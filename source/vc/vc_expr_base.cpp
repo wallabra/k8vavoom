@@ -785,7 +785,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
         }
         if (Offs == 0) {
           // 0 means "mod author is a fuckin' moron"
-          ParseWarning((aloc ? *aloc : Loc), "Mod author is a fuckin' moron");
+          ParseWarning((aloc ? *aloc : Loc), "Mod author is a moron.");
           /*
           VExpression *enew = new VNoneLiteral(Loc);
           delete this;

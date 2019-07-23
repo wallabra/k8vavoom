@@ -1173,42 +1173,50 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
         sc->ExpectNumber();
         GotoOffset = sc->Number;
       }
-      if (!LastState && NewLabelsStart == Class->StateLabelDefs.Num()) sc->Error("Goto before first state");
-      // if we have no defined states for latest labels, create dummy state to attach gotos to it
-      // simple redirection won't work, because this label can be used as `A_JumpXXX()` destination, for example
-      // sigh... k8
-      if (!LastState) {
-        // yet if we are in spawn label, demand at least one defined state
-        //if (inSpawnLabel) sc->Error("you cannot do immediate jump in spawn state");
-        // ah, screw it, just define TNT1
-        VState *dummyState = new VState(va("S_%d", States.Num()), Class, TmpLoc);
-        States.Append(dummyState);
-        dummyState->SpriteName = "tnt1";
-        dummyState->Frame = 0|VState::FF_SKIPOFFS|VState::FF_SKIPMODEL|VState::FF_DONTCHANGE|VState::FF_KEEPSPRITE;
-        dummyState->Time = 0;
-        // link previous state
-        if (PrevState) PrevState->NextState = dummyState;
-        // assign state to the labels
+      // some degenerative mod authors do this
+      if (LastState && GotoOffset == 0 && VStr::strEquCI(*GotoLabel, "Fail")) {
+        GLog.Logf(NAME_Warning, "%s: fixed `Goto Fail`, mod author is a moron.", *TmpLoc.toStringNoCol());
+        check(LastState);
+        LastState->NextState = LastState;
+        PrevState = nullptr; // new execution chain
+      } else {
+        if (!LastState && NewLabelsStart == Class->StateLabelDefs.Num()) sc->Error("Goto before first state");
+        // if we have no defined states for latest labels, create dummy state to attach gotos to it
+        // simple redirection won't work, because this label can be used as `A_JumpXXX()` destination, for example
+        // sigh... k8
+        if (!LastState) {
+          // yet if we are in spawn label, demand at least one defined state
+          //if (inSpawnLabel) sc->Error("you cannot do immediate jump in spawn state");
+          // ah, screw it, just define TNT1
+          VState *dummyState = new VState(va("S_%d", States.Num()), Class, TmpLoc);
+          States.Append(dummyState);
+          dummyState->SpriteName = "tnt1";
+          dummyState->Frame = 0|VState::FF_SKIPOFFS|VState::FF_SKIPMODEL|VState::FF_DONTCHANGE|VState::FF_KEEPSPRITE;
+          dummyState->Time = 0;
+          // link previous state
+          if (PrevState) PrevState->NextState = dummyState;
+          // assign state to the labels
+          for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) {
+            Class->StateLabelDefs[i].State = dummyState;
+            LoopStart = dummyState; // this will replace loop start only if we have any labels
+          }
+          NewLabelsStart = Class->StateLabelDefs.Num(); // no current label
+          PrevState = dummyState;
+          LastState = dummyState;
+          //inSpawnLabel = false; // no need to add dummy state for "nodelay" anymore
+        }
+        LastState->GotoLabel = GotoLabel;
+        LastState->GotoOffset = GotoOffset;
+        check(NewLabelsStart == Class->StateLabelDefs.Num());
+        /*k8: this doesn't work, see above
         for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) {
-          Class->StateLabelDefs[i].State = dummyState;
-          LoopStart = dummyState; // this will replace loop start only if we have any labels
+          Class->StateLabelDefs[i].GotoLabel = GotoLabel;
+          Class->StateLabelDefs[i].GotoOffset = GotoOffset;
         }
         NewLabelsStart = Class->StateLabelDefs.Num(); // no current label
-        PrevState = dummyState;
-        LastState = dummyState;
-        //inSpawnLabel = false; // no need to add dummy state for "nodelay" anymore
+        */
+        PrevState = nullptr; // new execution chain
       }
-      LastState->GotoLabel = GotoLabel;
-      LastState->GotoOffset = GotoOffset;
-      check(NewLabelsStart == Class->StateLabelDefs.Num());
-      /*k8: this doesn't work, see above
-      for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) {
-        Class->StateLabelDefs[i].GotoLabel = GotoLabel;
-        Class->StateLabelDefs[i].GotoOffset = GotoOffset;
-      }
-      NewLabelsStart = Class->StateLabelDefs.Num(); // no current label
-      */
-      PrevState = nullptr; // new execution chain
       if (!sc->Crossed && sc->Check(";")) {}
       continue;
     }
