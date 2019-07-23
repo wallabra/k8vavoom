@@ -1092,9 +1092,9 @@ void SV_GetSectorGapCoords (sector_t *sector, const TVec point, float &floorz, f
 //==========================================================================
 sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, bool dbgDump) {
   if (!sector->Has3DFloors()) return sector->eregions;
-  const float secfz = sector->floor.GetPointZ(p);
+  const float secfz = sector->floor.GetPointZClamped(p);
   if (p.z <= secfz) return sector->eregions;
-  //const float seccz = sector->ceiling.GetPointZ(p);
+  //const float seccz = sector->ceiling.GetPointZClamped(p);
 
   sec_region_t *last = nullptr;
   bool wasHit = false;
@@ -1105,12 +1105,12 @@ sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, bool dbgDump
   // skip base region
   for (sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
     if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
-    const float fz = reg->efloor.GetPointZ(p);
+    const float fz = reg->efloor.GetPointZClamped(p);
     if (!last || fz > lastz) last = reg;
     // non-solid?
     if (reg->regflags&sec_region_t::RF_NonSolid) {
       // for non-solid regions calculate distance to ceiling
-      const float cz = reg->eceiling.GetPointZ(p);
+      const float cz = reg->eceiling.GetPointZClamped(p);
       if (dbgDump) { GCon->Logf("SPRL: non-solid: z=%g; cz=%g; dist=%g; best=%g", p.z, cz, cz-p.z, bestDist); DumpRegion(reg); }
       if (p.z <= cz) {
         const float fdist = cz-p.z;
