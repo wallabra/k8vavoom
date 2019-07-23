@@ -1122,7 +1122,7 @@ sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, bool dbgDump
       }
     } else {
       // for solid regions calculate distance to floor
-      //const float fz = reg->efloor.GetPointZ(p);
+      //const float fz = reg->efloor.GetPointZClamped(p);
       if (dbgDump) { GCon->Logf("SPRL: solid: z=%g; fz=%g; dist=%g; best=%g", p.z, fz, fz-p.z, bestDist); DumpRegion(reg); }
       if (p.z <= fz) {
         const float fdist = fz-p.z;
