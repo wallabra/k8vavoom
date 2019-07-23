@@ -711,8 +711,8 @@ void VRenderLevelShared::CalculateSubAmbient (float &l, float &lr, float &lg, fl
         sec_surface_t *rfloor;
         if (reg->fakefloor) {
           if (reg->realfloor) {
-            const float fakez = reg->fakefloor->esecplane.GetPointZ(p);
-            const float realz = reg->realfloor->esecplane.GetPointZ(p);
+            const float fakez = reg->fakefloor->esecplane.GetPointZClamped(p);
+            const float realz = reg->realfloor->esecplane.GetPointZClamped(p);
             if (fakez < realz) {
               rfloor = (p.z < realz ? reg->fakefloor : reg->realfloor);
             } else {
@@ -763,7 +763,7 @@ void VRenderLevelShared::CalculateSubAmbient (float &l, float &lr, float &lg, fl
     if (sec->floor.pic) {
       VTexture *gtex = GTextureManager(sec->floor.pic);
       if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
-        const float hgt = p.z-sub->sector->floor.GetPointZ(p);
+        const float hgt = p.z-sub->sector->floor.GetPointZClamped(p);
         if (hgt >= 0.0f && hgt < 120.0f) {
           /*
           if (lr == l && lg == l && lb == l) lr = lg = lb = 255;
