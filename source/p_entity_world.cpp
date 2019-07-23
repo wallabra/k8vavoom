@@ -99,12 +99,12 @@ struct tmtrace_t {
 
   inline void CopyRegFloor (sec_region_t *r, const TVec *Origin) {
     EFloor = r->efloor;
-    if (Origin) FloorZ = EFloor.GetPointZ(*Origin);
+    if (Origin) FloorZ = EFloor.GetPointZClamped(*Origin);
   }
 
   inline void CopyRegCeiling (sec_region_t *r, const TVec *Origin) {
     ECeiling = r->eceiling;
-    if (Origin) CeilingZ = ECeiling.GetPointZ(*Origin);
+    if (Origin) CeilingZ = ECeiling.GetPointZClamped(*Origin);
   }
 
   inline void CopyOpenFloor (opening_t *o, bool setz=true) {
@@ -129,9 +129,9 @@ struct tmtrace_t {
 //==========================================================================
 static void tmtSetupGap (tmtrace_t *tmtrace, sector_t *sector, float Height, bool debugDump) {
   SV_FindGapFloorCeiling(sector, tmtrace->End, Height, tmtrace->EFloor, tmtrace->ECeiling, debugDump);
-  tmtrace->FloorZ = tmtrace->EFloor.GetPointZ(tmtrace->End);
+  tmtrace->FloorZ = tmtrace->EFloor.GetPointZClamped(tmtrace->End);
   tmtrace->DropOffZ = tmtrace->FloorZ;
-  tmtrace->CeilingZ = tmtrace->ECeiling.GetPointZ(tmtrace->End);
+  tmtrace->CeilingZ = tmtrace->ECeiling.GetPointZClamped(tmtrace->End);
 }
 
 
@@ -164,7 +164,7 @@ void VEntity::CopyTraceCeiling (tmtrace_t *tr, bool setz) {
 //==========================================================================
 void VEntity::CopyRegFloor (sec_region_t *r, bool setz) {
   EFloor = r->efloor;
-  FloorZ = EFloor.GetPointZ(Origin);
+  FloorZ = EFloor.GetPointZClamped(Origin);
 }
 
 
@@ -175,7 +175,7 @@ void VEntity::CopyRegFloor (sec_region_t *r, bool setz) {
 //==========================================================================
 void VEntity::CopyRegCeiling (sec_region_t *r, bool setz) {
   ECeiling = r->eceiling;
-  CeilingZ = ECeiling.GetPointZ(Origin);
+  CeilingZ = ECeiling.GetPointZClamped(Origin);
 }
 
 
