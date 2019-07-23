@@ -195,16 +195,16 @@ bool Physics (float DeltaTime) {
   }
 
   CheckWater();
-  if (!bFloatBob || !bSpecial) {
-    UpdateVelocity(DeltaTime);
-  }
+  if (!bFloatBob || !bSpecial) UpdateVelocity(DeltaTime);
+  // apply friction here
+  if (Velocity.x || Velocity.y) ApplyFriction(DeltaTime);
 
   // momentum (velocity) movement
   // handle X and Y momentums
   float oldfloorz = XYMovement(DeltaTime, CummX, CummY);
   if (IsDestroyed()) return false; // mobj was removed
   // apply friction here
-  if (Velocity.x || Velocity.y) ApplyFriction(DeltaTime);
+  //if (Velocity.x || Velocity.y) ApplyFriction(DeltaTime);
 
   if (bFloatBob) {
     if (bSpecial) {
@@ -305,6 +305,8 @@ bool Physics (float DeltaTime) {
     Level.MoveStaticLightByOwner(self, Origin+LightOffset);
   }
 
+  // apply friction here
+  //if (Velocity.x || Velocity.y) ApplyFriction(DeltaTime);
   return true;
 }
 
