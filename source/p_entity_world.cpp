@@ -456,8 +456,8 @@ void VEntity::LinkToWorld (bool properFloorCheck) {
     // simplified check
     TSecPlaneRef floor, ceiling;
     SV_FindGapFloorCeiling(ss->sector, Origin, Height, EFloor, ECeiling);
-    FloorZ = EFloor.GetPointZ(Origin);
-    CeilingZ = ECeiling.GetPointZ(Origin);
+    FloorZ = EFloor.GetPointZClamped(Origin);
+    CeilingZ = ECeiling.GetPointZClamped(Origin);
   }
 
   // link into sector
