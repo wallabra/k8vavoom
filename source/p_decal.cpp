@@ -639,7 +639,6 @@ bool VDecalAnimStretcher::parse (VScriptParser *sc) {
     sc->Error(va("unknown decal keyword '%s'", *sc->String));
     break;
   }
-
   return false;
 }
 
@@ -690,6 +689,7 @@ bool VDecalAnimSlider::parse (VScriptParser *sc) {
   sc->ExpectString();
   if (sc->String.Length() == 0) { sc->Error("invalid decal fader name"); return false; }
   name = VName(*sc->String);
+  bool k8reversey = false;
   sc->Expect("{");
   while (!sc->AtEnd()) {
     if (sc->Check("}")) return true;
@@ -697,10 +697,11 @@ bool VDecalAnimSlider::parse (VScriptParser *sc) {
     if (sc->Check("disty")) { VDecalDef::parseNumOrRandom(sc, &distY, true); continue; }
     if (sc->Check("slidestart")) { VDecalDef::parseNumOrRandom(sc, &startTime); continue; }
     if (sc->Check("slidetime")) { VDecalDef::parseNumOrRandom(sc, &actionTime); continue; }
+    if (sc->Check("k8reversey")) { k8reversey = true; continue; }
     sc->Error(va("unknown decal keyword '%s'", *sc->String));
     break;
   }
-
+  if (!k8reversey) distY.value = -distY.value;
   return false;
 }
 
