@@ -28,16 +28,20 @@
 //**  Defines shared by refresh and drawer
 //**
 //**************************************************************************
-#ifndef _R_SHARED_H
-#define _R_SHARED_H
+#ifndef VAVOOM_RENDER_SHARED_H
+#define VAVOOM_RENDER_SHARED_H
 
-#define VAVOOM_BIGGER_RGB_TABLE
+// there is little need to use bigger translation tables
+// usually, 5 bits of color info is enough, so 32x32x32
+// color cube is ok for our purposes.
+
+//#define VAVOOM_BIGGER_RGB_TABLE
 //#define VAVOOM_HUGE_RGB_TABLE
 
-//#include "fmd2defs.h"
 #include "drawer.h"
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 // color maps
 enum {
   CM_Default,
@@ -46,12 +50,12 @@ enum {
   CM_Red,
   CM_Green,
 
-  CM_Max
+  CM_Max,
 };
 
 // simulate light fading using dark fog
 enum {
-  FADE_LIGHT = 0xff010101
+  FADE_LIGHT = 0xff010101u,
 };
 
 
@@ -62,11 +66,12 @@ struct texinfo_t {
   TVec taxis;
   float toffs;
   VTexture *Tex;
-  /*bool*/vint32 noDecals;
-  // 1.1 for solid surfaces
+  vint32 noDecals;
+  // 1.1f for solid surfaces
   // alpha for masked surfaces
+  // not always right, tho (1.0f vs 1.1f); need to be checked and properly fixed
   float Alpha;
-  /*bool*/vint32 Additive;
+  vint32 Additive;
   vuint8 ColorMap;
 };
 
@@ -191,6 +196,7 @@ protected:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// one alias model frame
 struct VMeshFrame {
   VStr Name;
   TVec Scale;
@@ -198,8 +204,6 @@ struct VMeshFrame {
   TVec *Verts;
   TVec *Normals;
   TPlane *Planes;
-  //TArray<vuint8> ValidTris;
-  // those are used for rebuilt frames (for multiframe models `TriCount` is constant)
   vuint32 TriCount;
   // cached offsets on OpenGL buffer
   vuint32 VertsOffset;
@@ -207,11 +211,13 @@ struct VMeshFrame {
 };
 
 #pragma pack(push,1)
+// texture coordinates
 struct VMeshSTVert {
   float S;
   float T;
 };
 
+// one mesh triangle
 struct VMeshTri {
   vuint16 VertIndex[3];
 };
@@ -259,12 +265,29 @@ VName R_HasNamedSkybox (const VStr &aname);
 
 // ////////////////////////////////////////////////////////////////////////// //
 // POV related
+// k8: this should be prolly moved to renderer, and recorded in render list
+// if i'll do that, i will be able to render stacked sectors, and mirrors
+// without portals.
+//
+// in render lists it is prolly enough to store current view transformation
+// matrix, because surface visibility flags are already set by the queue manager.
+//
+// another thing to consider is queue manager limitation: one surface can be
+// queued only once. this is not a hard limitation, though, as queue manager is
+// using arrays to keep surface pointers, but it is handy for various render
+// checks. we prolly need to increment queue frame counter when view changes.
 extern TVec vieworg;
 extern TVec viewforward;
 extern TVec viewright;
 extern TVec viewup;
 extern TAVec viewangles;
+extern TFrustum view_frustum;
 
+extern bool MirrorFlip;
+extern bool MirrorClip;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 //extern VCvarI r_fog;
 extern VCvarF r_fog_r;
 extern VCvarF r_fog_g;
@@ -280,11 +303,6 @@ extern VCvarB r_fade_light;
 extern VCvarF r_fade_factor;
 
 extern VCvarF r_sky_bright_factor;
-
-extern TFrustum view_frustum;
-
-extern bool MirrorFlip;
-extern bool MirrorClip;
 
 extern rgba_t r_palette[256];
 extern vuint8 r_black_color;
