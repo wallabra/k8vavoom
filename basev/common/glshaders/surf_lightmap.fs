@@ -9,6 +9,7 @@ uniform sampler2D SpecularMap;
 #ifdef VV_LIGHTMAP_BRIGHTMAP
 $include "common/brightmap_vars.fs"
 #endif
+$include "common/texshade.inc"
 
 $include "common/fog_vars.fs"
 $include "common/texlmap_vars.fs"
@@ -21,7 +22,7 @@ uniform vec4 Light;
 
 
 void main () {
-  vec4 TexColor = texture2D(Texture, TextureCoordinate);
+  vec4 TexColor = GetStdTexel(Texture, TextureCoordinate);
   if (TexColor.a < ALPHA_MASKED) discard; // only normal and masked walls should go thru this
 
   vec4 lt = texture2D(LightMap, LightmapCoordinate);

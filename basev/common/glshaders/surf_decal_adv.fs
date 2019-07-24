@@ -9,6 +9,8 @@ uniform vec2 ScreenSize;
 
 varying vec2 TextureCoordinate;
 
+$include "common/texshade.inc"
+
 
 void main () {
   vec4 FinalColor;
@@ -16,7 +18,7 @@ void main () {
 
   if (SplatAlpha <= ALPHA_MIN) discard;
 
-  TexColor = texture2D(Texture, TextureCoordinate);
+  TexColor = GetStdTexel(Texture, TextureCoordinate);
   if (TexColor.a < ALPHA_MIN) discard;
 
   FinalColor.a = clamp(TexColor.a*SplatAlpha, 0.0, 1.0);

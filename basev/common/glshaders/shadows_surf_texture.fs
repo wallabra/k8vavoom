@@ -2,12 +2,11 @@
 $include "common/common.inc"
 
 uniform sampler2D Texture;
-
 $include "common/texture_vars.fs"
 
 
 void main () {
-  vec4 TexColor = texture2D(Texture, TextureCoordinate);
+  vec4 TexColor = GetStdTexel(Texture, TextureCoordinate);
 #ifdef VV_TEXTURED_MASKED_WALL
   //if (TexColor.a < ALPHA_MIN) discard;
   if (TexColor.a < ALPHA_MASKED) discard; // only normal and masked walls should go thru this

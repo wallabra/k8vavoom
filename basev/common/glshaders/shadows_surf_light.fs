@@ -5,6 +5,7 @@ uniform vec3 LightColor;
 uniform float LightRadius;
 uniform float LightMin;
 uniform sampler2D Texture;
+$include "common/texshade.inc"
 #ifdef VV_SPOTLIGHT
 $include "common/spotlight_vars.fs"
 #endif
@@ -20,7 +21,7 @@ $include "common/texture_vars.fs"
 void main () {
   if (VDist <= 0.0 || Dist <= 0.0) discard;
 
-  vec4 TexColor = texture2D(Texture, TextureCoordinate);
+  vec4 TexColor = GetStdTexelSimpleShade(Texture, TextureCoordinate);
   //if (TexColor.a < ALPHA_MIN) discard; //FIXME
   if (TexColor.a < ALPHA_MASKED) discard; // only normal and masked walls should go thru this
 

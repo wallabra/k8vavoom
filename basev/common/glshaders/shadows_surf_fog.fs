@@ -12,7 +12,7 @@ $include "common/texture_vars.fs"
 
 void main () {
 #ifdef VV_MASKED_FOG
-  vec4 TexColor = texture2D(Texture, TextureCoordinate);
+  vec4 TexColor = GetStdTexelSimpleShade(Texture, TextureCoordinate);
   //if (TexColor.a < ALPHA_MIN) discard;
   if (TexColor.a < ALPHA_MASKED) discard; // only normal and masked walls should go thru this
 #endif

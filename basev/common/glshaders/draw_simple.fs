@@ -2,6 +2,7 @@
 $include "common/common.inc"
 
 uniform sampler2D Texture;
+$include "common/texshade.inc"
 uniform float Alpha;
 #ifdef LIGHTING
 uniform vec4 Light;
@@ -11,7 +12,7 @@ varying vec2 TextureCoordinate;
 
 
 void main () {
-  vec4 TexColor = texture2D(Texture, TextureCoordinate);
+  vec4 TexColor = GetStdTexel(Texture, TextureCoordinate);
   if (TexColor.a < ALPHA_MIN) discard;
 
   // we got a non-premultiplied color, convert it

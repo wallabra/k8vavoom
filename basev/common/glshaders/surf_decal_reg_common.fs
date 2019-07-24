@@ -1,6 +1,7 @@
 // decal renderer for regular case (normal and lightmapped surfaces)
 
 uniform sampler2D Texture;
+$include "common/texshade.inc"
 #ifdef REG_LIGHTMAP
 uniform sampler2D LightMap;
 uniform sampler2D SpecularMap;
@@ -23,7 +24,7 @@ void main () {
 
   if (SplatAlpha <= ALPHA_MIN) discard;
 
-  TexColor = texture2D(Texture, TextureCoordinate);
+  TexColor = GetStdTexel(Texture, TextureCoordinate);
   if (TexColor.a < ALPHA_MIN) discard;
 
   FinalColor.a = clamp(TexColor.a*SplatAlpha, 0.0, 1.0);

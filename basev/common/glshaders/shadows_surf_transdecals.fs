@@ -6,7 +6,7 @@ $include "common/texture_vars.fs"
 
 
 void main () {
-  vec4 TexColor = texture2D(Texture, TextureCoordinate);
+  vec4 TexColor = GetStdTexelSimpleShade(Texture, TextureCoordinate);
   //if (TexColor.a < ALPHA_MIN) discard;
   if (TexColor.a < ALPHA_MASKED) discard; //FIXME: only normal and masked walls should go thru this
   // this doesn't matter

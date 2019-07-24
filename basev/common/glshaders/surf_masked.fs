@@ -4,6 +4,7 @@ $include "common/common.inc"
 //#define VAVOOM_ADV_MASKED_FOG
 
 uniform sampler2D Texture;
+$include "common/texshade.inc"
 #ifdef VV_MASKED_BRIGHTMAP
 $include "common/brightmap_vars.fs"
 #endif
@@ -20,7 +21,7 @@ $include "common/glow_vars.fs"
 
 
 void main () {
-  vec4 TexColor = texture2D(Texture, TextureCoordinate);
+  vec4 TexColor = GetStdTexel(Texture, TextureCoordinate);
   if (TexColor.a < AlphaRef) discard;
   //TexColor *= Light;
 

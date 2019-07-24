@@ -27,12 +27,12 @@ void main () {
 //  vec4 lt = Light;
 //#endif
 #ifdef VV_AMBIENT_MASKED_WALL
-  vec4 TexColor = texture2D(Texture, TextureCoordinate);
+  vec4 TexColor = GetStdTexelSimpleShade(Texture, TextureCoordinate);
   //if (TexColor.a <= ALPHA_MIN) discard;
   if (TexColor.a < ALPHA_MASKED) discard; // only normal and masked walls should go thru this
 #endif
 #ifdef VV_AMBIENT_BRIGHTMAP_WALL
-  vec4 TexColor = texture2D(Texture, TextureCoordinate);
+  vec4 TexColor = GetStdTexelSimpleShade(Texture, TextureCoordinate);
   //if (TexColor.a <= ALPHA_MIN) discard;
   if (TexColor.a < ALPHA_MASKED) discard; // only normal and masked walls should go thru this
   $include "common/brightmap_calc.fs"
