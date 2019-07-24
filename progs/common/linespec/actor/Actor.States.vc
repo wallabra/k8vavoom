@@ -37,9 +37,6 @@ GenericFreezeDeath:
 Death:
   TNT1 A 0
   Stop
-XDeath:
-  TNT1 A 0
-  Stop
 }
 
 defaultproperties
