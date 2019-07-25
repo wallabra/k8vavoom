@@ -514,9 +514,11 @@ void Destroyed () {
 //
 //  Touch
 //
+//  return `false` if movement should be blocked
+//
 //==========================================================================
 bool Touch (Entity Other) {
-  return !Other.bSolid;
+  return (Other.bCorpse ? true : !Other.bSolid);
 }
 
 

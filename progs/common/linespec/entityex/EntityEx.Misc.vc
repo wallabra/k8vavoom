@@ -670,6 +670,9 @@ override bool Touch (Entity InOther) {
     return ProcessHitFlags(Other, !Other.bSolid && !Other.bSpecial && (!Other.bShootable || !Other.bTouchy) && !Other.bBlockedBySolidActors);
   }
 
+  //k8: corpses won't block anything
+  if (Other.bCorpse) return true;
+
   //k8: missile should hit shootable object even if it is non-solid
   if (bMissile) {
     if (!(Other.bSolid || Other.bShootable) && !Other.bSpecial && (!Other.bShootable || !Other.bTouchy) && !Other.bBlockedBySolidActors) return ProcessHitFlags(Other, true);
