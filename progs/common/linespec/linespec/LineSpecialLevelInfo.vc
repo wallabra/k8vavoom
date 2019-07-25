@@ -4705,7 +4705,7 @@ final bool EV_ThrustThingZ (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, En
   if (Arg3) Force = -Force;
 
   bool success = false;
-  foreach (Entity Ent; eachTID(Arg1, A)) {
+  foreach (EntityEx Ent; eachTID(Arg1, A)) {
     //print("THRUSTZ for '%C', force=%s (%s), oldz=%f", Ent, Force, Arg4, Ent.Velocity.z);
     if (!Arg4) Ent.Velocity.z = 0;
     Ent.Velocity.z = fclamp(Ent.Velocity.z+Force, -1024, 1024); // k8: why not?
