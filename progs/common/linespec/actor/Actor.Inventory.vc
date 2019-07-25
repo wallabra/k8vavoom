@@ -223,7 +223,7 @@ final void A_Punch (optional bool alertIfHit, optional bool noAlertIfKilled) {
   LineAttack(dir, MELEERANGE, damage, BulletPuff, default, default, 'Fist', out hitEntity:hitEntity);
 
   if (alertIfHit && hitEntity) {
-    //print("FIST HIT: ent=%C (health=%s of %s)", hitEntity, hitEntity.Health, hitEntity.default.Health);
+    //print("FIST HIT: ent=%C (health=%s of %s)", hitEntity, hitEntity.Health, hitEntity.InitialHealth);
     if (!noAlertIfKilled || hitEntity.Health > 0) {
       LineSpecialLevelInfo(Level).NoiseAlert(self, self);
     }

@@ -158,7 +158,7 @@ final void A_Srcr2Decide()
     // No spots
     return;
   }
-  switch (Health / (default.Health / 8))
+  switch (Health / (InitialHealth / 8))
   {
   case 0:
     chance = 0.75;
@@ -214,7 +214,7 @@ final void A_Srcr2Attack()
     Target.Damage(self, self, HITDICE(20), spawnBlood:true);
     return;
   }
-  chance = Health < default.Health / 2 ? 96 : 48;
+  chance = Health < InitialHealth / 2 ? 96 : 48;
   if (P_Random() < chance)
   {
     // Wizard spawners

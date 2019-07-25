@@ -1591,8 +1591,8 @@ override bool SectorChanged (int CrushChange) {
   // killough 11/98: kill touchy things immediately
   if (bTouchy && (bArmed || IsSentient())) {
     bArmed = false; // disarm
-    SpawnExploBloodAtHead(default.Health, none);
-    Damage(none, none, default.Health); // kill object
+    SpawnExploBloodAtHead(InitialHealth, none);
+    Damage(none, none, InitialHealth); // kill object
     return true;
   }
 
@@ -1875,7 +1875,7 @@ final bool GiveBody (int num) {
       return true;
     }
   } else {
-    max = default.Health;
+    max = InitialHealth;
     if (num < 0) {
       num = max*(-num)/100;
       if (Health < num) {
@@ -2163,7 +2163,7 @@ override void SetActorProperty (int Prop, int IntVal, string StrVal) {
 //
 //==========================================================================
 override int GetActorProperty (int Prop) {
-  //if (Prop == APROP_SpawnHealth) print("GetActorProperty(%C, APROP_SpawnHealth)=%s", self, self.default.Health);
+  //if (Prop == APROP_SpawnHealth) print("GetActorProperty(%C, APROP_SpawnHealth)=%s", self, self.InitialHealth);
   switch (Prop) {
     case APROP_Health: return Health;
     case APROP_Speed: return int(Speed/35.0*65536.0);
@@ -2177,7 +2177,7 @@ override int GetActorProperty (int Prop) {
     case APROP_Frightened: return 0;
     case APROP_Gravity: return int(Gravity*65536.0);
     case APROP_Friendly: return bFriendly;
-    case APROP_SpawnHealth: if (PlayerPawn(self)) return PlayerPawn(self).MaxHealth; else return self.default.Health;
+    case APROP_SpawnHealth: if (PlayerPawn(self)) return PlayerPawn(self).MaxHealth; else return self.InitialHealth;
     case APROP_Dropped: return bDropped;
     case APROP_Species: return NameToIIndex(GetSpecies()); //HACK! keep in sync with C++ code!
     case APROP_NameTag: return (StrifeName ? NameToIIndex(name(StrifeName)) : NameToIIndex(GetClassName(Class))); //HACK! keep in sync with C++ code!
@@ -3277,7 +3277,7 @@ final bool DoThingRaise () {
   bDropOff = false;
   bSolid = true;
   bCorpse = false;
-  Health = default.Health;
+  Health = InitialHealth;
   Target = none;
   LastEnemy = none;
   //!LastPlayerSeenPosValid = false;

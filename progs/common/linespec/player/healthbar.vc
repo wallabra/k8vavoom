@@ -79,7 +79,7 @@ void HealthBarProcessor () {
   if (!ename) ename = string(GetClassName(ee.Class));
   if (!ename) return; // oops
 
-  int maxHealth = max(1, int(PlayerPawn(ee) ? PlayerPawn(ee).MaxHealth : ee.default.Health));
+  int maxHealth = max(1, int(PlayerPawn(ee) ? PlayerPawn(ee).MaxHealth : ee.InitialHealth));
   int health = max(0, int(ee.Health));
   int prc = 100*health/maxHealth;
   string msg = va("%d%% (%d/%d)\n%s", prc, health, maxHealth, ename);

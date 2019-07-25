@@ -157,7 +157,7 @@ final void A_Respawn (optional int Flags) {
     OK = true;
   }
   if (OK) {
-    Health = default.Health;
+    Health = InitialHealth;
 
     // [KS] don't keep target, because it could be self if the monster committed suicide
     //      ...actually it's better off an option, so you have better control over monster behavior

@@ -1002,7 +1002,7 @@ final void A_Srcr1Attack () {
     return;
   }
 
-  if (Health > (default.Health/3)*2) {
+  if (Health > (InitialHealth/3)*2) {
     // spit one fireball
     SpawnMissile(Target, SorcererFX1, 48.0);
   } else {
@@ -1014,7 +1014,7 @@ final void A_Srcr1Attack () {
       SpawnMissileAngles(SorcererFX1, AngleMod360(angle-3.0), ang.pitch, 48.0);
       SpawnMissileAngles(SorcererFX1, AngleMod360(angle+3.0), ang.pitch, 48.0);
     }
-    if (Health < default.Health/3) {
+    if (Health < InitialHealth/3) {
       // maybe attack again
       if (Special1) {
         // just attacked, so don't attack again

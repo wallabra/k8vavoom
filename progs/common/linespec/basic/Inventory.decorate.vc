@@ -472,7 +472,7 @@ final void decorate_A_Saw (optional name FullSound, optional name HitSound,
   LineAttack(dir, /*SAWRANGE*/range, damage, PuffType, default, default, 'Chainsaw', out hitEntity:hitEntity);
 
   if (alertIfHit && hitEntity) {
-    //print("SAW HIT: ent=%C (health=%s of %s)", hitEntity, hitEntity.Health, hitEntity.default.Health);
+    //print("SAW HIT: ent=%C (health=%s of %s)", hitEntity, hitEntity.Health, hitEntity.InitialHealth);
     if (!noAlertIfKilled || hitEntity.Health > 0) {
       LineSpecialLevelInfo(Level).NoiseAlert(self, self);
     }

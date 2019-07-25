@@ -44,7 +44,7 @@ override void A_CastSorcererSpell()
 
   ang1 = AngleMod360(Angles.yaw - 45.0);
   ang2 = AngleMod360(Angles.yaw + 45.0);
-  if (Health < (default.Health / 3))
+  if (Health < (InitialHealth / 3))
   {
     // Spawn 2 at a time
     mo = Actor(Target).SpawnMissileAngle(SorcFX3, ang1, 4.0);

@@ -4313,13 +4313,13 @@ override int DoThingDamage(int Tid, int Amount, name DmgType, Entity Activator)
       {
         EntityEx(A).Damage(none, EntityEx(Activator), Amount, DmgType, spawnBlood:true);
       }
-      else if (A.Health < A.default.Health)
+      else if (A.Health < A.InitialHealth)
       {
         //  Negative amount heals thing.
         A.Health -= Amount;
-        if (A.Health > A.default.Health)
+        if (A.Health > A.InitialHealth)
         {
-          A.Health = A.default.Health;
+          A.Health = A.InitialHealth;
         }
         if (A.bIsPlayer)
         {

@@ -787,7 +787,7 @@ void Died (EntityEx source, EntityEx inflictor) {
   // calculate gibs health
   int GHealth = GibsHealth;
   if (!GHealth) {
-    GHealth = int(float(-default.Health)*LineSpecialGameInfo(Level.Game).GibsHealthFactor);
+    GHealth = int(float(-InitialHealth)*LineSpecialGameInfo(Level.Game).GibsHealthFactor);
   }
 
   // handle possible unmorph on death
@@ -800,7 +800,7 @@ void Died (EntityEx source, EntityEx inflictor) {
       if (WasGibbed) {
         int RealGibHealth = RealSelf.GibsHealth;
         if (!RealGibHealth) {
-          RealGibHealth = int(float(-RealSelf.default.Health)*LineSpecialGameInfo(Level.Game).GibsHealthFactor);
+          RealGibHealth = int(float(-RealSelf.InitialHealth)*LineSpecialGameInfo(Level.Game).GibsHealthFactor);
         }
         if (RealSelf.Health >= RealGibHealth) {
           // if morphed was gibbed, so must original be (where allowed)
@@ -919,7 +919,7 @@ void Died (EntityEx source, EntityEx inflictor) {
     // extreme death?
     if (Health < GHealth) {
       DeathState = FindState('Death', 'Extreme', true);
-      if (DeathState) SpawnHeadBloodSpray(damage:default.Health, notDead:false, spawnBloodPool:true);
+      if (DeathState) SpawnHeadBloodSpray(damage:InitialHealth, notDead:false, spawnBloodPool:true);
     }
     // normal death?
     if (!DeathState) DeathState = FindState('Death');

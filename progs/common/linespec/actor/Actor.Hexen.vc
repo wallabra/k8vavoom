@@ -1758,7 +1758,7 @@ final void A_DragonPain () {
 final void A_KoraxChase () {
   Actor spot;
 
-  if (!Special2 && (Health <= (default.Health/2))) {
+  if (!Special2 && (Health <= (InitialHealth/2))) {
     spot = Actor(Level.FindMobjFromTID(KORAX_FIRST_TELEPORT_TID, none));
     if (spot) Teleport(spot.Origin, spot.Angles.yaw, true, true, false);
     XLevel.StartACS(249, 0, 0, 0, 0, self, nullptr, 0, false, false);
@@ -1775,7 +1775,7 @@ final void A_KoraxChase () {
   }
 
   // teleport away
-  if (Health < (default.Health>>1)) {
+  if (Health < (InitialHealth>>1)) {
     if (Random() < 0.0390625) {
       spot = Actor(Level.FindMobjFromTID(KORAX_TELEPORT_TID, Tracer));
       Tracer = spot;
@@ -1958,7 +1958,7 @@ final void A_KoraxCommand () {
   float z = Origin.z+KORAX_COMMAND_HEIGHT;
   Spawn(KoraxBolt, vector(x, y, z));
 
-  int numcommands = (Health <= (default.Health>>1) ? 5 : 4);
+  int numcommands = (Health <= (InitialHealth>>1) ? 5 : 4);
   switch (P_Random()%numcommands) {
     case 0: XLevel.StartACS(250, 0, 0, 0, 0, self, nullptr, 0, false, false); break;
     case 1: XLevel.StartACS(251, 0, 0, 0, 0, self, nullptr, 0, false, false); break;
@@ -2236,7 +2236,7 @@ final void A_StopBalls () {
   Args[1] = 0; // reset rotation counter
 
        if (Args[0] <= 0 && chance < 200) SpecialCID = SorcBall2; // blue
-  else if (Health < (default.Health>>1) && chance < 200) SpecialCID = SorcBall3; // green
+  else if (Health < (InitialHealth>>1) && chance < 200) SpecialCID = SorcBall3; // green
   else SpecialCID = SorcBall1; // yellow
 }
 
