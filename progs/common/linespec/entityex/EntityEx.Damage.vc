@@ -830,7 +830,7 @@ void Died (EntityEx source, EntityEx inflictor) {
     Health = -1;
   }
 
-  if (source && (source.bIsPlayer) && PlayerEx(source.Player).IsWeaponAlwaysExtremeDeath()) {
+  if (source && source.bIsPlayer && PlayerEx(source.Player).IsWeaponAlwaysExtremeDeath()) {
     // always extreme death
     Health = -5000;
   }
