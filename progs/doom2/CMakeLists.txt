@@ -10,9 +10,10 @@ add_custom_command(OUTPUT ${OUTDIR}/cgame.dat
     cgame.vc
     ../doom/cgame/*.vc
     ${OUTDIR1}/game.dat
-    ${COMMON_PROGS_DIR}/engine.dat
+    #${COMMON_PROGS_DIR}/engine.dat
     ${COMMON_PROGS_DIR}/linespec.dat
     ${COMMON_PROGS_DIR}/newui.dat
     ${COMMON_PROGS_DIR}/uibase.dat)
 add_custom_target(doom2_cgame ALL DEPENDS ${OUTDIR}/cgame.dat)
-add_dependencies(doom2_cgame vcc engine linespec uibase doom_game)
+#add_dependencies(doom2_cgame vcc engine linespec uibase doom_game)
+add_dependencies(doom2_cgame vcc linespec uibase doom_game)
