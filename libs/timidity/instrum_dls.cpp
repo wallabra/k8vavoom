@@ -1022,7 +1022,7 @@ static void load_region_dls(MidiSong* song, DLS_Data *patches, Sample *sample, D
 
 		value = load_connection(art->cConnections, artList, CONN_DST_PAN) / 2;
 		int panval = (int)((0.5 + to_normalized_percent(value)) * 127.0);
-		if (sample->panning < 0) panval = 0; else if (sample->panning > 128) panval = 127;
+		if (panval < 0) panval = 0; else if (panval > 127) panval = 127;
 		sample->panning = panval;
 
 		//ctl->cmsg(CMSG_INFO, VERB_NORMAL,
