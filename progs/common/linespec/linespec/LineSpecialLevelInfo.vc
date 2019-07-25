@@ -4219,29 +4219,23 @@ final bool EV_ThingRemove(int tid)
   return success;
 }
 
+
 //==========================================================================
 //
 //  EV_ThingDestroy
 //
 //==========================================================================
-
-final bool EV_ThingDestroy(int tid, int Extreme)
-{
-  EntityEx  A;
-  bool    success;
-
-  success = false;
-  for (A = EntityEx(FindMobjFromTID(tid, none)); A;
-    A = EntityEx(FindMobjFromTID(tid, A)))
-  {
-    if (A.bShootable)
-    {
-      A.Damage(none, none, Extreme ? 1000000 : A.Health, '', forced:true, spawnBlood:true);
+final bool EV_ThingDestroy(int tid, int Extreme) {
+  bool success = false;
+  foreach (EntityEx A; eachTID(tid, none)) {
+    if (A.bShootable) {
+      A.Damage(none, none, (Extreme ? 1000000 : A.Health), '', forced:true, spawnBlood:true);
       success = true;
     }
   }
   return success;
 }
+
 
 //===========================================================================
 //
