@@ -660,6 +660,7 @@ bool VEntity::CheckThing (tmtrace_t &cptrace, VEntity *Other) {
   // can't hit thing
   if (!(Other->EntityFlags&EF_ColideWithThings)) return true;
   if (!(Other->EntityFlags&EF_Solid)) return true;
+  if (Other->EntityFlags&EF_Corpse) return true; //k8: skip corpses
 
   const float blockdist = Other->Radius+Radius;
 
@@ -927,21 +928,29 @@ bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other, bool noPickups)
     return true;
   }
 
-  tmtrace.BlockingMobj = Other;
-  if (!(Level->LevelInfoFlags2&VLevelInfo::LIF2_CompatNoPassOver) &&
-      !compat_nopassover &&
-      !(EntityFlags&(EF_Float|EF_Missile|EF_NoGravity)) &&
-      (Other->EntityFlags&(EF_Solid|EF_ActLikeBridge)) == (EF_Solid|EF_ActLikeBridge))
-  {
-    // allow actors to walk on other actors as well as floors
-    if (fabsf(Other->Origin.x-tmtrace.End.x) < Other->Radius ||
-        fabsf(Other->Origin.y-tmtrace.End.y) < Other->Radius)
+  // can't walk on corpses (but can touch them)
+  const bool isOtherCorpse = !!(Other->EntityFlags&EF_Corpse);
+
+  if (!isOtherCorpse) {
+    //tmtrace.BlockingMobj = Other;
+
+    // check bridges
+    if (!(Level->LevelInfoFlags2&VLevelInfo::LIF2_CompatNoPassOver) &&
+        !compat_nopassover &&
+        !(EntityFlags&(EF_Float|EF_Missile|EF_NoGravity)) &&
+        (Other->EntityFlags&(EF_Solid|EF_ActLikeBridge)) == (EF_Solid|EF_ActLikeBridge))
     {
-      if (Other->Origin.z+Other->Height >= tmtrace.FloorZ &&
-          Other->Origin.z+Other->Height <= tmtrace.End.z+MaxStepHeight)
+      // allow actors to walk on other actors as well as floors
+      if (fabsf(Other->Origin.x-tmtrace.End.x) < Other->Radius ||
+          fabsf(Other->Origin.y-tmtrace.End.y) < Other->Radius)
       {
-        tmtrace.StepThing = Other;
-        tmtrace.FloorZ = Other->Origin.z+Other->Height;
+        if (Other->Origin.z+Other->Height >= tmtrace.FloorZ &&
+            Other->Origin.z+Other->Height <= tmtrace.End.z+MaxStepHeight)
+        {
+          //tmtrace.BlockingMobj = Other;
+          tmtrace.StepThing = Other;
+          tmtrace.FloorZ = Other->Origin.z+Other->Height;
+        }
       }
     }
   }
@@ -952,16 +961,35 @@ bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other, bool noPickups)
       (EntityFlags&EF_Missile))
   {
     // prevent some objects from overlapping
-    if (EntityFlags&Other->EntityFlags&EF_DontOverlap) return false;
+    if (!isOtherCorpse && ((EntityFlags&Other->EntityFlags)&EF_DontOverlap)) {
+      tmtrace.BlockingMobj = Other;
+      return false;
+    }
     // check if a mobj passed over/under another object
     if (tmtrace.End.z >= Other->Origin.z+Other->Height) return true; // overhead
     if (tmtrace.End.z+Height <= Other->Origin.z) return true;  // underneath
   }
 
   //FIXME: call VC to determine blocking
-  if (noPickups) return !(Other->EntityFlags&EF_Solid); // non-solids won't block
+  if (noPickups) {
+    if (isOtherCorpse) return true; // k8: corpses won't block
+    if (Other->EntityFlags&EF_Solid) {
+      tmtrace.BlockingMobj = Other;
+      return false;
+    }
+    // non-solids won't block
+    return true;
+  }
 
-  return eventTouch(Other);
+  //if (EntityFlags&EF_IsPlayer) GCon->Logf("RelThing: self=`%s`; other=`%s`; ocp=%d", *GetClass()->GetFullName(), *Other->GetClass()->GetFullName(), (int)isOtherCorpse);
+
+  if (!eventTouch(Other)) {
+    // just in case
+    tmtrace.BlockingMobj = Other;
+    return false;
+  }
+
+  return true;
 }
 
 
@@ -1690,6 +1718,7 @@ VEntity *VEntity::TestMobjZ (const TVec &TryOrg) {
         if (*Other == this) continue; // don't clip against self
         if (!(Other->EntityFlags&EF_ColideWithThings)) continue; // can't hit thing
         if (!(Other->EntityFlags&EF_Solid)) continue; // not solid
+        if (Other->EntityFlags&EF_Corpse) continue; //k8: can't hit corpse
         if (TryOrg.z > Other->Origin.z+Other->Height) continue; // over thing
         if (TryOrg.z+Height < Other->Origin.z) continue; // under thing
         float blockdist = Other->Radius+Radius;
