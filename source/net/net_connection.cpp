@@ -75,7 +75,7 @@ VNetConnection::VNetConnection (VSocketPublic *ANetCon, VNetContext *AContext, V
 //
 //==========================================================================
 VNetConnection::~VNetConnection () {
-  GCon->Logf(NAME_Dev, va("Closing connection %s", *GetAddress()));
+  GCon->Logf(NAME_Dev, "Closing connection %s", *GetAddress());
   //GCon->Logf("NET: deleting #%d channels...", OpenChannels.length());
   while (OpenChannels.length()) {
     int idx = OpenChannels.length()-1;
