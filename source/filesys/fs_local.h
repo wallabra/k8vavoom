@@ -53,6 +53,7 @@ struct VPK3ResDirInfo {
 class VSearchPath {
 public:
   bool iwad;
+  bool basepak;
 
 public:
   VSearchPath ();

@@ -1498,7 +1498,7 @@ void VOpenGLDrawer::DebugRenderScreenRect (int x0, int y0, int x1, int y1, vuint
 //
 //==========================================================================
 static VStr readTextFile (const VStr &fname) {
-  VStream *strm = FL_OpenFileRead(fname);
+  VStream *strm = FL_OpenFileReadBaseOnly(fname);
   if (!strm) Sys_Error("Failed to open shader '%s'", *fname);
   int size = strm->TotalSize();
   if (size == 0) return VStr();
@@ -1627,13 +1627,13 @@ static VStr getDirectiveArg (const VStr &s) {
 //
 //==========================================================================
 GLhandleARB VOpenGLDrawer::LoadShader (GLenum Type, const VStr &FileName, const TArray<VStr> &defines) {
+  // load source file
+  VStr ssrc = readTextFile(FileName);
+
   // create shader object
   GLhandleARB Shader = p_glCreateShaderObjectARB(Type);
   if (!Shader) Sys_Error("Failed to create shader object");
   CreatedShaderObjects.Append(Shader);
-
-  // load source file
-  VStr ssrc = readTextFile(FileName);
 
   // build source text
   bool needToAddRevZ = CanUseRevZ();

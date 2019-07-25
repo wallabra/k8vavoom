@@ -900,7 +900,15 @@ static void AddGameDir (const VStr &basedir, const VStr &dir) {
 
   for (int i = 0; i < ZipFiles.length(); ++i) {
     //if (i == 0) wpkAppend(dir+"/"+ZipFiles[i], true); // system pak
+    bool isBPK = ZipFiles[i].extractFileName().strEquCI("basepak.pk3");
+    int spl = SearchPaths.length();
     AddZipFile(bdx+"/"+ZipFiles[i]);
+    if (isBPK) {
+      // mark "basepak" flags
+      for (int cc = spl; cc < SearchPaths.length(); ++cc) {
+        SearchPaths[cc]->basepak = true;
+      }
+    }
   }
 
   // custom mode
@@ -1626,7 +1634,7 @@ void FL_Init () {
 
   if (isChex) AddGameDir("basev/mods/chex");
 
-  // setup "iwad" flags
+  // mark "iwad" flags
   for (int i = 0; i < SearchPaths.length(); ++i) {
     SearchPaths[i]->iwad = true;
   }
@@ -1799,6 +1807,26 @@ void FL_CreatePath (const VStr &Path) {
 //==========================================================================
 VStream *FL_OpenFileRead (const VStr &Name) {
   for (int i = SearchPaths.length()-1; i >= 0; --i) {
+    VStream *Strm = SearchPaths[i]->OpenFileRead(Name);
+    if (Strm) return Strm;
+  }
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  FL_OpenFileReadBaseOnly
+//
+//==========================================================================
+VStream *FL_OpenFileReadBaseOnly (const VStr &Name) {
+  /*
+  for (int i = SearchPaths.length()-1; i >= 0; --i) {
+    if (SearchPaths[i]->basepak) GCon->Logf(NAME_Init, "*** <%s>", *SearchPaths[i]->GetPrefix());
+  }
+  */
+  for (int i = SearchPaths.length()-1; i >= 0; --i) {
+    if (!SearchPaths[i]->basepak) continue;
     VStream *Strm = SearchPaths[i]->OpenFileRead(Name);
     if (Strm) return Strm;
   }

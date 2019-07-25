@@ -49,6 +49,9 @@ VStream *FL_OpenFileWriteInCfgDir (const VStr &Name);
 VStream *FL_OpenSysFileRead (const VStr &Name);
 VStream *FL_OpenSysFileWrite (const VStr &Name);
 
+// search file only in "basepaks"
+VStream *FL_OpenFileReadBaseOnly (const VStr &Name);
+
 // not a real list, but something that can be used to check savegame validity
 const TArray<VStr> &GetWadPk3List ();
 
