@@ -951,7 +951,8 @@ static void AddGameDir (const VStr &basedir, const VStr &dir) {
 //==========================================================================
 static void AddGameDir (const VStr &dir) {
   AddGameDir(fl_basedir, dir);
-  if (fl_savedir.IsNotEmpty()) AddGameDir(fl_savedir, dir);
+  //k8:wtf?!
+  //if (fl_savedir.IsNotEmpty()) AddGameDir(fl_savedir, dir);
   fl_gamedir = dir;
 }
 
