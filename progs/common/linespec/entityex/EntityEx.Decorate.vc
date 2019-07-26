@@ -82,7 +82,7 @@ final int decorate_randompick (int v0, optional int v1, optional int v2, optiona
                                optional int v22, optional int v23, optional int v24,
                                optional int v25, optional int v26, optional int v27)
 {
-  int[22] values;
+  int[32] values;
   int vcount = 1;
   values[0] = v0;
   if (specified_v1) values[vcount++] = v1;
