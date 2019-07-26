@@ -117,6 +117,37 @@ protected:
 
 //==========================================================================
 //
+//  VDecorateRndPick
+//
+//  as `[f]randompick()` can have insane amounts of arguments, we'll
+//  generate VM code directly instead
+//
+//==========================================================================
+class VDecorateRndPick : public VExpression {
+private:
+  VExpression *crnd0; // first call to P_Random()
+
+public:
+  TArray<VExpression *> numbers; // jump labels
+  bool asFloat;
+  VState *CallerState;
+
+  VDecorateRndPick (bool aAsFloat, const TLocation &aloc);
+  virtual ~VDecorateRndPick () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &ec) override;
+  virtual void Emit (VEmitContext &ec) override;
+  virtual VStr toString () const override;
+
+protected:
+  VDecorateRndPick () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+
+//==========================================================================
+//
 //  VDecorateInvocation::VDecorateInvocation
 //
 //==========================================================================
@@ -888,6 +919,198 @@ VStr VDecorateAJump::toString () const {
   for (int f = 0; f < labels.length(); ++f) {
     res += ", ";
     res += e2s(labels[f]);
+  }
+  res += ")";
+  return res;
+}
+
+
+
+//==========================================================================
+//
+//  VDecorateRndPick::VDecorateRndPick
+//
+//==========================================================================
+VDecorateRndPick::VDecorateRndPick (bool aAsFloat, const TLocation &aloc)
+  : VExpression(aloc)
+  , crnd0(nullptr)
+  , numbers()
+  , asFloat(aAsFloat)
+  , CallerState(nullptr)
+{
+}
+
+
+//==========================================================================
+//
+//  VDecorateRndPick::~VDecorateRndPick
+//
+//==========================================================================
+VDecorateRndPick::~VDecorateRndPick () {
+  delete crnd0; crnd0 = nullptr;
+  for (int f = numbers.length()-1; f >= 0; --f) delete numbers[f];
+  numbers.clear();
+  CallerState = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VDecorateRndPick::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDecorateRndPick::SyntaxCopy () {
+  auto res = new VDecorateRndPick();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDecorateRndPick::DoSyntaxCopyTo
+//
+//==========================================================================
+void VDecorateRndPick::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VDecorateRndPick *)e;
+  res->crnd0 = (crnd0 ? crnd0->SyntaxCopy() : nullptr);
+  res->numbers.setLength(numbers.length());
+  for (int f = 0; f < numbers.length(); ++f) {
+    res->numbers[f] = (numbers[f] ? numbers[f]->SyntaxCopy() : nullptr);
+  }
+  res->asFloat = asFloat;
+  res->CallerState = CallerState;
+}
+
+
+//==========================================================================
+//
+//  VExpression
+//
+//==========================================================================
+VExpression *VDecorateRndPick::DoResolve (VEmitContext &ec) {
+  if (numbers.length() == 0) {
+    ParseError(Loc, "no choices in `%srandompick` -- are you nuts?!", (asFloat ? "f" : ""));
+    delete this;
+    return nullptr;
+  }
+
+  if (numbers.length() > 255) {
+    ParseError(Loc, "%d choices in `%srandompick` -- are you nuts?!", numbers.length(), (asFloat ? "f" : ""));
+    delete this;
+    return nullptr;
+  }
+
+  // resolve numbers
+  for (int lbidx = 0; lbidx < numbers.length(); ++lbidx) {
+    VExpression *lbl = numbers[lbidx];
+
+    if (!lbl) {
+      ParseError(Loc, "`%srandompick` cannot have default arguments", (asFloat ? "f" : ""));
+      delete this;
+      return nullptr;
+    }
+
+    bool massaged = false;
+    lbl = lbl->MassageDecorateArg(ec, CallerState, (asFloat ? "frandompick" : "randompick"), lbidx+1, (asFloat ? VFieldType(TYPE_Float) : VFieldType(TYPE_Int)), nullptr, &massaged);
+    if (!lbl) { delete this; return nullptr; } // some error
+
+    numbers[lbidx] = lbl->Resolve(ec);
+    lbl = numbers[lbidx];
+    if (!lbl) { delete this; return nullptr; }
+
+    if (lbl->Type.Type == TYPE_Int) {
+      if (asFloat) numbers[lbidx] = new VScalarToFloat(lbl, true); // resolved
+    } else if (lbl->Type.Type == TYPE_Float) {
+      if (!asFloat) {
+        ParseWarning(Loc, "`randompick()` expects int arguments");
+        numbers[lbidx] = new VScalarToInt(lbl, true); // resolved
+      }
+    } else {
+      ParseError(Loc, "argument #%d has invalid type `%s`", lbidx+1, *lbl->Type.GetName());
+      delete this;
+      return nullptr;
+    }
+  }
+
+  // one number means "just return it"
+  if (numbers.length() > 1) {
+    // call to `P_Random()`
+    crnd0 = new VBinary(VBinary::Modulus,
+              new VCastOrInvocation("P_Random", Loc, 0, nullptr),
+              new VIntLiteral(numbers.length(), Loc), Loc);
+
+    crnd0 = crnd0->Resolve(ec);
+    if (!crnd0) { delete this; return nullptr; }
+
+    if (crnd0->Type.Type != TYPE_Int && crnd0->Type.Type != TYPE_Byte) {
+      ParseError(Loc, "`P_Random()` should return integer, not `%s`", *crnd0->Type.GetName());
+      delete this;
+      return nullptr;
+    }
+  } else {
+    crnd0 = nullptr; // just in case
+  }
+
+  Type.Type = (asFloat ? TYPE_Float : TYPE_Int);
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDecorateRndPick::Emit
+//
+//==========================================================================
+void VDecorateRndPick::Emit (VEmitContext &ec) {
+  if (numbers.length() == 1) {
+    numbers[0]->Emit(ec); // prob
+  } else if (numbers.length() > 0) {
+    VLabel endTarget = ec.DefineLabel();
+
+    // index
+    crnd0->Emit(ec);
+
+    // switch:
+    TArray<VLabel> addrs;
+    addrs.setLength(numbers.length());
+    for (int lidx = 0; lidx < numbers.length(); ++lidx) addrs[lidx] = ec.DefineLabel();
+    for (int lidx = 0; lidx < numbers.length(); ++lidx) {
+      if (lidx >= 0 && lidx < 256) {
+        ec.AddStatement(OPC_CaseGotoB, lidx, addrs[lidx], Loc);
+      } else if (lidx >= MIN_VINT16 && lidx < MAX_VINT16) {
+        ec.AddStatement(OPC_CaseGotoS, lidx, addrs[lidx], Loc);
+      } else {
+        ec.AddStatement(OPC_CaseGoto, lidx, addrs[lidx], Loc);
+      }
+    }
+    // just in case (and for optimiser)
+    ec.AddStatement(OPC_DropPOD, Loc); // prob (lidx dropped)
+    ec.AddStatement(OPC_Goto, endTarget, Loc); // prob
+
+    // now generate label jump code
+    for (int lidx = 0; lidx < numbers.length(); ++lidx) {
+      numbers[lidx]->Emit(ec); // number
+      if (lidx != numbers.length()-1) ec.AddStatement(OPC_Goto, endTarget, Loc); // prob
+    }
+
+    ec.MarkLabel(endTarget);
+  }
+}
+
+
+//==========================================================================
+//
+//  VDecorateRndPick::toString
+//
+//==========================================================================
+VStr VDecorateRndPick::toString () const {
+  VStr res = va("%srandompick(", (asFloat ? "f" : ""));
+  bool putComma = false;
+  for (auto &&n : numbers) {
+    if (putComma) res += ", "; else putComma = true;
+    res += e2s(n);
   }
   res += ")";
   return res;
