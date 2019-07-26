@@ -284,6 +284,7 @@ native final bool IsTIDUsed (int tid);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+#ifndef COMPILING_UI
 struct MobjByTIDIteratorInfo {
   Entity prev;
   int tid; // 0: use activator (it is in prev)
@@ -326,6 +327,7 @@ final bool eachTID_opIterNext (out MobjByTIDIteratorInfo it, out EntityEx ent) {
   }
   return true;
 }
+#endif
 
 
 //==========================================================================

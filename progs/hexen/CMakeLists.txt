@@ -3,7 +3,7 @@ set(COMMON_PROGS_DIR ${CMAKE_BINARY_DIR}/basev/common/progs)
 
 add_custom_command(OUTPUT ${OUTDIR}/game.dat
   COMMAND mkdir ARGS -p ${OUTDIR}
-  COMMAND ${WINERUN} $<TARGET_FILE:vcc> ARGS -P${COMMON_PROGS_DIR} -P${OUTDIR} ${CMAKE_CURRENT_SOURCE_DIR}/game/classes.vc ${OUTDIR}/game.dat
+  COMMAND ${WINERUN} $<TARGET_FILE:vcc> ARGS -P${COMMON_PROGS_DIR} -P${OUTDIR} -P${PROJECT_SOURCE_DIR}/progs/common -P${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/game/classes.vc ${OUTDIR}/game.dat
   DEPENDS
     vcc
     game/*.vc
@@ -16,7 +16,7 @@ add_custom_target(hexen_game ALL DEPENDS ${OUTDIR}/game.dat)
 add_dependencies(hexen_game vcc linespec uibase)
 
 add_custom_command(OUTPUT ${OUTDIR}/cgame.dat
-  COMMAND ${WINERUN} $<TARGET_FILE:vcc> ARGS -P${COMMON_PROGS_DIR} -P${OUTDIR} ${CMAKE_CURRENT_SOURCE_DIR}/cgame/classes.vc ${OUTDIR}/cgame.dat
+  COMMAND ${WINERUN} $<TARGET_FILE:vcc> ARGS -P${COMMON_PROGS_DIR} -P${OUTDIR} -P${PROJECT_SOURCE_DIR}/progs/common -P${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/cgame/classes.vc ${OUTDIR}/cgame.dat
   DEPENDS
     vcc
     cgame/*.vc

@@ -11,7 +11,7 @@ set(OUTDIR ${CMAKE_BINARY_DIR}/basev/common/progs)
 
 add_custom_command(OUTPUT ${OUTDIR}/newui.dat
   COMMAND mkdir ARGS -p ${OUTDIR}
-  COMMAND ${WINERUN} $<TARGET_FILE:vcc> ARGS -P${OUTDIR} ${CMAKE_CURRENT_SOURCE_DIR}/newui/classes.vc ${OUTDIR}/newui.dat
+  COMMAND ${WINERUN} $<TARGET_FILE:vcc> ARGS -P${OUTDIR} -P${PROJECT_SOURCE_DIR}/progs/common ${CMAKE_CURRENT_SOURCE_DIR}/newui/classes.vc ${OUTDIR}/newui.dat
   DEPENDS
     vcc
     engine/*.vc
@@ -22,7 +22,8 @@ add_custom_target(newui ALL DEPENDS ${OUTDIR}/newui.dat)
 add_dependencies(newui vcc)
 
 add_custom_command(OUTPUT ${OUTDIR}/linespec.dat
-  COMMAND ${WINERUN} $<TARGET_FILE:vcc> ARGS -P${OUTDIR} ${CMAKE_CURRENT_SOURCE_DIR}/linespec/classes.vc ${OUTDIR}/linespec.dat
+  COMMAND mkdir ARGS -p ${OUTDIR}
+  COMMAND ${WINERUN} $<TARGET_FILE:vcc> ARGS -P${OUTDIR} -P${PROJECT_SOURCE_DIR}/progs/common ${CMAKE_CURRENT_SOURCE_DIR}/linespec/classes.vc ${OUTDIR}/linespec.dat
   DEPENDS
     vcc
     engine/*.vc
@@ -59,7 +60,8 @@ add_custom_target(linespec ALL DEPENDS ${OUTDIR}/linespec.dat)
 add_dependencies(linespec vcc)
 
 add_custom_command(OUTPUT ${OUTDIR}/uibase.dat
-  COMMAND ${WINERUN} $<TARGET_FILE:vcc> ARGS -P${OUTDIR} ${CMAKE_CURRENT_SOURCE_DIR}/uibase/classes.vc ${OUTDIR}/uibase.dat
+  COMMAND mkdir ARGS -p ${OUTDIR}
+  COMMAND ${WINERUN} $<TARGET_FILE:vcc> ARGS -P${OUTDIR} -P${PROJECT_SOURCE_DIR}/progs/common ${CMAKE_CURRENT_SOURCE_DIR}/uibase/classes.vc ${OUTDIR}/uibase.dat
   DEPENDS
     vcc
     engine/*.vc
