@@ -969,7 +969,7 @@ void VPackage::LoadBinaryObject (VStream *Strm, const VStr &filename, TLocation 
 // VPackage::LoadObject
 //
 //==========================================================================
-#if !defined(IN_VCC)
+//#if !defined(IN_VCC)
 static const char *pkgImportFiles[] = {
   "0package.vc",
   "package.vc",
@@ -977,7 +977,7 @@ static const char *pkgImportFiles[] = {
   "classes.vc",
   nullptr
 };
-#endif
+//#endif
 
 
 void VPackage::LoadObject (TLocation l) {
@@ -988,10 +988,25 @@ void VPackage::LoadObject (TLocation l) {
   VStream *f = fsysOpenFile(va("%s.dat", *Name));
   if (f) { LoadBinaryObject(f, va("%s.dat", *Name), l); return; }
 
-  for (int i = 0; i < GPackagePath.Num(); ++i) {
+  /*
+  for (int i = 0; i < GPackagePath.length(); ++i) {
     VStr fname = GPackagePath[i]+"/"+Name+".dat";
     f = fsysOpenFile(*fname);
     if (f) { LoadBinaryObject(f, va("%s.dat", *Name), l); return; }
+  }
+  */
+
+  for (int i = 0; i < GPackagePath.length(); ++i) {
+    for (const char **pif = pkgImportFiles; *pif; ++pif) {
+      //VStr mainVC = va("%s/progs/%s/%s", *GPackagePath[i], *Name, *pif);
+      VStr mainVC = va("%s/%s/%s", *GPackagePath[i], *Name, *pif);
+      //GLog.Logf(": <%s>", *mainVC);
+      VStream *Strm = fsysOpenFile(*mainVC);
+      if (Strm) {
+        LoadSourceObject(Strm, mainVC, l);
+        return;
+      }
+    }
   }
 
   ParseError(l, "Can't find package %s", *Name);
@@ -999,7 +1014,7 @@ void VPackage::LoadObject (TLocation l) {
 #elif defined(VCC_STANDALONE_EXECUTOR)
   devprintf("Loading package '%s'...\n", *Name);
 
-  for (int i = 0; i < GPackagePath.Num(); ++i) {
+  for (int i = 0; i < GPackagePath.length(); ++i) {
     for (const char **pif = pkgImportFiles; *pif; ++pif) {
       VStr mainVC = GPackagePath[i]+"/"+Name+"/"+(*pif);
       devprintf("  <%s>\n", *mainVC);
@@ -1051,7 +1066,6 @@ void VPackage::LoadObject (TLocation l) {
   }
 
   //LoadBinaryObject(Strm, mainVC, l);
-
 #endif
 }
 
