@@ -35,17 +35,17 @@
 //==========================================================================
 final void A_Jump (int Chance, state Label1, optional state Label2,
   optional state Label3, optional state Label4, optional state Label5,
-  optional state Label6, optional state Label7, optional state Label8,
+  optional state Label6, optional state Label7, optional state Label8/*,
   optional state Label9, optional state Label10, optional state Label11,
   optional state Label12, optional state Label13, optional state Label14,
   optional state Label15, optional state Label16, optional state Label17,
   optional state Label18, optional state Label19, optional state Label20,
   optional state Label21, optional state Label22, optional state Label23,
   optional state Label24, optional state Label25, optional state Label26,
-  optional state Label27, optional state Label28, optional state Label29)
+  optional state Label27, optional state Label28, optional state Label29*/)
 {
   if (Chance > 0) {
-    state[32] List;
+    state[12] List;
     List[0] = Label1;
     int count = 1;
     if (specified_Label2) List[count++] = Label2;
@@ -55,6 +55,7 @@ final void A_Jump (int Chance, state Label1, optional state Label2,
     if (specified_Label6) List[count++] = Label6;
     if (specified_Label7) List[count++] = Label7;
     if (specified_Label8) List[count++] = Label8;
+    /*
     if (specified_Label9) List[count++] = Label9;
     if (specified_Label10) List[count++] = Label10;
     if (specified_Label11) List[count++] = Label11;
@@ -76,16 +77,17 @@ final void A_Jump (int Chance, state Label1, optional state Label2,
     if (specified_Label27) List[count++] = Label27;
     if (specified_Label28) List[count++] = Label28;
     if (specified_Label29) List[count++] = Label29;
+    */
 
     if (Chance > 255 || P_Random() < Chance) {
       int n = 0;
       if (count > 1) n = P_Random()%count;
+      // state jumps should not affect state chain results
+      if (XLevel.StateCall) XLevel.StateCall->Result = false;
       DoJump(List[n]);
+      return;
     }
   }
-
-  // state jumps should not affect state chain results
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
 
 

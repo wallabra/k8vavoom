@@ -72,6 +72,7 @@ final float decorate_frandom (float From, float To) {
 //  decorate_randompick
 //
 //==========================================================================
+/*
 final int decorate_randompick (int v0, optional int v1, optional int v2, optional int v3,
                                optional int v4, optional int v5, optional int v6,
                                optional int v7, optional int v8, optional int v9,
@@ -114,6 +115,7 @@ final int decorate_randompick (int v0, optional int v1, optional int v2, optiona
   if (specified_v27) values[vcount++] = v27;
   return values[P_Random()%vcount];
 }
+*/
 
 
 //==========================================================================
@@ -121,6 +123,7 @@ final int decorate_randompick (int v0, optional int v1, optional int v2, optiona
 //  decorate_frandompick
 //
 //==========================================================================
+/*
 final float decorate_frandompick (float v0, optional float v1, optional float v2, optional float v3,
                                   optional float v4, optional float v5, optional float v6,
                                   optional float v7, optional float v8, optional float v9,
@@ -147,6 +150,7 @@ final float decorate_frandompick (float v0, optional float v1, optional float v2
   if (specified_v15) values[vcount++] = v15;
   return values[P_Random()%vcount];
 }
+*/
 
 
 //==========================================================================
