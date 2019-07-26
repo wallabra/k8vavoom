@@ -691,6 +691,168 @@ static __attribute__((unused)) void R_ProjectPointsToPlane (TVec *dest, const TV
 
 //==========================================================================
 //
+//  CanSurfaceSegCastShadow
+//
+//==========================================================================
+static bool CanSurfaceSegCastShadow (const surface_t *surf, const TVec LightPos, float Radius) {
+  // solid segs that has no non-solid neighbours cannot cast any shadow
+  const seg_t *seg = surf->seg;
+  const line_t *ldef = seg->linedef;
+  if (!ldef) {
+    // miniseg; wutafuck? it should not have any surface!
+    GCon->Log(NAME_Error, "miniseg should not have any surfaces!");
+    return true;
+  }
+
+  // if this is a two-sided line, don't reject it
+  if (ldef->flags&ML_TWOSIDED) {
+    //TODO: here we can check if this is top/bottom texture, and if it can cast shadow
+    //      to check this, see if light can touch surface edge, and consider this seg one-sided, if it isn't
+    return true;
+  }
+
+  // if this is not a two-sided line, only first and last segs can cast shadows
+  //!!!if ((int)(ptrdiff_t)(ldef-GLevel->Lines) == 42) GCon->Log("********* 42 ************");
+  if (*seg->v1 != *ldef->v1 && *seg->v2 != *ldef->v2 &&
+      *seg->v2 != *ldef->v1 && *seg->v1 != *ldef->v2)
+  {
+    //!!!GCon->Log("*** skipped useless shadow segment (0)");
+    return true;
+  }
+
+  // we cannot do anything sane for 3D floors
+  const subsector_t *sub = surf->subsector;
+  if (sub) {
+    const sector_t *sector = sub->sector;
+    if (sector->SectorFlags&sector_t::SF_ExtrafloorSource) return true; // sadly, i cannot reject 3D floors yet
+  }
+
+  // if all neighbour lines are one-sided, and doesn't make a sharp turn, this seg cannot cast a shadow
+
+  // check v1
+  const line_t *const *lnx = ldef->v1lines;
+  for (int cc = ldef->v1linesCount; cc--; ++lnx) {
+    const line_t *l2 = *lnx;
+    if (!l2->SphereTouches(LightPos, Radius)) continue;
+    if (l2->flags&ML_TWOSIDED) return true;
+    if (PlaneAngles2D(ldef, l2) <= 180.0f && PlaneAngles2DFlipTo(ldef, l2) <= 180.0f) {
+      /*
+      if ((int)(ptrdiff_t)(ldef-GLevel->Lines) == 42) {
+        GCon->Logf("::: %d vs %d: %g : %g", (int)(ptrdiff_t)(ldef-GLevel->Lines), (int)(ptrdiff_t)(l2-GLevel->Lines), PlaneAngles2D(ldef, l2), PlaneAngles2DFlipTo(ldef, l2));
+      }!!!
+      */
+      continue;
+    }
+    return true;
+  }
+
+  // check v2
+  lnx = ldef->v2lines;
+  for (int cc = ldef->v2linesCount; cc--; ++lnx) {
+    const line_t *l2 = *lnx;
+    if (!l2->SphereTouches(LightPos, Radius)) continue;
+    if (l2->flags&ML_TWOSIDED) return true;
+    if (PlaneAngles2D(ldef, l2) <= 180.0f && PlaneAngles2DFlipTo(ldef, l2) <= 180.0f) {
+      /*!!!
+      if ((int)(ptrdiff_t)(ldef-GLevel->Lines) == 42) {
+        GCon->Logf("::: %d vs %d: %g : %g", (int)(ptrdiff_t)(ldef-GLevel->Lines), (int)(ptrdiff_t)(l2-GLevel->Lines), PlaneAngles2D(ldef, l2), PlaneAngles2DFlipTo(ldef, l2));
+      }
+      */
+      continue;
+    }
+    return true;
+  }
+
+  // done, it passed all checks, and cannot cast shadow (i hope)
+  return false;
+}
+
+
+//==========================================================================
+//
+//  CanSurfaceFlatCastShadow
+//
+//==========================================================================
+static bool CanSurfaceFlatCastShadow (const surface_t *surf, const TVec LightPos, float Radius) {
+  // flat surfaces in subsectors whose neighbours doesn't change height can't cast any shadow
+  const subsector_t *sub = surf->subsector;
+  if (sub->numlines == 0) return true; // just in case
+
+  const sector_t *sector = sub->sector;
+  // sadly, we cannot optimise for sectors with 3D (extra) floors
+  if (sector->SectorFlags&sector_t::SF_ExtrafloorSource) return true; // sadly, i cannot reject 3D floors yet
+
+  // do we have any 3D floors in this sector?
+  if (sector->SectorFlags&sector_t::SF_HasExtrafloors) {
+    // check if we're doing top ceiling, or bottom floor
+    // (this should always be the case, but...)
+    if (surf->plane.normal == sector->floor.normal) {
+      if (surf->plane.dist != sector->floor.dist) return true;
+    } else if (surf->plane.normal == sector->ceiling.normal) {
+      if (surf->plane.dist != sector->ceiling.dist) return true;
+    } else {
+      return true;
+    }
+  }
+
+  const seg_t *seg = sub->firstseg;
+  for (int cnt = sub->numlines; cnt--; ++seg) {
+    const seg_t *s2 = seg->partner;
+    if (!s2) continue;
+    const subsector_t *sub2 = s2->frontsub;
+    if (sub2 == sub) continue;
+    // different subsector
+    const sector_t *sec2 = sub2->sector;
+    if (sec2 == sector) continue;
+    // different sector
+    if (!s2->SphereTouches(LightPos, Radius)) continue;
+    // and light sphere touches it, check heights
+    if (surf->typeFlags&surface_t::TF_FLOOR) {
+      // if current sector floor is lower than the neighbour sector floor,
+      // it means that our current floor cannot cast a shadow there
+      if (sector->floor.minz <= sec2->floor.maxz) continue;
+    } else if (surf->typeFlags&surface_t::TF_CEILING) {
+      // if current sector ceiling is higher than the neighbour sector ceiling,
+      // it means that our current ceiling cannot cast a shadow there
+      if (sector->ceiling.maxz >= sec2->ceiling.minz) continue;
+    } else {
+      GCon->Log("oops; non-floor and non-ceiling flat surface");
+    }
+    /*
+    if (FASI(sec2->floor.minz) == FASI(sector->floor.minz) &&
+        FASI(sec2->floor.maxz) == FASI(sector->floor.maxz) &&
+        FASI(sec2->ceiling.minz) == FASI(sector->ceiling.minz) &&
+        FASI(sec2->ceiling.maxz) == FASI(sector->ceiling.maxz))
+    {
+      continue;
+    }
+    */
+    return true;
+  }
+
+  // done, it passed all checks, and cannot cast shadow (i hope)
+  return false;
+}
+
+
+//==========================================================================
+//
+//  CanSurfaceCastShadow
+//
+//==========================================================================
+static bool CanSurfaceCastShadow (const surface_t *surf, const TVec &LightPos, float Radius) {
+  if (surf->seg) {
+    return CanSurfaceSegCastShadow(surf, LightPos, Radius);
+  } else if (surf->subsector) {
+    return CanSurfaceFlatCastShadow(surf, LightPos, Radius);
+  }
+  // just in case
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::RenderSurfaceShadowVolume
 //
 //  `LightCanCross` means that light can span over this surface
@@ -709,127 +871,7 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
   if (gl_dbg_wireframe) return;
   if (surf->count < 3) return; // just in case
 
-  if (gl_smart_reject_shadow_surfaces) {
-    if (surf->seg) {
-      // solid segs that has no non-solid neighbours cannot cast any shadow
-      const seg_t *seg = surf->seg;
-      const line_t *ldef = seg->linedef;
-      if (!ldef) {
-        // miniseg; wutafuck? it should not have any surface!
-        GCon->Log(NAME_Warning, "miniseg should not have any surfaces!");
-        return;
-      }
-      // if this is not a two-sided line, only first and last segs can cast shadows
-      if (!(ldef->flags&ML_TWOSIDED)) {
-        //!!!if ((int)(ptrdiff_t)(ldef-GLevel->Lines) == 42) GCon->Log("********* 42 ************");
-        if (*seg->v1 != *ldef->v1 && *seg->v2 != *ldef->v2 &&
-            *seg->v2 != *ldef->v1 && *seg->v1 != *ldef->v2)
-        {
-          //!!!GCon->Log("*** skipped useless shadow segment (0)");
-          return;
-        }
-        // if all neighbour lines are one-sided, and doesn't make a sharp turn, this seg cannot cast a shadow
-        bool canSkip = true;
-        for (int cc = 0; cc < ldef->v1linesCount; ++cc) {
-          const line_t *l2 = ldef->v1lines[cc];
-          if (!l2->SphereTouches(LightPos, Radius)) {
-            /*!!!
-            if ((int)(ptrdiff_t)(ldef-GLevel->Lines) == 42) {
-              GCon->Logf(":!!!(0): %d vs %d: %g : %g", (int)(ptrdiff_t)(ldef-GLevel->Lines), (int)(ptrdiff_t)(l2-GLevel->Lines), PlaneAngles2D(ldef, l2), PlaneAngles2DFlipTo(ldef, l2));
-            }
-            */
-            continue;
-          }
-          if (l2->flags&ML_TWOSIDED) { canSkip = false; break; }
-          if (PlaneAngles2D(ldef, l2) <= 180.0f && PlaneAngles2DFlipTo(ldef, l2) <= 180.0f) {
-            /*
-            if ((int)(ptrdiff_t)(ldef-GLevel->Lines) == 42) {
-              GCon->Logf("::: %d vs %d: %g : %g", (int)(ptrdiff_t)(ldef-GLevel->Lines), (int)(ptrdiff_t)(l2-GLevel->Lines), PlaneAngles2D(ldef, l2), PlaneAngles2DFlipTo(ldef, l2));
-            }!!!
-            */
-            continue;
-          }
-          canSkip = false;
-          break;
-        }
-        if (canSkip) {
-          for (int cc = 0; cc < ldef->v2linesCount; ++cc) {
-            const line_t *l2 = ldef->v2lines[cc];
-            if (!l2->SphereTouches(LightPos, Radius)) {
-              /*!!!
-              if ((int)(ptrdiff_t)(ldef-GLevel->Lines) == 42) {
-                GCon->Logf(":!!!(1): %d vs %d: %g : %g", (int)(ptrdiff_t)(ldef-GLevel->Lines), (int)(ptrdiff_t)(l2-GLevel->Lines), PlaneAngles2D(ldef, l2), PlaneAngles2DFlipTo(ldef, l2));
-              }
-              */
-              continue;
-            }
-            if (l2->flags&ML_TWOSIDED) { canSkip = false; break; }
-            if (PlaneAngles2D(ldef, l2) <= 180.0f && PlaneAngles2DFlipTo(ldef, l2) <= 180.0f) {
-              /*!!!
-              if ((int)(ptrdiff_t)(ldef-GLevel->Lines) == 42) {
-                GCon->Logf("::: %d vs %d: %g : %g", (int)(ptrdiff_t)(ldef-GLevel->Lines), (int)(ptrdiff_t)(l2-GLevel->Lines), PlaneAngles2D(ldef, l2), PlaneAngles2DFlipTo(ldef, l2));
-              }
-              */
-              continue;
-            }
-            canSkip = false;
-            break;
-          }
-        }
-        if (canSkip) {
-          //!!!GCon->Logf("*** skipped useless shadow segment (1) (line=%d)", (int)(ptrdiff_t)(ldef-GLevel->Lines));
-          return;
-        }
-      }
-    } else if (surf->subsector) {
-      // flat surfaces in subsectors whose neighbours doesn't change height can't cast any shadow
-      const subsector_t *sub = surf->subsector;
-      const sector_t *sector = sub->sector;
-      // sadly, we cannot optimise for sectors with 3D (extra) floors
-      if (sub->numlines && (sector->SectorFlags&(sector_t::SF_ExtrafloorSource|sector_t::SF_HasExtrafloors)) == 0) {
-        bool canSkip = true;
-        const seg_t *seg = sub->firstseg;
-        for (int cnt = sub->numlines; cnt--; ++seg) {
-          const seg_t *s2 = seg->partner;
-          if (!s2) continue;
-          const subsector_t *sub2 = s2->frontsub;
-          if (sub2 == sub) continue;
-          // different subsector
-          const sector_t *sec2 = sub2->sector;
-          if (sec2 == sector) continue;
-          // different sector
-          if (!s2->SphereTouches(LightPos, Radius)) continue;
-          // and light sphere touches it, check heights
-          if (surf->typeFlags&surface_t::TF_FLOOR) {
-            // if current sector floor is lower than the neighbour sector floor,
-            // it means that our current floor cannot cast a shadow there
-            if (sector->floor.minz <= sec2->floor.maxz) continue;
-          } else if (surf->typeFlags&surface_t::TF_CEILING) {
-            // if current sector ceiling is higher than the neighbour sector ceiling,
-            // it means that our current ceiling cannot cast a shadow there
-            if (sector->ceiling.maxz >= sec2->ceiling.minz) continue;
-          } else {
-            GCon->Log("oops; non-floor and non-ceiling flat surface");
-          }
-          /*
-          if (FASI(sec2->floor.minz) == FASI(sector->floor.minz) &&
-              FASI(sec2->floor.maxz) == FASI(sector->floor.maxz) &&
-              FASI(sec2->ceiling.minz) == FASI(sector->ceiling.minz) &&
-              FASI(sec2->ceiling.maxz) == FASI(sector->ceiling.maxz))
-          {
-            continue;
-          }
-          */
-          canSkip = false;
-          break;
-        }
-        if (canSkip) {
-          //GCon->Logf("*** skipped useless shadow flat");
-          return;
-        }
-      }
-    }
-  }
+  if (gl_smart_reject_shadow_surfaces && !CanSurfaceCastShadow(surf, LightPos, Radius)) return;
 
   const unsigned vcount = (unsigned)surf->count;
   const TVec *sverts = surf->verts;
@@ -1089,7 +1131,7 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float Li
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
   // do not use stencil test if we rendered no shadow surfaces
-  if (doShadow && /*IsStencilBufferDirty()*/wasRenderedShadowSurface) {
+  if (doShadow && IsStencilBufferDirty()/*wasRenderedShadowSurface*/) {
     if (gl_dbg_use_zpass > 1) {
       glStencilFunc(GL_EQUAL, 0x1, 0xff);
     } else {
