@@ -667,6 +667,26 @@ private:
   bool decalUsedStencil;
   bool stencilBufferDirty;
 
+  // scissor array indicies
+  enum {
+    SCS_MINX,
+    SCS_MINY,
+    SCS_MAXX,
+    SCS_MAXY,
+  };
+
+  // last used shadow volume scissor
+  // if new scissor is inside this one, and stencil buffer is not changed,
+  // do not clear stencil buffer
+  // reset in `BeginShadowVolumesPass()`
+  // modified in `BeginLightShadowVolumes()`
+  GLint lastSVScissor[4];
+  // set in `BeginShadowVolumesPass()`
+  GLint lastSVVport[4];
+
+  // modified in `SetupLightScissor()`/`ResetScissor()`
+  GLint currentSVScissor[4];
+
   enum DecalType { DT_SIMPLE, DT_LIGHTMAP, DT_ADVANCED };
 
   // this is required for decals

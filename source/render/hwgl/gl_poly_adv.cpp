@@ -378,6 +378,9 @@ void VOpenGLDrawer::BeginShadowVolumesPass () {
   //glEnable(GL_STENCIL_TEST);
   glDisable(GL_STENCIL_TEST);
   glDepthMask(GL_FALSE); // no z-buffer writes
+  // reset last known scissor
+  glGetIntegerv(GL_VIEWPORT, lastSVVport);
+  memcpy(lastSVScissor, lastSVVport, sizeof(lastSVScissor));
 }
 
 
@@ -390,6 +393,7 @@ void VOpenGLDrawer::BeginShadowVolumesPass () {
 //==========================================================================
 void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float Radius, bool useZPass, bool hasScissor, const int scoords[4], const TVec &aconeDir, const float aconeAngle) {
   if (gl_dbg_wireframe) return;
+  //GCon->Logf("*** VOpenGLDrawer::BeginLightShadowVolumes(): stencil_dirty=%d", (int)IsStencilBufferDirty());
   glDisable(GL_TEXTURE_2D);
   if (hasScissor) {
     if (gl_use_stencil_quad_clear) {
@@ -439,6 +443,18 @@ void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float R
       if (oldDepthTest) glEnable(GL_DEPTH_TEST); else glDisable(GL_DEPTH_TEST);
     } else {
       glEnable(GL_SCISSOR_TEST);
+      if (!IsStencilBufferDirty()) {
+        // check if current scissor rect is not inside the previous one
+        // if it is not inside, we still have to clear stencil buffer
+        if (currentSVScissor[SCS_MINX] < lastSVScissor[SCS_MINX] ||
+            currentSVScissor[SCS_MINY] < lastSVScissor[SCS_MINY] ||
+            currentSVScissor[SCS_MAXX] > lastSVScissor[SCS_MAXX] ||
+            currentSVScissor[SCS_MAXY] > lastSVScissor[SCS_MAXY])
+        {
+          //GCon->Log("*** VOpenGLDrawer::BeginLightShadowVolumes(): force scissor crear");
+          NoteStencilBufferDirty();
+        }
+      }
       ClearStencilBuffer();
     }
   } else {
@@ -501,6 +517,9 @@ void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float R
   }
   SurfShadowVolume.Activate();
   SurfShadowVolume.SetLightPos(LightPos);
+
+  // remember current scissor rect
+  memcpy(lastSVScissor, currentSVScissor, sizeof(lastSVScissor));
 }
 
 
@@ -510,6 +529,7 @@ void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float R
 //
 //==========================================================================
 void VOpenGLDrawer::EndLightShadowVolumes () {
+  //GCon->Logf("*** VOpenGLDrawer::EndLightShadowVolumes(): stencil_dirty=%d", (int)IsStencilBufferDirty());
   //RestoreDepthFunc(); // no need to do this, if will be modified anyway
   // meh, just turn if off each time
   /*if (gl_dbg_adv_render_offset_shadow_volume || !usingFPZBuffer)*/ {
@@ -612,12 +632,15 @@ static __attribute__((unused)) void R_ProjectPointsToPlane (TVec *dest, const TV
 //
 //  most checks are done in caller
 //
-//  FIXME: idiotic gozzo 3d-shit extra should be rendered in both directions
+//  FIXME: gozzo 3d-shit extra should be rendered in both directions?
 //
 //==========================================================================
 void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius) {
   if (gl_dbg_wireframe) return;
   if (surf->count < 3) return; // just in case
+
+  //GCon->Logf("***   VOpenGLDrawer::RenderSurfaceShadowVolume()");
+  NoteStencilBufferDirty();
 
   const unsigned vcount = (unsigned)surf->count;
   const TVec *sverts = surf->verts;
@@ -836,8 +859,6 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
     glVertex(sverts[0]);
     glVertex4(v[0], 0);
   glEnd();
-
-  NoteStencilBufferDirty();
 }
 
 #define SETUP_LIGHT_SHADER(shad_)  do { \
@@ -870,15 +891,18 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float Li
 
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
-  if (gl_dbg_use_zpass > 1) {
-    glStencilFunc(GL_EQUAL, 0x1, 0xff);
-  } else {
-    glStencilFunc(GL_EQUAL, 0x0, 0xff);
-  }
-  glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-
   // do not use stencil test if we rendered no shadow surfaces
-  if (doShadow && IsStencilBufferDirty()) glEnable(GL_STENCIL_TEST); else glDisable(GL_STENCIL_TEST);
+  if (doShadow && IsStencilBufferDirty()) {
+    if (gl_dbg_use_zpass > 1) {
+      glStencilFunc(GL_EQUAL, 0x1, 0xff);
+    } else {
+      glStencilFunc(GL_EQUAL, 0x0, 0xff);
+    }
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    glEnable(GL_STENCIL_TEST);
+  } else {
+    glDisable(GL_STENCIL_TEST);
+  }
 
   glBlendFunc(GL_SRC_ALPHA, GL_ONE);
   glEnable(GL_BLEND);

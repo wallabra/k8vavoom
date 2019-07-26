@@ -961,6 +961,7 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
 
   if (radius < 4) {
     scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
+    currentSVScissor[SCS_MINX] = currentSVScissor[SCS_MINY] = currentSVScissor[SCS_MAXX] = currentSVScissor[SCS_MAXY] = 0;
     glScissor(0, 0, 0, 0);
     return 0;
   }
@@ -971,6 +972,7 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
   // the thing that should not be (completely behind)
   if (inworld.z-radius > -1.0f) {
     scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
+    currentSVScissor[SCS_MINX] = currentSVScissor[SCS_MINY] = currentSVScissor[SCS_MAXX] = currentSVScissor[SCS_MAXY] = 0;
     glDisable(GL_SCISSOR_TEST);
     return 0;
   }
@@ -1008,6 +1010,7 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
 
     if (trbb[0] >= trbb[3+0] || trbb[1] >= trbb[3+1] || trbb[2] >= trbb[3+2]) {
       scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
+      currentSVScissor[SCS_MINX] = currentSVScissor[SCS_MINY] = currentSVScissor[SCS_MAXX] = currentSVScissor[SCS_MAXY] = 0;
       glDisable(GL_SCISSOR_TEST);
       return 0;
     }
@@ -1031,6 +1034,7 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     bbox[5] = min2(bbox[5], trbb[5]);
     if (bbox[0] >= bbox[3+0] || bbox[1] >= bbox[3+1] || bbox[2] >= bbox[3+2]) {
       scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
+      currentSVScissor[SCS_MINX] = currentSVScissor[SCS_MINY] = currentSVScissor[SCS_MAXX] = currentSVScissor[SCS_MAXY] = 0;
       glDisable(GL_SCISSOR_TEST);
       return 0;
     }
@@ -1053,6 +1057,7 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     bbox[5] = min2(bbox[5], bmax.z);
     if (bbox[0] >= bbox[3+0] || bbox[1] >= bbox[3+1] || bbox[2] >= bbox[3+2]) {
       scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
+      currentSVScissor[SCS_MINX] = currentSVScissor[SCS_MINY] = currentSVScissor[SCS_MAXX] = currentSVScissor[SCS_MAXY] = 0;
       glDisable(GL_SCISSOR_TEST);
       return 0;
     }
@@ -1098,6 +1103,7 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
   glGetIntegerv(GL_VIEWPORT, vport);
   if (vport[2] < 1 || vport[3] < 1) {
     scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
+    currentSVScissor[SCS_MINX] = currentSVScissor[SCS_MINY] = currentSVScissor[SCS_MAXX] = currentSVScissor[SCS_MAXY] = 0;
     glDisable(GL_SCISSOR_TEST);
     return 0;
   }
@@ -1145,6 +1151,7 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
 #else
   if (minx > scrx1 || miny > scry1 || maxx < vport[0] || maxy < vport[1]) {
     scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
+    currentSVScissor[SCS_MINX] = currentSVScissor[SCS_MINY] = currentSVScissor[SCS_MAXX] = currentSVScissor[SCS_MAXY] = 0;
     glDisable(GL_SCISSOR_TEST);
     if (hasBoundsTest && gl_enable_depth_bounds) glDisable(GL_DEPTH_BOUNDS_TEST_EXT);
     return 0;
@@ -1172,6 +1179,7 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
   // drop very small lights, why not?
   if (wdt <= 4 || hgt <= 4) {
     scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
+    currentSVScissor[SCS_MINX] = currentSVScissor[SCS_MINY] = currentSVScissor[SCS_MAXX] = currentSVScissor[SCS_MAXY] = 0;
     glDisable(GL_SCISSOR_TEST);
     if (hasBoundsTest && gl_enable_depth_bounds) glDisable(GL_DEPTH_BOUNDS_TEST_EXT);
     return 0;
@@ -1183,6 +1191,10 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
   scoord[1] = miny;
   scoord[2] = maxx;
   scoord[3] = maxy;
+  currentSVScissor[SCS_MINX] = scoord[0];
+  currentSVScissor[SCS_MINY] = scoord[1];
+  currentSVScissor[SCS_MAXX] = scoord[2];
+  currentSVScissor[SCS_MAXY] = scoord[3];
 
   return 1;
 }
@@ -1197,6 +1209,8 @@ void VOpenGLDrawer::ResetScissor () {
   glScissor(0, 0, ScreenWidth, ScreenHeight);
   glDisable(GL_SCISSOR_TEST);
   if (hasBoundsTest) glDisable(GL_DEPTH_BOUNDS_TEST_EXT);
+  currentSVScissor[SCS_MINX] = currentSVScissor[SCS_MINY] = 0;
+  currentSVScissor[SCS_MAXX] = currentSVScissor[SCS_MAXY] = 32000;
 }
 
 
@@ -1278,6 +1292,9 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
   if (RendLev && RendLev->NeedsInfiniteFarClip && HaveDepthClamp) glEnable(GL_DEPTH_CLAMP);
   //k8: there is no reason to not do it
   //if (HaveDepthClamp) glEnable(GL_DEPTH_CLAMP);
+
+  currentSVScissor[SCS_MINX] = currentSVScissor[SCS_MINY] = 0;
+  currentSVScissor[SCS_MAXX] = currentSVScissor[SCS_MAXY] = 32000;
 }
 
 
