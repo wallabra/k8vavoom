@@ -2122,13 +2122,16 @@ static void AM_DrawLevelStats () {
 
   int currY = VirtualHeight-sb_height-7;
 
+  T_DrawText(20, currY, *GClLevel->LevelInfo->GetLevelName(), CR_UNTRANSLATED);
+  currY -= 10;
+
   if (am_show_map_name) {
-    T_DrawText(20, currY-10, va("%s (n%d:c%d)", *GClLevel->MapName, GClLevel->LevelInfo->LevelNum, GClLevel->LevelInfo->Cluster), CR_UNTRANSLATED);
-    T_DrawText(20, currY, *GClLevel->LevelInfo->GetLevelName(), CR_UNTRANSLATED);
-    currY -= 10*2+4;
+    T_DrawText(20, currY, va("%s (n%d:c%d)", *GClLevel->MapName, GClLevel->LevelInfo->LevelNum, GClLevel->LevelInfo->Cluster), CR_UNTRANSLATED);
+    currY -= 10;
   }
 
   if (am_show_stats) {
+    currY -= 4;
     currY -= 3*10;
     kills = cl->KillCount;
     items = cl->ItemCount;
