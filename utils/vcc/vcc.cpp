@@ -97,7 +97,6 @@ static VPackage *CurrentPackage;
 static bool DebugMode = false;
 static FILE *DebugFile = nullptr;
 
-static VLexer Lex;
 static VVccLog VccLog;
 
 
@@ -225,10 +224,10 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
           if (*text) OpenDebugFile(text);
           break;
         case 'I':
-          Lex.AddIncludePath(text);
+          VMemberBase::StaticAddIncludePath(text);
           break;
         case 'D':
-          Lex.AddDefine(text);
+          VMemberBase::StaticAddDefine(text);
           break;
         case 'P':
           VMemberBase::StaticAddPackagePath(text);
@@ -267,8 +266,10 @@ int main (int argc, char **argv) {
     starttime = time(0);
     Init();
     ProcessArgs(argc, argv);
-    Lex.AddDefine("IN_VCC");
+    VMemberBase::StaticAddDefine("IN_VCC");
 
+    VLexer Lex;
+    VMemberBase::InitLexer(Lex);
     Lex.OpenSource(SourceFileName);
     VParser Parser(Lex, CurrentPackage);
     Parser.Parse();
