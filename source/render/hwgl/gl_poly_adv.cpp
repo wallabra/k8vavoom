@@ -36,6 +36,69 @@ extern VCvarB gl_enable_depth_bounds;
 extern VCvarB gl_dbg_advlight_debug;
 extern VCvarI gl_dbg_advlight_color;
 
+static VCvarB gl_smart_dirty_rects("gl_smart_dirty_rects", true, "Use dirty rectangles list to check for stencil buffer dirtyness?", 0);
+
+/* TODO
+  clear stencil buffer before first shadow shadow rendered.
+  also, check if the given surface really can cast shadow.
+  note that solid segs that has no non-solid neighbours cannot cast any shadow.
+  also, flat surfaces in subsectors whose neighbours doesn't change height can't cast any shadow.
+*/
+
+// ////////////////////////////////////////////////////////////////////////// //
+struct DRect {
+  int x0, y0;
+  int x1, y1; // inclusive
+};
+
+static TArray<DRect> dirtyRects;
+
+
+static bool isDirtyRect (const GLint arect[4]) {
+  for (auto &&r : dirtyRects) {
+    if (arect[VOpenGLDrawer::SCS_MAXX] < r.x0 || arect[VOpenGLDrawer::SCS_MAXY] < r.y0 ||
+        arect[VOpenGLDrawer::SCS_MINX] > r.x1 || arect[VOpenGLDrawer::SCS_MINY] > r.y1)
+    {
+      continue;
+    }
+    return true;
+  }
+  return false;
+}
+
+
+static void appendDirtyRect (const GLint arect[4]) {
+  // remove all rects that are inside our new one
+  /*
+  int ridx = 0;
+  while (ridx < dirtyRects.length()) {
+    const DRect r = dirtyRects[ridx];
+    // if new rect is inside some old one, do nothing
+    if (arect[VOpenGLDrawer::SCS_MINX] >= r.x0 && arect[VOpenGLDrawer::SCS_MINY] >= r.y0 &&
+        arect[VOpenGLDrawer::SCS_MAXX] <= r.x1 && arect[VOpenGLDrawer::SCS_MAXY] <= r.y1)
+    {
+      return;
+    }
+    // if old rect is inside a new one, remove old rect
+    if (r.x0 >= arect[VOpenGLDrawer::SCS_MINX] && r.y0 >= arect[VOpenGLDrawer::SCS_MINY] &&
+        r.x1 <= arect[VOpenGLDrawer::SCS_MAXX] && r.y1 <= arect[VOpenGLDrawer::SCS_MAXY])
+    {
+      dirtyRects.removeAt(ridx);
+      continue;
+    }
+    // check next rect
+    ++ridx;
+  }
+  */
+
+  // append new one
+  DRect &rc = dirtyRects.alloc();
+  rc.x0 = arect[VOpenGLDrawer::SCS_MINX];
+  rc.y0 = arect[VOpenGLDrawer::SCS_MINY];
+  rc.x1 = arect[VOpenGLDrawer::SCS_MAXX];
+  rc.y1 = arect[VOpenGLDrawer::SCS_MAXY];
+}
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern "C" {
@@ -381,6 +444,7 @@ void VOpenGLDrawer::BeginShadowVolumesPass () {
   // reset last known scissor
   glGetIntegerv(GL_VIEWPORT, lastSVVport);
   memcpy(lastSVScissor, lastSVVport, sizeof(lastSVScissor));
+  if (gl_smart_dirty_rects) dirtyRects.reset();
 }
 
 
@@ -392,6 +456,7 @@ void VOpenGLDrawer::BeginShadowVolumesPass () {
 //
 //==========================================================================
 void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float Radius, bool useZPass, bool hasScissor, const int scoords[4], const TVec &aconeDir, const float aconeAngle) {
+  wasRenderedShadowSurface = false;
   if (gl_dbg_wireframe) return;
   //GCon->Logf("*** VOpenGLDrawer::BeginLightShadowVolumes(): stencil_dirty=%d", (int)IsStencilBufferDirty());
   glDisable(GL_TEXTURE_2D);
@@ -451,8 +516,15 @@ void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float R
             currentSVScissor[SCS_MAXX] > lastSVScissor[SCS_MAXX] ||
             currentSVScissor[SCS_MAXY] > lastSVScissor[SCS_MAXY])
         {
-          //GCon->Log("*** VOpenGLDrawer::BeginLightShadowVolumes(): force scissor crear");
-          NoteStencilBufferDirty();
+          //GCon->Log("*** VOpenGLDrawer::BeginLightShadowVolumes(): force scissor clrear");
+          if (gl_smart_dirty_rects) {
+            if (isDirtyRect(currentSVScissor)) {
+              //GCon->Log("*** VOpenGLDrawer::BeginLightShadowVolumes(): force scissor clrear");
+              NoteStencilBufferDirty();
+            }
+          } else {
+            NoteStencilBufferDirty();
+          }
         }
       }
       ClearStencilBuffer();
@@ -640,6 +712,10 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
   if (surf->count < 3) return; // just in case
 
   //GCon->Logf("***   VOpenGLDrawer::RenderSurfaceShadowVolume()");
+  if (!wasRenderedShadowSurface && gl_smart_dirty_rects) {
+    appendDirtyRect(currentSVScissor);
+  }
+  wasRenderedShadowSurface = true;
   NoteStencilBufferDirty();
 
   const unsigned vcount = (unsigned)surf->count;
@@ -892,7 +968,7 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float Li
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
   // do not use stencil test if we rendered no shadow surfaces
-  if (doShadow && IsStencilBufferDirty()) {
+  if (doShadow && /*IsStencilBufferDirty()*/wasRenderedShadowSurface) {
     if (gl_dbg_use_zpass > 1) {
       glStencilFunc(GL_EQUAL, 0x1, 0xff);
     } else {

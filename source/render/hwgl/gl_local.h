@@ -542,6 +542,15 @@ protected:
   void DestroyShaders ();
 
 public:
+  // scissor array indicies
+  enum {
+    SCS_MINX,
+    SCS_MINY,
+    SCS_MAXX,
+    SCS_MAXY,
+  };
+
+public:
   // VDrawer interface
   VOpenGLDrawer ();
   virtual ~VOpenGLDrawer () override;
@@ -667,14 +676,6 @@ private:
   bool decalUsedStencil;
   bool stencilBufferDirty;
 
-  // scissor array indicies
-  enum {
-    SCS_MINX,
-    SCS_MINY,
-    SCS_MAXX,
-    SCS_MAXY,
-  };
-
   // last used shadow volume scissor
   // if new scissor is inside this one, and stencil buffer is not changed,
   // do not clear stencil buffer
@@ -686,6 +687,11 @@ private:
 
   // modified in `SetupLightScissor()`/`ResetScissor()`
   GLint currentSVScissor[4];
+
+  // reset in `BeginLightShadowVolumes()`
+  // set in `RenderSurfaceShadowVolume()`
+  bool wasRenderedShadowSurface;
+
 
   enum DecalType { DT_SIMPLE, DT_LIGHTMAP, DT_ADVANCED };
 
