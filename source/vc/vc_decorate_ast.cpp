@@ -101,6 +101,7 @@ public:
   TArray<VExpression *> labels; // jump labels
   VState *CallerState;
 
+public:
   VDecorateAJump (const TLocation &aloc);
   virtual ~VDecorateAJump () override;
   virtual VExpression *SyntaxCopy () override;
@@ -130,8 +131,8 @@ private:
 public:
   TArray<VExpression *> numbers; // jump labels
   bool asFloat;
-  VState *CallerState;
 
+public:
   VDecorateRndPick (bool aAsFloat, const TLocation &aloc);
   virtual ~VDecorateRndPick () override;
   virtual VExpression *SyntaxCopy () override;
@@ -936,7 +937,6 @@ VDecorateRndPick::VDecorateRndPick (bool aAsFloat, const TLocation &aloc)
   , crnd0(nullptr)
   , numbers()
   , asFloat(aAsFloat)
-  , CallerState(nullptr)
 {
 }
 
@@ -950,7 +950,6 @@ VDecorateRndPick::~VDecorateRndPick () {
   delete crnd0; crnd0 = nullptr;
   for (int f = numbers.length()-1; f >= 0; --f) delete numbers[f];
   numbers.clear();
-  CallerState = nullptr;
 }
 
 
@@ -980,7 +979,6 @@ void VDecorateRndPick::DoSyntaxCopyTo (VExpression *e) {
     res->numbers[f] = (numbers[f] ? numbers[f]->SyntaxCopy() : nullptr);
   }
   res->asFloat = asFloat;
-  res->CallerState = CallerState;
 }
 
 
@@ -1013,22 +1011,22 @@ VExpression *VDecorateRndPick::DoResolve (VEmitContext &ec) {
     }
 
     bool massaged = false;
-    lbl = lbl->MassageDecorateArg(ec, CallerState, (asFloat ? "frandompick" : "randompick"), lbidx+1, (asFloat ? VFieldType(TYPE_Float) : VFieldType(TYPE_Int)), nullptr, &massaged);
+    lbl = lbl->MassageDecorateArg(ec, /*CallerState*/nullptr, (asFloat ? "frandompick" : "randompick"), lbidx+1, (asFloat ? VFieldType(TYPE_Float) : VFieldType(TYPE_Int)), nullptr, &massaged);
     if (!lbl) { delete this; return nullptr; } // some error
 
     numbers[lbidx] = lbl->Resolve(ec);
     lbl = numbers[lbidx];
     if (!lbl) { delete this; return nullptr; }
 
-    if (lbl->Type.Type == TYPE_Int) {
+    if (lbl->Type.Type == TYPE_Int || lbl->Type.Type == TYPE_Byte) {
       if (asFloat) numbers[lbidx] = new VScalarToFloat(lbl, true); // resolved
     } else if (lbl->Type.Type == TYPE_Float) {
       if (!asFloat) {
-        ParseWarning(Loc, "`randompick()` expects int arguments");
+        ParseWarning(Loc, "`%srandompick()` argument #%d must be int", (asFloat ? "f" : ""), lbidx+1);
         numbers[lbidx] = new VScalarToInt(lbl, true); // resolved
       }
     } else {
-      ParseError(Loc, "argument #%d has invalid type `%s`", lbidx+1, *lbl->Type.GetName());
+      ParseError(Loc, "`%srandompick()` argument #%d has invalid type `%s`", (asFloat ? "f" : ""), lbidx+1, *lbl->Type.GetName());
       delete this;
       return nullptr;
     }
@@ -1064,9 +1062,10 @@ VExpression *VDecorateRndPick::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VDecorateRndPick::Emit (VEmitContext &ec) {
+  check(numbers.length() > 0);
   if (numbers.length() == 1) {
-    numbers[0]->Emit(ec); // prob
-  } else if (numbers.length() > 0) {
+    numbers[0]->Emit(ec); // number
+  } else {
     VLabel endTarget = ec.DefineLabel();
 
     // index
@@ -1086,11 +1085,13 @@ void VDecorateRndPick::Emit (VEmitContext &ec) {
       }
     }
     // just in case (and for optimiser)
-    ec.AddStatement(OPC_DropPOD, Loc); // prob (lidx dropped)
-    ec.AddStatement(OPC_Goto, endTarget, Loc); // prob
+    ec.AddStatement(OPC_DropPOD, Loc); // (index dropped)
+    ec.AddStatement(OPC_PushNumber, -1, Loc);
+    ec.AddStatement(OPC_Goto, endTarget, Loc);
 
     // now generate label jump code
     for (int lidx = 0; lidx < numbers.length(); ++lidx) {
+      ec.MarkLabel(addrs[lidx]);
       numbers[lidx]->Emit(ec); // number
       if (lidx != numbers.length()-1) ec.AddStatement(OPC_Goto, endTarget, Loc); // prob
     }

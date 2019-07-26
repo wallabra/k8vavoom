@@ -118,6 +118,33 @@ static VExpression *ParseAJump (VScriptParser *sc, VClass *Class, VState *State)
 
 //==========================================================================
 //
+//  ParseRandomPick
+//
+//  paren eated
+//
+//==========================================================================
+static VExpression *ParseRandomPick (VScriptParser *sc, VClass *Class, bool asFloat) {
+  VDecorateRndPick *pk = new VDecorateRndPick(asFloat, sc->GetLoc()); //FIXME: MEMLEAK!
+  if (sc->Check(")")) {
+    ParseError(sc->GetLoc(), "`%srandompick` expects some arguments!", (asFloat ? "f" : ""));
+    return pk;
+  }
+  do {
+    VExpression *num = ParseExpression(sc, Class);
+    if (!num) {
+      ParseError(sc->GetLoc(), "`%srandompick` oops!", (asFloat ? "f" : ""));
+      sc->Expect(")");
+      return pk;
+    }
+    pk->numbers.append(num);
+  } while (sc->Check(","));
+  sc->Expect(")");
+  return pk;
+}
+
+
+//==========================================================================
+//
 //  ParseFunCallWithName
 //
 //==========================================================================
@@ -316,7 +343,12 @@ static VExpression *ParseExpressionPriority0 (VScriptParser *sc) {
       return new VCastOrInvocation(VName("GetCvarF"), l, 1, Args);
     }
     */
-    if (sc->Check("(")) return ParseMethodCall(sc, Name, l, true); // paren eaten
+    if (sc->Check("(")) {
+      if (Name.strEquCI("randompick") || Name.strEquCI("frandompick")) {
+        return ParseRandomPick(sc, decoClass, Name.strEquCI("frandompick"));
+      }
+      return ParseMethodCall(sc, Name, l, true); // paren eaten
+    }
     if (sc->String.length() > 2 && sc->String[1] == '_' && (sc->String[0] == 'A' || sc->String[0] == 'a')) {
       return ParseMethodCall(sc, Name, l, false); // paren not eaten
     }
