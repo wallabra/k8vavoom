@@ -176,6 +176,9 @@ menudef AdvRenderOptions {
       "This can skip some GPU clear calls, but I'm not sure if it worth it.";
   }
 
+
+  header "Shadow Casting Optimisations";
+
   option bool {
     title = "Skip Non-Shadow Surfaces";
     cvar = gl_smart_reject_shadow_surfaces;
@@ -184,6 +187,22 @@ menudef AdvRenderOptions {
       "This can buy you some FPS with huge lights, but I'm not sure"
       "if i wrote the algo right, so you can turn this off if you'll"
       "see some invalid shadowing.";
+  }
+
+  option bool {
+    title = "Skip Non-Shadow Segs";
+    cvar = gl_smart_reject_shadow_segs;
+    help =
+      "Skip some segs that cannot possibly cast shadow."
+      "Suboption of common skipping.";
+  }
+
+  option bool {
+    title = "Skip Non-Shadow Flats";
+    cvar = gl_smart_reject_shadow_flats;
+    help =
+      "Skip some flats that cannot possibly cast shadow."
+      "Suboption of common skipping.";
   }
 
 

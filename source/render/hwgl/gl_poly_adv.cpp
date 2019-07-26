@@ -35,6 +35,9 @@ extern VCvarI gl_dbg_advlight_color;
 static VCvarB gl_smart_dirty_rects("gl_smart_dirty_rects", true, "Use dirty rectangles list to check for stencil buffer dirtyness?", CVAR_Archive);
 static VCvarB gl_smart_reject_shadow_surfaces("gl_smart_reject_shadow_surfaces", true, "Reject some surfaces that cannot possibly produce shadows?", CVAR_Archive);
 
+static VCvarB gl_smart_reject_shadow_segs("gl_smart_reject_shadow_segs", true, "Reject some surfaces that cannot possibly produce shadows?", CVAR_Archive);
+static VCvarB gl_smart_reject_shadow_flats("gl_smart_reject_shadow_flats", true, "Reject some surfaces that cannot possibly produce shadows?", CVAR_Archive);
+
 
 /* TODO
   clear stencil buffer before first shadow shadow rendered.
@@ -695,6 +698,8 @@ static __attribute__((unused)) void R_ProjectPointsToPlane (TVec *dest, const TV
 //
 //==========================================================================
 static bool CanSurfaceSegCastShadow (const surface_t *surf, const TVec LightPos, float Radius) {
+  if (!gl_smart_reject_shadow_segs) return true;
+
   // solid segs that has no non-solid neighbours cannot cast any shadow
   const seg_t *seg = surf->seg;
   const line_t *ldef = seg->linedef;
@@ -706,15 +711,42 @@ static bool CanSurfaceSegCastShadow (const surface_t *surf, const TVec LightPos,
 
   // we cannot do anything sane for 3D floors
   const subsector_t *sub = surf->subsector;
-  if (sub) {
-    const sector_t *sector = sub->sector;
-    if (sector->SectorFlags&sector_t::SF_ExtrafloorSource) return true; // sadly, i cannot reject 3D floors yet
-  }
+  if (!sub) return true;
+
+  const sector_t *sector = sub->sector;
+  if (sector->SectorFlags&sector_t::SF_ExtrafloorSource) return true; // sadly, i cannot reject 3D floors yet
 
   // if this is a two-sided line, don't reject it
   if (ldef->flags&ML_TWOSIDED) {
-    //TODO: here we can check if this is top/bottom texture, and if it can cast shadow
-    //      to check this, see if light can touch surface edge, and consider this seg one-sided, if it isn't
+    /*
+    if (!seg->partner) return false; // just in case
+    const sector_t *backsec = seg->partner->frontsub->sector;
+    check(backsec);
+
+    // here we can check if this is top/bottom texture, and if it can cast shadow
+    // to check this, see if light can touch surface edge, and consider this seg one-sided, if it isn't
+
+    // calculate coordinates of bottom texture (if any)
+    if (surf->typeFlags&surface_t::TF_BOTTOM) {
+      // just in case: if back sector floor should be higher that than our floor
+      float minz = sector->floor.minz;
+      float maxz = backsec->floor.maxz;
+      if (maxz <= minz) return false; // bottom texture shouldn't be visible anyway
+      GCon->Logf("*** BOTTOM CHECK! minz=%g; maxz=%g", minz, maxz);
+      GCon->Logf("   lz=%g; llow=%g; lhigh=%g", LightPos.z, LightPos.z-Radius, LightPos.z+Radius);
+      // if light is fully inside or outside, this seg cannot cast shadow
+      // fully outside?
+      if (LightPos.z+Radius <= minz || LightPos.z-Radius >= maxz) return false;
+      // fully inside?
+      if (LightPos.z+Radius > maxz) {
+        return true;
+      } else {
+        GCon->Logf("*** BOTTOM REJECT!");
+      }
+    } else {
+      return true;
+    }
+    */
     return true;
   }
 
@@ -736,12 +768,10 @@ static bool CanSurfaceSegCastShadow (const surface_t *surf, const TVec LightPos,
     if (!l2->SphereTouches(LightPos, Radius)) continue;
     if (l2->flags&ML_TWOSIDED) return true;
     if (PlaneAngles2D(ldef, l2) <= 180.0f && PlaneAngles2DFlipTo(ldef, l2) <= 180.0f) {
-      /*
-      if ((int)(ptrdiff_t)(ldef-GLevel->Lines) == 42) {
-        GCon->Logf("::: %d vs %d: %g : %g", (int)(ptrdiff_t)(ldef-GLevel->Lines), (int)(ptrdiff_t)(l2-GLevel->Lines), PlaneAngles2D(ldef, l2), PlaneAngles2DFlipTo(ldef, l2));
-      }!!!
-      */
+      //!!!GCon->Logf("::: %d vs %d: %g : %g", (int)(ptrdiff_t)(ldef-GLevel->Lines), (int)(ptrdiff_t)(l2-GLevel->Lines), PlaneAngles2D(ldef, l2), PlaneAngles2DFlipTo(ldef, l2));
       continue;
+    } else {
+      //!!!GCon->Logf("::: %d vs %d: %g : %g", (int)(ptrdiff_t)(ldef-GLevel->Lines), (int)(ptrdiff_t)(l2-GLevel->Lines), PlaneAngles2D(ldef, l2), PlaneAngles2DFlipTo(ldef, l2));
     }
     return true;
   }
@@ -753,16 +783,15 @@ static bool CanSurfaceSegCastShadow (const surface_t *surf, const TVec LightPos,
     if (!l2->SphereTouches(LightPos, Radius)) continue;
     if (l2->flags&ML_TWOSIDED) return true;
     if (PlaneAngles2D(ldef, l2) <= 180.0f && PlaneAngles2DFlipTo(ldef, l2) <= 180.0f) {
-      /*!!!
-      if ((int)(ptrdiff_t)(ldef-GLevel->Lines) == 42) {
-        GCon->Logf("::: %d vs %d: %g : %g", (int)(ptrdiff_t)(ldef-GLevel->Lines), (int)(ptrdiff_t)(l2-GLevel->Lines), PlaneAngles2D(ldef, l2), PlaneAngles2DFlipTo(ldef, l2));
-      }
-      */
+      //!!!GCon->Logf("::: %d vs %d: %g : %g", (int)(ptrdiff_t)(ldef-GLevel->Lines), (int)(ptrdiff_t)(l2-GLevel->Lines), PlaneAngles2D(ldef, l2), PlaneAngles2DFlipTo(ldef, l2));
       continue;
+    } else {
+      //!!!GCon->Logf("::: %d vs %d: %g : %g", (int)(ptrdiff_t)(ldef-GLevel->Lines), (int)(ptrdiff_t)(l2-GLevel->Lines), PlaneAngles2D(ldef, l2), PlaneAngles2DFlipTo(ldef, l2));
     }
     return true;
   }
 
+  //!!!GCon->Log("*** skipped useless shadow segment (1)");
   // done, it passed all checks, and cannot cast shadow (i hope)
   return false;
 }
@@ -774,6 +803,8 @@ static bool CanSurfaceSegCastShadow (const surface_t *surf, const TVec LightPos,
 //
 //==========================================================================
 static bool CanSurfaceFlatCastShadow (const surface_t *surf, const TVec LightPos, float Radius) {
+  if (!gl_smart_reject_shadow_flats) return true;
+
   // flat surfaces in subsectors whose neighbours doesn't change height can't cast any shadow
   const subsector_t *sub = surf->subsector;
   if (sub->numlines == 0) return true; // just in case
