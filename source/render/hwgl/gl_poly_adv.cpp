@@ -704,6 +704,13 @@ static bool CanSurfaceSegCastShadow (const surface_t *surf, const TVec LightPos,
     return true;
   }
 
+  // we cannot do anything sane for 3D floors
+  const subsector_t *sub = surf->subsector;
+  if (sub) {
+    const sector_t *sector = sub->sector;
+    if (sector->SectorFlags&sector_t::SF_ExtrafloorSource) return true; // sadly, i cannot reject 3D floors yet
+  }
+
   // if this is a two-sided line, don't reject it
   if (ldef->flags&ML_TWOSIDED) {
     //TODO: here we can check if this is top/bottom texture, and if it can cast shadow
@@ -718,13 +725,6 @@ static bool CanSurfaceSegCastShadow (const surface_t *surf, const TVec LightPos,
   {
     //!!!GCon->Log("*** skipped useless shadow segment (0)");
     return true;
-  }
-
-  // we cannot do anything sane for 3D floors
-  const subsector_t *sub = surf->subsector;
-  if (sub) {
-    const sector_t *sector = sub->sector;
-    if (sector->SectorFlags&sector_t::SF_ExtrafloorSource) return true; // sadly, i cannot reject 3D floors yet
   }
 
   // if all neighbour lines are one-sided, and doesn't make a sharp turn, this seg cannot cast a shadow
