@@ -774,30 +774,6 @@ static inline bool isCircleTouchingLine (const TVec &corg, const float radiusSq,
 
 //==========================================================================
 //
-//  PlaneAngles2D
-//
-//==========================================================================
-static float PlaneAngles2D (const TPlane *from, const TPlane *to) {
-  float afrom = VectorAngleYaw(from->normal);
-  float ato = VectorAngleYaw(to->normal);
-  return AngleMod(AngleMod(ato-afrom+180)-180);
-}
-
-
-//==========================================================================
-//
-//  PlaneAngles2DFlipTo
-//
-//==========================================================================
-static float PlaneAngles2DFlipTo (const TPlane *from, const TPlane *to) {
-  float afrom = VectorAngleYaw(from->normal);
-  float ato = VectorAngleYaw(-to->normal);
-  return AngleMod(AngleMod(ato-afrom+180)-180);
-}
-
-
-//==========================================================================
-//
 //  VRenderLevelShared::CheckBSPVisibilitySub
 //
 //  `firsttravel` is used to reject invisible segs

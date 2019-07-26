@@ -168,6 +168,24 @@ menudef AdvRenderOptions {
       "This can buy you some FPS by reducing fill rate.";
   }
 
+  option bool {
+    title = "Smarted Stencil Clearing";
+    cvar = gl_smart_dirty_rects;
+    help =
+      "Use dirty rectangles to decide if we should clear stencil buffer."
+      "This can skip some GPU clear calls, but I'm not sure if it worth it.";
+  }
+
+  option bool {
+    title = "Skip Non-Shadow Surfaces";
+    cvar = gl_smart_reject_shadow_surfaces;
+    help =
+      "Skip some surfaces that cannot possibly cast shadow."
+      "This can buy you some FPS with huge lights, but I'm not sure"
+      "if i wrote the algo right, so you can turn this off if you'll"
+      "see some invalid shadowing.";
+  }
+
 
   header "DEBUG Stencil Shadows Options";
 

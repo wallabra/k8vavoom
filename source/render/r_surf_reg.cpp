@@ -30,9 +30,6 @@
 #define ON_EPSILON      (0.1f)
 #define SUBDIVIDE_SIZE  (240)
 
-// this is used to compare floats like ints which is faster
-#define FASI(var) (*(const int *)&var)
-
 
 // ////////////////////////////////////////////////////////////////////////// //
 static VCvarB r_precalc_static_lights("r_precalc_static_lights", true, "Precalculate static lights?", CVAR_Archive);

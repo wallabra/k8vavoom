@@ -721,6 +721,13 @@ bool VLevel::LoadCachedData (VStream *strm) {
 
   if (arrstrm->IsError()) { delete arrstrm; GCon->Log("cache file corrupted (read error)"); return false; }
   delete arrstrm;
+
+  for (int f = 0; f < NumSubsectors; ++f) {
+    subsector_t *ss = &Subsectors[f];
+    if (ss->firstline < 0 || ss->firstline >= NumSegs) { GCon->Log("invalid subsector data (read error)"); return false; }
+    ss->firstseg = &Segs[ss->firstline];
+  }
+
   return true;
 }
 
@@ -2118,6 +2125,8 @@ void VLevel::PostLoadSubsectors () {
       ss->bbox2d[BOX2D_RIGHT] = max2(ss->bbox2d[BOX2D_RIGHT], max2(seg.v1->x, seg.v2->x));
       ss->bbox2d[BOX2D_TOP] = max2(ss->bbox2d[BOX2D_TOP], max2(seg.v1->y, seg.v2->y));
     }
+
+    ss->firstseg = &Segs[ss->firstline];
   }
 
   for (auto &&it : allSegsIdx()) {

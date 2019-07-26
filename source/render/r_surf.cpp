@@ -28,9 +28,6 @@
 #include "r_local.h"
 #include "sv_local.h"
 
-// this is used to compare floats like ints which is faster
-#define FASI(var) (*(const int32_t *)&var)
-
 
 // ////////////////////////////////////////////////////////////////////////// //
 static VCvarB r_hack_transtop("r_hack_transtop", true, "Allow \"Transparent Top Texture\" hack?", CVAR_PreInit|CVAR_Archive);

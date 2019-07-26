@@ -28,6 +28,10 @@
 //#define RandomFull()  ((float)(rand() & 0x7fff) / (float)0x7fff)
 
 
+// this is used to compare floats like ints which is faster
+#define FASI(var_) (*(const int32_t *)&(var_))
+
+
 // An output device.
 class FOutputDevice : public VLogListener {
 public:
@@ -171,4 +175,30 @@ vuint8 colorIntensity (int r, int g, int b) {
   const double gY = 0.715158;
   const double bY = 0.072187;
   return clampToByte(sRGBgamma(rY*sRGBungamma(r)+gY*sRGBungamma(g)+bY*sRGBungamma(b)));
+}
+
+
+//==========================================================================
+//
+//  PlaneAngles2D
+//
+//==========================================================================
+static inline __attribute__((unused)) __attribute__((warn_unused_result))
+float PlaneAngles2D (const TPlane *from, const TPlane *to) {
+  float afrom = VectorAngleYaw(from->normal);
+  float ato = VectorAngleYaw(to->normal);
+  return AngleMod(AngleMod(ato-afrom+180)-180);
+}
+
+
+//==========================================================================
+//
+//  PlaneAngles2DFlipTo
+//
+//==========================================================================
+static inline __attribute__((unused)) __attribute__((warn_unused_result))
+float PlaneAngles2DFlipTo (const TPlane *from, const TPlane *to) {
+  float afrom = VectorAngleYaw(from->normal);
+  float ato = VectorAngleYaw(-to->normal);
+  return AngleMod(AngleMod(ato-afrom+180)-180);
 }

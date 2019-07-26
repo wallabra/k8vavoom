@@ -28,15 +28,13 @@
 #include "render/r_local.h"
 
 
-// this is used to compare floats like ints which is faster
-#define FASI(var) (*(const uint32_t *)&var)
-
-
 extern VCvarB gl_enable_depth_bounds;
 extern VCvarB gl_dbg_advlight_debug;
 extern VCvarI gl_dbg_advlight_color;
 
-static VCvarB gl_smart_dirty_rects("gl_smart_dirty_rects", true, "Use dirty rectangles list to check for stencil buffer dirtyness?", 0);
+static VCvarB gl_smart_dirty_rects("gl_smart_dirty_rects", true, "Use dirty rectangles list to check for stencil buffer dirtyness?", CVAR_Archive);
+static VCvarB gl_smart_reject_shadow_surfaces("gl_smart_reject_shadow_surfaces", true, "Reject some surfaces that cannot possibly produce shadows?", CVAR_Archive);
+
 
 /* TODO
   clear stencil buffer before first shadow shadow rendered.
@@ -711,12 +709,127 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
   if (gl_dbg_wireframe) return;
   if (surf->count < 3) return; // just in case
 
-  //GCon->Logf("***   VOpenGLDrawer::RenderSurfaceShadowVolume()");
-  if (!wasRenderedShadowSurface && gl_smart_dirty_rects) {
-    appendDirtyRect(currentSVScissor);
+  if (gl_smart_reject_shadow_surfaces) {
+    if (surf->seg) {
+      // solid segs that has no non-solid neighbours cannot cast any shadow
+      const seg_t *seg = surf->seg;
+      const line_t *ldef = seg->linedef;
+      if (!ldef) {
+        // miniseg; wutafuck? it should not have any surface!
+        GCon->Log(NAME_Warning, "miniseg should not have any surfaces!");
+        return;
+      }
+      // if this is not a two-sided line, only first and last segs can cast shadows
+      if (!(ldef->flags&ML_TWOSIDED)) {
+        //!!!if ((int)(ptrdiff_t)(ldef-GLevel->Lines) == 42) GCon->Log("********* 42 ************");
+        if (*seg->v1 != *ldef->v1 && *seg->v2 != *ldef->v2 &&
+            *seg->v2 != *ldef->v1 && *seg->v1 != *ldef->v2)
+        {
+          //!!!GCon->Log("*** skipped useless shadow segment (0)");
+          return;
+        }
+        // if all neighbour lines are one-sided, and doesn't make a sharp turn, this seg cannot cast a shadow
+        bool canSkip = true;
+        for (int cc = 0; cc < ldef->v1linesCount; ++cc) {
+          const line_t *l2 = ldef->v1lines[cc];
+          if (!l2->SphereTouches(LightPos, Radius)) {
+            /*!!!
+            if ((int)(ptrdiff_t)(ldef-GLevel->Lines) == 42) {
+              GCon->Logf(":!!!(0): %d vs %d: %g : %g", (int)(ptrdiff_t)(ldef-GLevel->Lines), (int)(ptrdiff_t)(l2-GLevel->Lines), PlaneAngles2D(ldef, l2), PlaneAngles2DFlipTo(ldef, l2));
+            }
+            */
+            continue;
+          }
+          if (l2->flags&ML_TWOSIDED) { canSkip = false; break; }
+          if (PlaneAngles2D(ldef, l2) <= 180.0f && PlaneAngles2DFlipTo(ldef, l2) <= 180.0f) {
+            /*
+            if ((int)(ptrdiff_t)(ldef-GLevel->Lines) == 42) {
+              GCon->Logf("::: %d vs %d: %g : %g", (int)(ptrdiff_t)(ldef-GLevel->Lines), (int)(ptrdiff_t)(l2-GLevel->Lines), PlaneAngles2D(ldef, l2), PlaneAngles2DFlipTo(ldef, l2));
+            }!!!
+            */
+            continue;
+          }
+          canSkip = false;
+          break;
+        }
+        if (canSkip) {
+          for (int cc = 0; cc < ldef->v2linesCount; ++cc) {
+            const line_t *l2 = ldef->v2lines[cc];
+            if (!l2->SphereTouches(LightPos, Radius)) {
+              /*!!!
+              if ((int)(ptrdiff_t)(ldef-GLevel->Lines) == 42) {
+                GCon->Logf(":!!!(1): %d vs %d: %g : %g", (int)(ptrdiff_t)(ldef-GLevel->Lines), (int)(ptrdiff_t)(l2-GLevel->Lines), PlaneAngles2D(ldef, l2), PlaneAngles2DFlipTo(ldef, l2));
+              }
+              */
+              continue;
+            }
+            if (l2->flags&ML_TWOSIDED) { canSkip = false; break; }
+            if (PlaneAngles2D(ldef, l2) <= 180.0f && PlaneAngles2DFlipTo(ldef, l2) <= 180.0f) {
+              /*!!!
+              if ((int)(ptrdiff_t)(ldef-GLevel->Lines) == 42) {
+                GCon->Logf("::: %d vs %d: %g : %g", (int)(ptrdiff_t)(ldef-GLevel->Lines), (int)(ptrdiff_t)(l2-GLevel->Lines), PlaneAngles2D(ldef, l2), PlaneAngles2DFlipTo(ldef, l2));
+              }
+              */
+              continue;
+            }
+            canSkip = false;
+            break;
+          }
+        }
+        if (canSkip) {
+          //!!!GCon->Logf("*** skipped useless shadow segment (1) (line=%d)", (int)(ptrdiff_t)(ldef-GLevel->Lines));
+          return;
+        }
+      }
+    } else if (surf->subsector) {
+      // flat surfaces in subsectors whose neighbours doesn't change height can't cast any shadow
+      const subsector_t *sub = surf->subsector;
+      const sector_t *sector = sub->sector;
+      // sadly, we cannot optimise for sectors with 3D (extra) floors
+      if (sub->numlines && (sector->SectorFlags&(sector_t::SF_ExtrafloorSource|sector_t::SF_HasExtrafloors)) == 0) {
+        bool canSkip = true;
+        const seg_t *seg = sub->firstseg;
+        for (int cnt = sub->numlines; cnt--; ++seg) {
+          const seg_t *s2 = seg->partner;
+          if (!s2) continue;
+          const subsector_t *sub2 = s2->frontsub;
+          if (sub2 == sub) continue;
+          // different subsector
+          const sector_t *sec2 = sub2->sector;
+          if (sec2 == sector) continue;
+          // different sector
+          if (!s2->SphereTouches(LightPos, Radius)) continue;
+          // and light sphere touches it, check heights
+          if (surf->typeFlags&surface_t::TF_FLOOR) {
+            // if current sector floor is lower than the neighbour sector floor,
+            // it means that our current floor cannot cast a shadow there
+            if (sector->floor.minz <= sec2->floor.maxz) continue;
+          } else if (surf->typeFlags&surface_t::TF_CEILING) {
+            // if current sector ceiling is higher than the neighbour sector ceiling,
+            // it means that our current ceiling cannot cast a shadow there
+            if (sector->ceiling.maxz >= sec2->ceiling.minz) continue;
+          } else {
+            GCon->Log("oops; non-floor and non-ceiling flat surface");
+          }
+          /*
+          if (FASI(sec2->floor.minz) == FASI(sector->floor.minz) &&
+              FASI(sec2->floor.maxz) == FASI(sector->floor.maxz) &&
+              FASI(sec2->ceiling.minz) == FASI(sector->ceiling.minz) &&
+              FASI(sec2->ceiling.maxz) == FASI(sector->ceiling.maxz))
+          {
+            continue;
+          }
+          */
+          canSkip = false;
+          break;
+        }
+        if (canSkip) {
+          //GCon->Logf("*** skipped useless shadow flat");
+          return;
+        }
+      }
+    }
   }
-  wasRenderedShadowSurface = true;
-  NoteStencilBufferDirty();
 
   const unsigned vcount = (unsigned)surf->count;
   const TVec *sverts = surf->verts;
@@ -742,6 +855,14 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
     }
     if (!splhit) return;
   }
+
+  //GCon->Logf("***   VOpenGLDrawer::RenderSurfaceShadowVolume()");
+  if (!wasRenderedShadowSurface && gl_smart_dirty_rects) {
+    appendDirtyRect(currentSVScissor);
+  }
+  wasRenderedShadowSurface = true;
+  NoteStencilBufferDirty();
+
 
   // OpenGL renders vertices with zero `w` as infinitely far -- this is exactly what we want
   // just do it in vertex shader
@@ -979,6 +1100,12 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float Li
   } else {
     glDisable(GL_STENCIL_TEST);
   }
+
+  /*
+  if (doShadow && !wasRenderedShadowSurface) {
+    Color = 0xffff0000u;
+  }
+  */
 
   glBlendFunc(GL_SRC_ALPHA, GL_ONE);
   glEnable(GL_BLEND);

@@ -1106,6 +1106,7 @@ struct subsector_t {
   native transient int updateWorldFrame; // unsigned
 
   sector_t *deepref;
+  seg_t *firstseg;
 
   //k8: i love bounding boxes! (this one doesn't store z, though)
   float[4] bbox2d;

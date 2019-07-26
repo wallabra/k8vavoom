@@ -886,6 +886,7 @@ public:
   vuint32 updateWorldFrame;
 
   sector_t *deepref; // for deepwater
+  seg_t *firstseg;
 
   //k8: i love bounding boxes! (this one doesn't store z, though)
   float bbox2d[4];
