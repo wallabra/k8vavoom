@@ -33,7 +33,7 @@ extern VCvarB gl_dbg_advlight_debug;
 extern VCvarI gl_dbg_advlight_color;
 
 static VCvarB gl_smart_dirty_rects("gl_smart_dirty_rects", true, "Use dirty rectangles list to check for stencil buffer dirtyness?", CVAR_Archive);
-static VCvarB gl_smart_reject_shadow_surfaces("gl_smart_reject_shadow_surfaces", true, "Reject some surfaces that cannot possibly produce shadows?", CVAR_Archive);
+static VCvarB gl_smart_reject_shadow_surfaces("gl_smart_reject_shadow_surfaces", false, "Reject some surfaces that cannot possibly produce shadows?", CVAR_Archive);
 
 static VCvarB gl_smart_reject_shadow_segs("gl_smart_reject_shadow_segs", true, "Reject some surfaces that cannot possibly produce shadows?", CVAR_Archive);
 static VCvarB gl_smart_reject_shadow_flats("gl_smart_reject_shadow_flats", true, "Reject some surfaces that cannot possibly produce shadows?", CVAR_Archive);
@@ -828,32 +828,45 @@ static bool CanSurfaceFlatCastShadow (const surface_t *surf, const TVec LightPos
 
   const seg_t *seg = sub->firstseg;
   for (int cnt = sub->numlines; cnt--; ++seg) {
-    const seg_t *s2 = seg->partner;
-    if (!s2) continue;
-    const subsector_t *sub2 = s2->frontsub;
+    const seg_t *backseg = seg->partner;
+    if (!backseg) continue;
+    const subsector_t *sub2 = backseg->frontsub;
     if (sub2 == sub) continue;
     // different subsector
-    const sector_t *sec2 = sub2->sector;
-    if (sec2 == sector) continue;
+    const sector_t *bsec = sub2->sector;
+    if (bsec == sector) continue;
     // different sector
-    if (!s2->SphereTouches(LightPos, Radius)) continue;
+    if (!backseg->SphereTouches(LightPos, Radius)) continue;
     // and light sphere touches it, check heights
     if (surf->typeFlags&surface_t::TF_FLOOR) {
       // if current sector floor is lower than the neighbour sector floor,
       // it means that our current floor cannot cast a shadow there
-      if (sector->floor.minz <= sec2->floor.maxz) continue;
+      //if (sector->floor.minz <= bsec->floor.maxz) continue;
+      if (bsec->floor.minz == sector->floor.minz &&
+          bsec->floor.maxz == sector->floor.maxz)
+      {
+        continue;
+      }
     } else if (surf->typeFlags&surface_t::TF_CEILING) {
       // if current sector ceiling is higher than the neighbour sector ceiling,
       // it means that our current ceiling cannot cast a shadow there
-      if (sector->ceiling.maxz >= sec2->ceiling.minz) continue;
+      //if (sector->ceiling.maxz >= bsec->ceiling.minz) continue;
+      // this is wrong; see Doom2:MAP02, room with two holes -- shot a fireball inside one hole
+      // this is wrong because we have two sectors with the same ceiling height, and then a hole
+      // so first sector ceiling is lit, and should block the light, but it is ignored
+      if (bsec->ceiling.minz == sector->ceiling.minz &&
+          bsec->ceiling.maxz == sector->ceiling.maxz)
+      {
+        continue;
+      }
     } else {
       GCon->Log("oops; non-floor and non-ceiling flat surface");
     }
     /*
-    if (FASI(sec2->floor.minz) == FASI(sector->floor.minz) &&
-        FASI(sec2->floor.maxz) == FASI(sector->floor.maxz) &&
-        FASI(sec2->ceiling.minz) == FASI(sector->ceiling.minz) &&
-        FASI(sec2->ceiling.maxz) == FASI(sector->ceiling.maxz))
+    if (FASI(bsec->floor.minz) == FASI(sector->floor.minz) &&
+        FASI(bsec->floor.maxz) == FASI(sector->floor.maxz) &&
+        FASI(bsec->ceiling.minz) == FASI(sector->ceiling.minz) &&
+        FASI(bsec->ceiling.maxz) == FASI(sector->ceiling.maxz))
     {
       continue;
     }
