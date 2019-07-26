@@ -651,17 +651,24 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
       if (IsStrConst()) {
         const VStr &str = GetStrConst(ec.Package);
         if (str.length() == 0 || str.ICmp("none") == 0 || str.ICmp("null") == 0 || str.ICmp("nil") == 0 || str.ICmp("false") == 0) {
-          ParseWarning((aloc ? *aloc : Loc), "`%s` argument #%d should be number (replaced with 1); PLEASE, FIX THE CODE!", funcName, argnum);
+          ParseWarning((aloc ? *aloc : Loc), "`%s` argument #%d should be number (replaced with 0); PLEASE, FIX THE CODE!", funcName, argnum);
           VExpression *enew = new VIntLiteral(0, Loc);
           delete this;
           return enew;
         }
         if (str.ICmp("true") == 0) {
-          ParseWarning((aloc ? *aloc : Loc), "`%s` argument #%d should be number (replaced with 0); PLEASE, FIX THE CODE!", funcName, argnum);
+          ParseWarning((aloc ? *aloc : Loc), "`%s` argument #%d should be number (replaced with 1); PLEASE, FIX THE CODE!", funcName, argnum);
           VExpression *enew = new VIntLiteral(1, Loc);
           delete this;
           return enew;
         }
+      }
+      // none as literal?
+      if (IsNoneLiteral()) {
+        ParseWarning((aloc ? *aloc : Loc), "`%s` argument #%d should be number (replaced with 0); PLEASE, FIX THE CODE!", funcName, argnum);
+        VExpression *enew = new VIntLiteral(0, Loc);
+        delete this;
+        return enew;
       }
       break;
 
@@ -688,6 +695,12 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
         delete this;
         return enew;
       }
+      // none as literal?
+      if (IsNoneLiteral()) {
+        VExpression *enew = new VNameLiteral("none", Loc);
+        delete this;
+        return enew;
+      }
       break;
 
     case TYPE_String:
@@ -703,6 +716,12 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
         // "false" or "0" means "empty"
         ParseWarning((aloc ? *aloc : Loc), "`%s` argument #%d should be string (replaced `0` with empty string); PLEASE, FIX THE CODE!", funcName, argnum);
         VExpression *enew = new VStringLiteral(VStr(), ec.Package->FindString(""), Loc);
+        delete this;
+        return enew;
+      }
+      // none as literal?
+      if (IsNoneLiteral()) {
+        VExpression *enew = new VStringLiteral("none", ec.Package->FindString(""), Loc);
         delete this;
         return enew;
       }
@@ -840,12 +859,12 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
           } else {
             CheckClass = VClass::FindClassNoCase(*ClassName);
             if (!CheckClass) {
-              ParseError((aloc ? *aloc : Loc), "No such class `%s`", *ClassName);
+              ParseError((aloc ? *aloc : Loc), "No such class `%s` (argument #%d for `%s`)", *ClassName, argnum, funcName);
               delete this;
               return nullptr;
             }
             if (!ec.SelfClass->IsChildOf(CheckClass)) {
-              ParseError((aloc ? *aloc : Loc), "`%s` is not a subclass of `%s`", ec.SelfClass->GetName(), CheckClass->GetName());
+              ParseError((aloc ? *aloc : Loc), "`%s` is not a subclass of `%s` (argument #%d for `%s`)", ec.SelfClass->GetName(), CheckClass->GetName(), argnum, funcName);
               delete this;
               return nullptr;
             }
@@ -857,13 +876,13 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
           VStateLabel *StLbl = CheckClass->FindStateLabel(Names, true);
           if (!StLbl) {
             if (VMemberBase::optDeprecatedLaxStates) {
-              ParseWarning((aloc ? *aloc : Loc), "No such state '%s' in class '%s'", *Lbl, CheckClass->GetName());
+              ParseWarning((aloc ? *aloc : Loc), "No such state '%s' in class '%s' (argument #%d for `%s`)", *Lbl, CheckClass->GetName(), argnum, funcName);
               // emulate virtual state jump, and let VM deal with it
               VExpression *TmpArgs[1];
               TmpArgs[0] = this;
               return new VInvocation(nullptr, ec.SelfClass->FindMethodChecked("FindJumpState"), nullptr, false, false, Loc, 1, TmpArgs);
             } else {
-              ParseError((aloc ? *aloc : Loc), "No such state '%s' in class '%s'", *Lbl, CheckClass->GetName());
+              ParseError((aloc ? *aloc : Loc), "No such state '%s' in class '%s' (argument #%d for `%s`)", *Lbl, CheckClass->GetName(), argnum, funcName);
               delete this;
               return nullptr;
             }
@@ -877,6 +896,39 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
         VExpression *TmpArgs[1];
         TmpArgs[0] = this;
         return new VInvocation(nullptr, ec.SelfClass->FindMethodChecked("FindJumpState"), nullptr, false, false, Loc, 1, TmpArgs);
+      }
+      // none as literal?
+      if (IsNoneLiteral()) {
+        VExpression *TmpArgs[1];
+        TmpArgs[0] = new VStringLiteral("none", ec.Package->FindString(""), Loc);
+        VExpression *enew = new VInvocation(nullptr, ec.SelfClass->FindMethodChecked("FindJumpState"), nullptr, false, false, Loc, 1, TmpArgs);
+        delete this;
+        return enew;
+      }
+      // support idiocity like `A_Jump(n, func())`
+      if (Type.Type != TYPE_State) {
+        //GCon->Logf("A_Jump: type=%s; expr=<%s>", *lbl->Type.GetName(), *lbl->toString());
+        VGagErrors gag;
+        VExpression *lx = this->SyntaxCopy()->Resolve(ec);
+        if (lx) {
+          if (lx->Type.Type != TYPE_State) {
+            const bool isGoodType = (lx->Type.Type == TYPE_Int || lx->Type.Type == TYPE_Byte || lx->Type.Type == TYPE_Bool || lx->Type.Type == TYPE_Float);
+            if (isGoodType) {
+              //GCon->Logf("A_Jump: type=%s; expr=<%s>", *lbl->Type.GetName(), *lbl->toString());
+              VExpression *TmpArgs[1];
+              TmpArgs[0] = this->SyntaxCopy();
+              if (lx->Type.Type == TYPE_Float) {
+                ParseWarning(Loc, "jump offset argument #%d for `%s` should be integer, not float! PLEASE, FIX THE CODE!", argnum, funcName);
+                TmpArgs[0] = new VScalarToInt(TmpArgs[0], false); // not resolved
+              }
+              VExpression *eres = new VInvocation(nullptr, ec.SelfClass->FindMethodChecked("FindJumpStateOfs"), nullptr, false, false, Loc, 1, TmpArgs);
+              //GCon->Logf("   NEW: type=%s; expr=<%s>", *lbl->Type.GetName(), *lbl->toString());
+              delete this;
+              return eres;
+            }
+          }
+          delete lx;
+        }
       }
       break;
   }

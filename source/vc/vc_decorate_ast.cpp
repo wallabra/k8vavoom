@@ -679,6 +679,7 @@ VExpression *VDecorateAJump::DoResolve (VEmitContext &ec) {
     if (!lbl) { delete this; return nullptr; } // some error
 
     // support idiocity like `A_Jump(n, func())`
+    /* moved to `MassageDecorateArg()`
     if (!massaged && lbl->Type.Type != TYPE_State) {
       //GCon->Logf("A_Jump: type=%s; expr=<%s>", *lbl->Type.GetName(), *lbl->toString());
       VGagErrors gag;
@@ -696,6 +697,7 @@ VExpression *VDecorateAJump::DoResolve (VEmitContext &ec) {
         delete lx;
       }
     }
+    */
 
     lbl = new VCastOrInvocation("DoJump", Loc, 1, &lbl);
     lbl = new VDropResult(lbl);
