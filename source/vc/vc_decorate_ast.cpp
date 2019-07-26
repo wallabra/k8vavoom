@@ -984,7 +984,7 @@ void VDecorateRndPick::DoSyntaxCopyTo (VExpression *e) {
 
 //==========================================================================
 //
-//  VExpression
+//  VDecorateRndPick::DoResolve
 //
 //==========================================================================
 VExpression *VDecorateRndPick::DoResolve (VEmitContext &ec) {
