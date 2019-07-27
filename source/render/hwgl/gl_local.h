@@ -583,6 +583,7 @@ public:
   virtual void BeginLightShadowVolumes (const TVec &LightPos, const float Radius, bool useZPass, bool hasScissor, const int scoords[4], const TVec &aconeDir, const float aconeAngle) override;
   virtual void EndLightShadowVolumes () override;
   virtual void RenderSurfaceShadowVolume (const surface_t *surf, const TVec &LightPos, float Radius) override;
+  void RenderSurfaceShadowVolumeZPassIntr (const surface_t *surf, const TVec &LightPos, float Radius);
 
   virtual void BeginLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, bool doShadow) override;
   virtual void DrawSurfaceLight (surface_t *surf) override;
