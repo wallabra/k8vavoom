@@ -140,6 +140,13 @@ private:
   void ProcessSpecialToken ();
   void ProcessFileName ();
 
+  // `#if` expression parser
+  // <0: error
+  int ProcessIfTerm ();
+  int ProcessIfLAnd ();
+  int ProcessIfLOr ();
+  int ProcessIfExpr ();
+
 private:
   // lookahead support
   bool isNStrEqu (int spos, int epos, const char *s) const;

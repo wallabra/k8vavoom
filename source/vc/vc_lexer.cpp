@@ -502,6 +502,7 @@ char VLexer::peekNextNonBlankChar () const {
 //
 //==========================================================================
 bool VLexer::SkipCurrentLine () {
+  if (src->NewLine || currCh != EOF_CHARACTER) return true;
   bool noBadChars = true;
   while (!src->NewLine && currCh != EOF_CHARACTER) {
     if (SkipComment()) continue;
@@ -708,6 +709,149 @@ void VLexer::ProcessIfDef (bool OnTrue) {
 
 //==========================================================================
 //
+//  VLexer::ProcessIfTerm
+//
+//  result is <0: error
+//
+//==========================================================================
+int VLexer::ProcessIfTerm () {
+  SkipWhitespaceAndComments();
+  if (src->NewLine || currCh == EOF_CHARACTER) {
+    ParseError(Location, "`#if`: missing argument");
+    return -1;
+  }
+  // number?
+  if (ASCIIToChrCode[(vuint8)currCh] == CHR_Number) {
+    ProcessNumberToken();
+    if (Token != TK_IntLiteral) {
+      ParseError(Location, "`#if`: integer expected");
+      return -1;
+    }
+    return (Number ? 1 : 0);
+  }
+  // `!`?
+  if (currCh == '!') {
+    NextChr();
+    int res = ProcessIfTerm();
+    if (res >= 0) res = 1-res;
+    return res;
+  }
+  // `(`?
+  if (currCh == '(') {
+    NextChr();
+    int res = ProcessIfExpr();
+    if (res >= 0) {
+      SkipWhitespaceAndComments();
+      if (src->NewLine || currCh != ')') {
+        ParseError(Location, "`#if`: `)` expected");
+        return -1;
+      }
+      NextChr();
+    }
+    return res;
+  }
+  // `defined`?
+  if (currCh == 'd') {
+    ProcessLetterToken(false);
+    if (!VStr::strEqu(tokenStringBuffer, "defined")) {
+      ParseError(Location, "`#if`: `defined` expected");
+      return -1;
+    }
+    SkipWhitespaceAndComments();
+    if (src->NewLine || currCh != '(') {
+      ParseError(Location, "`#if`: `(` expected");
+      return -1;
+    }
+    NextChr();
+    SkipWhitespaceAndComments();
+    if (src->NewLine || ASCIIToChrCode[(vuint8)currCh] != CHR_Letter) {
+      ParseError(Location, "`#if`: identifier expected");
+      return -1;
+    }
+    ProcessLetterToken(false);
+    int res = (HasDefine(tokenStringBuffer) ? 1 : 0);
+    SkipWhitespaceAndComments();
+    if (src->NewLine || currCh != ')') {
+      ParseError(Location, "`#if`: `)` expected");
+      return -1;
+    }
+    NextChr();
+    return res;
+  }
+  // other
+  ParseError(Location, "`#if`: unexpected token");
+  return -1;
+}
+
+
+//==========================================================================
+//
+//  VLexer::ProcessIfLAnd
+//
+//  result is <0: error
+//
+//==========================================================================
+int VLexer::ProcessIfLAnd () {
+  int res = ProcessIfTerm();
+  if (res < 0) return res;
+  for (;;) {
+    SkipWhitespaceAndComments();
+    if (src->NewLine || currCh == EOF_CHARACTER) return res;
+    if (currCh != '&') return res;
+    NextChr();
+    if (src->NewLine || currCh != '&') {
+      ParseError(Location, "`#if`: `&&` expected");
+      return -1;
+    }
+    NextChr();
+    int op2 = ProcessIfTerm();
+    if (op2 < 0) return op2;
+    res = (res && op2 ? 1 : 0);
+  }
+}
+
+
+//==========================================================================
+//
+//  VLexer::ProcessIfLOr
+//
+//  result is <0: error
+//
+//==========================================================================
+int VLexer::ProcessIfLOr () {
+  int res = ProcessIfLAnd();
+  if (res < 0) return res;
+  for (;;) {
+    SkipWhitespaceAndComments();
+    if (src->NewLine || currCh == EOF_CHARACTER) return res;
+    if (currCh != '|') return res;
+    NextChr();
+    if (src->NewLine || currCh != '|') {
+      ParseError(Location, "`#if`: `||` expected");
+      return -1;
+    }
+    NextChr();
+    int op2 = ProcessIfLAnd();
+    if (op2 < 0) return op2;
+    res = (res || op2 ? 1 : 0);
+  }
+}
+
+
+//==========================================================================
+//
+//  VLexer::ProcessIfExpr
+//
+//  result is <0: error
+//
+//==========================================================================
+int VLexer::ProcessIfExpr () {
+  return ProcessIfLOr();
+}
+
+
+//==========================================================================
+//
 //  VLexer::ProcessIf
 //
 //==========================================================================
@@ -720,27 +864,14 @@ void VLexer::ProcessIf () {
 
   SkipWhitespaceAndComments();
 
-  // argument to the #if must be on the same line
-  if (src->NewLine || currCh == EOF_CHARACTER) {
-    ParseError(Location, "`#if`: missing argument");
-    return;
-  }
+  int val = ProcessIfExpr();
+  bool isTrue = (val > 0);
 
-  // currently, only "0" and "1" are supported
-  if (src->NewLine || currCh == EOF_CHARACTER || ASCIIToChrCode[(vuint8)currCh] != CHR_Number) ParseError(Location, "`#if`: integer expected");
-  ProcessNumberToken();
-  if (Token != TK_IntLiteral) ParseError(Location, "`#if`: integer expected");
-  bool isTrue = (Number != 0);
-
-  if (src->Skipping) {
-    src->IfStates.Append(IF_Skip);
+  if (isTrue) {
+    src->IfStates.Append(IF_True);
   } else {
-    if (isTrue) {
-      src->IfStates.Append(IF_True);
-    } else {
-      src->IfStates.Append(IF_False);
-      src->Skipping = true;
-    }
+    src->IfStates.Append(IF_False);
+    src->Skipping = true;
   }
 }
 
