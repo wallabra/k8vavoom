@@ -81,7 +81,7 @@ private:
     char *FileEnd;
     char currCh;
     TLocation Loc;
-    TLocation CurLoc;
+    TLocation CurrChLoc;
     int SourceIdx;
     bool IncLineNumber;
     bool NewLine;
@@ -104,7 +104,13 @@ private:
   inline bool checkStrTk (const char *tokname) const { return (strcmp(tokenStringBuffer, tokname) == 0); }
 
   void NextChr ();
+  // 0 is "currCh"
   char Peek (int dist=0) const;
+
+  // this skips comment, `currCh` is the first non-comment char
+  // at enter, `currCh` must be the first comment char
+  // returns `true` if some comment was skipped
+  bool SkipComment ();
 
   void SkipWhitespaceAndComments ();
 
@@ -114,7 +120,10 @@ private:
   bool SkipCurrentLine ();
 
   void ProcessPreprocessor ();
+  void ProcessUnknownDirective ();
+  void ProcessLineDirective ();
   void ProcessDefine ();
+  void ProcessUndef ();
   void ProcessIf ();
   void ProcessIfDef (bool OnTrue);
   void ProcessElse ();
@@ -142,7 +151,7 @@ private:
 public:
   EToken Token;
   TLocation Location; // of the current token
-  TLocation CurLocation; // of the current token
+  TLocation CurrChLocation; // of the current char (currCh)
   vint32 Number;
   float Float;
   char *String;
@@ -171,7 +180,9 @@ public:
   // should NOT fail if file not found
   virtual VStream *doOpenFile (const VStr &filename);
 
-  void AddDefine (const VStr &CondNam, bool showWarning=true);
+  void AddDefine (const VStr &CondName, bool showWarning=true);
+  void RemoveDefine (const VStr &CondName, bool showWarning=true);
+  bool HasDefine (const VStr &CondName);
   void AddIncludePath (const VStr &DirName);
   void OpenSource (const VStr &FileName);
   void OpenSource (VStream *astream, const VStr &FileName); // takes ownership
