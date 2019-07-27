@@ -673,6 +673,12 @@ void VLexer::ProcessUndef () {
 void VLexer::ProcessIfDef (bool OnTrue) {
   const char *ifname = (OnTrue ? "#ifdef" : "#ifndef");
 
+  // if we're skipping now, don't bother
+  if (src->Skipping) {
+    src->IfStates.Append(IF_Skip);
+    return;
+  }
+
   SkipWhitespaceAndComments();
 
   // argument to the #ifdef must be on the same line
@@ -689,17 +695,13 @@ void VLexer::ProcessIfDef (bool OnTrue) {
   }
   ProcessLetterToken(false);
 
-  if (src->Skipping) {
-    src->IfStates.Append(IF_Skip);
+  // check if the name has been defined
+  bool found = HasDefine(tokenStringBuffer);
+  if (found == OnTrue) {
+    src->IfStates.Append(IF_True);
   } else {
-    // check if the name has been defined
-    bool found = HasDefine(tokenStringBuffer);
-    if (found == OnTrue) {
-      src->IfStates.Append(IF_True);
-    } else {
-      src->IfStates.Append(IF_False);
-      src->Skipping = true;
-    }
+    src->IfStates.Append(IF_False);
+    src->Skipping = true;
   }
 }
 
@@ -710,6 +712,12 @@ void VLexer::ProcessIfDef (bool OnTrue) {
 //
 //==========================================================================
 void VLexer::ProcessIf () {
+  // if we're skipping now, don't bother
+  if (src->Skipping) {
+    src->IfStates.Append(IF_Skip);
+    return;
+  }
+
   SkipWhitespaceAndComments();
 
   // argument to the #if must be on the same line
