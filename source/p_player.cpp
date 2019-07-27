@@ -304,7 +304,7 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
     }
 
     if (!state) {
-      if (position == PS_WEAPON) GCon->Logf(NAME_Warning, "*** WEAPON removed itself!");
+      if (position == PS_WEAPON && developer) GCon->Logf(NAME_Dev, "*** WEAPON removed itself!");
       // object removed itself
       //_stateRouteSelf = nullptr; // why not?
       DispSpriteFrame[position] = 0;

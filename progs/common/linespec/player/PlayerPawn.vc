@@ -400,33 +400,36 @@ override void AddInventory (Inventory Item) {
 //==========================================================================
 override void RemoveInventory (Inventory Item) {
   if (!Item) return; //k8: just in case
+  PlayerEx pex = (bIsPlayer ? PlayerEx(Player) : none);
+
   bool SelectNewWeap = false;
-  if (bIsPlayer) {
-    if (PlayerEx(Player).InvPtr == Item) {
-      PlayerEx(Player).InvPtr = Item.PrevInv();
-      if (!PlayerEx(Player).InvPtr) PlayerEx(Player).InvPtr = Item.NextInv();
+
+  if (pex) {
+    if (pex.InvPtr == Item) {
+      pex.InvPtr = Item.PrevInv();
+      if (!pex.InvPtr) pex.InvPtr = Item.NextInv();
     }
-    if (PlayerEx(Player).InvFirst == Item) {
-      PlayerEx(Player).InvFirst = Item.PrevInv();
-      if (!PlayerEx(Player).InvFirst) PlayerEx(Player).InvFirst = Item.NextInv();
+    if (pex.InvFirst == Item) {
+      pex.InvFirst = Item.PrevInv();
+      if (!pex.InvFirst) pex.InvFirst = Item.NextInv();
     }
-    if (PlayerEx(Player).PendingWeapon == Item) PlayerEx(Player).PendingWeapon = none;
-    if (PlayerEx(Player).ReadyWeapon == Item) {
-      PlayerEx(Player).ReadyWeapon = none;
-      PlayerEx(Player).Refire = 0;
+    if (pex.PendingWeapon == Item) pex.PendingWeapon = none;
+    if (pex.ReadyWeapon == Item) {
+      pex.ReadyWeapon = none;
+      pex.ResetWeaponReloadRefire();
       SelectNewWeap = true;
     }
   }
 
   ::RemoveInventory(Item);
 
-  if (bIsPlayer && Item.bInvBar) PlayerEx(Player).AdjustInvFirst();
+  if (pex && Item.bInvBar) pex.AdjustInvFirst();
 
-  if (SelectNewWeap && !PlayerEx(Player).PendingWeapon) {
-    Weapon Best = PlayerEx(Player).BestWeapon();
+  if (pex && SelectNewWeap && !pex.PendingWeapon) {
+    Weapon Best = pex.BestWeapon();
     if (Best) {
-      PlayerEx(Player).SetWeapon(Best);
-      PlayerEx(Player).BringUpWeapon();
+      pex.SetWeapon(Best);
+      pex.BringUpWeapon();
     }
   }
 }
@@ -439,12 +442,11 @@ override void RemoveInventory (Inventory Item) {
 //==========================================================================
 override bool UseInventory (Inventory Item) {
   if (!Item) return false; //k8: just in case
+  PlayerEx pex = (bIsPlayer ? PlayerEx(Player) : none);
+  if (!pex) return false; //k8: just in case
 
   // can't use anything while totally frozen
-  if (PlayerEx(Player).bTotallyFrozen ||
-      (Level.bFrozen &&
-      !(PlayerEx(Player).Cheats&PlayerEx::CF_TIMEFREEZE)))
-  {
+  if (pex.bTotallyFrozen || (Level.bFrozen && !(pex.Cheats&PlayerEx::CF_TIMEFREEZE))) {
     return false;
   }
 
@@ -452,13 +454,13 @@ override bool UseInventory (Inventory Item) {
   if (!::UseInventory(Item)) {
     if (!PuzzleItem(Item)) {
       // unable to use artifact, advance pointer
-      PlayerEx(Player).PlayerNextArtifact();
+      pex.PlayerNextArtifact();
     }
     return false;
   }
 
-  PlaySound(Item.UseSound, /*CHAN_BODY*/CHAN_VOICE);
-  PlayerEx(Player).ArtifactFlash = 4;
+  PlaySound(Item.UseSound, /*CHAN_BODY*//*CHAN_VOICE*/CHAN_AUTO);
+  pex.ArtifactFlash = 4;
   return true;
 }
 

@@ -1309,7 +1309,7 @@ void BringUpWeapon (optional bool instant, optional bool skipSound) {
   }
 
   if (PendingWeapon && ReadyWeapon && PendingWeapon == ReadyWeapon) {
-    print("%C: RAISING ALREADY RAISED WEAPON! (0)", ReadyWeapon);
+    printwarn("%C: RAISING ALREADY RAISED WEAPON! (0)", ReadyWeapon);
     //return;
   }
 
@@ -1393,6 +1393,7 @@ void SetupPsprites () {
 void MovePsprites (float deltaTime) {
   // moved here, so weapon can bob independently
   Weapon wpn = Weapon(ReadyWeapon);
+
   if (MO && wpn && !wpn.bDontBob && !wpn.bBobDisabled) {
     // bob the weapon based on movement speed
     float angle = AngleMod360(180.0*MO.XLevel.Time);
@@ -1407,16 +1408,17 @@ void MovePsprites (float deltaTime) {
   ViewStates[PS_WEAPON_OVL].SX = ViewStates[PS_WEAPON].SX;
   ViewStates[PS_WEAPON_OVL].SY = ViewStates[PS_WEAPON].SY;
 
-  if (wpn && !ReadyWeapon) {
-    printwarn("PLAYER: ReadyWeapon died, PendingWeapon is %C", PendingWeapon);
-  }
-  if (wpn && !ViewStates[PS_WEAPON].State) {
-    printwarn("PLAYER: ReadyWeapon %C (%C) removed itself, PendingWeapon is %C", ReadyWeapon, wpn, PendingWeapon);
-    if (ReadyWeapon == wpn) ReadyWeapon = none;
-  } else if (wpn && ViewStates[PS_WEAPON].State && GetStateDuration(ViewStates[PS_WEAPON].State) < 0) {
-    // this is totally wrong, because it cannot call `A_WeaponReady()`, and weapon switching is impossible
-    printwarn("PLAYER: ReadyWeapon %C (%C) put itself into endless state", ReadyWeapon, wpn, PendingWeapon);
-    if (ReadyWeapon == wpn) ReadyWeapon = none;
+  if (!ReadyWeapon) {
+    if (wpn) printwarn("PLAYER: ReadyWeapon died, PendingWeapon is %C", PendingWeapon);
+  } else {
+    if (!ViewStates[PS_WEAPON].State) {
+      printwarn("PLAYER: ReadyWeapon %C (%C) removed itself, PendingWeapon is %C", ReadyWeapon, wpn, PendingWeapon);
+      ReadyWeapon = none;
+    } else if (GetStateDuration(ViewStates[PS_WEAPON].State) < 0) {
+      // this is totally wrong, because it cannot call `A_WeaponReady()`, and weapon switching is impossible
+      printwarn("PLAYER: ReadyWeapon %C (%C) put itself into endless state", ReadyWeapon, wpn, PendingWeapon);
+      ReadyWeapon = none;
+    }
   }
 }
 
@@ -1486,6 +1488,22 @@ void ReloadWeapon () {
 
 //==========================================================================
 //
+//  SetPendingWeapon
+//
+//==========================================================================
+void SetPendingWeapon (Weapon NewWpn) {
+  if (!NewWpn) return;
+  if (MorphTime) return;
+  if (NewWpn == ReadyWeapon) return;
+  // do not select morph weapon, do not change morph weapon
+  if (NewWpn.bGivenAsMorphWeapon || (ReadyWeapon && ReadyWeapon.bGivenAsMorphWeapon)) return;
+  bReloadQueued = false;
+  PendingWeapon = NewWpn;
+}
+
+
+//==========================================================================
+//
 //  ChangeWeapon
 //
 //  The actual changing of the weapon is done when the weapon psprite can
@@ -1493,14 +1511,7 @@ void ReloadWeapon () {
 //
 //==========================================================================
 void ChangeWeapon (int newweapon) {
-  if (MorphTime) return;
-  Weapon NewWpn = GetSlotChangeWeapon(newweapon);
-  if (NewWpn && NewWpn != ReadyWeapon &&
-      (!NewWpn.bGivenAsMorphWeapon && (!ReadyWeapon || !ReadyWeapon.bGivenAsMorphWeapon)))
-  {
-    bReloadQueued = false;
-    PendingWeapon = NewWpn;
-  }
+  SetPendingWeapon(GetSlotChangeWeapon(newweapon));
 }
 
 
@@ -1510,12 +1521,7 @@ void ChangeWeapon (int newweapon) {
 //
 //==========================================================================
 void PrevWeapon () {
-  if (MorphTime) return;
-  Weapon Wpn = GetPrevWeapon(PendingWeapon ? PendingWeapon : ReadyWeapon);
-  if (Wpn && Wpn != ReadyWeapon) {
-    bReloadQueued = false;
-    PendingWeapon = Wpn;
-  }
+  SetPendingWeapon(GetPrevWeapon(PendingWeapon ? PendingWeapon : ReadyWeapon));
 }
 
 
@@ -1525,12 +1531,7 @@ void PrevWeapon () {
 //
 //==========================================================================
 void NextWeapon () {
-  if (MorphTime) return;
-  Weapon Wpn = GetNextWeapon(PendingWeapon ? PendingWeapon : ReadyWeapon);
-  if (Wpn && Wpn != ReadyWeapon) {
-    bReloadQueued = false;
-    PendingWeapon = Wpn;
-  }
+  SetPendingWeapon(GetNextWeapon(PendingWeapon ? PendingWeapon : ReadyWeapon));
 }
 
 
