@@ -595,6 +595,40 @@ void VRenderLevelShared::RenderMobjs (ERenderPass Pass) {
 
 //==========================================================================
 //
+//  CalculateThingAlpha
+//
+//  returns `false` if this thing is not visible
+//
+//==========================================================================
+static inline bool CalculateThingAlpha (VEntity *mobj, int &RendStyle, float &Alpha) {
+  int rs = mobj->RenderStyle;
+  if (rs == STYLE_None) return false;
+
+  float alpha = mobj->Alpha;
+  switch (rs) {
+    case STYLE_SoulTrans:
+      rs = STYLE_Translucent;
+      alpha = r_transsouls;
+      break;
+    case STYLE_OptFuzzy:
+      rs = (r_drawfuzz ? STYLE_Fuzzy : STYLE_Translucent);
+      break;
+    case STYLE_Normal:
+      alpha = 1.0f;
+      break;
+  }
+  if (rs == STYLE_Fuzzy) alpha = FUZZY_ALPHA;
+
+  if (alpha < 0.01f) return false; // no reason to render it, it is invisible
+
+  RendStyle = rs;
+  Alpha = alpha;
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::BuildVisibleObjectsList
 //
 //  this should be called after `RenderWorld()`
@@ -604,7 +638,10 @@ void VRenderLevelShared::RenderMobjs (ERenderPass Pass) {
 //==========================================================================
 void VRenderLevelShared::BuildVisibleObjectsList () {
   visibleObjects.reset();
-  allModelObjects.reset();
+  allShadowModelObjects.reset();
+
+  int RendStyle;
+  float Alpha;
 
   if (r_dbg_thing_dump_vislist) GCon->Logf("=== VISIBLE THINGS ===");
   for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
@@ -613,34 +650,22 @@ void VRenderLevelShared::BuildVisibleObjectsList () {
     if (mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
     (*Ent)->NumRenderedShadows = 0; // for advanced renderer
 
-    int RendStyle = mobj->RenderStyle;
-    if (RendStyle == STYLE_None) continue;
-
+    bool alphaDone = false;
     // collect all things with models (we'll need them in advrender)
-    //TODO: make this faster somehow?
-    do {
-      if (!mobj->State) break;
-      if (!HasAliasModel(mobj->GetClass()->Name)) break;
-      allModelObjects.append(mobj);
-    } while (0);
+    if (HasAliasModel(mobj->GetClass()->Name)) {
+      alphaDone = true;
+      if (!CalculateThingAlpha(mobj, RendStyle, Alpha)) continue; // invisible
+      // ignore translucent things, they cannot cast a shadow
+      if (RendStyle == STYLE_Normal && Alpha >= 1.0f) allShadowModelObjects.append(mobj);
+    }
 
     // skip things in subsectors that are not visible
     const unsigned SubIdx = (unsigned)(ptrdiff_t)(mobj->SubSector-Level->Subsectors);
     if (!(BspVisThing[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
 
-    float Alpha = mobj->Alpha;
-
-    if (RendStyle == STYLE_SoulTrans) {
-      RendStyle = STYLE_Translucent;
-      Alpha = r_transsouls;
-    } else if (RendStyle == STYLE_OptFuzzy) {
-      RendStyle = (r_drawfuzz ? STYLE_Fuzzy : STYLE_Translucent);
-    } else if (RendStyle == STYLE_Normal) {
-      Alpha = 1.0f;
+    if (!alphaDone) {
+      if (!CalculateThingAlpha(mobj, RendStyle, Alpha)) continue; // invisible
     }
-    if (RendStyle == STYLE_Fuzzy) Alpha = FUZZY_ALPHA;
-
-    if (Alpha < 0.01f) continue; // no reason to render it, it is invisible
 
     if (r_dbg_thing_dump_vislist) GCon->Logf("  <%s> (%f,%f,%f) 0x%08x", *mobj->GetClass()->GetFullName(), mobj->Origin.x, mobj->Origin.y, mobj->Origin.z, mobj->EntityFlags);
     // mark as visible, why not?

@@ -179,8 +179,8 @@ void VAdvancedRenderLevel::ResetMobjsLightCount (bool first, bool doShadows) {
         mobjAffected.append(*ent);
       }
       */
-      VEntity **ent = allModelObjects.ptr();
-      for (int count = allModelObjects.length(); count--; ++ent) {
+      VEntity **ent = allShadowModelObjects.ptr();
+      for (int count = allShadowModelObjects.length(); count--; ++ent) {
         //if ((*ent)->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
         //if (!(*ent)->State) continue;
         //if (!HasAliasModel((*ent)->GetClass()->Name)) continue;

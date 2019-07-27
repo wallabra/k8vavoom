@@ -847,6 +847,9 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
   const TVec *v = sverts;
 
   if (spotLight) {
+    // reject all surfaces behind a spotlight
+    //TODO: build spotlight frustum, and perform a rejection with it
+    //      or even better: perform such rejection earilier
     TPlane pl;
     pl.SetPointNormal3D(LightPos, coneDir);
     const TVec *vv = sverts;

@@ -408,7 +408,7 @@ protected:
   vuint32 updateWorldFrame;
 
   TArray<VEntity *> visibleObjects;
-  TArray<VEntity *> allModelObjects; // used in advrender
+  TArray<VEntity *> allShadowModelObjects; // used in advrender
   //TMapNC<VEntity *, bool> visibleObjects;
   //VEntity **visibleObjects;
   //unsigned visibleObjectsCount;
