@@ -168,26 +168,40 @@ void VAdvancedRenderLevel::ResetMobjsLightCount (bool first, bool doShadows) {
       }
     } else {
       // we need to render shadows, so process all things
-      //TODO: optimise this by build an unified visibility for all lights
-      /*
-      for (TThinkerIterator<VEntity> ent(Level); ent; ++ent) {
-        //if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
-        //if (!ent->State) continue;
-        if (!HasAliasModel((*ent)->GetClass()->Name)) continue;
-        ent->NumRenderedShadows = 0;
-        if (!IsTouchedByLight(*ent)) continue;
-        mobjAffected.append(*ent);
-      }
-      */
-      VEntity **ent = allShadowModelObjects.ptr();
-      for (int count = allShadowModelObjects.length(); count--; ++ent) {
-        //if ((*ent)->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
-        //if (!(*ent)->State) continue;
-        //if (!HasAliasModel((*ent)->GetClass()->Name)) continue;
-        if (!IsTouchedByLight(*ent)) continue;
-        //if (r_dbg_advthing_dump_actlist) GCon->Logf("  <%s> (%f,%f,%f)", *(*ent)->GetClass()->GetFullName(), (*ent)->Origin.x, (*ent)->Origin.y, (*ent)->Origin.z);
-        mobjAffected.append(*ent);
-      }
+      #ifdef VVRENDER_FULL_ALIAS_MODEL_SHADOW_LIST
+        VEntity **ent = allShadowModelObjects.ptr();
+        for (int count = allShadowModelObjects.length(); count--; ++ent) {
+          //if ((*ent)->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+          //if (!(*ent)->State) continue;
+          //if (!HasAliasModel((*ent)->GetClass()->Name)) continue;
+          if (!IsTouchedByLight(*ent)) continue;
+          //if (r_dbg_advthing_dump_actlist) GCon->Logf("  <%s> (%f,%f,%f)", *(*ent)->GetClass()->GetFullName(), (*ent)->Origin.x, (*ent)->Origin.y, (*ent)->Origin.z);
+          mobjAffected.append(*ent);
+        }
+      #else
+        const int xl = MapBlock(CurrLightPos.x-CurrLightRadius-Level->BlockMapOrgX-MAXRADIUS);
+        const int xh = MapBlock(CurrLightPos.x+CurrLightRadius-Level->BlockMapOrgX+MAXRADIUS);
+        const int yl = MapBlock(CurrLightPos.y-CurrLightRadius-Level->BlockMapOrgY-MAXRADIUS);
+        const int yh = MapBlock(CurrLightPos.y+CurrLightRadius-Level->BlockMapOrgY+MAXRADIUS);
+        int RendStyle;
+        float Alpha;
+        for (int bx = xl; bx <= xh; ++bx) {
+          for (int by = yl; by <= yh; ++by) {
+            for (VBlockThingsIterator It(Level, bx, by); It; ++It) {
+              VEntity *mobj = *It;
+              if (!mobj->State || (mobj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) continue;
+              if (mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+              if (!IsTouchedByLight(mobj)) continue;
+              if (!HasAliasModel(mobj->GetClass()->Name)) continue;
+              if (!CalculateThingAlpha(mobj, RendStyle, Alpha)) continue; // invisible
+              // ignore translucent things, they cannot cast a shadow
+              if (RendStyle == STYLE_Normal && Alpha >= 1.0f) {
+                mobjAffected.append(mobj);
+              }
+            }
+          }
+        }
+      #endif
     }
   } else {
     // no need to do anything here, as the list will be reset for each new light

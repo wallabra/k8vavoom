@@ -595,40 +595,6 @@ void VRenderLevelShared::RenderMobjs (ERenderPass Pass) {
 
 //==========================================================================
 //
-//  CalculateThingAlpha
-//
-//  returns `false` if this thing is not visible
-//
-//==========================================================================
-static inline bool CalculateThingAlpha (VEntity *mobj, int &RendStyle, float &Alpha) {
-  int rs = mobj->RenderStyle;
-  if (rs == STYLE_None) return false;
-
-  float alpha = mobj->Alpha;
-  switch (rs) {
-    case STYLE_SoulTrans:
-      rs = STYLE_Translucent;
-      alpha = r_transsouls;
-      break;
-    case STYLE_OptFuzzy:
-      rs = (r_drawfuzz ? STYLE_Fuzzy : STYLE_Translucent);
-      break;
-    case STYLE_Normal:
-      alpha = 1.0f;
-      break;
-  }
-  if (rs == STYLE_Fuzzy) alpha = FUZZY_ALPHA;
-
-  if (alpha < 0.01f) return false; // no reason to render it, it is invisible
-
-  RendStyle = rs;
-  Alpha = alpha;
-  return true;
-}
-
-
-//==========================================================================
-//
 //  VRenderLevelShared::BuildVisibleObjectsList
 //
 //  this should be called after `RenderWorld()`
@@ -638,7 +604,9 @@ static inline bool CalculateThingAlpha (VEntity *mobj, int &RendStyle, float &Al
 //==========================================================================
 void VRenderLevelShared::BuildVisibleObjectsList () {
   visibleObjects.reset();
+  #ifdef VVRENDER_FULL_ALIAS_MODEL_SHADOW_LIST
   allShadowModelObjects.reset();
+  #endif
 
   int RendStyle;
   float Alpha;
@@ -650,6 +618,7 @@ void VRenderLevelShared::BuildVisibleObjectsList () {
     if (mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
     (*Ent)->NumRenderedShadows = 0; // for advanced renderer
 
+    #ifdef VVRENDER_FULL_ALIAS_MODEL_SHADOW_LIST
     bool alphaDone = false;
     // collect all things with models (we'll need them in advrender)
     if (HasAliasModel(mobj->GetClass()->Name)) {
@@ -658,12 +627,16 @@ void VRenderLevelShared::BuildVisibleObjectsList () {
       // ignore translucent things, they cannot cast a shadow
       if (RendStyle == STYLE_Normal && Alpha >= 1.0f) allShadowModelObjects.append(mobj);
     }
+    #endif
 
     // skip things in subsectors that are not visible
     const unsigned SubIdx = (unsigned)(ptrdiff_t)(mobj->SubSector-Level->Subsectors);
     if (!(BspVisThing[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
 
-    if (!alphaDone) {
+    #ifdef VVRENDER_FULL_ALIAS_MODEL_SHADOW_LIST
+    if (!alphaDone)
+    #endif
+    {
       if (!CalculateThingAlpha(mobj, RendStyle, Alpha)) continue; // invisible
     }
 

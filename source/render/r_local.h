@@ -27,6 +27,8 @@
 #ifndef VAVOOM_R_LOCAL_HEADER
 #define VAVOOM_R_LOCAL_HEADER
 
+//#define VVRENDER_FULL_ALIAS_MODEL_SHADOW_LIST
+
 #include "cl_local.h"
 #include "r_shared.h"
 #include "fmd2defs.h"
@@ -35,6 +37,9 @@
 
 // was 0.1
 #define FUZZY_ALPHA  (0.7f)
+
+extern VCvarB r_drawfuzz;
+extern VCvarF r_transsouls;
 
 
 // dynamic light types
@@ -408,10 +413,9 @@ protected:
   vuint32 updateWorldFrame;
 
   TArray<VEntity *> visibleObjects;
+  #ifdef VVRENDER_FULL_ALIAS_MODEL_SHADOW_LIST
   TArray<VEntity *> allShadowModelObjects; // used in advrender
-  //TMapNC<VEntity *, bool> visibleObjects;
-  //VEntity **visibleObjects;
-  //unsigned visibleObjectsCount;
+  #endif
 
   BSPVisInfo *bspVisRadius;
   vuint32 bspVisRadiusFrame;
@@ -480,6 +484,35 @@ protected:
 
   // clears render queues
   void ClearQueues ();
+
+  // returns `false` if this thing is not visible
+  static inline bool CalculateThingAlpha (VEntity *mobj, int &RendStyle, float &Alpha) {
+    int rs = mobj->RenderStyle;
+    if (rs == STYLE_None) return false;
+
+    float alpha = mobj->Alpha;
+    switch (rs) {
+      case STYLE_SoulTrans:
+        rs = STYLE_Translucent;
+        alpha = clampval(r_transsouls.asFloat(), 0.0f, 1.0f);
+        if (alpha <= 0.0f) return false;
+        if (alpha >= 1.0f) rs = STYLE_Normal;
+        break;
+      case STYLE_OptFuzzy:
+        rs = (r_drawfuzz.asBool() ? STYLE_Fuzzy : STYLE_Translucent);
+        break;
+      case STYLE_Normal:
+        alpha = 1.0f;
+        break;
+    }
+    if (rs == STYLE_Fuzzy) alpha = FUZZY_ALPHA;
+
+    if (alpha < 0.01f) return false; // no reason to render it, it is invisible
+
+    RendStyle = rs;
+    Alpha = alpha;
+    return true;
+  }
 
 public:
   virtual bool IsNodeRendered (const node_t *node) const override;
