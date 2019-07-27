@@ -1,0 +1,13 @@
+class Main : Object;
+
+
+void main () {
+#if 0 /* comments allowed */
+  fuckme();
+#endif
+  print("ok0");
+#if 1 // and this
+  print("ok1");
+#endif /* so much for comments */
+  print("done");
+}
