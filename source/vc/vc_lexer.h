@@ -105,10 +105,18 @@ private:
 
   void NextChr ();
   char Peek (int dist=0) const;
+
   void SkipWhitespaceAndComments ();
+
+  // skip current line, correctly process comments
+  // returns `true` if no non-whitespace and non-comment chars were seen
+  // used to skip lines in preprocessor
+  bool SkipCurrentLine ();
+
   void ProcessPreprocessor ();
   void ProcessDefine ();
-  void ProcessIf (bool OnTrue);
+  void ProcessIf ();
+  void ProcessIfDef (bool OnTrue);
   void ProcessElse ();
   void ProcessEndIf ();
   void ProcessInclude ();

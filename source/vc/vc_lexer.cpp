@@ -461,9 +461,11 @@ void VLexer::ProcessPreprocessor () {
   } else if (!VStr::Cmp(tokenStringBuffer, "define")) {
     ProcessDefine();
   } else if (!VStr::Cmp(tokenStringBuffer, "ifdef")) {
-    ProcessIf(true);
+    ProcessIfDef(true);
   } else if (!VStr::Cmp(tokenStringBuffer, "ifndef")) {
-    ProcessIf(false);
+    ProcessIfDef(false);
+  } else if (!VStr::Cmp(tokenStringBuffer, "if")) {
+    ProcessIf();
   } else if (!VStr::Cmp(tokenStringBuffer, "else")) {
     ProcessElse();
   } else if (!VStr::Cmp(tokenStringBuffer, "endif")) {
@@ -531,26 +533,62 @@ void VLexer::AddDefine (const VStr &CondName, bool showWarning) {
 
 //==========================================================================
 //
-//  VLexer::ProcessIf
+//  VLexer::SkipCurrentLine
+//
+//  skip current line, correctly process comments
+//  returns `true` if no non-whitespace and non-comment chars were seen
+//  used to skip lines in preprocessor
 //
 //==========================================================================
-void VLexer::ProcessIf (bool OnTrue) {
+bool VLexer::SkipCurrentLine () {
+  bool noBadChars = true;
+  while (!src->NewLine && currCh != EOF_CHARACTER) {
+    if ((vuint8)currCh > ' ') {
+      if (currCh == '/') {
+        char nch = Peek(1);
+        if (nch == '/' || nch == '*' || nch == '+') {
+          SkipWhitespaceAndComments();
+          continue;
+        }
+      }
+      noBadChars = false;
+    }
+    NextChr();
+  }
+  return noBadChars;
+  //while (!src->NewLine && currCh != EOF_CHARACTER) NextChr();
+}
+
+
+//==========================================================================
+//
+//  VLexer::ProcessIfDef
+//
+//==========================================================================
+void VLexer::ProcessIfDef (bool OnTrue) {
+  const char *ifname = (OnTrue ? "#ifdef" : "#ifndef");
+
   SkipWhitespaceAndComments();
 
   // argument to the #ifdef must be on the same line
   if (src->NewLine || currCh == EOF_CHARACTER) {
-    ParseError(Location, "`#if`: missing argument");
+    ParseError(Location, "`%s`: missing argument", ifname);
     return;
   }
 
   // parse condition name
   if (ASCIIToChrCode[(vuint8)currCh] != CHR_Letter) {
-    ParseError(Location, "`#if`: invalid argument");
-    while (!src->NewLine && currCh != EOF_CHARACTER) NextChr();
+    ParseError(Location, "`%s`: invalid argument", ifname);
+    SkipCurrentLine();
     return;
   }
 
   ProcessLetterToken(false);
+
+  if (!SkipCurrentLine()) {
+    ParseError(Location, "`%s`: extra arguments", ifname);
+    return;
+  }
 
   if (src->Skipping) {
     src->IfStates.Append(IF_Skip);
@@ -575,12 +613,63 @@ void VLexer::ProcessIf (bool OnTrue) {
 
 //==========================================================================
 //
+//  VLexer::ProcessIf
+//
+//==========================================================================
+void VLexer::ProcessIf () {
+  SkipWhitespaceAndComments();
+
+  // argument to the #if must be on the same line
+  if (src->NewLine || currCh == EOF_CHARACTER) {
+    ParseError(Location, "`#if`: missing argument");
+    return;
+  }
+
+  // currently, only "0" and "1" are supported
+  if (currCh != '0' && currCh != '1') {
+    ParseError(Location, "`#if`: invalid argument (only `0` and `1` are allowed)");
+    SkipCurrentLine();
+    return;
+  }
+
+  bool isTrue = (currCh != '0');
+  NextChr();
+
+  if (currCh == EOF_CHARACTER) {
+    ParseError(Location, "`#if`: unexpected end of file");
+    return;
+  }
+
+  if (!SkipCurrentLine()) {
+    ParseError(Location, "`#if`: invalid argument (only `0` and `1` are allowed)");
+    return;
+  }
+
+  if (src->Skipping) {
+    src->IfStates.Append(IF_Skip);
+  } else {
+    if (isTrue) {
+      src->IfStates.Append(IF_True);
+    } else {
+      src->IfStates.Append(IF_False);
+      src->Skipping = true;
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  VLexer::ProcessElse
 //
 //==========================================================================
 void VLexer::ProcessElse () {
   if (!src->IfStates.Num()) {
     ParseError(Location, "`#else` without an `#ifdef`/`#ifndef`");
+    return;
+  }
+  if (!SkipCurrentLine()) {
+    ParseError(Location, "`#else`: no arguments allowed");
     return;
   }
   switch (src->IfStates[src->IfStates.Num()-1]) {
@@ -613,6 +702,10 @@ void VLexer::ProcessElse () {
 void VLexer::ProcessEndIf () {
   if (!src->IfStates.Num()) {
     ParseError(Location, "`#endif` without an `#ifdef`/`#ifndef`");
+    return;
+  }
+  if (!SkipCurrentLine()) {
+    ParseError(Location, "`#endif`: no arguments allowed");
     return;
   }
   src->IfStates.RemoveIndex(src->IfStates.Num()-1);
@@ -660,13 +753,19 @@ void VLexer::ProcessInclude () {
   //TLocation Loc = Location;
 
   Token = TK_NoToken;
+  // a new-line is expected at the end of preprocessor directive
+  /*
   SkipWhitespaceAndComments();
-  // a new-line is expected at the end of preprocessor directive.
   if (!src->NewLine) ParseError(Location, "`#include`: extra arguments");
+  */
+  if (!SkipCurrentLine()) {
+    ParseError(Location, "`#include`: no extra arguments allowed");
+    return;
+  }
 
   if (src->Skipping) return;
 
-  // check if it's an absolute path location.
+  // check if it's an absolute path location
   if (tokenStringBuffer[0] != '/' && tokenStringBuffer[0] != '\\') {
     // first try relative to the current source file
     if (src->Path.IsNotEmpty()) {
