@@ -1,0 +1,57 @@
+class Main : Object;
+
+
+void main () {
+#if (0) /* comments allowed */
+  fuckme();
+#endif
+
+#if defined(BOO) || 1
+  print("ok0");
+#endif
+
+#if defined(BOO) || 0
+  print("fail00");
+#endif
+
+#if defined(BOO) && 1
+  print("fail01");
+#endif
+
+#if defined(BOO) && 0
+  print("fail02");
+#endif
+
+
+#define BOO
+#if defined(BOO) || 0
+  print("ok1");
+#endif
+
+#if defined(BOO) && 0
+  print("fail10");
+#endif
+
+#if defined(BOO) && 1
+  print("ok2");
+#endif
+
+#undef BOO
+#if defined(BOO) || 0
+  print("fail3");
+#else
+  print("ok3");
+#endif
+
+#if defined(BOO) || 0 || 1
+  print("ok4");
+#else
+  print("fail4");
+#endif
+
+#if !defined(BOO)
+  print("ok5");
+#else
+  print("fail5");
+#endif
+}
