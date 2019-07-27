@@ -191,6 +191,11 @@ void VAdvancedRenderLevel::ResetMobjsLightCount (bool first, bool doShadows) {
               VEntity *mobj = *It;
               if (!mobj->State || (mobj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) continue;
               if (mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+              if (!mobj->SubSector) continue; // just in case
+              // skip things in subsectors that are not visible
+              const int SubIdx = (int)(ptrdiff_t)(mobj->SubSector-Level->Subsectors);
+              if (!(LightBspVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
+              if (mobj->Radius < 1) continue;
               if (!IsTouchedByLight(mobj)) continue;
               if (!HasAliasModel(mobj->GetClass()->Name)) continue;
               if (!CalculateThingAlpha(mobj, RendStyle, Alpha)) continue; // invisible
