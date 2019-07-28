@@ -38,8 +38,6 @@
 #include "sv_local.h"
 
 
-extern VCvarB gl_pic_filtering;
-extern VCvarF fov;
 extern VCvarB r_chasecam;
 extern VCvarB r_brightmaps;
 extern VCvarB r_brightmaps_sprite;
@@ -50,9 +48,6 @@ static VCvarB r_thing_hiframe_use_camera_plane("r_thing_hiframe_use_camera_plane
 static VCvarB r_thing_monster_use_camera_plane("r_thing_monster_use_camera_plane", true, "Use angle to camera plane to select monster rotation?", CVAR_Archive);
 static VCvarB r_thing_missile_use_camera_plane("r_thing_missile_use_camera_plane", true, "Use angle to camera plane to select missile rotation?", CVAR_Archive);
 static VCvarB r_thing_other_use_camera_plane("r_thing_other_use_camera_plane", true, "Use angle to camera plane to select non-monster rotation?", CVAR_Archive);
-
-
-extern refdef_t refdef;
 
 
 enum {
@@ -66,27 +61,17 @@ enum {
 };
 
 
+VCvarB r_sort_sprites("r_sort_sprites", true, "Sprite sorting.", CVAR_Archive);
 VCvarB r_draw_mobjs("r_draw_mobjs", true, "Draw mobjs?", /*CVAR_Archive|*/CVAR_PreInit);
 VCvarB r_draw_psprites("r_draw_psprites", true, "Draw psprites?", /*CVAR_Archive|*/CVAR_PreInit);
 VCvarB r_models("r_models", true, "Allow models?", CVAR_Archive);
 VCvarB r_view_models("r_view_models", false, "View models?", CVAR_Archive);
 VCvarB r_model_shadows("r_model_shadows", true, "Draw model shadows in advanced renderer?", CVAR_Archive);
 VCvarB r_model_light("r_model_light", true, "Draw model light in advanced renderer?", CVAR_Archive);
-VCvarB r_sort_sprites("r_sort_sprites", true, "Sprite sorting.", CVAR_Archive);
-VCvarB r_sprite_use_pofs("r_sprite_use_pofs", true, "Use PolygonOffset with sprite sorting to reduce sprite flickering?", CVAR_Archive);
 VCvarB r_fix_sprite_offsets("r_fix_sprite_offsets", true, "Fix sprite offsets?", CVAR_Archive);
 VCvarI r_sprite_fix_delta("r_sprite_fix_delta", "-7", "Sprite offset amount.", CVAR_Archive); // -6 seems to be ok for vanilla BFG explosion, and for imp fireball
 VCvarB r_drawfuzz("r_drawfuzz", false, "Draw fuzz effect?", CVAR_Archive);
 VCvarF r_transsouls("r_transsouls", "1", "Translucent Lost Souls?", CVAR_Archive);
-VCvarI crosshair("crosshair", "2", "Crosshair type (0-2).", CVAR_Archive);
-VCvarF crosshair_alpha("crosshair_alpha", "0.6", "Crosshair opacity.", CVAR_Archive);
-
-static VCvarI r_crosshair_yofs("r_crosshair_yofs", "0", "Crosshair y offset (>0: down).", CVAR_Archive);
-
-static VCvarF r_sprite_pofs("r_sprite_pofs", "128", "DEBUG");
-static VCvarF r_sprite_pslope("r_sprite_pslope", "-1.0", "DEBUG");
-
-VCvarB r_draw_adjacent_subsector_things("r_draw_adjacent_subsector_things", true, "Draw things subsectors adjacent to visible subsectors (can fix disappearing things)?", CVAR_Archive);
 
 extern VCvarB r_decals_enabled;
 extern VCvarB r_decals_wall_masked;
@@ -95,112 +80,109 @@ extern VCvarB r_decals_wall_alpha;
 
 //==========================================================================
 //
-//  VRenderLevelShared::DrawTranslucentPoly
+//  R_DrawSpritePatch
 //
 //==========================================================================
-void VRenderLevelShared::DrawTranslucentPoly (surface_t *surf, TVec *sv,
-  int count, int lump, float Alpha, bool Additive, int translation,
-  bool isSprite, vuint32 light, vuint32 Fade, const TVec &normal, float pdist,
-  const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority,
-  bool useSprOrigin, const TVec &sprOrigin, vuint32 objid, int hangup)
+void R_DrawSpritePatch (float x, float y, int sprite, int frame, int rot,
+                        int TranslStart, int TranslEnd, int Color, float scale,
+                        bool ignoreVScr)
 {
-  check(count >= 0);
-  if (count == 0 || Alpha < 0.01f) return;
+  bool flip;
+  int lump;
 
-  // make room
-  if (traspUsed == traspSize) {
-    if (traspSize >= 0xfffffff) Sys_Error("Too many translucent entities");
-    traspSize += 0x10000;
-    trans_sprites = (trans_sprite_t *)Z_Realloc(trans_sprites, traspSize*sizeof(trans_sprites[0]));
+  spriteframe_t *sprframe = &sprites[sprite].spriteframes[frame&VState::FF_FRAMEMASK];
+  flip = sprframe->flip[rot];
+  lump = sprframe->lump[rot];
+  VTexture *Tex = GTextureManager[lump];
+  if (!Tex) return; // just in case
+
+  (void)Tex->GetWidth();
+
+  float x1 = x-Tex->SOffset*scale;
+  float y1 = y-Tex->TOffset*scale;
+  float x2 = x1+Tex->GetWidth()*scale;
+  float y2 = y1+Tex->GetHeight()*scale;
+
+  if (!ignoreVScr) {
+    x1 *= fScaleX;
+    y1 *= fScaleY;
+    x2 *= fScaleX;
+    y2 *= fScaleY;
   }
 
-  float dist;
-  if (useSprOrigin) {
-    TVec mid = sprOrigin;
-    //dist = fabsf(DotProduct(mid-vieworg, viewforward));
-    dist = LengthSquared(mid-vieworg);
-  } else {
-#if 1
-    TVec mid(0, 0, 0);
-    for (int i = 0; i < count; ++i) mid += sv[i];
-    mid /= count;
-    //dist = fabsf(DotProduct(mid-vieworg, viewforward));
-    dist = LengthSquared(mid-vieworg);
-#else
-    // select nearest vertex
-    dist = LengthSquared(sv[0]-vieworg);
-    for (int i = 1; i < count; ++i) {
-      const float nd = LengthSquared(sv[i]-vieworg);
-      if (dist > nd) dist = nd;
+  Drawer->DrawSpriteLump(x1, y1, x2, y2, Tex, R_GetCachedTranslation(R_SetMenuPlayerTrans(TranslStart, TranslEnd, Color), nullptr), flip);
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::BuildVisibleObjectsList
+//
+//  this should be called after `RenderWorld()`
+//
+//  this is not called for "regular" renderer
+//
+//==========================================================================
+void VRenderLevelShared::BuildVisibleObjectsList () {
+  visibleObjects.reset();
+  #ifdef VVRENDER_FULL_ALIAS_MODEL_SHADOW_LIST
+  allShadowModelObjects.reset();
+  #endif
+
+  int RendStyle;
+  float Alpha;
+
+  if (r_dbg_thing_dump_vislist) GCon->Logf("=== VISIBLE THINGS ===");
+  for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
+    VEntity *mobj = *Ent;
+    if (!mobj->State || (mobj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) continue;
+    if (mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+    (*Ent)->NumRenderedShadows = 0; // for advanced renderer
+
+    #ifdef VVRENDER_FULL_ALIAS_MODEL_SHADOW_LIST
+    bool alphaDone = false;
+    // collect all things with models (we'll need them in advrender)
+    if (HasAliasModel(mobj->GetClass()->Name)) {
+      alphaDone = true;
+      if (!CalculateThingAlpha(mobj, RendStyle, Alpha)) continue; // invisible
+      // ignore translucent things, they cannot cast a shadow
+      if (RendStyle == STYLE_Normal && Alpha >= 1.0f) allShadowModelObjects.append(mobj);
     }
-#endif
+    #endif
+
+    // skip things in subsectors that are not visible
+    const unsigned SubIdx = (unsigned)(ptrdiff_t)(mobj->SubSector-Level->Subsectors);
+    if (!(BspVisThing[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
+
+    #ifdef VVRENDER_FULL_ALIAS_MODEL_SHADOW_LIST
+    if (!alphaDone)
+    #endif
+    {
+      if (!CalculateThingAlpha(mobj, RendStyle, Alpha)) continue; // invisible
+    }
+
+    if (r_dbg_thing_dump_vislist) GCon->Logf("  <%s> (%f,%f,%f) 0x%08x", *mobj->GetClass()->GetFullName(), mobj->Origin.x, mobj->Origin.y, mobj->Origin.z, mobj->EntityFlags);
+    // mark as visible, why not?
+    // use bsp visibility, to not mark "adjacent" things
+    if (BspVis[SubIdx>>3]&(1<<(SubIdx&7))) mobj->FlagsEx |= VEntity::EFEX_Rendered;
+    visibleObjects.append(mobj);
   }
 
-  //const float dist = fabsf(DotProduct(mid-vieworg, viewforward));
-  //float dist = Length(mid-vieworg);
-
-  trans_sprite_t &spr = trans_sprites[traspUsed++];
-  if (isSprite) memcpy(spr.Verts, sv, sizeof(TVec)*4);
-  spr.dist = dist;
-  spr.lump = lump;
-  spr.normal = normal;
-  spr.pdist = pdist;
-  spr.saxis = saxis;
-  spr.taxis = taxis;
-  spr.texorg = texorg;
-  spr.surf = surf;
-  spr.Alpha = Alpha;
-  spr.Additive = Additive;
-  spr.translation = translation;
-  spr.type = (isSprite ? 1 : 0);
-  spr.light = light;
-  spr.objid = objid;
-  spr.hangup = hangup;
-  spr.Fade = Fade;
-  spr.prio = priority;
+  // shrink list
+  if (visibleObjects.capacity() > 16384) {
+    if (visibleObjects.capacity()*2 >= visibleObjects.length()) {
+      visibleObjects.setLength(visibleObjects.length(), true); // resize
+    }
+  }
 }
 
 
 //==========================================================================
 //
-//  VRenderLevelShared::RenderTranslucentAliasModel
+//  VRenderLevelShared::QueueSprite
 //
 //==========================================================================
-void VRenderLevelShared::RenderTranslucentAliasModel (VEntity *mobj, vuint32 light, vuint32 Fade, float Alpha, bool Additive, float TimeFrac) {
-  if (!mobj) return; // just in case
-
-  // make room
-  if (traspUsed == traspSize) {
-    if (traspSize >= 0xfffffff) Sys_Error("Too many translucent entities");
-    traspSize += 0x10000;
-    trans_sprites = (trans_sprite_t *)Z_Realloc(trans_sprites, traspSize*sizeof(trans_sprites[0]));
-  }
-
-  //const float dist = fabsf(DotProduct(mobj->Origin-vieworg, viewforward));
-  const float dist = LengthSquared(mobj->Origin-vieworg);
-
-  trans_sprite_t &spr = trans_sprites[traspUsed++];
-  spr.Ent = mobj;
-  spr.light = light;
-  spr.Fade = Fade;
-  spr.Alpha = Alpha;
-  spr.Additive = Additive;
-  spr.dist = dist;
-  spr.type = 2;
-  spr.TimeFrac = TimeFrac;
-  spr.lump = -1; // has no sense
-  spr.objid = mobj->GetUniqueId();
-  spr.prio = 0; // normal priority
-  spr.hangup = 0;
-}
-
-
-//==========================================================================
-//
-//  VRenderLevelShared::RenderSprite
-//
-//==========================================================================
-void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fade, float Alpha, bool Additive, vuint32 seclight) {
+void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fade, float Alpha, bool Additive, vuint32 seclight) {
   int spr_type = thing->SpriteType;
 
   TVec sprorigin = thing->GetDrawOrigin();
@@ -312,7 +294,7 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
       break;
 
     default:
-      Sys_Error("RenderSprite: Bad sprite type %d", spr_type);
+      Sys_Error("QueueSprite: Bad sprite type %d", spr_type);
   }
 
   spritedef_t *sprdef;
@@ -539,7 +521,7 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
   // try to draw a model
   // if it's a script and it doesn't specify model for this frame, draw sprite instead
   if (!RenderAliasModel(mobj, light, Fade, Alpha, Additive, Pass)) {
-    RenderSprite(mobj, light, Fade, Alpha, Additive, seclight);
+    QueueSprite(mobj, light, Fade, Alpha, Additive, seclight);
   }
 }
 
@@ -564,573 +546,4 @@ void VRenderLevelShared::RenderMobjs (ERenderPass Pass) {
       RenderThing(*ent, Pass);
     }
   }
-}
-
-
-//==========================================================================
-//
-//  VRenderLevelShared::BuildVisibleObjectsList
-//
-//  this should be called after `RenderWorld()`
-//
-//  this is not called for "regular" renderer
-//
-//==========================================================================
-void VRenderLevelShared::BuildVisibleObjectsList () {
-  visibleObjects.reset();
-  #ifdef VVRENDER_FULL_ALIAS_MODEL_SHADOW_LIST
-  allShadowModelObjects.reset();
-  #endif
-
-  int RendStyle;
-  float Alpha;
-
-  if (r_dbg_thing_dump_vislist) GCon->Logf("=== VISIBLE THINGS ===");
-  for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
-    VEntity *mobj = *Ent;
-    if (!mobj->State || (mobj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) continue;
-    if (mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
-    (*Ent)->NumRenderedShadows = 0; // for advanced renderer
-
-    #ifdef VVRENDER_FULL_ALIAS_MODEL_SHADOW_LIST
-    bool alphaDone = false;
-    // collect all things with models (we'll need them in advrender)
-    if (HasAliasModel(mobj->GetClass()->Name)) {
-      alphaDone = true;
-      if (!CalculateThingAlpha(mobj, RendStyle, Alpha)) continue; // invisible
-      // ignore translucent things, they cannot cast a shadow
-      if (RendStyle == STYLE_Normal && Alpha >= 1.0f) allShadowModelObjects.append(mobj);
-    }
-    #endif
-
-    // skip things in subsectors that are not visible
-    const unsigned SubIdx = (unsigned)(ptrdiff_t)(mobj->SubSector-Level->Subsectors);
-    if (!(BspVisThing[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
-
-    #ifdef VVRENDER_FULL_ALIAS_MODEL_SHADOW_LIST
-    if (!alphaDone)
-    #endif
-    {
-      if (!CalculateThingAlpha(mobj, RendStyle, Alpha)) continue; // invisible
-    }
-
-    if (r_dbg_thing_dump_vislist) GCon->Logf("  <%s> (%f,%f,%f) 0x%08x", *mobj->GetClass()->GetFullName(), mobj->Origin.x, mobj->Origin.y, mobj->Origin.z, mobj->EntityFlags);
-    // mark as visible, why not?
-    // use bsp visibility, to not mark "adjacent" things
-    if (BspVis[SubIdx>>3]&(1<<(SubIdx&7))) mobj->FlagsEx |= VEntity::EFEX_Rendered;
-    visibleObjects.append(mobj);
-  }
-
-  // shrink list
-  if (visibleObjects.capacity() > 16384) {
-    if (visibleObjects.capacity()*2 >= visibleObjects.length()) {
-      visibleObjects.setLength(visibleObjects.length(), true); // resize
-    }
-  }
-}
-
-
-//==========================================================================
-//
-//  traspCmp
-//
-//==========================================================================
-extern "C" {
-  static int traspCmp (const void *a, const void *b, void *) {
-    if (a == b) return 0;
-    const VRenderLevelShared::trans_sprite_t *ta = (const VRenderLevelShared::trans_sprite_t *)a;
-    const VRenderLevelShared::trans_sprite_t *tb = (const VRenderLevelShared::trans_sprite_t *)b;
-
-    // non-translucent objects should come first, and
-    // additive ones should come last
-    bool didDistanceCheck = false;
-
-    // additive
-    if (ta->Additive && tb->Additive) {
-      // both additive, sort by distance to view origin (order doesn't matter, as long as it is consistent)
-      // but additive models should be sorted back-to-front, so use back-to-front, as with translucents
-      const float d0 = ta->dist;
-      const float d1 = tb->dist;
-      if (d0 < d1) return 1;
-      if (d0 > d1) return -1;
-      // same distance, do other checks
-      didDistanceCheck = true;
-    } else if (ta->Additive) {
-      // a is additive, b is not additive, so b should come first (a > b)
-      return 1;
-    } else if (tb->Additive) {
-      // a is not additive, b is additive, so a should come first (a < b)
-      return -1;
-    }
-
-    check(!ta->Additive);
-    check(!tb->Additive);
-
-    // translucent
-    const bool aTrans = (ta->Alpha < 1.0f);
-    const bool bTrans = (tb->Alpha < 1.0f);
-    if (aTrans && bTrans) {
-      // both translucent, sort by distance to view origin (nearest last)
-      const float d0 = ta->dist;
-      const float d1 = tb->dist;
-      if (d0 < d1) return 1; // a is nearer, so it is last (a > b)
-      if (d0 > d1) return -1; // b is nearer, so it is last (a < b)
-      // same distance, do other checks
-      didDistanceCheck = true;
-    } else if (aTrans) {
-      // a is translucent, b is not translucent; b first (a > b)
-      return 1;
-    } else if (bTrans) {
-      // a is not translucent, b is translucent; a first (a < b)
-      return -1;
-    }
-
-    // sort by object type
-    // first masked polys, then sprites, then alias models
-    // type 0: masked polys
-    // type 1: sprites
-    // type 2: alias models
-    const int typediff = (int)ta->type-(int)tb->type;
-    if (typediff) return typediff;
-
-    // distance again
-    if (!didDistanceCheck) {
-      // do nearest first here, so z-buffer will do some culling for us
-      //const float d0 = (ta->type == 1 ? ta->pdist : ta->dist);
-      //const float d1 = (tb->type == 1 ? tb->pdist : tb->dist);
-      const float d0 = ta->dist;
-      const float d1 = tb->dist;
-      if (d0 < d1) return -1; // a is nearest, so it is first (a < b)
-      if (d0 > d1) return 1; // b is nearest, so it is first (a > b)
-    }
-
-    // priority check
-    // higher priority comes first
-    if (ta->prio < tb->prio) return 1; // a has lower priority, it should come last (a > b)
-    if (ta->prio > tb->prio) return -1; // a has higher priority, it should come first (a < b)
-
-    if (ta->objid < tb->objid) return -1;
-    if (ta->objid > tb->objid) return 1;
-
-    // sort sprites by lump number, why not
-    if (ta->type == 1) {
-      if (ta->lump < tb->lump) return -1;
-      if (ta->lump > tb->lump) return 1;
-    }
-
-    // nothing to check anymore, consider equal
-    return 0;
-  }
-}
-
-
-//==========================================================================
-//
-//  VRenderLevelShared::DrawTranslucentPolys
-//
-//==========================================================================
-void VRenderLevelShared::DrawTranslucentPolys () {
-  if (traspUsed <= traspFirst) return; // nothing to do
-
-  // sort 'em
-  timsort_r(trans_sprites+traspFirst, traspUsed-traspFirst, sizeof(trans_sprites[0]), &traspCmp, nullptr);
-
-#define MAX_POFS  (10)
-  bool pofsEnabled = false;
-  int pofs = 0;
-  float lastpdist = -1e12f; // for sprites: use polyofs for the same dist
-  bool firstSprite = true;
-
-  // render 'em
-  for (int f = traspFirst; f < traspUsed; ++f) {
-    trans_sprite_t &spr = trans_sprites[f];
-    if (spr.type == 2) {
-      // alias model
-      if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); pofsEnabled = false; }
-      DrawEntityModel(spr.Ent, spr.light, spr.Fade, spr.Alpha, spr.Additive, spr.TimeFrac, RPASS_Normal);
-    } else if (spr.type) {
-      // sprite
-      if (r_sort_sprites && r_sprite_use_pofs && (firstSprite || lastpdist == spr.pdist)) {
-        lastpdist = spr.pdist;
-        if (!firstSprite) {
-          if (!pofsEnabled) {
-            // switch to next pofs
-            //if (++pofs == MAX_POFS) pofs = 0;
-            ++pofs;
-            glEnable(GL_POLYGON_OFFSET_FILL);
-            //glPolygonOffset(((float)pofs)/(float)MAX_POFS, -4);
-            glPolygonOffset(r_sprite_pslope, -(pofs*r_sprite_pofs)); // pull forward
-            pofsEnabled = true;
-          }
-        } else {
-          firstSprite = false;
-        }
-      } else {
-        lastpdist = spr.pdist;
-        if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); pofsEnabled = false; }
-        // reset pofs
-        pofs = 0;
-      }
-      Drawer->DrawSpritePolygon(spr.Verts, GTextureManager[spr.lump],
-                                spr.Alpha, spr.Additive, GetTranslation(spr.translation),
-                                ColorMap, spr.light, spr.Fade, spr.normal, spr.pdist,
-                                spr.saxis, spr.taxis, spr.texorg, spr.hangup);
-    } else {
-      // masked polygon
-      if (!IsAdvancedRenderer()) {
-        check(spr.surf);
-        if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); pofsEnabled = false; }
-        Drawer->DrawMaskedPolygon(spr.surf, spr.Alpha, spr.Additive);
-      }
-    }
-  }
-#undef MAX_POFS
-
-  if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); }
-
-  // reset list
-  traspUsed = traspFirst;
-}
-
-
-//==========================================================================
-//
-//  showPSpriteWarnings
-//
-//==========================================================================
-static bool showPSpriteWarnings () {
-  static int flag = -1;
-  if (flag < 0) flag = (GArgs.CheckParm("-Wpsprite") || GArgs.CheckParm("-Wall") ? 1 : 0);
-  return !!flag;
-}
-
-
-//==========================================================================
-//
-//  VRenderLevelShared::RenderPSprite
-//
-//==========================================================================
-void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameInfo mfi,
-  float PSP_DIST, vuint32 light, vuint32 Fade, float Alpha, bool Additive)
-{
-  spritedef_t *sprdef;
-  spriteframe_t *sprframe;
-  int lump;
-  bool flip;
-
-  if (Alpha <= 0.0002f) return; // no reason to render it, it is invisible
-  if (Alpha > 1.0f) Alpha = 1.0f;
-
-  // decide which patch to use
-  if ((vuint32)mfi.spriteIndex/*VSt->State->SpriteIndex*/ >= MAX_SPRITE_MODELS) {
-    if (showPSpriteWarnings()) {
-      GCon->Logf(NAME_Warning, "R_ProjectSprite: invalid sprite number %d", mfi.spriteIndex);
-    }
-    return;
-  }
-  sprdef = &sprites[mfi.spriteIndex/*VSt->State->SpriteIndex*/];
-
-  if (mfi.frame/*(VSt->State->Frame & VState::FF_FRAMEMASK)*/ >= sprdef->numframes) {
-    if (showPSpriteWarnings()) {
-      GCon->Logf(NAME_Warning, "R_ProjectSprite: invalid sprite frame %d : %d (max is %d)", mfi.spriteIndex, mfi.frame, sprdef->numframes);
-    }
-    return;
-  }
-  sprframe = &sprdef->spriteframes[mfi.frame/*VSt->State->Frame & VState::FF_FRAMEMASK*/];
-
-  lump = sprframe->lump[0];
-  if (lump < 0) {
-    if (showPSpriteWarnings()) {
-      GCon->Logf(NAME_Warning, "R_ProjectSprite: invalid sprite texture id %d in frame %d : %d", lump, mfi.spriteIndex, mfi.frame);
-    }
-    return;
-  }
-  flip = sprframe->flip[0];
-  VTexture *Tex = GTextureManager[lump];
-  if (!Tex) {
-    if (showPSpriteWarnings()) {
-      GCon->Logf(NAME_Warning, "R_ProjectSprite: invalid sprite texture id %d in frame %d : %d (the thing that should not be)", lump, mfi.spriteIndex, mfi.frame);
-    }
-    return;
-  }
-
-  int TexWidth = Tex->GetWidth();
-  int TexHeight = Tex->GetHeight();
-  int TexSOffset = Tex->SOffset;
-  int TexTOffset = Tex->TOffset;
-
-  //GCon->Logf("PSPRITE: '%s'; size=(%d,%d); ofs=(%d,%d)", *Tex->Name, TexWidth, TexHeight, TexSOffset, TexTOffset);
-
-  TVec dv[4];
-
-  float PSP_DISTI = 1.0f/PSP_DIST;
-  TVec sprorigin = vieworg+PSP_DIST*viewforward;
-
-  float sprx = 160.0f-VSt->SX+TexSOffset;
-  float spry = 100.0f-VSt->SY*R_GetAspectRatio()+TexTOffset;
-
-  spry -= cl->PSpriteSY;
-  //k8: this is not right, but meh...
-  if (fov > 90) spry -= (refdef.fovx-1.0f)*(aspect_ratio != 0 ? 100.0f : 110.0f);
-
-  //  1 / 160 = 0.00625f
-  TVec start = sprorigin-(sprx*PSP_DIST*0.00625f)*viewright;
-  TVec end = start+(TexWidth*PSP_DIST*0.00625f)*viewright;
-
-  //  1 / 160.0f * 120 / 100 = 0.0075f
-  const float symul = 1.0f/160.0f*120.0f/100.0f;
-  TVec topdelta = (spry*PSP_DIST*symul)*viewup;
-  TVec botdelta = topdelta-(TexHeight*PSP_DIST*symul)*viewup;
-  if (aspect_ratio != 1) {
-    topdelta *= 100.0f/120.0f;
-    botdelta *= 100.0f/120.0f;
-  }
-
-  dv[0] = start+botdelta;
-  dv[1] = start+topdelta;
-  dv[2] = end+topdelta;
-  dv[3] = end+botdelta;
-
-  TVec saxis(0, 0, 0);
-  TVec taxis(0, 0, 0);
-  TVec texorg(0, 0, 0);
-  if (flip) {
-    saxis = -(viewright*160*PSP_DISTI);
-    texorg = dv[2];
-  } else {
-    saxis = viewright*160*PSP_DISTI;
-    texorg = dv[1];
-  }
-       if (aspect_ratio == 0) taxis = -(viewup*160*PSP_DISTI);
-  else if (aspect_ratio == 1) taxis = -(viewup*100*4/3*PSP_DISTI);
-  else if (aspect_ratio == 2) taxis = -(viewup*100*16/9*PSP_DISTI);
-  else if (aspect_ratio > 2) taxis = -(viewup*100*16/10*PSP_DISTI);
-
-  Drawer->DrawSpritePolygon(dv, GTextureManager[lump], Alpha, Additive,
-    0, ColorMap, light, Fade, -viewforward,
-    DotProduct(dv[0], -viewforward), saxis, taxis, texorg, false);
-}
-
-
-//==========================================================================
-//
-//  VRenderLevelShared::RenderViewModel
-//
-//  FIXME: this doesn't work with "----" and "####" view states
-//
-//==========================================================================
-bool VRenderLevelShared::RenderViewModel (VViewState *VSt, vuint32 light,
-                                          vuint32 Fade, float Alpha, bool Additive)
-{
-  if (!r_view_models) return false;
-
-  TVec origin = vieworg+(VSt->SX-1.0f)*viewright/8.0f-(VSt->SY-32.0f)*viewup/6.0f;
-
-  float TimeFrac = 0;
-  if (VSt->State->Time > 0) {
-    TimeFrac = 1.0f-(VSt->StateTime/VSt->State->Time);
-    TimeFrac = midval(0.0f, TimeFrac, 1.0f);
-  }
-
-  return DrawAliasModel(nullptr, VSt->State->Outer->Name, origin, cl->ViewAngles, 1.0f, 1.0f,
-    VSt->State->getMFI(), (VSt->State->NextState ? VSt->State->NextState->getMFI() : VSt->State->getMFI()),
-    nullptr, 0, light, Fade, Alpha, Additive, true, TimeFrac, r_interpolate_frames,
-    RPASS_Normal);
-}
-
-
-//==========================================================================
-//
-//  VRenderLevelShared::DrawPlayerSprites
-//
-//==========================================================================
-void VRenderLevelShared::DrawPlayerSprites () {
-  if (!r_draw_psprites || r_chasecam) return;
-  if (!cl || !cl->MO) return;
-
-  int RendStyle = STYLE_Normal;
-  float Alpha = 1.0f;
-  bool Additive = false;
-
-  cl->MO->eventGetViewEntRenderParams(Alpha, RendStyle);
-
-  if (RendStyle == STYLE_SoulTrans) {
-    RendStyle = STYLE_Translucent;
-    Alpha = r_transsouls;
-  } else if (RendStyle == STYLE_OptFuzzy) {
-    RendStyle = (r_drawfuzz ? STYLE_Fuzzy : STYLE_Translucent);
-  }
-
-  switch (RendStyle) {
-    case STYLE_None: return;
-    case STYLE_Normal: Alpha = 1.0f; break;
-    case STYLE_Fuzzy: Alpha = FUZZY_ALPHA; break;
-    case STYLE_Add: Additive = true; break;
-    case STYLE_Stencil: break;
-    case STYLE_AddStencil: Additive = true; break;
-  }
-  //Alpha = midval(0.0f, Alpha, 1.0f);
-  if (Alpha <= 0.002f) return; // no reason to render it, it is invisible
-  if (Alpha > 1.0f) Alpha = 1.0f;
-
-  int ltxr = 0, ltxg = 0, ltxb = 0;
-  {
-    static VClass *eclass = nullptr;
-    if (!eclass) eclass = VClass::FindClass("Entity");
-    // check if we have any light at player's origin (rough), and owned by player
-    const dlight_t *dl = DLights;
-    for (int dlcount = MAX_DLIGHTS; dlcount--; ++dl) {
-      if (dl->die < Level->Time || dl->radius < 1.0f) continue;
-      if (!dl->Owner || (dl->Owner->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) || !dl->Owner->IsA(eclass)) continue;
-      VEntity *e = (VEntity *)dl->Owner;
-      if ((e->EntityFlags&VEntity::EF_IsPlayer) == 0) continue;
-      if (e != cl->MO) continue;
-      if ((e->Origin-dl->origin).length() > dl->radius*0.75f) continue;
-      ltxr += (dl->color>>16)&0xff;
-      ltxg += (dl->color>>8)&0xff;
-      ltxb += dl->color&0xff;
-    }
-  }
-
-  // add all active psprites
-  for (int i = 0; i < NUMPSPRITES; ++i) {
-    if (!cl->ViewStates[i].State) continue;
-
-    vuint32 light;
-    if (RendStyle == STYLE_Fuzzy) {
-      light = 0;
-    } else if (cl->ViewStates[i].State->Frame&VState::FF_FULLBRIGHT) {
-      light = 0xffffffff;
-    } else {
-      /*
-      light = LightPoint(vieworg, cl->MO->Radius, -1);
-      if (ltxr|ltxg|ltxb) {
-        //GCon->Logf("ltx=(%d,%d,%d)", ltxr, ltxg, ltxb);
-        int r = max2(ltxr, (int)((light>>16)&0xff));
-        int g = max2(ltxg, (int)((light>>8)&0xff));
-        int b = max2(ltxb, (int)(light&0xff));
-        light = (light&0xff000000u)|(((vuint32)clampToByte(r))<<16)|(((vuint32)clampToByte(g))<<8)|((vuint32)clampToByte(b));
-      }
-      */
-      if (ltxr|ltxg|ltxb) {
-        light = (0xff000000u)|(((vuint32)clampToByte(ltxr))<<16)|(((vuint32)clampToByte(ltxg))<<8)|((vuint32)clampToByte(ltxb));
-      } else {
-        light = LightPoint(vieworg, cl->MO->Radius, -1);
-      }
-      //GCon->Logf("ltx=(%d,%d,%d)", ltxr, ltxg, ltxb);
-      //light = (0xff000000u)|(((vuint32)clampToByte(ltxr))<<16)|(((vuint32)clampToByte(ltxg))<<8)|((vuint32)clampToByte(ltxb));
-    }
-
-    //FIXME: fake "solid color" with colored light for now
-    if (RendStyle == STYLE_Stencil || RendStyle == STYLE_AddStencil) {
-      light = (light&0xff000000u)|(cl->MO->StencilColor&0xffffffu);
-    }
-
-    vuint32 Fade = GetFade(SV_PointRegionLight(r_viewleaf->sector, cl->ViewOrg));
-
-    const float currSY = cl->ViewStates[i].SY;
-    float dur = cl->PSpriteWeaponLoweringDuration;
-    if (dur > 0.0f) {
-      float stt = cl->PSpriteWeaponLoweringStartTime;
-      float currt = Level->Time;
-      float t = currt-stt;
-      float prevSY = cl->PSpriteWeaponLowerPrev;
-      if (t >= 0.0f && t < dur) {
-        float ydelta = fabs(prevSY-currSY)*(t/dur);
-        //GCon->Logf("prev=%f; end=%f; curr=%f; dur=%f; t=%f; mul=%f; ydelta=%f", cl->PSpriteWeaponLowerPrev, currSY, prevSY+ydelta, dur, t, t/dur, ydelta);
-        if (prevSY < currSY) {
-          prevSY += ydelta;
-          //GCon->Logf("DOWN: prev=%f; end=%f; curr=%f; dur=%f; t=%f; mul=%f; ydelta=%f", cl->PSpriteWeaponLowerPrev, currSY, prevSY, dur, t, t/dur, ydelta);
-          if (prevSY >= currSY) {
-            prevSY = currSY;
-            cl->PSpriteWeaponLoweringDuration = 0.0f;
-          }
-        } else {
-          prevSY -= ydelta;
-          //GCon->Logf("UP: prev=%f; end=%f; curr=%f; dur=%f; t=%f; mul=%f; ydelta=%f", cl->PSpriteWeaponLowerPrev, currSY, prevSY, dur, t, t/dur, ydelta);
-          if (prevSY <= currSY) {
-            prevSY = currSY;
-            cl->PSpriteWeaponLoweringDuration = 0.0f;
-          }
-        }
-      } else {
-        prevSY = currSY;
-        cl->PSpriteWeaponLoweringDuration = 0.0f;
-      }
-      cl->ViewStates[i].SY = prevSY;
-    }
-
-    cl->ViewStates[i].SY += cl->ViewStates[i].OfsY;
-
-    if (!RenderViewModel(&cl->ViewStates[i], light, Fade, Alpha, Additive)) {
-      RenderPSprite(&cl->ViewStates[i], cl->getMFI(i), 3-i, light, Fade, Alpha, Additive);
-    }
-
-    cl->ViewStates[i].SY = currSY;
-  }
-}
-
-
-//==========================================================================
-//
-//  VRenderLevelShared::DrawCrosshair
-//
-//==========================================================================
-void VRenderLevelShared::DrawCrosshair () {
-  static int prevCH = -666;
-  int ch = (int)crosshair;
-  if (ch > 0 && ch < 10 && crosshair_alpha > 0.0f) {
-    static int handle = 0;
-    if (!handle || prevCH != ch) {
-      prevCH = ch;
-      handle = GTextureManager.AddPatch(VName(va("CROSHAI%i", ch), VName::AddLower8), TEXTYPE_Pic);
-      if (handle < 0) handle = 0;
-    }
-    if (handle > 0) {
-      //if (crosshair_alpha < 0.0f) crosshair_alpha = 0.0f;
-      if (crosshair_alpha > 1.0f) crosshair_alpha = 1.0f;
-      int cy = (screenblocks < 11 ? (VirtualHeight-sb_height)/2 : VirtualHeight/2);
-      cy += r_crosshair_yofs;
-      bool oldflt = gl_pic_filtering;
-      gl_pic_filtering = false;
-      R_DrawPic(VirtualWidth/2, cy, handle, crosshair_alpha);
-      gl_pic_filtering = oldflt;
-    }
-  }
-}
-
-
-//==========================================================================
-//
-//  R_DrawSpritePatch
-//
-//==========================================================================
-void R_DrawSpritePatch (float x, float y, int sprite, int frame, int rot,
-                        int TranslStart, int TranslEnd, int Color, float scale,
-                        bool ignoreVScr)
-{
-  bool flip;
-  int lump;
-
-  spriteframe_t *sprframe = &sprites[sprite].spriteframes[frame&VState::FF_FRAMEMASK];
-  flip = sprframe->flip[rot];
-  lump = sprframe->lump[rot];
-  VTexture *Tex = GTextureManager[lump];
-  if (!Tex) return; // just in case
-
-  (void)Tex->GetWidth();
-
-  float x1 = x-Tex->SOffset*scale;
-  float y1 = y-Tex->TOffset*scale;
-  float x2 = x1+Tex->GetWidth()*scale;
-  float y2 = y1+Tex->GetHeight()*scale;
-
-  if (!ignoreVScr) {
-    x1 *= fScaleX;
-    y1 *= fScaleY;
-    x2 *= fScaleX;
-    y2 *= fScaleY;
-  }
-
-  Drawer->DrawSpriteLump(x1, y1, x2, y2, Tex, R_GetCachedTranslation(R_SetMenuPlayerTrans(TranslStart, TranslEnd, Color), nullptr), flip);
 }

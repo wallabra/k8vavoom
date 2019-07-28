@@ -174,6 +174,8 @@ set(RENDERBASE_SOURCES
   render/r_surf.cpp
   render/r_surf_adv.cpp
   render/r_surf_reg.cpp
+  render/r_maskqueue.cpp
+  render/r_psprites.cpp
   render/r_things.cpp
   render/r_things_adv.cpp
 )
