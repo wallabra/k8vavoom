@@ -124,7 +124,6 @@ private:
 
   // stream music player
   bool MusicEnabled;
-  bool StreamPlaying;
   VStreamMusicPlayer *StreamMusicPlayer;
 
   // list of currently playing sounds
@@ -220,7 +219,6 @@ VAudio::VAudio ()
   : MaxSoundDist(4096)
   , MapSong(NAME_None)
   , MusicEnabled(true)
-  , StreamPlaying(false)
   , StreamMusicPlayer(nullptr)
   , NumChannels(0)
   , ChanUsed(0)
@@ -943,11 +941,10 @@ static int FindMusicLump (const char *songName) {
 void VAudio::PlaySong (const char *Song, bool Loop) {
   static const char *ExtraExts[] = { "opus", "ogg", "flac", "mp3", nullptr };
 
-  if (!Song || !Song[0]) return;
+  if (!Song || !Song[0] || !StreamMusicPlayer) return;
 
-  bool wasPlaying = StreamPlaying;
-  if (StreamPlaying) StreamMusicPlayer->Stop();
-  StreamPlaying = false;
+  bool wasPlaying = StreamMusicPlayer->IsPlaying();
+  if (wasPlaying) StreamMusicPlayer->Stop();
 
   if ((Song[0] == '*' && !Song[1]) ||
       VStr::strEquCI(Song, "none") ||
@@ -1068,7 +1065,6 @@ void VAudio::PlaySong (const char *Song, bool Loop) {
     GCon->Logf("starting song '%s' with codec '%s'", *W_FullLumpName(Lump), codecName);
     // start playing streamed music
     StreamMusicPlayer->Play(Codec, Song, Loop);
-    StreamPlaying = true;
   } else {
     GCon->Logf("couldn't find codec for song '%s'", *W_FullLumpName(Lump));
     delete Strm;
@@ -1130,22 +1126,22 @@ void VAudio::CmdMusic (const TArray<VStr> &Args) {
   }
 
   if (command.ICmp("pause") == 0) {
-    if (StreamPlaying) StreamMusicPlayer->Pause();
+    StreamMusicPlayer->Pause();
     return;
   }
 
   if (command.ICmp("resume") == 0) {
-    if (StreamPlaying) StreamMusicPlayer->Resume();
+    StreamMusicPlayer->Resume();
     return;
   }
 
   if (command.ICmp("stop") == 0) {
-    if (StreamPlaying) StreamMusicPlayer->Stop();
+    StreamMusicPlayer->Stop();
     return;
   }
 
   if (command.ICmp("info") == 0) {
-    if (StreamPlaying && StreamMusicPlayer->IsPlaying()) {
+    if (StreamMusicPlayer->IsPlaying()) {
       GCon->Logf("Currently %s %s.", (StreamMusicPlayer->CurrLoop ? "looping" : "playing"), *StreamMusicPlayer->CurrSong);
     } else {
       GCon->Log("No song currently playing");
@@ -1422,8 +1418,32 @@ void VSoundSeqNode::Serialise (VStream &Strm) {
 //  COMMAND Music
 //
 //==========================================================================
-COMMAND(Music) {
+COMMAND_WITH_AC(Music) {
   if (GAudio) ((VAudio *)GAudio)->CmdMusic(Args);
+}
+
+
+//==========================================================================
+//
+//  COMMAND_AC Music
+//
+//==========================================================================
+COMMAND_AC(Music) {
+  TArray<VStr> list;
+  VStr prefix = (aidx < args.length() ? args[aidx] : VStr());
+  if (aidx == 1) {
+    list.append("info");
+    list.append("loop");
+    list.append("off");
+    list.append("on");
+    list.append("pause");
+    list.append("play");
+    list.append("resume");
+    list.append("stop");
+    return AutoCompleteFromList(prefix, list, true); // return unchanged as empty
+  } else {
+    return VStr::EmptyString;
+  }
 }
 
 
