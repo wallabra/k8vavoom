@@ -219,7 +219,12 @@ bool FluidManager::needRestart = false;
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern "C" {
-  static void shutTheFuckUpFluid (int level, char *message, void *data) {
+  #if (FLUIDSYNTH_VERSION_MAJOR > 1)
+  # define VV_FLUID_LOG_CONST  const
+  #else
+  # define VV_FLUID_LOG_CONST
+  #endif
+  static void shutTheFuckUpFluid (int level, VV_FLUID_LOG_CONST char *message, void *data) {
     switch (level) {
       case FLUID_PANIC:
         GCon->Logf(NAME_Error, "FluidSynth PANIC: %s", message);
