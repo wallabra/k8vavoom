@@ -68,7 +68,7 @@ if(NOT CMAKE_COMPILER_IS_GNUCC)
   message(WARNING "Your compiler is not GNU, please, don't report bugs.")
   set(K8_UNFUCK_AS_GCC OFF)
 
-  if(CMAKE_CXX_COMPILER MATCHES ".*clang")
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     message(WARNING "And, by the way. clang sux.")
     set(K8_UNFUCK_AS_SHITLANG ON)
   endif()
