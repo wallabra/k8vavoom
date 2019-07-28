@@ -134,87 +134,62 @@ bool VAdvancedRenderLevel::IsTouchedByLight (VEntity *ent) {
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::ResetMobjsLightCount
+//  VAdvancedRenderLevel::BuildMobjsInCurrLight
 //
 //==========================================================================
-void VAdvancedRenderLevel::ResetMobjsLightCount (bool first, bool doShadows) {
-  if (!r_draw_mobjs || !r_models) {
-    mobjAffected.reset();
-    return;
-  }
-  if (first) {
-    // first time, build new list
-    mobjAffected.reset();
-    // if we won't render thing shadows, don't bother trying invisible things
-    if (!doShadows || !r_model_shadows) {
-      // we already have a list of visible things built
-      if (r_dbg_advthing_dump_actlist) GCon->Log("=== counting objects ===");
-      VEntity **ent = visibleObjects.ptr();
-      for (int count = visibleObjects.length(); count--; ++ent) {
-        //if ((*ent)->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
-        //if (!(*ent)->State) continue;
-        if (!HasAliasModel((*ent)->GetClass()->Name)) continue;
+void VAdvancedRenderLevel::BuildMobjsInCurrLight (bool doShadows) {
+  mobjsInCurrLight.reset();
+  if (!r_draw_mobjs || !r_models) return;
+  // build new list
+  // if we won't render thing shadows, don't bother trying invisible things
+  if (!doShadows || !r_model_shadows) {
+    // we already have a list of visible things built
+    if (r_dbg_advthing_dump_actlist) GCon->Log("=== counting objects ===");
+    VEntity **ent = visibleObjects.ptr();
+    for (int count = visibleObjects.length(); count--; ++ent) {
+      if (!HasAliasModel((*ent)->GetClass()->Name)) continue;
+      if (!IsTouchedByLight(*ent)) continue;
+      if (r_dbg_advthing_dump_actlist) GCon->Logf("  <%s> (%f,%f,%f)", *(*ent)->GetClass()->GetFullName(), (*ent)->Origin.x, (*ent)->Origin.y, (*ent)->Origin.z);
+      mobjsInCurrLight.append(*ent);
+    }
+  } else {
+    // we need to render shadows, so process all things
+    #ifdef VVRENDER_FULL_ALIAS_MODEL_SHADOW_LIST
+      VEntity **ent = allShadowModelObjects.ptr();
+      for (int count = allShadowModelObjects.length(); count--; ++ent) {
         if (!IsTouchedByLight(*ent)) continue;
-        if (r_dbg_advthing_dump_actlist) GCon->Logf("  <%s> (%f,%f,%f)", *(*ent)->GetClass()->GetFullName(), (*ent)->Origin.x, (*ent)->Origin.y, (*ent)->Origin.z);
-        mobjAffected.append(*ent);
+        //if (r_dbg_advthing_dump_actlist) GCon->Logf("  <%s> (%f,%f,%f)", *(*ent)->GetClass()->GetFullName(), (*ent)->Origin.x, (*ent)->Origin.y, (*ent)->Origin.z);
+        mobjsInCurrLight.append(*ent);
       }
-    } else {
-      // we need to render shadows, so process all things
-      #ifdef VVRENDER_FULL_ALIAS_MODEL_SHADOW_LIST
-        VEntity **ent = allShadowModelObjects.ptr();
-        for (int count = allShadowModelObjects.length(); count--; ++ent) {
-          //if ((*ent)->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
-          //if (!(*ent)->State) continue;
-          //if (!HasAliasModel((*ent)->GetClass()->Name)) continue;
-          if (!IsTouchedByLight(*ent)) continue;
-          //if (r_dbg_advthing_dump_actlist) GCon->Logf("  <%s> (%f,%f,%f)", *(*ent)->GetClass()->GetFullName(), (*ent)->Origin.x, (*ent)->Origin.y, (*ent)->Origin.z);
-          mobjAffected.append(*ent);
-        }
-      #else
-        const int xl = MapBlock(CurrLightPos.x-CurrLightRadius-Level->BlockMapOrgX-MAXRADIUS);
-        const int xh = MapBlock(CurrLightPos.x+CurrLightRadius-Level->BlockMapOrgX+MAXRADIUS);
-        const int yl = MapBlock(CurrLightPos.y-CurrLightRadius-Level->BlockMapOrgY-MAXRADIUS);
-        const int yh = MapBlock(CurrLightPos.y+CurrLightRadius-Level->BlockMapOrgY+MAXRADIUS);
-        int RendStyle;
-        float Alpha;
-        for (int bx = xl; bx <= xh; ++bx) {
-          for (int by = yl; by <= yh; ++by) {
-            for (VBlockThingsIterator It(Level, bx, by); It; ++It) {
-              VEntity *mobj = *It;
-              if (!mobj->State || (mobj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) continue;
-              if (mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
-              if (!mobj->SubSector) continue; // just in case
-              // skip things in subsectors that are not visible
-              const int SubIdx = (int)(ptrdiff_t)(mobj->SubSector-Level->Subsectors);
-              if (!(LightBspVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
-              if (mobj->Radius < 1) continue;
-              if (!IsTouchedByLight(mobj)) continue;
-              if (!HasAliasModel(mobj->GetClass()->Name)) continue;
-              if (!CalculateThingAlpha(mobj, RendStyle, Alpha)) continue; // invisible
-              // ignore translucent things, they cannot cast a shadow
-              if (RendStyle == STYLE_Normal && Alpha >= 1.0f) {
-                mobjAffected.append(mobj);
-              }
+    #else
+      const int xl = MapBlock(CurrLightPos.x-CurrLightRadius-Level->BlockMapOrgX-MAXRADIUS);
+      const int xh = MapBlock(CurrLightPos.x+CurrLightRadius-Level->BlockMapOrgX+MAXRADIUS);
+      const int yl = MapBlock(CurrLightPos.y-CurrLightRadius-Level->BlockMapOrgY-MAXRADIUS);
+      const int yh = MapBlock(CurrLightPos.y+CurrLightRadius-Level->BlockMapOrgY+MAXRADIUS);
+      int RendStyle;
+      float Alpha;
+      for (int bx = xl; bx <= xh; ++bx) {
+        for (int by = yl; by <= yh; ++by) {
+          for (VBlockThingsIterator It(Level, bx, by); It; ++It) {
+            VEntity *mobj = *It;
+            if (!mobj->State || (mobj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) continue;
+            if (mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+            if (!mobj->SubSector) continue; // just in case
+            // skip things in subsectors that are not visible
+            const int SubIdx = (int)(ptrdiff_t)(mobj->SubSector-Level->Subsectors);
+            if (!(LightBspVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
+            if (mobj->Radius < 1) continue;
+            if (!IsTouchedByLight(mobj)) continue;
+            if (!HasAliasModel(mobj->GetClass()->Name)) continue;
+            if (!CalculateThingAlpha(mobj, RendStyle, Alpha)) continue; // invisible
+            // ignore translucent things, they cannot cast a shadow
+            if (RendStyle == STYLE_Normal && Alpha >= 1.0f) {
+              mobjsInCurrLight.append(mobj);
             }
           }
         }
-      #endif
-    }
-  } else {
-    // no need to do anything here, as the list will be reset for each new light
-    /*
-    int count = mobjAffected.length();
-    if (!count) return;
-    VEntity **entp = mobjAffected.ptr();
-    for (; count--; ++entp) {
-      VEntity *ent = *entp;
-      if (ent->NumRenderedShadows == 0) continue; // no need to do anything
-      if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
-      if (!ent->State) continue;
-      if (!IsTouchedByLight(ent)) continue;
-      ent->NumRenderedShadows = 0;
-    }
-    */
+      }
+    #endif
   }
 }
 
@@ -320,7 +295,6 @@ void VAdvancedRenderLevel::RenderThingLight (VEntity *mobj) {
   float Alpha, TimeFrac;
   bool Additive;
   if (!SetupRenderStyleAndTime(mobj, RendStyle, Alpha, Additive, TimeFrac)) return;
-
   DrawEntityModel(mobj, 0xffffffff, 0, Alpha, Additive, TimeFrac, RPASS_Light);
 }
 
@@ -329,17 +303,11 @@ void VAdvancedRenderLevel::RenderThingLight (VEntity *mobj) {
 //
 //  VAdvancedRenderLevel::RenderMobjsLight
 //
-//  can use `mobjAffected`
-//
 //==========================================================================
 void VAdvancedRenderLevel::RenderMobjsLight () {
   if (!r_draw_mobjs || !r_models || !r_model_light) return;
   if (!r_dbg_advthing_draw_light) return;
-  int count = mobjAffected.length();
-  if (!count) return;
-  VEntity **entp = mobjAffected.ptr();
-  for (; count--; ++entp) {
-    VEntity *ent = *entp;
+  for (auto &&ent : mobjsInCurrLight) {
     if (ent == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) continue; // don't draw camera actor
     //if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
     //if (!ent->State) continue;
@@ -363,7 +331,6 @@ void VAdvancedRenderLevel::RenderThingShadow (VEntity *mobj) {
   float Alpha, TimeFrac;
   bool Additive;
   if (!SetupRenderStyleAndTime(mobj, RendStyle, Alpha, Additive, TimeFrac)) return;
-
   //GCon->Logf("THING SHADOW! (%s)", *mobj->GetClass()->GetFullName());
   DrawEntityModel(mobj, 0xffffffff, 0, Alpha, Additive, TimeFrac, RPASS_ShadowVolumes);
 }
@@ -373,18 +340,11 @@ void VAdvancedRenderLevel::RenderThingShadow (VEntity *mobj) {
 //
 //  VAdvancedRenderLevel::RenderMobjsShadow
 //
-//  can use `mobjAffected`
-//
 //==========================================================================
 void VAdvancedRenderLevel::RenderMobjsShadow (VEntity *owner, vuint32 dlflags) {
   if (!r_draw_mobjs || !r_models || !r_model_shadows) return;
   if (!r_dbg_advthing_draw_shadow) return;
-  int count = mobjAffected.length();
-  //GCon->Logf("THING SHADOWS: %d", count);
-  if (!count) return;
-  VEntity **entp = mobjAffected.ptr();
-  for (; count--; ++entp) {
-    VEntity *ent = *entp;
+  for (auto &&ent : mobjsInCurrLight) {
     if (ent == owner && (dlflags&dlight_t::NoSelfShadow)) continue;
     if (ent->NumRenderedShadows > r_max_model_shadows) continue; // limit maximum shadows for this Entity
     //if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;

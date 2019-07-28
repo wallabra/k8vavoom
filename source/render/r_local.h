@@ -872,7 +872,9 @@ public:
 class VAdvancedRenderLevel : public VRenderLevelShared {
 private:
   vuint32 CurrLightColor;
-  TArray<VEntity *> mobjAffected; // built in `ResetMobjsLightCount()`
+  // built in `BuildMobjsInCurrLight()`
+  // used in rendering of shadow and light things (only)
+  TArray<VEntity *> mobjsInCurrLight;
   int LightsRendered;
 
 protected:
@@ -922,7 +924,7 @@ protected:
                            TVec coneDir=TVec(0.0f, 0.0f, 0.0f), float coneAngle=0.0f);
 
   // things
-  void ResetMobjsLightCount (bool first, bool doShadows); // if `first` is true, build array of affected entities
+  void BuildMobjsInCurrLight (bool doShadows);
   void RenderThingAmbient (VEntity*);
   void RenderMobjsAmbient ();
   void RenderThingTextures (VEntity*);

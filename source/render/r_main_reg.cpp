@@ -27,8 +27,6 @@
 #include "gamedefs.h"
 #include "r_local.h"
 
-static VCvarB r_reg_disable_things("r_reg_disable_things", false, "Disable rendering of things (regular renderer).", 0/*CVAR_Archive*/);
-//extern VCvarB r_disable_world_update;
 
 extern int light_reset_surface_cache; // in r_light_reg.cpp
 
@@ -74,11 +72,9 @@ void VRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *Range) {
   RenderWorld(RD, Range);
   if (light_reset_surface_cache != 0) return;
 
-  if (!r_reg_disable_things) {
-    //k8: no need to build list here, as things only processed once
-    //BuildVisibleObjectsList();
-    RenderMobjs(RPASS_Normal);
-  }
+  //k8: no need to build list here, as things only processed once
+  //BuildVisibleObjectsList();
+  RenderMobjs(RPASS_Normal);
 
   DrawParticles();
 

@@ -889,7 +889,7 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
   float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
 #endif
 
-  ResetMobjsLightCount(true, allowShadows);
+  BuildMobjsInCurrLight(allowShadows);
 
   // if we want to scissor on geometry, check if any lit model is out of our light bbox.
   // stop right here! say, is there ANY reason to not limit light box with map geometry?
@@ -898,9 +898,7 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
   // any geometry at all. to somewhat ease this case, rebuild light box when the light
   // didn't touched anything.
   if (allowShadows && checkModels) {
-    int count = mobjAffected.length();
-    if (!count) return; // nothing to do, as it is guaranteed that light cannot touch map geometry
-    VEntity **entp = mobjAffected.ptr();
+    if (mobjsInCurrLight.length() == 0) return; // nothing to do, as it is guaranteed that light cannot touch map geometry
     float xbbox[6] = {0};
     /*
     xbbox[0+0] = LitBBox[0].x;
@@ -911,8 +909,7 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
     xbbox[3+2] = LitBBox[1].z;
     */
     bool wasHit = false;
-    for (; count--; ++entp) {
-      VEntity *ment = *entp;
+    for (auto &&ment : mobjsInCurrLight) {
       if (ment == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) continue; // don't draw camera actor
       // skip things in subsectors that are not visible
       const int SubIdx = (int)(ptrdiff_t)(ment->SubSector-Level->Subsectors);
@@ -1000,7 +997,6 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
     }
     Drawer->BeginModelsShadowsPass(CurrLightPos, CurrLightRadius);
     RenderMobjsShadow(ent, dlflags);
-    ResetMobjsLightCount(false, allowShadows);
   }
   Drawer->EndLightShadowVolumes();
 
@@ -1031,7 +1027,6 @@ void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, co
 #endif
   Drawer->BeginModelsLightPass(CurrLightPos, CurrLightRadius, LightMin, Color, coneDir, coneAngle);
   RenderMobjsLight();
-  ResetMobjsLightCount(false, allowShadows);
 
   //if (hasScissor) Drawer->DebugRenderScreenRect(scoord[0], scoord[1], scoord[2], scoord[3], 0x7f007f00);
 
