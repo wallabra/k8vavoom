@@ -382,7 +382,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
 
   //if (Fade != FADE_LIGHT) GCon->Logf("<%s>: Fade=0x%08x", *thing->GetClass()->GetFullName(), Fade);
 
-  if (Alpha >= 1.0f && !Additive && Tex->isTranslucent()) Alpha = 0.9999;
+  if (Alpha >= 1.0f && !Additive && Tex->isTranslucent()) Alpha = 0.9999f;
 
   if (Alpha < 1.0f || Additive || r_sort_sprites) {
     int priority = 0;
@@ -441,12 +441,11 @@ extern "C" {
       return -1;
     }
 
-    check(!ta->Additive);
-    check(!tb->Additive);
+    // additive still may be set here; assume that additive surface is not transparent
 
     // translucent
-    const bool aTrans = (ta->Alpha < 1.0f);
-    const bool bTrans = (tb->Alpha < 1.0f);
+    const bool aTrans = (!ta->Additive && ta->Alpha < 1.0f);
+    const bool bTrans = (!tb->Additive && tb->Alpha < 1.0f);
     if (aTrans && bTrans) {
       // both translucent, sort by distance to view origin (nearest last)
       const float d0 = ta->dist;
