@@ -94,6 +94,9 @@ public:
   virtual void StopAllSequences () override;
   virtual void SerialiseSounds (VStream &Strm) override;
 
+  // returns codec or nullptr
+  virtual VAudioCodec *LoadSongInternal (const char *Song, bool wasPlaying) override;
+
 private:
   enum { MAX_CHANNELS = 256 };
 
@@ -198,6 +201,8 @@ static VCvarF snd_random_pitch_boost("snd_random_pitch_boost", "1", "Random pitc
 
 VCvarI snd_mid_player("snd_mid_player", "0", "MIDI player type (0:Timidity; 1:FluidSynth; -1:none)", CVAR_Archive|CVAR_PreInit);
 VCvarI snd_mod_player("snd_mod_player", "2", "Module player type", CVAR_Archive);
+
+static VCvarB snd_music_background_load("snd_music_background_load", true, "Load music in the background thread?", CVAR_Archive);
 
 
 //==========================================================================
@@ -935,16 +940,13 @@ static int FindMusicLump (const char *songName) {
 
 //==========================================================================
 //
-//  VAudio::PlaySong
+//  VAudio::LoadSongInternal
 //
 //==========================================================================
-void VAudio::PlaySong (const char *Song, bool Loop) {
+VAudioCodec *VAudio::LoadSongInternal (const char *Song, bool wasPlaying) {
   static const char *ExtraExts[] = { "opus", "ogg", "flac", "mp3", nullptr };
 
-  if (!Song || !Song[0] || !StreamMusicPlayer) return;
-
-  bool wasPlaying = StreamMusicPlayer->IsPlaying();
-  if (wasPlaying) StreamMusicPlayer->Stop();
+  if (!Song || !Song[0]) return nullptr;
 
   if ((Song[0] == '*' && !Song[1]) ||
       VStr::strEquCI(Song, "none") ||
@@ -952,7 +954,7 @@ void VAudio::PlaySong (const char *Song, bool Loop) {
   {
     // this looks like common "stop song" action
     if (wasPlaying) GCon->Log("stopped current song");
-    return;
+    return nullptr;
   }
 
 #if 0
@@ -984,7 +986,7 @@ void VAudio::PlaySong (const char *Song, bool Loop) {
         const VStr &fname = N->GetAttribute("file");
         if (fname.length() == 0 || fname.strEquCI("none")) {
           delete Doc;
-          return;
+          return nullptr;
         }
         Lump = W_CheckNumForFileName(fname);
         if (Lump >= 0) break;
@@ -1007,7 +1009,7 @@ void VAudio::PlaySong (const char *Song, bool Loop) {
       }
     }
     if (mal && (Lump < 0 || mal->fileid >= W_LumpFile(Lump))) {
-      if (mal->newName == NAME_None) return; // replaced with nothing
+      if (mal->newName == NAME_None) return nullptr; // replaced with nothing
       int l2 = FindMusicLump(*mal->newName);
       if (Lump < 0 || (l2 >= 0 && mal->fileid >= W_LumpFile(l2))) {
         Lump = l2;
@@ -1018,7 +1020,7 @@ void VAudio::PlaySong (const char *Song, bool Loop) {
 
   if (Lump < 0) {
     GCon->Logf(NAME_Warning, "Can't find song \"%s\"", Song);
-    return;
+    return nullptr;
   }
 
   // get music volume for this song
@@ -1029,7 +1031,7 @@ void VAudio::PlaySong (const char *Song, bool Loop) {
   if (Strm->TotalSize() < 4) {
     GCon->Logf(NAME_Warning, "Lump '%s' for song \"%s\" is too small (%d)", *W_FullLumpName(Lump), Song, Strm->TotalSize());
     delete Strm;
-    return;
+    return nullptr;
   }
 
   vuint8 Hdr[4];
@@ -1045,7 +1047,7 @@ void VAudio::PlaySong (const char *Song, bool Loop) {
     delete Strm;
     if (!MidLength) {
       delete MidStrm;
-      return;
+      return nullptr;
     }
     MidStrm->Seek(0);
     MidStrm->BeginRead();
@@ -1061,13 +1063,37 @@ void VAudio::PlaySong (const char *Song, bool Loop) {
     if (Codec) codecName = Desc->Description;
   }
 
-  if (StreamMusicPlayer && Codec) {
+  if (Codec) {
     GCon->Logf("starting song '%s' with codec '%s'", *W_FullLumpName(Lump), codecName);
     // start playing streamed music
+    //StreamMusicPlayer->Play(Codec, Song, Loop);
+    return Codec;
+  }
+
+  GCon->Logf("couldn't find codec for song '%s'", *W_FullLumpName(Lump));
+  delete Strm;
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VAudio::PlaySong
+//
+//==========================================================================
+void VAudio::PlaySong (const char *Song, bool Loop) {
+  if (!Song || !Song[0] || !StreamMusicPlayer) return;
+
+  if (snd_music_background_load) {
+  }
+
+  bool wasPlaying = StreamMusicPlayer->IsPlaying();
+  if (wasPlaying) StreamMusicPlayer->Stop();
+
+  VAudioCodec *Codec = LoadSongInternal(Song, wasPlaying);
+
+  if (Codec && StreamMusicPlayer) {
     StreamMusicPlayer->Play(Codec, Song, Loop);
-  } else {
-    GCon->Logf("couldn't find codec for song '%s'", *W_FullLumpName(Lump));
-    delete Strm;
   }
 }
 

@@ -187,42 +187,46 @@ private:
 //
 //  Main audio management class.
 //
-class VAudioPublic : public VInterface
-{
+class VAudioCodec;
+class VAudioPublic : public VInterface {
 public:
-  //  Top level methods.
-  virtual void Init() = 0;
-  virtual void Shutdown() = 0;
+  // top level methods
+  virtual void Init () = 0;
+  virtual void Shutdown () = 0;
 
-  //  Playback of sound effects
-  virtual void PlaySound(int, const TVec&, const TVec&, int, int, float,
-    float, bool) = 0;
-  virtual void StopSound(int, int) = 0;
-  virtual void StopAllSound() = 0;
-  virtual bool IsSoundPlaying(int, int) = 0;
+  // playback of sound effects
+  virtual void PlaySound (int, const TVec&, const TVec&, int, int, float, float, bool) = 0;
+  virtual void StopSound (int, int) = 0;
+  virtual void StopAllSound () = 0;
+  virtual bool IsSoundPlaying (int, int) = 0;
 
-  //  Music and general sound control
-  virtual void StartSong(VName, bool) = 0;
-  virtual void PauseSound() = 0;
-  virtual void ResumeSound() = 0;
-  virtual void Start() = 0;
-  virtual void MusicChanged() = 0;
-  virtual void UpdateSounds() = 0;
+  // ,usic and general sound control
+  virtual void StartSong (VName, bool) = 0;
+  virtual void PauseSound () = 0;
+  virtual void ResumeSound () = 0;
+  virtual void Start () = 0;
+  virtual void MusicChanged () = 0;
+  virtual void UpdateSounds () = 0;
 
   //  Sound sequences
-  virtual void StartSequence(int, const TVec&, VName, int) = 0;
-  virtual void AddSeqChoice(int, VName) = 0;
-  virtual void StopSequence(int) = 0;
-  virtual void UpdateActiveSequences(float) = 0;
-  virtual void StopAllSequences() = 0;
-  virtual void SerialiseSounds(VStream&) = 0;
+  virtual void StartSequence (int, const TVec &, VName, int) = 0;
+  virtual void AddSeqChoice (int, VName) = 0;
+  virtual void StopSequence (int) = 0;
+  virtual void UpdateActiveSequences (float) = 0;
+  virtual void StopAllSequences () = 0;
+  virtual void SerialiseSounds (VStream &) = 0;
+
+  // returns codec or nullptr
+  virtual VAudioCodec *LoadSongInternal (const char *Song, bool wasPlaying) = 0;
 
   // WARNING! this must be called from the main thread, i.e.
   //          from the thread that calls `PlaySound*()` API!
   virtual void NotifySoundLoaded (int sound_id, bool success) = 0;
 
-  static VAudioPublic *Create();
+  static VAudioPublic *Create ();
 };
+
+
 extern VCvarI snd_mid_player;
 extern VCvarI snd_mod_player;
 

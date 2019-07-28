@@ -344,6 +344,7 @@ public:
   mythread_cond stpCondPong;
   float lastVolume;
   bool threadInited;
+  char namebuf[1024];
 
 public:
   bool StrmOpened;
@@ -393,6 +394,10 @@ public:
     STP_IsPlaying, // check if current stream is playing
     STP_SetPitch, // change stream pitch
     STP_SetVolume,
+    // the following two commands will replace current music with the new one
+    // music name is in `namebuf`
+    //STP_PlaySong,
+    //STP_PlaySongLooped,
   };
   volatile STPCommand stpcmd;
   volatile bool stpIsPlaying; // it will return `STP_IsPlaying` result here
