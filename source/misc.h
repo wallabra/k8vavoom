@@ -48,8 +48,8 @@ public:
 };
 
 // error logs
-extern FOutputDevice *GLogSysError;
-extern FOutputDevice *GLogHostError;
+//extern FOutputDevice *GLogSysError;
+//extern FOutputDevice *GLogHostError;
 
 
 __attribute__((warn_unused_result)) int superatoi (const char *s);

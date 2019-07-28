@@ -36,6 +36,7 @@ BJPRNGCtx g_bjprng_ctx;
 
 
 #if !defined(VCC_STANDALONE_EXECUTOR)
+/*
 class VLogSysError : public FOutputDevice {
 public:
   virtual void Serialise (const char *V, EName Event) override;
@@ -52,6 +53,7 @@ static VLogHostError LogHostError;
 
 FOutputDevice *GLogSysError = &LogSysError;
 FOutputDevice *GLogHostError = &LogHostError;
+*/
 
 
 //==========================================================================
@@ -94,9 +96,11 @@ __attribute__((format(printf, 3, 4))) void FOutputDevice::Logf (EName Type, cons
 //  VLogSysError
 //
 //==========================================================================
+/*
 void VLogSysError::Serialise (const char *V, EName) {
   Sys_Error("%s", V);
 }
+*/
 
 
 //==========================================================================
@@ -104,9 +108,11 @@ void VLogSysError::Serialise (const char *V, EName) {
 //  VLogHostError
 //
 //==========================================================================
+/*
 void VLogHostError::Serialise (const char *V, EName) {
   Host_Error("%s", V);
 }
+*/
 
 
 //==========================================================================
