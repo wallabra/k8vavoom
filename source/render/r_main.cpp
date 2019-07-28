@@ -1754,6 +1754,42 @@ void R_DrawPicFloatPartEx (float x, float y, float tx0, float ty0, float tx1, fl
 
 //==========================================================================
 //
+//  R_DrawSpritePatch
+//
+//==========================================================================
+void R_DrawSpritePatch (float x, float y, int sprite, int frame, int rot,
+                        int TranslStart, int TranslEnd, int Color, float scale,
+                        bool ignoreVScr)
+{
+  bool flip;
+  int lump;
+
+  spriteframe_t *sprframe = &sprites[sprite].spriteframes[frame&VState::FF_FRAMEMASK];
+  flip = sprframe->flip[rot];
+  lump = sprframe->lump[rot];
+  VTexture *Tex = GTextureManager[lump];
+  if (!Tex) return; // just in case
+
+  (void)Tex->GetWidth();
+
+  float x1 = x-Tex->SOffset*scale;
+  float y1 = y-Tex->TOffset*scale;
+  float x2 = x1+Tex->GetWidth()*scale;
+  float y2 = y1+Tex->GetHeight()*scale;
+
+  if (!ignoreVScr) {
+    x1 *= fScaleX;
+    y1 *= fScaleY;
+    x2 *= fScaleX;
+    y2 *= fScaleY;
+  }
+
+  Drawer->DrawSpriteLump(x1, y1, x2, y2, Tex, R_GetCachedTranslation(R_SetMenuPlayerTrans(TranslStart, TranslEnd, Color), nullptr), flip);
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::PrecacheLevel
 //
 //  Preloads all relevant graphics for the level.
