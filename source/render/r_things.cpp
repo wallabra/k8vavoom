@@ -269,29 +269,6 @@ void VRenderLevelShared::RenderSprite (VEntity *thing, vuint32 light, vuint32 Fa
       // generate the sprite's axes, according to the sprite's world orientation
       AngleVectors(thing->/*Angles*/GetSpriteDrawAngles(), sprforward, sprright, sprup);
       if (spr_type != SPR_ORIENTED) {
-        /*
-        const float pitch = thing->Angles.pitch;
-        if (pitch == 90.0f) {
-          // floor
-          sprorigin.z += 0.01f;
-        } else if (pitch == 180.0f) {
-          // ceiling
-          sprorigin.z -= 0.01f;
-        } else {
-          // slope
-          TVec vofs;
-          AngleVectorPitch(thing->Angles.pitch, vofs);
-          //GCon->Logf("vofs: (%f,%f,%f); pitch=%f", vofs.x, vofs.y, vofs.z, pitch);
-          sprorigin -= vofs*0.01f;
-        }
-        */
-        /*
-        {
-          TVec vofs;
-          AngleVectorPitch(pitch, vofs);
-          GCon->Logf("vofs: (%f,%f,%f); pitch=%f", vofs.x, vofs.y, vofs.z, pitch);
-        }
-        */
         hangup = (sprup.z > 0 ? 1 : sprup.z < 0 ? -1 : 0);
       }
       break;
@@ -534,11 +511,8 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
     case STYLE_Stencil: break;
     case STYLE_AddStencil: Additive = true; break;
   }
-  if (Alpha <= 0.0002f) return; // no reason to render it, it is invisible
+  if (Alpha <= 0.01f) return; // no reason to render it, it is invisible
   if (Alpha > 1.0f) Alpha = 1.0f;
-
-  //Alpha = midval(0.0f, Alpha, 1.0f);
-  //if (!Alpha) return; // never make a vissprite when MF2_DONTDRAW is flagged
 
   // setup lighting
   vuint32 light, seclight;
@@ -662,28 +636,10 @@ void VRenderLevelShared::BuildVisibleObjectsList () {
 //
 //==========================================================================
 extern "C" {
-  static int traspCmp (const void *a, const void *b, void */*udata*/) {
+  static int traspCmp (const void *a, const void *b, void *) {
     if (a == b) return 0;
     const VRenderLevelShared::trans_sprite_t *ta = (const VRenderLevelShared::trans_sprite_t *)a;
     const VRenderLevelShared::trans_sprite_t *tb = (const VRenderLevelShared::trans_sprite_t *)b;
-
-    /*
-    {
-      const float d0 = ta->dist;
-      const float d1 = tb->dist;
-      if (d0 < d1) return -1; // a is nearer, so it is last
-      if (d0 > d1) return 1; // b is nearer, so it is last
-    }
-    */
-
-    // first masked polys, then sprites, then alias models
-    // type 0: masked polys
-    // type 1: sprites
-    // type 2: alias models
-    //const int typediff = (int)ta->type-(int)tb->type;
-    //if (typediff) return typediff;
-    //if (ta->type < tb->type) return -1;
-    //if (ta->type > tb->type) return 1;
 
     // non-translucent objects should come first, and
     // additive ones should come last
@@ -707,9 +663,12 @@ extern "C" {
       return -1;
     }
 
+    check(!ta->Additive);
+    check(!tb->Additive);
+
     // translucent
-    const bool aTrans = (!ta->Additive && ta->Alpha < 1.0f);
-    const bool bTrans = (!tb->Additive && tb->Alpha < 1.0f);
+    const bool aTrans = (ta->Alpha < 1.0f);
+    const bool bTrans = (tb->Alpha < 1.0f);
     if (aTrans && bTrans) {
       // both translucent, sort by distance to view origin (nearest last)
       const float d0 = ta->dist;
@@ -812,23 +771,13 @@ void VRenderLevelShared::DrawTranslucentPolys () {
         // reset pofs
         pofs = 0;
       }
-      /*
-      GLint odf = GL_LEQUAL;
-      glGetIntegerv(GL_DEPTH_FUNC, &odf);
-      //glDepthFunc(((VOpenGLDrawer *)Drawer)->CanUseRevZ() ? GL_GREATER : GL_LESS);
-      glDepthFunc(GL_GREATER);
-      */
-      //if (spr.noDepthChange) GCon->Logf("!!! %u", spr.objid);
       Drawer->DrawSpritePolygon(spr.Verts, GTextureManager[spr.lump],
                                 spr.Alpha, spr.Additive, GetTranslation(spr.translation),
                                 ColorMap, spr.light, spr.Fade, spr.normal, spr.pdist,
                                 spr.saxis, spr.taxis, spr.texorg, spr.hangup);
-      /*
-      glDepthFunc(odf);
-      */
     } else {
       // masked polygon
-      if (!r_advrender_translucent_as_light || !IsAdvancedRenderer()) {
+      if (!IsAdvancedRenderer()) {
         check(spr.surf);
         if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); pofsEnabled = false; }
         Drawer->DrawMaskedPolygon(spr.surf, spr.Alpha, spr.Additive);

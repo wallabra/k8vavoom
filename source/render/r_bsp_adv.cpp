@@ -52,5 +52,4 @@ void VAdvancedRenderLevel::RenderWorld (const refdef_t *rd, const VViewClipper *
   RenderBspWorld(rd, Range);
   Drawer->DrawWorldAmbientPass();
   //RenderPortals();
-  //RenderTranslucentWallsAmbient(); // later
 }

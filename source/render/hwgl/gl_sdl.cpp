@@ -41,7 +41,7 @@ public:
 
   virtual void Init () override;
   virtual bool SetResolution (int, int, int) override;
-  virtual void *GetExtFuncPtr (const char *) override;
+  virtual void *GetExtFuncPtr (const char *name) override;
   virtual void Update () override;
   virtual void Shutdown () override;
 

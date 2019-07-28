@@ -275,12 +275,12 @@ VOpenGLDrawer::VOpenGLDrawer ()
   : VDrawer()
   , shaderHead(nullptr)
   , mainFBO()
-  //, secondFBO()
   , ambLightFBO()
   , texturesGenerated(false)
-  , lastgamma(0)
-  , CurrentFade(0)
 {
+  lastgamma = 0;
+  CurrentFade = 0;
+
   MaxTextureUnits = 1;
   useReverseZ = false;
   hasNPOT = false;

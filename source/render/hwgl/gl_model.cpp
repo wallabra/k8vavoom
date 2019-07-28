@@ -746,8 +746,6 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
   p_glVertexAttribPointerARB(ShadowsModelShadow.loc_Vert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset);
   p_glEnableVertexAttribArrayARB(ShadowsModelShadow.loc_Vert2);
 
-  //const float Shadow_Offset = M_INFINITY;
-
   // caps
   if (!usingZPass && !gl_dbg_use_zpass) {
     glBegin(GL_TRIANGLES);

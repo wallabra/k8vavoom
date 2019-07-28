@@ -162,7 +162,6 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
   BuildVisibleObjectsList();
 
   RenderMobjsAmbient();
-  if (r_advrender_translucent_as_light) RenderTranslucentWallsAmbient();
 
   //GCon->Log("***************** RenderScene *****************");
   //FIXME: mirrors can use stencils, and advlight too...

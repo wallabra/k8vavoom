@@ -100,8 +100,8 @@ bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
 //
 //==========================================================================
 void VOpenGLDrawer::DrawPortalArea (VPortal *Portal) {
-  for (int i = 0; i < Portal->Surfs.Num(); ++i) {
-    const surface_t *surf = Portal->Surfs[i];
+  for (auto &&surf : Portal->Surfs) {
+    //const surface_t *surf = Portal->Surfs[i];
     if (surf->count < 3) continue;
     glBegin(GL_POLYGON);
     for (unsigned j = 0; j < (unsigned)surf->count; ++j) glVertex(surf->verts[j]);

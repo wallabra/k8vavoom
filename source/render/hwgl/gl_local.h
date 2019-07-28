@@ -435,7 +435,7 @@ extern VCvarB gl_decal_debug_nostencil;
 extern VCvarB gl_decal_debug_noalpha;
 extern VCvarB gl_decal_dump_max;
 extern VCvarB gl_decal_reset_max;
-extern VCvarB gl_sort_textures;
+extern VCvarB gl_uusort_textures;
 extern VCvarB gl_dbg_adv_render_textures_surface;
 extern VCvarB gl_dbg_adv_render_offset_shadow_volume;
 extern VCvarB gl_dbg_adv_render_never_offset_shadow_volume;
@@ -523,9 +523,9 @@ public:
 
 private:
   bool usingZPass; // if we are rendering shadow volumes, should we do "z-pass"?
-  TVec coneDir;
-  float coneAngle;
-  bool spotLight;
+  TVec coneDir; // current spotlight direction
+  float coneAngle; // current spotlight cone angle
+  bool spotLight; // is current light a spotlight?
   GLint savedDepthMask; // used in various begin/end methods
   // for `DrawTexturedPoly()` API
   VTexture *texturedPolyLastTex;
@@ -594,9 +594,6 @@ public:
 
   virtual void DrawSkyPolygon (surface_t *, bool, VTexture *, float, VTexture *, float, int) override;
   virtual void DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additive) override;
-
-  virtual void BeginTranslucentPolygonAmbient () override;
-  virtual void DrawTranslucentPolygonAmbient (surface_t *surf, float Alpha, bool Additive) override;
 
   virtual void BeginTranslucentPolygonDecals () override;
   virtual void DrawTranslucentPolygonDecals (surface_t *surf, float Alpha, bool Additive) override;
@@ -846,19 +843,20 @@ private:
   static inline void glVertex4 (const TVec &v, const float w) { glVertex4f(v.x, v.y, v.z, w); }
 
 protected:
-  //enum { M_INFINITY = 8000 };
-  //enum { M_INFINITY = 36000 };
-  enum { M_INFINITY = 64000 };
-
   vuint8 *tmpImgBuf0;
   vuint8 *tmpImgBuf1;
   int tmpImgBufSize;
+
+  float tex_iw, tex_ih;
+  int tex_w, tex_h;
+
+  int lastgamma;
+  int CurrentFade;
 
   bool hasNPOT;
   bool hasBoundsTest; // GL_EXT_depth_bounds_test
 
   FBO mainFBO;
-  //FBO secondFBO; // for transition effects, color only
   FBO ambLightFBO; // we'll copy ambient light texture here, so we can use it in decal renderer to light decals
 
   GLint maxTexSize;
@@ -867,23 +865,11 @@ protected:
   GLuint lmap_id[NUM_BLOCK_SURFS];
   GLuint addmap_id[NUM_BLOCK_SURFS];
 
-  float tex_iw, tex_ih;
-  int tex_w, tex_h;
-
-  //GLenum maxfilter;
-  //GLenum minfilter;
-  //GLenum mipfilter;
   GLenum ClampToEdge;
   GLfloat max_anisotropy; // 1.0: off
   bool anisotropyExists;
 
   bool usingFPZBuffer;
-
-  //GLenum spr_maxfilter;
-  //GLenum spr_mipfilter;
-
-  int lastgamma;
-  int CurrentFade;
 
   bool HaveDepthClamp;
   bool HaveStencilWrap;
@@ -901,171 +887,167 @@ protected:
   static VCvarB clear;
   static VCvarB blend_sprites;
   static VCvarB ext_anisotropy;
-  //static VCvarF maxdist;
-  //static VCvarB model_lighting;
   static VCvarB specular_highlights;
   static VCvarI multisampling_sample;
   static VCvarB gl_smooth_particles;
   static VCvarB gl_dump_vendor;
   static VCvarB gl_dump_extensions;
 
-  //  extensions
-  bool CheckExtension(const char*);
-  virtual void *GetExtFuncPtr(const char*) = 0;
+  // extensions
+  bool CheckExtension (const char *ext);
+  virtual void *GetExtFuncPtr (const char *name) = 0;
 
-  void SetFade(vuint32 NewFade);
+  void SetFade (vuint32 NewFade);
 
-  void GenerateTextures();
+  void GenerateTextures ();
   virtual void FlushOneTexture (VTexture *tex) override; // unload one texture
   virtual void FlushTextures () override; // unload all textures
-  void DeleteTextures();
-  void FlushTexture(VTexture*);
-  void DeleteTexture(VTexture*);
-  void SetTexture(VTexture*, int);
-  void SetBrightmapTexture (VTexture*);
-  void SetSpriteLump(VTexture*, VTextureTranslation*, int, bool asPicture);
-  void SetPic(VTexture*, VTextureTranslation*, int);
-  void SetPicModel(VTexture*, VTextureTranslation*, int);
-  void GenerateTexture(VTexture*, GLuint*, VTextureTranslation*, int, bool asPicture);
-  void UploadTexture8(int, int, const vuint8*, const rgba_t*);
-  void UploadTexture8A(int, int, const pala_t*, const rgba_t*);
-  void UploadTexture(int, int, const rgba_t*);
+  void DeleteTextures ();
+  void FlushTexture (VTexture *);
+  void DeleteTexture (VTexture *);
+  void SetTexture (VTexture *Tex, int CMap);
+  void SetBrightmapTexture (VTexture *);
+  void SetSpriteLump (VTexture *Tex, VTextureTranslation *Translation, int CMap, bool asPicture);
+  void SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap);
+  void SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int CMap);
+  void GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTranslation *Translation, int CMap, bool asPicture);
+  void UploadTexture8 (int Width, int Height, const vuint8 *Data, const rgba_t *Pal);
+  void UploadTexture8A (int Width, int Height, const pala_t *Data, const rgba_t *Pal);
+  void UploadTexture (int width, int height, const rgba_t *data);
 
-  void DoHorizonPolygon(surface_t*);
-  void DrawPortalArea(VPortal*);
+  void DoHorizonPolygon (surface_t *surf);
+  void DrawPortalArea (VPortal *Portal);
 
   GLhandleARB LoadShader (GLenum Type, const VStr &FileName, const TArray<VStr> &defines=TArray<VStr>());
   GLhandleARB CreateProgram (const char *progname, GLhandleARB VertexShader, GLhandleARB FragmentShader);
 
-  void UploadModel(VMeshModel *Mdl);
-  void UnloadModels();
+  void UploadModel (VMeshModel *Mdl);
+  void UnloadModels ();
 
   void SetupTextureFiltering (int level); // level is taken from the appropriate cvar
 
 public:
-#define _(x)  x##_t p_##x
-  //_(glMultiTexCoord2fARB);
-  _(glActiveTextureARB);
+#define VGLAPIPTR(x)  x##_t p_##x
+  //VGLAPIPTR(glMultiTexCoord2fARB);
+  VGLAPIPTR(glActiveTextureARB);
 
-  _(glPointParameterfEXT);
-  _(glPointParameterfvEXT);
+  VGLAPIPTR(glPointParameterfEXT);
+  VGLAPIPTR(glPointParameterfvEXT);
 
-  _(glStencilFuncSeparate);
-  _(glStencilOpSeparate);
+  VGLAPIPTR(glStencilFuncSeparate);
+  VGLAPIPTR(glStencilOpSeparate);
 
-  _(glDeleteObjectARB);
-  _(glGetHandleARB);
-  _(glDetachObjectARB);
-  _(glCreateShaderObjectARB);
-  _(glShaderSourceARB);
-  _(glCompileShaderARB);
-  _(glCreateProgramObjectARB);
-  _(glAttachObjectARB);
-  _(glLinkProgramARB);
-  _(glUseProgramObjectARB);
-  _(glValidateProgramARB);
-  _(glUniform1fARB);
-  _(glUniform2fARB);
-  _(glUniform3fARB);
-  _(glUniform4fARB);
-  _(glUniform1iARB);
-  _(glUniform2iARB);
-  _(glUniform3iARB);
-  _(glUniform4iARB);
-  _(glUniform1fvARB);
-  _(glUniform2fvARB);
-  _(glUniform3fvARB);
-  _(glUniform4fvARB);
-  _(glUniform1ivARB);
-  _(glUniform2ivARB);
-  _(glUniform3ivARB);
-  _(glUniform4ivARB);
-  _(glUniformMatrix2fvARB);
-  _(glUniformMatrix3fvARB);
-  _(glUniformMatrix4fvARB);
-  _(glGetObjectParameterfvARB);
-  _(glGetObjectParameterivARB);
-  _(glGetInfoLogARB);
-  _(glGetAttachedObjectsARB);
-  _(glGetUniformLocationARB);
-  _(glGetActiveUniformARB);
-  _(glGetUniformfvARB);
-  _(glGetUniformivARB);
-  _(glGetShaderSourceARB);
+  VGLAPIPTR(glDeleteObjectARB);
+  VGLAPIPTR(glGetHandleARB);
+  VGLAPIPTR(glDetachObjectARB);
+  VGLAPIPTR(glCreateShaderObjectARB);
+  VGLAPIPTR(glShaderSourceARB);
+  VGLAPIPTR(glCompileShaderARB);
+  VGLAPIPTR(glCreateProgramObjectARB);
+  VGLAPIPTR(glAttachObjectARB);
+  VGLAPIPTR(glLinkProgramARB);
+  VGLAPIPTR(glUseProgramObjectARB);
+  VGLAPIPTR(glValidateProgramARB);
+  VGLAPIPTR(glUniform1fARB);
+  VGLAPIPTR(glUniform2fARB);
+  VGLAPIPTR(glUniform3fARB);
+  VGLAPIPTR(glUniform4fARB);
+  VGLAPIPTR(glUniform1iARB);
+  VGLAPIPTR(glUniform2iARB);
+  VGLAPIPTR(glUniform3iARB);
+  VGLAPIPTR(glUniform4iARB);
+  VGLAPIPTR(glUniform1fvARB);
+  VGLAPIPTR(glUniform2fvARB);
+  VGLAPIPTR(glUniform3fvARB);
+  VGLAPIPTR(glUniform4fvARB);
+  VGLAPIPTR(glUniform1ivARB);
+  VGLAPIPTR(glUniform2ivARB);
+  VGLAPIPTR(glUniform3ivARB);
+  VGLAPIPTR(glUniform4ivARB);
+  VGLAPIPTR(glUniformMatrix2fvARB);
+  VGLAPIPTR(glUniformMatrix3fvARB);
+  VGLAPIPTR(glUniformMatrix4fvARB);
+  VGLAPIPTR(glGetObjectParameterfvARB);
+  VGLAPIPTR(glGetObjectParameterivARB);
+  VGLAPIPTR(glGetInfoLogARB);
+  VGLAPIPTR(glGetAttachedObjectsARB);
+  VGLAPIPTR(glGetUniformLocationARB);
+  VGLAPIPTR(glGetActiveUniformARB);
+  VGLAPIPTR(glGetUniformfvARB);
+  VGLAPIPTR(glGetUniformivARB);
+  VGLAPIPTR(glGetShaderSourceARB);
 
-  _(glVertexAttrib1dARB);
-  _(glVertexAttrib1dvARB);
-  _(glVertexAttrib1fARB);
-  _(glVertexAttrib1fvARB);
-  _(glVertexAttrib1sARB);
-  _(glVertexAttrib1svARB);
-  _(glVertexAttrib2dARB);
-  _(glVertexAttrib2dvARB);
-  _(glVertexAttrib2fARB);
-  _(glVertexAttrib2fvARB);
-  _(glVertexAttrib2sARB);
-  _(glVertexAttrib2svARB);
-  _(glVertexAttrib3dARB);
-  _(glVertexAttrib3dvARB);
-  _(glVertexAttrib3fARB);
-  _(glVertexAttrib3fvARB);
-  _(glVertexAttrib3sARB);
-  _(glVertexAttrib3svARB);
-  _(glVertexAttrib4NbvARB);
-  _(glVertexAttrib4NivARB);
-  _(glVertexAttrib4NsvARB);
-  _(glVertexAttrib4NubARB);
-  _(glVertexAttrib4NubvARB);
-  _(glVertexAttrib4NuivARB);
-  _(glVertexAttrib4NusvARB);
-  _(glVertexAttrib4bvARB);
-  _(glVertexAttrib4dARB);
-  _(glVertexAttrib4dvARB);
-  _(glVertexAttrib4fARB);
-  _(glVertexAttrib4fvARB);
-  _(glVertexAttrib4ivARB);
-  _(glVertexAttrib4sARB);
-  _(glVertexAttrib4svARB);
-  _(glVertexAttrib4ubvARB);
-  _(glVertexAttrib4uivARB);
-  _(glVertexAttrib4usvARB);
-  _(glVertexAttribPointerARB);
-  _(glEnableVertexAttribArrayARB);
-  _(glDisableVertexAttribArrayARB);
-  _(glBindAttribLocationARB);
-  _(glGetActiveAttribARB);
-  _(glGetAttribLocationARB);
-  _(glGetVertexAttribdvARB);
-  _(glGetVertexAttribfvARB);
-  _(glGetVertexAttribivARB);
-  _(glGetVertexAttribPointervARB);
+  VGLAPIPTR(glVertexAttrib1dARB);
+  VGLAPIPTR(glVertexAttrib1dvARB);
+  VGLAPIPTR(glVertexAttrib1fARB);
+  VGLAPIPTR(glVertexAttrib1fvARB);
+  VGLAPIPTR(glVertexAttrib1sARB);
+  VGLAPIPTR(glVertexAttrib1svARB);
+  VGLAPIPTR(glVertexAttrib2dARB);
+  VGLAPIPTR(glVertexAttrib2dvARB);
+  VGLAPIPTR(glVertexAttrib2fARB);
+  VGLAPIPTR(glVertexAttrib2fvARB);
+  VGLAPIPTR(glVertexAttrib2sARB);
+  VGLAPIPTR(glVertexAttrib2svARB);
+  VGLAPIPTR(glVertexAttrib3dARB);
+  VGLAPIPTR(glVertexAttrib3dvARB);
+  VGLAPIPTR(glVertexAttrib3fARB);
+  VGLAPIPTR(glVertexAttrib3fvARB);
+  VGLAPIPTR(glVertexAttrib3sARB);
+  VGLAPIPTR(glVertexAttrib3svARB);
+  VGLAPIPTR(glVertexAttrib4NbvARB);
+  VGLAPIPTR(glVertexAttrib4NivARB);
+  VGLAPIPTR(glVertexAttrib4NsvARB);
+  VGLAPIPTR(glVertexAttrib4NubARB);
+  VGLAPIPTR(glVertexAttrib4NubvARB);
+  VGLAPIPTR(glVertexAttrib4NuivARB);
+  VGLAPIPTR(glVertexAttrib4NusvARB);
+  VGLAPIPTR(glVertexAttrib4bvARB);
+  VGLAPIPTR(glVertexAttrib4dARB);
+  VGLAPIPTR(glVertexAttrib4dvARB);
+  VGLAPIPTR(glVertexAttrib4fARB);
+  VGLAPIPTR(glVertexAttrib4fvARB);
+  VGLAPIPTR(glVertexAttrib4ivARB);
+  VGLAPIPTR(glVertexAttrib4sARB);
+  VGLAPIPTR(glVertexAttrib4svARB);
+  VGLAPIPTR(glVertexAttrib4ubvARB);
+  VGLAPIPTR(glVertexAttrib4uivARB);
+  VGLAPIPTR(glVertexAttrib4usvARB);
+  VGLAPIPTR(glVertexAttribPointerARB);
+  VGLAPIPTR(glEnableVertexAttribArrayARB);
+  VGLAPIPTR(glDisableVertexAttribArrayARB);
+  VGLAPIPTR(glBindAttribLocationARB);
+  VGLAPIPTR(glGetActiveAttribARB);
+  VGLAPIPTR(glGetAttribLocationARB);
+  VGLAPIPTR(glGetVertexAttribdvARB);
+  VGLAPIPTR(glGetVertexAttribfvARB);
+  VGLAPIPTR(glGetVertexAttribivARB);
+  VGLAPIPTR(glGetVertexAttribPointervARB);
 
-  _(glBindBufferARB);
-  _(glDeleteBuffersARB);
-  _(glGenBuffersARB);
-  _(glIsBufferARB);
-  _(glBufferDataARB);
-  _(glBufferSubDataARB);
-  _(glGetBufferSubDataARB);
-  _(glMapBufferARB);
-  _(glUnmapBufferARB);
-  _(glGetBufferParameterivARB);
-  _(glGetBufferPointervARB);
+  VGLAPIPTR(glBindBufferARB);
+  VGLAPIPTR(glDeleteBuffersARB);
+  VGLAPIPTR(glGenBuffersARB);
+  VGLAPIPTR(glIsBufferARB);
+  VGLAPIPTR(glBufferDataARB);
+  VGLAPIPTR(glBufferSubDataARB);
+  VGLAPIPTR(glGetBufferSubDataARB);
+  VGLAPIPTR(glMapBufferARB);
+  VGLAPIPTR(glUnmapBufferARB);
+  VGLAPIPTR(glGetBufferParameterivARB);
+  VGLAPIPTR(glGetBufferPointervARB);
 
-  _(glDrawRangeElementsEXT);
+  VGLAPIPTR(glDrawRangeElementsEXT);
 
-  _(glClipControl);
-  _(glDepthBoundsEXT);
-  _(glBlitFramebuffer);
+  VGLAPIPTR(glClipControl);
+  VGLAPIPTR(glDepthBoundsEXT);
+  VGLAPIPTR(glBlitFramebuffer);
 
-  _(glGetProgramiv);
-  //_(glGetPointerv);
+  VGLAPIPTR(glGetProgramiv);
+  //VGLAPIPTR(glGetPointerv);
 
-  _(glBlendFuncSeparate);
+  VGLAPIPTR(glBlendFuncSeparate);
 
-#undef _
-
-  //void MultiTexCoord(int level, GLfloat s, GLfloat t) { p_glMultiTexCoord2fARB(GLenum(GL_TEXTURE0_ARB + level), s, t); }
+#undef VGLAPIPTR
 
   inline void SelectTexture (int level) { p_glActiveTextureARB(GLenum(GL_TEXTURE0_ARB+level)); }
 

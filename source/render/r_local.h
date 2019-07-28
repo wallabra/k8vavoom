@@ -896,7 +896,6 @@ protected:
   virtual void QueueWorldSurface (surface_t*) override;
   void RenderWorld (const refdef_t*, const VViewClipper*);
 
-  void RenderTranslucentWallsAmbient ();
   void RenderTranslucentWallsDecals ();
 
   void AddPolyObjToLightClipper (VViewClipper &clip, subsector_t *sub, bool asShadow);
@@ -969,7 +968,6 @@ extern vuint8 light_remap[256];
 extern VCvarB r_darken;
 extern VCvarB r_dynamic_lights;
 extern VCvarB r_static_lights;
-extern VCvarB r_advrender_translucent_as_light;
 
 extern VCvarI aspect_ratio;
 extern VCvarB r_interpolate_frames;

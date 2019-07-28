@@ -202,9 +202,6 @@ public:
                                float offs1, VTexture *Texture2, float offs2, int CMap) = 0;
   virtual void DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additive) = 0;
 
-  virtual void BeginTranslucentPolygonAmbient () = 0;
-  virtual void DrawTranslucentPolygonAmbient (surface_t *surf, float Alpha, bool Additive) = 0;
-
   virtual void BeginTranslucentPolygonDecals () = 0;
   virtual void DrawTranslucentPolygonDecals (surface_t *surf, float Alpha, bool Additive) = 0;
 
