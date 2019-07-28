@@ -40,6 +40,23 @@ bool GLogSkipLogTypeName = false;
 
 VLog::Listener *VLog::Listeners = nullptr;
 
+mythread_mutex VLog::logLock;
+volatile bool VLog::logLockInited = false;
+
+
+//==========================================================================
+//
+//  InitLogLock
+//
+//==========================================================================
+static inline void InitLogLock () {
+  //WARNING! THIS IS NOT THREAD-SAFE!
+  if (!VLog::logLockInited) {
+    VLog::logLockInited = true;
+    mythread_mutex_init(&VLog::logLock);
+  }
+}
+
 
 //==========================================================================
 //
@@ -65,6 +82,8 @@ VLog::VLog ()
 //==========================================================================
 void VLog::AddListener (VLogListener *lst) {
   if (!lst) return;
+  InitLogLock();
+  MyThreadLocker lock(&logLock);
   //if (inWrite) { fprintf(stderr, "FATAL: cannot add log listeners from log listener!\n"); abort(); }
   Listener *ls = (Listener *)Z_Malloc(sizeof(Listener));
   if (!ls) { fprintf(stderr, "FATAL: out of memory for log listener list!\n"); abort(); }
@@ -87,6 +106,8 @@ void VLog::AddListener (VLogListener *lst) {
 //==========================================================================
 void VLog::RemoveListener (VLogListener *lst) {
   if (!lst || !Listeners) return;
+  InitLogLock();
+  MyThreadLocker lock(&logLock);
   //if (inWrite) { fprintf(stderr, "FATAL: cannot remove log listeners from log listener!\n"); abort(); }
   Listener *lastCurr = nullptr, *lastPrev = nullptr;
   Listener *curr = Listeners, *prev = nullptr;
@@ -106,17 +127,21 @@ void VLog::RemoveListener (VLogListener *lst) {
 
 //==========================================================================
 //
-//  VLog::doWrite
+//  VLog::doWriteStr
 //
 //==========================================================================
-void VLog::doWriteStr (EName Type, const char *s) {
+void VLog::doWriteStr (EName Type, const char *s, bool addEOL) {
+  static const char *eolstr = "\n";
   if (!s || !s[0]) return;
+
+  MyThreadLocker lock(&logLock);
   if (!Listeners) return;
 
   inWrite = true;
   for (Listener *ls = Listeners; ls; ls = ls->next) {
     try {
       ls->ls->Serialise(s, Type);
+      if (addEOL) ls->ls->Serialise(eolstr, Type);
     } catch (...) {
     }
   }
@@ -130,6 +155,7 @@ void VLog::doWriteStr (EName Type, const char *s) {
 //
 //==========================================================================
 void VLog::doWrite (EName Type, const char *fmt, va_list ap, bool addEOL) {
+  MyThreadLocker lock(&logLock);
   if (!Listeners) return;
 
   if (!addEOL && (!fmt || !fmt[0])) return;
@@ -184,7 +210,15 @@ void VLog::doWrite (EName Type, const char *fmt, va_list ap, bool addEOL) {
 
   if (addEOL) { logbuf[size] = '\n'; logbuf[size+1] = 0; }
 
-  doWriteStr(Type, logbuf);
+  //doWriteStr(Type, logbuf, false);
+  inWrite = true;
+  for (Listener *ls = Listeners; ls; ls = ls->next) {
+    try {
+      ls->ls->Serialise(logbuf, Type);
+    } catch (...) {
+    }
+  }
+  inWrite = false;
 }
 
 
@@ -220,8 +254,7 @@ __attribute__((format(printf, 2, 3))) void VLog::Logf (const char *fmt, ...) {
 //
 //==========================================================================
 void VLog::Log (EName Type, const char *s) {
-  doWriteStr(Type, s);
-  doWriteStr(Type, "\n");
+  doWriteStr(Type, s, true);
 }
 
 
@@ -231,8 +264,7 @@ void VLog::Log (EName Type, const char *s) {
 //
 //==========================================================================
 void VLog::Log (const char *s) {
-  doWriteStr(NAME_Log, s);
-  doWriteStr(NAME_Log, "\n");
+  doWriteStr(NAME_Log, s, true);
 }
 
 

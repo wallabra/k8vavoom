@@ -57,7 +57,7 @@ private:
   bool inWrite;
 
 public:
-  void doWriteStr (EName Type, const char *s);
+  void doWriteStr (EName Type, const char *s, bool addEOL);
   void doWrite (EName Type, const char *fmt, va_list ap, bool addEOL);
 
 public:
@@ -80,6 +80,10 @@ public:
 
   void Log (EName Type, const char *s);
   void Log (const char *s);
+
+public: // fuck you, shitplusplus!
+  static mythread_mutex logLock;
+  static volatile bool logLockInited;
 };
 
 
