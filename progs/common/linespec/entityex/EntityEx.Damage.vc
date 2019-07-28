@@ -56,6 +56,22 @@ bool K8HS_IsGoodDamageType (name damageType) {
 
 //==========================================================================
 //
+//  IsIAmAKindOf
+//
+//  checks if `self` is a subclass, or a replacement
+//
+//==========================================================================
+final bool IsIAmAKindOf (name ClsName) {
+  if (!ClsName) return false;
+  if (self isa ClsName) return true;
+  class xreplCls = GetClassReplacee(self.Class);
+  if (xreplCls) return (xreplCls isa ClsName);
+  return false;
+}
+
+
+//==========================================================================
+//
 //  K8onBeforeLineDamage
 //
 //  this script will be called before hitscan line damage is done.
@@ -101,11 +117,10 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
 
   // kill certain monsters in one shot
   if (fastkills) {
-    if (GetClassName(GetClassReplacee(self.Class)) == 'PainElemental') {
+    if (IsIAmAKindOf('PainElemental')) {
       if (GetCvarB('k8HSInstaKillPainElementals')) fastdamage = vicHealth+10;
-    } else if (GetClassName(GetClassReplacee(self.Class)) == 'LostSoul') {
+    } else if (IsIAmAKindOf('LostSoul')) {
       if (GetCvarB('k8HSInstaKillLostSouls')) fastdamage = vicHealth+10;
-      fastdamage = vicHealth+10;
     }
     if (fastdamage > 0) return fastdamage;
   }
@@ -149,7 +164,7 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
   } else if (vicHgt <= 64.0) {
     // arachnotron(64)
     // bruiser(64)
-    if (GetClassName(GetClassReplacee(self.Class)) == 'Arachnotron') {
+    if (IsIAmAKindOf('Arachnotron')) {
       headshot = (fromtop <= 18.0);
       if (debugme) print("*******ARACHNO!");
     } else {
@@ -324,7 +339,7 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
       }
 
       if (fastkills) {
-        if (GetClassName(GetClassReplacee(self.Class)) == 'Archvile') {
+        if (IsIAmAKindOf('Archvile')) {
           fastdamage = GetCvar('k8HSFastKillArchVileDamage');
           if (fastdamage > 0 && dodmg < fastdamage) {
             //Log(s:"Archvile superdamage: old=", d:dodmg, s:"; new=", d:fastdamage, s:"; health=", d:vicHealth);
