@@ -33,19 +33,40 @@
 #include "sv_local.h"
 
 
-extern VCvarB r_sort_sprites;
-static VCvarB r_sprite_use_pofs("r_sprite_use_pofs", true, "Use PolygonOffset with sprite sorting to reduce sprite flickering?", CVAR_Archive);
+enum {
+  SPR_VP_PARALLEL_UPRIGHT, // 0 (default)
+  SPR_FACING_UPRIGHT, // 1
+  SPR_VP_PARALLEL, // 2: parallel to camera visplane
+  SPR_ORIENTED, // 3
+  SPR_VP_PARALLEL_ORIENTED, // 4 (xy billboard)
+  SPR_VP_PARALLEL_UPRIGHT_ORIENTED, // 5
+  SPR_ORIENTED_OFS, // 6 (offset slightly by pitch -- for floor/ceiling splats)
+};
 
+
+extern VCvarB r_sort_sprites;
+extern VCvarB r_brightmaps;
+extern VCvarB r_brightmaps_sprite;
+
+static VCvarB r_fix_sprite_offsets("r_fix_sprite_offsets", true, "Fix sprite offsets?", CVAR_Archive);
+static VCvarI r_sprite_fix_delta("r_sprite_fix_delta", "-7", "Sprite offset amount.", CVAR_Archive); // -6 seems to be ok for vanilla BFG explosion, and for imp fireball
+
+static VCvarB r_sprite_use_pofs("r_sprite_use_pofs", true, "Use PolygonOffset with sprite sorting to reduce sprite flickering?", CVAR_Archive);
 static VCvarF r_sprite_pofs("r_sprite_pofs", "128", "DEBUG");
 static VCvarF r_sprite_pslope("r_sprite_pslope", "-1.0", "DEBUG");
 
+static VCvarB r_thing_hiframe_use_camera_plane("r_thing_hiframe_use_camera_plane", true, "Use angle to camera plane to select rotation for sprites with detailed rotations?", CVAR_Archive);
+static VCvarB r_thing_monster_use_camera_plane("r_thing_monster_use_camera_plane", true, "Use angle to camera plane to select monster rotation?", CVAR_Archive);
+static VCvarB r_thing_missile_use_camera_plane("r_thing_missile_use_camera_plane", true, "Use angle to camera plane to select missile rotation?", CVAR_Archive);
+static VCvarB r_thing_other_use_camera_plane("r_thing_other_use_camera_plane", true, "Use angle to camera plane to select non-monster rotation?", CVAR_Archive);
+
 
 //==========================================================================
 //
-//  VRenderLevelShared::DrawTranslucentPoly
+//  VRenderLevelShared::QueueTranslucentPoly
 //
 //==========================================================================
-void VRenderLevelShared::DrawTranslucentPoly (surface_t *surf, TVec *sv,
+void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, TVec *sv,
   int count, int lump, float Alpha, bool Additive, int translation,
   bool isSprite, vuint32 light, vuint32 Fade, const TVec &normal, float pdist,
   const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority,
@@ -110,10 +131,10 @@ void VRenderLevelShared::DrawTranslucentPoly (surface_t *surf, TVec *sv,
 
 //==========================================================================
 //
-//  VRenderLevelShared::RenderTranslucentAliasModel
+//  VRenderLevelShared::QueueTranslucentAliasModel
 //
 //==========================================================================
-void VRenderLevelShared::RenderTranslucentAliasModel (VEntity *mobj, vuint32 light, vuint32 Fade, float Alpha, bool Additive, float TimeFrac) {
+void VRenderLevelShared::QueueTranslucentAliasModel (VEntity *mobj, vuint32 light, vuint32 Fade, float Alpha, bool Additive, float TimeFrac) {
   if (!mobj) return; // just in case
 
   // make room
@@ -139,6 +160,251 @@ void VRenderLevelShared::RenderTranslucentAliasModel (VEntity *mobj, vuint32 lig
   spr.objid = mobj->GetUniqueId();
   spr.prio = 0; // normal priority
   spr.hangup = 0;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::QueueSprite
+//
+//==========================================================================
+void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fade, float Alpha, bool Additive, vuint32 seclight) {
+  int spr_type = thing->SpriteType;
+
+  TVec sprorigin = thing->GetDrawOrigin();
+  TVec sprforward(0, 0, 0);
+  TVec sprright(0, 0, 0);
+  TVec sprup(0, 0, 0);
+
+  // HACK: if sprite is additive, move is slightly closer to view
+  // this is mostly for things like light flares
+  if (Additive) {
+    sprorigin -= viewforward*0.2f;
+  }
+
+  float dot;
+  TVec tvec(0, 0, 0);
+  float sr;
+  float cr;
+  int hangup = 0;
+  //spr_type = SPR_ORIENTED;
+
+  switch (spr_type) {
+    case SPR_VP_PARALLEL_UPRIGHT:
+      // Generate the sprite's axes, with sprup straight up in worldspace,
+      // and sprright parallel to the viewplane. This will not work if the
+      // view direction is very close to straight up or down, because the
+      // cross product will be between two nearly parallel vectors and
+      // starts to approach an undefined state, so we don't draw if the two
+      // vectors are less than 1 degree apart
+      dot = viewforward.z; // same as DotProduct(viewforward, sprup), because sprup is 0, 0, 1
+      if (dot > 0.999848f || dot < -0.999848f) return; // cos(1 degree) = 0.999848f
+      sprup = TVec(0, 0, 1);
+      // CrossProduct(sprup, viewforward)
+      sprright = Normalise(TVec(viewforward.y, -viewforward.x, 0));
+      // CrossProduct(sprright, sprup)
+      sprforward = TVec(-sprright.y, sprright.x, 0);
+      break;
+
+    case SPR_FACING_UPRIGHT:
+      // Generate the sprite's axes, with sprup straight up in worldspace,
+      // and sprright perpendicular to sprorigin. This will not work if the
+      // view direction is very close to straight up or down, because the
+      // cross product will be between two nearly parallel vectors and
+      // starts to approach an undefined state, so we don't draw if the two
+      // vectors are less than 1 degree apart
+      tvec = Normalise(sprorigin-vieworg);
+      dot = tvec.z; // same as DotProduct (tvec, sprup), because sprup is 0, 0, 1
+      if (dot > 0.999848f || dot < -0.999848f) return; // cos(1 degree) = 0.999848f
+      sprup = TVec(0, 0, 1);
+      // CrossProduct(sprup, -sprorigin)
+      sprright = Normalise(TVec(tvec.y, -tvec.x, 0));
+      // CrossProduct(sprright, sprup)
+      sprforward = TVec(-sprright.y, sprright.x, 0);
+      break;
+
+    case SPR_VP_PARALLEL:
+      // Generate the sprite's axes, completely parallel to the viewplane.
+      // There are no problem situations, because the sprite is always in
+      // the same position relative to the viewer
+      sprup = viewup;
+      sprright = viewright;
+      sprforward = viewforward;
+      break;
+
+    case SPR_ORIENTED:
+    case SPR_ORIENTED_OFS:
+      // generate the sprite's axes, according to the sprite's world orientation
+      AngleVectors(thing->/*Angles*/GetSpriteDrawAngles(), sprforward, sprright, sprup);
+      if (spr_type != SPR_ORIENTED) {
+        hangup = (sprup.z > 0 ? 1 : sprup.z < 0 ? -1 : 0);
+      }
+      break;
+
+    case SPR_VP_PARALLEL_ORIENTED:
+      // Generate the sprite's axes, parallel to the viewplane, but
+      // rotated in that plane around the centre according to the sprite
+      // entity's roll angle. So sprforward stays the same, but sprright
+      // and sprup rotate
+      sr = msin(thing->Angles.roll);
+      cr = mcos(thing->Angles.roll);
+
+      sprforward = viewforward;
+      sprright = TVec(viewright.x*cr+viewup.x*sr, viewright.y*cr+viewup.y*sr, viewright.z*cr+viewup.z*sr);
+      sprup = TVec(viewright.x*(-sr)+viewup.x*cr, viewright.y*(-sr)+viewup.y*cr, viewright.z*(-sr)+viewup.z*cr);
+      break;
+
+    case SPR_VP_PARALLEL_UPRIGHT_ORIENTED:
+      // Generate the sprite's axes, with sprup straight up in worldspace,
+      // and sprright parallel to the viewplane and then rotated in that
+      // plane around the centre according to the sprite entity's roll
+      // angle. So sprforward stays the same, but sprright and sprup rotate
+      // This will not work if the view direction is very close to straight
+      // up or down, because the cross product will be between two nearly
+      // parallel vectors and starts to approach an undefined state, so we
+      // don't draw if the two vectors are less than 1 degree apart
+      dot = viewforward.z;  //  same as DotProduct(viewforward, sprup), because sprup is 0, 0, 1
+      if ((dot > 0.999848f) || (dot < -0.999848f))  // cos(1 degree) = 0.999848f
+        return;
+
+      sr = msin(thing->Angles.roll);
+      cr = mcos(thing->Angles.roll);
+
+      //  CrossProduct(TVec(0, 0, 1), viewforward)
+      tvec = Normalise(TVec(viewforward.y, -viewforward.x, 0));
+      //  CrossProduct(tvec, TVec(0, 0, 1))
+      sprforward = TVec(-tvec.y, tvec.x, 0);
+      //  Rotate
+      sprright = TVec(tvec.x*cr, tvec.y*cr, tvec.z*cr+sr);
+      sprup = TVec(tvec.x*(-sr), tvec.y*(-sr), tvec.z*(-sr)+cr);
+      break;
+
+    default:
+      Sys_Error("QueueSprite: Bad sprite type %d", spr_type);
+  }
+
+  spritedef_t *sprdef;
+  spriteframe_t *sprframe;
+
+  int SpriteIndex = thing->GetEffectiveSpriteIndex();
+  int FrameIndex = thing->GetEffectiveSpriteFrame();
+  if (thing->FixedSpriteName != NAME_None) SpriteIndex = VClass::FindSprite(thing->FixedSpriteName);
+
+  // decide which patch to use for sprite relative to player
+  if ((unsigned)SpriteIndex >= MAX_SPRITE_MODELS) {
+#ifdef PARANOID
+    GCon->Logf(NAME_Dev, "Invalid sprite number %d", SpriteIndex);
+#endif
+    return;
+  }
+
+  sprdef = &sprites[SpriteIndex];
+  if (FrameIndex >= sprdef->numframes) {
+#ifdef PARANOID
+    GCon->Logf(NAME_Dev, "Invalid sprite frame %d : %d", SpriteIndex, FrameIndex);
+#endif
+    return;
+  }
+
+  sprframe = &sprdef->spriteframes[FrameIndex];
+
+  int lump;
+  bool flip;
+
+  if (sprframe->rotate) {
+    // choose a different rotation based on player view
+    //FIXME must use sprforward here?
+    bool useCameraPlane;
+    if (r_thing_hiframe_use_camera_plane && sprframe->lump[0] != sprframe->lump[1]) {
+      useCameraPlane = true;
+    } else {
+           if (thing->IsMonster()) useCameraPlane = r_thing_monster_use_camera_plane;
+      else if (thing->IsMissile()) useCameraPlane = r_thing_missile_use_camera_plane;
+      else useCameraPlane = r_thing_other_use_camera_plane;
+    }
+    float ang = (useCameraPlane ?
+      matan(sprorigin.y-vieworg.y, sprorigin.x-vieworg.x) :
+      matan(sprforward.y+viewforward.y, sprforward.x+viewforward.x));
+    const float angadd = (sprframe->lump[0] == sprframe->lump[1] ? 45.0f/2.0f : 45.0f/4.0f); //k8: is this right?
+    //const float angadd = (useCameraPlane ? 45.0f/2.0f : 45.0f/4.0f);
+    /*
+    if (sprframe->lump[0] == sprframe->lump[1]) {
+      ang = matan(sprorigin.y-vieworg.y, sprorigin.x-vieworg.x);
+      ang = AngleMod(ang-thing->GetSpriteDrawAngles().yaw+180.0f+45.0f/2.0f);
+    } else {
+      ang = matan(sprforward.y+viewforward.y, sprforward.x+viewforward.x);
+      ang = AngleMod(ang-thing->GetSpriteDrawAngles().yaw+180.0f+45.0f/4.0f);
+    }
+    */
+    ang = AngleMod(ang-thing->GetSpriteDrawAngles().yaw+180.0f+angadd);
+    vuint32 rot = (vuint32)(ang*16.0f/360.0f)&15;
+    lump = sprframe->lump[rot];
+    flip = sprframe->flip[rot];
+  } else {
+    // use single rotation for all views
+    lump = sprframe->lump[0];
+    flip = sprframe->flip[0];
+  }
+
+  if (lump <= 0) {
+#ifdef PARANOID
+    GCon->Logf(NAME_Dev, "Sprite frame %d : %d, not present", SpriteIndex, FrameIndex);
+#endif
+    // sprite lump is not present
+    return;
+  }
+
+  VTexture *Tex = GTextureManager[lump];
+
+  if (!Tex || Tex->Type == TEXTYPE_Null) return; // just in case
+
+  //if (r_brightmaps && r_brightmaps_sprite && Tex->Brightmap && Tex->Brightmap->nofullbright) light = seclight; // disable fullbright
+  if (r_brightmaps && r_brightmaps_sprite && Tex->nofullbright) light = seclight; // disable fullbright
+
+  int TexWidth = Tex->GetWidth();
+  int TexHeight = Tex->GetHeight();
+  int TexSOffset = Tex->SOffset;
+  int TexTOffset = Tex->TOffset;
+
+  TVec sv[4];
+
+  TVec start = -TexSOffset*sprright*thing->ScaleX;
+  TVec end = (TexWidth-TexSOffset)*sprright*thing->ScaleX;
+
+  if (r_fix_sprite_offsets && TexTOffset < TexHeight && 2*TexTOffset+r_sprite_fix_delta >= TexHeight) TexTOffset = TexHeight;
+  TVec topdelta = TexTOffset*sprup*thing->ScaleY;
+  TVec botdelta = (TexTOffset-TexHeight)*sprup*thing->ScaleY;
+
+  sv[0] = sprorigin+start+botdelta;
+  sv[1] = sprorigin+start+topdelta;
+  sv[2] = sprorigin+end+topdelta;
+  sv[3] = sprorigin+end+botdelta;
+
+  //if (Fade != FADE_LIGHT) GCon->Logf("<%s>: Fade=0x%08x", *thing->GetClass()->GetFullName(), Fade);
+
+  if (Alpha >= 1.0f && !Additive && Tex->isTranslucent()) Alpha = 0.9999;
+
+  if (Alpha < 1.0f || Additive || r_sort_sprites) {
+    int priority = 0;
+    if (thing) {
+           if (thing->EntityFlags&VEntity::EF_Bright) priority = 200;
+      else if (thing->EntityFlags&VEntity::EF_FullBright) priority = 100;
+      else if (thing->EntityFlags&(VEntity::EF_Corpse|VEntity::EF_Blasted)) priority = -120;
+      else if (thing->Health <= 0) priority = -110;
+      else if (thing->EntityFlags&VEntity::EF_NoBlockmap) priority = -200;
+    }
+    QueueTranslucentPoly(nullptr, sv, 4, lump, Alpha+(thing->RenderStyle == STYLE_Dark ? 1666.0f : 0.0f), Additive,
+      thing->Translation, true/*isSprite*/, light, Fade, -sprforward,
+      DotProduct(sprorigin, -sprforward), (flip ? -sprright : sprright)/thing->ScaleX,
+      -sprup/thing->ScaleY, (flip ? sv[2] : sv[1]), priority
+      , true, /*sprorigin*/thing->Origin, thing->GetUniqueId(), hangup);
+  } else {
+    Drawer->DrawSpritePolygon(sv, /*GTextureManager[lump]*/Tex, Alpha+(thing->RenderStyle == STYLE_Dark ? 1666.0f : 0.0f),
+      Additive, GetTranslation(thing->Translation), ColorMap, light,
+      Fade, -sprforward, DotProduct(sprorigin, -sprforward),
+      (flip ? -sprright : sprright)/thing->ScaleX,
+      -sprup/thing->ScaleY, (flip ? sv[2] : sv[1]), hangup);
+  }
 }
 
 

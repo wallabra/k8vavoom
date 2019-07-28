@@ -678,14 +678,14 @@ protected:
   bool HasAliasModel (VName clsName) const;
 
   // things
-  void DrawTranslucentPoly (surface_t *surf, TVec *sv, int count, int lump,
-                            float Alpha, bool Additive, int translation,
-                            bool isSprite, vuint32 light, vuint32 Fade, const TVec &normal, float pdist,
-                            const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority=0,
-                            bool useSprOrigin=false, const TVec &sprOrigin=TVec(), vuint32 objid=0,
-                            int hangup=0);
+  void QueueTranslucentPoly (surface_t *surf, TVec *sv, int count, int lump,
+                             float Alpha, bool Additive, int translation,
+                             bool isSprite, vuint32 light, vuint32 Fade, const TVec &normal, float pdist,
+                             const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority=0,
+                             bool useSprOrigin=false, const TVec &sprOrigin=TVec(), vuint32 objid=0,
+                             int hangup=0);
   void QueueSprite (VEntity *thing, vuint32 light, vuint32 Fade, float Alpha, bool Additive, vuint32 seclight);
-  void RenderTranslucentAliasModel (VEntity*, vuint32, vuint32, float, bool, float);
+  void QueueTranslucentAliasModel (VEntity *mobj, vuint32 light, vuint32 Fade, float Alpha, bool Additive, float TimeFrac);
   bool RenderAliasModel (VEntity*, vuint32, vuint32, float, bool, ERenderPass);
   void RenderThing (VEntity*, ERenderPass);
   void RenderMobjs (ERenderPass);

@@ -60,6 +60,7 @@ static VCvarB r_dbg_always_draw_flats("r_dbg_always_draw_flats", true, "Draw fla
 static VCvarB r_draw_adjacent_subsector_things("r_draw_adjacent_subsector_things", true, "Draw things subsectors adjacent to visible subsectors (can fix disappearing things)?", CVAR_Archive);
 
 extern int light_reset_surface_cache; // in r_light_reg.cpp
+
 extern VCvarB r_decals_enabled;
 extern VCvarB clip_frustum;
 extern VCvarB clip_frustum_bsp;
@@ -434,7 +435,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
         */
         if (SurfPrepareForRender(surfs)) {
           if (surfs->plvisible) {
-            DrawTranslucentPoly(surfs, surfs->verts, surfs->count,
+            QueueTranslucentPoly(surfs, surfs->verts, surfs->count,
               0, SkyBox->eventSkyBoxGetPlaneAlpha(), false, 0,
               false, 0, Fade, TVec(), 0, TVec(), TVec(), TVec());
           }
@@ -488,7 +489,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
       //surfs->plvisible = surfs->IsVisible(vieworg);
       if (SurfPrepareForRender(surfs)) {
         if (surfs->plvisible) {
-          DrawTranslucentPoly(surfs, surfs->verts, surfs->count,
+          QueueTranslucentPoly(surfs, surfs->verts, surfs->count,
             0, texinfo->Alpha, texinfo->Additive, 0, false, 0, Fade,
             TVec(), 0, TVec(), TVec(), TVec());
         }
