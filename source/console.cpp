@@ -44,6 +44,7 @@ enum cons_state_t {
 
 class FConsoleDevice : public FOutputDevice {
 public:
+  FConsoleDevice ();
   virtual void Serialise (const char *V, EName Event) override;
 };
 
@@ -54,8 +55,13 @@ public:
 };
 
 
+static mythread_mutex conLogLock;
 FConsoleDevice Console;
 FOutputDevice *GCon = &Console;
+
+FConsoleDevice::FConsoleDevice () {
+  mythread_mutex_init(&conLogLock);
+}
 
 
 static TILine c_iline;
@@ -154,6 +160,7 @@ void C_Shutdown () {
 //==========================================================================
 void C_Start () {
   MN_DeactivateMenu();
+  MyThreadLocker lock(&conLogLock);
   if (consolestate == cons_closed) {
     c_iline.Init();
     last_line = num_lines;
@@ -170,6 +177,7 @@ void C_Start () {
 //==========================================================================
 void C_StartFull () {
   MN_DeactivateMenu();
+  MyThreadLocker lock(&conLogLock);
   c_iline.Init();
   last_line = num_lines;
   consolestate = cons_open;
@@ -287,6 +295,7 @@ void C_Drawer () {
   y -= 10;
 
   // lines
+  MyThreadLocker lock(&conLogLock);
   int i = last_line;
   while ((y+9 > 0) && i--) {
     int lidx = (i+first_line)%MAX_LINES;
@@ -318,6 +327,8 @@ bool C_Responder (event_t *ev) {
   // k8: nope, eat all keyboard events
   //     oops, console (de)activation is processed down the chain
   //if (ev->type != ev_keydown && ev->type != ev_keyup) return false;
+
+  MyThreadLocker lock(&conLogLock);
 
   switch (ev->data1) {
     // close console
@@ -452,6 +463,7 @@ bool C_Responder (event_t *ev) {
 //
 //==========================================================================
 COMMAND(Cls) {
+  MyThreadLocker lock(&conLogLock);
   num_lines = 0;
   first_line = 0;
   last_line = 0;
@@ -467,6 +479,7 @@ COMMAND(Cls) {
 //==========================================================================
 static void AddLine (const char *Data) {
   if (!Data) Data = "";
+  //MyThreadLocker lock(&conLogLock);
   if (num_lines >= MAX_LINES) {
     --num_lines;
     ++first_line;
@@ -651,6 +664,7 @@ static void ConSerialise (const char *str, EName Event, bool fromGLog) {
   if (Event == NAME_Dev && !developer) return;
   if (!fromGLog) { GLog.WriteLine(Event, "%s", str); return; }
   if (!str) str = "";
+  MyThreadLocker lock(&conLogLock);
   //HACK! if string starts with "Sys_Error:", print it, and close log file
   if (VStr::NCmp(str, "Sys_Error:", 10) == 0) {
     if (logfout) { fflush(logfout); fprintf(logfout, "*** %s\n", str); fclose(logfout); logfout = nullptr; }
