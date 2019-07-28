@@ -101,6 +101,23 @@ VAdvancedRenderLevel::~VAdvancedRenderLevel () {
 
 //==========================================================================
 //
+//  VAdvancedRenderLevel::RenderTranslucentWallsDecals
+//
+//==========================================================================
+void VAdvancedRenderLevel::RenderTranslucentWallsDecals () {
+  if (traspFirst >= traspUsed) return;
+  trans_sprite_t *twi = &trans_sprites[traspFirst];
+  for (int f = traspFirst; f < traspUsed; ++f, ++twi) {
+    if (twi->type) continue; // not a wall
+    if (twi->Alpha >= 1.0f) continue; // not a translucent
+    check(twi->surf);
+    Drawer->DrawTranslucentPolygonDecals(twi->surf, twi->Alpha, twi->Additive);
+  }
+}
+
+
+//==========================================================================
+//
 //  VAdvancedRenderLevel::RenderScene
 //
 //==========================================================================
