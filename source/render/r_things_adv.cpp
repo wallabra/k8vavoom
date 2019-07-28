@@ -47,6 +47,8 @@ extern VCvarB r_drawfuzz;
 extern VCvarF r_transsouls;
 extern VCvarI r_max_model_shadows;
 
+static VCvarB r_dbg_thing_dump_vislist("r_dbg_thing_dump_vislist", false, "Dump built list of visible things?", 0);
+
 static VCvarB r_dbg_advthing_dump_actlist("r_dbg_advthing_dump_actlist", false, "Dump built list of active/affected things in advrender?", 0);
 static VCvarB r_dbg_advthing_dump_ambient("r_dbg_advthing_dump_ambient", false, "Dump rendered ambient things?", 0);
 static VCvarB r_dbg_advthing_dump_textures("r_dbg_advthing_dump_textures", false, "Dump rendered textured things?", 0);
@@ -56,6 +58,69 @@ static VCvarB r_dbg_advthing_draw_texture("r_dbg_advthing_draw_texture", true, "
 static VCvarB r_dbg_advthing_draw_light("r_dbg_advthing_draw_light", true, "Draw textures for things?", 0);
 static VCvarB r_dbg_advthing_draw_shadow("r_dbg_advthing_draw_shadow", true, "Draw textures for things?", 0);
 static VCvarB r_dbg_advthing_draw_fog("r_dbg_advthing_draw_fog", true, "Draw fog for things?", 0);
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::BuildVisibleObjectsList
+//
+//  this should be called after `RenderWorld()`
+//
+//  this is not called for "regular" renderer
+//
+//==========================================================================
+void VRenderLevelShared::BuildVisibleObjectsList () {
+  visibleObjects.reset();
+  #ifdef VVRENDER_FULL_ALIAS_MODEL_SHADOW_LIST
+  allShadowModelObjects.reset();
+  #endif
+
+  int RendStyle;
+  float Alpha;
+
+  if (r_dbg_thing_dump_vislist) GCon->Logf("=== VISIBLE THINGS ===");
+  for (TThinkerIterator<VEntity> Ent(Level); Ent; ++Ent) {
+    VEntity *mobj = *Ent;
+    if (!mobj->State || (mobj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) continue;
+    if (mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
+    (*Ent)->NumRenderedShadows = 0; // for advanced renderer
+
+    #ifdef VVRENDER_FULL_ALIAS_MODEL_SHADOW_LIST
+    bool alphaDone = false;
+    // collect all things with models (we'll need them in advrender)
+    if (HasAliasModel(mobj->GetClass()->Name)) {
+      alphaDone = true;
+      if (!CalculateThingAlpha(mobj, RendStyle, Alpha)) continue; // invisible
+      // ignore translucent things, they cannot cast a shadow
+      if (RendStyle == STYLE_Normal && Alpha >= 1.0f) allShadowModelObjects.append(mobj);
+    }
+    #endif
+
+    // skip things in subsectors that are not visible
+    const unsigned SubIdx = (unsigned)(ptrdiff_t)(mobj->SubSector-Level->Subsectors);
+    if (!(BspVisThing[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
+
+    #ifdef VVRENDER_FULL_ALIAS_MODEL_SHADOW_LIST
+    if (!alphaDone)
+    #endif
+    {
+      if (!CalculateThingAlpha(mobj, RendStyle, Alpha)) continue; // invisible
+    }
+
+    if (r_dbg_thing_dump_vislist) GCon->Logf("  <%s> (%f,%f,%f) 0x%08x", *mobj->GetClass()->GetFullName(), mobj->Origin.x, mobj->Origin.y, mobj->Origin.z, mobj->EntityFlags);
+    // mark as visible, why not?
+    // use bsp visibility, to not mark "adjacent" things
+    if (BspVis[SubIdx>>3]&(1<<(SubIdx&7))) mobj->FlagsEx |= VEntity::EFEX_Rendered;
+    visibleObjects.append(mobj);
+  }
+
+  // shrink list
+  if (visibleObjects.capacity() > 16384) {
+    if (visibleObjects.capacity()*2 >= visibleObjects.length()) {
+      visibleObjects.setLength(visibleObjects.length(), true); // resize
+    }
+  }
+}
 
 
 //==========================================================================
