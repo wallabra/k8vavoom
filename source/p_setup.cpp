@@ -150,6 +150,20 @@ static TMap<VStr, bool> mapTextureWarns;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+struct AuxiliaryCloser {
+public:
+  bool doCloseAux;
+
+public:
+  AuxiliaryCloser () : doCloseAux(false) {}
+  ~AuxiliaryCloser () { if (doCloseAux) W_CloseAuxiliary(); doCloseAux = false; }
+
+  AuxiliaryCloser (const AuxiliaryCloser &) = delete;
+  AuxiliaryCloser &operator = (const AuxiliaryCloser &) = delete;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 struct LoadingTiming {
   const char *name;
   double time;
@@ -779,6 +793,8 @@ void VLevel::SetupThingsFromMapinfo () {
 //
 //==========================================================================
 void VLevel::LoadMap (VName AMapName) {
+  AuxiliaryCloser auxCloser;
+
   bool killCache = loader_cache_ignore_one;
   loader_cache_ignore_one = false;
   bool AuxiliaryMap = false;
@@ -827,6 +843,7 @@ load_again:
       xmaplumpnum = W_CheckNumForFileName(va("maps/%s.wad", *MapName));
       lumpnum = W_OpenAuxiliary(aux_file_name);
       if (lumpnum >= 0) {
+        auxCloser.doCloseAux = true;
         MapLumpName = W_LumpName(lumpnum);
         AuxiliaryMap = true;
       }
@@ -847,6 +864,7 @@ load_again:
         xmaplumpnum = lumpnum;
         lumpnum = W_AddAuxiliaryStream(lstrm, WAuxFileType::Wad);
         if (lumpnum >= 0) {
+          auxCloser.doCloseAux = true;
           MapLumpName = W_LumpName(lumpnum);
           AuxiliaryMap = true;
         } else {
@@ -1305,8 +1323,9 @@ load_again:
   LineVVListTime += Sys_Time();
 
   // end of map lump processing
-  if (AuxiliaryMap) {
+  if (AuxiliaryMap || auxCloser.doCloseAux) {
     // close the auxiliary file(s)
+    auxCloser.doCloseAux = false;
     W_CloseAuxiliary();
   }
 

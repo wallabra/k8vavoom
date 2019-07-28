@@ -569,7 +569,8 @@ void Host_Frame () {
     // reset progs virtual machine
     PR_OnAbort();
     // make sure, that we use primary wad files
-    W_CloseAuxiliary();
+    //k8: no need to, we'll do this in p_setup
+    //W_CloseAuxiliary();
 
 #ifdef CLIENT
     if (GGameInfo->NetMode == NM_DedicatedServer) {
@@ -590,7 +591,8 @@ void Host_Frame () {
     // reset progs virtual machine
     PR_OnAbort();
     // make sure, that we use primary wad files
-    W_CloseAuxiliary();
+    //k8: no need to, we'll do this in p_setup
+    //W_CloseAuxiliary();
 
 #ifdef CLIENT
     if (GGameInfo->NetMode == NM_DedicatedServer) {
