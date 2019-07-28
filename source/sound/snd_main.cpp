@@ -1070,7 +1070,7 @@ VAudioCodec *VAudio::LoadSongInternal (const char *Song, bool wasPlaying) {
     return Codec;
   }
 
-  GCon->Logf("couldn't find codec for song '%s'", *W_FullLumpName(Lump));
+  GCon->Logf(NAME_Warning, "couldn't find codec for song '%s'", *W_FullLumpName(Lump));
   delete Strm;
   return nullptr;
 }
@@ -1085,15 +1085,16 @@ void VAudio::PlaySong (const char *Song, bool Loop) {
   if (!Song || !Song[0] || !StreamMusicPlayer) return;
 
   if (snd_music_background_load) {
-  }
+    StreamMusicPlayer->LoadAndPlay(Song, Loop);
+  } else {
+    bool wasPlaying = StreamMusicPlayer->IsPlaying();
+    if (wasPlaying) StreamMusicPlayer->Stop();
 
-  bool wasPlaying = StreamMusicPlayer->IsPlaying();
-  if (wasPlaying) StreamMusicPlayer->Stop();
+    VAudioCodec *Codec = LoadSongInternal(Song, wasPlaying);
 
-  VAudioCodec *Codec = LoadSongInternal(Song, wasPlaying);
-
-  if (Codec && StreamMusicPlayer) {
-    StreamMusicPlayer->Play(Codec, Song, Loop);
+    if (Codec && StreamMusicPlayer) {
+      StreamMusicPlayer->Play(Codec, Song, Loop);
+    }
   }
 }
 

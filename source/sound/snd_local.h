@@ -351,7 +351,8 @@ public:
   VAudioCodec *Codec;
   // current playing song info
   bool CurrLoop;
-  VName CurrSong;
+  //VName CurrSong;
+  VStr CurrSong;
   bool Stopping;
   bool Paused;
   double FinishTime;
@@ -383,6 +384,8 @@ public:
   void SetPitch (float pitch);
   void SetVolume (float volume);
 
+  void LoadAndPlay (const char *InName, bool InLoop);
+
   // streamer thread ping/pong bussiness
   // k8: it is public to free me from fuckery with `friends`
   enum STPCommand {
@@ -396,8 +399,8 @@ public:
     STP_SetVolume,
     // the following two commands will replace current music with the new one
     // music name is in `namebuf`
-    //STP_PlaySong,
-    //STP_PlaySongLooped,
+    STP_PlaySong,
+    STP_PlaySongLooped,
   };
   volatile STPCommand stpcmd;
   volatile bool stpIsPlaying; // it will return `STP_IsPlaying` result here
