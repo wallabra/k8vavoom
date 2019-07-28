@@ -36,7 +36,7 @@ static VCvarB snd_background_loading("snd_background_loading", true, "Load sound
 #ifdef CLIENT
 class VRawSampleLoader : public VSampleLoader {
 public:
-  virtual void Load(sfxinfo_t&, VStream&) override;
+  virtual void Load (sfxinfo_t &, VStream &) override;
 };
 #endif
 
@@ -246,18 +246,18 @@ static MYTHREAD_RET_TYPE soundStreamThread (void *adevobj) {
           if (sndThreadDebug) fprintf(stderr, "STRD: ...and freed sound #%d (uc=%d) (%s : %s)\n", sndid, sman->S_sfx[sndid].UseCount, *sman->S_sfx[sndid].TagName, *W_FullLumpName(sman->S_sfx[sndid].LumpNum));
           Z_Free(sman->S_sfx[sndid].Data);
           sman->S_sfx[sndid].Data = nullptr;
-          sman->S_sfx[sndid].loadedState = 0; // not loaded
+          sman->S_sfx[sndid].loadedState = sfxinfo_t::ST_NotLoaded;
         } else {
-          sman->S_sfx[sndid].loadedState = 2; // loaded
+          sman->S_sfx[sndid].loadedState = sfxinfo_t::ST_Loaded;
         }
       } else {
-        // just in case
         if (sndThreadDebug) fprintf(stderr, "STRD: failed to load sound #%d (uc=%d) (%s : %s)\n", sndid, sman->S_sfx[sndid].UseCount, *sman->S_sfx[sndid].TagName, *W_FullLumpName(sman->S_sfx[sndid].LumpNum));
+        // just in case
         if (sman->S_sfx[sndid].Data) {
           Z_Free(sman->S_sfx[sndid].Data);
           sman->S_sfx[sndid].Data = nullptr;
         }
-        sman->S_sfx[sndid].loadedState = -1; // invalid
+        sman->S_sfx[sndid].loadedState = sfxinfo_t::ST_Invalid;
       }
       // put into ready list
       sman->readySounds.append(sndid);
@@ -977,30 +977,48 @@ void VSoundManager::Process () {
 //==========================================================================
 void VSoundManager::ProcessLoadedSounds () {
   while (readySounds.length()) {
-    int sndid = readySounds[0];
-    if (S_sfx[sndid].loadedState != 2 && S_sfx[sndid].loadedState != -1) Sys_Error(va("STRD: invalid loaded state (%d) for sound #%d (uc=%d) (%s : %s)\n", S_sfx[sndid].loadedState, sndid, S_sfx[sndid].UseCount, *S_sfx[sndid].TagName, *W_FullLumpName(S_sfx[sndid].LumpNum)));
+    int sound_id = readySounds[0];
+    if (S_sfx[sound_id].loadedState != sfxinfo_t::ST_Loaded && S_sfx[sound_id].loadedState != sfxinfo_t::ST_Invalid) Sys_Error(va("STRD: invalid loaded state (%d) for sound #%d (uc=%d) (%s : %s)\n", S_sfx[sound_id].loadedState, sound_id, S_sfx[sound_id].UseCount, *S_sfx[sound_id].TagName, *W_FullLumpName(S_sfx[sound_id].LumpNum)));
     readySounds.removeAt(0);
-    if (sndThreadDebug) fprintf(stderr, "STRD: notifying about sound #%d (uc=%d) (%s : %s)\n", sndid, S_sfx[sndid].UseCount, *S_sfx[sndid].TagName, *W_FullLumpName(S_sfx[sndid].LumpNum));
+    if (sndThreadDebug) fprintf(stderr, "STRD: notifying about sound #%d (uc=%d) (%s : %s)\n", sound_id, S_sfx[sound_id].UseCount, *S_sfx[sound_id].TagName, *W_FullLumpName(S_sfx[sound_id].LumpNum));
     // `UseCount` already incremented
-    bool hasData = !!S_sfx[sndid].Data;
+    bool hasData = !!S_sfx[sound_id].Data;
+    if (hasData && S_sfx[sound_id].UseCount == 0) {
+      // not needed, forget it
+      if (sndThreadDebug) fprintf(stderr, "STRD: freed sound #%d (uc=%d) (%s : %s)\n", sound_id, S_sfx[sound_id].UseCount, *S_sfx[sound_id].TagName, *W_FullLumpName(S_sfx[sound_id].LumpNum));
+      Z_Free(S_sfx[sound_id].Data);
+      S_sfx[sound_id].Data = nullptr;
+      S_sfx[sound_id].loadedState = sfxinfo_t::ST_NotLoaded;
+      continue;
+    }
     mythread_mutex_unlock(&loaderLock);
     if (GAudio) {
       // this will call `DoneWithLump()`
-      GAudio->NotifySoundLoaded(sndid, hasData);
+      GAudio->NotifySoundLoaded(sound_id, hasData);
     } else {
-      if (hasData) {
-        MyThreadLocker lock(&loaderLock);
-        S_sfx[sndid].UseCount = 1;
-        DoneWithLump(sndid);
+      if (hasData) DoneWithLump(sound_id);
+    }
+    // report errors
+    if (!hasData) {
+      MyThreadLocker lock(&loaderLock);
+      // it must be failed one
+      if (S_sfx[sound_id].loadedState != sfxinfo_t::ST_Invalid) {
+        GCon->Logf(NAME_Error, "*** INVALID STATE (%d) FOR SOUND '%s' (%s)", S_sfx[sound_id].loadedState, *S_sfx[sound_id].TagName, *W_FullLumpName(S_sfx[sound_id].LumpNum));
+        S_sfx[sound_id].loadedState = sfxinfo_t::ST_Invalid;
+        if (S_sfx[sound_id].Data) {
+          Z_Free(S_sfx[sound_id].Data);
+          S_sfx[sound_id].Data = nullptr;
+        }
+      }
+      S_sfx[sound_id].UseCount = 0;
+      if (S_sfx[sound_id].LumpNum >= 0) {
+        GCon->Logf(NAME_Warning, "Failed to load sound '%s' (%s)", *S_sfx[sound_id].TagName, *W_FullLumpName(S_sfx[sound_id].LumpNum));
       } else {
-        MyThreadLocker lock(&loaderLock);
-        // it must be failed one
-        check(S_sfx[sndid].loadedState < 0);
-        S_sfx[sndid].UseCount = 0;
+        GCon->Logf(NAME_Warning, "Cannot find sound '%s'", *S_sfx[sound_id].TagName);
       }
     }
     mythread_mutex_lock(&loaderLock);
-    if (sndThreadDebug) fprintf(stderr, "STRD: notified about sound #%d (uc=%d) (%s : %s)\n", sndid, S_sfx[sndid].UseCount, *S_sfx[sndid].TagName, *W_FullLumpName(S_sfx[sndid].LumpNum));
+    if (sndThreadDebug) fprintf(stderr, "STRD: notified about sound #%d (uc=%d) (%s : %s)\n", sound_id, S_sfx[sound_id].UseCount, *S_sfx[sound_id].TagName, *W_FullLumpName(S_sfx[sound_id].LumpNum));
   }
 }
 
@@ -1019,18 +1037,19 @@ bool VSoundManager::LoadSoundInternal (int sound_id) {
   {
     MyThreadLocker lock(&loaderLock);
     sfx = &S_sfx[sound_id];
-    if (sfx->loadedState < 0) return false;
-    if (sfx->loadedState == 1) Sys_Error("internal error is sound loader");
-    if (sfx->loadedState > 0) return true;
-    sfx->loadedState = 1; // loading
+    if (sfx->loadedState == sfxinfo_t::ST_Invalid) return false;
+    if (sfx->loadedState == sfxinfo_t::ST_Loading) Sys_Error("internal error is sound loader");
+    if (sfx->loadedState == sfxinfo_t::ST_Loaded) return true;
+    if (sfx->loadedState != sfxinfo_t::ST_NotLoaded) Sys_Error("internal error is sound loader");
+    sfx->loadedState = sfxinfo_t::ST_Loading;
   }
 
   int Lump = sfx->LumpNum;
   if (Lump < 0) {
     //soundsWarned.put(*S_sfx[sound_id].TagName);
-    GCon->Logf(NAME_Warning, "Sound '%s' lump not found", *S_sfx[sound_id].TagName);
+    //GCon->Logf(NAME_Warning, "Sound '%s' lump not found", *S_sfx[sound_id].TagName);
     MyThreadLocker lock(&loaderLock);
-    sfx->loadedState = -1;
+    sfx->loadedState = sfxinfo_t::ST_Invalid;
     return false;
   }
 
@@ -1040,7 +1059,8 @@ bool VSoundManager::LoadSoundInternal (int sound_id) {
   VStream *Strm = W_CreateLumpReaderNum(Lump);
   if (!Strm) {
     MyThreadLocker lock(&loaderLock);
-    sfx->loadedState = -1;
+    sfx->LumpNum = Lump;
+    sfx->loadedState = sfxinfo_t::ST_Invalid;
     return false;
   }
 
@@ -1049,6 +1069,7 @@ bool VSoundManager::LoadSoundInternal (int sound_id) {
     Ldr->Load(*sfx, *Strm);
     if (sfx->Data) {
       //GCon->Logf("sound '%s' is %s", *W_FullLumpName(Lump), typeid(*Ldr).name());
+      //if (sndThreadDebug) fprintf(stderr, "STRD: loaded sound #%d (uc=%d) (%s : %s) format is '%s'\n", sound_id, S_sfx[sound_id].UseCount, *S_sfx[sound_id].TagName, *W_FullLumpName(Lump), typeid(*Ldr).name());
       break;
     }
   }
@@ -1056,14 +1077,16 @@ bool VSoundManager::LoadSoundInternal (int sound_id) {
 
   if (!sfx->Data) {
     //soundsWarned.put(*S_sfx[sound_id].TagName);
-    GCon->Logf(NAME_Warning, "Failed to load sound '%s' (%s)", *S_sfx[sound_id].TagName, *W_FullLumpName(Lump));
+    //GCon->Logf(NAME_Warning, "Failed to load sound '%s' (%s)", *S_sfx[sound_id].TagName, *W_FullLumpName(Lump));
     MyThreadLocker lock(&loaderLock);
-    sfx->loadedState = -1;
+    sfx->LumpNum = Lump;
+    sfx->loadedState = sfxinfo_t::ST_Invalid;
     return false;
   } else {
     // don't set "loaded" here, caller will do it
-    //MyThreadLocker lock(&loaderLock);
-    //sfx->loadedState = 2; // loaded
+    MyThreadLocker lock(&loaderLock);
+    sfx->LumpNum = Lump;
+    //sfx->loadedState = sfxinfo_t::ST_Loaded;
     //GCon->Logf("SND: loaded sound '%s' (rc=%d)", *S_sfx[sound_id].TagName, S_sfx[sound_id].UseCount+1);
     return true;
   }
@@ -1081,25 +1104,32 @@ int VSoundManager::LoadSound (int sound_id) {
   if (!loaderThreadStarted) {
     // no streaming thread
     if (!S_sfx[sound_id].Data) {
-      if (S_sfx[sound_id].loadedState < 0) return LS_Error;
-      if (!LoadSoundInternal(sound_id)) return LS_Error;
-      S_sfx[sound_id].loadedState = 2; // loaded
+      if (S_sfx[sound_id].loadedState == sfxinfo_t::ST_Invalid) return LS_Error;
+      if (!LoadSoundInternal(sound_id)) {
+        if (S_sfx[sound_id].LumpNum >= 0) {
+          GCon->Logf(NAME_Warning, "Failed to load sound '%s' (%s)", *S_sfx[sound_id].TagName, *W_FullLumpName(S_sfx[sound_id].LumpNum));
+        } else {
+          GCon->Logf(NAME_Warning, "Cannot find sound '%s'", *S_sfx[sound_id].TagName);
+        }
+        return LS_Error;
+      }
+      S_sfx[sound_id].loadedState = sfxinfo_t::ST_Loaded;
     }
     ++S_sfx[sound_id].UseCount;
     return LS_Ready;
   } else {
     MyThreadLocker lock(&loaderLock);
     // loaded?
-    if (S_sfx[sound_id].loadedState == 2) {
+    if (S_sfx[sound_id].loadedState == sfxinfo_t::ST_Loaded) {
       ++S_sfx[sound_id].UseCount;
       return LS_Ready;
     }
     // do not try to load sound that already failed once
     //if (soundsWarned.has(*S_sfx[sound_id].TagName)) return LS_Error;
-    if (S_sfx[sound_id].loadedState < 0) return LS_Error;
+    if (S_sfx[sound_id].loadedState == sfxinfo_t::ST_Invalid) return LS_Error;
     // mark current sound as used
     ++S_sfx[sound_id].UseCount; // it will be released in audio driver
-    if (S_sfx[sound_id].loadedState == 1) return LS_Pending;
+    if (S_sfx[sound_id].loadedState == sfxinfo_t::ST_Loading) return LS_Pending;
     // process loaded sounds (why not?)
     ProcessLoadedSounds();
     if (!queuedSoundsMap.has(sound_id)) {
@@ -1122,19 +1152,20 @@ void VSoundManager::DoneWithLump (int sound_id) {
   if (sound_id > 0 && sound_id < S_sfx.length()) {
     MyThreadLocker lock(&loaderLock);
     sfxinfo_t &sfx = S_sfx[sound_id];
-    if (sfx.loadedState <= 0) return; // oops
+    if (sfx.loadedState == sfxinfo_t::ST_Invalid) return; // oops
+    if (sfx.loadedState == sfxinfo_t::ST_NotLoaded) return; // oops
     if (sndThreadDebug) fprintf(stderr, "STRD: releasing sound #%d (uc=%d) (%s : %s)\n", sound_id, S_sfx[sound_id].UseCount, *S_sfx[sound_id].TagName, *W_FullLumpName(S_sfx[sound_id].LumpNum));
-    if (!sfx.UseCount) Sys_Error(va("invalid UseCount for sound #%d (uc=%d) (%s : %s)\n", sound_id, S_sfx[sound_id].UseCount, *S_sfx[sound_id].TagName, *W_FullLumpName(S_sfx[sound_id].LumpNum)));
+    if (sfx.UseCount <= 0) Sys_Error(va("invalid UseCount for sound #%d (uc=%d) (%s : %s)\n", sound_id, S_sfx[sound_id].UseCount, *S_sfx[sound_id].TagName, *W_FullLumpName(S_sfx[sound_id].LumpNum)));
     --sfx.UseCount;
     //GCon->Logf("SND: done with sound '%s' (rc=%d)", *S_sfx[sound_id].TagName, S_sfx[sound_id].UseCount);
-    if (sfx.UseCount == 0 && sfx.loadedState == 2) {
+    if (sfx.UseCount == 0 && sfx.loadedState == sfxinfo_t::ST_Loaded) {
       //GCon->Logf("SND: unloaded sound '%s'", *S_sfx[sound_id].TagName);
       if (sndThreadDebug) fprintf(stderr, "STRD: unloading sound #%d (uc=%d) (%s : %s)\n", sound_id, S_sfx[sound_id].UseCount, *S_sfx[sound_id].TagName, *W_FullLumpName(S_sfx[sound_id].LumpNum));
       if (sfx.Data) {
         Z_Free(sfx.Data);
         sfx.Data = nullptr;
       }
-      sfx.loadedState = 0;
+      sfx.loadedState = sfxinfo_t::ST_NotLoaded;
     }
   }
 }
@@ -1469,18 +1500,33 @@ void VSoundManager::ReplaceSoundLumpNames (TArray<FReplacedString> &List) {
 //==========================================================================
 void VRawSampleLoader::Load (sfxinfo_t &Sfx, VStream &Strm) {
   // read header and see if it's a valid raw sample
-  vuint16 Unknown;
+  vuint16 Version;
   vuint16 SampleRate;
   vuint32 DataSize;
 
   Strm.Seek(0);
-  Strm << Unknown << SampleRate << DataSize;
-  if (Unknown != 3 || (vint32)DataSize != Strm.TotalSize()-8) return;
+  Strm << Version << SampleRate << DataSize;
+  //if (Version == 3) GCon->Logf("RAW: sr=%d; datasize=%d; totalsize=%d; diff=%d", SampleRate, DataSize, Strm.TotalSize(), Strm.TotalSize()-DataSize);
+  // it has 32 padding bytes
+  if (Version != 3 || SampleRate < 1024 || SampleRate > 48000 || DataSize < 32 || (vint32)DataSize != Strm.TotalSize()-8) return;
 
   Sfx.SampleBits = 8;
   Sfx.SampleRate = SampleRate;
-  Sfx.DataSize = DataSize;
-  Sfx.Data = Z_Malloc(Sfx.DataSize);
-  Strm.Serialise(Sfx.Data, Sfx.DataSize);
+
+  // check for padding
+  if (DataSize > 32) {
+    // has some actual sound data
+    vuint8 padbuf[16];
+    Strm.Serialise(padbuf, 16); // skip prepad
+    Sfx.DataSize = DataSize-32; // skip both paddings
+    Sfx.Data = Z_Malloc(Sfx.DataSize);
+    Strm.Serialise(Sfx.Data, Sfx.DataSize);
+    //GCon->Logf("RAW: sr=%d; datasize=%d", SampleRate, DataSize);
+  } else {
+    // empty sample
+    Sfx.DataSize = 1;
+    Sfx.Data = Z_Malloc(Sfx.DataSize);
+    memset(Sfx.Data, 0x80, Sfx.DataSize);
+  }
 }
 #endif

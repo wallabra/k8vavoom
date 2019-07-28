@@ -72,6 +72,8 @@ enum {
 // SoundFX struct.
 //
 struct sfxinfo_t {
+  enum { ST_Invalid = -1, ST_NotLoaded = 0, ST_Loading = 1, ST_Loaded = 2 };
+
   VName TagName; // name, by whitch sound is recognised in script
   int LumpNum; // lump number of sfx
 
@@ -97,7 +99,7 @@ struct sfxinfo_t {
   vuint32 DataSize;
   void *Data;
 
-  int loadedState; // <0: invalid; 0: not yet; 1: loading; 2: loaded
+  int loadedState; // ST_XXX
 };
 
 struct seq_info_t {
@@ -265,10 +267,11 @@ public:
 // streamed audio decoder interface
 class VAudioCodec : public VInterface {
 public:
-  int     SampleRate;
-  int     SampleBits;
-  int     NumChannels;
+  int SampleRate;
+  int SampleBits;
+  int NumChannels;
 
+public:
   VAudioCodec () : SampleRate(44100), SampleBits(16), NumChannels(2) {}
   // always decodes stereo, returns number of frames
   // `NumSamples` is number of stereo samples

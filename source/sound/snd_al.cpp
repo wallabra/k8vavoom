@@ -516,33 +516,41 @@ void VOpenALDevice::NotifySoundLoaded (int sound_id, bool success) {
     if (success) {
       // play it
       //GCon->Logf("OpenAL: playing source #%u (sound #%d)", cur->src, sound_id);
-      // clear error code
-      alGetError();
-      // create buffer
-      alGenBuffers(1, &Buffers[sound_id]);
-      if (alGetError() != AL_NO_ERROR) {
-        GCon->Log(NAME_Dev, "Failed to gen OpenAL buffer");
-        srcErrorSet.put(cur->src, true);
-      } else {
-        // load buffer data
-        alBufferData(Buffers[sound_id],
-          (GSoundManager->S_sfx[sound_id].SampleBits == 8 ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16),
-          GSoundManager->S_sfx[sound_id].Data,
-          GSoundManager->S_sfx[sound_id].DataSize,
-          GSoundManager->S_sfx[sound_id].SampleRate);
-
+      if (!Buffers[sound_id]) {
+        // clear error code
+        alGetError();
+        // create buffer
+        alGenBuffers(1, &Buffers[sound_id]);
         if (alGetError() != AL_NO_ERROR) {
-          GCon->Log(NAME_Dev, "Failed to load buffer data");
+          GCon->Log(NAME_Dev, "Failed to gen OpenAL buffer");
           srcErrorSet.put(cur->src, true);
+          Buffers[sound_id] = 0;
         } else {
-          GCon->Logf("OpenAL: playing source #%u (sound #%d)", cur->src, sound_id);
-          alSourcei(cur->src, AL_BUFFER, Buffers[sound_id]);
-          alSourcePlay(cur->src);
+          // load buffer data
+          alBufferData(Buffers[sound_id],
+            (GSoundManager->S_sfx[sound_id].SampleBits == 8 ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16),
+            GSoundManager->S_sfx[sound_id].Data,
+            GSoundManager->S_sfx[sound_id].DataSize,
+            GSoundManager->S_sfx[sound_id].SampleRate);
+
+          if (alGetError() != AL_NO_ERROR) {
+            GCon->Log(NAME_Dev, "Failed to load buffer data");
+            srcErrorSet.put(cur->src, true);
+            Buffers[sound_id] = 0;
+          } else {
+            //GCon->Logf("OpenAL: playing source #%u (sound #%d; sr=%d; bits=%d; size=%d)", cur->src, sound_id, GSoundManager->S_sfx[sound_id].SampleRate, GSoundManager->S_sfx[sound_id].SampleBits, GSoundManager->S_sfx[sound_id].DataSize);
+            alSourcei(cur->src, AL_BUFFER, Buffers[sound_id]);
+            alSourcePlay(cur->src);
+          }
         }
+      } else {
+        // already buffered, just play it
+        //GCon->Logf("OpenAL: playing already buffered source #%u (sound #%d; sr=%d; bits=%d; size=%d)", cur->src, sound_id, GSoundManager->S_sfx[sound_id].SampleRate, GSoundManager->S_sfx[sound_id].SampleBits, GSoundManager->S_sfx[sound_id].DataSize);
+        alSourcei(cur->src, AL_BUFFER, Buffers[sound_id]);
+        alSourcePlay(cur->src);
       }
     } else {
-      // kill it
-      //alDeleteSources(1, &cur->src);
+      // mark as invalid
       srcErrorSet.put(cur->src, true);
     }
     GSoundManager->DoneWithLump(sound_id);
