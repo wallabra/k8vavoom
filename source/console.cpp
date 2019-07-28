@@ -328,8 +328,7 @@ bool C_Responder (event_t *ev) {
   //     oops, console (de)activation is processed down the chain
   //if (ev->type != ev_keydown && ev->type != ev_keyup) return false;
 
-  MyThreadLocker lock(&conLogLock);
-
+  // shit; i have to perform more fine-grained locking
   switch (ev->data1) {
     // close console
     case K_ESCAPE:
@@ -346,6 +345,7 @@ bool C_Responder (event_t *ev) {
       if (c_iline.Data && c_iline.Data[0]) {
         // print it
         GCon->Logf(">%s", c_iline.Data);
+        MyThreadLocker lock(&conLogLock);
 
         // add to history (but if it is a duplicate, move it to history top)
         int dupidx = -1;
@@ -394,26 +394,38 @@ bool C_Responder (event_t *ev) {
 
     // scroll lines up
     case K_PAGEUP:
-      for (int i = 0; i < (GInput->ShiftDown ? 1 : max2(2, (int)con_height/9-2)); ++i) {
-        if (last_line > 1) --last_line;
+      {
+        MyThreadLocker lock(&conLogLock);
+        for (int i = 0; i < (GInput->ShiftDown ? 1 : max2(2, (int)con_height/9-2)); ++i) {
+          if (last_line > 1) --last_line;
+        }
       }
       return true;
 
     // scroll lines down
     case K_PAGEDOWN:
-      for (int i = 0; i < (GInput->ShiftDown ? 1 : max2(2, (int)con_height/9-2)); ++i) {
-        if (last_line < num_lines) ++last_line;
+      {
+        MyThreadLocker lock(&conLogLock);
+        for (int i = 0; i < (GInput->ShiftDown ? 1 : max2(2, (int)con_height/9-2)); ++i) {
+          if (last_line < num_lines) ++last_line;
+        }
       }
       return true;
 
     // go to first line
     case K_HOME:
-      last_line = 1;
+      {
+        MyThreadLocker lock(&conLogLock);
+        last_line = 1;
+      }
       return true;
 
     // go to last line
     case K_END:
-      last_line = num_lines;
+      {
+        MyThreadLocker lock(&conLogLock);
+        last_line = num_lines;
+      }
       return true;
 
     // command history up
