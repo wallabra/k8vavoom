@@ -1833,7 +1833,6 @@ static void AM_drawThings () {
     if (!mobj->State || (mobj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) continue;
     invisible = ((mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible|VEntity::EF_NoBlockmap)) || mobj->RenderStyle == STYLE_None);
     if (invisible && am_cheating <= 2) continue;
-
     //if (!(mobj->FlagsEx&VEntity::EFEX_Rendered)) continue;
 
     vuint32 color;

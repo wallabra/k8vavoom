@@ -265,7 +265,7 @@ class VEntity : public VThinker {
   // extra flags
   enum {
     EFEX_Monster  = 1u<<0u, // is this a monster?
-    EFEX_Rendered = 1u<<1u, // was this thing rendered? (used in automap)
+    EFEX_Rendered = 1u<<1u, // was this thing rendered? (unused, not set ever)
   };
   vuint32 FlagsEx;
 

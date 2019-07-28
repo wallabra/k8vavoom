@@ -103,7 +103,7 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
     if (!(BspVisThing[SubIdx>>3]&(1<<(SubIdx&7)))) return;
     // mark as visible, why not?
     // use bsp visibility, to not mark "adjacent" things
-    if (BspVis[SubIdx>>3]&(1<<(SubIdx&7))) mobj->FlagsEx |= VEntity::EFEX_Rendered;
+    //if (BspVis[SubIdx>>3]&(1<<(SubIdx&7))) mobj->FlagsEx |= VEntity::EFEX_Rendered;
   }
 
   float Alpha = mobj->Alpha;
