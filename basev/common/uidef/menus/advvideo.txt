@@ -10,6 +10,7 @@ menudef AdvVideoOptions {
     cvar = r_decals_enabled;
   }
 
+  /* textures are always sorted, because why not?
   option bool {
     title = "Sort textures";
     cvar = gl_sort_textures;
@@ -17,7 +18,9 @@ menudef AdvVideoOptions {
       "Sort textures, so renderer will do less texture switches."
       "This can win several FPS on huge levels.";
   }
+  */
 
+  /* sprites are always sorted, because why not?
   option bool {
     title = "Sort sprites";
     cvar = r_sort_sprites;
@@ -25,6 +28,7 @@ menudef AdvVideoOptions {
       "Sort sprites, so sprites on the same coords will flicker less."
       "This *can* reduce sprite flickering, but it is not guaranteed.";
   }
+  */
 
   option bool {
     title = "Better Thing Rendering";
