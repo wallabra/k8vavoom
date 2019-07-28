@@ -873,23 +873,32 @@ void VSoundManager::CleanupSounds () {
 
 //==========================================================================
 //
+//  VSoundManager::Process
+//
+//==========================================================================
+void VSoundManager::Process () {
+}
+
+
+//==========================================================================
+//
 //  VSoundManager::LoadSound
 //
 //==========================================================================
-bool VSoundManager::LoadSound (int sound_id) {
+int VSoundManager::LoadSound (int sound_id) {
   static const char *Exts[] = { "flac", "opus", "wav", "raw", "ogg", "mp3", nullptr };
 
-  if (sound_id < 1 || sound_id >= S_sfx.length()) return false;
+  if (sound_id < 1 || sound_id >= S_sfx.length()) return LS_Error;
 
   if (!S_sfx[sound_id].Data) {
     // do not try to load sound that already failed once
-    if (soundsWarned.has(*S_sfx[sound_id].TagName)) return false;
+    if (soundsWarned.has(*S_sfx[sound_id].TagName)) return LS_Error;
 
     int Lump = S_sfx[sound_id].LumpNum;
     if (Lump < 0) {
       soundsWarned.put(*S_sfx[sound_id].TagName);
       GCon->Logf(NAME_Warning, "Sound '%s' lump not found", *S_sfx[sound_id].TagName);
-      return false;
+      return LS_Error;
     }
 
     int FileLump = W_FindLumpByFileNameWithExts(va("sound/%s", *W_LumpName(Lump)), Exts);
@@ -908,14 +917,14 @@ bool VSoundManager::LoadSound (int sound_id) {
     if (!S_sfx[sound_id].Data) {
       soundsWarned.put(*S_sfx[sound_id].TagName);
       GCon->Logf(NAME_Warning, "Failed to load sound '%s' (%s)", *S_sfx[sound_id].TagName, *W_FullLumpName(Lump));
-      return false;
+      return LS_Error;
     }
     //GCon->Logf("SND: loaded sound '%s' (rc=%d)", *S_sfx[sound_id].TagName, S_sfx[sound_id].UseCount+1);
   }
 
   ++S_sfx[sound_id].UseCount;
   SoundJustUsed(sound_id);
-  return true;
+  return LS_Ready;
 }
 
 

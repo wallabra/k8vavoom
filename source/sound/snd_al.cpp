@@ -196,14 +196,14 @@ void VOpenALDevice::Shutdown () {
   }
   BufferCount = 0;
 
-  //  Destroy context.
+  // destroy context
   if (Context) {
     alcSetThreadContext(nullptr);
     alcDestroyContext(Context);
     Context = nullptr;
   }
 
-  //  Disconnect from a device.
+  // disconnect from a device
   if (Device) {
     alcCloseDevice(Device);
     Device = nullptr;
@@ -213,11 +213,32 @@ void VOpenALDevice::Shutdown () {
 
 //==========================================================================
 //
-//  VOpenALDevice::LoadSound
+//  VOpenALDevice::AllocSource
 //
 //==========================================================================
-bool VOpenALDevice::LoadSound (int sound_id) {
-  if (sound_id < 0 || sound_id >= GSoundManager->S_sfx.length()) return false;
+bool VOpenALDevice::AllocSource (ALuint *src) {
+  if (!src) return false;
+  alGetError(); // clear error code
+  alGenSources(1, src);
+  if (alGetError() != AL_NO_ERROR) {
+    GCon->Log(NAME_Dev, "Failed to gen OpenAL source");
+    return false;
+  }
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VOpenALDevice::LoadSound
+//
+//  returns VSoundManager::LS_XXX
+//  if not errored, sets `src` to new sound source
+//
+//==========================================================================
+int VOpenALDevice::LoadSound (int sound_id, ALuint *src) {
+  if (sound_id < 0 || sound_id >= GSoundManager->S_sfx.length()) return VSoundManager::LS_Error;
+
   if (BufferCount < GSoundManager->S_sfx.length()) {
     int newsz = ((GSoundManager->S_sfx.length()+1)|0xff)+1;
     ALuint *newbuf = new ALuint[newsz];
@@ -229,6 +250,7 @@ bool VOpenALDevice::LoadSound (int sound_id) {
     Buffers = newbuf;
     BufferCount = newsz;
   }
+
   /*
   if (BufferCount < sound_id+1) {
     int newsz = ((sound_id+4)|0xfff)+1;
@@ -240,10 +262,44 @@ bool VOpenALDevice::LoadSound (int sound_id) {
   }
   */
 
-  if (Buffers[sound_id]) return true;
+  if (Buffers[sound_id]) {
+    if (AllocSource(src)) return VSoundManager::LS_Ready;
+    return VSoundManager::LS_Error;
+  }
+
+  // check that sound lump is queued
+  auto pss = sourcesPending.find(sound_id);
+  if (pss) {
+    // pending sound, generate new source, and add it to pending list
+    if (!AllocSource(src)) return VSoundManager::LS_Error;
+    PendingSrc *psrc = new PendingSrc;
+    psrc->src = *src;
+    psrc->sound_id = sound_id;
+    psrc->next = *pss;
+    sourcesPending.put(sound_id, psrc);
+    srcPendingSet.put(*src, sound_id);
+    return VSoundManager::LS_Pending;
+  }
 
   // check that sound lump is loaded
-  if (!GSoundManager->LoadSound(sound_id)) return false; // missing sound
+  int res = GSoundManager->LoadSound(sound_id);
+  if (res == VSoundManager::LS_Error) return false; // missing sound
+
+  // generate new source
+  if (!AllocSource(src)) return VSoundManager::LS_Error;
+
+  if (res == VSoundManager::LS_Pending) {
+    // pending sound, generate new source, and add it to pending list
+    check(!sourcesPending.find(sound_id));
+    check(!srcPendingSet.find(*src));
+    PendingSrc *psrc = new PendingSrc;
+    psrc->src = *src;
+    psrc->sound_id = sound_id;
+    psrc->next = nullptr;
+    sourcesPending.put(sound_id, psrc);
+    srcPendingSet.put(*src, sound_id);
+    return VSoundManager::LS_Pending;
+  }
 
   // clear error code
   alGetError();
@@ -251,9 +307,10 @@ bool VOpenALDevice::LoadSound (int sound_id) {
   // create buffer
   alGenBuffers(1, &Buffers[sound_id]);
   if (alGetError() != AL_NO_ERROR) {
-    GCon->Log(NAME_Dev, "Failed to gen buffer");
+    GCon->Log(NAME_Dev, "Failed to gen OpenAL buffer");
     GSoundManager->DoneWithLump(sound_id);
-    return false;
+    alDeleteSources(1, src);
+    return VSoundManager::LS_Error;
   }
 
   // load buffer data
@@ -262,15 +319,17 @@ bool VOpenALDevice::LoadSound (int sound_id) {
     GSoundManager->S_sfx[sound_id].Data,
     GSoundManager->S_sfx[sound_id].DataSize,
     GSoundManager->S_sfx[sound_id].SampleRate);
+
   if (alGetError() != AL_NO_ERROR) {
     GCon->Log(NAME_Dev, "Failed to load buffer data");
     GSoundManager->DoneWithLump(sound_id);
-    return false;
+    alDeleteSources(1, src);
+    return VSoundManager::LS_Error;
   }
 
   // we don't need to keep lump static
   GSoundManager->DoneWithLump(sound_id);
-  return true;
+  return VSoundManager::LS_Ready;
 }
 
 
@@ -283,17 +342,10 @@ bool VOpenALDevice::LoadSound (int sound_id) {
 //
 //==========================================================================
 int VOpenALDevice::PlaySound (int sound_id, float volume, float pitch, bool Loop) {
-  if (!LoadSound(sound_id)) return -1;
-
   ALuint src;
-  alGetError(); // clear error code
-  alGenSources(1, &src);
-  if (alGetError() != AL_NO_ERROR) {
-    GCon->Log(NAME_Dev, "Failed to gen source");
-    return -1;
-  }
 
-  alSourcei(src, AL_BUFFER, Buffers[sound_id]);
+  int res = LoadSound(sound_id, &src);
+  if (res == VSoundManager::LS_Error) return -1;
 
   alSourcef(src, AL_GAIN, volume);
   alSourcef(src, AL_ROLLOFF_FACTOR, rolloff_factor);
@@ -303,7 +355,10 @@ int VOpenALDevice::PlaySound (int sound_id, float volume, float pitch, bool Loop
   alSourcef(src, AL_MAX_DISTANCE, max_distance);
   alSourcef(src, AL_PITCH, pitch);
   if (Loop) alSourcei(src, AL_LOOPING, AL_TRUE);
-  alSourcePlay(src);
+  if (res == VSoundManager::LS_Ready) {
+    alSourcei(src, AL_BUFFER, Buffers[sound_id]);
+    alSourcePlay(src);
+  }
   return src;
 }
 
@@ -316,17 +371,10 @@ int VOpenALDevice::PlaySound (int sound_id, float volume, float pitch, bool Loop
 int VOpenALDevice::PlaySound3D (int sound_id, const TVec &origin, const TVec &velocity,
                                 float volume, float pitch, bool Loop)
 {
-  if (!LoadSound(sound_id)) return -1;
-
   ALuint src;
-  alGetError(); // clear error code
-  alGenSources(1, &src);
-  if (alGetError() != AL_NO_ERROR) {
-    GCon->Log(NAME_Dev, "Failed to gen source");
-    return -1;
-  }
 
-  alSourcei(src, AL_BUFFER, Buffers[sound_id]);
+  int res = LoadSound(sound_id, &src);
+  if (res == VSoundManager::LS_Error) return -1;
 
   alSourcef(src, AL_GAIN, volume);
   alSourcef(src, AL_ROLLOFF_FACTOR, rolloff_factor);
@@ -337,7 +385,10 @@ int VOpenALDevice::PlaySound3D (int sound_id, const TVec &origin, const TVec &ve
   alSourcef(src, AL_MAX_DISTANCE, max_distance);
   alSourcef(src, AL_PITCH, pitch);
   if (Loop) alSourcei(src, AL_LOOPING, AL_TRUE);
-  alSourcePlay(src);
+  if (res == VSoundManager::LS_Ready) {
+    alSourcei(src, AL_BUFFER, Buffers[sound_id]);
+    alSourcePlay(src);
+  }
   return src;
 }
 
@@ -361,9 +412,11 @@ void VOpenALDevice::UpdateChannel3D (int Handle, const TVec &Org, const TVec &Ve
 //==========================================================================
 bool VOpenALDevice::IsChannelPlaying (int Handle) {
   if (Handle == -1) return false;
+  // pending sounds are "playing"
+  if (srcPendingSet.has((ALuint)Handle)) return true;
   ALint State;
-  alGetSourcei(Handle, AL_SOURCE_STATE, &State);
-  return State == AL_PLAYING;
+  alGetSourcei((ALuint)Handle, AL_SOURCE_STATE, &State);
+  return (State == AL_PLAYING);
 }
 
 
@@ -378,9 +431,39 @@ bool VOpenALDevice::IsChannelPlaying (int Handle) {
 //==========================================================================
 void VOpenALDevice::StopChannel (int Handle) {
   if (Handle == -1) return;
-  // stop buffer
-  alSourceStop(Handle);
-  alDeleteSources(1, (ALuint*)&Handle);
+  ALuint hh = (ALuint)Handle;
+  // remove pending sounds
+  auto sidp = srcPendingSet.find(hh);
+  if (sidp) {
+    // remove from pending list
+    srcPendingSet.del(hh);
+    PendingSrc **pss = sourcesPending.find(*sidp);
+    if (pss) {
+      PendingSrc *prev = nullptr, *cur = *pss;
+      while (cur && cur->src != hh) {
+        prev = cur;
+        cur = cur->next;
+      }
+      if (cur) {
+        // i found her!
+        if (prev) {
+          // not first
+          prev->next = cur->next;
+        } else if (cur->next) {
+          // first, not last
+          sourcesPending.put(*sidp, cur->next);
+        } else {
+          // only one
+          sourcesPending.del(*sidp);
+        }
+        delete cur;
+      }
+    }
+  } else {
+    // stop buffer
+    alSourceStop(hh);
+  }
+  alDeleteSources(1, &hh);
 }
 
 
@@ -404,6 +487,37 @@ void VOpenALDevice::UpdateListener (const TVec &org, const TVec &vel,
 
   alDopplerFactor(doppler_factor);
   alDopplerVelocity(doppler_velocity);
+}
+
+
+//==========================================================================
+//
+//  VOpenALDevice::NotifySoundLoaded
+//
+// WARNING! this must be called from the main thread, i.e.
+//          from the thread that calls `PlaySound*()` API!
+//
+//==========================================================================
+void VOpenALDevice::NotifySoundLoaded (int sound_id, bool success) {
+  PendingSrc **pss = sourcesPending.find(sound_id);
+  if (!pss) return; // nothing to do
+  PendingSrc *cur = *pss;
+  while (cur) {
+    PendingSrc *next = cur->next;
+    check(cur->sound_id == sound_id);
+    srcPendingSet.del(cur->src);
+    if (success) {
+      // play it
+      alSourcei(cur->src, AL_BUFFER, Buffers[sound_id]);
+      alSourcePlay(cur->src);
+    } else {
+      // kill it
+      alDeleteSources(1, &cur->src);
+    }
+    delete cur;
+    cur = next;
+  }
+  sourcesPending.del(sound_id);
 }
 
 

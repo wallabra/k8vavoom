@@ -488,6 +488,8 @@ void Host_Frame () {
       return;
     }
 
+    if (GSoundManager) GSoundManager->Process();
+
     Host_UpdateLanguage();
 
 #ifdef CLIENT

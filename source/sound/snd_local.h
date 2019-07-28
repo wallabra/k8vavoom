@@ -185,13 +185,26 @@ private:
   ALuint StrmSource;
   short StrmDataBuffer[STRM_BUFFER_SIZE*2];
 
+  // if sound is queued to be loaded, we'll remember sound source here
+  struct PendingSrc {
+    ALuint src;
+    int sound_id;
+    PendingSrc *next;
+  };
+  TMapNC<int, PendingSrc *> sourcesPending; // key is sound id
+  TMapNC<ALuint, int> srcPendingSet; // key is source id, value is sound id
+
   static VCvarF doppler_factor;
   static VCvarF doppler_velocity;
   static VCvarF rolloff_factor;
   static VCvarF reference_distance;
   static VCvarF max_distance;
 
-  bool LoadSound (int);
+  bool AllocSource (ALuint *src);
+
+  // returns VSoundManager::LS_XXX
+  // if not errored, sets `src` to new sound source
+  int LoadSound (int sound_id, ALuint *src);
 
 public:
   VOpenALDevice ();
@@ -200,14 +213,15 @@ public:
   bool Init();
   int SetChannels (int);
   void Shutdown ();
-  int PlaySound (int, float, float, bool);
-  int PlaySound3D (int, const TVec&, const TVec&, float, float, bool);
-  void UpdateChannel3D (int, const TVec&, const TVec&);
-  bool IsChannelPlaying (int);
-  void StopChannel (int);
-  void UpdateListener (const TVec&, const TVec&, const TVec&, const TVec&, const TVec&
+  int PlaySound (int sound_id, float volume, float pitch, bool Loop);
+  int PlaySound3D (int sound_id, const TVec &origin, const TVec &velocity,
+                   float volume, float pitch, bool Loop);
+  void UpdateChannel3D (int Handle, const TVec &Org, const TVec &Vel);
+  bool IsChannelPlaying (int Handle);
+  void StopChannel (int Handle);
+  void UpdateListener (const TVec &org, const TVec &vel, const TVec &fwd, const TVec&, const TVec &up
 #if defined(VAVOOM_REVERB)
-                      , VReverbInfo*
+                      , VReverbInfo *Env
 #endif
                       );
 
@@ -224,6 +238,10 @@ public:
 
   void AddCurrentThread ();
   void RemoveCurrentThread ();
+
+  // WARNING! this must be called from the main thread, i.e.
+  //          from the thread that calls `PlaySound*()` API!
+  void NotifySoundLoaded (int sound_id, bool success);
 };
 
 

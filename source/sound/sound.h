@@ -67,6 +67,9 @@ struct FRolloffInfo {
 // handles list of registered sound and sound sequences
 class VSoundManager {
 public:
+  enum { LS_Error = -1, LS_Pending = 0, LS_Ready = 1 };
+
+public:
   // the complete set of sound effects
   TArray<sfxinfo_t> S_sfx; // 0 is reserved
   TArray<seq_info_t> SeqInfo;
@@ -86,7 +89,7 @@ public:
   int ResolveSound (int);
   int ResolveEntitySound (VName, VName, VName);
   bool IsSoundPresent (VName, VName, VName);
-  bool LoadSound (int);
+  int LoadSound (int sound_id); // returns LS_XXX
   void DoneWithLump (int);
   float GetMusicVolume (const char *SongName);
   FAmbientSound *GetAmbientSound (int);
@@ -105,6 +108,9 @@ public:
 #if defined(VAVOOM_REVERB)
   VReverbInfo *FindEnvironment (int);
 #endif
+
+  // call this *VERY* often, so pending sounds can be sent to player
+  void Process ();
 
 public:
   struct VMusicAlias {
