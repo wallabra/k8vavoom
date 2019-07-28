@@ -217,6 +217,19 @@ void VOpenALDevice::Shutdown () {
 //
 //==========================================================================
 bool VOpenALDevice::LoadSound (int sound_id) {
+  if (sound_id < 0 || sound_id >= GSoundManager->S_sfx.length()) return false;
+  if (BufferCount < GSoundManager->S_sfx.length()) {
+    int newsz = ((GSoundManager->S_sfx.length()+1)|0xff)+1;
+    ALuint *newbuf = new ALuint[newsz];
+    if (BufferCount > 0) {
+      for (int f = 0; f < BufferCount; ++f) newbuf[f] = Buffers[f];
+    }
+    for (int f = BufferCount; f < newsz; ++f) newbuf[f] = 0;
+    delete[] Buffers;
+    Buffers = newbuf;
+    BufferCount = newsz;
+  }
+  /*
   if (BufferCount < sound_id+1) {
     int newsz = ((sound_id+4)|0xfff)+1;
     ALuint *newbuf = new ALuint[newsz];
@@ -225,6 +238,7 @@ bool VOpenALDevice::LoadSound (int sound_id) {
     Buffers = newbuf;
     BufferCount = newsz;
   }
+  */
 
   if (Buffers[sound_id]) return true;
 

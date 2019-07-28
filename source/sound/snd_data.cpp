@@ -30,7 +30,7 @@
 #define VV_ALLOW_SFX_TRUNCATION
 
 static VCvarB snd_verbose_truncate("snd_verbose_truncate", false, "Show silence-truncated sounds?", CVAR_Archive);
-static VCvarB snd_free_played_sounds("snd_free_played_sounds", false, "Immediately unload started sound?", CVAR_Archive);
+static VCvarB snd_free_played_sounds("snd_free_played_sounds", true, "Immediately unload started sound?", CVAR_Archive);
 static VCvarB snd_free_old_sounds("snd_free_old_sounds", false, "Free old sounds on map change?", CVAR_Archive);
 static bool lastFreePlayedSounds = false;
 
@@ -197,7 +197,7 @@ VSoundManager::~VSoundManager () {
 //
 //  VSoundManager::Init
 //
-//  Loads sound script lump or file, if param -devsnd was specified
+//  Loads sound script lump
 //
 //==========================================================================
 void VSoundManager::Init () {
