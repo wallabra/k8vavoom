@@ -173,6 +173,10 @@ private:
 
   inline int ChanFirstUsed () const { return ChanNextUsed(-1, true); }
   int ChanNextUsed (int cidx, bool wantFirst=false) const;
+
+  // WARNING! this must be called from the main thread, i.e.
+  //          from the thread that calls `PlaySound*()` API!
+  virtual void NotifySoundLoaded (int sound_id, bool success) override;
 };
 
 
@@ -1069,6 +1073,16 @@ void VAudio::PlaySong (const char *Song, bool Loop) {
     GCon->Logf("couldn't find codec for song '%s'", *W_FullLumpName(Lump));
     delete Strm;
   }
+}
+
+
+//==========================================================================
+//
+//  VAudio::NotifySoundLoaded
+//
+//==========================================================================
+void VAudio::NotifySoundLoaded (int sound_id, bool success) {
+  if (SoundDevice) SoundDevice->NotifySoundLoaded(sound_id, success);
 }
 
 

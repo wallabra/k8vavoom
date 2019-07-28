@@ -69,6 +69,19 @@ class VSoundManager {
 public:
   enum { LS_Error = -1, LS_Pending = 0, LS_Ready = 1 };
 
+public: // fuck you, shitplusplus!
+  mythread loaderThread;
+  mythread_mutex loaderLock;
+  mythread_cond loaderCond;
+  /*volatile*/ TArray<int> queuedSounds;
+  /*volatile*/ TMapNC<int, bool> queuedSoundsMap;
+  /*volatile*/ TArray<int> readySounds;
+  volatile int loaderDoQuit;
+  volatile bool loaderIsIdle;
+  volatile bool loaderThreadStarted;
+
+  bool LoadSoundInternal (int sound_id);
+
 public:
   // the complete set of sound effects
   TArray<sfxinfo_t> S_sfx; // 0 is reserved
@@ -78,7 +91,7 @@ public:
 protected:
   TMap<VStr, bool> sfxMissingReported; // name is lowercased
 
-  void SoundJustUsed (int idx);
+  void ProcessLoadedSounds ();
 
 public:
   VSoundManager ();
@@ -203,6 +216,10 @@ public:
   virtual void UpdateActiveSequences(float) = 0;
   virtual void StopAllSequences() = 0;
   virtual void SerialiseSounds(VStream&) = 0;
+
+  // WARNING! this must be called from the main thread, i.e.
+  //          from the thread that calls `PlaySound*()` API!
+  virtual void NotifySoundLoaded (int sound_id, bool success) = 0;
 
   static VAudioPublic *Create();
 };

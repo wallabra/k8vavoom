@@ -97,8 +97,7 @@ struct sfxinfo_t {
   vuint32 DataSize;
   void *Data;
 
-  // last used time
-  double luTime;
+  int loadedState; // <0: invalid; 0: not yet; 1: loading; 2: loaded
 };
 
 struct seq_info_t {
@@ -193,6 +192,7 @@ private:
   };
   TMapNC<int, PendingSrc *> sourcesPending; // key is sound id
   TMapNC<ALuint, int> srcPendingSet; // key is source id, value is sound id
+  TMapNC<ALuint, bool> srcErrorSet; // key is source id
 
   static VCvarF doppler_factor;
   static VCvarF doppler_velocity;
