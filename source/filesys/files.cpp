@@ -36,6 +36,9 @@ static VCvarB gz_skip_menudef("_gz_skip_menudef", false, "Skip gzdoom menudef pa
 
 static VCvarB __dbg_debug_preinit("__dbg_debug_preinit", false, "Dump preinits?", CVAR_PreInit);
 
+VCvarS game_name("game_name", "unknown", "The Name Of The Game.", CVAR_Rom);
+
+
 bool fsys_skipSounds = false;
 bool fsys_skipSprites = false;
 bool fsys_skipDehacked = false;
@@ -262,6 +265,15 @@ struct CustomModeInfo {
   bool disableGoreMod;
   bool disableBDW;
   VStr basedir;
+  // has any sense only for modes loaded from "~/.k8vavoom/modes.rc"
+  TArray<VStr> basedirglob;
+  bool reported;
+
+  CustomModeInfo () : name(), aliases(), pwads(), postpwads(), autoskips(), disableBloodReplacement(false), disableGoreMod(false), disableBDW(false), basedir(), basedirglob(), reported(false) {}
+
+  CustomModeInfo (const CustomModeInfo &src) : name(), aliases(), pwads(), postpwads(), autoskips(), disableBloodReplacement(false), disableGoreMod(false), disableBDW(false), basedir(), basedirglob(), reported(false) { copyFrom(src); }
+
+  CustomModeInfo &operator = (const CustomModeInfo &src) { copyFrom(src); return *this; }
 
   void clear () {
     name.clear();
@@ -272,91 +284,187 @@ struct CustomModeInfo {
     disableBloodReplacement = false;
     disableGoreMod = false;
     disableBDW = false;
+    basedirglob.clear();
+    reported = false;
   }
-};
 
+  void appendPWad (const VStr &str) {
+    if (str.isEmpty()) return;
+    for (auto &&s : pwads) if (s.strEqu(str)) return;
+    pwads.append(str);
+  }
 
-static CustomModeInfo customMode;
-static TArray<VStr> postPWads; // from autoload
+  void appendPostPWad (const VStr &str) {
+    if (str.isEmpty()) return;
+    for (auto &&s : postpwads) if (s.strEqu(str)) return;
+    postpwads.append(str);
+  }
 
+  void copyFrom (const CustomModeInfo &src) {
+    if (&src == this) return;
+    clear();
+    name = src.name;
+    // copy aliases
+    aliases.setLength(src.aliases.length());
+    for (auto &&it : src.aliases.itemsIdx()) aliases[it.index()] = it.value();
+    // copy pwads
+    pwads.setLength(src.pwads.length());
+    for (auto &&it : src.pwads.itemsIdx()) pwads[it.index()] = it.value();
+    // copy postwads
+    postpwads.setLength(src.postpwads.length());
+    for (auto &&it : src.postpwads.itemsIdx()) postpwads[it.index()] = it.value();
+    // copy autoskips
+    autoskips.setLength(src.autoskips.length());
+    for (auto &&it : src.autoskips.itemsIdx()) autoskips[it.index()] = it.value();
+    // copy flags
+    disableBloodReplacement = src.disableBloodReplacement;
+    disableGoreMod = src.disableGoreMod;
+    disableBDW = src.disableBDW;
+    // copy other things
+    basedir = src.basedir;
+    basedirglob.setLength(src.basedirglob.length());
+    for (auto &&it : src.basedirglob.itemsIdx()) basedirglob[it.index()] = it.value();
+    reported = src.reported;
+  }
 
-static void SetupCustomMode (VStr basedir) {
-  //customMode.clear();
+  // used to build final mode definition
+  void merge (const CustomModeInfo &src) {
+    if (&src == this) return;
+    for (auto &&s : src.pwads) appendPWad(s);
+    for (auto &&s : src.postpwads) appendPostPWad(s);
+    for (auto &&s : src.autoskips) autoskips.append(s);
+    if (src.disableBloodReplacement) disableBloodReplacement = true;
+    if (src.disableGoreMod) disableGoreMod = true;
+    if (src.disableBDW) disableBDW = true;
+  }
 
-  if (!basedir.isEmpty() && !basedir.endsWith("/")) basedir += "/";
-  VStream *rcstrm = FL_OpenSysFileRead(basedir+"modes.rc");
-  if (!rcstrm) return;
+  bool isMyAlias (VStr s) const {
+    s = s.xstrip();
+    if (s.isEmpty()) return false;
+    for (auto &a : aliases) if (a.strEquCI(s)) return true;
+    return false;
+  }
 
-  // load modes
-  TArray<CustomModeInfo> modes;
-  VScriptParser *sc = new VScriptParser(rcstrm->GetName(), rcstrm);
-  while (!sc->AtEnd()) {
-    if (sc->Check("alias")) {
-      sc->ExpectString();
-      VStr k = sc->String;
-      sc->Expect("is");
-      sc->ExpectString();
-      VStr v = sc->String;
-      if (!k.isEmpty() && !v.isEmpty() && k.ICmp(v) != 0) {
-        for (int f = 0; f < modes.length(); ++f) {
-          if (modes[f].name.ICmp(v) == 0) {
-            modes[f].aliases.append(k);
-            break;
-          }
-        }
-      }
-      continue;
-    }
-    sc->Expect("mode");
+  static VStr stripBaseDirShit (VStr dirname) {
+    while (!dirname.isEmpty() && (dirname[0] == '/' || dirname[0] == '\\')) dirname.chopLeft(1);
+    while (!dirname.isEmpty() && (dirname[dirname.length()-1] == '/' || dirname[dirname.length()-1] == '\\')) dirname.chopRight(1);
+    if (dirname.startsWithCI("basev/")) dirname.chopLeft(6);
+    return dirname;
+  }
+
+  bool isGoodBaseDir (VStr dirname) const {
+    if (basedirglob.length() == 0) return true;
+    dirname = stripBaseDirShit(dirname);
+    if (dirname.isEmpty()) return true;
+    for (auto &g : basedirglob) if (dirname.globMatchCI(g)) return true;
+    return false;
+  }
+
+  // `mode` keyword skipped, expects mode name
+  // mode must be cleared
+  void parse (VScriptParser *sc) {
+    //clear();
     sc->ExpectString();
-    CustomModeInfo mode;
-    mode.clear();
-    mode.name = sc->String;
-    mode.basedir = basedir;
+    name = sc->String;
     sc->Expect("{");
     while (!sc->Check("}")) {
       if (sc->Check("pwad")) {
         for (;;) {
           sc->ExpectString();
-          mode.pwads.append(sc->String);
+          appendPWad(sc->String);
           if (!sc->Check(",")) break;
         }
       } else if (sc->Check("postpwad")) {
         for (;;) {
           sc->ExpectString();
-          mode.postpwads.append(sc->String);
+          appendPostPWad(sc->String);
           if (!sc->Check(",")) break;
         }
       } else if (sc->Check("skipauto")) {
         for (;;) {
           sc->ExpectString();
-          GroupMask &gi = mode.autoskips.alloc();
-          gi.mask = sc->String;
-          gi.enabled = false;
+          sc->String = sc->String.xstrip();
+          if (!sc->String.isEmpty()) {
+            GroupMask &gi = autoskips.alloc();
+            gi.mask = sc->String;
+            gi.enabled = false;
+          }
           if (!sc->Check(",")) break;
         }
       } else if (sc->Check("forceauto")) {
         for (;;) {
           sc->ExpectString();
-          GroupMask &gi = mode.autoskips.alloc();
+          GroupMask &gi = autoskips.alloc();
           gi.mask = sc->String;
           gi.enabled = true;
           if (!sc->Check(",")) break;
         }
       } else if (sc->Check("DisableBloodReplacement")) {
-        mode.disableBloodReplacement = true;
+        disableBloodReplacement = true;
       } else if (sc->Check("DisableGoreMod")) {
-        mode.disableGoreMod = true;
+        disableGoreMod = true;
       } else if (sc->Check("DisableBDW")) {
-        mode.disableBDW = true;
+        disableBDW = true;
+      } else if (sc->Check("alias")) {
+        sc->ExpectString();
+        VStr k = sc->String.xstrip();
+        if (!k.isEmpty()) aliases.append(k);
+      } else if (sc->Check("basedir")) {
+        sc->ExpectString();
+        VStr k = stripBaseDirShit(sc->String.xstrip());
+        if (!k.isEmpty()) basedirglob.append(k);
       } else {
         sc->Error(va("unknown command '%s'", *sc->String));
       }
     }
+  }
+};
+
+
+static CustomModeInfo customMode;
+static TArray<CustomModeInfo> userModes; // from "~/.k8vavoom/modes.rc"
+static TArray<VStr> postPWads; // from autoload
+
+
+//==========================================================================
+//
+//  LoadModesFromStream
+//
+//  deletes stream
+//
+//==========================================================================
+static void LoadModesFromStream (VStream *rcstrm, TArray<CustomModeInfo> &modes, VStr basedir=VStr::EmptyString) {
+  if (!rcstrm) return;
+  VScriptParser *sc = new VScriptParser(rcstrm->GetName(), rcstrm);
+  while (!sc->AtEnd()) {
+    if (sc->Check("alias")) {
+      sc->ExpectString();
+      VStr k = sc->String.xstrip();
+      sc->Expect("is");
+      sc->ExpectString();
+      VStr v = sc->String.xstrip();
+      if (!k.isEmpty() && !v.isEmpty() && !k.strEquCI(v)) {
+        bool found = false;
+        for (int f = 0; f < modes.length(); ++f) {
+          if (modes[f].name.strEquCI(v)) {
+            found = true;
+            modes[f].aliases.append(k);
+            break;
+          }
+        }
+        if (!found) sc->Message(va("cannot set alias '%s', because mode '%s' is unknown", *k, *v));
+      }
+      continue;
+    }
+    sc->Expect("mode");
+    CustomModeInfo mode;
+    mode.clear();
+    mode.basedir = basedir;
+    mode.parse(sc);
     // append mode
     bool found = false;
     for (int f = 0; f < modes.length(); ++f) {
-      if (modes[f].name.ICmp(mode.name) == 0) {
+      if (modes[f].name.strEquCI(mode.name)) {
         // i found her!
         found = true;
         modes[f] = mode;
@@ -366,7 +474,86 @@ static void SetupCustomMode (VStr basedir) {
     if (!found) modes.append(mode);
   }
   delete sc;
+}
 
+
+//==========================================================================
+//
+//  ParseUserModes
+//
+//  "game_name" cvar must be set
+//
+//==========================================================================
+static void ParseUserModes () {
+  if (game_name.asStr().isEmpty()) return; // just in case
+  VStream *rcstrm = FL_OpenFileReadInCfgDir("modes.rc");
+  if (!rcstrm) return;
+  GCon->Logf(NAME_Init, "parsing user mode definitions from '%s'...", *rcstrm->GetName());
+
+  // load modes
+  LoadModesFromStream(rcstrm, userModes);
+}
+
+
+//==========================================================================
+//
+//  ApplyUserModes
+//
+//==========================================================================
+static void ApplyUserModes (VStr basedir) {
+  // apply modes
+  bool inMode = false;
+  for (int asp = 1; asp < GArgs.Count(); ++asp) {
+    if (VStr::Cmp(GArgs[asp], "-mode") == 0) {
+      inMode = true;
+    } else if (inMode) {
+      VStr mname = GArgs[asp];
+      if (!mname.isEmpty() && (*mname)[0] != '-' && (*mname)[0] != '+') {
+        CustomModeInfo *nfo = nullptr;
+        for (auto &&mode : userModes) {
+          if (mode.isGoodBaseDir(basedir) && mode.name.strEquCI(mname)) {
+            nfo = &mode;
+            break;
+          }
+        }
+        if (!nfo) {
+          for (auto &&mode : userModes) {
+            if (mode.isGoodBaseDir(basedir) && mode.isMyAlias(mname)) {
+              nfo = &mode;
+              break;
+            }
+          }
+        }
+        if (nfo) {
+          if (!nfo->reported) {
+            nfo->reported = true;
+            GCon->Logf(NAME_Init, "activating user mode '%s'", *nfo->name);
+          }
+          customMode.merge(*nfo);
+        }
+      }
+      inMode = false;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  SetupCustomMode
+//
+//==========================================================================
+static void SetupCustomMode (VStr basedir) {
+  //customMode.clear();
+
+  if (!basedir.isEmpty() && !basedir.endsWith("/")) basedir += "/";
+  VStream *rcstrm = FL_OpenSysFileRead(basedir+"modes.rc");
+  if (!rcstrm) return;
+  GCon->Logf(NAME_Init, "parsing mode definitions from '%s'...", *rcstrm->GetName());
+
+  // load modes
+  TArray<CustomModeInfo> modes;
+  LoadModesFromStream(rcstrm, modes, basedir);
   if (modes.length() == 0) return; // nothing to do
 
   // build active mode
@@ -379,30 +566,23 @@ static void SetupCustomMode (VStr basedir) {
       VStr mname = GArgs[asp];
       if (!mname.isEmpty() && (*mname)[0] != '-' && (*mname)[0] != '+') {
         const CustomModeInfo *nfo = nullptr;
-        for (int f = 0; f < modes.length(); ++f) {
-          if (modes[f].name.ICmp(mname) == 0) {
-            nfo = &modes[f];
+        for (auto &&mode : modes) {
+          if (mode.name.strEquCI(mname)) {
+            nfo = &mode;
             break;
           }
         }
         if (!nfo) {
-          for (int f = 0; f < modes.length(); ++f) {
-            for (int c = 0; c < modes[f].aliases.length(); ++c) {
-              if (modes[f].aliases[c].ICmp(mname) == 0) {
-                nfo = &modes[f];
-                break;
-              }
+          for (auto &&mode : modes) {
+            if (mode.isMyAlias(mname)) {
+              nfo = &mode;
+              break;
             }
-            if (nfo) break;
           }
         }
         if (nfo) {
-          for (int c = 0; c < nfo->pwads.length(); ++c) customMode.pwads.append(nfo->pwads[c]);
-          for (int c = 0; c < nfo->postpwads.length(); ++c) customMode.postpwads.append(nfo->postpwads[c]);
-          for (int c = 0; c < nfo->autoskips.length(); ++c) customMode.autoskips.append(nfo->autoskips[c]);
-          if (nfo->disableBloodReplacement) customMode.disableBloodReplacement = true;
-          if (nfo->disableGoreMod) customMode.disableGoreMod = true;
-          if (nfo->disableBDW) customMode.disableBDW = true;
+          GCon->Logf(NAME_Init, "activating mode '%s'", *nfo->name);
+          customMode.merge(*nfo);
         }
       }
       inMode = false;
@@ -585,9 +765,6 @@ static void wpkAppend (const VStr &fname, bool asystem) {
 }
 
 
-VCvarS game_name("game_name", "unknown", "The Name Of The Game.", CVAR_Rom);
-
-
 // ////////////////////////////////////////////////////////////////////////// //
 __attribute__((unused)) static int cmpfuncCI (const void *v1, const void *v2) {
   return ((VStr*)v1)->ICmp((*(VStr*)v2));
@@ -761,11 +938,13 @@ static void CustomModeLoadPwads (int type) {
   // load post-file pwads from autoload here too
   if (type == CM_POST_PWADS && postPWads.length() > 0) {
     GCon->Logf(NAME_Init, "loading autoload post-pwads");
-    for (int f = 0; f < postPWads.length(); ++f) AddAnyFile(postPWads[f], true); // allow fail
+    for (auto &&wn : postPWads) {
+      GCon->Logf(NAME_Init, "autoload post-pwad: %s...", *wn);
+      AddAnyFile(wn, true); // allow fail
+    }
   }
 
-  for (int f = 0; f < list.length(); ++f) {
-    VStr fname = list[f];
+  for (auto &&fname : list) {
     if (fname.isEmpty()) continue;
     if (!fname.startsWith("/")) fname = customMode.basedir+fname;
     GCon->Logf(NAME_Init, "mode pwad: %s...", *fname);
@@ -868,11 +1047,11 @@ void AddAutoloadRC (const VStr &aubasedir) {
 //
 //==========================================================================
 static void AddGameDir (const VStr &basedir, const VStr &dir) {
+  GCon->Logf(NAME_Init, "adding game dir '%s'...", *dir);
+
   VStr bdx = basedir;
   if (bdx.length() == 0) bdx = "./";
   bdx = bdx+"/"+dir;
-  //fprintf(stderr, "bdx:<%s>\n", *bdx);
-  //GCon->Logf(NAME_Init, "*** bdx:<%s> ***", *bdx);
 
   if (!Sys_DirExists(bdx)) return;
 
@@ -918,6 +1097,7 @@ static void AddGameDir (const VStr &basedir, const VStr &dir) {
 
   // custom mode
   SetupCustomMode(bdx);
+  ApplyUserModes(dir);
 
   // add "autoload/*"
   if (!fsys_onlyOneBaseFile) {
@@ -1588,6 +1768,8 @@ void FL_Init () {
   // and current dir
   //IWadDirs.Append(".");
 
+  ParseUserModes();
+
   AddGameDir("basev/common");
 
   collectPWads();
@@ -1954,7 +2136,7 @@ VStream *FL_OpenFileWrite (const VStr &Name, bool isFullName) {
 VStream *FL_OpenFileReadInCfgDir (const VStr &Name) {
   VStr diskName = FL_GetConfigDir()+"/"+Name;
   FILE *File = fopen(*diskName, "rb");
-  if (File) return new VStreamFileReader(File, GCon, Name);
+  if (File) return new VStreamFileReader(File, GCon, diskName);
   return FL_OpenFileRead(Name);
 }
 
@@ -1969,7 +2151,7 @@ VStream *FL_OpenFileWriteInCfgDir (const VStr &Name) {
   FL_CreatePath(diskName.ExtractFilePath());
   FILE *File = fopen(*diskName, "wb");
   if (!File) return nullptr;
-  return new VStreamFileWriter(File, GCon, Name);
+  return new VStreamFileWriter(File, GCon, diskName);
 }
 
 
