@@ -1,0 +1,8 @@
+branding.ico
+  icons was drawn by Mr.Rocket from DoomWorld. great thanks!
+
+k8vavoom_badge.svg
+k8vavoom_logo.svg
+k8vavoom_badge.png
+k8vavoom_logo.png
+  created by ar888. great thanks!

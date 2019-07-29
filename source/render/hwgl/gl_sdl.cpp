@@ -26,6 +26,7 @@
 //**************************************************************************
 #include <SDL.h>
 #include "gl_local.h"
+#include "../../icondata/k8vavomicondata.c"
 
 
 extern VCvarB want_mouse_at_zero;
@@ -214,6 +215,25 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, int fsmode) {
   if (!hw_window) {
     GCon->Logf("SDL2: cannot create SDL2 window.");
     return false;
+  }
+
+  {
+    #if SDL_BYTEORDER == SDL_BIG_ENDIAN
+      static const Uint32 rmask = 0x0000ff00u;
+      static const Uint32 gmask = 0x00ff0000u;
+      static const Uint32 bmask = 0xff000000u;
+      static const Uint32 amask = 0x000000ffu;
+    #else
+      static const Uint32 rmask = 0x00ff0000u;
+      static const Uint32 gmask = 0x0000ff00u;
+      static const Uint32 bmask = 0x000000ffu;
+      static const Uint32 amask = 0xff000000u;
+    #endif
+    SDL_Surface *icosfc = SDL_CreateRGBSurfaceFrom(k8vavoomicondata, 32, 32, 32, 32*4, rmask, gmask, bmask, amask);
+    if (icosfc) {
+      SDL_SetWindowIcon(hw_window, icosfc);
+      SDL_FreeSurface(icosfc);
+    }
   }
 
   hw_glctx = SDL_GL_CreateContext(hw_window);
