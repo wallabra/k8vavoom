@@ -6,3 +6,7 @@ k8vavoom_logo.svg
 k8vavoom_badge.png
 k8vavoom_logo.png
   created by ar888. great thanks!
+
+
+badge idea:
+  wrkq from DoomWorld. great thanks!
