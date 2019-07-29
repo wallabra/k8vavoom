@@ -1415,6 +1415,11 @@ static void ParseSkillDefOld (VScriptParser *sc, VSkillDef *sdef) {
       break;
     }
   }
+
+  if (sdef->SpawnFilter == 0) {
+    GCon->Logf(NAME_Warning, "MAPINFO:%s: skill param 'SpawnFilter' is not set for skill '%s'; assume UV.", *sc->GetLoc().toStringNoCol(), *sdef->MenuName);
+    sdef->SpawnFilter = 8; // UV
+  }
 }
 
 
@@ -1603,6 +1608,11 @@ static void ParseSkillDef (VScriptParser *sc) {
       sc->Error(va("unknown MAPINFO skill command '%s'", *sc->String));
       break;
     }
+  }
+
+  if (sdef->SpawnFilter == 0) {
+    GCon->Logf(NAME_Warning, "MAPINFO:%s: skill param 'SpawnFilter' is not set for skill '%s'; assume UV.", *sc->GetLoc().toStringNoCol(), *sdef->MenuName);
+    sdef->SpawnFilter = 8; // UV
   }
 }
 
