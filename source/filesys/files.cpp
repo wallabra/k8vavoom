@@ -260,6 +260,7 @@ struct CustomModeInfo {
   TArray<GroupMask> autoskips;
   bool disableBloodReplacement;
   bool disableGoreMod;
+  bool disableBDW;
   VStr basedir;
 
   void clear () {
@@ -270,6 +271,7 @@ struct CustomModeInfo {
     autoskips.clear();
     disableBloodReplacement = false;
     disableGoreMod = false;
+    disableBDW = false;
   }
 };
 
@@ -345,6 +347,8 @@ static void SetupCustomMode (VStr basedir) {
         mode.disableBloodReplacement = true;
       } else if (sc->Check("DisableGoreMod")) {
         mode.disableGoreMod = true;
+      } else if (sc->Check("DisableBDW")) {
+        mode.disableBDW = true;
       } else {
         sc->Error(va("unknown command '%s'", *sc->String));
       }
@@ -398,6 +402,7 @@ static void SetupCustomMode (VStr basedir) {
           for (int c = 0; c < nfo->autoskips.length(); ++c) customMode.autoskips.append(nfo->autoskips[c]);
           if (nfo->disableBloodReplacement) customMode.disableBloodReplacement = true;
           if (nfo->disableGoreMod) customMode.disableGoreMod = true;
+          if (nfo->disableBDW) customMode.disableBDW = true;
         }
       }
       inMode = false;
@@ -1641,6 +1646,7 @@ void FL_Init () {
 
   // load custom mode pwads
   if (customMode.disableBloodReplacement) fsys_DisableBloodReplacement = true;
+  if (customMode.disableBDW) fsys_DisableBDW = true;
   CustomModeLoadPwads(CM_PRE_PWADS);
 
   int mapnum = -1;
