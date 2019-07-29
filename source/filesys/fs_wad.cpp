@@ -238,7 +238,7 @@ void VWadFile::Close () {
 //==========================================================================
 void VWadFile::InitNamespaces () {
   InitNamespace(WADNS_Sprites, NAME_s_start, NAME_s_end, NAME_ss_start, NAME_ss_end);
-  InitNamespace(WADNS_Flats, NAME_f_start, NAME_f_end, NAME_ff_start, NAME_ff_end);
+  InitNamespace(WADNS_Flats, NAME_f_start, NAME_f_end, NAME_ff_start, NAME_ff_end, true);
   InitNamespace(WADNS_ColorMaps, NAME_c_start, NAME_c_end, NAME_cc_start, NAME_cc_end);
   InitNamespace(WADNS_ACSLibrary, NAME_a_start, NAME_a_end, NAME_aa_start, NAME_aa_end);
   InitNamespace(WADNS_NewTextures, NAME_tx_start, NAME_tx_end);
@@ -269,36 +269,110 @@ void VWadFile::InitNamespaces () {
 }
 
 
+struct NSInfo {
+public:
+  EWadNamespace NS;
+  VName Start, End;
+  VName AltStart, AltEnd;
+  bool flatNS;
+  bool inNS; // currently
+  VName CurrEnd;
+
+public:
+  NSInfo (EWadNamespace aNS, VName aStart, VName aEnd, VName aAltStart, VName aAltEnd, bool aflatNS)
+    : NS(aNS)
+    , Start(aStart)
+    , End(aEnd)
+    , AltStart(aAltStart)
+    , AltEnd(aAltEnd)
+    , flatNS(aflatNS)
+    , inNS(false)
+    , CurrEnd(NAME_None)
+  {}
+
+  // returns ending lump name, or `NAME_None`
+  static VName isFlatStartLump (VName lumpName) {
+    const char *s = *lumpName;
+    if (s[0] != 'f') return NAME_None;
+    if (!VStr::endsWith(s, "_start")) return NAME_None;
+    if (s[1] != '_' && (s[1] < '0' || s[1] > '9')) return NAME_None;
+    // start of flats section
+    VStr str(s);
+    int under = str.indexOf('_');
+    if (under < 0) return NAME_None;
+    str = str.left(under);
+    str += "_end";
+    if (str.length() > 8) return NAME_None;
+    return VName(*str);
+  }
+
+  static bool isFlatEndLump (VName lumpName) {
+    const char *s = *lumpName;
+    if (s[0] != 'f') return false;
+    if (!VStr::endsWith(s, "_end")) return false;
+    if (s[1] != '_' && (s[1] < '0' || s[1] > '9')) return false;
+    // end of flats section
+    return true;
+  }
+
+  // returns `true` if this lump must be cleared
+  bool checkName (VName lumpName) {
+    if (lumpName == NAME_None) return false; // just in case
+    if (inNS) {
+      // inside the namespace, check for ending lump
+      if (lumpName == CurrEnd || lumpName == End || (AltEnd != NAME_None && lumpName == AltEnd)) {
+        inNS = false;
+        CurrEnd = NAME_None;
+        return true;
+      }
+      if (!flatNS) return false;
+      // if in the main lump
+      if (CurrEnd == End || (AltEnd != NAME_None && CurrEnd == AltEnd)) {
+        return (isFlatEndLump(lumpName) || isFlatStartLump(lumpName) != NAME_None);
+      } else {
+        // not in the main lump
+        if (isFlatEndLump(lumpName)) {
+          // end of flats section
+          inNS = false;
+          CurrEnd = NAME_None;
+          return true;
+        }
+        // ignore sporadic start sublumps
+        return (isFlatStartLump(lumpName) != NAME_None);
+      }
+    } else {
+      // not inside the namespace, check for starting lump
+      if (lumpName == Start) { CurrEnd = End; inNS = true; return true; }
+      if (AltStart != NAME_None && lumpName == AltStart) { CurrEnd = AltEnd; inNS = true; return true; }
+      if (flatNS) {
+        VName el = isFlatStartLump(lumpName);
+        if (el != NAME_None) { inNS = true; CurrEnd = el; return true; }
+      }
+    }
+    return false;
+  }
+};
+
+
 //==========================================================================
 //
 //  VWadFile::InitNamespace
 //
 //==========================================================================
-void VWadFile::InitNamespace (EWadNamespace NS, VName Start, VName End, VName AltStart, VName AltEnd) {
-  bool InNS = false;
-  for (int i = 0; i < pakdir.files.length(); ++i) {
-    VPakFileInfo &fi = pakdir.files[i];
+void VWadFile::InitNamespace (EWadNamespace NS, VName Start, VName End, VName AltStart, VName AltEnd, bool flatNS) {
+  NSInfo nsi(NS, Start, End, AltStart, AltEnd, flatNS);
+  for (auto &&fi : pakdir.files) {
+    //VPakFileInfo &fi = pakdir.files[i];
     // skip if lump is already in other namespace
     if (fi.lumpNamespace != WADNS_Global) continue;
-    if (InNS) {
-      // check for ending marker
-      if (fi.lumpName == End || (AltEnd != NAME_None && fi.lumpName == AltEnd)) {
-        InNS = false;
-      } else {
-        if ((fsys_skipSounds && NS == WADNS_Sounds) ||
-            (fsys_skipSprites && NS == WADNS_Sprites))
-        {
-          fi.lumpNamespace = /*(EWadNamespace)*/-1;
-          fi.lumpName = NAME_None;
-        }
-        fi.lumpNamespace = NS;
-      }
-    } else {
-      // check for starting marker
-      if (fi.lumpName == Start || (AltStart != NAME_None && fi.lumpName == AltStart)) {
-        InNS = true;
-      }
+    if (fi.lumpName == NAME_None) continue;
+    if (nsi.checkName(fi.lumpName)) {
+      // this is special lump, clear it
+      fi.lumpNamespace = /*(EWadNamespace)*/-1;
+      fi.lumpName = NAME_None;
+      continue;
     }
+    if (nsi.inNS) fi.lumpNamespace = NS;
   }
 }
 

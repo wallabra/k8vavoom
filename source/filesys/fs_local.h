@@ -253,7 +253,7 @@ private:
 private:
   void InitNamespaces ();
   void FixVoiceNamespaces ();
-  void InitNamespace (EWadNamespace NS, VName Start, VName End, VName AltStart=NAME_None, VName AltEnd=NAME_None);
+  void InitNamespace (EWadNamespace NS, VName Start, VName End, VName AltStart=NAME_None, VName AltEnd=NAME_None, bool flatNS=false);
 
 public:
   VWadFile ();
