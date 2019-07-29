@@ -625,13 +625,17 @@ VStream *W_CreateLumpReaderName (VName Name, EWadNamespace NS) {
 
 //==========================================================================
 //
-//  W_StartIterationFromLumpFile
+//  W_StartIterationFromLumpFileNS
 //
 //==========================================================================
-int W_StartIterationFromLumpFile (int File) {
+int W_StartIterationFromLumpFileNS (int File, EWadNamespace NS) {
   if (File < 0) return -1;
-  if (File >= SearchPaths.length()) return MAKE_HANDLE(SearchPaths.length()+1, 69)-1;
-  return MAKE_HANDLE(File, 0)-1;
+  if (File >= SearchPaths.length()) return -1;
+  for (int li = 0; File < SearchPaths.length(); ++File, li = 0) {
+    li = SearchPaths[File]->IterateNS(li, NS);
+    if (li != -1) return MAKE_HANDLE(File, li);
+  }
+  return -1;
 }
 
 
@@ -658,6 +662,7 @@ int W_IterateNS (int Prev, EWadNamespace NS) {
 //
 //==========================================================================
 int W_IterateFile (int Prev, const VStr &Name) {
+  if (Name.isEmpty()) return -1;
   //GCon->Logf(NAME_Dev, "W_IterateFile: Prev=%d (%d); fn=<%s>", Prev, SearchPaths.length(), *Name);
   for (int wi = FILE_INDEX(Prev)+1; wi < SearchPaths.length(); ++wi) {
     int li = SearchPaths[wi]->CheckNumForFileName(Name);

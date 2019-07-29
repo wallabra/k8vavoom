@@ -2922,7 +2922,7 @@ void VLevel::LoadACScripts (int Lump, int XMapLump) {
   // this is done so autoloaded acs won't interfere with pwad libraries
   if (XMapLump >= 0) {
     // from map file and further
-    for (int ScLump = W_IterateNS(W_StartIterationFromLumpFile(W_LumpFile(XMapLump)), WADNS_Global); ScLump >= 0; ScLump = W_IterateNS(ScLump, WADNS_Global)) {
+    for (int ScLump = W_StartIterationFromLumpFileNS(W_LumpFile(XMapLump), WADNS_Global); ScLump >= 0; ScLump = W_IterateNS(ScLump, WADNS_Global)) {
       if (W_LumpName(ScLump) != NAME_loadacs) continue;
       LoadLoadACS(ScLump, XMapLump);
     }
