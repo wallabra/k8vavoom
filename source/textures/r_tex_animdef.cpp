@@ -81,6 +81,15 @@ struct AnimDef_t {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// the basic idea is to fill up both arrays, and use them to build animation lists.
+
+// partially parsed from TEXTUREx lumps
+static TArray<VStr> txxnames;
+// collected from loaded wads
+static TArray<VStr> flatnames;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // switches
 TArray<TSwitch *> Switches;
 
@@ -111,6 +120,33 @@ void R_ShutdownFTAnims () {
     AnimDoorDefs[i].Frames = nullptr;
   }
   AnimDoorDefs.Clear();
+}
+
+
+//==========================================================================
+//
+//  FillLists
+//
+//  fill `txxnames`, and `flatnames`
+//
+//==========================================================================
+static void FillLists () {
+  txxnames.clear();
+  flatnames.clear();
+
+  /*
+  // collect all flats
+  for (auto &&it : WadNSIterator(WADNS_Flats)) {
+    GCon->Logf("FLAT: lump=%d; name=<%s> (%s); size=%d", it.lump, *it.getName(), *it.getFullName(), it.getSize());
+  }
+
+  // parse all TEXTUREx lumps
+  for (auto &&it : WadNSIterator(WADNS_Global)) {
+    if (it.getName() == NAME_texture1 || it.getName() == NAME_texture2) {
+      GCon->Logf("TEXTUREx: lump=%d; name=<%s> (%s)", it.lump, *it.getName(), *it.getFullName());
+    }
+  }
+  */
 }
 
 
@@ -923,6 +959,8 @@ static void ParseFTAnims (VScriptParser *sc) {
 //==========================================================================
 void R_InitFTAnims () {
   if (GArgs.CheckParm("-disable-animdefs")) return;
+
+  FillLists();
 
   // process all animdefs lumps
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
