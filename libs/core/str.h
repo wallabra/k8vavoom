@@ -559,6 +559,18 @@ public:
   inline bool globmatch (const char *pat, bool caseSensitive=true) const { return globmatch(getData(), pat, caseSensitive); }
   inline bool globmatch (const VStr &pat, bool caseSensitive=true) const { return globmatch(getData(), *pat, caseSensitive); }
 
+  static inline bool globMatch (const char *str, const char *pat, bool caseSensitive=true) { return globmatch(str, pat, caseSensitive); }
+  inline bool globMatch (const char *pat, bool caseSensitive=true) const { return globmatch(getData(), pat, caseSensitive); }
+  inline bool globMatch (const VStr &pat, bool caseSensitive=true) const { return globmatch(getData(), *pat, caseSensitive); }
+
+  static inline bool globmatchCI (const char *str, const char *pat) { return globmatch(str, pat, false); }
+  inline bool globmatchCI (const char *pat) const { return globmatch(getData(), pat, false); }
+  inline bool globmatchCI (const VStr &pat) const { return globmatch(getData(), *pat, false); }
+
+  static inline bool globMatchCI (const char *str, const char *pat) { return globmatch(str, pat, false); }
+  inline bool globMatchCI (const char *pat) const { return globmatch(getData(), pat, false); }
+  inline bool globMatchCI (const VStr &pat) const { return globmatch(getData(), *pat, false); }
+
   // will not clear `args`
   void Tokenise (TArray <VStr> &args) const;
   inline void Tokenize (TArray <VStr> &args) const { Tokenise(args); }
