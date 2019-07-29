@@ -50,7 +50,7 @@ override void AbsorbDamage (int damage, name DmgType, ref int NewDamage) {
       NewDamage = 1;
     }
 
-    if (Owner && dmg_factor > 1.0) Owner.PlaySound(ActiveSound, CHAN_VOICE);
+    if (Owner && dmg_factor > 1.0) Owner.PlaySound(ActiveSound, /*CHAN_VOICE*/CHAN_BODY);
   }
 
   if (Inventory) Inventory.AbsorbDamage(damage, DmgType, NewDamage);
@@ -63,8 +63,8 @@ override void AbsorbDamage (int damage, name DmgType, ref int NewDamage) {
 //
 //==========================================================================
 override void InitEffect () {
-  if (Owner) {
-    Owner.PlaySound(SightSound, CHAN_VOICE);
+  if (EntityEx(Owner)) {
+    if (SightSound) Owner.PlaySound(SightSound, /*CHAN_VOICE*/CHAN_AUTO);
     // set some special flags for protecting the Owner
     EntityEx(Owner).bNoRadiusDamage = true;
     EntityEx(Owner).bNoMorph = true;
@@ -83,8 +83,8 @@ override void InitEffect () {
 //
 //==========================================================================
 override void EndEffect () {
-  if (Owner) {
-    Owner.PlaySound(DeathSound, CHAN_VOICE);
+  if (EntityEx(Owner)) {
+    Owner.PlaySound(DeathSound, /*CHAN_VOICE*/CHAN_AUTO);
     // remove flags from Owner
     EntityEx(Owner).bNoRadiusDamage = false;
     EntityEx(Owner).bNoMorph = false;

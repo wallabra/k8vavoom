@@ -928,7 +928,7 @@ void PlayerInSpecialSector (float deltaTime) {
     ++Level.CurrentSecret;
     MO.Sector->special &= ~SECSPEC_SECRET_MASK;
     centreprint("You found a secret area");
-    MO.PlaySound('misc/secret', CHAN_VOICE);
+    MO.PlaySound('misc/secret', /*CHAN_VOICE*/CHAN_AUTO);
   }
 
   // search for iron feet power: any subclass will do
@@ -3834,7 +3834,6 @@ bool doHealthAccumHealthPickup (Health item, EntityEx toucher) {
 //
 //==========================================================================
 override void PlayerTick (float deltaTime) {
-
   bool isBot = bIsBot;
 
   if (isBot) {
@@ -3878,7 +3877,7 @@ override void PlayerTick (float deltaTime) {
 
   if ((MO.XLevel.TicTime%(3*35) == 0) && (Cheats&CF_REGENERATION) && Health > 0) {
     if (EntityEx(MO).GiveBody(5) && !GetSoundPlayingInfo(MO, GetSoundID('*regenerate'))) {
-      MO.PlaySound('*regenerate', CHAN_VOICE);
+      MO.PlaySound('*regenerate', /*CHAN_VOICE*/CHAN_BODY);
     }
   }
 

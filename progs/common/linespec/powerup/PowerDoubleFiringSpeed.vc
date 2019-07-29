@@ -34,7 +34,7 @@ class PowerDoubleFiringSpeed : Powerup;
 //==========================================================================
 override void InitEffect () {
   if (Owner && Owner.Player) {
-    Owner.PlaySound(SightSound, CHAN_VOICE);
+    Owner.PlaySound(SightSound, /*CHAN_VOICE*/CHAN_AUTO);
     // apply effect
     PlayerEx(Owner.Player).Cheats |= PlayerEx::CF_DOUBLEFIRINGSPEED;
   }
@@ -48,7 +48,7 @@ override void InitEffect () {
 //==========================================================================
 override void EndEffect () {
   if (Owner && Owner.Player) {
-    Owner.PlaySound(DeathSound, CHAN_VOICE);
+    Owner.PlaySound(DeathSound, /*CHAN_VOICE*/CHAN_AUTO);
     // remove effect.
     PlayerEx(Owner.Player).Cheats &= ~PlayerEx::CF_DOUBLEFIRINGSPEED;
   }

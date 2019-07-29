@@ -35,7 +35,7 @@ class PowerMask : PowerIronFeet;
 override void DoEffect () {
   ::DoEffect();
   if (!Owner) return;
-  if (!(Level.XLevel.TicTime&0x3f)) Owner.PlaySound('misc/mask', CHAN_VOICE);
+  if (!(Level.XLevel.TicTime&0x3f)) Owner.PlaySound('misc/mask', /*CHAN_VOICE*/CHAN_BODY);
 }
 
 

@@ -905,7 +905,7 @@ final int LineAttack (TVec dir, float distance, int LADamage,
   }
 
   if (PuffType) {
-    if (PuffType.default.ActiveSound) PlaySound(PuffType.default.ActiveSound, CHAN_WEAPON); // play miss sound
+    if (PuffType.default.ActiveSound) PlaySound(PuffType.default.ActiveSound, /*CHAN_WEAPON*/CHAN_AUTO); // play miss sound
     if (PuffType.default.bAlwaysPuff) SpawnPuff(lineEnd, distance, PuffType, false, pufftid:pufftid!optional, disableRandomZ:disableRandomZ!optional);
   }
 
