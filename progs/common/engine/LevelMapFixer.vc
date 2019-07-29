@@ -495,7 +495,7 @@ void KnownMapBugFixer () {
     printwarn("MAPFIX: Venom MAP01 detected and fixed");
   }
 
-  //k8: until i'll find out why this mapspot ends up in wrong sector, this hack will make SS:R map05 turret work
+  //k8: this hack will make SS:R map05 turret work right in both versions
   if (MapHashMD5 == "00b2077327e4f724f43d6f2f81cd47c4" ||
       MapHashMD5 == "72a7f91eaa76187cc57bd6a017f49e96")
   {
@@ -507,5 +507,13 @@ void KnownMapBugFixer () {
         break;
       }
     }
+  }
+
+  //k8: Maps Of Chaos (Overkill), MAP04 invalid player start
+  if (MapHashMD5 == "0b8884450521c30e5bc286e9b9d2b6dc" && Things.length == 289) {
+    printwarn("MAPFIX: Maps Of Chaos (Overkill), MAP04");
+    // fix invalid player 1 start (it should be DM start instead)
+    Things[286].type = 11;
+    Things[286].angle = 180;
   }
 }
