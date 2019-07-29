@@ -231,6 +231,9 @@ static MYTHREAD_RET_TYPE soundStreamThread (void *adevobj) {
     // check if we have something to do
     while (sman->queuedSounds.length() > 0) {
       if (sman->loaderDoQuit) break;
+      // k8: dunno, maybe take the last appended sound, as it will prolly
+      //     the one that the game needs right now.
+      //     drawback: older sounds will be delayed even more.
       int sndid = sman->queuedSounds[0];
       if (sndThreadDebug) fprintf(stderr, "STRD: trying to load sound #%d (uc=%d) (%s : %s)\n", sndid, sman->S_sfx[sndid].UseCount, *sman->S_sfx[sndid].TagName, *W_FullLumpName(sman->S_sfx[sndid].LumpNum));
       mythread_mutex_unlock(&sman->loaderLock);
