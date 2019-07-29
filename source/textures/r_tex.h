@@ -242,4 +242,12 @@ extern VCvarB r_hirestex;
 extern VCvarB r_showinfo;
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+// animated textures support
+// ////////////////////////////////////////////////////////////////////////// //
+
+extern void R_InitFTAnims (); // called by `R_InitTexture()`
+extern void R_ShutdownFTAnims (); // called by `R_ShutdownTexture()`
+
+
 #endif
