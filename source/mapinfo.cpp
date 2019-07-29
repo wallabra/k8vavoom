@@ -1491,7 +1491,11 @@ static void ParseSkillDef (VScriptParser *sc) {
     } else if (sc->Check("SpawnFilter")) {
       sc->Expect("=");
       if (sc->CheckNumber()) {
-        if (sc->Number > 0 && sc->Number < 31) sdef->SpawnFilter = 1<<(sc->Number-1);
+        if (sc->Number > 0 && sc->Number < 31) {
+          sdef->SpawnFilter = 1<<(sc->Number-1);
+        } else {
+          GCon->Logf(NAME_Warning, "MAPINFO:%s: invalid spawnfilter value %d", *sc->GetLoc().toStringNoCol(), sc->Number);
+        }
       } else {
              if (sc->Check("Baby")) sdef->SpawnFilter = 1;
         else if (sc->Check("Easy")) sdef->SpawnFilter = 2;
