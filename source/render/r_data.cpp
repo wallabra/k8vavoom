@@ -1032,15 +1032,19 @@ static void ParseLightDef (VScriptParser *sc, int LightType) {
 
 //==========================================================================
 //
-//  IntensityToRadius
+//  GZSizeToRadius
 //
 //==========================================================================
-static inline float IntensityToRadius (float Val) {
+static inline float GZSizeToRadius (float Val) {
+  /*
   if (Val <= 20.0f) return Val*4.5f;
   if (Val <= 30.0f) return Val*3.6f;
   if (Val <= 40.0f) return Val*3.3f;
   if (Val <= 60.0f) return Val*2.8f;
   return Val*2.5f;
+  */
+  //k8: 1.04f is just because i feel
+  return Val*1.04f; // size in map units
 }
 
 
@@ -1049,7 +1053,7 @@ static inline float IntensityToRadius (float Val) {
 //  ParseGZLightDef
 //
 //==========================================================================
-static void ParseGZLightDef (VScriptParser *sc, int LightType) {
+static void ParseGZLightDef (VScriptParser *sc, int LightType, float lightsizefactor) {
   // get name, find it in the list or add it if it's not there yet
   sc->ExpectString();
   VLightEffectDef *L = R_FindLightEffect(sc->String);
@@ -1068,6 +1072,8 @@ static void ParseGZLightDef (VScriptParser *sc, int LightType) {
   L->Scale = 0.0f;
   L->NoSelfShadow = 0;
 
+  bool attenuated = false;
+
   // parse light def
   sc->Expect("{");
   while (!sc->Check("}")) {
@@ -1081,10 +1087,10 @@ static void ParseGZLightDef (VScriptParser *sc, int LightType) {
       L->Color = ((int)(r*255)<<16)|((int)(g*255)<<8)|(int)(b*255)|0xff000000;
     } else if (sc->Check("size")) {
       sc->ExpectNumber();
-      L->Radius = IntensityToRadius(float(sc->Number));
+      L->Radius = float(sc->Number);
     } else if (sc->Check("secondarySize")) {
       sc->ExpectNumber();
-      L->Radius2 = IntensityToRadius(float(sc->Number));
+      L->Radius2 = float(sc->Number);
     } else if (sc->Check("offset")) {
       // GZDoom manages Z offset as Y offset
       sc->ExpectNumber();
@@ -1117,10 +1123,19 @@ static void ParseGZLightDef (VScriptParser *sc, int LightType) {
     } else if (sc->Check("attenuate")) {
       sc->ExpectNumber();
       sc->Message("attenuate parameter not supported.");
+      attenuated = true;
     } else {
       sc->Error(va("Bad gz light parameter (%s)", *sc->String));
     }
   }
+
+  if (attenuated) {
+    L->Radius *= lightsizefactor;
+    L->Radius2 *= lightsizefactor;
+  }
+
+  L->Radius = GZSizeToRadius(L->Radius);
+  L->Radius2 = GZSizeToRadius(L->Radius2);
 }
 
 
@@ -1490,6 +1505,9 @@ static void ParseGlow (VScriptParser *sc) {
 //
 //==========================================================================
 static void ParseGZDoomEffectDefs (int SrcLump, VScriptParser *sc, TArray<VTempClassEffects> &ClassDefs) {
+  // for old mods (before Apr 2018) it should be `0.667f` (see https://forum.zdoom.org/viewtopic.php?t=60280 )
+  // sadly, there is no way to autodetect it, so let's use what GZDoom is using now
+  float lightsizefactor = 1.0; // for attenuated lights
   while (!sc->AtEnd()) {
     if (sc->Check("#include")) {
       sc->ExpectString();
@@ -1502,16 +1520,17 @@ static void ParseGZDoomEffectDefs (int SrcLump, VScriptParser *sc, TArray<VTempC
       ParseGZDoomEffectDefs(Lump, new VScriptParser(/*sc->String*/W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassDefs);
       continue;
     }
-    else if (sc->Check("pointlight")) ParseGZLightDef(sc, DLTYPE_Point);
-    else if (sc->Check("pulselight")) ParseGZLightDef(sc, DLTYPE_Pulse);
-    else if (sc->Check("flickerlight")) ParseGZLightDef(sc, DLTYPE_Flicker);
-    else if (sc->Check("flickerlight2")) ParseGZLightDef(sc, DLTYPE_FlickerRandom);
-    else if (sc->Check("sectorlight")) ParseGZLightDef(sc, DLTYPE_Sector);
+    else if (sc->Check("pointlight")) ParseGZLightDef(sc, DLTYPE_Point, lightsizefactor);
+    else if (sc->Check("pulselight")) ParseGZLightDef(sc, DLTYPE_Pulse, lightsizefactor);
+    else if (sc->Check("flickerlight")) ParseGZLightDef(sc, DLTYPE_Flicker, lightsizefactor);
+    else if (sc->Check("flickerlight2")) ParseGZLightDef(sc, DLTYPE_FlickerRandom, lightsizefactor);
+    else if (sc->Check("sectorlight")) ParseGZLightDef(sc, DLTYPE_Sector, lightsizefactor);
     else if (sc->Check("object")) ParseClassEffects(sc, ClassDefs);
     else if (sc->Check("skybox")) R_ParseMapDefSkyBoxesScript(sc);
     else if (sc->Check("brightmap")) ParseBrightmap(SrcLump, sc);
     else if (sc->Check("glow")) ParseGlow(sc);
     else if (sc->Check("hardwareshader")) { sc->Message("Shaders are not supported"); sc->SkipBracketed(); }
+    else if (sc->Check("lightsizefactor")) { sc->ExpectFloat(); lightsizefactor = clampval((float)sc->Float, 0.0f, 4.0f); }
     else { sc->Error(va("Unknown command (%s)", *sc->String)); }
   }
   delete sc;
