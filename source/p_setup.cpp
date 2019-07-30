@@ -1008,6 +1008,8 @@ load_again:
     GCon->Logf("Selected nodes builder: %s", nbname);
   }
 
+  if (AuxiliaryMap) GCon->Log("loading map from nested wad...");
+
   if (sha224valid) {
     vuint8 sha224hash[SHA224_DIGEST_SIZE];
     sha224_final(&sha224ctx, sha224hash);
