@@ -656,6 +656,26 @@ if(ENABLE_CLIENT)
   # Icon
   #
   install(FILES ../res/k8vavoom.png DESTINATION ${DATADIR})
+  # variants
+  if(WIN32)
+    install(FILES ../res/ico/k8vavoom_icon2.ico DESTINATION ${DATADIR}/icons)
+    install(FILES ../res/ico/k8vavoom_icon3.ico DESTINATION ${DATADIR}/icons)
+    install(FILES ../res/ico/k8vavoom_icon4.ico DESTINATION ${DATADIR}/icons)
+    install(FILES ../res/ico/k8vavoom_icon5.ico DESTINATION ${DATADIR}/icons)
+    install(FILES ../res/ico/k8vavoom_icon6.ico DESTINATION ${DATADIR}/icons)
+    install(FILES ../res/ico/k8vavoom_icon7.ico DESTINATION ${DATADIR}/icons)
+    install(FILES ../res/ico/k8vavoom_icon8.ico DESTINATION ${DATADIR}/icons)
+    install(FILES ../res/ico/k8vavoom_icon9.ico DESTINATION ${DATADIR}/icons)
+  else(WIN32)
+    install(FILES ../res/png/k8vavoom_icon2.png DESTINATION ${DATADIR}/icons)
+    install(FILES ../res/png/k8vavoom_icon3.png DESTINATION ${DATADIR}/icons)
+    install(FILES ../res/png/k8vavoom_icon4.png DESTINATION ${DATADIR}/icons)
+    install(FILES ../res/png/k8vavoom_icon5.png DESTINATION ${DATADIR}/icons)
+    install(FILES ../res/png/k8vavoom_icon6.png DESTINATION ${DATADIR}/icons)
+    install(FILES ../res/png/k8vavoom_icon7.png DESTINATION ${DATADIR}/icons)
+    install(FILES ../res/png/k8vavoom_icon8.png DESTINATION ${DATADIR}/icons)
+    install(FILES ../res/png/k8vavoom_icon9.png DESTINATION ${DATADIR}/icons)
+  endif(WIN32)
 
   if(ENABLE_WRAPPERS)
     file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/k8vavoom
