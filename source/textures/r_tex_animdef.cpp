@@ -84,9 +84,9 @@ struct AnimDef_t {
 // the basic idea is to fill up both arrays, and use them to build animation lists.
 
 // partially parsed from TEXTUREx lumps
-static TArray<VStr> txxnames;
+static TArray<TArray<VName> > txxnames;
 // collected from loaded wads
-static TArray<VStr> flatnames;
+static TArray<TArray<VName> > flatnames;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -99,6 +99,19 @@ static TArray<VAnimDoorDef> AnimDoorDefs;
 
 static TMapNC<VName, bool> animPicSeen; // temporary
 static TMapNC<int, bool> animTexMap; // to make `R_IsAnimatedTexture()` faster
+
+
+//==========================================================================
+//
+//  ClearLists
+//
+//==========================================================================
+static void ClearLists () {
+  for (auto &&arr : txxnames) arr.clear();
+  txxnames.clear();
+  for (auto &&arr : flatnames) arr.clear();
+  flatnames.clear();
+}
 
 
 //==========================================================================
@@ -125,28 +138,102 @@ void R_ShutdownFTAnims () {
 
 //==========================================================================
 //
+//  ParseTXXLump
+//
+//==========================================================================
+static void ParseTXXLump (int lump, int &totalTextures) {
+  if (lump < 0) return;
+  VStream *strm = W_CreateLumpReaderNum(lump);
+  if (!strm) return;
+  //GCon->Logf("...parsing binary texture lump '%s'", *W_FullLumpName(lump));
+  // texture count
+  vuint32 tcount;
+  *strm << tcount;
+  if (tcount == 0 || tcount > 65535) { delete strm; return; }
+  // texture offsets
+  TArray<vuint32> offsets;
+  offsets.setLength((int)tcount);
+  for (auto &&ofs : offsets) *strm << ofs;
+  if (strm->IsError()) { delete strm; return; }
+  // read texture names
+  for (auto &&ofs : offsets) {
+    if (ofs >= (vuint32)strm->TotalSize()) continue;
+    strm->Seek((int)ofs);
+    char namebuf[9];
+    strm->Serialise(namebuf, 8);
+    if (strm->IsError()) { delete strm; return; }
+    namebuf[8] = 0;
+    ++totalTextures;
+    if (namebuf[0]) {
+      VName txname = VName(namebuf, VName::AddLower);
+      txxnames[txxnames.length()-1].append(txname);
+    } else {
+      txxnames[txxnames.length()-1].append(NAME_None);
+    }
+  }
+  delete strm;
+}
+
+
+//==========================================================================
+//
 //  FillLists
 //
 //  fill `txxnames`, and `flatnames`
 //
 //==========================================================================
 static void FillLists () {
-  txxnames.clear();
-  flatnames.clear();
+  ClearLists();
 
-  /*
   // collect all flats
+  int lastFlatFile = -1;
+  int totalFlats = 0;
   for (auto &&it : WadNSIterator(WADNS_Flats)) {
-    GCon->Logf("FLAT: lump=%d; name=<%s> (%s); size=%d", it.lump, *it.getName(), *it.getFullName(), it.getSize());
+    //GCon->Logf("FLAT: lump=%d; name=<%s> (%s); size=%d", it.lump, *it.getName(), *it.getFullName(), it.getSize());
+    ++totalFlats;
+    if (lastFlatFile != it.getFile()) {
+      lastFlatFile = it.getFile();
+      flatnames.alloc();
+    }
+    flatnames[flatnames.length()-1].append(it.getName());
   }
 
   // parse all TEXTUREx lumps
+  int totalTxx = 0;
+  int totalTextures = 0;
+  int lastTXXFile = -1;
+  int lastTX1Lump = -1, lastTX2Lump = -1;
   for (auto &&it : WadNSIterator(WADNS_Global)) {
     if (it.getName() == NAME_texture1 || it.getName() == NAME_texture2) {
-      GCon->Logf("TEXTUREx: lump=%d; name=<%s> (%s)", it.lump, *it.getName(), *it.getFullName());
+      //GCon->Logf("TXX: lump=%d; name=<%s> (%s); size=%d; file=%d (%d)", it.lump, *it.getName(), *it.getFullName(), it.getSize(), it.getFile(), lastTXXFile);
+      if (lastTXXFile != it.getFile()) {
+        if (lastTX1Lump >= 0 || lastTX2Lump >= 0) {
+          txxnames.alloc();
+          if (lastTX1Lump >= 0) ++totalTxx;
+          if (lastTX2Lump >= 0) ++totalTxx;
+          ParseTXXLump(lastTX1Lump, totalTextures);
+          ParseTXXLump(lastTX2Lump, totalTextures);
+        }
+        lastTX1Lump = -1;
+        lastTX2Lump = -1;
+        lastTXXFile = it.getFile();
+      }
+           if (it.getName() == NAME_texture1) { if (lastTX1Lump < 0) lastTX1Lump = it.lump; }
+      else if (it.getName() == NAME_texture2) { if (lastTX2Lump < 0) lastTX2Lump = it.lump; }
+      //GCon->Logf("  %d : %d", lastTX1Lump, lastTX2Lump);
     }
   }
-  */
+  if (lastTX1Lump >= 0 || lastTX2Lump >= 0) {
+    txxnames.alloc();
+    if (lastTX1Lump >= 0) ++totalTxx;
+    if (lastTX2Lump >= 0) ++totalTxx;
+    ParseTXXLump(lastTX1Lump, totalTextures);
+    ParseTXXLump(lastTX2Lump, totalTextures);
+  }
+
+  GCon->Logf("%d flat%s found in %d wad%s", totalFlats, (totalFlats != 1 ? "s" : ""), flatnames.length(), (flatnames.length() != 1 ? "s" : ""));
+  GCon->Logf("%d texture list%s found in %d wad%s, total %d texture%s", totalTxx, (totalTxx != 1 ? "s" : ""), txxnames.length(), (txxnames.length() != 1 ? "s" : ""),  totalTextures, (totalTextures != 1 ? "s" : ""));
+  //for (auto &&n : txxnames) GCon->Logf("  <%s>", *n);
 }
 
 
@@ -156,6 +243,7 @@ static void FillLists () {
 //
 //  scan pwads, and build texture range
 //  clears `ids` on error (range too long, for example)
+//  used in Boom ANIMATED parser
 //
 //  int txtype = (Type&1 ? TEXTYPE_Wall : TEXTYPE_Flat);
 //
@@ -167,100 +255,44 @@ static void BuildTextureRange (VName nfirst, VName nlast, int txtype, TArray<int
     return;
   }
 
-  EWadNamespace txns = (txtype == TEXTYPE_Flat ? WADNS_Flats : WADNS_Global);
-  int pic1lmp = W_FindFirstLumpOccurence(nfirst, txns);
-  if (pic1lmp == -1 && txtype == TEXTYPE_Flat) {
-    pic1lmp = W_FindFirstLumpOccurence(nfirst, WADNS_NewTextures);
-    if (pic1lmp >= 0) txns = WADNS_NewTextures;
-  }
-  int pic2lmp = W_FindFirstLumpOccurence(nlast, txns);
-  if (pic1lmp == -1 && pic2lmp == -1) return; // invalid episode
+  const char *atypestr = (txtype == TEXTYPE_Flat ? "flat" : "texture");
 
-  if (pic1lmp == -1) {
-    if (developer) GCon->Logf(NAME_Dev, "BOOMANIM: first animtex '%s' not found (but '%s' is found)", *nfirst, *nlast);
-    return;
-  } else if (pic2lmp == -1) {
-    if (developer) GCon->Logf(NAME_Dev, "BOOMANIM: second animtex '%s' not found (but '%s' is found)", *nlast, *nfirst);
-    return;
-  }
-
-  if (GTextureManager.CheckNumForName(W_LumpName(pic1lmp), txtype, true) <= 0) {
-    if (developer) GCon->Logf(NAME_Dev, "BOOMANIM: first animtex '%s' not a texture", *nfirst);
-    return;
-  }
-
-  if (GTextureManager.CheckNumForName(W_LumpName(pic2lmp), txtype, true) <= 0) {
-    if (developer) GCon->Logf(NAME_Dev, "BOOMANIM: second animtex '%s' not a texture", *nlast);
-    return;
-  }
-
-  check(pic1lmp != -1);
-  check(pic2lmp != -1);
-
-  bool backward = (pic2lmp < pic1lmp);
-
-  int start = (backward ? pic2lmp : pic1lmp);
-  int end = (backward ? pic1lmp : pic2lmp);
-  check(start <= end);
-
-  // try to find common texture prefix, to filter out accidental shit introduced by pwads
-  VStr pfx;
-  {
-    const char *n0 = *nfirst;
-    const char *n1 = *nlast;
-    while (*n0 && *n1) {
-      if (*n0 != *n1) break;
-      pfx += *n0;
-      ++n0;
-      ++n1;
-    }
-  }
-
-  if (developer) GCon->Logf(NAME_Dev, "=== %s : %s === (0x%08x : 0x%08x) [%s] (0x%08x -> 0x%08x; ns=%d)", *nfirst, *nlast, pic1lmp, pic2lmp, *pfx, start, end, txns);
-  // find all textures in animation (up to arbitrary limit)
-  // it is safe to not check for `-1` here, as it is guaranteed that the last texture is present
-  for (; start <= end; start = W_IterateNS(start, txns)) {
-    check(start != -1); // should not happen
-    if (developer) GCon->Logf(NAME_Dev, "  lump: 0x%08x; name=<%s> : <%s>", start, *W_LumpName(start), *W_FullLumpName(start));
-    // check prefix
-    if (pfx.length()) {
-      const char *lname = *W_LumpName(start);
-      if (!VStr::startsWith(lname, *pfx)) {
-        if (developer) GCon->Logf(NAME_Dev, "    PFX SKIP: %s : 0x%08x (0x%08x)", lname, start, end);
-        continue;
+  TArray<VName> bestList;
+  for (int listidx = 0; listidx < (txtype == TEXTYPE_Flat ? flatnames.length() : txxnames.length()); ++listidx) {
+    TArray<VName> &list = (txtype == TEXTYPE_Flat ? flatnames[listidx] : txxnames[listidx]);
+    int firstIdx = -1;
+    for (auto &&it : list.itemsIdx()) {
+      if (firstIdx < 0 && it.value() == nfirst) firstIdx = it.index();
+      // in list
+      if (firstIdx >= 0 && it.value() == nlast) {
+        int len = it.index()+1-firstIdx;
+        if (len > limit) {
+          GCon->Logf(NAME_Warning, "ANIMATED: skipping %ss animation between '%s' and '%s' due to limits violation (%d, but only %d allowed)", atypestr, *nfirst, *nlast, len, limit);
+        } else {
+          if (len > bestList.length()) {
+            bestList.reset();
+            for (int f = firstIdx; f < firstIdx+len; ++f) bestList.append(list[f]);
+          }
+        }
+        firstIdx = -1;
       }
     }
-    int txidx = GTextureManager.CheckNumForName(W_LumpName(start), txtype, true);
-    if (developer) {
-      GCon->Logf(NAME_Dev, "  %s : 0x%08x (0x%08x)", (txidx == -1 ? "----" : *GTextureManager.GetTextureName(txidx)), start, end);
-    }
-    if (txidx == -1) continue;
-    // if we have seen this texture in animdef, skip the whole sequence
-    if (checkadseen) {
-      if (animPicSeen.has(W_LumpName(start))) {
-        if (developer) GCon->Logf(NAME_Dev, " SEEN IN ANIMDEF, SKIPPED");
-        ids.clear();
-        return;
-      }
-    }
-    // check for overlong sequences
-    if (ids.length() > limit) {
-      if (developer) GCon->Logf(NAME_Dev, "BOOMANIM: too long animtex sequence ('%s' -- '%s')", *nfirst, *nlast);
-      ids.clear();
-      return;
-    }
-    ids.append(txidx);
-    if (start == end) break;
   }
 
-  if (backward && ids.length() > 1) {
-    // reverse list
-    for (int f = 0; f < ids.length()/2; ++f) {
-      int nidx = ids.length()-f-1;
-      int tmp = ids[f];
-      ids[f] = ids[nidx];
-      ids[nidx] = tmp;
+  // build ids
+  ids.reset();
+  for (auto &&txname : bestList) {
+    if (txname == NAME_None) continue;
+    int tid = GTextureManager.CheckNumForName(txname, txtype, true);
+    if (tid > 0) {
+      ids.append(tid);
+    } else {
+      GCon->Logf(NAME_Warning, "ANIMATED: %s '%s' not found in animation sequence between '%s' and '%s'", atypestr, *txname, *nfirst, *nlast);
     }
+  }
+
+  if (ids.length() == 0) {
+    GCon->Logf(NAME_Warning, "ANIMATED: %ss animation sequence between '%s' and '%s' not found", atypestr, *nfirst, *nlast);
   }
 }
 
@@ -382,55 +414,73 @@ void P_InitAnimated () {
 
 //==========================================================================
 //
-//  GetTextureIdWithOffset
+//  FindFirstTextureInSequence
 //
 //==========================================================================
-static int GetTextureIdWithOffset (int txbase, int offset, int fttype) {
-  //if (developer) GCon->Logf(NAME_Dev, "GetTextureIdWithOffset: txbase=%d; offset=%d; IsFlat=%d", txbase, offset, IsFlat);
-  if (txbase <= 0) return -1; // oops
-  if (offset < 0) return -1; // oops
-  if (offset == 0) return txbase;
-  int txtype = (fttype == FT_Flat ? TEXTYPE_Flat : TEXTYPE_Wall);
-  EWadNamespace txns = (fttype == FT_Flat ? WADNS_Flats : WADNS_Global);
-  VName txname = GTextureManager.GetTextureName(txbase);
-  if (txname == NAME_None) {
-    //if (developer) GCon->Logf(NAME_Dev, "GetTextureIdWithOffset: FOOO (txbase=%d; offset=%d; name=%s)", txbase, offset, *txname);
-    return -1; // oops
-  }
-  int lmp = W_FindFirstLumpOccurence(txname, txns);
-  if (lmp == -1 && fttype != FT_Flat) {
-    lmp = W_FindFirstLumpOccurence(txname, WADNS_NewTextures);
-    if (lmp >= 0) txns = WADNS_NewTextures;
-  }
-  if (lmp == -1) {
-    //if (developer) GCon->Logf(NAME_Dev, "GetTextureIdWithOffset: cannot find first lump (txbase=%d; offset=%d; name=%s)", txbase, offset, *txname);
-    return -1; // oops
-  }
-  // now scan loaded paks until we skip enough textures
-  for (;;) {
-    lmp = W_IterateNS(lmp, txns); // skip one lump
-    if (lmp == -1) break; // oops
-    VName lmpName = W_LumpName(lmp);
-    if (lmpName == NAME_None) continue;
-    int txidx = GTextureManager.CheckNumForName(lmpName, txtype, true);
-    if (txidx == -1) {
-      //if (developer) GCon->Logf(NAME_Dev, "GetTextureIdWithOffset: trying to force-load lump 0x%08x (%s)", lmp, *lmpName);
-      // not a texture, try to load one
-      VTexture *tx = VTexture::CreateTexture(txtype, lmp);
-      if (tx) {
-        tx->Name = lmpName;
-        GCon->Logf(NAME_Warning, "force-loaded animation texture '%s'", *tx->Name);
-        txidx = GTextureManager.AddTexture(tx);
-        check(txidx > 0);
-      } else {
-        // not a texture
-        continue;
+static bool FindFirstTextureInSequence (VName txname, int fttype, int &txlist, int &txbase) {
+  txlist = txbase = -1;
+  if (txname == NAME_None) return false;
+
+  for (int listidx = 0; listidx < (fttype == FT_Flat ? flatnames.length() : txxnames.length()); ++listidx) {
+    TArray<VName> &list = (fttype == FT_Flat ? flatnames[listidx] : txxnames[listidx]);
+    for (auto &&it : list.itemsIdx()) {
+      if (it.value() == txname) {
+        txlist = listidx;
+        txbase = it.index();
+        // only the first occurence matters
+        /*if (fttype == FT_Texture)*/ break;
       }
     }
-    //if (developer) GCon->Logf(NAME_Dev, "GetTextureIdWithOffset: txbase=%d; offset=%d; txidx=%d; txname=%s; lmpname=%s", txbase, offset, txidx, *GTextureManager.GetTextureName(txidx), *lmpName);
-    if (--offset == 0) return txidx;
   }
-  return -1; // not found
+
+  if (txlist < 0) {
+    const char *atypestr = (fttype == FT_Flat ? "flat" : "texture");
+    GCon->Logf(NAME_Warning, "%s texture '%s' not found for animation sequence", atypestr, *txname);
+    return false;
+  }
+
+  //GCon->Logf("*** <%s> %d : %d", *txname, txlist, txbase);
+  return true;
+}
+
+
+//==========================================================================
+//
+//  GetTextureIdWithOffset
+//
+//  `txlist` and `txbase` are list pointers
+//
+//==========================================================================
+static int GetTextureIdWithOffset (int txlist, int txbase, int offset, int fttype, bool optional) {
+  //GCon->Logf("***   %d : %d : %d", txlist, txbase, offset);
+
+  if (txlist < 0 || txbase < 0) return -1;
+  if (offset < 0) return -1;
+  if (fttype == FT_Flat) {
+    if (txlist >= flatnames.length()) return -1;
+  } else {
+    if (txlist >= txxnames.length()) return -1;
+  }
+  TArray<VName> &list = (fttype == FT_Flat ? flatnames[txlist] : txxnames[txlist]);
+  //GCon->Logf("   1: %d", list.length()-txbase);
+  if (txbase >= list.length() || list.length()-txbase <= offset) return -1;
+
+  VName txname = list[txbase+offset];
+  if (txname == NAME_None) return -1;
+
+  int txtype = (fttype == FT_Flat ? TEXTYPE_Flat : TEXTYPE_Wall);
+  const char *atypestr = (fttype == FT_Flat ? "flat" : "texture");
+
+  int tid = GTextureManager.CheckNumForName(txname, txtype, true);
+  if (tid == 0) return -1; // just in case
+  if (tid < 0) {
+    tid = GTextureManager.CheckNumForNameAndForce(txname, txtype, true, optional);
+    if (tid <= 0) return -1;
+    GCon->Logf(NAME_Warning, "force-loaded animation %s '%s' for animation sequence '%s'", atypestr, *txname, *list[txbase]);
+  }
+
+  //GCon->Logf("   1: <%s>", *txname);
+  return (tid > 0 ? tid : -1);
 }
 
 
@@ -445,6 +495,8 @@ static void ParseFTAnim (VScriptParser *sc, int fttype) {
   AnimDef_t ad;
   FrameDef_t fd;
 
+  int currStList = -1, currStIndex = -1;
+
   memset(&ad, 0, sizeof(ad));
 
   // optional flag
@@ -454,12 +506,13 @@ static void ParseFTAnim (VScriptParser *sc, int fttype) {
   // name
   bool ignore = false;
   sc->ExpectName8Warn();
-  ad.Index = GTextureManager.CheckNumForNameAndForce(sc->Name8, (fttype == FT_Flat ? TEXTYPE_Flat : TEXTYPE_Wall), true, optional);
+  VName startTxName = sc->Name8;
+  ad.Index = GTextureManager.CheckNumForNameAndForce(startTxName, (fttype == FT_Flat ? TEXTYPE_Flat : TEXTYPE_Wall), true, optional);
   if (ad.Index == -1) {
     ignore = true;
     if (!optional) GCon->Logf(NAME_Warning, "ANIMDEFS: Can't find texture \"%s\"", *sc->Name8);
   } else {
-    animPicSeen.put(sc->Name8, true);
+    animPicSeen.put(startTxName, true);
   }
 
   bool vanilla = false;
@@ -527,14 +580,19 @@ static void ParseFTAnim (VScriptParser *sc, int fttype) {
     } else {
       if (sc->CheckNumber()) {
         //if (developer) GCon->Logf(NAME_Dev, "%s: pic: num=%d", *sc->GetLoc().toStringNoCol(), sc->Number);
+        if (!ignore && currStList < 0) {
+          if (!FindFirstTextureInSequence(startTxName, fttype, currStList, currStIndex)) {
+            ignore = true;
+          }
+        }
         if (!ignore) {
           if (!ad.range) {
             // simple pic
             check(CurType == 1);
             if (sc->Number < 0) sc->Number = 1;
-            int txidx = GetTextureIdWithOffset(ad.Index, sc->Number-1, fttype);
+            int txidx = GetTextureIdWithOffset(/*ad.Index*/currStList, currStIndex, sc->Number-1, fttype, optional);
             if (txidx == -1) {
-              sc->Message(va("Cannot find %stexture '%s'+%d", (fttype == FT_Flat ? "flat " : ""), *GTextureManager.GetTextureName(ad.Index), sc->Number-1));
+              sc->Message(va("Cannot find %stexture '%s'+%d (pic)", (fttype == FT_Flat ? "flat " : ""), *startTxName, sc->Number-1));
             } else {
               animPicSeen.put(GTextureManager.GetTextureName(txidx), true);
             }
@@ -542,16 +600,14 @@ static void ParseFTAnim (VScriptParser *sc, int fttype) {
           } else {
             // range
             check(CurType == 2);
-            if (!ignore) {
-              // create frames
-              for (int ofs = 0; ofs <= sc->Number; ++ofs) {
-                int txidx = GetTextureIdWithOffset(ad.Index, ofs, fttype);
-                if (txidx == -1) {
-                  sc->Message(va("Cannot find %stexture '%s'+%d", (fttype == FT_Flat ? "flat " : ""), *GTextureManager.GetTextureName(ad.Index), ofs));
-                } else {
-                  animPicSeen.put(GTextureManager.GetTextureName(txidx), true);
-                  ids.append(txidx);
-                }
+            // create frames
+            for (int ofs = 0; ofs <= sc->Number; ++ofs) {
+              int txidx = GetTextureIdWithOffset(/*ad.Index*/currStList, currStIndex, ofs, fttype, optional);
+              if (txidx == -1) {
+                sc->Message(va("Cannot find %stexture '%s'+%d (range)", (fttype == FT_Flat ? "flat " : ""), *GTextureManager.GetTextureName(ad.Index), ofs));
+              } else {
+                animPicSeen.put(GTextureManager.GetTextureName(txidx), true);
+                ids.append(txidx);
               }
             }
           }
@@ -999,6 +1055,8 @@ void R_InitFTAnims () {
       }
     }
   }
+
+  ClearLists();
 }
 
 
