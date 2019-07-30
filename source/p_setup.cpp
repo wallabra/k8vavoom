@@ -962,7 +962,7 @@ load_again:
       if (sha224valid) sha224valid = hashLump(nullptr, &md5ctx, BehaviorLump); // md5
     }
 
-    //  Verify that it's a valid map.
+    // verify that it's a valid map
     if (ThingsLump == -1 || LinesLump == -1 || SidesLump == -1 ||
         VertexesLump == -1 || SectorsLump == -1)
     {
