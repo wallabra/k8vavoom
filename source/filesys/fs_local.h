@@ -245,9 +245,6 @@ private:
   VStream *Stream;
   //int NumLumps;
   //lumpinfo_t *LumpInfo; // location of each lump on disk
-#ifdef VAVOOM_USE_GWA
-  VStr GwaDir;
-#endif
   bool lockInited;
 
 private:
@@ -258,7 +255,7 @@ private:
 public:
   VWadFile ();
   //virtual ~VWadFile () override;
-  void Open (const VStr &FileName, bool FixVoices, VStream *InStream, const VStr &AGwaDir);
+  void Open (const VStr &FileName, bool FixVoices, VStream *InStream);
   void OpenSingleLump (const VStr &FileName);
   virtual void Close () override;
   virtual VStream *OpenFileRead (const VStr &) override;
@@ -346,7 +343,7 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-void W_AddFileFromZip (const VStr &WadName, VStream *WadStrm, const VStr &GwaName=VStr(), VStream *GwaStrm=nullptr);
+void W_AddFileFromZip (const VStr &WadName, VStream *WadStrm);
 
 bool VFS_ShouldIgnoreExt (const VStr &fname);
 

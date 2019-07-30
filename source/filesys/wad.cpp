@@ -56,7 +56,7 @@ static TMap<VStr, int> fullNameTexLumpChecked;
 //  filename for the lump name.
 //
 //==========================================================================
-void W_AddFile (const VStr &FileName, bool FixVoices, const VStr &GwaDir) {
+void W_AddFile (const VStr &FileName, bool FixVoices) {
   int wadtime;
 
   wadtime = Sys_FileTime(FileName);
@@ -66,37 +66,12 @@ void W_AddFile (const VStr &FileName, bool FixVoices, const VStr &GwaDir) {
 
   VStr ext = FileName.ExtractFileExtension();
   VWadFile *Wad = new VWadFile;
-  if (!ext.strEquCI(".wad") && !ext.strEquCI(".gwa")) {
+  if (!ext.strEquCI(".wad")) {
     Wad->OpenSingleLump(FileName);
   } else {
-    Wad->Open(FileName, FixVoices, nullptr, GwaDir);
+    Wad->Open(FileName, FixVoices, nullptr);
   }
   SearchPaths.Append(Wad);
-
-#ifdef VAVOOM_USE_GWA
-  if (ext.strEquCI(".wad")) {
-    VStr gl_name;
-
-    bool FoundGwa = false;
-    if (GwaDir.IsNotEmpty()) {
-      gl_name = GwaDir+"/"+FileName.ExtractFileName().StripExtension()+".gwa";
-      if (Sys_FileTime(gl_name) >= wadtime) {
-        W_AddFile(gl_name, VStr(), false);
-        FoundGwa = true;
-      }
-    }
-
-    if (!FoundGwa) {
-      gl_name = FileName.StripExtension()+".gwa";
-      if (Sys_FileTime(gl_name) >= wadtime) {
-        W_AddFile(gl_name, VStr(), false);
-      } else {
-        // leave empty slot for GWA file
-        SearchPaths.Append(new VWadFile);
-      }
-    }
-  }
-#endif
 }
 
 
@@ -105,24 +80,12 @@ void W_AddFile (const VStr &FileName, bool FixVoices, const VStr &GwaDir) {
 //  W_AddFileFromZip
 //
 //==========================================================================
-void W_AddFileFromZip (const VStr &WadName, VStream *WadStrm, const VStr &GwaName, VStream *GwaStrm) {
+void W_AddFileFromZip (const VStr &WadName, VStream *WadStrm) {
   // add WAD file
   wadfiles.Append(WadName);
   VWadFile *Wad = new VWadFile;
-  Wad->Open(WadName, false, WadStrm, VStr());
+  Wad->Open(WadName, false, WadStrm);
   SearchPaths.Append(Wad);
-#ifdef VAVOOM_USE_GWA
-  if (GwaStrm) {
-    // add GWA file
-    wadfiles.Append(GwaName);
-    VWadFile *Gwa = new VWadFile;
-    Gwa->Open(GwaName, VStr(), false, GwaStrm);
-    SearchPaths.Append(Gwa);
-  } else {
-    // leave empty slot for GWA file
-    SearchPaths.Append(new VWadFile);
-  }
-#endif
 }
 
 
@@ -145,20 +108,12 @@ int W_StartAuxiliary () {
 int W_OpenAuxiliary (const VStr &FileName) {
   W_CloseAuxiliary();
   AuxiliaryIndex = SearchPaths.length();
-#ifdef VAVOOM_USE_GWA
-  VStr GwaName = FileName.StripExtension()+".gwa";
-  VStream *WadStrm = FL_OpenFileRead(FileName);
-  if (!WadStrm) { AuxiliaryIndex = 0; return -1; }
-  VStream *GwaStrm = FL_OpenFileRead(GwaName);
-  W_AddFileFromZip(FileName, WadStrm, GwaName, GwaStrm);
-#else
   VStream *WadStrm = FL_OpenFileRead(FileName);
   if (!WadStrm) { AuxiliaryIndex = 0; return -1; }
   //fprintf(stderr, "*** AUX: '%s'\n", *FileName);
   auto olen = wadfiles.length();
   W_AddFileFromZip(FileName, WadStrm);
   wadfiles.setLength(olen);
-#endif
   return MAKE_HANDLE(AuxiliaryIndex, 0);
 }
 
@@ -208,7 +163,7 @@ static void zipAddWads (VZipFile *zip, const VStr &zipName) {
     if (memcmp(sign, "PWAD", 4) != 0 && memcmp(sign, "IWAD", 4) != 0) { delete memstrm; continue; }
     memstrm->Seek(0);
     VWadFile *wad = new VWadFile;
-    wad->Open(zipName+":"+list[f], false, memstrm, VStr());
+    wad->Open(zipName+":"+list[f], false, memstrm);
     SearchPaths.Append(wad);
   }
 }
@@ -252,7 +207,7 @@ int W_AddAuxiliaryStream (VStream *strm, WAuxFileType ftype) {
   } else {
     VWadFile *wad = new VWadFile;
     //GCon->Logf("AUX: %s", *(strm->GetName()));
-    wad->Open(strm->GetName(), false, strm, VStr());
+    wad->Open(strm->GetName(), false, strm);
     SearchPaths.Append(wad);
   }
 

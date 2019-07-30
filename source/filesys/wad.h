@@ -29,10 +29,10 @@
 //**
 //**************************************************************************
 // k8: use .gwa supplemental wads?
-// those are remnants of the early times, and not really used these days
+// those are remnants of the early times, and not really used these days.
 // you still can put PVS there, but PVS seems to be totally unused
-// these days too; so i opted to exclude GWA support
-//#define VAVOOM_USE_GWA
+// these days too; so i opted to exclude GWA support.
+// i had a define to turn GWA support on, but now i removed it completely.
 
 
 // boom namespaces
@@ -55,7 +55,7 @@ enum EWadNamespace {
 };
 
 
-void W_AddFile (const VStr &FileName, bool FixVoices, const VStr &GwaDir=VStr());
+void W_AddFile (const VStr &FileName, bool FixVoices);
 void W_Shutdown ();
 
 enum WAuxFileType {

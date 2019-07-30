@@ -797,13 +797,7 @@ static void AddZipFile (const VStr &ZipName, VZipFile *Zip, bool allowpk3) {
   TArray<VStr> Wads;
   Zip->ListWadFiles(Wads);
   for (int i = 0; i < Wads.length(); ++i) {
-#ifdef VAVOOM_USE_GWA
-    VStr GwaName = Wads[i].StripExtension()+".gwa";
-#endif
     VStream *WadStrm = Zip->OpenFileRead(Wads[i]);
-#ifdef VAVOOM_USE_GWA
-    VStream *GwaStrm = Zip->OpenFileRead(GwaName);
-#endif
 
     if (!WadStrm) continue;
     if (WadStrm->TotalSize() < 16) { delete WadStrm; continue; }
@@ -815,23 +809,7 @@ static void AddZipFile (const VStr &ZipName, VZipFile *Zip, bool allowpk3) {
     VStream *MemStrm = new VMemoryStream(ZipName+":"+Wads[i], WadStrm);
     delete WadStrm;
 
-#ifdef VAVOOM_USE_GWA
-    if (GwaStrm) {
-      Len = GwaStrm->TotalSize();
-      //Buf = new vuint8[Len];
-      Buf = (vuint8 *)Z_Calloc(Len);
-      GwaStrm->Serialise(Buf, Len);
-      delete GwaStrm;
-      GwaStrm = nullptr;
-      GwaStrm = new VMemoryStream(ZipName+":"+GwaName, Buf, Len, true);
-      //delete[] Buf;
-      Buf = nullptr;
-    }
-
-    W_AddFileFromZip(ZipName+":"+Wads[i], WadStrm, ZipName+":"+GwaName, GwaStrm);
-#else
     W_AddFileFromZip(ZipName+":"+Wads[i], MemStrm);
-#endif
   }
 
   if (!allowpk3) return;
@@ -885,7 +863,7 @@ static void AddAnyFile (const VStr &fname, bool allowFail, bool fixVoices=false)
     if (allowFail) {
       W_AddFile(fname, false);
     } else {
-      W_AddFile(fname, fixVoices, fl_savedir);
+      W_AddFile(fname, fixVoices);
     }
   }
 }
@@ -909,7 +887,7 @@ static void AddPakDir (const VStr &dirname) {
   for (int i = 0; i < wads.length(); ++i) {
     VStream *wadst = dpak->OpenFileRead(wads[i]);
     if (!wadst) continue;
-    W_AddFileFromZip(dpak->GetPrefix()+":"+wads[i], wadst, VStr(), nullptr);
+    W_AddFileFromZip(dpak->GetPrefix()+":"+wads[i], wadst);
   }
 
   // add all pk3 files in the root

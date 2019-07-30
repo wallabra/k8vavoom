@@ -52,9 +52,6 @@ VWadFile::VWadFile ()
   , Stream(nullptr)
   //, NumLumps(0)
   //, LumpInfo(nullptr)
-#ifdef VAVOOM_USE_GWA
-  , GwaDir()
-#endif
   , lockInited(false)
 {
 }
@@ -77,7 +74,7 @@ VWadFile::~VWadFile () {
 //  VWadFile::Open
 //
 //==========================================================================
-void VWadFile::Open (const VStr &FileName, bool FixVoices, VStream *InStream, const VStr &AGwaDir) {
+void VWadFile::Open (const VStr &FileName, bool FixVoices, VStream *InStream) {
   wadinfo_t header;
   //lumpinfo_t *lump_p;
   int length;
@@ -92,9 +89,6 @@ void VWadFile::Open (const VStr &FileName, bool FixVoices, VStream *InStream, co
   //Name = FileName;
   PakFileName = FileName;
   pakdir.clear();
-#ifdef VAVOOM_USE_GWA
-  GwaDir = AGwaDir;
-#endif
 
   if (InStream) {
     Stream = InStream;
@@ -176,9 +170,6 @@ void VWadFile::OpenSingleLump (const VStr &FileName) {
   if (fsys_report_added_paks) GCon->Logf(NAME_Init, "Adding \"%s\"...", *FileName);
 
   PakFileName = FileName;
-#ifdef VAVOOM_USE_GWA
-  GwaDir = VStr();
-#endif
   VPakFileInfo fi;
 
   // single lump file
@@ -209,17 +200,6 @@ void VWadFile::OpenSingleLump (const VStr &FileName) {
 //
 //==========================================================================
 void VWadFile::Close () {
-  /*
-  if (LumpInfo) {
-    delete[] LumpInfo;
-    LumpInfo = nullptr;
-  }
-  NumLumps = 0;
-  Name.Clean();
-  */
-#ifdef VAVOOM_USE_GWA
-  GwaDir.Clean();
-#endif
   if (Stream) {
     delete Stream;
     Stream = nullptr;
