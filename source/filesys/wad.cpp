@@ -45,6 +45,9 @@ static int AuxiliaryIndex = 0;
 
 static TMap<VStr, int> fullNameTexLumpChecked;
 
+// don't search files in auxiliary wads, ever
+static inline int getSPCount () { return (AuxiliaryIndex ? AuxiliaryIndex : SearchPaths.length()); }
+
 
 //==========================================================================
 //
@@ -116,28 +119,6 @@ int W_OpenAuxiliary (const VStr &FileName) {
   wadfiles.setLength(olen);
   return MAKE_HANDLE(AuxiliaryIndex, 0);
 }
-
-
-//==========================================================================
-//
-//  W_AddAuxiliary
-//
-//==========================================================================
-/*
-int W_AddAuxiliary (const VStr &FileName) {
-  if (!AuxiliaryIndex) AuxiliaryIndex = SearchPaths.length();
-  int residx = SearchPaths.length();
-  VStream *Strm = FL_OpenFileRead(FileName);
-  if (!Strm) {
-    if (AuxiliaryIndex == SearchPaths.length()) AuxiliaryIndex = 0;
-    return -1;
-  }
-  auto olen = wadfiles.length();
-  W_AddFileFromZip(FileName, Strm);
-  wadfiles.setLength(olen);
-  return MAKE_HANDLE(residx, 0);
-}
-*/
 
 
 //==========================================================================
@@ -243,12 +224,10 @@ void W_CloseAuxiliary () {
 //==========================================================================
 int W_CheckNumForName (VName Name, EWadNamespace NS) {
   if (Name == NAME_None) return -1;
-
-  for (int wi = SearchPaths.length()-1; wi >= 0; --wi) {
+  for (int wi = getSPCount()-1; wi >= 0; --wi) {
     int i = SearchPaths[wi]->CheckNumForName(Name, NS);
     if (i >= 0) return MAKE_HANDLE(wi, i);
   }
-
   // not found
   return -1;
 }
@@ -261,7 +240,7 @@ int W_CheckNumForName (VName Name, EWadNamespace NS) {
 //==========================================================================
 int W_FindFirstLumpOccurence (VName lmpname, EWadNamespace NS) {
   if (lmpname == NAME_None) return -1;
-  for (int wi = 0; wi < SearchPaths.length(); ++wi) {
+  for (int wi = 0; wi < getSPCount(); ++wi) {
     int i = SearchPaths[wi]->CheckNumForName(lmpname, NS, true);
     if (i >= 0) return MAKE_HANDLE(wi, i);
   }
@@ -292,7 +271,7 @@ int W_GetNumForName (VName Name, EWadNamespace NS) {
 //
 //==========================================================================
 int W_CheckNumForNameInFile (VName Name, int File, EWadNamespace NS) {
-  if (File < 0 || File >= SearchPaths.length()) return -1;
+  if (File < 0 || File >= getSPCount()) return -1;
   int i = SearchPaths[File]->CheckNumForName(Name, NS);
   if (i >= 0) return MAKE_HANDLE(File, i);
   // not found
@@ -308,7 +287,7 @@ int W_CheckNumForNameInFile (VName Name, int File, EWadNamespace NS) {
 //
 //==========================================================================
 int W_CheckFirstNumForNameInFile (VName Name, int File, EWadNamespace NS) {
-  if (File < 0 || File >= SearchPaths.length()) return -1;
+  if (File < 0 || File >= getSPCount()) return -1;
   int i = SearchPaths[File]->CheckNumForName(Name, NS, true);
   if (i >= 0) return MAKE_HANDLE(File, i);
   // not found
@@ -324,7 +303,7 @@ int W_CheckFirstNumForNameInFile (VName Name, int File, EWadNamespace NS) {
 //
 //==========================================================================
 int W_CheckNumForFileName (const VStr &Name) {
-  for (int wi = SearchPaths.length()-1; wi >= 0; --wi) {
+  for (int wi = getSPCount()-1; wi >= 0; --wi) {
     int i = SearchPaths[wi]->CheckNumForFileName(Name);
     if (i >= 0) return MAKE_HANDLE(wi, i);
   }
@@ -343,7 +322,7 @@ int W_CheckNumForFileName (const VStr &Name) {
 int W_CheckNumForFileNameInSameFile (int filelump, const VStr &Name) {
   if (filelump < 0) return W_CheckNumForFileName(Name);
   int fidx = FILE_INDEX(filelump);
-  if (fidx < 0 || fidx >= SearchPaths.length()) return -1;
+  if (fidx < 0 || fidx >= getSPCount()) return -1;
   VSearchPath *w = SearchPaths[fidx];
   int i = w->CheckNumForFileName(Name);
   if (i >= 0) return MAKE_HANDLE(fidx, i);
@@ -362,7 +341,7 @@ int W_CheckNumForFileNameInSameFile (int filelump, const VStr &Name) {
 int W_CheckNumForFileNameInSameFileOrLower (int filelump, const VStr &Name) {
   if (filelump < 0) return W_CheckNumForFileName(Name);
   int fidx = FILE_INDEX(filelump);
-  if (fidx >= SearchPaths.length()) fidx = SearchPaths.length()-1;
+  if (fidx >= getSPCount()) fidx = getSPCount()-1;
   while (fidx >= 0) {
     VSearchPath *w = SearchPaths[fidx];
     int i = w->CheckNumForFileName(Name);
@@ -382,6 +361,7 @@ int W_CheckNumForFileNameInSameFileOrLower (int filelump, const VStr &Name) {
 //
 //==========================================================================
 int W_FindACSObjectInFile (VStr Name, int File) {
+  // check auxiliaries too
   if (File < 0 || File >= SearchPaths.length()) return -1;
   while (File >= 0) {
     int i = SearchPaths[File]->FindACSObject(Name);
@@ -400,7 +380,7 @@ int W_FindACSObjectInFile (VStr Name, int File) {
 //==========================================================================
 static int tryWithExtension (VStr name, const char *ext) {
   if (ext && *ext) name = name+ext;
-  for (int wi = SearchPaths.length()-1; wi >= 0; --wi) {
+  for (int wi = getSPCount()-1; wi >= 0; --wi) {
     int i = SearchPaths[wi]->CheckNumForFileName(name);
     if (i >= 0) return MAKE_HANDLE(wi, i);
   }
@@ -585,8 +565,8 @@ VStream *W_CreateLumpReaderName (VName Name, EWadNamespace NS) {
 //==========================================================================
 int W_StartIterationFromLumpFileNS (int File, EWadNamespace NS) {
   if (File < 0) return -1;
-  if (File >= SearchPaths.length()) return -1;
-  for (int li = 0; File < SearchPaths.length(); ++File, li = 0) {
+  if (File >= getSPCount()) return -1;
+  for (int li = 0; File < getSPCount(); ++File, li = 0) {
     li = SearchPaths[File]->IterateNS(li, NS);
     if (li != -1) return MAKE_HANDLE(File, li);
   }
@@ -603,7 +583,7 @@ int W_IterateNS (int Prev, EWadNamespace NS) {
   if (Prev < 0) Prev = -1;
   int wi = FILE_INDEX(Prev+1);
   int li = LUMP_INDEX(Prev+1);
-  for (; wi < SearchPaths.length(); ++wi, li = 0) {
+  for (; wi < getSPCount(); ++wi, li = 0) {
     li = SearchPaths[wi]->IterateNS(li, NS);
     if (li != -1) return MAKE_HANDLE(wi, li);
   }
@@ -618,10 +598,10 @@ int W_IterateNS (int Prev, EWadNamespace NS) {
 //==========================================================================
 int W_IterateFile (int Prev, const VStr &Name) {
   if (Name.isEmpty()) return -1;
-  //GCon->Logf(NAME_Dev, "W_IterateFile: Prev=%d (%d); fn=<%s>", Prev, SearchPaths.length(), *Name);
-  for (int wi = FILE_INDEX(Prev)+1; wi < SearchPaths.length(); ++wi) {
+  //GCon->Logf(NAME_Dev, "W_IterateFile: Prev=%d (%d); fn=<%s>", Prev, getSPCount(), *Name);
+  for (int wi = FILE_INDEX(Prev)+1; wi < getSPCount(); ++wi) {
     int li = SearchPaths[wi]->CheckNumForFileName(Name);
-    //GCon->Logf(NAME_Dev, "W_IterateFile: wi=%d (%d); fn=<%s>; li=%d", wi, SearchPaths.length(), *Name, li);
+    //GCon->Logf(NAME_Dev, "W_IterateFile: wi=%d (%d); fn=<%s>; li=%d", wi, getSPCount(), *Name, li);
     if (li != -1) return MAKE_HANDLE(wi, li);
   }
   return -1;
@@ -727,7 +707,7 @@ int W_NextMountFileId () {
 //==========================================================================
 VStr W_FindMapInLastFile (int fileid, int *mapnum) {
   if (mapnum) *mapnum = -1;
-  if (fileid < 0 || fileid >= SearchPaths.length()) return VStr();
+  if (fileid < 0 || fileid >= getSPCount()) return VStr();
   int found = 0xffff;
   bool doom1 = false;
   char doom1ch = 'e';
@@ -809,7 +789,7 @@ VStr W_FindMapInAuxuliaries (int *mapnum) {
 bool W_IsIWADLump (int lump) {
   if (lump < 0) return false;
   int fidx = FILE_INDEX(lump);
-  if (fidx < 0 || fidx >= SearchPaths.length()) return false;
+  if (fidx < 0 || fidx >= getSPCount()) return false;
   return SearchPaths[fidx]->iwad;
 }
 
@@ -822,5 +802,5 @@ bool W_IsIWADLump (int lump) {
 bool W_IsAuxLump (int lump) {
   if (lump < 0 || !AuxiliaryIndex) return false;
   int fidx = FILE_INDEX(lump);
-  return (fidx >= AuxiliaryIndex);
+  return (fidx >= AuxiliaryIndex && fidx < SearchPaths.length());
 }
