@@ -84,22 +84,9 @@ menudef AdvVideoOptions {
   }
 
 
+  /*
   header "Translucency";
 
-  option slider {
-    title = "Lost Souls Translucency";
-    cvar = r_transsouls;
-    step = 0.05;
-    min = 0;
-    max = 1;
-  }
-
-  option bool {
-    title = "Optional Fuzzy Effect";
-    cvar = r_drawfuzz;
-  }
-
-  /*
   option bool {
     title = "Better translucent wall lighting";
     cvar = r_adv_masked_wall_vertex_light;
@@ -194,17 +181,6 @@ menudef AdvVideoOptions {
     step = 0.1;
     min = 0;
     max = 2;
-  }
-
-
-  header "Miscellaneous";
-
-  option bool {
-    title = "Blend sprites";
-    cvar = gl_blend_sprites;
-    help =
-      "May make rendering faster or slower. Who knows?"
-      "If in doubt, leave this 'OFF'.";
   }
 
 

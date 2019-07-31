@@ -172,45 +172,6 @@ menudef VideoOptions {
   }
 
 
-  header "Visual Hacks";
-
-  option bool {
-    title = "Fix Sprites Offset";
-    cvar = r_fix_sprite_offsets;
-  }
-
-  option slider {
-    title = "Sprites Delta";
-    cvar = r_sprite_fix_delta;
-    step = 1;
-    min = -255;
-    max = 255;
-  }
-
-
-  header "Camera Plane Rotation";
-
-  option bool {
-    title = "Detailed Rotation Sprites";
-    cvar = r_thing_hiframe_use_camera_plane;
-  }
-
-  option bool {
-    title = "Monster";
-    cvar = r_thing_monster_use_camera_plane;
-  }
-
-  option bool {
-    title = "Missile";
-    cvar = r_thing_missile_use_camera_plane;
-  }
-
-  option bool {
-    title = "Other Things";
-    cvar = r_thing_other_use_camera_plane;
-  }
-
-
   header "UI Graphics Filtering";
 
   option bool {
@@ -245,6 +206,11 @@ menudef VideoOptions {
 
 
   header "More Options";
+
+  option submenu {
+    title = "Sprite Options";
+    submenu = "SpriteVideoOptions";
+  }
 
   option submenu {
     title = "Advanced Video Options";

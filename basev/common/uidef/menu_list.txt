@@ -10,6 +10,7 @@ menus {
   "menus/mouse.txt",
   "menus/options.txt",
   "menus/sound.txt",
+  "menus/sprvideo.txt",
   "menus/video.txt",
   "menus/xmp.txt",
 

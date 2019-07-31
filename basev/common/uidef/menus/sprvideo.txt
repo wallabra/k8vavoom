@@ -1,0 +1,169 @@
+// sprite rendering options menu
+menudef SpriteVideoOptions {
+  Title = "SPRITE OPTIONS";
+
+  /* sprites are always sorted, because why not?
+  option bool {
+    title = "Sort sprites";
+    cvar = r_sort_sprites;
+    help =
+      "Sort sprites, so sprites on the same coords will flicker less."
+      "This *can* reduce sprite flickering, but it is not guaranteed.";
+  }
+  */
+
+  option bool {
+    title = "Blend sprites";
+    cvar = gl_blend_sprites;
+    help =
+      "May make rendering faster or slower. Who knows?"
+      "If in doubt, leave this 'OFF'.";
+  }
+
+
+  header "Visual Hacks";
+
+  option bool {
+    title = "Fix Sprites Offset";
+    cvar = r_fix_sprite_offsets;
+  }
+
+  option slider {
+    title = "Sprites Delta";
+    cvar = r_sprite_fix_delta;
+    step = 1;
+    min = -255;
+    max = 255;
+  }
+
+
+  header "Camera Plane Rotation";
+
+  option bool {
+    title = "Detailed Rotation Sprites";
+    cvar = r_thing_hiframe_use_camera_plane;
+  }
+
+  option bool {
+    title = "Monster";
+    cvar = r_thing_monster_use_camera_plane;
+  }
+
+  option bool {
+    title = "Missile";
+    cvar = r_thing_missile_use_camera_plane;
+  }
+
+  option bool {
+    title = "Other Things";
+    cvar = r_thing_other_use_camera_plane;
+  }
+
+
+  header "Translucency";
+
+  option slider {
+    title = "Lost Souls Translucency";
+    cvar = r_transsouls;
+    step = 0.05;
+    min = 0;
+    max = 1;
+  }
+
+  option bool {
+    title = "Optional Fuzzy Effect";
+    cvar = r_drawfuzz;
+  }
+
+
+  header "Texture Filtering";
+
+  option enum {
+    title = "Sprites Filter";
+    cvar = gl_sprite_filter;
+    list {
+      "Nearest",
+      "Nearest Mipmap",
+      "Linear Nearest",
+      "Bilinear",
+      "Trilinear"
+    }
+  }
+
+
+  header "Fake Shadows";
+
+  option bool {
+    title = "Fake Sprite Shadows";
+    cvar = r_fake_sprite_shadows;
+    help =
+      "This globally enables/disables fake sprite shadows."
+      "This is the effect you may seen in Duke Nukem 3D, for example."
+      "Please, note that those are not real shadows, so they will ignore"
+      "light sources, slopes, won't be properly casted on wall geometry,"
+      "won't be properly clipped, and so on."
+      "But the effect still looks nice, try it!"
+      "The effect is cheap, so don't be afraid of turning it on on weak GPUs.";
+  }
+
+  option slider {
+    title = "Shadow Translucency";
+    cvar = r_fake_shadow_translucency;
+    step = 0.05;
+    min = 0;
+    max = 1;
+    help =
+      "Translucency (alpha) multiplier for fake sprite shadows.";
+  }
+
+  option slider {
+    title = "Shadow Scale";
+    cvar = r_fake_shadow_scale;
+    step = 0.05;
+    min = 0;
+    max = 1;
+    help =
+      "Sprite height multiplier for fake shadows.";
+  }
+
+
+  header "Fake Shadow Casters";
+
+  option bool {
+    title = "Monsters";
+    cvar = r_fake_shadows_monsters;
+    help = "Should monsters cast fake shadows?";
+  }
+
+  option bool {
+    title = "Corpses";
+    cvar = r_fake_shadows_corpses;
+    help = "Should corpses cast fake shadows?";
+  }
+
+  option bool {
+    title = "Missiles";
+    cvar = r_fake_shadows_missiles;
+    help = "Should missiles (projectiles) cast fake shadows?";
+  }
+
+  option bool {
+    title = "Pickups";
+    cvar = r_fake_shadows_pickups;
+    help = "Should pickups cast fake shadows?";
+  }
+
+  option bool {
+    title = "Decorations";
+    cvar = r_fake_shadows_decorations;
+    help =
+      "Should decorations cast fake shadows?"
+      "'Decoration' is any solid thing.";
+  }
+
+  option bool {
+    title = "Players";
+    cvar = r_fake_shadows_players;
+    help = "Should players cast fake shadows?";
+  }
+}
