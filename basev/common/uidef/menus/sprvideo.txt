@@ -132,6 +132,15 @@ menudef SpriteVideoOptions {
       "Sprite height multiplier for fake shadows.";
   }
 
+  option bool {
+    title = "3D Models";
+    cvar = r_fake_shadows_alias_models;
+    help =
+      "Should 3D models cast fake shadow?"
+      "Please, note that model geometry is not used here, only the"
+      "original sprite frame. It may look strange, or even ugly.";
+  }
+
 
   header "Fake Shadow Casters";
 
@@ -171,5 +180,19 @@ menudef SpriteVideoOptions {
     title = "Players";
     cvar = r_fake_shadows_players;
     help = "Should players cast fake shadows?";
+  }
+
+  option bool {
+    title = "Additive Monsters";
+    cvar = r_fake_shadow_additive_monsters;
+    help =
+      "Shot 'additive' monsters cast shadow?";
+  }
+
+  option bool {
+    title = "Additive Projectiles";
+    cvar = r_fake_shadow_additive_missiles;
+    help =
+      "Shot 'additive' projectiles (like imp fireballs) cast shadow?";
   }
 }

@@ -61,10 +61,11 @@ static VCvarB r_thing_monster_use_camera_plane("r_thing_monster_use_camera_plane
 static VCvarB r_thing_missile_use_camera_plane("r_thing_missile_use_camera_plane", true, "Use angle to camera plane to select missile rotation?", CVAR_Archive);
 static VCvarB r_thing_other_use_camera_plane("r_thing_other_use_camera_plane", true, "Use angle to camera plane to select non-monster rotation?", CVAR_Archive);
 
+VCvarB r_fake_shadows_alias_models("r_fake_shadows_alias_models", false, "Render shadows from alias models (based on sprite frame)?", CVAR_Archive);
 static VCvarB r_fake_sprite_shadows("r_fake_sprite_shadows", true, "Render fake sprite shadows?", CVAR_Archive);
 static VCvarF r_fake_shadow_translucency("r_fake_shadow_translucency", "0.5", "Fake sprite shadows translucency multiplier.", CVAR_Archive);
 static VCvarF r_fake_shadow_scale("r_fake_shadow_scale", "0.1", "Fake sprite shadows height multiplier.", CVAR_Archive);
-static VCvarB r_fake_shadow_ignore_offset_fix("r_fake_shadow_ignore_offset_fix", true, "Should fake sprite shadows ignore sprite offset fix?", CVAR_Archive);
+static VCvarB r_fake_shadow_ignore_offset_fix("r_fake_shadow_ignore_offset_fix", false, "Should fake sprite shadows ignore sprite offset fix?", CVAR_Archive);
 
 static VCvarB r_fake_shadows_monsters("r_fake_shadows_monsters", true, "Render fake sprite shadows for monsters?", CVAR_Archive);
 static VCvarB r_fake_shadows_corpses("r_fake_shadows_corpses", true, "Render fake sprite shadows for corpses?", CVAR_Archive);
@@ -72,6 +73,9 @@ static VCvarB r_fake_shadows_missiles("r_fake_shadows_missiles", true, "Render f
 static VCvarB r_fake_shadows_pickups("r_fake_shadows_pickups", true, "Render fake sprite shadows for pickups?", CVAR_Archive);
 static VCvarB r_fake_shadows_decorations("r_fake_shadows_decorations", true, "Render fake sprite shadows for decorations?", CVAR_Archive);
 static VCvarB r_fake_shadows_players("r_fake_shadows_players", true, "Render fake sprite shadows for players?", CVAR_Archive);
+
+static VCvarB r_fake_shadow_additive_missiles("r_fake_shadow_additive_missiles", true, "Render shadows from additive projectiles?", CVAR_Archive);
+static VCvarB r_fake_shadow_additive_monsters("r_fake_shadow_additive_monsters", true, "Render shadows from additive monsters?", CVAR_Archive);
 
 
 //==========================================================================
@@ -186,7 +190,8 @@ void VRenderLevelShared::QueueTranslucentAliasModel (VEntity *mobj, vuint32 ligh
 //  VRenderLevelShared::QueueSprite
 //
 //==========================================================================
-void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fade, float Alpha, bool Additive, vuint32 seclight) {
+void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fade, float Alpha, bool Additive,
+                                      vuint32 seclight, bool onlyShadow) {
   int spr_type = thing->SpriteType;
 
   TVec sprorigin = thing->GetDrawOrigin();
@@ -206,10 +211,12 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
   float cr;
   int hangup = 0;
   bool renderShadow =
-    !Additive && thing && spr_type == SPR_VP_PARALLEL_UPRIGHT &&
+    /*!Additive &&*/ thing && spr_type == SPR_VP_PARALLEL_UPRIGHT &&
     r_fake_sprite_shadows.asBool() &&
     r_sort_sprites.asBool() &&
     (r_fake_shadow_scale.asFloat() > 0.0f);
+
+  if (onlyShadow && !renderShadow) return;
 
   //spr_type = SPR_ORIENTED;
   switch (spr_type) {
@@ -397,14 +404,23 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
       // don't draw camera actor shadow (just in case, it should not come here anyway)
       renderShadow = false;
     }
+    if (renderShadow && Additive) {
+      if (thing->IsMissile()) {
+        renderShadow = (r_fake_shadows_missiles.asBool() && r_fake_shadow_additive_missiles.asBool());
+      } else if (thing->IsMonster()) {
+        renderShadow = (r_fake_shadows_monsters.asBool() && r_fake_shadow_additive_monsters.asBool());
+      } else {
+        renderShadow = false;
+      }
+    }
   }
 
   // only for monsters
   if (renderShadow) {
            if (thing->IsPlayer()) { renderShadow = r_fake_shadows_players.asBool();
-    } else if (thing->IsMonster()) { renderShadow = r_fake_shadows_monsters.asBool();
-    } else if (thing->IsCorpse()) { renderShadow = r_fake_shadows_corpses.asBool();
     } else if (thing->IsMissile()) { renderShadow = r_fake_shadows_missiles.asBool();
+    } else if (thing->IsCorpse()) { renderShadow = r_fake_shadows_corpses.asBool();
+    } else if (thing->IsMonster()) { renderShadow = r_fake_shadows_monsters.asBool();
     } else if (thing->IsSolid()) { renderShadow = r_fake_shadows_decorations.asBool();
     } else if (r_fake_shadows_pickups.asBool()) {
       // check for pickup
@@ -429,6 +445,8 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
       renderShadow = false;
     }
   }
+
+  if (onlyShadow && !renderShadow) return;
 
   TVec sv[4];
 
@@ -458,11 +476,13 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
       else if (thing->Health <= 0) priority = -110;
       else if (thing->EntityFlags&VEntity::EF_NoBlockmap) priority = -200;
     }
-    QueueTranslucentPoly(nullptr, sv, 4, lump, Alpha+(thing->RenderStyle == STYLE_Dark ? 1666.0f : 0.0f), Additive,
-      thing->Translation, true/*isSprite*/, light, Fade, -sprforward,
-      DotProduct(sprorigin, -sprforward), (flip ? -sprright : sprright)/scaleX,
-      -sprup/scaleY, (flip ? sv[2] : sv[1]), priority
-      , true, /*sprorigin*/thing->Origin, thing->GetUniqueId(), hangup);
+    if (!onlyShadow) {
+      QueueTranslucentPoly(nullptr, sv, 4, lump, Alpha+(thing->RenderStyle == STYLE_Dark ? 1666.0f : 0.0f), Additive,
+        thing->Translation, true/*isSprite*/, light, Fade, -sprforward,
+        DotProduct(sprorigin, -sprforward), (flip ? -sprright : sprright)/scaleX,
+        -sprup/scaleY, (flip ? sv[2] : sv[1]), priority
+        , true, /*sprorigin*/thing->Origin, thing->GetUniqueId(), hangup);
+    }
     // add shadow
     if (renderShadow) {
       Alpha *= r_fake_shadow_translucency.asFloat();
@@ -488,8 +508,8 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
           sv[2] = sprorigin+end+topdelta;
           sv[3] = sprorigin+end+botdelta;
 
-          QueueTranslucentPoly(nullptr, sv, 4, lump, Alpha+(thing->RenderStyle == STYLE_Dark ? 1666.0f : 0.0f), Additive,
-            thing->Translation, true/*isSprite*/, light, Fade, -sprforward,
+          QueueTranslucentPoly(nullptr, sv, 4, lump, Alpha, /*Additive*/false,
+            /*thing->Translation*/0, true/*isSprite*/, light, Fade, -sprforward,
             DotProduct(sprorigin, -sprforward), (flip ? -sprright : sprright)/scaleX,
             -sprup/scaleY, (flip ? sv[2] : sv[1]), priority
             , true, /*sprorigin*/thing->Origin, thing->GetUniqueId(), 666/*fakeshadow type*/);

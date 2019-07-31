@@ -42,6 +42,8 @@ extern VCvarB r_chasecam;
 extern VCvarB r_brightmaps;
 extern VCvarB r_brightmaps_sprite;
 
+extern VCvarB r_fake_shadows_alias_models;
+
 VCvarB r_sort_sprites("r_sort_sprites", true, "Sprite sorting.", CVAR_Archive);
 VCvarB r_draw_mobjs("r_draw_mobjs", true, "Draw mobjs?", /*CVAR_Archive|*/CVAR_PreInit);
 VCvarB r_draw_psprites("r_draw_psprites", true, "Draw psprites?", /*CVAR_Archive|*/CVAR_PreInit);
@@ -153,6 +155,8 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
   // if it's a script and it doesn't specify model for this frame, draw sprite instead
   if (!RenderAliasModel(mobj, light, Fade, Alpha, Additive, Pass)) {
     QueueSprite(mobj, light, Fade, Alpha, Additive, seclight);
+  } else if (r_fake_shadows_alias_models) {
+    QueueSprite(mobj, light, Fade, Alpha, Additive, seclight, true); // only shadow
   }
 }
 

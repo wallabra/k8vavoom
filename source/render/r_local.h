@@ -651,7 +651,7 @@ protected:
                              const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority=0,
                              bool useSprOrigin=false, const TVec &sprOrigin=TVec(), vuint32 objid=0,
                              int hangup=0);
-  void QueueSprite (VEntity *thing, vuint32 light, vuint32 Fade, float Alpha, bool Additive, vuint32 seclight);
+  void QueueSprite (VEntity *thing, vuint32 light, vuint32 Fade, float Alpha, bool Additive, vuint32 seclight, bool onlyShadow=false);
   void QueueTranslucentAliasModel (VEntity *mobj, vuint32 light, vuint32 Fade, float Alpha, bool Additive, float TimeFrac);
   bool RenderAliasModel (VEntity*, vuint32, vuint32, float, bool, ERenderPass);
   void RenderThing (VEntity*, ERenderPass);
