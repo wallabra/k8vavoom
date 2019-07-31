@@ -687,12 +687,12 @@ bool VDecalAnimSlider::animate (decal_t *decal, float timeDelta) {
   if (timePassed < startTime.value) return true; // not yet
   if (timePassed >= startTime.value+actionTime.value || actionTime.value <= 0) {
     decal->ofsX = distX.value;
-    decal->ofsY = distY.value*(k8reversey ? -1.0f : 1.0f);
+    decal->ofsY = distY.value*(k8reversey ? 1.0f : -1.0f);
     return false;
   }
   float dtx = timePassed-startTime.value;
   decal->ofsX = distX.value*dtx/actionTime.value;
-  decal->ofsY = (distY.value*dtx/actionTime.value)*(k8reversey ? -1.0f : 1.0f);
+  decal->ofsY = (distY.value*dtx/actionTime.value)*(k8reversey ? 1.0f : -1.0f);
   return true;
 }
 
