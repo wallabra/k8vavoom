@@ -60,10 +60,17 @@ static VCvarB r_thing_monster_use_camera_plane("r_thing_monster_use_camera_plane
 static VCvarB r_thing_missile_use_camera_plane("r_thing_missile_use_camera_plane", true, "Use angle to camera plane to select missile rotation?", CVAR_Archive);
 static VCvarB r_thing_other_use_camera_plane("r_thing_other_use_camera_plane", true, "Use angle to camera plane to select non-monster rotation?", CVAR_Archive);
 
+static VCvarB r_fake_sprite_shadows("r_fake_sprite_shadows", true, "Render fake sprite shadows?", CVAR_Archive);
+
 
 //==========================================================================
 //
 //  VRenderLevelShared::QueueTranslucentPoly
+//
+//  hangup:
+//    0: normal
+//   -1: no z-buffer write, slightly offset (used for flat-aligned sprites)
+//  666: fake sprite shadow
 //
 //==========================================================================
 void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, TVec *sv,
@@ -187,6 +194,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
   float sr;
   float cr;
   int hangup = 0;
+  bool renderShadow = (!Additive && thing && spr_type == SPR_VP_PARALLEL_UPRIGHT && r_fake_sprite_shadows.asBool() && r_sort_sprites.asBool());
   //spr_type = SPR_ORIENTED;
 
   switch (spr_type) {
@@ -292,17 +300,17 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
 
   // decide which patch to use for sprite relative to player
   if ((unsigned)SpriteIndex >= MAX_SPRITE_MODELS) {
-#ifdef PARANOID
+    #ifdef PARANOID
     GCon->Logf(NAME_Dev, "Invalid sprite number %d", SpriteIndex);
-#endif
+    #endif
     return;
   }
 
   sprdef = &sprites[SpriteIndex];
   if (FrameIndex >= sprdef->numframes) {
-#ifdef PARANOID
+    #ifdef PARANOID
     GCon->Logf(NAME_Dev, "Invalid sprite frame %d : %d", SpriteIndex, FrameIndex);
-#endif
+    #endif
     return;
   }
 
@@ -347,9 +355,9 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
   }
 
   if (lump <= 0) {
-#ifdef PARANOID
+    #ifdef PARANOID
     GCon->Logf(NAME_Dev, "Sprite frame %d : %d, not present", SpriteIndex, FrameIndex);
-#endif
+    #endif
     // sprite lump is not present
     return;
   }
@@ -366,14 +374,23 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
   int TexSOffset = Tex->SOffset;
   int TexTOffset = Tex->TOffset;
 
+  float scaleX = max2(0.001f, thing->ScaleX);
+  float scaleY = max2(0.001f, thing->ScaleY);
+
+  // only for monsters
+  //TODO: player shadows in multiplayer, or in third person
+  if (renderShadow) {
+    renderShadow = (thing->IsMonster() || thing->IsCorpse() || thing->IsMissile());
+  }
+
   TVec sv[4];
 
-  TVec start = -TexSOffset*sprright*thing->ScaleX;
-  TVec end = (TexWidth-TexSOffset)*sprright*thing->ScaleX;
+  TVec start = -TexSOffset*sprright*scaleX;
+  TVec end = (TexWidth-TexSOffset)*sprright*scaleX;
 
   if (r_fix_sprite_offsets && TexTOffset < TexHeight && 2*TexTOffset+r_sprite_fix_delta >= TexHeight) TexTOffset = TexHeight;
-  TVec topdelta = TexTOffset*sprup*thing->ScaleY;
-  TVec botdelta = (TexTOffset-TexHeight)*sprup*thing->ScaleY;
+  TVec topdelta = TexTOffset*sprup*scaleY;
+  TVec botdelta = (TexTOffset-TexHeight)*sprup*scaleY;
 
   sv[0] = sprorigin+start+botdelta;
   sv[1] = sprorigin+start+topdelta;
@@ -385,6 +402,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
   if (Alpha >= 1.0f && !Additive && Tex->isTranslucent()) Alpha = 0.9999f;
 
   if (Alpha < 1.0f || Additive || r_sort_sprites) {
+    // add sprite
     int priority = 0;
     if (thing) {
            if (thing->EntityFlags&VEntity::EF_Bright) priority = 200;
@@ -395,15 +413,44 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
     }
     QueueTranslucentPoly(nullptr, sv, 4, lump, Alpha+(thing->RenderStyle == STYLE_Dark ? 1666.0f : 0.0f), Additive,
       thing->Translation, true/*isSprite*/, light, Fade, -sprforward,
-      DotProduct(sprorigin, -sprforward), (flip ? -sprright : sprright)/thing->ScaleX,
-      -sprup/thing->ScaleY, (flip ? sv[2] : sv[1]), priority
+      DotProduct(sprorigin, -sprforward), (flip ? -sprright : sprright)/scaleX,
+      -sprup/scaleY, (flip ? sv[2] : sv[1]), priority
       , true, /*sprorigin*/thing->Origin, thing->GetUniqueId(), hangup);
+    // add shadow
+    if (renderShadow) {
+      Alpha *= 0.5f;
+      if (Alpha >= 0.012f) {
+        // check origin
+        if (sprorigin.z >= thing->FloorZ) {
+          sprorigin.z = thing->FloorZ;
+
+          scaleY *= 0.1f;
+
+          //start = -TexSOffset*sprright*scaleX;
+          end = (TexWidth-TexSOffset)*sprright*scaleX;
+
+          topdelta = TexTOffset*sprup*scaleY;
+          botdelta = (TexTOffset-TexHeight)*sprup*scaleY;
+
+          sv[0] = sprorigin+start+botdelta;
+          sv[1] = sprorigin+start+topdelta;
+          sv[2] = sprorigin+end+topdelta;
+          sv[3] = sprorigin+end+botdelta;
+
+          QueueTranslucentPoly(nullptr, sv, 4, lump, Alpha+(thing->RenderStyle == STYLE_Dark ? 1666.0f : 0.0f), Additive,
+            thing->Translation, true/*isSprite*/, light, Fade, -sprforward,
+            DotProduct(sprorigin, -sprforward), (flip ? -sprright : sprright)/scaleX,
+            -sprup/scaleY, (flip ? sv[2] : sv[1]), priority
+            , true, /*sprorigin*/thing->Origin, thing->GetUniqueId(), 666/*fakeshadow type*/);
+        }
+      }
+    }
   } else {
     Drawer->DrawSpritePolygon(sv, /*GTextureManager[lump]*/Tex, Alpha+(thing->RenderStyle == STYLE_Dark ? 1666.0f : 0.0f),
       Additive, GetTranslation(thing->Translation), ColorMap, light,
       Fade, -sprforward, DotProduct(sprorigin, -sprforward),
-      (flip ? -sprright : sprright)/thing->ScaleX,
-      -sprup/thing->ScaleY, (flip ? sv[2] : sv[1]), hangup);
+      (flip ? -sprright : sprright)/scaleX,
+      -sprup/scaleY, (flip ? sv[2] : sv[1]), hangup);
   }
 }
 
@@ -418,6 +465,35 @@ extern "C" {
     if (a == b) return 0;
     const VRenderLevelShared::trans_sprite_t *ta = (const VRenderLevelShared::trans_sprite_t *)a;
     const VRenderLevelShared::trans_sprite_t *tb = (const VRenderLevelShared::trans_sprite_t *)b;
+
+    const int tahang = ta->hangup;
+    const int tbhang = tb->hangup;
+
+    // "hangup" sprites comes before other sprites
+    if (tahang == -1 || tbhang == -1) {
+      if (tahang == -1 && tbhang == -1) {
+        // do normal checks here
+      } else if (tahang == -1) {
+        // a is hangup, b is not, (a < b)
+        return -1;
+      } else {
+        // a is not hangup, b is hangup, (a > b)
+        return 1;
+      }
+    }
+
+    // fake sprite shadows comes first
+    if (tahang == 666 || tbhang == 666) {
+      if (tahang == 666 && tbhang == 666) {
+        // do normal checks here
+      } else if (tahang == 666) {
+        // a is shadow, b is not, (a < b)
+        return -1;
+      } else {
+        // a is not shadow, b is shadow, (a > b)
+        return 1;
+      }
+    }
 
     // non-translucent objects should come first, and
     // additive ones should come last

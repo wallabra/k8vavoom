@@ -256,6 +256,11 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
 //
 //  VOpenGLDrawer::DrawSpritePolygon
 //
+//  hangup:
+//    0: normal
+//   -1: no z-buffer write, slightly offset (used for flat-aligned sprites)
+//  666: fake sprite shadow
+//
 //==========================================================================
 void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
                                        float Alpha, bool Additive,
@@ -268,8 +273,9 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
   if (!Tex) return; // just in case
 
   TVec texpt(0, 0, 0);
+  const bool fakeShadow = (hangup == 666);
 
-  bool doBrightmap = (r_brightmaps && r_brightmaps_sprite && Tex->Brightmap);
+  bool doBrightmap = (!fakeShadow && r_brightmaps && r_brightmaps_sprite && Tex->Brightmap);
   bool styleDark = (Alpha >= 1000.0f);
   if (styleDark) Alpha -= 1666.0f;
 
@@ -282,10 +288,13 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
     p_glActiveTextureARB(GL_TEXTURE0+1);
     SetBrightmapTexture(Tex->Brightmap);
     p_glActiveTextureARB(GL_TEXTURE0);
-  } else {
+  } else if (!fakeShadow) {
     SurfMasked.Activate();
     SurfMasked.SetTexture(0);
     //SurfMasked.SetFogType();
+  } else {
+    SurfMaskedFakeShadow.Activate();
+    SurfMaskedFakeShadow.SetTexture(0);
   }
 
   SetSpriteLump(Tex, Translation, CMap, true);
@@ -305,7 +314,11 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
       SurfMaskedBrightmap.SetAlphaRef(hangup || Additive || Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
     } else {
       //SurfMasked.SetAlphaRef(hangup || Additive ? getAlphaThreshold() : 0.666f);
-      SurfMasked.SetAlphaRef(hangup || Additive || Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
+      if (!fakeShadow) {
+        SurfMasked.SetAlphaRef(hangup || Additive || Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
+      } else {
+        SurfMaskedFakeShadow.SetAlphaRef(hangup || Additive || Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
+      }
     }
     if (hangup) {
       zbufferWriteDisabled = true;
@@ -333,7 +346,11 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
     if (doBrightmap) {
       SurfMaskedBrightmap.SetAlphaRef(Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
     } else {
-      SurfMasked.SetAlphaRef(Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
+      if (!fakeShadow) {
+        SurfMasked.SetAlphaRef(Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
+      } else {
+        SurfMaskedFakeShadow.SetAlphaRef(Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
+      }
     }
     Alpha = 1.0f;
     //glDisable(GL_BLEND);
@@ -356,6 +373,14 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
   //GCon->Logf("Tex=%s; Fade=0x%08x; light=0x%08x; alpha=%f", *Tex->Name, Fade, light, Alpha);
   //Fade = 0xff505050;
 
+  #define SPRVTX(shdr_,cv_)  do { \
+    texpt = (cv_)-texorg; \
+    shdr_.SetTexCoord( \
+      DotProduct(texpt, saxis)*tex_iw, \
+      DotProduct(texpt, taxis)*tex_ih); \
+    glVertex(cv_); \
+  } while (0)
+
   if (doBrightmap) {
     SurfMaskedBrightmap.SetLight(
       ((light>>16)&255)/255.0f,
@@ -364,63 +389,40 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
     SurfMaskedBrightmap.SetFogFade(Fade, Alpha);
 
     glBegin(GL_QUADS);
-      texpt = cv[0]-texorg;
-      SurfMaskedBrightmap.SetTexCoord(
-        DotProduct(texpt, saxis)*tex_iw,
-        DotProduct(texpt, taxis)*tex_ih);
-      glVertex(cv[0]);
-
-      texpt = cv[1]-texorg;
-      SurfMaskedBrightmap.SetTexCoord(
-        DotProduct(texpt, saxis)*tex_iw,
-        DotProduct(texpt, taxis)*tex_ih);
-      glVertex(cv[1]);
-
-      texpt = cv[2]-texorg;
-      SurfMaskedBrightmap.SetTexCoord(
-        DotProduct(texpt, saxis)*tex_iw,
-        DotProduct(texpt, taxis)*tex_ih);
-      glVertex(cv[2]);
-
-      texpt = cv[3]-texorg;
-      SurfMaskedBrightmap.SetTexCoord(
-        DotProduct(texpt, saxis)*tex_iw,
-        DotProduct(texpt, taxis)*tex_ih);
-      glVertex(cv[3]);
+      SPRVTX(SurfMaskedBrightmap, cv[0]);
+      SPRVTX(SurfMaskedBrightmap, cv[1]);
+      SPRVTX(SurfMaskedBrightmap, cv[2]);
+      SPRVTX(SurfMaskedBrightmap, cv[3]);
     glEnd();
   } else {
-    SurfMasked.SetLight(
-      ((light>>16)&255)/255.0f,
-      ((light>>8)&255)/255.0f,
-      (light&255)/255.0f, Alpha);
-    SurfMasked.SetFogFade(Fade, Alpha);
-
-    glBegin(GL_QUADS);
-      texpt = cv[0]-texorg;
-      SurfMasked.SetTexCoord(
-        DotProduct(texpt, saxis)*tex_iw,
-        DotProduct(texpt, taxis)*tex_ih);
-      glVertex(cv[0]);
-
-      texpt = cv[1]-texorg;
-      SurfMasked.SetTexCoord(
-        DotProduct(texpt, saxis)*tex_iw,
-        DotProduct(texpt, taxis)*tex_ih);
-      glVertex(cv[1]);
-
-      texpt = cv[2]-texorg;
-      SurfMasked.SetTexCoord(
-        DotProduct(texpt, saxis)*tex_iw,
-        DotProduct(texpt, taxis)*tex_ih);
-      glVertex(cv[2]);
-
-      texpt = cv[3]-texorg;
-      SurfMasked.SetTexCoord(
-        DotProduct(texpt, saxis)*tex_iw,
-        DotProduct(texpt, taxis)*tex_ih);
-      glVertex(cv[3]);
-    glEnd();
+    if (!fakeShadow) {
+      SurfMasked.SetLight(
+        ((light>>16)&255)/255.0f,
+        ((light>>8)&255)/255.0f,
+        (light&255)/255.0f, Alpha);
+      SurfMasked.SetFogFade(Fade, Alpha);
+      glBegin(GL_QUADS);
+        SPRVTX(SurfMasked, cv[0]);
+        SPRVTX(SurfMasked, cv[1]);
+        SPRVTX(SurfMasked, cv[2]);
+        SPRVTX(SurfMasked, cv[3]);
+      glEnd();
+    } else {
+      SurfMaskedFakeShadow.SetLight(
+        ((light>>16)&255)/255.0f,
+        ((light>>8)&255)/255.0f,
+        (light&255)/255.0f, Alpha);
+      SurfMaskedFakeShadow.SetFogFade(Fade, Alpha);
+      glBegin(GL_QUADS);
+        SPRVTX(SurfMaskedFakeShadow, cv[0]);
+        SPRVTX(SurfMaskedFakeShadow, cv[1]);
+        SPRVTX(SurfMaskedFakeShadow, cv[2]);
+        SPRVTX(SurfMaskedFakeShadow, cv[3]);
+      glEnd();
+    }
   }
+
+  #undef SPRVTX
 
   if (restoreBlend) {
     if (hangup) {

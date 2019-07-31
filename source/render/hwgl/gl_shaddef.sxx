@@ -165,6 +165,7 @@ ShaderList basedir="basev/common/glshaders" {
   Shader SurfMaskedBrightmap both="surf_masked" { define "VV_MASKED_BRIGHTMAP"; }
   Shader SurfMaskedGlow both="surf_masked" { define "VV_MASKED_GLOW"; }
   Shader SurfMaskedBrightmapGlow both="surf_masked" { defines { "VV_MASKED_BRIGHTMAP", "VV_MASKED_GLOW" } }
+  Shader SurfMaskedFakeShadow vertex="surf_masked" fragment="surf_masked_fakeshadow";
 
   Shader SurfPartSq vertex="particle" fragment="particle_sq";
   Shader SurfPartSm vertex="particle" fragment="particle_sm";

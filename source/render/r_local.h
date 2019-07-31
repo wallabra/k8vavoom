@@ -296,7 +296,7 @@ public:
     int type; // 0: masked polygon (wall); 1: sprite; 2: alias model
     float dist; // for soriting
     vuint32 objid; // for entities
-    int hangup;
+    int hangup; // 0: normal; -1: no z-buffer write, slightly offset (used for flat-aligned sprites); 666: fake sprite shadow
     vuint32 light;
     vuint32 Fade;
   };
