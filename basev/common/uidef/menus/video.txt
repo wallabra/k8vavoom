@@ -208,7 +208,7 @@ menudef VideoOptions {
   header "More Options";
 
   option submenu {
-    title = "Sprite Options";
+    title = "Sprite And Fake Shadow Options";
     submenu = "SpriteVideoOptions";
   }
 
