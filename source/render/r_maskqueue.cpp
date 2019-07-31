@@ -64,6 +64,7 @@ static VCvarB r_thing_other_use_camera_plane("r_thing_other_use_camera_plane", t
 static VCvarB r_fake_sprite_shadows("r_fake_sprite_shadows", true, "Render fake sprite shadows?", CVAR_Archive);
 static VCvarF r_fake_shadow_translucency("r_fake_shadow_translucency", "0.5", "Fake sprite shadows translucency multiplier.", CVAR_Archive);
 static VCvarF r_fake_shadow_scale("r_fake_shadow_scale", "0.1", "Fake sprite shadows height multiplier.", CVAR_Archive);
+static VCvarB r_fake_shadow_ignore_offset_fix("r_fake_shadow_ignore_offset_fix", true, "Should fake sprite shadows ignore sprite offset fix?", CVAR_Archive);
 
 static VCvarB r_fake_shadows_monsters("r_fake_shadows_monsters", true, "Render fake sprite shadows for monsters?", CVAR_Archive);
 static VCvarB r_fake_shadows_corpses("r_fake_shadows_corpses", true, "Render fake sprite shadows for corpses?", CVAR_Archive);
@@ -477,7 +478,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
           end = (TexWidth-TexSOffset)*sprright*scaleX;
 
           // undo sprite offset
-          if (r_fix_sprite_offsets) TexTOffset = Tex->TOffset;
+          if (r_fake_shadow_ignore_offset_fix && r_fix_sprite_offsets) TexTOffset = Tex->TOffset;
 
           topdelta = TexTOffset*sprup*scaleY;
           botdelta = (TexTOffset-TexHeight)*sprup*scaleY;

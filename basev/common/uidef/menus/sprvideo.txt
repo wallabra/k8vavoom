@@ -98,12 +98,18 @@ menudef SpriteVideoOptions {
     cvar = r_fake_sprite_shadows;
     help =
       "This globally enables/disables fake sprite shadows."
-      "This is the effect you may seen in Duke Nukem 3D, for example."
+      "This is the effect you've prolly seen in Duke Nukem 3D, for example."
       "Please, note that those are not real shadows, so they will ignore"
       "light sources, slopes, won't be properly casted on wall geometry,"
       "won't be properly clipped, and so on."
       "But the effect still looks nice, try it!"
       "The effect is cheap, so don't be afraid of turning it on on weak GPUs.";
+  }
+
+  option bool {
+    title = "Ignore Sprite Offset Fix";
+    cvar = r_fake_shadow_ignore_offset_fix;
+    help = "You can play with this option to see what looks better.";
   }
 
   option slider {
