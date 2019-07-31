@@ -1222,8 +1222,20 @@ void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtex
       //if (Strm.IsError()) Sys_Error("%s: error reading PNAMES", *W_FullLumpName(NamesLump));
       TmpName[8] = 0;
 
-      if ((vuint8)TmpName[0] < 32 || (vuint8)TmpName[0] >= 127) {
-        Sys_Error("%s: record #%d, name is <%s>", *W_FullLumpName(NamesLump), i, TmpName);
+      bool warned = false;
+      for (int cc = 0; TmpName[cc]; ++cc) {
+        if ((vuint8)TmpName[cc] < 32 || (vuint8)TmpName[cc] >= 127) {
+          if (!warned) {
+            warned = true;
+            vuint8 nc = (vuint8)TmpName[cc]&0x7f;
+            if (nc < 32 || nc >= 127) {
+              Sys_Error("%s: record #%d, name is <%s> (0x%08x)", *W_FullLumpName(NamesLump), i, TmpName, (unsigned)(Strm.Tell()-8));
+            } else {
+              GCon->Logf("%s: record #%d, name is <%s> (0x%08x)", *W_FullLumpName(NamesLump), i, TmpName, (unsigned)(Strm.Tell()-8));
+            }
+            TmpName[cc] = nc;
+          }
+        }
       }
 
       //if (developer) GCon->Logf(NAME_Dev, "PNAMES entry #%d is '%s'", i, TmpName);
