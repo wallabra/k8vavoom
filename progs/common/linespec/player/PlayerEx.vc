@@ -4457,6 +4457,9 @@ void Cheat_DumpInventory () {
   for (Inventory Item = EntityEx(MO).Inventory; Item; Item = Item.Inventory) {
     print("  %C: amount=%s", Item, Item.Amount);
   }
+  print("===========");
+  if (ReadyWeapon) print("ReadyWeapon: %C", ReadyWeapon);
+  if (PendingWeapon) print("PendingWeapon: %C", PendingWeapon);
 }
 
 
