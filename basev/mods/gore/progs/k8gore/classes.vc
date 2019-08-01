@@ -4,12 +4,12 @@ class K8Gore_BloodBase : Actor decorate;
 class K8Gore_BloodBaseTransient : Actor/*K8Gore_BloodBase*/ decorate;
 
 class K8Gore_Blood : Actor decorate;
-class K8Gore_BloodGreen : Actor decorate;
-class K8Gore_BloodBlue : Actor decorate;
+//class K8Gore_BloodGreen : Actor decorate;
+//class K8Gore_BloodBlue : Actor decorate;
 
 class K8Gore_Blood_SplatterReplacer : Actor decorate;
-class K8Gore_Blood_SplatterReplacerGreen : Actor decorate;
-class K8Gore_Blood_SplatterReplacerBlue : Actor decorate;
+//class K8Gore_Blood_SplatterReplacerGreen : Actor decorate;
+//class K8Gore_Blood_SplatterReplacerBlue : Actor decorate;
 
 class Cacodemon : Actor decorate;
 class BaronOfHell : Actor decorate;

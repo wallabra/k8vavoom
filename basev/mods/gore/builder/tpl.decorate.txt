@@ -20,6 +20,7 @@ Actor K8Gore_Blood$(Color) /*: K8Gore_BloodBase$(TransientSfx)*/ {
   +THRUACTORS
   +CLIENTSIDEONLY
   -ALLOWPARTICLES
+  +CopyBloodTranslation
   Scale 0.5
   Speed 0
 
@@ -87,6 +88,7 @@ Actor K8Gore_BloodHit$(Color) : K8Gore_BloodBase$(TransientSfx) {
   +NOCLIP
   +CLIENTSIDEONLY
   +NoInteraction
+  +CopyBloodTranslation
   Scale 0.7
   Renderstyle Translucent
   Alpha 0.7
@@ -128,6 +130,7 @@ Actor K8Gore_FlyingBlood$(Color) /*: K8Gore_BloodBase$(TransientSfx)*/ {
   +CORPSE
   -DONTSPLASH
   -NOGRAVITY
+  +CopyBloodTranslation
   //+KillOnUnarchive
   Mass 1
 
@@ -170,13 +173,13 @@ Actor K8Gore_FlyingBlood$(Color) /*: K8Gore_BloodBase$(TransientSfx)*/ {
       TNT1 A 0
       TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound("k8gore/blooddrop2"); }
       "####" "#" 0 A_JumpIf(waterlevel > 1, "DeathDone")
-      TNT1 A 0 A_SpawnItem("K8Gore_BloodSpot$(Color)", 0, 1)
+      TNT1 A 0 A_SpawnItem("K8Gore_BloodSpot$(Color)", 0, 1, false, true)
       //TNT1 A 0 A_CustomMissile("K8Gore_CeilBloodChecker$(Color)", -15, 0, 90, CMF_AIMDIRECTION, 90)
       TNT1 A 0
         {
           if (!GetCVar("k8GoreOpt_CeilBlood")) return state("Null"); // die
           if (GetCVar("k8GoreOpt_BloodAmount") < 2) return state("Null"); // die
-          A_SpawnItemEx("K8Gore_DetectCeilBloodSimpler$(Color)",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION,0);
+          A_SpawnItemEx("K8Gore_DetectCeilBloodSimpler$(Color)",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION|SXF_TRANSFERTRANSLATION,0);
         }
     DeathDone:
       TNT1 A 1
@@ -215,6 +218,7 @@ Actor K8Gore_FlyingBloodTrail$(Color) : K8Gore_BloodBase$(TransientSfx) {
   +MISSILE
   -NOGRAVITY
   +KillOnUnarchive
+  +CopyBloodTranslation
   Speed 2
 
   States {
@@ -235,7 +239,7 @@ Actor K8Gore_FlyingBloodTrail$(Color) : K8Gore_BloodBase$(TransientSfx) {
     /*
     Splash:
       B8OD A 0
-      //TNT1 A 0 A_SpawnItem("K8Gore_Underblood2$(Color)")
+      //TNT1 A 0 A_SpawnItem("K8Gore_Underblood2$(Color)",0,0,0,true)
       Stop
     */
   }
@@ -270,6 +274,7 @@ Actor K8Gore_FlyingBloodFake$(Color) : K8Gore_BloodBase$(TransientSfx) {
   +THRUACTORS
   -NOGRAVITY
   +KillOnUnarchive
+  +CopyBloodTranslation
   Mass 1
 
   States {
@@ -284,7 +289,7 @@ Actor K8Gore_FlyingBloodFake$(Color) : K8Gore_BloodBase$(TransientSfx) {
 
     Splash:
       B8OD A 0
-      //TNT1 A 0 A_SpawnItem("K8Gore_Underblood2$(Color)")
+      //TNT1 A 0 A_SpawnItem("K8Gore_Underblood2$(Color)",0,0,0,true)
       Stop
 
     Death:
@@ -318,6 +323,7 @@ Actor K8Gore_BloodmistSmall$(Color) : K8Gore_FlyingBlood$(Color) {
   +NoInteraction
   -NOGRAVITY
   +KillOnUnarchive
+  +CopyBloodTranslation
   Scale 0.8
   Radius 2
   Height 2
@@ -372,6 +378,7 @@ Actor K8Gore_BloodSpot$(Color) : K8Gore_BloodBase$(TransientSfx) {
   -NoLiftDrop
   +NOBLOCKMAP
   +OrientedOfs
+  +CopyBloodTranslation
   //+NoInteraction
   Renderstyle Dark
   //!Alpha 0.99
@@ -523,6 +530,7 @@ Actor K8Gore_DetectCeilBloodSimpler$(Color) : K8Gore_BloodBase$(TransientSfx) {
   +NODAMAGETHRUST
   -DONTSPLASH
   +NOGRAVITY
+  +CopyBloodTranslation
 
   States {
     Spawn:
@@ -571,6 +579,7 @@ Actor K8Gore_CeilBloodChecker$(Color) : K8Gore_FlyingBlood$(Color) {
   //+Decals2SPass
   Decal None
   -Decals2SPass
+  +CopyBloodTranslation
 
   States {
     Spawn:
@@ -585,7 +594,7 @@ Actor K8Gore_CeilBloodChecker$(Color) : K8Gore_FlyingBlood$(Color) {
 
     Death:
       TNT1 A 0 A_k8JumpIfCeilingSky("Xdeath")
-      TNT1 A 1 A_SpawnItem("K8Gore_CeilBloodSpot$(Color)",0,0,0,1)
+      TNT1 A 1 A_SpawnItem("K8Gore_CeilBloodSpot$(Color)",0,0,0,true)
       TNT1 A 5
       Stop
 
@@ -610,6 +619,7 @@ Actor K8Gore_CeilBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
   +NOBLOCKMAP
   +NoInteraction
   +OrientedOfs
+  +CopyBloodTranslation
   Renderstyle Dark
   //!Alpha 0.99
 
@@ -621,8 +631,8 @@ Actor K8Gore_CeilBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
       Goto ModelFriendly
     DoAfterSpawn:
       "####" "#" 1
-      "####" "#" 0 A_SpawnItem("K8Gore_DripingBloodLeavesSmallPool$(Color)")
-      "####" "#" 0 A_SpawnItem("K8Gore_CeilBloodTinyBloodSpawner$(Color)")
+      "####" "#" 0 A_SpawnItem("K8Gore_DripingBloodLeavesSmallPool$(Color)",0,0,0,true)
+      "####" "#" 0 A_SpawnItem("K8Gore_CeilBloodTinyBloodSpawner$(Color)",0,0,0,true)
       "####" "################################################################################" 2
       "####" "################################################################################" 2
       "####" "################################################################################" 2
@@ -685,6 +695,7 @@ Actor K8Gore_TinyBlood$(Color) : K8Gore_BloodBase$(TransientSfx) {
   //+DOOMBOUNCE
   //BounceFactor 0.01
   -DOOMBOUNCE
+  +CopyBloodTranslation
 
   States {
     Spawn:
@@ -729,21 +740,22 @@ Actor K8Gore_CeilBloodTinyBloodSpawner$(Color) : K8Gore_TinyBlood$(Color) {
   +NOBLOCKMAP
   +NoInteraction
   +SpawnCeiling
+  +CopyBloodTranslation
 
   States {
     Spawn:
       TNT1 A 0
       "####" "#" 0 A_k8JumpIfCeilingSky("DieNow")
 #ifndef TRANSIENT
-      TNT1 AAAAAAAAAAAAAA 5 A_SpawnItemEx("K8Gore_BloodDripingFromCeiling$(Color)", random(-5, 5), random(-5, 5))
-      TNT1 AAAAAAAAAAAAAA 10 A_SpawnItemEx("K8Gore_BloodDripingFromCeiling$(Color)", random(-5, 5), random(-5, 5))
-      TNT1 AAAAAAAAAAAAAA 16 A_SpawnItemEx("K8Gore_BloodDripingFromCeiling$(Color)", random(-5, 5), random(-5, 5))
-      TNT1 AAAAAAAAAAAAAA 24 A_SpawnItem("K8Gore_BloodDripingFromCeiling$(Color)")
+      TNT1 AAAAAAAAAAAAAA 5 A_SpawnItemEx("K8Gore_BloodDripingFromCeiling$(Color)", random(-5, 5), random(-5, 5), 0, 0,0,0, 0, SXF_TRANSFERTRANSLATION)
+      TNT1 AAAAAAAAAAAAAA 10 A_SpawnItemEx("K8Gore_BloodDripingFromCeiling$(Color)", random(-5, 5), random(-5, 5), 0, 0,0,0, 0, SXF_TRANSFERTRANSLATION)
+      TNT1 AAAAAAAAAAAAAA 16 A_SpawnItemEx("K8Gore_BloodDripingFromCeiling$(Color)", random(-5, 5), random(-5, 5), 0, 0,0,0, 0, SXF_TRANSFERTRANSLATION)
+      TNT1 AAAAAAAAAAAAAA 24 A_SpawnItem("K8Gore_BloodDripingFromCeiling$(Color)",0,0,0,true)
 #else
-      TNT1 AAAAA 5 A_SpawnItemEx("K8Gore_BloodDripingFromCeiling$(Color)", random(-5, 5), random(-5, 5))
-      TNT1 AAAAA 10 A_SpawnItemEx("K8Gore_BloodDripingFromCeiling$(Color)", random(-5, 5), random(-5, 5))
-      TNT1 AAAAA 16 A_SpawnItemEx("K8Gore_BloodDripingFromCeiling$(Color)", random(-5, 5), random(-5, 5))
-      TNT1 AAAAA 24 A_SpawnItem("K8Gore_BloodDripingFromCeiling$(Color)")
+      TNT1 AAAAA 5 A_SpawnItemEx("K8Gore_BloodDripingFromCeiling$(Color)", random(-5, 5), random(-5, 5), 0, 0,0,0, 0, SXF_TRANSFERTRANSLATION)
+      TNT1 AAAAA 10 A_SpawnItemEx("K8Gore_BloodDripingFromCeiling$(Color)", random(-5, 5), random(-5, 5), 0, 0,0,0, 0, SXF_TRANSFERTRANSLATION)
+      TNT1 AAAAA 16 A_SpawnItemEx("K8Gore_BloodDripingFromCeiling$(Color)", random(-5, 5), random(-5, 5), 0, 0,0,0, 0, SXF_TRANSFERTRANSLATION)
+      TNT1 AAAAA 24 A_SpawnItem("K8Gore_BloodDripingFromCeiling$(Color)",0,0,0,true)
 #endif
       Stop
 
@@ -765,6 +777,7 @@ Actor K8Gore_BloodDripingFromCeiling$(Color) : K8Gore_TinyBlood$(Color) {
   -DOOMBOUNCE
   +NOBLOCKMAP
   //+KillOnUnarchive
+  +CopyBloodTranslation
 
   States {
     Spawn:
@@ -790,6 +803,7 @@ Actor K8Gore_DripingBloodLeavesSmallPool$(Color) : K8Gore_TinyBlood$(Color) {
   -DONTSPLASH
   -DOOMBOUNCE
   +NOBLOCKMAP
+  +CopyBloodTranslation
   //+KillOnUnarchive
   scale 0.3
 
@@ -806,7 +820,7 @@ Actor K8Gore_DripingBloodLeavesSmallPool$(Color) : K8Gore_TinyBlood$(Color) {
     Death:
       TNT1 A 0
       TNT1 A 0 A_k8JumpIfOnFloorSky("DieNow")
-      TNT1 A 0 A_SpawnItem("K8Gore_MinuscleBloodSpot$(Color)")
+      TNT1 A 0 A_SpawnItem("K8Gore_MinuscleBloodSpot$(Color)",0,0,0,true)
       TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound("k8gore/blooddrop2"); }
 #ifndef TRANSIENT
       XDT1 EFGHIJKL 2
@@ -847,6 +861,7 @@ Actor K8Gore_MinuscleBloodSpot$(Color) : K8Gore_BloodSpot$(Color) {
   Scale 0.25
   Decal K8GoreBloodSplat$(Color)
   +Decals2SPass
+  +CopyBloodTranslation
   DamageFactor "TeleportRemover", 100.0
   Renderstyle Dark
   //!Alpha 0.99
@@ -923,6 +938,7 @@ Actor K8Gore_GrowingBloodPool$(Color) : K8Gore_BloodSpot$(Color) {
   +NOBLOCKMAP
   +OrientedOfs
   //+NoInteraction
+  +CopyBloodTranslation
   Scale 1.0
   Decal None
   -Decals2SPass

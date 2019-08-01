@@ -69,6 +69,7 @@ echo "//////////////////////////////////////////////////////////////////////////
 rdmd zprepro.d $DECAL_SELECTOR Shade=4f -DTRANSIENT --append TransientSfx=Transient Color=Transient Translation= $DECORATE_SRC $DECORATE_DEST
 rdmd zprepro.d $DECAL_SELECTOR Shade=$DECAL_SHADE_RED_TRANSIENT -DTRANSIENT --append TransientSfx=Transient Color=Transient Translation= $DECAL_SRC $DECAL_DEST
 
+exit 0
 
 
 Translation='Translation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"'
