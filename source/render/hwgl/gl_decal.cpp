@@ -129,6 +129,8 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
 
   bool tex1set = false;
   int currTexId = -1; // don't call `SetTexture()` repeatedly
+  VTextureTranslation *currTrans = nullptr;
+  int lastTexTrans = 0;
 
   while (dc) {
     // "0" means "no texture found", so remove it too
@@ -164,6 +166,14 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
     if ((dc->flags&decal_t::NoMidTex) && (surf->typeFlags&surface_t::TF_MIDDLE)) { dc = dc->next; continue; }
     if ((dc->flags&decal_t::NoTopTex) && (surf->typeFlags&surface_t::TF_TOP)) { dc = dc->next; continue; }
     if ((dc->flags&decal_t::NoBotTex) && (surf->typeFlags&surface_t::TF_BOTTOM)) { dc = dc->next; continue; }
+
+    if (currTexId != dcTexId || lastTexTrans != dc->translation) {
+      auto trans = R_GetCachedTranslation(dc->translation, GLevel); //FIXME!
+      if (currTrans != trans) {
+        currTexId = -1;
+        currTrans = trans;
+      }
+    }
 
     // use origScale to get the original starting point
     float txofs = dtex->GetScaledSOffset()*dc->scaleX;
@@ -220,7 +230,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
 
     if (currTexId != dcTexId) {
       currTexId = dcTexId;
-      SetTexture(dtex, /*tex->ColorMap*/cmap); // this sets `tex_iw` and `tex_ih`
+      SetDecalTexture(dtex, currTrans, /*tex->ColorMap*/cmap); // this sets `tex_iw` and `tex_ih`
     }
 
     const float xstofs = dc->xdist-txofs+dc->ofsX;

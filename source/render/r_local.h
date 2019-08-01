@@ -150,6 +150,7 @@ struct decal_t {
   VName dectype;
   //VName picname;
   VTextureID texture;
+  int translation;
   vuint32 flags;
   // z and x positions has no image offset added
   float orgz; // original z position

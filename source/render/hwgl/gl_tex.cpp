@@ -175,6 +175,18 @@ void VOpenGLDrawer::SetTexture (VTexture *Tex, int CMap) {
 
 //==========================================================================
 //
+//  VOpenGLDrawer::SetDecalTexture
+//
+//==========================================================================
+void VOpenGLDrawer::SetDecalTexture (VTexture *Tex, VTextureTranslation *Translation, int CMap) {
+  if (!Tex) Sys_Error("cannot set null texture");
+  SetSpriteLump(Tex, Translation, CMap, false);
+  SetupTextureFiltering(texture_filter);
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::SetSpriteLump
 //
 //==========================================================================

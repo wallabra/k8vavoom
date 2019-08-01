@@ -110,6 +110,7 @@ VCvarF fov("fov", "90", "Field of vision.");
 // translation tables
 VTextureTranslation *PlayerTranslations[MAXPLAYERS+1];
 static TArray<VTextureTranslation *> CachedTranslations;
+static TMapNC<vuint32, int> CachedTranslationsMap; // key:crc; value: translation index
 
 static VCvarB r_precache_textures("r_precache_textures", true, "Precache level textures?", CVAR_Archive);
 static VCvarB r_precache_model_textures("r_precache_model_textures", true, "Precache alias model textures?", CVAR_Archive);
@@ -1951,15 +1952,28 @@ VTextureTranslation *R_GetCachedTranslation (int TransNum, VLevel *Level) {
 
   if (!Tr) return nullptr;
 
+  /*
   for (int i = 0; i < CachedTranslations.Num(); ++i) {
     VTextureTranslation *Check = CachedTranslations[i];
     if (Check->Crc != Tr->Crc) continue;
     if (memcmp(Check->Palette, Tr->Palette, sizeof(Tr->Palette))) continue;
     return Check;
   }
+  */
+  auto cpi = CachedTranslationsMap.find(Tr->Crc);
+  if (cpi) {
+    int cidx = *cpi;
+    while (cidx >= 0) {
+      VTextureTranslation *Check = CachedTranslations[cidx];
+      if (memcmp(Check->Palette, Tr->Palette, sizeof(Tr->Palette)) == 0) return Check;
+      cidx = Check->nextInCache;
+    }
+  }
 
   VTextureTranslation *Copy = new VTextureTranslation;
   *Copy = *Tr;
+  Copy->nextInCache = (cpi ? *cpi : -1);
+  CachedTranslationsMap.put(Copy->Crc, CachedTranslations.length());
   CachedTranslations.Append(Copy);
   return Copy;
 }
@@ -2082,5 +2096,6 @@ void V_Shutdown () {
     CachedTranslations[i] = nullptr;
   }
   CachedTranslations.Clear();
+  CachedTranslationsMap.clear();
   R_FreeSkyboxData();
 }

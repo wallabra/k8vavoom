@@ -165,7 +165,7 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   else if (aspect_ratio > 2) taxis = -(viewup*100*16/10*PSP_DISTI);
 
   Drawer->DrawSpritePolygon(dv, GTextureManager[lump], Alpha, Additive,
-    0, ColorMap, light, Fade, -viewforward,
+    nullptr, ColorMap, light, Fade, -viewforward,
     DotProduct(dv[0], -viewforward), saxis, taxis, texorg, false);
 }
 

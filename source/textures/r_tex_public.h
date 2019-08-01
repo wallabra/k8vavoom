@@ -118,7 +118,8 @@ public:
   vuint8 Table[256];
   rgba_t Palette[256];
 
-  vuint16 Crc;
+  vuint32 Crc;
+  int nextInCache;
 
   // used to detect changed player translations
   vuint8 TranslStart;

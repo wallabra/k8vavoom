@@ -605,6 +605,7 @@ void R_ShutdownData () {
 //==========================================================================
 VTextureTranslation::VTextureTranslation()
   : Crc(0)
+  , nextInCache(-1)
   , TranslStart(0)
   , TranslEnd(0)
   , Color(0)
@@ -634,7 +635,16 @@ void VTextureTranslation::Clear () {
 //
 //==========================================================================
 void VTextureTranslation::CalcCrc () {
+  /*
   auto Work = TCRC16();
+  for (int i = 1; i < 256; ++i) {
+    Work += Palette[i].r;
+    Work += Palette[i].g;
+    Work += Palette[i].b;
+  }
+  Crc = Work;
+  */
+  auto Work = TCRC32();
   for (int i = 1; i < 256; ++i) {
     Work += Palette[i].r;
     Work += Palette[i].g;
@@ -650,11 +660,14 @@ void VTextureTranslation::CalcCrc () {
 //
 //==========================================================================
 void VTextureTranslation::Serialise (VStream &Strm) {
+  //k8: is this right at all?
+  //    this is used to translations added by ACS
   vuint8 xver = 0; // current version is 0
   Strm << xver;
   Strm.Serialise(Table, 256);
   Strm.Serialise(Palette, sizeof(Palette));
-  Strm << Crc
+  vuint16 itWasCrc16 = 0;
+  Strm << itWasCrc16
     << TranslStart
     << TranslEnd
     << Color;
@@ -665,6 +678,7 @@ void VTextureTranslation::Serialise (VStream &Strm) {
     VTransCmd &C = Commands[i];
     Strm << C.Type << C.Start << C.End << C.R1 << C.G1 << C.B1 << C.R2 << C.G2 << C.B2;
   }
+  //CalcCrc();
 }
 
 

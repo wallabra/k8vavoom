@@ -108,6 +108,7 @@ enum {
   PROP_RenderStyle,
   PROP_Translation,
   PROP_BloodColor,
+  PROP_BloodTranslation,
   PROP_BloodType,
   PROP_StencilColor,
   PROP_Monster,
@@ -556,6 +557,10 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
         P.SetField(Lst.Class, *PN->GetAttribute("property"));
       } else if (PN->Name == "prop_blood_color") {
         VPropDef &P = Lst.NewProp(PROP_BloodColor, PN);
+        P.SetField(Lst.Class, "BloodColor");
+        P.SetField2(Lst.Class, "BloodTranslation");
+      } else if (PN->Name == "prop_blood_translation") {
+        VPropDef &P = Lst.NewProp(PROP_BloodTranslation, PN);
         P.SetField(Lst.Class, "BloodColor");
         P.SetField2(Lst.Class, "BloodTranslation");
       } else if (PN->Name == "prop_blood_type") {
@@ -2154,7 +2159,13 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
               vuint32 Col = sc->ExpectColor();
               P.Field->SetInt(DefObj, Col);
               P.Field2->SetInt(DefObj, R_GetBloodTranslation(Col));
+              //GCon->Logf(NAME_Init, "*** BLOOD COLOR FOR `%s`", *Class->GetFullName());
             }
+            break;
+          case PROP_BloodTranslation:
+            P.Field->SetInt(DefObj, 0); // clear color
+            P.Field2->SetInt(DefObj, R_ParseDecorateTranslation(sc, (GameFilter&GAME_Strife ? 7 : 3))); // set translation
+            //GCon->Logf(NAME_Init, "*** BLOOD TRANSLATION FOR `%s`", *Class->GetFullName());
             break;
           case PROP_BloodType:
             sc->ExpectString();

@@ -906,6 +906,7 @@ protected:
   void FlushTexture (VTexture *);
   void DeleteTexture (VTexture *);
   void SetTexture (VTexture *Tex, int CMap);
+  void SetDecalTexture (VTexture *Tex, VTextureTranslation *Translation, int CMap);
   void SetBrightmapTexture (VTexture *);
   void SetSpriteLump (VTexture *Tex, VTextureTranslation *Translation, int CMap, bool asPicture);
   void SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap);
