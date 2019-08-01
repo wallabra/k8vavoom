@@ -509,6 +509,7 @@ class!Actor AxeBloodType;
 int BloodColor;
 int BloodTranslation;
 bool bBloodDisableSplats; // has sense only for blood actors
+bool bCopyBloodTranslation;
 
 array!DropItemInfo DropItemList;
 
@@ -536,6 +537,38 @@ transient float tmp_phys_z_change;
 replication {
   reliable if (Role == ROLE_Authority && bNetOwner)
     Inventory, bInvulnerable;
+}
+
+
+//==========================================================================
+//
+//  CopyTranslations
+//
+//==========================================================================
+override void CopyTranslations (Entity src) {
+  ::CopyTranslations(src);
+  EntityEx ee = EntityEx(src);
+  if (ee) {
+    if (ee.BloodTranslation) BloodTranslation = ee.BloodTranslation;
+    if (ee.BloodColor) BloodColor = ee.BloodColor;
+    //bBloodDisableSplats = ee.bBloodDisableSplats;
+  }
+}
+
+
+//==========================================================================
+//
+//  CopyBloodTranslations
+//
+//==========================================================================
+void CopyBloodTranslations (Entity src, optional bool copyNormalTranslation) {
+  if (bDontTranslate) return;
+  EntityEx ee = EntityEx(src);
+  if (!ee) return;
+  if (copyNormalTranslation || !specified_copyNormalTranslation) ::CopyTranslations(src);
+  if (ee.BloodTranslation) { Translation = ee.BloodTranslation; BloodTranslation = ee.BloodTranslation; }
+  if (ee.BloodColor) BloodColor = ee.BloodColor;
+  //bBloodDisableSplats = ee.bBloodDisableSplats;
 }
 
 

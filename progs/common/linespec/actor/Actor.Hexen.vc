@@ -911,7 +911,7 @@ final void A_FiredSpawnRock () {
   mo = Spawn(rtype, rockOrg);
   if (mo) {
     mo.Target = self;
-    mo.Translation = Translation;
+    mo.CopyTranslations(self);
     mo.Velocity.x = (Random()-0.5)*4.0*35.0;
     mo.Velocity.y = (Random()-0.5)*4.0*35.0;
     mo.Velocity.z = Random()*4.0*35.0;
@@ -1029,7 +1029,7 @@ final void A_FiredAttack () {
 final void A_FiredSplotch () {
   Actor A = Spawn(FireDemonSplotch1, Origin);
   if (A) {
-    A.Translation = Translation;
+    A.CopyTranslations(self);
     A.Velocity.x = (Random()-0.5)*8.0*35.0;
     A.Velocity.y = (Random()-0.5)*8.0*35.0;
     A.Velocity.z = (3.0+Random()*4.0)*35.0;
@@ -1037,7 +1037,7 @@ final void A_FiredSplotch () {
 
   A = Spawn(FireDemonSplotch2, Origin);
   if (A) {
-    A.Translation = Translation;
+    A.CopyTranslations(self);
     A.Velocity.x = (Random()-0.5)*8.0*35.0;
     A.Velocity.y = (Random()-0.5)*8.0*35.0;
     A.Velocity.z = (3.0+Random()*4.0)*35.0;
@@ -1164,7 +1164,7 @@ final void A_BishopSpawnBlur () {
 
   Actor blur = Spawn(BishopBlur, Origin);
   if (blur) {
-    blur.Translation = Translation;
+    blur.CopyTranslations(self);
     blur.Angles = Angles;
   }
 }
@@ -1225,7 +1225,7 @@ final void A_BishopPainBlur () {
                      Origin+vector((Random()-Random())*16.0,
                      (Random()-Random())*16.0, (Random()-Random())*8.0));
   if (blur) {
-    blur.Translation = Translation;
+    blur.CopyTranslations(self);
     blur.Angles = Angles;
   }
 }
@@ -1372,7 +1372,7 @@ final void A_SerpentSpawnGibs () {
     A.Velocity.x = (Random()-0.5)/4.0*35.0;
     A.Velocity.y = (Random()-0.5)/4.0*35.0;
     A.FloorClip = 6.0;
-    A.Translation = Translation;
+    A.CopyTranslations(self);
   }
 
   A = Spawn(SerpentGib2, vector(Origin.x+(Random()-0.5)*16.0, Origin.y+(Random()-0.5)*16.0, FloorZ+1.0));
@@ -1380,7 +1380,7 @@ final void A_SerpentSpawnGibs () {
     A.Velocity.x = (Random()-0.5)/4.0*35.0;
     A.Velocity.y = (Random()-0.5)/4.0*35.0;
     A.FloorClip = 6.0;
-    A.Translation = Translation;
+    A.CopyTranslations(self);
   }
 
   A = Spawn(SerpentGib3, vector(Origin.x+(Random()-0.5)*16.0, Origin.y+(Random()-0.5)*16.0, FloorZ+1.0));
@@ -1388,7 +1388,7 @@ final void A_SerpentSpawnGibs () {
     A.Velocity.x = (Random()-0.5)/4.0*35.0;
     A.Velocity.y = (Random()-0.5)/4.0*35.0;
     A.FloorClip = 6.0;
-    A.Translation = Translation;
+    A.CopyTranslations(self);
   }
 }
 

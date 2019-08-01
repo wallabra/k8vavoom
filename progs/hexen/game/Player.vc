@@ -207,7 +207,7 @@ override void SpawnSpeedEffect()
   if (speedA)
   {
     speedA.Angles.yaw = MO.Angles.yaw;
-    speedA.Translation = MO.Translation;
+    speedA.CopyTranslations(MO);
     speedA.Target = Actor(MO);
     speedA.Special1 = PClass;
     if (speedA.Special1 > 2)

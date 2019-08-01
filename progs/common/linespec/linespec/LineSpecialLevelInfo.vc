@@ -6216,15 +6216,19 @@ override void PolyCrushMobj(Entity Other, polyobj_t *po)
         if (c)
         {
           Actor Gib = Spawn(RealGibs);
-          Gib.RenderStyle = EntityEx(Other).RenderStyle;
-          Gib.Alpha = EntityEx(Other).Alpha;
-          Gib.Height = 0.0;
-          Gib.Radius = 0.0;
-          if (EntityEx(Other).BloodTranslation && !Gib.bDontTranslate)
-          {
-            Gib.Translation = EntityEx(Other).BloodTranslation;
+          if (Gib) {
+            Gib.RenderStyle = EntityEx(Other).RenderStyle;
+            Gib.Alpha = EntityEx(Other).Alpha;
+            Gib.Height = 0.0;
+            Gib.Radius = 0.0;
+            Gib.CopyTranslations(Other);
+            /*k8: really?
+            if (EntityEx(Other).BloodTranslation && !Gib.bDontTranslate) {
+              Gib.Translation = EntityEx(Other).BloodTranslation;
+            }
+            */
+            Gib.PlaySound('misc/fallingsplat', /*CHAN_BODY*/CHAN_AUTO);
           }
-          Gib.PlaySound('misc/fallingsplat', /*CHAN_BODY*/CHAN_AUTO);
           CanDestroy = true;
         }
         else
@@ -6969,8 +6973,7 @@ final void AddPlayerCorpse(EntityEx Corpse)
     }
   }
   bodyque[bodyqueslot%BodyQueSize] = Corpse;
-  Corpse.Translation = XLevel.SetBodyQueueTrans(
-    bodyqueslot%BodyQueSize, Corpse.Translation);
+  Corpse.Translation = XLevel.SetBodyQueueTrans(bodyqueslot%BodyQueSize, Corpse.Translation);
   bodyqueslot++;
 }
 

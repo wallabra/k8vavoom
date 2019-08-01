@@ -732,7 +732,7 @@ final void doFireMissileProjectile (class!Actor MissileType, optional float Angl
   Angles.pitch = SavedPitch;
 
   if (A) {
-    if (Flags&FPF_TRANSFERTRANSLATION) A.Translation = self.Translation;
+    if (Flags&FPF_TRANSFERTRANSLATION) A.CopyTranslations(self);
     // handle seeker missiles
     if (A.bSeekerMissile) A.Tracer = AimTarget;
     if (!(Flags&FPF_AIMATANGLE)) VectorRotateAroundZ(ref A.Velocity, Angle);

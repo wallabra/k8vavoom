@@ -228,6 +228,7 @@ final void A_SetBlend (string Col1, float A, int Tics, optional string Col2) {
   if (!specified_Col2) C2 = C1;
 
   FlashFader F = Spawn(FlashFader);
+  if (!F) return;
   F.Init(float((C1>>16)&0xff)/255.0, float((C1>>8)&0xff)/255.0, float(C1&0xff)/255.0,
          A,
          float((C2>>16)&0xff)/255.0, float((C2>>8)&0xff)/255.0, float(C2&0xff)/255.0,

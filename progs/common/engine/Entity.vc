@@ -436,6 +436,18 @@ native final bool GetDecorateFlag (string Name);
 
 //==========================================================================
 //
+//  CopyTranslations
+//
+//==========================================================================
+void CopyTranslations (Entity src) {
+  if (src) {
+    Translation = src.Translation;
+  }
+}
+
+
+//==========================================================================
+//
 //  UpdateVelocity
 //
 //  moved from native to VC code

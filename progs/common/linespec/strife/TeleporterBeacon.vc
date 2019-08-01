@@ -96,7 +96,7 @@ final void A_SummonRebel()
   // Set up the new rebel.
   if (Owner)
   {
-    A.Translation = Owner.Translation;
+    A.CopyTranslations(Owner);
     A.FriendPlayer = Owner.bIsPlayer ? Owner.Player.GetPlayerNum() + 1 : 0;
   }
   A.Threshold = 100;
@@ -110,7 +110,7 @@ final void A_SummonRebel()
   if (Owner)
   {
     // Rebels are the same color as their owner
-    A.Translation = Owner.Translation;
+    A.CopyTranslations(Owner);
     // Set the rebel's target to whatever last hurt the player, so long as it's not
     // one of the player's other rebels.
     if (Owner.Target && !A.IsFriend(Owner.Target))

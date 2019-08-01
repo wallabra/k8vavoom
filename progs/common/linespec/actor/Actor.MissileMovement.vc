@@ -89,10 +89,12 @@ final void A_Tracer () {
   SpawnPuff(Origin, MISSILERANGE, BulletPuff, false);
 
   A = Spawn(RevenantTracerSmoke, Origin-Velocity*Level.Game.frametime);
-
-  A.Velocity.z = 1.0*35.0;
-  A.StateTime -= Random()*0.1;
-  if (A.StateTime < 0.1) A.StateTime = 0.1;
+  if (A) {
+    if (bCopyBloodTranslation) A.CopyBloodTranslations(self);
+    A.Velocity.z = 1.0*35.0;
+    A.StateTime -= Random()*0.1;
+    if (A.StateTime < 0.1) A.StateTime = 0.1;
+  }
 
   // adjust direction
   if (!Tracer || Tracer.Health <= 0 || !CanSeek(Tracer)) return;

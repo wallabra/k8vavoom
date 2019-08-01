@@ -678,6 +678,7 @@ final void A_ThrowGrenade (class!Actor ItemType, optional float SpawnHeight,
 
   Actor A = Spawn(ItemType, owo.Origin+vector(0.0, 0.0, SpawnHeight+35.0-owo.FloorClip));
   if (A) {
+    if (bCopyBloodTranslation) A.CopyBloodTranslations(self);
     A.PlayMissileSpawnSound(self);
     if (XYVel) A.Speed = XYVel*35.0;
     A.Angles.yaw = AngleMod360(owo.Angles.yaw+(Random()*2.0-1.0)*45.0/8.0);
@@ -811,6 +812,7 @@ final void BlastActor (Actor victim, Actor source, float speed, class!Actor Blas
   float z = victim.Origin.z-victim.FloorClip+victim.Height/2.0;
   Actor A = Spawn(BlastEffect, vector(x, y, z));
   if (A) {
+    if (bCopyBloodTranslation) A.CopyBloodTranslations(self);
     A.Velocity.x = victim.Velocity.x;
     A.Velocity.y = victim.Velocity.y;
   }
@@ -1228,7 +1230,10 @@ final void A_MinotaurCharge () {
     class!Actor PuffType = PhoenixPuff;
     if (bSummonedMonster) PuffType = PunchPuff;
     Actor puff = Spawn(PuffType, Origin);
-    puff.Velocity.z = 2.0*35.0;
+    if (puff) {
+      if (bCopyBloodTranslation) puff.CopyBloodTranslations(self);
+      puff.Velocity.z = 2.0*35.0;
+    }
     --Special1;
   } else {
     bSkullFly = false;

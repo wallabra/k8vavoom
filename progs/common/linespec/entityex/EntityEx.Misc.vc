@@ -627,7 +627,8 @@ final void NightmareRespawn () {
   A.ReactionCount = 18;
 
   // copy custom translation
-  A.Translation = Translation;
+  //A.Translation = Translation;
+  A.CopyTranslations(self);
 
   A.SkillRespawnCount = SkillRespawnCount;
 
@@ -1560,12 +1561,16 @@ override bool SectorChanged (int CrushChange) {
 
       if (c) {
         Actor Gib = Spawn(RealGibs);
-        Gib.RenderStyle = RenderStyle;
-        Gib.Alpha = Alpha;
-        Gib.Height = 0.0;
-        Gib.Radius = 0.0;
-        if (BloodTranslation && !Gib.bDontTranslate) Gib.Translation = BloodTranslation;
-        Gib.PlaySound('misc/fallingsplat', /*CHAN_BODY*/CHAN_AUTO);
+        if (Gib) {
+          Gib.RenderStyle = RenderStyle;
+          Gib.Alpha = Alpha;
+          Gib.Height = 0.0;
+          Gib.Radius = 0.0;
+          Gib.CopyTranslations(self);
+          //k8: really?
+          //if (BloodTranslation && !Gib.bDontTranslate) Gib.Translation = BloodTranslation;
+          Gib.PlaySound('misc/fallingsplat', /*CHAN_BODY*/CHAN_AUTO);
+        }
         CanDestroy = true;
       } else {
         bDontGib = true;
@@ -1609,7 +1614,8 @@ override bool SectorChanged (int CrushChange) {
       A.SetBloodArgs(self, damage:CrushChange);
       A.Velocity.x = (Random()-Random())*16.0*35.0;
       A.Velocity.y = (Random()-Random())*16.0*35.0;
-      if (BloodTranslation && !A.bDontTranslate) A.Translation = BloodTranslation;
+      //if (BloodTranslation && !A.bDontTranslate) A.Translation = BloodTranslation;
+      if (!A.bDontTranslate) A.CopyTranslations(self);
     }
     if (!bInvulnerable && CrushPainSound && !GetSoundPlayingInfo(self, GetSoundID(CrushPainSound))) {
       PlaySound(CrushPainSound, CHAN_VOICE);

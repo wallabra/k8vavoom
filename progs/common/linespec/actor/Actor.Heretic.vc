@@ -34,6 +34,7 @@ final void A_MntrFloorFire () {
   Origin.z = FloorZ;
   bIntrJustMoved = false; // disable interpolation
   Actor A = Spawn(MinotaurFX3, vector(Origin.x+(Random()-Random())*4.0, Origin.y+(Random()-Random())*4.0, ONFLOORZ));
+  if (!A) return;
   A.Target = Target;
   A.Velocity.x = 0.00001; // force block checking
   A.CheckMissileSpawn();
@@ -47,6 +48,8 @@ final void A_MntrFloorFire () {
 //==========================================================================
 final void A_DripBlood () {
   EntityEx mo = Spawn(Blood, Origin+vector((Random()-Random())*8.0, (Random()-Random())*8.0, 0.0));
+  if (!mo) return;
+  if (bCopyBloodTranslation) mo.CopyBloodTranslations(self);
   mo.Velocity.x = (Random()-Random())*4.0*35.0;
   mo.Velocity.y = (Random()-Random())*4.0*35.0;
   mo.Gravity = 0.125;
@@ -61,6 +64,7 @@ final void A_DripBlood () {
 final void A_LichIceImpact () {
   foreach (auto i; 0..8) {
     Actor shard = Spawn(HeadFX2, Origin);
+    if (!shard) continue;
     float angle = float(i)*45.0;
     shard.Target = Target;
     shard.Angles.yaw = angle;
@@ -92,6 +96,7 @@ final void A_LichFireGrow () {
 final void A_BlueSpark () {
   foreach (auto i; 0..2) {
     Actor spark = Spawn(Sorcerer2FXSpark, Origin);
+    if (!spark) continue;
     spark.Velocity.x = (Random()-Random())*2.0*35.0;
     spark.Velocity.y = (Random()-Random())*2.0*35.0;
     spark.Velocity.z = (1.0+Random())*35.0;
@@ -171,22 +176,28 @@ final void A_MaceBallImpact2 () {
     SetState(IdleState);
 
     Actor tiny = Spawn(MaceFX3, Origin);
-    float angle = AngleMod360(Angles.yaw+90.0);
-    tiny.Target = Target;
-    tiny.Angles.yaw = angle;
-    tiny.Velocity.x = Velocity.x/2.0+(Velocity.z-35.0)*cos(angle);
-    tiny.Velocity.y = Velocity.y/2.0+(Velocity.z-35.0)*sin(angle);
-    tiny.Velocity.z = Velocity.z;
-    tiny.CheckMissileSpawn();
+    if (tiny) {
+      if (bCopyBloodTranslation) tiny.CopyBloodTranslations(self);
+      float angle = AngleMod360(Angles.yaw+90.0);
+      tiny.Target = Target;
+      tiny.Angles.yaw = angle;
+      tiny.Velocity.x = Velocity.x/2.0+(Velocity.z-35.0)*cos(angle);
+      tiny.Velocity.y = Velocity.y/2.0+(Velocity.z-35.0)*sin(angle);
+      tiny.Velocity.z = Velocity.z;
+      tiny.CheckMissileSpawn();
+    }
 
     tiny = Spawn(MaceFX3, Origin);
-    angle = AngleMod360(Angles.yaw-90.0);
-    tiny.Target = Target;
-    tiny.Angles.yaw = angle;
-    tiny.Velocity.x = Velocity.x/2.0+(Velocity.z-35.0)*cos(angle);
-    tiny.Velocity.y = Velocity.y/2.0+(Velocity.z-35.0)*sin(angle);
-    tiny.Velocity.z = Velocity.z;
-    tiny.CheckMissileSpawn();
+    if (tiny) {
+      if (bCopyBloodTranslation) tiny.CopyBloodTranslations(self);
+      float angle = AngleMod360(Angles.yaw-90.0);
+      tiny.Target = Target;
+      tiny.Angles.yaw = angle;
+      tiny.Velocity.x = Velocity.x/2.0+(Velocity.z-35.0)*cos(angle);
+      tiny.Velocity.y = Velocity.y/2.0+(Velocity.z-35.0)*sin(angle);
+      tiny.Velocity.z = Velocity.z;
+      tiny.CheckMissileSpawn();
+    }
   }
 }
 
@@ -216,6 +227,8 @@ final void A_PodPain () {
   int count = (chance > 240 ? 2 : 1);
   foreach (auto i; 0..count) {
     Actor goo = Spawn(PodGoo, Origin+vector(0.0, 0.0, 48.0));
+    if (!goo) continue;
+    if (bCopyBloodTranslation) goo.CopyBloodTranslations(self);
     goo.Target = self;
     goo.Velocity.x = (Random()-Random())*2.0*35.0;
     goo.Velocity.y = (Random()-Random())*2.0*35.0;
@@ -247,6 +260,7 @@ final void A_MakePod () {
   float z = Origin.z;
 
   Actor A = Spawn(Pod, vector(x, y, ONFLOORZ));
+  if (!A) return;
   if (!A.CheckPosition(A.Origin)) {
     // didn't fit
     A.Destroy();
@@ -289,6 +303,8 @@ final void A_VolcanoBlast () {
   int count = 1+(P_Random()%3);
   foreach (auto i; 0..count) {
     Actor blast = Spawn(VolcanoBlast, Origin+vector(0.0, 0.0, 44.0));
+    if (!blast) continue;
+    if (bCopyBloodTranslation) blast.CopyBloodTranslations(self);
     blast.Target = self;
     float angle = Random()*360.0;
     blast.Angles.yaw = angle;
@@ -315,6 +331,7 @@ final void A_VolcBallImpact () {
   RadiusAttack(Target, 25, 25.0, true);
   foreach (auto i; 0..4) {
     Actor tiny = Spawn(VolcanoTBlast, Origin);
+    if (!tiny) continue;
     tiny.Target = self;
     float angle = float(i)*90.0;
     tiny.Angles.yaw = angle;
@@ -359,13 +376,19 @@ final void A_ImpXDeath1 () {
 final void A_ImpExplode () {
   bNoGravity = false;
   Actor mo = Spawn(HereticImpChunk1, Origin);
-  mo.Velocity.x = (Random()-Random())*4.0*35.0;
-  mo.Velocity.y = (Random()-Random())*4.0*35.0;
-  mo.Velocity.z = 9.0*35.0;
+  if (mo) {
+    if (bCopyBloodTranslation) mo.CopyBloodTranslations(self);
+    mo.Velocity.x = (Random()-Random())*4.0*35.0;
+    mo.Velocity.y = (Random()-Random())*4.0*35.0;
+    mo.Velocity.z = 9.0*35.0;
+  }
   mo = Spawn(HereticImpChunk2, Origin);
-  mo.Velocity.x = (Random()-Random())*4.0*35.0;
-  mo.Velocity.y = (Random()-Random())*4.0*35.0;
-  mo.Velocity.z = 9.0*35.0;
+  if (mo) {
+    if (bCopyBloodTranslation) mo.CopyBloodTranslations(self);
+    mo.Velocity.x = (Random()-Random())*4.0*35.0;
+    mo.Velocity.y = (Random()-Random())*4.0*35.0;
+    mo.Velocity.z = 9.0*35.0;
+  }
   if (Special1 == 666) SetState(FindState('XCrash')); // extreme death crash
 }
 
@@ -493,6 +516,7 @@ final void A_LichAttack () {
       baseFire.SetState(baseFire.FindState('Grown')); // don't grow
       foreach (auto i; 0..5) {
         Actor fire = Spawn(HeadFX3, baseFire.Origin);
+        if (!fire) continue;
         if (i == 0) PlaySound('ironlich/attack1', CHAN_WEAPON);
         fire.Target = baseFire.Target;
         fire.Angles.yaw = baseFire.Angles.yaw;
