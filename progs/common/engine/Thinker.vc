@@ -197,3 +197,5 @@ readonly float Timer;
 // these two weren't saved, why?
 readonly name DefaultSound;
 readonly ubyte UseAgain;
+readonly int tbversion; // v1 stores more data
+readonly int SwitchDefTexture;

@@ -687,14 +687,16 @@ static void ParseFTAnim (VScriptParser *sc, int fttype) {
 //
 //==========================================================================
 static int AddSwitchDef (TSwitch *Switch) {
-//TEMPORARY
+//meh, RAM is cheap; besides, replacing switches may cause problems
 #if 0
-  for (int i = 0; i < Switches.length(); ++i) {
-    if (Switches[i]->Tex == Switch->Tex) {
-      delete Switches[i];
-      Switches[i] = nullptr;
-      Switches[i] = Switch;
-      return i;
+  for (auto &&it : Switches.itemsIdx()) {
+    TSwitch *sw = it.value();
+    if (sw->Tex == Switch->Tex) {
+      if (sw != Switch) {
+        delete Switches[it.index()];
+        Switches[it.index()] = Switch;
+      }
+      return it.index();
     }
   }
 #endif

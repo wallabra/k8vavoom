@@ -60,8 +60,10 @@ class VThinkButton : public VThinker {
   float Timer;
   VName DefaultSound;
   vuint8 UseAgain; // boolean
+  vint32 tbversion; // v1 stores more data
+  VTextureID SwitchDefTexture;
 
-  //virtual void SerialiseOther (VStream&) override;
+  virtual void SerialiseOther (VStream&) override;
   virtual void Tick (float) override;
   bool AdvanceFrame ();
 };
@@ -83,17 +85,17 @@ bool VLevelInfo::ChangeSwitchTexture (int sidenum, bool useAgain, VName DefaultS
   int texMid = XLevel->Sides[sidenum].MidTexture;
   int texBot = XLevel->Sides[sidenum].BottomTexture;
 
-  for (int  i = 0; i < Switches.Num(); ++i) {
+  for (int idx = Switches.length()-1; idx >= 0; --idx) {
     EBWhere where;
-    TSwitch *sw = Switches[i];
+    TSwitch *sw = Switches[idx];
 
-    if (sw->Tex == texTop) {
+    if (texTop && sw->Tex == texTop) {
       where = SWITCH_Top;
       XLevel->Sides[sidenum].TopTexture = sw->Frames[0].Texture;
-    } else if (sw->Tex == texMid) {
+    } else if (texMid && sw->Tex == texMid) {
       where = SWITCH_Middle;
       XLevel->Sides[sidenum].MidTexture = sw->Frames[0].Texture;
-    } else if (sw->Tex == texBot) {
+    } else if (texBot && sw->Tex == texBot) {
       where = SWITCH_Bottom;
       XLevel->Sides[sidenum].BottomTexture = sw->Frames[0].Texture;
     } else {
@@ -102,7 +104,7 @@ bool VLevelInfo::ChangeSwitchTexture (int sidenum, bool useAgain, VName DefaultS
 
     bool PlaySound;
     if (useAgain || sw->NumFrames > 1) {
-      PlaySound = StartButton(sidenum, where, i, DefaultSound, useAgain);
+      PlaySound = StartButton(sidenum, where, idx, DefaultSound, useAgain);
     } else {
       PlaySound = true;
     }
@@ -143,6 +145,8 @@ bool VLevelInfo::StartButton (int sidenum, vuint8 w, int SwitchDef, VName Defaul
   But->Frame = -1;
   But->DefaultSound = DefaultSound;
   But->UseAgain = (UseAgain ? 1 : 0);
+  But->tbversion = 1;
+  But->SwitchDefTexture = Switches[SwitchDef]->Tex;
   But->AdvanceFrame();
   return true;
 }
@@ -153,18 +157,36 @@ bool VLevelInfo::StartButton (int sidenum, vuint8 w, int SwitchDef, VName Defaul
 //  VThinkButton::SerialiseOther
 //
 //==========================================================================
-/*
 void VThinkButton::SerialiseOther (VStream &Strm) {
   Super::SerialiseOther(Strm);
-  vuint8 xver = 0;
-  Strm << xver;
-  Strm << STRM_INDEX(Side)
-    << Where
-    << STRM_INDEX(SwitchDef)
-    << STRM_INDEX(Frame)
-    << Timer;
+  if (tbversion == 1) {
+    VNTValueIOEx vio(&Strm);
+    vio.io(VName("switch.texture"), SwitchDefTexture);
+    if (Strm.IsLoading()) {
+      bool found = false;
+      for (int idx = Switches.length()-1; idx >= 0; --idx) {
+        TSwitch *sw = Switches[idx];
+        if (sw->Tex == SwitchDefTexture) {
+          found = true;
+          if (idx != SwitchDef) {
+            GCon->Logf(NAME_Warning, "switch index changed from %d to %d (this may break the game!)", SwitchDef, idx);
+          } else {
+            //GCon->Logf("*** switch index %d found!", SwitchDef);
+          }
+          SwitchDef = idx;
+          break;
+        }
+      }
+      if (!found) {
+        GCon->Logf(NAME_Error, "switch index for old index %d not found (this WILL break the game!)", SwitchDef);
+        SwitchDef = -1;
+      }
+    }
+  } else {
+    GCon->Log(NAME_Warning, "*** old switch data found in save, this may break the game!");
+  }
 }
-*/
+
 
 //==========================================================================
 //
@@ -176,27 +198,34 @@ void VThinkButton::Tick (float DeltaTime) {
   // do buttons
   Timer -= DeltaTime;
   if (Timer <= 0.0f) {
-    TSwitch *Def = Switches[SwitchDef];
-    if (Frame == Def->NumFrames-1) {
-      SwitchDef = Def->PairIndex;
-      Def = Switches[Def->PairIndex];
-      Frame = -1;
-      Level->SectorStartSound(XLevel->Sides[Side].Sector,
-        Def->Sound ? Def->Sound :
-        GSoundManager->GetSoundID(DefaultSound), 0, 1, 1);
-      UseAgain = 0;
-    }
+    if (SwitchDef >= 0 && SwitchDef < Switches.length()) {
+      TSwitch *Def = Switches[SwitchDef];
+      if (Frame == Def->NumFrames-1) {
+        SwitchDef = Def->PairIndex;
+        Def = Switches[Def->PairIndex];
+        Frame = -1;
+        Level->SectorStartSound(XLevel->Sides[Side].Sector,
+          Def->Sound ? Def->Sound :
+          GSoundManager->GetSoundID(DefaultSound), 0, 1, 1);
+        UseAgain = 0;
+      }
 
-    bool KillMe = AdvanceFrame();
-    if (Where == SWITCH_Middle) {
-      XLevel->Sides[Side].MidTexture = Def->Frames[Frame].Texture;
-    } else if (Where == SWITCH_Bottom) {
-      XLevel->Sides[Side].BottomTexture = Def->Frames[Frame].Texture;
+      bool KillMe = AdvanceFrame();
+      if (Side >= 0 && Side < XLevel->NumSides) {
+        if (Where == SWITCH_Middle) {
+          XLevel->Sides[Side].MidTexture = Def->Frames[Frame].Texture;
+        } else if (Where == SWITCH_Bottom) {
+          XLevel->Sides[Side].BottomTexture = Def->Frames[Frame].Texture;
+        } else {
+          // texture_top
+          XLevel->Sides[Side].TopTexture = Def->Frames[Frame].Texture;
+        }
+      }
+      if (KillMe) DestroyThinker();
     } else {
-      // texture_top
-      XLevel->Sides[Side].TopTexture = Def->Frames[Frame].Texture;
+      UseAgain = 0;
+      DestroyThinker();
     }
-    if (KillMe) DestroyThinker();
   }
 }
 
