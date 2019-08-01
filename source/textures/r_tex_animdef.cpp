@@ -334,7 +334,7 @@ void P_InitAnimated () {
 
   int animlump = W_CheckNumForName(NAME_animated);
   if (animlump < 0) return;
-  GCon->Logf(NAME_Init, "loading Boom animated lump from '%s'", *W_FullLumpName(animlump));
+  GCon->Logf(NAME_Init, "loading Boom animated lump from '%s'...", *W_FullLumpName(animlump));
 
   VStream *lumpstream = W_CreateLumpReaderName(NAME_animated);
   VCheckedStream Strm(lumpstream);
@@ -1021,6 +1021,7 @@ void R_InitFTAnims () {
   // process all animdefs lumps
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) == NAME_animdefs) {
+      GCon->Logf(NAME_Init, "parsing ANIMDEF from '%s'...", *W_FullLumpName(Lump));
       ParseFTAnims(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)));
     }
   }
