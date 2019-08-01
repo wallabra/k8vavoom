@@ -551,7 +551,6 @@ override void CopyTranslations (Entity src) {
   if (ee) {
     if (ee.BloodTranslation) BloodTranslation = ee.BloodTranslation;
     if (ee.BloodColor) BloodColor = ee.BloodColor;
-    //bBloodDisableSplats = ee.bBloodDisableSplats;
   }
 }
 
@@ -561,14 +560,43 @@ override void CopyTranslations (Entity src) {
 //  CopyBloodTranslations
 //
 //==========================================================================
-void CopyBloodTranslations (Entity src, optional bool copyNormalTranslation) {
-  if (bDontTranslate) return;
+void CopyBloodTranslations (Entity src, bool copyNormalTranslation) {
+  if (!src || bDontTranslate) return;
+  if (copyNormalTranslation /*|| !specified_copyNormalTranslation*/) CopyTranslations(src);
   EntityEx ee = EntityEx(src);
   if (!ee) return;
-  if (copyNormalTranslation || !specified_copyNormalTranslation) ::CopyTranslations(src);
-  if (ee.BloodTranslation) { Translation = ee.BloodTranslation; BloodTranslation = ee.BloodTranslation; }
-  if (ee.BloodColor) BloodColor = ee.BloodColor;
-  //bBloodDisableSplats = ee.bBloodDisableSplats;
+  if (ee.BloodTranslation) {
+    Translation = ee.BloodTranslation;
+    BloodTranslation = Translation;
+    if (ee.BloodColor) BloodColor = ee.BloodColor;
+  } else if (ee.bCopyBloodTranslation) {
+    if (ee.Translation) {
+      Translation = ee.Translation;
+      BloodTranslation = Translation;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  CarryBloodTranslations
+//
+//==========================================================================
+void CarryBloodTranslations (Entity src) {
+  if (!src || bDontTranslate) return;
+  EntityEx ee = EntityEx(src);
+  if (!ee) return;
+  /*
+  if (ee.BloodTranslation && ee.bCopyBloodTranslation) {
+    if (ee.BloodTranslation) { Translation = ee.BloodTranslation; BloodTranslation = ee.BloodTranslation; }
+    if (ee.BloodColor) BloodColor = ee.BloodColor;
+  }
+  */
+  if (ee.Translation && ee.bCopyBloodTranslation) {
+    if (ee.BloodTranslation) { Translation = ee.Translation; BloodTranslation = ee.Translation; }
+    if (ee.BloodColor) BloodColor = ee.BloodColor;
+  }
 }
 
 

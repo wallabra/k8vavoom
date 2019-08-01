@@ -813,7 +813,7 @@ override bool Touch (Entity InOther) {
       if (!bNoBossRip || !Other.bBoss) {
         if (!Other.bNoBlood && !Other.bReflective && !Other.bInvulnerable) {
           // ok to spawn some blood
-          SpawnRipperBlood();
+          Other.SpawnRipperBlood();
         }
         PlaySound('misc/ripslop', /*CHAN_BODY*/CHAN_AUTO);
         damage = GetMissileDamage(3, 2);
@@ -1611,11 +1611,13 @@ override bool SectorChanged (int CrushChange) {
     // spray blood in a random direction
     if (!bNoBlood && !bInvulnerable && BloodType && IsBloodAllowed()) {
       EntityEx A = Spawn(BloodType, Origin+vector(0.0, 0.0, Height/2.0));
-      A.SetBloodArgs(self, damage:CrushChange);
-      A.Velocity.x = (Random()-Random())*16.0*35.0;
-      A.Velocity.y = (Random()-Random())*16.0*35.0;
-      //if (BloodTranslation && !A.bDontTranslate) A.Translation = BloodTranslation;
-      if (!A.bDontTranslate) A.CopyTranslations(self);
+      if (A) {
+        A.SetBloodArgs(self, damage:CrushChange);
+        A.Velocity.x = (Random()-Random())*16.0*35.0;
+        A.Velocity.y = (Random()-Random())*16.0*35.0;
+        //if (BloodTranslation && !A.bDontTranslate) A.Translation = BloodTranslation;
+        A.CopyBloodTranslations(self, copyNormalTranslation:false);
+      }
     }
     if (!bInvulnerable && CrushPainSound && !GetSoundPlayingInfo(self, GetSoundID(CrushPainSound))) {
       PlaySound(CrushPainSound, CHAN_VOICE);

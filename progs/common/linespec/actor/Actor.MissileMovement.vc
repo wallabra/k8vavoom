@@ -90,7 +90,7 @@ final void A_Tracer () {
 
   A = Spawn(RevenantTracerSmoke, Origin-Velocity*Level.Game.frametime);
   if (A) {
-    if (bCopyBloodTranslation) A.CopyBloodTranslations(self);
+    A.CarryBloodTranslations(self);
     A.Velocity.z = 1.0*35.0;
     A.StateTime -= Random()*0.1;
     if (A.StateTime < 0.1) A.StateTime = 0.1;

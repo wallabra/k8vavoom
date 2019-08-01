@@ -38,7 +38,8 @@ override void BeginPlay()
 {
   ::BeginPlay();
   // Special stuff
-  Spawn(BloodPool, vector(Origin.x, Origin.y, ONFLOORZ));
+  auto A = Spawn(BloodPool, vector(Origin.x, Origin.y, ONFLOORZ));
+  if (A) A.CarryBloodTranslations(self);
 }
 
 //==========================================================================
@@ -53,7 +54,8 @@ final void A_CorpseBloodDrip()
   {
     return;
   }
-  Spawn(CorpseBloodDrip, Origin + vector(0.0, 0.0, Height / 2.0));
+  auto A = Spawn(CorpseBloodDrip, Origin + vector(0.0, 0.0, Height / 2.0));
+  if (A) A.CarryBloodTranslations(self);
 }
 
 states

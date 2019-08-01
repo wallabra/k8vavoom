@@ -78,7 +78,7 @@ final void A_TossGib () {
   gib.Velocity.x = speed*cos(an);
   gib.Velocity.y = speed*sin(an);
   gib.Velocity.z = Random()*16.0*35.0;
-  if (bCopyBloodTranslation) gib.CopyBloodTranslations(self, copyNormalTranslation:false);
+  gib.CarryBloodTranslations(self);
 }
 
 
@@ -98,7 +98,7 @@ final void A_SpawnDebris (class!Actor SpawnType, optional bool TransTransl,
     EntityEx A = Spawn(SpawnType, Origin+vector((Random()-0.5)*16.0, (Random()-0.5)*16.0, Random()*Height));
     if (!A) continue;
     if (TransTransl) A.CopyTranslations(self);
-    if (bCopyBloodTranslation) A.CopyBloodTranslations(self, copyNormalTranslation:false);
+    A.CarryBloodTranslations(self);
     // the way it uses states sucks big time
     if (i < GetClassNumOwnedStates(SpawnType)) {
       A.SetState(GetStatePlus(GetClassFirstState(SpawnType), i));
@@ -125,7 +125,7 @@ final void InitSpawnedItem (EntityEx A, bool TransTransl, bool SetMaster,
     //print("COPYTRANS to `%C` from `%C`", A, self);
     A.CopyTranslations(self);
   }
-  if (bCopyBloodTranslation) A.CopyBloodTranslations(self, copyNormalTranslation:false);
+  A.CarryBloodTranslations(self);
 
   if (TransPointers) {
     A.Target = Target;

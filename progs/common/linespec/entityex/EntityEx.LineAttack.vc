@@ -733,13 +733,15 @@ override void eventLineAttackACS (TVec dir, float distance, int LADamage, name p
 //  (or something else that is non-existing)
 //  decalType of '' means "use default puff decal"
 //
+//  returns `true` if DIDN'T hit anything
+//
 //==========================================================================
-final int LineAttack (TVec dir, float distance, int LADamage,
-                      class!EntityEx PuffType, optional bool NoAttackGhosts,
-                      optional TVec *outHitPoint, optional name DmgType,
-                      optional bool secondary, optional name decalType,
-                      optional int pufftid, optional bool disableRandomZ,
-                      optional out EntityEx hitEntity)
+final bool LineAttack (TVec dir, float distance, int LADamage,
+                       class!EntityEx PuffType, optional bool NoAttackGhosts,
+                       optional TVec *outHitPoint, optional name DmgType,
+                       optional bool secondary, optional name decalType,
+                       optional int pufftid, optional bool disableRandomZ,
+                       optional out EntityEx hitEntity)
 {
   TVec dst;
   intercept_t *in;

@@ -128,7 +128,7 @@ final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
     }
     */
     //if (TraceSplat(Origin-dir*2, dir, 64.0, &tr, 0)) SpawnDecal(tr.hit, DecalName, tr.side, tr.line);
-    TraceSplat(Origin-dir*2, dir, 64.0, &tr, 0, DecalName);
+    TraceSplat(Origin-dir*2, dir, 64.0, &tr, 0, DecalName, translation:(bCopyBloodTranslation ? Translation : 0));
   } else {
     /*
     if (GetCvarB('k8ExplodeMissleTest')) {
@@ -200,7 +200,7 @@ final EntityEx SpawnMissile (EntityEx dest, class!EntityEx type, optional float 
 
   EntityEx A = Spawn(type, org);
   if (A) A.DecalName = A.default.DecalName;
-  if (bCopyBloodTranslation) A.CopyBloodTranslations(self);
+  A.CarryBloodTranslations(self);
 
   A.PlayMissileSpawnSound(self);
 
@@ -251,7 +251,7 @@ final EntityEx SpawnMissileXYZ (TVec org, EntityEx dest, class!EntityEx type) {
 
   EntityEx A = Spawn(type, org);
   if (A) A.DecalName = A.default.DecalName;
-  if (bCopyBloodTranslation) A.CopyBloodTranslations(self);
+  A.CarryBloodTranslations(self);
   A.PlayMissileSpawnSound(self);
   A.Target = self;  // Originator
   dir = dest.Origin-Origin;
@@ -292,7 +292,7 @@ final EntityEx SpawnMissileZAimed (float z, EntityEx dest, class!EntityEx type) 
 
   EntityEx A = Spawn(type, org);
   if (A) A.DecalName = A.default.DecalName;
-  if (bCopyBloodTranslation) A.CopyBloodTranslations(self);
+  A.CarryBloodTranslations(self);
 
   A.PlayMissileSpawnSound(self);
 
@@ -349,7 +349,7 @@ final EntityEx SpawnMissileAngles (class!EntityEx type, float yaw, float pitch,
   EntityEx A = Spawn(type, org);
   if (!A) return none;
   if (!A.DecalName) A.DecalName = type.default.DecalName;
-  if (bCopyBloodTranslation) A.CopyBloodTranslations(self);
+  A.CarryBloodTranslations(self);
   A.PlayMissileSpawnSound(self);
   A.Target = self; // originator
   A.Angles.yaw = yaw;
@@ -386,7 +386,7 @@ final EntityEx SpawnMissileAngle (class!EntityEx type, float angle,
   EntityEx mo = Spawn(type, org);
   if (!mo) return none;
   if (!mo.DecalName) mo.DecalName = type.default.DecalName;
-  if (bCopyBloodTranslation) mo.CopyBloodTranslations(self);
+  mo.CarryBloodTranslations(self);
   mo.PlayMissileSpawnSound(self);
   mo.Target = self; // originator
   mo.Angles.yaw = angle;
@@ -418,7 +418,7 @@ final EntityEx SpawnMissileAngleSpeed (class!EntityEx type, float angle,
   EntityEx mo = Spawn(type, org);
   if (!mo) return none;
   if (!mo.DecalName) mo.DecalName = type.default.DecalName;
-  if (bCopyBloodTranslation) mo.CopyBloodTranslations(self);
+  mo.CarryBloodTranslations(self);
   mo.Tracer = self; // Originator
   mo.Angles.yaw = angle;
   float sina, cosa;
@@ -441,7 +441,7 @@ final EntityEx SpawnSubMissile (class!EntityEx type, EntityEx AInstigator) {
 
   EntityEx other = Spawn(type, Origin);
   if (!other) return none;
-  if (bCopyBloodTranslation) other.CopyBloodTranslations(self);
+  other.CarryBloodTranslations(self);
 
   other.Target = AInstigator;
   other.Angles = Angles;
@@ -535,7 +535,7 @@ final EntityEx SpawnPlayerMissileEx (class!EntityEx type, bool RetExploded,
   EntityEx A = Spawn(type, org);
   if (!A) return none;
   if (!A.DecalName) A.DecalName = type.default.DecalName;
-  if (bCopyBloodTranslation) A.CopyBloodTranslations(self);
+  A.CarryBloodTranslations(self);
   if (specified_decalType && decalType) {
     //if (GetCvarB('k8ExplodeMissleTest')) print("missile decal set to <%n>", decalType);
     A.DecalName = decalType;

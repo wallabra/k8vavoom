@@ -49,7 +49,7 @@ final void A_MntrFloorFire () {
 final void A_DripBlood () {
   EntityEx mo = Spawn(Blood, Origin+vector((Random()-Random())*8.0, (Random()-Random())*8.0, 0.0));
   if (!mo) return;
-  if (bCopyBloodTranslation) mo.CopyBloodTranslations(self);
+  mo.CarryBloodTranslations(self);
   mo.Velocity.x = (Random()-Random())*4.0*35.0;
   mo.Velocity.y = (Random()-Random())*4.0*35.0;
   mo.Gravity = 0.125;
@@ -177,7 +177,7 @@ final void A_MaceBallImpact2 () {
 
     Actor tiny = Spawn(MaceFX3, Origin);
     if (tiny) {
-      if (bCopyBloodTranslation) tiny.CopyBloodTranslations(self);
+      tiny.CarryBloodTranslations(self);
       float angle = AngleMod360(Angles.yaw+90.0);
       tiny.Target = Target;
       tiny.Angles.yaw = angle;
@@ -189,7 +189,7 @@ final void A_MaceBallImpact2 () {
 
     tiny = Spawn(MaceFX3, Origin);
     if (tiny) {
-      if (bCopyBloodTranslation) tiny.CopyBloodTranslations(self);
+      tiny.CarryBloodTranslations(self);
       float angle = AngleMod360(Angles.yaw-90.0);
       tiny.Target = Target;
       tiny.Angles.yaw = angle;
@@ -228,7 +228,7 @@ final void A_PodPain () {
   foreach (auto i; 0..count) {
     Actor goo = Spawn(PodGoo, Origin+vector(0.0, 0.0, 48.0));
     if (!goo) continue;
-    if (bCopyBloodTranslation) goo.CopyBloodTranslations(self);
+    goo.CarryBloodTranslations(self);
     goo.Target = self;
     goo.Velocity.x = (Random()-Random())*2.0*35.0;
     goo.Velocity.y = (Random()-Random())*2.0*35.0;
@@ -304,7 +304,7 @@ final void A_VolcanoBlast () {
   foreach (auto i; 0..count) {
     Actor blast = Spawn(VolcanoBlast, Origin+vector(0.0, 0.0, 44.0));
     if (!blast) continue;
-    if (bCopyBloodTranslation) blast.CopyBloodTranslations(self);
+    blast.CarryBloodTranslations(self);
     blast.Target = self;
     float angle = Random()*360.0;
     blast.Angles.yaw = angle;
@@ -377,14 +377,14 @@ final void A_ImpExplode () {
   bNoGravity = false;
   Actor mo = Spawn(HereticImpChunk1, Origin);
   if (mo) {
-    if (bCopyBloodTranslation) mo.CopyBloodTranslations(self);
+    mo.CarryBloodTranslations(self);
     mo.Velocity.x = (Random()-Random())*4.0*35.0;
     mo.Velocity.y = (Random()-Random())*4.0*35.0;
     mo.Velocity.z = 9.0*35.0;
   }
   mo = Spawn(HereticImpChunk2, Origin);
   if (mo) {
-    if (bCopyBloodTranslation) mo.CopyBloodTranslations(self);
+    mo.CarryBloodTranslations(self);
     mo.Velocity.x = (Random()-Random())*4.0*35.0;
     mo.Velocity.y = (Random()-Random())*4.0*35.0;
     mo.Velocity.z = 9.0*35.0;
