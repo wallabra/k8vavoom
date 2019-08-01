@@ -276,7 +276,7 @@ bool IsGood2SLineForBloodSplat (const line_t *li) {
 //
 //==========================================================================
 final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *tr, optional float zofs,
-                       optional name DecalName, optional bool pass2S, optional bool only2S)
+                       optional name DecalName, optional bool pass2S, optional bool only2S, optional int translation)
 {
   TVec outHitPoint;
   trsplat_t temptr;
@@ -331,7 +331,7 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
 
       if (Level.CompatTrace && li->frontsector == li->backsector) {
         if (DecalName && (pass2S || only2S) && IsGood2SLineForBloodSplat(li)) {
-          SpawnDecal(hit_point, DecalName, side, li);
+          SpawnDecal(hit_point, DecalName, side, li, translation!optional);
         }
         continue;
       }
@@ -355,7 +355,7 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
           if (open) {
             // alpha check for various special fx (additive lines are mostly used for fx too)
             if (DecalName && (pass2S || only2S) && IsGood2SLineForBloodSplat(li)) {
-              SpawnDecal(hit_point, DecalName, side, li);
+              SpawnDecal(hit_point, DecalName, side, li, translation!optional);
             }
             continue;
           }
@@ -391,7 +391,7 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
       tr->side = side;
       tr->didhit = true;
 
-      if (DecalName && !only2S) SpawnDecal(hit_point, DecalName, side, li);
+      if (DecalName && !only2S) SpawnDecal(hit_point, DecalName, side, li, translation!optional);
 
       // don't go any farther if not two-sided
       if (!(li->flags&ML_TWOSIDED)) return true;
@@ -477,6 +477,9 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
 
   if (isSmallDamage && !radiusDamage) return; // oops
 
+  int btrans = (BloodTranslation && !bDontTranslate ? BloodTranslation : 0);
+  print("btrans for %C is %s", self, btrans);
+
   trsplat_t tr;
   while (count-- > 0) {
     //float bleedang = AngleMod360(angle+(P_Random()-128)*noise);
@@ -499,7 +502,7 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
     if (isSmallDamage && !radiusDamage) continue;
 
     //print("TraceBleed: %s", bloodType);
-    TraceSplat(pos, vdir, 172.0, &tr, 0, bloodType, pass2S:true, only2S:false);
+    TraceSplat(pos, vdir, 172.0, &tr, 0, bloodType, pass2S:true, only2S:false, translation:btrans);
   }
 }
 

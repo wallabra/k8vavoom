@@ -275,8 +275,8 @@ native final int SetBodyQueueTrans (int Slot, int Transl);
 
 // ////////////////////////////////////////////////////////////////////////// //
 // decal functions
-native final void AddDecal (TVec org, name dectype, int side, line_t *li);
-native final void AddDecalById (TVec org, int id, int side, line_t *li);
+native final void AddDecal (TVec org, name dectype, int side, line_t *li, optional int translation);
+native final void AddDecalById (TVec org, int id, int side, line_t *li, optional int translation);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
