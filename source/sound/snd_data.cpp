@@ -366,8 +366,10 @@ void VSoundManager::Init () {
 //==========================================================================
 void VSoundManager::ParseSndinfo (VScriptParser *sc, int fileid) {
   TArray<int> list;
+  bool insideIf = false;
 
   while (!sc->AtEnd()) {
+    auto loc = sc->GetLoc();
     if (sc->Check("$archivepath")) {
       // $archivepath <directory>
       // ignored
@@ -616,11 +618,36 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc, int fileid) {
         als.newName = (sc->Name == NAME_None || VStr::ICmp(*sc->Name, "none") == 0 ? NAME_None : sc->Name);
         als.fileid = fileid;
       }
+    } else if (sc->Check("$endif")) {
+      if (insideIf) {
+        insideIf = false;
+      } else {
+        GCon->Logf(NAME_Warning, "%s: stray `$endif` in sound script", *loc.toStringNoCol());
+      }
     } else if (sc->Check("$ifdoom") || sc->Check("$ifheretic") ||
-               sc->Check("$ifhexen") || sc->Check("$ifstrife") ||
-               sc->Check("$endif"))
+               sc->Check("$ifhexen") || sc->Check("$ifstrife"))
     {
-      GCon->Log("Conditional SNDINFO commands are not supported");
+      //GCon->Log("Conditional SNDINFO commands are not supported");
+      if (insideIf) {
+        sc->Error(va("nested conditionals are not allowed (%s)", *sc->String));
+      }
+      //GCon->Logf(NAME_Warning, "%s: k8vavoom doesn't support conditional game commands in terrain script", *loc.toStringNoCol());
+      VStr gmname = VStr(*sc->String+3);
+      if (game_name.asStr().startsWithCI(gmname)) {
+        insideIf = true;
+        GCon->Logf(NAME_Init, "%s: processing conditional section '%s' in sound script", *loc.toStringNoCol(), *gmname);
+      } else {
+        // skip lines until we hit `endif`
+        GCon->Logf(NAME_Init, "%s: skipping conditional section '%s' in sound script", *loc.toStringNoCol(), *gmname);
+        while (sc->GetString()) {
+          if (sc->Crossed) {
+            if (sc->String.strEqu("endif")) {
+              //GCon->Logf(NAME_Init, "******************** FOUND ENDIF!");
+              break;
+            }
+          }
+        }
+      }
     } else if (sc->Check("$volume")) {
       // $volume soundname <volume>
       sc->ExpectString();
