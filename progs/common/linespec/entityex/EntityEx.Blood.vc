@@ -424,7 +424,6 @@ final bool TraceSplat (TVec org, TVec dir, float distance, optional trsplat_t *t
 //==========================================================================
 final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radiusDamage) {
   if (damage < 1 || !IsBloodAllowed()) return;
-  return;
 
   if (bIsPlayer) {
     // gods don't bleed
