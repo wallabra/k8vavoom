@@ -16,8 +16,9 @@ actor Cacodemon 3005
   Obituary "$ob_caco"
   HitObituary "$ob_cacohit"
   Monster
-  BloodType BloodBlue, BloodSplatterBlue
-  BloodColor "00 00 66"
+  //BloodType BloodBlue, BloodSplatterBlue
+  //BloodColor "00 00 66"
+  BloodTranslation "16:48=240:247", "64:79=240:247", "164:167=201:207", "168:191=192:207", "232:235=100:207", "236:239=199:207"
   +NoGravity
   +Float
   states

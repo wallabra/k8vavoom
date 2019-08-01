@@ -58,6 +58,7 @@
     <prop_translation name="Translation" property="Translation" />
     <prop_blood_color name="BloodColor" />
     <prop_blood_type name="BloodType" />
+    <prop_blood_translation name="BloodTranslation" />
     <prop_name name="Decal" property="DecalName" />
     <prop_stencil_color name="StencilColor" property="StencilColor" />
     <!--  Obituaries -->
