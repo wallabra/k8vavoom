@@ -45,8 +45,10 @@ static int AuxiliaryIndex = 0;
 
 static TMap<VStr, int> fullNameTexLumpChecked;
 
+bool fsys_EnableAuxSearch = false;
+
 // don't search files in auxiliary wads, ever
-static inline int getSPCount () { return (AuxiliaryIndex ? AuxiliaryIndex : SearchPaths.length()); }
+static inline int getSPCount () { return (AuxiliaryIndex && !fsys_EnableAuxSearch ? AuxiliaryIndex : SearchPaths.length()); }
 
 
 //==========================================================================

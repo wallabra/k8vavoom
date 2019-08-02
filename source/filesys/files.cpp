@@ -1297,6 +1297,7 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
   } else {
     if (games.length() != 1) {
       // try to select DooM or DooM II automatically
+      fsys_EnableAuxSearch = true;
       {
         bool oldReport = fsys_no_dup_reports;
         fsys_no_dup_reports = true;
@@ -1354,6 +1355,8 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
           }
         }
       }
+      fsys_EnableAuxSearch = false;
+
       if (selectedGame < 0) {
         // try to detect game
         if (mainiwad.length() > 0) {
@@ -1373,6 +1376,7 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
           }
         }
       }
+
       if (selectedGame < 0) {
         for (int gi = 0; gi < games.length(); ++gi) {
           version_t &gmi = games[gi];
@@ -1388,6 +1392,7 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
           if (selectedGame >= 0) break;
         }
       }
+
       if (selectedGame >= 0) {
         game_name = *games[selectedGame].param;
         GCon->Logf(NAME_Init, "detected game: \"%s\"", *games[selectedGame].param);

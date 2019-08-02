@@ -99,6 +99,9 @@ extern bool fsys_DisableBloodReplacement;
 extern bool fsys_IgnoreZScript;
 extern bool fsys_DisableBDW;
 
+// used for game detection
+extern bool fsys_EnableAuxSearch;
+
 extern VCvarS game_name;
 
 extern GameOptions game_options;
