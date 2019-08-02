@@ -28,6 +28,9 @@
 #include "r_tex.h"
 
 
+static VCvarB dbg_dump_animdef_ranges("dbg_dump_animdef_ranges", false, "Dump ANIMDEF ranges?", CVAR_PreInit);
+
+
 enum {
   FT_Texture,
   FT_Flat,
@@ -270,7 +273,7 @@ static void BuildTextureRange (int wadfile, VName nfirst, VName nlast, int txtyp
     int tid = GTextureManager.CheckNumForName(lilu.texName, txtype, true);
     if (tid > 0) {
       ids.append(tid);
-      //GCon->Logf(NAME_Init, "ANIM<%s : %s> %d (%d : %s)", *nfirst, *nlast, firstIdx-1, lilu.lumpFile, *lilu.texName);
+      if (dbg_dump_animdef_ranges) GCon->Logf(NAME_Init, "ANIM<%s : %s> %d (%d : %s)", *nfirst, *nlast, firstIdx-1, lilu.lumpFile, *lilu.texName);
     } else {
       GCon->Logf(NAME_Warning, "ANIMATED: %s '%s' not found in animation sequence between '%s' and '%s'", atypestr, *lilu.texName, *nfirst, *nlast);
     }
@@ -452,6 +455,8 @@ static int GetTextureIdWithOffset (int wadfile, int txbase, int offset, int ftty
     if (tid <= 0) return -1;
     GCon->Logf(NAME_Warning, "force-loaded animation %s '%s' for animation sequence '%s'", atypestr, *txname, *list[txbase].texName);
   }
+
+  if (dbg_dump_animdef_ranges) GCon->Logf(NAME_Init, "ANIM<%s+%d> (%d : %s)", *list[txbase].texName, offset, list[txbase+offset].lumpFile, *txname);
 
   //GCon->Logf("   1: <%s>", *txname);
   return (tid > 0 ? tid : -1);
