@@ -178,8 +178,10 @@ private:
   }
 
   inline void nextStep () {
-    for (; lump >= 0; lump = W_IterateNS(lump, ns)) {
-      if (W_LumpName(lump) == lumpname) break;
+    if (lump >= 0) {
+      for (lump = W_IterateNS(lump, ns); lump >= 0; lump = W_IterateNS(lump, ns)) {
+        if (W_LumpName(lump) == lumpname) break;
+      }
     }
   }
 
@@ -211,8 +213,8 @@ public:
 
   inline WadNSNameIterator begin () { return WadNSNameIterator(lumpname, ns); }
   inline WadNSNameIterator end () { return WadNSNameIterator(*this, true); }
-  inline bool operator == (const WadNSNameIterator &b) const { return (lump == b.lump && ns == b.ns); }
-  inline bool operator != (const WadNSNameIterator &b) const { return (lump != b.lump || ns != b.ns); }
+  inline bool operator == (const WadNSNameIterator &b) const { return (lump == b.lump && ns == b.ns && lumpname == b.lumpname); }
+  inline bool operator != (const WadNSNameIterator &b) const { return (lump != b.lump || ns != b.ns || lumpname != b.lumpname); }
   inline WadNSNameIterator operator * () const { return WadNSNameIterator(*this); } /* required for iterator */
   inline void operator ++ () { nextStep(); } /* this is enough for iterator */
 
