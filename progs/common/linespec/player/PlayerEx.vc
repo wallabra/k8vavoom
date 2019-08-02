@@ -647,6 +647,19 @@ void CrouchMove (int direction) {
 
 //==========================================================================
 //
+//  IsCrouchButtonCrouch
+//
+//==========================================================================
+final bool IsCrouchButtonCrouch () {
+  if (Buttons&BT_CROUCH) {
+    return (!bFly || MO.Origin.z <= MO.FloorZ);
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
 //  MovePlayer
 //
 //==========================================================================
@@ -657,7 +670,7 @@ void MovePlayer (float deltaTime) {
 
   // yeah, we can start crouching mid-air
   auto ohgt = MO.Height;
-  CrouchMove(Buttons&BT_CROUCH ? -1 : 1);
+  CrouchMove(IsCrouchButtonCrouch() ? -1 : 1);
   //print("HEIGHT: %s  %s  crf=%s; vh=%s; dvh=%s", ohgt, MO.Height, EntityEx(MO).crouchfactor, ViewHeight, PlayerPawn(MO).default.ViewHeight);
 
   // do not let the player control movement if not onground
@@ -730,6 +743,7 @@ void MovePlayer (float deltaTime) {
       }
     }
     if ((Buttons&BT_JUMP) && MO.Velocity.z < 160) MO.Velocity.z += 30;
+    if ((Buttons&BT_CROUCH) && MO.Velocity.z > -160) MO.Velocity.z -= 30;
     float limit = (Buttons&BT_SPEED ? 400 : 200);
     MO.Velocity.z = fclamp(MO.Velocity.z, -limit, limit);
     //print("VZ=%s; FH=%s; fvwd=%s", MO.Velocity.z, FlyHeight, vforward);
@@ -862,7 +876,7 @@ void WaterMove (float deltaTime) {
     } else if (MO.Origin.z <= MO.FloorZ) {
       // normal crouch
       doCrouchMove = false;
-      CrouchMove(Buttons&BT_CROUCH ? -1 : 1);
+      CrouchMove(IsCrouchButtonCrouch() ? -1 : 1);
     }
   } else {
     if (MO.WaterLevel >= 2 && wishvel.z < 0 && wishvz == 0) {
