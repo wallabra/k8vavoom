@@ -369,6 +369,23 @@ static void BuildTextureRange (int wadfile, VName nfirst, VName nlast, int txtyp
   }
 
   if (ids.length() == 0) {
+    // can absent in doom1
+    if (!dbg_dump_animdef_ranges) {
+      if (nfirst == "swater1" && nlast == "swater4") return;
+      if (nfirst == "rrock05" && nlast == "rrock08") return;
+      if (nfirst == "slime01" && nlast == "slime04") return;
+      if (nfirst == "slime05" && nlast == "slime08") return;
+      if (nfirst == "slime09" && nlast == "slime12") return;
+      if (nfirst == "bfall1" && nlast == "bfall4") return;
+      if (nfirst == "sfall1" && nlast == "sfall4") return;
+      if (nfirst == "dbrain1" && nlast == "dbrain4") return;
+      // can absent in doom2
+      if (nfirst == "swater1" && nlast == "swater4") return;
+      if (nfirst == "blodgr1" && nlast == "blodgr4") return;
+      if (nfirst == "sladrip1" && nlast == "sladrip3") return;
+      // can absent both in doom1, and in doom2
+      if (nfirst == "wfall1" && nlast == "wfall4") return;
+    }
     GCon->Logf(NAME_Warning, "ANIMATED: %ss animation sequence between '%s' and '%s' not found", atypestr, *nfirst, *nlast);
   }
 }
