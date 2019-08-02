@@ -27,6 +27,8 @@
 #include "gamedefs.h"
 #include "r_tex.h"
 
+static VCvarB r_animated_use_best("r_animated_use_best", false, "Use best length instead of last range for Boom ANIMATED lumps?", CVAR_Archive|CVAR_PreInit);
+
 /*k8
   range animations are tricky: they depend on wad ordering,
   and this is so fuckin' broken, that i don't even know where to start.
@@ -269,7 +271,7 @@ static void BuildTextureRange (VName nfirst, VName nlast, int txtype, TArray<int
         if (len > limit) {
           GCon->Logf(NAME_Warning, "ANIMATED: skipping %ss animation between '%s' and '%s' due to limits violation (%d, but only %d allowed)", atypestr, *nfirst, *nlast, len, limit);
         } else {
-          if (len > bestList.length()) {
+          if (!r_animated_use_best || len > bestList.length()) {
             bestList.reset();
             for (int f = firstIdx; f < firstIdx+len; ++f) bestList.append(list[f]);
           }
