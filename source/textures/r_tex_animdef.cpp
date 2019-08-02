@@ -72,12 +72,108 @@ struct AnimDef_t {
 struct ListLump {
   VName texName;
   int lumpFile;
+  int nextIndex; // next list index for this name; -1 is EOL
 };
 
-// partially parsed from TEXTUREx lumps
-static TArray<ListLump> txxnames;
-// collected from loaded wads
-static TArray<ListLump> flatnames;
+
+struct ListOfLumps {
+public:
+  TArray<ListLump> list;
+  TMapNC<VName, int> map; // first lump for the given name, so we don't have to loop over and over again
+
+public:
+  ListOfLumps () : list(), map() {}
+  ListOfLumps (const ListOfLumps &) = delete;
+  ListOfLumps &operator = (const ListOfLumps &) = delete;
+
+  inline void clear () { map.clear(); list.clear(); }
+
+  void append (VName txname, int filenum);
+
+  // returns -1 if not found
+  int findInFileFrom (int stidx, VName aname) const;
+
+  inline int length () const { return list.length(); }
+  const ListLump &operator [] (int idx) const { check(idx >= 0 && idx < list.length()); return list[idx]; }
+
+public:
+  struct NameIterator {
+    const TArray<ListLump> *list;
+    int currIndex;
+
+    NameIterator () : list(nullptr), currIndex(-1) {}
+    NameIterator (const ListOfLumps *alist, VName aname) : list(&alist->list) { auto mip = alist->map.find(aname); currIndex = (mip ? *mip : -1); }
+    NameIterator (const NameIterator &it) : list(it.list), currIndex(it.currIndex) {}
+    NameIterator (const NameIterator &it, bool asEnd) : list(it.list), currIndex(-1) {}
+    inline NameIterator &operator = (const NameIterator &it) { list = it.list; currIndex = it.currIndex; return *this; }
+
+    inline NameIterator begin () { return NameIterator(*this); }
+    inline NameIterator end () { return NameIterator(*this, true); }
+    inline bool operator == (const NameIterator &b) const { return (list == b.list && currIndex == b.currIndex); }
+    inline bool operator != (const NameIterator &b) const { return (list != b.list || currIndex != b.currIndex); }
+    inline NameIterator operator * () const { return NameIterator(*this); } /* required for iterator */
+    inline void operator ++ () { if (currIndex > 0) currIndex = (*list)[currIndex].nextIndex; } /* this is enough for iterator */
+
+    inline bool isEmpty () const { return (currIndex < 0); }
+    inline int index () const { return currIndex; }
+    inline VName getName () const { return (currIndex >= 0 ? (*list)[currIndex].texName : NAME_None); }
+    inline int getFile () const { return (currIndex >= 0 ? (*list)[currIndex].lumpFile : -1); }
+  };
+
+  inline NameIterator named (VName aname) const { return NameIterator(this, aname); }
+
+  inline int findInFileFrom (const NameIterator &it, VName aname) const { return findInFileFrom(it.index(), aname); }
+};
+
+
+//==========================================================================
+//
+//  ListOfLumps::append
+//
+//==========================================================================
+void ListOfLumps::append (VName txname, int filenum) {
+  ListLump &newlilu = list.alloc();
+  newlilu.texName = txname;
+  newlilu.lumpFile = filenum;
+  newlilu.nextIndex = -1;
+  auto mip = map.find(txname);
+  if (mip) {
+    // append to the name chain
+    int lidx = *mip;
+    while (list[lidx].nextIndex != -1) {
+      check(list[lidx].texName == txname);
+      lidx = list[lidx].nextIndex;
+    }
+    check(lidx >= 0 && lidx < list.length()-1);
+    check(list[lidx].nextIndex == -1);
+    list[lidx].nextIndex = list.length()-1;
+  } else {
+    // first with such name
+    map.put(txname, list.length()-1);
+  }
+}
+
+
+//==========================================================================
+//
+//  ListOfLumps::findInFileFrom
+//
+//==========================================================================
+int ListOfLumps::findInFileFrom (int stidx, VName aname) const {
+  if (stidx < 0 || stidx >= list.length()) return -1;
+  int filenum = list[stidx].lumpFile;
+  for (; stidx < list.length(); ++stidx) {
+    const ListLump &lilu = list[stidx];
+    if (lilu.lumpFile != filenum) return -1;
+    if (lilu.texName == aname) return stidx;
+  }
+  return -1;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+static ListOfLumps txxnames; // collected from TEXTUREx lumps
+static ListOfLumps flatnames; // collected from loaded wads
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -152,9 +248,7 @@ static void ParseTXXLump (int lump) {
     strm->Serialise(namebuf, 8);
     if (strm->IsError()) { delete strm; return; }
     namebuf[8] = 0;
-    ListLump &lilu = txxnames.alloc();
-    lilu.texName = VName(namebuf, VName::AddLower);
-    lilu.lumpFile = W_LumpFile(lump);
+    txxnames.append(VName(namebuf, VName::AddLower), W_LumpFile(lump));
   }
   delete strm;
 }
@@ -173,9 +267,7 @@ static void FillLists () {
   // collect all flats
   for (auto &&it : WadNSIterator(WADNS_Flats)) {
     //GCon->Logf("FLAT: lump=%d; name=<%s> (%s); size=%d", it.lump, *it.getName(), *it.getFullName(), it.getSize());
-    ListLump &lilu = flatnames.alloc();
-    lilu.texName = it.getName();
-    lilu.lumpFile = it.getFile();
+    flatnames.append(it.getName(), it.getFile());
   }
 
   // parse all TEXTUREx lumps
@@ -187,7 +279,6 @@ static void FillLists () {
       //GCon->Logf("TXX: lump=%d; name=<%s> (%s); size=%d; file=%d (%d)", it.lump, *it.getName(), *it.getFullName(), it.getSize(), it.getFile(), lastTXXFile);
       if (lastTXXFile != it.getFile()) {
         if (lastTX1Lump >= 0 || lastTX2Lump >= 0) {
-          txxnames.alloc();
           if (lastTX1Lump >= 0) ++totalTxx;
           if (lastTX2Lump >= 0) ++totalTxx;
           ParseTXXLump(lastTX1Lump);
@@ -203,7 +294,6 @@ static void FillLists () {
     }
   }
   if (lastTX1Lump >= 0 || lastTX2Lump >= 0) {
-    txxnames.alloc();
     if (lastTX1Lump >= 0) ++totalTxx;
     if (lastTX2Lump >= 0) ++totalTxx;
     ParseTXXLump(lastTX1Lump);
@@ -235,40 +325,39 @@ static void BuildTextureRange (int wadfile, VName nfirst, VName nlast, int txtyp
 
   const char *atypestr = (txtype == TEXTYPE_Flat ? "flat" : "texture");
 
-  TArray<ListLump> &larr = (txtype == TEXTYPE_Flat ? flatnames : txxnames);
+  ListOfLumps &list = (txtype == TEXTYPE_Flat ? flatnames : txxnames);
   int firstIdx = -1, listLen = 0;
+  int skipFile = -1;
   //GCon->Logf("***************** %d: <%s> : <%s>", wadfile, *nfirst, *nlast);
-  for (auto &&it : larr.itemsIdxRev()) {
-    //GCon->Logf("  checking %d (%d : %s)", it.index(), it.value().lumpFile, *it.value().texName);
+  for (auto &&it : list.named(nfirst)) {
+    if (dbg_dump_animdef_ranges) GCon->Logf("  checking %d (%d : %s)", it.index(), it.getFile(), *it.getName());
     //k8: this seems to be unnecessary
-    //!!!if (it.value().lumpFile > wadfile) continue;
-    if (it.value().texName != nfirst) continue;
+    //!!!if (it.getFile() > wadfile) continue;
+    if (it.getFile() == skipFile) continue;
+    check(it.getName() == nfirst);
+    // skip this file in any case
+    skipFile = it.getFile();
     // find list end, set `firstIdx` and `listLen` if found
-    for (int lend = it.index(); lend < larr.length(); ++lend) {
-      if (larr[lend].lumpFile != it.value().lumpFile) break;
-      //GCon->Logf("    ending check: %d (%d : %s)", lend, larr[lend].lumpFile, *larr[lend].texName);
-      if (larr[lend].texName == nlast) {
-        // i found her!
-        int len = lend+1-it.index();
-        /*
-        if (len > limit) {
-          GCon->Logf(NAME_Warning, "ANIMATED: skipping %ss animation between '%s' and '%s' due to limits violation (%d, but only %d allowed)", atypestr, *nfirst, *nlast, len, limit);
-        } else
-        */
-        {
-          firstIdx = it.index();
-          listLen = len;
-        }
-        break;
+    int lend = list.findInFileFrom(it, nlast);
+    if (lend >= 0) {
+      // i found her!
+      int len = lend+1-it.index();
+      /*
+      if (len > limit) {
+        GCon->Logf(NAME_Warning, "ANIMATED: skipping %ss animation between '%s' and '%s' due to limits violation (%d, but only %d allowed)", atypestr, *nfirst, *nlast, len, limit);
+      } else
+      */
+      {
+        firstIdx = it.index();
+        listLen = len;
       }
     }
-    if (firstIdx >= 0) break;
   }
 
   // build ids
   ids.reset();
   while (listLen-- > 0) {
-    ListLump &lilu = larr[firstIdx++];
+    const ListLump &lilu = list[firstIdx++];
     if (lilu.texName == NAME_None) continue;
     int tid = GTextureManager.CheckNumForName(lilu.texName, txtype, true);
     if (tid > 0) {
@@ -404,13 +493,10 @@ static bool FindFirstTextureInSequence (int wadfile, VName txname, int fttype, i
   txbase = -1;
   if (txname == NAME_None) return false;
 
-  for (auto &&it : (fttype == FT_Flat ? flatnames.itemsIdxRev() : txxnames.itemsIdxRev())) {
+  for (auto &&it : (fttype == FT_Flat ? flatnames.named(txname) : txxnames.named(txname))) {
     //k8: this seems to be unnecessary
-    //!!!if (it.value().lumpFile > wadfile) continue;
-    if (it.value().texName == txname) {
-      txbase = it.index();
-      break;
-    }
+    //!!!if (it.getFile() > wadfile) continue;
+    txbase = it.index();
   }
 
   if (txbase < 0) {
@@ -437,7 +523,7 @@ static int GetTextureIdWithOffset (int wadfile, int txbase, int offset, int ftty
   if (txbase < 0) return -1;
   if (offset < 0) return -1;
 
-  TArray<ListLump> &list = (fttype == FT_Flat ? flatnames : txxnames);
+  ListOfLumps &list = (fttype == FT_Flat ? flatnames : txxnames);
   if (txbase >= list.length() || list.length()-txbase <= offset) return -1;
   //k8: this seems to be unnecessary
   //!!!if (list[txbase+offset].lumpFile != wadfile) return -1;
