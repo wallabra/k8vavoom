@@ -288,101 +288,62 @@ public:
   inline T *end () { return (length1D() > 0 ? ArrData+length1D() : nullptr); }
   inline const T *end () const { return (length1D() > 0 ? ArrData+length1D() : nullptr); }
 
-  class Iterator {
-  public:
-    T *currvalue;
-    T *endvalue;
+  #define VARR_DEFINE_ITEMS_ITERATOR(xconst_)  \
+    class xconst_##IndexIterator { \
+    public: \
+      xconst_ T *currvalue; \
+      xconst_ T *endvalue; \
+      int currindex; \
+    public: \
+      xconst_##IndexIterator (xconst_ TArray<T> *arr) { \
+        if (arr->length1D() > 0) { \
+          currvalue = arr->ArrData; \
+          endvalue = currvalue+arr->length1D(); \
+        } else { \
+          currvalue = endvalue = nullptr; \
+        } \
+        currindex = 0; \
+      } \
+      xconst_##IndexIterator (const xconst_##IndexIterator &it) : currvalue(it.currvalue), endvalue(it.endvalue), currindex(it.currindex) {} \
+      xconst_##IndexIterator (const xconst_##IndexIterator &it, bool asEnd) : currvalue(it.endvalue), endvalue(it.endvalue), currindex(it.currindex) {} \
+      inline xconst_##IndexIterator begin () { return xconst_##IndexIterator(*this); } \
+      inline xconst_##IndexIterator end () { return xconst_##IndexIterator(*this, true); } \
+      inline bool operator == (const xconst_##IndexIterator &b) const { return (currvalue == b.currvalue); } \
+      inline bool operator != (const xconst_##IndexIterator &b) const { return (currvalue != b.currvalue); } \
+      inline xconst_##IndexIterator operator * () const { return xconst_##IndexIterator(*this); } /* required for iterator */ \
+      inline void operator ++ () { ++currvalue; ++currindex; } /* this is enough for iterator */ \
+      inline xconst_ T &value () { return *currvalue; } \
+      /*inline const T &value () const { return *currvalue; }*/ \
+      inline int index () const { return currindex; } \
+    }; \
+    inline xconst_##IndexIterator itemsIdx () xconst_ { return xconst_##IndexIterator(this); }
 
-  public:
-    Iterator (TArray<T> *arr) {
-      if (arr->length1D() > 0) {
-        currvalue = arr->ArrData;
-        endvalue = currvalue+arr->length1D();
-      } else {
-        currvalue = endvalue = nullptr;
-      }
-    }
-    inline T *begin () { return currvalue; }
-    inline T *end () { return endvalue; }
-  };
-  inline Iterator items () { return Iterator(this); }
+  VARR_DEFINE_ITEMS_ITERATOR()
+  VARR_DEFINE_ITEMS_ITERATOR(const)
+  #undef VARR_DEFINE_ITEMS_ITERATOR
 
+  #define VARR_DEFINE_ITEMS_ITERATOR(xconst_)  \
+    class xconst_##IndexIteratorRev { \
+    public: \
+      xconst_ TArray<T> *arr; \
+      int currindex; \
+    public: \
+      xconst_##IndexIteratorRev (xconst_ TArray<T> *aarr) : arr(aarr) { currindex = (arr->length1D() > 0 ? arr->length1D()-1 : -1); } \
+      xconst_##IndexIteratorRev (const xconst_##IndexIteratorRev &it) : arr(it.arr), currindex(it.currindex) {} \
+      xconst_##IndexIteratorRev (const xconst_##IndexIteratorRev &it, bool asEnd) : arr(it.arr), currindex(-1) {} \
+      inline xconst_##IndexIteratorRev begin () { return xconst_##IndexIteratorRev(*this); } \
+      inline xconst_##IndexIteratorRev end () { return xconst_##IndexIteratorRev(*this, true); } \
+      inline bool operator == (const xconst_##IndexIteratorRev &b) const { return (arr == b.arr && currindex == b.currindex); } \
+      inline bool operator != (const xconst_##IndexIteratorRev &b) const { return (arr != b.arr || currindex != b.currindex); } \
+      inline xconst_##IndexIteratorRev operator * () const { return xconst_##IndexIteratorRev(*this); } /* required for iterator */ \
+      inline void operator ++ () { --currindex; } /* this is enough for iterator */ \
+      inline xconst_ T &value () { return arr->ArrData[currindex]; } \
+      /*inline const T &value () const { return arr->ArrData[currindex]; }*/ \
+      inline int index () const { return currindex; } \
+    }; \
+    inline xconst_##IndexIteratorRev itemsIdxRev () xconst_ { return xconst_##IndexIteratorRev(this); }
 
-  class ConstIterator {
-  public:
-    const T *currvalue;
-    const T *endvalue;
-
-  public:
-    ConstIterator (const TArray<T> *arr) {
-      if (arr->length1D() > 0) {
-        currvalue = arr->ArrData;
-        endvalue = currvalue+arr->length1D();
-      } else {
-        currvalue = endvalue = nullptr;
-      }
-    }
-    inline const T *begin () { return currvalue; }
-    inline const T *end () { return endvalue; }
-  };
-  inline Iterator items () const { return ConstIterator(this); }
-
-  class IndexIterator {
-  public:
-    T *currvalue;
-    T *endvalue;
-    int currindex;
-
-  public:
-    IndexIterator (TArray<T> *arr) {
-      if (arr->length1D() > 0) {
-        currvalue = arr->ArrData;
-        endvalue = currvalue+arr->length1D();
-      } else {
-        currvalue = endvalue = nullptr;
-      }
-      currindex = 0;
-    }
-    IndexIterator (const IndexIterator &it) : currvalue(it.currvalue), endvalue(it.endvalue), currindex(it.currindex) {}
-    IndexIterator (const IndexIterator &it, bool asEnd) : currvalue(it.endvalue), endvalue(it.endvalue), currindex(it.currindex) {}
-    inline IndexIterator begin () { return IndexIterator(*this); }
-    inline IndexIterator end () { return IndexIterator(*this, true); }
-    inline bool operator == (const IndexIterator &b) const { return (currvalue == b.currvalue); }
-    inline bool operator != (const IndexIterator &b) const { return (currvalue != b.currvalue); }
-    inline IndexIterator operator * () const { return IndexIterator(*this); } /* required for iterator */
-    inline void operator ++ () { ++currvalue; ++currindex; } /* this is enough for iterator */
-    inline T &value () { return *currvalue; }
-    inline const T &value () const { return *currvalue; }
-    inline int index () const { return currindex; }
-  };
-  inline IndexIterator itemsIdx () { return IndexIterator(this); }
-
-  class ConstIndexIterator {
-  public:
-    const T *currvalue;
-    const T *endvalue;
-    int currindex;
-
-  public:
-    ConstIndexIterator (const TArray<T> *arr) {
-      if (arr->length1D() > 0) {
-        currvalue = arr->ArrData;
-        endvalue = currvalue+arr->length1D();
-      } else {
-        currvalue = endvalue = nullptr;
-      }
-      currindex = 0;
-    }
-    ConstIndexIterator (const ConstIndexIterator &it) : currvalue(it.currvalue), endvalue(it.endvalue), currindex(it.currindex) {}
-    ConstIndexIterator (const ConstIndexIterator &it, bool asEnd) : currvalue(it.endvalue), endvalue(it.endvalue), currindex(it.currindex) {}
-    inline ConstIndexIterator begin () { return ConstIndexIterator(*this); }
-    inline ConstIndexIterator end () { return ConstIndexIterator(*this, true); }
-    inline bool operator == (const ConstIndexIterator &b) const { return (currvalue == b.currvalue); }
-    inline bool operator != (const ConstIndexIterator &b) const { return (currvalue != b.currvalue); }
-    inline ConstIndexIterator operator * () const { return ConstIndexIterator(*this); } /* required for iterator */
-    inline void operator ++ () { ++currvalue; ++currindex; } /* this is enough for iterator */
-    inline const T &value () const { return *currvalue; }
-    inline int index () const { return currindex; }
-  };
-  inline ConstIndexIterator itemsIdx () const { return ConstIndexIterator(this); }
+  VARR_DEFINE_ITEMS_ITERATOR()
+  VARR_DEFINE_ITEMS_ITERATOR(const)
+  #undef VARR_DEFINE_ITEMS_ITERATOR
 };
