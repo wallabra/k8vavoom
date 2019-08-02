@@ -169,7 +169,7 @@ menudef AdvRenderOptions {
   }
 
   option bool {
-    title = "Smarted Stencil Clearing";
+    title = "Smarter Stencil Clearing";
     cvar = gl_smart_dirty_rects;
     help =
       "Use dirty rectangles to decide if we should clear stencil buffer."
