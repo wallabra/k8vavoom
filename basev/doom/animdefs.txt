@@ -1,4 +1,5 @@
 //  Animated textures
+/*
 Texture optional nukage1 vanilla tics 8
   pic nukage1
   pic nukage2
@@ -120,6 +121,7 @@ Texture optional dbrain1 vanilla tics 8
   pic dbrain2
   pic dbrain3
   pic dbrain4
+*/
 
 
 //  Switches available in Doom shareware
