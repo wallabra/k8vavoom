@@ -39,6 +39,14 @@ struct refdef_t {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+struct fakefloor_t {
+  sec_plane_t floorplane;
+  sec_plane_t ceilplane;
+  sec_params_t params;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 class VDecalAnim;
 
 struct decal_t {
@@ -159,9 +167,15 @@ float R_GetAspectRatio ();
 
 bool R_ModelNoSelfShadow (VName clsName);
 
-extern TArray<int> AllModelTextures;
+#ifdef SERVER
+// r_sky
+void R_InitSkyBoxes ();
+#endif
+
+bool IsSky (sec_plane_t *SPlane);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+extern TArray<int> AllModelTextures;
 extern int validcount; // defined in "sv_main.cpp"
 extern int validcountSZCache; // defined in "sv_main.cpp"

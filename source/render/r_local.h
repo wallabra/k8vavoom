@@ -106,13 +106,6 @@ struct sec_surface_t {
 };
 
 
-struct fakefloor_t {
-  sec_plane_t floorplane;
-  sec_plane_t ceilplane;
-  sec_params_t params;
-};
-
-
 struct skysurface_t : surface_t {
   TVec __verts[3]; // so we have 4 of 'em here
 };
@@ -886,9 +879,6 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-// r_sky
-void R_InitSkyBoxes ();
-
 // r_model
 void R_InitModels ();
 void R_FreeModels ();
@@ -923,14 +913,5 @@ extern vuint32 blocklightsr[VRenderLevel::LMapTraceInfo::GridSize*VRenderLevel::
 extern vuint32 blocklightsg[VRenderLevel::LMapTraceInfo::GridSize*VRenderLevel::LMapTraceInfo::GridSize];
 extern vuint32 blocklightsb[VRenderLevel::LMapTraceInfo::GridSize*VRenderLevel::LMapTraceInfo::GridSize];
 
-
-//==========================================================================
-//
-//  IsSky
-//
-//==========================================================================
-static inline bool IsSky (sec_plane_t *SPlane) {
-  return (SPlane->pic == skyflatnum || (SPlane->SkyBox && SPlane->SkyBox->eventSkyBoxGetAlways()));
-}
 
 #endif
