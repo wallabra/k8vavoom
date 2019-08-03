@@ -25,10 +25,6 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
-#include "sv_local.h"
-#ifdef CLIENT
-# include "cl_local.h"
-#endif
 
 
 static VCvarB r_bsp_loose_bbox_height("r_bsp_loose_bbox_height", false, "If `true`, the engine will try to calculate proper bbox heights.", CVAR_Archive);

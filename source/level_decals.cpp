@@ -25,10 +25,6 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
-#include "sv_local.h"
-#ifdef CLIENT
-# include "cl_local.h"
-#endif
 
 
 extern VCvarB r_decals_enabled;

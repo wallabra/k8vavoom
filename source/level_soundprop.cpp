@@ -26,9 +26,6 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "sv_local.h"
-#ifdef CLIENT
-# include "cl_local.h"
-#endif
 
 
 static VCvarB gm_compat_corpses_can_hear("gm_compat_corpses_can_hear", false, "Can corpses hear sound propagation?", CVAR_Archive);
