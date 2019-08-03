@@ -182,8 +182,11 @@ void VRenderLevelShared::BuildVisibleObjectsList () {
     }
 
     // skip things in subsectors that are not visible
+    /*
     const unsigned SubIdx = (unsigned)(ptrdiff_t)(ent->SubSector-Level->Subsectors);
     if (!(BspVisThing[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
+    */
+    if (!IsThingVisible(ent)) continue;
 
     if (!alphaDone) {
       if (!CalculateThingAlpha(ent, RendStyle, Alpha)) continue; // invisible

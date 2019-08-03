@@ -216,7 +216,7 @@ extern VCvarB compat_nopassover;
 
 //=============================================================================
 //
-//  VEntity::CreateSecNodeList
+//  VEntity::Destroy
 //
 //=============================================================================
 void VEntity::Destroy () {
@@ -233,11 +233,11 @@ void VEntity::Destroy () {
 //
 //  phares 3/14/98
 //
-//  Alters/creates the sector_list that shows what sectors the object resides in
+//  alters/creates the sector_list that shows what sectors the object
+//  resides in
 //
 //=============================================================================
 void VEntity::CreateSecNodeList () {
-  int xl, xh, yl, yh, bx, by;
   msecnode_t *Node;
 
   // first, clear out the existing Thing fields. as each node is
@@ -260,13 +260,13 @@ void VEntity::CreateSecNodeList () {
   //++validcount; // used to make sure we only process a line once
   XLevel->IncrementValidCount();
 
-  xl = MapBlock(tmbbox[BOX2D_LEFT]-XLevel->BlockMapOrgX);
-  xh = MapBlock(tmbbox[BOX2D_RIGHT]-XLevel->BlockMapOrgX);
-  yl = MapBlock(tmbbox[BOX2D_BOTTOM]-XLevel->BlockMapOrgY);
-  yh = MapBlock(tmbbox[BOX2D_TOP]-XLevel->BlockMapOrgY);
+  int xl = MapBlock(tmbbox[BOX2D_LEFT]-XLevel->BlockMapOrgX);
+  int xh = MapBlock(tmbbox[BOX2D_RIGHT]-XLevel->BlockMapOrgX);
+  int yl = MapBlock(tmbbox[BOX2D_BOTTOM]-XLevel->BlockMapOrgY);
+  int yh = MapBlock(tmbbox[BOX2D_TOP]-XLevel->BlockMapOrgY);
 
-  for (bx = xl; bx <= xh; ++bx) {
-    for (by = yl; by <= yh; ++by) {
+  for (int bx = xl; bx <= xh; ++bx) {
+    for (int by = yl; by <= yh; ++by) {
       line_t *ld;
       for (VBlockLinesIterator It(XLevel, bx, by, &ld); It.GetNext(); ) {
         // locates all the sectors the object is in by looking at the lines that cross through it.

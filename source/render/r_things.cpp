@@ -101,11 +101,14 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
 
   if (Pass == RPASS_Normal) {
     // skip things in subsectors that are not visible
+    /*
     const unsigned SubIdx = (unsigned)(ptrdiff_t)(mobj->SubSector-Level->Subsectors);
     if (!(BspVisThing[SubIdx>>3]&(1<<(SubIdx&7)))) return;
     // mark as visible, why not?
     // use bsp visibility, to not mark "adjacent" things
     //if (BspVis[SubIdx>>3]&(1<<(SubIdx&7))) mobj->FlagsEx |= VEntity::EFEX_Rendered;
+    */
+    if (!IsThingVisible(mobj)) return;
   }
 
   float Alpha = mobj->Alpha;

@@ -202,3 +202,32 @@ float PlaneAngles2DFlipTo (const TPlane *from, const TPlane *to) {
   float ato = VectorAngleYaw(-to->normal);
   return AngleMod(AngleMod(ato-afrom+180)-180);
 }
+
+
+//==========================================================================
+//
+//  IsCircleTouchBox2D
+//
+//==========================================================================
+static inline __attribute__((unused)) __attribute__((warn_unused_result))
+bool IsCircleTouchBox2D (const float cx, const float cy, float radius, const float bbox2d[4]) {
+  if (radius < 1.0f) return false;
+
+  const float bbwHalf = (bbox2d[BOX2D_RIGHT]+bbox2d[BOX2D_LEFT])*0.5f;
+  const float bbhHalf = (bbox2d[BOX2D_TOP]+bbox2d[BOX2D_BOTTOM])*0.5f;
+
+  // the distance between the center of the circle and the center of the box
+  // not a const, because we'll modify the variables later
+  float cdistx = fabsf(cx-(bbox2d[BOX2D_LEFT]+bbwHalf));
+  float cdisty = fabsf(cy-(bbox2d[BOX2D_BOTTOM]+bbhHalf));
+
+  // easy cases: either completely outside, or completely inside
+  if (cdistx > bbwHalf+radius || cdisty > bbhHalf+radius) return false;
+  if (cdistx <= bbwHalf || cdisty <= bbhHalf) return true;
+
+  // hard case: touching a corner
+  cdistx -= bbwHalf;
+  cdisty -= bbhHalf;
+  const float cdistsq = cdistx*cdistx+cdisty*cdisty;
+  return (cdistsq <= radius*radius);
+}
