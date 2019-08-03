@@ -1854,6 +1854,11 @@ void VRenderLevelShared::PrecacheLevel () {
     bool abortIt = false;
     int sprlimit = r_precache_max_sprites.asInt();
     if (sprlimit < 0) sprlimit = 0;
+    TArray<bool> txsaved;
+    if (sprlimit) {
+      txsaved.setLength(texturepresent.length());
+      for (int f = 0; f < texturepresent.length(); ++f) txsaved[f] = texturepresent[f];
+    }
     for (auto &&sfi : sprites) {
       if (sfi.numframes == 0) continue;
       const spriteframe_t *spf = sfi.spriteframes;
@@ -1865,16 +1870,22 @@ void VRenderLevelShared::PrecacheLevel () {
           if (!texturepresent[stid]) {
             texturepresent[stid] = true;
             ++sprtexcount;
-            if (sprlimit && sprtexcount >= sprlimit) {
-              GCon->Logf(NAME_Warning, "too many sprite textures, aborting at %d!", sprtexcount);
+            if (sprlimit && sprtexcount == sprlimit) {
+              //GCon->Logf(NAME_Warning, "too many sprite textures, aborting at %d!", sprtexcount);
               abortIt = true;
-              break;
+              //break;
             }
           }
         }
-        if (abortIt) break;
+        //if (abortIt) break;
       }
-      if (abortIt) break;
+      //if (abortIt) break;
+    }
+    if (abortIt) {
+      GCon->Logf(NAME_Warning, "too many sprite textures (%d), aborted at %d!", sprtexcount, sprlimit);
+      check(txsaved.length() == texturepresent.length());
+      for (int f = 0; f < texturepresent.length(); ++f) texturepresent[f] = txsaved[f];
+      sprtexcount = 0;
     }
     if (sprtexcount) GCon->Logf("found %d sprite textures", sprtexcount);
   }
