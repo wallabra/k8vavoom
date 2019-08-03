@@ -355,7 +355,7 @@ static void InitColorMaps () {
 //
 //  InstallSpriteLump
 //
-//  Local function for R_InitSprites.
+//  local function for R_InitSprites
 //
 //==========================================================================
 static void InstallSpriteLump (int lumpnr, int frame, char Rot, bool flipped) {
@@ -410,6 +410,75 @@ static void InstallSpriteLump (int lumpnr, int frame, char Rot, bool flipped) {
 }
 
 
+struct SpriteTexInfo {
+  int texid;
+  int next; // next id of texture with this 4-letter prefix, or 0
+};
+
+static TArray<SpriteTexInfo> spriteTextures;
+static TMap<vuint32, int> spriteTexMap; // key: 4 bytes of a name; value: index in spriteTextures
+static int spriteTexturesLengthCheck = -1;
+
+
+//==========================================================================
+//
+//  sprprefix2u32
+//
+//==========================================================================
+static vuint32 sprprefix2u32 (const char *name) {
+  if (!name || !name[0] || !name[1] || !name[2] || !name[3]) return 0;
+  vuint32 res = 0;
+  for (int f = 0; f < 4; ++f, ++name) {
+    vuint8 ch = (vuint8)name[0];
+    if (ch >= 'A' && ch <= 'Z') ch = ch-'A'+'a';
+    res = (res<<8)|ch;
+  }
+  return res;
+}
+
+
+//==========================================================================
+//
+//  BuildSpriteTexturesList
+//
+//==========================================================================
+static void BuildSpriteTexturesList () {
+  if (spriteTexturesLengthCheck == GTextureManager.GetNumTextures()) return;
+  spriteTexturesLengthCheck = GTextureManager.GetNumTextures();
+  spriteTextures.reset();
+  spriteTexMap.reset();
+
+  // scan the lumps, filling in the frames for whatever is found
+  for (int l = 0; l < GTextureManager.GetNumTextures(); ++l) {
+    if (GTextureManager[l]->Type == TEXTYPE_Sprite) {
+      const char *lumpname = *GTextureManager[l]->Name;
+      if (!lumpname[0] || !lumpname[1] || !lumpname[2] || !lumpname[3] || !lumpname[4] || !lumpname[5]) continue;
+      vuint32 pfx = sprprefix2u32(lumpname);
+      if (!pfx) continue;
+      // create new record
+      int cidx = spriteTextures.length();
+      SpriteTexInfo &sti = spriteTextures.alloc();
+      sti.texid = l;
+      sti.next = 0;
+      // append to list
+      auto pip = spriteTexMap.find(pfx);
+      if (pip) {
+        // append to the list
+        int last = *pip;
+        check(last >= 0 && last < spriteTextures.length()-1);
+        while (spriteTextures[last].next) last = spriteTextures[last].next;
+        check(last >= 0 && last < spriteTextures.length()-1);
+        check(spriteTextures[last].next == 0);
+        spriteTextures[last].next = cidx;
+      } else {
+        // list head
+        spriteTexMap.put(pfx, cidx);
+      }
+    }
+  }
+}
+
+
 //==========================================================================
 //
 //  R_InstallSprite
@@ -451,6 +520,7 @@ void R_InstallSprite (const char *name, int index) {
   }
 
   // scan the lumps, filling in the frames for whatever is found
+  /*
   for (int l = 0; l < GTextureManager.GetNumTextures(); ++l) {
     if (GTextureManager[l]->Type == TEXTYPE_Sprite) {
       const char *lumpname = *GTextureManager[l]->Name;
@@ -463,6 +533,35 @@ void R_InstallSprite (const char *name, int index) {
       }
     }
   }
+  */
+  vuint32 intpfx = sprprefix2u32(intname);
+  if (!intpfx) {
+    GCon->Logf(NAME_Warning, "trying to install sprite with invalid name '%s'!", intname);
+    sprites[index].numframes = 0;
+    return;
+  }
+
+  BuildSpriteTexturesList();
+  {
+    auto pip = spriteTexMap.find(intpfx);
+    if (pip) {
+      int slidx = *pip;
+      do {
+        int l = spriteTextures[slidx].texid;
+        slidx = spriteTextures[slidx].next;
+        check(GTextureManager[l]->Type == TEXTYPE_Sprite);
+        const char *lumpname = *GTextureManager[l]->Name;
+        if (lumpname[0] && lumpname[1] && lumpname[2] && lumpname[3] && lumpname[4] && lumpname[5]) {
+          if (memcmp(lumpname, intname, 4) == 0) {
+            InstallSpriteLump(l, VStr::ToUpper(lumpname[4])-'A', lumpname[5], false);
+            if (lumpname && strlen(lumpname) >= 6 && lumpname[6]) {
+              InstallSpriteLump(l, VStr::ToUpper(lumpname[6])-'A', lumpname[7], true);
+            }
+          }
+        }
+      } while (slidx != 0);
+    }
+  }
 
   // check the frames that were found for completeness
   if (maxframe == -1) {
@@ -471,6 +570,8 @@ void R_InstallSprite (const char *name, int index) {
   }
 
   ++maxframe;
+
+  //GCon->Logf(NAME_Init, "sprite '%s', maxframe=%d", intname, maxframe);
 
   for (int frame = 0; frame < maxframe; ++frame) {
     //fprintf(stderr, "  frame=%d; rot=%d (%u)\n", frame, (int)sprtemp[frame].rotate, *((unsigned char *)&sprtemp[frame].rotate));
