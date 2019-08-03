@@ -1022,10 +1022,13 @@ void VSoundManager::ProcessLoadedSounds () {
       continue;
     }
     mythread_mutex_unlock(&loaderLock);
+#ifdef CLIENT
     if (GAudio) {
       // this will call `DoneWithLump()`
       GAudio->NotifySoundLoaded(sound_id, hasData);
-    } else {
+    } else
+#endif
+    {
       if (hasData) DoneWithLump(sound_id);
     }
     // report errors
