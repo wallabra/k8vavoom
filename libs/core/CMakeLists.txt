@@ -1,3 +1,7 @@
+if(CMAKE_BUILD_TYPE MATCHES "Debug")
+  add_definitions(-DVAVOOM_DEBUG_BUILD=1)
+endif()
+
 add_library(core STATIC
   mimalloc/mimalloc.h
 

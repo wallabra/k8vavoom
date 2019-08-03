@@ -38,6 +38,11 @@ function(sxx_compile output filename)
 endfunction()
 
 
+if(CMAKE_BUILD_TYPE MATCHES "Debug")
+  add_definitions(-DVAVOOM_DEBUG_BUILD=1)
+endif()
+
+
 #---------------------------------------
 #
 # k8vavoom C compiler sources
