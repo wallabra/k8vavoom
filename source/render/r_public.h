@@ -39,6 +39,46 @@ struct refdef_t {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+class VDecalAnim;
+
+struct decal_t {
+  enum {
+    SlideFloor = 0x0001U, // curz: offset with floorz, slide with it
+    SlideCeil = 0x0002U, // curz: offset with ceilingz, slide with it
+    FlipX = 0x0010U,
+    FlipY = 0x0020U,
+    Fullbright = 0x0100U,
+    Fuzzy = 0x0200U,
+    SideDefOne = 0x0800U,
+    NoMidTex = 0x1000U, // don't render on middle texture
+    NoTopTex = 0x2000U, // don't render on top texture
+    NoBotTex = 0x4000U, // don't render on bottom texture
+  };
+  decal_t *next; // in this seg
+  seg_t *seg;
+  sector_t *slidesec; // backsector for SlideXXX
+  VName dectype;
+  //VName picname;
+  VTextureID texture;
+  int translation;
+  vuint32 flags;
+  // z and x positions has no image offset added
+  float orgz; // original z position
+  float curz; // z position (offset with floor/ceiling TexZ if not midtex, see `flags`)
+  float xdist; // offset from linedef start, in map units
+  float ofsX, ofsY; // for animators
+  float origScaleX, origScaleY; // for animators
+  float scaleX, scaleY; // actual
+  float origAlpha; // for animators
+  float alpha; // decal alpha
+  float addAlpha; // alpha for additive translucency (not supported yet)
+  VDecalAnim *animator; // decal animator (can be nullptr)
+  decal_t *prevanimated; // so we can skip static decals
+  decal_t *nextanimated; // so we can skip static decals
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 class VRenderLevelPublic : public VInterface {
 public: //k8: i am too lazy to write accessor methods
   bool staticLightsFiltered;
