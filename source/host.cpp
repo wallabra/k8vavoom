@@ -166,6 +166,7 @@ void Host_Init () {
   GCon->Log(NAME_Init, "---------------------------------------------------------------");
   GCon->Log(NAME_Init, "REMEMBER: BY USING FOSS SOFTWARE, YOU ARE SUPPORTING COMMUNISM!");
   GCon->Log(NAME_Init, "---------------------------------------------------------------");
+  GCon->Logf(NAME_Init, "Memory allocator: %s", Z_GetAllocatorType());
 
   if (GArgs.CheckParm("-vc-lax-override")) VMemberBase::optDeprecatedLaxOverride = true;
   if (GArgs.CheckParm("-vc-lax-states")) VMemberBase::optDeprecatedLaxStates = true;
