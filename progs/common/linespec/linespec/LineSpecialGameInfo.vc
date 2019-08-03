@@ -195,7 +195,7 @@ override void Init () {
 
   CreateCvar('r_particle_effects', "1", "Enable particle effects?", CVAR_ARCHIVE);
   CreateCvar('r_particle_puffs', "1", "Enable particle sparks?", CVAR_ARCHIVE);
-  CreateCvar('r_particle_blood', "1", "Enable particle blood?", CVAR_ARCHIVE);
+  CreateCvar('r_particle_blood', "0", "Enable particle blood?", CVAR_ARCHIVE);
   CreateCvar('r_particle_trails', "1", "Enable particle trails?", CVAR_ARCHIVE);
 
   CreateCvar('r_statusbar_draw', "1", "Draw statusbar?", CVAR_ARCHIVE);
