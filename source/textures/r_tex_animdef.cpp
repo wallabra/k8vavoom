@@ -300,8 +300,8 @@ static void FillLists () {
     ParseTXXLump(lastTX2Lump);
   }
 
-  GCon->Logf("%d flat%s found", flatnames.length(), (flatnames.length() != 1 ? "s" : ""));
-  GCon->Logf("%d texture list%s found, total %d texture%s", totalTxx, (totalTxx != 1 ? "s" : ""), txxnames.length(), (txxnames.length() != 1 ? "s" : ""));
+  GCon->Logf(NAME_Init, "%d flat%s found", flatnames.length(), (flatnames.length() != 1 ? "s" : ""));
+  GCon->Logf(NAME_Init, "%d texture list%s found, total %d texture%s", totalTxx, (totalTxx != 1 ? "s" : ""), txxnames.length(), (txxnames.length() != 1 ? "s" : ""));
 }
 
 

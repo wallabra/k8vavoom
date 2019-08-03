@@ -56,6 +56,10 @@ private:
 
   static bool cliInserted;
 
+protected:
+  static bool execLogInit;
+
+private:
   static void TokeniseString (const VStr &);
 
   static void rebuildCommandCache ();

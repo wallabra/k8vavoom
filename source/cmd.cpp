@@ -33,6 +33,8 @@
 
 VCmdBuf GCmdBuf;
 
+bool VCommand::execLogInit = true;
+
 bool VCommand::ParsingKeyConf;
 
 bool VCommand::Initialised = false;
@@ -634,6 +636,7 @@ void VCommand::ExecuteString (const VStr &Acmd, ECmdSource src, VBasePlayer *APl
         return;
       }
 #endif
+      execLogInit = false;
       cliInserted = true;
       InsertCLICommands();
     }
@@ -1031,12 +1034,12 @@ COMMAND(Echo) {
 
 //==========================================================================
 //
-//  Exec_f
+//  COMMAND Exec
 //
 //==========================================================================
 COMMAND(Exec) {
   if (Args.length() < 2 || Args.length() > 3) {
-    GCon->Log("Exec <filename> : execute script file");
+    GCon->Log((execLogInit ? NAME_Init : NAME_Log), "Exec <filename> : execute script file");
     return;
   }
 
@@ -1046,20 +1049,20 @@ COMMAND(Exec) {
   VStr dskname = Host_GetConfigDir()+"/"+Args[1];
   if (Sys_FileExists(dskname)) {
     Strm = FL_OpenSysFileRead(dskname);
-    if (Strm) GCon->Logf("Executing '%s'...", *dskname);
+    if (Strm) GCon->Logf((execLogInit ? NAME_Init : NAME_Log), "Executing '%s'...", *dskname);
   }
 
   // try wad file
   if (!Strm && FL_FileExists(Args[1])) {
     Strm = FL_OpenFileRead(Args[1]);
     if (Strm) {
-      GCon->Logf("Executing '%s'...", *Args[1]);
+      GCon->Logf((execLogInit ? NAME_Init : NAME_Log), "Executing '%s'...", *Args[1]);
       //GCon->Logf("<%s>", *Strm->GetName());
     }
   }
 
   if (!Strm) {
-    if (Args.length() == 2) GCon->Logf("Can't find '%s'...", *Args[1]);
+    if (Args.length() == 2) GCon->Logf(NAME_Warning, "Can't find '%s'...", *Args[1]);
     return;
   }
 
@@ -1073,7 +1076,7 @@ COMMAND(Exec) {
   if (Strm->IsError()) {
     delete Strm;
     delete[] buf;
-    GCon->Logf("Error reading '%s'!", *Args[1]);
+    GCon->Logf(NAME_Warning, "Error reading '%s'!", *Args[1]);
     return;
   }
   delete Strm;

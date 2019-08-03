@@ -209,7 +209,7 @@ void VNetwork::Init () {
     }
   }
 
-  if (*MyIpAddress) GCon->Logf(NAME_DevNet, "TCP/IP address %s", MyIpAddress);
+  if (developer && *MyIpAddress) GCon->Logf(NAME_DevNet, "TCP/IP address %s", MyIpAddress);
 }
 
 

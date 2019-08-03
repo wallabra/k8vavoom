@@ -231,3 +231,16 @@ bool IsCircleTouchBox2D (const float cx, const float cy, float radius, const flo
   const float cdistsq = cdistx*cdistx+cdisty*cdisty;
   return (cdistsq <= radius*radius);
 }
+
+
+//==========================================================================
+//
+//  size2human
+//
+//==========================================================================
+static inline __attribute__((unused)) __attribute__((warn_unused_result))
+VStr size2human (vuint32 size) {
+       if (size < 1024*1024) return va("%u%s KB", size/1024, (size%1024 >= 512 ? ".5" : ""));
+  else if (size < 1024*1024*1024) return va("%u%s MB", size/(1024*1024), (size%(1024*1024) >= 1024 ? ".5" : ""));
+  else return va("%u%s GB", size/(1024*1024*1024), (size%(1024*1024*1024) >= 1024*1024 ? ".5" : ""));
+}

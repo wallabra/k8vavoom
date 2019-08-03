@@ -233,6 +233,7 @@ void SV_Init () {
   if (GArgs.CheckParm("-dbg-dump-doomed")) VClass::StaticDumpMObjInfo();
   if (GArgs.CheckParm("-dbg-dump-scriptid")) VClass::StaticDumpScriptIds();
 
+  GCon->Logf(NAME_Init, "registering %d sprites...", VClass::GSpriteNames.length());
   for (int i = 0; i < VClass::GSpriteNames.Num(); ++i) R_InstallSprite(*VClass::GSpriteNames[i], i);
 
   ServerNetContext = new VServerNetContext();

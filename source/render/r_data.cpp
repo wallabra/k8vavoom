@@ -211,10 +211,8 @@ static void InitPalette () {
 //
 //==========================================================================
 static void InitRgbTable () {
-  VStr rtblsize;
-       if (sizeof(r_rgbtable) < 1024*1024) rtblsize = va("%u KB", (unsigned)(sizeof(r_rgbtable)/1024));
-  else rtblsize = va("%u MB", (unsigned)(sizeof(r_rgbtable)/1024/1024));
-  GCon->Logf(NAME_Init, "building color translation table (%d, %s)...", VAVOOM_COLOR_COMPONENT_MAX, *rtblsize);
+  VStr rtblsize = size2human((unsigned)sizeof(r_rgbtable));
+  GCon->Logf(NAME_Init, "building color translation table (%d bits, %d items per color, %s)...", VAVOOM_COLOR_COMPONENT_BITS, VAVOOM_COLOR_COMPONENT_MAX, *rtblsize);
   memset(r_rgbtable, 0, sizeof(r_rgbtable));
   for (int ir = 0; ir < VAVOOM_COLOR_COMPONENT_MAX; ++ir) {
     for (int ig = 0; ig < VAVOOM_COLOR_COMPONENT_MAX; ++ig) {
@@ -253,6 +251,7 @@ static void InitRgbTable () {
 //
 //==========================================================================
 static void InitTranslationTables () {
+  GCon->Log(NAME_Init, "building texture translations tables...");
   {
     VStream *lumpstream = W_CreateLumpReaderName(NAME_translat);
     VCheckedStream Strm(lumpstream);
@@ -295,6 +294,8 @@ static void InitTranslationTables () {
 //
 //==========================================================================
 static void InitColorMaps () {
+  GCon->Log(NAME_Init, "building colormaps...");
+
   // calculate inverse colormap
   VTextureTranslation *T = &ColorMaps[CM_Inverse];
   T->Table[0] = 0;
