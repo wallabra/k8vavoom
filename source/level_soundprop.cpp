@@ -24,7 +24,17 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-// included from level.cpp
+#include "gamedefs.h"
+#include "sv_local.h"
+#ifdef CLIENT
+# include "cl_local.h"
+#endif
+#include "render/r_local.h" // for decals
+
+
+static VCvarB gm_compat_corpses_can_hear("gm_compat_corpses_can_hear", false, "Can corpses hear sound propagation?", CVAR_Archive);
+static VCvarB gm_compat_everything_can_hear("gm_compat_everything_can_hear", false, "Can everything hear sound propagation?", CVAR_Archive);
+static VCvarF gm_compat_max_hearing_distance("gm_compat_max_hearing_distance", "0", "Maximum hearing distance (0 means unlimited)?", CVAR_Archive);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

@@ -24,7 +24,20 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-// included from level.cpp
+#include "gamedefs.h"
+#include "sv_local.h"
+#ifdef CLIENT
+# include "cl_local.h"
+#endif
+#include "render/r_local.h" // for decals
+
+extern VCvarB r_decals_enabled;
+
+static VCvarI r_decal_onetype_max("r_decal_onetype_max", "128", "Maximum decals of one decaltype on a wall segment.", CVAR_Archive);
+static VCvarI r_decal_gore_onetype_max("r_decal_gore_onetype_max", "8", "Maximum decals of one decaltype on a wall segment for Gore Mod.", CVAR_Archive);
+
+//#define VAVOOM_DECALS_DEBUG_REPLACE_PICTURE
+//#define VAVOOM_DECALS_DEBUG
 
 
 //==========================================================================

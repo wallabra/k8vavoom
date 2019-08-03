@@ -27,45 +27,18 @@
 #include "gamedefs.h"
 #include "sv_local.h"
 #ifdef CLIENT
-#include "cl_local.h"
+# include "cl_local.h"
 #endif
 #include "render/r_local.h" // for decals
 
-//#define VAVOOM_DECALS_DEBUG_REPLACE_PICTURE
-//#define VAVOOM_DECALS_DEBUG
-
-extern VCvarB r_decals_enabled;
 
 IMPLEMENT_CLASS(V, Level);
 
 VLevel *GLevel;
 VLevel *GClLevel;
 
-static VCvarI r_decal_onetype_max("r_decal_onetype_max", "128", "Maximum decals of one decaltype on a wall segment.", CVAR_Archive);
-static VCvarI r_decal_gore_onetype_max("r_decal_gore_onetype_max", "8", "Maximum decals of one decaltype on a wall segment for Gore Mod.", CVAR_Archive);
-
-static VCvarB gm_compat_corpses_can_hear("gm_compat_corpses_can_hear", false, "Can corpses hear sound propagation?", CVAR_Archive);
-static VCvarB gm_compat_everything_can_hear("gm_compat_everything_can_hear", false, "Can everything hear sound propagation?", CVAR_Archive);
-static VCvarF gm_compat_max_hearing_distance("gm_compat_max_hearing_distance", "0", "Maximum hearing distance (0 means unlimited)?", CVAR_Archive);
-
-static VCvarB r_bsp_loose_bbox_height("r_bsp_loose_bbox_height", false, "If `true`, the engine will try to calculate proper bbox heights.", CVAR_Archive);
-static int lastLooseBBoxHeight = -1; // unknown yet
-
-
 opening_t *VLevel::openListHead = nullptr;
 opening_t *VLevel::openListFree = nullptr;
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-#include "level_dbgexport.cpp"
-#include "level_saveio.cpp"
-#include "level_soundprop.cpp"
-#include "level_decals.cpp"
-#include "level_secnode.cpp"
-#include "level_3dcoldet.cpp"
-#include "level_calclineseg.cpp"
-#include "level_3dfloors.cpp"
-#include "level_nodebbox.cpp"
 
 
 //==========================================================================

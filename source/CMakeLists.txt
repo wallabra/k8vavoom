@@ -305,6 +305,21 @@ set(FILESYS_SOURCES
 )
 
 
+set(VLEVEL_CLASS_SOURCES
+  level.h
+  level.cpp
+  level_3dcoldet.cpp
+  level_3dfloors.cpp
+  level_calclineseg.cpp
+  level_dbgexport.cpp
+  level_decals.cpp
+  level_nodebbox.cpp
+  level_saveio.cpp
+  level_secnode.cpp
+  level_soundprop.cpp
+)
+
+
 #---------------------------------------
 #
 # Main executable sources
@@ -349,8 +364,7 @@ set(MAIN_COMMON_SOURCES
   #l_glvis.cpp
   language.cpp
   language.h
-  level.cpp
-  level.h
+  ${VLEVEL_CLASS_SOURCES}
   lockdefs.cpp
   lockdefs.h
   mapinfo.cpp
@@ -480,7 +494,7 @@ set(SERVER_COMMON_SOURCES
   host.cpp
   infostr.cpp
   language.cpp
-  level.cpp
+  ${VLEVEL_CLASS_SOURCES}
   lockdefs.cpp
   mapinfo.cpp
   misc.cpp

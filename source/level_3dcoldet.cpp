@@ -24,7 +24,12 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-// included from level.cpp
+#include "gamedefs.h"
+#include "sv_local.h"
+#ifdef CLIENT
+# include "cl_local.h"
+#endif
+#include "render/r_local.h" // for decals
 
 
 //==========================================================================
