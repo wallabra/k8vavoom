@@ -25,6 +25,7 @@
 //**
 //**************************************************************************
 #include "gl_local.h"
+// for `blocklightsr`, `blocklightsg`, `blocklightsb`
 #include "render/r_local.h"
 
 

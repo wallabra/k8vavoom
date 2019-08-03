@@ -25,7 +25,7 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
-#include "render/r_local.h"
+
 
 extern VCvarB r_decals_enabled;
 

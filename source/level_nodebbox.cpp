@@ -29,7 +29,6 @@
 #ifdef CLIENT
 # include "cl_local.h"
 #endif
-#include "render/r_local.h" // for decals
 
 
 static VCvarB r_bsp_loose_bbox_height("r_bsp_loose_bbox_height", false, "If `true`, the engine will try to calculate proper bbox heights.", CVAR_Archive);

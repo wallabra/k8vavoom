@@ -26,7 +26,6 @@
 #include "gamedefs.h"
 #include "net/network.h"
 #include "sv_local.h"
-#include "render/r_local.h"
 
 
 // ////////////////////////////////////////////////////////////////////////// //

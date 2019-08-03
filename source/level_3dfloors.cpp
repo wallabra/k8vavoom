@@ -29,7 +29,6 @@
 #ifdef CLIENT
 # include "cl_local.h"
 #endif
-#include "render/r_local.h" // for decals
 
 
 //==========================================================================

@@ -30,9 +30,6 @@
 #include "ui/ui.h"
 #include "neoui/neoui.h"
 #include <time.h>
-#ifdef SERVER
-# include "render/r_local.h"
-#endif
 
 #include "cvar.h"
 

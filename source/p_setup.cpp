@@ -52,11 +52,10 @@ static inline vuint32 GetTypeHash (const VectorInfo &vi) { return joaatHashBuf(v
 // ////////////////////////////////////////////////////////////////////////// //
 #include "gamedefs.h"
 #ifdef SERVER
-#include "sv_local.h"
+# include "sv_local.h"
 #endif
 
 #include "drawer.h"
-#include "render/r_local.h"
 
 
 static VCvarB dbg_deep_water("dbg_deep_water", false, "Show debug messages in Deep Water processor?", CVAR_PreInit/*|CVAR_Archive*/);

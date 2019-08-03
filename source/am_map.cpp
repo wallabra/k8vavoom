@@ -33,7 +33,7 @@
 #include "drawer.h"
 #ifdef CLIENT
 # include "neoui/neoui.h"
-# include "render/r_local.h"
+# include "render/r_local.h" /*FIXME: sorry, i have to do this for textured automap*/
 #endif
 
 // there is no need to do this anymore: OpenGL will do it for us
