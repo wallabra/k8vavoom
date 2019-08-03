@@ -771,8 +771,8 @@ final void SpawnFly (class!EntityEx SpawnType, name SpawnSound) {
     if (newmobj.SeeState && newmobj.LookForPlayers(true)) newmobj.SetState(newmobj.SeeState);
     // telefrag anything in this spot
     if (!newmobj.IsDestroyed()) {
-      //newmobj.bTelestomp = true;
-      newmobj.TeleportMove(newmobj.Origin, ForceTelestomp:true);
+      newmobj.bTelestomp = true;
+      newmobj.TeleportMove(newmobj.Origin/*, ForceTelestomp:true*/);
     }
   }
 
