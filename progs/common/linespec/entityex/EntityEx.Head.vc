@@ -506,10 +506,10 @@ float CameraHeight;
 class!Actor BloodType;
 class!Actor BloodSplatterType;
 class!Actor AxeBloodType;
-int BloodColor;
-int BloodTranslation;
+int BloodColor; // used for particle effects
+int BloodTranslation; // forced onto blood actors and decals
 bool bBloodDisableSplats; // has sense only for blood actors
-bool bCopyBloodTranslation;
+bool bCopyBloodTranslation; // set in decorate with "+CopyBloodTranslation", used in blood actors to force-copy their translation (blood color)
 
 array!DropItemInfo DropItemList;
 

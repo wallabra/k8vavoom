@@ -521,9 +521,6 @@ final void TraceBleed (int damage, TVec pos, float angle, float pitch, bool radi
 //
 //==========================================================================
 final void SpawnBlood (TVec Org, int damage, optional TVec shootOrg, optional float zofs) {
-  EntityEx A;
-  int i, c;
-
   if (!IsBloodAllowed()) return;
 
   // keep z, but set x and y to our coords
@@ -544,21 +541,33 @@ final void SpawnBlood (TVec Org, int damage, optional TVec shootOrg, optional fl
   if (!specified_zofs) zofs = (Random()-Random())*4.0;
   BloodAddZClamped(Org, zofs, (BloodType ? BloodType.default.Height : 0));
   damage = (damage > 255 ? 255 : damage);
-  c = P_Random()>>1;
-  for (i = 0; i < MAXPLAYERS; ++i) {
-    if (!Level.Game.Players[i]) continue;
-    if (!Level.Game.Players[i].bSpawned) continue;
-    if (GetCvarB('r_particle_blood')) {
+
+  bool spawnParticles = GetCvarB('r_particle_blood');
+  if (spawnParticles) {
+    int c = P_Random()>>1;
+    if (BloodColor) {
+      c = -7+(c>>3);
+      int r = clamp(((BloodColor>>16)&0xff)+c, 0, 255);
+      int g = clamp(((BloodColor>>8)&0xff)+c, 0, 255);
+      int b = clamp((BloodColor&0xff)+c, 0, 255);
+      c = RGB(r, g, b);
+      //print("BloodColor=0x%08x; c=0x%08x", BloodColor, c);
+    } else {
+      c = RGB(32+c, c>>4, c>>4);
+    }
+    foreach (int i; 0..MAXPLAYERS) {
+      if (!Level.Game.Players[i]) continue;
+      if (!Level.Game.Players[i].bSpawned) continue;
       PlayerEx(Level.Game.Players[i]).ParticleEffect(damage,
         LineSpecialLevelInfo::pt_static, 0, Org, 0.0,
         vector(32.0, 32.0, 32.0), 0.5, 10.0, 40.0,
-        BloodColor ? BloodColor : RGB(32+c, c>>4, c>>4), 0.6, 0.0);
+        c/*color*/, 0.6, 0.0);
     }
   }
 
   if (!BloodType) return;
 
-  A = Spawn(BloodType, Org);
+  EntityEx A = Spawn(BloodType, Org);
   if (!A) return; // oops
   A.CopyBloodTranslations(self, copyNormalTranslation:true);
   //print("spawned blood `%C` for `%C` (bt=%s; A.bDontTranslate=%B; a.t=%s; a.bt=%s)", A, self, BloodTranslation, A.bDontTranslate, A.Translation, A.BloodTranslation);
