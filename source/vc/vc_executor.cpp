@@ -61,8 +61,9 @@
 #define STACK_ID  (0x45f6cd4b)
 
 #define CHECK_STACK_OVERFLOW
+#define CHECK_STACK_OVERFLOW_RT
 #define CHECK_STACK_UNDERFLOW
-#define CHECK_FOR_EMPTY_STACK
+//#define CHECK_FOR_EMPTY_STACK
 
 #define CHECK_FOR_INF_NAN_DIV
 
@@ -89,37 +90,13 @@ static unsigned breakCheckCount = 0;
 volatile unsigned vmAbortBySignal = 0;
 VStack *pr_stackPtr;
 
-static VMethod *current_func = nullptr;
-static VStack pr_stack[MAX_PROG_STACK];
+//static VMethod *current_func = nullptr;
+static VStack pr_stack[MAX_PROG_STACK+16384];
 
 struct VCSlice {
   vuint8 *ptr; // it is easier to index this way
   vint32 length;
 };
-
-
-//==========================================================================
-//
-//  PR_Init
-//
-//==========================================================================
-void PR_Init () {
-  // set stack ID for overflow / underflow checks
-  pr_stack[0].i = STACK_ID;
-  pr_stack[MAX_PROG_STACK-1].i = STACK_ID;
-  pr_stackPtr = pr_stack+1;
-}
-
-
-//==========================================================================
-//
-//  PR_OnAbort
-//
-//==========================================================================
-void PR_OnAbort () {
-  current_func = nullptr;
-  pr_stackPtr = pr_stack+1;
-}
 
 
 //==========================================================================
@@ -230,6 +207,35 @@ static void cstDump (const vuint8 *ip, bool toStdErr=false) {
   } else {
     GLog.Logf(NAME_Error, "=============================");
   }
+}
+
+
+//==========================================================================
+//
+//  PR_Init
+//
+//==========================================================================
+void PR_Init () {
+  // set stack ID for overflow / underflow checks
+  pr_stack[0].i = STACK_ID;
+  pr_stack[MAX_PROG_STACK-1].i = STACK_ID;
+  pr_stackPtr = pr_stack+1;
+
+  cstSize = 16384;
+  callStack = (CallStackItem *)Z_Realloc(callStack, sizeof(callStack[0])*cstSize);
+  cstUsed = 0;
+}
+
+
+//==========================================================================
+//
+//  PR_OnAbort
+//
+//==========================================================================
+void PR_OnAbort () {
+  //current_func = nullptr;
+  pr_stackPtr = pr_stack+1;
+  cstUsed = 0;
 }
 
 
@@ -503,29 +509,29 @@ static void RunFunction (VMethod *func) {
   float ftemp;
   vint32 itemp;
 
-  current_func = func;
+  //current_func = func;
 
   if (!func) { cstDump(nullptr); Sys_Error("Trying to execute null function"); }
 
-  ++(current_func->Profile1);
-  ++(current_func->Profile2);
+  ++(func->Profile1);
+  ++(func->Profile2);
 
   //fprintf(stderr, "FN(%d): <%s>\n", cstUsed, *func->GetFullName());
 
   if (func->Flags&FUNC_Net) {
     VStack *Params = pr_stackPtr-func->ParamsSize;
-    //if (!(current_func->Flags&FUNC_Native)) ++(current_func->Profile2);
+    //if (!(func->Flags&FUNC_Native)) ++(func->Profile2);
     if (((VObject *)Params[0].p)->ExecuteNetMethod(func)) return;
   }
 
   if (func->Flags&FUNC_Native) {
     // native function, first statement is pointer to function
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-    if (developer) cstPush(func);
+    /*if (developer)*/ cstPush(func);
 #endif
     func->NativeFunc();
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-    if (developer) cstPop();
+    /*if (developer)*/ cstPop();
 #endif
     return;
   }
@@ -573,11 +579,18 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Call)
+        //GCon->Logf("*** (%s) *** (callStack=%p; sp=%p; sptop=%p; cstUsed=%u)", *((VMethod *)ReadPtr(ip+1))->GetFullName(), callStack, sp, pr_stack, cstUsed);
+        #ifdef CHECK_STACK_OVERFLOW_RT
+        if (sp >= &pr_stack[MAX_PROG_STACK-4]) {
+          cstDump(ip);
+          Sys_Error("ExecuteFunction: Stack overflow in `%s`", *func->GetFullName());
+        }
+        #endif
         pr_stackPtr = sp;
         cstFixTopIPSP(ip);
         //cstDump(ip);
         RunFunction((VMethod *)ReadPtr(ip+1));
-        current_func = func;
+        //current_func = func;
         ip += 1+sizeof(void *);
         sp = pr_stackPtr;
         PR_VM_BREAK;
@@ -608,7 +621,7 @@ func_loop:
         cstFixTopIPSP(ip);
         RunFunction(((VObject *)sp[-ip[3]].p)->GetVFunctionIdx(ReadInt16(ip+1)));
         ip += 4;
-        current_func = func;
+        //current_func = func;
         sp = pr_stackPtr;
         PR_VM_BREAK;
 
@@ -618,7 +631,7 @@ func_loop:
         cstFixTopIPSP(ip);
         RunFunction(((VObject *)sp[-ip[2]].p)->GetVFunctionIdx(ip[1]));
         ip += 3;
-        current_func = func;
+        //current_func = func;
         sp = pr_stackPtr;
         PR_VM_BREAK;
 
@@ -636,7 +649,7 @@ func_loop:
           RunFunction((VMethod *)pDelegate[1]);
         }
         ip += 6;
-        current_func = func;
+        //current_func = func;
         sp = pr_stackPtr;
         PR_VM_BREAK;
 
@@ -654,7 +667,7 @@ func_loop:
           RunFunction((VMethod *)pDelegate[1]);
         }
         ip += 4;
-        current_func = func;
+        //current_func = func;
         sp = pr_stackPtr;
         PR_VM_BREAK;
 
@@ -677,7 +690,7 @@ func_loop:
           cstFixTopIPSP(ip);
           RunFunction((VMethod *)pDelegate[1]);
         }
-        current_func = func;
+        //current_func = func;
         sp = pr_stackPtr;
         PR_VM_BREAK;
 
@@ -2529,7 +2542,7 @@ func_loop:
                 cstFixTopIPSP(ip);
                 if (!A.Sort(Type, dgself, dgfunc)) { cstDump(origip); Sys_Error("Internal error in array sorter"); }
               }
-              current_func = func;
+              //current_func = func;
               sp = pr_stackPtr;
               //fprintf(stderr, "sp=%p\n", sp);
               sp -= 3;
@@ -3067,7 +3080,7 @@ VFuncRes VObject::ExecuteFunction (VMethod *func) {
 
   // run function
   {
-    CurrFuncHolder cfholder(&current_func, func);
+    //CurrFuncHolder cfholder(&current_func, func);
 #ifdef VMEXEC_RUNDUMP
     enterIndent(); printIndent(); fprintf(stderr, "***ENTERING `%s` (RETx); sp=%d (max2:%u)\n", *func->GetFullName(), (int)(pr_stackPtr-pr_stack), (unsigned)MAX_PROG_STACK);
 #endif
