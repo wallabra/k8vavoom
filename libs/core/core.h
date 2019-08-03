@@ -27,7 +27,9 @@
 #ifndef VAVOOM_CORE_HEADER
 #define VAVOOM_CORE_HEADER
 
-#define VAVOOM_USE_MIMALLOC
+#ifndef VAVOOM_DEBUG_BUILD
+# define VAVOOM_USE_MIMALLOC
+#endif
 
 // define this to activate zone allocator counters
 //#define VAVOOM_CORE_COUNT_ALLOCS
