@@ -239,6 +239,7 @@ string lastMapHash;
 
 
 // cached cvars
+transient bool bot_disable_ai;
 transient bool bot_ignore_humans;
 transient bool bot_developer_messages_roam;
 transient bool bot_developer_messages_checkpos;
@@ -259,6 +260,7 @@ transient bool bot_always_headshots;
 //
 //==========================================================================
 final void UpdateCvarCache () {
+  bot_disable_ai = GetCvarB('bot_disable_ai');
   bot_ignore_humans = GetCvarB('bot_ignore_humans');
   bot_developer_messages_roam = GetCvarB('bot_developer_messages_roam');
   bot_developer_messages_checkpos = GetCvarB('bot_developer_messages_checkpos');
@@ -2574,6 +2576,8 @@ void BotTick (float deltaTime) {
     player.Buttons |= BT_USE;
     return;
   }
+
+  if (bot_disable_ai) return;
 
   lastThinkTic = currTic;
 
