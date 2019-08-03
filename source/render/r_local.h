@@ -442,10 +442,13 @@ protected:
   // entity must not be `nullptr`, and must have `SubSector` set
   inline bool IsThingVisible (VEntity *ent) const {
     const unsigned SubIdx = (unsigned)(ptrdiff_t)(ent->SubSector-Level->Subsectors);
+    return !!(BspVisThing[SubIdx>>3]&(1u<<(SubIdx&7)));
+    /*
     if (!(BspVisThing[SubIdx>>3]&(1u<<(SubIdx&7)))) return false;
     // if it is not in a visible level part, check render radius
     if (BspVis[SubIdx>>3]&(1u<<(SubIdx&7))) return true;
     return IsCircleTouchBox2D(ent->Origin.x, ent->Origin.y, ent->Radius, ent->SubSector->bbox2d);
+    */
   }
 
 public:
