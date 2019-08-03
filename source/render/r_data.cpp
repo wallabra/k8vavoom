@@ -481,6 +481,18 @@ static void BuildSpriteTexturesList () {
 
 //==========================================================================
 //
+//  R_InstallSpriteComplete
+//
+//==========================================================================
+void R_InstallSpriteComplete () {
+  spriteTexturesLengthCheck = -1;
+  spriteTextures.clear();
+  spriteTexMap.clear();
+}
+
+
+//==========================================================================
+//
 //  R_InstallSprite
 //
 //  Builds the sprite rotation matrixes to account for horizontally flipped

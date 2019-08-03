@@ -408,6 +408,9 @@ native static final void R_DrawPicPartEx (int x, int y, float tx0, float ty0, fl
 native static final void R_DrawPicFloatPartEx (float x, float y, float tx0, float ty0, float tx1, float ty1, int handle, optional float alpha);
 // installs a sprite model
 native static final void R_InstallSprite (string Name, int index);
+// call this to free temporary memory allocated by `R_InstallSprite()`
+// it is not a bug to not call this, tho
+native static final void R_InstallSpriteComplete ();
 // draws a sprite
 native static final void R_DrawSpritePatch (float x, float y, int sprite,
   optional int frame, optional int rot, optional int TranslStart, optional int TranslEnd,

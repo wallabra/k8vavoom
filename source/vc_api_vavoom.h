@@ -79,6 +79,7 @@
   DECLARE_FUNCTION(R_DrawPicPartEx)
   DECLARE_FUNCTION(R_DrawPicFloatPartEx)
   DECLARE_FUNCTION(R_InstallSprite)
+  DECLARE_FUNCTION(R_InstallSpriteComplete)
   DECLARE_FUNCTION(R_DrawSpritePatch)
   DECLARE_FUNCTION(InstallModel)
   DECLARE_FUNCTION(R_DrawModelFrame)

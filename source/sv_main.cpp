@@ -235,6 +235,7 @@ void SV_Init () {
 
   GCon->Logf(NAME_Init, "registering %d sprites...", VClass::GSpriteNames.length());
   for (int i = 0; i < VClass::GSpriteNames.Num(); ++i) R_InstallSprite(*VClass::GSpriteNames[i], i);
+  R_InstallSpriteComplete(); // why not?
 
   ServerNetContext = new VServerNetContext();
 

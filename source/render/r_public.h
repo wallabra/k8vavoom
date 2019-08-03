@@ -134,6 +134,7 @@ public:
 void R_InitData ();
 void R_ShutdownData ();
 void R_InstallSprite (const char *, int);
+void R_InstallSpriteComplete ();
 bool R_AreSpritesPresent (int);
 int R_ParseDecorateTranslation (VScriptParser *, int);
 int R_GetBloodTranslation (int);

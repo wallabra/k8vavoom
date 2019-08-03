@@ -78,6 +78,7 @@ override void CreateChoices () {
   foreach (auto idx, const ref auto pcl; PClasses) {
     R_InstallSprite(pcl.sprite, idx+500);
   }
+  R_InstallSpriteComplete();
 
 
   PlayerName = MenuInputLine(NewChild(MenuInputLine));
