@@ -93,6 +93,38 @@ static bool isDecalsOverlap (VDecalDef *dec, float dcx0, float dcy0, decal_t *cu
 
 //==========================================================================
 //
+//  calcDecalSide
+//
+//==========================================================================
+static int calcDecalSide (const line_t *li, const sector_t *fsec, const sector_t *bsec, const line_t *nline, int origside, int lvnum) {
+  // find out correct side
+  if (nline->frontsector == fsec || nline->backsector == bsec) return 0;
+  if (nline->backsector == fsec || nline->frontsector == bsec) return 1;
+  // try to find out the side by using decal spawn point, and current side direction
+  // move back a little
+  TVec xdir = li->normal;
+  if (origside) xdir = -xdir;
+  //TVec norg = ((*li->v1)+(*li->v2))*0.5f; // line center
+  TVec norg = (lvnum == 0 ? *li->v1 : *li->v2);
+  norg += xdir*1024;
+  int nside = nline->PointOnSide(norg);
+  VDC_DLOG("  (0)nline=%d, detected side %d", (int)(ptrdiff_t)(nline-GLevel->Lines), nside);
+  if (li->sidenum[nside] < 0) {
+    nside ^= 1;
+    if (li->sidenum[nside] < 0) return -1; // wuta?
+  }
+  VDC_DLOG("  (0)nline=%d, choosen side %d", (int)(ptrdiff_t)(nline-GLevel->Lines), nside);
+  /*
+  VDC_DLOG("  nline=%d, cannot detect side", (int)(ptrdiff_t)(nline-GLevel->Lines));
+  //nside = origside;
+  continue;
+  */
+  return nside;
+}
+
+
+//==========================================================================
+//
 //  VLevel::AddAnimatedDecal
 //
 //==========================================================================
@@ -467,29 +499,8 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
     for (int ngbCount = li->v1linesCount; ngbCount--; ++ngb) {
       line_t *nline = *ngb;
       // find out correct side
-      int nside =
-        (nline->frontsector == fsec || nline->backsector == bsec) ? 0 :
-        (nline->backsector == fsec || nline->frontsector == bsec) ? 1 :
-        -1;
-      if (nside == -1) {
-        // try to find out the side by using decal spawn point, and current side direction
-        // move back a little
-        TVec xdir = li->normal;
-        if (side) xdir = -xdir;
-        TVec norg = (*li->v1)+xdir*1024;
-        nside = nline->PointOnSide(norg);
-        VDC_DLOG("  (0)nline=%d, detected side %d", (int)(ptrdiff_t)(nline-Lines), nside);
-        if (li->sidenum[nside] < 0) {
-          if (nside == 0 || li->sidenum[nside^1] < 0) continue; // wuta?
-          nside ^= 1;
-        }
-        VDC_DLOG("  (0)nline=%d, choosen side %d", (int)(ptrdiff_t)(nline-Lines), nside);
-        /*
-        VDC_DLOG("  nline=%d, cannot detect side", (int)(ptrdiff_t)(nline-Lines));
-        //nside = side;
-        continue;
-        */
-      }
+      int nside = calcDecalSide(li, fsec, bsec, nline, side, 0);
+      if (nside < 0) continue;
       if (li->v1 == nline->v2) {
         VDC_DLOG("  v1 at nv2 (%d) (ok)", (int)(ptrdiff_t)(nline-Lines));
         PutDecalAtLine(tex, orgz, ((*nline->v2)-(*nline->v1)).length2D()+dstxofs, dec, nside, nline, flips, translation);
@@ -507,29 +518,8 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
     for (int ngbCount = li->v2linesCount; ngbCount--; ++ngb) {
       line_t *nline = *ngb;
       // find out correct side
-      int nside =
-        (nline->frontsector == fsec || nline->backsector == bsec) ? 0 :
-        (nline->backsector == fsec || nline->frontsector == bsec) ? 1 :
-        -1;
-      if (nside == -1) {
-        // try to find out the side by using decal spawn point, and current side direction
-        // move back a little
-        TVec xdir = li->normal;
-        if (side) xdir = -xdir;
-        TVec norg = (*li->v2)+xdir*1024;
-        nside = nline->PointOnSide(norg);
-        VDC_DLOG("  (1)nline=%d, detected side %d", (int)(ptrdiff_t)(nline-Lines), nside);
-        if (li->sidenum[nside] < 0) {
-          if (nside == 0 || li->sidenum[nside^1] < 0) continue; // wuta?
-          nside ^= 1;
-        }
-        VDC_DLOG("  (1)nline=%d, choosen side %d", (int)(ptrdiff_t)(nline-Lines), nside);
-        /*
-        VDC_DLOG("  nline=%d, cannot detect side", (int)(ptrdiff_t)(nline-Lines));
-        //nside = side;
-        continue;
-        */
-      }
+      int nside = calcDecalSide(li, fsec, bsec, nline, side, 1);
+      if (nside < 0) continue;
       if (li->v2 == nline->v1) {
         VDC_DLOG("  v2 at nv1 (%d) (ok)", (int)(ptrdiff_t)(nline-Lines));
         PutDecalAtLine(tex, orgz, dstxofs-linelen, dec, nside, nline, flips, translation);
