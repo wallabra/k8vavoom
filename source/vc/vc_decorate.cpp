@@ -1663,6 +1663,9 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
   bool optionalActor = false;
   auto cstloc = sc->GetLoc();
 
+  bool bloodTranslationSet = false;
+  vuint32 bloodColor = 0;
+
   // parse actor name
   // in order to allow dots in actor names, this is done in non-C mode,
   // so we have to do a little bit more complex parsing
@@ -2155,17 +2158,15 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             P.Field->SetInt(DefObj, R_ParseDecorateTranslation(sc, (GameFilter&GAME_Strife ? 7 : 3)));
             break;
           case PROP_BloodColor:
-            {
-              vuint32 Col = sc->ExpectColor();
-              P.Field->SetInt(DefObj, Col);
-              P.Field2->SetInt(DefObj, R_GetBloodTranslation(Col));
-              //GCon->Logf(NAME_Init, "*** BLOOD COLOR FOR `%s`", *Class->GetFullName());
-            }
+            bloodColor = sc->ExpectColor();
+            P.Field->SetInt(DefObj, bloodColor);
+            if (!bloodTranslationSet) P.Field2->SetInt(DefObj, R_GetBloodTranslation(bloodColor));
             break;
           case PROP_BloodTranslation:
-            P.Field->SetInt(DefObj, 0); // clear color
+            bloodTranslationSet = true;
+            //k8: don't clear color, so we could be able to set it separately
+            //P.Field->SetInt(DefObj, 0); // clear color
             P.Field2->SetInt(DefObj, R_ParseDecorateTranslation(sc, (GameFilter&GAME_Strife ? 7 : 3))); // set translation
-            //GCon->Logf(NAME_Init, "*** BLOOD TRANSLATION FOR `%s`", *Class->GetFullName());
             break;
           case PROP_BloodType:
             sc->ExpectString();
