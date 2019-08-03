@@ -112,6 +112,7 @@ VTextureTranslation *PlayerTranslations[MAXPLAYERS+1];
 static TArray<VTextureTranslation *> CachedTranslations;
 static TMapNC<vuint32, int> CachedTranslationsMap; // key:crc; value: translation index
 
+static VCvarB r_reupload_level_textures("r_reupload_level_textures", true, "Reupload level textures to GPU when new map is loaded?", CVAR_Archive);
 static VCvarB r_precache_textures("r_precache_textures", true, "Precache level textures?", CVAR_Archive);
 static VCvarB r_precache_model_textures("r_precache_model_textures", true, "Precache alias model textures?", CVAR_Archive);
 static VCvarB r_precache_sprite_textures("r_precache_sprite_textures", false, "Precache sprite textures?", CVAR_Archive);
@@ -514,6 +515,8 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
 //
 //==========================================================================
 VRenderLevelShared::~VRenderLevelShared () {
+  UncacheLevel();
+
   delete[] bspVisRadius;
   bspVisRadius = nullptr;
 
@@ -1883,6 +1886,44 @@ void VRenderLevelShared::PrecacheLevel () {
   }
 
   R_PBarUpdate("Textures", maxpbar, maxpbar, true); // final update
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::UncacheLevel
+//
+//==========================================================================
+void VRenderLevelShared::UncacheLevel () {
+  if (!r_reupload_level_textures) return;
+
+  const int maxtex = GTextureManager.GetNumTextures();
+
+  TArray<bool> texturepresent;
+  texturepresent.setLength(maxtex);
+  for (auto &&b : texturepresent) b = false;
+
+  for (int f = 0; f < Level->NumSectors; ++f) {
+    if (Level->Sectors[f].floor.pic > 0 && Level->Sectors[f].floor.pic < maxtex) texturepresent[Level->Sectors[f].floor.pic] = true;
+    if (Level->Sectors[f].ceiling.pic > 0 && Level->Sectors[f].ceiling.pic < maxtex) texturepresent[Level->Sectors[f].ceiling.pic] = true;
+  }
+
+  for (int f = 0; f < Level->NumSides; ++f) {
+    if (Level->Sides[f].TopTexture > 0 && Level->Sides[f].TopTexture < maxtex) texturepresent[Level->Sides[f].TopTexture] = true;
+    if (Level->Sides[f].MidTexture > 0 && Level->Sides[f].MidTexture < maxtex) texturepresent[Level->Sides[f].MidTexture] = true;
+    if (Level->Sides[f].BottomTexture > 0 && Level->Sides[f].BottomTexture < maxtex) texturepresent[Level->Sides[f].BottomTexture] = true;
+  }
+
+  int lvltexcount = 0;
+  texturepresent[0] = false;
+  for (auto &&b : texturepresent) { if (b) ++lvltexcount; }
+  if (!lvltexcount) return;
+
+  GCon->Logf("unloading %d level textures...", lvltexcount);
+  for (int f = 1; f < texturepresent.length(); ++f) {
+    if (!texturepresent[f]) continue;
+    Drawer->FlushOneTexture(GTextureManager[f]);
+  }
 }
 
 

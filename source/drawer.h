@@ -194,8 +194,8 @@ public:
 
   // texture stuff
   virtual void PrecacheTexture (VTexture *) = 0;
-  virtual void FlushOneTexture (VTexture *) = 0; // unload one texture
-  virtual void FlushTextures () = 0; // unload all textures
+  virtual void FlushOneTexture (VTexture *tex, bool forced=false) = 0; // unload one texture
+  virtual void FlushTextures (bool forced=false) = 0; // unload all textures
 
   // polygon drawing
   virtual void DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *Texture1,

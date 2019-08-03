@@ -899,7 +899,7 @@ void VOpenGLDrawer::StartUpdate (bool allowClear) {
   //glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 1); // 1 is minimum, i.e. "off"
 
   if (usegamma != lastgamma) {
-    FlushTextures();
+    FlushTextures(true); // forced
     lastgamma = usegamma;
   }
 

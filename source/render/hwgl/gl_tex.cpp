@@ -48,8 +48,10 @@ void VOpenGLDrawer::GenerateTextures () {
 //  VOpenGLDrawer::FlushTextures
 //
 //==========================================================================
-void VOpenGLDrawer::FlushTextures () {
-  for (int i = 0; i < GTextureManager.GetNumTextures(); ++i) DeleteTexture(GTextureManager[i]);
+void VOpenGLDrawer::FlushTextures (bool forced) {
+  for (int i = 0; i < GTextureManager.GetNumTextures(); ++i) {
+    if (forced) DeleteTexture(GTextureManager[i]); else FlushTexture(GTextureManager[i]);
+  }
 }
 
 
@@ -58,9 +60,9 @@ void VOpenGLDrawer::FlushTextures () {
 //  VOpenGLDrawer::FlushOneTexture
 //
 //==========================================================================
-void VOpenGLDrawer::FlushOneTexture (VTexture *tex) {
+void VOpenGLDrawer::FlushOneTexture (VTexture *tex, bool forced) {
   if (!tex) return;
-  DeleteTexture(tex);
+  if (forced) DeleteTexture(tex); else FlushTexture(tex);
 }
 
 

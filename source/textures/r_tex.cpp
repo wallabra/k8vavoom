@@ -254,7 +254,7 @@ void VTextureManager::ResetMapTextures () {
 #ifdef CLIENT
     if (r_reupload_textures && Drawer) {
       GCon->Logf("Unloading textures from GPU...");
-      Drawer->FlushTextures();
+      Drawer->FlushTextures(true); // forced
       //rehashTextures();
     }
 #endif
@@ -265,14 +265,14 @@ void VTextureManager::ResetMapTextures () {
 
   GCon->Logf(NAME_Dev, "*** *** MapTextures.length()=%d *** ***", MapTextures.length());
 #ifdef CLIENT
-  if (Drawer && r_reupload_textures) Drawer->FlushTextures();
+  if (Drawer && r_reupload_textures) Drawer->FlushTextures(true); // forced
 #endif
   for (int f = MapTextures.length()-1; f >= 0; --f) {
     if (developer) {
       if (MapTextures[f]) GCon->Logf(NAME_Dev, "removing map texture #%d (%s)", f, *MapTextures[f]->Name);
     }
 #ifdef CLIENT
-    if (Drawer && !r_reupload_textures && MapTextures[f]) Drawer->FlushOneTexture(MapTextures[f]);
+    if (Drawer && !r_reupload_textures && MapTextures[f]) Drawer->FlushOneTexture(MapTextures[f], true); // forced
 #endif
     delete MapTextures[f];
     MapTextures[f] = nullptr;

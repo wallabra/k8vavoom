@@ -517,6 +517,7 @@ protected:
   void UpdateCameraTexture (VEntity*, int, int);
   vuint32 GetFade (sec_region_t*);
   void PrecacheLevel ();
+  void UncacheLevel ();
   VTextureTranslation *GetTranslation (int);
   void BuildPlayerTranslations ();
 
