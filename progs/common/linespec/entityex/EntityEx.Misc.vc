@@ -264,8 +264,11 @@ final bool TeleportMove (TVec org, optional bool ForceTelestomp) {
 
     //print("TELEPORT CHECK: %C (%s) really touch %C (%s)", self, self.Radius, Other, Other.Radius);
     // check if allowed to stomp things
-    if ((!ForceTelestomp && !bTelestomp && !Level.bAllowMonsterTelefrags) || Other.bNoTeleFrag) {
-      return false;
+    //k8: should we reject forced telefragging if `Other` denied it?
+    if (!ForceTelestomp) {
+      if ((/*!ForceTelestomp &&*/ !bTelestomp && !Level.bAllowMonsterTelefrags) || Other.bNoTeleFrag) {
+        return false;
+      }
     }
 
     Other.SpawnExploBloodAtHead(max(Other.Health, 10000), self);
