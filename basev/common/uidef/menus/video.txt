@@ -67,6 +67,14 @@ menudef VideoOptions {
   }
 
   option bool {
+    title = "Reset Level Texture Cache";
+    cvar = r_reupload_level_textures;
+    help =
+      "If this option is turned on, the engine will reset level"
+      "texture cache each time new map is loaded.";
+  }
+
+  option bool {
     title = "Reupload Textures On Level Change";
     cvar = r_reupload_textures;
     help =
