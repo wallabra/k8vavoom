@@ -321,14 +321,14 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
   if (thing->FixedSpriteName != NAME_None) SpriteIndex = VClass::FindSprite(thing->FixedSpriteName);
 
   // decide which patch to use for sprite relative to player
-  if ((unsigned)SpriteIndex >= MAX_SPRITE_MODELS) {
+  if ((unsigned)SpriteIndex >= (unsigned)sprites.length()) {
     #ifdef PARANOID
     GCon->Logf(NAME_Dev, "Invalid sprite number %d", SpriteIndex);
     #endif
     return;
   }
 
-  sprdef = &sprites[SpriteIndex];
+  sprdef = &sprites.ptr()[SpriteIndex];
   if (FrameIndex >= sprdef->numframes) {
     #ifdef PARANOID
     GCon->Logf(NAME_Dev, "Invalid sprite frame %d : %d", SpriteIndex, FrameIndex);

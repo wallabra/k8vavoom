@@ -61,7 +61,8 @@ vuint8 r_rgbtable[VAVOOM_COLOR_COMPONENT_MAX*VAVOOM_COLOR_COMPONENT_MAX*VAVOOM_C
 
 // variables used to look up
 // and range check thing_t sprites patches
-spritedef_t sprites[MAX_SPRITE_MODELS];
+//spritedef_t sprites[MAX_SPRITE_MODELS];
+TArray<spritedef_t> sprites;
 
 VTextureTranslation **TranslationTables;
 int NumTranslationTables;
@@ -505,7 +506,7 @@ void R_InstallSpriteComplete () {
 //
 //==========================================================================
 void R_InstallSprite (const char *name, int index) {
-  if ((vuint32)index >= MAX_SPRITE_MODELS) Host_Error("Invalid sprite index %d for sprite %s", index, name);
+  if (index < 0) Host_Error("Invalid sprite index %d for sprite %s", index, name);
   //GCon->Logf("!!INSTALL_SPRITE: <%s> (%d)", name, index);
   spritename = name;
 #if 1
@@ -521,13 +522,22 @@ void R_InstallSprite (const char *name, int index) {
 #endif
   maxframe = -1;
 
+  while (index >= sprites.length()) {
+    spritedef_t &ss = sprites.alloc();
+    ss.numframes = 0;
+    ss.spriteframes = nullptr;
+  }
+  check(index < sprites.length());
+  sprites[index].numframes = 0;
+  if (sprites[index].spriteframes) Z_Free(sprites[index].spriteframes);
+  sprites[index].spriteframes = nullptr;
+
   // scan all the lump names for each of the names, noting the highest frame letter
   // just compare 4 characters as ints
   //int intname = *(int*)*VName(spritename, VName::AddLower8);
   const char *intname = *VName(spritename, VName::AddLower8);
   if (!intname[0] || !intname[1] || !intname[2] || !intname[3]) {
     GCon->Logf(NAME_Warning, "trying to install sprite with invalid name '%s'", intname);
-    sprites[index].numframes = 0;
     return;
   }
 
@@ -549,7 +559,6 @@ void R_InstallSprite (const char *name, int index) {
   vuint32 intpfx = sprprefix2u32(intname);
   if (!intpfx) {
     GCon->Logf(NAME_Warning, "trying to install sprite with invalid name '%s'!", intname);
-    sprites[index].numframes = 0;
     return;
   }
 
@@ -576,10 +585,7 @@ void R_InstallSprite (const char *name, int index) {
   }
 
   // check the frames that were found for completeness
-  if (maxframe == -1) {
-    sprites[index].numframes = 0;
-    return;
-  }
+  if (maxframe == -1) return;
 
   ++maxframe;
 
@@ -631,11 +637,6 @@ void R_InstallSprite (const char *name, int index) {
     }
   }
 
-  if (sprites[index].spriteframes) {
-    Z_Free(sprites[index].spriteframes);
-    sprites[index].spriteframes = nullptr;
-  }
-
   // allocate space for the frames present and copy sprtemp to it
   sprites[index].numframes = maxframe;
   sprites[index].spriteframes = (spriteframe_t*)Z_Malloc(maxframe*sizeof(spriteframe_t));
@@ -649,11 +650,8 @@ void R_InstallSprite (const char *name, int index) {
 //
 //==========================================================================
 static void FreeSpriteData () {
-  for (int i = 0; i < MAX_SPRITE_MODELS; ++i) {
-    if (sprites[i].spriteframes) {
-      Z_Free(sprites[i].spriteframes);
-    }
-  }
+  for (auto &&ss : sprites) if (ss.spriteframes) Z_Free(ss.spriteframes);
+  sprites.clear();
 }
 
 
@@ -663,7 +661,7 @@ static void FreeSpriteData () {
 //
 //==========================================================================
 bool R_AreSpritesPresent (int Index) {
-  return (sprites[Index].numframes > 0);
+  return (Index >= 0 && Index < sprites.length() && sprites.ptr()[Index].numframes > 0);
 }
 
 

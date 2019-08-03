@@ -31,7 +31,7 @@
 #include "r_shared.h"
 #include "fmd2defs.h"
 
-#define MAX_SPRITE_MODELS  (10*1024)
+//#define MAX_SPRITE_MODELS  (10*1024)
 
 // was 0.1
 #define FUZZY_ALPHA  (0.7f)
@@ -902,7 +902,7 @@ int R_SetMenuPlayerTrans (int, int, int);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-extern spritedef_t sprites[MAX_SPRITE_MODELS];
+extern TArray<spritedef_t> sprites; //[MAX_SPRITE_MODELS];
 
 // r_main
 extern int screenblocks;

@@ -1765,7 +1765,8 @@ void R_DrawSpritePatch (float x, float y, int sprite, int frame, int rot,
   bool flip;
   int lump;
 
-  spriteframe_t *sprframe = &sprites[sprite].spriteframes[frame&VState::FF_FRAMEMASK];
+  if (sprite < 0 || sprite >= sprites.length()) return;
+  spriteframe_t *sprframe = &sprites.ptr()[sprite].spriteframes[frame&VState::FF_FRAMEMASK];
   flip = sprframe->flip[rot];
   lump = sprframe->lump[rot];
   VTexture *Tex = GTextureManager[lump];

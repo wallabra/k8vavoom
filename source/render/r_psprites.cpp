@@ -80,13 +80,13 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   if (Alpha > 1.0f) Alpha = 1.0f;
 
   // decide which patch to use
-  if ((vuint32)mfi.spriteIndex/*VSt->State->SpriteIndex*/ >= MAX_SPRITE_MODELS) {
+  if ((unsigned)mfi.spriteIndex/*VSt->State->SpriteIndex*/ >= (unsigned)sprites.length()) {
     if (showPSpriteWarnings()) {
       GCon->Logf(NAME_Warning, "R_ProjectSprite: invalid sprite number %d", mfi.spriteIndex);
     }
     return;
   }
-  sprdef = &sprites[mfi.spriteIndex/*VSt->State->SpriteIndex*/];
+  sprdef = &sprites.ptr()[mfi.spriteIndex/*VSt->State->SpriteIndex*/];
 
   if (mfi.frame/*(VSt->State->Frame & VState::FF_FRAMEMASK)*/ >= sprdef->numframes) {
     if (showPSpriteWarnings()) {
