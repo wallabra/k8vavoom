@@ -55,6 +55,15 @@ static bool zShuttingDown = false;
 #endif
 
 
+const char *Z_GetAllocatorType () {
+#ifdef VAVOOM_USE_MIMALLOC
+  return "mi-malloc";
+#else
+  return "standard";
+#endif
+}
+
+
 __attribute__((malloc)) __attribute__((alloc_size(1))) __attribute__((returns_nonnull))
 void *Z_Malloc (size_t size) {
 #ifdef VAVOOM_CORE_COUNT_ALLOCS

@@ -39,6 +39,9 @@ extern int zone_free_call_count;
 #endif
 
 
+const char *Z_GetAllocatorType ();
+
+
 // shitdoze, for some idiotic shitdoze reason, calls our `delete` on
 // a thing it allocated with standard `new`. this causes segfault in mi-malloc.
 // so call this function before returning from `main()`.
