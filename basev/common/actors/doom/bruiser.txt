@@ -15,10 +15,8 @@ actor BaronOfHell 3003
   DeathSound "baron/death"
   Obituary "$ob_baron"
   HitObituary "$ob_baronhit"
-  /*
-  BloodType BloodGreen, BloodSplatterGreen
-  BloodColor "00 66 00"
-  */
+  //BloodType BloodGreen, BloodSplatterGreen
+  BloodColor "00 66 00" // for particles
   BloodTranslation "16:48=112:127", "64:79=112:127", "164:167=117:127", "168:191=112:127", "232:235=119:127", "236:239=123:127"
   Monster
   +FloorClip
