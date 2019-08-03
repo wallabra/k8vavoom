@@ -40,12 +40,39 @@ menudef VideoOptions {
   }
 
   option bool {
-    title = "Precache Textures";
+    title = "Precache Level Textures";
     cvar = r_precache_textures;
     help =
       "Precache level textures (upload them to GPU) on level loading?"
       "This has relatively low impact on most level loading times, and"
       "the game will stutter less on entering new areas.";
+  }
+
+  option bool {
+    title = "Precache Alias Model Textures";
+    cvar = r_precache_model_textures;
+    help =
+      "Precache alias model textures (upload them to GPU) on level loading?"
+      "This has relatively low impact on most level loading times, and"
+      "the game will stutter less on entering new areas.";
+  }
+
+  option bool {
+    title = "Precache Sprite Textures";
+    cvar = r_precache_sprite_textures;
+    help =
+      "Precache sprite textures (upload them to GPU) on level loading?"
+      "This has *HUGE* impact on loading times, and require *ALOT* of GPU memory."
+      "Better leave this 'OFF'.";
+  }
+
+  option bool {
+    title = "Reupload Textures On Level Change";
+    cvar = r_reupload_textures;
+    help =
+      "If this option is turned on, the engine will reupload all cached textures"
+      "each time new map is loaded. Turn this off only if you turned off texture"
+      "precaching, to release GPU memory.";
   }
 
   option bool {
@@ -148,7 +175,7 @@ menudef VideoOptions {
   }
 
   option bool {
-    title = "Sprite/3D Model Movement Interpolation";
+    title = "Movement Interpolation";
     cvar = r_interpolate_thing_movement;
     help = "Interpolate thing/monster movement?";
   }
