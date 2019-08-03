@@ -813,7 +813,7 @@ private:
 
   int SetBodyQueueTrans (int, int);
 
-  void AddDecal (TVec org, const VName &dectype, int side, line_t *li, int level, int translation);
+  void AddDecal (TVec org, VName dectype, int side, line_t *li, int level, int translation);
   void AddDecalById (TVec org, int id, int side, line_t *li, int level, int translation);
   // called by `AddDecal()`
   void AddOneDecal (int level, TVec org, VDecalDef *dec, int side, line_t *li, int translation);

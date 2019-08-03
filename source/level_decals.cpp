@@ -26,44 +26,20 @@
 //**************************************************************************
 #include "gamedefs.h"
 
+//#define VAVOOM_DECALS_DEBUG_REPLACE_PICTURE
+//#define VAVOOM_DECALS_DEBUG
+
+#ifdef VAVOOM_DECALS_DEBUG
+# define VDC_DLOG  GCon->Logf
+#else
+# define VDC_DLOG(...)  do {} while (0)
+#endif
+
 
 extern VCvarB r_decals_enabled;
 
 static VCvarI r_decal_onetype_max("r_decal_onetype_max", "128", "Maximum decals of one decaltype on a wall segment.", CVAR_Archive);
 static VCvarI r_decal_gore_onetype_max("r_decal_gore_onetype_max", "8", "Maximum decals of one decaltype on a wall segment for Gore Mod.", CVAR_Archive);
-
-//#define VAVOOM_DECALS_DEBUG_REPLACE_PICTURE
-//#define VAVOOM_DECALS_DEBUG
-
-
-//==========================================================================
-//
-//  VLevel::AddAnimatedDecal
-//
-//==========================================================================
-void VLevel::AddAnimatedDecal (decal_t *dc) {
-  if (!dc || dc->prevanimated || dc->nextanimated || decanimlist == dc || !dc->animator) return;
-  if (decanimlist) decanimlist->prevanimated = dc;
-  dc->nextanimated = decanimlist;
-  decanimlist = dc;
-}
-
-
-//==========================================================================
-//
-//  VLevel::RemoveAnimatedDecal
-//
-//  this will also kill animator
-//
-//==========================================================================
-void VLevel::RemoveAnimatedDecal (decal_t *dc) {
-  if (!dc || (!dc->prevanimated && !dc->nextanimated && decanimlist != dc)) return;
-  if (dc->prevanimated) dc->prevanimated->nextanimated = dc->nextanimated; else decanimlist = dc->nextanimated;
-  if (dc->nextanimated) dc->nextanimated->prevanimated = dc->prevanimated;
-  delete dc->animator;
-  dc->animator = nullptr;
-  dc->prevanimated = dc->nextanimated = nullptr;
-}
 
 
 //==========================================================================
@@ -112,6 +88,36 @@ static bool isDecalsOverlap (VDecalDef *dec, float dcx0, float dcy0, decal_t *cu
   */
 
   return !(itx1 <= myx0 || ity1 <= myy0 || itx0 >= myx1 || ity0 >= myy1);
+}
+
+
+//==========================================================================
+//
+//  VLevel::AddAnimatedDecal
+//
+//==========================================================================
+void VLevel::AddAnimatedDecal (decal_t *dc) {
+  if (!dc || dc->prevanimated || dc->nextanimated || decanimlist == dc || !dc->animator) return;
+  if (decanimlist) decanimlist->prevanimated = dc;
+  dc->nextanimated = decanimlist;
+  decanimlist = dc;
+}
+
+
+//==========================================================================
+//
+//  VLevel::RemoveAnimatedDecal
+//
+//  this will also kill animator
+//
+//==========================================================================
+void VLevel::RemoveAnimatedDecal (decal_t *dc) {
+  if (!dc || (!dc->prevanimated && !dc->nextanimated && decanimlist != dc)) return;
+  if (dc->prevanimated) dc->prevanimated->nextanimated = dc->nextanimated; else decanimlist = dc->nextanimated;
+  if (dc->nextanimated) dc->nextanimated->prevanimated = dc->prevanimated;
+  delete dc->animator;
+  dc->animator = nullptr;
+  dc->prevanimated = dc->nextanimated = nullptr;
 }
 
 
@@ -176,9 +182,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
   //HACK!
   if (VStr::startsWithCI(*dec->name, "K8Gore")) dcmaxcount = r_decal_gore_onetype_max;
 
-#ifdef VAVOOM_DECALS_DEBUG
-  GCon->Logf("Decal '%s' at line #%d (side %d; fs=%d; bs=%d): linelen=%g; o0=%g; o1=%g (ofsorig=%g; txofs=%g; tyofs=%g; tw=%g; th=%g)", *dec->name, (int)(ptrdiff_t)(li-Lines), side, (int)(ptrdiff_t)(fsec-Sectors), (bsec ? (int)(ptrdiff_t)(bsec-Sectors) : -1), linelen, dcx0, dcx1, lineofs, txofs, tyofs, twdt, thgt);
-#endif
+  VDC_DLOG("Decal '%s' at line #%d (side %d; fs=%d; bs=%d): linelen=%g; o0=%g; o1=%g (ofsorig=%g; txofs=%g; tyofs=%g; tw=%g; th=%g)", *dec->name, (int)(ptrdiff_t)(li-Lines), side, (int)(ptrdiff_t)(fsec-Sectors), (bsec ? (int)(ptrdiff_t)(bsec-Sectors) : -1), linelen, dcx0, dcx1, lineofs, txofs, tyofs, twdt, thgt);
 
   TVec linepos = v1+li->ndir*lineofs;
 
@@ -197,9 +201,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
       if (seg->flags&SF_ZEROLEN) continue; // invalid seg
       check(seg->linedef == li);
 
-#ifdef VAVOOM_DECALS_DEBUG
-      GCon->Logf("  checking seg #%d; offset=%g; length=%g", (int)(ptrdiff_t)(seg-Segs), seg->offset, seg->length);
-#endif
+      VDC_DLOG("  checking seg #%d; offset=%g; length=%g", (int)(ptrdiff_t)(seg-Segs), seg->offset, seg->length);
 
       // check if decal is in seg bounds
       if (dcx1 <= seg->offset || dcx0 >= seg->offset+seg->length) continue; // out of bounds
@@ -295,9 +297,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
       }
 
       if (fsec && bsec) {
-#ifdef VAVOOM_DECALS_DEBUG
-        GCon->Logf("  2s: orgz=%g; front=(%g,%g); back=(%g,%g)", orgz, ffloorZ, fceilingZ, bfloorZ, bceilingZ);
-#endif
+        VDC_DLOG("  2s: orgz=%g; front=(%g,%g); back=(%g,%g)", orgz, ffloorZ, fceilingZ, bfloorZ, bceilingZ);
         if (hasMidTex && orgz >= max2(ffloorZ, bfloorZ) && orgz <= min2(fceilingZ, bceilingZ)) {
           // midtexture
                if (li->flags&ML_DONTPEGBOTTOM) slideWithFloor = true;
@@ -320,9 +320,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
             // only top texture
             if ((li->flags&ML_DONTPEGTOP) == 0) slideWithCeiling = true;
           }
-#ifdef VAVOOM_DECALS_DEBUG
-          GCon->Logf("  2s: front=(%g,%g); back=(%g,%g); sc=%d; sf=%d", ffloorZ, fceilingZ, bfloorZ, bceilingZ, (int)slideWithFloor, (int)slideWithCeiling);
-#endif
+          VDC_DLOG("  2s: front=(%g,%g); back=(%g,%g); sc=%d; sf=%d", ffloorZ, fceilingZ, bfloorZ, bceilingZ, (int)slideWithFloor, (int)slideWithCeiling);
         }
 
         // door hack
@@ -337,9 +335,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
         }
         */
       } else {
-#ifdef VAVOOM_DECALS_DEBUG
-        GCon->Logf("  1s: orgz=%g; front=(%g,%g)", orgz, ffloorZ, fceilingZ);
-#endif
+        VDC_DLOG("  1s: orgz=%g; front=(%g,%g)", orgz, ffloorZ, fceilingZ);
         // one-sided
         if (hasMidTex && orgz >= ffloorZ && orgz <= fceilingZ) {
           // midtexture
@@ -366,9 +362,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
           }
         }
         if (slideWithFloor || slideWithCeiling) slidesec = fsec;
-#ifdef VAVOOM_DECALS_DEBUG
-        GCon->Logf("  1s: front=(%g,%g); sc=%d; sf=%d", ffloorZ, fceilingZ, (int)slideWithFloor, (int)slideWithCeiling);
-#endif
+        VDC_DLOG("  1s: front=(%g,%g); sc=%d; sf=%d", ffloorZ, fceilingZ, (int)slideWithFloor, (int)slideWithCeiling);
       }
 
       // remove old same-typed decals, if necessary
@@ -412,9 +406,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
         }
       }
 
-#ifdef VAVOOM_DECALS_DEBUG
-      GCon->Logf("  decaling seg #%d; offset=%g; length=%g", (int)(ptrdiff_t)(seg-Segs), seg->offset, seg->length);
-#endif
+      VDC_DLOG("  decaling seg #%d; offset=%g; length=%g", (int)(ptrdiff_t)(seg-Segs), seg->offset, seg->length);
 
       // create decal
       decal_t *decal = new decal_t;
@@ -450,18 +442,14 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
         if (decal->slidesec) {
           decal->flags |= decal_t::SlideFloor;
           decal->curz -= decal->slidesec->floor.TexZ;
-#ifdef VAVOOM_DECALS_DEBUG
-          GCon->Logf("  floor slide; sec=%d", (int)(ptrdiff_t)(decal->slidesec-Sectors));
-#endif
+          VDC_DLOG("  floor slide; sec=%d", (int)(ptrdiff_t)(decal->slidesec-Sectors));
         }
       } else if (slideWithCeiling) {
         decal->slidesec = (slidesec ? slidesec : bsec);
         if (decal->slidesec) {
           decal->flags |= decal_t::SlideCeil;
           decal->curz -= decal->slidesec->ceiling.TexZ;
-#ifdef VAVOOM_DECALS_DEBUG
-          GCon->Logf("  ceil slide; sec=%d", (int)(ptrdiff_t)(decal->slidesec-Sectors));
-#endif
+          VDC_DLOG("  ceil slide; sec=%d", (int)(ptrdiff_t)(decal->slidesec-Sectors));
         }
       }
 
@@ -474,9 +462,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
   // if our decal is not completely at linedef, spread it to adjacent linedefs
   if (dcx0 < 0) {
     // to the left
-    #ifdef VAVOOM_DECALS_DEBUG
-    GCon->Logf("Decal '%s' at line #%d: going to the left; ofs=%g; side=%d", *dec->name, (int)(ptrdiff_t)(li-Lines), dcx0, side);
-    #endif
+    VDC_DLOG("Decal '%s' at line #%d: going to the left; ofs=%g; side=%d", *dec->name, (int)(ptrdiff_t)(li-Lines), dcx0, side);
     line_t **ngb = li->v1lines;
     for (int ngbCount = li->v1linesCount; ngbCount--; ++ngb) {
       line_t *nline = *ngb;
@@ -492,33 +478,23 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
         if (side) xdir = -xdir;
         TVec norg = (*li->v1)+xdir*1024;
         nside = nline->PointOnSide(norg);
-        #ifdef VAVOOM_DECALS_DEBUG
-        GCon->Logf("  (0)nline=%d, detected side %d", (int)(ptrdiff_t)(nline-Lines), nside);
-        #endif
+        VDC_DLOG("  (0)nline=%d, detected side %d", (int)(ptrdiff_t)(nline-Lines), nside);
         if (li->sidenum[nside] < 0) {
           if (nside == 0 || li->sidenum[nside^1] < 0) continue; // wuta?
           nside ^= 1;
         }
-        #ifdef VAVOOM_DECALS_DEBUG
-        GCon->Logf("  (0)nline=%d, choosen side %d", (int)(ptrdiff_t)(nline-Lines), nside);
-        #endif
+        VDC_DLOG("  (0)nline=%d, choosen side %d", (int)(ptrdiff_t)(nline-Lines), nside);
         /*
-        #ifdef VAVOOM_DECALS_DEBUG
-        GCon->Logf("  nline=%d, cannot detect side", (int)(ptrdiff_t)(nline-Lines));
-        #endif
+        VDC_DLOG("  nline=%d, cannot detect side", (int)(ptrdiff_t)(nline-Lines));
         //nside = side;
         continue;
         */
       }
       if (li->v1 == nline->v2) {
-        #ifdef VAVOOM_DECALS_DEBUG
-        GCon->Logf("  v1 at nv2 (%d) (ok)", (int)(ptrdiff_t)(nline-Lines));
-        #endif
+        VDC_DLOG("  v1 at nv2 (%d) (ok)", (int)(ptrdiff_t)(nline-Lines));
         PutDecalAtLine(tex, orgz, ((*nline->v2)-(*nline->v1)).length2D()+dstxofs, dec, nside, nline, flips, translation);
       } else if (li->v1 == nline->v1) {
-        #ifdef VAVOOM_DECALS_DEBUG
-        GCon->Logf("  v1 at nv1 (%d) (opp)", (int)(ptrdiff_t)(nline-Lines));
-        #endif
+        VDC_DLOG("  v1 at nv1 (%d) (opp)", (int)(ptrdiff_t)(nline-Lines));
         //PutDecalAtLine(tex, orgz, dstxofs, dec, (nline->frontsector == fsec ? 0 : 1), nline, flips, translation);
       }
     }
@@ -526,9 +502,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
 
   if (dcx1 > linelen) {
     // to the right
-    #ifdef VAVOOM_DECALS_DEBUG
-    GCon->Logf("Decal '%s' at line #%d: going to the right; left=%g; side=%d", *dec->name, (int)(ptrdiff_t)(li-Lines), dcx1-linelen, side);
-    #endif
+    VDC_DLOG("Decal '%s' at line #%d: going to the right; left=%g; side=%d", *dec->name, (int)(ptrdiff_t)(li-Lines), dcx1-linelen, side);
     line_t **ngb = li->v2lines;
     for (int ngbCount = li->v2linesCount; ngbCount--; ++ngb) {
       line_t *nline = *ngb;
@@ -544,33 +518,23 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
         if (side) xdir = -xdir;
         TVec norg = (*li->v2)+xdir*1024;
         nside = nline->PointOnSide(norg);
-        #ifdef VAVOOM_DECALS_DEBUG
-        GCon->Logf("  (1)nline=%d, detected side %d", (int)(ptrdiff_t)(nline-Lines), nside);
-        #endif
+        VDC_DLOG("  (1)nline=%d, detected side %d", (int)(ptrdiff_t)(nline-Lines), nside);
         if (li->sidenum[nside] < 0) {
           if (nside == 0 || li->sidenum[nside^1] < 0) continue; // wuta?
           nside ^= 1;
         }
-        #ifdef VAVOOM_DECALS_DEBUG
-        GCon->Logf("  (1)nline=%d, choosen side %d", (int)(ptrdiff_t)(nline-Lines), nside);
-        #endif
+        VDC_DLOG("  (1)nline=%d, choosen side %d", (int)(ptrdiff_t)(nline-Lines), nside);
         /*
-        #ifdef VAVOOM_DECALS_DEBUG
-        GCon->Logf("  nline=%d, cannot detect side", (int)(ptrdiff_t)(nline-Lines));
-        #endif
+        VDC_DLOG("  nline=%d, cannot detect side", (int)(ptrdiff_t)(nline-Lines));
         //nside = side;
         continue;
         */
       }
       if (li->v2 == nline->v1) {
-        #ifdef VAVOOM_DECALS_DEBUG
-        GCon->Logf("  v2 at nv1 (%d) (ok)", (int)(ptrdiff_t)(nline-Lines));
-        #endif
+        VDC_DLOG("  v2 at nv1 (%d) (ok)", (int)(ptrdiff_t)(nline-Lines));
         PutDecalAtLine(tex, orgz, dstxofs-linelen, dec, nside, nline, flips, translation);
       } else if (li->v2 == nline->v2) {
-        #ifdef VAVOOM_DECALS_DEBUG
-        GCon->Logf("  v2 at nv2 (%d) (opp)", (int)(ptrdiff_t)(nline-Lines));
-        #endif
+        VDC_DLOG("  v2 at nv2 (%d) (opp)", (int)(ptrdiff_t)(nline-Lines));
         //PutDecalAtLine(tex, orgz, ((*nline->v2)-(*nline->v1)).length2D()+(dstxofs-linelen), dec, (nline->frontsector == fsec ? 0 : 1), nline, flips, translation);
       }
     }
@@ -654,9 +618,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, int side, line_t 
   else dist = 0;
 
   const float lineofs = dist*(v2-v1).length2D();
-#ifdef VAVOOM_DECALS_DEBUG
-  GCon->Logf("linelen=%g; dist=%g; lineofs=%g", (v2-v1).length2D(), dist, lineofs);
-#endif
+  VDC_DLOG("linelen=%g; dist=%g; lineofs=%g", (v2-v1).length2D(), dist, lineofs);
 
   PutDecalAtLine(tex, org.z, lineofs, dec, side, li, flips, translation);
 }
@@ -667,7 +629,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, int side, line_t 
 // VLevel::AddDecal
 //
 //==========================================================================
-void VLevel::AddDecal (TVec org, const VName &dectype, int side, line_t *li, int level, int translation) {
+void VLevel::AddDecal (TVec org, VName dectype, int side, line_t *li, int level, int translation) {
   if (!r_decals_enabled) return;
   if (!li || dectype == NAME_None) return; // just in case
 
@@ -678,15 +640,14 @@ void VLevel::AddDecal (TVec org, const VName &dectype, int side, line_t *li, int
   static TStrSet baddecals;
 
 #ifdef VAVOOM_DECALS_DEBUG_REPLACE_PICTURE
-  VDecalDef *dec = VDecalDef::getDecal(VName("k8TestDecal"));
-#else
-  VDecalDef *dec = VDecalDef::getDecal(dectype);
+  dectype = VName("k8TestDecal");
 #endif
+  VDecalDef *dec = VDecalDef::getDecal(dectype);
   if (dec) {
     //GCon->Logf("DECAL '%s'; name is '%s', texid is %d; org=(%g,%g,%g)", *dectype, *dec->name, dec->texid, org.x, org.y, org.z);
     AddOneDecal(level, org, dec, side, li, translation);
   } else {
-    if (!baddecals.put(*dectype)) GCon->Logf("NO DECAL: '%s'", *dectype);
+    if (!baddecals.put(*dectype)) GCon->Logf(NAME_Warning, "NO DECAL: '%s'", *dectype);
   }
 }
 
