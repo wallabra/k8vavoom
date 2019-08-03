@@ -298,7 +298,7 @@ void VSdlOpenGLDrawer::Update () {
 //  Close the graphics
 //
 //==========================================================================
-void VSdlOpenGLDrawer::Shutdown() {
+void VSdlOpenGLDrawer::Shutdown () {
   if (hw_glctx && mInitialized) callICB(VCB_DeinitVideo);
   DeleteTextures();
   if (hw_glctx) {

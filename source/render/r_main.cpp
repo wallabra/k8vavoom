@@ -114,6 +114,7 @@ static TMapNC<vuint32, int> CachedTranslationsMap; // key:crc; value: translatio
 
 static VCvarB r_precache_textures("r_precache_textures", true, "Precache level textures?", CVAR_Archive);
 static VCvarB r_precache_model_textures("r_precache_model_textures", true, "Precache alias model textures?", CVAR_Archive);
+static VCvarB r_precache_sprite_textures("r_precache_sprite_textures", false, "Precache sprite textures?", CVAR_Archive);
 static VCvarI r_level_renderer("r_level_renderer", "1", "Level renderer type (0:auto; 1:lightmap; 2:stenciled).", CVAR_Archive);
 
 int r_precache_textures_override = -1;
@@ -479,7 +480,11 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
 
   // preload graphics
   if (r_precache_textures_override != 0) {
-    if (r_precache_textures || r_precache_textures_override > 0) PrecacheLevel();
+    if (r_precache_textures || r_precache_textures_override > 0 ||
+        r_precache_model_textures || r_precache_sprite_textures)
+    {
+      PrecacheLevel();
+    }
   }
 
   ResetVisFrameCount();
@@ -1798,52 +1803,86 @@ void R_DrawSpritePatch (float x, float y, int sprite, int frame, int rot,
 //
 //==========================================================================
 void VRenderLevelShared::PrecacheLevel () {
+  //k8: why?
   if (cls.demoplayback) return;
 
+  const int maxtex = GTextureManager.GetNumTextures();
+
   TArray<bool> texturepresent;
-  int maxtex = GTextureManager.GetNumTextures();
-  if (maxtex < 2) return;
-
   texturepresent.setLength(maxtex);
-  for (int f = maxtex-1; f >= 0; --f) texturepresent[f] = false;
+  for (auto &&b : texturepresent) b = false;
 
-  for (int f = 0; f < Level->NumSectors; ++f) {
-    if (Level->Sectors[f].floor.pic > 0 && Level->Sectors[f].floor.pic < maxtex) texturepresent[Level->Sectors[f].floor.pic] = true;
-    if (Level->Sectors[f].ceiling.pic > 0 && Level->Sectors[f].ceiling.pic < maxtex) texturepresent[Level->Sectors[f].ceiling.pic] = true;
+  if (r_precache_textures || r_precache_textures_override > 0) {
+    for (int f = 0; f < Level->NumSectors; ++f) {
+      if (Level->Sectors[f].floor.pic > 0 && Level->Sectors[f].floor.pic < maxtex) texturepresent[Level->Sectors[f].floor.pic] = true;
+      if (Level->Sectors[f].ceiling.pic > 0 && Level->Sectors[f].ceiling.pic < maxtex) texturepresent[Level->Sectors[f].ceiling.pic] = true;
+    }
+
+    for (int f = 0; f < Level->NumSides; ++f) {
+      if (Level->Sides[f].TopTexture > 0 && Level->Sides[f].TopTexture < maxtex) texturepresent[Level->Sides[f].TopTexture] = true;
+      if (Level->Sides[f].MidTexture > 0 && Level->Sides[f].MidTexture < maxtex) texturepresent[Level->Sides[f].MidTexture] = true;
+      if (Level->Sides[f].BottomTexture > 0 && Level->Sides[f].BottomTexture < maxtex) texturepresent[Level->Sides[f].BottomTexture] = true;
+    }
+
+    int lvltexcount = 0;
+    texturepresent[0] = false;
+    for (auto &&b : texturepresent) { if (b) ++lvltexcount; }
+    if (lvltexcount) GCon->Logf("found %d level textures", lvltexcount);
   }
 
-  for (int f = 0; f < Level->NumSides; ++f) {
-    if (Level->Sides[f].TopTexture > 0 && Level->Sides[f].TopTexture < maxtex) texturepresent[Level->Sides[f].TopTexture] = true;
-    if (Level->Sides[f].MidTexture > 0 && Level->Sides[f].MidTexture < maxtex) texturepresent[Level->Sides[f].MidTexture] = true;
-    if (Level->Sides[f].BottomTexture > 0 && Level->Sides[f].BottomTexture < maxtex) texturepresent[Level->Sides[f].BottomTexture] = true;
+  // models
+  if (r_precache_model_textures && AllModelTextures.length() > 0) {
+    int mdltexcount = 0;
+    for (auto &&mtid : AllModelTextures) {
+      if (mtid < 1) continue;
+      check(mtid < texturepresent.length());
+      if (!texturepresent[mtid]) {
+        texturepresent[mtid] = true;
+        ++mdltexcount;
+      }
+    }
+    if (mdltexcount) GCon->Logf("found %d alias model textures", mdltexcount);
   }
+
+  // sprites
+  if (r_precache_sprite_textures && sprites.length() > 0) {
+    int sprtexcount = 0;
+    for (auto &&sfi : sprites) {
+      if (sfi.numframes == 0) continue;
+      const spriteframe_t *spf = sfi.spriteframes;
+      for (int f = sfi.numframes; f--; ++spf) {
+        for (int lidx = 0; lidx < 16; ++lidx) {
+          int stid = spf->lump[lidx];
+          if (stid < 1) continue;
+          check(stid < texturepresent.length());
+          if (!texturepresent[stid]) {
+            texturepresent[stid] = true;
+            ++sprtexcount;
+          }
+        }
+      }
+    }
+    if (sprtexcount) GCon->Logf("found %d sprite textures", sprtexcount);
+  }
+
+  int maxpbar = 0, currpbar = 0;
+  for (auto &&b : texturepresent) { if (b) ++maxpbar; }
 
   R_LdrMsgShowSecondary("PRECACHING TEXTURES...");
   R_PBarReset();
 
-  int mdltexcount = 0;
-  if (r_precache_model_textures) {
-    mdltexcount = AllModelTextures.length();
-    if (mdltexcount > 0) GCon->Logf("precaching %d model textures...", mdltexcount);
-    for (int f = 0; f < AllModelTextures.length(); ++f) {
-      R_PBarUpdate("Textures", f, maxtex+mdltexcount);
-      Drawer->PrecacheTexture(GTextureManager[AllModelTextures[f]]);
+  if (maxpbar > 0) {
+    GCon->Logf("precaching %d textures...", maxpbar);
+    for (int f = 1; f < maxtex; ++f) {
+      if (texturepresent[f]) {
+        ++currpbar;
+        R_PBarUpdate("Textures", currpbar, maxpbar);
+        Drawer->PrecacheTexture(GTextureManager[f]);
+      }
     }
   }
 
-  // precache textures
-  int xtexcount = 0;
-  for (int f = 1; f < maxtex; ++f) if (texturepresent[f]) ++xtexcount;
-  if (xtexcount > 0) GCon->Logf("precaching %d map textures...", xtexcount);
-
-  for (int f = 1; f < maxtex; ++f) {
-    if (texturepresent[f]) {
-      R_PBarUpdate("Textures", f+mdltexcount, maxtex+mdltexcount);
-      Drawer->PrecacheTexture(GTextureManager[f]);
-    }
-  }
-
-  R_PBarUpdate("Textures", maxtex+mdltexcount, maxtex+mdltexcount, true); // final update
+  R_PBarUpdate("Textures", maxpbar, maxpbar, true); // final update
 }
 
 
