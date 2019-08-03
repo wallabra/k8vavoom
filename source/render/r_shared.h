@@ -121,8 +121,8 @@ struct surface_t {
   vuint32 dlightbits;
   vuint32 drawflags; // DF_XXX
   int count;
-  short texturemins[2];
-  short extents[2];
+  /*short*/int texturemins[2];
+  /*short*/int extents[2];
   surfcache_t *CacheSurf;
   int plvisible; // cached visibility flag, set in main BSP collector (VRenderLevelShared::SurfCheckAndQueue)
   //vuint32 fixvertbmp; // for world surfaces, this is bitmap of "fix" additional surfaces (bit 1 means "added fix")

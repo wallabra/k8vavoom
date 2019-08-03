@@ -30,6 +30,11 @@
 #define ON_EPSILON      (0.1f)
 #define SUBDIVIDE_SIZE  (240)
 
+//#define EXTMAX  (32767)
+//#define EXTMAX  (65536)
+// float mantissa is 24 bits, but let's play safe, and use 20 bits
+#define EXTMAX  (0x100000)
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 static VCvarB r_precalc_static_lights("r_precalc_static_lights", true, "Precalculate static lights?", CVAR_Archive);
@@ -120,8 +125,8 @@ void VRenderLevel::InitSurfs (bool recalcStaticLightmaps, surface_t *ASurfs, tex
       surf->subsector = sub;
       surf->drawflags &= ~surface_t::DF_CALC_LMAP; // just in case
     } else {
-      short old_texturemins[2];
-      short old_extents[2];
+      /*short*/int old_texturemins[2];
+      /*short*/int old_extents[2];
 
       // to do checking later
       old_texturemins[0] = surf->texturemins[0];
@@ -135,14 +140,13 @@ void VRenderLevel::InitSurfs (bool recalcStaticLightmaps, surface_t *ASurfs, tex
         // bad surface
         continue;
       }
-
       int bmins = (int)floor(mins/16);
       int bmaxs = (int)ceil(maxs/16);
 
-      if (bmins < -32767/16 || bmins > 32767/16 ||
-          bmaxs < -32767/16 || bmaxs > 32767/16 ||
-          (bmaxs-bmins) < -32767/16 ||
-          (bmaxs-bmins) > 32767/16)
+      if (bmins < -EXTMAX/16 || bmins > EXTMAX/16 ||
+          bmaxs < -EXTMAX/16 || bmaxs > EXTMAX/16 ||
+          (bmaxs-bmins) < -EXTMAX/16 ||
+          (bmaxs-bmins) > EXTMAX/16)
       {
         GCon->Logf(NAME_Warning, "Subsector %d got too big S surface extents: (%d,%d)", (int)(ptrdiff_t)(sub-Level->Subsectors), bmins, bmaxs);
         surf->texturemins[0] = 0;
@@ -156,14 +160,13 @@ void VRenderLevel::InitSurfs (bool recalcStaticLightmaps, surface_t *ASurfs, tex
         // bad surface
         continue;
       }
-
       bmins = (int)floor(mins/16);
       bmaxs = (int)ceil(maxs/16);
 
-      if (bmins < -32767/16 || bmins > 32767/16 ||
-          bmaxs < -32767/16 || bmaxs > 32767/16 ||
-          (bmaxs-bmins) < -32767/16 ||
-          (bmaxs-bmins) > 32767/16)
+      if (bmins < -EXTMAX/16 || bmins > EXTMAX/16 ||
+          bmaxs < -EXTMAX/16 || bmaxs > EXTMAX/16 ||
+          (bmaxs-bmins) < -EXTMAX/16 ||
+          (bmaxs-bmins) > EXTMAX/16)
       {
         GCon->Logf(NAME_Warning, "Subsector %d got too big T surface extents: (%d,%d)", (int)(ptrdiff_t)(sub-Level->Subsectors), bmins, bmaxs);
         surf->texturemins[1] = 0;
