@@ -419,7 +419,7 @@ override void ClearInventory () {
 //
 //===========================================================================
 override void GiveInventory (name ItemName, int Amount, bool allowReplacement) {
-  //printwarn("*** GiveInventory: %s %s", ItemName, Amount);
+  //printwarn("*** %C: GiveInventory: %s %s", ItemName, Amount);
 
   if (Amount <= 0) return;
   if (nameicmp(ItemName, 'armor') == 0) ItemName = 'basicarmor';
@@ -454,7 +454,11 @@ override void GiveInventory (name ItemName, int Amount, bool allowReplacement) {
     HadWeapon = !!PlayerEx(Player).ReadyWeapon;
   }
 
-  Inventory Item = Spawn(ItemClass, default, default, default, AllowReplace:false);
+  //k8: if item's pickup code calls some movement functions, this may trigger
+  //    another call to pickup handler (due to something bumped into new item),
+  //    and it will go on, and on, and on (thanks to TDRR for finding this!).
+  //    so i will move the item far away, and let's hope that there will be nobody there
+  Inventory Item = Spawn(ItemClass, /*default*/vector(-33000, -33000, -33000), default, default, AllowReplace:false);
   if (!Item) return;
 
   // this shouldn't count for the item statistics
@@ -466,7 +470,12 @@ override void GiveInventory (name ItemName, int Amount, bool allowReplacement) {
   else if (BasicArmorBonus(Item)) BasicArmorBonus(Item).SaveAmount *= Amount;
   else Item.Amount = Amount;
 
-  if (!Item.TryPickup(self)) Item.Destroy();
+  if (!Item.TryPickup(self)) {
+    Item.Destroy();
+  } else if (!Item.IsDestroyed()) {
+    // just in case, move it to spawner's origin
+    Item.SetOrigin(Origin, properFloorCheck:true);
+  }
 
   // don't automatically bring up weapon
   if (bIsPlayer && HadWeapon) {
