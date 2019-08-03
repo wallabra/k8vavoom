@@ -66,6 +66,18 @@ menudef VideoOptions {
       "Better leave this 'OFF'.";
   }
 
+  option slider {
+    title = "Maximum Sprite Textures To Precache";
+    cvar = r_precache_max_sprites;
+    step = 16;
+    min = 0;
+    max = 32768;
+    help =
+      "Some mods has enormous number of sprites. You can limit number of"
+      "sprite textures the engine will try to precache here."
+      "Zero means 'no limits'.";
+  }
+
   option bool {
     title = "Reset Level Texture Cache";
     cvar = r_reupload_level_textures;
