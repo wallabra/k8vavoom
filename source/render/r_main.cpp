@@ -116,6 +116,7 @@ static VCvarB r_reupload_level_textures("r_reupload_level_textures", true, "Reup
 static VCvarB r_precache_textures("r_precache_textures", true, "Precache level textures?", CVAR_Archive);
 static VCvarB r_precache_model_textures("r_precache_model_textures", true, "Precache alias model textures?", CVAR_Archive);
 static VCvarB r_precache_sprite_textures("r_precache_sprite_textures", false, "Precache sprite textures?", CVAR_Archive);
+static VCvarI r_precache_max_sprites("r_precache_max_sprites", "4096", "Maxumum number of sprite textures to precache?", CVAR_Archive);
 static VCvarI r_level_renderer("r_level_renderer", "1", "Level renderer type (0:auto; 1:lightmap; 2:stenciled).", CVAR_Archive);
 
 int r_precache_textures_override = -1;
@@ -1850,6 +1851,9 @@ void VRenderLevelShared::PrecacheLevel () {
   // sprites
   if (r_precache_sprite_textures && sprites.length() > 0) {
     int sprtexcount = 0;
+    bool abortIt = false;
+    int sprlimit = r_precache_max_sprites.asInt();
+    if (sprlimit < 0) sprlimit = 0;
     for (auto &&sfi : sprites) {
       if (sfi.numframes == 0) continue;
       const spriteframe_t *spf = sfi.spriteframes;
@@ -1861,9 +1865,16 @@ void VRenderLevelShared::PrecacheLevel () {
           if (!texturepresent[stid]) {
             texturepresent[stid] = true;
             ++sprtexcount;
+            if (sprlimit && sprtexcount >= sprlimit) {
+              GCon->Logf(NAME_Warning, "too many sprite textures, aborting at %d!", sprtexcount);
+              abortIt = true;
+              break;
+            }
           }
         }
+        if (abortIt) break;
       }
+      if (abortIt) break;
     }
     if (sprtexcount) GCon->Logf("found %d sprite textures", sprtexcount);
   }
