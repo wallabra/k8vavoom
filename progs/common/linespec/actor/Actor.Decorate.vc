@@ -966,6 +966,37 @@ final state A_JumpIfMasterCloser (float distance, state label, optional bool noz
 
 //==========================================================================
 //
+//  A_JumpIfHigherOrLower
+//
+//==========================================================================
+final state A_JumpIfHigherOrLower (state high, state low, optional float offsethigh,
+                                   optional float offsetlow, optional bool includeHeight,
+                                   optional int aptr)
+{
+  if (!high || !low) return none;
+  if (!specified_aptr) aptr = AAPTR_TARGET; // per wiki
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_JumpIfHigherOrLower', aptr));
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  if (!tgt || tgt == self) return none; // per wiki
+
+  if (!specified_includeHeight) includeHeight = true; // per wiki
+
+  if (high && tgt.Origin.z > (includeHeight ? Height : 0)+Origin.z+offsethigh) {
+    DoJump(high);
+    return high;
+  }
+
+  if (low && tgt.Origin.z+(includeHeight ? tgt.Height : 0) < Origin.z+offsetlow) {
+    DoJump(low);
+    return low;
+  }
+
+  return none;
+}
+
+
+//==========================================================================
+//
 //  A_Warp
 //
 //==========================================================================
