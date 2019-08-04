@@ -184,42 +184,56 @@ final bool LookForMonsters () {
 //  Returns true if a monster is targeted.
 //
 //==========================================================================
-final bool LookForMonsters2 (float fov) {
-  if (!fov) fov = 180;
-  bool allaround = (fabs(fov) >= 360);
+final bool LookForMonsters2 (float fov, float minseedist, float maxseedist) {
+  if (!maxseedist) maxseedist = 4096;
+  minseedist = fmax(0, minseedist);
+  maxseedist = fmax(0, maxseedist);
+  float minseedistSq = minseedist*minseedist;
+  float maxseedistSq = maxseedist*maxseedist;
 
-  //!LastPlayerSeenPosValid = false;
-  //EntityEx mo;
-  //foreach AllThinkers(EntityEx, mo)
-  Entity ee;
-  foreach RadiusThings(out ee, Origin, 4096)
-  {
-    EntityEx mo = EntityEx(ee);
-    if (!mo) continue;
-    if (mo.Health <= 0) continue; // dead
-    if (mo == self) continue; // self
-    if (!mo.bMonster) continue; // not a monster
-    if (bFriendly == mo.bFriendly) continue; // fiendly
-    if (!CanSee(mo)) continue; // out of sight
-    if (P_Random() > 128) continue; // sometimes skip
+  if (maxseedist > 0 && (minseedist <= 0 || minseedist < maxseedist)) {
+    if (!fov) fov = 180;
+    bool allaround = (fabs(fov) >= 360);
 
-    if (!allaround) {
-      /*
-      float an = AngleMod360(atan2(mo.Origin.y-Origin.y, mo.Origin.x-Origin.x)-Angles.yaw);
-      if (an > 90.0 && an < 270.0) {
-        float dist = DistTo(mo);
-        // if real close, react anyway
-        if (dist > MELEERANGE) continue; // behind back
+    //!LastPlayerSeenPosValid = false;
+    //EntityEx mo;
+    //foreach AllThinkers(EntityEx, mo)
+    Entity ee;
+    foreach RadiusThings(out ee, Origin, maxseedist)
+    {
+      EntityEx mo = EntityEx(ee);
+      if (!mo) continue;
+      if (mo.Health <= 0) continue; // dead
+      if (mo == self) continue; // self
+      if (!mo.bMonster) continue; // not a monster
+      if (bFriendly == mo.bFriendly) continue; // fiendly
+
+      // distance check
+      float distSq = DistToSquared(mo);
+      if (distSq > maxseedistSq) continue;
+      if (minseedistSq && distSq < minseedistSq) continue;
+
+      if (!CanSee(mo)) continue; // out of sight
+      if (P_Random() > 128) continue; // sometimes skip
+
+      if (!allaround) {
+        /*
+        float an = AngleMod360(atan2(mo.Origin.y-Origin.y, mo.Origin.x-Origin.x)-Angles.yaw);
+        if (an > 90.0 && an < 270.0) {
+          float dist = DistTo(mo);
+          // if real close, react anyway
+          if (dist > MELEERANGE) continue; // behind back
+        }
+        */
+        if (!CheckFovTo(mo, fov)) {
+          //float dist = DistTo(mo);
+          // if real close, react anyway
+          if (distSq > MELEERANGE*MELEERANGE) continue; // behind back
+        }
       }
-      */
-      if (!CheckFovTo(mo, fov)) {
-        float dist = DistTo(mo);
-        // if real close, react anyway
-        if (dist > MELEERANGE) continue; // behind back
-      }
+      Target = mo;
+      return true;
     }
-    Target = mo;
-    return true;
   }
 
   // use goal as target
@@ -248,16 +262,13 @@ final bool LookForMonsters2 (float fov) {
 //  Returns true if a player is targeted.
 //
 //==========================================================================
-final bool LookForPlayers (float fov) {
+final bool LookForPlayers (float fov, optional float minseedist, optional float maxseedist) {
   if (TIDToHate != 0) {
-    if (LookForTID(fov)) return true;
+    if (LookForTID(fov, minseedist, maxseedist)) return true;
     if (!bHuntPlayers) return false;
   } else if (bFriendly) {
-    return LookForMonsters2(fov);
+    return LookForMonsters2(fov, minseedist, maxseedist);
   }
-
-  if (!fov) fov = 180;
-  bool allaround = (fabs(fov) >= 360);
 
   if (!Level.Game.netgame && Level.Game.Players[0] &&
       Level.Game.Players[0].bSpawned && Level.Game.Players[0].Health <= 0)
@@ -268,6 +279,17 @@ final bool LookForPlayers (float fov) {
     Target = none;
     return false;
   }
+
+  if (!fov) fov = 180;
+  bool allaround = (fabs(fov) >= 360);
+
+  if (!maxseedist) maxseedist = 4096;
+  minseedist = fmax(0, minseedist);
+  maxseedist = fmax(0, maxseedist);
+  float minseedistSq = minseedist*minseedist;
+  float maxseedistSq = maxseedist*maxseedist;
+
+  if (!maxseedist || minseedist >= maxseedist) return false;
 
   int c = 0;
   int stop = (LastLook-1)&(MAXPLAYERS-1);
@@ -310,6 +332,12 @@ final bool LookForPlayers (float fov) {
     if (PlayerEx(P).bNoTarget) continue; // don't target
     if (P.Health <= 0) continue; // dead
     if (!EntityEx(P.MO).bShootable) continue; // not shootable
+
+    // distance check
+    float distSq = DistToSquared(P.MO);
+    if (distSq > maxseedistSq) continue;
+    if (minseedistSq && distSq < minseedistSq) continue;
+
     if (!CanSee(P.MO)) continue; // out of sight
 
     if (!allaround) {
@@ -322,9 +350,9 @@ final bool LookForPlayers (float fov) {
       }
       */
       if (!CheckFovTo(P.MO, fov)) {
-        float dist = DistTo(P.MO);
+        //float dist = DistTo(P.MO);
         // if real close, react anyway
-        if (dist > MELEERANGE) continue; // behind back
+        if (distSq > MELEERANGE*MELEERANGE) continue; // behind back
       }
     }
 
@@ -378,38 +406,54 @@ final bool LookForPlayers (float fov) {
 //  Returns true if a hating TID is targeted.
 //
 //============================================================================
-final bool LookForTID (float fov) {
+final bool LookForTID (float fov, float minseedist, float maxseedist) {
   if (!fov) fov = 180;
   bool allaround = (fabs(fov) >= 360);
 
+  if (!maxseedist) maxseedist = 4096;
+  minseedist = fmax(0, minseedist);
+  maxseedist = fmax(0, maxseedist);
+  float minseedistSq = minseedist*minseedist;
+  float maxseedistSq = maxseedist*maxseedist;
+
+  if (!maxseedist || minseedist >= maxseedist) return false;
+
   Entity Tmp;
-  foreach RadiusThings(Tmp, Origin, 64.0) {
-    if (!EntityEx(Tmp).bShootable) continue; // not shootable
-    if (Tmp == self) continue;
-    if (Tmp.Health <= 0) continue; // dead
-    if (EntityEx(Tmp).bDormant) continue; // skip dormant things
 
-    EntityEx Other;
-    if (Tmp.TID == TIDToHate) {
-      // good one
-      Other = EntityEx(Tmp);
-    } else if (EntityEx(Tmp).Target && EntityEx(Tmp).Target.TID == TIDToHate) {
-      // if it attacks something with given TID, hate it too
-      Other = EntityEx(Tmp).Target;
-      if (!Other.bShootable || Other.Health <= 0 || Other.bDormant) continue;
-    } else {
-      continue;
+  if (minseedist < 64) {
+    foreach RadiusThings(Tmp, Origin, fmin(maxseedist, 64.0)) {
+      if (!EntityEx(Tmp).bShootable) continue; // not shootable
+      if (Tmp == self) continue;
+      if (Tmp.Health <= 0) continue; // dead
+      if (EntityEx(Tmp).bDormant) continue; // skip dormant things
+
+      EntityEx Other;
+      if (Tmp.TID == TIDToHate) {
+        // good one
+        Other = EntityEx(Tmp);
+      } else if (EntityEx(Tmp).Target && EntityEx(Tmp).Target.TID == TIDToHate) {
+        // if it attacks something with given TID, hate it too
+        Other = EntityEx(Tmp).Target;
+        if (!Other.bShootable || Other.Health <= 0 || Other.bDormant) continue;
+      } else {
+        continue;
+      }
+
+      // distance check
+      float distSq = DistToSquared(Other);
+      if (distSq > maxseedistSq) continue;
+      if (minseedistSq && distSq < minseedistSq) continue;
+
+      if (!bNoSightCheck && !CanSee(Other)) continue; // out of sight
+
+      // need to be sure the reactiontime is 0 if the monster is leaving
+      // its goal to go after a player
+      if (Goal && Target == Goal) ReactionTime = 0.0;
+
+      Target = Other;
+      LastLookActor = none;
+      return true;
     }
-
-    if (!bNoSightCheck && !CanSee(Other)) continue; // out of sight
-
-    // need to be sure the reactiontime is 0 if the monster is leaving
-    // its goal to go after a player
-    if (Goal && Target == Goal) ReactionTime = 0.0;
-
-    Target = Other;
-    LastLookActor = none;
-    return true;
   }
 
   bool ReachedEnd = false;
@@ -437,6 +481,11 @@ final bool LookForTID (float fov) {
     if (Other.Health <= 0) continue; // dead
     if (Other.bDormant) continue; // skip dormant things
 
+    // distance check
+    float distSq = DistToSquared(Other);
+    if (distSq > maxseedistSq) continue;
+    if (minseedistSq && distSq < minseedistSq) continue;
+
     if (--Cnt == 0) break;
 
     if (!bNoSightCheck) {
@@ -451,9 +500,9 @@ final bool LookForTID (float fov) {
         }
         */
         if (!CheckFovTo(Other, fov)) {
-          float dist = DistTo(Other);
+          //float dist = DistTo(Other);
           // if real close, react anyway
-          if (dist > MELEERANGE) continue; // behind back
+          if (distSq > MELEERANGE*MELEERANGE) continue; // behind back
         }
       }
     }
