@@ -161,6 +161,11 @@ struct PlayerClassWeaponSlots {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+static void ParseConst (VScriptParser *sc, VMemberBase *parent, bool changeMode=true);
+static void ParseEnum (VScriptParser *sc, VMemberBase *parent, bool changeMode=true);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // this is workaround for morons overriding the same class several times in
 // the same mod (yes, smoothdoom, i am talking about you).
 // we will cut off old override if we'll find a new one
@@ -886,10 +891,10 @@ static void AddClassFixup (VClass *Class, VField *Field, const VStr &ClassName, 
 //  ParseConst
 //
 //==========================================================================
-static void ParseConst (VScriptParser *sc) {
-  bool isInt = false;
+static void ParseConst (VScriptParser *sc, VMemberBase *parent, bool changeMode) {
+  if (changeMode) sc->SetCMode(true);
 
-  sc->SetCMode(true);
+  bool isInt = false;
        if (sc->Check("int")) isInt = true;
   else if (sc->Check("float")) isInt = false;
   else sc->Error(va("%s: expected 'int' or 'float'", *sc->GetLoc().toStringNoCol()));
@@ -903,7 +908,8 @@ static void ParseConst (VScriptParser *sc) {
   if (!Expr) {
     sc->Error("Constant value expected");
   } else {
-    VEmitContext ec(DecPkg);
+    VEmitContext ec(parent);
+    if (parent->MemberType == MEMBER_Class) ec.SelfClass = (VClass *)parent;
     Expr = Expr->Resolve(ec);
     if (Expr) {
       if (isInt) {
@@ -920,7 +926,7 @@ static void ParseConst (VScriptParser *sc) {
         //GCon->Logf("*** INT CONST '%s' is %d", *Name, Val);
         delete Expr;
         Expr = nullptr;
-        VConstant *C = new VConstant(*Name, DecPkg, Loc);
+        VConstant *C = new VConstant(*Name, parent, Loc);
         C->Type = TYPE_Int;
         C->Value = Val;
       } else {
@@ -929,14 +935,63 @@ static void ParseConst (VScriptParser *sc) {
         //GCon->Logf("*** FLOAT CONST '%s' is %g", *Name, Val);
         delete Expr;
         Expr = nullptr;
-        VConstant *C = new VConstant(*Name, DecPkg, Loc);
+        VConstant *C = new VConstant(*Name, parent, Loc);
         C->Type = TYPE_Float;
         C->FloatValue = Val;
       }
     }
   }
   sc->Expect(";");
-  sc->SetCMode(false);
+
+  if (changeMode) sc->SetCMode(false);
+}
+
+
+//==========================================================================
+//
+//  ParseEnum
+//
+//==========================================================================
+static void ParseEnum (VScriptParser *sc, VMemberBase *parent, bool changeMode) {
+  if (changeMode) sc->SetCMode(true);
+
+  //GLog.Logf("Enum");
+  if (!sc->Check("{")) {
+    sc->ExpectIdentifier();
+    sc->Expect("{");
+  }
+
+  int currValue = 0;
+  while (!sc->Check("}")) {
+    sc->ExpectIdentifier();
+    TLocation Loc = sc->GetLoc();
+    VStr Name = sc->String.ToLower();
+    VExpression *eval;
+    if (sc->Check("=")) {
+      eval = ParseExpression(sc, nullptr);
+      if (eval) {
+        VEmitContext ec(parent);
+        eval = eval->Resolve(ec);
+        if (eval && !eval->IsIntConst()) sc->Error(va("%s: expected integer literal", *sc->GetLoc().toStringNoCol()));
+        if (eval) {
+          currValue = eval->GetIntConst();
+          delete eval;
+        }
+      }
+    }
+    // create constant
+    VConstant *C = new VConstant(*Name, parent, Loc);
+    C->Type = TYPE_Int;
+    C->Value = currValue;
+    ++currValue;
+    if (!sc->Check(",")) {
+      sc->Expect("}");
+      break;
+    }
+  }
+  sc->Check(";");
+
+  if (changeMode) sc->SetCMode(false);
 }
 
 
@@ -1035,52 +1090,6 @@ static void ParseClass (VScriptParser *sc) {
     else if (sc->Check("field")) ParseFieldAlias(sc, Class);
     else sc->Error(va("Unknown class property '%s'", *sc->String));
   }
-  sc->SetCMode(false);
-}
-
-
-//==========================================================================
-//
-//  ParseEnum
-//
-//==========================================================================
-static void ParseEnum (VScriptParser *sc) {
-  sc->SetCMode(true);
-  //GLog.Logf("Enum");
-  if (!sc->Check("{")) {
-    sc->ExpectIdentifier();
-    sc->Expect("{");
-  }
-
-  int currValue = 0;
-  while (!sc->Check("}")) {
-    sc->ExpectIdentifier();
-    TLocation Loc = sc->GetLoc();
-    VStr Name = sc->String.ToLower();
-    VExpression *eval;
-    if (sc->Check("=")) {
-      eval = ParseExpression(sc, nullptr);
-      if (eval) {
-        VEmitContext ec(DecPkg);
-        eval = eval->Resolve(ec);
-        if (eval && !eval->IsIntConst()) sc->Error(va("%s: expected integer literal", *sc->GetLoc().toStringNoCol()));
-        if (eval) {
-          currValue = eval->GetIntConst();
-          delete eval;
-        }
-      }
-    }
-    // create constant
-    VConstant *C = new VConstant(*Name, DecPkg, Loc);
-    C->Type = TYPE_Int;
-    C->Value = currValue;
-    ++currValue;
-    if (!sc->Check(",")) {
-      sc->Expect("}");
-      break;
-    }
-  }
-  sc->Check(";");
   sc->SetCMode(false);
 }
 
@@ -1609,7 +1618,7 @@ static void ScanActorDefForUserVars (VScriptParser *sc, TArray<VDecorateUserVarD
   sc->Expect("{");
 
   while (!sc->Check("}")) {
-    if (!sc->Check("var")) {
+    if (sc->QuotedString || !sc->Check("var")) {
       // not a var, skip whole line
       //sc->SkipLine();
       sc->GetString();
@@ -1852,6 +1861,16 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
 
     if (sc->Check("alias")) {
       ParseActionAlias(sc, Class);
+      continue;
+    }
+
+    if (sc->Check("const")) {
+      ParseConst(sc, Class, false); // don't touch scanner mode
+      continue;
+    }
+
+    if (sc->Check("enum")) {
+      ParseEnum(sc, Class, false); // don't touch scanner mode
       continue;
     }
 
@@ -2994,9 +3013,9 @@ static void ParseDecorate (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, 
       if (Lump < 0) sc->Error(va("Lump %s not found", *sc->String));
       ParseDecorate(new VScriptParser(/*sc->String*/W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassFixups, newWSlots);
     } else if (sc->Check("const")) {
-      ParseConst(sc);
+      ParseConst(sc, DecPkg);
     } else if (sc->Check("enum")) {
-      ParseEnum(sc);
+      ParseEnum(sc, DecPkg);
     } else if (sc->Check("class")) {
       ParseClass(sc);
     } else if (sc->Check("actor")) {

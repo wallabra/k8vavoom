@@ -632,6 +632,29 @@ VConstant *VClass::FindConstant (VName Name, VName EnumName) {
 
 //==========================================================================
 //
+//  VClass::FindPackageConstant
+//
+//==========================================================================
+VConstant *VClass::FindPackageConstant (VMemberBase *pkg, VName Name, VName EnumName) {
+  if (!pkg) return FindConstant(Name, EnumName);
+  if (Name == NAME_None) return nullptr;
+  // check if we're in that package
+  VMemberBase *opkg = Outer;
+  while (opkg && opkg->MemberType != MEMBER_Package) opkg = opkg->Outer;
+  if (!opkg || opkg != pkg) {
+    //GLog.Logf("const `%s` search aborted for `%s`", *Name, *GetFullName());
+    return nullptr;
+  }
+  Name = ResolveAlias(Name);
+  VMemberBase *m = StaticFindMember(Name, this, MEMBER_Const, EnumName);
+  if (m) return (VConstant *)m;
+  if (ParentClass) return ParentClass->FindPackageConstant(pkg, Name, EnumName);
+  return nullptr;
+}
+
+
+//==========================================================================
+//
 //  VClass::FindField
 //
 //==========================================================================

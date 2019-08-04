@@ -571,8 +571,9 @@ VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
   }
 
   // non-prefixed constant
-  // look only for constants defined in DECORATE scripts
-  VConstant *Const = ec.Package->FindConstant(CheckName);
+  // look only for constants defined in DECORATE scripts (and in the current class)
+  VConstant *Const = (ec.SelfClass ? ec.SelfClass->FindPackageConstant(ec.Package, CheckName) : nullptr);
+  if (!Const) Const = ec.Package->FindConstant(CheckName);
   if (Const) {
     VExpression *e = new VConstantValue(Const, Loc);
     delete this;

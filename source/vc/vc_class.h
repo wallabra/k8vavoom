@@ -362,6 +362,7 @@ public:
   bool IsKnownEnum (VName EnumName);
   bool AddKnownEnum (VName EnumName); // returns `true` if enum was redefined
   VConstant *FindConstant (VName Name, VName EnumName=NAME_None);
+  VConstant *FindPackageConstant (VMemberBase *pkg, VName Name, VName EnumName=NAME_None);
   VField *FindField (VName, bool bRecursive=true);
   VField *FindField (VName, const TLocation &, VClass *);
   VField *FindFieldChecked (VName);
