@@ -89,26 +89,25 @@ final void A_ChangeVelocity (float x, optional float y, optional float z, option
   Entity tgt = DecorDoAAPtr('A_ChangeVelocity', aptr!optional);
   if (!tgt) return;
 
-  float vx = x, vy = y, vz = z;
+  TVec nv = vector(x, y, z);
 
   if (flags&1) {
     // relative axes - make x, y relative to actor's current angle
-    vx = x*(-y)*cos(tgt.Angles.yaw)*sin(tgt.Angles.yaw);
-    vx /= 4.0*35.0;
-    vy = x*sin(tgt.Angles.yaw)*y*cos(tgt.Angles.yaw);
-    vy /= 4.0*35.0;
+    float sina, cosa;
+    sincos(tgt.Angles.yaw, out sina, out cosa);
+    nv.x = x*cosa-y*sina;
+    nv.y = x*sina+y*cosa;
   }
+
+  // translate to k8vavoom velocity
+  nv *= 35.0;
 
   if (flags&2) {
     // discard old velocity - replace old velocity with new velocity
-    tgt.Velocity.x = vx;
-    if (specified_y) tgt.Velocity.y = vy;
-    if (specified_z) tgt.Velocity.z = vz;
+    tgt.Velocity = nv;
   } else {
     // add new velocity to old velocity
-    tgt.Velocity.x += vx;
-    if (specified_y) tgt.Velocity.y += vy;
-    if (specified_z) tgt.Velocity.z += vz;
+    tgt.Velocity += nv;
   }
 }
 
