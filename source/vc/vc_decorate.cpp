@@ -905,14 +905,18 @@ static void ParseConst (VScriptParser *sc) {
   } else {
     VEmitContext ec(DecPkg);
     Expr = Expr->Resolve(ec);
-    if (isInt && Expr && Expr->IsFloatConst()) {
-      GCon->Logf(NAME_Warning, "%s: some moron cannot put a proper float type to a constant `%s`", *sc->GetLoc().toStringNoCol(), *Name);
-      isInt = false;
-    }
     if (Expr) {
       if (isInt) {
-        if (!Expr->IsIntConst()) sc->Error(va("%s: expected integer literal", *sc->GetLoc().toStringNoCol()));
-        int Val = Expr->GetIntConst();
+        int Val;
+        if (Expr->IsFloatConst()) {
+               if (Expr->GetFloatConst() < -0x3fffffff) Val = -0x3fffffff;
+          else if (Expr->GetFloatConst() > 0x3fffffff) Val = 0x3fffffff;
+          else Val = (int)Expr->GetFloatConst();
+          GCon->Logf(NAME_Warning, "%s: some moron cannot put a proper float type to a constant `%s`; %g truncated to %d", *sc->GetLoc().toStringNoCol(), *Name, Expr->GetFloatConst(), Val);
+        } else {
+          if (!Expr->IsIntConst()) sc->Error(va("%s: expected integer literal", *sc->GetLoc().toStringNoCol()));
+          Val = Expr->GetIntConst();
+        }
         //GCon->Logf("*** INT CONST '%s' is %d", *Name, Val);
         delete Expr;
         Expr = nullptr;
