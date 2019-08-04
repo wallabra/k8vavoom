@@ -801,7 +801,8 @@ final bool HitFloor () {
 
   if (bMissile && (bColideWithWorld || !LineSpecialGameInfo(Level.Game).bNoClipIgnoreFloor)) {
     // physics caller will setup interpolation with `tmp_phys_z_change`
-    tmp_phys_z_change += FloorZ-Origin.z;
+    // if we have no velocity, don't bother interpolating
+    if (Velocity.xy) tmp_phys_z_change += FloorZ-Origin.z;
     Origin.z = FloorZ;
     if (bBounceFloors || BounceType != BOUNCE_None) {
       FloorBounceMissile();
@@ -829,7 +830,9 @@ final bool HitFloor () {
   }
 
   // physics caller will setup interpolation with `tmp_phys_z_change`
-  tmp_phys_z_change += FloorZ-Origin.z;
+  //if ((self isa 'LifeEssence') || (self isa 'ZombieMan')) print("%C: myz=%s; floorz=%s; fz-mz=%s (tzc=%s)", self, Origin.z, FloorZ, FloorZ-Origin.z, tmp_phys_z_change);
+  // if we have no velocity, don't bother interpolating
+  if (Velocity.xy) tmp_phys_z_change += FloorZ-Origin.z;
   Origin.z = FloorZ;
 
   if (vdot < -0.1) {
@@ -878,7 +881,8 @@ final bool HitCeiling () {
   }
 
   // physics caller will setup interpolation with `tmp_phys_z_change`
-  tmp_phys_z_change += (CeilingZ-Height)-Origin.z;
+  // if we have no velocity, don't bother interpolating
+  if (Velocity.xy) tmp_phys_z_change += (CeilingZ-Height)-Origin.z;
   Origin.z = CeilingZ-Height;
 
   if (bMissile && (bColideWithWorld || !LineSpecialGameInfo(Level.Game).bNoClipIgnoreFloor)) {
