@@ -159,6 +159,18 @@ final void A_SetAngle (float newyaw, optional int flags, optional int aptr) {
 }
 
 
+//==========================================================================
+//
+//  A_SetSpeed
+//
+//==========================================================================
+final void A_SetSpeed (float speed, optional int aptr) {
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_SetSpeed', aptr!optional));
+  if (!tgt) return;
+  tgt.Speed = fmax(0, speed)*35.0;
+}
+
+
 /*
 const int SPF_FORCECLAMP = 0x01;
 const int SPF_INTERPOLATE = 0x00;
@@ -1223,18 +1235,6 @@ final state A_CheckLOF (optional state jump, optional int flags, optional float 
   // all checks passed
   return true;
 #endif
-}
-
-
-//==========================================================================
-//
-//  A_SetSpeed
-//
-//==========================================================================
-final void A_SetSpeed (float speed, optional int aptr) {
-  EntityEx tgt = EntityEx(DecorDoAAPtr('A_SetSpeed', aptr!optional));
-  if (!tgt) return;
-  tgt.Speed = fmax(0, speed)*35.0;
 }
 
 
