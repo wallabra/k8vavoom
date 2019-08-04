@@ -201,7 +201,7 @@ final float decorate_clamp (float val, float min, float max) {
 /*final*/ float decorate_gravity { get { return Gravity; } }
 /*final*/ float decorate_meleerange { get { return MeleeRange; } }
 /*final*/ float decorate_reactiontime { get { return ReactionTime*35.0; } }
-/*final*/ float decorate_speed { get { return Speed; } }
+/*final*/ float decorate_speed { get { return Speed/35.0; } }
 /*final*/ int decorate_special { get { return Special; } }
 /*final*/ int decorate_tid { get { return TID; } }
 /*final*/ int decorate_tidtohate { get { return TIDToHate; } }
