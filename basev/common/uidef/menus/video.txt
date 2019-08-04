@@ -61,7 +61,17 @@ menudef VideoOptions {
     title = "Precache Sprite Textures";
     cvar = r_precache_sprite_textures;
     help =
-      "Precache sprite textures (upload them to GPU) on level loading?"
+      "Precache most used sprite textures (upload them to GPU) on level loading?"
+      "This scans spawned level things, and precaches most of their sprites."
+      "Usually this has a medium impact on GPU and loading times."
+      "Turn this 'ON' if you have a box with 3+GB of RAM and non-integrated GPU.";
+  }
+
+  option bool {
+    title = "Precache *ALL* Sprite Textures";
+    cvar = r_precache_all_sprite_textures;
+    help =
+      "Precache *ALL* sprite textures (upload them to GPU) on level loading?"
       "This has *HUGE* impact on loading times, and require *ALOT* of GPU memory."
       "Better leave this 'OFF'.";
   }
