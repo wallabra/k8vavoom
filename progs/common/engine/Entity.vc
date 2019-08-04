@@ -917,6 +917,16 @@ final float DistTo (Entity Other) {
 
 //==========================================================================
 //
+//  DistToSquared
+//
+//==========================================================================
+final float DistToSquared (Entity Other) {
+  return LengthSquared(Other.GetCentre()-GetCentre());
+}
+
+
+//==========================================================================
+//
 //  DistTo2
 //
 //==========================================================================
@@ -924,6 +934,18 @@ final float DistTo2 (Entity Other) {
   TVec dir = Other.Origin-Origin;
   dir.z = 0.0;
   return Length2D(dir);
+}
+
+
+//==========================================================================
+//
+//  DistTo2Squared
+//
+//==========================================================================
+final float DistTo2Squared (Entity Other) {
+  TVec dir = Other.Origin-Origin;
+  //dir.z = 0.0;
+  return Length2DSquared(dir);
 }
 
 
