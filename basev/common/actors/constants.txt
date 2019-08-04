@@ -153,6 +153,7 @@ const int MSF_DontHurt = 2;
 const int BF_USEAMMO      = 1;
 const int BF_DONTWARN     = 2;
 const int BF_AFFECTBOSSES = 4;
+const int BF_NOIMPACTDAMAGE = 8;
 
 // flags for A_CustomPunch
 const int CPF_USEAMMO       = 1;

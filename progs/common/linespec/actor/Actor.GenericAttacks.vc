@@ -59,6 +59,13 @@ const int CMF_SAVEPITCH       = 64;
 const int CMF_ABSOLUTEANGLE   = 128;
 
 
+// flags for A_Blast
+const int BF_USEAMMO      = 1;
+const int BF_DONTWARN     = 2;
+const int BF_AFFECTBOSSES = 4;
+const int BF_NOIMPACTDAMAGE = 8;
+
+
 //==========================================================================
 //
 //  A_CustomMissile
@@ -810,16 +817,20 @@ final void BlastActor (Actor victim, Actor source, float speed, class!Actor Blas
   float x = victim.Origin.x+(victim.Radius+1.0)*cos(ang);
   float y = victim.Origin.y+(victim.Radius+1.0)*sin(ang);
   float z = victim.Origin.z-victim.FloorClip+victim.Height/2.0;
-  Actor A = Spawn(BlastEffect, vector(x, y, z));
-  if (A) {
-    A.CarryBloodTranslations(self);
-    A.Velocity.x = victim.Velocity.x;
-    A.Velocity.y = victim.Velocity.y;
+
+  Actor A = none;
+  if (BlastEffect) {
+    A = Spawn(BlastEffect, vector(x, y, z));
+    if (A) {
+      A.CarryBloodTranslations(self);
+      A.Velocity.x = victim.Velocity.x;
+      A.Velocity.y = victim.Velocity.y;
+    }
   }
 
   if (victim.bMissile) {
     victim.Velocity.z = 8.0*35.0;
-    A.Velocity.z = victim.Velocity.z;
+    if (A) A.Velocity.z = victim.Velocity.z;
   } else {
     victim.Velocity.z = 1000.0/fmax(1, victim.Mass)*35.0;
   }
@@ -844,25 +855,37 @@ final void BlastActor (Actor victim, Actor source, float speed, class!Actor Blas
 //  A_Blast
 //
 //==========================================================================
-final void A_Blast (int BlastFlags, float Strength, float Radius, float Speed,
-                    class!Actor BlastEffect, string BlastSound)
+final void A_Blast (optional int BlastFlags, optional float Strength/*ignored*/,
+                    optional float Radius, optional float Speed,
+                    optional class!Actor BlastEffect, optional name BlastSound)
 {
-  if (bIsPlayer && (BlastFlags&1)) {
+  //const int BF_USEAMMO      = 1;
+  //const int BF_DONTWARN     = 2;
+  //const int BF_AFFECTBOSSES = 4;
+  //const int BF_NOIMPACTDAMAGE = 8;
+
+  if (!Radius) Radius = 255; // default radius
+  if (!Speed) Speed = 20; // default speed
+  if (!specified_BlastEffect) BlastEffect = class!Actor(FindClassNoCase('BlastEffect'));
+  if (!specified_BlastSound) BlastSound = 'BlastRadius';
+
+  if (bIsPlayer && (BlastFlags&BF_USEAMMO)) {
     Weapon Wpn = PlayerEx(Player).ReadyWeapon;
     if (!Wpn) return;
     if (!Wpn.DepleteAmmo(Wpn.FireMode)) return;
   }
 
-  Owner.PlaySound(name(BlastSound), CHAN_ITEM);
-  if (!(BlastFlags&2)) LineSpecialLevelInfo(Level).NoiseAlert(EntityEx(Owner), EntityEx(Owner));
+  if (BlastSound) Owner.PlaySound(BlastSound, CHAN_ITEM);
+  if (!(BlastFlags&BF_DONTWARN)) LineSpecialLevelInfo(Level).NoiseAlert(EntityEx(Owner), EntityEx(Owner));
 
   Actor mo;
   foreach AllThinkers(Actor, mo) {
-    if (mo == Owner || mo.bBoss) continue; // not a valid monster
+    if (mo == Owner) continue;
+    if (mo.bBoss && !(BlastFlags&BF_AFFECTBOSSES)) continue; // not a valid monster
     if (mo.bCanBlast || mo.bIceCorpse) {
       // frozen corpse
       // let these special cases go
-    } else if (mo.bMonster && (mo.Health <= 0)) {
+    } else if (mo.bMonster && mo.Health <= 0) {
       continue;
     } else if (!mo.bMonster && !mo.bIsPlayer && !mo.bMissile && !mo.bTouchy) {
       // must be monster, player, missile or touchy

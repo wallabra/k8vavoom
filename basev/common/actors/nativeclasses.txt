@@ -444,6 +444,8 @@ class Actor extends Thinker
   action native A_SetSpeed (float speed, int aptr);
   action native A_SetFloatSpeed (float speed, int aptr);
 
+  action native A_Blast (int BlastFlags, float Strength, float Radius, float Speed, class!Actor BlastEffect, string BlastSound);
+
   action native A_RemoveChildren (optional bool all, optional int flags, optional string filter, optional string species);
   action native A_RadiusGive (name item, float distance, int flags, optional int amount, optional string filter, optional string species, optional float mindist, optional int limit);
 
