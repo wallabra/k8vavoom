@@ -420,6 +420,7 @@ static VClass *WeaponClass;
 static VClass *WeaponPieceClass;
 static VClass *PlayerPawnClass;
 static VClass *MorphProjectileClass;
+static VClass *PowerSpeedClass;
 
 static VMethod *FuncA_Scream;
 static VMethod *FuncA_NoBlocking;
@@ -1949,7 +1950,12 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             break;
           case PROP_Speed:
             sc->ExpectFloatWithSign();
-            P.Field->SetFloat(DefObj, sc->Float*35.0f);
+            // check for speed powerup
+            if (PowerSpeedClass && Class->IsChildOf(PowerSpeedClass)) {
+              P.Field->SetFloat(DefObj, sc->Float);
+            } else {
+              P.Field->SetFloat(DefObj, sc->Float*35.0f);
+            }
             break;
           case PROP_SpeedMult:
             sc->ExpectFloatWithSign();
@@ -3191,6 +3197,7 @@ void ProcessDecorateScripts () {
   WeaponPieceClass = VClass::FindClass("WeaponPiece");
   PlayerPawnClass = VClass::FindClass("PlayerPawn");
   MorphProjectileClass = VClass::FindClass("MorphProjectile");
+  PowerSpeedClass = VClass::FindClass("PowerSpeed");
 
   // find methods used by old style decorations
   FuncA_Scream = ActorClass->FindMethodChecked("A_Scream");
