@@ -81,6 +81,7 @@ class Actor extends Thinker
 
   action native A_JumpIfRadiusAmountGreater (int radius, int amount, name className, state label, optional bool exact);
   action native A_JumpIfTracerCloser (float distance, state st, optional bool noz);
+  action native A_JumpIfMasterCloser (float distance, state st, optional bool noz);
 
   action native A_Warp (int aptr, optional float xofs, optional float yofs, optional float zofs, optional float angle, optional int flags, optional state success_state, optional float heightoffset, optional float radiusoffset, optional float pitch);
 

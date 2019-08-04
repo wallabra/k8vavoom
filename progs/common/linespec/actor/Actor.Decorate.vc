@@ -935,7 +935,26 @@ final state A_JumpIfTracerCloser (float distance, state label, optional bool noz
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
   if (!Tracer) return none;
   distance = fmax(0, distance);
-  float dist = (noz ? DistTo(Tracer) : DistTo2(Tracer));
+  float dist = (noz ? DistTo2(Tracer) : DistTo(Tracer));
+  if (dist < distance) {
+    DoJump(label);
+    return label;
+  } else {
+    return none;
+  }
+}
+
+
+//==========================================================================
+//
+//  A_JumpIfMasterCloser
+//
+//==========================================================================
+final state A_JumpIfMasterCloser (float distance, state label, optional bool noz) {
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  if (!Master) return none;
+  distance = fmax(0, distance);
+  float dist = (noz ? DistTo2(Master) : DistTo(Master));
   if (dist < distance) {
     DoJump(label);
     return label;
