@@ -137,6 +137,7 @@ COMMAND_AC(Summon) {
 //  COMMAND VScript_Command
 //
 //==========================================================================
+/*
 COMMAND(VScript_Command) {
   if (Args.Num() < 2) return;
 
@@ -151,6 +152,7 @@ COMMAND(VScript_Command) {
     Player->eventCheat_VScriptCommand(Args);
   }
 }
+*/
 
 
 //==========================================================================

@@ -355,11 +355,13 @@ public:
   void QS_Load () { static VMethodProxy method("QS_Load"); vobjPutParamSelf(); VMT_RET_VOID(method); }
 
   // cheats
+  /*
   void eventCheat_VScriptCommand (TArray<VStr> &args) {
     static VMethodProxy method("Cheat_VScriptCommand");
     vobjPutParamSelf((void *)&args);
     VMT_RET_VOID(method);
   }
+  */
 
   // server to client events
   void eventClientStartSound (int SoundId, TVec Org, int OriginId,
