@@ -176,6 +176,18 @@ final void A_SetSpeed (float speed, optional int aptr) {
 }
 
 
+//==========================================================================
+//
+//  A_SetFloatSpeed
+//
+//==========================================================================
+final void A_SetFloatSpeed (float speed, optional int aptr) {
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_SetFloatSpeed', aptr!optional));
+  if (!tgt) return;
+  tgt.FloatSpeed = fmax(0, speed)*35.0;
+}
+
+
 /*
 const int SPF_FORCECLAMP = 0x01;
 const int SPF_INTERPOLATE = 0x00;
