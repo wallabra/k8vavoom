@@ -5271,13 +5271,113 @@ void PlayerUnmorphed () {
 
 //==========================================================================
 //
+//  Cheat_VScriptCommand_AC
+//
+//==========================================================================
+void Cheat_VScriptCommand_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  //print("args.length=%s, new=%B", args.length, newArg);
+  //foreach (string s; args) print("  <%s>", s);
+
+  // autocomplete command
+  if (args.length == 1 || (args.length == 2 && !newArg)) {
+    //if (!newArg) return;
+    aclist[$] = "give";
+    aclist[$] = "take";
+    aclist[$] = "drop";
+    aclist[$] = "fire";
+    aclist[$] = "apts";
+    return;
+  }
+
+  // autocomplete class
+  if ((args.length == 2 && newArg) || (args.length == 3 && !newArg)) {
+    string cmd = args[1];
+    string pfx = (args.length == 3 ? args[2] : "");
+    // give: any inventory item
+    if (stricmp(cmd, "give") == 0) {
+      class!Inventory cls;
+      foreach AllClasses(Inventory, out cls) {
+        // abstract and native classes cannot be spawned
+        if (IsAbstractClass(cls) || IsNativeClass(cls)) continue;
+        // check prefix
+        string cns = string(GetClassName(cls));
+        if (pfx && !cns.strStartsWith(pfx, caseSensitive:false)) continue;
+        aclist[$] = string(GetClassName(cls));
+      }
+      return;
+    }
+    // take, drop: any held inventory item
+    if (stricmp(cmd, "take") == 0 || stricmp(cmd, "drop") == 0) {
+      for (auto inv = EntityEx(MO).Inventory; inv; inv = inv.Inventory) {
+        class!Inventory cls = class!Inventory(inv.Class);
+        if (!cls) continue;
+        // abstract and native classes cannot be spawned
+        //if (IsAbstractClass(cls) || IsNativeClass(cls)) continue;
+        // check prefix
+        string cns = string(GetClassName(cls));
+        if (pfx && !cns.strStartsWith(pfx, caseSensitive:false)) continue;
+        aclist[$] = string(GetClassName(cls));
+      }
+      return;
+    }
+    // fire: projectiles
+    if (stricmp(cmd, "give") == 0) {
+      class!Actor cls;
+      foreach AllClasses(Actor, out cls) {
+        // abstract and native classes cannot be spawned
+        if (!cls.default.bMissile) continue;
+        if (IsAbstractClass(cls) || IsNativeClass(cls)) continue;
+        // check prefix
+        string cns = string(GetClassName(cls));
+        if (pfx && !cns.strStartsWith(pfx, caseSensitive:false)) continue;
+        aclist[$] = string(GetClassName(cls));
+      }
+      return;
+    }
+  }
+
+  /*
+  if (args.length == 2) {
+    if (newArg) return;
+  } else {
+    return;
+  }
+
+  class!Actor cls;
+  foreach AllClasses(Actor, out cls) {
+    // skip unspawnable actors
+    class!Actor ac = class!Actor(GetClassReplacement(cls));
+    if (!ac || ac != cls) continue;
+    // check state
+    auto spwspate = FindClassState(ac, 'Spawn');
+    if (!spwspate) continue;
+    if (!AreStateSpritesPresent(spwspate)) continue;
+    aclist[$] = string(GetClassName(ac));
+  }
+  */
+}
+
+
+//==========================================================================
+//
 //  Cheat_VScriptCommand
 //
 //==========================================================================
-override void Cheat_VScriptCommand (ref array!string args) {
+/*override*/ void Cheat_VScriptCommand (/*ref array!string args*/) {
   //print("VScript Command: %s (%d)", args[0], args.length);
-  if (!args.length) return;
-  if (args[0] == "?") {
+
+  /*
+  if (Cmd_GetArgC() != 2) {
+    cprint("Summon: class name expected");
+    return;
+  }
+
+  // find which type to spawn
+  auto moClass = class!EntityEx(FindClassNoCase(name(Cmd_GetArgV(1))));
+  */
+
+  if (Cmd_GetArgC() == 1) return;
+  if (Cmd_GetArgV(1) == "?") {
     print("give what [amount] -- give inventory item");
     print("take what [amount] -- take inventory item");
     print("drop what          -- drop inventory item");
@@ -5286,13 +5386,13 @@ override void Cheat_VScriptCommand (ref array!string args) {
     return;
   }
 
-  if (args.length < 2) return;
+  if (Cmd_GetArgC() < 3) return;
 
-  if (args[0] == "fire") {
-    class!Actor mt = class!Actor(GetClassReplacement(FindClassNoCase(name(args[1]))));
-    if (!mt) { print("actor '%s' not found", args[1]); return; }
+  if (Cmd_GetArgV(1) == "fire") {
+    class!Actor mt = class!Actor(GetClassReplacement(FindClassNoCase(name(Cmd_GetArgV(2)))));
+    if (!mt) { print("actor '%s' not found", Cmd_GetArgV(2)); return; }
     float ofs = 4;
-    if (args.length > 2) ofs = atof(args[2]);
+    if (Cmd_GetArgC() > 3) ofs = atof(Cmd_GetArgV(3));
     //Actor(MO).A_CustomMissile(mt, MO.Height/2, 0, AimMode:2);
     float hgt = MO.Height/2;
     TVec Offs = ofs*vector(cos(MO.Angles.yaw), sin(MO.Angles.yaw), 0.0);
@@ -5303,15 +5403,15 @@ override void Cheat_VScriptCommand (ref array!string args) {
   }
 
   // find inventory class
-  class!Inventory icls = class!Inventory(FindClassNoCase(name(args[1])));
-  if (!icls) { print("what is '%s'?", args[1]); return; }
+  class!Inventory icls = class!Inventory(FindClassNoCase(name(Cmd_GetArgV(2))));
+  if (!icls) { print("what is '%s'?", Cmd_GetArgV(2)); return; }
 
   int amount = 0;
-  if (args.length > 2) amount = atoi(args[2]);
+  if (Cmd_GetArgC() > 3) amount = atoi(Cmd_GetArgV(3));
 
   Inventory invit = EntityEx(MO).FindInventory(icls);
 
-  if (args[0] == "give") {
+  if (Cmd_GetArgV(1) == "give") {
     if (!invit) {
       // no item in inventory, give one
       class!Inventory irepl = class!Inventory(GetClassReplacement(icls));
@@ -5342,7 +5442,7 @@ override void Cheat_VScriptCommand (ref array!string args) {
     return;
   }
 
-  if (args[0] == "take") {
+  if (Cmd_GetArgV(1) == "take") {
     if (!invit) { print("you don't have '%C'", icls); return; }
     if (amount <= 0) amount = 1;
     auto newam = invit.Amount-amount;
@@ -5356,7 +5456,7 @@ override void Cheat_VScriptCommand (ref array!string args) {
     return;
   }
 
-  if (args[0] == "drop") {
+  if (Cmd_GetArgV(1) == "drop") {
     if (!invit) { print("you don't have '%C'", icls); return; }
     TVec dir = vector(cos(MO.Angles.yaw), sin(MO.Angles.yaw))*64;
     dir.z = MO.Height/2;
@@ -5371,9 +5471,9 @@ override void Cheat_VScriptCommand (ref array!string args) {
     return;
   }
 
-  if (args[0] == "apts") {
-    int pts = MO.GetArmorPointsForType(name(args[1]));
-    print("points for armor type '%s': %s", args[1], pts);
+  if (Cmd_GetArgV(1) == "apts") {
+    int pts = MO.GetArmorPointsForType(name(Cmd_GetArgV(2)));
+    print("points for armor type '%s': %s", Cmd_GetArgV(2), pts);
     return;
   }
 }

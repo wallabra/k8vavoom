@@ -543,6 +543,9 @@ int GetCurrentArmorActualSaveAmount () { return 0; }
 // if commands starts with `Cheat_`, ends with '_AC', is void, and is
 //   (const ref array!string args, bool newArg, out array!string aclist)
 // this is autocompleter
+//   it is always at least one argument -- command name
+//   `newArg==true` means "want to autocomplete next arg in the list"
+//   `newArg==false` means "want to autocomplete last arg in the list"
 
 /*
 void Cheat_Resurrect () {}
@@ -564,7 +567,7 @@ void Cheat_ShooterKing () {}
 void Cheat_Regeneration () {}
 void Cheat_DumpInventory () {}
 */
-void Cheat_VScriptCommand (ref array!string args) {}
+//void Cheat_VScriptCommand (ref array!string args) {}
 
 
 defaultproperties {
