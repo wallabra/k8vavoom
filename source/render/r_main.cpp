@@ -1833,7 +1833,7 @@ struct SpriteScanInfo {
 //  ProcessState
 //
 //==========================================================================
-static void ProcessState (VState *st, SpriteScanInfo &ssi) {
+static void ProcessSpriteState (VState *st, SpriteScanInfo &ssi) {
   while (st) {
     if (ssi.stateSeen.has(st)) break;
     ssi.stateSeen.put(st, true);
@@ -1863,9 +1863,23 @@ static void ProcessState (VState *st, SpriteScanInfo &ssi) {
         }
       }
     }
-    ProcessState(st->NextState, ssi);
+    ProcessSpriteState(st->NextState, ssi);
     st = st->Next;
   }
+}
+
+
+//==========================================================================
+//
+//  ProcessSpriteClass
+//
+//==========================================================================
+static void ProcessSpriteClass (VClass *cls, SpriteScanInfo &ssi) {
+  if (!cls) return;
+  if (ssi.classSeen.has(cls)) return;
+  ssi.classSeen.put(cls, true);
+  ssi.clearStates();
+  ProcessSpriteState(cls->States, ssi);
 }
 
 
@@ -1886,12 +1900,13 @@ int VRenderLevelShared::CollectSpriteTextures (TArray<bool> &texturepresent) {
   for (VThinker *th = Level->ThinkerHead; th; th = th->Next) {
     if (th->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) continue;
     if (!th->IsA(eexCls)) continue;
-    VClass *cls = th->GetClass();
-    if (ssi.classSeen.has(cls)) continue;
-    ssi.classSeen.put(cls, true);
-    ssi.clearStates();
-    ProcessState(cls->States, ssi);
+    ProcessSpriteClass(th->GetClass(), ssi);
   }
+  // precache gore mod sprites
+  VClass *gm0Cls = VClass::FindClass("K8Gore_BloodBase");
+  if (gm0Cls) VMemberBase::ForEachChildOf(gm0Cls, (void *)&ssi, [](VClass *cls, void *udata) { ProcessSpriteClass(cls, *(SpriteScanInfo *)udata); return FOREACH_NEXT; });
+  VClass *gm1Cls = VClass::FindClass("K8Gore_BloodBaseTransient");
+  if (gm1Cls) VMemberBase::ForEachChildOf(gm1Cls, (void *)&ssi, [](VClass *cls, void *udata) { ProcessSpriteClass(cls, *(SpriteScanInfo *)udata); return FOREACH_NEXT; });
   return ssi.sprtexcount;
 }
 
