@@ -708,6 +708,24 @@ IMPLEMENT_FUNCTION(VObject, GetClassName) {
   RET_NAME(SomeClass ? SomeClass->Name : NAME_None);
 }
 
+IMPLEMENT_FUNCTION(VObject, IsAbstractClass) {
+  P_GET_PTR(VClass, SomeClass);
+  if (SomeClass) {
+    RET_BOOL(!!(SomeClass->ClassFlags&CLASS_Abstract));
+  } else {
+    RET_BOOL(false);
+  }
+}
+
+IMPLEMENT_FUNCTION(VObject, IsNativeClass) {
+  P_GET_PTR(VClass, SomeClass);
+  if (SomeClass) {
+    RET_BOOL(!!(SomeClass->ClassFlags&CLASS_Native));
+  } else {
+    RET_BOOL(false);
+  }
+}
+
 IMPLEMENT_FUNCTION(VObject, GetClassParent) {
   P_GET_PTR(VClass, SomeClass);
   RET_PTR(SomeClass ? SomeClass->ParentClass : nullptr);

@@ -123,6 +123,8 @@
   DECLARE_FUNCTION(FindClassLowerCase)
   DECLARE_FUNCTION(ClassIsChildOf)
   DECLARE_FUNCTION(GetClassName)
+  DECLARE_FUNCTION(IsAbstractClass)
+  DECLARE_FUNCTION(IsNativeClass)
   DECLARE_FUNCTION(GetClassParent)
   DECLARE_FUNCTION(GetClassReplacement)
   DECLARE_FUNCTION(GetCompatibleClassReplacement)
