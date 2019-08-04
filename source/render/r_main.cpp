@@ -116,7 +116,8 @@ static VCvarB r_reupload_level_textures("r_reupload_level_textures", true, "Reup
 static VCvarB r_precache_textures("r_precache_textures", true, "Precache level textures?", CVAR_Archive);
 static VCvarB r_precache_model_textures("r_precache_model_textures", true, "Precache alias model textures?", CVAR_Archive);
 static VCvarB r_precache_sprite_textures("r_precache_sprite_textures", false, "Precache sprite textures?", CVAR_Archive);
-static VCvarI r_precache_max_sprites("r_precache_max_sprites", "4096", "Maxumum number of sprite textures to precache?", CVAR_Archive);
+static VCvarB r_precache_all_sprite_textures("r_precache_all_sprite_textures", false, "Precache sprite textures?", CVAR_Archive);
+static VCvarI r_precache_max_sprites("r_precache_max_sprites", "3072", "Maxumum number of sprite textures to precache?", CVAR_Archive);
 static VCvarI r_level_renderer("r_level_renderer", "1", "Level renderer type (0:auto; 1:lightmap; 2:stenciled).", CVAR_Archive);
 
 int r_precache_textures_override = -1;
@@ -483,7 +484,7 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   // preload graphics
   if (r_precache_textures_override != 0) {
     if (r_precache_textures || r_precache_textures_override > 0 ||
-        r_precache_model_textures || r_precache_sprite_textures)
+        r_precache_model_textures || r_precache_sprite_textures || r_precache_all_sprite_textures)
     {
       PrecacheLevel();
     }
@@ -1799,6 +1800,102 @@ void R_DrawSpritePatch (float x, float y, int sprite, int frame, int rot,
 }
 
 
+/*
+  inline void UpdateDispFrameFrom (const VState *st) {
+    if (st) {
+      if ((st->Frame&VState::FF_KEEPSPRITE) == 0 && st->SpriteIndex != 1) {
+        DispSpriteFrame = (DispSpriteFrame&~0x00ffffff)|(st->SpriteIndex&0x00ffffff);
+        DispSpriteName = st->SpriteName;
+      }
+      if ((st->Frame&VState::FF_DONTCHANGE) == 0) DispSpriteFrame = (DispSpriteFrame&0x00ffffff)|((st->Frame&VState::FF_FRAMEMASK)<<24);
+    }
+  }
+*/
+
+
+struct SpriteScanInfo {
+  TArray<bool> *texturepresent;
+  TMapNC<VClass *, bool> classSeen;
+  TMapNC<VState *, bool> stateSeen;
+  TMapNC<vuint32, bool> spidxSeen;
+  int sprtexcount;
+
+  SpriteScanInfo (TArray<bool> &txps) : texturepresent(&txps), stateSeen(), spidxSeen(), sprtexcount(0) {}
+  SpriteScanInfo (const SpriteScanInfo &) = delete;
+  SpriteScanInfo &operator = (const SpriteScanInfo &) = delete;
+
+  inline void clearStates () { stateSeen.reset(); }
+};
+
+
+//==========================================================================
+//
+//  ProcessState
+//
+//==========================================================================
+static void ProcessState (VState *st, SpriteScanInfo &ssi) {
+  while (st) {
+    if (ssi.stateSeen.has(st)) break;
+    ssi.stateSeen.put(st, true);
+    // extract sprite and frame
+    if (!(st->Frame&VState::FF_KEEPSPRITE)) {
+      vuint32 spridx = st->SpriteIndex&0x00ffffff;
+      //int sprfrm = st->Frame&VState::FF_FRAMEMASK;
+      if (spridx < (vuint32)sprites.length()) {
+        if (!ssi.spidxSeen.has(spridx)) {
+          // precache all rotations
+          ssi.spidxSeen.put(spridx, true);
+          const spritedef_t &sfi = sprites.ptr()[spridx];
+          if (sfi.numframes > 0) {
+            const spriteframe_t *spf = sfi.spriteframes;
+            for (int f = sfi.numframes; f--; ++spf) {
+              for (int lidx = 0; lidx < 16; ++lidx) {
+                int stid = spf->lump[lidx];
+                if (stid < 1) continue;
+                check(stid < ssi.texturepresent->length());
+                if (!(*ssi.texturepresent)[stid]) {
+                  (*ssi.texturepresent)[stid] = true;
+                  ++ssi.sprtexcount;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    ProcessState(st->NextState, ssi);
+    st = st->Next;
+  }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::CollectSpriteTextures
+//
+//  this is actually private, but meh...
+//
+//  returns number of new textures
+//
+//==========================================================================
+int VRenderLevelShared::CollectSpriteTextures (TArray<bool> &texturepresent) {
+  // scan all thinkers, and add sprites from all states, because why not?
+  VClass *eexCls = VClass::FindClass("EntityEx");
+  if (!eexCls) return 0;
+  SpriteScanInfo ssi(texturepresent);
+  for (VThinker *th = Level->ThinkerHead; th; th = th->Next) {
+    if (th->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) continue;
+    if (!th->IsA(eexCls)) continue;
+    VClass *cls = th->GetClass();
+    if (ssi.classSeen.has(cls)) continue;
+    ssi.classSeen.put(cls, true);
+    ssi.clearStates();
+    ProcessState(cls->States, ssi);
+  }
+  return ssi.sprtexcount;
+}
+
+
 //==========================================================================
 //
 //  VRenderLevelShared::PrecacheLevel
@@ -1849,9 +1946,8 @@ void VRenderLevelShared::PrecacheLevel () {
   }
 
   // sprites
-  if (r_precache_sprite_textures && sprites.length() > 0) {
+  if ((r_precache_sprite_textures || r_precache_all_sprite_textures) && sprites.length() > 0) {
     int sprtexcount = 0;
-    bool abortIt = false;
     int sprlimit = r_precache_max_sprites.asInt();
     if (sprlimit < 0) sprlimit = 0;
     TArray<bool> txsaved;
@@ -1859,29 +1955,26 @@ void VRenderLevelShared::PrecacheLevel () {
       txsaved.setLength(texturepresent.length());
       for (int f = 0; f < texturepresent.length(); ++f) txsaved[f] = texturepresent[f];
     }
-    for (auto &&sfi : sprites) {
-      if (sfi.numframes == 0) continue;
-      const spriteframe_t *spf = sfi.spriteframes;
-      for (int f = sfi.numframes; f--; ++spf) {
-        for (int lidx = 0; lidx < 16; ++lidx) {
-          int stid = spf->lump[lidx];
-          if (stid < 1) continue;
-          check(stid < texturepresent.length());
-          if (!texturepresent[stid]) {
-            texturepresent[stid] = true;
-            ++sprtexcount;
-            if (sprlimit && sprtexcount == sprlimit) {
-              //GCon->Logf(NAME_Warning, "too many sprite textures, aborting at %d!", sprtexcount);
-              abortIt = true;
-              //break;
+    if (r_precache_all_sprite_textures) {
+      for (auto &&sfi : sprites) {
+        if (sfi.numframes == 0) continue;
+        const spriteframe_t *spf = sfi.spriteframes;
+        for (int f = sfi.numframes; f--; ++spf) {
+          for (int lidx = 0; lidx < 16; ++lidx) {
+            int stid = spf->lump[lidx];
+            if (stid < 1) continue;
+            check(stid < texturepresent.length());
+            if (!texturepresent[stid]) {
+              texturepresent[stid] = true;
+              ++sprtexcount;
             }
           }
         }
-        //if (abortIt) break;
       }
-      //if (abortIt) break;
+    } else {
+      sprtexcount = CollectSpriteTextures(texturepresent);
     }
-    if (abortIt) {
+    if (sprlimit && sprtexcount > sprlimit) {
       GCon->Logf(NAME_Warning, "too many sprite textures (%d), aborted at %d!", sprtexcount, sprlimit);
       check(txsaved.length() == texturepresent.length());
       for (int f = 0; f < texturepresent.length(); ++f) texturepresent[f] = txsaved[f];

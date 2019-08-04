@@ -516,6 +516,7 @@ protected:
   void MarkLeaves ();
   void UpdateCameraTexture (VEntity*, int, int);
   vuint32 GetFade (sec_region_t*);
+  int CollectSpriteTextures (TArray<bool> &texturepresent); // this is actually private, but meh... returns number of new textures
   void PrecacheLevel ();
   void UncacheLevel ();
   VTextureTranslation *GetTranslation (int);
