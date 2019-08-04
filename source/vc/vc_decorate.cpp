@@ -905,25 +905,29 @@ static void ParseConst (VScriptParser *sc) {
   } else {
     VEmitContext ec(DecPkg);
     Expr = Expr->Resolve(ec);
-    if (isInt) {
-      if (Expr && !Expr->IsIntConst()) sc->Error(va("%s: expected integer literal", *sc->GetLoc().toStringNoCol()));
-      if (Expr) {
+    if (isInt && Expr && Expr->IsFloatConst()) {
+      GCon->Logf(NAME_Warning, "%s: some moron cannot put a proper float type to a constant `%s`", *sc->GetLoc().toStringNoCol(), *Name);
+      isInt = false;
+    }
+    if (Expr) {
+      if (isInt) {
+        if (!Expr->IsIntConst()) sc->Error(va("%s: expected integer literal", *sc->GetLoc().toStringNoCol()));
         int Val = Expr->GetIntConst();
+        //GCon->Logf("*** INT CONST '%s' is %d", *Name, Val);
         delete Expr;
         Expr = nullptr;
         VConstant *C = new VConstant(*Name, DecPkg, Loc);
         C->Type = TYPE_Int;
         C->Value = Val;
-      }
-    } else {
-      if (Expr && !Expr->IsFloatConst() && !Expr->IsIntConst()) sc->Error(va("%s: expected float literal", *sc->GetLoc().toStringNoCol()));
-      if (Expr) {
+      } else {
+        if (!Expr->IsFloatConst() && !Expr->IsIntConst()) sc->Error(va("%s: expected float literal", *sc->GetLoc().toStringNoCol()));
         float Val = (Expr->IsFloatConst() ? Expr->GetFloatConst() : (float)Expr->GetIntConst());
+        //GCon->Logf("*** FLOAT CONST '%s' is %g", *Name, Val);
         delete Expr;
         Expr = nullptr;
         VConstant *C = new VConstant(*Name, DecPkg, Loc);
         C->Type = TYPE_Float;
-        C->Value = Val;
+        C->FloatValue = Val;
       }
     }
   }
