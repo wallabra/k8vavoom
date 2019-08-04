@@ -118,6 +118,8 @@ public:
   static VMemberBase *ForEachNamed (VName aname, FERes (*dg) (VMemberBase *m), bool caseSensitive=true);
   static inline VMemberBase *ForEachNamedCI (VName aname, FERes (*dg) (VMemberBase *m)) { return ForEachNamed(aname, dg, false); }
 
+  static VClass *ForEachChildOf (VClass *superCls, void *udata, FERes (*dg) (VClass *cls, void *udata));
+
   // accessors
   inline const char *GetName () const { return *Name; }
   inline const VName GetVName () const { return Name; }

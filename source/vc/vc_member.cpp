@@ -263,6 +263,23 @@ VMemberBase *VMemberBase::ForEachNamed (VName aname, FERes (*dg) (VMemberBase *m
 
 //==========================================================================
 //
+//  VMemberBase::ForEachChildOf
+//
+//==========================================================================
+VClass *VMemberBase::ForEachChildOf (VClass *superCls, void *udata, FERes (*dg) (VClass *cls, void *udata)) {
+  if (!dg) return nullptr;
+  for (auto &&m : GMembers) {
+    if (m->MemberType != MEMBER_Class) continue;
+    VClass *cls = (VClass *)m;
+    if (superCls && !cls->IsChildOf(superCls)) continue;
+    if (dg(cls, udata) == FERes::FOREACH_STOP) return cls;
+  }
+  return nullptr;
+}
+
+
+//==========================================================================
+//
 //  VMemberBase::GetFullName
 //
 //==========================================================================
