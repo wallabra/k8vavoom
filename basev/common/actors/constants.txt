@@ -576,3 +576,9 @@ enum EZFlags
   GZF_NOPORTALS =       1 << 4,   // Don't pass through any portals.
   GZF_NO3DFLOOR =       1 << 5,   // Pass all 3D floors.
 };
+
+enum FMDFlags {
+  FMDF_NOPITCH     = 1<<0,
+  FMDF_INTERPOLATE = 1<<1,
+  FMDF_NOANGLE     = 1<<2,
+};

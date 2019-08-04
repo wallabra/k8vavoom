@@ -86,7 +86,7 @@ enum /*WARPF*/ {
   WARPF_COPYPITCH         = 0x8000,
 };
 
-// Flags for GetZAt
+// flags for GetZAt
 enum /*EZFlags*/ {
   GZF_ABSOLUTEPOS =     1,      // Use the absolute position instead of an offsetted one.
   GZF_ABSOLUTEANG =     1 << 1,   // Don't add the actor's angle to the parameter.
@@ -97,7 +97,12 @@ enum /*EZFlags*/ {
 };
 
 
-// flags for A_QuakeEx are in `QuakeFocusEx`
+// flags for A_FaceMovementDirection
+enum /*FMDFlags*/ {
+  FMDF_NOPITCH     = 1<<0,
+  FMDF_INTERPOLATE = 1<<1,
+  FMDF_NOANGLE     = 1<<2,
+};
 
 
 //==========================================================================
@@ -992,6 +997,62 @@ final state A_JumpIfHigherOrLower (state high, state low, optional float offseth
   }
 
   return none;
+}
+
+
+//==========================================================================
+//
+//  A_FaceMovementDirection
+//
+//==========================================================================
+final bool A_FaceMovementDirection (optional float offset, optional float anglelimit,
+                                    optional float pitchlimit, optional int flags,
+                                    optional int aptr)
+{
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_k8JumpIfSkyFloor', aptr!optional));
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+
+  if (!tgt || ((flags&FMDF_NOPITCH) && (flags&FMDF_NOANGLE))) return false;
+
+  // don't bother calculating this if we don't have any horizontal movement
+  if (!(flags&FMDF_NOANGLE) && (tgt.Velocity.x || tgt.Velocity.y)) {
+    float current = tgt.Angles.yaw;
+    float angle = VectorAngleYaw(tgt.Velocity);
+    // done because using anglelimit directly causes a signed/unsigned mismatch
+
+    if (anglelimit > 0) {
+      float delta = -AngleMod180(angle-current);
+      if (fabs(delta) > anglelimit) {
+             if (delta < 0) current += anglelimit + offset;
+        else if (delta > 0) current -= anglelimit + offset;
+        tgt.Angles.yaw = current; //, !!(flags & FMDF_INTERPOLATE));
+      } else {
+        tgt.Angles.yaw = angle+offset; //, !!(flags & FMDF_INTERPOLATE));
+      }
+    } else {
+      tgt.Angles.yaw = angle+offset; //, !!(flags & FMDF_INTERPOLATE));
+    }
+  }
+
+  if (!(flags&FMDF_NOPITCH)) {
+    float current = tgt.Angles.pitch;
+    auto vel = tgt.Velocity.xy;
+    float pitch = -atan2(tgt.Velocity.z, tgt.Velocity.Length2D);
+    if (pitchlimit > 0) {
+      float pdelta = AngleMod180(pitch-current);
+      if (fabs(pdelta) > pitchlimit) {
+        if (pdelta > 0) current -= fmin(pitchlimit, pdelta);
+        else current += fmin(pitchlimit, -pdelta);
+        tgt.Angles.pitch = current; //, !!(flags & FMDF_INTERPOLATE));
+      } else {
+        tgt.Angles.pitch = pitch; //, !!(flags & FMDF_INTERPOLATE));
+      }
+    } else {
+      tgt.Angles.pitch = pitch; //, !!(flags & FMDF_INTERPOLATE));
+    }
+  }
+
+  return true;
 }
 
 

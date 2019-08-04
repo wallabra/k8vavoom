@@ -125,6 +125,8 @@ class Actor extends Thinker
   action native A_SentinelBob();
   action native A_Burst(class<Actor> chunktype);
 
+  action native A_FaceMovementDirection (optional float offset, optional float anglelimit, optional float pitchlimit, optional int flags, optional int aptr);
+
   action native A_SetArg (int n, int v);
 
   action native A_CheckProximity (state jump, name classname, float distance, optional int count, optional int flags, optional int ptr);
