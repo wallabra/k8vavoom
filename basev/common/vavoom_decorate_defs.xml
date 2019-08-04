@@ -16,7 +16,7 @@
     <prop_missile_damage name="Damage" />
     <prop_poison_damage name="PoisonDamage" property="MissilePoisonDamage" />
     <prop_float name="RadiusDamageFactor" property="RDFactor" />
-    <prop_speed name="Speed" property="Speed" />
+    <prop_speed_mult name="Speed" property="Speed" />
     <prop_vspeed name="VSpeed" />
     <prop_speed name="FastSpeed" property="FastSpeed" />
     <prop_speed name="FloatSpeed" property="FloatSpeed" />

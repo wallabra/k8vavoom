@@ -84,6 +84,7 @@ enum {
   PROP_Float,
   PROP_FloatUnsupported,
   PROP_Speed,
+  PROP_SpeedMult,
   PROP_Tics,
   PROP_TicsSecs,
   PROP_Percent,
@@ -482,6 +483,9 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
         P.SetField(Lst.Class, *PN->GetAttribute("property"));
       } else if (PN->Name == "prop_speed") {
         VPropDef &P = Lst.NewProp(PROP_Speed, PN);
+        P.SetField(Lst.Class, *PN->GetAttribute("property"));
+      } else if (PN->Name == "prop_speed_mult") {
+        VPropDef &P = Lst.NewProp(PROP_SpeedMult, PN);
         P.SetField(Lst.Class, *PN->GetAttribute("property"));
       } else if (PN->Name == "prop_tics") {
         VPropDef &P = Lst.NewProp(PROP_Tics, PN);
@@ -1946,6 +1950,10 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
           case PROP_Speed:
             sc->ExpectFloatWithSign();
             P.Field->SetFloat(DefObj, sc->Float*35.0f);
+            break;
+          case PROP_SpeedMult:
+            sc->ExpectFloatWithSign();
+            P.Field->SetFloat(DefObj, sc->Float);
             break;
           case PROP_Tics:
             sc->ExpectNumberWithSign();
