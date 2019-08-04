@@ -1306,13 +1306,15 @@ override bool eventDropItem (name itemName, int amount, float chance) {
 //  DropItem
 //
 //==========================================================================
-final EntityEx DropItem (class!EntityEx type, int amount, float chance, optional TVec dropofs) {
+final EntityEx DropItem (class!EntityEx type, int amount, float chance, optional TVec dropofs, optional bool AllowReplace) {
   if (Random() > chance) return none;
 
   float DropZ = 0.0;
   if (!Level.CompatNoTossDrops) DropZ = Height/2.0;
   if (!specified_dropofs) dropofs = vector(0.0, 0.0, DropZ);
-  EntityEx A = Spawn(type, Origin+dropofs);
+  EntityEx A = Spawn(type, Origin+dropofs, AllowReplace:AllowReplace!optional);
+  if (!A) return none;
+
   //A = Spawn(type, Origin + vector(0.0, 0.0, DropZ));
   if (A.bSpecial) A.bDropped = true; // special versions of items
 

@@ -5434,7 +5434,7 @@ void Cheat_VScriptCommand () {
     if (!invit) { print("you don't have '%C'", icls); return; }
     TVec dir = vector(cos(MO.Angles.yaw), sin(MO.Angles.yaw))*64;
     dir.z = MO.Height/2;
-    auto it = Inventory(EntityEx(MO).DropItem(icls, max(0, amount), 1.0, dropofs:dir));
+    auto it = Inventory(EntityEx(MO).DropItem(icls, max(0, amount), 1.0, dropofs:dir, AllowReplace:false));
     if (it) {
       print("dropped '%C'", icls);
       it.Velocity = vector(0, 0, 0);

@@ -112,7 +112,7 @@ replication {
 // ////////////////////////////////////////////////////////////////////////// //
 native final spawner Thinker Spawn (class!Thinker Type, optional TVec AOrigin,
                                     optional TAVec AAngles, optional mthing_t *mthing,
-                                    optional bool AllowReplace);
+                                    optional bool AllowReplace/*=true*/);
 override native void Destroy (); // this just marks thinker to be deleted on a next tick
 
 // broadcast message (print to all clients)
