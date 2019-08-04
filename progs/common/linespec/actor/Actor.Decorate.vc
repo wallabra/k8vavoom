@@ -1228,6 +1228,18 @@ final state A_CheckLOF (optional state jump, optional int flags, optional float 
 
 //==========================================================================
 //
+//  A_SetSpeed
+//
+//==========================================================================
+final void A_SetSpeed (float speed, optional int aptr) {
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_SetSpeed', aptr!optional));
+  if (!tgt) return;
+  tgt.Speed = fmax(0, speed)*35.0;
+}
+
+
+//==========================================================================
+//
 //  A_k8MoveBy
 //
 //==========================================================================
