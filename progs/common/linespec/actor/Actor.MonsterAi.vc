@@ -139,7 +139,7 @@ final void A_Look () {
     if (bFriendly && targ.bFriendly) {
       // if we find a valid target here, the wandering logic should *not* be activated!
       // if would cause the seestate to be set twice
-      if (!LookForPlayers(bLookAllAround)) {
+      if (!LookForPlayers(bLookAllAround ? 360 : 0)) {
         // let the actor wander around aimlessly looking for a fight
         if (SeeState) {
           if (!bInChase) SetState(SeeState);
@@ -151,12 +151,12 @@ final void A_Look () {
       Target = targ;
       if (bAmbush) {
         if (!CanSee(Target)) {
-          if (!LookForPlayers(bLookAllAround)) return;
+          if (!LookForPlayers(bLookAllAround ? 360 : 0)) return;
         }
       }
     }
   } else {
-    if (!LookForPlayers(bLookAllAround)) return;
+    if (!LookForPlayers(bLookAllAround ? 360 : 0)) return;
   }
 
   // go into chase state
@@ -200,7 +200,7 @@ final void A_Look2 () {
         return;
       }
     } else {
-      if (LookForPlayers(bLookAllAround)) {
+      if (LookForPlayers(bLookAllAround ? 360 : 0)) {
         // let the actor wander around aimlessly looking for a fight
         if (SeeState) {
           if (!bInChase) SetState(SeeState);
@@ -243,7 +243,8 @@ final void A_LookEx (int flags, optional float minseedist, optional float maxsee
   //if (!specified_minseedist) minseedist = 0; // this is default
   //if (!specified_maxseedist) maxseedist = 0; // this is default
   //if (!specified_maxheardist) maxheardist = 0; // this is default
-  //if (!specified_fov) fov = 0; // this is default
+  if (!fov) fov = 180; // this is default
+  fov = fabs(fov);
   if (!specified_wakestate) wakestate = FindState('See');
   bool dojump = !(flags&LOF_NOJUMP);
 
@@ -284,7 +285,7 @@ final void A_LookEx (int flags, optional float minseedist, optional float maxsee
       if (!(flags&Entity::LOF_NOSIGHTCHECK)) {
         // if we find a valid target here, the wandering logic should *not* be activated!
         // if would cause the seestate to be set twice
-        if (!LookForPlayers(bLookAllAround)) {
+        if (!LookForPlayers(bLookAllAround ? 360 : 0)) {
           // let the actor wander around aimlessly looking for a fight
           state wkst = (dojump ? /*FindState*/(wakestate) : none);
           if (wkst) {
@@ -309,16 +310,16 @@ final void A_LookEx (int flags, optional float minseedist, optional float maxsee
           if (!CanSee(Target) && (!minseedist || DistTo(Target) < minseedist) &&
               (!maxseedist || DistTo(Target) > maxseedist))
           {
-            if (!LookForPlayers(bLookAllAround)) return;
+            if (!LookForPlayers(bLookAllAround ? 360 : 0)) return;
           }
         } else {
-          if (!LookForPlayers(bLookAllAround)) return;
+          if (!LookForPlayers(bLookAllAround ? 360 : 0)) return;
         }
       }
     }
   } else {
     if (!(flags&Entity::LOF_NOSIGHTCHECK)) {
-      if (!LookForPlayers(bLookAllAround)) return;
+      if (!LookForPlayers(bLookAllAround ? 360 : 0)) return;
     } else {
       return;
     }
@@ -488,7 +489,7 @@ void DoChase (bool FastChase, state AMeleeState, state AMissileState,
 
   if (!Target || !Target.bShootable) {
     // look for a new target
-    if (LookForPlayers(true) && Target != Goal) {
+    if (LookForPlayers(360) && Target != Goal) {
       // got a new target
       bInChase = false;
       return;
@@ -617,7 +618,7 @@ void DoChase (bool FastChase, state AMeleeState, state AMissileState,
     if (!CanSee(Target)) {
       bool PrevNoSightCheck = bNoSightCheck;
       bNoSightCheck = false;
-      bool GotNew = LookForPlayers(true);
+      bool GotNew = LookForPlayers(360);
       bNoSightCheck = PrevNoSightCheck;
       if (GotNew) {
         // got a new target

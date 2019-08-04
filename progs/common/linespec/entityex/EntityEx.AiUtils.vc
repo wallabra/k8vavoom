@@ -27,6 +27,31 @@
 
 //==========================================================================
 //
+//  CheckFovTo
+//
+//  zero fov means "cannot see"
+//
+//==========================================================================
+final bool CheckFovTo (Entity ent, float fov) {
+  if (!ent) return false;
+  fov = fabs(fov);
+  if (fov >= 360) return true; // all around vision
+  if (!fov) return false; // cannot see
+
+  // (90..270) -- back
+  //float anOld = AngleMod360(atan2(ent.Origin.y-Origin.y, ent.Origin.x-Origin.x)-Angles.yaw);
+
+  // positive: ent is to the right; negative: ent is to the left
+  float an = fabs(AngleDiff(atan2(ent.Origin.y-Origin.y, ent.Origin.x-Origin.x), Angles.yaw));
+
+  //print("*** %C -> %C: an=%s; (new:%B  old:%B)", self, ent, an, (an < fov*0.5), (anOld <= 90 || anOld >= 270.0));
+  //return false;
+  return (an <= fov*0.5);
+}
+
+
+//==========================================================================
+//
 //  CheckMeleeRange
 //
 //==========================================================================
@@ -154,8 +179,15 @@ final bool LookForMonsters () {
 //
 //  LookForMonsters2
 //
+//  If fov is 0, only look 180 degrees in front.
+//  Use 360 to look all around.
+//  Returns true if a monster is targeted.
+//
 //==========================================================================
-final bool LookForMonsters2 (bool allaround) {
+final bool LookForMonsters2 (float fov) {
+  if (!fov) fov = 180;
+  bool allaround = (fabs(fov) >= 360);
+
   //!LastPlayerSeenPosValid = false;
   //EntityEx mo;
   //foreach AllThinkers(EntityEx, mo)
@@ -172,8 +204,15 @@ final bool LookForMonsters2 (bool allaround) {
     if (P_Random() > 128) continue; // sometimes skip
 
     if (!allaround) {
+      /*
       float an = AngleMod360(atan2(mo.Origin.y-Origin.y, mo.Origin.x-Origin.x)-Angles.yaw);
       if (an > 90.0 && an < 270.0) {
+        float dist = DistTo(mo);
+        // if real close, react anyway
+        if (dist > MELEERANGE) continue; // behind back
+      }
+      */
+      if (!CheckFovTo(mo, fov)) {
         float dist = DistTo(mo);
         // if real close, react anyway
         if (dist > MELEERANGE) continue; // behind back
@@ -204,17 +243,21 @@ final bool LookForMonsters2 (bool allaround) {
 //
 //  LookForPlayers
 //
-//  If allaround is false, only look 180 degrees in front.
+//  If fov is 0, only look 180 degrees in front.
+//  Use 360 to look all around.
 //  Returns true if a player is targeted.
 //
 //==========================================================================
-final bool LookForPlayers (bool allaround) {
+final bool LookForPlayers (float fov) {
   if (TIDToHate != 0) {
-    if (LookForTID(allaround)) return true;
+    if (LookForTID(fov)) return true;
     if (!bHuntPlayers) return false;
   } else if (bFriendly) {
-    return LookForMonsters2(allaround);
+    return LookForMonsters2(fov);
   }
+
+  if (!fov) fov = 180;
+  bool allaround = (fabs(fov) >= 360);
 
   if (!Level.Game.netgame && Level.Game.Players[0] &&
       Level.Game.Players[0].bSpawned && Level.Game.Players[0].Health <= 0)
@@ -270,8 +313,15 @@ final bool LookForPlayers (bool allaround) {
     if (!CanSee(P.MO)) continue; // out of sight
 
     if (!allaround) {
+      /*
       float an = AngleMod360(atan2(P.MO.Origin.y-Origin.y, P.MO.Origin.x-Origin.x)-Angles.yaw);
       if (an > 90.0 && an < 270.0) {
+        float dist = DistTo(P.MO);
+        // if real close, react anyway
+        if (dist > MELEERANGE) continue; // behind back
+      }
+      */
+      if (!CheckFovTo(P.MO, fov)) {
         float dist = DistTo(P.MO);
         // if real close, react anyway
         if (dist > MELEERANGE) continue; // behind back
@@ -323,8 +373,15 @@ final bool LookForPlayers (bool allaround) {
 //
 //  Selects a live monster with the given TID
 //
+//  If fov is 0, only look 180 degrees in front.
+//  Use 360 to look all around.
+//  Returns true if a hating TID is targeted.
+//
 //============================================================================
-final bool LookForTID (bool AllAround) {
+final bool LookForTID (float fov) {
+  if (!fov) fov = 180;
+  bool allaround = (fabs(fov) >= 360);
+
   Entity Tmp;
   foreach RadiusThings(Tmp, Origin, 64.0) {
     if (!EntityEx(Tmp).bShootable) continue; // not shootable
@@ -384,9 +441,16 @@ final bool LookForTID (bool AllAround) {
 
     if (!bNoSightCheck) {
       if (!CanSee(Other)) continue; // out of sight
-      if (!AllAround) {
+      if (!allaround) {
+        /*
         float an = AngleMod360(atan2(Other.Origin.y-Origin.y, Other.Origin.x-Origin.x)-Angles.yaw);
         if (an > 90.0 && an < 270.0) {
+          float dist = DistTo(Other);
+          // if real close, react anyway
+          if (dist > MELEERANGE) continue; // behind back
+        }
+        */
+        if (!CheckFovTo(Other, fov)) {
           float dist = DistTo(Other);
           // if real close, react anyway
           if (dist > MELEERANGE) continue; // behind back

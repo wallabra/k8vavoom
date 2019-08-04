@@ -768,7 +768,7 @@ final void SpawnFly (class!EntityEx SpawnType, name SpawnSound) {
     // make new monster hate the same thing eye hates
     // note that this differs from ZDoom which copies friendliness from target spot
     if (Master) newmobj.CopyFriendliness(Master, false);
-    if (newmobj.SeeState && newmobj.LookForPlayers(true)) newmobj.SetState(newmobj.SeeState);
+    if (newmobj.SeeState && newmobj.LookForPlayers(360)) newmobj.SetState(newmobj.SeeState);
     // telefrag anything in this spot
     if (!newmobj.IsDestroyed()) {
       newmobj.bTelestomp = true;

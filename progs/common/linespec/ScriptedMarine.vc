@@ -261,7 +261,7 @@ final void A_M_Refire () {
   if (!Target || Target.Health <= 0) {
     if (MissileState && Random() < 0.625) {
       // look for a new target
-      if (LookForPlayers(true) && CheckMissileRange()) return; // got one, continue shooting
+      if (LookForPlayers(360) && CheckMissileRange()) return; // got one, continue shooting
     }
     SetState(GetStatePlus(State, 1));
     return;

@@ -962,7 +962,7 @@ final void A_FiredChase () {
 
   if (!Target || !Target.bShootable) {
     // invalid enemy
-    LookForPlayers(true);
+    LookForPlayers(360);
     return;
   }
 
@@ -1686,7 +1686,7 @@ final void A_DragonFlight () {
       PlaySound('DragonAttack', CHAN_WEAPON);
     }
   } else {
-    LookForPlayers(true);
+    LookForPlayers(360);
   }
 }
 
