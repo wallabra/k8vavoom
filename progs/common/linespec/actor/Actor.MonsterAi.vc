@@ -283,6 +283,19 @@ final void A_LookEx (int flags, optional float minseedist, optional float maxsee
 
   if (targ && targ.bShootable) {
     if (bFriendly && targ.bFriendly) {
+      bool doWander = true;
+      if (!(flags&Entity::LOF_NOSIGHTCHECK)) {
+        doWander = !LookForPlayers(fov, minseedist, (maxseedist ? fmin(maxseedist, 1280) : 1280));
+      }
+      if (doWander) {
+        state wkst = (dojump ? wakestate : none);
+        if (wkst) {
+          if (!bInChase) SetState(wkst);
+        } else {
+          A_Wander();
+        }
+      }
+      #if 0
       if (!(flags&Entity::LOF_NOSIGHTCHECK)) {
         // if we find a valid target here, the wandering logic should *not* be activated!
         // if would cause the seestate to be set twice
@@ -304,6 +317,7 @@ final void A_LookEx (int flags, optional float minseedist, optional float maxsee
           A_Wander();
         }
       }
+      #endif
     } else {
       Target = targ;
       if (bAmbush) {
@@ -311,16 +325,16 @@ final void A_LookEx (int flags, optional float minseedist, optional float maxsee
           if (!CanSee(Target) && (!minseedist || DistTo(Target) < minseedist) &&
               (!maxseedist || DistTo(Target) > maxseedist))
           {
-            if (!LookForPlayers(fov)) return;
+            if (!LookForPlayers(fov, minseedist, maxseedist)) return;
           }
         } else {
-          if (!LookForPlayers(fov)) return;
+          if (!LookForPlayers(fov, minseedist, maxseedist)) return;
         }
       }
     }
   } else {
     if (!(flags&Entity::LOF_NOSIGHTCHECK)) {
-      if (!LookForPlayers(fov)) return;
+      if (!LookForPlayers(fov, minseedist, maxseedist)) return;
     } else {
       return;
     }
