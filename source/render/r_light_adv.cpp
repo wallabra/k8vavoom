@@ -108,7 +108,7 @@ static VCvarI r_max_light_segs_one("r_max_light_segs_one", "-1", "Maximum light 
 static VCvarI r_max_shadow_segs_all("r_max_shadow_segs_all", "-1", "Maximum shadow segments for all lights.", CVAR_Archive);
 static VCvarI r_max_shadow_segs_one("r_max_shadow_segs_one", "-1", "Maximum shadow segments for one light.", CVAR_Archive);
 
-VCvarF r_light_filter_static_coeff("r_light_filter_static_coeff", "0.1", "How close static lights should be to be filtered out?\n(0.1-0.3 is usually ok).", CVAR_Archive);
+VCvarF r_light_filter_static_coeff("r_light_filter_static_coeff", "0.2", "How close static lights should be to be filtered out?\n(0.1-0.3 is usually ok).", CVAR_Archive);
 VCvarB r_allow_static_light_filter("r_allow_static_light_filter", true, "Allow filtering of static lights?", CVAR_Archive);
 
 VCvarB dbg_adv_light_notrace_mark("dbg_adv_light_notrace_mark", false, "Mark notrace lights red?", CVAR_PreInit);
