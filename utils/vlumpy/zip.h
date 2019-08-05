@@ -225,11 +225,21 @@ extern int ZEXPORT zipCloseFileInZipRaw OF((zipFile file,
   uncompressed_size and crc32 are value for the uncompressed size
 */
 
+
+extern int ZEXPORT zipWriteWholeFileToZip OF((zipFile file, const zip_fileinfo* zipfi,
+                                              const char *filename,
+                                              const void *buf, unsigned bufsize));
+
+
 extern int ZEXPORT zipClose OF((zipFile file,
                 const char* global_comment));
 /*
   Close the zipfile
 */
+
+
+extern bool useZopfli;
+
 
 #ifdef __cplusplus
 }

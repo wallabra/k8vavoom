@@ -95,6 +95,7 @@ struct fon2_char_t {
 };
 
 
+static bool showPackedSize = false;
 static TOWadFile outwad;
 static zipFile Zip;
 
@@ -235,6 +236,7 @@ static void AddToZip (const char *Name, void *Data, size_t Size) {
     zi.tmz_date.tm_year = LTime->tm_year;
   }
 
+  /*
   // open file
   if (zipOpenNewFileInZip(Zip, Name, &zi, nullptr, 0, nullptr, 0, nullptr, Z_DEFLATED, Z_BEST_COMPRESSION) != ZIP_OK) {
     Error("Failed to open file in ZIP");
@@ -248,6 +250,11 @@ static void AddToZip (const char *Name, void *Data, size_t Size) {
   // close it
   if (zipCloseFileInZip(Zip) != ZIP_OK) {
     Error("Failed to close file in ZIP");
+  }
+  */
+
+  if (zipWriteWholeFileToZip(Zip, &zi, Name, Data, (unsigned)Size) != ZIP_OK) {
+    Error(va("Failed to write file '%s' to ZIP", Name));
   }
 }
 
@@ -957,6 +964,7 @@ extern "C" {
   }
 }
 
+
 //==========================================================================
 //
 //  SortFileList
@@ -965,6 +973,25 @@ extern "C" {
 static void SortFileList (TArray<DiskFile> &flist) {
   if (flist.length() < 2) return;
   timsort_r(flist.ptr(), (size_t)flist.length(), (size_t)sizeof(DiskFile), &DFICompare, nullptr);
+}
+
+
+//==========================================================================
+//
+//  comatoze
+//
+//==========================================================================
+static __attribute__((unused)) const char *comatoze (unsigned n) {
+  static char buf[128];
+  int bpos = (int)sizeof(buf);
+  buf[--bpos] = 0;
+  int xcount = 0;
+  do {
+    if (xcount == 3) { buf[--bpos] = ','; xcount = 0; }
+    buf[--bpos] = '0'+n%10;
+    ++xcount;
+  } while ((n /= 10) != 0);
+  return &buf[bpos];
 }
 
 
@@ -1142,6 +1169,16 @@ static void ParseScript (const char *name) {
   }
   SC_Close();
 
+  if (showPackedSize) {
+    FILE *ff = fopen(destfile, "rb");
+    if (ff) {
+      fseek(ff, 0, SEEK_END);
+      int size = (int)ftell(ff);
+      fclose(ff);
+      fprintf(stderr, "%s: %s bytes\n", destfile, comatoze((unsigned)size));
+    }
+  }
+
   destfile[0] = 0;
 }
 
@@ -1157,8 +1194,23 @@ int main (int argc, char *argv[]) {
     return 1;
   }
 
+#ifdef _WIN32
+  useZopfli = true;
+  showPackedSize = true;
+#else
+  useZopfli = false;
+#endif
+
   try {
+    bool inopt = true;
     for (int i = 1; i < argc; ++i) {
+      if (inopt) {
+        if (strcmp(argv[i], "--") == 0) { inopt = false; continue; }
+        if (strcmp(argv[i], "--zopfli") == 0) { useZopfli = true; continue; }
+        if (strcmp(argv[i], "--no-zopfli") == 0) { useZopfli = false; continue; }
+        if (strcmp(argv[i], "--zopfli=yes") == 0) { useZopfli = true; continue; }
+        if (strcmp(argv[i], "--zopfli=no") == 0) { useZopfli = false; continue; }
+      }
       if (argv[i][0] == '-' && argv[i][1] == 'D') {
         strcpy(destfile, argv[i]+2);
       } else {
