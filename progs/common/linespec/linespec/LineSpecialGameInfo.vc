@@ -240,6 +240,8 @@ override void Init () {
   CreateCvar('k8SuperBulletCooldown', "0.15", "SuperBullet cooldown time, in seconds.", CVAR_ARCHIVE);
 
 
+  CreateCvar('dbg_blood_disable_entities', "0", "Disable spawning of blood entities?", 0/*CVAR_ARCHIVE*/);
+
 
   CreateCvar('bot_disable_ai', "0", "Disable bot AI (for debugging)?", 0/*CVAR_ARCHIVE*/);
 

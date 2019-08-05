@@ -178,6 +178,8 @@ void SpawnHeadBloodSpray (int damage, optional bool notDead, optional bool spawn
   bool doSpray = IsBloodAllowed() && GetCvarB('k8HSHeadKillBloodSpray');
   if (!doSpray) return;
 
+  if (GetCvarB('dbg_blood_disable_entities')) return;
+
   name bloodClassName = k8GetBloodClassName('K8Gore_BloodTransient', 'Blood');
   name poolClassName = k8GetBloodClassName('K8Gore_GrowingBloodPool', '');
   //print("bloodtype: %C/%C", self.BloodType, GetClassReplacee(self.BloodType));
@@ -537,6 +539,8 @@ final void SpawnBlood (TVec Org, int damage, optional TVec shootOrg, optional fl
     TraceBleed(damage, goup, av.yaw, av.pitch, false);
   }
 
+  if (GetCvarB('dbg_blood_disable_entities')) return;
+
   //Org.z += (Random()-Random())*4.0;
   if (!specified_zofs) zofs = (Random()-Random())*4.0;
   BloodAddZClamped(Org, zofs, (BloodType ? BloodType.default.Height : 0));
@@ -633,6 +637,8 @@ final void SpawnExploBloodAtHead (int damage, optional EntityEx src) {
     TraceBleed(damage, goup, av.yaw, av.pitch, true);
   }
 
+  if (GetCvarB('dbg_blood_disable_entities')) return;
+
   bool isSmallDamage = false;
   bool isHighDamage = false;
 
@@ -679,16 +685,17 @@ final void SpawnBloodSplatter (TVec org, int damage, TVec shootOrg) {
     }
   }
 
-  if (!BloodSplatterType) return;
-
-  EntityEx mo = Spawn(BloodSplatterType, org);
-  if (!mo) return;
-  mo.SetBloodArgs(self, damage);
-  mo.Target = self;
-  mo.Velocity.x = (Random()-Random())*4.0*35.0;
-  mo.Velocity.y = (Random()-Random())*4.0*35.0;
-  mo.Velocity.z = 3.0*35.0;
-  mo.CopyBloodTranslations(self, copyNormalTranslation:true);
+  if (BloodSplatterType && !GetCvarB('dbg_blood_disable_entities')) {
+    EntityEx mo = Spawn(BloodSplatterType, org);
+    if (mo) {
+      mo.SetBloodArgs(self, damage);
+      mo.Target = self;
+      mo.Velocity.x = (Random()-Random())*4.0*35.0;
+      mo.Velocity.y = (Random()-Random())*4.0*35.0;
+      mo.Velocity.z = 3.0*35.0;
+      mo.CopyBloodTranslations(self, copyNormalTranslation:true);
+    }
+  }
 
   {
     TAVec av;
@@ -712,11 +719,14 @@ final void SpawnBloodSplatter2 (TVec org, TVec shootOrg) {
   org.x += (Random()-0.5)*8.0;
   org.y += (Random()-0.5)*8.0;
 
-  EntityEx mo = Spawn(AxeBloodType, org);
-  if (!mo) return;
-  mo.SetBloodArgs(self);
-  mo.Target = self;
-  mo.CopyBloodTranslations(self, copyNormalTranslation:true);
+  if (!GetCvarB('dbg_blood_disable_entities')) {
+    EntityEx mo = Spawn(AxeBloodType, org);
+    if (mo) {
+      mo.SetBloodArgs(self);
+      mo.Target = self;
+      mo.CopyBloodTranslations(self, copyNormalTranslation:true);
+    }
+  }
 
   {
     TAVec av;
@@ -735,6 +745,7 @@ final void SpawnBloodSplatter2 (TVec org, TVec shootOrg) {
 //==========================================================================
 final void SpawnRipperBlood () {
   if (!BloodType) return;
+  if (GetCvarB('dbg_blood_disable_entities')) return;
 
   TVec org;
   org.x = Origin.x+(Random()-Random())*16.0;
@@ -743,11 +754,12 @@ final void SpawnRipperBlood () {
   BloodAddZClamped(org, (Random()-Random())*16.0, BloodType.default.Height);
 
   EntityEx th = Spawn(BloodType, org);
-  if (!th) return;
-  th.SetBloodArgs(self);
-  if (LineSpecialGameInfo(Level.Game).bRipperBloodNoGravity) th.bNoGravity = true;
-  th.Velocity.x = Velocity.x/2.0;
-  th.Velocity.y = Velocity.y/2.0;
-  th.StateTime += Random()*0.1;
-  th.CopyBloodTranslations(self, copyNormalTranslation:true);
+  if (th) {
+    th.SetBloodArgs(self);
+    if (LineSpecialGameInfo(Level.Game).bRipperBloodNoGravity) th.bNoGravity = true;
+    th.Velocity.x = Velocity.x/2.0;
+    th.Velocity.y = Velocity.y/2.0;
+    th.StateTime += Random()*0.1;
+    th.CopyBloodTranslations(self, copyNormalTranslation:true);
+  }
 }
