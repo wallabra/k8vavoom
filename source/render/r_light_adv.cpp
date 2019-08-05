@@ -275,7 +275,7 @@ void VAdvancedRenderLevel::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *te
     }
 
     // floor or ceiling? ignore masked
-    if (surf->GetNormalZ() != 0) {
+    if (surf->GetNormalZ()) {
       VTexture *tex = surf->texinfo->Tex;
       if (!tex || tex->Type == TEXTYPE_Null) continue;
       if (surf->texinfo->Alpha < 1.0f || surf->texinfo->Additive) continue;

@@ -223,6 +223,8 @@ bool VRenderLevelShared::SurfPrepareForRender (surface_t *surf) {
     }
   }
 
+  if (!surf->plvisible && (surf->drawflags&surface_t::DF_NO_FACE_CULL)) surf->plvisible = true;
+
   return true;
 }
 
@@ -314,7 +316,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
   vuint32 glowCeilingColor = 0;
 
   // floor or ceiling lights
-  // this rely on the face that flat surfaces will never mix with other surfaces
+  // this rely on the fact that flat surfaces will never mix with other surfaces
   //TODO: this should also interpolate wall lighting
   if (surfs->plane.normal.z > 0) {
     // floor
@@ -465,6 +467,9 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
   }
 #endif
 
+  // note that masked surfaces (i.e. textures with binary transparency) are processed by the normal renderers.
+  // i.e. there is no need to pass them to "transparent wall" route.
+  // only alpha-blended and additive surfaces must be rendered in a separate pass.
   const bool isCommon = (texinfo->Alpha >= 1.0f && !texinfo->Additive && !texinfo->Tex->isTranslucent());
 
   for (; surfs; surfs = surfs->next) {
@@ -641,7 +646,7 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
     // viewer is in back side or on plane
     // gozzo 3d floors should be rendered regardless of orientation
     segpart_t *sp = dseg->extra;
-    if (sp && sp->texinfo.Tex && (sp->texinfo.Alpha < 1.0f || sp->texinfo.Additive || sp->texinfo.Tex->isSeeThrough())) {
+    if (sp && sp->texinfo.Tex && (sp->texinfo.Alpha < 1.0f || sp->texinfo.Additive || sp->texinfo.Tex->isTranslucent())) {
       // mark subsector as rendered
       sub->miscFlags |= subsector_t::SSMF_Rendered;
       side_t *sidedef = seg->sidedef;
