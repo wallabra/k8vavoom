@@ -708,6 +708,16 @@ IMPLEMENT_FUNCTION(VObject, GetClassName) {
   RET_NAME(SomeClass ? SomeClass->Name : NAME_None);
 }
 
+IMPLEMENT_FUNCTION(VObject, GetClassLocationStr) {
+  P_GET_PTR(VClass, SomeClass);
+  RET_STR(SomeClass ? SomeClass->Loc.toStringNoCol() : VStr::EmptyString);
+}
+
+IMPLEMENT_FUNCTION(VObject, GetFullClassName) {
+  P_GET_PTR(VClass, SomeClass);
+  RET_STR(SomeClass ? SomeClass->GetFullName() : VStr::EmptyString);
+}
+
 IMPLEMENT_FUNCTION(VObject, IsAbstractClass) {
   P_GET_PTR(VClass, SomeClass);
   if (SomeClass) {
@@ -803,6 +813,16 @@ IMPLEMENT_FUNCTION(VObject, FindClassByGameObjName) {
 //  State methods
 //
 //==========================================================================
+IMPLEMENT_FUNCTION(VObject, GetStateLocationStr) {
+  P_GET_PTR(VState, State);
+  RET_STR(State ? State->Loc.toStringNoCol() : VStr::EmptyString);
+}
+
+IMPLEMENT_FUNCTION(VObject, GetFullStateName) {
+  P_GET_PTR(VState, State);
+  RET_STR(State ? State->GetFullName() : VStr::EmptyString);
+}
+
 IMPLEMENT_FUNCTION(VObject, StateIsInRange) {
   P_GET_INT(MaxDepth);
   P_GET_PTR(VState, End);

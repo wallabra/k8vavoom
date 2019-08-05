@@ -123,6 +123,8 @@
   DECLARE_FUNCTION(FindClassLowerCase)
   DECLARE_FUNCTION(ClassIsChildOf)
   DECLARE_FUNCTION(GetClassName)
+  DECLARE_FUNCTION(GetFullClassName)
+  DECLARE_FUNCTION(GetClassLocationStr)
   DECLARE_FUNCTION(IsAbstractClass)
   DECLARE_FUNCTION(IsNativeClass)
   DECLARE_FUNCTION(GetClassParent)
@@ -135,6 +137,8 @@
   DECLARE_FUNCTION(GetClassGameObjName)
 
   // state methods
+  DECLARE_FUNCTION(GetStateLocationStr)
+  DECLARE_FUNCTION(GetFullStateName)
   DECLARE_FUNCTION(StateIsInRange)
   DECLARE_FUNCTION(StateIsInSequence)
   DECLARE_FUNCTION(GetStateSpriteName)

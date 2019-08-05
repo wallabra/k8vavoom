@@ -844,6 +844,8 @@ native static final bool ClassIsChildOf (class SomeClass, class BaseClass);
 native static final bool IsAbstractClass (class C);
 native static final bool IsNativeClass (class C);
 native static final name GetClassName (class C);
+native static final string GetFullClassName (class C);
+native static final string GetClassLocationStr (class C);
 native static final class GetClassParent (class C);
 native static final class GetClassReplacement (class C);
 native static final spawner class GetCompatibleClassReplacement (class CType, class C); // returns `none` if replacement is not compatible with `CType`
@@ -861,6 +863,8 @@ enum StateTicKind {
   Random, // random(Arg1, Arg2)
 }
 
+native static final string GetStateLocationStr (state State);
+native static final string GetFullStateName (state State);
 native static final bool StateIsInRange (state State, state Start, state End, int MaxDepth);
 native static final bool StateIsInSequence (state State, state Start);
 native static final name GetStateSpriteName (state State);
