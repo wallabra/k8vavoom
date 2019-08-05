@@ -4558,6 +4558,157 @@ void Cheat_WhereIsSrc () {
 
 //==========================================================================
 //
+//  Cheat_PrintReplacementFor_AC
+//
+//==========================================================================
+void Cheat_PrintReplacementFor_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  Cheat_WhereIsSrc_AC(ref args, newArg, out aclist);
+}
+
+
+//==========================================================================
+//
+//  Cheat_PrintReplacementFor
+//
+//==========================================================================
+void Cheat_PrintReplacementFor () {
+  if (Cmd_GetArgC() != 2) {
+    cprint("%s: class name expected", Cmd_GetArgV(0));
+    return;
+  }
+
+  string wantstr = Cmd_GetArgV(1);
+  auto moClass = class!EntityEx(FindClassNoCase(name(wantstr)));
+  if (moClass) {
+    print("'%C' replaced with '%C'", moClass, GetClassReplacement(moClass));
+    return;
+  }
+
+  // wildcard?
+  if (wantstr.strIndexOf("*") < 0 && wantstr.strIndexOf("?") < 0 &&
+      wantstr.strIndexOf("[") < 0 && wantstr.strIndexOf("]") < 0)
+  {
+    // can't find thing type
+    cprint("%s: unknown class '%s'", Cmd_GetArgV(0), wantstr);
+    return;
+  }
+
+  class!EntityEx cls;
+  foreach AllClasses(EntityEx, out cls) {
+    if (!globmatch(string(GetClassName(cls)), wantstr, caseSensitive:false)) continue;
+    print("'%C' replaced with '%C'", moClass, GetClassReplacement(moClass));
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_PrintReplaceeFor_AC
+//
+//==========================================================================
+void Cheat_PrintReplaceeFor_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  Cheat_WhereIsSrc_AC(ref args, newArg, out aclist);
+}
+
+
+//==========================================================================
+//
+//  Cheat_PrintReplaceeFor
+//
+//==========================================================================
+void Cheat_PrintReplaceeFor () {
+  if (Cmd_GetArgC() != 2) {
+    cprint("%s: class name expected", Cmd_GetArgV(0));
+    return;
+  }
+
+  string wantstr = Cmd_GetArgV(1);
+  auto moClass = class!EntityEx(FindClassNoCase(name(wantstr)));
+  if (moClass) {
+    print("'%C' replaces '%C'", moClass, GetClassReplacee(moClass));
+    return;
+  }
+
+  // wildcard?
+  if (wantstr.strIndexOf("*") < 0 && wantstr.strIndexOf("?") < 0 &&
+      wantstr.strIndexOf("[") < 0 && wantstr.strIndexOf("]") < 0)
+  {
+    // can't find thing type
+    cprint("%s: unknown class '%s'", Cmd_GetArgV(0), wantstr);
+    return;
+  }
+
+  class!EntityEx cls;
+  foreach AllClasses(EntityEx, out cls) {
+    if (!globmatch(string(GetClassName(cls)), wantstr, caseSensitive:false)) continue;
+    print("'%C' replaces '%C'", moClass, GetClassReplacee(moClass));
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_PrintParentsFor_AC
+//
+//==========================================================================
+void Cheat_PrintParentsFor_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  Cheat_WhereIsSrc_AC(ref args, newArg, out aclist);
+}
+
+
+//==========================================================================
+//
+//  cht_dump_parents
+//
+//==========================================================================
+private final void cht_dump_parents (class cls) {
+  if (!cls || !GetClassParent(cls)) return;
+  print("=== %C ===", cls);
+  cls = GetClassParent(cls);
+  while (cls) {
+    print("  %C", cls);
+    cls = GetClassParent(cls);
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_PrintParentsFor
+//
+//==========================================================================
+void Cheat_PrintParentsFor () {
+  if (Cmd_GetArgC() != 2) {
+    cprint("%s: class name expected", Cmd_GetArgV(0));
+    return;
+  }
+
+  string wantstr = Cmd_GetArgV(1);
+  auto moClass = class!EntityEx(FindClassNoCase(name(wantstr)));
+  if (moClass) {
+    cht_dump_parents(moClass);
+    return;
+  }
+
+  // wildcard?
+  if (wantstr.strIndexOf("*") < 0 && wantstr.strIndexOf("?") < 0 &&
+      wantstr.strIndexOf("[") < 0 && wantstr.strIndexOf("]") < 0)
+  {
+    // can't find thing type
+    cprint("%s: unknown class '%s'", Cmd_GetArgV(0), wantstr);
+    return;
+  }
+
+  class!EntityEx cls;
+  foreach AllClasses(EntityEx, out cls) {
+    if (!globmatch(string(GetClassName(cls)), wantstr, caseSensitive:false)) continue;
+    cht_dump_parents(moClass);
+  }
+}
+
+
+//==========================================================================
+//
 //  Cheat_Resurrect
 //
 //==========================================================================
