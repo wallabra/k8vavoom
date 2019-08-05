@@ -25,6 +25,9 @@
 //**
 //**************************************************************************
 #include "core.h"
+#if !defined(_WIN32)
+# include <unistd.h>
+#endif
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -353,11 +356,11 @@ __attribute__((format(printf, 2, 3))) void VLog::DWriteLine (const char *fmt, ..
 #if !defined(_WIN32) || defined(IN_WADCHECK)
 class VConLogger : public VLogListener {
 private:
-  bool wasNL;
+  bool lastWasNL;
   EName lastEvent;
 
 public:
-  VConLogger () : wasNL(true), lastEvent(NAME_None) {
+  VConLogger () : lastWasNL(true), lastEvent(NAME_None) {
     VName::StaticInit();
     GLog.AddListener(this);
   }
@@ -413,54 +416,64 @@ public:
     printStr(s, strlen(s), fo);
   }
 
+  static void xprintStr (const char *s, FILE *fo) {
+    if (fo && s && s[0]) fwrite(s, strlen(s), 1, fo);
+  }
+
+  void printEvent (EName event) {
+    if (event == NAME_None) event = NAME_Log;
+    FILE *fo = outfile();
+    if (fo) {
+      if (event != NAME_Log || !GLogSkipLogTypeName) {
+        #if !defined(_WIN32)
+        bool resetColor = true;
+        int fd = fileno(fo);
+        if (fd >= 0 && isatty(fd)) {
+               if (event == NAME_Init) xprintStr("\x1b[1m", fo);
+          else if (event == NAME_Warning) xprintStr("\x1b[0;33;1m", fo);
+          else if (event == NAME_Error) xprintStr("\x1b[0;31;1m", fo);
+          else if (event == NAME_Log) xprintStr("\x1b[0;32m", fo);
+          else xprintStr("\x1b[0;36;1m", fo);
+        } else {
+          resetColor = false;
+        }
+        #endif
+        xprintStr(*VName(event), fo);
+        xprintStr(":", fo);
+        #if !defined(_WIN32)
+        if (resetColor) xprintStr("\x1b[0m", fo);
+        #endif
+      }
+    }
+    lastEvent = event;
+  }
+
   virtual void Serialise (const char *Text, EName Event) override {
-    if (!GLogTTYLog) return;
-    //fprintf(stderr, "%s: <%s>\n", *VName(Event), *VStr(Text).quote());
+    if (Event == NAME_None) Event = NAME_Log;
+    if (!GLogTTYLog) { lastEvent = NAME_None; return; }
     while (*Text) {
-      if (lastEvent != Event) {
-        if (!wasNL) fputc('\n', outfile());
-        wasNL = true;
-        lastEvent = Event;
-      }
       if (Text[0] == '\r' && Text[1] == '\n') ++Text;
-      if (Text[0] == '\n' || Text[0] == '\r') {
-        if (wasNL) {
-          lastEvent = Event;
-          if (Event != NAME_Log || !GLogSkipLogTypeName) {
-            printStr(*VName(Event), outfile());
-            printStr(":", outfile());
-          }
+      // find line terminator
+      const char *eol = Text;
+      while (*eol && *eol != '\n' && *eol != '\r') ++eol;
+      // print string until terminator
+      if (eol != Text) {
+        // has some string to print
+        if (lastWasNL || Event != lastEvent) {
+          // force new event
+          if (!lastWasNL) printStr("\n", outfile());
+          printEvent(Event);
+          xprintStr(" ", outfile());
         }
-        fputc('\n', outfile());
-        ++Text;
-        wasNL = true;
-      } else {
-        const char *eol0 = strchr(Text, '\n');
-        const char *eol1 = strchr(Text, '\r');
-        if (!eol0 && !eol1) {
-          if (wasNL) {
-            if (Event != NAME_Log || !GLogSkipLogTypeName) {
-              printStr(*VName(Event), outfile());
-              printStr(": ", outfile());
-            }
-            wasNL = false;
-          }
-          printStr(Text, outfile());
-          return;
-        }
-        const char *eol = (eol0 && eol1 ? (eol0 < eol1 ? eol0 : eol1) : eol0 ? eol0 : eol1);
-        check(eol != Text);
-        // ends with eol
-        if (wasNL) {
-          if (Event != NAME_Log || !GLogSkipLogTypeName) {
-            printStr(*VName(Event), outfile());
-            printStr(": ", outfile());
-          }
-          wasNL = false;
-        }
+        lastWasNL = false;
         printStr(Text, (size_t)(ptrdiff_t)(eol-Text), outfile());
-        Text = eol;
       }
+      if (!eol[0]) break; // no more
+      // new line
+      check(eol[0] == '\r' || eol[0] == '\n');
+      if (!lastWasNL) printStr("\n", outfile());
+      lastWasNL = true;
+      Text = eol+1;
     }
   }
 };
