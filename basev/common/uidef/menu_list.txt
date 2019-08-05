@@ -1,6 +1,7 @@
 menus {
   "menus/advrender.txt",
   "menus/advvideo.txt",
+  "menus/advvideolightfilter.txt",
   "menus/amoptions.txt",
   "menus/fluid.txt",
   "menus/gameplay.txt",

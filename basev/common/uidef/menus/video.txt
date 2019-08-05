@@ -279,4 +279,9 @@ menudef VideoOptions {
     title = "Advanced Rendering Options";
     submenu = "AdvRenderOptions";
   }
+
+  option submenu {
+    title = "Light Filtering Options";
+    submenu = "AdvVideoLightFilterOptions";
+  }
 }
