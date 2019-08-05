@@ -4632,22 +4632,6 @@ void Cheat_PrintParentsFor_AC (const ref array!string args, bool newArg, out arr
 
 //==========================================================================
 //
-//  cht_dump_parents
-//
-//==========================================================================
-private static final void cht_dump_parents (class cls) {
-  if (!cls || !GetClassParent(cls)) return;
-  print("=== %C ===", cls);
-  cls = GetClassParent(cls);
-  while (cls) {
-    print("  %C", cls);
-    cls = GetClassParent(cls);
-  }
-}
-
-
-//==========================================================================
-//
 //  Cheat_PrintParentsFor
 //
 //==========================================================================
@@ -4658,7 +4642,105 @@ void Cheat_PrintParentsFor () {
   }
 
   cht_apply_to_classes(Cmd_GetArgV(0), Cmd_GetArgV(1), delegate void (class!EntityEx moClass) {
-    cht_dump_parents(moClass);
+    if (!moClass || !GetClassParent(moClass)) return;
+    class cls = moClass;
+    print("=== %C ===", cls);
+    cls = GetClassParent(cls);
+    while (cls) {
+      print("  %C", cls);
+      cls = GetClassParent(cls);
+    }
+  });
+}
+
+
+//==========================================================================
+//
+//  Cheat_PrintSpritesFor_AC
+//
+//==========================================================================
+void Cheat_PrintSpritesFor_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  Cheat_WhereIsSrc_AC(ref args, newArg, out aclist);
+}
+
+
+//==========================================================================
+//
+//  Cheat_PrintSpritesFor
+//
+//==========================================================================
+void Cheat_PrintSpritesFor () {
+  if (Cmd_GetArgC() != 2) {
+    cprint("%s: class name expected", Cmd_GetArgV(0));
+    return;
+  }
+
+  cht_apply_to_classes(Cmd_GetArgV(0), Cmd_GetArgV(1), delegate void (class!EntityEx moClass) {
+    dictionary!(string, bool) sprmap;
+    array!string sprlist;
+    /*
+    // pickup sprite for inventory
+    auto inv = class!Inventory(moClass);
+    if (inv) {
+      string nn = string(inv.default.IconName).toLowerCase();
+      if (nn && nn != "tnt1") {
+        sprmap.put(nn, true);
+        sprlist[$] = nn;
+      }
+    }
+    */
+    // from states
+    for (state st = GetClassFirstState(moClass); st; st = GetNextStateInProg(st)) {
+      name sprname = GetStateSpriteName(st);
+      if (!sprname) continue;
+      if (sprname == 'tnt1') continue;
+      string nn = string(sprname);
+      int frm = GetStateSpriteFrame(st)&0x7f;
+      frm += 65;
+      nn ~= strFromChar(frm);
+      nn = nn.toUpperCase();
+      if (!AreStateSpritesPresent(st)) nn ~= " (MISSING!)";
+      if (sprmap.find(nn)) continue;
+      sprmap.put(nn, true);
+      sprlist[$] = nn;
+    }
+
+    // pickup sprite for inventory
+    string pkspr;
+    auto inv = class!Inventory(moClass);
+    if (inv) {
+      pkspr = string(inv.default.IconName).toLowerCase();
+      if (pkspr == "tnt1") pkspr = "";
+    }
+
+    // print others
+    if (!sprlist.length && !pkspr) {
+      print("no sprites found for class '%C'", moClass);
+    } else {
+      print("=== sprites for class '%C' ===", moClass);
+      if (pkspr) {
+        print("  INVENTORY SPRITE: %s", pkspr);
+        print("  ---");
+      }
+      sprlist.sort(delegate int (string a, string b) { return strcmp(a, b); });
+      //foreach (string s; sprlist) print(" %s", s);
+      int pos = 0, first = -1;
+      while (pos < sprlist.length) {
+        string s = sprlist[pos];
+        if (first < 0) {
+          first = pos;
+          ++pos;
+        } else if (s.strIndexOf(" ") >= 0 || s[0..$-1] != sprlist[first][0..$-1]) {
+          if (first != pos-1) print("  %s -- %s", sprlist[first], sprlist[pos-1]); else print("  %s", sprlist[first]);
+          first = -1;
+        } else {
+          ++pos;
+        }
+      }
+      if (first >= 0) {
+        if (first != pos-1) print("  %s -- %s", sprlist[first], sprlist[pos-1]); else print("  %s", sprlist[first]);
+      }
+    }
   });
 }
 
