@@ -4802,24 +4802,31 @@ void Cheat_Summon_AC (const ref array!string args, bool newArg, out array!string
   if (args.length == 1) {
     if (!newArg) return;
   } else if (args.length == 2) {
-    if (newArg) return;
+    if (newArg) { aclist[$] = "noreplace"; return; }
   } else {
+    if (args.length == 3 && !newArg) aclist[$] = "noreplace";
     return;
   }
 
+  bool noreplace = false;
+  if (args.length == 2 && args[1] && args[1][0] == "!") noreplace = true;
+
   class!Actor cls;
   foreach AllClasses(Actor, out cls) {
-    // skip unspawnable actors
-    class!Actor ac = class!Actor(GetClassReplacement(cls));
-    if (!ac || ac != cls) continue;
+    class!Actor ac = cls;
+    if (!noreplace) {
+      // skip unspawnable actors
+      ac = class!Actor(GetClassReplacement(cls));
+      if (!ac || ac != cls) continue;
+    }
     // check state
     auto spwspate = FindClassState(ac, 'Spawn');
     if (!spwspate) continue;
     if (!AreStateSpritesPresent(spwspate)) continue;
-    aclist[$] = string(GetClassName(ac));
+    aclist[$] = va("%s%s", (noreplace ? "!" : ""), GetClassName(ac));
   }
 
-  if (args.length == 1) {
+  if (args.length == 1 || (args.length == 2 && args[1] == "!")) {
     if (aclist.length > 100) {
       cprint("the list contains %s items; please, be more specific", aclist.length);
       aclist.clear();
@@ -4839,22 +4846,36 @@ void Cheat_Summon () {
   auto plr = PlayerEx(MO.Player);
   if (!plr) return;
 
-  if (Cmd_GetArgC() != 2) {
+  if (Cmd_GetArgC() < 2 || Cmd_GetArgC() > 3) {
+    cprint("Summon: class name expected (use '!class' to disable replacement)");
+    return;
+  }
+
+  string clsName = Cmd_GetArgV(1);
+  if (!clsName || clsName == "!") {
     cprint("Summon: class name expected");
     return;
   }
 
+  bool noreplace = false;
+  if (clsName[0] == "!") {
+    noreplace = true;
+    clsName = clsName[1..$];
+  }
+
   // find which type to spawn
-  auto moClass = class!EntityEx(FindClassNoCase(name(Cmd_GetArgV(1))));
+  auto moClass = class!EntityEx(FindClassNoCase(name(clsName)));
   if (!moClass) {
     // Can't find thing type
-    print("Summon: unknown class '%s'", Cmd_GetArgV(1));
+    print("Summon: unknown class '%s'", clsName);
     return;
   }
 
   //writeln("summon 0: ", GetClassName(moClass));
-  auto moRepl = class!EntityEx(GetClassReplacement(moClass));
-  if (moRepl) moClass = moRepl;
+  if (!noreplace && (Cmd_GetArgC() == 2 || stricmp(Cmd_GetArgV(2), "noreplace") != 0)) {
+    auto moRepl = class!EntityEx(GetClassReplacement(moClass));
+    if (moRepl) moClass = moRepl;
+  }
   //writeln("summon 1: ", GetClassName(moClass));
 
   auto spwspate = FindClassState(moClass, 'Spawn');
@@ -4878,9 +4899,11 @@ void Cheat_Summon () {
   TVec dir;
   AngleVector(ang, out dir);
   TVec dst = MO.Origin+84*dir;
+  //dst.z = fclamp(dst.z, MO.FloorZ, MO.CeilingZ);
 
   // this calls `OnMapSpawn(nullptr)` for spawned item
-  Level.Spawn(moClass, dst); // optional TAVec AAngles, optional mthing_t *mthing, optional bool AllowReplace
+  auto it = Level.Spawn(moClass, dst, AllowReplace:false); // optional TAVec AAngles, optional mthing_t *mthing, optional bool AllowReplace
+  if (it.Sector) it.Origin.z = fclamp(it.Origin.z, it.FloorZ, it.CeilingZ);
 }
 
 
