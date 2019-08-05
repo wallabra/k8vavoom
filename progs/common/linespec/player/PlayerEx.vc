@@ -4611,10 +4611,10 @@ void Cheat_Summon () {
 
 //==========================================================================
 //
-//  Cheat_RemoveAllEntities_AC
+//  Cheat_RemoveEntity_AC
 //
 //==========================================================================
-void Cheat_RemoveAllEntities_AC (const ref array!string args, bool newArg, out array!string aclist) {
+void Cheat_RemoveEntity_AC (const ref array!string args, bool newArg, out array!string aclist) {
   if (!MO) return;
 
   if (args.length == 1) {
@@ -4642,16 +4642,16 @@ void Cheat_RemoveAllEntities_AC (const ref array!string args, bool newArg, out a
 
 //==========================================================================
 //
-//  Cheat_RemoveAllEntities
+//  Cheat_RemoveEntity
 //
 //==========================================================================
-void Cheat_RemoveAllEntities () {
+void Cheat_RemoveEntity () {
   if (!MO.bIsPlayer || !Level) return;
   auto plr = PlayerEx(MO.Player);
   if (!plr) return;
 
   if (Cmd_GetArgC() != 2) {
-    cprint("RemoveAllEntities: class name expected");
+    cprint("RemoveEntity: class name expected");
     return;
   }
 
@@ -4666,7 +4666,7 @@ void Cheat_RemoveAllEntities () {
         wantstr.strIndexOf("[") < 0 && wantstr.strIndexOf("]") < 0)
     {
       // can't find thing type
-      print("RemoveAllEntities: unknown class '%s'", Cmd_GetArgV(1));
+      print("RemoveEntity: unknown class '%s'", Cmd_GetArgV(1));
       return;
     }
     isglob = true;
@@ -4688,10 +4688,10 @@ void Cheat_RemoveAllEntities () {
   }
 
   if (elist.length == 0) {
-    print("RemoveAllEntities: no entities of class '%s' found", wantname);
+    print("RemoveEntity: no entities of class '%s' found", wantname);
   } else {
     foreach (EntityEx e; elist) delete e;
-    print("RemoveAllEntities: %s %s of class '%s' removed", elist.length, (elist.length != 1 ? "entities" : "entity"), wantname);
+    print("RemoveEntity: %s %s of class '%s' removed", elist.length, (elist.length != 1 ? "entities" : "entity"), wantname);
   }
 }
 
