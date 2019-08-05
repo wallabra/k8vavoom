@@ -4463,13 +4463,33 @@ void Cheat_Regeneration () {
 
 //==========================================================================
 //
-//  Cheat_Regeneration
+//  Cheat_DumpInventory
 //
 //==========================================================================
 void Cheat_DumpInventory () {
+  bool dumpLoc = (Cmd_GetArgC() > 1);
   print("=== inventory of player (%C : %C) ===", self, self.MO);
   for (Inventory Item = EntityEx(MO).Inventory; Item; Item = Item.Inventory) {
-    print("  %C: amount=%s", Item, Item.Amount);
+    if (dumpLoc) {
+      print("  %C: amount=%s  (%s)", Item, Item.Amount, GetClassLocationStr(Item.Class));
+    } else {
+      print("  %C: amount=%s", Item, Item.Amount);
+    }
+  }
+  if (ReadyWeapon || PendingWeapon) {
+    print("===========");
+    if (dumpLoc) {
+      if (ReadyWeapon) print("ReadyWeapon: %C  (%s)", ReadyWeapon, GetClassLocationStr(ReadyWeapon.Class));
+      if (PendingWeapon) print("PendingWeapon: %C  (%s)", PendingWeapon, GetClassLocationStr(PendingWeapon.Class));
+    } else {
+      if (ReadyWeapon) print("ReadyWeapon: %C", ReadyWeapon);
+      if (PendingWeapon) print("PendingWeapon: %C", PendingWeapon);
+    }
+  }
+}
+
+
+//==========================================================================
   }
   print("===========");
   if (ReadyWeapon) print("ReadyWeapon: %C", ReadyWeapon);
