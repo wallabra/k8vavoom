@@ -245,9 +245,9 @@ void VOpenGLDrawer::VGLShader::Deactivate () {
 //
 //==========================================================================
 void VOpenGLDrawer::VGLShader::Compile () {
-  GCon->Logf(NAME_Init, "compiling shader '%s'...", progname);
-  GLhandleARB VertexShader = owner->LoadShader(GL_VERTEX_SHADER_ARB, vssrcfile, defines);
-  GLhandleARB FragmentShader = owner->LoadShader(GL_FRAGMENT_SHADER_ARB, fssrcfile, defines);
+  if (developer) GCon->Logf(NAME_Dev, "compiling shader '%s'...", progname);
+  GLhandleARB VertexShader = owner->LoadShader(progname, GL_VERTEX_SHADER_ARB, vssrcfile, defines);
+  GLhandleARB FragmentShader = owner->LoadShader(progname, GL_FRAGMENT_SHADER_ARB, fssrcfile, defines);
   prog = owner->CreateProgram(progname, VertexShader, FragmentShader);
   LoadUniforms();
 }
@@ -1643,13 +1643,15 @@ static VStr getDirectiveArg (const VStr &s) {
 //  VOpenGLDrawer::LoadShader
 //
 //==========================================================================
-GLhandleARB VOpenGLDrawer::LoadShader (GLenum Type, const VStr &FileName, const TArray<VStr> &defines) {
+GLhandleARB VOpenGLDrawer::LoadShader (const char *progname, GLenum Type, const VStr &FileName, const TArray<VStr> &defines) {
   // load source file
   VStr ssrc = readTextFile(FileName);
 
+  const char *sotype = (Type == GL_VERTEX_SHADER_ARB ? "vertex" : "fragment");
+
   // create shader object
   GLhandleARB Shader = p_glCreateShaderObjectARB(Type);
-  if (!Shader) Sys_Error("Failed to create shader object");
+  if (!Shader) Sys_Error("Failed to create %s shader object for shader '%s'", sotype, progname);
   CreatedShaderObjects.Append(Shader);
 
   // build source text
@@ -1715,8 +1717,12 @@ GLhandleARB VOpenGLDrawer::LoadShader (GLenum Type, const VStr &FileName, const 
     GLsizei LogLen;
     p_glGetInfoLogARB(Shader, sizeof(LogText)-1, &LogLen, LogText);
     LogText[LogLen] = 0;
-    fprintf(stderr, "================ %s ================\n%s\n=================================\n%s\b", *FileName, *res, LogText);
-    Sys_Error("%s", va("Failed to compile shader %s: %s", *FileName, LogText));
+    GCon->Logf(NAME_Error, "FAILED to compile %s shader '%s'!", sotype, progname);
+    GCon->Logf(NAME_Error, "%s\n", LogText);
+    GCon->Logf(NAME_Error, "====\n%s\n====", *res);
+    //fprintf(stderr, "================ %s ================\n%s\n=================================\n%s\b", *FileName, *res, LogText);
+    //Sys_Error("%s", va("Failed to compile shader %s: %s", *FileName, LogText));
+    Sys_Error("Failed to compile %s shader %s!", sotype, progname);
   }
   return Shader;
 }
