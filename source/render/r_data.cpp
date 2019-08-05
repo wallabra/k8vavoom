@@ -213,7 +213,7 @@ static void InitPalette () {
 //==========================================================================
 static void InitRgbTable () {
   VStr rtblsize = size2human((unsigned)sizeof(r_rgbtable));
-  GCon->Logf(NAME_Init, "building color translation table (%d bits, %d items per color, %s)...", VAVOOM_COLOR_COMPONENT_BITS, VAVOOM_COLOR_COMPONENT_MAX, *rtblsize);
+  if (developer) GCon->Logf(NAME_Dev, "building color translation table (%d bits, %d items per color, %s)...", VAVOOM_COLOR_COMPONENT_BITS, VAVOOM_COLOR_COMPONENT_MAX, *rtblsize);
   memset(r_rgbtable, 0, sizeof(r_rgbtable));
   for (int ir = 0; ir < VAVOOM_COLOR_COMPONENT_MAX; ++ir) {
     for (int ig = 0; ig < VAVOOM_COLOR_COMPONENT_MAX; ++ig) {
@@ -372,7 +372,7 @@ static void InstallSpriteLump (int lumpnr, int frame, char Rot, bool flipped) {
   VTexture *Tex = GTextureManager[lumpnr];
   if ((vuint32)frame >= 30 || (vuint32)rotation > 16) {
     //Sys_Error("InstallSpriteLump: Bad frame characters in lump '%s'", *Tex->Name);
-    GCon->Logf("ERROR:InstallSpriteLump: Bad frame characters in lump '%s'", *Tex->Name);
+    GCon->Logf(NAME_Error, "InstallSpriteLump: Bad frame characters in lump '%s'", *Tex->Name);
     if ((vuint32)frame < MAX_SPR_TEMP) {
       for (int r = 0; r < 16; ++r) {
         sprtemp[frame].lump[r] = -1;
@@ -600,7 +600,7 @@ void R_InstallSprite (const char *name, int index) {
           Sys_Error("R_InstallSprite: No patches found for '%s' frame '%c'", spritename, frame+'A');
         } else {
           if (spr_report_missing_patches) {
-            GCon->Logf("R_InstallSprite: No patches found for '%s' frame '%c'", spritename, frame+'A');
+            GCon->Logf(NAME_Error, "R_InstallSprite: No patches found for '%s' frame '%c'", spritename, frame+'A');
           }
         }
         break;
@@ -628,7 +628,7 @@ void R_InstallSprite (const char *name, int index) {
               Sys_Error("R_InstallSprite: Sprite '%s' frame '%c' is missing rotations", spritename, frame+'A');
             } else {
               if (spr_report_missing_rotations) {
-                GCon->Logf("R_InstallSprite: Sprite '%s' frame '%c' is missing rotations", spritename, frame+'A');
+                GCon->Logf(NAME_Error, "R_InstallSprite: Sprite '%s' frame '%c' is missing rotations", spritename, frame+'A');
               }
             }
           }
@@ -1227,7 +1227,7 @@ static void ParseGZLightDef (VScriptParser *sc, int LightType, float lightsizefa
       L->Offset.y = float(sc->Number);
     } else if (sc->Check("subtractive")) {
       sc->ExpectNumber();
-      sc->Message("Subtractive lights not supported.");
+      sc->Message(va("Subtractive light ('%s') is not supported yet.", *L->Name));
     } else if (sc->Check("chance")) {
       sc->ExpectFloat();
       L->Chance = sc->Float;
@@ -1239,19 +1239,23 @@ static void ParseGZLightDef (VScriptParser *sc, int LightType, float lightsizefa
       L->Interval = sc->Float;
     } else if (sc->Check("additive")) {
       sc->ExpectNumber();
-      sc->Message("Additive parameter not supported.");
+      sc->Message(va("Additive light ('%s') parameter not supported yet.", *L->Name));
     } else if (sc->Check("halo")) {
       sc->ExpectNumber();
-      sc->Message("Halo parameter not supported.");
+      sc->Message(va("Halo light ('%s') parameter not supported.", *L->Name));
     } else if (sc->Check("dontlightself")) {
       sc->ExpectNumber();
-      sc->Message("DontLightSelf parameter not supported.");
+      sc->Message(va("DontLightSelf light ('%s') parameter not supported.", *L->Name));
     } else if (sc->Check("attenuate")) {
       sc->ExpectNumber();
-      sc->Message("attenuate parameter not supported.");
-      attenuated = true;
+      if (sc->Number) {
+        attenuated = true;
+      } else {
+        attenuated = false;
+        sc->Message(va("Non-attenuated light ('%s') will be attenuated anyway.", *L->Name));
+      }
     } else {
-      sc->Error(va("Bad gz light parameter (%s)", *sc->String));
+      sc->Error(va("Bad gz light ('%s') parameter (%s)", *L->Name, *sc->String));
     }
   }
 
@@ -1424,6 +1428,7 @@ static void ParseClassEffects (VScriptParser *sc, TArray<VTempClassEffects> &Cla
 //
 //==========================================================================
 static void ParseEffectDefs (VScriptParser *sc, TArray<VTempClassEffects> &ClassDefs) {
+  if (developer) GCon->Logf(NAME_Dev, "...parsing k8vavoom effect definitions from '%s'...", *sc->GetScriptName());
   while (!sc->AtEnd()) {
     if (sc->Check("#include")) {
       sc->ExpectString();
@@ -1432,8 +1437,8 @@ static void ParseEffectDefs (VScriptParser *sc, TArray<VTempClassEffects> &Class
       if (Lump < 0 && sc->String.Length() <= 8 && sc->String.IndexOf('/') < 0) {
         Lump = W_CheckNumForName(VName(*sc->String, VName::AddLower8));
       }
-      if (Lump < 0) sc->Error(va("Lump %s not found", *sc->String));
-      ParseEffectDefs(new VScriptParser(/*sc->String*/W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassDefs);
+      if (Lump < 0) sc->Error(va("Lump '%s' not found", *sc->String));
+      ParseEffectDefs(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassDefs);
       continue;
     }
     else if (sc->Check("pointlight")) ParseLightDef(sc, DLTYPE_Point);
@@ -1467,9 +1472,9 @@ static void ParseBrightmap (int SrcLump, VScriptParser *sc) {
   sc->Expect("{");
   while (!sc->Check("}")) {
     if (sc->Check("map")) {
-      if (!sc->GetString()) sc->Error("brightmap image name expected");
-      if (sc->String.isEmpty()) sc->Error("empty brightmap image");
-      if (!bmap.isEmpty()) GCon->Logf(NAME_Warning, "duplicate brightmap image");
+      if (!sc->GetString()) sc->Error(va("brightmap image name expected for image '%s'", *img));
+      if (sc->String.isEmpty()) sc->Error(va("empty brightmap image for image '%s'", *img));
+      if (!bmap.isEmpty()) GCon->Logf(NAME_Warning, "duplicate brightmap image for image '%s'", *img);
       bmap = sc->String.fixSlashes();
     } else if (sc->Check("iwad")) {
       iwad = true;
@@ -1480,7 +1485,7 @@ static void ParseBrightmap (int SrcLump, VScriptParser *sc) {
     } else {
       //sc->Error(va("Unknown command (%s)", *sc->String));
       sc->ExpectString();
-      sc->Message(va("Unknown command (%s)", *sc->String));
+      sc->Message(va("Unknown command (%s) for image '%s'", *sc->String, *img));
     }
   }
   // there is no need to load brightmap textures for server
@@ -1634,6 +1639,7 @@ static void ParseGZDoomEffectDefs (int SrcLump, VScriptParser *sc, TArray<VTempC
   // for old mods (before Apr 2018) it should be `0.667f` (see https://forum.zdoom.org/viewtopic.php?t=60280 )
   // sadly, there is no way to autodetect it, so let's use what GZDoom is using now
   float lightsizefactor = 1.0; // for attenuated lights
+  if (developer) GCon->Logf(NAME_Dev, "...parsing GZDoom light definitions from '%s'...", *sc->GetScriptName());
   while (!sc->AtEnd()) {
     if (sc->Check("#include")) {
       sc->ExpectString();
@@ -1642,8 +1648,8 @@ static void ParseGZDoomEffectDefs (int SrcLump, VScriptParser *sc, TArray<VTempC
       if (Lump < 0 && sc->String.Length() <= 8 && sc->String.IndexOf('/') < 0) {
         Lump = W_CheckNumForName(VName(*sc->String, VName::AddLower8));
       }
-      if (Lump < 0) sc->Error(va("Lump %s not found", *sc->String));
-      ParseGZDoomEffectDefs(Lump, new VScriptParser(/*sc->String*/W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassDefs);
+      if (Lump < 0) sc->Error(va("Lump '%s' not found", *sc->String));
+      ParseGZDoomEffectDefs(Lump, new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassDefs);
       continue;
     }
     else if (sc->Check("pointlight")) ParseGZLightDef(sc, DLTYPE_Point, lightsizefactor);
@@ -1669,7 +1675,7 @@ static void ParseGZDoomEffectDefs (int SrcLump, VScriptParser *sc, TArray<VTempC
 //
 //==========================================================================
 void R_ParseEffectDefs () {
-  GCon->Log(NAME_Init, "Parsing effect defs");
+  GCon->Log(NAME_Init, "Parsing effect defs...");
 
   TArray<VTempClassEffects> ClassDefs;
 
@@ -1752,14 +1758,14 @@ void R_ParseEffectDefs () {
       if (SprDef.Light.IsNotEmpty()) {
         SprFx.LightDef = R_FindLightEffect(SprDef.Light);
         if (!SprFx.LightDef) {
-          GCon->Logf(NAME_Warning, "Light \"%s\" not found.", *SprDef.Light);
+          GCon->Logf(NAME_Warning, "Light '%s' not found.", *SprDef.Light);
         }
       }
       SprFx.PartDef = nullptr;
       if (SprDef.Part.IsNotEmpty()) {
         SprFx.PartDef = FindParticleEffect(SprDef.Part);
         if (!SprFx.PartDef) {
-          GCon->Logf(NAME_Warning, "Particle effect \"%s\" not found.", *SprDef.Part);
+          GCon->Logf(NAME_Warning, "Particle effect '%s' not found.", *SprDef.Part);
         }
       }
     }
