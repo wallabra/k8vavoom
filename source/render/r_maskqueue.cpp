@@ -656,6 +656,8 @@ extern "C" {
 void VRenderLevelShared::DrawTranslucentPolys () {
   if (traspUsed <= traspFirst) return; // nothing to do
 
+  //GCon->Logf("DrawTranslucentPolys: first=%u; used=%u; count=%u", traspFirst, traspUsed, traspUsed-traspFirst);
+
   // sort 'em
   timsort_r(trans_sprites+traspFirst, traspUsed-traspFirst, sizeof(trans_sprites[0]), &traspCmp, nullptr);
 
@@ -668,6 +670,7 @@ void VRenderLevelShared::DrawTranslucentPolys () {
   // render 'em
   for (int f = traspFirst; f < traspUsed; ++f) {
     trans_sprite_t &spr = trans_sprites[f];
+    //GCon->Logf("  #%d: type=%d; alpha=%g; additive=%d; light=0x%08x; fade=0x%08x", f, spr.type, spr.Alpha, (int)spr.Additive, spr.light, spr.Fade);
     if (spr.type == 2) {
       // alias model
       if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); pofsEnabled = false; }
@@ -701,11 +704,11 @@ void VRenderLevelShared::DrawTranslucentPolys () {
                                 spr.saxis, spr.taxis, spr.texorg, spr.hangup);
     } else {
       // masked polygon
-      if (!IsAdvancedRenderer()) {
-        check(spr.surf);
-        if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); pofsEnabled = false; }
-        Drawer->DrawMaskedPolygon(spr.surf, spr.Alpha, spr.Additive);
-      }
+      // for advanced rendere: non-translucent and non-additive polys are already done, and should not end up here anyway
+      //if (IsAdvancedRenderer()) continue;
+      check(spr.surf);
+      if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); pofsEnabled = false; }
+      Drawer->DrawMaskedPolygon(spr.surf, spr.Alpha, spr.Additive);
     }
   }
 #undef MAX_POFS

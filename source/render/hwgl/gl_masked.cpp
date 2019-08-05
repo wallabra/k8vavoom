@@ -186,6 +186,8 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     */
     {
       const float lev = getSurfLightLevel(surf);
+      //GCon->Logf("Tex: %s; lev=%g", *tex->Tex->Name, getSurfLightLevel(surf));
+      //const float lev = 1.0f;
       if (doBrightmap) {
         SurfMaskedBrightmapGlow.SetLight(
           ((surf->Light>>16)&255)*lev/255.0f,
