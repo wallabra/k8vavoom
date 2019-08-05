@@ -4490,10 +4490,58 @@ void Cheat_DumpInventory () {
 
 
 //==========================================================================
+//
+//  Cheat_WhereIsSrc_AC
+//
+//==========================================================================
+void Cheat_WhereIsSrc_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  if (args.length == 1) {
+    if (!newArg) return;
+  } else if (args.length == 2) {
+    if (newArg) return;
+  } else {
+    return;
   }
-  print("===========");
-  if (ReadyWeapon) print("ReadyWeapon: %C", ReadyWeapon);
-  if (PendingWeapon) print("PendingWeapon: %C", PendingWeapon);
+
+  class!Actor cls;
+  foreach AllClasses(Actor, out cls) {
+    aclist[$] = string(GetClassName(cls));
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_WhereIsSrc
+//
+//==========================================================================
+void Cheat_WhereIsSrc () {
+  if (Cmd_GetArgC() != 2) {
+    cprint("%s: class name expected", Cmd_GetArgV(0));
+    return;
+  }
+
+  string wantstr = Cmd_GetArgV(1);
+  auto moClass = class!EntityEx(FindClassNoCase(name(wantstr)));
+  if (moClass) {
+    print("%C: %s", moClass, GetClassLocationStr(moClass));
+    return;
+  }
+
+  // wildcard?
+  if (wantstr.strIndexOf("*") < 0 && wantstr.strIndexOf("?") < 0 &&
+      wantstr.strIndexOf("[") < 0 && wantstr.strIndexOf("]") < 0)
+  {
+    // can't find thing type
+    cprint("%s: unknown class '%s'", Cmd_GetArgV(0), wantstr);
+    return;
+  }
+
+  class!EntityEx cls;
+  foreach AllClasses(EntityEx, out cls) {
+    if (!globmatch(string(GetClassName(cls)), wantstr, caseSensitive:false)) continue;
+    print("%C: %s", cls, GetClassLocationStr(cls));
+  }
 }
 
 
