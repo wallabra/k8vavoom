@@ -969,7 +969,7 @@ int ZEXPORT zipWriteWholeFileToZip (zipFile file, const zip_fileinfo *zinfo, con
     zi->ci.stream_initialised = 0;
 
     uLong crc32 = (uLong)zi->ci.crc32;
-    uLong uncompressed_size = (uLong)zi->ci.stream.total_in;
+    uLong uncompressed_size = (uLong)bufsize;
 
     uLong compressed_size = (uLong)outsize;
 
