@@ -875,12 +875,12 @@ final void A_Blast (optional int BlastFlags, optional float Strength/*ignored*/,
     if (!Wpn.DepleteAmmo(Wpn.FireMode)) return;
   }
 
-  if (BlastSound) Owner.PlaySound(BlastSound, CHAN_ITEM);
-  if (!(BlastFlags&BF_DONTWARN)) LineSpecialLevelInfo(Level).NoiseAlert(EntityEx(Owner), EntityEx(Owner));
+  if (BlastSound) PlaySound(BlastSound, CHAN_ITEM);
+  if (!(BlastFlags&BF_DONTWARN)) LineSpecialLevelInfo(Level).NoiseAlert(self, self);
 
   Actor mo;
   foreach AllThinkers(Actor, mo) {
-    if (mo == Owner) continue;
+    if (mo == self) continue;
     if (mo.bBoss && !(BlastFlags&BF_AFFECTBOSSES)) continue; // not a valid monster
     if (mo.bCanBlast || mo.bIceCorpse) {
       // frozen corpse
@@ -893,9 +893,9 @@ final void A_Blast (optional int BlastFlags, optional float Strength/*ignored*/,
     }
     if (mo.bDormant) continue; // no dormant creatures
     if (mo.bDontBlast) continue;
-    float dist = Owner.DistTo(mo);
+    float dist = self.DistTo(mo);
     if (dist > Radius) continue; // out of range
-    BlastActor(mo, Actor(Owner), Speed, BlastEffect);
+    BlastActor(mo, self, Speed, BlastEffect);
   }
 }
 
