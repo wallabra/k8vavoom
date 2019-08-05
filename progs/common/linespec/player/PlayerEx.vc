@@ -4503,9 +4503,20 @@ void Cheat_WhereIsSrc_AC (const ref array!string args, bool newArg, out array!st
     return;
   }
 
-  class!Actor cls;
-  foreach AllClasses(Actor, out cls) {
-    aclist[$] = string(GetClassName(cls));
+  // actors
+  class!EntityEx cls;
+  foreach AllClasses(EntityEx, out cls) {
+    if (IsAbstractClass(cls) || IsNativeClass(cls)) continue;
+    if ((cls isa 'Actor') || (cls isa 'Inventory')) {
+      aclist[$] = string(GetClassName(cls));
+    }
+  }
+
+  if (args.length == 1) {
+    if (aclist.length > 100) {
+      cprint("the list contains %s items; please, be more specific", aclist.length);
+      aclist.clear();
+    }
   }
 }
 
@@ -4618,6 +4629,13 @@ void Cheat_Summon_AC (const ref array!string args, bool newArg, out array!string
     if (!AreStateSpritesPresent(spwspate)) continue;
     aclist[$] = string(GetClassName(ac));
   }
+
+  if (args.length == 1) {
+    if (aclist.length > 100) {
+      cprint("the list contains %s items; please, be more specific", aclist.length);
+      aclist.clear();
+    }
+  }
 }
 
 
@@ -4705,6 +4723,13 @@ void Cheat_RemoveEntity_AC (const ref array!string args, bool newArg, out array!
     classmap.put(cname, true);
     aclist[$] = string(cname);
   }
+
+  if (args.length == 1) {
+    if (aclist.length > 100) {
+      cprint("the list contains %s items; please, be more specific", aclist.length);
+      aclist.clear();
+    }
+  }
 }
 
 
@@ -4791,6 +4816,13 @@ void Cheat_CountEntities_AC (const ref array!string args, bool newArg, out array
     if (ent.bIsPlayer) continue;
     classmap.put(cname, true);
     aclist[$] = string(cname);
+  }
+
+  if (args.length == 1) {
+    if (aclist.length > 100) {
+      cprint("the list contains %s items; please, be more specific", aclist.length);
+      aclist.clear();
+    }
   }
 }
 
