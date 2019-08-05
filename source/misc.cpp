@@ -36,26 +36,6 @@ BJPRNGCtx g_bjprng_ctx;
 
 
 #if !defined(VCC_STANDALONE_EXECUTOR)
-/*
-class VLogSysError : public FOutputDevice {
-public:
-  virtual void Serialise (const char *V, EName Event) override;
-};
-
-class VLogHostError : public FOutputDevice {
-public:
-  virtual void Serialise (const char *V, EName Event) override;
-};
-
-
-static VLogSysError LogSysError;
-static VLogHostError LogHostError;
-
-FOutputDevice *GLogSysError = &LogSysError;
-FOutputDevice *GLogHostError = &LogHostError;
-*/
-
-
 //==========================================================================
 //
 //  FOutputDevice implementation
@@ -89,30 +69,6 @@ __attribute__((format(printf, 3, 4))) void FOutputDevice::Logf (EName Type, cons
 
   Serialise(string, Type);
 }
-
-
-//==========================================================================
-//
-//  VLogSysError
-//
-//==========================================================================
-/*
-void VLogSysError::Serialise (const char *V, EName) {
-  Sys_Error("%s", V);
-}
-*/
-
-
-//==========================================================================
-//
-//  VLogHostError
-//
-//==========================================================================
-/*
-void VLogHostError::Serialise (const char *V, EName) {
-  Host_Error("%s", V);
-}
-*/
 
 
 //==========================================================================
@@ -345,30 +301,6 @@ vuint32 M_LookupColorName (const char *Name) {
   //if (cpp) GCon->Logf("*** FOUND COLOR <%s> : <%s> : 0x%08x", Name, tmpbuf, *cpp);
   return (cpp ? *cpp : 0);
 }
-
-
-//==========================================================================
-//
-//  ParseHex
-//
-//==========================================================================
-/*
-int ParseHex (const char *Str) {
-  int Ret = 0;
-  int Mul = 1;
-  const char *c = Str;
-  if (*c == '-') {
-    ++c;
-    Mul = -1;
-  }
-  for (; *c; ++c) {
-         if (*c >= '0' && *c <= '9') Ret = (Ret<<4)+*c-'0';
-    else if (*c >= 'a' && *c <= 'f') Ret = (Ret<<4)+*c-'a'+10;
-    else if (*c >= 'A' && *c <= 'F') Ret = (Ret<<4)+*c-'A'+10;
-  }
-  return Ret*Mul;
-}
-*/
 
 
 //==========================================================================
