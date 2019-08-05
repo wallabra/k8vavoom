@@ -40,7 +40,9 @@ VCvarB r_dynamic_clip_more("r_dynamic_clip_more", true, "Do some extra checks wh
 VCvarB r_static_lights("r_static_lights", true, "Allow static lights?", CVAR_Archive);
 VCvarB r_light_opt_shadow("r_light_opt_shadow", false, "Check if light can potentially cast a shadow.", CVAR_Archive);
 
-VCvarF r_light_filter_dynamic_coeff("r_light_filter_dynamic_coeff", "0.2", "How close dynamic lights should be to be filtered out?\n(0.6-0.9 is usually ok).", CVAR_Archive);
+VCvarF r_light_filter_dynamic_coeff("r_light_filter_dynamic_coeff", "0.2", "How close dynamic lights should be to be filtered out?\n(0.2-0.4 is usually ok).", CVAR_Archive);
+VCvarB r_allow_dynamic_light_filter("r_allow_dynamic_light_filter", true, "Allow filtering of dynamic lights?", CVAR_Archive);
+
 VCvarB r_allow_subtractive_lights("r_allow_subtractive_lights", false, "Are subtractive lights allowed?", /*CVAR_Archive*/0);
 
 static VCvarB r_dynamic_light_better_vis_check("r_dynamic_light_better_vis_check", true, "Do better (but slower) dynlight visibility checking on spawn?", CVAR_Archive);
@@ -233,6 +235,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
 
   float coeff = r_light_filter_dynamic_coeff;
   if (coeff <= 0.1f) coeff = 0.1f; else if (coeff > 1) coeff = 1;
+  if (!r_allow_dynamic_light_filter) coeff = 0.02f; // filter them anyway
 
   float radsq = (radius < 1 ? 64*64 : radius*radius*coeff);
   if (radsq < 32*32) radsq = 32*32;
