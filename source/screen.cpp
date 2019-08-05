@@ -518,7 +518,7 @@ void SCR_Update (bool fullUpdate) {
   bool allowClear = true;
 
   // do buffered drawing
-  if (cl && cls.signon && cl->MO && !GClGame->intermission) {
+  if (cl && cls.signon && cl->MO && !GClGame->InIntermission()) {
     if (!GLevel || GLevel->TicTime >= serverStartRenderFramesTic) {
       //k8: always render level, so automap will be updated in all cases
       updateStarted = true;

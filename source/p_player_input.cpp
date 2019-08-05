@@ -393,7 +393,7 @@ COMMAND(Impulse) {
 //==========================================================================
 COMMAND(ToggleAlwaysRun) {
 #ifdef CLIENT
-  if (!cl || !GClGame || !GGameInfo || GClGame->intermission || GGameInfo->NetMode <= NM_TitleMap) {
+  if (!cl || !GClGame || !GGameInfo || GClGame->InIntermission() || GGameInfo->NetMode <= NM_TitleMap) {
     return;
   }
   //if (MN_Active() || C_Active() || NUI_IsPaused()) return;

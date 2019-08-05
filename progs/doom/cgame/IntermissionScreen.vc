@@ -216,24 +216,27 @@ void Start () {
   cnt = 0.0;
   btime = 0.0;
 
-  if (!Background && !ClGame.cl.Level.bNoIntermission) {
+  if (!Background /*&& !ClGame.cl.Level.bNoIntermission*/) {
     Background = NewChild(IntermissionBackground);
     Background.ScaleX = float(Width)/float(Background.Width);
     Background.ScaleY = float(Height)/float(Background.Height);
   }
 
+  /*
   if (ClGame.cl.Level.bNoIntermission && Background) {
     delete Background; // remove it
     //Background.Clean();
-    //print("********* NO INTERMISSION! leavemap=%s; entermap=%s", ClGame.im.LeaveMap, ClGame.im.EnterMap);
   }
+  */
 
+  /*
   scope(exit) {
     if (ClGame.cl.Level.bNoIntermission && Background) {
       delete Background; // remove it
       interstate = IMS_Done;
     }
   }
+  */
 
   if (!checkForDoom2()) {
     FindEpisodeAndMap(ClGame.im.LeaveMap, &im_episode, &im_map);
@@ -254,21 +257,17 @@ void Start () {
   else if (ClGame.maxclients > 1) IM_InitCooperativeStats();
   else IM_InitSingleStats();
 
-  if (interstate == IMS_Stats) {
+  if (interstate == IMS_Stats && !ClGame.cl.Level.bNoIntermission) {
     IM_LoadData();
-
     // intermission music
-    if (ClGame.im.InterMusic) {
-      CmdBuf_AddText(va("music loop \"%q\"\n", ClGame.im.InterMusic));
-    }
-    else {
-      if (checkForDoom2()) {
-        CmdBuf_AddText("music loop d_dm2int\n");
-      } else {
-        CmdBuf_AddText("music loop d_inter\n");
-      }
-    }
+    string musname;
+    CmdBuf_AddText(va("music loop \"%q\"\n", ClGame.im.InterMusic));
+         if (ClGame.im.InterMusic) musname = string(ClGame.im.InterMusic);
+    else if (checkForDoom2()) musname = "d_dm2int";
+    else musname = "d_inter";
+    CmdBuf_AddText(va("music loop \"%q\"\n", musname));
   } else {
+    // this will take care of empty text
     IM_InitText();
   }
 }
@@ -371,15 +370,6 @@ void IM_InitAnimatedBack () {
     return;
   }
   if (!Background) return;
-
-  //print("IM_InitAnimatedBack: interstate=%d; exitpic=%n; enterpic=%n", interstate, ClGame.im.ExitPic, ClGame.im.EnterPic);
-  /*
-  print("  LeaveMap=%n; LeaveCluster=%d; LeaveName=%s; LeaveTitlePatch=%n; ExitPic=%n", ClGame.im.LeaveMap, ClGame.im.LeaveCluster, ClGame.im.LeaveName, ClGame.im.LeaveTitlePatch, ClGame.im.ExitPic);
-  print("  EnterMap=%n; EnterCluster=%d; EnterName=%s; EnterTitlePatch=%n; EnterPic=%n", ClGame.im.EnterMap, ClGame.im.EnterCluster, ClGame.im.EnterName, ClGame.im.EnterTitlePatch, ClGame.im.EnterPic);
-  print("  InterMusic=%n", ClGame.im.InterMusic);
-  print("  Text=%s", ClGame.im.Text);
-  print("  TextFlat=%n; TextPic=%n; TextMusic=%n; bTextIsLump=%d", ClGame.im.TextFlat, ClGame.im.TextPic, ClGame.im.TextMusic, ClGame.im.bTextIsLump);
-  */
 
   name BgPic = (interstate ? ClGame.im.ExitPic : ClGame.im.EnterPic);
   //print("  BgPic0: %n (present=%d); im_episode=%d; isdoom2=%s", BgPic, WadLumpPresent(BgPic), im_episode, (IsAnyDoom2 ? "tan" : "ona"));
@@ -555,14 +545,6 @@ void IM_InitSingleStats () {
   cnt_secret[0] = -1;
   cnt_time = -1;
   cnt_pause = 1.0;
-  if (ClGame.cl.Level.bNoIntermission) {
-    //interstate = IMS_NoState;
-    ClGame.skipintermission = false;
-    CmdBuf_AddText("TeleportNewMap\n");
-    interstate = IMS_Done;
-    //Background.State = IntermissionBackground::STATE_Done;
-    if (Background) Background.Clean(); // don't draw it at all
-  }
 }
 
 
@@ -695,14 +677,6 @@ void IM_InitCooperativeStats () {
     cnt_items[i] = 0;
     cnt_secret[i] = 0;
     cnt_frags[i] = 0;
-  }
-  if (ClGame.cl.Level.bNoIntermission) {
-    interstate = IMS_NoState;
-    ClGame.skipintermission = false;
-    CmdBuf_AddText("TeleportNewMap\n");
-    interstate = IMS_Done;
-    //Background.State = IntermissionBackground::STATE_Done;
-    if (Background) Background.Clean(); // don't draw it at all
   }
 }
 
@@ -877,8 +851,6 @@ void IM_UpdateCooperativeStats (float DeltaTime) {
 //
 //==========================================================================
 void IM_InitDeathmatchStats () {
-  int i;
-  int j;
   PlayerReplicationInfo RepInfo;
 
   interstate = IMS_Stats;
@@ -888,7 +860,7 @@ void IM_InitDeathmatchStats () {
   cnt_pause = 1.0;
 
   foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo) {
-    i = RepInfo.PlayerNum;
+    int i = RepInfo.PlayerNum;
     dm_Frags[i] = 0;
     dm_Deaths[i] = 0;
   }
@@ -938,8 +910,6 @@ void IM_DrawDeathmatchStats () {
 //
 //==========================================================================
 void IM_UpdateDeathmatchStats (float DeltaTime) {
-  int i;
-
   bool stillticking;
   PlayerReplicationInfo RepInfo;
 
@@ -959,7 +929,7 @@ void IM_UpdateDeathmatchStats (float DeltaTime) {
     stillticking = false;
 
     foreach ClGame.GLevel.LevelInfo.AllThinkers(PlayerReplicationInfo, RepInfo) {
-      i = RepInfo.PlayerNum;
+      int i = RepInfo.PlayerNum;
       if (dm_Frags[i] != RepInfo.Frags) {
         if (RepInfo.Frags < 0) dm_Frags[i]--; else dm_Frags[i]++;
         stillticking = true;
@@ -1099,17 +1069,38 @@ void IM_InitText () {
   cookedHubText.clear();
   hubTextTypingComplete = false;
 
-  if (ClGame.deathmatch || !ClGame.im.Text) {
+  IntermissionText *itext =
+    ClGame.intermissionPhase == ClientGame::IM_Phase.Leave ? &ClGame.im.LeaveText :
+    ClGame.intermissionPhase == ClientGame::IM_Phase.Enter ? &ClGame.im.EnterText :
+    nullptr;
+
+  // if we have no leave text, try enter text
+  if (itext && !itext.Text && ClGame.intermissionPhase == ClientGame::IM_Phase.Leave) {
+    if (ClGame.im.EnterText.Text) {
+      ClGame.intermissionPhase = ClientGame::IM_Phase.Enter;
+      IM_InitText();
+      return;
+    }
+    itext = nullptr;
+  }
+
+  if (!itext || !itext.Text || ClGame.deathmatch) {
+    // no text, go to new map
+    //interstate = IMS_NoState;
+    ClGame.skipintermission = false;
     CmdBuf_AddText("TeleportNewMap\n");
     interstate = IMS_Done;
-    if (Background) Background.State = IntermissionBackground::STATE_Done;
+    if (Background) {
+      Background.State = IntermissionBackground::STATE_Done;
+      if (ClGame.cl.Level.bNoIntermission) Background.Clean(); // this is finale text
+    }
     return;
   }
 
-  if (ClGame.im.bTextIsLump) {
-    HubText = LoadTextLump(name(ClGame.im.Text));
+  if (itext.bTextIsLump) {
+    HubText = LoadTextLump(name(itext.Text));
   } else {
-    HubText = ClGame.im.Text;
+    HubText = itext.Text;
   }
 
   hubTextHeight = -1; // will be calculated on the first draw
@@ -1141,17 +1132,17 @@ void IM_InitText () {
 
   TextFlat = '';
   TextPic = 0;
-  if (ClGame.im.TextPic) {
-    TextPic = R_RegisterPic(ClGame.im.TextPic);
-  } else if (ClGame.im.TextFlat) {
-    TextFlat = ClGame.im.TextFlat;
+  if (itext.TextPic) {
+    TextPic = R_RegisterPic(itext.TextPic);
+  } else if (itext.TextFlat) {
+    TextFlat = itext.TextFlat;
   }
 
   interstate = IMS_Text;
   intertime = 0.0;
 
-  if (ClGame.im.TextMusic) {
-    CmdBuf_AddText(va("music loop \"%q\"\n", ClGame.im.TextMusic));
+  if (itext.TextMusic) {
+    CmdBuf_AddText(va("music loop \"%q\"\n", itext.TextMusic));
   } else {
     if (checkForDoom2()) {
       CmdBuf_AddText("music loop d_read_m\n");
@@ -1243,9 +1234,19 @@ void IM_UpdateText (float DeltaTime) {
     // check for second keypress
     if (hubTextTypingComplete) {
       ClGame.skipintermission = false;
-      CmdBuf_AddText("TeleportNewMap\n");
-      interstate = IMS_Done;
-      if (Background) Background.State = IntermissionBackground::STATE_Done;
+      // if we are in leave text, try enter text
+      if (ClGame.intermissionPhase == ClientGame::IM_Phase.Leave) {
+        ClGame.intermissionPhase = ClientGame::IM_Phase.Enter;
+        IM_InitText();
+      } else {
+        CmdBuf_AddText("TeleportNewMap\n");
+        interstate = IMS_Done;
+        //if (Background) Background.State = IntermissionBackground::STATE_Done;
+        if (Background) {
+          Background.State = IntermissionBackground::STATE_Done;
+          if (ClGame.cl.Level.bNoIntermission) Background.Clean(); // this is finale text
+        }
+      }
       return;
     }
     // check for first keypress

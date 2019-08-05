@@ -601,7 +601,12 @@ void IM_InitText () {
     return;
   }
 
-  if (!ClGame.im.Text) {
+  IntermissionText *itext =
+    ClGame.intermissionPhase == ClientGame::IM_Phase.Leave ? &ClGame.im.LeaveText :
+    ClGame.intermissionPhase == ClientGame::IM_Phase.Enter ? &ClGame.im.EnterText :
+    nullptr;
+
+  if (!itext.Text) {
     if (ClGame.cl.Level.bNoIntermission) {
       CmdBuf_AddText("TeleportNewMap\n");
       interstate = IMS_Done;
@@ -616,20 +621,20 @@ void IM_InitText () {
     }
   }
 
-  HubText = (ClGame.im.bTextIsLump ? LoadTextLump(name(ClGame.im.Text)) : ClGame.im.Text);
+  HubText = (itext.bTextIsLump ? LoadTextLump(name(itext.Text)) : itext.Text);
   HubCount = float(strlenutf8(HubText))*TEXTSPEED+TEXTWAIT;
 
   TextFlat = '';
   TextPic = 0;
-       if (ClGame.im.TextPic) TextPic = R_RegisterPic(ClGame.im.TextPic);
-  else if (ClGame.im.TextFlat) TextFlat = ClGame.im.TextFlat;
+       if (itext.TextPic) TextPic = R_RegisterPic(itext.TextPic);
+  else if (itext.TextFlat) TextFlat = itext.TextFlat;
 
   ClGame.skipintermission = false;
   interstate = IMS_Text;
   intertime = 0.0;
   oldintertime = HubCount;
-  if (ClGame.im.TextMusic) {
-    CmdBuf_AddText(va("music loop \"%q\"\n", ClGame.im.TextMusic));
+  if (itext.TextMusic) {
+    CmdBuf_AddText(va("music loop \"%q\"\n", itext.TextMusic));
   } else {
     CmdBuf_AddText("music loop mus_cptd\n");
   }

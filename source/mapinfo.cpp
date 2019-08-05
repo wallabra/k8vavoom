@@ -135,6 +135,52 @@ VStr mapInfo_t::GetName () const {
 
 //==========================================================================
 //
+//  mapInfo_t::dump
+//
+//==========================================================================
+void mapInfo_t::dump (const char *msg) const{
+  if (msg && msg[0]) GCon->Logf("==== mapinfo: %s ===", msg); else GCon->Log("==== mapinfo ===");
+  GCon->Logf("  LumpName: \"%s\"", *VStr(LumpName).quote());
+  GCon->Logf("  Name: \"%s\"", *Name.quote());
+  GCon->Logf("  LevelNum: %d", LevelNum);
+  GCon->Logf("  Cluster: %d", Cluster);
+  GCon->Logf("  WarpTrans: %d", WarpTrans);
+  GCon->Logf("  NextMap: \"%s\"", *VStr(NextMap).quote());
+  GCon->Logf("  SecretMap: \"%s\"", *VStr(SecretMap).quote());
+  GCon->Logf("  SongLump: \"%s\"", *VStr(SongLump).quote());
+  GCon->Logf("  Sky1Texture: %d", Sky1Texture);
+  GCon->Logf("  Sky2Texture: %d", Sky2Texture);
+  GCon->Logf("  Sky1ScrollDelta: %g", Sky1ScrollDelta);
+  GCon->Logf("  Sky2ScrollDelta: %g", Sky2ScrollDelta);
+  GCon->Logf("  SkyBox: \"%s\"", *VStr(SkyBox).quote());
+  GCon->Logf("  FadeTable: \"%s\"", *VStr(FadeTable).quote());
+  GCon->Logf("  Fade: 0x%08x", Fade);
+  GCon->Logf("  OutsideFog: 0x%08x", OutsideFog);
+  GCon->Logf("  Gravity: %g", Gravity);
+  GCon->Logf("  AirControl: %g", AirControl);
+  GCon->Logf("  Flags: 0x%08x", Flags);
+  GCon->Logf("  Flags2: 0x%08x", Flags2);
+  GCon->Logf("  TitlePatch: \"%s\"", *VStr(TitlePatch).quote());
+  GCon->Logf("  ParTime: %d", ParTime);
+  GCon->Logf("  SuckTime: %d", SuckTime);
+  GCon->Logf("  HorizWallShade: %d", HorizWallShade);
+  GCon->Logf("  VertWallShade: %d", VertWallShade);
+  GCon->Logf("  Infighting: %d", Infighting);
+  GCon->Logf("  RedirectType: \"%s\"", *VStr(RedirectType).quote());
+  GCon->Logf("  RedirectMap: \"%s\"", *VStr(RedirectMap).quote());
+  GCon->Logf("  ExitPic: \"%s\"", *VStr(ExitPic).quote());
+  GCon->Logf("  EnterPic: \"%s\"", *VStr(EnterPic).quote());
+  GCon->Logf("  InterMusic: \"%s\"", *VStr(InterMusic).quote());
+  for (auto &&sac : SpecialActions) {
+    GCon->Log("  --- special action ---");
+    GCon->Logf("    TypeName: \"%s\"", *VStr(sac.TypeName).quote());
+    GCon->Logf("    Special: %d (%d,%d,%d,%d,%d)", sac.Special, sac.Args[0], sac.Args[1], sac.Args[2], sac.Args[3], sac.Args[4]);
+  }
+}
+
+
+//==========================================================================
+//
 //  P_SetupMapinfoPlayerClasses
 //
 //==========================================================================
@@ -469,6 +515,7 @@ void InitMapInfo () {
   }
 
   // set up default map info returned for maps that have not defined in MAPINFO
+  memset((void *)&DefaultMap, 0, sizeof(DefaultMap));
   DefaultMap.Name = "Unnamed";
   DefaultMap.Sky1Texture = loadSkyTexture(nullptr, "sky1"); //GTextureManager.CheckNumForName("sky1", TEXTYPE_Wall, true, true);
   DefaultMap.Sky2Texture = DefaultMap.Sky1Texture;

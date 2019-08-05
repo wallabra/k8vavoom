@@ -544,16 +544,50 @@ void VBasePlayer::DoClientSetAngles (TAVec Angles) {
 }
 
 
+enum { ClusterText_Exit, ClusterText_Enter };
+
+
+//==========================================================================
+//
+//  SetupClusterText
+//
+//==========================================================================
+static void SetupClusterText (int cttype, IntermissionText &im, const VClusterDef *CDef) {
+  im.clear();
+  if (!CDef) return;
+
+  VStr text = (cttype == ClusterText_Exit ? CDef->ExitText : CDef->EnterText);
+  if (text.isEmpty()) return;
+
+  const bool dotrans = !!(CDef->Flags&(cttype == ClusterText_Exit ? CLUSTERF_LookupExitText : CLUSTERF_LookupEnterText));
+  const bool islump = !!(CDef->Flags&(cttype == ClusterText_Exit ? CLUSTERF_ExitTextIsLump : CLUSTERF_EnterTextIsLump));
+
+  if (dotrans) text = GLanguage[*text];
+  im.Text = text;
+  if (islump) im.Flags |= IntermissionText::IMF_TextIsLump;
+
+  if (CDef->Flags&CLUSTERF_FinalePic) {
+    im.TextFlat = NAME_None;
+    im.TextPic = CDef->Flat;
+  } else {
+    im.TextFlat = CDef->Flat;
+    im.TextPic = NAME_None;
+  }
+
+  im.TextMusic = CDef->Music;
+}
+
+
 //==========================================================================
 //
 //  VBasePlayer::DoClientIntermission
 //
 //==========================================================================
 void VBasePlayer::DoClientIntermission (VName NextMap) {
-  im_t &im = ClGame->im;
+  IntermissionInfo &im = ClGame->im;
 
-  im.Text.Clean();
-  im.IMFlags = 0;
+  im.LeaveText.clear();
+  im.EnterText.clear();
 
   const mapInfo_t &linfo = P_GetMapInfo(Level->XLevel->MapName);
   im.LeaveMap = Level->XLevel->MapName;
@@ -570,54 +604,27 @@ void VBasePlayer::DoClientIntermission (VName NextMap) {
   im.EnterTitlePatch = einfo.TitlePatch;
   im.EnterPic = einfo.EnterPic;
 
-  if (linfo.Cluster != einfo.Cluster) {
-    if (einfo.Cluster) {
-      const VClusterDef *CDef = P_GetClusterDef(einfo.Cluster);
-      if (CDef->EnterText.Length()) {
-        if (CDef->Flags & CLUSTERF_LookupEnterText) {
-          im.Text = GLanguage[*CDef->EnterText];
-        } else {
-          im.Text = CDef->EnterText;
-        }
-        if (CDef->Flags & CLUSTERF_EnterTextIsLump) im.IMFlags |= im_t::IMF_TextIsLump;
-        if (CDef->Flags & CLUSTERF_FinalePic) {
-          im.TextFlat = NAME_None;
-          im.TextPic = CDef->Flat;
-        } else {
-          im.TextFlat = CDef->Flat;
-          im.TextPic = NAME_None;
-        }
-        im.TextMusic = CDef->Music;
-      }
-    }
-    if (im.Text.Length() == 0 && linfo.Cluster) {
-      const VClusterDef *CDef = P_GetClusterDef(linfo.Cluster);
-      if (CDef->ExitText.Length()) {
-        if (CDef->Flags & CLUSTERF_LookupExitText) {
-          im.Text = GLanguage[*CDef->ExitText];
-        } else {
-          im.Text = CDef->ExitText;
-        }
-        if (CDef->Flags & CLUSTERF_ExitTextIsLump) im.IMFlags |= im_t::IMF_TextIsLump;
-        if (CDef->Flags & CLUSTERF_FinalePic) {
-          im.TextFlat = NAME_None;
-          im.TextPic = CDef->Flat;
-        } else {
-          im.TextFlat = CDef->Flat;
-          im.TextPic = NAME_None;
-        }
-        im.TextMusic = CDef->Music;
-      }
-    }
-  }
+  /*
+  GCon->Logf("******************** DoClientIntermission ********************");
+  linfo.dump("leaving");
+  einfo.dump("entering");
+  */
 
-  ClGame->intermission = 1;
 #ifdef CLIENT
   AM_Stop();
   GAudio->StopAllSequences();
 #endif
 
-  ClGame->eventIintermissionStart();
+  if (linfo.Cluster != einfo.Cluster) {
+    // cluster leaving text
+    if (linfo.Cluster) SetupClusterText(ClusterText_Exit, im.LeaveText, P_GetClusterDef(linfo.Cluster));
+    // cluster entering text
+    if (einfo.Cluster) SetupClusterText(ClusterText_Enter, im.EnterText, P_GetClusterDef(einfo.Cluster));
+  }
+
+       if (im.LeaveText.isActive()) ClGame->StartIntermissionLeave();
+  else if (im.EnterText.isActive()) ClGame->StartIntermissionEnter();
+  else ClGame->StartIntermissionLeave(); // anyway
 }
 
 
@@ -655,11 +662,10 @@ void VBasePlayer::DoClientSkipIntermission () {
 //
 //==========================================================================
 void VBasePlayer::DoClientFinale (VStr Type) {
-  ClGame->intermission = 2;
 #ifdef CLIENT
   AM_Stop();
 #endif
-  ClGame->eventStartFinale(*Type);
+  ClGame->StartFinale(*Type);
 }
 
 

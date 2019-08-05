@@ -99,11 +99,9 @@ static void CL_ResetLastSong () {
 //==========================================================================
 void CL_Ticker () {
   // do main actions
-  switch (GClGame->intermission) {
-    case 0:
-      SB_Ticker();
-      AM_Ticker();
-      break;
+  if (!GClGame->InIntermission()) {
+    SB_Ticker();
+    AM_Ticker();
   }
   R_AnimateSurfaces();
 }
@@ -413,7 +411,7 @@ bool CL_Responder (event_t *ev) {
 //==========================================================================
 void CL_Clear () {
   GClGame->serverinfo.Clean();
-  GClGame->intermission = 0;
+  GClGame->ResetIntermission();
   if (cl) cl->ClearInput();
   if (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Client) GAudio->StopAllSound(); // make sure all sounds are stopped
   cls.signon = 0;

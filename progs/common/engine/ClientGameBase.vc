@@ -35,7 +35,7 @@ readonly GameInfo Game;
 readonly BasePlayer cl;
 readonly Level GLevel;
 
-readonly im_t im;
+readonly IntermissionInfo im;
 
 readonly RootWidget GRoot;
 
@@ -46,7 +46,14 @@ int deathmatch;
 
 string serverinfo;
 
-int intermission;
+enum IM_Phase {
+  None, // not in intermission
+  Leave,
+  Enter,
+  Finale,
+}
+
+IM_Phase intermissionPhase;
 
 
 //==========================================================================
@@ -141,10 +148,10 @@ void StatusBarUpdateWidgets (float DeltaTime) {
 
 //==========================================================================
 //
-//  IintermissionStart
+//  IntermissionStart
 //
 //==========================================================================
-void IintermissionStart () {
+void IntermissionStart () {
 }
 
 

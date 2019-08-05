@@ -2329,7 +2329,7 @@ COMMAND(Iddt) {
 //
 //==========================================================================
 COMMAND(toggle_automap) {
-  if (!cl || !GClGame || !GGameInfo || GClGame->intermission || GGameInfo->NetMode <= NM_TitleMap) {
+  if (!cl || !GClGame || !GGameInfo || GClGame->InIntermission() || GGameInfo->NetMode <= NM_TitleMap) {
     return;
   }
 #ifdef CLIENT

@@ -38,6 +38,6 @@
 //
 //===========================================================================
 bool F_Responder (event_t *event) {
-  if (!cl || GClGame->intermission != 2) return false;
+  if (!cl || !GClGame->InFinale()) return false;
   return GClGame->eventFinaleResponder(event);
 }

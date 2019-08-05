@@ -57,7 +57,24 @@ struct dlight_t {
 };
 
 
-struct im_t {
+struct IntermissionText {
+  VStr Text;
+  VName TextFlat;
+  VName TextPic;
+  VName TextMusic;
+
+  enum {
+    IMF_TextIsLump = 0x01,
+  };
+  vuint32 Flags;
+
+  IntermissionText () : Text(), TextFlat(NAME_None), TextPic(NAME_None), TextMusic(NAME_None), Flags(0) {}
+  inline void clear () { Text.clear(); TextFlat = NAME_None; TextPic = NAME_None; TextMusic = NAME_None; Flags = 0; }
+  inline bool isActive () const { return !Text.isEmpty(); }
+};
+
+
+struct IntermissionInfo {
   VName LeaveMap;
   vint32 LeaveCluster;
   VStr LeaveName;
@@ -72,15 +89,8 @@ struct im_t {
 
   VName InterMusic;
 
-  VStr Text;
-  VName TextFlat;
-  VName TextPic;
-  VName TextMusic;
-
-  enum {
-    IMF_TextIsLump = 0x01,
-  };
-  vint32 IMFlags;
+  IntermissionText LeaveText;
+  IntermissionText EnterText;
 };
 
 
@@ -100,21 +110,41 @@ class VClientGameBase : public VObject {
   VBasePlayer *cl;
   VLevel *GLevel;
 
-  im_t im;
+  IntermissionInfo im;
 
   VRootWidget *GRoot;
 
-  int sb_height;
+  vint32 sb_height;
 
-  int maxclients;
-  int deathmatch;
+  vint32 maxclients;
+  vint32 deathmatch;
 
   VStr serverinfo;
 
-  int intermission;
+  enum /*IM_Phase*/ {
+    IM_Phase_None, // not in intermission
+    IM_Phase_Leave,
+    IM_Phase_Enter,
+    IM_Phase_Finale,
+  };
+
+  vint32 intermissionPhase;
+
+protected:
+  void eventIntermissionStart () { static VMethodProxy method("IntermissionStart"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+  void eventStartFinale (VName FinaleType) { static VMethodProxy method("StartFinale"); vobjPutParamSelf(FinaleType); VMT_RET_VOID(method); }
 
 public:
   //VClientGameBase () : serverinfo(E_NoInit) {}
+
+  inline bool InIntermission () const { return (intermissionPhase != IM_Phase_None); }
+  inline bool InFinale () const { return (intermissionPhase == IM_Phase_Finale); }
+
+  inline void ResetIntermission () { intermissionPhase = IM_Phase_None; }
+
+  inline void StartIntermissionLeave () { intermissionPhase = IM_Phase_Leave; eventIntermissionStart(); }
+  inline void StartIntermissionEnter () { intermissionPhase = IM_Phase_Enter; eventIntermissionStart(); }
+  inline void StartFinale (VName FinaleType) { intermissionPhase = IM_Phase_Finale; eventStartFinale(FinaleType); }
 
   void eventPostSpawn () { static VMethodProxy method("PostSpawn"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   void eventRootWindowCreated () { static VMethodProxy method("RootWindowCreated"); vobjPutParamSelf(); VMT_RET_VOID(method); }
@@ -127,8 +157,6 @@ public:
   void eventStatusBarStartMap () { static VMethodProxy method("StatusBarStartMap"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   void eventStatusBarDrawer (int sb_type) { static VMethodProxy method("StatusBarDrawer"); vobjPutParamSelf(sb_type); VMT_RET_VOID(method); }
   void eventStatusBarUpdateWidgets (float DeltaTime) { if (DeltaTime <= 0.0f) return; static VMethodProxy method("StatusBarUpdateWidgets"); vobjPutParamSelf(DeltaTime); VMT_RET_VOID(method); }
-  void eventIintermissionStart () { static VMethodProxy method("IintermissionStart"); vobjPutParamSelf(); VMT_RET_VOID(method); }
-  void eventStartFinale (VName FinaleType) { static VMethodProxy method("StartFinale"); vobjPutParamSelf(FinaleType); VMT_RET_VOID(method); }
   bool eventFinaleResponder (event_t *event) { static VMethodProxy method("FinaleResponder"); vobjPutParamSelf(event); VMT_RET_BOOL(method); }
   void eventDeactivateMenu () { static VMethodProxy method("DeactivateMenu"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   bool eventMenuResponder (event_t *event) { static VMethodProxy method("MenuResponder"); vobjPutParamSelf(event); VMT_RET_BOOL(method); }

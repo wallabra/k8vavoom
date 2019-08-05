@@ -457,7 +457,7 @@ void VInput::ProcessEvents () {
       UnpressAll();
     }
 
-    if (cl && !GClGame->intermission) {
+    if (cl && !GClGame->InIntermission()) {
       if (KBCheatProcessor(&ev)) continue; // cheatcode typed
       if (SB_Responder(&ev)) continue; // status window ate it
       if (AM_Responder(&ev)) continue; // automap ate it

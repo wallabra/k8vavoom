@@ -117,37 +117,42 @@ override void OnDraw()
 
 void IM_InitHubText()
 {
-  if (!ClGame.im.Text)
+  IntermissionText *itext =
+    ClGame.intermissionPhase == ClientGame::IM_Phase.Leave ? &ClGame.im.LeaveText :
+    ClGame.intermissionPhase == ClientGame::IM_Phase.Enter ? &ClGame.im.EnterText :
+    nullptr;
+
+  if (!itext.Text)
   {
     CmdBuf_AddText("TeleportNewMap\n");
     interstate = IMS_Done;
     return;
   }
 
-  if (ClGame.im.bTextIsLump)
+  if (itext.bTextIsLump)
   {
-    HubText = LoadTextLump(name(ClGame.im.Text));
+    HubText = LoadTextLump(name(itext.Text));
   }
   else
   {
-    HubText = ClGame.im.Text;
+    HubText = itext.Text;
   }
   HubCount = float(strlenutf8(HubText)) * TextSpeed + TextWait;
 
   TextFlat = '';
   TextPic = 0;
-  if (ClGame.im.TextPic)
+  if (itext.TextPic)
   {
-    TextPic = R_RegisterPic(ClGame.im.TextPic);
+    TextPic = R_RegisterPic(itext.TextPic);
   }
-  else if (ClGame.im.TextFlat)
+  else if (itext.TextFlat)
   {
-    TextFlat = ClGame.im.TextFlat;
+    TextFlat = itext.TextFlat;
   }
 
-  if (ClGame.im.TextMusic)
+  if (itext.TextMusic)
   {
-    CmdBuf_AddText(va("music loop \"%q\"\n", ClGame.im.TextMusic));
+    CmdBuf_AddText(va("music loop \"%q\"\n", itext.TextMusic));
   }
   else
   {

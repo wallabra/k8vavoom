@@ -180,10 +180,10 @@ override void StatusBarUpdateWidgets (float DeltaTime) {
 
 //==========================================================================
 //
-//  IintermissionStart
+//  IntermissionStart
 //
 //==========================================================================
-override void IintermissionStart () {
+override void IntermissionStart () {
   GSBar.Hide();
   GImission.Show();
   GImission.Start();

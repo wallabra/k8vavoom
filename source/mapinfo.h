@@ -66,6 +66,7 @@ struct mapInfo_t {
   VName InterMusic;
 
   VStr GetName () const;
+  void dump (const char *msg=nullptr) const;
 };
 
 enum {
