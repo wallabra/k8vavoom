@@ -4606,7 +4606,7 @@ void Cheat_WhereIsSrc_AC (const ref array!string args, bool newArg, out array!st
 //
 //==========================================================================
 private final void cht_apply_to_classes (string cmdname, string wantstr, void delegate (class!EntityEx cls) dg) {
-  class!EntityEx moClass = class!EntityEx(FindClassNoCase(name(wantstr)));
+  class!EntityEx moClass = class!EntityEx(FindClassNoCaseStr(wantstr));
   if (moClass) {
     dg(moClass);
     return;
@@ -4943,7 +4943,7 @@ void Cheat_Summon () {
   }
 
   // find which type to spawn
-  auto moClass = class!EntityEx(FindClassNoCase(name(clsName)));
+  auto moClass = class!EntityEx(FindClassNoCaseStr(clsName));
   if (!moClass) {
     // Can't find thing type
     print("Summon: unknown class '%s'", clsName);
@@ -5259,7 +5259,7 @@ void Cheat_ForceWeapon () {
   }
 
   // find which type to spawn
-  auto wpnClass = class!EntityEx(FindClassNoCase(name(clsName)));
+  auto wpnClass = class!EntityEx(FindClassNoCaseStr(clsName));
   if (!wpnClass) {
     // Can't find thing type
     print("ForceWeapon: unknown class '%s'", clsName);
@@ -5831,7 +5831,7 @@ void Cheat_VScriptCommand () {
   if (argc < 3) return;
 
   if (vscmd == "fire") {
-    class!Actor mt = class!Actor(GetClassReplacement(FindClassNoCase(name(Cmd_GetArgV(2)))));
+    class!Actor mt = class!Actor(GetClassReplacement(FindClassNoCaseStr(Cmd_GetArgV(2))));
     if (!mt) { print("actor '%s' not found", Cmd_GetArgV(2)); return; }
     float ofs = 4;
     if (argc > 3) ofs = atof(Cmd_GetArgV(3));
@@ -5845,7 +5845,7 @@ void Cheat_VScriptCommand () {
   }
 
   // find inventory class
-  class!Inventory icls = class!Inventory(FindClassNoCase(name(Cmd_GetArgV(2))));
+  class!Inventory icls = class!Inventory(FindClassNoCaseStr(Cmd_GetArgV(2)));
   if (!icls) { print("what is '%s'?", Cmd_GetArgV(2)); return; }
 
   int amount = 0;
