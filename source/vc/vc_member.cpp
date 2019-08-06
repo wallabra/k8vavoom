@@ -306,12 +306,6 @@ void VMemberBase::StaticInit () {
     check(C->MemberIndex == -666);
     C->MemberIndex = GMembers.Append(C);
     PutToNameHash(C);
-    /*
-    int HashIndex = C->Name.GetIndex()&4095;
-    C->HashNext = GMembersHash[HashIndex];
-    GMembersHash[HashIndex] = C;
-    C->HashLowerCased();
-    */
   }
 
   // sprite TNT1 is always 0, ---- is always 1
@@ -402,7 +396,7 @@ VPackage *VMemberBase::StaticLoadPackage (VName AName, const TLocation &l) {
 //  VMemberBase::StaticFindMember
 //
 //==========================================================================
-VMemberBase *VMemberBase::StaticFindMember (VName AName, VMemberBase *AOuter, vuint8 AType, VName EnumName/*, bool caseSensitive*/) {
+VMemberBase *VMemberBase::StaticFindMember (VName AName, VMemberBase *AOuter, vuint8 AType, VName EnumName) {
   //VName realName = AName;
   if (AType == MEMBER_Const && EnumName != NAME_None) {
     // rewrite name
@@ -411,57 +405,16 @@ VMemberBase *VMemberBase::StaticFindMember (VName AName, VMemberBase *AOuter, vu
     nn += *AName;
     AName = VName(*nn);
   }
-  /*
-  int HashIndex = AName.GetIndex()&4095;
-  for (VMemberBase *m = GMembersHash[HashIndex]; m; m = m->HashNext) {
-    if (m->Name == AName && (m->Outer == AOuter ||
-        (AOuter == ANY_PACKAGE && m->Outer && m->Outer->MemberType == MEMBER_Package)) &&
-        (AType == ANY_MEMBER || m->MemberType == AType))
-    {
-      return m;
-    }
-  }
-  */
-  //k8: FUCK YOU, SHITPP!
-  /*
-  VMemberBase *mm = ForEachNamed(AName, [&](VMemberBase *m) -> FERes {
+  // use normal map
+  VMemberBase **mpp = gMembersMap.find(AName);
+  if (!mpp) return nullptr;
+  for (VMemberBase *m = *mpp; m; m = m->HashNext) {
+    //if (AName == "TVec") fprintf(stderr, "V: <%s> %d : %d (anypkg=%d); outerpkg=%d\n", *m->GetFullName(), m->MemberType, AType, (AOuter == ANY_PACKAGE), (m->Outer && m->Outer->MemberType == MEMBER_Package));
     if ((m->Outer == AOuter || (AOuter == ANY_PACKAGE && m->Outer && m->Outer->MemberType == MEMBER_Package)) &&
         (AType == ANY_MEMBER || m->MemberType == AType))
     {
-      return FERes::FOREACH_STOP;
-    }
-    return FERes::FOREACH_NEXT;
-  }, caseSensitive);
-  return mm;
-  */
-  /*
-  if (!caseSensitive) {
-    // use lower-case map
-    AName = VName(*AName, VName::FindLower);
-    if (AName == NAME_None) return nullptr; // no such name, no chance to find a member
-    VMemberBase **mpp = gMembersMapLC.find(AName);
-    if (!mpp) return nullptr;
-    for (VMemberBase *m = *mpp; m; m = m->HashNextLC) {
-      if ((m->Outer == AOuter || (AOuter == ANY_PACKAGE && m->Outer && m->Outer->MemberType == MEMBER_Package)) &&
-          (AType == ANY_MEMBER || m->MemberType == AType))
-      {
-        return m;
-      }
-    }
-  } else
-  */
-  {
-    // use normal map
-    VMemberBase **mpp = gMembersMap.find(AName);
-    if (!mpp) return nullptr;
-    for (VMemberBase *m = *mpp; m; m = m->HashNext) {
-      //if (AName == "TVec") fprintf(stderr, "V: <%s> %d : %d (anypkg=%d); outerpkg=%d\n", *m->GetFullName(), m->MemberType, AType, (AOuter == ANY_PACKAGE), (m->Outer && m->Outer->MemberType == MEMBER_Package));
-      if ((m->Outer == AOuter || (AOuter == ANY_PACKAGE && m->Outer && m->Outer->MemberType == MEMBER_Package)) &&
-          (AType == ANY_MEMBER || m->MemberType == AType))
-      {
-        //if (AName == "TVec") fprintf(stderr, "  FOUND: V: <%s> %d : %d\n", *m->GetFullName(), m->MemberType, AType);
-        return m;
-      }
+      //if (AName == "TVec") fprintf(stderr, "  FOUND: V: <%s> %d : %d\n", *m->GetFullName(), m->MemberType, AType);
+      return m;
     }
   }
   return nullptr;
@@ -538,26 +491,11 @@ VFieldType VMemberBase::StaticFindType (VClass *AClass, VName Name) {
   }
 
   // package enum
-#if 0
-  //FIXME: make this faster
-  {
-    int len = GMembers.length();
-    for (int f = 0; f < len; ++f) {
-      if (GMembers[f] && GMembers[f]->MemberType == MEMBER_Package) {
-        VPackage *pkg = (VPackage *)GMembers[f];
-        if (pkg->IsKnownEnum(Name)) return VFieldType(TYPE_Int);
-      }
-    }
+  int len = gPackageList.length();
+  for (int f = 0; f < len; ++f) {
+    VPackage *pkg = gPackageList[f];
+    if (pkg->IsKnownEnum(Name)) return VFieldType(TYPE_Int);
   }
-#else
-  {
-    int len = gPackageList.length();
-    for (int f = 0; f < len; ++f) {
-      VPackage *pkg = gPackageList[f];
-      if (pkg->IsKnownEnum(Name)) return VFieldType(TYPE_Int);
-    }
-  }
-#endif
 
   return VFieldType(TYPE_Unknown);
 }
@@ -570,114 +508,20 @@ VFieldType VMemberBase::StaticFindType (VClass *AClass, VName Name) {
 //==========================================================================
 VClass *VMemberBase::StaticFindClass (VName AName, bool caseSensitive) {
   if (AName == NAME_None) return nullptr;
-  //VMemberBase *m = StaticFindMember(AName, ANY_PACKAGE, MEMBER_Class, NAME_None, caseSensitive);
-  //if (m) return (VClass *)m;
-#if 0
-  if (caseSensitive) {
-    // use normal map
-    VMemberBase **mpp = gMembersMap.find(AName);
-    if (!mpp) return nullptr;
-    for (VMemberBase *m = *mpp; m; m = m->HashNext) {
-      if (m->Outer && m->Outer->MemberType == MEMBER_Package && m->MemberType == MEMBER_Class) {
-        return (VClass *)m;
-      }
-    }
-  } else
-#endif
   // classes cannot be duplicated, so we can use much smaller lower-case map to find class
-  {
-    // use lower-case map
-    VName loname = VName(*AName, VName::FindLower);
-    if (loname == NAME_None) return nullptr; // no such name, no chance to find a member
-    VMemberBase **mpp = gMembersMapLC.find(loname);
-    if (!mpp) return nullptr;
-    for (VMemberBase *m = *mpp; m; m = m->HashNextLC) {
-      if (m->Outer && m->Outer->MemberType == MEMBER_Package && m->MemberType == MEMBER_Class) {
-        if (caseSensitive && m->Name != AName) continue;
-        return (VClass *)m;
-      }
+  // use lower-case map
+  VName loname = VName(*AName, VName::FindLower);
+  if (loname == NAME_None) return nullptr; // no such name, no chance to find a member
+  VMemberBase **mpp = gMembersMapLC.find(loname);
+  if (!mpp) return nullptr;
+  for (VMemberBase *m = *mpp; m; m = m->HashNextLC) {
+    if (m->Outer && m->Outer->MemberType == MEMBER_Package && m->MemberType == MEMBER_Class) {
+      if (caseSensitive && m->Name != AName) continue;
+      return (VClass *)m;
     }
   }
   return nullptr;
 }
-
-
-//==========================================================================
-//
-//  VMemberBase::StaticFindClassNoCase
-//
-//==========================================================================
-/*
-VClass *VMemberBase::StaticFindClassNoCase (VName AName) {
-  VMemberBase *m = StaticFindMemberNoCase(AName, ANY_PACKAGE, MEMBER_Class);
-  if (m) return (VClass *)m;
-  return nullptr;
-}
-*/
-
-
-/*
-//==========================================================================
-//
-//  VMemberBase::StaticFindMObj
-//
-//==========================================================================
-VClass *VMemberBase::StaticFindMObj (vint32 id, VName pkgname) {
-  if (pkgname != NAME_None) {
-    VMemberBase *pkg = StaticFindMember(pkgname, nullptr, MEMBER_Package);
-    if (!pkg) return nullptr;
-    return ((VPackage *)pkg)->FindMObj(id);
-  } else {
-    int len = GMembers.length();
-    for (int f = 0; f < len; ++f) {
-      if (GMembers[f] && GMembers[f]->MemberType == MEMBER_Package) {
-        VClass *c = ((VPackage *)GMembers[f])->FindMObj(id);
-        if (c) return c;
-      }
-    }
-  }
-  return nullptr;
-}
-
-
-//==========================================================================
-//
-//  VMemberBase::StaticFindMObjInfo
-//
-//==========================================================================
-mobjinfo_t *VMemberBase::StaticFindMObjInfo (vint32 id) {
-  if (id == 0) return nullptr;
-  int len = VClass::GMobjInfos.length();
-  for (int f = 0; f < len; ++f) {
-    mobjinfo_t *nfo = &VClass::GMobjInfos[f];
-    if (nfo->DoomEdNum == id) return nfo;
-  }
-  return nullptr;
-}
-
-
-//==========================================================================
-//
-//  VMemberBase::StaticFindScriptId
-//
-//==========================================================================
-VClass *VMemberBase::StaticFindScriptId (vint32 id, VName pkgname) {
-  if (pkgname != NAME_None) {
-    VMemberBase *pkg = StaticFindMember(pkgname, nullptr, MEMBER_Package);
-    if (!pkg) return nullptr;
-    return ((VPackage *)pkg)->FindScriptId(id);
-  } else {
-    int len = GMembers.length();
-    for (int f = 0; f < len; ++f) {
-      if (GMembers[f] && GMembers[f]->MemberType == MEMBER_Package) {
-        VClass *c = ((VPackage *)GMembers[f])->FindScriptId(id);
-        if (c) return c;
-      }
-    }
-  }
-  return nullptr;
-}
-*/
 
 
 //==========================================================================

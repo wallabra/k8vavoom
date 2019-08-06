@@ -441,7 +441,7 @@ public:
   inline VMethod *FindConCommandMethodExact (const VStr &name) { return FindConCommandMethod(name, true); } // doesn't skip anything
 
   // WARNING! don't add/remove ANY named members from callback!
-  // return `FOREACH_STOP` from callback to stop (and return current member)
+  // return `FERes::FOREACH_STOP` from callback to stop (and return current member)
   // template function should accept `VClass *`, and return `FERes`
   // templated, so i can use lambdas
   // k8: don't even ask me. fuck shitplusplus.

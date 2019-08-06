@@ -322,7 +322,7 @@ VClass *VClass::FindClass (const char *AName) {
   if (!AName || !AName[0]) return nullptr;
   VName TempName(AName, VName::Find);
   if (TempName == NAME_None) return nullptr; // no such name, no chance to find a class
-  return (VClass *)VMemberBase::ForEachNamed(TempName, [](VMemberBase *m) { return (m->MemberType == MEMBER_Class ? FOREACH_STOP : FOREACH_NEXT); });
+  return (VClass *)VMemberBase::ForEachNamed(TempName, [](VMemberBase *m) { return (m->MemberType == MEMBER_Class ? FERes::FOREACH_STOP : FERes::FOREACH_NEXT); });
   /*
   for (VClass *Cls = GClasses; Cls; Cls = Cls->LinkNext) {
     if (Cls->GetVName() == TempName && Cls->MemberType == MEMBER_Class) return Cls;
@@ -346,7 +346,7 @@ VClass *VClass::FindClassLowerCase (VName AName) {
   }
   return nullptr;
   */
-  return (VClass *)VMemberBase::ForEachNamedCI(AName, [](VMemberBase *m) { return (m->MemberType == MEMBER_Class ? FOREACH_STOP : FOREACH_NEXT); });
+  return (VClass *)VMemberBase::ForEachNamedCI(AName, [](VMemberBase *m) { return (m->MemberType == MEMBER_Class ? FERes::FOREACH_STOP : FERes::FOREACH_NEXT); });
 }
 
 
@@ -363,7 +363,7 @@ VClass *VClass::FindClassNoCase (const char *AName) {
   }
   return nullptr;
   */
-  return (VClass *)VMemberBase::ForEachNamedCI(VName(AName, VName::FindLower), [](VMemberBase *m) { return (m->MemberType == MEMBER_Class ? FOREACH_STOP : FOREACH_NEXT); });
+  return (VClass *)VMemberBase::ForEachNamedCI(VName(AName, VName::FindLower), [](VMemberBase *m) { return (m->MemberType == MEMBER_Class ? FERes::FOREACH_STOP : FERes::FOREACH_NEXT); });
 }
 
 
@@ -726,23 +726,6 @@ VMethod *VClass::FindMethod (VName Name, bool bRecursive) {
   if (bRecursive && ParentClass) return ParentClass->FindMethod(Name, bRecursive);
   return nullptr;
 }
-
-
-//==========================================================================
-//
-//  VClass::FindMethodNoCase
-//
-//==========================================================================
-/*
-VMethod *VClass::FindMethodNoCase (VName Name, bool bRecursive) {
-  if (Name == NAME_None) return nullptr;
-  Name = ResolveAlias(Name, true); // nocase
-  VMethod *M = (VMethod *)StaticFindMemberNoCase(Name, this, MEMBER_Method);
-  if (M) return M;
-  if (bRecursive && ParentClass) return ParentClass->FindMethodNoCase(Name, bRecursive);
-  return nullptr;
-}
-*/
 
 
 //==========================================================================

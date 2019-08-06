@@ -118,7 +118,7 @@ public:
 
   // for each name
   // WARNING! don't add/remove ANY named members from callback!
-  // return `FOREACH_STOP` from callback to stop (and return current member)
+  // return `FERes::FOREACH_STOP` from callback to stop (and return current member)
   // template function should accept `VMemberBase *`, and return `FERes`
   // templated, so i can use lambdas
   // k8: don't even ask me. fuck shitplusplus.
@@ -168,7 +168,6 @@ public:
   static void StaticAddPackagePath (const char *);
   static VPackage *StaticLoadPackage (VName, const TLocation &);
   static VMemberBase *StaticFindMember (VName AName, VMemberBase *AOuter, vuint8 AType, VName EnumName=NAME_None/*, bool caseSensitive=true*/);
-  //static inline VMemberBase *StaticFindMemberNoCase (VName AName, VMemberBase *AOuter, vuint8 AType, VName EnumName=NAME_None) { return StaticFindMember(AName, AOuter, AType, EnumName, false); }
 
   //FIXME: this looks ugly
   static VFieldType StaticFindType (VClass *, VName);
