@@ -5131,6 +5131,81 @@ void Cheat_CountAllEntities () {
 
 //==========================================================================
 //
+//  Cheat_ForceWeapon_AC
+//
+//==========================================================================
+void Cheat_ForceWeapon_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  if (!MO.bIsPlayer || !Level) return;
+
+  if (args.length == 1) {
+    if (!newArg) return;
+  } else if (args.length == 2) {
+    if (newArg) { aclist[$] = "instant"; return; }
+  } else {
+    if (args.length == 3 && !newArg) aclist[$] = "instant";
+    return;
+  }
+
+  for (Inventory inv = EntityEx(MO).Inventory; inv; inv = inv.Inventory) {
+    if (Weapon(inv)) {
+      bool found = false;
+      string wname = string(GetClassName(inv.Class));
+      foreach (string s; aclist) if (s == wname) { found = true; break; }
+      if (!found) aclist[$] = wname;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_ForceWeapon
+//
+//==========================================================================
+void Cheat_ForceWeapon () {
+  //print("SUMMON: argc=%d", Cmd_GetArgC());
+  if (!MO.bIsPlayer || !Level) return;
+  auto plr = PlayerEx(MO.Player);
+  if (!plr) return;
+
+  if (Cmd_GetArgC() < 2 || Cmd_GetArgC() > 3) {
+    cprint("ForceWeapon: inventory name expected");
+    return;
+  }
+
+  string clsName = Cmd_GetArgV(1);
+  if (!clsName) {
+    cprint("ForceWeapon: inventory name expected");
+    return;
+  }
+
+  // find which type to spawn
+  auto wpnClass = class!EntityEx(FindClassNoCase(name(clsName)));
+  if (!wpnClass) {
+    // Can't find thing type
+    print("ForceWeapon: unknown class '%s'", clsName);
+    return;
+  }
+  if (wpnClass !isa 'Weapon') {
+    // Can't find thing type
+    print("ForceWeapon: class '%s' is not a weapon", clsName);
+    return;
+  }
+
+  auto wpn = Weapon(EntityEx(MO).FindInventory(class!Inventory(wpnClass)));
+  if (!wpn) {
+    print("ForceWeapon: class '%s' not found in inventory", clsName);
+    return;
+  }
+
+  bool instant = (stricmp(Cmd_GetArgV(2), "instant") == 0);
+  plr.SetWeapon(wpn);
+  plr.BringUpWeapon(instant:instant);
+}
+
+
+//==========================================================================
+//
 //  Cheat_NoClip
 //
 //==========================================================================
