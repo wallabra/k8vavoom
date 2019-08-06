@@ -699,7 +699,7 @@ final void HitLine (tmtrace_t *tmtrace, float StepVelScale, bool forceSlide) {
 
     // wtf?!
     if (!hitline) {
-      printwarn("missile '%C' get to `HitLine` without a blocking line; THIS IS ENGINE BUG!!!");
+      printwarn("missile '%C' get to `HitLine` without a blocking line; THIS IS ENGINE BUG!!!", self);
       Destroy();
       return;
     }
