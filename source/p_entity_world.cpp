@@ -91,7 +91,9 @@ struct tmtrace_t {
   TArray<line_t *> SpecHit;
 
   VEntity *BlockingMobj;
-  line_t *AnyBlockingLine; // any blocking lines (including two-sided)
+  // any blocking line (including passable two-sided!); only has any sense if trace returned `false`
+  // note that this is really *any* line, not necessarily first or last crossed!
+  line_t *AnyBlockingLine;
 
   // from cptrace_t
   TVec Pos; // valid for cptrace_t
@@ -999,6 +1001,8 @@ bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other, bool noPickups)
 //
 //  Adjusts tmtrace.FloorZ and tmtrace.CeilingZ as lines are contacted
 //
+//  returns `true` if blocked
+//
 //==========================================================================
 bool VEntity::CheckRelLine (tmtrace_t &tmtrace, line_t *ld, bool skipSpecials) {
   // check line bounding box for early out
@@ -1099,6 +1103,7 @@ bool VEntity::CheckRelLine (tmtrace_t &tmtrace, line_t *ld, bool skipSpecials) {
     if (ld->flags&ML_RAILING) tmtrace.FloorZ += 32;
   } else {
     tmtrace.CeilingZ = tmtrace.FloorZ;
+    tmtrace.BlockingLine = ld;
   }
 
   // if contacted a special line, add it to the list
