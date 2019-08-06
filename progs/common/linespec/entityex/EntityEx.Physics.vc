@@ -683,7 +683,7 @@ final void HitLine (tmtrace_t *tmtrace, float StepVelScale, bool forceSlide) {
     line_t *hitline = tmtrace->BlockingLine;
     if (!hitline) hitline = tmtrace->CeilingLine;
     if (!hitline) hitline = tmtrace->FloorLine;
-    if (!hitline) hitline = tmtrace->AnyBlockingLine;
+    //if (!hitline) hitline = tmtrace->AnyBlockingLine; //k8: nope; this was my hack, and it is wrong here
     if (!hitline && tmtrace->SpecHit.Length) {
       bool wasBlockAll = false;
       line_t *blockall;
@@ -696,11 +696,14 @@ final void HitLine (tmtrace_t *tmtrace, float StepVelScale, bool forceSlide) {
         if (wasBlockAll) hitline = blockall; else hitline = tmtrace->SpecHit[0];
       }
     }
+
     // wtf?!
     if (!hitline) {
+      printwarn("missile '%C' get to `HitLine` without a blocking line; THIS IS ENGINE BUG!!!");
       Destroy();
       return;
     }
+
     ExplodeMissile(none, hitline);
   } else if (bSlide || forceSlide) {
     // try to slide along it

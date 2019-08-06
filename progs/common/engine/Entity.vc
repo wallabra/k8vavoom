@@ -197,7 +197,9 @@ struct tmtrace_t {
   array!(line_t *) SpecHit;
 
   Entity BlockingMobj;
-  line_t *AnyBlockingLine; // any blocking line
+  // any blocking line (including passable two-sided!); only has any sense if trace returned `false`
+  // note that this is really *any* line, not necessarily first or last crossed!
+  line_t *AnyBlockingLine;
 };
 
 // info for drawing: position
