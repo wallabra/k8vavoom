@@ -119,8 +119,9 @@
   // class methods
   DECLARE_FUNCTION(FindClass)
   DECLARE_FUNCTION(FindClassNoCase)
+  DECLARE_FUNCTION(FindClassNoCaseStr)
   DECLARE_FUNCTION(FindClassNoCaseEx)
-  DECLARE_FUNCTION(FindClassLowerCase)
+  DECLARE_FUNCTION(FindClassNoCaseExStr)
   DECLARE_FUNCTION(ClassIsChildOf)
   DECLARE_FUNCTION(GetClassName)
   DECLARE_FUNCTION(GetFullClassName)

@@ -273,7 +273,6 @@ static void processNumFixups (const char *errname, bool ismobj, TMapDtor<int, Sp
         cls = nullptr;
       } else {
         cls = VClass::FindClassNoCase(*cname);
-        if (!cls) cls = VClass::FindClassLowerCase(VName(*cname, VName::AddLower));
         if (!cls) GCon->Logf(NAME_Warning, "MAPINFO: class '%s' for %s %d not found", *cname, errname, nfo.DoomEdNum);
       }
       nfo.Class = cls;
@@ -302,7 +301,6 @@ static void processNumFixups (const char *errname, bool ismobj, TMapDtor<int, Sp
       cls = nullptr;
     } else {
       cls = VClass::FindClassNoCase(*cname);
-      if (!cls) cls = VClass::FindClassLowerCase(VName(*cname, VName::AddLower));
       if (!cls) GCon->Logf(NAME_Warning, "MAPINFO: class '%s' for %s %d not found", *cname, errname, fxp->num);
     }
     //GCon->Logf("    MAPINFO1: class '%s' for %s got doomed num %d", *cname, errname, fxp->num);

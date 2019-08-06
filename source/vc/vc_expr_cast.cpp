@@ -973,7 +973,7 @@ VExpression *VDynamicClassCast::DoResolve (VEmitContext &ec) {
   Type = TYPE_Class;
   Type.Class = VMemberBase::StaticFindClass(ClassName);
   if (!Type.Class) {
-    ParseError(Loc, "No such class %s", *ClassName);
+    ParseError(Loc, "No such class `%s`", *ClassName);
     delete this;
     return nullptr;
   }

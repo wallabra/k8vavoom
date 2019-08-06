@@ -171,8 +171,9 @@ public:
 
   //FIXME: this looks ugly
   static VFieldType StaticFindType (VClass *, VName);
+  static VClass *StaticFindClass (const char *AName, bool caseSensitive=true);
   static VClass *StaticFindClass (VName AName, bool caseSensitive=true);
-  static inline VClass *StaticFindClassNoCase (VName AName) { return StaticFindClass(AName, false); }
+  static inline VClass *StaticFindClassNoCase (const char *AName) { return StaticFindClass(AName, false); }
 
   // will not clear `list`
   static void StaticGetClassListNoCase (TArray<VStr> &list, const VStr &prefix, VClass *isaClass=nullptr);

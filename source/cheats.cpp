@@ -103,7 +103,7 @@ COMMAND_AC(Summon) {
   // replace with replacements ;-)
   /*
   for (int f = 0; f < list.length(); ++f) {
-    VClass *cls = VMemberBase::StaticFindClass(*list[f]);
+    VClass *cls = VMemberBase::StaticFindClassNoCase(*list[f]);
     if (!cls) { list[f].clear(); continue; }
     VClass *c1 = cls->GetReplacement();
     if (!c1 || !c1->IsChildOf(actor)) { list[f].clear(); continue; }
@@ -117,7 +117,7 @@ COMMAND_AC(Summon) {
   TArray<VStr> newlist;
   for (int f = 0; f < list.length(); ++f) {
     if (list.length() == 0 || (newlist.length() && newlist[newlist.length()-1] == list[f])) continue;
-    VClass *cls = VMemberBase::StaticFindClass(*list[f]);
+    VClass *cls = VMemberBase::StaticFindClassNoCase(*list[f]);
     if (!cls) continue;
     VClass *c1 = cls->GetReplacement();
     if (!c1 || !c1->IsChildOf(actor)) continue;

@@ -334,24 +334,6 @@ VClass *VClass::FindClass (const char *AName) {
 
 //==========================================================================
 //
-//  VClass::FindClassLowerCase
-//
-//==========================================================================
-VClass *VClass::FindClassLowerCase (VName AName) {
-  if (AName == NAME_None) return nullptr;
-  /*
-  int HashIndex = GetTypeHash(AName)&(LOWER_CASE_HASH_SIZE-1);
-  for (VClass *Probe = GLowerCaseHashTable[HashIndex]; Probe; Probe = Probe->LowerCaseHashNext) {
-    if (Probe->LowerCaseName == AName) return Probe;
-  }
-  return nullptr;
-  */
-  return (VClass *)VMemberBase::ForEachNamedCI(AName, [](VMemberBase *m) { return (m->MemberType == MEMBER_Class ? FERes::FOREACH_STOP : FERes::FOREACH_NEXT); });
-}
-
-
-//==========================================================================
-//
 //  VClass::FindClassNoCase
 //
 //==========================================================================
@@ -363,7 +345,8 @@ VClass *VClass::FindClassNoCase (const char *AName) {
   }
   return nullptr;
   */
-  return (VClass *)VMemberBase::ForEachNamedCI(VName(AName, VName::FindLower), [](VMemberBase *m) { return (m->MemberType == MEMBER_Class ? FERes::FOREACH_STOP : FERes::FOREACH_NEXT); });
+  //return (VClass *)VMemberBase::ForEachNamedCI(VName(AName, VName::FindLower), [](VMemberBase *m) { return (m->MemberType == MEMBER_Class ? FERes::FOREACH_STOP : FERes::FOREACH_NEXT); });
+  return VMemberBase::StaticFindClassNoCase(AName);
 }
 
 
@@ -1709,8 +1692,7 @@ VState *VClass::ResolveStateLabel (const TLocation &Loc, VName LabelName, int Of
     if (ClassNameStr.ICmp("Super") == 0) {
       CheckClass = ParentClass;
     } else {
-      VName ClassName(*ClassNameStr);
-      CheckClass = StaticFindClassNoCase(ClassName);
+      CheckClass = StaticFindClassNoCase(*ClassNameStr);
       if (!CheckClass) {
         ParseError(Loc, "No such superclass '%s' for class '%s'", *ClassNameStr, *GetFullName());
         return nullptr;

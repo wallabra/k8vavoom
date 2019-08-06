@@ -966,7 +966,7 @@ void ParseDecalDef (VScriptParser *sc) {
         sc->ExpectString();
         VStr decname = sc->String;
         // find class
-        VClass *klass = VClass::FindClassLowerCase(*clsname.ToLower());
+        VClass *klass = VClass::FindClassNoCase(*clsname);
         if (klass) {
           if (developer && GArgs.CheckParm("-debug-decals")) GCon->Logf(NAME_Dev, "%s: class '%s': set decal '%s'", *sc->GetLoc().toStringNoCol(), klass->GetName(), *decname);
           SetClassFieldName(klass, VName("DecalName"), VName(*decname));

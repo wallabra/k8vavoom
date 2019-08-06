@@ -1710,7 +1710,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
 
   if (GArgs.CheckParm("-debug_decorate")) sc->Message(va("Parsing class %s", *NameStr));
 
-  VClass *DupCheck = VClass::FindClassLowerCase(*NameStr.ToLower());
+  VClass *DupCheck = VClass::FindClassNoCase(*NameStr);
   if (DupCheck != nullptr && DupCheck->MemberType == MEMBER_Class) {
     GLog.Logf(NAME_Warning, "%s: Redeclared class `%s` (old at %s)", *cstloc.toStringNoCol(), *NameStr, *DupCheck->Loc.toStringNoCol());
   }
@@ -1734,7 +1734,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
 
   VClass *ParentClass = ActorClass;
   if (ParentStr.IsNotEmpty()) {
-    ParentClass = VClass::FindClassLowerCase(*ParentStr.ToLower());
+    ParentClass = VClass::FindClassNoCase(*ParentStr);
     if (ParentClass == nullptr || ParentClass->MemberType != MEMBER_Class) {
       if (optionalActor) {
         sc->Message(va("Skipping optional actor `%s`", *NameStr));
@@ -1799,7 +1799,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
   VClass *ReplaceeClass = nullptr;
   if (sc->Check("replaces")) {
     sc->ExpectString();
-    ReplaceeClass = VClass::FindClassLowerCase(*sc->String.ToLower());
+    ReplaceeClass = VClass::FindClassNoCase(*sc->String);
     if (ReplaceeClass == nullptr || ReplaceeClass->MemberType != MEMBER_Class) {
       if (GArgs.CheckParm("-vc-decorate-lax-parents")) {
         ReplaceeClass = nullptr; // just in case
@@ -3334,8 +3334,7 @@ void ProcessDecorateScripts () {
           VName cn = newWSlots[wsidx].getSlotName(sidx, widx);
           VClass *wc = nullptr;
           if (cn != NAME_None) {
-            VStr lcn = VStr(cn).toLowerCase();
-            wc = VClass::FindClassLowerCase(*lcn);
+            wc = VClass::FindClassNoCase(*cn);
             if (!wc) {
               GLog.Logf(NAME_Warning, "unknown weapon class '%s'", *cn);
             } else if (!wc->IsChildOf(wpnbase)) {

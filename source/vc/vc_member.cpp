@@ -508,15 +508,37 @@ VFieldType VMemberBase::StaticFindType (VClass *AClass, VName Name) {
 //==========================================================================
 VClass *VMemberBase::StaticFindClass (VName AName, bool caseSensitive) {
   if (AName == NAME_None) return nullptr;
-  // classes cannot be duplicated, so we can use much smaller lower-case map to find class
+  if (!caseSensitive) return StaticFindClass(*AName, false); // use slightly slower search
+  check(caseSensitive);
+  VMemberBase **mpp = gMembersMap.find(AName);
+  if (!mpp) return nullptr;
+  for (VMemberBase *m = *mpp; m; m = m->HashNext) {
+    if (m->Outer && m->Outer->MemberType == MEMBER_Package && m->MemberType == MEMBER_Class) {
+      if (m->Name != AName) continue;
+      return (VClass *)m;
+    }
+  }
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VMemberBase::StaticFindClass
+//
+//==========================================================================
+VClass *VMemberBase::StaticFindClass (const char *AName, bool caseSensitive) {
+  if (!AName || !AName[0]) return nullptr;
+  if (caseSensitive) return StaticFindClass(VName(AName, VName::Find), true); // use slightly faster search-by-name
+  check(!caseSensitive);
   // use lower-case map
-  VName loname = VName(*AName, VName::FindLower);
+  VName loname = VName(AName, VName::FindLower);
   if (loname == NAME_None) return nullptr; // no such name, no chance to find a member
   VMemberBase **mpp = gMembersMapLC.find(loname);
   if (!mpp) return nullptr;
   for (VMemberBase *m = *mpp; m; m = m->HashNextLC) {
     if (m->Outer && m->Outer->MemberType == MEMBER_Package && m->MemberType == MEMBER_Class) {
-      if (caseSensitive && m->Name != AName) continue;
+      if (!VStr::strEquCI(*m->Name, AName)) continue;
       return (VClass *)m;
     }
   }

@@ -329,7 +329,6 @@ public:
   // systemwide functions
   static VClass *FindClass (const char *);
   static VClass *FindClassNoCase (const char *);
-  static VClass *FindClassLowerCase (VName);
   static int FindSprite (VName, bool = true);
   static void GetSpriteNames (TArray<FReplacedString> &);
   static void ReplaceSpriteNames (TArray<FReplacedString> &);
