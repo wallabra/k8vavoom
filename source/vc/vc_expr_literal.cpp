@@ -293,6 +293,86 @@ VStr VNameLiteral::toString () const {
 
 //==========================================================================
 //
+//  VClassNameLiteral::VClassNameLiteral
+//
+//==========================================================================
+VClassNameLiteral::VClassNameLiteral (VName AValue, const TLocation &ALoc)
+  : VNameLiteral(AValue, ALoc)
+{
+}
+
+
+//==========================================================================
+//
+//  VClassNameLiteral::SyntaxCopy
+//
+//==========================================================================
+VExpression *VClassNameLiteral::SyntaxCopy () {
+  auto res = new VClassNameLiteral();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VClassNameLiteral::IsClassNameConst
+//
+//==========================================================================
+bool VClassNameLiteral::IsClassNameConst () const {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VClassNameLiteral::DoResolve
+//
+//==========================================================================
+VExpression *VClassNameLiteral::DoResolve (VEmitContext &ec) {
+  VClass *Class = VMemberBase::StaticFindClass(Value);
+  if (Class) {
+    VExpression *e = new VClassConstant(Class, Loc);
+    delete this;
+    return e->Resolve(ec);
+  }
+
+  Class = ec.Package->FindDecorateImportClass(Value);
+  if (Class) {
+    VExpression *e = new VClassConstant(Class, Loc);
+    delete this;
+    return e->Resolve(ec);
+  }
+
+  ParseError(Loc, "Unknown class name `%s`", *Value);
+  delete this;
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VClassNameLiteral::Emit
+//
+//==========================================================================
+void VClassNameLiteral::Emit (VEmitContext &ec) {
+  Sys_Error("VClassNameLiteral::Emit: the thing that should not be!");
+}
+
+
+//==========================================================================
+//
+//  VClassNameLiteral::toString
+//
+//==========================================================================
+VStr VClassNameLiteral::toString () const {
+  return VStr("class!")+VStr(Value);
+}
+
+
+
+//==========================================================================
+//
 //  VStringLiteral::VStringLiteral
 //
 //==========================================================================

@@ -433,11 +433,16 @@ VExpression *VParser::ParseExpressionPriority0 () {
           Lex.NextToken();
           Lex.Expect(TK_Greater);
         }
-        Lex.Expect(TK_LParen);
-        VExpression *Expr = ParseExpressionPriority13();
-        if (!Expr) ParseError(Lex.Location, "Expression expected");
-        Lex.Expect(TK_RParen);
-        return new VDynamicClassCast(ClassName, Expr, l);
+        // special construct: `class!Name` (without a paren)
+        // used to get, for example, `Inventory` class when there is `Inventory` field
+        if (Lex.Check(TK_LParen)) {
+          VExpression *Expr = ParseExpressionPriority13();
+          if (!Expr) ParseError(Lex.Location, "Expression expected");
+          Lex.Expect(TK_RParen);
+          return new VDynamicClassCast(ClassName, Expr, l);
+        } else {
+          return new VClassNameLiteral(ClassName, l);
+        }
       }
     case TK_Int:
     case TK_Float:

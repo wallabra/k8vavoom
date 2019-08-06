@@ -99,6 +99,26 @@ protected:
 
 //==========================================================================
 //
+//  VClassNameLiteral
+//
+//==========================================================================
+class VClassNameLiteral : public VNameLiteral {
+public:
+  VClassNameLiteral (VName, const TLocation &);
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+  virtual bool IsClassNameConst () const override;
+
+  virtual VStr toString () const override;
+
+protected:
+  VClassNameLiteral () {}
+};
+
+
+//==========================================================================
+//
 //  VStringLiteral
 //
 //==========================================================================
