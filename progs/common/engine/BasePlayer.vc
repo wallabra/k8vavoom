@@ -426,6 +426,36 @@ Entity eventGetReadyWeapon () {
 
 //==========================================================================
 //
+//  eventFindInventoryWeapon
+//
+//==========================================================================
+Entity eventFindInventoryWeapon (string classname, bool allowReplace) {
+  return none;
+}
+
+
+//==========================================================================
+//
+//  eventIsReadyWeaponByName
+//
+//==========================================================================
+bool eventIsReadyWeaponByName (string classname, bool allowReplace) {
+  return false;
+}
+
+
+//==========================================================================
+//
+//  eventSetPendingWeapon
+//
+//==========================================================================
+bool eventSetPendingWeapon (Entity ent) {
+  return false;
+}
+
+
+//==========================================================================
+//
 //  IsCheckpointPossible
 //
 //  this should check player's inventory (and maybe some other things), and

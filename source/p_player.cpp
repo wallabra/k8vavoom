@@ -1179,3 +1179,47 @@ IMPLEMENT_FUNCTION(VBasePlayer, QS_GetFloat) {
   }
   RET_FLOAT(ret.fval);
 }
+
+
+//==========================================================================
+//
+//  ChangeWeapon
+//
+//==========================================================================
+COMMAND(ChangeWeapon) {
+  if (Source == SRC_Command) {
+    ForwardToServer();
+    return;
+  }
+
+  if (!Player) return;
+  if (Args.Num() < 2) { GCon->Logf(NAME_Warning, "SelectWeapon expects weapon list"); return; }
+
+  VEntity *curwpn = Player->eventGetReadyWeapon();
+
+  int nextIndex = 1;
+  if (curwpn) {
+    //GCon->Logf("*** CW: active weapon %s", curwpn->GetClass()->GetName());
+    for (int widx = 1; widx < Args.length(); ++widx) {
+      //if (Args[widx].strEquCI(*curwpn->GetClass()->Name)) { nextIndex = widx+1; break; }
+      if (Player->eventIsReadyWeaponByName(Args[widx], true)) { // allow replacements
+        //GCon->Logf("*** CW: active weapon at index=%d; str=%s; wpn=%s", widx, *Args[widx], curwpn->GetClass()->GetName());
+        nextIndex = widx+1;
+        break;
+      }
+    }
+  }
+
+  for (int widx = 1; widx < Args.length(); ++widx, ++nextIndex) {
+    if (nextIndex >= Args.length()) nextIndex = 1;
+    VEntity *newwpn = Player->eventFindInventoryWeapon(Args[nextIndex], true); // allow replacements
+    /*
+    if (newwpn) {
+      GCon->Logf("*** CW: index=%d; str=%s; wpn=%s", nextIndex, *Args[nextIndex], newwpn->GetClass()->GetName());
+    } else {
+      GCon->Logf(NAME_Warning, "*** CW: index=%d; str=%s; SKIP", nextIndex, *Args[nextIndex]);
+    }
+    */
+    if (newwpn && Player->eventSetPendingWeapon(newwpn)) return;
+  }
+}

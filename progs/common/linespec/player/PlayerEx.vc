@@ -421,6 +421,25 @@ void ResetWeaponReloadRefire () {
 
 //==========================================================================
 //
+//  eventSetPendingWeapon
+//
+//==========================================================================
+override bool eventSetPendingWeapon (Entity ent) {
+  if (!MO) return false;
+  Weapon wpn = Weapon(ent);
+  if (!wpn) return false;
+  for (Inventory inv = EntityEx(MO).Inventory; inv; inv = inv.Inventory) {
+    if (ent == wpn) {
+      PendingWeapon = wpn;
+      return true;
+    }
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
 //  eventSetReadyWeapon
 //
 //==========================================================================
@@ -435,6 +454,66 @@ override void eventSetReadyWeapon (Entity ent, bool instant) {
     }
   }
   BringUpWeapon(instant:instant, skipSound:instant);
+}
+
+
+//==========================================================================
+//
+//  eventIsReadyWeaponByName
+//
+//==========================================================================
+override bool eventIsReadyWeaponByName (string classname, bool allowReplace) {
+  if (!classname || !ReadyWeapon) return false;
+  // try direct
+  auto wpnClass = class!Weapon(FindClassNoCaseStr(classname));
+  if (!wpnClass) return false;
+  if (wpnClass == ReadyWeapon.Class) return true;
+  // try replacement
+  if (allowReplace) {
+    // replacement
+    auto wpnRepl = class!Weapon(GetClassReplacement(wpnClass));
+    if (wpnRepl && wpnRepl != wpnClass && wpnRepl == ReadyWeapon.Class) return true;
+    // replacee
+    auto wpnSrc = class!Weapon(GetClassReplacee(ReadyWeapon.Class));
+    if (wpnSrc && stricmp(string(GetClassName(wpnSrc)), classname) == 0) return true;
+    // superclass chain
+    wpnClass = class!Weapon(ReadyWeapon.Class);
+    while (wpnClass) {
+      if (stricmp(string(GetClassName(wpnClass)), classname) == 0) return true;
+      wpnClass = class!Weapon(GetClassParent(wpnClass));
+    }
+  }
+  // not found
+  return false;
+}
+
+
+//==========================================================================
+//
+//  eventFindInventoryWeapon
+//
+//==========================================================================
+override Entity eventFindInventoryWeapon (string classname, bool allowReplace) {
+  if (!classname) return none;
+  if (!MO) return none;
+  // try direct
+  auto wpnClass = class!Weapon(FindClassNoCaseStr(classname));
+  if (!wpnClass) return none;
+  for (Inventory inv = EntityEx(MO).Inventory; inv; inv = inv.Inventory) {
+    if (inv.Class == wpnClass) return Weapon(inv);
+  }
+  // try replacements
+  if (allowReplace) {
+    // replacement
+    auto wpnRepl = class!Weapon(GetClassReplacement(wpnClass));
+    if (wpnRepl && wpnRepl != wpnClass) {
+      for (Inventory inv = EntityEx(MO).Inventory; inv; inv = inv.Inventory) {
+        if (inv.Class == wpnRepl) return Weapon(inv);
+      }
+    }
+  }
+  // not found
+  return none;
 }
 
 

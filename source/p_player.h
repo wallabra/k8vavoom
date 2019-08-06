@@ -457,6 +457,18 @@ public:
     VMT_RET_VOID(method);
   }
 
+  bool eventIsReadyWeaponByName (const VStr &classname, bool allowReplace) {
+    static VMethodProxy method("eventIsReadyWeaponByName");
+    vobjPutParamSelf(classname, allowReplace);
+    VMT_RET_BOOL(method);
+  }
+
+  VEntity *eventFindInventoryWeapon (const VStr &classname, bool allowReplace) {
+    static VMethodProxy method("eventFindInventoryWeapon");
+    vobjPutParamSelf(classname, allowReplace);
+    VMT_RET_REF(VEntity, method);
+  }
+
   VEntity *eventGetReadyWeapon () {
     static VMethodProxy method("eventGetReadyWeapon");
     vobjPutParamSelf();
@@ -467,6 +479,12 @@ public:
     static VMethodProxy method("eventSetReadyWeapon");
     vobjPutParamSelf(ent, instant);
     VMT_RET_VOID(method);
+  }
+
+  bool eventSetPendingWeapon (VEntity *ent) {
+    static VMethodProxy method("eventSetPendingWeapon");
+    vobjPutParamSelf(ent);
+    VMT_RET_BOOL(method);
   }
 
   VStr GetCurrentArmorClassName () { static VMethodProxy method("GetCurrentArmorClassName"); vobjPutParamSelf(); VMT_RET_STR(method); }
