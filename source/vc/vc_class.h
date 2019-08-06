@@ -440,6 +440,30 @@ public:
   VMethod *FindConCommandMethod (const VStr &name, bool exact=false); // skips autocompleters if `exact` is `false`
   inline VMethod *FindConCommandMethodExact (const VStr &name) { return FindConCommandMethod(name, true); } // doesn't skip anything
 
+  // WARNING! don't add/remove ANY named members from callback!
+  // return `FOREACH_STOP` from callback to stop (and return current member)
+  // template function should accept `VClass *`, and return `FERes`
+  // templated, so i can use lambdas
+  // k8: don't even ask me. fuck shitplusplus.
+  template<typename TDg> static VClass *ForEachChildOf (VClass *superCls, TDg &&dg) {
+    decltype(dg((VClass *)nullptr)) test_ = FERes::FOREACH_NEXT;
+    (void)test_;
+    if (!superCls) return nullptr;
+    for (auto &&m : GMembers) {
+      if (m->MemberType != MEMBER_Class) continue;
+      VClass *cls = (VClass *)m;
+      if (superCls && !cls->IsChildOf(superCls)) continue;
+      FERes res = dg(cls);
+      if (res == FERes::FOREACH_STOP) return cls;
+    }
+    return nullptr;
+  }
+
+  template<typename TDg> static VClass *ForEachChildOf (const char *clsname, TDg &&dg) {
+    if (!clsname || !clsname[0]) return nullptr;
+    return ForEachChildOf(VClass::FindClass(clsname), dg);
+  }
+
 private:
   void CalcFieldOffsets ();
   void InitNetFields ();

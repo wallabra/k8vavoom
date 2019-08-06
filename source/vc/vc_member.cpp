@@ -38,9 +38,9 @@ bool VMemberBase::GObjInitialised = false;
 bool VMemberBase::GObjShuttingDown = false;
 TArray<VMemberBase *> VMemberBase::GMembers;
 //static VMemberBase *GMembersHash[4096];
-static TMapNC<VName, VMemberBase *> gMembersMap;
-static TMapNC<VName, VMemberBase *> gMembersMapLC; // lower-cased names
-static TArray<VPackage *> gPackageList;
+TMapNC<VName, VMemberBase *> VMemberBase::gMembersMap;
+TMapNC<VName, VMemberBase *> VMemberBase::gMembersMapLC; // lower-cased names
+TArray<VPackage *> VMemberBase::gPackageList;
 
 TArray<VStr> VMemberBase::GPackagePath;
 TArray<VPackage *> VMemberBase::GLoadedPackages;
@@ -226,55 +226,6 @@ void VMemberBase::RemoveFromNameHash (VMemberBase *self) {
       }
     }
   }
-}
-
-
-//==========================================================================
-//
-//  VMemberBase::ForEachNamed
-//
-//  WARNING! don't add/remove ANY named members from callback!
-//  return `false` from callback to stop (and return current member)
-//
-//==========================================================================
-VMemberBase *VMemberBase::ForEachNamed (VName aname, FERes (*dg) (VMemberBase *m), bool caseSensitive) {
-  if (!dg) return nullptr;
-  if (aname == NAME_None) return nullptr; // oops
-  if (!caseSensitive) {
-    // use lower-case map
-    aname = VName(*aname, VName::FindLower);
-    if (aname == NAME_None) return nullptr; // no such name, no chance to find a member
-    VMemberBase **mpp = gMembersMapLC.find(aname);
-    if (!mpp) return nullptr;
-    for (VMemberBase *m = *mpp; m; m = m->HashNextLC) {
-      if (dg(m) == FERes::FOREACH_STOP) return m;
-    }
-  } else {
-    // use normal map
-    VMemberBase **mpp = gMembersMap.find(aname);
-    if (!mpp) return nullptr;
-    for (VMemberBase *m = *mpp; m; m = m->HashNext) {
-      if (dg(m) == FERes::FOREACH_STOP) return m;
-    }
-  }
-  return nullptr;
-}
-
-
-//==========================================================================
-//
-//  VMemberBase::ForEachChildOf
-//
-//==========================================================================
-VClass *VMemberBase::ForEachChildOf (VClass *superCls, void *udata, FERes (*dg) (VClass *cls, void *udata)) {
-  if (!dg) return nullptr;
-  for (auto &&m : GMembers) {
-    if (m->MemberType != MEMBER_Class) continue;
-    VClass *cls = (VClass *)m;
-    if (superCls && !cls->IsChildOf(superCls)) continue;
-    if (dg(cls, udata) == FERes::FOREACH_STOP) return cls;
-  }
-  return nullptr;
 }
 
 

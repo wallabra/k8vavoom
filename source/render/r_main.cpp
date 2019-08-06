@@ -1903,10 +1903,8 @@ int VRenderLevelShared::CollectSpriteTextures (TArray<bool> &texturepresent) {
     ProcessSpriteClass(th->GetClass(), ssi);
   }
   // precache gore mod sprites
-  VClass *gm0Cls = VClass::FindClass("K8Gore_BloodBase");
-  if (gm0Cls) VMemberBase::ForEachChildOf(gm0Cls, (void *)&ssi, [](VClass *cls, void *udata) { ProcessSpriteClass(cls, *(SpriteScanInfo *)udata); return FOREACH_NEXT; });
-  VClass *gm1Cls = VClass::FindClass("K8Gore_BloodBaseTransient");
-  if (gm1Cls) VMemberBase::ForEachChildOf(gm1Cls, (void *)&ssi, [](VClass *cls, void *udata) { ProcessSpriteClass(cls, *(SpriteScanInfo *)udata); return FOREACH_NEXT; });
+  VClass::ForEachChildOf("K8Gore_BloodBase", [&ssi](VClass *cls) { ProcessSpriteClass(cls, ssi); return FERes::FOREACH_NEXT; });
+  VClass::ForEachChildOf("K8Gore_BloodBaseTransient", [&ssi](VClass *cls) { ProcessSpriteClass(cls, ssi); return FERes::FOREACH_NEXT; });
   return ssi.sprtexcount;
 }
 

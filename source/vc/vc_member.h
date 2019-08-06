@@ -83,6 +83,10 @@ private:
   VMemberBase *HashNext;
   VMemberBase *HashNextLC;
 
+  static TMapNC<VName, VMemberBase *> gMembersMap;
+  static TMapNC<VName, VMemberBase *> gMembersMapLC; // lower-cased names
+  static TArray<VPackage *> gPackageList;
+
   static void PutToNameHash (VMemberBase *self);
   static void RemoveFromNameHash (VMemberBase *self);
 
@@ -115,10 +119,35 @@ public:
   // for each name
   // WARNING! don't add/remove ANY named members from callback!
   // return `FOREACH_STOP` from callback to stop (and return current member)
-  static VMemberBase *ForEachNamed (VName aname, FERes (*dg) (VMemberBase *m), bool caseSensitive=true);
-  static inline VMemberBase *ForEachNamedCI (VName aname, FERes (*dg) (VMemberBase *m)) { return ForEachNamed(aname, dg, false); }
-
-  static VClass *ForEachChildOf (VClass *superCls, void *udata, FERes (*dg) (VClass *cls, void *udata));
+  // template function should accept `VMemberBase *`, and return `FERes`
+  // templated, so i can use lambdas
+  // k8: don't even ask me. fuck shitplusplus.
+  template<typename TDg> static VMemberBase *ForEachNamed (VName aname, TDg &&dg, bool caseSensitive=true) {
+    decltype(dg((VMemberBase *)nullptr)) test_ = FERes::FOREACH_NEXT;
+    (void)test_;
+    if (aname == NAME_None) return nullptr; // oops
+    if (!caseSensitive) {
+      // use lower-case map
+      aname = VName(*aname, VName::FindLower);
+      if (aname == NAME_None) return nullptr; // no such name, no chance to find a member
+      VMemberBase **mpp = gMembersMapLC.find(aname);
+      if (!mpp) return nullptr;
+      for (VMemberBase *m = *mpp; m; m = m->HashNextLC) {
+        FERes res = dg(m);
+        if (res == FERes::FOREACH_STOP) return m;
+      }
+    } else {
+      // use normal map
+      VMemberBase **mpp = gMembersMap.find(aname);
+      if (!mpp) return nullptr;
+      for (VMemberBase *m = *mpp; m; m = m->HashNext) {
+        FERes res = dg(m);
+        if (res == FERes::FOREACH_STOP) return m;
+      }
+    }
+    return nullptr;
+  }
+  template<typename TDg> static inline VMemberBase *ForEachNamedCI (VName aname, TDg &&dg) { return ForEachNamed(aname, dg, false); }
 
   // accessors
   inline const char *GetName () const { return *Name; }
