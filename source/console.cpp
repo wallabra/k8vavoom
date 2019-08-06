@@ -182,7 +182,8 @@ void C_StartFull () {
   last_line = num_lines;
   consolestate = cons_open;
   c_history_current = -1;
-  cons_h = 480.0f;
+  //cons_h = 480.0f;
+  cons_h = fmax(con_height.asFloat(), 128.0f);
 }
 
 
