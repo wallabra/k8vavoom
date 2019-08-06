@@ -536,13 +536,28 @@ override void SB_DrawFullscreenStats () {
   }
 
   // keys
-  int KeyX = ovw/2;
-  for (Inventory Item = EntityEx(cl.MO).Inventory; Item; Item = Item.Inventory) {
-    if (Key(Item)) {
-      int Pic = R_RegisterPic(Item.IconName);
-      if (Pic >= 0) {
-        DrawPic(KeyX, /*470*/ovh-10, Pic, fsalpha);
-        KeyX += 20;
+  {
+    int keyCount = 0;
+    for (Inventory Item = EntityEx(cl.MO).Inventory; Item; Item = Item.Inventory) {
+      if (Key(Item)) {
+        int Pic = R_RegisterPic(Item.IconName);
+        if (Pic >= 0) {
+          ++keyCount;
+        }
+      }
+    }
+    if (keyCount) {
+      int KeyX = (ovw-20*keyCount)/2;
+      for (Inventory Item = EntityEx(cl.MO).Inventory; Item; Item = Item.Inventory) {
+        if (Key(Item)) {
+          int Pic = R_RegisterPic(Item.IconName);
+          if (Pic >= 0) {
+            // darken it a little, so a key will be more visible
+            /*if (KeyX == ovw/2)*/ ShadeRect(KeyX-5, /*470*/ovh-12, 18, 12, 0.4);
+            DrawPic(KeyX, /*470*/ovh-10, Pic, fmin(fsalpha+0.2, 1.0));
+            KeyX += 20;
+          }
+        }
       }
     }
   }
