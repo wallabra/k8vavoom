@@ -5192,10 +5192,12 @@ void Cheat_ForceWeapon () {
     return;
   }
 
-  auto wpn = Weapon(EntityEx(MO).FindInventory(class!Inventory(wpnClass)));
-  if (!wpn) {
-    print("ForceWeapon: class '%s' not found in inventory", clsName);
-    return;
+  Weapon wpn;
+  for (Inventory inv = EntityEx(MO).Inventory; inv; inv = inv.Inventory) {
+    if (inv.Class == wpnClass) {
+      wpn = Weapon(inv);
+      break;
+    }
   }
 
   bool instant = (stricmp(Cmd_GetArgV(2), "instant") == 0);
