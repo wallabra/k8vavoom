@@ -287,9 +287,9 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
             ShadowsAmbientBrightmap.Activate();
             prevsflight = -666; // force light setup
           }
-          p_glActiveTextureARB(GL_TEXTURE0+1);
+          SelectTexture(1);
           SetBrightmapTexture(currTexinfo->Tex->Brightmap);
-          p_glActiveTextureARB(GL_TEXTURE0);
+          SelectTexture(0);
           // set normal texture
           SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
           ShadowsAmbientBrightmap.SetTex(currTexinfo);
@@ -317,9 +317,9 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           if (currShader != MASKED) {
             /*
             if (currShader == BRIGHTMAP) {
-              p_glActiveTextureARB(GL_TEXTURE0+1);
+              SelectTexture(1);
               glBindTexture(GL_TEXTURE_2D, 0);
-              p_glActiveTextureARB(GL_TEXTURE0);
+              SelectTexture(0);
             }
             */
             currShader = MASKED;
@@ -350,9 +350,9 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           if (currShader != SOLID) {
             /*
             if (currShader == BRIGHTMAP) {
-              p_glActiveTextureARB(GL_TEXTURE0+1);
+              SelectTexture(1);
               glBindTexture(GL_TEXTURE_2D, 0);
-              p_glActiveTextureARB(GL_TEXTURE0);
+              SelectTexture(0);
             }
             */
             currShader = SOLID;
@@ -424,9 +424,9 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
   // restore depth function
   //if (gl_prefill_zbuffer) RestoreDepthFunc();
 
-  p_glActiveTextureARB(GL_TEXTURE0+1);
+  SelectTexture(1);
   glBindTexture(GL_TEXTURE_2D, 0);
-  p_glActiveTextureARB(GL_TEXTURE0);
+  SelectTexture(0);
 }
 
 

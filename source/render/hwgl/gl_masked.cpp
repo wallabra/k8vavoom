@@ -51,9 +51,9 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     SurfMaskedBrightmapGlow.SetBrightMapAdditive(r_brightmaps_additive ? 1.0f : 0.0f);
     SurfMaskedBrightmapGlow.SetTexture(0);
     SurfMaskedBrightmapGlow.SetTextureBM(1);
-    p_glActiveTextureARB(GL_TEXTURE0+1);
+    SelectTexture(1);
     SetBrightmapTexture(tex->Tex->Brightmap);
-    p_glActiveTextureARB(GL_TEXTURE0);
+    SelectTexture(0);
     if (gp.isActive()) {
       VV_GLDRAWER_ACTIVATE_GLOW(SurfMaskedBrightmapGlow, gp);
     } else {
@@ -248,9 +248,9 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   if (Additive) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
   if (doBrightmap) {
-    p_glActiveTextureARB(GL_TEXTURE0+1);
+    SelectTexture(1);
     glBindTexture(GL_TEXTURE_2D, 0);
-    p_glActiveTextureARB(GL_TEXTURE0);
+    SelectTexture(0);
   }
 }
 
@@ -288,9 +288,9 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
     SurfMaskedBrightmap.SetBrightMapAdditive(r_brightmaps_additive ? 1.0f : 0.0f);
     SurfMaskedBrightmap.SetTexture(0);
     SurfMaskedBrightmap.SetTextureBM(1);
-    p_glActiveTextureARB(GL_TEXTURE0+1);
+    SelectTexture(1);
     SetBrightmapTexture(Tex->Brightmap);
-    p_glActiveTextureARB(GL_TEXTURE0);
+    SelectTexture(0);
   } else if (!fakeShadow) {
     SurfMasked.Activate();
     SurfMasked.SetTexture(0);
@@ -439,9 +439,9 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
   if (styleDark) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
   if (doBrightmap) {
-    p_glActiveTextureARB(GL_TEXTURE0+1);
+    SelectTexture(1);
     glBindTexture(GL_TEXTURE_2D, 0);
-    p_glActiveTextureARB(GL_TEXTURE0);
+    SelectTexture(0);
   }
 }
 

@@ -252,9 +252,9 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
       SurfSimpleBrightmap.SetBrightMapAdditive(r_brightmaps_additive ? 1.0f : 0.0f);
       SurfSimpleBrightmap.SetTexture(0);
       SurfSimpleBrightmap.SetTextureBM(1);
-      p_glActiveTextureARB(GL_TEXTURE0+1);
+      SelectTexture(1);
       SetBrightmapTexture(textr->Tex->Brightmap);
-      p_glActiveTextureARB(GL_TEXTURE0);
+      SelectTexture(0);
       SetTexture(textr->Tex, textr->ColorMap);
       SurfSimpleBrightmap.SetTex(textr);
       if (gp.isActive()) {
@@ -339,9 +339,9 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
       SurfLightmapBrightmap.SetLightMap(1);
       SurfLightmapBrightmap.SetSpecularMap(2);
       SurfLightmapBrightmap.SetTextureBM(3);
-      p_glActiveTextureARB(GL_TEXTURE0+3);
+      SelectTexture(3);
       SetBrightmapTexture(tex->Tex->Brightmap);
-      p_glActiveTextureARB(GL_TEXTURE0);
+      SelectTexture(0);
       SetTexture(tex->Tex, tex->ColorMap);
       SurfLightmapBrightmap.SetTex(tex);
       if (gp.isActive()) {

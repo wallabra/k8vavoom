@@ -216,9 +216,9 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
           SurfAdvDecal.SetSplatAlpha(dc->alpha);
           if (!tex1set) {
             tex1set = true;
-            p_glActiveTextureARB(GL_TEXTURE0+1);
+            SelectTexture(1);
             glBindTexture(GL_TEXTURE_2D, ambLightFBO.getColorTid());
-            p_glActiveTextureARB(GL_TEXTURE0);
+            SelectTexture(0);
           }
           SurfAdvDecal.SetFullBright(dc->flags&decal_t::Fullbright ? 1.0f : 0.0f);
           SurfAdvDecal.SetAmbLightTexture(1);
@@ -279,9 +279,9 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
   glEnable(GL_CULL_FACE);
   glEnable(GL_DEPTH_TEST);
   if (tex1set) {
-    p_glActiveTextureARB(GL_TEXTURE0+1);
+    SelectTexture(1);
     glBindTexture(GL_TEXTURE_2D, 0);
-    p_glActiveTextureARB(GL_TEXTURE0);
+    SelectTexture(0);
   }
 
   //if (dtype != DT_ADVANCED) glDisable(GL_BLEND);
