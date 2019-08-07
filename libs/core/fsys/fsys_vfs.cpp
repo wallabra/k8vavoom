@@ -662,7 +662,23 @@ VStr W_LoadTextLump (VName name) {
 
 //==========================================================================
 //
-//  W_CreateLumpReaderNum
+//  W_LoadLumpIntoArrayIdx
+//
+//==========================================================================
+void W_LoadLumpIntoArrayIdx (int Lump, TArray<vuint8> &Array) {
+  VStream *Strm = W_CreateLumpReaderNum(Lump);
+  if (!Strm) Sys_Error("error reading lump with index %d", Lump);
+  check(Strm);
+  Array.SetNum(Strm->TotalSize());
+  Strm->Serialise(Array.Ptr(), Strm->TotalSize());
+  if (Strm->IsError()) { delete Strm; Sys_Error("error reading lump '%s'", *W_FullLumpName(Lump)); }
+  delete Strm;
+}
+
+
+//==========================================================================
+//
+//  W_LoadLumpIntoArray
 //
 //==========================================================================
 void W_LoadLumpIntoArray (VName LumpName, TArray<vuint8> &Array) {
@@ -713,7 +729,7 @@ VStr W_FindMapInLastFile (int fileid, int *mapnum) {
   bool doom1 = false;
   char doom1ch = 'e';
   VStr longname;
-  for (int lump = SearchPaths[fileid]->IterateNS(0, (EWadNamespace)-1/*WADNS_Global*/, true); lump >= 0; lump = SearchPaths[fileid]->IterateNS(lump+1, (EWadNamespace)-1/*WADNS_Global*/, true)) {
+  for (int lump = SearchPaths[fileid]->IterateNS(0, WADNS_Any, true); lump >= 0; lump = SearchPaths[fileid]->IterateNS(lump+1, WADNS_Any, true)) {
     const char *name;
     VName ln = SearchPaths[fileid]->LumpName(lump);
     if (ln != NAME_None) {

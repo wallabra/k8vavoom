@@ -78,7 +78,7 @@ void VDirPakFile::ScanDirectory (VStr relpath, int depth) {
   auto dh = Sys_OpenDir(scanPath, true); // want dirs
   if (!dh) return;
   //GLog.Logf(NAME_Dev, "scanning '%s' (depth=%d)...", *scanPath, depth);
-  // /*EWadNamespace*/vint32 ns = (relpath.length() == 0 ? WADNS_Global : /*(EWadNamespace)*/-1);
+  // /*EWadNamespace*/vint32 ns = (relpath.length() == 0 ? WADNS_Global : WADNS_Any);
   // map relpath to known namespaces
   /*
   if (relpath.length()) {

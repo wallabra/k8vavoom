@@ -548,7 +548,7 @@ bool VFileDirectory::lumpExists (VName lname, vint32 ns) {
   if (!fp) return false;
   if (ns < 0) return true;
   for (int f = *fp; f >= 0; f = files[f].nextLump) {
-    if (files[f].lumpNamespace == ns) return true;
+    if (ns == WADNS_Any || files[f].lumpNamespace == ns) return true;
   }
   return false;
 }
@@ -581,7 +581,7 @@ int VFileDirectory::findFirstLump (VName lname, vint32 ns) {
   if (!fp) return -1;
   if (ns < 0) return *fp;
   for (int f = *fp; f >= 0; f = files[f].nextLump) {
-    if (files[f].lumpNamespace == ns) return f;
+    if (ns == WADNS_Any || files[f].lumpNamespace == ns) return f;
   }
   return -1;
 }
@@ -599,7 +599,7 @@ int VFileDirectory::findLastLump (VName lname, vint32 ns) {
   if (!fp) return -1;
   int res = -1;
   for (int f = *fp; f >= 0; f = files[f].nextLump) {
-    if (ns < 0 || files[f].lumpNamespace == ns) res = f;
+    if (ns == WADNS_Any || files[f].lumpNamespace == ns) res = f;
   }
   return res;
 }
@@ -614,7 +614,7 @@ int VFileDirectory::nextLump (vint32 curridx, vint32 ns, bool allowEmptyName8) {
   if (curridx < 0) curridx = 0;
   for (; curridx < files.length(); ++curridx) {
     if (!allowEmptyName8 && files[curridx].lumpName == NAME_None) continue;
-    if (ns < 0 || files[curridx].lumpNamespace == ns) return curridx;
+    if (ns == WADNS_Any || files[curridx].lumpNamespace == ns) return curridx;
   }
   return -1;
 }

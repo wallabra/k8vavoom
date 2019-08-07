@@ -201,7 +201,7 @@ void VFilesDir::Close () {
 //==========================================================================
 int VFilesDir::CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst) {
   /*
-  if (InNS >= WADNS_ZipSpecial) InNS = WADNS_Global;
+  if (InNS >= WADNS_ZipSpecial && NS != WADNS_Any) InNS = WADNS_Global;
   if (InNS != WADNS_Global) return -1;
   int fidx = findFileCI(LumpName);
   if (fidx != -1) return fidx;
@@ -241,7 +241,7 @@ VStr VFilesDir::LumpFileName (int LumpNum) {
 //==========================================================================
 int VFilesDir::IterateNS (int Start, EWadNamespace NS, bool allowEmptyName8) {
   /*
-  if (InNS >= WADNS_ZipSpecial) InNS = WADNS_Global;
+  if (InNS >= WADNS_ZipSpecial && NS != WADNS_Any) InNS = WADNS_Global;
   if (InNS != WADNS_Global) return -1;
   if (Start < 0 || Start >= cachedFiles.length()) return -1;
   return Start;

@@ -32,6 +32,13 @@ bool fsys_IgnoreZScript = true;
 bool fsys_DisableBDW = false;
 bool fsys_report_added_paks = true;
 
+bool fsys_skipSounds = false;
+bool fsys_skipSprites = false;
+bool fsys_skipDehacked = false;
+
+// autodetected wad/pk3
+int fsys_detected_mod = AD_NONE;
+
 TArray<VSearchPath *> SearchPaths;
 TArray<VStr> wadfiles;
 TArray<VStr> fsys_game_filters;

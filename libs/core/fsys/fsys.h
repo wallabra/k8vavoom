@@ -56,6 +56,10 @@ extern bool fsys_DisableBDW;
 // used for game detection
 extern bool fsys_EnableAuxSearch;
 
+extern bool fsys_skipSounds;
+extern bool fsys_skipSprites;
+extern bool fsys_skipDehacked;
+
 extern TArray<VStr> fsys_game_filters;
 
 
@@ -84,10 +88,13 @@ enum EWadNamespace {
   WADNS_Graphics,
   WADNS_Sounds,
   WADNS_Music,
+
+  // all
+  WADNS_Any,
 };
 
 
-void W_AddFile (const VStr &FileName, bool FixVoices);
+void W_AddFile (const VStr &FileName, bool FixVoices=false);
 void W_Shutdown ();
 
 enum WAuxFileType {
@@ -134,6 +141,7 @@ bool W_IsIWADLump (int lump);
 void W_ReadFromLump (int lump, void *dest, int pos, int size);
 VStr W_LoadTextLump (VName name);
 void W_LoadLumpIntoArray (VName Lump, TArray<vuint8>& Array);
+void W_LoadLumpIntoArrayIdx (int Lump, TArray<vuint8>& Array);
 VStream *W_CreateLumpReaderNum (int lump);
 VStream *W_CreateLumpReaderName (VName Name, EWadNamespace NS = WADNS_Global);
 

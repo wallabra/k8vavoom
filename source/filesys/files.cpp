@@ -39,9 +39,6 @@ static VCvarB __dbg_debug_preinit("__dbg_debug_preinit", false, "Dump preinits?"
 VCvarS game_name("game_name", "unknown", "The Name Of The Game.", CVAR_Rom);
 
 
-bool fsys_skipSounds = false;
-bool fsys_skipSprites = false;
-bool fsys_skipDehacked = false;
 bool fsys_hasPwads = false; // or paks
 bool fsys_hasMapPwads = false; // or paks
 bool fsys_DisableBloodReplacement = false; // for custom modes
@@ -50,9 +47,6 @@ bool fsys_DisableBloodReplacement = false; // for custom modes
 int fsys_warp_n0 = -1;
 int fsys_warp_n1 = -1;
 VStr fsys_warp_cmd;
-
-// autodetected wad/pk3
-int fsys_detected_mod = AD_NONE;
 
 static bool fsys_onlyOneBaseFile = false;
 
