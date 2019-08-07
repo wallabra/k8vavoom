@@ -1528,7 +1528,7 @@ void FL_Init () {
   VStr mainIWad = VStr();
   int wmap1 = -1, wmap2 = -1; // warp
 
-  fsys_IgnoreZScript = true;
+  fsys_IgnoreZScript = false;
 
   doStartMap = (GArgs.CheckParm("-k8runmap") != 0);
 
