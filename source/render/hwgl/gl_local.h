@@ -798,23 +798,15 @@ public:
   };
 
 private:
-  SurfListItem *surfList;
-  vuint32 surfListUsed;
-  vuint32 surfListSize;
+  TArray<SurfListItem> surfList;
 
-  inline void surfListClear () {
-    surfListUsed = 0;
-  }
+  inline void surfListClear () { surfList.reset(); }
 
   inline void surfListAppend (surface_t *surf, surfcache_t *cache=nullptr) {
     UpdateAndUploadSurfaceTexture(surf);
-    if (surfListUsed == surfListSize) {
-      surfListSize += 65536;
-      surfList = (SurfListItem *)Z_Realloc(surfList, surfListSize*sizeof(surfList[0]));
-    }
-    SurfListItem *si = &surfList[surfListUsed++];
-    si->surf = surf;
-    si->cache = cache;
+    SurfListItem &si = surfList.alloc();
+    si.surf = surf;
+    si.cache = cache;
   }
 
 private:

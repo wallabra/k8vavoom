@@ -465,9 +465,7 @@ void VOpenGLDrawer::WorldDrawing () {
     //SurfSimple_Locs.storeFogType();
 
     const texinfo_t *lastTexinfo = nullptr;
-    surface_t **surfptr = RendLev->DrawSurfList.ptr();
-    for (int count = RendLev->DrawSurfList.length(); count--; ++surfptr) {
-      surface_t *surf = *surfptr;
+    for (auto &&surf : RendLev->DrawSurfList) {
       if (!surf->plvisible) continue; // viewer is in back side or on plane
       const texinfo_t *currTexinfo = surf->texinfo;
       if (!currTexinfo) continue; // just in case
@@ -547,10 +545,10 @@ void VOpenGLDrawer::WorldDrawing () {
           if (!surf->plvisible) continue; // viewer is in back side or on plane
           surfListAppend(surf, cache);
         }
-        if (surfListUsed > 0) {
-          timsort_r(surfList, surfListUsed, sizeof(surfList[0]), &surfListItemCmp, nullptr);
-          for (vuint32 sidx = 0; sidx < surfListUsed; ++sidx) {
-            surface_t *surf = surfList[sidx].surf;
+        if (surfList.length() > 0) {
+          timsort_r(surfList.ptr(), surfList.length(), sizeof(SurfListItem), &surfListItemCmp, nullptr);
+          for (auto &&sli : surfList) {
+            surface_t *surf = sli.surf;
             const texinfo_t *currTexinfo = surf->texinfo;
             bool textureChanded =
               !lastTexinfo ||
@@ -558,7 +556,8 @@ void VOpenGLDrawer::WorldDrawing () {
               lastTexinfo->Tex != currTexinfo->Tex ||
               lastTexinfo->ColorMap != currTexinfo->ColorMap;
             lastTexinfo = currTexinfo;
-            if (RenderLMapSurface(textureChanded, surf, surfList[sidx].cache)) lastTexinfo = nullptr;
+            if (RenderLMapSurface(textureChanded, surf, sli.cache)) lastTexinfo = nullptr;
+            //if (RenderSimpleSurface(textureChanded, surf)) lastTexinfo = nullptr;
           }
         }
       }

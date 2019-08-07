@@ -274,6 +274,7 @@ void VOpenGLDrawer::VGLShader::Unload () {
 VOpenGLDrawer::VOpenGLDrawer ()
   : VDrawer()
   , shaderHead(nullptr)
+  , surfList()
   , mainFBO()
   , ambLightFBO()
   , texturesGenerated(false)
@@ -298,8 +299,8 @@ VOpenGLDrawer::VOpenGLDrawer ()
   stencilBufferDirty = true; // just in case
   isShittyGPU = true; // let's play safe
 
-  surfList = nullptr;
-  surfListUsed = surfListSize = 0;
+  //surfList = nullptr;
+  //surfListUsed = surfListSize = 0;
 }
 
 
@@ -309,9 +310,7 @@ VOpenGLDrawer::VOpenGLDrawer ()
 //
 //==========================================================================
 VOpenGLDrawer::~VOpenGLDrawer () {
-  if (surfList) Z_Free(surfList);
-  surfList = nullptr;
-  surfListUsed = surfListSize = 0;
+  surfList.clear();
 
   if (tmpImgBuf0) { Z_Free(tmpImgBuf0); tmpImgBuf0 = nullptr; }
   if (tmpImgBuf1) { Z_Free(tmpImgBuf1); tmpImgBuf1 = nullptr; }
