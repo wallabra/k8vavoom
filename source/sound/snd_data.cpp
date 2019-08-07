@@ -1543,11 +1543,7 @@ void VRawSampleLoader::Load (sfxinfo_t &Sfx, VStream &Strm) {
   // it has 32 padding bytes
   if (Version != 3) return;
   if (SampleRate < 1024 || SampleRate > 48000) {
-    GCon->Logf(NAME_Warning, "invalid DMX sound '%s' sample rate: %d", *Strm.GetName(), SampleRate);
-    return;
-  }
-  if (DataSize < 32) {
-    GCon->Logf(NAME_Warning, "invalid DMX sound '%s' sample data size: %d", *Strm.GetName(), DataSize);
+    GCon->Logf(NAME_Warning, "invalid DMX sound '%s' sample rate: %u", *Strm.GetName(), SampleRate);
     return;
   }
   if ((vint32)DataSize > Strm.TotalSize()-8) {
@@ -1555,7 +1551,7 @@ void VRawSampleLoader::Load (sfxinfo_t &Sfx, VStream &Strm) {
     return;
   }
   if ((vint32)DataSize != Strm.TotalSize()-8) {
-    GCon->Logf(NAME_Warning, "DMX sound '%s' contains extra data (%d bytes)", *Strm.GetName(), (Strm.TotalSize()-8)-(vint32)DataSize);
+    GCon->Logf(NAME_Warning, "DMX sound '%s' contains extra data (%d bytes, this is not fatal)", *Strm.GetName(), (Strm.TotalSize()-8)-(vint32)DataSize);
     //return;
   }
   //if (Version != 3 || SampleRate < 1024 || SampleRate > 48000 || DataSize < 32 || (vint32)DataSize != Strm.TotalSize()-8) return;
@@ -1573,6 +1569,7 @@ void VRawSampleLoader::Load (sfxinfo_t &Sfx, VStream &Strm) {
     Strm.Serialise(Sfx.Data, Sfx.DataSize);
     //GCon->Logf("RAW: sr=%d; datasize=%d", SampleRate, DataSize);
   } else {
+    GCon->Logf(NAME_Warning, "empty DMX sound '%s' (%u bytes, this is not fatal)", *Strm.GetName(), DataSize);
     // empty sample
     Sfx.DataSize = 1;
     Sfx.Data = Z_Malloc(Sfx.DataSize);
