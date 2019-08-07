@@ -93,6 +93,7 @@ int FL_CheckFilterName (VStr &fname) {
 //
 //==========================================================================
 bool FL_FileExists (const VStr &fname) {
+  if (fname.isEmpty()) return false;
   for (int i = SearchPaths.length()-1; i >= 0; --i) {
     if (SearchPaths[i]->FileExists(fname)) return true;
   }
@@ -106,9 +107,14 @@ bool FL_FileExists (const VStr &fname) {
 //
 //==========================================================================
 VStream *FL_OpenFileRead (const VStr &Name) {
-  for (int i = SearchPaths.length()-1; i >= 0; --i) {
-    VStream *Strm = SearchPaths[i]->OpenFileRead(Name);
-    if (Strm) return Strm;
+  if (Name.isEmpty()) return nullptr;
+  if (Name.length() >= 2 && Name[0] == '/' && Name[1] == '/') {
+    return FL_OpenFileReadBaseOnly(Name.mid(2, Name.length()));
+  } else {
+    for (int i = SearchPaths.length()-1; i >= 0; --i) {
+      VStream *Strm = SearchPaths[i]->OpenFileRead(Name);
+      if (Strm) return Strm;
+    }
   }
   return nullptr;
 }
@@ -120,6 +126,7 @@ VStream *FL_OpenFileRead (const VStr &Name) {
 //
 //==========================================================================
 VStream *FL_OpenFileReadBaseOnly (const VStr &Name) {
+  if (Name.isEmpty()) return nullptr;
   for (int i = SearchPaths.length()-1; i >= 0; --i) {
     if (!SearchPaths[i]->basepak) continue;
     VStream *Strm = SearchPaths[i]->OpenFileRead(Name);
@@ -135,6 +142,7 @@ VStream *FL_OpenFileReadBaseOnly (const VStr &Name) {
 //
 //==========================================================================
 void FL_CreatePath (const VStr &Path) {
+  if (Path.isEmpty() || Path == ".") return;
   TArray<VStr> spp;
   Path.SplitPath(spp);
   if (spp.length() == 0 || (spp.length() == 1 && spp[0] == "/")) return;
@@ -182,5 +190,6 @@ VStream *FL_OpenSysFileWrite (const VStr &Name) {
 //
 //==========================================================================
 bool FL_IsSafeDiskFileName (const VStr &fname) {
+  if (fname.isEmpty()) return false;
   return fname.isSafeDiskFileName();
 }
