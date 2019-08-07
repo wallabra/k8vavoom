@@ -442,6 +442,9 @@ override bool eventSetPendingWeapon (Entity ent) {
 //
 //  eventSetReadyWeapon
 //
+//  currently this is used only in checkpoint loader, hence such logic
+//  (no checks for the same weapon, and such)
+//
 //==========================================================================
 override void eventSetReadyWeapon (Entity ent, bool instant) {
   if (!MO) return;
