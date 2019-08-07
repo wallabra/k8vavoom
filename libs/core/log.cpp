@@ -422,6 +422,7 @@ public:
 
   void printEvent (EName event) {
     if (event == NAME_None) event = NAME_Log;
+    lastEvent = event;
     FILE *fo = outfile();
     if (fo) {
       if (event != NAME_Log || !GLogSkipLogTypeName) {
@@ -445,23 +446,25 @@ public:
         #endif
       }
     }
-    lastEvent = event;
   }
 
   virtual void Serialise (const char *Text, EName Event) override {
     if (Event == NAME_None) Event = NAME_Log;
     if (!GLogTTYLog) { lastEvent = NAME_None; return; }
+    //printf("===(%s)\n%s\n===\n", *VName(Event), Text);
     while (*Text) {
       if (Text[0] == '\r' && Text[1] == '\n') ++Text;
       // find line terminator
       const char *eol = Text;
       while (*eol && *eol != '\n' && *eol != '\r') ++eol;
       // print string until terminator
+      //{ fwrite("|", 1, 1, stdout); fwrite(Text, (size_t)(ptrdiff_t)(eol-Text), 1, stdout); fwrite("|\n", 2, 1, stdout); }
+      //printf("===(%s)\n%s\n===\n", *VName(Event), Text);
       if (eol != Text) {
-        // has some string to print
+        // has something to print
         if (lastWasNL || Event != lastEvent) {
           // force new event
-          if (!lastWasNL) printStr("\n", outfile());
+          if (!lastWasNL) xprintStr("\n", outfile());
           printEvent(Event);
           xprintStr(" ", outfile());
         }
@@ -471,7 +474,7 @@ public:
       if (!eol[0]) break; // no more
       // new line
       check(eol[0] == '\r' || eol[0] == '\n');
-      if (!lastWasNL) printStr("\n", outfile());
+      if (!lastWasNL) xprintStr("\n", outfile());
       lastWasNL = true;
       Text = eol+1;
     }
