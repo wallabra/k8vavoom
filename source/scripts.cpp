@@ -1343,10 +1343,16 @@ IMPLEMENT_FUNCTION(VScriptsParser, OpenLumpFullName) {
       return;
     }
   }
-  int num = W_GetNumForFileName(Name);
-  //int num = W_IterateFile(-1, *Name);
-  if (num < 0) Sys_Error("file '%s' not found", *Name);
-  Self->Int = new VScriptParser(*Name, W_CreateLumpReaderNum(num));
+  if (Name.length() >= 2 && Name[0] == '/' && Name[1] == '/') {
+    VStream *strm = FL_OpenFileRead(Name);
+    if (!strm) Sys_Error("file '%s' not found", *Name);
+    Self->Int = new VScriptParser(*Name, strm);
+  } else {
+    int num = W_GetNumForFileName(Name);
+    //int num = W_IterateFile(-1, *Name);
+    if (num < 0) Sys_Error("file '%s' not found", *Name);
+    Self->Int = new VScriptParser(*Name, W_CreateLumpReaderNum(num));
+  }
 #elif defined(VCC_STANDALONE_EXECUTOR)
   if (Self->Int) {
     delete Self->Int;
