@@ -4829,6 +4829,43 @@ void Cheat_PrintSpritesFor () {
 
 //==========================================================================
 //
+//  Cheat_PrintAllWeapons
+//
+//==========================================================================
+void Cheat_PrintAllWeapons () {
+  if (Cmd_GetArgC() != 1) {
+    cprint("%s: wut?!", Cmd_GetArgV(0));
+    return;
+  }
+
+  array!name wlist;
+  class!Weapon WpnCls;
+  foreach AllClasses(Weapon, WpnCls) {
+    if (WpnCls.default.bCheatNotWeapon) continue;
+    class!Weapon repl = class!Weapon(GetClassReplacement(WpnCls));
+    if (repl && repl != WpnCls) continue;
+    auto st = FindClassState(WpnCls, 'Ready');
+    if (!st) continue; // an abstract base class
+    if (!AreStateSpritesPresent(st)) continue; // no sprites
+    // if weapon cannot be spawned, you cannot get it
+    st = FindClassState(WpnCls, 'Spawn');
+    if (!st) continue; // an abstract base class
+    if (!AreStateSpritesPresent(st)) continue; // no sprites
+    wlist[$] = GetClassName(WpnCls);
+  }
+
+  if (wlist.length == 0) {
+    printwarn("no weapons found -- WTF?!");
+  } else {
+    wlist.sort(delegate int (name a, name b) { return nameicmp(a, b); });
+    print("=== %s weapons found ===", wlist.length);
+    foreach (name n; wlist) print("  %s", n);
+  }
+}
+
+
+//==========================================================================
+//
 //  Cheat_Resurrect
 //
 //==========================================================================
