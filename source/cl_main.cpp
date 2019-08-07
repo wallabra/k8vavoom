@@ -338,6 +338,8 @@ void CL_SetUpStandaloneClient () {
 
   GClGame->serverinfo = svs.serverinfo;
   CL_ReadFromServerInfo();
+  // cheating is always enabled in standalone client
+  if (GGameInfo->NetMode == NM_TitleMap || GGameInfo->NetMode == NM_Standalone) VCvar::SetCheating(true);
 
   GClGame->maxclients = svs.max_clients;
   GClGame->deathmatch = deathmatch;
