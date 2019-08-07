@@ -29,7 +29,6 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
-#include "filesys/fwaddefs.h"
 #include "bsp/ajbsp/bsp.h"
 
 #ifdef CLIENT

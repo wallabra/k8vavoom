@@ -26,12 +26,29 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "fs_local.h"
-#include "fwaddefs.h"
 
 
 extern bool fsys_skipSounds;
 extern bool fsys_skipSprites;
 extern bool fsys_skipDehacked;
+
+
+#pragma pack(push, 1)
+// WAD file types
+struct wadinfo_t {
+  // should be "IWAD" or "PWAD"
+  char identification[4];
+  int numlumps;
+  int infotableofs;
+};
+
+
+struct filelump_t {
+  int filepos;
+  int size;
+  char name[8];
+};
+#pragma pack(pop)
 
 
 struct lumpinfo_t {

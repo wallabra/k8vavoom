@@ -296,7 +296,6 @@ set(ZDBSP_SOURCES
 #
 #---------------------------------------
 set(FILESYS_SOURCES
-  filesys/fwaddefs.h
   filesys/fs_local.h
   filesys/fs_pakbase.cpp
   filesys/fs_dir.cpp
