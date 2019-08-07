@@ -803,7 +803,7 @@ private:
   inline void surfListClear () { surfList.reset(); }
 
   inline void surfListAppend (surface_t *surf, surfcache_t *cache=nullptr) {
-    UpdateAndUploadSurfaceTexture(surf);
+    //UpdateAndUploadSurfaceTexture(surf); //no, not here
     SurfListItem &si = surfList.alloc();
     si.surf = surf;
     si.cache = cache;

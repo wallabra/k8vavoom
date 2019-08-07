@@ -74,6 +74,47 @@ struct texinfo_t {
   float Alpha;
   vint32 Additive;
   vuint8 ColorMap;
+
+  inline bool isEmptyTexture () const { return (!Tex || Tex->Type == TEXTYPE_Null); }
+
+  // call this to check if we need to change OpenGL texture
+  inline bool needChange (const texinfo_t &other) const {
+    if (&other == this) return false;
+    return
+      Tex != other.Tex ||
+      ColorMap != other.ColorMap ||
+      FASI(saxis) != FASI(other.saxis) ||
+      FASI(soffs) != FASI(other.soffs) ||
+      FASI(taxis) != FASI(other.taxis) ||
+      FASI(toffs) != FASI(other.toffs);
+  }
+
+  // call this to cache info for `needChange()`
+  inline void updateLastUsed (const texinfo_t &other) {
+    if (&other == this) return;
+    Tex = other.Tex;
+    ColorMap = other.ColorMap;
+    saxis = other.saxis;
+    soffs = other.soffs;
+    taxis = other.taxis;
+    toffs = other.toffs;
+    // other fields doesn't matter
+  }
+
+  inline void resetLastUsed () {
+    Tex = nullptr; // it is enough, but to be sure...
+    ColorMap = 255; // impossible colormap
+  }
+
+  inline void initLastUsed () {
+    saxis = taxis = TVec(-99999, -99999, -99999);
+    soffs = toffs = -99999;
+    Tex = nullptr;
+    noDecals = false;
+    Alpha = -666;
+    Additive = 666;
+    ColorMap = 255;
+  }
 };
 
 

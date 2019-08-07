@@ -277,6 +277,9 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
 
   if (surf->count < 3) return false;
 
+  // do it here
+  UpdateAndUploadSurfaceTexture(surf);
+
   float lev = getSurfLightLevel(surf);
   if (doBrightmap) {
     SurfSimpleBrightmap.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
@@ -286,7 +289,7 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
     SurfSimple.SetFogFade(surf->Fade, 1.0f);
   }
 
-  bool doDecals = textr->Tex && !textr->noDecals && surf->seg && surf->seg->decals;
+  bool doDecals = (textr->Tex && !textr->noDecals && surf->seg && surf->seg->decals);
 
   // fill stencil buffer for decals
   if (doDecals) RenderPrepareShaderDecals(surf);
@@ -364,6 +367,9 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
 
   if (surf->count < 3) return false;
 
+  // do it here
+  UpdateAndUploadSurfaceTexture(surf);
+
   float lev = getSurfLightLevel(surf);
   float fullBright = 0.0f;
   if (r_glow_flat && !surf->seg && tex->Tex->glowing) {
@@ -422,6 +428,9 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
 //
 //==========================================================================
 void VOpenGLDrawer::WorldDrawing () {
+  texinfo_t lastTexinfo;
+  lastTexinfo.initLastUsed();
+
   // first draw horizons
   {
     surface_t **surfptr = RendLev->DrawHorizonList.ptr();
@@ -464,18 +473,14 @@ void VOpenGLDrawer::WorldDrawing () {
     VV_GLDRAWER_DEACTIVATE_GLOW(SurfSimple);
     //SurfSimple_Locs.storeFogType();
 
-    const texinfo_t *lastTexinfo = nullptr;
+    lastTexinfo.resetLastUsed();
     for (auto &&surf : RendLev->DrawSurfList) {
       if (!surf->plvisible) continue; // viewer is in back side or on plane
       const texinfo_t *currTexinfo = surf->texinfo;
-      if (!currTexinfo) continue; // just in case
-      bool textureChanded =
-        !lastTexinfo ||
-        lastTexinfo != currTexinfo ||
-        lastTexinfo->Tex != currTexinfo->Tex ||
-        lastTexinfo->ColorMap != currTexinfo->ColorMap;
-      lastTexinfo = currTexinfo;
-      if (RenderSimpleSurface(textureChanded, surf)) lastTexinfo = nullptr;
+      if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
+      const bool textureChanded = lastTexinfo.needChange(*currTexinfo);
+      if (textureChanded) lastTexinfo.updateLastUsed(*currTexinfo);
+      if (RenderSimpleSurface(textureChanded, surf)) lastTexinfo.resetLastUsed();
     }
   }
 
@@ -488,7 +493,7 @@ void VOpenGLDrawer::WorldDrawing () {
     //SurfLightmap_Locs.storeFogType();
     VV_GLDRAWER_DEACTIVATE_GLOW(SurfLightmap);
 
-    const texinfo_t *lastTexinfo = nullptr;
+    lastTexinfo.resetLastUsed();
     for (int lb = 0; lb < NUM_BLOCK_SURFS; ++lb) {
       if (!RendLev->light_chain[lb]) continue;
 
@@ -530,13 +535,10 @@ void VOpenGLDrawer::WorldDrawing () {
           surface_t *surf = cache->surf;
           if (!surf->plvisible) continue; // viewer is in back side or on plane
           const texinfo_t *currTexinfo = surf->texinfo;
-          bool textureChanded =
-            !lastTexinfo ||
-            lastTexinfo != currTexinfo ||
-            lastTexinfo->Tex != currTexinfo->Tex ||
-            lastTexinfo->ColorMap != currTexinfo->ColorMap;
-          lastTexinfo = currTexinfo;
-          if (RenderLMapSurface(textureChanded, surf, cache)) lastTexinfo = nullptr;
+          if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
+          const bool textureChanded = lastTexinfo.needChange(*currTexinfo);
+          if (textureChanded) lastTexinfo.updateLastUsed(*currTexinfo);
+          if (RenderLMapSurface(textureChanded, surf, cache)) lastTexinfo.resetLastUsed();
         }
       } else {
         surfListClear();
@@ -550,14 +552,11 @@ void VOpenGLDrawer::WorldDrawing () {
           for (auto &&sli : surfList) {
             surface_t *surf = sli.surf;
             const texinfo_t *currTexinfo = surf->texinfo;
-            bool textureChanded =
-              !lastTexinfo ||
-              lastTexinfo != currTexinfo ||
-              lastTexinfo->Tex != currTexinfo->Tex ||
-              lastTexinfo->ColorMap != currTexinfo->ColorMap;
-            lastTexinfo = currTexinfo;
-            if (RenderLMapSurface(textureChanded, surf, sli.cache)) lastTexinfo = nullptr;
-            //if (RenderSimpleSurface(textureChanded, surf)) lastTexinfo = nullptr;
+            if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
+            const bool textureChanded = lastTexinfo.needChange(*currTexinfo);
+            if (textureChanded) lastTexinfo.updateLastUsed(*currTexinfo);
+            if (RenderLMapSurface(textureChanded, surf, sli.cache)) lastTexinfo.resetLastUsed();
+            //if (RenderSimpleSurface(textureChanded, surf)) lastTexinfo.resetLastUsed();
           }
         }
       }

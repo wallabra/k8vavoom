@@ -259,22 +259,21 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 
     float prevsflight = -666;
     vuint32 prevlight = 0;
-    const texinfo_t *lastTexinfo = nullptr;
-    surface_t **surfptr = RendLev->DrawSurfList.ptr();
+    texinfo_t lastTexinfo;
+    lastTexinfo.initLastUsed();
 
     bool prevGlowActive[3] = { false, false, false };
     GlowParams gp;
 
-    for (int count = RendLev->DrawSurfList.length(); count--; ++surfptr) {
-      const surface_t *surf = *surfptr;
+    for (auto &&surf : RendLev->DrawSurfList) {
       if (!surf->plvisible) continue; // viewer is in back side or on plane
       if (surf->count < 3) continue;
 
       // don't render translucent surfaces
       // they should not end up here, but...
       const texinfo_t *currTexinfo = surf->texinfo;
-      if (!currTexinfo || !currTexinfo->Tex || currTexinfo->Tex->Type == TEXTYPE_Null) continue;
-      if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue;
+      if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
+      if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
 
       if (!gl_dbg_wireframe) {
         CalcGlow(gp, surf);
@@ -303,16 +302,12 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
               VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientBrightmap);
             }
           }
-          lastTexinfo = nullptr;
+          lastTexinfo.resetLastUsed();
         } else if (surf->drawflags&surface_t::DF_MASKED) {
           //GCon->Logf("MASKED WALL: wall texture is '%s'", *currTexinfo->Tex->Name);
           // masked wall
-          bool textureChanded =
-            !lastTexinfo ||
-            lastTexinfo != currTexinfo ||
-            lastTexinfo->Tex != currTexinfo->Tex ||
-            lastTexinfo->ColorMap != currTexinfo->ColorMap;
-          lastTexinfo = currTexinfo;
+          bool textureChanded = lastTexinfo.needChange(*currTexinfo);
+          if (textureChanded) lastTexinfo.updateLastUsed(*currTexinfo);
 
           if (currShader != MASKED) {
             /*
@@ -399,9 +394,11 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           }
         }
       } else {
+        /*
         float clr = (float)(count+1)/RendLev->DrawSurfList.length();
         if (clr < 0.1f) clr = 0.1f;
         glColor4f(clr, clr, clr, 1.0f);
+        */
       }
 
       if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
@@ -1079,26 +1076,23 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
 
   //glDisable(GL_BLEND);
 
+  texinfo_t lastTexinfo;
+  lastTexinfo.initLastUsed();
+
   // no need to sort surfaces there, it is already done in ambient pass
-  const texinfo_t *lastTexinfo = nullptr;
-  surface_t **surfptr = RendLev->DrawSurfList.ptr();
-  for (int count = RendLev->DrawSurfList.length(); count--; ++surfptr) {
-    surface_t *surf = *surfptr;
+  lastTexinfo.resetLastUsed();
+  for (auto &&surf : RendLev->DrawSurfList) {
     if (!surf->plvisible) continue; // viewer is in back side or on plane
     if (surf->count < 3) continue;
 
     // don't render translucent surfaces
     // they should not end up here, but...
     const texinfo_t *currTexinfo = surf->texinfo;
-    if (!currTexinfo || !currTexinfo->Tex || currTexinfo->Tex->Type == TEXTYPE_Null) continue;
-    if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue;
+    if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
+    if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
 
-    bool textureChanded =
-      !lastTexinfo ||
-      lastTexinfo != currTexinfo ||
-      lastTexinfo->Tex != currTexinfo->Tex ||
-      lastTexinfo->ColorMap != currTexinfo->ColorMap;
-    lastTexinfo = currTexinfo;
+    bool textureChanded = lastTexinfo.needChange(*currTexinfo);
+    if (textureChanded) lastTexinfo.updateLastUsed(*currTexinfo);
 
     if (surf->drawflags&surface_t::DF_MASKED) {
       // masked wall
@@ -1147,7 +1141,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
         if (lastWasMasked) ShadowsTextureMasked.Activate(); else ShadowsTexture.Activate();
         glBlendFunc(GL_DST_COLOR, GL_ZERO);
         //glEnable(GL_BLEND);
-        lastTexinfo = nullptr; // resetup texture
+        lastTexinfo.resetLastUsed(); // resetup texture
       }
     }
   }
@@ -1188,10 +1182,11 @@ void VOpenGLDrawer::DrawWorldFogPass () {
   ShadowsFog.SetFogFade(lastFade, 1.0f);
   */
 
-  surface_t **surfptr = RendLev->DrawSurfList.ptr();
-  const texinfo_t *lastTexinfo = nullptr;
-  for (int count = RendLev->DrawSurfList.length(); count--; ++surfptr) {
-    surface_t *surf = *surfptr;
+  texinfo_t lastTexinfo;
+  lastTexinfo.initLastUsed();
+
+  lastTexinfo.resetLastUsed();
+  for (auto &&surf : RendLev->DrawSurfList) {
     if (!surf->Fade) continue;
     if (!surf->plvisible) continue; // viewer is in back side or on plane
     if (surf->count < 3) continue;
@@ -1199,8 +1194,8 @@ void VOpenGLDrawer::DrawWorldFogPass () {
     // don't render translucent surfaces
     // they should not end up here, but...
     const texinfo_t *currTexinfo = surf->texinfo;
-    if (!currTexinfo || !currTexinfo->Tex || currTexinfo->Tex->Type == TEXTYPE_Null) continue;
-    if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue;
+    if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
+    if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
 
     if (surf->drawflags&surface_t::DF_MASKED) {
       if (activated != ShaderMasked) {
@@ -1217,12 +1212,8 @@ void VOpenGLDrawer::DrawWorldFogPass () {
         ShadowsFogMasked.SetFogFade(surf->Fade, 1.0f);
       }
 
-      bool textureChanded =
-        !lastTexinfo ||
-        lastTexinfo != currTexinfo ||
-        lastTexinfo->Tex != currTexinfo->Tex ||
-        lastTexinfo->ColorMap != currTexinfo->ColorMap;
-      lastTexinfo = currTexinfo;
+      const bool textureChanded = lastTexinfo.needChange(*currTexinfo);
+      if (textureChanded) lastTexinfo.updateLastUsed(*currTexinfo);
 
       if (textureChanded) {
         SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
