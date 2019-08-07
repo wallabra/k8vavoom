@@ -1,5 +1,7 @@
 SubDir TOP src libs core ;
 
+#SubDirHdrs $(TOP) src ;
+SubDirHdrs $(TOP) src liblzma api ;
 
 Library libcore.a :
   src/args.cpp
@@ -36,4 +38,12 @@ Library libcore.a :
   src/zone.cpp
   # mi-malloc
   src/mimalloc/static.c
+  # fsys
+  src/fsys/fsys.cpp
+  src/fsys/fsys_dir.cpp
+  src/fsys/fsys_dirpak.cpp
+  src/fsys/fsys_pakbase.cpp
+  src/fsys/fsys_wad.cpp
+  src/fsys/fsys_zip.cpp
+  src/fsys/fsys_vfs.cpp
 ;
