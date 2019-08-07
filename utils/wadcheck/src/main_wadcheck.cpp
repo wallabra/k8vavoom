@@ -348,7 +348,7 @@ int main (int argc, char **argv) {
     for (int lump = W_IterateNS(-1, WADNS_Any); lump >= 0; lump = W_IterateNS(lump, WADNS_Any)) {
       if (W_LumpLength(lump) < 8) continue;
       TArray<vuint8> data;
-      W_LoadLumpIntoArray(lump, data);
+      W_LoadLumpIntoArrayIdx(lump, data);
       XXH64_hash_t hash = XXH64(data.ptr(), data.length(), 0x29a);
       //GLog.WriteLine("calculated hash for '%s': 0x%16llx", *W_FullLumpName(lump), hash);
       appendHash(hash, W_FullLumpName(lump), W_LumpLength(lump));
@@ -368,7 +368,7 @@ int main (int argc, char **argv) {
     for (int lump = W_IterateNS(-1, WADNS_Any); lump >= 0; lump = W_IterateNS(lump, WADNS_Any)) {
       if (W_LumpLength(lump) < 8) continue;
       TArray<vuint8> data;
-      W_LoadLumpIntoArray(lump, data);
+      W_LoadLumpIntoArrayIdx(lump, data);
       XXH64_hash_t hash = XXH64(data.ptr(), data.length(), 0x29a);
       checkHash(hash, W_FullLumpName(lump), W_LumpLength(lump));
     }
