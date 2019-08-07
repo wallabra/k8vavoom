@@ -743,8 +743,8 @@ final void SpawnBloodSplatter2 (TVec org, TVec shootOrg) {
 //  SpawnRipperBlood
 //
 //==========================================================================
-final void SpawnRipperBlood () {
-  if (!BloodType) return;
+final void SpawnRipperBlood (int damage, optional EntityEx src) {
+  if (!BloodType || damage < 0) return;
   if (GetCvarB('dbg_blood_disable_entities')) return;
 
   TVec org;
@@ -762,4 +762,6 @@ final void SpawnRipperBlood () {
     th.StateTime += Random()*0.1;
     th.CopyBloodTranslations(self, copyNormalTranslation:true);
   }
+
+  if (damage > 0) SpawnExploBloodAtHead(damage, src!optional);
 }

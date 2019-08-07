@@ -754,7 +754,33 @@ override bool Touch (Entity InOther) {
     if (bMThruSpecies && Target && (Target.GetSpecies() == GetSpecies())) return ProcessHitFlags(Other, true);
 
     if ((BounceType == BOUNCE_Doom || BounceType == BOUNCE_Hexen) && MissileDamage == 0) {
-      return ProcessHitFlags(Other, (Target == Other || !Other.bSolid));
+      // yet ripper rips, not bounces, even if it doesn't do any damage!
+      if (Target != Other && Other.bSolid && !Other.bCorpse) {
+        //ProcessHitFlags(Other, false);
+        #if 1
+        if (!bRip || Other.bDontRip || (bNoBossRip && Other.bBoss)) {
+          // not a ripper, bounce unconditionally
+          return ProcessHitFlags(Other, false);
+        } else {
+          // ripper
+          if (!Other.bIsPlayer) {
+            // not a player
+            if (Other.bMonster) {
+              // monster
+              if (!Other.IsSentient()) return ProcessHitFlags(Other, false); /* non-sentient monster */
+            } else if (!Other.bMissile) {
+              // not a monster, not a missile
+              // non-shootable, or invulnerable, or has no health?
+              //printwarn("%C: not m/m: %C -- shootable=%B; invuln=%B; health=%s", self, Other, Other.bShootable, Other.bInvulnerable, Other.Health);
+              if (!Other.bShootable || Other.bInvulnerable || Other.Health <= 0) return ProcessHitFlags(Other, false); // hit it!
+            }
+          }
+        }
+        #else
+        // ripper missiles should be processed as normal ones
+        if (!bRip || Other.bDontRip) return ProcessHitFlags(Other, (Target == Other || !Other.bSolid || Other.bCorpse));
+        #endif
+      }
     }
 
     switch (SpecialMissileHit(Other)) {
@@ -814,13 +840,13 @@ override bool Touch (Entity InOther) {
 
     if (bRip && !Other.bDontRip) {
       if (!bNoBossRip || !Other.bBoss) {
-        if (!Other.bNoBlood && !Other.bReflective && !Other.bInvulnerable) {
-          // ok to spawn some blood
-          Other.SpawnRipperBlood();
-        }
         PlaySound('misc/ripslop', /*CHAN_BODY*/CHAN_AUTO);
         damage = GetMissileDamage(3, 2);
-        Other.SpawnExploBloodAtHead(damage, self);
+        if (!Other.bNoBlood && !Other.bReflective && !Other.bInvulnerable) {
+          // ok to spawn some blood
+          Other.SpawnRipperBlood(damage, self);
+        }
+        //Other.SpawnExploBloodAtHead(damage, self);
         Other.Damage(self, Target, damage, DamageType);
         if (Other.bPushable && !bCannotPush) {
           // push thing
