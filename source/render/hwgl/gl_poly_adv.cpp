@@ -275,6 +275,9 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
       if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
 
+      // update all dunamic textures here
+      UpdateAndUploadSurfaceTexture(surf);
+
       if (!gl_dbg_wireframe) {
         CalcGlow(gp, surf);
 
