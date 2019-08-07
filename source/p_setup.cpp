@@ -861,7 +861,7 @@ load_again:
       if (!lstrm->IsError() && memcmp(sign, "PWAD", 4) == 0) {
         lstrm->Seek(0);
         xmaplumpnum = lumpnum;
-        lumpnum = W_AddAuxiliaryStream(lstrm, WAuxFileType::Wad);
+        lumpnum = W_AddAuxiliaryStream(lstrm, WAuxFileType::VFS_Wad);
         if (lumpnum >= 0) {
           auxCloser.doCloseAux = true;
           MapLumpName = W_LumpName(lumpnum);

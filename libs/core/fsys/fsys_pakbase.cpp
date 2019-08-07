@@ -24,8 +24,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "gamedefs.h"
-#include "fs_local.h"
+#include "fsys_local.h"
 
 
 extern bool fsys_skipSounds;
@@ -244,7 +243,7 @@ void VFileDirectory::buildLumpNames () {
 
     if (fi.lumpName != NAME_None) {
       if (!VStr::isLowerCase(*fi.lumpName)) {
-        GCon->Logf(NAME_Warning, "Archive \"%s\" contains non-lowercase lump name '%s'", *getArchiveName(), *fi.lumpName);
+        GLog.Logf(NAME_Warning, "Archive \"%s\" contains non-lowercase lump name '%s'", *getArchiveName(), *fi.lumpName);
       }
     } else {
       if (fi.fileName.length() == 0) continue;
@@ -260,7 +259,7 @@ void VFileDirectory::buildLumpNames () {
       if (fi.fileName.startsWith("filter/")) {
         VStr fn = fi.fileName;
         fidx = FL_CheckFilterName(fn);
-        //if (fidx >= 0) GCon->Logf("FILTER CHECK: fidx=%d; oname=<%s>; name=<%s>", fidx, *origName, *fn);
+        //if (fidx >= 0) GLog.Logf("FILTER CHECK: fidx=%d; oname=<%s>; name=<%s>", fidx, *origName, *fn);
         if (fidx < 0) {
           // hide this file
           fi.fileName.clear(); // hide this file
@@ -329,7 +328,7 @@ void VFileDirectory::buildLumpNames () {
           // found previous file: hide it if it has lower filter index
           if (np->filter > fidx) {
             // hide this file
-            //GCon->Logf("removed '%s'", *origName);
+            //GLog.Logf("removed '%s'", *origName);
             fi.fileName.clear();
             continue;
           }
@@ -350,7 +349,7 @@ void VFileDirectory::buildLumpNames () {
           // put this lump to lump map
           flumpmap.put(ln, FilterItem(i, fidx));
         }
-        //GCon->Logf("replaced '%s' -> '%s' (%s)", *origName, *fn, *lumpName);
+        //GLog.Logf("replaced '%s' -> '%s' (%s)", *origName, *fn, *lumpName);
       }
 
       // final lump name
@@ -408,7 +407,7 @@ void VFileDirectory::buildNameMaps (bool rebuilding) {
         if (squareChecked == 0b1111u) {
           fsys_IgnoreZScript = true;
           fsys_DisableBDW = true;
-          GCon->Logf(NAME_Init, "Detected Adventures Of Square");
+          GLog.Logf(NAME_Init, "Detected Adventures Of Square");
         } else {
           squareChecked = ~0u;
         }
@@ -423,7 +422,7 @@ void VFileDirectory::buildNameMaps (bool rebuilding) {
       if (false)
 #endif
       {
-        GCon->Logf(NAME_Warning, "Archive \"%s\" contains zscript", *getArchiveName());
+        GLog.Logf(NAME_Warning, "Archive \"%s\" contains zscript", *getArchiveName());
         fi.lumpName = NAME_None;
         lmp = NAME_None;
         fsys_IgnoreZScript = true;
@@ -451,8 +450,8 @@ void VFileDirectory::buildNameMaps (bool rebuilding) {
         *lsidp = f; // update index
         if (doReports) {
           if (lmp == "decorate" || lmp == "sndinfo" || lmp == "dehacked") {
-            GCon->Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *fi.fileName, *getArchiveName());
-            GCon->Logf(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE %s FILES!", (aszip ? "PK3/ZIP" : "WAD"));
+            GLog.Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *fi.fileName, *getArchiveName());
+            GLog.Logf(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE %s FILES!", (aszip ? "PK3/ZIP" : "WAD"));
           }
         }
       }
@@ -460,15 +459,15 @@ void VFileDirectory::buildNameMaps (bool rebuilding) {
     if (fi.fileName.length()) {
       if (doReports) {
         if ((aszip || lmp == "decorate") && filemap.has(fi.fileName)) {
-          GCon->Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *fi.fileName, *getArchiveName());
-          GCon->Logf(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE %s FILES!", (aszip ? "PK3/ZIP" : "WAD"));
+          GLog.Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *fi.fileName, *getArchiveName());
+          GLog.Logf(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE %s FILES!", (aszip ? "PK3/ZIP" : "WAD"));
         } else if (f > 0) {
           for (int pidx = f-1; pidx >= 0; --pidx) {
             if (files[pidx].fileName.length()) {
               if (files[pidx].fileName == fi.fileName) {
-                //GCon->Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\" (%d:%d).", *fi.fileName, *getArchiveName(), pidx, f);
-                GCon->Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *fi.fileName, *getArchiveName());
-                GCon->Logf(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE %s FILES!", (aszip ? "PK3/ZIP" : "WAD"));
+                //GLog.Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\" (%d:%d).", *fi.fileName, *getArchiveName(), pidx, f);
+                GLog.Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *fi.fileName, *getArchiveName());
+                GLog.Logf(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE %s FILES!", (aszip ? "PK3/ZIP" : "WAD"));
               }
               break;
             }
@@ -478,14 +477,14 @@ void VFileDirectory::buildNameMaps (bool rebuilding) {
       // put files into hashmap
       filemap.put(fi.fileName, f);
     }
-    //if (dumpZips) GCon->Logf(NAME_Dev, "%s: %s", *PakFileName, *Files[f].fileName);
+    //if (dumpZips) GLog.Logf(NAME_Dev, "%s: %s", *PakFileName, *Files[f].fileName);
   }
 
   if (!rebuilding && GArgs.CheckParm("-dump-paks")) {
-    GCon->Logf("======== PAK: %s ========", *getArchiveName());
+    GLog.Logf("======== PAK: %s ========", *getArchiveName());
     for (int f = 0; f < files.length(); ++f) {
       VPakFileInfo &fi = files[f];
-      GCon->Logf("  %d: file=<%s>; lump=<%s>; ns=%d; size=%d; ofs=%d", f, *fi.fileName, *fi.lumpName, fi.lumpNamespace, fi.filesize, fi.pakdataofs);
+      GLog.Logf("  %d: file=<%s>; lump=<%s>; ns=%d; size=%d; ofs=%d", f, *fi.fileName, *fi.lumpName, fi.lumpNamespace, fi.filesize, fi.pakdataofs);
     }
   }
     //if (LumpName.length() == 0) fprintf(stderr, "ZIP <%s> mapped to nothing\n", *Files[i].Name);
@@ -676,7 +675,7 @@ void VPakFileBase::Close () {
 //==========================================================================
 int VPakFileBase::CheckNumForName (VName lumpName, EWadNamespace NS, bool wantFirst) {
   int res = (wantFirst ? pakdir.findFirstLump(lumpName, NS) : pakdir.findLastLump(lumpName, NS));
-  //GCon->Logf("CheckNumForName:<%s>: ns=%d; first=%d; res=%d; name=<%s> (%s)", *PakFileName, NS, (int)wantFirst, res, *pakdir.normalizeLumpName(lumpName), *lumpName);
+  //GLog.Logf("CheckNumForName:<%s>: ns=%d; first=%d; res=%d; name=<%s> (%s)", *PakFileName, NS, (int)wantFirst, res, *pakdir.normalizeLumpName(lumpName), *lumpName);
   return res;
 }
 
@@ -701,7 +700,7 @@ int VPakFileBase::FindACSObject (const VStr &fname) {
   if (afn.ExtractFileExtension().strEquCI(".o")) afn = afn.StripExtension();
   if (afn.length() == 0) return -1;
   VName ln = VName(*afn, VName::AddLower8);
-  if (developer) GCon->Logf(NAME_Dev, "*** ACS: looking for '%s' (normalized: '%s'; shorten: '%s')", *fname, *afn, *ln);
+  if (fsys_developer_debug) GLog.Logf(NAME_Dev, "*** ACS: looking for '%s' (normalized: '%s'; shorten: '%s')", *fname, *afn, *ln);
   int rough = -1;
   int prevlen = -1;
   const int count = pakdir.files.length();
@@ -711,25 +710,25 @@ int VPakFileBase::FindACSObject (const VStr &fname) {
     if (fi.lumpNamespace != WADNS_ACSLibrary) continue;
     if (fi.lumpName != ln) continue;
     if (fi.filesize >= 0 && fi.filesize < 12) continue; // why not? (<0 for disk mounts)
-    if (developer) GCon->Logf(NAME_Dev, "*** ACS0: fi='%s', lump='%s', ns=%d (%d)", *fi.fileName, *fi.lumpName, fi.lumpNamespace, WADNS_ACSLibrary);
+    if (fsys_developer_debug) GLog.Logf(NAME_Dev, "*** ACS0: fi='%s', lump='%s', ns=%d (%d)", *fi.fileName, *fi.lumpName, fi.lumpNamespace, WADNS_ACSLibrary);
     const VStr fn = fi.fileName.ExtractFileBaseName().StripExtension();
     if (fn.ICmp(afn) == 0) {
       // exact match
-      if (developer) GCon->Logf(NAME_Dev, "*** ACS0: %s", *fi.fileName);
+      if (fsys_developer_debug) GLog.Logf(NAME_Dev, "*** ACS0: %s", *fi.fileName);
       memset(sign, 0, 4);
       ReadFromLump(f, sign, 0, 4);
       if (memcmp(sign, "ACS", 3) != 0) continue;
       if (sign[3] != 0 && sign[3] != 'E' && sign[3] != 'e') continue;
-      if (developer) GCon->Logf(NAME_Dev, "*** ACS0: %s -- HIT!", *fi.fileName);
+      if (fsys_developer_debug) GLog.Logf(NAME_Dev, "*** ACS0: %s -- HIT!", *fi.fileName);
       return f;
     }
     if (rough < 0 || (fn.length() >= afn.length() && prevlen > fn.length())) {
-      if (developer) GCon->Logf(NAME_Dev, "*** ACS1: %s", *fi.fileName);
+      if (fsys_developer_debug) GLog.Logf(NAME_Dev, "*** ACS1: %s", *fi.fileName);
       memset(sign, 0, 4);
       ReadFromLump(f, sign, 0, 4);
       if (memcmp(sign, "ACS", 3) != 0) continue;
       if (sign[3] != 0 && sign[3] != 'E' && sign[3] != 'e') continue;
-      if (developer) GCon->Logf(NAME_Dev, "*** ACS1: %s -- HIT!", *fi.fileName);
+      if (fsys_developer_debug) GLog.Logf(NAME_Dev, "*** ACS1: %s -- HIT!", *fi.fileName);
       rough = f;
       prevlen = fn.length();
     }

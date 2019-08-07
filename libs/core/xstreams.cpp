@@ -1047,6 +1047,12 @@ const VStr &VStdFileStream::GetName () const {
 //==========================================================================
 void VStdFileStream::Seek (int pos) {
   if (!mFl) { setError(); return; }
+#ifdef __SWITCH__
+  // I don't know how or why this works, but unless you seek to 0 first,
+  // fseeking on the Switch seems to set the pointer to an incorrect
+  // position, but only sometimes
+  fseek(mFl, 0, SEEK_SET);
+#endif
   if (fseek(mFl, pos, SEEK_SET)) setError();
 }
 
@@ -1057,7 +1063,14 @@ void VStdFileStream::Seek (int pos) {
 //
 //==========================================================================
 int VStdFileStream::Tell () {
-  return (bError || !mFl ? 0 : ftell(mFl));
+  if (mFl && !bError) {
+    int res = (int)ftell(mFl);
+    if (res < 0) { setError(); return 0; }
+    return res;
+  } else {
+    setError();
+    return 0;
+  }
 }
 
 
@@ -1067,7 +1080,9 @@ int VStdFileStream::Tell () {
 //
 //==========================================================================
 int VStdFileStream::TotalSize () {
-  if (size < 0 && mFl && !bError) {
+  if (!mFl || bError) { setError(); return 0; }
+  if (!IsLoading()) size = -1;
+  if (size < 0) {
     auto opos = ftell(mFl);
     fseek(mFl, 0, SEEK_END);
     size = (int)ftell(mFl);

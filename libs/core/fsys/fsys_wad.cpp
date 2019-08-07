@@ -24,8 +24,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "gamedefs.h"
-#include "fs_local.h"
+#include "fsys_local.h"
 
 
 extern bool fsys_skipSounds;
@@ -114,7 +113,7 @@ void VWadFile::Open (const VStr &FileName, bool FixVoices, VStream *InStream) {
     Stream = FL_OpenSysFileRead(FileName);
     if (!Stream) Sys_Error("Couldn't open \"%s\"", *FileName);
   }
-  if (fsys_report_added_paks && !FileName.isEmpty()) GCon->Logf(NAME_Init, "Adding \"%s\"...", *FileName);
+  if (fsys_report_added_paks && !FileName.isEmpty()) GLog.Logf(NAME_Init, "Adding \"%s\"...", *FileName);
 
   // WAD file or homebrew levels?
   Stream->Serialise(&header, sizeof(header));
@@ -184,7 +183,7 @@ void VWadFile::OpenSingleLump (const VStr &FileName) {
   // open the file and add to directory
   Stream = FL_OpenSysFileRead(FileName);
   if (!Stream) Sys_Error("Couldn't open \"%s\"", *FileName);
-  if (fsys_report_added_paks) GCon->Logf(NAME_Init, "Adding \"%s\"...", *FileName);
+  if (fsys_report_added_paks) GLog.Logf(NAME_Init, "Adding \"%s\"...", *FileName);
 
   PakFileName = FileName;
   VPakFileInfo fi;
@@ -425,7 +424,7 @@ VStream *VWadFile::CreateLumpReaderNum (int lump) {
   VStream *S = new VPartialStreamRO(GetPrefix()+":"+pakdir.files[lump].fileName, Stream, fi.pakdataofs, fi.filesize, &rdlock);
 #endif
 
-  //GCon->Logf("WAD<%s>: lump=%d; name=<%s>; size=(%d:%d); ofs=0x%08x", *PakFileName, lump, *fi.lumpName, fi.filesize, S->TotalSize(), fi.pakdataofs);
+  //GLog.Logf("WAD<%s>: lump=%d; name=<%s>; size=(%d:%d); ofs=0x%08x", *PakFileName, lump, *fi.lumpName, fi.filesize, S->TotalSize(), fi.pakdataofs);
   //Z_Free(ptr);
   return S;
 }
@@ -524,7 +523,7 @@ void VWadFile::RenameSprites (const TArray<VSpriteRename> &A, const TArray<VLump
       newname[1] = A[j].New[1];
       newname[2] = A[j].New[2];
       newname[3] = A[j].New[3];
-      GCon->Logf(NAME_Dev, "renaming WAD sprite '%s' to '%s'", *fi.lumpName, newname);
+      GLog.Logf(NAME_Dev, "renaming WAD sprite '%s' to '%s'", *fi.lumpName, newname);
       fi.lumpName = newname;
       wasRename = true;
     }

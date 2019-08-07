@@ -24,8 +24,10 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#ifndef FS_LOCAL_HEADER
-#define FS_LOCAL_HEADER
+#ifndef VAVOOM_FSYS_LOCAL_HEADER
+#define VAVOOM_FSYS_LOCAL_HEADER
+
+#include "fsys.h"
 
 
 //==========================================================================
@@ -317,28 +319,6 @@ public:
   virtual VStream *OpenFileRead (const VStr &)  override;
   virtual VStream *CreateLumpReaderNum (int) override;
   virtual int LumpLength (int) override;
-};
-
-
-//==========================================================================
-//  VStreamFileReader
-//==========================================================================
-class VStreamFileReader : public VStream {
-protected:
-  FILE *File;
-  FOutputDevice *Error;
-  VStr fname;
-
-public:
-  VStreamFileReader (FILE*, FOutputDevice*, const VStr &afname);
-  virtual ~VStreamFileReader () override;
-  virtual const VStr &GetName () const override;
-  virtual void Seek (int InPos) override;
-  virtual int Tell () override;
-  virtual int TotalSize () override;
-  virtual bool AtEnd () override;
-  virtual bool Close () override;
-  virtual void Serialise (void *V, int Length) override;
 };
 
 

@@ -24,8 +24,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "gamedefs.h"
-#include "fs_local.h"
+#include "fsys_local.h"
 
 
 //==========================================================================
@@ -136,7 +135,7 @@ VStream *VFilesDir::OpenFileRead (const VStr &Name) {
   FILE *File = fopen(*tmpName, "rb");
   if (!File) return nullptr;
   //fprintf(stderr, "***DISK: <%s:%s>\n", *GetPrefix(), *Name);
-  return new VStreamFileReader(File, GCon, tmpName);
+  return new VStdFileStreamRead(File, tmpName);
 }
 
 

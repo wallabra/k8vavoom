@@ -36,10 +36,6 @@ void FL_Shutdown ();
 
 VStr FL_GetConfigDir ();
 
-bool FL_FileExists (const VStr &fname);
-void FL_CreatePath (const VStr &Path);
-
-VStream *FL_OpenFileRead (const VStr &Name);
 // set `isFullName` to `true` to prevent adding anything to file name
 VStream *FL_OpenFileWrite (const VStr &Name, bool isFullName=false);
 
@@ -49,12 +45,6 @@ VStream *FL_OpenFileWriteInCfgDir (const VStr &Name);
 VStream *FL_OpenSysFileRead (const VStr &Name);
 VStream *FL_OpenSysFileWrite (const VStr &Name);
 
-// search file only in "basepaks"
-VStream *FL_OpenFileReadBaseOnly (const VStr &Name);
-
-// not a real list, but something that can be used to check savegame validity
-const TArray<VStr> &GetWadPk3List ();
-
 
 VStr FL_GetConfigDir ();
 VStr FL_GetCacheDir ();
@@ -62,8 +52,9 @@ VStr FL_GetSavesDir ();
 VStr FL_GetScreenshotsDir ();
 VStr FL_GetUserDataDir (bool shouldCreate);
 
-// reject absolute names, names with ".", and names with ".."
-bool FL_IsSafeDiskFileName (const VStr &fname);
+
+// not a real list, but something that can be used to check savegame validity
+const TArray<VStr> &FL_GetWadPk3List ();
 
 
 // used to set "preinit" cvars
@@ -96,11 +87,9 @@ extern bool fsys_hasPwads; // or paks
 extern bool fsys_hasMapPwads; // or paks
 
 extern bool fsys_DisableBloodReplacement;
-extern bool fsys_IgnoreZScript;
-extern bool fsys_DisableBDW;
-
-// used for game detection
-extern bool fsys_EnableAuxSearch;
+// in fsys
+//extern bool fsys_IgnoreZScript;
+//extern bool fsys_DisableBDW;
 
 extern VCvarS game_name;
 

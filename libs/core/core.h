@@ -124,4 +124,6 @@
 
 #include "cvarsys.h"
 
+#include "fsys/fsys.h"
+
 #endif

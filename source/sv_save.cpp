@@ -383,7 +383,7 @@ static VStr SV_GetSavesDir () {
 static vuint32 GetModListHash () {
   VStr modlist;
   // get list of loaded modules
-  auto wadlist = GetWadPk3List();
+  auto wadlist = FL_GetWadPk3List();
   //GCon->Logf("====================="); for (int f = 0; f < wadlist.length(); ++f) GCon->Logf("  %d: %s", f, *wadlist[f]);
   for (int f = 0; f < wadlist.length(); ++f) {
     modlist += wadlist[f];
@@ -811,7 +811,7 @@ bool VSaveSlot::LoadSlot (int Slot) {
   }
 
   // check list of loaded modules
-  auto wadlist = GetWadPk3List();
+  auto wadlist = FL_GetWadPk3List();
   vint32 wcount = wadlist.length();
   *Strm << wcount;
 
@@ -954,7 +954,7 @@ void VSaveSlot::SaveToSlot (int Slot) {
   }
 
   // write list of loaded modules
-  auto wadlist = GetWadPk3List();
+  auto wadlist = FL_GetWadPk3List();
   //GCon->Logf("====================="); for (int f = 0; f < wadlist.length(); ++f) GCon->Logf("  %d: %s", f, *wadlist[f]);
   vint32 wcount = wadlist.length();
   *Strm << wcount;
@@ -1046,7 +1046,7 @@ bool SV_GetSaveString (int Slot, VStr &Desc) {
       }
       if (goodSave) {
         // check list of loaded modules
-        auto wadlist = GetWadPk3List();
+        auto wadlist = FL_GetWadPk3List();
         vint32 wcount = wadlist.length();
         *Strm << wcount;
         if (wcount < 1 || wcount > 8192 || wcount != wadlist.length()) {

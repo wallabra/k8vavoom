@@ -23,8 +23,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "gamedefs.h"
-#include "fs_local.h"
+#include "fsys_local.h"
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -78,7 +77,7 @@ void VDirPakFile::ScanDirectory (VStr relpath, int depth) {
   if (relpath.length()) scanPath = scanPath+"/"+relpath;
   auto dh = Sys_OpenDir(scanPath, true); // want dirs
   if (!dh) return;
-  //GCon->Logf(NAME_Dev, "scanning '%s' (depth=%d)...", *scanPath, depth);
+  //GLog.Logf(NAME_Dev, "scanning '%s' (depth=%d)...", *scanPath, depth);
   // /*EWadNamespace*/vint32 ns = (relpath.length() == 0 ? WADNS_Global : /*(EWadNamespace)*/-1);
   // map relpath to known namespaces
   /*
@@ -103,14 +102,14 @@ void VDirPakFile::ScanDirectory (VStr relpath, int depth) {
     VStr dsk = Sys_ReadDir(dh);
     if (dsk.length() == 0) break;
     VStr diskname = (relpath.length() ? relpath+"/"+dsk : dsk).fixSlashes();
-    //GCon->Logf("...<%s> : <%s>", *dsk, *diskname);
+    //GLog.Logf("...<%s> : <%s>", *dsk, *diskname);
     if (dsk.endsWith("/")) {
       // directory, scan it
       diskname.chopRight(1);
       dirlist.append(diskname);
     } else {
       VStr loname = diskname.toLowerCase();
-      //GCon->Logf(NAME_Dev, "***dsk=<%s>; diskname=<%s>; loname=<%s>", *dsk, *diskname, *loname);
+      //GLog.Logf(NAME_Dev, "***dsk=<%s>; diskname=<%s>; loname=<%s>", *dsk, *diskname, *loname);
       if (pakdir.filemap.has(loname)) continue;
       pakdir.filemap.put(loname, pakdir.files.length());
       VPakFileInfo fe;
@@ -120,7 +119,7 @@ void VDirPakFile::ScanDirectory (VStr relpath, int depth) {
       check(fe.lumpName == NAME_None);
       check(fe.lumpNamespace == -1);
       // fe.lumpNamespace = ns;
-      //GCon->Logf(NAME_Dev, "%d: ns=%d; pakname=<%s>; diskname=<%s>; lumpname=<%s>", files.length()-1, fe.ns, *fe.pakname, *fe.diskname, *fe.lumpname);
+      //GLog.Logf(NAME_Dev, "%d: ns=%d; pakname=<%s>; diskname=<%s>; lumpname=<%s>", files.length()-1, fe.ns, *fe.pakname, *fe.diskname, *fe.lumpname);
       pakdir.append(fe);
     }
   }
@@ -141,7 +140,7 @@ VStream *VDirPakFile::OpenFileRead (const VStr &fname) {
   VStr tmpname = PakFileName+"/"+pakdir.files[lump].diskName;
   FILE *fl = fopen(*tmpname, "rb");
   if (!fl) return nullptr;
-  return new VStreamFileReader(fl, GCon, pakdir.files[lump].diskName);
+  return new VStdFileStreamRead(fl, pakdir.files[lump].diskName);
 }
 
 
@@ -174,5 +173,5 @@ VStream *VDirPakFile::CreateLumpReaderNum (int lump) {
   VStr tmpname = PakFileName+"/"+pakdir.files[lump].diskName;
   FILE *fl = fopen(*tmpname, "rb");
   if (!fl) return nullptr;
-  return new VStreamFileReader(fl, GCon, pakdir.files[lump].diskName);
+  return new VStdFileStreamRead(fl, pakdir.files[lump].diskName);
 }

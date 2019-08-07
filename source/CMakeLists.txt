@@ -296,16 +296,8 @@ set(ZDBSP_SOURCES
 #
 #---------------------------------------
 set(FILESYS_SOURCES
-  filesys/fs_local.h
-  filesys/fs_pakbase.cpp
-  filesys/fs_dir.cpp
-  filesys/fs_dirpak.cpp
-  filesys/fs_wad.cpp
-  filesys/fs_zip.cpp
   filesys/files.cpp
   filesys/files.h
-  filesys/wad.cpp
-  filesys/wad.h
 )
 
 

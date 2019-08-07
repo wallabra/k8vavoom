@@ -25,7 +25,7 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
-#include "fs_local.h"
+#include "../../libs/core/fsys/fsys_local.h"
 
 
 extern VCvarB game_release_mode;
@@ -45,8 +45,6 @@ bool fsys_skipDehacked = false;
 bool fsys_hasPwads = false; // or paks
 bool fsys_hasMapPwads = false; // or paks
 bool fsys_DisableBloodReplacement = false; // for custom modes
-bool fsys_IgnoreZScript = false;
-bool fsys_DisableBDW = false;
 
 
 int fsys_warp_n0 = -1;
@@ -85,42 +83,11 @@ VStr fl_basedir;
 VStr fl_savedir;
 VStr fl_gamedir;
 
-TArray<VSearchPath *> SearchPaths;
-bool fsys_report_added_paks = true;
-//static VCvarB fsys_report_system_wads("fsys_report_system_wads", false, "Report loaded system wads?", CVAR_Archive);
-//static VCvarB fsys_report_user_wads("fsys_report_user_wads", true, "Report loaded user wads?", CVAR_Archive);
-
-TArray<VStr> wadfiles;
-//static bool bIwadAdded;
 static TArray<VStr> IWadDirs;
 static int IWadIndex;
 static VStr warpTpl;
 static TArray<ArgVarValue> preinitCV;
 static ArgVarValue emptyAV;
-static TArray<VStr> filters;
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-// removes prefix, returns filter index (or -1, and does nothing)
-int FL_CheckFilterName (VStr &fname) {
-  if (fname.isEmpty() || filters.length() == 0) return -1;
-  if (!fname.startsWithNoCase("filter/")) return -1;
-  //GCon->Logf("!!! %d", filters.length());
-  int bestIdx = -1;
-  for (int f = 0; f < filters.length(); ++f) {
-    const VStr &fs = filters[f];
-    //GCon->Logf("f=%d; fs=<%s>; fname=<%s>", f, *fs, *fname);
-    if (fname.length() > fs.length()+1 && fname[fs.length()] == '/' && fname.startsWith(fs)) {
-      bestIdx = f;
-    }
-  }
-  if (bestIdx >= 0) {
-    const VStr &fs = filters[bestIdx];
-    fname.chopLeft(fs.length()+1);
-    while (fname.length() && fname[0] == '/') fname.chopLeft(1);
-  }
-  return bestIdx;
-}
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -698,7 +665,7 @@ static void tempMount (const PWadFile &pwf) {
     for (int i = 0; i < wads.length(); ++i) {
       VStream *wadst = dpak->OpenFileRead(wads[i]);
       if (!wadst) continue;
-      W_AddAuxiliaryStream(wadst, WAuxFileType::Wad);
+      W_AddAuxiliaryStream(wadst, WAuxFileType::VFS_Wad);
     }
 
     // add all pk3 files in the root
@@ -706,7 +673,7 @@ static void tempMount (const PWadFile &pwf) {
     dpak->ListPk3Files(pk3s);
     for (int i = 0; i < pk3s.length(); ++i) {
       VStream *pk3st = dpak->OpenFileRead(pk3s[i]);
-      W_AddAuxiliaryStream(pk3st, WAuxFileType::Pk3);
+      W_AddAuxiliaryStream(pk3st, WAuxFileType::VFS_Pk3);
     }
   } else {
     VStream *strm = FL_OpenSysFileRead(pwf.fname);
@@ -724,15 +691,15 @@ static void tempMount (const PWadFile &pwf) {
     strm->Seek(0);
     if (memcmp(sign, "PWAD", 4) == 0 || memcmp(sign, "IWAD", 4) == 0) {
       //GCon->Logf(NAME_Init, "TEMPMOUNT: WAD: %s", *pwf.fname);
-      W_AddAuxiliaryStream(strm, WAuxFileType::Wad);
+      W_AddAuxiliaryStream(strm, WAuxFileType::VFS_Wad);
     } else {
       VStr ext = pwf.fname.ExtractFileExtension();
       if (ext.strEquCI(".pk3")) {
         //GCon->Logf(NAME_Init, "TEMPMOUNT: PK3: %s", *pwf.fname);
-        W_AddAuxiliaryStream(strm, WAuxFileType::Pk3);
+        W_AddAuxiliaryStream(strm, WAuxFileType::VFS_Pk3);
       } else if (ext.strEquCI(".zip")) {
         //GCon->Logf(NAME_Init, "TEMPMOUNT: ZIP: %s", *pwf.fname);
-        W_AddAuxiliaryStream(strm, WAuxFileType::Zip);
+        W_AddAuxiliaryStream(strm, WAuxFileType::VFS_Zip);
       }
     }
   }
@@ -742,7 +709,22 @@ static void tempMount (const PWadFile &pwf) {
 // ////////////////////////////////////////////////////////////////////////// //
 static TArray<VStr> wpklist; // everything is lowercased
 
-// asystem
+
+//==========================================================================
+//
+//  FL_GetWadPk3List
+//
+//==========================================================================
+const TArray<VStr> &FL_GetWadPk3List () {
+  return wpklist;
+}
+
+
+//==========================================================================
+//
+//  wpkAppend
+//
+//==========================================================================
 static void wpkAppend (const VStr &fname, bool asystem) {
   if (fname.length() == 0) return;
   VStr fn = fname.toLowerCase();
@@ -772,16 +754,6 @@ __attribute__((unused)) static int cmpfuncCI (const void *v1, const void *v2) {
 
 static int cmpfuncCINoExt (const void *v1, const void *v2) {
   return ((VStr *)v1)->StripExtension().ICmp(((VStr *)v2)->StripExtension());
-}
-
-
-//==========================================================================
-//
-//  AddZipFile
-//
-//==========================================================================
-const TArray<VStr> &GetWadPk3List () {
-  return wpklist;
 }
 
 
@@ -1423,7 +1395,7 @@ static void ParseBase (const VStr &name, const VStr &mainiwad) {
 
   //GCon->Logf("********* %d", gmi.filters.length());
 
-  filters = gmi.filters;
+  fsys_game_filters = gmi.filters;
   warpTpl = gmi.warp;
 
   IWadIndex = SearchPaths.length();
@@ -1561,6 +1533,8 @@ void FL_Init () {
   const char *p;
   VStr mainIWad = VStr();
   int wmap1 = -1, wmap2 = -1; // warp
+
+  fsys_IgnoreZScript = true;
 
   doStartMap = (GArgs.CheckParm("-k8runmap") != 0);
 
@@ -1911,181 +1885,12 @@ void FL_Init () {
 //
 //==========================================================================
 void FL_Shutdown () {
-  for (int i = 0; i < SearchPaths.length(); ++i) {
-    delete SearchPaths[i];
-    SearchPaths[i] = nullptr;
-  }
-  SearchPaths.Clear();
   fl_basedir.Clean();
   fl_savedir.Clean();
   fl_gamedir.Clean();
-  wadfiles.Clear();
   IWadDirs.Clear();
+  FSYS_Shutdown();
 }
-
-
-//==========================================================================
-//
-//  FL_FileExists
-//
-//==========================================================================
-bool FL_FileExists (const VStr &fname) {
-  for (int i = SearchPaths.length()-1; i >= 0; --i) {
-    if (SearchPaths[i]->FileExists(fname)) return true;
-  }
-  return false;
-}
-
-
-//==========================================================================
-//
-//  FL_CreatePath
-//
-//==========================================================================
-void FL_CreatePath (const VStr &Path) {
-  TArray<VStr> spp;
-  Path.SplitPath(spp);
-  if (spp.length() == 0 || (spp.length() == 1 && spp[0] == "/")) return;
-  if (spp.length() > 0) {
-    VStr newpath;
-    for (int pos = 0; pos < spp.length(); ++pos) {
-      if (newpath.length() && newpath[newpath.length()-1] != '/') newpath += "/";
-      newpath += spp[pos];
-      if (!Sys_DirExists(newpath)) Sys_CreateDirectory(newpath);
-    }
-  }
-  /*
-  VStr Temp = Path;
-  for (size_t i = 3; i <= Temp.Length(); i++)
-  {
-    if (Temp[i] == '/' || Temp[i] == '\\' || Temp[i] == 0)
-    {
-      char Save = Temp[i];
-      Temp[i] = 0;
-      if (!Sys_DirExists(Temp))
-        Sys_CreateDirectory(Temp);
-      Temp[i] = Save;
-    }
-  }
-  */
-}
-
-
-//==========================================================================
-//
-//  FL_OpenFileRead
-//
-//==========================================================================
-VStream *FL_OpenFileRead (const VStr &Name) {
-  for (int i = SearchPaths.length()-1; i >= 0; --i) {
-    VStream *Strm = SearchPaths[i]->OpenFileRead(Name);
-    if (Strm) return Strm;
-  }
-  return nullptr;
-}
-
-
-//==========================================================================
-//
-//  FL_OpenFileReadBaseOnly
-//
-//==========================================================================
-VStream *FL_OpenFileReadBaseOnly (const VStr &Name) {
-  /*
-  for (int i = SearchPaths.length()-1; i >= 0; --i) {
-    if (SearchPaths[i]->basepak) GCon->Logf(NAME_Init, "*** <%s>", *SearchPaths[i]->GetPrefix());
-  }
-  */
-  for (int i = SearchPaths.length()-1; i >= 0; --i) {
-    if (!SearchPaths[i]->basepak) continue;
-    VStream *Strm = SearchPaths[i]->OpenFileRead(Name);
-    if (Strm) return Strm;
-  }
-  return nullptr;
-}
-
-
-//==========================================================================
-//
-//  FL_OpenSysFileRead
-//
-//==========================================================================
-VStream *FL_OpenSysFileRead (const VStr &Name) {
-  FILE *File = fopen(*Name, "rb");
-  if (!File) return nullptr;
-  return new VStreamFileReader(File, GCon, Name);
-}
-
-
-//==========================================================================
-//
-//  VStreamFileWriter
-//
-//==========================================================================
-class VStreamFileWriter : public VStream {
-protected:
-  FILE *File;
-  FOutputDevice *Error;
-  VStr fname;
-
-public:
-  VStreamFileWriter (FILE *InFile, FOutputDevice *InError, const VStr &afname) : File(InFile), Error(InError), fname(afname) {
-    bLoading = false;
-  }
-
-  virtual ~VStreamFileWriter () override {
-    if (File) Close();
-  }
-
-  virtual const VStr &GetName () const override { return fname; }
-
-  virtual void Seek (int InPos) override {
-    if (!File || bError || fseek(File, InPos, SEEK_SET)) bError = true;
-  }
-
-  virtual int Tell () override {
-    if (File && !bError) {
-      int res = (int)ftell(File);
-      if (res < 0) { bError = true; return 0; }
-      return res;
-    } else {
-      bError = true;
-      return 0;
-    }
-  }
-
-  virtual int TotalSize () override {
-    if (!File || bError) { bError = true; return 0; }
-    int CurPos = ftell(File);
-    if (fseek(File, 0, SEEK_END) != 0) { bError = true; return 0; }
-    int Size = ftell(File);
-    if (Size < 0) { bError = true; return 0; }
-    if (fseek(File, CurPos, SEEK_SET) != 0) { bError = true; return 0; }
-    return Size;
-  }
-
-  virtual bool AtEnd () override {
-    if (File && !bError) return !!feof(File);
-    bError = true;
-    return true;
-  }
-
-  virtual bool Close () override {
-    if (File && fclose(File)) bError = true;
-    File = nullptr;
-    return !bError;
-  }
-
-  virtual void Serialise (void *V, int Length) override {
-    if (!File || bError) { bError = true; return; }
-    if (fwrite(V, Length, 1, File) != 1) bError = true;
-  }
-
-  virtual void Flush () override {
-    if (!File || bError) { bError = true; return; }
-    if (fflush(File)) bError = true;
-  }
-};
 
 
 //==========================================================================
@@ -2104,10 +1909,7 @@ VStream *FL_OpenFileWrite (const VStr &Name, bool isFullName) {
       tmpName = fl_basedir+"/"+fl_gamedir+"/"+Name;
     }
   }
-  FL_CreatePath(tmpName.ExtractFilePath());
-  FILE *File = fopen(*tmpName, "wb");
-  if (!File) return nullptr;
-  return new VStreamFileWriter(File, GCon, tmpName);
+  return FL_OpenSysFileWrite(tmpName);
 }
 
 
@@ -2119,7 +1921,7 @@ VStream *FL_OpenFileWrite (const VStr &Name, bool isFullName) {
 VStream *FL_OpenFileReadInCfgDir (const VStr &Name) {
   VStr diskName = FL_GetConfigDir()+"/"+Name;
   FILE *File = fopen(*diskName, "rb");
-  if (File) return new VStreamFileReader(File, GCon, diskName);
+  if (File) return new VStdFileStreamRead(File, diskName);
   return FL_OpenFileRead(Name);
 }
 
@@ -2131,139 +1933,7 @@ VStream *FL_OpenFileReadInCfgDir (const VStr &Name) {
 //==========================================================================
 VStream *FL_OpenFileWriteInCfgDir (const VStr &Name) {
   VStr diskName = FL_GetConfigDir()+"/"+Name;
-  FL_CreatePath(diskName.ExtractFilePath());
-  FILE *File = fopen(*diskName, "wb");
-  if (!File) return nullptr;
-  return new VStreamFileWriter(File, GCon, diskName);
-}
-
-
-//==========================================================================
-//
-//  FL_OpenSysFileWrite
-//
-//==========================================================================
-VStream *FL_OpenSysFileWrite (const VStr &Name) {
-  return FL_OpenFileWrite(Name, true);
-}
-
-
-//==========================================================================
-//
-//  VStreamFileReader
-//
-//==========================================================================
-VStreamFileReader::VStreamFileReader (FILE *InFile, FOutputDevice *InError, const VStr &afname)
-  : File(InFile)
-  , Error(InError)
-  , fname(afname)
-{
-  fseek(File, 0, SEEK_SET);
-  bLoading = true;
-}
-
-
-//==========================================================================
-//
-//  VStreamFileReader::~VStreamFileReader
-//
-//==========================================================================
-VStreamFileReader::~VStreamFileReader() {
-  if (File) Close();
-}
-
-
-//==========================================================================
-//
-//  VStreamFileReader::GetName
-//
-//==========================================================================
-const VStr &VStreamFileReader::GetName () const {
-  return fname;
-}
-
-
-//==========================================================================
-//
-//  VStreamFileReader::Seek
-//
-//==========================================================================
-void VStreamFileReader::Seek (int InPos) {
-#ifdef __SWITCH__
-  // I don't know how or why this works, but unless you seek to 0 first,
-  // fseeking on the Switch seems to set the pointer to an incorrect
-  // position, but only sometimes
-  if (File) fseek(File, 0, SEEK_SET);
-#endif
-  if (!File || bError || fseek(File, InPos, SEEK_SET)) bError = true;
-}
-
-
-//==========================================================================
-//
-//  VStreamFileReader::Tell
-//
-//==========================================================================
-int VStreamFileReader::Tell () {
-  if (File && !bError) {
-    int res = (int)ftell(File);
-    if (res < 0) { bError = true; return 0; }
-    return res;
-  } else {
-    bError = true;
-    return 0;
-  }
-}
-
-
-//==========================================================================
-//
-//  VStreamFileReader::TotalSize
-//
-//==========================================================================
-int VStreamFileReader::TotalSize () {
-  if (!File || bError) { bError = true; return 0; }
-  int CurPos = ftell(File);
-  if (fseek(File, 0, SEEK_END) != 0) { bError = true; return 0; }
-  int Size = ftell(File);
-  if (Size < 0) { bError = true; return 0; }
-  if (fseek(File, CurPos, SEEK_SET) != 0) { bError = true; return 0; }
-  return Size;
-}
-
-
-//==========================================================================
-//
-//  VStreamFileReader::AtEnd
-//
-//==========================================================================
-bool VStreamFileReader::AtEnd () {
-  if (File && !bError) return !!feof(File);
-  bError = true;
-  return true;
-}
-
-
-//==========================================================================
-//
-//  VStreamFileReader::Close
-//
-//==========================================================================
-bool VStreamFileReader::Close () {
-  if (File) fclose(File);
-  File = nullptr;
-  return !bError;
-}
-
-
-//==========================================================================
-//
-//  VStreamFileReader::Serialise
-//
-//==========================================================================
-void VStreamFileReader::Serialise (void *V, int Length) {
-  if (!File || bError) { bError = true; return; }
-  if (fread(V, Length, 1, File) != 1) bError = true;
+  return FL_OpenSysFileWrite(diskName);
 }
 
 
@@ -2345,14 +2015,4 @@ VStr FL_GetUserDataDir (bool shouldCreate) {
   //res += '/'; res += game_name;
   if (shouldCreate) Sys_CreateDirectory(res);
   return res;
-}
-
-
-//==========================================================================
-//
-//  FL_IsSafeDiskFileName
-//
-//==========================================================================
-bool FL_IsSafeDiskFileName (const VStr &fname) {
-  return fname.isSafeDiskFileName();
 }

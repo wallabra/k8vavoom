@@ -28,8 +28,7 @@
 //**    Handles WAD file header, directory, lump I/O.
 //**
 //**************************************************************************
-#include "gamedefs.h"
-#include "fs_local.h"
+#include "fsys_local.h"
 
 
 #define GET_LUMP_FILE(num)    SearchPaths[((num)>>16)&0xffff]
@@ -162,13 +161,13 @@ int W_AddAuxiliaryStream (VStream *strm, WAuxFileType ftype) {
   //if (strm.TotalSize() < 16) return -1;
   if (!AuxiliaryIndex) AuxiliaryIndex = SearchPaths.length();
   int residx = SearchPaths.length();
-  //GCon->Logf("AUX: %s", *strm->GetName());
+  //GLog.Logf("AUX: %s", *strm->GetName());
 
-  if (ftype != WAuxFileType::Wad) {
+  if (ftype != WAuxFileType::VFS_Wad) {
     VZipFile *zip = new VZipFile(strm, strm->GetName());
     SearchPaths.Append(zip);
     // scan for wads and pk3s
-    if (ftype == WAuxFileType::Zip) {
+    if (ftype == WAuxFileType::VFS_Zip) {
       zipAddWads(zip, strm->GetName());
       // scan for pk3s
       TArray<VStr> list;
@@ -181,7 +180,7 @@ int W_AddAuxiliaryStream (VStream *strm, WAuxFileType ftype) {
         bool err = zipstrm->IsError();
         delete zipstrm;
         if (err) { delete memstrm; continue; }
-        //GCon->Logf("AUX: %s", *(strm->GetName()+":"+list[f]));
+        //GLog.Logf("AUX: %s", *(strm->GetName()+":"+list[f]));
         VZipFile *pk3 = new VZipFile(memstrm, strm->GetName()+":"+list[f]);
         SearchPaths.Append(pk3);
         zipAddWads(pk3, pk3->GetPrefix());
@@ -189,7 +188,7 @@ int W_AddAuxiliaryStream (VStream *strm, WAuxFileType ftype) {
     }
   } else {
     VWadFile *wad = new VWadFile;
-    //GCon->Logf("AUX: %s", *(strm->GetName()));
+    //GLog.Logf("AUX: %s", *(strm->GetName()));
     wad->Open(strm->GetName(), false, strm);
     SearchPaths.Append(wad);
   }
@@ -600,10 +599,10 @@ int W_IterateNS (int Prev, EWadNamespace NS) {
 //==========================================================================
 int W_IterateFile (int Prev, const VStr &Name) {
   if (Name.isEmpty()) return -1;
-  //GCon->Logf(NAME_Dev, "W_IterateFile: Prev=%d (%d); fn=<%s>", Prev, getSPCount(), *Name);
+  //GLog.Logf(NAME_Dev, "W_IterateFile: Prev=%d (%d); fn=<%s>", Prev, getSPCount(), *Name);
   for (int wi = FILE_INDEX(Prev)+1; wi < getSPCount(); ++wi) {
     int li = SearchPaths[wi]->CheckNumForFileName(Name);
-    //GCon->Logf(NAME_Dev, "W_IterateFile: wi=%d (%d); fn=<%s>; li=%d", wi, getSPCount(), *Name, li);
+    //GLog.Logf(NAME_Dev, "W_IterateFile: wi=%d (%d); fn=<%s>; li=%d", wi, getSPCount(), *Name, li);
     if (li != -1) return MAKE_HANDLE(wi, li);
   }
   return -1;
@@ -637,14 +636,14 @@ int W_FindLumpByFileNameWithExts (const VStr &BaseName, const char **Exts) {
 VStr W_LoadTextLump (VName name) {
   VStream *Strm = W_CreateLumpReaderName(name);
   if (!Strm) {
-    GCon->Logf(NAME_Warning, "cannot load text lump '%s'", *name);
+    GLog.Logf(NAME_Warning, "cannot load text lump '%s'", *name);
     return VStr::EmptyString;
   }
   int msgSize = Strm->TotalSize();
   char *buf = new char[msgSize+1];
   Strm->Serialise(buf, msgSize);
   if (Strm->IsError()) {
-    GCon->Logf(NAME_Warning, "cannot load text lump '%s'", *name);
+    GLog.Logf(NAME_Warning, "cannot load text lump '%s'", *name);
     return VStr::EmptyString;
   }
   delete Strm;
@@ -654,7 +653,7 @@ VStr W_LoadTextLump (VName name) {
   delete[] buf;
 
   if (!Ret.IsValidUtf8()) {
-    GCon->Logf(NAME_Warning, "'%s' is not a valid UTF-8 text lump, assuming Latin 1", *name);
+    GLog.Logf(NAME_Warning, "'%s' is not a valid UTF-8 text lump, assuming Latin 1", *name);
     Ret = Ret.Latin1ToUtf8();
   }
   return Ret;
@@ -673,7 +672,7 @@ void W_LoadLumpIntoArray (VName LumpName, TArray<vuint8> &Array) {
   check(Strm);
   Array.SetNum(Strm->TotalSize());
   Strm->Serialise(Array.Ptr(), Strm->TotalSize());
-  if (Strm->IsError()) { delete Strm; Host_Error("error reading lump '%s'", *W_FullLumpName(Lump)); }
+  if (Strm->IsError()) { delete Strm; Sys_Error("error reading lump '%s'", *W_FullLumpName(Lump)); }
   delete Strm;
 }
 
@@ -727,7 +726,7 @@ VStr W_FindMapInLastFile (int fileid, int *mapnum) {
       name = *longname+5;
       if (strchr(name, '/')) continue;
     }
-    //GCon->Logf("*** <%s>", name);
+    //GLog.Logf("*** <%s>", name);
     // doom1 (or kdizd)
     if ((name[0] == 'e' || name[0] == 'z') && name[1] && name[2] == 'm' && name[3] && !name[4]) {
       int e = VStr::digitInBase(name[1], 10);
@@ -776,7 +775,7 @@ VStr W_FindMapInAuxuliaries (int *mapnum) {
   if (!AuxiliaryIndex) return VStr();
   for (int f = SearchPaths.length()-1; f >= AuxiliaryIndex; --f) {
     VStr mn = W_FindMapInLastFile(f, mapnum);
-    //GCon->Logf(NAME_Init, "W_FindMapInAuxuliaries:<%s>: f=%d; ax=%d; mn=%s", *SearchPaths[f]->GetPrefix(), f, AuxiliaryIndex, *mn);
+    //GLog.Logf(NAME_Init, "W_FindMapInAuxuliaries:<%s>: f=%d; ax=%d; mn=%s", *SearchPaths[f]->GetPrefix(), f, AuxiliaryIndex, *mn);
     if (!mn.isEmpty()) return mn;
   }
   return VStr();

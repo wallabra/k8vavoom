@@ -538,7 +538,7 @@ void CL_PlayDemo (const VStr &DemoName, bool IsTimeDemo) {
     return;
   }
 
-  auto wadlist = GetWadPk3List();
+  auto wadlist = FL_GetWadPk3List();
   int wadlen = wadlist.length();
   int dmwadlen = -1;
   *Strm << STRM_INDEX(dmwadlen);
@@ -688,7 +688,7 @@ COMMAND(RecordDemo) {
   vuint32 ver = VAVOOM_DEMO_VERSION;
   *cls.demofile << ver;
 
-  auto wadlist = GetWadPk3List();
+  auto wadlist = FL_GetWadPk3List();
   int wadlen = wadlist.length();
   *cls.demofile << STRM_INDEX(wadlen);
   for (int f = 0; f < wadlen; ++f) *cls.demofile << wadlist[f];

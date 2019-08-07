@@ -78,4 +78,15 @@ add_library(core STATIC
   mimalloc/mimalloc-types.h
   mimalloc/mimalloc.h
   mimalloc/static.c
+
+  # fsys (aka VFS)
+  fsys/fsys.h
+  fsys/fsys.cpp
+  fsys/fsys_local.h
+  fsys/fsys_dir.cpp
+  fsys/fsys_dirpak.cpp
+  fsys/fsys_pakbase.cpp
+  fsys/fsys_wad.cpp
+  fsys/fsys_zip.cpp
+  fsys/fsys_vfs.cpp
 )

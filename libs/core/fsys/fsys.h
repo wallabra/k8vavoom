@@ -24,15 +24,47 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-//**
-//**  WAD I/O functions.
-//**
-//**************************************************************************
+#ifndef VAVOOM_FSYS_H
+#define VAVOOM_FSYS_H
+
+#ifndef VAVOOM_CORE_HEADER
+# include "../core.h"
+#endif
+
+
+void FSYS_Shutdown ();
+
+bool FL_FileExists (const VStr &fname);
+void FL_CreatePath (const VStr &Path);
+
+VStream *FL_OpenFileRead (const VStr &Name);
+
+VStream *FL_OpenSysFileRead (const VStr &Name);
+VStream *FL_OpenSysFileWrite (const VStr &Name);
+
+// search file only in "basepaks"
+VStream *FL_OpenFileReadBaseOnly (const VStr &Name);
+
+// reject absolute names, names with ".", and names with ".."
+bool FL_IsSafeDiskFileName (const VStr &fname);
+
+
+extern bool fsys_developer_debug;
+extern bool fsys_IgnoreZScript;
+extern bool fsys_DisableBDW;
+
+// used for game detection
+extern bool fsys_EnableAuxSearch;
+
+extern TArray<VStr> fsys_game_filters;
+
+
 // k8: use .gwa supplemental wads?
 // those are remnants of the early times, and not really used these days.
 // you still can put PVS there, but PVS seems to be totally unused
 // these days too; so i opted to exclude GWA support.
 // i had a define to turn GWA support on, but now i removed it completely.
+#include "fsys.h"
 
 
 // boom namespaces
@@ -59,9 +91,9 @@ void W_AddFile (const VStr &FileName, bool FixVoices);
 void W_Shutdown ();
 
 enum WAuxFileType {
-  Wad,
-  Zip,
-  Pk3,
+  VFS_Wad,
+  VFS_Zip,
+  VFS_Pk3,
 };
 
 // returns lump handle
@@ -267,3 +299,6 @@ public:
   inline bool isIWAD () const { return (lump >= 0 ? W_IsIWADLump(lump) : false); }
   inline bool isIWad () const { return (lump >= 0 ? W_IsIWADLump(lump) : false); }
 };
+
+
+#endif

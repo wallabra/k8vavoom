@@ -47,15 +47,15 @@
 //**  distribution.
 //**
 //**************************************************************************
-#include "gamedefs.h"
-#include "fs_local.h"
+#include "fsys_local.h"
+
 #ifdef USE_INTERNAL_LZMA
-# include "../../libs/liblzma/api/lzma.h"
+# include "../../liblzma/api/lzma.h"
 #else
 # include <lzma.h>
 #endif
 #ifdef USE_INTERNAL_ZLIB
-# include "../../libs/zlib/zlib.h"
+# include "../../zlib/zlib.h"
 #else
 # include <zlib.h>
 #endif
@@ -89,7 +89,6 @@ private:
   VStream *FileStream; // source stream of the zipfile
   VStr fname;
   const VPakFileInfo &Info; // info about the file we are reading
-  FOutputDevice *Error;
 
   Bytef ReadBuffer[UNZ_BUFSIZE]; // internal buffer for compressed data
   z_stream stream; // zlib stream structure for inflate
@@ -119,7 +118,7 @@ private:
   void cacheAllData ();
 
 public:
-  VZipFileReader (const VStr &afname, VStream *, vuint32, const VPakFileInfo &, FOutputDevice *, mythread_mutex *ardlock);
+  VZipFileReader (const VStr &afname, VStream *, vuint32, const VPakFileInfo &, mythread_mutex *ardlock);
   virtual ~VZipFileReader () override;
   virtual const VStr &GetName () const override;
   virtual void Serialise (void *, int) override;
@@ -171,7 +170,7 @@ VZipFile::VZipFile (const VStr &zipfile)
   : VPakFileBase(zipfile, true)
 {
   mythread_mutex_init(&rdlock);
-  if (fsys_report_added_paks) GCon->Logf(NAME_Init, "Adding \"%s\"...", *PakFileName);
+  if (fsys_report_added_paks) GLog.Logf(NAME_Init, "Adding \"%s\"...", *PakFileName);
   auto fstream = FL_OpenSysFileRead(PakFileName);
   check(fstream);
   OpenArchive(fstream);
@@ -253,7 +252,7 @@ void VZipFile::OpenArchive (VStream *fstream) {
   bool isPK3 = PakFileName.ExtractFileExtension().strEquCI(".pk3");
   bool canHasPrefix = true;
   if (isPK3) canHasPrefix = false; // do not remove prefixes in pk3
-  //GCon->Logf("*** ARK: <%s>:<%s> pfx=%d", *PakFileName, *PakFileName.ExtractFileExtension(), (int)canHasPrefix);
+  //GLog.Logf("*** ARK: <%s>:<%s> pfx=%d", *PakFileName, *PakFileName.ExtractFileExtension(), (int)canHasPrefix);
 
   // set the current file of the zipfile to the first file
   vuint32 pos_in_central_dir = offset_central_dir;
@@ -340,7 +339,7 @@ void VZipFile::OpenArchive (VStream *fstream) {
       }
       if (canHasPrefix) {
         // remove prefix
-        //GCon->Logf("*** ARK: <%s>:<%s> pfx=<%s>", *PakFileName, *PakFileName.ExtractFileExtension(), *xpfx);
+        //GLog.Logf("*** ARK: <%s>:<%s> pfx=<%s>", *PakFileName, *PakFileName.ExtractFileExtension(), *xpfx);
         for (int i = 0; i < pakdir.files.length(); ++i) {
           pakdir.files[i].fileName = VStr(pakdir.files[i].fileName, sli+1, pakdir.files[i].fileName.length()-sli-1);
           //printf("new: <%s>\n", *Files[i].Name);
@@ -355,9 +354,9 @@ void VZipFile::OpenArchive (VStream *fstream) {
   // detect SkullDash EE
   if (isPK3) {
     int tmidx = pakdir.findFile("maps/titlemap.wad");
-    //GCon->Logf("***%s: tmidx=%d", *PakFileName, tmidx);
+    //GLog.Logf("***%s: tmidx=%d", *PakFileName, tmidx);
     if (tmidx >= 0 && pakdir.files[tmidx].filesize == 286046) {
-      //GCon->Logf("*** TITLEMAP: %s", *CalculateMD5(tmidx));
+      //GLog.Logf("*** TITLEMAP: %s", *CalculateMD5(tmidx));
       // check md5
       if (CalculateMD5(tmidx) == "def4f5e00c60727aeb3a25d1982cfcf1") {
         fsys_detected_mod = AD_SKULLDASHEE;
@@ -436,7 +435,7 @@ void VZipFile::Close () {
 VStream *VZipFile::OpenFileRead (const VStr &fname) {
   int fidx = pakdir.findFile(fname);
   if (fidx < 0) return nullptr;
-  return new VZipFileReader(PakFileName+":"+fname, FileStream, BytesBeforeZipFile, pakdir.files[fidx], GCon, &rdlock);
+  return new VZipFileReader(PakFileName+":"+fname, FileStream, BytesBeforeZipFile, pakdir.files[fidx], &rdlock);
 }
 
 
@@ -448,7 +447,7 @@ VStream *VZipFile::OpenFileRead (const VStr &fname) {
 VStream *VZipFile::CreateLumpReaderNum (int Lump) {
   check(Lump >= 0);
   check(Lump < pakdir.files.length());
-  return new VZipFileReader(PakFileName+":"+pakdir.files[Lump].fileName, FileStream, BytesBeforeZipFile, pakdir.files[Lump], GCon, &rdlock);
+  return new VZipFileReader(PakFileName+":"+pakdir.files[Lump].fileName, FileStream, BytesBeforeZipFile, pakdir.files[Lump], &rdlock);
 }
 
 
@@ -481,7 +480,7 @@ void VZipFile::RenameSprites (const TArray<VSpriteRename> &A, const TArray<VLump
       newname[1] = A[j].New[1];
       newname[2] = A[j].New[2];
       newname[3] = A[j].New[3];
-      GCon->Logf(NAME_Dev, "renaming ZIP sprite '%s' to '%s'", *L.lumpName, newname);
+      GLog.Logf(NAME_Dev, "renaming ZIP sprite '%s' to '%s'", *L.lumpName, newname);
       L.lumpName = newname;
       wasRename = true;
     }
@@ -503,12 +502,11 @@ void VZipFile::RenameSprites (const TArray<VSpriteRename> &A, const TArray<VLump
 //
 //==========================================================================
 VZipFileReader::VZipFileReader (const VStr &afname, VStream *InStream, vuint32 BytesBeforeZipFile,
-                               const VPakFileInfo &aInfo, FOutputDevice *InError, mythread_mutex *ardlock)
+                               const VPakFileInfo &aInfo, mythread_mutex *ardlock)
   : rdlock(ardlock)
   , FileStream(InStream)
   , fname(afname)
   , Info(aInfo)
-  , Error(InError)
   , lzmaopts(nullptr)
   , wholeBuf(nullptr)
   , wholeSize(-2)
@@ -532,7 +530,7 @@ VZipFileReader::VZipFileReader (const VStr &afname, VStream *InStream, vuint32 B
 
   if (Info.compression != Z_STORE && Info.compression != Z_DEFLATED && Info.compression != Z_LZMA) {
     bError = true;
-    Error->Logf("Compression method %d is not supported for file '%s'", Info.compression, *afname);
+    GLog.Logf("Compression method %d is not supported for file '%s'", Info.compression, *afname);
     return;
   }
 
@@ -562,7 +560,7 @@ VZipFileReader::VZipFileReader (const VStr &afname, VStream *InStream, vuint32 B
        * size of both compressed and uncompressed data
        */
       bError = true;
-      Error->Logf("Failed to initialise inflate stream for file '%s'", *fname);
+      GLog.Logf("Failed to initialise inflate stream for file '%s'", *fname);
       return;
     }
     stream_initialised = true;
@@ -575,7 +573,7 @@ VZipFileReader::VZipFileReader (const VStr &afname, VStream *InStream, vuint32 B
   stream.avail_in = 0;
   lzmastream.avail_in = 0;
   bLoading = true;
-  //Error->Logf("***LOADING '%s'", *fname);
+  //GLog.Logf("***LOADING '%s'", *fname);
 }
 
 
@@ -627,12 +625,12 @@ bool VZipFileReader::Close () {
   wholeSize = -2;
 
   if (stream_initialised) {
-    //Error->Logf("***CLOSING '%s'", *fname);
+    //GLog.Logf("***CLOSING '%s'", *fname);
     /*
     if (!bError && rest_read_uncompressed == 0) {
       if (Crc32 != Info.crc32) {
         bError = true;
-        Error->Logf("Bad CRC for file '%s'", *fname);
+        GLog.Logf("Bad CRC for file '%s'", *fname);
       }
     }
     */
@@ -659,7 +657,7 @@ bool VZipFileReader::LzmaRestart () {
 
   if (usezlib) {
     bError = true;
-    Error->Logf("Cannot lzma-restart non-lzma stream for file '%s'", *fname);
+    GLog.Logf("Cannot lzma-restart non-lzma stream for file '%s'", *fname);
     return false;
   }
 
@@ -669,7 +667,7 @@ bool VZipFileReader::LzmaRestart () {
 
   if (rest_read_compressed < 4+5) {
     bError = true;
-    Error->Logf("Invalid lzma header (out of data) for file '%s'", *fname);
+    GLog.Logf("Invalid lzma header (out of data) for file '%s'", *fname);
     return false;
   }
 
@@ -683,13 +681,13 @@ bool VZipFileReader::LzmaRestart () {
 
   if (err) {
     bError = true;
-    Error->Logf("Error reading lzma headers for file '%s'", *fname);
+    GLog.Logf("Error reading lzma headers for file '%s'", *fname);
     return false;
   }
 
   if (ziplzmahdr[3] != 0 || ziplzmahdr[2] == 0 || ziplzmahdr[2] < 5) {
     bError = true;
-    Error->Logf("Invalid lzma header (0) for file '%s'", *fname);
+    GLog.Logf("Invalid lzma header (0) for file '%s'", *fname);
     return false;
   }
 
@@ -697,7 +695,7 @@ bool VZipFileReader::LzmaRestart () {
     vuint32 skip = ziplzmahdr[2]-5;
     if (rest_read_compressed < skip) {
       bError = true;
-      Error->Logf("Invalid lzma header (out of extra data) for file '%s'", *fname);
+      GLog.Logf("Invalid lzma header (out of extra data) for file '%s'", *fname);
       return false;
     }
     rest_read_compressed -= skip;
@@ -706,7 +704,7 @@ bool VZipFileReader::LzmaRestart () {
       *FileStream << tmp;
       if (FileStream->IsError()) {
         bError = true;
-        Error->Logf("Error reading extra lzma headers for file '%s'", *fname);
+        GLog.Logf("Error reading extra lzma headers for file '%s'", *fname);
         return false;
       }
     }
@@ -726,26 +724,26 @@ bool VZipFileReader::LzmaRestart () {
   vuint32 prpsize;
   if (lzma_properties_size(&prpsize, &filters[0]) != LZMA_OK) {
     bError = true;
-    Error->Logf("Failed to initialise lzma stream for file '%s'", *fname);
+    GLog.Logf("Failed to initialise lzma stream for file '%s'", *fname);
     return false;
   }
   if (prpsize != 5) {
     bError = true;
-    Error->Logf("Failed to initialise lzma stream for file '%s'", *fname);
+    GLog.Logf("Failed to initialise lzma stream for file '%s'", *fname);
     return false;
   }
 
   if (lzma_properties_decode(&filters[0], nullptr, lzmaprhdr, prpsize) != LZMA_OK) {
     lzmaopts = (lzma_options_lzma *)filters[0].options;
     bError = true;
-    Error->Logf("Failed to initialise lzma stream for file '%s'", *fname);
+    GLog.Logf("Failed to initialise lzma stream for file '%s'", *fname);
     return false;
   }
   lzmaopts = (lzma_options_lzma *)filters[0].options;
 
   if (lzma_raw_decoder(&lzmastream, &filters[0]) != LZMA_OK) {
     bError = true;
-    Error->Logf("Failed to initialise lzma stream for file '%s'", *fname);
+    GLog.Logf("Failed to initialise lzma stream for file '%s'", *fname);
     return false;
   }
 
@@ -795,37 +793,37 @@ bool VZipFileReader::CheckCurrentFileCoherencyHeader (vuint32 *piSizeVar, vuint3
   }
 
   if (err) {
-    Error->Logf("Error reading archive for file '%s'", *fname);
+    GLog.Logf("Error reading archive for file '%s'", *fname);
     return false;
   }
 
   if (Magic != 0x04034b50) {
-    Error->Logf("Bad file magic for file '%s'", *fname);
+    GLog.Logf("Bad file magic for file '%s'", *fname);
     return false;
   }
 
   if (ComprMethod != Info.compression) {
-    Error->Logf("Compression method doesn't match for file '%s'", *fname);
+    GLog.Logf("Compression method doesn't match for file '%s'", *fname);
     return false;
   }
 
   if (Crc != Info.crc32 && (Flags&8) == 0) {
-    Error->Logf("CRC doesn't match for file '%s'", *fname);
+    GLog.Logf("CRC doesn't match for file '%s'", *fname);
     return false;
   }
 
   if (ComprSize != Info.packedsize && (Flags&8) == 0) {
-    Error->Logf("Compressed size doesn't match for file '%s'", *fname);
+    GLog.Logf("Compressed size doesn't match for file '%s'", *fname);
     return false;
   }
 
   if (UncomprSize != (vuint32)Info.filesize && (Flags&8) == 0) {
-    Error->Logf("Uncompressed size doesn't match for file '%s'", *fname);
+    GLog.Logf("Uncompressed size doesn't match for file '%s'", *fname);
     return false;
   }
 
   if (FileNameSize != Info.filenamesize) {
-    Error->Logf("File name length doesn't match for file '%s'", *fname);
+    GLog.Logf("File name length doesn't match for file '%s'", *fname);
     return false;
   }
 
@@ -847,7 +845,7 @@ void VZipFileReader::readBytes (void *buf, int length) {
   if (length == 0) return;
 
   if ((vuint32)length > rest_read_uncompressed) {
-    //Error->Logf("Want to read past the end of the file '%s': rest=%d; length=%d", *GetName(), (vint32)rest_read_uncompressed, length);
+    //GLog.Logf("Want to read past the end of the file '%s': rest=%d; length=%d", *GetName(), (vint32)rest_read_uncompressed, length);
     setError();
     return;
   }
@@ -878,13 +876,13 @@ void VZipFileReader::readBytes (void *buf, int length) {
       }
       if (err) {
         bError = true;
-        Error->Logf("Failed to read from zip for file '%s'", *fname);
+        GLog.Logf("Failed to read from zip for file '%s'", *fname);
         return;
       }
 #ifdef K8_UNLZMA_DEBUG
       if (!usezlib) fprintf(stderr, "LZMA: read %d compressed bytes\n", uReadThis);
 #endif
-      //Error->Logf("Read %u packed bytes from '%s' (%u left)", uReadThis, *GetName(), rest_read_compressed-uReadThis);
+      //GLog.Logf("Read %u packed bytes from '%s' (%u left)", uReadThis, *GetName(), rest_read_compressed-uReadThis);
       pos_in_zipfile += uReadThis;
       rest_read_compressed -= uReadThis;
       stream.next_in = ReadBuffer;
@@ -917,7 +915,7 @@ void VZipFileReader::readBytes (void *buf, int length) {
       int err = inflate(&stream, flush);
       if (err >= 0 && stream.msg != nullptr) {
         setError();
-        Error->Logf("Decompression failed: %s for file '%s'", stream.msg, *fname);
+        GLog.Logf("Decompression failed: %s for file '%s'", stream.msg, *fname);
         return;
       }
       uLong uTotalOutAfter = stream.total_out;
@@ -937,7 +935,7 @@ void VZipFileReader::readBytes (void *buf, int length) {
       int err = lzma_code(&lzmastream, LZMA_RUN);
       if (err != LZMA_OK && err != LZMA_STREAM_END) {
         setError();
-        Error->Logf("LZMA decompression failed (%d) for file '%s'", err, *fname);
+        GLog.Logf("LZMA decompression failed (%d) for file '%s'", err, *fname);
         return;
       }
       vuint32 uOutThis = outbefore-lzmastream.avail_out;
@@ -957,12 +955,12 @@ void VZipFileReader::readBytes (void *buf, int length) {
   }
 
   if (iRead != length) {
-    Error->Logf("Only read %d of %d bytes for file '%s'", iRead, length, *fname);
+    GLog.Logf("Only read %d of %d bytes for file '%s'", iRead, length, *fname);
     if (!bError) setError();
   } else if (!bError && rest_read_uncompressed == 0) {
     if (Crc32 != Info.crc32) {
       setError();
-      Error->Logf("Bad CRC for file '%s'", *fname);
+      GLog.Logf("Bad CRC for file '%s'", *fname);
     }
   }
 }
@@ -980,13 +978,13 @@ void VZipFileReader::Serialise (void *V, int length) {
 
   if (!V) {
     setError();
-    Error->Logf("Cannot read into nullptr buffer for file '%s'", *fname);
+    GLog.Logf("Cannot read into nullptr buffer for file '%s'", *fname);
     return;
   }
 
   // use data cache?
   if (wholeSize >= 0) {
-    //Error->Logf("  ***READING '%s' (currpos=%d; size=%d; left=%d; len=%d)", *fname, currpos, wholeSize, wholeSize-currpos, length);
+    //GLog.Logf("  ***READING '%s' (currpos=%d; size=%d; left=%d; len=%d)", *fname, currpos, wholeSize, wholeSize-currpos, length);
     if (length < 0 || currpos < 0 || currpos >= wholeSize || wholeSize-currpos < length) setError();
     if (bError) return;
     memcpy(V, wholeBuf+currpos, length);
@@ -1005,7 +1003,7 @@ void VZipFileReader::Serialise (void *V, int length) {
 //
 //==========================================================================
 void VZipFileReader::cacheAllData () {
-  //Error->Logf("Back-seek in '%s' (curr=%d; new=%d)", *GetName(), Tell(), InPos);
+  //GLog.Logf("Back-seek in '%s' (curr=%d; new=%d)", *GetName(), Tell(), InPos);
   Crc32 = 0;
   rest_read_compressed = Info.packedsize;
   rest_read_uncompressed = Info.filesize;
@@ -1028,11 +1026,11 @@ void VZipFileReader::cacheAllData () {
   }
   // cache data
   wholeSize = (vint32)Info.filesize;
-  //Error->Logf("*** CACHING '%s' (cpos=%d; newpos=%d; size=%d)", *GetName(), cpos, InPos, wholeSize);
+  //GLog.Logf("*** CACHING '%s' (cpos=%d; newpos=%d; size=%d)", *GetName(), cpos, InPos, wholeSize);
   if (wholeSize < 0) { setError(); return; }
   wholeBuf = (vuint8 *)Z_Malloc(wholeSize ? wholeSize : 1);
   readBytes(wholeBuf, wholeSize);
-  //Error->Logf("*** CACHED: %s", (bError ? "error" : "ok"));
+  //GLog.Logf("*** CACHED: %s", (bError ? "error" : "ok"));
 }
 
 
@@ -1048,7 +1046,7 @@ void VZipFileReader::Seek (int InPos) {
   if (bError) return;
 
   if (wholeSize >= 0) {
-    //Error->Logf("  ***SEEKING '%s' (currpos=%d; size=%d; newpos=%d)", *fname, currpos, wholeSize, InPos);
+    //GLog.Logf("  ***SEEKING '%s' (currpos=%d; size=%d; newpos=%d)", *fname, currpos, wholeSize, InPos);
     currpos = InPos;
     return;
   }
@@ -1059,12 +1057,12 @@ void VZipFileReader::Seek (int InPos) {
     // check if we have to cache data
     ++wholeSize;
     if (wholeSize >= 0) {
-      //Error->Logf("*** (0)CACHING '%s' (cpos=%d; newpos=%d; size=%u)", *GetName(), cpos, InPos, Info.filesize);
+      //GLog.Logf("*** (0)CACHING '%s' (cpos=%d; newpos=%d; size=%u)", *GetName(), cpos, InPos, Info.filesize);
       cacheAllData();
       currpos = InPos;
       return;
     }
-    //Error->Logf("Back-seek in '%s' (curr=%d; new=%d)", *GetName(), Tell(), InPos);
+    //GLog.Logf("Back-seek in '%s' (curr=%d; new=%d)", *GetName(), Tell(), InPos);
     Crc32 = 0;
     rest_read_compressed = Info.packedsize;
     rest_read_uncompressed = Info.filesize;
@@ -1090,7 +1088,7 @@ void VZipFileReader::Seek (int InPos) {
     if (cpos < 32768 && InPos >= (vint32)(Info.filesize-Info.filesize/3)) {
       ++wholeSize;
       if (wholeSize >= 0) {
-        //Error->Logf("*** (1)CACHING '%s' (cpos=%d; newpos=%d; size=%u)", *GetName(), cpos, InPos, Info.filesize);
+        //GLog.Logf("*** (1)CACHING '%s' (cpos=%d; newpos=%d; size=%u)", *GetName(), cpos, InPos, Info.filesize);
         cacheAllData();
         currpos = InPos;
         return;
