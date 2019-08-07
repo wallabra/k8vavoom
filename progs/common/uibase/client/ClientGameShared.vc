@@ -117,14 +117,14 @@ void PostSpawn () {
 //==========================================================================
 void LoadMenuDefs () {
   {
-    auto par = MenuDefinition.openParser("uidef/menu_list.txt");
+    auto par = MenuDefinition.openParser("//uidef/menu_list.txt");
     scope(exit) delete par;
     par.Expect("menus");
     par.Expect("{");
     while (!par.Check("}")) {
       if (par.Check(",")) continue;
       par.ExpectString();
-      string fname = va("uidef/%s", par.String);
+      string fname = va("//uidef/%s", par.String);
       MenuDefinition mdef = MenuScreenTextDef.LoadMenu(fname);
       if (!mdef) continue;
       if (!mdef.menuName) { delete mdef; continue; }
