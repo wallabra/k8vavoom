@@ -70,7 +70,7 @@ static VCvarB r_model_advshadow_all("r_model_advshadow_all", false, "Light all a
 //
 //==========================================================================
 static inline bool CalculateThingAlpha (const VEntity *ent, int &RendStyle, float &Alpha) {
-  int rs = ent->RenderStyle;
+  int rs = VRenderLevelDrawer::CoerceRenderStyle(ent->RenderStyle);
   float alpha;
   switch (rs) {
     case STYLE_None:
@@ -122,7 +122,7 @@ static inline bool CalculateThingAlpha (const VEntity *ent, int &RendStyle, floa
 //==========================================================================
 static inline bool SetupRenderStyleAndTime (const VEntity *ent, int &RendStyle, float &Alpha, bool &Additive, float &TimeFrac) {
   if (!CalculateThingAlpha(ent, RendStyle, Alpha)) return false;
-  Additive = (RendStyle == STYLE_Add);
+  Additive = VRenderLevelDrawer::IsAdditiveStyle(RendStyle);
 
   if (ent->State->Time > 0) {
     TimeFrac = 1.0f-(ent->StateTime/ent->State->Time);

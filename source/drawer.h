@@ -131,6 +131,42 @@ public:
 
   virtual bool IsNodeRendered (const node_t *node) const = 0;
   virtual bool IsSubsectorRendered (const subsector_t *sub) const = 0;
+
+public:
+  static inline bool IsAdditiveStyle (int style) {
+    switch (style) {
+      case STYLE_AddStencil:
+      case STYLE_Add:
+      case STYLE_Subtract:
+      case STYLE_AddShaded:
+        return true;
+      default: break;
+    }
+    return false;
+  }
+
+  static inline int CoerceRenderStyle (int style) {
+    switch (style) {
+      case STYLE_None:
+      case STYLE_Normal:
+      case STYLE_Fuzzy:
+      case STYLE_SoulTrans:
+      case STYLE_OptFuzzy:
+      case STYLE_Stencil:
+      case STYLE_AddStencil:
+      case STYLE_Translucent:
+      case STYLE_Add:
+      case STYLE_Dark:
+        return style;
+      case STYLE_Shaded: return STYLE_Stencil; // not implemented
+      case STYLE_TranslucentStencil: return STYLE_Translucent; // not implemented
+      case STYLE_Shadow: return STYLE_Translucent; // not implemented
+      case STYLE_Subtract: return STYLE_Add; // not implemented
+      case STYLE_AddShaded: return STYLE_Add; // not implemented
+      default: break;
+    }
+    return STYLE_Normal;
+  }
 };
 
 

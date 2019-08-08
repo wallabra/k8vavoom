@@ -208,9 +208,10 @@ void VRenderLevelShared::DrawPlayerSprites () {
 
   int RendStyle = STYLE_Normal;
   float Alpha = 1.0f;
-  bool Additive = false;
 
   cl->MO->eventGetViewEntRenderParams(Alpha, RendStyle);
+  RendStyle = CoerceRenderStyle(RendStyle);
+  bool Additive = IsAdditiveStyle(RendStyle);
 
   if (RendStyle == STYLE_SoulTrans) {
     RendStyle = STYLE_Translucent;
@@ -223,9 +224,7 @@ void VRenderLevelShared::DrawPlayerSprites () {
     case STYLE_None: return;
     case STYLE_Normal: Alpha = 1.0f; break;
     case STYLE_Fuzzy: Alpha = FUZZY_ALPHA; break;
-    case STYLE_Add: Additive = true; break;
     case STYLE_Stencil: break;
-    case STYLE_AddStencil: Additive = true; break;
   }
   //Alpha = midval(0.0f, Alpha, 1.0f);
   if (Alpha <= 0.002f) return; // no reason to render it, it is invisible

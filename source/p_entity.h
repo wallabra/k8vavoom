@@ -96,12 +96,17 @@ enum {
   STYLE_Fuzzy, // draw silhouette using "fuzz" effect
   STYLE_SoulTrans, // draw translucent with amount in r_transsouls
   STYLE_OptFuzzy, // draw as fuzzy or translucent, based on user preference
-  STYLE_Translucent = 64, // draw translucent
-  STYLE_Add, // draw additive
   STYLE_Stencil, // solid color
+  STYLE_Translucent, // draw translucent
+  STYLE_Add, // draw additive
+  STYLE_Shaded, // not implemented
+  STYLE_TranslucentStencil, // not implemented
+  STYLE_Shadow, // not implemented
+  STYLE_Subtract, // not implemented
   STYLE_AddStencil, // solid color, additive
+  STYLE_AddShaded, // not implemented
   // special style for sprites only
-  STYLE_Dark,
+  STYLE_Dark = 64,
 };
 
 // color tralslation types

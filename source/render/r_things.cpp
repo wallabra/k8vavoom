@@ -96,7 +96,7 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
     if (mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) return;
   }
 
-  int RendStyle = mobj->RenderStyle;
+  int RendStyle = CoerceRenderStyle(mobj->RenderStyle);
   if (RendStyle == STYLE_None) return;
 
   if (Pass == RPASS_Normal) {
@@ -112,7 +112,7 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
   }
 
   float Alpha = mobj->Alpha;
-  bool Additive = false;
+  bool Additive = IsAdditiveStyle(RendStyle);
 
   if (RendStyle == STYLE_SoulTrans) {
     RendStyle = STYLE_Translucent;
@@ -125,9 +125,7 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
     case STYLE_None: return;
     case STYLE_Normal: Alpha = 1.0f; break;
     case STYLE_Fuzzy: Alpha = FUZZY_ALPHA; break;
-    case STYLE_Add: Additive = true; break;
     case STYLE_Stencil: break;
-    case STYLE_AddStencil: Additive = true; break;
   }
   if (Alpha <= 0.01f) return; // no reason to render it, it is invisible
   if (Alpha > 1.0f) Alpha = 1.0f;

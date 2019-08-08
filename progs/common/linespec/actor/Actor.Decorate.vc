@@ -188,6 +188,17 @@ final void A_SetFloatSpeed (float speed, optional int aptr) {
 }
 
 
+//==========================================================================
+//
+//  A_SetRenderStyle
+//
+//==========================================================================
+final void A_SetRenderStyle (float alpha, int style) {
+  Alpha = fclamp(alpha, 0.0, 1.0);
+  RenderStyle = style;
+}
+
+
 /*
 const int SPF_FORCECLAMP = 0x01;
 const int SPF_INTERPOLATE = 0x00;
