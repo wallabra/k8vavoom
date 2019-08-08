@@ -182,8 +182,16 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
     ssurf->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(Tex)*spl.splane->YScale);
     ssurf->texinfo.saxis = Normalise(CrossProduct(spl.GetNormal(), ssurf->texinfo.taxis))*(TextureSScale(Tex)*spl.splane->XScale);
   }
-  ssurf->texinfo.soffs = spl.splane->xoffs;
-  ssurf->texinfo.toffs = spl.splane->yoffs+spl.splane->BaseYOffs;
+
+  const float newsoffs = spl.splane->xoffs;
+  const float newtoffs = spl.splane->yoffs+spl.splane->BaseYOffs;
+  bool offsChanged = (FASI(ssurf->texinfo.soffs) != FASI(newsoffs) ||
+                      FASI(ssurf->texinfo.toffs) != FASI(newtoffs));
+  ssurf->texinfo.soffs = newsoffs;
+  ssurf->texinfo.toffs = newtoffs;
+  //ssurf->texinfo.soffs = spl.splane->xoffs;
+  //ssurf->texinfo.toffs = spl.splane->yoffs+spl.splane->BaseYOffs;
+
   ssurf->texinfo.Tex = Tex;
   ssurf->texinfo.noDecals = (Tex ? Tex->noDecals : true);
   ssurf->texinfo.Alpha = (spl.splane->Alpha < 1.0f ? spl.splane->Alpha : 1.1f);
@@ -223,20 +231,21 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
       ssurf->surfs = SubdivideFace(surf, ssurf->texinfo.saxis, &ssurf->texinfo.taxis);
       InitSurfs(true, ssurf->surfs, &ssurf->texinfo, &plane, sub);
     }
-  } else {
-    // update z coords, if necessary
-    if (updateZ) {
-      bool changed = false;
-      for (; surf; surf = surf->next) {
-        TVec *svert = surf->verts;
-        for (int i = surf->count; i--; ++svert) {
-          const float oldZ = svert->z;
-          svert->z = spl.GetPointZ(svert->x, svert->y);
-          if (!changed && FASI(oldZ) != FASI(svert->z)) changed = true;
-        }
-        if (changed) InitSurfs(true, ssurf->surfs, &ssurf->texinfo, &plane, sub);
+  } else if (updateZ) {
+    // update z coords
+    bool changed = false;
+    for (; surf; surf = surf->next) {
+      TVec *svert = surf->verts;
+      for (int i = surf->count; i--; ++svert) {
+        const float oldZ = svert->z;
+        svert->z = spl.GetPointZ(svert->x, svert->y);
+        if (!changed && FASI(oldZ) != FASI(svert->z)) changed = true;
       }
+      if (changed) InitSurfs(true, ssurf->surfs, &ssurf->texinfo, &plane, sub);
     }
+  } else if (offsChanged) {
+    // still have to force it, because texture is scrolled, and lightmap s/t are invalid
+    InitSurfs(true, ssurf->surfs, &ssurf->texinfo, &plane, sub);
   }
 
   return ssurf;
@@ -302,8 +311,12 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
   }
 
   if (!ignoreColorMap) ssurf->texinfo.ColorMap = ColorMap; // just in case
-  ssurf->texinfo.soffs = splane.splane->xoffs;
-  ssurf->texinfo.toffs = splane.splane->yoffs+splane.splane->BaseYOffs;
+  const float newsoffs = splane.splane->xoffs;
+  const float newtoffs = splane.splane->yoffs+splane.splane->BaseYOffs;
+  bool offsChanged = (FASI(ssurf->texinfo.soffs) != FASI(newsoffs) ||
+                      FASI(ssurf->texinfo.toffs) != FASI(newtoffs));
+  ssurf->texinfo.soffs = newsoffs;
+  ssurf->texinfo.toffs = newtoffs;
 
   // ok, we still may need to update texture or z coords
   // update texture?
@@ -331,6 +344,11 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
     if (changed || splane.splane->pic != skyflatnum) {
       InitSurfs(true, ssurf->surfs, &ssurf->texinfo, &plane, sub);
     }
+  } else if (offsChanged && splane.splane->pic != skyflatnum) {
+    // still have to force it, because texture is scrolled, and lightmap s/t are invalid
+    TPlane plane = *(TPlane *)splane.splane;
+    if (splane.flipped) plane.flipInPlace();
+    InitSurfs(true, ssurf->surfs, &ssurf->texinfo, &plane, sub);
   }
 }
 
