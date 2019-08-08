@@ -1663,7 +1663,13 @@ static void ParseGZDoomEffectDefs (int SrcLump, VScriptParser *sc, TArray<VTempC
     else if (sc->Check("glow")) ParseGlow(sc);
     else if (sc->Check("hardwareshader")) { sc->Message("Shaders are not supported"); sc->SkipBracketed(); }
     else if (sc->Check("lightsizefactor")) { sc->ExpectFloat(); lightsizefactor = clampval((float)sc->Float, 0.0f, 4.0f); }
-    else { sc->Error(va("Unknown command (%s)", *sc->String)); }
+    else if (sc->Check("material")) {
+      sc->Message("Materials are not supported");
+      while (sc->GetString()) {
+        if (sc->String == "}") break;
+        if (sc->String == "{") { sc->SkipBracketed(true); break; }
+      }
+    } else { sc->Error(va("Unknown command (%s)", *sc->String)); }
   }
   delete sc;
 }
