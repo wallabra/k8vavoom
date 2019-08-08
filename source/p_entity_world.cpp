@@ -889,17 +889,23 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups, bo
     }
 
     if (!good) {
-      if (!tmtrace.BlockingLine) tmtrace.BlockingLine = fuckhit;
-      if (!tmtrace.AnyBlockingLine) tmtrace.AnyBlockingLine = fuckhit;
+      if (fuckhit) {
+        if (!tmtrace.BlockingLine) tmtrace.BlockingLine = fuckhit;
+        if (!tmtrace.AnyBlockingLine) tmtrace.AnyBlockingLine = fuckhit;
+      }
       return false;
     }
 
     if (tmtrace.CeilingZ-tmtrace.FloorZ < Height) {
-      if (!tmtrace.CeilingLine && !tmtrace.FloorLine && !tmtrace.BlockingLine) {
-        GCon->Logf(NAME_Warning, "CheckRelPosition for `%s` is height-blocked, but no block line determined!", GetClass()->GetName());
-        tmtrace.BlockingLine = fuckhit;
+      if (fuckhit) {
+        if (!tmtrace.CeilingLine && !tmtrace.FloorLine && !tmtrace.BlockingLine) {
+          // this can happen when you're crouching, for example
+          // `fuckhit` is not set in that case too
+          GCon->Logf(NAME_Warning, "CheckRelPosition for `%s` is height-blocked, but no block line determined!", GetClass()->GetName());
+          tmtrace.BlockingLine = fuckhit;
+        }
+        if (!tmtrace.AnyBlockingLine) tmtrace.AnyBlockingLine = fuckhit;
       }
-      if (!tmtrace.AnyBlockingLine) tmtrace.AnyBlockingLine = fuckhit;
       return false;
     }
   }
