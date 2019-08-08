@@ -951,6 +951,11 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       //sc->ExpectName8();
       sc->ExpectString();
       info->EnterPic = *sc->String.ToLower();
+    } else if (sc->Check("background")) {
+      sc->Message("'background' mapinfo command is not supported");
+      if (newFormat) sc->Expect("=");
+      //sc->ExpectName8();
+      sc->ExpectString();
     } else if (sc->Check("intermusic")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectString();
