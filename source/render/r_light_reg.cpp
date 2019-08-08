@@ -349,10 +349,6 @@ void VRenderLevel::CalcPoints (LMapTraceInfo &lmi, const surface_t *surf, bool l
 template<typename T> void FilterLightmap (T *lmap, const int wdt, const int hgt) {
   if (!r_lmap_lowfilter) return;
   if (!lmap || (wdt < 2 && hgt < 2)) return;
-  if (wdt*hgt > GridSize*GridSize*4) {
-    GCon->Logf(NAME_Warning, "skipped filter for lightmap of size %dx%d", wdt, hgt);
-    return;
-  }
   static T *lmnew = nullptr;
   static int lmnewSize = 0;
   if (wdt*hgt > lmnewSize) {
@@ -629,13 +625,23 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
       surf->lightmap_rgb = (rgb_t *)Z_Realloc(surf->lightmap_rgb, sz);
     }
 
-    if (!lmi.didExtra) FilterLightmap(lightmapr, w, h);
-    if (!lmi.didExtra) FilterLightmap(lightmapg, w, h);
-    if (!lmi.didExtra) FilterLightmap(lightmapb, w, h);
+    if (!lmi.didExtra) {
+      if (w*h <= GridSize*GridSize*4) {
+        FilterLightmap(lightmapr, w, h);
+        FilterLightmap(lightmapg, w, h);
+        FilterLightmap(lightmapb, w, h);
+      } else {
+        GCon->Logf(NAME_Warning, "skipped filter for lightmap of size %dx%d", w, h);
+      }
+    }
+
+    //HACK!
+    if (w*h > GridSize*GridSize*4) lmi.didExtra = false;
 
     int i = 0;
     for (int t = 0; t < h; ++t) {
       for (int s = 0; s < w; ++s, ++i) {
+        if (i > GridSize*GridSize*4) i = GridSize*GridSize*4-1;
         float total;
         if (lmi.didExtra) {
           // filtered sample
@@ -694,11 +700,21 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
       surf->lmsize = sz;
     }
 
-    if (!lmi.didExtra) FilterLightmap(lightmap, w, h);
+    if (!lmi.didExtra) {
+      if (w*h <= GridSize*GridSize*4) {
+        FilterLightmap(lightmap, w, h);
+      } else {
+        GCon->Logf(NAME_Warning, "skipped filter for lightmap of size %dx%d", w, h);
+      }
+    }
+
+    //HACK!
+    if (w*h > GridSize*GridSize*4) lmi.didExtra = false;
 
     int i = 0;
     for (int t = 0; t < h; ++t) {
       for (int s = 0; s < w; ++s, ++i) {
+        if (i > GridSize*GridSize*4) i = GridSize*GridSize*4-1;
         float total;
         if (lmi.didExtra) {
           // filtered sample
@@ -1447,6 +1463,8 @@ bool VRenderLevel::CacheSurface (surface_t *surface) {
   int tmax = (surface->extents[1]>>4)+1;
   check(smax > 0);
   check(tmax > 0);
+  if (smax > LMapTraceInfo::GridSize) smax = LMapTraceInfo::GridSize;
+  if (tmax > LMapTraceInfo::GridSize) tmax = LMapTraceInfo::GridSize;
 
   // allocate memory if needed
   // if a texture just animated, don't reallocate it

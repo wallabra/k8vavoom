@@ -30,10 +30,10 @@
 #define ON_EPSILON      (0.1f)
 #define SUBDIVIDE_SIZE  (240)
 
-//#define EXTMAX  (32767)
+#define EXTMAX  (32767)
 //#define EXTMAX  (65536)
 // float mantissa is 24 bits, but let's play safe, and use 20 bits
-#define EXTMAX  (0x100000)
+//#define EXTMAX  (0x100000)
 
 
 // ////////////////////////////////////////////////////////////////////////// //

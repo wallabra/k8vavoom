@@ -173,8 +173,6 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
   // setup texture
   VTexture *Tex = GTextureManager(spl.splane->pic);
   if (!Tex) Tex = GTextureManager[GTextureManager.DefaultTexture];
-  if (!Tex) GCon->Logf(NAME_Error, "wuta... pic=%d (def=%d; num=%d; nummap=%d)", spl.splane->pic.id, GTextureManager.DefaultTexture, GTextureManager.GetNumTextures(), GTextureManager.GetNumMapTextures());
-  //GCon->Logf(NAME_Error, "wuta... pic=%d (def=%d; num=%d; nummap=%d)", spl.splane->pic.id, GTextureManager.DefaultTexture, GTextureManager.GetNumTextures(), GTextureManager.GetNumMapTextures());
   if (fabsf(spl.splane->normal.z) > 0.1f) {
     float s, c;
     msincos(spl.splane->BaseAngle-spl.splane->Angle, &s, &c);
