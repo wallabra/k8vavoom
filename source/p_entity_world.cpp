@@ -889,11 +889,16 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups, bo
     }
 
     if (!good) {
+      if (!tmtrace.BlockingLine) tmtrace.BlockingLine = fuckhit;
       if (!tmtrace.AnyBlockingLine) tmtrace.AnyBlockingLine = fuckhit;
       return false;
     }
 
     if (tmtrace.CeilingZ-tmtrace.FloorZ < Height) {
+      if (!tmtrace.CeilingLine && !tmtrace.FloorLine && !tmtrace.BlockingLine) {
+        GCon->Logf(NAME_Warning, "CheckRelPosition for `%s` is height-blocked, but no block line determined!", GetClass()->GetName());
+        tmtrace.BlockingLine = fuckhit;
+      }
       if (!tmtrace.AnyBlockingLine) tmtrace.AnyBlockingLine = fuckhit;
       return false;
     }
@@ -1001,7 +1006,7 @@ bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other, bool noPickups)
 //
 //  Adjusts tmtrace.FloorZ and tmtrace.CeilingZ as lines are contacted
 //
-//  returns `true` if blocked
+//  returns `false` if blocked
 //
 //==========================================================================
 bool VEntity::CheckRelLine (tmtrace_t &tmtrace, line_t *ld, bool skipSpecials) {
@@ -1024,11 +1029,16 @@ bool VEntity::CheckRelLine (tmtrace_t &tmtrace, line_t *ld, bool skipSpecials) {
   // NOTE: specials are NOT sorted by order, so two special lines that are only 8 pixels apart
   //       could be crossed in either order.
 
+  // k8: this code is fuckin' mess. why some lines are processed immediately, and
+  //     other lines are pushed to be processed later? what the fuck is going on here?!
+  //     it seems that the original intent was to immediately process blocking lines,
+  //     but push non-blocking lines. wtf?!
+
   if (!ld->backsector) {
     // one sided line
     if (!skipSpecials) BlockedByLine(ld);
     // mark the line as blocking line
-    tmtrace.BlockingLine = tmtrace.AnyBlockingLine = ld;
+    tmtrace.BlockingLine = ld;
     return false;
   }
 
@@ -1036,42 +1046,42 @@ bool VEntity::CheckRelLine (tmtrace_t &tmtrace, line_t *ld, bool skipSpecials) {
     if (ld->flags&ML_BLOCKEVERYTHING) {
       // explicitly blocking everything
       if (!skipSpecials) BlockedByLine(ld);
-      tmtrace.AnyBlockingLine = ld;
+      tmtrace.BlockingLine = ld;
       return false;
     }
 
     if ((EntityFlags&VEntity::EF_Missile) && (ld->flags&ML_BLOCKPROJECTILE)) {
       // blocks projectile
       if (!skipSpecials) BlockedByLine(ld);
-      tmtrace.AnyBlockingLine = ld;
+      tmtrace.BlockingLine = ld;
       return false;
     }
 
     if ((EntityFlags&VEntity::EF_CheckLineBlocking) && (ld->flags&ML_BLOCKING)) {
       // explicitly blocking everything
       if (!skipSpecials) BlockedByLine(ld);
-      tmtrace.AnyBlockingLine = ld;
+      tmtrace.BlockingLine = ld;
       return false;
     }
 
     if ((EntityFlags&VEntity::EF_CheckLineBlockMonsters) && (ld->flags&ML_BLOCKMONSTERS)) {
       // block monsters only
       if (!skipSpecials) BlockedByLine(ld);
-      tmtrace.AnyBlockingLine = ld;
+      tmtrace.BlockingLine = ld;
       return false;
     }
 
     if ((EntityFlags&VEntity::EF_IsPlayer) && (ld->flags&ML_BLOCKPLAYERS)) {
       // block players only
       if (!skipSpecials) BlockedByLine(ld);
-      tmtrace.AnyBlockingLine = ld;
+      tmtrace.BlockingLine = ld;
       return false;
     }
 
     if ((EntityFlags&VEntity::EF_Float) && (ld->flags&ML_BLOCK_FLOATERS)) {
       // block floaters only
       if (!skipSpecials) BlockedByLine(ld);
-      tmtrace.AnyBlockingLine = ld;
+      tmtrace.BlockingLine = ld;
       return false;
     }
   }
@@ -1103,7 +1113,10 @@ bool VEntity::CheckRelLine (tmtrace_t &tmtrace, line_t *ld, bool skipSpecials) {
     if (ld->flags&ML_RAILING) tmtrace.FloorZ += 32;
   } else {
     tmtrace.CeilingZ = tmtrace.FloorZ;
+    //k8: oops; it seems that we have to return `false` here
+    if (!skipSpecials) BlockedByLine(ld);
     tmtrace.BlockingLine = ld;
+    return false;
   }
 
   // if contacted a special line, add it to the list
@@ -1198,7 +1211,8 @@ TAVec VEntity::GetInterpolatedDrawAngles () {
 //
 //  VEntity::TryMove
 //
-//  Attempt to move to a new position, crossing special lines.
+//  attempt to move to a new position, crossing special lines.
+//  returns `false` if move is blocked.
 //
 //==========================================================================
 bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool checkOnly) {
