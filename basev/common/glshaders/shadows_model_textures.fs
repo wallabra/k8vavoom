@@ -29,7 +29,7 @@ void main () {
 
   // sample color from ambient light texture
   vec2 tc2 = gl_FragCoord.xy/ScreenSize.xy;
-  vec4 ambColor = texture2D(AmbLightTexture, tc2);
+  vec3 ambColor = texture2D(AmbLightTexture, tc2).rgb;
 
   // Light.a == 1: fullbright
   // k8: oops, no way to do it yet (why?)

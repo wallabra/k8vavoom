@@ -26,6 +26,7 @@ void main () {
   if (TexColor.a < ALPHA_MASKED) discard; // only normal and masked walls should go thru this
 
   vec4 lt = texture2D(LightMap, LightmapCoordinate);
+  lt.a = 1.0;
   lt.r = mix(lt.r, Light.r, FullBright);
   lt.g = mix(lt.g, Light.g, FullBright);
   lt.b = mix(lt.b, Light.b, FullBright);

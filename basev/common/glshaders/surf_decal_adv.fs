@@ -27,7 +27,7 @@ void main () {
 
   // sample color from ambient light texture
   vec2 tc2 = gl_FragCoord.xy/ScreenSize.xy;
-  vec4 ambColor = texture2D(AmbLightTexture, tc2);
+  vec3 ambColor = texture2D(AmbLightTexture, tc2).rgb;
   // if `FullBright` is 1, mul by 1.0, otherwise mul by ambient
   ambColor.r = 1.0*FullBright+(1.0-FullBright)*ambColor.r;
   ambColor.g = 1.0*FullBright+(1.0-FullBright)*ambColor.g;

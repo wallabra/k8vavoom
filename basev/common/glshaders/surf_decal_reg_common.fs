@@ -33,8 +33,8 @@ void main () {
 
 #ifdef REG_LIGHTMAP
   // lightmapped
-  vec4 lmc = texture2D(LightMap, LightmapCoordinate);
-  vec4 spc = texture2D(SpecularMap, LightmapCoordinate);
+  vec3 lmc = texture2D(LightMap, LightmapCoordinate).rgb;
+  vec3 spc = texture2D(SpecularMap, LightmapCoordinate).rgb;
   FinalColor.rgb *= lmc.rgb;
   FinalColor.rgb += spc.rgb;
 #else
