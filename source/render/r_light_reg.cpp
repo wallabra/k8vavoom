@@ -349,6 +349,10 @@ void VRenderLevel::CalcPoints (LMapTraceInfo &lmi, const surface_t *surf, bool l
 template<typename T> void FilterLightmap (T *lmap, const int wdt, const int hgt) {
   if (!r_lmap_lowfilter) return;
   if (!lmap || (wdt < 2 && hgt < 2)) return;
+  if (wdt*hgt > GridSize*GridSize*4) {
+    GCon->Logf(NAME_Warning, "skipped filter for lightmap of size %dx%d", wdt, hgt);
+    return;
+  }
   static T *lmnew = nullptr;
   static int lmnewSize = 0;
   if (wdt*hgt > lmnewSize) {
@@ -445,7 +449,7 @@ void VRenderLevel::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_
   int h = (surf->extents[1]>>4)+1;
 
   bool doMidFilter = (!lmi.didExtra && r_lmap_filtering > 0);
-  if (doMidFilter) memset(lightmapHit, 0, w*h);
+  if (doMidFilter) memset(lightmapHit, 0, /*w*h*/lmi.numsurfpt);
 
   bool wasAnyHit = false;
   sector_t *ssector = Level->PointInSubsector(light->origin)->sector;
@@ -501,6 +505,8 @@ void VRenderLevel::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_
     const vuint8 *lht = lightmapHit;
     for (int y = 0; y < h; ++y) {
       for (int x = 0; x < w; ++x, ++lht) {
+        const int laddr = y*w+x;
+        if (laddr >= lmi.numsurfpt) goto doneall;
         if (*lht) continue;
         // check if any neighbour point was hit
         // if not, don't bother to do better tracing
@@ -518,7 +524,7 @@ void VRenderLevel::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_
         }
        done:
         if (doit) {
-          TVec pt = lmi.surfpt[y*w+x];
+          TVec pt = lmi.surfpt[laddr];
           dist = 0.0f;
           for (int dy = -1; dy < 2; ++dy) {
             for (int dx = -1; dx < 2; ++dx) {
@@ -547,20 +553,21 @@ void VRenderLevel::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_
           // without this, lights with huge radius will overbright everything
           if (add > 255.0f) add = 255.0f;
 
-          lightmap[y*w+x] += add;
-          lightmapr[y*w+x] += add*rmul;
-          lightmapg[y*w+x] += add*gmul;
-          lightmapb[y*w+x] += add*bmul;
+          lightmap[laddr] += add;
+          lightmapr[laddr] += add*rmul;
+          lightmapg[laddr] += add*gmul;
+          lightmapb[laddr] += add*bmul;
           // ignore really tiny lights
-          if (lightmap[y*w+x] > 1) {
+          if (lightmap[laddr] > 1) {
             lmi.light_hit = true;
             if (light->color != 0xffffffff) is_colored = true;
           }
-          lightmapHit[y*w+x] = 1;
+          lightmapHit[laddr] = 1;
           if (r_lmap_filtering == 2) goto again;
         }
       }
     }
+    doneall: (void)0;
   }
 }
 
