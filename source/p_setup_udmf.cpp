@@ -878,7 +878,9 @@ void VUdmfParser::ParseThing () {
         while (s.length() && (vuint8)s[0] <= ' ') s.chopLeft(1);
         while (s.length() && (vuint8)s[s.length()-1] <= ' ') s.chopRight(1);
         if (s.length() == 0) continue;
-        sc.Message(va("UDMF: `renderstyle` property with value \"%s\" is not supported yet", *s));
+        if (s.strEquCI("normal")) continue;
+        //sc.Message(va("UDMF: `renderstyle` property with value \"%s\" is not supported yet", *s));
+        keyWarning(WT_THING);
         continue;
       }
 
