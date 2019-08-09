@@ -918,3 +918,28 @@ bool IsBloodAllowed () {
 
   return true;
 }
+
+
+//==========================================================================
+//
+//  FindDamageType
+//
+//  returns `defaultFactor` if no damage type found
+//
+//==========================================================================
+final float FindDamageFactor (name DmgType, float defaultFactor) {
+  //printdebug("%C: FindDamageFactor; type=%s", self, DmgType);
+  foreach (const ref auto df; DamageFactors) {
+    //printdebug("  %C: dtype=%s; factor=%s", self, df.DamageType, df.Factor);
+    if (nameicmp(df.DamageType, DmgType) == 0 ||
+        (!DmgType && nameicmp(df.DamageType, 'None') == 0) ||
+        (!df.DamageType && nameicmp(DmgType, 'None') == 0))
+    {
+      //printdebug("    FOUND!");
+      float dmgFactor = df.Factor;
+      if (dmgFactor < 0) dmgFactor = 1; // this is what GZDoom does
+      return dmgFactor;
+    }
+  }
+  return defaultFactor;
+}

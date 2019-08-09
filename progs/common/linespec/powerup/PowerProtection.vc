@@ -33,24 +33,17 @@ class PowerProtection : Powerup;
 //
 //==========================================================================
 override void AbsorbDamage (int damage, name DmgType, ref int NewDamage) {
-  float dmg_factor;
-
   if (damage > 0) {
-    foreach (auto i; 0..DamageFactors.length) {
-      if (nameicmp(DamageFactors[i].DamageType, DmgType) == 0 ||
-          (!DmgType && nameicmp(DamageFactors[i].DamageType, 'None') == 0))
-      {
-        dmg_factor = DamageFactors[i].Factor;
-        break;
-      }
-    }
-    NewDamage = int(float(damage)*dmg_factor > 0.0 ? dmg_factor : 1.0);
-    if (NewDamage == 0) {
-      // don't allow zero damage as result of an underflow
-      NewDamage = 1;
-    }
+    float dmgFactor = 0.25; // default is damage/4
+    if (DamageFactors.length) dmgFactor = FindDamageFactor(DmgType, 1.0);
 
-    if (Owner && dmg_factor > 1.0) Owner.PlaySound(ActiveSound, /*CHAN_VOICE*/CHAN_BODY);
+    // GZDoom allows zero damage; we weren't, but why?
+    NewDamage = max(0, int(float(damage)*dmgFactor)); // (-don't) allow zero damage as result of an underflow
+
+    if (NewDamage < damage) {
+      damage = max(1, NewDamage); // so others can work too
+      if (Owner) Owner.PlaySound(ActiveSound, /*CHAN_VOICE*/CHAN_BODY);
+    }
   }
 
   if (Inventory) Inventory.AbsorbDamage(damage, DmgType, NewDamage);
@@ -66,13 +59,16 @@ override void InitEffect () {
   if (EntityEx(Owner)) {
     if (SightSound) Owner.PlaySound(SightSound, /*CHAN_VOICE*/CHAN_AUTO);
     // set some special flags for protecting the Owner
-    EntityEx(Owner).bNoRadiusDamage = true;
-    EntityEx(Owner).bNoMorph = true;
-    EntityEx(Owner).bDontSquash = true;
-    EntityEx(Owner).bDontBlast = true;
-    EntityEx(Owner).bNoTeleOther = true;
-    EntityEx(Owner).bDontRip = true;
-    EntityEx(Owner).bNoPain = true;
+    //k8: dunno, it looks right to check for "common protection" here
+    if (DamageFactors.length == 0) {
+      EntityEx(Owner).bNoRadiusDamage = true;
+      EntityEx(Owner).bNoMorph = true;
+      EntityEx(Owner).bDontSquash = true;
+      EntityEx(Owner).bDontBlast = true;
+      EntityEx(Owner).bNoTeleOther = true;
+      EntityEx(Owner).bDontRip = true;
+      EntityEx(Owner).bNoPain = true;
+    }
   }
 }
 
@@ -86,13 +82,16 @@ override void EndEffect () {
   if (EntityEx(Owner)) {
     Owner.PlaySound(DeathSound, /*CHAN_VOICE*/CHAN_AUTO);
     // remove flags from Owner
-    EntityEx(Owner).bNoRadiusDamage = false;
-    EntityEx(Owner).bNoMorph = false;
-    EntityEx(Owner).bDontSquash = false;
-    EntityEx(Owner).bDontBlast = false;
-    EntityEx(Owner).bNoTeleOther = false;
-    EntityEx(Owner).bDontRip = false;
-    EntityEx(Owner).bNoPain = false;
+    //k8: dunno, it looks right to check for "common protection" here
+    if (DamageFactors.length == 0) {
+      EntityEx(Owner).bNoRadiusDamage = false;
+      EntityEx(Owner).bNoMorph = false;
+      EntityEx(Owner).bDontSquash = false;
+      EntityEx(Owner).bDontBlast = false;
+      EntityEx(Owner).bNoTeleOther = false;
+      EntityEx(Owner).bDontRip = false;
+      EntityEx(Owner).bNoPain = false;
+    }
   }
 }
 

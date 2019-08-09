@@ -33,24 +33,17 @@ class PowerDamage : Powerup;
 //
 //==========================================================================
 override void AbsorbDamage (int damage, name DmgType, ref int NewDamage) {
-  float dmg_factor;
-
   if (damage > 0) {
-    foreach (auto i; 0..DamageFactors.length) {
-      if (nameicmp(DamageFactors[i].DamageType, DmgType) == 0 ||
-          (!DmgType && nameicmp(DamageFactors[i].DamageType, 'None') == 0))
-      {
-        dmg_factor = DamageFactors[i].Factor;
-        break;
-      }
-    }
-    NewDamage = int(float(damage)*dmg_factor > 0.0 ? dmg_factor : 1.0);
-    if (NewDamage == 0) {
-      // don't allow zero damage as result of an underflow
-      NewDamage = 1;
-    }
+    float dmgFactor = 0.25; // default is damage/4
+    if (DamageFactors.length) dmgFactor = FindDamageFactor(DmgType, float.nan);
+    //dmgFactor += 1.0; //k8: dunno
 
-    if (Owner && dmg_factor > 1.0) Owner.PlaySound(ActiveSound, /*CHAN_VOICE*/CHAN_BODY);
+    NewDamage = max(0, int(float(damage)*dmgFactor));
+
+    if (NewDamage != damage) {
+      damage = max(1, NewDamage); // so others can work too
+      if (Owner) Owner.PlaySound(ActiveSound, /*CHAN_VOICE*/CHAN_BODY);
+    }
   }
 
   if (Inventory) Inventory.AbsorbDamage(damage, DmgType, NewDamage);

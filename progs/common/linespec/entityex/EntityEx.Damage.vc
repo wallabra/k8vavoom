@@ -502,15 +502,13 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
 
   if (nameicmp(DmgType, 'Fire') == 0 && bFireResist) {
     damage >>= 1;
-  } else {
-    foreach (auto i; 0..DamageFactors.length) {
-      if (nameicmp(DamageFactors[i].DamageType, DmgType) == 0 ||
-          (!DmgType && nameicmp(DamageFactors[i].DamageType, 'None') == 0) ||
-          (nameicmp(DmgType, 'None') == 0 && nameicmp(DamageFactors[i].DamageType, 'None') == 0))
-      {
-        damage = int(float(damage)*DamageFactors[i].Factor);
+  } else { // k8: still check damage factors?
+    if (DamageFactors.length) {
+      float dfactor = FindDamageFactor(DmgType, float.nan);
+      if (!dfactor.isnan) {
+        //printdebug("%C: damage type %s reduction factor is %s", self, DmgType, dfactor);
+        damage = int(float(damage)*dfactor);
         if (damage <= 0) return;
-        break;
       }
     }
   }
@@ -518,7 +516,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
   damage = TakeSpecialDamage(inflictor, source, damage, DmgType, forced:forced!optional);
   if (damage == -1) return;
 
-  //print("DAMAGE: self=`%C`; damage=%d; health=%s; forced=%B; dmgtype=<%s>", self, damage, Health, forced, DmgType);
+  //printdebug("DAMAGE: self=`%C`; damage=%d; health=%s; forced=%B; dmgtype=<%s>", self, damage, Health, forced, DmgType);
   // push the target unless using a weapon that should not inflict thrust
   if (inflictor && inflictor != self && bColideWithThings && !inflictor.bNoDamageThrust) {
     float kickback;
@@ -729,7 +727,7 @@ int DoSpecialDamage (EntityEx victim, EntityEx source, int damage) {
 //  TakeSpecialDamage
 //
 //==========================================================================
-int TakeSpecialDamage(EntityEx inflictor, EntityEx source, int damage, name DmgType, optional bool forced) {
+int TakeSpecialDamage (EntityEx inflictor, EntityEx source, int damage, name DmgType, optional bool forced) {
   if (bNoDamage && !forced) return 0;
 
   // always apply damage if actor has regular death state or no death states at all
