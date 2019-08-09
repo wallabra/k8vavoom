@@ -2627,33 +2627,7 @@ override void SpawnClient () {
   */
 
   // setup weapon slots
-  /+
-  if (Level) {
-    LineSpecialGameInfo GI = LineSpecialGameInfo(Level.Game);
-    if (GI) {
-      /*
-      foreach (auto wsidx; 0..LineSpecialGameInfo::NUM_WEAPON_SLOTS) {
-        print("=== weapon slot #%d", wsidx);
-        foreach (auto s2idx; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT) {
-          class!Weapon ww = GI.WeaponSlots[wsidx].Weapons[s2idx];
-          if (ww) print("  %d: %n (priority:%d)", s2idx, GetClassName(ww), ww.default.Position);
-        }
-      }
-      */
-      GI.InitializeWeaponSlots(class!PlayerPawn(MO.Class));
-      /*
-      foreach (auto wsidx; 0..LineSpecialGameInfo::NUM_WEAPON_SLOTS) {
-        print("=== weapon slot #%d", wsidx);
-        foreach (auto s2idx; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT) {
-          class!Weapon ww = GI.WeaponSlots[wsidx].Weapons[s2idx];
-          if (ww) print("  %d: %n (priority:%d)", s2idx, GetClassName(ww), ww.default.Position);
-        }
-      }
-      */
-    }
-  }
-  +/
-  if (PlayerPawn(MO)) PlayerPawn(MO).InitializeWeaponSlots(LineSpecialGameInfo(Level.Game));
+  if (PlayerPawn(MO)) PlayerPawn(MO).InitializeWeaponSlots(/*LineSpecialGameInfo(Level.Game)*/);
 
   if (Level.Game.netgame && !Level.Game.deathmatch && playerWasReborn) {
     OnNetReborn(OldMO);
@@ -2733,7 +2707,7 @@ override void NetGameReborn () {
     }
   }
 
-  if (PlayerPawn(MO)) PlayerPawn(MO).InitializeWeaponSlots(LineSpecialGameInfo(Level.Game));
+  if (PlayerPawn(MO)) PlayerPawn(MO).InitializeWeaponSlots(/*LineSpecialGameInfo(Level.Game)*/);
 
   OnNetReborn(OldMO);
 }
@@ -2798,6 +2772,18 @@ void DeathMatchSpawnPlayer () {
     CheckSpot(sp); // spawn teleport fog
     SpawnPlayer(sp, false);
   }
+}
+
+
+//==========================================================================
+//
+//  eventAfterUnarchiveThinkers
+//
+//==========================================================================
+override void eventAfterUnarchiveThinkers () {
+  //printwarn("player `%C`: after unarchive...", self);
+  // setup weapon slots
+  if (PlayerPawn(MO)) PlayerPawn(MO).InitializeWeaponSlots(/*LineSpecialGameInfo(Level.Game)*/);
 }
 
 

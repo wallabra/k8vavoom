@@ -351,6 +351,8 @@ public:
   void eventOnBeforeSave (bool autosave, bool checkpoint) { static VMethodProxy method("eventOnBeforeSave"); vobjPutParamSelf(autosave, checkpoint); VMT_RET_VOID(method); }
   void eventOnAfterSave (bool autosave, bool checkpoint) { static VMethodProxy method("eventOnAfterSave"); vobjPutParamSelf(autosave, checkpoint); VMT_RET_VOID(method); }
 
+  void eventAfterUnarchiveThinkers () { static VMethodProxy method("eventAfterUnarchiveThinkers"); vobjPutParamSelf(); VMT_RET_VOID(method); }
+
   void QS_Save () { static VMethodProxy method("QS_Save"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   void QS_Load () { static VMethodProxy method("QS_Load"); vobjPutParamSelf(); VMT_RET_VOID(method); }
 

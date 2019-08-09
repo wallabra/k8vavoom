@@ -32,7 +32,7 @@ const float RUNNING_SPEED = 2000;
 
 enum {
   NUM_WEAPON_SLOTS = 10,
-  MAX_WEAPONS_PER_SLOT = 16,
+  MAX_WEAPONS_PER_SLOT = 32,
 }
 
 // default view height
@@ -92,7 +92,8 @@ int MaxHealth;
 int k8hsCount;
 
 // weapon slots
-class!Weapon[(NUM_WEAPON_SLOTS+1)*MAX_WEAPONS_PER_SLOT] weaponSlotClasses;
+transient protected class!Weapon[(NUM_WEAPON_SLOTS+1)*MAX_WEAPONS_PER_SLOT] weaponSlotContents;
+//protected array!(class!Weapon) weaponSlotContents;
 
 
 //==========================================================================
@@ -103,7 +104,7 @@ class!Weapon[(NUM_WEAPON_SLOTS+1)*MAX_WEAPONS_PER_SLOT] weaponSlotClasses;
 class!Weapon GetWeaponInSlot (int slot, int index) {
   if (slot < 0 || slot > NUM_WEAPON_SLOTS) return none;
   if (index < 0 || index >= MAX_WEAPONS_PER_SLOT) return none;
-  class!Weapon wpn = weaponSlotClasses[slot*MAX_WEAPONS_PER_SLOT+index];
+  class!Weapon wpn = weaponSlotContents[slot*MAX_WEAPONS_PER_SLOT+index];
   if (!wpn) return none;
   class!Weapon repl = class!Weapon(GetClassReplacement(wpn));
   return (repl ? repl : wpn);
@@ -118,7 +119,7 @@ class!Weapon GetWeaponInSlot (int slot, int index) {
 void SetWeaponInSlot (int slot, int index, class!Weapon wpn) {
   if (slot < 0 || slot > NUM_WEAPON_SLOTS) return;
   if (index < 0 || index >= MAX_WEAPONS_PER_SLOT) return;
-  weaponSlotClasses[slot*MAX_WEAPONS_PER_SLOT+index] = wpn;
+  weaponSlotContents[slot*MAX_WEAPONS_PER_SLOT+index] = wpn;
 }
 
 
@@ -320,7 +321,13 @@ void FindAndReplaceWeaponInSlot (class!Weapon origWpn, class!Weapon newWpn) {
 //  InitializeWeaponSlots
 //
 //==========================================================================
-void InitializeWeaponSlots (LineSpecialGameInfo GI) {
+void InitializeWeaponSlots () {
+  auto GI = LineSpecialGameInfo(Level.Game);
+  assert(GI);
+  //weaponSlotContents.length = (NUM_WEAPON_SLOTS+1)*MAX_WEAPONS_PER_SLOT;
+  //foreach (ref auto wcs; weaponSlotContents) wcs = none;
+  foreach (int wsidx; 0..weaponSlotContents.length) weaponSlotContents[wsidx] = default.weaponSlotContents[wsidx];
+
   //printdebug("*** InitializeWeaponSlots (%C) ***", self);
   DumpWeaponSlots();
 

@@ -351,8 +351,7 @@ void UpdateSpecials () {
 //  AfterUnarchiveThinkers
 //
 //==========================================================================
-void AfterUnarchiveThinkers () {
-}
+void AfterUnarchiveThinkers () {}
 
 
 //==========================================================================

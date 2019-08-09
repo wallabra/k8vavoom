@@ -41,7 +41,7 @@ enum {
   FLAGS_HASH_SIZE = 256,
   //WARNING! keep in sync with script code (LineSpecialGameInfo.vc)
   NUM_WEAPON_SLOTS = 10,
-  MAX_WEAPONS_PER_SLOT = 16,
+  MAX_WEAPONS_PER_SLOT = 32,
 };
 
 enum {
@@ -154,13 +154,6 @@ struct VClassFixup {
 };
 
 
-struct PlayerClassWeaponSlots {
-  VName playerClass;
-  int slotsDefined; // one bit for one slot; if set, replace slot with this
-  VClass *classes[(NUM_WEAPON_SLOTS+1)*MAX_WEAPONS_PER_SLOT];
-};
-
-
 // ////////////////////////////////////////////////////////////////////////// //
 static void ParseConst (VScriptParser *sc, VMemberBase *parent, bool changeMode=true);
 static void ParseEnum (VScriptParser *sc, VMemberBase *parent, bool changeMode=true);
@@ -250,12 +243,10 @@ static void DoClassReplacement (VClass *oldcls, VClass *newcls) {
 // ////////////////////////////////////////////////////////////////////////// //
 struct VWeaponSlotFixups {
   VName plrClassName;
-  //bool defined[NUM_WEAPON_SLOTS+1]; // [1..10]
-  int defined; // bitfield
+  vuint32 defined; // bitfield
   VName names[(NUM_WEAPON_SLOTS+1)*MAX_WEAPONS_PER_SLOT];
 
   VWeaponSlotFixups () : plrClassName(NAME_None), defined(0) {
-    //for (int f = 0; f <= NUM_WEAPON_SLOTS; ++f) defined[f] = false;
     for (int f = 0; f < (NUM_WEAPON_SLOTS+1)*MAX_WEAPONS_PER_SLOT; ++f) names[f] = NAME_None;
   }
 
@@ -267,13 +258,10 @@ struct VWeaponSlotFixups {
   inline static bool isValidSlot (int idx) { return (idx >= 0 && idx <= NUM_WEAPON_SLOTS); }
 
   inline bool hasAnyDefinedSlot () const {
-    //for (int f = 0; f <= NUM_WEAPON_SLOTS; ++f) if (defined[f]) return true;
-    //return false;
     return (defined != 0);
   }
 
-  //inline bool isDefinedSlot (int idx) const { return (idx >= 0 && idx <= NUM_WEAPON_SLOTS ? defined[idx] : false); }
-  inline bool isDefinedSlot (int idx) const { return (idx >= 0 && idx <= NUM_WEAPON_SLOTS ? !!(defined&(1<<idx)) : false); }
+  inline bool isDefinedSlot (int idx) const { return (idx >= 0 && idx <= NUM_WEAPON_SLOTS ? !!(defined&(1u<<idx)) : false); }
 
   VName getSlotName (int sidx, int nidx) const {
     if (sidx < 0 || sidx > NUM_WEAPON_SLOTS) return NAME_None;
@@ -284,15 +272,13 @@ struct VWeaponSlotFixups {
 
   void clearSlot (int idx) {
     if (idx < 0 || idx > NUM_WEAPON_SLOTS) return;
-    //defined[idx] = true;
-    defined |= 1<<idx;
+    defined |= 1u<<idx;
     for (int f = 0; f < MAX_WEAPONS_PER_SLOT; ++f) names[idx*MAX_WEAPONS_PER_SLOT+f] = NAME_None;
   }
 
   void addToSlot (int idx, VName aname) {
-    if (idx < 0 || idx > NUM_WEAPON_SLOTS) return;
-    //defined[idx] = true;
-    defined |= 1<<idx;
+    if (idx < 0 || idx > NUM_WEAPON_SLOTS || aname == NAME_None || VStr::strEquCI("none", *aname)) return;
+    defined |= 1u<<idx;
     for (int f = 0; f < MAX_WEAPONS_PER_SLOT; ++f) {
       if (names[idx*MAX_WEAPONS_PER_SLOT+f] == NAME_None) {
         names[idx*MAX_WEAPONS_PER_SLOT+f] = aname;
@@ -3327,7 +3313,7 @@ void ProcessDecorateScripts () {
         GLog.Logf(NAME_Warning, "`%s` is not a player pawn class, cannot set weapon slots", *newWSlots[wsidx].plrClassName);
         continue;
       }
-      VField *fldList = pawn->FindFieldChecked(VName("weaponSlotClasses"));
+      VField *fldList = pawn->FindFieldChecked(VName("weaponSlotContents"));
       //FIXME: type checking!
       VClass **wsarrbase = (VClass **)(fldList->GetFieldPtr((VObject *)pawn->Defaults));
       for (int sidx = 0; sidx <= NUM_WEAPON_SLOTS; ++sidx) {

@@ -1746,6 +1746,8 @@ static bool SV_LoadMap (VName MapName, bool allowCheckpoints, bool hubTeleport) 
     if (dbg_checkpoints) GCon->Logf("QS: === done ===");
     QS_StartPhase(QSPhase::QSP_None);
 
+    plr->eventAfterUnarchiveThinkers();
+
     plr->PlayerState = PST_LIVE;
     if (rwe) plr->eventSetReadyWeapon(rwe, true); // instant
 
@@ -1867,6 +1869,16 @@ void SV_LoadGame (int slot) {
 #endif
     // launch waiting scripts
     if (!deathmatch) GLevel->Acs->CheckAcsStore();
+
+    //GCon->Logf(NAME_Debug, "************************** (%d)", svs.max_clients);
+    for (int i = 0; i < MAXPLAYERS; ++i) {
+      VBasePlayer *Player = GGameInfo->Players[i];
+      if (!Player) {
+        //GCon->Logf(NAME_Debug, "*** no player #%d", i);
+        continue;
+      }
+      Player->eventAfterUnarchiveThinkers();
+    }
   }
 
   SV_SendLoadedEvent();
