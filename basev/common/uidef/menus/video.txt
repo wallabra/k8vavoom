@@ -104,7 +104,7 @@ menudef VideoOptions {
     cvar = r_reupload_textures;
     help =
       "If this option is turned on, the engine will reupload all cached textures"
-      "each time new map is loaded. Turn this off only if you turned off texture"
+      "each time new map is loaded. Turn this on only if you turned off texture"
       "precaching, to release GPU memory.";
   }
 
