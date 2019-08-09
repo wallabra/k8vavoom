@@ -299,6 +299,7 @@ struct VWeaponSlotFixups {
         return;
       }
     }
+    GCon->Logf(NAME_Warning, "There is no room in PlayerPawn slot #%d to add weapon '%s'", idx, *aname);
   }
 };
 

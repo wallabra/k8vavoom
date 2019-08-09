@@ -296,14 +296,18 @@ void FindAndReplaceWeaponInSlot (class!Weapon origWpn, class!Weapon newWpn) {
 
   if (foundIt) return; // it is already there
 
+  bool added = false;
   // insert it into slot, and sort a slot
   foreach (auto s2idx; 0..MAX_WEAPONS_PER_SLOT) {
     if (!GetWeaponInSlot(nsidx, s2idx)) {
       dprint("added new '%C' to slot %d at position %d", newWpn, nsidx, s2idx);
       SetWeaponInSlot(nsidx, s2idx, newWpn);
+      added = true;
       break;
     }
   }
+
+  if (!added) printwarn("cannot add weapon `%C` to slot #%d (no room)", newWpn, nsidx);
 
   //DumpWeaponSlots();
   SortWeaponSlot(nsidx);
@@ -317,7 +321,7 @@ void FindAndReplaceWeaponInSlot (class!Weapon origWpn, class!Weapon newWpn) {
 //
 //==========================================================================
 void InitializeWeaponSlots (LineSpecialGameInfo GI) {
-  dprint("*** InitializeWeaponSlots (%C) ***", self);
+  //printdebug("*** InitializeWeaponSlots (%C) ***", self);
   DumpWeaponSlots();
 
   class!Weapon wcls;
