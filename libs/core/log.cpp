@@ -434,6 +434,7 @@ public:
           else if (event == NAME_Warning) xprintStr("\x1b[0;33;1m", fo);
           else if (event == NAME_Error) xprintStr("\x1b[0;31;1m", fo);
           else if (event == NAME_Log) xprintStr("\x1b[0;32m", fo);
+          else if (event == NAME_Debug) xprintStr("\x1b[0;34;1m", fo);
           else xprintStr("\x1b[0;36;1m", fo);
         } else {
           resetColor = false;

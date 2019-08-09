@@ -29,9 +29,7 @@
 //**
 //**************************************************************************
 
-// Macros ------------------------------------------------------------------
-
-// Define a message as an enumeration.
+// define a message as an enumeration
 #ifndef REGISTER_NAME
   #define REGISTER_NAME(name) NAME_##name,
   #define REGISTERING_ENUM
@@ -43,20 +41,20 @@
   #define NAME_None  NAME_none
 #endif
 
-// Hardcoded names ---------------------------------------------------------
 
-// Special zero value, meaning no name.
-//REGISTER_NAME(none)
+// ////////////////////////////////////////////////////////////////////////// //
+// hardcoded names
 
-// Log messages.
+// log messages
 REGISTER_NAME(Log)
 REGISTER_NAME(Init)
 REGISTER_NAME(Dev)
 REGISTER_NAME(DevNet)
 REGISTER_NAME(Warning)
 REGISTER_NAME(Error)
+REGISTER_NAME(Debug)
 
-//  Native class names.
+// native class names
 REGISTER_NAME(Object)
 REGISTER_NAME(GameObject)
 REGISTER_NAME(Thinker)
@@ -77,15 +75,15 @@ REGISTER_NAME(ClientGameBase)
 REGISTER_NAME(ClientState)
 REGISTER_NAME(ScriptsParser)
 
-//  Special struct names
+// special struct names
 REGISTER_NAME(TVec)
 REGISTER_NAME(TAVec)
 
-//  Thinker events
+// Thinker events
 REGISTER_NAME(Tick)
 REGISTER_NAME(ClientTick)
 
-//  Entity events
+// Entity events
 REGISTER_NAME(OnMapSpawn)
 REGISTER_NAME(BeginPlay)
 REGISTER_NAME(Destroyed)
@@ -122,7 +120,7 @@ REGISTER_NAME(MorphActor)
 REGISTER_NAME(UnmorphActor)
 REGISTER_NAME(GetViewEntRenderParams)
 
-//  LevelInfo events
+// LevelInfo events
 REGISTER_NAME(SpawnSpecials)
 REGISTER_NAME(UpdateSpecials)
 REGISTER_NAME(AfterUnarchiveThinkers)
@@ -148,7 +146,7 @@ REGISTER_NAME(SetMarineSprite)
 REGISTER_NAME(AcsFadeRange)
 REGISTER_NAME(AcsCancelFade)
 
-//  BasePlayer events
+// BasePlayer events
 REGISTER_NAME(PutClientIntoServer)
 REGISTER_NAME(SpawnClient)
 REGISTER_NAME(NetGameReborn)
@@ -194,7 +192,7 @@ REGISTER_NAME(ClientHudMessage)
 REGISTER_NAME(ServerImpulse)
 REGISTER_NAME(ServerSetUserInfo)
 
-//  ClientGameBase events
+// ClientGameBase events
 REGISTER_NAME(RootWindowCreated)
 REGISTER_NAME(Connected)
 REGISTER_NAME(Disconnected)
@@ -220,7 +218,7 @@ REGISTER_NAME(AddNotifyMessage)
 REGISTER_NAME(AddCentreMessage)
 REGISTER_NAME(AddHudMessage)
 
-//  Widget events
+// Widget events
 REGISTER_NAME(OnCreate)
 REGISTER_NAME(OnDestroy)
 REGISTER_NAME(OnChildAdded)
@@ -244,7 +242,7 @@ REGISTER_NAME(OnMouseClick)
 REGISTER_NAME(OnMMouseClick)
 REGISTER_NAME(OnRMouseClick)
 
-//  Lump names
+// Lump names
 REGISTER_NAME(s_start)
 REGISTER_NAME(s_end)
 REGISTER_NAME(ss_start)
@@ -340,14 +338,14 @@ REGISTER_NAME(strfdefs)
 REGISTER_NAME(keyconf)
 REGISTER_NAME(textures)
 
-//  Standard font names
+// standard font names
 REGISTER_NAME(smallfont)
 REGISTER_NAME(smallfont2)
 REGISTER_NAME(bigfont)
 REGISTER_NAME(consolefont)
 REGISTER_NAME(confont)
 
-//  Compiler names
+// compiler names
 REGISTER_NAME(Num)
 REGISTER_NAME(Length)
 REGISTER_NAME(length)
@@ -383,8 +381,8 @@ REGISTER_NAME(Socket)
 REGISTER_NAME(MiAStarGraphBase)
 REGISTER_NAME(MiAStarNodeBase)
 
-// Closing -----------------------------------------------------------------
 
+// closing
 #ifdef REGISTERING_ENUM
     NUM_HARDCODED_NAMES
   };
