@@ -652,13 +652,13 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
       if (IsStrConst()) {
         const VStr &str = GetStrConst(ec.Package);
         if (str.length() == 0 || str.ICmp("none") == 0 || str.ICmp("null") == 0 || str.ICmp("nil") == 0 || str.ICmp("false") == 0) {
-          ParseWarning((aloc ? *aloc : Loc), "`%s` argument #%d should be number (replaced with 0); PLEASE, FIX THE CODE!", funcName, argnum);
+          ParseWarningArError((aloc ? *aloc : Loc), "`%s` argument #%d should be number (replaced with 0); PLEASE, FIX THE CODE!", funcName, argnum);
           VExpression *enew = new VIntLiteral(0, Loc);
           delete this;
           return enew;
         }
         if (str.ICmp("true") == 0) {
-          ParseWarning((aloc ? *aloc : Loc), "`%s` argument #%d should be number (replaced with 1); PLEASE, FIX THE CODE!", funcName, argnum);
+          ParseWarningArError((aloc ? *aloc : Loc), "`%s` argument #%d should be number (replaced with 1); PLEASE, FIX THE CODE!", funcName, argnum);
           VExpression *enew = new VIntLiteral(1, Loc);
           delete this;
           return enew;
@@ -666,7 +666,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
       }
       // none as literal?
       if (IsNoneLiteral()) {
-        ParseWarning((aloc ? *aloc : Loc), "`%s` argument #%d should be number (replaced with 0); PLEASE, FIX THE CODE!", funcName, argnum);
+        ParseWarningArError((aloc ? *aloc : Loc), "`%s` argument #%d should be number (replaced with 0); PLEASE, FIX THE CODE!", funcName, argnum);
         VExpression *enew = new VIntLiteral(0, Loc);
         delete this;
         return enew;
@@ -691,7 +691,13 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
       // integer zero?
       if (IsIntConst() && GetIntConst() == 0) {
         // "false" or "0" means "empty"
-        ParseWarning((aloc ? *aloc : Loc), "`%s` argument #%d should be string (replaced `0` with empty string); PLEASE, FIX THE CODE!", funcName, argnum);
+        ParseWarningArError((aloc ? *aloc : Loc), "`%s` argument #%d should be string (replaced `0` with empty string); PLEASE, FIX THE CODE!", funcName, argnum);
+        VExpression *enew = new VNameLiteral(NAME_None, Loc);
+        delete this;
+        return enew;
+      }
+      if (argnum == 4 && IsIntConst() && GetIntConst() == 1 && VStr::strEqu(funcName, "A_CustomMeleeAttack")) {
+        ParseWarningArError((aloc ? *aloc : Loc), "`%s` argument #%d should be string (replaced `1` with empty string); MOD AUTHOR IS MORON!", funcName, argnum);
         VExpression *enew = new VNameLiteral(NAME_None, Loc);
         delete this;
         return enew;
@@ -715,7 +721,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
       // integer zero?
       if (IsIntConst() && GetIntConst() == 0) {
         // "false" or "0" means "empty"
-        ParseWarning((aloc ? *aloc : Loc), "`%s` argument #%d should be string (replaced `0` with empty string); PLEASE, FIX THE CODE!", funcName, argnum);
+        ParseWarningArError((aloc ? *aloc : Loc), "`%s` argument #%d should be string (replaced `0` with empty string); PLEASE, FIX THE CODE!", funcName, argnum);
         VExpression *enew = new VStringLiteral(VStr(), ec.Package->FindString(""), Loc);
         delete this;
         return enew;
@@ -749,7 +755,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
           VClass *Cls = VClass::FindClassNoCase(*CName);
           if (!Cls) {
             if (!destType.Class) {
-              ParseWarning((aloc ? *aloc : Loc), "No such class `%s` for argument #%d of `%s`", *CName, argnum, funcName);
+              ParseWarningArError((aloc ? *aloc : Loc), "No such class `%s` for argument #%d of `%s`", *CName, argnum, funcName);
               VExpression *enew = new VNoneLiteral(Loc);
               delete this;
               return enew;
@@ -770,10 +776,25 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
             return enew;
           }
           if (destType.Class && !Cls->IsChildOf(destType.Class)) {
-            ParseWarning((aloc ? *aloc : Loc), "Class `%s` is not a descendant of `%s` for argument #%d of `%s`", *CName, destType.Class->GetName(), argnum, funcName);
-            VExpression *enew = new VNoneLiteral(Loc);
-            delete this;
-            return enew;
+            // exception: allow `RandomSpawner` for inventories
+            bool stillError = true;
+            if (argnum == 1 && VStr::strEqu("A_GiveInventory", funcName)) {
+              static VClass *invCls = nullptr;
+              if (invCls == nullptr) { invCls = VClass::FindClass("Inventory"); check(invCls); }
+              static VClass *rndCls = nullptr;
+              if (rndCls == nullptr) { rndCls = VClass::FindClass("RandomSpawner"); check(rndCls); }
+              if (destType.Class->IsChildOf(invCls) && Cls->IsChildOf(rndCls)) {
+                stillError = false;
+                ParseWarningArError((aloc ? *aloc : Loc), "using class `%s` (RandomSpawner) for argument #%d of `%s`", Cls->GetName(), argnum, funcName);
+              }
+            }
+            if (stillError) {
+              ParseWarningArError((aloc ? *aloc : Loc), "Class `%s` is not a descendant of `%s` for argument #%d of `%s`", *CName, destType.Class->GetName(), argnum, funcName);
+              //for (VClass *cc = Cls; cc; cc = cc->GetSuperClass()) GLog.Logf(NAME_Debug, "  %s", cc->GetName());
+              VExpression *enew = new VNoneLiteral(Loc);
+              delete this;
+              return enew;
+            }
           }
           VExpression *enew = new VClassConstant(Cls, Loc);
           delete this;
@@ -784,7 +805,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
       // integer zero?
       if (IsIntConst() && GetIntConst() == 0) {
         // "false" or "0" means "empty"
-        ParseWarning((aloc ? *aloc : Loc), "`%s` argument #%d should be class (replaced with `none`); PLEASE, FIX THE CODE!", funcName, argnum);
+        ParseWarningArError((aloc ? *aloc : Loc), "`%s` argument #%d should be class (replaced with `none`); PLEASE, FIX THE CODE!", funcName, argnum);
         VExpression *enew = new VNoneLiteral(Loc);
         delete this;
         return enew;
@@ -804,7 +825,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
             delete this;
             return nullptr;
           }
-          ParseWarning((aloc ? *aloc : Loc), "`%s` argument #%d should be number %d; PLEASE, FIX THE CODE!", funcName, argnum, lbl);
+          ParseWarningArError((aloc ? *aloc : Loc), "`%s` argument #%d should be number %d; PLEASE, FIX THE CODE!", funcName, argnum, lbl);
           VExpression *enew = new VIntLiteral(lbl, Loc);
           delete this;
           return enew->MassageDecorateArg(ec, CallerState, funcName, argnum, destType, aloc, massaged);
@@ -821,7 +842,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
         }
         if (Offs == 0) {
           // 0 means "mod author is a fuckin' moron"
-          ParseWarning((aloc ? *aloc : Loc), "Mod author is a moron.");
+          ParseWarningArError((aloc ? *aloc : Loc), "zero jump offset in `%s`. mod author is a moron.", funcName);
           /*
           VExpression *enew = new VNoneLiteral(Loc);
           delete this;
@@ -877,7 +898,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
           VStateLabel *StLbl = CheckClass->FindStateLabel(Names, true);
           if (!StLbl) {
             if (VMemberBase::optDeprecatedLaxStates) {
-              ParseWarning((aloc ? *aloc : Loc), "No such state '%s' in class '%s' (argument #%d for `%s`)", *Lbl, CheckClass->GetName(), argnum, funcName);
+              ParseWarningArError((aloc ? *aloc : Loc), "No such state '%s' in class '%s' (argument #%d for `%s`)", *Lbl, CheckClass->GetName(), argnum, funcName);
               // emulate virtual state jump, and let VM deal with it
               VExpression *TmpArgs[1];
               TmpArgs[0] = this;
@@ -919,7 +940,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
               VExpression *TmpArgs[1];
               TmpArgs[0] = this->SyntaxCopy();
               if (lx->Type.Type == TYPE_Float) {
-                ParseWarning(Loc, "jump offset argument #%d for `%s` should be integer, not float! PLEASE, FIX THE CODE!", argnum, funcName);
+                ParseWarningArError(Loc, "jump offset argument #%d for `%s` should be integer, not float! PLEASE, FIX THE CODE!", argnum, funcName);
                 TmpArgs[0] = new VScalarToInt(TmpArgs[0], false); // not resolved
               }
               VExpression *eres = new VInvocation(nullptr, ec.SelfClass->FindMethodChecked("FindJumpStateOfs"), nullptr, false, false, Loc, 1, TmpArgs);
