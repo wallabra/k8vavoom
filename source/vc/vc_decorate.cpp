@@ -2104,7 +2104,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             {
               auto loc = sc->GetLoc();
 
-              VName DamageType = NAME_None;
+              VName DamageType = /*NAME_None*/VName("None");
               // Check if we only have a number instead of a string, since
               // there are some custom WAD files that don't specify a DamageType,
               // but specify a DamageFactor
@@ -2128,12 +2128,14 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
                   if (!ncDF) ncDF = &DamageFactors[i];
                 }
               }
+
               if (!DF && ncDF) DF = ncDF;
               if (!DF) {
                 DF = &DamageFactors.Alloc();
                 DF->DamageType = DamageType;
               }
               DF->Factor = sc->Float;
+              //GCon->Logf(NAME_Warning, "*** class '%s': damage factor '%s', value is %g", Class->GetName(), *DamageType, sc->Float);
             }
             break;
           case PROP_MissileDamage:
