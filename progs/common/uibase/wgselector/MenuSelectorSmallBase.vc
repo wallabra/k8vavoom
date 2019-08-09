@@ -24,20 +24,34 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class MenuStaticAnim : /*Widget*/MenuSelectorBase;
+class MenuSelector_SmallBase : MenuSelectorBase;
 
-int Speed;
-array!int Frames;
+int OrgXDelta;
+int MarkDelta;
+
 float Time;
 
-int OffsetX;
-int OffsetY;
 
-int OriginX;
-int OriginY;
+//==========================================================================
+//
+//  OnCreate
+//
+//==========================================================================
+override void OnCreate () {
+  ::OnCreate();
+  Disable(); //k8: why?
+}
 
-bool bAutoSize;
-bool bBackwards;
+
+//==========================================================================
+//
+//  SetYOfs
+//
+//==========================================================================
+override void SetYOfs (int hgt) {
+  if (hgt < 12) { yofs = 0; return; }
+  yofs = max(0, (hgt-8)/2);
+}
 
 
 //==========================================================================
@@ -46,40 +60,9 @@ bool bBackwards;
 //
 //==========================================================================
 override void SetOrigin (int OrgX, int OrgY) {
-  OriginX = OrgX;
-  OriginY = OrgY;
-  SetPos(OriginX-OffsetX, OriginY-OffsetY);
-}
-
-
-//==========================================================================
-//
-//  AddFrame
-//
-//==========================================================================
-void AddFrame (name Name) {
-  int Handle;
-  picinfo_t Info;
-
-  Handle = R_RegisterPic(Name);
-  Frames.length = Frames.length+1;
-  Frames[Frames.length-1] = Handle;
-  if (bAutoSize) {
-    R_GetPicInfo(Handle, &Info);
-    if (Frames.length == 1) {
-      // set up offsets and size for initial frame
-      OffsetX = Info.xoffset;
-      OffsetY = Info.yoffset;
-      SetSize(Info.width, Info.height);
-    } else {
-      // adjust offsets and size
-      if (OffsetX < Info.xoffset) OffsetX = Info.xoffset;
-      if (OffsetY < Info.yoffset) OffsetY = Info.yoffset;
-      if (Width-OffsetX < Info.width-Info.xoffset) Width = Info.width-Info.xoffset+OffsetX;
-      if (Height-OffsetY < Info.height-Info.yoffset) Height = Info.height-Info.yoffset+OffsetY;
-    }
-    SetPos(OriginX-OffsetX, OriginY-OffsetY);
-  }
+  yofs = 0;
+  //::SetOrigin(OrgX, OrgY);
+  SetPos(OrgX+OrgXDelta, OrgY);
 }
 
 
@@ -95,17 +78,28 @@ override void Tick (float DeltaTime) {
 
 //==========================================================================
 //
-//  OnDraw
+//  GetMarkColor
 //
 //==========================================================================
-override void OnDraw () {
-  int frame = int(Time*float(Speed))%Frames.length;
-  if (bBackwards) frame = Frames.length-frame-1;
-  DrawPic(OffsetX, OffsetY, Frames[frame]);
+int GetMarkColor () {
+#if 0
+  int phase = int(Time*1000/400)%3;
+  int clr = CR_FIRE;
+  switch (phase) {
+    case 0: clr = CR_LIGHTBLUE/*CR_FIRE*/; break;
+    case 1: clr = CR_SAPPHIRE/*CR_GOLD*/; break;
+    case 2: clr = CR_CYAN/*CR_WHITE*/; break;
+  }
+#else
+  int phase = int(Time*1000/400)%2;
+  int clr = (phase ? CR_DARKGREEN : CR_WHITE);
+#endif
+  return clr;
 }
 
 
 defaultproperties {
   bTickEnabled = true;
-  bAutoSize = true;
+  Width = 320;
+  Height = 200;
 }

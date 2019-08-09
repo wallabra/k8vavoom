@@ -33,6 +33,7 @@ import 'linespec';
 
 #include "wgselector/MenuSelectorBase.vc"
 #include "wgselector/MenuStaticAnim.vc"
+#include "wgselector/MenuSelectorSmallBase.vc"
 #include "wgselector/MenuSelectorSmallLeft.vc"
 #include "wgselector/MenuSelectorSmallRight.vc"
 #include "wgselector/MenuSelectorBig.vc"

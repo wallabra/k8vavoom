@@ -24,27 +24,20 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class MenuSelector_SmallLeft : MenuSelectorBase;
+class MenuSelector_SmallLeft : MenuSelector_SmallBase;
 
 
-override void SetYOfs (int hgt) {
-  yofs = max(0, (hgt-10)/2);
-}
-
-
-override void SetOrigin (int OrgX, int OrgY) {
-  yofs = 0;
-  SetPos(OrgX-10, OrgY);
-}
-
-
+//==========================================================================
+//
+//  OnDraw
+//
+//==========================================================================
 override void OnDraw () {
   SetTextAlign(hright, vtop);
-  DrawText(8, yofs, ">");
+  DrawText(8, yofs, "*", GetMarkColor());
 }
 
 
 defaultproperties {
-  Width = 320;
-  Height = 200;
+  OrgXDelta = -10;
 }

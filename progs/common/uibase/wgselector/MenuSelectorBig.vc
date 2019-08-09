@@ -26,48 +26,40 @@
 //**************************************************************************
 class MenuSelector_Big : MenuStaticAnim;
 
+
 //==========================================================================
 //
 //  GetClGame
 //
 //==========================================================================
-
-ClientGameShared GetClGame()
-{
+ClientGameShared GetClGame () {
   return MenuScreen(Parent).ClGame;
 }
+
 
 //==========================================================================
 //
 //  OnCreate
 //
 //==========================================================================
-
-override void OnCreate()
-{
-  int i;
-
+override void OnCreate () {
   ::OnCreate();
-
-  for (i = 0; i < GetClGame().BigSelectorAnimFrames.Num; i++)
-  {
-    AddFrame(GetClGame().BigSelectorAnimFrames[i]);
+  foreach (ref auto bff; GetClGame().BigSelectorAnimFrames) {
+    AddFrame(bff);
   }
   Speed = GetClGame().BigSelectorAnimSpeed;
 }
+
 
 //==========================================================================
 //
 //  SetOrigin
 //
 //==========================================================================
-
-override void SetOrigin(int X, int Y)
-{
-  ::SetOrigin(X + GetClGame().BigSelectorXOffset,
-    Y + GetClGame().BigSelectorYOffset);
+override void SetOrigin (int X, int Y) {
+  ::SetOrigin(X+GetClGame().BigSelectorXOffset, Y+GetClGame().BigSelectorYOffset);
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }
