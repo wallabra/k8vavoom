@@ -35,6 +35,8 @@ const int
   GAME_Chex    = 0x10,
   GAME_Any     = 0xff;
 
+const int MAX_RANDOMSPAWNERS_RECURSION = 32; // Should be largely more than enough...
+
 const int PTROP_UNSAFETARGET = 1;
 const int PTROP_UNSAFEMASTER = 2;
 
@@ -942,4 +944,108 @@ final float FindDamageFactor (name DmgType, float defaultFactor) {
     }
   }
   return defaultFactor;
+}
+
+
+//==========================================================================
+//
+//  ChooseFromDropItemList
+//
+//  this is used when RandomSpawner is given as an inventory, or a weapon
+//
+//  can return `none`
+//
+//==========================================================================
+static final class!EntityEx ChooseFromDropItemList (class!EntityEx origSpc, optional bool AllowReplace/*=true*/, optional out bool error) {
+  if (!origSpc) { error = true; return none; }
+  if (!specified_AllowReplace) AllowReplace = true;
+  //if (!class!EntityEx(allowedClass)) { error = true; return none; }
+
+  error = false;
+
+  //class!RandomSpawner spc = class!RandomSpawner(resCls);
+  class!EntityEx spc = origSpc;
+  int triesLeft = MAX_RANDOMSPAWNERS_RECURSION;
+  while (spc) {
+    if (!(--triesLeft)) {
+      printwarn("RandomSpawner `%C` is looped; aborting.", origSpc);
+      error = true;
+      return none;
+    }
+
+    int len = spc.default.DropItemList.length;
+    if (!len) return none;
+
+    int n = 0;
+    foreach (const ref DropItemInfo di; spc.default.DropItemList) {
+      //if (!di.Type) continue;
+      int amn = di.Amount;
+      if (amn <= 0) amn = 1;
+      // this is how we can weight the list
+      n += amn;
+    }
+    assert(n > 0);
+
+    // then we reset the iterator to the start position...
+    int i = 0;
+    // take a random number...
+    //n = P_Random()%n;
+    n = GenRandomU31()%n;
+    // and iterate in the array up to the random number chosen
+    while (n > -1 && i < len) {
+      int amn = spc.default.DropItemList[i].Amount;
+      if (amn <= 0) amn = 1;
+      n -= amn;
+      if (i+1 < len && n > -1) {
+        ++i;
+      } else {
+        n = -1;
+      }
+      /*
+      if (spc.default.DropItemList[i].Type) {
+        int amn = spc.default.DropItemList[i].Amount;
+        if (amn <= 0) amn = 1;
+        n -= amn;
+        if (i+1 < spc.default.DropItemList.length && n > -1) {
+          ++i;
+        } else {
+          n = -1;
+        }
+      } else {
+        ++i;
+      }
+      */
+    }
+
+    if (i >= len) {
+      printwarn("RandomSpawn in class `%C` got invalid random index", origSpc);
+      error = true;
+      return none;
+    }
+
+    // if we hit an invalid (empty) class, do nothing
+    if (!spc.default.DropItemList[i].Type) {
+      if (!spc.default.DropItemList[i].TypeName) return none;
+      printwarn("RandomSpawn in class `%C` hit unknown class `%s`", origSpc, spc.default.DropItemList[i].TypeName);
+      // something we don't know about
+      //return class!Unknown;
+      continue;
+    }
+
+    // ...and we can coose the item...
+    if (Random() > spc.default.DropItemList[i].Chance) return none;
+
+    spc = class!EntityEx(spc.default.DropItemList[i].Type);
+    assert(spc);
+
+    if (AllowReplace) {
+      class!EntityEx replCls = class!EntityEx(GetClassReplacement(spc));
+      if (replCls) spc = replCls;
+    }
+
+    if (!class!RandomSpawner(spc)) return /*allowedClass*/(spc);
+    // loop
+  }
+
+  return none;
 }

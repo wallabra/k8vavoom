@@ -127,9 +127,9 @@ void RemoveInventory (Inventory Item) {
   while (Prev && Prev.Inventory != Item) Prev = Prev.Inventory;
 
   if (!Prev) {
-    print("Cannot remove '%C' from inventory of '%C': it is not there!", Item, self);
+    printwarn("Cannot remove '%C' from inventory of '%C': it is not there!", Item, self);
     if (Item.Owner) {
-      if (Item.Owner != self) print(" OWNER: '%C'", Item.Owner); else print(" OWNER: SELF");
+      if (Item.Owner != self) printwarn(" OWNER: '%C'", Item.Owner); else printwarn(" OWNER: SELF");
       Item.DetachedFromOwner();
       Item.Owner = none;
     }
@@ -156,7 +156,7 @@ final Inventory FindInventory (class!Inventory ItemClass, optional bool disableR
     if (Check.Class == ItemClass) return Check;
     // consider replacements too
     if (!disableReplacement && GetClassReplacement(Check.Class) == repl) {
-      //print("FOUND REPLACEMENT INVENTORY: ItemClass=<%C>; repl=<%C>; Check=<%C>", ItemClass, repl, Check);
+      //printdebug("FOUND REPLACEMENT INVENTORY: ItemClass=<%C>; repl=<%C>; Check=<%C>", ItemClass, repl, Check);
       return Check;
     }
   }
@@ -189,15 +189,13 @@ final PowerInfiniteAmmo FindInfiniteAmmoPowerup () {
 static final Ammo SpawnAmmoType (Thinker spwnr, class!Ammo AmmoType, optional bool disableReplace) {
   if (!AmmoType) return none;
 
-  class!Thinker replCls = (disableReplace ? class!Thinker(AmmoType) : class!Thinker(GetClassReplacement(AmmoType)));
+  class!EntityEx replCls = (disableReplace ? class!EntityEx(AmmoType) : class!EntityEx(GetClassReplacement(AmmoType)));
   if (!replCls) replCls = AmmoType;
 
   if (class!RandomSpawner(replCls)) {
-    class!RandomSpawner spc = class!RandomSpawner(replCls);
-    assert(spc);
-    class!Ammo ammoCls = class!Ammo(RandomSpawner.doChooseRandomInvenotry(spc, class!Ammo(FindClass('Ammo'))));
+    class!Ammo ammoCls = class!Ammo(ChooseFromDropItemList(replCls, AllowReplace:true));
     if (!ammoCls) return none;
-    print("RandomSpawner `%C` chose ammo item `%C`", spc, ammoCls);
+    printdebug("RandomSpawner `%C` chose ammo item `%C`", replCls, ammoCls);
     AmmoType = ammoCls;
   } else {
     if (!class!Ammo(AmmoType)) return none;
@@ -222,15 +220,13 @@ static final Ammo SpawnAmmoType (Thinker spwnr, class!Ammo AmmoType, optional bo
 static final Inventory SpawnInventoryType (Thinker spwnr, class!Inventory Type, optional bool disableReplace) {
   if (!Type) return none;
 
-  class!Thinker replCls = (disableReplace ? class!Thinker(Type) : class!Thinker(GetClassReplacement(Type)));
+  class!EntityEx replCls = (disableReplace ? class!EntityEx(Type) : class!EntityEx(GetClassReplacement(Type)));
   if (!replCls) replCls = Type;
 
   if (class!RandomSpawner(replCls)) {
-    class!RandomSpawner spc = class!RandomSpawner(replCls);
-    assert(spc);
-    class!Inventory invCls = class!Inventory(RandomSpawner.doChooseRandomInvenotry(spc, class!Inventory(FindClass('Inventory'))));
+    class!Inventory invCls = class!Inventory(ChooseFromDropItemList(replCls, AllowReplace:true));
     if (!invCls) return none;
-    print("RandomSpawner `%C` chose inventory item `%C`", spc, invCls);
+    printdebug("RandomSpawner `%C` chose inventory item `%C`", replCls, invCls);
     Type = invCls;
   } else {
     if (!class!Inventory(Type)) return none;
@@ -255,15 +251,13 @@ static final Inventory SpawnInventoryType (Thinker spwnr, class!Inventory Type, 
 static final Weapon SpawnWeaponType (Thinker spwnr, class!Weapon Type, optional bool disableReplace) {
   if (!Type) return none;
 
-  class!Thinker replCls = (disableReplace ? class!Thinker(Type) : class!Thinker(GetClassReplacement(Type)));
+  class!EntityEx replCls = (disableReplace ? class!EntityEx(Type) : class!EntityEx(GetClassReplacement(Type)));
   if (!replCls) replCls = Type;
 
   if (class!RandomSpawner(replCls)) {
-    class!RandomSpawner spc = class!RandomSpawner(replCls);
-    assert(spc);
-    class!Weapon wpnCls = class!Weapon(RandomSpawner.doChooseRandomInvenotry(spc, class!Weapon(FindClass('Weapon'))));
+    class!Weapon wpnCls = class!Weapon(ChooseFromDropItemList(replCls, AllowReplace:true));
     if (!wpnCls) return none;
-    print("RandomSpawner `%C` chose weapon item `%C`", spc, wpnCls);
+    printdebug("RandomSpawner `%C` chose weapon item `%C`", replCls, wpnCls);
     Type = wpnCls;
   } else {
     if (!class!Weapon(Type)) return none;
@@ -301,7 +295,7 @@ final Inventory GiveInventoryType (class!Inventory Type, optional bool disableRe
     --Level.TotalItems;
   }
   Item.bDropped = true;
-  //print("*** Item=%C (%C)", Item, self);
+  //printdebug("*** Item=%C (%C)", Item, self);
   if (!Item.TryPickup(self)) {
     Item.Destroy();
     return none;
@@ -428,20 +422,20 @@ override void GiveInventory (name ItemName, int Amount, bool allowReplacement) {
   // get class of the item
   class EClass = FindClassNoCase(ItemName);
   if (!EClass) {
-    print("Unknown item type '%s'", ItemName);
+    printwarn("Unknown item type '%s'", ItemName);
     return;
   }
 
   class!Inventory ItemClass = class!Inventory(EClass);
   if (!ItemClass) {
-    print("'%s' is not an inventory class", ItemName);
+    printwarn("'%s' is not an inventory class", ItemName);
     return;
   }
 
   if (allowReplacement) {
     class!Inventory irepl = class!Inventory(GetClassReplacement(ItemClass));
     if (!irepl) {
-      print("'%s' replacement is not an inventory class, ignoring it", ItemName);
+      printwarn("'%s' replacement is not an inventory class, ignoring it", ItemName);
     } else {
       ItemClass = irepl;
     }
@@ -662,7 +656,7 @@ override void SetAmmoCapacity (name Name, int Amount) {
   if (!Item) {
     Item = GiveInventoryType(AmmoType);
     if (!Item) {
-      print("cannot give ammo of type `%C` (%s)", AmmoType, Name);
+      printwarn("cannot give ammo of type `%C` (%s)", AmmoType, Name);
       return;
     }
     Item.Amount = 0;

@@ -3291,7 +3291,7 @@ void GiveElvenGifts (optional mthing_t *mthing, optional bool Voodoo, optional b
 //
 //===========================================================================
 bool AddElvenGift (name Klass) {
-  class!Thinker th = class!Thinker(FindClass(Klass));
+  class!Actor th = class!Actor(FindClass(Klass));
   if (th) {
     Actor act = Actor(Level.Spawn(th));
     if (!act) return false;

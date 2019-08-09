@@ -26,87 +26,6 @@
 //**************************************************************************
 class RandomSpawner : Actor abstract;
 
-const int MAX_RANDOMSPAWNERS_RECURSION = 32; // Should be largely more than enough...
-
-//!int BounceCount;
-
-
-//==========================================================================
-//
-//  doChooseRandomInvenotry
-//
-//  this is used when RandomSpawner is given as an inventory, or a weapon
-//
-//==========================================================================
-static final class!Thinker doChooseRandomInvenotry (class!RandomSpawner spc, class!Thinker allowedClass) {
-  if (!allowedClass) return none;
-  class!RandomSpawner origSpc = spc;
-  int triesLeft = 32;
-  while (spc) {
-    if (!(--triesLeft)) {
-      printwarn("RandomSpawner `%C` is looped; aborting.", origSpc);
-      return none;
-    }
-    int len = spc.default.DropItemList.length;
-    if (!len) return none;
-
-    int i = 0;
-    int n = 0;
-    while (i < len) {
-      if (spc.default.DropItemList[i].Type) {
-        int amn = spc.default.DropItemList[i].Amount;
-        if (amn <= 0) amn = 1;
-        // this is how we can weight the list.
-        n += amn;
-      }
-      ++i;
-    }
-
-    if (n == 0) {
-      printwarn("RandomSpawner `%C` is invalid!", spc);
-      return none;
-    }
-
-    // then we reset the iterator to the start position...
-    i = 0;
-    // take a random number...
-    n = P_Random()%n;
-    // and iterate in the array up to the random number chosen
-    while (n > -1 && i < len) {
-      if (spc.default.DropItemList[i].Type) {
-        int amn = spc.default.DropItemList[i].Amount;
-        if (amn <= 0) amn = 1;
-        n -= amn;
-        if (i+1 < spc.default.DropItemList.length && n > -1) {
-          ++i;
-        } else {
-          n = -1;
-        }
-      } else {
-        ++i;
-      }
-    }
-    if (i >= len) {
-      printwarn("RandomSpawner `%C` got invalid random index", spc);
-      return none;
-    }
-
-    // ...and we can coose the item...
-    if (Random() <= spc.default.DropItemList[i].Chance) {
-      class!EntityEx cls = class!EntityEx(spc.default.DropItemList[i].Type);
-      class!EntityEx replCls = class!EntityEx(GetClassReplacement(cls));
-      if (replCls) cls = replCls;
-      if (!cls) return none;
-      if (!class!RandomSpawner(cls)) return allowedClass(cls);
-      spc = class!RandomSpawner(cls);
-    } else {
-      return none;
-    }
-  }
-
-  return none;
-}
-
 
 //==========================================================================
 //
@@ -116,80 +35,49 @@ static final class!Thinker doChooseRandomInvenotry (class!RandomSpawner spc, cla
 override void BeginPlay () {
   int n = 0, i = 0;
   bool IsBoss = false;
-  Entity NewEntity;
 
   ::BeginPlay();
-  if (DropItemList.length) {
-    while (i < DropItemList.length) {
-      if (DropItemList[i].Type) {
-        if (DropItemList[i].Amount <= 0) {
-          // default value is negative, we need a positive value.
-          DropItemList[i].Amount = 1;
-        }
-        // this is how we can weight the list.
-        n += DropItemList[i].Amount;
-      } else {
-        // send a warning that this class can't be found and continue the loop
-        printwarn("RandomSpawner `%C` type definition is incorrect at element %i", self, i);
-      }
-      ++i;
-    }
-    if (n == 0) {
-      printwarn("RandomSpawner `%C` is invalid! Replaced with error object.", self);
-      // show that there's a problem.
-      Spawn(Unknown, Origin, default, default/*, false*/);
-      Destroy();
-      return;
-    }
-    // then we reset the iterator to the start position...
-    i = 0;
-    // take a random number...
-    n = P_Random()%n;
-    // and iterate in the array up to the random number chosen
-    while (n > -1 && i < DropItemList.length) {
-      if (DropItemList[i].Type) {
-        assert(DropItemList[i].Amount > 0);
-        n -= DropItemList[i].Amount;
-        if (i+1 < DropItemList.length && n > -1) {
-          ++i;
-        } else {
-          n = -1;
-        }
-      } else {
-        ++i;
-      }
-    }
-    if (i >= DropItemList.length) {
-      printwarn("RandomSpawner `%C` got invalid random index", self);
-      // show that there's a problem.
-      Spawn(Unknown, Origin, default, default/*, false*/);
-      Destroy();
-      return;
-    }
-    // ...and we can spawn the dropped item...
 
-    // prevent infinite recursions
-    if (BounceCount >= MAX_RANDOMSPAWNERS_RECURSION) {
+  if (DropItemList.length) {
+    bool error;
+
+    class!EntityEx spwcls = ChooseFromDropItemList(/*Actor, */class!EntityEx(self.Class), AllowReplace:true, out error:error);
+    // skip unknowns (this is done in `ChooseFromDropItemList()` now)
+    /+
+    foreach (; 0..32) {
+      if (!spwcls) break;
+      if (GetClassName(spwcls) != 'Unknown') break;
+      spwcls = ChooseFromDropItemList(/*Actor, */class!EntityEx(self.Class), AllowReplace:true, out error:error);
+    }
+    +/
+
+    if (spwcls) {
+      spwcls = class!Actor(spwcls);
+      if (!spwcls) error = true;
+    }
+
+    if (error) {
+      printwarn("RandomSpawner `%C` replaced with error object", self);
       // show that there's a problem
       Spawn(Unknown, Origin, default, default/*, false*/);
       Destroy();
       return;
-    } else if (Random() <= DropItemList[i].Chance) {
-      class!EntityEx cls = class!EntityEx(FindClass(GetClassName(GetClassReplacement(DropItemList[i].Type))));
+    }
 
-      if (!cls) {
-        // show that there's a problem
-        Spawn(Unknown, Origin, default, default/*, false*/);
-        Destroy();
-        return;
-      }
+    if (spwcls) {
+      printdebug("RandomSpawner `%C` choose `%C`", self, spwcls);
+    } else {
+      printdebug("RandomSpawner `%C` choose `none`", self);
+    }
 
+    EntityEx NewEntity;
+    if (spwcls) {
       if (bMissile && Target && Target.Target) {
         // attempting to spawn a missile
         if (!Tracer && bSeekerMissile) Tracer = Target;
-        NewEntity = SpawnMissileXYZ(Origin, Target, cls);
+        NewEntity = SpawnMissileXYZ(Origin, Target, spwcls);
       } else {
-        NewEntity = Spawn(cls, Origin, default, default/*, false*/);
+        NewEntity = EntityEx(Spawn(spwcls, Origin, default, default, AllowReplace:false)); // no need to replace, we already did it
       }
 
       if (NewEntity) {
@@ -202,48 +90,52 @@ override void BeginPlay () {
         NewEntity.Args[2] = Args[2];
         NewEntity.Args[3] = Args[3];
         NewEntity.Args[4] = Args[4];
-        EntityEx(NewEntity).Special1 = Special1;
-        EntityEx(NewEntity).Special2 = Special2;
+        NewEntity.Special1 = Special1;
+        NewEntity.Special2 = Special2;
         NewEntity.SetTID(TID);
-        EntityEx(NewEntity).Master = Master;
-        EntityEx(NewEntity).Target = Target;
-        EntityEx(NewEntity).Tracer = Tracer;
-        EntityEx(NewEntity).Species = Species;
-        EntityEx(NewEntity).CopyFriendliness(self, false);
+        NewEntity.Master = Master;
+        NewEntity.Target = Target;
+        NewEntity.Tracer = Tracer;
+        NewEntity.Species = Species;
+        NewEntity.CopyFriendliness(self, false);
 
         // copy map spawn flags
-        EntityEx(NewEntity).bAmbush = bAmbush;
-        EntityEx(NewEntity).bStanding = bStanding;
-        if (bDormant) EntityEx(NewEntity).Deactivate(none);
+        NewEntity.bAmbush = bAmbush;
+        NewEntity.bStanding = bStanding;
+        if (bDormant) NewEntity.Deactivate(none);
         if (bShadow && RenderStyle == STYLE_Translucent && Alpha == 0.25) {
-          EntityEx(NewEntity).bShadow = true;
-          EntityEx(NewEntity).RenderStyle = STYLE_Translucent;
-          EntityEx(NewEntity).Alpha = 0.25;
+          NewEntity.bShadow = true;
+          NewEntity.RenderStyle = STYLE_Translucent;
+          NewEntity.Alpha = 0.25;
         }
-        if (RenderStyle == STYLE_None) EntityEx(NewEntity).RenderStyle = STYLE_None;
+        if (RenderStyle == STYLE_None) NewEntity.RenderStyle = STYLE_None;
+
+        // copy translations too, why not?
+        NewEntity.CopyTranslations(self);
 
         // this handles things such as projectiles with the MF4_SPECTRAL flag that have
         // a health set to -2 after spawning, for internal reasons
         if (Health != default.Health) NewEntity.Health = Health;
         if (NewEntity.IsA('Inventory')) {
-          EntityEx(NewEntity).bDropped = bDropped;
+          NewEntity.bDropped = bDropped;
         } else {
-          EntityEx(NewEntity).bDropped = false;
+          NewEntity.bDropped = false;
         }
         // handle special altitude flags
-             if (EntityEx(NewEntity).bSpawnCeiling) NewEntity.Origin.z = NewEntity.CeilingZ-NewEntity.Height;
-        else if (EntityEx(NewEntity).bSpawnFloat) NewEntity.Origin.z = FLOATRANDZ;
-        if (EntityEx(NewEntity).bMissile) EntityEx(NewEntity).CheckMissileSpawn();
+             if (NewEntity.bSpawnCeiling) NewEntity.Origin.z = NewEntity.CeilingZ-NewEntity.Height;
+        else if (NewEntity.bSpawnFloat) NewEntity.Origin.z = FLOATRANDZ;
+        if (NewEntity.bMissile) NewEntity.CheckMissileSpawn();
 
         // bouncecount is used to count how many recursions we're in
-        if (NewEntity.IsA('RandomSpawner')) RandomSpawner(NewEntity).BounceCount = ++BounceCount;
+        //if (NewEntity.IsA('RandomSpawner')) RandomSpawner(NewEntity).BounceCount = ++BounceCount;
 
         // if the spawned actor has either of those flags, it's a boss
-        if (EntityEx(NewEntity).bBossDeath || EntityEx(NewEntity).bBoss) IsBoss = true;
+        if (NewEntity.bBossDeath || NewEntity.bBoss) IsBoss = true;
       }
     }
+
     if (NewEntity && IsBoss) {
-      Tracer = EntityEx(NewEntity);
+      Tracer = NewEntity;
     } else {
       // "else" because a boss-replacing spawner must wait until it can call A_BossDeath.
       Destroy();

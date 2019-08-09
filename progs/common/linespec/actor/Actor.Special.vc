@@ -104,7 +104,7 @@ final void A_KeenDie (optional int tag) {
   if (!tag) tag = 666;
 
   // scan the remaining thinkers to see if all Keens are dead
-  foreach AllThinkers(class!Thinker(Class), Other) {
+  foreach AllThinkers(class!EntityEx(Class), Other) {
     if (Other != self && Other.Health > 0) {
       // other mobj of the same Class not dead
       return;
