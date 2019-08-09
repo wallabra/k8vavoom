@@ -240,18 +240,12 @@ void VField::SkipSerialisedType (VStream &Strm) {
     case TYPE_Delegate: Strm << tmpobj; Strm << tmpname; break;
     case TYPE_Struct: Strm << tmpname; VStruct::SkipSerialisedObject(Strm); break;
     case TYPE_Array:
-      Strm << tp; // inner type
-      Strm << STRM_INDEX(n);
-      Strm << STRM_INDEX(InnerSize);
-      if (n < 0 || InnerSize < 0) Host_Error("I/O Error: invalid array size");
-      if (n || InnerSize) Strm.Seek(Strm.Tell()+n*InnerSize);
-      break;
     case TYPE_DynamicArray:
       Strm << tp; // inner type
       Strm << STRM_INDEX(n);
       Strm << STRM_INDEX(InnerSize);
-      if (n < 0 || InnerSize < 0) Host_Error("I/O Error: invalid dynamic array size");
-      if (n || InnerSize) Strm.Seek(Strm.Tell()+n*InnerSize);
+      if (n < 0 || InnerSize < 0) Host_Error("I/O Error: invalid array size");
+      while (n--) SkipSerialisedType(Strm);
       break;
     case TYPE_SliceArray:
       //FIXME:SLICE
