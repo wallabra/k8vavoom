@@ -824,6 +824,8 @@ native static final void print (string format, ...) [printf,1];
 native static final void dprint (string format, ...) [printf,1];
 // print warning to console
 native static final void printwarn (string format, ...) [printf,1];
+// print debug message to console (not filtered, just another message type)
+native static final void printdebug (string format, ...) [printf,1];
 
 
 // ////////////////////////////////////////////////////////////////////////// //
