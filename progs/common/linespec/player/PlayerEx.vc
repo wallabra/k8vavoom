@@ -3730,7 +3730,7 @@ void DeathPlayerTick (float deltaTime) {
       }
 #endif
     }
-  } else if (Actor(MO).DamageType != 'Ice') {
+  } else if (nameicmp(Actor(MO).DamageType, 'Ice') != 0) {
     // fall to ground (if not frozen)
     DeltaViewHeight = 0.0;
     if (ViewHeight > 6.0) ViewHeight -= 35.0*deltaTime;

@@ -622,10 +622,10 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
         // check for flame death
         if (!inflictor || !inflictor.bConditionalFireDamage || (Health > -50 && damage > 25)) DamageType = 'Fire';
       } else {
-        DamageType = 'Fire';
+        DamageType = 'Fire'; // for obituary
       }
     } else {
-      DamageType = DmgType;
+      DamageType = DmgType; // for obituary
     }
     if (source && source.IsServant()) {
       // minotaur's kills go to his master
@@ -647,7 +647,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
   foreach (auto i; 0..PainChances.Num) {
     if (nameicmp(PainChances[i].DamageType, DmgType) == 0 ||
         (!DmgType && nameicmp(PainChances[i].DamageType, 'None') == 0) ||
-        (nameicmp(DmgType, 'None') == 0 && nameicmp(PainChances[i].DamageType, 'None') == 0))
+        (!PainChances[i].DamageType && nameicmp(DmgType, 'None') == 0))
     {
       PChance = PainChances[i].Chance;
       break;
@@ -1029,9 +1029,9 @@ final void PoisonDamage (EntityEx inflictor, EntityEx source, int damage, bool p
     if (bIsPlayer && inflictor && !PlayerEx(Player).MorphTime) {
       // check for flame death
       if (nameicmp(inflictor.DamageType, 'Fire') == 0 && Health > -50 && damage > 25) {
-        DamageType = 'Fire';
+        DamageType = 'Fire'; // for obituary
       } else {
-        DamageType = inflictor.DamageType;
+        DamageType = inflictor.DamageType; // for obituary
       }
     }
     Died(source, inflictor);
