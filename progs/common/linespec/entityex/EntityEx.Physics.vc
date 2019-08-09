@@ -683,7 +683,7 @@ final void HitLine (tmtrace_t *tmtrace, float StepVelScale, bool forceSlide) {
     line_t *hitline = tmtrace->BlockingLine;
     if (!hitline) hitline = tmtrace->CeilingLine;
     if (!hitline) hitline = tmtrace->FloorLine;
-    //if (!hitline) hitline = tmtrace->AnyBlockingLine; //k8: nope; this was my hack, and it is wrong here
+    if (!hitline) hitline = tmtrace->AnyBlockingLine; //k8: nope; this was my hack, and it is wrong here
     if (!hitline && tmtrace->SpecHit.Length) {
       bool wasBlockAll = false;
       line_t *blockall;
@@ -699,8 +699,14 @@ final void HitLine (tmtrace_t *tmtrace, float StepVelScale, bool forceSlide) {
 
     // wtf?!
     if (!hitline) {
-      printwarn("missile '%C' get to `HitLine` without a blocking line; THIS IS ENGINE BUG!!!", self);
+      //printwarn("missile '%C' get to `HitLine` without a blocking line; THIS IS ENGINE BUG!!!", self);
       Destroy();
+      return;
+    }
+
+    // just in case, again
+    if (hitline->special == LNSPEC_LineHorizon) {
+      if (bBounceSky) Velocity = vector(0.0, 0.0, -1.0*35.0); else Destroy();
       return;
     }
 
