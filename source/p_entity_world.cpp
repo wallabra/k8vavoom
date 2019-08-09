@@ -1120,9 +1120,15 @@ bool VEntity::CheckRelLine (tmtrace_t &tmtrace, line_t *ld, bool skipSpecials) {
   } else {
     tmtrace.CeilingZ = tmtrace.FloorZ;
     //k8: oops; it seems that we have to return `false` here
-    if (!skipSpecials) BlockedByLine(ld);
-    tmtrace.BlockingLine = ld;
-    return false;
+    //    but only if this is not a special line, otherwise monsters cannot open doors
+    if (!ld->special) {
+      if (!skipSpecials) BlockedByLine(ld);
+      tmtrace.BlockingLine = ld;
+      return false;
+    } else {
+      // this is special line, don't block movement (but remember this line as blocking!)
+      tmtrace.BlockingLine = ld;
+    }
   }
 
   // if contacted a special line, add it to the list
