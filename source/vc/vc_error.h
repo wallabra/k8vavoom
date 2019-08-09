@@ -58,6 +58,7 @@ enum ECompileError {
 };
 
 void ParseWarning (const TLocation &, const char *text, ...) __attribute__((format(printf, 2, 3)));
+void ParseWarningArError (const TLocation &, const char *text, ...) __attribute__((format(printf, 2, 3)));
 void ParseError (const TLocation &, const char *text, ...) __attribute__((format(printf, 2, 3)));
 void ParseError (const TLocation &, ECompileError error);
 void ParseError (const TLocation &, ECompileError error, const char *text, ...) __attribute__((format(printf, 3, 4)));

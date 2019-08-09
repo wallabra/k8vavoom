@@ -96,17 +96,33 @@ __attribute__((noreturn)) void BailOut () {
 //==========================================================================
 __attribute__((format(printf, 2, 3))) void ParseWarning (const TLocation &l, const char *text, ...) {
   if (vcGagErrors) return;
-
-  char Buffer[2048];
   va_list argPtr;
-
   va_start(argPtr, text);
-  vsnprintf(Buffer, sizeof(Buffer), text, argPtr);
+  const char *buf = vavarg(text, argPtr);
   va_end(argPtr);
 #if !defined(IN_VCC)
-  GLog.Logf(NAME_Warning, "%s: warning: %s", *(vcErrorIncludeCol ? l.toString(): l.toStringNoCol()), Buffer);
+  GLog.Logf(NAME_Warning, "%s: warning: %s", *(vcErrorIncludeCol ? l.toString(): l.toStringNoCol()), buf);
 #else
-  fprintf(stderr, "%s: warning: %s\n", *(vcErrorIncludeCol ? l.toString(): l.toStringNoCol()), Buffer);
+  fprintf(stderr, "%s: warning: %s\n", *(vcErrorIncludeCol ? l.toString(): l.toStringNoCol()), buf);
+#endif
+}
+
+
+//==========================================================================
+//
+//  ParseWarningArError
+//
+//==========================================================================
+__attribute__((format(printf, 2, 3))) void ParseWarningArError (const TLocation &l, const char *text, ...) {
+  if (vcGagErrors) return;
+  va_list argPtr;
+  va_start(argPtr, text);
+  const char *buf = vavarg(text, argPtr);
+  va_end(argPtr);
+#if !defined(IN_VCC)
+  GLog.Logf(NAME_Error, "%s: shit! %s", *(vcErrorIncludeCol ? l.toString(): l.toStringNoCol()), buf);
+#else
+  fprintf(stderr, "%s: SHIT!: %s\n", *(vcErrorIncludeCol ? l.toString(): l.toStringNoCol()), buf);
 #endif
 }
 
@@ -119,16 +135,14 @@ __attribute__((format(printf, 2, 3))) void ParseWarning (const TLocation &l, con
 __attribute__((format(printf, 2, 3))) void ParseError (const TLocation &l, const char *text, ...) {
   if (vcGagErrors) { ++vcGagErrorCount; return; }
 
-  char Buffer[2048];
-  va_list argPtr;
-
   ++vcErrorCount;
 
+  va_list argPtr;
   va_start(argPtr, text);
-  vsnprintf(Buffer, sizeof(Buffer), text, argPtr);
+  const char *buf = vavarg(text, argPtr);
   va_end(argPtr);
 
-  VStr err = va("%s: %s", *(vcErrorIncludeCol ? l.toString(): l.toStringNoCol()), Buffer);
+  VStr err = va("%s: %s", *(vcErrorIncludeCol ? l.toString(): l.toStringNoCol()), buf);
   vcParseErrors.append(err);
 
 #if !defined(IN_VCC)
@@ -161,14 +175,12 @@ __attribute__((format(printf, 3, 4))) void ParseError (const TLocation &l, EComp
   if (vcGagErrors) { ++vcGagErrorCount; return; }
 
   if (text && text[0]) {
-    char Buffer[2048];
     va_list argPtr;
-
     va_start(argPtr, text);
-    vsnprintf(Buffer, sizeof(Buffer), text, argPtr);
+    const char *buf = vavarg(text, argPtr);
     va_end(argPtr);
     //ParseError(l, "Error #%d - %s, %s", error, ErrorNames[error], Buffer);
-    ParseError(l, "%s, %s", ErrorNames[error], Buffer);
+    ParseError(l, "%s, %s", ErrorNames[error], buf);
   } else {
     ParseError(l, "%s", ErrorNames[error]);
   }
@@ -190,14 +202,13 @@ __attribute__((format(printf, 3, 4))) void ParseError (const TLocation &l, EComp
 //
 //==========================================================================
 __attribute__((noreturn, format(printf, 1, 2))) void FatalError (const char *text, ...) {
-  static char workString[1024];
   va_list argPtr;
 
   va_start(argPtr, text);
-  vsnprintf(workString, sizeof(workString), text, argPtr);
+  const char *buf = vavarg(text, argPtr);
   va_end(argPtr);
 
-  Sys_Error("%s", workString);
+  Sys_Error("%s", buf);
 }
 
 #endif
