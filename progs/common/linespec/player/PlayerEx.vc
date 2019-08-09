@@ -4545,6 +4545,39 @@ void Cheat_Regeneration () {
 
 //==========================================================================
 //
+//  Cheat_PrintWeaponSlots
+//
+//==========================================================================
+void Cheat_PrintWeaponSlots () {
+  auto plrmo = PlayerPawn(MO);
+  if (!plrmo) return;
+  foreach (auto i; 0..PlayerPawn::NUM_WEAPON_SLOTS) {
+    bool slotStarted = false;
+    foreach (auto j; 0..PlayerPawn::MAX_WEAPONS_PER_SLOT) {
+      //class!Weapon WpnCls = plrmo.WeaponSlots[i].Weapons[j];
+      class!Weapon WpnCls = plrmo.GetWeaponInSlot(i, j);
+      if (!WpnCls) continue;
+      // check if it is spawnable
+      auto st = FindClassState(WpnCls, 'Ready');
+      if (!st) continue; // an abstract base class
+      if (!AreStateSpritesPresent(st)) continue; // no sprites
+      // if weapon cannot be spawned, you cannot get it
+      st = FindClassState(WpnCls, 'Spawn');
+      if (!st) continue; // an abstract base class
+      if (!AreStateSpritesPresent(st)) continue; // no sprites
+      // ok, seems to be valid
+      if (!slotStarted) {
+        slotStarted = true;
+        print(" --- SLOT #%d ---", i);
+      }
+      print("   %C", WpnCls);
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  Cheat_DumpInventory
 //
 //==========================================================================
