@@ -41,86 +41,6 @@ VCvarB r_interpolate_thing_angles_sprites("r_interpolate_thing_angles_sprites", 
 #endif
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-/*
-struct cptrace_t {
-  TVec Pos;
-  float BBox[4];
-  float FloorZ;
-  float CeilingZ;
-  float DropOffZ;
-  sec_plane_t *EFloor;
-  sec_plane_t *ECeiling;
-};
-*/
-
-struct tmtrace_t {
-  VEntity *StepThing; // not for cptrace_t
-  TVec End; // not for cptrace_t
-  float BBox[4]; // valid for cptrace_t
-  float FloorZ; // valid for cptrace_t
-  float CeilingZ; // valid for cptrace_t
-  float DropOffZ; // valid for cptrace_t
-
-  // WARNING! keep in sync with VEntity fcflags
-  /*
-  enum {
-    FC_FlipFloor = 1u<<0,
-    FC_FlipCeiling = 1u<<1,
-  };
-  vuint32 fcflags; // valid for cptrace_t
-  */
-  TSecPlaneRef EFloor; // valid for cptrace_t
-  TSecPlaneRef ECeiling; // valid for cptrace_t
-
-  enum {
-    TF_FloatOk = 0x01u, // if true, move would be ok if within tmtrace.FloorZ - tmtrace.CeilingZ
-  };
-  vuint32 TraceFlags;
-
-  // keep track of the line that lowers the ceiling,
-  // so missiles don't explode against sky hack walls
-  line_t *CeilingLine;
-  line_t *FloorLine;
-  // also keep track of the blocking line, for checking
-  // against doortracks
-  line_t *BlockingLine; // only lines without backsector
-
-  // keep track of special lines as they are hit,
-  // but don't process them until the move is proven valid
-  TArray<line_t *> SpecHit;
-
-  VEntity *BlockingMobj;
-  // any blocking line (including passable two-sided!); only has any sense if trace returned `false`
-  // note that this is really *any* line, not necessarily first or last crossed!
-  line_t *AnyBlockingLine;
-
-  // from cptrace_t
-  TVec Pos; // valid for cptrace_t
-
-
-  inline void CopyRegFloor (sec_region_t *r, const TVec *Origin) {
-    EFloor = r->efloor;
-    if (Origin) FloorZ = EFloor.GetPointZClamped(*Origin);
-  }
-
-  inline void CopyRegCeiling (sec_region_t *r, const TVec *Origin) {
-    ECeiling = r->eceiling;
-    if (Origin) CeilingZ = ECeiling.GetPointZClamped(*Origin);
-  }
-
-  inline void CopyOpenFloor (opening_t *o, bool setz=true) {
-    EFloor = o->efloor;
-    if (setz) FloorZ = o->bottom;
-  }
-
-  inline void CopyOpenCeiling (opening_t *o, bool setz=true) {
-    ECeiling = o->eceiling;
-    if (setz) CeilingZ = o->top;
-  }
-};
-
-
 //==========================================================================
 //
 //  tmtSetupGap
@@ -1227,13 +1147,15 @@ TAVec VEntity::GetInterpolatedDrawAngles () {
 //  returns `false` if move is blocked.
 //
 //==========================================================================
-bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool checkOnly) {
+bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool checkOnly, bool noPickups) {
   bool check;
   TVec oldorg(0, 0, 0);
   line_t *ld;
   sector_t *OldSec = Sector;
 
-  check = CheckRelPosition(tmtrace, newPos, checkOnly);
+  bool skipEffects = (checkOnly || noPickups);
+
+  check = CheckRelPosition(tmtrace, newPos, skipEffects);
   tmtrace.TraceFlags &= ~tmtrace_t::TF_FloatOk;
 
   if (!check) {
@@ -1248,7 +1170,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
         tmtrace.CeilingZ-(O->Origin.z+O->Height) < Height)
     {
       // can't step up or doesn't fit
-      PushLine(tmtrace, checkOnly);
+      PushLine(tmtrace, skipEffects);
       return false;
     }
 
@@ -1263,7 +1185,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
   if (EntityFlags&EF_ColideWithWorld) {
     if (tmtrace.CeilingZ-tmtrace.FloorZ < Height) {
       // doesn't fit
-      PushLine(tmtrace, checkOnly);
+      PushLine(tmtrace, skipEffects);
       //printf("*** WORLD(0)!\n");
       return false;
     }
@@ -1272,7 +1194,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
 
     if (tmtrace.CeilingZ-Origin.z < Height && !(EntityFlags&EF_Fly) && !(EntityFlags&EF_IgnoreCeilingStep)) {
       // mobj must lower itself to fit
-      PushLine(tmtrace, checkOnly);
+      PushLine(tmtrace, skipEffects);
       //printf("*** WORLD(1)!\n");
       return false;
     }
@@ -1289,7 +1211,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
         {
           if (!checkOnly) Velocity.z = -8.0f*35.0f;
         }
-        PushLine(tmtrace, checkOnly);
+        PushLine(tmtrace, skipEffects);
         return false;
       } else if (Origin.z < tmtrace.FloorZ && tmtrace.FloorZ-tmtrace.DropOffZ > MaxStepHeight) {
         // check to make sure there's nothing in the way for the step up
@@ -1301,7 +1223,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
         {
           if (!checkOnly) Velocity.z = 8.0f*35.0f;
         }
-        PushLine(tmtrace, checkOnly);
+        PushLine(tmtrace, skipEffects);
         return false;
       }
     }
@@ -1315,19 +1237,19 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
               (tmtrace.BlockingMobj && tmtrace.BlockingMobj->CheckOnmobj()) ||
               TestMobjZ(TVec(newPos.x, newPos.y, tmtrace.FloorZ)))
           {
-            PushLine(tmtrace, checkOnly);
+            PushLine(tmtrace, skipEffects);
             //printf("*** WORLD(2)!\n");
             return false;
           }
         } else {
-          PushLine(tmtrace, checkOnly);
+          PushLine(tmtrace, skipEffects);
           //printf("*** WORLD(3)!\n");
           return false;
         }
       }
 
       if ((EntityFlags&EF_Missile) && !(EntityFlags&EF_StepMissile) && tmtrace.FloorZ > Origin.z) {
-        PushLine(tmtrace, checkOnly);
+        PushLine(tmtrace, skipEffects);
         //printf("*** WORLD(4)!\n");
         return false;
       }
@@ -1340,7 +1262,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
         }
         // check to make sure there's nothing in the way for the step up
         if (TestMobjZ(TVec(newPos.x, newPos.y, tmtrace.FloorZ))) {
-          PushLine(tmtrace, checkOnly);
+          PushLine(tmtrace, skipEffects);
           //printf("*** WORLD(5)!\n");
           return false;
         }
@@ -1412,28 +1334,30 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
     FloorClip = 0.0f;
   }
 
-  // if any special lines were hit, do the effect
-  if (EntityFlags&EF_ColideWithWorld) {
-    while (tmtrace.SpecHit.Num() > 0) {
-      int side;
-      int oldside;
+  if (!noPickups) {
+    // if any special lines were hit, do the effect
+    if (EntityFlags&EF_ColideWithWorld) {
+      while (tmtrace.SpecHit.Num() > 0) {
+        int side;
+        int oldside;
 
-      // see if the line was crossed
-      ld = tmtrace.SpecHit[tmtrace.SpecHit.Num()-1];
-      tmtrace.SpecHit.SetNum(tmtrace.SpecHit.Num()-1, false);
-      side = ld->PointOnSide(Origin);
-      oldside = ld->PointOnSide(oldorg);
-      if (side != oldside) {
-        if (ld->special) eventCrossSpecialLine(ld, oldside);
+        // see if the line was crossed
+        ld = tmtrace.SpecHit[tmtrace.SpecHit.Num()-1];
+        tmtrace.SpecHit.SetNum(tmtrace.SpecHit.Num()-1, false);
+        side = ld->PointOnSide(Origin);
+        oldside = ld->PointOnSide(oldorg);
+        if (side != oldside) {
+          if (ld->special) eventCrossSpecialLine(ld, oldside);
+        }
       }
     }
-  }
 
-  // do additional check here to avoid calling progs
-  if ((OldSec->heightsec && Sector->heightsec && Sector->ActionList) ||
-      (OldSec != Sector && (OldSec->ActionList || Sector->ActionList)))
-  {
-    eventCheckForSectorActions(OldSec, OldAboveFakeFloor, OldAboveFakeCeiling);
+    // do additional check here to avoid calling progs
+    if ((OldSec->heightsec && Sector->heightsec && Sector->ActionList) ||
+        (OldSec != Sector && (OldSec->ActionList || Sector->ActionList)))
+    {
+      eventCheckForSectorActions(OldSec, OldAboveFakeFloor, OldAboveFakeCeiling);
+    }
   }
 
   return true;
@@ -1548,10 +1472,12 @@ void VEntity::SlidePathTraverse (float &BestSlideFrac, line_t *&BestSlideLine, f
 //  Find the first line hit, move flush to it, and slide along it.
 //  This is a kludgy mess.
 //
+//  `noPickups` means "don't activate specials" too.
+//
 //  k8: TODO: switch to beveled BSP!
 //
 //==========================================================================
-void VEntity::SlideMove (float StepVelScale) {
+void VEntity::SlideMove (float StepVelScale, bool noPickups) {
   float leadx;
   float leady;
   float trailx;
@@ -1569,8 +1495,8 @@ void VEntity::SlideMove (float StepVelScale) {
   do {
     if (++hitcount == 3) {
       // don't loop forever
-      if (!TryMove(tmtrace, TVec(Origin.x, Origin.y+YMove, Origin.z), true)) {
-        TryMove(tmtrace, TVec(Origin.x+XMove, Origin.y, Origin.z), true);
+      if (!TryMove(tmtrace, TVec(Origin.x, Origin.y+YMove, Origin.z), true, noPickups)) {
+        TryMove(tmtrace, TVec(Origin.x+XMove, Origin.y, Origin.z), true, noPickups);
       }
       return;
     }
@@ -2142,9 +2068,10 @@ IMPLEMENT_FUNCTION(VEntity, TestMobjZ) {
 }
 
 IMPLEMENT_FUNCTION(VEntity, SlideMove) {
+  P_GET_BOOL_OPT(noPickups, false);
   P_GET_FLOAT(StepVelScale);
   P_GET_SELF;
-  Self->SlideMove(StepVelScale);
+  Self->SlideMove(StepVelScale, noPickups);
 }
 
 IMPLEMENT_FUNCTION(VEntity, BounceWall) {

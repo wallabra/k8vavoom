@@ -276,6 +276,86 @@ struct opening_t {
 };
 
 
+/*
+struct cptrace_t {
+  TVec Pos;
+  float BBox[4];
+  float FloorZ;
+  float CeilingZ;
+  float DropOffZ;
+  sec_plane_t *EFloor;
+  sec_plane_t *ECeiling;
+};
+*/
+
+struct tmtrace_t {
+  VEntity *StepThing; // not for cptrace_t
+  TVec End; // not for cptrace_t
+  float BBox[4]; // valid for cptrace_t
+  float FloorZ; // valid for cptrace_t
+  float CeilingZ; // valid for cptrace_t
+  float DropOffZ; // valid for cptrace_t
+
+  // WARNING! keep in sync with VEntity fcflags
+  /*
+  enum {
+    FC_FlipFloor = 1u<<0,
+    FC_FlipCeiling = 1u<<1,
+  };
+  vuint32 fcflags; // valid for cptrace_t
+  */
+  TSecPlaneRef EFloor; // valid for cptrace_t
+  TSecPlaneRef ECeiling; // valid for cptrace_t
+
+  enum {
+    TF_FloatOk = 0x01u, // if true, move would be ok if within tmtrace.FloorZ - tmtrace.CeilingZ
+  };
+  vuint32 TraceFlags;
+
+  // keep track of the line that lowers the ceiling,
+  // so missiles don't explode against sky hack walls
+  line_t *CeilingLine;
+  line_t *FloorLine;
+  // also keep track of the blocking line, for checking
+  // against doortracks
+  line_t *BlockingLine; // only lines without backsector
+
+  // keep track of special lines as they are hit,
+  // but don't process them until the move is proven valid
+  TArray<line_t *> SpecHit;
+
+  VEntity *BlockingMobj;
+  // any blocking line (including passable two-sided!); only has any sense if trace returned `false`
+  // note that this is really *any* line, not necessarily first or last crossed!
+  line_t *AnyBlockingLine;
+
+  // from cptrace_t
+  TVec Pos; // valid for cptrace_t
+
+  /*
+  inline void CopyRegFloor (sec_region_t *r, const TVec *Origin) {
+    EFloor = r->efloor;
+    if (Origin) FloorZ = EFloor.GetPointZClamped(*Origin);
+  }
+
+  inline void CopyRegCeiling (sec_region_t *r, const TVec *Origin) {
+    ECeiling = r->eceiling;
+    if (Origin) CeilingZ = ECeiling.GetPointZClamped(*Origin);
+  }
+  */
+
+  inline void CopyOpenFloor (opening_t *o, bool setz=true) {
+    EFloor = o->efloor;
+    if (setz) FloorZ = o->bottom;
+  }
+
+  inline void CopyOpenCeiling (opening_t *o, bool setz=true) {
+    ECeiling = o->eceiling;
+    if (setz) CeilingZ = o->top;
+  }
+};
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 TVec P_SectorClosestPoint (sector_t *sec, TVec in);
 int P_BoxOnLineSide (float *tmbox, line_t *ld);

@@ -83,7 +83,6 @@
 //==========================================================================
 
 struct tmtrace_t;
-struct cptrace_t;
 
 #ifdef CLIENT
 extern VCvarB r_interpolate_thing_angles_models;
@@ -505,9 +504,9 @@ public:
   bool CheckWater ();
   bool CheckPosition (TVec);
   bool CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups=false, bool ignoreMonsters=false, bool ignorePlayers=false);
-  bool TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool checkOnly=false);
+  bool TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool checkOnly=false, bool noPickups=false);
   VEntity *TestMobjZ (const TVec &);
-  void SlideMove (float);
+  void SlideMove (float StepVelScale, bool noPickups=false);
   void BounceWall (float, float);
   //void UpdateVelocity (); // moved to VC
   TVec FakeZMovement ();

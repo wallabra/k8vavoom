@@ -58,9 +58,9 @@ TAVec viewangles(0, 0, 0);
 
 TFrustum view_frustum;
 
-VCvarB r_chasecam("r_chasecam", false, "Chasecam mode.", CVAR_Archive);
+VCvarB r_chasecam("r_chasecam", false, "Chasecam mode.", /*CVAR_Archive*/0);
 VCvarF r_chase_dist("r_chase_dist", "32", "Chasecam distance.", CVAR_Archive);
-VCvarF r_chase_up("r_chase_up", "128", "Chasecam position: up.", CVAR_Archive);
+VCvarF r_chase_up("r_chase_up", "32", "Chasecam position: up.", CVAR_Archive);
 VCvarF r_chase_right("r_chase_right", "0", "Chasecam position: right.", CVAR_Archive);
 VCvarI r_chase_front("r_chase_front", "0", "Chasecam position: front.", CVAR_Archive);
 
@@ -1329,6 +1329,7 @@ void VRenderLevelShared::SetupFrame () {
 
   if (r_chasecam && cl->MO == cl->Camera) {
     vieworg = cl->MO->Origin+TVec(0.0f, 0.0f, 32.0f)-r_chase_dist*viewforward+r_chase_up*viewup+r_chase_right*viewright;
+    //bool TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool checkOnly=false, bool noPickups=false);
   } else {
     vieworg = cl->ViewOrg;
   }

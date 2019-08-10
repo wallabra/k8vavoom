@@ -200,6 +200,9 @@ struct tmtrace_t {
   // any blocking line (including passable two-sided!); only has any sense if trace returned `false`
   // note that this is really *any* line, not necessarily first or last crossed!
   line_t *AnyBlockingLine;
+
+  // from cptrace_t
+  TVec Pos; // valid for cptrace_t
 };
 
 // info for drawing: position
@@ -408,7 +411,8 @@ native final bool TryMove (TVec newPos, bool AllowDropOff, optional bool checkOn
 native final bool TryMoveEx (tmtrace_t *tmtrace, TVec newPos, bool AllowDropOff, optional bool checkOnly);
 native final bool TestMobjZ ();
 
-native final void SlideMove (float StepVelScale);
+// `noPickups` means "don't activate specials" too
+native final void SlideMove (float StepVelScale, optional bool noPickups/*=false*/);
 native final void BounceWall (float overbounce, float bouncefactor);
 
 native final bool CheckWater ();
