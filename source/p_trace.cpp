@@ -36,7 +36,7 @@
 static bool CheckPlanes (linetrace_t &Trace, sector_t *sec) {
   TVec outHit(0.0f, 0.0f, 0.0f), outNorm(0.0f, 0.0f, 0.0f);
 
-  if (!VLevel::CheckHitPlanes(sec, true, Trace.LineStart, Trace.LineEnd, (unsigned)Trace.PlaneNoBlockFlags, &outHit, &outNorm, nullptr/*, -0.1f*/)) {
+  if (!VLevel::CheckHitPlanes(sec, true/*sector bounds*/, Trace.LineStart, Trace.LineEnd, (unsigned)Trace.PlaneNoBlockFlags, &outHit, &outNorm, nullptr/*, -0.1f*/)) {
     // hit floor or ceiling
     Trace.LineEnd = outHit;
     Trace.HitPlaneNormal = outNorm;
@@ -197,6 +197,7 @@ bool VLevel::TraceLine (linetrace_t &Trace, const TVec &Start, const TVec &End, 
   // the head node is the last node output
   if (CrossBSPNode(Trace, NumNodes-1)) {
     Trace.LineEnd = realEnd;
+    //GCon->Logf("!!!!!!!!!!!!! %d", (int)CheckPlanes(Trace, PointInSubsector(realEnd)->sector));
     return CheckPlanes(Trace, PointInSubsector(realEnd)->sector);
   }
   return false;

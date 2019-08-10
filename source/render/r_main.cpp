@@ -59,10 +59,12 @@ TAVec viewangles(0, 0, 0);
 TFrustum view_frustum;
 
 VCvarB r_chasecam("r_chasecam", false, "Chasecam mode.", /*CVAR_Archive*/0);
+VCvarB r_chase_front("r_chase_front", false, "Position chasecam in the front of the player (can be used to view weapons/player sprite, for example).", /*CVAR_Archive*/0); // debug setting
+VCvarF r_chase_raise("r_chase_raise", "32", "Chasecam z raise before offseting by view direction.", CVAR_Archive);
 VCvarF r_chase_dist("r_chase_dist", "32", "Chasecam distance.", CVAR_Archive);
-VCvarF r_chase_up("r_chase_up", "32", "Chasecam position: up.", CVAR_Archive);
-VCvarF r_chase_right("r_chase_right", "0", "Chasecam position: right.", CVAR_Archive);
-VCvarI r_chase_front("r_chase_front", "0", "Chasecam position: front.", CVAR_Archive);
+VCvarF r_chase_up("r_chase_up", "32", "Chasecam offset up (using view direction).", CVAR_Archive);
+VCvarF r_chase_right("r_chase_right", "0", "Chasecam offset right (using view direction).", CVAR_Archive);
+VCvarF r_chase_radius("r_chase_radius", "16", "Chasecam entity radius (used for offsetting coldet).", CVAR_Archive);
 
 //VCvarI r_fog("r_fog", "0", "Fog mode (0:GL_LINEAR; 1:GL_LINEAR; 2:GL_EXP; 3:GL_EXP2; add 4 to get \"nicer\" fog).");
 VCvarB r_fog_test("r_fog_test", false, "Is fog testing enabled?");
@@ -1329,10 +1331,30 @@ void VRenderLevelShared::SetupFrame () {
 
   if (r_chasecam && cl->MO == cl->Camera) {
     //vieworg = cl->MO->Origin+TVec(0.0f, 0.0f, 32.0f)-r_chase_dist*viewforward+r_chase_up*viewup+r_chase_right*viewright;
-    TVec endcpos = cl->MO->Origin+TVec(0.0f, 0.0f, 32.0f)-r_chase_dist*viewforward+r_chase_up*viewup+r_chase_right*viewright;
-    TVec cpos = cl->MO->SlideMoveCamera(cl->MO->Origin, endcpos, 16);
-    vieworg = cpos;
+    TVec endcpos = cl->MO->Origin+TVec(0.0f, 0.0f, r_chase_raise)-r_chase_dist*viewforward+r_chase_up*viewup+r_chase_right*viewright;
+    TVec cpos = cl->MO->SlideMoveCamera(cl->MO->Origin, endcpos, r_chase_radius);
+    #define CAMERA_ITIME  (0.1)
+    double currTime = Sys_Time();
+    double deltaTime = currTime-prevChaseCamTime;
+    if (prevChaseCamTime < 0 || deltaTime < 0 || deltaTime >= CAMERA_ITIME) {
+      prevChaseCamTime = currTime;
+      prevChaseCamPos = cpos;
+    } else {
+      // some interpolation
+      TVec delta = cpos-prevChaseCamPos;
+      if (fabsf(delta.x) <= 1 && fabsf(delta.y) <= 1 && fabsf(delta.z) <= 1) {
+        prevChaseCamTime = currTime;
+        prevChaseCamPos = cpos;
+      } else {
+        float dtime = float(deltaTime/CAMERA_ITIME);
+        prevChaseCamPos += delta*dtime;
+        prevChaseCamTime = currTime;
+      }
+    }
+    vieworg = prevChaseCamPos;
+    //vieworg = cpos;
   } else {
+    prevChaseCamTime = -1;
     vieworg = cl->ViewOrg;
   }
 

@@ -395,6 +395,10 @@ protected:
 
   vuint32 currVisFrame;
 
+  // chasecam
+  double prevChaseCamTime = -1.0;
+  TVec prevChaseCamPos;
+
 private:
   inline segpart_t *SurfCreatorGetPSPart () {
     if (pspartsLeft == 0) Sys_Error("internal level surface creation bug");

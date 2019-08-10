@@ -177,14 +177,14 @@ bool VLevel::CheckPlaneHit (const TSecPlaneRef &plane, const TVec &linestart, co
 
 #define UPDATE_PLANE_HIT(plane_)  do { \
   if (!CheckPlaneHit((plane_), linestart, lineend, currhit, isSky, threshold)) { \
-    wasHit = true; \
-    float dist = (currhit-linestart).lengthSquared(); \
-    if (dist < besthdist) { \
+    const float dist = (currhit-linestart).lengthSquared(); \
+    if (!wasHit || dist < besthdist) { \
       besthit = currhit; \
       bestIsSky = isSky; \
       besthdist = dist; \
       bestNormal = (plane_).GetNormal(); \
     } \
+    wasHit = true; \
   } \
 } while (0)
 

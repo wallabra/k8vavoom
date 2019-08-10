@@ -1574,10 +1574,11 @@ void VEntity::SlideMove (float StepVelScale, bool noPickups) {
 //  this is used to move chase camera
 //
 //==========================================================================
-TVec VEntity::SlideMoveCamera (TVec org, TVec end, float raduis) {
+TVec VEntity::SlideMoveCamera (TVec org, TVec end, float radius) {
   TVec velo = end-org;
   if (!velo.isValid() || velo.isZero()) return org;
-  if (/*raduis < 2*/true) {
+
+  if (radius < 2) {
     // just trace
     linetrace_t ltr;
     if (XLevel->TraceLine(ltr, org, end, 0/*SPF_NOBLOCKSIGHT*/)) return end; // no hit
@@ -1586,22 +1587,26 @@ TVec VEntity::SlideMoveCamera (TVec org, TVec end, float raduis) {
     //const float wantdist = velo.length();
     const float movedist = mdelta.length();
     if (movedist > 2.0f) {
-      ltr.LineEnd -= mdelta.normalised()*2;
+      //GCon->Logf("*** hit! (%g,%g,%g)", ltr.HitPlaneNormal.x, ltr.HitPlaneNormal.y, ltr.HitPlaneNormal.z);
+      if (ltr.HitPlaneNormal.z) {
+        // floor
+        //GCon->Logf("floor hit! (%g,%g,%g)", ltr.HitPlaneNormal.x, ltr.HitPlaneNormal.y, ltr.HitPlaneNormal.z);
+        ltr.LineEnd += ltr.HitPlaneNormal*2;
+      } else {
+        ltr.LineEnd -= mdelta.normalised()*2;
+      }
     }
     return ltr.LineEnd;
   }
-#if 0
-  SPF_NOBLOCKING   = 1u, // Not blocking
-  SPF_NOBLOCKSIGHT = 2u, // Do not block sight
-  SPF_NOBLOCKSHOOT = 4u, // Do not block shooting
-  SPF_ADDITIVE     = 8u, // Additive translucency
-  // split move in multiple steps if moving too fast
-  int Steps = 1;
-  float XStep = fabs(xmove);
-  float YStep = fabs(ymove);
-  float MaxStep = Radius-1.0;
 
-  if (MaxStep <= 0.0) MaxStep = MAXMOVESTEP;
+  // split move in multiple steps if moving too fast
+  const float xmove = velo.x;
+  const float ymove = velo.y;
+
+  int Steps = 1;
+  float XStep = fabsf(xmove);
+  float YStep = fabsf(ymove);
+  float MaxStep = radius-1.0f;
 
   if (XStep > MaxStep || YStep > MaxStep) {
     if (XStep > YStep) {
@@ -1611,56 +1616,48 @@ TVec VEntity::SlideMoveCamera (TVec org, TVec end, float raduis) {
     }
   }
 
-  float StepXMove = xmove/float(Steps);
-  float StepYMove = ymove/float(Steps);
+  const float StepXMove = xmove/float(Steps);
+  const float StepYMove = ymove/float(Steps);
+  const float StepZMove = velo.z/float(Steps);
 
-  //int Step = 1;
-  TVec oldOrigin = Origin;
-  foreach (; 0..Steps) {
-    float ptryx = Origin.x+StepXMove;
-    float ptryy = Origin.y+StepYMove;
+  //GCon->Logf("*** *** Steps=%d; move=(%g,%g,%g); onestep=(%g,%g,%g)", Steps, xmove, ymove, velo.z, StepXMove, StepYMove, StepZMove);
+  tmtrace_t tmtrace;
+  for (int step = 0; step < Steps; ++step) {
+    float ptryx = org.x+StepXMove;
+    float ptryy = org.y+StepYMove;
+    float ptryz = org.z+StepZMove;
 
-    tmtrace_t tmtrace;
-    if (!bNoInteraction && !TryMoveEx(&tmtrace, vector(ptryx, ptryy, Origin.z), AllowDropOff:true)) {
-      // blocked move
-      if (DecalName && (bDecals2SPass || bDecalsOnly2S)) {
-        //print("tracing decal '%s' (hit)", DecalName);
-        TVec spdir = Velocity.normalise();
-        float spdist = length(Origin-oldOrigin);
-        TraceSplat(oldOrigin, spdir, spdist, tr:nullptr, zofs:0, DecalName:DecalName, pass2S:bDecals2SPass, only2S:bDecalsOnly2S, translation:(bCopyBloodTranslation ? Translation : 0));
-      }
-      if (tmtrace.BlockingMobj) {
-        //if (GetCvarB('k8ExplodeMissleTest')) print("MOBJ!");
-        HitMobj(tmtrace.BlockingMobj, ptryx, ptryy);
-      } else {
-        /*
-        if (GetCvarB('k8ExplodeMissleTest')) {
-          print("LINE! (%d)", tmtrace.SpecHit.Length);
-          if (!tmtrace.BlockingLine) print("*** BUT NO LINE!");
-          if (!tmtrace.AnyBlockingLine) print("*** BUT NO ANY-LINE!");
-          if (!tmtrace.AnyBlockingLine) {
-            if (tmtrace.CeilingLine) print("      CEILING LINE IS HERE!");
-            if (tmtrace.FloorLine) print("      FLOOR LINE IS HERE!");
-            if (tmtrace.CeilingLine == tmtrace.FloorLine && tmtrace.FloorLine) print("      FLOOR AND CEILING LINE IS THE SAME!");
-          }
-        }
-        */
-        /*
-        if (!tmtrace.BlockingLine && !tmtrace.AnyBlockingLine) {
-          tmtrace_t tr2;
-          if (CheckRelPosition(&tr2, vector(ptryx, ptryy, Origin.z))) {
-            print("second trace returned TRUE!: l:%s; al:%s", (tr2.BlockingLine ? "tan" : "ona"), (tr2.AnyBlockingLine ? "tan" : "ona"));
-          } else {
-            print("second trace returned FALSE!: l:%s; al:%s", (tr2.BlockingLine ? "tan" : "ona"), (tr2.AnyBlockingLine ? "tan" : "ona"));
-          }
-        }
-        */
-        HitLine(&tmtrace, DeltaTime/float(Steps), (ScrollX || ScrollY ? true : false));
-      }
-      return oldfloorz;
+    TVec newPos = TVec(ptryx, ptryy, ptryz);
+    bool check = CheckRelPosition(tmtrace, newPos, true);
+    if (check) {
+      org = newPos;
+      continue;
     }
-  } //while (Step++ < Steps);
-#endif
+
+    // blocked move; trace back until we got a good position
+    // this sux, but we'll do it only once per frame, so...
+    float len = (newPos-org).length();
+    TVec dir = (newPos-org).normalised(); // to newpos
+    //GCon->Logf("*** len=%g; dir=(%g,%g,%g)", len, dir.x, dir.y, dir.z);
+    float curr = 1.0f;
+    while (curr <= len) {
+      if (!CheckRelPosition(tmtrace, org+dir*curr, true)) {
+        curr -= 1.0f;
+        break;
+      }
+      curr += 1.0f;
+    }
+    if (curr > len) curr = len;
+    //GCon->Logf("   final len=%g", curr);
+    org += dir*curr;
+    break;
+  }
+
+  // clamp to floor/ceiling
+  CheckRelPosition(tmtrace, org, true);
+  if (org.z < tmtrace.FloorZ+radius) org.z = tmtrace.FloorZ+radius;
+  if (org.z > tmtrace.CeilingZ-radius) org.z = tmtrace.CeilingZ-radius;
+  return org;
 }
 
 
