@@ -156,8 +156,6 @@ override void Init () {
   // disable criticals?
   CreateCvar('k8HSCriticals', "1", "Enable critical shots?", CVAR_ARCHIVE|CVAR_SERVERINFO);
 
-  CreateCvar('k8HSAllowEmptyDamageType', "1", "Allow empty damage type for headshots/crits?", CVAR_ARCHIVE|CVAR_SERVERINFO);
-
   // fastkill/instakill some annoying monsters?
   CreateCvar('k8HSFastKillAnnoyingMonsters', (IsReleaseMode ? "0" : "1"), "Fastkill some annoying monsters?", CVAR_ARCHIVE|CVAR_SERVERINFO);
   // instakill Pain Elementals?

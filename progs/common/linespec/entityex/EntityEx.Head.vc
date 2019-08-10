@@ -924,6 +924,25 @@ bool IsBloodAllowed () {
 
 //==========================================================================
 //
+//  IsNormalLikeDamage
+//
+//  map some built-in damage types to normal
+//
+//==========================================================================
+bool IsNormalLikeDamage (name DmgType) {
+  return
+    !DmgType ||
+    nameicmp(DmgType, 'None') == 0 ||
+    nameicmp(DmgType, 'Normal') == 0 ||
+    nameicmp(DmgType, 'Bullet') == 0 ||
+    nameicmp(DmgType, 'Shell') == 0 ||
+    nameicmp(DmgType, 'BDW_Bullet') == 0 ||
+    nameicmp(DmgType, 'BDW_Shell') == 0;
+}
+
+
+//==========================================================================
+//
 //  FindDamageType
 //
 //  returns `defaultFactor` if no damage type found
@@ -931,6 +950,8 @@ bool IsBloodAllowed () {
 //==========================================================================
 final float FindDamageFactor (name DmgType, float defaultFactor) {
   //printdebug("%C: FindDamageFactor; type=%s", self, DmgType);
+  if (DmgType && nameicmp(DmgType, 'Normal') == 0) DmgType = 'None';
+  float dmgNormal = float.nan;
   foreach (const ref auto df; DamageFactors) {
     //printdebug("  %C: dtype=%s; factor=%s", self, df.DamageType, df.Factor);
     if (nameicmp(df.DamageType, DmgType) == 0 ||
@@ -942,8 +963,37 @@ final float FindDamageFactor (name DmgType, float defaultFactor) {
       if (dmgFactor < 0) dmgFactor = 1; // this is what GZDoom does
       return dmgFactor;
     }
+    if (dmgNormal.isnan && nameicmp(df.DamageType, 'None') == 0) dmgNormal = df.Factor;
   }
+  // map some built-in damage types to normal
+  if (!dmgNormal.isnan && IsNormalLikeDamage(DmgType)) return dmgNormal;
   return defaultFactor;
+}
+
+
+//==========================================================================
+//
+//  FindPainChance
+//
+//  returns `defaultFactor` if no damage type found
+//
+//==========================================================================
+final float FindPainChance (name DmgType, float defaultChance) {
+  //printdebug("%C: FindDamageFactor; type=%s", self, DmgType);
+  if (DmgType && nameicmp(DmgType, 'Normal') == 0) DmgType = 'None';
+  float dmgNormal = float.nan;
+  foreach (const ref auto df; PainChances) {
+    if (nameicmp(df.DamageType, DmgType) == 0 ||
+        (!DmgType && nameicmp(df.DamageType, 'None') == 0) ||
+        (!df.DamageType && nameicmp(DmgType, 'None') == 0))
+    {
+      return df.Chance;
+    }
+    if (dmgNormal.isnan && nameicmp(df.DamageType, 'None') == 0) dmgNormal = df.Chance;
+  }
+  // map some built-in damage types to normal
+  if (!dmgNormal.isnan && IsNormalLikeDamage(DmgType)) return dmgNormal;
+  return defaultChance;
 }
 
 

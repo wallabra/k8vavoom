@@ -629,10 +629,26 @@ int GetBlend () {
 //
 //  AbsorbDamage
 //
+//  absorb damage taken
+//
 //==========================================================================
-void AbsorbDamage (int damage, name DmgType, ref int NewDamage) {
+void AbsorbDamage (EntityEx inflictor, int damage, name DmgType, ref int NewDamage) {
   if (Inventory) {
-    Inventory.AbsorbDamage(damage, DmgType, NewDamage);
+    Inventory.AbsorbDamage(inflictor, damage, DmgType, NewDamage);
+  }
+}
+
+
+//==========================================================================
+//
+//  AmplifyDamage
+//
+//  amplify damage dealt
+//
+//==========================================================================
+void AmplifyDamage (EntityEx target, int damage, name DmgType, ref int NewDamage) {
+  if (Inventory) {
+    Inventory.AmplifyDamage(target, damage, DmgType, NewDamage);
   }
 }
 

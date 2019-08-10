@@ -34,21 +34,10 @@
 //
 //==========================================================================
 bool K8HS_IsGoodDamageType (name damageType) {
-  if (damageType) {
-    if (damageType != 'Bullet' &&
-        damageType != 'Shell' &&
-        damageType != 'BDW_Bullet' &&
-        damageType != 'BDW_Shell'
-       )
-    {
-      if (GetCvarB('k8HSDebug_ShowFailedDamageType')) print("DMGTYPE: %s", damageType);
-      return false;
-    }
-  } else {
-    if (!GetCvarB('k8HSAllowEmptyDamageType')) {
-      if (GetCvarB('k8HSDebug_ShowFailedDamageType')) print("DMGTYPE: %s", damageType);
-      return false;
-    }
+  if (!damageType) return true; // normal damage
+  if (!IsNormalLikeDamage(damageType)) {
+    if (GetCvarB('k8HSDebug_ShowFailedDamageType')) print("DMGTYPE: %s", damageType);
+    return false;
   }
   return true;
 }
@@ -420,11 +409,11 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
 {
   if (!bShootable && !forced) return; // shouldn't happen...
 
-  if (nameicmp(DmgType, 'None') == 0) {
-    //print("DAMAGE TYPE: NONE");
+  if (DmgType) {
+    if (nameicmp(DmgType, 'None') == 0 || nameicmp(DmgType, 'Normal') == 0) DmgType = 'None';
+  } else {
     DmgType = 'None';
   }
-  if (!DmgType) DmgType = 'None';
 
   if (Health <= 0) {
     if (inflictor && nameicmp(DmgType, 'Ice') == 0) return;
@@ -435,6 +424,13 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
       Velocity.y = 0.0;
     }
     return;
+  }
+
+  // amplify damage with powerups
+  if (source && source.bIsPlayer && damage > 0 && source.Inventory) {
+    int NewDmg = damage;
+    source.Inventory.AmplifyDamage(self, damage, DmgType, NewDmg);
+    damage = NewDmg;
   }
 
   // forced blood?
@@ -584,7 +580,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
 
     if (!NoArmor && Inventory) {
       int NewDmg = damage;
-      Inventory.AbsorbDamage(damage, DmgType, NewDmg);
+      Inventory.AbsorbDamage(source, damage, DmgType, NewDmg);
       damage = NewDmg;
       if (damage <= 0) return;
     }
@@ -643,16 +639,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
     return;
   }
 
-  float PChance = PainChance;
-  foreach (auto i; 0..PainChances.Num) {
-    if (nameicmp(PainChances[i].DamageType, DmgType) == 0 ||
-        (!DmgType && nameicmp(PainChances[i].DamageType, 'None') == 0) ||
-        (!PainChances[i].DamageType && nameicmp(DmgType, 'None') == 0))
-    {
-      PChance = PainChances[i].Chance;
-      break;
-    }
-  }
+  float PChance = FindPainChance(DmgType, PainChance);
 
   if (!bNoPain && ((Random() < PChance) && !bSkullFly)) {
     if (inflictor && inflictor.bLightning) {

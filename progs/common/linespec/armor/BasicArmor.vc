@@ -111,7 +111,7 @@ override bool HandlePickup (Inventory Item) {
 //  AbsorbDamage
 //
 //==========================================================================
-override void AbsorbDamage (int damage, name DmgType, ref int NewDamage) {
+override void AbsorbDamage (EntityEx inflictor, int damage, name DmgType, ref int NewDamage) {
   if (nameicmp(DmgType, 'Drowning') != 0) {
     int saved = int(float(damage)*SavePercent);
     if (Amount <= saved) saved = Amount;
@@ -126,7 +126,7 @@ override void AbsorbDamage (int damage, name DmgType, ref int NewDamage) {
     }
     damage = NewDamage;
   }
-  if (Inventory) Inventory.AbsorbDamage(damage, DmgType, NewDamage);
+  if (Inventory) Inventory.AbsorbDamage(inflictor, damage, DmgType, NewDamage);
 }
 
 

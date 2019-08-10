@@ -44,12 +44,12 @@ override void DoEffect () {
 //  AbsorbDamage
 //
 //==========================================================================
-override void AbsorbDamage (int damage, name DmgType, ref int NewDamage) {
+override void AbsorbDamage (EntityEx inflictor, int damage, name DmgType, ref int NewDamage) {
   if (nameicmp(DmgType, 'Fire') == 0) {
     // if the player wears an environmental suit it's not damaged by fire damage
     NewDamage = 0;
   } else {
-    ::AbsorbDamage(damage, DmgType, NewDamage);
+    ::AbsorbDamage(inflictor, damage, DmgType, NewDamage);
   }
 }
 

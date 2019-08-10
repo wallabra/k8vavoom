@@ -29,14 +29,13 @@ class PowerDamage : Powerup;
 
 //==========================================================================
 //
-//  AbsorbDamage
+//  AmplifyDamage
 //
 //==========================================================================
-override void AbsorbDamage (int damage, name DmgType, ref int NewDamage) {
+override void AmplifyDamage (EntityEx target, int damage, name DmgType, ref int NewDamage) {
   if (damage > 0) {
-    float dmgFactor = 0.25; // default is damage/4
-    if (DamageFactors.length) dmgFactor = FindDamageFactor(DmgType, float.nan);
-    //dmgFactor += 1.0; //k8: dunno
+    float dmgFactor = 2.0; // default is twice
+    if (DamageFactors.length) dmgFactor = FindDamageFactor(DmgType, 1.0);
 
     NewDamage = max(0, int(float(damage)*dmgFactor));
 
@@ -46,7 +45,7 @@ override void AbsorbDamage (int damage, name DmgType, ref int NewDamage) {
     }
   }
 
-  if (Inventory) Inventory.AbsorbDamage(damage, DmgType, NewDamage);
+  ::AmplifyDamage(target, damage, DmgType, NewDamage);
 }
 
 

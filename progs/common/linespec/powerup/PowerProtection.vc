@@ -32,7 +32,7 @@ class PowerProtection : Powerup;
 //  AbsorbDamage
 //
 //==========================================================================
-override void AbsorbDamage (int damage, name DmgType, ref int NewDamage) {
+override void AbsorbDamage (EntityEx inflictor, int damage, name DmgType, ref int NewDamage) {
   if (damage > 0) {
     float dmgFactor = 0.25; // default is damage/4
     if (DamageFactors.length) dmgFactor = FindDamageFactor(DmgType, 1.0);
@@ -46,7 +46,7 @@ override void AbsorbDamage (int damage, name DmgType, ref int NewDamage) {
     }
   }
 
-  if (Inventory) Inventory.AbsorbDamage(damage, DmgType, NewDamage);
+  ::AbsorbDamage(inflictor, damage, DmgType, NewDamage);
 }
 
 
