@@ -35,7 +35,7 @@
 //==========================================================================
 bool K8HS_IsGoodDamageType (name damageType) {
   if (!damageType) return true; // normal damage
-  if (!IsNormalLikeDamage(damageType)) {
+  if (nameicmp(damageType, 'Chainsaw') == 0 || !IsNormalLikeDamage(damageType)) {
     if (GetCvarB('k8HSDebug_ShowFailedDamageType')) print("DMGTYPE: %s", damageType);
     return false;
   }

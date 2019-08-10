@@ -936,6 +936,9 @@ bool IsNormalLikeDamage (name DmgType) {
     nameicmp(DmgType, 'Normal') == 0 ||
     nameicmp(DmgType, 'Bullet') == 0 ||
     nameicmp(DmgType, 'Shell') == 0 ||
+    nameicmp(DmgType, 'Fist') == 0 ||
+    nameicmp(DmgType, 'BerserkFist') == 0 ||
+    nameicmp(DmgType, 'Chainsaw') == 0 ||
     nameicmp(DmgType, 'BDW_Bullet') == 0 ||
     nameicmp(DmgType, 'BDW_Shell') == 0;
 }
