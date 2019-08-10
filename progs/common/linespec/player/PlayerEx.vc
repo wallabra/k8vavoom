@@ -1745,9 +1745,36 @@ Weapon CycleWeaponWithDir (Weapon Current, bool forward) {
   // find current weapon slot and index
   int currSlot, currIndex;
   if (!pawn.FindWeaponSlot(class!Weapon(Current.Class), out currSlot, out currIndex)) {
+    // try non-slotted weapons if going forward
+    if (forward) {
+      for (Inventory inv = pawn.Inventory; inv; inv = inv.Inventory) {
+        if (inv == Current) {
+          // found in inventory, try prev/next non-slot weapon
+          for (inv = inv.Inventory; inv; inv = inv.Inventory) {
+            if (!class!Weapon(inv.Class)) continue;
+            if (!pawn.FindWeaponSlot(class!Weapon(inv.Class), out currSlot, out currIndex)) {
+              // i found her!
+              return Weapon(inv);
+            }
+          }
+          // try first non-slot item
+          for (inv = pawn.Inventory; inv; inv = inv.Inventory) {
+            if (!class!Weapon(inv.Class)) continue;
+            if (!pawn.FindWeaponSlot(class!Weapon(inv.Class), out currSlot, out currIndex)) {
+              // i found her!
+              if (inv != Current) return Weapon(inv);
+              // this is the only one non-slot item, go through slots
+              break;
+            }
+          }
+        }
+      }
+    }
     currSlot = 0;
     currIndex = (forward ? pawn.GetSlotSize(currSlot) : 0);
   }
+
+  //TODO: if we're going forward, and next weapon wraps, try non-slot weapons first
 
   // now cycle
   foreach (auto sidx; 0..pawn.GetNumberOfSlots()) {

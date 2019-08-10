@@ -101,6 +101,7 @@ int DehExplosionStyle;
 float DehExplosionAlpha;
 
 
+// this is used for default, and for keyconf slots
 struct WeaponSlot {
   class!Weapon[PlayerPawn::MAX_WEAPONS_PER_SLOT] Weapons;
 };
@@ -108,10 +109,23 @@ struct WeaponSlot {
 transient WeaponSlot WeaponSlots[PlayerPawn::NUM_WEAPON_SLOTS+1];
 
 
-struct WSlotEntry {
-  array!(class!Weapon) weapons;
+// this is used for gameinfo slots
+enum WSlotSrc {
+  KEYCONF,
+  GAMEINFO,
 }
-//transient protected WSlotEntry actualWeaponSlots[PlayerPawn::NUM_WEAPON_SLOTS];
+
+struct WeaponSlotRec {
+  class!Weapon wcls;
+  WSlotSrc src;
+}
+
+struct WSlotEntry {
+  array!WeaponSlotRec weapons;
+}
+
+transient WSlotEntry kkWeaponSlots[PlayerPawn::NUM_WEAPON_SLOTS];
+transient int kkWeaponSlotCopy[PlayerPawn::NUM_WEAPON_SLOTS]; // if set to false, this slot was inited from keyconf
 
 
 //==========================================================================
@@ -267,6 +281,8 @@ override void Init () {
 
   CreateCvar('trans_debug_log', "0", "Show translation debug log?", CVAR_ARCHIVE);
 
+
+  foreach (ref auto b; kkWeaponSlotCopy) b = true;
 
   ::Init(); // parse cvarinfo and such
 }
@@ -1292,62 +1308,73 @@ override void SpawnWorld (Level InLevel) {
 
 //==========================================================================
 //
-//  FindWeaponSlot
+//  KeyconfPrepareSlot
 //
 //==========================================================================
-private final bool FindWeaponSlot (class!Weapon WpnClass, out int Slot, out int Index, optional int Position, bool exact) {
-  if (WpnClass) {
-    class!Weapon wpnrep = class!Weapon(GetClassReplacement(WpnClass));
-    if (!wpnrep) wpnrep = WpnClass;
-    foreach (auto i; 0..PlayerPawn::NUM_WEAPON_SLOTS) {
-      foreach (auto j; 0..PlayerPawn::MAX_WEAPONS_PER_SLOT) {
-        class!Weapon swc = WeaponSlots[i].Weapons[j];
-        if (!swc) continue;
-        if (swc != WpnClass) {
-          if (exact) continue;
-          class!Weapon swcrep = class!Weapon(GetClassReplacement(swc));
-          if (!swcrep) swcrep = swc;
-          if (swcrep != WpnClass && swc != wpnrep && swcrep != wpnrep) continue;
-        }
-        //print("***FOUND '%C' as '%C' (exact:%B) at (%d:%d) (Position(%B)=%d)", WpnClass, swc, exact, i, j, specified_Position, Position);
-        Slot = i;
-        // assign weapon position, if it's already set
-        Index = clamp((Position ? Position : j), 0, PlayerPawn::MAX_WEAPONS_PER_SLOT-1);
-        return true;
-      }
-    }
+private final void KeyconfPrepareSlot (int slot, WSlotSrc src) {
+  if (slot < 0 || slot >= kkWeaponSlotCopy.length) return;
+  if (!kkWeaponSlotCopy[slot]) return;
+  kkWeaponSlotCopy[slot] = false;
+  if (kkWeaponSlots[slot].weapons.length) {
+    printwarn("*** AddSlotDefault: internal error!");
+    kkWeaponSlots[slot].weapons.clear();
   }
-  Slot = -1;
-  Index = -1;
-  return false;
+  foreach (auto widx; 0..PlayerPawn::MAX_WEAPONS_PER_SLOT) {
+    class!Weapon wcls = WeaponSlots[slot].Weapons[widx];
+    if (wcls) {
+      class!Weapon repl = class!Weapon(GetClassReplacement(wcls));
+      if (repl) wcls = repl;
+    }
+    auto wi = kkWeaponSlots[slot].weapons.alloc();
+    wi.wcls = wcls;
+    wi.src = WSlotSrc.KEYCONF;
+  }
 }
 
 
 //==========================================================================
 //
-//  AddWeaponToSlot
+//  AddKeyconfCompactSlots
 //
 //==========================================================================
-bool AddWeaponToSlot (int Slot, class!Weapon WeaponClass) {
-  if (!WeaponClass) return false;
-  foreach (auto i; 0..PlayerPawn::MAX_WEAPONS_PER_SLOT) {
-    class!Weapon swc = WeaponSlots[Slot].Weapons[i];
-    if (swc) {
-      if (swc == WeaponClass || GetClassReplacement(swc) == GetClassReplacement(WeaponClass)) {
-        // already there
-        return true;
+private final void AddKeyconfCompactSlots () {
+  foreach (int sidx; 0..kkWeaponSlots.length) {
+    int dest = 0;
+    foreach (int widx; 0..kkWeaponSlots[sidx].weapons.length) {
+      class!Weapon swc = kkWeaponSlots[sidx].weapons[widx].wcls;
+      if (swc) {
+        if (widx != dest) kkWeaponSlots[sidx].weapons[dest] = kkWeaponSlots[sidx].weapons[widx];
+        ++dest;
       }
     }
+    kkWeaponSlots[sidx].weapons.length = dest;
   }
-  foreach (auto i; 0..PlayerPawn::MAX_WEAPONS_PER_SLOT) {
-    if (!WeaponSlots[Slot].Weapons[i]) {
-      class!Weapon wwrepl = class!Weapon(GetClassReplacement(WeaponClass));
-      if (!wwrepl) wwrepl = WeaponClass;
-      WeaponSlots[Slot].Weapons[i] = wwrepl;
-      return true;
+}
+
+
+//==========================================================================
+//
+//  AddKeyconfWeaponToSlot
+//
+//==========================================================================
+private final bool AddKeyconfWeaponToSlot (int Slot, class!Weapon wcls, WSlotSrc src) {
+  if (!wcls) return false;
+  --Slot;
+  if (Slot < 0 || Slot >= kkWeaponSlots.length) return false;
+
+  // remove from all slots
+  foreach (int sidx; 0..kkWeaponSlots.length) {
+    foreach (ref auto wi; kkWeaponSlots[sidx].weapons) {
+      if (wi.wcls == wcls) wi.wcls = none;
     }
   }
-  return false;
+  AddKeyconfCompactSlots(); // compact slots
+
+  // add
+  auto wi = kkWeaponSlots[Slot].weapons.alloc();
+  wi.wcls = wcls;
+  wi.src = src;
+  return true;
 }
 
 
@@ -1388,18 +1415,21 @@ override void CmdSetSlot (ref array!string Args) {
   if (Slot == 0) Slot = 10;
 
   // clear slot
-  foreach (auto i; 0..PlayerPawn::MAX_WEAPONS_PER_SLOT) WeaponSlots[Slot].Weapons[i] = none;
+  kkWeaponSlots[Slot-1].weapons.clear();
+  kkWeaponSlotCopy[Slot-1] = false;
 
   if (Args.Num == 2) {
     print("Slot cleared");
   } else {
     foreach (auto i; 2..Args.length) {
-      // standarize class name here, since I've found people writing in all types of mixed cases...
+      // standardize class name here, since I've found people writing in all types of mixed cases...
       class!Weapon Cls = class!Weapon(FindClassNoCaseStr(Args[i]));
       if (!Cls) {
         print("`%s` is not a weapon", Args[i]);
-      } else if (!AddWeaponToSlot(Slot, Cls)) {
-        print("Couldn't add `%s` to slot `%d`", Args[i], Slot);
+      } else {
+        if (!AddKeyconfWeaponToSlot(Slot, Cls, WSlotSrc.KEYCONF)) {
+          print("Couldn't add `%s` to slot `%d`", Args[i], Slot);
+        }
       }
     }
   }
@@ -1428,19 +1458,16 @@ override void CmdAddSlotDefault (ref array!string Args) {
   // slot '0' means '10'
   if (Slot == 0) Slot = 10;
 
-  // standarize class name here, since I've found people writing in all types of mixed cases...
+  // standardize class name here, since I've found people writing in all types of mixed cases...
   class!Weapon Cls = class!Weapon(FindClassNoCaseStr(Args[2]));
   if (!Cls) {
     print("`%s` is not a weapon", Args[2]);
     return;
   }
 
-  int TmpSlot;
-  int TmpIndex;
-  if (!FindWeaponSlot(Cls, TmpSlot, TmpIndex, exact:false)) {
-    if (!AddWeaponToSlot(Slot, Cls)) {
-      print("Couldn\'t add `%s` to slot `%d`", Args[2], Slot);
-    }
+  KeyconfPrepareSlot(Slot-1, WSlotSrc.KEYCONF);
+  if (!AddKeyconfWeaponToSlot(Slot, Cls, WSlotSrc.KEYCONF)) {
+    print("Couldn\'t add `%s` to slot `%d`", Args[2], Slot);
   }
 }
 
