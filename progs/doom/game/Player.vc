@@ -289,60 +289,24 @@ void Cheat_Gimme () {
 
   // weapons
   if (Cmd_CheckParm("Weapons") || Cmd_CheckParm("All") || Cmd_CheckParm("Arsenal")) {
-    /*
-    LineSpecialGameInfo GI = LineSpecialGameInfo(Level.Game);
-    foreach (auto sidx; 0..LineSpecialGameInfo::NUM_WEAPON_SLOTS+1) {
-      foreach (auto widx; 0..LineSpecialGameInfo::MAX_WEAPONS_PER_SLOT) {
-        if (GI.WeaponSlots[sidx].Weapons[widx]) print("slot #%d, weapon #%d: '%C'", sidx, widx, GI.WeaponSlots[sidx].Weapons[widx]);
-      }
-    }
-    */
+    CheatHelper_AllWeapons();
+  }
+
+  // choppers
+  if (Cmd_CheckParm("Choppers")) {
     bool gotit = false;
     class!Weapon WpnCls;
     foreach AllClasses(Weapon, WpnCls) {
       if (WpnCls.default.bCheatNotWeapon) continue;
       class!Weapon repl = class!Weapon(GetClassReplacement(WpnCls));
       if (repl && repl != WpnCls) continue;
-      auto st = FindClassState(WpnCls, 'Ready');
-      if (!st) continue; // an abstract base class
-      if (!AreStateSpritesPresent(st)) continue; // no sprites
-      // if weapon cannot be spawned, you cannot get it
-      st = FindClassState(WpnCls, 'Spawn');
-      if (!st) continue; // an abstract base class
-      if (!AreStateSpritesPresent(st)) continue; // no sprites
-      // check if already have it
-      if (EntityEx(MO).FindInventory(WpnCls, disableReplacement:true)) continue;
-      //Weapon Wpn = Weapon(Level.Spawn(WpnCls, default, default, default, AllowReplace:false));
-      Weapon Wpn = EntityEx.SpawnWeaponType(Level, WpnCls, disableReplace:true);
-      Wpn.AmmoGive1 = 0;
-      Wpn.AmmoGive2 = 0;
-      if (!Wpn.TryPickup(EntityEx(MO))) {
-        Wpn.Destroy();
-      } else {
-        print("CHEAT: got '%C'!", WpnCls);
+      if (!Weapon.IsUsableWeaponClass(WpnCls)) continue;
+      if (WpnCls !isa 'Chainsaw') continue;
+      if (EntityEx(MO).FindInventory(WpnCls, disableReplacement:true)) {
+        ChangeWeapon(1);
         gotit = true;
+        break;
       }
-    }
-    if (gotit) cprint("You got weapons!");
-  }
-
-  // choppers
-  if (Cmd_CheckParm("Choppers")) {
-    class!Weapon WpnCls;
-    foreach AllClasses(Weapon, WpnCls) {
-      if (WpnCls.default.bCheatNotWeapon) continue;
-      class!Weapon repl = class!Weapon(GetClassReplacement(WpnCls));
-      if (repl && repl != WpnCls) continue;
-      auto st = FindClassState(WpnCls, 'Ready');
-      if (!st) continue; // an abstract base class
-      if (!AreStateSpritesPresent(st)) continue; // no sprites
-      //print("WPN: <%C>", WpnCls);
-      bool csfound = false;
-      for (class wcc = WpnCls; wcc; wcc = GetClassParent(wcc)) if (GetClassName(wcc) == 'Chainsaw') { csfound = true; break; }
-      //if (!csfound) for (class wcc = WpnCls; wcc; wcc = GetClassReplacee(wcc)) if (GetClassName(wcc) == 'Chainsaw') { csfound = true; break; }
-      if (!csfound) continue;
-      //print("WPN IS CHAINSAW!");
-      //Weapon Wpn = Weapon(Level.Spawn(WpnCls, default, default, default/*, false*/));
       Weapon Wpn = EntityEx.SpawnWeaponType(Level, WpnCls, disableReplace:true);
       if (Wpn) {
         Wpn.AmmoGive1 = 0;
@@ -353,7 +317,38 @@ void Cheat_Gimme () {
           print("CHEAT: got '%C'!", WpnCls);
           ChangeWeapon(1);
           cprint("You got Chainsaw!");
+          gotit = true;
           break;
+        }
+      }
+    }
+    // if not found, try chainsaw replacement
+    if (!gotit) {
+      foreach AllClasses(Weapon, WpnCls) {
+        if (WpnCls.default.bCheatNotWeapon) continue;
+        class!Weapon repl = class!Weapon(GetClassReplacement(WpnCls));
+        if (repl && repl != WpnCls) continue;
+        if (!Weapon.IsUsableWeaponClass(WpnCls)) continue;
+        if (WpnCls isa 'Chainsaw') continue;
+        if (GetClassReplacee(WpnCls) !isa 'Chainsaw') continue;
+        if (EntityEx(MO).FindInventory(WpnCls, disableReplacement:true)) {
+          ChangeWeapon(1);
+          gotit = true;
+          break;
+        }
+        Weapon Wpn = EntityEx.SpawnWeaponType(Level, WpnCls, disableReplace:true);
+        if (Wpn) {
+          Wpn.AmmoGive1 = 0;
+          Wpn.AmmoGive2 = 0;
+          if (!Wpn.TryPickup(EntityEx(MO))) {
+            Wpn.Destroy();
+          } else {
+            print("CHEAT: got '%C'!", WpnCls);
+            ChangeWeapon(1);
+            cprint("You got Chainsaw!");
+            gotit = true;
+            break;
+          }
         }
       }
     }
@@ -372,56 +367,12 @@ void Cheat_Gimme () {
 
   // Ammo
   if (Cmd_CheckParm("Ammo") || Cmd_CheckParm("All") || Cmd_CheckParm("Arsenal")) {
-    bool gotit = false;
-    foreach AllClasses(Ammo, Cls) {
-      // Only direct descendants.
-      if (GetClassParent(Cls) != Ammo) continue;
-      Ammo AmmoItem = EntityEx.SpawnAmmoType(Level, class!Ammo(Cls));
-      if (!AmmoItem) continue;
-      Inventory invAmmo = EntityEx(MO).FindInventory(Cls);
-      if (invAmmo && Ammo(invAmmo)) {
-        delete AmmoItem;
-        AmmoItem = Ammo(invAmmo);
-        assert(AmmoItem);
-      } else {
-        assert(Ammo(AmmoItem));
-        if (!AmmoItem.TryPickup(EntityEx(MO))) {
-          AmmoItem.Destroy();
-          AmmoItem = none;
-        } else {
-          gotit = true;
-        }
-      }
-      /*
-      Inventory AmmoItem = EntityEx(MO).FindInventory(Cls);
-      if (!AmmoItem) {
-        AmmoItem = Level.Spawn(Cls, default, default, default, AllowReplace:false);
-        if (!AmmoItem.TryPickup(EntityEx(MO))) {
-          AmmoItem.Destroy();
-          AmmoItem = none;
-        } else {
-          gotit = true;
-        }
-      }
-      */
-      if (Ammo(AmmoItem)) { AmmoItem.Amount = Ammo(AmmoItem)./*MaxAmount*/k8GetAmmoKingMax(); gotit = true; }
-    }
-    if (gotit) cprint("You got ammo!");
+    CheatHelper_AllAmmo();
   }
 
   // Keys
   if (Cmd_CheckParm("Keys") || Cmd_CheckParm("All")) {
-    bool gotit = false;
-    foreach AllClasses(Key, Cls) {
-      class!Key repl = class!Key(GetClassReplacement(Cls));
-      if (repl && repl != Cls) continue;
-      auto st = FindClassState(Cls, 'Spawn');
-      if (!st) continue; // an abstract base class
-      if (!AreStateSpritesPresent(st)) continue; // no sprites
-      EntityEx(MO).GiveInventoryType(Cls, disableReplace:true);
-      gotit = true;
-    }
-    cprint("You got keys!");
+    CheatHelper_AllKeys();
   }
 
   // powers

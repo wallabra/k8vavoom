@@ -105,7 +105,13 @@ struct WeaponSlot {
   class!Weapon[PlayerPawn::MAX_WEAPONS_PER_SLOT] Weapons;
 };
 
-WeaponSlot WeaponSlots[PlayerPawn::NUM_WEAPON_SLOTS+1];
+transient WeaponSlot WeaponSlots[PlayerPawn::NUM_WEAPON_SLOTS+1];
+
+
+struct WSlotEntry {
+  array!(class!Weapon) weapons;
+}
+//transient protected WSlotEntry actualWeaponSlots[PlayerPawn::NUM_WEAPON_SLOTS];
 
 
 //==========================================================================

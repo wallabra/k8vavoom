@@ -1102,3 +1102,18 @@ static final class!EntityEx ChooseFromDropItemList (class!EntityEx origSpc, opti
 
   return none;
 }
+
+
+//==========================================================================
+//
+//  IsSpawnableClass
+//
+//==========================================================================
+static final bool IsSpawnableClass (class cls) {
+  if (!cls) return false;
+  if (IsAbstractClass(cls)) return false;
+  auto st = FindClassState(cls, 'Spawn');
+  if (!st) return false; // an abstract base class
+  if (!AreStateSpritesPresent(st)) return false; // no sprites
+  return true;
+}

@@ -44,8 +44,8 @@ ACTOR BDW_Shotgun : Shotgun Replaces Shotgun {
   Game Doom
   SpawnID 27
   Weapon.SlotNumber 3
-  Weapon.SlotPriority 666 // goes before ssg; was 200
-  Weapon.SelectionOrder 800
+  Weapon.SlotPriority 0.99999 // goes last, so it will be selected before ssg
+  Weapon.SelectionOrder 350 // it is 400 for ssg
   Weapon.AmmoUse1 0
   Weapon.AmmoGive1 4
   Weapon.AmmoUse2 0

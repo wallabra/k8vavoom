@@ -48,7 +48,9 @@ Actor (optional) K8BDW_GoldWandHefty : BDW_RifleClipBox Replaces GoldWandHefty {
 
 Actor BDW_Rifle : Weapon Replaces Chaingun {
   Weapon.Kickback 100 // default for doom weapons
-  Weapon.SlotNumber 2
+  Weapon.SlotNumber 4
+  Weapon.SlotPriority 0.99999 // goes last, so it will be selected before chaingun
+  Weapon.SelectionOrder 650 // it is 700 for chaingun
   Weapon.AmmoUse1 0
   Weapon.AmmoGive1 10
   Weapon.AmmoUse2 0

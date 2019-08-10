@@ -1606,8 +1606,8 @@ void SetPendingWeapon (Weapon NewWpn) {
 //  do it (read: not in the middle of an attack).
 //
 //==========================================================================
-void ChangeWeapon (int newweapon) {
-  SetPendingWeapon(GetSlotChangeWeapon(newweapon));
+void ChangeWeapon (int slot) {
+  SetPendingWeapon(GetSlotChangeWeapon(slot));
 }
 
 
@@ -1684,41 +1684,47 @@ Weapon ChoosePowered (Weapon Wpn) {
 //  GetSlotChangeWeapon
 //
 //==========================================================================
-Weapon GetSlotChangeWeapon (int Slot) {
-  if (Slot < 0 || Slot > PlayerPawn::NUM_WEAPON_SLOTS) return ReadyWeapon;
+Weapon GetSlotChangeWeapon (int slot) {
   auto pawn = PlayerPawn(MO);
   if (!pawn) return ReadyWeapon;
-  //LineSpecialGameInfo GI = LineSpecialGameInfo(Level.Game);
 
+  if (slot < 1 || slot > pawn.GetNumberOfSlots()) return ReadyWeapon;
+  --slot;
+
+  // note that slot selection goes from the last weapon to the first weapon
+  int slotsize = pawn.GetSlotSize(slot);
+  if (!slotsize) return ReadyWeapon; // this slot is empty, nothing to do
+
+  // find ready weapon position in slot (if any)
+  int cwidx = slotsize;
   if (ReadyWeapon) {
-    class!Weapon readyWpnClass = class!Weapon(GetClassReplacement(ReadyWeapon.Class));
+    class!Weapon readyWpnClass = class!Weapon(ReadyWeapon.Class);
     if (readyWpnClass) {
-      foreach (auto i; 0..PlayerPawn::MAX_WEAPONS_PER_SLOT) {
-        //print("i=%s; wpn=%C", i, GI.WeaponSlots[Slot].Weapons[i]);
-        class!Weapon slotwpn = pawn.GetWeaponInSlot(Slot, i);
+      foreach (auto i; 0..slotsize; reverse) {
+        class!Weapon slotwpn = pawn.GetWeaponInSlot(slot, i);
         if (!slotwpn) continue;
         if (slotwpn == readyWpnClass ||
             (ReadyWeapon.bPoweredUp && ReadyWeapon.SisterWeapon &&
-             slotwpn == GetClassReplacement(ReadyWeapon.SisterWeapon.Class)))
+             slotwpn == ReadyWeapon.SisterWeapon.Class))
         {
-          foreach (int j; 0..PlayerPawn::MAX_WEAPONS_PER_SLOT) {
-            int nwidx = (i+j+1)%PlayerPawn::MAX_WEAPONS_PER_SLOT;
-            class!Weapon swc = pawn.GetWeaponInSlot(Slot, nwidx);
-            if (!swc) continue;
-            Weapon Wpn = Weapon(EntityEx(MO).FindInventory(swc));
-            if (Wpn && Wpn.CheckAmmo(Weapon::FIRE_Either, AutoSwitch:false)) return ChoosePowered(Wpn);
-          }
+          // i found her!
+          cwidx = i;
+          break;
         }
       }
     }
   }
 
-  //print("=== PLAYER '%C' wants slot %d ===", self, Slot);
-  foreach (auto i; 0..PlayerPawn::MAX_WEAPONS_PER_SLOT; reverse) {
-    class!Weapon slotwpn = pawn.GetWeaponInSlot(Slot, i);
+  // now cycle through the slot
+  foreach (auto i; 0..slotsize) {
+    // step back
+    if ((--cwidx) < 0) cwidx = slotsize-1;
+    // get weapon in slot position
+    class!Weapon slotwpn = pawn.GetWeaponInSlot(slot, cwidx);
     if (!slotwpn) continue;
-    //if (slotwpn) print("   wpn #%d: %C", i, slotwpn);
-    Weapon Wpn = Weapon(EntityEx(MO).FindInventory(slotwpn));
+    // check if we have it in our inventory
+    Weapon Wpn = Weapon(EntityEx(MO).FindInventory(slotwpn, disableReplacement:true));
+    // check if it has ammo
     if (Wpn && Wpn.CheckAmmo(Weapon::FIRE_Either, AutoSwitch:false)) return ChoosePowered(Wpn);
   }
 
@@ -1734,36 +1740,25 @@ Weapon GetSlotChangeWeapon (int Slot) {
 Weapon CycleWeaponWithDir (Weapon Current, bool forward) {
   auto pawn = PlayerPawn(MO);
   if (!pawn) return Current;
+  if (!pawn.GetNumberOfSlots()) return Current; // just in case
 
   // find current weapon slot and index
-  int currSlot = -1, currIndex = -1;
-  if (!Current || !pawn.FindWeaponSlot(class!Weapon(Current.Class), out currSlot, out currIndex)) {
-    if (forward) {
-      currSlot = 0;
-      currIndex = -1;
-    } else {
-      currSlot = PlayerPawn::NUM_WEAPON_SLOTS;
-      currIndex = PlayerPawn::MAX_WEAPONS_PER_SLOT;
-    }
+  int currSlot, currIndex;
+  if (!pawn.FindWeaponSlot(class!Weapon(Current.Class), out currSlot, out currIndex)) {
+    currSlot = 0;
+    currIndex = (forward ? pawn.GetSlotSize(currSlot) : 0);
   }
 
-  foreach (auto i; 0..PlayerPawn::MAX_WEAPONS_PER_SLOT*(PlayerPawn::NUM_WEAPON_SLOTS+1)) {
-    if (forward) {
-      if (++currIndex == PlayerPawn::MAX_WEAPONS_PER_SLOT) {
-        currIndex = 0;
-        currSlot = (currSlot+1)%(PlayerPawn::NUM_WEAPON_SLOTS+1);
-      }
-    } else {
-      if (--currIndex == -1) {
-        currIndex = PlayerPawn::MAX_WEAPONS_PER_SLOT-1;
-        currSlot = (currSlot+PlayerPawn::NUM_WEAPON_SLOTS)%(PlayerPawn::NUM_WEAPON_SLOTS+1); // this wraps
-      }
-    }
-    class!Weapon swc = pawn.GetWeaponInSlot(currSlot, currIndex);
-    if (!swc) continue;
-    if (Current && Current.Class == swc) continue;
-    Weapon Wpn = Weapon(EntityEx(MO).FindInventory(swc));
-    if (Wpn) {
+  // now cycle
+  foreach (auto sidx; 0..pawn.GetNumberOfSlots()) {
+    foreach (auto widx; 0..pawn.GetSlotSize(sidx)) {
+      // move to the next weapon in slot
+      if (forward) pawn.IncrementWeaponIndex(ref currSlot, ref currIndex); else pawn.DecrementWeaponIndex(ref currSlot, ref currIndex);
+      class!Weapon swc = pawn.GetWeaponInSlot(currSlot, currIndex);
+      if (!swc) continue;
+      if (Current && Current.Class == swc) continue;
+      Weapon Wpn = Weapon(EntityEx(MO).FindInventory(swc, disableReplacement:true));
+      if (!Wpn) continue;
       if (Wpn.CheckAmmo(Weapon::FIRE_Either, AutoSwitch:false)) return ChoosePowered(Wpn);
     }
   }
@@ -2198,9 +2193,11 @@ override void UseInventory (string Inv) {
     return;
   }
 
-  name invname = name(Inv);
-  Inventory item = EntityEx(MO).FindInventory(class!Inventory(FindClassNoCase(invname)));
-  if (!item) item = EntityEx(MO).FindInventory(class!Inventory(GetClassReplacement(FindClassNoCase(invname))));
+  class!Inventory invCls = class!Inventory(FindClassNoCaseStr(Inv));
+  if (!invCls) return;
+
+  Inventory item = EntityEx(MO).FindInventory(invCls, disableReplacement:true);
+  if (!item) item = EntityEx(MO).FindInventory(class!Inventory(GetClassReplacement(invCls)), disableReplacement:true);
 
   if (item) {
     // use Inventory item
@@ -2998,10 +2995,8 @@ override void RemoveKeysVerbose (optional bool verbose) {
   foreach AllClasses(Key, Cls) {
     class!Key repl = class!Key(GetClassReplacement(Cls));
     if (repl && repl != Cls) continue;
-    auto st = FindClassState(Cls, 'Spawn');
-    if (!st) continue; // an abstract base class
-    if (!AreStateSpritesPresent(st)) continue; // no sprites
-    auto inv = PP.FindInventory(Cls);
+    if (!EntityEx.IsSpawnableClass(Cls)) continue;
+    auto inv = PP.FindInventory(Cls, disableReplacement:true);
     if (inv) {
       again = true;
       if (verbose) print("removed key '%C'", inv);
@@ -4535,28 +4530,21 @@ void Cheat_Regeneration () {
 //
 //==========================================================================
 void Cheat_PrintWeaponSlots () {
-  auto plrmo = PlayerPawn(MO);
-  if (!plrmo) return;
-  foreach (auto i; 0..PlayerPawn::NUM_WEAPON_SLOTS) {
-    bool slotStarted = false;
-    foreach (auto j; 0..PlayerPawn::MAX_WEAPONS_PER_SLOT) {
-      //class!Weapon WpnCls = plrmo.WeaponSlots[i].Weapons[j];
-      class!Weapon WpnCls = plrmo.GetWeaponInSlot(i, j);
+  auto pawn = PlayerPawn(MO);
+  if (!pawn) return;
+  foreach (auto sidx; 0..pawn.GetNumberOfSlots()) {
+    int pwnum = 0;
+    foreach (auto widx; 0..pawn.GetSlotSize(sidx)) {
+      class!Weapon WpnCls = pawn.GetWeaponInSlot(sidx, widx);
       if (!WpnCls) continue;
       // check if it is spawnable
       auto st = FindClassState(WpnCls, 'Ready');
       if (!st) continue; // an abstract base class
       if (!AreStateSpritesPresent(st)) continue; // no sprites
-      // if weapon cannot be spawned, you cannot get it
-      st = FindClassState(WpnCls, 'Spawn');
-      if (!st) continue; // an abstract base class
-      if (!AreStateSpritesPresent(st)) continue; // no sprites
       // ok, seems to be valid
-      if (!slotStarted) {
-        slotStarted = true;
-        print(" --- SLOT #%d ---", i);
-      }
-      print("   %C", WpnCls);
+      if (!pwnum) print(" --- SLOT #%d ---", sidx);
+      print("   %2d: %C", pwnum, WpnCls);
+      ++pwnum;
     }
   }
 }
@@ -6072,6 +6060,90 @@ override int GetCurrentArmorActualSaveAmount () {
   if (pickup) return pickup.SaveAmount;
   // i don't know what is it
   return 0;
+}
+
+
+//==========================================================================
+//
+//  CheatHelper_AllWeapons
+//
+//==========================================================================
+void CheatHelper_AllWeapons () {
+  bool gotit = false;
+  class!Weapon WpnCls;
+  foreach AllClasses(Weapon, out WpnCls) {
+    if (WpnCls.default.bCheatNotWeapon) continue;
+    class!Weapon repl = class!Weapon(GetClassReplacement(WpnCls));
+    if (repl && repl != WpnCls) continue;
+    // check if it is valid
+    if (!Weapon.IsUsableWeaponClass(WpnCls)) continue;
+    // check if already have it
+    if (EntityEx(MO).FindInventory(WpnCls, disableReplacement:true)) continue;
+    //Weapon Wpn = Weapon(Level.Spawn(WpnCls, default, default, default, AllowReplace:false));
+    Weapon Wpn = EntityEx.SpawnWeaponType(Level, WpnCls, disableReplace:true);
+    Wpn.AmmoGive1 = 0;
+    Wpn.AmmoGive2 = 0;
+    if (!Wpn.TryPickup(EntityEx(MO))) {
+      Wpn.Destroy();
+    } else {
+      print("CHEAT: got '%C'!", WpnCls);
+      gotit = true;
+    }
+  }
+  if (gotit) cprint("You got weapons!");
+}
+
+
+//==========================================================================
+//
+//  CheatHelper_AllAmmo
+//
+//==========================================================================
+void CheatHelper_AllAmmo () {
+  bool gotit = false;
+  class!Ammo Cls;
+  foreach AllClasses(Ammo, out Cls) {
+    // only direct descendants
+    if (GetClassParent(Cls) != Ammo) continue;
+    Ammo AmmoItem = EntityEx.SpawnAmmoType(Level, class!Ammo(Cls));
+    if (!AmmoItem) continue;
+    Inventory invAmmo = EntityEx(MO).FindInventory(Cls);
+    if (invAmmo && Ammo(invAmmo)) {
+      delete AmmoItem;
+      AmmoItem = Ammo(invAmmo);
+      assert(AmmoItem);
+    } else {
+      assert(Ammo(AmmoItem));
+      if (!AmmoItem.TryPickup(EntityEx(MO))) {
+        AmmoItem.Destroy();
+        AmmoItem = none;
+      } else {
+        gotit = true;
+      }
+    }
+    if (Ammo(AmmoItem)) { AmmoItem.Amount = Ammo(AmmoItem)./*MaxAmount*/k8GetAmmoKingMax(); gotit = true; }
+  }
+  if (gotit) cprint("You got ammo!");
+}
+
+
+//==========================================================================
+//
+//  CheatHelper_AllKeys
+//
+//==========================================================================
+void CheatHelper_AllKeys () {
+  bool gotit = false;
+  class!Key Cls;
+  foreach AllClasses(Key, out Cls) {
+    class!Key repl = class!Key(GetClassReplacement(Cls));
+    if (repl && repl != Cls) continue;
+    if (!EntityEx.IsSpawnableClass(Cls)) continue;
+    if (EntityEx(MO).FindInventory(Cls, disableReplacement:true)) continue;
+    EntityEx(MO).GiveInventoryType(Cls, disableReplace:true);
+    gotit = true;
+  }
+  cprint("You got keys!");
 }
 
 

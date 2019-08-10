@@ -57,7 +57,7 @@ name ReadySound;
 
 int SlotNumber = -1; // weapon slot this weapon is placed in
 int SelectionOrder; // weapons with lower values have greater priority
-int Position; // position this weapon has in each slot
+/*int*/float SlotPosition = 0.5; // position this weapon has in each slot; default is middle
 float Kickback; // kickback from this weapon
 
 float PSpriteSY; // y-adjustment value for full screen
@@ -106,6 +106,68 @@ float FOVScale;
 replication {
   reliable if (Role == ROLE_Authority && bNetOwner)
     Ammo1, Ammo2;
+}
+
+
+//==========================================================================
+//
+//  IsExtraBDWWeapon
+//
+//==========================================================================
+static final bool IsExtraBDWWeapon (class!Weapon wcls) {
+  if (!wcls) return false;
+  return (string(GetClassName(wcls)).strStartsWith("K8BDW_") /*|| string(GetClassName(wcls)).strStartsWith("BDW_")*/);
+}
+
+
+//==========================================================================
+//
+//  IsValidExtraBDWWeapon
+//
+//==========================================================================
+private static final bool IsValidExtraBDWWeapon (class!Weapon wcls) {
+  if (!wcls) return false;
+  if (IsExtraBDWWeapon(wcls)) {
+    // check if replacee can be spawned
+    class!Weapon rpx = class!Weapon(GetClassReplacee(wcls));
+    if (!rpx) return false;
+    auto st = FindClassState(rpx, 'Spawn');
+    if (!st) return false; // an abstract base class
+    if (!AreStateSpritesPresent(st)) return false;
+    // check if replacee can be "readied"
+    st = FindClassState(rpx, 'Ready');
+    if (!st) return false; // an abstract base class
+    if (!AreStateSpritesPresent(st)) return false;
+  }
+  return true;
+}
+
+
+//==========================================================================
+//
+//  IsUsableWeaponClass
+//
+//==========================================================================
+static final bool IsUsableWeaponClass (class!Weapon wcls) {
+  if (!wcls) return false;
+  auto st = FindClassState(wcls, 'Ready');
+  if (!st) return false; // an abstract base class
+  if (!AreStateSpritesPresent(st)) return false;
+  return IsValidExtraBDWWeapon(wcls);
+}
+
+
+//==========================================================================
+//
+//  IsSpawnableWeaponClass
+//
+//==========================================================================
+static final bool IsSpawnableWeaponClass (class!Weapon wcls) {
+  if (!wcls) return false;
+  auto st = FindClassState(wcls, 'Spawn');
+  if (!st) return false; // an abstract base class
+  if (!AreStateSpritesPresent(st)) return false;
+  return IsValidExtraBDWWeapon(wcls);
 }
 
 
