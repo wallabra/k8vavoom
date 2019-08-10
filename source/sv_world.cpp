@@ -642,7 +642,7 @@ opening_t *SV_SectorOpenings2 (sector_t *sector, bool skipNonSolid) {
 opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned NoBlockFlags, bool do3dmidtex, bool usePoint) {
   if (linedef->sidenum[1] == -1 || !linedef->backsector) return nullptr; // single sided line
 
-  NoBlockFlags &= (SPF_MAX_OPENINGS-1);
+  NoBlockFlags &= (SPF_MAX_FLAG-1u);
 
   // fast algo for two sectors without 3d floors
   if (!linedef->frontsector->Has3DFloors() &&

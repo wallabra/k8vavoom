@@ -210,7 +210,7 @@ native final int GetLineIndex (line_t *line);
 // use BSP to find sector where the given point lies
 native final subsector_t *PointInSubsector (const TVec Point);
 native final sector_t *PointInSector (const TVec Point);
-// BSP trace
+// BSP trace; returns `false` if something was hit (and then `HitNormal` is valid)
 native final bool TraceLine (const TVec start, const TVec end, out TVec HitPoint, out TVec HitNormal);
 // call this after sector height changed, to notify things
 // crunch means "crush actors" (otherwise first unfitting actor will stop notifying)

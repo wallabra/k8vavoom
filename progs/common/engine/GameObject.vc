@@ -193,7 +193,7 @@ enum {
   SPF_NOBLOCKSHOOT = 4,
   SPF_ADDITIVE     = 8,
 
-  SPF_MAX_OPENINGS = 16,
+  SPF_MAX_FLAG     = 16,
 };
 
 

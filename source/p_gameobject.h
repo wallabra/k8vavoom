@@ -95,7 +95,7 @@ enum {
   SPF_NOBLOCKSHOOT = 4u, // Do not block shooting
   SPF_ADDITIVE     = 8u, // Additive translucency
 
-  SPF_MAX_OPENINGS = 16,
+  SPF_MAX_FLAG     = 16u,
 };
 
 //==========================================================================

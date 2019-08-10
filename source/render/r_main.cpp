@@ -1328,8 +1328,10 @@ void VRenderLevelShared::SetupFrame () {
   view_frustum.clear(); // why not?
 
   if (r_chasecam && cl->MO == cl->Camera) {
-    vieworg = cl->MO->Origin+TVec(0.0f, 0.0f, 32.0f)-r_chase_dist*viewforward+r_chase_up*viewup+r_chase_right*viewright;
-    //bool TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool checkOnly=false, bool noPickups=false);
+    //vieworg = cl->MO->Origin+TVec(0.0f, 0.0f, 32.0f)-r_chase_dist*viewforward+r_chase_up*viewup+r_chase_right*viewright;
+    TVec endcpos = cl->MO->Origin+TVec(0.0f, 0.0f, 32.0f)-r_chase_dist*viewforward+r_chase_up*viewup+r_chase_right*viewright;
+    TVec cpos = cl->MO->SlideMoveCamera(cl->MO->Origin, endcpos, 16);
+    vieworg = cpos;
   } else {
     vieworg = cl->ViewOrg;
   }

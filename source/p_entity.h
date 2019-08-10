@@ -514,6 +514,9 @@ public:
   bool CheckSides (TVec);
   void CheckDropOff (float &, float &);
 
+  // this is used to move chase camera
+  TVec SlideMoveCamera (TVec org, TVec end, float raduis);
+
   const int GetEffectiveSpriteIndex () const { return DispSpriteFrame&0x00ffffff; }
   const int GetEffectiveSpriteFrame () const { return ((DispSpriteFrame>>24)&VState::FF_FRAMEMASK); }
 
