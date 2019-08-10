@@ -2067,7 +2067,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
               P.Field->SetFloat(DefObj, float(sc->Number)/256.0f);
             } else {
               sc->ExpectString();
-              VName DamageType = (sc->String.ICmp("Normal") == 0 ? NAME_None : VName(*sc->String));
+              VName DamageType = (sc->String.ICmp("Normal") == 0 ? /*NAME_None*/VName("None") : VName(*sc->String));
               sc->Expect(",");
               sc->ExpectNumber();
 
