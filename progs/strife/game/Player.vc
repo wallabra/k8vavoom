@@ -98,10 +98,48 @@ override void PlayerImpulse () {
 
 //==========================================================================
 //
+//  Cheat_Gimme_AC
+//
+//==========================================================================
+void Cheat_Gimme_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  if (args.length == 1) {
+    if (!newArg) return;
+  } else if (args.length == 2) {
+    if (newArg) return;
+  } else {
+    return;
+  }
+
+  aclist[$] = "Ammo";
+  aclist[$] = "Arsenal";
+  aclist[$] = "Backpack";
+  aclist[$] = "CommUnit";
+  aclist[$] = "Gold";
+  aclist[$] = "Health";
+  aclist[$] = "Keys";
+  aclist[$] = "NoKeys";
+  aclist[$] = "QuestItems";
+  aclist[$] = "Sigil";
+  aclist[$] = "Weapons";
+}
+
+
+//==========================================================================
+//
 //  Cheat_Gimme
 //
 //==========================================================================
 void Cheat_Gimme () {
+  if (!MO) return;
+
+  if (Cmd_CheckParm("ElvenGifts")) {
+    GiveElvenGifts(forced:true);
+  }
+
+  if (Cmd_CheckParm("NoKeys")) {
+    RemoveKeysVerbose();
+  }
+
   // backpack
   if (Cmd_CheckParm("Backpack")) {
     Inventory I = Level.Spawn(AmmoSatchel, default, default, default, false);
@@ -111,45 +149,20 @@ void Cheat_Gimme () {
   }
 
   // weapons
-  if (Cmd_CheckParm("Weapons")) {
-    class!Weapon WpnCls;
-    foreach AllClasses(Weapon, WpnCls) {
-      if (!FindClassState(WpnCls, 'Ready')) continue; // abstract base class
-      if (WpnCls.default.bCheatNotWeapon) continue;
-      Weapon Wpn = Level.Spawn(WpnCls, default, default, default, false);
-      Wpn.AmmoGive1 = 0;
-      Wpn.AmmoGive2 = 0;
-      if (!Wpn.TryPickup(EntityEx(MO))) Wpn.Destroy();
-    }
+  if (Cmd_CheckParm("Weapons") || Cmd_CheckParm("arsenal")) {
+    CheatHelper_AllWeapons();
     cprint("ALL WEAPONS");
   }
 
   // ammo
-  if (Cmd_CheckParm("Ammo")) {
-    class!Inventory Cls;
-    foreach AllClasses(Ammo, Cls) {
-      // only direct descendants
-      if (GetClassParent(Cls) != Ammo) continue;
-      Inventory AmmoItem = EntityEx(MO).FindInventory(Cls);
-      if (!AmmoItem) {
-        AmmoItem = Level.Spawn(Cls, default, default, default, false);
-        if (!AmmoItem.TryPickup(EntityEx(MO))) {
-          AmmoItem.Destroy();
-          AmmoItem = none;
-        }
-      }
-      if (AmmoItem) AmmoItem.Amount = AmmoItem.MaxAmount;
-    }
+  if (Cmd_CheckParm("Ammo") || Cmd_CheckParm("arsenal")) {
+    CheatHelper_AllAmmo();
     cprint("FULL AMMO");
   }
 
   // keys
   if (Cmd_CheckParm("Keys")) {
-    class!Inventory Cls;
-    foreach AllClasses(Key, Cls) {
-      if (!FindClassState(Cls, 'Spawn')) continue; // abstract class
-      EntityEx(MO).GiveInventoryType(Cls);
-    }
+    CheatHelper_AllKeys();
     cprint("ALL KEYS");
   }
 
@@ -173,11 +186,13 @@ void Cheat_Gimme () {
     cprint("SIGIL PIECE");
   }
 
-  // quest items.
-  foreach (auto i; 0..31) {
-    if (Cmd_CheckParm(va("Quest%d", i+1))) {
-      EntityEx(MO).GiveInventoryType(class!Inventory(FindClass(name(va("QuestItem%d", i)))));
-      cprint("YOU GOT IT");
+  // quest items
+  if (Cmd_CheckParm("QuestItems")) {
+    foreach (auto i; 0..31) {
+      if (Cmd_CheckParm(va("Quest%d", i+1))) {
+        EntityEx(MO).GiveInventoryType(class!Inventory(FindClass(name(va("QuestItem%d", i)))));
+        cprint("YOU GOT IT");
+      }
     }
   }
 
@@ -191,7 +206,7 @@ void Cheat_Gimme () {
         GoldItem = none;
       }
     }
-    if (GoldItem) GoldItem.Amount = GoldItem.MaxAmount;
+    if (GoldItem) GoldItem.Amount = min(100_000, GoldItem.MaxAmount);
     cprint("GOT GOLD");
   }
 }

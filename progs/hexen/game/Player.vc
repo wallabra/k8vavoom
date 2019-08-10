@@ -241,71 +241,57 @@ override void SpawnSpeedEffect()
   }
 }
 
+
+//==========================================================================
+//
+//  Cheat_Gimme_AC
+//
+//==========================================================================
+void Cheat_Gimme_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  if (args.length == 1) {
+    if (!newArg) return;
+  } else if (args.length == 2) {
+    if (newArg) return;
+  } else {
+    return;
+  }
+
+  aclist[$] = "Ammo";
+  aclist[$] = "Arsenal";
+  aclist[$] = "Artifacts";
+  aclist[$] = "ElvenGifts";
+  aclist[$] = "Health";
+  aclist[$] = "Keys";
+  aclist[$] = "NoKeys";
+  aclist[$] = "Puzzles";
+  aclist[$] = "Weapons";
+}
+
+
 //==========================================================================
 //
 //  Cheat_Gimme
 //
 //==========================================================================
+void Cheat_Gimme () {
+  if (!MO) return;
 
-void Cheat_Gimme()
-{
-  class!Inventory      Cls;
-  class!Weapon       WpnCls;
-  class!FourthWeaponPiece  PieceCls;
-  Inventory         Inv;
+  if (Cmd_CheckParm("ElvenGifts")) {
+    GiveElvenGifts(forced:true);
+  }
 
-  if (Cmd_CheckParm("weapons"))
-  {
-    int i;
+  if (Cmd_CheckParm("NoKeys")) {
+    RemoveKeysVerbose();
+  }
 
-    HexenArmor HArmor = HexenArmor(EntityEx(MO).FindInventory(
-      HexenArmor));
-    for (i = 0; i < 4; i++)
-    {
-      HArmor.Slots[i] = HArmor.SlotsIncrement[i];
-    }
-    foreach AllClasses(Weapon, WpnCls)
-    {
-      if (!FindClassState(WpnCls, 'Ready'))
-      {
-        //  Abstract class.
-        continue;
-      }
-      Weapon Wpn = Level.Spawn(WpnCls, default, default, default, false);
-      Wpn.AmmoGive1 = 0;
-      Wpn.AmmoGive2 = 0;
-      if (!Wpn.TryPickup(EntityEx(MO)))
-      {
-        Wpn.Destroy();
-      }
-    }
-    foreach AllClasses(Ammo, Cls)
-    {
-      //  Only direct descendants.
-      if (GetClassParent(Cls) != Ammo)
-      {
-        continue;
-      }
-      Inventory AmmoItem = EntityEx(MO).FindInventory(Cls);
-      if (!AmmoItem)
-      {
-        AmmoItem = Level.Spawn(Cls, default, default, default, false);
-        if (!AmmoItem.TryPickup(EntityEx(MO)))
-        {
-          AmmoItem.Destroy();
-          AmmoItem = none;
-        }
-      }
-      if (AmmoItem)
-      {
-        AmmoItem.Amount = AmmoItem.MaxAmount;
-      }
-    }
+  if (Cmd_CheckParm("weapons") || Cmd_CheckParm("arsenal")) {
+    HexenArmor HArmor = HexenArmor(EntityEx(MO).FindInventory( HexenArmor));
+    foreach (int i; 0..4) HArmor.Slots[i] = HArmor.SlotsIncrement[i];
 
-    FourthWeaponHolder Hold = FourthWeaponHolder(
-      EntityEx(MO).FindInventory(FourthWeaponHolder));
-    if (!Hold)
-    {
+    CheatHelper_AllWeapons();
+
+    FourthWeaponHolder Hold = FourthWeaponHolder(EntityEx(MO).FindInventory(FourthWeaponHolder));
+    if (!Hold) {
       Hold = Level.Spawn(FourthWeaponHolder, default, default, default, false);
       Hold.AttachToOwner(EntityEx(MO));
     }
@@ -313,81 +299,53 @@ void Cheat_Gimme()
 
     cprint("ALL WEAPONS");
   }
-  if (Cmd_CheckParm("health"))
-  {
-    if (MorphTime)
-    {
+
+  if (Cmd_CheckParm("ammo") || Cmd_CheckParm("arsenal")) {
+    CheatHelper_AllAmmo();
+    cprint("ALL AMMO");
+  }
+
+  if (Cmd_CheckParm("health")) {
+    if (MorphTime) {
       MO.Health = MAXMORPHHEALTH;
       Health = MO.Health;
-    }
-    else
-    {
+    } else {
       MO.Health = MAXHEALTH;
       Health = MO.Health;
     }
     cprint("FULL HEALTH");
   }
-  if (Cmd_CheckParm("keys"))
-  {
-    foreach AllClasses(Key, Cls)
-    {
-      if (!FindClassState(Cls, 'Spawn'))
-      {
-        //  Abstract class
-        continue;
-      }
-      EntityEx(MO).GiveInventoryType(Cls);
-    }
+
+  if (Cmd_CheckParm("keys")) {
+    CheatHelper_AllKeys();
     cprint("ALL KEYS");
   }
-  if (Cmd_CheckParm("artifacts"))
-  {
-    // All artifacts
-    foreach AllClasses(Inventory, Cls)
-    {
-      if (!Cls.default.bInvBar || !Cls.default.MaxAmount)
-      {
-        //  Not an artifact
-        continue;
-      }
-      if (!FindClassState(Cls, 'Spawn'))
-      {
-        //  Abstract class
-        continue;
-      }
-      if (ClassIsChildOf(Cls, PuzzleItem))
-      {
-        //  Not puzzle items.
-        continue;
-      }
-      if (!AreStateSpritesPresent(FindClassState(Cls, 'Spawn')))
-      {
-        //  From other game or not available in shareware.
-        continue;
-      }
+
+  if (Cmd_CheckParm("artifacts")) {
+    // all artifacts
+    class!Inventory Cls;
+    Inventory Inv;
+    foreach AllClasses(Inventory, Cls) {
+      if (!Cls.default.bInvBar || !Cls.default.MaxAmount) continue; // not an artifact
+      if (!EntityEx.IsSpawnableClass(Cls)) continue; // not spawnable
+      if (ClassIsChildOf(Cls, PuzzleItem)) continue; // not puzzle items
       Inv = Level.Spawn(Cls, default, default, default, false);
       Inv.Amount = Inv.MaxAmount;
-      if (!Inv.TryPickup(EntityEx(MO)))
-      {
-        Inv.Destroy();
-      }
+      if (!Inv.TryPickup(EntityEx(MO))) Inv.Destroy();
     }
     cprint("ALL ARTIFACTS");
   }
-  if (Cmd_CheckParm("puzzles"))
-  {
-    foreach AllClasses(PuzzleItem, Cls)
-    {
-      if (!FindClassState(Cls, 'Spawn'))
-      {
-        //  Abstract class
-        continue;
-      }
+
+  if (Cmd_CheckParm("puzzles")) {
+    class!Inventory Cls;
+    foreach AllClasses(PuzzleItem, Cls) {
+      if (!EntityEx.IsSpawnableClass(Cls)) continue; // not spawnable
       EntityEx(MO).GiveInventoryType(Cls);
     }
-    cprint("ALL ARTIFACTS");
+    cprint("ALL PUZZLE ARTIFACTS");
   }
 }
+
 
 //==========================================================================
 //
