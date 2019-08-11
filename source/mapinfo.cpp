@@ -1777,10 +1777,22 @@ static void ParseMapInfo (VScriptParser *sc) {
       // hack for "complete"
       else if (sc->Check("gameinfo")) {
         ParseGameInfo(sc);
+      } else if (sc->Check("damagetype")) {
+        sc->Message("Unimplemented MAPINFO command `DamageType`");
+        if (!sc->Check("{")) {
+          sc->ExpectString();
+          sc->SkipBracketed();
+        } else {
+          sc->SkipBracketed(true); // bracket eaten
+        }
       } else if (sc->Check("intermission")) {
-        GCon->Logf(NAME_Warning, "Unimplemented MAPINFO command Intermission");
-        if (!sc->Check("{")) sc->ExpectString();
-        sc->SkipBracketed();
+        sc->Message("Unimplemented MAPINFO command `Intermission`");
+        if (!sc->Check("{")) {
+          sc->ExpectString();
+          sc->SkipBracketed();
+        } else {
+          sc->SkipBracketed(true); // bracket eaten
+        }
       /*
       } else if (sc->Check("gamedefaults")) {
         GCon->Logf("WARNING: Unimplemented MAPINFO section gamedefaults");
