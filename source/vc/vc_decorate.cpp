@@ -169,7 +169,7 @@ static inline bool getDecorateDebug () {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-// this is workaround for morons overriding the same class several times in
+// this is workaround for mo...dders overriding the same class several times in
 // the same mod (yes, smoothdoom, i am talking about you).
 // we will cut off old override if we'll find a new one
 static TMapNC<VClass *, bool> currFileRepls; // set; key is old class
@@ -917,7 +917,7 @@ static void ParseConst (VScriptParser *sc, VMemberBase *parent, bool changeMode)
                if (Expr->GetFloatConst() < -0x3fffffff) Val = -0x3fffffff;
           else if (Expr->GetFloatConst() > 0x3fffffff) Val = 0x3fffffff;
           else Val = (int)Expr->GetFloatConst();
-          GCon->Logf(NAME_Warning, "%s: some moron cannot put a proper float type to a constant `%s`; %g truncated to %d", *sc->GetLoc().toStringNoCol(), *Name, Expr->GetFloatConst(), Val);
+          GCon->Logf(NAME_Warning, "%s: some mo...dder cannot put a proper float type to a constant `%s`; %g truncated to %d", *sc->GetLoc().toStringNoCol(), *Name, Expr->GetFloatConst(), Val);
         } else {
           if (!Expr->IsIntConst()) sc->Error(va("%s: expected integer literal", *sc->GetLoc().toStringNoCol()));
           Val = Expr->GetIntConst();
@@ -1196,7 +1196,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       }
       // some degenerative mod authors do this
       if (LastState && GotoOffset == 0 && VStr::strEquCI(*GotoLabel, "Fail")) {
-        GLog.Logf(NAME_Warning, "%s: fixed `Goto Fail`, mod author is a moron.", *TmpLoc.toStringNoCol());
+        GLog.Logf(NAME_Warning, "%s: fixed `Goto Fail`, mod author is a mo...dder.", *TmpLoc.toStringNoCol());
         check(LastState);
         LastState->NextState = LastState;
         PrevState = nullptr; // new execution chain

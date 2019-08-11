@@ -697,7 +697,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
         return enew;
       }
       if (argnum == 4 && IsIntConst() && GetIntConst() == 1 && VStr::strEqu(funcName, "A_CustomMeleeAttack")) {
-        ParseWarningArError((aloc ? *aloc : Loc), "`%s` argument #%d should be string (replaced `1` with empty string); MOD AUTHOR IS MORON!", funcName, argnum);
+        ParseWarningArError((aloc ? *aloc : Loc), "`%s` argument #%d should be string (replaced `1` with empty string); MOD AUTHOR IS A MO...DDER!", funcName, argnum);
         VExpression *enew = new VNameLiteral(NAME_None, Loc);
         delete this;
         return enew;
@@ -841,8 +841,8 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
           return nullptr;
         }
         if (Offs == 0) {
-          // 0 means "mod author is a fuckin' moron"
-          ParseWarningArError((aloc ? *aloc : Loc), "zero jump offset in `%s`. mod author is a moron.", funcName);
+          // 0 means "mod author is a clueless retard"
+          ParseWarningArError((aloc ? *aloc : Loc), "zero jump offset in `%s`. mod author is a mo...dder.", funcName);
           /*
           VExpression *enew = new VNoneLiteral(Loc);
           delete this;
