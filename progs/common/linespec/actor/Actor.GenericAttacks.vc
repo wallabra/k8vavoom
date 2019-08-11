@@ -237,6 +237,8 @@ final void A_CustomBulletAttack (float SpreadHoriz, float SpreadVert,
                outHitPoint:default, PuffType.default.DamageType, secondary:(i != 0),
                disableRandomZ:!!(Flags&CBAF_NORANDOMPUFFZ), out puffEntity:puff);
     if (missile) {
+      VectorAngles(dir, out rot);
+      if (Flags&CBAF_NOPITCH) rot.pitch = 0;
       EntityEx msl = SpawnMissileAngles(missile, rot.yaw, rot.pitch, spawnheight!optional, spawnofsxy!optional);
       if (msl && puff) {
         if (Flags&CBAF_PUFFTARGET) msl.Target = puff;
