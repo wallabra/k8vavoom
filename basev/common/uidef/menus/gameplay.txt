@@ -107,6 +107,11 @@ menudef GameplayOptions {
   }
 
   option bool {
+    title = "Use Slot 11 in Weapon Cycling";
+    cvar = wp_cycle_special_slot;
+  }
+
+  option bool {
     title = "Berserk autoswitch";
     cvar = k8BerserkSwitch;
     help = "WARNING: This may not work for custom weapon packs.";
