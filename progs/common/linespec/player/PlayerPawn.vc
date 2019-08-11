@@ -182,12 +182,13 @@ final bool FindWeaponSlot (class!Weapon WpnClass, out int Slot, out int Index) {
 //  passed indicies must be valid
 //
 //==========================================================================
-final void IncrementWeaponIndex (ref int slot, ref int index) {
+final void IncrementWeaponIndex (ref int slot, ref int index, bool allowExtraSlot) {
   if (actualWeaponSlots.length == 0) return; // oops
   // in slot, we're going backwards
   if ((--index) >= 0) return;
-  foreach (; 0..actualWeaponSlots.length) {
-    if ((++slot) >= actualWeaponSlots.length) slot = 0;
+  int slotCount = actualWeaponSlots.length-(allowExtraSlot ? 0 : 1);
+  foreach (; 0..slotCount) {
+    if ((++slot) >= slotCount) slot = 0;
     index = actualWeaponSlots[slot].weapons.length-1;
     if (index >= 0) return;
   }
@@ -202,12 +203,13 @@ final void IncrementWeaponIndex (ref int slot, ref int index) {
 //  passed indicies must be valid
 //
 //==========================================================================
-final void DecrementWeaponIndex (ref int slot, ref int index) {
+final void DecrementWeaponIndex (ref int slot, ref int index, bool allowExtraSlot) {
   if (actualWeaponSlots.length == 0) return; // oops
   // in slot, we're going forward
   if ((++index) < actualWeaponSlots[slot].weapons.length-1) return;
-  foreach (; 0..actualWeaponSlots.length) {
-    if ((--slot) < 0) slot = actualWeaponSlots.length-1;
+  int slotCount = actualWeaponSlots.length-(allowExtraSlot ? 0 : 1);
+  foreach (; 0..slotCount) {
+    if ((--slot) < 0) slot = slotCount-1;
     index = 0;
     if (actualWeaponSlots[slot].weapons.length > 0) return;
   }

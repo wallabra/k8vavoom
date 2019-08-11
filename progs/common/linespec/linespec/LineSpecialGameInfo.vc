@@ -264,6 +264,8 @@ override void Init () {
 
   CreateCvar('dbg_blood_disable_entities', "0", "Disable spawning of blood entities?", 0/*CVAR_ARCHIVE*/);
 
+  CreateCvar('wp_cycle_special_slot', "0", "Should weapon cycling use slot 11 too?", CVAR_ARCHIVE);
+
 
   CreateCvar('bot_disable_ai', "0", "Disable bot AI (for debugging)?", 0/*CVAR_ARCHIVE*/);
 
