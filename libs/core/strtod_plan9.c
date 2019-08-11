@@ -612,10 +612,12 @@ double fmtstrtod (const char *as, char **aas, int *rangeErr) {
       }
       /* fallthrough */
     case S1:
+      /*k8: removed for good; this is in violation of standard, but...
       if (xcmp(s, "infinity") == 0) {
         if (aas) *aas = (char *)skipSpaces(s+8);
         goto retinf;
       }
+      */
       if (xcmp(s, "inf") == 0) {
         if (aas) *aas = (char *)skipSpaces(s+3);
         goto retinf;
