@@ -70,6 +70,7 @@
 
 static VCvarI acs_screenblocks_override("acs_screenblocks_override", "-1", "Overrides 'screenblocks' variable for acs scripts (-1: don't).", CVAR_Archive);
 static VCvarB acs_halt_on_unimplemented_opcode("acs_halt_on_unimplemented_opcode", false, "Halt ACS VM on unimplemented opdode?", CVAR_Archive);
+static VCvarB acs_halt_on_unknown_opcode("acs_halt_on_unknown_opcode", true, "Halt ACS VM on unknown opdode?", CVAR_Archive);
 static VCvarB acs_warning_console_commands("acs_warning_console_commands", true, "Show warning when ACS script tries to execute console command?", CVAR_Archive);
 static VCvarB acs_dump_uservar_access("acs_dump_uservar_access", false, "Dump ACS uservar access?", CVAR_Archive);
 static VCvarB acs_use_doomtic_granularity("acs_use_doomtic_granularity", false, "Should ACS use DooM tic granularity for delays?", CVAR_Archive);
@@ -6980,7 +6981,10 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK_STOP;
 
     ACSVM_DEFAULT
-      Host_Error("Illegal ACS opcode %d", cmd);
+      if (acs_halt_on_unknown_opcode) Host_Error("Illegal ACS opcode %d", cmd);
+      GCon->Logf(NAME_Error, "ACS: Illegal ACS opcode %d", cmd);
+      action = SCRIPT_Terminate;
+      ACSVM_BREAK_STOP;
     }
   } while (action == SCRIPT_Continue);
 
