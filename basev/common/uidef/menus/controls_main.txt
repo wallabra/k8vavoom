@@ -353,6 +353,13 @@ menudef ControlsMain {
     command = "impulse 10";
   }
 
+  // this is slot for weapons that has no explicit slot
+  option bind {
+    title = "Slot 11";
+    button = ona;
+    command = "impulse 48";
+  }
+
   option bind {
     title = "Artifact Slot 1";
     button = ona;
