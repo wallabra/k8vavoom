@@ -1694,6 +1694,8 @@ static void ParseGameInfo (VScriptParser *sc) {
       int slot = sc->Number;
       if (slot < 0 || slot > 10) sc->Message(va("ignoring gameinfo weaponslot %d", slot));
       TArray<VStr> clist;
+      clist.append("CmdSetSlot"); // arg0
+      clist.append(VStr(slot)); // arg1 is number
       while (sc->Check(",")) {
         if (!sc->GetString()) sc->Error("unexpected gameinfo end in mapinfo");
         if (!sc->String.isEmpty()) clist.append(sc->String);
