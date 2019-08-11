@@ -134,7 +134,7 @@ COMMAND(WeaponSection) {
 //==========================================================================
 COMMAND(SetSlot) {
   if (!ParsingKeyConf) return;
-  GGameInfo->eventCmdSetSlot(&Args);
+  GGameInfo->eventCmdSetSlot(&Args, true); // as keyconf
 }
 
 
@@ -145,5 +145,5 @@ COMMAND(SetSlot) {
 //==========================================================================
 COMMAND(AddSlotDefault) {
   if (!ParsingKeyConf) return;
-  GGameInfo->eventCmdAddSlotDefault(&Args);
+  GGameInfo->eventCmdAddSlotDefault(&Args, true); // as keyconf
 }

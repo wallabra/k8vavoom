@@ -1669,6 +1669,55 @@ static void ParseSkillDef (VScriptParser *sc) {
 
 //==========================================================================
 //
+//  ParseGameInfo
+//
+//==========================================================================
+static void ParseGameInfo (VScriptParser *sc) {
+  //auto cmode = sc->IsCMode();
+  //sc->SetCMode(true);
+  sc->Expect("{");
+  //sc->SkipBracketed(true);
+  for (;;) {
+    if (sc->AtEnd()) { sc->Error("'}' not found"); break; }
+    if (sc->Check("}")) break;
+    if (sc->Check("PlayerClasses")) {
+      MapInfoPlayerClasses.clear();
+      sc->Expect("=");
+      for (;;) {
+        sc->ExpectString();
+        if (sc->String.length()) MapInfoPlayerClasses.append(VName(*sc->String));
+        if (!sc->Check(",")) break;
+      }
+    } else if (sc->Check("weaponslot")) {
+      sc->Expect("=");
+      sc->ExpectNumber();
+      int slot = sc->Number;
+      if (slot < 0 || slot > 10) sc->Message(va("ignoring gameinfo weaponslot %d", slot));
+      TArray<VStr> clist;
+      while (sc->Check(",")) {
+        if (!sc->GetString()) sc->Error("unexpected gameinfo end in mapinfo");
+        if (!sc->String.isEmpty()) clist.append(sc->String);
+      }
+      // we only have so many slots
+      if (slot >= 0 && slot <= 10) {
+        GGameInfo->eventCmdSetSlot(&clist, false); // as gameinfo
+      }
+    } else {
+      sc->ExpectString();
+      sc->Message(va("skipped gameinfo command '%s'", *sc->String));
+      sc->Expect("=");
+      sc->ExpectString();
+      while (sc->Check(",")) {
+        if (!sc->GetString()) sc->Error("unexpected gameinfo end in mapinfo");
+      }
+    }
+  }
+  //sc->SetCMode(cmode);
+}
+
+
+//==========================================================================
+//
 //  ParseMapInfo
 //
 //==========================================================================
@@ -1725,27 +1774,7 @@ static void ParseMapInfo (VScriptParser *sc) {
       }
       // hack for "complete"
       else if (sc->Check("gameinfo")) {
-        //auto cmode = sc->IsCMode();
-        //sc->SetCMode(true);
-        sc->Expect("{");
-        //sc->SkipBracketed(true);
-        for (;;) {
-          if (sc->AtEnd()) { sc->Error("'}' not found"); break; }
-          if (sc->Check("}")) break;
-          if (sc->Check("PlayerClasses")) {
-            MapInfoPlayerClasses.clear();
-            sc->Expect("=");
-            for (;;) {
-              sc->ExpectString();
-              if (sc->String.length()) MapInfoPlayerClasses.append(VName(*sc->String));
-              if (!sc->Check(",")) break;
-            }
-          } else {
-            sc->ExpectString();
-            if (sc->Check("=")) sc->SkipLine();
-          }
-        }
-        //sc->SetCMode(cmode);
+        ParseGameInfo(sc);
       } else if (sc->Check("intermission")) {
         GCon->Logf(NAME_Warning, "Unimplemented MAPINFO command Intermission");
         if (!sc->Check("{")) sc->ExpectString();

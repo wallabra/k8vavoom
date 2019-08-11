@@ -41,7 +41,7 @@ enum {
   FLAGS_HASH_SIZE = 256,
   //WARNING! keep in sync with script code (LineSpecialGameInfo.vc)
   NUM_WEAPON_SLOTS = 10,
-  MAX_WEAPONS_PER_SLOT = 32,
+  MAX_WEAPONS_PER_SLOT = 64,
 };
 
 enum {

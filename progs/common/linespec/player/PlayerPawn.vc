@@ -25,7 +25,7 @@
 //**
 //**************************************************************************
 class PlayerPawn : Actor abstract;
-//#define DUMP_WEAPON_SLOT_BUILDING
+#define DUMP_WEAPON_SLOT_BUILDING
 
 
 const float WALKING_SPEED = 1000;
@@ -34,7 +34,7 @@ const float RUNNING_SPEED = 2000;
 
 enum {
   NUM_WEAPON_SLOTS = 10,
-  MAX_WEAPONS_PER_SLOT = 32,
+  MAX_WEAPONS_PER_SLOT = 64,
 }
 
 // default view height
@@ -295,8 +295,8 @@ void InitializeWeaponSlots () {
   bool[NUM_WEAPON_SLOTS] hasGIWeapons;
   foreach (auto sidx; 0..NUM_WEAPON_SLOTS) {
     hasGIWeapons[sidx] = false;
-    foreach (auto widx; 0..MAX_WEAPONS_PER_SLOT) {
-      class!Weapon wcls = GI.WeaponSlots[sidx+1].Weapons[widx];
+    foreach (auto widx; 0..GI.GetDefaultMaxWeaponsInSlot(sidx)) {
+      class!Weapon wcls = GI.GetDefaultWeaponInSlot(sidx, widx);
       if (!wcls) continue;
       if (wcls) {
         class!Weapon repl = class!Weapon(GetClassReplacement(wcls));

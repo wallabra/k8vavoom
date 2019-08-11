@@ -252,7 +252,7 @@ void CmdWeaponSection (string Section) {
 //  CmdSetSlot
 //
 //==========================================================================
-void CmdSetSlot (ref array!string Args) {
+void CmdSetSlot (ref array!string Args, bool asKeyconf) {
 }
 
 
@@ -261,7 +261,7 @@ void CmdSetSlot (ref array!string Args) {
 //  CmdAddSlotDefault
 //
 //==========================================================================
-void CmdAddSlotDefault (ref array!string Args) {
+void CmdAddSlotDefault (ref array!string Args, bool asKeyconf) {
 }
 
 
