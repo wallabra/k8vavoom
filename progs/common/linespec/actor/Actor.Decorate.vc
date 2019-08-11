@@ -199,6 +199,16 @@ final void A_SetRenderStyle (float alpha, int style) {
 }
 
 
+//==========================================================================
+//
+//  A_SetMass
+//
+//==========================================================================
+final void A_SetMass (float newmass) {
+  if (newmass.isfinite) Mass = newmass;
+}
+
+
 /*
 const int SPF_FORCECLAMP = 0x01;
 const int SPF_INTERPOLATE = 0x00;

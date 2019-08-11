@@ -446,6 +446,7 @@ class Actor extends Thinker
 
   action native A_SetSpeed (float speed, int aptr);
   action native A_SetFloatSpeed (float speed, int aptr);
+  action native A_SetMass (float newmass);
 
   action native A_Blast (int BlastFlags, float Strength, float Radius, float Speed, class!Actor BlastEffect, string BlastSound);
 
