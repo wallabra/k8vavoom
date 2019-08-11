@@ -123,7 +123,7 @@ static VCvarB show_time("dbg_show_times", false, "Show some debug times?", CVAR_
 static VCvarS configfile("configfile", "config.cfg", "Config file name.", CVAR_Archive|CVAR_PreInit);
 
 static char CurrentLanguage[4];
-static VCvarS Language("language", "en", "Game language.", CVAR_Archive|CVAR_PreInit);
+static VCvarS Language("language", "en", "Game language.", /*CVAR_Archive|CVAR_PreInit|*/CVAR_Rom);
 
 static VCvarB cap_framerate("cl_cap_framerate", true, "Cap framerate for non-networking games?", CVAR_Archive);
 static VCvarI cl_framerate("cl_framerate", "0", "Cap framerate for non-networking games?", CVAR_Archive);
