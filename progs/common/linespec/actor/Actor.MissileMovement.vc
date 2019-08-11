@@ -276,8 +276,8 @@ final void A_Stop () {
 //
 //==========================================================================
 final void A_Weave (int horzspeed, int vertspeed, float horzdist, float vertdist) {
-  int WeaveXY = (Special2>>16)&0xffff;
-  int WeaveZ = Special2&0xffff;
+  int WeaveXY = (Special2>>16)&63;
+  int WeaveZ = Special2&63;
   float angle = AngleMod360(Angles.yaw+90.0);
 
   if (horzspeed || horzdist) {
