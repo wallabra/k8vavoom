@@ -57,6 +57,7 @@ ACTOR BDW_Shotgun : Shotgun Replaces Shotgun {
   Inventory.PickupSound "weapons/bdw_shotgun/sgpump"
   //Obituary "$OB_MPSHOTGUN"
   Obituary "%o chewed on %k's boomstick."
+  Tag "Elven Shotgun"
   AttackSound "None"
   +WEAPON.NOALERT
   +WEAPON.NOAUTOAIM

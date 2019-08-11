@@ -40,7 +40,12 @@ menudef HUDOptions {
       "Dark Red",
       "Dark Brown",
       "Purple",
-      "Dark Gray"
+      "Dark Gray",
+      "Cyan",
+      "Ice",
+      "Fire",
+      "Sapphire",
+      "Teal",
     }
   }
 
@@ -68,7 +73,12 @@ menudef HUDOptions {
       "Dark Red",
       "Dark Brown",
       "Purple",
-      "Dark Gray"
+      "Dark Gray",
+      "Cyan",
+      "Ice",
+      "Fire",
+      "Sapphire",
+      "Teal",
     }
   }
 
@@ -196,6 +206,52 @@ menudef HUDOptions {
   option bool {
     title = "Ammo in Fullscreen";
     cvar = r_hud_draw_fs_ammo;
+  }
+
+  option bool {
+    title = "Weapon Name in Fullscreen";
+    cvar = r_hud_draw_weapon_name;
+  }
+
+  option enum {
+    title = "Weapon Name Color";
+    cvar = r_hud_weapon_name_color;
+    list {
+      "Brick",
+      "Tan",
+      "Gray",
+      "Green",
+      "Brown",
+      "Gold",
+      "Red",
+      "Blue",
+      "Orange",
+      "White",
+      "Yellow",
+      "Normal",
+      "Black",
+      "Light Blue",
+      "Cream",
+      "Olive",
+      "Dark Green",
+      "Dark Red",
+      "Dark Brown",
+      "Purple",
+      "Dark Gray",
+      "Cyan",
+      "Ice",
+      "Fire",
+      "Sapphire",
+      "Teal",
+    }
+  }
+
+  option slider {
+    title = "Weapon Name Fadeout Time";
+    cvar = r_hud_weapon_name_fadeout_time;
+    min = 0;
+    max = 5;
+    step = 0.1;
   }
 
   option bool {

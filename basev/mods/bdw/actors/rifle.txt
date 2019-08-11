@@ -62,6 +62,7 @@ Actor BDW_Rifle : Weapon Replaces Chaingun {
   Weapon.AmmoType2 "BDW_RifleAmmo"
   Obituary "%o was shot down by %k's assault rifle."
   AttackSound "None"
+  Tag "Elven Assault Rifle"
   Inventory.PickupSound "weapons/bdw_rifle/clipin"
   Inventory.Pickupmessage "You got the Assault Rifle!"
   +WEAPON.NOAUTOAIM

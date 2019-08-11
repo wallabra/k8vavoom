@@ -186,6 +186,10 @@ struct AmmoInfo {
 }
 
 
+string lastWeaponName;
+float lastWeaponNameChangeTime;
+
+
 //==========================================================================
 //
 //  checkForDoom2
@@ -688,6 +692,47 @@ override void SB_DrawFullscreenStats () {
       }
     }
   }
+
+  if (GetCvarB('r_hud_draw_weapon_name')) {
+    float currTime = cl.MO.Level.XLevel.Time;
+    // check if weapon name was changed
+    if (cl.ReadyWeapon) {
+      string wname = cl.ReadyWeapon.StrifeName;
+      while (wname.length && wname[0] <= ' ') wname = wname[1..$];
+      while (wname.length && wname[$-1] <= ' ') wname = wname[0..$-1];
+      if (!wname) {
+        wname = string(GetClassName(cl.ReadyWeapon.Class));
+        while (wname.length && wname[0] <= ' ') wname = wname[1..$];
+        while (wname.length && wname[$-1] <= ' ') wname = wname[0..$-1];
+      }
+      if (lastWeaponName != wname) {
+        lastWeaponName = wname;
+        lastWeaponNameChangeTime = currTime;
+      }
+    } else {
+      lastWeaponName = "";
+      lastWeaponNameChangeTime = currTime;
+    }
+    // check fading out
+    if (lastWeaponName) {
+      float staytime = GetCvarF('r_hud_weapon_name_fadeout_time');
+      float currAlpha = 1.0;
+      if (staytime <= 0 || currTime-lastWeaponNameChangeTime <= staytime) {
+        // no fadeout
+        if (staytime <= 0) lastWeaponNameChangeTime = currTime;
+      } else {
+        // fadeout
+        currAlpha = 1-fclamp((currTime-lastWeaponNameChangeTime-staytime)/0.4, 0, 1);
+      }
+      currAlpha = fsalpha*currAlpha;
+      if (currAlpha > 0) {
+        int xpos = (Width-TextWidth(lastWeaponName))/2;
+        int ypos = ovh-10;
+        DrawText(xpos, ypos, lastWeaponName, GetCvarI('r_hud_weapon_name_color'), CR_UNTRANSLATED, currAlpha);
+      }
+    }
+  }
+
 
   if (GetCvarB('r_hud_draw_fs_face')) {
     // faces
