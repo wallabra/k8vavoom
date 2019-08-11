@@ -741,7 +741,7 @@ final bool LineAttack (TVec dir, float distance, int LADamage,
                        optional TVec *outHitPoint, optional name DmgType,
                        optional bool secondary, optional name decalType,
                        optional int pufftid, optional bool disableRandomZ,
-                       optional out EntityEx hitEntity)
+                       optional out EntityEx hitEntity, optional out EntityEx puffEntity)
 {
   TVec dst;
   intercept_t *in;
@@ -752,7 +752,7 @@ final bool LineAttack (TVec dir, float distance, int LADamage,
   //print("LineAttack: self=<%C>", self);
 
   //Entity e; print("%f", e.Height);
-
+  puffEntity = none;
   hitEntity = none;
 
   shootOrigin = Origin;
@@ -830,7 +830,7 @@ final bool LineAttack (TVec dir, float distance, int LADamage,
 
       // spawn bullet puffs
       if (PuffType) {
-        SpawnPuff(hit_point, distance, PuffType, false, sec, li, real_hit_point, decalType!optional, pufftid!optional, disableRandomZ!optional);
+        puffEntity = SpawnPuff(hit_point, distance, PuffType, false, sec, li, real_hit_point, decalType!optional, pufftid!optional, disableRandomZ!optional);
       }
 
       // don't go any farther
@@ -871,7 +871,7 @@ final bool LineAttack (TVec dir, float distance, int LADamage,
 
     // spawn bullet puffs or blood spots, depending on target type
     if ((PuffType && PuffType.default.bPuffOnActors) || th.bNoBlood || th.bInvulnerable || th.bDormant) {
-      SpawnPuff(hit_point, distance, PuffType, true, pufftid:pufftid!optional, disableRandomZ:disableRandomZ!optional);
+      puffEntity = SpawnPuff(hit_point, distance, PuffType, true, pufftid:pufftid!optional, disableRandomZ:disableRandomZ!optional);
     }
     if (!UseBloodSplatter && !th.bNoBlood && !th.bInvulnerable && !th.bDormant) {
       th.SpawnBlood(hit_point, LADamage, shootOrigin);
@@ -908,7 +908,7 @@ final bool LineAttack (TVec dir, float distance, int LADamage,
 
   if (PuffType) {
     if (PuffType.default.ActiveSound) PlaySound(PuffType.default.ActiveSound, /*CHAN_WEAPON*/CHAN_AUTO); // play miss sound
-    if (PuffType.default.bAlwaysPuff) SpawnPuff(lineEnd, distance, PuffType, false, pufftid:pufftid!optional, disableRandomZ:disableRandomZ!optional);
+    if (PuffType.default.bAlwaysPuff) puffEntity = SpawnPuff(lineEnd, distance, PuffType, false, pufftid:pufftid!optional, disableRandomZ:disableRandomZ!optional);
   }
 
   return true;

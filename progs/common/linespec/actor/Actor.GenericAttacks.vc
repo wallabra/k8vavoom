@@ -66,6 +66,17 @@ const int BF_AFFECTBOSSES = 4;
 const int BF_NOIMPACTDAMAGE = 8;
 
 
+// flags for A_CustomBulletAttack
+const int CBAF_AIMFACING     = 1;
+const int CBAF_NORANDOM      = 2;
+const int CBAF_EXPLICITANGLE = 4;
+const int CBAF_NOPITCH       = 8;
+const int CBAF_NORANDOMPUFFZ = 16;
+const int CBAF_PUFFTARGET    = 32;
+const int CBAF_PUFFMASTER    = 64;
+const int CBAF_PUFFTRACER    = 128;
+
+
 //==========================================================================
 //
 //  A_CustomMissile
@@ -179,24 +190,23 @@ final void FireSuperBullet () {
 //==========================================================================
 final void A_CustomBulletAttack (float SpreadHoriz, float SpreadVert,
                                  int NumBullets, int DamagePerBullet, optional class!Actor PuffType,
-                                 optional float Range, optional int Flags)
+                                 optional float Range, optional int Flags, optional int aptr,
+                                 optional class!Actor missile, optional float spawnheight, optional float spawnofsxy)
 {
-  TAVec rot;
+  if (!specified_aptr) aptr = AAPTR_TARGET;
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_CustomBulletAttack', aptr));
 
   if (!Range) Range = (bIsPlayer ? 8192.0 : MISSILERANGE);
   //FIXME: not specified and none are two different things
   if (!PuffType || !specified_PuffType) PuffType = BulletPuff;
 
-  // CBAF_AIMFACING
-  if (!Target && !(Flags&1)) return;
-
-  // CBAF_AIMFACING
-  if (!(Flags&1)) A_FaceTarget();
-
-  if (AttackSound)
-  {
-    PlaySound(AttackSound, CHAN_WEAPON);
+  if (!(Flags&CBAF_AIMFACING)) {
+    if (tgt) common_A_FaceSomething(tgt);
   }
+  //if (!tgt && !(Flags&CBAF_AIMFACING)) return;
+  //if (!(Flags&CBAF_AIMFACING)) A_FaceTarget();
+
+  if (AttackSound) PlaySound(AttackSound, CHAN_WEAPON);
 
   TVec aimDir;
   if (bIsPlayer) {
@@ -207,22 +217,33 @@ final void A_CustomBulletAttack (float SpreadHoriz, float SpreadVert,
     AimLineAttack(aimDir, Angles, MISSILERANGE);
   }
 
-  //FIXME: CBAF_NOPITCH
-  //if (flags&8) {}
-
+  TAVec rot;
+  EntityEx puff;
   foreach (auto i; 0..NumBullets) {
-    if (Flags&4/*CBAF_EXPLICITANGLE*/) {
+    if (Flags&CBAF_EXPLICITANGLE) {
       rot.pitch = SpreadVert;
       rot.yaw = SpreadHoriz;
     } else {
       rot.pitch = (Random()-Random())*SpreadVert;
       rot.yaw = (Random()-Random())*SpreadHoriz;
     }
+    if (Flags&CBAF_NOPITCH) rot.pitch = 0;
     rot.roll = 0.0;
     TVec dir = RotateDirectionVector(aimDir, rot);
     int damage = DamagePerBullet;
-    if (!(Flags&2)) damage *= ((P_Random()%3)+1);
-    LineAttack(dir, Range, damage, PuffType, default, default, PuffType.default.DamageType, (i != 0));
+    if (!(Flags&CBAF_NORANDOM)) damage *= ((P_Random()%3)+1);
+    //TODO:CBAF_NORANDOMPUFFZ
+    LineAttack(dir, Range, damage, PuffType, NoAttackGhosts:default,
+               outHitPoint:default, PuffType.default.DamageType, secondary:(i != 0),
+               disableRandomZ:!!(Flags&CBAF_NORANDOMPUFFZ), out puffEntity:puff);
+    if (missile) {
+      EntityEx msl = SpawnMissileAngles(missile, rot.yaw, rot.pitch, spawnheight!optional, spawnofsxy!optional);
+      if (msl && puff) {
+        if (Flags&CBAF_PUFFTARGET) msl.Target = puff;
+        if (Flags&CBAF_PUFFMASTER) msl.Master = puff;
+        if (Flags&CBAF_PUFFTRACER) msl.Tracer = puff;
+      }
+    }
   }
 }
 

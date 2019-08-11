@@ -90,9 +90,9 @@ const int CBAF_NORANDOM      = 2;
 const int CBAF_EXPLICITANGLE = 4;
 const int CBAF_NOPITCH       = 8;
 const int CBAF_NORANDOMPUFFZ = 16;
-//const int CBAF_PUFFTARGET   = 32;
-//const int CBAF_PUFFMASTER   = 64;
-//const int CBAF_PUFFTRACER   = 128;
+const int CBAF_PUFFTARGET    = 32;
+const int CBAF_PUFFMASTER    = 64;
+const int CBAF_PUFFTRACER    = 128;
 
 // flags for A_FireBullets
 const int FBF_USEAMMO       = 1;
@@ -101,11 +101,9 @@ const int FBF_EXPLICITANGLE = 4;
 const int FBF_NOPITCH       = 8;
 const int FBF_NOFLASH       = 16;
 const int FBF_NORANDOMPUFFZ = 32;
-/* missiles not implemented yet
 const int FBF_PUFFTARGET    = 64;
 const int FBF_PUFFMASTER    = 128;
 const int FBF_PUFFTRACER    = 256;
-*/
 
 // flags for A_LookEx
 const int LOF_NOSIGHTCHECK    = 1;

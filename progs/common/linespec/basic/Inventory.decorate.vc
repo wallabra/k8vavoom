@@ -29,6 +29,18 @@
 //**
 //**************************************************************************
 
+// flags for A_FireBullets
+const int FBF_USEAMMO       = 1;
+const int FBF_NORANDOM      = 2;
+const int FBF_EXPLICITANGLE = 4;
+const int FBF_NOPITCH       = 8;
+const int FBF_NOFLASH       = 16;
+const int FBF_NORANDOMPUFFZ = 32;
+const int FBF_PUFFTARGET    = 64;
+const int FBF_PUFFMASTER    = 128;
+const int FBF_PUFFTRACER    = 256;
+
+
 //**************************************************************************
 //  State jumps
 //**************************************************************************
@@ -604,22 +616,14 @@ final void A_CustomPunch (int PunchDamage, optional bool NoRandom,
 
 
 //===========================================================================
-const int FBF_USEAMMO = 1;
-const int FBF_NORANDOM = 2;
-const int FBF_EXPLICITANGLE = 4;
-const int FBF_NOPITCH = 8;
-const int FBF_NOFLASH = 16;
-const int FBF_NORANDOMPUFFZ = 32;
-
-
-//===========================================================================
 //
 //  A_FireBullets
 //
 //===========================================================================
 final void A_FireBullets (float SpreadHoriz, float SpreadVert, int NumBullets,
   int DamagePerBullet, optional class!Actor PuffType, optional int Flags,
-  optional float Range)
+  optional float Range,
+  optional class!Actor missile, optional float spawnheight, optional float spawnofsxy)
 {
   TVec dir;
   int damage;
@@ -664,10 +668,22 @@ final void A_FireBullets (float SpreadHoriz, float SpreadVert, int NumBullets,
 
   Aim(aimDir, 16.0*64.0, default, noAAim, noAimPitch);
 
+  EntityEx puff;
   if ((NumBullets == 1 && !PlayerEx(Player).Refire) || NumBullets == 0) {
     damage = DamagePerBullet;
     if (randDamage) damage *= (P_Random()%3+1);
-    LineAttack(aimDir, Range, damage, PuffType, default, default, PuffType.default.DamageType, false, decal);
+    LineAttack(aimDir, Range, damage, PuffType, NoAttackGhosts:default,
+               outHitPoint:default, PuffType.default.DamageType, secondary:false,
+               decalType:decal, disableRandomZ:!doRandPuffZ, out puffEntity:puff);
+    if (missile) {
+      VectorAngles(aimDir, out rot);
+      EntityEx msl = SpawnMissileAngles(missile, rot.yaw, rot.pitch, spawnheight!optional, spawnofsxy!optional);
+      if (msl && puff) {
+        if (Flags&FBF_PUFFTARGET) msl.Target = puff;
+        if (Flags&FBF_PUFFMASTER) msl.Master = puff;
+        if (Flags&FBF_PUFFTRACER) msl.Tracer = puff;
+      }
+    }
   } else {
     if (NumBullets == -1) NumBullets = 1;
     foreach (auto i; 0..NumBullets) {
@@ -682,7 +698,17 @@ final void A_FireBullets (float SpreadHoriz, float SpreadVert, int NumBullets,
       dir = RotateDirectionVector(aimDir, rot);
       damage = DamagePerBullet;
       if (randDamage) damage *= (P_Random()%3+1);
-      LineAttack(dir, Range, damage, PuffType, default, default, PuffType.default.DamageType, (i != 0), decal);
+      LineAttack(dir, Range, damage, PuffType, NoAttackGhosts:default,
+                 outHitPoint:default, PuffType.default.DamageType, secondary:(i != 0),
+                 decalType:decal, disableRandomZ:!doRandPuffZ, out puffEntity:puff);
+      if (missile) {
+        EntityEx msl = SpawnMissileAngles(missile, rot.yaw, rot.pitch, spawnheight!optional, spawnofsxy!optional);
+        if (msl && puff) {
+          if (Flags&FBF_PUFFTARGET) msl.Target = puff;
+          if (Flags&FBF_PUFFMASTER) msl.Master = puff;
+          if (Flags&FBF_PUFFTRACER) msl.Tracer = puff;
+        }
+      }
     }
   }
 }

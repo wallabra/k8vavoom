@@ -1957,7 +1957,7 @@ final bool RepairArmorWith (int amount, optional class!BasicArmorBonus armorbonu
 //  decalType of '' means "use default puff decal"
 //
 //==========================================================================
-final void SpawnPuff (TVec Org, float Range, class!EntityEx PuffType,
+final EntityEx SpawnPuff (TVec Org, float Range, class!EntityEx PuffType,
   bool HitThing, optional sector_t *sec, optional line_t *li, optional TVec realOrg,
   optional name decalType, optional int pufftid, optional bool disableRandomZ)
 {
@@ -1999,7 +1999,7 @@ final void SpawnPuff (TVec Org, float Range, class!EntityEx PuffType,
     if (!disableRandomZ) Org.z += (Random()-Random())*4.0;
 
     puff = Spawn(PuffType, Org);
-    if (!puff) return; // oops
+    if (!puff) return none; // oops
 
     if (pufftid) puff.SetTID(pufftid);
 
@@ -2017,7 +2017,11 @@ final void SpawnPuff (TVec Org, float Range, class!EntityEx PuffType,
 
     if (puff.ExplodeEffect) SendExplosion(ExplodeEffect, DLightRadius, Org);
     LineSpecialLevelInfo(Level).bPuffSpawned = true;
+
+    return puff;
   }
+
+  return none;
 }
 
 
