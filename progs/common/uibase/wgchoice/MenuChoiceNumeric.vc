@@ -83,6 +83,8 @@ void SetInitialValue (float AValue) {
 //
 //==========================================================================
 override void OnDraw () {
+  DrawBackground();
+
   int Col = (IsFocus() ? TextColorFocus : TextColor);
 
   /*

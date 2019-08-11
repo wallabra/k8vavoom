@@ -48,7 +48,7 @@ MenuChoiceEnum VSync;
 //==========================================================================
 override void CreateChoices () {
   Mode = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  Mode.SetOrigin(ChoicesStartX, currentY);
+  SetChoiceInitialSizePos(Mode);
   Mode.Text = "Resolution";
   foreach (ref auto mi; modes) Mode.AddItem(va("%dx%d", mi.width, mi.height));
   Mode.SetInitialValue(GetModeValue());
@@ -61,6 +61,7 @@ override void CreateChoices () {
   currentY += Mode.Height;
 
   EdWidth = MenuInputLine(NewChild(MenuInputLine));
+  SetChoiceInitialSizePos(EdWidth);
   EdWidth.SetOrigin(ChoicesStartX+10, currentY);
   EdWidth.CursorXOffs = -10;
   EdWidth.Text = "Width";
@@ -69,6 +70,7 @@ override void CreateChoices () {
   currentY += EdWidth.Height;
 
   EdHeight = MenuInputLine(NewChild(MenuInputLine));
+  SetChoiceInitialSizePos(EdHeight);
   EdHeight.SetOrigin(ChoicesStartX+10, currentY);
   EdHeight.CursorXOffs = -10;
   EdHeight.Text = "Height";
@@ -81,6 +83,7 @@ override void CreateChoices () {
     "Scaled FS",
     "Real FS"
   );
+  //Windowed.Width = Width;
     SetLastHelp(
       "There are two fullscreen modes available.\n"~
       "Scaled Fullscreen mode will not change your desktop resolution,\n"~
@@ -89,7 +92,8 @@ override void CreateChoices () {
       "WARNING: The engine trusts you, and will not check if videomode is valid.");
 
   VSync = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
-  VSync.SetOrigin(ChoicesStartX, currentY);
+  SetChoiceInitialSizePos(VSync);
+  //VSync.SetOrigin(ChoicesStartX, currentY);
   VSync.Text = "VSync";
   VSync.SetInitialValue(GetCvar('r_vsync'));
     SetLastHelp(
@@ -111,7 +115,9 @@ override void CreateChoices () {
       "Others are for various wide-screen modes.");
 
   MenuTextButton Btn = MenuTextButton(NewChild(MenuSmallTextButton));
-  Btn.SetOrigin(ChoicesStartX, currentY);
+  //SetTextButtonInitialSizePos(Btn);
+  SetChoiceInitialSizePos(Btn);
+  //Btn.SetOrigin(ChoicesStartX, currentY);
   Btn.Text = "Set Resolution";
   Btn.Activated = &ActivateSetMode;
 }
@@ -146,6 +152,7 @@ void ActivateSetMode (Object Sender) {
 
 
 defaultproperties {
+  WidthThreshold = 10;
   ChoicesStartX = 120;
   ChoicesStartY = 26;
   SelectorType = MenuSelector_SmallRight;

@@ -56,7 +56,7 @@ int currentY;
 
 HelpText helpText;
 
-enum WidthThreshold = 380;
+int WidthThreshold = 380;
 
 
 //==========================================================================
@@ -197,6 +197,56 @@ void SetLastHelp (string help) {
 
 //==========================================================================
 //
+//  SetChoiceInitialSizeSimple
+//
+//==========================================================================
+void SetChoiceInitialSizeSimple (MenuChoice cc, optional bool doCurOffs/*=true*/) {
+  if (!cc) return;
+  if (!specified_doCurOffs) doCurOffs = true;
+  if (Width > WidthThreshold) {
+    //print("[%s] wdt=%d", text, Width);
+    cc.Width = Width;
+    if (doCurOffs) {
+      cc.CursorXOffs = Width/2;
+      cc.CursorXOffsHR = Width/2;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  SetChoiceInitialSizePos
+//
+//==========================================================================
+void SetChoiceInitialSizePos (MenuChoice cc) {
+  if (!cc) return;
+  if (Width > WidthThreshold) {
+    //print("[%s] wdt=%d", text, Width);
+    cc.Width = Width;
+    cc.CursorXOffs = Width/2;
+    cc.CursorXOffsHR = Width/2;
+    cc.SetOrigin(Width/2, currentY);
+  } else {
+    cc.SetOrigin(ChoicesStartX, currentY);
+  }
+}
+
+
+//==========================================================================
+//
+//  SetTextButtonInitialSizePos
+//
+//==========================================================================
+void SetTextButtonInitialSizePos (MenuTextButton cc) {
+  if (!cc) return;
+  cc.SetOrigin(ChoicesStartX, currentY);
+  if (Width > WidthThreshold) cc.Width = Width;
+}
+
+
+//==========================================================================
+//
 //  CreateOnOffCvar
 //
 //  should be called from `CreateChoices()` (and `currentY` must be set)
@@ -204,15 +254,7 @@ void SetLastHelp (string help) {
 //==========================================================================
 MenuChoice_OnOff CreateOnOffCvar (string text, name cvname) {
   auto onoff = MenuChoice_OnOff(NewChild(MenuChoice_OnOff));
-  if (Width > WidthThreshold) {
-    //print("[%s] wdt=%d", text, Width);
-    onoff.Width = Width;
-    onoff.CursorXOffs = Width/2;
-    onoff.CursorXOffsHR = Width/2;
-    onoff.SetOrigin(Width/2, currentY);
-  } else {
-    onoff.SetOrigin(ChoicesStartX, currentY);
-  }
+  SetChoiceInitialSizePos(onoff);
   onoff.Text = text;
   onoff.SetSessionCvar(cvname);
   currentY += onoff.Height;
@@ -239,15 +281,7 @@ MenuChoiceEnum CreateEnumCvar (string text, name cvname,
   optional string item24, optional string item25, optional string item26)
 {
   auto en = MenuChoiceEnum(NewChild(MenuChoiceEnum));
-  if (Width > WidthThreshold) {
-    //print("[%s] wdt=%d", text, Width);
-    en.Width = Width;
-    en.CursorXOffs = Width/2;
-    en.CursorXOffsHR = Width/2;
-    en.SetOrigin(Width/2, currentY);
-  } else {
-    en.SetOrigin(ChoicesStartX, currentY);
-  }
+  SetChoiceInitialSizePos(en);
   en.Text = text;
   if (specified_item0) en.AddItem(item0);
   if (specified_item1) en.AddItem(item1);
@@ -295,16 +329,7 @@ MenuChoiceSlider CreateFloatSliderCvar (string text, name cvname, float delta, o
     currentY -= 2;
   }
   auto slider = MenuChoiceSlider(NewChild(MenuChoiceSlider));
-  if (Width > WidthThreshold) {
-    slider.Width = Width;
-    slider.Width = Width;
-    slider.CursorXOffs = Width/2;
-    slider.CursorXOffsHR = Width/2;
-    slider.SetOrigin(Width/2, currentY);
-  } else {
-    slider.SetOrigin(ChoicesStartX, currentY);
-    //slider.CursorXOffs = ChoicesStartX;
-  }
+  SetChoiceInitialSizePos(slider);
   slider.Text = text;
   slider.cvarSession = cvname;
   slider.ValueDelta = delta;
@@ -325,14 +350,7 @@ MenuChoiceSlider CreateFloatSliderCvar (string text, name cvname, float delta, o
 //==========================================================================
 MenuChoiceNumeric CreateFloatNumericCvar (string text, name cvname, float delta, optional float min, optional float max) {
   auto slider = MenuChoiceNumeric(NewChild(MenuChoiceNumeric));
-  if (Width > WidthThreshold) {
-    slider.Width = Width;
-    slider.CursorXOffs = Width/2;
-    slider.CursorXOffsHR = Width/2;
-    slider.SetOrigin(Width/2, currentY);
-  } else {
-    slider.SetOrigin(ChoicesStartX, currentY);
-  }
+  SetChoiceInitialSizePos(slider);
   slider.Text = text;
   slider.cvarSession = cvname;
   slider.ValueDelta = delta;
@@ -540,6 +558,7 @@ void CursorMoved () {
   if (CursorPos >= 0 && CursorPos < Items.Num) SetCurrentFocusChild(Items[CursorPos]);
   if (Selector) {
     Selector.SetOriginCentered(Items[CursorPos].X+Items[CursorPos].CursorXOffs, Items[CursorPos].Y+Items[CursorPos].CursorYOffs, Items[CursorPos].Height);
+    //print("000: cp=%s; %s %s %s w=%s", CursorPos, Items[CursorPos].X, Items[CursorPos].CursorXOffs, Items[CursorPos].X+Items[CursorPos].CursorXOffs, Width);
   }
   CursorPrev = CursorPos;
   OfsYPrev = ChildrenOfsY;

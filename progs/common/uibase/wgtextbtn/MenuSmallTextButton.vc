@@ -43,6 +43,8 @@ override void SetOrigin (int x, int y) {
 
 
 override void OnDraw () {
+  DrawBackground();
+
   int y = 0;
        if (TextVAlign == vbottom) y += Height-1;
   else if (TextVAlign == vcenter) y += Height/2;

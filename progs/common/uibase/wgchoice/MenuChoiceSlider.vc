@@ -68,7 +68,7 @@ override void OnCreate () {
 override void OnDraw () {
   int xx, xt;
 
-  //FillRect(0, 0, Width, Height-2, 0xff_000000|(int(ClipRect.OriginY)&0xff));
+  DrawBackground();
 
   SetTextAlign(hright, vtop);
   DrawText(CursorXOffs, 2+1, Text, IsFocus() ? TextColorFocus : TextColor);

@@ -220,7 +220,7 @@ public:
   void DrawShadowedPic (int, int, VTexture *);
   void FillRectWithFlat (int, int, int, int, VName);
   void FillRectWithFlatRepeat (int, int, int, int, VName);
-  void FillRect (int, int, int, int, int);
+  void FillRect (int, int, int, int, int, float);
   void ShadeRect (int, int, int, int, float);
 
   void SetFont (VFont*);

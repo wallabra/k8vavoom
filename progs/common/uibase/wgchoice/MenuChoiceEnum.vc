@@ -128,7 +128,8 @@ void SetInitialValue (float AValue) {
 //
 //==========================================================================
 override void OnDraw () {
-  //FillRect(0, 0, Width, Height-2, 0xff_000000|(int(ClipRect.OriginY)&0xff));
+  DrawBackground();
+
   string caption;
   int idx = findValue(Value);
   if (idx < 0) {

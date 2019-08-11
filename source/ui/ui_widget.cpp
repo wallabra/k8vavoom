@@ -800,7 +800,7 @@ void VWidget::FillRectWithFlatRepeat (int X, int Y, int Width, int Height, VName
 //  VWidget::FillRect
 //
 //==========================================================================
-void VWidget::FillRect (int X, int Y, int Width, int Height, int color) {
+void VWidget::FillRect (int X, int Y, int Width, int Height, int color, float alpha) {
   float X1 = X;
   float Y1 = Y;
   float X2 = X+Width;
@@ -810,7 +810,7 @@ void VWidget::FillRect (int X, int Y, int Width, int Height, int color) {
   float S2 = Width;
   float T2 = Height;
   if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
-    Drawer->FillRect(X1, Y1, X2, Y2, color);
+    Drawer->FillRect(X1, Y1, X2, Y2, color, alpha);
   }
 }
 
@@ -1290,13 +1290,14 @@ IMPLEMENT_FUNCTION(VWidget, FillRectWithFlatRepeat) {
 }
 
 IMPLEMENT_FUNCTION(VWidget, FillRect) {
+  P_GET_FLOAT_OPT(alpha, 1.0f);
   P_GET_INT(color);
   P_GET_INT(Height);
   P_GET_INT(Width);
   P_GET_INT(Y);
   P_GET_INT(X);
   P_GET_SELF;
-  Self->FillRect(X, Y, Width, Height, color);
+  Self->FillRect(X, Y, Width, Height, color, alpha);
 }
 
 IMPLEMENT_FUNCTION(VWidget, ShadeRect) {

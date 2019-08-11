@@ -39,17 +39,25 @@ int strifeMode;
 //
 //==========================================================================
 override void SetOrigin (int x, int y) {
-  SetPos(x-160, y);
+  //SetPos(x-160, y);
+  CursorXOffs = /*200*/CursorXOffsHR;
+  SetPos(x-CursorXOffs, y);
+  //print("!!! %s %s", X, CursorXOffs);
 }
 
 
 override void OnDraw () {
+  DrawBackground();
+
   int key1 = -1;
   int key2 = -1;
 
   int Col = (Disabled ? CR_BLACK : IsFocus() ? CR_YELLOW : CR_WHITE);
   SetTextAlign(hright, vtop);
-  DrawText(160, 0, Text, Col);
+  //int ctpos = 160;
+  int ctpos = CursorXOffs;
+
+  DrawText(ctpos, 0, Text, Col);
 
   IN_GetBindingKeys(CommandOn, &key1, &key2, strifeMode);
 
@@ -57,14 +65,14 @@ override void OnDraw () {
   //Col = IsFocus() ? CR_YELLOW : CR_OLIVE;
   Col = (Disabled ? CR_BLACK : IsFocus() ? CR_FIRE : /*CR_LIGHTBLUE*/CR_DARKGREEN);
   if (key1 >= 0) {
-    DrawText(160+10, 0, KeyNameForNum(key1), Col);
+    DrawText(ctpos+10, 0, KeyNameForNum(key1), Col);
   } else {
-    DrawText(160+10, 0, "---", /*Col*/CR_BLACK);
+    DrawText(ctpos+10, 0, "---", /*Col*/CR_BLACK);
   }
   if (key2 >= 0) {
-    DrawText(160+100, 0, KeyNameForNum(key2), Col);
+    DrawText(ctpos+100, 0, KeyNameForNum(key2), Col);
   } else {
-    DrawText(160+100, 0, "---", /*Col*/CR_BLACK);
+    DrawText(ctpos+100, 0, "---", /*Col*/CR_BLACK);
   }
 }
 

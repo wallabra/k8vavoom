@@ -92,7 +92,8 @@ void CreateMenuFromDef (MenuDefinition mdef) {
     isControls = true;
     class!MenuSelectorBase cc = class!MenuSelectorBase(MenuSelector_SmallRight);
     if (cc) SelectorType = cc;
-    ChoicesStartX = 190;
+    ChoicesStartX = Width/2; //190;
+    //ChoicesStartX = 0;
     ChoicesStartY = 26;
   } else if (mdef.seltype) {
     class!MenuSelectorBase cc = class!MenuSelectorBase(FindClass(mdef.seltype));
@@ -106,7 +107,6 @@ void CreateMenuFromDef (MenuDefinition mdef) {
   currentY = ChoicesStartY;
 
   CreateMenuItemsFromList(mdef.options);
-
 }
 
 
@@ -154,8 +154,9 @@ override void CreateTitle () {
 override void CursorMoved () {
   ::CursorMoved();
   if (isControls && Selector && ClGame) {
-    Selector.SetPos(160+Items[CursorPos].X+ClGame.ControlColumn*90, Items[CursorPos].Y);
-    Selector.SetYOfs(Items[CursorPos].Height);
+    //Selector.SetPos(160+Items[CursorPos].X+ClGame.ControlColumn*90, Items[CursorPos].Y);
+    //Selector.SetYOfs(Items[CursorPos].Height);
+    Selector.SetOriginCentered(Items[CursorPos].X+Items[CursorPos].CursorXOffs+ClGame.ControlColumn*90, Items[CursorPos].Y+Items[CursorPos].CursorYOffs, Items[CursorPos].Height);
   }
 }
 

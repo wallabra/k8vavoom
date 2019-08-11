@@ -52,11 +52,9 @@ array!ClassInfo PClasses;
 //
 //==========================================================================
 void CreateClasses () {
-  {
-    auto cls = PClasses.alloc();
-    cls.sprite = "PLAY";
-    cls.className = "Doomguy";
-  }
+  auto cls = PClasses.alloc();
+  cls.sprite = "PLAY";
+  cls.className = "Doomguy";
 }
 
 
@@ -103,6 +101,7 @@ override void CreateChoices () {
   int Col = ParseColor(GetCvarS('color'));
 
   ColR = NewChild(MenuChoiceSlider);
+  ColR.Width = 420;
   ColR.SetOrigin(ChoicesStartX, currentY);
   ColR.Text = "Red";
   ColR.ValueDelta = 0.1;
@@ -111,6 +110,7 @@ override void CreateChoices () {
   currentY += ColR.Height;
 
   ColG = NewChild(MenuChoiceSlider);
+  ColG.Width = 420;
   ColG.SetOrigin(ChoicesStartX, currentY);
   ColG.Text = "Green";
   ColG.ValueDelta = 0.1;
@@ -119,6 +119,7 @@ override void CreateChoices () {
   currentY += ColG.Height;
 
   ColB = NewChild(MenuChoiceSlider);
+  ColB.Width = 420;
   ColB.SetOrigin(ChoicesStartX, currentY);
   ColB.Text = "Blue";
   ColB.ValueDelta = 0.1;

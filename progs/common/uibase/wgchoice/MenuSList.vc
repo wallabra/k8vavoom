@@ -91,6 +91,8 @@ void DrawTextBox (string text) {
 //
 //==========================================================================
 override void OnDraw () {
+  DrawBackground();
+
   slist = GetSlist();
 
   SetTextAlign(hleft, vtop);
