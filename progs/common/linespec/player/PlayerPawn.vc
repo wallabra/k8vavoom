@@ -276,6 +276,21 @@ protected final void DumpWeaponSlots () {
 
 //==========================================================================
 //
+//  GetBDWOverride
+//
+//==========================================================================
+protected final class!Weapon GetBDWOverride (class!Weapon wcls) {
+  if (!wcls) return none;
+  class!Weapon repl = class!Weapon(GetClassReplacement(wcls));
+  if (!repl) return none;
+  string rpname = string(GetClassName(repl));
+  if (rpname.strStartsWith("BDW_") || rpname.strStartsWith("K8BDW_")) return repl;
+  return wcls;
+}
+
+
+//==========================================================================
+//
 //  InitializeWeaponSlots
 //
 //==========================================================================
@@ -344,9 +359,11 @@ void InitializeWeaponSlots () {
     actualWeaponSlots[sidx].weapons.reset();
     foreach (ref auto wi; GI.kkWeaponSlots[sidx].weapons) {
       assert(wi.wcls);
-      if (debugDump) printdebug("*** %s slot #%d, weapon #%d: %C", (wi.src == LineSpecialGameInfo::WSlotSrc.KEYCONF ? "KEYCONF" : "GameInfo"), sidx, actualWeaponSlots[sidx].weapons.length, wi.wcls);
-      actualWeaponSlots[sidx].weapons[$] = wi.wcls;
-      wclassInKeyconf.put(GetClassName(wi.wcls), true);
+      class!Weapon wcls = GetBDWOverride(wi.wcls);
+      if (debugDump) printdebug("*** %s slot #%d, weapon #%d: %C", (wi.src == LineSpecialGameInfo::WSlotSrc.KEYCONF ? "KEYCONF" : "GameInfo"), sidx, actualWeaponSlots[sidx].weapons.length, wcls);
+      actualWeaponSlots[sidx].weapons[$] = wcls;
+      wclassInKeyconf.put(GetClassName(wcls), true);
+      if (wcls != wi.wcls) wclassInKeyconf.put(GetClassName(wi.wcls), true);
     }
   }
 
