@@ -181,6 +181,7 @@ override void GotAmmo (Ammo NewAmmo) {
 //==========================================================================
 override void PlayerImpulse () {
   ::PlayerImpulse();
+  Impulse = 0;
 }
 
 

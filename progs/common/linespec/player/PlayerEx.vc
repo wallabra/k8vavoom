@@ -1745,36 +1745,9 @@ Weapon CycleWeaponWithDir (Weapon Current, bool forward) {
   // find current weapon slot and index
   int currSlot, currIndex;
   if (!pawn.FindWeaponSlot(class!Weapon(Current.Class), out currSlot, out currIndex)) {
-    // try non-slotted weapons if going forward
-    if (forward) {
-      for (Inventory inv = pawn.Inventory; inv; inv = inv.Inventory) {
-        if (inv == Current) {
-          // found in inventory, try prev/next non-slot weapon
-          for (inv = inv.Inventory; inv; inv = inv.Inventory) {
-            if (!class!Weapon(inv.Class)) continue;
-            if (!pawn.FindWeaponSlot(class!Weapon(inv.Class), out currSlot, out currIndex)) {
-              // i found her!
-              return Weapon(inv);
-            }
-          }
-          // try first non-slot item
-          for (inv = pawn.Inventory; inv; inv = inv.Inventory) {
-            if (!class!Weapon(inv.Class)) continue;
-            if (!pawn.FindWeaponSlot(class!Weapon(inv.Class), out currSlot, out currIndex)) {
-              // i found her!
-              if (inv != Current) return Weapon(inv);
-              // this is the only one non-slot item, go through slots
-              break;
-            }
-          }
-        }
-      }
-    }
     currSlot = 0;
     currIndex = (forward ? pawn.GetSlotSize(currSlot) : 0);
   }
-
-  //TODO: if we're going forward, and next weapon wraps, try non-slot weapons first
 
   // now cycle
   foreach (auto sidx; 0..pawn.GetNumberOfSlots()) {
@@ -3109,6 +3082,7 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
 
   PP = Level.Spawn(class!PlayerPawn(Level.Game.PlayerClasses[PClass]), vector(x, y, z), default, default, AllowReplace:false);
   print("spawned player with class <%C>...", PP);
+  PP.InitializeWeaponSlots();
   //print("falling damage: normal=%B; old=%B; strife=%B", Level.bFallingDamage, Level.bOldFallingDamage, Level.bStrifeFallingDamage);
   if (GetCvarS('player_default_gender')) PP.SoundGender = name(GetCvarS('player_default_gender'));
   if (mthing) PP.Origin.z += mthing->height;
@@ -5760,6 +5734,7 @@ void SpawnSpeedEffect () {
 void PlayerImpulse () {
   if (!Impulse) return;
 
+  // weapon slot 11 is used for weapons without explicit slot
   if (Impulse <= PlayerPawn::NUM_WEAPON_SLOTS) { ChangeWeapon(Impulse); Impulse = 0; return; }
 
   switch (Impulse) {
@@ -5771,6 +5746,7 @@ void PlayerImpulse () {
     case 17: PrevWeapon(); Impulse = 0; return;
     case 18: NextWeapon(); Impulse = 0; return;
     case 43: Actor(MO).FireSuperBullet(); Impulse = 0; return;
+    case 48: ChangeWeapon(11); Impulse = 0; return; // weapons without explicit slot
     case 56: bReloadQueued = true; Impulse = 0; return; // so you can use this in aliases and such
     case 142: Actor(MO).DebugCheckMidTex(); Impulse = 0; return;
     case 149: bFlashlightOn = !bFlashlightOn; Impulse = 0; return; // so you can use this in aliases and such

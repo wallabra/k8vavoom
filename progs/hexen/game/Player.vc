@@ -158,29 +158,32 @@ override int GetRebornHealth()
 //
 //==========================================================================
 override void PlayerImpulse () {
-  ::PlayerImpulse();
-
   int impulse = Impulse;
-  Impulse = 0;
-  if (!impulse) return;
-
-  Inventory Arti = none;
+  //Impulse = 0;
 
   // Hexen artifact hot keys
-  if (!Arti) {
-         if (impulse == 12 && (Health < MAXHEALTH)) Arti = EntityEx(MO).FindInventory(ArtiHealth);
-    else if (impulse == 10) Arti = EntityEx(MO).FindInventory(ArtiPoisonBag);
-    else if (impulse == 9) Arti = EntityEx(MO).FindInventory(ArtiBlastRadius);
-    else if (impulse == 8) Arti = EntityEx(MO).FindInventory(ArtiTeleport);
-    else if (impulse == 7) Arti = EntityEx(MO).FindInventory(ArtiTeleportOther);
-    else if (impulse == 6) Arti = EntityEx(MO).FindInventory(ArtiPork);
-    else if (impulse == 5 && !EntityEx(MO).FindInventory(PowerInvulnerable)) Arti = EntityEx(MO).FindInventory(ArtiInvulnerability);
+  Inventory Arti = none;
+
+  switch (impulse) {
+    case 5:
+      if (!EntityEx(MO).FindInventory(PowerInvulnerable)) Arti = EntityEx(MO).FindInventory(ArtiInvulnerability);
+      Impulse = 0;
+      break;
+    case 6: Arti = EntityEx(MO).FindInventory(ArtiPork); Impulse = 0; break;
+    case 7: Arti = EntityEx(MO).FindInventory(ArtiTeleportOther); Impulse = 0; break;
+    case 8: Arti = EntityEx(MO).FindInventory(ArtiTeleport); Impulse = 0; break;
+    case 9: Arti = EntityEx(MO).FindInventory(ArtiBlastRadius); Impulse = 0; break;
+    case 10: Arti = EntityEx(MO).FindInventory(ArtiPoisonBag); Impulse = 0; break;
+    case 12: if (Health < MAXHEALTH) Arti = EntityEx(MO).FindInventory(ArtiHealth); Impulse = 0; break;
   }
 
   if (Arti) {
     // Use an artifact
     EntityEx(MO).UseInventory(Arti);
+  } else {
+    ::PlayerImpulse();
   }
+  Impulse = 0;
 }
 
 

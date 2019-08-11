@@ -25,8 +25,6 @@
 //**
 //**************************************************************************
 class PlayerPawn : Actor abstract;
-#define DUMP_WEAPON_SLOT_BUILDING
-
 
 const float WALKING_SPEED = 1000;
 const float RUNNING_SPEED = 2000;
@@ -93,8 +91,12 @@ int MaxHealth;
 // K8 Headshots Variables
 int k8hsCount;
 
-// weapon slots
-transient protected class!Weapon[(NUM_WEAPON_SLOTS+1)*MAX_WEAPONS_PER_SLOT] weaponSlotContents;
+// weapon slots from decorate
+// this is created by decorate, and it is in very special format
+// it has info for exactly 10 slots, and each slot list ends with `none`
+// i.e. `none` is used as slot delimiter (NOT TERMINATOR! i.e. last `none` may absent)
+// also, exact `Weapon` class means "this slot was defined as empty"
+transient protected array!(class!Weapon) decoWeaponsClasses;
 
 
 struct WSlotEntry {
@@ -132,12 +134,6 @@ final class!Weapon GetWeaponInSlot (int slot, int index) {
   if (slot < 0 || slot >= actualWeaponSlots.length) return none;
   if (index < 0 || index >= actualWeaponSlots[slot].weapons.length) return none;
   return actualWeaponSlots[slot].weapons[index];
-  /*
-  class!Weapon wpn = weaponSlotContents[slot*MAX_WEAPONS_PER_SLOT+index];
-  if (!wpn) return none;
-  class!Weapon repl = class!Weapon(GetClassReplacement(wpn));
-  return (repl ? repl : wpn);
-  */
 }
 
 
@@ -264,7 +260,7 @@ protected final bool HasWeaponInAnySlot (class!Weapon wpn) {
 //
 //==========================================================================
 protected final void DumpWeaponSlots () {
-#ifdef DUMP_WEAPON_SLOT_BUILDING
+  if (!GetCvarB('dbg_debug_weapon_slots')) return;
   printdebug("=== player pawn '%C' ===", self);
   foreach (auto sidx; 0..GetNumberOfSlots()) {
     printdebug(" --- SLOT #%d ---", sidx);
@@ -273,7 +269,6 @@ protected final void DumpWeaponSlots () {
       if (ww) printdebug("  weapon #%d: %C (priority:%s)", widx, ww, ww.default.SlotPosition);
     }
   }
-#endif
 }
 
 
@@ -283,54 +278,54 @@ protected final void DumpWeaponSlots () {
 //
 //==========================================================================
 void InitializeWeaponSlots () {
+  bool debugDump = GetCvarB('dbg_debug_weapon_slots');
+
   //printdebug("*** InitializeWeaponSlots (%C) ***", self);
   auto GI = LineSpecialGameInfo(Level.Game);
   assert(GI);
 
   // clear all slots
-  actualWeaponSlots.length = NUM_WEAPON_SLOTS;
+  actualWeaponSlots.length = NUM_WEAPON_SLOTS+1; // one slot is reserved for weapons without explicit slot
   foreach (ref auto wsl; actualWeaponSlots) wsl.weapons.length = 0;
 
   // set slots from vc code
-  bool[NUM_WEAPON_SLOTS] hasGIWeapons;
   foreach (auto sidx; 0..NUM_WEAPON_SLOTS) {
-    hasGIWeapons[sidx] = false;
     foreach (auto widx; 0..GI.GetDefaultMaxWeaponsInSlot(sidx)) {
       class!Weapon wcls = GI.GetDefaultWeaponInSlot(sidx, widx);
       if (!wcls) continue;
-      if (wcls) {
-        class!Weapon repl = class!Weapon(GetClassReplacement(wcls));
-        if (repl) wcls = repl;
+      class!Weapon repl = class!Weapon(GetClassReplacement(wcls));
+      if (repl) {
+        if (debugDump) printdebug("*** GI slot #%d, weapon #%d: %C -> %C", sidx, widx, wcls, repl);
+        wcls = repl;
+      } else {
+        if (debugDump) printdebug("*** GI slot #%d, weapon #%d: %C", sidx, widx, wcls);
       }
-      #ifdef DUMP_WEAPON_SLOT_BUILDING
-      printdebug("*** GI slot #%d, weapon #%d: %C", sidx, widx, wcls);
-      #endif
       actualWeaponSlots[sidx].weapons[$] = wcls;
-      hasGIWeapons[sidx] = true;
     }
   }
 
   // set default slots from player pawn (this overrides vc slots)
-  foreach (int wsidx; 0..weaponSlotContents.length) {
-    class!Weapon wcls = default.weaponSlotContents[wsidx];
-    if (!wcls) continue;
-    int psidx = wsidx/MAX_WEAPONS_PER_SLOT;
-    if (!psidx) continue;
-    int slot = psidx-1;
-    // clear slot if it was defined in game info
-    if (hasGIWeapons[slot]) {
-      hasGIWeapons[slot] = false;
-      actualWeaponSlots[slot].weapons.reset();
+  {
+    int currDecoSlot = 0;
+    foreach (class!Weapon wcls; default.decoWeaponsClasses) {
+      if (!wcls) {
+        if ((++currDecoSlot) >= NUM_WEAPON_SLOTS) break; // this should not happen, but let's play safe
+        continue;
+      }
+      // special flag, it means "clear slot"
+      if (wcls == Weapon) {
+        if (debugDump) printdebug("*** pawn slot #%d emptied", currDecoSlot);
+        actualWeaponSlots[currDecoSlot].weapons.reset();
+      } else {
+        // use overrides for player pawn
+        if (wcls) {
+          class!Weapon repl = class!Weapon(GetClassReplacement(wcls));
+          if (repl) wcls = repl;
+        }
+        if (debugDump) printdebug("*** pawn slot #%d, weapon #%d: %C", currDecoSlot, actualWeaponSlots[currDecoSlot].weapons.length, wcls);
+        actualWeaponSlots[currDecoSlot].weapons[$] = wcls;
+      }
     }
-    // use overrides for player pawn
-    if (wcls) {
-      class!Weapon repl = class!Weapon(GetClassReplacement(wcls));
-      if (repl) wcls = repl;
-    }
-    #ifdef DUMP_WEAPON_SLOT_BUILDING
-    printdebug("*** pawn slot #%d, weapon #%d: %C", slot, actualWeaponSlots[slot].weapons.length, wcls);
-    #endif
-    actualWeaponSlots[slot].weapons[$] = wcls;
   }
 
   // set slots from game info/keyconf
@@ -338,24 +333,21 @@ void InitializeWeaponSlots () {
   foreach (auto sidx; 0..NUM_WEAPON_SLOTS) {
     if (GI.kkWeaponSlots[sidx].weapons.length == 0) {
       if (GI.kkWeaponSlotCopy[sidx]) continue;
-      #ifdef DUMP_WEAPON_SLOT_BUILDING
-      printdebug("*** KK/GI slot #%d: cleared!", sidx);
-      #endif
+      if (debugDump) printdebug("*** KK/GI slot #%d: cleared!", sidx);
     }
     // overwrite slot
     actualWeaponSlots[sidx].weapons.reset();
     foreach (ref auto wi; GI.kkWeaponSlots[sidx].weapons) {
       assert(wi.wcls);
-      #ifdef DUMP_WEAPON_SLOT_BUILDING
-      printdebug("*** %s slot #%d, weapon #%d: %C", (wi.src == LineSpecialGameInfo::WSlotSrc.KEYCONF ? "KEYCONF" : "GameInfo"), sidx, actualWeaponSlots[sidx].weapons.length, wi.wcls);
-      #endif
+      if (debugDump) printdebug("*** %s slot #%d, weapon #%d: %C", (wi.src == LineSpecialGameInfo::WSlotSrc.KEYCONF ? "KEYCONF" : "GameInfo"), sidx, actualWeaponSlots[sidx].weapons.length, wi.wcls);
       actualWeaponSlots[sidx].weapons[$] = wi.wcls;
     }
   }
 
   // now append all weapons with slot number
-  bool[NUM_WEAPON_SLOTS] needSlotSorting;
-  foreach (int slot; 0..NUM_WEAPON_SLOTS) needSlotSorting[slot] = false;
+  int[NUM_WEAPON_SLOTS+1] needSlotSorting;
+  assert(needSlotSorting.length == actualWeaponSlots.length);
+  foreach (ref auto b; needSlotSorting) b = false;
 
   {
     class!Weapon wcls;
@@ -364,9 +356,7 @@ void InitializeWeaponSlots () {
       if (repl && repl != wcls) continue; // this weapon is replaced with another one, don't bother
       // check if this weapon can be "readied"
       if (!Weapon.IsUsableWeaponClass(wcls)) {
-        #ifdef DUMP_WEAPON_SLOT_BUILDING
-        printdebug("*** %C: this weapon is unusable, skipping it", wcls);
-        #endif
+        if (debugDump) printdebug("*** %C: this weapon is unusable, skipping it", wcls);
         continue;
       }
       // try to find a slot number
@@ -435,9 +425,7 @@ void InitializeWeaponSlots () {
       }
       // in the same slot?
       if (sameSlot) {
-        #ifdef DUMP_WEAPON_SLOT_BUILDING
-        printdebug("*** weapon %C: want slot #%d, and it is already there", wcls, snum);
-        #endif
+        if (debugDump) printdebug("*** weapon %C: want slot #%d, and it is already there", wcls, snum);
         continue;
       }
       // if weapon present in other slots, remove it from other slots
@@ -447,9 +435,7 @@ void InitializeWeaponSlots () {
           while (widx < actualWeaponSlots[sidx].weapons.length) {
             class!Weapon swc = GetWeaponInSlot(sidx, widx);
             if (swc != wcls) { ++widx; continue; }
-            #ifdef DUMP_WEAPON_SLOT_BUILDING
-            printdebug("*** weapon %C: removing from slot #%d", wcls, sidx);
-            #endif
+            if (debugDump) printdebug("*** weapon %C: removing from slot #%d", wcls, sidx);
             actualWeaponSlots[sidx].weapons.remove(widx);
           }
         }
@@ -457,18 +443,16 @@ void InitializeWeaponSlots () {
       // mark this slot as one that needs sorting
       needSlotSorting[snum] = true;
       // put it in a slot
-      #ifdef DUMP_WEAPON_SLOT_BUILDING
-      printdebug("*** weapon %C: adding to slot #%d as weapon #%d", wcls, snum, actualWeaponSlots[snum].weapons.length);
-      #endif
+      if (debugDump) printdebug("*** weapon %C: adding to slot #%d as weapon #%d", wcls, snum, actualWeaponSlots[snum].weapons.length);
       actualWeaponSlots[snum].weapons[$] = wcls;
     }
   }
 
   // now sort all slots that needs sorting
-  foreach (int slot; 0..NUM_WEAPON_SLOTS) {
+  foreach (int slot; 0..needSlotSorting.length) {
     if (!needSlotSorting[slot]) continue;
     actualWeaponSlots[slot].weapons.sort(&CompareWeaponPosition);
-    // remove empty slots
+    // remove empty entries
     while (actualWeaponSlots[slot].weapons.length && !actualWeaponSlots[slot].weapons[$-1]) actualWeaponSlots[slot].weapons.length -= 1;
   }
 
@@ -677,9 +661,6 @@ override void SetHeight (float newvalue) {
 }
 
 
-#ifdef DUMP_WEAPON_SLOT_BUILDING
-# undef DUMP_WEAPON_SLOT_BUILDING
-#endif
 defaultproperties {
   Health = 100;
   Radius = 16.0;

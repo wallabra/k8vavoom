@@ -119,16 +119,13 @@ override void GotAmmo(Ammo NewAmmo)
 //
 //==========================================================================
 override void PlayerImpulse () {
-  ::PlayerImpulse();
-
   int impulse = Impulse;
-  Impulse = 0;
-  if (!impulse) return;
-
-  Inventory Arti = none;
 
   // Heretic artifact hot keys
+  Inventory Arti = none;
+
   if (impulse == 11) {
+    Impulse = 0;
     if (!EntityEx(MO).FindInventory(PowerWeaponLevel2)) {
       Arti = EntityEx(MO).FindInventory(ArtiTomeOfPower);
     }
@@ -138,6 +135,9 @@ override void PlayerImpulse () {
     // Use an artifact
     EntityEx(MO).UseInventory(Arti);
   }
+
+  ::PlayerImpulse();
+  Impulse = 0;
 }
 
 

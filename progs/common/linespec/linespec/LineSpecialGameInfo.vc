@@ -26,6 +26,7 @@
 //**************************************************************************
 class LineSpecialGameInfo : GameInfo;
 
+const int MaxWeaponSlots = 10; // 10 is valid!
 const int MaxWeaponsInSlot = 8;
 
 
@@ -109,7 +110,7 @@ struct WeaponSlot {
   class!Weapon[MaxWeaponsInSlot] Weapons;
 };
 
-protected transient WeaponSlot WeaponSlots[PlayerPawn::NUM_WEAPON_SLOTS+1];
+protected transient WeaponSlot WeaponSlots[MaxWeaponSlots+1];
 
 
 // this is used for gameinfo slots
@@ -127,8 +128,8 @@ struct WSlotEntry {
   array!WeaponSlotRec weapons;
 }
 
-transient WSlotEntry kkWeaponSlots[PlayerPawn::NUM_WEAPON_SLOTS];
-transient int kkWeaponSlotCopy[PlayerPawn::NUM_WEAPON_SLOTS]; // if set to false, this slot was inited from keyconf
+transient WSlotEntry kkWeaponSlots[MaxWeaponSlots];
+transient int kkWeaponSlotCopy[MaxWeaponSlots]; // if set to false, this slot was inited from keyconf
 
 
 //==========================================================================
@@ -1316,7 +1317,7 @@ override void SpawnWorld (Level InLevel) {
 //==========================================================================
 final int GetDefaultWeaponSlotCount () {
   // slot 0 is unused
-  return PlayerPawn::NUM_WEAPON_SLOTS;
+  return MaxWeaponSlots;
 }
 
 
@@ -1326,7 +1327,6 @@ final int GetDefaultWeaponSlotCount () {
 //
 //==========================================================================
 final int GetDefaultMaxWeaponsInSlot (int slot) {
-  // slot 0 is unused
   return MaxWeaponsInSlot;
 }
 
@@ -1338,7 +1338,7 @@ final int GetDefaultMaxWeaponsInSlot (int slot) {
 //==========================================================================
 final class!Weapon GetDefaultWeaponInSlot (int slot, int index) {
   ++slot;
-  if (slot < 1 || slot > PlayerPawn::NUM_WEAPON_SLOTS) return none;
+  if (slot < 1 || slot > MaxWeaponSlots) return none;
   if (index < 0 || index >= MaxWeaponsInSlot) return none;
   return WeaponSlots[slot].Weapons[index];
 }
@@ -1444,7 +1444,7 @@ override void CmdSetSlot (ref array!string Args, bool asKeyconf) {
   // get slot number
   bool err;
   int Slot = atoi(Args[1], out err);
-  if (err || Slot < 0 || Slot >= PlayerPawn::NUM_WEAPON_SLOTS) {
+  if (err || Slot < 0 || Slot > MaxWeaponSlots) {
     printwarn("Bad weapon slot number '%d'", Args[1]);
     return;
   }
@@ -1488,7 +1488,7 @@ override void CmdAddSlotDefault (ref array!string Args, bool asKeyconf) {
   // get slot number
   bool err;
   int Slot = atoi(Args[1], out err);
-  if (err || Slot < 0 || Slot >= PlayerPawn::NUM_WEAPON_SLOTS) {
+  if (err || Slot < 0 || Slot > MaxWeaponSlots) {
     printwarn("Bad weapon slot number '%d'", Args[1]);
     return;
   }
