@@ -1744,7 +1744,7 @@ Weapon CycleWeaponWithDir (Weapon Current, bool forward) {
 
   // find current weapon slot and index
   int currSlot, currIndex;
-  if (!pawn.FindWeaponSlot(class!Weapon(Current.Class), out currSlot, out currIndex)) {
+  if (!Current || !pawn.FindWeaponSlot(class!Weapon(Current.Class), out currSlot, out currIndex)) {
     currSlot = 0;
     currIndex = (forward ? pawn.GetSlotSize(currSlot) : 0);
   }
