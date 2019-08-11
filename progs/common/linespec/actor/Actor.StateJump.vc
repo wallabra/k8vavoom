@@ -226,10 +226,14 @@ final void A_JumpIfInTargetInventory(class!Actor ItemType, int Amount, state Lab
 //  A_JumpIfTargetInLOS
 //
 //==========================================================================
-final void A_JumpIfTargetInLOS (state Label, optional float Fov, optional int flags, optional float distmax, optional float distclose) {
+final bool A_JumpIfTargetInLOS (state Label, optional float Fov, optional int flags, optional float distmax, optional float distclose) {
   // state jumps should not affect state chain results
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
-  if (checkIfTargetInLOS(Fov!optional, flags!optional, distmax!optional, distclose!optional)) DoJump(Label);
+  if (checkIfTargetInLOS(Fov!optional, flags!optional, distmax!optional, distclose!optional)) {
+    DoJump(Label);
+    return true;
+  }
+  return false;
 }
 
 
@@ -241,7 +245,7 @@ final void A_JumpIfTargetInLOS (state Label, optional float Fov, optional int fl
 //  wutafuck? it seems to simply call `A_JumpIfTargetInLOS()` on target object
 //
 //==========================================================================
-final void A_JumpIfInTargetLOS (state Label, optional float Fov, optional int flags, optional float distmax, optional float distclose) {
+final bool A_JumpIfInTargetLOS (state Label, optional float Fov, optional int flags, optional float distmax, optional float distclose) {
   // state jumps should not affect state chain results
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
   /*
@@ -251,7 +255,11 @@ final void A_JumpIfInTargetLOS (state Label, optional float Fov, optional int fl
   */
   // emulate this with flags, because real target is not what you may think, especially for players
   flags |= JLOSF_TARGETLOS|JLOSF_FLIPFOV;
-  if (checkIfTargetInLOS(Fov!optional, flags, distmax!optional, distclose!optional)) DoJump(Label);
+  if (checkIfTargetInLOS(Fov!optional, flags, distmax!optional, distclose!optional)) {
+    DoJump(Label);
+    return true;
+  }
+  return false;
 }
 
 
