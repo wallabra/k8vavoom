@@ -330,6 +330,9 @@ void InitializeWeaponSlots () {
 
   // set slots from game info/keyconf
   // this doesn't do any replacements
+  // note that keyconf has precedence over weapon.slotnumber
+  dictionary!(name, bool) wclassInKeyconf; // this is used to "seal" keyconf weapons
+  // do it
   foreach (auto sidx; 0..NUM_WEAPON_SLOTS) {
     if (GI.kkWeaponSlots[sidx].weapons.length == 0) {
       if (GI.kkWeaponSlotCopy[sidx]) continue;
@@ -341,6 +344,7 @@ void InitializeWeaponSlots () {
       assert(wi.wcls);
       if (debugDump) printdebug("*** %s slot #%d, weapon #%d: %C", (wi.src == LineSpecialGameInfo::WSlotSrc.KEYCONF ? "KEYCONF" : "GameInfo"), sidx, actualWeaponSlots[sidx].weapons.length, wi.wcls);
       actualWeaponSlots[sidx].weapons[$] = wi.wcls;
+      wclassInKeyconf.put(GetClassName(wi.wcls), true);
     }
   }
 
@@ -354,6 +358,11 @@ void InitializeWeaponSlots () {
     foreach AllClasses(Weapon, wcls) {
       class!Weapon repl = class!Weapon(GetClassReplacement(wcls));
       if (repl && repl != wcls) continue; // this weapon is replaced with another one, don't bother
+      // check for keyconf seal
+      if (wclassInKeyconf.find(GetClassName(wcls))) {
+        if (debugDump) printdebug("*** %C: this weapon is sealed by keyconf", wcls);
+        continue;
+      }
       // check if this weapon can be "readied"
       if (!Weapon.IsUsableWeaponClass(wcls)) {
         if (debugDump) printdebug("*** %C: this weapon is unusable, skipping it", wcls);
@@ -406,8 +415,10 @@ void InitializeWeaponSlots () {
               break;
           }
           if (doreport) {
-            printwarn("weapon `%C` has no defined slot (and is inaccessible!): %s", wcls, GetClassLocationStr(wcls));
+            printwarn("weapon `%C` has no defined slot (put into slot 11): %s", wcls, GetClassLocationStr(wcls));
           }
+          needSlotSorting[10] = true;
+          actualWeaponSlots[10].weapons[$] = wcls;
         }
         continue;
       }
