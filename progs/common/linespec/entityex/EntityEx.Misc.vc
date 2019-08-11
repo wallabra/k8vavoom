@@ -496,9 +496,9 @@ final bool HeightClip (optional bool skipTriggers, optional bool skipObjects) {
     return true;
   }
 
-  //if (bIsPlayer) print("old: Floor=%s; Ceiling=%s; FloorZ=%s; CeilingZ=%s", EFloor.splane, ECeiling.splane, FloorZ, CeilingZ);
+  //if (bIsPlayer) printdebug("old: Floor=%s; Ceiling=%s; FloorZ=%s; CeilingZ=%s", EFloor.splane, ECeiling.splane, FloorZ, CeilingZ);
 
-  CheckRelPosition(&tmtrace, Origin);//, debugDump:bIsPlayer);
+  bool isok = CheckRelPosition(&tmtrace, Origin);//, debugDump:bIsPlayer);
   // what about stranding a monster partially off an edge?
 
   EFloor = tmtrace.EFloor;
@@ -506,7 +506,7 @@ final bool HeightClip (optional bool skipTriggers, optional bool skipObjects) {
   FloorZ = tmtrace.FloorZ;
   CeilingZ = tmtrace.CeilingZ;
 
-  //if (bIsPlayer) print("new: Floor=%s; Ceiling=%s; FloorZ=%s; CeilingZ=%s", EFloor.splane, ECeiling.splane, FloorZ, CeilingZ);
+  //if (bIsPlayer) printdebug("new: Floor=%s; Ceiling=%s; FloorZ=%s; CeilingZ=%s; isok=%B; range=%s; height=%s", EFloor.splane, ECeiling.splane, FloorZ, CeilingZ, isok, CeilingZ-FloorZ, Height);
 
   if (onfloor && (!bNoGravity || !bNoLiftDrop || bMoveWithSector)) {
     // walking monsters rise and fall with the floor
@@ -522,9 +522,11 @@ final bool HeightClip (optional bool skipTriggers, optional bool skipObjects) {
         }
         if (CeilingZ-(FloorZ+Height) < onmo.Height) {
           // things don't fit, stop
+          //if (bIsPlayer) printdebug("   DONTFIT (0)!");
           return false;
         }
       }
+      //if (bIsPlayer) printdebug("   FIT (0)!");
       Origin.z = FloorZ;
     }
   } else {
@@ -543,6 +545,7 @@ final bool HeightClip (optional bool skipTriggers, optional bool skipObjects) {
         return true;
       } else {
         // doesn't fit, stop
+        //if (bIsPlayer) printdebug("   DONTFIT (1)!");
         return false;
       }
     }

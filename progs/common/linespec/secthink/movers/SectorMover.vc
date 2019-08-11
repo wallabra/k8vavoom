@@ -107,13 +107,15 @@ int MovePlane (sector_t *sector, float amount, float dest, int crush,
             return RES_PASTDEST;
           } else {
             flag = XLevel.ChangeSector(sector, crush);
-            MoveLinkedSectorsFloor(sector, sector->floor.dist-lastpos, sector->floor.TexZ-LastTexZ, crush);
-            // this is completely illogical and aparently in Strife they fixed this one
-            /*if (flag) {
-              sector->floor.dist = lastpos;
-              XLevel.ChangeSector(sector, crush);
+            if (flag) {
+              if (!crush || StopOnCrush) {
+                sector->floor.dist = lastpos;
+                sector->floor.TexZ = LastTexZ;
+                XLevel.ChangeSector(sector, crush);
+              }
               return RES_CRUSHED;
-            }*/
+            }
+            MoveLinkedSectorsFloor(sector, sector->floor.dist-lastpos, sector->floor.TexZ-LastTexZ, crush);
           }
           break;
 
@@ -138,8 +140,9 @@ int MovePlane (sector_t *sector, float amount, float dest, int crush,
               sector->floor.dist = lastpos;
               sector->floor.TexZ = LastTexZ;
               XLevel.ChangeSector(sector, crush);
+            } else {
+              MoveLinkedSectorsFloor(sector, sector->floor.dist-lastpos, sector->floor.TexZ-LastTexZ, crush);
             }
-            MoveLinkedSectorsFloor(sector, sector->floor.dist-lastpos, sector->floor.TexZ-LastTexZ, crush);
             return RES_PASTDEST;
           } else {
             // COULD GET CRUSHED
@@ -149,8 +152,9 @@ int MovePlane (sector_t *sector, float amount, float dest, int crush,
                 sector->floor.dist = lastpos;
                 sector->floor.TexZ = LastTexZ;
                 XLevel.ChangeSector(sector, crush);
+              } else {
+                MoveLinkedSectorsFloor(sector, sector->floor.dist-lastpos, sector->floor.TexZ-LastTexZ, crush);
               }
-              MoveLinkedSectorsFloor(sector, sector->floor.dist-lastpos, sector->floor.TexZ-LastTexZ, crush);
               return RES_CRUSHED;
             }
           }
@@ -217,6 +221,14 @@ int MovePlane (sector_t *sector, float amount, float dest, int crush,
             return RES_PASTDEST;
           } else {
             flag = XLevel.ChangeSector(sector, crush);
+            if (flag) {
+              if (!crush || StopOnCrush) {
+                sector->ceiling.dist = lastpos;
+                sector->ceiling.TexZ = LastTexZ;
+                XLevel.ChangeSector(sector, crush);
+              }
+              return RES_CRUSHED;
+            }
           }
           break;
       }

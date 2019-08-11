@@ -39,6 +39,9 @@ int Direction;
 float Speed;
 float FloorDestDist;
 float CeilingDestDist;
+// so we would be able to backtrack elevator a little, otherwise the player will stuck
+float FloorHeight;
+float CeilingHeight;
 
 
 //==========================================================================
@@ -49,8 +52,8 @@ float CeilingDestDist;
 void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
            int Arg5, int InType, line_t *Line)
 {
-  float FloorHeight;
-  float CeilingHeight;
+  //float FloorHeight;
+  //float CeilingHeight;
   float NewHeight;
   TVec Spot;
 
@@ -113,6 +116,7 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
       CeilingDestDist = DotProduct(Sector->ceiling.normal, Spot);
       break;
   }
+
   StartFloorSound();
 }
 
@@ -126,16 +130,58 @@ override void Tick (float DeltaTime) {
   int Res;
 
   if (Direction < 0) {
-    // moving down
-    Res = MovePlane(Sector, Speed*DeltaTime, CeilingDestDist, 0, 1, Direction, false);
-    if (Res == RES_OK || Res == RES_PASTDEST) {
-      MovePlane(Sector, Speed*DeltaTime, FloorDestDist, 0, 0, Direction, false);
+    // moving elevator down
+    if (FloorHeight > CeilingHeight) {
+      // floor is higher
+      // first, move ceiling
+      Res = MovePlane(Sector, Speed*DeltaTime, CeilingDestDist, crush:0, floorOrCeiling:1, Direction, StopOnCrush:false);
+      if (Res == RES_OK || Res == RES_PASTDEST) {
+        // ok, ceiling moved, move floor
+        Res = MovePlane(Sector, Speed*DeltaTime, FloorDestDist, crush:0, floorOrCeiling:0, Direction, StopOnCrush:false);
+        if (Res == RES_CRUSHED) {
+          // move ceiling back
+          MovePlane(Sector, Speed*DeltaTime, CeilingHeight, crush:0, floorOrCeiling:1, -Direction, StopOnCrush:false);
+        }
+      }
+    } else {
+      // ceiling is higher
+      // first, move floor
+      Res = MovePlane(Sector, Speed*DeltaTime, FloorDestDist, crush:0, floorOrCeiling:0, Direction, StopOnCrush:false);
+      if (Res == RES_OK || Res == RES_PASTDEST) {
+        // ok, floor moved, move ceiling
+        Res = MovePlane(Sector, Speed*DeltaTime, CeilingDestDist, crush:0, floorOrCeiling:1, Direction, StopOnCrush:false);
+        if (Res == RES_CRUSHED) {
+          // move floor back
+          MovePlane(Sector, Speed*DeltaTime, FloorHeight, crush:0, floorOrCeiling:0, -Direction, StopOnCrush:false);
+        }
+      }
     }
   } else {
-    // up
-    Res = MovePlane(Sector, Speed*DeltaTime, FloorDestDist, 0, 0, Direction, false);
-    if (Res == RES_OK || Res == RES_PASTDEST) {
-      MovePlane(Sector, Speed*DeltaTime, CeilingDestDist, 0, 1, Direction, false);
+    // moving elevator up
+    if (FloorHeight > CeilingHeight) {
+      // floor is higher
+      // first, move floor
+      Res = MovePlane(Sector, Speed*DeltaTime, FloorDestDist, crush:0, floorOrCeiling:0, Direction, StopOnCrush:false);
+      if (Res == RES_OK || Res == RES_PASTDEST) {
+        // ok, floor moved, move ceiling
+        Res = MovePlane(Sector, Speed*DeltaTime, CeilingDestDist, crush:0, floorOrCeiling:1, Direction, StopOnCrush:false);
+        if (Res == RES_CRUSHED) {
+          // move floor back
+          MovePlane(Sector, Speed*DeltaTime, FloorHeight, crush:0, floorOrCeiling:0, -Direction, StopOnCrush:false);
+        }
+      }
+    } else {
+      // ceiling is higher
+      // first, move ceiling
+      Res = MovePlane(Sector, Speed*DeltaTime, CeilingDestDist, crush:0, floorOrCeiling:1, Direction, StopOnCrush:false);
+      if (Res == RES_OK || Res == RES_PASTDEST) {
+        // ok, ceiling moved, move floor
+        Res = MovePlane(Sector, Speed*DeltaTime, FloorDestDist, crush:0, floorOrCeiling:0, Direction, StopOnCrush:false);
+        if (Res == RES_CRUSHED) {
+          // move ceiling back
+          MovePlane(Sector, Speed*DeltaTime, CeilingHeight, crush:0, floorOrCeiling:1, -Direction, StopOnCrush:false);
+        }
+      }
     }
   }
 
