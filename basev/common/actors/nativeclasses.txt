@@ -299,6 +299,9 @@ class Actor extends Thinker
   action native A_CountdownArg(eval int argnum);
   action native A_Stop();
 
+  action native A_Weave (int horzspeed, int vertspeed, float horzdist, float vertdist);
+
+
   //
   //  Inventory functions
   //
