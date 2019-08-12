@@ -48,10 +48,10 @@ VClientGameBase *GClGame;
 
 bool UserInfoSent;
 
-VCvarS cl_name("name", "PLAYER", "Player name.", CVAR_Archive | CVAR_UserInfo);
-VCvarI cl_color("color", "0", "Player color.", CVAR_Archive | CVAR_UserInfo);
-VCvarI cl_class("class", "0", "Player class.", CVAR_Archive | CVAR_UserInfo);
-VCvarS cl_model("model", "", "Player model.", CVAR_Archive | CVAR_UserInfo);
+VCvarS cl_name("name", "PLAYER", "Player name.", CVAR_Archive|CVAR_UserInfo);
+VCvarS cl_color("color", "00 ff 00", "Player color.", CVAR_Archive|CVAR_UserInfo);
+VCvarI cl_class("class", "0", "Player class.", CVAR_Archive|CVAR_UserInfo);
+VCvarS cl_model("model", "", "Player model.", CVAR_Archive|CVAR_UserInfo);
 
 static VCvarB d_attraction_mode("d_attraction_mode", false, "Allow demo playback (won't work with non-k8vavoom demos)?", CVAR_Archive);
 

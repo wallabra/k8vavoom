@@ -157,11 +157,10 @@ static VCvarB draw_world_timer("draw_world_timer", false, "Draw playing time?", 
 
 static VCvarI screen_width("screen_width", "0", "Custom screen width", CVAR_Archive);
 static VCvarI screen_height("screen_height", "0", "Custom screen height", CVAR_Archive);
-//static VCvarI screen_bpp("screen_bpp", "0", "Custom screen BPP", CVAR_Archive);
 VCvarI screen_fsmode("screen_fsmode", "0", "Video mode: windowed(0), fullscreen scaled(1), fullscreen real(2)", CVAR_Archive);
 static VCvarI brightness("brightness", "0", "Brightness.", CVAR_Archive);
 
-static VCvarI draw_fps("draw_fps", "0", "Draw FPS counter?", CVAR_Archive);
+static VCvarI draw_fps("draw_fps", "0", "Draw FPS counter (1:FPS; 2:MSECS)?", CVAR_Archive);
 static VCvarI draw_fps_posx("draw_fps_posx", "0", "FPS counter position (<0:left; 0:center; >0:right)", CVAR_Archive);
 static double fps_start = 0.0;
 static double ms = 0.0;
