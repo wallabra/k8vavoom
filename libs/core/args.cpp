@@ -83,7 +83,7 @@ char *VArgs::GetBinaryDir () {
 //==========================================================================
 static char *xstrdup (const char *s) {
   if (!s) s = "";
-  char *res = (char *)Z_Malloc(strlen(s)+1);
+  char *res = (char *)::malloc(strlen(s)+1);
   strcpy(res, s);
   return res;
 }
@@ -97,12 +97,18 @@ static char *xstrdup (const char *s) {
 void VArgs::Init (int argc, char **argv, const char *filearg) {
   // save args
   if (argc < 0) argc = 0; else if (argc > MAXARGVS) argc = MAXARGVS;
-  Argc = argc;
-  Argv = (char **)Z_Malloc(sizeof(char *)*MAXARGVS); // memleak, but nobody cares
+  //Argc = argc;
+  Argv = (char **)::malloc(sizeof(char *)*MAXARGVS); // memleak, but nobody cares
   memset(Argv, 0, sizeof(char*)*MAXARGVS);
   Argv[0] = xstrdup(GetBinaryDir());
-  if (Argc < 1) Argc = 1;
-  for (int f = 1; f < argc; ++f) if (argv[f] && argv[f][0]) Argv[f] = xstrdup(argv[f]);
+  //if (Argc < 1) Argc = 1;
+  Argc = 1;
+  for (int f = 1; f < argc; ++f) {
+    if (argv[f] && argv[f][0]) {
+      if (Argc >= MAXARGVS-1) break;
+      Argv[Argc++] = xstrdup(argv[f]);
+    }
+  }
 #ifdef __SWITCH__
   // add static response file if it exists
   FILE *rf = fopen("/switch/vavoom/args.txt", "rb");
@@ -125,7 +131,7 @@ void VArgs::Init (int argc, char **argv, const char *filearg) {
 //==========================================================================
 void VArgs::AddFileOption (const char *optname) {
   if (!optname || !optname[0]) return;
-  fopts = (char **)Z_Realloc(fopts, (foptsCount+1)*sizeof(fopts[0]));
+  fopts = (char **)::realloc(fopts, (foptsCount+1)*sizeof(fopts[0]));
   fopts[foptsCount++] = xstrdup(optname);
 }
 
@@ -241,11 +247,11 @@ void VArgs::FindResponseFile () {
       printf("\nNo such response file %s!", &Argv[i][1]);
       exit(1);
     }
-    GLog.WriteLine("Found response file %s!", &Argv[i][1]);
+    //GLog.WriteLine("Found response file %s!", &Argv[i][1]);
     fseek(handle, 0, SEEK_END);
     int size = ftell(handle);
     fseek(handle, 0, SEEK_SET);
-    char *file = (char *)Z_Malloc(size+1);
+    char *file = (char *)::malloc(size+1);
     fread(file, size, 1, handle);
     fclose(handle);
     file[size] = 0;
@@ -253,8 +259,8 @@ void VArgs::FindResponseFile () {
     // keep all other cmdline args
     char **oldargv = Argv; // memleak, but nobody cares
 
-    Argv = (char **)Z_Malloc(sizeof(char *)*MAXARGVS);
-    memset(Argv, 0, sizeof(char*)*MAXARGVS);
+    Argv = (char **)::malloc(sizeof(char *)*MAXARGVS);
+    memset(Argv, 0, sizeof(char *)*MAXARGVS);
 
     // keep args before response file
     int indexinfile;
@@ -275,7 +281,8 @@ void VArgs::FindResponseFile () {
       if (infile[k] == '\"') {
         // parse quoted string
         ++k;
-        Argv[indexinfile++] = infile+k;
+        const char *argstartptr = infile+k;
+        //Argv[indexinfile++] = xstrdup(infile+k);
         char CurChar;
         char *OutBuf = infile+k;
         do {
@@ -293,11 +300,14 @@ void VArgs::FindResponseFile () {
           ++OutBuf;
         } while (CurChar);
         *(infile+k) = 0;
+        Argv[indexinfile++] = xstrdup(argstartptr);
       } else {
         // parse unquoted string
-        Argv[indexinfile++] = infile+k;
+        //Argv[indexinfile++] = xstrdup(infile+k);
+        const char *argstartptr = infile+k;
         while (k < size && infile[k] > ' ' && infile[k] != '\"') ++k;
         *(infile+k) = 0;
+        Argv[indexinfile++] = xstrdup(argstartptr);
       }
     }
 
@@ -318,10 +328,16 @@ void VArgs::FindResponseFile () {
     }
 
     // display args
-    GLog.WriteLine("%d command-line args:", Argc);
-    for (k = 1; k < Argc; ++k) GLog.WriteLine("%s", Argv[k]);
+    //GLog.WriteLine("%d command-line args:", Argc);
+    //for (k = 1; k < Argc; ++k) GLog.WriteLine("%s", Argv[k]);
     --i;
   }
+/*
+#ifdef _WIN32
+  fprintf(stderr, "%d command-line args:\n", Argc);
+  for (int cc = 1; cc < Argc; ++cc) fprintf(stderr, "  %d: <%s>\n", cc, Argv[cc]);
+#endif
+*/
 }
 
 
@@ -407,7 +423,8 @@ bool VArgs::IsCommand (int idx) const {
 //==========================================================================
 void VArgs::removeAt (int idx) {
   if (idx < 1 || idx >= Argc) return;
-  Z_Free(Argv[idx]);
+  //k8: nobody cares about memleaks here, so let's play safe
+  //::free(Argv[idx]);
   for (int f = idx+1; f < Argc; ++f) Argv[f-1] = Argv[f];
   Argv[Argc-1] = nullptr;
   --Argc;
