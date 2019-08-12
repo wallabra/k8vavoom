@@ -27,7 +27,6 @@
 class ClientGameBase : Object abstract native;
 
 bool local_server;
-
 // used to accelerate or skip a stage
 bool skipintermission;
 
