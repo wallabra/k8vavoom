@@ -53,9 +53,9 @@ void Host_Quit ();
 
 
 #ifdef DEVELOPER
-VCvarB developer("developer", true, "Developer (debug) mode?", 0/*CVAR_Archive*/);
+VCvarB developer("developer", true, "Developer (debug) mode?", CVAR_PreInit/*|CVAR_Archive*/);
 #else
-VCvarB developer("developer", false, "Developer (debug) mode?", 0/*CVAR_Archive*/);
+VCvarB developer("developer", false, "Developer (debug) mode?", CVAR_PreInit/*|CVAR_Archive*/);
 #endif
 
 #ifdef VAVOOM_K8_DEVELOPER
