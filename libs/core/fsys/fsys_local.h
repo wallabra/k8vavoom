@@ -95,6 +95,7 @@ private:
 
 public:
   VFilesDir (const VStr &aPath);
+  virtual ~VFilesDir () override;
   virtual bool FileExists (const VStr&) override;
   virtual VStream *OpenFileRead (const VStr&) override;
   virtual VStream *CreateLumpReaderNum (int) override;
