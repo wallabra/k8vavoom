@@ -186,7 +186,7 @@ public:
   TArray<VLevelScriptThinker *> AcsExports;
 
   VSaveLoaderStream (VStream *InStream) : Stream(InStream) { bLoading = true; }
-  virtual ~VSaveLoaderStream () override { delete Stream; Stream = nullptr; }
+  virtual ~VSaveLoaderStream () override { Close(); delete Stream; Stream = nullptr; }
 
   // stream interface
   virtual void Serialise (void *Data, int Len) override { Stream->Serialise(Data, Len); }
@@ -265,7 +265,7 @@ public:
     for (int i = 0; i < VName::GetNumNames(); ++i) NamesMap[i] = -1;
   }
 
-  virtual ~VSaveWriterStream () override { delete Stream; Stream = nullptr; }
+  virtual ~VSaveWriterStream () override { Close(); delete Stream; Stream = nullptr; }
 
   // stream interface
   virtual void Serialise (void *Data, int Len) override { Stream->Serialise(Data, Len); }

@@ -144,6 +144,8 @@ public:
     memset(MembersMap, 0, VMemberBase::GMembers.Num()*sizeof(vint32));
   }
 
+  virtual ~VProgsWriter () override { Close(); }
+
   // stream interface
   virtual void Seek (int InPos) override { if (fseek(File, InPos, SEEK_SET)) bError = true; }
   virtual int Tell () override { return ftell(File); }
@@ -237,6 +239,7 @@ public:
   }
 
   virtual ~VProgsReader ()  override{
+    Close();
     delete[] NameRemap;
     delete[] Imports;
     delete[] Exports;

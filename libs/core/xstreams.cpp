@@ -79,6 +79,16 @@ VMemoryStreamRO::VMemoryStreamRO (const VStr &strmName, VStream *strm)
 
 //==========================================================================
 //
+//  VMemoryStreamRO::VMemoryStreamRO
+//
+//==========================================================================
+VMemoryStreamRO::~VMemoryStreamRO () {
+  Close();
+}
+
+
+//==========================================================================
+//
 //  VMemoryStreamRO::Clear
 //
 //==========================================================================
@@ -314,6 +324,16 @@ VMemoryStream::VMemoryStream (const VStr &strmName, VStream *strm)
 
 //==========================================================================
 //
+//  ~VMemoryStream::~VMemoryStream
+//
+//==========================================================================
+VMemoryStream::~VMemoryStream () {
+  Close();
+}
+
+
+//==========================================================================
+//
 //  VMemoryStream::Serialise
 //
 //==========================================================================
@@ -403,6 +423,16 @@ VArrayStream::VArrayStream (const VStr &strmName, TArray<vuint8>& InArray)
   , StreamName(strmName)
 {
   bLoading = true;
+}
+
+
+//==========================================================================
+//
+//  VArrayStream::~VArrayStream
+//
+//==========================================================================
+VArrayStream::~VArrayStream () {
+  Close();
 }
 
 
@@ -501,6 +531,16 @@ VPagedMemoryStream::VPagedMemoryStream (const VStr &strmName)
   , StreamName(strmName)
 {
   bLoading = false;
+}
+
+
+//==========================================================================
+//
+//  VPagedMemoryStream::~VPagedMemoryStream
+//
+//==========================================================================
+VPagedMemoryStream::~VPagedMemoryStream () {
+  Close();
 }
 
 
@@ -681,6 +721,16 @@ VBitStreamWriter::VBitStreamWriter (vint32 AMax, bool allowExpand)
   int sz = (AMax+7)/8+(allowExpand ? 256 : 0);
   Data.SetNum(sz);
   memset(Data.Ptr(), 0, sz);
+}
+
+
+//==========================================================================
+//
+//  VBitStreamWriter::~VBitStreamWriter
+//
+//==========================================================================
+VBitStreamWriter::~VBitStreamWriter () {
+  Close();
 }
 
 
@@ -869,6 +919,16 @@ VBitStreamReader::VBitStreamReader (vuint8 *Src, vint32 Length)
 
 //==========================================================================
 //
+//  VBitStreamReader::~VBitStreamReader
+//
+//==========================================================================
+VBitStreamReader::~VBitStreamReader () {
+  Close();
+}
+
+
+//==========================================================================
+//
 //  VBitStreamReader::SetData
 //
 //==========================================================================
@@ -993,26 +1053,43 @@ bool VBitStreamReader::AtEnd () {
 
 //==========================================================================
 //
-//  VStdFileStream::VStdFileStream
+//  VStdFileStreamBase::VStdFileStreamBase
 //
 //==========================================================================
-VStdFileStream::VStdFileStream (FILE* afl, const VStr &aname, bool asWriter)
+VStdFileStreamBase::VStdFileStreamBase (FILE* afl, const VStr &aname, bool asWriter)
   : mFl(afl)
   , mName(aname)
   , size(-1)
 {
-  if (afl) fseek(afl, 0, SEEK_SET);
   bLoading = !asWriter;
+  if (afl && !asWriter) {
+    if (fseek(afl, 0, SEEK_SET)) setError();
+  }
 }
 
 
 //==========================================================================
 //
-//  VStdFileStream::Close
+//  VStdFileStreamBase::~VStdFileStreamBase
 //
 //==========================================================================
-bool VStdFileStream::Close () {
-  if (mFl) { fclose(mFl); mFl = nullptr; }
+VStdFileStreamBase::~VStdFileStreamBase () {
+  Close();
+}
+
+
+//==========================================================================
+//
+//  VStdFileStreamBase::Close
+//
+//==========================================================================
+bool VStdFileStreamBase::Close () {
+  if (mFl) {
+    if (!bLoading) fflush(mFl);
+    fclose(mFl);
+    mFl = nullptr;
+  }
+  fflush(stderr);
   mName.clear();
   return !bError;
 }
@@ -1020,11 +1097,15 @@ bool VStdFileStream::Close () {
 
 //==========================================================================
 //
-//  VStdFileStream::setError
+//  VStdFileStreamBase::setError
 //
 //==========================================================================
-void VStdFileStream::setError () {
-  if (mFl) { fclose(mFl); mFl = nullptr; }
+void VStdFileStreamBase::setError () {
+  if (mFl) {
+    fflush(stderr);
+    fclose(mFl);
+    mFl = nullptr;
+  }
   mName.clear();
   bError = true;
 }
@@ -1032,20 +1113,20 @@ void VStdFileStream::setError () {
 
 //==========================================================================
 //
-//  VStdFileStream::GetName
+//  VStdFileStreamBase::GetName
 //
 //==========================================================================
-const VStr &VStdFileStream::GetName () const {
+const VStr &VStdFileStreamBase::GetName () const {
   return mName;
 }
 
 
 //==========================================================================
 //
-//  VStdFileStream::Seek
+//  VStdFileStreamBase::Seek
 //
 //==========================================================================
-void VStdFileStream::Seek (int pos) {
+void VStdFileStreamBase::Seek (int pos) {
   if (!mFl) { setError(); return; }
 #ifdef __SWITCH__
   // I don't know how or why this works, but unless you seek to 0 first,
@@ -1059,10 +1140,10 @@ void VStdFileStream::Seek (int pos) {
 
 //==========================================================================
 //
-//  VStdFileStream::Tell
+//  VStdFileStreamBase::Tell
 //
 //==========================================================================
-int VStdFileStream::Tell () {
+int VStdFileStreamBase::Tell () {
   if (mFl && !bError) {
     int res = (int)ftell(mFl);
     if (res < 0) { setError(); return 0; }
@@ -1076,10 +1157,10 @@ int VStdFileStream::Tell () {
 
 //==========================================================================
 //
-//  VStdFileStream::TotalSize
+//  VStdFileStreamBase::TotalSize
 //
 //==========================================================================
-int VStdFileStream::TotalSize () {
+int VStdFileStreamBase::TotalSize () {
   if (!mFl || bError) { setError(); return 0; }
   if (!IsLoading()) size = -1;
   if (size < 0) {
@@ -1094,20 +1175,20 @@ int VStdFileStream::TotalSize () {
 
 //==========================================================================
 //
-//  VStdFileStream::AtEnd
+//  VStdFileStreamBase::AtEnd
 //
 //==========================================================================
-bool VStdFileStream::AtEnd () {
+bool VStdFileStreamBase::AtEnd () {
   return (bError || !mFl || Tell() >= TotalSize());
 }
 
 
 //==========================================================================
 //
-//  VStdFileStream::Serialise
+//  VStdFileStreamBase::Serialise
 //
 //==========================================================================
-void VStdFileStream::Serialise (void *buf, int len) {
+void VStdFileStreamBase::Serialise (void *buf, int len) {
   if (bError || !mFl || len < 0) { setError(); return; }
   if (len == 0) return;
   if (bLoading) {

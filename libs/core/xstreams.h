@@ -39,6 +39,8 @@ public:
   VMemoryStreamRO (const VStr &strmName, const void *adata, int adataSize, bool takeOwnership=false);
   VMemoryStreamRO (const VStr &strmName, VStream *strm); // from current position to stream end
 
+  virtual ~VMemoryStreamRO () override;
+
   void Clear ();
 
   void Setup (const VStr &strmName, const void *adata, int adataSize, bool takeOwnership=false);
@@ -71,6 +73,8 @@ public:
   VMemoryStream (const VStr &strmName, const TArray<vuint8> &);
   VMemoryStream (const VStr &strmName, VStream *strm); // from current position to stream end
 
+  virtual ~VMemoryStream () override;
+
   virtual void Serialise (void *Data, int Length) override;
   virtual void Seek (int) override;
   virtual int Tell () override;
@@ -93,6 +97,7 @@ protected:
 
 public:
   VArrayStream (const VStr &strmName, TArray<vuint8> &);
+  virtual ~VArrayStream () override;
 
   virtual void Serialise (void *Data, int Length) override;
   virtual void Seek (int) override;
@@ -125,12 +130,13 @@ private:
 public:
   // initialise empty writing stream
   VPagedMemoryStream (const VStr &strmName);
+  virtual ~VPagedMemoryStream () override;
 
-  virtual bool Close () override;
   virtual void Serialise (void *Data, int Length) override;
   virtual void Seek (int) override;
   virtual int Tell () override;
   virtual int TotalSize () override;
+  virtual bool Close () override;
 
   inline void BeginRead () { bLoading = true; pos = 0; curr = first; }
 
@@ -170,6 +176,8 @@ protected:
 
 public:
   VBitStreamWriter (vint32, bool allowExpand=false);
+  virtual ~VBitStreamWriter () override;
+
   virtual void Serialise (void *Data, int Length) override;
   virtual void SerialiseBits (void *Data, int Length) override;
   virtual void SerialiseInt (vuint32 &Value/*, vuint32 Max*/) override;
@@ -223,6 +231,8 @@ protected:
 
 public:
   VBitStreamReader (vuint8* = nullptr, vint32 = 0);
+  virtual ~VBitStreamReader () override;
+
   void SetData (VBitStreamReader&, int);
   virtual void Serialise (void *Data, int Length) override;
   virtual void SerialiseBits (void *Data, int Length) override;
@@ -253,7 +263,7 @@ public:
 
 // ////////////////////////////////////////////////////////////////////////// //
 // owns afl
-class VStdFileStream : public VStream {
+class VStdFileStreamBase : public VStream {
 private:
   FILE *mFl;
   VStr mName;
@@ -263,7 +273,8 @@ private:
   void setError ();
 
 public:
-  VStdFileStream (FILE *afl, const VStr &aname=VStr(), bool asWriter=false);
+  VStdFileStreamBase (FILE *afl, const VStr &aname, bool asWriter);
+  virtual ~VStdFileStreamBase () override;
 
   virtual const VStr &GetName () const override;
   virtual void Seek (int pos) override;
@@ -275,15 +286,15 @@ public:
 };
 
 // owns afl
-class VStdFileStreamRead : public VStdFileStream {
+class VStdFileStreamRead : public VStdFileStreamBase {
 public:
-  VStdFileStreamRead (FILE *afl, const VStr &aname=VStr()) : VStdFileStream(afl, aname, false) {}
+  VStdFileStreamRead (FILE *afl, const VStr &aname=VStr()) : VStdFileStreamBase(afl, aname, false) {}
 };
 
 // owns afl
-class VStdFileStreamWrite : public VStdFileStream {
+class VStdFileStreamWrite : public VStdFileStreamBase {
 public:
-  VStdFileStreamWrite (FILE *afl, const VStr &aname=VStr()) : VStdFileStream(afl, aname, true) {}
+  VStdFileStreamWrite (FILE *afl, const VStr &aname=VStr()) : VStdFileStreamBase(afl, aname, true) {}
 };
 
 
