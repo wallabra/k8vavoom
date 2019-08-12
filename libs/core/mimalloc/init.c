@@ -424,6 +424,7 @@ static void mi_process_done(void) {
 #if defined(_WIN32) && defined(MI_SHARED_LIB)
   // Windows DLL: easy to hook into process_init and thread_done
   #include <windows.h>
+  the thing that should not be!
 
   __declspec(dllexport) BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved) {
     UNUSED(reserved);
@@ -439,7 +440,8 @@ static void mi_process_done(void) {
 
 #elif defined(__GNUC__) || defined(__clang__)
   // GCC,Clang: use the constructor attribute
-  static void __attribute__((constructor)) _mi_process_init(void) {
+  /*static*/ void __attribute__((constructor)) _mi_process_init_gcc_(void) {
+    //fprintf(stderr, "!!!!!!!!!!!!!!!!!!!!\n");
     mi_process_init();
   }
 
