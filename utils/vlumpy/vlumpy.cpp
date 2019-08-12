@@ -1197,6 +1197,7 @@ int main (int argc, char *argv[]) {
 #ifdef _WIN32
   useZopfli = true;
   showPackedSize = true;
+  useZopfli = false;
 #else
   useZopfli = false;
 #endif
