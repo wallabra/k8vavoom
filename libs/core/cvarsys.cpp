@@ -120,12 +120,13 @@ void VCvar::HostInitComplete () {
 //  VCvar::VCvar
 //
 //==========================================================================
-VCvar::VCvar (const char *AName, const char *ADefault, const char *AHelp, int AFlags)
+VCvar::VCvar (const char *AName, const char *ADefault, const char *AHelp, int AFlags, CVType AType)
   : Name(AName)
   , DefaultString(ADefault)
   , HelpString(AHelp)
   , defstrOwned(false)
   , Flags(AFlags)
+  , Type(AType)
   , IntValue(0)
   , FloatValue(0)
   , BoolValue(false)
@@ -140,6 +141,14 @@ VCvar::VCvar (const char *AName, const char *ADefault, const char *AHelp, int AF
   if (Name && Name[0]) {
     insertIntoHash(); // insert into hash (this leaks on duplicate vars)
   }
+
+  // fixup default string, if necessary
+  if (Type != CVType::String && !StringValue.strEqu(DefaultString)) {
+    defstrOwned = true;
+    char *Tmp = new char[StringValue.Length()+1];
+    VStr::Cpy(Tmp, *StringValue);
+    DefaultString = Tmp;
+  }
 }
 
 
@@ -148,11 +157,12 @@ VCvar::VCvar (const char *AName, const char *ADefault, const char *AHelp, int AF
 //  VCvar::VCvar
 //
 //==========================================================================
-VCvar::VCvar (const char *AName, const VStr &ADefault, const VStr &AHelp, int AFlags)
+VCvar::VCvar (const char *AName, const VStr &ADefault, const VStr &AHelp, int AFlags, CVType AType)
   : Name(AName)
   , HelpString("no help yet")
   , defstrOwned(true)
   , Flags(AFlags)
+  , Type(AType)
   , IntValue(0)
   , FloatValue(0)
   , BoolValue(false)
@@ -172,7 +182,19 @@ VCvar::VCvar (const char *AName, const VStr &ADefault, const VStr &AHelp, int AF
   DoSet(DefaultString);
   if (Name && Name[0]) {
     insertIntoHash(); // insert into hash (this leaks on duplicate vars)
-    check(Initialised);
+    //check(Initialised);
+  }
+
+  // fixup default string, if necessary
+  if (Type != CVType::String && !StringValue.strEqu(DefaultString)) {
+    if (defstrOwned) {
+      char *c = (char *)DefaultString;
+      delete[] c;
+    }
+    defstrOwned = true;
+    Tmp = new char[StringValue.Length()+1];
+    VStr::Cpy(Tmp, *StringValue);
+    DefaultString = Tmp;
   }
 }
 
@@ -206,6 +228,143 @@ VCvar *VCvar::insertIntoHash () {
   this->nextInBucket = cvhBuckets[nhash%CVAR_HASH_SIZE];
   cvhBuckets[nhash%CVAR_HASH_SIZE] = this;
   return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VCvar::CoerceToString
+//
+//==========================================================================
+void VCvar::CoerceToString () {
+  switch (Type) {
+    case CVType::String: // string -> string
+      break;
+    case CVType::Int: // int -> string
+      StringValue = VStr((int)IntValue);
+      break;
+    case CVType::Float: // float -> string
+      StringValue = VStr((float)FloatValue);
+      break;
+    case CVType::Bool: // bool -> string
+      StringValue = VStr(BoolValue ? "1" : "0");
+      break;
+  }
+  Type = CVType::String;
+}
+
+
+//==========================================================================
+//
+//  VCvar::CoerceToFloat
+//
+//==========================================================================
+void VCvar::CoerceToFloat () {
+  switch (Type) {
+    case CVType::String: // string -> float
+      FloatValue = VStr::atof(*StringValue, 0.0f);
+      StringValue = VStr((float)FloatValue);
+      IntValue = (FloatValue <= (float)MIN_VINT32 ? MIN_VINT32 : FloatValue >= (float)MAX_VINT32 ? MAX_VINT32 : (int)FloatValue);
+      BoolValue = (isFiniteF(FloatValue) && FloatValue != 0.0f);
+      break;
+    case CVType::Int: // int -> float
+      FloatValue = IntValue;
+      StringValue = VStr((float)FloatValue);
+      BoolValue = (isFiniteF(FloatValue) && FloatValue != 0.0f);
+      break;
+    case CVType::Float: // float -> float
+      break;
+    case CVType::Bool: // bool -> float
+      FloatValue = (BoolValue ? 1.0f : 0.0f);
+      IntValue = (BoolValue ? 1 : 0);
+      StringValue = VStr(BoolValue ? "1" : "0");
+      break;
+  }
+  Type = CVType::Float;
+}
+
+
+//==========================================================================
+//
+//  VCvar::CoerceToInt
+//
+//==========================================================================
+void VCvar::CoerceToInt () {
+  switch (Type) {
+    case CVType::String: // string -> int
+      IntValue = VStr::atoi(*StringValue);
+      StringValue = VStr((int)IntValue);
+      FloatValue = IntValue;
+      BoolValue = !!IntValue;
+      break;
+    case CVType::Int: // int -> int
+      break;
+    case CVType::Float: // float -> int
+      IntValue = (FloatValue <= (float)MIN_VINT32 ? MIN_VINT32 : FloatValue >= (float)MAX_VINT32 ? MAX_VINT32 : (int)FloatValue);
+      StringValue = VStr((int)IntValue);
+      FloatValue = IntValue;
+      BoolValue = !!IntValue;
+      break;
+    case CVType::Bool: // bool -> int
+      FloatValue = (BoolValue ? 1.0f : 0.0f);
+      IntValue = (BoolValue ? 1 : 0);
+      StringValue = VStr(BoolValue ? "1" : "0");
+      break;
+  }
+  Type = CVType::Int;
+}
+
+
+//==========================================================================
+//
+//  VCvar::CoerceToBool
+//
+//==========================================================================
+void VCvar::CoerceToBool () {
+  switch (Type) {
+    case CVType::String: // string -> bool
+      // use `BoolValue` here, as it was set by the standard parser
+      FloatValue = (BoolValue ? 1.0f : 0.0f);
+      IntValue = (BoolValue ? 1 : 0);
+      StringValue = VStr(BoolValue ? "1" : "0");
+      break;
+    case CVType::Int: // int -> bool
+      BoolValue = !!IntValue;
+      FloatValue = (BoolValue ? 1.0f : 0.0f);
+      IntValue = (BoolValue ? 1 : 0);
+      StringValue = VStr(BoolValue ? "1" : "0");
+      break;
+    case CVType::Float: // float -> bool
+      BoolValue = (isFiniteF(FloatValue) && FloatValue != 0.0f);
+      FloatValue = (BoolValue ? 1.0f : 0.0f);
+      IntValue = (BoolValue ? 1 : 0);
+      StringValue = VStr(BoolValue ? "1" : "0");
+      break;
+    case CVType::Bool: // bool -> bool
+      break;
+  }
+  Type = CVType::Bool;
+}
+
+
+//==========================================================================
+//
+//  VCvar::Set
+//
+//  this will coerce values, if necessary
+//
+//==========================================================================
+void VCvar::SetType (CVType atype) {
+  if (atype == Type) return;
+  // source type type
+  switch (atype) {
+    case CVType::String: CoerceToString(); break;
+    case CVType::Int: CoerceToInt(); break;
+    case CVType::Float: CoerceToFloat(); break;
+    case CVType::Bool: CoerceToBool(); break;
+    default: Sys_Error("invalid cvar type (VCvar::SetType)");
+  }
+  Type = atype; // just in case
 }
 
 
@@ -293,7 +452,7 @@ void VCvar::DoSet (const VStr &AValue) {
   // interpret boolean
   if (validFloat) {
     // easy
-    BoolValue = (isFiniteF(FloatValue) && FloatValue != 0);
+    BoolValue = (isFiniteF(FloatValue) && FloatValue != 0.0f);
   } else if (validInt) {
     // easy
     BoolValue = (IntValue != 0);
@@ -313,6 +472,27 @@ void VCvar::DoSet (const VStr &AValue) {
   }
 
   if (!validFloat && validInt) FloatValue = IntValue; // let's hope it fits
+
+  // normalize types
+  switch (Type) {
+    case CVType::String:
+      break;
+    case CVType::Int:
+      FloatValue = IntValue; // let's hope it fits
+      BoolValue = !!IntValue;
+      StringValue = VStr((int)IntValue);
+      break;
+    case CVType::Float:
+      IntValue = (FloatValue <= (float)MIN_VINT32 ? MIN_VINT32 : FloatValue >= (float)MAX_VINT32 ? MAX_VINT32 : (int)FloatValue);
+      BoolValue = (isFiniteF(FloatValue) && FloatValue != 0.0f);
+      StringValue = VStr((float)FloatValue);
+      break;
+    case CVType::Bool:
+      FloatValue = (BoolValue ? 1.0f : 0.0f);
+      IntValue = (BoolValue ? 1 : 0);
+      StringValue = VStr(BoolValue ? "1" : "0");
+      break;
+  }
 
   if (MeChangedCB) MeChangedCB(this, oldValue);
   if (ChangedCB) ChangedCB(this, oldValue);

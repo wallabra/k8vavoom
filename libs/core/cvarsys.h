@@ -27,31 +27,40 @@
 
 enum {
   CVAR_None       = 0,
-  CVAR_Archive    = 0x0001, // set to cause it to be saved to config.cfg
-  CVAR_UserInfo   = 0x0002, // added to userinfo when changed
-  CVAR_ServerInfo = 0x0004, // added to serverinfo when changed
-  CVAR_Init       = 0x0008, // don't allow change from console at all, but can be set from the command line
-  CVAR_Latch      = 0x0010, // save changes until server restart
-  CVAR_Rom        = 0x0020, // display only, cannot be set by user at all
-  CVAR_Cheat      = 0x0040, // can not be changed if cheats are disabled
-  CVAR_Modified   = 0x0080, // set each time the cvar is changed
-  CVAR_FromMod    = 0x0100, // this cvar came from cvarinfo
-  CVAR_PreInit    = 0x4000, // CLI change for this cvar should be processed before initializing the main game
+  CVAR_Archive    = 0x0001u, // set to cause it to be saved to config.cfg
+  CVAR_UserInfo   = 0x0002u, // added to userinfo when changed
+  CVAR_ServerInfo = 0x0004u, // added to serverinfo when changed
+  CVAR_Init       = 0x0008u, // don't allow change from console at all, but can be set from the command line
+  CVAR_Latch      = 0x0010u, // save changes until server restart
+  CVAR_Rom        = 0x0020u, // display only, cannot be set by user at all
+  CVAR_Cheat      = 0x0040u, // can not be changed if cheats are disabled
+  CVAR_Modified   = 0x0080u, // set each time the cvar is changed
+  CVAR_FromMod    = 0x0100u, // this cvar came from cvarinfo
+  CVAR_PreInit    = 0x4000u, // CLI change for this cvar should be processed before initializing the main game
   //
-  CVAR_AlwaysArchive = 0x8000, // always write to config
+  CVAR_AlwaysArchive = 0x8000u, // always write to config
 };
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 // console variable
 class VCvar {
+public:
+  enum CVType {
+    String,
+    Int,
+    Float,
+    Bool,
+  };
+
 protected:
   const char *Name; // variable name
   const char *DefaultString; // default value
   const char *HelpString; // this *can* be owned, but as we never deleting cvar objects, it doesn't matter
   bool defstrOwned; // `true` if `DefaultString` is owned and should be deleted
   VStr StringValue; // current value
-  int Flags; // `CVAR_XXX` flags
+  unsigned Flags; // `CVAR_XXX` flags
+  CVType Type;
   int IntValue; // atoi(string)
   float FloatValue; // atof(string)
   bool BoolValue; // interprets various "true" strings
@@ -59,15 +68,25 @@ protected:
   VCvar *nextInBucket; // next cvar in this bucket
   vuint32 lnhash; // hash of lo-cased variable name
 
+private:
+  void CoerceToString ();
+  void CoerceToFloat ();
+  void CoerceToInt ();
+  void CoerceToBool ();
+
 public:
   // called on any change, before other callbacks
   void (*MeChangedCB) (VCvar *cvar, const VStr &oldValue);
 
 public:
-  VCvar (const char *AName, const char *ADefault, const char *AHelp, int AFlags=CVAR_None);
-  VCvar (const char *AName, const VStr &ADefault, const VStr &AHelp, int AFlags=CVAR_None);
+  VCvar (const char *AName, const char *ADefault, const char *AHelp, int AFlags=CVAR_None, CVType AType=CVType::String);
+  VCvar (const char *AName, const VStr &ADefault, const VStr &AHelp, int AFlags=CVAR_None, CVType AType=CVType::String);
 
   static void AddAllVarsToAutocomplete (void (*addfn) (const char *name));
+
+  inline CVType GetType () const { return Type; }
+  // this will coerce values, if necessary
+  void SetType (CVType atype);
 
   void Set (int value);
   void Set (float value);
@@ -180,7 +199,7 @@ class VCvarB;
 // cvar that can be used as int variable
 class VCvarI : public VCvar {
 public:
-  VCvarI (const char *AName, const char *ADefault, const char *AHelp, int AFlags=0) : VCvar(AName, ADefault, AHelp, AFlags) {}
+  VCvarI (const char *AName, const char *ADefault, const char *AHelp, int AFlags=0) : VCvar(AName, ADefault, AHelp, AFlags, CVType::Int) {}
   VCvarI (const VCvar &);
 
   inline operator int () const { return IntValue; }
@@ -196,7 +215,7 @@ public:
 // cvar that can be used as float variable
 class VCvarF : public VCvar {
 public:
-  VCvarF (const char *AName, const char *ADefault, const char *AHelp, int AFlags=0) : VCvar(AName, ADefault, AHelp, AFlags) {}
+  VCvarF (const char *AName, const char *ADefault, const char *AHelp, int AFlags=0) : VCvar(AName, ADefault, AHelp, AFlags, CVType::Float) {}
   VCvarF (const VCvar &);
 
   inline operator float () const { return FloatValue; }
@@ -213,7 +232,7 @@ public:
 // cvar that can be used as `char *` variable
 class VCvarS : public VCvar {
 public:
-  VCvarS (const char *AName, const char *ADefault, const char *AHelp, int AFlags=0) : VCvar(AName, ADefault, AHelp, AFlags) {}
+  VCvarS (const char *AName, const char *ADefault, const char *AHelp, int AFlags=0) : VCvar(AName, ADefault, AHelp, AFlags, CVType::String) {}
   VCvarS (const VCvar &);
 
   inline operator const char * () const { return *StringValue; }
@@ -227,7 +246,7 @@ public:
 // cvar that can be used as bool variable
 class VCvarB : public VCvar {
 public:
-  VCvarB (const char *AName, bool ADefault, const char *AHelp, int AFlags=0) : VCvar(AName, (ADefault ? "1" : "0"), AHelp, AFlags) {}
+  VCvarB (const char *AName, bool ADefault, const char *AHelp, int AFlags=0) : VCvar(AName, (ADefault ? "1" : "0"), AHelp, AFlags, CVType::Bool) {}
 
   inline operator bool () const { return BoolValue; }
   VCvarB &operator = (const VCvar &v);
