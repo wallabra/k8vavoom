@@ -187,8 +187,8 @@ private:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-FAudioCodecDesc *FAudioCodecDesc::List;
-VAudioPublic *GAudio;
+FAudioCodecDesc *FAudioCodecDesc::List = nullptr;
+VAudioPublic *GAudio = nullptr;
 
 VCvarF VAudio::snd_sfx_volume("snd_sfx_volume", "0.5", "Sound effects volume.", CVAR_Archive);
 VCvarF VAudio::snd_music_volume("snd_music_volume", "0.5", "Music volume", CVAR_Archive);
@@ -202,7 +202,7 @@ static VCvarF snd_random_pitch_boost("snd_random_pitch_boost", "1", "Random pitc
 VCvarI snd_mid_player("snd_mid_player", "1", "MIDI player type (0:Timidity; 1:FluidSynth; -1:none)", CVAR_Archive|CVAR_PreInit);
 VCvarI snd_mod_player("snd_mod_player", "2", "Module player type", CVAR_Archive);
 
-static VCvarB snd_music_background_load("snd_music_background_load", true, "Load music in the background thread?", CVAR_Archive);
+static VCvarB snd_music_background_load("snd_music_background_load", true, "Load music in the background thread?", CVAR_Archive|CVAR_PreInit);
 
 
 //==========================================================================
@@ -382,19 +382,27 @@ void VAudio::Init () {
 //==========================================================================
 void VAudio::Shutdown () {
   // stop playback of all sounds
+  if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): stopping sequences...");
   StopAllSequences();
+  if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): stopping sounds...");
   StopAllSound();
   if (StreamMusicPlayer) {
-    StreamMusicPlayer->Shutdown();
+    //if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): shutting down music player...");
+    //StreamMusicPlayer->Shutdown();
+    if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): deleting music player...");
     delete StreamMusicPlayer;
     StreamMusicPlayer = nullptr;
   }
   if (SoundDevice) {
-    SoundDevice->Shutdown();
+    //if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): shutting down sound device...");
+    //SoundDevice->Shutdown();
+    if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): deleting sound device...");
     delete SoundDevice;
     SoundDevice = nullptr;
   }
+  if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): resetting all channels...");
   ResetAllChannels();
+  if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): shutdown complete!");
 }
 
 
@@ -1235,15 +1243,17 @@ VSoundSeqNode::~VSoundSeqNode () {
   }
 
   // play stop sound
-  if (StopSound >= 0) ((VAudio *)GAudio)->StopSound(OriginId, 0);
-  if (StopSound >= 1) ((VAudio *)GAudio)->PlaySound(StopSound, Origin, TVec(0, 0, 0), OriginId, 1, Volume, Attenuation, false);
+  if (GAudio) {
+    if (StopSound >= 0) ((VAudio *)GAudio)->StopSound(OriginId, 0);
+    if (StopSound >= 1) ((VAudio *)GAudio)->PlaySound(StopSound, Origin, TVec(0, 0, 0), OriginId, 1, Volume, Attenuation, false);
 
-  // remove from the list of active sound sequences
-  if (((VAudio*)GAudio)->SequenceListHead == this) ((VAudio *)GAudio)->SequenceListHead = Next;
-  if (Prev) Prev->Next = Next;
-  if (Next) Next->Prev = Prev;
+    // remove from the list of active sound sequences
+    if (((VAudio*)GAudio)->SequenceListHead == this) ((VAudio *)GAudio)->SequenceListHead = Next;
+    if (Prev) Prev->Next = Next;
+    if (Next) Next->Prev = Prev;
 
-  --((VAudio *)GAudio)->ActiveSequences;
+    --((VAudio *)GAudio)->ActiveSequences;
+  }
 }
 
 

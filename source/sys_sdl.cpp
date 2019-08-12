@@ -135,10 +135,19 @@ static void PutEndText (const char *text) {
 void Sys_Quit (const char *EndText) {
   // shutdown system
   Host_Shutdown();
+  if (developer) GLog.Log(NAME_Dev, "calling `SDL_Quit()`");
   SDL_Quit();
   // throw the end text at the screen
-  if (EndText) PutEndText(EndText);
+  if (EndText) {
+    if (developer) GLog.Log(NAME_Dev, "showing endtext");
+    PutEndText(EndText);
+  }
   // exit
+  if (developer) GLog.Log(NAME_Dev, "exiting");
+#ifdef _WIN32
+  //ExitProcess(0);
+  TerminateProcess(GetCurrentProcess(), 0);
+#endif
   exit(0);
 }
 
@@ -342,7 +351,9 @@ static void mainloop (int argc, char **argv) {
     FL_InitOptions();
     GArgs.Init(argc, argv, "-file");
 
+    //{ GCon->Logf(NAME_Init, "mainloop:000:::ARGC=%d", GArgs.Count()); for (int f = 0; f < GArgs.Count(); ++f) GCon->Logf(NAME_Init, "  #%d: <%s>", f, GArgs[f]); }
     FL_CollectPreinits();
+    //{ GCon->Logf(NAME_Init, "mainloop:001:::ARGC=%d", GArgs.Count()); for (int f = 0; f < GArgs.Count(); ++f) GCon->Logf(NAME_Init, "  #%d: <%s>", f, GArgs[f]); }
 
     // if( SDL_InitSubSystem(SDL_INIT_VIDEO) < 0 )
     if (SDL_Init(SDL_INIT_VIDEO) < 0) Sys_Error("SDL_InitSubSystem(): %s\n",SDL_GetError());
@@ -417,9 +428,19 @@ static void mainloop (int argc, char **argv) {
     //devprintf("\n\nERROR: %s\n", e.message);
     GCon->Logf("\n\nERROR: %s", e.message);
     Host_Shutdown();
+    if (developer) GLog.Log(NAME_Dev, "calling `SDL_Quit()`");
     SDL_Quit();
+    if (developer) GLog.Log(NAME_Dev, "exiting");
+#ifndef _WIN32
     exit(1);
+#else
+    TerminateProcess(GetCurrentProcess(), 1);
+    //ExitProcess(1);
+#endif
   }
+  if (developer) GLog.Log(NAME_Dev, "calling `SDL_Quit()`");
+  SDL_Quit();
+  if (developer) GLog.Log(NAME_Dev, "mainloop complete");
 }
 
 
@@ -462,10 +483,12 @@ int main (int argc, char **argv) {
     }
   }
   Z_ShuttingDown();
+
 #ifdef _WIN32
-  return 0;
+  //ExitProcess(0);
+  TerminateProcess(GetCurrentProcess(), 0);
 #elif defined(__SWITCH__)
   socketExit();
-  return 0;
 #endif
+  return 0;
 }

@@ -157,11 +157,17 @@ VSoundManager::~VSoundManager () {
   if (loaderThreadStarted) {
     GCon->Log("shutting down sound loader thread...");
     {
+      if (developer) GCon->Log(NAME_Dev, "   ...getting lock...");
       MyThreadLocker lock(&loaderLock);
+      if (developer) GCon->Log(NAME_Dev, "   ...setting variable...");
       loaderDoQuit = 1;
+      if (developer) GCon->Log(NAME_Dev, "   ...relasing lock...");
     }
     // the signal will be delivered when the mutex is released
+    if (developer) GCon->Log(NAME_Dev, "   ...sending signal lock...");
     mythread_cond_signal(&loaderCond);
+    if (developer) GCon->Log(NAME_Dev, "   ...joining threads...");
+    /*
     for (;;) {
       {
         MyThreadLocker lock(&loaderLock);
@@ -169,6 +175,10 @@ VSoundManager::~VSoundManager () {
       }
       Sys_Yield();
     }
+    */
+    mythread_join(loaderThread);
+    if (developer) GCon->Log(NAME_Dev, "   ...resetting threading flag...");
+    loaderThreadStarted = false;
     GCon->Log("sound loader thread shut down.");
   }
 
@@ -182,6 +192,7 @@ VSoundManager::~VSoundManager () {
       S_sfx[i].Sounds = nullptr;
     }
   }
+  if (developer) GCon->Logf(NAME_Dev, "all sounds freed.");
 
   for (int i = 0; i < NUM_AMBIENT_SOUNDS; ++i) {
     if (AmbientSounds[i]) {
@@ -189,6 +200,7 @@ VSoundManager::~VSoundManager () {
       AmbientSounds[i] = nullptr;
     }
   }
+  if (developer) GCon->Logf(NAME_Dev, "all ambient sounds freed.");
 
   for (int i = 0; i < SeqInfo.length(); ++i) {
     if (SeqInfo[i].Data) {
@@ -196,6 +208,7 @@ VSoundManager::~VSoundManager () {
       SeqInfo[i].Data = nullptr;
     }
   }
+  if (developer) GCon->Logf(NAME_Dev, "all sound sequences freed.");
 
 #if defined(VAVOOM_REVERB)
   for (VReverbInfo *R = Environments; R; ) {

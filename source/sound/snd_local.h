@@ -195,6 +195,7 @@ private:
   TMapNC<int, PendingSrc *> sourcesPending; // key is sound id
   TMapNC<ALuint, int> srcPendingSet; // key is source id, value is sound id
   TMapNC<ALuint, bool> srcErrorSet; // key is source id
+  TMapNC<ALuint, bool> activeSourceSet; // key is source id
 
   static VCvarF doppler_factor;
   static VCvarF doppler_velocity;

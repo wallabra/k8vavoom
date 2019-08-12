@@ -168,6 +168,8 @@ void Host_Init () {
   GCon->Log(NAME_Init, "---------------------------------------------------------------");
   GCon->Logf(NAME_Init, "Memory allocator: %s", Z_GetAllocatorType());
 
+  //{ GCon->Logf(NAME_Init, "HOST:::ARGC=%d", GArgs.Count()); for (int f = 0; f < GArgs.Count(); ++f) GCon->Logf(NAME_Init, "  #%d: <%s>", f, GArgs[f]); }
+
   if (GArgs.CheckParm("-vc-lax-override")) VMemberBase::optDeprecatedLaxOverride = true;
   if (GArgs.CheckParm("-vc-lax-states")) VMemberBase::optDeprecatedLaxStates = true;
   if (GArgs.CheckParm("-developer")) developer = true;
@@ -224,7 +226,7 @@ void Host_Init () {
   GInput = VInputPublic::Create();
   GInput->Init();
   GAudio = VAudioPublic::Create();
-  GAudio->Init();
+  if (GAudio) GAudio->Init();
   SCR_Init();
   CT_Init();
   V_Init();
@@ -776,40 +778,50 @@ void Host_Shutdown () {
   static bool shutting_down = false;
 
   if (shutting_down) {
-    GCon->Log("Recursive shutdown");
+    GLog.Log("Recursive shutdown");
     return;
   }
   shutting_down = true;
 
 #define SAFE_SHUTDOWN(name, args) \
-  try { /*GCon->Log("Doing "#name);*/ name args; } catch (...) { GCon->Log(#name" failed"); }
+  try { /*GLog.Log("Doing "#name);*/ name args; } catch (...) { GLog.Log(#name" failed"); }
 
 #ifdef CLIENT
   //k8:no need to do this:SAFE_SHUTDOWN(C_Shutdown, ()) // console
+  if (developer) GLog.Log(NAME_Dev, "shutting down client...");
   SAFE_SHUTDOWN(CL_Shutdown, ())
 #endif
 #ifdef SERVER
+  if (developer) GLog.Log(NAME_Dev, "shutting down server...");
   SAFE_SHUTDOWN(SV_Shutdown, ())
 #endif
   if (GNet) {
+    if (developer) GLog.Log(NAME_Dev, "shutting down network...");
     SAFE_SHUTDOWN(delete GNet,)
     GNet = nullptr;
   }
 #ifdef CLIENT
   if (GInput) {
+    if (developer) GLog.Log(NAME_Dev, "shutting down input...");
     SAFE_SHUTDOWN(delete GInput,)
     GInput = nullptr;
   }
+
+  if (developer) GLog.Log(NAME_Dev, "shutting down video...");
   SAFE_SHUTDOWN(V_Shutdown, ()) // video
+
   if (GAudio) {
+    if (developer) GLog.Log(NAME_Dev, "shutting down audio...");
     SAFE_SHUTDOWN(delete GAudio,)
     GAudio = nullptr;
+    if (developer) GLog.Log(NAME_Dev, "audio deleted...");
   }
   //k8:no need to do this:SAFE_SHUTDOWN(T_Shutdown, ()) // font system
 #endif
   //k8:no need to do this:SAFE_SHUTDOWN(Sys_Shutdown, ()) // nothing at all
 
   if (GSoundManager) {
+    if (developer) GLog.Log(NAME_Dev, "shutting down sound manager...");
     SAFE_SHUTDOWN(delete GSoundManager,)
     GSoundManager = nullptr;
   }
@@ -825,15 +837,18 @@ void Host_Shutdown () {
   //k8:no need to do this:SAFE_SHUTDOWN(GLanguage.FreeData, ())
   //k8:no need to do this:SAFE_SHUTDOWN(ShutdownDecorate, ())
 
+  if (developer) GLog.Log(NAME_Dev, "shutting down VObject...");
   SAFE_SHUTDOWN(VObject::StaticExit, ())
   //k8:no need to do this:SAFE_SHUTDOWN(VName::StaticExit, ())
   //SAFE_SHUTDOWN(Z_Shutdown, ())
-  //GCon->Log("k8vavoom: shutdown complete");
+  //GLog.Log("k8vavoom: shutdown complete");
 
 #ifdef CLIENT
+  if (developer) GLog.Log(NAME_Dev, "shutting down console...");
   C_Shutdown(); // save log
 #endif
 
   // prevent shitdoze crashes
+  if (developer) GLog.Log(NAME_Dev, "shutting down memory manager...");
   Z_ShuttingDown();
 }

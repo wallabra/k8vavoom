@@ -354,6 +354,7 @@ void VStreamMusicPlayer::Init () {
 //
 //==========================================================================
 void VStreamMusicPlayer::Shutdown () {
+  if (developer) GLog.Log(NAME_Dev, "VStreamMusicPlayer::Shutdown(): sending quit command");
   stpThreadSendCommand(STP_Quit);
   mythread_mutex_unlock(&stpLockPong);
 
@@ -364,6 +365,7 @@ void VStreamMusicPlayer::Shutdown () {
   mythread_mutex_destroy(&stpLockPong);
   mythread_cond_destroy(&stpCondPong);
 
+  if (developer) GLog.Log(NAME_Dev, "VStreamMusicPlayer::Shutdown(): shutdown complete!");
   SDLOG("MAIN: destroyed mutexes and conds");
 }
 

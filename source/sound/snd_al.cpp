@@ -182,8 +182,25 @@ int VOpenALDevice::SetChannels (int InNumChannels) {
 //
 //==========================================================================
 void VOpenALDevice::Shutdown () {
+  if (developer) GLog.Log(NAME_Dev, "VOpenALDevice::Shutdown(): shutting down OpenAL...");
+
+  srcPendingSet.clear();
+  srcErrorSet.clear();
+
+  if (activeSourceSet.length()) {
+    if (developer) GLog.Logf(NAME_Dev, "VOpenALDevice::Shutdown(): aborting %d active sources...", activeSourceSet.length());
+    while (activeSourceSet.length()) {
+      auto it = activeSourceSet.first();
+      ALuint src = it.getKey();
+      if (developer) GLog.Logf(NAME_Dev, "VOpenALDevice::Shutdown():   aborting source %u", src);
+      activeSourceSet.del(src);
+      alDeleteSources(1, &src);
+    }
+  }
+
   // delete buffers
   if (Buffers) {
+    if (developer) GLog.Log(NAME_Dev, "VOpenALDevice::Shutdown(): deleting sound buffers...");
     //alDeleteBuffers(GSoundManager->S_sfx.length(), Buffers);
     for (int bidx = 0; bidx < BufferCount; ++bidx) {
       if (Buffers[bidx]) {
@@ -198,16 +215,22 @@ void VOpenALDevice::Shutdown () {
 
   // destroy context
   if (Context) {
+    if (developer) GLog.Log(NAME_Dev, "VOpenALDevice::Shutdown(): destroying context...");
     alcSetThreadContext(nullptr);
+    //alcSetThreadContext(Context);
     alcDestroyContext(Context);
+    //alcSetThreadContext(nullptr);
     Context = nullptr;
   }
 
   // disconnect from a device
   if (Device) {
+    if (developer) GLog.Log(NAME_Dev, "VOpenALDevice::Shutdown(): closing device...");
     alcCloseDevice(Device);
     Device = nullptr;
+    Context = nullptr;
   }
+  if (developer) GLog.Log(NAME_Dev, "VOpenALDevice::Shutdown(): shutdown complete!");
 }
 
 
@@ -224,6 +247,7 @@ bool VOpenALDevice::AllocSource (ALuint *src) {
     GCon->Log(NAME_Dev, "Failed to gen OpenAL source");
     return false;
   }
+  activeSourceSet.put(*src, true);
   return true;
 }
 
@@ -312,6 +336,7 @@ int VOpenALDevice::LoadSound (int sound_id, ALuint *src) {
   if (alGetError() != AL_NO_ERROR) {
     GCon->Log(NAME_Dev, "Failed to gen OpenAL buffer");
     GSoundManager->DoneWithLump(sound_id);
+    activeSourceSet.del(*src);
     alDeleteSources(1, src);
     return VSoundManager::LS_Error;
   }
@@ -326,6 +351,7 @@ int VOpenALDevice::LoadSound (int sound_id, ALuint *src) {
   if (alGetError() != AL_NO_ERROR) {
     GCon->Log(NAME_Dev, "Failed to load buffer data");
     GSoundManager->DoneWithLump(sound_id);
+    activeSourceSet.del(*src);
     alDeleteSources(1, src);
     return VSoundManager::LS_Error;
   }
@@ -470,6 +496,7 @@ void VOpenALDevice::StopChannel (int Handle) {
     alSourceStop(hh);
   }
   srcErrorSet.del(hh);
+  activeSourceSet.del(hh);
   alDeleteSources(1, &hh);
 }
 
@@ -578,6 +605,7 @@ bool VOpenALDevice::OpenStream (int Rate, int Bits, int Channels) {
     GCon->Log(NAME_Dev, "Failed to gen source");
     return false;
   }
+  activeSourceSet.put(StrmSource, true);
   alSourcei(StrmSource, AL_SOURCE_RELATIVE, AL_TRUE);
   alGenBuffers(NUM_STRM_BUFFERS, StrmBuffers);
   alSourceQueueBuffers(StrmSource, NUM_STRM_BUFFERS, StrmBuffers);
@@ -595,6 +623,7 @@ bool VOpenALDevice::OpenStream (int Rate, int Bits, int Channels) {
 void VOpenALDevice::CloseStream () {
   if (StrmSource) {
     alDeleteBuffers(NUM_STRM_BUFFERS, StrmBuffers);
+    activeSourceSet.del(StrmSource);
     alDeleteSources(1, &StrmSource);
     StrmSource = 0;
   }
