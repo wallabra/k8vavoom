@@ -42,16 +42,38 @@ int zone_realloc_call_count = 0;
 int zone_free_call_count = 0;
 #endif
 
-static bool zShuttingDown = false;
 
 #ifdef VAVOOM_USE_MIMALLOC
-# define malloc_fn   mi_malloc
-# define realloc_fn  mi_realloc
-# define free_fn     mi_free
+static volatile bool zShuttingDown = false;
+#endif
+
+
+static inline void ZManDeactivate () {
+#ifdef VAVOOM_USE_MIMALLOC
+  __atomic_store_n(&zShuttingDown, true, __ATOMIC_SEQ_CST);
+#endif
+}
+
+
+static inline bool isZManActive () {
+#ifdef VAVOOM_USE_MIMALLOC
+  bool res = false;
+  __atomic_load(&zShuttingDown, &res, __ATOMIC_SEQ_CST);
+  return !res;
 #else
-# define malloc_fn   malloc
-# define realloc_fn  realloc
-# define free_fn     free
+  return true;
+#endif
+}
+
+
+#ifdef VAVOOM_USE_MIMALLOC
+# define malloc_fn   ::mi_malloc
+# define realloc_fn  ::mi_realloc
+# define free_fn     ::mi_free
+#else
+# define malloc_fn   ::malloc
+# define realloc_fn  ::realloc
+# define free_fn     ::free
 #endif
 
 
@@ -80,6 +102,9 @@ __attribute__((alloc_size(2))) void *Z_Realloc (void *ptr, size_t size) {
 #ifdef VAVOOM_CORE_COUNT_ALLOCS
   ++zone_realloc_call_count;
 #endif
+#ifdef VAVOOM_USE_MIMALLOC
+  if (size == 0 && !isZManActive()) return nullptr; // don't bother
+#endif
   if (size) {
     void *res = realloc_fn(ptr, size);
     if (!res) Sys_Error("out of memory for %u bytes!", (unsigned int)size);
@@ -94,9 +119,9 @@ __attribute__((alloc_size(2))) void *Z_Realloc (void *ptr, size_t size) {
 __attribute__((malloc)) __attribute__((alloc_size(1))) __attribute__((returns_nonnull))
 void *Z_Calloc (size_t size) {
 #if !defined(VAVOOM_USE_MIMALLOC)
-  void *res = calloc(1, (size > 0 ? size : 1));
+  void *res = ::calloc(1, (size > 0 ? size : 1));
 #else
-  void *res = mi_zalloc(size > 0 ? size : 1);
+  void *res = ::mi_zalloc(size > 0 ? size : 1);
 #endif
   if (!res) Sys_Error("out of memory for %u bytes!", (unsigned int)size);
 #if !defined(VAVOOM_USE_MIMALLOC)
@@ -107,7 +132,7 @@ void *Z_Calloc (size_t size) {
 
 
 void Z_Free (void *ptr) {
-  if (zShuttingDown) return; // shitdoze hack
+  if (!isZManActive()) return; // shitdoze hack
 #ifdef VAVOOM_CORE_COUNT_ALLOCS
   ++zone_free_call_count;
 #endif
@@ -119,13 +144,13 @@ void Z_Free (void *ptr) {
 // call this when exiting a thread function, to reclaim thread heaps
 void Z_ThreadDone () {
 #if defined(VAVOOM_USE_MIMALLOC)
-  mi_thread_done();
+  if (isZManActive()) ::mi_thread_done();
 #endif
 }
 
 
 void Z_ShuttingDown () {
-  zShuttingDown = true;
+  ZManDeactivate();
 }
 
 
@@ -151,14 +176,14 @@ void *operator new[] (size_t size) noexcept(false) {
 }
 
 void operator delete (void *p) {
-  if (zShuttingDown) return; // shitdoze hack
+  if (!isZManActive()) return; // shitdoze hack
   //fprintf(stderr, "delete (%p)\n", p);
   Z_Free(p);
 }
 
 
 void operator delete[] (void *p) {
-  if (zShuttingDown) return; // shitdoze hack
+  if (!isZManActive()) return; // shitdoze hack
   //fprintf(stderr, "delete[] (%p)\n", p);
   Z_Free(p);
 }
