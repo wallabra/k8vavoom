@@ -90,6 +90,7 @@ void FL_CollectPreinits () {
   bool inMinus = false;
   while (aidx < GArgs.Count()) {
     const char *args = GArgs[aidx];
+    //GLog.Logf("FL_CollectPreinits: argc=%d; aidx=%d; inminus=%d; args=<%s>", GArgs.Count(), aidx, (int)inMinus, args);
     if (!inMinus) {
       if (!args[0]) {
         GArgs.removeAt(aidx);
@@ -105,6 +106,7 @@ void FL_CollectPreinits () {
     if (args[0] != '+') {
       continue;
     }
+    // stray "+"?
     if (!args[1]) {
       inMinus = true;
       continue;
@@ -124,6 +126,7 @@ void FL_CollectPreinits () {
     while (args[spos] && (vuint8)(args[spos]) <= ' ') ++spos;
     if (args[spos]) {
       // in the same arg
+      /*
       if (aidx < GArgs.Count()) {
         const char *a2 = GArgs[aidx];
         if (a2[0] != '+' && a2[0] != '-') {
@@ -131,6 +134,7 @@ void FL_CollectPreinits () {
           continue;
         }
       }
+      */
       val = VStr(args+spos);
       // remove this arg
       --aidx;
@@ -138,6 +142,7 @@ void FL_CollectPreinits () {
     } else {
       // in another arg
       if (aidx >= GArgs.Count()) break;
+      /*
       if (aidx+1 < GArgs.Count()) {
         const char *a2 = GArgs[aidx+1];
         if (a2[0] != '+' && a2[0] != '-') {
@@ -145,6 +150,7 @@ void FL_CollectPreinits () {
           continue;
         }
       }
+      */
       val = VStr(GArgs[aidx]);
       // remove two args
       --aidx;
@@ -155,6 +161,7 @@ void FL_CollectPreinits () {
     ArgVarValue &vv = preinitCV.alloc();
     vv.varname = vname;
     vv.value = val;
+    //GLog.Logf("FL_CollectPreinits:   new var '%s' with value '%s'", *vname, *val);
     //HACK!
     if (vname.ICmp("__dbg_debug_preinit") == 0) VCvar::Set(*vname, val);
   }
