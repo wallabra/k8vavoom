@@ -2503,7 +2503,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
               int acttype = 0;
               for (;;) {
                      if (sc->Check("THINGSPEC_Default") || sc->Check("AF_Default")) acttype |= THINGSPEC_Default;
-                //else if (sc->Check("THINGSPEC_ThingActs") || sc->Check("AF_ThingActs")) acttype |= THINGSPEC_ThingActs; // unsupported
+                else if (sc->Check("THINGSPEC_ThingActs") || sc->Check("AF_ThingActs")) acttype |= THINGSPEC_ThingActs; // unsupported
                 else if (sc->Check("THINGSPEC_ThingTargets") || sc->Check("AF_ThingTargets")) acttype |= THINGSPEC_ThingTargets;
                 else if (sc->Check("THINGSPEC_TriggerTargets") || sc->Check("AF_TriggerTargets")) acttype |= THINGSPEC_TriggerTargets;
                 else if (sc->Check("THINGSPEC_MonsterTrigger") || sc->Check("AF_MonsterTrigger")) acttype |= THINGSPEC_MonsterTrigger;

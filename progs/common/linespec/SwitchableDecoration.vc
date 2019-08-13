@@ -72,7 +72,7 @@ int ActivationType /*= THINGSPEC_Default*/;
 //==========================================================================
 final bool checkActivatorValidity (EntityEx Activator) {
   if (ActivationType) {
-    //if (ActivationType&AF_ThingActs) Activator = self; //k8:not sure
+    //if (ActivationType&AF_ThingActs) Activator = self; //k8:not sure; done in caller
     if (Activator) {
       if (!Activator.bIsPlayer) {
         int act = Activator.ClassifyActor();
