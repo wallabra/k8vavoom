@@ -382,17 +382,18 @@ void VAudio::Init () {
 //==========================================================================
 void VAudio::Shutdown () {
   // stop playback of all sounds
-  if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): stopping sequences...");
-  StopAllSequences();
-  if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): stopping sounds...");
-  StopAllSound();
   if (StreamMusicPlayer) {
     //if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): shutting down music player...");
     //StreamMusicPlayer->Shutdown();
     if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): deleting music player...");
+    StreamMusicPlayer->Shutdown();
     delete StreamMusicPlayer;
     StreamMusicPlayer = nullptr;
   }
+  if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): stopping sequences...");
+  StopAllSequences();
+  if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): stopping sounds...");
+  StopAllSound();
   if (SoundDevice) {
     //if (developer) GLog.Log(NAME_Dev, "VAudio::Shutdown(): shutting down sound device...");
     //SoundDevice->Shutdown();

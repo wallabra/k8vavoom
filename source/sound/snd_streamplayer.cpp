@@ -354,19 +354,23 @@ void VStreamMusicPlayer::Init () {
 //
 //==========================================================================
 void VStreamMusicPlayer::Shutdown () {
-  if (developer) GLog.Log(NAME_Dev, "VStreamMusicPlayer::Shutdown(): sending quit command");
-  stpThreadSendCommand(STP_Quit);
-  mythread_mutex_unlock(&stpLockPong);
+  if (SoundDevice) {
+    if (developer) GLog.Log(NAME_Dev, "VStreamMusicPlayer::Shutdown(): sending quit command");
+    stpThreadSendCommand(STP_Quit); // this joins player thread
+    mythread_mutex_unlock(&stpLockPong);
 
-  // threading cleanup
-  mythread_mutex_destroy(&stpPingLock);
-  mythread_cond_destroy(&stpPingCond);
+    // threading cleanup
+    mythread_mutex_destroy(&stpPingLock);
+    mythread_cond_destroy(&stpPingCond);
 
-  mythread_mutex_destroy(&stpLockPong);
-  mythread_cond_destroy(&stpCondPong);
+    mythread_mutex_destroy(&stpLockPong);
+    mythread_cond_destroy(&stpCondPong);
 
-  if (developer) GLog.Log(NAME_Dev, "VStreamMusicPlayer::Shutdown(): shutdown complete!");
-  SDLOG("MAIN: destroyed mutexes and conds");
+    if (developer) GLog.Log(NAME_Dev, "VStreamMusicPlayer::Shutdown(): shutdown complete!");
+    SDLOG("MAIN: destroyed mutexes and conds");
+    SoundDevice = nullptr;
+  }
+  threadInited = false;
 }
 
 
@@ -376,7 +380,10 @@ void VStreamMusicPlayer::Shutdown () {
 //
 //==========================================================================
 void VStreamMusicPlayer::Play (VAudioCodec *InCodec, const char *InName, bool InLoop) {
-  if (!threadInited) Sys_Error("FATAL: cannot load song to uninited stream player");
+  if (!threadInited) {
+    GLog.Logf(NAME_Error, "*** cannot load song to uninited stream player!");
+    return;
+  }
   stpThreadSendCommand(STP_Stop);
   if (InName && InName[0]) {
     bool xopened = SoundDevice->OpenStream(InCodec->SampleRate, InCodec->SampleBits, InCodec->NumChannels);
@@ -401,7 +408,10 @@ void VStreamMusicPlayer::Play (VAudioCodec *InCodec, const char *InName, bool In
 //
 //==========================================================================
 void VStreamMusicPlayer::LoadAndPlay (const char *InName, bool InLoop) {
-  if (!threadInited) Sys_Error("FATAL: cannot load song to uninited stream player");
+  if (!threadInited) {
+    GLog.Logf(NAME_Error, "*** cannot load song to uninited stream player!");
+    return;
+  }
   if (!InName) InName = "";
   memset(namebuf, 0, sizeof(namebuf));
   strncpy(namebuf, InName, sizeof(namebuf)-1);

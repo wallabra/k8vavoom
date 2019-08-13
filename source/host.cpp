@@ -815,6 +815,7 @@ void Host_Shutdown () {
 
   if (GAudio) {
     if (developer) GLog.Log(NAME_Dev, "shutting down audio...");
+    GAudio->Shutdown();
     SAFE_SHUTDOWN(delete GAudio,)
     GAudio = nullptr;
     if (developer) GLog.Log(NAME_Dev, "audio deleted...");

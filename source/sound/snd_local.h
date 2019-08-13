@@ -357,7 +357,7 @@ public:
   bool Stopping;
   bool Paused;
   double FinishTime;
-  VOpenALDevice *SoundDevice;
+  VOpenALDevice *SoundDevice; // `nullptr` means "shutdown called"
 
   VStreamMusicPlayer (VOpenALDevice *InSoundDevice)
     : lastVolume(1.0f)
@@ -373,7 +373,7 @@ public:
     , stpNewVolume(1.0f)
   {}
 
-  ~VStreamMusicPlayer () {}
+  ~VStreamMusicPlayer () { Shutdown(); }
 
   void Init ();
   void Shutdown ();
