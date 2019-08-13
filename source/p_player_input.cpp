@@ -193,8 +193,8 @@ static VCvarF cl_anglespeedkey("cl_anglespeedkey", "1.5", "Fast turning multipli
 static VCvarF cl_deathroll("cl_deathroll", "75", "Deathroll amount.", CVAR_Archive);
 static VCvarF cl_deathrollspeed("cl_deathrollspeed", "80", "Deathroll speed.", CVAR_Archive);
 
-static VCvarF mouse_x_sensitivity("mouse_x_sensitivity", "5.5", "Horizontal mouse sensitivity.", CVAR_Archive);
-static VCvarF mouse_y_sensitivity("mouse_y_sensitivity", "5.5", "Vertical mouse sensitivity.", CVAR_Archive);
+VCvarF mouse_x_sensitivity("mouse_x_sensitivity", "5.5", "Horizontal mouse sensitivity.", CVAR_Archive);
+VCvarF mouse_y_sensitivity("mouse_y_sensitivity", "5.5", "Vertical mouse sensitivity.", CVAR_Archive);
 static VCvarB mouse_look("mouse_look", true, "Allow mouselook?", CVAR_Archive);
 static VCvarB mouse_look_horisontal("mouse_look_horisontal", true, "Allow horisontal mouselook?", CVAR_Archive);
 static VCvarB mouse_look_vertical("mouse_look_vertical", true, "Allow vertical mouselook?", CVAR_Archive);
@@ -203,8 +203,8 @@ static VCvarB lookstrafe("lookstrafe", false, "Allow lookstrafe?", CVAR_Archive)
 static VCvarB lookspring_mouse("lookspring_mouse", false, "Allow lookspring for mouselook key?", CVAR_Archive);
 static VCvarB lookspring_keyboard("lookspring_keyboard", false, "Allow lookspring for keyboard view keys?", CVAR_Archive);
 
-static VCvarF m_yaw("m_yaw", "0.022", "Mouse yaw speed.", CVAR_Archive);
-static VCvarF m_pitch("m_pitch", "0.022", "Mouse pitch speed.", CVAR_Archive);
+VCvarF m_yaw("m_yaw", "0.022", "Mouse yaw speed.", CVAR_Archive);
+VCvarF m_pitch("m_pitch", "0.022", "Mouse pitch speed.", CVAR_Archive);
 static VCvarF m_forward("m_forward", "1", "Mouse forward speed.", CVAR_Archive);
 static VCvarF m_side("m_side", "0.8", "Mouse sidestepping speed.", CVAR_Archive);
 

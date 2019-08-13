@@ -76,6 +76,12 @@ static VCvarB acs_dump_uservar_access("acs_dump_uservar_access", false, "Dump AC
 static VCvarB acs_use_doomtic_granularity("acs_use_doomtic_granularity", false, "Should ACS use DooM tic granularity for delays?", CVAR_Archive);
 static VCvarB acs_enabled("acs_enabled", true, "DEBUG: are ACS scripts enabled?", CVAR_PreInit);
 
+extern VCvarF mouse_x_sensitivity;
+extern VCvarF mouse_y_sensitivity;
+extern VCvarF m_yaw;
+extern VCvarF m_pitch;
+
+
 static bool acsReportedBadOpcodesInited = false;
 static bool acsReportedBadOpcodes[65536];
 
@@ -5788,24 +5794,16 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       {
         VStr cvname = GetStr(sp[-1]);
         int val;
-        if (cvname.ICmp("screenblocks") == 0) {
-          val = acs_screenblocks_override;
-          if (val < 0) val = VCvar::GetInt(*cvname);
-        } else if (cvname.ICmp("vid_defwidth") == 0) {
-          //val = (int)(VirtualWidth*65536.0f);
-          val = (int)(640.0f*65536.0f);
-        } else if (cvname.ICmp("vid_defheight") == 0) {
-          //val = (int)(VirtualHeight*65536.0f);
-          val = (int)(480.0f*65536.0f);
-        } else if (cvname.ICmp("vid_aspect") == 0) {
-          val = 0;
-        } else if (cvname.ICmp("vid_nowidescreen") == 0) {
-          val = 1;
-        } else if (cvname.ICmp("tft") == 0) {
-          val = 0;
-        } else {
-          val = VCvar::GetInt(*cvname);
-        }
+             if (cvname.strEquCI("screenblocks")) { val = acs_screenblocks_override; if (val < 0) val = VCvar::GetInt(*cvname); }
+        else if (cvname.strEquCI("vid_defwidth")) { /*val = (int)(VirtualWidth*65536.0f);*/ val = (int)(640.0f*65536.0f); }
+        else if (cvname.strEquCI("vid_defheight")) { /*val = (int)(VirtualHeight*65536.0f);*/ val = (int)(480.0f*65536.0f); }
+        else if (cvname.strEquCI("vid_aspect")) { val = 0; }
+        else if (cvname.strEquCI("vid_nowidescreen")) { val = 1; }
+        else if (cvname.strEquCI("tft")) { val = 0; }
+        else if (cvname.strEquCI("m_yaw")) { val = (int)(m_yaw.asFloat()*65536.0f); }
+        else if (cvname.strEquCI("m_pitch")) { val = (int)(m_pitch.asFloat()*65536.0f); }
+        else if (cvname.strEquCI("mouse_sensitivity")) { val = (int)(max2(mouse_x_sensitivity.asFloat(), mouse_y_sensitivity.asFloat())*65536.0f); }
+        else { val = VCvar::GetInt(*cvname); }
         //GCon->Logf("GetCvar(%s)=%d", *cvname, val);
         sp[-1] = val;
       }
