@@ -49,6 +49,7 @@ override void CreateControlKeyChoices () {
           }
         }
       }
+
       // also look inside of the binds list
       if (binds_list.length > 0) {
         foreach (auto j; 0..binds_list.length) {

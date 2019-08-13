@@ -62,19 +62,15 @@ int strifeMode = 0; // 0: don't care; -1: disabled in Strife; 1: enabled in Stri
 
 //==========================================================================
 //
-//  GenerateArrays
-//
-//  This method generates dynamic arrays of special controls from KEYCONF
-//  scripts
+//  ParseKeyConfLump
 //
 //==========================================================================
-void GenerateArrays () {
-  // This method parses KEYCONF special controls to be added to
-  // a special controls screen to display
-  ScriptsParser kc = ScriptsParser(SpawnObject(ScriptsParser));
+void ParseKeyConfLump (int lump) {
+  if (lump < 0) return;
+  auto kc = SpawnObject(ScriptsParser);
+  scope(exit) delete kc;
+  kc.OpenLumpIndex(lump);
 
-  kc.OpenLumpName('keyconf');
-  // Lump is present, scan it until we find a 'addkeysection'
   while (!kc.AtEnd()) {
     // We are only interested in a couple of commands, like
     // 'addkeysection', 'bind', 'defaultbind' and 'addmenukey'
@@ -83,41 +79,62 @@ void GenerateArrays () {
       kc.ExpectString();
       AltTitle = kc.String;
       // Ignore the config section
-      // (until we think a way to implement it)
+      // (until we think out a way to implement it)
       kc.ExpectString();
+      continue;
     }
     if (kc.Check("alias")) {
       // Store alias name in the special array
-      aliases_list.length += 1;
+      auto aa = aliases_list.alloc();
       kc.ExpectString();
-      aliases_list[$-1].alias_name = kc.String;
+      aa.alias_name = kc.String;
       kc.ExpectString();
-      aliases_list[$-1].command = kc.String;
+      aa.command = kc.String;
+      continue;
     }
     if (kc.Check("defaultbind")) {
-      dbinds_list.length += 1;
+      auto bb = dbinds_list.alloc();
       kc.ExpectString();
-      dbinds_list[$-1].bind_key = kc.String;
+      bb.bind_key = kc.String;
       kc.ExpectString();
-      dbinds_list[$-1].alias_name = kc.String;
+      bb.alias_name = kc.String;
+      continue;
     }
     if (kc.Check("bind")) {
-      binds_list.length += 1;
+      auto bb = binds_list.alloc();
       kc.ExpectString();
-      binds_list[$-1].bind_key = kc.String;
+      bb.bind_key = kc.String;
       kc.ExpectString();
-      binds_list[$-1].alias_name = kc.String;
+      bb.alias_name = kc.String;
+      continue;
     }
     if (kc.Check("addmenukey")) {
-      menukeys_list.length += 1;
+      auto mk = menukeys_list.alloc();
       kc.ExpectString();
-      menukeys_list[$-1].desc = kc.String;
+      mk.desc = kc.String;
       kc.ExpectString();
-      menukeys_list[$-1].alias_name = kc.String;
+      mk.alias_name = kc.String;
+      continue;
     }
     kc.GetString();
   }
-  kc.Destroy();
+}
+
+
+//==========================================================================
+//
+//  GenerateArrays
+//
+//  This method generates dynamic arrays of special controls from KEYCONF
+//  scripts
+//
+//==========================================================================
+void GenerateArrays () {
+  foreach (int lump; WadIterateNS(EWadNamespace.Global)) {
+    if (W_LumpName(lump) == 'keyconf') {
+      ParseKeyConfLump(lump);
+    }
+  }
 }
 
 
