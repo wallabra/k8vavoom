@@ -605,49 +605,98 @@ final void decorate_A_ChangeFlag (string flagname, int value) {
 
 //==========================================================================
 //
-//  decorate_A_DamageSelf
+//  doDamageSomething
+//
+//  common code for `A_DamageXXX()`
 //
 //==========================================================================
-final void decorate_A_DamageSelf (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
+final void doDamageSomething (EntityEx dest, int amount, name damagetype, int flags, optional name filter, optional name species,
+                              optional int src, optional int inflict)
+{
+  if (!dest) return;
+
   if (amount == 0 && !(flags&DMSS_KILL)) return;
 
-  // 0: unknown; -1: filter didn't hit; 1: filter hit
+  // 0: unknown (considered true, lol); -1: filter didn't hit; 1: filter hit
   int flt = 0, spc = 0;
 
   // check filters
-  if (specified_filter && filter) flt = (nameicmp(GetClassName(Class), filter) != 0 ? 1 : -1); //k8: should we check replacements or inheritance chain?
-  if (specified_species && species) spc = (nameicmp(GetSpecies(), species) != 0 ? 1 : -1);
+  if (specified_filter && filter) flt = (nameicmp(GetClassName(dest.Class), filter) != 0 ? 1 : -1); //k8: should we check replacements or inheritance chain?
+  if (specified_species && species) spc = (nameicmp(dest.GetSpecies(), species) != 0 ? 1 : -1);
 
-  if (flt && (flags&DMSS_EXFILTER)) flt = -flt;
-  if (spc && (flags&DMSS_EXSPECIES)) spc = -spc;
+  // invert filters, if necessary
+  if (flags&DMSS_EXFILTER) flt = -flt;
+  if (flags&DMSS_EXSPECIES) spc = -spc;
 
+  // process filters
   if (flags&DMSS_EITHER) {
     if (spc < 0 && flt < 0) return;
   } else {
     if (spc < 0 || flt < 0) return;
   }
 
+  // get source and inflictor
   EntityEx source = EntityEx(DecorDoAAPtr('A_DamageSelf', src!optional));
   EntityEx inflictor = EntityEx(DecorDoAAPtr('A_DamageSelf', inflict!optional));
 
+  // fix damage type
   if (inflictor && (flags&DMSS_INFLICTORDMGTYPE)) damagetype = inflictor.DamageType;
 
-  //if (flags) { printwarn("DECORATE: A_DamageSelf with `flags` is not supported yet!"); }
-
-  if ((flags&DMSS_KILL) && amount < Health) amount = Health;
+  if ((flags&DMSS_KILL) && amount < dest.Health) amount = dest.Health;
+  if (amount == 0) return; // just in case
 
   //DMSS_FOILBUDDHA = 0x00000010 //k8: no wai
   if (amount < 0) {
     // heal
-    GiveBody(-amount);
+    dest.GiveBody(-amount);
   } else {
-    Damage(inflictor:inflictor, source:source, amount, DmgType:damagetype!optional,
+    dest.Damage(inflictor:inflictor, source:source, amount, DmgType:damagetype,
       NoArmor:!(flags&DMSS_AFFECTARMOR),
       forced:!!(flags&DMSS_FOILINVUL),
       ignoreDamageFactors:!!(flags&DMSS_NOFACTOR),
       ignorePowerups:!!(flags&DMSS_NOPROTECT)
     );
   }
+}
+
+
+//==========================================================================
+//
+//  decorate_A_DamageSelf
+//
+//==========================================================================
+final void decorate_A_DamageSelf (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
+  doDamageSomething(self, amount, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
+}
+
+
+//==========================================================================
+//
+//  decorate_A_DamageTarget
+//
+//==========================================================================
+final void decorate_A_DamageTarget (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
+  doDamageSomething(Target, amount, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
+}
+
+
+//==========================================================================
+//
+//  decorate_A_DamageMaster
+//
+//==========================================================================
+final void decorate_A_DamageMaster (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
+  doDamageSomething(Master, amount, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
+}
+
+
+//==========================================================================
+//
+//  decorate_A_DamageTracer
+//
+//==========================================================================
+final void decorate_A_DamageTracer (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
+  doDamageSomething(Tracer, amount, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
 }
 
 
