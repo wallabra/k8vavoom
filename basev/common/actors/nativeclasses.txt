@@ -463,6 +463,7 @@ class Actor extends Thinker
   action native GetZAt ([float x, float y, float angle, int flags, int pick_pointer);
   action native GetDistance (bool checkz, int ptr_select);
   action native GetAngle (int flags, optional int ptr_select);
+  action native IsPointerEqual (int aptr0, int aptr1);
 
   // k8 extensions
   // does shell-like glob matching

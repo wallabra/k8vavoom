@@ -418,6 +418,18 @@ final float decorate_GetAngle (optional int flags, optional int aptr) {
 
 //==========================================================================
 //
+//  decorate_IsPointerEqual
+//
+//==========================================================================
+final bool decorate_IsPointerEqual (optional int aptr0, optional int aptr1) {
+  Entity e0 = DecorDoAAPtr('IsPointerEqual', aptr0);
+  Entity e1 = DecorDoAAPtr('IsPointerEqual', aptr1);
+  return (e0 == e1);
+}
+
+
+//==========================================================================
+//
 //  A_SpawnProjectile
 //
 //==========================================================================
