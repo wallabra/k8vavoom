@@ -670,7 +670,32 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
           delete this;
           return enew;
         }
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+        // `A_SpawnParticle()` color
+        if (argnum == 1 && VStr::strEqu(funcName, "A_SpawnParticle")) {
+          vuint32 clr = M_ParseColor(*str, /*retZeroIfInvalid*/true);
+          if (clr == 0) {
+            ParseWarning((aloc ? *aloc : Loc), "color argument \"%s\" to `%s` is not a valid color (replaced with black)!", *str, funcName);
+          }
+          VExpression *enew = new VIntLiteral((vint32)clr, Loc);
+          delete this;
+          return enew;
+        }
+#endif
       }
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+      // `A_SpawnParticle()` color
+      if (argnum == 1 && IsDecorateSingleName() && VStr::strEqu(funcName, "A_SpawnParticle")) {
+        VDecorateSingleName *e = (VDecorateSingleName *)this;
+        vuint32 clr = M_ParseColor(*e->Name, /*retZeroIfInvalid*/true);
+        if (clr == 0) {
+          ParseWarning((aloc ? *aloc : Loc), "color argument \"%s\" to `%s` is not a valid color (replaced with black)!", *e->Name, funcName);
+        }
+        VExpression *enew = new VIntLiteral((vint32)clr, Loc);
+        delete this;
+        return enew;
+      }
+#endif
       // none as literal?
       if (IsNoneLiteral()) {
         ParseWarningArError((aloc ? *aloc : Loc), "`%s` argument #%d should be number (replaced with 0); PLEASE, FIX THE CODE!", funcName, argnum);
