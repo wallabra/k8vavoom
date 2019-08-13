@@ -26,6 +26,190 @@
 //**************************************************************************
 class MenuScreenSpecialControls : MenuScreenControls;
 
+// we'll create some arrays here for special controls
+struct alias_t {
+  string alias_name; // name of the alias
+  string command; // command to type from console
+  string secid; // section id
+};
+
+
+struct bind {
+  string bind_key; // key to bind this alias to
+  string alias_name; // name of the alias
+  string secid; // section id
+};
+
+
+struct menukey {
+  string desc; // description of the key for menu
+  string alias_name; // name of the alias
+  string secid; // section id
+};
+
+
+struct SectionInfo {
+  string secname;
+  string secid;
+};
+
+// jeep dynamic arrays of each of these so that we "build"
+// the special control sections in the menu
+array!alias_t aliases_list;
+array!bind dbinds_list;
+array!bind binds_list;
+array!menukey menukeys_list;
+
+// all known sections
+array!SectionInfo sections;
+
+//string AltTitle; // alternate title for the screen (if any)
+
+
+//==========================================================================
+//
+//  xstrip
+//
+//==========================================================================
+private static final string xstrip (string s) {
+  while (s.length && s[0] <= " ") s = s[1..$];
+  while (s.length && s[$-1] <= " ") s = s[0..$-1];
+  return s;
+}
+
+
+//==========================================================================
+//
+//  ParseKeyConfLump
+//
+//==========================================================================
+void ParseKeyConfLump (int lump) {
+  if (lump < 0) return;
+  auto kc = SpawnObject(ScriptsParser);
+  scope(exit) delete kc;
+  kc.OpenLumpIndex(lump);
+  string secid;
+  int scnum = 0;
+  while (!kc.AtEnd()) {
+    // We are only interested in a couple of commands, like
+    // 'addkeysection', 'bind', 'defaultbind' and 'addmenukey'
+    if (kc.Check("addkeysection")) {
+      // addkeysection "Title" keysection<-(for config file)
+      kc.ExpectString();
+      string secname = xstrip(kc.String);
+      if (!secname) secname = va("--- %s ---", scnum++);
+      // section id
+      kc.ExpectString();
+      secid = kc.String;
+      if (!secid) secid = secname;
+      sections.length += 1;
+      sections[$-1].secname = secname;
+      sections[$-1].secid = secid;
+      continue;
+    }
+    if (kc.Check("alias")) {
+      // store alias name in the special array
+      auto aa = aliases_list.alloc();
+      kc.ExpectString();
+      aa.alias_name = xstrip(kc.String);
+      kc.ExpectString();
+      aa.command = xstrip(kc.String);
+      aa.secid = secid;
+      continue;
+    }
+    if (kc.Check("defaultbind")) {
+      auto bb = dbinds_list.alloc();
+      kc.ExpectString();
+      bb.bind_key = xstrip(kc.String);
+      kc.ExpectString();
+      bb.alias_name = xstrip(kc.String);
+      bb.secid = secid;
+      continue;
+    }
+    if (kc.Check("bind")) {
+      auto bb = binds_list.alloc();
+      kc.ExpectString();
+      bb.bind_key = xstrip(kc.String);
+      kc.ExpectString();
+      bb.alias_name = xstrip(kc.String);
+      bb.secid = secid;
+      continue;
+    }
+    if (kc.Check("addmenukey")) {
+      auto mk = menukeys_list.alloc();
+      kc.ExpectString();
+      mk.desc = xstrip(kc.String);
+      kc.ExpectString();
+      mk.alias_name = xstrip(kc.String);
+      mk.secid = secid;
+      continue;
+    }
+    kc.GetString();
+  }
+}
+
+
+//==========================================================================
+//
+//  GenerateArrays
+//
+//  This method generates dynamic arrays of special controls from KEYCONF
+//  scripts
+//
+//==========================================================================
+void GenerateArrays () {
+  foreach (int lump; WadIterateNS(EWadNamespace.Global)) {
+    if (W_LumpName(lump) == 'keyconf') {
+      ParseKeyConfLump(lump);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  AddControl
+//
+//==========================================================================
+void AddControl (string Text, string CommandOn, string CommandOff) {
+  MenuControlKey newCtl = MenuControlKey(NewChild(MenuControlKey));
+  //SetChoiceInitialSizeSimple(newCtl);
+  newCtl.SetOrigin(/*ChoicesStartX*/Width/2, ChoicesStartY+NumControls*10);
+  newCtl.Width = Width;
+  newCtl.CursorXOffs = Width/2;
+  newCtl.CursorXOffsHR = Width/2;
+  newCtl.Height = 10;
+  newCtl.Text = Text;
+  newCtl.CommandOn = CommandOn;
+  newCtl.CommandOff = CommandOff;
+  newCtl.strifeMode = strifeMode;
+       if (strifeMode < 0) newCtl.Disabled = IsStrife;
+  else if (strifeMode > 0) newCtl.Disabled = !IsStrife;
+  ++NumControls;
+}
+
+
+//==========================================================================
+//
+//  AddText
+//
+//==========================================================================
+void AddText (string Text) {
+  if (NumControls) ++NumControls;
+  auto Btn = MenuTextButton(NewChild(MenuSmallTextButton));
+  Btn.SetOrigin(/*ChoicesStartX*/Width/2, ChoicesStartY+NumControls*10);
+  //SetChoiceInitialSizeSimple(Btn);
+  Btn.Width = Width;
+  Btn.CursorXOffs = Width/2;
+  Btn.CursorXOffsHR = Width/2;
+  Btn.Text = Text;
+  Btn.Focusable = false;
+  Btn.TextColor = CR_OLIVE;
+  Btn.TextColorFocus = CR_OLIVE;
+  Btn.Height = 10;
+  ++NumControls;
+}
+
 
 //==========================================================================
 //
@@ -36,6 +220,20 @@ override void CreateControlKeyChoices () {
   // first, generate arrays for using for building controls list
   GenerateArrays();
 
+  foreach (const ref auto sec; sections) {
+    bool addHeader = true;
+    foreach (const ref auto mk; menukeys_list) {
+      if (mk.secid != sec.secid) continue;
+      if (!mk.desc || !mk.alias_name) continue;
+      if (addHeader) {
+        addHeader = false;
+        AddText(sec.secname);
+      }
+      AddControl(mk.desc, mk.alias_name, "");
+    }
+  }
+
+  /*
   if (menukeys_list.Num > 0) {
     foreach (auto i; 0..menukeys_list.length) {
       // for each menukey, we must check the alias name inside of all defaultbinds and binds, to extract key binds
@@ -61,6 +259,7 @@ override void CreateControlKeyChoices () {
       }
     }
   }
+  */
 }
 
 

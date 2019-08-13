@@ -128,3 +128,13 @@ bool MN_Active () {
 COMMAND(SetMenu) {
   GClGame->eventSetMenu(Args.Num() > 1 ? *Args[1] : "");
 }
+
+
+//==========================================================================
+//
+//  COMMAND OpenMenu
+//
+//==========================================================================
+COMMAND(OpenMenu) {
+  GClGame->eventSetMenu(Args.Num() > 1 ? *Args[1] : "");
+}
