@@ -403,9 +403,13 @@ void DamageEx (EntityEx inflictor, EntityEx source, int damage, name DmgType, bo
 //
 //  "spawnBlood" can be set to spawn blood
 //
+//  `ignorePowerups` and `NoArmor` now does the same thing (sigh)
+//
 //==========================================================================
 final void Damage (EntityEx inflictor, EntityEx source, int damage,
-                   optional name DmgType, optional bool NoArmor, optional bool forced, optional bool spawnBlood)
+                   optional name DmgType, optional bool NoArmor, optional bool forced,
+                   optional bool spawnBlood,
+                   optional bool ignoreDamageFactors, optional bool ignorePowerups)
 {
   if (!bShootable && !forced) return; // shouldn't happen...
 
@@ -499,7 +503,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
   if (nameicmp(DmgType, 'Fire') == 0 && bFireResist) {
     damage >>= 1;
   } else { // k8: still check damage factors?
-    if (DamageFactors.length) {
+    if (!ignoreDamageFactors && DamageFactors.length) {
       float dfactor = FindDamageFactor(DmgType, float.nan);
       if (!dfactor.isnan) {
         //printdebug("%C: damage type %s reduction factor is %s", self, DmgType, dfactor);
@@ -578,7 +582,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
       return;
     }
 
-    if (!NoArmor && Inventory) {
+    if (!NoArmor && !ignorePowerups && Inventory) {
       int NewDmg = damage;
       Inventory.AbsorbDamage(source, damage, DmgType, NewDmg);
       damage = NewDmg;

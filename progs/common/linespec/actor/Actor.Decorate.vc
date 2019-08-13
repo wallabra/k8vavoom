@@ -104,6 +104,20 @@ enum /*FMDFlags*/ {
   FMDF_NOANGLE     = 1<<2,
 };
 
+// flags for A_Damage (Master/Target/Tracer/Children/Siblings/Self) series
+enum /*EDamageFlags*/ {
+  DMSS_FOILINVUL = 0x00000001,
+  DMSS_AFFECTARMOR = 0x00000002,
+  DMSS_KILL = 0x00000004,
+  DMSS_NOFACTOR = 0x00000008,
+  DMSS_FOILBUDDHA = 0x00000010,
+  DMSS_NOPROTECT = 0x00000020,
+  DMSS_EXFILTER = 0x00000040,
+  DMSS_EXSPECIES = 0x00000080,
+  DMSS_EITHER = 0x00000100,
+  DMSS_INFLICTORDMGTYPE = 0x00000200,
+};
+
 
 //==========================================================================
 //
@@ -595,13 +609,45 @@ final void decorate_A_ChangeFlag (string flagname, int value) {
 //
 //==========================================================================
 final void decorate_A_DamageSelf (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
-  if (flags) { print("DECORATE: A_DamageSelf with `flags` is not supported yet!"); }
-  if (specified_filter) { print("DECORATE: A_DamageSelf with `filter` is not supported yet!"); }
-  if (specified_species) { print("DECORATE: A_DamageSelf with `species` is not supported yet!"); }
-  if (specified_src) { print("DECORATE: A_DamageSelf with `src` is not supported yet!"); }
-  if (specified_inflict) { print("DECORATE: A_DamageSelf with `inflict` is not supported yet!"); }
-  if (amount == 0) return;
-  Damage(inflictor:self, source:self, amount, DmgType:damagetype!optional);
+  if (amount == 0 && !(flags&DMSS_KILL)) return;
+
+  // 0: unknown; -1: filter didn't hit; 1: filter hit
+  int flt = 0, spc = 0;
+
+  // check filters
+  if (specified_filter && filter) flt = (nameicmp(GetClassName(Class), filter) != 0 ? 1 : -1); //k8: should we check replacements or inheritance chain?
+  if (specified_species && species) spc = (nameicmp(GetSpecies(), species) != 0 ? 1 : -1);
+
+  if (flt && (flags&DMSS_EXFILTER)) flt = -flt;
+  if (spc && (flags&DMSS_EXSPECIES)) spc = -spc;
+
+  if (flags&DMSS_EITHER) {
+    if (spc < 0 && flt < 0) return;
+  } else {
+    if (spc < 0 || flt < 0) return;
+  }
+
+  EntityEx source = EntityEx(DecorDoAAPtr('A_DamageSelf', src!optional));
+  EntityEx inflictor = EntityEx(DecorDoAAPtr('A_DamageSelf', inflict!optional));
+
+  if (inflictor && (flags&DMSS_INFLICTORDMGTYPE)) damagetype = inflictor.DamageType;
+
+  //if (flags) { printwarn("DECORATE: A_DamageSelf with `flags` is not supported yet!"); }
+
+  if ((flags&DMSS_KILL) && amount < Health) amount = Health;
+
+  //DMSS_FOILBUDDHA = 0x00000010 //k8: no wai
+  if (amount < 0) {
+    // heal
+    GiveBody(-amount);
+  } else {
+    Damage(inflictor:inflictor, source:source, amount, DmgType:damagetype!optional,
+      NoArmor:!(flags&DMSS_AFFECTARMOR),
+      forced:!!(flags&DMSS_FOILINVUL),
+      ignoreDamageFactors:!!(flags&DMSS_NOFACTOR),
+      ignorePowerups:!!(flags&DMSS_NOPROTECT)
+    );
+  }
 }
 
 
