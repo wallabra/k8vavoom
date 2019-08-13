@@ -663,6 +663,13 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
           delete this;
           return enew;
         }
+        // doomrl arsenal author is moron
+        if (argnum == 3 && VStr::strEqu(funcName, "decorate_A_CheckFlag") && str.strEquCI("Nope")) {
+          ParseWarningArError((aloc ? *aloc : Loc), "`%s` argument #%d should be aptr (replaced with AAPTR_DEFAULT, mod author is a moron)!", funcName, argnum);
+          VExpression *enew = new VIntLiteral(0, Loc);
+          delete this;
+          return enew;
+        }
       }
       // none as literal?
       if (IsNoneLiteral()) {
