@@ -589,3 +589,10 @@ enum FMDFlags {
   FMDF_INTERPOLATE = 1<<1,
   FMDF_NOANGLE     = 1<<2,
 };
+
+
+// flags for A_BFGSpray
+enum EBFGSprayFlags {
+  BFGF_HURTSOURCE = 1,
+  BFGF_MISSILEORIGIN = 2,
+};

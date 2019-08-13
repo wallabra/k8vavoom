@@ -27,6 +27,13 @@
 //  Monster specific functions for Doom
 //**************************************************************************
 
+// flags for A_BFGSpray
+enum /*EBFGSprayFlags*/ {
+  BFGF_HURTSOURCE = 1,
+  BFGF_MISSILEORIGIN = 2,
+};
+
+
 //==========================================================================
 //
 //  A_Hoof
@@ -141,14 +148,19 @@ final void A_BFGSpray () {
 //===========================================================================
 final void decorate_A_BFGSpray (optional class!EntityEx FlashType,
                                 optional int NumRays, optional int DamageAmount,
-                                optional float fov, optional float Distance)
+                                optional float fov, optional float Distance,
+                                optional float vaimrange/*notyet*/, optional int explicitDamage,
+                                optional int flags)
 {
   TVec Dir;
 
   // target is the originator (player) of the missile
   // it may be missing, tho
   // also, zdoom wiki says "this function will create unpredictable effects if used on a non-missile"
-  if (!bMissile || !Target) return;
+  if (!bMissile) return;
+  EntityEx spraySrc = (flags&BFGF_MISSILEORIGIN ? self : Target);
+  if (spraySrc) return;
+
 
   if (!FlashType) FlashType = BFGExtra;
   if (NumRays <= 0) NumRays = 40;
@@ -165,16 +177,21 @@ final void decorate_A_BFGSpray (optional class!EntityEx FlashType,
     aimAng.yaw = AngleMod360(aimAng.yaw-fovd2+fov/float(NumRays)*float(i));
 
     // target is the originator (player) of the missile
-    EntityEx AimTarget = Target.AimLineAttack(out Dir, aimAng, /*16.0*64.0*/Distance);
-    if (!AimTarget) continue;
+    EntityEx AimTarget = spraySrc.AimLineAttack(out Dir, aimAng, /*16.0*64.0*/Distance);
+    if (!AimTarget || AimTarget == self) continue;
+    if (AimTarget == Target && (flags&(BFGF_MISSILEORIGIN|BFGF_HURTSOURCE)) != (BFGF_MISSILEORIGIN|BFGF_HURTSOURCE)) continue;
 
     EntityEx spray = Spawn(FlashType, AimTarget.Origin+vector(0.0, 0.0, AimTarget.Height/4.0));
 
-    if (spray && spray.bPuffGetsOwner) spray.Target = Target;
+    if (spray && spray.bPuffGetsOwner) spray.Target = spraySrc;
 
     int damage = 0;
-    foreach (auto j; 0..DamageAmount) damage += (P_Random()&7)+1;
+    if (explicitDamage > 0) {
+      damage = explicitDamage;
+    } else {
+      foreach (auto j; 0..DamageAmount) damage += (P_Random()&7)+1;
+    }
 
-    AimTarget.Damage(Target, Target, damage, spawnBlood:true);
+    AimTarget.Damage(spraySrc, spraySrc, damage, spawnBlood:true);
   }
 }
