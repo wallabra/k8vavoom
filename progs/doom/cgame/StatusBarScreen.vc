@@ -186,8 +186,8 @@ struct AmmoInfo {
 }
 
 
-string lastWeaponName;
-float lastWeaponNameChangeTime;
+transient string lastWeaponName;
+transient float lastWeaponNameChangeTime;
 
 
 //==========================================================================
@@ -719,12 +719,15 @@ override void SB_DrawFullscreenStats () {
       float currAlpha = 1.0;
       if (staytime <= 0 || currTime-lastWeaponNameChangeTime <= staytime) {
         // no fadeout
-        if (staytime <= 0) lastWeaponNameChangeTime = currTime;
+        if (staytime <= 0) {
+          lastWeaponNameChangeTime = currTime;
+          currAlpha = fsalpha;
+        }
       } else {
         // fadeout
         currAlpha = 1-fclamp((currTime-lastWeaponNameChangeTime-staytime)/0.4, 0, 1);
+        //currAlpha = fsalpha*currAlpha;
       }
-      currAlpha = fsalpha*currAlpha;
       if (currAlpha > 0) {
         int xpos = (Width-TextWidth(lastWeaponName))/2;
         int ypos = ovh-10;
