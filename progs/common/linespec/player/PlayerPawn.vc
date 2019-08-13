@@ -206,7 +206,7 @@ final void IncrementWeaponIndex (ref int slot, ref int index, bool allowExtraSlo
 final void DecrementWeaponIndex (ref int slot, ref int index, bool allowExtraSlot) {
   if (actualWeaponSlots.length == 0) return; // oops
   // in slot, we're going forward
-  if ((++index) < actualWeaponSlots[slot].weapons.length-1) return;
+  if ((++index) < actualWeaponSlots[slot].weapons.length) return;
   int slotCount = actualWeaponSlots.length-(allowExtraSlot ? 0 : 1);
   foreach (; 0..slotCount) {
     if ((--slot) < 0) slot = slotCount-1;

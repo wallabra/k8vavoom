@@ -1763,9 +1763,10 @@ Weapon CycleWeaponWithDir (Weapon Current, bool forward) {
   int currSlot, currIndex;
   if (!Current || !pawn.FindWeaponSlot(class!Weapon(Current.Class), out currSlot, out currIndex)) {
     currSlot = 0;
-    currIndex = (forward ? pawn.GetSlotSize(currSlot) : 0);
+    currIndex = (forward ? pawn.GetSlotSize(currSlot) : -1);
   }
 
+  //printdebug("st(fwd=%B): s=%s; i=%s", forward, currSlot, currIndex);
   // now cycle
   int smax = pawn.GetNumberOfSlots();
   bool allowExtraSlot = (currSlot >= PlayerPawn::NUM_WEAPON_SLOTS || (smax > PlayerPawn::NUM_WEAPON_SLOTS && GetCvarB('wp_cycle_special_slot')));
@@ -1774,6 +1775,7 @@ Weapon CycleWeaponWithDir (Weapon Current, bool forward) {
     foreach (auto widx; 0..pawn.GetSlotSize(sidx)) {
       // move to the next weapon in slot
       if (forward) pawn.IncrementWeaponIndex(ref currSlot, ref currIndex, allowExtraSlot); else pawn.DecrementWeaponIndex(ref currSlot, ref currIndex, allowExtraSlot);
+      //printdebug("  st(fwd=%B): s=%s; i=%s", forward, currSlot, currIndex);
       class!Weapon swc = pawn.GetWeaponInSlot(currSlot, currIndex);
       if (!swc) continue;
       if (Current && Current.Class == swc) continue;
