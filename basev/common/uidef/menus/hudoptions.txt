@@ -19,67 +19,13 @@ menudef HUDOptions {
   option enum {
     title = "Message Color";
     cvar = hud_font_color;
-    list {
-      "Brick",
-      "Tan",
-      "Gray",
-      "Green",
-      "Brown",
-      "Gold",
-      "Red",
-      "Blue",
-      "Orange",
-      "White",
-      "Yellow",
-      "Normal",
-      "Black",
-      "Light Blue",
-      "Cream",
-      "Olive",
-      "Dark Green",
-      "Dark Red",
-      "Dark Brown",
-      "Purple",
-      "Dark Gray",
-      "Cyan",
-      "Ice",
-      "Fire",
-      "Sapphire",
-      "Teal",
-    }
+    list = text_colors;
   }
 
   option enum {
     title = "Center Message Color";
     cvar = hud_font_color_centered;
-    list {
-      "Brick",
-      "Tan",
-      "Gray",
-      "Green",
-      "Brown",
-      "Gold",
-      "Red",
-      "Blue",
-      "Orange",
-      "White",
-      "Yellow",
-      "Normal",
-      "Black",
-      "Light Blue",
-      "Cream",
-      "Olive",
-      "Dark Green",
-      "Dark Red",
-      "Dark Brown",
-      "Purple",
-      "Dark Gray",
-      "Cyan",
-      "Ice",
-      "Fire",
-      "Sapphire",
-      "Teal",
-    }
+    list = text_colors;
   }
 
   option numeric {
@@ -216,34 +162,7 @@ menudef HUDOptions {
   option enum {
     title = "Weapon Name Color";
     cvar = r_hud_weapon_name_color;
-    list {
-      "Brick",
-      "Tan",
-      "Gray",
-      "Green",
-      "Brown",
-      "Gold",
-      "Red",
-      "Blue",
-      "Orange",
-      "White",
-      "Yellow",
-      "Normal",
-      "Black",
-      "Light Blue",
-      "Cream",
-      "Olive",
-      "Dark Green",
-      "Dark Red",
-      "Dark Brown",
-      "Purple",
-      "Dark Gray",
-      "Cyan",
-      "Ice",
-      "Fire",
-      "Sapphire",
-      "Teal",
-    }
+    list = text_colors;
   }
 
   option slider {

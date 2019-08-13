@@ -307,6 +307,11 @@ final static int parseTextColorName (ScriptsParser par) {
   else if (par.Check("darkbrown")) return CR_DARKBROWN;
   else if (par.Check("purple")) return CR_PURPLE;
   else if (par.Check("darkgray") || par.Check("darkgrey")) return CR_DARKGRAY;
+  else if (par.Check("cyan")) return CR_CYAN;
+  else if (par.Check("ice")) return CR_ICE;
+  else if (par.Check("fire")) return CR_FIRE;
+  else if (par.Check("sapphire")) return CR_SAPPHIRE;
+  else if (par.Check("teal")) return CR_TEAL;
   else par.ScriptError("invalid color name '%s'", par.String);
   return CR_UNDEFINED;
 }
@@ -609,18 +614,50 @@ override bool parseOne (ScriptsParser par) {
   if (::parseOne(par)) return true;
 
   if (par.Check("list")) {
-    par.Expect("{");
-    int val = 0;
-    while (!par.Check("}")) {
-      par.ExpectString();
-      list.length += 1;
-      list[$-1].caption = par.String;
-      if (par.Check("=")) {
-        par.ExpectNumber(withSign:true);
-        val = par.Number;
+    if (par.Check("=")) {
+      // there will be more
+      par.Expect("text_colors");
+      int val = 0;
+      list.length += 1; list[$-1].caption = "Brick"; list[$-1].value = float(val++);
+      list.length += 1; list[$-1].caption = "Tan"; list[$-1].value = float(val++);
+      list.length += 1; list[$-1].caption = "Gray"; list[$-1].value = float(val++);
+      list.length += 1; list[$-1].caption = "Green"; list[$-1].value = float(val++);
+      list.length += 1; list[$-1].caption = "Brown"; list[$-1].value = float(val++);
+      list.length += 1; list[$-1].caption = "Gold"; list[$-1].value = float(val++);
+      list.length += 1; list[$-1].caption = "Red"; list[$-1].value = float(val++);
+      list.length += 1; list[$-1].caption = "Blue"; list[$-1].value = float(val++);
+      list.length += 1; list[$-1].caption = "Orange"; list[$-1].value = float(val++);
+      list.length += 1; list[$-1].caption = "White"; list[$-1].value = float(val++);
+      list.length += 1; list[$-1].caption = "Yellow"; list[$-1].value = float(val++);
+      list.length += 1; list[$-1].caption = "Normal"; list[$-1].value = float(val++);
+      list.length += 1; list[$-1].caption = "Black"; list[$-1].value = float(val++);
+      list.length += 1; list[$-1].caption = "Light Blue"; list[$-1].value = float(val++);
+      list.length += 1; list[$-1].caption = "Cream"; list[$-1].value = float(val++);
+      list.length += 1; list[$-1].caption = "Olive"; list[$-1].value = float(val++);
+      list.length += 1; list[$-1].caption = "Dark Green"; list[$-1].value = float(val++);
+      list.length += 1; list[$-1].caption = "Dark Red"; list[$-1].value = float(val++);
+      list.length += 1; list[$-1].caption = "Dark Brown"; list[$-1].value = float(val++);
+      list.length += 1; list[$-1].caption = "Purple"; list[$-1].value = float(val++);
+      list.length += 1; list[$-1].caption = "Dark Gray"; list[$-1].value = float(val++);
+      list.length += 1; list[$-1].caption = "Cyan"; list[$-1].value = float(val++);
+      list.length += 1; list[$-1].caption = "Ice"; list[$-1].value = float(val++);
+      list.length += 1; list[$-1].caption = "Fire"; list[$-1].value = float(val++);
+      list.length += 1; list[$-1].caption = "Sapphire"; list[$-1].value = float(val++);
+      list.length += 1; list[$-1].caption = "Teal"; list[$-1].value = float(val++);
+    } else {
+      par.Expect("{");
+      int val = 0;
+      while (!par.Check("}")) {
+        par.ExpectString();
+        list.length += 1;
+        list[$-1].caption = par.String;
+        if (par.Check("=")) {
+          par.ExpectNumber(withSign:true);
+          val = par.Number;
+        }
+        list[$-1].value = float(val++);
+        while (par.Check(",")) {}
       }
-      list[$-1].value = float(val++);
-      while (par.Check(",")) {}
     }
     return true;
   }
