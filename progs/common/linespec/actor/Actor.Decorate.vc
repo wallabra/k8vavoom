@@ -174,7 +174,16 @@ final void A_SetAngle (float newyaw, optional int flags, optional int aptr) {
   Entity tgt = DecorDoAAPtr('A_SetAngle', aptr!optional);
   if (!tgt) return;
   tgt.Angles.yaw = AngleMod360(newyaw);
-  //dprint("A_SetAngle: not implemented!");
+}
+
+
+//==========================================================================
+//
+//  A_Turn
+//
+//==========================================================================
+final void A_Turn (float yawdelta) {
+  Angles.yaw = AngleMod360(Angles.yaw+yawdelta);
 }
 
 
