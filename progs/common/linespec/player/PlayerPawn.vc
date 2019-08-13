@@ -576,7 +576,11 @@ override bool UseInventory (Inventory Item) {
   if (!::UseInventory(Item)) {
     if (!PuzzleItem(Item)) {
       // unable to use artifact, advance pointer
-      pex.PlayerNextArtifact();
+      // gozzo doesn't do this at all; we'll do this for Heretic and Hexen
+      string gamename = GetCvarS('game_name');
+      if (stricmp(gamename, "Heretic") == 0 || stricmp(gamename, "Hexen") == 0) {
+        pex.PlayerNextArtifact();
+      }
     }
     return false;
   }
