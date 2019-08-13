@@ -3287,7 +3287,7 @@ override void CalcFakeZMovement (out TVec Ret, float DeltaTime) {
 //  DoThingRaise
 //
 //===========================================================================
-final bool DoThingRaise () {
+final bool DoThingRaise (optional bool skipCheckPosition) {
   if (!bCorpse) return false; // not a monster
 
   if (StateTime != -1.0) {
@@ -3307,11 +3307,13 @@ final bool DoThingRaise () {
   bSolid = true;
   Height = default.Height;
 
-  if (!CheckPosition(Origin)) {
-    Height = OldHeight;
-    Radius = OldRadius;
-    bSolid = OldSolid;
-    return false; // doesn't fit here
+  if (!skipCheckPosition) {
+    if (!CheckPosition(Origin)) {
+      Height = OldHeight;
+      Radius = OldRadius;
+      bSolid = OldSolid;
+      return false; // doesn't fit here
+    }
   }
 
   PlaySound('vile/raise', /*CHAN_BODY*/CHAN_AUTO);

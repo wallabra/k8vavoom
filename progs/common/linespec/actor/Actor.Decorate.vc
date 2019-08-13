@@ -626,6 +626,9 @@ final void doDamageSomething (EntityEx dest, int amount, name damagetype, int fl
 
   if (amount == 0 && !(flags&DMSS_KILL)) return;
 
+  if (nameicmp(filter, 'none') == 0) filter = '';
+  if (nameicmp(species, 'none') == 0) species = '';
+
   // 0: unknown (considered true, lol); -1: filter didn't hit; 1: filter hit
   int flt = 0, spc = 0;
 
@@ -645,8 +648,8 @@ final void doDamageSomething (EntityEx dest, int amount, name damagetype, int fl
   }
 
   // get source and inflictor
-  EntityEx source = EntityEx(DecorDoAAPtr('A_DamageSelf', src!optional));
-  EntityEx inflictor = EntityEx(DecorDoAAPtr('A_DamageSelf', inflict!optional));
+  EntityEx source = EntityEx(DecorDoAAPtr('doDamageSomething', src!optional));
+  EntityEx inflictor = EntityEx(DecorDoAAPtr('doDamageSomething', inflict!optional));
 
   // fix damage type
   if (inflictor && (flags&DMSS_INFLICTORDMGTYPE)) damagetype = inflictor.DamageType;
@@ -706,6 +709,37 @@ final void decorate_A_DamageMaster (int amount, optional name damagetype, option
 //==========================================================================
 final void decorate_A_DamageTracer (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
   doDamageSomething(Tracer, amount, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
+}
+
+
+//==========================================================================
+//
+//  decorate_A_DamageChildren
+//
+//==========================================================================
+final void decorate_A_DamageChildren (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
+  Actor A;
+  foreach AllThinkers(Actor, A) {
+    if (A.Master != self) continue;
+    doDamageSomething(A, amount, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
+  }
+}
+
+
+//==========================================================================
+//
+//  decorate_A_DamageSiblings
+//
+//==========================================================================
+final void decorate_A_DamageSiblings (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
+  EntityEx mainMaster = Master;
+  if (!mainMaster) return;
+  Actor A;
+  foreach AllThinkers(Actor, A) {
+    if (A.Master == mainMaster && A != self) {
+      doDamageSomething(A, amount, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
+    }
+  }
 }
 
 
@@ -772,6 +806,7 @@ final void A_DropItem (name item, optional int dropamount, optional int chance) 
 //  a_removechildren_checkIfChildShouldBeRemoved
 //
 //==========================================================================
+/*
 final private bool a_removechildren_checkIfChildShouldBeRemoved (Actor child, bool all, int flags, string filter, string species) {
   if (!all && child.Health > 0) return false; // it is still alive
   bool filterHit = true, speciesHit = true;
@@ -803,58 +838,118 @@ final private bool a_removechildren_checkIfChildShouldBeRemoved (Actor child, bo
   }
   return true;
 }
+*/
 
 
-#ifdef VC_SCRIPT_USE_SPAWNED_CHILDREN_ARRAY
-#else
-// this is trick so `delete` will clear the array for us
-transient private array!Actor A_RC_KillList;
-#endif
+//==========================================================================
+//
+//  doRemoveSomethingCheck
+//
+//  common code for `A_RemoveXXX()`
+//
+//==========================================================================
+final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filter, optional name species) {
+  if (!dest) return false;
+
+  if (nameicmp(filter, 'none') == 0) filter = '';
+  if (nameicmp(species, 'none') == 0) species = '';
+
+  // 0: unknown (considered true, lol); -1: filter didn't hit; 1: filter hit
+  int flt = 0, spc = 0;
+
+  // check filters
+  if (specified_filter && filter) flt = (nameicmp(GetClassName(dest.Class), filter) != 0 ? 1 : -1); //k8: should we check replacements or inheritance chain?
+  if (specified_species && species) spc = (nameicmp(dest.GetSpecies(), species) != 0 ? 1 : -1);
+
+  // invert filters, if necessary
+  if (flags&RMVF_EXFILTER) flt = -flt;
+  if (flags&RMVF_EXSPECIES) spc = -spc;
+
+  // process filters
+  if (flags&RMVF_EITHER) {
+    if (spc < 0 && flt < 0) return false;
+  } else {
+    if (spc < 0 || flt < 0) return false;
+  }
+
+  // check other flags
+  if (!(flags&RMVF_EVERYTHING)) {
+    if (dest.bMonster) {
+      if (flags&RMVF_NOMONSTERS) return false;
+    } else if (dest.IsMissile(false)) {
+      if (!(flags&RMVF_MISSILES)) return false;
+    } else {
+      // other?
+      if (!(flags&RMVF_MISC)) return false;
+    }
+  }
+
+  return true;
+}
+
+
+//==========================================================================
+//
+//  A_RemoveMaster
+//
+//==========================================================================
+final void A_RemoveMaster (optional int flags, optional name filter, optional name species) {
+  if (doRemoveSomethingCheck(Master, flags, filter!optional, species!optional)) delete Master;
+}
+
+
+//==========================================================================
+//
+//  A_RemoveTarget
+//
+//==========================================================================
+final void A_RemoveTarget (optional int flags, optional name filter, optional name species) {
+  if (doRemoveSomethingCheck(Target, flags, filter!optional, species!optional)) delete Target;
+}
+
+
+//==========================================================================
+//
+//  A_RemoveTracer
+//
+//==========================================================================
+final void A_RemoveTracer (optional int flags, optional name filter, optional name species) {
+  if (doRemoveSomethingCheck(Tracer, flags, filter!optional, species!optional)) delete Tracer;
+}
+
 
 //==========================================================================
 //
 //  A_RemoveChildren
 //
 //==========================================================================
-final void A_RemoveChildren (optional bool all, optional int flags, optional string filter, optional string species) {
-  if (stricmp(filter, "none") == 0) filter = "";
-  if (stricmp(species, "none") == 0) species = "";
-
-#ifdef VC_SCRIPT_USE_SPAWNED_CHILDREN_ARRAY
-  foreach (auto idx; 0..SpawnedChildren.length) {
-    Actor child = Actor(SpawnedChildren[idx]);
-    if (!child) continue;
-    if (!a_removechildren_checkIfChildShouldBeRemoved(child, all, flags, filter, species)) continue;
-    // kill it!
-    //print("%C: removing children #%d (%C)", self, idx, SpawnedChildren[idx]);
-    delete SpawnedChildren[idx];
+final void A_RemoveChildren (optional bool all, optional int flags, optional name filter, optional name species) {
+  Actor A;
+  foreach AllThinkers(Actor, A) {
+    if (A.Master != self) continue;
+    if (!all && A.Health > 0) continue;
+    if (!doRemoveSomethingCheck(A, flags, filter!optional, species!optional)) continue;
+    A.Destroy();
   }
+}
 
-  // shrink array
-  /*
-  foreach (auto idx; 0..SpawnedChildren.length; reverse) {
-    if (SpawnedChildren[idx]) {
-      if (idx+1 < SpawnedChildren.length) SpawnedChildren.length = idx+1;
-      break;
+
+//==========================================================================
+//
+//  A_RemoveSiblings
+//
+//==========================================================================
+final void A_RemoveSiblings (optional bool all, optional int flags, optional name filter, optional name species) {
+  EntityEx mainMaster = Master;
+  if (!mainMaster) return;
+  Actor A;
+  foreach AllThinkers(Actor, A) {
+    if (A.Master == mainMaster && A != self) {
+      if (!all && A.Health > 0) continue;
+      if (!doRemoveSomethingCheck(A, flags, filter!optional, species!optional)) continue;
+      A.Destroy();
     }
   }
-  */
-#else
-  //array!Actor A_RC_KillList;
-  A_RC_KillList.clear(); // clear, but don't reallocate
-  Actor th;
-  foreach AllThinkers(Actor, th) {
-    if (th && th.SpawnParent == self && a_removechildren_checkIfChildShouldBeRemoved(th, all, flags, filter, species)) A_RC_KillList[$] = th;
-  }
-  foreach (auto idx; 0..A_RC_KillList.length) {
-    th = A_RC_KillList[idx];
-    if (th) {
-      //print("%C: removing children #%d (%C)", self, idx, th);
-      delete th;
-    }
-  }
-  A_RC_KillList.clear(); // clear, but don't reallocate
-#endif
 }
 
 

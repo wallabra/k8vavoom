@@ -70,6 +70,12 @@ enum /*FAF_Flags*/ {
   FAF_TOP    = 4,
 };
 
+// for `A_RaiseXXX()`
+enum /*ERaise*/ {
+  RF_TRANSFERFRIENDLINESS = 1,
+  RF_NOCHECKPOSITION = 2,
+}
+
 
 //==========================================================================
 //
@@ -1000,11 +1006,92 @@ final void A_ClearSoundTarget () {
 
 //==========================================================================
 //
+//  doKillXXX
+//
+//  worker for A_KillXXX
+//
+//==========================================================================
+final void doKillXXX (EntityEx dest, name damagetype, int flags, optional name filter,
+                      optional name species, optional int src, optional int inflict)
+{
+  if (!dest) return;
+
+  if (nameicmp(filter, 'none') == 0) filter = '';
+  if (nameicmp(species, 'none') == 0) species = '';
+
+  // 0: unknown (considered true, lol); -1: filter didn't hit; 1: filter hit
+  int flt = 0, spc = 0;
+
+  // check filters
+  if (specified_filter && filter) flt = (nameicmp(GetClassName(dest.Class), filter) != 0 ? 1 : -1); //k8: should we check replacements or inheritance chain?
+  if (specified_species && species) spc = (nameicmp(dest.GetSpecies(), species) != 0 ? 1 : -1);
+
+  // invert filters, if necessary
+  if (flags&KILS_EXFILTER) flt = -flt;
+  if (flags&KILS_EXSPECIES) spc = -spc;
+
+  // process filters
+  if (flags&KILS_EITHER) {
+    if (spc < 0 && flt < 0) return;
+  } else {
+    if (spc < 0 || flt < 0) return;
+  }
+
+  if (!(flags&KILS_KILLMISSILES)) {
+    if (dest.IsMissile(false)) return;
+  }
+  if (flags&KILS_NOMONSTERS) {
+    if (dest.bMonster) return;
+  }
+
+  // get source and inflictor
+  EntityEx source = EntityEx(DecorDoAAPtr('doKillXXX', src!optional));
+  EntityEx inflictor = EntityEx(DecorDoAAPtr('doKillXXX', inflict!optional));
+
+  // fix damage type
+  if (inflictor && (flags&DMSS_INFLICTORDMGTYPE)) damagetype = inflictor.DamageType;
+
+  dest.Damage(inflictor, source, dest.Health, damagetype, NoArmor:true, forced:!!(flags&KILS_FOILINVUL), ignoreDamageFactors:true, ignorePowerups:true);
+}
+
+
+//==========================================================================
+//
 //  A_KillMaster
 //
 //==========================================================================
-final void A_KillMaster () {
-  if (Master) Master.Damage(self, self, Master.Health, default, true);
+final void A_KillMaster (optional name damagetype, optional int flags,
+                         optional name filter, optional name species,
+                         optional int src, optional int inflict)
+{
+  //if (Master) Master.Damage(self, self, Master.Health, default, true);
+  doKillXXX(Master, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
+}
+
+
+//==========================================================================
+//
+//  A_KillTarget
+//
+//==========================================================================
+final void A_KillTarget (optional name damagetype, optional int flags,
+                         optional name filter, optional name species,
+                         optional int src, optional int inflict)
+{
+  doKillXXX(Target, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
+}
+
+
+//==========================================================================
+//
+//  A_KillTracer
+//
+//==========================================================================
+final void A_KillTracer (optional name damagetype, optional int flags,
+                         optional name filter, optional name species,
+                         optional int src, optional int inflict)
+{
+  doKillXXX(Tracer, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
 }
 
 
@@ -1013,27 +1100,80 @@ final void A_KillMaster () {
 //  A_KillChildren
 //
 //==========================================================================
-final void A_KillChildren (optional name damagetype, optional int flags
-             /*, optional string filter, optional string species, optional int src, optional int inflict*/)
+final void A_KillChildren (optional name damagetype, optional int flags,
+                           optional name filter, optional name species,
+                           optional int src, optional int inflict)
 {
   Actor A;
-  if (specified_damagetype) {
-    if (!damagetype || nameicmp(damagetype, 'none') == 0) damagetype = '';
-    //else if (stricmp(damagetype, "NODAMAGE") == 0) damagetype = "None";//FIXME: TODO
-  }
   foreach AllThinkers(Actor, A) {
-    if (A.Master == self) {
-      if (A.IsMissile(false)) {
-        if (!(flags&KILS_KILLMISSILES)) continue;
-      } else if (A.bMonster) {
-        if (flags&KILS_NOMONSTERS) continue;
-      } else {
-        continue;
-      }
-      if (specified_damagetype) {
-        A.Damage(self, self, A.Health, damagetype, NoArmor:true, forced:!!(flags&KILS_FOILINVUL));
-      } else {
-        A.Damage(self, self, A.Health, default, NoArmor:true, forced:!!(flags&KILS_FOILINVUL));
+    if (A.Master != self) continue;
+    doKillXXX(A, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
+  }
+}
+
+
+//==========================================================================
+//
+//  A_KillSiblings
+//
+//==========================================================================
+final void A_KillSiblings (optional name damagetype, optional int flags,
+                           optional name filter, optional name species,
+                           optional int src, optional int inflict)
+{
+  EntityEx mainMaster = Master;
+  if (!mainMaster) return;
+  Actor A;
+  foreach AllThinkers(Actor, A) {
+    if (A.Master == mainMaster && A != self) {
+      doKillXXX(A, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  A_RaiseMaster
+//
+//==========================================================================
+final void A_RaiseMaster (optional int flags) {
+  if (!Master) return;
+  if (Master.DoThingRaise(!!(flags&RF_NOCHECKPOSITION))) {
+    if (flags&RF_TRANSFERFRIENDLINESS) Master.CopyFriendliness(self, false);
+  }
+}
+
+
+//==========================================================================
+//
+//  A_RaiseChildren
+//
+//==========================================================================
+final void A_RaiseChildren (optional int flags) {
+  Actor A;
+  foreach AllThinkers(Actor, A) {
+    if (A.Master != self) continue;
+    if (A.DoThingRaise(!!(flags&RF_NOCHECKPOSITION))) {
+      if (flags&RF_TRANSFERFRIENDLINESS) A.CopyFriendliness(self, false);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  A_RaiseSiblings
+//
+//==========================================================================
+final void A_RaiseSiblings (optional int flags) {
+  EntityEx mainMaster = Master;
+  if (!mainMaster) return;
+  Actor A;
+  foreach AllThinkers(Actor, A) {
+    if (A.Master == mainMaster && A != self) {
+      if (A.DoThingRaise(!!(flags&RF_NOCHECKPOSITION))) {
+        if (flags&RF_TRANSFERFRIENDLINESS) A.CopyFriendliness(self, false);
       }
     }
   }
