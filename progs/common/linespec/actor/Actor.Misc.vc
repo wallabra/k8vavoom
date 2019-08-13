@@ -31,16 +31,20 @@
 class Actor : EntityEx abstract;
 
 // flags for A_WeaponReady
-enum {
-  WRF_NOBOB = 1,
-  WRF_NOSWITCH = 2,
-  WRF_NOPRIMARY = 4,
-  WRF_NOSECONDARY = 8,
-  WRF_NOFIRE = 12,
-  WRF_ALLOWREFIRE = 32,
-  WRF_ALLOWRELOAD = 64,
-  WRF_ALLOWZOOM = 128,
-};
+const int WRF_NOBOB       = 1;
+const int WRF_NOSWITCH    = 2;
+const int WRF_NOPRIMARY   = 4;
+const int WRF_NOSECONDARY = 8;
+const int WRF_NOFIRE      = 12;
+const int WRF_ALLOWRELOAD = 16;
+const int WRF_ALLOWZOOM   = 32;
+const int WRF_DISABLESWITCH = 64;
+const int WRF_ALLOWREFIRE = 8192; // k8vavoom specific
+// not implemented yet
+const int WRF_ALLOWUSER1 = 128;
+const int WRF_ALLOWUSER2 = 256;
+const int WRF_ALLOWUSER3 = 512;
+const int WRF_ALLOWUSER4 = 1024;
 
 
 //==========================================================================
@@ -784,6 +788,9 @@ final void A_WeaponReady (optional int Flags) {
     return;
   }
 
+  bool wasZoomDown = Player.bZoomDown;
+  if (!k8InWeaponReady) Player.bZoomDown = !!(Player.Buttons&BT_ZOOM);
+
   // get out of attack state
   if (StateIsInSequence(State, MissileState) || StateIsInSequence(State, MeleeState)) {
     if (InWeaponReadyCheckSetRecurseGuard()) return;
@@ -797,7 +804,10 @@ final void A_WeaponReady (optional int Flags) {
     PlaySound(Wpn.ReadySound, CHAN_WEAPON);
   }
 
-  if (!(Flags&WRF_NOSWITCH)) {
+  if (Flags&WRF_DISABLESWITCH) {
+    // this cancels switch
+    PlayerEx(Player).PendingWeapon = none;
+  } else if (!(Flags&WRF_NOSWITCH)) {
     // put the weapon away if the player has a pending weapon or has died
     if (PlayerEx(Player).PendingWeapon || Player.MO.Health <= 0) {
       if (InWeaponReadyCheckSetRecurseGuard()) return;
@@ -811,9 +821,9 @@ final void A_WeaponReady (optional int Flags) {
   }
 
   //print("wpnready: %C; flags=0x%04x; attack=%B", Wpn, Flags, !!(Player.Buttons&BT_ATTACK));
-  if ((Flags&WRF_NOFIRE) != WRF_NOFIRE) {
+  if (!(Flags&WRF_NOFIRE)) {
     // check for fire
-    if ((Flags&WRF_NOPRIMARY) == 0 && (Player.Buttons&BT_ATTACK)) {
+    if (!(Flags&WRF_NOPRIMARY) && (Player.Buttons&BT_ATTACK)) {
       if (((Flags&WRF_ALLOWREFIRE) || !Player.bAttackDown) || !Wpn.bNoAutoFire) {
         if (InWeaponReadyCheckSetRecurseGuard()) return;
         scope(exit) k8InWeaponReady = false;
@@ -824,7 +834,7 @@ final void A_WeaponReady (optional int Flags) {
         //if (Wpn.FireMode == Weapon::FIRE_Primary || Wpn.FireMode == Weapon::FIRE_Secondary) PlayerEx(Player).Refire++;
         return;
       }
-    } else if ((Flags&WRF_NOSECONDARY) == 0 && (Player.Buttons&BT_ALT_ATTACK) && Wpn.FindState('AltFire')) {
+    } else if (!(Flags&WRF_NOSECONDARY) && (Player.Buttons&BT_ALT_ATTACK) && Wpn.FindState('AltFire')) {
       if (((Flags&WRF_ALLOWREFIRE) || !Player.bAttackDown) || !Wpn.bNoAutoFire) {
         if (InWeaponReadyCheckSetRecurseGuard()) return;
         scope(exit) k8InWeaponReady = false;
@@ -854,7 +864,7 @@ final void A_WeaponReady (optional int Flags) {
   // check for zoom
   if (Flags&WRF_ALLOWZOOM) {
     if ((Player.Buttons&BT_ZOOM) && Wpn.GetZoomState()) {
-      if (!Player.bZoomDown) {
+      if (!wasZoomDown) {
         if (InWeaponReadyCheckSetRecurseGuard()) return;
         scope(exit) k8InWeaponReady = false;
         Wpn.bBobDisabled = true;
@@ -864,7 +874,7 @@ final void A_WeaponReady (optional int Flags) {
       return;
     }
   }
-  Player.bZoomDown = !!(Player.Buttons&BT_ZOOM);
+  //Player.bZoomDown = !!(Player.Buttons&BT_ZOOM);
 
   /* moved out of here, so weapon can bob independently
   if (!(Flags&WRF_NOBOB) || !Wpn.bDontBob) {

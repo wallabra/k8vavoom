@@ -123,15 +123,21 @@ const int CVF_RELATIVE = 1;
 const int CVF_REPLACE = 2;
 
 // flags for A_WeaponReady
+
 const int WRF_NOBOB       = 1;
-const int WRF_NOFIRE      = 12;
 const int WRF_NOSWITCH    = 2;
 const int WRF_NOPRIMARY   = 4;
 const int WRF_NOSECONDARY = 8;
-const int WRF_ALLOWREFIRE = 32;
-const int WRF_ALLOWRELOAD = 64;
-const int WRF_ALLOWZOOM   = 128;
-//const int WRF_ALLOWZOOM   = 0; //k8: not implemented yet
+const int WRF_NOFIRE      = 12;
+const int WRF_ALLOWRELOAD = 16;
+const int WRF_ALLOWZOOM   = 32;
+const int WRF_DISABLESWITCH = 64;
+const int WRF_ALLOWREFIRE = 8192; // k8vavoom specific
+// not implemented yet
+const int WRF_ALLOWUSER1 = 128;
+const int WRF_ALLOWUSER2 = 256;
+const int WRF_ALLOWUSER3 = 512;
+const int WRF_ALLOWUSER4 = 1024;
 
 // flags for A_RailAttack and A_CustomRailgun
 const int RGF_SILENT        = 1;
