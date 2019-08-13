@@ -78,6 +78,7 @@ void VWorldInfo::SetSkill (int ASkill) {
        if (ASkill < 0) GameSkill = 0;
   else if (ASkill >= P_GetNumSkills()) GameSkill = P_GetNumSkills()-1;
   else GameSkill = ASkill;
+
   const VSkillDef *SDef = P_GetSkillDef(GameSkill);
 
   SkillAmmoFactor = SDef->AmmoFactor;
@@ -90,6 +91,10 @@ void VWorldInfo::SetSkill (int ASkill) {
   SkillAcsReturn = SDef->AcsReturn;
   Flags = (Flags & 0xffffff00) | (SDef->Flags & 0x0000000f);
   if (SDef->Flags&SKILLF_SlowMonsters) Flags |= WIF_SkillSlowMonsters;
+
+  // copy replacements
+  SkillReplacements.reset();
+  for (auto &&rpl : SDef->Replacements) SkillReplacements.append(rpl);
 }
 
 

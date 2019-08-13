@@ -53,6 +53,10 @@ class VWorldInfo : public VGameObject {
   };
   vuint32 Flags;
 
+  // monster replacements for each skill
+  // WARNING! currently it works only for predefined map spawns!
+  TArray<VSkillMonsterReplacement> SkillReplacements;
+
 public:
   //VWorldInfo ();
   virtual void PostCtor () override;

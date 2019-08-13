@@ -117,6 +117,12 @@ struct VSkillPlayerClassName {
   VStr MenuName;
 };
 
+// both must be at least `EntityEx`, and compatible
+struct VSkillMonsterReplacement {
+  VClass *oldClass;
+  VClass *newClass;
+};
+
 struct VSkillDef {
   VStr Name;
   float AmmoFactor;
@@ -133,6 +139,9 @@ struct VSkillDef {
   VStr Key;
   VStr TextColor;
   vuint32 Flags;
+  // monster replacements for each skill
+  // WARNING! currently it works only for predefined map spawns!
+  TArray<VSkillMonsterReplacement> Replacements;
 };
 
 

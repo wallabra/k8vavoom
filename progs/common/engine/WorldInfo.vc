@@ -44,6 +44,7 @@ readonly bool bSkillEasyBossBrain;
 readonly bool bSkillAutoUseHealth;
 readonly bool bSkillSlowMonsters;
 
+array!SkillMonsterReplacement SkillReplacements;
 
 native final void SetSkill (int Skill);
 

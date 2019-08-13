@@ -6578,6 +6578,21 @@ override void SpawnMapThing (mthing_t *mthing) {
   } else {
     oldClass = moClass;
     moClass = class!EntityEx(GetClassReplacement(moClass));
+    if (!moClass) moClass = oldClass;
+    // check skill replacements
+    foreach (ref const auto repl; /*skd.Replacements*/World.SkillReplacements) {
+      if (repl.oldClass == oldClass) {
+        //printdebug("*** skill (%d) replacement: normal `%C` replaced with `%C`", World.GameSkill, oldClass, repl.newClass);
+        moClass = repl.newClass;
+        break;
+      }
+      if (repl.oldClass == moClass) {
+        //printdebug("*** skill (%d) replacement: replaced `%C` (%C) replaced with `%C`", World.GameSkill, oldClass, moClass, repl.newClass);
+        moClass = repl.newClass;
+        break;
+      }
+    }
+    if (!moClass) return; // nothing to do
     //print("SpawnMapThing: type=%d; oldClass='%C'; newClass='%C'; solid=%B", mthing.type, oldClass, moClass, moClass.default.bSolid);
 
     // if actor has no sprites, also map it to the unknown thing

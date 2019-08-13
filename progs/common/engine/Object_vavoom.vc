@@ -228,6 +228,12 @@ struct SkillPlayerClassName {
   string MenuName;
 };
 
+// it is guaranteed to be `EntityEx` by the engine
+struct SkillMonsterReplacement {
+  class!EntityEx oldClass;
+  class!EntityEx newClass; // note that this can be `none`!
+};
+
 struct SkillDef {
   string Name;
   float AmmoFactor;
@@ -250,6 +256,9 @@ struct SkillDef {
   bool bMenuNameIsPic;
   bool bMustConfirm;
   bool bSlowMonsters;
+  // monster replacements for each skill
+  // WARNING! currently it works only for predefined map spawns!
+  array!SkillMonsterReplacement Replacements;
 };
 
 

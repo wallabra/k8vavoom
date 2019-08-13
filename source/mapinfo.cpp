@@ -1509,6 +1509,11 @@ static void ParseSkillDef (VScriptParser *sc) {
   sdef->Key.Clean();
   sdef->TextColor.Clean();
   sdef->Flags = 0;
+  // if skill definition contains replacements, clear the old ones
+  // k8: i am not sure if i should keep old replacements here, but why not?
+  bool sdefClearReplacements = true;
+
+  VClass *eexCls = VClass::FindClassNoCase("Actor"); // we'll need it later
 
   if (!sc->Check("{")) { ParseSkillDefOld(sc, sdef); return; }
   SCParseModeSaver msave(sc);
@@ -1609,11 +1614,36 @@ static void ParseSkillDef (VScriptParser *sc) {
     } else if (sc->Check("AutoUseHealth")) {
       sdef->Flags |= SKILLF_AutoUseHealth;
     } else if (sc->Check("ReplaceActor")) {
-      GCon->Logf(NAME_Warning, "MAPINFO:%s: skill param 'ReplaceActor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
+      //GCon->Logf(NAME_Warning, "MAPINFO:%s: skill param 'ReplaceActor' is not implemented yet.", *sc->GetLoc().toStringNoCol());
       sc->Expect("=");
       sc->ExpectString();
+      VStr oldCN = sc->String;
       sc->Expect(",");
       sc->ExpectString();
+      VStr newCN = sc->String;
+      if (sdefClearReplacements) { sdef->Replacements.clear(); sdefClearReplacements = false; }
+      if (eexCls && !oldCN.isEmpty()) {
+        VClass *oldCls = VClass::FindClassNoCase(*oldCN);
+        if (!oldCls->IsChildOf(eexCls)) {
+          GCon->Logf(NAME_Warning, "MAPINFO:%s: source class `%s` in 'ReplaceActor' is invalid.", *oldCN, *sc->GetLoc().toStringNoCol());
+        } else {
+          // source is ok, check destination
+          VClass *newCls = nullptr;
+          bool newIsValid = true;
+          if (!newCN.isEmpty() && !newCN.strEquCI("none") && !newCN.strEquCI("null")) {
+            newCls = VClass::FindClassNoCase(*newCN);
+            if (!newCls || !newCls->IsChildOf(eexCls)) {
+              GCon->Logf(NAME_Warning, "MAPINFO:%s: destination class `%s` in 'ReplaceActor' is invalid.", *newCN, *sc->GetLoc().toStringNoCol());
+              newIsValid = false;
+            }
+          }
+          if (newIsValid) {
+            VSkillMonsterReplacement &rp = sdef->Replacements.alloc();
+            rp.oldClass = oldCls;
+            rp.newClass = newCls;
+          }
+        }
+      }
     } else if (sc->Check("MonsterHealth")) {
       GCon->Logf(NAME_Warning, "MAPINFO:%s: skill param 'MonsterHealth' is not implemented yet.", *sc->GetLoc().toStringNoCol());
       sc->Expect("=");
