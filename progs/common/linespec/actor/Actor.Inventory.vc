@@ -125,12 +125,12 @@ final void A_GiveToTargetRespectReplace (class!Inventory ItemType, optional int 
 //  DoTakeInventory
 //
 //==========================================================================
-final void DoTakeInventory (class!Inventory ItemType, int Amount, EntityEx Receiver) {
+final void DoTakeInventory (class!Inventory ItemType, int Amount, EntityEx Receiver, optional bool disableReplace) {
   if (!Receiver) return;
 
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
 
-  Inventory Item = Receiver.FindInventory(ItemType);
+  Inventory Item = Receiver.FindInventory(ItemType, disableReplacement:disableReplace);
   if (Item && !HexenArmor(Item)) {
     if (Item.Amount > 0 && XLevel.StateCall) XLevel.StateCall->Result = true;
     if (!Amount || Item.Amount <= Amount) {
@@ -160,7 +160,7 @@ final void A_TakeInventory (class!Inventory ItemType, optional int Amount, optio
       if (dest.FindInfiniteAmmoPowerup()) return;
     }
   }
-  DoTakeInventory(ItemType, Amount, dest);
+  DoTakeInventory(ItemType, Amount, dest, disableReplace:true); //k8: i hope so
 }
 
 
@@ -169,8 +169,18 @@ final void A_TakeInventory (class!Inventory ItemType, optional int Amount, optio
 //  A_TakeFromTarget
 //
 //==========================================================================
-final void A_TakeFromTarget (class!Inventory ItemType, optional int Amount) {
-  DoTakeInventory(ItemType, Amount, Target);
+final void A_TakeFromTarget (class!Inventory ItemType, optional int Amount, optional int flags, optional int aptr) {
+  EntityEx dest;
+  if (aptr == AAPTR_DEFAULT) dest = Target; //k8: exception, according to the wiki
+  else dest = EntityEx(DecorDoAAPtr('A_TakeFromTarget', aptr));
+  if (!dest) return;
+  // process TIF_NOTAKEINFINITE
+  if (flags&1) {
+    if (ItemType isa Ammo) {
+      if (dest.FindInfiniteAmmoPowerup()) return;
+    }
+  }
+  DoTakeInventory(ItemType, Amount, dest, disableReplace:true); //k8: i hope so
 }
 
 
@@ -180,7 +190,7 @@ final void A_TakeFromTarget (class!Inventory ItemType, optional int Amount) {
 //
 //==========================================================================
 final void A_DropInventory (class!Inventory ItemType) {
-  Inventory Item = FindInventory(ItemType);
+  Inventory Item = FindInventory(ItemType, disableReplacement:true); //k8: i hope so
   if (Item) DropInventory(Item);
 }
 
