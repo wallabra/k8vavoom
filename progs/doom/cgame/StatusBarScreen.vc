@@ -639,8 +639,7 @@ override void SB_DrawFullscreenStats () {
         //class!Ammo a2 = class!Ammo(GetClassReplacement(wammo));
         //if (a2) wammo = a2;
         int tmpslot, tmpindex;
-        pawn.FindWeaponSlot(class!Weapon(wpn.Class), out tmpslot, out tmpindex);
-        if (tmpslot >= 2 && tmpslot <= 9) {
+        if (pawn.FindWeaponSlot(class!Weapon(wpn.Class), out tmpslot, out tmpindex)) {
           bool found = false;
           foreach (const ref AmmoInfo a; alist) if (a.ammo == wammo) { found = true; break; }
           if (!found) {
