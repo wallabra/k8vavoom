@@ -85,6 +85,17 @@ final bool DoGiveInventory (class!Inventory ItemType, int Amount, EntityEx Recei
 //==========================================================================
 final void A_GiveInventory (class!Inventory ItemType, optional int Amount, optional int giveto) {
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_GiveInventory', giveto!optional));
+  DoGiveInventory(ItemType, Amount, /*self*/tgt, disableReplace:false);
+}
+
+
+//==========================================================================
+//
+//  A_GiveInventoryRespectReplace
+//
+//==========================================================================
+final void A_GiveInventoryRespectReplace (class!Inventory ItemType, optional int Amount, optional int giveto) {
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_GiveInventory', giveto!optional));
   DoGiveInventory(ItemType, Amount, /*self*/tgt, disableReplace:true);
 }
 
@@ -95,6 +106,16 @@ final void A_GiveInventory (class!Inventory ItemType, optional int Amount, optio
 //
 //==========================================================================
 final void A_GiveToTarget (class!Inventory ItemType, optional int Amount) {
+  DoGiveInventory(ItemType, Amount, Target, disableReplace:false);
+}
+
+
+//==========================================================================
+//
+//  A_GiveToTargetRespectReplace
+//
+//==========================================================================
+final void A_GiveToTargetRespectReplace (class!Inventory ItemType, optional int Amount) {
   DoGiveInventory(ItemType, Amount, Target, disableReplace:true);
 }
 

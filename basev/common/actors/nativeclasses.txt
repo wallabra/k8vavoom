@@ -312,6 +312,9 @@ class Actor extends Thinker
   action native A_DropInventory(class<Inventory> itemtype);
   action native A_SelectWeapon(class<Weapon> weapontype);
 
+  action native A_GiveInventoryRespectReplace(class<Inventory> itemtype, optional eval int amount);
+  action native A_GiveToTargetRespectReplace(class<Inventory> itemtype, optional eval int amount);
+
   //
   //  Weapon functions
   //
