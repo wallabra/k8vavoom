@@ -240,6 +240,7 @@ BUTTON(MouseLook)
 BUTTON(Reload)
 BUTTON(Flashlight)
 BUTTON(SuperBullet)
+BUTTON(Zoom)
 
 
 //==========================================================================
@@ -597,6 +598,7 @@ void VBasePlayer::HandleInput () {
   if (KeyFlashlight.KeyState()) Buttons |= BT_FLASHLIGHT;
 
   if (KeySuperBullet.KeyState()) Buttons |= BT_SUPERBULLET;
+  if (KeyZoom.KeyState()) Buttons |= BT_ZOOM;
   //GCon->Logf("VBasePlayer::HandleInput(%p): Buttons=0x%08x", this, Buttons);
 
   AcsCurrButtonsPressed |= Buttons;
@@ -698,6 +700,7 @@ int VBasePlayer::AcsGetInput (int InputType) {
       if (Btn&BT_STRAFE) Ret |= ACS_BT_STRAFE;
       if (Btn&BT_SPEED) Ret |= ACS_BT_SPEED;
       if (Btn&BT_RELOAD) Ret |= ACS_BT_RELOAD;
+      if (Btn&BT_ZOOM) Ret |= ACS_BT_ZOOM;
       return Ret;
 
     case INPUT_YAW: case MODINPUT_YAW:

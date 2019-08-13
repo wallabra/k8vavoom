@@ -39,8 +39,7 @@ enum {
   WRF_NOFIRE = 12,
   WRF_ALLOWREFIRE = 32,
   WRF_ALLOWRELOAD = 64,
-  //WRF_ALLOWZOOM = 128,
-  WRF_ALLOWZOOM = 0, //k8: not implemented yet
+  WRF_ALLOWZOOM = 128,
 };
 
 
@@ -815,7 +814,7 @@ final void A_WeaponReady (optional int Flags) {
   if ((Flags&WRF_NOFIRE) != WRF_NOFIRE) {
     // check for fire
     if ((Flags&WRF_NOPRIMARY) == 0 && (Player.Buttons&BT_ATTACK)) {
-      if (((Flags&WRF_ALLOWREFIRE) != 0 || !Player.bAttackDown) || !Wpn.bNoAutoFire) {
+      if (((Flags&WRF_ALLOWREFIRE) || !Player.bAttackDown) || !Wpn.bNoAutoFire) {
         if (InWeaponReadyCheckSetRecurseGuard()) return;
         scope(exit) k8InWeaponReady = false;
         Wpn.bBobDisabled = true;
@@ -825,8 +824,8 @@ final void A_WeaponReady (optional int Flags) {
         //if (Wpn.FireMode == Weapon::FIRE_Primary || Wpn.FireMode == Weapon::FIRE_Secondary) PlayerEx(Player).Refire++;
         return;
       }
-    } else if ((Flags&WRF_NOSECONDARY) == 0 && (Player.Buttons&BT_ALT_ATTACK) != 0 && Wpn.FindState('AltFire')) {
-      if (((Flags&WRF_ALLOWREFIRE) != 0 || !Player.bAttackDown) || !Wpn.bNoAutoFire) {
+    } else if ((Flags&WRF_NOSECONDARY) == 0 && (Player.Buttons&BT_ALT_ATTACK) && Wpn.FindState('AltFire')) {
+      if (((Flags&WRF_ALLOWREFIRE) || !Player.bAttackDown) || !Wpn.bNoAutoFire) {
         if (InWeaponReadyCheckSetRecurseGuard()) return;
         scope(exit) k8InWeaponReady = false;
         Wpn.bBobDisabled = true;
@@ -842,14 +841,30 @@ final void A_WeaponReady (optional int Flags) {
   }
 
   // check for reload
-  if ((Flags&WRF_ALLOWRELOAD) != 0 && Player.bReloadQueued && Wpn.FindState('Reload')) {
+  if ((Flags&WRF_ALLOWRELOAD) && Player.bReloadQueued && Wpn.GetReloadState()) {
     if (InWeaponReadyCheckSetRecurseGuard()) return;
     scope(exit) k8InWeaponReady = false;
     Wpn.bBobDisabled = true;
     Player.bAttackDown = true;
+    Player.bZoomDown = false;
     PlayerEx(Player).ReloadWeapon();
     return;
   }
+
+  // check for zoom
+  if (Flags&WRF_ALLOWZOOM) {
+    if ((Player.Buttons&BT_ZOOM) && Wpn.GetZoomState()) {
+      if (!Player.bZoomDown) {
+        if (InWeaponReadyCheckSetRecurseGuard()) return;
+        scope(exit) k8InWeaponReady = false;
+        Wpn.bBobDisabled = true;
+        Player.bZoomDown = true;
+        PlayerEx(Player).ZoomWeapon();
+      }
+      return;
+    }
+  }
+  Player.bZoomDown = !!(Player.Buttons&BT_ZOOM);
 
   /* moved out of here, so weapon can bob independently
   if (!(Flags&WRF_NOBOB) || !Wpn.bDontBob) {

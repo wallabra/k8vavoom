@@ -81,6 +81,12 @@ menudef ControlsMain {
   }
 
   option bind {
+    title = "Zoom";
+    button = tan;
+    command = "Zoom";
+  }
+
+  option bind {
     title = "Previous weapon";
     button = ona;
     command = "impulse 17";

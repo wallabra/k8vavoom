@@ -98,6 +98,7 @@ enum {
   BT_BACKWARD    = 0x00020000,
   BT_FLASHLIGHT  = 0x00100000,
   BT_SUPERBULLET = 0x00200000,
+  BT_ZOOM        = 0x00400000,
 };
 
 // player states

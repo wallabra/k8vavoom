@@ -130,8 +130,8 @@ const int WRF_NOPRIMARY   = 4;
 const int WRF_NOSECONDARY = 8;
 const int WRF_ALLOWREFIRE = 32;
 const int WRF_ALLOWRELOAD = 64;
-//const int WRF_ALLOWZOOM   = 128;
-const int WRF_ALLOWZOOM   = 0; //k8: not implemented yet
+const int WRF_ALLOWZOOM   = 128;
+//const int WRF_ALLOWZOOM   = 0; //k8: not implemented yet
 
 // flags for A_RailAttack and A_CustomRailgun
 const int RGF_SILENT        = 1;

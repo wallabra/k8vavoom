@@ -1582,6 +1582,23 @@ void ReloadWeapon () {
 }
 
 
+//===========================================================================
+//
+//  ZoomWeapon
+//
+//===========================================================================
+void ZoomWeapon () {
+  //k8: zooming weapon resets refire state
+  ResetWeaponReloadRefire();
+  if (ReadyWeapon) {
+    state zst = ReadyWeapon.GetZoomState();
+    if (!zst) return;
+    SetViewObject(ReadyWeapon);
+    SetViewState(PS_WEAPON, zst);
+  }
+}
+
+
 //==========================================================================
 //
 //  SetPendingWeapon
@@ -3415,6 +3432,7 @@ void PlayerReborn () {
   ResetPlayerOnSpawn(keepPlayerState:true);
   bUseDown = true; // don't do anything immediately
   bAttackDown = true;
+  bZoomDown = false;
   ResetWeaponReloadRefire();
   PlayerState = PST_LIVE;
   Health = GetRebornHealth();

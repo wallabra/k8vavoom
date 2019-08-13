@@ -607,6 +607,16 @@ state GetReloadState () {
 
 //==========================================================================
 //
+//  GetZoomState
+//
+//==========================================================================
+state GetZoomState () {
+  return FindState('Zoom');
+}
+
+
+//==========================================================================
+//
 //  CheckSpecialWeaponAmmo
 //
 //  Special hack for BDW Assault Rifle and BDW Shotgun

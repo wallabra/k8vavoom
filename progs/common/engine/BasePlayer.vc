@@ -62,6 +62,7 @@ readonly bool bIsClient; // player on client side
 bool bAutomapRevealed;
 bool bAutomapShowThings;
 bool bReloadQueued; // true if "reload" was pressed
+bool bZoomDown; // `true` if button down last tic
 
 native readonly private void *Net;
 

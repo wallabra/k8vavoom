@@ -77,6 +77,7 @@ enum {
   BT_BACKWARD    = 0x00020000,
   BT_FLASHLIGHT  = 0x00100000,
   BT_SUPERBULLET = 0x00200000,
+  BT_ZOOM        = 0x00400000,
 };
 
 struct VViewState {
@@ -96,18 +97,19 @@ class VBasePlayer : public VGameObject {
   VLevelInfo *Level;
 
   enum {
-    PF_Active            = 0x0001,
-    PF_Spawned           = 0x0002,
-    PF_IsBot             = 0x0004,
-    PF_FixAngle          = 0x0008,
-    PF_AttackDown        = 0x0010, // True if button down last tic.
-    PF_UseDown           = 0x0020,
-    PF_DidSecret         = 0x0040, // True if secret level has been done.
-    PF_Centreing         = 0x0080,
-    PF_IsClient          = 0x0100, // Player on client side
-    PF_AutomapRevealed   = 0x0200,
-    PF_AutomapShowThings = 0x0400,
-    PF_ReloadQueued      = 0x0800,
+    PF_Active            = 0x0001u,
+    PF_Spawned           = 0x0002u,
+    PF_IsBot             = 0x0004u,
+    PF_FixAngle          = 0x0008u,
+    PF_AttackDown        = 0x0010u, // True if button down last tic.
+    PF_UseDown           = 0x0020u,
+    PF_DidSecret         = 0x0040u, // True if secret level has been done.
+    PF_Centreing         = 0x0080u,
+    PF_IsClient          = 0x0100u, // Player on client side
+    PF_AutomapRevealed   = 0x0200u,
+    PF_AutomapShowThings = 0x0400u,
+    PF_ReloadQueued      = 0x0800u,
+    PF_ZoomDown          = 0x1000u,
   };
   vuint32 PlayerFlags;
 
