@@ -487,9 +487,12 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
 
   if (bDormant && !forced) return; // invulnerable, and won't wake up
 
+  bool isBuddha = false;
   if (bIsPlayer) {
     // Take half damage in trainer mode
     damage = int(float(damage)*Level.World.GetDamageFactor());
+    isBuddha = !!(PlayerEx(Player).Cheats&PlayerEx::CF_BUDDHA);
+    if (!isBuddha && !ignorePowerups && FindBuddhaPowerup()) isBuddha = true;
   }
 
   // special damage types
@@ -534,7 +537,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
       if (thrust < 0.0 || thrust > 10.0) thrust = 10.0;
       // make fall forwards sometimes
       //k8: but not if player is cheating
-      if (!bIsPlayer || !(PlayerEx(Player).Cheats&(PlayerEx::CF_BUDDHA|PlayerEx::CF_NOCLIP|PlayerEx::CF_GODMODE))) {
+      if (!bIsPlayer || (!isBuddha && !(PlayerEx(Player).Cheats&(PlayerEx::CF_BUDDHA|PlayerEx::CF_NOCLIP|PlayerEx::CF_GODMODE)))) {
         if (damage < 40 && damage > Health &&
             Origin.z-inflictor.Origin.z > 64.0 &&
             (P_Random()&1) &&
@@ -602,7 +605,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
     }
     Player.Health -= damage; // mirror mobj health here for Dave
     if (Player.Health < 0) Player.Health = 0;
-    if (Player.Health < 1 && (PlayerEx(Player).Cheats&PlayerEx::CF_BUDDHA)) Player.Health = 1;
+    if (Player.Health < 1 && /*(PlayerEx(Player).Cheats&PlayerEx::CF_BUDDHA)*/isBuddha) Player.Health = 1;
     PlayerEx(Player).Attacker = source;
     PlayerEx(Player).DamageFlash += float(damage)/35.0; // add damage after armor / invuln
     if (PlayerEx(Player).DamageFlash > 3.0) PlayerEx(Player).DamageFlash = 3.0; // teleport stomp does 10k points...
@@ -612,7 +615,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
 
   // do the damage
   Health -= damage;
-  if (bIsPlayer && Health < 1 && (PlayerEx(Player).Cheats&PlayerEx::CF_BUDDHA)) Health = 1;
+  if (bIsPlayer && Health < 1 && /*(PlayerEx(Player).Cheats&PlayerEx::CF_BUDDHA)*/isBuddha) Health = 1;
   if (Health <= 0) {
     // death
     Special1 = damage;
@@ -993,27 +996,32 @@ final void PoisonPlayer (EntityEx poisoner, int poison) {
 final void PoisonDamage (EntityEx inflictor, EntityEx source, int damage, bool playPainSound) {
   if (Health <= 0) return;
   if (bInvulnerable && damage < 10000) return; // mobj is invulnerable
+
+  bool isBuddha = false;
   if (bIsPlayer) {
     // take half damage in trainer mode
     damage = int(float(damage)*Level.World.GetDamageFactor());
+    isBuddha = !!(PlayerEx(Player).Cheats&PlayerEx::CF_BUDDHA);
+    if (!isBuddha && FindBuddhaPowerup()) isBuddha = true;
+
+    if (damage < 1000 && ((PlayerEx(Player).Cheats&PlayerEx::CF_GODMODE) || bInvulnerable)) {
+      return;
+    }
+    if (damage >= Player.Health && (Level.World.bSkillAutoUseHealth || Level.Game.deathmatch) &&
+        !PlayerEx(Player).MorphTime)
+    {
+      // try to use some inventory health
+      AutoUseHealth(damage-Player.Health+1);
+    }
+    Player.Health -= damage; // mirror mobj health here for Dave
+    if (Player.Health < 0) Player.Health = 0;
+    if (Player.Health < 1 && /*(PlayerEx(Player).Cheats&PlayerEx::CF_BUDDHA)*/isBuddha) Player.Health = 1;
+    PlayerEx(Player).Attacker = source;
   }
-  if (damage < 1000 && ((PlayerEx(Player).Cheats&PlayerEx::CF_GODMODE) || bInvulnerable)) {
-    return;
-  }
-  if (damage >= Player.Health && (Level.World.bSkillAutoUseHealth || Level.Game.deathmatch) &&
-      !PlayerEx(Player).MorphTime)
-  {
-    // try to use some inventory health
-    AutoUseHealth(damage-Player.Health+1);
-  }
-  Player.Health -= damage; // mirror mobj health here for Dave
-  if (Player.Health < 0) Player.Health = 0;
-  if (Player.Health < 1 && (PlayerEx(Player).Cheats&PlayerEx::CF_BUDDHA)) Player.Health = 1;
-  PlayerEx(Player).Attacker = source;
 
   // do the damage
   Health -= damage;
-  if (bIsPlayer && Health < 1 && (PlayerEx(Player).Cheats&PlayerEx::CF_BUDDHA)) Health = 1;
+  if (bIsPlayer && Health < 1 && /*(PlayerEx(Player).Cheats&PlayerEx::CF_BUDDHA)*/isBuddha) Health = 1;
   if (Health <= 0) {
     // death
     Special1 = damage;

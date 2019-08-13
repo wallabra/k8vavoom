@@ -1,0 +1,76 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 2018-2019 Ketmar Dark
+//**
+//**  This program is free software: you can redistribute it and/or modify
+//**  it under the terms of the GNU General Public License as published by
+//**  the Free Software Foundation, either version 3 of the License, or
+//**  (at your option) any later version.
+//**
+//**  This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**  You should have received a copy of the GNU General Public License
+//**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//**
+//**************************************************************************
+class PowerBuddha : Powerup;
+
+
+//==========================================================================
+//
+//  HandlePickup
+//
+//==========================================================================
+override bool HandlePickup (Inventory Item) {
+  if (Item.Class == Class) {
+    Powerup Pow = Powerup(Item);
+
+    // permanent powerups can be always picked up
+    if (!Pow.EffectTime) {
+      Item.bPickupGood = true;
+      return true;
+    }
+    // don't pick it up if not yet blinking unless it should always be picked up
+    if (!Item.bAlwaysPickup) return true; // already have it
+    Item.bPickupGood = true;
+    return true;
+  }
+
+  if (Inventory) return Inventory.HandlePickup(Item);
+  return false;
+}
+
+
+//==========================================================================
+//
+//  DoEffect
+//
+//==========================================================================
+override void DoEffect () {
+}
+
+
+//==========================================================================
+//
+//  GetBlend
+//
+//==========================================================================
+override int GetBlend () {
+  return RGBA(255, 127, 0, 16);
+}
+
+
+defaultproperties {
+  EffectTime = 60.0;
+}

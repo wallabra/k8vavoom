@@ -183,6 +183,20 @@ final PowerInfiniteAmmo FindInfiniteAmmoPowerup () {
 
 //==========================================================================
 //
+//  FindBuddhaPowerup
+//
+//==========================================================================
+final PowerBuddha FindBuddhaPowerup () {
+  for (auto inv = Inventory; inv; inv = inv.Inventory) {
+    auto pup = PowerBuddha(inv);
+    if (pup) return pup;
+  }
+  return none;
+}
+
+
+//==========================================================================
+//
 //  SpawnAmmoType
 //
 //==========================================================================
