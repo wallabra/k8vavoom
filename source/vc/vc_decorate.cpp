@@ -3396,6 +3396,22 @@ void ShutdownDecorate () {
 //
 //==========================================================================
 bool VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
+  // this ("special") flag means "actor can be picked up
+  // gzdoom does something with it, we cannot pickup anything except inventory anyway
+  // (and cannot reset this flag on inventory)
+  /*no, it is implemented
+  if (Flag.strEquCI("special") == 0) {
+    VClass *invCls = VClass::FindClass("Inventory");
+    if (invCls && GetClass()->IsChildOf(invCls)) {
+      if (Value) return true;
+    } else {
+      if (!Value) return true;
+    }
+    GCon->Logf(NAME_Debug, "setting 'SPECIAL' flag for `%s` to %d", *GetClass()->GetFullName(), (int)Value);
+    return false;
+  }
+  */
+
   VName FlagName;
   VName ClassFilter(NAME_None);
   int DotPos = Flag.IndexOf('.');
@@ -3457,6 +3473,18 @@ bool VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
 //
 //==========================================================================
 bool VEntity::GetDecorateFlag (const VStr &Flag) {
+  // this ("special") flag means "actor can be picked up
+  // gzdoom does something with it, we cannot pickup anything except inventory anyway
+  // (and cannot reset this flag on inventory)
+  /*no, it is implemented
+  if (Flag.strEquCI("special") == 0) {
+    //GCon->Logf(NAME_Debug, "getting 'SPECIAL' flag for `%s`", *GetClass()->GetFullName());
+    // inventory is always pickable, others aren't
+    VClass *invCls = VClass::FindClass("Inventory");
+    return (invCls && GetClass()->IsChildOf(invCls));
+  }
+  */
+
   VName FlagName;
   VName ClassFilter(NAME_None);
   int DotPos = Flag.IndexOf('.');

@@ -278,6 +278,7 @@
     <flag name="NoInteraction" property="bNoInteraction" />
     <flag name="PickUp" property="bPickUp" />
     <flag name="Touchy" property="bTouchy" />
+    <flag name="Special" property="bSpecial" />
     <flag_unsupported name="Vulnerable" />
     <!-- Limited use -->
     <flag name="SeesDaggers" property="bSeesDaggers" />
