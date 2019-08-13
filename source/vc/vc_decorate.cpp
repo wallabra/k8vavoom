@@ -90,7 +90,7 @@ enum {
   PROP_Percent,
   PROP_FloatClamped,
   PROP_FloatClamped2,
-  PROP_FloatOpt2,
+  PROP_FloatOpt2, //WARNING! used exclusively for movement speed
   PROP_Name,
   PROP_NameLower,
   PROP_Str,
