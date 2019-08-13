@@ -866,6 +866,8 @@ final void A_FirePistol () {
       if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1)) return;
       Player.SetViewObject(Wpn);
       Player.SetViewState(PS_FLASH, Wpn.FindState('Flash'));
+      Wpn = PlayerEx(Player).ReadyWeapon;
+      if (!Wpn) return;
       decal = Wpn.DecalName;
       noAAim = Wpn.IsAutoaimDisabled(); //bNoAutoaim;
       if (!noAAim && !GetCvarB('k8HitscanAutoAim')) noAAim = true;
@@ -902,6 +904,8 @@ final void A_FireShotgun () {
     if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1)) return;
     Player.SetViewObject(Wpn);
     Player.SetViewState(PS_FLASH, Wpn.FindState('Flash'));
+    Wpn = PlayerEx(Player).ReadyWeapon;
+    if (!Wpn) return;
     decal = Wpn.DecalName;
     noAAim = Wpn.IsAutoaimDisabled(); //bNoAutoaim;
     if (!noAAim && !GetCvarB('k8HitscanAutoAim')) noAAim = true;
@@ -936,6 +940,8 @@ final void A_FireShotgun2 () {
     if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 2)) return;
     Player.SetViewObject(Wpn);
     Player.SetViewState(PS_FLASH, Wpn.FindState('Flash'));
+    Wpn = PlayerEx(Player).ReadyWeapon;
+    if (!Wpn) return;
     decal = Wpn.DecalName;
     noAAim = Wpn.IsAutoaimDisabled; //bNoAutoaim;
     if (!noAAim && !GetCvarB('k8HitscanAutoAim')) noAAim = true;
@@ -1007,6 +1013,8 @@ final void A_FireCGun () {
     } else {
       Player.SetViewState(PS_FLASH, GetStatePlus(Wpn.FindState('Flash'), 1));
     }
+    Wpn = PlayerEx(Player).ReadyWeapon;
+    if (!Wpn) return;
     decal = Wpn.DecalName;
     noAAim = Wpn.IsAutoaimDisabled; //bNoAutoaim;
     if (!noAAim && !GetCvarB('k8HitscanAutoAim')) noAAim = true;
@@ -1054,6 +1062,8 @@ final void A_FirePlasma () {
     } else {
       Player.SetViewState(PS_FLASH, GetStatePlus(Wpn.FindState('Flash'), 1));
     }
+    Wpn = PlayerEx(Player).ReadyWeapon;
+    if (!Wpn) return;
     decal = Wpn.DecalName;
   }
   SpawnPlayerMissile(PlasmaBall, decal);
@@ -1076,6 +1086,8 @@ final void DoFireRailgun (float Offset) {
     } else {
       Player.SetViewState(PS_FLASH, GetStatePlus(Wpn.FindState('Flash'), 1));
     }
+    Wpn = PlayerEx(Player).ReadyWeapon;
+    if (!Wpn) return;
   }
   int RailDamage = (Level.Game.deathmatch ? 100 : 150);
   TVec Dir;

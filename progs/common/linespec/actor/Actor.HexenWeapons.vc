@@ -288,6 +288,8 @@ final void A_CStaffCheck () {
       Player.Health = newLife;
       Player.SetViewObject(Wpn);
       Player.SetViewState(PS_WEAPON, Wpn.FindState('Fire2'));
+      Wpn = PlayerEx(Player).ReadyWeapon;
+      if (!Wpn) return;
     }
     Wpn.DepleteAmmo(Wpn.FireMode, false);
   }
