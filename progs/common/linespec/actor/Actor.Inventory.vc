@@ -33,7 +33,7 @@
 //  DoGiveInventory
 //
 //==========================================================================
-final bool DoGiveInventory (class!Inventory ItemType, int Amount, EntityEx Receiver) {
+final bool DoGiveInventory (class!Inventory ItemType, int Amount, EntityEx Receiver, optional bool disableReplace) {
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
   if (!Receiver) return false;
 
@@ -42,7 +42,7 @@ final bool DoGiveInventory (class!Inventory ItemType, int Amount, EntityEx Recei
   bool Ret = true;
   if (ItemType) {
     auto origItemType = ItemType;
-    Inventory Item = SpawnInventoryType(self, ItemType);
+    Inventory Item = SpawnInventoryType(self, ItemType, disableReplace:disableReplace!optional);
     if (Item) {
       //Inventory Item = Spawn(ItemType, default, default, default, AllowReplace:false);
       if (!Inventory(Item)) {
@@ -62,6 +62,7 @@ final bool DoGiveInventory (class!Inventory ItemType, int Amount, EntityEx Recei
         --Level.TotalItems;
       }
 
+      //printdebug("DoGiveInventory:%C: Item=%C (Item at %s)", self, Item, GetClassLocationStr(Item.Class));
       if (!Item.TryPickup(Receiver)) {
         Item.Destroy();
         Ret = false;
@@ -84,7 +85,7 @@ final bool DoGiveInventory (class!Inventory ItemType, int Amount, EntityEx Recei
 //==========================================================================
 final void A_GiveInventory (class!Inventory ItemType, optional int Amount, optional int giveto) {
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_GiveInventory', giveto!optional));
-  DoGiveInventory(ItemType, Amount, /*self*/tgt);
+  DoGiveInventory(ItemType, Amount, /*self*/tgt, disableReplace:true);
 }
 
 
@@ -94,7 +95,7 @@ final void A_GiveInventory (class!Inventory ItemType, optional int Amount, optio
 //
 //==========================================================================
 final void A_GiveToTarget (class!Inventory ItemType, optional int Amount) {
-  DoGiveInventory(ItemType, Amount, Target);
+  DoGiveInventory(ItemType, Amount, Target, disableReplace:true);
 }
 
 
