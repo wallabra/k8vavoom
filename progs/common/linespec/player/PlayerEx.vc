@@ -4981,10 +4981,12 @@ void Cheat_Summon_AC (const ref array!string args, bool newArg, out array!string
       ac = class!Actor(GetClassReplacement(cls));
       if (!ac || ac != cls) continue;
     }
-    // check state
-    auto spwspate = FindClassState(ac, 'Spawn');
-    if (!spwspate) continue;
-    if (!AreStateSpritesPresent(spwspate)) continue;
+    if (!class!RandomSpawner(cls)) {
+      // check state
+      auto spwspate = FindClassState(ac, 'Spawn');
+      if (!spwspate) continue;
+      if (!AreStateSpritesPresent(spwspate)) continue;
+    }
     aclist[$] = va("%s%s", (noreplace ? "!" : ""), GetClassName(ac));
   }
 
@@ -5029,7 +5031,7 @@ void Cheat_Summon () {
   auto moClass = class!EntityEx(FindClassNoCaseStr(clsName));
   if (!moClass) {
     // Can't find thing type
-    print("Summon: unknown class '%s'", clsName);
+    printwarn("Summon: unknown class '%s'", clsName);
     return;
   }
 
@@ -5040,21 +5042,27 @@ void Cheat_Summon () {
   }
   //writeln("summon 1: ", GetClassName(moClass));
 
-  auto spwspate = FindClassState(moClass, 'Spawn');
+  bool doRandomSpawner = false;
+  if (class!RandomSpawner(moClass)) {
+    doRandomSpawner = true;
+    //printdebug("RANDOMSPAWNER: `%C`", moClass);
+  } else {
+    auto spwspate = FindClassState(moClass, 'Spawn');
 
-  // if actor has no spawn state, we cannot summon it
-  if (!spwspate) {
-    print("Summon: class '%s' has no spawn state", Cmd_GetArgV(1));
-    return;
+    // if actor has no spawn state, we cannot summon it
+    if (!spwspate) {
+      print("Summon: class '%s' has no spawn state", Cmd_GetArgV(1));
+      return;
+    }
+
+    // if actor has no spawn sprites, we cannot summon it
+    if (!AreStateSpritesPresent(spwspate)) {
+      print("Summon: class '%s' has no frames", Cmd_GetArgV(1));
+      return;
+    }
+
+    //if (Level.Game.nomonsters && moClass.default.bMonster) return;
   }
-
-  // if actor has no spawn sprites, we cannot summon it
-  if (!AreStateSpritesPresent(spwspate)) {
-    print("Summon: class '%s' has no frames", Cmd_GetArgV(1));
-    return;
-  }
-
-  //if (Level.Game.nomonsters && moClass.default.bMonster) return;
 
   // spawn it
   TAVec ang = MO.Angles; //vector(plr.pitch, plr.yaw, plr.roll);
@@ -5065,6 +5073,11 @@ void Cheat_Summon () {
 
   // this calls `OnMapSpawn(nullptr)` for spawned item
   auto it = Level.Spawn(moClass, dst, AllowReplace:false); // optional TAVec AAngles, optional mthing_t *mthing, optional bool AllowReplace
+  if (!it) {
+    printwarn("cannot spawn `%C`", moClass);
+    return;
+  }
+
   if (it.Sector) it.Origin.z = fclamp(it.Origin.z, it.FloorZ, it.CeilingZ);
 }
 
