@@ -64,7 +64,9 @@ private:
     STYLE_Subtract,
     STYLE_ReverseSubtract,
     STYLE_Modulate,
-    STYLE_CopyAlpha
+    STYLE_Overlay,
+    STYLE_CopyAlpha,
+    STYLE_CopyNewAlpha,
   };
 
   struct VTexPatch {

@@ -361,12 +361,9 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
               else if (sc->Check("reversesubtract")) P.Style = STYLE_ReverseSubtract;
               else if (sc->Check("modulate")) P.Style = STYLE_Modulate;
               else if (sc->Check("copyalpha")) P.Style = STYLE_CopyAlpha;
-              // Overlay: This is the same as CopyAlpha, except it only copies the patch's alpha channel where it has a higher alpha than what's underneath.
-              else if (sc->Check("overlay")) {
-                //FIXME
-                GCon->Logf(NAME_Warning, "%s: unsupported texture style 'Overlay', approximated with 'CopyAlpha'", *sc->GetLoc().toStringNoCol());
-                P.Style = STYLE_CopyAlpha;
-              } else {
+              else if (sc->Check("overlay")) P.Style = STYLE_Overlay;
+              else if (sc->Check("copynewalpha")) P.Style = STYLE_CopyNewAlpha;
+              else {
                 if (expectStyle) {
                   sc->Error(va("Bad style: '%s'", *sc->String));
                 } else {
@@ -647,6 +644,31 @@ vuint8 *VMultiPatchTexture::GetPixels () {
                   Dst.g = vuint8(Dst.g*ia+col.g*a);
                   Dst.b = vuint8(Dst.b*ia+col.b*a);
                   Dst.a = col.a;
+                }
+                break;
+              case STYLE_CopyNewAlpha:
+                {
+                  float tmpa = clampval(col.a*patch->Alpha, 0.0f, 255.0f);
+                  if (tmpa == 255) {
+                    Dst = col;
+                  } else {
+                    float a = tmpa/255.0f;
+                    float ia = (255.0f-tmpa)/255.0f;
+                    Dst.r = vuint8(Dst.r*ia+col.r*a);
+                    Dst.g = vuint8(Dst.g*ia+col.g*a);
+                    Dst.b = vuint8(Dst.b*ia+col.b*a);
+                    Dst.a = tmpa;
+                  }
+                }
+                break;
+              case STYLE_Overlay: //k8: dunno
+                {
+                  float a = col.a/255.0f;
+                  float ia = (255.0f-col.a)/255.0f;
+                  Dst.r = vuint8(Dst.r*ia+col.r*a);
+                  Dst.g = vuint8(Dst.g*ia+col.g*a);
+                  Dst.b = vuint8(Dst.b*ia+col.b*a);
+                  if (col.a > Dst.a) Dst.a = col.a;
                 }
                 break;
             }
