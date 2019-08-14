@@ -406,6 +406,7 @@
     <prop_tics name="Powerup.Duration" property="EffectTime" />
     <prop_name name="Powerup.Mode" property="Mode" />
     <prop_speed_mult name="Powerup.Speed" property="Speed" />
+    <prop_float name="Powerup.Strength" property="Strength" />
   </class>
 
   <class name="PowerupGiver">

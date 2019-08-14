@@ -197,6 +197,20 @@ final PowerBuddha FindBuddhaPowerup () {
 
 //==========================================================================
 //
+//  FindRegenerationPowerup
+//
+//==========================================================================
+final PowerRegeneration FindRegenerationPowerup () {
+  for (auto inv = Inventory; inv; inv = inv.Inventory) {
+    auto pup = PowerRegeneration(inv);
+    if (pup) return pup;
+  }
+  return none;
+}
+
+
+//==========================================================================
+//
 //  SpawnAmmoType
 //
 //==========================================================================

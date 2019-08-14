@@ -29,6 +29,23 @@ class PowerRegeneration : Powerup;
 
 //==========================================================================
 //
+//  Regenerate
+//
+//==========================================================================
+void Regenerate (EntityEx ent) {
+  if (!ent) return;
+  if (Strength.isnan) Strength = 5;
+  int regen = int(Strength);
+  if (regen <= 0) return;
+  if (ent.GiveBody(regen) && !GetSoundPlayingInfo(ent, GetSoundID('*regenerate'))) {
+    //printdebug("REGEN=%s", Strength);
+    ent.PlaySound('*regenerate', /*CHAN_VOICE*/CHAN_BODY);
+  }
+}
+
+
+//==========================================================================
+//
 //  InitEffect
 //
 //==========================================================================
@@ -36,7 +53,7 @@ override void InitEffect () {
   if (Owner && Owner.Player) {
     Owner.PlaySound(SightSound, /*CHAN_VOICE*/CHAN_AUTO);
     // give the player the power to regnerate lost life
-    PlayerEx(Owner.Player).Cheats |= PlayerEx::CF_REGENERATION;
+    //PlayerEx(Owner.Player).Cheats |= PlayerEx::CF_REGENERATION;
   }
 }
 
@@ -50,7 +67,7 @@ override void EndEffect () {
   if (Owner && Owner.Player) {
     Owner.PlaySound(DeathSound, /*CHAN_VOICE*/CHAN_AUTO);
     // take away the regeneration power
-    PlayerEx(Owner.Player).Cheats &= ~PlayerEx::CF_REGENERATION;
+    //PlayerEx(Owner.Player).Cheats &= ~PlayerEx::CF_REGENERATION;
   }
 }
 

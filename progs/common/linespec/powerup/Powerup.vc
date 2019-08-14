@@ -33,7 +33,7 @@ class Powerup : Inventory abstract;
 float EffectTime;
 int BlendColor;
 name Mode;
-float Strength = 0; //k8:FIXME, i need a way to know if it is specified
+float Strength = float.nan; //k8:FIXME, i need a way to know if it is specified
 
 
 replication {

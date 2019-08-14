@@ -167,6 +167,9 @@ transient float lastViewOrgZForPfx; // set in `CalcHeight()`, used in `PostfixVi
 transient float lastViewOrgVH;
 transient subsector_t *lastViewOrgZSub;
 
+// meh, let it cheat a little
+transient int LastRegenTicTime = 0;
+
 
 //==========================================================================
 //
@@ -2680,6 +2683,8 @@ override void NetGameReborn () {
   MO.Player = none;
   MO.bIsPlayer = false;
 
+  LastRegenTicTime = 0;
+
   // spawn at random spot if in death match
   if (Level.Game.deathmatch) {
     k8HealthAccum_Amount = 0;
@@ -2955,6 +2960,7 @@ void ResetPlayerOnSpawn (optional bool keepPlayerState) {
   bFlashlightButtonDown = false;
 
   k8NextSuperBulletTime = 0;
+  LastRegenTicTime = 0;
 
   ResetACSButtons();
 
@@ -3976,9 +3982,15 @@ override void PlayerTick (float deltaTime) {
   }
 
 
-  if ((MO.XLevel.TicTime%(3*35) == 0) && (Cheats&CF_REGENERATION) && Health > 0) {
-    if (EntityEx(MO).GiveBody(5) && !GetSoundPlayingInfo(MO, GetSoundID('*regenerate'))) {
-      MO.PlaySound('*regenerate', /*CHAN_VOICE*/CHAN_BODY);
+  if (MO.XLevel.TicTime%(3*35) == 0 && Health > 0 && LastRegenTicTime != MO.XLevel.TicTime) {
+    LastRegenTicTime = MO.XLevel.TicTime;
+    PowerRegeneration rgp = EntityEx(MO).FindRegenerationPowerup();
+    if (rgp) {
+      rgp.Regenerate(EntityEx(MO));
+    } else if (Cheats&CF_REGENERATION) {
+      if (EntityEx(MO).GiveBody(5) && !GetSoundPlayingInfo(MO, GetSoundID('*regenerate'))) {
+        MO.PlaySound('*regenerate', /*CHAN_VOICE*/CHAN_BODY);
+      }
     }
   }
 
