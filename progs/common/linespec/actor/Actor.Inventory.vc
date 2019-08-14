@@ -112,6 +112,21 @@ final void A_GiveToTarget (class!Inventory ItemType, optional int Amount) {
 
 //==========================================================================
 //
+//  A_GiveToChildren
+//
+//==========================================================================
+final void A_GiveToChildren (class!Inventory ItemType, optional int Amount) {
+  if (!ItemType) return;
+  Actor A;
+  foreach AllThinkers(Actor, A) {
+    if (A.Master != self) continue;
+    DoGiveInventory(ItemType, Amount, A, disableReplace:true);
+  }
+}
+
+
+//==========================================================================
+//
 //  A_GiveToTargetRespectReplace
 //
 //==========================================================================
