@@ -265,6 +265,9 @@ override void StartMap () {
   pic_invgeml[1] = R_RegisterPic('invgeml2');
   pic_invgemr[0] = R_RegisterPic('invgemr1');
   pic_invgemr[1] = R_RegisterPic('invgemr2');
+
+  lastWeaponName = "";
+  lastWeaponNameChangeTime = 0;
 }
 
 

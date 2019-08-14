@@ -70,6 +70,8 @@ override void OnCreate () {
 //
 //  StartMap
 //
+//  WARNING! this can be called several times for one map! (k8:FIXME!)
+//
 //==========================================================================
 void StartMap () {
   ClearNotify();
