@@ -735,7 +735,7 @@ static VStatement *ParseFunCallAsStmt (VScriptParser *sc, VClass *Class, VState 
         delete dest;
         dest = e;
       }
-      if (!dest->IsDecorateUserVar()) sc->Error("cannot assign to non-field");
+      if (!dest->IsDecorateUserVar()) sc->Error(va("cannot assign to non-field `%s`", *FuncName));
       VExpression *val = ParseExpression(sc, Class);
       if (!val) sc->Error("decorate parsing error");
       VExpression *ass = new VAssignment(VAssignment::Assign, dest, val, stloc);
@@ -743,10 +743,25 @@ static VStatement *ParseFunCallAsStmt (VScriptParser *sc, VClass *Class, VState 
     }
   }
 
-  if (VStr::ICmp(*FuncName, "A_Jump") == 0) {
+  if (FuncName.strEquCI("A_Jump")) {
     VExpression *jexpr = ParseAJump(sc, Class, State);
     return new VExpressionStatement(jexpr);
   } else {
+    //k8: THIS IS ABSOLUTELY HORRIBLY HACK! MAKE IT RIGHT IN TERM PARSER INSTEAD!
+    auto ll = sc->GetLoc();
+    if (sc->Check("++")) {
+      if (!FuncName.startsWithCI("user_")) sc->Error(va("cannot assign to non-unservar `%s`", *FuncName));
+      //VExpression *dest = new VDecorateSingleName(FuncName, stloc);
+      //if (!dest->IsDecorateUserVar()) sc->Error(va("cannot assign to non-field `%s`", *FuncName));
+      VExpression *dest = new VDecorateUserVar(*FuncName, stloc);
+      VExpression *op1 = dest->SyntaxCopy();
+      VExpression *op2 = new VIntLiteral(1, ll);
+      VExpression *val = new VBinary(VBinary::Add, op1, op2, ll);
+      VExpression *ass = new VAssignment(VAssignment::Assign, dest, val, stloc);
+      //fprintf(stderr, "**%s: <%s> **\n", *sc->GetLoc().toStringNoCol(), *ass->toString());
+      return new VExpressionStatement(new VDropResult(ass));
+    }
+
     VMethod *Func = ParseFunCallWithName(sc, FuncName, Class, NumArgs, Args, false); // no paren
     //fprintf(stderr, "***2:<%s>\n", *sc->String);
 
