@@ -557,13 +557,14 @@ bool VScriptParser::GetString () {
                (ScriptPtr[0] == '|' && ScriptPtr[1] == '|') ||
                (ScriptPtr[0] == '<' && ScriptPtr[1] == '<') ||
                (ScriptPtr[0] == '>' && ScriptPtr[1] == '>') ||
-               (ScriptPtr[0] == ':' && ScriptPtr[1] == ':'))
+               (ScriptPtr[0] == ':' && ScriptPtr[1] == ':') ||
+               (ScriptPtr[0] == '+' && ScriptPtr[1] == '+') ||
+               (ScriptPtr[0] == '-' && ScriptPtr[1] == '-'))
     {
       // special double-character token
+      if (ScriptPtr[0] == '>' && ScriptPtr[1] == '>' && ScriptPtr[2] == '>') String += *ScriptPtr++; // for `>>>`
       String += *ScriptPtr++;
       String += *ScriptPtr++;
-      // `>>>`
-      if (ScriptPtr[0] == '>') String += *ScriptPtr++;
     } else if (CharClassifier::isNumStart(ScriptPtr, AllowNumSign)) {
       // number
       if (ScriptPtr[0] == '+' || ScriptPtr[0] == '-') String += *ScriptPtr++;
