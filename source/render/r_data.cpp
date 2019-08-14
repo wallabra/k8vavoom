@@ -1212,19 +1212,19 @@ static void ParseGZLightDef (VScriptParser *sc, int LightType, float lightsizefa
       float b = midval(0.0f, (float)sc->Float, 1.0f);
       L->Color = ((int)(r*255)<<16)|((int)(g*255)<<8)|(int)(b*255)|0xff000000;
     } else if (sc->Check("size")) {
-      sc->ExpectNumber();
-      L->Radius = float(sc->Number);
+      sc->ExpectFloat();
+      L->Radius = sc->Float;
     } else if (sc->Check("secondarySize")) {
-      sc->ExpectNumber();
-      L->Radius2 = float(sc->Number);
+      sc->ExpectFloat();
+      L->Radius2 = sc->Float;
     } else if (sc->Check("offset")) {
       // GZDoom manages Z offset as Y offset
-      sc->ExpectNumber();
-      L->Offset.x = float(sc->Number);
-      sc->ExpectNumber();
-      L->Offset.z = float(sc->Number);
-      sc->ExpectNumber();
-      L->Offset.y = float(sc->Number);
+      sc->ExpectFloat();
+      L->Offset.x = sc->Float;
+      sc->ExpectFloat();
+      L->Offset.z = sc->Float;
+      sc->ExpectFloat();
+      L->Offset.y = sc->Float;
     } else if (sc->Check("subtractive")) {
       sc->ExpectNumber();
       sc->Message(va("Subtractive light ('%s') is not supported yet.", *L->Name));
