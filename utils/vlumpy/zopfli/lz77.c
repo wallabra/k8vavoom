@@ -466,7 +466,7 @@ void ZopfliFindLongestMatch(ZopfliBlockState* s, const ZopfliHash* h,
 
     assert(p < ZOPFLI_WINDOW_SIZE);
     assert(p == hprev[pp]);
-    assert(hhashval[p] == hval);
+    /*assert(hhashval[p] == hval);*/
 
     if (dist > 0) {
       assert(pos < size);
