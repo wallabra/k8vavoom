@@ -74,6 +74,19 @@ struct SpawnEdFixup {
 };
 
 
+//==========================================================================
+//
+//  ExpectBool
+//
+//==========================================================================
+static bool ExpectBool (const char *optname, VScriptParser *sc) {
+  if (sc->Check("true") || sc->Check("on") || sc->Check("tan")) return true;
+  if (sc->CheckNumber()) return !!sc->Number;
+  sc->Error(va("boolean value expected for option '%s'", optname));
+  return false;
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 VName P_TranslateMap (int map);
 static void ParseMapInfo (VScriptParser *sc);
@@ -566,7 +579,7 @@ static void SetMapDefaults (mapInfo_t &Info) {
   Info.EnterPic = NAME_None;
   Info.InterMusic = NAME_None;
 
-  if (GGameInfo->Flags & VGameInfo::GIF_DefaultLaxMonsterActivation) {
+  if (GGameInfo->Flags&VGameInfo::GIF_DefaultLaxMonsterActivation) {
     Info.Flags2 |= VLevelInfo::LIF2_LaxMonsterActivation;
   }
 }
@@ -1734,6 +1747,11 @@ static void ParseGameInfo (VScriptParser *sc) {
       if (slot >= 0 && slot <= 10) {
         GGameInfo->eventCmdSetSlot(&clist, false); // as gameinfo
       }
+    } else if (sc->Check("ForceKillScripts")) {
+      sc->Expect("=");
+      bool bval = ExpectBool("ForceKillScripts", sc);
+      //mapInfoGameInfoInitial.bForceKillScripts = bval;
+      if (bval) GGameInfo->Flags |= VGameInfo::GIF_ForceKillScripts; else GGameInfo->Flags &= ~VGameInfo::GIF_ForceKillScripts;
     } else {
       sc->ExpectString();
       sc->Message(va("skipped gameinfo command '%s'", *sc->String));

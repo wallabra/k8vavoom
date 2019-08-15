@@ -852,8 +852,18 @@ void Died (EntityEx source, EntityEx inflictor) {
   bSkullFly = false;
   if (!bNoGravKill) bNoGravity = false;
   bDropOff = true;
+  // gozzo does it like this:
+  //   only mosters and things with raise state can become corpses
+  //   k8: not that i care even a little
   bCorpse = true;
   bPassMobj = false;
+
+  // [JM] Fire KILL type scripts for actor. Not needed for players, since they have the "DEATH" script type.
+  //printdebug("DEAD: `%C`; bNoKillScripts=%B; bUseKillScripts=%B; bForceKillScripts=%B", self, bNoKillScripts, bUseKillScripts, Level.Game.bForceKillScripts);
+  if (!bIsPlayer && !bNoKillScripts && (bUseKillScripts || Level.Game.bForceKillScripts)) {
+    //printdebug("calling kill script for `%C`", self);
+    XLevel.StartTypedACScripts(Level::SCRIPT_Kill, 0, 0, 0, Activator:self, Always:true, RunNow:true);
+  }
 
   float NewHeight = 0.0;
   if (nameicmp(DamageType, 'Fire') == 0) NewHeight = BurnHeight;

@@ -69,6 +69,7 @@ array!class PlayerClasses;
 bool bDefaultLaxMonsterActivation;
 bool bDefaultBloodSplatter;
 readonly bool bPaused;
+bool bForceKillScripts;
 
 final bool netgame {
   get { return NetMode > NM_Standalone; }

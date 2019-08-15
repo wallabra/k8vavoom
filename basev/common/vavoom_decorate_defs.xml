@@ -337,6 +337,10 @@
     <flag_unsupported name="RelativeToFloor" />
     <!-- used in blood replacements -->
     <flag name="BloodDontSplat" property="bBloodDisableSplats" />
+    <!-- more gozzo shit -->
+    <flag name="UseKillScripts" property="bUseKillScripts" />
+    <flag name="NoKillScripts" property="bNoKillScripts" />
+    <!-- flag name="DontCorpse" property="bDontCorpse" / -->
   </class>
 
   <class name="Inventory">

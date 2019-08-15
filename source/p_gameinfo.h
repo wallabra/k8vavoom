@@ -71,9 +71,10 @@ class VGameInfo : public VGameObject {
   TArray<VClass *> PlayerClasses;
 
   enum {
-    GIF_DefaultLaxMonsterActivation = 0x00000001,
-    GIF_DefaultBloodSplatter        = 0x00000002,
-    GIF_Paused                      = 0x00000004,
+    GIF_DefaultLaxMonsterActivation = 1u<<0,
+    GIF_DefaultBloodSplatter        = 1u<<1,
+    GIF_Paused                      = 1u<<2,
+    GIF_ForceKillScripts            = 1u<<3,
   };
   vuint32 Flags;
 

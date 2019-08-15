@@ -94,6 +94,9 @@ enum {
   SCRIPT_Unloading   = 13,
   SCRIPT_Disconnect  = 14,
   SCRIPT_Return      = 15,
+  SCRIPT_Event       = 16, // not implemented
+  SCRIPT_Kill        = 17,
+  SCRIPT_Reopen      = 18, // not implemented
 };
 
 
