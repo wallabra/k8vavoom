@@ -179,6 +179,79 @@ static inline bool getIgnoreMoronicStateCommands () {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+//k8: sorry!
+static inline bool isChexActor (const VStr &cname) {
+  static const char *namelist[] = {
+    "ArmoredFlemoidusBipedicus",
+    "Bootspoon",
+    "BowlOfFruit",
+    "BowlOfVegetables",
+    "ChexAppleTree",
+    "ChexArmor",
+    "ChexBananaTree",
+    "ChexBlueCard",
+    "ChexCavernColumn",
+    "ChexCavernStalagmite",
+    "ChexChemicalBurner",
+    "ChexChemicalFlask",
+    "ChexCivilian1",
+    "ChexCivilian2",
+    "ChexCivilian3",
+    "ChexFlagOnPole",
+    "ChexGasTank",
+    "ChexLandingLight",
+    "ChexLightColumn",
+    "ChexMineCart",
+    "ChexOrangeTree",
+    "ChexPlayer",
+    "ChexRedCard",
+    "ChexSlimeFountain",
+    "ChexSoul",
+    "ChexSpaceship",
+    "ChexSubmergedPlant",
+    "ChexTallFlower",
+    "ChexTallFlower2",
+    "ChexYellowCard",
+    "ComputerAreaMap",
+    "Flembrane",
+    "FlemoidusBipedicus",
+    "FlemoidusCommonus",
+    "FlemoidusCycloptisCommonus",
+    "GlassOfWater",
+    "LAZBall",
+    "LAZDevice",
+    "LargeZorchPack",
+    "LargeZorchRecharge",
+    "LargeZorcher",
+    "MiniZorchPack",
+    "MiniZorchRecharge",
+    "MiniZorcher",
+    "PhaseZorchMissile",
+    "PhasingZorch",
+    "PhasingZorchPack",
+    "PhasingZorcher",
+    "PropulsorMissile",
+    "PropulsorZorch",
+    "PropulsorZorchPack",
+    "RapidZorcher",
+    "SlimeProofSuit",
+    "SlimeRepellent",
+    "SuperBootspork",
+    "SuperChexArmor",
+    "SuperLargeZorcher",
+    "SuperchargeBreakfast",
+    "ZorchPropulsor",
+    "Zorchpack",
+    nullptr
+  };
+  for (const char *const *nptr = namelist; *nptr; ++nptr) {
+    if (cname.strEquCI(*nptr)) return true;
+  }
+  return false;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // this is workaround for mo...dders overriding the same class several times in
 // the same mod (yes, smoothdoom, i am talking about you).
 // we will cut off old override if we'll find a new one
@@ -1764,8 +1837,11 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
       if (optionalActor) {
         sc->Message(va("Skipping optional actor `%s`", *NameStr));
         ParentClass = nullptr; // just in case
+      } else if (isChexActor(ParentStr)) {
+        sc->Message(va("Parent class `%s` from Chex Quest not found for actor `%s`, ignoring actor", *ParentStr, *NameStr));
+        ParentClass = nullptr; // just in case
       } else if (GArgs.CheckParm("-vc-decorate-lax-parents")) {
-        sc->Message(va("Parent class `%s` not found", *ParentStr));
+        sc->Message(va("Parent class `%s` not found for actor `%s`, ignoring actor", *ParentStr, *NameStr));
         ParentClass = nullptr; // just in case
       } else {
         sc->Error(va("Parent class `%s` not found", *ParentStr));
@@ -1826,11 +1902,14 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
     sc->ExpectString();
     ReplaceeClass = VClass::FindClassNoCase(*sc->String);
     if (ReplaceeClass == nullptr || ReplaceeClass->MemberType != MEMBER_Class) {
-      if (GArgs.CheckParm("-vc-decorate-lax-parents")) {
+      if (isChexActor(sc->String)) {
         ReplaceeClass = nullptr; // just in case
-        sc->Message(va("Replaced class `%s` not found", *sc->String));
+        sc->Message(va("Replaced class `%s` from Chex Quest not found for actor `%s`", *sc->String, *NameStr));
+      } else if (GArgs.CheckParm("-vc-decorate-lax-parents")) {
+        ReplaceeClass = nullptr; // just in case
+        sc->Message(va("Replaced class `%s` not found for actor `%s`", *sc->String, *NameStr));
       } else {
-        sc->Error(va("Replaced class `%s` not found", *sc->String));
+        sc->Error(va("Replaced class `%s` not found for actor `%s`", *sc->String, *NameStr));
       }
     }
     if (ReplaceeClass != nullptr && !ReplaceeClass->IsChildOf(ActorClass)) {
