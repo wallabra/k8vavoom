@@ -588,6 +588,11 @@ bool VScriptParser::GetString () {
       // normal string
       while (ScriptPtr < ScriptEndPtr) {
         const char ch = *ScriptPtr++;
+        // eh...
+        if (ch == '\'' && !String.isEmpty() && ScriptPtr[0] && !CharClassifier::isCIdTerm(ScriptPtr[0])) {
+          String += ch;
+          continue;
+        }
         if (CharClassifier::isCIdTerm(ch)) { --ScriptPtr; break; }
         String += ch;
       }
@@ -600,6 +605,11 @@ bool VScriptParser::GetString () {
       // normal string
       while (ScriptPtr < ScriptEndPtr) {
         const char ch = *ScriptPtr++;
+        // eh...
+        if (ch == '\'' && !String.isEmpty() && ScriptPtr[0] && !CharClassifier::isNCIdTerm(ScriptPtr[0])) {
+          String += ch;
+          continue;
+        }
         if (CharClassifier::isNCIdTerm(ch)) { --ScriptPtr; break; }
         // check for comments
         if (ch == '/') {
