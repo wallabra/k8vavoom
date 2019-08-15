@@ -78,7 +78,7 @@ static VCvarB build_blockmap("loader_force_blockmap_rebuild", false, "Force bloc
 //static VCvarB nodes_allow_compressed_old("nodes_allow_compressed_old", true, "Allow loading v0 compressed GL nodes?", CVAR_Archive);
 static VCvarB nodes_allow_compressed("nodes_allow_compressed", false, "Allow loading v1+ compressed GL nodes?", CVAR_Archive);
 
-static VCvarB loader_force_nodes_rebuild("loader_force_nodes_rebuild", false, "Force node rebuilding?", CVAR_Archive);
+static VCvarB loader_force_nodes_rebuild("loader_force_nodes_rebuild", true, "Force node rebuilding?", CVAR_Archive);
 
 static VCvarB loader_cache_data("loader_cache_data", false, "Cache built level data?", CVAR_Archive);
 static VCvarB loader_cache_ignore_one("loader_cache_ignore_one", false, "Ignore (and remove) cache for next map loading?", CVAR_PreInit);
