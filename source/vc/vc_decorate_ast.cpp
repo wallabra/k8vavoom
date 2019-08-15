@@ -258,6 +258,12 @@ VExpression *VDecorateInvocation::DoResolve (VEmitContext &ec) {
   }
 
   if (ec.SelfClass) {
+    if (VStr::strEquCI(*Name, "A_WeaponOffset")) {
+      ParseWarning(Loc, "Unknown decorate action `%s` in class `%s`", *Name, *ec.SelfClass->GetFullName());
+      VExpression *e = new VIntLiteral(0, Loc);
+      delete this;
+      return e->Resolve(ec);
+    }
     ParseError(Loc, "Unknown decorate action `%s` in class `%s`", *Name, *ec.SelfClass->GetFullName());
   } else {
     ParseError(Loc, "Unknown decorate action `%s`", *Name);

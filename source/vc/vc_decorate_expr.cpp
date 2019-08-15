@@ -303,7 +303,7 @@ static VExpression *ParseExpressionPriority0 (VScriptParser *sc) {
     VExpression *op = ParseExpression(sc, decoClass);
     if (!op) ParseError(l, "Expression expected");
     sc->Expect(")");
-    return op;
+    return new VExprParens(op, l);
   }
 
   if (sc->CheckIdentifier()) {
