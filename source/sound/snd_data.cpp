@@ -30,7 +30,14 @@
 #define VV_ALLOW_SFX_TRUNCATION
 
 static VCvarB snd_verbose_truncate("snd_verbose_truncate", false, "Show silence-truncated sounds?", CVAR_Archive);
-static VCvarB snd_background_loading("snd_background_loading", true, "Load sounds in background thread?", CVAR_Archive|CVAR_PreInit);
+
+#ifdef _WIN32
+# define VV_SND_BACKLOAD  false
+#else
+# define VV_SND_BACKLOAD  true
+#endif
+VCvarB snd_background_loading("snd_background_loading", VV_SND_BACKLOAD, "Load sounds in background thread?", /*CVAR_Archive|*/CVAR_PreInit);
+VCvarB snd_music_background_load("snd_music_background_load", VV_SND_BACKLOAD, "Load music in the background thread?", /*CVAR_Archive|*/CVAR_PreInit);
 
 
 #ifdef CLIENT

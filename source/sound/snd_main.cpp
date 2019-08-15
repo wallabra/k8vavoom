@@ -202,7 +202,7 @@ static VCvarF snd_random_pitch_boost("snd_random_pitch_boost", "1", "Random pitc
 VCvarI snd_mid_player("snd_mid_player", "1", "MIDI player type (0:Timidity; 1:FluidSynth; -1:none)", CVAR_Archive|CVAR_PreInit);
 VCvarI snd_mod_player("snd_mod_player", "2", "Module player type", CVAR_Archive);
 
-static VCvarB snd_music_background_load("snd_music_background_load", true, "Load music in the background thread?", CVAR_Archive|CVAR_PreInit);
+extern VCvarB snd_music_background_load;
 
 
 //==========================================================================
