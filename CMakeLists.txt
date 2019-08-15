@@ -10,6 +10,7 @@ project(k8vavoom)
 
 option(WITH_SDL2 "Use SDL2 library" ON)
 option(WITH_OPENGL "Use OpenGL library" ON)
+option(WITH_MIMALLOC "Use mi-malloc memory allocator" ON)
 option(WITH_VORBIS "Enable Vorbis support" ON)
 option(WITH_OPUS "Enable Opus support" ON)
 option(WITH_LIBMAD "Enable MP3 support" ON)
@@ -312,6 +313,11 @@ set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Os ${UNFUCK_G
 
 
 add_definitions(-DZDBSP_DISABLE_SSE=1)
+
+if(NOT WITH_MIMALLOC)
+  add_definitions(-DVAVOOM_DISABLE_MIMALLOC)
+  message(STATUS, "Using system memory allocator")
+endif(NOT WITH_MIMALLOC)
 
 set(VAVOOM_MAIN_DEPS "")
 

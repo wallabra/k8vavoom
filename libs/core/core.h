@@ -31,6 +31,10 @@
 # define VAVOOM_USE_MIMALLOC
 #endif
 
+#if defined(VAVOOM_DISABLE_MIMALLOC) && defined(VAVOOM_USE_MIMALLOC)
+# undef VAVOOM_USE_MIMALLOC
+#endif
+
 // define this to activate zone allocator counters
 //#define VAVOOM_CORE_COUNT_ALLOCS
 
