@@ -1936,6 +1936,17 @@ int VRenderLevelShared::CollectSpriteTextures (TArray<bool> &texturepresent) {
   // precache gore mod sprites
   VClass::ForEachChildOf("K8Gore_BloodBase", [&ssi](VClass *cls) { ProcessSpriteClass(cls, ssi); return FERes::FOREACH_NEXT; });
   VClass::ForEachChildOf("K8Gore_BloodBaseTransient", [&ssi](VClass *cls) { ProcessSpriteClass(cls, ssi); return FERes::FOREACH_NEXT; });
+  // precache other blood sprites
+  VClass::ForEachChildOf("Blood", [&ssi](VClass *cls) { ProcessSpriteClass(cls, ssi); return FERes::FOREACH_NEXT; });
+  VClass *bloodRepl = VClass::FindClass("Blood");
+  if (bloodRepl) bloodRepl = bloodRepl->GetReplacement();
+  while (bloodRepl && bloodRepl->IsChildOf(eexCls)) {
+    ProcessSpriteClass(bloodRepl, ssi);
+    bloodRepl = bloodRepl->GetSuperClass();
+  }
+  // precache weapon and ammo sprites, because why not?
+  VClass::ForEachChildOf("Ammo", [&ssi](VClass *cls) { ProcessSpriteClass(cls, ssi); return FERes::FOREACH_NEXT; });
+  VClass::ForEachChildOf("Weapon", [&ssi](VClass *cls) { ProcessSpriteClass(cls, ssi); return FERes::FOREACH_NEXT; });
   return ssi.sprtexcount;
 }
 
