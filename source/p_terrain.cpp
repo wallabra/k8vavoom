@@ -33,7 +33,7 @@
 
 
 struct VSplashInfo {
-  VName Name;
+  VName Name; // always lowercased
 
   VClass *SmallClass;
   float SmallClip;
@@ -54,7 +54,7 @@ struct VSplashInfo {
 
 
 struct VTerrainInfo {
-  VName Name;
+  VName Name; // always lowercased
   VName Splash;
   enum {
     F_Liquid          = 0x00000001,
@@ -78,6 +78,8 @@ struct VTerrainInfo {
 struct VTerrainType {
   int Pic;
   VName TypeName;
+  // it is safe to use pointer here, becasuse it is set after all
+  // terrain data is loaded, and the pointer is immutable
   VTerrainInfo *Info;
 };
 
@@ -87,17 +89,28 @@ static TArray<VSplashInfo> SplashInfos;
 static TArray<VTerrainInfo> TerrainInfos;
 static TArray<VTerrainType> TerrainTypes;
 
+static TMapNC<VName, int> SplashMap; // key: lowercased name; value: index in `SplashInfos`
+static TMapNC<VName, int> TerrainMap; // key: lowercased name; value: index in `TerrainInfos`
+static TMapNC<int, int> TerrainTypeMap; // key: pic number; value: index in `TerrainTypes`
+
 
 //==========================================================================
 //
 //  GetSplashInfo
 //
 //==========================================================================
-static VSplashInfo *GetSplashInfo (VName Name) {
+static VSplashInfo *GetSplashInfo (const char *Name) {
+  if (!Name || !Name[0]) Name = "solid"; // default one
+  VName loname = VName(Name, VName::FindLower);
+  if (loname == NAME_None) return nullptr;
+  auto spp = SplashMap.find(loname);
+  return (spp ? &SplashInfos[*spp] : nullptr);
+  /*
   for (int i = 0; i < SplashInfos.Num(); ++i) {
-    if (SplashInfos[i].Name == Name) return &SplashInfos[i];
+    if (VStr::strEquCI(*SplashInfos[i].Name, *Name)) return &SplashInfos[i];
   }
   return nullptr;
+  */
 }
 
 
@@ -106,11 +119,18 @@ static VSplashInfo *GetSplashInfo (VName Name) {
 //  GetTerrainInfo
 //
 //==========================================================================
-static VTerrainInfo *GetTerrainInfo (VName Name) {
+static VTerrainInfo *GetTerrainInfo (const char *Name) {
+  if (!Name || !Name[0]) Name = "solid"; // default one
+  VName loname = VName(Name, VName::FindLower);
+  if (loname == NAME_None) return nullptr;
+  auto spp = TerrainMap.find(loname);
+  return (spp ? &TerrainInfos[*spp] : nullptr);
+  /*
   for (int i = 0; i < TerrainInfos.Num(); ++i) {
-    if (TerrainInfos[i].Name == Name) return &TerrainInfos[i];
+    if (VStr::strEquCI(*TerrainInfos[i].Name, *Name)) return &TerrainInfos[i];
   }
   return nullptr;
+  */
 }
 
 
@@ -120,14 +140,21 @@ static VTerrainInfo *GetTerrainInfo (VName Name) {
 //
 //==========================================================================
 static void ParseTerrainScript (VScriptParser *sc) {
+  GCon->Logf(NAME_Init, "parsing terrain script '%s'...", *sc->GetScriptName());
   bool insideIf = false;
   while (!sc->AtEnd()) {
     auto loc = sc->GetLoc();
     if (sc->Check("splash")) {
       sc->ExpectString();
+      if (sc->String.isEmpty()) sc->String = "none";
       VSplashInfo *SInfo = GetSplashInfo(*sc->String);
-      if (!SInfo) SInfo = &SplashInfos.Alloc();
-      SInfo->Name = *sc->String;
+      if (!SInfo) {
+        //!GCon->Logf(NAME_Init, "%s: new splash '%s'", *sc->GetLoc().toStringNoCol(), *sc->String);
+        VName nn = VName(*sc->String, VName::AddLower);
+        SInfo = &SplashInfos.Alloc();
+        SInfo->Name = nn;
+        SplashMap.put(nn, SplashInfos.length()-1);
+      }
       SInfo->SmallClass = nullptr;
       SInfo->SmallClip = 0;
       SInfo->SmallSound = NAME_None;
@@ -179,9 +206,15 @@ static void ParseTerrainScript (VScriptParser *sc) {
       }
     } else if (sc->Check("terrain")) {
       sc->ExpectString();
+      if (sc->String.isEmpty()) sc->String = "none";
       VTerrainInfo *TInfo = GetTerrainInfo(*sc->String);
-      if (!TInfo) TInfo = &TerrainInfos.Alloc();
-      TInfo->Name = *sc->String;
+      if (!TInfo) {
+        //!GCon->Logf(NAME_Init, "%s: new terrain '%s'", *sc->GetLoc().toStringNoCol(), *sc->String);
+        VName nn = VName(*sc->String, VName::AddLower);
+        TInfo = &TerrainInfos.Alloc();
+        TInfo->Name = nn;
+        TerrainMap.put(nn, TerrainInfos.length()-1);
+      }
       TInfo->Splash = NAME_None;
       TInfo->Flags = 0;
       TInfo->FootClip = 0;
@@ -253,8 +286,22 @@ static void ParseTerrainScript (VScriptParser *sc) {
     } else if (sc->Check("floor")) {
       sc->Check("optional"); // ignore it
       sc->ExpectName8Warn();
-      int Pic = GTextureManager.CheckNumForName(sc->Name8, TEXTYPE_Flat, false);
+      VName floorname = sc->Name8;
+      int Pic = GTextureManager.CheckNumForName(floorname, TEXTYPE_Flat, false);
       sc->ExpectString();
+      if (sc->String.isEmpty()) sc->String = "none";
+      auto pp = TerrainTypeMap.find(Pic);
+      if (pp) {
+        // replace old one
+        TerrainTypes[*pp].TypeName = VName(*sc->String, VName::AddLower);
+      } else {
+        //!GCon->Logf(NAME_Init, "%s: new terrain floor '%s' of type '%s' (pic=%d)", *sc->GetLoc().toStringNoCol(), *floorname, *sc->String, Pic);
+        VTerrainType &T = TerrainTypes.Alloc();
+        T.Pic = Pic;
+        T.TypeName = VName(*sc->String, VName::AddLower);
+        TerrainTypeMap.put(Pic, TerrainTypes.length()-1);
+      }
+      /*
       bool Found = false;
       for (int i = 0; i < TerrainTypes.Num(); ++i) {
         if (TerrainTypes[i].Pic == Pic) {
@@ -268,6 +315,7 @@ static void ParseTerrainScript (VScriptParser *sc) {
         T.Pic = Pic;
         T.TypeName = *sc->String;
       }
+      */
     } else if (sc->Check("endif")) {
       if (insideIf) {
         insideIf = false;
@@ -313,7 +361,9 @@ static void ParseTerrainScript (VScriptParser *sc) {
 void P_InitTerrainTypes () {
   // create default terrain
   VTerrainInfo &DefT = TerrainInfos.Alloc();
-  DefT.Name = "Solid";
+  VName nn = VName("Solid", VName::AddLower);
+  TerrainMap.put(nn, TerrainInfos.length()-1);
+  DefT.Name = nn;
   DefT.Splash = NAME_None;
   DefT.Flags = 0;
   DefT.FootClip = 0;
@@ -327,9 +377,16 @@ void P_InitTerrainTypes () {
       ParseTerrainScript(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)));
     }
   }
-  for (int i = 0; i < TerrainTypes.Num(); ++i) {
-    TerrainTypes[i].Info = GetTerrainInfo(TerrainTypes[i].TypeName);
-    if (!TerrainTypes[i].Info) TerrainTypes[i].Info = &TerrainInfos[0];
+
+  // setup terrain type pointers
+  for (auto &&ttinf : TerrainTypes) {
+    ttinf.Info = GetTerrainInfo(*ttinf.TypeName);
+    if (!ttinf.Info) {
+      GCon->Logf(NAME_Warning, "unknown terrain type '%s' for texture '%s'", *ttinf.TypeName, (ttinf.Pic >= 0 ? *GTextureManager[ttinf.Pic]->Name : "<notexture>"));
+      ttinf.Info = &TerrainInfos[0]; // default one
+    } else {
+      //GCon->Logf(NAME_Warning, "set terrain type '%s' (%s) for texture '%s'", *ttinf.TypeName, *ttinf.Info->Name, (ttinf.Pic >= 0 ? *GTextureManager[ttinf.Pic]->Name : "<notexture>"));
+    }
   }
 }
 
@@ -340,10 +397,13 @@ void P_InitTerrainTypes () {
 //
 //==========================================================================
 VTerrainInfo *SV_TerrainType (int pic) {
+  /*
   for (int i = 0; i < TerrainTypes.Num(); ++i) {
     if (TerrainTypes[i].Pic == pic) return TerrainTypes[i].Info;
   }
-  return &TerrainInfos[0];
+  */
+  auto pp = TerrainTypeMap.find(pic);
+  return (pp ? TerrainTypes[*pp].Info : &TerrainInfos[0]);
 }
 
 
@@ -356,16 +416,19 @@ void P_FreeTerrainTypes () {
   SplashInfos.Clear();
   TerrainInfos.Clear();
   TerrainTypes.Clear();
+  SplashMap.clear();
+  TerrainMap.clear();
+  TerrainTypeMap.clear();
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 IMPLEMENT_FUNCTION(VObject, GetSplashInfo) {
   P_GET_NAME(Name);
-  RET_PTR(GetSplashInfo(Name));
+  if (Name == NAME_None) RET_PTR(nullptr); else RET_PTR(GetSplashInfo(*Name));
 }
 
 IMPLEMENT_FUNCTION(VObject, GetTerrainInfo) {
   P_GET_NAME(Name);
-  RET_PTR(GetTerrainInfo(Name));
+  if (Name == NAME_None) RET_PTR(nullptr); else RET_PTR(GetTerrainInfo(*Name));
 }

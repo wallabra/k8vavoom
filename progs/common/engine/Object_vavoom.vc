@@ -539,10 +539,12 @@ native static final name GetSeqTrans (int Num, int SeqType);
 native static final name GetSeqSlot (name Sequence);
 native static final void StopAllSounds ();
 
-native static final GameObject::VTerrainInfo *TerrainType (int pic);
-native static final GameObject::VSplashInfo *GetSplashInfo (name Name);
-native static final GameObject::VTerrainInfo *GetTerrainInfo (name Name);
+native static final GameObject::VTerrainInfo *TerrainType (int pic); // never returns `nullptr`
+native static final GameObject::VSplashInfo *GetSplashInfo (name Name); // can return `nullptr`
+native static final GameObject::VTerrainInfo *GetTerrainInfo (name Name); // can return `nullptr`
+
 native static final void SB_Start ();
+
 native static final class FindClassFromEditorId (int Id, int GameFilter);
 native static final class FindClassFromScriptId (int Id, int GameFilter);
 
