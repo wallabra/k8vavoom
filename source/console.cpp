@@ -524,6 +524,7 @@ static void AddLine (const char *Data) {
 static ConLine cpbuf;
 static int cpCurrLineLen = 0;
 static VStr cpLastColor;
+static bool cpLogFileNeedName = true;
 
 
 static void cpAppendChar (char ch) {
@@ -678,6 +679,7 @@ static void ConSerialise (const char *str, EName Event, bool fromGLog) {
   if (!fromGLog) { GLog.WriteLine(Event, "%s", str); return; }
   if (!str) str = "";
   MyThreadLocker lock(&conLogLock);
+  //fprintf(stderr, "<<<%s>>>", str);
   //HACK! if string starts with "Sys_Error:", print it, and close log file
   if (VStr::NCmp(str, "Sys_Error:", 10) == 0) {
     if (logfout) { fflush(logfout); fprintf(logfout, "*** %s\n", str); fclose(logfout); logfout = nullptr; }
@@ -693,9 +695,26 @@ static void ConSerialise (const char *str, EName Event, bool fromGLog) {
     cpPrintCurrColor();
   }
   DoPrint(str);
+  // write to log
   if (logfout) {
     VStr rc = VStr(str).RemoveColors();
-    fprintf(logfout, "%s: %s", VName::SafeString(Event), *rc);
+    const char *rstr = *rc;
+    while (rstr && *rstr) {
+      const char *eol = strchr(rstr, '\n');
+      if (!eol) eol = rstr+strlen(rstr);
+      if (cpLogFileNeedName) {
+        fprintf(logfout, "%s:%s", VName::SafeString(Event), (rstr == eol ? "" : " "));
+        cpLogFileNeedName = false;
+      }
+      if (eol != rstr) fwrite(rstr, (ptrdiff_t)(eol-rstr), 1, logfout);
+      rstr = eol;
+      if (!rstr[0]) break;
+      check(rstr[0] == '\n');
+      fprintf(logfout, "\n");
+      cpLogFileNeedName = true;
+      ++rstr;
+    }
+    //fprintf(logfout, "%s: %s", VName::SafeString(Event), *rc);
   }
 }
 
