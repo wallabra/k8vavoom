@@ -30,7 +30,11 @@ name menuName;
 bool isControls;
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+//==========================================================================
+//
+//  LoadMenu
+//
+//==========================================================================
 final static MenuDefinition LoadMenu (string defFileName) {
   if (!defFileName) FatalError("undefined menudef");
   auto par = MenuDefinition.openParser(defFileName);
@@ -42,6 +46,11 @@ final static MenuDefinition LoadMenu (string defFileName) {
 }
 
 
+//==========================================================================
+//
+//  CreateMenu
+//
+//==========================================================================
 override void CreateMenu () {
   auto mdef = LoadMenu(defFileName);
   scope(exit) delete mdef;
@@ -50,6 +59,11 @@ override void CreateMenu () {
 }
 
 
+//==========================================================================
+//
+//  CreateMenuItemsFromList
+//
+//==========================================================================
 void CreateMenuItemsFromList (ref array!MenuDefOptionBase options) {
   foreach (auto opt; options) {
     if (!opt.test()) continue;
@@ -84,6 +98,11 @@ void CreateMenuItemsFromList (ref array!MenuDefOptionBase options) {
 }
 
 
+//==========================================================================
+//
+//  CreateMenuFromDef
+//
+//==========================================================================
 void CreateMenuFromDef (MenuDefinition mdef) {
   menuName = name(mdef.menuName.toLowerCase());
   Title = mdef.title;
@@ -110,27 +129,11 @@ void CreateMenuFromDef (MenuDefinition mdef) {
 }
 
 
-void FinishCreatingMenu () {
-  Height = max(Height, Items[$-1].Y+Items[$-1].Height+4);
-
-  CreateSelector();
-  SetDefaultChoice();
-  if (AllowVerticalResize && Items.length > 0) {
-    int newHeight = max(Height, Items[$-1].Y+Items[$-1].Height+2);
-    if (newHeight > GetVirtualHeight()-8) {
-      newHeight = GetVirtualHeight()-8;
-      MenuScrollable = true;
-    }
-    Height = newHeight;
-  }
-
-  FixTitleWidthClosePos();
-
-  // center menu
-  SetPos((GetVirtualWidth()-Width)/2, (GetVirtualHeight()-Height)/2);
-}
-
-
+//==========================================================================
+//
+//  CreateTitle
+//
+//==========================================================================
 override void CreateTitle () {
   if (Title) {
     if (!titleItem) titleItem = MenuTitleText(NewChild(MenuTitleText));

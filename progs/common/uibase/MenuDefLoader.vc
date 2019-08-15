@@ -585,8 +585,8 @@ override MenuChoice CreateOption (MenuScreen menu) {
 
 
 defaultproperties {
-  textColor = CR_ORANGE;
-  textColorFocus = CR_ORANGE;
+  textColor = /*CR_ORANGE*/CR_FIRE;
+  textColorFocus = /*CR_ORANGE*/CR_FIRE;
 }
 
 

@@ -63,8 +63,38 @@ array!menukey menukeys_list;
 // all known sections
 array!SectionInfo sections;
 
-//string AltTitle; // alternate title for the screen (if any)
-//int NumControls;
+
+//==========================================================================
+//
+//  FindOrAddKeySection
+//
+//  returns section id
+//
+//==========================================================================
+protected final string FindOrAddKeySection (string secname, string secid) {
+  if (!secid) {
+    secid = "Uncategorized";
+    if (!secname) secname = secid;
+  }
+
+  foreach (ref const auto ss; sections) {
+    if (stricmp(ss.secid, secid) == 0) {
+      if (!secname || stricmp(ss.secname, secname) == 0) {
+        return secid;
+      }
+      // same id, different names; change id
+      secid ~= ".other";
+      return FindOrAddKeySection(secname, secid);
+    }
+  }
+
+  // add a new section
+  sections.length += 1;
+  if (!secname) secname = va("--- %s ---", sections.length);
+  sections[$-1].secname = secid;
+  sections[$-1].secid = secid;
+  return secid;
+}
 
 
 //==========================================================================
@@ -77,7 +107,7 @@ void ParseKeyConfLump (int lump) {
   auto kc = SpawnObject(ScriptsParser);
   scope(exit) delete kc;
   kc.OpenLumpIndex(lump);
-  string secid;
+  string secid = FindOrAddKeySection("", ""); // default sectoin
   int scnum = 0;
   while (!kc.AtEnd()) {
     // We are only interested in a couple of commands, like
@@ -86,14 +116,12 @@ void ParseKeyConfLump (int lump) {
       // addkeysection "Title" keysection<-(for config file)
       kc.ExpectString();
       string secname = xstrip(kc.String);
-      if (!secname) secname = va("--- %s ---", scnum++);
+      //if (!secname) secname = va("--- %s ---", scnum++);
       // section id
       kc.ExpectString();
       secid = kc.String;
       if (!secid) secid = secname;
-      sections.length += 1;
-      sections[$-1].secname = secname;
-      sections[$-1].secid = secid;
+      secid = FindOrAddKeySection(secid, secname);
       continue;
     }
     if (kc.Check("alias")) {
@@ -163,10 +191,10 @@ void GenerateArrays () {
 void AddControl (string Text, string CommandOn, string CommandOff) {
   MenuControlKey newCtl = MenuControlKey(NewChild(MenuControlKey));
   //SetChoiceInitialSizeSimple(newCtl);
-  newCtl.SetOrigin(/*ChoicesStartX*/Width/2, ChoicesStartY);
   newCtl.Width = Width;
   newCtl.CursorXOffs = Width/2;
   newCtl.CursorXOffsHR = Width/2;
+  newCtl.SetOrigin(/*ChoicesStartX*/Width/2, currentY);
   newCtl.Height = 10;
   newCtl.Text = Text;
   newCtl.CommandOn = CommandOn;
@@ -174,7 +202,7 @@ void AddControl (string Text, string CommandOn, string CommandOff) {
   newCtl.strifeMode = strifeMode;
        if (strifeMode < 0) newCtl.Disabled = IsStrife;
   else if (strifeMode > 0) newCtl.Disabled = !IsStrife;
-  ChoicesStartY += newCtl.Height;
+  currentY += newCtl.Height;
 }
 
 
@@ -187,29 +215,31 @@ void AddHeader (string Text, bool firstHdr) {
   auto Btn = MenuTextButton(NewChild(MenuSmallTextButton));
   Btn.TextHAlign = hcenter;
   Btn.TextVAlign = vbottom;
-  if (!firstHdr) ChoicesStartY += 6;
-  Btn.SetOrigin(/*ChoicesStartX*//*Width/2*/0, ChoicesStartY);
+  if (!firstHdr) currentY += 4;
   //SetChoiceInitialSizeSimple(Btn);
   Btn.Width = Width;
   Btn.CursorXOffs = Width/2;
   Btn.CursorXOffsHR = Width/2;
+  Btn.SetOrigin(/*ChoicesStartX*//*Width/2*/0, currentY);
   Btn.Text = Text;
   Btn.Focusable = false;
-  Btn.TextColor = CR_OLIVE;
-  Btn.TextColorFocus = CR_OLIVE;
+  Btn.TextColor = CR_FIRE;
+  Btn.TextColorFocus = CR_FIRE;
   Btn.Height = 10;
-  ChoicesStartY += Btn.Height+2;
+  currentY += Btn.Height;
 }
 
 
 //==========================================================================
 //
-//  CreateControlKeyChoices
+//  CreateChoices
 //
 //==========================================================================
-override void CreateControlKeyChoices () {
+override void CreateChoices () {
   // first, generate arrays for using for building controls list
   GenerateArrays();
+
+  currentY = ChoicesStartY;
 
   bool firstHdr = true;
   foreach (const ref auto sec; sections) {
@@ -257,5 +287,6 @@ override void CreateControlKeyChoices () {
 
 
 defaultproperties {
+  Title = "MOD CONTROLS";
   strifeMode = -1; // mods are usually for non-strife
 }

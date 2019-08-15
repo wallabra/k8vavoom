@@ -72,6 +72,32 @@ override void OnDestroy () {
 
 //==========================================================================
 //
+//  FinishCreatingMenu
+//
+//==========================================================================
+void FinishCreatingMenu () {
+  //if (AllowVerticalResize) Height = max(Height, Items[$-1].Y+Items[$-1].Height+4);
+
+  CreateSelector();
+  SetDefaultChoice();
+  if (AllowVerticalResize && Items.length > 0) {
+    int newHeight = max(Height, Items[$-1].Y+Items[$-1].Height+2);
+    if (newHeight > GetVirtualHeight()-28) {
+      newHeight = GetVirtualHeight()-28;
+      MenuScrollable = true;
+    }
+    Height = newHeight;
+  }
+
+  FixTitleWidthClosePos();
+
+  // center menu
+  SetPos((GetVirtualWidth()-Width)/2, (GetVirtualHeight()-Height)/2);
+}
+
+
+//==========================================================================
+//
 //  CreateMenu
 //
 //==========================================================================
@@ -82,6 +108,8 @@ void CreateMenu () {
   CreateBackButton();
   currentY = ChoicesStartY;
   CreateChoices();
+  FinishCreatingMenu();
+  /* this is in `FinishCreatingMenu()` now
   CreateSelector();
   SetDefaultChoice();
   if (AllowVerticalResize && Items.length > 0) {
@@ -95,6 +123,7 @@ void CreateMenu () {
   FixTitleWidthClosePos();
   // center menu
   SetPos((GetVirtualWidth()-Width)/2, (GetVirtualHeight()-Height)/2);
+  */
 }
 
 
@@ -534,12 +563,23 @@ final void FixTopIndex () {
   helpText.text = Items[CursorPos].getHelp();
   if (Items.Num == 1) { helpText.atTop = false; CursorPos = 0; ChildrenOfsY = 0; return; }
   if (!MenuScrollable) { helpText.atTop = false; ChildrenOfsY = 0; return; }
+  // check if this is first selectable item
+  bool isFirstItem = true;
+  foreach (auto index, auto item; Items) {
+    if (!item.Focusable || !item.Enabled) continue;
+    if (MenuChoice_BackButton(item)) continue;
+    isFirstItem = index == CursorPos;
+    break;
+  }
+  if (isFirstItem) { helpText.atTop = false; ChildrenOfsY = 0; return; }
+  // make sure that cursor is visible
   int th = CalcTotalHeight();
   int ys = GetItemYS(CursorPos);
   int ye = GetItemYE(CursorPos);
   //print("Menu <%C>; ofs=%d; ys=%d; ye=%d; th=%d; height=%d; hh=%d; bs=%d; OriginY=%s", Class, ChildrenOfsY, ys, ye, th, Height, helpText.Height, GetVirtualHeight()-helpText.Height-4, Y2Virtual(ye));
        if (ys+ChildrenOfsY < ChoicesStartY) ChildrenOfsY = -ys+ChoicesStartY;
   else if (ye+ChildrenOfsY > Height) ChildrenOfsY = -(ye-Height);
+  // make sure that help is visible
   if (helpText.Height > 0) {
     helpText.atTop = (Y2Virtual(ye) >= GetVirtualHeight()-helpText.Height-4);
   }

@@ -31,26 +31,6 @@ int strifeMode = 0; // 0: don't care; -1: disabled in Strife; 1: enabled in Stri
 
 //==========================================================================
 //
-//  CreateControlKeyChoices
-//
-//==========================================================================
-void CreateControlKeyChoices () {
-  Error("ooops");
-}
-
-
-//==========================================================================
-//
-//  CreateChoices
-//
-//==========================================================================
-override void CreateChoices () {
-  CreateControlKeyChoices();
-}
-
-
-//==========================================================================
-//
 //  CursorMoved
 //
 //==========================================================================
@@ -66,8 +46,10 @@ defaultproperties {
   WidthThreshold = 10;
   X = 130;
   Y = 60;
-  Width = 380;
-  Height = 360;
+  //Width = 380;
+  Width = 520;
+  //Height = 360;
+  Height = 260;
 
   ChoicesStartX = 190;
   //ChoicesStartX = 0;
@@ -78,4 +60,5 @@ defaultproperties {
   SelectorType = MenuSelector_SmallRight;
   Title = "SETUP CONTROLS";
   MenuScrollable = true;
+  AllowVerticalResize = true;
 }

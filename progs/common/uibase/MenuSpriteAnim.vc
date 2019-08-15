@@ -35,6 +35,11 @@ int Color;
 float Time;
 
 
+//==========================================================================
+//
+//  OnCreate
+//
+//==========================================================================
 override void OnCreate () {
   ::OnCreate();
   bTickEnabled = true;
@@ -42,11 +47,21 @@ override void OnCreate () {
 }
 
 
+//==========================================================================
+//
+//  Tick
+//
+//==========================================================================
 override void Tick (float DeltaTime) {
   Time += DeltaTime;
 }
 
 
+//==========================================================================
+//
+//  OnDraw
+//
+//==========================================================================
 override void OnDraw () {
   int frame = int(Time*float(Speed))%NumFrames;
   R_DrawSpritePatch(OldOriginX, OldOriginY, SprDef, frame, 0, TranslStart, TranslEnd, Color);
