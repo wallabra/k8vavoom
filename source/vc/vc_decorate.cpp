@@ -136,6 +136,7 @@ enum {
 
 enum {
   FLAG_Bool,
+  FLAG_BoolInverted,
   FLAG_Unsupported,
   FLAG_Byte,
   FLAG_Float,
@@ -626,6 +627,9 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
         P.SetField(Lst.Class, *PN->GetAttribute("property"));
       } else if (PN->Name == "flag") {
         VFlagDef &F = Lst.NewFlag(FLAG_Bool, PN);
+        F.SetField(Lst.Class, *PN->GetAttribute("property"));
+      } else if (PN->Name == "flag_inverted") {
+        VFlagDef &F = Lst.NewFlag(FLAG_BoolInverted, PN);
         F.SetField(Lst.Class, *PN->GetAttribute("property"));
       } else if (PN->Name == "flag_unsupported") {
         /*VFlagDef &F =*/(void)Lst.NewFlag(FLAG_Unsupported, PN);
@@ -1120,6 +1124,7 @@ static bool ParseFlag (VScriptParser *sc, VClass *Class, bool Value, TArray<VCla
       if (FlagName == F.Name) {
         switch (F.Type) {
           case FLAG_Bool: F.Field->SetBool(DefObj, Value); break;
+          case FLAG_BoolInverted: F.Field->SetBool(DefObj, !Value); break;
           case FLAG_Unsupported: if (dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Unsupported flag %s in %s", *floc.toStringNoCol(), *FlagName, Class->GetName()); break;
           case FLAG_Byte: F.Field->SetByte(DefObj, Value ? F.BTrue : F.BFalse); break;
           case FLAG_Float: F.Field->SetFloat(DefObj, Value ? F.FTrue : F.FFalse); break;
@@ -3439,6 +3444,7 @@ bool VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
         bool didset = true;
         switch (F.Type) {
           case FLAG_Bool: F.Field->SetBool(this, Value); break;
+          case FLAG_BoolInverted: F.Field->SetBool(this, !Value); break;
           case FLAG_Unsupported: if (dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "Unsupported flag %s in %s", *Flag, GetClass()->GetName()); break;
           case FLAG_Byte: F.Field->SetByte(this, Value ? F.BTrue : F.BFalse); break;
           case FLAG_Float: F.Field->SetFloat(this, Value ? F.FTrue : F.FFalse); break;
@@ -3504,6 +3510,7 @@ bool VEntity::GetDecorateFlag (const VStr &Flag) {
       if (FlagName == F.Name) {
         switch (F.Type) {
           case FLAG_Bool: return F.Field->GetBool(this);
+          case FLAG_BoolInverted: return !F.Field->GetBool(this);
           case FLAG_Unsupported: if (dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "Unsupported flag %s in %s", *Flag, GetClass()->GetName()); return false;
           case FLAG_Byte: return !!F.Field->GetByte(this);
           case FLAG_Float: return (F.Field->GetFloat(this) != 0.0f);

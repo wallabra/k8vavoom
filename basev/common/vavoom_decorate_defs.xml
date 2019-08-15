@@ -176,6 +176,7 @@
     <flag name="NoTeleOther" property="bNoTeleOther" />
     <flag name="DontHarmClass" property="bDontHurtClass" />
     <flag name="DontHarmSpecies" property="bDontHurtSpecies" />
+    <flag_inverted name="DoHarmSpecies" property="bDontHurtSpecies" />
     <flag name="NoDamage" property="bNoDamage" />
     <flag name="DontRip" property="bDontRip" />
     <flag name="NoTelefrag" property="bNoTeleFrag" />
