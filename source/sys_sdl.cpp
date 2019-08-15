@@ -146,7 +146,7 @@ void Sys_Quit (const char *EndText) {
   if (developer) GLog.Log(NAME_Dev, "exiting");
 #ifdef _WIN32
   //ExitProcess(0);
-  TerminateProcess(GetCurrentProcess(), 0);
+  //TerminateProcess(GetCurrentProcess(), 0);
 #endif
   exit(0);
 }
@@ -431,12 +431,11 @@ static void mainloop (int argc, char **argv) {
     if (developer) GLog.Log(NAME_Dev, "calling `SDL_Quit()`");
     SDL_Quit();
     if (developer) GLog.Log(NAME_Dev, "exiting");
-#ifndef _WIN32
-    exit(1);
-#else
-    TerminateProcess(GetCurrentProcess(), 1);
+#ifdef _WIN32
     //ExitProcess(1);
+    //TerminateProcess(GetCurrentProcess(), 1);
 #endif
+    exit(1);
   }
   if (developer) GLog.Log(NAME_Dev, "calling `SDL_Quit()`");
   SDL_Quit();
@@ -486,7 +485,7 @@ int main (int argc, char **argv) {
 
 #ifdef _WIN32
   //ExitProcess(0);
-  TerminateProcess(GetCurrentProcess(), 0);
+  //TerminateProcess(GetCurrentProcess(), 0);
 #elif defined(__SWITCH__)
   socketExit();
 #endif
