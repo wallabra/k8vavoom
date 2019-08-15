@@ -2684,19 +2684,19 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       {
         VEntity *Ent = EntityFromTID(args[0], Activator);
         if (!Ent) return 0;
-        return (int)(Ent->Velocity.x*65536.0f);
+        return (int)(Ent->Velocity.x*(65536.0f/35.0f));
       }
     case ACSF_GetActorVelY:
       {
         VEntity *Ent = EntityFromTID(args[0], Activator);
         if (!Ent) return 0;
-        return (int)(Ent->Velocity.y*65536.0f);
+        return (int)(Ent->Velocity.y*(65536.0f/35.0f));
       }
     case ACSF_GetActorVelZ:
       {
         VEntity *Ent = EntityFromTID(args[0], Activator);
         if (!Ent) return 0;
-        return (int)(Ent->Velocity.z*65536.0f);
+        return (int)(Ent->Velocity.z*(65536.0f/35.0f));
       }
 
     //bool SetActorVelocity (int tid, fixed velx, fixed vely, fixed velz, bool add, bool setbob)
@@ -2711,13 +2711,13 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
             ++count;
             if (args[4]) {
               // add
-              Activator->Velocity.x += float(args[1])/65536.0f;
-              Activator->Velocity.y += float(args[2])/65536.0f;
-              Activator->Velocity.z += float(args[3])/65536.0f;
+              Activator->Velocity.x += float(args[1])/65536.0f*35.0f;
+              Activator->Velocity.y += float(args[2])/65536.0f*35.0f;
+              Activator->Velocity.z += float(args[3])/65536.0f*35.0f;
             } else {
-              Activator->Velocity.x = float(args[1])/65536.0f;
-              Activator->Velocity.y = float(args[2])/65536.0f;
-              Activator->Velocity.z = float(args[3])/65536.0f;
+              Activator->Velocity.x = float(args[1])/65536.0f*35.0f;
+              Activator->Velocity.y = float(args[2])/65536.0f*35.0f;
+              Activator->Velocity.z = float(args[3])/65536.0f*35.0f;
             }
           }
         } else {
@@ -2725,13 +2725,13 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
             ++count;
             if (args[4]) {
               // add
-              mobj->Velocity.x += float(args[1])/65536.0f;
-              mobj->Velocity.y += float(args[2])/65536.0f;
-              mobj->Velocity.z += float(args[3])/65536.0f;
+              mobj->Velocity.x += float(args[1])/65536.0f*35.0f;
+              mobj->Velocity.y += float(args[2])/65536.0f*35.0f;
+              mobj->Velocity.z += float(args[3])/65536.0f*35.0f;
             } else {
-              mobj->Velocity.x = float(args[1])/65536.0f;
-              mobj->Velocity.y = float(args[2])/65536.0f;
-              mobj->Velocity.z = float(args[3])/65536.0f;
+              mobj->Velocity.x = float(args[1])/65536.0f*35.0f;
+              mobj->Velocity.y = float(args[2])/65536.0f*35.0f;
+              mobj->Velocity.z = float(args[3])/65536.0f*35.0f;
             }
           }
         }
