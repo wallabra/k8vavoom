@@ -279,6 +279,12 @@ final bool A_SpawnItemEx (class!Actor ItemType,
     if (Flags&SXF_TRANSFERALPHA) A.Alpha = Alpha;
     if (Flags&SXF_TRANSFERRENDERSTYLE) A.RenderStyle = RenderStyle;
 
+    if ((Flags&(SXF_TRANSFERTRANSLATION|SXF_USEBLOODCOLOR)) == SXF_USEBLOODCOLOR && !A.bDontTranslate) {
+      A.Translation = Translation;
+      A.BloodTranslation = Translation;
+      A.BloodColor = BloodColor;
+    }
+
     if (Flags&(SXF_SETTARGET|SXF_SETTRACER|SXF_SETMASTER)) {
       // find instigator for missiles
       EntityEx Instig = self;
