@@ -32,7 +32,11 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 VLog GLog;
+#if !defined(_WIN32)
 bool GLogTTYLog = true;
+#else
+bool GLogTTYLog = false;
+#endif
 bool GLogErrorToStderr = false;
 bool GLogWarningToStderr = false;
 #if defined(IN_WADCHECK)
@@ -353,7 +357,7 @@ __attribute__((format(printf, 2, 3))) void VLog::DWriteLine (const char *fmt, ..
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-#if !defined(_WIN32) || defined(IN_WADCHECK)
+#if !defined(_WIN32) || defined(IN_WADCHECK) || 1
 class VConLogger : public VLogListener {
 private:
   bool lastWasNL;
