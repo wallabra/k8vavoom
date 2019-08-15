@@ -251,4 +251,18 @@ menudef MiscOptions {
     title = "Particle trails";
     cvar = r_particle_trails;
   }
+
+
+  header "GZDoom Emulation Options";
+
+  option bool {
+    title = "Emulate Broken Gotos";
+    cvar = dbg_emulate_broken_gozzo_gotos;
+    help =
+      "GZDoom simply continues the execution if decorate state is trying to jump"
+      "to non-existing state. k8vavoom destroys the actor in this case."
+      "Destroying the actor allows to detect mod bugs, but emulating broken"
+      "gotos allows to play some mods."
+      "Note that you will get a console warning in either case.";
+  }
 }
