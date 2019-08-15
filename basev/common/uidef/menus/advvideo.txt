@@ -177,9 +177,7 @@ menudef AdvVideoOptions {
   option bool {
     title = "Model Shadows";
     cvar = r_model_shadows;
-    help =
-      "Let 3D models cast shadows in stenciled lighting mode."
-      "WARNING: This will *DRAMATICALLY* slow down renderer!";
+    help = "Let 3D models cast shadows in stenciled lighting mode.";
   }
 
 
@@ -212,8 +210,8 @@ menudef AdvVideoOptions {
       "with alot of lighting decorations, and preprocessing those can take"
       "alot of time too. Currently engine cannot cache static lighting, so"
       "(quick)loading will precalculate lighting each time."
-      "If in doubt, leave this 'ON'."
-      "***WARNING!*** THIS IS EXPERIMENTAL OPTION!";
+      "\cJIf in doubt, leave this 'ON'.\c-"
+      "\cGWARNING! THIS IS EXPERIMENTAL OPTION!";
   }
 
 
@@ -286,26 +284,27 @@ menudef AdvVideoOptions {
       "Floating point depth buffer has much better precision than normal,"
       "but it is twice as big. Turning off fp depth buffer can give you"
       "somewhat better FPS in stenciled lighting."
+      "\cJIf in doubt, leave this 'OFF'."
       ""
-      "NOTE: You have to go to 'Screen Resolution' menu and"
-      "use 'Set Resolution' to activate this.";
+      "\cKNOTE: You have to go to 'Screen Resolution' menu and"
+      "\cKuse 'Set Resolution' to activate this.";
   }
 
   option bool [gl_is_shitty_gpu == 0] {
     title = "Enable 'Reverse Z' trick";
     cvar = gl_enable_reverse_z;
     help =
-      "IF IN DOUBT, LEAVE THIS 'ON'!"
-      "WARNING: stenciled lighting is broken with fp depth buffer, if"
-      "this is turned off!"
-      ""
       "This is the trick that allows almost infinite view distance."
       "There is no reason to manually change this, as the engine will"
       "automatically turn this off if your GPU is not capable of using"
       "this trick."
       ""
-      "NOTE: You have to go to 'Screen Resolution' menu and"
-      "use 'Set Resolution' to activate this.";
+      "\cJIf in doubt, leave this 'ON'."
+      "\cGWARNING: stenciled lighting is broken with fp depth buffer, if"
+      "\cGthis is turned off!"
+      ""
+      "\cKNOTE: You have to go to 'Screen Resolution' menu and"
+      "\cKuse 'Set Resolution' to activate this.";
   }
 
   option bool {
@@ -315,7 +314,10 @@ menudef AdvVideoOptions {
       "If your OpenGL has `glClipControl()` function (or the corresponding"
       "extension), the engine can better utilize depth buffer (you can set"
       "'gl_maxdist' cvar to greater values without artifacts)."
-      "If in doubt, leave this 'ON', and the engine will decide."
-      "Note that 'reverse z trick' won't work with this feature disabled.";
+      "\cJIf in doubt, leave this 'ON', and the engine will decide."
+      "Note that 'reverse z trick' won't work with this feature disabled."
+      ""
+      "\cKNOTE: You have to go to 'Screen Resolution' menu and"
+      "\cKuse 'Set Resolution' to activate this.";
   }
 }

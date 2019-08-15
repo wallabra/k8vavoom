@@ -121,6 +121,6 @@ menudef HealthAccumOptions {
     cvar = k8HealthAccum_MessagesAccumed;
     help =
       "Show HUD messages for accumulated health."
-      "WARNING: Those messages can be imprecise.";
+      "\cGWARNING! Those messages can be imprecise.";
   }
 }

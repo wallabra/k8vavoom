@@ -32,7 +32,7 @@ menudef AdvVideoLightFilterOptions {
     help =
       "Filter out too close static lights to make rendering faster?"
       "This option affects only stencil lighting."
-      "WARNING: you must restart a map or reload a save to use new settings!";
+      "\cGWARNING! You must restart a map or reload a save to use new settings!";
   }
 
   option slider {
@@ -44,6 +44,6 @@ menudef AdvVideoLightFilterOptions {
     help =
       "How close static lights should be to be filtered out?"
       "This option affects only stencil lighting."
-      "WARNING: you must restart a map or reload a save to use new settings!";
+      "\cGWARNING! you must restart a map or reload a save to use new settings!";
   }
 }

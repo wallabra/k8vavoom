@@ -57,7 +57,7 @@ menudef MiscOptions {
       "Internal nodes builder."
       "If set to 'Auto', the engine will select the nodes builder"
       "that should did its best on a given map."
-      "If unsure, leave it as 'Auto'.";
+      "\cJIf unsure, leave it as 'Auto'.";
   }
 
   option enum [__k8vavoom_developer_version > 0] {
@@ -70,7 +70,7 @@ menudef MiscOptions {
     }
     help =
       "Nodes builder for normal (non-UDMF) maps."
-      "DO NOT set to 'Auto'!";
+      "\cGDO NOT set to 'Auto'!";
   }
 
   option enum [__k8vavoom_developer_version > 0] {
@@ -83,17 +83,25 @@ menudef MiscOptions {
     }
     help =
       "Nodes builder for UDMF maps."
-      "DO NOT set to 'Auto'!";
+      "\cGDO NOT set to 'Auto'!";
   }
 
   option bool {
     title = "Force node rebuilding";
     cvar = loader_force_nodes_rebuild;
+    help =
+      "Always rebuild nodes for a map."
+      "\cJIf in doubt, leave this 'ON'.";
   }
 
   option bool {
     title = "Fast mode (suboptimal)";
     cvar = nodes_fast_mode;
+    help =
+      "Use simpler nodes building algorithm. This can speedup"
+      "building nodes for some huge maps, but rendering"
+      "(and other engine activities) can be somewhat slower."
+      "\cJIf in doubt, leave this 'OFF'.";
   }
 
   option bool {
@@ -106,9 +114,9 @@ menudef MiscOptions {
     cvar = nodes_allow_compressed;
     help =
       "Load prebuilt GL Nodes?"
-      "GL Node loader is buggy, and may not work."
       "If turned off, the engine will use internal node builder."
-      "If in doubt, set this to 'OFF'.";
+      "\cJIf in doubt, set this to 'OFF'."
+      "\cGWARNING: GL Node loader is buggy, and may not work.";
   }
 
   option bool [__k8vavoom_developer_version > 0] {
@@ -199,7 +207,7 @@ menudef MiscOptions {
       "You may know it as 'flat floodfill bug' in Vanilla."
       "Currently this fixer is very simple, and can fix only simple cases."
       "It may cause rendering glitches, but such cases are rare."
-      "If in doubt, turn this ON. Yes, 'ON'!";
+      "\cJIf in doubt, turn this 'ON'. Yes, 'ON'!";
   }
 
   option bool {
@@ -213,7 +221,7 @@ menudef MiscOptions {
       "You may know it as 'flat floodfill bug' in Vanilla."
       "Currently this fixer is very simple, and can fix only simple cases."
       "It may cause rendering glitches, but such cases are rare."
-      "If in doubt, turn this ON. Yes, 'ON'!";
+      "\cJIf in doubt, turn this 'ON'. Yes, 'ON'!";
   }
 
   option bool {
@@ -226,7 +234,7 @@ menudef MiscOptions {
       "that looks like hanging over the lower sector floor. Those"
       "bridges are still 2D, but they are looking 3D."
       "It may cause rendering glitches, but such cases are rare."
-      "If in doubt, turn this ON. Yes, 'ON'!";
+      "\cJIf in doubt, turn this 'ON'. Yes, 'ON'!";
   }
 
 
@@ -259,10 +267,11 @@ menudef MiscOptions {
     title = "Emulate Broken Gotos";
     cvar = dbg_emulate_broken_gozzo_gotos;
     help =
-      "GZDoom simply continues the execution if decorate state is trying to jump"
-      "to non-existing state. k8vavoom destroys the actor in this case."
+      "GZDoom simply continues the execution if decorate state is trying to"
+      "jump to non-existing state. k8vavoom destroys the actor in this case."
       "Destroying the actor allows to detect mod bugs, but emulating broken"
       "gotos allows to play some mods."
-      "Note that you will get a console warning in either case.";
+      "\cGWARNING! This may cause some mods (especially weapon mods) to malfunction!"
+      "Also, you will get a console warning in any case.";
   }
 }

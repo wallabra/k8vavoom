@@ -114,7 +114,7 @@ menudef GameplayOptions {
   option bool {
     title = "Berserk autoswitch";
     cvar = k8BerserkSwitch;
-    help = "WARNING: This may not work for custom weapon packs.";
+    help = "\cGWARNING! This may not work for custom weapon packs.";
   }
 
   option bool {

@@ -126,7 +126,7 @@ menudef AutomapOptions {
     cvar = am_show_secrets;
     help =
       "Mark secret walls on automap?"
-      "WARNING! Technically this is cheating, but you"
-      "can use this without turning on cheats.";
+      "\cGWARNING! Technically this is cheating, but you"
+      "\cGcan use this without turning on cheats.";
   }
 }
