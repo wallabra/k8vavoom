@@ -1213,9 +1213,9 @@ void VScriptParser::SkipBracketed (bool bracketEaten) {
 void VScriptParser::Message (const char *message) {
   const char *Msg = (message ? message : "Bad syntax.");
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-  GCon->Logf(NAME_Warning, "\"%s\" line %d: %s", *ScriptName, TokLine, Msg);
+  GCon->Logf(NAME_Warning, "%s:%d: %s", *ScriptName, TokLine, Msg);
 #else
-  GLog.WriteLine(NAME_Warning, "\"%s\" line %d: %s", *ScriptName, TokLine, Msg);
+  GLog.WriteLine(NAME_Warning, "%s:%d: %s", *ScriptName, TokLine, Msg);
 #endif
 }
 
@@ -1227,7 +1227,7 @@ void VScriptParser::Message (const char *message) {
 //==========================================================================
 void VScriptParser::Error (const char *message) {
   const char *Msg = (message ? message : "Bad syntax.");
-  Sys_Error("Script error, \"%s\" line %d: %s", *ScriptName, TokLine, Msg);
+  Sys_Error("Script error at %s:%d: %s", *ScriptName, TokLine, Msg);
 }
 
 
@@ -1239,7 +1239,7 @@ void VScriptParser::Error (const char *message) {
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
 void VScriptParser::HostError (const char *message) {
   const char *Msg = (message ? message : "Bad syntax.");
-  Host_Error("Script error, \"%s\" line %d: %s", *ScriptName, TokLine, Msg);
+  Host_Error("Script error at %s:%d: %s", *ScriptName, TokLine, Msg);
 }
 #endif
 
