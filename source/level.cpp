@@ -675,7 +675,21 @@ int VLevel::SetBodyQueueTrans (int Slot, int Trans) {
 //==========================================================================
 int VLevel::FindSectorFromTag (sector_t *&sector, int tag, int start) {
    //k8: just in case
-  if (tag == 0 || NumSubsectors < 1) {
+  if (tag == -1 || NumSubsectors < 1) {
+    sector = nullptr;
+    return -1;
+  }
+
+  if (tag == 0) {
+    // this has to be special
+    if (start < -1) start = -1; // first
+    // find next untagged sector
+    for (++start; start < NumSectors; ++start) {
+      sector_t *sec = &Sectors[start];
+      if (sec->sectorTag || sec->moreTags.length()) continue;
+      sector = sec;
+      return start;
+    }
     sector = nullptr;
     return -1;
   }
@@ -711,7 +725,21 @@ int VLevel::FindSectorFromTag (sector_t *&sector, int tag, int start) {
 line_t *VLevel::FindLine (int lineTag, int *searchPosition) {
   if (!searchPosition) return nullptr;
   //k8: should zero tag be allowed here?
-  if (!lineTag || lineTag == -1 || NumLines < 1) { *searchPosition = -1; return nullptr; }
+  if (lineTag == -1 || NumLines < 1) { *searchPosition = -1; return nullptr; }
+
+  if (lineTag == 0) {
+    int start = (searchPosition ? *searchPosition : -1);
+    if (start < -1) start = -1;
+    // find next untagged line
+    for (++start; start < NumLines; ++start) {
+      line_t *ldef = &Lines[start];
+      if (ldef->lineTag || ldef->moreTags.length()) continue;
+      *searchPosition = start;
+      return ldef;
+    }
+    *searchPosition = -1;
+    return nullptr;
+  }
 
   if (*searchPosition < 0) {
     // first
