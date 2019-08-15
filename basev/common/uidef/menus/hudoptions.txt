@@ -130,6 +130,25 @@ menudef HUDOptions {
     step = 0.1;
   }
 
+  option bool {
+    title = "All Objects";
+    cvar = k8HealthBarShowAll;
+    textColor = BRICK;
+    help =
+      "Should Health Bar show all objects?"
+      "This is useful for various debugging.";
+  }
+
+  option bool {
+    title = "Show class name";
+    cvar = k8HealthBarShowClassName;
+    textColor = BRICK;
+    help =
+      "Should Health Bar always show class name, even if tag name available?"
+      "This is useful for various debugging.";
+  }
+
+
 
   header "Status Bar";
 

@@ -255,6 +255,8 @@ override void Init () {
   CreateCvar('k8HealthBar', "0", "Allow healthbar?", CVAR_ARCHIVE);
   CreateCvar('k8HealthBarAlpha', "0.6", "Healthbar opacity.", CVAR_ARCHIVE);
   CreateCvar('k8HealthBarOnlyMonsters', "1", "Ignore non-monsters?", CVAR_ARCHIVE);
+  CreateCvar('k8HealthBarShowAll', "0", "Show any object (useful for debugging)?", CVAR_ARCHIVE);
+  CreateCvar('k8HealthBarShowClassName', "0", "Show class name instead of tag (useful for debugging)?", CVAR_ARCHIVE);
 
   CreateCvar('blood_widespread', "0", "Throw blood splats on full 360 degrees circle?", CVAR_ARCHIVE);
 

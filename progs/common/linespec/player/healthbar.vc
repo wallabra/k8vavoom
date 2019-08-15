@@ -70,13 +70,16 @@ void HealthBarProcessor () {
   // find actor
   TVec dir;
   AngleVector(mo.Angles, out dir);
-  EntityEx ee = EntityEx(mo.PickActor(org:default, dir:dir, distance:8192, actorMask:MF_SHOOTABLE, wallMask:ML_BLOCKEVERYTHING|ML_BLOCKHITSCAN));
+  int actorMask = (GetCvarB('k8HealthBarShowAll') ? -1 : MF_SHOOTABLE);
+  EntityEx ee = EntityEx(mo.PickActor(org:default, dir:dir, distance:8192, actorMask:actorMask, wallMask:ML_BLOCKEVERYTHING|ML_BLOCKHITSCAN));
   if (!ee) return;
 
-  if (!ee.bMonster && GetCvarB('k8HealthBarOnlyMonsters')) return;
+  if (actorMask != -1 && !ee.bMonster && GetCvarB('k8HealthBarOnlyMonsters')) return;
 
-  string ename = ee.StrifeName;
-  if (!ename) ename = string(GetClassName(ee.Class));
+  string ename = ee.StrifeName.xstrip;
+  if (!ename || GetCvarB('k8HealthBarShowClassName')) {
+    ename = string(GetClassName(ee.Class));
+  }
   if (!ename) return; // oops
 
   int maxHealth = max(1, int(PlayerPawn(ee) ? PlayerPawn(ee).MaxHealth : ee.InitialHealth));

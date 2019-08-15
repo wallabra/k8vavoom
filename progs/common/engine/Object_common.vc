@@ -814,6 +814,17 @@ alias strEndsWith = StrEndsWith;
 native static final string StrReplace (string Str, string Search, string Replacement);
 alias strReplace = StrReplace;
 
+//==========================================================================
+//
+//  xstrip
+//
+//==========================================================================
+static final string xstrip (string s) {
+  while (s.length && s[0] <= " ") s = s[1..$];
+  while (s.length && s[$-1] <= " ") s = s[0..$-1];
+  return s;
+}
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 //  Printing to console
