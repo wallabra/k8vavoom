@@ -10,6 +10,10 @@ terms of the MIT license. A copy of the license can be found in the file
 
 #define MI_MALLOC_VERSION 100   // major + 2 digits minor
 
+#if defined(_MSC_VER)
+# error "k8: m$vc support in mi-malloc is intentionally broken."
+#endif
+
 //k8: defaults
 // just in case, it is not used
 #define MI_STATIC_LIB
@@ -20,7 +24,6 @@ terms of the MIT license. A copy of the license can be found in the file
 #if defined(MI_SECURE) || (MI_SECURE != 0)
 # error "don't do this!"
 #endif
-
 
 // ------------------------------------------------------
 // Compiler specific attributes
@@ -133,7 +136,6 @@ mi_decl_export void mi_thread_stats_print(FILE* out) mi_attr_noexcept;
 typedef void (mi_deferred_free_fun)(bool force, unsigned long long heartbeat);
 mi_decl_export void mi_register_deferred_free(mi_deferred_free_fun* deferred_free) mi_attr_noexcept;
 
-
 // ------------------------------------------------------
 // Aligned allocation
 // ------------------------------------------------------
@@ -208,6 +210,8 @@ typedef bool (mi_cdecl mi_block_visit_fun)(const mi_heap_t* heap, const mi_heap_
 
 mi_decl_export bool mi_heap_visit_blocks(const mi_heap_t* heap, bool visit_all_blocks, mi_block_visit_fun* visitor, void* arg);
 
+mi_decl_export bool mi_is_in_heap_region(const void* p) mi_attr_noexcept;
+
 // ------------------------------------------------------
 // Convenience
 // ------------------------------------------------------
@@ -230,16 +234,22 @@ mi_decl_export bool mi_heap_visit_blocks(const mi_heap_t* heap, bool visit_all_b
 // ------------------------------------------------------
 
 typedef enum mi_option_e {
-  mi_option_page_reset,
-  mi_option_cache_reset,
-  mi_option_pool_commit,
-  mi_option_large_os_pages,
-  mi_option_secure,
+  // stable options
   mi_option_show_stats,
   mi_option_show_errors,
   mi_option_verbose,
+  // the following options are experimental
+  mi_option_secure,
+  mi_option_eager_commit,
+  mi_option_eager_region_commit,
+  mi_option_large_os_pages,      // implies eager commit
+  mi_option_page_reset,
+  mi_option_cache_reset,
+  mi_option_reset_decommits,
+  mi_option_reset_discards,
   _mi_option_last
 } mi_option_t;
+
 
 mi_decl_export bool  mi_option_is_enabled(mi_option_t option);
 mi_decl_export void  mi_option_enable(mi_option_t option, bool enable);

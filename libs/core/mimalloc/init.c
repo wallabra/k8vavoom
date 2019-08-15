@@ -11,7 +11,7 @@ terms of the MIT license. A copy of the license can be found in the file
 
 // Empty page used to initialize the small free pages array
 const mi_page_t _mi_page_empty = {
-  0, false, false, {0},
+  0, false, false, false, {0},
   0, 0,
   NULL, 0, 0,   // free, used, cookie
   NULL, 0, 0,
@@ -91,7 +91,7 @@ mi_decl_thread mi_heap_t* _mi_heap_default = (mi_heap_t*)&_mi_heap_empty;
 static mi_tld_t tld_main = {
   0,
   &_mi_heap_main,
-  { { NULL, NULL }, {NULL ,NULL}, 0, 0, 0, 0, {NULL,NULL}, tld_main_stats }, // segments
+  { { NULL, NULL }, {NULL ,NULL}, 0, 0, 0, 0, 0, 0, NULL, tld_main_stats }, // segments
   { 0, NULL, NULL, 0, tld_main_stats },              // os
   { MI_STATS_NULL }                                  // stats
 };
@@ -102,12 +102,12 @@ mi_heap_t _mi_heap_main = {
   MI_PAGE_QUEUES_EMPTY,
   NULL,
   0,
-  0,
 #if MI_INTPTR_SIZE==8   // the cookie of the main heap can be fixed (unlike page cookies that need to be secure!)
   0xCDCDCDCDCDCDCDCDUL,
 #else
   0xCDCDCDCDUL,
 #endif
+  0,
   0,
   false   // can reclaim
 };
@@ -148,6 +148,10 @@ uintptr_t _mi_random_shuffle(uintptr_t x) {
 }
 
 uintptr_t _mi_random_init(uintptr_t seed /* can be zero */) {
+#ifdef __wasi__ // no ASLR when using WebAssembly, and time granularity may be coarse
+  uintptr_t x;
+  arc4random_buf(&x, sizeof x);
+#else
    // Hopefully, ASLR makes our function address random
   uintptr_t x = (uintptr_t)((void*)&_mi_random_init);
   x ^= seed;
@@ -169,6 +173,7 @@ uintptr_t _mi_random_init(uintptr_t seed /* can be zero */) {
   for (uintptr_t i = 0; i < max; i++) {
     x = _mi_random_shuffle(x);
   }
+#endif
   return x;
 }
 
@@ -230,7 +235,7 @@ static bool _mi_heap_done(void) {
   heap = heap->tld->heap_backing;
   if (!mi_heap_is_initialized(heap)) return false;
 
-  // collect if not the main thread 
+  // collect if not the main thread
   if (heap != &_mi_heap_main) {
     _mi_heap_collect_abandon(heap);
   }
@@ -269,28 +274,24 @@ static bool _mi_heap_done(void) {
 // to set up the thread local keys.
 // --------------------------------------------------------
 
-//k8: no need to do this
-#ifdef MI_USE_PTHREADS
-# undef MI_USE_PTHREADS
-#endif
-/*
-#ifndef _WIN32
+#ifdef __wasi__
+// no pthreads in the WebAssembly Standard Interface
+#elif !defined(_WIN32)
 #define MI_USE_PTHREADS
 #endif
-*/
 
 #if defined(_WIN32) && defined(MI_SHARED_LIB)
   // nothing to do as it is done in DllMain
 #elif defined(_WIN32) && !defined(MI_SHARED_LIB)
-# if defined(MI_USE_FLS) && (MI_USE_FLS != 0)
   // use thread local storage keys to detect thread ending
   #include <windows.h>
   #include <fibersapi.h>
+  #if defined(MI_USE_FLS) && (MI_USE_FLS != 0)
   static DWORD mi_fls_key;
   static void NTAPI mi_fls_done(PVOID value) {
     if (value!=NULL) mi_thread_done();
   }
-# endif
+  #endif
 #elif defined(MI_USE_PTHREADS)
   // use pthread locol storage keys to detect thread ending
   #include <pthread.h>
@@ -298,9 +299,10 @@ static bool _mi_heap_done(void) {
   static void mi_pthread_done(void* value) {
     if (value!=NULL) mi_thread_done();
   }
+#elif defined(__wasi__)
+// no pthreads in the WebAssembly Standard Interface
 #else
-  //k8: no need to do this
-  //#pragma message("define a way to call mi_thread_done when a thread is done")
+  #pragma message("define a way to call mi_thread_done when a thread is done")
 #endif
 
 // Set up handlers so `mi_thread_done` is called automatically
@@ -311,9 +313,9 @@ static void mi_process_setup_auto_thread_done(void) {
   #if defined(_WIN32) && defined(MI_SHARED_LIB)
     // nothing to do as it is done in DllMain
   #elif defined(_WIN32) && !defined(MI_SHARED_LIB)
-   #if defined(MI_USE_FLS) && (MI_USE_FLS != 0)
+    #if defined(MI_USE_FLS) && (MI_USE_FLS != 0)
     mi_fls_key = FlsAlloc(&mi_fls_done);
-   #endif
+    #endif
   #elif defined(MI_USE_PTHREADS)
     pthread_key_create(&mi_pthread_key, &mi_pthread_done);
   #endif
@@ -342,9 +344,9 @@ void mi_thread_init(void) mi_attr_noexcept
   #if defined(_WIN32) && defined(MI_SHARED_LIB)
     // nothing to do as it is done in DllMain
   #elif defined(_WIN32) && !defined(MI_SHARED_LIB)
-   #if defined(MI_USE_FLS) && (MI_USE_FLS != 0)
+    #if defined(MI_USE_FLS) && (MI_USE_FLS != 0)
     FlsSetValue(mi_fls_key, (void*)(_mi_thread_id()|1)); // set to a dummy value so that `mi_fls_done` is called
-   #endif
+    #endif
   #elif defined(MI_USE_PTHREADS)
     pthread_setspecific(mi_pthread_key, (void*)(_mi_thread_id()|1)); // set to a dummy value so that `mi_pthread_done` is called
   #endif
@@ -421,10 +423,10 @@ static void mi_process_done(void) {
 }
 
 
+
 #if defined(_WIN32) && defined(MI_SHARED_LIB)
   // Windows DLL: easy to hook into process_init and thread_done
   #include <windows.h>
-  the thing that should not be!
 
   __declspec(dllexport) BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved) {
     UNUSED(reserved);
@@ -440,8 +442,7 @@ static void mi_process_done(void) {
 
 #elif defined(__GNUC__) || defined(__clang__)
   // GCC,Clang: use the constructor attribute
-  /*static*/ void __attribute__((constructor)) _mi_process_init_gcc_(void) {
-    //fprintf(stderr, "!!!!!!!!!!!!!!!!!!!!\n");
+  static void __attribute__((constructor)) _mi_process_init(void) {
     mi_process_init();
   }
 
@@ -449,11 +450,9 @@ static void mi_process_done(void) {
   // C++: use static initialization to detect process start
   static bool _mi_process_init(void) {
     mi_process_init();
-    //return (mi_main_thread_id != 0);
     return (_mi_heap_main.thread_id != 0);
-    //return (_mi_thread_id() != 0);
   }
-  bool mi_initialized___ = _mi_process_init();
+  static bool mi_initialized = _mi_process_init();
 
 #elif defined(_MSC_VER)
   // MSVC: use data section magic for static libraries

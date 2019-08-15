@@ -31,19 +31,32 @@ typedef struct mi_option_desc_s {
   const char* name;   // option name without `mimalloc_` prefix
 } mi_option_desc_t;
 
-static mi_option_desc_t options[_mi_option_last] = {
+static mi_option_desc_t options[_mi_option_last] =
+{
+  // stable options
+  { 0, UNINIT, "show_stats" },
+  { MI_DEBUG, UNINIT, "show_errors" },
+  { 0, UNINIT, "verbose" },
+
+  #if MI_SECURE
+  { MI_SECURE, INITIALIZED, "secure" }, // in a secure build the environment setting is ignored
+  #else
+  { 0, UNINIT, "secure" },
+  #endif
+
+  // the following options are experimental and not all combinations make sense.
+  { 1, UNINIT, "eager_commit" },        // note: if eager_region_commit is on, this should be on too.
+  #ifdef _WIN32   // and BSD?
+  //k8: fuck off, i don't care how it looks in shitdows shitmanager
+  { 1, UNINIT, "eager_region_commit" }, // don't commit too eagerly on windows (just for looks...)
+  #else
+  { 1, UNINIT, "eager_region_commit" },
+  #endif
+  { 0, UNINIT, "large_os_pages" },      // use large OS pages, use only with eager commit to prevent fragmentation of VMA's
   { 0, UNINIT, "page_reset" },
   { 0, UNINIT, "cache_reset" },
-  { /*0*/1, UNINIT, "pool_commit" },
-  { 0, UNINIT, "large_os_pages" },   // use large OS pages
-  #if MI_SECURE
-  { MI_SECURE, INITIALIZED, "secure" }, // in secure build the environment setting is ignored
-  #else
-  { 0, /*UNINIT*/DEFAULTED, "secure" },
-  #endif
-  { 0, UNINIT, "show_stats" },
-  { /*MI_DEBUG*/0, UNINIT, "show_errors" },
-  { /*MI_DEBUG*/0, UNINIT, "verbose" }
+  { 0, UNINIT, "reset_decommits" },     // note: cannot enable this if secure is on
+  { 0, UNINIT, "reset_discards" }       // note: cannot enable this if secure is on
 };
 
 static void mi_option_init(mi_option_desc_t* desc);
@@ -156,15 +169,16 @@ void _mi_assert_fail(const char* assertion, const char* fname, unsigned line, co
 
 static void mi_strlcpy(char* dest, const char* src, size_t dest_size) {
   dest[0] = 0;
+  //k8:fuck you, m$vc:#pragma warning(suppress:4996)
   strncpy(dest, src, dest_size - 1);
   dest[dest_size - 1] = 0;
 }
 
 static void mi_strlcat(char* dest, const char* src, size_t dest_size) {
+  //k8:fuck you, m$vc:#pragma warning(suppress:4996)
   strncat(dest, src, dest_size - 1);
   dest[dest_size - 1] = 0;
 }
-
 
 static void mi_option_init(mi_option_desc_t* desc) {
   desc->init = DEFAULTED;
@@ -172,12 +186,14 @@ static void mi_option_init(mi_option_desc_t* desc) {
   char buf[32];
   mi_strlcpy(buf, "mimalloc_", sizeof(buf));
   mi_strlcat(buf, desc->name, sizeof(buf));
+  //k8:fuck you, m$vc:#pragma warning(suppress:4996)
   char* s = getenv(buf);
   if (s == NULL) {
     size_t buf_size = strlen(buf);
     for (size_t i = 0; i < buf_size; i++) {
       buf[i] = toupper(buf[i]);
     }
+    //k8:fuck you, m$vc:#pragma warning(suppress:4996)
     s = getenv(buf);
   }
   if (s != NULL) {

@@ -10,7 +10,6 @@ terms of the MIT license. A copy of the license can be found in the file
 #include "mimalloc-atomic.h"
 
 #include <string.h>  // memset, memcpy
-#include <stdint.h>
 
 
 /* -----------------------------------------------------------
@@ -147,6 +146,11 @@ static void mi_heap_collect_ex(mi_heap_t* heap, mi_collect_t collect)
   // collect segment caches
   if (collect >= FORCE) {
     _mi_segment_thread_collect(&heap->tld->segments);
+  }
+
+  // collect regions
+  if (collect >= FORCE && _mi_is_main_thread()) {
+    _mi_mem_collect(&heap->tld->stats);
   }
 }
 
@@ -502,7 +506,7 @@ typedef struct mi_visit_blocks_args_s {
 
 static bool mi_heap_area_visitor(const mi_heap_t* heap, const mi_heap_area_ex_t* xarea, void* arg) {
   mi_visit_blocks_args_t* args = (mi_visit_blocks_args_t*)arg;
-  if (!args->visitor(heap, &xarea->area, NULL, xarea->area.block_size, arg)) return false;
+  if (!args->visitor(heap, &xarea->area, NULL, xarea->area.block_size, args->arg)) return false;
   if (args->visit_blocks) {
     return mi_heap_area_visit_blocks(xarea, args->visitor, args->arg);
   }
