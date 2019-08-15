@@ -119,6 +119,36 @@ enum /*EDamageFlags*/ {
 };
 
 
+enum /*ESkillProperty*/ {
+  SKILLP_FastMonsters,
+  SKILLP_Respawn,
+  SKILLP_RespawnLimit,
+  SKILLP_DisableCheats,
+  SKILLP_AutoUseHealth,
+  SKILLP_SpawnFilter,
+  SKILLP_EasyBossBrain,
+  SKILLP_ACSReturn,
+  SKILLP_NoPain,
+  SKILLP_EasyKey,
+  SKILLP_SlowMonsters,
+  SKILLP_Infight,
+  SKILLP_PlayerRespawn,
+};
+
+// floating point properties
+enum /*EFSkillProperty*/ {
+  SKILLP_AmmoFactor,
+  SKILLP_DropAmmoFactor,
+  SKILLP_ArmorFactor,
+  SKILLP_HealthFactor,
+  SKILLP_DamageFactor,
+  SKILLP_Aggressiveness,
+  SKILLP_MonsterHealth,
+  SKILLP_FriendlyHealth,
+  SKILLP_KickbackFactor,
+};
+
+
 //==========================================================================
 //
 //  A_k8ConLog
@@ -353,6 +383,52 @@ final int decorate_CountInv (name ItemName, optional int aptr) {
   Entity tgt = DecorDoAAPtr('decorate_CountInv', aptr!optional);
   if (!tgt) return 0;
   return tgt.CheckInventory(ItemName, allowReplacement:true);
+}
+
+
+//==========================================================================
+//
+//  decorate_G_SkillPropertyInt
+//
+//==========================================================================
+final int decorate_G_SkillPropertyInt (int prop) {
+  switch (prop) {
+    case SKILLP_FastMonsters: return Level.World.bSkillFastMonsters;
+    case SKILLP_Respawn: printwarn("G_SkillPropertyInt: respawn time is not implemented!"); return 0;
+    case SKILLP_RespawnLimit: return Level.World.GetRespawnLimit();
+    case SKILLP_DisableCheats: return false;
+    case SKILLP_AutoUseHealth: return Level.World.bSkillAutoUseHealth;
+    case SKILLP_SpawnFilter: return Level.World.GetSpawnFilter();
+    case SKILLP_EasyBossBrain: return Level.World.bSkillEasyBossBrain;
+    case SKILLP_ACSReturn: return Level.World.SkillAcsReturn;
+    case SKILLP_NoPain: return false;
+    case SKILLP_EasyKey: return 0;
+    case SKILLP_SlowMonsters: return Level.World.bSkillSlowMonsters;
+    case SKILLP_Infight: return (Level.Infighting ? Level.Infighting : GetCvarI('infighting'));
+    case SKILLP_PlayerRespawn: return 0;
+  }
+  return 0;
+}
+
+
+//==========================================================================
+//
+//  decorate_G_SkillPropertyFloat
+//
+//==========================================================================
+final float decorate_G_SkillPropertyFloat (int prop) {
+  switch (prop) {
+    case SKILLP_AmmoFactor: return Level.World.GetAmmoFactor();
+    case SKILLP_DropAmmoFactor: return 1.0;
+    case SKILLP_ArmorFactor: return 1.0;
+    case SKILLP_HealthFactor: return 1.0;
+    case SKILLP_DamageFactor: return 1.0;
+    case SKILLP_Aggressiveness: return Level.World.GetAggressiveness();
+    case SKILLP_MonsterHealth: return 1.0;
+    case SKILLP_FriendlyHealth: return 1.0;
+    case SKILLP_KickbackFactor: return 1.0;
+  }
+  return 0.0;
 }
 
 
