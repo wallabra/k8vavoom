@@ -198,7 +198,8 @@ final void A_SpawnItem (class!Actor ItemType, optional float Distance,
   // don't spawn monsters if this actor has been massacred
   if (nameicmp(DamageType, 'Massacre') == 0 && ItemType.default.bMonster) return;
 
-  if (!Distance) Distance = Radius+ItemType.default.Radius;
+  //k8: i absolutely don't know why it was here
+  //if (!Distance) Distance = Radius+ItemType.default.Radius;
 
   // if called from weapon, then use ammo
   if (bIsPlayer &&
@@ -211,7 +212,10 @@ final void A_SpawnItem (class!Actor ItemType, optional float Distance,
     if (UseAmmo && !Wpn.DepleteAmmo(Wpn.FireMode)) return;
   }
 
-  EntityEx A = Spawn(ItemType, Origin+vector(Distance*cos(Angles.yaw), Distance*sin(Angles.yaw), ZHeight-FloorClip));
+  TVec org = Origin+vector(Distance*cos(Angles.yaw), Distance*sin(Angles.yaw), ZHeight-FloorClip);
+  //printdebug("A_SpawnItem: type=%C; Distance=%s; org=%s; Origin=%s; yaw=%s", ItemType, Distance, org, Origin, Angles.yaw);
+
+  EntityEx A = Spawn(ItemType, org);
   InitSpawnedItem(A, TransTransl, UseAmmo, false, false, false, false);
 }
 
@@ -248,6 +252,7 @@ final bool A_SpawnItemEx (class!Actor ItemType,
   }
   Org += Origin;
 
+  //printdebug("A_SpawnItemEx: type=%C; org=%s; Origin=%s; yaw=%s", ItemType, Org, Origin, Angles.yaw);
   EntityEx A = Spawn(ItemType, Org);
   InitSpawnedItem(A,
     !!(Flags&SXF_TRANSFERTRANSLATION),
