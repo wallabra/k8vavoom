@@ -432,6 +432,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
         invCls = VMemberBase::StaticFindClass("Inventory");
       }
       // random spawner class
+      /* no, it should never end up on spawned by itself
       static VClass *rspCls = nullptr;
       static bool rspClsInited = false;
       if (!rspClsInited) {
@@ -441,6 +442,8 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
       renderShadow =
         (invCls && thing->IsA(invCls)) ||
         (rspCls && thing->IsA(rspCls));
+      */
+      renderShadow = (invCls && thing->IsA(invCls));
     } else {
       renderShadow = false;
     }
@@ -453,12 +456,8 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
   TVec start = -TexSOffset*sprright*scaleX;
   TVec end = (TexWidth-TexSOffset)*sprright*scaleX;
 
-  //const float ttoffs = TexTOffset*scaleY;
-  //const float ttheight = TexHeight*scaleY;
   const int origTOffset = TexTOffset;
   //if (thing) GCon->Logf(NAME_Debug, "*** CLASS '%s': scaleY=%g; TOfs=%d; hgt=%d; dofix=%d", thing->GetClass()->GetName(), scaleY, TexTOffset, TexHeight, (TexTOffset < TexHeight && 2*TexTOffset+r_sprite_fix_delta >= TexHeight ? 1 : 0));
-  //if (r_fix_sprite_offsets && ttoffs < ttheight && 2*ttoffs+r_sprite_fix_delta.asInt()*scaleY >= ttheight) TexTOffset = TexHeight;
-  //if (r_fix_sprite_offsets && TexTOffset < TexHeight && 2*TexTOffset+r_sprite_fix_delta >= TexHeight) TexTOffset = TexHeight;
   //k8: scale is arbitrary here
   if (r_fix_sprite_offsets && TexTOffset < TexHeight && 2*TexTOffset+r_sprite_fix_delta >= TexHeight && scaleY > 0.6f && scaleY < 1.6f) TexTOffset = TexHeight;
 
@@ -507,7 +506,6 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
 
           // undo sprite offset
           if (r_fake_shadow_ignore_offset_fix) TexTOffset = origTOffset;
-          //if (r_fake_shadow_ignore_offset_fix && r_fix_sprite_offsets) TexTOffset = Tex->TOffset;
 
           topdelta = TexTOffset*sprup*scaleY;
           botdelta = (TexTOffset-TexHeight)*sprup*scaleY;
