@@ -160,7 +160,7 @@ public:
         return style;
       case STYLE_Shaded: return STYLE_Stencil; // not implemented
       case STYLE_TranslucentStencil: return STYLE_Translucent; // not implemented
-      case STYLE_Shadow: return STYLE_Translucent; // not implemented
+      case STYLE_Shadow: return /*STYLE_Translucent*/STYLE_Fuzzy; // not implemented
       case STYLE_Subtract: return STYLE_Add; // not implemented
       case STYLE_AddShaded: return STYLE_Add; // not implemented
       default: break;

@@ -37,9 +37,9 @@
     <prop_float_clamped name="WallBounceFactor" property="WallBounceFactor" min="0" max="1" />
     <prop_int name="BounceCount" property="BounceCount" />
     <prop_name name="BounceSound" property="BounceSound" />
-    <prop_int_unsupported name="ProjectilePassHeight" />
-    <prop_int_unsupported name="WeaveIndexXY" />
-    <prop_int_unsupported name="WeaveIndexZ" />
+    <prop_int_unsupported name="ProjectilePassHeight" warning="true" />
+    <prop_int_unsupported name="WeaveIndexXY" warning="true" />
+    <prop_int_unsupported name="WeaveIndexZ" warning="true" />
     <!-- Sound -->
     <prop_name name="SeeSound" property="SightSound" />
     <prop_name name="AttackSound" property="AttackSound" />
@@ -52,6 +52,7 @@
     <prop_render_style name="RenderStyle" property="RenderStyle" />
     <prop_default_alpha name="DefaultAlpha" />
     <prop_float_clamped name="Alpha" property="Alpha" min="0" max="1" />
+    <prop_float_unsupported name="StealthAlpha" warning="true" />
     <prop_float_clamped name="XScale" property="ScaleX" min="0" max="4" />
     <prop_float_clamped name="YScale" property="ScaleY" min="0" max="4" />
     <prop_float_clamped_2 name="Scale" property="ScaleX" property2="ScaleY" min="0" max="4" />
@@ -155,7 +156,7 @@
     <flag name="Frightened" property="bFrightened" />
     <flag name="NoTarget" property="bNeverTarget" />
     <flag name="NoInfighting" property="bNoInfighting" />
-    <flag_unsupported name="NoTimeFreeze" />
+    <flag_unsupported name="NoTimeFreeze" warning="true" />
     <flag name="NoFear" property="bNoFear" />
     <flag name="CantSeek" property="bCantSeek" />
     <flag name="Telestomp" property="bTelestomp" />
@@ -165,6 +166,7 @@
     <flag name="CanBounceWater" property="bCanBounceWater" />
     <!-- Defenses -->
     <flag name="Invulnerable" property="bInvulnerable" />
+    <flag_inverted name="Vulnerable" property="bInvulnerable" />
     <flag name="Reflective" property="bReflective" />
     <flag name="ShieldReflect" property="bShieldReflect" />
     <flag name="Deflect" property="bDeflect" />
@@ -196,7 +198,7 @@
     <flag name="DontGib" property="bDontGib" />
     <flag name="DontSplash" property="bNoSplash" />
     <flag name="DontOverlap" property="bDontOverlap" />
-    <flag_unsupported name="FixMapThingPos" />
+    <flag_unsupported name="FixMapThingPos" warning="true" />
     <flag name="FullVolActive" property="bFullVolActive" />
     <flag name="FullVolDeath" property="bFullVolDeath" />
     <flag name="NoWallBounceSnd" property="bNoWallBounceSnd" />
@@ -253,7 +255,7 @@
     <flag name="NoBounceSound" property="bNoBounceSound" />
     <flag name="ExplodeOnWater" property="bExplodeOnWater" />
     <flag name="CanBounceOnWater" property="bCanBounceWater" />
-    <flag_unsupported name="MBFBouncer" />
+    <flag_unsupported name="MBFBouncer" warning="true" />
     <!-- Miscellaneous -->
     <flag name="Dropped" property="bDropped" />
     <flag name="IsMonster" property="bMonster" />
@@ -272,15 +274,14 @@
     <flag name="AlwaysFast" property="bAlwaysFast" />
     <flag name="NeverFast" property="bNeverFast" />
     <flag name="FastMelee" property="bFastMelee" />
-    <flag_unsupported name="OldRadiusDmg" />
+    <flag_unsupported name="OldRadiusDmg" warning="true" />
     <flag name="UseSpecial" property="bUseSpecial" />
-    <flag_unsupported name="BumpSpecial" />
+    <flag_unsupported name="BumpSpecial" warning="true" />
     <flag name="BossDeath" property="bBossDeath" />
     <flag name="NoInteraction" property="bNoInteraction" />
     <flag name="PickUp" property="bPickUp" />
     <flag name="Touchy" property="bTouchy" />
     <flag name="Special" property="bSpecial" />
-    <flag_unsupported name="Vulnerable" />
     <!-- Limited use -->
     <flag name="SeesDaggers" property="bSeesDaggers" />
     <flag name="InCombat" property="bInCombat" />
@@ -331,10 +332,11 @@
     <flag_unsupported name="BaseArmor" />
     <flag_unsupported name="SuperArmor" />
     <flag_unsupported name="ExplodeOnDeath" />
+    <flag_unsupported name="ServerSideOnly" warning="true" />
     <prop_int_unsupported name="LimitedToTeam" />
     <prop_int_unsupported name="VisibleToTeam" />
     <prop_int_unsupported name="LimitedToPlayerClass" />
-    <flag_unsupported name="RelativeToFloor" />
+    <flag_unsupported name="RelativeToFloor" warning="true" />
     <!-- used in blood replacements -->
     <flag name="BloodDontSplat" property="bBloodDisableSplats" />
     <!-- more gozzo shit -->
@@ -362,7 +364,7 @@
     <flag name="Undroppable" property="bUndroppable" />
     <flag name="InvBar" property="bInvBar" />
     <flag name="HubPower" property="bHubPower" />
-    <flag_unsupported name="PersistentPower" />
+    <flag_unsupported name="PersistentPower" warning="true" />
     <flag name="InterHubStrip" property="bInterHubStrip" />
     <flag_class name="PickupFlash" property="PickupFlashType" true_value="PickupFlash" false_value="None" />
     <flag name="AlwaysPickup" property="bAlwaysPickup" />
@@ -387,15 +389,15 @@
     <prop_int name="Armor.SaveAmount" property="SaveAmount" />
     <prop_percent name="Armor.SavePercent" property="SavePercent" />
     <prop_int name="Armor.MaxSaveAmount" property="MaxSaveAmount" />
-    <prop_int_unsupported name="Armor.MaxBonus" />
-    <prop_int_unsupported name="Armor.MaxBonusMax" />
+    <prop_int_unsupported name="Armor.MaxBonus" warning="true" />
+    <prop_int_unsupported name="Armor.MaxBonusMax" warning="true" />
   </class>
 
   <class name="BasicArmorPickup">
     <prop_int name="Armor.SaveAmount" property="SaveAmount" />
     <prop_percent name="Armor.SavePercent" property="SavePercent" />
-    <prop_int_unsupported name="Armor.MaxAbsorb" />
-    <prop_int_unsupported name="Armor.MaxFullAbsorb" />
+    <prop_int_unsupported name="Armor.MaxAbsorb" warning="true" />
+    <prop_int_unsupported name="Armor.MaxFullAbsorb" warning="true" />
   </class>
 
   <class name="Health">

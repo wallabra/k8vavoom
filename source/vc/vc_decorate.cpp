@@ -407,6 +407,8 @@ struct VPropDef {
   float FMax;
   VStr CPrefix;
 
+  bool ShowWarning;
+
   inline void SetField (VClass *Class, const char *FieldName) {
     Field = Class->FindFieldChecked(FieldName);
   }
@@ -434,6 +436,8 @@ struct VFlagDef {
   };
   VName NFalse;
 
+  bool ShowWarning;
+
   inline void SetField (VClass *Class, const char *FieldName) {
     Field = Class->FindFieldChecked(FieldName);
   }
@@ -453,20 +457,28 @@ struct VFlagList {
   TArray<VFlagDef> Flags;
   int FlagsHash[FLAGS_HASH_SIZE];
 
-  VPropDef &NewProp (vuint8 Type, VXmlNode *PN) {
+  VPropDef &NewProp (vuint8 Type, VXmlNode *PN, bool checkUnsupported=false) {
     VPropDef &P = Props.Alloc();
     P.Type = Type;
     P.Name = *PN->GetAttribute("name").ToLower();
+    if (checkUnsupported && PN->HasAttribute("warning")) {
+      VStr bs = PN->GetAttribute("warning");
+      if (bs.strEquCI("true") || bs.strEquCI("tan")) P.ShowWarning = true;
+    }
     int HashIndex = GetTypeHash(P.Name)&(PROPS_HASH_SIZE-1);
     P.HashNext = PropsHash[HashIndex];
     PropsHash[HashIndex] = Props.Num()-1;
     return P;
   }
 
-  VFlagDef &NewFlag (vuint8 Type, VXmlNode *PN) {
+  VFlagDef &NewFlag (vuint8 Type, VXmlNode *PN, bool checkUnsupported=false) {
     VFlagDef &F = Flags.Alloc();
     F.Type = Type;
     F.Name = *PN->GetAttribute("name").ToLower();
+    if (checkUnsupported && PN->HasAttribute("warning")) {
+      VStr bs = PN->GetAttribute("warning");
+      if (bs.strEquCI("true") || bs.strEquCI("tan")) F.ShowWarning = true;
+    }
     int HashIndex = GetTypeHash(F.Name)&(FLAGS_HASH_SIZE-1);
     F.HashNext = FlagsHash[HashIndex];
     FlagsHash[HashIndex] = Flags.Num()-1;
@@ -546,13 +558,17 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
         P.SetField(Lst.Class, *PN->GetAttribute("property"));
         P.IConst = VStr::atoi(*PN->GetAttribute("value")); //FIXME
       } else if (PN->Name == "prop_int_unsupported") {
-        /*VPropDef &P =*/(void)Lst.NewProp(PROP_IntUnsupported, PN);
+        /*VPropDef &P =*/(void)Lst.NewProp(PROP_IntUnsupported, PN, true);
       } else if (PN->Name == "prop_float_unsupported") {
-        /*VPropDef &P =*/(void)Lst.NewProp(PROP_FloatUnsupported, PN);
+        /*VPropDef &P =*/(void)Lst.NewProp(PROP_FloatUnsupported, PN, true);
       } else if (PN->Name == "prop_int_id_unsupported") {
-        /*VPropDef &P =*/(void)Lst.NewProp(PROP_IntIdUnsupported, PN);
+        /*VPropDef &P =*/(void)Lst.NewProp(PROP_IntIdUnsupported, PN, true);
       } else if (PN->Name == "prop_skip_line_unsupported") {
-        /*VPropDef &P =*/(void)Lst.NewProp(PROP_SkipLineUnsupported, PN);
+        /*VPropDef &P =*/(void)Lst.NewProp(PROP_SkipLineUnsupported, PN, true);
+      } else if (PN->Name == "prop_string_unsupported") {
+        /*VPropDef &P =*/(void)Lst.NewProp(PROP_StrUnsupported, PN, true);
+      } else if (PN->Name == "flag_unsupported") {
+        /*VFlagDef &F =*/(void)Lst.NewFlag(FLAG_Unsupported, PN, true);
       } else if (PN->Name == "prop_bit_index") {
         VPropDef &P = Lst.NewProp(PROP_BitIndex, PN);
         P.SetField(Lst.Class, *PN->GetAttribute("property"));
@@ -598,8 +614,6 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
       } else if (PN->Name == "prop_string") {
         VPropDef &P = Lst.NewProp(PROP_Str, PN);
         P.SetField(Lst.Class, *PN->GetAttribute("property"));
-      } else if (PN->Name == "prop_string_unsupported") {
-        /*VPropDef &P =*/(void)Lst.NewProp(PROP_StrUnsupported, PN);
       } else if (PN->Name == "prop_class") {
         VPropDef &P = Lst.NewProp(PROP_Class, PN);
         P.SetField(Lst.Class, *PN->GetAttribute("property"));
@@ -713,8 +727,6 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
       } else if (PN->Name == "flag_inverted") {
         VFlagDef &F = Lst.NewFlag(FLAG_BoolInverted, PN);
         F.SetField(Lst.Class, *PN->GetAttribute("property"));
-      } else if (PN->Name == "flag_unsupported") {
-        /*VFlagDef &F =*/(void)Lst.NewFlag(FLAG_Unsupported, PN);
       } else if (PN->Name == "flag_byte") {
         VFlagDef &F = Lst.NewFlag(FLAG_Byte, PN);
         F.SetField(Lst.Class, *PN->GetAttribute("property"));
@@ -1207,7 +1219,7 @@ static bool ParseFlag (VScriptParser *sc, VClass *Class, bool Value, TArray<VCla
         switch (F.Type) {
           case FLAG_Bool: F.Field->SetBool(DefObj, Value); break;
           case FLAG_BoolInverted: F.Field->SetBool(DefObj, !Value); break;
-          case FLAG_Unsupported: if (dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Unsupported flag %s in %s", *floc.toStringNoCol(), *FlagName, Class->GetName()); break;
+          case FLAG_Unsupported: if (F.ShowWarning || dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Unsupported flag %s in %s", *floc.toStringNoCol(), *FlagName, Class->GetName()); break;
           case FLAG_Byte: F.Field->SetByte(DefObj, Value ? F.BTrue : F.BFalse); break;
           case FLAG_Float: F.Field->SetFloat(DefObj, Value ? F.FTrue : F.FFalse); break;
           case FLAG_Name: F.Field->SetName(DefObj, Value ? F.NTrue : F.NFalse); break;
@@ -2024,7 +2036,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
           case PROP_IntUnsupported:
             //FIXME
             sc->CheckNumberWithSign();
-            if (dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+            if (P.ShowWarning || dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
             break;
           case PROP_IntIdUnsupported:
             //FIXME
@@ -2036,7 +2048,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
               sc->ExpectIdentifier();
               if (sc->Check(",")) sc->ExpectIdentifier();
               //sc->SetCMode(oldcm);
-              if (dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+              if (P.ShowWarning || dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
             }
             break;
           case PROP_BitIndex:
@@ -2050,7 +2062,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
           case PROP_FloatUnsupported:
             //FIXME
             sc->ExpectFloatWithSign();
-            if (dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+            if (P.ShowWarning || dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
             break;
           case PROP_Speed:
             sc->ExpectFloatWithSign();
@@ -2112,7 +2124,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
           case PROP_StrUnsupported:
             //FIXME
             sc->ExpectString();
-            if (dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+            if (P.ShowWarning || dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
             break;
           case PROP_Class:
             sc->ExpectString();
@@ -2291,10 +2303,10 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
               else if (sc->Check("Dark")) RenderStyle = STYLE_Dark;
               else if (sc->Check("Stencil")) RenderStyle = STYLE_Stencil;
               else if (sc->Check("AddStencil")) RenderStyle = STYLE_AddStencil;
-              else if (sc->Check("Subtract")) { RenderStyle = STYLE_Add; if (dbg_show_decorate_unsupported) GLog.Log(va("%s: Render style 'Subtract' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
-              else if (sc->Check("Shaded")) { RenderStyle = STYLE_Translucent; if (dbg_show_decorate_unsupported) GLog.Log(va("%s: Render style 'Shaded' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
-              else if (sc->Check("AddShaded")) { RenderStyle = STYLE_Add; if (dbg_show_decorate_unsupported) GLog.Log(va("%s: Render style 'AddShaded' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
-              else if (sc->Check("Shadow")) { RenderStyle = STYLE_Fuzzy; if (dbg_show_decorate_unsupported) GLog.Log(va("%s: Render style 'Shadow' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
+              else if (sc->Check("Subtract")) { RenderStyle = STYLE_Subtract; /*if (dbg_show_decorate_unsupported)*/ GLog.Log(va("%s: Render style 'Subtract' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
+              else if (sc->Check("Shaded")) { RenderStyle = STYLE_Shaded; /*if (dbg_show_decorate_unsupported)*/ GLog.Log(va("%s: Render style 'Shaded' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
+              else if (sc->Check("AddShaded")) { RenderStyle = STYLE_AddShaded; /*if (dbg_show_decorate_unsupported)*/ GLog.Log(va("%s: Render style 'AddShaded' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
+              else if (sc->Check("Shadow")) { RenderStyle = STYLE_Shadow; /*if (dbg_show_decorate_unsupported)*/ GLog.Log(va("%s: Render style 'Shadow' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
               else sc->Error("Bad render style");
               P.Field->SetByte(DefObj, RenderStyle);
             }
@@ -2633,7 +2645,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             break;
           case PROP_SkipLineUnsupported:
             {
-              if (dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+              if (P.ShowWarning || dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
               sc->SkipLine();
             }
             break;
@@ -3550,7 +3562,7 @@ bool VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
         switch (F.Type) {
           case FLAG_Bool: F.Field->SetBool(this, Value); break;
           case FLAG_BoolInverted: F.Field->SetBool(this, !Value); break;
-          case FLAG_Unsupported: if (dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "Unsupported flag %s in %s", *Flag, GetClass()->GetName()); break;
+          case FLAG_Unsupported: if (F.ShowWarning || dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "Unsupported flag '%s' in `%s`", *Flag, GetClass()->GetName()); break;
           case FLAG_Byte: F.Field->SetByte(this, Value ? F.BTrue : F.BFalse); break;
           case FLAG_Float: F.Field->SetFloat(this, Value ? F.FTrue : F.FFalse); break;
           case FLAG_Name: F.Field->SetName(this, Value ? F.NTrue : F.NFalse); break;
@@ -3616,7 +3628,7 @@ bool VEntity::GetDecorateFlag (const VStr &Flag) {
         switch (F.Type) {
           case FLAG_Bool: return F.Field->GetBool(this);
           case FLAG_BoolInverted: return !F.Field->GetBool(this);
-          case FLAG_Unsupported: if (dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "Unsupported flag %s in %s", *Flag, GetClass()->GetName()); return false;
+          case FLAG_Unsupported: if (F.ShowWarning || dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "Unsupported flag '%s' in `%s`", *Flag, GetClass()->GetName()); return false;
           case FLAG_Byte: return !!F.Field->GetByte(this);
           case FLAG_Float: return (F.Field->GetFloat(this) != 0.0f);
           case FLAG_Name: return (F.Field->GetNameValue(this) != NAME_None);
