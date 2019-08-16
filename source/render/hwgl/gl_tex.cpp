@@ -72,18 +72,13 @@ void VOpenGLDrawer::FlushOneTexture (VTexture *tex, bool forced) {
 //
 //==========================================================================
 void VOpenGLDrawer::DeleteTextures () {
+  FlushTextures(true); // forced
+
   if (texturesGenerated) {
-    FlushTextures();
     glDeleteTextures(NUM_BLOCK_SURFS, lmap_id);
     glDeleteTextures(NUM_BLOCK_SURFS, addmap_id);
     texturesGenerated = false;
   }
-
-  // delete all created shader objects
-  for (int i = CreatedShaderObjects.length()-1; i >= 0; --i) {
-    p_glDeleteObjectARB(CreatedShaderObjects[i]);
-  }
-  CreatedShaderObjects.Clear();
 
   UnloadModels();
 }

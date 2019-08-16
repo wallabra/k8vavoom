@@ -1173,6 +1173,7 @@ int main (int argc, char **argv) {
     fprintf(foh, "\n");
     fprintf(foh, "    virtual void Setup (VOpenGLDrawer *aowner) override;\n");
     fprintf(foh, "    virtual void LoadUniforms () override;\n");
+    fprintf(foh, "    virtual void UnloadUniforms () override;\n");
     fprintf(foh, "\n");
     // generate setters
     for (const LocInfo *loc = si->locs; loc; loc = loc->next) {
@@ -1309,6 +1310,14 @@ int main (int argc, char **argv) {
       } else {
         fprintf(foc, "  loc_%s = owner->glGet%sLoc(progname, prog, \"%s\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
       }
+    }
+    fprintf(foc, "}\n");
+    fprintf(foc, "\n");
+
+    // generate uniform unloader
+    fprintf(foc, "void VOpenGLDrawer::VShaderDef_%s::UnloadUniforms () {\n", si->name);
+    for (const LocInfo *loc = si->locs; loc; loc = loc->next) {
+      fprintf(foc, "  loc_%s = -1;\n", loc->name);
     }
     fprintf(foc, "}\n");
   }

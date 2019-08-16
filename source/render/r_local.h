@@ -463,6 +463,8 @@ public:
 
   virtual void UpdateSubsectorFlatSurfaces (subsector_t *sub, bool dofloors, bool doceils, bool forced=false) override;
 
+  virtual void PrecacheLevel () override;
+
 protected:
   VRenderLevelShared (VLevel *ALevel);
   ~VRenderLevelShared ();
@@ -521,7 +523,6 @@ protected:
   void UpdateCameraTexture (VEntity*, int, int);
   vuint32 GetFade (sec_region_t*);
   int CollectSpriteTextures (TArray<bool> &texturepresent); // this is actually private, but meh... returns number of new textures
-  void PrecacheLevel ();
   void UncacheLevel ();
   VTextureTranslation *GetTranslation (int);
   void BuildPlayerTranslations ();

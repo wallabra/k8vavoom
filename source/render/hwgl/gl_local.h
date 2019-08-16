@@ -475,6 +475,7 @@ public:
     virtual void Unload ();
     virtual void Setup (VOpenGLDrawer *aowner) = 0;
     virtual void LoadUniforms () = 0;
+    virtual void UnloadUniforms () = 0;
 
     void Activate ();
     void Deactivate ();

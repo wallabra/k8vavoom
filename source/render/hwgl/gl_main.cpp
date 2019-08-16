@@ -259,7 +259,10 @@ void VOpenGLDrawer::VGLShader::Compile () {
 //
 //==========================================================================
 void VOpenGLDrawer::VGLShader::Unload () {
-  GCon->Logf(NAME_Init, "unloading shader '%s'...", progname);
+  if (developer) GCon->Logf(NAME_Dev, "unloading shader '%s'...", progname);
+  // actual program object will be destroyed elsewhere
+  prog = 0;
+  UnloadUniforms();
 }
 
 
@@ -424,6 +427,11 @@ void VOpenGLDrawer::SetupTextureFiltering (int level) {
 void VOpenGLDrawer::DeinitResolution () {
   // unload shaders
   DestroyShaders();
+  // delete all created shader objects
+  for (int i = CreatedShaderObjects.length()-1; i >= 0; --i) {
+    p_glDeleteObjectARB(CreatedShaderObjects[i]);
+  }
+  CreatedShaderObjects.Clear();
   // destroy FBOs
   mainFBO.destroy();
   //secondFBO.destroy();

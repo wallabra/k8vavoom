@@ -132,6 +132,8 @@ public:
   virtual bool IsNodeRendered (const node_t *node) const = 0;
   virtual bool IsSubsectorRendered (const subsector_t *sub) const = 0;
 
+  virtual void PrecacheLevel () = 0;
+
 public:
   static inline bool IsAdditiveStyle (int style) {
     switch (style) {
