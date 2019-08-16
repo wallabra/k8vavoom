@@ -146,9 +146,9 @@ final void A_GiveToChildren (class!Inventory ItemType, optional int Amount) {
 //
 //==========================================================================
 final void DoTakeInventory (class!Inventory ItemType, int Amount, EntityEx Receiver, optional bool disableReplace) {
-  if (!Receiver) return;
-
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
+
+  if (!Receiver) return;
 
   Inventory Item = Receiver.FindInventory(ItemType, disableReplacement:disableReplace);
   if (Item && !HexenArmor(Item)) {
@@ -173,9 +173,8 @@ final void DoTakeInventory (class!Inventory ItemType, int Amount, EntityEx Recei
 //==========================================================================
 final void A_TakeInventory (class!Inventory ItemType, optional int Amount, optional int flags, optional int giveto) {
   EntityEx dest = EntityEx(DecorDoAAPtr('A_TakeInventory', giveto!optional));
-  if (!dest) return;
   // process TIF_NOTAKEINFINITE
-  if (flags&1) {
+  if (dest && (flags&1)) {
     if (ItemType isa Ammo) {
       if (dest.FindInfiniteAmmoPowerup()) return;
     }
@@ -191,11 +190,9 @@ final void A_TakeInventory (class!Inventory ItemType, optional int Amount, optio
 //==========================================================================
 final void A_TakeFromTarget (class!Inventory ItemType, optional int Amount, optional int flags, optional int aptr) {
   EntityEx dest;
-  if (aptr == AAPTR_DEFAULT) dest = Target; //k8: exception, according to the wiki
-  else dest = EntityEx(DecorDoAAPtr('A_TakeFromTarget', aptr));
-  if (!dest) return;
+  if (Target) dest = EntityEx(Target.DecorDoAAPtr('A_TakeFromTarget', aptr));
   // process TIF_NOTAKEINFINITE
-  if (flags&1) {
+  if (dest && (flags&1)) {
     if (ItemType isa Ammo) {
       if (dest.FindInfiniteAmmoPowerup()) return;
     }

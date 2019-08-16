@@ -194,8 +194,9 @@ final void A_JumpIfInventory (class!Actor ItemType, int Amount, state Label, opt
 //  A_JumpIfInTargetInventory
 //
 //==========================================================================
-final void A_JumpIfInTargetInventory(class!Actor ItemType, int Amount, state Label, optional int aptr) {
-  EntityEx tgt = EntityEx(DecorDoAAPtr('A_JumpIfInventory', aptr!optional));
+final void A_JumpIfInTargetInventory (class!Actor ItemType, int Amount, state Label, optional int aptr) {
+  EntityEx tgt;
+  if (Target) tgt = EntityEx(Target.DecorDoAAPtr('A_JumpIfInventory', aptr!optional));
   if (!tgt) {
     XLevel.StateCall->Result = false;
     return;
