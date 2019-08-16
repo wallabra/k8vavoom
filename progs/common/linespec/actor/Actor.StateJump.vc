@@ -150,7 +150,7 @@ final void A_JumpIfCloser (float Dist, state Label, optional bool noz) {
 //  A_JumpIfHealthLower
 //
 //==========================================================================
-final void A_JumpIfHealthLower(int HealthVal, state Label, optional int aptr) {
+final void A_JumpIfHealthLower (int HealthVal, state Label, optional int aptr) {
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_JumpIfHealthLower', aptr!optional));
   if (tgt) {
     if (tgt.Health < HealthVal) DoJump(Label);
@@ -165,27 +165,35 @@ final void A_JumpIfHealthLower(int HealthVal, state Label, optional int aptr) {
 //  A_JumpIfInventory
 //
 //==========================================================================
-final void A_JumpIfInventory (class!Actor ItemType, int Amount, state Label, optional int aptr) {
+final void worker_JumpIfInInventory (EntityEx tgt, class!Actor ItemType, int Amount, state Label) {
   class!Inventory itp = class!Inventory(ItemType);
-  EntityEx tgt = EntityEx(DecorDoAAPtr('A_JumpIfInventory', aptr!optional));
 
   if (itp && tgt) {
-    Inventory Item = tgt.FindInventory(itp);
-    //if (!Item) Item = tgt.FindInventory(GetClassReplacement(itp));
+    Inventory Item = tgt.FindInventory(itp, disableReplacement:true); //k8: i hope so
     if (Item) {
       Ammo ammo = Ammo(Item);
       int maxam = (ammo ? ammo.k8GetAmmoKingMax() : Item.MaxAmount);
       if ((Amount > 0 && Item.Amount >= Amount) ||
           (Amount == 0 && Item.Amount >= maxam))
       {
-        //print("%C: A_JumpIfInventory: found item %C (%C); amount=%d (max=%d) (req=%d); state=%s", self, Item, itp, Item.Amount, Item.MaxAmount, Amount, Label);
         DoJump(Label);
       }
     }
   }
 
-  //  State jumps should not affect state chain results.
+  // state jumps should not affect state chain results
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
+}
+
+
+//==========================================================================
+//
+//  A_JumpIfInventory
+//
+//==========================================================================
+final void A_JumpIfInventory (class!Actor ItemType, int Amount, state Label, optional int aptr) {
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_JumpIfInventory', aptr!optional));
+  worker_JumpIfInInventory(tgt, ItemType, Amount, Label);
 }
 
 
@@ -197,28 +205,7 @@ final void A_JumpIfInventory (class!Actor ItemType, int Amount, state Label, opt
 final void A_JumpIfInTargetInventory (class!Actor ItemType, int Amount, state Label, optional int aptr) {
   EntityEx tgt;
   if (Target) tgt = EntityEx(Target.DecorDoAAPtr('A_JumpIfInventory', aptr!optional));
-  if (!tgt) {
-    XLevel.StateCall->Result = false;
-    return;
-  }
-
-  if (ItemType && tgt.Target)
-  {
-    Inventory Item = tgt.Target.FindInventory(class!Inventory(ItemType));
-    if (Item)
-    {
-      Ammo ammo = Ammo(Item);
-      int maxam = (ammo ? ammo.k8GetAmmoKingMax() : Item.MaxAmount);
-      if ((Amount > 0 && Item.Amount >= Amount) ||
-          (Amount == 0 && Item.Amount >= maxam))
-      {
-        DoJump(Label);
-      }
-    }
-  }
-
-  //  State jumps should not affect state chain results.
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  worker_JumpIfInInventory(tgt, ItemType, Amount, Label);
 }
 
 
