@@ -77,6 +77,18 @@ enum /*ERaise*/ {
 }
 
 
+// chase flags
+const int CHF_FASTCHASE        = 1;
+const int CHF_NOPLAYACTIVE     = 2;
+const int CHF_NIGHTMAREFAST    = 4;
+const int CHF_RESURRECT        = 8;
+const int CHF_DONTMOVE         = 16;
+const int CHF_NORANDOMTURN     = 32;
+const int CHF_NODIRECTIONTURN  = 64;
+const int CHF_NOPOSTATTACKTURN = 128;
+const int CHF_STOPIFBLOCKED    = 256;
+
+
 //==========================================================================
 //
 //  A_Look
@@ -398,6 +410,16 @@ final void A_TurretLook () {
 //
 //==========================================================================
 final void A_Wander () {
+  decorate_A_Wander();
+}
+
+
+//==========================================================================
+//
+//  decorate_A_Wander
+//
+//==========================================================================
+final void decorate_A_Wander (optional int flags) {
   bInCombat = false;
   if (bStanding) return;
 
@@ -406,13 +428,14 @@ final void A_Wander () {
     return;
   }
 
-  // turn towards movement direction if not there yet
-  if (MoveDir < DI_NODIR) {
-    Angles.yaw = float(int(Angles.yaw/45.0))*45.0;
-    float delta = AngleMod180(Angles.yaw-float(MoveDir)*45.0);
-
-         if (delta > 0.0) Angles.yaw = AngleMod360(Angles.yaw-45.0);
-    else if (delta < 0.0) Angles.yaw = AngleMod360(Angles.yaw+45.0);
+  if (!(flags&CHF_NODIRECTIONTURN)) {
+    // turn towards movement direction if not there yet
+    if (MoveDir < DI_NODIR) {
+      Angles.yaw = float(int(Angles.yaw/45.0))*45.0;
+      float delta = AngleMod180(Angles.yaw-float(MoveDir)*45.0);
+           if (delta > 0.0) Angles.yaw = AngleMod360(Angles.yaw-45.0);
+      else if (delta < 0.0) Angles.yaw = AngleMod360(Angles.yaw+45.0);
+    }
   }
 
   /*!!!
@@ -425,9 +448,16 @@ final void A_Wander () {
   }
   */
 
-  if (--MoveCount < 0 || !StepMove()) {
-    RandomChaseDir();
-    MoveCount += 5;
+  if (flags&CHF_NORANDOMTURN) {
+    if (--MoveCount < 0) MoveCount += 5;
+    if (!StepMove()) {
+      if (!(flags&CHF_STOPIFBLOCKED)) RandomChaseDir();
+    }
+  } else {
+    if (--MoveCount < 0 || !StepMove()) {
+      if (!(flags&CHF_STOPIFBLOCKED)) RandomChaseDir();
+      MoveCount += 5;
+    }
   }
 }
 
