@@ -633,6 +633,8 @@ double fmtstrtod (const char *as, char **aas, int *rangeErr) {
       --s; /* back over e */
       break;
   }
+  // trailing 'f' or 'l'
+  if (*s == 'f' || *s == 'l') ++s;
   if (aas) *aas = (char *)skipSpaces(s);
 
   if (flag&Fdpoint) while (na > 0 && a[na-1] == '0') --na;
