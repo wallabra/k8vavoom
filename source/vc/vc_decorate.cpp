@@ -3513,6 +3513,9 @@ void ShutdownDecorate () {
 }
 
 
+static TMap<VStr, bool> decoFlagsWarned;
+
+
 //==========================================================================
 //
 //  VEntity::SetDecorateFlag
@@ -3557,12 +3560,21 @@ bool VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
       const VFlagDef &F = ClassDef.Flags[i];
       if (FlagName == F.Name) {
         //GLog.Logf("SETFLAG '%s'(%s) on '%s'", *FlagName, *Flag, *GetClass()->GetFullName());
+        //FIXME: unlink only for flags that needs it!
         UnlinkFromWorld(); // some flags can affect word linking, so unlink here...
         bool didset = true;
         switch (F.Type) {
           case FLAG_Bool: F.Field->SetBool(this, Value); break;
           case FLAG_BoolInverted: F.Field->SetBool(this, !Value); break;
-          case FLAG_Unsupported: if (F.ShowWarning || dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "Unsupported flag '%s' in `%s`", *Flag, GetClass()->GetName()); break;
+          case FLAG_Unsupported:
+            if (F.ShowWarning || dbg_show_decorate_unsupported) {
+              VStr ws = va("Setting unsupported flag '%s' in `%s` to `%s`", *Flag, GetClass()->GetName(), (Value ? "true" : "false"));
+              if (!decoFlagsWarned.has(ws)) {
+                decoFlagsWarned.put(ws, true);
+                GLog.Log(NAME_Warning, *ws);
+              }
+            }
+            break;
           case FLAG_Byte: F.Field->SetByte(this, Value ? F.BTrue : F.BFalse); break;
           case FLAG_Float: F.Field->SetFloat(this, Value ? F.FTrue : F.FFalse); break;
           case FLAG_Name: F.Field->SetName(this, Value ? F.NTrue : F.NFalse); break;
@@ -3582,10 +3594,12 @@ bool VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
       }
     }
   }
-  static TMap<VStr, bool> warned;
-  if (!warned.find(Flag)) {
-    warned.put(Flag, true);
-    GLog.Logf(NAME_Warning, "Unknown flag (set) '%s'", *Flag);
+  {
+    VStr ws = va("Setting unknown flag '%s' in `%s` to `%s`", *Flag, GetClass()->GetName(), (Value ? "true" : "false"));
+    if (!decoFlagsWarned.has(ws)) {
+      decoFlagsWarned.put(ws, true);
+      GLog.Log(NAME_Warning, *ws);
+    }
   }
   return false;
 }
@@ -3628,7 +3642,15 @@ bool VEntity::GetDecorateFlag (const VStr &Flag) {
         switch (F.Type) {
           case FLAG_Bool: return F.Field->GetBool(this);
           case FLAG_BoolInverted: return !F.Field->GetBool(this);
-          case FLAG_Unsupported: if (F.ShowWarning || dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "Unsupported flag '%s' in `%s`", *Flag, GetClass()->GetName()); return false;
+          case FLAG_Unsupported:
+            if (F.ShowWarning || dbg_show_decorate_unsupported) {
+              VStr ws = va("Getting unsupported flag '%s' in `%s`", *Flag, GetClass()->GetName());
+              if (!decoFlagsWarned.has(ws)) {
+                decoFlagsWarned.put(ws, true);
+                GLog.Log(NAME_Warning, *ws);
+              }
+            }
+            return false;
           case FLAG_Byte: return !!F.Field->GetByte(this);
           case FLAG_Float: return (F.Field->GetFloat(this) != 0.0f);
           case FLAG_Name: return (F.Field->GetNameValue(this) != NAME_None);
@@ -3639,10 +3661,12 @@ bool VEntity::GetDecorateFlag (const VStr &Flag) {
       }
     }
   }
-  static TMap<VStr, bool> warned;
-  if (!warned.find(Flag)) {
-    warned.put(Flag, true);
-    GLog.Logf(NAME_Warning, "Unknown flag (get) '%s'", *Flag);
+  {
+    VStr ws = va("Getting unknown flag '%s' in `%s`", *Flag, GetClass()->GetName());
+    if (!decoFlagsWarned.has(ws)) {
+      decoFlagsWarned.put(ws, true);
+      GLog.Log(NAME_Warning, *ws);
+    }
   }
   return false;
 }
