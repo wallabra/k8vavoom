@@ -102,12 +102,13 @@ final void A_GiveInventoryRespectReplace (class!Inventory ItemType, optional int
 
 //==========================================================================
 //
+
 //  A_GiveToTarget
 //
 //==========================================================================
 final void A_GiveToTarget (class!Inventory ItemType, optional int Amount, optional int aptr) {
-  if (!specified_aptr) aptr = AAPTR_TARGET;
-  EntityEx tgt = EntityEx(DecorDoAAPtr('A_GiveToTarget', aptr));
+  EntityEx tgt;
+  if (Target) tgt = EntityEx(Target.DecorDoAAPtr('A_GiveToTarget', aptr));
   DoGiveInventory(ItemType, Amount, tgt, disableReplace:true);
 }
 
@@ -118,8 +119,8 @@ final void A_GiveToTarget (class!Inventory ItemType, optional int Amount, option
 //
 //==========================================================================
 final void A_GiveToTargetRespectReplace (class!Inventory ItemType, optional int Amount, optional int aptr) {
-  if (!specified_aptr) aptr = AAPTR_TARGET;
-  EntityEx tgt = EntityEx(DecorDoAAPtr('A_GiveToTarget', aptr));
+  EntityEx tgt;
+  if (Target) tgt = EntityEx(Target.DecorDoAAPtr('A_GiveToTarget', aptr));
   DoGiveInventory(ItemType, Amount, tgt, disableReplace:false);
 }
 
