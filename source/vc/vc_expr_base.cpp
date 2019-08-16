@@ -618,6 +618,73 @@ void VExpression::operator delete[] (void *p) {
 
 //==========================================================================
 //
+//  tryStringAsFloat
+//
+//==========================================================================
+static bool tryStringAsFloat (float &resf, const char *str) {
+  resf = 0.0f;
+  if (!str || !str[0]) return false;
+  if (VStr::convertFloat(str, &resf)) {
+    if (isFiniteF(resf)) {
+      return true;
+    }
+  }
+  resf = 0.0f;
+  return false;
+}
+
+
+//==========================================================================
+//
+//  tryStringAsInt
+//
+//==========================================================================
+static bool tryStringAsInt (int &resi, const char *str, const VFieldType &destType) {
+  // try int
+  resi = 0;
+  if (!str || !str[0]) return false;
+  // loose conversion
+  if (VStr::convertInt(str, &resi, true)) {
+    switch (destType.Type) {
+      case TYPE_Byte: resi = clampToByte(resi); break;
+      case TYPE_Bool: resi = (resi ? 1 : 0); break;
+    }
+    return true;
+  }
+  resi = 0;
+  return false;
+}
+
+
+//==========================================================================
+//
+//  tryStringAsFloat2Int
+//
+//==========================================================================
+static bool tryStringAsFloat2Int (int &resi, const char *str, const VFieldType &destType) {
+  resi = 0;
+  if (!str || !str[0]) return false;
+  // try float (sigh)
+  float resf = 0.0f;
+  if (VStr::convertFloat(str, &resf)) {
+    if (isFiniteF(resf)) {
+      // arbitrary limits
+           if (resf < -0x3fffffff) resi = -0x3fffffff;
+      else if (resf > +0x3fffffff) resi = +0x3fffffff;
+      else resi = (int)resf;
+      switch (destType.Type) {
+        case TYPE_Byte: resi = clampToByte(resi); break;
+        case TYPE_Bool: resi = (resi ? 1 : 0); break;
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
 //  VInvocation::MassageDecorateArg
 //
 //  this will try to coerce some decorate argument to something sensible
@@ -665,7 +732,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
         }
         // doomrl arsenal author is moron
         if (argnum == 3 && VStr::strEqu(funcName, "decorate_A_CheckFlag") && str.strEquCI("Nope")) {
-          ParseWarningArError((aloc ? *aloc : Loc), "`%s` argument #%d should be aptr (replaced with AAPTR_DEFAULT, mod author is a moron)!", funcName, argnum);
+          ParseWarningArError((aloc ? *aloc : Loc), "`%s` argument #%d should be aptr (replaced with AAPTR_DEFAULT, mod author is a mo...dder)!", funcName, argnum);
           VExpression *enew = new VIntLiteral(0, Loc);
           delete this;
           return enew;
@@ -682,6 +749,31 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
           return enew;
         }
 #endif
+        // ok, try to convert string to a number... please, Invisible Pink Unicorn, why did you created so many morons?!
+        if (destType.Type == TYPE_Float) {
+          float resf = 0.0f;
+          if (tryStringAsFloat(resf, *str)) {
+            ParseWarningArError((aloc ? *aloc : Loc), "`%s` argument #%d should be `float`, not string (coerced, mod author is a mo...dder)!", funcName, argnum);
+            VExpression *enew = new VFloatLiteral(resf, Loc);
+            delete this;
+            return enew;
+          }
+        } else {
+          // try int
+          int resi = 0;
+          if (tryStringAsInt(resi, *str, destType)) {
+            ParseWarningArError((aloc ? *aloc : Loc), "`%s` argument #%d should be `%s`, not string (coerced, mod author is a mo...dder)!", funcName, argnum, *destType.GetName());
+            VExpression *enew = new VIntLiteral(resi, Loc);
+            delete this;
+            return enew;
+          }
+          if (tryStringAsFloat2Int(resi, *str, destType)) {
+            ParseWarningArError((aloc ? *aloc : Loc), "`%s` argument #%d should be `%s`, not float-as-string (coerced, mod author is a mo...dder)!", funcName, argnum, *destType.GetName());
+            VExpression *enew = new VIntLiteral(resi, Loc);
+            delete this;
+            return enew;
+          }
+        }
       }
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
       // `A_SpawnParticle()` color
@@ -702,6 +794,36 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
         VExpression *enew = new VIntLiteral(0, Loc);
         delete this;
         return enew;
+      }
+
+      if (IsDecorateSingleName()) {
+        VDecorateSingleName *e = (VDecorateSingleName *)this;
+        VStr str = VStr(e->Name);
+        // ok, try to convert string to a number... please, Invisible Pink Unicorn, why did you created so many morons?!
+        if (destType.Type == TYPE_Float) {
+          float resf = 0.0f;
+          if (tryStringAsFloat(resf, *str)) {
+            ParseWarningArError((aloc ? *aloc : Loc), "`%s` argument #%d should be `float`, not string (coerced, mod author is a mo...dder)!", funcName, argnum);
+            VExpression *enew = new VFloatLiteral(resf, Loc);
+            delete this;
+            return enew;
+          }
+        } else {
+          // try int
+          int resi = 0;
+          if (tryStringAsInt(resi, *str, destType)) {
+            ParseWarningArError((aloc ? *aloc : Loc), "`%s` argument #%d should be `%s`, not string (coerced, mod author is a mo...dder)!", funcName, argnum, *destType.GetName());
+            VExpression *enew = new VIntLiteral(resi, Loc);
+            delete this;
+            return enew;
+          }
+          if (tryStringAsFloat2Int(resi, *str, destType)) {
+            ParseWarningArError((aloc ? *aloc : Loc), "`%s` argument #%d should be `%s`, not float-as-string (coerced, mod author is a mo...dder)!", funcName, argnum, *destType.GetName());
+            VExpression *enew = new VIntLiteral(resi, Loc);
+            delete this;
+            return enew;
+          }
+        }
       }
       break;
 
