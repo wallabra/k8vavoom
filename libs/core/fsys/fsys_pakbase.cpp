@@ -389,6 +389,7 @@ void VFileDirectory::buildNameMaps (bool rebuilding) {
   if (GArgs.CheckParm("-ignore-square")) squareChecked = ~0u;
   lumpmap.clear();
   filemap.clear();
+  TMap<VStr, bool> dupsReported;
   //bool dumpZips = GArgs.CheckParm("-dev-dump-zips");
   TMapNC<VName, int> lastSeenLump;
   for (int f = 0; f < files.length(); ++f) {
@@ -431,6 +432,7 @@ void VFileDirectory::buildNameMaps (bool rebuilding) {
         Sys_Error("Archive \"%s\" contains zscript", *getArchiveName());
       }
     }
+
     if (lmp != NAME_None) {
       if (fsys_IgnoreZScript) {
         if (fi.fileName.startsWithCI("zscript")) {
@@ -450,24 +452,31 @@ void VFileDirectory::buildNameMaps (bool rebuilding) {
         *lsidp = f; // update index
         if (doReports) {
           if (lmp == "decorate" || lmp == "sndinfo" || lmp == "dehacked") {
-            GLog.Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *fi.fileName, *getArchiveName());
-            GLog.Logf(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE %s FILES!", (aszip ? "PK3/ZIP" : "WAD"));
+            if (!dupsReported.put(fi.fileName, true)) {
+              GLog.Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *fi.fileName, *getArchiveName());
+              GLog.Logf(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE %s FILES!", (aszip ? "PK3/ZIP" : "WAD"));
+            }
           }
         }
       }
     }
+
     if (fi.fileName.length()) {
       if (doReports) {
         if ((aszip || lmp == "decorate") && filemap.has(fi.fileName)) {
-          GLog.Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *fi.fileName, *getArchiveName());
-          GLog.Logf(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE %s FILES!", (aszip ? "PK3/ZIP" : "WAD"));
+          if (!dupsReported.put(fi.fileName, true)) {
+            GLog.Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *fi.fileName, *getArchiveName());
+            GLog.Logf(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE %s FILES!", (aszip ? "PK3/ZIP" : "WAD"));
+          }
         } else if (f > 0) {
           for (int pidx = f-1; pidx >= 0; --pidx) {
             if (files[pidx].fileName.length()) {
               if (files[pidx].fileName == fi.fileName) {
-                //GLog.Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\" (%d:%d).", *fi.fileName, *getArchiveName(), pidx, f);
-                GLog.Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *fi.fileName, *getArchiveName());
-                GLog.Logf(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE %s FILES!", (aszip ? "PK3/ZIP" : "WAD"));
+                if (!dupsReported.put(fi.fileName, true)) {
+                  //GLog.Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\" (%d:%d).", *fi.fileName, *getArchiveName(), pidx, f);
+                  GLog.Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *fi.fileName, *getArchiveName());
+                  GLog.Logf(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE %s FILES!", (aszip ? "PK3/ZIP" : "WAD"));
+                }
               }
               break;
             }
