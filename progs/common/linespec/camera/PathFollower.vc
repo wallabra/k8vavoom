@@ -133,7 +133,7 @@ override void BeginPlay () {
   StartCurrNode = node;
 
   if (node == none) {
-    print("PathFollower %d: Can't find interpolation pt %d", TID, Args[0]+256*Args[1]);
+    printwarn("PathFollower %d: Can't find interpolation pt %d", TID, Args[0]+256*Args[1]);
     return;
   }
 
@@ -142,7 +142,7 @@ override void BeginPlay () {
   if (Args[2]&1) {
     // linear path; need 2 nodes
     if (node.NextPoint == none) {
-      print("PathFollower %d: Path needs at least 2 nodes", TID);
+      printwarn("PathFollower %d: Path needs at least 2 nodes", TID);
       return;
     }
     StartPrevNode = none;
@@ -152,7 +152,7 @@ override void BeginPlay () {
         node.NextPoint.NextPoint == none ||
         node.NextPoint.NextPoint.NextPoint == none)
     {
-      print("PathFollower %d: Path needs at least 4 nodes", TID);
+      printwarn("PathFollower %d: Path needs at least 4 nodes", TID);
       return;
     }
     // if the first node is in a loop, we can start there
@@ -227,7 +227,12 @@ override void Tick (float DeltaTime) {
   }
 
   if (Interpolate()) {
-    Time += 8.0/float(CurrNode.Args[1])*DeltaTime;
+    if (CurrNode.Args[1] < 1) {
+      printwarn("fucked up interpolation node: travel time=%s", CurrNode.Args[1]);
+      Time += 8.0*DeltaTime;
+    } else {
+      Time += 8.0/float(CurrNode.Args[1])*DeltaTime;
+    }
     if (Time > 1.0) {
       Time -= 1.0;
       bJustStepped = true;

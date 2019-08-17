@@ -87,7 +87,7 @@ void FormChain () {
     break;
   }
 
-  if (NextPoint == none && (Args[3]|Args[4])) print("Can't find target for camera node %d", TID);
+  if (NextPoint == none && (Args[3]|Args[4])) printwarn("Can't find target for camera node %d", TID);
 
   Angles.pitch = float(Args[0]);
        if (Angles.pitch <= -90.0) Angles.pitch = -89.0;
