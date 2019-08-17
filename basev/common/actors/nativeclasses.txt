@@ -586,3 +586,28 @@ class Whirlwind extends Actor
 {
   action native A_WhirlwindSeek();
 }
+
+
+class ScriptedMarine extends Actor
+  native
+{
+  action native A_M_BFGsound();
+  action native A_M_BerserkPunch();
+  action native A_M_CheckAttack();
+  action native A_M_FireBFG();
+  action native A_M_FireCGun();
+  action native A_M_FireCGunAccurate();
+  action native A_M_FireMissile();
+  action native A_M_FirePistol();
+  action native A_M_FirePistolInaccurate();
+  action native A_M_FirePlasma();
+  action native A_M_FireRailgun();
+  action native A_M_FireShotgun();
+  action native A_M_FireShotgun2();
+  action native A_M_Punch();
+  action native A_M_Refire();
+  action native A_M_SawRefire();
+  action native A_MarineChase();
+  action native A_MarineLook();
+  action native A_MarineNoise();
+}

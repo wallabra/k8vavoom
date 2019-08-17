@@ -203,11 +203,22 @@ final void A_M_SawRefire () {
 //
 //===========================================================================
 final void A_M_Punch () {
+  decorate_A_M_Punch();
+}
+
+
+//===========================================================================
+//
+//  decorate_A_M_Punch
+//
+//===========================================================================
+final void decorate_A_M_Punch (optional int force) {
   TVec dir;
 
   if (!Target) return;
+  if (!specified_force) force = 1;
 
-  int damage = (P_Random()%10+1)<<1;
+  int damage = ((P_Random()%10+1)<<1)*force;
 
   A_FaceTarget();
   TAVec aimAngles = Angles;
@@ -257,9 +268,20 @@ final void A_M_BerserkPunch () {
 //
 //===========================================================================
 final void A_M_Refire () {
+  decorate_A_M_Refire();
+}
+
+
+//===========================================================================
+//
+//  decorate_A_M_Refire
+//
+//===========================================================================
+final void decorate_A_M_Refire (optional bool ignoreMissile) {
+  bool hasMissileState = (ignoreMissile ? false : !!MissileState);
   // check if target is lost or dead
   if (!Target || Target.Health <= 0) {
-    if (MissileState && Random() < 0.625) {
+    if (hasMissileState && Random() < 0.625) {
       // look for a new target
       if (LookForPlayers(360) && CheckMissileRange()) return; // got one, continue shooting
     }
@@ -268,7 +290,7 @@ final void A_M_Refire () {
   }
   // check if target went out of the range or sight, with small chance to
   // stop shooting even if target is not dead.
-  if ((!MissileState && !CheckMeleeRange()) || !CanSee(Target, disableBetterSight:true) || P_Random() < 4) {
+  if ((!hasMissileState && !CheckMeleeRange()) || !CanSee(Target, disableBetterSight:true) || P_Random() < 4) {
     SetState(GetStatePlus(State, 1));
   }
 }
