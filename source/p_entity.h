@@ -313,6 +313,10 @@ class VEntity : public VThinker {
 
   VName DecalName;
 
+  // set this field in `BeginPlay()` to override `VThinker::SpawnThinker()` result
+  // this is required for `RandomSpawner`
+  VEntity *BeginPlayResult;
+
   // `SetState()` guard
   // high 16 bits is `SetState()` invocation count
   // low 16 bits is watchcat

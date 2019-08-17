@@ -87,7 +87,8 @@ public:
   void BroadcastCentrePrint (const char *);
   void BroadcastCentrePrintf (const char *, ...) __attribute__((format(printf,2,3)));
 
-  DECLARE_FUNCTION(Spawn)
+  DECLARE_FUNCTION(SpawnThinker)
+  //DECLARE_FUNCTION(Spawn)
   DECLARE_FUNCTION(Destroy)
 
   // print functions

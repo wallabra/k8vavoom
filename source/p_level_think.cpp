@@ -435,7 +435,9 @@ VThinker *VLevel::SpawnThinker (VClass *AClass, const TVec &AOrigin,
   VClass *Class = (AllowReplace ? AClass->GetReplacement() : AClass);
   if (!Class) Class = AClass;
   VThinker *Ret = (VThinker *)StaticSpawnNoReplace(Class);
+  if (Ret) Ret->SpawnTime = Time;
   AddThinker(Ret);
+  VThinker *OverRet = nullptr;
 
   if (IsForServer() && Class->IsChildOf(VEntity::StaticClass())) {
     VEntity *e = (VEntity *)Ret;
@@ -444,7 +446,22 @@ VThinker *VLevel::SpawnThinker (VClass *AClass, const TVec &AOrigin,
     e->eventOnMapSpawn(mthing);
     // call it anyway, some script code may rely on this
     /*if (!(e->GetFlags()&(_OF_Destroyed|_OF_Destroyed)))*/ {
-      if (LevelInfo->LevelInfoFlags2&VLevelInfo::LIF2_BegunPlay) e->eventBeginPlay();
+      if (LevelInfo->LevelInfoFlags2&VLevelInfo::LIF2_BegunPlay) {
+        e->eventBeginPlay();
+        if (e->BeginPlayResult) {
+          // check it, just in case
+          if (e->BeginPlayResult->GetClass()->IsChildOf(VEntity::StaticClass())) {
+            OverRet = e->BeginPlayResult;
+            /*
+            if (!OverRet->GetClass()->IsChildOf(AClass)) {
+              GCon->Logf(NAME_Error, "%s:BeginPlay() tried to override return with non-compatible class `%s`", e->GetClass()->GetName(), OverRet->GetClass()->GetName());
+            }
+            */
+          } else {
+            GCon->Logf(NAME_Error, "%s:BeginPlay() tried to override return with non-entity class `%s`", e->GetClass()->GetName(), e->BeginPlayResult->GetClass()->GetName());
+          }
+        }
+      }
     }
   }
 
@@ -453,7 +470,30 @@ VThinker *VLevel::SpawnThinker (VClass *AClass, const TVec &AOrigin,
     if (!(e->GetFlags()&(_OF_Destroyed|_OF_Destroyed))) eventEntitySpawned(e);
   }
 
-  return Ret;
+  return (OverRet ? OverRet : Ret);
+}
+
+
+//==========================================================================
+//
+//  VLevel::SpawnThinkerEx
+//
+//==========================================================================
+VEntity *VLevel::SpawnThinkerEx (VClass *AClass, const TVec &AOrigin,
+                                  const TAVec &AAngles, mthing_t *mthing, bool AllowReplace)
+{
+  static VClass *eexCls = nullptr;
+  if (!eexCls) {
+    eexCls = VClass::FindClass("EntityEx");
+    if (!eexCls) Sys_Error("cannot find class `EntityEx`");
+  }
+  VThinker *res = SpawnThinker(AClass, AOrigin, AAngles, mthing, AllowReplace);
+  if (!res) return nullptr;
+  if (!res->GetClass()->IsChildOf(eexCls)) {
+    GCon->Logf(NAME_Error, "%s:SpawnThinkerEx tried to return class `%s`, which is not `EntityEx`", GetClass()->GetName(), res->GetClass()->GetName());
+    return nullptr;
+  }
+  return (VEntity *)res;
 }
 
 

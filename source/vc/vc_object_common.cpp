@@ -665,6 +665,12 @@ IMPLEMENT_FUNCTION(VObject, printwarn) {
   PR_DoWriteBuf(nullptr, false, NAME_Warning);
 }
 
+IMPLEMENT_FUNCTION(VObject, printerror) {
+  VStr s = PF_FormatString();
+  PR_DoWriteBuf(*s, false, NAME_Error);
+  PR_DoWriteBuf(nullptr, false, NAME_Error);
+}
+
 IMPLEMENT_FUNCTION(VObject, printdebug) {
   VStr s = PF_FormatString();
   PR_DoWriteBuf(*s, false, NAME_Debug);

@@ -110,9 +110,56 @@ replication {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-native final spawner Thinker Spawn (class!Thinker Type, optional TVec AOrigin,
-                                    optional TAVec AAngles, optional mthing_t *mthing,
-                                    optional bool AllowReplace/*=true*/);
+// alas, RandomSpawner can return various shit here, so we need to double-check it
+native final spawner Thinker SpawnThinker (class!Thinker Type, optional TVec AOrigin,
+                                               optional TAVec AAngles, optional mthing_t *mthing,
+                                               optional bool AllowReplace/*=true*/);
+
+// alas, RandomSpawner can return various shit here, so we need to double-check it
+final spawner EntityEx Spawn (class!EntityEx Type, optional TVec AOrigin,
+                              optional TAVec AAngles, optional mthing_t *mthing,
+                              optional bool AllowReplace/*=true*/,
+                              optional bool AllowAnything/*=false*/)
+{
+  if (!Type) return none;
+  if (Type !isa 'EntityEx') Error("cannot spawn non-EntityEx with `Spawn()`");
+  Thinker res = SpawnThinker(class!Thinker(Type), AOrigin!optional, AAngles!optional, mthing!optional, AllowReplace!optional);
+  if (res) {
+    if (AllowAnything) return EntityEx(res);
+    if (!Type(res)) {
+      name goodClass = '';
+           if (Type isa 'Ammo') goodClass = 'Ammo';
+      else if (Type isa 'Weapon') goodClass = 'Weapon';
+      else if (Type isa 'Inventory') goodClass = 'Inventory';
+      if (goodClass) {
+        if (res !isa goodClass) {
+          if (res !isa 'Inventory') {
+            // RandomSpawner consumers will take care of it
+            if (Type !isa 'RandomSpawned') {
+              printerror("**** %C:Tried to spawn %s class `%C`, but got class `%C`", self, goodClass, Type, res);
+              res = none;
+            } else {
+              printwarn("**** %C:Tried to spawn %s class `%C`, but got class `%C` (RandomSpawner exception)", self, goodClass, Type, res);
+            }
+          } else {
+            printwarn("**** %C:Tried to spawn %s class `%C`, but got class `%C`, nerfed to Inventory", self, goodClass, Type, res);
+            // still allow inventory
+          }
+        }
+      } else if (Type isa 'Actor') {
+        if (res !isa 'Actor') {
+          printwarn("**** %C:Tried to spawn Actor class `%C`, but got class `%C`", self, Type, res);
+          res = none;
+        }
+      } else {
+        printwarn("**** %C:Tried to spawn class `%C`, but got class `%C`", self, Type, res);
+        res = none;
+      }
+    }
+  }
+  return EntityEx(res);
+}
+
 override native void Destroy (); // this just marks thinker to be deleted on a next tick
 
 // broadcast message (print to all clients)

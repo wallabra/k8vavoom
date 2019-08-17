@@ -692,7 +692,7 @@ final void decorate_A_BrainSpit (optional name actname) {
   }
 
   if (!BState) {
-    BState = Spawn(BrainState);
+    BState = SpawnThinker(BrainState);
     BState.FindTargets();
   }
 

@@ -538,6 +538,10 @@ public:
   VThinker *SpawnThinker (VClass *AClass, const TVec &AOrigin=TVec(0, 0, 0),
                           const TAVec &AAngles=TAVec(0, 0, 0), mthing_t *mthing=nullptr,
                           bool AllowReplace=true);
+  // the same as above, but guaranteed to return either `EntityEx`, or `none`
+  VEntity *SpawnThinkerEx (VClass *AClass, const TVec &AOrigin=TVec(0, 0, 0),
+                           const TAVec &AAngles=TAVec(0, 0, 0), mthing_t *mthing=nullptr,
+                           bool AllowReplace=true);
   void AddThinker (VThinker *Th);
   void RemoveThinker (VThinker *Th);
   void DestroyAllThinkers ();

@@ -139,16 +139,21 @@ bool VLevelInfo::StartButton (int sidenum, vuint8 w, int SwitchDef, VName Defaul
   }
 
   VThinkButton *But = (VThinkButton *)XLevel->SpawnThinker(VThinkButton::StaticClass());
-  But->Side = sidenum;
-  But->Where = w;
-  But->SwitchDef = SwitchDef;
-  But->Frame = -1;
-  But->DefaultSound = DefaultSound;
-  But->UseAgain = (UseAgain ? 1 : 0);
-  But->tbversion = 1;
-  But->SwitchDefTexture = Switches[SwitchDef]->Tex;
-  But->AdvanceFrame();
-  return true;
+  if (!But) return false;
+  if (But->GetClass()->IsChildOf(VThinkButton::StaticClass())) {
+    But->Side = sidenum;
+    But->Where = w;
+    But->SwitchDef = SwitchDef;
+    But->Frame = -1;
+    But->DefaultSound = DefaultSound;
+    But->UseAgain = (UseAgain ? 1 : 0);
+    But->tbversion = 1;
+    But->SwitchDefTexture = Switches[SwitchDef]->Tex;
+    But->AdvanceFrame();
+    return true;
+  } else {
+    return false;
+  }
 }
 
 

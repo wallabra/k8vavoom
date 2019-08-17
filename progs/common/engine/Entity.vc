@@ -363,6 +363,10 @@ Entity Owner;
 
 name DecalName;
 
+// set this field in `BeginPlay()` to override `VThinker::SpawnThinker()` result
+// this is required for `RandomSpawner`
+native transient Entity BeginPlayResult;
+
 // internal C++ field
 readonly private native int setStateInCount;
 

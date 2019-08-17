@@ -163,7 +163,7 @@ void QueueInit (sector_t *InSector, int InType, float InHeight, int InStairsType
 //
 //==========================================================================
 void QueueStairSector (sector_t *sec, float height) {
-  StairStepMover Other = Spawn(StairStepMover);
+  StairStepMover Other = SpawnThinker(StairStepMover);
   Other.QueueInit(sec, QueueType^1, height, StairsType,
     StairStepDelta, Direction, StairSpeed, StairTexture,
     StairStartHeight, DelayTotal, ResetDelay);

@@ -115,6 +115,7 @@
   DECLARE_FUNCTION(print)
   DECLARE_FUNCTION(dprint)
   DECLARE_FUNCTION(printwarn)
+  DECLARE_FUNCTION(printerror)
   DECLARE_FUNCTION(printdebug)
 
   // class methods

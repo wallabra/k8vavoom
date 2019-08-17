@@ -85,7 +85,7 @@ override int UnmorphActor (Entity Activator, int Force) {
   oldArgs[4] = Args[4];
 
   UnlinkFromWorld();
-  mo = Spawn(originalClass, Origin);
+  mo = Spawn(originalClass, Origin, AllowReplace:false); //k8:dunno
 
   if (!mo.TestLocation() && !Force) {
     // didn't fit

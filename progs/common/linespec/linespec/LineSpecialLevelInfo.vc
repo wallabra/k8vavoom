@@ -147,7 +147,7 @@ override void SpawnSpecials () {
   int i;
 
   if (Level.bLightning) {
-    LightningThinker Lightning = Spawn(LightningThinker);
+    LightningThinker Lightning = SpawnThinker(LightningThinker);
     Lightning.Init();
   }
 
@@ -1157,7 +1157,7 @@ override void StartPlaneWatcher (Entity it, line_t *line, int lineSide,
   bool ceiling, int tag, int height, int special, int arg0, int arg1,
   int arg2, int arg3, int arg4)
 {
-  PlaneWatcher PW = Spawn(PlaneWatcher);
+  PlaneWatcher PW = SpawnThinker(PlaneWatcher);
   PW.Start(it, line, lineSide, ceiling, tag, height, special, arg0, arg1, arg2, arg3, arg4);
 }
 
@@ -1197,7 +1197,7 @@ final int EV_DoDoor (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Type,
     }
 
     // new door thinker
-    Door = Spawn(VerticalDoor);
+    Door = SpawnThinker(VerticalDoor);
     Door.Init(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Type, delayOctics!optional);
     RetCode = true;
   } else {
@@ -1205,7 +1205,7 @@ final int EV_DoDoor (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Type,
       if (Sec->CeilingData) continue;
       // add new door thinker
       RetCode = true;
-      Door = Spawn(VerticalDoor);
+      Door = SpawnThinker(VerticalDoor);
       Door.Init(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Type, delayOctics!optional);
     }
   }
@@ -1255,7 +1255,7 @@ final int EV_GenericDoor (int dtag, int speed, int kind, int delay, int lock, li
 //
 //==========================================================================
 final void SpawnDoorCloseIn30 (sector_t *sec) {
-  VerticalDoor Door = Spawn(VerticalDoor);
+  VerticalDoor Door = SpawnThinker(VerticalDoor);
   Door.InitCloseIn30(sec);
   sec->special = 0;
 }
@@ -1270,7 +1270,7 @@ final void SpawnDoorCloseIn30 (sector_t *sec) {
 //==========================================================================
 final void SpawnDoorRaiseIn5Mins (sector_t *sec) {
   sec->special = 0;
-  VerticalDoor Door = Spawn(VerticalDoor);
+  VerticalDoor Door = SpawnThinker(VerticalDoor);
   Door.Init(sec, 0, 16, 150, 0, 0, VerticalDoor::DOOREV_RaiseIn5Mins);
 }
 
@@ -1300,7 +1300,7 @@ final int EV_TextureChangeDoor (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5
 
     // new door thinker
     if (FindAnimDoor(XLevel.Sides[Line->sidenum[0]].TopTexture)) {
-      Door = Spawn(TextureChangeDoor);
+      Door = SpawnThinker(TextureChangeDoor);
       Door.Init(Line->backsector, Arg1, Arg2, Arg3, Arg4, Arg5, Line);
       Rtn = true;
     }
@@ -1313,7 +1313,7 @@ final int EV_TextureChangeDoor (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5
         // new door thinker
         if (FindAnimDoor(XLevel.Sides[Line->sidenum[0]].TopTexture)) {
           Rtn = true;
-          Door = Spawn(TextureChangeDoor);
+          Door = SpawnThinker(TextureChangeDoor);
           Door.Init(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Line);
           break;
         }
@@ -1358,7 +1358,7 @@ final int EV_DoCeiling (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Ty
     if (!Line->backsector->CeilingData) {
       // new ceiling thinker
       Rtn = true;
-      Ceiling = Spawn(CeilingMover);
+      Ceiling = SpawnThinker(CeilingMover);
       Ceiling.Init(Line->backsector, Arg1, Arg2, Arg3, Arg4, Arg5,
         Type, Line);
     }
@@ -1376,7 +1376,7 @@ final int EV_DoCeiling (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Ty
       if (Sec->CeilingData) continue;
       // new ceiling thinker
       Rtn = true;
-      Ceiling = Spawn(CeilingMover);
+      Ceiling = SpawnThinker(CeilingMover);
       Ceiling.Init(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Type, Line);
     }
   }
@@ -1413,7 +1413,7 @@ final bool EV_StartCeilingWaggle (int Arg1, int Arg2, int Arg3, int Arg4, int Ar
   for (int hidx = XLevel.FindSectorFromTag(out Sector, Arg1); hidx >= 0; hidx = XLevel.FindSectorFromTag(out Sector, Arg1, hidx)) {
     if (Sector->CeilingData) continue; // already busy with another thinker
     RetCode = true;
-    Waggle = Spawn(CeilingWaggle);
+    Waggle = SpawnThinker(CeilingWaggle);
     Waggle.Init(Sector, Arg1, Arg2, Arg3, Arg4, Arg5);
   }
   return RetCode;
@@ -1450,7 +1450,7 @@ final int EV_DoFloor(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
     {
       // new floor thinker
       Rtn = true;
-      Floor = Spawn(FloorMover);
+      Floor = SpawnThinker(FloorMover);
       Floor.Init(Line->backsector, Arg1, Arg2, Arg3, Arg4, Arg5, Type,
         Line);
     }
@@ -1465,7 +1465,7 @@ final int EV_DoFloor(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 
       // new floor thinker
       Rtn = true;
-      Floor = Spawn(FloorMover);
+      Floor = SpawnThinker(FloorMover);
       Floor.Init(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Type, Line);
     }
   }
@@ -1537,11 +1537,11 @@ final int EV_DoDonut(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
       if (!s3) { print("!!!EV_DoDonut: s3 is null"); continue; } //k8: just in case
 
       //  Spawn rising slime
-      Floor = Spawn(FloorMover);
+      Floor = SpawnThinker(FloorMover);
       Floor.InitDonut(s2, s3, Arg2);
 
       //  Spawn lowering donut-hole
-      Floor = Spawn(FloorMover);
+      Floor = SpawnThinker(FloorMover);
       Floor.InitDonut2(s1, s3, Arg3);
       break;
     }
@@ -1572,7 +1572,7 @@ final bool EV_StartFloorWaggle(int Arg1, int Arg2, int Arg3, int Arg4,
       continue;
     }
     RetCode = true;
-    Waggle = Spawn(FloorWaggle);
+    Waggle = SpawnThinker(FloorWaggle);
     Waggle.Init(Sector, Arg1, Arg2, Arg3, Arg4, Arg5);
   }
   return RetCode;
@@ -1643,7 +1643,7 @@ final int EV_BuildStairsOld (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
       // new floor thinker
       Rtn = 1;
       Height = GetPlanePointZ(ref Sec->floor, vector(0.0, 0.0, 0.0))+StairSize;
-      Floor = Spawn(FloorMover);
+      Floor = SpawnThinker(FloorMover);
       Floor.InitStair(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Generic, Height);
 
       Texture = Sec->floor.pic;
@@ -1674,7 +1674,7 @@ final int EV_BuildStairsOld (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
               break;
             }
           }
-          Floor = Spawn(FloorMover);
+          Floor = SpawnThinker(FloorMover);
           Floor.InitStair(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Generic, Height);
           Ok = true;
           break;
@@ -1722,7 +1722,7 @@ final int EV_BuildStairs(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
       continue;
     }
 
-    StairStep = Spawn(StairStepMover);
+    StairStep = SpawnThinker(StairStepMover);
     StairStep.Init(Sec, Arg1, Arg2, Arg3, Arg4, Arg5,
       StairsType);
     if (StairQueueHead)
@@ -1787,7 +1787,7 @@ final int EV_DoPlat(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
     {
       // Find lowest & highest floors around sector
       Rtn = 1;
-      Plat = Spawn(Platform);
+      Plat = SpawnThinker(Platform);
       Plat.Init(Line->backsector, Arg1, Arg2, Arg3, Arg4, Arg5, Type);
     }
   }
@@ -1816,7 +1816,7 @@ final int EV_DoPlat(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 
       // Find lowest & highest floors around sector
       Rtn = 1;
-      Plat = Spawn(Platform);
+      Plat = SpawnThinker(Platform);
       Plat.Init(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Type);
     }
   }
@@ -1865,7 +1865,7 @@ final int EV_BuildPillar(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   {
     if (Sec->FloorData || Sec->CeilingData) continue; // already moving
     Rtn = true;
-    pillar = Spawn(Pillar);
+    pillar = SpawnThinker(Pillar);
     pillar.Init(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Crush);
   }
   return Rtn;
@@ -1889,7 +1889,7 @@ final int EV_OpenPillar(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
   {
     if (Sec->FloorData || Sec->CeilingData) continue; // already moving
     Rtn = true;
-    pillar = Spawn(Pillar);
+    pillar = SpawnThinker(Pillar);
     pillar.InitOpen(Sec, Arg1, Arg2, Arg3, Arg4, Arg5);
   }
   return Rtn;
@@ -1928,7 +1928,7 @@ final int EV_DoElevator(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 
     //  New elevator thinker
     Rtn = true;
-    Elev = Spawn(Elevator);
+    Elev = SpawnThinker(Elevator);
     Elev.Init(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Type, Line);
   }
   return Rtn;
@@ -1990,7 +1990,7 @@ final bool EV_RotatePoly(line_t *line, int Arg1, int Arg2, int Arg3,
   {
     Error("EV_RotatePoly:  Invalid polyobj num"); //: %d\n", polyNum);
   }
-  pe = Spawn(PolyobjRotator);
+  pe = SpawnThinker(PolyobjRotator);
   pe.polyobj = polyNum;
   if (Arg3)
   {
@@ -2027,7 +2027,7 @@ final bool EV_RotatePoly(line_t *line, int Arg1, int Arg2, int Arg3,
     { // mirroring poly is already in motion
       break;
     }
-    pe = Spawn(PolyobjRotator);
+    pe = SpawnThinker(PolyobjRotator);
     poly->SpecialData = pe;
     pe.polyobj = mirror;
     if (Arg3)
@@ -2128,7 +2128,7 @@ final bool EV_MovePoly (line_t *line, int Arg1, int Arg2, int Arg3, int Arg4,
   {
     Error("EV_MovePoly:  Invalid polyobj num"); //: %d\n", polyNum);
   }
-  pe = Spawn(PolyobjMover);
+  pe = SpawnThinker(PolyobjMover);
   pe.polyobj = polyNum;
   if (timesEight)
   {
@@ -2159,7 +2159,7 @@ final bool EV_MovePoly (line_t *line, int Arg1, int Arg2, int Arg3, int Arg4,
     { // mirroring poly is already in motion
       break;
     }
-    pe = Spawn(PolyobjMover);
+    pe = SpawnThinker(PolyobjMover);
     pe.carryThings = carryThings;
     pe.polyobj = mirror;
     poly->SpecialData = pe;
@@ -2212,7 +2212,7 @@ final bool EV_OpenPolyDoor(line_t *line, int Arg1, int Arg2, int Arg3,
   {
     Error("EV_OpenPolyDoor:  Invalid polyobj num"); //: %d\n", polyNum);
   }
-  pd = Spawn(PolyobjDoor);
+  pd = SpawnThinker(PolyobjDoor);
   pd.type = type;
   pd.polyobj = polyNum;
   if (type == PolyobjDoor::PODOOR_SLIDE)
@@ -2253,7 +2253,7 @@ final bool EV_OpenPolyDoor(line_t *line, int Arg1, int Arg2, int Arg3,
     { // mirroring poly is already in motion
       break;
     }
-    pd = Spawn(PolyobjDoor);
+    pd = SpawnThinker(PolyobjDoor);
     pd.polyobj = mirror;
     pd.type = type;
     poly->SpecialData = pd;
@@ -2305,7 +2305,7 @@ final void SpawnFireFlicker(sector_t *sector)
 {
   FireFlicker Flick;
 
-  Flick = Spawn(FireFlicker);
+  Flick = SpawnThinker(FireFlicker);
   Flick.Init(sector);
 }
 
@@ -2321,7 +2321,7 @@ final void SpawnGlowingLight(sector_t *sector)
 {
   GlowingLight G;
 
-  G = Spawn(GlowingLight);
+  G = SpawnThinker(GlowingLight);
   G.Init(sector);
 }
 
@@ -2335,7 +2335,7 @@ final void SpawnLightFlash(sector_t *sector)
 {
   LightFlash Flash;
 
-  Flash = Spawn(LightFlash);
+  Flash = SpawnThinker(LightFlash);
   Flash.Init(sector);
 }
 
@@ -2350,7 +2350,7 @@ final void SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int maxtime,
 {
   Strobe Flash;
 
-  Flash = Spawn(Strobe);
+  Flash = SpawnThinker(Strobe);
   Flash.Init(sector, fastOrSlow, maxtime, inSync);
 }
 
@@ -2364,7 +2364,7 @@ final void SpawnPhasedLight(sector_t *sector, int base, int index)
 {
   PhasedLight Phase;
 
-  Phase = Spawn(PhasedLight);
+  Phase = SpawnThinker(PhasedLight);
   Phase.Init(sector, base, index);
 }
 
@@ -2476,7 +2476,7 @@ final int EV_StartLightStrobing(int Arg1, int Arg2, int Arg3, int Arg4,
     if (Sec->LightingData) continue;
 
     Ret = true;
-    Flash = Spawn(Strobe);
+    Flash = SpawnThinker(Strobe);
     Flash.Init(Sec, Arg3, Arg2, Arg4);
   }
   return Ret;
@@ -2642,7 +2642,7 @@ final bool EV_SpawnLight(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
        hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
   {
-    Light = Spawn(LightEffect);
+    Light = SpawnThinker(LightEffect);
     Light.Init(Sec, Arg1, Arg2, Arg3, Arg4, Arg5, Type);
     Rtn = true;
   }
@@ -2680,7 +2680,7 @@ final void SpawnTransferWallLight(line_t *Line)
 {
   WallLightTransfer Tr;
 
-  Tr = Spawn(WallLightTransfer);
+  Tr = SpawnThinker(WallLightTransfer);
   Tr.Init(Line->frontsector, Line->arg1, Line->arg2, Line->arg3,
     Line->arg4, Line->arg5);
 }
@@ -2702,7 +2702,7 @@ final void SpawnScrollingFloor(sector_t *Sector, int XDir, int YDir,
 {
   Scroller  Scroll;
 
-  Scroll = Spawn(Scroller);
+  Scroll = SpawnThinker(Scroller);
   Scroll.InitFloor(Sector, XDir, YDir, Speed);
 }
 
@@ -2716,7 +2716,7 @@ final void SpawnWallScroller (line_t *Line, int XDir, int YDir)
 {
   Scroller  Scroll;
 
-  Scroll = Spawn(Scroller);
+  Scroll = SpawnThinker(Scroller);
   Scroll.InitWall(Line, XDir, YDir);
 }
 
@@ -2730,7 +2730,7 @@ final void SpawnWallOffsetsScroller(line_t *Line)
 {
   Scroller  Scroll;
 
-  Scroll = Spawn(Scroller);
+  Scroll = SpawnThinker(Scroller);
   Scroll.InitWallOffsets(Line);
 }
 
@@ -2744,7 +2744,7 @@ final void SpawnTextureBothScroller (line_t *Line)
 {
   Scroller  Scroll;
 
-  Scroll = Spawn(Scroller);
+  Scroll = SpawnThinker(Scroller);
   Scroll.InitTextureBoth(Line, float(Line->arg2-Line->arg3)/64.0,
     float(Line->arg5-Line->arg4)/64.0, 0, 7);
 }
@@ -2763,7 +2763,7 @@ final void SpawnScrollCeiling(line_t *Line)
        hidx = XLevel.FindSectorFromTag(out sec, Line->arg1, hidx))
   {
     int secnum = sec-&XLevel.Sectors[0];
-    Scroll = Spawn(Scroller);
+    Scroll = SpawnThinker(Scroller);
     Scroll.InitGen(Scroller::SCROLLEV_Ceiling, Line, secnum);
   }
 }
@@ -2785,14 +2785,14 @@ final void SpawnScrollFloor(line_t *Line)
     if (Line->arg3 != 1)
     {
       //  Scroll the floor texture
-      Scroll = Spawn(Scroller);
+      Scroll = SpawnThinker(Scroller);
       Scroll.InitGen(Scroller::SCROLLEV_Floor, Line, secnum);
     }
 
     if (Line->arg3 > 0)
     {
       //  Carry objects on the floor
-      Scroll = Spawn(Scroller);
+      Scroll = SpawnThinker(Scroller);
       Scroll.InitGen(Scroller::SCROLLEV_Carry, Line, secnum);
     }
   }
@@ -2819,7 +2819,7 @@ final void SpawnScrollTextureModel(line_t *Line)
   {
     if (Line != Other)
     {
-      Scroll = Spawn(Scroller);
+      Scroll = SpawnThinker(Scroller);
       Scroll.InitTextureModel(Other, Line);
     }
   }
@@ -2954,7 +2954,7 @@ final void SetWallScroller(int LineId, float XSpeed, float YSpeed,
       if (i == FoundScrollers.Num)
       {
         //  Start a new scroller.
-        Scroll = Spawn(Scroller);
+        Scroll = SpawnThinker(Scroller);
         Scroll.InitTextureBoth(Other, XSpeed, YSpeed, WhichSide,
           Where);
       }
@@ -3040,7 +3040,7 @@ final void SetScroller(int Type, int Arg1, int Arg2, int Arg3)
        hidx = XLevel.FindSectorFromTag(out sec, Arg1, hidx))
   {
     int secnum = sec-&XLevel.Sectors[0];
-    Sc = Spawn(Scroller);
+    Sc = SpawnThinker(Scroller);
     Sc.InitScripted(Type, Arg2, Arg3, secnum);
   }
 }
@@ -3911,6 +3911,7 @@ final bool DoThingProjectile(int tid, int TypeID, int AAngle, int ASpeed,
     }
 
     newA = Spawn(moType, A.Origin);
+    if (!newA) break;
     //print("proj %C: org=%s; A=%C", newA, A.Origin, A);
     //print("%C: *** special:%B; gravity:%B, nogravity:%B; grav=%f", newA, newA.bSpecial, gravity, newA.bNoGravity, newA.Gravity);
     if (newA.SightSound) newA.PlaySound(newA.SightSound, CHAN_VOICE);
@@ -5653,7 +5654,7 @@ final void SpawnPushers()
       for (int hidx = XLevel.FindSectorFromTag(out Sec, l->arg1); hidx >= 0;
            hidx = XLevel.FindSectorFromTag(out Sec, l->arg1, hidx))
       {
-        P = Spawn(Pusher);
+        P = SpawnThinker(Pusher);
         P.Init(Pusher::PUSHER_Wind, l->arg4 ? l : nullptr, l->arg2, l->arg3, none, Sec-&XLevel.Sectors[0]);
       }
       break;
@@ -5662,7 +5663,7 @@ final void SpawnPushers()
       for (int hidx = XLevel.FindSectorFromTag(out Sec, l->arg1); hidx >= 0;
            hidx = XLevel.FindSectorFromTag(out Sec, l->arg1, hidx))
       {
-        P = Spawn(Pusher);
+        P = SpawnThinker(Pusher);
         P.Init(Pusher::PUSHER_Current, l->arg4 ? l : nullptr, l->arg2, l->arg3, none, Sec-&XLevel.Sectors[0]);
       }
       break;
@@ -5682,7 +5683,7 @@ final void SpawnPushers()
             // [RH] Allow narrowing it down by tid
             if (!l->arg2 || l->arg2 == thing.TID)
             {
-              P = Spawn(Pusher);
+              P = SpawnThinker(Pusher);
               P.Init(Pusher::PUSHER_Push, l->arg4 ? l : nullptr, l->arg3, 0, thing, ssnum);
             }
           }
@@ -5701,7 +5702,7 @@ final void SpawnPushers()
             for (s = 0; s < XLevel.Sectors.length; s++) {
               if (&XLevel.Sectors[s] == thing.Sector) break;
             }
-            P = Spawn(Pusher);
+            P = SpawnThinker(Pusher);
             P.Init(Pusher::PUSHER_Push, l->arg4 ? l : nullptr, l->arg3, 0, thing, s);
           }
         }
@@ -5757,7 +5758,7 @@ final bool AdjustPusher(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
     }
     if (!P)
     {
-      P = Spawn(Pusher);
+      P = SpawnThinker(Pusher);
       P.Init(Type, nullptr, magnitude, angle, none, secnum);
     }
   }
@@ -6069,7 +6070,7 @@ final void ForceLightning(int Mode)
   }
   if (!Lightning)
   {
-    Lightning = Spawn(LightningThinker);
+    Lightning = SpawnThinker(LightningThinker);
     Lightning.Init();
   }
   Lightning.ForceLightning(Mode);
@@ -6538,7 +6539,7 @@ override void SpawnMapThing (mthing_t *mthing) {
 
   // zdoom music changers
   if (mthing.type >= 14101 && mthing.type <= 14165) {
-    Spawn(SecMusicChangerBase, default, default, mthing, false);
+    Spawn(SecMusicChangerBase, default, default, mthing, AllowReplace:false, AllowAnything:true);
     return;
   }
 
@@ -6553,7 +6554,7 @@ override void SpawnMapThing (mthing_t *mthing) {
   if (!moClass) {
     // can't find thing type
     if (mthing.type == 9200) {
-      auto dcs = Spawn(Unknown, default, default, mthing, false);
+      auto dcs = Spawn(Unknown, default, default, mthing, AllowReplace:false);
       dcs.bSolid = false;
       TAVec agl;
       agl.yaw = AngleMod360(mthing.angle+180); // turn it to the wall
@@ -6608,7 +6609,7 @@ override void SpawnMapThing (mthing_t *mthing) {
   }
 
   // spawn it
-  auto thg = Spawn(moClass, default, default, mthing, false);
+  auto thg = Spawn(moClass, default, default, mthing, AllowReplace:false, AllowAnything:true);
   //print("SpawnMapThing: '%C' (%d) height=%f (defheight=%f); org=%s", thg, mthing.type, thg.Height, moClass.default.Height, thg.Origin);
   //if (moClass.default.bSolid && !thg.bSolid) print("  ****FUUUUUUU");
 
@@ -7215,7 +7216,7 @@ final void StartFlashFader(float BlendR1, float BlendG1, float BlendB1,
         BlendA1 = P.BlendA;
       }
     }
-    FlashFader F = Spawn(FlashFader);
+    FlashFader F = SpawnThinker(FlashFader);
     F.Init(BlendR1, BlendG1, BlendB1, BlendA1, BlendR2, BlendG2, BlendB2,
       BlendA2, Duration, EntityEx(ForWho));
   }

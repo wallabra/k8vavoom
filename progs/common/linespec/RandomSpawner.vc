@@ -59,7 +59,7 @@ override void BeginPlay () {
     if (error) {
       printwarn("RandomSpawner `%C` replaced with error object", self);
       // show that there's a problem
-      Spawn(Unknown, Origin, default, default/*, false*/);
+      BeginPlayResult = Spawn(Unknown, Origin, default, default/*, false*/, AllowReplace:false); // override `Thinker.Spawn()` result
       Destroy();
       return;
     }
@@ -77,10 +77,11 @@ override void BeginPlay () {
         if (!Tracer && bSeekerMissile) Tracer = Target;
         NewEntity = SpawnMissileXYZ(Origin, Target, spwcls);
       } else {
-        NewEntity = EntityEx(Spawn(spwcls, Origin, default, default, AllowReplace:false)); // no need to replace, we already did it
+        NewEntity = EntityEx(Spawn(spwcls, Origin, default, default, AllowReplace:false, AllowAnything:true)); // no need to replace, we already did it
       }
 
       if (NewEntity) {
+        BeginPlayResult = NewEntity; // override `Thinker.Spawn()` result
         // copy everything that is relevant
         NewEntity.Angles = Angles;
         NewEntity.Origin = Origin;
