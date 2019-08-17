@@ -179,7 +179,13 @@ const VStr &VXmlNode::GetAttribute (const char *AttrName, bool Required) const {
   for (int i = 0; i < Attributes.length(); ++i) {
     if (Attributes[i].Name == AttrName) return Attributes[i].Value;
   }
-  if (Required) Sys_Error("XML attribute %s not found", AttrName);
+  if (Required) {
+    if (Attributes.length()) {
+      GLog.Logf("=== node \"%s\" attrs ===", *Name);
+      for (auto &&a : Attributes) GLog.Logf("  \"%s\"=\"%s\"", *a.Name, *a.Value);
+    }
+    Sys_Error("XML attribute \"%s\" not found in node \"%s\"", AttrName, *Name);
+  }
   return VStr::EmptyString;
 }
 
@@ -193,7 +199,13 @@ const VStr &VXmlNode::GetAttribute (const VStr &AttrName, bool Required) const {
   for (int i = 0; i < Attributes.length(); ++i) {
     if (Attributes[i].Name == AttrName) return Attributes[i].Value;
   }
-  if (Required) Sys_Error("XML attribute %s not found", *AttrName);
+  if (Required) {
+    if (Attributes.length()) {
+      GLog.Logf("=== node \"%s\" attrs ===", *Name);
+      for (auto &&a : Attributes) GLog.Logf("  \"%s\"=\"%s\"", *a.Name, *a.Value);
+    }
+    Sys_Error("XML attribute \"%s\" not found in node \"%s\"", *AttrName, *Name);
+  }
   return VStr::EmptyString;
 }
 
