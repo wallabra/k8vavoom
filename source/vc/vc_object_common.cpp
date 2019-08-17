@@ -901,7 +901,7 @@ IMPLEMENT_FUNCTION(VObject, GetStateDuration) {
 }
 
 IMPLEMENT_FUNCTION(VObject, GetStatePlus) {
-  P_GET_BOOL_OPT(IgnoreJump, false);
+  P_GET_BOOL_OPT(IgnoreJump, true);
   P_GET_INT(Offset);
   P_GET_PTR(VState, State);
   RET_PTR(State ? State->GetPlus(Offset, IgnoreJump) : nullptr);
@@ -921,11 +921,13 @@ IMPLEMENT_FUNCTION(VObject, CallStateAction) {
   }
 }
 
+// by execution
 IMPLEMENT_FUNCTION(VObject, GetNextState) {
   P_GET_PTR(VState, State);
   RET_PTR(State ? State->NextState : nullptr);
 }
 
+// by declaration
 IMPLEMENT_FUNCTION(VObject, GetNextStateInProg) {
   P_GET_PTR(VState, State);
   RET_PTR(State ? State->Next : nullptr);
