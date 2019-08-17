@@ -286,10 +286,9 @@ final bool LookForPlayers (float fov, optional float minseedist, optional float 
   if (!maxseedist) maxseedist = 4096;
   minseedist = fmax(0, minseedist);
   maxseedist = fmax(0, maxseedist);
+  if (!maxseedist || minseedist >= maxseedist) return false; // cannot see anything
   float minseedistSq = minseedist*minseedist;
   float maxseedistSq = maxseedist*maxseedist;
-
-  if (!maxseedist || minseedist >= maxseedist) return false;
 
   int c = 0;
   int stop = (LastLook-1)&(MAXPLAYERS-1);
@@ -360,11 +359,13 @@ final bool LookForPlayers (float fov, optional float minseedist, optional float 
       // player is invisible
       if (DistTo(P.MO) > 2.0*MELEERANGE && Length(P.MO.Velocity) < 5.0*35.0) {
         // player is sneaking - can't detect
-        return false;
+        //return false;
+        continue;
       }
       if (P_Random() < 225) {
         // player isn't sneaking, but still didn't detect
-        return false;
+        //return false;
+        continue;
       }
     }
 
