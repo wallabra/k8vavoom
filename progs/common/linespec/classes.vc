@@ -71,7 +71,6 @@ enum {
 #include "entityex/EntityEx.Blood.vc"
 #include "entityex/EntityEx.Decorate.vc"
 #include "entityex/EntityEx.Decal.vc"
-#include "entityex/EntityEx.CheckFlag.vc"
 #include "entityex/EntityEx.TracePath.vc"
 #include "entityex/EntityEx.Defaults.vc"
 
