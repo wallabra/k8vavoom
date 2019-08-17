@@ -276,7 +276,7 @@
     <flag name="FastMelee" property="bFastMelee" />
     <flag_unsupported name="OldRadiusDmg" warning="true" />
     <flag name="UseSpecial" property="bUseSpecial" />
-    <flag_unsupported name="BumpSpecial" warning="true" />
+    <flag name="BumpSpecial" warning="bBumpSpecial" />
     <flag name="BossDeath" property="bBossDeath" />
     <flag name="NoInteraction" property="bNoInteraction" />
     <flag name="PickUp" property="bPickUp" />

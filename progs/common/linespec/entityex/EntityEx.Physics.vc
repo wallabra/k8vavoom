@@ -260,6 +260,9 @@ bool Physics (float DeltaTime) {
           Origin.z = onmo.Origin.z+onmo.Height;
         }
 
+        //GZDoom does it here
+        onmo.CheckDoBumpSpecial(self);
+
         bOnMobj = true;
         Velocity.z = 0.0;
         Crash();

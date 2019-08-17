@@ -666,6 +666,56 @@ final bool ProcessHitFlags (EntityEx Other, bool res) {
 
 //==========================================================================
 //
+//  CheckDoBumpSpecial
+//
+//  returns `true` if activated
+//
+//==========================================================================
+bool CheckDoBumpSpecial (EntityEx Other) {
+  if (!Other || Other == self) return false; // can't
+  // check for bBumpSpecial
+  if (!bBumpSpecial) return false;
+  // also, leave the bumper enough time to go away
+  //FIXME: broken with hubs!
+  if (XLevel.Time <= NextBumpTime) return false;
+  // by default, only players can activate things by bumping into them
+  auto swd = SwitchableDecoration(self);
+  if (!swd) return false;
+  // check if we can be hit
+  if (!Other.bIsPlayer) {
+    // check for switcable decorations
+    if (((swd.ActivationType&SwitchableDecoration::AF_MonsterTrigger) && Other.bMonster) ||
+        ((swd.ActivationType&SwitchableDecoration::AF_MissileTrigger) && Other.bMissile))
+    {
+      // ok
+    } else {
+      return false;
+    }
+  }
+  // check for special action
+  if (bUseSpecial && Special) {
+    if (swd.ActivationType) printwarn("activation type for thing specials aren't implemented yet! %C:ActivationType=0x%08x", swd, swd.ActivationType);
+    if (Level.ExecuteActionSpecial(swd.Special, swd.Args[0], swd.Args[1], swd.Args[2], swd.Args[3], swd.Args[4], nullptr, 0, self)) {
+      if (swd.ActivationType&SwitchableDecoration::AF_ClearSpecial) { swd.Special = 0; foreach (ref auto v; swd.Args) v = 0; }
+      NextBumpTime = XLevel.Time+1; // second
+      return true;
+    }
+  }
+  // do item action
+  if (swd.ActivationType) {
+    //print("UseThing001: SWD! self=%C; Other=%C", self, Other);
+    if (swd.Activate(self)) {
+      NextBumpTime = XLevel.Time+1; // second
+      return true;
+    }
+  }
+  // alas
+  return false;
+}
+
+
+//==========================================================================
+//
 //  Touch
 //
 //  returns `false` if hit something
@@ -716,20 +766,7 @@ override bool Touch (Entity InOther) {
     return ProcessHitFlags(Other, true);
   }
 
-  // Check for bBumpSpecial
-  // By default, only players can activate things by bumping into them
-  /*
-  if (bBumpSpecial && (Other.bIsPlayer
-    || ((thing->activationtype & THINGSPEC_MonsterTrigger) && (tm.thing->flags3 & MF3_ISMONSTER))
-    || ((thing->activationtype & THINGSPEC_MissileTrigger) && (tm.thing->flags & MF_MISSILE))
-    ) && (level.maptime > LastBump)) // Leave the bumper enough time to go away
-  {
-    if (P_ActivateThingSpecial(thing, tm.thing))
-    {
-      LastBump = level.maptime + TICRATE;
-    }
-  }
-  */
+  CheckDoBumpSpecial(Other);
 
   // check for skulls slamming into things
   if (bSkullFly) return ProcessHitFlags(Other, Slam(Other));
