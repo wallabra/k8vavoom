@@ -54,7 +54,7 @@ final void A_PotteryExplode()
   for (i = (P_Random() & 3) + 3; i; i--)
   {
     A = Spawn(PotteryBit, Origin);
-    A.SetState(GetStatePlus(A.IdleState, P_Random() % 5, true));
+    A.SetState(GetStatePlus(A.IdleState, P_Random() % 5, IgnoreJump:true));
     if (A)
     {
       A.Velocity.x = (Random() - Random()) * 4.0 * 35.0;

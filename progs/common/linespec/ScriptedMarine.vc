@@ -123,6 +123,8 @@ final void SetWeapon (int WpnNum) {
     case WEAPON_Railgun: MissileState = FindState('Missile', 'Railgun', true); break;
     case WEAPON_BFG: MissileState = FindState('Missile', 'Bfg', true); break;
   }
+
+  //printdebug("%C: SetWeapon(%s): state=%s", self, WpnNum, MissileState);
 }
 
 
@@ -278,6 +280,7 @@ final void A_M_Refire () {
 //
 //===========================================================================
 final void decorate_A_M_Refire (optional bool ignoreMissile) {
+  //printdebug("%C:REFIRE! (ignoreMissile=%B)", self, ignoreMissile);
   bool hasMissileState = (ignoreMissile ? false : !!MissileState);
   // check if target is lost or dead
   if (!Target || Target.Health <= 0) {
@@ -291,7 +294,10 @@ final void decorate_A_M_Refire (optional bool ignoreMissile) {
   // check if target went out of the range or sight, with small chance to
   // stop shooting even if target is not dead.
   if ((!hasMissileState && !CheckMeleeRange()) || !CanSee(Target, disableBetterSight:true) || P_Random() < 4) {
-    SetState(GetStatePlus(State, 1));
+    //printdebug("%C:  refire plus1 (state=%s)", self, State);
+    state newState = GetStatePlus(State, 1);
+    //printdebug("%C:  newState=%s", self, newState);
+    SetState(newState);
   }
 }
 

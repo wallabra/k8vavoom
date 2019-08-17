@@ -172,7 +172,7 @@ final void A_SelectPiece()
 {
   if (NumPieces > 1)
   {
-    SetState(GetStatePlus(IdleState, NumPieces, true));
+    SetState(GetStatePlus(IdleState, NumPieces, IgnoreJump:true));
   }
 }
 

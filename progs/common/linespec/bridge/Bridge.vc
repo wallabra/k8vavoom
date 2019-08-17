@@ -68,7 +68,7 @@ final void A_BridgeInit () {
 override void RemoveThing () {
   Special1 = true; // removing the bridge
   bSolid = false;
-  SetState(GetStatePlus(IdleState, 3, true));
+  SetState(GetStatePlus(IdleState, 3, IgnoreJump:true));
 }
 
 

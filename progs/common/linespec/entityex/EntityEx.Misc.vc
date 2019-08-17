@@ -577,8 +577,8 @@ override float GetStateTime (state AState, float AStateTime) {
       //default: return AStateTime;
     }
     if (IsFast()) {
-           if (bFaster && StateIsInRange(AState, SeeState, none, 8)) AStateTime /= 2.0;
-      else if (bFastMelee && StateIsInRange(AState, MeleeState, none, 3)) AStateTime /= 2.0;
+           if (bFaster && SeeState && StateIsInRange(AState, SeeState, none, 8)) AStateTime /= 2.0;
+      else if (bFastMelee && MeleeState && StateIsInRange(AState, MeleeState, none, 3)) AStateTime /= 2.0;
       else {
         auto fff = GetStateSpriteFrame(AState);
         if (fff&FF_FAST) AStateTime /= 2.0;

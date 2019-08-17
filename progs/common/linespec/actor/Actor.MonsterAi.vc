@@ -235,13 +235,13 @@ final void A_Look2 () {
 
   if (P_Random() < 30) {
     if (!(P_Random()&1)) {
-      SetState(GetStatePlus(IdleState, 1, true));
+      SetState(GetStatePlus(IdleState, 1, IgnoreJump:true));
     } else {
-      SetState(GetStatePlus(IdleState, 2, true));
+      SetState(GetStatePlus(IdleState, 2, IgnoreJump:true));
     }
   }
 
-  if (!bStanding && P_Random() < 40) SetState(GetStatePlus(IdleState, 3, true));
+  if (!bStanding && P_Random() < 40) SetState(GetStatePlus(IdleState, 3, IgnoreJump:true));
 }
 
 

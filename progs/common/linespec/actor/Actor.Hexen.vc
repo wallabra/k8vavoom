@@ -655,7 +655,7 @@ final void A_CheckThrowBomb2 () {
       fabs(Velocity.y) < 1.5*35.0 &&
       Velocity.z < 2.0*35.0)
   {
-    SetState(GetStatePlus(IdleState, 6, true));
+    SetState(GetStatePlus(IdleState, 6, IgnoreJump:true));
     Origin.z = FloorZ;
     Velocity.z = 0.0;
     BounceType = BOUNCE_None;
@@ -745,7 +745,7 @@ final void A_FogMove () {
 //==========================================================================
 final void A_PotteryChooseBit () {
   Special1 = 1+2*(P_Random()%5);
-  SetState(GetStatePlus(FindState('Death'), Special1, true));
+  SetState(GetStatePlus(FindState('Death'), Special1, IgnoreJump:true));
   StateTime = 8.0+Random()*16.0;
 }
 
@@ -761,7 +761,7 @@ final void A_PotteryCheck () {
     Actor pmo = Actor(Level.Game.Players[i].MO);
     if (CanSee(pmo) && (fabs(AngleMod180(atan2(Origin.y-pmo.Origin.y, Origin.x-pmo.Origin.x)-pmo.Angles.yaw)) <= 45.0)) {
       // previous state (pottery bit waiting state)
-      SetState(GetStatePlus(FindState('Death'), Special1, true));
+      SetState(GetStatePlus(FindState('Death'), Special1, IgnoreJump:true));
       return;
     }
   }
@@ -777,7 +777,7 @@ final void A_CorpseExplode () {
   EntityEx A;
   for (int i = (P_Random()&3)+3; i; --i) {
     A = Spawn(CorpseBit, Origin);
-    if (A) A.SetState(GetStatePlus(A.IdleState, P_Random()%3, true));
+    if (A) A.SetState(GetStatePlus(A.IdleState, P_Random()%3, IgnoreJump:true));
     if (A) {
       A.Velocity.x = (Random()-Random())*4.0*35.0;
       A.Velocity.y = (Random()-Random())*4.0*35.0;
@@ -786,7 +786,7 @@ final void A_CorpseExplode () {
   }
   // spawn a skull
   A = Spawn(CorpseBit, Origin);
-  if (A) A.SetState(GetStatePlus(A.IdleState, 3, true));
+  if (A) A.SetState(GetStatePlus(A.IdleState, 3, IgnoreJump:true));
   if (A) {
     A.Velocity.x = (Random()-Random())*4.0*35.0;
     A.Velocity.y = (Random()-Random())*4.0*35.0;
@@ -859,7 +859,7 @@ final void A_SoAExplode () {
 
   foreach (auto i; 0..10) {
     A = Spawn(ZArmorChunk, Origin+vector((Random()-0.5)*16.0, (Random()-0.5)*16.0, Random()*Height));
-    A.SetState(GetStatePlus(A.IdleState, i, true));
+    A.SetState(GetStatePlus(A.IdleState, i, IgnoreJump:true));
     if (A) {
       A.Velocity.x = (Random()-Random())*4.0*35.0;
       A.Velocity.y = (Random()-Random())*4.0*35.0;
