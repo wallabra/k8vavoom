@@ -1545,7 +1545,7 @@ void FL_Init () {
   else if (GArgs.CheckParm("-slow") != 0) fastparm = -1;
 
   if (GArgs.CheckParm("-respawn") != 0) respawnparm = true;
-  if (GArgs.CheckParm("-nomonsters") != 0) NoMonsters = true;
+  if (GArgs.CheckParm("-nomonsters") != 0 || GArgs.CheckParm("-nomonster") != 0) NoMonsters = true;
 
   if (GArgs.CheckParm("-nomenudef") != 0) gz_skip_menudef = true;
 
