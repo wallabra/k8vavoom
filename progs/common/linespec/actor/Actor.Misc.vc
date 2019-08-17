@@ -754,6 +754,9 @@ final void A_LayToCeilingWithYawSprite (float yaw) {
 }
 
 
+//private transient string lastActivatedAWR;
+
+
 //==========================================================================
 //
 //  InWeaponReadyCheckSetRecurseGuard
@@ -763,11 +766,31 @@ final bool InWeaponReadyCheckSetRecurseGuard () {
   // don't recurse
   if (k8InWeaponReady) {
     printwarn("A_WeaponReady: recursive call! %s", XLevel.CallingState);
+    //printwarn("               previous      : %s", lastActivatedAWR);
     //assert(false);
     return true;
   }
+  //lastActivatedAWR = va("%s", XLevel.CallingState);
   k8InWeaponReady = true;
   return false;
+}
+
+
+//==========================================================================
+//
+//  WeaponReadyResetAttackState
+//
+//==========================================================================
+final void WeaponReadyResetAttackState () {
+  // get out of attack state
+  if (!IdleState) return;
+  if ((MissileState && StateIsInSequence(State, MissileState)) ||
+      (MeleeState && StateIsInSequence(State, MeleeState)))
+  {
+    //print("%C: InMissile=%B", self, StateIsInSequence(State, MissileState));
+    //print("%C: InMelee  =%B", self, StateIsInSequence(State, MeleeState));
+    SetState(IdleState);
+  }
 }
 
 
@@ -782,21 +805,16 @@ final bool InWeaponReadyCheckSetRecurseGuard () {
 final void A_WeaponReady (optional int Flags) {
   if (!bIsPlayer) return;
 
+  bool wasZoomDown = Player.bZoomDown;
+  if (!k8InWeaponReady) Player.bZoomDown = !!(Player.Buttons&BT_ZOOM);
+
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (!Wpn) {
     PlayerEx(Player).ResetWeaponReloadRefire();
     return;
   }
 
-  bool wasZoomDown = Player.bZoomDown;
-  if (!k8InWeaponReady) Player.bZoomDown = !!(Player.Buttons&BT_ZOOM);
-
-  // get out of attack state
-  if (StateIsInSequence(State, MissileState) || StateIsInSequence(State, MeleeState)) {
-    if (InWeaponReadyCheckSetRecurseGuard()) return;
-    scope(exit) k8InWeaponReady = false;
-    SetState(IdleState);
-  }
+  Wpn.bBobDisabled = ((Flags&WRF_NOBOB) || Wpn.bDontBob);
 
   if (Player.ViewStates[PS_WEAPON].State == Wpn.GetReadyState() &&
       Wpn.ReadySound && (!Wpn.bReadySndHalf || Random() < 0.5))
@@ -810,7 +828,10 @@ final void A_WeaponReady (optional int Flags) {
   } else if (!(Flags&WRF_NOSWITCH)) {
     // put the weapon away if the player has a pending weapon or has died
     if (PlayerEx(Player).PendingWeapon || Player.MO.Health <= 0) {
-      if (InWeaponReadyCheckSetRecurseGuard()) return;
+      if (InWeaponReadyCheckSetRecurseGuard()) {
+        printwarn("A_WeaponReady: weapon change recursed");
+        return;
+      }
       scope(exit) k8InWeaponReady = false;
       Wpn.bBobDisabled = true;
       Player.SetViewObject(Wpn);
@@ -821,12 +842,16 @@ final void A_WeaponReady (optional int Flags) {
   }
 
   //print("wpnready: %C; flags=0x%04x; attack=%B", Wpn, Flags, !!(Player.Buttons&BT_ATTACK));
-  if (!(Flags&WRF_NOFIRE)) {
+  if ((Flags&WRF_NOFIRE) != WRF_NOFIRE) {
     // check for fire
     if (!(Flags&WRF_NOPRIMARY) && (Player.Buttons&BT_ATTACK)) {
       if (((Flags&WRF_ALLOWREFIRE) || !Player.bAttackDown) || !Wpn.bNoAutoFire) {
-        if (InWeaponReadyCheckSetRecurseGuard()) return;
+        if (InWeaponReadyCheckSetRecurseGuard()) {
+          printwarn("A_WeaponReady: primary fire recursed");
+          return;
+        }
         scope(exit) k8InWeaponReady = false;
+        WeaponReadyResetAttackState();
         Wpn.bBobDisabled = true;
         Player.bAttackDown = true;
         Player.bReloadQueued = false;
@@ -836,8 +861,12 @@ final void A_WeaponReady (optional int Flags) {
       }
     } else if (!(Flags&WRF_NOSECONDARY) && (Player.Buttons&BT_ALT_ATTACK) && Wpn.FindState('AltFire')) {
       if (((Flags&WRF_ALLOWREFIRE) || !Player.bAttackDown) || !Wpn.bNoAutoFire) {
-        if (InWeaponReadyCheckSetRecurseGuard()) return;
+        if (InWeaponReadyCheckSetRecurseGuard()) {
+          printwarn("A_WeaponReady: secondary fire recursed");
+          return;
+        }
         scope(exit) k8InWeaponReady = false;
+        WeaponReadyResetAttackState();
         Wpn.bBobDisabled = true;
         Player.bAttackDown = true;
         Player.bReloadQueued = false;
@@ -846,14 +875,37 @@ final void A_WeaponReady (optional int Flags) {
         return;
       }
     } else {
+      if (Player.bAttackDown) {
+        //k8: i don't think that we need any checks here
+        WeaponReadyResetAttackState();
+      }
       Player.bAttackDown = false;
     }
+    // still reset player state
+    //k8: i don't think that we need any checks here
+    //WeaponReadyResetAttackState();
+    /*
+    {
+      if (InWeaponReadyCheckSetRecurseGuard()) {
+        printwarn("A_WeaponReady: fire state recursed");
+        //WeaponReadyResetAttackState();
+        return;
+      } else {
+        scope(exit) k8InWeaponReady = false;
+        WeaponReadyResetAttackState();
+      }
+    }
+    */
   }
 
   // check for reload
   if ((Flags&WRF_ALLOWRELOAD) && Player.bReloadQueued && Wpn.GetReloadState()) {
-    if (InWeaponReadyCheckSetRecurseGuard()) return;
+    if (InWeaponReadyCheckSetRecurseGuard()) {
+      printwarn("A_WeaponReady: reloading recursed");
+      return;
+    }
     scope(exit) k8InWeaponReady = false;
+    WeaponReadyResetAttackState();
     Wpn.bBobDisabled = true;
     Player.bAttackDown = true;
     Player.bZoomDown = false;
@@ -865,8 +917,12 @@ final void A_WeaponReady (optional int Flags) {
   if (Flags&WRF_ALLOWZOOM) {
     if ((Player.Buttons&BT_ZOOM) && Wpn.GetZoomState()) {
       if (!wasZoomDown) {
-        if (InWeaponReadyCheckSetRecurseGuard()) return;
+        if (InWeaponReadyCheckSetRecurseGuard()) {
+          printwarn("A_WeaponReady: zoom recursed");
+          return;
+        }
         scope(exit) k8InWeaponReady = false;
+        WeaponReadyResetAttackState();
         Wpn.bBobDisabled = true;
         Player.bZoomDown = true;
         PlayerEx(Player).ZoomWeapon();
@@ -885,7 +941,6 @@ final void A_WeaponReady (optional int Flags) {
     Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONTOP+PlayerEx(Player).Bob*sin(angle);
   }
   */
-  Wpn.bBobDisabled = ((Flags&WRF_NOBOB) || Wpn.bDontBob);
 }
 
 
