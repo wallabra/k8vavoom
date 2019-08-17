@@ -1544,10 +1544,12 @@ override void Tick (float deltaTime) {
     TAVec lastAngles = Angles;
     lastOrg = Origin;
     bIntrJustMoved = true; // teleports and force origin changes will reset it
+    //if (stateChange && (self isa 'RLFormerAssaultTrooper')) printdebug("%C: old state: %s; time=%s", self, State, StateTime);
     if (!AdvanceState(deltaTime)) {
       // freed itself
       return;
     }
+    //if (stateChange && (self isa 'RLFormerAssaultTrooper')) printdebug("%C: new state: %s; time=%s", self, State, StateTime);
     // interpolation check
     if (stateChange && bIntrJustMoved) {
       /*

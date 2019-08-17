@@ -123,7 +123,26 @@ final void decorate_A_JumpIf (float Expr, state Label) {
 //  A_JumpIfCloser
 //
 //==========================================================================
-final void A_JumpIfCloser (float Dist, state Label, optional bool noz) {
+final bool CheckIfCloser (EntityEx targ, float Dist, bool noz) {
+  if (!targ) return false;
+  /*
+  if (Targ && (noz ? DistTo2(Targ) : DistTo(Targ)) < Dist &&
+      ((Origin.z > Targ.Origin.z && Origin.z-Target.Origin.z-Target.Height < Dist) ||
+       (Origin.z <= Targ.Origin.z && Target.Origin.z-Origin.z-Height < Dist)))
+  */
+  return
+    (DistTo2(targ) < Dist && (noz ||
+      ((Origin.z > targ.Origin.z && Origin.z-targ.Origin.z-targ.Height < Dist) ||
+       (Origin.z <= targ.Origin.z && targ.Origin.z-Origin.z-Height < Dist))));
+}
+
+
+//==========================================================================
+//
+//  A_JumpIfCloser
+//
+//==========================================================================
+final state A_JumpIfCloser (float Dist, state Label, optional bool noz) {
   EntityEx Targ;
 
   if (!bIsPlayer) {
@@ -133,15 +152,39 @@ final void A_JumpIfCloser (float Dist, state Label, optional bool noz) {
     Targ = Aim(Dir, 16.0*64.0);
   }
 
-  if (Targ && (noz ? DistTo2(Targ) : DistTo(Targ)) < Dist &&
-      ((Origin.z > Targ.Origin.z && Origin.z-Target.Origin.z-Target.Height < Dist) ||
-       (Origin.z <= Targ.Origin.z && Target.Origin.z-Origin.z-Height < Dist)))
-  {
-    DoJump(Label);
-  }
-
+  state stres = none;
+  if (CheckIfCloser(Targ, Dist, noz)) { stres = Label; DoJump(Label); }
   // state jumps should not affect state chain results
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  return stres;
+}
+
+
+//==========================================================================
+//
+//  A_JumpIfTracerCloser
+//
+//==========================================================================
+final state A_JumpIfTracerCloser (float distance, state label, optional bool noz) {
+  state stres = none;
+  if (CheckIfCloser(Tracer, distance, noz)) { stres = label; DoJump(label); }
+  // state jumps should not affect state chain results
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  return stres;
+}
+
+
+//==========================================================================
+//
+//  A_JumpIfMasterCloser
+//
+//==========================================================================
+final state A_JumpIfMasterCloser (float distance, state label, optional bool noz) {
+  state stres = none;
+  if (CheckIfCloser(Master, distance, noz)) { stres = label; DoJump(label); }
+  // state jumps should not affect state chain results
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  return stres;
 }
 
 
