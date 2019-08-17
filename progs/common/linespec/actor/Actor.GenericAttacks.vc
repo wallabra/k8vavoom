@@ -706,7 +706,7 @@ final void A_ThrowGrenade (class!Actor ItemType, optional float SpawnHeight,
     if (UseAmmo && !Wpn.DepleteAmmo(Wpn.FireMode)) return;
   }
 
-  Actor A = Spawn(ItemType, owo.Origin+vector(0.0, 0.0, SpawnHeight+35.0-owo.FloorClip));
+  Actor A = SpawnEntityChecked(class!Actor, ItemType, owo.Origin+vector(0.0, 0.0, SpawnHeight+35.0-owo.FloorClip));
   if (A) {
     A.CarryBloodTranslations(self);
     A.PlayMissileSpawnSound(self);
@@ -843,7 +843,7 @@ final void BlastActor (Actor victim, Actor source, float speed, class!Actor Blas
 
   Actor A = none;
   if (BlastEffect) {
-    A = Spawn(BlastEffect, vector(x, y, z));
+    A = SpawnEntityChecked(class!Actor, BlastEffect, vector(x, y, z));
     if (A) {
       A.CarryBloodTranslations(self);
       A.Velocity.x = victim.Velocity.x;
@@ -1275,7 +1275,7 @@ final void A_MinotaurCharge () {
   if (Special1 > 0) {
     class!Actor PuffType = PhoenixPuff;
     if (bSummonedMonster) PuffType = PunchPuff;
-    Actor puff = Spawn(PuffType, Origin);
+    EntityEx puff = Spawn(PuffType, Origin);
     if (puff) {
       puff.CarryBloodTranslations(self);
       puff.Velocity.z = 2.0*35.0;

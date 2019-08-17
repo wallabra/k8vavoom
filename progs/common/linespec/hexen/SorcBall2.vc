@@ -36,21 +36,16 @@ class SorcBall2 : SorcBall;
 
 override void A_CastSorcererSpell()
 {
-  Actor mo;
-  float z;
-
   // Put sorcerer into throw spell animation
   if (Target.Health > 0) Target.SetState(Target.FindState('Attack2'));
 
-  z = Target.Origin.z - Target.FloorClip + SORC_DEFENSE_HEIGHT;
-  mo = Spawn(SorcFX2, vector(Origin.x, Origin.y, z));
+  float z = Target.Origin.z - Target.FloorClip + SORC_DEFENSE_HEIGHT;
+  EntityEx mo = Spawn(SorcFX2, vector(Origin.x, Origin.y, z));
+
   Actor(Target).bInvulnerable = true;
   Actor(Target).bReflective = true;
   Target.Args[0] = SORC_DEFENSE_TIME;
-  if (mo)
-  {
-    mo.Target = Target;
-  }
+  if (mo) mo.Target = Target;
 
   Target.Args[3] = SORC_STOPPED;
 }

@@ -779,7 +779,7 @@ void VPackage::LoadSourceObject (VStream *Strm, const VStr &filename, TLocation 
     }
   }
 
-# if !defined(VCC_STANDALONE_EXECUTOR)
+  #if !defined(VCC_STANDALONE_EXECUTOR)
   // we need to do this, 'cause k8vavoom 'engine' package has some classes w/o definitions (`Acs`, `Button`)
   if (Name == NAME_engine) {
     for (VClass *Cls = GClasses; Cls; Cls = Cls->LinkNext) {
@@ -791,7 +791,7 @@ void VPackage::LoadSourceObject (VStream *Strm, const VStr &filename, TLocation 
       }
     }
   }
-# endif
+  #endif
 #endif
 }
 

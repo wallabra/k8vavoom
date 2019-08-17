@@ -149,9 +149,7 @@ final void TeleportToPlayerStarts(Actor victim)
 
 final void A_TeloSpawnA()
 {
-  Actor A;
-
-  A = Spawn(TelOtherFX2, Origin);
+  EntityEx A = Spawn(TelOtherFX2, Origin);
   if (A)
   {
     A.Angles.yaw = Angles.yaw;
@@ -169,9 +167,7 @@ final void A_TeloSpawnA()
 
 final void A_TeloSpawnB()
 {
-  Actor A;
-
-  A = Spawn(TelOtherFX3, Origin);
+  EntityEx A = Spawn(TelOtherFX3, Origin);
   if (A)
   {
     A.Angles.yaw = Angles.yaw;
@@ -189,9 +185,7 @@ final void A_TeloSpawnB()
 
 final void A_TeloSpawnC()
 {
-  Actor A;
-
-  A = Spawn(TelOtherFX4, Origin);
+  EntityEx A = Spawn(TelOtherFX4, Origin);
   if (A)
   {
     A.Angles.yaw = Angles.yaw;
@@ -209,9 +203,7 @@ final void A_TeloSpawnC()
 
 final void A_TeloSpawnD()
 {
-  Actor A;
-
-  A = Spawn(TelOtherFX5, Origin);
+  EntityEx A = Spawn(TelOtherFX5, Origin);
   if (A)
   {
     A.Angles.yaw = Angles.yaw;

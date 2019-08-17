@@ -5990,7 +5990,7 @@ final int implLocalQuake (int intensity, int duration, float damrad, float tremr
   if (tid == 0 && Activator) {
     // activator
     //print(" (a)spawning quaker for '%C'", Activator);
-    focus = Spawn(QuakeFocus, Activator.Origin);
+    focus = SpawnEntityChecked(class!QuakeFocus, QuakeFocus, Activator.Origin);
     if (focus) {
       //print("  (a)spawned quaker for '%C'", Activator);
       focus.Richters = intensity;
@@ -6005,7 +6005,7 @@ final int implLocalQuake (int intensity, int duration, float damrad, float tremr
   // find all quake foci
   for (target = EntityEx(FindMobjFromTID(tid, none)); target; target = EntityEx(FindMobjFromTID(tid, target))) {
     //print(" spawning quaker for '%C'", target);
-    focus = Spawn(QuakeFocus, target.Origin);
+    focus = SpawnEntityChecked(class!QuakeFocus, QuakeFocus, target.Origin);
     if (focus) {
       //print("  spawned quaker for '%C'", target);
       focus.Richters = intensity;
@@ -6216,7 +6216,7 @@ override void PolyCrushMobj(Entity Other, polyobj_t *po)
 
         if (c)
         {
-          Actor Gib = Spawn(RealGibs);
+          Actor Gib = SpawnEntityChecked(class!Actor, RealGibs);
           if (Gib) {
             Gib.RenderStyle = EntityEx(Other).RenderStyle;
             Gib.Alpha = EntityEx(Other).Alpha;
@@ -6539,7 +6539,7 @@ override void SpawnMapThing (mthing_t *mthing) {
 
   // zdoom music changers
   if (mthing.type >= 14101 && mthing.type <= 14165) {
-    Spawn(SecMusicChangerBase, default, default, mthing, AllowReplace:false, AllowAnything:true);
+    SpawnThinker(SecMusicChangerBase, default, default, mthing, AllowReplace:false);
     return;
   }
 
@@ -6609,7 +6609,7 @@ override void SpawnMapThing (mthing_t *mthing) {
   }
 
   // spawn it
-  auto thg = Spawn(moClass, default, default, mthing, AllowReplace:false, AllowAnything:true);
+  Thinker thg = SpawnThinker(moClass, default, default, mthing, AllowReplace:false);
   //print("SpawnMapThing: '%C' (%d) height=%f (defheight=%f); org=%s", thg, mthing.type, thg.Height, moClass.default.Height, thg.Origin);
   //if (moClass.default.bSolid && !thg.bSolid) print("  ****FUUUUUUU");
 
@@ -6894,17 +6894,16 @@ final void ConChoiceImpulse(int ChoiceNum)
     ItemType = GetClassFromID(Choice->GiveItem);
     if (ItemType)
     {
-      Item = Inventory(Spawn(ItemType, default, default, default, false));
-      //  This shouldn't count for the item statistics
-      if (Item.bCountItem)
-      {
-        Item.bCountItem = false;
-        Level.TotalItems--;
-      }
-      GaveItem = Item.TryPickup(CurrentSpeakingTo);
-      if (!GaveItem)
-      {
-        Item.Destroy();
+      Item = SpawnEntityChecked(class!Inventory, ItemType, default, default, default, false);
+      if (Item) {
+        // this shouldn't count for the item statistics
+        if (Item.bCountItem)
+        {
+          Item.bCountItem = false;
+          Level.TotalItems--;
+        }
+        GaveItem = Item.TryPickup(CurrentSpeakingTo);
+        if (!GaveItem) Item.Destroy();
       }
     }
   }

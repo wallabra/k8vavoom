@@ -51,7 +51,8 @@ override bool HandlePickup (Inventory Item) {
 //
 //==========================================================================
 override Inventory CreateCopy (EntityEx Toucher) {
-  HexenArmor Copy = Spawn(HexenArmor, default, default, default, AllowReplace:false);
+  HexenArmor Copy = SpawnEntityChecked(class!HexenArmor, HexenArmor, default, default, default, AllowReplace:false);
+  assert(Copy);
   Copy.AddArmorToSlot(Toucher, Health, Amount);
   GoAwayAndDie();
   return Copy;

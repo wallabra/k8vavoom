@@ -82,8 +82,10 @@ override Entity QS_SpawnEntityInventory (name className) {
 
   Inventory ent = FindInventory(ec, disableReplacement:true);
   if (!ent) {
-    ent = Spawn(ec, AllowReplace:false);
-    if (!ent) return none;
+    EntityEx newEnt = Spawn(ec, AllowReplace:false);
+    if (!newEnt) return none;
+    ent = Inventory(newEnt);
+    if (!ent) { delete newEnt; return none; }
     ent.AttachToOwner(self);
   }
 
@@ -230,7 +232,7 @@ static final Ammo SpawnAmmoType (Thinker spwnr, class!Ammo AmmoType, optional bo
   }
   if (!AmmoType) return none;
 
-  Ammo ammo = spwnr.Spawn(AmmoType, default, default, default, AllowReplace:false);
+  Ammo ammo = spwnr.SpawnEntityChecked(class!Ammo, AmmoType, AllowReplace:false);
   if (!Ammo(ammo)) {
     delete ammo;
     return none;
@@ -261,7 +263,7 @@ static final Inventory SpawnInventoryType (Thinker spwnr, class!Inventory Type, 
   }
   if (!Type) return none;
 
-  Inventory inv = spwnr.Spawn(Type, default, default, default, AllowReplace:false);
+  Inventory inv = spwnr.SpawnEntityChecked(class!Inventory, Type, AllowReplace:false);
   if (!Inventory(inv)) {
     delete inv;
     return none;
@@ -292,7 +294,7 @@ static final Weapon SpawnWeaponType (Thinker spwnr, class!Weapon Type, optional 
   }
   if (!Type) return none;
 
-  Weapon wpn = spwnr.Spawn(Type, default, default, default, AllowReplace:false);
+  Weapon wpn = spwnr.SpawnEntityChecked(class!Weapon, Type, AllowReplace:false);
   if (!Weapon(wpn)) {
     delete wpn;
     return none;
@@ -480,8 +482,9 @@ override void GiveInventory (name ItemName, int Amount, bool allowReplacement) {
   //    another call to pickup handler (due to something bumped into new item),
   //    and it will go on, and on, and on (thanks to TDRR for finding this!).
   //    so i will move the item far away, and let's hope that there will be nobody there
-  Inventory Item = Spawn(ItemClass, /*default*/vector(-33000, -33000, -33000), default, default, AllowReplace:false);
+  Inventory Item = SpawnEntityChecked(class!Inventory, ItemClass, vector(-33000, -33000, -33000), AllowReplace:false);
   if (!Item) return;
+  if (!Inventory(Item)) { delete Item; return; }
 
   // this shouldn't count for the item statistics
   if (Item.bCountItem) {
@@ -578,7 +581,7 @@ override int UseInventoryName (name ItemName, bool allowReplacement) {
 //
 //===========================================================================
 override int GetArmorPoints () {
-  Inventory A = FindInventory(BasicArmor);
+  Inventory A = FindInventory(BasicArmor, disableReplacement:true);
   return (A ? A.Amount : 0);
 }
 
@@ -590,7 +593,7 @@ override int GetArmorPoints () {
 //===========================================================================
 override int GetArmorPointsForType (name armtype) {
   if (!armtype || nameicmp(armtype, 'None') == 0) return 0;
-  BasicArmor armor = BasicArmor(FindInventory(BasicArmor));
+  BasicArmor armor = BasicArmor(FindInventory(BasicArmor, disableReplacement:true));
   if (!armor) return 0;
   //FIXME: should we really try parents here?
   if (nameicmp(armtype, armor.GetArmorName()) == 0) return max(0, armor.Amount);

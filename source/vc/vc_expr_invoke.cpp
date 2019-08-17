@@ -454,7 +454,7 @@ VExpression *VSuperInvocation::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
 
-  ParseError(Loc, "No such method `%s`", *Name);
+  ParseError(Loc, "No such method `%s` in parent class `%s` of class `%s`", *Name, (ec.SelfClass->ParentClass ? ec.SelfClass->ParentClass->GetName() : "<none>"), ec.SelfClass->GetName());
   delete this;
   return nullptr;
 }
@@ -1395,7 +1395,11 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
   // don't need it anymore
   delete selfCopy;
 
-  ParseError(Loc, "No such method `%s`", *MethodName);
+  if (!(SelfExpr->Type.Class->ObjectFlags&CLASSOF_PostLoaded)) {
+    ParseError(Loc, "No such method `%s` in class `%s` (that class is not post-loaded yet!)", *MethodName, SelfExpr->Type.Class->GetName());
+  } else {
+    ParseError(Loc, "No such method `%s` in class `%s`", *MethodName, SelfExpr->Type.Class->GetName());
+  }
   delete this;
   return nullptr;
 }
@@ -1421,7 +1425,7 @@ VExpression *VDotInvocation::ResolveIterator (VEmitContext &ec) {
 
   VMethod *M = SelfExpr->Type.Class->FindAccessibleMethod(MethodName, ec.SelfClass, &Loc);
   if (!M) {
-    ParseError(Loc, "No such method %s", *MethodName);
+    ParseError(Loc, "No such method %s in class `%s` (iterator resolving)", *MethodName, SelfExpr->Type.Class->GetName());
     delete this;
     return nullptr;
   }

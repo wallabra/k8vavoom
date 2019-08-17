@@ -610,33 +610,37 @@ final void NightmareRespawn () {
   if (!CheckPosition(vector(x, y, ONFLOORZ))) return; // no respwan
 
   // spawn a teleport fog at old spot
-  EntityEx A = Spawn(TeleportFog, vector(Origin.x, Origin.y, ONFLOORZ));
-  A.Origin.z += LineSpecialGameInfo(Level.Game).TeleFogHeight;
+  EntityEx A = SpawnEntityChecked(class!EntityEx, TeleportFog, vector(Origin.x, Origin.y, ONFLOORZ));
+  if (A) {
+    A.Origin.z += LineSpecialGameInfo(Level.Game).TeleFogHeight;
 
-  // spawn a teleport fog at the new spot
-  A = Spawn(TeleportFog, vector(x, y, ONFLOORZ));
-  A.Origin.z += LineSpecialGameInfo(Level.Game).TeleFogHeight;
+    // spawn a teleport fog at the new spot
+    A = SpawnEntityChecked(class!EntityEx, TeleportFog, vector(x, y, ONFLOORZ));
+    if (A) A.Origin.z += LineSpecialGameInfo(Level.Game).TeleFogHeight;
 
-  // spawn the new monster
+    // spawn the new monster
 
-  // spawn it
-  if (bSpawnCeiling) z = ONCEILINGZ; else z = ONFLOORZ;
+    // spawn it
+    if (bSpawnCeiling) z = ONCEILINGZ; else z = ONFLOORZ;
 
-  // inherit attributes from deceased one
-  A = Spawn(class!EntityEx(Class), vector(x, y, z), default, default, AllowReplace:false);
-  Level.CopyMThing(&SpawnPoint, &A.SpawnPoint);
-  A.Angles.yaw = float(45*(SpawnPoint.angle/45));
+    // inherit attributes from deceased one
+    A = SpawnEntityChecked(class!EntityEx, class!EntityEx(Class), vector(x, y, z), default, default, AllowReplace:false);
+    if (A) {
+      Level.CopyMThing(&SpawnPoint, &A.SpawnPoint);
+      A.Angles.yaw = float(45*(SpawnPoint.angle/45));
 
-  if (SpawnPoint.options&LineSpecialLevelInfo::MTF_AMBUSH) A.bAmbush = true;
-  if (SpawnPoint.options&LineSpecialLevelInfo::MTF_STANDSTILL) A.bStanding = true;
+      if (SpawnPoint.options&LineSpecialLevelInfo::MTF_AMBUSH) A.bAmbush = true;
+      if (SpawnPoint.options&LineSpecialLevelInfo::MTF_STANDSTILL) A.bStanding = true;
 
-  A.ReactionCount = 18;
+      A.ReactionCount = 18;
 
-  // copy custom translation
-  //A.Translation = Translation;
-  A.CopyTranslations(self);
+      // copy custom translation
+      //A.Translation = Translation;
+      A.CopyTranslations(self);
 
-  A.SkillRespawnCount = SkillRespawnCount;
+      A.SkillRespawnCount = SkillRespawnCount;
+    }
+  }
 
   // remove the old monster
   Destroy();
@@ -1341,7 +1345,7 @@ final EntityEx DropItem (class!EntityEx type, int amount, float chance, optional
   float DropZ = 0.0;
   if (!Level.CompatNoTossDrops) DropZ = Height/2.0;
   if (!specified_dropofs) dropofs = vector(0.0, 0.0, DropZ);
-  EntityEx A = Spawn(type, Origin+dropofs, AllowReplace:AllowReplace!optional);
+  EntityEx A = SpawnEntityChecked(class!EntityEx, type, Origin+dropofs, AllowReplace:AllowReplace!optional);
   if (!A) return none;
 
   //A = Spawn(type, Origin + vector(0.0, 0.0, DropZ));
@@ -1594,7 +1598,7 @@ override bool SectorChanged (int CrushChange) {
       }
 
       if (c) {
-        Actor Gib = Spawn(RealGibs);
+        Actor Gib = SpawnEntityChecked(class!Actor, RealGibs);
         if (Gib) {
           Gib.RenderStyle = RenderStyle;
           Gib.Alpha = Alpha;
@@ -1644,7 +1648,7 @@ override bool SectorChanged (int CrushChange) {
     Damage(none, none, CrushChange);
     // spray blood in a random direction
     if (!bNoBlood && !bInvulnerable && BloodType && IsBloodAllowed()) {
-      EntityEx A = Spawn(BloodType, Origin+vector(0.0, 0.0, Height/2.0));
+      EntityEx A = SpawnEntityChecked(class!EntityEx, BloodType, Origin+vector(0.0, 0.0, Height/2.0));
       if (A) {
         A.SetBloodArgs(self, damage:CrushChange);
         A.Velocity.x = (Random()-Random())*16.0*35.0;
@@ -1846,7 +1850,9 @@ final void TouchDehackedSpecial (EntityEx Toucher) {
   class!Inventory ItemType = LineSpecialLevelInfo(Level).GetDehackedItemType(self);
   if (!ItemType) return;
 
-  Inventory Item = Spawn(ItemType, default, default, default/*, false*/);
+  Inventory Item = SpawnEntityChecked(class!Inventory, ItemType, default, default, default/*, false*/);
+  if (!Item) return;
+
   Item.bDropped = bDropped;
   if (bDropped) {
     if (Ammo(Item)) {
@@ -1998,7 +2004,7 @@ final EntityEx SpawnPuff (TVec Org, float Range, class!EntityEx PuffType,
   if (PuffType) {
     if (!disableRandomZ) Org.z += (Random()-Random())*4.0;
 
-    puff = Spawn(PuffType, Org);
+    puff = SpawnEntityChecked(class!EntityEx, PuffType, Org);
     if (!puff) return none; // oops
 
     if (pufftid) puff.SetTID(pufftid);
@@ -2135,7 +2141,7 @@ final int GetSpeech () {
 //==========================================================================
 final EntityEx TossUpObject (class!EntityEx type) {
   float randomspeed = Random()*8.0-6.0;
-  EntityEx A = Spawn(type, GetCentre());
+  EntityEx A = SpawnEntityChecked(class!EntityEx, type, GetCentre());
   if (A) {
     float an = AngleMod360(Angles.yaw+Random()*360.0);
     A.Angles.yaw = an;
@@ -2339,29 +2345,30 @@ final void PainShootSkull (class!Actor SpawnType, float angle, optional bool noa
   // If it is, then we don't allow the spawn.
   if (CheckSides(Origin+vector(cosa, sina, 8.0))) return;
 
-  newSkull = Spawn(SpawnType, Origin);
+  newSkull = SpawnEntityChecked(class!Actor, SpawnType, Origin);
+  if (newSkull) {
+    // Check to see if the new Lost Soul's z value is above the
+    // ceiling of its new sector, or below the floor. If so, kill it.
+    if (newSkull.Origin.z > newSkull.CeilingZ-newSkull.Height ||
+        newSkull.Origin.z < newSkull.FloorZ)
+    {
+      // kill it immediately
+      newSkull.Damage(self, self, 10000, forced:true);
+      return;
+    }
 
-  // Check to see if the new Lost Soul's z value is above the
-  // ceiling of its new sector, or below the floor. If so, kill it.
-  if (newSkull.Origin.z > newSkull.CeilingZ-newSkull.Height ||
-      newSkull.Origin.z < newSkull.FloorZ)
-  {
-    // kill it immediately
-    newSkull.Damage(self, self, 10000, forced:true);
-    return;
+    // check for movements
+    if (!newSkull.TryMove(newSkull.Origin+vector(cosa, sina, 8.0), AllowDropOff:false)) {
+      // kill it immediately
+      newSkull.Damage(self, self, 10000, forced:true);
+      return;
+    }
+
+    // spawned skulls hate same things as master
+    newSkull.CopyFriendliness(self, !notarget);
+
+    if (!noattack) newSkull.A_SkullAttack();
   }
-
-  // check for movements
-  if (!newSkull.TryMove(newSkull.Origin+vector(cosa, sina, 8.0), AllowDropOff:false)) {
-    // kill it immediately
-    newSkull.Damage(self, self, 10000, forced:true);
-    return;
-  }
-
-  // spawned skulls hate same things as master
-  newSkull.CopyFriendliness(self, !notarget);
-
-  if (!noattack) newSkull.A_SkullAttack();
 }
 
 
@@ -2619,7 +2626,7 @@ final void SpawnDirt (float radius) {
     case 4: dtype = Dirt5; break;
     case 5: dtype = Dirt6; break;
   }
-  EntityEx dirt = Spawn(dtype, org);
+  EntityEx dirt = SpawnEntityChecked(class!EntityEx, dtype, org);
   if (dirt) dirt.Velocity.z = Random()*4.0*35.0;
 }
 
@@ -3658,8 +3665,8 @@ DehackedDormantPickup:
     SetState(IdleState);
 
     // spawn a teleport fog at the new spot
-    A = Spawn(ItemFog, Origin);
-    A.PlaySound('misc/spawn', CHAN_ITEM);
+    A = SpawnEntityChecked(class!EntityEx, ItemFog, Origin);
+    if (A) A.PlaySound('misc/spawn', CHAN_ITEM);
   }
   Stop
 }

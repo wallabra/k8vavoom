@@ -63,6 +63,10 @@ class VThinker : public VGameObject {
   };
   vuint32 ThinkerFlags;
 
+private:
+  // must be called from `Spawn*` implementations
+  static VThinker *SpawnCommon (bool allowNoneClass, bool checkKillEntityEx, bool hasDesiredClass);
+
 public:
   //VThinker ();
 
@@ -88,7 +92,9 @@ public:
   void BroadcastCentrePrintf (const char *, ...) __attribute__((format(printf,2,3)));
 
   DECLARE_FUNCTION(SpawnThinker)
-  //DECLARE_FUNCTION(Spawn)
+  DECLARE_FUNCTION(SpawnNoTypeCheck)
+  DECLARE_FUNCTION(SpawnEntityChecked)
+  DECLARE_FUNCTION(Spawn)
   DECLARE_FUNCTION(Destroy)
 
   // print functions

@@ -72,7 +72,7 @@ override bool Use (bool Pickup) {
 //==========================================================================
 final void Blast (Actor victim, Actor source, float strength) {
   float ang;
-  Actor A;
+  EntityEx A;
   float x;
   float y;
   float z;
@@ -113,6 +113,7 @@ final void Blast (Actor victim, Actor source, float strength) {
     x = victim.Origin.x+(victim.Radius+1.0)*cos(ang);
     y = victim.Origin.y+(victim.Radius+1.0)*sin(ang);
     z = victim.Origin.z-victim.FloorClip+victim.Height/2.0;
+
     A = Spawn(BlastEffect, vector(x, y, z));
     if (A) {
       A.Velocity.x = victim.Velocity.x;

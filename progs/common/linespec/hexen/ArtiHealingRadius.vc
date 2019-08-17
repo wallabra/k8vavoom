@@ -44,7 +44,6 @@ override bool Use(bool Pickup)
   float dist;
   int effective = false;
   int amount;
-  int i;
   bool GaveArmor;
 
   foreach AllThinkers(PlayerPawn, P)
@@ -58,22 +57,20 @@ override bool Use(bool Pickup)
       continue;
     }
 
-    if (PlayerPawn(Owner).HealRadiusType == 'Armor')
+    if (nameicmp(PlayerPawn(Owner).HealRadiusType, 'Armor') == 0)
     {
       // Radius armor boost
       GaveArmor = false;
-      for (i = 0; i < 4; i++)
-      {
-        HexenArmor Armor = Spawn(HexenArmor, default, default, default, AllowReplace:false);
-        Armor.Health = i;
-        Armor.Amount = 1;
-        if (Armor.TryPickup(P))
-        {
-          GaveArmor = true;
-        }
-        else
-        {
-          Armor.Destroy();
+      foreach (int i; 0..4) {
+        HexenArmor Armor = SpawnEntityChecked(class!HexenArmor, HexenArmor, default, default, default, AllowReplace:false);
+        if (Armor) {
+          Armor.Health = i;
+          Armor.Amount = 1;
+          if (Armor.TryPickup(P)) {
+            GaveArmor = true;
+          } else {
+            Armor.Destroy();
+          }
         }
       }
       if (GaveArmor)
@@ -82,7 +79,7 @@ override bool Use(bool Pickup)
         P.PlaySound('MysticIncant', CHAN_ITEM);
       }
     }
-    else if (PlayerPawn(Owner).HealRadiusType == 'Mana')
+    else if (nameicmp(PlayerPawn(Owner).HealRadiusType, 'Mana') == 0)
     {
       // Radius mana boost
       amount = 50 + (P_Random() % 50);

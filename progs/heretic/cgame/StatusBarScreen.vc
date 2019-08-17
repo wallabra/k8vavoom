@@ -352,8 +352,7 @@ override void SB_DrawMainBar()
     }
 
     //  Armor
-    BasicArmor Armor = BasicArmor(EntityEx(cl.MO).FindInventory(
-      BasicArmor));
+    BasicArmor Armor = BasicArmor(EntityEx(cl.MO).FindInventory(BasicArmor, disableReplacement:true));
     SB_DrawNumber9(BAR_X + 228, BAR_Y + 12, Armor ? Armor.Amount : 0);
   }
   else
@@ -401,7 +400,7 @@ override void SB_DrawFullscreenStats () {
   DrawPic(30, yfix(494), pic_health, 0.6);
 
   // armorpoints
-  BasicArmor Armor = BasicArmor(EntityEx(cl.MO).FindInventory(BasicArmor));
+  BasicArmor Armor = BasicArmor(EntityEx(cl.MO).FindInventory(BasicArmor, disableReplacement:true));
   if (Armor && Armor.Amount) {
     int i = (Armor.SavePercent > 0.5 ? 1 : 0);
     SB_DrawNumber9(140, yfix(456), Armor.Amount);

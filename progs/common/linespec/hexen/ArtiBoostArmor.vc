@@ -37,21 +37,18 @@ class ArtiBoostArmor : Inventory
 
 override bool Use(bool Pickup)
 {
-  int i;
   bool good = false;
-  for (i = 0; i < 4; i++)
-  {
+  foreach (int i; 0..4) {
     // 1 point per armor type
-    HexenArmor Armor = Spawn(HexenArmor, default, default, default, AllowReplace:false);
-    Armor.Health = i;
-    Armor.Amount = 1;
-    if (Armor.TryPickup(EntityEx(Owner)))
-    {
-      good = true;
-    }
-    else
-    {
-      Armor.Destroy();
+    HexenArmor Armor = SpawnEntityChecked(class!HexenArmor, HexenArmor, default, default, default, AllowReplace:false);
+    if (Armor) {
+      Armor.Health = i;
+      Armor.Amount = 1;
+      if (Armor.TryPickup(EntityEx(Owner))) {
+        good = true;
+      } else {
+        Armor.Destroy();
+      }
     }
   }
   return good;

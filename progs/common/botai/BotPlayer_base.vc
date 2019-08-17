@@ -847,7 +847,7 @@ bool CheckOtherItem (Actor item, out bool res) {
   if (Health(item) && botmo.Health >= Player::MAXHEALTH) { res = false; return true; }
   //if ((item.Class == Soulsphere || item.Class == Megasphere) && botmo.Health >= 2*Player::MAXHEALTH) return false;
 
-  BasicArmor Armor = BasicArmor(botmo.FindInventory(BasicArmor));
+  BasicArmor Armor = BasicArmor(botmo.FindInventory(BasicArmor, disableReplacement:true));
   if (!Armor) return false;
 
   if (BasicArmorPickup(item) && (Armor.Amount >= BasicArmorPickup(item).SaveAmount)) { res = false; return true; }

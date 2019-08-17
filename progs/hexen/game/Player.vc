@@ -206,7 +206,7 @@ override void BotTick(float deltaTime)
 
 override void SpawnSpeedEffect()
 {
-  Actor speedA = HexenLevelInfo(Level).Spawn(PlayerSpeed, MO.Origin);
+  EntityEx speedA = HexenLevelInfo(Level).Spawn(PlayerSpeed, MO.Origin);
   if (speedA)
   {
     speedA.Angles.yaw = MO.Angles.yaw;
@@ -288,17 +288,17 @@ void Cheat_Gimme () {
   }
 
   if (Cmd_CheckParm("weapons") || Cmd_CheckParm("arsenal")) {
-    HexenArmor HArmor = HexenArmor(EntityEx(MO).FindInventory( HexenArmor));
+    HexenArmor HArmor = HexenArmor(EntityEx(MO).FindInventory(HexenArmor, disableReplacement:true));
     foreach (int i; 0..4) HArmor.Slots[i] = HArmor.SlotsIncrement[i];
 
     CheatHelper_AllWeapons();
 
     FourthWeaponHolder Hold = FourthWeaponHolder(EntityEx(MO).FindInventory(FourthWeaponHolder));
     if (!Hold) {
-      Hold = Level.Spawn(FourthWeaponHolder, default, default, default, false);
-      Hold.AttachToOwner(EntityEx(MO));
+      Hold = Level.SpawnEntityChecked(class!FourthWeaponHolder, FourthWeaponHolder, default, default, default, false);
+      if (Hold) Hold.AttachToOwner(EntityEx(MO));
     }
-    Hold.PieceMask = 7;
+    if (Hold) Hold.PieceMask = 7;
 
     cprint("ALL WEAPONS");
   }
@@ -332,9 +332,11 @@ void Cheat_Gimme () {
       if (!Cls.default.bInvBar || !Cls.default.MaxAmount) continue; // not an artifact
       if (!EntityEx.IsSpawnableClass(Cls)) continue; // not spawnable
       if (ClassIsChildOf(Cls, PuzzleItem)) continue; // not puzzle items
-      Inv = Level.Spawn(Cls, default, default, default, false);
-      Inv.Amount = Inv.MaxAmount;
-      if (!Inv.TryPickup(EntityEx(MO))) Inv.Destroy();
+      Inv = Level.SpawnEntityChecked(class!Inventory, Cls, default, default, default, false);
+      if (Inv) {
+        Inv.Amount = Inv.MaxAmount;
+        if (!Inv.TryPickup(EntityEx(MO))) Inv.Destroy();
+      }
     }
     cprint("ALL ARTIFACTS");
   }
@@ -407,7 +409,7 @@ void Cheat_Class()
   }
   //FIXME it doesn't work like this.
   PClass = pclass;
-  HexenArmor HArmor = HexenArmor(EntityEx(MO).FindInventory(HexenArmor));
+  HexenArmor HArmor = HexenArmor(EntityEx(MO).FindInventory(HexenArmor, disableReplacement:true));
   for (i = 0; i < 4; i++)
   {
     HArmor.Slots[i] = 0.0;

@@ -1254,7 +1254,7 @@ final void A_Burst (class!Actor ChunkType) {
   int i = NumChunks+((P_Random()-P_Random())%(NumChunks/4));
   if (i < 24) i = 24;
   for (; i >= 0; --i) {
-    Actor A = Spawn(ChunkType, Origin+vector((Random()-0.5)*2.0*Radius, (Random()-0.5)*2.0*Radius, Random()*Height));
+    Actor A = SpawnEntityChecked(class!Actor, ChunkType, Origin+vector((Random()-0.5)*2.0*Radius, (Random()-0.5)*2.0*Radius, Random()*Height));
     if (A) {
       A.Velocity.z = (A.Origin.z-Origin.z)/Height*4.0*35.0;
       A.Velocity.x = (Random()-Random())*2.0*35.0;

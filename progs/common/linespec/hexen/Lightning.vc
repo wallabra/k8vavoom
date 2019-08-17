@@ -269,9 +269,7 @@ final void A_LightningRemove()
 
 final void A_LastZap()
 {
-  Actor A;
-
-  A = Spawn(LightningZap, Origin);
+  EntityEx A = Spawn(LightningZap, Origin);
   if (A)
   {
     A.SetState(A.FindState('LastZap'));

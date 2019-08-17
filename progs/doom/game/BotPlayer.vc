@@ -54,7 +54,7 @@ override bool CheckOtherItem (Actor item, out bool res) {
     return true;
   }
 
-  BasicArmor Armor = BasicArmor(botmo.FindInventory(BasicArmor));
+  BasicArmor Armor = BasicArmor(botmo.FindInventory(BasicArmor, disableReplacement:true));
   if (!Armor) return false;
 
   if (item.Class == Megasphere && Armor.Amount >= 200) {

@@ -188,7 +188,8 @@ override Inventory CreateCopy (EntityEx Toucher) {
   if (GetClassParent(Class) == Ammo) {
     Copy = ::CreateCopy(Toucher);
   } else {
-    Copy = Spawn(GetParentAmmo(), default, default, default, AllowReplace:false);
+    Copy = SpawnEntityChecked(class!Inventory, GetParentAmmo(), default, default, default, AllowReplace:false);
+    assert(Copy);
     GoAwayAndDie();
   }
   Copy.Amount = NewAmount;

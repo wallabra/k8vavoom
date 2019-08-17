@@ -493,8 +493,7 @@ override void SB_DrawMainBar()
   }
 
   // Armor
-  HexenArmor HArmor = HexenArmor(EntityEx(cl.MO).FindInventory(
-    HexenArmor));
+  HexenArmor HArmor = HexenArmor(EntityEx(cl.MO).FindInventory(HexenArmor, disableReplacement:true));
   int TotalArmorPoints = !HArmor ? 0 :
     int((HArmor.Slots[0] + HArmor.Slots[1] + HArmor.Slots[2] +
     HArmor.Slots[3] + HArmor.Slots[4]) / 5.0);
@@ -533,8 +532,7 @@ void SB_DrawKeyBar()
   }
 
   //  Armor
-  HexenArmor HArmor = HexenArmor(EntityEx(cl.MO).FindInventory(
-    HexenArmor));
+  HexenArmor HArmor = HexenArmor(EntityEx(cl.MO).FindInventory(HexenArmor, disableReplacement:true));
   for (i = 0; i < 4; i++)
   {
     float ArmorPerc;
@@ -621,7 +619,7 @@ override void SB_DrawFullscreenStats () {
   DrawPic(30, yfix(490), pic_health, 0.6);
 
   // armor
-  HexenArmor HArmor = HexenArmor(EntityEx(cl.MO).FindInventory(HexenArmor));
+  HexenArmor HArmor = HexenArmor(EntityEx(cl.MO).FindInventory(HexenArmor, disableReplacement:true));
   int TotalArmorPoints = (!HArmor ? 0 : int((HArmor.Slots[0]+HArmor.Slots[1]+HArmor.Slots[2]+HArmor.Slots[3]+HArmor.Slots[4])/5.0));
   foreach (auto i; 0..4) {
     float ArmorPerc;

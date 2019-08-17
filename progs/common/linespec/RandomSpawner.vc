@@ -77,7 +77,7 @@ override void BeginPlay () {
         if (!Tracer && bSeekerMissile) Tracer = Target;
         NewEntity = SpawnMissileXYZ(Origin, Target, spwcls);
       } else {
-        NewEntity = EntityEx(Spawn(spwcls, Origin, default, default, AllowReplace:false, AllowAnything:true)); // no need to replace, we already did it
+        NewEntity = Spawn(spwcls, Origin, default, default, AllowReplace:false); // no need to replace, we already did it
       }
 
       if (NewEntity) {

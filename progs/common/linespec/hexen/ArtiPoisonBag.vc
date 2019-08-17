@@ -38,7 +38,7 @@ class ArtiPoisonBag : Inventory
 override bool Use(bool Pickup)
 {
   float angle;
-  Actor bomb;
+  EntityEx bomb;
 
   angle = Owner.Angles.yaw;
   if (ClassIsChildOf(Owner.Class, GetClassReplacement(ClericPlayer)))

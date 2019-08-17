@@ -476,29 +476,6 @@ VThinker *VLevel::SpawnThinker (VClass *AClass, const TVec &AOrigin,
 
 //==========================================================================
 //
-//  VLevel::SpawnThinkerEx
-//
-//==========================================================================
-VEntity *VLevel::SpawnThinkerEx (VClass *AClass, const TVec &AOrigin,
-                                  const TAVec &AAngles, mthing_t *mthing, bool AllowReplace)
-{
-  static VClass *eexCls = nullptr;
-  if (!eexCls) {
-    eexCls = VClass::FindClass("EntityEx");
-    if (!eexCls) Sys_Error("cannot find class `EntityEx`");
-  }
-  VThinker *res = SpawnThinker(AClass, AOrigin, AAngles, mthing, AllowReplace);
-  if (!res) return nullptr;
-  if (!res->GetClass()->IsChildOf(eexCls)) {
-    GCon->Logf(NAME_Error, "%s:SpawnThinkerEx tried to return class `%s`, which is not `EntityEx`", GetClass()->GetName(), res->GetClass()->GetName());
-    return nullptr;
-  }
-  return (VEntity *)res;
-}
-
-
-//==========================================================================
-//
 //  Script iterators
 //
 //==========================================================================

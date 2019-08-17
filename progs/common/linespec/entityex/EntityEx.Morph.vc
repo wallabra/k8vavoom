@@ -76,10 +76,12 @@ final bool MorphMonster (class!MorphedMonster MonsterClass, float Duration,
   if (bNoMorph) return false;
   if (!MonsterClass) return false;
 
+  MorphedMonster monster = SpawnEntityChecked(class!MorphedMonster, MonsterClass, Origin, default, default/*, false*/);
+  if (!monster) return false;
+
   if (!MorphFlash) MorphFlash = class!Actor(TeleportFog);
   if (MorphFlash) Spawn(MorphFlash, Origin+vector(0.0, 0.0, LineSpecialGameInfo(Level.Game).TeleFogHeight));
 
-  MorphedMonster monster = Spawn(MonsterClass, Origin, default, default/*, false*/);
   monster.SpecialCID = class!Actor(Class);
   monster.MorphStyle = MorphStyle;
   monster.UnmorphTime = XLevel.Time+Duration;
@@ -138,10 +140,12 @@ final bool MorphPlayer (class!PlayerPawn PlayerClass, float Duration,
     return false;
   }
 
+  Actor beastMo = SpawnEntityChecked(class!Actor, PlayerClass, Origin, default, default/*, false*/);
+  if (!beastMo) return false;
+
   if (!MorphFlash) MorphFlash = class!Actor(TeleportFog);
   if (MorphFlash) Spawn(MorphFlash, Origin+vector(0.0, 0.0, LineSpecialGameInfo(Level.Game).TeleFogHeight));
 
-  Actor beastMo = Spawn(PlayerClass, Origin, default, default/*, false*/);
   if (TID && (MorphStyle&MORPH_NEWTIDBEHAVIOUR)) {
     beastMo.SetTID(TID);
     SetTID(0);
@@ -153,10 +157,10 @@ final bool MorphPlayer (class!PlayerPawn PlayerClass, float Duration,
   Player.Health = beastMo.Health;
   Player.MO = beastMo;
   if (Player.Camera == self) Player.Camera = beastMo;
-  BasicArmor Armor = BasicArmor(FindInventory(BasicArmor));
+  BasicArmor Armor = BasicArmor(FindInventory(BasicArmor, disableReplacement:true));
   Armor.Amount = 0;
   Armor.SavePercent = 0.0;
-  HexenArmor HArmor = HexenArmor(FindInventory(HexenArmor));
+  HexenArmor HArmor = HexenArmor(FindInventory(HexenArmor, disableReplacement:true));
   if (HArmor) {
     foreach (auto i; 0..4) HArmor.Slots[i] = 0.0;
   }

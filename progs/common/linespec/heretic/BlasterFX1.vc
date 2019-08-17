@@ -76,19 +76,16 @@ override int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 
 final void A_SpawnRippers()
 {
-  int i;
-  float angle;
-  Actor ripper;
-
-  for (i = 0; i < 8; i++)
-  {
-    ripper = Spawn(Ripper, Origin);
-    angle = float(i) * 45.0;
-    ripper.Target = Target;
-    ripper.Angles.yaw = angle;
-    ripper.Velocity.x = ripper.Speed * cos(angle);
-    ripper.Velocity.y = ripper.Speed * sin(angle);
-    ripper.CheckMissileSpawn();
+  foreach (int i; 0..8) {
+    EntityEx ripper = Spawn(Ripper, Origin);
+    if (ripper) {
+      float angle = float(i) * 45.0;
+      ripper.Target = Target;
+      ripper.Angles.yaw = angle;
+      ripper.Velocity.x = ripper.Speed * cos(angle);
+      ripper.Velocity.y = ripper.Speed * sin(angle);
+      ripper.CheckMissileSpawn();
+    }
   }
 }
 

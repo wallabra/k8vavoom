@@ -384,7 +384,7 @@ override void SB_DrawMainBar () {
   DrawPic(ST_FACESX, ST_FACESY, pic_faces[sb_faceindex]);
 
   // armor percentage
-  BasicArmor Armor = BasicArmor(EntityEx(cl.MO).FindInventory(BasicArmor));
+  BasicArmor Armor = BasicArmor(EntityEx(cl.MO).FindInventory(BasicArmor, disableReplacement:true));
   SB_DrawTallNum(ST_ARMORX, ST_ARMORY, (Armor ? Armor.Amount : 0), 1.0, true);
 
   // keyboxes 0-2
@@ -523,7 +523,7 @@ override void SB_DrawFullscreenStats () {
   }
 
   // armor
-  BasicArmor Armor = BasicArmor(EntityEx(cl.MO).FindInventory(BasicArmor));
+  BasicArmor Armor = BasicArmor(EntityEx(cl.MO).FindInventory(BasicArmor, disableReplacement:true));
   if (Armor && Armor.Amount) {
     int i = Armor.SavePercent > 0.335 ? 1 : 0;
     SB_DrawTallNum(ST_TDARMORX, ST_TDARMORY, Armor.Amount, fsalpha, false);

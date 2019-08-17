@@ -98,7 +98,6 @@ final void DSparilTeleport()
   TVec    dir;
   BossSpot  Spot;
   BossSpot  Initial;
-  Actor   fog;
 
   if (!BossSpotCount)
   {
@@ -133,8 +132,8 @@ final void DSparilTeleport()
   PrevOrg = Origin;
   if (TeleportMove(Spot.Origin))
   {
-    fog = Spawn(Sorcerer2Telefade, PrevOrg);
-    fog.PlaySound('misc/teleport', CHAN_VOICE);
+    EntityEx fog = Spawn(Sorcerer2Telefade, PrevOrg);
+    if (fog) fog.PlaySound('misc/teleport', CHAN_VOICE);
     SetState(FindState('Teleport'));
     PlaySound('misc/teleport', CHAN_VOICE);
     Origin.z = FloorZ;

@@ -117,11 +117,13 @@ override void BeginPlay () {
       if (master.SeqName == slot) break;
     }
     if (!master) {
-      master = Spawn(SoundSequenceSlot, vector(0.0, 0.0, 0.0), default, default/*, false*/);
-      master.SeqName = slot;
-      master.StartSoundSequence(slot, 0);
+      master = SpawnEntityChecked(class!SoundSequenceSlot, SoundSequenceSlot, vector(0.0, 0.0, 0.0), default, default/*, false*/);
+      if (master) {
+        master.SeqName = slot;
+        master.StartSoundSequence(slot, 0);
+      }
     }
-    master.AddSoundSequenceChoice(SName);
+    if (master) master.AddSoundSequenceChoice(SName);
     Destroy();
   }
 }

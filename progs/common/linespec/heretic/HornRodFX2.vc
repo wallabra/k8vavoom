@@ -119,68 +119,45 @@ final void A_HideInCeiling()
   Origin.z = CeilingZ + 4.0;
 }
 
+
 //===========================================================================
 //
 //  A_SkullRodStorm
 //
 //===========================================================================
-
-final void A_SkullRodStorm()
-{
-  float x;
-  float y;
-  Actor A;
+final void A_SkullRodStorm() {
   PlayerEx player;
   class!Actor rain_type;
 
-  if (Health-- == 0)
-  {
+  if (Health-- == 0) {
     SetState(none);
     player = PlayerEx(Target.Player);
-    if (!player || !player.bActive)
-    {
-      // Player left the game
-      return;
-    }
-    if (player.Health <= 0)
-    {
-      // Player is dead
-      return;
-    }
-    if (player.Rain1 == self)
-    {
-      player.Rain1 = none;
-    }
-    else if (player.Rain2 == self)
-    {
-      player.Rain2 = none;
-    }
+    if (!player || !player.bActive) return; // player left the game
+    if (player.Health <= 0) return; // player is dead
+         if (player.Rain1 == self) player.Rain1 = none;
+    else if (player.Rain2 == self) player.Rain2 = none;
     return;
   }
-  if (Random() < 0.1)
-  {
-    // Fudge rain frequency
-    return;
+  if (Random() < 0.1) return; // fudge rain frequency
+
+  float x = Origin.x + Random() * 128.0 - 64.0;
+  float y = Origin.y + Random() * 128.0 - 64.0;
+  switch (RainColor) {
+    case 0: rain_type = RainPillar; break;
+    case 1: rain_type = RainPlayer2; break;
+    case 2: rain_type = RainPlayer3; break;
+    case 3: rain_type = RainPlayer4; break;
   }
-  x = Origin.x + Random() * 128.0 - 64.0;
-  y = Origin.y + Random() * 128.0 - 64.0;
-  switch (RainColor)
-  {
-  case 0: rain_type = RainPillar; break;
-  case 1: rain_type = RainPlayer2; break;
-  case 2: rain_type = RainPlayer3; break;
-  case 3: rain_type = RainPlayer4; break;
+
+  Actor A = SpawnEntityChecked(class!Actor, rain_type, vector(x, y, ONCEILINGZ));
+  if (A) {
+    if (Sector->bHasExtrafloors && Origin.z <= CeilingZ) A.Origin.z = CeilingZ - A.Height;
+    A.Target = Target;
+    A.Velocity.x = 0.00001; // Force collision detection
+    A.Velocity.z = -A.Speed;
+    A.CheckMissileSpawn();
   }
-  A = Spawn(rain_type, vector(x, y, ONCEILINGZ));
-  if(Sector->bHasExtrafloors && Origin.z <= CeilingZ) A.Origin.z = CeilingZ - A.Height;
-  A.Target = Target;
-  A.Velocity.x = 0.00001; // Force collision detection
-  A.Velocity.z = -A.Speed;
-  A.CheckMissileSpawn();
-  if (!(Special1 & 31))
-  {
-    PlaySound('weapons/hornrodpowrain', CHAN_VOICE);
-  }
+  if (!(Special1 & 31)) PlaySound('weapons/hornrodpowrain', CHAN_VOICE);
   Special1++;
 }
 

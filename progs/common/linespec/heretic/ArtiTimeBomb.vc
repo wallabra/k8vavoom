@@ -38,10 +38,10 @@ class ArtiTimeBomb : Inventory
 override bool Use(bool Pickup)
 {
   float angle = Owner.Angles.yaw;
-  Actor A = Spawn(ActivatedTimeBomb,
+  EntityEx A = Spawn(ActivatedTimeBomb,
     Owner.Origin + vector(24.0 * cos(angle), 24.0 * sin(angle),
     -Owner.FloorClip));
-  A.Target = EntityEx(Owner);
+  if (A) A.Target = EntityEx(Owner);
   return true;
 }
 

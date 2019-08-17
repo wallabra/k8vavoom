@@ -262,7 +262,7 @@ final void A_Bang4Cloud () {
 //
 //==========================================================================
 final void A_DropFire () {
-  Actor A = Spawn(FireDroplet, Origin+vector(0.0, 0.0, 24.0));
+  Actor A = SpawnEntityChecked(class!Actor, FireDroplet, Origin+vector(0.0, 0.0, 24.0));
   if (A) {
     A.Velocity.z = -35.0;
     RadiusAttack(self, 64, 64.0, false, 'Fire');

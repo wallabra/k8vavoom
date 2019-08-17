@@ -370,7 +370,8 @@ Inventory CreateCopy (EntityEx Toucher) {
   Inventory Copy;
   if (GoAway()) {
     // must create a copy
-    Copy = Spawn(class!Inventory(Class), default, default, default, AllowReplace:false);
+    Copy = SpawnEntityChecked(class!Inventory, class!Inventory(Class), Origin, Angles, default, AllowReplace:false);
+    assert(Copy);
     Copy.Amount = Amount;
     Copy.MaxAmount = MaxAmount;
   } else {
@@ -401,7 +402,8 @@ Inventory CreateTossable () {
     return self;
   }
 
-  Inventory Copy = Spawn(class!Inventory(Class), default, default, default, AllowReplace:false);
+  Inventory Copy = SpawnEntityChecked(class!Inventory, class!Inventory(Class), default, default, default, AllowReplace:false);
+  assert(Copy);
   Copy.Amount = 1;
   Copy.MaxAmount = MaxAmount;
   Copy.DropTime = 1.0;

@@ -142,9 +142,11 @@ void Cheat_Gimme () {
 
   // backpack
   if (Cmd_CheckParm("Backpack")) {
-    Inventory I = Level.Spawn(AmmoSatchel, default, default, default, false);
-    I.bDropped = true;
-    if (!I.TryPickup(EntityEx(MO))) I.Destroy();
+    Inventory I = Level.SpawnEntityChecked(class!Inventory, AmmoSatchel, default, default, default, false);
+    if (I) {
+      I.bDropped = true;
+      if (!I.TryPickup(EntityEx(MO))) I.Destroy();
+    }
     cprint("EXTRA AMMO");
   }
 
@@ -181,8 +183,10 @@ void Cheat_Gimme () {
 
   // sigil piece
   if (Cmd_CheckParm("Sigil")) {
-    Sigil S = Level.Spawn(Sigil, default, default, default, false);
-    if (!S.SpecialDropAction(none)) S.Destroy();
+    Sigil S = Level.SpawnEntityChecked(class!Sigil, Sigil, default, default, default, false);
+    if (S) {
+      if (!S.SpecialDropAction(none)) S.Destroy();
+    }
     cprint("SIGIL PIECE");
   }
 
@@ -200,10 +204,12 @@ void Cheat_Gimme () {
   if (Cmd_CheckParm("Gold")) {
     Inventory GoldItem = EntityEx(MO).FindInventory(Coin);
     if (!GoldItem) {
-      GoldItem = Level.Spawn(Coin, default, default, default, false);
-      if (!GoldItem.TryPickup(EntityEx(MO))) {
-        GoldItem.Destroy();
-        GoldItem = none;
+      GoldItem = Level.SpawnEntityChecked(class!Inventory, Coin, default, default, default, false);
+      if (GoldItem) {
+        if (!GoldItem.TryPickup(EntityEx(MO))) {
+          GoldItem.Destroy();
+          GoldItem = none;
+        }
       }
     }
     if (GoldItem) GoldItem.Amount = min(100_000, GoldItem.MaxAmount);

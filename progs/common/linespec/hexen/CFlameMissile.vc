@@ -50,21 +50,13 @@ override bool BlasterHitMobj(Entity Other)
 override void SpawnBlasterEffects()
 {
   float z;
-  Actor A;
 
-  if (!--Special1)
-  {
+  if (!--Special1) {
     Special1 = 4;
     z = Origin.z - 12.0;
-    if (z < FloorZ)
-    {
-      z = FloorZ;
-    }
-    A = Spawn(CFlameFloor, vector(Origin.x, Origin.y, z));
-    if (A)
-    {
-      A.Angles.yaw = Angles.yaw;
-    }
+    if (z < FloorZ) z = FloorZ;
+    EntityEx A = Spawn(CFlameFloor, vector(Origin.x, Origin.y, z));
+    if (A) A.Angles.yaw = Angles.yaw;
   }
 }
 
@@ -92,7 +84,6 @@ final void A_CFlameMissile()
   int i;
   float an;
   float dist;
-  Actor A;
 
   bInvisible = false;
   PlaySound('ClericFlameExplode', CHAN_VOICE);
@@ -103,7 +94,7 @@ final void A_CFlameMissile()
     for (i = 0; i < 4; i++)
     {
       an = float(i) * 45.0;
-      A = Spawn(CircleFlame, bmo.Origin +
+      EntityEx A = Spawn(CircleFlame, bmo.Origin +
         vector(dist * cos(an), dist * sin(an), 5.0));
       if (A)
       {

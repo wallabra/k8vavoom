@@ -603,7 +603,7 @@ final bool A_Quake (float intensity, float ticduration, float damrad, float trem
   tremrad = fmax(0, tremrad);
   if (intensity < 1) return false;
   intensity = fmin(intensity, 9);
-  QuakeFocus focus = Spawn(QuakeFocus, Origin);
+  QuakeFocus focus = SpawnEntityChecked(class!QuakeFocus, QuakeFocus, Origin);
   if (focus) {
     focus.Richters = int(intensity);
     focus.QuakeDuration = int(ticduration)>>1; // decremented every 2 tics
@@ -636,7 +636,7 @@ final bool A_QuakeEx (float intensityX, float intensityY, float intensityZ, floa
   intensityX = fmin(intensityX, 9);
   intensityY = fmin(intensityY, 9);
   intensityZ = fmin(intensityZ, 9);
-  QuakeFocusEx focus = Spawn(QuakeFocusEx, Origin);
+  QuakeFocusEx focus = SpawnEntityChecked(class!QuakeFocusEx, QuakeFocusEx, Origin);
   if (focus) {
     focus.Richters = vector(int(intensityX), int(intensityY), int(intensityZ));
     focus.QuakeDuration = int(ticduration)>>1; // decremented every 2 tics

@@ -797,7 +797,7 @@ void VLevel::LoadMap (VName AMapName) {
   bool killCache = loader_cache_ignore_one;
   loader_cache_ignore_one = false;
   bool AuxiliaryMap = false;
-  int lumpnum, xmaplumpnum;
+  int lumpnum, xmaplumpnum = -1;
   VName MapLumpName;
   decanimlist = nullptr;
   decanimuid = 0;

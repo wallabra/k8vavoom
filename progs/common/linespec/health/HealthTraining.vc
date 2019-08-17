@@ -35,9 +35,11 @@ class HealthTraining : Inventory;
 override bool TryPickup (EntityEx Toucher) {
   if (::TryPickup(Toucher)) {
     Toucher.GiveInventoryType(GunTraining);
-    Inventory Item = Spawn(Coin, default, default, default/*, false*/);
-    Item.Amount = PlayerEx(Toucher.Player).Accuracy*5+300;
-    if (!Item.TryPickup(Toucher)) Item.Destroy();
+    Inventory Item = SpawnEntityChecked(class!Inventory, Coin, default, default, default/*, false*/);
+    if (Item) {
+      Item.Amount = PlayerEx(Toucher.Player).Accuracy*5+300;
+      if (!Item.TryPickup(Toucher)) Item.Destroy();
+    }
     return true;
   }
   return false;

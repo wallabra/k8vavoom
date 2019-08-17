@@ -47,7 +47,8 @@ override bool TryPickup (EntityEx Toucher) {
     }
   }
   if (!Hold) {
-    Hold = Spawn(WeaponHolder, default, default, default/*, false*/);
+    Hold = SpawnEntityChecked(class!WeaponHolder, WeaponHolder, default, default, default/*, false*/);
+    assert(Hold);
     Hold.AttachToOwner(Toucher);
     Hold.WeaponType = WeaponType;
     Hold.PieceMask = 0;
@@ -76,13 +77,15 @@ override bool TryPickup (EntityEx Toucher) {
   Hold.PieceMask |= PieceValue;
   if (Hold.PieceMask == (1<<WeaponType.default.Health)-1) {
     if (!Toucher.FindInventory(WeaponType)) {
-      GivenWeapon = Level.Spawn(WeaponType);
-      // given weapon should not give any more ammo to the player
-      GivenWeapon.AmmoGive1 = 0;
-      GivenWeapon.AmmoGive2 = 0;
-      GivenWeapon.AttachToOwner(Toucher);
-      GivenWeapon.AmmoGive1 = GivenWeapon.default.AmmoGive1;
-      GivenWeapon.AmmoGive2 = GivenWeapon.default.AmmoGive2;
+      GivenWeapon = Level.SpawnEntityChecked(class!Weapon, WeaponType);
+      if (GivenWeapon) {
+        // given weapon should not give any more ammo to the player
+        GivenWeapon.AmmoGive1 = 0;
+        GivenWeapon.AmmoGive2 = 0;
+        GivenWeapon.AttachToOwner(Toucher);
+        GivenWeapon.AmmoGive1 = GivenWeapon.default.AmmoGive1;
+        GivenWeapon.AmmoGive2 = GivenWeapon.default.AmmoGive2;
+      }
     }
   }
   GiveQuest(Toucher);

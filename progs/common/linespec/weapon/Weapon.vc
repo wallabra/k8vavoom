@@ -428,8 +428,8 @@ final Weapon AddWeapon (class!Weapon WeaponType) {
   if (!WeaponType) return none;
   Weapon Wpn = Weapon(EntityEx(Owner).FindInventory(WeaponType/*, disableReplacement:true*/));
   if (!Wpn) {
-    Wpn = Spawn(WeaponType, default, default, default/*, false*/);
-    Wpn.AttachToOwner(EntityEx(Owner));
+    Wpn = SpawnEntityChecked(class!Weapon, WeaponType, default, default, default/*, false*/);
+    if (Wpn) Wpn.AttachToOwner(EntityEx(Owner));
   }
   return Wpn;
 }

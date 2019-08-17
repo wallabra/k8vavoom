@@ -33,7 +33,7 @@
 final void A_MntrFloorFire () {
   Origin.z = FloorZ;
   bIntrJustMoved = false; // disable interpolation
-  Actor A = Spawn(MinotaurFX3, vector(Origin.x+(Random()-Random())*4.0, Origin.y+(Random()-Random())*4.0, ONFLOORZ));
+  EntityEx A = Spawn(MinotaurFX3, vector(Origin.x+(Random()-Random())*4.0, Origin.y+(Random()-Random())*4.0, ONFLOORZ));
   if (!A) return;
   A.Target = Target;
   A.Velocity.x = 0.00001; // force block checking
@@ -63,7 +63,7 @@ final void A_DripBlood () {
 //==========================================================================
 final void A_LichIceImpact () {
   foreach (auto i; 0..8) {
-    Actor shard = Spawn(HeadFX2, Origin);
+    EntityEx shard = Spawn(HeadFX2, Origin);
     if (!shard) continue;
     float angle = float(i)*45.0;
     shard.Target = Target;
@@ -95,7 +95,7 @@ final void A_LichFireGrow () {
 //==========================================================================
 final void A_BlueSpark () {
   foreach (auto i; 0..2) {
-    Actor spark = Spawn(Sorcerer2FXSpark, Origin);
+    EntityEx spark = Spawn(Sorcerer2FXSpark, Origin);
     if (!spark) continue;
     spark.Velocity.x = (Random()-Random())*2.0*35.0;
     spark.Velocity.y = (Random()-Random())*2.0*35.0;
@@ -175,7 +175,7 @@ final void A_MaceBallImpact2 () {
     Velocity.z = Velocity.z*192.0/256.0;
     SetState(IdleState);
 
-    Actor tiny = Spawn(MaceFX3, Origin);
+    EntityEx tiny = Spawn(MaceFX3, Origin);
     if (tiny) {
       tiny.CarryBloodTranslations(self);
       float angle = AngleMod360(Angles.yaw+90.0);
@@ -226,7 +226,7 @@ final void A_PodPain () {
   if (chance < 128) return;
   int count = (chance > 240 ? 2 : 1);
   foreach (auto i; 0..count) {
-    Actor goo = Spawn(PodGoo, Origin+vector(0.0, 0.0, 48.0));
+    EntityEx goo = Spawn(PodGoo, Origin+vector(0.0, 0.0, 48.0));
     if (!goo) continue;
     goo.CarryBloodTranslations(self);
     goo.Target = self;
@@ -259,7 +259,7 @@ final void A_MakePod () {
   float y = Origin.y;
   float z = Origin.z;
 
-  Actor A = Spawn(Pod, vector(x, y, ONFLOORZ));
+  EntityEx A = Spawn(Pod, vector(x, y, ONFLOORZ));
   if (!A) return;
   if (!A.CheckPosition(A.Origin)) {
     // didn't fit
@@ -302,7 +302,7 @@ final void A_VolcanoSet () {
 final void A_VolcanoBlast () {
   int count = 1+(P_Random()%3);
   foreach (auto i; 0..count) {
-    Actor blast = Spawn(VolcanoBlast, Origin+vector(0.0, 0.0, 44.0));
+    EntityEx blast = Spawn(VolcanoBlast, Origin+vector(0.0, 0.0, 44.0));
     if (!blast) continue;
     blast.CarryBloodTranslations(self);
     blast.Target = self;
@@ -330,7 +330,7 @@ final void A_VolcBallImpact () {
   }
   RadiusAttack(Target, 25, 25.0, true);
   foreach (auto i; 0..4) {
-    Actor tiny = Spawn(VolcanoTBlast, Origin);
+    EntityEx tiny = Spawn(VolcanoTBlast, Origin);
     if (!tiny) continue;
     tiny.Target = self;
     float angle = float(i)*90.0;
@@ -375,7 +375,7 @@ final void A_ImpXDeath1 () {
 //==========================================================================
 final void A_ImpExplode () {
   bNoGravity = false;
-  Actor mo = Spawn(HereticImpChunk1, Origin);
+  EntityEx mo = Spawn(HereticImpChunk1, Origin);
   if (mo) {
     mo.CarryBloodTranslations(self);
     mo.Velocity.x = (Random()-Random())*4.0*35.0;
@@ -515,7 +515,7 @@ final void A_LichAttack () {
     if (baseFire) {
       baseFire.SetState(baseFire.FindState('Grown')); // don't grow
       foreach (auto i; 0..5) {
-        Actor fire = Spawn(HeadFX3, baseFire.Origin);
+        EntityEx fire = Spawn(HeadFX3, baseFire.Origin);
         if (!fire) continue;
         if (i == 0) PlaySound('ironlich/attack1', CHAN_WEAPON);
         fire.Target = baseFire.Target;
@@ -546,7 +546,8 @@ final void A_LichAttack () {
 //
 //==========================================================================
 final void A_GenWizard () {
-  Actor A = Spawn(Wizard, Origin, vector(0.0, 0.0, 0.0));
+  EntityEx A = Spawn(Wizard, Origin, vector(0.0, 0.0, 0.0));
+  if (!A) return;
   A.Origin.z = Origin.z-A.Height/2.0;
   if (!A.TestLocation()) {
     // didn't fit
@@ -918,10 +919,12 @@ final void A_SpawnMace () {
   if (!SpotCount) return; // no maces placed
   if (!Level.Game.deathmatch && P_Random() < 64) return; // sometimes doesn't show up if not in deathmatch
 
-  Mace M = Spawn(Mace);
-  M.SpotCount = SpotCount;
-  M.FirstSpot = First;
-  M.DoRespawn();
+  Mace M = SpawnEntityChecked(class!Mace, Mace);
+  if (M) {
+    M.SpotCount = SpotCount;
+    M.FirstSpot = First;
+    M.DoRespawn();
+  }
 }
 
 
@@ -1071,8 +1074,10 @@ final void A_Sor1Pain () {
 //==========================================================================
 final void A_SorcererRise () {
   bSolid = false;
-  Sorcerer2 S2 = Spawn(Sorcerer2, Origin);
-  S2.SetState(S2.FindState('Rise'));
-  S2.Angles.yaw = Angles.yaw;
-  S2.CopyFriendliness(self, true);
+  Sorcerer2 S2 = SpawnEntityChecked(class!Sorcerer2, Sorcerer2, Origin);
+  if (S2) {
+    S2.SetState(S2.FindState('Rise'));
+    S2.Angles.yaw = Angles.yaw;
+    S2.CopyFriendliness(self, true);
+  }
 }

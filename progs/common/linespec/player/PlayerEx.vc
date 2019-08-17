@@ -2511,7 +2511,8 @@ bool GiveAmmo (class!Ammo ammo, int count) {
   if (!AmmoItem) {
     class!Ammo repl = class!Ammo(GetClassReplacement(ammo));
     if (!repl) repl = ammo;
-    AmmoItem = Level.Spawn(repl, default, default, default, AllowReplace:false);
+    AmmoItem = Level.SpawnEntityChecked(class!Ammo, repl, default, default, default, AllowReplace:false);
+    if (!AmmoItem) return false;
     AmmoItem.AttachToOwner(EntityEx(MO));
     AmmoItem.Amount = 0;
   }
@@ -3108,7 +3109,8 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
   float z = spawnOrigin.z;
   if (PClass >= Level.Game.PlayerClasses.Num) Error("Player::SpawnPlayer: Unknown class type (class=%s; max=%s)", PClass, Level.Game.PlayerClasses.Num-1);
 
-  PP = Level.Spawn(class!PlayerPawn(Level.Game.PlayerClasses[PClass]), vector(x, y, z), default, default, AllowReplace:false);
+  PP = Level.SpawnEntityChecked(class!PlayerPawn, class!PlayerPawn(Level.Game.PlayerClasses[PClass]), vector(x, y, z), default, default, AllowReplace:false);
+  if (!PP) Error("Player::SpawnPlayer: cannot spawn `%C` (it is prolly not a player pawn)", Level.Game.PlayerClasses[PClass]);
   print("spawned player with class <%C>...", PP);
   PP.InitializeWeaponSlots();
   //print("falling damage: normal=%B; old=%B; strife=%B", Level.bFallingDamage, Level.bOldFallingDamage, Level.bStrifeFallingDamage);
@@ -3385,17 +3387,21 @@ void RemovePistol () {
 //
 //===========================================================================
 void AddDefaultInventory () {
-  HexenArmor HArmor = Level.Spawn(HexenArmor, default, default, default, AllowReplace:false);
-  HArmor.AttachToOwner(EntityEx(MO));
-  HArmor.Slots[4] = PlayerPawn(MO).HexenArmor[0];
-  HArmor.SlotsIncrement[0] = PlayerPawn(MO).HexenArmor[1];
-  HArmor.SlotsIncrement[1] = PlayerPawn(MO).HexenArmor[2];
-  HArmor.SlotsIncrement[2] = PlayerPawn(MO).HexenArmor[3];
-  HArmor.SlotsIncrement[3] = PlayerPawn(MO).HexenArmor[4];
+  HexenArmor HArmor = Level.SpawnEntityChecked(class!HexenArmor, HexenArmor, default, default, default, AllowReplace:false);
+  if (HArmor) {
+    HArmor.AttachToOwner(EntityEx(MO));
+    HArmor.Slots[4] = PlayerPawn(MO).HexenArmor[0];
+    HArmor.SlotsIncrement[0] = PlayerPawn(MO).HexenArmor[1];
+    HArmor.SlotsIncrement[1] = PlayerPawn(MO).HexenArmor[2];
+    HArmor.SlotsIncrement[2] = PlayerPawn(MO).HexenArmor[3];
+    HArmor.SlotsIncrement[3] = PlayerPawn(MO).HexenArmor[4];
+  }
 
-  BasicArmor BArmor = Level.Spawn(BasicArmor, default, default, default, AllowReplace:false);
-  BArmor.Amount = 0;
-  BArmor.AttachToOwner(EntityEx(MO));
+  BasicArmor BArmor = Level.SpawnEntityChecked(class!BasicArmor, BasicArmor, default, default, default, AllowReplace:false);
+  if (BArmor) {
+    BArmor.Amount = 0;
+    BArmor.AttachToOwner(EntityEx(MO));
+  }
 
   //print("AddDefaultInventory: MO=`%C`", MO);
   foreach (auto i; 0..EntityEx(MO).DropItemList.length) {
@@ -4372,7 +4378,8 @@ bool UndoPlayerMorph (bool Force, PlayerEx Activator) {
   MO.UnlinkFromWorld();
   if (BaseClass >= Level.Game.PlayerClasses.Num) Error("UndoPlayerMorph: Unknown class type");
 
-  A = Level.Spawn(class!PlayerPawn(Level.Game.PlayerClasses[BaseClass]), MO.Origin, default, default, AllowReplace:false);
+  A = Level.SpawnEntityChecked(class!PlayerPawn, class!PlayerPawn(Level.Game.PlayerClasses[BaseClass]), MO.Origin, default, default, AllowReplace:false);
+  if (!A) Error("UndoPlayerMorph: class `%C` is prolly not a player pawn", Level.Game.PlayerClasses[BaseClass]);
   if (!Force && !A.TestLocation()) {
     // didn't fit
     A.Destroy();
@@ -4444,8 +4451,8 @@ void ActivateMorphWeapon () {
   class!Weapon WpnClass = PlayerPawn(MO).MorphWeapon;
   Weapon Wpn;
   if (WpnClass) {
-    Wpn = Level.Spawn(WpnClass);
-    Wpn.bGivenAsMorphWeapon = true;
+    Wpn = Level.SpawnEntityChecked(class!Weapon, WpnClass);
+    if (Wpn) Wpn.bGivenAsMorphWeapon = true;
   } else {
     // couldn't find any weapons, use the default weapon for this player (from initial inventory)
     foreach (int i; 0..EntityEx(MO).DropItemList.Num) {
@@ -4453,7 +4460,7 @@ void ActivateMorphWeapon () {
       if (!itc) continue;
       class!EntityEx itcrepl = class!EntityEx(GetClassReplacement(itc));
       if (itcrepl) itc = itcrepl;
-      Inventory Item = Inventory(Level.Spawn(itc, default, default, default, AllowReplace:false));
+      Inventory Item = Level.SpawnEntityChecked(class!Inventory, itc, default, default, default, AllowReplace:false);
       if (Item) {
         if (EntityEx(MO).DropItemList[i].Amount > 0) {
           Item.Amount = EntityEx(MO).DropItemList[i].Amount;
@@ -4461,13 +4468,19 @@ void ActivateMorphWeapon () {
         if (Weapon(Item)) {
           Wpn = Weapon(Item);
           WpnClass = class!Weapon(Weapon(Item).Class);
+          break;
         }
+        delete Item;
       }
     }
   }
-  if (!Wpn.TryPickup(EntityEx(MO))) Wpn.Destroy();
+  if (Wpn && !Wpn.TryPickup(EntityEx(MO))) delete Wpn;
 
-  SetWeapon(Weapon(EntityEx(MO).FindInventory(WpnClass)));
+  if (WpnClass) {
+    SetWeapon(Weapon(EntityEx(MO).FindInventory(WpnClass)));
+  } else {
+    SetWeapon(none);
+  }
   SetViewObject(ReadyWeapon);
   if (ReadyWeapon) {
     ReadyWeapon.bBobDisabled = true;
@@ -6040,7 +6053,7 @@ override Entity eventGetReadyWeapon () {
 //==========================================================================
 BasicArmor GetCurrentArmor () {
   if (!MO) return none;
-  return BasicArmor(EntityEx(MO).FindInventory(BasicArmor));
+  return BasicArmor(EntityEx(MO).FindInventory(BasicArmor, disableReplacement:true));
 }
 
 

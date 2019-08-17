@@ -242,9 +242,11 @@ void Cheat_Gimme () {
       if (!Cls.default.bInvBar || !Cls.default.MaxAmount) continue; // not an artifact
       if (!EntityEx.IsSpawnableClass(Cls)) continue; // not spawnable
       if (ClassIsChildOf(Cls, PuzzleItem)) continue; // not puzzle items
-      Inventory Item = Level.Spawn(Cls, default, default, default, false);
-      Item.Amount = Item.MaxAmount;
-      if (!Item.TryPickup(EntityEx(MO))) Item.Destroy();
+      Inventory Item = Level.SpawnEntityChecked(class!Inventory, Cls, default, default, default, false);
+      if (Item) {
+        Item.Amount = Item.MaxAmount;
+        if (!Item.TryPickup(EntityEx(MO))) Item.Destroy();
+      }
     }
     cprint("ALL ARTIFACTS");
   }

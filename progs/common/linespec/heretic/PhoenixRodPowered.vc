@@ -53,7 +53,6 @@ final void A_InitPhoenixPL2()
 
 final void A_FirePhoenixPL2()
 {
-  Actor A;
   TVec dir;
   TVec org;
 
@@ -76,17 +75,17 @@ final void A_FirePhoenixPL2()
   org.y = Origin.y + (Random() - Random()) * 2.0;
   org.z = Origin.z + 26.0 - sin(Angles.pitch);
   org.z -= FloorClip;
-  A = Spawn(PhoenixFX2, org);
-  A.Target = self;
-  A.Angles.yaw = Angles.yaw;
-  A.Angles.pitch = Angles.pitch;
-  AngleVector(A.Angles, out dir);
-  A.Velocity = Velocity + A.Speed * dir;
-  if (!PlayerEx(Player).Refire || !(XLevel.TicTime % 38))
-  {
-    PlaySound('weapons/phoenixpowshoot', CHAN_WEAPON);
+
+  EntityEx A = Spawn(PhoenixFX2, org);
+  if (A) {
+    A.Target = self;
+    A.Angles.yaw = Angles.yaw;
+    A.Angles.pitch = Angles.pitch;
+    AngleVector(A.Angles, out dir);
+    A.Velocity = Velocity + A.Speed * dir;
   }
-  A.CheckMissileSpawn();
+  if (!PlayerEx(Player).Refire || !(XLevel.TicTime % 38)) PlaySound('weapons/phoenixpowshoot', CHAN_WEAPON);
+  if (A) A.CheckMissileSpawn();
 }
 
 //===========================================================================

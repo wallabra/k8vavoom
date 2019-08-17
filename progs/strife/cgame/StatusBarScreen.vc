@@ -222,7 +222,7 @@ override void SB_DrawMainBar () {
   }
 
   // armor percentage
-  BasicArmor Armor = BasicArmor(EntityEx(cl.MO).FindInventory(BasicArmor));
+  BasicArmor Armor = BasicArmor(EntityEx(cl.MO).FindInventory(BasicArmor, disableReplacement:true));
   if (Armor.Amount > 0) {
     if (Armor.SavePercent == 0.5) {
       DrawPic(BAR_X+8, BAR_Y+175, R_RegisterPic('i_arm1'));
@@ -331,7 +331,7 @@ override void SB_DrawFullscreenStats () {
   DrawPic(20, 465, pic_medpack, 0.7);
 
   // armor
-  BasicArmor Armor = BasicArmor(EntityEx(cl.MO).FindInventory(BasicArmor));
+  BasicArmor Armor = BasicArmor(EntityEx(cl.MO).FindInventory(BasicArmor, disableReplacement:true));
   if (Armor && Armor.Amount) {
     // armor type
     int i = (Armor.SavePercent == 0.5 ? 0 : 1);

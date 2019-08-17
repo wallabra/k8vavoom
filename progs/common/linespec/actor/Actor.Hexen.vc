@@ -149,7 +149,7 @@ final void A_DelayGib () {
 final void A_WraithFX2 () {
   float angle;
   foreach (auto i; 0..2) {
-    Actor A = Spawn(WraithFX2, Origin);
+    EntityEx A = Spawn(WraithFX2, Origin);
     if (A) {
       if (Random() < 0.5) {
         angle = AngleMod360(Angles.yaw+Random()*90.0);
@@ -174,7 +174,7 @@ final void A_WraithFX2 () {
 final void A_DragonFX2 () {
   float delay = 0.5+Random();
   for (int i = 1+(P_Random()&3); i; --i) {
-    Actor A = Spawn(DragonExplosion, Origin+vector((Random()-0.5)*64.0, (Random()-0.5)*64.0, (Random()-0.5)*16.0));
+    EntityEx A = Spawn(DragonExplosion, Origin+vector((Random()-0.5)*64.0, (Random()-0.5)*64.0, (Random()-0.5)*16.0));
     if (A) {
       A.StateTime = delay+Random()*0.2*float(i);
       A.Target = Target;
@@ -191,21 +191,19 @@ final void A_DragonFX2 () {
 //
 //============================================================================
 final void A_SorcSpinBalls () {
-  Actor ball;
-  TVec org;
-
-  //  To prevent spawning balls more than once.
+  // to prevent spawning balls more than once
   IdleState = GetStatePlus(IdleState, 2);
 
   A_SlowBalls();
-  Args[0] = 0;  // Currently no defense
+  Args[0] = 0; // currently no defense
   Args[3] = SORC_NORMAL;
-  Args[4] = SORCBALL_INITIAL_SPEED; // Initial orbit speed
+  Args[4] = SORCBALL_INITIAL_SPEED; // initial orbit speed
   Special1f = 1.0;
-  org = Origin;
+
+  TVec org = Origin;
   org.z = Origin.z-FloorClip+Height;
 
-  ball = Spawn(SorcBall1, org, default, default/*, false*/);
+  EntityEx ball = Spawn(SorcBall1, org, default, default/*, false*/);
   if (ball) {
     ball.Target = self;
     ball.Special2 = SORCFX4_RAPIDFIRE_TIME;
@@ -256,7 +254,7 @@ final void A_SorcFX1Seek () {
 //
 //==========================================================================
 final void A_SorcFX2Split () {
-  Actor A = Spawn(SorcFX2, Origin, default, default/*, false*/);
+  EntityEx A = Spawn(SorcFX2, Origin, default, default/*, false*/);
   if (A) {
     A.Target = Target;
     A.Args[0] = 0;  // CW
@@ -354,8 +352,8 @@ final void A_KBoltRaise () {
   // spawn a child upward
   float z = Origin.z+KORAX_BOLT_HEIGHT;
   if (z+KORAX_BOLT_HEIGHT < CeilingZ) {
-    Actor A = Spawn(KoraxBolt, vector(Origin.x, Origin.y, z));
-    A.Special1 = KORAX_BOLT_LIFETIME;
+    EntityEx A = Spawn(KoraxBolt, vector(Origin.x, Origin.y, z));
+    if (A) A.Special1 = KORAX_BOLT_LIFETIME;
   } else {
     // maybe cap it off here
   }
@@ -687,7 +685,7 @@ final void A_CheckThrowBomb2 () {
 //
 //==========================================================================
 final void A_FogSpawn () {
-  Actor A;
+  EntityEx A;
 
   if (Special1-- > 0) return;
 
@@ -776,10 +774,10 @@ final void A_PotteryCheck () {
 //
 //============================================================================
 final void A_CorpseExplode () {
-  Actor A;
+  EntityEx A;
   for (int i = (P_Random()&3)+3; i; --i) {
     A = Spawn(CorpseBit, Origin);
-    A.SetState(GetStatePlus(A.IdleState, P_Random()%3, true));
+    if (A) A.SetState(GetStatePlus(A.IdleState, P_Random()%3, true));
     if (A) {
       A.Velocity.x = (Random()-Random())*4.0*35.0;
       A.Velocity.y = (Random()-Random())*4.0*35.0;
@@ -788,7 +786,7 @@ final void A_CorpseExplode () {
   }
   // spawn a skull
   A = Spawn(CorpseBit, Origin);
-  A.SetState(GetStatePlus(A.IdleState, 3, true));
+  if (A) A.SetState(GetStatePlus(A.IdleState, 3, true));
   if (A) {
     A.Velocity.x = (Random()-Random())*4.0*35.0;
     A.Velocity.y = (Random()-Random())*4.0*35.0;
@@ -806,8 +804,8 @@ final void A_CorpseExplode () {
 //==========================================================================
 final void A_LeafSpawn () {
   for (int i = (P_Random()&3)+1; i; --i) {
-    Actor A = Spawn((P_Random()&1 ? class!Actor(Leaf2) : class!Actor(Leaf1)),
-                    Origin+vector((Random()-Random())*64.0, (Random()-Random())*64.0, Random()*64.0));
+    EntityEx A = Spawn((P_Random()&1 ? class!Actor(Leaf2) : class!Actor(Leaf1)),
+                       Origin+vector((Random()-Random())*64.0, (Random()-Random())*64.0, Random()*64.0));
     if (A) {
       A.Thrust(Angles.yaw, Random()*2.0+3.0);
       A.Target = self;
@@ -893,7 +891,7 @@ final void A_SoAExplode () {
 //
 //============================================================================
 final void A_FiredSpawnRock () {
-  Actor mo;
+  EntityEx mo;
   TVec rockOrg;
   class!Actor rtype;
 
@@ -1027,7 +1025,7 @@ final void A_FiredAttack () {
 //
 //============================================================================
 final void A_FiredSplotch () {
-  Actor A = Spawn(FireDemonSplotch1, Origin);
+  EntityEx A = Spawn(FireDemonSplotch1, Origin);
   if (A) {
     A.CopyTranslations(self);
     A.Velocity.x = (Random()-0.5)*8.0*35.0;
@@ -1074,7 +1072,7 @@ final void A_IceGuyChase () {
     float dist = Radius*(Random()*2.0-1.0);
     float an = AngleMod360(Angles.yaw+90.0);
     if (Random() < 0.5) tp = IceGuyWisp2; else tp = IceGuyWisp1;
-    Actor A = Spawn(tp, Origin+vector(dist*cos(an), dist*sin(an), 60.0));
+    EntityEx A = Spawn(tp, Origin+vector(dist*cos(an), dist*sin(an), 60.0));
     if (A) {
       A.Velocity = Velocity;
       A.Target = self;
@@ -1162,7 +1160,7 @@ final void A_BishopSpawnBlur () {
     }
   }
 
-  Actor blur = Spawn(BishopBlur, Origin);
+  EntityEx blur = Spawn(BishopBlur, Origin);
   if (blur) {
     blur.CopyTranslations(self);
     blur.Angles = Angles;
@@ -1221,9 +1219,9 @@ final void A_BishopPainBlur () {
     return;
   }
 
-  Actor blur = Spawn(BishopPainBlur,
-                     Origin+vector((Random()-Random())*16.0,
-                     (Random()-Random())*16.0, (Random()-Random())*8.0));
+  EntityEx blur = Spawn(BishopPainBlur,
+                        Origin+vector((Random()-Random())*16.0,
+                        (Random()-Random())*16.0, (Random()-Random())*8.0));
   if (blur) {
     blur.CopyTranslations(self);
     blur.Angles = Angles;
@@ -1367,7 +1365,7 @@ final void A_SerpentMeleeAttack () {
 //
 //==========================================================================
 final void A_SerpentSpawnGibs () {
-  Actor A = Spawn(SerpentGib1, vector(Origin.x+(Random()-0.5)*16.0, Origin.y+(Random()-0.5)*16.0, FloorZ+1.0));
+  EntityEx A = Spawn(SerpentGib1, vector(Origin.x+(Random()-0.5)*16.0, Origin.y+(Random()-0.5)*16.0, FloorZ+1.0));
   if (A) {
     A.Velocity.x = (Random()-0.5)/4.0*35.0;
     A.Velocity.y = (Random()-0.5)/4.0*35.0;
@@ -1420,7 +1418,7 @@ final void A_WraithInit () {
 final void A_WraithFX3 () {
   int numdropped = P_Random()%15;
   foreach (auto i; 0..numdropped) {
-    Actor A = Spawn(WraithFX3, Origin);
+    EntityEx A = Spawn(WraithFX3, Origin);
     if (A) {
       A.Origin.x += (Random()-0.5)*8.0;
       A.Origin.y += (Random()-0.5)*8.0;
@@ -1439,7 +1437,6 @@ final void A_WraithFX3 () {
 //
 //==========================================================================
 final void A_WraithFX4 () {
-  Actor mo;
   int chance = P_Random();
   int spawn4, spawn5;
 
@@ -1449,7 +1446,7 @@ final void A_WraithFX4 () {
   else { spawn4 = false; spawn5 = false; }
 
   if (spawn4) {
-    mo = Spawn(WraithFX4, Origin);
+    EntityEx mo = Spawn(WraithFX4, Origin);
     if (mo) {
       mo.Origin.x += (Random()-0.5)*16.0;
       mo.Origin.y += (Random()-0.5)*16.0;
@@ -1459,7 +1456,7 @@ final void A_WraithFX4 () {
   }
 
   if (spawn5) {
-    mo = Spawn(WraithFX5, Origin);
+    EntityEx mo = Spawn(WraithFX5, Origin);
     if (mo) {
       mo.Origin.x += (Random()-0.5)*8.0;
       mo.Origin.y += (Random()-0.5)*8.0;
@@ -1805,14 +1802,14 @@ final void A_KoraxDecide () {
 //
 //==========================================================================
 final Actor SpawnKoraxMissile (TVec org, EntityEx dest, class!Actor type) {
-  TVec dir;
-  Actor th;
-
   org.z -= FloorClip;
-  th = Spawn(type, org);
+  Actor th = SpawnEntityChecked(class!Actor, type, org);
+  if (!th) return none;
+
   if (th.SightSound) th.PlaySound(th.SightSound, CHAN_VOICE);
   th.Target = self; // originator
-  dir = dest.Origin-org;
+
+  TVec dir = dest.Origin-org;
   if (dest.bShadow) {
     // invisible target
     VectorRotateAroundZ(ref dir, (Random()-Random())*45.0);
@@ -2031,7 +2028,7 @@ final void KSpiritInit (EntityEx Spirit) {
 final void A_CHolyAttack2 () {
   // float bob index
   foreach (auto j; 0..4) {
-    Actor A = Spawn(HolySpirit, Origin);
+    EntityEx A = Spawn(HolySpirit, Origin);
     if (!A) continue;
     switch (j) {
       case 0: HolySpirit(A).WeaveZ = P_Random()&7; break; // upper-left
@@ -2059,12 +2056,14 @@ final void A_CHolyAttack2 () {
       A.bSkullFly = true;
       A.bMissile = false;
     }
-    Actor tail = Spawn(HolyTail, A.Origin);
-    tail.Target = A;  // parent
-    foreach (auto i; 1..3) {
-      Actor next = Spawn(HolyTailTrail, A.Origin);
-      tail.Tracer = next;
-      tail = next;
+    EntityEx tail = Spawn(HolyTail, A.Origin);
+    if (tail) {
+      tail.Target = A;  // parent
+      foreach (auto i; 1..3) {
+        EntityEx next = Spawn(HolyTailTrail, A.Origin);
+        tail.Tracer = next;
+        tail = next;
+      }
     }
   }
 }
@@ -2076,7 +2075,7 @@ final void A_CHolyAttack2 () {
 //
 //===========================================================================
 final void A_PoisonBagInit () {
-  Actor A = Spawn(PoisonCloud, Origin+vector(0.0, 0.0, 28.0));
+  EntityEx A = Spawn(PoisonCloud, Origin+vector(0.0, 0.0, 28.0));
   if (A) PoisonCloud(A).InitCloud(Actor(Target));
 }
 
@@ -2172,7 +2171,7 @@ final void A_SorcererBishopEntry () {
 //
 //============================================================================
 final void A_SpawnBishop () {
-  Actor A = Spawn(Bishop, Origin);
+  EntityEx A = Spawn(Bishop, Origin);
   if (A) {
     if (!A.TestLocation()) {
       A.SetState(none);
@@ -2256,7 +2255,7 @@ final void A_SpawnFizzle () {
   org.y = Origin.y+dist*sin(angle);
   org.z = Origin.z-FloorClip+Height/2.0;
   foreach (auto ix; 0..5) {
-    Actor A = Spawn(SorcSpark1, org);
+    EntityEx A = Spawn(SorcSpark1, org);
     if (A) {
       float rangle = angle+Random()*5.0*90.0/1024.0;
       A.Velocity.x = Random()*Speed*cos(rangle);
@@ -2289,7 +2288,7 @@ final void A_Summon () {
     if (!Tracer.bCorpse) {
       // master isn't dead
       A.Tracer = Tracer; // pointer to master
-      Powerup Power = Spawn(PowerMinotaur, default, default, default/*, false*/);
+      Powerup Power = SpawnEntityChecked(class!Powerup, PowerMinotaur, default, default, default/*, false*/);
       if (Power) {
         Power.bAlwaysPickup = true;
         if (!Power.TryPickup(Target)) Power.Destroy();

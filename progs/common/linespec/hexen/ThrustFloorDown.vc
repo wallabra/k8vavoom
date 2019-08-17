@@ -66,7 +66,7 @@ final void A_ThrustInitDn()
   FloorClip = Height;
   bSolid = false;
   bInvisible = true;
-  SpawnedDirt = Spawn(DirtClump, Origin);
+  SpawnedDirt = SpawnEntityChecked(class!Actor, DirtClump, Origin);
 }
 
 //==========================================================================

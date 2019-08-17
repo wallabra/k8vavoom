@@ -338,49 +338,75 @@ public:
 //  Script natives
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VThinker, SpawnThinker) {
+VThinker *VThinker::SpawnCommon (bool allowNoneClass, bool checkKillEntityEx, bool hasDesiredClass) {
+  static VClass *eexCls = nullptr;
+  if (checkKillEntityEx && !eexCls) {
+    eexCls = VClass::FindClass("EntityEx");
+    if (!eexCls) Sys_Error("cannot find class `EntityEx`");
+  }
+
   P_GET_BOOL_OPT(AllowReplace, true);
   P_GET_PTR_OPT(mthing_t, mthing, nullptr);
   P_GET_AVEC_OPT(AAngles, TAVec(0, 0, 0));
   P_GET_VEC_OPT(AOrigin, TVec(0, 0, 0));
   P_GET_PTR(VClass, Class);
+  VClass *desiredClass = (hasDesiredClass ? (VClass *)PR_PopPtr() : nullptr);
   P_GET_SELF;
-  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("empty self in `Thinker::SpawnThinker()`"); }
+
+  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("empty self in `Thinker::SpawnXXX()`"); }
   VEntity *SelfEnt = Cast<VEntity>(Self);
   // if spawner is entity, default to it's origin and angles
   if (SelfEnt) {
     if (!specified_AOrigin) AOrigin = SelfEnt->Origin;
     if (!specified_AAngles) AAngles = SelfEnt->Angles;
   }
-  if (!Class) { VObject::VMDumpCallStack(); Sys_Error("Trying to spawn `None` class"); }
-  if (!Self->XLevel) { VObject::VMDumpCallStack(); Sys_Error("empty XLevel self in `Thinker::SpawnThinker()`"); }
+  if (!Class) {
+    if (!allowNoneClass) { VObject::VMDumpCallStack(); Sys_Error("Trying to spawn `None` class"); }
+    return nullptr;
+  }
+  if (!Self->XLevel) { VObject::VMDumpCallStack(); Sys_Error("empty XLevel self in `Thinker::SpawnXXX()`"); }
+
+  //if (checkKillEntityEx && !Class->IsChildOf(eexCls)) { VObject::VMDumpCallStack(); Sys_Error("trying to spawn non-EntityEx class `%s`", Class->GetName()); }
+
   VThinker *th = Self->XLevel->SpawnThinker(Class, AOrigin, AAngles, mthing, AllowReplace);
-  //if (th) th->SpawnTime = Self->XLevel->Time;
+
+  // check it
+  if (th && checkKillEntityEx && !th->GetClass()->IsChildOf(eexCls)) {
+    check(eexCls);
+    GCon->Logf(NAME_Warning, "%s: tried to spawn class `%s`, got class `%s`, which is not `EntityEx` (this is mostly harmless)", Self->GetClass()->GetName(), Class->GetName(), th->GetClass()->GetName());
+    th->DestroyThinker();
+    th = nullptr;
+  }
+
+  if (th && desiredClass && !th->GetClass()->IsChildOf(desiredClass)) {
+    GCon->Logf(NAME_Warning, "%s: tried to spawn class `%s`, got class `%s`, which is not `%s`", Self->GetClass()->GetName(), Class->GetName(), th->GetClass()->GetName(), desiredClass->GetName());
+    th->DestroyThinker();
+    th = nullptr;
+  }
+
+  return th;
+}
+
+
+IMPLEMENT_FUNCTION(VThinker, SpawnThinker) {
+  VThinker *th = SpawnCommon(/*allowNoneClass*/false, /*checkKillEntityEx*/false, /*hasDesiredClass*/false);
   RET_REF(th);
 }
 
-/*
-IMPLEMENT_FUNCTION(VThinker, Spawn) {
-  P_GET_BOOL_OPT(AllowReplace, true);
-  P_GET_PTR_OPT(mthing_t, mthing, nullptr);
-  P_GET_AVEC_OPT(AAngles, TAVec(0, 0, 0));
-  P_GET_VEC_OPT(AOrigin, TVec(0, 0, 0));
-  P_GET_PTR(VClass, Class);
-  P_GET_SELF;
-  if (!Self) { VObject::VMDumpCallStack(); Sys_Error("empty self in `Thinker::Spawn()`"); }
-  VEntity *SelfEnt = Cast<VEntity>(Self);
-  // if spawner is entity, default to it's origin and angles
-  if (SelfEnt) {
-    if (!specified_AOrigin) AOrigin = SelfEnt->Origin;
-    if (!specified_AAngles) AAngles = SelfEnt->Angles;
-  }
-  if (!Class) { VObject::VMDumpCallStack(); Sys_Error("Trying to spawn `None` class"); }
-  if (!Self->XLevel) { VObject::VMDumpCallStack(); Sys_Error("empty XLevel self in `Thinker::Spawn()`"); }
-  VThinker *th = Self->XLevel->SpawnThinkerEx(Class, AOrigin, AAngles, mthing, AllowReplace);
-  //if (th) th->SpawnTime = Self->XLevel->Time;
+IMPLEMENT_FUNCTION(VThinker, SpawnNoTypeCheck) {
+  VThinker *th = SpawnCommon(/*allowNoneClass*/true, /*checkKillEntityEx*/false, /*hasDesiredClass*/false);
   RET_REF(th);
 }
-*/
+
+IMPLEMENT_FUNCTION(VThinker, Spawn) {
+  VThinker *th = SpawnCommon(/*allowNoneClass*/true, /*checkKillEntityEx*/true, /*hasDesiredClass*/false);
+  RET_REF(th);
+}
+
+IMPLEMENT_FUNCTION(VThinker, SpawnEntityChecked) {
+  VThinker *th = SpawnCommon(/*allowNoneClass*/true, /*checkKillEntityEx*/true, /*hasDesiredClass*/true);
+  RET_REF(th);
+}
 
 IMPLEMENT_FUNCTION(VThinker, Destroy) {
   P_GET_SELF;

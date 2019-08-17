@@ -61,7 +61,8 @@ override bool TryPickup (EntityEx Toucher) {
 
   FourthWeaponHolder Hold = FourthWeaponHolder(Toucher.FindInventory(FourthWeaponHolder));
   if (!Hold) {
-    Hold = Spawn(FourthWeaponHolder, default, default, default/*, false*/);
+    Hold = SpawnEntityChecked(class!FourthWeaponHolder, FourthWeaponHolder, default, default, default/*, false*/);
+    assert(Hold);
     Hold.AttachToOwner(Toucher);
     Hold.PieceMask = 0;
   }
@@ -86,9 +87,9 @@ override bool TryPickup (EntityEx Toucher) {
   if (Hold.PieceMask == (WPIECE1|WPIECE2|WPIECE3)) {
     // give the weapon if we don't already have it
     if (!Weapon(Toucher.FindInventory(WeaponType))) {
-      Weapon Wpn = Level.Spawn(WeaponType);
-      if (!Wpn.TryPickup(Toucher)) {
-        Wpn.Destroy();
+      Weapon Wpn = Level.SpawnEntityChecked(class!Weapon, WeaponType);
+      if (!Wpn || !Wpn.TryPickup(Toucher)) {
+        delete Wpn;
       } else {
         gaveWeapon = true;
         PlayerEx(Toucher.Player).PendingWeapon = Wpn;
