@@ -648,6 +648,10 @@ static void skipUnimplementedCommand (VScriptParser *sc, bool wantArg) {
   miWarning(sc, "Unimplemented command '%s'", *sc->String);
   if (sc->Check("=")) {
     sc->ExpectString();
+    while (sc->Check(",")) {
+      if (sc->Check("}")) { sc->UnGet(); break; }
+      sc->ExpectString();
+    }
   } else if (wantArg) {
     sc->ExpectString();
   }
@@ -663,7 +667,8 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
   bool newFormat = sc->Check("{");
   //if (newFormat) sc->SetCMode(true);
   // process optional tokens
-  while (1) {
+  for (;;) {
+    //sc->GetString(); sc->UnGet(); GCon->Logf(NAME_Debug, "%s: %s", *sc->GetLoc().toStringNoCol(), *sc->String);
     if (sc->Check("levelnum")) {
       if (newFormat) sc->Expect("=");
       sc->ExpectNumber();
@@ -981,37 +986,43 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
     } else if (sc->Check("cd_title_track")) { if (newFormat) sc->Expect("="); sc->ExpectNumber(); //cd_NonLevelTracks[CD_TITLETRACK] = sc->Number;
     // these are stubs for now.
     } else if (sc->Check("cdid")) { skipUnimplementedCommand(sc, true);
-    } else if (sc->Check("noinventorybar")) { skipUnimplementedCommand(sc, false);
+    //} else if (sc->Check("noinventorybar")) { skipUnimplementedCommand(sc, false);
     } else if (sc->Check("airsupply")) { skipUnimplementedCommand(sc, true);
     } else if (sc->Check("sndseq")) { skipUnimplementedCommand(sc, true);
     } else if (sc->Check("sndinfo")) { skipUnimplementedCommand(sc, true);
     } else if (sc->Check("soundinfo")) { skipUnimplementedCommand(sc, true);
-    } else if (sc->Check("allowcrouch")) { skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("pausemusicinmenus")) { skipUnimplementedCommand(sc, false);
+    //} else if (sc->Check("allowcrouch")) { skipUnimplementedCommand(sc, false);
+    //} else if (sc->Check("pausemusicinmenus")) { skipUnimplementedCommand(sc, false);
     } else if (sc->Check("bordertexture")) { skipUnimplementedCommand(sc, true);
     } else if (sc->Check("f1")) { skipUnimplementedCommand(sc, true);
-    } else if (sc->Check("allowrespawn")) { skipUnimplementedCommand(sc, false);
+    //} else if (sc->Check("allowrespawn")) { skipUnimplementedCommand(sc, false);
     } else if (sc->Check("teamdamage")) { skipUnimplementedCommand(sc, true);
     } else if (sc->Check("fogdensity")) { skipUnimplementedCommand(sc, true);
     } else if (sc->Check("outsidefogdensity")) { skipUnimplementedCommand(sc, true);
     } else if (sc->Check("skyfog")) { skipUnimplementedCommand(sc, true);
-    } else if (sc->Check("teamplayon")) { skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("teamplayoff")) { skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("checkswitchrange")) { skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("nocheckswitchrange")) { skipUnimplementedCommand(sc, false);
+    //} else if (sc->Check("teamplayon")) { skipUnimplementedCommand(sc, false);
+    //} else if (sc->Check("teamplayoff")) { skipUnimplementedCommand(sc, false);
+    //} else if (sc->Check("checkswitchrange")) { skipUnimplementedCommand(sc, false);
+    //} else if (sc->Check("nocheckswitchrange")) { skipUnimplementedCommand(sc, false);
     } else if (sc->Check("translator")) { skipUnimplementedCommand(sc, true); skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("unfreezesingleplayerconversations")) { skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("smoothlighting")) { skipUnimplementedCommand(sc, false);
+    //} else if (sc->Check("unfreezesingleplayerconversations")) { skipUnimplementedCommand(sc, false);
+    //} else if (sc->Check("smoothlighting")) { skipUnimplementedCommand(sc, false);
     } else if (sc->Check("lightmode")) { skipUnimplementedCommand(sc, true);
-    } else if (sc->Check("Grinding_PolyObj")) { skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("UsePlayerStartZ")) { skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("spawnwithweaponraised")) { skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("noautosavehint")) { skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("PrecacheTextures")) { skipUnimplementedCommand(sc, false);
+    //} else if (sc->Check("Grinding_PolyObj")) { skipUnimplementedCommand(sc, false);
+    //} else if (sc->Check("UsePlayerStartZ")) { skipUnimplementedCommand(sc, false);
+    //} else if (sc->Check("spawnwithweaponraised")) { skipUnimplementedCommand(sc, false);
+    //} else if (sc->Check("noautosavehint")) { skipUnimplementedCommand(sc, false);
+    //} else if (sc->Check("PrecacheTextures")) { skipUnimplementedCommand(sc, false);
+    //} else if (sc->Check("PrecacheSounds")) { skipUnimplementedCommand(sc, false);
+    //} else if (sc->Check("PrecacheClasses")) { skipUnimplementedCommand(sc, false);
+    //} else if (sc->Check("intermissionmusic")) { skipUnimplementedCommand(sc, false);
     } else {
       if (newFormat) {
         if (sc->Check("}")) break;
-        sc->Error(va("invalid mapinfo command (%s)", *sc->String));
+        //sc->Message(va("unknown mapinfo command '%s', skipping...", *sc->String));
+        if (!sc->GetString()) break;
+        skipUnimplementedCommand(sc, false); // don't force arg, but skip them
+        if (sc->Check("}")) break;
       }
       break;
     }
