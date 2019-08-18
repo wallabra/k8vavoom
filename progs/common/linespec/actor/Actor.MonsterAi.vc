@@ -1044,7 +1044,7 @@ final void doKillXXX (EntityEx dest, name damagetype, int flags, optional name f
 {
   if (!dest) return;
 
-  if (!decoFilterCheck(dest, invertFilter:!!(flags&KILS_EXFILTER), invertSpecies:!!(flags&KILS_EXSPECIES), either:!!(flags&KILS_EITHER), filter:filter!optional, species:species!optional)) return;
+  if (!DecorFilterCheck(dest, invertFilter:!!(flags&KILS_EXFILTER), invertSpecies:!!(flags&KILS_EXSPECIES), either:!!(flags&KILS_EITHER), filter:filter!optional, species:species!optional)) return;
 
   if (!(flags&KILS_KILLMISSILES)) {
     if (dest.IsMissile(false)) return;
