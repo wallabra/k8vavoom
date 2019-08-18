@@ -68,30 +68,30 @@ void StartFinale (name AFinaleType) {
 
   if (!StrStartsWith(va("%n", FinaleType), "EndGame")) FinaleType = ClGame.DefaultFinaleType;
 
-  if (FinaleType == 'EndGamePic1') {
+  if (nameicmp(FinaleType, 'EndGamePic1') == 0) {
     if (!IsMapPresent('e2m1') && WadLumpPresent('order')) InitPic('order'); else InitPic('credit');
-  } else if (FinaleType == 'EndGamePic2') {
+  } else if (nameicmp(FinaleType, 'EndGamePic2') == 0) {
     InitPic('victory2');
-  } else if (FinaleType == 'EndGamePic3') {
+  } else if (nameicmp(FinaleType, 'EndGamePic3') == 0) {
     if (WadLumpPresent('endpic')) {
       InitPic('endpic');
     } else {
       // just show credits screen for extended episodes
       InitPic('credit');
     }
-  } else if (FinaleType == 'EndGameUnderwater') {
+  } else if (nameicmp(FinaleType, 'EndGameUnderwater') == 0) {
     InitUnderwater();
-  } else if (FinaleType == 'EndGameBunny') {
+  } else if (nameicmp(FinaleType, 'EndGameBunny') == 0) {
     InitBunnyScroll();
-  } else if (FinaleType == 'EndGameDemon') {
+  } else if (nameicmp(FinaleType, 'EndGameDemon') == 0) {
     InitDemonScroll();
-  } else if (FinaleType == 'EndGameCast') {
+  } else if (nameicmp(FinaleType, 'EndGameCast') == 0) {
     StartCast();
-  } else if (FinaleType == 'EndGameChess') {
+  } else if (nameicmp(FinaleType, 'EndGameChess') == 0) {
     InitChess();
-  } else if (FinaleType == 'EndGameStrife') {
+  } else if (nameicmp(FinaleType, 'EndGameStrife') == 0) {
     InitStrifeFinale();
-  } else if (StrStartsWith(va("%n", FinaleType), "EndGameCustomPic")) {
+  } else if (StrStartsWith(va("%n", FinaleType), "EndGameCustomPic", caseSensitive:false)) {
     string ft = va("%n", FinaleType);
     InitPic(name(substrutf8(ft, 16, ft.length-16)));
   } else {
@@ -131,8 +131,8 @@ override void OnVisibilityChanged (bool bNewVisibility) {
 //
 //==========================================================================
 override void OnPostDraw () {
-       if (FinaleType == 'EndGameCast') CastPostDraw();
-  else if (FinaleType == 'EndGameChess') ChessPostDraw();
+       if (nameicmp(FinaleType, 'EndGameCast') == 0) CastPostDraw();
+  else if (nameicmp(FinaleType, 'EndGameChess') == 0) ChessPostDraw();
 }
 
 
@@ -142,7 +142,7 @@ override void OnPostDraw () {
 //
 //===========================================================================
 bool Responder (event_t *event) {
-  if (FinaleType == 'EndGameCast') return CastResponder(event);
+  if (nameicmp(FinaleType, 'EndGameCast') == 0) return CastResponder(event);
   return false;
 }
 
@@ -154,9 +154,9 @@ bool Responder (event_t *event) {
 //==========================================================================
 override void Tick (float DeltaTime) {
   FinaleTime += DeltaTime;
-       if (FinaleType == 'EndGameCast') CastTicker(DeltaTime);
-  else if (FinaleType == 'EndGameChess') ChessTicker();
-  else if (FinaleType == 'EndGameStrife') StrifeFinalTicker(DeltaTime);
+       if (nameicmp(FinaleType, 'EndGameCast') == 0) CastTicker(DeltaTime);
+  else if (nameicmp(FinaleType, 'EndGameChess') == 0) ChessTicker();
+  else if (nameicmp(FinaleType, 'EndGameStrife') == 0) StrifeFinalTicker(DeltaTime);
 }
 
 

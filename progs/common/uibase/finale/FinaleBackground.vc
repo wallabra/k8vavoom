@@ -103,11 +103,11 @@ void InitChess () {
 //
 //==========================================================================
 override void OnDraw () {
-       if (FScreen.FinaleType == 'EndGameBunny') DrawBunnyScroll();
-  else if (FScreen.FinaleType == 'EndGameDemon') DrawDemonScroll();
-  else if (FScreen.FinaleType == 'EndGameChess') DrawChess();
-  else if (FScreen.FinaleType == 'EndGameCast') DrawFullScreenPicFinale(fpage1);
-  //else if (FScreen.FinaleType == 'EndGameStrife') DrawFullScreenPic(fpage1);
+       if (nameicmp(FScreen.FinaleType, 'EndGameBunny') == 0) DrawBunnyScroll();
+  else if (nameicmp(FScreen.FinaleType, 'EndGameDemon') == 0) DrawDemonScroll();
+  else if (nameicmp(FScreen.FinaleType, 'EndGameChess') == 0) DrawChess();
+  else if (nameicmp(FScreen.FinaleType, 'EndGameCast') == 0) DrawFullScreenPicFinale(fpage1);
+  //else if (nameicmp(FScreen.FinaleType, 'EndGameStrife') == 0) DrawFullScreenPic(fpage1);
   else DrawFullScreenPic(fpage1);
 }
 
