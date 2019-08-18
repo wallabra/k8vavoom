@@ -213,32 +213,121 @@ final PowerRegeneration FindRegenerationPowerup () {
 
 //==========================================================================
 //
-//  SpawnAmmoType
+//  ChooserCheckAllowedReplacements
+//
+//  check if this is a weapon, and replace it if we have a replacement
+//
+//  this is so `GiveInventory()` with weapon types gives the correct
+//  ammo/weapon type with weapon mods
 //
 //==========================================================================
-static final Ammo SpawnAmmoType (Thinker spwnr, class!Ammo AmmoType, optional bool disableReplace) {
-  if (!AmmoType) return none;
+static final class!Inventory ChooserCheckAllowedReplacements (class!Inventory Type) {
+  if (class!Weapon(Type)) {
+    class!Inventory repl = class!Inventory(GetClassReplacement(Type));
+    if (repl != Type && class!Weapon(repl) && !class!RandomSpawner(repl)) {
+      printdebug("ChooserCheckAllowedReplacements: weapon %C replaced with %C", Type, repl);
+      Type = repl;
+    }
+  } else if (class!Ammo(Type)) {
+    class!Inventory repl = class!Inventory(GetClassReplacement(Type));
+    if (repl != Type && class!Ammo(repl) && !class!RandomSpawner(repl)) {
+      printdebug("ChooserCheckAllowedReplacements: ammo %C replaced with %C", Type, repl);
+      Type = repl;
+    }
+  }
+  return Type;
+}
 
-  class!EntityEx replCls = (disableReplace ? class!EntityEx(AmmoType) : class!EntityEx(GetClassReplacement(AmmoType)));
-  if (!replCls) replCls = AmmoType;
+
+//==========================================================================
+//
+//  ChooseInventoryType
+//
+//  use this instead of directly spawning an inventory item
+//
+//==========================================================================
+static final class!Inventory ChooseInventoryType (class!EntityEx Type, bool disableReplace) {
+  if (!Type) return none;
+
+       if (Type isa 'BasicArmor') Type = BasicArmor;
+  else if (Type isa 'HexenArmor') Type = HexenArmor;
+
+  class!EntityEx replCls = (disableReplace ? Type : class!EntityEx(GetClassReplacement(Type)));
+  if (!replCls) replCls = Type;
 
   if (class!RandomSpawner(replCls)) {
-    class!Ammo ammoCls = class!Ammo(ChooseFromDropItemList(replCls, AllowReplace:true));
-    if (!ammoCls) return none;
-    printdebug("RandomSpawner `%C` chose ammo item `%C`", replCls, ammoCls);
-    AmmoType = ammoCls;
-  } else {
-    if (!class!Ammo(AmmoType)) return none;
+    class!Inventory invCls = class!Inventory(ChooseFromDropItemList(replCls, AllowReplace:!disableReplace));
+    if (!invCls) return none;
+    name itpname = 'inventory';
+         if (invCls isa 'Ammo') itpname = 'ammo';
+    else if (invCls isa 'Weapon') itpname = 'weapon';
+    printdebug("RandomSpawner `%C` chose %s item `%C`", replCls, itpname, invCls);
+    Type = invCls;
   }
-  if (!AmmoType) return none;
 
-  Ammo ammo = spwnr.SpawnEntityChecked(class!Ammo, AmmoType, AllowReplace:false);
-  if (!Ammo(ammo)) {
-    delete ammo;
+  return ChooserCheckAllowedReplacements(class!Inventory(Type));
+}
+
+
+//==========================================================================
+//
+//  ChooseInventoryTypeByName
+//
+//  use this instead of directly spawning an inventory item
+//
+//==========================================================================
+static final class!Inventory ChooseInventoryTypeByName (name ItemName, bool disableReplace) {
+  if (!ItemName || nameicmp(ItemName, 'none') == 0) return none;
+  if (nameicmp(ItemName, 'armor') == 0) ItemName = 'basicarmor';
+  if (nameicmp(ItemName, 'basicarmor') == 0) return ChooseInventoryType(BasicArmor, disableReplace);
+  if (nameicmp(ItemName, 'hexenarmor') == 0) return ChooseInventoryType(HexenArmor, disableReplace);
+  return ChooseInventoryType(class!EntityEx(FindClassNoCase(ItemName)), disableReplace);
+}
+
+
+//==========================================================================
+//
+//  SpawnInventoryTypeByName
+//
+//==========================================================================
+static final Inventory SpawnInventoryTypeByName (Thinker spwnr, name ItemName, optional bool disableReplace) {
+  class!Inventory Type = ChooseInventoryTypeByName(ItemName, disableReplace:disableReplace!optional);
+  if (!Type) return none;
+  //k8: if item's pickup code calls some movement functions, this may trigger
+  //    another call to pickup handler (due to something bumped into new item),
+  //    and it will go on, and on, and on (thanks to TDRR for finding this!).
+  //    so i will move the item far away, and let's hope that there will be nobody there
+  Inventory inv = spwnr.SpawnEntityChecked(class!Inventory, Type, vector(-33000, -33000, -33000), AllowReplace:false);
+  if (!Inventory(inv)) { delete inv; inv = none; }
+  return inv;
+}
+
+
+//==========================================================================
+//
+//  SpawnInventoryTypeChecked
+//
+//==========================================================================
+static final spawner Inventory SpawnInventoryTypeChecked (class!Inventory destType, Thinker spwnr, class!EntityEx Type, optional bool disableReplace) {
+  if (!Type || !destType) return none;
+  class!Inventory stype = ChooseInventoryType(Type, disableReplace);
+  if (!stype) return none;
+  if (!destType(stype)) {
+    // alas
+    printwarn("class `%C` is not a subclass of `%C`, cannot spawn inventory", stype, destType);
     return none;
   }
-
-  return ammo;
+  //k8: if item's pickup code calls some movement functions, this may trigger
+  //    another call to pickup handler (due to something bumped into new item),
+  //    and it will go on, and on, and on (thanks to TDRR for finding this!).
+  //    so i will move the item far away, and let's hope that there will be nobody there
+  Inventory inv = spwnr.SpawnEntityChecked(destType, stype, vector(-33000, -33000, -33000), AllowReplace:false);
+  if (inv && !destType(inv.Class)) {
+    printwarn("spawned item `%C` is not a subclass of `%C`, discarding", inv, destType);
+    delete inv;
+    inv = none;
+  }
+  return inv;
 }
 
 
@@ -247,29 +336,18 @@ static final Ammo SpawnAmmoType (Thinker spwnr, class!Ammo AmmoType, optional bo
 //  SpawnInventoryType
 //
 //==========================================================================
-static final Inventory SpawnInventoryType (Thinker spwnr, class!Inventory Type, optional bool disableReplace) {
-  if (!Type) return none;
+static final Inventory SpawnInventoryType (Thinker spwnr, class!EntityEx Type, optional bool disableReplace) {
+  return SpawnInventoryTypeChecked(class!Inventory, spwnr, Type, disableReplace!optional);
+}
 
-  class!EntityEx replCls = (disableReplace ? class!EntityEx(Type) : class!EntityEx(GetClassReplacement(Type)));
-  if (!replCls) replCls = Type;
 
-  if (class!RandomSpawner(replCls)) {
-    class!Inventory invCls = class!Inventory(ChooseFromDropItemList(replCls, AllowReplace:true));
-    if (!invCls) return none;
-    printdebug("RandomSpawner `%C` chose inventory item `%C`", replCls, invCls);
-    Type = invCls;
-  } else {
-    if (!class!Inventory(Type)) return none;
-  }
-  if (!Type) return none;
-
-  Inventory inv = spwnr.SpawnEntityChecked(class!Inventory, Type, AllowReplace:false);
-  if (!Inventory(inv)) {
-    delete inv;
-    return none;
-  }
-
-  return inv;
+//==========================================================================
+//
+//  SpawnAmmoType
+//
+//==========================================================================
+static final Ammo SpawnAmmoType (Thinker spwnr, class!Ammo Type, optional bool disableReplace) {
+  return SpawnInventoryTypeChecked(class!Ammo, spwnr, Type, disableReplace!optional);
 }
 
 
@@ -279,28 +357,7 @@ static final Inventory SpawnInventoryType (Thinker spwnr, class!Inventory Type, 
 //
 //==========================================================================
 static final Weapon SpawnWeaponType (Thinker spwnr, class!Weapon Type, optional bool disableReplace) {
-  if (!Type) return none;
-
-  class!EntityEx replCls = (disableReplace ? class!EntityEx(Type) : class!EntityEx(GetClassReplacement(Type)));
-  if (!replCls) replCls = Type;
-
-  if (class!RandomSpawner(replCls)) {
-    class!Weapon wpnCls = class!Weapon(ChooseFromDropItemList(replCls, AllowReplace:true));
-    if (!wpnCls) return none;
-    printdebug("RandomSpawner `%C` chose weapon item `%C`", replCls, wpnCls);
-    Type = wpnCls;
-  } else {
-    if (!class!Weapon(Type)) return none;
-  }
-  if (!Type) return none;
-
-  Weapon wpn = spwnr.SpawnEntityChecked(class!Weapon, Type, AllowReplace:false);
-  if (!Weapon(wpn)) {
-    delete wpn;
-    return none;
-  }
-
-  return wpn;
+  return SpawnInventoryTypeChecked(class!Weapon, spwnr, Type, disableReplace!optional);
 }
 
 
@@ -311,7 +368,6 @@ static final Weapon SpawnWeaponType (Thinker spwnr, class!Weapon Type, optional 
 //==========================================================================
 final Inventory GiveInventoryType (class!Inventory Type, optional bool disableReplace/*=false*/) {
   if (!Type) return none;
-  //Inventory Item = Spawn(Type, default, default, default, AllowReplace:!disableReplace);
   Inventory Item = SpawnInventoryType(self, Type, disableReplace:disableReplace);
   if (!Item) return none;
   if (!Inventory(Item)) {
@@ -441,34 +497,18 @@ override void ClearInventory () {
 //
 //  GiveInventory
 //
+//  called from ACS
+//
 //===========================================================================
 override void GiveInventory (name ItemName, int Amount, bool allowReplacement) {
   //printwarn("*** %C: GiveInventory: %s %s", ItemName, Amount);
-
   if (Amount <= 0) return;
-  if (nameicmp(ItemName, 'armor') == 0) ItemName = 'basicarmor';
-  if (allowReplacement && nameicmp(ItemName, 'basicarmor') != 0 && nameicmp(ItemName, 'hexenarmor') != 0) allowReplacement = false;
+  if (!ItemName || nameicmp(ItemName, 'none') == 0) return;
 
-  // get class of the item
-  class EClass = FindClassNoCase(ItemName);
-  if (!EClass) {
-    printwarn("Unknown item type '%s'", ItemName);
+  Inventory Item = SpawnInventoryTypeByName(self, ItemName, disableReplace:!allowReplacement);
+  if (!Item) {
+    printwarn("GiveInventory: Unknown item type '%s'", ItemName);
     return;
-  }
-
-  class!Inventory ItemClass = class!Inventory(EClass);
-  if (!ItemClass) {
-    printwarn("'%s' is not an inventory class", ItemName);
-    return;
-  }
-
-  if (allowReplacement) {
-    class!Inventory irepl = class!Inventory(GetClassReplacement(ItemClass));
-    if (!irepl) {
-      printwarn("'%s' replacement is not an inventory class, ignoring it", ItemName);
-    } else {
-      ItemClass = irepl;
-    }
   }
 
   Weapon SavedPendingWeapon = none;
@@ -477,14 +517,6 @@ override void GiveInventory (name ItemName, int Amount, bool allowReplacement) {
     SavedPendingWeapon = PlayerEx(Player).PendingWeapon;
     HadWeapon = !!PlayerEx(Player).ReadyWeapon;
   }
-
-  //k8: if item's pickup code calls some movement functions, this may trigger
-  //    another call to pickup handler (due to something bumped into new item),
-  //    and it will go on, and on, and on (thanks to TDRR for finding this!).
-  //    so i will move the item far away, and let's hope that there will be nobody there
-  Inventory Item = SpawnEntityChecked(class!Inventory, ItemClass, vector(-33000, -33000, -33000), AllowReplace:false);
-  if (!Item) return;
-  if (!Inventory(Item)) { delete Item; return; }
 
   // this shouldn't count for the item statistics
   if (Item.bCountItem) {
@@ -511,18 +543,34 @@ override void GiveInventory (name ItemName, int Amount, bool allowReplacement) {
 
 //===========================================================================
 //
+//  FindInventoryClassForACS
+//
+//===========================================================================
+final class!Inventory FindInventoryClassForACS (name ItemName, bool allowReplacement) {
+  if (!ItemName || nameicmp(ItemName, 'none') == 0) return none;
+  if (nameicmp(ItemName, 'armor') == 0) ItemName = 'basicarmor';
+  if (nameicmp(ItemName, 'basicarmor') == 0) return BasicArmor;
+  if (nameicmp(ItemName, 'hexenarmor') == 0) return HexenArmor;
+  class!EntityEx ecls = class!EntityEx(FindClassNoCase(ItemName));
+  if (!ecls) return none;
+  if (allowReplacement) {
+    class!EntityEx repl = class!EntityEx(GetClassReplacement(ecls));
+    if (repl) ecls = repl;
+  }
+  return class!Inventory(ecls);
+}
+
+
+//===========================================================================
+//
 //  TakeInventory
 //
 //===========================================================================
 override void TakeInventory (name ItemName, int Amount, bool allowReplacement) {
   //printwarn("*** TakeInventory: %s %s", ItemName, Amount);
-
   if (Amount <= 0) return;
-  if (nameicmp(ItemName, 'armor') == 0) ItemName = 'basicarmor';
-  if (allowReplacement && nameicmp(ItemName, 'basicarmor') != 0 && nameicmp(ItemName, 'hexenarmor') != 0) allowReplacement = false;
 
-  // get class of the item
-  class!Inventory ItemClass = class!Inventory(FindClassNoCase(ItemName));
+  class!Inventory ItemClass = FindInventoryClassForACS(ItemName, allowReplacement);
   if (!ItemClass) return;
 
   Inventory Item = FindInventory(ItemClass, disableReplacement:!allowReplacement);
@@ -546,17 +594,10 @@ override void TakeInventory (name ItemName, int Amount, bool allowReplacement) {
 //===========================================================================
 override int CheckInventory (name ItemName, bool allowReplacement) {
   //printwarn("*** CheckInventory: %s", ItemName);
-
-       if (nameicmp(ItemName, 'armor') == 0) ItemName = 'basicarmor';
-  else if (nameicmp(ItemName, 'health') == 0) return Health;
-  if (allowReplacement && nameicmp(ItemName, 'basicarmor') != 0 && nameicmp(ItemName, 'hexenarmor') != 0) allowReplacement = false;
-
-  class!Inventory ItemClass = class!Inventory(FindClassNoCase(ItemName));
-  if (ItemClass) {
-    Inventory Item = FindInventory(ItemClass, disableReplacement:!allowReplacement);
-    return (Item ? Item.Amount : 0);
-  }
-  return 0;
+  class!Inventory ItemClass = FindInventoryClassForACS(ItemName, allowReplacement);
+  if (!ItemClass) return 0;
+  Inventory Item = FindInventory(ItemClass, disableReplacement:!allowReplacement);
+  return (Item ? Item.Amount : 0);
 }
 
 
@@ -566,12 +607,10 @@ override int CheckInventory (name ItemName, bool allowReplacement) {
 //
 //===========================================================================
 override int UseInventoryName (name ItemName, bool allowReplacement) {
-  class!Inventory ItemClass = class!Inventory(FindClassNoCase(ItemName));
-  if (ItemClass) {
-    Inventory Item = FindInventory(ItemClass, disableReplacement:!allowReplacement);
-    if (Item) return UseInventory(Item);
-  }
-  return 0;
+  class!Inventory ItemClass = FindInventoryClassForACS(ItemName, allowReplacement);
+  if (!ItemClass) return 0;
+  Inventory Item = FindInventory(ItemClass, disableReplacement:!allowReplacement);
+  return (Item ? UseInventory(Item) : 0);
 }
 
 
