@@ -117,11 +117,14 @@ bool VLevel::CheckLine (linetrace_t &Trace, seg_t *Seg) const {
 bool VLevel::CrossSubsector (linetrace_t &Trace, int num) const {
   subsector_t *sub = &Subsectors[num];
 
-  if (sub->poly) {
-    // check the polyobj in the subsector first
-    seg_t **polySeg = sub->poly->segs;
-    for (int polyCount = sub->poly->numsegs; polyCount--; ++polySeg) {
-      if (!CheckLine(Trace, *polySeg)) return false;
+  if (sub->HasPObjs()) {
+    // check the polyobjects in the subsector first
+    for (auto &&it : sub->PObjFirst()) {
+      polyobj_t *pobj = it.value();
+      seg_t **polySeg = pobj->segs;
+      for (int polyCount = pobj->numsegs; polyCount--; ++polySeg) {
+        if (!CheckLine(Trace, *polySeg)) return false;
+      }
     }
   }
 

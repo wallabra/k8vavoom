@@ -1558,11 +1558,16 @@ void VRenderLevelShared::CreateWorldSurfaces () {
     for (sec_region_t *reg = sub->sector->eregions; reg; reg = reg->next) {
       ++count;
       dscount += sub->numlines;
-      if (sub->poly) dscount += sub->poly->numsegs; // polyobj
+      if (sub->HasPObjs()) {
+        for (auto &&it : sub->PObjFirst()) dscount += it.value()->numsegs; // polyobj
+      }
       for (int j = 0; j < sub->numlines; ++j) spcount += CountSegParts(&Level->Segs[sub->firstline+j]);
-      if (sub->poly) {
-        seg_t *const *polySeg = sub->poly->segs;
-        for (int polyCount = sub->poly->numsegs; polyCount--; ++polySeg) spcount += CountSegParts(*polySeg);
+      if (sub->HasPObjs()) {
+        for (auto &&it : sub->PObjFirst()) {
+          polyobj_t *pobj = it.value();
+          seg_t *const *polySeg = pobj->segs;
+          for (int polyCount = pobj->numsegs; polyCount--; ++polySeg) spcount += CountSegParts(*polySeg);
+        }
       }
     }
   }
@@ -1620,19 +1625,24 @@ void VRenderLevelShared::CreateWorldSurfaces () {
       }
 
       sreg->count = sub->numlines;
-      if (ridx == 0 && sub->poly) sreg->count += sub->poly->numsegs; // polyobj
+      if (ridx == 0 && sub->HasPObjs()) {
+        for (auto &&it : sub->PObjFirst()) sreg->count += it.value()->numsegs; // polyobj
+      }
       if (pdsLeft < sreg->count) Sys_Error("out of drawsegs in surface creator");
       sreg->lines = pds;
       pds += sreg->count;
       pdsLeft -= sreg->count;
       for (int j = 0; j < sub->numlines; ++j) CreateSegParts(sub, &sreg->lines[j], &Level->Segs[sub->firstline+j], main_floor, main_ceiling, reg, (ridx == 0));
 
-      if (ridx == 0 && sub->poly) {
+      if (ridx == 0 && sub->HasPObjs()) {
         // polyobj
         int j = sub->numlines;
-        seg_t **polySeg = sub->poly->segs;
-        for (int polyCount = sub->poly->numsegs; polyCount--; ++polySeg, ++j) {
-          CreateSegParts(sub, &sreg->lines[j], *polySeg, main_floor, main_ceiling, nullptr, true);
+        for (auto &&it : sub->PObjFirst()) {
+          polyobj_t *pobj = it.value();
+          seg_t **polySeg = pobj->segs;
+          for (int polyCount = pobj->numsegs; polyCount--; ++polySeg, ++j) {
+            CreateSegParts(sub, &sreg->lines[j], *polySeg, main_floor, main_ceiling, nullptr, true);
+          }
         }
       }
 
@@ -1669,11 +1679,14 @@ void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region)
   if (!region || !sub) return;
 
   // polyobj cannot be in subsector with 3d floors, so update it once
-  if (sub->poly) {
+  if (sub->HasPObjs()) {
     // update the polyobj
-    seg_t **polySeg = sub->poly->segs;
-    for (int polyCount = sub->poly->numsegs; polyCount--; ++polySeg) {
-      UpdateDrawSeg(sub, (*polySeg)->drawsegs, region->floorplane, region->ceilplane);
+    for (auto &&it : sub->PObjFirst()) {
+      polyobj_t *pobj = it.value();
+      seg_t **polySeg = pobj->segs;
+      for (int polyCount = pobj->numsegs; polyCount--; ++polySeg) {
+        UpdateDrawSeg(sub, (*polySeg)->drawsegs, region->floorplane, region->ceilplane);
+      }
     }
   }
 
@@ -1707,12 +1720,15 @@ void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region)
     }
 
     /* polyobj cannot be in 3d floor
-    if (updatePoly && sub->poly) {
+    if (updatePoly && sub->HasPObjs()) {
       // update the polyobj
       updatePoly = false;
-      seg_t **polySeg = sub->poly->segs;
-      for (int polyCount = sub->poly->numsegs; polyCount--; ++polySeg) {
-        UpdateDrawSeg(sub, (*polySeg)->drawsegs, r_floor, r_ceiling);
+      for (auto &&it : sub->PObjFirst()) {
+        polyobj_t *pobj = it.value();
+        seg_t **polySeg = pobj->segs;
+        for (int polyCount = pobj->numsegs; polyCount--; ++polySeg) {
+          UpdateDrawSeg(sub, (*polySeg)->drawsegs, r_floor, r_ceiling);
+        }
       }
     }
     */

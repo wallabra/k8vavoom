@@ -981,10 +981,13 @@ void VRenderLevelShared::UpdateBBoxWithLine (TVec bbox[2], VEntity *SkyBox, cons
       const subsector_t *vsub = &Level->Subsectors[ssindex]; \
       for (const subregion_t *region = vsub->regions; region; region = region->next) { \
         sec_region_t *curreg = region->secregion; \
-        if (vsub->poly && r_draw_pobj) { \
-          seg_t **polySeg = vsub->poly->segs; \
-          for (int count = vsub->poly->numsegs; count--; ++polySeg) { \
-            UpdateBBoxWithLine(LitBBox, curreg->eceiling.splane->SkyBox, (*polySeg)->drawsegs); \
+        if (vsub->HasPObjs() && r_draw_pobj) { \
+          for (auto &&it : vsub->PObjFirst()) { \
+            polyobj_t *pobj = it.value(); \
+            seg_t **polySeg = pobj->segs; \
+            for (int count = pobj->numsegs; count--; ++polySeg) { \
+              UpdateBBoxWithLine(LitBBox, curreg->eceiling.splane->SkyBox, (*polySeg)->drawsegs); \
+            } \
           } \
         } \
         drawseg_t *ds = region->lines; \
@@ -1065,7 +1068,7 @@ void VRenderLevelShared::BuildLightVis (int bspnum, const float *bbox) {
 
 #if 0
     bool hasGoodSurf = false;
-    if (!sub->poly) {
+    if (!sub->HasPObjs()) {
       const seg_t *seg = &Level->Segs[sub->firstline];
       for (int count = sub->numlines; count--; ++seg) {
         if (seg->SphereTouches(CurrLightPos, CurrLightRadius)) {

@@ -394,12 +394,15 @@ void VAdvancedRenderLevel::RenderShadowSecSurface (sec_surface_t *ssurf, VEntity
 //
 //==========================================================================
 void VAdvancedRenderLevel::AddPolyObjToLightClipper (VViewClipper &clip, subsector_t *sub, bool asShadow) {
-  if (sub && sub->poly && r_draw_pobj && clip_use_1d_clipper) {
-    seg_t **polySeg = sub->poly->segs;
-    for (int polyCount = sub->poly->numsegs; polyCount--; ++polySeg) {
-      seg_t *seg = (*polySeg)->drawsegs->seg;
-      if (seg->linedef) {
-        clip.CheckAddClipSeg(seg, nullptr/*mirror*/, asShadow);
+  if (sub && sub->HasPObjs() && r_draw_pobj && clip_use_1d_clipper) {
+    for (auto &&it : sub->PObjFirst()) {
+      polyobj_t *pobj = it.value();
+      seg_t **polySeg = pobj->segs;
+      for (int polyCount = pobj->numsegs; polyCount--; ++polySeg) {
+        seg_t *seg = (*polySeg)->drawsegs->seg;
+        if (seg->linedef) {
+          clip.CheckAddClipSeg(seg, nullptr/*mirror*/, asShadow);
+        }
       }
     }
   }
@@ -412,12 +415,15 @@ void VAdvancedRenderLevel::AddPolyObjToLightClipper (VViewClipper &clip, subsect
 //
 //==========================================================================
 void VAdvancedRenderLevel::RenderShadowPolyObj (subsector_t *sub) {
-  if (sub && sub->poly && r_draw_pobj) {
+  if (sub && sub->HasPObjs() && r_draw_pobj) {
     subregion_t *region = sub->regions;
     sec_region_t *secregion = region->secregion;
-    seg_t **polySeg = sub->poly->segs;
-    for (int polyCount = sub->poly->numsegs; polyCount--; ++polySeg) {
-      RenderShadowLine(sub, secregion, (*polySeg)->drawsegs);
+    for (auto &&it : sub->PObjFirst()) {
+      polyobj_t *pobj = it.value();
+      seg_t **polySeg = pobj->segs;
+      for (int polyCount = pobj->numsegs; polyCount--; ++polySeg) {
+        RenderShadowLine(sub, secregion, (*polySeg)->drawsegs);
+      }
     }
   }
 }
@@ -669,12 +675,15 @@ void VAdvancedRenderLevel::RenderLightSecSurface (sec_surface_t *ssurf, VEntity 
 //
 //==========================================================================
 void VAdvancedRenderLevel::RenderLightPolyObj (subsector_t *sub) {
-  if (sub && sub->poly && r_draw_pobj) {
+  if (sub && sub->HasPObjs() && r_draw_pobj) {
     subregion_t *region = sub->regions;
     sec_region_t *secregion = region->secregion;
-    seg_t **polySeg = sub->poly->segs;
-    for (int polyCount = sub->poly->numsegs; polyCount--; ++polySeg) {
-      RenderLightLine(secregion, (*polySeg)->drawsegs);
+    for (auto &&it : sub->PObjFirst()) {
+      polyobj_t *pobj = it.value();
+      seg_t **polySeg = pobj->segs;
+      for (int polyCount = pobj->numsegs; polyCount--; ++polySeg) {
+        RenderLightLine(secregion, (*polySeg)->drawsegs);
+      }
     }
   }
 }

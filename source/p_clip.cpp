@@ -1354,7 +1354,7 @@ void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *M
   if (ClipIsFull()) return;
 #endif
 
-  bool doPoly = (sub->poly && clip_with_polyobj && r_draw_pobj);
+  bool doPoly = (sub->HasPObjs() && clip_with_polyobj && r_draw_pobj);
 
   {
     const seg_t *seg = &Level->Segs[sub->firstline];
@@ -1365,11 +1365,14 @@ void VViewClipper::ClipAddSubsectorSegs (const subsector_t *sub, const TPlane *M
   }
 
   if (doPoly) {
-    seg_t **polySeg = sub->poly->segs;
-    for (int count = sub->poly->numsegs; count--; ++polySeg) {
-      const seg_t *seg = *polySeg;
-      if (IsGoodSegForPoly(*this, seg)) {
-        CheckAddClipSeg(seg, Mirror, clipAll);
+    for (auto &&it : sub->PObjFirst()) {
+      polyobj_t *pobj = it.value();
+      const seg_t *const *polySeg = pobj->segs;
+      for (int count = pobj->numsegs; count--; ++polySeg) {
+        const seg_t *seg = *polySeg;
+        if (IsGoodSegForPoly(*this, seg)) {
+          CheckAddClipSeg(seg, Mirror, clipAll);
+        }
       }
     }
   }
@@ -1592,7 +1595,7 @@ void VViewClipper::ClipLightAddSubsectorSegs (const subsector_t *sub, bool asSha
   if (ClipIsFull()) return;
 #endif
 
-  bool doPoly = (sub->poly && clip_with_polyobj && r_draw_pobj);
+  bool doPoly = (sub->HasPObjs() && clip_with_polyobj && r_draw_pobj);
 
   {
     const seg_t *seg = &Level->Segs[sub->firstline];
@@ -1608,11 +1611,14 @@ void VViewClipper::ClipLightAddSubsectorSegs (const subsector_t *sub, bool asSha
 #endif
      )
   {
-    seg_t **polySeg = sub->poly->segs;
-    for (int count = sub->poly->numsegs; count--; ++polySeg) {
-      const seg_t *seg = *polySeg;
-      if (IsGoodSegForPoly(*this, seg)) {
-        CheckLightAddClipSeg(seg, Mirror, asShadow);
+    for (auto &&it : sub->PObjFirst()) {
+      polyobj_t *pobj = it.value();
+      const seg_t *const *polySeg = pobj->segs;
+      for (int count = pobj->numsegs; count--; ++polySeg) {
+        const seg_t *seg = *polySeg;
+        if (IsGoodSegForPoly(*this, seg)) {
+          CheckLightAddClipSeg(seg, Mirror, asShadow);
+        }
       }
     }
   }

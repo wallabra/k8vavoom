@@ -534,7 +534,7 @@ void VLevelChannel::Update () {
   //GCon->Log(NAME_DevNet, "VLevelChannel::Update -- Polys");
   for (int i = 0; i < Level->NumPolyObjs; ++i) {
     polyobj_t *Po = &Level->PolyObjs[i];
-    if (!Connection->CheckFatPVS(Po->subsector)) continue;
+    if (!Connection->CheckFatPVS(Po->GetSubsector())) continue;
 
     rep_polyobj_t *RepPo = &PolyObjs[i];
     if (RepPo->startSpot.x == Po->startSpot.x &&

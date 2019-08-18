@@ -1071,8 +1071,11 @@ struct polyobj_t {
   bool bCrush; // should the polyobj attempt to crush mobjs?
   bool bHurtOnTouch;
   int seqType;
-  subsector_t *subsector;
   Thinker SpecialData;  // pointer a thinker, if the poly is moving
+  readonly subsector_t *sub;
+  // we can have more than one pobj in a subsector, and they form a doubly-linked list
+  readonly polyobj_t *subprev;
+  readonly polyobj_t *subnext;
 };
 
 //

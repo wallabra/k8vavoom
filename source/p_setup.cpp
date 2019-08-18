@@ -90,9 +90,9 @@ static VCvarB loader_force_fix_2s("loader_force_fix_2s", false, "Force-fix inval
 
 
 extern VCvarI nodes_builder_type;
-extern VCvarI r_max_portal_depth;
-extern int pobj_allow_several_in_subsector_override; // <0: disable; >0: enable
 #ifdef CLIENT
+extern VCvarI r_max_portal_depth;
+extern VCvarI r_max_portal_depth_override;
 extern int ldr_extrasamples_override; // -1: no override; 0: disable; 1: enable
 extern int r_precalc_static_lights_override; // <0: not set
 extern int r_precache_textures_override; // <0: not set
@@ -240,8 +240,6 @@ static void DumpLoadingTimings () {
 //==========================================================================
 void VLevel::FixKnownMapErrors () {
   eventKnownMapBugFixer();
-
-  if (LevelFlags&LF_ForceAllowSeveralPObjInSubsector) pobj_allow_several_in_subsector_override = 1;
 #ifdef CLIENT
   if (LevelFlags&LF_ForceNoTexturePrecache) r_precache_textures_override = 0;
   if (LevelFlags&LF_ForceNoPrecalcStaticLights) r_precalc_static_lights_override = 0;
@@ -812,8 +810,8 @@ load_again:
   ResetLoadingTimings();
   GTextureManager.ResetMapTextures();
 
-  pobj_allow_several_in_subsector_override = 0;
 #ifdef CLIENT
+  r_max_portal_depth_override = -1;
   ldr_extrasamples_override = -1;
   r_precalc_static_lights_override = -1;
   r_precache_textures_override = -1;

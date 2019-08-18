@@ -189,7 +189,7 @@ class VLevel : public VGameObject {
     LF_TextMap   = 0x08, // UDMF format map
     // used in map fixer
     LF_ForceRebuildNodes                = 0x0010,
-    LF_ForceAllowSeveralPObjInSubsector = 0x0020,
+    LF_ForceAllowSeveralPObjInSubsector = 0x0020, // this is not used anymore, but kept for compatibility
     LF_ForceNoTexturePrecache           = 0x0040,
     LF_ForceNoPrecalcStaticLights       = 0x0080,
     LF_ForceNoDeepwaterFix              = 0x0100,

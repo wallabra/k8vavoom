@@ -973,12 +973,13 @@ void VRenderLevel::InvalidateSubsectorLMaps (const TVec &org, float radius, int 
   subsector_t *sub = &Level->Subsectors[num];
   if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
   // polyobj
-  if (sub->poly) {
-    int polyCount = sub->poly->numsegs;
-    seg_t **polySeg = sub->poly->segs;
-    while (polyCount--) {
-      InvalidateLineLMaps(org, radius, (*polySeg)->drawsegs);
-      ++polySeg;
+  if (sub->HasPObjs()) {
+    for (auto &&it : sub->PObjFirst()) {
+      polyobj_t *pobj = it.value();
+      seg_t **polySeg = pobj->segs;
+      for (int polyCount = pobj->numsegs; polyCount--; ++polySeg) {
+        InvalidateLineLMaps(org, radius, (*polySeg)->drawsegs);
+      }
     }
   }
   //TODO: invalidate only relevant segs

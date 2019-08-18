@@ -762,6 +762,8 @@ struct sector_t {
 
 // polyobj data
 struct polyobj_t {
+  friend class PolySubIter;
+
   seg_t **segs;
   vint32 numsegs;
   TVec startSpot;
@@ -777,8 +779,45 @@ struct polyobj_t {
   };
   vuint32 PolyFlags;
   vint32 seqType;
-  subsector_t *subsector;
   VThinker *SpecialData; // pointer a thinker, if the poly is moving
+
+private:
+  subsector_t *sub;
+  // we can have more than one pobj in a subsector, and they form a doubly-linked list
+  polyobj_t *subprev;
+  polyobj_t *subnext;
+
+public:
+  //WARNING! polyobj can be in only one subsector at a time, so calling this
+  //         will remove pobj from its current subsector, and put it into a new one!
+  // it is safe to call this with `nullptr`
+  void RelinkToSubsector (subsector_t *asub);
+  void UnlinkFromSubsector ();
+
+  inline subsector_t *GetSubsector () const { return sub; }
+
+  inline polyobj_t *GetPrev () { return subprev; }
+  inline const polyobj_t *GetPrev () const { return subprev; }
+
+  inline polyobj_t *GetNext () { return subnext; }
+  inline const polyobj_t *GetNext () const { return subnext; }
+
+public:
+  class PolySubIter {
+  private:
+    polyobj_t *pobjp;
+  public:
+    PolySubIter (polyobj_t *pstart) : pobjp(pstart) {}
+    inline PolySubIter begin () { return PolySubIter(pobjp); }
+    inline PolySubIter end () { return PolySubIter(nullptr); }
+    inline bool operator == (const PolySubIter &b) const { return (pobjp == b.pobjp); }
+    inline bool operator != (const PolySubIter &b) const { return (pobjp != b.pobjp); }
+    inline PolySubIter operator * () const { return PolySubIter(this->pobjp); } /* required for iterator */
+    inline void operator ++ () { if (pobjp) pobjp = pobjp->GetNext(); } /* this is enough for iterator */
+    // accessors
+    inline polyobj_t *pobj () const { return pobjp; }
+    inline polyobj_t *value () const { return pobjp; }
+  };
 };
 
 
@@ -878,7 +917,7 @@ public:
   subsector_t *seclink; // next subsector for this sector
   vint32 numlines;
   vint32 firstline;
-  polyobj_t *poly;
+  polyobj_t *polyfirst; // first pobj in the subsector
 
   node_t *parent;
   vuint32 parentChild; // our child index in parent node
@@ -896,6 +935,9 @@ public:
   subregion_t *regions;
 
   vuint32 miscFlags; // SSMF_xxx
+
+  inline bool HasPObjs () const { return !!polyfirst; }
+  inline polyobj_t::PolySubIter PObjFirst () const { return polyobj_t::PolySubIter(polyfirst); }
 };
 
 

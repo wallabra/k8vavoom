@@ -36,8 +36,41 @@
 #define PO_MAXPOLYSEGS    (512)
 
 
-static VCvarB pobj_allow_several_in_subsector("pobj_allow_several_in_subsector", false, "Allow several polyobjs in one subsector (WARNING! THE ENGINE MAY CRASH!)?", CVAR_PreInit|CVAR_Archive);
-int pobj_allow_several_in_subsector_override = 0; // <0: disable; >0: enable
+//==========================================================================
+//
+//  polyobj_t::RelinkToSubsector
+//
+//==========================================================================
+void polyobj_t::RelinkToSubsector (subsector_t *asub) {
+  if (asub == sub) return; // nothing to do
+  if (sub) UnlinkFromSubsector();
+  if (!asub) return;
+  // just prepend, the order doesn't really matter
+  check(!subprev);
+  check(!subnext);
+  subnext = asub->polyfirst;
+  if (asub->polyfirst) {
+    check(asub->polyfirst != this);
+    check(!asub->polyfirst->subprev);
+    asub->polyfirst->subprev = this;
+  }
+  asub->polyfirst = this;
+}
+
+
+//==========================================================================
+//
+//  polyobj_t::UnlinkFromSubsector
+//
+//==========================================================================
+void polyobj_t::UnlinkFromSubsector () {
+  if (!sub) return;
+  if (!subprev) sub->polyfirst = subnext; // fix list head
+  if (subprev) subprev->subnext = subnext;
+  if (subnext) subnext->subprev = subprev;
+  sub = nullptr;
+  subprev = subnext = nullptr;
+}
 
 
 //==========================================================================
@@ -389,24 +422,7 @@ void VLevel::TranslatePolyobjToStartSpot (float originX, float originY, int tag)
   avg.x /= po->numsegs;
   avg.y /= po->numsegs;
   subsector_t *sub = PointInSubsector(avg);
-  if (sub->poly != nullptr && sub->poly != po) {
-    bool allowed = false;
-    if (pobj_allow_several_in_subsector_override) {
-      allowed = (pobj_allow_several_in_subsector_override > 0); // <0: disable; >0: enable
-    } else {
-      allowed = pobj_allow_several_in_subsector;
-    }
-    if (allowed) {
-      GCon->Logf(NAME_Error, "Multiple polyobjs in a single subsector.");
-    } else {
-      Sys_Error("Multiple polyobjs in a single subsector.");
-    }
-    //FIXME!
-    sub->poly->subsector = nullptr;
-  }
-  sub->poly = po;
-  po->subsector = sub;
-
+  po->RelinkToSubsector(sub);
   UpdatePolySegs(po);
 }
 

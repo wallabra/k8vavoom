@@ -393,10 +393,8 @@ void KnownMapBugFixer () {
       MapHashMD5 == "2842ece024c5c7905f637c616fefc36e" ||
       MapHashMD5 == "c3cd90a4d470b5413849e6341f245737")
   {
-//#ifdef CLIENT
-    SetCvar('r_max_portal_depth', 1);
-//#endif
-    bForceAllowSeveralPObjInSubsector = true;
+    SetCvar('r_max_portal_depth_override', 1);
+    bForceAllowSeveralPObjInSubsector = true; // this is not used anymore, but kept for compatibility
     printwarn("MAPFIX: Winter's Fury: reduced portals to 1, enabled pobj hack");
     return;
   }
@@ -404,14 +402,12 @@ void KnownMapBugFixer () {
   // Skulldash EE first map and credits map, too many static lights, don't precalc
   if (MapHashMD5 == "42389d0173031f6ffc8df2919d34fe16" ||
       MapHashMD5 == "a8d2a336f0b8e77a84be9460743be70d") {
-//#ifdef CLIENT
     if (MapHashMD5 == "42389d0173031f6ffc8df2919d34fe16") {
       // hub map
       bForceNoTexturePrecache = true;
       bForceNoPrecalcStaticLights = true;
     }
     //ldr_extrasamples_override = 0;
-//#endif
     printwarn("MAPFIX: SkullDash EE: disabled precalculated static lightmaps and texture precaching");
     return;
   }

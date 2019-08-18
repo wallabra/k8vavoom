@@ -42,6 +42,7 @@
 VCvarB r_draw_pobj("r_draw_pobj", true, "Render polyobjects?", CVAR_PreInit);
 static VCvarI r_maxmirrors("r_maxmirrors", "1", "Maximum allowed mirrors.", CVAR_Archive);
 VCvarI r_max_portal_depth("r_max_portal_depth", "1", "Maximum allowed portal depth (-1: infinite)", CVAR_Archive);
+VCvarI r_max_portal_depth_override("r_max_portal_depth_override", "-1", "Maximum allowed portal depth override for map fixer (-1: not active)", 0);
 static VCvarB r_allow_horizons("r_allow_horizons", true, "Allow horizon portal rendering?", CVAR_Archive);
 static VCvarB r_allow_mirrors("r_allow_mirrors", false, "Allow mirror portal rendering?", CVAR_Archive);
 static VCvarB r_allow_other_portals("r_allow_other_portals", false, "Allow non-mirror portal rendering (SLOW)?", CVAR_Archive);
@@ -73,6 +74,18 @@ static bool oldMirrors = true;
 static bool oldHorizons = true;
 static int oldMaxMirrors = -666;
 static int oldPortalDepth = -666;
+
+
+//==========================================================================
+//
+//  GetMaxPortalDepth
+//
+//==========================================================================
+static inline int GetMaxPortalDepth () {
+  int res = r_max_portal_depth_override.asInt();
+  if (res >= 0) return res;
+  return r_max_portal_depth.asInt();
+}
 
 
 //==========================================================================
@@ -839,12 +852,15 @@ bool VRenderLevelShared::NeedToRenderNextSubFirst (const subregion_t *region) {
 //
 //==========================================================================
 void VRenderLevelShared::AddPolyObjToClipper (VViewClipper &clip, subsector_t *sub) {
-  if (sub && sub->poly && r_draw_pobj && clip_use_1d_clipper) {
-    seg_t **polySeg = sub->poly->segs;
-    for (int polyCount = sub->poly->numsegs; polyCount--; ++polySeg) {
-      seg_t *seg = (*polySeg)->drawsegs->seg;
-      if (seg->linedef) {
-        clip.CheckAddClipSeg(seg, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
+  if (sub && sub->HasPObjs() && r_draw_pobj && clip_use_1d_clipper) {
+    for (auto &&it : sub->PObjFirst()) {
+      polyobj_t *pobj = it.value();
+      seg_t **polySeg = pobj->segs;
+      for (int polyCount = pobj->numsegs; polyCount--; ++polySeg) {
+        seg_t *seg = (*polySeg)->drawsegs->seg;
+        if (seg->linedef) {
+          clip.CheckAddClipSeg(seg, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
+        }
       }
     }
   }
@@ -860,12 +876,15 @@ void VRenderLevelShared::AddPolyObjToClipper (VViewClipper &clip, subsector_t *s
 //
 //==========================================================================
 void VRenderLevelShared::RenderPolyObj (subsector_t *sub) {
-  if (sub && sub->poly && r_draw_pobj) {
+  if (sub && sub->HasPObjs() && r_draw_pobj) {
     subregion_t *region = sub->regions;
     sec_region_t *secregion = region->secregion;
-    seg_t **polySeg = sub->poly->segs;
-    for (int polyCount = sub->poly->numsegs; polyCount--; ++polySeg) {
-      RenderLine(sub, secregion, region, (*polySeg)->drawsegs);
+    for (auto &&it : sub->PObjFirst()) {
+      polyobj_t *pobj = it.value();
+      seg_t **polySeg = pobj->segs;
+      for (int polyCount = pobj->numsegs; polyCount--; ++polySeg) {
+        RenderLine(sub, secregion, region, (*polySeg)->drawsegs);
+      }
     }
   }
 }
@@ -895,7 +914,7 @@ void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region)
     }
   } else {
     // if there is no polyobj here, we can skip rendering floors
-    if (!sub || !sub->poly || !r_draw_pobj) drawFloors = false;
+    if (!sub || !sub->HasPObjs() || !r_draw_pobj) drawFloors = false;
   }
 
   if (drawFloors || r_dbg_always_draw_flats) {
@@ -1165,7 +1184,7 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
 //==========================================================================
 void VRenderLevelShared::RenderPortals () {
   if (PortalLevel == 0) {
-    if (oldMaxMirrors != r_maxmirrors || oldPortalDepth != r_max_portal_depth ||
+    if (oldMaxMirrors != r_maxmirrors || oldPortalDepth != GetMaxPortalDepth() ||
         oldHorizons != r_allow_horizons || oldMirrors != r_allow_mirrors)
     {
       //GCon->Logf("portal settings changed, resetting portal info...");
@@ -1178,7 +1197,7 @@ void VRenderLevelShared::RenderPortals () {
       Portals.reset();
       // save cvars
       oldMaxMirrors = r_maxmirrors;
-      oldPortalDepth = r_max_portal_depth;
+      oldPortalDepth = GetMaxPortalDepth();
       oldHorizons = r_allow_horizons;
       oldMirrors = r_allow_mirrors;
       return;
@@ -1195,7 +1214,8 @@ void VRenderLevelShared::RenderPortals () {
   }
 #endif
 
-  if (r_max_portal_depth < 0 || PortalLevel <= r_max_portal_depth) {
+  const int maxpdepth = GetMaxPortalDepth();
+  if (maxpdepth < 0 || PortalLevel <= maxpdepth) {
     //FIXME: disable decals for portals
     //       i should rewrite decal rendering, so we can skip stencil buffer
     //       (or emulate stencil buffer with texture and shaders)
