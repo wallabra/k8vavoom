@@ -702,7 +702,7 @@ final void doDamageSomething (EntityEx dest, int amount, name damagetype, int fl
 
   if (amount == 0 && !(flags&DMSS_KILL)) return;
 
-  if (!DecorFilterCheck(dest, invertFilter:!!(flags&DMSS_EXFILTER), invertSpecies:!!(flags&DMSS_EXSPECIES), either:!!(flags&DMSS_EITHER), filter:filter!optional, species:species!optional)) return;
+  if (!dest.DecorFilterCheck(invertFilter:!!(flags&DMSS_EXFILTER), invertSpecies:!!(flags&DMSS_EXSPECIES), either:!!(flags&DMSS_EITHER), filter:filter!optional, species:species!optional)) return;
 
   // get source and inflictor
   EntityEx source = EntityEx(DecorDoAAPtr('doDamageSomething', src!optional));
@@ -868,7 +868,7 @@ final void A_DropItem (name item, optional int dropamount, optional int chance) 
 final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filter, optional name species) {
   if (!dest) return false;
 
-  if (!DecorFilterCheck(dest, invertFilter:!!(flags&RMVF_EXFILTER), invertSpecies:!!(flags&RMVF_EXSPECIES), either:!!(flags&RMVF_EITHER), filter:filter!optional, species:species!optional)) return false;
+  if (!dest.DecorFilterCheck(invertFilter:!!(flags&RMVF_EXFILTER), invertSpecies:!!(flags&RMVF_EXSPECIES), either:!!(flags&RMVF_EITHER), filter:filter!optional, species:species!optional)) return false;
 
   // check other flags
   if (!(flags&RMVF_EVERYTHING)) {
@@ -992,7 +992,7 @@ final int A_RadiusGive (name itemname, float distance, int flags, optional int a
         if (fabs(Origin.x-ent.Origin.x) > distance || fabs(Origin.y-ent.Origin.y) > distance) continue;
       }
 
-      if (!DecorFilterCheck(ent, invertFilter:!!(flags&RGF_EXFILTER), invertSpecies:!!(flags&RGF_EXSPECIES), either:!!(flags&RGF_EITHER), filter:filter!optional, species:species!optional)) continue;
+      if (!ent.DecorFilterCheck(invertFilter:!!(flags&RGF_EXFILTER), invertSpecies:!!(flags&RGF_EXSPECIES), either:!!(flags&RGF_EITHER), filter:filter!optional, species:species!optional)) continue;
 
       if (ent.bCorpse && (flags&RGF_CORPSES)) {
         // do nothing, really
