@@ -702,26 +702,7 @@ final void doDamageSomething (EntityEx dest, int amount, name damagetype, int fl
 
   if (amount == 0 && !(flags&DMSS_KILL)) return;
 
-  if (nameicmp(filter, 'none') == 0) filter = '';
-  if (nameicmp(species, 'none') == 0) species = '';
-
-  // 0: unknown (considered true, lol); -1: filter didn't hit; 1: filter hit
-  int flt = 0, spc = 0;
-
-  // check filters
-  if (specified_filter && filter) flt = (nameicmp(GetClassName(dest.Class), filter) != 0 ? 1 : -1); //k8: should we check replacements or inheritance chain?
-  if (specified_species && species) spc = (nameicmp(dest.GetSpecies(), species) != 0 ? 1 : -1);
-
-  // invert filters, if necessary
-  if (flags&DMSS_EXFILTER) flt = -flt;
-  if (flags&DMSS_EXSPECIES) spc = -spc;
-
-  // process filters
-  if (flags&DMSS_EITHER) {
-    if (spc < 0 && flt < 0) return;
-  } else {
-    if (spc < 0 || flt < 0) return;
-  }
+  if (!decoFilterCheck(dest, invertFilter:!!(flags&DMSS_EXFILTER), invertSpecies:!!(flags&DMSS_EXSPECIES), either:!!(flags&DMSS_EITHER), filter:filter!optional, species:species!optional)) return;
 
   // get source and inflictor
   EntityEx source = EntityEx(DecorDoAAPtr('doDamageSomething', src!optional));
@@ -879,46 +860,6 @@ final void A_DropItem (name item, optional int dropamount, optional int chance) 
 
 //==========================================================================
 //
-//  a_removechildren_checkIfChildShouldBeRemoved
-//
-//==========================================================================
-/*
-final private bool a_removechildren_checkIfChildShouldBeRemoved (Actor child, bool all, int flags, string filter, string species) {
-  if (!all && child.Health > 0) return false; // it is still alive
-  bool filterHit = true, speciesHit = true;
-  if (filter) {
-    filterHit = (stricmp(filter, string(GetClassName(child.Class))) != 0);
-    if (flags&RMVF_EXFILTER) filterHit = !filterHit; // filter inverted
-  }
-  if (species) {
-    speciesHit = (stricmp(species, string(child.GetSpecies())) != 0);
-    if (flags&RMVF_EXSPECIES) speciesHit = !speciesHit; // species inverted
-  }
-  if (flags&RMVF_EITHER) {
-    if (!filterHit && !speciesHit) return false;
-  } else {
-    if (!filterHit || !speciesHit) return false;
-  }
-  // check other flags
-  if (!(flags&RMVF_EVERYTHING)) {
-    if (child.bMonster) {
-      // monster?
-      if (flags&RMVF_NOMONSTERS) return false;
-    } else if (child.IsMissile(false)) { // or precise?
-      // missile?
-      if (!(flags&RMVF_MISSILES)) return false;
-    } else {
-      // other?
-      if (!(flags&RMVF_MISC)) return false;
-    }
-  }
-  return true;
-}
-*/
-
-
-//==========================================================================
-//
 //  doRemoveSomethingCheck
 //
 //  common code for `A_RemoveXXX()`
@@ -927,26 +868,7 @@ final private bool a_removechildren_checkIfChildShouldBeRemoved (Actor child, bo
 final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filter, optional name species) {
   if (!dest) return false;
 
-  if (nameicmp(filter, 'none') == 0) filter = '';
-  if (nameicmp(species, 'none') == 0) species = '';
-
-  // 0: unknown (considered true, lol); -1: filter didn't hit; 1: filter hit
-  int flt = 0, spc = 0;
-
-  // check filters
-  if (specified_filter && filter) flt = (nameicmp(GetClassName(dest.Class), filter) != 0 ? 1 : -1); //k8: should we check replacements or inheritance chain?
-  if (specified_species && species) spc = (nameicmp(dest.GetSpecies(), species) != 0 ? 1 : -1);
-
-  // invert filters, if necessary
-  if (flags&RMVF_EXFILTER) flt = -flt;
-  if (flags&RMVF_EXSPECIES) spc = -spc;
-
-  // process filters
-  if (flags&RMVF_EITHER) {
-    if (spc < 0 && flt < 0) return false;
-  } else {
-    if (spc < 0 || flt < 0) return false;
-  }
+  if (!decoFilterCheck(dest, invertFilter:!!(flags&RMVF_EXFILTER), invertSpecies:!!(flags&RMVF_EXSPECIES), either:!!(flags&RMVF_EITHER), filter:filter!optional, species:species!optional)) return false;
 
   // check other flags
   if (!(flags&RMVF_EVERYTHING)) {
@@ -1034,7 +956,7 @@ final void A_RemoveSiblings (optional bool all, optional int flags, optional nam
 //  A_RadiusGive
 //
 //==========================================================================
-final int A_RadiusGive (name itemname, float distance, int flags, optional int amount, optional string filter, optional string species, optional float mindist, optional int limit) {
+final int A_RadiusGive (name itemname, float distance, int flags, optional int amount, optional name filter, optional name species, optional float mindist, optional int limit) {
   if (!specified_limit) limit = int.max;
   if (limit < 1) return 0;
 
@@ -1048,12 +970,10 @@ final int A_RadiusGive (name itemname, float distance, int flags, optional int a
   if (!itemname) return 0;
   class!Inventory itemtype = class!Inventory(FindClassNoCase(itemname));
   if (!itemtype) return 0;
+  /*k8: i don't think so
   itemtype = class!Inventory(GetClassReplacement(itemtype));
   if (!itemtype) return 0;
-
-  // fix filters
-  if (stricmp(filter, "none") == 0) filter = "";
-  if (stricmp(species, "none") == 0) species = "";
+  */
 
   bool giveCube = (flags&RGF_CUBE);
   int count = 0;
@@ -1061,6 +981,7 @@ final int A_RadiusGive (name itemname, float distance, int flags, optional int a
   foreach RadiusThings(enti, Origin, distance*(giveCube ? 2.0 : 1.0)) {
     EntityEx ent = EntityEx(enti);
     if (!ent) continue;
+
     if (ent == self) {
       if (!(flags&RGF_GIVESELF)) continue;
     } else {
@@ -1071,21 +992,7 @@ final int A_RadiusGive (name itemname, float distance, int flags, optional int a
         if (fabs(Origin.x-ent.Origin.x) > distance || fabs(Origin.y-ent.Origin.y) > distance) continue;
       }
 
-      // check filters
-      bool filterHit = true, speciesHit = true;
-      if (filter) {
-        filterHit = (stricmp(filter, string(GetClassName(ent.Class))) != 0);
-        if (flags&RGF_EXFILTER) filterHit = !filterHit; // filter inverted
-      }
-      if (species) {
-        speciesHit = (stricmp(species, string(ent.GetSpecies())) != 0);
-        if (flags&RGF_EXSPECIES) speciesHit = !speciesHit; // species inverted
-      }
-      if (flags&RGF_EITHER) {
-        if (!filterHit && !speciesHit) continue;
-      } else {
-        if (!filterHit || !speciesHit) continue;
-      }
+      if (!decoFilterCheck(ent, invertFilter:!!(flags&RGF_EXFILTER), invertSpecies:!!(flags&RGF_EXSPECIES), either:!!(flags&RGF_EITHER), filter:filter!optional, species:species!optional)) continue;
 
       if (ent.bCorpse && (flags&RGF_CORPSES)) {
         // do nothing, really

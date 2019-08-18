@@ -59,6 +59,39 @@ override void Destroyed () {
 }
 
 
+//==========================================================================
+//
+//  decoFilterCheck
+//
+//  returns `true` if filter passed
+//
+//==========================================================================
+final bool decoFilterCheck (EntityEx dest, bool invertFilter, bool invertSpecies, bool either,
+                            optional name filter, optional name species)
+{
+  if (!dest) return false;
+
+  if (!specified_filter && !specified_species) return true;
+
+  // 0: unknown (considered true, lol); -1: filter didn't hit; 1: filter hit
+  int flt = 0, spc = 0;
+
+  // check filters
+  if (specified_filter /*&& filter*/) flt = (nameicmp(GetClassName(dest.Class), filter) != 0 ? 1 : -1); //k8: should we check replacements or inheritance chain?
+  if (specified_species /*&& species*/) spc = (nameicmp(dest.GetSpecies(), species) != 0 ? 1 : -1);
+
+  // invert filters, if necessary
+  if (invertFilter) flt = -flt;
+  if (invertSpecies) spc = -spc;
+
+  // process filters
+  return
+    either ?
+      (spc >= 0 && flt >= 0) :
+      (spc >= 0 || flt >= 0);
+}
+
+
 //===========================================================================
 //
 //  A_Log

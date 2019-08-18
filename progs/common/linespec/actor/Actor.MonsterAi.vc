@@ -1044,26 +1044,7 @@ final void doKillXXX (EntityEx dest, name damagetype, int flags, optional name f
 {
   if (!dest) return;
 
-  if (nameicmp(filter, 'none') == 0) filter = '';
-  if (nameicmp(species, 'none') == 0) species = '';
-
-  // 0: unknown (considered true, lol); -1: filter didn't hit; 1: filter hit
-  int flt = 0, spc = 0;
-
-  // check filters
-  if (specified_filter && filter) flt = (nameicmp(GetClassName(dest.Class), filter) != 0 ? 1 : -1); //k8: should we check replacements or inheritance chain?
-  if (specified_species && species) spc = (nameicmp(dest.GetSpecies(), species) != 0 ? 1 : -1);
-
-  // invert filters, if necessary
-  if (flags&KILS_EXFILTER) flt = -flt;
-  if (flags&KILS_EXSPECIES) spc = -spc;
-
-  // process filters
-  if (flags&KILS_EITHER) {
-    if (spc < 0 && flt < 0) return;
-  } else {
-    if (spc < 0 || flt < 0) return;
-  }
+  if (!decoFilterCheck(dest, invertFilter:!!(flags&KILS_EXFILTER), invertSpecies:!!(flags&KILS_EXSPECIES), either:!!(flags&KILS_EITHER), filter:filter!optional, species:species!optional)) return;
 
   if (!(flags&KILS_KILLMISSILES)) {
     if (dest.IsMissile(false)) return;
