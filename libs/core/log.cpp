@@ -471,7 +471,7 @@ public:
           // force new event
           if (!lastWasNL) xprintStr("\n", outfile());
           printEvent(Event);
-          xprintStr(" ", outfile());
+          if (!GLogSkipLogTypeName) xprintStr(" ", outfile());
         }
         lastWasNL = false;
         printStr(Text, (size_t)(ptrdiff_t)(eol-Text), outfile());
