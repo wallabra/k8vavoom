@@ -19,6 +19,8 @@ rule -configure- {
   if $(NT) || $(WINDOZE) {
     -configure-add-line- LINKLIBS.all "+=" "-lwinmm" ";" ;
     -configure-add-line- LINKFLAGS.all "+=" '-Wl,-subsystem,console' ";" ;
+  } else {
+    -configure-add-line- LINKFLAGS.all "+=" -pthread ";" ;
   }
   -configure-pkg-config- "zlib" : zlib : : "[-configure-zlib-not-found-]" ;
   -configure-pkg-config- "liblzma" : liblzma : : "[-configure-liblzma-not-found-]" ;
