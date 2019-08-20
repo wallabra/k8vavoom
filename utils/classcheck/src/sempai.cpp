@@ -1,0 +1,361 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**  Copyright (C) 2019 Ketmar Dark
+//**
+//**  This program is free software: you can redistribute it and/or modify
+//**  it under the terms of the GNU General Public License as published by
+//**  the Free Software Foundation, either version 3 of the License, or
+//**  (at your option) any later version.
+//**
+//**  This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**  You should have received a copy of the GNU General Public License
+//**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//**
+//**************************************************************************
+#include "sempai.h"
+
+
+//==========================================================================
+//
+//  SemParser::SemParser
+//
+//  this will destroy a stream after reading
+//
+//==========================================================================
+SemParser::SemParser (VStream *src)
+  : text()
+  , currpos(0)
+  , token()
+  , tokpos(0)
+  , srcfile(src->GetName())
+{
+  src->Seek(0);
+  text.setLength(src->TotalSize());
+  src->Serialise(text.getMutableCStr(), text.length());
+  delete src;
+}
+
+
+//==========================================================================
+//
+//  SemParser::SemParser
+//
+//==========================================================================
+SemParser::SemParser (const SemParser &src)
+  : text()
+  , currpos(0)
+  , token()
+  , tokpos(0)
+  , srcfile()
+{
+  *this = src;
+}
+
+
+//==========================================================================
+//
+//  SemParser::~SemParser
+//
+//==========================================================================
+SemParser::~SemParser () {
+}
+
+
+//==========================================================================
+//
+//  SemParser::operator =
+//
+//==========================================================================
+SemParser &SemParser::operator = (const SemParser &src) {
+  if (&src != this) {
+    text = src.text;
+    currpos = src.currpos;
+    token = src.token;
+    tokpos = src.tokpos;
+    srcfile = src.srcfile;
+  }
+  return *this;
+}
+
+
+//==========================================================================
+//
+//  SemParser::getLineForPos
+//
+//==========================================================================
+int SemParser::getLineForPos (int pos) const {
+  if (pos <= 0) return 1;
+  int linenum = 1;
+  for (int cpos = 0; cpos < text.length(); ++cpos) {
+    if (cpos == pos) break;
+    if (text[cpos] == '\n') ++linenum;
+  }
+  return linenum;
+}
+
+
+//==========================================================================
+//
+//  SemParser::skipBlanks
+//
+//  ...and comments
+//
+//==========================================================================
+void SemParser::skipBlanks () {
+  for (;;) {
+    char ch = peekChar();
+    if (!ch) break;
+    if ((vuint8)ch <= ' ') { skipChar(); continue; }
+    // line join?
+    if (ch == '\\') {
+      int ofs = 1;
+      for (;;) {
+        ch = peekChar(ofs);
+        if (!ch) return;
+        if (ch == '\n') {
+          // yeah, join
+          skipChar(); // slash
+          break;
+        }
+        if ((vuint8)ch > ' ') return; // oops
+      }
+      continue;
+    }
+    // comment?
+    if (ch != '/') break;
+    ch = peekChar(1);
+    // one-line comment?
+    if (ch == '/') {
+      for (;;) {
+        ch = getChar();
+        if (!ch || ch == '\n') break;
+      }
+      continue;
+    }
+    // multiline?
+    if (ch == '*') {
+      skipChar();
+      skipChar();
+      for (;;) {
+        ch = getChar();
+        if (!ch) break;
+        if (ch != '*') continue;
+        ch = getChar();
+        if (ch == '/') break;
+      }
+      continue;
+    }
+    // nested?
+    if (ch == '+') {
+      skipChar();
+      skipChar();
+      int level = 1;
+      for (;;) {
+        ch = getChar();
+        if (!ch) break;
+        if (ch == '+' && peekChar() == '/') {
+          skipChar();
+          if (--level == 0) break;
+        } else if (ch == '/' && peekChar() == '+') {
+          skipChar();
+          ++level;
+        }
+      }
+      continue;
+    }
+    // not a comment, not a blank
+    break;
+  }
+}
+
+
+//==========================================================================
+//
+//  SemParser::collectBasedNumber
+//
+//==========================================================================
+void SemParser::collectBasedNumber (int base) {
+  for (;;) {
+    char ch = peekChar();
+    if (!ch) return;
+    if (ch != '_' && VStr::digitInBase(ch, base) < 0) break;
+    token += getChar();
+  }
+}
+
+
+//==========================================================================
+//
+//  SemParser::skipToken
+//
+//==========================================================================
+void SemParser::skipToken () {
+  skipBlanks();
+
+  token.clear();
+  tokpos = currpos;
+  char ch = getChar();
+  if (!ch) return;
+  token += ch;
+
+  // quoted?
+  if (ch == '\'' || ch == '"') {
+    char ech = ch;
+    for (;;) {
+      ch = getChar();
+      if (!ch) break;
+      token += ch;
+      if (ch == ech) break;
+      if (ch == '\\') {
+        ch = getChar();
+        if (!ch) break;
+        token += ch;
+      }
+    }
+    return;
+  }
+
+  // number?
+  // actually, numbers can start with signs, but i don't care here
+  if (VStr::digitInBase(ch, 10) >= 0) {
+    int base = 10;
+    // hex number?
+    if (ch == '0' && peekChar() == 'x') {
+      token += getChar(); // eat 'x'
+      base = 16;
+    } else if (ch == '0' && peekChar() == 'b') {
+      token += getChar(); // eat 'b'
+      base = 2;
+    }
+    // integral part
+    collectBasedNumber(base);
+    ch = peekChar();
+    // fractional part?
+    if (ch == '.') {
+      token += getChar(); // eat the dot
+      collectBasedNumber(base);
+      ch = peekChar();
+    }
+    // exponent?
+    if ((base == 10 && (ch == 'e' || ch == 'E')) || (base == 16 && (ch == 'p' || ch == 'P'))) {
+      token += getChar(); // so eat the 'e'/'p'
+      ch = peekChar();
+      if (ch == '+' || ch == '-') token += getChar();
+      collectBasedNumber(base);
+    }
+    return;
+  }
+
+  // identifier?
+  if (ch == '_' || VStr::isAlphaAscii(ch)) {
+    for (;;) {
+      ch = peekChar();
+      if (!ch) return;
+      if (ch != '_' && !VStr::isAlphaAscii(ch) && VStr::digitInBase(ch, 10) < 0) break;
+      token += getChar();
+    }
+    return;
+  }
+
+  // here we should parse multichar tokens, but meh...
+  if (ch == ':' && peekChar() == ':') {
+    token += getChar();
+  }
+}
+
+
+//==========================================================================
+//
+//  SemParser::expectId
+//
+//==========================================================================
+VStr SemParser::expectId () {
+  int savepos = currpos;
+  skipBlanks();
+  char ch = peekChar();
+  if (ch == '_' || VStr::isAlphaAscii(ch)) {
+    skipToken();
+    return token;
+  }
+  currpos = savepos;
+  Sys_Error("%s:%d: identifier expected", *srcfile, getCurrLine());
+}
+
+
+//==========================================================================
+//
+//  SemParser::expect
+//
+//==========================================================================
+void SemParser::expect (const VStr &s) {
+  auto pos = savePos();
+  skipToken();
+  if (token.strEqu(s)) return;
+  VStr tk = token;
+  restorePos(pos);
+  Sys_Error("%s:%d: `%s` expected, got `%s`", *srcfile, getCurrLine(), *s, *tk);
+}
+
+
+//==========================================================================
+//
+//  SemParser::eat
+//
+//==========================================================================
+bool SemParser::eat (const VStr &s) {
+  auto pos = savePos();
+  skipToken();
+  if (token.strEqu(s)) return true;
+  restorePos(pos);
+  return false;
+}
+
+
+//==========================================================================
+//
+//  SemParser::expectInt
+//
+//==========================================================================
+int SemParser::expectInt () {
+  auto pos = savePos();
+  skipToken();
+  int res = 0;
+  if (!VStr::convertInt(*token, &res)) {
+    if (token == "MAX_ACS_MAP_VARS") return 666;
+    if (token == "MAX_LOCAL_VARS") return 666;
+    if (token == "NUM_BLOCK_SURFS") return 666;
+    if (token == "BLOCK_WIDTH") return 666;
+    if (token == "BLOCK_HEIGHT") return 666;
+    if (token == "MAXPLAYERS") return 8;
+    if (token == "TID_HASH_SIZE") return 128; //FIXME!
+    if (token == "NUMPSPRITES") return 3; //FIXME!
+
+    if (token == "BODYQUESIZE") return 32; //FIXME!
+    if (token == "CORPSEQUEUESIZE") return 64; //FIXME!
+    if (token == "NUM_NOTIFY_LINES") return 5; //FIXME!
+    if (token == "CastCount") return 17; //FIXME!
+    if (token == "MaxWeaponSlots") return 10; //FIXME!
+    if (token == "MaxWeaponsInSlot") return 8; //FIXME!
+    if (token == "NUM_END_MESSAGES") return 15; //FIXME!
+
+    if (token == "ST_NUMFACES") return 666; //FIXME!
+
+    if (token == "NUM_SPECIALS") return 666;
+    if (token == "NUMTOTALBOTS") return 666;
+
+    restorePos(pos);
+    Sys_Error("%s:%d: integer expected", *srcfile, getCurrLine());
+  }
+  return res;
+}
