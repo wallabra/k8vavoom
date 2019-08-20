@@ -410,8 +410,9 @@ opening_t *SV_FindRelOpening (opening_t *gaps, float z1, float z2);
 //==========================================================================
 void P_InitSwitchList ();
 
+struct VTerrainInfo;
 void P_InitTerrainTypes ();
-struct VTerrainInfo *SV_TerrainType (int pic);
+VTerrainInfo *SV_TerrainType (int pic);
 void P_FreeTerrainTypes ();
 
 

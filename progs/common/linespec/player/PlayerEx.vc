@@ -248,7 +248,7 @@ replication {
 }
 
 
-#include "healthbar.vc"
+#include "PlayerEx.healthbar.vc"
 
 
 //==========================================================================

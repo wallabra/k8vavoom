@@ -1064,17 +1064,19 @@ IMPLEMENT_FUNCTION(VObject, SpawnObject) {
 #include <time.h>
 #include <sys/time.h>
 
+/*
 #if 0
 #if !defined(VCC_STANDALONE_EXECUTOR)
 #ifdef _WIN32
 static struct tm *localtime_r (const time_t * timep, struct tm *result) {
-  /* Note: Win32 localtime() is thread-safe */
+  // Note: Win32 localtime() is thread-safe
   memcpy(result, localtime(timep), sizeof(struct tm));
   return result;
 }
 #endif
 #endif
 #endif
+*/
 
 
 struct TTimeVal {

@@ -70,9 +70,11 @@ struct surfcache_t {
   // size
   int width, height;
   // line list in block
-  surfcache_t *bprev, *bnext;
+  surfcache_t *bprev;
+  surfcache_t *bnext;
   // cache list in line
-  surfcache_t *lprev, *lnext;
+  surfcache_t *lprev;
+  surfcache_t *lnext;
   surfcache_t *chain; // list of drawable surfaces
   surfcache_t *addchain; // list of specular surfaces
   int blocknum; // light surface index

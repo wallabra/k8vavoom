@@ -30,7 +30,7 @@ class VMiAStarNodeBase;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-class VMiAStarGraphIntr : micropather::Graph {
+class VMiAStarGraphIntr : public micropather::Graph {
   friend class VMiAStarGraphBase;
 
 private:
