@@ -337,14 +337,14 @@ static void CopyGLVerts (VLevel *Level, CopyInfo &nfo) {
   delete[] Level->Vertexes;
   nfo.ajvidx.reset();
 
-  Level->Vertexes = new vertex_t[ajbsp::num_vertices];
+  Level->Vertexes = new TVec[ajbsp::num_vertices];
   Level->NumVertexes = ajbsp::num_vertices;
-  memset((void *)Level->Vertexes, 0, sizeof(vertex_t)*ajbsp::num_vertices);
+  memset((void *)Level->Vertexes, 0, sizeof(TVec)*ajbsp::num_vertices);
 
   for (int i = 0; i < ajbsp::num_vertices; ++i) {
     ajbsp::vertex_t *vert = ajbsp::LookupVertex(i);
     nfo.ajvidx.put(vert, i); // for `AJVertexIndex()`
-    vertex_t *pDst = &Level->Vertexes[i];
+    TVec *pDst = &Level->Vertexes[i];
     *pDst = TVec(ajRoundoffVertex(vert->x), ajRoundoffVertex(vert->y), 0);
   }
 

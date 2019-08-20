@@ -163,17 +163,25 @@ enum {
 };
 
 
+struct VSectorLink {
+  vint32 index;
+  vint32 mts; // bit 30: set if ceiling; low byte: movetype
+  vint32 next; // index, or -1
+};
+
+
+struct VCtl2DestLink {
+  vint32 src; // sector number, just in case (can be -1 for unused slots)
+  vint32 dest; // sector number (can be -1 for unused slots)
+  vint32 next; // index in `ControlLinks` or -1
+};
+
+
 class VLevel : public VGameObject {
   DECLARE_CLASS(VLevel, VGameObject, 0)
   NO_DEFAULT_CONSTRUCTOR(VLevel)
 
   friend class VUdmfParser;
-
-  struct SectorLink {
-    vint32 index;
-    vint32 mts; // bit 30: set if ceiling; low byte: movetype
-    vint32 next; // index, or -1
-  };
 
   VName MapName;
   VStr MapHash;
@@ -201,7 +209,7 @@ class VLevel : public VGameObject {
   // MAP related Lookup tables
   // store VERTEXES, LINEDEFS, SIDEDEFS, etc.
 
-  vertex_t *Vertexes;
+  TVec *Vertexes;
   vint32 NumVertexes;
 
   sector_t *Sectors;
@@ -315,7 +323,7 @@ class VLevel : public VGameObject {
   TagHash *sectorTags;
 
   TArray<vint32> sectorlinkStart;
-  TArray<SectorLink> sectorlinks;
+  TArray<VSectorLink> sectorlinks;
 
   TArray<VLevelScriptThinker *> scriptThinkers;
 
@@ -332,13 +340,7 @@ class VLevel : public VGameObject {
   // this is used to keep control->dest 3d floor links
   // [0..NumSectors) is entry point, then follow next index (-1 means 'end')
   // order is undefined
-  struct Ctl2DestLink {
-    vint32 src; // sector number, just in case (can be -1 for unused slots)
-    vint32 dest; // sector number (can be -1 for unused slots)
-    vint32 next; // index in `ControlLinks` or -1
-  };
-
-  TArray<Ctl2DestLink> ControlLinks;
+  TArray<VCtl2DestLink> ControlLinks;
 
   // array of cached subsector centers (used in VC code, no need to save/load it)
   TArray<TVec> ssCenters;
@@ -624,7 +626,7 @@ public:
     inline const arrname_##Iterator itername_ () const { return arrname_##Iterator(this); }
 
   // iterators: `for (auto &&it : XXX())` (`it` is a reference!)
-  VL_ITERATOR(Vertexes, allVertices, vertex_t)
+  VL_ITERATOR(Vertexes, allVertices, TVec)
   VL_ITERATOR(Sectors, allSectors, sector_t)
   VL_ITERATOR(Sides, allSides, side_t)
   VL_ITERATOR(Lines, allLines, line_t)
@@ -669,7 +671,7 @@ public:
     inline arrname_##IndexIterator itername_ () { return arrname_##IndexIterator(this); } \
     inline arrname_##IndexIterator itername_ () const { return arrname_##IndexIterator(this); } \
 
-  VL_ITERATOR_INDEX(Vertexes, allVerticesIdx, vertex_t)
+  VL_ITERATOR_INDEX(Vertexes, allVerticesIdx, TVec)
   VL_ITERATOR_INDEX(Sectors, allSectorsIdx, sector_t)
   VL_ITERATOR_INDEX(Sides, allSidesIdx, side_t)
   VL_ITERATOR_INDEX(Lines, allLinesIdx, line_t)

@@ -308,7 +308,7 @@ void VLevel::RecalcWorldNodeBBox (int bspnum, float bbox[6], const float skyheig
 //==========================================================================
 void VLevel::RecalcWorldBBoxes () {
   /*
-  ITER_CHECKER(Vertexes, allVerticesIdx, vertex_t)
+  ITER_CHECKER(Vertexes, allVerticesIdx, TVec)
   ITER_CHECKER(Sectors, allSectorsIdx, sector_t)
   ITER_CHECKER(Sides, allSidesIdx, side_t)
   ITER_CHECKER(Lines, allLinesIdx, line_t)

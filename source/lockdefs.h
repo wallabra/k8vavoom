@@ -33,7 +33,7 @@ struct VLockDef {
   TArray<VLockGroup> Locks;
   VStr Message;
   VStr RemoteMessage;
-  int MapColor;
+  vint32 MapColor;
   VName LockedSound;
 };
 

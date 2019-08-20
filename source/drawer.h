@@ -57,7 +57,7 @@ struct particle_t {
   TVec vel; // velocity
   TVec accel; // acceleration
   float die; // cl.time when particle will be removed
-  int type;
+  vint32 type;
   float ramp;
   float gravity;
   float dur; // for pt_fading

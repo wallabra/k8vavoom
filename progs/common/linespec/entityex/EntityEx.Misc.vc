@@ -2148,7 +2148,7 @@ final bool CheckBossDeath () {
 //  GetSpeechIndex
 //
 //==========================================================================
-final int GetSpeechIndex (RogueConSpeech[] List, int ID, int Num) {
+final int GetSpeechIndex (FRogueConSpeech[] List, int ID, int Num) {
   int Found = 0;
   foreach (auto i; 0..List.length) {
     if (List[i].SpeakerID == ID) {

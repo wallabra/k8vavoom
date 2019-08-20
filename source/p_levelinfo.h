@@ -117,12 +117,12 @@ class VLevelInfo : public VThinker {
   };
   vuint32 LevelInfoFlags2;
 
-  int TotalKills;
-  int TotalItems;
-  int TotalSecret; // for intermission
-  int CurrentKills;
-  int CurrentItems;
-  int CurrentSecret;
+  vint32 TotalKills;
+  vint32 TotalItems;
+  vint32 TotalSecret; // for intermission
+  vint32 CurrentKills;
+  vint32 CurrentItems;
+  vint32 CurrentSecret;
 
   float CompletitionTime; // for intermission
 
@@ -134,7 +134,7 @@ class VLevelInfo : public VThinker {
 
   float Gravity; // level gravity
   float AirControl;
-  int Infighting;
+  vint32 Infighting;
   TArray<VMapSpecialAction> SpecialActions;
   TArray<TVec> MapMarkers;
 

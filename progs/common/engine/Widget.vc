@@ -28,7 +28,7 @@
 
 class Widget : Object native;
 
-struct ClipRect {
+struct VClipRect {
   // origin of the widget, in absolote coords
   float OriginX;
   float OriginY;
@@ -74,7 +74,7 @@ private int SizeHeight;
 private float SizeScaleX;
 private float SizeScaleY;
 
-private readonly ClipRect ClipRect;
+private readonly VClipRect ClipRect;
 
 // currently focused child widget
 private readonly Widget CurrentFocusChild;

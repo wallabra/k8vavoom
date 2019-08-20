@@ -59,14 +59,14 @@ private:
   VWidget *NextWidget;
 
   // position of the widget in the parent widget
-  int PosX;
-  int PosY;
+  vint32 PosX;
+  vint32 PosY;
   // offset for children
-  int OfsX;
-  int OfsY;
+  vint32 OfsX;
+  vint32 OfsY;
   // size of the child area of the widget
-  int SizeWidth;
-  int SizeHeight;
+  vint32 SizeWidth;
+  vint32 SizeHeight;
   // scaling of the widget
   float SizeScaleX;
   float SizeScaleY;
@@ -83,8 +83,8 @@ private:
   vuint8 VAlign;
 
   // text cursor
-  int LastX;
-  int LastY;
+  vint32 LastX;
+  vint32 LastY;
 
   // Booleans
   enum {

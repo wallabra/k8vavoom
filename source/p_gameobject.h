@@ -98,18 +98,6 @@ enum {
   SPF_MAX_FLAG     = 16u,
 };
 
-//==========================================================================
-//
-//  Vertex
-//
-//==========================================================================
-
-//
-// Your plain vanilla vertex.
-// Note: transformed values not buffered locally,
-// like some DOOM-alikes ("wt", "WebView") did.
-typedef TVec vertex_t;
-
 
 //==========================================================================
 //
@@ -244,8 +232,8 @@ int tagHashTag (const TagHash *th, int index);
 
 struct line_t : public TPlane {
   // vertices, from v1 to v2
-  vertex_t *v1;
-  vertex_t *v2;
+  TVec *v1;
+  TVec *v2;
 
   // precalculated (v2-v1).normalised2D for side checking
   TVec dir;
@@ -430,7 +418,7 @@ struct TSecPlaneRef {
   enum Type { Unknown = -1, Floor = 0, Ceiling = 1 };
 
   sec_plane_t *splane;
-  bool flipped;
+  /*bool*/vint32 flipped; // actually, bit flags
 
   TSecPlaneRef () : splane(nullptr), flipped(false) {}
   TSecPlaneRef (const TSecPlaneRef &sp) : splane(sp.splane), flipped(sp.flipped) {}
@@ -767,8 +755,8 @@ struct polyobj_t {
   seg_t **segs;
   vint32 numsegs;
   TVec startSpot;
-  vertex_t *originalPts; // used as the base for the rotations
-  vertex_t *prevPts; // use to restore the old point values
+  TVec *originalPts; // used as the base for the rotations
+  TVec *prevPts; // use to restore the old point values
   float angle;
   vint32 tag; // reference tag assigned in HereticEd
   vint32 bbox2d[4];
@@ -847,8 +835,8 @@ enum {
 };
 
 struct seg_t : public TPlane {
-  vertex_t *v1;
-  vertex_t *v2;
+  TVec *v1;
+  TVec *v2;
 
   float offset;
   float length;
@@ -865,7 +853,7 @@ struct seg_t : public TPlane {
   sector_t *backsector;
 
   seg_t *partner; // from glnodes
-  struct subsector_t *frontsub; // front subsector (we need this for self-referencing deep water)
+  subsector_t *frontsub; // front subsector (we need this for self-referencing deep water)
 
   // side of line (for light calculations: 0 or 1)
   vint32 side;

@@ -211,7 +211,7 @@ final void A_NoBlocking () {
 //==========================================================================
 final void decorate_A_NoBlocking (optional bool drop) {
   int SpeechNum;
-  RogueConSpeech *Speech;
+  FRogueConSpeech *Speech;
   class!EntityEx DropItemType;
 
   if (!specified_drop) drop = true;

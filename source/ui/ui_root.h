@@ -36,11 +36,11 @@ private:
   vuint32 RootFlags;
 
   // current mouse cursor position
-  int MouseX;
-  int MouseY;
+  vint32 MouseX;
+  vint32 MouseY;
 
   // current mouse cursor graphic
-  int MouseCursorPic;
+  vint32 MouseCursorPic;
 
   void MouseMoveEvent (int, int);
   bool MouseButtonEvent (int, bool);

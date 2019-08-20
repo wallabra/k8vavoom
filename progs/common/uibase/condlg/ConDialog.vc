@@ -56,7 +56,7 @@ string[3] CancelTexts;
 //
 //==========================================================================
 void SetSpeech (EntityEx Speaker, int SpeechNum) {
-  GameObject::RogueConSpeech *Speech;
+  GameObject::FRogueConSpeech *Speech;
 
   //Width = GetVirtualWidth();
   //Height = GetVirtualHeight();

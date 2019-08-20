@@ -395,14 +395,14 @@ void VLevel::TranslatePolyobjToStartSpot (float originX, float originY, int tag)
   }
   if (!po) Host_Error("Unable to match polyobj tag: %d", tag); // didn't match the tag with a polyobj tag
   if (po->segs == nullptr) Host_Error("Anchor point located without a StartSpot point: %d", tag);
-  po->originalPts = new vertex_t[po->numsegs];
-  po->prevPts = new vertex_t[po->numsegs];
+  po->originalPts = new TVec[po->numsegs];
+  po->prevPts = new TVec[po->numsegs];
   float deltaX = originX-po->startSpot.x;
   float deltaY = originY-po->startSpot.y;
 
   seg_t **tempSeg = po->segs;
-  vertex_t *tempPt = po->originalPts;
-  vertex_t avg(0, 0, 0); // used to find a polyobj's centre, and hence subsector
+  TVec *tempPt = po->originalPts;
+  TVec avg(0, 0, 0); // used to find a polyobj's centre, and hence subsector
 
   for (int i = 0; i < po->numsegs; ++i, ++tempSeg, ++tempPt) {
     seg_t **veryTempSeg = po->segs;
@@ -581,7 +581,7 @@ bool VLevel::MovePolyobj (int num, float x, float y, bool forced) {
   seg_t **segList;
   seg_t **veryTempSeg;
   polyobj_t *po;
-  vertex_t *prevPts;
+  TVec *prevPts;
   bool blocked;
 
   po = GetPolyobj(num);
@@ -662,8 +662,8 @@ bool VLevel::RotatePolyobj (int num, float angle) {
   if (IsForServer()) UnLinkPolyobj(po);
 
   seg_t **segList = po->segs;
-  vertex_t *originalPts = po->originalPts;
-  vertex_t *prevPts = po->prevPts;
+  TVec *originalPts = po->originalPts;
+  TVec *prevPts = po->prevPts;
 
   for (int count = po->numsegs; count; --count, ++segList, ++originalPts, ++prevPts) {
     if (IsForServer()) {

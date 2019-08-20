@@ -175,13 +175,13 @@ class VEntity : public VThinker {
   VName FixedSpriteName;
   VStr FixedModelName;
   vuint8 ModelVersion;
-  int NumRenderedShadows;
+  vint32 NumRenderedShadows;
 
   vuint8 RenderStyle;
   float Alpha;
-  int Translation;
+  vint32 Translation;
 
-  int StencilColor;
+  vint32 StencilColor;
 
   float FloorClip; // value to use for floor clipping
 
@@ -224,7 +224,7 @@ class VEntity : public VThinker {
   TSecPlaneRef ECeiling;
 
   // if == validcount, already checked
-  //int ValidCount;
+  //vint32 ValidCount;
 
   // flags
   enum {
@@ -263,8 +263,8 @@ class VEntity : public VThinker {
   };
   vuint32 EntityFlags;
 
-  int Health;
-  int InitialHealth;
+  vint32 Health;
+  vint32 InitialHealth;
 
   // extra flags
   enum {
@@ -281,14 +281,14 @@ class VEntity : public VThinker {
   // only valid if type == MT_PLAYER
   VBasePlayer *Player;
 
-  int TID; // thing identifier
+  vint32 TID; // thing identifier
   VEntity *TIDHashNext;
   VEntity *TIDHashPrev;
 
-  int Special; // special
-  int Args[5]; // special arguments
+  vint32 Special; // special
+  vint32 Args[5]; // special arguments
 
-  int SoundOriginID;
+  vint32 SoundOriginID;
 
   // params
   float Mass;

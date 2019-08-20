@@ -105,25 +105,25 @@ native readonly private ubyte *NoVis;
 native mthing_t[] Things;
 
 native readonly private int BlockMapLumpSize;
-native readonly private ubyte *BlockMapLump;
-native readonly private ubyte *BlockMap;
+native readonly private int *BlockMapLump;
+native readonly private int *BlockMap;
 native readonly private int BlockMapWidth;
 native readonly private int BlockMapHeight;
 native readonly private float BlockMapOrgX;
 native readonly private float BlockMapOrgY;
-native readonly private ubyte *BlockLinks;
-native readonly private ubyte *PolyBlockMap;
+native readonly private /*VEntity** */void *BlockLinks;
+native readonly private /*polyblock_t** */void *PolyBlockMap;
 
 native readonly private ubyte *RejectMatrix;
 native readonly private int RejectMatrixSize;
 
 // strife conversations
-native RogueConSpeech[] GenericSpeeches;
-native RogueConSpeech[] LevelSpeeches;
+native FRogueConSpeech[] GenericSpeeches;
+native FRogueConSpeech[] LevelSpeeches;
 
 // list of all poly-objects on the level
-native readonly private int[] PolyObjs;
-native readonly private int[] PolyAnchorPoints;
+native readonly private /*int*/void *[] PolyObjs;
+native readonly private /*int*/void *[] PolyAnchorPoints;
 
 // sound environments for sector zones
 native int[] Zones;

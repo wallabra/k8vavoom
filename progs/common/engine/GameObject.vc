@@ -604,7 +604,8 @@ struct segpart_t {
   float backBotDist;
   float TextureOffset;
   float RowOffset;
-  int regidx; // region index (has no meaning for non-region parts)
+  //int regidx; // region index (has no meaning for non-region parts)
+  sec_region_t *basereg;
 };
 
 // TODO: document this!
@@ -1087,8 +1088,10 @@ struct subregion_t {
   subregion_t *next;
   native transient private TSecPlaneRef floorplane;
   native transient private TSecPlaneRef ceilplane;
-  native transient private sec_surface_t *floor;
-  native transient private sec_surface_t *ceil;
+  native transient private sec_surface_t *realfloor;
+  native transient private sec_surface_t *realceil;
+  native transient private sec_surface_t *fakefloor; // can be `nullptr`
+  native transient private sec_surface_t *fakeceil; // can be `nullptr`
   int count;
   native transient drawseg_t *lines;
 };
@@ -1185,7 +1188,7 @@ struct mthing_t {
 //  Strife conversation scripts
 //
 
-struct RogueConChoice {
+struct FRogueConChoice {
   int GiveItem; // item given on success
   int NeedItem1; // required item 1
   int NeedItem2; // required item 2
@@ -1202,7 +1205,7 @@ struct RogueConChoice {
                  // item is not ready, quest is not completed)
 };
 
-struct RogueConSpeech {
+struct FRogueConSpeech {
   int SpeakerID; // type of the object (MT_xxx)
   int DropItem; // item dropped when killed
   int CheckItem1; // item 1 to check for jump
@@ -1213,7 +1216,7 @@ struct RogueConSpeech {
   name Voice; // voice to play
   name BackPic; // picture of the speaker
   string Text; // message
-  RogueConChoice[5] Choices; // choices
+  FRogueConChoice[5] Choices; // choices
 };
 
 

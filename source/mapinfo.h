@@ -129,10 +129,10 @@ struct VSkillDef {
   float DoubleAmmoFactor;
   float DamageFactor;
   float RespawnTime;
-  int RespawnLimit;
+  vint32 RespawnLimit;
   float Aggressiveness;
-  int SpawnFilter;
-  int AcsReturn;
+  vint32 SpawnFilter;
+  vint32 AcsReturn;
   VStr MenuName;
   TArray<VSkillPlayerClassName> PlayerClassNames;
   VStr ConfirmationText;

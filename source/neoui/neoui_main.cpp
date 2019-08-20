@@ -387,7 +387,7 @@ class VGLTexture : public VObject {
 
 private:
   VOpenGLTexture *tex;
-  int id;
+  vint32 id;
 
 public:
   virtual void Destroy () override;
@@ -1266,8 +1266,8 @@ public:
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct ScissorRect {
-  int x, y, w, h;
-  int enabled;
+  vint32 x, y, w, h;
+  vint32 enabled;
 };
 
 
@@ -2127,12 +2127,12 @@ IMPLEMENT_FUNCTION(VGLVideo, loadFontPCF) {
 
 
 struct FontCharInfo {
-  int ch;
+  vint32 ch;
   //int width, height; // height may differ from font height
   //int advance; // horizontal advance to print next char
   //int topofs; // offset from font top (i.e. y+topofs should be used to draw char)
-  int leftbear, rightbear; // positive means "more to the respective bbox side"
-  int ascent, descent; // both are positive, which actually means "offset from baseline to the respective direction"
+  vint32 leftbear, rightbear; // positive means "more to the respective bbox side"
+  vint32 ascent, descent; // both are positive, which actually means "offset from baseline to the respective direction"
 };
 
 

@@ -613,8 +613,8 @@ bool VLevel::LoadCachedData (VStream *strm) {
   delete [] Vertexes;
   *arrstrm << NumVertexes;
   GCon->Logf("cache: reading %d vertexes", NumVertexes);
-  Vertexes = new vertex_t[NumVertexes];
-  memset((void *)Vertexes, 0, sizeof(vertex_t)*NumVertexes);
+  Vertexes = new TVec[NumVertexes];
+  memset((void *)Vertexes, 0, sizeof(TVec)*NumVertexes);
   for (int f = 0; f < NumVertexes; ++f) {
     float x, y, z;
     *arrstrm << x << y << z;
@@ -1551,11 +1551,11 @@ void VLevel::LoadVertexes (int Lump, int GLLump, int &NumBaseVerts) {
   NumVertexes = NumBaseVerts+NumGLVerts;
 
   // allocate memory for vertexes
-  Vertexes = new vertex_t[NumVertexes];
-  if (NumVertexes) memset((void *)Vertexes, 0, sizeof(vertex_t)*NumVertexes);
+  Vertexes = new TVec[NumVertexes];
+  if (NumVertexes) memset((void *)Vertexes, 0, sizeof(TVec)*NumVertexes);
 
   // load base vertexes
-  vertex_t *pDst;
+  TVec *pDst;
   {
     VStream *lumpstream = W_CreateLumpReaderNum(Lump);
     VCheckedStream Strm(lumpstream);
@@ -1962,7 +1962,7 @@ void VLevel::FinaliseLines () {
 //
 //==========================================================================
 void VLevel::LoadGLSegs (int Lump, int NumBaseVerts) {
-  vertex_t *GLVertexes = Vertexes+NumBaseVerts;
+  TVec *GLVertexes = Vertexes+NumBaseVerts;
   int NumGLVertexes = NumVertexes-NumBaseVerts;
 
   // determine format of the segs data
@@ -2392,11 +2392,11 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
     }
 
     if (OrgVerts+NewVerts != (vuint32)NumVertexes) {
-      vertex_t *OldVerts = Vertexes;
+      TVec *OldVerts = Vertexes;
       NumVertexes = OrgVerts+NewVerts;
-      Vertexes = new vertex_t[NumVertexes];
-      if (NumVertexes) memset((void *)Vertexes, 0, sizeof(vertex_t)*NumVertexes);
-      if (OldVerts) memcpy((void *)Vertexes, (void *)OldVerts, OrgVerts*sizeof(vertex_t));
+      Vertexes = new TVec[NumVertexes];
+      if (NumVertexes) memset((void *)Vertexes, 0, sizeof(TVec)*NumVertexes);
+      if (OldVerts) memcpy((void *)Vertexes, (void *)OldVerts, OrgVerts*sizeof(TVec));
       // fix up vertex pointers in linedefs
       for (int i = 0; i < NumLines; ++i) {
         line_t &L = Lines[i];
@@ -2410,7 +2410,7 @@ bool VLevel::LoadCompressedGLNodes (int Lump, char hdr[4]) {
     }
 
     // read new vertexes
-    vertex_t *DstVert = Vertexes+OrgVerts;
+    TVec *DstVert = Vertexes+OrgVerts;
     for (vuint32 i = 0; i < NewVerts; ++i, ++DstVert) {
       vint32 x, y;
       *Strm << x << y;

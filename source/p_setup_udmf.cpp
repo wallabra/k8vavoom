@@ -933,8 +933,8 @@ void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
 
   // copy vertexes
   NumVertexes = Parser.ParsedVertexes.length();
-  Vertexes = new vertex_t[NumVertexes];
-  //memcpy(Vertexes, Parser.ParsedVertexes.Ptr(), sizeof(vertex_t)*NumVertexes);
+  Vertexes = new TVec[NumVertexes];
+  //memcpy(Vertexes, Parser.ParsedVertexes.Ptr(), sizeof(TVec)*NumVertexes);
   bool hasVertexHeights = false;
   for (int f = 0; f < NumVertexes; ++f) {
     Vertexes[f] = TVec(Parser.ParsedVertexes[f].x, Parser.ParsedVertexes[f].y);

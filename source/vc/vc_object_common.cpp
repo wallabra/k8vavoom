@@ -1080,24 +1080,24 @@ static struct tm *localtime_r (const time_t * timep, struct tm *result) {
 
 
 struct TTimeVal {
-  int secs; // actually, unsigned
-  int usecs;
+  vint32 secs; // actually, unsigned
+  vint32 usecs;
   // for 2030+
-  int secshi;
+  vint32 secshi;
 };
 
 
 struct TDateTime {
-  int sec; // [0..60] (yes, *sometimes* it can be 60)
-  int min; // [0..59]
-  int hour; // [0..23]
-  int month; // [0..11]
-  int year; // normal value, i.e. 2042 for 2042
-  int mday; // [1..31] -- day of the month
+  vint32 sec; // [0..60] (yes, *sometimes* it can be 60)
+  vint32 min; // [0..59]
+  vint32 hour; // [0..23]
+  vint32 month; // [0..11]
+  vint32 year; // normal value, i.e. 2042 for 2042
+  vint32 mday; // [1..31] -- day of the month
   //
-  int wday; // [0..6] -- day of the week (0 is sunday)
-  int yday; // [0..365] -- day of the year
-  int isdst; // is daylight saving time?
+  vint32 wday; // [0..6] -- day of the week (0 is sunday)
+  vint32 yday; // [0..365] -- day of the year
+  vint32 isdst; // is daylight saving time?
 };
 
 //native static final bool GetTimeOfDay (out TTimeVal tv);

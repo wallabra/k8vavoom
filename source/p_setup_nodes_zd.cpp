@@ -265,8 +265,8 @@ void VLevel::BuildNodesZD () {
     delete[] Vertexes;
 
     NumVertexes = newvertsCount;
-    Vertexes = new vertex_t[newvertsCount];
-    memset((void *)Vertexes, 0, sizeof(vertex_t)*newvertsCount);
+    Vertexes = new TVec[newvertsCount];
+    memset((void *)Vertexes, 0, sizeof(TVec)*newvertsCount);
 
     for (int vidx = 0; vidx < newvertsCount; ++vidx) {
       Vertexes[vidx] = TVec(fromFix(newverts[vidx].x), fromFix(newverts[vidx].y), 0);

@@ -28,7 +28,7 @@ class LevelInfo : Thinker native abstract;
 
 const int TID_HASH_SIZE = 128;
 
-struct MapSpecialAction {
+struct VMapSpecialAction {
   name TypeName;
   int Special;
   int Args[5];
@@ -199,7 +199,7 @@ private Entity TIDHash[TID_HASH_SIZE];
 float Gravity; // level gravity
 float AirControl;
 int Infighting;
-array!MapSpecialAction SpecialActions;
+array!VMapSpecialAction SpecialActions;
 protected array!TVec MapMarkers;
 
 

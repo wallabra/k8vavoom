@@ -804,7 +804,7 @@ void VLevel::SectorSetLink (int controltag, int tag, int surface, int movetype) 
       //GCon->Logf("  csi=%d; sl=%d", csi, sectorlinkStart[csi]);
       // allocate sectorlink
       int slidx = sectorlinks.length();
-      SectorLink &sl = sectorlinks.alloc();
+      VSectorLink &sl = sectorlinks.alloc();
       sl.index = lsi;
       sl.mts = (movetype&0x0f)|(surface ? 1<<30 : 0);
       sl.next = sectorlinkStart[csi];
@@ -825,7 +825,7 @@ void VLevel::AppendControlLink (const sector_t *src, const sector_t *dest) {
   if (ControlLinks.length() == 0) {
     // first time, create empty array
     ControlLinks.setLength(NumSectors);
-    Ctl2DestLink *link = ControlLinks.ptr();
+    VCtl2DestLink *link = ControlLinks.ptr();
     for (int f = NumSectors; f--; ++link) {
       link->src = -1;
       link->dest = -1;
@@ -835,7 +835,7 @@ void VLevel::AppendControlLink (const sector_t *src, const sector_t *dest) {
 
   const int srcidx = (int)(ptrdiff_t)(src-Sectors);
   const int destidx = (int)(ptrdiff_t)(dest-Sectors);
-  Ctl2DestLink *lnk = &ControlLinks[srcidx];
+  VCtl2DestLink *lnk = &ControlLinks[srcidx];
   if (lnk->dest < 0) {
     // first slot
     check(lnk->src == -1);
@@ -853,7 +853,7 @@ void VLevel::AppendControlLink (const sector_t *src, const sector_t *dest) {
     }
     // append to list
     int newidx = ControlLinks.length();
-    Ctl2DestLink *newlnk = &ControlLinks.alloc();
+    VCtl2DestLink *newlnk = &ControlLinks.alloc();
     lnk = &ControlLinks[lastidx]; // refresh lnk, because array might be reallocated
     check(lnk->next == -1);
     lnk->next = newidx;

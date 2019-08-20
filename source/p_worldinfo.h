@@ -39,10 +39,10 @@ class VWorldInfo : public VGameObject {
   float SkillDoubleAmmoFactor;
   float SkillDamageFactor;
   float SkillRespawnTime;
-  int SkillRespawnLimit;
+  vint32 SkillRespawnLimit;
   float SkillAggressiveness;
-  int SkillSpawnFilter;
-  int SkillAcsReturn;
+  vint32 SkillSpawnFilter;
+  vint32 SkillAcsReturn;
 
   enum {
     WIF_SkillFastMonsters  = 0x00000001,
