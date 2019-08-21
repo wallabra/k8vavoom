@@ -563,6 +563,27 @@ final class!Inventory FindInventoryClassForACS (name ItemName, bool allowReplace
 
 //===========================================================================
 //
+//  FindInventoryByTypeForACS
+//
+//===========================================================================
+final Inventory FindInventoryByTypeForACS (class!Inventory ItemClass, bool allowReplacement) {
+  if (!ItemClass || !class!Inventory(ItemClass)) return none;
+  Inventory Item = FindInventory(ItemClass, disableReplacement:!allowReplacement);
+  if (Item) return Item;
+  if (allowReplacement) return none; // replacements already checked
+  // if this is any weapon or ammo, check for replacements, for weapon mods
+  class!EntityEx replCls;
+       if (class!Weapon(ItemClass)) replCls = class!Weapon(GetClassReplacement(ItemClass));
+  else if (class!Ammo(ItemClass)) replCls = class!Ammo(GetClassReplacement(ItemClass));
+  else return none; // alas
+  if (!replCls || replCls == ItemClass) return none;
+  // try to find replaced inventory
+  return FindInventory(ItemClass, disableReplacement:true);
+}
+
+
+//===========================================================================
+//
 //  TakeInventory
 //
 //===========================================================================
@@ -573,7 +594,7 @@ override void TakeInventory (name ItemName, int Amount, bool allowReplacement) {
   class!Inventory ItemClass = FindInventoryClassForACS(ItemName, allowReplacement);
   if (!ItemClass) return;
 
-  Inventory Item = FindInventory(ItemClass, disableReplacement:!allowReplacement);
+  Inventory Item = FindInventoryByTypeForACS(ItemClass, allowReplacement:allowReplacement);
   if (!Item) return;
 
   Item.Amount -= Amount;
@@ -596,7 +617,7 @@ override int CheckInventory (name ItemName, bool allowReplacement) {
   //printwarn("*** CheckInventory: %s", ItemName);
   class!Inventory ItemClass = FindInventoryClassForACS(ItemName, allowReplacement);
   if (!ItemClass) return 0;
-  Inventory Item = FindInventory(ItemClass, disableReplacement:!allowReplacement);
+  Inventory Item = FindInventoryByTypeForACS(ItemClass, allowReplacement:allowReplacement);
   return (Item ? Item.Amount : 0);
 }
 
@@ -609,7 +630,7 @@ override int CheckInventory (name ItemName, bool allowReplacement) {
 override int UseInventoryName (name ItemName, bool allowReplacement) {
   class!Inventory ItemClass = FindInventoryClassForACS(ItemName, allowReplacement);
   if (!ItemClass) return 0;
-  Inventory Item = FindInventory(ItemClass, disableReplacement:!allowReplacement);
+  Inventory Item = FindInventoryByTypeForACS(ItemClass, allowReplacement:allowReplacement);
   return (Item ? UseInventory(Item) : 0);
 }
 
@@ -652,10 +673,31 @@ override int GetArmorPointsForType (name armtype) {
 //
 //  CheckNamedWeapon
 //
+//  used from ACS
+//
 //===========================================================================
 override int CheckNamedWeapon (name Name) {
-  if (!bIsPlayer || !PlayerEx(Player).ReadyWeapon) return false;
-  return (nameicmp(Name, GetClassName(PlayerEx(Player).ReadyWeapon.Class)) == 0);
+  if (!bIsPlayer || !Name) return 0;
+  Weapon wpn = PlayerEx(Player).ReadyWeapon;
+  if (!wpn) return 0;
+  if (nameicmp(Name, GetClassName(wpn.Class)) == 0) return 1;
+  // check for replaced weapon, in case some weapon mod replaced it
+  class!Weapon wpnCls = class!Weapon(FindClassNoCase(Name));
+  if (!wpnCls) return 0; // this name is not a weapon name
+  // get replacement
+  class!Weapon replCls = class!Weapon(GetClassReplacement(wpnCls));
+  if (!replCls || replCls == wpnCls) return 0; // this weapon has no replacement
+  // is replaced weapon a current one?
+  if (wpn.Class != replCls) return 0; // no, nothing to do here
+  // check if our inventory doesn't contain the exactly named weapon
+  // (this is so exact checks will work)
+  for (Inventory inv = Inventory; inv; inv = inv.Inventory) {
+    if (Weapon(inv)) {
+      if (nameicmp(Name, GetClassName(inv.Class)) == 0) return 0; // alas, exactness check failed
+    }
+  }
+  // ok, replaced weapon is good
+  return 1;
 }
 
 
@@ -663,11 +705,33 @@ override int CheckNamedWeapon (name Name) {
 //
 //  SetNamedWeapon
 //
+//  used from ACS
+//  if there is no such weapon, do nothing
+//
 //===========================================================================
 override int SetNamedWeapon (name Name) {
-  if (!bIsPlayer) return false;
+  if (!bIsPlayer || !Name) return 0;
 
-  Weapon Wpn = Weapon(FindInventory(class!Inventory(FindClassNoCase(Name)), disableReplacement:true));
+  class!Weapon wpnCls = class!Weapon(FindClassNoCase(Name));
+  if (!wpnCls) return 0; // not a weapon name
+
+  // check if it's already active
+  if (PlayerEx(Player).ReadyWeapon && PlayerEx(Player).ReadyWeapon.Class == wpnCls) {
+    // make sure player doesn't switch away from it
+    PlayerEx(Player).PendingWeapon = none;
+    return true;
+  }
+
+  /*
+  Weapon Wpn = Weapon(FindInventory(wpnCls, disableReplacement:true));
+  if (!Wpn) {
+    // try replacement weapon, in case some weapon mod replaced it
+    Wpn = Weapon(FindInventory(wpnCls, disableReplacement:false));
+    if (!Wpn) return 0; // no such weapon
+  }
+  */
+
+  Weapon Wpn = Weapon(FindInventoryByTypeForACS(wpnCls, allowReplacement:false));
   if (!Wpn) return false;
 
   // check if it's already active
@@ -689,21 +753,44 @@ override int SetNamedWeapon (name Name) {
 //
 //  GetAmmoCapacity
 //
+//  all types derived from Inventory but not from Ammo will return 0
+//
 //===========================================================================
 override int GetAmmoCapacity (name Name) {
   class!Ammo AmmoType = class!Ammo(FindClassNoCase(Name));
   if (!AmmoType) return 0;
 
-  // only direct descendants of Ammo class
-  if (GetClassParent(AmmoType) != Ammo) return 0;
+  // only direct descendants of Ammo class (k8: why?)
+  //if (GetClassParent(AmmoType) != Ammo) return 0;
 
-  // if we have this ammo, return current max amount, otherwise return
-  // default for this ammo type
-  Inventory Item = FindInventory(AmmoType);
-  if (!Item) return AmmoType.default.MaxAmount;
-  Ammo ammo = Ammo(Item);
-  if (ammo) return ammo.k8GetAmmoKingMax();
-  return Item.MaxAmount;
+  // if we have this ammo, return current max amount, otherwise return default for this ammo type
+  /*
+  Ammo ammo = Ammo(FindInventory(AmmoType, disableReplacement:true));
+  if (!ammo) {
+    // try replacement ammo, in case some weapon mod replaced it
+    ammo = Ammo(FindInventory(AmmoType, disableReplacement:false));
+    if (!ammo) {
+      // temporarily spawn it, so we can return amount according to "ammo king" mode
+      ammo = SpawnEntityChecked(class!Ammo, AmmoType, AllowReplace:true);
+      if (!ammo) return AmmoType.default.MaxAmount;
+      int res = ammo.k8GetAmmoKingMax();
+      delete ammo;
+      return res;
+    }
+  }
+  */
+
+  Ammo ammo = Ammo(FindInventoryByTypeForACS(AmmoType, allowReplacement:false));
+  if (!ammo) {
+    // temporarily spawn it, so we can return amount according to "ammo king" mode
+    ammo = SpawnAmmoType(self, AmmoType, disableReplace:true);
+    if (!ammo) return AmmoType.default.MaxAmount;
+    int res = ammo.k8GetAmmoKingMax();
+    delete ammo;
+    return res;
+  }
+
+  return ammo.k8GetAmmoKingMax();
 }
 
 
@@ -716,30 +803,48 @@ override void SetAmmoCapacity (name Name, int Amount) {
   class!Ammo AmmoType = class!Ammo(FindClassNoCase(Name));
   if (!AmmoType) return;
 
-  // only direct descendants of Ammo class
-  if (GetClassParent(AmmoType) != Ammo) return;
+  // only direct descendants of Ammo class (k8: why?)
+  //if (GetClassParent(AmmoType) != Ammo) return 0;
 
   // make sure new ammo capacity is not negative
   Amount = max(0, Amount);
 
-  Inventory Item = FindInventory(AmmoType);
-  if (!Item) {
-    Item = GiveInventoryType(AmmoType);
-    if (!Item) {
+  /*
+  Ammo ammo = Ammo(FindInventory(AmmoType, disableReplacement:true));
+  if (!ammo) {
+    // try replacement ammo, in case some weapon mod replaced it
+    ammo = Ammo(FindInventory(AmmoType, disableReplacement:false));
+    if (!ammo) {
+      // give player this ammo, but make it empty, otherwise we cannot set the capacity
+      ammo = Ammo(GiveInventoryType(AmmoType));
+      if (!ammo) {
+        printwarn("cannot give ammo of type `%C` (%s)", AmmoType, Name);
+        return;
+      }
+      ammo.Amount = 0;
+    }
+  }
+  */
+
+  Ammo ammo = Ammo(FindInventoryByTypeForACS(AmmoType, allowReplacement:false));
+  if (!ammo) {
+    // give player this ammo, but make it empty, otherwise we cannot set the capacity
+    Inventory inv = GiveInventoryType(AmmoType, disableReplace:true);
+    if (inv) {
+      ammo = Ammo(inv);
+      if (!ammo) delete inv;
+    }
+    if (!ammo) {
       printwarn("cannot give ammo of type `%C` (%s)", AmmoType, Name);
       return;
     }
-    Item.Amount = 0;
+    ammo.Amount = 0;
   }
-  Item.MaxAmount = Amount;
+
+  ammo.MaxAmount = Amount;
 
   // we also should make sure that the current amount doesn't exceed the new limit
-  Ammo ammo = Ammo(Item);
-  if (ammo) {
-    if (ammo.Amount > ammo.k8GetAmmoKingMax()) ammo.Amount = ammo.k8GetAmmoKingMax();
-  } else {
-    if (Item.Amount > Item.MaxAmount) Item.Amount = Item.MaxAmount;
-  }
+  ammo.Amount = min(ammo.Amount, ammo.k8GetAmmoKingMax());
 }
 
 

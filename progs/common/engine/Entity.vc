@@ -699,6 +699,8 @@ int GetArmorPointsForType (name armtype) {
 //
 //  CheckNamedWeapon
 //
+//  used from ACS
+//
 //===========================================================================
 int CheckNamedWeapon (name Name) {
   return 0;
@@ -708,6 +710,8 @@ int CheckNamedWeapon (name Name) {
 //===========================================================================
 //
 //  SetNamedWeapon
+//
+//  used from ACS
 //
 //===========================================================================
 int SetNamedWeapon (name Name) {
