@@ -549,15 +549,20 @@ static __attribute__((unused)) inline void mythread_condtime_set (mythread_condt
 // ////////////////////////////////////////////////////////////////////////// //
 
 class MyThreadLocker {
-private:
-  MyThreadLocker (const MyThreadLocker &);
-  void operator = (const MyThreadLocker &);
-
 public:
   mythread_mutex *mutex;
 
-  MyThreadLocker (mythread_mutex *amutex) : mutex(amutex) { mythread_mutex_lock(mutex); }
-  ~MyThreadLocker () { mythread_mutex_unlock(mutex); }
+  MyThreadLocker (mythread_mutex *amutex) : mutex(amutex) { if (mutex) mythread_mutex_lock(mutex); }
+  ~MyThreadLocker () { if (mutex) { mythread_mutex_unlock(mutex); mutex = nullptr; } }
+
+  // you can one-time reset a lock
+  // WARNING! there is no way to re-aquire the lock after a reset!
+  // this is mainly so you can tail-call the function that aquires the lock itself
+  inline void resetLock () { if (mutex) { mythread_mutex_unlock(mutex); mutex = nullptr; } }
+
+  // no copies!
+  MyThreadLocker (const MyThreadLocker &) = delete;
+  MyThreadLocker &operator = (const MyThreadLocker &) = delete;
 };
 
 
