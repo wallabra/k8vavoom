@@ -331,6 +331,9 @@ bool VFS_ShouldIgnoreExt (const VStr &fname);
 // removes prefix, returns filter index (or -1, and does nothing)
 int FL_CheckFilterName (VStr &fname);
 
+VStream *FL_OpenFileRead_NoLock (const VStr &Name);
+VStream *FL_OpenFileReadBaseOnly_NoLock (const VStr &Name);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern const VPK3ResDirInfo PK3ResourceDirs[];
@@ -347,5 +350,6 @@ enum {
 
 extern int fsys_detected_mod;
 
+extern mythread_mutex fsys_glock;
 
 #endif

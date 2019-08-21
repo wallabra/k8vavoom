@@ -66,8 +66,9 @@ void W_AddFile (const VStr &FileName, bool FixVoices) {
   wadtime = Sys_FileTime(FileName);
   if (wadtime == -1) Sys_Error("Required file %s doesn't exist", *FileName);
 
-  wadfiles.Append(FileName);
+  MyThreadLocker glocker(&fsys_glock);
 
+  wadfiles.Append(FileName);
   VStr ext = FileName.ExtractFileExtension();
   VWadFile *Wad = new VWadFile;
   if (!ext.strEquCI(".wad")) {
@@ -75,6 +76,7 @@ void W_AddFile (const VStr &FileName, bool FixVoices) {
   } else {
     Wad->Open(FileName, FixVoices, nullptr);
   }
+
   SearchPaths.Append(Wad);
 }
 
@@ -86,6 +88,7 @@ void W_AddFile (const VStr &FileName, bool FixVoices) {
 //==========================================================================
 void W_AddFileFromZip (const VStr &WadName, VStream *WadStrm) {
   // add WAD file
+  MyThreadLocker glocker(&fsys_glock);
   wadfiles.Append(WadName);
   VWadFile *Wad = new VWadFile;
   Wad->Open(WadName, false, WadStrm);
@@ -95,10 +98,41 @@ void W_AddFileFromZip (const VStr &WadName, VStream *WadStrm) {
 
 //==========================================================================
 //
+//  W_CloseAuxiliaryNoLock
+//
+//==========================================================================
+static void W_CloseAuxiliary_NoLock () {
+  if (AuxiliaryIndex) {
+    // close all additional files
+    for (int f = SearchPaths.length()-1; f >= AuxiliaryIndex; --f) SearchPaths[f]->Close();
+    for (int f = SearchPaths.length()-1; f >= AuxiliaryIndex; --f) {
+      delete SearchPaths[f];
+      SearchPaths[f] = nullptr;
+    }
+    SearchPaths.setLength(AuxiliaryIndex);
+    AuxiliaryIndex = 0;
+  }
+}
+
+
+//==========================================================================
+//
+//  W_CloseAuxiliary
+//
+//==========================================================================
+void W_CloseAuxiliary () {
+  MyThreadLocker glocker(&fsys_glock);
+  W_CloseAuxiliary_NoLock();
+}
+
+
+//==========================================================================
+//
 //  W_StartAuxiliary
 //
 //==========================================================================
 int W_StartAuxiliary () {
+  MyThreadLocker glocker(&fsys_glock);
   if (!AuxiliaryIndex) AuxiliaryIndex = SearchPaths.length();
   return MAKE_HANDLE(AuxiliaryIndex, 0);
 }
@@ -110,13 +144,23 @@ int W_StartAuxiliary () {
 //
 //==========================================================================
 int W_OpenAuxiliary (const VStr &FileName) {
-  W_CloseAuxiliary();
+  MyThreadLocker glocker(&fsys_glock);
+  W_CloseAuxiliary_NoLock();
   AuxiliaryIndex = SearchPaths.length();
-  VStream *WadStrm = FL_OpenFileRead(FileName);
+  VStream *WadStrm = FL_OpenFileRead_NoLock(FileName);
   if (!WadStrm) { AuxiliaryIndex = 0; return -1; }
   //fprintf(stderr, "*** AUX: '%s'\n", *FileName);
   auto olen = wadfiles.length();
-  W_AddFileFromZip(FileName, WadStrm);
+
+  //W_AddFileFromZip(FileName, WadStrm); copypasted here
+  {
+    //wadfiles.Append(FileName);
+    VWadFile *Wad = new VWadFile;
+    Wad->Open(FileName, false, WadStrm);
+    SearchPaths.Append(Wad);
+  }
+
+  // just in case
   wadfiles.setLength(olen);
   return MAKE_HANDLE(AuxiliaryIndex, 0);
 }
@@ -158,6 +202,8 @@ static void zipAddWads (VZipFile *zip, const VStr &zipName) {
 //==========================================================================
 int W_AddAuxiliaryStream (VStream *strm, WAuxFileType ftype) {
   if (!strm) return -1;
+  MyThreadLocker glocker(&fsys_glock);
+
   //if (strm.TotalSize() < 16) return -1;
   if (!AuxiliaryIndex) AuxiliaryIndex = SearchPaths.length();
   int residx = SearchPaths.length();
@@ -199,25 +245,6 @@ int W_AddAuxiliaryStream (VStream *strm, WAuxFileType ftype) {
 
 //==========================================================================
 //
-//  W_CloseAuxiliary
-//
-//==========================================================================
-void W_CloseAuxiliary () {
-  if (AuxiliaryIndex) {
-    // close all additional files
-    for (int f = SearchPaths.length()-1; f >= AuxiliaryIndex; --f) SearchPaths[f]->Close();
-    for (int f = SearchPaths.length()-1; f >= AuxiliaryIndex; --f) {
-      delete SearchPaths[f];
-      SearchPaths[f] = nullptr;
-    }
-    SearchPaths.setLength(AuxiliaryIndex);
-    AuxiliaryIndex = 0;
-  }
-}
-
-
-//==========================================================================
-//
 //  W_CheckNumForName
 //
 //  Returns -1 if name not found.
@@ -225,6 +252,7 @@ void W_CloseAuxiliary () {
 //==========================================================================
 int W_CheckNumForName (VName Name, EWadNamespace NS) {
   if (Name == NAME_None) return -1;
+  MyThreadLocker glocker(&fsys_glock);
   for (int wi = getSPCount()-1; wi >= 0; --wi) {
     int i = SearchPaths[wi]->CheckNumForName(Name, NS);
     if (i >= 0) return MAKE_HANDLE(wi, i);
@@ -241,6 +269,7 @@ int W_CheckNumForName (VName Name, EWadNamespace NS) {
 //==========================================================================
 int W_FindFirstLumpOccurence (VName lmpname, EWadNamespace NS) {
   if (lmpname == NAME_None) return -1;
+  MyThreadLocker glocker(&fsys_glock);
   for (int wi = 0; wi < getSPCount(); ++wi) {
     int i = SearchPaths[wi]->CheckNumForName(lmpname, NS, true);
     if (i >= 0) return MAKE_HANDLE(wi, i);
@@ -272,6 +301,7 @@ int W_GetNumForName (VName Name, EWadNamespace NS) {
 //
 //==========================================================================
 int W_CheckNumForNameInFile (VName Name, int File, EWadNamespace NS) {
+  MyThreadLocker glocker(&fsys_glock);
   if (File < 0 || File >= getSPCount()) return -1;
   int i = SearchPaths[File]->CheckNumForName(Name, NS);
   if (i >= 0) return MAKE_HANDLE(File, i);
@@ -288,6 +318,7 @@ int W_CheckNumForNameInFile (VName Name, int File, EWadNamespace NS) {
 //
 //==========================================================================
 int W_CheckFirstNumForNameInFile (VName Name, int File, EWadNamespace NS) {
+  MyThreadLocker glocker(&fsys_glock);
   if (File < 0 || File >= getSPCount()) return -1;
   int i = SearchPaths[File]->CheckNumForName(Name, NS, true);
   if (i >= 0) return MAKE_HANDLE(File, i);
@@ -304,6 +335,7 @@ int W_CheckFirstNumForNameInFile (VName Name, int File, EWadNamespace NS) {
 //
 //==========================================================================
 int W_CheckNumForFileName (const VStr &Name) {
+  MyThreadLocker glocker(&fsys_glock);
   for (int wi = getSPCount()-1; wi >= 0; --wi) {
     int i = SearchPaths[wi]->CheckNumForFileName(Name);
     if (i >= 0) return MAKE_HANDLE(wi, i);
@@ -323,6 +355,7 @@ int W_CheckNumForFileName (const VStr &Name) {
 int W_CheckNumForFileNameInSameFile (int filelump, const VStr &Name) {
   if (filelump < 0) return W_CheckNumForFileName(Name);
   int fidx = FILE_INDEX(filelump);
+  MyThreadLocker glocker(&fsys_glock);
   if (fidx < 0 || fidx >= getSPCount()) return -1;
   VSearchPath *w = SearchPaths[fidx];
   int i = w->CheckNumForFileName(Name);
@@ -342,6 +375,7 @@ int W_CheckNumForFileNameInSameFile (int filelump, const VStr &Name) {
 int W_CheckNumForFileNameInSameFileOrLower (int filelump, const VStr &Name) {
   if (filelump < 0) return W_CheckNumForFileName(Name);
   int fidx = FILE_INDEX(filelump);
+  MyThreadLocker glocker(&fsys_glock);
   if (fidx >= getSPCount()) fidx = getSPCount()-1;
   while (fidx >= 0) {
     VSearchPath *w = SearchPaths[fidx];
@@ -363,6 +397,7 @@ int W_CheckNumForFileNameInSameFileOrLower (int filelump, const VStr &Name) {
 //==========================================================================
 int W_FindACSObjectInFile (VStr Name, int File) {
   // check auxiliaries too
+  MyThreadLocker glocker(&fsys_glock);
   if (File < 0 || File >= SearchPaths.length()) return -1;
   while (File >= 0) {
     int i = SearchPaths[File]->FindACSObject(Name);
@@ -397,6 +432,7 @@ static int tryWithExtension (VStr name, const char *ext) {
 //
 //==========================================================================
 int W_CheckNumForTextureFileName (const VStr &Name) {
+  MyThreadLocker glocker(&fsys_glock);
   VStr loname = (Name.isLowerCase() ? Name : Name.toLowerCase());
   auto ip = fullNameTexLumpChecked.find(loname);
   if (ip) return *ip;
@@ -442,6 +478,7 @@ int W_GetNumForFileName (const VStr &Name) {
 //
 //==========================================================================
 int W_LumpLength (int lump) {
+  MyThreadLocker glocker(&fsys_glock);
   if (lump < 0 || FILE_INDEX(lump) >= SearchPaths.length()) Sys_Error("W_LumpLength: %i >= num_wad_files", FILE_INDEX(lump));
   VSearchPath *w = GET_LUMP_FILE(lump);
   int lumpindex = LUMP_INDEX(lump);
@@ -455,6 +492,7 @@ int W_LumpLength (int lump) {
 //
 //==========================================================================
 VName W_LumpName (int lump) {
+  MyThreadLocker glocker(&fsys_glock);
   if (lump < 0 || FILE_INDEX(lump) >= SearchPaths.length()) return NAME_None;
   VSearchPath *w = GET_LUMP_FILE(lump);
   int lumpindex = LUMP_INDEX(lump);
@@ -468,6 +506,7 @@ VName W_LumpName (int lump) {
 //
 //==========================================================================
 VStr W_FullLumpName (int lump) {
+  MyThreadLocker glocker(&fsys_glock);
   if (lump < 0 || FILE_INDEX(lump) >= SearchPaths.length()) return VStr("<invalid>");
   VSearchPath *w = GET_LUMP_FILE(lump);
   int lumpindex = LUMP_INDEX(lump);
@@ -482,6 +521,7 @@ VStr W_FullLumpName (int lump) {
 //
 //==========================================================================
 VStr W_RealLumpName (int lump) {
+  MyThreadLocker glocker(&fsys_glock);
   if (lump < 0 || FILE_INDEX(lump) >= SearchPaths.length()) return VStr();
   VSearchPath *w = GET_LUMP_FILE(lump);
   int lumpindex = LUMP_INDEX(lump);
@@ -496,6 +536,7 @@ VStr W_RealLumpName (int lump) {
 //
 //==========================================================================
 VStr W_FullPakNameForLump (int lump) {
+  MyThreadLocker glocker(&fsys_glock);
   if (lump < 0 || FILE_INDEX(lump) >= SearchPaths.length()) return VStr("<invalid>");
   VSearchPath *w = GET_LUMP_FILE(lump);
   return w->GetPrefix();
@@ -508,6 +549,7 @@ VStr W_FullPakNameForLump (int lump) {
 //
 //==========================================================================
 VStr W_FullPakNameByFile (int fidx) {
+  MyThreadLocker glocker(&fsys_glock);
   if (fidx < 0 || fidx >= SearchPaths.length()) return VStr("<invalid>");
   VSearchPath *w = SearchPaths[fidx];
   return w->GetPrefix();
@@ -532,6 +574,7 @@ int W_LumpFile (int lump) {
 //
 //==========================================================================
 void W_ReadFromLump (int lump, void *dest, int pos, int size) {
+  MyThreadLocker glocker(&fsys_glock);
   if (lump < 0 || FILE_INDEX(lump) >= SearchPaths.length()) Sys_Error("W_ReadFromLump: %i >= num_wad_files", FILE_INDEX(lump));
   VSearchPath *w = GET_LUMP_FILE(lump);
   w->ReadFromLump(LUMP_INDEX(lump), dest, pos, size);
@@ -544,6 +587,7 @@ void W_ReadFromLump (int lump, void *dest, int pos, int size) {
 //
 //==========================================================================
 VStream *W_CreateLumpReaderNum (int lump) {
+  MyThreadLocker glocker(&fsys_glock);
   if (lump < 0 || FILE_INDEX(lump) >= SearchPaths.length()) Sys_Error("W_CreateLumpReaderNum: %i >= num_wad_files", FILE_INDEX(lump));
   return GET_LUMP_FILE(lump)->CreateLumpReaderNum(LUMP_INDEX(lump));
 }
@@ -566,6 +610,7 @@ VStream *W_CreateLumpReaderName (VName Name, EWadNamespace NS) {
 //==========================================================================
 int W_StartIterationFromLumpFileNS (int File, EWadNamespace NS) {
   if (File < 0) return -1;
+  MyThreadLocker glocker(&fsys_glock);
   if (File >= getSPCount()) return -1;
   for (int li = 0; File < getSPCount(); ++File, li = 0) {
     li = SearchPaths[File]->IterateNS(li, NS);
@@ -584,6 +629,7 @@ int W_IterateNS (int Prev, EWadNamespace NS) {
   if (Prev < 0) Prev = -1;
   int wi = FILE_INDEX(Prev+1);
   int li = LUMP_INDEX(Prev+1);
+  MyThreadLocker glocker(&fsys_glock);
   for (; wi < getSPCount(); ++wi, li = 0) {
     li = SearchPaths[wi]->IterateNS(li, NS);
     if (li != -1) return MAKE_HANDLE(wi, li);
@@ -598,6 +644,7 @@ int W_IterateNS (int Prev, EWadNamespace NS) {
 //
 //==========================================================================
 int W_IterateFile (int Prev, const VStr &Name) {
+  MyThreadLocker glocker(&fsys_glock);
   if (Name.isEmpty()) return -1;
   //GLog.Logf(NAME_Dev, "W_IterateFile: Prev=%d (%d); fn=<%s>", Prev, getSPCount(), *Name);
   for (int wi = FILE_INDEX(Prev)+1; wi < getSPCount(); ++wi) {
@@ -699,6 +746,7 @@ void W_LoadLumpIntoArray (VName LumpName, TArray<vuint8> &Array) {
 //
 //==========================================================================
 void W_Shutdown () {
+  MyThreadLocker glocker(&fsys_glock);
   for (int i = SearchPaths.length()-1; i >= 0; --i) {
     delete SearchPaths[i];
     SearchPaths[i] = nullptr;
@@ -713,16 +761,17 @@ void W_Shutdown () {
 //
 //==========================================================================
 int W_NextMountFileId () {
+  MyThreadLocker glocker(&fsys_glock);
   return SearchPaths.length();
 }
 
 
 //==========================================================================
 //
-//  W_FindMapInLastFile
+//  W_FindMapInLastFile_NoLock
 //
 //==========================================================================
-VStr W_FindMapInLastFile (int fileid, int *mapnum) {
+static VStr W_FindMapInLastFile_NoLock (int fileid, int *mapnum) {
   if (mapnum) *mapnum = -1;
   if (fileid < 0 || fileid >= getSPCount()) return VStr();
   int found = 0xffff;
@@ -784,13 +833,25 @@ VStr W_FindMapInLastFile (int fileid, int *mapnum) {
 
 //==========================================================================
 //
+//  W_FindMapInLastFile
+//
+//==========================================================================
+VStr W_FindMapInLastFile (int fileid, int *mapnum) {
+  MyThreadLocker glocker(&fsys_glock);
+  return W_FindMapInLastFile_NoLock(fileid, mapnum);
+}
+
+
+//==========================================================================
+//
 //  W_FindMapInAuxuliaries
 //
 //==========================================================================
 VStr W_FindMapInAuxuliaries (int *mapnum) {
+  MyThreadLocker glocker(&fsys_glock);
   if (!AuxiliaryIndex) return VStr();
   for (int f = SearchPaths.length()-1; f >= AuxiliaryIndex; --f) {
-    VStr mn = W_FindMapInLastFile(f, mapnum);
+    VStr mn = W_FindMapInLastFile_NoLock(f, mapnum);
     //GLog.Logf(NAME_Init, "W_FindMapInAuxuliaries:<%s>: f=%d; ax=%d; mn=%s", *SearchPaths[f]->GetPrefix(), f, AuxiliaryIndex, *mn);
     if (!mn.isEmpty()) return mn;
   }
@@ -806,6 +867,7 @@ VStr W_FindMapInAuxuliaries (int *mapnum) {
 bool W_IsIWADLump (int lump) {
   if (lump < 0) return false;
   int fidx = FILE_INDEX(lump);
+  MyThreadLocker glocker(&fsys_glock);
   if (fidx < 0 || fidx >= getSPCount()) return false;
   return SearchPaths[fidx]->iwad;
 }
@@ -817,6 +879,7 @@ bool W_IsIWADLump (int lump) {
 //
 //==========================================================================
 bool W_IsAuxLump (int lump) {
+  MyThreadLocker glocker(&fsys_glock);
   if (lump < 0 || !AuxiliaryIndex) return false;
   int fidx = FILE_INDEX(lump);
   return (fidx >= AuxiliaryIndex && fidx < SearchPaths.length());

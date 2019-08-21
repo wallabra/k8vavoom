@@ -43,6 +43,19 @@ TArray<VSearchPath *> SearchPaths;
 TArray<VStr> wadfiles;
 TArray<VStr> fsys_game_filters;
 
+mythread_mutex fsys_glock;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class FSys_Internal_Init_Class {
+public:
+  FSys_Internal_Init_Class (bool) {
+    mythread_mutex_init(&fsys_glock);
+  }
+};
+
+FSys_Internal_Init_Class fsys_internal_init_class_variable_(true);
+
 
 //==========================================================================
 //
@@ -50,6 +63,7 @@ TArray<VStr> fsys_game_filters;
 //
 //==========================================================================
 void FSYS_Shutdown () {
+  MyThreadLocker glocker(&fsys_glock);
   for (int i = 0; i < SearchPaths.length(); ++i) {
     delete SearchPaths[i];
     SearchPaths[i] = nullptr;
@@ -94,6 +108,7 @@ int FL_CheckFilterName (VStr &fname) {
 //==========================================================================
 bool FL_FileExists (const VStr &fname) {
   if (fname.isEmpty()) return false;
+  MyThreadLocker glocker(&fsys_glock);
   for (int i = SearchPaths.length()-1; i >= 0; --i) {
     if (SearchPaths[i]->FileExists(fname)) return true;
   }
@@ -103,13 +118,29 @@ bool FL_FileExists (const VStr &fname) {
 
 //==========================================================================
 //
-//  FL_OpenFileRead
+//  FL_OpenFileReadBaseOnly_NoLock
 //
 //==========================================================================
-VStream *FL_OpenFileRead (const VStr &Name) {
+VStream *FL_OpenFileReadBaseOnly_NoLock (const VStr &Name) {
+  if (Name.isEmpty()) return nullptr;
+  for (int i = SearchPaths.length()-1; i >= 0; --i) {
+    if (!SearchPaths[i]->basepak) continue;
+    VStream *Strm = SearchPaths[i]->OpenFileRead(Name);
+    if (Strm) return Strm;
+  }
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  FL_OpenFileRead_NoLock
+//
+//==========================================================================
+VStream *FL_OpenFileRead_NoLock (const VStr &Name) {
   if (Name.isEmpty()) return nullptr;
   if (Name.length() >= 2 && Name[0] == '/' && Name[1] == '/') {
-    return FL_OpenFileReadBaseOnly(Name.mid(2, Name.length()));
+    return FL_OpenFileReadBaseOnly_NoLock(Name.mid(2, Name.length()));
   } else {
     for (int i = SearchPaths.length()-1; i >= 0; --i) {
       VStream *Strm = SearchPaths[i]->OpenFileRead(Name);
@@ -127,12 +158,20 @@ VStream *FL_OpenFileRead (const VStr &Name) {
 //==========================================================================
 VStream *FL_OpenFileReadBaseOnly (const VStr &Name) {
   if (Name.isEmpty()) return nullptr;
-  for (int i = SearchPaths.length()-1; i >= 0; --i) {
-    if (!SearchPaths[i]->basepak) continue;
-    VStream *Strm = SearchPaths[i]->OpenFileRead(Name);
-    if (Strm) return Strm;
-  }
-  return nullptr;
+  MyThreadLocker glocker(&fsys_glock);
+  return FL_OpenFileReadBaseOnly_NoLock(Name);
+}
+
+
+//==========================================================================
+//
+//  FL_OpenFileRead
+//
+//==========================================================================
+VStream *FL_OpenFileRead (const VStr &Name) {
+  if (Name.isEmpty()) return nullptr;
+  MyThreadLocker glocker(&fsys_glock);
+  return FL_OpenFileRead_NoLock(Name);
 }
 
 
