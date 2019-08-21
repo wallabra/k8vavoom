@@ -74,6 +74,41 @@ struct SpawnEdFixup {
 };
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+struct MapInfoCommand {
+  const char *cmd;
+  void (*handler) (VScriptParser *sc, bool newFormat, mapInfo_t *info, bool &HexenMode);
+  MapInfoCommand *next;
+};
+
+
+static MapInfoCommand *mclist = nullptr;
+static TMap<VStr, MapInfoCommand *> mcmap; // key is lowercase name
+
+
+#define MAPINFOCMD(name_)  \
+class MapInfoCommandImpl##name_ { \
+public: \
+  /*static*/ MapInfoCommand mci; \
+  MapInfoCommandImpl##name_ (const char *aname) { \
+    mci.cmd = aname; \
+    mci.handler = &Handler; \
+    mci.next = nullptr; \
+    if (!mclist) { \
+      mclist = &mci; \
+    } else { \
+      MapInfoCommand *last = mclist; \
+      while (last->next) last = last->next; \
+      last->next = &mci; \
+    } \
+  } \
+  static void Handler (VScriptParser *sc, bool newFormat, mapInfo_t *info, bool &HexenMode); \
+}; \
+/*MapInfoCommand MapInfoCommandImpl##name_ mci;*/ \
+MapInfoCommandImpl##name_ mpiprzintrnlz_mici_##name_(#name_); \
+void MapInfoCommandImpl##name_::Handler (VScriptParser *sc, bool newFormat, mapInfo_t *info, bool &HexenMode)
+
+
 //==========================================================================
 //
 //  ExpectBool
@@ -534,6 +569,9 @@ void InitMapInfo () {
   DefaultMap.HorizWallShade = -8;
   DefaultMap.VertWallShade = 8;
   //GCon->Logf("*** DEFAULT MAP: Sky1Texture=%d", DefaultMap.Sky1Texture);
+
+  // we don't need it anymore
+  mcmap.clear();
 }
 
 
@@ -660,40 +698,6 @@ static void skipUnimplementedCommand (VScriptParser *sc, bool wantArg) {
     miWarning(sc, "Unimplemented flag '%s'", *cmd);
   }
 }
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-struct MapInfoCommand {
-  const char *cmd;
-  void (*handler) (VScriptParser *sc, bool newFormat, mapInfo_t *info, bool &HexenMode);
-  MapInfoCommand *next;
-};
-
-
-static MapInfoCommand *mclist = nullptr;
-
-
-#define MAPINFOCMD(name_)  \
-class MapInfoCommandImpl##name_ { \
-public: \
-  /*static*/ MapInfoCommand mci; \
-  MapInfoCommandImpl##name_ (const char *aname) { \
-    mci.cmd = aname; \
-    mci.handler = &Handler; \
-    mci.next = nullptr; \
-    if (!mclist) { \
-      mclist = &mci; \
-    } else { \
-      MapInfoCommand *last = mclist; \
-      while (last->next) last = last->next; \
-      last->next = &mci; \
-    } \
-  } \
-  static void Handler (VScriptParser *sc, bool newFormat, mapInfo_t *info, bool &HexenMode); \
-}; \
-/*MapInfoCommand MapInfoCommandImpl##name_ mci;*/ \
-MapInfoCommandImpl##name_ mpiprzintrnlz_mici_##name_(#name_); \
-void MapInfoCommandImpl##name_::Handler (VScriptParser *sc, bool newFormat, mapInfo_t *info, bool &HexenMode)
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -1131,22 +1135,25 @@ MAPINFOCMD(lightmode) { skipUnimplementedCommand(sc, true); }
 //
 //==========================================================================
 static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode) {
+  // build command map, if it is not built yet
+  if (mcmap.length() == 0 && mclist) {
+    for (MapInfoCommand *mcp = mclist; mcp; mcp = mcp->next) {
+      VStr cn = VStr(mcp->cmd).toLowerCase().xstrip();
+      if (cn.isEmpty()) Sys_Error("internal engine error: unnamed mapinfo command handler!");
+      if (mcmap.put(cn, mcp)) Sys_Error("internal engine error: duplicate mapinfo command handler for '%s'!", mcp->cmd);
+    }
+  }
+
   bool newFormat = sc->Check("{");
   //if (newFormat) sc->SetCMode(true);
   // process optional tokens
   for (;;) {
     //sc->GetString(); sc->UnGet(); GCon->Logf(NAME_Debug, "%s: %s", *sc->GetLoc().toStringNoCol(), *sc->String);
     if (!sc->GetString()) break;
-    bool foundit = false;
-    for (const MapInfoCommand *mcp = mclist; mcp; mcp = mcp->next) {
-      if (sc->String.strEquCI(mcp->cmd)) {
-        //GCon->Logf(NAME_Debug, "%s: cmd='%s' (new=%d)", *sc->GetLoc().toStringNoCol(), *sc->String, (int)newFormat);
-        foundit = true;
-        (*mcp->handler)(sc, newFormat, info, HexenMode);
-        break;
-      }
-    }
-    if (!foundit) {
+    auto mpp = mcmap.find(sc->String.toLowerCase());
+    if (mpp) {
+      (*(*mpp)->handler)(sc, newFormat, info, HexenMode);
+    } else {
       //GCon->Logf(NAME_Debug, "%s: NOT FOUND cmd='%s' (new=%d)", *sc->GetLoc().toStringNoCol(), *sc->String, (int)newFormat);
       sc->UnGet();
       if (!newFormat) break;
