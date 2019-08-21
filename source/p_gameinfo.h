@@ -79,6 +79,47 @@ class VGameInfo : public VGameObject {
   vuint32 Flags;
 
 public:
+  enum { PlrAll = 0, PlrOnlySpawned = 1 };
+
+  struct PlayersIter {
+  private:
+    VGameInfo *gi;
+    int plridx;
+    int type;
+
+    inline void nextByType () {
+      for (++plridx; plridx < MAXPLAYERS; ++plridx) {
+        if (!gi->Players[plridx]) continue;
+        switch (type) {
+          case PlrAll: return;
+          default: // just in case
+          case PlrOnlySpawned: if (gi->Players[plridx]->PlayerFlags&VBasePlayer::PF_Spawned) return; break;
+        }
+      }
+      plridx = MAXPLAYERS;
+    }
+
+  public:
+    PlayersIter (int atype, VGameInfo *agi) : gi(agi), plridx(-1), type(atype) { nextByType(); }
+    PlayersIter (const PlayersIter &src) : gi(src.gi), plridx(src.plridx), type(src.type) {}
+    PlayersIter (const PlayersIter &src, bool atEnd) : gi(src.gi), plridx(MAXPLAYERS), type(src.type) {}
+
+    inline PlayersIter begin () { return PlayersIter(*this); }
+    inline PlayersIter end () { return PlayersIter(*this, true); }
+    inline bool operator == (const PlayersIter &b) const { return (gi == b.gi && plridx == b.plridx && type == b.type); }
+    inline bool operator != (const PlayersIter &b) const { return (gi != b.gi || plridx != b.plridx || type != b.type); }
+    inline PlayersIter operator * () const { return PlayersIter(*this); } /* required for iterator */
+    inline void operator ++ () { if (plridx < MAXPLAYERS) nextByType(); } /* this is enough for iterator */
+    // accessors
+    inline int index () const { return plridx; }
+    inline VBasePlayer *value () const { return gi->Players[plridx]; }
+    inline VBasePlayer *player () const { return gi->Players[plridx]; }
+  };
+
+  PlayersIter playersAll () { return PlayersIter(PlrAll, this); }
+  PlayersIter playersSpawned () { return PlayersIter(PlrOnlySpawned, this); }
+
+public:
   //VGameInfo ();
 
   bool IsPaused ();
