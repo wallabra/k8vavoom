@@ -745,8 +745,7 @@ void VAcsObject::LoadEnhancedObject () {
       info = FindScript(LittleShort(((vuint16 *)buffer)[0]));
       if (info) {
         info->VarCount = LittleShort(((vuint16 *)buffer)[1]);
-        //  Make sure it's at least 4 so in SpawnScript we can safely
-        // assign args to first 4 variables.
+        // make sure it's at least 4 so in SpawnScript we can safely assign args to first 4 variables
         if (info->VarCount < 4) info->VarCount = 4;
       }
     }
@@ -824,7 +823,7 @@ void VAcsObject::LoadEnhancedObject () {
       }
       */
 #if 0
-      // gcc wants to optimise this with SSE instructions, and for some reason it believes that buffer is aligned.
+      // gcc wants to optimise this with SSE instructions, and for some reason it believes that the buffer is aligned.
       // most of the time it is, but no guarantees are given. fuck.
       memcpy(elems, buffer+3, initsize*4);
       for (i = 0; i < initsize; ++i) elems[i] = LittleLong(elems[i]);
@@ -854,7 +853,7 @@ void VAcsObject::LoadEnhancedObject () {
   // is okay.
   LibraryID = Level->LoadedObjects.Append(this)<<16;
 
-  // Tag the library ID to any map variables that are initialised with strings.
+  // tag the library ID to any map variables that are initialised with strings
   if (LibraryID) {
     buffer = (int *)FindChunk("MSTR");
     if (buffer) {
@@ -904,88 +903,73 @@ void VAcsObject::LoadEnhancedObject () {
       }
     }
 
-    //  Go through each imported object in order and resolve all
-    // imported functions and map variables.
-    for (i = 0; i < Imports.Num(); ++i)
-    {
+    // go through each imported object in order and resolve all imported functions and map variables
+    for (i = 0; i < Imports.Num(); ++i) {
       VAcsObject *lib = Imports[i];
       int j;
 
-      if (!lib)
-        continue;
+      if (!lib) continue;
 
-      // Resolve functions
+      // resolve functions
       buffer = (int*)FindChunk("FNAM");
-      for (j = 0; j < NumFunctions; ++j)
-      {
+      for (j = 0; j < NumFunctions; ++j) {
         VAcsFunction *func = &Functions[j];
-        if (func->Address != 0 || func->ImportNum != 0)
-          continue;
+        if (func->Address != 0 || func->ImportNum != 0) continue;
 
         int libfunc = lib->FindFunctionName((char*)(buffer+2)+LittleLong(buffer[3+j]));
-        if (libfunc < 0)
-          continue;
+        if (libfunc < 0) continue;
 
         VAcsFunction *realfunc = &lib->Functions[libfunc];
-        //  Make sure that the library really defines this
-        // function. It might simply be importing it itself.
-        if (realfunc->Address == 0 || realfunc->ImportNum != 0)
-          continue;
+        // make sure that the library really defines this function
+        // it might simply be importing it itself
+        if (realfunc->Address == 0 || realfunc->ImportNum != 0) continue;
 
         func->Address = libfunc;
         func->ImportNum = i+1;
-        if (realfunc->ArgCount != func->ArgCount)
-        {
+        if (realfunc->ArgCount != func->ArgCount) {
           GCon->Logf(NAME_Warning, "ACS: Function %s in %s has %d arguments. %s expects it to have %d.",
             (char *)(buffer+2)+LittleLong(buffer[3+j]),
             *W_LumpName(lib->LumpNum), realfunc->ArgCount,
             *W_LumpName(LumpNum), func->ArgCount);
           Format = ACS_Unknown;
         }
-        //  The next two properties do not effect code compatibility,
+        // the next two properties do not effect code compatibility,
         // so it is okay for them to be different in the imported
         // module than they are in this one, as long as we make sure
-        // to use the real values.
+        // to use the real values
         func->LocalCount = realfunc->LocalCount;
         func->HasReturnValue = realfunc->HasReturnValue;
       }
 
-      //  Resolve map variables.
+      // resolve map variables
       buffer = (int*)FindChunk("MIMP");
-      if (buffer)
-      {
+      if (buffer) {
         parse = (char*)&buffer[2];
-        for (j = 0; j < LittleLong(buffer[1]); ++j)
-        {
+        for (j = 0; j < LittleLong(buffer[1]); ++j) {
           int varNum = LittleLong(*(int*)&parse[j]);
           j += 4;
           int impNum = lib->FindMapVarName(&parse[j]);
-          if (impNum >= 0)
-          {
+          if (impNum >= 0) {
             MapVars[varNum] = &lib->MapVarStore[impNum];
           }
-          do ; while (parse[++j]);
+          do {} while (parse[++j]);
         }
       }
 
-      // Resolve arrays
-      if (NumTotalArrays > NumArrays)
-      {
+      // resolve arrays
+      if (NumTotalArrays > NumArrays) {
         buffer = (int*)FindChunk("AIMP");
         parse = (char*)&buffer[3];
-        for (j = 0; j < LittleLong(buffer[2]); ++j)
-        {
+        for (j = 0; j < LittleLong(buffer[2]); ++j) {
           int varNum = LittleLong(*(int*)parse);
           parse += 4;
           int expectedSize = LittleLong(*(int*)parse);
           parse += 4;
           int impNum = lib->FindMapArray(parse);
-          if (impNum >= 0)
-          {
+          if (impNum >= 0) {
             Arrays[NumArrays+j] = &lib->ArrayStore[impNum];
             MapVarStore[varNum] = NumArrays+j;
-            if (lib->ArrayStore[impNum].Size != expectedSize)
-            {
+            if (lib->ArrayStore[impNum].Size != expectedSize) {
               Format = ACS_Unknown;
               GCon->Logf(NAME_Warning, "ACS: The array %s in %s has %d elements, but %s expects it to only have %d.",
                 parse, *W_LumpName(lib->LumpNum),
@@ -1000,7 +984,7 @@ void VAcsObject::LoadEnhancedObject () {
     }
   }
 
-  // Load script names (if any)
+  // load script names (if any)
   buffer = (int*)FindChunk("SNAM");
   if (buffer) {
     int size = LittleLong(buffer[1]);
@@ -1052,22 +1036,17 @@ void VAcsObject::LoadEnhancedObject () {
 //  VAcsObject::UnencryptStrings
 //
 //==========================================================================
-
-void VAcsObject::UnencryptStrings()
-{
+void VAcsObject::UnencryptStrings () {
   vuint8 *prevchunk = nullptr;
-  vuint32 *chunk = (vuint32*)FindChunk("STRE");
-  while (chunk)
-  {
-    for (int strnum = 0; strnum < LittleLong(chunk[3]); ++strnum)
-    {
+  vuint32 *chunk = (vuint32 *)FindChunk("STRE");
+  while (chunk) {
+    for (int strnum = 0; strnum < LittleLong(chunk[3]); ++strnum) {
       int ofs = LittleLong(chunk[5+strnum]);
       vuint8 *data = (vuint8*)chunk+ofs+8;
       vuint8 last;
       int p = (vuint8)(ofs*157135);
       int i = 0;
-      do
-      {
+      do {
         last = (data[i] ^= (vuint8)(p+(i>>1)));
         ++i;
       } while (last != 0);
@@ -1076,10 +1055,7 @@ void VAcsObject::UnencryptStrings()
     chunk = (vuint32*)NextChunk((vuint8*)chunk);
     prevchunk[3] = 'L';
   }
-  if (prevchunk)
-  {
-    prevchunk[3] = 'L';
-  }
+  if (prevchunk) prevchunk[3] = 'L';
 }
 
 
@@ -1088,9 +1064,7 @@ void VAcsObject::UnencryptStrings()
 //  VAcsObject::FindFunctionName
 //
 //==========================================================================
-
-int VAcsObject::FindFunctionName(const char *Name) const
-{
+int VAcsObject::FindFunctionName (const char *Name) const {
   return FindStringInChunk(FindChunk("FNAM"), Name);
 }
 
@@ -1100,9 +1074,7 @@ int VAcsObject::FindFunctionName(const char *Name) const
 //  VAcsObject::FindMapVarName
 //
 //==========================================================================
-
-int VAcsObject::FindMapVarName(const char *Name) const
-{
+int VAcsObject::FindMapVarName (const char *Name) const {
   return FindStringInChunk(FindChunk("MEXP"), Name);
 }
 
@@ -1112,14 +1084,9 @@ int VAcsObject::FindMapVarName(const char *Name) const
 //  VAcsObject::FindMapArray
 //
 //==========================================================================
-
-int VAcsObject::FindMapArray(const char *Name) const
-{
+int VAcsObject::FindMapArray (const char *Name) const {
   int var = FindMapVarName(Name);
-  if (var >= 0)
-  {
-    return MapVarStore[var];
-  }
+  if (var >= 0) return MapVarStore[var];
   return -1;
 }
 
@@ -1129,16 +1096,11 @@ int VAcsObject::FindMapArray(const char *Name) const
 //  VAcsObject::FindStringInChunk
 //
 //==========================================================================
-
-int VAcsObject::FindStringInChunk(vuint8 *Chunk, const char *Name) const
-{
-  if (Chunk)
-  {
+int VAcsObject::FindStringInChunk (vuint8 *Chunk, const char *Name) const {
+  if (Chunk) {
     int count = LittleLong(((int*)Chunk)[2]);
-    for (int i = 0; i < count; ++i)
-    {
-      if (!VStr::ICmp(Name, (char*)(Chunk+8)+LittleLong(((int*)Chunk)[3+i])))
-      {
+    for (int i = 0; i < count; ++i) {
+      if (VStr::strEquCI(Name, (char*)(Chunk+8)+LittleLong(((int*)Chunk)[3+i]))) {
         return i;
       }
     }
@@ -1152,16 +1114,10 @@ int VAcsObject::FindStringInChunk(vuint8 *Chunk, const char *Name) const
 //  VAcsObject::FindChunk
 //
 //==========================================================================
-
-vuint8 *VAcsObject::FindChunk(const char *id) const
-{
+vuint8 *VAcsObject::FindChunk (const char *id) const {
   vuint8 *chunk = Chunks;
-  while (chunk && chunk < Data+DataSize)
-  {
-    if (*(int*)chunk == *(int*)id)
-    {
-      return chunk;
-    }
+  while (chunk && chunk < Data+DataSize) {
+    if (*(int*)chunk == *(int*)id) return chunk;
     chunk = chunk+LittleLong(((int*)chunk)[1])+8;
   }
   return nullptr;
@@ -1173,17 +1129,11 @@ vuint8 *VAcsObject::FindChunk(const char *id) const
 //  VAcsObject::NextChunk
 //
 //==========================================================================
-
-vuint8 *VAcsObject::NextChunk(vuint8 *prev) const
-{
+vuint8 *VAcsObject::NextChunk (vuint8 *prev) const {
   int id = *(int*)prev;
   vuint8 *chunk = prev+LittleLong(((int*)prev)[1])+8;
-  while (chunk && chunk < Data+DataSize)
-  {
-    if (*(int*)chunk == id)
-    {
-      return chunk;
-    }
+  while (chunk && chunk < Data+DataSize) {
+    if (*(int*)chunk == id) return chunk;
     chunk = chunk+LittleLong(((int*)chunk)[1])+8;
   }
   return nullptr;
@@ -1258,22 +1208,21 @@ void VAcsObject::Serialise (VStream &Strm) {
 //  VAcsObject::OffsetToPtr
 //
 //==========================================================================
-vuint8 *VAcsObject::OffsetToPtr(int Offs)
-{
+vuint8 *VAcsObject::OffsetToPtr (int Offs) {
   if (Offs < 0 || Offs >= DataSize) Host_Error("Bad offset in ACS file");
   return Data+Offs;
 }
+
 
 //==========================================================================
 //
 //  VAcsObject::PtrToOffset
 //
 //==========================================================================
-
-int VAcsObject::PtrToOffset(vuint8 *Ptr)
-{
+int VAcsObject::PtrToOffset (vuint8 *Ptr) {
   return Ptr-Data;
 }
+
 
 //==========================================================================
 //
@@ -1348,20 +1297,10 @@ int VAcsObject::FindScriptNumberByName (VStr aname) const {
 //  VAcsObject::GetFunction
 //
 //==========================================================================
-
-VAcsFunction *VAcsObject::GetFunction(int funcnum,
-  VAcsObject *&Object)
-{
-  if ((unsigned)funcnum >= (unsigned)NumFunctions)
-  {
-    return nullptr;
-  }
+VAcsFunction *VAcsObject::GetFunction (int funcnum, VAcsObject *&Object) {
+  if ((unsigned)funcnum >= (unsigned)NumFunctions) return nullptr;
   VAcsFunction *Func = Functions+funcnum;
-  if (Func->ImportNum)
-  {
-    return Imports[Func->ImportNum-1]->GetFunction(Func->Address,
-      Object);
-  }
+  if (Func->ImportNum) return Imports[Func->ImportNum-1]->GetFunction(Func->Address, Object);
   Object = this;
   return Func;
 }
@@ -1372,13 +1311,9 @@ VAcsFunction *VAcsObject::GetFunction(int funcnum,
 //  VAcsObject::GetArrayVal
 //
 //==========================================================================
-
-int VAcsObject::GetArrayVal(int ArrayIdx, int Index)
-{
-  if ((unsigned)ArrayIdx >= (unsigned)NumTotalArrays)
-    return 0;
-  if ((unsigned)Index >= (unsigned)Arrays[ArrayIdx]->Size)
-    return 0;
+int VAcsObject::GetArrayVal (int ArrayIdx, int Index) {
+  if ((unsigned)ArrayIdx >= (unsigned)NumTotalArrays) return 0;
+  if ((unsigned)Index >= (unsigned)Arrays[ArrayIdx]->Size) return 0;
   return Arrays[ArrayIdx]->Data[Index];
 }
 
@@ -1388,13 +1323,9 @@ int VAcsObject::GetArrayVal(int ArrayIdx, int Index)
 //  VAcsObject::SetArrayVal
 //
 //==========================================================================
-
-void VAcsObject::SetArrayVal(int ArrayIdx, int Index, int Value)
-{
-  if ((unsigned)ArrayIdx >= (unsigned)NumTotalArrays)
-    return;
-  if ((unsigned)Index >= (unsigned)Arrays[ArrayIdx]->Size)
-    return;
+void VAcsObject::SetArrayVal (int ArrayIdx, int Index, int Value) {
+  if ((unsigned)ArrayIdx >= (unsigned)NumTotalArrays) return;
+  if ((unsigned)Index >= (unsigned)Arrays[ArrayIdx]->Size) return;
   Arrays[ArrayIdx]->Data[Index] = Value;
 }
 
@@ -1404,15 +1335,12 @@ void VAcsObject::SetArrayVal(int ArrayIdx, int Index, int Value)
 //  VAcsObject::StartTypedACScripts
 //
 //==========================================================================
-
-void VAcsObject::StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3, /*int Arg4,*/
-  VEntity *Activator, bool Always, bool RunNow)
+void VAcsObject::StartTypedACScripts (int Type, int Arg1, int Arg2, int Arg3, /*int Arg4,*/
+                                      VEntity *Activator, bool Always, bool RunNow)
 {
-  for (int i = 0; i < NumScripts; ++i)
-  {
-    if (Scripts[i].Type == Type)
-    {
-      // Auto-activate
+  for (int i = 0; i < NumScripts; ++i) {
+    if (Scripts[i].Type == Type) {
+      // auto-activate
       VAcs *Script = Level->SpawnScript(&Scripts[i], this, Activator, nullptr, 0, Arg1, Arg2, Arg3, 0, Always, !RunNow, false); // always register thinker
       if (RunNow && Script) {
         VLevel *lvl = Script->XLevel;
@@ -1502,7 +1430,7 @@ int VAcsLevel::PutNewString (VStr str) {
 //  VAcsLevel::LoadObject
 //
 //==========================================================================
-VAcsObject *VAcsLevel::LoadObject(int Lump) {
+VAcsObject *VAcsLevel::LoadObject (int Lump) {
   for (int i = 0; i < LoadedObjects.Num(); ++i) {
     if (LoadedObjects[i]->LumpNum == Lump) {
       return LoadedObjects[i];
@@ -1517,14 +1445,10 @@ VAcsObject *VAcsLevel::LoadObject(int Lump) {
 //  VAcsLevel::FindScript
 //
 //==========================================================================
-
-VAcsInfo *VAcsLevel::FindScript(int Number, VAcsObject *&Object)
-{
-  for (int i = 0; i < LoadedObjects.Num(); ++i)
-  {
+VAcsInfo *VAcsLevel::FindScript (int Number, VAcsObject *&Object) {
+  for (int i = 0; i < LoadedObjects.Num(); ++i) {
     VAcsInfo *Found = LoadedObjects[i]->FindScript(Number);
-    if (Found)
-    {
+    if (Found) {
       Object = LoadedObjects[i];
       return Found;
     }
@@ -1538,14 +1462,10 @@ VAcsInfo *VAcsLevel::FindScript(int Number, VAcsObject *&Object)
 //  VAcsLevel::FindScriptByName
 //
 //==========================================================================
-
-VAcsInfo *VAcsLevel::FindScriptByName (int Number, VAcsObject *&Object)
-{
-  for (int i = 0; i < LoadedObjects.Num(); ++i)
-  {
+VAcsInfo *VAcsLevel::FindScriptByName (int Number, VAcsObject *&Object) {
+  for (int i = 0; i < LoadedObjects.Num(); ++i) {
     VAcsInfo *Found = LoadedObjects[i]->FindScriptByName(Number);
-    if (Found)
-    {
+    if (Found) {
       Object = LoadedObjects[i];
       return Found;
     }
@@ -1559,17 +1479,13 @@ VAcsInfo *VAcsLevel::FindScriptByName (int Number, VAcsObject *&Object)
 //  VAcsLevel::FindScriptByNameStr
 //
 //==========================================================================
-
-VAcsInfo *VAcsLevel::FindScriptByNameStr (VStr aname, VAcsObject *&Object)
-{
+VAcsInfo *VAcsLevel::FindScriptByNameStr (VStr aname, VAcsObject *&Object) {
   if (aname.length() == 0) return nullptr;
   VName nn = VName(*aname, VName::FindLower);
   if (nn == NAME_None) return nullptr;
-  for (int i = 0; i < LoadedObjects.Num(); ++i)
-  {
+  for (int i = 0; i < LoadedObjects.Num(); ++i) {
     VAcsInfo *Found = LoadedObjects[i]->FindScriptByName(-nn.GetIndex());
-    if (Found)
-    {
+    if (Found) {
       Object = LoadedObjects[i];
       return Found;
     }
@@ -1632,12 +1548,8 @@ VName VAcsLevel::GetNameLowerCase (int Index) {
 //  VAcsLevel::GetObject
 //
 //==========================================================================
-VAcsObject *VAcsLevel::GetObject(int Index)
-{
-  if ((unsigned)Index >= (unsigned)LoadedObjects.Num())
-  {
-    return nullptr;
-  }
+VAcsObject *VAcsLevel::GetObject (int Index) {
+  if ((unsigned)Index >= (unsigned)LoadedObjects.Num()) return nullptr;
   return LoadedObjects[Index];
 }
 
@@ -1647,12 +1559,10 @@ VAcsObject *VAcsLevel::GetObject(int Index)
 //  VAcsLevel::StartTypedACScripts
 //
 //==========================================================================
-
-void VAcsLevel::StartTypedACScripts(int Type, int Arg1, int Arg2, int Arg3,
-  VEntity *Activator, bool Always, bool RunNow)
+void VAcsLevel::StartTypedACScripts (int Type, int Arg1, int Arg2, int Arg3,
+                                     VEntity *Activator, bool Always, bool RunNow)
 {
-  for (int i = 0; i < LoadedObjects.Num(); ++i)
-  {
+  for (int i = 0; i < LoadedObjects.Num(); ++i) {
     LoadedObjects[i]->StartTypedACScripts(Type, Arg1, Arg2, Arg3, Activator, Always, RunNow);
   }
 }
@@ -1776,8 +1686,8 @@ void VAcsLevel::CheckAcsStore () {
 //
 //==========================================================================
 bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3, int Arg4,
-  VEntity *Activator, line_t *Line, int Side, bool Always, bool WantResult,
-  bool Net, int *realres)
+                       VEntity *Activator, line_t *Line, int Side, bool Always, bool WantResult,
+                       bool Net, int *realres)
 {
   /*
   if (WantResult) {
@@ -1902,8 +1812,9 @@ bool VAcsLevel::Suspend (int Number, int MapNum) {
 //
 //==========================================================================
 VAcs *VAcsLevel::SpawnScript (VAcsInfo *Info, VAcsObject *Object,
-  VEntity *Activator, line_t *Line, int Side, int Arg1, int Arg2, int Arg3, int Arg4,
-  bool Always, bool Delayed, bool ImmediateRun)
+                              VEntity *Activator, line_t *Line, int Side,
+                              int Arg1, int Arg2, int Arg3, int Arg4,
+                              bool Always, bool Delayed, bool ImmediateRun)
 {
   if (!Always && Info->RunningScript) {
     if (Info->RunningScript->State == VAcs::ASTE_Suspended) {
@@ -2269,6 +2180,9 @@ static int doGetUserVarOrArray (VEntity *ent, VName fldname, bool isArray, int i
 # define USE_COMPUTED_GOTO 1
 #endif
 
+//#undef USE_COMPUTED_GOTO
+//#define USE_COMPUTED_GOTO 0
+
 #if USE_COMPUTED_GOTO
 #define ACSVM_SWITCH(op)  goto *vm_labels[op];
 #define ACSVM_CASE(x)   Lbl_ ## x:
@@ -2442,7 +2356,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       return ActiveObject->Level->PutNewString("");
 
     case ACSF_GetWeapon:
-      if (Activator && (Activator->EntityFlags&VEntity::EF_IsPlayer) != 0 && Activator->Player) {
+      if (Activator && Activator->IsPlayer() && Activator->Player) {
         VEntity *wpn = Activator->Player->eventGetReadyWeapon();
         if (wpn) return ActiveObject->Level->PutNewString(*wpn->GetClass()->Name);
       }
@@ -2467,7 +2381,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
     // fixed GetArmorInfo (int infotype)
     case ACSF_GetArmorInfo:
       if (argCount > 0) {
-        if (!Activator || (Activator->EntityFlags&VEntity::EF_IsPlayer) == 0 || !Activator->Player) {
+        if (!Activator || !Activator->IsPlayer() || !Activator->Player) {
           // what to do here?
           if (args[0] == ARMORINFO_CLASSNAME) return ActiveObject->Level->PutNewString("None");
           return 0;
@@ -3660,8 +3574,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
   double sttime = Sys_Time();
   int scountLeft = ACS_GUARD_INSTRUCTION_COUNT;
 
-  do
-  {
+  do {
     vint32 cmd;
 
 #if USE_COMPUTED_GOTO
@@ -3671,21 +3584,15 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     0 };
 #endif
 
-    if (fmt == ACS_LittleEnhanced)
-    {
+    if (fmt == ACS_LittleEnhanced) {
       cmd = *ip;
-      if (cmd >= 240)
-      {
+      if (cmd >= 240) {
         cmd = 240+((cmd-240)<<8)+ip[1];
         ip += 2;
-      }
-      else
-      {
+      } else {
         ++ip;
       }
-    }
-    else
-    {
+    } else {
       cmd = READ_INT32(ip);
       ip += 4;
     }
@@ -3705,7 +3612,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_SWITCH(cmd)
     {
-    //  Standard P-Code commands.
+    // standard P-Code commands
     ACSVM_CASE(PCD_Nop)
       ACSVM_BREAK;
 
@@ -3733,8 +3640,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         int special = READ_BYTE_OR_INT32;
         INC_BYTE_OR_INT32;
         //if (special == 226) GCon->Logf("***ACS:%d: LSPEC1: special=%d; args=(%d)", info->Number, special, sp[-1]);
-        Level->eventExecuteActionSpecial(special, sp[-1], 0, 0, 0, 0,
-          line, side, Activator);
+        Level->eventExecuteActionSpecial(special, sp[-1], 0, 0, 0, 0, line, side, Activator);
         --sp;
       }
       ACSVM_BREAK;
@@ -3819,8 +3725,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       {
         int special = READ_BYTE_OR_INT32;
         INC_BYTE_OR_INT32;
-        Level->eventExecuteActionSpecial(special, READ_INT32(ip), READ_INT32(ip+4), READ_INT32(ip+8), READ_INT32(ip+12), READ_INT32(ip+16), line, side,
-          Activator);
+        Level->eventExecuteActionSpecial(special, READ_INT32(ip), READ_INT32(ip+4), READ_INT32(ip+8), READ_INT32(ip+12), READ_INT32(ip+16), line, side, Activator);
         ip += 20;
       }
       ACSVM_BREAK;
@@ -4178,7 +4083,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         if (Flat > 0) { //???
           sector_t *sector;
           for (int Idx = FindSectorFromTag(sector, sp[-2]); Idx >= 0; Idx = FindSectorFromTag(sector, sp[-2], Idx)) {
-            /*XLevel->Sectors[Idx].*/sector->floor.pic = Flat;
+            sector->floor.pic = Flat;
           }
         }
         sp -= 2;
@@ -4194,7 +4099,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         if (Flat > 0) { //???
           sector_t *sector;
           for (int Idx = FindSectorFromTag(sector, Tag); Idx >= 0; Idx = FindSectorFromTag(sector, Tag, Idx)) {
-            /*XLevel->Sectors[Idx].*/sector->floor.pic = Flat;
+            sector->floor.pic = Flat;
           }
         }
       }
@@ -4206,7 +4111,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         if (Flat > 0) { //???
           sector_t *sector;
           for (int Idx = FindSectorFromTag(sector, sp[-2]); Idx >= 0; Idx = FindSectorFromTag(sector, sp[-2], Idx)) {
-            /*XLevel->Sectors[Idx].*/sector->ceiling.pic = Flat;
+            sector->ceiling.pic = Flat;
           }
         }
         sp -= 2;
@@ -4222,7 +4127,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         if (Flat > 0) { //???
           sector_t *sector;
           for (int Idx = FindSectorFromTag(sector, Tag); Idx >= 0; Idx = FindSectorFromTag(sector, Tag, Idx)) {
-            /*XLevel->Sectors[Idx].*/sector->ceiling.pic = Flat;
+            sector->ceiling.pic = Flat;
           }
         }
       }
@@ -4295,9 +4200,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
           !XLevel->Acs->FindScript(WaitValue, WaitObject)->RunningScript)
       {
         State = ASTE_WaitingForScriptStart;
-      }
-      else
-      {
+      } else {
         State = ASTE_WaitingForScript;
       }
       --sp;
@@ -4310,9 +4213,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
           !XLevel->Acs->FindScript(WaitValue, WaitObject)->RunningScript)
       {
         State = ASTE_WaitingForScriptStart;
-      }
-      else
-      {
+      } else {
         State = ASTE_WaitingForScript;
       }
       ip += 4;
@@ -4330,9 +4231,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
               !XLevel->Acs->FindScript(WaitValue, WaitObject)->RunningScript)
           {
             State = ASTE_WaitingForScriptStart;
-          }
-          else
-          {
+          } else {
             State = ASTE_WaitingForScript;
           }
         } else {
@@ -4362,7 +4261,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_EndPrint)
       PrintStr = PrintStr.EvalEscapeSequences();
-      if (Activator && Activator->EntityFlags&VEntity::EF_IsPlayer) {
+      if (Activator && Activator->IsPlayer()) {
         Activator->Player->CentrePrintf("%s", *PrintStr);
       } else {
         BroadcastCentrePrint(*PrintStr);
@@ -4397,22 +4296,10 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_GameType)
-      if (GGameInfo->NetMode == NM_TitleMap)
-      {
-        *sp = GAME_TITLE_MAP;
-      }
-      else if (GGameInfo->NetMode == NM_Standalone)
-      {
-        *sp = GAME_SINGLE_PLAYER;
-      }
-      else if (deathmatch)
-      {
-        *sp = GAME_NET_DEATHMATCH;
-      }
-      else
-      {
-        *sp = GAME_NET_COOPERATIVE;
-      }
+           if (GGameInfo->NetMode == NM_TitleMap) *sp = GAME_TITLE_MAP;
+      else if (GGameInfo->NetMode == NM_Standalone) *sp = GAME_SINGLE_PLAYER;
+      else if (deathmatch) *sp = GAME_NET_DEATHMATCH;
+      else *sp = GAME_NET_COOPERATIVE;
       ++sp;
       ACSVM_BREAK;
 
@@ -4427,21 +4314,17 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SectorSound)
-      Level->SectorStartSound(line ? line->frontsector : nullptr,
-        GSoundManager->GetSoundID(GetName(sp[-2])), 0, sp[-1]/127.0f,
-        1.0f);
+      Level->SectorStartSound((line ? line->frontsector : nullptr), GSoundManager->GetSoundID(GetName(sp[-2])), 0, sp[-1]/127.0f, 1.0f);
       sp -= 2;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_AmbientSound)
-      StartSound(TVec(0, 0, 0), 0, GSoundManager->GetSoundID(
-        GetName(sp[-2])), 0, sp[-1]/127.0f, 0.0f, false);
+      StartSound(TVec(0, 0, 0), 0, GSoundManager->GetSoundID(GetName(sp[-2])), 0, sp[-1]/127.0f, 0.0f, false);
       sp -= 2;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SoundSequence)
-      Level->SectorStartSequence(line ? line->frontsector : nullptr,
-        GetName(sp[-1]), 0);
+      Level->SectorStartSequence((line ? line->frontsector : nullptr), GetName(sp[-1]), 0);
       --sp;
       ACSVM_BREAK;
 
@@ -4500,9 +4383,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       {
         TranslateSpecial(sp[-6], sp[-5]);
         int searcher = -1;
-        for (line_t *line = XLevel->FindLine(sp[-7], &searcher);
-             line != nullptr; line = XLevel->FindLine(sp[-7], &searcher))
-        {
+        for (line_t *line = XLevel->FindLine(sp[-7], &searcher); line != nullptr; line = XLevel->FindLine(sp[-7], &searcher)) {
           line->special = sp[-6];
           line->arg1 = sp[-5];
           line->arg2 = sp[-4];
@@ -4518,9 +4399,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_ThingSound)
       {
         VName sound = GetName(sp[-2]);
-        for (VEntity *mobj = Level->FindMobjFromTID(sp[-3], nullptr);
-          mobj; mobj = Level->FindMobjFromTID(sp[-3], mobj))
-        {
+        for (VEntity *mobj = Level->FindMobjFromTID(sp[-3], nullptr); mobj; mobj = Level->FindMobjFromTID(sp[-3], mobj)) {
           mobj->StartSound(sound, 0, sp[-1]/127.0f, 1.0f, false);
         }
         sp -= 3;
@@ -4535,82 +4414,51 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     //  Extended P-Code commands.
     ACSVM_CASE(PCD_ActivatorSound)
-      if (Activator)
-      {
+      if (Activator) {
         Activator->StartSound(GetName(sp[-2]), 0, sp[-1]/127.0f, 1.0f, false);
-      }
-      else
-      {
-        StartSound(TVec(0, 0, 0), 0, GSoundManager->GetSoundID(
-          GetName(sp[-2])), 0, sp[-1]/127.0f, 1.0f, false);
+      } else {
+        StartSound(TVec(0, 0, 0), 0, GSoundManager->GetSoundID(GetName(sp[-2])), 0, sp[-1]/127.0f, 1.0f, false);
       }
       sp -= 2;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_LocalAmbientSound)
-      if (Activator)
-      {
-        Activator->StartLocalSound(GetName(sp[-2]), 0, sp[-1]/127.0f,
-          1.0f);
-      }
+      if (Activator) Activator->StartLocalSound(GetName(sp[-2]), 0, sp[-1]/127.0f, 1.0f);
       sp -= 2;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SetLineMonsterBlocking)
       {
         int searcher = -1;
-        for (line_t *line = XLevel->FindLine(sp[-2], &searcher);
-          line != nullptr; line = XLevel->FindLine(sp[-2], &searcher))
-        {
-          if (sp[-1])
+        for (line_t *line = XLevel->FindLine(sp[-2], &searcher); line != nullptr; line = XLevel->FindLine(sp[-2], &searcher)) {
+          if (sp[-1]) {
             line->flags |= ML_BLOCKMONSTERS;
-          else
+          } else {
             line->flags &= ~ML_BLOCKMONSTERS;
+          }
         }
         sp -= 2;
       }
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_PlayerHealth)
-      if (Activator)
-      {
-        *sp = Activator->Health;
-      }
-      else
-      {
-        *sp = 0;
-      }
+      *sp = (Activator ? Activator->Health : 0);
       ++sp;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_PlayerArmorPoints)
-      if (Activator)
-      {
-        *sp = Activator->eventGetArmorPoints();
-      }
-      else
-      {
-        *sp = 0;
-      }
+      *sp = (Activator ? Activator->eventGetArmorPoints() : 0);
       ++sp;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_PlayerFrags)
-      if (Activator && Activator->Player)
-      {
-        *sp = Activator->Player->Frags;
-      }
-      else
-      {
-        *sp = 0;
-      }
+      *sp = (Activator && Activator->Player ? Activator->Player->Frags : 0);
       ++sp;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_PrintName)
       {
         VBasePlayer *Plr;
-
         switch (sp[-1]) {
           case PRINTNAME_LEVELNAME:
             PrintStr += GClLevel->LevelInfo->GetLevelName();
@@ -4633,7 +4481,6 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
             else PrintStr += "Unknown";
             break;
         }
-
         --sp;
       }
       ACSVM_BREAK;
@@ -4659,14 +4506,12 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SetGravity)
-      Level->Gravity = ((float)sp[-1]/(float)0x10000) *
-        DEFAULT_GRAVITY/800.0f;
+      Level->Gravity = ((float)sp[-1]/(float)0x10000)*DEFAULT_GRAVITY/800.0f;
       --sp;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SetGravityDirect)
-      Level->Gravity = ((float)READ_INT32(ip)/(float)0x10000) *
-        DEFAULT_GRAVITY/800.0f;
+      Level->Gravity = ((float)READ_INT32(ip)/(float)0x10000)*DEFAULT_GRAVITY/800.0f;
       ip += 4;
       ACSVM_BREAK;
 
@@ -4681,17 +4526,11 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_ClearInventory)
-      if (Activator)
-      {
+      if (Activator) {
         Activator->eventClearInventory();
-      }
-      else
-      {
-        for (int i = 0; i < MAXPLAYERS; ++i)
-        {
-          if (Level->Game->Players[i] &&
-            Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)
-          {
+      } else {
+        for (int i = 0; i < MAXPLAYERS; ++i) {
+          if (Level->Game->Players[i] && Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned) {
             Level->Game->Players[i]->MO->eventClearInventory();
           }
         }
@@ -4699,20 +4538,11 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_GiveInventory)
-      if (Activator)
-      {
+      if (Activator) {
         Activator->eventGiveInventory(GetNameLowerCase(sp[-2]), sp[-1], false); // disable replacement
-      }
-      else
-      {
-        for (int i = 0; i < MAXPLAYERS; ++i)
-        {
-          if (Level->Game->Players[i] &&
-            Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)
-          {
-            Level->Game->Players[i]->MO->eventGiveInventory(
-              GetNameLowerCase(sp[-2]), sp[-1], false); // disable replacement
-          }
+      } else {
+        for (auto &&it : Level->Game->playersSpawned()) {
+          it.player()->MO->eventGiveInventory(GetNameLowerCase(sp[-2]), sp[-1], false); // disable replacement
         }
       }
       sp -= 2;
@@ -4722,31 +4552,19 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       if (Activator) {
         Activator->eventGiveInventory(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()), READ_INT32(ip+4), false); // disable replacement
       } else {
-        for (int i = 0; i < MAXPLAYERS; ++i) {
-          if (Level->Game->Players[i] && (Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)) {
-            Level->Game->Players[i]->MO->eventGiveInventory(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()), READ_INT32(ip+4), false); // disable replacement
-          }
+        for (auto &&it : Level->Game->playersSpawned()) {
+          it.player()->MO->eventGiveInventory(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()), READ_INT32(ip+4), false); // disable replacement
         }
       }
       ip += 8;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_TakeInventory)
-      if (Activator)
-      {
-        Activator->eventTakeInventory(GetNameLowerCase(sp[-2]),
-          sp[-1], false); // disable replacement
-      }
-      else
-      {
-        for (int i = 0; i < MAXPLAYERS; ++i)
-        {
-          if (Level->Game->Players[i] &&
-            Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)
-          {
-            Level->Game->Players[i]->MO->eventTakeInventory(
-              GetNameLowerCase(sp[-2]), sp[-1], false); // disable replacement
-          }
+      if (Activator) {
+        Activator->eventTakeInventory(GetNameLowerCase(sp[-2]), sp[-1], false); // disable replacement
+      } else {
+        for (auto &&it : Level->Game->playersSpawned()) {
+          it.player()->MO->eventTakeInventory(GetNameLowerCase(sp[-2]), sp[-1], false); // disable replacement
         }
       }
       sp -= 2;
@@ -4756,22 +4574,17 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       if (Activator) {
         Activator->eventTakeInventory(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()), READ_INT32(ip+4), false); // disable replacement
       } else {
-        for (int i = 0; i < MAXPLAYERS; ++i) {
-          if (Level->Game->Players[i] && (Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)) {
-            Level->Game->Players[i]->MO->eventTakeInventory(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()), READ_INT32(ip+4), false); // disable replacement
-          }
+        for (auto &&it : Level->Game->playersSpawned()) {
+          it.player()->MO->eventTakeInventory(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()), READ_INT32(ip+4), false); // disable replacement
         }
       }
       ip += 8;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_CheckInventory)
-      if (!Activator)
-      {
+      if (!Activator) {
         sp[-1] = 0;
-      }
-      else
-      {
+      } else {
         sp[-1] = Activator->eventCheckInventory(GetNameLowerCase(sp[-1]), false); // disable replacement
       }
       ACSVM_BREAK;
@@ -4806,8 +4619,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SpawnSpot)
-      sp[-4] = Level->eventAcsSpawnSpot(GetNameLowerCase(sp[-4]),
-        sp[-3], sp[-2], float(sp[-1])*45.0f/32.0f);
+      sp[-4] = Level->eventAcsSpawnSpot(GetNameLowerCase(sp[-4]), sp[-3], sp[-2], float(sp[-1])*45.0f/32.0f);
       sp -= 3;
       ACSVM_BREAK;
 
@@ -4829,16 +4641,14 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_LocalSetMusic)
-      if (Activator && (Activator->EntityFlags&VEntity::EF_IsPlayer))
-      {
+      if (Activator && Activator->IsPlayer() && Activator->Player) {
         Activator->Player->eventClientChangeMusic(GetNameLowerCase(sp[-3]));
       }
       sp -= 3;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_LocalSetMusicDirect)
-      if (Activator && (Activator->EntityFlags&VEntity::EF_IsPlayer))
-      {
+      if (Activator && Activator->IsPlayer() && Activator->Player) {
         Activator->Player->eventClientChangeMusic(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()));
       }
       ip += 12;
@@ -4905,18 +4715,16 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         GCon->Logf("  HUDMSG(id=%d): ht=%f (0x%04x); t1=%f; t2=%f; type=0x%02x, msg=%s", Id, HoldTime, optstart[-1], Time1, Time2, Type, *PrintStr.quote());
         */
 
-        if (cmd != PCD_EndHudMessageBold && Activator && (Activator->EntityFlags&VEntity::EF_IsPlayer)) {
-          Activator->Player->eventClientHudMessage(PrintStr, Font,
-            Type, Id, Color, ColorName, x, y, HudWidth,
-            HudHeight, HoldTime, Time1, Time2);
+        if (cmd != PCD_EndHudMessageBold && Activator && Activator->IsPlayer()) {
+          if (Activator->Player) {
+            Activator->Player->eventClientHudMessage(PrintStr, Font,
+              Type, Id, Color, ColorName, x, y, HudWidth,
+              HudHeight, HoldTime, Time1, Time2);
+          }
         } else {
-          for (int i = 0; i < MAXPLAYERS; ++i) {
-            if (Level->Game->Players[i] && (Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)) {
-              Level->Game->Players[i]->eventClientHudMessage(
-                PrintStr, Font, Type, Id, Color, ColorName,
-                x, y, HudWidth, HudHeight, HoldTime, Time1,
-                Time2);
-            }
+          for (auto &&it : Level->Game->playersSpawned()) {
+            it.player()->eventClientHudMessage(PrintStr, Font, Type, Id, Color, ColorName,
+                                               x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
           }
         }
         sp = optstart-6;
@@ -4942,32 +4750,27 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_LSpec1DirectB)
-      Level->eventExecuteActionSpecial(ip[0], ip[1], 0, 0, 0, 0, line,
-        side, Activator);
+      Level->eventExecuteActionSpecial(ip[0], ip[1], 0, 0, 0, 0, line, side, Activator);
       ip += 2;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_LSpec2DirectB)
-      Level->eventExecuteActionSpecial(ip[0], ip[1], ip[2], 0, 0, 0,
-        line, side, Activator);
+      Level->eventExecuteActionSpecial(ip[0], ip[1], ip[2], 0, 0, 0, line, side, Activator);
       ip += 3;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_LSpec3DirectB)
-      Level->eventExecuteActionSpecial(ip[0], ip[1], ip[2], ip[3], 0,
-        0, line, side, Activator);
+      Level->eventExecuteActionSpecial(ip[0], ip[1], ip[2], ip[3], 0, 0, line, side, Activator);
       ip += 4;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_LSpec4DirectB)
-      Level->eventExecuteActionSpecial(ip[0], ip[1], ip[2], ip[3],
-        ip[4], 0, line, side, Activator);
+      Level->eventExecuteActionSpecial(ip[0], ip[1], ip[2], ip[3], ip[4], 0, line, side, Activator);
       ip += 5;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_LSpec5DirectB)
-      Level->eventExecuteActionSpecial(ip[0], ip[1], ip[2], ip[3],
-        ip[4], ip[5], line, side, Activator);
+      Level->eventExecuteActionSpecial(ip[0], ip[1], ip[2], ip[3], ip[4], ip[5], line, side, Activator);
       ip += 6;
       ACSVM_BREAK;
 
@@ -4992,8 +4795,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_PushBytes)
-      for (int i = 0; i < ip[0]; ++i)
-        sp[i] = ip[i+1];
+      for (int i = 0; i < ip[0]; ++i) sp[i] = ip[i+1];
       sp += ip[0];
       ip += ip[0]+1;
       ACSVM_BREAK;
@@ -5035,11 +4837,8 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_SetThingSpecial)
       {
         TranslateSpecial(sp[-6], sp[-5]);
-        if (sp[-7] != 0)
-        {
-          for (VEntity *Ent = Level->FindMobjFromTID(sp[-7], nullptr);
-            Ent; Ent = Level->FindMobjFromTID(sp[-7], Ent))
-          {
+        if (sp[-7] != 0) {
+          for (VEntity *Ent = Level->FindMobjFromTID(sp[-7], nullptr); Ent; Ent = Level->FindMobjFromTID(sp[-7], Ent)) {
             Ent->Special = sp[-6];
             Ent->Args[0] = sp[-5];
             Ent->Args[1] = sp[-4];
@@ -5047,9 +4846,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
             Ent->Args[3] = sp[-2];
             Ent->Args[4] = sp[-1];
           }
-        }
-        else if (Activator)
-        {
+        } else if (Activator) {
           Activator->Special = sp[-6];
           Activator->Args[0] = sp[-5];
           Activator->Args[1] = sp[-4];
@@ -5190,60 +4987,34 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_GetActorX)
       {
         VEntity *Ent = EntityFromTID(sp[-1], Activator);
-        if (!Ent)
-        {
-          sp[-1] = 0;
-        }
-        else
-        {
-          sp[-1] = vint32(Ent->Origin.x*0x10000);
-        }
+        sp[-1] = (Ent ? vint32(Ent->Origin.x*0x10000) : 0);
       }
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_GetActorY)
       {
         VEntity *Ent = EntityFromTID(sp[-1], Activator);
-        if (!Ent)
-        {
-          sp[-1] = 0;
-        }
-        else
-        {
-          sp[-1] = vint32(Ent->Origin.y*0x10000);
-        }
+        sp[-1] = (Ent ? vint32(Ent->Origin.y*0x10000) : 0);
       }
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_GetActorZ)
       {
         VEntity *Ent = EntityFromTID(sp[-1], Activator);
-        if (!Ent)
-        {
-          sp[-1] = 0;
-        }
-        else
-        {
-          sp[-1] = vint32(Ent->Origin.z*0x10000);
-        }
+        sp[-1] = (Ent ? vint32(Ent->Origin.z*0x10000) : 0);
       }
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_StartTranslation)
-      if (sp[-1] >= 1 && sp[-1] <= MAX_LEVEL_TRANSLATIONS)
-      {
-        while (XLevel->Translations.Num() < sp[-1])
-        {
+      if (sp[-1] >= 1 && sp[-1] <= MAX_LEVEL_TRANSLATIONS) {
+        while (XLevel->Translations.Num() < sp[-1]) {
           XLevel->Translations.Append(nullptr);
         }
         Translation = XLevel->Translations[sp[-1]-1];
-        if (!Translation)
-        {
+        if (!Translation) {
           Translation = new VTextureTranslation;
           XLevel->Translations[sp[-1]-1] = Translation;
-        }
-        else
-        {
+        } else {
           Translation->Clear();
         }
       }
@@ -5251,24 +5022,17 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_TranslationRange1)
-      if (Translation)
-      {
-        Translation->MapToRange(sp[-4], sp[-3], sp[-2], sp[-1]);
-      }
+      if (Translation) Translation->MapToRange(sp[-4], sp[-3], sp[-2], sp[-1]);
       sp -= 4;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_TranslationRange2)
-      if (Translation)
-      {
-        Translation->MapToColors(sp[-8], sp[-7], sp[-6], sp[-5],
-          sp[-4], sp[-3], sp[-2], sp[-1]);
-      }
+      if (Translation) Translation->MapToColors(sp[-8], sp[-7], sp[-6], sp[-5], sp[-4], sp[-3], sp[-2], sp[-1]);
       sp -= 8;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_EndTranslation)
-      //  Nothing to do here.
+      // nothing to do here
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_Call)
@@ -5493,24 +5257,12 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_CheckWeapon)
-      if (Activator)
-      {
-        sp[-1] = Activator->eventCheckNamedWeapon(GetNameLowerCase(
-          sp[-1]));
-      }
-      else
-      {
-        sp[-1] = 0;
-      }
+      sp[-1] = (Activator ? Activator->eventCheckNamedWeapon(GetNameLowerCase(sp[-1])) : 0);
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SetWeapon)
       //GCon->Logf("SETWEAPON: '%s'", *GetNameLowerCase(sp[-1]));
-      if (Activator) {
-        sp[-1] = Activator->eventSetNamedWeapon(GetNameLowerCase(sp[-1]));
-      } else {
-        sp[-1] = 0;
-      }
+      sp[-1] = (Activator ? Activator->eventSetNamedWeapon(GetNameLowerCase(sp[-1])) : 0);
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_TagString)
@@ -5740,7 +5492,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_PlayerNumber)
-      *sp = (Activator && (Activator->EntityFlags&VEntity::EF_IsPlayer) ? SV_GetPlayerNum(Activator->Player) : -1);
+      *sp = (Activator && Activator->IsPlayer() ? SV_GetPlayerNum(Activator->Player) : -1);
       //GCon->Logf("PCD_PlayerNumber: %d", *sp);
       ++sp;
       ACSVM_BREAK;
@@ -5904,41 +5656,18 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_GetLevelInfo)
-      switch (sp[-1])
-      {
-      case LEVELINFO_PAR_TIME:
-        sp[-1] = Level->ParTime;
-        break;
-      case LEVELINFO_SUCK_TIME:
-        sp[-1] = Level->SuckTime;
-        break;
-      case LEVELINFO_CLUSTERNUM:
-        sp[-1] = Level->Cluster;
-        break;
-      case LEVELINFO_LEVELNUM:
-        sp[-1] = Level->LevelNum;
-        break;
-      case LEVELINFO_TOTAL_SECRETS:
-        sp[-1] = Level->TotalSecret;
-        break;
-      case LEVELINFO_FOUND_SECRETS:
-        sp[-1] = Level->CurrentSecret;
-        break;
-      case LEVELINFO_TOTAL_ITEMS:
-        sp[-1] = Level->TotalItems;
-        break;
-      case LEVELINFO_FOUND_ITEMS:
-        sp[-1] = Level->CurrentItems;
-        break;
-      case LEVELINFO_TOTAL_MONSTERS:
-        sp[-1] = Level->TotalKills;
-        break;
-      case LEVELINFO_KILLED_MONSTERS:
-        sp[-1] = Level->CurrentKills;
-        break;
-      default:
-        sp[-1] = 0;
-        break;
+      switch (sp[-1]) {
+        case LEVELINFO_PAR_TIME: sp[-1] = Level->ParTime; break;
+        case LEVELINFO_SUCK_TIME: sp[-1] = Level->SuckTime; break;
+        case LEVELINFO_CLUSTERNUM: sp[-1] = Level->Cluster; break;
+        case LEVELINFO_LEVELNUM: sp[-1] = Level->LevelNum; break;
+        case LEVELINFO_TOTAL_SECRETS: sp[-1] = Level->TotalSecret; break;
+        case LEVELINFO_FOUND_SECRETS: sp[-1] = Level->CurrentSecret; break;
+        case LEVELINFO_TOTAL_ITEMS: sp[-1] = Level->TotalItems; break;
+        case LEVELINFO_FOUND_ITEMS: sp[-1] = Level->CurrentItems; break;
+        case LEVELINFO_TOTAL_MONSTERS: sp[-1] = Level->TotalKills; break;
+        case LEVELINFO_KILLED_MONSTERS: sp[-1] = Level->CurrentKills; break;
+        default: sp[-1] = 0; break;
       }
       ACSVM_BREAK;
 
@@ -5987,23 +5716,11 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_GetAmmoCapacity)
-      if (Activator)
-      {
-        sp[-1] = Activator->eventGetAmmoCapacity(GetNameLowerCase(
-          sp[-1]));
-      }
-      else
-      {
-        sp[-1] = 0;
-      }
+      sp[-1] = (Activator ? Activator->eventGetAmmoCapacity(GetNameLowerCase(sp[-1])) : 0);
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SetAmmoCapacity)
-      if (Activator)
-      {
-        Activator->eventSetAmmoCapacity(GetNameLowerCase(sp[-2]),
-          sp[-1]);
-      }
+      if (Activator) Activator->eventSetAmmoCapacity(GetNameLowerCase(sp[-2]), sp[-1]);
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_PrintMapCharArray)
@@ -6077,9 +5794,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_SetActorAngle)
       if (!sp[-2]) {
-        if (Activator) {
-          Activator->Angles.yaw = (float)(sp[-1]&0xffff)*360.0f/(float)0x10000;
-        }
+        if (Activator) Activator->Angles.yaw = (float)(sp[-1]&0xffff)*360.0f/(float)0x10000;
       } else {
         for (VEntity *Ent = Level->FindMobjFromTID(sp[-2], nullptr); Ent; Ent = Level->FindMobjFromTID(sp[-2], Ent)) {
           Ent->Angles.yaw = (float)(sp[-1]&0xffff)*360.0f/(float)0x10000;
@@ -6089,8 +5804,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SpawnProjectile)
-      Level->eventEV_ThingProjectile(sp[-7], 0, sp[-5], sp[-4], sp[-3],
-        sp[-2], sp[-1], GetNameLowerCase(sp[-6]), Activator);
+      Level->eventEV_ThingProjectile(sp[-7], 0, sp[-5], sp[-4], sp[-3], sp[-2], sp[-1], GetNameLowerCase(sp[-6]), Activator);
       sp -= 7;
       ACSVM_BREAK;
 
@@ -6098,7 +5812,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       {
         sector_t *sector;
         int SNum = FindSectorFromTag(sector, sp[-1]);
-        sp[-1] = (SNum >= 0 ? /*XLevel->Sectors[SNum].*/sector->params.lightlevel : 0);
+        sp[-1] = (SNum >= 0 ? sector->params.lightlevel : 0);
       }
       ACSVM_BREAK;
 
@@ -6122,9 +5836,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_ClearActorInventory)
       {
-        for (VEntity *mobj = Level->FindMobjFromTID(sp[-1], nullptr);
-          mobj; mobj = Level->FindMobjFromTID(sp[-1], mobj))
-        {
+        for (VEntity *mobj = Level->FindMobjFromTID(sp[-1], nullptr); mobj; mobj = Level->FindMobjFromTID(sp[-1], mobj)) {
           mobj->eventClearInventory();
         }
       }
@@ -6133,9 +5845,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_GiveActorInventory)
       {
-        for (VEntity *mobj = Level->FindMobjFromTID(sp[-3], nullptr);
-          mobj; mobj = Level->FindMobjFromTID(sp[-3], mobj))
-        {
+        for (VEntity *mobj = Level->FindMobjFromTID(sp[-3], nullptr); mobj; mobj = Level->FindMobjFromTID(sp[-3], mobj)) {
           mobj->eventGiveInventory(GetNameLowerCase(sp[-2]), sp[-1], false); // disable replacement
         }
       }
@@ -6145,9 +5855,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_TakeActorInventory)
       {
         //int searcher = -1;
-        for (VEntity *mobj = Level->FindMobjFromTID(sp[-3], nullptr);
-          mobj; mobj = Level->FindMobjFromTID(sp[-3], mobj))
-        {
+        for (VEntity *mobj = Level->FindMobjFromTID(sp[-3], nullptr); mobj; mobj = Level->FindMobjFromTID(sp[-3], mobj)) {
           mobj->eventTakeInventory(GetNameLowerCase(sp[-2]), sp[-1], false); // disable replacement
         }
       }
@@ -6157,33 +5865,24 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_CheckActorInventory)
       {
         VEntity *Ent = EntityFromTID(sp[-2], Activator);
-        if (!Ent)
-        {
-          sp[-2] = 0;
-        }
-        else
-        {
-          sp[-2] = Ent->eventCheckInventory(GetNameLowerCase(sp[-1]), false); // disable replacement
-        }
+        sp[-2] = (!Ent ? 0 : Ent->eventCheckInventory(GetNameLowerCase(sp[-1]), false)); // disable replacement
       }
       --sp;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_ThingCountName)
-      sp[-2] = Level->eventThingCount(0, GetNameLowerCase(sp[-2]),
-        sp[-1], -1);
+      sp[-2] = Level->eventThingCount(0, GetNameLowerCase(sp[-2]), sp[-1], -1);
       --sp;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SpawnSpotFacing)
-      sp[-3] = Level->eventAcsSpawnSpotFacing(GetNameLowerCase(sp[-3]),
-        sp[-2], sp[-1]);
+      sp[-3] = Level->eventAcsSpawnSpotFacing(GetNameLowerCase(sp[-3]), sp[-2], sp[-1]);
       sp -= 2;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_PlayerClass)
       if (sp[-1] < 0 || sp[-1] >= MAXPLAYERS || !Level->Game->Players[sp[-1]] ||
-        !(Level->Game->Players[sp[-1]]->PlayerFlags&VBasePlayer::PF_Spawned))
+          !(Level->Game->Players[sp[-1]]->PlayerFlags&VBasePlayer::PF_Spawned))
       {
         sp[-1] = -1;
       }
@@ -6513,7 +6212,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       //sp[-3] - Position
       //sp[-2] - Flags
       //sp[-1] - Skill
-      GCmdBuf<<va("TeleportNewMapEx \"%s\" %d %d %d\n", *GetStr(sp[-4]).quote(), sp[-3], sp[-2], sp[-1]);
+      GCmdBuf << va("TeleportNewMapEx \"%s\" %d %d %d\n", *GetStr(sp[-4]).quote(), sp[-3], sp[-2], sp[-1]);
       sp -= 4;
       ACSVM_BREAK;
 
@@ -6523,40 +6222,23 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_ReplaceTextures)
-      if (~sp[-1]&(NOT_TOP|NOT_MIDDLE|NOT_BOTTOM))
-      {
+      // walls
+      if ((sp[-1]&(NOT_TOP|NOT_MIDDLE|NOT_BOTTOM)) != (NOT_TOP|NOT_MIDDLE|NOT_BOTTOM)) {
         int FromTex = GTextureManager.NumForName(GetName8(sp[-3]), TEXTYPE_Wall, true);
         int ToTex = GTextureManager.NumForName(GetName8(sp[-2]), TEXTYPE_Wall, true);
-        for (int i = 0; i < XLevel->NumSides; ++i)
-        {
-          if (!(sp[-1]&NOT_TOP) &&
-            XLevel->Sides[i].TopTexture == FromTex)
-          {
-            XLevel->Sides[i].TopTexture = ToTex;
-          }
-          if (!(sp[-1]&NOT_MIDDLE) &&
-            XLevel->Sides[i].MidTexture == FromTex)
-          {
-            XLevel->Sides[i].MidTexture = ToTex;
-          }
-          if (!(sp[-1]&NOT_BOTTOM) &&
-            XLevel->Sides[i].BottomTexture == FromTex)
-          {
-            XLevel->Sides[i].BottomTexture = ToTex;
-          }
+        for (int i = 0; i < XLevel->NumSides; ++i) {
+          if (!(sp[-1]&NOT_TOP) && XLevel->Sides[i].TopTexture == FromTex) XLevel->Sides[i].TopTexture = ToTex;
+          if (!(sp[-1]&NOT_MIDDLE) && XLevel->Sides[i].MidTexture == FromTex) XLevel->Sides[i].MidTexture = ToTex;
+          if (!(sp[-1]&NOT_BOTTOM) && XLevel->Sides[i].BottomTexture == FromTex) XLevel->Sides[i].BottomTexture = ToTex;
         }
       }
-      if (~sp[-1]&(NOT_FLOOR|NOT_CEILING))
-      {
+      // flats
+      if ((sp[-1]&(NOT_FLOOR|NOT_CEILING)) != (NOT_FLOOR|NOT_CEILING)) {
         int FromTex = GTextureManager.NumForName(GetName8(sp[-3]), TEXTYPE_Flat, true);
         int ToTex = GTextureManager.NumForName(GetName8(sp[-2]), TEXTYPE_Flat, true);
         for (int i = 0; i < XLevel->NumSectors; ++i) {
-          if (!(sp[-1]&NOT_FLOOR) && XLevel->Sectors[i].floor.pic == FromTex) {
-            XLevel->Sectors[i].floor.pic = ToTex;
-          }
-          if (!(sp[-1]&NOT_CEILING) && XLevel->Sectors[i].ceiling.pic == FromTex) {
-            XLevel->Sectors[i].ceiling.pic = ToTex;
-          }
+          if (!(sp[-1]&NOT_FLOOR) && XLevel->Sectors[i].floor.pic == FromTex) XLevel->Sectors[i].floor.pic = ToTex;
+          if (!(sp[-1]&NOT_CEILING) && XLevel->Sectors[i].ceiling.pic == FromTex) XLevel->Sectors[i].ceiling.pic = ToTex;
         }
       }
       sp -= 3;
@@ -6569,27 +6251,16 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_GetActorPitch)
       {
         VEntity *Ent = EntityFromTID(sp[-1], Activator);
-        sp[-1] = Ent ? vint32(Ent->Angles.pitch*0x10000/360) &
-          0xffff : 0;
+        sp[-1] = (Ent ? vint32(Ent->Angles.pitch*0x10000/360)&0xffff : 0);
       }
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SetActorPitch)
-      if (!sp[-2])
-      {
-        if (Activator)
-        {
-          Activator->Angles.pitch = AngleMod180(
-            (float)(sp[-1]&0xffff)*360.0f/(float)0x10000);
-        }
-      }
-      else
-      {
-        for (VEntity *Ent = Level->FindMobjFromTID(sp[-2], nullptr);
-          Ent; Ent = Level->FindMobjFromTID(sp[-2], Ent))
-        {
-          Ent->Angles.pitch = AngleMod180(
-            (float)(sp[-1]&0xffff)*360.0f/(float)0x10000);
+      if (!sp[-2]) {
+        if (Activator) Activator->Angles.pitch = AngleMod180((float)(sp[-1]&0xffff)*360.0f/(float)0x10000);
+      } else {
+        for (VEntity *Ent = Level->FindMobjFromTID(sp[-2], nullptr); Ent; Ent = Level->FindMobjFromTID(sp[-2], Ent)) {
+          Ent->Angles.pitch = AngleMod180((float)(sp[-1]&0xffff)*360.0f/(float)0x10000);
         }
       }
       sp -= 2;
@@ -6605,30 +6276,19 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       {
         TArray<VName> Names;
         VMemberBase::StaticSplitStateLabel(GetStr(sp[-2]), Names);
-        if (!sp[-3])
-        {
-          VStateLabel *Lbl = !Activator ? nullptr :
-            Activator->GetClass()->FindStateLabel(Names, !!sp[-1]);
-          if (Lbl && Lbl->State)
-          {
+        if (!sp[-3]) {
+          VStateLabel *Lbl = (!Activator ? nullptr : Activator->GetClass()->FindStateLabel(Names, !!sp[-1]));
+          if (Lbl && Lbl->State) {
             Activator->SetState(Lbl->State);
             sp[-3] = 1;
-          }
-          else
-          {
+          } else {
             sp[-3] = 0;
           }
-        }
-        else
-        {
+        } else {
           int Count = 0;
-          for (VEntity *Ent = Level->FindMobjFromTID(sp[-3], nullptr);
-            Ent; Ent = Level->FindMobjFromTID(sp[-3], Ent))
-          {
-            VStateLabel *Lbl = Ent->GetClass()->FindStateLabel(
-              Names, !!sp[-1]);
-            if (Lbl && Lbl->State)
-            {
+          for (VEntity *Ent = Level->FindMobjFromTID(sp[-3], nullptr); Ent; Ent = Level->FindMobjFromTID(sp[-3], Ent)) {
+            VStateLabel *Lbl = Ent->GetClass()->FindStateLabel(Names, !!sp[-1]);
+            if (Lbl && Lbl->State) {
               Ent->SetState(Lbl->State);
               ++Count;
             }
@@ -6640,51 +6300,32 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_ThingDamage2)
-      sp[-3] = Level->eventDoThingDamage(sp[-3], sp[-2],
-        GetName(sp[-1]), Activator);
+      sp[-3] = Level->eventDoThingDamage(sp[-3], sp[-2], GetName(sp[-1]), Activator);
       sp -= 2;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_UseInventory)
-      if (Activator)
-      {
+      if (Activator) {
         sp[-1] = Activator->eventUseInventoryName(GetNameLowerCase(sp[-1]), false); // disable replacement
-      }
-      else
-      {
+      } else {
         sp[-1] = 0;
-        for (int i = 0; i < MAXPLAYERS; ++i)
-        {
-          if (Level->Game->Players[i] &&
-            Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)
-          {
-            sp[-1] += Level->Game->Players[i]->MO->eventUseInventoryName(GetNameLowerCase(sp[-1]), false); // disable replacement
-          }
+        for (auto &&it : Level->Game->playersSpawned()) {
+          sp[-1] += it.player()->MO->eventUseInventoryName(GetNameLowerCase(sp[-1]), false); // disable replacement
         }
       }
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_UseActorInventory)
-      if (sp[-2])
-      {
+      if (sp[-2]) {
         int Ret = 0;
-        for (VEntity *Ent = Level->FindMobjFromTID(sp[-2], nullptr);
-          Ent; Ent = Level->FindMobjFromTID(sp[-2], Ent))
-        {
+        for (VEntity *Ent = Level->FindMobjFromTID(sp[-2], nullptr); Ent; Ent = Level->FindMobjFromTID(sp[-2], Ent)) {
           Ret += Ent->eventUseInventoryName(GetNameLowerCase(sp[-1]), false); // disable replacement
         }
         sp[-2] = Ret;
-      }
-      else
-      {
+      } else {
         sp[-1] = 0;
-        for (int i = 0; i < MAXPLAYERS; ++i)
-        {
-          if (Level->Game->Players[i] &&
-            Level->Game->Players[i]->PlayerFlags&VBasePlayer::PF_Spawned)
-          {
-            sp[-1] += Level->Game->Players[i]->MO->eventUseInventoryName(GetNameLowerCase(sp[-1]), false); // disable replacement
-          }
+        for (auto &&it : Level->Game->playersSpawned()) {
+          sp[-1] += it.player()->MO->eventUseInventoryName(GetNameLowerCase(sp[-1]), false); // disable replacement
         }
       }
       --sp;
@@ -6693,13 +6334,10 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_CheckActorCeilingTexture)
       {
         VEntity *Ent = EntityFromTID(sp[-2], Activator);
-        if (Ent)
-        {
+        if (Ent) {
           int Tex = GTextureManager.CheckNumForName(GetName8(sp[-1]), TEXTYPE_Wall, true);
-          sp[-2] = Ent->Sector->ceiling.pic == Tex;
-        }
-        else
-        {
+          sp[-2] = (Ent->Sector->ceiling.pic == Tex ? 1 : 0);
+        } else {
           sp[-2] = 0;
         }
       }
@@ -6709,13 +6347,10 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_CheckActorFloorTexture)
       {
         VEntity *Ent = EntityFromTID(sp[-2], Activator);
-        if (Ent)
-        {
+        if (Ent) {
           int Tex = GTextureManager.CheckNumForName(GetName8(sp[-1]), TEXTYPE_Wall, true);
-          sp[-2] = Ent->Sector->floor.pic == Tex;
-        }
-        else
-        {
+          sp[-2] = (Ent->Sector->floor.pic == Tex ? 1 : 0);
+        } else {
           sp[-2] = 0;
         }
       }
@@ -6725,14 +6360,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_GetActorLightLevel)
       {
         VEntity *Ent = EntityFromTID(sp[-1], Activator);
-        if (Ent)
-        {
-          sp[-1] = Ent->Sector->params.lightlevel;
-        }
-        else
-        {
-          sp[-1] = 0;
-        }
+        sp[-1] = (Ent ? Ent->Sector->params.lightlevel : 0);
       }
       ACSVM_BREAK;
 
@@ -6755,129 +6383,88 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_CheckPlayerCamera)
       if (sp[-1] < 0 || sp[-1] >= MAXPLAYERS ||
-        !Level->Game->Players[sp[-1]] ||
-        !(Level->Game->Players[sp[-1]]->PlayerFlags&VBasePlayer::PF_Spawned) ||
-        !Level->Game->Players[sp[-1]]->Camera)
+          !Level->Game->Players[sp[-1]] ||
+          !(Level->Game->Players[sp[-1]]->PlayerFlags&VBasePlayer::PF_Spawned) ||
+          !Level->Game->Players[sp[-1]]->Camera)
       {
         sp[-1] = -1;
-      }
-      else
-      {
+      } else {
         sp[-1] = Level->Game->Players[sp[-1]]->Camera->TID;
       }
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_MorphActor)
-      if (sp[-7])
-      {
+      if (sp[-7]) {
         //int searcher = -1;
         int Res = 0;
-        for (VEntity *Ent = Level->FindMobjFromTID(sp[-7], nullptr);
-          Ent; Ent = Level->FindMobjFromTID(sp[-7], Ent))
-        {
+        for (VEntity *Ent = Level->FindMobjFromTID(sp[-7], nullptr); Ent; Ent = Level->FindMobjFromTID(sp[-7], Ent)) {
           Res += Ent->eventMorphActor(GetNameLowerCase(sp[-6]),
             GetNameLowerCase(sp[-5]), sp[-4]/35.0f, sp[-3],
             GetNameLowerCase(sp[-2]), GetNameLowerCase(sp[-1]));
         }
         sp[-7] = Res;
-      }
-      else if (Activator)
-      {
+      } else if (Activator) {
         sp[-7] = Activator->eventMorphActor(GetNameLowerCase(sp[-6]),
             GetNameLowerCase(sp[-5]), sp[-4]/35.0f, sp[-3],
             GetNameLowerCase(sp[-2]), GetNameLowerCase(sp[-1]));
-      }
-      else
-      {
+      } else {
         sp[-7] = 0;
       }
       sp -= 6;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_UnmorphActor)
-      if (sp[-2])
-      {
+      if (sp[-2]) {
         //int searcher = -1;
         int Res = 0;
-        for (VEntity *Ent = Level->FindMobjFromTID(sp[-2], nullptr);
-          Ent; Ent = Level->FindMobjFromTID(sp[-2], Ent))
-        {
+        for (VEntity *Ent = Level->FindMobjFromTID(sp[-2], nullptr); Ent; Ent = Level->FindMobjFromTID(sp[-2], Ent)) {
           Res += Ent->eventUnmorphActor(Activator, sp[-1]);
         }
         sp[-2] = Res;
-      }
-      else if (Activator)
-      {
+      } else if (Activator) {
         sp[-2] = Activator->eventUnmorphActor(Activator, sp[-1]);
-      }
-      else
-      {
+      } else {
         sp[-2] = 0;
       }
       --sp;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_GetPlayerInput)
-      if (sp[-2] < 0)
-      {
-        if (Activator && Activator->Player)
-        {
-          sp[-2] = Activator->Player->AcsGetInput(sp[-1]);
-        }
-        else
-        {
+      if (sp[-2] < 0) {
+        if (Activator && Activator->IsPlayer()) {
+          sp[-2] = (Activator->Player ? Activator->Player->AcsGetInput(sp[-1]) : 0);
+        } else {
           sp[-2] = 0;
         }
-      }
-      else if (sp[-2] < MAXPLAYERS && Level->Game->Players[sp[-2]] &&
-        (Level->Game->Players[sp[-2]]->PlayerFlags&VBasePlayer::PF_Spawned))
+      } else if (sp[-2] < MAXPLAYERS && Level->Game->Players[sp[-2]] &&
+                 (Level->Game->Players[sp[-2]]->PlayerFlags&VBasePlayer::PF_Spawned))
       {
         sp[-2] = Level->Game->Players[sp[-2]]->AcsGetInput(sp[-1]);
-      }
-      else
-      {
+      } else {
         sp[-2] = 0;
       }
       --sp;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_ClassifyActor)
-      if (sp[-1])
-      {
+      if (sp[-1]) {
         VEntity *Ent = EntityFromTID(sp[-1], Activator);
-        if (Ent)
-        {
-          sp[-1] = Ent->eventClassifyActor();
-        }
-        else
-        {
-          //  None
-          sp[-1] = 0;
-        }
-      }
-      else
-      {
-        if (Activator)
-        {
-          sp[-1] = Activator->eventClassifyActor();
-        }
-        else
-        {
-          //  World
-          sp[-1] = 1;
-        }
+        sp[-1] = (Ent ? Ent->eventClassifyActor() : 0);
+      } else if (Activator) {
+        sp[-1] = Activator->eventClassifyActor();
+      } else {
+        // world
+        sp[-1] = 1;
       }
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_PrintBinary)
       {
         vuint32 Val = sp[-1];
-        do
-        {
-          PrintStr += Val&1 ? "1" : "0";
+        do {
+          PrintStr += (Val&1 ? "1" : "0");
           Val >>= 1;
-        }
-        while (Val);
+        } while (Val);
       }
       --sp;
       ACSVM_BREAK;
