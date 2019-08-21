@@ -1366,7 +1366,7 @@ void VPartialStreamRO::Serialise (void *buf, int len) {
   {
     MyThreadLocker locker(lockptr);
     if (stpos+partlen-srccurpos < len) { bError = true; return; }
-    srcStream->Seek(srccurpos);
+    if (srcStream->Tell() != srccurpos) srcStream->Seek(srccurpos);
     if (srcStream->IsError()) { bError = true; return; }
     srcStream->Serialise(buf, len);
     if (srcStream->IsError()) { bError = true; return; }
@@ -1384,7 +1384,7 @@ void VPartialStreamRO::SerialiseBits (void *Data, int Length) {
   if (!checkValidityCond(Length >= 0)) return;
   {
     MyThreadLocker locker(lockptr);
-    srcStream->Seek(srccurpos);
+    if (srcStream->Tell() != srccurpos) srcStream->Seek(srccurpos);
     if (srcStream->IsError()) { bError = true; return; }
     srcStream->SerialiseBits(Data, Length);
     int cpos = srcStream->Tell();
@@ -1400,7 +1400,7 @@ void VPartialStreamRO::SerialiseInt (vuint32 &Value/*, vuint32 Max*/) {
   if (!checkValidity()) return;
   {
     MyThreadLocker locker(lockptr);
-    srcStream->Seek(srccurpos);
+    if (srcStream->Tell() != srccurpos) srcStream->Seek(srccurpos);
     if (srcStream->IsError()) { bError = true; return; }
     srcStream->SerialiseInt(Value/*, Max*/);
     int cpos = srcStream->Tell();
@@ -1487,7 +1487,7 @@ void VPartialStreamRO::Flush () {
   if (!checkValidity()) return; \
   { \
     MyThreadLocker locker(lockptr); \
-    srcStream->Seek(srccurpos); \
+    if (srcStream->Tell() != srccurpos) srcStream->Seek(srccurpos); \
     if (srcStream->IsError()) { bError = true; return; } \
     srcStream->io(v); \
     int cpos = srcStream->Tell(); \
@@ -1558,7 +1558,7 @@ void VPartialStreamRO::SerialiseStructPointer (void *&Ptr, VStruct *Struct) {
   if (!checkValidityCond(!!Ptr && !!Struct)) return;
   {
     MyThreadLocker locker(lockptr);
-    srcStream->Seek(srccurpos);
+    if (srcStream->Tell() != srccurpos) srcStream->Seek(srccurpos);
     if (srcStream->IsError()) { bError = true; return; }
     srcStream->SerialiseStructPointer(Ptr, Struct);
     int cpos = srcStream->Tell();

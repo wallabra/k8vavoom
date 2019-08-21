@@ -60,6 +60,9 @@ public:
 public:
   VSearchPath ();
   virtual ~VSearchPath ();
+
+  // all following methods are supposed to be called with global mutex protection
+  // (i.e. they should not be called from multiple threads simultaneously)
   virtual bool FileExists (const VStr &Name) = 0;
   virtual VStream *OpenFileRead (const VStr &Name) = 0;
   virtual void Close () = 0;

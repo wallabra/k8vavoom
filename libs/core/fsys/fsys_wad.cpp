@@ -421,6 +421,7 @@ VStream *VWadFile::CreateLumpReaderNum (int lump) {
   // create stream
   VStream *S = new VMemoryStream(GetPrefix()+":"+pakdir.files[lump].fileName, ptr, fi.filesize, true);
 #else
+  // this is mt-protected
   VStream *S = new VPartialStreamRO(GetPrefix()+":"+pakdir.files[lump].fileName, Stream, fi.pakdataofs, fi.filesize, &rdlock);
 #endif
 
