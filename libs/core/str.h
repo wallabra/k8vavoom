@@ -54,17 +54,35 @@ private:
   inline Store *store () { return (dataptr ? (Store *)(dataptr-sizeof(Store)) : nullptr); }
   inline Store *store () const { return (dataptr ? (Store *)(dataptr-sizeof(Store)) : nullptr); }
 
+  // should be called only when storage is available
+  inline int atomicGetRC () const { return __atomic_load_n(&((const Store *)(dataptr-sizeof(Store)))->rc, __ATOMIC_SEQ_CST); }
+  // should be called only when storage is available
+  inline void atomicSetRC (int newval) { __atomic_store_n(&((Store *)(dataptr-sizeof(Store)))->rc, newval, __ATOMIC_SEQ_CST); }
+  // should be called only when storage is available
+  inline bool atomicIsImmutable () const { return (__atomic_load_n(&((const Store *)(dataptr-sizeof(Store)))->rc, __ATOMIC_SEQ_CST) < 0); }
+  // should be called only when storage is available
+  // immutable strings aren't unique
+  inline bool atomicIsUnique () const { return (__atomic_load_n(&((const Store *)(dataptr-sizeof(Store)))->rc, __ATOMIC_SEQ_CST) == 1); }
+  // should be called only when storage is available
+  // returns new value
+  // WARNING: will happily modify immutable RC!
+  inline void atomicIncRC () const { (void)__atomic_add_fetch(&((Store *)(dataptr-sizeof(Store)))->rc, 1, __ATOMIC_SEQ_CST); }
+  // should be called only when storage is available
+  // returns new value
+  // WARNING: will happily modify immutable RC!
+  inline int atomicDecRC () const { return __atomic_sub_fetch(&((Store *)(dataptr-sizeof(Store)))->rc, 1, __ATOMIC_SEQ_CST); }
+
   inline char *getData () { return dataptr; }
   inline const char *getData () const { return dataptr; }
 
-  inline void incref () const { if (dataptr && store()->rc >= 0) ++store()->rc; }
+  inline void incref () const { if (dataptr && !atomicIsImmutable()) atomicIncRC(); }
 
   // WARNING! may free `data` contents!
   // this also clears `data`
   inline void decref () {
     if (dataptr) {
-      if (store()->rc > 0) {
-        if (--store()->rc == 0) {
+      if (atomicGetRC() > 0) {
+        if (atomicDecRC() == 0) {
           #ifdef VAVOOM_TEST_VSTR
           fprintf(stderr, "VStr: freeing %p\n", dataptr);
           #endif
@@ -99,7 +117,7 @@ private:
 
 public:
   // debul
-  inline int dbgGetRef () const { return (dataptr ? store()->rc : 0); }
+  inline int dbgGetRef () const { return (dataptr ? atomicGetRC() : 0); }
 
 public:
   // some utilities
@@ -168,7 +186,6 @@ public:
   }
   inline void SetLength (int len, char fillChar=' ') { setLength(len, fillChar); }
 
-  //inline int getRC () const { return (dataptr ? store()->rc : 0); }
   inline int getCapacity () const { return (dataptr ? store()->alloted : 0); }
 
   // returns number of characters in a UTF-8 string

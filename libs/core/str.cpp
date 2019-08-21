@@ -529,12 +529,10 @@ void VStr::chopRight (int len) {
 // ////////////////////////////////////////////////////////////////////////// //
 void VStr::makeImmutable () {
   if (!dataptr) return; // nothing to do
-  /*
-  if (store()->rc >= 0 && store()->rc < 0xffff) {
-    store()->rc = store()->rc+0xffff; // wow, big rc count, so it will be copied on mutation
+  if (!atomicIsImmutable()) {
+    //store()->rc = -0x0fffffff; // any negative means "immutable"
+    atomicSetRC(-0x0fffffff); // any negative means "immutable"
   }
-  */
-  store()->rc = -0x0fffffff; // any negative means "immutable"
 }
 
 
@@ -545,7 +543,7 @@ VStr &VStr::makeImmutableRetSelf () {
 
 
 void VStr::makeMutable () {
-  if (!dataptr || store()->rc == 1) return; // nothing to do
+  if (!dataptr || atomicIsUnique() == 1) return; // nothing to do
   // allocate new string
   Store *oldstore = store();
   const char *olddata = dataptr;
@@ -559,7 +557,10 @@ void VStr::makeMutable () {
   dataptr = ((char *)newdata)+sizeof(Store);
   // copy old data
   memcpy(dataptr, olddata, olen+1);
-  if (oldstore->rc > 0) --oldstore->rc; // decrement old refcounter
+  //if (oldstore->rc > 0) --oldstore->rc; // decrement old refcounter
+  if (__atomic_load_n(&oldstore->rc, __ATOMIC_SEQ_CST) > 0) {
+    (void)__atomic_sub_fetch(&oldstore->rc, 1, __ATOMIC_SEQ_CST);
+  }
 #ifdef VAVOOM_TEST_VSTR
   fprintf(stderr, "VStr: makeMutable: old=%p(%d); new=%p(%d)\n", oldstore+1, oldstore->rc, dataptr, newdata->rc);
 #endif
@@ -598,7 +599,7 @@ void VStr::resize (int newlen) {
   }
 
   // unique?
-  if (store()->rc == 1) {
+  if (atomicIsUnique() == 1) {
     // do in-place reallocs
     if (newlen < oldlen) {
       // shrink
@@ -664,7 +665,11 @@ void VStr::resize (int newlen) {
     ns->alloted = alloclen;
     ns->rc = 1;
     // decrement old rc
-    if (store()->rc > 0) --store()->rc;
+    //if (store()->rc > 0) --store()->rc;
+    if (!atomicIsImmutable()) {
+      int nrc = atomicDecRC();
+      check(nrc > 0);
+    }
     #ifdef VAVOOM_TEST_VSTR
     fprintf(stderr, "VStr: realloced(new): old=%p(%d); new=%p(%d)\n", dataptr, store()->rc, ns+1, ns->rc);
     #endif
