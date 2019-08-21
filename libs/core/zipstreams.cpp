@@ -59,7 +59,7 @@ VZipStreamReader::VZipStreamReader (VStream *ASrcStream, vuint32 ACompressedSize
 //  VZipStreamReader::VZipStreamReader
 //
 //==========================================================================
-VZipStreamReader::VZipStreamReader (const VStr &fname, VStream *ASrcStream, vuint32 ACompressedSize, vuint32 AUncompressedSize, Type atype)
+VZipStreamReader::VZipStreamReader (VStr fname, VStream *ASrcStream, vuint32 ACompressedSize, vuint32 AUncompressedSize, Type atype)
   : VStream()
   , srcStream(ASrcStream)
   , initialised(false)
@@ -115,7 +115,7 @@ VZipStreamReader::VZipStreamReader (bool useCurrSrcPos, VStream *ASrcStream, vui
 //  VZipStreamReader::VZipStreamReader
 //
 //==========================================================================
-VZipStreamReader::VZipStreamReader (bool useCurrSrcPos, const VStr &fname, VStream *ASrcStream, vuint32 ACompressedSize, vuint32 AUncompressedSize, Type atype)
+VZipStreamReader::VZipStreamReader (bool useCurrSrcPos, VStr fname, VStream *ASrcStream, vuint32 ACompressedSize, vuint32 AUncompressedSize, Type atype)
   : VStream()
   , srcStream(ASrcStream)
   , initialised(false)
@@ -202,8 +202,8 @@ void VZipStreamReader::initialize () {
 //  VZipStreamReader::GetName
 //
 //==========================================================================
-const VStr &VZipStreamReader::GetName () const {
-  return mFileName;
+VStr VZipStreamReader::GetName () const {
+  return mFileName.cloneUnique();
 }
 
 

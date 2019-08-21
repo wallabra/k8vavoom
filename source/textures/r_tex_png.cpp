@@ -216,7 +216,7 @@ void VPngTexture::Unload () {
 //
 //==========================================================================
 #ifdef CLIENT
-void WritePNG(const VStr &FileName, const void *Data, int Width, int Height, int Bpp, bool Bot2top) {
+void WritePNG(VStr FileName, const void *Data, int Width, int Height, int Bpp, bool Bot2top) {
 #if 0
   VStream *Strm = FL_OpenFileWrite(FileName, true);
   if (!Strm) { GCon->Log("Couldn't write png"); return; }

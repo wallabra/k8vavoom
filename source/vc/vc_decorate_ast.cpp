@@ -483,7 +483,7 @@ bool VDecorateUserVar::IsDecorateUserVar () const {
 //  VDecorateSingleName::VDecorateSingleName
 //
 //==========================================================================
-VDecorateSingleName::VDecorateSingleName (const VStr &AName, const TLocation &ALoc)
+VDecorateSingleName::VDecorateSingleName (VStr AName, const TLocation &ALoc)
   : VExpression(ALoc)
   , Name(AName)
 {

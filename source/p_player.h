@@ -240,7 +240,7 @@ public:
   void SetViewState(int, VState*);
   void AdvanceViewStates(float);
 
-  void SetUserInfo(const VStr&);
+  void SetUserInfo(VStr);
   void ReadFromUserInfo();
 
   //  Handling of player input.
@@ -267,15 +267,15 @@ public:
   void DoClientFinale(VStr);
   void DoClientChangeMusic(VName);
   void DoClientSetServerInfo(VStr, VStr);
-  void DoClientHudMessage(const VStr&, VName, int, int, int, const VStr&,
+  void DoClientHudMessage(VStr, VName, int, int, int, VStr,
     float, float, int, int, float, float, float);
 
   void WriteViewData();
 
   // append player commands with the given prefix
-  void ListConCommands (TArray<VStr> &list, const VStr &pfx);
+  void ListConCommands (TArray<VStr> &list, VStr pfx);
 
-  bool IsConCommand (const VStr &name);
+  bool IsConCommand (VStr name);
 
   // returns `true` if command was found and executed
   // uses VCommand command line
@@ -341,7 +341,7 @@ public:
   void eventClientTick (float deltaTime) { static VMethodProxy method("ClientTick"); vobjPutParamSelf(deltaTime); VMT_RET_VOID(method); }
   void eventSetViewPos () { static VMethodProxy method("SetViewPos"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   void eventPreTravel () { static VMethodProxy method("PreTravel"); vobjPutParamSelf(); VMT_RET_VOID(method); }
-  void eventUseInventory (const VStr &Inv) { static VMethodProxy method("UseInventory"); vobjPutParamSelf(Inv); VMT_RET_VOID(method); }
+  void eventUseInventory (VStr Inv) { static VMethodProxy method("UseInventory"); vobjPutParamSelf(Inv); VMT_RET_VOID(method); }
   bool eventCheckDoubleFiringSpeed () { static VMethodProxy method("CheckDoubleFiringSpeed"); vobjPutParamSelf(); VMT_RET_BOOL(method); }
 
   void eventResetInventory () { static VMethodProxy method("ResetInventory"); vobjPutParamSelf(); VMT_RET_VOID(method); }
@@ -395,12 +395,12 @@ public:
     vobjPutParamSelf(OriginId);
     VMT_RET_VOID(method);
   }
-  void eventClientPrint (const VStr &Str) {
+  void eventClientPrint (VStr Str) {
     static VMethodProxy method("ClientPrint");
     vobjPutParamSelf(Str);
     VMT_RET_VOID(method);
   }
-  void eventClientCentrePrint (const VStr &Str) {
+  void eventClientCentrePrint (VStr Str) {
     static VMethodProxy method("ClientCentrePrint");
     vobjPutParamSelf(Str);
     VMT_RET_VOID(method);
@@ -425,7 +425,7 @@ public:
     vobjPutParamSelf();
     VMT_RET_VOID(method);
   }
-  void eventClientFinale (const VStr &Type) {
+  void eventClientFinale (VStr Type) {
     static VMethodProxy method("ClientFinale");
     vobjPutParamSelf(Type);
     VMT_RET_VOID(method);
@@ -435,13 +435,13 @@ public:
     vobjPutParamSelf(Song);
     VMT_RET_VOID(method);
   }
-  void eventClientSetServerInfo (const VStr &Key, const VStr &Value) {
+  void eventClientSetServerInfo (VStr Key, VStr Value) {
     static VMethodProxy method("ClientSetServerInfo");
     vobjPutParamSelf(Key, Value);
     VMT_RET_VOID(method);
   }
-  void eventClientHudMessage (const VStr &Message, VName Font, int Type,
-                              int Id, int Color, const VStr &ColorName, float x, float y,
+  void eventClientHudMessage (VStr Message, VName Font, int Type,
+                              int Id, int Color, VStr ColorName, float x, float y,
                               int HudWidth, int HudHeight, float HoldTime, float Time1, float Time2)
   {
     static VMethodProxy method("ClientHudMessage");
@@ -455,19 +455,19 @@ public:
     vobjPutParamSelf(AImpulse);
     VMT_RET_VOID(method);
   }
-  void eventServerSetUserInfo (const VStr &Info) {
+  void eventServerSetUserInfo (VStr Info) {
     static VMethodProxy method("ServerSetUserInfo");
     vobjPutParamSelf(Info);
     VMT_RET_VOID(method);
   }
 
-  bool eventIsReadyWeaponByName (const VStr &classname, bool allowReplace) {
+  bool eventIsReadyWeaponByName (VStr classname, bool allowReplace) {
     static VMethodProxy method("eventIsReadyWeaponByName");
     vobjPutParamSelf(classname, allowReplace);
     VMT_RET_BOOL(method);
   }
 
-  VEntity *eventFindInventoryWeapon (const VStr &classname, bool allowReplace) {
+  VEntity *eventFindInventoryWeapon (VStr classname, bool allowReplace) {
     static VMethodProxy method("eventFindInventoryWeapon");
     vobjPutParamSelf(classname, allowReplace);
     VMT_RET_REF(VEntity, method);

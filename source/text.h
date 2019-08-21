@@ -81,10 +81,10 @@ void T_Shutdown ();
 void T_SetFont (VFont *);
 void T_SetAlign (halign_e, valign_e);
 
-void T_DrawText (int, int, const VStr &, int);
-int T_TextWidth (const VStr &);
-int T_TextHeight (const VStr &);
-int T_StringWidth (const VStr &);
+void T_DrawText (int, int, VStr, int);
+int T_TextWidth (VStr);
+int T_TextHeight (VStr);
+int T_StringWidth (VStr);
 int T_FontHeight ();
 
 void T_DrawCursor ();

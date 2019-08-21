@@ -126,7 +126,7 @@ private:
   VWidget *GetWidgetAt (float, float);
 
   bool TransferAndClipRect (float&, float&, float&, float&, float&, float&, float&, float&) const;
-  void DrawString (int, int, const VStr&, int, int, float);
+  void DrawString (int, int, VStr, int, int, float);
 
   void cleanupWidgets ();
 
@@ -227,10 +227,10 @@ public:
   void SetFont (VName);
   void SetTextAlign (halign_e, valign_e);
   void SetTextShadow (bool);
-  void DrawText (int, int, const VStr &, int, int, float);
-  int TextWidth (const VStr &);
-  int TextHeight (const VStr &);
-  int StringWidth (const VStr &);
+  void DrawText (int, int, VStr, int, int, float);
+  int TextWidth (VStr);
+  int TextHeight (VStr);
+  int StringWidth (VStr);
   int FontHeight ();
   void DrawCursor ();
   void DrawCursorAt (int, int);

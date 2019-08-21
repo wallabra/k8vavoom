@@ -180,7 +180,7 @@ void QS_PutValue (const QSValue &val) {
 }
 
 
-QSValue QS_GetValue (VEntity *ent, const VStr &name) {
+QSValue QS_GetValue (VEntity *ent, VStr name) {
   if (qsPhase != QSPhase::QSP_Load) Host_Error("cannot use CheckPoint API outside of checkpoint handlers");
   auto xptr = qsmap.find(ent);
   if (!xptr) return QSValue();

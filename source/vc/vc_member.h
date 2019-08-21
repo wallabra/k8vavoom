@@ -176,11 +176,11 @@ public:
   static inline VClass *StaticFindClassNoCase (const char *AName) { return StaticFindClass(AName, false); }
 
   // will not clear `list`
-  static void StaticGetClassListNoCase (TArray<VStr> &list, const VStr &prefix, VClass *isaClass=nullptr);
+  static void StaticGetClassListNoCase (TArray<VStr> &list, VStr prefix, VClass *isaClass=nullptr);
 
   static VClass *StaticFindClassByGameObjName (VName aname, VName pkgname);
 
-  static void StaticSplitStateLabel (const VStr &LabelName, TArray<VName> &Parts, bool appendToParts=false);
+  static void StaticSplitStateLabel (VStr LabelName, TArray<VName> &Parts, bool appendToParts=false);
 
   static void StaticAddIncludePath (const char *);
   static void StaticAddDefine (const char *);
@@ -198,7 +198,7 @@ public:
   static void *userdata; // arbitrary pointer, not used by the lexer
   // should return `null` if file not found
   // should NOT fail if file not found
-  static VStream *(*dgOpenFile) (const VStr &filename, void *userdata);
+  static VStream *(*dgOpenFile) (VStr filename, void *userdata);
 
 private:
   static TArray<VStr> incpathlist;

@@ -243,7 +243,7 @@ public:
   ColorCV (VCvarS *acvar) : cvar(acvar), color(0), oldval(VStr::EmptyString), oldAlpha(-666.0f) {}
 
   inline vuint32 getColor () {
-    const VStr &nval = cvar->asStr();
+    VStr nval = cvar->asStr();
     if (nval != oldval || am_overlay_alpha != oldAlpha) {
       oldval = nval;
       oldAlpha = am_overlay_alpha;

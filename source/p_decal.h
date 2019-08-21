@@ -113,15 +113,15 @@ public:
   void genValues ();
 
 public:
-  static VDecalDef *find (const VStr &aname);
-  static VDecalDef *find (const VName &aname);
+  static VDecalDef *find (VStr aname);
+  static VDecalDef *find (VName aname);
   static VDecalDef *findById (int id);
 
-  static VDecalDef *getDecal (const VStr &aname);
-  static VDecalDef *getDecal (const VName &aname);
+  static VDecalDef *getDecal (VStr aname);
+  static VDecalDef *getDecal (VName aname);
   static VDecalDef *getDecalById (int id);
 
-  static bool hasDecal (const VName &aname);
+  static bool hasDecal (VName aname);
 
 public:
   static void parseNumOrRandom (VScriptParser *sc, DecalFloatVal *value, bool withSign=false);
@@ -147,7 +147,7 @@ public:
     vuint16 weight;
 
     NameListItem () : name(NAME_None), weight(0) {}
-    NameListItem (const VName &aname, vuint16 aweight) : name(aname), weight(aweight) {}
+    NameListItem (VName aname, vuint16 aweight) : name(aname), weight(aweight) {}
   };
 
   struct ListItem {
@@ -182,8 +182,8 @@ public:
   VDecalDef *chooseDecal (int reclevel=0);
 
 public:
-  static VDecalGroup *find (const VStr &aname);
-  static VDecalGroup *find (const VName &aname);
+  static VDecalGroup *find (VStr aname);
+  static VDecalGroup *find (VName aname);
 
 private:
   static VDecalGroup *listHead;
@@ -238,8 +238,8 @@ public:
   static void Serialise (VStream &Strm, VDecalAnim *&aptr);
 
 public:
-  static VDecalAnim *find (const VStr &aname);
-  static VDecalAnim *find (const VName &aname);
+  static VDecalAnim *find (VStr aname);
+  static VDecalAnim *find (VName aname);
 
 private:
   static VDecalAnim *listHead;

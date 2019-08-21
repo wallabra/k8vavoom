@@ -894,7 +894,7 @@ void VWidget::SetTextShadow (bool State) {
 //  VWidget::DrawString
 //
 //==========================================================================
-void VWidget::DrawString (int x, int y, const VStr &String, int NormalColor, int BoldColor, float Alpha) {
+void VWidget::DrawString (int x, int y, VStr String, int NormalColor, int BoldColor, float Alpha) {
   if (String.length() == 0) return;
 
   int cx = x;
@@ -938,7 +938,7 @@ void VWidget::DrawString (int x, int y, const VStr &String, int NormalColor, int
 //  VWidget::DrawText
 //
 //==========================================================================
-void VWidget::DrawText (int x, int y, const VStr &String, int NormalColor, int BoldColor, float Alpha) {
+void VWidget::DrawText (int x, int y, VStr String, int NormalColor, int BoldColor, float Alpha) {
   int start = 0;
   int cx = x;
   int cy = y;
@@ -969,7 +969,7 @@ void VWidget::DrawText (int x, int y, const VStr &String, int NormalColor, int B
 //  VWidget::TextWidth
 //
 //==========================================================================
-int VWidget::TextWidth (const VStr &s) {
+int VWidget::TextWidth (VStr s) {
   return (Font ? Font->TextWidth(s) : 0);
 }
 
@@ -979,7 +979,7 @@ int VWidget::TextWidth (const VStr &s) {
 //  VWidget::StringWidth
 //
 //==========================================================================
-int VWidget::StringWidth (const VStr &s) {
+int VWidget::StringWidth (VStr s) {
   return (Font ? Font->StringWidth(s) : 0);
 }
 
@@ -989,7 +989,7 @@ int VWidget::StringWidth (const VStr &s) {
 //  VWidget::TextHeight
 //
 //==========================================================================
-int VWidget::TextHeight (const VStr &s) {
+int VWidget::TextHeight (VStr s) {
   return (Font ? Font->TextHeight(s) : 0);
 }
 

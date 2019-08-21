@@ -99,7 +99,7 @@ VLexer::~VLexer () {
 //  VLexer::AddDefine
 //
 //==========================================================================
-void VLexer::AddDefine (const VStr &CondName, bool showWarning) {
+void VLexer::AddDefine (VStr CondName, bool showWarning) {
   if (CondName.length() == 0) return; // get lost!
   // check for redefined names
   for (auto &&ds : defines) {
@@ -117,7 +117,7 @@ void VLexer::AddDefine (const VStr &CondName, bool showWarning) {
 //  VLexer::RemoveDefine
 //
 //==========================================================================
-void VLexer::RemoveDefine (const VStr &CondName, bool showWarning) {
+void VLexer::RemoveDefine (VStr CondName, bool showWarning) {
   if (CondName.length() == 0) return; // get lost!
   bool removed = false;
   int i = 0;
@@ -133,7 +133,7 @@ void VLexer::RemoveDefine (const VStr &CondName, bool showWarning) {
 //  VLexer::HasDefine
 //
 //==========================================================================
-bool VLexer::HasDefine (const VStr &CondName) {
+bool VLexer::HasDefine (VStr CondName) {
   if (CondName.length() == 0) return false;
   for (auto &&ds : defines) if (ds == CondName) return true;
   return false;
@@ -149,7 +149,7 @@ bool VLexer::HasDefine (const VStr &CondName) {
 //  otherwise falls back to standard vfs
 //
 //==========================================================================
-VStream *VLexer::doOpenFile (const VStr &filename) {
+VStream *VLexer::doOpenFile (VStr filename) {
   if (filename.length() == 0) return nullptr; // just in case
   VStr fname = filename;
 #ifdef WIN32
@@ -169,7 +169,7 @@ VStream *VLexer::doOpenFile (const VStr &filename) {
 //  VLexer::OpenSource
 //
 //==========================================================================
-void VLexer::OpenSource (const VStr &FileName) {
+void VLexer::OpenSource (VStr FileName) {
   // read file and prepare for compilation
   PushSource(FileName);
   sourceOpen = true;
@@ -182,7 +182,7 @@ void VLexer::OpenSource (const VStr &FileName) {
 //  VLexer::OpenSource
 //
 //==========================================================================
-void VLexer::OpenSource (VStream *astream, const VStr &FileName) {
+void VLexer::OpenSource (VStream *astream, VStr FileName) {
   // read file and prepare for compilation
   PushSource(astream, FileName);
   sourceOpen = true;
@@ -195,7 +195,7 @@ void VLexer::OpenSource (VStream *astream, const VStr &FileName) {
 //  VLexer::PushSource
 //
 //==========================================================================
-void VLexer::PushSource (const VStr &FileName) {
+void VLexer::PushSource (VStr FileName) {
   PushSource(doOpenFile(FileName), FileName);
 }
 
@@ -205,7 +205,7 @@ void VLexer::PushSource (const VStr &FileName) {
 //  VLexer::PushSource
 //
 //==========================================================================
-void VLexer::PushSource (VStream *Strm, const VStr &FileName) {
+void VLexer::PushSource (VStream *Strm, VStr FileName) {
   if (!Strm) {
     FatalError("VC: Couldn't open '%s'", *FileName);
     return;
@@ -1001,7 +1001,7 @@ void VLexer::ProcessInclude () {
 //  VLexer::AddIncludePath
 //
 //==========================================================================
-void VLexer::AddIncludePath (const VStr &DirName) {
+void VLexer::AddIncludePath (VStr DirName) {
   if (DirName.length() == 0) return; // get lost
   VStr copy = DirName;
   // append trailing slash if needed

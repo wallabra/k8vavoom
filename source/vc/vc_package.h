@@ -92,7 +92,7 @@ public:
   virtual void Serialise (VStream &) override;
 
   int FindString (const char *);
-  int FindString (const VStr &str);
+  int FindString (VStr str);
   VConstant *FindConstant (VName Name, VName EnumName=NAME_None);
 
   const VStr &GetStringByIndex (int idx);
@@ -104,15 +104,15 @@ public:
 
   void Emit ();
 #if defined(IN_VCC)
-  void WriteObject (const VStr &); // binary
+  void WriteObject (VStr); // binary
 #endif
   void LoadObject (TLocation);
 
   // will delete `Strm`
-  void LoadSourceObject (VStream *Strm, const VStr &filename, TLocation l);
+  void LoadSourceObject (VStream *Strm, VStr filename, TLocation l);
 #if defined(IN_VCC)
   // will delete `Strm`
-  void LoadBinaryObject (VStream *Strm, const VStr &filename, TLocation l);
+  void LoadBinaryObject (VStream *Strm, VStr filename, TLocation l);
 #endif
 
   /*

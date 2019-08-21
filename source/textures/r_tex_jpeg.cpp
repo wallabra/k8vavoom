@@ -408,7 +408,7 @@ static void my_term_destination (j_compress_ptr cinfo) {
 //  WriteJPG
 //
 //==========================================================================
-void WriteJPG (const VStr &FileName, const void *Data, int Width, int Height, int Bpp, bool Bot2top) {
+void WriteJPG (VStr FileName, const void *Data, int Width, int Height, int Bpp, bool Bot2top) {
   VStream *Strm = FL_OpenFileWrite(FileName, true);
   if (!Strm) {
     GCon->Log(NAME_Warning, "Couldn't write jpg");

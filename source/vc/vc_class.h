@@ -429,15 +429,15 @@ public:
   //void HashLowerCased ();
 
   // df state thingy
-  void DFStateSetTexDir (const VStr &adir);
-  void DFStateAddTexture (const VStr &tname, const TextureInfo &ti);
-  const VStr &DFStateGetTexDir () const;
-  bool DFStateGetTexture (const VStr &tname, TextureInfo &ti) const;
+  void DFStateSetTexDir (VStr adir);
+  void DFStateAddTexture (VStr tname, const TextureInfo &ti);
+  VStr DFStateGetTexDir () const;
+  bool DFStateGetTexture (VStr tname, TextureInfo &ti) const;
 
   // console command methods
   // returns index in lists, or -1
-  VMethod *FindConCommandMethod (const VStr &name, bool exact=false); // skips autocompleters if `exact` is `false`
-  inline VMethod *FindConCommandMethodExact (const VStr &name) { return FindConCommandMethod(name, true); } // doesn't skip anything
+  VMethod *FindConCommandMethod (VStr name, bool exact=false); // skips autocompleters if `exact` is `false`
+  inline VMethod *FindConCommandMethodExact (VStr name) { return FindConCommandMethod(name, true); } // doesn't skip anything
 
   // WARNING! don't add/remove ANY named members from callback!
   // return `FERes::FOREACH_STOP` from callback to stop (and return current member)

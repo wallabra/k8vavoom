@@ -59,7 +59,7 @@ bool VMemberBase::koraxCompatibility = false;
 bool VMemberBase::koraxCompatibilityWarnings = true;
 
 void *VMemberBase::userdata; // arbitrary pointer, not used by the lexer
-VStream *(*VMemberBase::dgOpenFile) (const VStr &filename, void *userdata);
+VStream *(*VMemberBase::dgOpenFile) (VStr filename, void *userdata);
 
 
 //==========================================================================
@@ -428,7 +428,7 @@ VMemberBase *VMemberBase::StaticFindMember (VName AName, VMemberBase *AOuter, vu
 //  will not clear `list`
 //
 //==========================================================================
-void VMemberBase::StaticGetClassListNoCase (TArray<VStr> &list, const VStr &prefix, VClass *isaClass) {
+void VMemberBase::StaticGetClassListNoCase (TArray<VStr> &list, VStr prefix, VClass *isaClass) {
   //FIXME: make this faster
 #if 0
   int len = GMembers.length();
@@ -580,7 +580,7 @@ VClass *VMemberBase::StaticFindClassByGameObjName (VName aname, VName pkgname) {
 //  VMemberBase::StaticSplitStateLabel
 //
 //==========================================================================
-void VMemberBase::StaticSplitStateLabel (const VStr &LabelName, TArray<VName> &Parts, bool appendToParts) {
+void VMemberBase::StaticSplitStateLabel (VStr LabelName, TArray<VName> &Parts, bool appendToParts) {
   TArray<VStr> StrParts;
   LabelName.Split(".", StrParts);
   if (!appendToParts) Parts.Clear();
@@ -638,7 +638,7 @@ void VMemberBase::StaticAddDefine (const char *s) {
 //  pkgOpenFileDG
 //
 //==========================================================================
-static VStream *pkgOpenFileDG (VLexer *self, const VStr &filename) {
+static VStream *pkgOpenFileDG (VLexer *self, VStr filename) {
   if (VMemberBase::dgOpenFile) return VMemberBase::dgOpenFile(filename, VMemberBase::userdata);
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
   return FL_OpenFileRead(filename);

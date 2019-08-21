@@ -298,7 +298,7 @@ VState *VEntity::FindState (VName StateName, VName SubLabel, bool Exact) {
 //  VEntity::FindStateEx
 //
 //==========================================================================
-VState *VEntity::FindStateEx (const VStr &StateName, bool Exact) {
+VState *VEntity::FindStateEx (VStr StateName, bool Exact) {
   TArray<VName> Names;
   VMemberBase::StaticSplitStateLabel(StateName, Names);
   VStateLabel *Lbl = GetClass()->FindStateLabel(Names, Exact);

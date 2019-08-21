@@ -100,7 +100,7 @@ struct DirInfo {
 //  isRegularFile
 //
 //==========================================================================
-static bool isRegularFile (const VStr &filename) {
+static bool isRegularFile (VStr filename) {
   struct stat st;
   if (filename.length() == 0) return false;
   if (stat(*filename, &st) == -1) return false;
@@ -113,7 +113,7 @@ static bool isRegularFile (const VStr &filename) {
 //  isDirectory
 //
 //==========================================================================
-static bool isDirectory (const VStr &filename) {
+static bool isDirectory (VStr filename) {
   struct stat st;
   if (filename.length() == 0) return false;
   if (stat(*filename, &st) == -1) return false;
@@ -126,7 +126,7 @@ static bool isDirectory (const VStr &filename) {
 //  Sys_FileExists
 //
 //==========================================================================
-bool Sys_FileExists (const VStr &filename) {
+bool Sys_FileExists (VStr filename) {
   return (!filename.isEmpty() && access(*filename, R_OK) == 0 && isRegularFile(filename));
 }
 
@@ -136,7 +136,7 @@ bool Sys_FileExists (const VStr &filename) {
 //  Sys_FileDelete
 //
 //==========================================================================
-void Sys_FileDelete (const VStr &filename) {
+void Sys_FileDelete (VStr filename) {
   if (filename.length()) unlink(*filename);
 }
 
@@ -148,7 +148,7 @@ void Sys_FileDelete (const VStr &filename) {
 //  Returns -1 if not present
 //
 //==========================================================================
-int Sys_FileTime (const VStr &path) {
+int Sys_FileTime (VStr path) {
   if (path.isEmpty()) return -1;
   struct stat buf;
   if (stat(*path, &buf) == -1) return -1;
@@ -171,7 +171,7 @@ int Sys_CurrFileTime () {
 //  Sys_CreateDirectory
 //
 //==========================================================================
-bool Sys_CreateDirectory (const VStr &path) {
+bool Sys_CreateDirectory (VStr path) {
   if (path.isEmpty()) return false;
   return (mkdir(*path, 0777) == 0);
 }
@@ -182,7 +182,7 @@ bool Sys_CreateDirectory (const VStr &path) {
 //  Sys_OpenDir
 //
 //==========================================================================
-void *Sys_OpenDir (const VStr &path, bool wantDirs) {
+void *Sys_OpenDir (VStr path, bool wantDirs) {
   if (path.isEmpty()) return nullptr;
   DIR *dh = opendir(*path);
   if (!dh) return nullptr;
@@ -246,7 +246,7 @@ void Sys_CloseDir (void *adir) {
 //  Sys_DirExists
 //
 //==========================================================================
-bool Sys_DirExists (const VStr &path) {
+bool Sys_DirExists (VStr path) {
   if (path.isEmpty()) return false;
   struct stat s;
   if (stat(*path, &s) == -1) return false;
@@ -424,7 +424,7 @@ struct ShitdozeDir {
 //  isRegularFile
 //
 //==========================================================================
-static bool isRegularFile (const VStr &filename) {
+static bool isRegularFile (VStr filename) {
   if (filename.length() == 0) return false;
   DWORD attrs = GetFileAttributes(*filename);
   if (attrs == INVALID_FILE_ATTRIBUTES) return false;
@@ -437,7 +437,7 @@ static bool isRegularFile (const VStr &filename) {
 //  isDirectory
 //
 //==========================================================================
-static bool isDirectory (const VStr &filename) {
+static bool isDirectory (VStr filename) {
   if (filename.length() == 0) return false;
   DWORD attrs = GetFileAttributes(*filename);
   if (attrs == INVALID_FILE_ATTRIBUTES) return false;
@@ -450,7 +450,7 @@ static bool isDirectory (const VStr &filename) {
 //  Sys_FileExists
 //
 //==========================================================================
-bool Sys_FileExists (const VStr &filename) {
+bool Sys_FileExists (VStr filename) {
   return (!filename.isEmpty() && access(*filename, R_OK) == 0 && isRegularFile(filename));
 }
 
@@ -460,7 +460,7 @@ bool Sys_FileExists (const VStr &filename) {
 //  Sys_FileDelete
 //
 //==========================================================================
-void Sys_FileDelete (const VStr &filename) {
+void Sys_FileDelete (VStr filename) {
   if (filename.length()) DeleteFile(*filename);
 }
 
@@ -472,7 +472,7 @@ void Sys_FileDelete (const VStr &filename) {
 //  Returns -1 if not present
 //
 //==========================================================================
-int Sys_FileTime (const VStr &path) {
+int Sys_FileTime (VStr path) {
   if (path.isEmpty()) return -1;
   if (!isRegularFile(path)) return -1;
   struct stat buf;
@@ -496,7 +496,7 @@ int Sys_CurrFileTime () {
 //  Sys_CreateDirectory
 //
 //==========================================================================
-bool Sys_CreateDirectory (const VStr &path) {
+bool Sys_CreateDirectory (VStr path) {
   if (path.isEmpty()) return false;
   return (mkdir(*path) == 0);
 }
@@ -507,7 +507,7 @@ bool Sys_CreateDirectory (const VStr &path) {
 //  Sys_OpenDir
 //
 //==========================================================================
-void *Sys_OpenDir (const VStr &dirname, bool wantDirs) {
+void *Sys_OpenDir (VStr dirname, bool wantDirs) {
   if (dirname.isEmpty()) return nullptr;
   auto sd = (ShitdozeDir *)Z_Malloc(sizeof(ShitdozeDir));
   if (!sd) return nullptr;
@@ -569,7 +569,7 @@ void Sys_CloseDir (void *adir) {
 //  Sys_DirExists
 //
 //==========================================================================
-bool Sys_DirExists (const VStr &path) {
+bool Sys_DirExists (VStr path) {
   if (path.isEmpty()) return false;
   struct stat s;
   if (stat(*path, &s) == -1) return false;

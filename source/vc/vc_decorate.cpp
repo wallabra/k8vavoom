@@ -180,7 +180,7 @@ static inline bool getIgnoreMoronicStateCommands () {
 
 // ////////////////////////////////////////////////////////////////////////// //
 //k8: sorry!
-static inline bool isChexActor (const VStr &cname) {
+static inline bool isChexActor (VStr cname) {
   static const char *namelist[] = {
     "ArmoredFlemoidusBipedicus",
     "Bootspoon",
@@ -348,7 +348,7 @@ public:
   inline void clearAllSlots () { for (int f = 0; f < NUM_WEAPON_SLOTS; ++f) slots[f].clear(); }
 
   inline VStr getPlayerClassName () const { return plrClassName; }
-  inline void setPlayerClassName (const VStr &aname) { plrClassName = aname; }
+  inline void setPlayerClassName (VStr aname) { plrClassName = aname; }
 
   inline static bool isValidSlot (int idx) { return (idx >= 0 && idx <= NUM_WEAPON_SLOTS); }
 
@@ -361,7 +361,7 @@ public:
 
   inline void clearSlot (int idx) { if (isValidSlot(idx)) slots[normSlotNumber(idx)].clear(); }
 
-  void addToSlot (int idx, const VStr &aname) {
+  void addToSlot (int idx, VStr aname) {
     if (!isValidSlot(idx)) return;
     if (aname.isEmpty() || aname.strEquCI("none")) return;
     idx = normSlotNumber(idx);
@@ -874,7 +874,7 @@ static void SetClassFieldName (VClass *Class, VName FieldName, VName Value) {
 //  SetClassFieldStr
 //
 //==========================================================================
-static void SetClassFieldStr (VClass *Class, VName FieldName, const VStr &Value) {
+static void SetClassFieldStr (VClass *Class, VName FieldName, VStr Value) {
   VField *F = Class->FindFieldChecked(FieldName);
   F->SetStr((VObject*)Class->Defaults, Value);
 }
@@ -951,7 +951,7 @@ static __attribute__((unused)) void SetFieldClass (VObject *Obj, VName FieldName
 //  AddClassFixup
 //
 //==========================================================================
-static void AddClassFixup (VClass *Class, VName FieldName, const VStr &ClassName, TArray<VClassFixup> &ClassFixups, VStr powerpfx=VStr()) {
+static void AddClassFixup (VClass *Class, VName FieldName, VStr ClassName, TArray<VClassFixup> &ClassFixups, VStr powerpfx=VStr()) {
   VField *F = Class->FindFieldChecked(FieldName);
   //fprintf(stderr, "AddClassFixup0: Class=<%s>; FieldName=<%s>, ClassName=<%s>\n", (Class ? *Class->GetFullName() : "None"), *FieldName, *ClassName);
   VClassFixup &CF = ClassFixups.Alloc();
@@ -968,7 +968,7 @@ static void AddClassFixup (VClass *Class, VName FieldName, const VStr &ClassName
 //  AddClassFixup
 //
 //==========================================================================
-static void AddClassFixup (VClass *Class, VField *Field, const VStr &ClassName, TArray<VClassFixup> &ClassFixups, VStr powerpfx=VStr()) {
+static void AddClassFixup (VClass *Class, VField *Field, VStr ClassName, TArray<VClassFixup> &ClassFixups, VStr powerpfx=VStr()) {
   //fprintf(stderr, "AddClassFixup1: Class=<%s>; FieldName=<%s>, ClassName=<%s>\n", (Class ? *Class->GetFullName() : "None"), *Field->GetFullName(), *ClassName);
   VClassFixup &CF = ClassFixups.Alloc();
   CF.Offset = Field->Ofs;
@@ -3521,7 +3521,7 @@ static TMap<VStr, bool> decoFlagsWarned;
 //  VEntity::SetDecorateFlag
 //
 //==========================================================================
-bool VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
+bool VEntity::SetDecorateFlag (VStr Flag, bool Value) {
   // this ("special") flag means "actor can be picked up
   // gzdoom does something with it, we cannot pickup anything except inventory anyway
   // (and cannot reset this flag on inventory)
@@ -3610,7 +3610,7 @@ bool VEntity::SetDecorateFlag (const VStr &Flag, bool Value) {
 //  VEntity::GetDecorateFlag
 //
 //==========================================================================
-bool VEntity::GetDecorateFlag (const VStr &Flag) {
+bool VEntity::GetDecorateFlag (VStr Flag) {
   // this ("special") flag means "actor can be picked up
   // gzdoom does something with it, we cannot pickup anything except inventory anyway
   // (and cannot reset this flag on inventory)

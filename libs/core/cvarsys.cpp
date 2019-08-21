@@ -29,7 +29,7 @@
 #define USE_SIMPLE_HASHFN
 
 
-void (*VCvar::ChangedCB) (VCvar *cvar, const VStr &oldValue) = nullptr;
+void (*VCvar::ChangedCB) (VCvar *cvar, VStr oldValue) = nullptr;
 void (*VCvar::CreatedCB) (VCvar *cvar) = nullptr;
 void (*VCvar::UserInfoSetCB) (VCvar *cvar) = nullptr;
 void (*VCvar::ServerInfoSetCB) (VCvar *cvar) = nullptr;
@@ -157,7 +157,7 @@ VCvar::VCvar (const char *AName, const char *ADefault, const char *AHelp, int AF
 //  VCvar::VCvar
 //
 //==========================================================================
-VCvar::VCvar (const char *AName, const VStr &ADefault, const VStr &AHelp, int AFlags, CVType AType)
+VCvar::VCvar (const char *AName, VStr ADefault, VStr AHelp, int AFlags, CVType AType)
   : Name(AName)
   , HelpString("no help yet")
   , defstrOwned(true)
@@ -393,7 +393,7 @@ void VCvar::Set (float value) {
 //  VCvar::Set
 //
 //==========================================================================
-void VCvar::Set (const VStr &AValue) {
+void VCvar::Set (VStr AValue) {
   if (Flags&CVAR_Latch) {
     LatchedString = AValue;
     return;
@@ -419,7 +419,7 @@ void VCvar::Set (const VStr &AValue) {
 //  VCvar::SetAsDefault
 //
 //==========================================================================
-void VCvar::SetDefault (const VStr &value) {
+void VCvar::SetDefault (VStr value) {
   if (value.strEqu(DefaultString)) return;
   if (defstrOwned) {
     delete[] const_cast<char *>(DefaultString);
@@ -438,7 +438,7 @@ void VCvar::SetDefault (const VStr &value) {
 //  does the actual value assignement
 //
 //==========================================================================
-void VCvar::DoSet (const VStr &AValue) {
+void VCvar::DoSet (VStr AValue) {
   if (StringValue == AValue) return; // nothing to do
   VStr oldValue = StringValue; // we'll need it later
 
@@ -639,7 +639,7 @@ void VCvar::Unlatch () {
 //  VCvar::CreateNew
 //
 //==========================================================================
-void VCvar::CreateNew (VName var_name, const VStr &ADefault, const VStr &AHelp, int AFlags) {
+void VCvar::CreateNew (VName var_name, VStr ADefault, VStr AHelp, int AFlags) {
   if (var_name == NAME_None) return;
   VCvar *cvar = FindVariable(*var_name);
   if (!cvar) {
@@ -780,7 +780,7 @@ const char *VCvar::GetCharp (const char *var_name) {
 //  VCvar::GetString
 //
 //==========================================================================
-const VStr &VCvar::GetString (const char *var_name) {
+VStr VCvar::GetString (const char *var_name) {
   VCvar *var = FindVariable(var_name);
   if (!var) return VStr::EmptyString;
   return var->StringValue;
@@ -840,7 +840,7 @@ void VCvar::Set (const char *var_name, float value) {
 //  VCvar::Set
 //
 //==========================================================================
-void VCvar::Set (const char *var_name, const VStr &value) {
+void VCvar::Set (const char *var_name, VStr value) {
   VCvar *var = FindVariable(var_name);
   if (!var) Sys_Error("Cvar_SetString: variable %s not found\n", var_name);
   var->Set(value);

@@ -277,10 +277,10 @@ public:
   //VFuncRes (const TVec *&v) : type(TYPE_Vector), pointer(true), ptr(v), ival(0), fval(0), vval(v ? v->x : 0.0f, v ? v->y : 0.0f, v ? v->z : 0.0f), sval(), nval(NAME_None) {}
   VFuncRes (const float x, const float y, const float z) : type(TYPE_Vector), pointer(false), ptr(nullptr), ival(0), fval(0), vval(x, y, z), sval(), nval(NAME_None) {}
 
-  VFuncRes (const VStr &v) : type(TYPE_String), pointer(false), ptr(nullptr), ival(0), fval(0), vval(0, 0, 0), sval(v), nval(NAME_None) {}
+  VFuncRes (VStr v) : type(TYPE_String), pointer(false), ptr(nullptr), ival(0), fval(0), vval(0, 0, 0), sval(v), nval(NAME_None) {}
   //VFuncRes (const VStr *&v) : type(TYPE_String), pointer(true), ptr(v), ival(0), fval(0), vval(0, 0, 0), sval(v ? *v : VStr::EmptyString), nval(NAME_None) {}
 
-  VFuncRes (const VName &v) : type(TYPE_Name), pointer(false), ptr(nullptr), ival(0), fval(0), vval(0, 0, 0), sval(), nval(v) {}
+  VFuncRes (VName v) : type(TYPE_Name), pointer(false), ptr(nullptr), ival(0), fval(0), vval(0, 0, 0), sval(), nval(v) {}
   //VFuncRes (const VName *&v) : type(TYPE_Name), pointer(true), ptr(v), ival(0), fval(0), vval(0, 0, 0), sval(), nval() { if (v) nval = VName(*v); else nval = NAME_None; }
 
   VFuncRes (VClass *v) : type(TYPE_Class), pointer(false), ptr(v), ival(0), fval(0), vval(0, 0, 0), sval(), nval(NAME_None) {}
@@ -323,7 +323,7 @@ public:
   inline int getInt () const { return ival; }
   inline float getFloat () const { return fval; }
   inline const TVec &getVector () const { return vval; }
-  inline const VStr &getStr () const { return sval; }
+  inline VStr getStr () const { return sval; }
   inline VName getName () const { return nval; }
 
   inline bool getBool () const {
@@ -496,7 +496,7 @@ public:
   inline VMethod *GetVFunction (VName FuncName) const { return vtable[Class->GetMethodIndex(FuncName)]; }
 
   static VStr NameFromVKey (int vkey);
-  static int VKeyFromName (const VStr &kn);
+  static int VKeyFromName (VStr kn);
 
   inline static const GCStats &GetGCStats () { return gcLastStats; }
   inline static void ResetGCStatsLastCollected () { gcLastStats.lastCollected = 0; }

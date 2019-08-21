@@ -44,8 +44,8 @@ BJPRNGCtx g_bjprng_ctx;
 FOutputDevice::~FOutputDevice () {}
 void FOutputDevice:: Log (const char *S) { Serialise(S, NAME_Log); }
 void FOutputDevice::Log (EName Type, const char *S) { Serialise(S, Type); }
-void FOutputDevice::Log (const VStr &S) { Serialise(*S, NAME_Log); }
-void FOutputDevice::Log (EName Type, const VStr &S) { Serialise(*S, Type); }
+void FOutputDevice::Log (VStr S) { Serialise(*S, NAME_Log); }
+void FOutputDevice::Log (EName Type, VStr S) { Serialise(*S, Type); }
 
 
 static char string[32768];

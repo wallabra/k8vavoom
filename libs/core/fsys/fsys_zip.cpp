@@ -118,9 +118,9 @@ private:
   void cacheAllData ();
 
 public:
-  VZipFileReader (const VStr &afname, VStream *, vuint32, const VPakFileInfo &, mythread_mutex *ardlock);
+  VZipFileReader (VStr afname, VStream *, vuint32, const VPakFileInfo &, mythread_mutex *ardlock);
   virtual ~VZipFileReader () override;
-  virtual const VStr &GetName () const override;
+  virtual VStr GetName () const override;
   virtual void Serialise (void *, int) override;
   virtual void Seek (int) override;
   virtual int Tell () override;
@@ -153,7 +153,7 @@ VZipFile::VZipFile (VStream *fstream)
 //  takes ownership
 //
 //==========================================================================
-VZipFile::VZipFile (VStream *fstream, const VStr &name)
+VZipFile::VZipFile (VStream *fstream, VStr name)
   : VPakFileBase(name, true)
 {
   mythread_mutex_init(&rdlock);
@@ -166,7 +166,7 @@ VZipFile::VZipFile (VStream *fstream, const VStr &name)
 //  VZipFile::VZipFile
 //
 //==========================================================================
-VZipFile::VZipFile (const VStr &zipfile)
+VZipFile::VZipFile (VStr zipfile)
   : VPakFileBase(zipfile, true)
 {
   mythread_mutex_init(&rdlock);
@@ -432,7 +432,7 @@ void VZipFile::Close () {
 //  VZipFile::OpenFileRead
 //
 //==========================================================================
-VStream *VZipFile::OpenFileRead (const VStr &fname) {
+VStream *VZipFile::OpenFileRead (VStr fname) {
   int fidx = pakdir.findFile(fname);
   if (fidx < 0) return nullptr;
   return new VZipFileReader(PakFileName+":"+fname, FileStream, BytesBeforeZipFile, pakdir.files[fidx], &rdlock);
@@ -501,8 +501,8 @@ void VZipFile::RenameSprites (const TArray<VSpriteRename> &A, const TArray<VLump
 //  VZipFileReader::VZipFileReader
 //
 //==========================================================================
-VZipFileReader::VZipFileReader (const VStr &afname, VStream *InStream, vuint32 BytesBeforeZipFile,
-                               const VPakFileInfo &aInfo, mythread_mutex *ardlock)
+VZipFileReader::VZipFileReader (VStr afname, VStream *InStream, vuint32 BytesBeforeZipFile,
+                                const VPakFileInfo &aInfo, mythread_mutex *ardlock)
   : rdlock(ardlock)
   , FileStream(InStream)
   , fname(afname)
@@ -592,8 +592,8 @@ VZipFileReader::~VZipFileReader() {
 //  VZipFileReader::GetName
 //
 //==========================================================================
-const VStr &VZipFileReader::GetName () const {
-  return fname;
+VStr VZipFileReader::GetName () const {
+  return fname.cloneUnique();
 }
 
 

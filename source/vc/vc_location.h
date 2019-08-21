@@ -43,7 +43,7 @@ public:
   VStr GetSource () const;
   inline bool isInternal () const { return (Loc == 0); }
 
-  static int AddSourceFile (const VStr &);
+  static int AddSourceFile (VStr);
   static void ClearSourceFiles ();
 
   VStr toString () const;

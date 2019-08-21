@@ -115,7 +115,6 @@
 
 #include "md5.h"
 
-#include "hashset.h"
 #include "wlist.h"
 
 #include "minipng.h"

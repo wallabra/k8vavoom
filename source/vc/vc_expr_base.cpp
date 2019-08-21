@@ -447,7 +447,7 @@ VExpression *VExpression::ResolveToIntLiteralEx (VEmitContext &ec, bool allowFlo
 
   // one-char string?
   if (res->IsStrConst()) {
-    const VStr &s = res->GetStrConst(ec.Package);
+    VStr s = res->GetStrConst(ec.Package);
     if (s.length() == 1) {
       VExpression *e = new VIntLiteral((vuint8)s[0], res->Loc);
       delete res;
@@ -482,7 +482,7 @@ bool VExpression::IsNameConst () const { return false; }
 bool VExpression::IsClassNameConst () const { return false; }
 vint32 VExpression::GetIntConst () const { ParseError(Loc, "Integer constant expected"); return 0; }
 float VExpression::GetFloatConst () const { ParseError(Loc, "Float constant expected"); return 0.0f; }
-const VStr &VExpression::GetStrConst (VPackage *) const { ParseError(Loc, "String constant expected"); return VStr::EmptyString; }
+VStr VExpression::GetStrConst (VPackage *) const { ParseError(Loc, "String constant expected"); return VStr(); }
 VName VExpression::GetNameConst () const { ParseError(Loc, "Name constant expected"); return NAME_None; }
 bool VExpression::IsNoneLiteral () const { return false; }
 bool VExpression::IsNoneDelegateLiteral () const { return false; }
@@ -717,7 +717,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
     case TYPE_Float:
     case TYPE_Bool:
       if (IsStrConst()) {
-        const VStr &str = GetStrConst(ec.Package);
+        VStr str = GetStrConst(ec.Package);
         if (str.length() == 0 || str.ICmp("none") == 0 || str.ICmp("null") == 0 || str.ICmp("nil") == 0 || str.ICmp("false") == 0) {
           ParseWarningArError((aloc ? *aloc : Loc), "`%s` argument #%d should be number (replaced with 0); PLEASE, FIX THE CODE!", funcName, argnum);
           VExpression *enew = new VIntLiteral(0, Loc);
@@ -837,7 +837,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
       }
       // string?
       if (IsStrConst()) {
-        const VStr &val = GetStrConst(ec.Package);
+        VStr val = GetStrConst(ec.Package);
         VExpression *enew = new VNameLiteral(*val, Loc);
         delete this;
         return enew;
@@ -898,7 +898,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
       }
       // string?
       if (IsStrConst()) {
-        const VStr &CName = GetStrConst(ec.Package);
+        VStr CName = GetStrConst(ec.Package);
         //TLocation ALoc = Loc;
         if (CName.length() == 0 || CName.ICmp("None") == 0 || CName.ICmp("nil") == 0 || CName.ICmp("null") == 0) {
           //ParseWarning(ALoc, "NONE CLASS `%s`", CName);
@@ -970,7 +970,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
       // some very bright persons does this: `A_JumpIfTargetInLOS("1")` -- brilliant!
       // string?
       if (IsStrConst()) {
-        const VStr &str = GetStrConst(ec.Package);
+        VStr str = GetStrConst(ec.Package);
         int lbl = -1;
         if (str.convertInt(&lbl)) {
           //TLocation ALoc = Args[i]->Loc;

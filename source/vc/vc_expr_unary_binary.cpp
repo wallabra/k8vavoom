@@ -706,7 +706,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
       if (op1->Type.Type == TYPE_Int && op2->Type.Type == TYPE_String &&
           op2->IsStrConst() && op2->GetStrConst(ec.Package).length() == 1)
       {
-        const VStr &s = op2->GetStrConst(ec.Package);
+        VStr s = op2->GetStrConst(ec.Package);
         VExpression *e = new VIntLiteral((vuint8)s[0], op2->Loc);
         delete op2;
         op2 = e->Resolve(ec); // will never fail
@@ -724,7 +724,7 @@ VExpression *VBinary::DoResolve (VEmitContext &ec) {
       if (op2->Type.Type == TYPE_Int && op1->Type.Type == TYPE_String &&
           op1->IsStrConst() && op1->GetStrConst(ec.Package).length() == 1)
       {
-        const VStr &s = op1->GetStrConst(ec.Package);
+        VStr s = op1->GetStrConst(ec.Package);
         VExpression *e = new VIntLiteral((vuint8)s[0], op1->Loc);
         delete op1;
         op1 = e->Resolve(ec); // will never fail

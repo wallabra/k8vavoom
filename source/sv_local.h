@@ -127,8 +127,8 @@ public:
   VAcsObject *LoadObject (int Lump);
   VAcsInfo *FindScript (int Number, VAcsObject *&Object);
   VAcsInfo *FindScriptByName (int Number, VAcsObject *&Object);
-  int FindScriptNumberByName (const VStr &aname, VAcsObject *&Object);
-  VAcsInfo *FindScriptByNameStr (const VStr &aname, VAcsObject *&Object);
+  int FindScriptNumberByName (VStr aname, VAcsObject *&Object);
+  VAcsInfo *FindScriptByNameStr (VStr aname, VAcsObject *&Object);
   VStr GetString (int Index);
   VName GetNameLowerCase (int Index);
   VAcsObject *GetObject (int Index);

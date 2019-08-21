@@ -234,7 +234,7 @@ static VMethod *ParseFunCallWithName (VScriptParser *sc, VStr FuncName, VClass *
       if (!Args[f]) continue;
       if (!Args[f]->IsStrConst()) continue;
       if (Func->ParamTypes[f].Type == TYPE_String) continue;
-      const VStr &str = Args[f]->GetStrConst(DecPkg);
+      VStr str = Args[f]->GetStrConst(DecPkg);
       if (!str.startsWithNoCase("user_")) continue;
       auto loc = Args[f]->Loc;
       ParseWarning(loc, "`user_xxx` should not be a string constant, you mo...dder! FIX YOUR BROKEN CODE!");

@@ -76,11 +76,11 @@ private:
 
 public:
   // called on any change, before other callbacks
-  void (*MeChangedCB) (VCvar *cvar, const VStr &oldValue);
+  void (*MeChangedCB) (VCvar *cvar, VStr oldValue);
 
 public:
   VCvar (const char *AName, const char *ADefault, const char *AHelp, int AFlags=CVAR_None, CVType AType=CVType::String);
-  VCvar (const char *AName, const VStr &ADefault, const VStr &AHelp, int AFlags=CVAR_None, CVType AType=CVType::String);
+  VCvar (const char *AName, VStr ADefault, VStr AHelp, int AFlags=CVAR_None, CVType AType=CVType::String);
 
   static void AddAllVarsToAutocomplete (void (*addfn) (const char *name));
 
@@ -90,8 +90,8 @@ public:
 
   void Set (int value);
   void Set (float value);
-  void Set (const VStr &value);
-  void SetDefault (const VStr &value);
+  void Set (VStr value);
+  void SetDefault (VStr value);
 
   // this clears modified flag on call
   inline bool IsModified () {
@@ -109,7 +109,7 @@ public:
   inline bool asBool () const { return BoolValue; }
   inline int asInt () const { return IntValue; }
   inline float asFloat () const { return FloatValue; }
-  inline const VStr &asStr () const { return StringValue; }
+  inline VStr asStr () const { return StringValue; }
 
   inline int GetFlags () const { return Flags; }
   inline const char *GetName () const { return Name; }
@@ -128,19 +128,19 @@ public:
 
   static bool CanBeModified (const char *var_name, bool modonly=false, bool noserver=true);
 
-  static void CreateNew (VName var_name, const VStr &ADefault, const VStr &AHelp, int AFlags);
+  static void CreateNew (VName var_name, VStr ADefault, VStr AHelp, int AFlags);
 
   static int GetInt (const char *var_name);
   static float GetFloat (const char *var_name);
   static bool GetBool (const char *var_name);
   static const char *GetCharp (const char *var_name);
-  static const VStr &GetString (const char *var_name);
+  static VStr GetString (const char *var_name);
   static const char *GetHelp (const char *var_name); // returns nullptr if there is no such cvar
   static int GetVarFlags (const char *var_name); // -1: not found
 
   static void Set (const char *var_name, int value);
   static void Set (const char *var_name, float value);
-  static void Set (const char *var_name, const VStr &value);
+  static void Set (const char *var_name, VStr value);
 
   static bool Command (const TArray<VStr> &Args);
   static void WriteVariablesToStream (VStream *st, bool saveDefaultValues=false);
@@ -170,14 +170,14 @@ private:
 
   void insertIntoList ();
   VCvar *insertIntoHash ();
-  void DoSet(const VStr &value);
+  void DoSet (VStr value);
 
   static bool Initialised;
   static bool Cheating;
 
 public:
   // called on any change, before other callbacks, but after cvar callback
-  static void (*ChangedCB) (VCvar *cvar, const VStr &oldValue);
+  static void (*ChangedCB) (VCvar *cvar, VStr oldValue);
   // called when new cvar is created
   static void (*CreatedCB) (VCvar *cvar);
 

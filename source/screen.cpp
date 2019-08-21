@@ -184,11 +184,11 @@ static VCvarS screenshot_type("screenshot_type", "png", "Screenshot type (png/jp
 static VCvarS screenshot_type("screenshot_type", "png", "Screenshot type (png/tga/pcx).", CVAR_Archive);
 #endif
 
-extern void WriteTGA (const VStr &FileName, void *data, int width, int height, int bpp, bool bot2top);
-extern void WritePCX (const VStr &FileName, void *data, int width, int height, int bpp, bool bot2top);
-extern void WritePNG (const VStr &FileName, const void *Data, int Width, int Height, int Bpp, bool Bot2top);
+extern void WriteTGA (VStr FileName, void *data, int width, int height, int bpp, bool bot2top);
+extern void WritePCX (VStr FileName, void *data, int width, int height, int bpp, bool bot2top);
+extern void WritePNG (VStr FileName, const void *Data, int Width, int Height, int Bpp, bool Bot2top);
 #ifdef VAVOOM_USE_LIBJPG
-extern void WriteJPG (const VStr &FileName, const void *Data, int Width, int Height, int Bpp, bool Bot2top);
+extern void WriteJPG (VStr FileName, const void *Data, int Width, int Height, int Bpp, bool Bot2top);
 #endif
 
 

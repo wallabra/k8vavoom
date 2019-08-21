@@ -90,7 +90,7 @@ VWadFile::~VWadFile () {
 //  VWadFile::Open
 //
 //==========================================================================
-void VWadFile::Open (const VStr &FileName, bool FixVoices, VStream *InStream) {
+void VWadFile::Open (VStr FileName, bool FixVoices, VStream *InStream) {
   wadinfo_t header;
   //lumpinfo_t *lump_p;
   int length;
@@ -179,7 +179,7 @@ void VWadFile::Open (const VStr &FileName, bool FixVoices, VStream *InStream) {
 //  VWadFile::OpenSingleLump
 //
 //==========================================================================
-void VWadFile::OpenSingleLump (const VStr &FileName) {
+void VWadFile::OpenSingleLump (VStr FileName) {
   // open the file and add to directory
   Stream = FL_OpenSysFileRead(FileName);
   if (!Stream) Sys_Error("Couldn't open \"%s\"", *FileName);
@@ -436,7 +436,7 @@ VStream *VWadFile::CreateLumpReaderNum (int lump) {
 //  VWadFile::OpenFileRead
 //
 //==========================================================================
-VStream *VWadFile::OpenFileRead (const VStr &fname) {
+VStream *VWadFile::OpenFileRead (VStr fname) {
   //VStr fn = fname.stripExtension();
   int lump = CheckNumForFileName(fname);
   if (lump < 0) return nullptr;

@@ -376,7 +376,7 @@ VStr VClassNameLiteral::toString () const {
 //  VStringLiteral::VStringLiteral
 //
 //==========================================================================
-VStringLiteral::VStringLiteral (const VStr &asval, vint32 AValue, const TLocation &ALoc)
+VStringLiteral::VStringLiteral (VStr asval, vint32 AValue, const TLocation &ALoc)
   : VExpression(ALoc)
   , Value(AValue)
   , strval(asval)
@@ -445,7 +445,7 @@ bool VStringLiteral::IsStrConst () const {
 //  VStringLiteral::GetStrConst
 //
 //==========================================================================
-const VStr &VStringLiteral::GetStrConst (VPackage *Pkg) const {
+VStr VStringLiteral::GetStrConst (VPackage *Pkg) const {
 #if defined(VCC_OLD_PACKAGE_STRING_POOL)
   return VStr(&Pkg->Strings[Value]);
 #else

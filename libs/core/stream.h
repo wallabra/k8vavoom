@@ -105,7 +105,7 @@ public:
   void Serialise (const void *buf, int len); // only write
 
   // stream interface
-  virtual const VStr &GetName () const;
+  virtual VStr GetName () const;
   virtual void Serialise (void *Data, int Length);
   virtual void SerialiseBits (void *Data, int Length);
   virtual void SerialiseInt (vuint32 &Value/*, vuint32 Max*/);

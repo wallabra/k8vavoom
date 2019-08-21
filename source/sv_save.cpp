@@ -499,7 +499,7 @@ static VStream *SV_OpenSlotFileRead (int slot) {
 //  kill 'em all!
 //
 //==========================================================================
-static bool removeSlotSaveFiles (int slot, const VStr &fignore) {
+static bool removeSlotSaveFiles (int slot, VStr fignore) {
   TArray<VStr> tokill;
   if (isBadSlotIndex(slot)) return false;
   // search save subdir
@@ -1811,7 +1811,7 @@ static bool SV_LoadMap (VName MapName, bool allowCheckpoints, bool hubTeleport) 
 //  SV_SaveGame
 //
 //==========================================================================
-static void SV_SaveGame (int slot, const VStr &Description, bool checkpoint, bool isAutosave) {
+static void SV_SaveGame (int slot, VStr Description, bool checkpoint, bool isAutosave) {
   BaseSlot.Description = Description;
   BaseSlot.CurrentMap = GLevel->MapName;
 

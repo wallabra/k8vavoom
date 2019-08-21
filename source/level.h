@@ -443,8 +443,8 @@ public:
   void RemoveScriptThinker (VLevelScriptThinker *sth); // won't call `Destroy()`, won't call `delete`
   void RunScriptThinkers (float DeltaTime);
 
-  void SuspendNamedScriptThinkers (const VStr &name, int map);
-  void TerminateNamedScriptThinkers (const VStr &name, int map);
+  void SuspendNamedScriptThinkers (VStr name, int map);
+  void TerminateNamedScriptThinkers (VStr name, int map);
 
 public:
   // allocate new opening from list

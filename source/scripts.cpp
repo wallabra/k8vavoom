@@ -160,7 +160,7 @@ CharClassifier charClassifierInit;
 //  VScriptParser::VScriptParser
 //
 //==========================================================================
-VScriptParser::VScriptParser (const VStr &name, VStream *Strm)
+VScriptParser::VScriptParser (VStr name, VStream *Strm)
   : Line(1)
   , TokLine(1)
   , End(false)
@@ -195,7 +195,7 @@ VScriptParser::VScriptParser (const VStr &name, VStream *Strm)
 //  VScriptParser::VScriptParser
 //
 //==========================================================================
-VScriptParser::VScriptParser (const VStr &name, const char *atext)
+VScriptParser::VScriptParser (VStr name, const char *atext)
   : Line(1)
   , TokLine(1)
   , End(false)
@@ -938,7 +938,7 @@ void VScriptParser::ExpectIdentifier () {
 //  NormalizeFuckedGozzoNumber
 //
 //==========================================================================
-static VStr NormalizeFuckedGozzoNumber (const VStr &String) {
+static VStr NormalizeFuckedGozzoNumber (VStr String) {
   VStr str = String;
   while (str.length() && (vuint8)str[0] <= ' ') str.chopLeft(1);
   if (str.length() && strchr("lfLF", str[str.length()-1])) str.chopRight(1);

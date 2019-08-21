@@ -992,7 +992,7 @@ VAudioCodec *VAudio::LoadSongInternal (const char *Song, bool wasPlaying) {
       for (VXmlNode *N = Doc->Root.FirstChild; N; N = N->NextSibling) {
         if (N->Name != "song") continue;
         if (!N->GetAttribute("name").strEquCI(Song)) continue;
-        const VStr &fname = N->GetAttribute("file");
+        VStr fname = N->GetAttribute("file");
         if (fname.length() == 0 || fname.strEquCI("none")) {
           delete Doc;
           return nullptr;

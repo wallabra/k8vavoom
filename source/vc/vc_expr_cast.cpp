@@ -162,7 +162,7 @@ VExpression *VStringToBool::DoResolve (VEmitContext &ec) {
   }
   if (op->IsStrConst()) {
     // do it inplace
-    const VStr &s = op->GetStrConst(ec.Package);
+    VStr s = op->GetStrConst(ec.Package);
     VExpression *e = new VIntLiteral((s.length() ? 1 : 0), Loc);
     delete this;
     return e->Resolve(ec);
@@ -793,7 +793,7 @@ VExpression *VCastToName::DoResolve (VEmitContext &ec) {
     case TYPE_String:
       if (op->IsStrConst()) {
         // do it inplace
-        const VStr &s = op->GetStrConst(ec.Package);
+        VStr s = op->GetStrConst(ec.Package);
         VExpression *e = (new VNameLiteral(VName(*s), Loc))->Resolve(ec);
         delete this;
         return e->Resolve(ec);

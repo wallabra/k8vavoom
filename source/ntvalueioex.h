@@ -85,7 +85,7 @@ public:
   void SetStream (VStream *ASrcStream);
 
   // stream interface
-  virtual const VStr &GetName () const override;
+  virtual VStr GetName () const override;
   virtual bool IsError () const override; // this will call `Host_Error()`
   virtual void Serialise (void *Data, int Length) override;
   virtual void SerialiseBits (void *Data, int Length) override;

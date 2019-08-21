@@ -32,7 +32,7 @@ public:
   virtual void ReadInput() = 0;
   virtual void RegrabMouse () = 0; // called by UI when mouse cursor is turned off
 
-  virtual void SetClipboardText (const VStr &text) = 0;
+  virtual void SetClipboardText (VStr text) = 0;
   virtual bool HasClipboardText () = 0;
   virtual VStr GetClipboardText () = 0;
 
@@ -71,9 +71,9 @@ public:
 
   // handling of key bindings
   virtual void ClearBindings () = 0;
-  virtual void GetBindingKeys (const VStr &Binding, int &Key1, int &Key2, int strifemode=0) = 0;
+  virtual void GetBindingKeys (VStr Binding, int &Key1, int &Key2, int strifemode=0) = 0;
   virtual void GetBinding (int KeyNum, VStr &Down, VStr &Up) = 0; // for current game mode
-  virtual void SetBinding (int KeyNum, const VStr &Down, const VStr &Up, bool Save=true, int strifemode=0) = 0;
+  virtual void SetBinding (int KeyNum, VStr Down, VStr Up, bool Save=true, int strifemode=0) = 0;
   virtual void WriteBindings (VStream *st) = 0;
 
   // returns translated ASCII char, or unchanged keycode
@@ -81,12 +81,12 @@ public:
   // note that only ASCII chars are supported
   virtual int TranslateKey (int keycode) = 0;
 
-  virtual int KeyNumForName (const VStr &Name) = 0;
+  virtual int KeyNumForName (VStr Name) = 0;
   virtual VStr KeyNameForNum (int KeyNr) = 0;
 
   virtual void RegrabMouse () = 0; // called by UI when mouse cursor is turned off
 
-  virtual void SetClipboardText (const VStr &text) = 0;
+  virtual void SetClipboardText (VStr text) = 0;
   virtual bool HasClipboardText () = 0;
   virtual VStr GetClipboardText () = 0;
 

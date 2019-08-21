@@ -1490,7 +1490,7 @@ bool VMCOptimizer::canRemoveRange (int idx0, int idx1, Instr *ignoreThis, Instr 
 struct Exiter {
   VStr msg;
 
-  Exiter (const VStr &amsg) { msg = amsg; }
+  Exiter (VStr amsg) { msg = amsg; }
   ~Exiter () { fprintf(stderr, "%s", *msg); }
 };
 */

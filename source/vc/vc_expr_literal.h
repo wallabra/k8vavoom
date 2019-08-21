@@ -127,12 +127,12 @@ public:
   vint32 Value;
   VStr strval;
 
-  VStringLiteral (const VStr &asval, vint32, const TLocation &);
+  VStringLiteral (VStr asval, vint32, const TLocation &);
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
   virtual bool IsStrConst () const override;
-  virtual const VStr &GetStrConst (VPackage *) const override;
+  virtual VStr GetStrConst (VPackage *) const override;
 
   virtual VStr toString () const override;
 

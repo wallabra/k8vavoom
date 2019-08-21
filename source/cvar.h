@@ -31,11 +31,4 @@
 void Cvars_Init ();
 
 
-//typedef void (*CvarChangeHandler) (VCvar *cvar, const VStr &oldValue);
-
-// pass `nullptr` as handler to remove
-// duplicate registration will be ignored (i.e. removal will remove all dupes)
-//void Cvars_RegisterChangeHandler (VStr cvname, CvarChangeHandler handler);
-
-
 #endif

@@ -1521,7 +1521,7 @@ void VOpenGLDrawer::DebugRenderScreenRect (int x0, int y0, int x1, int y1, vuint
 //  readTextFile
 //
 //==========================================================================
-static VStr readTextFile (const VStr &fname) {
+static VStr readTextFile (VStr fname) {
   VStream *strm = FL_OpenFileReadBaseOnly(fname);
   if (!strm) Sys_Error("Failed to open shader '%s'", *fname);
   int size = strm->TotalSize();
@@ -1539,7 +1539,7 @@ static VStr readTextFile (const VStr &fname) {
 //  isEmptyLine
 //
 //==========================================================================
-static bool isEmptyLine (const VStr &s) {
+static bool isEmptyLine (VStr s) {
   int pos = 0;
   while (pos < s.length()) {
     if ((vuint8)s[pos] > ' ') return false;
@@ -1554,7 +1554,7 @@ static bool isEmptyLine (const VStr &s) {
 //  isCommentLine
 //
 //==========================================================================
-static bool isCommentLine (const VStr &s) {
+static bool isCommentLine (VStr s) {
   if (s.length() < 2) return false;
   int pos = 0;
   while (pos+1 < s.length()) {
@@ -1571,7 +1571,7 @@ static bool isCommentLine (const VStr &s) {
 //  isVersionLine
 //
 //==========================================================================
-static bool isVersionLine (const VStr &s) {
+static bool isVersionLine (VStr s) {
   if (s.length() < 2) return false;
   int pos = 0;
   while (pos < s.length()) {
@@ -1595,7 +1595,7 @@ static bool isVersionLine (const VStr &s) {
 //  getDirective
 //
 //==========================================================================
-static VStr getDirective (const VStr &s) {
+static VStr getDirective (VStr s) {
   int pos = 0;
   while (pos+1 < s.length()) {
     if (s[pos] == '$') {
@@ -1618,7 +1618,7 @@ static VStr getDirective (const VStr &s) {
 //  getDirectiveArg
 //
 //==========================================================================
-static VStr getDirectiveArg (const VStr &s) {
+static VStr getDirectiveArg (VStr s) {
   int pos = 0;
   while (pos+1 < s.length()) {
     if (s[pos] == '$') {
@@ -1650,7 +1650,7 @@ static VStr getDirectiveArg (const VStr &s) {
 //  VOpenGLDrawer::LoadShader
 //
 //==========================================================================
-GLhandleARB VOpenGLDrawer::LoadShader (const char *progname, GLenum Type, const VStr &FileName, const TArray<VStr> &defines) {
+GLhandleARB VOpenGLDrawer::LoadShader (const char *progname, GLenum Type, VStr FileName, const TArray<VStr> &defines) {
   // load source file
   VStr ssrc = readTextFile(FileName);
 
@@ -1686,7 +1686,7 @@ GLhandleARB VOpenGLDrawer::LoadShader (const char *progname, GLenum Type, const 
         if (needToAddRevZ) { res += "#define VAVOOM_REVERSE_Z\n"; needToAddRevZ = false; }
         // add other defines
         for (int didx = 0; didx < defines.length(); ++didx) {
-          const VStr &def = defines[didx];
+          VStr def = defines[didx];
           if (def.isEmpty()) continue;
           res += "#define ";
           res += def;

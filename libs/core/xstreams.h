@@ -36,15 +36,15 @@ protected:
 
 public:
   VMemoryStreamRO (); // so we can declare it, and initialize later
-  VMemoryStreamRO (const VStr &strmName, const void *adata, int adataSize, bool takeOwnership=false);
-  VMemoryStreamRO (const VStr &strmName, VStream *strm); // from current position to stream end
+  VMemoryStreamRO (VStr strmName, const void *adata, int adataSize, bool takeOwnership=false);
+  VMemoryStreamRO (VStr strmName, VStream *strm); // from current position to stream end
 
   virtual ~VMemoryStreamRO () override;
 
   void Clear ();
 
-  void Setup (const VStr &strmName, const void *adata, int adataSize, bool takeOwnership=false);
-  void Setup (const VStr &strmName, VStream *strm); // from current position to stream end
+  void Setup (VStr strmName, const void *adata, int adataSize, bool takeOwnership=false);
+  void Setup (VStr strmName, VStream *strm); // from current position to stream end
 
   virtual void Serialise (void *Data, int Length) override;
   virtual void Seek (int) override;
@@ -53,7 +53,7 @@ public:
 
   inline const vuint8 *GetPtr () const { return Data; }
 
-  virtual const VStr &GetName () const override;
+  virtual VStr GetName () const override;
 };
 
 
@@ -67,11 +67,11 @@ protected:
 public:
   // initialise empty writing stream
   VMemoryStream ();
-  VMemoryStream (const VStr &strmName);
+  VMemoryStream (VStr strmName);
   // initialise reading streams
-  VMemoryStream (const VStr &strmName, const void *, int, bool takeOwnership=false);
-  VMemoryStream (const VStr &strmName, const TArray<vuint8> &);
-  VMemoryStream (const VStr &strmName, VStream *strm); // from current position to stream end
+  VMemoryStream (VStr strmName, const void *, int, bool takeOwnership=false);
+  VMemoryStream (VStr strmName, const TArray<vuint8> &);
+  VMemoryStream (VStr strmName, VStream *strm); // from current position to stream end
 
   virtual ~VMemoryStream () override;
 
@@ -84,7 +84,7 @@ public:
   inline void BeginWrite () { bLoading = false; }
   inline TArray<vuint8> &GetArray () { return Array; }
 
-  virtual const VStr &GetName () const override;
+  virtual VStr GetName () const override;
 };
 
 
@@ -96,7 +96,7 @@ protected:
   VStr StreamName;
 
 public:
-  VArrayStream (const VStr &strmName, TArray<vuint8> &);
+  VArrayStream (VStr strmName, TArray<vuint8> &);
   virtual ~VArrayStream () override;
 
   virtual void Serialise (void *Data, int Length) override;
@@ -108,7 +108,7 @@ public:
   inline void BeginWrite () { bLoading = false; }
   inline TArray<vuint8> &GetArray () { return Array; }
 
-  virtual const VStr &GetName () const override;
+  virtual VStr GetName () const override;
 };
 
 
@@ -129,7 +129,7 @@ private:
 
 public:
   // initialise empty writing stream
-  VPagedMemoryStream (const VStr &strmName);
+  VPagedMemoryStream (VStr strmName);
   virtual ~VPagedMemoryStream () override;
 
   virtual void Serialise (void *Data, int Length) override;
@@ -142,7 +142,7 @@ public:
 
   void CopyTo (VStream *strm);
 
-  virtual const VStr &GetName () const override;
+  virtual VStr GetName () const override;
 };
 
 
@@ -273,10 +273,10 @@ private:
   void setError ();
 
 public:
-  VStdFileStreamBase (FILE *afl, const VStr &aname, bool asWriter);
+  VStdFileStreamBase (FILE *afl, VStr aname, bool asWriter);
   virtual ~VStdFileStreamBase () override;
 
-  virtual const VStr &GetName () const override;
+  virtual VStr GetName () const override;
   virtual void Seek (int pos) override;
   virtual int Tell () override;
   virtual int TotalSize () override;
@@ -288,13 +288,13 @@ public:
 // owns afl
 class VStdFileStreamRead : public VStdFileStreamBase {
 public:
-  VStdFileStreamRead (FILE *afl, const VStr &aname=VStr()) : VStdFileStreamBase(afl, aname, false) {}
+  VStdFileStreamRead (FILE *afl, VStr aname=VStr()) : VStdFileStreamBase(afl, aname, false) {}
 };
 
 // owns afl
 class VStdFileStreamWrite : public VStdFileStreamBase {
 public:
-  VStdFileStreamWrite (FILE *afl, const VStr &aname=VStr()) : VStdFileStreamBase(afl, aname, true) {}
+  VStdFileStreamWrite (FILE *afl, VStr aname=VStr()) : VStdFileStreamBase(afl, aname, true) {}
 };
 
 
@@ -320,12 +320,12 @@ private:
 public:
   // doesn't own passed stream
   VPartialStreamRO (VStream *ASrcStream, int astpos, int apartlen=-1, bool aOwnSrc=false);
-  VPartialStreamRO (const VStr &aname, VStream *ASrcStream, int astpos, int apartlen, mythread_mutex *alockptr);
+  VPartialStreamRO (VStr aname, VStream *ASrcStream, int astpos, int apartlen, mythread_mutex *alockptr);
   // will free source stream if necessary
   virtual ~VPartialStreamRO () override;
 
   // stream interface
-  virtual const VStr &GetName () const override;
+  virtual VStr GetName () const override;
   virtual bool IsError () const override;
   virtual void Serialise (void *Data, int Length) override;
   virtual void SerialiseBits (void *Data, int Length) override;

@@ -63,12 +63,12 @@ public:
 
   // all following methods are supposed to be called with global mutex protection
   // (i.e. they should not be called from multiple threads simultaneously)
-  virtual bool FileExists (const VStr &Name) = 0;
-  virtual VStream *OpenFileRead (const VStr &Name) = 0;
+  virtual bool FileExists (VStr Name) = 0;
+  virtual VStream *OpenFileRead (VStr Name) = 0;
   virtual void Close () = 0;
   virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=true) = 0;
-  virtual int CheckNumForFileName (const VStr &Name) = 0;
-  virtual int FindACSObject (const VStr &fname) = 0;
+  virtual int CheckNumForFileName (VStr Name) = 0;
+  virtual int FindACSObject (VStr fname) = 0;
   virtual void ReadFromLump (int LumpNum, void *Dest, int Pos, int Size) = 0;
   virtual int LumpLength (int LumpNum) = 0;
   virtual VName LumpName (int LumpNum) = 0;
@@ -97,14 +97,14 @@ private:
   int findFileCI (VStr fname);
 
 public:
-  VFilesDir (const VStr &aPath);
+  VFilesDir (VStr aPath);
   virtual ~VFilesDir () override;
-  virtual bool FileExists (const VStr&) override;
-  virtual VStream *OpenFileRead (const VStr&) override;
+  virtual bool FileExists (VStr) override;
+  virtual VStream *OpenFileRead (VStr) override;
   virtual VStream *CreateLumpReaderNum (int) override;
   virtual void Close () override;
   virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=true) override;
-  virtual int CheckNumForFileName (const VStr &) override;
+  virtual int CheckNumForFileName (VStr) override;
   virtual void ReadFromLump (int, void*, int, int) override;
   virtual int LumpLength (int) override;
   virtual VName LumpName (int) override;
@@ -210,18 +210,18 @@ public:
   VFileDirectory pakdir;
 
 public:
-  VPakFileBase (const VStr &apakfilename, bool aaszip=false);
+  VPakFileBase (VStr apakfilename, bool aaszip=false);
   virtual ~VPakFileBase () override;
 
   //inline bool hasFiles () const { return (pakdir.files.length() > 0); }
 
   virtual void Close () override;
 
-  virtual bool FileExists (const VStr &fname) override;
-  //virtual VStream *OpenFileRead (const VStr &fname) override;
+  virtual bool FileExists (VStr fname) override;
+  //virtual VStream *OpenFileRead (VStr fname) override;
   virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=true) override;
-  virtual int CheckNumForFileName (const VStr &fname) override;
-  virtual int FindACSObject (const VStr &fname) override;
+  virtual int CheckNumForFileName (VStr fname) override;
+  virtual int FindACSObject (VStr fname) override;
   virtual void ReadFromLump (int, void *, int, int) override;
   virtual int LumpLength (int) override;
   virtual VName LumpName (int) override;
@@ -261,19 +261,19 @@ private:
 public:
   VWadFile ();
   //virtual ~VWadFile () override;
-  void Open (const VStr &FileName, bool FixVoices, VStream *InStream);
-  void OpenSingleLump (const VStr &FileName);
+  void Open (VStr FileName, bool FixVoices, VStream *InStream);
+  void OpenSingleLump (VStr FileName);
   virtual void Close () override;
-  virtual VStream *OpenFileRead (const VStr &) override;
+  virtual VStream *OpenFileRead (VStr) override;
   virtual VStream *CreateLumpReaderNum (int) override;
   virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=true) override;
-  //virtual int CheckNumForFileName (const VStr &) override;
+  //virtual int CheckNumForFileName (VStr) override;
   virtual void ReadFromLump (int lump, void *dest, int pos, int size) override;
   //virtual int LumpLength (int) override;
   //virtual VName LumpName (int) override;
   //virtual VStr LumpFileName (int) override;
   virtual int IterateNS (int, EWadNamespace, bool allowEmptyName8=false) override;
-  //virtual bool FileExists (const VStr &) override;
+  //virtual bool FileExists (VStr) override;
   virtual void RenameSprites (const TArray<VSpriteRename>&, const TArray<VLumpRename>&) override;
   //virtual VStr GetPrefix () override { return Name; }
 };
@@ -293,12 +293,12 @@ private:
   void OpenArchive (VStream *fstream);
 
 public:
-  VZipFile (const VStr &);
+  VZipFile (VStr);
   VZipFile (VStream *fstream); // takes ownership
-  VZipFile (VStream *fstream, const VStr &name); // takes ownership
+  VZipFile (VStream *fstream, VStr name); // takes ownership
   virtual ~VZipFile () override;
 
-  virtual VStream *OpenFileRead (const VStr &)  override;
+  virtual VStream *OpenFileRead (VStr)  override;
   virtual VStream *CreateLumpReaderNum (int) override;
   virtual void Close () override;
   virtual void RenameSprites (const TArray<VSpriteRename> &, const TArray<VLumpRename> &) override;
@@ -316,26 +316,26 @@ private:
   void ScanAllDirs ();
 
 public:
-  VDirPakFile (const VStr &);
+  VDirPakFile (VStr);
 
   //inline bool hasFiles () const { return (files.length() > 0); }
 
-  virtual VStream *OpenFileRead (const VStr &)  override;
+  virtual VStream *OpenFileRead (VStr)  override;
   virtual VStream *CreateLumpReaderNum (int) override;
   virtual int LumpLength (int) override;
 };
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-void W_AddFileFromZip (const VStr &WadName, VStream *WadStrm);
+void W_AddFileFromZip (VStr WadName, VStream *WadStrm);
 
-bool VFS_ShouldIgnoreExt (const VStr &fname);
+bool VFS_ShouldIgnoreExt (VStr fname);
 
 // removes prefix, returns filter index (or -1, and does nothing)
 int FL_CheckFilterName (VStr &fname);
 
-VStream *FL_OpenFileRead_NoLock (const VStr &Name);
-VStream *FL_OpenFileReadBaseOnly_NoLock (const VStr &Name);
+VStream *FL_OpenFileRead_NoLock (VStr Name);
+VStream *FL_OpenFileReadBaseOnly_NoLock (VStr Name);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

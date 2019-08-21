@@ -32,7 +32,7 @@
 //  VFilesDir::VFilesDir
 //
 //==========================================================================
-VFilesDir::VFilesDir (const VStr &aPath)
+VFilesDir::VFilesDir (VStr aPath)
   : VSearchPath()
   , path(aPath)
   , cachedFiles()
@@ -117,7 +117,7 @@ int VFilesDir::findFileCI (VStr fname) {
 //  VFilesDir::CheckNumForFileName
 //
 //==========================================================================
-int VFilesDir::CheckNumForFileName (const VStr &Name) {
+int VFilesDir::CheckNumForFileName (VStr Name) {
   return findFileCI(Name);
 }
 
@@ -127,7 +127,7 @@ int VFilesDir::CheckNumForFileName (const VStr &Name) {
 //  VFilesDir::FileExists
 //
 //==========================================================================
-bool VFilesDir::FileExists (const VStr &Name) {
+bool VFilesDir::FileExists (VStr Name) {
   return (findFileCI(Name) >= 0);
 }
 
@@ -137,7 +137,7 @@ bool VFilesDir::FileExists (const VStr &Name) {
 //  VFilesDir::OpenFileRead
 //
 //==========================================================================
-VStream *VFilesDir::OpenFileRead (const VStr &Name) {
+VStream *VFilesDir::OpenFileRead (VStr Name) {
   VStr storedName = Name;
   int fidx = findFileCI(storedName);
   if (fidx == -1) return nullptr;

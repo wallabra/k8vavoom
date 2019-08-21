@@ -34,19 +34,19 @@
 
 void FSYS_Shutdown ();
 
-bool FL_FileExists (const VStr &fname);
-void FL_CreatePath (const VStr &Path);
+bool FL_FileExists (VStr fname);
+void FL_CreatePath (VStr Path);
 
-VStream *FL_OpenFileRead (const VStr &Name);
+VStream *FL_OpenFileRead (VStr Name);
 
-VStream *FL_OpenSysFileRead (const VStr &Name);
-VStream *FL_OpenSysFileWrite (const VStr &Name);
+VStream *FL_OpenSysFileRead (VStr Name);
+VStream *FL_OpenSysFileWrite (VStr Name);
 
 // search file only in "basepaks"
-VStream *FL_OpenFileReadBaseOnly (const VStr &Name);
+VStream *FL_OpenFileReadBaseOnly (VStr Name);
 
 // reject absolute names, names with ".", and names with ".."
-bool FL_IsSafeDiskFileName (const VStr &fname);
+bool FL_IsSafeDiskFileName (VStr fname);
 
 
 extern bool fsys_developer_debug;
@@ -94,7 +94,7 @@ enum EWadNamespace {
 };
 
 
-void W_AddFile (const VStr &FileName, bool FixVoices=false);
+void W_AddFile (VStr FileName, bool FixVoices=false);
 void W_Shutdown ();
 
 enum WAuxFileType {
@@ -105,8 +105,8 @@ enum WAuxFileType {
 
 // returns lump handle
 int W_StartAuxiliary (); // returns first aux index
-int W_OpenAuxiliary (const VStr &FileName); // -1: not found
-//int W_AddAuxiliary (const VStr &FileName); // -1: not found
+int W_OpenAuxiliary (VStr FileName); // -1: not found
+//int W_AddAuxiliary (VStr FileName); // -1: not found
 int W_AddAuxiliaryStream (VStream *strm, WAuxFileType ftype); // -1: error/not found; otherwise handle of the first appended file
 void W_CloseAuxiliary (); // close all aux files
 
@@ -116,12 +116,12 @@ int W_CheckNumForNameInFile (VName Name, int File, EWadNamespace NS = WADNS_Glob
 int W_CheckFirstNumForNameInFile (VName Name, int File, EWadNamespace NS = WADNS_Global);
 int W_FindACSObjectInFile (VStr Name, int File);
 
-int W_CheckNumForFileName (const VStr &Name);
-int W_CheckNumForFileNameInSameFile (int filelump, const VStr &Name);
-int W_CheckNumForFileNameInSameFileOrLower (int filelump, const VStr &Name);
-int W_CheckNumForTextureFileName (const VStr &Name);
-int W_GetNumForFileName (const VStr &Name);
-int W_FindLumpByFileNameWithExts (const VStr &BaseName, const char **Exts);
+int W_CheckNumForFileName (VStr Name);
+int W_CheckNumForFileNameInSameFile (int filelump, VStr Name);
+int W_CheckNumForFileNameInSameFileOrLower (int filelump, VStr Name);
+int W_CheckNumForTextureFileName (VStr Name);
+int W_GetNumForFileName (VStr Name);
+int W_FindLumpByFileNameWithExts (VStr BaseName, const char **Exts);
 
 int W_LumpLength (int lump);
 VName W_LumpName (int lump);
@@ -147,7 +147,7 @@ VStream *W_CreateLumpReaderName (VName Name, EWadNamespace NS = WADNS_Global);
 
 int W_StartIterationFromLumpFileNS (int File, EWadNamespace NS); // returns -1 if not found
 int W_IterateNS (int Prev, EWadNamespace NS);
-int W_IterateFile (int Prev, const VStr &Name);
+int W_IterateFile (int Prev, VStr Name);
 
 int W_NextMountFileId ();
 VStr W_FindMapInLastFile (int fileid, int *mapnum);
@@ -281,7 +281,7 @@ public:
   VStr fname;
 
 public:
-  WadFileIterator (const VStr &afname) : lump(-1), fname(afname) { lump = W_IterateFile(-1, afname); }
+  WadFileIterator (VStr afname) : lump(-1), fname(afname) { lump = W_IterateFile(-1, afname); }
   WadFileIterator (const WadFileIterator &it) : lump(it.lump), fname(it.fname) {}
   WadFileIterator (const WadFileIterator &it, bool asEnd) : lump(-1), fname(it.fname) {}
   inline WadFileIterator &operator = (const WadFileIterator &it) { lump = it.lump; fname = it.fname; return *this; }

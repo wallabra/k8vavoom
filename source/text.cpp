@@ -75,7 +75,7 @@ void T_SetAlign (halign_e NewHAlign, valign_e NewVAlign) {
 //  T_DrawText
 //
 //==========================================================================
-void T_DrawText (int x, int y, const VStr &String, int col) {
+void T_DrawText (int x, int y, VStr String, int col) {
   GRoot->DrawText(x, y, String, col, CR_YELLOW, 1.0f);
 }
 
@@ -85,7 +85,7 @@ void T_DrawText (int x, int y, const VStr &String, int col) {
 //  T_TextWidth
 //
 //==========================================================================
-int T_TextWidth (const VStr &s) {
+int T_TextWidth (VStr s) {
   return GRoot->TextWidth(s);
 }
 
@@ -95,7 +95,7 @@ int T_TextWidth (const VStr &s) {
 //  T_StringWidth
 //
 //==========================================================================
-int T_StringWidth (const VStr &s) {
+int T_StringWidth (VStr s) {
   return GRoot->StringWidth(s);
 }
 
@@ -105,7 +105,7 @@ int T_StringWidth (const VStr &s) {
 //  T_TextHeight
 //
 //==========================================================================
-int T_TextHeight (const VStr &s) {
+int T_TextHeight (VStr s) {
   return GRoot->TextHeight(s);
 }
 

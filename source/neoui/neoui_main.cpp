@@ -243,7 +243,7 @@ public:
   static inline bool isFullyOpaque () { return ((colorARGB&0xff000000) == 0); }
   static inline bool isFullyTransparent () { return ((colorARGB&0xff000000) == 0xff000000); }
 
-  static void drawTextAt (int x, int y, const VStr &text);
+  static void drawTextAt (int x, int y, VStr text);
 
   DECLARE_FUNCTION(isInitialized)
   DECLARE_FUNCTION(screenWidth)
@@ -319,7 +319,7 @@ public:
     float tx0, ty0, tx1, ty1;
   };
 
-  const VStr &getPath () const { return mPath; }
+  VStr getPath () const { return mPath.cloneUnique(); }
   int getRC () const { return rc; }
 
 public:
@@ -342,7 +342,7 @@ private:
   VOpenGLTexture (int awdt, int ahgt); // dimensions must be valid!
 
 public:
-  VOpenGLTexture (VImage *aimg, const VStr &apath);
+  VOpenGLTexture (VImage *aimg, VStr apath);
   ~VOpenGLTexture (); // don't call this manually!
 
   void addRef ();
@@ -350,13 +350,13 @@ public:
 
   void update ();
 
-  static VOpenGLTexture *Load (const VStr &fname);
+  static VOpenGLTexture *Load (VStr fname);
   static VOpenGLTexture *CreateEmpty (VStr txname, int wdt, int hgt);
 
   inline int getWidth () const { return (img ? img->width : 0); }
   inline int getHeight () const { return (img ? img->height : 0); }
 
-  PropertyRO<const VStr &, VOpenGLTexture> path {this, &VOpenGLTexture::getPath};
+  PropertyRO<VStr, VOpenGLTexture> path {this, &VOpenGLTexture::getPath};
   PropertyRO<int, VOpenGLTexture> width {this, &VOpenGLTexture::getWidth};
   PropertyRO<int, VOpenGLTexture> height {this, &VOpenGLTexture::getHeight};
 
@@ -452,18 +452,18 @@ protected:
   NUIFont (); // this inits nothing, and intended to be used in `LoadXXX()`
 
 public:
-  //NUIFont (VName aname, const VStr &fnameIni, const VStr &fnameTexture);
+  //NUIFont (VName aname, VStr fnameIni, VStr fnameTexture);
   ~NUIFont ();
 
-  static NUIFont *LoadDF (VName aname, const VStr &fnameIni, const VStr &fnameTexture);
-  static NUIFont *LoadPCF (VName aname, const VStr &filename);
+  static NUIFont *LoadDF (VName aname, VStr fnameIni, VStr fnameTexture);
+  static NUIFont *LoadPCF (VName aname, VStr filename);
 
   const FontChar *getChar (vint32 ch) const;
   vint32 charWidth (vint32 ch) const;
-  vint32 textWidth (const VStr &s) const;
-  vint32 textHeight (const VStr &s) const;
+  vint32 textWidth (VStr s) const;
+  vint32 textHeight (VStr s) const;
   // will clear lines; returns maximum text width
-  //int splitTextWidth (const VStr &text, TArray<VSplitLine> &lines, int maxWidth) const;
+  //int splitTextWidth (VStr text, TArray<VSplitLine> &lines, int maxWidth) const;
 
   inline VName getName () const { return name; }
   inline vint32 getSpaceWidth () const { return spaceWidth; }
@@ -1326,7 +1326,7 @@ void uploadAllTextures () {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-VOpenGLTexture::VOpenGLTexture (VImage *aimg, const VStr &apath)
+VOpenGLTexture::VOpenGLTexture (VImage *aimg, VStr apath)
   : rc(1)
   , mPath(apath)
   , img(aimg)
@@ -1457,7 +1457,7 @@ void VOpenGLTexture::update () {
 }
 
 
-VOpenGLTexture *VOpenGLTexture::Load (const VStr &fname) {
+VOpenGLTexture *VOpenGLTexture::Load (VStr fname) {
   if (fname.length() == 0) return nullptr;
   if (fname.length() > 0) {
     VOpenGLTexture **loaded = txLoaded.find(fname);
@@ -1873,7 +1873,7 @@ void VGLVideo::setFont (VName fontname) {
 }
 
 
-void VGLVideo::drawTextAt (int x, int y, const VStr &text) {
+void VGLVideo::drawTextAt (int x, int y, VStr text) {
   if (!currFont /*|| isFullyTransparent()*/ || text.isEmpty()) return;
   if (!NeoUIICB::inited) return;
 
@@ -2316,7 +2316,7 @@ static VStr readLine (VStream *strm, bool allTrim=true) {
 }
 
 
-static VStr getKey (const VStr &s) {
+static VStr getKey (VStr s) {
   int epos = s.indexOf('=');
   if (epos < 0) return s;
   VStr res = s.left(epos);
@@ -2325,7 +2325,7 @@ static VStr getKey (const VStr &s) {
 }
 
 
-static VStr getValue (const VStr &s) {
+static VStr getValue (VStr s) {
   int epos = s.indexOf('=');
   if (epos < 0) return VStr();
   VStr res = s;
@@ -2336,7 +2336,7 @@ static VStr getValue (const VStr &s) {
 }
 
 
-static int getIntValue (const VStr &s) {
+static int getIntValue (VStr s) {
   VStr v = getValue(s);
   if (v.isEmpty()) return 0;
   bool neg = v.startsWith("-");
@@ -2414,7 +2414,7 @@ NUIFont::~NUIFont() {
 //  NUIFont::LoadDF
 //
 //==========================================================================
-NUIFont *NUIFont::LoadDF (VName aname, const VStr &fnameIni, const VStr &fnameTexture) {
+NUIFont *NUIFont::LoadDF (VName aname, VStr fnameIni, VStr fnameTexture) {
   VOpenGLTexture *tex = VOpenGLTexture::Load(fnameTexture);
   if (!tex) Sys_Error("cannot load font '%s' (texture not found)", *aname);
 
@@ -2518,7 +2518,7 @@ NUIFont *NUIFont::LoadDF (VName aname, const VStr &fnameIni, const VStr &fnameTe
 //  NUIFont::LoadPCF
 //
 //==========================================================================
-NUIFont *NUIFont::LoadPCF (VName aname, const VStr &filename) {
+NUIFont *NUIFont::LoadPCF (VName aname, VStr filename) {
 /*
   static const vuint16 cp12512Uni[128] = {
     0x0402,0x0403,0x201A,0x0453,0x201E,0x2026,0x2020,0x2021,0x20AC,0x2030,0x0409,0x2039,0x040A,0x040C,0x040B,0x040F,
@@ -2643,7 +2643,7 @@ int NUIFont::charWidth (int ch) const {
 //  NUIFont::textWidth
 //
 //==========================================================================
-int NUIFont::textWidth (const VStr &s) const {
+int NUIFont::textWidth (VStr s) const {
   int res = 0, curwdt = 0;
   for (int f = 0; f < s.length(); ++f) {
     vuint8 ch = vuint8(s[f]);
@@ -2665,7 +2665,7 @@ int NUIFont::textWidth (const VStr &s) const {
 //  NUIFont::textHeight
 //
 //==========================================================================
-int NUIFont::textHeight (const VStr &s) const {
+int NUIFont::textHeight (VStr s) const {
   int res = fontHeight;
   for (int f = 0; f < s.length(); ++f) if (s[f] == '\n') res += fontHeight;
   return res;

@@ -258,8 +258,8 @@ public:
 
   VAcsInfo *FindScript (int Number) const;
   VAcsInfo *FindScriptByName (int nameidx) const;
-  int FindScriptNumberByName (const VStr &aname) const;
-  VAcsInfo *FindScriptByNameStr (const VStr &aname) const;
+  int FindScriptNumberByName (VStr aname) const;
+  VAcsInfo *FindScriptByNameStr (VStr aname) const;
   VAcsFunction *GetFunction (int funcnum, VAcsObject *&Object);
   int GetArrayVal (int ArrayIdx, int Index);
   void SetArrayVal (int ArrayIdx, int Index, int Value);
@@ -434,7 +434,7 @@ private:
   };
 
   inline VStr GetStr (int Index) { return ActiveObject->Level->GetString(Index); }
-  //inline int PutStr (const VStr &str) { return ActiveObject->Level->PutString(str); }
+  //inline int PutStr (VStr str) { return ActiveObject->Level->PutString(str); }
   inline VName GetName (int Index) { return *ActiveObject->Level->GetString(Index); }
   inline VName GetNameLowerCase (int Index) { return ActiveObject->Level->GetNameLowerCase(Index); }
   inline VName GetName8 (int Index) { return VName(*ActiveObject->Level->GetString(Index), VName::AddLower8); }
@@ -1319,9 +1319,10 @@ VAcsInfo *VAcsObject::FindScriptByName (int nameidx) const {
 //  VAcsObject::FindScriptByNameStr
 //
 //==========================================================================
-VAcsInfo *VAcsObject::FindScriptByNameStr (const VStr &aname) const {
+VAcsInfo *VAcsObject::FindScriptByNameStr (VStr aname) const {
   if (aname.length() == 0) return nullptr;
-  VName nn = VName(*aname, VName::AddLower);
+  VName nn = VName(*aname, VName::FindLower);
+  if (nn == NAME_None) return nullptr;
   for (int i = 0; i < NumScripts; i++) {
     if (Scripts[i].Name == nn) return Scripts+i;
   }
@@ -1334,9 +1335,10 @@ VAcsInfo *VAcsObject::FindScriptByNameStr (const VStr &aname) const {
 //  VAcsObject::FindScriptNumberByName
 //
 //==========================================================================
-int VAcsObject::FindScriptNumberByName (const VStr &aname) const {
+int VAcsObject::FindScriptNumberByName (VStr aname) const {
   if (aname.length() == 0) return -1;
-  VName nn = VName(*aname, VName::AddLower);
+  VName nn = VName(*aname, VName::FindLower);
+  if (nn == NAME_None) return -1;
   for (int i = 0; i < NumScripts; ++i) {
     if (Scripts[i].Name == nn) return -SPECIAL_LOW_SCRIPT_NUMBER-i;
   }
@@ -1561,10 +1563,11 @@ VAcsInfo *VAcsLevel::FindScriptByName (int Number, VAcsObject *&Object)
 //
 //==========================================================================
 
-VAcsInfo *VAcsLevel::FindScriptByNameStr (const VStr &aname, VAcsObject *&Object)
+VAcsInfo *VAcsLevel::FindScriptByNameStr (VStr aname, VAcsObject *&Object)
 {
   if (aname.length() == 0) return nullptr;
-  VName nn = VName(*aname, VName::AddLower);
+  VName nn = VName(*aname, VName::FindLower);
+  if (nn == NAME_None) return nullptr;
   for (int i = 0; i < LoadedObjects.Num(); i++)
   {
     VAcsInfo *Found = LoadedObjects[i]->FindScriptByName(-nn.GetIndex());
@@ -1583,7 +1586,7 @@ VAcsInfo *VAcsLevel::FindScriptByNameStr (const VStr &aname, VAcsObject *&Object
 //  VAcsLevel::FindScriptNumberByName
 //
 //==========================================================================
-int VAcsLevel::FindScriptNumberByName (const VStr &aname, VAcsObject *&Object) {
+int VAcsLevel::FindScriptNumberByName (VStr aname, VAcsObject *&Object) {
   if (aname.length() == 0) return -1;
   for (int i = 0; i < LoadedObjects.length(); ++i) {
     int idx = LoadedObjects[i]->FindScriptNumberByName(aname);

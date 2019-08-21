@@ -161,18 +161,18 @@ public:
   void eventDeactivateMenu () { static VMethodProxy method("DeactivateMenu"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   bool eventMenuResponder (event_t *event) { static VMethodProxy method("MenuResponder"); vobjPutParamSelf(event); VMT_RET_BOOL(method); }
   bool eventMenuActive () { static VMethodProxy method("MenuActive"); vobjPutParamSelf(); VMT_RET_BOOL(method); }
-  void eventSetMenu (const VStr &Name) { static VMethodProxy method("SetMenu"); vobjPutParamSelf(Name); VMT_RET_VOID(method); }
+  void eventSetMenu (VStr Name) { static VMethodProxy method("SetMenu"); vobjPutParamSelf(Name); VMT_RET_VOID(method); }
 
   void eventMessageBoxDrawer () { static VMethodProxy method("MessageBoxDrawer"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   bool eventMessageBoxResponder (event_t *event) { static VMethodProxy method("MessageBoxResponder"); vobjPutParamSelf(event); VMT_RET_BOOL(method); }
   bool eventMessageBoxActive () { static VMethodProxy method("MessageBoxActive"); vobjPutParamSelf(); VMT_RET_BOOL(method); }
 
   void eventDrawViewBorder (int x, int y, int w, int h) { static VMethodProxy method("DrawViewBorder"); vobjPutParamSelf(x, y, w, h); VMT_RET_VOID(method); }
-  void eventAddNotifyMessage (const VStr &Str) { static VMethodProxy method("AddNotifyMessage"); vobjPutParamSelf(Str); VMT_RET_VOID(method); }
-  void eventAddCentreMessage (const VStr &Msg) { static VMethodProxy method("AddCentreMessage"); vobjPutParamSelf(Msg); VMT_RET_VOID(method); }
+  void eventAddNotifyMessage (VStr Str) { static VMethodProxy method("AddNotifyMessage"); vobjPutParamSelf(Str); VMT_RET_VOID(method); }
+  void eventAddCentreMessage (VStr Msg) { static VMethodProxy method("AddCentreMessage"); vobjPutParamSelf(Msg); VMT_RET_VOID(method); }
 
-  void eventAddHudMessage (const VStr &Message, VName Font, int Type, int Id,
-                           int Color, const VStr &ColorName, float x, float y,
+  void eventAddHudMessage (VStr Message, VName Font, int Type, int Id,
+                           int Color, VStr ColorName, float x, float y,
                            int HudWidth, int HudHeight, float HoldTime,
                            float Time1, float Time2)
   {
@@ -197,7 +197,7 @@ void CL_StopRecording ();
 
 void R_DrawModelFrame (const TVec&, float, VModel*, int, int, const char*, int, int, int, float);
 
-VModel *Mod_FindName (const VStr&);
+VModel *Mod_FindName (VStr);
 
 void SCR_SetVirtualScreen (int, int);
 

@@ -334,8 +334,8 @@ bool VCheckedStream::Close () {
 //  VCheckedStream::GetName
 //
 //==========================================================================
-const VStr &VCheckedStream::GetName () const {
-  return (srcStream ? srcStream->GetName() : VStr::EmptyString);
+VStr VCheckedStream::GetName () const {
+  return (srcStream ? srcStream->GetName() : VStr());
 }
 
 

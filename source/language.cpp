@@ -229,7 +229,7 @@ void VLanguage::ParseLanguageScript (vint32 Lump, const char *InCode, bool Exact
 //  VLanguage::HandleEscapes
 //
 //==========================================================================
-VStr VLanguage::HandleEscapes (const VStr &Src) {
+VStr VLanguage::HandleEscapes (VStr Src) {
   bool hasWork = false;
   for (size_t i = Src.Length(); i > 0; --i) if (Src[i-1] == '\\') { hasWork = true; break; }
   if (!hasWork) return VStr(Src);
@@ -365,7 +365,7 @@ bool VLanguage::HasTranslation (const char *s) const {
 //  VLanguage::GetStringId
 //
 //==========================================================================
-VName VLanguage::GetStringId (const VStr &Str) {
+VName VLanguage::GetStringId (VStr Str) {
   if (!table) return NAME_None;
   for (auto it = table->first(); it; ++it) {
     if (it.getValue().Value == Str) return it.GetKey();
@@ -379,7 +379,7 @@ VName VLanguage::GetStringId (const VStr &Str) {
 //  VLanguage::ReplaceString
 //
 //==========================================================================
-void VLanguage::ReplaceString (VName Key, const VStr &Value) {
+void VLanguage::ReplaceString (VName Key, VStr Value) {
   VLangEntry Entry;
   Entry.Value = Value;
   Entry.PassNum = 0;

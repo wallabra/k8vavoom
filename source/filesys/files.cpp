@@ -187,7 +187,7 @@ void FL_ProcessPreInits () {
 }
 
 
-bool FL_HasPreInit (const VStr &varname) {
+bool FL_HasPreInit (VStr varname) {
   if (varname.length() == 0 || preinitCV.length() == 0) return false;
   for (int f = 0; f < preinitCV.length(); ++f) {
     if (preinitCV[f].varname.ICmp(varname) == 0) return true;
@@ -219,7 +219,7 @@ struct GroupMask {
   bool enabled;
 
   bool isGlob () const { return (mask.indexOf('*') >= 0 || mask.indexOf('?') >= 0 || mask.indexOf('[') >= 0); }
-  bool match (const VStr &s) const { return s.globmatch(mask, false); }
+  bool match (VStr s) const { return s.globmatch(mask, false); }
 };
 
 
@@ -256,13 +256,13 @@ struct CustomModeInfo {
     reported = false;
   }
 
-  void appendPWad (const VStr &str) {
+  void appendPWad (VStr str) {
     if (str.isEmpty()) return;
     for (auto &&s : pwads) if (s.strEqu(str)) return;
     pwads.append(str);
   }
 
-  void appendPostPWad (const VStr &str) {
+  void appendPostPWad (VStr str) {
     if (str.isEmpty()) return;
     for (auto &&s : postpwads) if (s.strEqu(str)) return;
     postpwads.append(str);
@@ -726,7 +726,7 @@ const TArray<VStr> &FL_GetWadPk3List () {
 //  wpkAppend
 //
 //==========================================================================
-static void wpkAppend (const VStr &fname, bool asystem) {
+static void wpkAppend (VStr fname, bool asystem) {
   if (fname.length() == 0) return;
   VStr fn = fname.toLowerCase();
   if (!asystem) {
@@ -763,7 +763,7 @@ static int cmpfuncCINoExt (const void *v1, const void *v2) {
 //  AddZipFile
 //
 //==========================================================================
-static void AddZipFile (const VStr &ZipName, VZipFile *Zip, bool allowpk3) {
+static void AddZipFile (VStr ZipName, VZipFile *Zip, bool allowpk3) {
   SearchPaths.Append(Zip);
 
   // add all WAD files in the root of the ZIP file
@@ -808,7 +808,7 @@ static void AddZipFile (const VStr &ZipName, VZipFile *Zip, bool allowpk3) {
 //  AddZipFile
 //
 //==========================================================================
-static void AddZipFile (const VStr &ZipName) {
+static void AddZipFile (VStr ZipName) {
   VZipFile *Zip = new VZipFile(ZipName);
   AddZipFile(ZipName, Zip, true);
 }
@@ -819,7 +819,7 @@ static void AddZipFile (const VStr &ZipName) {
 //  AddAnyFile
 //
 //==========================================================================
-static void AddAnyFile (const VStr &fname, bool allowFail, bool fixVoices=false) {
+static void AddAnyFile (VStr fname, bool allowFail, bool fixVoices=false) {
   if (fname.length() == 0) {
     if (!allowFail) Sys_Error("cannot add empty file");
     return;
@@ -847,7 +847,7 @@ static void AddAnyFile (const VStr &fname, bool allowFail, bool fixVoices=false)
 //  AddPakDir
 //
 //==========================================================================
-static void AddPakDir (const VStr &dirname) {
+static void AddPakDir (VStr dirname) {
   if (dirname.length() == 0) return;
   VDirPakFile *dpak = new VDirPakFile(dirname);
   //if (!dpak->hasFiles()) { delete dpak; return; }
@@ -909,7 +909,7 @@ static void CustomModeLoadPwads (int type) {
 //  AddAutoloadRC
 //
 //==========================================================================
-void AddAutoloadRC (const VStr &aubasedir) {
+void AddAutoloadRC (VStr aubasedir) {
   VStream *aurc = FL_OpenSysFileRead(aubasedir+"autoload.rc");
   if (!aurc) return;
 
@@ -997,7 +997,7 @@ void AddAutoloadRC (const VStr &aubasedir) {
 //  AddGameDir
 //
 //==========================================================================
-static void AddGameDir (const VStr &basedir, const VStr &dir) {
+static void AddGameDir (VStr basedir, VStr dir) {
   GCon->Logf(NAME_Init, "adding game dir '%s'...", *dir);
 
   VStr bdx = basedir;
@@ -1093,7 +1093,7 @@ static void AddGameDir (const VStr &basedir, const VStr &dir) {
 //  AddGameDir
 //
 //==========================================================================
-static void AddGameDir (const VStr &dir) {
+static void AddGameDir (VStr dir) {
   AddGameDir(fl_basedir, dir);
   //k8:wtf?!
   //if (fl_savedir.IsNotEmpty()) AddGameDir(fl_savedir, dir);
@@ -1106,7 +1106,7 @@ static void AddGameDir (const VStr &dir) {
 //  FindMainWad
 //
 //==========================================================================
-static VStr FindMainWad (const VStr &MainWad) {
+static VStr FindMainWad (VStr MainWad) {
   if (MainWad.length() == 0) return VStr();
 
   // if we have path separators, try relative path first
@@ -1149,7 +1149,7 @@ static VStr FindMainWad (const VStr &MainWad) {
 //  SetupGameDir
 //
 //==========================================================================
-static void SetupGameDir (const VStr &dirname) {
+static void SetupGameDir (VStr dirname) {
   AddGameDir(dirname);
 }
 
@@ -1159,7 +1159,7 @@ static void SetupGameDir (const VStr &dirname) {
 //  ParseBase
 //
 //==========================================================================
-static void ParseBase (const VStr &name, const VStr &mainiwad) {
+static void ParseBase (VStr name, VStr mainiwad) {
   TArray<version_t> games;
   int selectedGame = -1;
   VStr UseName;
@@ -1488,7 +1488,7 @@ extern VCvarI Skill;
 //  countFmtHash
 //
 //==========================================================================
-static int countFmtHash (const VStr &str) {
+static int countFmtHash (VStr str) {
   if (str.length() == 0) return 0;
   int count = 0;
   bool inHash = false;
@@ -1899,7 +1899,7 @@ void FL_Shutdown () {
 //  FL_OpenFileWrite
 //
 //==========================================================================
-VStream *FL_OpenFileWrite (const VStr &Name, bool isFullName) {
+VStream *FL_OpenFileWrite (VStr Name, bool isFullName) {
   VStr tmpName;
   if (isFullName) {
     tmpName = Name;
@@ -1919,7 +1919,7 @@ VStream *FL_OpenFileWrite (const VStr &Name, bool isFullName) {
 //  FL_OpenFileReadInCfgDir
 //
 //==========================================================================
-VStream *FL_OpenFileReadInCfgDir (const VStr &Name) {
+VStream *FL_OpenFileReadInCfgDir (VStr Name) {
   VStr diskName = FL_GetConfigDir()+"/"+Name;
   FILE *File = fopen(*diskName, "rb");
   if (File) return new VStdFileStreamRead(File, diskName);
@@ -1932,7 +1932,7 @@ VStream *FL_OpenFileReadInCfgDir (const VStr &Name) {
 //  FL_OpenFileWriteInCfgDir
 //
 //==========================================================================
-VStream *FL_OpenFileWriteInCfgDir (const VStr &Name) {
+VStream *FL_OpenFileWriteInCfgDir (VStr Name) {
   VStr diskName = FL_GetConfigDir()+"/"+Name;
   return FL_OpenSysFileWrite(diskName);
 }

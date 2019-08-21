@@ -169,7 +169,7 @@ protected:
   static bool NeedRestart ();
   static void UpdateCvarCache ();
 
-  static void onCVarChanged (VCvar *cvar, const VStr &oldValue) { needRestart = true; }
+  static void onCVarChanged (VCvar *cvar, VStr oldValue) { needRestart = true; }
 
 public:
   FluidManager () {

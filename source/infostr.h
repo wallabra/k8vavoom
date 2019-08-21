@@ -25,6 +25,6 @@
 //**
 //**************************************************************************
 
-VStr Info_ValueForKey (const VStr &s, const VStr &key);
-void Info_RemoveKey (VStr &s, const VStr &key);
-void Info_SetValueForKey (VStr &s, const VStr &key, const VStr &value);
+VStr Info_ValueForKey (VStr s, VStr key);
+void Info_RemoveKey (VStr &s, VStr key);
+void Info_SetValueForKey (VStr &s, VStr key, VStr value);

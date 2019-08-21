@@ -58,7 +58,7 @@ TMap<VStr, int> VCommand::AliasMap;
 bool VCommand::cliInserted = false;
 VStr VCommand::cliPreCmds;
 
-void (*VCommand::onShowCompletionMatch) (bool isheader, const VStr &s);
+void (*VCommand::onShowCompletionMatch) (bool isheader, VStr s);
 
 static const char *KeyConfCommands[] = {
   "alias",
@@ -359,7 +359,7 @@ void VCommand::AddToAutoComplete (const char *string) {
 //  VCommand::AutoCompleteFromList
 //
 //==========================================================================
-VStr VCommand::AutoCompleteFromList (const VStr &prefix, const TArray <VStr> &list, bool unchangedAsEmpty, bool doSortHint) {
+VStr VCommand::AutoCompleteFromList (VStr prefix, const TArray <VStr> &list, bool unchangedAsEmpty, bool doSortHint) {
   if (list.length() == 0) return (unchangedAsEmpty ? VStr::EmptyString : prefix);
 
   VStr bestmatch;
@@ -465,7 +465,7 @@ static VBasePlayer *findPlayer () {
 //  if returned string ends with space, this is the only match
 //
 //==========================================================================
-VStr VCommand::GetAutoComplete (const VStr &prefix) {
+VStr VCommand::GetAutoComplete (VStr prefix) {
   if (prefix.length() == 0) return prefix; // oops
 
   TArray<VStr> args;
@@ -589,7 +589,7 @@ VStr VCommand::GetAutoComplete (const VStr &prefix) {
 //  VCommand::TokeniseString
 //
 //==========================================================================
-void VCommand::TokeniseString (const VStr &str) {
+void VCommand::TokeniseString (VStr str) {
   Original = str;
   Args.reset();
   str.tokenize(Args);
@@ -615,7 +615,7 @@ void VCommand::rebuildCommandCache () {
 //  VCommand::ExecuteString
 //
 //==========================================================================
-void VCommand::ExecuteString (const VStr &Acmd, ECmdSource src, VBasePlayer *APlayer) {
+void VCommand::ExecuteString (VStr Acmd, ECmdSource src, VBasePlayer *APlayer) {
   //fprintf(stderr, "+++ command BEFORE tokenizing: <%s>\n", *Acmd);
   TokeniseString(Acmd);
   Source = src;
@@ -807,7 +807,7 @@ void VCmdBuf::Insert (const char *text) {
 //  VCmdBuf::Insert
 //
 //==========================================================================
-void VCmdBuf::Insert (const VStr &text) {
+void VCmdBuf::Insert (VStr text) {
   Buffer = text+Buffer;
 }
 
@@ -827,7 +827,7 @@ void VCmdBuf::Print (const char *data) {
 //  VCmdBuf::Print
 //
 //==========================================================================
-void VCmdBuf::Print (const VStr &data) {
+void VCmdBuf::Print (VStr data) {
   Buffer += data;
 }
 

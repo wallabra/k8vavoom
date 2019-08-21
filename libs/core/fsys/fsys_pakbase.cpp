@@ -81,7 +81,7 @@ static const char *PK3IgnoreExts[] = {
 //  VFS_ShouldIgnoreExt
 //
 //==========================================================================
-bool VFS_ShouldIgnoreExt (const VStr &fname) {
+bool VFS_ShouldIgnoreExt (VStr fname) {
   if (fname.length() == 0) return false;
   for (const char **s = PK3IgnoreExts; *s; ++s) if (fname.endsWithNoCase(*s)) return true;
   //if (fname.length() > 12 && fname.endsWithNoCase(".txt")) return true;
@@ -630,7 +630,7 @@ int VFileDirectory::nextLump (vint32 curridx, vint32 ns, bool allowEmptyName8) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-VPakFileBase::VPakFileBase (const VStr &apakfilename, bool aaszip)
+VPakFileBase::VPakFileBase (VStr apakfilename, bool aaszip)
   : VSearchPath()
   , PakFileName(apakfilename)
   , pakdir(this, aaszip)
@@ -662,7 +662,7 @@ void VPakFileBase::RenameSprites (const TArray<VSpriteRename> &A, const TArray<V
 //  VPakFileBase::FileExists
 //
 //==========================================================================
-bool VPakFileBase::FileExists (const VStr &fname) {
+bool VPakFileBase::FileExists (VStr fname) {
   return pakdir.fileExists(fname);
 }
 
@@ -694,7 +694,7 @@ int VPakFileBase::CheckNumForName (VName lumpName, EWadNamespace NS, bool wantFi
 //  VPakFileBase::CheckNumForFileName
 //
 //==========================================================================
-int VPakFileBase::CheckNumForFileName (const VStr &fileName) {
+int VPakFileBase::CheckNumForFileName (VStr fileName) {
   return pakdir.findFile(fileName);
 }
 
@@ -704,7 +704,7 @@ int VPakFileBase::CheckNumForFileName (const VStr &fileName) {
 //  VPakFileBase::FindACSObject
 //
 //==========================================================================
-int VPakFileBase::FindACSObject (const VStr &fname) {
+int VPakFileBase::FindACSObject (VStr fname) {
   VStr afn = fname.ExtractFileBaseName();
   if (afn.ExtractFileExtension().strEquCI(".o")) afn = afn.StripExtension();
   if (afn.length() == 0) return -1;

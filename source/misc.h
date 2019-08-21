@@ -41,8 +41,8 @@ public:
   // simple text printing
   void Log (const char *S);
   void Log (EName Type, const char *S);
-  void Log (const VStr &S);
-  void Log (EName Type, const VStr &S);
+  void Log (VStr S);
+  void Log (EName Type, VStr S);
   void Logf (const char *Fmt, ...) __attribute__((format(printf, 2, 3)));
   void Logf (EName Type, const char *Fmt, ...) __attribute__((format(printf, 3, 4)));
 };

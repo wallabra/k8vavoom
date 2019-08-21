@@ -48,16 +48,16 @@ public:
   ~VXmlNode ();
 
   VXmlNode *FindChild (const char *AName) const;
-  VXmlNode *FindChild (const VStr &AName) const;
+  VXmlNode *FindChild (VStr AName) const;
   VXmlNode *GetChild (const char *AName) const;
-  VXmlNode *GetChild (const VStr &AName) const;
+  VXmlNode *GetChild (VStr AName) const;
   VXmlNode *FindNext (const char *AName) const;
-  VXmlNode *FindNext (const VStr &AName) const;
+  VXmlNode *FindNext (VStr AName) const;
   VXmlNode *FindNext () const; // with the same name as the current one
   bool HasAttribute (const char *AttrName) const;
-  bool HasAttribute (const VStr &AttrName) const;
-  const VStr &GetAttribute (const char *AttrName, bool Required=true) const;
-  const VStr &GetAttribute (const VStr &AttrName, bool Required=true) const;
+  bool HasAttribute (VStr AttrName) const;
+  VStr GetAttribute (const char *AttrName, bool Required=true) const;
+  VStr GetAttribute (VStr AttrName, bool Required=true) const;
 };
 
 
@@ -76,7 +76,7 @@ public:
   VXmlNode Root;
 
 public:
-  void Parse (VStream &Strm, const VStr &AName);
+  void Parse (VStream &Strm, VStr AName);
 
 private:
   vuint32 GetChar (); // with correct encoding
@@ -88,5 +88,5 @@ private:
   VStr ParseAttrValue (char);
   bool ParseAttribute (VStr &, VStr &);
   void ParseNode (VXmlNode *);
-  VStr HandleReferences (const VStr &);
+  VStr HandleReferences (VStr);
 };

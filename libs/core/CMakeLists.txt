@@ -19,7 +19,6 @@ add_library(core STATIC
   exception.h
   exception.cpp
   hashfunc.h
-  hashset.h
   jh32.h
   jh32.cpp
   rg32.h

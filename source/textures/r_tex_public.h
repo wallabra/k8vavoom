@@ -149,7 +149,7 @@ public:
   void MapToRange (int, int, int, int);
   void MapToColors (int, int, int, int, int, int, int, int);
   void BuildBloodTrans (int);
-  void AddTransString (const VStr &);
+  void AddTransString (VStr);
 
   inline const vuint8 *GetTable () const { return Table; }
   inline const rgba_t *GetPalette () const { return Palette; }
@@ -453,7 +453,7 @@ public:
   };
 
   inline Iter firstWithName (VName n, bool allowShrink=true) { return Iter(this, n, allowShrink); }
-  Iter firstWithStr (const VStr &s);
+  Iter firstWithStr (VStr s);
 
 public:
   VTextureManager ();
@@ -546,8 +546,8 @@ public:
   inline int GetNumMapTextures () const { return MapTextures.length(); }
 
   // to use in `ExportTexture` command
-  void FillNameAutocompletion (const VStr &prefix, TArray<VStr> &list);
-  VTexture *GetExistingTextureByName (const VStr &txname, int type=TEXTYPE_Any);
+  void FillNameAutocompletion (VStr prefix, TArray<VStr> &list);
+  VTexture *GetExistingTextureByName (VStr txname, int type=TEXTYPE_Any);
 
 private:
   void LoadPNames (int Lump, TArray<WallPatchInfo> &patchtexlookup, TArray<VName> &numberedNames);

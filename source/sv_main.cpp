@@ -146,7 +146,7 @@ static bool cliMapStartFound = false;
 
 struct VCVFSSaver {
   void *userdata;
-  VStream *(*dgOpenFile) (const VStr &filename, void *userdata);
+  VStream *(*dgOpenFile) (VStr filename, void *userdata);
 
   VCVFSSaver () : userdata(VMemberBase::userdata), dgOpenFile(VMemberBase::dgOpenFile) {}
 
@@ -159,7 +159,7 @@ struct VCVFSSaver {
 
 static int vcmodCurrFileLump = -1;
 
-static VStream *vcmodOpenFile (const VStr &filename, void *userdata) {
+static VStream *vcmodOpenFile (VStr filename, void *userdata) {
   /*
   for (int flump = W_IterateFile(-1, filename); flump >= 0; flump = W_IterateFile(flump, filename)) {
     if (vcmodCurrFile >= 0 && (vcmodCurrFile != W_LumpFile(flump))) continue;

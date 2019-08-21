@@ -135,7 +135,7 @@ inline VObject *PR_PopRef () {
 }
 
 
-inline void PR_PushStr (const VStr &value) {
+inline void PR_PushStr (VStr value) {
   pr_stackPtr->p = nullptr;
   *(VStr*)&pr_stackPtr->p = value;
   pr_stackPtr++;

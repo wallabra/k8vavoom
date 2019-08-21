@@ -60,7 +60,7 @@ static inline int getSPCount () { return (AuxiliaryIndex && !fsys_EnableAuxSearc
 //  filename for the lump name.
 //
 //==========================================================================
-void W_AddFile (const VStr &FileName, bool FixVoices) {
+void W_AddFile (VStr FileName, bool FixVoices) {
   int wadtime;
 
   wadtime = Sys_FileTime(FileName);
@@ -86,7 +86,7 @@ void W_AddFile (const VStr &FileName, bool FixVoices) {
 //  W_AddFileFromZip
 //
 //==========================================================================
-void W_AddFileFromZip (const VStr &WadName, VStream *WadStrm) {
+void W_AddFileFromZip (VStr WadName, VStream *WadStrm) {
   // add WAD file
   MyThreadLocker glocker(&fsys_glock);
   wadfiles.Append(WadName);
@@ -143,7 +143,7 @@ int W_StartAuxiliary () {
 //  W_OpenAuxiliary
 //
 //==========================================================================
-int W_OpenAuxiliary (const VStr &FileName) {
+int W_OpenAuxiliary (VStr FileName) {
   MyThreadLocker glocker(&fsys_glock);
   W_CloseAuxiliary_NoLock();
   AuxiliaryIndex = SearchPaths.length();
@@ -171,7 +171,7 @@ int W_OpenAuxiliary (const VStr &FileName) {
 //  zipAddWads
 //
 //==========================================================================
-static void zipAddWads (VZipFile *zip, const VStr &zipName) {
+static void zipAddWads (VZipFile *zip, VStr zipName) {
   if (!zip) return;
   TArray<VStr> list;
   // scan for wads
@@ -334,7 +334,7 @@ int W_CheckFirstNumForNameInFile (VName Name, int File, EWadNamespace NS) {
 //  Returns -1 if name not found.
 //
 //==========================================================================
-int W_CheckNumForFileName (const VStr &Name) {
+int W_CheckNumForFileName (VStr Name) {
   MyThreadLocker glocker(&fsys_glock);
   for (int wi = getSPCount()-1; wi >= 0; --wi) {
     int i = SearchPaths[wi]->CheckNumForFileName(Name);
@@ -352,7 +352,7 @@ int W_CheckNumForFileName (const VStr &Name) {
 //  Returns -1 if name not found.
 //
 //==========================================================================
-int W_CheckNumForFileNameInSameFile (int filelump, const VStr &Name) {
+int W_CheckNumForFileNameInSameFile (int filelump, VStr Name) {
   if (filelump < 0) return W_CheckNumForFileName(Name);
   int fidx = FILE_INDEX(filelump);
   MyThreadLocker glocker(&fsys_glock);
@@ -372,7 +372,7 @@ int W_CheckNumForFileNameInSameFile (int filelump, const VStr &Name) {
 //  Returns -1 if name not found.
 //
 //==========================================================================
-int W_CheckNumForFileNameInSameFileOrLower (int filelump, const VStr &Name) {
+int W_CheckNumForFileNameInSameFileOrLower (int filelump, VStr Name) {
   if (filelump < 0) return W_CheckNumForFileName(Name);
   int fidx = FILE_INDEX(filelump);
   MyThreadLocker glocker(&fsys_glock);
@@ -431,7 +431,7 @@ static int tryWithExtension (VStr name, const char *ext) {
 //  Returns -1 if name not found.
 //
 //==========================================================================
-int W_CheckNumForTextureFileName (const VStr &Name) {
+int W_CheckNumForTextureFileName (VStr Name) {
   MyThreadLocker glocker(&fsys_glock);
   VStr loname = (Name.isLowerCase() ? Name : Name.toLowerCase());
   auto ip = fullNameTexLumpChecked.find(loname);
@@ -463,7 +463,7 @@ int W_CheckNumForTextureFileName (const VStr &Name) {
 //  Calls W_CheckNumForFileName, but bombs out if not found.
 //
 //==========================================================================
-int W_GetNumForFileName (const VStr &Name) {
+int W_GetNumForFileName (VStr Name) {
   int i = W_CheckNumForFileName(Name);
   if (i == -1) Sys_Error("W_GetNumForFileName: %s not found!", *Name);
   return i;
@@ -643,7 +643,7 @@ int W_IterateNS (int Prev, EWadNamespace NS) {
 //  W_IterateFile
 //
 //==========================================================================
-int W_IterateFile (int Prev, const VStr &Name) {
+int W_IterateFile (int Prev, VStr Name) {
   MyThreadLocker glocker(&fsys_glock);
   if (Name.isEmpty()) return -1;
   //GLog.Logf(NAME_Dev, "W_IterateFile: Prev=%d (%d); fn=<%s>", Prev, getSPCount(), *Name);
@@ -661,7 +661,7 @@ int W_IterateFile (int Prev, const VStr &Name) {
 //  W_FindLumpByFileNameWithExts
 //
 //==========================================================================
-int W_FindLumpByFileNameWithExts (const VStr &BaseName, const char **Exts) {
+int W_FindLumpByFileNameWithExts (VStr BaseName, const char **Exts) {
   int Found = -1;
   for (const char **Ext = Exts; *Ext; ++Ext) {
     VStr Check = BaseName+"."+(*Ext);

@@ -37,13 +37,13 @@ void FL_Shutdown ();
 VStr FL_GetConfigDir ();
 
 // set `isFullName` to `true` to prevent adding anything to file name
-VStream *FL_OpenFileWrite (const VStr &Name, bool isFullName=false);
+VStream *FL_OpenFileWrite (VStr Name, bool isFullName=false);
 
-VStream *FL_OpenFileReadInCfgDir (const VStr &Name);
-VStream *FL_OpenFileWriteInCfgDir (const VStr &Name);
+VStream *FL_OpenFileReadInCfgDir (VStr Name);
+VStream *FL_OpenFileWriteInCfgDir (VStr Name);
 
-VStream *FL_OpenSysFileRead (const VStr &Name);
-VStream *FL_OpenSysFileWrite (const VStr &Name);
+VStream *FL_OpenSysFileRead (VStr Name);
+VStream *FL_OpenSysFileWrite (VStr Name);
 
 
 VStr FL_GetConfigDir ();
@@ -61,7 +61,7 @@ const TArray<VStr> &FL_GetWadPk3List ();
 int FL_GetPreInitCount ();
 const ArgVarValue &FL_GetPreInitAt (int idx);
 void FL_ClearPreInits ();
-bool FL_HasPreInit (const VStr &varname);
+bool FL_HasPreInit (VStr varname);
 
 void FL_CollectPreinits ();
 void FL_ProcessPreInits ();

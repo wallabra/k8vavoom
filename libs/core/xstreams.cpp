@@ -47,7 +47,7 @@ VMemoryStreamRO::VMemoryStreamRO ()
 //  VMemoryStreamRO::VMemoryStreamRO
 //
 //==========================================================================
-VMemoryStreamRO::VMemoryStreamRO (const VStr &strmName, const void *adata, int adataSize, bool takeOwnership)
+VMemoryStreamRO::VMemoryStreamRO (VStr strmName, const void *adata, int adataSize, bool takeOwnership)
   : Data((const vuint8 *)adata)
   , Pos(0)
   , DataSize(adataSize)
@@ -65,7 +65,7 @@ VMemoryStreamRO::VMemoryStreamRO (const VStr &strmName, const void *adata, int a
 //  VMemoryStreamRO::VMemoryStreamRO
 //
 //==========================================================================
-VMemoryStreamRO::VMemoryStreamRO (const VStr &strmName, VStream *strm)
+VMemoryStreamRO::VMemoryStreamRO (VStr strmName, VStream *strm)
   : Data(nullptr)
   , Pos(0)
   , DataSize(0)
@@ -108,7 +108,7 @@ void VMemoryStreamRO::Clear () {
 //  VMemoryStreamRO::Setup
 //
 //==========================================================================
-void VMemoryStreamRO::Setup (const VStr &strmName, const void *adata, int adataSize, bool takeOwnership) {
+void VMemoryStreamRO::Setup (VStr strmName, const void *adata, int adataSize, bool takeOwnership) {
   check(!Data);
   check(Pos == 0);
   check(DataSize == 0);
@@ -130,7 +130,7 @@ void VMemoryStreamRO::Setup (const VStr &strmName, const void *adata, int adataS
 //  from current position to stream end
 //
 //==========================================================================
-void VMemoryStreamRO::Setup (const VStr &strmName, VStream *strm) {
+void VMemoryStreamRO::Setup (VStr strmName, VStream *strm) {
   check(!Data);
   check(Pos == 0);
   check(DataSize == 0);
@@ -229,8 +229,8 @@ int VMemoryStreamRO::TotalSize () {
 //  VMemoryStreamRO::GetName
 //
 //==========================================================================
-const VStr &VMemoryStreamRO::GetName () const {
-  return StreamName;
+VStr VMemoryStreamRO::GetName () const {
+  return StreamName.cloneUnique();
 }
 
 
@@ -253,7 +253,7 @@ VMemoryStream::VMemoryStream ()
 //  VMemoryStream::VMemoryStream
 //
 //==========================================================================
-VMemoryStream::VMemoryStream (const VStr &strmName)
+VMemoryStream::VMemoryStream (VStr strmName)
   : Pos(0)
   , StreamName(strmName)
 {
@@ -266,7 +266,7 @@ VMemoryStream::VMemoryStream (const VStr &strmName)
 //  VMemoryStream::VMemoryStream
 //
 //==========================================================================
-VMemoryStream::VMemoryStream (const VStr &strmName, const void *InData, int InLen, bool takeOwnership)
+VMemoryStream::VMemoryStream (VStr strmName, const void *InData, int InLen, bool takeOwnership)
   : Pos(0)
   , StreamName(strmName)
 {
@@ -287,7 +287,7 @@ VMemoryStream::VMemoryStream (const VStr &strmName, const void *InData, int InLe
 //  VMemoryStream::VMemoryStream
 //
 //==========================================================================
-VMemoryStream::VMemoryStream (const VStr &strmName, const TArray<vuint8> &InArray)
+VMemoryStream::VMemoryStream (VStr strmName, const TArray<vuint8> &InArray)
   : Pos(0)
   , StreamName(strmName)
 {
@@ -301,7 +301,7 @@ VMemoryStream::VMemoryStream (const VStr &strmName, const TArray<vuint8> &InArra
 //  VMemoryStream::VMemoryStream
 //
 //==========================================================================
-VMemoryStream::VMemoryStream (const VStr &strmName, VStream *strm)
+VMemoryStream::VMemoryStream (VStr strmName, VStream *strm)
   : Pos(0)
   , StreamName(strmName)
 {
@@ -406,8 +406,8 @@ int VMemoryStream::TotalSize () {
 //  VMemoryStream::GetName
 //
 //==========================================================================
-const VStr &VMemoryStream::GetName () const {
-  return StreamName;
+VStr VMemoryStream::GetName () const {
+  return StreamName.cloneUnique();
 }
 
 
@@ -417,7 +417,7 @@ const VStr &VMemoryStream::GetName () const {
 //  VArrayStream::VArrayStream
 //
 //==========================================================================
-VArrayStream::VArrayStream (const VStr &strmName, TArray<vuint8>& InArray)
+VArrayStream::VArrayStream (VStr strmName, TArray<vuint8>& InArray)
   : Array(InArray)
   , Pos(0)
   , StreamName(strmName)
@@ -510,8 +510,8 @@ int VArrayStream::TotalSize () {
 //  VArrayStream::GetName
 //
 //==========================================================================
-const VStr &VArrayStream::GetName () const {
-  return StreamName;
+VStr VArrayStream::GetName () const {
+  return StreamName.cloneUnique();
 }
 
 
@@ -523,7 +523,7 @@ const VStr &VArrayStream::GetName () const {
 //  initialise empty writing stream
 //
 //==========================================================================
-VPagedMemoryStream::VPagedMemoryStream (const VStr &strmName)
+VPagedMemoryStream::VPagedMemoryStream (VStr strmName)
   : first(nullptr)
   , curr(nullptr)
   , pos(0)
@@ -566,8 +566,8 @@ bool VPagedMemoryStream::Close () {
 //  VPagedMemoryStream::GetName
 //
 //==========================================================================
-const VStr &VPagedMemoryStream::GetName () const {
-  return StreamName;
+VStr VPagedMemoryStream::GetName () const {
+  return StreamName.cloneUnique();
 }
 
 
@@ -1056,7 +1056,7 @@ bool VBitStreamReader::AtEnd () {
 //  VStdFileStreamBase::VStdFileStreamBase
 //
 //==========================================================================
-VStdFileStreamBase::VStdFileStreamBase (FILE* afl, const VStr &aname, bool asWriter)
+VStdFileStreamBase::VStdFileStreamBase (FILE* afl, VStr aname, bool asWriter)
   : mFl(afl)
   , mName(aname)
   , size(-1)
@@ -1116,8 +1116,8 @@ void VStdFileStreamBase::setError () {
 //  VStdFileStreamBase::GetName
 //
 //==========================================================================
-const VStr &VStdFileStreamBase::GetName () const {
-  return mName;
+VStr VStdFileStreamBase::GetName () const {
+  return mName.cloneUnique();
 }
 
 
@@ -1244,7 +1244,7 @@ VPartialStreamRO::VPartialStreamRO (VStream *ASrcStream, int astpos, int apartle
 //  VPartialStreamRO::VPartialStreamRO
 //
 //==========================================================================
-VPartialStreamRO::VPartialStreamRO (const VStr &aname, VStream *ASrcStream, int astpos, int apartlen, mythread_mutex *alockptr)
+VPartialStreamRO::VPartialStreamRO (VStr aname, VStream *ASrcStream, int astpos, int apartlen, mythread_mutex *alockptr)
   : lockptr(alockptr)
   , srcStream(ASrcStream)
   , stpos(astpos)
@@ -1307,15 +1307,15 @@ bool VPartialStreamRO::Close () {
 //  VPartialStreamRO::GetName
 //
 //==========================================================================
-const VStr &VPartialStreamRO::GetName () const {
+VStr VPartialStreamRO::GetName () const {
   if (!closed) {
-    if (!myname.isEmpty()) return myname;
+    if (!myname.isEmpty()) return myname.cloneUnique();
     if (srcStream) {
       MyThreadLocker locker(lockptr);
       return srcStream->GetName();
     }
   }
-  return VStr::EmptyString;
+  return VStr();
 }
 
 

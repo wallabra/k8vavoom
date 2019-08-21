@@ -458,7 +458,7 @@ VFont::VFont () {
 //  VFont::VFont
 //
 //==========================================================================
-VFont::VFont (VName AName, const VStr &FormatStr, int First, int Count, int StartIndex) {
+VFont::VFont (VName AName, VStr FormatStr, int First, int Count, int StartIndex) {
   for (int i = 0; i < 128; ++i) AsciiChars[i] = -1;
   FirstChar = -1;
   LastChar = -1;
@@ -755,7 +755,7 @@ int VFont::FindTextColor (VName Name) {
 //  VFont::StringWidth
 //
 //==========================================================================
-int VFont::StringWidth (const VStr &String) const {
+int VFont::StringWidth (VStr String) const {
   int w = 0;
   for (const char *SPtr = *String; *SPtr; ) {
     int c = VStr::Utf8GetChar(SPtr);
@@ -775,7 +775,7 @@ int VFont::StringWidth (const VStr &String) const {
 //  VFont::TextWidth
 //
 //==========================================================================
-int VFont::TextWidth (const VStr &String) const {
+int VFont::TextWidth (VStr String) const {
   const int len = String.length();
   if (len == 0) return 0;
   int res = 0, pos = 0, start = 0;
@@ -798,7 +798,7 @@ int VFont::TextWidth (const VStr &String) const {
 //  VFont::TextHeight
 //
 //==========================================================================
-int VFont::TextHeight (const VStr &String) const {
+int VFont::TextHeight (VStr String) const {
   int h = FontHeight;
   const int len = String.length();
   if (len > 0) {
@@ -814,7 +814,7 @@ int VFont::TextHeight (const VStr &String) const {
 //  VFont::SplitText
 //
 //==========================================================================
-int VFont::SplitText (const VStr &Text, TArray<VSplitLine> &Lines, int MaxWidth, bool trimRight) const {
+int VFont::SplitText (VStr Text, TArray<VSplitLine> &Lines, int MaxWidth, bool trimRight) const {
   Lines.Clear();
   const char *Start = *Text;
   bool WordStart = true;
@@ -887,7 +887,7 @@ int VFont::SplitText (const VStr &Text, TArray<VSplitLine> &Lines, int MaxWidth,
 //  VFont::SplitTextWithNewlines
 //
 //==========================================================================
-VStr VFont::SplitTextWithNewlines (const VStr &Text, int MaxWidth, bool trimRight) const {
+VStr VFont::SplitTextWithNewlines (VStr Text, int MaxWidth, bool trimRight) const {
   TArray<VSplitLine> Lines;
   SplitText(Text, Lines, MaxWidth, trimRight);
   VStr Ret;

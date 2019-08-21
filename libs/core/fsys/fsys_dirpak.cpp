@@ -44,7 +44,7 @@ extern "C" {
 //  VDirPakFile::VDirPakFile
 //
 //==========================================================================
-VDirPakFile::VDirPakFile (const VStr &aPath)
+VDirPakFile::VDirPakFile (VStr aPath)
   : VPakFileBase(aPath.fixSlashes())
 {
   while (PakFileName.endsWith("/")) PakFileName.chopRight(1);
@@ -134,7 +134,7 @@ void VDirPakFile::ScanDirectory (VStr relpath, int depth) {
 //  VDirPakFile::OpenFileRead
 //
 //==========================================================================
-VStream *VDirPakFile::OpenFileRead (const VStr &fname) {
+VStream *VDirPakFile::OpenFileRead (VStr fname) {
   int lump = CheckNumForFileName(fname);
   if (lump < 0) return nullptr;
   VStr tmpname = PakFileName+"/"+pakdir.files[lump].diskName;

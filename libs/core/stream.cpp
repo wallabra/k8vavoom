@@ -188,8 +188,8 @@ VStream::~VStream () {
 //  VStream::GetName
 //
 //==========================================================================
-const VStr &VStream::GetName () const {
-  return VStr::EmptyString;
+VStr VStream::GetName () const {
+  return VStr();
 }
 
 

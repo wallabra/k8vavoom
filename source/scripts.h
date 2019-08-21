@@ -65,8 +65,8 @@ private:
 
 public:
   // deletes `Strm`
-  VScriptParser (const VStr &name, VStream *Strm);
-  VScriptParser (const VStr &name, const char *atext);
+  VScriptParser (VStr name, VStream *Strm);
+  VScriptParser (VStr name, const char *atext);
 
   ~VScriptParser ();
 
@@ -123,7 +123,7 @@ public:
 
   TLocation GetLoc ();
 
-  inline const VStr &GetScriptName () const { return ScriptName; }
+  inline VStr GetScriptName () const { return ScriptName.cloneUnique(); }
   inline bool IsCMode () const { return CMode; }
   inline bool IsEscape () const { return Escape; }
 

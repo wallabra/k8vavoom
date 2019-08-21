@@ -60,7 +60,7 @@ protected:
   static bool execLogInit;
 
 private:
-  static void TokeniseString (const VStr &);
+  static void TokeniseString (VStr);
 
   static void rebuildCommandCache ();
 
@@ -76,7 +76,7 @@ protected:
 
 public:
   static bool ParsingKeyConf;
-  static void (*onShowCompletionMatch) (bool isheader, const VStr &s);
+  static void (*onShowCompletionMatch) (bool isheader, VStr s);
 
   // will be added before real CLI console commands
   static VStr cliPreCmds;
@@ -100,7 +100,7 @@ public:
   static void ProcessKeyConf ();
 
   static void AddToAutoComplete (const char *);
-  static VStr GetAutoComplete (const VStr &prefix);
+  static VStr GetAutoComplete (VStr prefix);
 
   // returns empty string if no matches found, or list is empty
   // if there is one exact match, return it with trailing space
@@ -108,9 +108,9 @@ public:
   // if longest prefix is the same as input prefix, show all matches
   // case-insensitive
   // if `unchangedAsEmpty` is `true`, return empty string if result is equal to input prefix
-  static VStr AutoCompleteFromList (const VStr &prefix, const TArray <VStr> &list, bool unchangedAsEmpty=false, bool doSortHint=true);
+  static VStr AutoCompleteFromList (VStr prefix, const TArray <VStr> &list, bool unchangedAsEmpty=false, bool doSortHint=true);
 
-  static void ExecuteString (const VStr &, ECmdSource, VBasePlayer *);
+  static void ExecuteString (VStr, ECmdSource, VBasePlayer *);
   static void ForwardToServer ();
   static int CheckParm (const char *);
 
@@ -174,9 +174,9 @@ private:
 public:
   VCmdBuf () : Wait(false) {}
   void Insert (const char *);
-  void Insert (const VStr &);
+  void Insert (VStr);
   void Print (const char *);
-  void Print (const VStr &);
+  void Print (VStr);
   void Exec ();
 
   inline VCmdBuf &operator << (const char *data) {
@@ -184,7 +184,7 @@ public:
     return *this;
   }
 
-  inline VCmdBuf &operator << (const VStr &data) {
+  inline VCmdBuf &operator << (VStr data) {
     Print(data);
     return *this;
   }

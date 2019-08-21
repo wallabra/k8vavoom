@@ -72,16 +72,16 @@ protected:
 
 public:
   VFont ();
-  VFont (VName, const VStr&, int, int, int);
+  VFont (VName, VStr, int, int, int);
   ~VFont ();
 
   VTexture *GetChar (int, int*, int) const;
   int GetCharWidth (int) const;
-  int StringWidth (const VStr&) const;
-  int TextWidth (const VStr&) const;
-  int TextHeight (const VStr&) const;
-  int SplitText (const VStr&, TArray<VSplitLine>&, int, bool trimRight=true) const;
-  VStr SplitTextWithNewlines (const VStr &Text, int MaxWidth, bool trimRight=true) const;
+  int StringWidth (VStr) const;
+  int TextWidth (VStr) const;
+  int TextHeight (VStr) const;
+  int SplitText (VStr, TArray<VSplitLine>&, int, bool trimRight=true) const;
+  VStr SplitTextWithNewlines (VStr Text, int MaxWidth, bool trimRight=true) const;
 
   inline int GetSpaceWidth () const { return SpaceWidth; }
   inline int GetHeight () const { return FontHeight; }

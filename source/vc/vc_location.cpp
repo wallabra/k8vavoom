@@ -38,7 +38,7 @@ TMapDtor<VStr, vint32> TLocation::SourceFilesMap;
 //  TLocation::AddSourceFile
 //
 //==========================================================================
-int TLocation::AddSourceFile (const VStr &SName) {
+int TLocation::AddSourceFile (VStr SName) {
   if (SourceFiles.length() == 0) {
     // add dummy source file
     SourceFiles.Append("<err>");

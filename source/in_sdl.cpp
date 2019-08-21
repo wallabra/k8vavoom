@@ -48,7 +48,7 @@ public:
   virtual void ReadInput () override;
   virtual void RegrabMouse () override; // called by UI when mouse cursor is turned off
 
-  virtual void SetClipboardText (const VStr &text) override;
+  virtual void SetClipboardText (VStr text) override;
   virtual bool HasClipboardText () override;
   virtual VStr GetClipboardText () override;
 
@@ -302,7 +302,7 @@ void VSdlInputDevice::RegrabMouse () {
 //  VSdlInputDevice::SetClipboardText
 //
 //==========================================================================
-void VSdlInputDevice::SetClipboardText (const VStr &text) {
+void VSdlInputDevice::SetClipboardText (VStr text) {
   if (text.length() && !text.IsValidUtf8()) {
     VStr s2 = text.Latin1ToUtf8();
     SDL_SetClipboardText(s2.getCStr());

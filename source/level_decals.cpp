@@ -627,7 +627,7 @@ void VLevel::AddDecal (TVec org, VName dectype, int side, line_t *li, int level,
 
   org = li->landAlongNormal(org);
 
-  static TStrSet baddecals;
+  static TMapNC<VName, bool> baddecals;
 
 #ifdef VAVOOM_DECALS_DEBUG_REPLACE_PICTURE
   dectype = VName("k8TestDecal");
@@ -637,7 +637,7 @@ void VLevel::AddDecal (TVec org, VName dectype, int side, line_t *li, int level,
     //GCon->Logf("DECAL '%s'; name is '%s', texid is %d; org=(%g,%g,%g)", *dectype, *dec->name, dec->texid, org.x, org.y, org.z);
     AddOneDecal(level, org, dec, side, li, translation);
   } else {
-    if (!baddecals.put(*dectype)) GCon->Logf(NAME_Warning, "NO DECAL: '%s'", *dectype);
+    if (!baddecals.put(dectype, true)) GCon->Logf(NAME_Warning, "NO DECAL: '%s'", *dectype);
   }
 }
 

@@ -74,7 +74,7 @@ VXmlNode *VXmlNode::FindChild (const char *AName) const {
 //  VXmlNode::FindChild
 //
 //==========================================================================
-VXmlNode *VXmlNode::FindChild (const VStr &AName) const {
+VXmlNode *VXmlNode::FindChild (VStr AName) const {
   for (VXmlNode *N = FirstChild; N; N = N->NextSibling) {
     if (N->Name == AName) return N;
   }
@@ -99,7 +99,7 @@ VXmlNode *VXmlNode::GetChild (const char *AName) const {
 //  VXmlNode::GetChild
 //
 //==========================================================================
-VXmlNode *VXmlNode::GetChild (const VStr &AName) const {
+VXmlNode *VXmlNode::GetChild (VStr AName) const {
   VXmlNode *N = FindChild(AName);
   if (!N) Sys_Error("XML node '%s' not found", *AName);
   return N;
@@ -124,7 +124,7 @@ VXmlNode *VXmlNode::FindNext (const char *AName) const {
 //  VXmlNode::FindNext
 //
 //==========================================================================
-VXmlNode *VXmlNode::FindNext (const VStr &AName) const {
+VXmlNode *VXmlNode::FindNext (VStr AName) const {
   for (VXmlNode *N = NextSibling; N; N = N->NextSibling) {
     if (N->Name == AName) return N;
   }
@@ -162,7 +162,7 @@ bool VXmlNode::HasAttribute(const char *AttrName) const {
 //  VXmlNode::FindChild
 //
 //==========================================================================
-bool VXmlNode::HasAttribute (const VStr &AttrName) const {
+bool VXmlNode::HasAttribute (VStr AttrName) const {
   for (int i = 0; i < Attributes.length(); ++i) {
     if (Attributes[i].Name == AttrName) return true;
   }
@@ -175,7 +175,7 @@ bool VXmlNode::HasAttribute (const VStr &AttrName) const {
 //  VXmlNode::GetAttribute
 //
 //==========================================================================
-const VStr &VXmlNode::GetAttribute (const char *AttrName, bool Required) const {
+VStr VXmlNode::GetAttribute (const char *AttrName, bool Required) const {
   for (int i = 0; i < Attributes.length(); ++i) {
     if (Attributes[i].Name == AttrName) return Attributes[i].Value;
   }
@@ -195,7 +195,7 @@ const VStr &VXmlNode::GetAttribute (const char *AttrName, bool Required) const {
 //  VXmlNode::GetAttribute
 //
 //==========================================================================
-const VStr &VXmlNode::GetAttribute (const VStr &AttrName, bool Required) const {
+VStr VXmlNode::GetAttribute (VStr AttrName, bool Required) const {
   for (int i = 0; i < Attributes.length(); ++i) {
     if (Attributes[i].Name == AttrName) return Attributes[i].Value;
   }
@@ -215,7 +215,7 @@ const VStr &VXmlNode::GetAttribute (const VStr &AttrName, bool Required) const {
 //  VXmlDocument::Parse
 //
 //==========================================================================
-void VXmlDocument::Parse (VStream &Strm, const VStr &AName) {
+void VXmlDocument::Parse (VStream &Strm, VStr AName) {
   Name = AName;
   Encoding = UTF8;
 
@@ -501,7 +501,7 @@ void VXmlDocument::ParseNode (VXmlNode *Node) {
 //  VXmlDocument::HandleReferences
 //
 //==========================================================================
-VStr VXmlDocument::HandleReferences (const VStr &AStr) {
+VStr VXmlDocument::HandleReferences (VStr AStr) {
   VStr Ret = AStr;
   for (int i = 0; i < Ret.length(); ++i) {
     if (Ret[i] == '&') {

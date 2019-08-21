@@ -82,7 +82,7 @@ public:
     return buf;
   }
 
-  void putStrInternal (const VStr &s, bool doQuote=false) {
+  void putStrInternal (VStr s, bool doQuote=false) {
     if (s.isEmpty()) return;
     int qlen = 0;
     if (doQuote) {
@@ -135,7 +135,7 @@ public:
     }
   }
 
-  void putStr (const VStr &s, int width, bool toRight, bool zeroFill, bool doQuote=false) {
+  void putStr (VStr s, int width, bool toRight, bool zeroFill, bool doQuote=false) {
     //if (doQuote) putChar('"');
     if (width > s.length() && toRight) {
       while (width-- > s.length()) putChar(' ');

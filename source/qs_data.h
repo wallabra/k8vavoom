@@ -69,7 +69,7 @@ struct QSValue {
     , objidx(0)
   {}
 
-  QSValue (VEntity *aent, const VStr &aname, QSType atype)
+  QSValue (VEntity *aent, VStr aname, QSType atype)
     : type(atype)
     , ent(aent)
     , name(aname)
@@ -80,10 +80,10 @@ struct QSValue {
     , objidx(0)
   {}
 
-  static inline QSValue CreateInt (VEntity *ent, const VStr &name, vint32 value) { QSValue aval(ent, name, QSType::QST_Int); aval.ival = value; return aval; }
-  static inline QSValue CreateName (VEntity *ent, const VStr &name, VName value) { QSValue aval(ent, name, QSType::QST_Name); aval.nval = value; return aval; }
-  static inline QSValue CreateStr (VEntity *ent, const VStr &name, const VStr &value) { QSValue aval(ent, name, QSType::QST_Str); aval.sval = value; return aval; }
-  static inline QSValue CreateFloat (VEntity *ent, const VStr &name, float value) { QSValue aval(ent, name, QSType::QST_Float); aval.fval = value; return aval; }
+  static inline QSValue CreateInt (VEntity *ent, VStr name, vint32 value) { QSValue aval(ent, name, QSType::QST_Int); aval.ival = value; return aval; }
+  static inline QSValue CreateName (VEntity *ent, VStr name, VName value) { QSValue aval(ent, name, QSType::QST_Name); aval.nval = value; return aval; }
+  static inline QSValue CreateStr (VEntity *ent, VStr name, VStr value) { QSValue aval(ent, name, QSType::QST_Str); aval.sval = value; return aval; }
+  static inline QSValue CreateFloat (VEntity *ent, VStr name, float value) { QSValue aval(ent, name, QSType::QST_Float); aval.fval = value; return aval; }
 
   inline bool isEmpty () const { return (type == QSType::QST_Void); }
 
@@ -97,7 +97,7 @@ extern TArray<QSValue> QS_GetCurrentArray ();
 
 extern void QS_StartPhase (QSPhase aphase);
 extern void QS_PutValue (const QSValue &val);
-extern QSValue QS_GetValue (VEntity *ent, const VStr &name);
+extern QSValue QS_GetValue (VEntity *ent, VStr name);
 
 // this is used in loader to build qs data
 extern void QS_EnterValue (const QSValue &val);

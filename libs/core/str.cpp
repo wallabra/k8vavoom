@@ -1020,7 +1020,7 @@ VStr VStr::Replace (const char *Search, const char *Replacement) const {
 }
 
 
-VStr VStr::Replace (const VStr &Search, const VStr &Replacement) const {
+VStr VStr::Replace (VStr Search, VStr Replacement) const {
   if (length() == 0) return VStr(); // nothing to replace in an empty string
 
   size_t SLen = Search.length();
@@ -1533,7 +1533,7 @@ VStr VStr::StripExtension () const {
 }
 
 
-VStr VStr::DefaultPath (const VStr &basepath) const {
+VStr VStr::DefaultPath (VStr basepath) const {
   const char *data = getData();
 #if !defined(_WIN32)
   if (data && data[0] == '/') return *this; // absolute path location
@@ -1547,7 +1547,7 @@ VStr VStr::DefaultPath (const VStr &basepath) const {
 
 
 // if path doesn't have a .EXT, append extension (extension should include the leading dot)
-VStr VStr::DefaultExtension (const VStr &extension) const {
+VStr VStr::DefaultExtension (VStr extension) const {
   const char *data = getData();
   const char *src = data+length();
   while (src != data) {

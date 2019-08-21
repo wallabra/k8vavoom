@@ -1238,7 +1238,7 @@ VStr VObject::NameFromVKey (int vkey) {
 //  VObject::VKeyFromName
 //
 //==========================================================================
-int VObject::VKeyFromName (const VStr &kn) {
+int VObject::VKeyFromName (VStr kn) {
   if (kn.isEmpty()) return 0;
 
   if (kn.length() == 1) {

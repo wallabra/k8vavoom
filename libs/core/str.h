@@ -378,7 +378,7 @@ public:
   inline int lastIndexOf (const VStr &v, int stpos=0) const { return LastIndexOf(v, stpos); }
 
   VStr Replace (const char *, const char *) const;
-  VStr Replace (const VStr &, const VStr &) const;
+  VStr Replace (VStr, VStr) const;
 
   inline VStr replace (const char *s0, const char *s1) const { return Replace(s0, s1); }
   inline VStr replace (const VStr &s0, const VStr &s1) const { return Replace(s0, s1); }
@@ -428,8 +428,8 @@ public:
   VStr ExtractFileBaseName () const;
   VStr ExtractFileExtension () const; // with a dot
   VStr StripExtension () const;
-  VStr DefaultPath (const VStr &basepath) const;
-  VStr DefaultExtension (const VStr &extension) const;
+  VStr DefaultPath (VStr basepath) const;
+  VStr DefaultExtension (VStr extension) const;
   VStr FixFileSlashes () const;
 
   inline VStr extractFilePath () const { return ExtractFilePath(); }
@@ -438,8 +438,8 @@ public:
   inline VStr extractFileBaseName () const { return ExtractFileBaseName(); }
   inline VStr extractFileExtension () const { return ExtractFileExtension(); }
   inline VStr stripExtension () const { return StripExtension(); }
-  inline VStr defaultPath (const VStr &basepath) const { return DefaultPath(basepath); }
-  inline VStr defaultExtension (const VStr &extension) const { return DefaultExtension(extension); }
+  inline VStr defaultPath (VStr basepath) const { return DefaultPath(basepath); }
+  inline VStr defaultExtension (VStr extension) const { return DefaultExtension(extension); }
   inline VStr fixSlashes () const { return FixFileSlashes(); }
 
   // removes all blanks

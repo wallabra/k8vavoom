@@ -511,7 +511,7 @@ void CL_SetUpNetClient (VSocketPublic *Sock) {
 //  CL_PlayDemo
 //
 //==========================================================================
-void CL_PlayDemo (const VStr &DemoName, bool IsTimeDemo) {
+void CL_PlayDemo (VStr DemoName, bool IsTimeDemo) {
   char magic[8];
 
   // open the demo file

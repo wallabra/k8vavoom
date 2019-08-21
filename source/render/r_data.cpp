@@ -978,7 +978,7 @@ static bool CheckChar (const char *&pStr, char Chr) {
 //  VTextureTranslation::AddTransString
 //
 //==========================================================================
-void VTextureTranslation::AddTransString (const VStr &Str) {
+void VTextureTranslation::AddTransString (VStr Str) {
   const char *pStr = *Str;
 
   // parse start and end of the range
@@ -1088,7 +1088,7 @@ int R_GetBloodTranslation (int Col) {
 //  R_FindLightEffect
 //
 //==========================================================================
-VLightEffectDef *R_FindLightEffect (const VStr &Name) {
+VLightEffectDef *R_FindLightEffect (VStr Name) {
   for (int i = 0; i < GLightEffectDefs.Num(); ++i) {
     if (Name.ICmp(*GLightEffectDefs[i].Name) == 0) return &GLightEffectDefs[i];
   }
@@ -1274,7 +1274,7 @@ static void ParseGZLightDef (VScriptParser *sc, int LightType, float lightsizefa
 //  FindParticleEffect
 //
 //==========================================================================
-static VParticleEffectDef *FindParticleEffect (const VStr &Name) {
+static VParticleEffectDef *FindParticleEffect (VStr Name) {
   for (int i = 0; i < GParticleEffectDefs.Num(); ++i) {
     if (Name.ICmp(*GParticleEffectDefs[i].Name) == 0) return &GParticleEffectDefs[i];
   }

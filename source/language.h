@@ -33,7 +33,7 @@ private:
 
   void FreeNonDehackedStrings ();
   void ParseLanguageScript (vint32 Lump, const char *InCode, bool ExactMatch, vint32 PassNum);
-  VStr HandleEscapes (const VStr &Src);
+  VStr HandleEscapes (VStr Src);
 
 public:
   VLanguage ();
@@ -51,8 +51,8 @@ public:
   bool HasTranslation (VName s) const;
   bool HasTranslation (const char *s) const;
 
-  VName GetStringId (const VStr &);
-  void ReplaceString (VName, const VStr &);
+  VName GetStringId (VStr);
+  void ReplaceString (VName, VStr);
 };
 
 

@@ -396,7 +396,7 @@ static void SetClassFieldBool (VClass *Class, const char *FieldName, int Value) 
 //  ParseFlag
 //
 //==========================================================================
-static void ParseFlag (const VStr &FlagName, int *Values, bool *Changed) {
+static void ParseFlag (VStr FlagName, int *Values, bool *Changed) {
   if (FlagName.Length() == 0) return;
   if (FlagName[0] >= '0' && FlagName[0] <= '9') {
     // clear flags that were not used by Doom engine as well as SLIDE flag which desn't exist anymore

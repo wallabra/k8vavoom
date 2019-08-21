@@ -451,7 +451,7 @@ void VTgaTexture::Unload () {
 //  WriteTGA
 //
 //==========================================================================
-void WriteTGA (const VStr &FileName, void *data, int width, int height, int bpp, bool bot2top) {
+void WriteTGA (VStr FileName, void *data, int width, int height, int bpp, bool bot2top) {
   VStream *Strm = FL_OpenFileWrite(FileName, true);
   if (!Strm) { GCon->Log("Couldn't write tga"); return; }
 

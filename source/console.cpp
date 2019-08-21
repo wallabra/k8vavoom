@@ -101,7 +101,7 @@ static FILE *logfout = nullptr;
 //  onShowCompletionMatchCB
 //
 //==========================================================================
-static void onShowCompletionMatchCB (bool isheader, const VStr &s) {
+static void onShowCompletionMatchCB (bool isheader, VStr s) {
   if (isheader) {
     GCon->Logf("\034K%s", *s);
   } else {

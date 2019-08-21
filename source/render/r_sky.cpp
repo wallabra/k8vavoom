@@ -120,7 +120,7 @@ void R_ParseMapDefSkyBoxesScript (VScriptParser *sc) {
 //  R_HasNamedSkybox
 //
 //==========================================================================
-VName R_HasNamedSkybox (const VStr &aname) {
+VName R_HasNamedSkybox (VStr aname) {
   if (aname.length() == 0) return NAME_None;
   for (int f = 0; f < skyboxinfo.length(); ++f) {
     if (aname.ICmp(*skyboxinfo[f].Name) == 0) return skyboxinfo[f].Name;

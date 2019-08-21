@@ -86,14 +86,14 @@ int FL_CheckFilterName (VStr &fname) {
   //GLog.Logf("!!! %d", fsys_game_filters.length());
   int bestIdx = -1;
   for (int f = 0; f < fsys_game_filters.length(); ++f) {
-    const VStr &fs = fsys_game_filters[f];
+    VStr fs = fsys_game_filters[f];
     //GLog.Logf("f=%d; fs=<%s>; fname=<%s>", f, *fs, *fname);
     if (fname.length() > fs.length()+1 && fname[fs.length()] == '/' && fname.startsWith(fs)) {
       bestIdx = f;
     }
   }
   if (bestIdx >= 0) {
-    const VStr &fs = fsys_game_filters[bestIdx];
+    VStr fs = fsys_game_filters[bestIdx];
     fname.chopLeft(fs.length()+1);
     while (fname.length() && fname[0] == '/') fname.chopLeft(1);
   }
@@ -106,7 +106,7 @@ int FL_CheckFilterName (VStr &fname) {
 //  FL_FileExists
 //
 //==========================================================================
-bool FL_FileExists (const VStr &fname) {
+bool FL_FileExists (VStr fname) {
   if (fname.isEmpty()) return false;
   MyThreadLocker glocker(&fsys_glock);
   for (int i = SearchPaths.length()-1; i >= 0; --i) {
@@ -121,7 +121,7 @@ bool FL_FileExists (const VStr &fname) {
 //  FL_OpenFileReadBaseOnly_NoLock
 //
 //==========================================================================
-VStream *FL_OpenFileReadBaseOnly_NoLock (const VStr &Name) {
+VStream *FL_OpenFileReadBaseOnly_NoLock (VStr Name) {
   if (Name.isEmpty()) return nullptr;
   for (int i = SearchPaths.length()-1; i >= 0; --i) {
     if (!SearchPaths[i]->basepak) continue;
@@ -137,7 +137,7 @@ VStream *FL_OpenFileReadBaseOnly_NoLock (const VStr &Name) {
 //  FL_OpenFileRead_NoLock
 //
 //==========================================================================
-VStream *FL_OpenFileRead_NoLock (const VStr &Name) {
+VStream *FL_OpenFileRead_NoLock (VStr Name) {
   if (Name.isEmpty()) return nullptr;
   if (Name.length() >= 2 && Name[0] == '/' && Name[1] == '/') {
     return FL_OpenFileReadBaseOnly_NoLock(Name.mid(2, Name.length()));
@@ -156,7 +156,7 @@ VStream *FL_OpenFileRead_NoLock (const VStr &Name) {
 //  FL_OpenFileReadBaseOnly
 //
 //==========================================================================
-VStream *FL_OpenFileReadBaseOnly (const VStr &Name) {
+VStream *FL_OpenFileReadBaseOnly (VStr Name) {
   if (Name.isEmpty()) return nullptr;
   MyThreadLocker glocker(&fsys_glock);
   return FL_OpenFileReadBaseOnly_NoLock(Name);
@@ -168,7 +168,7 @@ VStream *FL_OpenFileReadBaseOnly (const VStr &Name) {
 //  FL_OpenFileRead
 //
 //==========================================================================
-VStream *FL_OpenFileRead (const VStr &Name) {
+VStream *FL_OpenFileRead (VStr Name) {
   if (Name.isEmpty()) return nullptr;
   MyThreadLocker glocker(&fsys_glock);
   return FL_OpenFileRead_NoLock(Name);
@@ -180,7 +180,7 @@ VStream *FL_OpenFileRead (const VStr &Name) {
 //  FL_CreatePath
 //
 //==========================================================================
-void FL_CreatePath (const VStr &Path) {
+void FL_CreatePath (VStr Path) {
   if (Path.isEmpty() || Path == ".") return;
   TArray<VStr> spp;
   Path.SplitPath(spp);
@@ -201,7 +201,7 @@ void FL_CreatePath (const VStr &Path) {
 //  FL_OpenSysFileRead
 //
 //==========================================================================
-VStream *FL_OpenSysFileRead (const VStr &Name) {
+VStream *FL_OpenSysFileRead (VStr Name) {
   if (Name.isEmpty()) return nullptr;
   FILE *File = fopen(*Name, "rb");
   if (!File) return nullptr;
@@ -214,7 +214,7 @@ VStream *FL_OpenSysFileRead (const VStr &Name) {
 //  FL_OpenSysFileWrite
 //
 //==========================================================================
-VStream *FL_OpenSysFileWrite (const VStr &Name) {
+VStream *FL_OpenSysFileWrite (VStr Name) {
   if (Name.isEmpty()) return nullptr;
   FL_CreatePath(Name.ExtractFilePath());
   FILE *File = fopen(*Name, "wb");
@@ -228,7 +228,7 @@ VStream *FL_OpenSysFileWrite (const VStr &Name) {
 //  FL_IsSafeDiskFileName
 //
 //==========================================================================
-bool FL_IsSafeDiskFileName (const VStr &fname) {
+bool FL_IsSafeDiskFileName (VStr fname) {
   if (fname.isEmpty()) return false;
   return fname.isSafeDiskFileName();
 }

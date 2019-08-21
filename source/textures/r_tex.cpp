@@ -395,7 +395,7 @@ void VTextureManager::AddToHash (int Index) {
 //  VTextureManager::firstWithStr
 //
 //==========================================================================
-VTextureManager::Iter VTextureManager::firstWithStr (const VStr &s) {
+VTextureManager::Iter VTextureManager::firstWithStr (VStr s) {
   if (s.isEmpty()) return Iter();
   VName n = VName(*s, VName::FindLower);
   if (n == NAME_None && s.length() > 8) n = VName(*s, VName::FindLower8);
@@ -633,18 +633,18 @@ int VTextureManager::FindFlatByName (VName Name, bool bOverload) {
 //
 //==========================================================================
 int VTextureManager::NumForName (VName Name, int Type, bool bOverload, bool bAllowLoadAsMapTexture) {
-  static TStrSet numForNameWarned;
+  static TMapNC<VName, bool> numForNameWarned;
   if (Name == NAME_None) return 0;
   if (IsDummyTextureName(Name)) return 0;
   int i = CheckNumForName(Name, Type, bOverload);
   if (i == -1) {
-    if (!numForNameWarned.has(*Name)) {
+    if (!numForNameWarned.has(Name)) {
       if (bAllowLoadAsMapTexture) {
         auto lock = LockMapLocalTextures();
         i = GTextureManager.AddFileTextureChecked(Name, Type);
         if (i == -1) i = GTextureManager.AddFileTextureChecked(VName(*Name, VName::AddLower), Type);
         if (i != -1) return i;
-        numForNameWarned.put(*Name);
+        numForNameWarned.put(Name, true);
       }
       GCon->Logf(NAME_Warning, "VTextureManager::NumForName: '%s' not found (type:%d; over:%d)", *Name, (int)Type, (int)bOverload);
     }
@@ -1702,7 +1702,7 @@ void R_ShutdownTexture () {
 //  to use in `ExportTexture` command
 //
 //==========================================================================
-void VTextureManager::FillNameAutocompletion (const VStr &prefix, TArray<VStr> &list) {
+void VTextureManager::FillNameAutocompletion (VStr prefix, TArray<VStr> &list) {
   if (prefix.length() == 0) {
     GCon->Logf("\034KThere are about %d textures, be more specific, please!", Textures.length()+MapTextures.length()-1);
     return;
@@ -1725,7 +1725,7 @@ void VTextureManager::FillNameAutocompletion (const VStr &prefix, TArray<VStr> &
 //  to use in `ExportTexture` command
 //
 //==========================================================================
-VTexture *VTextureManager::GetExistingTextureByName (const VStr &txname, int type) {
+VTexture *VTextureManager::GetExistingTextureByName (VStr txname, int type) {
   VName nn = VName(*txname, VName::FindLower);
   if (nn == NAME_None) return nullptr;
 
@@ -1772,7 +1772,7 @@ COMMAND_WITH_AC(ExportTexture) {
 
   int ttype = TEXTYPE_Any;
   if (Args.length() == 3) {
-    const VStr &tstr = Args[2];
+    VStr tstr = Args[2];
          if (tstr.ICmp("any") == 0) ttype = TEXTYPE_Any;
     else if (tstr.ICmp("patch") == 0) ttype = TEXTYPE_WallPatch;
     else if (tstr.ICmp("wall") == 0) ttype = TEXTYPE_Wall;

@@ -59,19 +59,19 @@ public:
 
   // handling of key bindings
   virtual void ClearBindings () override;
-  virtual void GetBindingKeys (const VStr &Binding, int &Key1, int &Key2, int strifemode=0) override;
+  virtual void GetBindingKeys (VStr Binding, int &Key1, int &Key2, int strifemode=0) override;
   virtual void GetBinding (int KeyNum, VStr &Down, VStr &Up) override;
-  virtual void SetBinding (int KeyNum, const VStr &Down, const VStr &Up, bool Save=true, int strifemode=0) override;
+  virtual void SetBinding (int KeyNum, VStr Down, VStr Up, bool Save=true, int strifemode=0) override;
   virtual void WriteBindings (VStream *st) override;
 
   virtual int TranslateKey (int ch) override;
 
-  virtual int KeyNumForName (const VStr &Name) override;
+  virtual int KeyNumForName (VStr Name) override;
   virtual VStr KeyNameForNum (int KeyNr) override;
 
   virtual void RegrabMouse () override; // called by UI when mouse cursor is turned off
 
-  virtual void SetClipboardText (const VStr &text) override;
+  virtual void SetClipboardText (VStr text) override;
   virtual bool HasClipboardText () override;
   virtual VStr GetClipboardText () override;
 
@@ -126,7 +126,7 @@ private:
   Binding KeyBindingsNonStrife[256];
   bool KeyBindingsSave[256];
 
-  const VStr &getBinding (bool down, int idx);
+  VStr getBinding (bool down, int idx);
 
   static const char ShiftXForm[128];
 };
@@ -355,7 +355,7 @@ void VInput::ClearBindings () {
 //  VInput::getBinding
 //
 //==========================================================================
-const VStr &VInput::getBinding (bool down, int idx) {
+VStr VInput::getBinding (bool down, int idx) {
   if (idx < 1 || idx > 255) return VStr::EmptyString;
   // for all games
   if (IsStrife()) {
@@ -519,7 +519,7 @@ int VInput::ReadKey () {
 //  VInput::GetBindingKeys
 //
 //==========================================================================
-void VInput::GetBindingKeys (const VStr &bindStr, int &Key1, int &Key2, int strifemode) {
+void VInput::GetBindingKeys (VStr bindStr, int &Key1, int &Key2, int strifemode) {
   Key1 = -1;
   Key2 = -1;
   if (bindStr.isEmpty()) return;
@@ -558,7 +558,7 @@ void VInput::GetBinding (int KeyNum, VStr &Down, VStr &Up) {
 //  VInput::SetBinding
 //
 //==========================================================================
-void VInput::SetBinding (int KeyNum, const VStr &Down, const VStr &Up, bool Save, int strifemode) {
+void VInput::SetBinding (int KeyNum, VStr Down, VStr Up, bool Save, int strifemode) {
   if (KeyNum < 1 || KeyNum > 255) return;
   if (Down.IsEmpty() && Up.IsEmpty() && !KeyBindingsSave[KeyNum]) return;
   KeyBindingsSave[KeyNum] = Save;
@@ -619,7 +619,7 @@ int VInput::TranslateKey (int ch) {
 //  return key code
 //
 //==========================================================================
-int VInput::KeyNumForName (const VStr &Name) {
+int VInput::KeyNumForName (VStr Name) {
   if (Name.IsEmpty()) return -1;
   int res = VObject::VKeyFromName(Name);
   if (res <= 0) res = -1;
@@ -661,7 +661,7 @@ void VInput::RegrabMouse () {
 //  VInput::SetClipboardText
 //
 //==========================================================================
-void VInput::SetClipboardText (const VStr &text) {
+void VInput::SetClipboardText (VStr text) {
   if (Device) Device->SetClipboardText(text);
 }
 

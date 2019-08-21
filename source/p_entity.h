@@ -500,7 +500,7 @@ public:
   void SetInitialState (VState *);
   bool AdvanceState (float);
   VState *FindState (VName, VName = NAME_None, bool = false);
-  VState *FindStateEx (const VStr &, bool);
+  VState *FindStateEx (VStr, bool);
   bool HasSpecialStates (VName);
   void GetStateEffects (TArray<VLightEffectDef *> &, TArray<VParticleEffectDef *> &) const;
   bool CallStateChain (VEntity *, VState *);
@@ -573,8 +573,8 @@ private:
   }
 
 public:
-  bool SetDecorateFlag (const VStr &, bool); // true: flag was found and set
-  bool GetDecorateFlag (const VStr &);
+  bool SetDecorateFlag (VStr, bool); // true: flag was found and set
+  bool GetDecorateFlag (VStr);
 
 public:
   void LinkToWorld (bool properFloorCheck=false);

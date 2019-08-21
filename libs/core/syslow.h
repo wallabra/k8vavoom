@@ -30,16 +30,16 @@
 //**************************************************************************
 
 
-bool Sys_FileExists (const VStr &filename);
-bool Sys_DirExists (const VStr &path);
-int Sys_FileTime (const VStr &path); // returns -1 if not present, or time in unix epoch
+bool Sys_FileExists (VStr filename);
+bool Sys_DirExists (VStr path);
+int Sys_FileTime (VStr path); // returns -1 if not present, or time in unix epoch
 int Sys_CurrFileTime (); // return current time in unix epoch
-bool Sys_CreateDirectory (const VStr &path);
+bool Sys_CreateDirectory (VStr path);
 
-void Sys_FileDelete (const VStr &filename);
+void Sys_FileDelete (VStr filename);
 
 // can return `nullptr` for invalid path
-void *Sys_OpenDir (const VStr &path, bool wantDirs=false); // nullptr: error
+void *Sys_OpenDir (VStr path, bool wantDirs=false); // nullptr: error
 // returns empty string on end-of-dir; returns names w/o path
 // if `wantDirs` is true, dir names are ends with "/"; never returns "." and ".."
 VStr Sys_ReadDir (void *adir);

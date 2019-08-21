@@ -406,9 +406,9 @@ void VBasePlayer::AdvanceViewStates (float deltaTime) {
 //  VBasePlayer::SetUserInfo
 //
 //==========================================================================
-void VBasePlayer::SetUserInfo (const VStr &info) {
+void VBasePlayer::SetUserInfo (VStr info) {
   if (!sv_loading) {
-    UserInfo = info;
+    UserInfo = info.cloneUnique();
     ReadFromUserInfo();
   }
 }
@@ -700,8 +700,8 @@ void VBasePlayer::DoClientSetServerInfo (VStr Key, VStr Value) {
 //  VBasePlayer::DoClientHudMessage
 //
 //==========================================================================
-void VBasePlayer::DoClientHudMessage (const VStr &Message, VName Font, int Type,
-  int Id, int Color, const VStr &ColorName, float x, float y,
+void VBasePlayer::DoClientHudMessage (VStr Message, VName Font, int Type,
+  int Id, int Color, VStr ColorName, float x, float y,
   int HudWidth, int HudHeight, float HoldTime, float Time1, float Time2)
 {
   ClGame->eventAddHudMessage(Message, Font, Type, Id, Color, ColorName,
@@ -745,7 +745,7 @@ void VBasePlayer::CallDumpInventory () {
 //  append player commands with the given prefix
 //
 //==========================================================================
-void VBasePlayer::ListConCommands (TArray<VStr> &list, const VStr &pfx) {
+void VBasePlayer::ListConCommands (TArray<VStr> &list, VStr pfx) {
   for (auto it = GetClass()->ConCmdListMts.first(); it; ++it) {
     const char *mtname = *it.getValue()->Name;
     mtname += 6;
@@ -763,7 +763,7 @@ void VBasePlayer::ListConCommands (TArray<VStr> &list, const VStr &pfx) {
 //  VBasePlayer::IsConCommand
 //
 //==========================================================================
-bool VBasePlayer::IsConCommand (const VStr &name) {
+bool VBasePlayer::IsConCommand (VStr name) {
   return !!GetClass()->FindConCommandMethod(name);
 }
 

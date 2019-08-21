@@ -126,7 +126,7 @@ void VLevel::AddScriptThinker (VLevelScriptThinker *sth, bool ImmediateRun) {
 //  VLevel::SuspendNamedScriptThinkers
 //
 //==========================================================================
-void VLevel::SuspendNamedScriptThinkers (const VStr &name, int map) {
+void VLevel::SuspendNamedScriptThinkers (VStr name, int map) {
   if (name.length() == 0) return;
   const int sclenOrig = scriptThinkers.length();
   VLevelScriptThinker **sth = scriptThinkers.ptr();
@@ -145,7 +145,7 @@ void VLevel::SuspendNamedScriptThinkers (const VStr &name, int map) {
 //  VLevel::TerminateNamedScriptThinkers
 //
 //==========================================================================
-void VLevel::TerminateNamedScriptThinkers (const VStr &name, int map) {
+void VLevel::TerminateNamedScriptThinkers (VStr name, int map) {
   if (name.length() == 0) return;
   const int sclenOrig = scriptThinkers.length();
   VLevelScriptThinker **sth = scriptThinkers.ptr();

@@ -293,7 +293,7 @@ class VDecorateSingleName : public VExpression {
 public:
   VStr Name;
 
-  VDecorateSingleName (const VStr &, const TLocation &);
+  VDecorateSingleName (VStr, const TLocation &);
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;

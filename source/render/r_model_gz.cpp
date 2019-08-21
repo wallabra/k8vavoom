@@ -606,8 +606,8 @@ void GZModelDef::merge (GZModelDef &other) {
   for (auto &&ofrm : other.frames) {
     if (ofrm.vvindex < 0) continue; // this frame is invalid
     // ok, we have a frame, try to find a model for it
-    const VStr &omdf = other.models[ofrm.mdindex].modelFile;
-    const VStr &osdf = other.models[ofrm.mdindex].skinFile;
+    VStr omdf = other.models[ofrm.mdindex].modelFile;
+    VStr osdf = other.models[ofrm.mdindex].skinFile;
     int mdlEmpty = -1; // first empty model in model array, to avoid looping twice
     int mdlindex = -1;
     for (auto &&mdlit : models.itemsIdx()) {

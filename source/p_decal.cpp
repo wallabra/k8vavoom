@@ -72,7 +72,7 @@ VDecalGroup *VDecalGroup::listHead = nullptr;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static bool parseHexRGB (const VStr &str, int *clr) {
+static bool parseHexRGB (VStr str, int *clr) {
   vuint32 ppc = M_ParseColor(*str);
   if (clr) *clr = ppc&0xffffff;
   return true;
@@ -127,13 +127,13 @@ void VDecalDef::removeFromList (VDecalDef *dc) {
 }
 
 
-VDecalDef *VDecalDef::find (const VStr &aname) {
+VDecalDef *VDecalDef::find (VStr aname) {
   VName xn = VName(*aname, VName::Find);
   if (xn == NAME_None) return nullptr;
   return find(xn);
 }
 
-VDecalDef *VDecalDef::find (const VName &aname) {
+VDecalDef *VDecalDef::find (VName aname) {
   for (auto it = listHead; it; it = it->next) {
     if (it->name == aname) return it;
   }
@@ -153,21 +153,21 @@ VDecalDef *VDecalDef::findById (int id) {
 }
 
 
-bool VDecalDef::hasDecal (const VName &aname) {
+bool VDecalDef::hasDecal (VName aname) {
   if (VDecalDef::find(aname)) return true;
   if (VDecalGroup::find(aname)) return true;
   return false;
 }
 
 
-VDecalDef *VDecalDef::getDecal (const VStr &aname) {
+VDecalDef *VDecalDef::getDecal (VStr aname) {
   VName xn = VName(*aname, VName::Find);
   if (xn == NAME_None) return nullptr;
   return getDecal(xn);
 }
 
 
-VDecalDef *VDecalDef::getDecal (const VName &aname) {
+VDecalDef *VDecalDef::getDecal (VName aname) {
   VDecalDef *dc = VDecalDef::find(aname);
   if (dc) return dc;
   // try group
@@ -390,13 +390,13 @@ void VDecalGroup::removeFromList (VDecalGroup *dg) {
 }
 
 
-VDecalGroup *VDecalGroup::find (const VStr &aname) {
+VDecalGroup *VDecalGroup::find (VStr aname) {
   VName xn = VName(*aname, VName::Find);
   if (xn == NAME_None) return nullptr;
   return find(xn);
 }
 
-VDecalGroup *VDecalGroup::find (const VName &aname) {
+VDecalGroup *VDecalGroup::find (VName aname) {
   for (auto it = listHead; it; it = it->next) {
     if (it->name == aname) return it;
   }
@@ -499,13 +499,13 @@ void VDecalAnim::removeFromList (VDecalAnim *anim) {
 }
 
 
-VDecalAnim *VDecalAnim::find (const VStr &aname) {
+VDecalAnim *VDecalAnim::find (VStr aname) {
   VName xn = VName(*aname, VName::Find);
   if (xn == NAME_None) return nullptr;
   return find(xn);
 }
 
-VDecalAnim *VDecalAnim::find (const VName &aname) {
+VDecalAnim *VDecalAnim::find (VName aname) {
   for (auto it = listHead; it; it = it->next) {
     if (it->name == aname) return it;
   }

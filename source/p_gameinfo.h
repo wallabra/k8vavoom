@@ -90,7 +90,7 @@ public:
   void eventTranslateLevel (VLevel *InLevel) { static VMethodProxy method("TranslateLevel"); vobjPutParamSelf(InLevel); VMT_RET_VOID(method); }
   void eventSpawnWorld (VLevel *InLevel) { static VMethodProxy method("SpawnWorld"); vobjPutParamSelf(InLevel); VMT_RET_VOID(method); }
   VName eventGetConScriptName (VName LevelName) { static VMethodProxy method("GetConScriptName"); vobjPutParamSelf(LevelName); VMT_RET_NAME(method); }
-  void eventCmdWeaponSection (const VStr &Section) { static VMethodProxy method("CmdWeaponSection"); vobjPutParamSelf(Section); VMT_RET_VOID(method); }
+  void eventCmdWeaponSection (VStr Section) { static VMethodProxy method("CmdWeaponSection"); vobjPutParamSelf(Section); VMT_RET_VOID(method); }
   void eventCmdSetSlot (TArray<VStr> *Args, bool asKeyconf) { static VMethodProxy method("CmdSetSlot"); vobjPutParamSelf((void *)Args, asKeyconf); VMT_RET_VOID(method); }
   void eventCmdAddSlotDefault (TArray<VStr> *Args, bool asKeyconf) { static VMethodProxy method("CmdAddSlotDefault"); vobjPutParamSelf((void *)Args, asKeyconf); VMT_RET_VOID(method); }
 

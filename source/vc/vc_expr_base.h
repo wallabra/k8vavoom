@@ -124,7 +124,7 @@ public:
   virtual bool IsClassNameConst () const;
   virtual vint32 GetIntConst () const;
   virtual float GetFloatConst () const;
-  virtual const VStr &GetStrConst (VPackage *) const;
+  virtual VStr GetStrConst (VPackage *) const;
   virtual VName GetNameConst () const;
   virtual bool IsNoneLiteral () const;
   virtual bool IsNoneDelegateLiteral () const;

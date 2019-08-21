@@ -107,7 +107,7 @@ public:
   VNTValue (VName aname, float val) : vval(0, 0, 0), nval(NAME_None), sval() { memset((void *)this, 0, sizeof(VNTValue)); type = T_Float; name = aname; ud.fval = val; }
   VNTValue (VName aname, const TVec &val) : vval(0, 0, 0), nval(NAME_None), sval() { memset((void *)this, 0, sizeof(VNTValue)); type = T_Vec; name = aname; vval = val; }
   VNTValue (VName aname, VName val) : vval(0, 0, 0), nval(NAME_None), sval() { memset((void *)this, 0, sizeof(VNTValue)); type = T_Name; name = aname; nval = val; }
-  VNTValue (VName aname, const VStr &val) : vval(0, 0, 0), nval(NAME_None), sval() { memset((void *)this, 0, sizeof(VNTValue)); type = T_Str; name = aname; sval = val; }
+  VNTValue (VName aname, VStr val) : vval(0, 0, 0), nval(NAME_None), sval() { memset((void *)this, 0, sizeof(VNTValue)); type = T_Str; name = aname; sval = val; }
   VNTValue (VName aname, VClass *val) : vval(0, 0, 0), nval(NAME_None), sval() { memset((void *)this, 0, sizeof(VNTValue)); type = T_Class; name = aname; ud.cval = (VMemberBase *)val; }
   VNTValue (VName aname, VObject *val) : vval(0, 0, 0), nval(NAME_None), sval() { memset((void *)this, 0, sizeof(VNTValue)); type = T_Obj; name = aname; ud.oval = val; }
   VNTValue (VName aname, VSerialisable *val) : vval(0, 0, 0), nval(NAME_None), sval() { memset((void *)this, 0, sizeof(VNTValue)); type = T_XObj; name = aname; ud.xoval = val; }

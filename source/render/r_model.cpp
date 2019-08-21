@@ -49,7 +49,7 @@ static VCvarB r_preload_alias_models("r_preload_alias_models", true, "Preload al
 
 // ////////////////////////////////////////////////////////////////////////// //
 // RR GG BB or -1
-static int parseHexRGB (const VStr &str) {
+static int parseHexRGB (VStr str) {
   vuint32 ppc = M_ParseColor(*str);
   return (ppc&0xffffff);
 }
@@ -401,12 +401,12 @@ static void ParseAngle (VXmlNode *N, const char *name, ModelAngle &angle) {
   angle.SetRelative(0.0f);
   VStr aname = VStr("angle_")+name;
   if (N->HasAttribute(aname)) {
-    const VStr &val = N->GetAttribute(aname);
+    VStr val = N->GetAttribute(aname);
     if (val.ICmp("random") == 0) angle.SetAbsoluteRandom(); else angle.SetAbsolute(VStr::atof(*val));
   } else {
     aname = VStr("rotate_")+name;
     if (N->HasAttribute(aname)) {
-      const VStr &val = N->GetAttribute(aname);
+      VStr val = N->GetAttribute(aname);
       if (val.ICmp("random") == 0) angle.SetRelativeRandom(); else angle.SetRelative(VStr::atof(*val));
     }
   }
@@ -420,7 +420,7 @@ static void ParseAngle (VXmlNode *N, const char *name, ModelAngle &angle) {
 //==========================================================================
 static bool ParseBool (VXmlNode *N, const char *name, bool defval) {
   if (!N->HasAttribute(name)) return defval;
-  const VStr &val = N->GetAttribute(name);
+  VStr val = N->GetAttribute(name);
   if (val.ICmp("yes") == 0 || val.ICmp("tan") == 0 || val.ICmp("true") == 0) return true;
   return false;
 }
@@ -736,7 +736,7 @@ static void ParseModelScript (VModel *Mdl, VStream &Strm, bool isGZDoom=false) {
 //  used in VC `InstallModel()`
 //
 //==========================================================================
-VModel *Mod_FindName (const VStr &name) {
+VModel *Mod_FindName (VStr name) {
   if (name.IsEmpty()) Sys_Error("Mod_ForName: nullptr name");
 
   // search the currently loaded models

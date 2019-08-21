@@ -161,9 +161,6 @@ public:
   virtual void Serialise (void *V, int Length) override { if (fwrite(V, Length, 1, File) != 1) bError = true; }
   virtual void Flush () override { if (fflush(File)) bError = true; }
 
-  //virtual VStream &operator << (VStr &s) override { s.Serialise(*this); return *this; }
-  //virtual VStream &operator << (const VStr &s) override { s.Serialise(*this); return *this; }
-
   virtual void io (VName &Name) override {
     int TmpIdx = NamesMap[Name.GetIndex()];
     *this << STRM_INDEX(TmpIdx);
@@ -254,9 +251,6 @@ public:
   virtual bool AtEnd () override { return Stream->AtEnd(); }
   virtual void Flush () override { Stream->Flush(); }
   virtual bool Close () override { return Stream->Close(); }
-
-  //virtual VStream &operator << (VStr &s) override { return VStream::operator<<(s); }
-  //virtual VStream &operator << (const VStr &s) override { return VStream::operator<<(s); }
 
   virtual void io (VName &Name) override {
     int NameIndex;
@@ -484,7 +478,7 @@ int VPackage::FindString (const char *str) {
 //  Return offset in strings array.
 //
 //==========================================================================
-int VPackage::FindString (const VStr &s) {
+int VPackage::FindString (VStr s) {
   if (s.length() == 0) return 0;
   return FindString(*s);
 }
@@ -621,7 +615,7 @@ void VPackage::Emit () {
 //  VPackage::WriteObject
 //
 //==========================================================================
-void VPackage::WriteObject (const VStr &name) {
+void VPackage::WriteObject (VStr name) {
   FILE *f;
   dprograms_t progs;
 
@@ -747,7 +741,7 @@ void VPackage::WriteObject (const VStr &name) {
 //  will delete `Strm`
 //
 //==========================================================================
-void VPackage::LoadSourceObject (VStream *Strm, const VStr &filename, TLocation l) {
+void VPackage::LoadSourceObject (VStream *Strm, VStr filename, TLocation l) {
   if (!Strm) return;
 
   VLexer Lex;
@@ -804,7 +798,7 @@ void VPackage::LoadSourceObject (VStream *Strm, const VStr &filename, TLocation 
 // will delete `Strm`
 //
 //==========================================================================
-void VPackage::LoadBinaryObject (VStream *Strm, const VStr &filename, TLocation l) {
+void VPackage::LoadBinaryObject (VStream *Strm, VStr filename, TLocation l) {
   if (!Strm) return;
 
   VProgsReader *Reader = new VProgsReader(Strm);

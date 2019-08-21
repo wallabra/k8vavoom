@@ -112,9 +112,9 @@ public:
   // comparisons
   inline bool operator == (const VName &Other) const { return (Index == Other.Index); }
   inline bool operator != (const VName &Other) const { return (Index != Other.Index); }
-  bool operator == (const VStr &s) const;
+  bool operator == (const VStr &s) const; // alas, it has to be `&` due to include order
   inline bool operator != (const VStr &s) const { return !(*this == s); }
-  bool operator == (const char *s) const;
+  bool operator == (const char *s) const; // alas, it has to be `&` due to include order
   inline bool operator != (const char *s) const { return !(*this == s); }
 
   // global functions

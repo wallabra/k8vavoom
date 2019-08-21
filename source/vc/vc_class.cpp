@@ -2166,7 +2166,7 @@ void VClass::CreateMethodMap () {
 //  VBasePlayer::FindConCommandMethodIdx
 //
 //==========================================================================
-VMethod *VClass::FindConCommandMethod (const VStr &name, bool exact) {
+VMethod *VClass::FindConCommandMethod (VStr name, bool exact) {
   if (name.isEmpty()) return nullptr;
   VStr loname = name.toLowerCase();
   auto mtp = ConCmdListMts.find(loname);
@@ -2498,7 +2498,7 @@ VStream &operator << (VStream &Strm, VStateLabel &Lbl) {
 //  VClass::DFStateSetTexDir
 //
 //==========================================================================
-void VClass::DFStateSetTexDir (const VStr &adir) {
+void VClass::DFStateSetTexDir (VStr adir) {
   dfStateTexDirSet = true;
   dfStateTexDir = adir;
 }
@@ -2509,7 +2509,7 @@ void VClass::DFStateSetTexDir (const VStr &adir) {
 //  VClass::DFStateGetTexDir
 //
 //==========================================================================
-const VStr &VClass::DFStateGetTexDir () const {
+VStr VClass::DFStateGetTexDir () const {
   for (const VClass *c = this; c; c = c->ParentClass) {
     if (c->dfStateTexDirSet) return c->dfStateTexDir;
   }
@@ -2532,7 +2532,7 @@ const VStr &VClass::DFStateGetTexDir () const {
 //  VClass::DFStateAddTexture
 //
 //==========================================================================
-void VClass::DFStateAddTexture (const VStr &tname, const TextureInfo &ti) {
+void VClass::DFStateAddTexture (VStr tname, const TextureInfo &ti) {
   if (tname.isEmpty()) return;
   dfStateTexList.put(tname, ti);
 }
@@ -2543,7 +2543,7 @@ void VClass::DFStateAddTexture (const VStr &tname, const TextureInfo &ti) {
 //  VClass::DFStateGetTexture
 //
 //==========================================================================
-bool VClass::DFStateGetTexture (const VStr &tname, TextureInfo &ti) const {
+bool VClass::DFStateGetTexture (VStr tname, TextureInfo &ti) const {
   ti.texImage.clear();
   ti.frameWidth = ti.frameHeight = 0;
   ti.frameOfsX = ti.frameOfsY = 0;

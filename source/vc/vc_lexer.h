@@ -129,8 +129,8 @@ private:
   void ProcessElse ();
   void ProcessEndIf ();
   void ProcessInclude ();
-  void PushSource (const VStr &FileName);
-  void PushSource (VStream *Strm, const VStr &FileName); // takes ownership
+  void PushSource (VStr FileName);
+  void PushSource (VStream *Strm, VStr FileName); // takes ownership
   void PopSource ();
   void ProcessNumberToken ();
   void ProcessChar ();
@@ -175,7 +175,7 @@ public:
   void *userdata; // arbitrary pointer, not used by the lexer
   // should return `null` if file not found
   // should NOT fail if file not found
-  VStream *(*dgOpenFile) (VLexer *self, const VStr &filename);
+  VStream *(*dgOpenFile) (VLexer *self, VStr filename);
 
 public:
   VLexer ();
@@ -185,14 +185,14 @@ public:
   // by default it tries to call `dgOpenFile()`, if it is specified,
   // otherwise falls back to standard vfs
   // should NOT fail if file not found
-  virtual VStream *doOpenFile (const VStr &filename);
+  virtual VStream *doOpenFile (VStr filename);
 
-  void AddDefine (const VStr &CondName, bool showWarning=true);
-  void RemoveDefine (const VStr &CondName, bool showWarning=true);
-  bool HasDefine (const VStr &CondName);
-  void AddIncludePath (const VStr &DirName);
-  void OpenSource (const VStr &FileName);
-  void OpenSource (VStream *astream, const VStr &FileName); // takes ownership
+  void AddDefine (VStr CondName, bool showWarning=true);
+  void RemoveDefine (VStr CondName, bool showWarning=true);
+  bool HasDefine (VStr CondName);
+  void AddIncludePath (VStr DirName);
+  void OpenSource (VStr FileName);
+  void OpenSource (VStream *astream, VStr FileName); // takes ownership
 
   char peekNextNonBlankChar () const;
 

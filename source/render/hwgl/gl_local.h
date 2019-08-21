@@ -912,7 +912,7 @@ protected:
   void DoHorizonPolygon (surface_t *surf);
   void DrawPortalArea (VPortal *Portal);
 
-  GLhandleARB LoadShader (const char *progname, GLenum Type, const VStr &FileName, const TArray<VStr> &defines=TArray<VStr>());
+  GLhandleARB LoadShader (const char *progname, GLenum Type, VStr FileName, const TArray<VStr> &defines=TArray<VStr>());
   GLhandleARB CreateProgram (const char *progname, GLhandleARB VertexShader, GLhandleARB FragmentShader);
 
   void UploadModel (VMeshModel *Mdl);

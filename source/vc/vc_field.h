@@ -110,7 +110,7 @@ public:
   inline void SetFloat (VObject *Obj, float Value) const { *(float*)((vuint8*)Obj+Ofs) = Value; }
   inline void SetFloat (VObject *Obj, float Value, int Idx) const { ((float*)((vuint8*)Obj+Ofs))[Idx] = Value; }
   inline void SetName (VObject *Obj, VName Value) const { *(VName*)((vuint8*)Obj+Ofs) = Value; }
-  inline void SetStr (VObject *Obj, const VStr &Value) const { *(VStr*)((vuint8*)Obj+Ofs) = Value; }
+  inline void SetStr (VObject *Obj, VStr Value) const { *(VStr*)((vuint8*)Obj+Ofs) = Value; }
 
   inline void SetBool (VObject *Obj, int Value) const {
     if (Value) {
