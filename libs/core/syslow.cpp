@@ -351,6 +351,7 @@ int Sys_GetCPUCount () {
 //  let's hope that 32 bits are enough for thread ids on all OSes, lol
 //
 //==========================================================================
+/*
 vuint32 Sys_GetCurrentTID () {
   static __thread pid_t cachedTID = (pid_t)-1;
   if (__builtin_expect(cachedTID == (pid_t)-1, 0)) {
@@ -366,6 +367,7 @@ vuint32 Sys_GetCurrentTID () {
   }
   return (vuint32)cachedTID;
 }
+*/
 
 
 //==========================================================================
@@ -725,6 +727,7 @@ int Sys_GetCPUCount () {
   return res;
 }
 
+
 //==========================================================================
 //
 //  Sys_GetCurrentTID
@@ -732,9 +735,11 @@ int Sys_GetCPUCount () {
 //  let's hope that 32 bits are enough for thread ids on all OSes, lol
 //
 //==========================================================================
+/*
 vuint32 Sys_GetCurrentTID () {
   return (vuint32)GetCurrentThreadId();
 }
+*/
 
 
 //==========================================================================
