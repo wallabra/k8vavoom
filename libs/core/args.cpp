@@ -362,6 +362,7 @@ int VArgs::CheckParm (const char *check, bool takeFirst, bool startsWith) const 
     end = 0;
     dir = -1;
   }
+
   while (i != end) {
     if (!startsWith) {
       if (VStr::strEquCI(Argv[i], check)) return i;
@@ -370,6 +371,7 @@ int VArgs::CheckParm (const char *check, bool takeFirst, bool startsWith) const 
     }
     i += dir;
   }
+
   return 0;
 }
 
@@ -400,7 +402,8 @@ int VArgs::CheckParmFrom (const char *check, int stidx, bool startsWith) const {
 //==========================================================================
 const char *VArgs::CheckValue (const char *check, bool takeFirst, bool startsWith) const {
   int a = CheckParm(check, takeFirst, startsWith);
-  if (a && a < Argc-1 && Argv[a+1][0] != '-' && Argv[a+1][0] != '+') return Argv[a+1];
+  //GLog.Logf(NAME_Debug, "VArgs::CheckValue: check=<%s>; takeFirst=%d; startsWith=%d; a=%d; <%s>", check, (int)takeFirst, (int)startsWith, a, Argv[a+1]);
+  if (a && a+1 < Argc && Argv[a+1][0] != '-' && Argv[a+1][0] != '+') return Argv[a+1];
   return nullptr;
 }
 
