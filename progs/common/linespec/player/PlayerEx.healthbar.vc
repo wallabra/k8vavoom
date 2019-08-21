@@ -76,11 +76,31 @@ void HealthBarProcessor () {
 
   if (actorMask != -1 && !ee.bMonster && GetCvarB('k8HealthBarOnlyMonsters')) return;
 
-  string ename = ee.StrifeName.xstrip;
-  if (!ename || GetCvarB('k8HealthBarShowClassName')) {
-    ename = string(GetClassName(ee.Class));
+  string ename;
+  if (GetCvarB('k8HealthBarShowClassName')) {
+    ename = va("[%C]", ee);
+  } else {
+    ename = ee.StrifeName.xstrip;
+    if (!ename) {
+      if (ee.bIsPlayer && ee.Player && PlayerPawn(ee.Player)) {
+        ename = PlayerPawn(ee.Player).DisplayName.xstrip;
+        if (ename) ename = va("<%s>", ename);
+      }
+      if (!ename) ename = va("[%C]", ee);
+    }
   }
-  if (!ename) return; // oops
+  if (!ename) ename = "<unknown class>";
+
+       if (ee.bInvulnerable) ename = va("\cP%s", ename); // invulnerables are olive
+  else if (ee.bIsPlayer) ename = va("\cY%s", ename); // players are sapphire
+  else if (ee.bBoss) ename = va("\cX%s", ename); // bosses are yellow
+  else if (!ee.bMonster && !ee.bMissile) {
+         if (ee.bShootable) ename = va("\cG%s", ename); // shootables are red
+    else if (ee.bPickUp) ename = va("\cI%s", ename); // pickups are orange
+    else if (!ee.bSolid) ename = va("\cD%s", ename); // non-solids are green
+    else if (ee.bDormant) ename = va("\cT%s", ename); // dormants are purple
+    else ename = va("\cU%s", ename); // decorations are dark-gray
+  }
 
   int maxHealth = max(1, int(PlayerPawn(ee) ? PlayerPawn(ee).MaxHealth : ee.InitialHealth));
   int health = max(0, int(ee.Health));
