@@ -645,17 +645,484 @@ static void DoCompatFlag (VScriptParser *sc, mapInfo_t *info, int Flag) {
 //
 //==========================================================================
 static void skipUnimplementedCommand (VScriptParser *sc, bool wantArg) {
-  miWarning(sc, "Unimplemented command '%s'", *sc->String);
+  VStr cmd = sc->String;
   if (sc->Check("=")) {
+    miWarning(sc, "Unimplemented command '%s'", *cmd);
     sc->ExpectString();
     while (sc->Check(",")) {
       if (sc->Check("}")) { sc->UnGet(); break; }
       sc->ExpectString();
     }
   } else if (wantArg) {
+    miWarning(sc, "Unimplemented old command '%s'", *cmd);
     sc->ExpectString();
+  } else {
+    miWarning(sc, "Unimplemented flag '%s'", *cmd);
   }
 }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+struct MapInfoCommand {
+  const char *cmd;
+  void (*handler) (VScriptParser *sc, bool newFormat, mapInfo_t *info, bool &HexenMode);
+  MapInfoCommand *next;
+};
+
+
+static MapInfoCommand *mclist = nullptr;
+
+
+#define MAPINFOCMD(name_)  \
+class MapInfoCommandImpl##name_ { \
+public: \
+  /*static*/ MapInfoCommand mci; \
+  MapInfoCommandImpl##name_ (const char *aname) { \
+    mci.cmd = aname; \
+    mci.handler = &Handler; \
+    mci.next = nullptr; \
+    if (!mclist) { \
+      mclist = &mci; \
+    } else { \
+      MapInfoCommand *last = mclist; \
+      while (last->next) last = last->next; \
+      last->next = &mci; \
+    } \
+  } \
+  static void Handler (VScriptParser *sc, bool newFormat, mapInfo_t *info, bool &HexenMode); \
+}; \
+/*MapInfoCommand MapInfoCommandImpl##name_ mci;*/ \
+MapInfoCommandImpl##name_ mpiprzintrnlz_mici_##name_(#name_); \
+void MapInfoCommandImpl##name_::Handler (VScriptParser *sc, bool newFormat, mapInfo_t *info, bool &HexenMode)
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(levelnum) {
+  if (newFormat) sc->Expect("=");
+  sc->ExpectNumber();
+  info->LevelNum = sc->Number;
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(cluster) {
+  if (newFormat) sc->Expect("=");
+  sc->ExpectNumber();
+  info->Cluster = sc->Number;
+  if (P_GetClusterDef(info->Cluster) == &DefaultClusterDef) {
+    // add empty cluster def if it doesn't exist yet
+    VClusterDef &C = ClusterDefs.Alloc();
+    C.Cluster = info->Cluster;
+    C.Flags = 0;
+    C.EnterText = VStr();
+    C.ExitText = VStr();
+    C.Flat = NAME_None;
+    C.Music = NAME_None;
+    if (HexenMode) C.Flags |= CLUSTERF_Hub;
+  }
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(warptrans) {
+  if (newFormat) sc->Expect("=");
+  sc->ExpectNumber();
+  info->WarpTrans = sc->Number;
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(next) {
+  if (newFormat) sc->Expect("=");
+  info->NextMap = ParseNextMapName(sc, HexenMode);
+  // hack for "complete"
+  if (sc->Check("{")) {
+    info->NextMap = "endgamec";
+    sc->SkipBracketed(true); // bracket eaten
+  } else if (newFormat && sc->Check(",")) {
+    sc->ExpectString();
+    // check for more commas?
+  }
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(secret) {
+  if (newFormat) sc->Expect("=");
+  info->SecretMap = ParseNextMapName(sc, HexenMode);
+}
+
+MAPINFOCMD(secretnext) {
+  if (newFormat) sc->Expect("=");
+  info->SecretMap = ParseNextMapName(sc, HexenMode);
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(sky1) {
+  auto loc = sc->GetLoc();
+  if (newFormat) sc->Expect("=");
+  sc->ExpectName();
+  //info->Sky1Texture = GTextureManager.NumForName(sc->Name, TEXTYPE_Wall, false);
+  VName skbname = R_HasNamedSkybox(sc->String);
+  if (skbname != NAME_None) {
+    //k8: ok, this may be done to support sourceports that cannot into skyboxes
+    miWarning(loc, "sky1 '%s' is actually a skybox (this is mostly harmless)", *sc->String);
+    info->SkyBox = skbname;
+    info->Sky1Texture = GTextureManager.DefaultTexture;
+    info->Sky2Texture = GTextureManager.DefaultTexture;
+    info->Sky1ScrollDelta = 0;
+    info->Sky2ScrollDelta = 0;
+    //GCon->Logf("MSG: using gz skybox '%s'", *skbname);
+    if (!sc->IsAtEol()) {
+      sc->Check(",");
+      sc->ExpectFloatWithSign();
+      if (HexenMode) sc->Float /= 256.0f;
+      if (sc->Float != 0) miWarning(loc, "ignoring sky scroll for skybox '%s' (this is mostly harmless)", *skbname);
+    }
+  } else {
+    info->SkyBox = NAME_None;
+    info->Sky1Texture = loadSkyTexture(sc, sc->Name);
+    info->Sky1ScrollDelta = 0;
+    if (newFormat) {
+      if (!sc->IsAtEol()) {
+        sc->Check(",");
+        sc->ExpectFloatWithSign();
+        if (HexenMode) sc->Float /= 256.0f;
+        info->Sky1ScrollDelta = sc->Float*35.0f;
+      }
+    } else {
+      if (!sc->IsAtEol()) {
+        sc->Check(",");
+        sc->ExpectFloatWithSign();
+        if (HexenMode) sc->Float /= 256.0f;
+        info->Sky1ScrollDelta = sc->Float*35.0f;
+      }
+    }
+  }
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(sky2) {
+  if (newFormat) sc->Expect("=");
+  sc->ExpectName8();
+  //info->Sky2Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, false);
+  //info->SkyBox = NAME_None; //k8:required or not???
+  info->Sky2Texture = loadSkyTexture(sc, sc->Name8);
+  info->Sky2ScrollDelta = 0;
+  if (newFormat) {
+    if (!sc->IsAtEol()) {
+      sc->Check(",");
+      sc->ExpectFloatWithSign();
+      if (HexenMode) sc->Float /= 256.0f;
+      info->Sky1ScrollDelta = sc->Float*35.0f;
+    }
+  } else {
+    if (!sc->IsAtEol()) {
+      sc->Check(",");
+      sc->ExpectFloatWithSign();
+      if (HexenMode) sc->Float /= 256.0f;
+      info->Sky2ScrollDelta = sc->Float*35.0f;
+    }
+  }
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(skybox) {
+  auto loc = sc->GetLoc();
+  if (newFormat) sc->Expect("=");
+  sc->ExpectString();
+  info->Sky1ScrollDelta = 0;
+  info->Sky2ScrollDelta = 0;
+  VName skbname = R_HasNamedSkybox(sc->String);
+  if (skbname != NAME_None) {
+    info->SkyBox = skbname;
+    info->Sky1Texture = GTextureManager.DefaultTexture;
+    info->Sky2Texture = GTextureManager.DefaultTexture;
+  } else {
+    if (GArgs.CheckParm("-mapper-is-idiot")) {
+      miWarning(loc, "skybox '%s' not found (mapper is idiot)!", *sc->String);
+    } else {
+      sc->Error(va("skybox '%s' not found (this mapinfo is broken)", *sc->String));
+    }
+    info->SkyBox = NAME_None;
+    info->Sky1Texture = loadSkyTexture(sc, VName(*sc->String, VName::AddLower8));
+    info->Sky2Texture = info->Sky1Texture;
+  }
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(skyrotate) {
+  miWarning(sc, "\"skyrotate\" command is not supported yet");
+  if (newFormat) sc->Expect("=");
+  sc->ExpectFloatWithSign();
+  if (sc->Check(",")) sc->ExpectFloatWithSign();
+  if (sc->Check(",")) sc->ExpectFloatWithSign();
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(doublesky) { info->Flags |= VLevelInfo::LIF_DoubleSky; }
+MAPINFOCMD(lightning) { info->Flags |= VLevelInfo::LIF_Lightning; }
+MAPINFOCMD(forcenoskystretch) { info->Flags |= VLevelInfo::LIF_ForceNoSkyStretch; }
+MAPINFOCMD(skystretch) { info->Flags &= ~VLevelInfo::LIF_ForceNoSkyStretch; }
+MAPINFOCMD(map07special) { info->Flags |= VLevelInfo::LIF_Map07Special; }
+MAPINFOCMD(baronspecial) { info->Flags |= VLevelInfo::LIF_BaronSpecial; }
+MAPINFOCMD(cyberdemonspecial) { info->Flags |= VLevelInfo::LIF_CyberDemonSpecial; }
+MAPINFOCMD(spidermastermindspecial) { info->Flags |= VLevelInfo::LIF_SpiderMastermindSpecial; }
+MAPINFOCMD(minotaurspecial) { info->Flags |= VLevelInfo::LIF_MinotaurSpecial; }
+MAPINFOCMD(dsparilspecial) { info->Flags |= VLevelInfo::LIF_DSparilSpecial; }
+MAPINFOCMD(ironlichspecial) { info->Flags |= VLevelInfo::LIF_IronLichSpecial; }
+MAPINFOCMD(specialaction_exitlevel) { info->Flags &= ~(VLevelInfo::LIF_SpecialActionOpenDoor|VLevelInfo::LIF_SpecialActionLowerFloor); }
+MAPINFOCMD(specialaction_opendoor) { info->Flags &= ~VLevelInfo::LIF_SpecialActionLowerFloor; info->Flags |= VLevelInfo::LIF_SpecialActionOpenDoor; }
+MAPINFOCMD(specialaction_lowerfloor) { info->Flags |= VLevelInfo::LIF_SpecialActionLowerFloor; info->Flags &= ~VLevelInfo::LIF_SpecialActionOpenDoor; }
+MAPINFOCMD(specialaction_killmonsters) { info->Flags |= VLevelInfo::LIF_SpecialActionKillMonsters; }
+MAPINFOCMD(intermission) { info->Flags &= ~VLevelInfo::LIF_NoIntermission; }
+MAPINFOCMD(nointermission) { info->Flags |= VLevelInfo::LIF_NoIntermission; }
+MAPINFOCMD(nosoundclipping) { /* ignored */ }
+MAPINFOCMD(allowmonstertelefrags) { info->Flags |= VLevelInfo::LIF_AllowMonsterTelefrags; }
+MAPINFOCMD(noallies) { info->Flags |= VLevelInfo::LIF_NoAllies; }
+MAPINFOCMD(fallingdamage) { info->Flags &= ~(VLevelInfo::LIF_OldFallingDamage|VLevelInfo::LIF_StrifeFallingDamage); info->Flags |= VLevelInfo::LIF_FallingDamage; }
+MAPINFOCMD(oldfallingdamage) { info->Flags &= ~(VLevelInfo::LIF_FallingDamage|VLevelInfo::LIF_StrifeFallingDamage); info->Flags |= VLevelInfo::LIF_OldFallingDamage; }
+MAPINFOCMD(forcefallingdamage) { info->Flags &= ~(VLevelInfo::LIF_FallingDamage|VLevelInfo::LIF_StrifeFallingDamage); info->Flags |= VLevelInfo::LIF_OldFallingDamage; }
+MAPINFOCMD(strifefallingdamage) { info->Flags &= ~(VLevelInfo::LIF_OldFallingDamage|VLevelInfo::LIF_FallingDamage); info->Flags |= VLevelInfo::LIF_StrifeFallingDamage; }
+MAPINFOCMD(nofallingdamage) { info->Flags &= ~(VLevelInfo::LIF_OldFallingDamage|VLevelInfo::LIF_StrifeFallingDamage|VLevelInfo::LIF_FallingDamage); }
+MAPINFOCMD(monsterfallingdamage) { info->Flags |= VLevelInfo::LIF_MonsterFallingDamage; }
+MAPINFOCMD(nomonsterfallingdamage) { info->Flags &= ~VLevelInfo::LIF_MonsterFallingDamage; }
+MAPINFOCMD(deathslideshow) { info->Flags |= VLevelInfo::LIF_DeathSlideShow; }
+MAPINFOCMD(allowfreelook) { info->Flags &= ~VLevelInfo::LIF_NoFreelook; }
+MAPINFOCMD(nofreelook) { info->Flags |= VLevelInfo::LIF_NoFreelook; }
+MAPINFOCMD(allowjump) { info->Flags &= ~VLevelInfo::LIF_NoJump; }
+MAPINFOCMD(nojump) { info->Flags |= VLevelInfo::LIF_NoJump; }
+MAPINFOCMD(nocrouch) { info->Flags2 |= VLevelInfo::LIF2_NoCrouch; }
+MAPINFOCMD(resethealth) { info->Flags2 |= VLevelInfo::LIF2_ResetHealth; }
+MAPINFOCMD(resetinventory) { info->Flags2 |= VLevelInfo::LIF2_ResetInventory; }
+MAPINFOCMD(resetitems) { info->Flags2 |= VLevelInfo::LIF2_ResetItems; }
+MAPINFOCMD(noautosequences) { info->Flags |= VLevelInfo::LIF_NoAutoSndSeq; }
+MAPINFOCMD(activateowndeathspecials) { info->Flags |= VLevelInfo::LIF_ActivateOwnSpecial; }
+MAPINFOCMD(killeractivatesdeathspecials) { info->Flags &= ~VLevelInfo::LIF_ActivateOwnSpecial; }
+MAPINFOCMD(missilesactivateimpactlines) { info->Flags |= VLevelInfo::LIF_MissilesActivateImpact; }
+MAPINFOCMD(missileshootersactivetimpactlines) { info->Flags &= ~VLevelInfo::LIF_MissilesActivateImpact; }
+MAPINFOCMD(filterstarts) { info->Flags |= VLevelInfo::LIF_FilterStarts; }
+MAPINFOCMD(infiniteflightpowerup) { info->Flags |= VLevelInfo::LIF_InfiniteFlightPowerup; }
+MAPINFOCMD(noinfiniteflightpowerup) { info->Flags &= ~VLevelInfo::LIF_InfiniteFlightPowerup; }
+MAPINFOCMD(clipmidtextures) { info->Flags |= VLevelInfo::LIF_ClipMidTex; }
+MAPINFOCMD(wrapmidtextures) { info->Flags |= VLevelInfo::LIF_WrapMidTex; }
+MAPINFOCMD(keepfullinventory) { info->Flags |= VLevelInfo::LIF_KeepFullInventory; }
+MAPINFOCMD(compat_shorttex) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatShortTex); }
+MAPINFOCMD(compat_stairs) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatStairs); }
+MAPINFOCMD(compat_limitpain) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatLimitPain); }
+MAPINFOCMD(compat_nopassover) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatNoPassOver); }
+MAPINFOCMD(compat_notossdrops) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatNoTossDrops); }
+MAPINFOCMD(compat_useblocking) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatUseBlocking); }
+MAPINFOCMD(compat_nodoorlight) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatNoDoorLight); }
+MAPINFOCMD(compat_ravenscroll) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatRavenScroll); }
+MAPINFOCMD(compat_soundtarget) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatSoundTarget); }
+MAPINFOCMD(compat_dehhealth) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatDehHealth); }
+MAPINFOCMD(compat_trace) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatTrace); }
+MAPINFOCMD(compat_dropoff) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatDropOff); }
+MAPINFOCMD(compat_boomscroll) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatBoomScroll); }
+MAPINFOCMD(additive_scrollers) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatBoomScroll); }
+MAPINFOCMD(compat_invisibility) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatInvisibility); }
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(noinfighting) { info->Infighting = -1; }
+MAPINFOCMD(normalinfighting) { info->Infighting = 0; }
+MAPINFOCMD(totalinfighting) { info->Infighting = 1; }
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(fadetable) {
+  if (newFormat) sc->Expect("=");
+  sc->ExpectName8();
+  info->FadeTable = sc->Name8;
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(fade) {
+  if (newFormat) sc->Expect("=");
+  sc->ExpectString();
+  info->Fade = M_ParseColor(*sc->String);
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(outsidefog) {
+  if (newFormat) sc->Expect("=");
+  sc->ExpectString();
+  info->OutsideFog = M_ParseColor(*sc->String);
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(music) {
+  if (newFormat) sc->Expect("=");
+  //sc->ExpectName8();
+  //info->SongLump = sc->Name8;
+  sc->ExpectName();
+  info->SongLump = sc->Name;
+  const char *nn = *sc->Name;
+  if (nn[0] == '$') {
+    ++nn;
+    if (nn[0] && GLanguage.HasTranslation(nn)) {
+      info->SongLump = VName(*GLanguage[nn], VName::AddLower);
+    }
+  }
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(cdtrack) { if (newFormat) sc->Expect("="); sc->ExpectNumber(); /*info->CDTrack = sc->Number;*/ }
+MAPINFOCMD(cd_start_track) { if (newFormat) sc->Expect("="); sc->ExpectNumber(); /*cd_NonLevelTracks[CD_STARTTRACK] = sc->Number;*/ }
+MAPINFOCMD(cd_end1_track) { if (newFormat) sc->Expect("="); sc->ExpectNumber(); /*cd_NonLevelTracks[CD_END1TRACK] = sc->Number;*/ }
+MAPINFOCMD(cd_end2_track) { if (newFormat) sc->Expect("="); sc->ExpectNumber(); /*cd_NonLevelTracks[CD_END2TRACK] = sc->Number;*/ }
+MAPINFOCMD(cd_end3_track) { if (newFormat) sc->Expect("="); sc->ExpectNumber(); /*cd_NonLevelTracks[CD_END3TRACK] = sc->Number;*/ }
+MAPINFOCMD(cd_intermission_track) { if (newFormat) sc->Expect("="); sc->ExpectNumber(); /*cd_NonLevelTracks[CD_INTERTRACK] = sc->Number;*/ }
+MAPINFOCMD(cd_title_track) { if (newFormat) sc->Expect("="); sc->ExpectNumber(); /*cd_NonLevelTracks[CD_TITLETRACK] = sc->Number;*/ }
+MAPINFOCMD(cdid) { skipUnimplementedCommand(sc, true); }
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(gravity) {
+  if (newFormat) sc->Expect("=");
+  sc->ExpectNumber();
+  info->Gravity = (float)sc->Number;
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(aircontrol) {
+  if (newFormat) sc->Expect("=");
+  sc->ExpectFloat();
+  info->AirControl = sc->Float;
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(titlepatch) {
+  //FIXME: quoted string is a textual level name
+  if (newFormat) sc->Expect("=");
+  sc->ExpectName8Def(NAME_None);
+  info->TitlePatch = sc->Name8;
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(par) {
+  if (newFormat) sc->Expect("=");
+  sc->ExpectNumber();
+  info->ParTime = sc->Number;
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(sucktime) {
+  if (newFormat) sc->Expect("=");
+  sc->ExpectNumber();
+  info->SuckTime = sc->Number;
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(evenlighting) {
+  info->HorizWallShade = 0;
+  info->VertWallShade = 0;
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(vertwallshade) {
+  if (newFormat) sc->Expect("=");
+  sc->ExpectNumber();
+  info->VertWallShade = midval(-128, sc->Number, 127);
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(horizwallshade) {
+  if (newFormat) sc->Expect("=");
+  sc->ExpectNumber();
+  info->HorizWallShade = midval(-128, sc->Number, 127);
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(specialaction) {
+  if (newFormat) sc->Expect("=");
+  VMapSpecialAction &A = info->SpecialActions.Alloc();
+  //sc->SetCMode(true);
+  sc->ExpectString();
+  A.TypeName = *sc->String.ToLower();
+  sc->Expect(",");
+  sc->ExpectString();
+  A.Special = 0;
+  for (int i = 0; i < LineSpecialInfos.Num(); ++i) {
+    if (!LineSpecialInfos[i].Name.ICmp(sc->String)) {
+      A.Special = LineSpecialInfos[i].Number;
+      break;
+    }
+  }
+  if (!A.Special) miWarning(sc, "Unknown action special '%s'", *sc->String);
+  memset(A.Args, 0, sizeof(A.Args));
+  for (int i = 0; i < 5 && sc->Check(","); ++i) {
+    sc->ExpectNumber();
+    A.Args[i] = sc->Number;
+  }
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(redirect) {
+  if (newFormat) sc->Expect("=");
+  sc->ExpectString();
+  info->RedirectType = *sc->String.ToLower();
+  info->RedirectMap = ParseNextMapName(sc, HexenMode);
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(strictmonsteractivation) {
+  info->Flags2 &= ~VLevelInfo::LIF2_LaxMonsterActivation;
+  info->Flags2 |= VLevelInfo::LIF2_HaveMonsterActivation;
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(laxmonsteractivation) {
+  info->Flags2 |= VLevelInfo::LIF2_LaxMonsterActivation;
+  info->Flags2 |= VLevelInfo::LIF2_HaveMonsterActivation;
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(interpic) {
+  if (newFormat) sc->Expect("=");
+  //sc->ExpectName8();
+  sc->ExpectString();
+  info->ExitPic = *sc->String.ToLower();
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(enterpic) {
+  if (newFormat) sc->Expect("=");
+  //sc->ExpectName8();
+  sc->ExpectString();
+  info->EnterPic = *sc->String.ToLower();
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(exitpic) {
+  if (newFormat) sc->Expect("=");
+  //sc->ExpectName8();
+  sc->ExpectString();
+  info->ExitPic = *sc->String.ToLower();
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(intermusic) {
+  if (newFormat) sc->Expect("=");
+  sc->ExpectString();
+  info->InterMusic = *sc->String.ToLower();
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(background) {
+  sc->Message("'background' mapinfo command is not supported");
+  if (newFormat) sc->Expect("=");
+  //sc->ExpectName8();
+  sc->ExpectString();
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+MAPINFOCMD(airsupply) { skipUnimplementedCommand(sc, true); }
+MAPINFOCMD(sndseq) { skipUnimplementedCommand(sc, true); }
+MAPINFOCMD(sndinfo) { skipUnimplementedCommand(sc, true); }
+MAPINFOCMD(soundinfo) { skipUnimplementedCommand(sc, true); }
+MAPINFOCMD(bordertexture) { skipUnimplementedCommand(sc, true); }
+MAPINFOCMD(f1) { skipUnimplementedCommand(sc, true); }
+MAPINFOCMD(teamdamage) { skipUnimplementedCommand(sc, true); }
+MAPINFOCMD(fogdensity) { skipUnimplementedCommand(sc, true); }
+MAPINFOCMD(outsidefogdensity) { skipUnimplementedCommand(sc, true); }
+MAPINFOCMD(skyfog) { skipUnimplementedCommand(sc, true); }
+MAPINFOCMD(translator) { skipUnimplementedCommand(sc, true); skipUnimplementedCommand(sc, false); }
+MAPINFOCMD(lightmode) { skipUnimplementedCommand(sc, true); }
 
 
 //==========================================================================
@@ -669,345 +1136,45 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
   // process optional tokens
   for (;;) {
     //sc->GetString(); sc->UnGet(); GCon->Logf(NAME_Debug, "%s: %s", *sc->GetLoc().toStringNoCol(), *sc->String);
-    if (sc->Check("levelnum")) {
-      if (newFormat) sc->Expect("=");
-      sc->ExpectNumber();
-      info->LevelNum = sc->Number;
-    } else if (sc->Check("cluster")) {
-      if (newFormat) sc->Expect("=");
-      sc->ExpectNumber();
-      info->Cluster = sc->Number;
-      if (P_GetClusterDef(info->Cluster) == &DefaultClusterDef) {
-        // add empty cluster def if it doesn't exist yet
-        VClusterDef &C = ClusterDefs.Alloc();
-        C.Cluster = info->Cluster;
-        C.Flags = 0;
-        C.EnterText = VStr();
-        C.ExitText = VStr();
-        C.Flat = NAME_None;
-        C.Music = NAME_None;
-        if (HexenMode) C.Flags |= CLUSTERF_Hub;
+    if (!sc->GetString()) break;
+    bool foundit = false;
+    for (const MapInfoCommand *mcp = mclist; mcp; mcp = mcp->next) {
+      if (sc->String.strEquCI(mcp->cmd)) {
+        //GCon->Logf(NAME_Debug, "%s: cmd='%s' (new=%d)", *sc->GetLoc().toStringNoCol(), *sc->String, (int)newFormat);
+        foundit = true;
+        (*mcp->handler)(sc, newFormat, info, HexenMode);
+        break;
       }
-    } else if (sc->Check("warptrans")) {
-      if (newFormat) sc->Expect("=");
-      sc->ExpectNumber();
-      info->WarpTrans = sc->Number;
-    } else if (sc->Check("next")) {
-      if (newFormat) sc->Expect("=");
-      info->NextMap = ParseNextMapName(sc, HexenMode);
-      // hack for "complete"
-      if (sc->Check("{")) {
-        info->NextMap = "endgamec";
-        sc->SkipBracketed(true); // bracket eaten
-      } else if (newFormat && sc->Check(",")) {
-        sc->ExpectString();
-        // check for more commas?
-      }
-    } else if (sc->Check("secret") || sc->Check("secretnext")) {
-      if (newFormat) sc->Expect("=");
-      info->SecretMap = ParseNextMapName(sc, HexenMode);
-    } else if (sc->Check("sky1")) {
-      if (newFormat) sc->Expect("=");
-      sc->ExpectName();
-      //info->Sky1Texture = GTextureManager.NumForName(sc->Name, TEXTYPE_Wall, false);
-      VName skbname = R_HasNamedSkybox(sc->String);
-      if (skbname != NAME_None) {
-        //k8: ok, this may be done to support sourceports that cannot into skyboxes
-        GCon->Logf(NAME_Warning, "%s:MAPINFO: sky1 '%s' is actually a skybox (this is mostly harmless)", *sc->GetLoc().toStringNoCol(), *sc->String);
-        info->SkyBox = skbname;
-        info->Sky1Texture = GTextureManager.DefaultTexture;
-        info->Sky2Texture = GTextureManager.DefaultTexture;
-        info->Sky1ScrollDelta = 0;
-        info->Sky2ScrollDelta = 0;
-        //GCon->Logf("MSG: using gz skybox '%s'", *skbname);
-        if (!sc->IsAtEol()) {
-          sc->Check(",");
-          sc->ExpectFloatWithSign();
-          if (HexenMode) sc->Float /= 256.0f;
-          if (sc->Float != 0) {
-            GCon->Logf(NAME_Warning, "%s:MAPINFO: ignoring sky scroll for skybox '%s' (this is mostly harmless)", *sc->GetLoc().toStringNoCol(), *skbname);
-          }
-        }
-      } else {
-        info->SkyBox = NAME_None;
-        info->Sky1Texture = loadSkyTexture(sc, sc->Name);
-        info->Sky1ScrollDelta = 0;
-        if (newFormat) {
-          if (!sc->IsAtEol()) {
-            sc->Check(",");
-            sc->ExpectFloatWithSign();
-            if (HexenMode) sc->Float /= 256.0f;
-            info->Sky1ScrollDelta = sc->Float*35.0f;
-          }
-        } else {
-          if (!sc->IsAtEol()) {
-            sc->Check(",");
-            sc->ExpectFloatWithSign();
-            if (HexenMode) sc->Float /= 256.0f;
-            info->Sky1ScrollDelta = sc->Float*35.0f;
-          }
-        }
-      }
-      //sc->SetCMode(ocm);
-    } else if (sc->Check("sky2")) {
-      if (newFormat) sc->Expect("=");
-      sc->ExpectName8();
-      //info->Sky2Texture = GTextureManager.NumForName(sc->Name8, TEXTYPE_Wall, false);
-      //info->SkyBox = NAME_None; //k8:required or not???
-      info->Sky2Texture = loadSkyTexture(sc, sc->Name8);
-      info->Sky2ScrollDelta = 0;
-      if (newFormat) {
-        if (!sc->IsAtEol()) {
-          sc->Check(",");
-          sc->ExpectFloatWithSign();
-          if (HexenMode) sc->Float /= 256.0f;
-          info->Sky1ScrollDelta = sc->Float*35.0f;
-        }
-      } else {
-        if (!sc->IsAtEol()) {
-          sc->Check(",");
-          sc->ExpectFloatWithSign();
-          if (HexenMode) sc->Float /= 256.0f;
-          info->Sky2ScrollDelta = sc->Float*35.0f;
-        }
-      }
-      //sc->SetCMode(ocm);
-    } else if (sc->Check("skybox")){
-      if (newFormat) sc->Expect("=");
-      sc->ExpectString();
-      info->Sky1ScrollDelta = 0;
-      info->Sky2ScrollDelta = 0;
-      VName skbname = R_HasNamedSkybox(sc->String);
-      if (skbname != NAME_None) {
-        info->SkyBox = skbname;
-        info->Sky1Texture = GTextureManager.DefaultTexture;
-        info->Sky2Texture = GTextureManager.DefaultTexture;
-      } else {
-        if (GArgs.CheckParm("-mapper-is-idiot")) {
-          GCon->Logf(NAME_Warning, "%s:MAPINFO: skybox '%s' not found (mapper is idiot)!", *sc->GetLoc().toStringNoCol(), *sc->String);
-        } else {
-          sc->Error(va("skybox '%s' not found (this mapinfo is broken)", *sc->String));
-        }
-        info->SkyBox = NAME_None;
-        info->Sky1Texture = loadSkyTexture(sc, VName(*sc->String, VName::AddLower8));
-        info->Sky2Texture = info->Sky1Texture;
-      }
-    } else if (sc->Check("skyrotate")){
-      GCon->Logf(NAME_Warning, "%s:MAPINFO: \"skyrotate\" command is not supported yet", *sc->GetLoc().toStringNoCol());
-      if (newFormat) sc->Expect("=");
-      sc->ExpectFloatWithSign();
-      if (sc->Check(",")) sc->ExpectFloatWithSign();
-      if (sc->Check(",")) sc->ExpectFloatWithSign();
-    } else if (sc->Check("doublesky")) { info->Flags |= VLevelInfo::LIF_DoubleSky;
-    } else if (sc->Check("lightning")) { info->Flags |= VLevelInfo::LIF_Lightning;
-    } else if (sc->Check("forcenoskystretch")) { info->Flags |= VLevelInfo::LIF_ForceNoSkyStretch;
-    } else if (sc->Check("skystretch")) { info->Flags &= ~VLevelInfo::LIF_ForceNoSkyStretch;
-    } else if (sc->Check("fadetable")) {
-      if (newFormat) sc->Expect("=");
-      sc->ExpectName8();
-      info->FadeTable = sc->Name8;
-    } else if (sc->Check("fade")) {
-      if (newFormat) sc->Expect("=");
-      sc->ExpectString();
-      info->Fade = M_ParseColor(*sc->String);
-    } else if (sc->Check("outsidefog")) {
-      if (newFormat) sc->Expect("=");
-      sc->ExpectString();
-      info->OutsideFog = M_ParseColor(*sc->String);
-    } else if (sc->Check("music")) {
-      if (newFormat) sc->Expect("=");
-      //sc->ExpectName8();
-      //info->SongLump = sc->Name8;
-      sc->ExpectName();
-      info->SongLump = sc->Name;
-      const char *nn = *sc->Name;
-      if (nn[0] == '$') {
-        ++nn;
-        if (nn[0] && GLanguage.HasTranslation(nn)) {
-          info->SongLump = VName(*GLanguage[nn], VName::AddLower);
-        }
-      }
-    } else if (sc->Check("cdtrack")) {
-      if (newFormat) sc->Expect("=");
-      sc->ExpectNumber();
-      //info->CDTrack = sc->Number;
-    } else if (sc->Check("gravity")) {
-      if (newFormat) sc->Expect("=");
-      sc->ExpectNumber();
-      info->Gravity = (float)sc->Number;
-    } else if (sc->Check("aircontrol")) {
-      if (newFormat) sc->Expect("=");
-      sc->ExpectFloat();
-      info->AirControl = sc->Float;
-    } else if (sc->Check("map07special")) { info->Flags |= VLevelInfo::LIF_Map07Special;
-    } else if (sc->Check("baronspecial")) { info->Flags |= VLevelInfo::LIF_BaronSpecial;
-    } else if (sc->Check("cyberdemonspecial")) { info->Flags |= VLevelInfo::LIF_CyberDemonSpecial;
-    } else if (sc->Check("spidermastermindspecial")) { info->Flags |= VLevelInfo::LIF_SpiderMastermindSpecial;
-    } else if (sc->Check("minotaurspecial")) { info->Flags |= VLevelInfo::LIF_MinotaurSpecial;
-    } else if (sc->Check("dsparilspecial")) { info->Flags |= VLevelInfo::LIF_DSparilSpecial;
-    } else if (sc->Check("ironlichspecial")) { info->Flags |= VLevelInfo::LIF_IronLichSpecial;
-    } else if (sc->Check("specialaction_exitlevel")) { info->Flags &= ~(VLevelInfo::LIF_SpecialActionOpenDoor|VLevelInfo::LIF_SpecialActionLowerFloor);
-    } else if (sc->Check("specialaction_opendoor")) { info->Flags &= ~VLevelInfo::LIF_SpecialActionLowerFloor; info->Flags |= VLevelInfo::LIF_SpecialActionOpenDoor;
-    } else if (sc->Check("specialaction_lowerfloor")) { info->Flags |= VLevelInfo::LIF_SpecialActionLowerFloor; info->Flags &= ~VLevelInfo::LIF_SpecialActionOpenDoor;
-    } else if (sc->Check("specialaction_killmonsters")) { info->Flags |= VLevelInfo::LIF_SpecialActionKillMonsters;
-    } else if (sc->Check("intermission")) { info->Flags &= ~VLevelInfo::LIF_NoIntermission;
-    } else if (sc->Check("nointermission")) { info->Flags |= VLevelInfo::LIF_NoIntermission;
-    } else if (sc->Check("titlepatch")) {
-      //FIXME: quoted string is a textual level name
-      if (newFormat) sc->Expect("=");
-      sc->ExpectName8Def(NAME_None);
-      info->TitlePatch = sc->Name8;
-    } else if (sc->Check("par")) {
-      if (newFormat) sc->Expect("=");
-      sc->ExpectNumber();
-      info->ParTime = sc->Number;
-    } else if (sc->Check("sucktime")) {
-      if (newFormat) sc->Expect("=");
-      sc->ExpectNumber();
-      info->SuckTime = sc->Number;
-    } else if (sc->Check("nosoundclipping")) { // ignored
-    } else if (sc->Check("allowmonstertelefrags")) { info->Flags |= VLevelInfo::LIF_AllowMonsterTelefrags;
-    } else if (sc->Check("noallies")) { info->Flags |= VLevelInfo::LIF_NoAllies;
-    } else if (sc->Check("fallingdamage")) { info->Flags &= ~(VLevelInfo::LIF_OldFallingDamage|VLevelInfo::LIF_StrifeFallingDamage); info->Flags |= VLevelInfo::LIF_FallingDamage;
-    } else if (sc->Check("oldfallingdamage") || sc->Check("forcefallingdamage")) { info->Flags &= ~(VLevelInfo::LIF_FallingDamage|VLevelInfo::LIF_StrifeFallingDamage); info->Flags |= VLevelInfo::LIF_OldFallingDamage;
-    } else if (sc->Check("strifefallingdamage")) { info->Flags &= ~(VLevelInfo::LIF_OldFallingDamage|VLevelInfo::LIF_FallingDamage); info->Flags |= VLevelInfo::LIF_StrifeFallingDamage;
-    } else if (sc->Check("nofallingdamage")) { info->Flags &= ~(VLevelInfo::LIF_OldFallingDamage|VLevelInfo::LIF_StrifeFallingDamage|VLevelInfo::LIF_FallingDamage);
-    } else if (sc->Check("monsterfallingdamage")) { info->Flags |= VLevelInfo::LIF_MonsterFallingDamage;
-    } else if (sc->Check("nomonsterfallingdamage")) { info->Flags &= ~VLevelInfo::LIF_MonsterFallingDamage;
-    } else if (sc->Check("deathslideshow")) { info->Flags |= VLevelInfo::LIF_DeathSlideShow;
-    } else if (sc->Check("allowfreelook")) { info->Flags &= ~VLevelInfo::LIF_NoFreelook;
-    } else if (sc->Check("nofreelook")) { info->Flags |= VLevelInfo::LIF_NoFreelook;
-    } else if (sc->Check("allowjump")) { info->Flags &= ~VLevelInfo::LIF_NoJump;
-    } else if (sc->Check("nojump")) { info->Flags |= VLevelInfo::LIF_NoJump;
-    } else if (sc->Check("nocrouch")) { info->Flags2 |= VLevelInfo::LIF2_NoCrouch;
-    } else if (sc->Check("resethealth")) { info->Flags2 |= VLevelInfo::LIF2_ResetHealth;
-    } else if (sc->Check("resetinventory")) { info->Flags2 |= VLevelInfo::LIF2_ResetInventory;
-    } else if (sc->Check("resetitems")) { info->Flags2 |= VLevelInfo::LIF2_ResetItems;
-    } else if (sc->Check("noautosequences")) { info->Flags |= VLevelInfo::LIF_NoAutoSndSeq;
-    } else if (sc->Check("activateowndeathspecials")) { info->Flags |= VLevelInfo::LIF_ActivateOwnSpecial;
-    } else if (sc->Check("killeractivatesdeathspecials")) { info->Flags &= ~VLevelInfo::LIF_ActivateOwnSpecial;
-    } else if (sc->Check("missilesactivateimpactlines")) { info->Flags |= VLevelInfo::LIF_MissilesActivateImpact;
-    } else if (sc->Check("missileshootersactivetimpactlines")) { info->Flags &= ~VLevelInfo::LIF_MissilesActivateImpact;
-    } else if (sc->Check("filterstarts")) { info->Flags |= VLevelInfo::LIF_FilterStarts;
-    } else if (sc->Check("infiniteflightpowerup")) { info->Flags |= VLevelInfo::LIF_InfiniteFlightPowerup;
-    } else if (sc->Check("noinfiniteflightpowerup")) { info->Flags &= ~VLevelInfo::LIF_InfiniteFlightPowerup;
-    } else if (sc->Check("clipmidtextures")) { info->Flags |= VLevelInfo::LIF_ClipMidTex;
-    } else if (sc->Check("wrapmidtextures")) { info->Flags |= VLevelInfo::LIF_WrapMidTex;
-    } else if (sc->Check("keepfullinventory")) { info->Flags |= VLevelInfo::LIF_KeepFullInventory;
-    } else if (sc->Check("compat_shorttex")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatShortTex);
-    } else if (sc->Check("compat_stairs")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatStairs);
-    } else if (sc->Check("compat_limitpain")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatLimitPain);
-    } else if (sc->Check("compat_nopassover")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatNoPassOver);
-    } else if (sc->Check("compat_notossdrops")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatNoTossDrops);
-    } else if (sc->Check("compat_useblocking")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatUseBlocking);
-    } else if (sc->Check("compat_nodoorlight")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatNoDoorLight);
-    } else if (sc->Check("compat_ravenscroll")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatRavenScroll);
-    } else if (sc->Check("compat_soundtarget")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatSoundTarget);
-    } else if (sc->Check("compat_dehhealth")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatDehHealth);
-    } else if (sc->Check("compat_trace")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatTrace);
-    } else if (sc->Check("compat_dropoff")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatDropOff);
-    } else if (sc->Check("compat_boomscroll") || sc->Check("additive_scrollers")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatBoomScroll);
-    } else if (sc->Check("compat_invisibility")) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatInvisibility);
-    } else if (sc->CheckStartsWith("compat_")) {
+    }
+    if (!foundit) {
+      //GCon->Logf(NAME_Debug, "%s: NOT FOUND cmd='%s' (new=%d)", *sc->GetLoc().toStringNoCol(), *sc->String, (int)newFormat);
+      sc->UnGet();
+      if (!newFormat) break;
+      if (sc->Check("}")) break;
+      //sc->Message(va("unknown mapinfo command '%s', skipping...", *sc->String));
+      if (!sc->GetString()) break;
+      skipUnimplementedCommand(sc, false); // don't force args, but skip them
+      if (sc->Check("}")) break;
+      continue;
+    }
+    /*
+    if (sc->CheckStartsWith("compat_")) {
       GCon->Logf(NAME_Warning, "%s: mapdef '%s' is not supported yet", *sc->GetLoc().toStringNoCol(), *sc->String);
       sc->Check("=");
       sc->CheckNumber();
-    } else if (sc->Check("evenlighting")) {
-      info->HorizWallShade = 0;
-      info->VertWallShade = 0;
-    } else if (sc->Check("vertwallshade")) {
-      if (newFormat) sc->Expect("=");
-      sc->ExpectNumber();
-      info->VertWallShade = midval(-128, sc->Number, 127);
-    } else if (sc->Check("horizwallshade")) {
-      if (newFormat) sc->Expect("=");
-      sc->ExpectNumber();
-      info->HorizWallShade = midval(-128, sc->Number, 127);
-    } else if (sc->Check("noinfighting")) { info->Infighting = -1;
-    } else if (sc->Check("normalinfighting")) { info->Infighting = 0;
-    } else if (sc->Check("totalinfighting")) { info->Infighting = 1;
-    } else if (sc->Check("specialaction")) {
-      if (newFormat) sc->Expect("=");
-      VMapSpecialAction &A = info->SpecialActions.Alloc();
-      //sc->SetCMode(true);
-      sc->ExpectString();
-      A.TypeName = *sc->String.ToLower();
-      sc->Expect(",");
-      sc->ExpectString();
-      A.Special = 0;
-      for (int i = 0; i < LineSpecialInfos.Num(); ++i) {
-        if (!LineSpecialInfos[i].Name.ICmp(sc->String)) {
-          A.Special = LineSpecialInfos[i].Number;
-          break;
-        }
-      }
-      if (!A.Special) GCon->Logf(NAME_Warning, "Unknown action special '%s'", *sc->String);
-      memset(A.Args, 0, sizeof(A.Args));
-      for (int i = 0; i < 5 && sc->Check(","); ++i) {
-        sc->ExpectNumber();
-        A.Args[i] = sc->Number;
-      }
-      //if (!newFormat) sc->SetCMode(false);
-    } else if (sc->Check("redirect")) {
-      if (newFormat) sc->Expect("=");
-      sc->ExpectString();
-      info->RedirectType = *sc->String.ToLower();
-      info->RedirectMap = ParseNextMapName(sc, HexenMode);
-    } else if (sc->Check("strictmonsteractivation")) {
-      info->Flags2 &= ~VLevelInfo::LIF2_LaxMonsterActivation;
-      info->Flags2 |= VLevelInfo::LIF2_HaveMonsterActivation;
-    } else if (sc->Check("laxmonsteractivation")) {
-      info->Flags2 |= VLevelInfo::LIF2_LaxMonsterActivation;
-      info->Flags2 |= VLevelInfo::LIF2_HaveMonsterActivation;
-    } else if (sc->Check("interpic") || sc->Check("exitpic")) {
-      if (newFormat) sc->Expect("=");
-      //sc->ExpectName8();
-      sc->ExpectString();
-      info->ExitPic = *sc->String.ToLower();
-    } else if (sc->Check("enterpic")) {
-      if (newFormat) sc->Expect("=");
-      //sc->ExpectName8();
-      sc->ExpectString();
-      info->EnterPic = *sc->String.ToLower();
-    } else if (sc->Check("background")) {
-      sc->Message("'background' mapinfo command is not supported");
-      if (newFormat) sc->Expect("=");
-      //sc->ExpectName8();
-      sc->ExpectString();
-    } else if (sc->Check("intermusic")) {
-      if (newFormat) sc->Expect("=");
-      sc->ExpectString();
-      info->InterMusic = *sc->String.ToLower();
-    } else if (sc->Check("cd_start_track")) { if (newFormat) sc->Expect("="); sc->ExpectNumber(); //cd_NonLevelTracks[CD_STARTTRACK] = sc->Number;
-    } else if (sc->Check("cd_end1_track")) { if (newFormat) sc->Expect("="); sc->ExpectNumber(); //cd_NonLevelTracks[CD_END1TRACK] = sc->Number;
-    } else if (sc->Check("cd_end2_track")) { if (newFormat) sc->Expect("="); sc->ExpectNumber(); //cd_NonLevelTracks[CD_END2TRACK] = sc->Number;
-    } else if (sc->Check("cd_end3_track")) { if (newFormat) sc->Expect("="); sc->ExpectNumber(); //cd_NonLevelTracks[CD_END3TRACK] = sc->Number;
-    } else if (sc->Check("cd_intermission_track")) { if (newFormat) sc->Expect("="); sc->ExpectNumber(); //cd_NonLevelTracks[CD_INTERTRACK] = sc->Number;
-    } else if (sc->Check("cd_title_track")) { if (newFormat) sc->Expect("="); sc->ExpectNumber(); //cd_NonLevelTracks[CD_TITLETRACK] = sc->Number;
-    // these are stubs for now.
-    } else if (sc->Check("cdid")) { skipUnimplementedCommand(sc, true);
+    }
+    */
+    // these are stubs for now
     //} else if (sc->Check("noinventorybar")) { skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("airsupply")) { skipUnimplementedCommand(sc, true);
-    } else if (sc->Check("sndseq")) { skipUnimplementedCommand(sc, true);
-    } else if (sc->Check("sndinfo")) { skipUnimplementedCommand(sc, true);
-    } else if (sc->Check("soundinfo")) { skipUnimplementedCommand(sc, true);
     //} else if (sc->Check("allowcrouch")) { skipUnimplementedCommand(sc, false);
     //} else if (sc->Check("pausemusicinmenus")) { skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("bordertexture")) { skipUnimplementedCommand(sc, true);
-    } else if (sc->Check("f1")) { skipUnimplementedCommand(sc, true);
     //} else if (sc->Check("allowrespawn")) { skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("teamdamage")) { skipUnimplementedCommand(sc, true);
-    } else if (sc->Check("fogdensity")) { skipUnimplementedCommand(sc, true);
-    } else if (sc->Check("outsidefogdensity")) { skipUnimplementedCommand(sc, true);
-    } else if (sc->Check("skyfog")) { skipUnimplementedCommand(sc, true);
     //} else if (sc->Check("teamplayon")) { skipUnimplementedCommand(sc, false);
     //} else if (sc->Check("teamplayoff")) { skipUnimplementedCommand(sc, false);
     //} else if (sc->Check("checkswitchrange")) { skipUnimplementedCommand(sc, false);
     //} else if (sc->Check("nocheckswitchrange")) { skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("translator")) { skipUnimplementedCommand(sc, true); skipUnimplementedCommand(sc, false);
     //} else if (sc->Check("unfreezesingleplayerconversations")) { skipUnimplementedCommand(sc, false);
     //} else if (sc->Check("smoothlighting")) { skipUnimplementedCommand(sc, false);
-    } else if (sc->Check("lightmode")) { skipUnimplementedCommand(sc, true);
     //} else if (sc->Check("Grinding_PolyObj")) { skipUnimplementedCommand(sc, false);
     //} else if (sc->Check("UsePlayerStartZ")) { skipUnimplementedCommand(sc, false);
     //} else if (sc->Check("spawnwithweaponraised")) { skipUnimplementedCommand(sc, false);
@@ -1016,27 +1183,12 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
     //} else if (sc->Check("PrecacheSounds")) { skipUnimplementedCommand(sc, false);
     //} else if (sc->Check("PrecacheClasses")) { skipUnimplementedCommand(sc, false);
     //} else if (sc->Check("intermissionmusic")) { skipUnimplementedCommand(sc, false);
-    } else {
-      if (newFormat) {
-        if (sc->Check("}")) break;
-        //sc->Message(va("unknown mapinfo command '%s', skipping...", *sc->String));
-        if (!sc->GetString()) break;
-        skipUnimplementedCommand(sc, false); // don't force arg, but skip them
-        if (sc->Check("}")) break;
-      }
-      break;
-    }
   }
   //if (newFormat) sc->SetCMode(false);
 
   // second sky defaults to first sky
-  if (info->Sky2Texture == GTextureManager.DefaultTexture) {
-    info->Sky2Texture = info->Sky1Texture;
-  }
-
-  if (info->Flags&VLevelInfo::LIF_DoubleSky) {
-    GTextureManager.SetFrontSkyLayer(info->Sky1Texture);
-  }
+  if (info->Sky2Texture == GTextureManager.DefaultTexture) info->Sky2Texture = info->Sky1Texture;
+  if (info->Flags&VLevelInfo::LIF_DoubleSky) GTextureManager.SetFrontSkyLayer(info->Sky1Texture);
 }
 
 
