@@ -1383,7 +1383,15 @@ static void ParseBase (VStr name, VStr mainiwad) {
   VStr mainWadPath;
 
   // try user-specified iwad
-  if (mainiwad.length() > 0) mainWadPath = FindMainWad(mainiwad);
+  if (mainiwad.length() > 0) {
+    GCon->Logf(NAME_Init, "trying custom IWAD '%s'...", *mainiwad);
+    mainWadPath = FindMainWad(mainiwad);
+    if (mainWadPath.isEmpty()) {
+      GCon->Logf(NAME_Warning, "custom IWAD '%s' not found!", *mainiwad);
+    } else {
+      GCon->Logf(NAME_Init, "found custom IWAD '%s'...", *mainWadPath);
+    }
+  }
 
   if (mainWadPath.length() == 0) {
     for (int f = 0; f < gmi.MainWads.length(); ++f) {
@@ -1512,6 +1520,8 @@ static int countFmtHash (VStr str) {
 void FL_InitOptions () {
   GArgs.AddFileOption("!1-game"); // '!' means "has args, and breaking" (number is argc)
   GArgs.AddFileOption("!1-logfile"); // don't register log file in saves
+  GArgs.AddFileOption("!1-iwad"); // don't register log file in saves
+  GArgs.AddFileOption("!1-iwaddir"); // don't register log file in saves
   GArgs.AddFileOption("!1-skip-autoload");
   GArgs.AddFileOption("!1-skip-auto");
   GArgs.AddFileOption("!1-mode");
