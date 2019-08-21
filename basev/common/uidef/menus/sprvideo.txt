@@ -28,6 +28,17 @@ menudef SpriteVideoOptions {
     cvar = r_fix_sprite_offsets;
   }
 
+  option bool {
+    title = "Fix Projectile Sprites Offset";
+    cvar = r_fix_sprite_offsets_missiles;
+    help =
+      "Projectiles are usually flying things, and offset fixer may"
+      "wrongly fix some of their frames, making them 'jump' in the air."
+      "You can turn this 'ON' if you're playing some mod where most"
+      "projectiles are ground-based."
+      "\cJIf in doubt, leave this 'OFF'.";
+  }
+
   option slider {
     title = "Sprites Delta";
     cvar = r_sprite_fix_delta;
