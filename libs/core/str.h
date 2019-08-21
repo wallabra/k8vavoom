@@ -37,6 +37,8 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 // WARNING! this cannot be bigger than one pointer, or VM will break!
+// WARNING! this is NOT MT-SAFE! if you want to use it from multiple threads,
+//          make sure to `cloneUnique()` it, and pass to each thread its own VStr!
 class VStr {
 public:
   struct Store {
@@ -55,9 +57,7 @@ private:
   inline char *getData () { return dataptr; }
   inline const char *getData () const { return dataptr; }
 
-  inline void incref () const {
-    if (dataptr && store()->rc >= 0) ++store()->rc;
-  }
+  inline void incref () const { if (dataptr && store()->rc >= 0) ++store()->rc; }
 
   // WARNING! may free `data` contents!
   // this also clears `data`
@@ -137,6 +137,17 @@ public:
   explicit VStr (double v);
 
   ~VStr () { clear(); }
+
+  // this will create an unique copy of the string, which (copy) can be used in other threads
+  inline VStr cloneUnique () const {
+    if (!dataptr) return VStr();
+    int len = length();
+    check(len > 0);
+    VStr res;
+    res.setLength(len, 0); // fill with zeroes, why not?
+    memcpy(res.dataptr, dataptr, len);
+    return res;
+  }
 
   void makeImmutable ();
   VStr &makeImmutableRetSelf ();
