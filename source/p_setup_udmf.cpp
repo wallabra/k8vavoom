@@ -651,6 +651,7 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
 
   VStr arg0str;
   bool hasArg0Str = false;
+  bool hasArgs = false;
 
   sc.Expect("{");
   while (!sc.Check("}")) {
@@ -669,11 +670,11 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
     if (Key.strEquCI("dontdraw")) { Flag(L.L.flags, ML_DONTDRAW); continue; }
     if (Key.strEquCI("mapped")) { Flag(L.L.flags, ML_MAPPED); continue; }
     if (Key.strEquCI("special")) { L.L.special = CheckInt(); continue; }
-    if (Key.strEquCI("arg0")) { L.L.arg1 = CheckInt(); continue; }
-    if (Key.strEquCI("arg1")) { L.L.arg2 = CheckInt(); continue; }
-    if (Key.strEquCI("arg2")) { L.L.arg3 = CheckInt(); continue; }
-    if (Key.strEquCI("arg3")) { L.L.arg4 = CheckInt(); continue; }
-    if (Key.strEquCI("arg4")) { L.L.arg5 = CheckInt(); continue; }
+    if (Key.strEquCI("arg0")) { hasArgs = true; L.L.arg1 = CheckInt(); continue; }
+    if (Key.strEquCI("arg1")) { hasArgs = true; L.L.arg2 = CheckInt(); continue; }
+    if (Key.strEquCI("arg2")) { hasArgs = true; L.L.arg3 = CheckInt(); continue; }
+    if (Key.strEquCI("arg3")) { hasArgs = true; L.L.arg4 = CheckInt(); continue; }
+    if (Key.strEquCI("arg4")) { hasArgs = true; L.L.arg5 = CheckInt(); continue; }
     if (Key.strEquCI("sidefront")) { L.L.sidenum[0] = CheckInt(); continue; }
     if (Key.strEquCI("sideback")) { L.L.sidenum[1] = CheckInt(); continue; }
 
@@ -695,6 +696,7 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
         //FIXME: actually, this is valid only for ACS specials
         arg0str = CheckString();
         hasArg0Str = true;
+        hasArgs = true;
         continue;
       }
 
@@ -758,6 +760,15 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
   }
 
   if (L.L.sidenum[0] < 0 && L.L.sidenum[1] < 0) GCon->Logf(NAME_Warning, "%s: UDMF: linedef #%d has no sidedefs", *L.loc.toStringNoCol(), L.index);
+
+  // hack for vanilla-style doom maps (per UDMF specs)
+  if (NS&(NS_Doom|NS_Heretic|NS_Hexen|NS_Strife)) {
+    //FIXME: this should be backed with proper code changes
+    //       see discussion here: https://www.doomworld.com/forum/topic/86102
+    if (!hasArgs && L.L.lineTag > 0) {
+      L.L.arg1 = L.L.lineTag;
+    }
+  }
 
   //FIXME: actually, this is valid only for special runacs range for now; write a proper thingy instead
   if (hasArg0Str && ((L.L.special >= 80 && L.L.special <= 86) || L.L.special == 226)) {
