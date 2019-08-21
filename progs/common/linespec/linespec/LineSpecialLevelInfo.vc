@@ -4243,37 +4243,25 @@ final bool EV_ThingDestroy(int tid, int Extreme) {
 //  EV_HealThing
 //
 //===========================================================================
-
-final bool EV_HealThing(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-  EntityEx A)
-{
-  if (A)
-  {
+final bool EV_HealThing (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, EntityEx A) {
+  if (A) {
     int Max = Arg2;
 
-    if (Max == 0 || !A.bIsPlayer)
-    {
+    if (Max == 0 || !A.bIsPlayer) {
       A.GiveBody(Arg1);
       return true;
     }
-    else if (Max == 1)
-    {
+
+    if (Max == 1) {
       Max = 200;
       class!Health SClass = class!Health(FindClass('Soulsphere'));
-      if (SClass)
-      {
-        Max = SClass.default.MaxAmount;
-      }
+      if (SClass) Max = SClass.default.MaxAmount;
     }
 
-    //  If health is already above max, do nothing
-    if (A.Health < Max)
-    {
+    // if health is already above max, do nothing
+    if (A.Health < Max) {
       A.Health += Arg1;
-      if (A.Health > Max && Max > 0)
-      {
-        A.Health = Max;
-      }
+      if (A.Health > Max && Max > 0) A.Health = Max;
       A.Player.Health = A.Health;
     }
   }
@@ -4281,17 +4269,16 @@ final bool EV_HealThing(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
   return !!A;
 }
 
+
 //==========================================================================
 //
 //  EV_ThingDamage
 //
 //==========================================================================
-
-final int EV_ThingDamage(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
-  Entity Activator)
-{
+final int EV_ThingDamage (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, Entity Activator) {
   return DoThingDamage(Arg1, Arg2, ModToDamageType(Arg3), Activator);
 }
+
 
 //==========================================================================
 //
