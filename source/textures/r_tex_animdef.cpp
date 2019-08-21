@@ -132,6 +132,7 @@ public:
 //
 //==========================================================================
 void ListOfLumps::append (VName txname, int filenum) {
+  if (txname == NAME_None) return;
   ListLump &newlilu = list.alloc();
   newlilu.texName = txname;
   newlilu.lumpFile = filenum;
@@ -266,7 +267,7 @@ static void FillLists () {
 
   // collect all flats
   for (auto &&it : WadNSIterator(WADNS_Flats)) {
-    //GCon->Logf("FLAT: lump=%d; name=<%s> (%s); size=%d", it.lump, *it.getName(), *it.getFullName(), it.getSize());
+    //GCon->Logf(NAME_Debug, "FLAT: lump=%d; name=<%s> (%s); size=%d", it.lump, *it.getName(), *it.getFullName(), it.getSize());
     flatnames.append(it.getName(), it.getFile());
   }
 
@@ -334,6 +335,7 @@ static void BuildTextureRange (int wadfile, VName nfirst, VName nlast, int txtyp
     //k8: this seems to be unnecessary
     //!!!if (it.getFile() > wadfile) continue;
     if (it.getFile() == skipFile) continue;
+    if (!W_IsWADFile(it.getFile())) continue; // ignore non-wad paks
     check(it.getName() == nfirst);
     // skip this file in any case
     skipFile = it.getFile();
