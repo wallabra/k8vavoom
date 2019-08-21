@@ -430,7 +430,12 @@ void VUdmfParser::Parse (VLevel *Level, const mapInfo_t &MInfo) {
     else if (sc.Check("linedef")) ParseLineDef(MInfo);
     else if (sc.Check("sidedef")) ParseSideDef();
     else if (sc.Check("thing")) ParseThing();
-    else sc.Error("Syntax error");
+    else {
+      if (!sc.GetString()) break;
+      sc.Message(va("UDMF: ignoring unknown block '%s'", *sc.String));
+      sc.Expect("{");
+      sc.SkipBracketed(true); // bracket eaten
+    }
   }
 }
 
