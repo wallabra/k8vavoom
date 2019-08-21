@@ -95,7 +95,7 @@ bool VFS_ShouldIgnoreExt (VStr fname) {
 //  VSearchPath::VSearchPath
 //
 //==========================================================================
-VSearchPath::VSearchPath () : iwad(false), basepak(false) {
+VSearchPath::VSearchPath () : iwad(false), basepak(false), normalwad(false) {
 }
 
 

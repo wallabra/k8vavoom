@@ -136,7 +136,11 @@ bool W_IsAuxLump (int lump); // -1 is not aux ;-)
 // returns handle or -1
 int W_FindFirstLumpOccurence (VName lmpname, EWadNamespace NS);
 
+bool W_IsIWADFile (int file);
+bool W_IsWADFile (int file); // not pk3, not disk
+
 bool W_IsIWADLump (int lump);
+bool W_IsWADLump (int lump); // not pk3, not disk
 
 void W_ReadFromLump (int lump, void *dest, int pos, int size);
 VStr W_LoadTextLump (VName name);

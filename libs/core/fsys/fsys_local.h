@@ -56,6 +56,7 @@ class VSearchPath {
 public:
   bool iwad;
   bool basepak;
+  bool normalwad;
 
 public:
   VSearchPath ();

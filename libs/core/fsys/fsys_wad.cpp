@@ -70,6 +70,7 @@ VWadFile::VWadFile ()
   //, LumpInfo(nullptr)
   , lockInited(false)
 {
+  normalwad = true;
 }
 
 

@@ -861,15 +861,53 @@ VStr W_FindMapInAuxuliaries (int *mapnum) {
 
 //==========================================================================
 //
+//  W_IsIWADFile
+//
+//==========================================================================
+bool W_IsIWADFile (int fidx) {
+  MyThreadLocker glocker(&fsys_glock);
+  if (fidx < 0 || fidx >= getSPCount()) return false;
+  return SearchPaths[fidx]->iwad;
+}
+
+
+//==========================================================================
+//
+//  W_IsWADFile
+//
+//  not pk3, not disk
+//
+//==========================================================================
+bool W_IsWADFile (int fidx) {
+  MyThreadLocker glocker(&fsys_glock);
+  if (fidx < 0 || fidx >= getSPCount()) return false;
+  return SearchPaths[fidx]->normalwad;
+}
+
+
+//==========================================================================
+//
+//  W_IsWADLump
+//
+//  not pk3, not disk
+//
+//==========================================================================
+bool W_IsWADLump (int lump) {
+  if (lump < 0) return false;
+  int fidx = FILE_INDEX(lump);
+  return W_IsWADFile(fidx);
+}
+
+
+//==========================================================================
+//
 //  W_IsIWADLump
 //
 //==========================================================================
 bool W_IsIWADLump (int lump) {
   if (lump < 0) return false;
   int fidx = FILE_INDEX(lump);
-  MyThreadLocker glocker(&fsys_glock);
-  if (fidx < 0 || fidx >= getSPCount()) return false;
-  return SearchPaths[fidx]->iwad;
+  return W_IsIWADFile(fidx);
 }
 
 
