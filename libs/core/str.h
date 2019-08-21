@@ -50,7 +50,7 @@ public:
 
   char *dataptr; // string, 0-terminated (0 is not in length); can be null
 
-private:
+protected:
   inline Store *store () { return (dataptr ? (Store *)(dataptr-sizeof(Store)) : nullptr); }
   inline Store *store () const { return (dataptr ? (Store *)(dataptr-sizeof(Store)) : nullptr); }
 
@@ -745,7 +745,7 @@ public:
     Reject = 12,
   };
 
-private:
+protected:
   vuint32 state;
 
 public:
@@ -773,7 +773,7 @@ public:
     return (state == Accept || state == Reject);
   }
 
-private:
+protected:
   static const vuint8 utf8dfa[0x16c];
 };
 

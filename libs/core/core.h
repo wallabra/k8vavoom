@@ -104,6 +104,7 @@
 #include "map.h" // mapping of keys to values
 #include "crc.h" // CRC calcuation
 #include "str.h" // strings
+#include "vstrci.h"
 #include "args.h" // command line arguments
 #include "xstreams.h" // extended streams
 #include "zipstreams.h" // extended streams

@@ -33,6 +33,7 @@ add_library(core STATIC
   names.h
   name.cpp
   str.h
+  vstrci.h
   str.cpp
   stream.h
   stream.cpp

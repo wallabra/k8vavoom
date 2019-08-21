@@ -123,6 +123,20 @@ static __attribute__((unused)) inline vuint32 fnvHashStr (const void *buf) {
 }
 
 
+// fnv-1a: http://www.isthe.com/chongo/tech/comp/fnv/
+static __attribute__((unused)) inline vuint32 fnvHashStrCI (const void *buf) {
+  vuint32 hash = 2166136261U; // fnv offset basis
+  if (buf) {
+    const vuint8 *s = (const vuint8 *)buf;
+    while (*s) {
+      hash ^= (vuint8)locase1251(*s++);
+      hash *= 16777619U; // 32-bit fnv prime
+    }
+  }
+  return (hash ? hash : 1); // this is unlikely, but...
+}
+
+
 // djb
 static __attribute__((unused)) inline vuint32 djbHashBufCI (const void *buf, size_t len) {
   vuint32 hash = 5381;
