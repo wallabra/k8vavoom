@@ -51,6 +51,12 @@ void Sys_Yield ();
 
 int Sys_GetCPUCount ();
 
+#define Sys_EmptyTID  ((vuint32)0xffffffffu)
+
+// get unique ID of the current thread
+// let's hope that 32 bits are enough for thread ids on all OSes, lol
+vuint32 Sys_GetCurrentTID ();
+
 // returns system user name suitable for using as player name
 // never returns empty string
 VStr Sys_GetUserName ();

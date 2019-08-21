@@ -74,12 +74,16 @@ static VStr sys_NormalizeUserName (const char *s) {
 
 #ifndef WIN32
 // normal OS
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE
+#endif
 #include <signal.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <pwd.h>
 #include <sys/stat.h>
+#include <sys/syscall.h>   /* For SYS_xxx definitions */
 #include <sys/time.h>
 #include <sys/types.h>
 #include <time.h>
@@ -342,6 +346,30 @@ int Sys_GetCPUCount () {
 
 //==========================================================================
 //
+//  Sys_GetCurrentTID
+//
+//  let's hope that 32 bits are enough for thread ids on all OSes, lol
+//
+//==========================================================================
+vuint32 Sys_GetCurrentTID () {
+  static __thread pid_t cachedTID = (pid_t)-1;
+  if (__builtin_expect(cachedTID == (pid_t)-1, 0)) {
+#ifdef __linux__
+    cachedTID = syscall(__NR_gettid);
+#else
+// WARNING TO IMPLEMENTORS: this must be *FAST*!
+// this function is used (or will be used) to protect several things
+// like `VStr`, and it should not incur significant overhead, or your
+// port will be dog-slow.
+# error "Please, implement `Sys_GetCurrentTID()` for your OS!"
+#endif
+  }
+  return (vuint32)cachedTID;
+}
+
+
+//==========================================================================
+//
 //  Sys_GetUserName
 //
 //==========================================================================
@@ -354,8 +382,14 @@ VStr Sys_GetUserName () {
   return sys_NormalizeUserName(nullptr);
 }
 
+
 #else
-// shitdoze
+
+//==========================================================================
+//
+//  shitdoze
+//
+//==========================================================================
 
 #include <signal.h>
 #include <fcntl.h>
@@ -689,6 +723,17 @@ int Sys_GetCPUCount () {
   if (res < 1) return 1;
   if (res > 64) return 64; // arbitrary limit
   return res;
+}
+
+//==========================================================================
+//
+//  Sys_GetCurrentTID
+//
+//  let's hope that 32 bits are enough for thread ids on all OSes, lol
+//
+//==========================================================================
+vuint32 Sys_GetCurrentTID () {
+  return (vuint32)GetCurrentThreadId();
 }
 
 
