@@ -91,6 +91,8 @@ public:
     line_t L;
     int V1Index;
     int V2Index;
+    int index;
+    TLocation loc;
   };
 
   struct VParsedSide {
@@ -99,6 +101,8 @@ public:
     VStr MidTexture;
     VStr BotTexture;
     int SectorIndex;
+    int index;
+    TLocation loc;
   };
 
   struct VParsedVertex {
@@ -106,6 +110,19 @@ public:
     float floorz, ceilingz;
     bool hasFloorZ;
     bool hasCeilingZ;
+    unsigned hasXY;
+    int index;
+    TLocation loc;
+    bool checked;
+
+    void checkValidity (int ldefidx) {
+      if (checked) return;
+      if (hasXY != 3) Host_Error("%s: UDMF: incomplete vertex #%d coordinate data (used in linedef #%d)", *loc.toStringNoCol(), index, ldefidx);
+      // be conservative here
+      if (x < -32767 || x > 32767) Host_Error("%s: UDMF: vertex #%d `x` is out of range (%g) (used in linedef #%d)", *loc.toStringNoCol(), index, x, ldefidx);
+      if (y < -32767 || y > 32767) Host_Error("%s: UDMF: vertex #%d `y` is out of range (%g) (used in linedef #%d)", *loc.toStringNoCol(), index, y, ldefidx);
+      checked = true;
+    }
   };
 
   VScriptParser sc;
@@ -426,18 +443,20 @@ void VUdmfParser::Parse (VLevel *Level, const mapInfo_t &MInfo) {
 void VUdmfParser::ParseVertex () {
   // allocate a new vertex
   VParsedVertex &v = ParsedVertexes.Alloc();
-  memset(&v, 0, sizeof(VParsedVertex));
-  bool hasX = false, hasY = false;
+  memset((void *)&v, 0, sizeof(VParsedVertex));
+  v.index = ParsedVertexes.length()-1;
+  v.loc = sc.GetLoc();
+
   sc.Expect("{");
   while (!sc.Check("}")) {
     ParseKey();
     if (Key.strEquCI("x")) {
-      hasX = true;
+      v.hasXY |= 1u;
       v.x = CheckFloat();
       continue;
     }
     if (Key.strEquCI("y")) {
-      hasY = true;
+      v.hasXY |= 2u;
       v.y = CheckFloat();
       continue;
     }
@@ -453,10 +472,13 @@ void VUdmfParser::ParseVertex () {
     }
     keyWarning(WT_VERTEX);
   }
-  if (!hasX || !hasY) sc.HostError("UDMF: incomplete vertex data");
+
+  /*
+  if (!hasX || !hasY) sc.HostError(va("UDMF: incomplete vertex #%d data", ParsedVertexes.length()-1));
   // be conservative here
-  if (v.x < -32767 || v.x > 32767) sc.HostError(va("UDMF: vertex `x` is out of range (%g)", v.x));
-  if (v.y < -32767 || v.y > 32767) sc.HostError(va("UDMF: vertex `y` is out of range (%g)", v.y));
+  if (v.x < -32767 || v.x > 32767) sc.HostError(va("UDMF: vertex #%d `x` is out of range (%g)", ParsedVertexes.length()-1, v.x));
+  if (v.y < -32767 || v.y > 32767) sc.HostError(va("UDMF: vertex #%d `y` is out of range (%g)", ParsedVertexes.length()-1, v.y));
+  */
 }
 
 
@@ -609,6 +631,8 @@ void VUdmfParser::ParseSector (VLevel *Level) {
 void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
   VParsedLine &L = ParsedLines.Alloc();
   memset((void *)&L, 0, sizeof(VParsedLine));
+  L.index = ParsedLines.length()-1;
+  L.loc = sc.GetLoc();
   L.V1Index = -1;
   L.V2Index = -1;
   L.L.locknumber = 0;
@@ -728,6 +752,8 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
     keyWarning(WT_LINE);
   }
 
+  if (L.L.sidenum[0] < 0 && L.L.sidenum[1] < 0) GCon->Logf(NAME_Warning, "%s: UDMF: linedef #%d has no sidedefs", *L.loc.toStringNoCol(), L.index);
+
   //FIXME: actually, this is valid only for special runacs range for now; write a proper thingy instead
   if (hasArg0Str && ((L.L.special >= 80 && L.L.special <= 86) || L.L.special == 226)) {
     VName sn = VName(*arg0str, VName::AddLower); // 'cause script names are lowercased
@@ -749,6 +775,8 @@ void VUdmfParser::ParseLineDef (const mapInfo_t &MInfo) {
 void VUdmfParser::ParseSideDef () {
   VParsedSide &S = ParsedSides.Alloc();
   memset((void *)&S, 0, sizeof(VParsedSide));
+  S.index = ParsedSides.length()-1;
+  S.loc = sc.GetLoc();
   S.TopTexture = "-";
   S.MidTexture = "-";
   S.BotTexture = "-";
@@ -757,6 +785,7 @@ void VUdmfParser::ParseSideDef () {
   S.S.Mid.ScaleX = S.S.Mid.ScaleY = 1.0f;
   float XOffs = 0;
   float YOffs = 0;
+  bool hasSector = false;
 
   sc.Expect("{");
   while (!sc.Check("}")) {
@@ -767,7 +796,7 @@ void VUdmfParser::ParseSideDef () {
     if (Key.strEquCI("texturetop")) { S.TopTexture = CheckString(); continue; }
     if (Key.strEquCI("texturebottom")) { S.BotTexture = CheckString(); continue; }
     if (Key.strEquCI("texturemiddle")) { S.MidTexture = CheckString(); continue; }
-    if (Key.strEquCI("sector")) { S.SectorIndex = CheckInt(); continue; }
+    if (Key.strEquCI("sector")) { hasSector = true; S.SectorIndex = CheckInt(); continue; }
 
     // extensions
     if (NS&(NS_Vavoom|NS_ZDoom|NS_ZDoomTranslated)) {
@@ -795,6 +824,8 @@ void VUdmfParser::ParseSideDef () {
     keyWarning(WT_SIDE);
   }
 
+  if (!hasSector) GCon->Logf(NAME_Warning, "%s: UDMF: side #%d has no assigned sector", *S.loc.toStringNoCol(), S.index);
+
   S.S.Top.TextureOffset += XOffs;
   S.S.Mid.TextureOffset += XOffs;
   S.S.Bot.TextureOffset += XOffs;
@@ -815,16 +846,18 @@ void VUdmfParser::ParseThing () {
 
   VStr arg0str;
   bool hasArg0Str = false;
+  unsigned hasXY = 0; // bitmask
+  bool hasType = false;
 
   sc.Expect("{");
   while (!sc.Check("}")) {
     ParseKey();
 
-    if (Key.strEquCI("x")) { T.x = CheckFloat(); continue; }
-    if (Key.strEquCI("y")) { T.y = CheckFloat(); continue; }
+    if (Key.strEquCI("x")) { hasXY |= 1u; T.x = CheckFloat(); continue; }
+    if (Key.strEquCI("y")) { hasXY |= 2u; T.y = CheckFloat(); continue; }
     if (Key.strEquCI("height")) { T.height = CheckFloat(); continue; }
     if (Key.strEquCI("angle")) { T.angle = CheckInt(); continue; }
-    if (Key.strEquCI("type")) { T.type = CheckInt(); continue; }
+    if (Key.strEquCI("type")) { hasType = true; T.type = CheckInt(); continue; }
     if (Key.strEquCI("ambush")) { Flag(T.options, MTF_AMBUSH); continue; }
     if (Key.strEquCI("single")) { Flag(T.options, MTF_GSINGLE); continue; }
     if (Key.strEquCI("dm")) { Flag(T.options, MTF_GDEATHMATCH); continue; }
@@ -907,6 +940,9 @@ void VUdmfParser::ParseThing () {
     keyWarning(WT_THING);
   }
 
+  if (hasXY != 3) sc.HostError(va("UDMF: thing #%d has no coordinates set", ParsedThings.length()-1));
+  if (!hasType) sc.HostError(va("UDMF: thing #%d has no type set", ParsedThings.length()-1));
+
   //FIXME: actually, this is valid only for special runacs range for now; write a proper thingy instead
   if (hasArg0Str && ((T.special >= 80 && T.special <= 86) || T.special == 226)) {
     VName sn = VName(*arg0str, VName::AddLower); // 'cause script names are lowercased
@@ -931,14 +967,33 @@ void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
 
   if (Parser.bExtended) LevelFlags |= LF_Extended;
 
-  // copy vertexes
+  if (Parser.ParsedVertexes.length() == 0) Host_Error("UDMF: map has no vertices!");
+
   NumVertexes = Parser.ParsedVertexes.length();
   Vertexes = new TVec[NumVertexes];
+  memset((void *)Vertexes, 0, sizeof(Vertexes[0]));
+
+  // check if any line refers to incomplete vertex
+  for (auto &&pl : Parser.ParsedLines) {
+    if (pl.V1Index < 0 || pl.V1Index >= NumVertexes) Host_Error("%s: UDMF: bad linedef #%d vertex index %d", *pl.loc.toStringNoCol(), pl.index, pl.V1Index);
+    if (pl.V2Index < 0 || pl.V2Index >= NumVertexes) Host_Error("%s: UDMF: bad linedef #%d vertex index %d", *pl.loc.toStringNoCol(), pl.index, pl.V2Index);
+    Parser.ParsedVertexes[pl.V1Index].checkValidity(pl.index);
+    Parser.ParsedVertexes[pl.V2Index].checkValidity(pl.index);
+  }
+
+  // copy vertexes
   //memcpy(Vertexes, Parser.ParsedVertexes.Ptr(), sizeof(TVec)*NumVertexes);
   bool hasVertexHeights = false;
-  for (int f = 0; f < NumVertexes; ++f) {
-    Vertexes[f] = TVec(Parser.ParsedVertexes[f].x, Parser.ParsedVertexes[f].y);
-    hasVertexHeights = hasVertexHeights || Parser.ParsedVertexes[f].hasFloorZ || Parser.ParsedVertexes[f].hasCeilingZ;
+  for (auto &&it : Parser.ParsedVertexes.itemsIdx()) {
+    const VUdmfParser::VParsedVertex &pv = it.value();
+    if (pv.checked) {
+      // this vertex is used
+      Vertexes[it.index()] = TVec(pv.x, pv.y);
+      hasVertexHeights = (hasVertexHeights || pv.hasFloorZ || pv.hasCeilingZ);
+    } else {
+      // this vertex is unused, assign invalid coords to it
+      Vertexes[it.index()] = TVec(-99999, -99999);
+    }
   }
 
   // check for duplicate vertices
@@ -950,7 +1005,7 @@ void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
     auto ip = vmap.find(vi);
     if (ip) {
       vremap.put(f, *ip);
-      GCon->Logf("UDMF: vertex %d is duplicate of vertex %d", f, *ip);
+      GCon->Logf(NAME_Warning, "%s: UDMF: vertex %d is duplicate of vertex %d (defined at %s)", *Parser.ParsedVertexes[f].loc.toStringNoCol(), f, *ip, *Parser.ParsedVertexes[*ip].loc.toStringNoCol());
     } else {
       vremap.put(f, f);
       vmap.put(vi, f);
@@ -971,12 +1026,7 @@ void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
   Lines = new line_t[NumLines];
   for (int i = 0; i < NumLines; ++i) {
     Lines[i] = Parser.ParsedLines[i].L;
-    if (Parser.ParsedLines[i].V1Index < 0 || Parser.ParsedLines[i].V1Index >= NumVertexes) {
-      Host_Error("Bad vertex index %d (07)", Parser.ParsedLines[i].V1Index);
-    }
-    if (Parser.ParsedLines[i].V2Index < 0 || Parser.ParsedLines[i].V2Index >= NumVertexes) {
-      Host_Error("Bad vertex index %d (08)", Parser.ParsedLines[i].V2Index);
-    }
+    // vertex index validity already checked
 
     auto ip0 = vremap.find(Parser.ParsedLines[i].V1Index);
     if (!ip0 || *ip0 < 0 || *ip0 >= NumVertexes) Sys_Error("UDMF: internal error (v0)");
@@ -1002,13 +1052,17 @@ void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
   CreateSides();
   side_t *sd = Sides;
   for (int i = 0; i < NumSides; ++i, ++sd) {
-    if (sd->BottomTexture < 0 || sd->BottomTexture >= Parser.ParsedSides.length()) Host_Error("Bad sidedef index (broken UDMF)");
+    if (sd->BottomTexture < 0 || sd->BottomTexture >= Parser.ParsedSides.length()) {
+      Host_Error("UDMF: bad sidedef index %d (broken UDMF)", (int)sd->BottomTexture);
+    }
     VUdmfParser::VParsedSide &Src = Parser.ParsedSides[sd->BottomTexture];
     int Spec = sd->MidTexture;
     int Tag = sd->TopTexture;
     *sd = Src.S;
 
-    if (Src.SectorIndex < 0 || Src.SectorIndex >= NumSectors) Host_Error("Bad sector index %d", Src.SectorIndex);
+    if (Src.SectorIndex < 0 || Src.SectorIndex >= NumSectors) {
+      Host_Error("%s: UDFM: bad sector index %d in sidedef #%d", *Src.loc.toStringNoCol(), Src.SectorIndex, Src.index);
+    }
     sd->Sector = &Sectors[Src.SectorIndex];
 
     switch (Spec) {
