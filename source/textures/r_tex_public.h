@@ -128,6 +128,8 @@ public:
 
   // used to replicate translation tables in more efficient way
   struct VTransCmd {
+    // 0: MapToRange
+    // 1: MapToColors
     vuint8 Type;
     vuint8 Start;
     vuint8 End;
@@ -144,12 +146,12 @@ public:
 
   void Clear ();
   void CalcCrc ();
-  void Serialise (VStream &);
-  void BuildPlayerTrans (int, int, int);
-  void MapToRange (int, int, int, int);
-  void MapToColors (int, int, int, int, int, int, int, int);
-  void BuildBloodTrans (int);
-  void AddTransString (VStr);
+  void Serialise (VStream &Strm);
+  void BuildPlayerTrans (int Start, int End, int Col);
+  void MapToRange (int AStart, int AEnd, int ASrcStart, int ASrcEnd);
+  void MapToColors (int AStart, int AEnd, int AR1, int AG1, int AB1, int AR2, int AG2, int AB2);
+  void BuildBloodTrans (int Col);
+  void AddTransString (VStr Str);
 
   inline const vuint8 *GetTable () const { return Table; }
   inline const rgba_t *GetPalette () const { return Palette; }

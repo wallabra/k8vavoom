@@ -33,7 +33,7 @@
 //  VTextureTranslation::VTextureTranslation
 //
 //==========================================================================
-VTextureTranslation::VTextureTranslation()
+VTextureTranslation::VTextureTranslation ()
   : Crc(0)
   , nextInCache(-1)
   , TranslStart(0)
@@ -189,10 +189,7 @@ void VTextureTranslation::MapToRange (int AStart, int AEnd, int ASrcStart, int A
 //  VTextureTranslation::MapToColors
 //
 //==========================================================================
-void VTextureTranslation::MapToColors (int AStart, int AEnd,
-                                        int AR1, int AG1, int AB1,
-                                        int AR2, int AG2, int AB2)
-{
+void VTextureTranslation::MapToColors (int AStart, int AEnd, int AR1, int AG1, int AB1, int AR2, int AG2, int AB2) {
   int Start;
   int End;
   int R1, G1, B1;
@@ -274,4 +271,61 @@ void VTextureTranslation::BuildBloodTrans (int Col) {
   }
   CalcCrc();
   Color = Col;
+}
+
+
+//==========================================================================
+//
+//  CheckChar
+//
+//==========================================================================
+static bool CheckChar (const char *&pStr, char Chr) {
+  // skip whitespace
+  while (*pStr && *((const vuint8 *)pStr) <= ' ') ++pStr;
+  if (*pStr != Chr) return false;
+  ++pStr;
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VTextureTranslation::AddTransString
+//
+//==========================================================================
+void VTextureTranslation::AddTransString (VStr Str) {
+  const char *pStr = *Str;
+
+  // parse start and end of the range
+  int Start = strtol(pStr, (char **)&pStr, 10);
+  if (!CheckChar(pStr, ':')) return;
+
+  int End = strtol(pStr, (char **)&pStr, 10);
+  if (!CheckChar(pStr, '=')) return;
+
+  /*if (CheckChar(pStr, '%')) {
+    // desaturated crap
+  } else*/
+  if (!CheckChar(pStr, '[')) {
+    int SrcStart = strtol(pStr, (char **)&pStr, 10);
+    if (!CheckChar(pStr, ':')) return;
+    int SrcEnd = strtol(pStr, (char **)&pStr, 10);
+    MapToRange(Start, End, SrcStart, SrcEnd);
+  } else {
+    int R1 = strtol(pStr, (char **)&pStr, 10);
+    if (!CheckChar(pStr, ',')) return;
+    int G1 = strtol(pStr, (char **)&pStr, 10);
+    if (!CheckChar(pStr, ',')) return;
+    int B1 = strtol(pStr, (char **)&pStr, 10);
+    if (!CheckChar(pStr, ']')) return;
+    if (!CheckChar(pStr, ':')) return;
+    if (!CheckChar(pStr, '[')) return;
+    int R2 = strtol(pStr, (char **)&pStr, 10);
+    if (!CheckChar(pStr, ',')) return;
+    int G2 = strtol(pStr, (char **)&pStr, 10);
+    if (!CheckChar(pStr, ',')) return;
+    int B2 = strtol(pStr, (char **)&pStr, 10);
+    if (!CheckChar(pStr, ']')) return;
+    MapToColors(Start, End, R1, G1, B1, R2, G2, B2);
+  }
 }
