@@ -153,6 +153,7 @@ set(TEXTURELIB_SOURCES
   textures/r_tex_raw.cpp
   textures/r_tex_tga.cpp
   textures/r_tex_warp.cpp
+  textures/r_tex_translation.cpp
 )
 
 set(RENDERBASE_SOURCES
