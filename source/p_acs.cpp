@@ -6433,6 +6433,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       if (sp[-2] < 0) {
         if (Activator && Activator->IsPlayer()) {
           sp[-2] = (Activator->Player ? Activator->Player->AcsGetInput(sp[-1]) : 0);
+          //GCon->Logf(NAME_Debug, "PIP (0x%04x): 0x%08x", (unsigned)sp[-1], (unsigned)sp[-2]);
         } else {
           sp[-2] = 0;
         }
