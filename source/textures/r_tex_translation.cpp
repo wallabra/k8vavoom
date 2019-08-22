@@ -141,6 +141,29 @@ void VTextureTranslation::BuildPlayerTrans (int Start, int End, int Col) {
 
 //==========================================================================
 //
+//  VTextureTranslation::BuildBloodTrans
+//
+//==========================================================================
+void VTextureTranslation::BuildBloodTrans (int Col) {
+  vuint8 r = (Col>>16)&255;
+  vuint8 g = (Col>>8)&255;
+  vuint8 b = Col&255;
+  // don't remap color 0
+  for (int i = 1; i < 256; ++i) {
+    int Bright = max3(r_palette[i].r, r_palette[i].g, r_palette[i].b);
+    Palette[i].r = r*Bright/255;
+    Palette[i].g = g*Bright/255;
+    Palette[i].b = b*Bright/255;
+    Table[i] = R_LookupRGB(Palette[i].r, Palette[i].g, Palette[i].b);
+    //Table[i] = R_LookupRGB(255, 0, 0);
+  }
+  CalcCrc();
+  Color = Col;
+}
+
+
+//==========================================================================
+//
 //  VTextureTranslation::MapToRange
 //
 //==========================================================================
@@ -308,24 +331,77 @@ void VTextureTranslation::MapDesaturated (int AStart, int AEnd, float rs, float 
 
 //==========================================================================
 //
-//  VTextureTranslation::BuildBloodTrans
+//  VTextureTranslation::MapBlended
 //
 //==========================================================================
-void VTextureTranslation::BuildBloodTrans (int Col) {
-  vuint8 r = (Col>>16)&255;
-  vuint8 g = (Col>>8)&255;
-  vuint8 b = Col&255;
-  // don't remap color 0
-  for (int i = 1; i < 256; ++i) {
-    int Bright = max3(r_palette[i].r, r_palette[i].g, r_palette[i].b);
-    Palette[i].r = r*Bright/255;
-    Palette[i].g = g*Bright/255;
-    Palette[i].b = b*Bright/255;
-    Table[i] = R_LookupRGB(Palette[i].r, Palette[i].g, Palette[i].b);
-    //Table[i] = R_LookupRGB(255, 0, 0);
+void VTextureTranslation::MapBlended (int AStart, int AEnd, int R, int G, int B) {
+  AStart = clampval(AStart, 0, 255);
+  AEnd = clampval(AEnd, 0, 255);
+  R = clampval(R, 0, 255);
+  G = clampval(G, 0, 255);
+  B = clampval(B, 0, 255);
+  // swap range if necesary
+  if (AStart > AEnd) {
+    int itmp = AStart;
+    AStart = AEnd;
+    AEnd = itmp;
   }
+  for (int i = AStart; i <= AEnd; ++i) {
+    float gray = colorIntensity(r_palette[i].r, r_palette[i].g, r_palette[i].b)/255.0f;
+    Palette[i].r = clampToByte((int)(R*gray));
+    Palette[i].g = clampToByte((int)(G*gray));
+    Palette[i].b = clampToByte((int)(B*gray));
+    Table[i] = R_LookupRGB(Palette[i].r, Palette[i].g, Palette[i].b);
+  }
+  VTransCmd &C = Commands.Alloc();
+  C.Type = 3;
+  C.Start = AStart;
+  C.End = AEnd;
+  C.R1 = R;
+  C.G1 = G;
+  C.B1 = B;
   CalcCrc();
-  Color = Col;
+}
+
+
+//==========================================================================
+//
+//  VTextureTranslation::MapTinted
+//
+//==========================================================================
+void VTextureTranslation::MapTinted (int AStart, int AEnd, int R, int G, int B, int Amount) {
+  AStart = clampval(AStart, 0, 255);
+  AEnd = clampval(AEnd, 0, 255);
+  R = clampval(R, 0, 255);
+  G = clampval(G, 0, 255);
+  B = clampval(B, 0, 255);
+  Amount = clampval(Amount, 0, 100);
+  // swap range if necesary
+  if (AStart > AEnd) {
+    int itmp = AStart;
+    AStart = AEnd;
+    AEnd = itmp;
+  }
+  const float origAmount = float(100-Amount)/100.0f;
+  const float rAmount = float(R)*(float(Amount)/100.0f);
+  const float gAmount = float(G)*(float(Amount)/100.0f);
+  const float bAmount = float(B)*(float(Amount)/100.0f);
+  //translatedcolor = originalcolor * (100-amount)% + (r, g, b) * amount%
+  for (int i = AStart; i <= AEnd; ++i) {
+    Palette[i].r = clampToByte((int)(r_palette[i].r*origAmount+rAmount));
+    Palette[i].g = clampToByte((int)(r_palette[i].g*origAmount+gAmount));
+    Palette[i].b = clampToByte((int)(r_palette[i].b*origAmount+bAmount));
+    Table[i] = R_LookupRGB(Palette[i].r, Palette[i].g, Palette[i].b);
+  }
+  VTransCmd &C = Commands.Alloc();
+  C.Type = 4;
+  C.Start = AStart;
+  C.End = AEnd;
+  C.R1 = R;
+  C.G1 = G;
+  C.B1 = B;
+  C.R2 = Amount;
+  CalcCrc();
 }
 
 
@@ -408,7 +484,7 @@ void VTextureTranslation::AddTransString (VStr Str) {
   if (!CheckChar(pStr, '=')) return;
 
   if (CheckChar(pStr, '%')) {
-    // desaturated crap
+    // desaturated
     if (!CheckChar(pStr, '[')) return;
     float rs = ExpectFloat(pStr);
     if (rs < 0) return;
@@ -432,6 +508,34 @@ void VTextureTranslation::AddTransString (VStr Str) {
     if (!CheckChar(pStr, ']')) return;
     //GCon->Logf(NAME_Debug, "DESAT: <%s>", *Str);
     MapDesaturated(Start, End, rs, gs, bs, re, ge, be);
+  } else if (CheckChar(pStr, '#')) {
+    // blended
+    if (!CheckChar(pStr, '[')) return;
+    int R1 = ExpectByte(pStr);
+    if (R1 < 0) return;
+    if (!CheckChar(pStr, ',')) return;
+    int G1 = ExpectByte(pStr);
+    if (G1 < 0) return;
+    if (!CheckChar(pStr, ',')) return;
+    int B1 = ExpectByte(pStr);
+    if (B1 < 0) return;
+    if (!CheckChar(pStr, ']')) return;
+    MapBlended(Start, End, R1, G1, B1);
+  } else if (CheckChar(pStr, '@')) {
+    // tinted
+    int Amount = ExpectByte(pStr);
+    if (Amount < 0) return;
+    if (!CheckChar(pStr, '[')) return;
+    int R1 = ExpectByte(pStr);
+    if (R1 < 0) return;
+    if (!CheckChar(pStr, ',')) return;
+    int G1 = ExpectByte(pStr);
+    if (G1 < 0) return;
+    if (!CheckChar(pStr, ',')) return;
+    int B1 = ExpectByte(pStr);
+    if (B1 < 0) return;
+    if (!CheckChar(pStr, ']')) return;
+    MapTinted(Start, End, R1, G1, B1, Amount);
   } else if (!CheckChar(pStr, '[')) {
     int SrcStart = ExpectByte(pStr);
     if (SrcStart < 0) return;

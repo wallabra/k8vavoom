@@ -128,9 +128,11 @@ public:
 
   // used to replicate translation tables in more efficient way
   struct VTransCmd {
-    // 0: MapToRange
-    // 1: MapToColors
-    // 2: MapDesaturated (1/2 ares scaled from [0..2] range)
+    // 0: MapToRange (only Start/End matters)
+    // 1: MapToColors (everything matters)
+    // 2: MapDesaturated (RGBs are scaled from [0..2] range)
+    // 3: MapBlended (only R1,G1,B1 matters)
+    // 4: MapTinted (R2 is amount in percents, G2 and B2 doesn't matter)
     vuint8 Type;
     vuint8 Start;
     vuint8 End;
@@ -152,6 +154,8 @@ public:
   void MapToRange (int AStart, int AEnd, int ASrcStart, int ASrcEnd);
   void MapToColors (int AStart, int AEnd, int AR1, int AG1, int AB1, int AR2, int AG2, int AB2);
   void MapDesaturated (int AStart, int AEnd, float rs, float gs, float bs, float re, float ge, float be);
+  void MapBlended (int AStart, int AEnd, int R, int G, int B);
+  void MapTinted (int AStart, int AEnd, int R, int G, int B, int Amount);
   void BuildBloodTrans (int Col);
   void AddTransString (VStr Str);
 
