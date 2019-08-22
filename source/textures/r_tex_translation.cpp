@@ -149,6 +149,10 @@ void VTextureTranslation::MapToRange (int AStart, int AEnd, int ASrcStart, int A
   int End;
   int SrcStart;
   int SrcEnd;
+  AStart = clampval(AStart, 0, 255);
+  AEnd = clampval(AEnd, 0, 255);
+  ASrcStart = clampval(ASrcStart, 0, 255);
+  ASrcEnd = clampval(ASrcEnd, 0, 255);
   // swap range if necesary
   if (AStart > AEnd) {
     Start = AEnd;
@@ -169,8 +173,8 @@ void VTextureTranslation::MapToRange (int AStart, int AEnd, int ASrcStart, int A
   }
   float CurCol = SrcStart;
   float ColStep = (float(SrcEnd)-float(SrcStart))/(float(End)-float(Start));
-  for (int i = Start; i < End; ++i, CurCol += ColStep) {
-    Table[i] = int(CurCol);
+  for (int i = Start; i <= End; ++i, CurCol += ColStep) {
+    Table[i] = clampToByte(int(CurCol));
     Palette[i] = r_palette[Table[i]];
   }
   //for (int f = 0; f < 256; ++f) Table[f] = R_LookupRGB(255, 0, 0);
@@ -194,6 +198,14 @@ void VTextureTranslation::MapToColors (int AStart, int AEnd, int AR1, int AG1, i
   int End;
   int R1, G1, B1;
   int R2, G2, B2;
+  AStart = clampval(AStart, 0, 255);
+  AEnd = clampval(AEnd, 0, 255);
+  AR1 = clampval(AR1, 0, 255);
+  AG1 = clampval(AG1, 0, 255);
+  AB1 = clampval(AB1, 0, 255);
+  AR2 = clampval(AR2, 0, 255);
+  AG2 = clampval(AG2, 0, 255);
+  AB2 = clampval(AB2, 0, 255);
   // swap range if necesary
   if (AStart > AEnd) {
     Start = AEnd;
@@ -231,10 +243,10 @@ void VTextureTranslation::MapToColors (int AStart, int AEnd, int AR1, int AG1, i
   if (!isFiniteF(RStep)) RStep = 0;
   if (!isFiniteF(GStep)) GStep = 0;
   if (!isFiniteF(BStep)) BStep = 0;
-  for (int i = Start; i < End; i++, CurR += RStep, CurG += GStep, CurB += BStep) {
-    Palette[i].r = int(CurR);
-    Palette[i].g = int(CurG);
-    Palette[i].b = int(CurB);
+  for (int i = Start; i <= End; ++i, CurR += RStep, CurG += GStep, CurB += BStep) {
+    Palette[i].r = clampToByte(int(CurR));
+    Palette[i].g = clampToByte(int(CurG));
+    Palette[i].b = clampToByte(int(CurB));
     Table[i] = R_LookupRGB(Palette[i].r, Palette[i].g, Palette[i].b);
   }
   VTransCmd &C = Commands.Alloc();
@@ -247,6 +259,49 @@ void VTextureTranslation::MapToColors (int AStart, int AEnd, int AR1, int AG1, i
   C.R2 = R2;
   C.G2 = G2;
   C.B2 = B2;
+  CalcCrc();
+}
+
+
+//==========================================================================
+//
+//  VTextureTranslation::MapDesaturated
+//
+//==========================================================================
+void VTextureTranslation::MapDesaturated (int AStart, int AEnd, float rs, float gs, float bs, float re, float ge, float be) {
+  AStart = clampval(AStart, 0, 255);
+  AEnd = clampval(AEnd, 0, 255);
+  rs = clampval(rs, 0.0f, 2.0f);
+  gs = clampval(gs, 0.0f, 2.0f);
+  bs = clampval(bs, 0.0f, 2.0f);
+  re = clampval(re, 0.0f, 2.0f);
+  ge = clampval(ge, 0.0f, 2.0f);
+  be = clampval(be, 0.0f, 2.0f);
+  // swap range if necesary
+  if (AStart > AEnd) {
+    int itmp = AStart;
+    AStart = AEnd;
+    AEnd = itmp;
+  }
+  //GCon->Logf(NAME_Debug, "DESAT: %d:%d [%g,%g,%g]-[%g,%g,%g]", AStart, AEnd, rs, gs, bs, re, ge, be);
+  for (int i = AStart; i <= AEnd; ++i) {
+    float gray = colorIntensity(r_palette[i].r, r_palette[i].g, r_palette[i].b)/255.0f;
+    Palette[i].r = clampToByte((int)((rs+gray*(re-rs))*255.0f));
+    Palette[i].g = clampToByte((int)((gs+gray*(ge-gs))*255.0f));
+    Palette[i].b = clampToByte((int)((bs+gray*(be-bs))*255.0f));
+    Table[i] = R_LookupRGB(Palette[i].r, Palette[i].g, Palette[i].b);
+    //GCon->Logf(NAME_Debug, "  i=%d; gray=%g; (%d,%d,%d) -> (%d,%d,%d)", i, gray, r_palette[i].r, r_palette[i].g, r_palette[i].b, Palette[i].r, Palette[i].g, Palette[i].b);
+  }
+  VTransCmd &C = Commands.Alloc();
+  C.Type = 2;
+  C.Start = AStart;
+  C.End = AEnd;
+  C.R1 = clampToByte((int)(rs*128.0f));
+  C.G1 = clampToByte((int)(gs*128.0f));
+  C.B1 = clampToByte((int)(bs*128.0f));
+  C.R2 = clampToByte((int)(re*128.0f));
+  C.G2 = clampToByte((int)(ge*128.0f));
+  C.B2 = clampToByte((int)(be*128.0f));
   CalcCrc();
 }
 
@@ -276,15 +331,62 @@ void VTextureTranslation::BuildBloodTrans (int Col) {
 
 //==========================================================================
 //
+//  SkipSpaces
+//
+//==========================================================================
+static inline void SkipSpaces (const char *&pStr) {
+  // skip whitespace
+  while (*pStr && *((const vuint8 *)pStr) <= ' ') ++pStr;
+}
+
+
+//==========================================================================
+//
 //  CheckChar
 //
 //==========================================================================
 static bool CheckChar (const char *&pStr, char Chr) {
-  // skip whitespace
-  while (*pStr && *((const vuint8 *)pStr) <= ' ') ++pStr;
+  SkipSpaces(pStr);
   if (*pStr != Chr) return false;
   ++pStr;
   return true;
+}
+
+
+//==========================================================================
+//
+//  ExpectByte
+//
+//  returns negative number on error
+//
+//==========================================================================
+static int ExpectByte (const char *&pStr) {
+  SkipSpaces(pStr);
+  if (pStr[0] < '0' || pStr[0] > '9') return -1;
+  const char *end;
+  int res = strtol(pStr, (char **)&end, 10);
+  if (end == pStr) return -1;
+  pStr = end;
+  return clampval(res, 0, 255);
+}
+
+
+//==========================================================================
+//
+//  ExpectFloat
+//
+//  returns negative number on error
+//
+//==========================================================================
+static float ExpectFloat (const char *&pStr) {
+  SkipSpaces(pStr);
+  if (pStr[0] != '.' && (pStr[0] < '0' || pStr[0] > '9')) return -1;
+  const char *end;
+  float res = strtof(pStr, (char **)&end);
+  if (end == pStr) return -1;
+  if (!isFiniteF(res)) return -1;
+  pStr = end;
+  return res;
 }
 
 
@@ -297,34 +399,66 @@ void VTextureTranslation::AddTransString (VStr Str) {
   const char *pStr = *Str;
 
   // parse start and end of the range
-  int Start = strtol(pStr, (char **)&pStr, 10);
+  int Start = ExpectByte(pStr);
+  if (Start < 0) return;
   if (!CheckChar(pStr, ':')) return;
 
-  int End = strtol(pStr, (char **)&pStr, 10);
+  int End = ExpectByte(pStr);
+  if (End < 0) return;
   if (!CheckChar(pStr, '=')) return;
 
-  /*if (CheckChar(pStr, '%')) {
+  if (CheckChar(pStr, '%')) {
     // desaturated crap
-  } else*/
-  if (!CheckChar(pStr, '[')) {
-    int SrcStart = strtol(pStr, (char **)&pStr, 10);
-    if (!CheckChar(pStr, ':')) return;
-    int SrcEnd = strtol(pStr, (char **)&pStr, 10);
-    MapToRange(Start, End, SrcStart, SrcEnd);
-  } else {
-    int R1 = strtol(pStr, (char **)&pStr, 10);
+    if (!CheckChar(pStr, '[')) return;
+    float rs = ExpectFloat(pStr);
+    if (rs < 0) return;
     if (!CheckChar(pStr, ',')) return;
-    int G1 = strtol(pStr, (char **)&pStr, 10);
+    float gs = ExpectFloat(pStr);
+    if (gs < 0) return;
     if (!CheckChar(pStr, ',')) return;
-    int B1 = strtol(pStr, (char **)&pStr, 10);
+    float bs = ExpectFloat(pStr);
+    if (bs < 0) return;
     if (!CheckChar(pStr, ']')) return;
     if (!CheckChar(pStr, ':')) return;
     if (!CheckChar(pStr, '[')) return;
-    int R2 = strtol(pStr, (char **)&pStr, 10);
+    float re = ExpectFloat(pStr);
+    if (re < 0) return;
     if (!CheckChar(pStr, ',')) return;
-    int G2 = strtol(pStr, (char **)&pStr, 10);
+    float ge = ExpectFloat(pStr);
+    if (ge < 0) return;
     if (!CheckChar(pStr, ',')) return;
-    int B2 = strtol(pStr, (char **)&pStr, 10);
+    float be = ExpectFloat(pStr);
+    if (be < 0) return;
+    if (!CheckChar(pStr, ']')) return;
+    //GCon->Logf(NAME_Debug, "DESAT: <%s>", *Str);
+    MapDesaturated(Start, End, rs, gs, bs, re, ge, be);
+  } else if (!CheckChar(pStr, '[')) {
+    int SrcStart = ExpectByte(pStr);
+    if (SrcStart < 0) return;
+    if (!CheckChar(pStr, ':')) return;
+    int SrcEnd = ExpectByte(pStr);
+    if (SrcEnd < 0) return;
+    MapToRange(Start, End, SrcStart, SrcEnd);
+  } else {
+    int R1 = ExpectByte(pStr);
+    if (R1 < 0) return;
+    if (!CheckChar(pStr, ',')) return;
+    int G1 = ExpectByte(pStr);
+    if (G1 < 0) return;
+    if (!CheckChar(pStr, ',')) return;
+    int B1 = ExpectByte(pStr);
+    if (B1 < 0) return;
+    if (!CheckChar(pStr, ']')) return;
+    if (!CheckChar(pStr, ':')) return;
+    if (!CheckChar(pStr, '[')) return;
+    int R2 = ExpectByte(pStr);
+    if (R2 < 0) return;
+    if (!CheckChar(pStr, ',')) return;
+    int G2 = ExpectByte(pStr);
+    if (G2 < 0) return;
+    if (!CheckChar(pStr, ',')) return;
+    int B2 = ExpectByte(pStr);
+    if (B2 < 0) return;
     if (!CheckChar(pStr, ']')) return;
     MapToColors(Start, End, R1, G1, B1, R2, G2, B2);
   }

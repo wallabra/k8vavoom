@@ -130,6 +130,7 @@ public:
   struct VTransCmd {
     // 0: MapToRange
     // 1: MapToColors
+    // 2: MapDesaturated (1/2 ares scaled from [0..2] range)
     vuint8 Type;
     vuint8 Start;
     vuint8 End;
@@ -150,6 +151,7 @@ public:
   void BuildPlayerTrans (int Start, int End, int Col);
   void MapToRange (int AStart, int AEnd, int ASrcStart, int ASrcEnd);
   void MapToColors (int AStart, int AEnd, int AR1, int AG1, int AB1, int AR2, int AG2, int AB2);
+  void MapDesaturated (int AStart, int AEnd, float rs, float gs, float bs, float re, float ge, float be);
   void BuildBloodTrans (int Col);
   void AddTransString (VStr Str);
 

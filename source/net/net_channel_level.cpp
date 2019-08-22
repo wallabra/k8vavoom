@@ -618,6 +618,7 @@ void VLevelChannel::Update () {
       Msg.WriteInt(C.Type/*, 2*/);
            if (C.Type == 0) Msg << C.Start << C.End << C.R1 << C.R2;
       else if (C.Type == 1) Msg << C.Start << C.End << C.R1 << C.G1 << C.B1 << C.R2 << C.G2 << C.B2;
+      else if (C.Type == 2) Msg << C.Start << C.End << C.R1 << C.G1 << C.B1 << C.R2 << C.G2 << C.B2;
       Rep[j] = C;
     }
     if (Msg.NeedSplit()) Msg.SendSplitMessage();
@@ -897,6 +898,17 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
               vuint8 B2;
               Msg << Start << End << R1 << G1 << B1 << R2 << G2 << B2;
               Tr->MapToColors(Start, End, R1, G1, B1, R2, G2, B2);
+            } else if (Type == 2) {
+              vuint8 Start;
+              vuint8 End;
+              vuint8 R1;
+              vuint8 G1;
+              vuint8 B1;
+              vuint8 R2;
+              vuint8 G2;
+              vuint8 B2;
+              Msg << Start << End << R1 << G1 << B1 << R2 << G2 << B2;
+              Tr->MapDesaturated(Start, End, R1/128.0f, G1/128.0f, B1/128.0f, R2/128.0f, G2/128.0f, B2/128.0f);
             }
           }
         }
