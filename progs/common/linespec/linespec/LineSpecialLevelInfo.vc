@@ -6596,7 +6596,8 @@ override void SpawnMapThing (mthing_t *mthing) {
   }
 
   // spawn it
-  Thinker thg = SpawnThinker(moClass, default, default, mthing, AllowReplace:false);
+  EntityEx thg = EntityEx(SpawnThinker(moClass, default, default, mthing, AllowReplace:false));
+  if (thg && thg.bFixMapthingPos) thg.FixMapthingPos();
   //print("SpawnMapThing: '%C' (%d) height=%f (defheight=%f); org=%s", thg, mthing.type, thg.Height, moClass.default.Height, thg.Origin);
   //if (moClass.default.bSolid && !thg.bSolid) print("  ****FUUUUUUU");
 

@@ -198,7 +198,7 @@
     <flag name="DontGib" property="bDontGib" />
     <flag name="DontSplash" property="bNoSplash" />
     <flag name="DontOverlap" property="bDontOverlap" />
-    <flag_unsupported name="FixMapThingPos" warning="true" />
+    <flag name="FixMapThingPos" property="bFixMapthingPos" />
     <flag name="FullVolActive" property="bFullVolActive" />
     <flag name="FullVolDeath" property="bFullVolDeath" />
     <flag name="NoWallBounceSnd" property="bNoWallBounceSnd" />

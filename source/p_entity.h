@@ -516,6 +516,7 @@ public:
   TVec FakeZMovement ();
   VEntity *CheckOnmobj ();
   bool CheckSides (TVec);
+  bool FixMapthingPos ();
   void CheckDropOff (float &, float &);
 
   // this is used to move chase camera
@@ -607,6 +608,7 @@ public:
   DECLARE_FUNCTION(StopSoundSequence)
   DECLARE_FUNCTION(CheckWater)
   DECLARE_FUNCTION(CheckSides)
+  DECLARE_FUNCTION(FixMapthingPos)
   DECLARE_FUNCTION(CheckDropOff)
   DECLARE_FUNCTION(CheckPosition)
   DECLARE_FUNCTION(CheckRelPosition)

@@ -235,7 +235,7 @@ struct line_t : public TPlane {
   TVec *v1;
   TVec *v2;
 
-  // precalculated (v2-v1).normalised2D for side checking
+  // precalculated *2D* (v2-v1) for side checking (i.e. z is zero)
   TVec dir;
   // normalised dir
   TVec ndir;
