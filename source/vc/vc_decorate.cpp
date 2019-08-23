@@ -492,8 +492,6 @@ TArray<VLineSpecInfo> LineSpecialInfos;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static VClass *decoClass = nullptr;
-
 static VPackage *DecPkg;
 
 static VClass *ActorClass;

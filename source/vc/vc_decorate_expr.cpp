@@ -260,10 +260,10 @@ static VMethod *ParseFunCallWithName (VScriptParser *sc, VStr FuncName, VClass *
 //  ParseMethodCall
 //
 //==========================================================================
-static VExpression *ParseMethodCall (VScriptParser *sc, VStr Name, TLocation Loc, bool parenEaten=true) {
+static VExpression *ParseMethodCall (VScriptParser *sc, VClass *Class, VStr Name, TLocation Loc, bool parenEaten=true) {
   VExpression *Args[VMethod::MAX_PARAMS+1];
   int NumArgs = 0;
-  VMethod *Func = ParseFunCallWithName(sc, Name, decoClass, NumArgs, Args, parenEaten); // got paren
+  VMethod *Func = ParseFunCallWithName(sc, Name, Class, NumArgs, Args, parenEaten); // got paren
   /*
   if (Name.ICmp("random") == 0) {
     fprintf(stderr, "*** RANDOM; NumArgs=%d (%s); func=%p (%s, %s)\n", NumArgs, *sc->GetLoc().toStringNoCol(), Func, *Args[0]->toString(), *Args[1]->toString());
@@ -273,147 +273,8 @@ static VExpression *ParseMethodCall (VScriptParser *sc, VStr Name, TLocation Loc
 }
 
 
-//==========================================================================
-//
-//  ParseExpressionTerm
-//
-//  this is priority level 0
-//
-//==========================================================================
-static VExpression *ParseExpressionTerm (VScriptParser *sc) {
-  TLocation l = sc->GetLoc();
-
-  // check for quoted strings first, since these could also have numbers...
-  if (sc->CheckQuotedString()) {
-    int Val = DecPkg->FindString(*sc->String);
-    return new VStringLiteral(sc->String, Val, l);
-  }
-
-  if (sc->CheckNumber()) {
-    vint32 Val = sc->Number;
-    return new VIntLiteral(Val, l);
-  }
-
-  if (sc->CheckFloat()) {
-    float Val = sc->Float;
-    return new VFloatLiteral(Val, l);
-  }
-
-  if (sc->Check("false")) return new VIntLiteral(0, l);
-  if (sc->Check("true")) return new VIntLiteral(1, l);
-
-  if (sc->Check("(")) {
-    VExpression *op = ParseExpressionNoAssign(sc, decoClass);
-    if (!op) ParseError(l, "Expression expected");
-    sc->Expect(")");
-    return new VExprParens(op, l);
-  }
-
-  if (sc->CheckIdentifier()) {
-    VStr Name = sc->String;
-    if (Name.ICmp("args") == 0) {
-      if (sc->GetString()) {
-        if (sc->String == "[") {
-          Name = VStr("GetArg");
-          //fprintf(stderr, "*** ARGS ***\n");
-          VExpression *Args[1];
-          Args[0] = ParseExpressionNoAssign(sc, decoClass);
-          if (!Args[0]) ParseError(l, "`args` index expression expected");
-          sc->Expect("]");
-          return new VDecorateInvocation(VName(*Name), l, 1, Args);
-        }
-        sc->UnGet();
-      }
-    }
-    // skip random generator ID
-    if ((Name.ICmp("random") == 0 || Name.ICmp("random2") == 0 || Name.ICmp("frandom") == 0 ||
-         Name.ICmp("randompick") == 0 || Name.ICmp("frandompick") == 0) && sc->Check("["))
-    {
-      sc->ExpectString();
-      sc->Expect("]");
-    }
-    // special argument parsing
-    if (sc->Check("(")) {
-      if (Name.strEquCI("randompick") || Name.strEquCI("frandompick")) {
-        return ParseRandomPick(sc, decoClass, Name.strEquCI("frandompick"));
-      }
-      return ParseMethodCall(sc, Name, l, true); // paren eaten
-    }
-    if (sc->String.length() > 2 && sc->String[1] == '_' && (sc->String[0] == 'A' || sc->String[0] == 'a')) {
-      return ParseMethodCall(sc, Name, l, false); // paren not eaten
-    }
-    return new VDecorateSingleName(Name, l);
-  }
-
-  return nullptr;
-}
-
-
-//==========================================================================
-//
-//  ParseExpressionIndexing
-//
-//  this is priority level 1
-//
-//==========================================================================
-static VExpression *ParseExpressionIndexing (VScriptParser *sc) {
-  VExpression *op = ParseExpressionTerm(sc);
-  if (!op) return nullptr;
-  bool done = false;
-  do {
-    if (sc->Check("[")) {
-      VExpression *ind = ParseExpressionNoAssign(sc, decoClass);
-      if (!ind) sc->Error("index expression error");
-      sc->Expect("]");
-      //op = new VArrayElement(op, ind, l);
-      if (!op->IsDecorateSingleName()) sc->Error("cannot index non-array");
-      VExpression *e = new VDecorateUserVar(*((VDecorateSingleName *)op)->Name, ind, op->Loc);
-      delete op;
-      op = e;
-    } else {
-      done = true;
-    }
-  } while (!done);
-  return op;
-}
-
-
-//==========================================================================
-//
-//  ParseExpressionUnary
-//
-//  this is priority level 2
-//
-//==========================================================================
-static VExpression *ParseExpressionUnary (VScriptParser *sc) {
-  VExpression *op;
-  TLocation l = sc->GetLoc();
-
-  if (sc->Check("+")) {
-    op = ParseExpressionUnary(sc);
-    return new VUnary(VUnary::Plus, op, l);
-  }
-
-  if (sc->Check("-")) {
-    op = ParseExpressionUnary(sc);
-    return new VUnary(VUnary::Minus, op, l);
-  }
-
-  if (sc->Check("!")) {
-    op = ParseExpressionUnary(sc);
-    return new VUnary(VUnary::Not, op, l);
-  }
-
-  if (sc->Check("~")) {
-    op = ParseExpressionUnary(sc);
-    return new VUnary(VUnary::BitInvert, op, l);
-  }
-
-  return ParseExpressionIndexing(sc);
-}
-
-
-typedef VExpression *(*ExprOpCB) (VScriptParser *sc, const TLocation &l, VExpression *lhs, VExpression *rhs);
+// ////////////////////////////////////////////////////////////////////////// //
+typedef VExpression *(*ExprOpCB) (VScriptParser *sc, VClass *Class, const TLocation &l, VExpression *lhs, VExpression *rhs);
 
 struct MathOpHandler {
   int prio; // negative means "right-associative"
@@ -422,11 +283,18 @@ struct MathOpHandler {
 };
 
 #define DEFOP(prio_,name_) \
-  { .prio = prio_, .op = name_, .cb = [](VScriptParser *sc, const TLocation &l, VExpression *lhs, VExpression *rhs) -> VExpression *
+  { .prio = prio_, .op = name_, .cb = [](VScriptParser *sc, VClass *Class, const TLocation &l, VExpression *lhs, VExpression *rhs) -> VExpression *
 
 #define ENDOP }
 
 static const MathOpHandler oplist[] = {
+  // unaries; rhs has no sense here
+  DEFOP(2, "+") { return new VUnary(VUnary::Plus, lhs, l); } ENDOP,
+  DEFOP(2, "-") { return new VUnary(VUnary::Minus, lhs, l); } ENDOP,
+  DEFOP(2, "!") { return new VUnary(VUnary::Not, lhs, l); } ENDOP,
+  DEFOP(2, "~") { return new VUnary(VUnary::BitInvert, lhs, l); } ENDOP,
+
+  // binarues
   DEFOP(3, "*") { return new VBinary(VBinary::Multiply, lhs, rhs, l); } ENDOP,
   DEFOP(3, "/") { return new VBinary(VBinary::Divide, lhs, rhs, l); } ENDOP,
   DEFOP(3, "%") { return new VBinary(VBinary::Modulus, lhs, rhs, l); } ENDOP,
@@ -456,26 +324,155 @@ static const MathOpHandler oplist[] = {
   DEFOP(11, "&&") { return new VBinaryLogical(VBinaryLogical::And, lhs, rhs, l); } ENDOP,
   DEFOP(12, "||") { return new VBinaryLogical(VBinaryLogical::Or, lhs, rhs, l); } ENDOP,
 
+  // 13 is ternary, it has no callback (special case)
   { .prio = 0, .op = nullptr, .cb = nullptr },
 };
 
-#define PRIO_MAX  (13)
+#define PRIO_TERNARY  (13)
+// for now
+#define PRIO_MAX        PRIO_TERNARY
+// for now
+#define PRIO_NO_ASSIGN  PRIO_TERNARY
 
 #undef DEFOP
 #undef ENDOP
+
 
 //==========================================================================
 //
 //  VParser::ParseExpressionGeneral
 //
 //==========================================================================
-static VExpression *ParseExpressionGeneral (VScriptParser *sc, int prio) {
-  check(prio >= 2);
-  if (prio == 2) return ParseExpressionUnary(sc);
-  VExpression *lhs = ParseExpressionGeneral(sc, prio-1);
+static VExpression *ParseExpressionGeneral (VScriptParser *sc, VClass *Class, int prio) {
+  check(prio >= 0);
+
+  // term
+  if (prio == 0) {
+    // check for quoted strings first, since these could also have numbers...
+    if (sc->CheckQuotedString()) {
+      int Val = DecPkg->FindString(*sc->String);
+      return new VStringLiteral(sc->String, Val, sc->GetLoc());
+    }
+
+    // integer?
+    if (sc->CheckNumber()) {
+      vint32 Val = sc->Number;
+      return new VIntLiteral(Val, sc->GetLoc());
+    }
+
+    // float?
+    if (sc->CheckFloat()) {
+      float Val = sc->Float;
+      return new VFloatLiteral(Val, sc->GetLoc());
+    }
+
+    // booleans?
+    if (sc->Check("false")) return new VIntLiteral(0, sc->GetLoc());
+    if (sc->Check("true")) return new VIntLiteral(1, sc->GetLoc());
+
+    // subexpression?
+    if (sc->Check("(")) {
+      const TLocation l = sc->GetLoc();
+      VExpression *op = ParseExpressionGeneral(sc, Class, PRIO_NO_ASSIGN);
+      if (!op) ParseError(l, "Expression expected");
+      sc->Expect(")");
+      return new VExprParens(op, l);
+    }
+
+    // identifier?
+    if (sc->CheckIdentifier()) {
+      const TLocation l = sc->GetLoc();
+      VStr Name = sc->String;
+      if (Name.strEquCI("args")) {
+        if (sc->Check("[")) {
+          const TLocation lidx = sc->GetLoc();
+          Name = VStr("GetArg");
+          //fprintf(stderr, "*** ARGS ***\n");
+          VExpression *Args[1];
+          Args[0] = ParseExpressionGeneral(sc, Class, PRIO_NO_ASSIGN);
+          if (!Args[0]) ParseError(lidx, "`args` index expression expected");
+          sc->Expect("]");
+          return new VDecorateInvocation(VName(*Name), lidx, 1, Args);
+        }
+      }
+      // skip random generator ID
+      if ((Name.ICmp("random") == 0 || Name.ICmp("random2") == 0 || Name.ICmp("frandom") == 0 ||
+           Name.ICmp("randompick") == 0 || Name.ICmp("frandompick") == 0) && sc->Check("["))
+      {
+        sc->ExpectString();
+        sc->Expect("]");
+      }
+      // special argument parsing
+      if (sc->Check("(")) {
+        if (Name.strEquCI("randompick") || Name.strEquCI("frandompick")) {
+          return ParseRandomPick(sc, Class, Name.strEquCI("frandompick"));
+        }
+        return ParseMethodCall(sc, Class, Name, l, true); // paren eaten
+      }
+      if (sc->String.length() > 2 && sc->String[1] == '_' && (sc->String[0] == 'A' || sc->String[0] == 'a')) {
+        return ParseMethodCall(sc, Class, Name, l, false); // paren not eaten
+      }
+      return new VDecorateSingleName(Name, l);
+    }
+
+    // some unknown shit
+    return nullptr;
+  }
+
+  // indexing
+  if (prio == 1) {
+    VExpression *op = ParseExpressionGeneral(sc, Class, prio-1);
+    if (!op) return nullptr;
+    for (;;) {
+      if (!sc->Check("[")) break;
+      VExpression *ind = ParseExpressionNoAssign(sc, Class);
+      if (!ind) sc->Error("index expression error");
+      sc->Expect("]");
+      //op = new VArrayElement(op, ind, l);
+      if (!op->IsDecorateSingleName()) sc->Error("cannot index non-array");
+      VExpression *e = new VDecorateUserVar(*((VDecorateSingleName *)op)->Name, ind, op->Loc);
+      delete op;
+      op = e;
+    }
+    return op;
+  }
+
+  // unaries
+  if (prio == 2) {
+    for (const MathOpHandler *mop = oplist; mop->op; ++mop) {
+      if (mop->prio != prio) continue;
+      if (sc->Check(mop->op)) {
+        const TLocation l = sc->GetLoc();
+        VExpression *lhs = ParseExpressionGeneral(sc, Class, prio); // rassoc
+        if (!lhs) return nullptr;
+        // as this is right-associative, return here
+        return mop->cb(sc, Class, l, lhs, nullptr);
+      }
+    }
+    // not found, try higher priority
+    return ParseExpressionGeneral(sc, Class, prio-1);
+  }
+
+  // ternary
+  if (prio == PRIO_TERNARY) {
+    VExpression *cond = ParseExpressionGeneral(sc, Class, prio-1);
+    if (!cond) return nullptr;
+    if (sc->Check("?")) {
+      const TLocation l = sc->GetLoc();
+      VExpression *op1 = ParseExpressionGeneral(sc, Class, prio); // rassoc
+      if (!op1) { delete cond; return nullptr; }
+      sc->Expect(":");
+      VExpression *op2 = ParseExpressionGeneral(sc, Class, prio); // rassoc
+      if (!op2) { delete op1; delete cond; return nullptr; }
+      cond = new VConditional(cond, op1, op2, l);
+    }
+    return cond;
+  }
+
+  // binaries
+  VExpression *lhs = ParseExpressionGeneral(sc, Class, prio-1);
   if (!lhs) return nullptr; // some error
   for (;;) {
-    TLocation l = sc->GetLoc();
     const MathOpHandler *mop = oplist;
     for (; mop->op; ++mop) {
       if (mop->prio != prio) continue;
@@ -483,9 +480,10 @@ static VExpression *ParseExpressionGeneral (VScriptParser *sc, int prio) {
     }
     if (!mop->op) break; // we're done with this priority level
     // get rhs
-    VExpression *rhs = ParseExpressionGeneral(sc, prio-1); // use `prio` for rassoc
+    const TLocation l = sc->GetLoc();
+    VExpression *rhs = ParseExpressionGeneral(sc, Class, prio-1); // use `prio` for rassoc, and immediately return (see above)
     if (!rhs) { delete lhs; return nullptr; } // some error
-    lhs = mop->cb(sc, l, lhs, rhs);
+    lhs = mop->cb(sc, Class, l, lhs, rhs);
     if (!lhs) return nullptr; // some error
     // do it all again...
   }
@@ -495,36 +493,11 @@ static VExpression *ParseExpressionGeneral (VScriptParser *sc, int prio) {
 
 //==========================================================================
 //
-//  VParser::ParseExpressionTernary
-//
-//==========================================================================
-static VExpression *ParseExpressionTernary (VScriptParser *sc) {
-  VExpression *op = ParseExpressionGeneral(sc, PRIO_MAX);
-  if (!op) return nullptr;
-  TLocation l = sc->GetLoc();
-  if (sc->Check("?")) {
-    VExpression *op1 = ParseExpressionTernary(sc);
-    if (!op1) { delete op; return nullptr; }
-    sc->Expect(":");
-    VExpression *op2 = ParseExpressionTernary(sc);
-    if (!op2) { delete op1; delete op; return nullptr; }
-    op = new VConditional(op, op1, op2, l);
-  }
-  return op;
-}
-
-
-//==========================================================================
-//
 //  ParseExpressionNoAssign
 //
 //==========================================================================
 static VExpression *ParseExpressionNoAssign (VScriptParser *sc, VClass *Class) {
-  VClass *olddc = decoClass;
-  decoClass = Class;
-  VExpression *res = ParseExpressionTernary(sc);
-  decoClass = olddc;
-  return res;
+  return ParseExpressionGeneral(sc, Class, PRIO_NO_ASSIGN);
 }
 
 
