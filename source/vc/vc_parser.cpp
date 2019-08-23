@@ -2590,7 +2590,9 @@ void VParser::ParseStates (VClass *InClass) {
     }
 
     auto stloc = Lex.Location;
-    // code
+    // creating method belonging to state is ok here, because
+    // all VC code resides in some package, and all package
+    // members are guaranteed to be postloaded
     State->Function = nullptr;
     State->FunctionName = NAME_None;
     if (Lex.Check(TK_LBrace)) {
@@ -2675,27 +2677,16 @@ void VParser::ParseStates (VClass *InClass) {
       //s2->Frame = (State->Frame&VState::FF_FULLBRIGHT)|(FSChar-'A');
       s2->Frame = frm;
       s2->Time = State->Time;
+      s2->TicType = State->TicType;
       s2->Arg1 = State->Arg1;
       s2->Arg2 = State->Arg2;
       s2->Misc1 = State->Misc1;
       s2->Misc2 = State->Misc2;
-      //s2->Function = State->Function;
-      if (State->Function) {
-        //s2->Function = new VMethod(NAME_None, /*s2*/InClass, s2->Loc);
-        s2->Function = new VMethod(NAME_None, s2, s2->Loc);
-        s2->Function->Flags = FUNC_Final;
-        s2->Function->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, s2->Loc);
-        s2->Function->ReturnType = VFieldType(TYPE_Void);
-        s2->Function->Statement = State->Function->Statement->SyntaxCopy();
-        s2->Function->NumParams = 0;
-        //InClass->AddMethod(s2->Function);
-        //s2->Function->Define();
-        check(State->FunctionName == NAME_None);
-      } else {
-        s2->Function = nullptr;
-        // name can be empty here too
-      }
+      // no need to perform syntax copy here
+      s2->Function = State->Function;
       s2->FunctionName = State->FunctionName;
+      s2->funcIsCopy = true;
+      s2->LightName = State->LightName;
       // link previous state
       PrevState->NextState = s2;
       PrevState = s2;

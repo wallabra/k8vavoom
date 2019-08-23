@@ -99,6 +99,10 @@ public:
   VLightEffectDef *LightDef;
   VStr LightName;
 
+  // compiler flags
+  bool funcIsCopy; // this will be set if there is no need to call `PostLoad()` for `Function`
+
+public:
   VState (VName AName, VMemberBase *AOuter, TLocation ALoc);
   virtual ~VState () override;
 

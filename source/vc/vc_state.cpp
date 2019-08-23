@@ -61,6 +61,7 @@ VState::VState (VName AName, VMemberBase *AOuter, TLocation ALoc)
   , LightInited(false)
   , LightDef(nullptr)
   , LightName(VStr())
+  , funcIsCopy(false)
 {
 }
 
@@ -128,7 +129,9 @@ void VState::PostLoad () {
 //==========================================================================
 bool VState::Define () {
   bool Ret = true;
-  if (Function && !Function->Define()) Ret = false;
+  if (!funcIsCopy) {
+    if (Function && !Function->Define()) Ret = false;
+  }
   return Ret;
 }
 
@@ -150,9 +153,10 @@ void VState::Emit () {
       ParseWarning(Loc, "State function `%s` wasn't properly defined", *Function->GetFullName());
     }
     //GLog.Logf(NAME_Debug, "%s: emiting function `%s` (%s)", *Loc.toString(), *Function->GetFullName(), *Function->Loc.toString());
-    Function->Emit();
+    if (!funcIsCopy) Function->Emit();
     FunctionName = NAME_None; // need this for decorate
   } else if (FunctionName != NAME_None) {
+    funcIsCopy = true; // set it here, so decorate code won't try to `PostLoad()` this state's function
     Function = ((VClass *)Outer)->FindMethod(FunctionName);
     if (!Function) {
       ParseError(Loc, "No such method `%s`", *FunctionName);

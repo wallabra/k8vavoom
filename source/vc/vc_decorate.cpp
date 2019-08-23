@@ -1604,6 +1604,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     PrevState = State;
     LastState = State;
 
+    check(!State->funcIsCopy);
     for (int i = 1; i < FramesString.Length(); ++i) {
       vint32 frm = (State->Frame&~(VState::FF_FRAMEMASK|VState::FF_DONTCHANGE|VState::FF_SKIPOFFS));
 
@@ -1625,7 +1626,6 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       // create a new state
       VState *s2 = new VState(va("S_%d", States.Num()), Class, sc->GetLoc());
       States.Append(s2);
-      // add temporary labels
       s2->SpriteName = State->SpriteName;
       s2->Frame = frm;
       s2->Time = State->Time;
@@ -1634,28 +1634,10 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       s2->Arg2 = State->Arg2;
       s2->Misc1 = State->Misc1;
       s2->Misc2 = State->Misc2;
-      //s2->Function = State->Function;
-      if (State->Function) {
-#if defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
-        s2->Function = new VMethod(NAME_None, s2, s2->Loc);
-#else
-        s2->Function = new VMethod(NAME_None, Class, s2->Loc);
-#endif
-        s2->Function->Flags = FUNC_Final;
-        s2->Function->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, s2->Loc);
-        s2->Function->ReturnType = VFieldType(TYPE_Void);
-        //GCon->Logf(NAME_Debug, "STATE: %s", *s2->Loc.toString());
-        //GCon->Logf(NAME_Debug, "STMT: %s", *State->Function->Statement->Loc.toString());
-        s2->Function->Statement = State->Function->Statement->SyntaxCopy();
-        s2->Function->NumParams = 0;
-#if !defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
-        Class->AddMethod(s2->Function);
-        s2->Function->Define();
-#endif
-        s2->FunctionName = NAME_None;
-      } else {
-        s2->FunctionName = State->FunctionName;
-      }
+      // no need to perform syntax copy here
+      s2->Function = State->Function;
+      s2->FunctionName = State->FunctionName;
+      s2->funcIsCopy = true;
       s2->LightName = State->LightName;
 
       // link previous state
@@ -3499,8 +3481,12 @@ void ProcessDecorateScripts () {
     for (VState *sts = dcls->States; sts; sts = sts->Next) {
       // `VState::Emit()` clears `FunctionName` for direct calls
       if (sts->Function && sts->FunctionName == NAME_None) {
-        //GLog.Logf("%s: generating code for `%s`", *sts->Loc.toString(), *sts->Function->GetFullName());
-        sts->Function->PostLoad();
+        if (!sts->funcIsCopy) {
+          //GLog.Logf("%s: generating code for `%s`", *sts->Loc.toString(), *sts->Function->GetFullName());
+          sts->Function->PostLoad();
+        } else {
+          //GLog.Logf("%s: don't generate code for copy `%s`", *sts->Loc.toString(), *sts->Function->GetFullName());
+        }
       }
     }
 #endif

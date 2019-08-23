@@ -564,6 +564,7 @@ void VMethod::PostLoad () {
   //if (!emitCalled) Sys_Error("`Emit()` not called before `PostLoad()` for %s", *GetFullName());
 
 #if !defined(IN_VCC)
+  //GLog.Logf(NAME_Debug, "*** %s: %s", *Loc.toString(), *GetFullName());
   // set up builtins
   if (NumParams > VMethod::MAX_PARAMS) Sys_Error("Function has more than %i params", VMethod::MAX_PARAMS);
   for (FBuiltinInfo *B = FBuiltinInfo::Builtins; B; B = B->Next) {
