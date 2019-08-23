@@ -628,6 +628,7 @@ bool ignoreClass (const VStr &name, VName parent) {
     "VScriptSubModel",
     "StLightInfo",
     //"FAmbientSound",
+    "MapInfoCommand",
     nullptr,
   };
   for (const char *const *np = ignoreCN; *np; ++np) {
