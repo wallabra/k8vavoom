@@ -1017,6 +1017,96 @@ VStr VConditional::toString () const {
 
 //==========================================================================
 //
+//  VCommaExprRetOp0::VCommaExprRetOp0
+//
+//==========================================================================
+VCommaExprRetOp0::VCommaExprRetOp0 (VExpression *abefore, VExpression *aafter, const TLocation &aloc)
+  : VExpression(aloc)
+  , op0(abefore)
+  , op1(aafter)
+{
+  if (!abefore) { ParseError(Loc, "Expression expected"); return; }
+  if (!aafter) { ParseError(Loc, "Expression expected"); return; }
+}
+
+
+//==========================================================================
+//
+//  VCommaExprRetOp0::~VCommaExprRetOp0
+//
+//==========================================================================
+VCommaExprRetOp0::~VCommaExprRetOp0 () {
+  if (op0) { delete op0; op0 = nullptr; }
+  if (op1) { delete op1; op1 = nullptr; }
+}
+
+
+//==========================================================================
+//
+//  VCommaExprRetOp0::SyntaxCopy
+//
+//==========================================================================
+VExpression *VCommaExprRetOp0::SyntaxCopy () {
+  auto res = new VCommaExprRetOp0();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VCommaExprRetOp0::DoSyntaxCopyTo
+//
+//==========================================================================
+void VCommaExprRetOp0::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VCommaExprRetOp0 *)e;
+  res->op0 = (op0 ? op0->SyntaxCopy() : nullptr);
+  res->op1 = (op1 ? op1->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VCommaExprRetOp0::DoResolve
+//
+//==========================================================================
+VExpression *VCommaExprRetOp0::DoResolve (VEmitContext &ec) {
+  if (op0) op0 = op0->Resolve(ec);
+  if (op1) op1 = (new VDropResult(op1))->Resolve(ec); // automatically add result drop
+  if (!op0 || !op1) {
+    delete this;
+    return nullptr;
+  }
+  Type = op0->Type;
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VCommaExprRetOp0::Emit
+//
+//==========================================================================
+void VCommaExprRetOp0::Emit (VEmitContext &ec) {
+  if (op0) op0->Emit(ec);
+  if (op1) op1->Emit(ec);
+}
+
+
+//==========================================================================
+//
+//  VCommaExprRetOp0::toString
+//
+//==========================================================================
+VStr VCommaExprRetOp0::toString () const {
+  return VStr("(")+e2s(op0)+",(void)"+e2s(op1)+")";
+}
+
+
+
+//==========================================================================
+//
 //  VDropResult::VDropResult
 //
 //==========================================================================

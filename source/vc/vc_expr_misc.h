@@ -193,6 +193,34 @@ protected:
 
 //==========================================================================
 //
+//  VCommaExprRetOp0
+//
+//  this executes op0, then op1, and drops result of op1
+//
+//==========================================================================
+class VCommaExprRetOp0 : public VExpression {
+public:
+  VExpression *op0; // before comma
+  VExpression *op1; // after comma
+
+  VCommaExprRetOp0 (VExpression *abefore, VExpression *aafter, const TLocation &aloc);
+  virtual ~VCommaExprRetOp0 () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+  //virtual bool IsComma () const override;
+
+  virtual VStr toString () const override;
+
+protected:
+  VCommaExprRetOp0 () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};
+
+
+//==========================================================================
+//
 //  VDropResult
 //
 //==========================================================================
