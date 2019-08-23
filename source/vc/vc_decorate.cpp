@@ -520,7 +520,7 @@ static VMethod *FuncA_FreezeDeathChunks;
 
 static TArray<VFlagList> FlagList;
 
-static TMapNC<VName, bool> IgnoredDecorateActions; // lowercased
+static TMap<VStrCI, bool> IgnoredDecorateActions;
 
 static bool inCodeBlock = false;
 
@@ -2656,9 +2656,9 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
     Class->States = States[0];
     for (int i = 0; i < States.Num()-1; ++i) States[i]->Next = States[i+1];
     for (auto &&sts : States) {
-#if defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
+      #if defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
       sts->Define(); // this defines state functions
-#endif
+      #endif
       if (sts->GotoLabel != NAME_None) {
         sts->NextState = Class->ResolveStateLabel(sts->Loc, sts->GotoLabel, sts->GotoOffset);
       }
@@ -3236,14 +3236,13 @@ void ProcessDecorateScripts () {
     VScriptParser *sc = new VScriptParser(W_FullLumpName(Lump), Strm);
     while (sc->GetString()) {
       if (sc->String.length() == 0) continue;
-      VName nl = VName(*sc->String.toLowerCase());
-      IgnoredDecorateActions.put(nl, true);
+      IgnoredDecorateActions.put(sc->String, true);
     }
     delete sc;
     delete Strm;
   }
 
-  int fp = GArgs.CheckParm("-decignore");
+  int fp = GArgs.CheckParm("-vc-decorate-ignore-file");
   if (fp) {
     while (++fp != GArgs.Count()) {
       if (GArgs[fp][0] == '-' || GArgs[fp][0] == '+') break;
@@ -3255,8 +3254,7 @@ void ProcessDecorateScripts () {
         VScriptParser *sc = new VScriptParser(fname, Strm);
         while (sc->GetString()) {
           if (sc->String.length() == 0) continue;
-          VName nl = VName(*sc->String.toLowerCase());
-          IgnoredDecorateActions.put(nl, true);
+          IgnoredDecorateActions.put(sc->String, true);
         }
         delete sc;
         delete Strm;
@@ -3264,15 +3262,12 @@ void ProcessDecorateScripts () {
     }
   }
 
-  fp = GArgs.CheckParm("-decignoreaction");
+  fp = GArgs.CheckParm("-vc-decorate-ignore-action");
   if (fp) {
     while (++fp != GArgs.Count()) {
       if (GArgs[fp][0] == '-' || GArgs[fp][0] == '+') break;
       VStr actname = VStr(GArgs[fp]);
-      if (actname.length()) {
-        actname = actname.toLowerCase();
-        IgnoredDecorateActions.put(VName(*actname), true);
-      }
+      if (!actname.isEmpty()) IgnoredDecorateActions.put(actname, true);
     }
   }
 
@@ -3462,9 +3457,9 @@ void ProcessDecorateScripts () {
     if (getDecorateDebug()) GLog.Logf("Emiting Class %s", *dcls->GetFullName());
     //dumpFieldDefs(DecPkg->ParsedClasses[i]);
     dcls->DecorateEmit();
-#if defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
+    #if defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
     for (VState *sts = dcls->States; sts; sts = sts->Next) sts->Emit();
-#endif
+    #endif
   }
 
   GLog.Logf(NAME_Init, "Generating decorate code...");
@@ -3474,7 +3469,7 @@ void ProcessDecorateScripts () {
     //dumpFieldDefs(DecPkg->ParsedClasses[i]);
     dcls->DecoratePostLoad();
     //dumpFieldDefs(dcls);
-#if defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
+    #if defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
     // generate code for state actions
     for (VState *sts = dcls->States; sts; sts = sts->Next) {
       // `VState::Emit()` clears `FunctionName` for direct calls
@@ -3487,7 +3482,7 @@ void ProcessDecorateScripts () {
         }
       }
     }
-#endif
+    #endif
   }
 
   if (vcErrorCount) BailOut();
