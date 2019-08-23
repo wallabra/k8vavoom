@@ -272,59 +272,58 @@ static VExpression *ParseMethodCall (VScriptParser *sc, VClass *Class, VStr Name
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-typedef VExpression *(*ExprOpCB) (VScriptParser *sc, VClass *Class, const TLocation &l, VExpression *lhs, VExpression *rhs);
-
-struct MathOpHandler {
-  int prio; // negative means "right-associative" (not implemented yet)
-  const char *op;
-  ExprOpCB cb; // nullptr means "no more"
+enum MathOpType {
+  MOP_Unary, // new VUnary((VUnary::EUnaryOp)mop->opcode, lhs, l);
+  MOP_Binary, // new VBinary((VBinary::EBinOp)mop->opcode, lhs, rhs, l);
+  MOP_Logical, // new VBinaryLogical((VBinaryLogical::ELogOp)mop->opcode, lhs, rhs, l);
 };
 
-#define DEFOP(prio_,name_) \
-  { .prio = prio_, .op = name_, .cb = [](VScriptParser *sc, VClass *Class, const TLocation &l, VExpression *lhs, VExpression *rhs) -> VExpression *
+struct MathOpHandler {
+  MathOpType type;
+  int prio; // negative means "right-associative" (not implemented yet)
+  const char *op; // `nullptr` means "i am the last one, The Omega of it all!"
+  int opcode;
+};
 
-#define ENDOP }
+#define DEFOP(type_,prio_,name_,opcode_) \
+  { .type = type_, .prio = prio_, .op = name_, .opcode = (int)opcode_ }
 
 static const MathOpHandler oplist[] = {
   // unaries; rhs has no sense here
-  DEFOP(2, "+") { return new VUnary(VUnary::Plus, lhs, l); } ENDOP,
-  DEFOP(2, "-") { return new VUnary(VUnary::Minus, lhs, l); } ENDOP,
-  DEFOP(2, "!") { return new VUnary(VUnary::Not, lhs, l); } ENDOP,
-  DEFOP(2, "~") { return new VUnary(VUnary::BitInvert, lhs, l); } ENDOP,
+  DEFOP(MOP_Unary, 2, "+", VUnary::Plus),
+  DEFOP(MOP_Unary, 2, "-", VUnary::Minus),
+  DEFOP(MOP_Unary, 2, "!", VUnary::Not),
+  DEFOP(MOP_Unary, 2, "~", VUnary::BitInvert),
 
-  // binarues
-  DEFOP(3, "*") { return new VBinary(VBinary::Multiply, lhs, rhs, l); } ENDOP,
-  DEFOP(3, "/") { return new VBinary(VBinary::Divide, lhs, rhs, l); } ENDOP,
-  DEFOP(3, "%") { return new VBinary(VBinary::Modulus, lhs, rhs, l); } ENDOP,
+  // binaries
+  DEFOP(MOP_Binary, 3, "*", VBinary::Multiply),
+  DEFOP(MOP_Binary, 3, "/", VBinary::Divide),
+  DEFOP(MOP_Binary, 3, "%", VBinary::Modulus),
 
-  DEFOP(4, "+") { return new VBinary(VBinary::Add, lhs, rhs, l); } ENDOP,
-  DEFOP(4, "-") { return new VBinary(VBinary::Subtract, lhs, rhs, l); } ENDOP,
+  DEFOP(MOP_Binary, 4, "+", VBinary::Add),
+  DEFOP(MOP_Binary, 4, "-", VBinary::Subtract),
 
-  DEFOP(5, "<<") { return new VBinary(VBinary::LShift, lhs, rhs, l); } ENDOP,
-  DEFOP(5, ">>") { return new VBinary(VBinary::RShift, lhs, rhs, l); } ENDOP,
+  DEFOP(MOP_Binary, 5, "<<", VBinary::LShift),
+  DEFOP(MOP_Binary, 5, ">>", VBinary::RShift),
 
-  DEFOP(6, "<") { return new VBinary(VBinary::Less, lhs, rhs, l); } ENDOP,
-  DEFOP(6, "<=") { return new VBinary(VBinary::LessEquals, lhs, rhs, l); } ENDOP,
-  DEFOP(6, ">") { return new VBinary(VBinary::Greater, lhs, rhs, l); } ENDOP,
-  DEFOP(6, ">=") { return new VBinary(VBinary::GreaterEquals, lhs, rhs, l); } ENDOP,
+  DEFOP(MOP_Binary, 6, "<", VBinary::Less),
+  DEFOP(MOP_Binary, 6, "<=", VBinary::LessEquals),
+  DEFOP(MOP_Binary, 6, ">", VBinary::Greater),
+  DEFOP(MOP_Binary, 6, ">=", VBinary::GreaterEquals),
 
-  DEFOP(7, "==") { return new VBinary(VBinary::Equals, lhs, rhs, l); } ENDOP,
-  DEFOP(7, "!=") { return new VBinary(VBinary::NotEquals, lhs, rhs, l); } ENDOP,
-  DEFOP(7, "=") {
-    GLog.Logf(NAME_Warning, "%s: hey, dumbhead, use `==` for comparisons!", *l.toStringNoCol());
-    return new VBinary(VBinary::NotEquals, lhs, rhs, l);
-  } ENDOP,
+  DEFOP(MOP_Binary, 7, "==", VBinary::Equals),
+  DEFOP(MOP_Binary, 7, "!=", VBinary::NotEquals),
 
-  DEFOP(8, "&") { return new VBinary(VBinary::And, lhs, rhs, l); } ENDOP,
-  DEFOP(9, "^") { return new VBinary(VBinary::XOr, lhs, rhs, l); } ENDOP,
-  DEFOP(10, "|") { return new VBinary(VBinary::Or, lhs, rhs, l); } ENDOP,
+  DEFOP(MOP_Binary, 8, "&", VBinary::And),
+  DEFOP(MOP_Binary, 9, "^", VBinary::XOr),
+  DEFOP(MOP_Binary, 10, "|", VBinary::Or),
 
-  DEFOP(11, "&&") { return new VBinaryLogical(VBinaryLogical::And, lhs, rhs, l); } ENDOP,
-  DEFOP(12, "||") { return new VBinaryLogical(VBinaryLogical::Or, lhs, rhs, l); } ENDOP,
+  DEFOP(MOP_Logical, 11, "&&", VBinaryLogical::And),
+  DEFOP(MOP_Logical, 12, "||", VBinaryLogical::Or),
 
   // 13 is ternary, it has no callback (special case)
 
-  { .prio = 0, .op = nullptr, .cb = nullptr },
+  { .type = MOP_Unary, .prio = 0, .op = nullptr, .opcode = 0 },
 };
 
 #define PRIO_TERNARY  (13)
@@ -415,6 +414,7 @@ static VExpression *ParseExpressionGeneral (VScriptParser *sc, VClass *Class, in
     }
 
     // some unknown shit
+    sc->Error("expression expected");
     return nullptr;
   }
 
@@ -438,16 +438,21 @@ static VExpression *ParseExpressionGeneral (VScriptParser *sc, VClass *Class, in
 
   // unaries
   if (prio == 2) {
+    // get token, this is slightly faster
+    if (!sc->GetString()) { sc->Error("expression expected"); return nullptr; } // no more code, wtf?
+    VStr token = sc->String;
     for (const MathOpHandler *mop = oplist; mop->op; ++mop) {
       if (mop->prio != prio) continue;
-      if (sc->Check(mop->op)) {
+      if (token.strEqu(mop->op)) {
+        check(mop->type == MOP_Unary);
         const TLocation l = sc->GetLoc();
         VExpression *lhs = ParseExpressionGeneral(sc, Class, prio); // rassoc
         if (!lhs) return nullptr;
         // as this is right-associative, return here
-        return mop->cb(sc, Class, l, lhs, nullptr);
+        return new VUnary((VUnary::EUnaryOp)mop->opcode, lhs, l);
       }
     }
+    sc->UnGet(); // return token back
     // not found, try higher priority
     return ParseExpressionGeneral(sc, Class, prio-1);
   }
@@ -476,9 +481,14 @@ static VExpression *ParseExpressionGeneral (VScriptParser *sc, VClass *Class, in
     // get token, this is slightly faster
     if (!sc->GetString()) break; // no more code
     VStr token = sc->String;
+    // hacks for some dumbfucks
     if (!inCodeBlock && token.strEqu("||")) {
-      if (prio == 10) GCon->Logf(NAME_Error, "%s: in decorate, you shall use `|` to combine constants, or you will be executed!", *sc->GetLoc().toStringNoCol());
+      if (prio == 10) GCon->Logf(NAME_Error, "%s: Spanish Inquisition says: in decorate, you shall use `|` to combine constants, or you will be executed!", *sc->GetLoc().toStringNoCol());
       token = "|";
+    }
+    if (token.strEqu("=")) {
+      if (prio == 7) GLog.Logf(NAME_Warning, "%s: Spanish Inquisition says: in decorate, you shall use `==` for comparisons, or you will be executed!", *sc->GetLoc().toStringNoCol());
+      token = "==";
     }
     // find math operator
     for (; mop->op; ++mop) {
@@ -487,7 +497,7 @@ static VExpression *ParseExpressionGeneral (VScriptParser *sc, VClass *Class, in
     }
     // not found?
     if (!mop->op) {
-      // we're done with this priority level, restore a token
+      // we're done with this priority level, return a token, and get out
       sc->UnGet();
       break;
     }
@@ -495,8 +505,11 @@ static VExpression *ParseExpressionGeneral (VScriptParser *sc, VClass *Class, in
     const TLocation l = sc->GetLoc();
     VExpression *rhs = ParseExpressionGeneral(sc, Class, prio-1); // use `prio` for rassoc, and immediately return (see above)
     if (!rhs) { delete lhs; return nullptr; } // some error
-    lhs = mop->cb(sc, Class, l, lhs, rhs);
-    if (!lhs) return nullptr; // some error
+    switch (mop->type) {
+      case MOP_Binary: lhs = new VBinary((VBinary::EBinOp)mop->opcode, lhs, rhs, l); break;
+      case MOP_Logical: lhs = new VBinaryLogical((VBinaryLogical::ELogOp)mop->opcode, lhs, rhs, l); break;
+      default: Sys_Error("internal decorate compiler error 697306");
+    }
     // do it all again...
   }
   return lhs;
