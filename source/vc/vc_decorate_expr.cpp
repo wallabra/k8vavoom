@@ -24,10 +24,8 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-// this directly included from "vc_decorate.cpp"
+// this source is directly included from "vc_decorate.cpp"
 
-
-static VExpression *ParseExpression (VScriptParser *sc, VClass *Class);
 static VExpression *ParseExpressionNoAssign (VScriptParser *sc, VClass *Class);
 
 
@@ -277,7 +275,7 @@ static VExpression *ParseMethodCall (VScriptParser *sc, VClass *Class, VStr Name
 typedef VExpression *(*ExprOpCB) (VScriptParser *sc, VClass *Class, const TLocation &l, VExpression *lhs, VExpression *rhs);
 
 struct MathOpHandler {
-  int prio; // negative means "right-associative"
+  int prio; // negative means "right-associative" (not implemented yet)
   const char *op;
   ExprOpCB cb; // nullptr means "no more"
 };
@@ -325,6 +323,7 @@ static const MathOpHandler oplist[] = {
   DEFOP(12, "||") { return new VBinaryLogical(VBinaryLogical::Or, lhs, rhs, l); } ENDOP,
 
   // 13 is ternary, it has no callback (special case)
+
   { .prio = 0, .op = nullptr, .cb = nullptr },
 };
 
@@ -474,11 +473,24 @@ static VExpression *ParseExpressionGeneral (VScriptParser *sc, VClass *Class, in
   if (!lhs) return nullptr; // some error
   for (;;) {
     const MathOpHandler *mop = oplist;
+    // get token, this is slightly faster
+    if (!sc->GetString()) break; // no more code
+    VStr token = sc->String;
+    if (!inCodeBlock && token.strEqu("||")) {
+      if (prio == 10) GCon->Logf(NAME_Error, "%s: in decorate, you shall use `|` to combine constants, or you will be executed!", *sc->GetLoc().toStringNoCol());
+      token = "|";
+    }
+    // find math operator
     for (; mop->op; ++mop) {
       if (mop->prio != prio) continue;
-      if (sc->Check(mop->op)) break;
+      if (token.strEqu(mop->op)) break;
     }
-    if (!mop->op) break; // we're done with this priority level
+    // not found?
+    if (!mop->op) {
+      // we're done with this priority level, restore a token
+      sc->UnGet();
+      break;
+    }
     // get rhs
     const TLocation l = sc->GetLoc();
     VExpression *rhs = ParseExpressionGeneral(sc, Class, prio-1); // use `prio` for rassoc, and immediately return (see above)
@@ -544,7 +556,7 @@ static VStatement *ParseFunCallAsStmt (VScriptParser *sc, VClass *Class, VState 
     VExpression *dest = nullptr;
     if (sc->Check("[")) {
       dest = new VDecorateSingleName(FuncName, stloc);
-      VExpression *ind = ParseExpression(sc, Class);
+      VExpression *ind = ParseExpressionNoAssign(sc, Class);
       if (!ind) sc->Error("decorate parsing error");
       sc->Expect("]");
       dest = new VArrayElement(dest, ind, stloc);
@@ -562,7 +574,7 @@ static VStatement *ParseFunCallAsStmt (VScriptParser *sc, VClass *Class, VState 
         dest = e;
       }
       if (!dest->IsDecorateUserVar()) sc->Error(va("cannot assign to non-field `%s`", *FuncName));
-      VExpression *val = ParseExpression(sc, Class);
+      VExpression *val = ParseExpressionNoAssign(sc, Class);
       if (!val) sc->Error("decorate parsing error");
       VExpression *ass = new VAssignment(VAssignment::Assign, dest, val, stloc);
       return new VExpressionStatement(new VDropResult(ass));
