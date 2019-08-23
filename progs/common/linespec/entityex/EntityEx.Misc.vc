@@ -160,7 +160,10 @@ final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
       continue;
     }
 
-    float dist = fmax(0.0, Length(Other.GetCentre()-GetCentre())-Other.Radius);
+    float dist =
+      !bOldRadiusDamage ?
+      fmax(0.0, Length(Other.GetCentre()-GetCentre())-Other.Radius): // 3d
+      fmax(0.0, Length2D(Other.GetCentre()-GetCentre())-Other.Radius); // 2d
     //print("000: %C: dist=%s; BombDistance=%s", self, dist, BombDistance);
 
     if (dist >= BombDistance && int(dist) > int(BombDistance)) continue; // out of range

@@ -369,6 +369,8 @@ bool bHitMaster;
 bool bHitTracer;
 bool bHitOwner;
 
+bool bOldRadiusDamage; // does not take z into account when doing radius damage
+
 // if `true`, flying projectile will leave decals on 2-sided walls it flied through
 bool bDecals2SPass;
 // if `true`, flying projectile will leave decals only on 2-sided walls it flied through

@@ -274,7 +274,7 @@
     <flag name="AlwaysFast" property="bAlwaysFast" />
     <flag name="NeverFast" property="bNeverFast" />
     <flag name="FastMelee" property="bFastMelee" />
-    <flag_unsupported name="OldRadiusDmg" warning="true" />
+    <flag name="OldRadiusDmg" property="bOldRadiusDamage" />
     <flag name="UseSpecial" property="bUseSpecial" />
     <flag name="BumpSpecial" property="bBumpSpecial" />
     <flag name="BossDeath" property="bBossDeath" />
