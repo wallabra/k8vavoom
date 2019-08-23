@@ -78,6 +78,8 @@ void VBasePlayer::PostCtor () {
 //
 //==========================================================================
 bool VBasePlayer::ExecuteNetMethod (VMethod *Func) {
+  //if (onExecuteNetMethodCB) return onExecuteNetMethodCB(this, func);
+
   if (GDemoRecordingContext) {
     // find initial version of the method
     VMethod *Base = Func;
