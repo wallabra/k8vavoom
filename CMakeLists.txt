@@ -316,7 +316,7 @@ add_definitions(-DZDBSP_DISABLE_SSE=1)
 
 if(NOT WITH_MIMALLOC)
   add_definitions(-DVAVOOM_DISABLE_MIMALLOC)
-  message(STATUS, "Using system memory allocator")
+  message(STATUS "Using system memory allocator")
 endif(NOT WITH_MIMALLOC)
 
 set(VAVOOM_MAIN_DEPS "")
