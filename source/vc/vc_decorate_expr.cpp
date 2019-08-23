@@ -37,7 +37,7 @@ static VStatement *ParseActionStatement (VScriptParser *sc, VClass *Class, VStat
 //
 //==========================================================================
 static VExpression *CheckParseSetUserVarExpr (VScriptParser *sc, VClass *Class, VStr FuncName) {
-  if (FuncName.ICmp("A_SetUserVar") == 0 || FuncName.ICmp("A_SetUserVarFloat") == 0) {
+  if (FuncName.strEquCI("A_SetUserVar") || FuncName.strEquCI("A_SetUserVarFloat")) {
     auto stloc = sc->GetLoc();
     sc->Expect("(");
     sc->ExpectString();
@@ -50,7 +50,7 @@ static VExpression *CheckParseSetUserVarExpr (VScriptParser *sc, VClass *Class, 
     if (!val) sc->Error("invalid assignment");
     VExpression *dest = new VDecorateUserVar(VName(*varName), stloc);
     return new VAssignment(VAssignment::Assign, dest, val, stloc);
-  } else if (FuncName.ICmp("A_SetUserArray") == 0 || FuncName.ICmp("A_SetUserArrayFloat") == 0) {
+  } else if (FuncName.strEquCI("A_SetUserArray") || FuncName.strEquCI("A_SetUserArrayFloat")) {
     auto stloc = sc->GetLoc();
     sc->Expect("(");
     sc->ExpectString();
@@ -169,8 +169,9 @@ static VMethod *ParseFunCallWithName (VScriptParser *sc, VStr FuncName, VClass *
         if (NumArgs == VMethod::MAX_PARAMS) {
           delete Args[NumArgs];
           Args[NumArgs] = nullptr;
-          if (VStr::ICmp(*FuncName, "A_Jump") != 0 && VStr::ICmp(*FuncName, "randompick") != 0 &&
-              VStr::ICmp(*FuncName, "decorate_randompick") != 0)
+          if (!VStr::strEquCI(*FuncName, "A_Jump") &&
+              !VStr::strEquCI(*FuncName, "randompick") &&
+              !VStr::strEquCI(*FuncName, "decorate_randompick"))
           {
             ParseError(sc->GetLoc(), "Too many arguments to `%s`", *FuncName);
           }
@@ -189,7 +190,7 @@ static VMethod *ParseFunCallWithName (VScriptParser *sc, VStr FuncName, VClass *
   if (!IgnoredDecorateActions.find(FuncName)) {
     // find the state action method: first check action specials, then state actions
     // hack: `ACS_ExecuteWithResult` has its own method, but it still should be in line specials
-    if (FuncName.ICmp("ACS_ExecuteWithResult") != 0) {
+    if (!FuncName.strEquCI("ACS_ExecuteWithResult")) {
       for (int i = 0; i < LineSpecialInfos.Num(); ++i) {
         if (LineSpecialInfos[i].Name == FuncNameLower) {
           Func = Class->FindMethodChecked("A_ExecActionSpecial");
@@ -222,8 +223,11 @@ static VMethod *ParseFunCallWithName (VScriptParser *sc, VStr FuncName, VClass *
     //GCon->Logf(NAME_Debug, "***8:<%s> %s", *FuncName, *sc->GetLoc().toStringNoCol());
   } else {
     if (Func && NumArgs > Func->NumParams &&
-        (VStr::ICmp(*FuncName, "A_Jump") == 0 || VStr::ICmp(*FuncName, "randompick") == 0 ||
-         VStr::ICmp(*FuncName, "decorate_randompick") == 0))
+        (VStr::strEquCI(*FuncName, "A_Jump") ||
+         VStr::strEquCI(*FuncName, "randompick") ||
+         VStr::strEquCI(*FuncName, "decorate_randompick") ||
+         VStr::strEquCI(*FuncName, "frandompick") ||
+         VStr::strEquCI(*FuncName, "decorate_frandompick")))
     {
       ParseWarning(sc->GetLoc(), "Too many arguments to `%s` (%d -- are you nuts?!)", *FuncName, totalCount);
       for (int f = Func->NumParams; f < NumArgs; ++f) { delete Args[f]; Args[f] = nullptr; }
@@ -359,9 +363,12 @@ static VExpression *ParseConvertToUserVar (VScriptParser *sc, VClass *Class, VEx
 //==========================================================================
 static VExpression *ParsePostfixIncDec (VScriptParser *sc, VClass *Class, VExpression *lhs) {
   int opc = 0;
+
        if (sc->Check("++")) opc = 1;
-  else if (sc->Check("++")) opc = -1;
+  else if (sc->Check("--")) opc = -1;
   else return lhs; // nothing to do
+
+  //GCon->Logf(NAME_Debug, "%s: `%s` (%d)", *lhs->Loc.toStringNoCol(), *lhs->toString(), opc);
 
   lhs = ParseConvertToUserVar(sc, Class, lhs);
 
@@ -421,6 +428,7 @@ static VExpression *ParseExpressionGeneral (VScriptParser *sc, VClass *Class, in
     if (sc->CheckIdentifier()) {
       const TLocation l = sc->GetLoc();
       VStr Name = sc->String;
+      // args[idx] are special
       if (Name.strEquCI("args")) {
         if (sc->Check("[")) {
           const TLocation lidx = sc->GetLoc();
@@ -433,8 +441,11 @@ static VExpression *ParseExpressionGeneral (VScriptParser *sc, VClass *Class, in
         }
       }
       // skip random generator ID
-      if ((Name.ICmp("random") == 0 || Name.ICmp("random2") == 0 || Name.ICmp("frandom") == 0 ||
-           Name.ICmp("randompick") == 0 || Name.ICmp("frandompick") == 0) && sc->Check("["))
+      if ((Name.strEquCI("random") ||
+           Name.strEquCI("random2") ||
+           Name.strEquCI("frandom") ||
+           Name.strEquCI("randompick") ||
+           Name.strEquCI("frandompick")) && sc->Check("["))
       {
         sc->ExpectString();
         sc->Expect("]");
@@ -446,9 +457,10 @@ static VExpression *ParseExpressionGeneral (VScriptParser *sc, VClass *Class, in
         }
         return ParseMethodCall(sc, Class, Name, l, true); // paren eaten
       }
-      if (sc->String.length() > 2 && sc->String[1] == '_' && (sc->String[0] == 'A' || sc->String[0] == 'a')) {
+      if (sc->String.length() > 2 && sc->String[1] == '_' && VStr::toupper(sc->String[0]) == 'A') {
         return ParseMethodCall(sc, Class, Name, l, false); // paren not eaten
       }
+      //GCon->Logf(NAME_Debug, "%s: PRIO0! (cb=%d) ID=`%s`", *sc->GetLoc().toStringNoCol(), (inCodeBlock ? 1 : 0), *Name);
       return new VDecorateSingleName(Name, l);
     }
 
@@ -479,6 +491,7 @@ static VExpression *ParseExpressionGeneral (VScriptParser *sc, VClass *Class, in
     // get token, this is slightly faster
     if (!sc->GetString()) { sc->Error("expression expected"); return nullptr; } // no more code, wtf?
     VStr token = sc->String;
+    //GCon->Logf(NAME_Debug, "%s: PRIO2! (cb=%d) %s", *sc->GetLoc().toStringNoCol(), (inCodeBlock ? 1 : 0), *token);
     // prefix increment
     if (inCodeBlock) {
       if (token.strEqu("++") || token.strEqu("--")) {
@@ -492,6 +505,7 @@ static VExpression *ParseExpressionGeneral (VScriptParser *sc, VClass *Class, in
         return new VAssignment(VAssignment::Assign, lhs, val, l);
       }
     }
+    // process unaries
     for (const MathOpHandler *mop = oplist; mop->op; ++mop) {
       if (mop->prio != prio) continue;
       if (token.strEqu(mop->op)) {
@@ -499,15 +513,22 @@ static VExpression *ParseExpressionGeneral (VScriptParser *sc, VClass *Class, in
         const TLocation l = sc->GetLoc();
         VExpression *lhs = ParseExpressionGeneral(sc, Class, prio); // rassoc
         if (!lhs) return nullptr;
+        //GCon->Logf(NAME_Debug, "%s: UNARY! %s", *lhs->Loc.toStringNoCol(), *lhs->toString());
         // as this is right-associative, return here
+        // note that postfix inc/dec is processed by the recursive call
+        return new VUnary((VUnary::EUnaryOp)mop->opcode, lhs, l);
+        /*
         lhs = new VUnary((VUnary::EUnaryOp)mop->opcode, lhs, l);
         if (inCodeBlock) lhs = ParsePostfixIncDec(sc, Class, lhs);
         return lhs;
+        */
       }
     }
+    // no unary found
     sc->UnGet(); // return token back
     // not found, try higher priority
     VExpression *lhs = ParseExpressionGeneral(sc, Class, prio-1);
+    //GCon->Logf(NAME_Debug, "%s: PRIO2, NOUNARY! (cb=%d) ID=`%s`; lhs=<%s>", *sc->GetLoc().toStringNoCol(), (inCodeBlock ? 1 : 0), *token, *lhs->toString());
     if (lhs && inCodeBlock) lhs = ParsePostfixIncDec(sc, Class, lhs);
     return lhs;
   }
@@ -537,13 +558,14 @@ static VExpression *ParseExpressionGeneral (VScriptParser *sc, VClass *Class, in
     if (!sc->GetString()) break; // no more code
     VStr token = sc->String;
     // hacks for some dumbfucks
-    if (!inCodeBlock && token.strEqu("||")) {
-      if (prio == 10) GCon->Logf(NAME_Error, "%s: Spanish Inquisition says: in decorate, you shall use `|` to combine constants, or you will be executed!", *sc->GetLoc().toStringNoCol());
-      token = "|";
-    }
-    if (!inCodeBlock && token.strEqu("=")) {
-      if (prio == 7) GLog.Logf(NAME_Warning, "%s: Spanish Inquisition says: in decorate, you shall use `==` for comparisons, or you will be executed!", *sc->GetLoc().toStringNoCol());
-      token = "==";
+    if (!inCodeBlock) {
+      if (token.strEqu("||")) {
+        if (prio == 10) GCon->Logf(NAME_Error, "%s: Spanish Inquisition says: in decorate, you shall use `|` to combine constants, or you will be executed!", *sc->GetLoc().toStringNoCol());
+        token = "|";
+      } else if (token.strEqu("=")) {
+        if (prio == 7) GLog.Logf(NAME_Warning, "%s: Spanish Inquisition says: in decorate, you shall use `==` for comparisons, or you will be executed!", *sc->GetLoc().toStringNoCol());
+        token = "==";
+      }
     }
     // find math operator
     for (; mop->op; ++mop) {
@@ -596,11 +618,9 @@ static VExpression *ParseExpression (VScriptParser *sc, VClass *Class) {
     return asse;
   }
 
-  if (!inCodeBlock) return ParseExpressionNoAssign(sc, Class);
-
-  // this can be assign
   VExpression *lhs = ParseExpressionNoAssign(sc, Class);
-  if (!lhs) return nullptr;
+  // this can be assign (if we are in a codeblock)
+  if (!lhs || !inCodeBlock) return lhs;
 
   // easy case?
   if (sc->Check("=")) {
@@ -639,6 +659,29 @@ static VExpression *ParseExpression (VScriptParser *sc, VClass *Class) {
 
 //==========================================================================
 //
+//  ParseCreateDropResult
+//
+//  this has a special case for `VCommaExprRetOp0`
+//  as `VCommaExprRetOp0` is created only for prefix inc/dec,
+//  we can simply drop the `op0` from it
+//
+//==========================================================================
+static VExpression *ParseCreateDropResult (VExpression *expr) {
+  if (!expr) return nullptr;
+  if (expr->IsDropResult()) return expr;
+  if (!expr->IsCommaRetOp0()) return new VDropResult(expr);
+  // drop `op0`
+  VCommaExprRetOp0 *cex = (VCommaExprRetOp0 *)expr;
+  VExpression *res = cex->op1;
+  //GCon->Logf(NAME_Debug, "%s:DROPRESULT: comma=<%s>; res=<%s>", *expr->Loc.toStringNoCol(), *expr->toString(), *res->toString());
+  cex->op1 = nullptr; // so it won't be destroyed
+  delete expr;
+  return ParseCreateDropResult(res);
+}
+
+
+//==========================================================================
+//
 //  ParseFunCallAsStmt
 //
 //==========================================================================
@@ -653,7 +696,7 @@ static VStatement *ParseFunCallAsStmt (VScriptParser *sc, VClass *Class, VState 
       // this looks like an expression
       sc->UnGet(); // return it
       VExpression *expr = ParseExpression(sc, Class);
-      return new VExpressionStatement(new VDropResult(expr));
+      return new VExpressionStatement(ParseCreateDropResult(expr));
     }
   }
 
@@ -667,9 +710,10 @@ static VStatement *ParseFunCallAsStmt (VScriptParser *sc, VClass *Class, VState 
     // if it starts with `user_`, it is an expression too
     if (FuncName.startsWithCI("user_")) {
       // this looks like an expression
+      //GCon->Logf(NAME_Debug, "%s: USERSHIT! `%s`", *sc->GetLoc().toStringNoCol(), *sc->String);
       sc->UnGet(); // return it
       VExpression *expr = ParseExpression(sc, Class);
-      return new VExpressionStatement(new VDropResult(expr));
+      return new VExpressionStatement(ParseCreateDropResult(expr));
     }
   }
 
@@ -693,7 +737,7 @@ static VStatement *ParseFunCallAsStmt (VScriptParser *sc, VClass *Class, VState 
       Expr->CallerState = State;
       callExpr = Expr;
     }
-    return new VExpressionStatement(new VDropResult(callExpr));
+    return new VExpressionStatement(ParseCreateDropResult(callExpr));
   }
 }
 
@@ -731,7 +775,7 @@ static VStatement *ParseStatementFor (VScriptParser *sc, VClass *Class, VState *
     for (;;) {
       VExpression *expr = ParseExpression(sc, Class);
       if (!expr) break;
-      forstmt->InitExpr.append(new VDropResult(expr));
+      forstmt->InitExpr.append(ParseCreateDropResult(expr));
       // here should be a comma or a semicolon
       if (!sc->Check(",")) break;
     }
@@ -744,7 +788,7 @@ static VStatement *ParseStatementFor (VScriptParser *sc, VClass *Class, VState *
     for (;;) {
       VExpression *expr = ParseExpression(sc, Class);
       if (!expr) break;
-      if (lastCondExpr) forstmt->CondExpr.append(new VDropResult(lastCondExpr));
+      if (lastCondExpr) forstmt->CondExpr.append(ParseCreateDropResult(lastCondExpr));
       lastCondExpr = expr;
       // here should be a comma or a semicolon
       if (!sc->Check(",")) break;
@@ -758,7 +802,7 @@ static VStatement *ParseStatementFor (VScriptParser *sc, VClass *Class, VState *
     for (;;) {
       VExpression *expr = ParseExpression(sc, Class);
       if (!expr) break;
-      forstmt->LoopExpr.append(new VDropResult(expr));
+      forstmt->LoopExpr.append(ParseCreateDropResult(expr));
       // here should be a comma or a right paren
       if (!sc->Check(",")) break;
     }
@@ -912,7 +956,7 @@ static VStatement *ParseActionStatement (VScriptParser *sc, VClass *Class, VStat
       VExpression *Args[1];
       Args[0] = ste;
       VExpression *einv = new VDecorateInvocation(VName("decorate_A_RetDoJump"), stloc, 1, Args);
-      VStatement *stinv = new VExpressionStatement(new VDropResult(einv));
+      VStatement *stinv = new VExpressionStatement(ParseCreateDropResult(einv));
       VCompound *cst = new VCompound(stloc);
       cst->Statements.append(stinv);
       cst->Statements.append(new VReturn(nullptr, stloc));
@@ -1021,7 +1065,7 @@ static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State) {
     #endif
     Func = M;
   } else {
-    if (VStr::ICmp(*FuncName, "A_Jump") == 0) {
+    if (VStr::strEquCI(*FuncName, "A_Jump")) {
       VExpression *jexpr = ParseAJump(sc, Class, State);
       VExpressionStatement *Stmt = new VExpressionStatement(jexpr);
       #if defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
@@ -1060,7 +1104,7 @@ static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State) {
           // need to create invocation
           VInvocation *Expr = new VInvocation(nullptr, Func, nullptr, false, false, sc->GetLoc(), NumArgs, Args);
           Expr->CallerState = State;
-          VExpressionStatement *Stmt = new VExpressionStatement(new VDropResult(Expr));
+          VExpressionStatement *Stmt = new VExpressionStatement(ParseCreateDropResult(Expr));
           #if defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
           VMethod *M = new VMethod(NAME_None, State, sc->GetLoc());
           #else
