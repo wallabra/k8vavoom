@@ -25,7 +25,45 @@
 //**
 //**************************************************************************
 
+class VScriptParser;
+
+
+struct VScriptSavedPos {
+public:
+  vint32 Line;
+  vint32 TokLine;
+  VStr String;
+  VName Name8;
+  VName Name;
+  vint32 Number;
+  /*double*/float Float; // oops; it should be double, but VC cannot into doubles
+
+  char *ScriptPtr;
+  char *TokStartPtr;
+  vint32 TokStartLine;
+  enum {
+    Flag_CMode = 1u<<0,
+    Flag_Escape = 1u<<1,
+    Flag_AllowNumSign = 1u<<2,
+    //
+    Flag_End = 1u<<3,
+    Flag_Crossed = 1u<<4,
+    Flag_QuotedString = 1u<<5,
+  };
+  vuint32 flags;
+
+
+public:
+  VScriptSavedPos (const VScriptParser &par) { saveFrom(par); }
+
+  void saveFrom (const VScriptParser &par);
+  void restoreTo (VScriptParser &par) const;
+};
+
+
 class VScriptParser {
+  friend struct VScriptSavedPos;
+
 public:
   int Line;
   int TokLine;
@@ -62,6 +100,13 @@ private:
 
   // slow! returns 0 on EOF
   char PeekOrSkipChar (bool doSkip);
+
+public:
+  // it also saves current modes
+  inline VScriptSavedPos SavePos () const { return VScriptSavedPos(*this); }
+
+  // it also restores saved modes
+  inline void RestorePos (const VScriptSavedPos &pos) { pos.restoreTo(*this); }
 
 public:
   // deletes `Strm`

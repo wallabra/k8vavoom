@@ -95,6 +95,9 @@ class VScriptsParser : public VObject {
   DECLARE_FUNCTION(CurrLine)
   DECLARE_FUNCTION(ScriptError)
   DECLARE_FUNCTION(ScriptMessage)
+
+  DECLARE_FUNCTION(SavePos)
+  DECLARE_FUNCTION(RestorePos)
 };
 
 IMPLEMENT_CLASS(V, ScriptsParser)
@@ -152,6 +155,63 @@ struct CharClassifier {
 };
 
 CharClassifier charClassifierInit;
+
+
+
+//==========================================================================
+//
+//  VScriptSavedPos::saveFrom
+//
+//==========================================================================
+void VScriptSavedPos::saveFrom (const VScriptParser &par) {
+  Line = par.Line;
+  TokLine = par.TokLine;
+  String = par.String;
+  Name8 = par.Name8;
+  Name = par.Name;
+  Number = par.Number;
+  Float = par.Float;
+
+  ScriptPtr = par.ScriptPtr;
+  TokStartPtr = par.TokStartPtr;
+  TokStartLine = par.TokStartLine;
+  flags =
+    (par.CMode ? Flag_CMode : 0u)|
+    (par.Escape ? Flag_Escape : 0u)|
+    (par.AllowNumSign ? Flag_AllowNumSign : 0u)|
+    //
+    (par.End ? Flag_End : 0u)|
+    (par.Crossed ? Flag_Crossed : 0u)|
+    (par.QuotedString ? Flag_QuotedString : 0u)|
+    0u;
+}
+
+
+//==========================================================================
+//
+//  VScriptSavedPos::restoreTo
+//
+//==========================================================================
+void VScriptSavedPos::restoreTo (VScriptParser &par) const {
+  par.Line = Line;
+  par.TokLine = TokLine;
+  par.String = String;
+  par.Name8 = Name8;
+  par.Name = Name;
+  par.Number = Number;
+  par.Float = Float;
+
+  par.ScriptPtr = ScriptPtr;
+  par.TokStartPtr = TokStartPtr;
+  par.TokStartLine = TokStartLine;
+
+  par.CMode = !!(flags&Flag_CMode);
+  par.Escape = !!(flags&Flag_Escape);
+  par.AllowNumSign = !!(flags&Flag_AllowNumSign);
+  par.End = !!(flags&Flag_End);
+  par.Crossed = !!(flags&Flag_Crossed);
+  par.QuotedString = !!(flags&Flag_QuotedString);
+}
 
 
 
@@ -1626,4 +1686,18 @@ IMPLEMENT_FUNCTION(VScriptsParser, ScriptMessage) {
   P_GET_SELF;
   Self->CheckInterface();
   Self->Int->Message(*Msg);
+}
+
+IMPLEMENT_FUNCTION(VScriptsParser, SavePos) {
+  P_GET_PTR(VScriptSavedPos, pos);
+  P_GET_SELF;
+  Self->CheckInterface();
+  if (pos) *pos = Self->Int->SavePos();
+}
+
+IMPLEMENT_FUNCTION(VScriptsParser, RestorePos) {
+  P_GET_PTR(VScriptSavedPos, pos);
+  P_GET_SELF;
+  Self->CheckInterface();
+  if (pos) Self->Int->RestorePos(*pos);
 }

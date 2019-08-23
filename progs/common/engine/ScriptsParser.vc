@@ -26,6 +26,28 @@
 //**************************************************************************
 class ScriptsParser : Object native;
 
+struct ScriptSavedPos {
+  int Line;
+  int TokLine;
+  string String;
+  name Name8;
+  name Name;
+  int Number;
+  float Float;
+
+  readonly void *ScriptPtr;
+  readonly void *TokStartPtr;
+  int TokStartLine;
+
+  bool CMode;
+  bool Escape;
+  bool AllowNumSign;
+
+  bool End;
+  bool Crossed;
+  bool QuotedString;
+}
+
 native private readonly void *Internal;
 
 native string String { get; }
@@ -72,6 +94,9 @@ native string FileName ();
 native int CurrLine ();
 native void ScriptError (string Text, ...) [printf,1];
 native void ScriptMessage (string Text, ...) [printf,1];
+
+native void SavePos (out ScriptSavedPos pos);
+native void RestorePos (const ref ScriptSavedPos pos);
 
 
 defaultproperties {
