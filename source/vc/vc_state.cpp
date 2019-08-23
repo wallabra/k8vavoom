@@ -146,19 +146,25 @@ void VState::Emit () {
   }
 
   if (Function) {
+    if (!Function->IsDefined()) {
+      ParseWarning(Loc, "State function `%s` wasn't properly defined", *Function->GetFullName());
+    }
+    //GLog.Logf(NAME_Debug, "%s: emiting function `%s` (%s)", *Loc.toString(), *Function->GetFullName(), *Function->Loc.toString());
     Function->Emit();
+    FunctionName = NAME_None; // need this for decorate
   } else if (FunctionName != NAME_None) {
     Function = ((VClass *)Outer)->FindMethod(FunctionName);
     if (!Function) {
       ParseError(Loc, "No such method `%s`", *FunctionName);
     } else {
+      if (Function->Flags&FUNC_VarArgs) { ParseError(Loc, "State method must not have varargs"); return; }
       if (Function->ReturnType.Type != TYPE_Void) ParseError(Loc, "State method must not return a value");
       if (Function->NumParams) ParseError(Loc, "State method must not take any arguments");
       if (Function->Flags&FUNC_Static) ParseError(Loc, "State method must not be static");
-      if (Function->Flags&FUNC_VarArgs) ParseError(Loc, "State method must not have varargs");
       if (Type == Vavoom) {
         if (!(Function->Flags&FUNC_Final)) ParseError(Loc, "State method must be final"); //k8: why?
       }
+      //GLog.Logf(NAME_Debug, "%s: direct function `%s` (%s)", *Loc.toString(), *Function->GetFullName(), *Function->Loc.toString());
     }
   }
 }

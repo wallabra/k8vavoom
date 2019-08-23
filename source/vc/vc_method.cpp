@@ -101,9 +101,11 @@ VMethod::VMethod (VName AName, VMemberBase *AOuter, TLocation ALoc)
   , Profile1(0)
   , Profile2(0)
   , NativeFunc(0)
-  , VTableIndex(0)
+  , VTableIndex(-666)
   , NetIndex(0)
   , NextNetMethod(0)
+  , defineResult(-1)
+  , emitCalled(false)
 {
   memset(ParamFlags, 0, sizeof(ParamFlags));
 }
@@ -166,6 +168,13 @@ void VMethod::Serialise (VStream &Strm) {
 //
 //==========================================================================
 bool VMethod::Define () {
+  if (emitCalled) Sys_Error("`Define()` after `Emit()` for %s", *GetFullName());
+  if (defineResult >= 0) {
+    GLog.Logf(NAME_Debug, "`Define()` for `%s` already called!", *GetFullName());
+    return (defineResult > 0);
+  }
+  defineResult = 0;
+
   bool Ret = true;
 
   if (Flags&FUNC_Static) {
@@ -309,6 +318,7 @@ bool VMethod::Define () {
     }
   }
 
+  defineResult = (Ret ? 1 : 0);
   return Ret;
 }
 
@@ -319,6 +329,13 @@ bool VMethod::Define () {
 //
 //==========================================================================
 void VMethod::Emit () {
+  if (defineResult < 0) Sys_Error("`Emit()` before `Define()` for %s", *GetFullName());
+  if (emitCalled) {
+    GLog.Logf(NAME_Debug, "`Emit()` for `%s` already called!", *GetFullName());
+    return;
+  }
+  emitCalled = true;
+
   if (Flags&FUNC_Native) {
     if (Statement) ParseError(Loc, "Native methods can't have a body");
     return;
@@ -542,6 +559,9 @@ void VMethod::DumpAsm () {
 void VMethod::PostLoad () {
   //k8: it should be called only once, but let's play safe here
   if (mPostLoaded) return;
+
+  if (defineResult < 0) Sys_Error("`Define()` not called for %s", *GetFullName());
+  //if (!emitCalled) Sys_Error("`Emit()` not called before `PostLoad()` for %s", *GetFullName());
 
 #if !defined(IN_VCC)
   // set up builtins

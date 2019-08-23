@@ -706,8 +706,29 @@ VMethod *VClass::FindMethod (VName Name, bool bRecursive) {
   Name = ResolveAlias(Name);
   VMethod *M = (VMethod *)StaticFindMember(Name, this, MEMBER_Method);
   if (M) return M;
-  if (bRecursive && ParentClass) return ParentClass->FindMethod(Name, bRecursive);
-  return nullptr;
+  //if (bRecursive && ParentClass) return ParentClass->FindMethod(Name, bRecursive);
+  //return nullptr;
+  if (!bRecursive || !ParentClass) return nullptr;
+  return ParentClass->FindMethod(Name, true);
+}
+
+
+//==========================================================================
+//
+//  VClass::FindMethodNonPostLoaded
+//
+//  this will follow `ParentClassName` instead of `ParentClass`
+//
+//==========================================================================
+VMethod *VClass::FindMethodNonPostLoaded (VName Name, bool bRecursive) {
+  if (Name == NAME_None) return nullptr;
+  Name = ResolveAlias(Name);
+  VMethod *M = (VMethod *)StaticFindMember(Name, this, MEMBER_Method);
+  if (M) return M;
+  if (!bRecursive || ParentClassName == NAME_None) return nullptr;
+  VClass *c2 = FindClass(*ParentClassName);
+  if (!c2) return nullptr;
+  return c2->FindMethodNonPostLoaded(Name, true);
 }
 
 
@@ -964,7 +985,7 @@ bool VClass::isNonVirtualMethod (VName Name) {
   VMethod *M = FindMethod(Name, false); // don't do recursive search
   if (!M) return false;
   if ((M->Flags&FUNC_Final) == 0) return false; // no way
-  if ((M->Flags&FUNC_NonVirtual) != 0) return true; // just in case
+  //if ((M->Flags&FUNC_NonVirtual) != 0) return true; // just in case
   // check if parent class has method with the same name
   if (!ParentClass) return true; // no parent class (why?) -- real final
   return (ParentClass->GetMethodIndex(M->Name) == -1);
@@ -1129,7 +1150,7 @@ bool VClass::Define () {
 
   for (int i = 0; i < Structs.Num(); ++i) if (!Structs[i]->Define()) return false;
 
-  // this can be not postloaded yet, so...
+  // this can not be postloaded yet, so...
   {
     VName pn = ParentClassName;
     while (pn != NAME_None) {
@@ -1247,25 +1268,6 @@ bool VClass::DefineMembers () {
 
   if (!DefineRepInfos()) Ret = false;
 
-  return Ret;
-}
-
-
-//==========================================================================
-//
-//  VClass::DecorateDefine
-//
-//==========================================================================
-bool VClass::DecorateDefine () {
-  bool Ret = true;
-  VField *PrevBool = nullptr;
-  for (VField *fi = Fields; fi; fi = fi->Next) {
-    if (!fi->Define()) Ret = false;
-    if (fi->Type.Type == TYPE_Bool && PrevBool && PrevBool->Type.BitMask != 0x80000000) {
-      fi->Type.BitMask = PrevBool->Type.BitMask<<1;
-    }
-    PrevBool = (fi->Type.Type == TYPE_Bool ? fi : nullptr);
-  }
   return Ret;
 }
 
@@ -1640,6 +1642,12 @@ void VClass::Emit () {
 void VClass::DecorateEmit () {
   // emit method code
   for (int i = 0; i < Methods.Num(); ++i) Methods[i]->Emit();
+  // define state functions
+  /*
+  for (VState *S = States; S; S = S->Next) {
+    if (!S->Function && S->FunctionName != NAME_None) S->Emit();
+  }
+  */
 }
 
 
@@ -1880,7 +1888,7 @@ void VClass::CalcFieldOffsets () {
     VMethod *M = (VMethod *)Methods[i];
     int MOfs = -1;
     if (ParentClass) MOfs = ParentClass->GetMethodIndex(M->Name);
-    if (MOfs == -1 && (M->Flags&FUNC_Final) != 0) M->Flags |= FUNC_NonVirtual;
+    //if (MOfs == -1 && (M->Flags&FUNC_Final) != 0) M->Flags |= FUNC_NonVirtual;
     if (MOfs == -1 && (M->Flags&FUNC_Final) == 0) MOfs = numMethods++;
     M->VTableIndex = MOfs;
   }
@@ -2092,6 +2100,7 @@ void VClass::CreateVTable () {
   if (ParentClass) memcpy(ClassVTable, ParentClass->ClassVTable, ParentClass->ClassNumMethods*sizeof(VMethod *));
   for (int i = 0; i < Methods.Num(); ++i) {
     VMethod *M = Methods[i];
+    check(M->VTableIndex >= -1);
     if (M->VTableIndex == -1) continue;
     ClassVTable[M->VTableIndex] = M;
   }
@@ -2388,11 +2397,7 @@ VClass *VClass::CreateDerivedClass (VName AName, VMemberBase *AOuter, TArray<VDe
 
   if (!NewClass->DefineRepInfos()) Sys_Error("cannot post-process replication info for class '%s'", *AName);
 
-  //!DecorateDefine();
-  //fprintf(stderr, "*** '%s' : '%s' (%d) ***\n", NewClass->GetName(), GetName(), (NewClass->ObjectFlags&CLASSOF_PostLoaded ? 1 : 0));
-  //fprintf(stderr, " class size 0: %d  %d  (%d)\n", NewClass->ClassUnalignedSize, NewClass->ClassSize, ParentClass->ClassSize);
   NewClass->PostLoad();
-  //fprintf(stderr, " class size 1: %d  %d  (%d)\n", NewClass->ClassUnalignedSize, NewClass->ClassSize, ParentClass->ClassSize);
   NewClass->CreateDefaults();
 
   /*

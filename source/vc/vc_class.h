@@ -367,6 +367,8 @@ public:
   VField *FindFieldChecked (VName);
   VProperty *FindProperty (VName);
   VMethod *FindMethod (VName Name, bool bRecursive=true);
+  // this will follow `ParentClassName` instead of `ParentClass`
+  VMethod *FindMethodNonPostLoaded (VName Name, bool bRecursive=true);
   //VMethod *FindMethodNoCase (VName Name, bool bRecursive=true);
   VMethod *FindMethodChecked (VName);
   VMethod *FindAccessibleMethod (VName Name, VClass *self=nullptr, const TLocation *loc=nullptr);
@@ -390,7 +392,6 @@ public:
   bool DefineMembers ();
   void Emit ();
   bool DefineRepInfos ();
-  bool DecorateDefine ();
   void DecorateEmit ();
   void DecoratePostLoad ();
   void EmitStateLabels ();

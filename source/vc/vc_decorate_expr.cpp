@@ -1049,14 +1049,20 @@ static void ParseActionBlock (VScriptParser *sc, VClass *Class, VState *State) {
   inCodeBlock = oldicb;
 
   if (stmt->Statements.length()) {
+#if defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
+    VMethod *M = new VMethod(NAME_None, State, sc->GetLoc());
+#else
     VMethod *M = new VMethod(NAME_None, Class, sc->GetLoc());
+#endif
     M->Flags = FUNC_Final;
     M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, sc->GetLoc());
     M->ReturnType = VFieldType(TYPE_Void);
     M->Statement = stmt;
     M->NumParams = 0;
+#if !defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
     Class->AddMethod(M);
     M->Define();
+#endif
     State->Function = M;
   } else {
     delete stmt;
@@ -1087,28 +1093,39 @@ static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State) {
 
   VStatement *suvst = CheckParseSetUserVarStmt(sc, Class, FuncName);
   if (suvst) {
+#if defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
+    VMethod *M = new VMethod(NAME_None, State, sc->GetLoc());
+#else
     VMethod *M = new VMethod(NAME_None, Class, sc->GetLoc());
+#endif
     M->Flags = FUNC_Final;
     M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, sc->GetLoc());
     M->ReturnType = VFieldType(TYPE_Void);
     M->Statement = suvst;
     M->NumParams = 0;
-    //M->ParamsSize = 1;
+#if !defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
     Class->AddMethod(M);
     M->Define();
+#endif
     Func = M;
   } else {
     if (VStr::ICmp(*FuncName, "A_Jump") == 0) {
       VExpression *jexpr = ParseAJump(sc, Class, State);
       VExpressionStatement *Stmt = new VExpressionStatement(jexpr);
+#if defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
+      VMethod *M = new VMethod(NAME_None, State, sc->GetLoc());
+#else
       VMethod *M = new VMethod(NAME_None, Class, sc->GetLoc());
+#endif
       M->Flags = FUNC_Final;
       M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, sc->GetLoc());
       M->ReturnType = VFieldType(TYPE_Void);
       M->Statement = Stmt;
       M->NumParams = 0;
+#if !defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
       Class->AddMethod(M);
       M->Define();
+#endif
       Func = M;
     } else {
       Func = ParseFunCallWithName(sc, FuncName, Class, NumArgs, Args, false); // no paren
@@ -1123,25 +1140,41 @@ static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State) {
             Args[i] = nullptr;
           }
         }
-      } else if (Func->NumParams || NumArgs /*|| FuncName.ICmp("a_explode") == 0*/) {
+      } else if (NumArgs || Func->Name == NAME_None || !Func->IsGoodStateMethod()) {
+        // need to create invocation
         VInvocation *Expr = new VInvocation(nullptr, Func, nullptr, false, false, sc->GetLoc(), NumArgs, Args);
         Expr->CallerState = State;
         VExpressionStatement *Stmt = new VExpressionStatement(new VDropResult(Expr));
+#if defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
+        VMethod *M = new VMethod(NAME_None, State, sc->GetLoc());
+#else
         VMethod *M = new VMethod(NAME_None, Class, sc->GetLoc());
+#endif
         M->Flags = FUNC_Final;
         M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, sc->GetLoc());
         M->ReturnType = VFieldType(TYPE_Void);
         M->Statement = Stmt;
         M->NumParams = 0;
+#if !defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
         Class->AddMethod(M);
         M->Define();
+#endif
+        /*
+        if (Func->NumParams == 0 && NumArgs == 0 && (Func->Flags&(FUNC_Final|FUNC_Static)) == FUNC_Final && Func->Name != NAME_None) {
+          GCon->Logf(NAME_Debug, "!!! %s: func=`%s` (%s) (params=%d; args=%d; final=%d; static=%d; flags=0x%04x)", Class->GetName(), Func->GetName(), *FuncName, Func->NumParams, NumArgs, (Func->Flags&FUNC_Final ? 1 : 0), (Func->Flags&FUNC_Static ? 1 : 0), Func->Flags);
+        }
+        */
         Func = M;
+      } else {
+        //GCon->Logf(NAME_Debug, "*** %s: func=`%s` (%s) (params=%d; args=%d; final=%d; static=%d)", Class->GetName(), Func->GetName(), *FuncName, Func->NumParams, NumArgs, (Func->Flags&FUNC_Final ? 1 : 0), (Func->Flags&FUNC_Static ? 1 : 0));
+        State->FunctionName = Func->Name;
+        check(State->FunctionName != NAME_None);
+        Func = nullptr;
       }
     }
   }
 
   State->Function = Func;
+  if (Func) State->FunctionName = NAME_None;
   if (sc->Check(";")) {}
 }
-
-

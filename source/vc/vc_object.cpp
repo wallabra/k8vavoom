@@ -340,6 +340,7 @@ VFuncRes VMethodProxy::Execute (VObject *Self) {
       Sys_Error("object of class `%s` is not a subclass of `%s` for method `%s`", Self->GetClass()->GetName(), Class->GetName(), MethodName);
     }
   }
+  if (Method->VTableIndex < -1) Sys_Error("method `%s` in class `%s` wasn't postloaded", (MethodName ? MethodName : "<unnamed>"), (Class ? Class->GetName() : "<unnamed>"));
   if (Method->VTableIndex != -1) {
     return VObject::ExecuteFunction(Self->vtable[Method->VTableIndex]);
   } else {
@@ -357,6 +358,7 @@ VFuncRes VMethodProxy::Execute (VObject *Self) {
 //==========================================================================
 VFuncRes VMethodProxy::ExecuteNoCheck (VObject *Self) {
   if (!Resolve(Self)) Sys_Error("cannot find method `%s` in class `%s`", (MethodName ? MethodName : "<unnamed>"), (Class ? Class->GetName() : "<unnamed>"));
+  if (Method->VTableIndex < -1) Sys_Error("method `%s` in class `%s` wasn't postloaded", (MethodName ? MethodName : "<unnamed>"), (Class ? Class->GetName() : "<unnamed>"));
   if (Method->VTableIndex != -1) {
     check(Self);
     return VObject::ExecuteFunction(Self->vtable[Method->VTableIndex]);

@@ -45,10 +45,11 @@ enum {
   FUNC_Protected   = 0x4000,
 
   // non-virtual method -- i.e. it has `FUNC_Final` set, and it is not in VMT
-  FUNC_NonVirtual  = 0x8000, // set in postload processor
+  //k8: i don't remember why i introduced this
+  //FUNC_NonVirtual  = 0x8000, // set in postload processor
 
   FUNC_NetFlags = FUNC_Net|FUNC_NetReliable,
-  FUNC_ProtectionFlags = FUNC_Override|FUNC_Private|FUNC_Protected|FUNC_NonVirtual,
+  FUNC_ProtectionFlags = FUNC_Override|FUNC_Private|FUNC_Protected/*|FUNC_NonVirtual*/,
 };
 
 
@@ -185,9 +186,13 @@ public:
   TArray<vuint8> Statements;
   TArray<TLocation> StatLocs; // locations for each code point
   builtin_t NativeFunc;
-  vint16 VTableIndex;
+  vint16 VTableIndex; // -666 means "not determined yet"
   vint32 NetIndex;
   VMethod *NextNetMethod;
+
+  // guard them, why not?
+  int defineResult; // -1: not called yet
+  bool emitCalled;
 
 public:
   VMethod (VName, VMemberBase *, TLocation);
@@ -214,14 +219,26 @@ public:
   // <0: not found
   int FindArgByName (VName aname) const;
 
+  inline bool IsDefined () const { return (defineResult >= 0); }
+
   inline bool IsStatic () const { return !!(Flags&FUNC_Static); }
   // valid only after codegen phase
-  inline bool IsVirtual () const { return !(Flags&FUNC_NonVirtual); } // you can use `VTableIndex >= 0` too
+  //inline bool IsVirtual () const { return !(Flags&FUNC_NonVirtual); } // you can use `VTableIndex >= 0` too
+  // valid only after `PostLoad()` call
+  inline bool IsVirtual () const { return (VTableIndex >= 0); }
+  inline bool IsNonVirtual () const { return (VTableIndex < 0); }
+
+  inline bool IsPostLoaded () const { return (VTableIndex >= -1); }
 
   // is this method suitable for various "normal" calls?
   inline bool IsNormal () const { return ((Flags&(FUNC_VarArgs|FUNC_Spawner|FUNC_Iterator)) == 0); }
 
   inline bool IsNetwork () const { return ((Flags&(FUNC_Net|FUNC_NetReliable)) != 0); }
+
+  // called from decorate parser, mostly
+  // if we're calling a "good" method, there is no need to create a wrapper
+  // not sure what to do with network methods, though
+  inline bool IsGoodStateMethod () const { return (NumParams == 0 && (Flags&~(FUNC_Native|FUNC_Spawner|FUNC_Net|FUNC_NetReliable/*|FUNC_NonVirtual*/)) == FUNC_Final); }
 
 private:
   void CompileCode ();

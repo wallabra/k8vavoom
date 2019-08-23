@@ -27,6 +27,7 @@
 #include "vc_local.h"
 #include "sv_local.h"
 
+#define VC_DECORATE_ACTION_BELONGS_TO_STATE
 
 static VCvarB dbg_show_decorate_unsupported("dbg_show_decorate_unsupported", false, "Show unsupported decorate props/flags?", CVAR_PreInit|CVAR_Archive);
 static VCvarB dbg_debug_weapon_slots("dbg_debug_weapon_slots", false, "Debug weapon slots?", CVAR_PreInit);
@@ -256,7 +257,6 @@ static inline bool isChexActor (VStr cname) {
 // the same mod (yes, smoothdoom, i am talking about you).
 // we will cut off old override if we'll find a new one
 static TMapNC<VClass *, bool> currFileRepls; // set; key is old class
-
 
 static void ClearReplacementBase () {
   currFileRepls.clear();
@@ -1276,7 +1276,6 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
   VState *LastState = nullptr; // last defined state (`nullptr` right after new label)
   VState *LoopStart = nullptr; // state with last defined label (used to resolve `loop`)
   int NewLabelsStart = Class->StateLabelDefs.Num(); // first defined, but not assigned label index
-  //bool inSpawnLabel = false;
 
   sc->Expect("{");
   // disable escape sequences in states
@@ -1310,7 +1309,6 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
           // sigh... k8
           if (!LastState) {
             // yet if we are in spawn label, demand at least one defined state
-            //if (inSpawnLabel) sc->Error("you cannot do immediate jump in spawn state");
             // ah, screw it, just define TNT1
             VState *dummyState = new VState(va("S_%d", States.Num()), Class, TmpLoc);
             States.Append(dummyState);
@@ -1327,7 +1325,6 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
             NewLabelsStart = Class->StateLabelDefs.Num(); // no current label
             PrevState = dummyState;
             LastState = dummyState;
-            //inSpawnLabel = false; // no need to add dummy state for "nodelay" anymore
           }
           LastState->GotoLabel = GotoLabel;
           LastState->GotoOffset = GotoOffset;
@@ -1354,29 +1351,11 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       } else {
         // see above for the reason to introduce this dummy state
         // nope, zdoom wiki says that this should make state "invisible"
-        //FIXME: for now, this is not working right
+        //FIXME: for now, this is not working right (it seems; need to be checked!)
         if (!LastState) {
           GLog.Logf(NAME_Warning, "%s: Empty state detected; this may not work as you expect!", *TmpLoc.toStringNoCol());
           GLog.Logf(NAME_Warning, "%s:   this will remove a state, not an actor!", *TmpLoc.toStringNoCol());
           GLog.Logf(NAME_Warning, "%s:   you can use k8vavoom-specific `RemoveState` command to get rid of this warning.", *TmpLoc.toStringNoCol());
-          /*
-          VState *dummyState = new VState(va("S_%d", States.Num()), Class, TmpLoc);
-          States.Append(dummyState);
-          dummyState->SpriteName = "tnt1";
-          dummyState->Frame = 0|VState::FF_SKIPOFFS|VState::FF_SKIPMODEL;
-          dummyState->Time = 0;
-          // link previous state
-          if (PrevState) PrevState->NextState = dummyState;
-          // assign state to the labels
-          for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) {
-            Class->StateLabelDefs[i].State = dummyState;
-            LoopStart = dummyState; // this will replace loop start only if we have any labels
-          }
-          NewLabelsStart = Class->StateLabelDefs.Num(); // no current label
-          PrevState = dummyState;
-          LastState = dummyState;
-          //inSpawnLabel = false; // no need to add dummy state for "nodelay" anymore
-          */
         }
         if (LastState) LastState->NextState = nullptr;
 
@@ -1444,7 +1423,6 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       VStateLabelDef &Lbl = Class->StateLabelDefs.Alloc();
       Lbl.Loc = TmpLoc;
       Lbl.Name = TmpName;
-      //if (TmpName.ICmp("Spawn") == 0) inSpawnLabel = true;
       if (!sc->Crossed && sc->Check(";")) {}
       continue;
     }
@@ -1503,7 +1481,11 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       // number
       sc->ExpectNumberWithSign();
       if (sc->Number < 0) {
-        State->Time = sc->Number;
+        //State->Time = sc->Number;
+        if (sc->Number != -1) {
+          GLog.Logf(NAME_Warning, "%s: negative state duration %d (only -1 is allowed)!", *TmpLoc.toStringNoCol(), sc->Number);
+        }
+        State->Time = -1;
       } else {
         State->Time = float(sc->Number)/35.0f;
       }
@@ -1522,7 +1504,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       if (sc->Check("NoDelay")) {
         // "nodelay" has sense only for "spawn" state
         // k8: play safe here: add dummy state for any label, just in case
-        if (!LastState /*&& inSpawnLabel*/) {
+        if (!LastState) {
           // there were no states after the label, insert dummy one
           VState *dupState = new VState(va("S_%d", States.Num()), Class, TmpLoc);
           States.Append(dupState);
@@ -1555,7 +1537,6 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
           LastState = State;
           // and use duplicate state as a new state
           State = dupState;
-          //inSpawnLabel = false; // no need to add dummy state for "nodelay" anymore
           continue;
         }
         continue;
@@ -1622,7 +1603,6 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     NewLabelsStart = Class->StateLabelDefs.Num(); // no current label
     PrevState = State;
     LastState = State;
-    //inSpawnLabel = false; // no need to add dummy state for "nodelay" anymore
 
     for (int i = 1; i < FramesString.Length(); ++i) {
       vint32 frm = (State->Frame&~(VState::FF_FRAMEMASK|VState::FF_DONTCHANGE|VState::FF_SKIPOFFS));
@@ -1654,7 +1634,28 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       s2->Arg2 = State->Arg2;
       s2->Misc1 = State->Misc1;
       s2->Misc2 = State->Misc2;
-      s2->Function = State->Function;
+      //s2->Function = State->Function;
+      if (State->Function) {
+#if defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
+        s2->Function = new VMethod(NAME_None, s2, s2->Loc);
+#else
+        s2->Function = new VMethod(NAME_None, Class, s2->Loc);
+#endif
+        s2->Function->Flags = FUNC_Final;
+        s2->Function->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, s2->Loc);
+        s2->Function->ReturnType = VFieldType(TYPE_Void);
+        //GCon->Logf(NAME_Debug, "STATE: %s", *s2->Loc.toString());
+        //GCon->Logf(NAME_Debug, "STMT: %s", *State->Function->Statement->Loc.toString());
+        s2->Function->Statement = State->Function->Statement->SyntaxCopy();
+        s2->Function->NumParams = 0;
+#if !defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
+        Class->AddMethod(s2->Function);
+        s2->Function->Define();
+#endif
+        s2->FunctionName = NAME_None;
+      } else {
+        s2->FunctionName = State->FunctionName;
+      }
       s2->LightName = State->LightName;
 
       // link previous state
@@ -1889,6 +1890,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
     delete sc2;
   }
 
+  if (getDecorateDebug()) sc->Message(va("Creating derived class `%s` from `%s`", *NameStr, ParentClass->GetName()));
   VClass *Class = ParentClass->CreateDerivedClass(*NameStr, DecPkg, uvars, sc->GetLoc());
   uvars.clear(); // we don't need it anymore
   DecPkg->ParsedClasses.Append(Class);
@@ -2673,9 +2675,12 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
   if (States.Num()) {
     Class->States = States[0];
     for (int i = 0; i < States.Num()-1; ++i) States[i]->Next = States[i+1];
-    for (int i = 0; i < States.Num(); ++i) {
-      if (States[i]->GotoLabel != NAME_None) {
-        States[i]->NextState = Class->ResolveStateLabel(States[i]->Loc, States[i]->GotoLabel, States[i]->GotoOffset);
+    for (auto &&sts : States) {
+#if defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
+      sts->Define(); // this defines state functions
+#endif
+      if (sts->GotoLabel != NAME_None) {
+        sts->NextState = Class->ResolveStateLabel(sts->Loc, sts->GotoLabel, sts->GotoOffset);
       }
     }
   }
@@ -3364,15 +3369,8 @@ void ProcessDecorateScripts () {
     Sys_Error("Not all DECORATE class imports were defined");
   }
 
-  GLog.Logf(NAME_Init, "Post-procesing");
+  GLog.Logf(NAME_Init, "Post-procesing decorate code...");
   //VMemberBase::StaticDumpMObjInfo();
-
-  /*k8: not yet
-  for (int i = 0; i < DecPkg->ParsedClasses.Num(); ++i) {
-    if (getDecorateDebug()) GLog.Logf("Defining Class %s", *DecPkg->ParsedClasses[i]->GetFullName());
-    if (!DecPkg->ParsedClasses[i]->DecorateDefine()) Sys_Error("DECORATE ERROR: cannot define class '%s'", *DecPkg->ParsedClasses[i]->GetFullName());
-  }
-  */
 
   // set class properties
   TMap<VStr, bool> powerfixReported;
@@ -3478,19 +3476,34 @@ void ProcessDecorateScripts () {
     newWSlots.clear();
   }
 
+  GLog.Logf(NAME_Init, "Compiling decorate code...");
   // emit code
-  for (int i = 0; i < DecPkg->ParsedClasses.Num(); ++i) {
-    if (getDecorateDebug()) GLog.Logf("Emiting Class %s", *DecPkg->ParsedClasses[i]->GetFullName());
+  for (auto &&dcls : DecPkg->ParsedClasses) {
+    if (getDecorateDebug()) GLog.Logf("Emiting Class %s", *dcls->GetFullName());
     //dumpFieldDefs(DecPkg->ParsedClasses[i]);
-    DecPkg->ParsedClasses[i]->DecorateEmit();
+    dcls->DecorateEmit();
+#if defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
+    for (VState *sts = dcls->States; sts; sts = sts->Next) sts->Emit();
+#endif
   }
 
+  GLog.Logf(NAME_Init, "Generating decorate code...");
   // compile and set up for execution
-  for (int i = 0; i < DecPkg->ParsedClasses.Num(); ++i) {
-    if (getDecorateDebug()) GLog.Logf("Compiling Class %s", *DecPkg->ParsedClasses[i]->GetFullName());
+  for (auto &&dcls : DecPkg->ParsedClasses) {
+    if (getDecorateDebug()) GLog.Logf("Compiling Class %s", *dcls->GetFullName());
     //dumpFieldDefs(DecPkg->ParsedClasses[i]);
-    DecPkg->ParsedClasses[i]->DecoratePostLoad();
-    //dumpFieldDefs(DecPkg->ParsedClasses[i]);
+    dcls->DecoratePostLoad();
+    //dumpFieldDefs(dcls);
+#if defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
+    // generate code for state actions
+    for (VState *sts = dcls->States; sts; sts = sts->Next) {
+      // `VState::Emit()` clears `FunctionName` for direct calls
+      if (sts->Function && sts->FunctionName == NAME_None) {
+        //GLog.Logf("%s: generating code for `%s`", *sts->Loc.toString(), *sts->Function->GetFullName());
+        sts->Function->PostLoad();
+      }
+    }
+#endif
   }
 
   if (vcErrorCount) BailOut();

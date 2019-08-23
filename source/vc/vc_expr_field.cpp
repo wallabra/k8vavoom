@@ -1328,6 +1328,7 @@ VExpression *VDelegateVal::DoResolve (VEmitContext &ec) {
   if ((M->Flags&FUNC_VarArgs) != 0) { wasError = true; ParseError(Loc, "delegate should not be vararg"); }
   if ((M->Flags&FUNC_Iterator) != 0) { wasError = true; ParseError(Loc, "delegate should not be iterator"); }
   // sadly, `FUNC_NonVirtual` is not set yet, so use slower check
+  // meh, delegates can get non-virtual functions now
   //if (ec.SelfClass->isNonVirtualMethod(M->Name)) { wasError = true; ParseError(Loc, "delegate should not be final"); }
   if (wasError) { delete this; return nullptr; }
   Type = TYPE_Delegate;
@@ -1349,8 +1350,9 @@ void VDelegateVal::Emit (VEmitContext &ec) {
   if (!M->Outer) { ParseError(Loc, "VDelegateVal::Emit: Method has no outer!"); return; }
   if (M->Outer->MemberType != MEMBER_Class) { ParseError(Loc, "VDelegateVal::Emit: Method outer is not a class!"); return; }
   M->Outer->PostLoad();
+  if (!M->IsPostLoaded()) { ParseError(Loc, "VDelegateVal::Emit: Method `%s` is not postloaded!", *M->GetFullName()); return; }
   //fprintf(stderr, "MT: %s (rf=%d)\n", *M->GetFullName(), (M->Flags&FUNC_NonVirtual ? 1 : 0));
-  if (M->Flags&FUNC_NonVirtual) {
+  if (/*M->Flags&FUNC_NonVirtual*/M->IsNonVirtual()) {
     ec.AddStatement(OPC_PushFunc, M, Loc);
   } else {
     ec.AddStatement(OPC_PushVFunc, M, Loc);
