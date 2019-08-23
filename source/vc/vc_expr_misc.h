@@ -209,7 +209,8 @@ public:
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
-  //virtual bool IsComma () const override;
+  virtual bool IsComma () const override;
+  virtual bool IsCommaRetOp0 () const override;
 
   virtual VStr toString () const override;
 
@@ -233,6 +234,8 @@ public:
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
+
+  virtual bool IsDropResult () const override;
 
   virtual VStr toString () const override;
 

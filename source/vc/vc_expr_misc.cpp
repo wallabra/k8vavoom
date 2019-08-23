@@ -1096,6 +1096,26 @@ void VCommaExprRetOp0::Emit (VEmitContext &ec) {
 
 //==========================================================================
 //
+//  VCommaExprRetOp0::IsComma
+//
+//==========================================================================
+bool VCommaExprRetOp0::IsComma () const {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VCommaExprRetOp0::IsCommaRetOp0
+//
+//==========================================================================
+bool VCommaExprRetOp0::IsCommaRetOp0 () const {
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VCommaExprRetOp0::toString
 //
 //==========================================================================
@@ -1158,10 +1178,7 @@ void VDropResult::DoSyntaxCopyTo (VExpression *e) {
 //==========================================================================
 VExpression *VDropResult::DoResolve (VEmitContext &ec) {
   if (op) op = op->Resolve(ec);
-  if (!op) {
-    delete this;
-    return nullptr;
-  }
+  if (!op) { delete this; return nullptr; }
 
   if (op->Type.Type == TYPE_Delegate) {
     // paren-less delegate call
@@ -1210,6 +1227,16 @@ void VDropResult::Emit (VEmitContext &ec) {
        if (op->Type.Type == TYPE_String) ec.AddStatement(OPC_DropStr, Loc);
   else if (op->Type.Type == TYPE_Vector) ec.AddStatement(OPC_VDrop, Loc);
   else if (op->Type.GetStackSize() == 4) ec.AddStatement(OPC_Drop, Loc);
+}
+
+
+//==========================================================================
+//
+//  VDropResult::IsDropResult
+//
+//==========================================================================
+bool VDropResult::IsDropResult () const {
+  return true;
 }
 
 

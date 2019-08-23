@@ -169,6 +169,9 @@ public:
   virtual bool IsDelegateType () const;
   virtual bool IsVectorCtor () const;
   virtual bool IsConstVectorCtor () const;
+  virtual bool IsComma () const;
+  virtual bool IsCommaRetOp0 () const;
+  virtual bool IsDropResult () const;
 
   virtual VStr toString () const;
 
