@@ -113,7 +113,7 @@ public:
   VZipFileReader (VStream *InStream, vuint32 bytesBeforeZipFile, const VZipFileInfo &aInfo, FSysDriverBase *aDriver);
   virtual ~VZipFileReader () override;
 
-  virtual const VStr &GetName () const override;
+  virtual VStr GetName () const override;
   virtual void Serialise (void*, int) override;
   virtual void Seek (int) override;
   virtual int Tell () override;
@@ -514,8 +514,8 @@ VZipFileReader::~VZipFileReader () {
 }
 
 
-const VStr &VZipFileReader::GetName () const {
-  return info.name;
+VStr VZipFileReader::GetName () const {
+  return info.name.cloneUnique();
 }
 
 

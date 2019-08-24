@@ -361,7 +361,7 @@ void VStreamDiskFile::setError () {
   bError = true;
 }
 
-const VStr &VStreamDiskFile::GetName () const { return mName; }
+VStr VStreamDiskFile::GetName () const { return mName.cloneUnique(); }
 
 void VStreamDiskFile::Seek (int pos) {
   if (!mFl) { setError(); return; }
@@ -1098,8 +1098,8 @@ VPartialStreamReader::~VPartialStreamReader () {
   mythread_mutex_destroy(&lock);
 }
 
-const VStr &VPartialStreamReader::GetName () const {
-  return (srcStream ? srcStream->GetName() : VStr::EmptyString);
+VStr VPartialStreamReader::GetName () const {
+  return (srcStream ? srcStream->GetName() : VStr());
 }
 
 bool VPartialStreamReader::Close () {
@@ -1225,7 +1225,7 @@ void VZipStreamReader::initialize () {
 }
 
 
-const VStr &VZipStreamReader::GetName () const { return mFileName; }
+VStr VZipStreamReader::GetName () const { return mFileName.cloneUnique(); }
 
 // turns on CRC checking
 void VZipStreamReader::setCrc (vuint32 acrc) {

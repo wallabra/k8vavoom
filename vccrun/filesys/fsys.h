@@ -206,7 +206,7 @@ public:
   VStreamDiskFile (FILE *afl, const VStr &aname=VStr(), bool asWriter=false, FSysDriverBase *aDriver=nullptr);
   virtual ~VStreamDiskFile () override;
 
-  virtual const VStr &GetName () const override;
+  virtual VStr GetName () const override;
   virtual void Seek (int pos) override;
   virtual int Tell () override;
   virtual int TotalSize () override;
@@ -233,7 +233,7 @@ public:
   VPartialStreamReader (VStream *ASrcStream, int astpos, int apartlen=-1, FSysDriverBase *aDriver=nullptr);
   virtual ~VPartialStreamReader () override;
 
-  virtual const VStr &GetName () const override;
+  virtual VStr GetName () const override;
   virtual void Serialise (void *, int) override;
   virtual void Seek (int) override;
   virtual int Tell () override;
@@ -293,7 +293,7 @@ public:
   VZipStreamReader (const VStr &fname, VStream *ASrcStream, vuint32 ACompressedSize=0xffffffffU, vuint32 AUncompressedSize=0xffffffffU, bool asZipArchive=false, FSysDriverBase *aDriver=nullptr);
   virtual ~VZipStreamReader () override;
 
-  virtual const VStr &GetName () const override;
+  virtual VStr GetName () const override;
 
   void setCrc (vuint32 acrc); // turns on CRC checking
 
