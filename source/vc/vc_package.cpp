@@ -30,6 +30,28 @@
 
 //==========================================================================
 //
+//  showLoadingMessages
+//
+//==========================================================================
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+static inline int showLoadingMessages () {
+  static int lmsg = -1;
+  if (lmsg < 0) {
+    lmsg = (GArgs.CheckParm("-vc-dev-loading") ? 1 : 0);
+  }
+  return (lmsg > 0);
+}
+
+#define vdlogf(...)  if (showLoadingMessages()) GLog.Logf(NAME_Init, __VA_ARGS__)
+#else
+
+#define vdlogf(...)  do {} while (0)
+
+#endif
+
+
+//==========================================================================
+//
 //  VPackage::VPackage
 //
 //==========================================================================
@@ -38,8 +60,6 @@ VPackage::VPackage ()
   , StringCount(0)
   , KnownEnums()
   , NumBuiltins(0)
-  //, Checksum(0)
-  //, Reader(nullptr)
 {
   InitStringPool();
 }
@@ -54,8 +74,6 @@ VPackage::VPackage (VName AName)
   : VMemberBase(MEMBER_Package, AName, nullptr, TLocation())
   , KnownEnums()
   , NumBuiltins(0)
-  //, Checksum(0)
-  //, Reader(nullptr)
 {
   InitStringPool();
 }
@@ -249,57 +267,59 @@ VClass *VPackage::FindDecorateImportClass (VName AName) const {
 //
 //==========================================================================
 void VPackage::Emit () {
-  devprintf("Importing packages\n");
+  vdlogf("Importing packages for '%s'...", *Name);
   for (int i = 0; i < PackagesToLoad.Num(); ++i) {
-    devprintf("  importing package '%s'...\n", *PackagesToLoad[i].Name);
+    vdlogf("  importing package '%s'...", *PackagesToLoad[i].Name);
     PackagesToLoad[i].Pkg = StaticLoadPackage(PackagesToLoad[i].Name, PackagesToLoad[i].Loc);
   }
 
   if (vcErrorCount) BailOut();
 
-  devprintf("Defining constants\n");
+  vdlogf("Defining constants for '%s'...", *Name);
   for (int i = 0; i < ParsedConstants.Num(); ++i) {
-    devprintf("  defining constant '%s'...\n", *ParsedConstants[i]->Name);
+    vdlogf("  defining constant '%s'...", *ParsedConstants[i]->Name);
     ParsedConstants[i]->Define();
   }
 
-  devprintf("Defining structs\n");
+  vdlogf("Defining structs for '%s'...", *Name);
   for (int i = 0; i < ParsedStructs.Num(); ++i) {
-    devprintf("  defining struct '%s'...\n", *ParsedStructs[i]->Name);
+    vdlogf("  defining struct '%s'...", *ParsedStructs[i]->Name);
     ParsedStructs[i]->Define();
   }
 
-  devprintf("Defining classes\n");
+  vdlogf("Defining classes for '%s'...", *Name);
   for (int i = 0; i < ParsedClasses.Num(); ++i) {
-    devprintf("  defining class '%s'...\n", *ParsedClasses[i]->Name);
+    vdlogf("  defining class '%s'...", *ParsedClasses[i]->Name);
     ParsedClasses[i]->Define();
   }
 
   for (int i = 0; i < ParsedDecorateImportClasses.Num(); ++i) {
-    devprintf("  defining decorate import class '%s'...\n", *ParsedDecorateImportClasses[i]->Name);
+    vdlogf("  defining decorate import class '%s'...", *ParsedDecorateImportClasses[i]->Name);
     ParsedDecorateImportClasses[i]->Define();
   }
 
   if (vcErrorCount) BailOut();
 
-  devprintf("Defining struct members\n");
+  vdlogf("Defining struct members for '%s'...", *Name);
   for (int i = 0; i < ParsedStructs.Num(); ++i) {
     ParsedStructs[i]->DefineMembers();
   }
 
-  devprintf("Defining class members\n");
+  vdlogf("Defining class members for '%s'...", *Name);
   for (int i = 0; i < ParsedClasses.Num(); ++i) {
     ParsedClasses[i]->DefineMembers();
   }
 
   if (vcErrorCount) BailOut();
 
-  devprintf("Emiting classes\n");
+  vdlogf("Emiting classes for '%s'...", *Name);
   for (int i = 0; i < ParsedClasses.Num(); ++i) {
     ParsedClasses[i]->Emit();
   }
 
   if (vcErrorCount) BailOut();
+
+  vdlogf("Emiting package '%s' complete!", *Name);
 }
 
 
@@ -359,18 +379,17 @@ void VPackage::LoadSourceObject (VStream *Strm, VStr filename, TLocation l) {
 // VPackage::LoadObject
 //
 //==========================================================================
-static const char *pkgImportFiles[] = {
-  "0package.vc",
-  "package.vc",
-  "0classes.vc",
-  "classes.vc",
-  nullptr
-};
-
-
 void VPackage::LoadObject (TLocation l) {
+  static const char *pkgImportFiles[] = {
+    "0package.vc",
+    "package.vc",
+    "0classes.vc",
+    "classes.vc",
+    nullptr
+  };
+
 #if defined(IN_VCC)
-  devprintf("Loading package %s\n", *Name);
+  vdlogf("Loading package %s", *Name);
 
   // load PROGS from a specified file
   VStream *f = fsysOpenFile(va("%s.dat", *Name));
@@ -392,14 +411,14 @@ void VPackage::LoadObject (TLocation l) {
   ParseError(l, "Can't find package %s", *Name);
 
 #elif defined(VCC_STANDALONE_EXECUTOR)
-  devprintf("Loading package '%s'...\n", *Name);
+  vdlogf("Loading package '%s'...", *Name);
 
   for (int i = 0; i < GPackagePath.length(); ++i) {
     for (const char **pif = pkgImportFiles; *pif; ++pif) {
       VStr mainVC = GPackagePath[i]+"/"+Name+"/"+(*pif);
-      devprintf("  <%s>\n", *mainVC);
+      vdlogf("  <%s>", *mainVC);
       VStream *Strm = fsysOpenFile(mainVC);
-      if (Strm) { devprintf("  '%s'\n", *mainVC); LoadSourceObject(Strm, mainVC, l); return; }
+      if (Strm) { vdlogf("  '%s'", *mainVC); LoadSourceObject(Strm, mainVC, l); return; }
     }
   }
 
@@ -408,7 +427,7 @@ void VPackage::LoadObject (TLocation l) {
     for (const char **pif = pkgImportFiles; *pif; ++pif) {
       VStr mainVC = VStr("packages/")+Name+"/"+(*pif);
       VStream *Strm = fsysOpenFile(mainVC);
-      if (Strm) { devprintf("  '%s'\n", *mainVC); LoadSourceObject(Strm, mainVC, l); return; }
+      if (Strm) { vdlogf("  '%s'", *mainVC); LoadSourceObject(Strm, mainVC, l); return; }
     }
   }
 
