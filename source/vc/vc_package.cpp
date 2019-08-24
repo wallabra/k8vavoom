@@ -778,10 +778,12 @@ void VPackage::LoadSourceObject (VStream *Strm, VStr filename, TLocation l) {
   if (Name == NAME_engine) {
     for (VClass *Cls = GClasses; Cls; Cls = Cls->LinkNext) {
       if (!Cls->Outer && Cls->MemberType == MEMBER_Class) {
-        GLog.Logf(NAME_Warning, "package `engine` has hidden class `%s` (this is harmless)", *Cls->Name);
+        Sys_Error("package `engine` has hidden class `%s`", *Cls->Name);
+        /*k8: this wasn't fatal, but now it is
         Cls->PostLoad();
         Cls->CreateDefaults();
         Cls->Outer = this;
+        */
       }
     }
   }
