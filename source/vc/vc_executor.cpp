@@ -526,13 +526,9 @@ static void RunFunction (VMethod *func) {
 
   if (func->Flags&FUNC_Native) {
     // native function, first statement is pointer to function
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-    /*if (developer)*/ cstPush(func);
-#endif
+    cstPush(func);
     func->NativeFunc();
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-    /*if (developer)*/ cstPop();
-#endif
+    cstPop();
     return;
   }
 
@@ -579,7 +575,7 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Call)
-        //GCon->Logf("*** (%s) *** (callStack=%p; sp=%p; sptop=%p; cstUsed=%u)", *((VMethod *)ReadPtr(ip+1))->GetFullName(), callStack, sp, pr_stack, cstUsed);
+        //GLog.Logf("*** (%s) *** (callStack=%p; sp=%p; sptop=%p; cstUsed=%u)", *((VMethod *)ReadPtr(ip+1))->GetFullName(), callStack, sp, pr_stack, cstUsed);
         #ifdef CHECK_STACK_OVERFLOW_RT
         if (sp >= &pr_stack[MAX_PROG_STACK-4]) {
           cstDump(ip);
@@ -3338,23 +3334,13 @@ void VObject::DumpProfileInternal (int type) {
   }
   if (!totalcount) return;
   const char *ptypestr = (type < 0 ? "native" : type > 0 ? "script" : "all");
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-    GCon->Logf("====== PROFILE (%s) ======", ptypestr);
-#else
-    fprintf(stderr, "====== PROFILE (%s) ======\n", ptypestr);
-#endif
+  GLog.Logf("====== PROFILE (%s) ======", ptypestr);
   for (int i = 0; i < MAX_PROF && profsort[i]; ++i) {
     VMethod *Func = (VMethod *)VMemberBase::GMembers[profsort[i]];
     if (!Func) continue;
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-    GCon->Logf("%6.2f%% (%9d) %9d %s",
+    GLog.Logf("%6.2f%% (%9d) %9d %s",
       (double)Func->Profile2*100.0/(double)totalcount,
       (int)Func->Profile2, (int)Func->Profile1, *Func->GetFullName());
-#else
-    fprintf(stderr, "%6.2f%% (%9d) %9d %s\n",
-      (double)Func->Profile2*100.0/(double)totalcount,
-      (int)Func->Profile2, (int)Func->Profile1, *Func->GetFullName());
-#endif
   }
 }
 
