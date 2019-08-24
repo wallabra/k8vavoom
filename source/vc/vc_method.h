@@ -200,9 +200,22 @@ public:
   virtual void CompilerShutdown () override;
 
   virtual void Serialise (VStream &) override;
+
+  // this resolves return type, parameter types, sets `SuperMethod`, and fixes flags
+  // must be called before `Emit()`
   bool Define ();
+
+  // this resolves and emits IR code for statements, and optimises that code
+  // must be called before `PostLoad()`
   void Emit ();
+
+  // dumps generated IR code; can be called after `Emit()`, has no sense after `PostLoad()`
   void DumpAsm ();
+
+  // this compiles IR instructions to VM opcodes
+  // it also resolves builtins
+  // this must be called last (i.e. after `Define()` and `Emit()`)
+  // this fills `Statements`, and clears `Instructions`
   virtual void PostLoad () override;
 
   // this can be called in `ExecuteNetMethod()` to do cleanup after RPC
@@ -241,5 +254,6 @@ public:
   inline bool IsGoodStateMethod () const { return (NumParams == 0 && (Flags&~(FUNC_Native|FUNC_Spawner|FUNC_Net|FUNC_NetReliable/*|FUNC_NonVirtual*/)) == FUNC_Final); }
 
 private:
-  void CompileCode ();
+  // this generates VM (or other) executable code (to `Statements`) from IR `Instructions`
+  void GenerateCode ();
 };

@@ -268,53 +268,58 @@ VClass *VPackage::FindDecorateImportClass (VName AName) const {
 //==========================================================================
 void VPackage::Emit () {
   vdlogf("Importing packages for '%s'...", *Name);
-  for (int i = 0; i < PackagesToLoad.Num(); ++i) {
-    vdlogf("  importing package '%s'...", *PackagesToLoad[i].Name);
-    PackagesToLoad[i].Pkg = StaticLoadPackage(PackagesToLoad[i].Name, PackagesToLoad[i].Loc);
+  for (auto &&pkg : PackagesToLoad) {
+    vdlogf("  importing package '%s'...", *pkg.Name);
+    pkg.Pkg = StaticLoadPackage(pkg.Name, pkg.Loc);
   }
 
   if (vcErrorCount) BailOut();
 
   vdlogf("Defining constants for '%s'...", *Name);
-  for (int i = 0; i < ParsedConstants.Num(); ++i) {
-    vdlogf("  defining constant '%s'...", *ParsedConstants[i]->Name);
-    ParsedConstants[i]->Define();
+  for (auto &&cc : ParsedConstants) {
+    vdlogf("  defining constant '%s'...", *cc->Name);
+    cc->Define();
   }
 
   vdlogf("Defining structs for '%s'...", *Name);
-  for (int i = 0; i < ParsedStructs.Num(); ++i) {
-    vdlogf("  defining struct '%s'...", *ParsedStructs[i]->Name);
-    ParsedStructs[i]->Define();
+  for (auto &&st : ParsedStructs) {
+    vdlogf("  defining struct '%s'...", *st->Name);
+    st->Define();
   }
 
   vdlogf("Defining classes for '%s'...", *Name);
-  for (int i = 0; i < ParsedClasses.Num(); ++i) {
-    vdlogf("  defining class '%s'...", *ParsedClasses[i]->Name);
-    ParsedClasses[i]->Define();
+  for (auto &&cls : ParsedClasses) {
+    vdlogf("  defining class '%s'...", *cls->Name);
+    cls->Define();
   }
 
-  for (int i = 0; i < ParsedDecorateImportClasses.Num(); ++i) {
-    vdlogf("  defining decorate import class '%s'...", *ParsedDecorateImportClasses[i]->Name);
-    ParsedDecorateImportClasses[i]->Define();
+  if (vcErrorCount) BailOut();
+
+  for (auto &&dcl : ParsedDecorateImportClasses) {
+    vdlogf("  defining decorate import class '%s'...", *dcl->Name);
+    dcl->Define();
   }
 
   if (vcErrorCount) BailOut();
 
   vdlogf("Defining struct members for '%s'...", *Name);
-  for (int i = 0; i < ParsedStructs.Num(); ++i) {
-    ParsedStructs[i]->DefineMembers();
+  for (auto &&st : ParsedStructs) {
+    vdlogf("  defining members for struct '%s'...", *st->Name);
+    st->DefineMembers();
   }
 
   vdlogf("Defining class members for '%s'...", *Name);
-  for (int i = 0; i < ParsedClasses.Num(); ++i) {
-    ParsedClasses[i]->DefineMembers();
+  for (auto &&cls : ParsedClasses) {
+    vdlogf("  defining members for class '%s'...", *cls->Name);
+    cls->DefineMembers();
   }
 
   if (vcErrorCount) BailOut();
 
   vdlogf("Emiting classes for '%s'...", *Name);
-  for (int i = 0; i < ParsedClasses.Num(); ++i) {
-    ParsedClasses[i]->Emit();
+  for (auto &&cls : ParsedClasses) {
+    vdlogf("  emitting class '%s'...", *cls->Name);
+    cls->Emit();
   }
 
   if (vcErrorCount) BailOut();
@@ -341,18 +346,22 @@ void VPackage::LoadSourceObject (VStream *Strm, VStr filename, TLocation l) {
   Emit();
 
 #if !defined(IN_VCC)
-  for (int i = 0; i < GMembers.Num(); ++i) {
-    if (GMembers[i]->IsIn(this)) {
-      GMembers[i]->PostLoad();
+  //vdlogf("VPackage::LoadSourceObject: package '%s'...", *Name);
+
+  #if !defined(VCC_STANDALONE_EXECUTOR)
+  GLog.Logf(NAME_Init, "VavoomC: generating code for package '%s'...", *Name);
+  #endif
+  for (auto &&mm : GMembers) {
+    if (mm->IsIn(this)) {
+      //vdlogf("  package '%s': calling `PostLoad()` for %s `%s`", *Name, mm->GetMemberTypeString(), *mm->Name);
+      mm->PostLoad();
     }
   }
 
   // create default objects
-  for (int i = 0; i < ParsedClasses.Num(); ++i) {
-    ParsedClasses[i]->CreateDefaults();
-    if (!ParsedClasses[i]->Outer) {
-      ParsedClasses[i]->Outer = this;
-    }
+  for (auto &&cls : ParsedClasses) {
+    cls->CreateDefaults();
+    if (!cls->Outer) cls->Outer = this;
   }
 
   #if !defined(VCC_STANDALONE_EXECUTOR)

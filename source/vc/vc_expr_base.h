@@ -80,6 +80,8 @@ public:
   VFieldType RealType;
   int Flags;
   TLocation Loc;
+
+public:
   static vuint32 TotalMemoryUsed;
   static vuint32 CurrMemoryUsed;
   static vuint32 PeakMemoryUsed;

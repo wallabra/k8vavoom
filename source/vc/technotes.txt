@@ -1,0 +1,131 @@
+notes about `Define()`, `Emit()`, `PostLoad()`
+==============================================
+
+to get executable VM code, the compiler basically does this (see `VPackage::LoadSourceObject()`):
+
+  1. parses code to AST.
+  2. calls `Emit()` for package.
+    2.0. package emitter does this:
+      2.0.1. calls loader for imported, but not yet loaded packages.
+      2.0.2. calls `Define()` for all package constants.
+      2.0.3. calls `Define()` for all package structs.
+      2.0.4. calls `Define()` for all package classes.
+      2.0.5. calls `Define()` for all package decorate pseudo-classes.
+      2.0.6. calls `DefineMembers()` for all package structs.
+      2.0.7. calls `DefineMembers()` for all package classes.
+      2.0.8. calls `Emit()` for all package classes.
+    2.1. calls `PostLoad()` for all package members, in arbirary order.
+
+
+
+notes about the compiler itself
+===============================
+
+VC compiler is classic multipass one.
+
+first, the source code is parsed to AST, with only basic syntax checking.
+at this stage, AST is highly abstract, and almost 1:1 identical to the source text.
+(almost) all types are presented with AST nodes too, not with `VFieldType`.
+
+next, `VMethod::Define()` resolves return type, and argument types, filling out
+respective `VFieldType` fields.
+
+then, `VMethod::Emit()` resolves statements, emits IR code, and optimises it.
+
+and finally, `VMethod::PostLoad()` generates VM bytecode from IR code.
+
+
+
+notes about expressions
+=======================
+
+basic AST node for expression is `VExpression` (what a concidence, indeed!).
+
+it has some interesting public fields:
+  VFieldType Type;
+    expression type. note that taking expression address for internal
+    compiler needs doesn't change the type to pointer, there is a special
+    flag field for that.
+
+  VFieldType RealType;
+    this is mostly used in assign operations. i will document it later
+    (when i'll fully understand it, lol ;-).
+
+  int Flags;
+    here, only `FIELD_ReadOnly` has any sense. it means that this expression
+    represents `read-only` one (i.e. you can take pointer to it, but cannot
+    perform assign on that pointer).
+
+  TLocation Loc;
+    source code location
+
+
+some interesting methods:
+  virtual VExpression *SyntaxCopy () = 0;
+    to create a copy of this expression, use `SyntaxCopy()`.
+    it must be called on an unresolved node, otherwise the result is undefined.
+
+  virtual VExpression *DoResolve (VEmitContext &ec) = 0;
+    this is our general "resolver". it resolves operands, determines expression
+    type, and such.
+    if called on already resolved node, the result is undefined.
+    variuous node types overloads this.
+
+  virtual VTypeExpr *ResolveAsType (VEmitContext &ec);
+    this resolves a node as a type expression.
+
+  virtual VExpression *ResolveAssignmentTarget (VEmitContext &ec);
+    this resolves a node as assignment target. most of the time it
+    does normal resolve, and then calls `RequestAddressOf()`.
+
+  virtual VExpression *ResolveAssignmentValue (VEmitContext &ec);
+    this resolves a node as assignment value. most of the time it
+    simply calls the normal resolver.
+
+  virtual VExpression *ResolveIterator (VEmitContext &ec);
+    this is called to resolve an iterator method for `foreach Method(args)`.
+
+  virtual VExpression *ResolveCompleteAssign (VEmitContext &ec, VExpression *val, bool &resolved);
+    this is a gross hack i (k8) introduced because i am dumb.
+    this will be called before the actual assign resolving.
+    return `nullptr` to indicate some error, or consume `val` and set `resolved` to `true` if resolved.
+    if `nullptr` is returned, both `this` and `val` should be destroyed.
+
+  virtual void RequestAddressOf ();
+    this is used to set "address requested" flag, which in turn is used in the codegen.
+
+
+  VExpression *Resolve (VEmitContext &ec);
+    this just calls `DoResolve()`.
+
+  VExpression *ResolveBoolean (VEmitContext &ec);
+    this resolves a value, and coerces that resolved value to boolean.
+
+  VExpression *ResolveFloat (VEmitContext &ec); // actually, *TO* float
+    this resolves a value, and coerces that resolved value to float.
+
+  VExpression *CoerceToBool (VEmitContext &ec);
+    call this on an already resolved node to coerce it to a boolean.
+
+  VExpression *CoerceToFloat (VEmitContext &ec);
+    call this on an already resolved node to coerce it to a float.
+
+  static void CoerceTypes (VEmitContext &ec, VExpression *&op1, VExpression *&op2, bool coerceNoneDelegate); // expression *MUST* be already resolved
+    this coerces ints to floats, and fixes `none`\`nullptr` type.
+
+
+  virtual VExpression *AddDropResult ();
+    called on an resolved node, to notify it that its result is not needed.
+    used in increments/decrements, to optimise use cases when their results
+    are not needed (i.e. user wrote something like `var++;`).
+
+
+  virtual void Emit (VEmitContext &ec) = 0;
+    generate IR code for a node.
+
+  virtual void EmitBranchable (VEmitContext &ec, VLabel Lbl, bool OnTrue);
+    this is used to emit boolean conditions. splitted to separate method, so
+    compiler can emit special code for short-circuiting booleans.
+
+  void EmitPushPointedCode (VFieldType type, VEmitContext &ec); // yeah, non-virtual
+    called to emit address of a node (requested earlier with `RequestAddressOf()`.

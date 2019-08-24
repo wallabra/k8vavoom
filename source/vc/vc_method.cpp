@@ -560,8 +560,14 @@ void VMethod::PostLoad () {
   //k8: it should be called only once, but let's play safe here
   if (mPostLoaded) return;
 
-  if (defineResult < 0) Sys_Error("`Define()` not called for %s", *GetFullName());
-  //if (!emitCalled) Sys_Error("`Emit()` not called before `PostLoad()` for %s", *GetFullName());
+  if (defineResult < 0) Sys_Error("`Define()` not called for `%s`", *GetFullName());
+  if (!emitCalled) {
+    // delegate declarations creates methods without a code, and without a name; tolerate those!
+    if (Name != NAME_None || Instructions.length() != 0) {
+      Sys_Error("`Emit()` not called before `PostLoad()` for `%s`", *GetFullName());
+    }
+    emitCalled = true; // why not?
+  }
 
 #if !defined(IN_VCC)
   //GLog.Logf(NAME_Debug, "*** %s: %s", *Loc.toString(), *GetFullName());
@@ -586,9 +592,7 @@ void VMethod::PostLoad () {
   }
 #endif
 
-  // moved to `Emit()`, as it belongs there anyway
-  //OptimizeInstructions();
-  CompileCode();
+  GenerateCode();
 
   mPostLoaded = true;
 }
@@ -608,24 +612,27 @@ void VMethod::WriteType (const VFieldType &tp) {
 }
 
 
-//==========================================================================
-//
-//  VMethod::CompileCode
-//
-//==========================================================================
 #define WriteUInt8(p)  Statements.Append(p)
 #define WriteInt16(p)  Statements.SetNum(Statements.Num()+2); *(vint16 *)&Statements[Statements.Num()-2] = (p)
 #define WriteInt32(p)  Statements.SetNum(Statements.Num()+4); *(vint32 *)&Statements[Statements.Num()-4] = (p)
 #define WritePtr(p)    Statements.SetNum(Statements.Num()+sizeof(void *)); *(void **)&Statements[Statements.Num()-sizeof(void *)] = (p)
 
 
-void VMethod::CompileCode () {
+//==========================================================================
+//
+//  VMethod::GenerateCode
+//
+//  this generates VM (or other) executable code (to `Statements`)
+//  from IR `Instructions`
+//==========================================================================
+void VMethod::GenerateCode () {
   Statements.Clear();
   if (!Instructions.Num()) return;
 
   TArray<int> iaddr; // addresses of all generated instructions
   iaddr.resize(Instructions.length()); // we know the size beforehand
 
+  // generate VM bytecode
   for (int i = 0; i < Instructions.Num()-1; ++i) {
     //Instructions[i].Address = Statements.Num();
     check(iaddr.length() == i);
@@ -741,6 +748,7 @@ void VMethod::CompileCode () {
   check(iaddr.length() == Instructions.length()-1);
   iaddr.append(Statements.length());
 
+  // fix jump destinations
   for (int i = 0; i < Instructions.Num()-1; ++i) {
     switch (StatementInfo[Instructions[i].Opcode].Args) {
       case OPCARGS_BranchTargetB:

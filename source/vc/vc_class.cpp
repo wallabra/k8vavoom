@@ -1146,10 +1146,12 @@ bool VClass::Define () {
 #endif
 
   // process constants, so if other class will try to use constant it its declaration, that will succeed
-  for (int f = 0; f < Constants.length(); ++f) if (!Constants[f]->Define()) return false;
+  for (auto &&ct : Constants) if (!ct->Define()) return false;
 
-  for (int i = 0; i < Structs.Num(); ++i) if (!Structs[i]->Define()) return false;
+  // define structs
+  for (auto &&st : Structs) if (!st->Define()) return false;
 
+  // check for duplicate field definitions, and for duplicate constants
   // this can not be postloaded yet, so...
   {
     VName pn = ParentClassName;
@@ -1619,7 +1621,7 @@ void VClass::Emit () {
   }
 
   // emit method code
-  for (int i = 0; i < Methods.Num(); ++i) Methods[i]->Emit();
+  for (auto &&mt : Methods) mt->Emit();
 
   // build list of state labels, resolve jumps
   EmitStateLabels();
@@ -1628,7 +1630,7 @@ void VClass::Emit () {
   for (VState *s = States; s; s = s->Next) s->Emit();
 
   // emit code of the network replication conditions
-  for (int ri = 0; ri < RepInfos.Num(); ++ri) RepInfos[ri].Cond->Emit();
+  for (auto &&ri : RepInfos) ri.Cond->Emit();
 
   DefaultProperties->Emit();
 }

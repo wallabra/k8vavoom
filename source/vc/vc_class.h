@@ -349,6 +349,8 @@ public:
   static void StaticDumpScriptIds ();
 
   virtual void Serialise (VStream &) override;
+  // calculates field offsets, creates VTable, and fills other such info
+  // must be called after `Define()` and `Emit()`
   virtual void PostLoad () override;
   virtual void Shutdown () override;
 
@@ -360,12 +362,16 @@ public:
 
   bool IsKnownEnum (VName EnumName);
   bool AddKnownEnum (VName EnumName); // returns `true` if enum was redefined
+
   VConstant *FindConstant (VName Name, VName EnumName=NAME_None);
   VConstant *FindPackageConstant (VMemberBase *pkg, VName Name, VName EnumName=NAME_None);
+
   VField *FindField (VName, bool bRecursive=true);
   VField *FindField (VName, const TLocation &, VClass *);
   VField *FindFieldChecked (VName);
+
   VProperty *FindProperty (VName);
+
   VMethod *FindMethod (VName Name, bool bRecursive=true);
   // this will follow `ParentClassName` instead of `ParentClass`
   VMethod *FindMethodNonPostLoaded (VName Name, bool bRecursive=true);
@@ -373,12 +379,12 @@ public:
   VMethod *FindMethodChecked (VName);
   VMethod *FindAccessibleMethod (VName Name, VClass *self=nullptr, const TLocation *loc=nullptr);
   int GetMethodIndex (VName);
+
   VState *FindState (VName);
   VState *FindStateChecked (VName);
   VStateLabel *FindStateLabel (VName AName, VName SubLabel=NAME_None, bool Exact=false);
   VStateLabel *FindStateLabel (TArray<VName> &, bool);
-  //VStateLabel *FindStateLabelChecked (VName, VName = NAME_None, bool=false);
-  //VStateLabel *FindStateLabelChecked (TArray<VName> &, bool);
+
   VDecorateStateAction *FindDecorateStateAction (VName);
   VName FindDecorateStateFieldTrans (VName dcname);
 
@@ -388,13 +394,31 @@ public:
   //          this is valid only after class was postloaded
   bool isNonVirtualMethod (VName Name);
 
+  // resolves parent name to parent class, calls `Define()` on constants and structs,
+  // sets replacement, and checks for duplicate fields/consts
   bool Define ();
+
+  // calls `DefineMembers()` for structs, `Define()` for methods, fields and properties (including default)
+  // also calls `Define()` for states, and calls `DefineRepInfos()`
+  // must be called after `Define()`
   bool DefineMembers ();
-  void Emit ();
+
+  // fills `RepXXX` fields; called from `DefineMembers()`, no need to call it manually
   bool DefineRepInfos ();
+
+  // calls `Emit()` for methods, emits state labels, calls `Emit()` for states, repinfo conditions, and default properties
+  void Emit ();
+
+  // this is special "castrated" emitter for decorate classes
+  // as decorate classes cannot have replications, or new virtual methods, or such,
+  // we don't need (and actually cannot) perform full `Emit()` on them
   void DecorateEmit ();
+
+  // the same for `PostLoad()` -- it is called instead of normal `PostLoad()` for decorate classes
   void DecoratePostLoad ();
+
   void EmitStateLabels ();
+
   VState *ResolveStateLabel (const TLocation &, VName, int);
   void SetStateLabel (VName, VState *);
   void SetStateLabel (const TArray<VName> &, VState *);

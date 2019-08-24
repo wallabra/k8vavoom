@@ -76,7 +76,12 @@ public:
   void AddField (VField *f);
   VField *FindField (VName);
   bool NeedsDestructor ();
+
+  // resolves parent struct
   bool Define ();
+
+  // calls `Define()` for fields, inits some other internal fields
+  // must be called after `Define()`
   bool DefineMembers ();
 
   bool IsA (const VStruct *s) const;

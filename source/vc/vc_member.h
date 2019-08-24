@@ -109,11 +109,32 @@ public:
   static bool koraxCompatibilityWarnings; // true by default
 
 public:
+  static inline const char *GetMemberTypeStringName (vuint8 mtype) {
+    switch (mtype) {
+      case MEMBER_Package: return "package";
+      case MEMBER_Field: return "field";
+      case MEMBER_Property: return "property";
+      case MEMBER_Method: return "method";
+      case MEMBER_State: return "state";
+      case MEMBER_Const: return "constant";
+      case MEMBER_Struct: return "struct";
+      case MEMBER_Class: return "class";
+      case MEMBER_DecorateClass: return "deco-class";
+    }
+    return "<unknown>";
+  }
+
+  inline const char *GetMemberTypeString () const { return GetMemberTypeStringName(MemberType); }
+
+public:
   VMemberBase (vuint8, VName, VMemberBase *, const TLocation &);
   virtual ~VMemberBase ();
 
   virtual void CompilerShutdown ();
 
+  // unique object id, will not repeat itself.
+  // if 32-bit integer overflows, the game will abort.
+  // will never be zero.
   inline vuint32 GetMemberId () const { return mMemberId; }
 
   // for each name
@@ -152,11 +173,12 @@ public:
   // accessors
   inline const char *GetName () const { return *Name; }
   inline const VName GetVName () const { return Name; }
-  VStr GetFullName () const;
+  VStr GetFullName () const; // full name includes package, and class
   VPackage *GetPackage () const;
   bool IsIn (VMemberBase *) const;
 
   virtual void Serialise (VStream &);
+  // this performs the final tasks for various object types (see the respective source for more info)
   virtual void PostLoad ();
   virtual void Shutdown ();
 
