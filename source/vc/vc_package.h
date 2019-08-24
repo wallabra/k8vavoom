@@ -63,9 +63,6 @@ public:
   // compiler fields
   TArray<VImportedPackage> PackagesToLoad;
 
-  //TArray<mobjinfo_t> MobjInfo;
-  //TArray<mobjinfo_t> ScriptIds;
-
   TArray<VConstant *> ParsedConstants;
   TArray<VStruct *> ParsedStructs;
   TArray<VClass *> ParsedClasses;
@@ -74,14 +71,6 @@ public:
   TMap<VName, bool> KnownEnums;
 
   int NumBuiltins;
-
-/*
-#if defined(IN_VCC)
-  // run-time fields
-  vuint16 Checksum;
-  VProgsReader *Reader;
-#endif
-*/
 
 public:
   VPackage ();
@@ -103,23 +92,17 @@ public:
   VClass *FindDecorateImportClass (VName) const;
 
   void Emit ();
-#if defined(IN_VCC)
+  #if defined(IN_VCC)
   void WriteObject (VStr); // binary
-#endif
+  #endif
   void LoadObject (TLocation);
 
   // will delete `Strm`
   void LoadSourceObject (VStream *Strm, VStr filename, TLocation l);
-#if defined(IN_VCC)
+  #if defined(IN_VCC)
   // will delete `Strm`
   void LoadBinaryObject (VStream *Strm, VStr filename, TLocation l);
-#endif
-
-  /*
-  mobjinfo_t *FindMObjInfo (vint32 id); // nullptr: not found
-  VClass *FindMObj (vint32 id) const;
-  VClass *FindScriptId (vint32 id) const;
-  */
+  #endif
 
   friend inline VStream &operator << (VStream &Strm, VPackage *&Obj) { return Strm << *(VMemberBase **)&Obj; }
 };
