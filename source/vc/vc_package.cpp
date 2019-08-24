@@ -83,12 +83,7 @@ void VPackage::InitStringPool () {
   StringInfo[0].Offs = 0;
   StringInfo[0].Next = 0;
   StringCount = 1;
-#if defined(VCC_OLD_PACKAGE_STRING_POOL)
-  Strings.SetNum(4);
-  memset(Strings.Ptr(), 0, 4);
-#else
   StringInfo[0].str = VStr::EmptyString;
-#endif
 }
 
 
@@ -157,27 +152,10 @@ int VPackage::FindString (const char *str) {
 
   vuint32 hash = StringHashFunc(str);
   for (int i = StringLookup[hash]; i; i = StringInfo[i].Next) {
-#if defined(VCC_OLD_PACKAGE_STRING_POOL)
-    if (VStr::Cmp(&Strings[StringInfo[i].Offs], str) == 0) {
-      return StringInfo[i].Offs;
-    }
-#else
-    if (StringInfo[i].str.Cmp(str) == 0) {
-      return StringInfo[i].Offs;
-    }
-#endif
+    if (StringInfo[i].str.Cmp(str) == 0) return StringInfo[i].Offs;
   }
 
   // add new string
-#if defined(VCC_OLD_PACKAGE_STRING_POOL)
-  TStringInfo &SI = StringInfo.Alloc();
-  int AddLen = VStr::Length(str)+1;
-  while (AddLen&3) ++AddLen;
-  int Ofs = Strings.Num();
-  Strings.SetNum(Strings.Num()+AddLen);
-  memset(&Strings[Ofs], 0, AddLen);
-  VStr::Cpy(&Strings[Ofs], str);
-#else
   int Ofs = StringInfo.length();
   check(Ofs == StringCount);
   ++StringCount;
@@ -185,7 +163,6 @@ int VPackage::FindString (const char *str) {
   // remember string
   SI.str = VStr(str);
   SI.str.makeImmutable();
-#endif
   SI.Offs = Ofs;
   SI.Next = StringLookup[hash];
   StringLookup[hash] = StringInfo.length()-1;
@@ -212,13 +189,8 @@ int VPackage::FindString (VStr s) {
 //
 //==========================================================================
 const VStr &VPackage::GetStringByIndex (int idx) {
-#if defined(VCC_OLD_PACKAGE_STRING_POOL)
-  if (idx < 0 || idx >= Strings.length()) return VStr::EmptyString;
-  return VStr(&Package->Strings[idx]);
-#else
   if (idx < 0 || idx >= StringInfo.length()) return VStr::EmptyString;
   return StringInfo[idx].str;
-#endif
 }
 
 

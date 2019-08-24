@@ -41,9 +41,7 @@ private:
   struct TStringInfo {
     int Offs;
     int Next;
-#if !defined(VCC_OLD_PACKAGE_STRING_POOL)
     VStr str;
-#endif
   };
 
   TArray<TStringInfo> StringInfo;
@@ -55,11 +53,6 @@ private:
   void InitStringPool ();
 
 public:
-  // shared fields
-#if defined(VCC_OLD_PACKAGE_STRING_POOL)
-  TArray<char> Strings;
-#endif
-
   // compiler fields
   TArray<VImportedPackage> PackagesToLoad;
 

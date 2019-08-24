@@ -444,13 +444,11 @@ bool VStringLiteral::IsStrConst () const {
 //
 //  VStringLiteral::GetStrConst
 //
+// WARNING! returns by reference!
+//
 //==========================================================================
-VStr VStringLiteral::GetStrConst (VPackage *Pkg) const {
-#if defined(VCC_OLD_PACKAGE_STRING_POOL)
-  return VStr(&Pkg->Strings[Value]);
-#else
+const VStr &VStringLiteral::GetStrConst (VPackage *Pkg) const {
   return Pkg->GetStringByIndex(Value);
-#endif
 }
 
 

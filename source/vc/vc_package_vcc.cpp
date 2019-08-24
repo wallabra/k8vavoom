@@ -353,17 +353,12 @@ void VPackage::WriteObject (VStr name) {
   }
 
   progs.ofs_strings = Writer.Tell();
-#if defined(VCC_OLD_PACKAGE_STRING_POOL)
-  progs.num_strings = Strings.Num();
-  Writer.Serialise(&Strings[0], Strings.Num());
-#else
   progs.num_strings = StringInfo.length();
   vint32 count = progs.num_strings;
   Writer << count;
   for (int stridx = 0; stridx < StringInfo.length(); ++stridx) {
     Writer << StringInfo[stridx].str;
   }
-#endif
 
   //FIXME
   //progs.ofs_mobjinfo = Writer.Tell();
@@ -394,11 +389,7 @@ void VPackage::WriteObject (VStr name) {
   devprintf("            count   size\n");
   devprintf("Header     %6d %6ld\n", 1, (long int)sizeof(progs));
   devprintf("Names      %6d %6d\n", Writer.Names.Num(), progs.ofs_strings - progs.ofs_names);
-#if defined(VCC_OLD_PACKAGE_STRING_POOL)
-  devprintf("Strings    %6d %6d\n", StringInfo.Num(), Strings.Num());
-#else
   devprintf("Strings    %6d\n", StringInfo.Num());
-#endif
   devprintf("Builtins   %6d\n", NumBuiltins);
   //devprintf("Mobj info  %6d %6d\n", VClass::GMobjInfos.Num(), progs.ofs_scriptids - progs.ofs_mobjinfo);
   //devprintf("Script Ids %6d %6d\n", VClass::GScriptIds.Num(), progs.ofs_imports - progs.ofs_scriptids);
@@ -524,11 +515,6 @@ void VPackage::LoadBinaryObject (VStream *Strm, VStr filename, TLocation l) {
   }
 
   // read strings
-#if defined(VCC_OLD_PACKAGE_STRING_POOL)
-  Strings.SetNum(Progs.num_strings);
-  Reader->Seek(Progs.ofs_strings);
-  Reader->Serialise(Strings.Ptr(), Progs.num_strings);
-#else
   Reader->Seek(Progs.ofs_strings);
   StringInfo.clear();
   InitStringPool();
@@ -548,7 +534,6 @@ void VPackage::LoadBinaryObject (VStream *Strm, VStr filename, TLocation l) {
       if (n != stridx) { ParseError(l, "Package '%s' contains corrupted string data", *Name); BailOut(); }
     }
   }
-#endif
 
   // serialise objects
   Reader->Seek(Progs.ofs_exportdata);

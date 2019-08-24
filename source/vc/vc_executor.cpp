@@ -888,11 +888,6 @@ func_loop:
           const VStr *S = (const VStr *)sp[-1].p;
           sp[-1].p = nullptr;
           *(VStr *)&sp[-1].p = *S;
-#if defined(VCC_OLD_PACKAGE_STRING_POOL)
-          const char *S = (const char *)sp[-1].p;
-          sp[-1].p = nullptr;
-          *(VStr *)&sp[-1].p = S;
-#endif
         }
         PR_VM_BREAK;
 
