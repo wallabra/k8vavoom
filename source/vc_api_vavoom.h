@@ -24,6 +24,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+/*
   // textures
   DECLARE_FUNCTION(CheckTextureNumForName)
   DECLARE_FUNCTION(TextureNumForName)
@@ -171,3 +172,4 @@
   DECLARE_FUNCTION(FS_FileExists)
   DECLARE_FUNCTION(FS_ReadFileContents)
   DECLARE_FUNCTION(FS_WriteFileContents)
+*/

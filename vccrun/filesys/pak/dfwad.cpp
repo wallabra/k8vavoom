@@ -41,13 +41,13 @@ private:
   bool openArchive ();
 
 protected:
-  virtual const VStr &getNameByIndex (int idx) const override;
+  virtual VStr getNameByIndex (int idx) const override;
   virtual int getNameCount () const override;
   // should return `nullptr` on failure
   virtual VStream *openWithIndex (int idx) override;
 
 public:
-  VDFWadFile (VStream* fstream, const VStr &aname=VStr("<memory>")); // takes ownership on success
+  VDFWadFile (VStream* fstream, VStr aname=VStr("<memory>")); // takes ownership on success
   virtual ~VDFWadFile () override;
 
   inline bool isOpened () const { return (fileStream != nullptr); }
@@ -56,7 +56,7 @@ public:
 
 // /////////////////////////////////////////////////////////////////////////// /
 // takes ownership
-VDFWadFile::VDFWadFile (VStream *fstream, const VStr &aname)
+VDFWadFile::VDFWadFile (VStream *fstream, VStr aname)
   : FSysDriverBase()
   , fileStream(nullptr)
   , files(nullptr)
@@ -76,7 +76,7 @@ VDFWadFile::~VDFWadFile () {
 }
 
 
-const VStr &VDFWadFile::getNameByIndex (int idx) const {
+VStr VDFWadFile::getNameByIndex (int idx) const {
   if (idx < 0 || idx >= fileCount) return VStr::EmptyString;
   return files[idx].name;
 }

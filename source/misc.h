@@ -64,53 +64,6 @@ void M_HsvToRgb (vuint8, vuint8, vuint8, vuint8&, vuint8&, vuint8&);
 void M_HsvToRgb (float, float, float, float&, float&, float&);
 
 
-// http://burtleburtle.net/bob/rand/smallprng.html
-struct BJPRNGCtx {
-  vuint32 a, b, c, d;
-};
-
-#define bjprng_rot(x,k) (((x)<<(k))|((x)>>(32-(k))))
-static inline __attribute__((unused)) __attribute__((warn_unused_result))
-vuint32 bjprng_ranval (BJPRNGCtx *x) {
-  vuint32 e = x->a-bjprng_rot(x->b, 27);
-  x->a = x->b^bjprng_rot(x->c, 17);
-  x->b = x->c+x->d;
-  x->c = x->d+e;
-  x->d = e+x->a;
-  return x->d;
-}
-
-static inline __attribute__((unused)) void bjprng_raninit (BJPRNGCtx *x, vuint32 seed) {
-  x->a = 0xf1ea5eed;
-  x->b = x->c = x->d = seed;
-  for (unsigned i = 0; i < 32; ++i) {
-    //(void)bjprng_ranval(x);
-    vuint32 e = x->a-bjprng_rot(x->b, 27);
-    x->a = x->b^bjprng_rot(x->c, 17);
-    x->b = x->c+x->d;
-    x->c = x->d+e;
-    x->d = e+x->a;
-  }
-}
-
-
-// initialized with `RandomInit()`
-extern BJPRNGCtx g_bjprng_ctx;
-
-
-static inline __attribute__((unused)) __attribute__((warn_unused_result))
-vuint32 GenRandomU31 () { return bjprng_ranval(&g_bjprng_ctx)&0x7fffffffu; }
-
-
-void RandomInit (); // call this to seed with random seed
-__attribute__((warn_unused_result)) float Random (); // [0..1)
-__attribute__((warn_unused_result)) float RandomFull (); // [0..1]
-__attribute__((warn_unused_result)) float RandomBetween (float minv, float maxv); // [minv..maxv]
-// [0..255]
-static inline __attribute__((unused)) __attribute__((warn_unused_result))
-vuint8 P_Random () { return bjprng_ranval(&g_bjprng_ctx)&0xff; }
-
-
 // see https://www.compuphase.com/cmetric.htm
 static inline __attribute__((unused)) __attribute__((const)) __attribute__((warn_unused_result))
 vint32 rgbDistanceSquared (vuint8 r0, vuint8 g0, vuint8 b0, vuint8 r1, vuint8 g1, vuint8 b1) {

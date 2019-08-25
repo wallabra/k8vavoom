@@ -47,7 +47,7 @@
 #include "debug.h"    //  Debug file
 #include "system.h"   //  System specific routines
 #include "filesys/files.h"    //  File I/O routines
-#include "vc_public.h"
+#include "../libs/vavoomc/vc_public.h"
 #include "vc_decorate.h"//  Decorate scripts
 #include "vc_dehacked.h"//  DeHackEd support
 #include "scripts.h"  //  Script parsing

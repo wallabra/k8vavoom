@@ -553,7 +553,7 @@ static int SocketConnect (SockType type, const VStr &host, int port, SocketOptio
 // if some timeout is zero, default timeout will be returned in opts
 // returns 0 on error, or positive socket id
 //native static final int SocketConnectUDP (string host, int port, optional ref SocketOptions opts);
-IMPLEMENT_FUNCTION(VObject, SocketConnectUDP) {
+IMPLEMENT_FREE_FUNCTION(VObject, SocketConnectUDP) {
   VStr host;
   int port;
   VOptParamPtr<SocketOptions> opts;
@@ -562,7 +562,7 @@ IMPLEMENT_FUNCTION(VObject, SocketConnectUDP) {
 }
 
 //native static final int SocketConnectTCP (string host, int port, optional ref SocketOptions opts);
-IMPLEMENT_FUNCTION(VObject, SocketConnectTCP) {
+IMPLEMENT_FREE_FUNCTION(VObject, SocketConnectTCP) {
   VStr host;
   int port;
   VOptParamPtr<SocketOptions> opts;
@@ -571,7 +571,7 @@ IMPLEMENT_FUNCTION(VObject, SocketConnectTCP) {
 }
 
 //native static final int SocketConnectTLS (string host, int port, optional ref SocketOptions opts);
-IMPLEMENT_FUNCTION(VObject, SocketConnectTLS) {
+IMPLEMENT_FREE_FUNCTION(VObject, SocketConnectTLS) {
   VStr host;
   int port;
   VOptParamPtr<SocketOptions> opts;
@@ -584,7 +584,7 @@ IMPLEMENT_FUNCTION(VObject, SocketConnectTLS) {
 // note that sockid will be destroyed after dispatching `ev_socket` event
 // immediate disconnect means "don't do shutdown, use SO_LIGER 0"
 //native static final bool SocketDisconnect (int sockid, optional bool immediate);
-IMPLEMENT_FUNCTION(VObject, SocketDisconnect) {
+IMPLEMENT_FREE_FUNCTION(VObject, SocketDisconnect) {
   int sockid;
   VOptParamBool immed(false);
   vobjGetParam(sockid, immed);
@@ -605,7 +605,7 @@ IMPLEMENT_FUNCTION(VObject, SocketDisconnect) {
 
 // for most queries, returns -1 for invalid sockid
 //native static final int SocketGetIOCTL (int sockid, SockIOCTL opcode);
-IMPLEMENT_FUNCTION(VObject, SocketGetIOCTL) {
+IMPLEMENT_FREE_FUNCTION(VObject, SocketGetIOCTL) {
   int sockid;
   int opcode;
   vobjGetParam(sockid, opcode);
@@ -652,7 +652,7 @@ IMPLEMENT_FUNCTION(VObject, SocketGetIOCTL) {
 }
 
 //native static final bool SocketSetIOCTL (int sockid, SockIOCTL opcode, optional int arg);
-IMPLEMENT_FUNCTION(VObject, SocketSetIOCTL) {
+IMPLEMENT_FREE_FUNCTION(VObject, SocketSetIOCTL) {
   int sockid;
   int opcode;
   VOptParamInt arg(0);
@@ -688,7 +688,7 @@ IMPLEMENT_FUNCTION(VObject, SocketSetIOCTL) {
 // on error, socket will be automatically closed
 // note that sockid will be destroyed after dispatching `ev_socket` event
 //native static final bool SocketSendStr (int sockid, string data);
-IMPLEMENT_FUNCTION(VObject, SocketSendStr) {
+IMPLEMENT_FREE_FUNCTION(VObject, SocketSendStr) {
   int sockid;
   VStr data;
   vobjGetParam(sockid, data);
@@ -703,7 +703,7 @@ IMPLEMENT_FUNCTION(VObject, SocketSendStr) {
 }
 
 //native static final bool SocketSendBuf (int sockid, const ref array!ubyte data, optional int ofs, optional int len);
-IMPLEMENT_FUNCTION(VObject, SocketSendBuf) {
+IMPLEMENT_FREE_FUNCTION(VObject, SocketSendBuf) {
   int sockid;
   VOptParamPtr< TArray<vuint8> > data;
   VOptParamInt ofs(0);
@@ -735,7 +735,7 @@ IMPLEMENT_FUNCTION(VObject, SocketSendBuf) {
 // can return empty string if there is noting in recv queue (or on error)
 // you can check for errors using `IsAlive` IOCTL request
 //native static final string SocketRecvStr (int sockid, optional int maxlen);
-IMPLEMENT_FUNCTION(VObject, SocketRecvStr) {
+IMPLEMENT_FREE_FUNCTION(VObject, SocketRecvStr) {
   int sockid;
   VOptParamInt maxlen(0x7fffffff);
   vobjGetParam(sockid, maxlen);
@@ -756,7 +756,7 @@ IMPLEMENT_FUNCTION(VObject, SocketRecvStr) {
 
 // append data to buffer; returns number of appended bytes or 0 on error/empty queue
 //native static final int SocketRecvBuf (int sockid, ref array!ubyte data, optional int maxlen);
-IMPLEMENT_FUNCTION(VObject, SocketRecvBuf) {
+IMPLEMENT_FREE_FUNCTION(VObject, SocketRecvBuf) {
   int sockid;
   VOptParamPtr< TArray<vuint8> > data;
   VOptParamInt maxlen(0x7fffffff);

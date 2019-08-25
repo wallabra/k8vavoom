@@ -24,6 +24,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+/*
   DECLARE_FUNCTION(get_GC_ImmediateDelete)
   DECLARE_FUNCTION(set_GC_ImmediateDelete)
 
@@ -79,3 +80,4 @@
 
   DECLARE_FUNCTION(SocketRecvStr)
   DECLARE_FUNCTION(SocketRecvBuf)
+*/

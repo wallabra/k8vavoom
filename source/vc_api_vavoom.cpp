@@ -24,10 +24,18 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+#include "gamedefs.h"
+#include "sv_local.h"
 #ifdef CLIENT
 # include "drawer.h"
 #endif
-#include "sv_local.h"
+
+
+IMPLEMENT_FREE_FUNCTION(VObject, CvarUnlatchAll) {
+  if (GGameInfo && GGameInfo->NetMode < NM_DedicatedServer) {
+    VCvar::Unlatch();
+  }
+}
 
 
 //**************************************************************************
@@ -35,32 +43,32 @@
 //  Texture utils
 //
 //**************************************************************************
-IMPLEMENT_FUNCTION(VObject, CheckTextureNumForName) {
+IMPLEMENT_FREE_FUNCTION(VObject, CheckTextureNumForName) {
   P_GET_NAME(name);
   RET_INT(GTextureManager.CheckNumForName(name, TEXTYPE_Wall, true));
 }
 
-IMPLEMENT_FUNCTION(VObject, TextureNumForName) {
+IMPLEMENT_FREE_FUNCTION(VObject, TextureNumForName) {
   P_GET_NAME(name);
   RET_INT(GTextureManager.NumForName(name, TEXTYPE_Wall, false));
 }
 
-IMPLEMENT_FUNCTION(VObject, CheckFlatNumForName) {
+IMPLEMENT_FREE_FUNCTION(VObject, CheckFlatNumForName) {
   P_GET_NAME(name);
   RET_INT(GTextureManager.CheckNumForName(name, TEXTYPE_Flat, true));
 }
 
-IMPLEMENT_FUNCTION(VObject, FlatNumForName) {
+IMPLEMENT_FREE_FUNCTION(VObject, FlatNumForName) {
   P_GET_NAME(name);
   RET_INT(GTextureManager.NumForName(name, TEXTYPE_Flat, false));
 }
 
-IMPLEMENT_FUNCTION(VObject, TextureHeight) {
+IMPLEMENT_FREE_FUNCTION(VObject, TextureHeight) {
   P_GET_INT(pic);
   RET_FLOAT(GTextureManager.TextureHeight(pic));
 }
 
-IMPLEMENT_FUNCTION(VObject, GetTextureName) {
+IMPLEMENT_FREE_FUNCTION(VObject, GetTextureName) {
   P_GET_INT(Handle);
   RET_NAME(GTextureManager.GetTextureName(Handle));
 }
@@ -71,32 +79,32 @@ IMPLEMENT_FUNCTION(VObject, GetTextureName) {
 //  Console command functions
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, Cmd_CheckParm) {
+IMPLEMENT_FREE_FUNCTION(VObject, Cmd_CheckParm) {
   P_GET_STR(str);
   RET_INT(VCommand::CheckParm(*str));
 }
 
-IMPLEMENT_FUNCTION(VObject, Cmd_GetArgC) {
+IMPLEMENT_FREE_FUNCTION(VObject, Cmd_GetArgC) {
   RET_INT(VCommand::GetArgC());
 }
 
-IMPLEMENT_FUNCTION(VObject, Cmd_GetArgV) {
+IMPLEMENT_FREE_FUNCTION(VObject, Cmd_GetArgV) {
   P_GET_INT(idx);
   RET_STR(VCommand::GetArgV(idx));
 }
 
-IMPLEMENT_FUNCTION(VObject, CmdBuf_AddText) {
+IMPLEMENT_FREE_FUNCTION(VObject, CmdBuf_AddText) {
   GCmdBuf << PF_FormatString();
 }
 
 
-IMPLEMENT_FUNCTION(VObject, KBCheatClearAll) {
+IMPLEMENT_FREE_FUNCTION(VObject, KBCheatClearAll) {
 #ifdef CLIENT
   VInputPublic::KBCheatClearAll();
 #endif
 }
 
-IMPLEMENT_FUNCTION(VObject, KBCheatAppend) {
+IMPLEMENT_FREE_FUNCTION(VObject, KBCheatAppend) {
   P_GET_STR(concmd);
   P_GET_STR(keys);
 #ifdef CLIENT
@@ -105,20 +113,20 @@ IMPLEMENT_FUNCTION(VObject, KBCheatAppend) {
 }
 
 
-IMPLEMENT_FUNCTION(VObject, AreStateSpritesPresent) {
+IMPLEMENT_FREE_FUNCTION(VObject, AreStateSpritesPresent) {
   P_GET_PTR(VState, State);
   RET_BOOL(State ? R_AreSpritesPresent(State->SpriteIndex) : false);
 }
 
 
-IMPLEMENT_FUNCTION(VObject, R_GetBloodTranslation) {
+IMPLEMENT_FREE_FUNCTION(VObject, R_GetBloodTranslation) {
   P_GET_INT(color);
   RET_INT(R_GetBloodTranslation(color));
 }
 
 
 // native static final int BoxOnLineSide2D (const TVec bmin, const TVec bmax, const ref GameObject::line_t line);
-IMPLEMENT_FUNCTION(VObject, BoxOnLineSide2D) {
+IMPLEMENT_FREE_FUNCTION(VObject, BoxOnLineSide2D) {
   P_GET_PTR(line_t, ld);
   P_GET_VEC(bmax);
   P_GET_VEC(bmin);
@@ -136,41 +144,41 @@ IMPLEMENT_FUNCTION(VObject, BoxOnLineSide2D) {
 //  Misc
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, Info_ValueForKey) {
+IMPLEMENT_FREE_FUNCTION(VObject, Info_ValueForKey) {
   P_GET_STR(key);
   P_GET_STR(info);
   RET_STR(Info_ValueForKey(info, key));
 }
 
-IMPLEMENT_FUNCTION(VObject, WadLumpPresent) {
+IMPLEMENT_FREE_FUNCTION(VObject, WadLumpPresent) {
   P_GET_NAME(name);
   //fprintf(stderr, "*** <%s> : %d (%d)\n", *name, W_CheckNumForName(name), W_CheckNumForName(name, WADNS_Graphics));
   RET_BOOL(W_CheckNumForName(name) >= 0 || W_CheckNumForName(name, WADNS_Graphics) >= 0);
 }
 
-IMPLEMENT_FUNCTION(VObject, FindAnimDoor) {
+IMPLEMENT_FREE_FUNCTION(VObject, FindAnimDoor) {
   P_GET_INT(BaseTex);
   RET_PTR(R_FindAnimDoor(BaseTex));
 }
 
-IMPLEMENT_FUNCTION(VObject, IsAnimatedTexture) {
+IMPLEMENT_FREE_FUNCTION(VObject, IsAnimatedTexture) {
   P_GET_INT(texid);
   RET_BOOL(R_IsAnimatedTexture(texid));
 }
 
-IMPLEMENT_FUNCTION(VObject, GetLangString) {
+IMPLEMENT_FREE_FUNCTION(VObject, GetLangString) {
   P_GET_NAME(Id);
   RET_STR(GLanguage[Id]);
 }
 
-IMPLEMENT_FUNCTION(VObject, RGB) {
+IMPLEMENT_FREE_FUNCTION(VObject, RGB) {
   P_GET_BYTE(b);
   P_GET_BYTE(g);
   P_GET_BYTE(r);
   RET_INT(0xff000000+(r<<16)+(g<<8)+b);
 }
 
-IMPLEMENT_FUNCTION(VObject, RGBA) {
+IMPLEMENT_FREE_FUNCTION(VObject, RGBA) {
   P_GET_BYTE(a);
   P_GET_BYTE(b);
   P_GET_BYTE(g);
@@ -178,18 +186,18 @@ IMPLEMENT_FUNCTION(VObject, RGBA) {
   RET_INT((a<<24)+(r<<16)+(g<<8)+b);
 }
 
-IMPLEMENT_FUNCTION(VObject, GetLockDef) {
+IMPLEMENT_FREE_FUNCTION(VObject, GetLockDef) {
   P_GET_INT(Lock);
   RET_PTR(GetLockDef(Lock));
 }
 
-IMPLEMENT_FUNCTION(VObject, ParseColor) {
+IMPLEMENT_FREE_FUNCTION(VObject, ParseColor) {
   P_GET_BOOL_OPT(retZeroIfInvalid, false);
   P_GET_STR(Name);
   RET_INT(M_ParseColor(*Name, retZeroIfInvalid));
 }
 
-IMPLEMENT_FUNCTION(VObject, TextColorString) {
+IMPLEMENT_FREE_FUNCTION(VObject, TextColorString) {
   P_GET_INT(Color);
   char buf[3];
   buf[0] = TEXT_COLOR_ESCAPE;
@@ -198,85 +206,85 @@ IMPLEMENT_FUNCTION(VObject, TextColorString) {
   RET_STR(VStr(buf));
 }
 
-IMPLEMENT_FUNCTION(VObject, StartTitleMap) {
+IMPLEMENT_FREE_FUNCTION(VObject, StartTitleMap) {
   RET_BOOL(Host_StartTitleMap());
 }
 
-IMPLEMENT_FUNCTION(VObject, IsAutoloadingMapFromCLI) {
+IMPLEMENT_FREE_FUNCTION(VObject, IsAutoloadingMapFromCLI) {
   RET_BOOL(Host_IsCLIMapStartFound());
 }
 
-IMPLEMENT_FUNCTION(VObject, LoadBinaryLump) {
+IMPLEMENT_FREE_FUNCTION(VObject, LoadBinaryLump) {
   P_GET_PTR(TArray<vuint8>, Array);
   P_GET_NAME(LumpName);
   W_LoadLumpIntoArray(LumpName, *Array);
 }
 
-IMPLEMENT_FUNCTION(VObject, IsMapPresent) {
+IMPLEMENT_FREE_FUNCTION(VObject, IsMapPresent) {
   P_GET_NAME(MapName);
   RET_BOOL(IsMapPresent(MapName));
 }
 
-IMPLEMENT_FUNCTION(VObject, HasDecal) {
+IMPLEMENT_FREE_FUNCTION(VObject, HasDecal) {
   P_GET_NAME(name);
   RET_BOOL(VDecalDef::hasDecal(name));
 }
 
 
 // native static final int W_IterateNS (int Prev, EWadNamespace NS);
-IMPLEMENT_FUNCTION(VObject, W_IterateNS) {
+IMPLEMENT_FREE_FUNCTION(VObject, W_IterateNS) {
   P_GET_INT(wadns);
   P_GET_INT(prev);
   RET_INT(W_IterateNS(prev, EWadNamespace(wadns)));
 }
 
 // native static final int W_IterateFile (int Prev, string Name);
-IMPLEMENT_FUNCTION(VObject, W_IterateFile) {
+IMPLEMENT_FREE_FUNCTION(VObject, W_IterateFile) {
   P_GET_STR(name);
   P_GET_INT(prev);
   RET_INT(W_IterateFile(prev, name));
 }
 
 // native static final int W_LumpLength (int lump);
-IMPLEMENT_FUNCTION(VObject, W_LumpLength) {
+IMPLEMENT_FREE_FUNCTION(VObject, W_LumpLength) {
   P_GET_INT(lump);
   RET_INT(W_LumpLength(lump));
 }
 
 // native static final name W_LumpName (int lump);
-IMPLEMENT_FUNCTION(VObject, W_LumpName) {
+IMPLEMENT_FREE_FUNCTION(VObject, W_LumpName) {
   P_GET_INT(lump);
   RET_NAME(W_LumpName(lump));
 }
 
 // native static final string W_FullLumpName (int lump);
-IMPLEMENT_FUNCTION(VObject, W_FullLumpName) {
+IMPLEMENT_FREE_FUNCTION(VObject, W_FullLumpName) {
   P_GET_INT(lump);
   RET_STR(W_FullLumpName(lump));
 }
 
 // native static final int W_LumpFile (int lump);
-IMPLEMENT_FUNCTION(VObject, W_LumpFile) {
+IMPLEMENT_FREE_FUNCTION(VObject, W_LumpFile) {
   P_GET_INT(lump);
   RET_INT(W_LumpFile(lump));
 }
 
 // native static final int W_CheckNumForName (name Name, optional EWadNamespace NS /*= WADNS_Global*/);
-IMPLEMENT_FUNCTION(VObject, W_CheckNumForName) {
+IMPLEMENT_FREE_FUNCTION(VObject, W_CheckNumForName) {
   P_GET_INT_OPT(ns, WADNS_Global);
   P_GET_NAME(Name);
   RET_INT(W_CheckNumForName(Name, EWadNamespace(ns)));
 }
 
 // native static final int W_GetNumForName (name Name, optional EWadNamespace NS /*= WADNS_Global*/);
-IMPLEMENT_FUNCTION(VObject, W_GetNumForName) {
+IMPLEMENT_FREE_FUNCTION(VObject, W_GetNumForName) {
   P_GET_INT_OPT(ns, WADNS_Global);
   P_GET_NAME(Name);
   RET_INT(W_GetNumForName(Name, EWadNamespace(ns)));
 }
 
 // native static final int W_CheckNumForNameInFile (name Name, int File, optional EWadNamespace NS /*= WADNS_Global*/);
-IMPLEMENT_FUNCTION(VObject, W_CheckNumForNameInFile) {
+IMPLEMENT_FREE_FUNCTION(VObject, W_CheckNumForNameInFile) {
   P_GET_INT_OPT(ns, WADNS_Global);
   P_GET_INT(File);
   P_GET_NAME(Name);
@@ -285,7 +293,7 @@ IMPLEMENT_FUNCTION(VObject, W_CheckNumForNameInFile) {
 
 
 // native static final bool FS_FileExists (string fname);
-IMPLEMENT_FUNCTION(VObject, FS_FileExists) {
+IMPLEMENT_FREE_FUNCTION(VObject, FS_FileExists) {
   P_GET_STR(fname);
   if (!FL_IsSafeDiskFileName(fname)) { RET_BOOL(false); return; }
   VStr diskName = FL_GetUserDataDir(false)+"/"+fname;
@@ -295,7 +303,7 @@ IMPLEMENT_FUNCTION(VObject, FS_FileExists) {
 }
 
 // native static final string FS_ReadFileContents (string fname);
-IMPLEMENT_FUNCTION(VObject, FS_ReadFileContents) {
+IMPLEMENT_FREE_FUNCTION(VObject, FS_ReadFileContents) {
   P_GET_STR(fname);
   if (!FL_IsSafeDiskFileName(fname)) { RET_STR(VStr::EmptyString); return; }
   VStr diskName = FL_GetUserDataDir(false)+"/"+fname;
@@ -312,7 +320,7 @@ IMPLEMENT_FUNCTION(VObject, FS_ReadFileContents) {
 }
 
 // native static final bool FS_WriteFileContents (string fname, string contents);
-IMPLEMENT_FUNCTION(VObject, FS_WriteFileContents) {
+IMPLEMENT_FREE_FUNCTION(VObject, FS_WriteFileContents) {
   P_GET_STR(contents);
   P_GET_STR(fname);
   if (!FL_IsSafeDiskFileName(fname)) { RET_BOOL(false); return; }

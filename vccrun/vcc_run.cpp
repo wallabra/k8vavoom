@@ -28,7 +28,7 @@
 #include <time.h>
 
 #include "vcc_run.h"
-#include "../source/vc/vc_local.h"
+#include "../libs/vavoomc/vc_local.h"
 
 #include "modules/mod_sound/sound.h"
 
@@ -435,7 +435,7 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
 
   if (count == 0) {
     if (SourceFileName.isEmpty()) {
-      SourceFileName = fsysForEachPakFile([] (const VStr &fname) { /*fprintf(stderr, ":<%s>\n", *fname);*/ return fname.endsWith("main.vc"); });
+      SourceFileName = fsysForEachPakFile([] (VStr fname) { /*fprintf(stderr, ":<%s>\n", *fname);*/ return fname.endsWith("main.vc"); });
     }
     auto dir = fsysOpenDir(".");
     if (dir) {

@@ -24,4 +24,4 @@
 //**
 //**************************************************************************
 
-//IMPLEMENT_FUNCTION(VObject, get_GC_AliveObjects) { RET_INT(gcLastStats.alive); }
+//IMPLEMENT_FREE_FUNCTION(VObject, get_GC_AliveObjects) { RET_INT(gcLastStats.alive); }

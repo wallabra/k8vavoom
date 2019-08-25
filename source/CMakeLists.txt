@@ -43,90 +43,6 @@ if(CMAKE_BUILD_TYPE MATCHES "Debug")
 endif()
 
 
-#---------------------------------------
-#
-# k8vavoom C compiler sources
-#
-#---------------------------------------
-set(VCCLIB_SOURCES
-  vc/vc_local.h
-  vc/vc_public.h
-  vc/vc_progs.h
-  vc/vc_progdefs.h
-
-  vc/vc_location.h
-  vc/vc_location.cpp
-  vc/vc_error.h
-  vc/vc_error.cpp
-  vc/vc_type.h
-  vc/vc_type.cpp
-  vc/vc_member.h
-  vc/vc_member.cpp
-  vc/vc_constant.h
-  vc/vc_constant.cpp
-  vc/vc_property.h
-  vc/vc_property.cpp
-  vc/vc_state.h
-  vc/vc_state.cpp
-  vc/vc_field.h
-  vc/vc_field.cpp
-  vc/vc_method.h
-  vc/vc_method.cpp
-  vc/vc_struct.h
-  vc/vc_struct.cpp
-  vc/vc_class.h
-  vc/vc_class.cpp
-  vc/vc_object.h
-  vc/vc_object.cpp
-  vc/vc_package.h
-  vc/vc_package.cpp
-  vc/vc_decorate.h
-  vc/vc_decorate.cpp
-  vc/vc_dehacked.h
-  vc/vc_dehacked.cpp
-
-  vc/vc_emit_context.h
-  vc/vc_emit_context.cpp
-  vc/vc_expr_base.h
-  vc/vc_expr_base.cpp
-
-  vc/vc_expr_array.h
-  vc/vc_expr_array.cpp
-  vc/vc_expr_assign.h
-  vc/vc_expr_assign.cpp
-  vc/vc_expr_cast.h
-  vc/vc_expr_cast.cpp
-  vc/vc_expr_field.h
-  vc/vc_expr_field.cpp
-  vc/vc_expr_invoke.h
-  vc/vc_expr_invoke.cpp
-  vc/vc_expr_literal.h
-  vc/vc_expr_literal.cpp
-  vc/vc_expr_local.h
-  vc/vc_expr_local.cpp
-  vc/vc_expr_misc.h
-  vc/vc_expr_misc.cpp
-  vc/vc_expr_type.h
-  vc/vc_expr_type.cpp
-  vc/vc_expr_unary_binary.h
-  vc/vc_expr_unary_binary.cpp
-  vc/vc_statement.h
-  vc/vc_statement.cpp
-
-  vc/vc_lexer.h
-  vc/vc_lexer_tokens.h
-  vc/vc_lexer.cpp
-  vc/vc_modifiers.h
-  vc/vc_modifiers.cpp
-  vc/vc_parser.h
-  vc/vc_parser.cpp
-
-  vc/vc_zastar.h
-  vc/vc_zastar.cpp
-
-  vc/vc_api_common.cpp
-  vc/vc_executor.cpp
-)
 
 #---------------------------------------
 #
@@ -319,6 +235,21 @@ set(VLEVEL_CLASS_SOURCES
 
 #---------------------------------------
 #
+# VavoomC compiler support sources
+#
+#---------------------------------------
+set(VCCLIB_SOURCES
+  vc/vc_decorate.h
+  vc/vc_decorate.cpp
+  vc/vc_dehacked.h
+  vc/vc_dehacked.cpp
+  vc_api_vavoom.h
+  vc_api_vavoom.cpp
+)
+
+
+#---------------------------------------
+#
 # Main executable sources
 #
 #---------------------------------------
@@ -410,7 +341,6 @@ set(MAIN_COMMON_SOURCES
   p_worldinfo.cpp
   p_worldinfo.h
   pr_cmds.cpp
-  vc_api_vavoom.h
   ${RENDERBASE_SOURCES}
   ${TEXTURELIB_SOURCES}
   ntvalueioex.cpp
@@ -575,8 +505,8 @@ endif(NOT WIN32)
 #---------------------------------------
 if(ENABLE_CLIENT)
   set(MAIN_SOURCES ${MAIN_COMMON_SOURCES})
-  #set(MAIN_LIBS glbsp libglvis timidity core ${VAVOOM_MAIN_DEPS} ${NET_LIBRARIES} ${MAIN_LIBS})
-  set(MAIN_LIBS timidity core ${VAVOOM_MAIN_DEPS} ${NET_LIBRARIES} ${MAIN_LIBS})
+  #set(MAIN_LIBS glbsp libglvis timidity vavoomc core ${VAVOOM_MAIN_DEPS} ${NET_LIBRARIES} ${MAIN_LIBS})
+  set(MAIN_LIBS timidity vavoomc core ${VAVOOM_MAIN_DEPS} ${NET_LIBRARIES} ${MAIN_LIBS})
   set(MAIN_COMPILE_FLAGS "")
 
   if(VORBIS_FOUND)
@@ -658,8 +588,8 @@ if(ENABLE_CLIENT)
   endif (MAIN_COMPILE_FLAGS)
   #message(STATUS "MAIN LINKLIBS: " ${MAIN_LIBS})
   target_link_libraries(k8vavoom ${MAIN_LIBS})
-  #add_dependencies(k8vavoom core timidity glbsp libglvis ${VAVOOM_MAIN_DEPS})
-  add_dependencies(k8vavoom core timidity ${VAVOOM_MAIN_DEPS})
+  #add_dependencies(k8vavoom core vavoomc timidity glbsp libglvis ${VAVOOM_MAIN_DEPS})
+  add_dependencies(k8vavoom core vavoomc timidity ${VAVOOM_MAIN_DEPS})
 
   install(TARGETS k8vavoom DESTINATION ${BINDIR})
 
@@ -733,10 +663,10 @@ if(ENABLE_SERVER)
   endif(ENABLE_WRAPPERS)
   set_target_properties(k8vavoom-dedicated PROPERTIES COMPILE_FLAGS -DSERVER)
   #FIXME: create separate from MAIN_LIBS link list
-  #target_link_libraries(k8vavoom-dedicated glbsp core ${MAIN_LIBS} ${NET_LIBRARIES})
-  target_link_libraries(k8vavoom-dedicated core ${MAIN_LIBS} ${NET_LIBRARIES})
-  #add_dependencies(k8vavoom-dedicated core glbsp ${VAVOOM_MAIN_DEPS})
-  add_dependencies(k8vavoom-dedicated core ${VAVOOM_MAIN_DEPS})
+  #target_link_libraries(k8vavoom-dedicated glbsp vavoomc core ${MAIN_LIBS} ${NET_LIBRARIES})
+  target_link_libraries(k8vavoom-dedicated vavoomc core ${MAIN_LIBS} ${NET_LIBRARIES})
+  #add_dependencies(k8vavoom-dedicated core vavoomc glbsp ${VAVOOM_MAIN_DEPS})
+  add_dependencies(k8vavoom-dedicated core vavoomc ${VAVOOM_MAIN_DEPS})
 
   install(TARGETS k8vavoom-dedicated DESTINATION ${BINDIR})
 

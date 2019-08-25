@@ -24,67 +24,90 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+#include "vcc_run.h"
+#include "../libs/vavoomc/vc_local.h"
+
+
+//==========================================================================
+//
+//  VInvocation::MassageDecorateArg
+//
+//  this will try to coerce some decorate argument to something sensible
+//
+//==========================================================================
+VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerState, const char *funcName,
+                                              int argnum, const VFieldType &destType, const TLocation *aloc,
+                                              bool *massaged)
+{
+  Sys_Error("VExpression::MassageDecorateArg: the thing that should not be!");
+}
+
+
+IMPLEMENT_FREE_FUNCTION(VObject, CvarUnlatchAll) {
+  VCvar::Unlatch();
+}
+
 
 //**************************************************************************
 //
 //  Basic functions
 //
 //**************************************************************************
-IMPLEMENT_FUNCTION(VObject, get_GC_ImmediateDelete) { RET_BOOL(GImmediadeDelete); }
-IMPLEMENT_FUNCTION(VObject, set_GC_ImmediateDelete) { P_GET_BOOL(val); GImmediadeDelete = val; }
+IMPLEMENT_FREE_FUNCTION(VObject, get_GC_ImmediateDelete) { RET_BOOL(VObject::GImmediadeDelete); }
+IMPLEMENT_FREE_FUNCTION(VObject, set_GC_ImmediateDelete) { P_GET_BOOL(val); VObject::GImmediadeDelete = val; }
 
 
 // native static final void ccmdClearText ();
-IMPLEMENT_FUNCTION(VObject, ccmdClearText) {
+IMPLEMENT_FREE_FUNCTION(VObject, ccmdClearText) {
   ccmdClearText();
 }
 
 // native static final void ccmdClearCommand ();
-IMPLEMENT_FUNCTION(VObject, ccmdClearCommand) {
+IMPLEMENT_FREE_FUNCTION(VObject, ccmdClearCommand) {
   ccmdClearCommand();
 }
 
 // native static final CCResult ccmdParseOne ();
-IMPLEMENT_FUNCTION(VObject, ccmdParseOne) {
+IMPLEMENT_FREE_FUNCTION(VObject, ccmdParseOne) {
   RET_INT(ccmdParseOne());
 }
 
 // native static final int ccmdGetArgc ();
-IMPLEMENT_FUNCTION(VObject, ccmdGetArgc) {
+IMPLEMENT_FREE_FUNCTION(VObject, ccmdGetArgc) {
   RET_INT(ccmdGetArgc());
 }
 
 // native static final string ccmdGetArgv (int idx);
-IMPLEMENT_FUNCTION(VObject, ccmdGetArgv) {
+IMPLEMENT_FREE_FUNCTION(VObject, ccmdGetArgv) {
   P_GET_INT(idx);
   RET_STR(ccmdGetArgv(idx));
 }
 
 // native static final int ccmdTextSize ();
-IMPLEMENT_FUNCTION(VObject, ccmdTextSize) {
+IMPLEMENT_FREE_FUNCTION(VObject, ccmdTextSize) {
   RET_INT(ccmdTextSize());
 }
 
 // native static final void ccmdPrepend (string str);
-IMPLEMENT_FUNCTION(VObject, ccmdPrepend) {
+IMPLEMENT_FREE_FUNCTION(VObject, ccmdPrepend) {
   P_GET_STR(str);
   ccmdPrepend(str);
 }
 
 // native static final void ccmdPrependQuoted (string str);
-IMPLEMENT_FUNCTION(VObject, ccmdPrependQuoted) {
+IMPLEMENT_FREE_FUNCTION(VObject, ccmdPrependQuoted) {
   P_GET_STR(str);
   ccmdPrependQuoted(str);
 }
 
 // native static final void ccmdAppend (string str);
-IMPLEMENT_FUNCTION(VObject, ccmdAppend) {
+IMPLEMENT_FREE_FUNCTION(VObject, ccmdAppend) {
   P_GET_STR(str);
   ccmdAppend(str);
 }
 
 // native static final void ccmdAppendQuoted (string str);
-IMPLEMENT_FUNCTION(VObject, ccmdAppendQuoted) {
+IMPLEMENT_FREE_FUNCTION(VObject, ccmdAppendQuoted) {
   P_GET_STR(str);
   ccmdAppendQuoted(str);
 }

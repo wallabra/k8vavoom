@@ -26,7 +26,7 @@
 #include <time.h>
 
 #include "vcc.h"
-#include "../../source/vc/vc_local.h"
+#include "../../libs/vavoomc/vc_local.h"
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -142,11 +142,11 @@ void Free (void* ptr) {
 
 //==========================================================================
 //
-//  OpenFile
+//  fsysOpenFileSimple
 //
 //==========================================================================
-VStream* OpenFile (const VStr& Name) {
-  FILE* file = fopen(*Name, "rb");
+VStream* fsysOpenFileSimple (VStr Name) {
+  FILE *file = fopen(*Name, "rb");
   return (file ? new VFileReader(file) : nullptr);
 }
 

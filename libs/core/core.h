@@ -95,6 +95,7 @@
 #include "ed25519.h"
 #include "endianness.h" // endianes handling
 #include "exception.h" // exception handling
+#include "prngs.h"
 #include "zone.h" // zone memory allocation
 #include "names.h" // built-in names
 #include "log.h" // general logging interface

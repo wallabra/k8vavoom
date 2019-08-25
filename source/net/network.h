@@ -404,7 +404,7 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-class VNetObjectsMap {
+class VNetObjectsMap : public VNetObjectsMapBase {
 private:
   TArray<VName> NameLookup;
   TArray<int> NameMap;
@@ -418,13 +418,15 @@ public:
 public:
   VNetObjectsMap ();
   VNetObjectsMap (VNetConnection *);
+  virtual ~VNetObjectsMap ();
 
   void SetUpClassLookup ();
   bool CanSerialiseObject (VObject *);
-  bool SerialiseName (VStream &, VName &);
-  bool SerialiseObject (VStream &, VObject *&);
-  bool SerialiseClass (VStream &, VClass *&);
-  bool SerialiseState (VStream &, VState *&);
+
+  virtual bool SerialiseName (VStream &, VName &) override;
+  virtual bool SerialiseObject (VStream &, VObject *&) override;
+  virtual bool SerialiseClass (VStream &, VClass *&) override;
+  virtual bool SerialiseState (VStream &, VState *&) override;
 
   friend class VObjectMapChannel;
 };

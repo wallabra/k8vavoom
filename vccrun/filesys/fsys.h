@@ -45,16 +45,16 @@ VStr fsysGetBinaryPath ();
 
 
 // append disk directory to the list of archives
-int fsysAppendDir (const VStr &path, const VStr &apfx=VStr());
+int fsysAppendDir (VStr path, VStr apfx=VStr());
 
 // append archive to the list of archives
 // it will be searched in the current dir, and then in `fsysBaseDir`
 // returns pack id or 0
-int fsysAppendPak (const VStr &fname, int pakid=fsysAnyPak);
+int fsysAppendPak (VStr fname, int pakid=fsysAnyPak);
 
 // this will take ownership of `strm` (or kill it on error)
 // returns pack id or 0
-int fsysAppendPak (VStream *strm, const VStr &apfx=VStr());
+int fsysAppendPak (VStream *strm, VStr apfx=VStr());
 
 // remove given pack from pack list
 void fsysRemovePak (int pakid);
@@ -63,7 +63,7 @@ void fsysRemovePak (int pakid);
 void fsysRemovePaksFrom (int pakid);
 
 // 0: no such pack
-int fsysFindPakByPrefix (const VStr &pfx);
+int fsysFindPakByPrefix (VStr pfx);
 
 // return pack file path for the given pack id (or empty string)
 VStr fsysGetPakPath (int pakid);
@@ -73,30 +73,32 @@ VStr fsysGetPakPrefix (int pakid);
 
 int fsysGetLastPakId ();
 
-bool fsysFileExists (const VStr &fname, int pakid=fsysAnyPak);
-//void fsysCreatePath (const VStr &path);
+bool fsysFileExists (VStr fname, int pakid=fsysAnyPak);
+//void fsysCreatePath (VStr path);
 
 // open file for reading, relative to basedir, and look into archives too
-VStream *fsysOpenFile (const VStr &fname, int pakid=fsysAnyPak);
+VStream *fsysOpenFile (VStr fname, int pakid=fsysAnyPak);
+// open file for reading, relative to basedir, and look into archives too
+VStream *fsysOpenFileSimple (VStr fname/*, int pakid=fsysAnyPak*/);
 
 // open file for reading, relative to basedir, and look into archives too
-VStream *fsysOpenFileAnyExt (const VStr &fname, int pakid=fsysAnyPak);
+VStream *fsysOpenFileAnyExt (VStr fname, int pakid=fsysAnyPak);
 
 // open file for reading, NOT relative to basedir
-VStream *fsysOpenDiskFileWrite (const VStr &fname);
-VStream *fsysOpenDiskFile (const VStr &fname);
+VStream *fsysOpenDiskFileWrite (VStr fname);
+VStream *fsysOpenDiskFile (VStr fname);
 
 // find file with any extension
-VStr fsysFileFindAnyExt (const VStr &fname, int pakid=fsysAnyPak);
+VStr fsysFileFindAnyExt (VStr fname, int pakid=fsysAnyPak);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 class FSysDriverBase {
   friend class VStreamPakFile;
-  friend const VStr &fsysForEachPakFile (bool (*dg) (const VStr &fname));
+  friend VStr fsysForEachPakFile (bool (*dg) (VStr fname));
 
 protected:
-  virtual const VStr &getNameByIndex (int idx) const = 0;
+  virtual VStr getNameByIndex (int idx) const = 0;
   virtual int getNameCount () const = 0;
 
 protected:
@@ -119,7 +121,7 @@ protected:
     return (hash ? hash : 1); // this is unlikely, but...
   }
 
-  static inline vuint32 fnvHashBufCI (const VStr &s) {
+  static inline vuint32 fnvHashBufCI (VStr s) {
     if (s.length() == 0) return 1;
     return fnvHashBufCI(*s, s.length());
   }
@@ -141,7 +143,7 @@ protected:
   void buildNameHashTable ();
 
   // index or -1
-  int findName (const VStr &fname) const;
+  int findName (VStr fname) const;
 
 protected:
   // should return `nullptr` on failure
@@ -159,18 +161,18 @@ public:
   virtual bool active ();
   virtual void deactivate ();
 
-  inline void setPrefix (const VStr &apfx) { mPrefix = apfx; }
-  inline const VStr &getPrefix () const { return mPrefix; }
+  inline void setPrefix (VStr apfx) { mPrefix = apfx; }
+  inline VStr getPrefix () const { return mPrefix; }
 
-  inline void setFilePath (const VStr &s) { mFilePath = s; }
-  inline const VStr &getFilePath () const { return mFilePath; }
+  inline void setFilePath (VStr s) { mFilePath = s; }
+  inline VStr getFilePath () const { return mFilePath; }
 
-  virtual bool hasFile (const VStr &fname);
+  virtual bool hasFile (VStr fname);
 
-  virtual VStr findFileWithAnyExt (const VStr &fname);
+  virtual VStr findFileWithAnyExt (VStr fname);
 
   // should return `nullptr` on failure
-  virtual VStream *open (const VStr &fname);
+  virtual VStream *open (VStr fname);
 };
 
 
@@ -203,7 +205,7 @@ private:
   void setError ();
 
 public:
-  VStreamDiskFile (FILE *afl, const VStr &aname=VStr(), bool asWriter=false, FSysDriverBase *aDriver=nullptr);
+  VStreamDiskFile (FILE *afl, VStr aname=VStr(), bool asWriter=false, FSysDriverBase *aDriver=nullptr);
   virtual ~VStreamDiskFile () override;
 
   virtual VStr GetName () const override;
@@ -290,7 +292,7 @@ private:
 public:
   // doesn't own passed stream
   VZipStreamReader (VStream *ASrcStream, vuint32 ACompressedSize=0xffffffffU, vuint32 AUncompressedSize=0xffffffffU, bool asZipArchive=false, FSysDriverBase *aDriver=nullptr);
-  VZipStreamReader (const VStr &fname, VStream *ASrcStream, vuint32 ACompressedSize=0xffffffffU, vuint32 AUncompressedSize=0xffffffffU, bool asZipArchive=false, FSysDriverBase *aDriver=nullptr);
+  VZipStreamReader (VStr fname, VStream *ASrcStream, vuint32 ACompressedSize=0xffffffffU, vuint32 AUncompressedSize=0xffffffffU, bool asZipArchive=false, FSysDriverBase *aDriver=nullptr);
   virtual ~VZipStreamReader () override;
 
   virtual VStr GetName () const override;
@@ -384,18 +386,18 @@ public:
 
 // ////////////////////////////////////////////////////////////////////////// //
 // returns -1 if not present
-int fsysDiskFileTime (const VStr &path);
-bool fsysDirExists (const VStr &path);
-bool fysCreateDirectory (const VStr &path);
+int fsysDiskFileTime (VStr path);
+bool fsysDirExists (VStr path);
+bool fysCreateDirectory (VStr path);
 
-void *fsysOpenDir (const VStr &path);
+void *fsysOpenDir (VStr path);
 VStr fsysReadDir (void *adir);
 void fsysCloseDir (void *adir);
 
 // kinda like `GetTickCount()`, in seconds
 double fsysCurrTick ();
 
-const VStr &fsysForEachPakFile (bool (*dg) (const VStr &fname));
+VStr fsysForEachPakFile (bool (*dg) (VStr fname));
 
 
 // ////////////////////////////////////////////////////////////////////////// //

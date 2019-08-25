@@ -29,9 +29,6 @@
 
 #include "vcc_vc.h"
 
-#include "../../source/vc/vc_public.h"
-
-#define fsysOpenFile  OpenFile
-
+#include "../../libs/vavoomc/vc_public.h"
 
 #endif

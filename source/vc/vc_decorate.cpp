@@ -24,7 +24,8 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "vc_local.h"
+#include "../libs/vavoomc/vc_local.h"
+#include "gamedefs.h"
 #include "sv_local.h"
 
 #define VC_DECORATE_ACTION_BELONGS_TO_STATE

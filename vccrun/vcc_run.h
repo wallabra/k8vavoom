@@ -49,7 +49,7 @@ float Random () {
 
 //#include "vcc_netobj.h"
 #include "vcc_run_vc.h"
-#include "../source/vc/vc_public.h"
+#include "../libs/vavoomc/vc_public.h"
 #include "../source/scripts.h"
 //#include "../source/misc.h"
 

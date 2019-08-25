@@ -890,7 +890,7 @@ struct ScissorRect {
 
 // ////////////////////////////////////////////////////////////////////////// //
 //native static final int CreateTimer (int intervalms, optional bool oneShot);
-IMPLEMENT_FUNCTION(VObject, CreateTimer) {
+IMPLEMENT_FREE_FUNCTION(VObject, CreateTimer) {
   P_GET_INT(specifiedOneShot);
   P_GET_BOOL(oneShot);
   P_GET_INT(intervalms);
@@ -899,7 +899,7 @@ IMPLEMENT_FUNCTION(VObject, CreateTimer) {
 }
 
 //native static final bool CreateTimerWithId (int id, int intervalms, optional bool oneShot);
-IMPLEMENT_FUNCTION(VObject, CreateTimerWithId) {
+IMPLEMENT_FREE_FUNCTION(VObject, CreateTimerWithId) {
   P_GET_INT(specifiedOneShot);
   P_GET_BOOL(oneShot);
   P_GET_INT(intervalms);
@@ -909,31 +909,31 @@ IMPLEMENT_FUNCTION(VObject, CreateTimerWithId) {
 }
 
 //native static final bool DeleteTimer (int id);
-IMPLEMENT_FUNCTION(VObject, DeleteTimer) {
+IMPLEMENT_FREE_FUNCTION(VObject, DeleteTimer) {
   P_GET_INT(id);
   RET_BOOL(VGLVideo::DeleteTimer(id));
 }
 
 //native static final bool IsTimerExists (int id);
-IMPLEMENT_FUNCTION(VObject, IsTimerExists) {
+IMPLEMENT_FREE_FUNCTION(VObject, IsTimerExists) {
   P_GET_INT(id);
   RET_BOOL(VGLVideo::IsTimerExists(id));
 }
 
 //native static final bool IsTimerOneShot (int id);
-IMPLEMENT_FUNCTION(VObject, IsTimerOneShot) {
+IMPLEMENT_FREE_FUNCTION(VObject, IsTimerOneShot) {
   P_GET_INT(id);
   RET_BOOL(VGLVideo::IsTimerOneShot(id));
 }
 
 //native static final int GetTimerInterval (int id);
-IMPLEMENT_FUNCTION(VObject, GetTimerInterval) {
+IMPLEMENT_FREE_FUNCTION(VObject, GetTimerInterval) {
   P_GET_INT(id);
   RET_INT(VGLVideo::GetTimerInterval(id));
 }
 
 //native static final bool SetTimerInterval (int id, int intervalms);
-IMPLEMENT_FUNCTION(VObject, SetTimerInterval) {
+IMPLEMENT_FREE_FUNCTION(VObject, SetTimerInterval) {
   P_GET_INT(intervalms);
   P_GET_INT(id);
   RET_BOOL(VGLVideo::SetTimerInterval(id, intervalms));
@@ -941,7 +941,7 @@ IMPLEMENT_FUNCTION(VObject, SetTimerInterval) {
 
 
 //native static final float GetTickCount ();
-IMPLEMENT_FUNCTION(VObject, GetTickCount) {
+IMPLEMENT_FREE_FUNCTION(VObject, GetTickCount) {
   RET_FLOAT((float)fsysCurrTick());
 }
 

@@ -423,12 +423,12 @@ void P_FreeTerrainTypes () {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-IMPLEMENT_FUNCTION(VObject, GetSplashInfo) {
+IMPLEMENT_FREE_FUNCTION(VObject, GetSplashInfo) {
   P_GET_NAME(Name);
   if (Name == NAME_None) RET_PTR(nullptr); else RET_PTR(GetSplashInfo(*Name));
 }
 
-IMPLEMENT_FUNCTION(VObject, GetTerrainInfo) {
+IMPLEMENT_FREE_FUNCTION(VObject, GetTerrainInfo) {
   P_GET_NAME(Name);
   if (Name == NAME_None) RET_PTR(nullptr); else RET_PTR(GetTerrainInfo(*Name));
 }

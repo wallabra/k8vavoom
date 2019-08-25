@@ -137,13 +137,13 @@ private:
   void openArchive ();
 
 protected:
-  virtual const VStr &getNameByIndex (int idx) const override;
+  virtual VStr getNameByIndex (int idx) const override;
   virtual int getNameCount () const override;
   // should return `nullptr` on failure
   virtual VStream *openWithIndex (int idx) override;
 
 public:
-  VZipFile (VStream* fstream, const VStr &aname=VStr("<memory>")); // takes ownership on success
+  VZipFile (VStream* fstream, VStr aname=VStr("<memory>")); // takes ownership on success
   virtual ~VZipFile() override;
 
   inline bool isOpened () const { return (fileStream != nullptr); }
@@ -152,7 +152,7 @@ public:
 
 // /////////////////////////////////////////////////////////////////////////// /
 // takes ownership
-VZipFile::VZipFile (VStream *fstream, const VStr &aname)
+VZipFile::VZipFile (VStream *fstream, VStr aname)
   : FSysDriverBase()
   , zipFileName(aname)
   , fileStream(nullptr)
@@ -173,7 +173,7 @@ VZipFile::~VZipFile () {
 }
 
 
-const VStr &VZipFile::getNameByIndex (int idx) const {
+VStr VZipFile::getNameByIndex (int idx) const {
   if (idx < 0 || idx >= fileCount) return VStr::EmptyString;
   return files[idx].name;
 }

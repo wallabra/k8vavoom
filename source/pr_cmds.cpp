@@ -62,7 +62,7 @@ VClass *SV_FindClassFromScriptId (int Id, int GameFilter);
 //  P_SectorClosestPoint
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, SectorClosestPoint) {
+IMPLEMENT_FREE_FUNCTION(VObject, SectorClosestPoint) {
   P_GET_VEC(point);
   P_GET_PTR(sector_t, sec);
   RET_VEC(P_SectorClosestPoint(sec, point));
@@ -74,7 +74,7 @@ IMPLEMENT_FUNCTION(VObject, SectorClosestPoint) {
 //  LineOpenings
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, LineOpenings) {
+IMPLEMENT_FREE_FUNCTION(VObject, LineOpenings) {
   P_GET_BOOL_OPT(do3dmidtex, false);
   P_GET_INT_OPT(blockmask, SPF_NOBLOCKING);
   P_GET_PTR(TVec, point);
@@ -89,7 +89,7 @@ IMPLEMENT_FUNCTION(VObject, LineOpenings) {
 //
 // native static final bool P_GetMidTexturePosition (const line_t *line, int sideno, out float ptextop, out float ptexbot);
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, P_GetMidTexturePosition) {
+IMPLEMENT_FREE_FUNCTION(VObject, P_GetMidTexturePosition) {
   P_GET_PTR(float, ptexbot);
   P_GET_PTR(float, ptextop);
   P_GET_INT(sideno);
@@ -104,7 +104,7 @@ IMPLEMENT_FUNCTION(VObject, P_GetMidTexturePosition) {
 //
 //==========================================================================
 /*
-IMPLEMENT_FUNCTION(VObject, FindThingGap) {
+IMPLEMENT_FREE_FUNCTION(VObject, FindThingGap) {
   P_GET_FLOAT(height);
   P_GET_PTR(TVec, point);
   P_GET_PTR(sector_t, sector);
@@ -122,7 +122,7 @@ IMPLEMENT_FUNCTION(VObject, FindThingGap) {
 //  FindOpening
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, FindOpening) {
+IMPLEMENT_FREE_FUNCTION(VObject, FindOpening) {
   P_GET_FLOAT(z2);
   P_GET_FLOAT(z1);
   P_GET_PTR(opening_t, gaps);
@@ -136,7 +136,7 @@ IMPLEMENT_FUNCTION(VObject, FindOpening) {
 //
 //==========================================================================
 /*
-IMPLEMENT_FUNCTION(VObject, PointInRegion) {
+IMPLEMENT_FREE_FUNCTION(VObject, PointInRegion) {
   P_GET_VEC(p);
   P_GET_PTR(sector_t, sector);
   RET_PTR(SV_PointInRegion(sector, p));
@@ -145,7 +145,7 @@ IMPLEMENT_FUNCTION(VObject, PointInRegion) {
 
 
 //native static final void GetSectorGapCoords (const GameObject::sector_t *sector, const ref TVec point, out float floorz, out float ceilz);
-IMPLEMENT_FUNCTION(VObject, GetSectorGapCoords) {
+IMPLEMENT_FREE_FUNCTION(VObject, GetSectorGapCoords) {
   P_GET_PTR(float, ceilz);
   P_GET_PTR(float, floorz);
   P_GET_PTR(TVec, point);
@@ -165,7 +165,7 @@ IMPLEMENT_FUNCTION(VObject, GetSectorGapCoords) {
 //  GetSoundPlayingInfo
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, GetSoundPlayingInfo) {
+IMPLEMENT_FREE_FUNCTION(VObject, GetSoundPlayingInfo) {
   P_GET_INT(id);
   P_GET_REF(VEntity, mobj);
 #ifdef CLIENT
@@ -183,7 +183,7 @@ IMPLEMENT_FUNCTION(VObject, GetSoundPlayingInfo) {
 //  GetSoundID
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, GetSoundID) {
+IMPLEMENT_FREE_FUNCTION(VObject, GetSoundID) {
   P_GET_NAME(Name);
   RET_INT(GSoundManager->GetSoundID(Name));
 }
@@ -194,7 +194,7 @@ IMPLEMENT_FUNCTION(VObject, GetSoundID) {
 //  StopAllSounds
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, StopAllSounds) {
+IMPLEMENT_FREE_FUNCTION(VObject, StopAllSounds) {
 #ifdef CLIENT
   GAudio->StopAllSound();
 #endif
@@ -206,7 +206,7 @@ IMPLEMENT_FUNCTION(VObject, StopAllSounds) {
 //  SetSeqTrans
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, SetSeqTrans) {
+IMPLEMENT_FREE_FUNCTION(VObject, SetSeqTrans) {
   P_GET_INT(SeqType);
   P_GET_INT(Num);
   P_GET_NAME(Name);
@@ -219,7 +219,7 @@ IMPLEMENT_FUNCTION(VObject, SetSeqTrans) {
 //  GetSeqTrans
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, GetSeqTrans) {
+IMPLEMENT_FREE_FUNCTION(VObject, GetSeqTrans) {
   P_GET_INT(SeqType);
   P_GET_INT(Num);
   RET_NAME(GSoundManager->GetSeqTrans(Num, SeqType));
@@ -231,7 +231,7 @@ IMPLEMENT_FUNCTION(VObject, GetSeqTrans) {
 //  GetSeqTrans
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, GetSeqSlot) {
+IMPLEMENT_FREE_FUNCTION(VObject, GetSeqSlot) {
   P_GET_NAME(Name);
   RET_NAME(GSoundManager->GetSeqSlot(Name));
 }
@@ -242,7 +242,7 @@ IMPLEMENT_FUNCTION(VObject, GetSeqSlot) {
 //  P_GetThingFloorType
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, TerrainType) {
+IMPLEMENT_FREE_FUNCTION(VObject, TerrainType) {
   P_GET_INT(pic);
   RET_PTR(SV_TerrainType(pic));
 }
@@ -253,7 +253,7 @@ IMPLEMENT_FUNCTION(VObject, TerrainType) {
 //  SB_Start
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, SB_Start) {
+IMPLEMENT_FREE_FUNCTION(VObject, SB_Start) {
 #ifdef CLIENT
   SB_Start();
 #endif
@@ -265,7 +265,7 @@ IMPLEMENT_FUNCTION(VObject, SB_Start) {
 //  FindClassFromEditorId
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, FindClassFromEditorId) {
+IMPLEMENT_FREE_FUNCTION(VObject, FindClassFromEditorId) {
   P_GET_INT(GameFilter);
   P_GET_INT(Id);
   RET_PTR(SV_FindClassFromEditorId(Id, GameFilter));
@@ -277,7 +277,7 @@ IMPLEMENT_FUNCTION(VObject, FindClassFromEditorId) {
 //  FindClassFromScriptId
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, FindClassFromScriptId) {
+IMPLEMENT_FREE_FUNCTION(VObject, FindClassFromScriptId) {
   P_GET_INT(GameFilter);
   P_GET_INT(Id);
   RET_PTR(SV_FindClassFromScriptId(Id, GameFilter));
@@ -289,64 +289,64 @@ IMPLEMENT_FUNCTION(VObject, FindClassFromScriptId) {
 //  various
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, P_GetMapName) {
+IMPLEMENT_FREE_FUNCTION(VObject, P_GetMapName) {
   P_GET_INT(map);
   RET_STR(P_GetMapName(map));
 }
 
 
-IMPLEMENT_FUNCTION(VObject, P_GetMapIndexByLevelNum) {
+IMPLEMENT_FREE_FUNCTION(VObject, P_GetMapIndexByLevelNum) {
   P_GET_INT(map);
   RET_INT(P_GetMapIndexByLevelNum(map));
 }
 
 
-IMPLEMENT_FUNCTION(VObject, P_GetNumMaps) {
+IMPLEMENT_FREE_FUNCTION(VObject, P_GetNumMaps) {
   RET_INT(P_GetNumMaps());
 }
 
 
-IMPLEMENT_FUNCTION(VObject, P_GetMapInfo) {
+IMPLEMENT_FREE_FUNCTION(VObject, P_GetMapInfo) {
   P_GET_INT(map);
   RET_PTR(P_GetMapInfoPtr(map));
 }
 
 
-IMPLEMENT_FUNCTION(VObject, P_GetMapLumpName) {
+IMPLEMENT_FREE_FUNCTION(VObject, P_GetMapLumpName) {
   P_GET_INT(map);
   RET_NAME(P_GetMapLumpName(map));
 }
 
 
-IMPLEMENT_FUNCTION(VObject, P_TranslateMap) {
+IMPLEMENT_FREE_FUNCTION(VObject, P_TranslateMap) {
   P_GET_INT(map);
   RET_NAME(P_TranslateMap(map));
 }
 
 
-IMPLEMENT_FUNCTION(VObject, P_GetNumEpisodes) {
+IMPLEMENT_FREE_FUNCTION(VObject, P_GetNumEpisodes) {
   RET_INT(P_GetNumEpisodes());
 }
 
 
-IMPLEMENT_FUNCTION(VObject, P_GetEpisodeDef) {
+IMPLEMENT_FREE_FUNCTION(VObject, P_GetEpisodeDef) {
   P_GET_INT(Index);
   RET_PTR(P_GetEpisodeDef(Index));
 }
 
 
-IMPLEMENT_FUNCTION(VObject, P_GetNumSkills) {
+IMPLEMENT_FREE_FUNCTION(VObject, P_GetNumSkills) {
   RET_INT(P_GetNumSkills());
 }
 
 
-IMPLEMENT_FUNCTION(VObject, P_GetSkillDef) {
+IMPLEMENT_FREE_FUNCTION(VObject, P_GetSkillDef) {
   P_GET_INT(Index);
   RET_PTR(const_cast<VSkillDef*>(P_GetSkillDef(Index)));
 }
 
 
-IMPLEMENT_FUNCTION(VObject, SV_GetSaveString) {
+IMPLEMENT_FREE_FUNCTION(VObject, SV_GetSaveString) {
   P_GET_PTR(VStr, buf);
   P_GET_INT(i);
   if (!buf) { RET_INT(0); return; }
@@ -358,7 +358,7 @@ IMPLEMENT_FUNCTION(VObject, SV_GetSaveString) {
 }
 
 
-IMPLEMENT_FUNCTION(VObject, SV_GetSaveDateString) {
+IMPLEMENT_FREE_FUNCTION(VObject, SV_GetSaveDateString) {
   P_GET_PTR(VStr, buf);
   P_GET_INT(i);
   if (!buf) return;
@@ -370,7 +370,7 @@ IMPLEMENT_FUNCTION(VObject, SV_GetSaveDateString) {
 }
 
 
-IMPLEMENT_FUNCTION(VObject, LoadTextLump) {
+IMPLEMENT_FREE_FUNCTION(VObject, LoadTextLump) {
   P_GET_NAME(name);
   RET_STR(W_LoadTextLump(name));
 }
@@ -394,17 +394,17 @@ IMPLEMENT_FUNCTION(VObject, LoadTextLump) {
 //  SetVirtualScreen
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, SetVirtualScreen) {
+IMPLEMENT_FREE_FUNCTION(VObject, SetVirtualScreen) {
   P_GET_INT(Height);
   P_GET_INT(Width);
   SCR_SetVirtualScreen(Width, Height);
 }
 
-IMPLEMENT_FUNCTION(VObject, GetVirtualWidth) { RET_INT(VirtualWidth); }
-IMPLEMENT_FUNCTION(VObject, GetVirtualHeight) { RET_INT(VirtualHeight); }
+IMPLEMENT_FREE_FUNCTION(VObject, GetVirtualWidth) { RET_INT(VirtualWidth); }
+IMPLEMENT_FREE_FUNCTION(VObject, GetVirtualHeight) { RET_INT(VirtualHeight); }
 
-IMPLEMENT_FUNCTION(VObject, GetRealScreenWidth) { RET_INT(ScreenWidth); }
-IMPLEMENT_FUNCTION(VObject, GetRealScreenHeight) { RET_INT(ScreenHeight); }
+IMPLEMENT_FREE_FUNCTION(VObject, GetRealScreenWidth) { RET_INT(ScreenWidth); }
+IMPLEMENT_FREE_FUNCTION(VObject, GetRealScreenHeight) { RET_INT(ScreenHeight); }
 
 
 //==========================================================================
@@ -412,7 +412,7 @@ IMPLEMENT_FUNCTION(VObject, GetRealScreenHeight) { RET_INT(ScreenHeight); }
 //  R_RegisterPic
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, R_RegisterPic) {
+IMPLEMENT_FREE_FUNCTION(VObject, R_RegisterPic) {
   P_GET_NAME(name);
   RET_INT(GTextureManager.AddPatch(name, TEXTYPE_Pic));
 }
@@ -423,7 +423,7 @@ IMPLEMENT_FUNCTION(VObject, R_RegisterPic) {
 //  R_RegisterPicPal
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, R_RegisterPicPal) {
+IMPLEMENT_FREE_FUNCTION(VObject, R_RegisterPicPal) {
   P_GET_NAME(palname);
   P_GET_NAME(name);
   RET_INT(GTextureManager.AddRawWithPal(name, palname));
@@ -435,7 +435,7 @@ IMPLEMENT_FUNCTION(VObject, R_RegisterPicPal) {
 //  R_RegisterPicPath
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, R_RegisterPicPath) {
+IMPLEMENT_FREE_FUNCTION(VObject, R_RegisterPicPath) {
   P_GET_NAME(path);
   RET_INT(GTextureManager.AddFileTextureChecked(path, TEXTYPE_Pic));
 }
@@ -446,7 +446,7 @@ IMPLEMENT_FUNCTION(VObject, R_RegisterPicPath) {
 //  R_GetPicInfo
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, R_GetPicInfo) {
+IMPLEMENT_FREE_FUNCTION(VObject, R_GetPicInfo) {
   P_GET_PTR(picinfo_t, info);
   P_GET_INT(handle);
   GTextureManager.GetTextureInfo(handle, info);
@@ -458,7 +458,7 @@ IMPLEMENT_FUNCTION(VObject, R_GetPicInfo) {
 //  R_DrawPic
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, R_DrawPic) {
+IMPLEMENT_FREE_FUNCTION(VObject, R_DrawPic) {
   P_GET_FLOAT_OPT(alpha, 1.0f);
   P_GET_INT(handle);
   P_GET_INT(y);
@@ -472,7 +472,7 @@ IMPLEMENT_FUNCTION(VObject, R_DrawPic) {
 //  R_DrawPicFloat
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, R_DrawPicFloat) {
+IMPLEMENT_FREE_FUNCTION(VObject, R_DrawPicFloat) {
   P_GET_FLOAT_OPT(alpha, 1.0f);
   P_GET_INT(handle);
   P_GET_FLOAT(y);
@@ -486,7 +486,7 @@ IMPLEMENT_FUNCTION(VObject, R_DrawPicFloat) {
 //  R_DrawPicPart
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, R_DrawPicPart) {
+IMPLEMENT_FREE_FUNCTION(VObject, R_DrawPicPart) {
   P_GET_FLOAT_OPT(alpha, 1.0f);
   P_GET_INT(handle);
   P_GET_FLOAT(phgt);
@@ -502,7 +502,7 @@ IMPLEMENT_FUNCTION(VObject, R_DrawPicPart) {
 //  R_DrawPicFloatPart
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, R_DrawPicFloatPart) {
+IMPLEMENT_FREE_FUNCTION(VObject, R_DrawPicFloatPart) {
   P_GET_FLOAT_OPT(alpha, 1.0f);
   P_GET_INT(handle);
   P_GET_FLOAT(phgt);
@@ -518,7 +518,7 @@ IMPLEMENT_FUNCTION(VObject, R_DrawPicFloatPart) {
 //  R_DrawPicPartEx
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, R_DrawPicPartEx) {
+IMPLEMENT_FREE_FUNCTION(VObject, R_DrawPicPartEx) {
   P_GET_FLOAT_OPT(alpha, 1.0f);
   P_GET_INT(handle);
   P_GET_FLOAT(ty1);
@@ -536,7 +536,7 @@ IMPLEMENT_FUNCTION(VObject, R_DrawPicPartEx) {
 //  R_DrawPicFloatPartEx
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, R_DrawPicFloatPartEx) {
+IMPLEMENT_FREE_FUNCTION(VObject, R_DrawPicFloatPartEx) {
   P_GET_FLOAT_OPT(alpha, 1.0f);
   P_GET_INT(handle);
   P_GET_FLOAT(ty1);
@@ -554,7 +554,7 @@ IMPLEMENT_FUNCTION(VObject, R_DrawPicFloatPartEx) {
 //  R_InstallSprite
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, R_InstallSprite) {
+IMPLEMENT_FREE_FUNCTION(VObject, R_InstallSprite) {
   P_GET_INT(index);
   P_GET_STR(name);
   R_InstallSprite(*name, index);
@@ -566,7 +566,7 @@ IMPLEMENT_FUNCTION(VObject, R_InstallSprite) {
 //  R_InstallSpriteComplete
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, R_InstallSpriteComplete) {
+IMPLEMENT_FREE_FUNCTION(VObject, R_InstallSpriteComplete) {
   R_InstallSpriteComplete();
 }
 
@@ -576,7 +576,7 @@ IMPLEMENT_FUNCTION(VObject, R_InstallSpriteComplete) {
 //  R_DrawSpritePatch
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, R_DrawSpritePatch) {
+IMPLEMENT_FREE_FUNCTION(VObject, R_DrawSpritePatch) {
   P_GET_FLOAT_OPT(Scale, 1.0f);
   P_GET_INT_OPT(Color, 0);
   P_GET_INT_OPT(TranslEnd, 0);
@@ -595,7 +595,7 @@ IMPLEMENT_FUNCTION(VObject, R_DrawSpritePatch) {
 //  InstallModel
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, InstallModel) {
+IMPLEMENT_FREE_FUNCTION(VObject, InstallModel) {
   P_GET_STR(name);
   if (FL_FileExists(name)) {
     RET_PTR(Mod_FindName(name));
@@ -610,7 +610,7 @@ IMPLEMENT_FUNCTION(VObject, InstallModel) {
 //  R_DrawModelFrame
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, R_DrawModelFrame) {
+IMPLEMENT_FREE_FUNCTION(VObject, R_DrawModelFrame) {
   P_GET_INT(Color);
   P_GET_INT(TranslEnd);
   P_GET_INT(TranslStart);
@@ -629,7 +629,7 @@ IMPLEMENT_FUNCTION(VObject, R_DrawModelFrame) {
 //  R_FillRect
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, R_FillRect) {
+IMPLEMENT_FREE_FUNCTION(VObject, R_FillRect) {
   P_GET_FLOAT_OPT(alpha, 1.0f);
   P_GET_INT(color);
   P_GET_FLOAT(height);
@@ -645,7 +645,7 @@ IMPLEMENT_FUNCTION(VObject, R_FillRect) {
 //  R_GetAspectRatio
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, R_GetAspectRatio) {
+IMPLEMENT_FREE_FUNCTION(VObject, R_GetAspectRatio) {
   RET_FLOAT(R_GetAspectRatio());
 }
 
@@ -655,7 +655,7 @@ IMPLEMENT_FUNCTION(VObject, R_GetAspectRatio) {
 //  R_SupportsAdvancedRendering
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, R_SupportsAdvancedRendering) {
+IMPLEMENT_FREE_FUNCTION(VObject, R_SupportsAdvancedRendering) {
   if (Drawer) {
     RET_BOOL(Drawer->SupportsAdvancedRendering());
   } else {
@@ -676,7 +676,7 @@ IMPLEMENT_FUNCTION(VObject, R_SupportsAdvancedRendering) {
 //  LocalSound
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, LocalSound) {
+IMPLEMENT_FREE_FUNCTION(VObject, LocalSound) {
   P_GET_NAME(name);
   GAudio->PlaySound(GSoundManager->GetSoundID(name), TVec(0, 0, 0), TVec(0, 0, 0), 0, 0, 1, 0, false);
 }
@@ -687,7 +687,7 @@ IMPLEMENT_FUNCTION(VObject, LocalSound) {
 //  IsLocalSoundPlaying
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, IsLocalSoundPlaying) {
+IMPLEMENT_FREE_FUNCTION(VObject, IsLocalSoundPlaying) {
   P_GET_NAME(name);
   RET_BOOL(GAudio->IsSoundPlaying(0, GSoundManager->GetSoundID(name)));
 }
@@ -698,7 +698,7 @@ IMPLEMENT_FUNCTION(VObject, IsLocalSoundPlaying) {
 //  StopLocalSounds
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, StopLocalSounds) {
+IMPLEMENT_FREE_FUNCTION(VObject, StopLocalSounds) {
   GAudio->StopSound(0, 0);
 }
 
@@ -708,7 +708,7 @@ IMPLEMENT_FUNCTION(VObject, StopLocalSounds) {
 //  TranslateKey
 //
 //==========================================================================
-IMPLEMENT_FUNCTION(VObject, TranslateKey) {
+IMPLEMENT_FREE_FUNCTION(VObject, TranslateKey) {
   P_GET_INT(ch);
   if (!GInput) { RET_STR(VStr::EmptyString); return; }
   ch = GInput->TranslateKey(ch);
@@ -718,13 +718,13 @@ IMPLEMENT_FUNCTION(VObject, TranslateKey) {
 }
 
 
-IMPLEMENT_FUNCTION(VObject, KeyNameForNum) {
+IMPLEMENT_FREE_FUNCTION(VObject, KeyNameForNum) {
   P_GET_INT(keynum);
   RET_STR(GInput->KeyNameForNum(keynum));
 }
 
 
-IMPLEMENT_FUNCTION(VObject, IN_GetBindingKeys) {
+IMPLEMENT_FREE_FUNCTION(VObject, IN_GetBindingKeys) {
   P_GET_INT_OPT(strifemode, 0);
   P_GET_PTR(int, key2);
   P_GET_PTR(int, key1);
@@ -733,7 +733,7 @@ IMPLEMENT_FUNCTION(VObject, IN_GetBindingKeys) {
 }
 
 
-IMPLEMENT_FUNCTION(VObject, IN_SetBinding) {
+IMPLEMENT_FREE_FUNCTION(VObject, IN_SetBinding) {
   P_GET_INT_OPT(strifemode, 0);
   P_GET_STR(onup);
   P_GET_STR(ondown);
@@ -742,12 +742,12 @@ IMPLEMENT_FUNCTION(VObject, IN_SetBinding) {
 }
 
 
-IMPLEMENT_FUNCTION(VObject, GetSlist) {
+IMPLEMENT_FREE_FUNCTION(VObject, GetSlist) {
   RET_PTR(GNet->GetSlist());
 }
 
 
-IMPLEMENT_FUNCTION(VObject, StartSearch) {
+IMPLEMENT_FREE_FUNCTION(VObject, StartSearch) {
   P_GET_BOOL(Master);
   GNet->StartSearch(Master);
 }
@@ -755,7 +755,7 @@ IMPLEMENT_FUNCTION(VObject, StartSearch) {
 #endif // CLIENT
 
 //native static bool IsLineTagEqual (const line_t *line, int tag);
-IMPLEMENT_FUNCTION(VObject, IsLineTagEqual) {
+IMPLEMENT_FREE_FUNCTION(VObject, IsLineTagEqual) {
   line_t *line;
   int tag;
   vobjGetParam(line, tag);
@@ -765,7 +765,7 @@ IMPLEMENT_FUNCTION(VObject, IsLineTagEqual) {
 
 
 //native static bool IsSectorTagEqual (const sector_t *sector, int tag);
-IMPLEMENT_FUNCTION(VObject, IsSectorTagEqual) {
+IMPLEMENT_FREE_FUNCTION(VObject, IsSectorTagEqual) {
   sector_t *sector;
   int tag;
   vobjGetParam(sector, tag);

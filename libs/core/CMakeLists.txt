@@ -54,6 +54,7 @@ add_library(core STATIC
   syslow.h
   syslow.cpp
   poly1305-donna.c
+  prngs.cpp
   ed25519.c
   chacha20.c
   sha2.c

@@ -31,7 +31,7 @@
 #  include "../utils/vcc/vcc.h"
 # elif defined(VCC_STANDALONE_EXECUTOR)
 #  include "../vccrun/vcc_run_vc.h"
-#  include "vc/vc_public.h"
+#  include "../libs/vavoomc/vc_public.h"
 #  include "scripts.h"
 # endif
 #endif
