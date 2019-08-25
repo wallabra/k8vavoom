@@ -1280,7 +1280,9 @@ int main (int argc, char **argv) {
   */
 
   TArray<VStr> shitpplist;
+  shitpplist.append("../../libs/core/prngs.h");
   scanSources(shitpplist, "../../source", "*.h", "*.cpp");
+  scanSources(shitpplist, "../../libs/vavoomc", "*.h", "*.cpp");
   GLog.Logf("%d shitpplist files found", shitpplist.length());
 
   TArray<VStr> vclist;
