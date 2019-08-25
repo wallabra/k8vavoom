@@ -212,7 +212,7 @@ static void InitPalette () {
 //
 //==========================================================================
 static void InitRgbTable () {
-  VStr rtblsize = size2human((unsigned)sizeof(r_rgbtable));
+  VStr rtblsize = VStr::size2human((unsigned)sizeof(r_rgbtable));
   if (developer) GCon->Logf(NAME_Dev, "building color translation table (%d bits, %d items per color, %s)...", VAVOOM_COLOR_COMPONENT_BITS, VAVOOM_COLOR_COMPONENT_MAX, *rtblsize);
   memset(r_rgbtable, 0, sizeof(r_rgbtable));
   for (int ir = 0; ir < VAVOOM_COLOR_COMPONENT_MAX; ++ir) {

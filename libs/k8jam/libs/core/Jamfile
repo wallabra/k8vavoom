@@ -7,6 +7,7 @@ Library libcore.a :
   src/args.cpp
   src/chacha20.c
   src/common.cpp
+  src/colorutil.cpp
   src/crc.cpp
   src/ed25519.c
   src/exception.cpp
@@ -18,6 +19,7 @@ Library libcore.a :
   src/minipng.cpp
   src/name.cpp
   src/poly1305-donna.c
+  src/prngs.cpp
   src/rg32.cpp
   #src/ryu_d2s.c
   #src/ryu_f2s.c

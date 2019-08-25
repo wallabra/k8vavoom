@@ -35,6 +35,10 @@
 #define TEXT_COLOR_ESCAPE_STR  "\034"
 
 
+extern char *va (const char *text, ...) __attribute__((format(printf, 1, 2)));
+extern char *vavarg (const char *text, va_list ap);
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // WARNING! this cannot be bigger than one pointer, or VM will break!
 // WARNING! this is NOT MT-SAFE! if you want to use it from multiple threads,
@@ -722,11 +726,16 @@ public:
   static char wc2koimap[65536];
 
   static const VStr EmptyString;
+
+public:
+  static inline __attribute__((unused)) __attribute__((warn_unused_result))
+  VStr size2human (vuint32 size) {
+         if (size < 1024*1024) return va("%u%s KB", size/1024, (size%1024 >= 512 ? ".5" : ""));
+    else if (size < 1024*1024*1024) return va("%u%s MB", size/(1024*1024), (size%(1024*1024) >= 1024 ? ".5" : ""));
+    else return va("%u%s GB", size/(1024*1024*1024), (size%(1024*1024*1024) >= 1024*1024 ? ".5" : ""));
+  }
 };
 
-
-extern char *va (const char *text, ...) __attribute__((format(printf, 1, 2)));
-extern char *vavarg (const char *text, va_list ap);
 
 //inline vuint32 GetTypeHash (const char *s) { return (s && s[0] ? fnvHashBuf(s, strlen(s)) : 1); }
 //inline vuint32 GetTypeHash (const VStr &s) { return (s.length() ? fnvHashBuf(*s, s.length()) : 1); }

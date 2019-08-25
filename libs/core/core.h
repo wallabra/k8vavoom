@@ -112,6 +112,7 @@
 #include "mathutil.h"
 #include "vector.h" // vector math
 #include "matrix.h" // matrices
+#include "colorutil.h"
 #include "xml.h" // xml file parsing
 #include "ntvalue.h"
 

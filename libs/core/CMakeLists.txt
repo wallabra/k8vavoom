@@ -12,6 +12,8 @@ add_library(core STATIC
   common.h
   common.cpp
   core.h
+  colorutil.h
+  colorutil.cpp
   crc.h
   crc.cpp
   endianness.h

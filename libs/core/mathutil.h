@@ -268,6 +268,17 @@ static __attribute__((unused)) __attribute__((const)) __attribute__((warn_unused
 static __attribute__((unused)) __attribute__((pure)) __attribute__((warn_unused_result)) inline vuint8 AngleToByte (const float angle) { return (vuint8)(AngleMod(angle)*256.0f/360.0f); }
 
 
+static inline __attribute__((unused)) __attribute__((const)) __attribute__((warn_unused_result))
+vint32 scaleInt (vint32 a, vint32 b, vint32 c) {
+  return (vint32)(((vint64)a*b)/c);
+}
+
+static inline __attribute__((unused)) __attribute__((const)) __attribute__((warn_unused_result))
+vuint32 scaleUInt (vuint32 a, vuint32 b, vuint32 c) {
+  return (vuint32)(((vuint64)a*b)/c);
+}
+
+
 // this is actually branch-less for ints on x86, and even for longs on x86_64
 static __attribute__((unused)) __attribute__((const)) __attribute__((warn_unused_result))
 inline vuint8 clampToByte (vint32 n) {
