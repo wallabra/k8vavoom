@@ -1042,6 +1042,22 @@ const char *getShitppType (const char *glslType) {
 }
 
 
+const char *getShitppStoreType (const char *glslType) {
+  if (strEqu(glslType, "float")) return "float";
+  if (strEqu(glslType, "bool")) return "bool";
+  if (strEqu(glslType, "vec3")) return "TVec";
+  if (strEqu(glslType, "mat4")) return "VMatrix4";
+  // non-standard types
+  if (strEqu(glslType, "vec4")) return "glsl_float4";
+  if (strEqu(glslType, "vec2")) return "glsl_float2";
+  if (strEqu(glslType, "mat3")) return "glsl_float9";
+  // samplers
+  if (strEqu(glslType, "sampler2D")) return "vuint32";
+  fprintf(stderr, "FATAL: unknown GLSL type `%s`!\n", glslType);
+  abort();
+}
+
+
 const char *getShitppAmp (const char *shitppType) {
   if (shitppType[strlen(shitppType)-1] == '*') return "";
   if (strEqu(shitppType, "TVec")) return "&";
@@ -1166,6 +1182,9 @@ int main (int argc, char **argv) {
     fprintf(foh, "  public:\n");
     for (const LocInfo *loc = si->locs; loc; loc = loc->next) {
       fprintf(foh, "    GLint loc_%s; // %s %s -> %s\n", loc->name, (loc->isAttr ? "attribute" : "uniform"), loc->glslType, getShitppType(loc->glslType));
+      fprintf(foh, "    %s last_%s;\n", getShitppStoreType(loc->glslType), loc->name);
+      fprintf(foh, "    %s curr_%s;\n", getShitppStoreType(loc->glslType), loc->name);
+      fprintf(foh, "    bool changed_%s;\n", loc->name);
     }
     fprintf(foh, "\n");
     fprintf(foh, "  public:\n");
@@ -1174,112 +1193,63 @@ int main (int argc, char **argv) {
     fprintf(foh, "    virtual void Setup (VOpenGLDrawer *aowner) override;\n");
     fprintf(foh, "    virtual void LoadUniforms () override;\n");
     fprintf(foh, "    virtual void UnloadUniforms () override;\n");
+    fprintf(foh, "    virtual void UploadChanged () override;\n");
     fprintf(foh, "\n");
+
     // generate setters
     for (const LocInfo *loc = si->locs; loc; loc = loc->next) {
       if (loc->inset) continue; // will be generated later
       const char *shitppType = getShitppType(loc->glslType);
-      if (!loc->isAttr) {
-        if (strEqu(loc->glslType, "float")) {
-          fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
-          fprintf(foh, "if (loc_%s >= 0) ", loc->name);
-          fprintf(foh, "owner->p_glUniform1fARB(loc_%s, v);", loc->name);
-          fprintf(foh, " }\n");
-        } else if (strEqu(loc->glslType, "bool")) {
-          fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
-          fprintf(foh, "if (loc_%s >= 0) ", loc->name);
-          fprintf(foh, "owner->p_glUniform1iARB(loc_%s, (v ? GL_TRUE : GL_FALSE));", loc->name);
-          fprintf(foh, " }\n");
-        } else if (strEqu(loc->glslType, "sampler2D")) {
-          fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
-          fprintf(foh, "if (loc_%s >= 0) ", loc->name);
-          fprintf(foh, "owner->p_glUniform1iARB(loc_%s, (GLint)v);", loc->name);
-          fprintf(foh, " }\n");
-        } else if (strEqu(loc->glslType, "vec3")) {
-          fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
-          fprintf(foh, "if (loc_%s >= 0) ", loc->name);
-          fprintf(foh, "owner->p_glUniform3fvARB(loc_%s, 1, &v.x);", loc->name);
-          fprintf(foh, " }\n");
-          fprintf(foh, "    inline void Set%s (const float x, const float y, const float z) { ", loc->name);
-          fprintf(foh, "if (loc_%s >= 0) ", loc->name);
-          fprintf(foh, "owner->p_glUniform3fARB(loc_%s, x, y, z);", loc->name);
-          fprintf(foh, " }\n");
-        } else if (strEqu(loc->glslType, "mat4")) {
-          fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
-          fprintf(foh, "if (loc_%s >= 0) ", loc->name);
-          fprintf(foh, "owner->p_glUniformMatrix4fvARB(loc_%s, 1, GL_FALSE, &v.m[0][0]);", loc->name);
-          fprintf(foh, " }\n");
-          fprintf(foh, "    inline void Set%s (const float * v) { ", loc->name);
-          fprintf(foh, "if (loc_%s >= 0) ", loc->name);
-          fprintf(foh, "owner->p_glUniformMatrix4fvARB(loc_%s, 1, GL_FALSE, v);", loc->name);
-          fprintf(foh, " }\n");
-        } else if (strEqu(loc->glslType, "vec4")) {
-          fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
-          fprintf(foh, "if (loc_%s >= 0) ", loc->name);
-          fprintf(foh, "owner->p_glUniform4fvARB(loc_%s, 1, v);", loc->name);
-          fprintf(foh, " }\n");
-          fprintf(foh, "    inline void Set%s (const float x, const float y, const float z, const float w) { ", loc->name);
-          fprintf(foh, "if (loc_%s >= 0) ", loc->name);
-          fprintf(foh, "owner->p_glUniform4fARB(loc_%s, x, y, z, w);", loc->name);
-          fprintf(foh, " }\n");
-        } else if (strEqu(loc->glslType, "vec2")) {
-          fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
-          fprintf(foh, "if (loc_%s >= 0) ", loc->name);
-          fprintf(foh, "owner->p_glUniform2fvARB(loc_%s, 1, v);", loc->name);
-          fprintf(foh, " }\n");
-          fprintf(foh, "    inline void Set%s (const float x, const float y) { ", loc->name);
-          fprintf(foh, "if (loc_%s >= 0) ", loc->name);
-          fprintf(foh, "owner->p_glUniform2fARB(loc_%s, x, y);", loc->name);
-          fprintf(foh, " }\n");
-        } else if (strEqu(loc->glslType, "mat3")) {
-          fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
-          fprintf(foh, "if (loc_%s >= 0) ", loc->name);
-          fprintf(foh, "owner->p_glUniformMatrix3fvARB(loc_%s, 1, GL_FALSE, v);", loc->name);
-          fprintf(foh, " }\n");
-        } else {
-          fprintf(stderr, "FATAL: cannot emit setter for GLSL type '%s'\n", loc->glslType);
-          abort();
-        }
+      if (strEqu(loc->glslType, "float")) {
+        fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
+        fprintf(foh, "curr_%s = v; ", loc->name);
+        fprintf(foh, " }\n");
+      } else if (strEqu(loc->glslType, "bool")) {
+        fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
+        fprintf(foh, "curr_%s = (v ? GL_TRUE : GL_FALSE);", loc->name);
+        fprintf(foh, " }\n");
+      } else if (strEqu(loc->glslType, "sampler2D")) {
+        fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
+        fprintf(foh, "curr_%s = (GLint)v;", loc->name);
+        fprintf(foh, " }\n");
+      } else if (strEqu(loc->glslType, "vec3")) {
+        fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
+        fprintf(foh, "curr_%s = v;", loc->name);
+        fprintf(foh, " }\n");
+        fprintf(foh, "    inline void Set%s (const float x, const float y, const float z) { ", loc->name);
+        fprintf(foh, "curr_%s = TVec(x, y, z);", loc->name);
+        fprintf(foh, " }\n");
+      } else if (strEqu(loc->glslType, "mat4")) {
+        fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
+        fprintf(foh, "memcpy(&curr_%s.m[0][0], &v.m[0][0], sizeof(float)*16);", loc->name);
+        fprintf(foh, " }\n");
+        fprintf(foh, "    inline void Set%s (const float * v) { ", loc->name);
+        fprintf(foh, "memcpy(&curr_%s.m[0][0], v, sizeof(float)*16);", loc->name);
+        fprintf(foh, " }\n");
+      } else if (strEqu(loc->glslType, "vec4")) {
+        fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
+        fprintf(foh, "memcpy(&curr_%s[0], v, sizeof(float)*4);", loc->name);
+        fprintf(foh, " }\n");
+        fprintf(foh, "    inline void Set%s (const float x, const float y, const float z, const float w) { ", loc->name);
+        fprintf(foh, "curr_%s[0] = x; curr_%s[1] = y; curr_%s[2] = z; curr_%s[3] = w;", loc->name, loc->name, loc->name, loc->name);
+        fprintf(foh, " }\n");
+      } else if (strEqu(loc->glslType, "vec2")) {
+        fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
+        fprintf(foh, "memcpy(&curr_%s[0], v, sizeof(float)*2);", loc->name);
+        fprintf(foh, " }\n");
+        fprintf(foh, "    inline void Set%s (const float x, const float y) { ", loc->name);
+        fprintf(foh, "curr_%s[0] = x; curr_%s[1] = y;", loc->name, loc->name);
+        fprintf(foh, " }\n");
+      } else if (strEqu(loc->glslType, "mat3")) {
+        fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
+        fprintf(foh, "memcpy(&curr_%s[0], v, sizeof(float)*9);", loc->name);
+        fprintf(foh, " }\n");
       } else {
-        // attrs
-        if (strEqu(loc->glslType, "float")) {
-          fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
-          fprintf(foh, "if (loc_%s >= 0) ", loc->name);
-          fprintf(foh, "owner->p_glVertexAttrib1fARB(loc_%s, v);", loc->name);
-          fprintf(foh, " }\n");
-        } else if (strEqu(loc->glslType, "vec2")) {
-          fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
-          fprintf(foh, "if (loc_%s >= 0) ", loc->name);
-          fprintf(foh, "owner->p_glVertexAttrib2fvARB(loc_%s, v);", loc->name);
-          fprintf(foh, " }\n");
-          fprintf(foh, "    inline void Set%s (const float x, const float y) { ", loc->name);
-          fprintf(foh, "if (loc_%s >= 0) ", loc->name);
-          fprintf(foh, "owner->p_glVertexAttrib2fARB(loc_%s, x, y);", loc->name);
-          fprintf(foh, " }\n");
-        } else if (strEqu(loc->glslType, "vec4")) {
-          fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
-          fprintf(foh, "if (loc_%s >= 0) ", loc->name);
-          fprintf(foh, "owner->p_glVertexAttrib4fvARB(loc_%s, v);", loc->name);
-          fprintf(foh, " }\n");
-          fprintf(foh, "    inline void Set%s (const float x, const float y, const float z, const float w) { ", loc->name);
-          fprintf(foh, "if (loc_%s >= 0) ", loc->name);
-          fprintf(foh, "owner->p_glVertexAttrib4fARB(loc_%s, x, y, z, w);", loc->name);
-          fprintf(foh, " }\n");
-        } else if (strEqu(loc->glslType, "vec3")) {
-          fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
-          fprintf(foh, "if (loc_%s >= 0) ", loc->name);
-          fprintf(foh, "owner->p_glVertexAttrib3fvARB(loc_%s, &v.x);", loc->name);
-          fprintf(foh, " }\n");
-          fprintf(foh, "    inline void Set%s (const float x, const float y, const float z) { ", loc->name);
-          fprintf(foh, "if (loc_%s >= 0) ", loc->name);
-          fprintf(foh, "owner->p_glVertexAttrib3fARB(loc_%s, x, y, z);", loc->name);
-          fprintf(foh, " }\n");
-        } else {
-          fprintf(stderr, "FATAL: cannot emit attribute setter for GLSL type '%s'\n", loc->glslType);
-          abort();
-        }
+        fprintf(stderr, "FATAL: cannot emit setter for GLSL type '%s'\n", loc->glslType);
+        abort();
       }
     }
+
     // generate set setters
     for (SetInfo *css = foundSets; css; css = css->nextTemp) {
       fprintf(foh, "%s", css->code);
@@ -1292,6 +1262,7 @@ int main (int argc, char **argv) {
     fprintf(foc, "  : VGLShader()\n");
     for (const LocInfo *loc = si->locs; loc; loc = loc->next) {
       fprintf(foc, "  , loc_%s(-1)\n", loc->name);
+      fprintf(foc, "  , changed_%s(false)\n", loc->name);
     }
     fprintf(foc, "{}\n");
     fprintf(foc, "\n");
@@ -1310,6 +1281,7 @@ int main (int argc, char **argv) {
       } else {
         fprintf(foc, "  loc_%s = owner->glGet%sLoc(progname, prog, \"%s\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
       }
+      fprintf(foc, "  changed_%s = true;\n", loc->name);
     }
     fprintf(foc, "}\n");
     fprintf(foc, "\n");
@@ -1320,6 +1292,52 @@ int main (int argc, char **argv) {
       fprintf(foc, "  loc_%s = -1;\n", loc->name);
     }
     fprintf(foc, "}\n");
+
+    // generate uploader
+    fprintf(foc, "void VOpenGLDrawer::VShaderDef_%s::UploadChanged () {\n", si->name);
+    for (const LocInfo *loc = si->locs; loc; loc = loc->next) {
+      fprintf(foc, "  if (loc_%s >= 0 && (changed_%s || notEqual_%s(last_%s, curr_%s))) { changed_%s = false; ", loc->name, loc->name, loc->glslType, loc->name, loc->name, loc->name);
+      if (!loc->isAttr) {
+        if (strEqu(loc->glslType, "float")) {
+          fprintf(foc, "owner->p_glUniform1fARB(loc_%s, curr_%s);", loc->name, loc->name);
+        } else if (strEqu(loc->glslType, "bool")) {
+          fprintf(foc, "owner->p_glUniform1iARB(loc_%s, (curr_%s ? GL_TRUE : GL_FALSE));", loc->name, loc->name);
+        } else if (strEqu(loc->glslType, "sampler2D")) {
+          fprintf(foc, "owner->p_glUniform1iARB(loc_%s, (GLint)curr_%s);", loc->name, loc->name);
+        } else if (strEqu(loc->glslType, "vec3")) {
+          fprintf(foc, "owner->p_glUniform3fvARB(loc_%s, 1, &curr_%s.x);", loc->name, loc->name);
+        } else if (strEqu(loc->glslType, "mat4")) {
+          fprintf(foc, "owner->p_glUniformMatrix4fvARB(loc_%s, 1, GL_FALSE, &curr_%s.m[0][0]);", loc->name, loc->name);
+        } else if (strEqu(loc->glslType, "vec4")) {
+          fprintf(foc, "owner->p_glUniform4fvARB(loc_%s, 1, &curr_%s[0]);", loc->name, loc->name);
+        } else if (strEqu(loc->glslType, "vec2")) {
+          fprintf(foc, "owner->p_glUniform2fvARB(loc_%s, 1, &curr_%s[0]);", loc->name, loc->name);
+        } else if (strEqu(loc->glslType, "mat3")) {
+          fprintf(foc, "owner->p_glUniformMatrix3fvARB(loc_%s, 1, GL_FALSE, &curr_%s[0]);", loc->name, loc->name);
+        } else {
+          fprintf(stderr, "FATAL: cannot emit setter for GLSL type '%s'\n", loc->glslType);
+          abort();
+        }
+      } else {
+        // attrs
+        if (strEqu(loc->glslType, "float")) {
+          fprintf(foc, "owner->p_glVertexAttrib1fARB(loc_%s, curr_%s);", loc->name, loc->name);
+        } else if (strEqu(loc->glslType, "vec2")) {
+          fprintf(foc, "owner->p_glVertexAttrib2fvARB(loc_%s, &curr_%s[0]);", loc->name, loc->name);
+        } else if (strEqu(loc->glslType, "vec4")) {
+          fprintf(foc, "owner->p_glVertexAttrib4fvARB(loc_%s, &curr_%s[0]);", loc->name, loc->name);
+        } else if (strEqu(loc->glslType, "vec3")) {
+          fprintf(foc, "owner->p_glVertexAttrib3fvARB(loc_%s, &curr_%s.x);", loc->name, loc->name);
+        } else {
+          fprintf(stderr, "FATAL: cannot emit attribute setter for GLSL type '%s'\n", loc->glslType);
+          abort();
+        }
+      }
+      fprintf(foc, " copyValue_%s(last_%s, curr_%s);", loc->glslType, loc->name, loc->name);
+      fprintf(foc, " }\n");
+    }
+    fprintf(foc, "}\n");
+    fprintf(foc, "\n");
   }
 
   // now write list of known shaders

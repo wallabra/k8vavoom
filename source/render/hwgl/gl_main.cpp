@@ -226,6 +226,7 @@ void VOpenGLDrawer::VGLShader::MainSetup (VOpenGLDrawer *aowner, const char *apr
 //==========================================================================
 void VOpenGLDrawer::VGLShader::Activate () {
   owner->p_glUseProgramObjectARB(prog);
+  owner->currentActiveShader = this;
 }
 
 
@@ -236,6 +237,7 @@ void VOpenGLDrawer::VGLShader::Activate () {
 //==========================================================================
 void VOpenGLDrawer::VGLShader::Deactivate () {
   owner->p_glUseProgramObjectARB(0);
+  owner->currentActiveShader = nullptr;
 }
 
 
@@ -263,6 +265,7 @@ void VOpenGLDrawer::VGLShader::Unload () {
   // actual program object will be destroyed elsewhere
   prog = 0;
   UnloadUniforms();
+  if (owner && owner->currentActiveShader == this) owner->currentActiveShader = nullptr;
 }
 
 
@@ -282,6 +285,7 @@ VOpenGLDrawer::VOpenGLDrawer ()
   , ambLightFBO()
   , texturesGenerated(false)
 {
+  currentActiveShader = nullptr;
   lastgamma = 0;
   CurrentFade = 0;
 
@@ -1353,6 +1357,7 @@ void VOpenGLDrawer::EndView () {
       (float)((cl->CShift>>8)&255)/255.0f,
       (float)(cl->CShift&255)/255.0f,
       (float)((cl->CShift>>24)&255)/255.0f);
+    DrawFixedCol.UploadChanged();
     //glEnable(GL_BLEND);
 
     glBegin(GL_QUADS);
@@ -1496,6 +1501,7 @@ void VOpenGLDrawer::DebugRenderScreenRect (int x0, int y0, int x1, int y1, vuint
     (GLfloat)(((color>>16)&255)/255.0f),
     (GLfloat)(((color>>8)&255)/255.0f),
     (GLfloat)((color&255)/255.0f), ((color>>24)&0xff)/255.0f);
+  DrawFixedCol.UploadChanged();
 
   glOrtho(0, ScreenWidth, ScreenHeight, 0, -666, 666);
   glBegin(GL_QUADS);
@@ -1513,6 +1519,7 @@ void VOpenGLDrawer::DebugRenderScreenRect (int x0, int y0, int x1, int y1, vuint
 
   glPopAttrib();
   p_glUseProgramObjectARB(0);
+  currentActiveShader = nullptr;
 }
 
 
@@ -1962,6 +1969,7 @@ void VOpenGLDrawer::FBO::blitTo (FBO *dest, GLint srcX0, GLint srcY0, GLint srcX
     glEnable(GL_TEXTURE_2D);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
     mOwner->p_glUseProgramObjectARB(0);
+    mOwner->currentActiveShader = nullptr;
 
     const float mywf = (float)mWidth;
     const float myhf = (float)mHeight;
@@ -2037,6 +2045,7 @@ void VOpenGLDrawer::FBO::blitToScreen () {
     glEnable(GL_TEXTURE_2D);
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
     mOwner->p_glUseProgramObjectARB(0);
+    mOwner->currentActiveShader = nullptr;
 
     if (realw == mWidth && realh == mHeight) {
       // copy texture by drawing full quad

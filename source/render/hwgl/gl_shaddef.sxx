@@ -19,14 +19,14 @@ Set PureLightmapSTSet {
 
   code [[
     inline void SetLMapOnly (const texinfo_t *textr, const surface_t *surf, const surfcache_t *cache) {
-      if (loc_SAxis >= 0) owner->p_glUniform3fvARB(loc_SAxis, 1, &textr->saxis.x);
-      if (loc_SOffs >= 0) owner->p_glUniform1fARB(loc_SOffs, textr->soffs);
-      if (loc_TAxis >= 0) owner->p_glUniform3fvARB(loc_TAxis, 1, &textr->taxis.x);
-      if (loc_TOffs >= 0) owner->p_glUniform1fARB(loc_TOffs, textr->toffs);
-      if (loc_TexMinS >= 0) owner->p_glUniform1fARB(loc_TexMinS, surf->texturemins[0]);
-      if (loc_TexMinT >= 0) owner->p_glUniform1fARB(loc_TexMinT, surf->texturemins[1]);
-      if (loc_CacheS >= 0) owner->p_glUniform1fARB(loc_CacheS, cache->s);
-      if (loc_CacheT >= 0) owner->p_glUniform1fARB(loc_CacheT, cache->t);
+      curr_SAxis = textr->saxis;
+      curr_SOffs = textr->soffs;
+      curr_TAxis = textr->taxis;
+      curr_TOffs = textr->toffs;
+      curr_TexMinS = surf->texturemins[0];
+      curr_TexMinT = surf->texturemins[1];
+      curr_CacheS = cache->s;
+      curr_CacheT = cache->t;
     }
   ]]
 }
@@ -42,12 +42,12 @@ Set TextureSTSet {
 
   code [[
     inline void SetTex (const texinfo_t *textr) {
-      if (loc_SAxis >= 0) owner->p_glUniform3fvARB(loc_SAxis, 1, &textr->saxis.x);
-      if (loc_SOffs >= 0) owner->p_glUniform1fARB(loc_SOffs, textr->soffs);
-      if (loc_TexIW >= 0) owner->p_glUniform1fARB(loc_TexIW, owner->tex_iw);
-      if (loc_TAxis >= 0) owner->p_glUniform3fvARB(loc_TAxis, 1, &textr->taxis.x);
-      if (loc_TOffs >= 0) owner->p_glUniform1fARB(loc_TOffs, textr->toffs);
-      if (loc_TexIH >= 0) owner->p_glUniform1fARB(loc_TexIH, owner->tex_ih);
+      curr_SAxis = textr->saxis;
+      curr_SOffs = textr->soffs;
+      curr_TexIW = owner->tex_iw;
+      curr_TAxis = textr->taxis;
+      curr_TOffs = textr->toffs;
+      curr_TexIH = owner->tex_ih;
     }
   ]]
 }
@@ -66,10 +66,10 @@ Set TextureSTSetNoSize {
 
   code [[
     inline void SetTexNoSize (const texinfo_t *textr) {
-      if (loc_SAxis >= 0) owner->p_glUniform3fvARB(loc_SAxis, 1, &textr->saxis.x);
-      if (loc_SOffs >= 0) owner->p_glUniform1fARB(loc_SOffs, textr->soffs);
-      if (loc_TAxis >= 0) owner->p_glUniform3fvARB(loc_TAxis, 1, &textr->taxis.x);
-      if (loc_TOffs >= 0) owner->p_glUniform1fARB(loc_TOffs, textr->toffs);
+      curr_SAxis = textr->saxis;
+      curr_SOffs = textr->soffs;
+      curr_TAxis = textr->taxis;
+      curr_TOffs = textr->toffs;
     }
   ]]
 }
@@ -85,10 +85,10 @@ Set LightmapSTSet {
 
   code [[
     inline void SetLMap (const surface_t *surf, const surfcache_t *cache) {
-      if (loc_TexMinS >= 0) owner->p_glUniform1fARB(loc_TexMinS, surf->texturemins[0]);
-      if (loc_TexMinT >= 0) owner->p_glUniform1fARB(loc_TexMinT, surf->texturemins[1]);
-      if (loc_CacheS >= 0) owner->p_glUniform1fARB(loc_CacheS, cache->s);
-      if (loc_CacheT >= 0) owner->p_glUniform1fARB(loc_CacheT, cache->t);
+      curr_TexMinS = surf->texturemins[0];
+      curr_TexMinT = surf->texturemins[1];
+      curr_CacheS = cache->s;
+      curr_CacheT = cache->t;
     }
   ]]
 }
@@ -103,15 +103,15 @@ Set FogSet {
   code [[
     inline void SetFogFade (vuint32 Fade, float Alpha) {
       if (Fade) {
-        if (loc_FogEnabled >= 0) owner->p_glUniform1iARB(loc_FogEnabled, GL_TRUE);
-        owner->p_glUniform4fARB(loc_FogColor,
-          ((Fade>>16)&255)/255.0f,
-          ((Fade>>8)&255)/255.0f,
-          (Fade&255)/255.0f, Alpha);
-        owner->p_glUniform1fARB(loc_FogStart, Fade == FADE_LIGHT ? 1.0f : r_fog_start);
-        owner->p_glUniform1fARB(loc_FogEnd, Fade == FADE_LIGHT ? 1024.0f*r_fade_factor : r_fog_end);
+        curr_FogEnabled = true;
+        curr_FogColor[0] = ((Fade>>16)&255)/255.0f;
+        curr_FogColor[1] = ((Fade>>8)&255)/255.0f;
+        curr_FogColor[2] = (Fade&255)/255.0f;
+        curr_FogColor[3] = Alpha;
+        curr_FogStart = (Fade == FADE_LIGHT ? 1.0f : r_fog_start);
+        curr_FogEnd = (Fade == FADE_LIGHT ? 1024.0f*r_fade_factor : r_fog_end);
       } else {
-        if (loc_FogEnabled >= 0) owner->p_glUniform1iARB(loc_FogEnabled, GL_FALSE);
+        curr_FogEnabled = false;
       }
     }
   ]]
@@ -127,12 +127,12 @@ Set SimpleFogSet {
 
   code [[
     inline void SetFogFade (vuint32 Fade, float Alpha) {
-      owner->p_glUniform4fARB(loc_FogColor,
-        ((Fade>>16)&255)/255.0f,
-        ((Fade>>8)&255)/255.0f,
-        (Fade&255)/255.0f, Alpha);
-      owner->p_glUniform1fARB(loc_FogStart, Fade == FADE_LIGHT ? 1.0f : r_fog_start);
-      owner->p_glUniform1fARB(loc_FogEnd, Fade == FADE_LIGHT ? 1024.0f*r_fade_factor : r_fog_end);
+      curr_FogColor[0] = ((Fade>>16)&255)/255.0f;
+      curr_FogColor[1] = ((Fade>>8)&255)/255.0f;
+      curr_FogColor[2] = (Fade&255)/255.0f;
+      curr_FogColor[3] = Alpha;
+      curr_FogStart = (Fade == FADE_LIGHT ? 1.0f : r_fog_start);
+      curr_FogEnd = (Fade == FADE_LIGHT ? 1024.0f*r_fade_factor : r_fog_end);
     }
   ]]
 }

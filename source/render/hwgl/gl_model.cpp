@@ -261,6 +261,11 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
   SurfModel.SetAllowTransparency(AllowTransparency);
   SurfModel.SetInter(Inter);
 
+  SurfModel.SetLightVal(((light>>16)&255)/255.0f, ((light>>8)&255)/255.0f, (light&255)/255.0f, Alpha);
+
+  SurfModel.UploadChanged();
+
+
   if (Additive) {
     glBlendFunc(GL_ONE, GL_ONE); // our source rgb is already premultiplied
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -283,8 +288,11 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
     p_glVertexAttribPointerARB(SurfModel.loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
     p_glEnableVertexAttribArrayARB(SurfModel.loc_TexCoord);
 
+    /*
     //SurfModel.SetViewOrigin(vieworg);
     SurfModel.SetLightVal(((light>>16)&255)/255.0f, ((light>>8)&255)/255.0f, (light&255)/255.0f, Alpha);
+    SurfModel.UploadChanged();
+    */
 
     p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, Mdl->IndexBuffer);
 
@@ -381,6 +389,12 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
   ShadowsModelAmbient.SetModelToWorldMat(RotationMatrix);
   ShadowsModelAmbient.SetNormalToWorldMat(NormalMat[0]);
 
+  ShadowsModelAmbient.SetViewOrigin(vieworg);
+  ShadowsModelAmbient.SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f);
+  ShadowsModelAmbient.SetAllowTransparency(AllowTransparency);
+
+  ShadowsModelAmbient.UploadChanged();
+
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
 
   p_glVertexAttribPointerARB(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
@@ -398,9 +412,12 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
   p_glVertexAttribPointerARB(ShadowsModelAmbient.loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
   p_glEnableVertexAttribArrayARB(ShadowsModelAmbient.loc_TexCoord);
 
+  /*
   ShadowsModelAmbient.SetViewOrigin(vieworg);
   ShadowsModelAmbient.SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f);
   ShadowsModelAmbient.SetAllowTransparency(AllowTransparency);
+  ShadowsModelAmbient.UploadChanged();
+  */
 
   glEnable(GL_ALPHA_TEST);
   glShadeModel(GL_SMOOTH);
@@ -474,7 +491,19 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
   ShadowsModelTextures.SetTexture(0);
   ShadowsModelTextures.SetInter(Inter);
   ShadowsModelTextures.SetModelToWorldMat(RotationMatrix);
+
+  ShadowsModelTextures.SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f);
+  ShadowsModelTextures.SetAllowTransparency(AllowTransparency);
+
+  SelectTexture(1);
+  glBindTexture(GL_TEXTURE_2D, ambLightFBO.getColorTid());
+  SelectTexture(0);
+  ShadowsModelTextures.SetAmbLightTexture(1);
+  ShadowsModelTextures.SetScreenSize((float)mainFBO.getWidth(), (float)mainFBO.getHeight());
+  //ShadowsModelTextures.UploadChanged();
+
   //!ShadowsModelTextures.SetNormalToWorldMat(NormalMat[0]);
+  ShadowsModelTextures.UploadChanged();
 
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
 
@@ -493,10 +522,12 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
   p_glVertexAttribPointerARB(ShadowsModelTextures.loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
   p_glEnableVertexAttribArrayARB(ShadowsModelTextures.loc_TexCoord);
 
+  /*
   //ShadowsModelTextures.SetViewOrigin(vieworg);
   ShadowsModelTextures.SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f);
   ShadowsModelTextures.SetAllowTransparency(AllowTransparency);
-
+  ShadowsModelTextures.UploadChanged();
+  */
 
   /* original
   glEnable(GL_ALPHA_TEST);
@@ -523,12 +554,6 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
   glDisable(GL_ALPHA_TEST);
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   //glDisable(GL_BLEND);
-
-  SelectTexture(1);
-  glBindTexture(GL_TEXTURE_2D, ambLightFBO.getColorTid());
-  SelectTexture(0);
-  ShadowsModelTextures.SetAmbLightTexture(1);
-  ShadowsModelTextures.SetScreenSize((float)mainFBO.getWidth(), (float)mainFBO.getHeight());
 
   GLint oldDepthMask;
   glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
@@ -575,6 +600,7 @@ void VOpenGLDrawer::BeginModelsLightPass (const TVec &LightPos, float Radius, fl
     ShadowsModelLightSpot.SetLightColor(((Color>>16)&255)/255.0f, ((Color>>8)&255)/255.0f, (Color&255)/255.0f);
     ShadowsModelLightSpot.SetConeDirection(coneDir);
     ShadowsModelLightSpot.SetConeAngle(coneAngle);
+    //ShadowsModelLightSpot.UploadChanged();
   } else {
     ShadowsModelLight.Activate();
     ShadowsModelLight.SetTexture(0);
@@ -582,6 +608,7 @@ void VOpenGLDrawer::BeginModelsLightPass (const TVec &LightPos, float Radius, fl
     ShadowsModelLight.SetLightRadius(Radius);
     ShadowsModelLight.SetLightMin(LightMin);
     ShadowsModelLight.SetLightColor(((Color>>16)&255)/255.0f, ((Color>>8)&255)/255.0f, (Color&255)/255.0f);
+    //ShadowsModelLight.UploadChanged();
   }
 }
 
@@ -589,6 +616,12 @@ void VOpenGLDrawer::BeginModelsLightPass (const TVec &LightPos, float Radius, fl
   (shad_).SetInter(Inter); \
   (shad_).SetModelToWorldMat(RotationMatrix); \
   (shad_).SetNormalToWorldMat(NormalMat[0]); \
+  /*(shad_).UploadChanged();*/ \
+ \
+  (shad_).SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f); \
+  (shad_).SetAllowTransparency(AllowTransparency); \
+  (shad_).SetViewOrigin(vieworg); \
+  (shad_).UploadChanged(); \
  \
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer); \
  \
@@ -606,10 +639,6 @@ void VOpenGLDrawer::BeginModelsLightPass (const TVec &LightPos, float Radius, fl
  \
   p_glVertexAttribPointerARB((shad_).loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0); \
   p_glEnableVertexAttribArrayARB((shad_).loc_TexCoord); \
- \
-  (shad_).SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f); \
-  (shad_).SetAllowTransparency(AllowTransparency); \
-  (shad_).SetViewOrigin(vieworg); \
  \
   p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, Mdl->IndexBuffer); \
   p_glDrawRangeElementsEXT(GL_TRIANGLES, 0, Mdl->STVerts.length()-1, Mdl->Tris.length()*3, GL_UNSIGNED_SHORT, 0); \
@@ -676,12 +705,15 @@ void VOpenGLDrawer::DrawAliasModelLight (const TVec &origin, const TAVec &angles
 void VOpenGLDrawer::BeginModelsShadowsPass (TVec &LightPos, float LightRadius) {
   ShadowsModelShadow.Activate();
   ShadowsModelShadow.SetLightPos(LightPos);
+  //ShadowsModelShadow.UploadChanged();
 }
 
 
-#define outv(idx, offs) \
-      ShadowsModelShadow.SetOffset(offs); \
-      glArrayElement(index ## idx);
+#define outv(idx, offs) do { \
+  ShadowsModelShadow.SetOffset(offs); \
+  ShadowsModelShadow.UploadChanged(); \
+  glArrayElement(index ## idx); \
+} while (0)
 
 //==========================================================================
 //
@@ -739,6 +771,7 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
 
   ShadowsModelShadow.SetInter(Inter);
   ShadowsModelShadow.SetModelToWorldMat(RotationMatrix);
+  ShadowsModelShadow.UploadChanged();
 
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
   p_glVertexAttribPointerARB(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
@@ -748,15 +781,19 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
 
   // caps
   if (!usingZPass && !gl_dbg_use_zpass) {
+    currentActiveShader->UploadChanged();
     glBegin(GL_TRIANGLES);
     //p_glVertexAttrib1fARB(ShadowsModelShadow_OffsetLoc, 1.0f);
     for (int i = 0; i < Mdl->Tris.length(); ++i) {
       if (PlaneSides[i]) {
         ShadowsModelShadow.SetOffset(1.0f);
+        ShadowsModelShadow.UploadChanged();
         glArrayElement(Mdl->Tris[i].VertIndex[0]);
         ShadowsModelShadow.SetOffset(1.0f);
+        ShadowsModelShadow.UploadChanged();
         glArrayElement(Mdl->Tris[i].VertIndex[1]);
         ShadowsModelShadow.SetOffset(1.0f);
+        ShadowsModelShadow.UploadChanged();
         glArrayElement(Mdl->Tris[i].VertIndex[2]);
       }
     }
@@ -765,10 +802,13 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
     for (int i = 0; i < Mdl->Tris.length(); ++i) {
       if (PlaneSides[i]) {
         ShadowsModelShadow.SetOffset(0.0f);
+        ShadowsModelShadow.UploadChanged();
         glArrayElement(Mdl->Tris[i].VertIndex[2]);
         ShadowsModelShadow.SetOffset(0.0f);
+        ShadowsModelShadow.UploadChanged();
         glArrayElement(Mdl->Tris[i].VertIndex[1]);
         ShadowsModelShadow.SetOffset(0.0f);
+        ShadowsModelShadow.UploadChanged();
         glArrayElement(Mdl->Tris[i].VertIndex[0]);
       }
     }
@@ -784,6 +824,7 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
       int index1 = Mdl->Edges[i].Vert1;
       int index2 = Mdl->Edges[i].Vert2;
 
+      currentActiveShader->UploadChanged();
       glBegin(GL_TRIANGLE_STRIP);
       if (PlaneSides[Mdl->Edges[i].Tri1]) {
         outv(1, 1.0f);
@@ -841,6 +882,14 @@ void VOpenGLDrawer::DrawAliasModelFog (const TVec &origin, const TAVec &angles,
   ShadowsModelFog.SetModelToWorldMat(RotationMatrix);
   ShadowsModelFog.SetFogFade(Fade, Alpha);
 
+  //k8:not there:ShadowsModelFog.SetViewOrigin(vieworg);
+  //k8:not there:ShadowsModelFog.SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f);
+  ShadowsModelFog.SetAllowTransparency(AllowTransparency);
+  //ShadowsModelFog.UploadChanged();
+
+  ShadowsModelFog.UploadChanged();
+
+
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
 
   p_glVertexAttribPointerARB(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
@@ -851,10 +900,6 @@ void VOpenGLDrawer::DrawAliasModelFog (const TVec &origin, const TAVec &angles,
 
   p_glVertexAttribPointerARB(ShadowsModelFog.loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
   p_glEnableVertexAttribArrayARB(ShadowsModelFog.loc_TexCoord);
-
-  //k8:not there:ShadowsModelFog.SetViewOrigin(vieworg);
-  //k8:not there:ShadowsModelFog.SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f);
-  ShadowsModelFog.SetAllowTransparency(AllowTransparency);
 
   glEnable(GL_ALPHA_TEST);
   glShadeModel(GL_SMOOTH);

@@ -213,6 +213,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   // fill stencil buffer for decals
   if (doDecals) RenderPrepareShaderDecals(surf);
 
+  currentActiveShader->UploadChanged();
   if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
   //glBegin(GL_POLYGON);
   glBegin(GL_TRIANGLE_FAN);
@@ -221,10 +222,12 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
       SurfMaskedBrightmapGlow.SetTexCoord(
         (DotProduct(surf->verts[i], tex->saxis)+tex->soffs)*tex_iw,
         (DotProduct(surf->verts[i], tex->taxis)+tex->toffs)*tex_ih);
+      SurfMaskedBrightmapGlow.UploadChanged();
     } else {
       SurfMaskedGlow.SetTexCoord(
         (DotProduct(surf->verts[i], tex->saxis)+tex->soffs)*tex_iw,
         (DotProduct(surf->verts[i], tex->taxis)+tex->toffs)*tex_ih);
+      SurfMaskedGlow.UploadChanged();
     }
     glVertex(surf->verts[i]);
   }
@@ -378,9 +381,10 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
 
   #define SPRVTX(shdr_,cv_)  do { \
     texpt = (cv_)-texorg; \
-    shdr_.SetTexCoord( \
+    (shdr_).SetTexCoord( \
       DotProduct(texpt, saxis)*tex_iw, \
       DotProduct(texpt, taxis)*tex_ih); \
+    (shdr_).UploadChanged(); \
     glVertex(cv_); \
   } while (0)
 
@@ -390,7 +394,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
       ((light>>8)&255)/255.0f,
       (light&255)/255.0f, Alpha);
     SurfMaskedBrightmap.SetFogFade(Fade, Alpha);
-
+    SurfMaskedBrightmap.UploadChanged();
     glBegin(GL_QUADS);
       SPRVTX(SurfMaskedBrightmap, cv[0]);
       SPRVTX(SurfMaskedBrightmap, cv[1]);
@@ -404,6 +408,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
         ((light>>8)&255)/255.0f,
         (light&255)/255.0f, Alpha);
       SurfMasked.SetFogFade(Fade, Alpha);
+      SurfMasked.UploadChanged();
       glBegin(GL_QUADS);
         SPRVTX(SurfMasked, cv[0]);
         SPRVTX(SurfMasked, cv[1]);
@@ -416,6 +421,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
         ((light>>8)&255)/255.0f,
         (light&255)/255.0f, Alpha);
       SurfMaskedFakeShadow.SetFogFade(Fade, Alpha);
+      SurfMaskedFakeShadow.UploadChanged();
       glBegin(GL_QUADS);
         SPRVTX(SurfMaskedFakeShadow, cv[0]);
         SPRVTX(SurfMaskedFakeShadow, cv[1]);
@@ -495,6 +501,7 @@ void VOpenGLDrawer::DrawTranslucentPolygonDecals (surface_t *surf, float Alpha, 
   SetTexture(tex->Tex, tex->ColorMap);
 
   if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
+  ShadowsSurfTransDecals.UploadChanged();
   glBegin(GL_POLYGON);
     for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
   glEnd();

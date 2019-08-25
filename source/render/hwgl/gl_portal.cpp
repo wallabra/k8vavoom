@@ -102,6 +102,7 @@ void VOpenGLDrawer::DrawPortalArea (VPortal *Portal) {
   for (auto &&surf : Portal->Surfs) {
     //const surface_t *surf = Portal->Surfs[i];
     if (surf->count < 3) continue;
+    currentActiveShader->UploadChanged();
     glBegin(GL_POLYGON);
     for (unsigned j = 0; j < (unsigned)surf->count; ++j) glVertex(surf->verts[j]);
     glEnd();
@@ -124,6 +125,7 @@ void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
       glDisable(GL_BLEND);
       if (gl_dbg_render_stack_portal_bounds && Portal->stackedSector) {
         p_glUseProgramObjectARB(0);
+        currentActiveShader = nullptr;
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glDepthFunc(GL_ALWAYS);
         glDepthMask(GL_FALSE); // no z-buffer writes

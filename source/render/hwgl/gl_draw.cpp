@@ -46,6 +46,7 @@ void VOpenGLDrawer::DrawPic (float x1, float y1, float x2, float y2,
   DrawSimple.Activate();
   DrawSimple.SetTexture(0);
   DrawSimple.SetAlpha(Alpha);
+  DrawSimple.UploadChanged();
   //glEnable(GL_BLEND);
   //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied
   glBegin(GL_QUADS);
@@ -70,6 +71,7 @@ void VOpenGLDrawer::DrawPicShadow (float x1, float y1, float x2, float y2,
   DrawShadow.Activate();
   DrawShadow.SetTexture(0);
   DrawShadow.SetAlpha(shade);
+  DrawShadow.UploadChanged();
   //glEnable(GL_BLEND);
   glBegin(GL_QUADS);
     glTexCoord2f(s1*tex_iw, t1*tex_ih); glVertex2f(x1, y1);
@@ -95,6 +97,7 @@ void VOpenGLDrawer::FillRectWithFlat (float x1, float y1, float x2, float y2,
   DrawSimple.Activate();
   DrawSimple.SetTexture(0);
   DrawSimple.SetAlpha(1.0f);
+  DrawSimple.UploadChanged();
   //glEnable(GL_BLEND);
   //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied
   glBegin(GL_QUADS);
@@ -121,6 +124,7 @@ void VOpenGLDrawer::FillRectWithFlatRepeat (float x1, float y1, float x2, float 
   DrawSimple.Activate();
   DrawSimple.SetTexture(0);
   DrawSimple.SetAlpha(1.0f);
+  DrawSimple.UploadChanged();
   float oldWS, oldWT;
   glGetTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, &oldWS);
   glGetTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, &oldWT);
@@ -153,6 +157,7 @@ void VOpenGLDrawer::FillRect (float x1, float y1, float x2, float y2, vuint32 co
     (GLfloat)(((color>>16)&255)/255.0f),
     (GLfloat)(((color>>8)&255)/255.0f),
     (GLfloat)((color&255)/255.0f), min2(1.0f, alpha));
+  DrawFixedCol.UploadChanged();
   glBegin(GL_QUADS);
     glVertex2f(x1, y1);
     glVertex2f(x2, y1);
@@ -174,6 +179,7 @@ void VOpenGLDrawer::FillRect (float x1, float y1, float x2, float y2, vuint32 co
 void VOpenGLDrawer::ShadeRect (int x, int y, int w, int h, float darkening) {
   DrawFixedCol.Activate();
   DrawFixedCol.SetColor(0.0f, 0.0f, 0.0f, darkening);
+  DrawFixedCol.UploadChanged();
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
   //glEnable(GL_BLEND);
   glBegin(GL_QUADS);
@@ -195,6 +201,7 @@ void VOpenGLDrawer::ShadeRect (int x, int y, int w, int h, float darkening) {
 void VOpenGLDrawer::DrawConsoleBackground (int h) {
   DrawFixedCol.Activate();
   DrawFixedCol.SetColor(0.0f, 0.0f, 0.5f, 0.75f);
+  DrawFixedCol.UploadChanged();
   //glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
   glBegin(GL_QUADS);
@@ -232,6 +239,7 @@ void VOpenGLDrawer::DrawSpriteLump (float x1, float y1, float x2, float y2,
   DrawSimple.Activate();
   DrawSimple.SetTexture(0);
   DrawSimple.SetAlpha(1.0f);
+  DrawSimple.UploadChanged();
   //glEnable(GL_BLEND);
   //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied
   glBegin(GL_QUADS);
@@ -251,6 +259,7 @@ void VOpenGLDrawer::DrawSpriteLump (float x1, float y1, float x2, float y2,
 //==========================================================================
 void VOpenGLDrawer::StartAutomap (bool asOverlay) {
   DrawAutomap.Activate();
+  DrawAutomap.UploadChanged();
   glEnable(GL_LINE_SMOOTH);
   if (asOverlay) {
     glEnable(GL_BLEND);
@@ -303,6 +312,7 @@ void VOpenGLDrawer::BeginTexturedPolys () {
   DrawSimpleLight.SetTexture(0);
   DrawSimpleLight.SetAlpha(texturedPolyLastAlpha);
   DrawSimpleLight.SetLight(texturedPolyLastLight.x, texturedPolyLastLight.y, texturedPolyLastLight.z, 1.0f);
+  DrawSimpleLight.UploadChanged();
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied
 }
 
@@ -347,6 +357,7 @@ void VOpenGLDrawer::DrawTexturedPoly (const texinfo_t *tinfo, TVec light, float 
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied
   }
   */
+  DrawSimpleLight.UploadChanged();
   glBegin(GL_TRIANGLE_FAN);
   if (origverts) {
     for (; vcount--; ++verts, ++origverts) {

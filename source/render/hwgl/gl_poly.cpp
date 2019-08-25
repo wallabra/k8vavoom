@@ -94,6 +94,7 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
     SurfDSky.SetTexture(0);
     SurfDSky.SetTexture2(1);
     SurfDSky.SetBrightness(r_sky_bright_factor);
+    SurfDSky.UploadChanged();
 
     //glBegin(GL_POLYGON);
     glBegin(GL_TRIANGLE_FAN);
@@ -104,6 +105,7 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
       SurfDSky.SetTexCoord2(
         (DotProduct(surf->verts[sidx[i]], tex->saxis)+tex->soffs-offs2)*tex_iw,
         (DotProduct(surf->verts[i], tex->taxis)+tex->toffs)*tex_ih);
+      SurfDSky.UploadChanged();
       glVertex(surf->verts[i]);
     }
     glEnd();
@@ -113,6 +115,7 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
     SurfSky.Activate();
     SurfSky.SetTexture(0);
     SurfSky.SetBrightness(r_sky_bright_factor);
+    SurfSky.UploadChanged();
 
     //glBegin(GL_POLYGON);
     glBegin(GL_TRIANGLE_FAN);
@@ -120,6 +123,7 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
       SurfSky.SetTexCoord(
         (DotProduct(surf->verts[sidx[i]], tex->saxis)+tex->soffs-offs1)*tex_iw,
         (DotProduct(surf->verts[i], tex->taxis)+tex->toffs)*tex_ih);
+      SurfSky.UploadChanged();
       glVertex(surf->verts[i]);
     }
     glEnd();
@@ -214,6 +218,7 @@ void VOpenGLDrawer::DoHorizonPolygon (surface_t *surf) {
   glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
   glDepthMask(GL_FALSE); // no z-buffer writes
   //glBegin(GL_POLYGON);
+  SurfSimple.UploadChanged();
   glBegin(GL_TRIANGLE_FAN);
     for (unsigned i = 0; i < 4; ++i) glVertex(v[i]);
   glEnd();
@@ -222,6 +227,7 @@ void VOpenGLDrawer::DoHorizonPolygon (surface_t *surf) {
 
   // write to the depth buffer
   SurfZBuf.Activate();
+  SurfZBuf.UploadChanged();
   glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
   //glBegin(GL_POLYGON);
   glBegin(GL_TRIANGLE_FAN);
@@ -296,6 +302,7 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
 
   ++glWDPolyTotal;
   //glBegin(GL_POLYGON);
+  currentActiveShader->UploadChanged();
   if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
   glBegin(GL_TRIANGLE_FAN);
     for (int i = 0; i < surf->count; ++i) {
@@ -397,6 +404,7 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
 
   ++glWDPolyTotal;
   //glBegin(GL_POLYGON);
+  currentActiveShader->UploadChanged();
   if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
   glBegin(GL_TRIANGLE_FAN);
     for (int i = 0; i < surf->count; ++i) {
@@ -451,6 +459,7 @@ void VOpenGLDrawer::WorldDrawing () {
       if (!surf->plvisible) continue; // viewer is in back side or on plane
       if (surf->count < 3) continue;
       //glBegin(GL_POLYGON);
+      currentActiveShader->UploadChanged();
       glBegin(GL_TRIANGLE_FAN);
         for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
       glEnd();
@@ -472,6 +481,7 @@ void VOpenGLDrawer::WorldDrawing () {
     SurfSimple.SetTexture(0);
     VV_GLDRAWER_DEACTIVATE_GLOW(SurfSimple);
     //SurfSimple_Locs.storeFogType();
+    SurfSimple.UploadChanged();
 
     lastTexinfo.resetLastUsed();
     for (auto &&surf : RendLev->DrawSurfList) {
@@ -492,6 +502,7 @@ void VOpenGLDrawer::WorldDrawing () {
     SurfLightmap.SetSpecularMap(2);
     //SurfLightmap_Locs.storeFogType();
     VV_GLDRAWER_DEACTIVATE_GLOW(SurfLightmap);
+    SurfLightmap.UploadChanged();
 
     lastTexinfo.resetLastUsed();
     for (int lb = 0; lb < NUM_BLOCK_SURFS; ++lb) {

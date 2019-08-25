@@ -35,6 +35,7 @@
 void VOpenGLDrawer::StartParticles () {
   glEnable(GL_BLEND);
   if (gl_smooth_particles) SurfPartSm.Activate(); else SurfPartSq.Activate();
+  currentActiveShader->UploadChanged();
   glBegin(GL_QUADS);
 }
 
@@ -54,34 +55,42 @@ void VOpenGLDrawer::DrawParticle (particle_t *p) {
   if (gl_smooth_particles) {
     SurfPartSm.SetLightVal(r, g, b, a);
     SurfPartSm.SetTexCoord(-1, -1);
+    SurfPartSm.UploadChanged();
     glVertex(p->org-viewright*p->Size+viewup*p->Size);
 
     SurfPartSm.SetLightVal(r, g, b, a);
     SurfPartSm.SetTexCoord(1, -1);
+    SurfPartSm.UploadChanged();
     glVertex(p->org+viewright*p->Size+viewup*p->Size);
 
     SurfPartSm.SetLightVal(r, g, b, a);
     SurfPartSm.SetTexCoord(1, 1);
+    SurfPartSm.UploadChanged();
     glVertex(p->org+viewright*p->Size-viewup*p->Size);
 
     SurfPartSm.SetLightVal(r, g, b, a);
     SurfPartSm.SetTexCoord(-1, 1);
+    SurfPartSm.UploadChanged();
     glVertex(p->org-viewright*p->Size-viewup*p->Size);
   } else {
     SurfPartSq.SetLightVal(r, g, b, a);
     SurfPartSq.SetTexCoord(-1, -1);
+    SurfPartSq.UploadChanged();
     glVertex(p->org-viewright*p->Size+viewup*p->Size);
 
     SurfPartSq.SetLightVal(r, g, b, a);
     SurfPartSq.SetTexCoord(1, -1);
+    SurfPartSq.UploadChanged();
     glVertex(p->org+viewright*p->Size+viewup*p->Size);
 
     SurfPartSq.SetLightVal(r, g, b, a);
     SurfPartSq.SetTexCoord(1, 1);
+    SurfPartSq.UploadChanged();
     glVertex(p->org+viewright*p->Size-viewup*p->Size);
 
     SurfPartSq.SetLightVal(r, g, b, a);
     SurfPartSq.SetTexCoord(-1, 1);
+    SurfPartSq.UploadChanged();
     glVertex(p->org-viewright*p->Size-viewup*p->Size);
   }
   /*

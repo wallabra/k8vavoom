@@ -466,6 +466,11 @@ public:
     GLhandleARB prog;
     TArray<VStr> defines;
 
+    typedef float glsl_float2[2];
+    typedef float glsl_float3[3];
+    typedef float glsl_float4[4];
+    typedef float glsl_float9[9];
+
   public:
     VGLShader() : next(nullptr), owner(nullptr), progname(nullptr), vssrcfile(nullptr), fssrcfile(nullptr), prog(-1) {}
 
@@ -476,9 +481,28 @@ public:
     virtual void Setup (VOpenGLDrawer *aowner) = 0;
     virtual void LoadUniforms () = 0;
     virtual void UnloadUniforms () = 0;
+    virtual void UploadChanged () = 0;
 
     void Activate ();
     void Deactivate ();
+
+    static inline bool notEqual_float (const float &v1, const float &v2) { return (FASI(v1) != FASI(v2)); }
+    static inline bool notEqual_bool (const bool v1, const bool v2) { return (v1 != v2); }
+    static inline bool notEqual_vec3 (const TVec &v1, const TVec &v2) { return (v1 != v2); }
+    static inline bool notEqual_mat4 (const VMatrix4 &v1, const VMatrix4 &v2) { return (memcmp(&v1.m[0][0], &v2.m[0][0], sizeof(float)*16) != 0); }
+    static inline bool notEqual_vec4 (const float *v1, const float *v2) { return (memcmp(v1, v2, sizeof(float)*4) != 0); }
+    static inline bool notEqual_vec2 (const float *v1, const float *v2) { return (memcmp(v1, v2, sizeof(float)*2) != 0); }
+    static inline bool notEqual_mat3 (const float *v1, const float *v2) { return (memcmp(v1, v2, sizeof(float)*9) != 0); }
+    static inline bool notEqual_sampler2D (const vuint32 v1, const vuint32 v2) { return (v1 != v2); }
+
+    static inline void copyValue_float (float &dest, const float &src) { dest = src; }
+    static inline void copyValue_bool (bool &dest, const bool &src) { dest = src; }
+    static inline void copyValue_vec3 (TVec &dest, const TVec &src) { dest = src; }
+    static inline void copyValue_mat4 (VMatrix4 &dest, const VMatrix4 &src) { memcpy(&dest.m[0][0], &src.m[0][0], sizeof(float)*16); }
+    static inline void copyValue_vec4 (float *dest, const float *src) { memcpy(dest, src, sizeof(float)*4); }
+    static inline void copyValue_vec2 (float *dest, const float *src) { memcpy(dest, src, sizeof(float)*2); }
+    static inline void copyValue_mat3 (float *dest, const float *src) { memcpy(dest, src, sizeof(float)*9); }
+    static inline void copyValue_sampler2D (vuint32 &dest, const vuint32 &src) { dest = src; }
   };
 
   friend class VGLShader;
@@ -519,6 +543,8 @@ public:
   };
 
   friend class FBO;
+
+  VGLShader *currentActiveShader;
 
 #include "gl_shaddef.hi"
 
