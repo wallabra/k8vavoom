@@ -37,7 +37,7 @@ static const unsigned BBoxVertexIndex[8][3] = {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-class TAVec {
+class /*__attribute__((packed))*/ TAVec {
 public:
   float pitch; // up/down
   float yaw; // left/right
@@ -59,6 +59,7 @@ public:
 
 static_assert(__builtin_offsetof(TAVec, yaw) == __builtin_offsetof(TAVec, pitch)+sizeof(float), "TAVec layout fail (0)");
 static_assert(__builtin_offsetof(TAVec, roll) == __builtin_offsetof(TAVec, yaw)+sizeof(float), "TAVec layout fail (1)");
+static_assert(sizeof(TAVec) == sizeof(float)*3, "TAVec layout fail (2)");
 
 static inline __attribute__((unused)) vuint32 GetTypeHash (const TAVec &v) { return joaatHashBuf(&v, 3*sizeof(float)); }
 
@@ -67,7 +68,7 @@ static __attribute__((unused)) inline bool operator != (const TAVec &v1, const T
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-class TVec {
+class /*__attribute__((packed))*/ TVec {
 public:
   float x, y, z;
 
@@ -188,6 +189,7 @@ public:
 
 static_assert(__builtin_offsetof(TVec, y) == __builtin_offsetof(TVec, x)+sizeof(float), "TVec layout fail (0)");
 static_assert(__builtin_offsetof(TVec, z) == __builtin_offsetof(TVec, y)+sizeof(float), "TVec layout fail (1)");
+static_assert(sizeof(TVec) == sizeof(float)*3, "TVec layout fail (2)");
 
 static inline __attribute__((unused)) vuint32 GetTypeHash (const TVec &v) { return joaatHashBuf(&v, 3*sizeof(float)); }
 
@@ -287,7 +289,7 @@ static inline __attribute__((unused)) float VectorAnglePitch (const TVec &vec) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 // Ax+By+Cz=D (ABC is normal, D is distance); i.e. "general form" (with negative D)
-class TPlane {
+class /*__attribute__((packed))*/ TPlane {
 public:
   TVec normal;
   float dist;
@@ -602,7 +604,8 @@ public:
   int BoxOnPlaneSide (const TVec &emins, const TVec &emaxs) const;
 };
 
-static_assert(__builtin_offsetof(TPlane, dist) == __builtin_offsetof(TPlane, normal.z)+sizeof(float), "TPlane layout fail");
+static_assert(__builtin_offsetof(TPlane, dist) == __builtin_offsetof(TPlane, normal.z)+sizeof(float), "TPlane layout fail (0)");
+static_assert(sizeof(TPlane) == sizeof(float)*4, "TPlane layout fail (1)");
 
 static inline __attribute__((unused)) vuint32 GetTypeHash (const TPlane &v) { return joaatHashBuf(&v, 4*sizeof(float)); }
 

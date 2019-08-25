@@ -5,8 +5,8 @@ uniform vec3 ViewOrigin;
 uniform vec3 LightPos;
 $include "common/texture_vars.vs"
 
-attribute vec3 SurfNormal;
-attribute float SurfDist;
+/*attribute*/uniform vec3 SurfNormal;
+/*attribute*/uniform float SurfDist;
 
 varying vec3 Normal;
 varying vec3 VertToLight;

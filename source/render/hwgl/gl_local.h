@@ -481,18 +481,19 @@ public:
     virtual void Setup (VOpenGLDrawer *aowner) = 0;
     virtual void LoadUniforms () = 0;
     virtual void UnloadUniforms () = 0;
-    virtual void UploadChanged () = 0;
+    virtual void UploadChangedUniforms (bool forced=false) = 0;
+    //virtual void UploadChangedAttrs () = 0;
 
     void Activate ();
     void Deactivate ();
 
     static inline bool notEqual_float (const float &v1, const float &v2) { return (FASI(v1) != FASI(v2)); }
     static inline bool notEqual_bool (const bool v1, const bool v2) { return (v1 != v2); }
-    static inline bool notEqual_vec3 (const TVec &v1, const TVec &v2) { return (v1 != v2); }
-    static inline bool notEqual_mat4 (const VMatrix4 &v1, const VMatrix4 &v2) { return (memcmp(&v1.m[0][0], &v2.m[0][0], sizeof(float)*16) != 0); }
-    static inline bool notEqual_vec4 (const float *v1, const float *v2) { return (memcmp(v1, v2, sizeof(float)*4) != 0); }
     static inline bool notEqual_vec2 (const float *v1, const float *v2) { return (memcmp(v1, v2, sizeof(float)*2) != 0); }
+    static inline bool notEqual_vec3 (const TVec &v1, const TVec &v2) { return (memcmp(&v1.x, &v2.x, sizeof(float)*3) != 0); }
+    static inline bool notEqual_vec4 (const float *v1, const float *v2) { return (memcmp(v1, v2, sizeof(float)*4) != 0); }
     static inline bool notEqual_mat3 (const float *v1, const float *v2) { return (memcmp(v1, v2, sizeof(float)*9) != 0); }
+    static inline bool notEqual_mat4 (const VMatrix4 &v1, const VMatrix4 &v2) { return (memcmp(&v1.m[0][0], &v2.m[0][0], sizeof(float)*16) != 0); }
     static inline bool notEqual_sampler2D (const vuint32 v1, const vuint32 v2) { return (v1 != v2); }
 
     static inline void copyValue_float (float &dest, const float &src) { dest = src; }

@@ -102,7 +102,7 @@ void VOpenGLDrawer::DrawPortalArea (VPortal *Portal) {
   for (auto &&surf : Portal->Surfs) {
     //const surface_t *surf = Portal->Surfs[i];
     if (surf->count < 3) continue;
-    currentActiveShader->UploadChanged();
+    currentActiveShader->UploadChangedUniforms();
     glBegin(GL_POLYGON);
     for (unsigned j = 0; j < (unsigned)surf->count; ++j) glVertex(surf->verts[j]);
     glEnd();

@@ -159,7 +159,7 @@ void VOpenGLDrawer::DrawWorldZBufferPass () {
     */
     {
       if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
-      currentActiveShader->UploadChanged();
+      currentActiveShader->UploadChangedUniforms();
       glBegin(GL_TRIANGLE_FAN);
         for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
       glEnd();
@@ -204,7 +204,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
   // set z-buffer for skies
   if (RendLev->DrawSkyList.length() && !gl_dbg_wireframe) {
     SurfZBuf.Activate();
-    SurfZBuf.UploadChanged();
+    SurfZBuf.UploadChangedUniforms();
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     surface_t **surfptr = RendLev->DrawSkyList.ptr();
     for (int count = RendLev->DrawSkyList.length(); count--; ++surfptr) {
@@ -247,7 +247,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 
     if (gl_dbg_wireframe) {
       DrawAutomap.Activate();
-      DrawAutomap.UploadChanged();
+      DrawAutomap.UploadChangedUniforms();
       glEnable(GL_BLEND);
       glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     } else {
@@ -408,7 +408,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       }
 
       if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
-      currentActiveShader->UploadChanged();
+      currentActiveShader->UploadChangedUniforms();
       if (!gl_dbg_wireframe) {
         // normal
         glBegin(GL_TRIANGLE_FAN);
@@ -594,7 +594,7 @@ void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float R
   }
   SurfShadowVolume.Activate();
   SurfShadowVolume.SetLightPos(LightPos);
-  SurfShadowVolume.UploadChanged();
+  SurfShadowVolume.UploadChangedUniforms();
 
   // remember current scissor rect
   memcpy(lastSVScissor, currentSVScissor, sizeof(lastSVScissor));
@@ -883,7 +883,8 @@ void VOpenGLDrawer::RenderSurfaceShadowVolume (const surface_t *surf, const TVec
     // OpenGL renders vertices with zero `w` as infinitely far -- this is exactly what we want
     // just do it in vertex shader
 
-    currentActiveShader->UploadChanged();
+    currentActiveShader->UploadChangedUniforms();
+    //currentActiveShader->UploadChangedAttrs();
 
     // render far cap
     //glBegin(GL_POLYGON);
@@ -1034,7 +1035,7 @@ void VOpenGLDrawer::DrawSurfaceLight (surface_t *surf) {
 
   if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
   //glBegin(GL_POLYGON);
-  currentActiveShader->UploadChanged();
+  currentActiveShader->UploadChangedUniforms();
   glBegin(GL_TRIANGLE_FAN);
     for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
   glEnd();
@@ -1136,7 +1137,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
 
     if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
     //glBegin(GL_POLYGON);
-    currentActiveShader->UploadChanged();
+    currentActiveShader->UploadChangedUniforms();
     glBegin(GL_TRIANGLE_FAN);
       for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
         /*
@@ -1246,7 +1247,7 @@ void VOpenGLDrawer::DrawWorldFogPass () {
 
     if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
     //glBegin(GL_POLYGON);
-    currentActiveShader->UploadChanged();
+    currentActiveShader->UploadChangedUniforms();
     glBegin(GL_TRIANGLE_FAN);
       for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
     glEnd();

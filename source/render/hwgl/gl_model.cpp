@@ -260,10 +260,8 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
   SurfModel.SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f);
   SurfModel.SetAllowTransparency(AllowTransparency);
   SurfModel.SetInter(Inter);
-
-  SurfModel.SetLightVal(((light>>16)&255)/255.0f, ((light>>8)&255)/255.0f, (light&255)/255.0f, Alpha);
-
-  SurfModel.UploadChanged();
+  //SurfModel.SetLightVal(((light>>16)&255)/255.0f, ((light>>8)&255)/255.0f, (light&255)/255.0f, Alpha); // this is attribute
+  SurfModel.UploadChangedUniforms();
 
 
   if (Additive) {
@@ -288,11 +286,9 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
     p_glVertexAttribPointerARB(SurfModel.loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
     p_glEnableVertexAttribArrayARB(SurfModel.loc_TexCoord);
 
-    /*
     //SurfModel.SetViewOrigin(vieworg);
-    SurfModel.SetLightVal(((light>>16)&255)/255.0f, ((light>>8)&255)/255.0f, (light&255)/255.0f, Alpha);
-    SurfModel.UploadChanged();
-    */
+    SurfModel.SetLightValAttr(((light>>16)&255)/255.0f, ((light>>8)&255)/255.0f, (light&255)/255.0f, Alpha);
+    //SurfModel.UploadChangedAttrs();
 
     p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, Mdl->IndexBuffer);
 
@@ -393,7 +389,7 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
   ShadowsModelAmbient.SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f);
   ShadowsModelAmbient.SetAllowTransparency(AllowTransparency);
 
-  ShadowsModelAmbient.UploadChanged();
+  ShadowsModelAmbient.UploadChangedUniforms();
 
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
 
@@ -416,7 +412,7 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
   ShadowsModelAmbient.SetViewOrigin(vieworg);
   ShadowsModelAmbient.SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f);
   ShadowsModelAmbient.SetAllowTransparency(AllowTransparency);
-  ShadowsModelAmbient.UploadChanged();
+  ShadowsModelAmbient.UploadChangedUniforms();
   */
 
   glEnable(GL_ALPHA_TEST);
@@ -500,10 +496,10 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
   SelectTexture(0);
   ShadowsModelTextures.SetAmbLightTexture(1);
   ShadowsModelTextures.SetScreenSize((float)mainFBO.getWidth(), (float)mainFBO.getHeight());
-  //ShadowsModelTextures.UploadChanged();
+  //ShadowsModelTextures.UploadChangedUniforms();
 
   //!ShadowsModelTextures.SetNormalToWorldMat(NormalMat[0]);
-  ShadowsModelTextures.UploadChanged();
+  ShadowsModelTextures.UploadChangedUniforms();
 
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
 
@@ -526,7 +522,7 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
   //ShadowsModelTextures.SetViewOrigin(vieworg);
   ShadowsModelTextures.SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f);
   ShadowsModelTextures.SetAllowTransparency(AllowTransparency);
-  ShadowsModelTextures.UploadChanged();
+  ShadowsModelTextures.UploadChangedUniforms();
   */
 
   /* original
@@ -600,7 +596,7 @@ void VOpenGLDrawer::BeginModelsLightPass (const TVec &LightPos, float Radius, fl
     ShadowsModelLightSpot.SetLightColor(((Color>>16)&255)/255.0f, ((Color>>8)&255)/255.0f, (Color&255)/255.0f);
     ShadowsModelLightSpot.SetConeDirection(coneDir);
     ShadowsModelLightSpot.SetConeAngle(coneAngle);
-    //ShadowsModelLightSpot.UploadChanged();
+    //ShadowsModelLightSpot.UploadChangedUniforms();
   } else {
     ShadowsModelLight.Activate();
     ShadowsModelLight.SetTexture(0);
@@ -608,7 +604,7 @@ void VOpenGLDrawer::BeginModelsLightPass (const TVec &LightPos, float Radius, fl
     ShadowsModelLight.SetLightRadius(Radius);
     ShadowsModelLight.SetLightMin(LightMin);
     ShadowsModelLight.SetLightColor(((Color>>16)&255)/255.0f, ((Color>>8)&255)/255.0f, (Color&255)/255.0f);
-    //ShadowsModelLight.UploadChanged();
+    //ShadowsModelLight.UploadChangedUniforms();
   }
 }
 
@@ -616,12 +612,12 @@ void VOpenGLDrawer::BeginModelsLightPass (const TVec &LightPos, float Radius, fl
   (shad_).SetInter(Inter); \
   (shad_).SetModelToWorldMat(RotationMatrix); \
   (shad_).SetNormalToWorldMat(NormalMat[0]); \
-  /*(shad_).UploadChanged();*/ \
+  /*(shad_).UploadChangedUniforms();*/ \
  \
   (shad_).SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f); \
   (shad_).SetAllowTransparency(AllowTransparency); \
   (shad_).SetViewOrigin(vieworg); \
-  (shad_).UploadChanged(); \
+  (shad_).UploadChangedUniforms(); \
  \
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer); \
  \
@@ -705,13 +701,13 @@ void VOpenGLDrawer::DrawAliasModelLight (const TVec &origin, const TAVec &angles
 void VOpenGLDrawer::BeginModelsShadowsPass (TVec &LightPos, float LightRadius) {
   ShadowsModelShadow.Activate();
   ShadowsModelShadow.SetLightPos(LightPos);
-  //ShadowsModelShadow.UploadChanged();
+  //ShadowsModelShadow.UploadChangedUniforms();
 }
 
 
 #define outv(idx, offs) do { \
-  ShadowsModelShadow.SetOffset(offs); \
-  ShadowsModelShadow.UploadChanged(); \
+  ShadowsModelShadow.SetOffsetAttr(offs); \
+  /*ShadowsModelShadow.UploadChangedAttrs();*/ \
   glArrayElement(index ## idx); \
 } while (0)
 
@@ -771,7 +767,7 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
 
   ShadowsModelShadow.SetInter(Inter);
   ShadowsModelShadow.SetModelToWorldMat(RotationMatrix);
-  ShadowsModelShadow.UploadChanged();
+  ShadowsModelShadow.UploadChangedUniforms();
 
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
   p_glVertexAttribPointerARB(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
@@ -781,19 +777,19 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
 
   // caps
   if (!usingZPass && !gl_dbg_use_zpass) {
-    currentActiveShader->UploadChanged();
+    currentActiveShader->UploadChangedUniforms();
     glBegin(GL_TRIANGLES);
     //p_glVertexAttrib1fARB(ShadowsModelShadow_OffsetLoc, 1.0f);
     for (int i = 0; i < Mdl->Tris.length(); ++i) {
       if (PlaneSides[i]) {
-        ShadowsModelShadow.SetOffset(1.0f);
-        ShadowsModelShadow.UploadChanged();
+        ShadowsModelShadow.SetOffsetAttr(1.0f);
+        //ShadowsModelShadow.UploadChangedAttrs();
         glArrayElement(Mdl->Tris[i].VertIndex[0]);
-        ShadowsModelShadow.SetOffset(1.0f);
-        ShadowsModelShadow.UploadChanged();
+        ShadowsModelShadow.SetOffsetAttr(1.0f);
+        //ShadowsModelShadow.UploadChangedAttrs();
         glArrayElement(Mdl->Tris[i].VertIndex[1]);
-        ShadowsModelShadow.SetOffset(1.0f);
-        ShadowsModelShadow.UploadChanged();
+        ShadowsModelShadow.SetOffsetAttr(1.0f);
+        //ShadowsModelShadow.UploadChangedAttrs();
         glArrayElement(Mdl->Tris[i].VertIndex[2]);
       }
     }
@@ -801,14 +797,14 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
     //p_glVertexAttrib1fARB(ShadowsModelShadow_OffsetLoc, 0.0f);
     for (int i = 0; i < Mdl->Tris.length(); ++i) {
       if (PlaneSides[i]) {
-        ShadowsModelShadow.SetOffset(0.0f);
-        ShadowsModelShadow.UploadChanged();
+        ShadowsModelShadow.SetOffsetAttr(0.0f);
+        ///ShadowsModelShadow.UploadChangedAttrs();
         glArrayElement(Mdl->Tris[i].VertIndex[2]);
-        ShadowsModelShadow.SetOffset(0.0f);
-        ShadowsModelShadow.UploadChanged();
+        ShadowsModelShadow.SetOffsetAttr(0.0f);
+        //ShadowsModelShadow.UploadChangedAttrs();
         glArrayElement(Mdl->Tris[i].VertIndex[1]);
-        ShadowsModelShadow.SetOffset(0.0f);
-        ShadowsModelShadow.UploadChanged();
+        ShadowsModelShadow.SetOffsetAttr(0.0f);
+        //ShadowsModelShadow.UploadChangedAttrs();
         glArrayElement(Mdl->Tris[i].VertIndex[0]);
       }
     }
@@ -824,7 +820,7 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
       int index1 = Mdl->Edges[i].Vert1;
       int index2 = Mdl->Edges[i].Vert2;
 
-      currentActiveShader->UploadChanged();
+      currentActiveShader->UploadChangedUniforms();
       glBegin(GL_TRIANGLE_STRIP);
       if (PlaneSides[Mdl->Edges[i].Tri1]) {
         outv(1, 1.0f);
@@ -885,9 +881,9 @@ void VOpenGLDrawer::DrawAliasModelFog (const TVec &origin, const TAVec &angles,
   //k8:not there:ShadowsModelFog.SetViewOrigin(vieworg);
   //k8:not there:ShadowsModelFog.SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f);
   ShadowsModelFog.SetAllowTransparency(AllowTransparency);
-  //ShadowsModelFog.UploadChanged();
+  //ShadowsModelFog.UploadChangedUniforms();
 
-  ShadowsModelFog.UploadChanged();
+  ShadowsModelFog.UploadChangedUniforms();
 
 
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);

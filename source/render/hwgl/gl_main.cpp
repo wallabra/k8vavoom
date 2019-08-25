@@ -1357,7 +1357,7 @@ void VOpenGLDrawer::EndView () {
       (float)((cl->CShift>>8)&255)/255.0f,
       (float)(cl->CShift&255)/255.0f,
       (float)((cl->CShift>>24)&255)/255.0f);
-    DrawFixedCol.UploadChanged();
+    DrawFixedCol.UploadChangedUniforms();
     //glEnable(GL_BLEND);
 
     glBegin(GL_QUADS);
@@ -1501,7 +1501,7 @@ void VOpenGLDrawer::DebugRenderScreenRect (int x0, int y0, int x1, int y1, vuint
     (GLfloat)(((color>>16)&255)/255.0f),
     (GLfloat)(((color>>8)&255)/255.0f),
     (GLfloat)((color&255)/255.0f), ((color>>24)&0xff)/255.0f);
-  DrawFixedCol.UploadChanged();
+  DrawFixedCol.UploadChangedUniforms();
 
   glOrtho(0, ScreenWidth, ScreenHeight, 0, -666, 666);
   glBegin(GL_QUADS);

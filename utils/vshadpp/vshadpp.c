@@ -1066,6 +1066,32 @@ const char *getShitppAmp (const char *shitppType) {
 }
 
 
+void writeUploadNoChecks (FILE *fo, const LocInfo *loc) {
+  if (!loc || !fo) return;
+  fprintf(fo, "owner->%s", (loc->isAttr ? "p_glVertexAttrib" : "p_glUniform"));
+       if (strEqu(loc->glslType, "float")) fprintf(fo, "1fARB(loc_%s, curr_%s);", loc->name, loc->name);
+  else if (strEqu(loc->glslType, "bool")) fprintf(fo, "1iARB(loc_%s, (curr_%s ? GL_TRUE : GL_FALSE));", loc->name, loc->name);
+  else if (strEqu(loc->glslType, "sampler2D")) fprintf(fo, "1iARB(loc_%s, (GLint)curr_%s);", loc->name, loc->name);
+  else {
+    const char *onestr = (loc->isAttr ? "" : "1,");
+    if (strEqu(loc->glslType, "vec3")) fprintf(fo, "3fvARB(loc_%s, %s &curr_%s.x);", loc->name, onestr, loc->name);
+    else if (strEqu(loc->glslType, "mat4")) fprintf(fo, "Matrix4fvARB(loc_%s, %s GL_FALSE, &curr_%s.m[0][0]);", loc->name, onestr, loc->name);
+    else if (strEqu(loc->glslType, "vec4")) fprintf(fo, "4fvARB(loc_%s, %s &curr_%s[0]);", loc->name, onestr, loc->name);
+    else if (strEqu(loc->glslType, "vec2")) fprintf(fo, "2fvARB(loc_%s, %s &curr_%s[0]);", loc->name, onestr, loc->name);
+    else if (strEqu(loc->glslType, "mat3")) fprintf(fo, "Matrix3fvARB(loc_%s, %s GL_FALSE, &curr_%s[0]);", loc->name, onestr, loc->name);
+    else { fprintf(stderr, "FATAL: cannot emit setter for GLSL type '%s'\n", loc->glslType); abort(); }
+  }
+}
+
+
+void writeUploadWithChecks (FILE *fo, const LocInfo *loc) {
+  if (!loc || !fo) return;
+  fprintf(fo, "if (loc_%s >=0 ) { ", loc->name);
+  writeUploadNoChecks(fo, loc);
+  fprintf(fo, " }");
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 int main (int argc, char **argv) {
   char *infname = nullptr;
@@ -1182,9 +1208,9 @@ int main (int argc, char **argv) {
     fprintf(foh, "  public:\n");
     for (const LocInfo *loc = si->locs; loc; loc = loc->next) {
       fprintf(foh, "    GLint loc_%s; // %s %s -> %s\n", loc->name, (loc->isAttr ? "attribute" : "uniform"), loc->glslType, getShitppType(loc->glslType));
-      fprintf(foh, "    %s last_%s;\n", getShitppStoreType(loc->glslType), loc->name);
+      if (!loc->isAttr) fprintf(foh, "    %s last_%s;\n", getShitppStoreType(loc->glslType), loc->name);
       fprintf(foh, "    %s curr_%s;\n", getShitppStoreType(loc->glslType), loc->name);
-      fprintf(foh, "    bool changed_%s;\n", loc->name);
+      if (!loc->isAttr) fprintf(foh, "    bool changed_%s;\n", loc->name);
     }
     fprintf(foh, "\n");
     fprintf(foh, "  public:\n");
@@ -1193,62 +1219,66 @@ int main (int argc, char **argv) {
     fprintf(foh, "    virtual void Setup (VOpenGLDrawer *aowner) override;\n");
     fprintf(foh, "    virtual void LoadUniforms () override;\n");
     fprintf(foh, "    virtual void UnloadUniforms () override;\n");
-    fprintf(foh, "    virtual void UploadChanged () override;\n");
+    fprintf(foh, "    virtual void UploadChangedUniforms (bool forced=false) override;\n");
+    /*fprintf(foh, "    virtual void UploadChangedAttrs () override;\n");*/
     fprintf(foh, "\n");
 
     // generate setters
     for (const LocInfo *loc = si->locs; loc; loc = loc->next) {
       if (loc->inset) continue; // will be generated later
       const char *shitppType = getShitppType(loc->glslType);
-      if (strEqu(loc->glslType, "float")) {
-        fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
-        fprintf(foh, "curr_%s = v; ", loc->name);
-        fprintf(foh, " }\n");
-      } else if (strEqu(loc->glslType, "bool")) {
-        fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
-        fprintf(foh, "curr_%s = (v ? GL_TRUE : GL_FALSE);", loc->name);
-        fprintf(foh, " }\n");
-      } else if (strEqu(loc->glslType, "sampler2D")) {
-        fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
-        fprintf(foh, "curr_%s = (GLint)v;", loc->name);
-        fprintf(foh, " }\n");
-      } else if (strEqu(loc->glslType, "vec3")) {
-        fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
-        fprintf(foh, "curr_%s = v;", loc->name);
-        fprintf(foh, " }\n");
-        fprintf(foh, "    inline void Set%s (const float x, const float y, const float z) { ", loc->name);
-        fprintf(foh, "curr_%s = TVec(x, y, z);", loc->name);
+      fprintf(foh, "    inline void Set%s%s (const %s %sv) { ", loc->name, (loc->isAttr ? "Attr" : ""), shitppType, getShitppAmp(shitppType));
+           if (strEqu(loc->glslType, "float")) fprintf(foh, "curr_%s = v; ", loc->name);
+      else if (strEqu(loc->glslType, "bool")) fprintf(foh, "curr_%s = (v ? GL_TRUE : GL_FALSE);", loc->name);
+      else if (strEqu(loc->glslType, "sampler2D")) fprintf(foh, "curr_%s = (GLint)v;", loc->name);
+      else if (strEqu(loc->glslType, "vec2")) fprintf(foh, "memcpy(&curr_%s[0], v, sizeof(float)*2);", loc->name);
+      else if (strEqu(loc->glslType, "vec3")) fprintf(foh, "curr_%s = v;", loc->name);
+      else if (strEqu(loc->glslType, "vec4")) fprintf(foh, "memcpy(&curr_%s[0], v, sizeof(float)*4);", loc->name);
+      else if (strEqu(loc->glslType, "mat3")) fprintf(foh, "memcpy(&curr_%s[0], v, sizeof(float)*9);", loc->name);
+      else if (strEqu(loc->glslType, "mat4")) fprintf(foh, "memcpy(&curr_%s.m[0][0], &v.m[0][0], sizeof(float)*16);", loc->name);
+      else { fprintf(stderr, "FATAL: cannot emit setter for GLSL type '%s'\n", loc->glslType); abort(); }
+      //fprintf(foh, " changed_%s = true;", loc->name);
+      // vertex attributes should be uploaded regardless of their value
+      if (loc->isAttr) {
+        // immediately upload attributes
+        if (loc->isAttr) writeUploadWithChecks(foh, loc);
+      }
+      fprintf(foh, " }\n");
+      // additional setters
+      if (strEqu(loc->glslType, "vec3")) {
+        fprintf(foh, "    inline void Set%s%s (const float x, const float y, const float z) { curr_%s = TVec(x, y, z); ", loc->name, (loc->isAttr ? "Attr" : ""), loc->name);
+        // immediately upload attributes
+        if (loc->isAttr) writeUploadWithChecks(foh, loc);
         fprintf(foh, " }\n");
       } else if (strEqu(loc->glslType, "mat4")) {
-        fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
-        fprintf(foh, "memcpy(&curr_%s.m[0][0], &v.m[0][0], sizeof(float)*16);", loc->name);
-        fprintf(foh, " }\n");
-        fprintf(foh, "    inline void Set%s (const float * v) { ", loc->name);
-        fprintf(foh, "memcpy(&curr_%s.m[0][0], v, sizeof(float)*16);", loc->name);
+        fprintf(foh, "    inline void Set%s%s (const float * v) { memcpy(&curr_%s.m[0][0], v, sizeof(float)*16); ", loc->name, (loc->isAttr ? "Attr" : ""), loc->name);
+        // immediately upload attributes
+        if (loc->isAttr) writeUploadWithChecks(foh, loc);
         fprintf(foh, " }\n");
       } else if (strEqu(loc->glslType, "vec4")) {
-        fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
-        fprintf(foh, "memcpy(&curr_%s[0], v, sizeof(float)*4);", loc->name);
-        fprintf(foh, " }\n");
-        fprintf(foh, "    inline void Set%s (const float x, const float y, const float z, const float w) { ", loc->name);
+        fprintf(foh, "    inline void Set%s%s (const float x, const float y, const float z, const float w) { ", loc->name, (loc->isAttr ? "Attr" : ""));
         fprintf(foh, "curr_%s[0] = x; curr_%s[1] = y; curr_%s[2] = z; curr_%s[3] = w;", loc->name, loc->name, loc->name, loc->name);
+        // immediately upload attributes
+        if (loc->isAttr) writeUploadWithChecks(foh, loc);
         fprintf(foh, " }\n");
       } else if (strEqu(loc->glslType, "vec2")) {
-        fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
-        fprintf(foh, "memcpy(&curr_%s[0], v, sizeof(float)*2);", loc->name);
+        fprintf(foh, "    inline void Set%s%s (const float x, const float y) { curr_%s[0] = x; curr_%s[1] = y; ", loc->name, (loc->isAttr ? "Attr" : ""), loc->name, loc->name);
+        // immediately upload attributes
+        if (loc->isAttr) writeUploadWithChecks(foh, loc);
         fprintf(foh, " }\n");
-        fprintf(foh, "    inline void Set%s (const float x, const float y) { ", loc->name);
-        fprintf(foh, "curr_%s[0] = x; curr_%s[1] = y;", loc->name, loc->name);
-        fprintf(foh, " }\n");
-      } else if (strEqu(loc->glslType, "mat3")) {
-        fprintf(foh, "    inline void Set%s (const %s %sv) { ", loc->name, shitppType, getShitppAmp(shitppType));
-        fprintf(foh, "memcpy(&curr_%s[0], v, sizeof(float)*9);", loc->name);
-        fprintf(foh, " }\n");
-      } else {
-        fprintf(stderr, "FATAL: cannot emit setter for GLSL type '%s'\n", loc->glslType);
-        abort();
       }
     }
+
+    // generate forced uploaders for all fields
+    /*
+    for (const LocInfo *loc = si->locs; loc; loc = loc->next) {
+      fprintf(foh, "    inline void ForceUpload%s () { ", loc->name);
+      fprintf(foh, " if (loc_%s >= 0) { ", loc->name);
+      writeUploadNoChecks(foh, loc);
+      fprintf(foh, " changed_%s = false; copyValue_%s(last_%s, curr_%s); }", loc->name, loc->glslType, loc->name, loc->name);
+      fprintf(foh, " }\n");
+    }
+    */
 
     // generate set setters
     for (SetInfo *css = foundSets; css; css = css->nextTemp) {
@@ -1262,7 +1292,7 @@ int main (int argc, char **argv) {
     fprintf(foc, "  : VGLShader()\n");
     for (const LocInfo *loc = si->locs; loc; loc = loc->next) {
       fprintf(foc, "  , loc_%s(-1)\n", loc->name);
-      fprintf(foc, "  , changed_%s(false)\n", loc->name);
+      if (!loc->isAttr) fprintf(foc, "  , changed_%s(false)\n", loc->name);
     }
     fprintf(foc, "{}\n");
     fprintf(foc, "\n");
@@ -1281,7 +1311,7 @@ int main (int argc, char **argv) {
       } else {
         fprintf(foc, "  loc_%s = owner->glGet%sLoc(progname, prog, \"%s\");\n", loc->name, (loc->isAttr ? "Attr" : "Uni"), loc->name);
       }
-      fprintf(foc, "  changed_%s = true;\n", loc->name);
+      if (!loc->isAttr) fprintf(foc, "  changed_%s = true;\n", loc->name);
     }
     fprintf(foc, "}\n");
     fprintf(foc, "\n");
@@ -1293,51 +1323,32 @@ int main (int argc, char **argv) {
     }
     fprintf(foc, "}\n");
 
-    // generate uploader
-    fprintf(foc, "void VOpenGLDrawer::VShaderDef_%s::UploadChanged () {\n", si->name);
+    // generate uniform uploader
+    fprintf(foc, "void VOpenGLDrawer::VShaderDef_%s::UploadChangedUniforms (bool forced) {\n", si->name);
     for (const LocInfo *loc = si->locs; loc; loc = loc->next) {
-      fprintf(foc, "  if (loc_%s >= 0 && (changed_%s || notEqual_%s(last_%s, curr_%s))) { changed_%s = false; ", loc->name, loc->name, loc->glslType, loc->name, loc->name, loc->name);
-      if (!loc->isAttr) {
-        if (strEqu(loc->glslType, "float")) {
-          fprintf(foc, "owner->p_glUniform1fARB(loc_%s, curr_%s);", loc->name, loc->name);
-        } else if (strEqu(loc->glslType, "bool")) {
-          fprintf(foc, "owner->p_glUniform1iARB(loc_%s, (curr_%s ? GL_TRUE : GL_FALSE));", loc->name, loc->name);
-        } else if (strEqu(loc->glslType, "sampler2D")) {
-          fprintf(foc, "owner->p_glUniform1iARB(loc_%s, (GLint)curr_%s);", loc->name, loc->name);
-        } else if (strEqu(loc->glslType, "vec3")) {
-          fprintf(foc, "owner->p_glUniform3fvARB(loc_%s, 1, &curr_%s.x);", loc->name, loc->name);
-        } else if (strEqu(loc->glslType, "mat4")) {
-          fprintf(foc, "owner->p_glUniformMatrix4fvARB(loc_%s, 1, GL_FALSE, &curr_%s.m[0][0]);", loc->name, loc->name);
-        } else if (strEqu(loc->glslType, "vec4")) {
-          fprintf(foc, "owner->p_glUniform4fvARB(loc_%s, 1, &curr_%s[0]);", loc->name, loc->name);
-        } else if (strEqu(loc->glslType, "vec2")) {
-          fprintf(foc, "owner->p_glUniform2fvARB(loc_%s, 1, &curr_%s[0]);", loc->name, loc->name);
-        } else if (strEqu(loc->glslType, "mat3")) {
-          fprintf(foc, "owner->p_glUniformMatrix3fvARB(loc_%s, 1, GL_FALSE, &curr_%s[0]);", loc->name, loc->name);
-        } else {
-          fprintf(stderr, "FATAL: cannot emit setter for GLSL type '%s'\n", loc->glslType);
-          abort();
-        }
-      } else {
-        // attrs
-        if (strEqu(loc->glslType, "float")) {
-          fprintf(foc, "owner->p_glVertexAttrib1fARB(loc_%s, curr_%s);", loc->name, loc->name);
-        } else if (strEqu(loc->glslType, "vec2")) {
-          fprintf(foc, "owner->p_glVertexAttrib2fvARB(loc_%s, &curr_%s[0]);", loc->name, loc->name);
-        } else if (strEqu(loc->glslType, "vec4")) {
-          fprintf(foc, "owner->p_glVertexAttrib4fvARB(loc_%s, &curr_%s[0]);", loc->name, loc->name);
-        } else if (strEqu(loc->glslType, "vec3")) {
-          fprintf(foc, "owner->p_glVertexAttrib3fvARB(loc_%s, &curr_%s.x);", loc->name, loc->name);
-        } else {
-          fprintf(stderr, "FATAL: cannot emit attribute setter for GLSL type '%s'\n", loc->glslType);
-          abort();
-        }
-      }
-      fprintf(foc, " copyValue_%s(last_%s, curr_%s);", loc->glslType, loc->name, loc->name);
-      fprintf(foc, " }\n");
+      if (loc->isAttr) continue;
+      fprintf(foc, "  if (loc_%s >= 0 && (forced || changed_%s || notEqual_%s(last_%s, curr_%s))) {\n", loc->name, loc->name, loc->glslType, loc->name, loc->name);
+      fprintf(foc, "    ");
+      writeUploadNoChecks(foc, loc);
+      fprintf(foc, "    changed_%s = false;\n", loc->name);
+      fprintf(foc, "    copyValue_%s(last_%s, curr_%s);", loc->glslType, loc->name, loc->name);
+      fprintf(foc, "  }\n");
     }
     fprintf(foc, "}\n");
     fprintf(foc, "\n");
+
+    // generate attribute uploader
+    /* not needed
+    fprintf(foc, "void VOpenGLDrawer::VShaderDef_%s::UploadChangedAttrs () {\n", si->name);
+    for (const LocInfo *loc = si->locs; loc; loc = loc->next) {
+      if (!loc->isAttr) continue;
+      fprintf(foc, "  ");
+      writeUploadWithChecks(foc, loc);
+      fprintf(foc, "\n");
+    }
+    fprintf(foc, "}\n");
+    fprintf(foc, "\n");
+    */
   }
 
   // now write list of known shaders

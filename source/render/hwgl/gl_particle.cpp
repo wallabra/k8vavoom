@@ -35,7 +35,7 @@
 void VOpenGLDrawer::StartParticles () {
   glEnable(GL_BLEND);
   if (gl_smooth_particles) SurfPartSm.Activate(); else SurfPartSq.Activate();
-  currentActiveShader->UploadChanged();
+  currentActiveShader->UploadChangedUniforms();
   glBegin(GL_QUADS);
 }
 
@@ -53,44 +53,44 @@ void VOpenGLDrawer::DrawParticle (particle_t *p) {
 
   //GLint lvLoc, tcLoc;
   if (gl_smooth_particles) {
-    SurfPartSm.SetLightVal(r, g, b, a);
-    SurfPartSm.SetTexCoord(-1, -1);
-    SurfPartSm.UploadChanged();
+    SurfPartSm.SetLightValAttr(r, g, b, a);
+    SurfPartSm.SetTexCoordAttr(-1, -1);
+    //SurfPartSm.UploadChangedAttrs();
     glVertex(p->org-viewright*p->Size+viewup*p->Size);
 
-    SurfPartSm.SetLightVal(r, g, b, a);
-    SurfPartSm.SetTexCoord(1, -1);
-    SurfPartSm.UploadChanged();
+    SurfPartSm.SetLightValAttr(r, g, b, a);
+    SurfPartSm.SetTexCoordAttr(1, -1);
+    //SurfPartSm.UploadChangedAttrs();
     glVertex(p->org+viewright*p->Size+viewup*p->Size);
 
-    SurfPartSm.SetLightVal(r, g, b, a);
-    SurfPartSm.SetTexCoord(1, 1);
-    SurfPartSm.UploadChanged();
+    SurfPartSm.SetLightValAttr(r, g, b, a);
+    SurfPartSm.SetTexCoordAttr(1, 1);
+    //SurfPartSm.UploadChangedAttrs();
     glVertex(p->org+viewright*p->Size-viewup*p->Size);
 
-    SurfPartSm.SetLightVal(r, g, b, a);
-    SurfPartSm.SetTexCoord(-1, 1);
-    SurfPartSm.UploadChanged();
+    SurfPartSm.SetLightValAttr(r, g, b, a);
+    SurfPartSm.SetTexCoordAttr(-1, 1);
+    //SurfPartSm.UploadChangedAttrs();
     glVertex(p->org-viewright*p->Size-viewup*p->Size);
   } else {
-    SurfPartSq.SetLightVal(r, g, b, a);
-    SurfPartSq.SetTexCoord(-1, -1);
-    SurfPartSq.UploadChanged();
+    SurfPartSq.SetLightValAttr(r, g, b, a);
+    SurfPartSq.SetTexCoordAttr(-1, -1);
+    //SurfPartSq.UploadChangedAttrs();
     glVertex(p->org-viewright*p->Size+viewup*p->Size);
 
-    SurfPartSq.SetLightVal(r, g, b, a);
-    SurfPartSq.SetTexCoord(1, -1);
-    SurfPartSq.UploadChanged();
+    SurfPartSq.SetLightValAttr(r, g, b, a);
+    SurfPartSq.SetTexCoordAttr(1, -1);
+    //SurfPartSq.UploadChangedAttrs();
     glVertex(p->org+viewright*p->Size+viewup*p->Size);
 
-    SurfPartSq.SetLightVal(r, g, b, a);
-    SurfPartSq.SetTexCoord(1, 1);
-    SurfPartSq.UploadChanged();
+    SurfPartSq.SetLightValAttr(r, g, b, a);
+    SurfPartSq.SetTexCoordAttr(1, 1);
+    //SurfPartSq.UploadChangedAttrs();
     glVertex(p->org+viewright*p->Size-viewup*p->Size);
 
-    SurfPartSq.SetLightVal(r, g, b, a);
-    SurfPartSq.SetTexCoord(-1, 1);
-    SurfPartSq.UploadChanged();
+    SurfPartSq.SetLightValAttr(r, g, b, a);
+    SurfPartSq.SetTexCoordAttr(-1, 1);
+    //SurfPartSq.UploadChangedAttrs();
     glVertex(p->org-viewright*p->Size-viewup*p->Size);
   }
   /*

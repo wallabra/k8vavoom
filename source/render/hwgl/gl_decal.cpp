@@ -258,7 +258,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
     float texy0 = (dc->flags&decal_t::FlipY ? 0.0f : 1.0f);
     float texy1 = (dc->flags&decal_t::FlipY ? 1.0f : 0.0f);
 
-    currentActiveShader->UploadChanged();
+    currentActiveShader->UploadChangedUniforms();
     glBegin(GL_QUADS);
       glTexCoord2f(texx0, texy0); glVertex3f(v0.x, v0.y, dcz-thgt);
       glTexCoord2f(texx0, texy1); glVertex3f(v0.x, v0.y, dcz);
