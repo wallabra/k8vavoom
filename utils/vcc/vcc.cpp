@@ -39,56 +39,6 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-class VFileReader : public VStream {
-private:
-  FILE* mFile;
-
-public:
-  VFileReader (FILE* InFile) : mFile(InFile) { bLoading = true; }
-
-  virtual ~VFileReader () { Close(); }
-
-  // stream interface
-  virtual void Serialise (void* V, int Length) override {
-    if (bError) return;
-    if (!mFile || fread(V, Length, 1, mFile) != 1) bError = true;
-  }
-
-  virtual void Seek (int InPos) override {
-    if (bError) return;
-    if (!mFile || fseek(mFile, InPos, SEEK_SET)) bError = true;
-  }
-
-  virtual int Tell() override {
-    return (mFile ? ftell(mFile) : 0);
-  }
-
-  virtual int TotalSize () override {
-    if (bError || !mFile) return 0;
-    auto curpos = ftell(mFile);
-    if (fseek(mFile, 0, SEEK_END)) { bError = true; return 0; }
-    auto size = ftell(mFile);
-    if (fseek(mFile, curpos, SEEK_SET)) { bError = true; return 0; }
-    return (int)size;
-  }
-
-  virtual bool AtEnd () override {
-    if (bError || !mFile) return true;
-    return !!feof(mFile);
-  }
-
-  virtual void Flush () override {
-    if (!mFile && fflush(mFile)) bError = true;
-  }
-
-  virtual bool Close() override {
-    if (mFile) { fclose(mFile); mFile = nullptr; }
-    return !bError;
-  }
-};
-
-
-// ////////////////////////////////////////////////////////////////////////// //
 static VStr SourceFileName;
 static VStr ObjectFileName;
 
@@ -147,7 +97,7 @@ void Free (void* ptr) {
 //==========================================================================
 VStream* fsysOpenFileSimple (VStr Name) {
   FILE *file = fopen(*Name, "rb");
-  return (file ? new VFileReader(file) : nullptr);
+  return (file ? new VStdFileStreamRead(file, Name) : nullptr);
 }
 
 
