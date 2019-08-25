@@ -26,7 +26,27 @@
 //**************************************************************************
 #include "vc_local.h"
 
-extern VCvarB developer;
+
+//==========================================================================
+//
+//  showReplacementMessages
+//
+//==========================================================================
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+static inline int showReplacementMessages () {
+  static int lmsg = -1;
+  if (lmsg < 0) {
+    lmsg = (GArgs.CheckParm("-vc-dev-replacement") ? 1 : 0);
+  }
+  return (lmsg > 0);
+}
+
+#define vdrlogf(...)  if (showReplacementMessages()) GLog.Logf(NAME_Debug, __VA_ARGS__)
+#else
+
+#define vdrlogf(...)  do {} while (0)
+
+#endif
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -1093,33 +1113,16 @@ bool VClass::Define () {
       if (!xdres) return false;
     }
     //fprintf(stderr, "VClass::Define: requested parent is `%s`, actual parent is `%s`\n", *ParentClassName, ParentClass->GetName());
-    // now set replacemente for the actual replacement (if necessary)
+    // now set replacement for the actual replacement (if necessary)
     if (DoesReplacement) {
-      /*
-      //fprintf(stderr, "VClass::Define: class `%s` tries to replace class `%s` (actual is `%s`)...\n", GetName(), *ParentClassName, ParentClass->GetName());
-      VClass *pc = ParentClass->GetReplacement();
-      if (!pc) {
-        ParseError(ParentClassLoc, "Cannot replace class `%s` (oops)", *ParentClassName);
-      } else if (!pc->IsChildOf(ParentClass)) {
-        ParseError(ParentClassLoc, "Cannot replace class `%s` (%s)", *ParentClassName, pc->GetName());
-      } else {
-        //if (!ParentClass->SetReplacement(this)) ParseError(ParentClassLoc, "Cannot replace class `%s`", *ParentClassName);
-        fprintf(stderr, "**** %s : %s\n", ParentClass->GetName(), pc->GetName());
-        if (!pc->SetReplacement(this)) ParseError(ParentClassLoc, "Cannot replace class `%s`", *ParentClassName);
-      }
-      */
       if (!ParentClass->SetReplacement(this)) ParseError(ParentClassLoc, "Cannot replace class `%s`", *ParentClassName);
     }
 #else
     if (DoesReplacement) {
       if (DoesReplacement == ReplaceType::Replace_LatestChild) {
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-        if (developer) GLog.Logf(NAME_Dev, "VClass::Define: class `%s` tries to replace latest child of class `%s` (actual is `%s`)", GetName(), *ParentClassName, ParentClass->GetName());
-#endif
+        vdrlogf("VClass::Define: class `%s` tries to replace latest child of class `%s` (actual is `%s`)", GetName(), *ParentClassName, ParentClass->GetName());
         ParentClass = ParentClass->FindBestLatestChild(Name);
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-        if (developer) GLog.Logf(NAME_Dev, "VClass::Define:   latest child is `%s`", ParentClass->GetName());
-#endif
+        vdrlogf("VClass::Define:   latest child is `%s`", ParentClass->GetName());
       } else {
         ParentClass = ParentClass->GetReplacement();
       }
@@ -1130,9 +1133,7 @@ bool VClass::Define () {
         ParentClass->DefinedAsDependency = true;
         if (!xdres) return false;
       }
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-      if (developer) GLog.Logf(NAME_Dev, "VClass::Define: class `%s` tries to replace class `%s` (actual is `%s`)...", GetName(), *ParentClassName, ParentClass->GetName());
-#endif
+      vdrlogf("VClass::Define: class `%s` tries to replace class `%s` (actual is `%s`)...", GetName(), *ParentClassName, ParentClass->GetName());
       if (!ParentClass->SetReplacement(this)) {
         ParseError(ParentClassLoc, "Cannot replace class `%s`", *ParentClassName);
       }

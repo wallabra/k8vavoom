@@ -26,12 +26,32 @@
 //**************************************************************************
 #include "vc_public.h"
 
-extern VCvarB developer;
-
 #if !defined(IN_VCC)
 # define VC_HOST_ERROR  Host_Error
 #else
 # define VC_HOST_ERROR  Sys_Error
+#endif
+
+
+//==========================================================================
+//
+//  showGCMessages
+//
+//==========================================================================
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR) && defined(VC_GARBAGE_COLLECTOR_LOGS_BASE)
+static inline int showGCMessages () {
+  static int lmsg = -1;
+  if (lmsg < 0) {
+    lmsg = (GArgs.CheckParm("-vc-dev-gc") ? 1 : 0);
+  }
+  return (lmsg > 0);
+}
+
+#define vdgclogf(...)  if (GCDebugMessagesAllowed && showGCMessages()) GLog.Logf(NAME_Debug, __VA_ARGS__)
+#else
+
+#define vdgclogf(...)  do {} while (0)
+
 #endif
 
 
@@ -404,9 +424,7 @@ VObject::~VObject () {
     --GNumDeleted;
     --gcLastStats.markedDead;
     ObjectFlags |= _OF_CleanupRef;
-#if defined(VC_GARBAGE_COLLECTOR_LOGS_BASE) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-    if (GCDebugMessagesAllowed && developer) GLog.Logf(NAME_Dev, "marked object(%u) #%d: %p (%s)", UniqueId, Index, this, GetClass()->GetName());
-#endif
+    vdgclogf("marked object(%u) #%d: %p (%s)", UniqueId, Index, this, GetClass()->GetName());
     //fprintf(stderr, "Cleaning up for `%s`\n", *this->GetClass()->Name);
     // no need to delete index from queues, next GC cycle will take care of that
     const int ilen = gObjFirstFree;
@@ -573,9 +591,7 @@ void VObject::Register () {
     gcLastStats.poolSize = gObjFirstFree;
     gcLastStats.poolAllocated = GObjObjects.NumAllocated();
   }
-#if defined(VC_GARBAGE_COLLECTOR_LOGS_BASE) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-  if (GCDebugMessagesAllowed && developer) GLog.Logf(NAME_Dev, "created object(%u) #%d: %p (%s)", UniqueId, Index, this, GetClass()->GetName());
-#endif
+  vdgclogf("created object(%u) #%d: %p (%s)", UniqueId, Index, this, GetClass()->GetName());
   ++gcLastStats.alive;
 }
 
@@ -593,9 +609,7 @@ void VObject::SetFlags (vuint32 NewFlags) {
     NewFlags |= _OF_CleanupRef;
     ++GNumDeleted;
     ++gcLastStats.markedDead;
-#if defined(VC_GARBAGE_COLLECTOR_LOGS_BASE) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-    if (GCDebugMessagesAllowed && developer) GLog.Logf(NAME_Dev, "marked object(%u) #%d: %p (%s)", UniqueId, Index, this, GetClass()->GetName());
-#endif
+    vdgclogf("marked object(%u) #%d: %p (%s)", UniqueId, Index, this, GetClass()->GetName());
   }
 #ifdef VCC_STANDALONE_EXECUTOR
   else if ((NewFlags&_OF_DelayedDestroy) && !(ObjectFlags&_OF_DelayedDestroy)) {
@@ -629,9 +643,7 @@ void VObject::ConditionalDestroy () {
 void VObject::Destroy () {
   Class->DestructObject(this);
   if (!(ObjectFlags&_OF_Destroyed)) SetFlags(_OF_Destroyed);
-#if defined(VC_GARBAGE_COLLECTOR_LOGS_BASE) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-  if (GCDebugMessagesAllowed && developer) GLog.Logf(NAME_Dev, "destroyed object(%u) #%d: %p (%s)", UniqueId, Index, this, GetClass()->GetName());
-#endif
+  vdgclogf("destroyed object(%u) #%d: %p (%s)", UniqueId, Index, this, GetClass()->GetName());
 }
 
 
@@ -668,9 +680,7 @@ bool destroyDelayed
 
   GInGarbageCollection = true;
 
-#if defined(VC_GARBAGE_COLLECTOR_LOGS_BASE) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-  if (GCDebugMessagesAllowed && developer) GLog.Logf(NAME_Dev, "collecting garbage...");
-#endif
+  vdgclogf("collecting garbage...");
 
 #ifdef VCC_STANDALONE_EXECUTOR
   // destroy all delayed-destroy objects
@@ -842,10 +852,8 @@ bool destroyDelayed
   gcLastStats.poolAllocated = GObjObjects.NumAllocated();
   gcLastStats.firstFree = gObjFirstFree;
 
-#if defined(VC_GARBAGE_COLLECTOR_LOGS_BASE) && !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-  if (GCDebugMessagesAllowed && developer) GLog.Logf(NAME_Dev, "garbage collection complete in %d msecs; %d objects deleted, %d objects live, %d of %d array slots used; firstfree=%d",
+  vdgclogf("garbage collection complete in %d msecs; %d objects deleted, %d objects live, %d of %d array slots used; firstfree=%d",
     (int)(gcLastStats.lastCollectDuration*1000), gcLastStats.lastCollected, gcLastStats.alive, gcLastStats.poolSize, gcLastStats.poolAllocated, gObjFirstFree);
-#endif
 
 #if !defined(IN_VCC)
   if (GGCMessagesAllowed && bodycount) {
