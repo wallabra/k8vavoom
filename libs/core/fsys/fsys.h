@@ -91,13 +91,18 @@ enum EWadNamespace {
 };
 
 
-void W_AddFile (VStr FileName, bool FixVoices=false);
+// for non-wad files (zip, pk3, pak), it adds add subarchives from a root directory
+void W_AddDiskFile (VStr FileName, bool FixVoices=false);
+// returns `true` if file was added
+bool W_AddDiskFileOptional (VStr FileName, bool FixVoices=false);
+// this mounts disk directory as PK3 archive
+void W_MountDiskDir (VStr dirname);
 void W_Shutdown ();
 
 enum WAuxFileType {
-  VFS_Wad,
-  VFS_Zip,
-  VFS_Pk3,
+  VFS_Wad, // caller is 100% sure that this is IWAD/PWAD
+  VFS_Zip, // guess it, and allow nested files
+  VFS_Archive, // guess it, but don't allow nested files
 };
 
 

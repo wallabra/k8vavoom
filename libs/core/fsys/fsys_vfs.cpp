@@ -52,6 +52,10 @@ static inline int getSPCount () { return (AuxiliaryIndex && !fsys_EnableAuxSearc
 
 // ////////////////////////////////////////////////////////////////////////// //
 FArchiveReaderInfo *arcInfoHead = nullptr;
+bool arcInfoArrayRecreate = true;
+TArray<FArchiveReaderInfo *> fsysArchiveOpeners;
+int arcInfoMaxSignLen = 0;
+TArray<vuint8> arcInfoSignBuf;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -60,6 +64,13 @@ extern "C" {
     if (aa == bb) return 0;
     const FArchiveReaderInfo *a = *(const FArchiveReaderInfo **)aa;
     const FArchiveReaderInfo *b = *(const FArchiveReaderInfo **)bb;
+    if (a->sign && a->sign[0]) {
+      // `a` has a signature, check `b`
+      if (!b->sign || !b->sign[0]) return -1; // prefer `a` to signature-less format anyway
+    } else {
+      // `a` doesn't have a signature, check `b`
+      if (b->sign && b->sign[0]) return 1; // prefer `b` to signature-less format anyway
+    }
     return a->priority-b->priority;
   }
 }
@@ -77,8 +88,15 @@ FArchiveReaderInfo::FArchiveReaderInfo (const char *afmtname, OpenCB ocb, const 
   , sign(asign)
   , priority(apriority)
 {
-  next = arcInfoHead;
-  arcInfoHead = this;
+  if (arcInfoHead) {
+    FArchiveReaderInfo *last = arcInfoHead;
+    while (last->next) last = last->next;
+    last->next = this;
+  } else {
+    arcInfoHead = this;
+  }
+  arcInfoArrayRecreate = true;
+  //fprintf(stderr, "*** REGISTERING OPENER FOR '%s' (signature is '%s') ***\n", afmtname, (asign ? asign : ""));
 }
 
 
@@ -87,23 +105,34 @@ FArchiveReaderInfo::FArchiveReaderInfo (const char *afmtname, OpenCB ocb, const 
 //  FArchiveReaderInfo::OpenArchive
 //
 //==========================================================================
-VSearchPath *FArchiveReaderInfo::OpenArchive (VStream *strm, VStr filename) {
+VSearchPath *FArchiveReaderInfo::OpenArchive (VStream *strm, VStr filename, bool FixVoices) {
   if (!strm || strm->IsError()) return nullptr; // sanity check
-  TArray<FArchiveReaderInfo *> openers;
-  int maxsignlen = 0;
-  for (FArchiveReaderInfo *opl = arcInfoHead; opl; opl = opl->next) {
-    openers.append(opl);
-    if (opl->sign && opl->sign[0]) {
-      size_t slen = strlen(opl->sign);
-      if (slen > 1024) Sys_Error("signature too long for archive format '%s'!", opl->fmtname);
-      if (slen > (vuint32)maxsignlen) maxsignlen = (vint32)slen;
+
+  // fill opener array
+  if (arcInfoArrayRecreate) {
+    arcInfoArrayRecreate = false;
+    int count = 0;
+    for (FArchiveReaderInfo *opl = arcInfoHead; opl; opl = opl->next) ++count;
+    fsysArchiveOpeners.clear();
+    fsysArchiveOpeners.resize(count);
+    // now fill it
+    arcInfoMaxSignLen = 0;
+    for (FArchiveReaderInfo *opl = arcInfoHead; opl; opl = opl->next) {
+      fsysArchiveOpeners.append(opl);
+      if (opl->sign && opl->sign[0]) {
+        size_t slen = strlen(opl->sign);
+        if (slen > 1024) Sys_Error("signature too long for archive format '%s'!", opl->fmtname);
+        if (slen > (vuint32)arcInfoMaxSignLen) arcInfoMaxSignLen = (vint32)slen;
+      }
     }
+    timsort_r(fsysArchiveOpeners.ptr(), fsysArchiveOpeners.length(), sizeof(FArchiveReaderInfo *), &OpenerCmpFunc, nullptr);
   }
-  timsort_r(openers.ptr(), openers.length(), sizeof(FArchiveReaderInfo *), &OpenerCmpFunc, nullptr);
-  TArray<vuint8> signbuf;
-  signbuf.setLength(maxsignlen);
+
+  if (arcInfoSignBuf.length() != arcInfoMaxSignLen) arcInfoSignBuf.setLength(arcInfoMaxSignLen);
   int lastsignlen = 0;
-  for (auto &&op : openers) {
+  //GLog.Logf(NAME_Debug, "=== checking '%s' with %d openers ===", *filename, fsysArchiveOpeners.length());
+  for (auto &&op : fsysArchiveOpeners) {
+    //GLog.Logf(NAME_Debug, "  trying opener for '%s'...", op->fmtname);
     // has signature?
     if (op->sign && op->sign[0]) {
       // has signature, perform signature check
@@ -111,21 +140,32 @@ VSearchPath *FArchiveReaderInfo::OpenArchive (VStream *strm, VStr filename) {
       if (lastsignlen < slen) {
         if (strm->Tell() != 0) strm->Seek(0);
         if (strm->IsError()) return nullptr;
-        strm->Serialise(signbuf.ptr(), slen);
+        memset(arcInfoSignBuf.ptr(), 0, slen);
+        strm->Serialise(arcInfoSignBuf.ptr(), slen);
         if (strm->IsError()) return nullptr;
         lastsignlen = slen;
       }
-      if (memcmp(signbuf.ptr(), op->sign, slen) != 0) continue; // bad signature
+      if (memcmp(arcInfoSignBuf.ptr(), op->sign, slen) != 0) {
+        // bad signature
+        //GLog.Logf(NAME_Debug, "    signature check failed for '%s'...", op->fmtname);
+        continue;
+      }
       if (strm->Tell() != slen) strm->Seek(0);
       if (strm->IsError()) return nullptr;
-      VSearchPath *spt = op->openCB(strm, filename);
-      if (spt) return spt;
+      VSearchPath *spt = op->openCB(strm, filename, FixVoices);
+      if (spt) {
+        //GLog.Logf(NAME_Debug, "  opened '%s' as '%s'...", *filename, op->fmtname);
+        return spt;
+      }
     } else {
       // no signature
       if (strm->Tell() != 0) strm->Seek(0);
       if (strm->IsError()) return nullptr;
-      VSearchPath *spt = op->openCB(strm, filename);
-      if (spt) return spt;
+      VSearchPath *spt = op->openCB(strm, filename, FixVoices);
+      if (spt) {
+        //GLog.Logf(NAME_Debug, "  opened '%s' as '%s'...", *filename, op->fmtname);
+        return spt;
+      }
     }
   }
   return nullptr;
@@ -134,23 +174,100 @@ VSearchPath *FArchiveReaderInfo::OpenArchive (VStream *strm, VStr filename) {
 
 //==========================================================================
 //
-//  W_AddFile
+//  VSearchPath::ListWadFiles
+//
+//==========================================================================
+void VSearchPath::ListWadFiles (TArray<VStr> &list) {
+}
+
+
+//==========================================================================
+//
+//  VSearchPath::ListPk3Files
+//
+//==========================================================================
+void VSearchPath::ListPk3Files (TArray<VStr> &list) {
+}
+
+
+//==========================================================================
+//
+//  AddArchiveFile_NoLock
+//
+//==========================================================================
+static void AddArchiveFile_NoLock (VStr filename, VSearchPath *arc, bool allowpk3) {
+  //SearchPaths.Append(Zip); // already done by the caller
+
+  // add all WAD/PK3 files in the root of the archive file
+  TArray<VStr> wadlist;
+  arc->ListWadFiles(wadlist);
+  if (allowpk3) arc->ListPk3Files(wadlist);
+
+  for (auto &&wadname : wadlist) {
+    VStream *WadStrm = arc->OpenFileRead(wadname);
+    if (!WadStrm) continue;
+    if (WadStrm->TotalSize() > 0x1fffffff) { delete WadStrm; continue; } // file is too big (arbitrary limit)
+    // decompress WAD file into a memory stream, since reading from ZIP will be very slow
+    VStream *MemStrm = new VMemoryStream(filename+":"+wadname, WadStrm);
+    delete WadStrm;
+
+    VSearchPath *wad = FArchiveReaderInfo::OpenArchive(MemStrm, filename+":"+wadname, false); // don't fix voices
+    if (!wad) { delete MemStrm; continue; } // unknown format
+
+    // if this is not a doom wad, and nested pk3s are not allowed, don't add it
+    if (!allowpk3 && !wad->normalwad) { delete wad; continue; }
+
+    //W_AddFileFromZip(ZipName+":"+Wads[i], MemStrm);
+    if (fsys_report_added_paks) GLog.Logf(NAME_Init, "Adding archive '%s'...", *wad->GetPrefix());
+    wadfiles.Append(wadname);
+    SearchPaths.Append(wad);
+
+    // if this is not a doom wad, and nested pk3s are allowed, recursively scan it
+    if (allowpk3 && !wad->normalwad) {
+      if (fsys_report_added_paks) GLog.Logf(NAME_Init, "Adding nested archives from '%s'...", *wad->GetPrefix());
+      AddArchiveFile_NoLock(wad->GetPrefix(), wad, false); // no nested pk3s allowed
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  W_AddDiskFile
 //
 //  All files are optional, but at least one file must be found (PWAD, if
-//  all required lumps are present). Files with a .wad extension are wadlink
+//  all required lumps are present). Files with a .wad extension are archive
 //  files with multiple lumps. Other files are single lumps with the base
 //  filename for the lump name.
 //
+//  for non-wad files (zip, pk3, pak), it adds add subarchives
+//  from a root directory
+//
 //==========================================================================
-void W_AddFile (VStr FileName, bool FixVoices) {
-  int wadtime;
+void W_AddDiskFile (VStr FileName, bool FixVoices) {
+  int wadtime = Sys_FileTime(FileName);
+  if (wadtime == -1) Sys_Error("Required file \"%s\" doesn't exist!", *FileName);
 
-  wadtime = Sys_FileTime(FileName);
-  if (wadtime == -1) Sys_Error("Required file %s doesn't exist", *FileName);
+  VStream *strm = FL_OpenSysFileRead(FileName);
+  if (!strm) Sys_Error("Cannot read required file \"%s\"!", *FileName);
 
   MyThreadLocker glocker(&fsys_glock);
+  VSearchPath *Wad = FArchiveReaderInfo::OpenArchive(strm, FileName);
+
+  bool doomWad = false;
+
+  if (!Wad) {
+    if (strm->IsError()) Sys_Error("Cannot read required file \"%s\"!", *FileName);
+    //delete strm;
+    VWadFile *wadone = new VWadFile;
+    wadone->OpenSingleLumpStream(strm, FileName);
+    Wad = wadone;
+  } else {
+    doomWad = Wad->normalwad;
+  }
 
   wadfiles.Append(FileName);
+  /* old code
   VStr ext = FileName.ExtractFileExtension();
   VWadFile *Wad = new VWadFile;
   if (!ext.strEquCI(".wad")) {
@@ -158,8 +275,63 @@ void W_AddFile (VStr FileName, bool FixVoices) {
   } else {
     Wad->Open(FileName, FixVoices, nullptr);
   }
+  */
 
   SearchPaths.Append(Wad);
+
+  if (!doomWad) AddArchiveFile_NoLock(FileName, Wad, true); // allow nested wads
+}
+
+
+//==========================================================================
+//
+//  W_AddDiskFileOptional
+//
+//==========================================================================
+bool W_AddDiskFileOptional (VStr FileName, bool FixVoices) {
+  int wadtime = Sys_FileTime(FileName);
+  if (wadtime == -1) return false;
+
+  VStream *strm = FL_OpenSysFileRead(FileName);
+  if (!strm) return false;
+
+  MyThreadLocker glocker(&fsys_glock);
+  VSearchPath *Wad = FArchiveReaderInfo::OpenArchive(strm, FileName);
+
+  bool doomWad = false;
+
+  if (!Wad) {
+    if (strm->IsError()) { delete strm; return false; }
+    GLog.Logf(NAME_Debug, "OPTDISKFILE: cannot detect format for '%s'...", *FileName);
+    VWadFile *wadone = new VWadFile;
+    wadone->OpenSingleLumpStream(strm, FileName);
+    Wad = wadone;
+  } else {
+    doomWad = Wad->normalwad;
+  }
+
+  wadfiles.Append(FileName);
+  SearchPaths.Append(Wad);
+
+  if (!doomWad) AddArchiveFile_NoLock(FileName, Wad, true); // allow nested wads
+
+  return true;
+}
+
+
+//==========================================================================
+//
+//  W_MountDiskDir
+//
+//==========================================================================
+void W_MountDiskDir (VStr dirname) {
+  if (dirname.isEmpty()) return;
+  VDirPakFile *dpak = new VDirPakFile(dirname);
+  //if (!dpak->hasFiles()) { delete dpak; return; }
+
+  SearchPaths.append(dpak);
+
+  AddArchiveFile_NoLock(dirname, dpak, true); // allow nested wads
 }
 
 
@@ -235,12 +407,24 @@ int W_OpenAuxiliary (VStr FileName) {
   auto olen = wadfiles.length();
 
   //W_AddFileFromZip(FileName, WadStrm); copypasted here
+  VSearchPath *Wad = FArchiveReaderInfo::OpenArchive(WadStrm, FileName);
+  if (!Wad) {
+    if (WadStrm->IsError()) Sys_Error("Cannot read required file \"%s\"!", *FileName);
+    VWadFile *wadone = new VWadFile;
+    wadone->OpenSingleLumpStream(WadStrm, FileName);
+    SearchPaths.Append(wadone);
+  } else {
+    SearchPaths.Append(Wad);
+  }
+
+  /* old code
   {
     //wadfiles.Append(FileName);
     VWadFile *Wad = new VWadFile;
     Wad->Open(FileName, false, WadStrm);
     SearchPaths.Append(Wad);
   }
+  */
 
   // just in case
   wadfiles.setLength(olen);
@@ -253,16 +437,16 @@ int W_OpenAuxiliary (VStr FileName) {
 //  zipAddWads
 //
 //==========================================================================
-static void zipAddWads (VZipFile *zip, VStr zipName) {
+static void zipAddWads (VSearchPath *zip, VStr zipName) {
   if (!zip) return;
   TArray<VStr> list;
   // scan for wads
   zip->ListWadFiles(list);
-  for (int f = 0; f < list.length(); ++f) {
-    VStream *wadstrm = zip->OpenFileRead(list[f]);
+  for (auto &&wadname : list) {
+    VStream *wadstrm = zip->OpenFileRead(wadname);
     if (!wadstrm) continue;
     if (wadstrm->TotalSize() < 16) { delete wadstrm; continue; }
-    VStream *memstrm = new VMemoryStream(zip->GetPrefix()+":"+list[f], wadstrm);
+    VStream *memstrm = new VMemoryStream(zip->GetPrefix()+":"+wadname, wadstrm);
     bool err = wadstrm->IsError();
     delete wadstrm;
     if (err) { delete memstrm; continue; }
@@ -271,7 +455,7 @@ static void zipAddWads (VZipFile *zip, VStr zipName) {
     if (memcmp(sign, "PWAD", 4) != 0 && memcmp(sign, "IWAD", 4) != 0) { delete memstrm; continue; }
     memstrm->Seek(0);
     VWadFile *wad = new VWadFile;
-    wad->Open(zipName+":"+list[f], false, memstrm);
+    wad->Open(zipName+":"+wadname, false, memstrm);
     SearchPaths.Append(wad);
   }
 }
@@ -292,7 +476,10 @@ int W_AddAuxiliaryStream (VStream *strm, WAuxFileType ftype) {
   //GLog.Logf("AUX: %s", *strm->GetName());
 
   if (ftype != WAuxFileType::VFS_Wad) {
-    VZipFile *zip = new VZipFile(strm, strm->GetName());
+    // guess it
+    VSearchPath *zip = FArchiveReaderInfo::OpenArchive(strm, strm->GetName());
+    if (!zip) return -1;
+    //VZipFile *zip = new VZipFile(strm, strm->GetName());
     SearchPaths.Append(zip);
     // scan for wads and pk3s
     if (ftype == WAuxFileType::VFS_Zip) {
@@ -300,18 +487,24 @@ int W_AddAuxiliaryStream (VStream *strm, WAuxFileType ftype) {
       // scan for pk3s
       TArray<VStr> list;
       zip->ListPk3Files(list);
-      for (int f = 0; f < list.length(); ++f) {
-        VStream *zipstrm = zip->OpenFileRead(list[f]);
+      for (auto &&pk3name : list) {
+        VStream *zipstrm = zip->OpenFileRead(pk3name);
         if (!zipstrm) continue;
         if (zipstrm->TotalSize() < 16) { delete zipstrm; continue; }
-        VStream *memstrm = new VMemoryStream(zip->GetPrefix()+":"+list[f], zipstrm);
+        VStream *memstrm = new VMemoryStream(zip->GetPrefix()+":"+pk3name, zipstrm);
         bool err = zipstrm->IsError();
         delete zipstrm;
         if (err) { delete memstrm; continue; }
-        //GLog.Logf("AUX: %s", *(strm->GetName()+":"+list[f]));
-        VZipFile *pk3 = new VZipFile(memstrm, strm->GetName()+":"+list[f]);
-        SearchPaths.Append(pk3);
-        zipAddWads(pk3, pk3->GetPrefix());
+        //GLog.Logf("AUX: %s", *(strm->GetName()+":"+wadname));
+        // guess
+        VSearchPath *pk3 = FArchiveReaderInfo::OpenArchive(memstrm, zip->GetPrefix()+":"+pk3name);
+        if (pk3) {
+          //VZipFile *pk3 = new VZipFile(memstrm, strm->GetName()+":"+wadname);
+          SearchPaths.Append(pk3);
+          zipAddWads(pk3, pk3->GetPrefix());
+        } else {
+          delete memstrm;
+        }
       }
     }
   } else {

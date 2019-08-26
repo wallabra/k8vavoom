@@ -49,11 +49,11 @@ VQuakePakFile::VQuakePakFile (VStream *fstream)
 //  takes ownership
 //
 //==========================================================================
-VQuakePakFile::VQuakePakFile (VStream *fstream, VStr name)
+VQuakePakFile::VQuakePakFile (VStream *fstream, VStr name, int signtype)
   : VPakFileBase(name, true)
 {
   mythread_mutex_init(&rdlock);
-  OpenArchive(fstream);
+  OpenArchive(fstream, signtype);
 }
 
 
@@ -89,31 +89,45 @@ VQuakePakFile::~VQuakePakFile () {
 //  VQuakePakFile::VQuakePakFile
 //
 //==========================================================================
-void VQuakePakFile::OpenArchive (VStream *fstream) {
+void VQuakePakFile::OpenArchive (VStream *fstream, int signtype) {
   Stream = fstream;
   check(Stream);
 
+  bool isSinPack = false;
+
   //Stream->Seek(0);
-  char sign[4];
-  memset(sign, 0, 4);
-  Stream->Serialise(sign, 4);
-  if (memcmp(sign, "PACK", 4) != 0) Sys_Error("not a quake pak file \"%s\"", *PakFileName);
+  if (!signtype) {
+    char sign[4];
+    memset(sign, 0, 4);
+    Stream->Serialise(sign, 4);
+         if (memcmp(sign, "PACK", 4) == 0) isSinPack = false;
+    else if (memcmp(sign, "SPAK", 4) == 0) isSinPack = true;
+    else Sys_Error("not a quake pak file \"%s\"", *PakFileName);
+  } else {
+    isSinPack = (signtype > 1);
+  }
 
   vuint32 dirofs;
   vuint32 dirsize;
 
   *Stream << dirofs << dirsize;
 
-  char namebuf[57];
+  if (!isSinPack) dirsize /= 64;
+
+  char namebuf[121];
   vuint32 ofs, size;
 
   Stream->Seek(dirofs);
   if (Stream->IsError()) Sys_Error("cannot read quake pak file \"%s\"", *PakFileName);
 
-  while (dirsize >= 64) {
-    dirsize -= 64;
+  while (dirsize > 0) {
+    --dirsize;
     memset(namebuf, 0, sizeof(namebuf));
-    Stream->Serialise(namebuf, 56);
+    if (!isSinPack) {
+      Stream->Serialise(namebuf, 56);
+    } else {
+      Stream->Serialise(namebuf, 120);
+    }
     *Stream << ofs << size;
     if (Stream->IsError()) Sys_Error("cannot read quake pak file \"%s\"", *PakFileName);
 
@@ -192,7 +206,7 @@ void VQuakePakFile::ReadFromLump (int lump, void *dest, int pos, int size) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static VSearchPath *openArchivePAK (VStream *strm, VStr filename) {
+static VSearchPath *openArchivePAK (VStream *strm, VStr filename, bool FixVoices) {
   if (strm->TotalSize() < 12) return nullptr;
   /* already checked by a caller
   char sign[4];
@@ -203,8 +217,24 @@ static VSearchPath *openArchivePAK (VStream *strm, VStr filename) {
   */
   strm->Seek(0);
   if (strm->IsError()) return nullptr;
-  return new VQuakePakFile(strm, filename);
+  return new VQuakePakFile(strm, filename, 1);
+}
+
+
+static VSearchPath *openArchiveSiN (VStream *strm, VStr filename, bool FixVoices) {
+  if (strm->TotalSize() < 12) return nullptr;
+  /* already checked by a caller
+  char sign[4];
+  memset(sign, 0, 4);
+  strm->Serialise(sign, 4);
+  if (strm->IsError()) return nullptr;
+  if (memcmp(sign, "PACK", 4) != 0) return nullptr;
+  */
+  strm->Seek(0);
+  if (strm->IsError()) return nullptr;
+  return new VQuakePakFile(strm, filename, 2);
 }
 
 
 FArchiveReaderInfo vavoom_fsys_archive_opener_pak("pak", &openArchivePAK, "PACK");
+FArchiveReaderInfo vavoom_fsys_archive_opener_sin("sin", &openArchiveSiN, "SPAK");

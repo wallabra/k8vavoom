@@ -45,8 +45,8 @@ Library libcore.a :
   src/fsys/fsys_dir.cpp
   src/fsys/fsys_dirpak.cpp
   src/fsys/fsys_pakbase.cpp
-  src/fsys/fsys_wad.cpp
-  src/fsys/fsys_zip.cpp
-  src/fsys/fsys_qkpak.cpp
+  #src/fsys/fsys_wad.cpp
+  #src/fsys/fsys_zip.cpp
+  #src/fsys/fsys_qkpak.cpp
   src/fsys/fsys_vfs.cpp
 ;

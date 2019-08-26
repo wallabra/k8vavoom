@@ -232,3 +232,10 @@ bool FL_IsSafeDiskFileName (VStr fname) {
   if (fname.isEmpty()) return false;
   return fname.isSafeDiskFileName();
 }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// i have to do this, otherwise the linker will optimise openers away
+#include "fsys_wad.cpp"
+#include "fsys_zip.cpp"
+#include "fsys_qkpak.cpp"

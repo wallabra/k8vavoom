@@ -78,6 +78,9 @@ public:
   virtual VStream *CreateLumpReaderNum (int LumpNum) = 0;
   virtual void RenameSprites (const TArray<VSpriteRename> &A, const TArray<VLumpRename> &LA) = 0;
   virtual VStr GetPrefix () = 0; // for logging
+
+  virtual void ListWadFiles (TArray<VStr> &list);
+  virtual void ListPk3Files (TArray<VStr> &list);
 };
 
 
@@ -236,12 +239,12 @@ public:
   //virtual VStream *CreateLumpReaderNum (int) override; // override this!
   virtual void RenameSprites (const TArray<VSpriteRename> &, const TArray<VLumpRename> &) override; // override this if you don't want any renaming
 
-  void ListWadFiles (TArray<VStr> &list);
-  void ListPk3Files (TArray<VStr> &list);
+  virtual void ListWadFiles (TArray<VStr> &list) override;
+  virtual void ListPk3Files (TArray<VStr> &list) override;
 
   VStr CalculateMD5 (int lumpidx);
 
-  virtual VStr GetPrefix () override { return PakFileName; }
+  virtual VStr GetPrefix () override;
 };
 
 
@@ -264,7 +267,7 @@ public:
   virtual ~VWadFile () override;
 
   void Open (VStr FileName, bool FixVoices, VStream *InStream);
-  void OpenSingleLump (VStr FileName);
+  void OpenSingleLumpStream (VStream *strm, VStr FileName);
   virtual void Close () override;
   virtual VStream *CreateLumpReaderNum (int) override;
   virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=true) override;
@@ -286,7 +289,7 @@ private:
   void OpenArchive (VStream *fstream, vuint32 cdofs=0);
 
 public:
-  VZipFile (VStr);
+  VZipFile (VStr zipfile); // only disk files
   VZipFile (VStream *fstream); // takes ownership
   // you can pass central dir offset here
   VZipFile (VStream *fstream, VStr name, vuint32 cdofs=0); // takes ownership
@@ -309,12 +312,12 @@ private:
   mythread_mutex rdlock;
   VStream *Stream; // source stream of the zipfile
 
-  void OpenArchive (VStream *fstream);
+  void OpenArchive (VStream *fstream, int signtype=0);
 
 public:
   VQuakePakFile (VStr);
   VQuakePakFile (VStream *fstream); // takes ownership
-  VQuakePakFile (VStream *fstream, VStr name); // takes ownership
+  VQuakePakFile (VStream *fstream, VStr name, int signtype=0); // takes ownership
   virtual ~VQuakePakFile () override;
 
   virtual VStream *CreateLumpReaderNum (int) override;
@@ -349,7 +352,7 @@ struct FArchiveReaderInfo {
 public:
   // stream is guaranteed to be seeked after the signature
   // return `nullptr` to reject this archive format
-  typedef VSearchPath *(*OpenCB) (VStream *strm, VStr filename);
+  typedef VSearchPath *(*OpenCB) (VStream *strm, VStr filename, bool FixVoices);
 
 private:
   FArchiveReaderInfo *next;
@@ -364,7 +367,7 @@ public:
   FArchiveReaderInfo (const char *afmtname, OpenCB ocb, const char *asign=nullptr, int apriority=666);
 
   // this owns the `strm` on success
-  static VSearchPath *OpenArchive (VStream *strm, VStr filename);
+  static VSearchPath *OpenArchive (VStream *strm, VStr filename, bool FixVoices=false);
 };
 
 

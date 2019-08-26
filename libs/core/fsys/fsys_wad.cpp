@@ -167,13 +167,13 @@ void VWadFile::Open (VStr FileName, bool FixVoices, VStream *InStream) {
 
 //==========================================================================
 //
-//  VWadFile::OpenSingleLump
+//  VWadFile::OpenSingleLumpStream
 //
 //==========================================================================
-void VWadFile::OpenSingleLump (VStr FileName) {
+void VWadFile::OpenSingleLumpStream (VStream *strm, VStr FileName) {
   // open the file and add to directory
-  Stream = FL_OpenSysFileRead(FileName);
-  if (!Stream) Sys_Error("Couldn't open \"%s\"", *FileName);
+  check(strm);
+  Stream = strm;
   if (fsys_report_added_paks) GLog.Logf(NAME_Init, "Adding \"%s\"...", *FileName);
 
   PakFileName = FileName;
@@ -468,7 +468,7 @@ void VWadFile::ReadFromLump (int lump, void *dest, int pos, int size) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static VSearchPath *openArchiveWAD (VStream *strm, VStr filename) {
+static VSearchPath *openArchiveWAD (VStream *strm, VStr filename, bool FixVoices) {
   if (strm->TotalSize() < 12) return nullptr;
   /* already checked by a caller
   char sign[4];
@@ -480,7 +480,7 @@ static VSearchPath *openArchiveWAD (VStream *strm, VStr filename) {
   strm->Seek(0);
   if (strm->IsError()) return nullptr;
   VWadFile *wad = new VWadFile;
-  wad->Open(filename, false, strm);
+  wad->Open(filename, FixVoices, strm);
   return wad;
 }
 

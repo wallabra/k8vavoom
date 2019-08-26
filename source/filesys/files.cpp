@@ -666,7 +666,7 @@ static void tempMount (const PWadFile &pwf) {
     for (int i = 0; i < wads.length(); ++i) {
       VStream *wadst = dpak->OpenFileRead(wads[i]);
       if (!wadst) continue;
-      W_AddAuxiliaryStream(wadst, WAuxFileType::VFS_Wad);
+      W_AddAuxiliaryStream(wadst, WAuxFileType::VFS_Archive);
     }
 
     // add all pk3 files in the root
@@ -674,7 +674,7 @@ static void tempMount (const PWadFile &pwf) {
     dpak->ListPk3Files(pk3s);
     for (int i = 0; i < pk3s.length(); ++i) {
       VStream *pk3st = dpak->OpenFileRead(pk3s[i]);
-      W_AddAuxiliaryStream(pk3st, WAuxFileType::VFS_Pk3);
+      W_AddAuxiliaryStream(pk3st, WAuxFileType::VFS_Archive);
     }
   } else {
     VStream *strm = FL_OpenSysFileRead(pwf.fname);
@@ -697,7 +697,7 @@ static void tempMount (const PWadFile &pwf) {
       VStr ext = pwf.fname.ExtractFileExtension();
       if (ext.strEquCI(".pk3")) {
         //GCon->Logf(NAME_Init, "TEMPMOUNT: PK3: %s", *pwf.fname);
-        W_AddAuxiliaryStream(strm, WAuxFileType::VFS_Pk3);
+        W_AddAuxiliaryStream(strm, WAuxFileType::VFS_Archive);
       } else if (ext.strEquCI(".zip")) {
         //GCon->Logf(NAME_Init, "TEMPMOUNT: ZIP: %s", *pwf.fname);
         W_AddAuxiliaryStream(strm, WAuxFileType::VFS_Zip);
@@ -760,62 +760,6 @@ static int cmpfuncCINoExt (const void *v1, const void *v2) {
 
 //==========================================================================
 //
-//  AddZipFile
-//
-//==========================================================================
-static void AddZipFile (VStr ZipName, VZipFile *Zip, bool allowpk3) {
-  SearchPaths.Append(Zip);
-
-  // add all WAD files in the root of the ZIP file
-  TArray<VStr> Wads;
-  Zip->ListWadFiles(Wads);
-  for (int i = 0; i < Wads.length(); ++i) {
-    VStream *WadStrm = Zip->OpenFileRead(Wads[i]);
-
-    if (!WadStrm) continue;
-    if (WadStrm->TotalSize() < 16) { delete WadStrm; continue; }
-    char sign[4];
-    WadStrm->Serialise(sign, 4);
-    if (memcmp(sign, "PWAD", 4) != 0 && memcmp(sign, "IWAD", 4) != 0) { delete WadStrm; continue; }
-    WadStrm->Seek(0);
-    // decompress WAD and GWA files into a memory stream since reading from ZIP will be very slow
-    VStream *MemStrm = new VMemoryStream(ZipName+":"+Wads[i], WadStrm);
-    delete WadStrm;
-
-    W_AddFileFromZip(ZipName+":"+Wads[i], MemStrm);
-  }
-
-  if (!allowpk3) return;
-
-  // add all pk3 files in the root of the ZIP file
-  TArray<VStr> pk3s;
-  Zip->ListPk3Files(pk3s);
-  for (int i = 0; i < pk3s.length(); ++i) {
-    VStream *ZipStrm = Zip->OpenFileRead(pk3s[i]);
-    if (ZipStrm->TotalSize() < 16) { delete ZipStrm; continue; }
-    // decompress file into a memory stream since reading from ZIP will be very slow
-    VStream *MemStrm = new VMemoryStream(ZipName+":"+pk3s[i], ZipStrm);
-    delete ZipStrm;
-    if (fsys_report_added_paks) GCon->Logf(NAME_Init, "Adding nested pk3 '%s:%s'...", *ZipName, *pk3s[i]);
-    VZipFile *pk3 = new VZipFile(MemStrm, ZipName+":"+pk3s[i]);
-    AddZipFile(ZipName+":"+pk3s[i], pk3, false);
-  }
-}
-
-
-//==========================================================================
-//
-//  AddZipFile
-//
-//==========================================================================
-static void AddZipFile (VStr ZipName) {
-  VZipFile *Zip = new VZipFile(ZipName);
-  AddZipFile(ZipName, Zip, true);
-}
-
-
-//==========================================================================
-//
 //  AddAnyFile
 //
 //==========================================================================
@@ -826,51 +770,12 @@ static void AddAnyFile (VStr fname, bool allowFail, bool fixVoices=false) {
   }
   if (!Sys_FileExists(fname)) {
     if (!allowFail) Sys_Error("cannot add file \"%s\"", *fname);
-    GCon->Logf(NAME_Warning,"cannot add file \"%s\"", *fname);
+    GCon->Logf(NAME_Warning, "cannot add file \"%s\"", *fname);
     return;
   }
-  VStr ext = fname.ExtractFileExtension();
-  if (ext.strEquCI(".pk3") || ext.strEquCI(".zip")) {
-    AddZipFile(fname);
-  } else {
-    if (allowFail) {
-      W_AddFile(fname, false);
-    } else {
-      W_AddFile(fname, fixVoices);
-    }
-  }
-}
-
-
-//==========================================================================
-//
-//  AddPakDir
-//
-//==========================================================================
-static void AddPakDir (VStr dirname) {
-  if (dirname.length() == 0) return;
-  VDirPakFile *dpak = new VDirPakFile(dirname);
-  //if (!dpak->hasFiles()) { delete dpak; return; }
-
-  SearchPaths.append(dpak);
-
-  // add all WAD files in the root
-  TArray<VStr> wads;
-  dpak->ListWadFiles(wads);
-  for (int i = 0; i < wads.length(); ++i) {
-    VStream *wadst = dpak->OpenFileRead(wads[i]);
-    if (!wadst) continue;
-    W_AddFileFromZip(dpak->GetPrefix()+":"+wads[i], wadst);
-  }
-
-  // add all pk3 files in the root
-  TArray<VStr> pk3s;
-  dpak->ListPk3Files(pk3s);
-  for (int i = 0; i < pk3s.length(); ++i) {
-    VStream *pk3st = dpak->OpenFileRead(pk3s[i]);
-    if (fsys_report_added_paks) GCon->Logf(NAME_Init, "Adding nested pk3 '%s:%s'...", *dpak->GetPrefix(), *pk3s[i]);
-    VZipFile *pk3 = new VZipFile(pk3st, dpak->GetPrefix()+":"+pk3s[i]);
-    AddZipFile(dpak->GetPrefix()+":"+pk3s[i], pk3, false);
+  if (!W_AddDiskFileOptional(fname, (allowFail ? false : fixVoices))) {
+    if (!allowFail) Sys_Error("cannot add file \"%s\"", *fname);
+    GCon->Logf(NAME_Warning, "cannot add file \"%s\"", *fname);
   }
 }
 
@@ -1030,14 +935,14 @@ static void AddGameDir (VStr basedir, VStr dir) {
   // now add wads, then pk3s
   for (int i = 0; i < WadFiles.length(); ++i) {
     //if (i == 0 && ZipFiles.length() == 0) wpkAppend(dir+"/"+WadFiles[i], true); // system pak
-    W_AddFile(bdx+"/"+WadFiles[i], false);
+    W_AddDiskFile(bdx+"/"+WadFiles[i], false);
   }
 
   for (int i = 0; i < ZipFiles.length(); ++i) {
     //if (i == 0) wpkAppend(dir+"/"+ZipFiles[i], true); // system pak
     bool isBPK = ZipFiles[i].extractFileName().strEquCI("basepak.pk3");
     int spl = SearchPaths.length();
-    AddZipFile(bdx+"/"+ZipFiles[i]);
+    /*AddDiskZipFile*/W_AddDiskFile(bdx+"/"+ZipFiles[i]);
     if (isBPK) {
       // mark "basepak" flags
       for (int cc = spl; cc < SearchPaths.length(); ++cc) {
@@ -1073,8 +978,8 @@ static void AddGameDir (VStr basedir, VStr dir) {
     }
 
     // now add wads, then pk3s
-    for (int i = 0; i < WadFiles.length(); ++i) W_AddFile(bdxSlash+WadFiles[i], false);
-    for (int i = 0; i < ZipFiles.length(); ++i) AddZipFile(bdxSlash+ZipFiles[i]);
+    for (int i = 0; i < WadFiles.length(); ++i) W_AddDiskFile(bdxSlash+WadFiles[i], false);
+    for (int i = 0; i < ZipFiles.length(); ++i) /*AddDiskZipFile*/W_AddDiskFile(bdxSlash+ZipFiles[i]);
 
     AddAutoloadRC(bdxSlash);
   }
@@ -1814,7 +1719,8 @@ void FL_Init () {
     if (pwf.asDirectory) {
       if (pwf.storeInSave) wpkAppend(pwf.fname, false); // non-system pak
       GCon->Logf(NAME_Init, "Mounting directory '%s' as emulated PK3 file.", *pwf.fname);
-      AddPakDir(pwf.fname);
+      //AddPakDir(pwf.fname);
+      W_MountDiskDir(pwf.fname);
     } else {
       if (pwf.storeInSave) wpkAppend(pwf.fname, false); // non-system pak
       AddAnyFile(pwf.fname, true);

@@ -390,7 +390,7 @@ VStream *VZipFile::CreateLumpReaderNum (int Lump) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static VSearchPath *openArchiveZIP (VStream *strm, VStr filename) {
+static VSearchPath *openArchiveZIP (VStream *strm, VStr filename, bool FixVoices) {
   if (strm->TotalSize() < 16) return nullptr;
   vuint32 cdofs = VZipFile::SearchCentralDir(strm);
   if (cdofs == 0) return nullptr;
@@ -398,5 +398,6 @@ static VSearchPath *openArchiveZIP (VStream *strm, VStr filename) {
 }
 
 
-// checking for this is slow, so give it lower priority
+// checking for this is slow, but the sorter will check it last, as it has no signature
+// still, give it lower priority in case we'll have other signature-less formats
 FArchiveReaderInfo vavoom_fsys_archive_opener_zip("zip", &openArchiveZIP, nullptr, 999);
