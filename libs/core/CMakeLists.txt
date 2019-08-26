@@ -91,5 +91,6 @@ add_library(core STATIC
   fsys/fsys_pakbase.cpp
   fsys/fsys_wad.cpp
   fsys/fsys_zip.cpp
+  fsys/fsys_qkpak.cpp
   fsys/fsys_vfs.cpp
 )

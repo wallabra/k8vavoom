@@ -66,8 +66,6 @@ struct lumpinfo_t {
 VWadFile::VWadFile ()
   : VPakFileBase("")
   , Stream(nullptr)
-  //, NumLumps(0)
-  //, LumpInfo(nullptr)
   , lockInited(false)
 {
   normalwad = true;
@@ -79,11 +77,9 @@ VWadFile::VWadFile ()
 //  VWadFile::~VWadFile
 //
 //==========================================================================
-/*
 VWadFile::~VWadFile () {
   Close();
 }
-*/
 
 
 //==========================================================================
@@ -93,22 +89,18 @@ VWadFile::~VWadFile () {
 //==========================================================================
 void VWadFile::Open (VStr FileName, bool FixVoices, VStream *InStream) {
   wadinfo_t header;
-  //lumpinfo_t *lump_p;
-  int length;
-  filelump_t *fileinfo;
-  filelump_t *fi_p;
 
   if (!lockInited) {
     lockInited = true;
     mythread_mutex_init(&rdlock);
   }
 
-  //Name = FileName;
   PakFileName = FileName;
   pakdir.clear();
 
   if (InStream) {
     Stream = InStream;
+    //Stream->Seek(0);
   } else {
     // open the file and add to directory
     Stream = FL_OpenSysFileRead(FileName);
@@ -117,11 +109,12 @@ void VWadFile::Open (VStr FileName, bool FixVoices, VStream *InStream) {
   if (fsys_report_added_paks && !FileName.isEmpty()) GLog.Logf(NAME_Init, "Adding \"%s\"...", *FileName);
 
   // WAD file or homebrew levels?
+  memset(&header, 0, sizeof(header));
   Stream->Serialise(&header, sizeof(header));
   if (VStr::NCmp(header.identification, "IWAD", 4) != 0 &&
       VStr::NCmp(header.identification, "PWAD", 4) != 0)
   {
-    Sys_Error("Wad file \"%s\" is neither IWAD nor PWAD\n", *FileName);
+    Sys_Error("Wad file \"%s\" is neither IWAD nor PWAD", *FileName);
   }
 
   header.numlumps = LittleLong(header.numlumps);
@@ -130,41 +123,38 @@ void VWadFile::Open (VStr FileName, bool FixVoices, VStream *InStream) {
   if (NumLumps < 0 || NumLumps > 65520) Sys_Error("invalid number of lumps in wad file '%s'", *FileName);
 
   // moved here to make static data less fragmented
-  //LumpInfo = new lumpinfo_t[NumLumps];
-  length = header.numlumps*(int)sizeof(filelump_t);
-  fi_p = fileinfo = (filelump_t *)Z_Malloc(length);
-  Stream->Seek(header.infotableofs);
-  Stream->Serialise(fileinfo, length);
-  if (Stream->IsError()) Sys_Error("cannot read directory of wad file '%s'", *FileName);
+  if (NumLumps > 0) {
+    Stream->Seek(header.infotableofs);
+    //Stream->Serialise(waddir.ptr(), length);
+    //if (Stream->IsError()) Sys_Error("cannot read directory of wad file '%s'", *FileName);
 
-  // fill in lumpinfo
-  //lump_p = LumpInfo;
-  for (int i = 0; i < NumLumps; ++i, /*++lump_p,*/ ++fileinfo) {
-    // Mac demo hexen.wad:  many (1784) of the lump names
-    // have their first character with the high bit (0x80)
-    // set. I don't know the reason for that. We must clear
-    // the high bits for such Mac wad files to work in this
-    // engine. This shouldn't break other wads.
-    VPakFileInfo fi;
-    char namebuf[9];
-    for (int j = 0; j < 8; ++j) namebuf[j] = fileinfo->name[j]&0x7f;
-    namebuf[8] = 0;
-    //
-    fi.lumpName = VName(namebuf, VName::AddLower8);
-    fi.pakdataofs = LittleLong(fileinfo->filepos);
-    fi.filesize = LittleLong(fileinfo->size);
-    fi.lumpNamespace = WADNS_Global;
-    fi.fileName = VStr(fi.lumpName);
-    pakdir.append(fi);
-    /*
-    lump_p->Name = VName(namebuf, VName::AddLower8);
-    lump_p->Position = LittleLong(fileinfo->filepos);
-    lump_p->Size = LittleLong(fileinfo->size);
-    lump_p->Namespace = WADNS_Global;
-    */
+    for (int decount = NumLumps; decount > 0; --decount) {
+      VPakFileInfo fi;
+
+      vuint32 ofs, size;
+      *Stream << ofs << size;
+
+      char namebuf[9];
+      Stream->Serialise(namebuf, 8);
+      if (Stream->IsError()) Sys_Error("cannot read wad file '%s'", *PakFileName);
+      if (!namebuf[0]) continue; // something strange happened here
+
+      // Mac demo hexen.wad: many (1784) of the lump names
+      // have their first character with the high bit (0x80)
+      // set. I don't know the reason for that. We must clear
+      // the high bits for such Mac wad files to work in this
+      // engine. This shouldn't break other wads.
+      for (int j = 0; j < 8; ++j) namebuf[j] &= 0x7f;
+      namebuf[8] = 0;
+
+      fi.lumpName = VName(namebuf, VName::AddLower8);
+      fi.pakdataofs = ofs;
+      fi.filesize = size;
+      fi.lumpNamespace = WADNS_Global;
+      fi.fileName = VStr(fi.lumpName);
+      pakdir.append(fi);
+    }
   }
-
-  Z_Free(fi_p);
 
   // set up namespaces
   InitNamespaces();
@@ -189,10 +179,6 @@ void VWadFile::OpenSingleLump (VStr FileName) {
   PakFileName = FileName;
   VPakFileInfo fi;
 
-  // single lump file
-  //NumLumps = 1;
-  //LumpInfo = new lumpinfo_t[1];
-
   // fill in lumpinfo
   fi.lumpName = VName(*FileName.ExtractFileBase(), VName::AddLower8);
   fi.pakdataofs = 0;
@@ -202,12 +188,6 @@ void VWadFile::OpenSingleLump (VStr FileName) {
   //pakdir.appendAndRegister(fi);
   pakdir.append(fi);
   pakdir.buildNameMaps();
-  /*
-  LumpInfo->Name = VName(*FileName.ExtractFileBase(), VName::AddLower8);
-  LumpInfo->Position = 0;
-  LumpInfo->Size = Stream->TotalSize();
-  LumpInfo->Namespace = WADNS_Global;
-  */
 }
 
 
@@ -217,6 +197,7 @@ void VWadFile::OpenSingleLump (VStr FileName) {
 //
 //==========================================================================
 void VWadFile::Close () {
+  VPakFileBase::Close();
   if (Stream) {
     delete Stream;
     Stream = nullptr;
@@ -266,6 +247,7 @@ void VWadFile::InitNamespaces () {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 struct NSInfo {
 public:
   EWadNamespace NS;
@@ -420,28 +402,15 @@ VStream *VWadFile::CreateLumpReaderNum (int lump) {
   }
 
   // create stream
-  VStream *S = new VMemoryStream(GetPrefix()+":"+pakdir.files[lump].fileName, ptr, fi.filesize, true);
+  VStream *S = new VMemoryStream(GetPrefix()+":"+fi.fileName, ptr, fi.filesize, true);
 #else
   // this is mt-protected
-  VStream *S = new VPartialStreamRO(GetPrefix()+":"+pakdir.files[lump].fileName, Stream, fi.pakdataofs, fi.filesize, &rdlock);
+  VStream *S = new VPartialStreamRO(GetPrefix()+":"+fi.fileName, Stream, fi.pakdataofs, fi.filesize, &rdlock);
 #endif
 
   //GLog.Logf("WAD<%s>: lump=%d; name=<%s>; size=(%d:%d); ofs=0x%08x", *PakFileName, lump, *fi.lumpName, fi.filesize, S->TotalSize(), fi.pakdataofs);
   //Z_Free(ptr);
   return S;
-}
-
-
-//==========================================================================
-//
-//  VWadFile::OpenFileRead
-//
-//==========================================================================
-VStream *VWadFile::OpenFileRead (VStr fname) {
-  //VStr fn = fname.stripExtension();
-  int lump = CheckNumForFileName(fname);
-  if (lump < 0) return nullptr;
-  return CreateLumpReaderNum(lump);
 }
 
 
@@ -498,43 +467,23 @@ void VWadFile::ReadFromLump (int lump, void *dest, int pos, int size) {
 }
 
 
-//==========================================================================
-//
-//  VWadFile::RenameSprites
-//
-//==========================================================================
-void VWadFile::RenameSprites (const TArray<VSpriteRename> &A, const TArray<VLumpRename> &LA) {
-  bool wasRename = false;
-  for (int i = 0; i < pakdir.files.length(); ++i) {
-    VPakFileInfo &fi = pakdir.files[i];
-    if (fi.lumpNamespace != WADNS_Sprites) continue;
-    for (int j = 0; j < A.Num(); ++j) {
-      if ((*fi.lumpName)[0] != A[j].Old[0] || (*fi.lumpName)[1] != A[j].Old[1] ||
-          (*fi.lumpName)[2] != A[j].Old[2] || (*fi.lumpName)[3] != A[j].Old[3])
-      {
-        continue;
-      }
-      char newname[16];
-      auto len = (int)strlen(*fi.lumpName);
-      if (len) {
-        if (len > 12) len = 12;
-        memcpy(newname, *fi.lumpName, len);
-      }
-      newname[len] = 0;
-      newname[0] = A[j].New[0];
-      newname[1] = A[j].New[1];
-      newname[2] = A[j].New[2];
-      newname[3] = A[j].New[3];
-      GLog.Logf(NAME_Dev, "renaming WAD sprite '%s' to '%s'", *fi.lumpName, newname);
-      fi.lumpName = newname;
-      wasRename = true;
-    }
-    for (int j = 0; j < LA.Num(); ++j) {
-      if (fi.lumpName == LA[j].Old) {
-        fi.lumpName = LA[j].New;
-        wasRename = true;
-      }
-    }
-  }
-  if (wasRename) pakdir.buildNameMaps(true);
+// ////////////////////////////////////////////////////////////////////////// //
+static VSearchPath *openArchiveWAD (VStream *strm, VStr filename) {
+  if (strm->TotalSize() < 12) return nullptr;
+  /* already checked by a caller
+  char sign[4];
+  memset(sign, 0, 4);
+  strm->Serialise(sign, 4);
+  if (strm->IsError()) return nullptr;
+  if (memcmp(sign, "IWAD", 4) != 0 && memcmp(sign, "PWAD", 4) != 0) return nullptr;
+  */
+  strm->Seek(0);
+  if (strm->IsError()) return nullptr;
+  VWadFile *wad = new VWadFile;
+  wad->Open(filename, false, strm);
+  return wad;
 }
+
+
+FArchiveReaderInfo vavoom_fsys_archive_opener_iwad("iwad", &openArchiveWAD, "IWAD");
+FArchiveReaderInfo vavoom_fsys_archive_opener_pwad("pwad", &openArchiveWAD, "PWAD");

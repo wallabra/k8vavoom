@@ -203,7 +203,12 @@ public:
 
 
 //==========================================================================
+//
 //  VPakFileBase
+//
+//  this is base class for various archive readers
+//  it implements file list, and sprite renaming functionality
+//
 //==========================================================================
 class VPakFileBase : public VSearchPath {
 public:
@@ -219,7 +224,7 @@ public:
   virtual void Close () override;
 
   virtual bool FileExists (VStr fname) override;
-  //virtual VStream *OpenFileRead (VStr fname) override;
+  virtual VStream *OpenFileRead (VStr fname) override;
   virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=true) override;
   virtual int CheckNumForFileName (VStr fname) override;
   virtual int FindACSObject (VStr fname) override;
@@ -228,8 +233,8 @@ public:
   virtual VName LumpName (int) override;
   virtual VStr LumpFileName (int) override;
   virtual int IterateNS (int, EWadNamespace, bool allowEmptyName8=false) override;
-  //virtual VStream *CreateLumpReaderNum (int) override;
-  virtual void RenameSprites (const TArray<VSpriteRename> &, const TArray<VLumpRename> &) override;
+  //virtual VStream *CreateLumpReaderNum (int) override; // override this!
+  virtual void RenameSprites (const TArray<VSpriteRename> &, const TArray<VLumpRename> &) override; // override this if you don't want any renaming
 
   void ListWadFiles (TArray<VStr> &list);
   void ListPk3Files (TArray<VStr> &list);
@@ -243,15 +248,10 @@ public:
 //==========================================================================
 //  VWadFile
 //==========================================================================
-//struct lumpinfo_t;
-
 class VWadFile : public VPakFileBase {
 private:
   mythread_mutex rdlock;
-  //VStr Name;
   VStream *Stream;
-  //int NumLumps;
-  //lumpinfo_t *LumpInfo; // location of each lump on disk
   bool lockInited;
 
 private:
@@ -261,22 +261,15 @@ private:
 
 public:
   VWadFile ();
-  //virtual ~VWadFile () override;
+  virtual ~VWadFile () override;
+
   void Open (VStr FileName, bool FixVoices, VStream *InStream);
   void OpenSingleLump (VStr FileName);
   virtual void Close () override;
-  virtual VStream *OpenFileRead (VStr) override;
   virtual VStream *CreateLumpReaderNum (int) override;
   virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=true) override;
-  //virtual int CheckNumForFileName (VStr) override;
   virtual void ReadFromLump (int lump, void *dest, int pos, int size) override;
-  //virtual int LumpLength (int) override;
-  //virtual VName LumpName (int) override;
-  //virtual VStr LumpFileName (int) override;
   virtual int IterateNS (int, EWadNamespace, bool allowEmptyName8=false) override;
-  //virtual bool FileExists (VStr) override;
-  virtual void RenameSprites (const TArray<VSpriteRename>&, const TArray<VLumpRename>&) override;
-  //virtual VStr GetPrefix () override { return Name; }
 };
 
 
@@ -287,22 +280,46 @@ class VZipFile : public VPakFileBase {
 private:
   mythread_mutex rdlock;
   VStream *FileStream; // source stream of the zipfile
-  //vuint16 NumFiles; // total number of files
   vuint32 BytesBeforeZipFile; // byte before the zipfile, (>0 for sfx)
 
-  vuint32 SearchCentralDir ();
-  void OpenArchive (VStream *fstream);
+  // you can pass central dir offset here
+  void OpenArchive (VStream *fstream, vuint32 cdofs=0);
 
 public:
   VZipFile (VStr);
   VZipFile (VStream *fstream); // takes ownership
-  VZipFile (VStream *fstream, VStr name); // takes ownership
+  // you can pass central dir offset here
+  VZipFile (VStream *fstream, VStr name, vuint32 cdofs=0); // takes ownership
   virtual ~VZipFile () override;
 
-  virtual VStream *OpenFileRead (VStr)  override;
   virtual VStream *CreateLumpReaderNum (int) override;
   virtual void Close () override;
-  virtual void RenameSprites (const TArray<VSpriteRename> &, const TArray<VLumpRename> &) override;
+
+public: // fuck shitpp friend idiocity
+  // returns 0 if not found
+  static vuint32 SearchCentralDir (VStream *strm);
+};
+
+
+//==========================================================================
+//  VQuakePakFile
+//==========================================================================
+class VQuakePakFile : public VPakFileBase {
+private:
+  mythread_mutex rdlock;
+  VStream *Stream; // source stream of the zipfile
+
+  void OpenArchive (VStream *fstream);
+
+public:
+  VQuakePakFile (VStr);
+  VQuakePakFile (VStream *fstream); // takes ownership
+  VQuakePakFile (VStream *fstream, VStr name); // takes ownership
+  virtual ~VQuakePakFile () override;
+
+  virtual VStream *CreateLumpReaderNum (int) override;
+  virtual void ReadFromLump (int lump, void *dest, int pos, int size) override;
+  virtual void Close () override;
 };
 
 
@@ -324,6 +341,30 @@ public:
   virtual VStream *OpenFileRead (VStr)  override;
   virtual VStream *CreateLumpReaderNum (int) override;
   virtual int LumpLength (int) override;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+struct FArchiveReaderInfo {
+public:
+  // stream is guaranteed to be seeked after the signature
+  // return `nullptr` to reject this archive format
+  typedef VSearchPath *(*OpenCB) (VStream *strm, VStr filename);
+
+private:
+  FArchiveReaderInfo *next;
+  OpenCB openCB;
+
+public:
+  const char *fmtname; // short name of the format, like "wad", or "pk3"
+  const char *sign; // you can give a signature to check; can be `nullptr` or empty
+  int priority; // lower priorities will be tried first
+
+public:
+  FArchiveReaderInfo (const char *afmtname, OpenCB ocb, const char *asign=nullptr, int apriority=666);
+
+  // this owns the `strm` on success
+  static VSearchPath *OpenArchive (VStream *strm, VStr filename);
 };
 
 

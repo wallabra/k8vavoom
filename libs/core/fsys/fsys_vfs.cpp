@@ -50,6 +50,88 @@ bool fsys_EnableAuxSearch = false;
 static inline int getSPCount () { return (AuxiliaryIndex && !fsys_EnableAuxSearch ? AuxiliaryIndex : SearchPaths.length()); }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+FArchiveReaderInfo *arcInfoHead = nullptr;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+extern "C" {
+  static int OpenerCmpFunc (const void *aa, const void *bb, void *udata) {
+    if (aa == bb) return 0;
+    const FArchiveReaderInfo *a = *(const FArchiveReaderInfo **)aa;
+    const FArchiveReaderInfo *b = *(const FArchiveReaderInfo **)bb;
+    return a->priority-b->priority;
+  }
+}
+
+
+//==========================================================================
+//
+//  FArchiveReaderInfo::FArchiveReaderInfo
+//
+//==========================================================================
+FArchiveReaderInfo::FArchiveReaderInfo (const char *afmtname, OpenCB ocb, const char *asign, int apriority)
+  : next(nullptr)
+  , openCB(ocb)
+  , fmtname(afmtname)
+  , sign(asign)
+  , priority(apriority)
+{
+  next = arcInfoHead;
+  arcInfoHead = this;
+}
+
+
+//==========================================================================
+//
+//  FArchiveReaderInfo::OpenArchive
+//
+//==========================================================================
+VSearchPath *FArchiveReaderInfo::OpenArchive (VStream *strm, VStr filename) {
+  if (!strm || strm->IsError()) return nullptr; // sanity check
+  TArray<FArchiveReaderInfo *> openers;
+  int maxsignlen = 0;
+  for (FArchiveReaderInfo *opl = arcInfoHead; opl; opl = opl->next) {
+    openers.append(opl);
+    if (opl->sign && opl->sign[0]) {
+      size_t slen = strlen(opl->sign);
+      if (slen > 1024) Sys_Error("signature too long for archive format '%s'!", opl->fmtname);
+      if (slen > (vuint32)maxsignlen) maxsignlen = (vint32)slen;
+    }
+  }
+  timsort_r(openers.ptr(), openers.length(), sizeof(FArchiveReaderInfo *), &OpenerCmpFunc, nullptr);
+  TArray<vuint8> signbuf;
+  signbuf.setLength(maxsignlen);
+  int lastsignlen = 0;
+  for (auto &&op : openers) {
+    // has signature?
+    if (op->sign && op->sign[0]) {
+      // has signature, perform signature check
+      int slen = (int)strlen(op->sign);
+      if (lastsignlen < slen) {
+        if (strm->Tell() != 0) strm->Seek(0);
+        if (strm->IsError()) return nullptr;
+        strm->Serialise(signbuf.ptr(), slen);
+        if (strm->IsError()) return nullptr;
+        lastsignlen = slen;
+      }
+      if (memcmp(signbuf.ptr(), op->sign, slen) != 0) continue; // bad signature
+      if (strm->Tell() != slen) strm->Seek(0);
+      if (strm->IsError()) return nullptr;
+      VSearchPath *spt = op->openCB(strm, filename);
+      if (spt) return spt;
+    } else {
+      // no signature
+      if (strm->Tell() != 0) strm->Seek(0);
+      if (strm->IsError()) return nullptr;
+      VSearchPath *spt = op->openCB(strm, filename);
+      if (spt) return spt;
+    }
+  }
+  return nullptr;
+}
+
+
 //==========================================================================
 //
 //  W_AddFile

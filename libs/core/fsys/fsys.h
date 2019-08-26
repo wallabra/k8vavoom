@@ -31,6 +31,11 @@
 # include "../core.h"
 #endif
 
+// k8: about .gwa supplemental wads.
+// those are remnants of the early times, and not really used these days.
+// you still can put PVS there, but PVS seems to be totally unused
+// these days too; so i opted to exclude GWA support.
+// i had a define to turn GWA support on, but now i removed it completely.
 
 void FSYS_Shutdown ();
 
@@ -61,14 +66,6 @@ extern bool fsys_skipSprites;
 extern bool fsys_skipDehacked;
 
 extern TArray<VStr> fsys_game_filters;
-
-
-// k8: use .gwa supplemental wads?
-// those are remnants of the early times, and not really used these days.
-// you still can put PVS there, but PVS seems to be totally unused
-// these days too; so i opted to exclude GWA support.
-// i had a define to turn GWA support on, but now i removed it completely.
-#include "fsys.h"
 
 
 // boom namespaces
@@ -102,6 +99,7 @@ enum WAuxFileType {
   VFS_Zip,
   VFS_Pk3,
 };
+
 
 // returns lump handle
 int W_StartAuxiliary (); // returns first aux index

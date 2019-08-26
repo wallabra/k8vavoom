@@ -654,6 +654,41 @@ VPakFileBase::~VPakFileBase () {
 //
 //==========================================================================
 void VPakFileBase::RenameSprites (const TArray<VSpriteRename> &A, const TArray<VLumpRename> &LA) {
+  bool wasRename = false;
+  for (auto &&L : pakdir.files) {
+    //VPakFileInfo &L = pakdir.files[i];
+    if (L.lumpNamespace != WADNS_Sprites) continue;
+    for (auto &&ren : A) {
+      if ((*L.lumpName)[0] != ren.Old[0] ||
+          (*L.lumpName)[1] != ren.Old[1] ||
+          (*L.lumpName)[2] != ren.Old[2] ||
+          (*L.lumpName)[3] != ren.Old[3])
+      {
+        continue;
+      }
+      char newname[16];
+      auto len = (int)strlen(*L.lumpName);
+      if (len) {
+        if (len > 12) len = 12;
+        memcpy(newname, *L.lumpName, len);
+      }
+      newname[len] = 0;
+      newname[0] = ren.New[0];
+      newname[1] = ren.New[1];
+      newname[2] = ren.New[2];
+      newname[3] = ren.New[3];
+      GLog.Logf(NAME_Dev, "%s: renaming sprite '%s' to '%s'", *PakFileName, *L.lumpName, newname);
+      L.lumpName = newname;
+      wasRename = true;
+    }
+    for (auto &&lra : LA) {
+      if (L.lumpName == lra.Old) {
+        L.lumpName = lra.New;
+        wasRename = true;
+      }
+    }
+  }
+  if (wasRename) pakdir.buildNameMaps(true);
 }
 
 
@@ -876,4 +911,16 @@ VStr VPakFileBase::CalculateMD5 (int lumpidx) {
   vuint8 md5digest[MD5Context::DIGEST_SIZE];
   md5ctx.Final(md5digest);
   return VStr::buf2hex(md5digest, MD5Context::DIGEST_SIZE);
+}
+
+
+//==========================================================================
+//
+//  VPakFileBase::OpenFileRead
+//
+//==========================================================================
+VStream *VPakFileBase::OpenFileRead (VStr fname) {
+  int fidx = pakdir.findFile(fname);
+  if (fidx < 0) return nullptr;
+  return CreateLumpReaderNum(fidx);
 }
