@@ -156,6 +156,7 @@ public:
 
   void Serialise (VStream *strm) {
     vassert(strm);
+    // note that we cannot use `VNTValueIOEx` here, because names are already written!
     if (strm->IsLoading()) {
       // load players inventory
       Clear();
