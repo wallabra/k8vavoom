@@ -109,7 +109,7 @@ VTypeExpr *VTypeExpr::NewTypeExprFromAuto (VFieldType atype, const TLocation &al
     if (!atype.Struct) {
 #if defined(IN_VCC) /*&& !defined(VCC_STANDALONE_EXECUTOR)*/
       VClass *ocls = (VClass *)VMemberBase::StaticFindMember("Object", ANY_PACKAGE, MEMBER_Class);
-      check(ocls);
+      vassert(ocls);
       VStruct *tvs = (VStruct *)VMemberBase::StaticFindMember("TVec", ocls, MEMBER_Struct);
 #else
       VStruct *tvs = (VStruct *)VMemberBase::StaticFindMember("TVec", /*ANY_PACKAGE*/VObject::StaticClass(), MEMBER_Struct);

@@ -560,7 +560,7 @@ static void cpFlushCurrent (bool asNewline) {
 
 // *ch should be TEXT_COLOR_ESCAPE
 static const char *cpProcessColorEscape (const char *ch) {
-  check(*ch == TEXT_COLOR_ESCAPE);
+  vassert(*ch == TEXT_COLOR_ESCAPE);
   cpLastColor.clear();
   ++ch; // skip TEXT_COLOR_ESCAPE
   if (!ch[0]) {
@@ -584,7 +584,7 @@ static const char *cpProcessColorEscape (const char *ch) {
 
 // *ch should be TEXT_COLOR_ESCAPE
 static const char *cpSkipColorEscape (const char *ch) {
-  check(*ch == TEXT_COLOR_ESCAPE);
+  vassert(*ch == TEXT_COLOR_ESCAPE);
   ++ch; // skip TEXT_COLOR_ESCAPE
   if (!ch[0]) return ch;
   if (*ch++ == '[') {
@@ -709,7 +709,7 @@ static void ConSerialise (const char *str, EName Event, bool fromGLog) {
       if (eol != rstr) fwrite(rstr, (ptrdiff_t)(eol-rstr), 1, logfout);
       rstr = eol;
       if (!rstr[0]) break;
-      check(rstr[0] == '\n');
+      vassert(rstr[0] == '\n');
       fprintf(logfout, "\n");
       cpLogFileNeedName = true;
       ++rstr;

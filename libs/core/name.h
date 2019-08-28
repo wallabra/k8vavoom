@@ -91,10 +91,10 @@ public:
   // accessors
   inline const char *operator * () const {
     if (Initialised) {
-      check(Index >= 0 && Index < (int)NamesCount);
+      vassert(Index >= 0 && Index < (int)NamesCount);
       return Names[Index]->Name;
     } else {
-      check(Index >= 0 && Index < GetAutoNameCounter());
+      vassert(Index >= 0 && Index < GetAutoNameCounter());
       return AutoNames[Index].Name;
     }
   }
@@ -127,9 +127,9 @@ public:
 
   static VName CreateWithIndex (int i) {
     if (Initialised) {
-      check(i >= 0 && i < (int)NamesCount);
+      vassert(i >= 0 && i < (int)NamesCount);
     } else {
-      check(i >= 0 && i < GetAutoNameCounter());
+      vassert(i >= 0 && i < GetAutoNameCounter());
     }
     VName res;
     res.Index = i;

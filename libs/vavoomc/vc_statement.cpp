@@ -160,7 +160,7 @@ void VAssertStatement::DoSyntaxCopyTo (VStatement *e) {
 //
 //==========================================================================
 bool VAssertStatement::Resolve (VEmitContext &ec) {
-  check(!FatalInvoke);
+  vassert(!FatalInvoke);
 
   // create message if necessary
   if (!Message) {
@@ -1592,7 +1592,7 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
   loopLoad->Flags &= ~FIELD_ReadOnly;
   // refvar code will be completed in our codegen
   if (isRef) {
-    check(indLocalVal >= 0);
+    vassert(indLocalVal >= 0);
     varaddr = new VLocalVar(indLocalVal, loopLoad->Loc);
     varaddr = varaddr->Resolve(ec); // should not fail (i hope)
     if (varaddr) {

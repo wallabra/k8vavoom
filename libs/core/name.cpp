@@ -53,7 +53,7 @@ int VName::GetAutoNameCounter () {
 
 // ////////////////////////////////////////////////////////////////////////// //
 int VName::AppendNameEntry (VNameEntry *e) {
-  check(e);
+  vassert(e);
   if (NamesCount >= NamesAlloced) {
     if (NamesAlloced > 0x1fffffff) Sys_Error("too many names");
     size_t newsz = ((NamesCount+1)|0x3fffu)+1;
@@ -105,7 +105,7 @@ VName::VName (const char *Name, ENameFindType FindType) {
     NameBuf[8] = 0;
   } else {
     size_t nlen = strlen(Name);
-    check(nlen > 0);
+    vassert(nlen > 0);
     if (nlen >= NAME_SIZE) nlen = NAME_SIZE;
     if (FindType == AddLower || FindType == FindLower || FindType == FindLower8) {
       for (size_t i = 0; i < nlen; ++i) NameBuf[i] = VStr::ToLower(Name[i]);
@@ -153,10 +153,10 @@ VName::VName (const char *Name, ENameFindType FindType) {
 bool VName::operator == (const VStr &s) const {
   if (Index == NAME_None) return s.isEmpty();
   if (Initialised) {
-    check(Index >= 0 && Index < (int)NamesCount);
+    vassert(Index >= 0 && Index < (int)NamesCount);
     return (s == Names[Index]->Name);
   } else {
-    check(Index >= 0 && Index < (int)ARRAY_COUNT(AutoNames));
+    vassert(Index >= 0 && Index < (int)ARRAY_COUNT(AutoNames));
     return (s == AutoNames[Index].Name);
   }
 }
@@ -166,10 +166,10 @@ bool VName::operator == (const char *s) const {
   if (!s) s = "";
   if (Index == NAME_None) return (s[0] == 0);
   if (Initialised) {
-    check(Index >= 0 && Index < (int)NamesCount);
+    vassert(Index >= 0 && Index < (int)NamesCount);
     return (VStr::Cmp(s, Names[Index]->Name) == 0);
   } else {
-    check(Index >= 0 && Index < (int)ARRAY_COUNT(AutoNames));
+    vassert(Index >= 0 && Index < (int)ARRAY_COUNT(AutoNames));
     return (VStr::Cmp(s, AutoNames[Index].Name) == 0);
   }
 }
@@ -195,7 +195,7 @@ void VName::StaticInit () {
     for (int i = 0; i < (int)ARRAY_COUNT(AutoNames); ++i) {
       // fixup name entry
       VNameEntry &e = AutoNames[i];
-      check(e.rc == -0x0fffffff);
+      vassert(e.rc == -0x0fffffff);
       e.length = VStr::Length(e.Name);
       e.alloted = e.length+1;
       AppendNameEntry(&AutoNames[i]);
@@ -208,7 +208,7 @@ void VName::StaticInit () {
       } else {
         e.Index = 0;
       }
-      check(e.Index == i);
+      vassert(e.Index == i);
     }
     // we are now initialised
     Initialised = true;

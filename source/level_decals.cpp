@@ -231,7 +231,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
       if (!seg->linedef) continue; // ignore minisegs (just in case)
       //if (seg->frontsub->sector->linecount == 0) continue; // ignore original polyobj sectors (just in case)
       if (seg->flags&SF_ZEROLEN) continue; // invalid seg
-      check(seg->linedef == li);
+      vassert(seg->linedef == li);
 
       VDC_DLOG("  checking seg #%d; offset=%g; length=%g", (int)(ptrdiff_t)(seg-Segs), seg->offset, seg->length);
 

@@ -54,8 +54,8 @@ VMemoryStreamRO::VMemoryStreamRO (VStr strmName, const void *adata, int adataSiz
   , FreeData(takeOwnership)
   , StreamName(strmName)
 {
-  check(adataSize >= 0);
-  check(adataSize == 0 || (adataSize > 0 && adata));
+  vassert(adataSize >= 0);
+  vassert(adataSize == 0 || (adataSize > 0 && adata));
   bLoading = true;
 }
 
@@ -109,13 +109,13 @@ void VMemoryStreamRO::Clear () {
 //
 //==========================================================================
 void VMemoryStreamRO::Setup (VStr strmName, const void *adata, int adataSize, bool takeOwnership) {
-  check(!Data);
-  check(Pos == 0);
-  check(DataSize == 0);
-  check(!bError);
-  check(adataSize >= 0);
-  check(adataSize == 0 || (adataSize > 0 && adata));
-  check(StreamName.length() == 0);
+  vassert(!Data);
+  vassert(Pos == 0);
+  vassert(DataSize == 0);
+  vassert(!bError);
+  vassert(adataSize >= 0);
+  vassert(adataSize == 0 || (adataSize > 0 && adata));
+  vassert(StreamName.length() == 0);
   StreamName = strmName;
   Data = (const vuint8 *)adata;
   DataSize = adataSize;
@@ -131,18 +131,18 @@ void VMemoryStreamRO::Setup (VStr strmName, const void *adata, int adataSize, bo
 //
 //==========================================================================
 void VMemoryStreamRO::Setup (VStr strmName, VStream *strm) {
-  check(!Data);
-  check(Pos == 0);
-  check(DataSize == 0);
-  check(!bError);
-  check(StreamName.length() == 0);
+  vassert(!Data);
+  vassert(Pos == 0);
+  vassert(DataSize == 0);
+  vassert(!bError);
+  vassert(StreamName.length() == 0);
   StreamName = strmName;
   if (strm) {
-    check(strm->IsLoading());
+    vassert(strm->IsLoading());
     int tsz = strm->TotalSize();
-    check(tsz >= 0);
+    vassert(tsz >= 0);
     int cpos = strm->Tell();
-    check(cpos >= 0);
+    vassert(cpos >= 0);
     if (cpos < tsz) {
       int len = tsz-cpos;
       void *dta = Z_Malloc(len);
@@ -166,10 +166,10 @@ void VMemoryStreamRO::Setup (VStr strmName, VStream *strm) {
 //
 //==========================================================================
 void VMemoryStreamRO::Serialise (void *buf, int Len) {
-  check(bLoading);
-  check(Len >= 0);
+  vassert(bLoading);
+  vassert(Len >= 0);
   if (Len == 0) return;
-  check(buf);
+  vassert(buf);
   if (Pos >= DataSize) {
     bError = true;
     return;
@@ -277,7 +277,7 @@ VMemoryStream::VMemoryStream (VStr strmName, const void *InData, int InLen, bool
     if (InLen) memcpy(Array.Ptr(), InData, InLen);
   } else {
     Array.SetPointerData((void *)InData, InLen);
-    check(Array.length() == InLen);
+    vassert(Array.length() == InLen);
   }
 }
 
@@ -307,11 +307,11 @@ VMemoryStream::VMemoryStream (VStr strmName, VStream *strm)
 {
   bLoading = true;
   if (strm) {
-    check(strm->IsLoading());
+    vassert(strm->IsLoading());
     int tsz = strm->TotalSize();
-    check(tsz >= 0);
+    vassert(tsz >= 0);
     int cpos = strm->Tell();
-    check(cpos >= 0);
+    vassert(cpos >= 0);
     if (cpos < tsz) {
       int len = tsz-cpos;
       Array.setLength(len);
@@ -338,7 +338,7 @@ VMemoryStream::~VMemoryStream () {
 //
 //==========================================================================
 void VMemoryStream::Serialise (void *Data, int Len) {
-  check(Len >= 0);
+  vassert(Len >= 0);
   if (Len == 0) return;
   const int alen = Array.length();
   if (bLoading) {
@@ -442,7 +442,7 @@ VArrayStream::~VArrayStream () {
 //
 //==========================================================================
 void VArrayStream::Serialise (void *Data, int Len) {
-  check(Len >= 0);
+  vassert(Len >= 0);
   if (Len == 0) return;
   const int alen = Array.length();
   if (bLoading) {
@@ -577,7 +577,7 @@ VStr VPagedMemoryStream::GetName () const {
 //
 //==========================================================================
 void VPagedMemoryStream::Serialise (void *bufp, int count) {
-  check(count >= 0);
+  vassert(count >= 0);
   if (count == 0 || bError) return;
   int leftInPage = DataPerPage-pos%DataPerPage;
   vuint8 *buf = (vuint8 *)bufp;
@@ -595,7 +595,7 @@ void VPagedMemoryStream::Serialise (void *bufp, int count) {
       pos += leftInPage;
       count -= leftInPage;
       buf += leftInPage;
-      check(pos%DataPerPage == 0);
+      vassert(pos%DataPerPage == 0);
       curr = *(vuint8 **)curr; // next page
       leftInPage = DataPerPage; // it is safe to overestimate here
     }
@@ -632,7 +632,7 @@ void VPagedMemoryStream::Serialise (void *bufp, int count) {
       pos += leftInPage;
       count -= leftInPage;
       buf += leftInPage;
-      check(pos%DataPerPage == 0);
+      vassert(pos%DataPerPage == 0);
       leftInPage = DataPerPage;
     }
     if (size < pos) size = pos;
@@ -662,7 +662,7 @@ void VPagedMemoryStream::Seek (int newpos) {
       // if we are at page boundary, do one step less
       if (newpos%DataPerPage == 0) {
         --pgcount;
-        check(pgcount > 0);
+        vassert(pgcount > 0);
       }
       curr = first;
       while (pgcount--) curr = *(vuint8 **)curr;
@@ -783,7 +783,7 @@ void VBitStreamWriter::Serialise (void *data, int length) {
 //==========================================================================
 void VBitStreamWriter::SerialiseBits (void *Src, int Length) {
   if (!Length) return;
-  check(Length > 0);
+  vassert(Length > 0);
 
   if (Pos+Length > Max) {
     if (!bAllowExpand) { bError = true; return; }
@@ -862,7 +862,7 @@ void VBitStreamWriter::SerialiseInt (vuint32 &Value/*, vuint32 Max*/) {
 //
 //==========================================================================
 void VBitStreamWriter::WriteInt (vuint32 Val/*, vuint32 Maximum*/) {
-  //checkSlow(Val < Maximum);
+  //vensure(Val < Maximum);
 #if 0
   // with maximum of 1 the only possible value is 0
   if (Maximum <= 1) return;
@@ -1029,7 +1029,7 @@ vuint32 VBitStreamReader::ReadInt (/*vuint32 Maximum*/) {
   // bytes
   while (ReadBit()) {
     for (int cnt = 4; cnt > 0; --cnt) {
-      check(Mask);
+      vassert(Mask);
       if (ReadBit()) Val |= Mask;
       Mask <<= 1;
     }

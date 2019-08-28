@@ -293,9 +293,9 @@ void VLevel::RecalcWorldNodeBBox (int bspnum, float bbox[6], const float skyheig
   { \
     int count = 0; \
     for (auto &&it : itname_()) { \
-      check(it.index() == count); \
+      vassert(it.index() == count); \
       typename_ *tp = it.value(); \
-      check(tp == &arrname_[count]); \
+      vassert(tp == &arrname_[count]); \
       ++count; \
     } \
   }

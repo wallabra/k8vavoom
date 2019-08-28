@@ -648,7 +648,7 @@ static bool CanSurfaceSegCastShadow (const surface_t *surf, const TVec LightPos,
     /*
     if (!seg->partner) return false; // just in case
     const sector_t *backsec = seg->partner->frontsub->sector;
-    check(backsec);
+    vassert(backsec);
 
     // here we can check if this is top/bottom texture, and if it can cast shadow
     // to check this, see if light can touch surface edge, and consider this seg one-sided, if it isn't

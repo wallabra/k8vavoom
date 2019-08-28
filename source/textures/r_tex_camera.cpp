@@ -45,7 +45,7 @@ VCameraTexture::VCameraTexture (VName AName, int AWidth, int AHeight)
   Height = AHeight;
   bIsCameraTexture = true;
   needFBO = true;
-  //check(!Pixels);
+  //vassert(!Pixels);
 }
 
 

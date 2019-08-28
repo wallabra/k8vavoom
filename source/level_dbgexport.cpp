@@ -144,7 +144,7 @@ void VLevel::DebugSaveLevel (VStream &strm) {
     if (line->lineTag && line->lineTag != -1) writef(strm, "  id = %d;\n", line->lineTag);
     writef(strm, "  v1 = %d;\n", vpool.put(*line->v1));
     writef(strm, "  v2 = %d;\n", vpool.put(*line->v2));
-    check(line->sidenum[0] >= 0);
+    vassert(line->sidenum[0] >= 0);
     writef(strm, "  sidefront = %d;\n", line->sidenum[0]);
     if (line->sidenum[1] >= 0) writef(strm, "  sideback = %d;\n", line->sidenum[1]);
     // flags
@@ -334,13 +334,13 @@ void VLevel::DebugSaveLevel (VStream &strm) {
     if (seg->linedef) {
       writef(strm, "  side = %d;\n", seg->side);
       // not a miniseg
-      check(seg->sidedef);
+      vassert(seg->sidedef);
       writef(strm, "  sidedef = %d;\n", (int)(ptrdiff_t)(seg->sidedef-&Sides[0]));
-      check(seg->linedef);
+      vassert(seg->linedef);
       writef(strm, "  linedef = %d;\n", (int)(ptrdiff_t)(seg->linedef-&Lines[0]));
     }
     if (seg->partner) writef(strm, "  partner = %d;\n", (int)(ptrdiff_t)(seg->partner-&Segs[0]));
-    check(seg->frontsub);
+    vassert(seg->frontsub);
     writef(strm, "  frontsub = %d;\n", (int)(ptrdiff_t)(seg->frontsub-&Subsectors[0]));
     writef(strm, "}\n");
   }
@@ -351,11 +351,11 @@ void VLevel::DebugSaveLevel (VStream &strm) {
     const subsector_t *sub = &Subsectors[f];
     writef(strm, "\nsubsector // %d\n", f);
     writef(strm, "{\n");
-    check(sub->sector);
+    vassert(sub->sector);
     writef(strm, "  sector = %d;\n", (int)(ptrdiff_t)(sub->sector-&Sectors[0]));
     writef(strm, "  firstseg = %d;\n", sub->firstline);
     writef(strm, "  numsegs = %d;\n", sub->numlines);
-    check(sub->parent);
+    vassert(sub->parent);
     writef(strm, "  bspnode = %d;\n", (int)(ptrdiff_t)(sub->parent-&Nodes[0]));
     writef(strm, "}\n");
   }

@@ -177,7 +177,7 @@ int VPackage::FindString (const char *str) {
 
   // add new string
   int Ofs = StringInfo.length();
-  check(Ofs == StringCount);
+  vassert(Ofs == StringCount);
   ++StringCount;
   TStringInfo &SI = StringInfo.Alloc();
   // remember string

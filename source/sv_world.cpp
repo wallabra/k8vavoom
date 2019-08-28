@@ -515,7 +515,7 @@ static void BuildSectorOpenings (const line_t *xldef, TArray<opening_t> &dest, s
   TSecPlaneRef currfloor;
   currfloor.set(&sector->floor, false);
   float currfloorz = secfz;
-  check(currfloor.isFloor());
+  vassert(currfloor.isFloor());
   // HACK: if the whole sector is taken by some region, return sector opening
   //       this is required to proper 3d-floor backside creation
   //       alas, `hadNonSolid` hack is required to get rid of "nano-water walls"
@@ -593,10 +593,10 @@ static void BuildSectorOpenings (const line_t *xldef, TArray<opening_t> &dest, s
 //
 //==========================================================================
 opening_t *SV_SectorOpenings (sector_t *sector, bool skipNonSolid) {
-  check(sector);
+  vassert(sector);
   static TArray<opening_t> oplist;
   BuildSectorOpenings(nullptr, oplist, sector, TVec::ZeroVector, 0, true/*linkList*/, false/*usePoint*/, skipNonSolid);
-  check(oplist.length() > 0);
+  vassert(oplist.length() > 0);
   return oplist.ptr();
 }
 
@@ -610,10 +610,10 @@ opening_t *SV_SectorOpenings (sector_t *sector, bool skipNonSolid) {
 //==========================================================================
 opening_t *SV_SectorOpenings2 (sector_t *sector, bool skipNonSolid) {
   /*
-  check(sector);
+  vassert(sector);
   static TArray<opening_t> oplist;
   BuildSectorOpenings(nullptr, oplist, sector, TVec::ZeroVector, 0, false/ *linkList* /, false/ *usePoint* /, skipNonSolid);
-  check(oplist.length() > 0);
+  vassert(oplist.length() > 0);
   if (oplist.length() > MAX_OPENINGS) Host_Error("too many sector openings");
   opening_t *dest = openings;
   opening_t *src = oplist.ptr();
@@ -624,10 +624,10 @@ opening_t *SV_SectorOpenings2 (sector_t *sector, bool skipNonSolid) {
   openings[oplist.length()-1].next = nullptr;
   return openings;
   */
-  check(sector);
+  vassert(sector);
   static TArray<opening_t> oplist;
   BuildSectorOpenings(nullptr, oplist, sector, TVec::ZeroVector, 0, true/*linkList*/, false/*usePoint*/, skipNonSolid);
-  check(oplist.length() > 0);
+  vassert(oplist.length() > 0);
   return oplist.ptr();
 }
 
@@ -746,8 +746,8 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
       continue;
     }
     // here op0 and op1 are intersecting
-    check(op0->bottom <= op1->top);
-    check(op1->bottom <= op0->top);
+    vassert(op0->bottom <= op1->top);
+    vassert(op1->bottom <= op0->top);
     if (destcount >= MAX_OPENINGS) Host_Error("too many line openings");
     // floor
     if (op0->bottom >= op1->bottom) {
@@ -1293,7 +1293,7 @@ void VLevel::ChangeOneSectorInternal (sector_t *sector) {
 //
 //==========================================================================
 bool VLevel::ChangeSectorInternal (sector_t *sector, int crunch) {
-  check(sector);
+  vassert(sector);
   int secnum = (int)(ptrdiff_t)(sector-Sectors);
   if ((csTouched[secnum]&0x7fffffffU) == csTouchCount) return !!(csTouched[secnum]&0x80000000U);
   csTouched[secnum] = csTouchCount;

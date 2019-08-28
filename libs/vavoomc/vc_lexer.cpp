@@ -370,7 +370,7 @@ bool VLexer::SkipComment () {
   // single-line?
   if (c1 == '/') {
     NextChr();
-    check(currCh == '/');
+    vassert(currCh == '/');
     do {
       NextChr();
       if (currCh == EOF_CHARACTER) break;
@@ -381,7 +381,7 @@ bool VLexer::SkipComment () {
   // multiline?
   if (c1 == '*') {
     NextChr();
-    check(currCh == '*');
+    vassert(currCh == '*');
     for (;;) {
       NextChr();
       if (currCh == EOF_CHARACTER) {
@@ -390,7 +390,7 @@ bool VLexer::SkipComment () {
       }
       if (currCh == '*' && Peek(1) == '/') {
         NextChr();
-        check(currCh == '/');
+        vassert(currCh == '/');
         break;
       }
     }
@@ -400,7 +400,7 @@ bool VLexer::SkipComment () {
   // multiline, nested?
   if (c1 == '+') {
     NextChr();
-    check(currCh == '+');
+    vassert(currCh == '+');
     int level = 1;
     for (;;) {
       NextChr();
@@ -410,12 +410,12 @@ bool VLexer::SkipComment () {
       }
       if (currCh == '+' && Peek(1) == '/') {
         NextChr();
-        check(currCh == '/');
+        vassert(currCh == '/');
         --level;
         if (level == 0) break;
       } else if (currCh == '/' && Peek(1) == '+') {
         NextChr();
-        check(currCh == '+');
+        vassert(currCh == '+');
         ++level;
       }
     }
@@ -510,7 +510,7 @@ bool VLexer::SkipCurrentLine () {
     NextChr();
   }
   if (currCh != EOF_CHARACTER) {
-    check(currCh == ' ');
+    vassert(currCh == ' ');
     NextChr();
   }
   return noBadChars;
@@ -1398,7 +1398,7 @@ void VLexer::ProcessFileName () {
       char ch = Peek(1);
       if (ch == '\\') {
         NextChr();
-        check(currCh == '\\');
+        vassert(currCh == '\\');
         currCh = '/';
       } else {
         ParseError(Location, "invalid escaping in file name");
@@ -1470,8 +1470,8 @@ void VLexer::Expect (EToken tk, ECompileError error) {
 //
 //==========================================================================
 bool VLexer::Check (const char *id, bool caseSensitive) {
-  check(id);
-  check(id[0]);
+  vassert(id);
+  vassert(id[0]);
   if (Token != TK_Identifier) return false;
   bool ok = ((caseSensitive ? VStr::Cmp(id, *Name) : VStr::ICmp(id, *Name)) == 0);
   if (!ok) return false;
@@ -1488,8 +1488,8 @@ bool VLexer::Check (const char *id, bool caseSensitive) {
 //
 //==========================================================================
 void VLexer::Expect (const char *id, bool caseSensitive) {
-  check(id);
-  check(id[0]);
+  vassert(id);
+  vassert(id[0]);
   if (Token != TK_Identifier) ParseError(Location, "expected `%s`, found `%s`", id, TokenNames[Token]);
   bool ok = ((caseSensitive ? VStr::Cmp(id, *Name) : VStr::ICmp(id, *Name)) == 0);
   if (!ok) ParseError(Location, "expected `%s`, found `%s`", id, *Name);

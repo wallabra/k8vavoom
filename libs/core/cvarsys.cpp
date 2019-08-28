@@ -182,7 +182,7 @@ VCvar::VCvar (const char *AName, VStr ADefault, VStr AHelp, int AFlags, CVType A
   DoSet(DefaultString);
   if (Name && Name[0]) {
     insertIntoHash(); // insert into hash (this leaks on duplicate vars)
-    //check(Initialised);
+    //vassert(Initialised);
   }
 
   // fixup default string, if necessary

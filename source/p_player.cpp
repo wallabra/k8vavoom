@@ -85,7 +85,7 @@ bool VBasePlayer::ExecuteNetMethod (VMethod *Func) {
     VMethod *Base = Func;
     while (Base->SuperMethod) Base = Base->SuperMethod;
     // execute it's replication condition method
-    check(Base->ReplCond);
+    vassert(Base->ReplCond);
     P_PASS_REF(this);
     vuint32 SavedFlags = PlayerFlags;
     PlayerFlags &= ~VBasePlayer::PF_IsClient;
@@ -112,7 +112,7 @@ bool VBasePlayer::ExecuteNetMethod (VMethod *Func) {
   VMethod *Base = Func;
   while (Base->SuperMethod) Base = Base->SuperMethod;
   // execute it's replication condition method
-  check(Base->ReplCond);
+  vassert(Base->ReplCond);
   P_PASS_REF(this);
   if (!VObject::ExecuteFunctionNoArgs(Base->ReplCond).getBool()) return false;
 
@@ -963,7 +963,7 @@ IMPLEMENT_FUNCTION(VBasePlayer, AdvanceViewStates) {
 
 IMPLEMENT_FUNCTION(VBasePlayer, DisconnectBot) {
   P_GET_SELF;
-  check(Self->PlayerFlags & PF_IsBot);
+  vassert(Self->PlayerFlags & PF_IsBot);
   SV_DropClient(Self, false);
 }
 

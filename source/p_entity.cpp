@@ -127,7 +127,7 @@ void VEntity::SetTID (int tid) {
 //
 //==========================================================================
 void VEntity::InsertIntoTIDList (int tid) {
-  check(TID == 0);
+  vassert(TID == 0);
   TID = tid;
   int HashIndex = tid&(VLevelInfo::TID_HASH_SIZE-1);
   TIDHashPrev = nullptr;
@@ -149,7 +149,7 @@ void VEntity::RemoveFromTIDList () {
     TIDHashPrev->TIDHashNext = TIDHashNext;
   } else {
     int HashIndex = TID&(VLevelInfo::TID_HASH_SIZE-1);
-    check(Level->TIDHash[HashIndex] == this);
+    vassert(Level->TIDHash[HashIndex] == this);
     Level->TIDHash[HashIndex] = TIDHashNext;
   }
   TID = 0;

@@ -68,7 +68,7 @@ VQuakePakFile::VQuakePakFile (VStr zipfile)
   mythread_mutex_init(&rdlock);
   if (fsys_report_added_paks) GLog.Logf(NAME_Init, "Adding \"%s\"...", *PakFileName);
   auto fstream = FL_OpenSysFileRead(PakFileName);
-  check(fstream);
+  vassert(fstream);
   OpenArchive(fstream);
 }
 
@@ -91,7 +91,7 @@ VQuakePakFile::~VQuakePakFile () {
 //==========================================================================
 void VQuakePakFile::OpenArchive (VStream *fstream, int signtype) {
   Stream = fstream;
-  check(Stream);
+  vassert(Stream);
 
   bool isSinPack = false;
 
@@ -171,8 +171,8 @@ void VQuakePakFile::Close () {
 //
 //==========================================================================
 VStream *VQuakePakFile::CreateLumpReaderNum (int Lump) {
-  check(Lump >= 0);
-  check(Lump < pakdir.files.length());
+  vassert(Lump >= 0);
+  vassert(Lump < pakdir.files.length());
   const VPakFileInfo &fi = pakdir.files[Lump];
   // this is mt-protected
   VStream *S = new VPartialStreamRO(GetPrefix()+":"+fi.fileName, Stream, fi.pakdataofs, fi.filesize, &rdlock);
@@ -188,8 +188,8 @@ VStream *VQuakePakFile::CreateLumpReaderNum (int Lump) {
 //
 //==========================================================================
 void VQuakePakFile::ReadFromLump (int lump, void *dest, int pos, int size) {
-  check(size >= 0);
-  check(pos >= 0);
+  vassert(size >= 0);
+  vassert(pos >= 0);
   if ((vuint32)lump >= (vuint32)pakdir.files.length()) Sys_Error("VQuakePakFile::ReadFromLump: %i >= numlumps", lump);
   VPakFileInfo &fi = pakdir.files[lump];
   if (pos >= fi.filesize || !size) {
@@ -200,7 +200,7 @@ void VQuakePakFile::ReadFromLump (int lump, void *dest, int pos, int size) {
     MyThreadLocker locker(&rdlock);
     Stream->Seek(fi.pakdataofs+pos);
     Stream->Serialise(dest, size);
-    check(!Stream->IsError());
+    vassert(!Stream->IsError());
   }
 }
 

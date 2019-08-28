@@ -161,7 +161,7 @@ void VLevelChannel::SendNewLevel () {
     Msg.WriteInt(CMD_NewLevel/*, CMD_MAX*/);
     Msg.WriteInt(NETWORK_PROTO_VERSION);
     VStr MapName = *Level->MapName;
-    check(!Msg.IsLoading());
+    vassert(!Msg.IsLoading());
     //Msg << svs.serverinfo << MapName;
     Msg << MapName;
     Msg.WriteInt(svs.max_clients/*, MAXPLAYERS+1*/);

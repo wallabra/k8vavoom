@@ -43,9 +43,9 @@ VChannel::VChannel (VNetConnection *AConnection, EChannelType AType, vint32 AInd
   , InMsg(nullptr)
   , OutMsg(nullptr)
 {
-  checkSlow(Index >= 0);
-  checkSlow(Index < MAX_CHANNELS);
-  checkSlow(!Connection->Channels[Index]);
+  vensure(Index >= 0);
+  vensure(Index < MAX_CHANNELS);
+  vensure(!Connection->Channels[Index]);
   Connection->Channels[Index] = this;
   Connection->OpenChannels.Append(this);
 }

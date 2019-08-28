@@ -927,8 +927,8 @@ int VDatagramSocket::GetMessage (TArray<vuint8> &Data) {
 //
 //==========================================================================
 int VDatagramSocket::SendMessage (const vuint8 *Data, vuint32 Length) {
-  checkSlow(Length > 0);
-  checkSlow(Length <= MAX_MSGLEN);
+  vensure(Length > 0);
+  vensure(Length <= MAX_MSGLEN);
   if (Invalid) return -1;
   return (LanDriver->Write(LanSocket, Data, Length, &Addr) == -1 ? -1 : 1);
 }

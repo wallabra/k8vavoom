@@ -490,11 +490,11 @@ static void LoadAllMapInfoLumpsInFile (int miLump, int zmiLump) {
   if (zmiLump >= 0) {
     milname = VName("zmapinfo", VName::Add);
   } else {
-    check(miLump >= 0);
+    vassert(miLump >= 0);
     zmiLump = miLump;
     milname = NAME_mapinfo;
   }
-  check(zmiLump >= 0);
+  vassert(zmiLump >= 0);
   int currFile = W_LumpFile(zmiLump);
   bool wasLoaded = false;
   for (; zmiLump >= 0; zmiLump = W_IterateNS(zmiLump, WADNS_Global)) {

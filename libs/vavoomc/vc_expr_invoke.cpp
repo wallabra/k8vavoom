@@ -799,9 +799,9 @@ void VDotInvocation::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 bool VDotInvocation::DoReResolvePtr (VEmitContext &ec, VExpression *&selfCopy) {
-  check(SelfExpr);
-  check(selfCopy);
-  check(selfCopy != SelfExpr);
+  vassert(SelfExpr);
+  vassert(selfCopy);
+  vassert(selfCopy != SelfExpr);
   if (SelfExpr->Type.Type == TYPE_Pointer) {
     delete SelfExpr;
     SelfExpr = new VPushPointed(selfCopy, selfCopy->Loc);

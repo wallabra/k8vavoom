@@ -87,7 +87,7 @@ static void UploadLinedefsZD (VLevel *Level, ZDBSP::FLevel &zlvl) {
     if (vmap[lv2idx] < 0) vmap[lv2idx] = vcount++;
   }
 
-  check(vcount);
+  vassert(vcount);
   if (vcount != Level->NumVertexes) GCon->Logf("ZDBSP: dropped %d vertices out of %d", Level->NumVertexes-vcount, Level->NumVertexes);
   //GCon->Logf("ZDBSP: old vertex count is %d, new vertex count is %d", Level->NumVertexes, vcount);
 
@@ -97,7 +97,7 @@ static void UploadLinedefsZD (VLevel *Level, ZDBSP::FLevel &zlvl) {
   for (auto &&it : Level->allVerticesIdx()) {
     int didx = vmap[it.index()];
     if (didx >= 0) {
-      check(didx < vcount);
+      vassert(didx < vcount);
       ZDBSP::WideVertex *zv = &zlvl.Vertices[didx];
       zv->x = toFix(it.value()->x);
       zv->y = toFix(it.value()->y);
@@ -124,8 +124,8 @@ static void UploadLinedefsZD (VLevel *Level, ZDBSP::FLevel &zlvl) {
     int lv1idx = (int)(ptrdiff_t)(pSrc->v1-Level->Vertexes);
     int lv2idx = (int)(ptrdiff_t)(pSrc->v2-Level->Vertexes);
     if (lv1idx < 0 || lv2idx < 0 || lv1idx >= Level->NumVertexes || lv2idx >= Level->NumVertexes) Sys_Error("invalid linedef vertexes");
-    check(vmap[lv1idx] >= 0);
-    check(vmap[lv2idx] >= 0);
+    vassert(vmap[lv1idx] >= 0);
+    vassert(vmap[lv2idx] >= 0);
     zline.v1 = vmap[lv1idx];
     zline.v2 = vmap[lv2idx];
 
@@ -276,7 +276,7 @@ void VLevel::BuildNodesZD () {
   }
 
   // fix linedefs
-  check(NumLines == (int)zlvl.Lines.Size());
+  vassert(NumLines == (int)zlvl.Lines.Size());
   for (size_t f = 0; f < zlvl.Lines.Size(); ++f) {
     const ZDBSP::IntLineDef &zline = zlvl.Lines[f];
     line_t *nl = &Lines[f];

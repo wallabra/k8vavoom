@@ -630,7 +630,7 @@ void VMethod::WriteType (const VFieldType &tp) {
   vuint8 tbuf[VFieldType::MemSize*2];
   vuint8 *ptr = tbuf;
   tp.WriteTypeMem(ptr);
-  check((ptrdiff_t)(ptr-tbuf) == VFieldType::MemSize);
+  vassert((ptrdiff_t)(ptr-tbuf) == VFieldType::MemSize);
   for (vuint8 *p = tbuf; p != ptr; ++p) Statements.append(*p);
 }
 
@@ -658,7 +658,7 @@ void VMethod::GenerateCode () {
   // generate VM bytecode
   for (int i = 0; i < Instructions.Num()-1; ++i) {
     //Instructions[i].Address = Statements.Num();
-    check(iaddr.length() == i);
+    vassert(iaddr.length() == i);
     iaddr.append(Statements.length());
     Statements.Append(Instructions[i].Opcode);
     switch (StatementInfo[Instructions[i].Opcode].Args) {
@@ -768,7 +768,7 @@ void VMethod::GenerateCode () {
     while (StatLocs.length() < Statements.length()) StatLocs.Append(Instructions[i].loc);
   }
   //Instructions[Instructions.Num()-1].Address = Statements.Num();
-  check(iaddr.length() == Instructions.length()-1);
+  vassert(iaddr.length() == Instructions.length()-1);
   iaddr.append(Statements.length());
 
   // fix jump destinations

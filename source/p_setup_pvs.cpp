@@ -182,7 +182,7 @@ public:
   }
 
   void createPortalSee () {
-    check(!portalsee);
+    vassert(!portalsee);
     portalsee = new vuint8[(numportals+7)/8];
     memset(portalsee, 0, (numportals+7)/8);
   }
@@ -193,19 +193,19 @@ public:
   }
 
   void clearPortalSee () {
-    check(portalsee);
+    vassert(portalsee);
     memset(portalsee, 0, (numportals+7)/8);
   }
 
   inline void setPortalSee (int pidx) {
-    check(pidx >= 0 && pidx < numportals);
-    check(portalsee);
+    vassert(pidx >= 0 && pidx < numportals);
+    vassert(portalsee);
     portalsee[pidx/8] |= (vuint8)(1u<<(pidx&7));
   }
 
   inline bool getPortalSee (int pidx) const {
-    check(pidx >= 0 && pidx < numportals);
-    check(portalsee);
+    vassert(pidx >= 0 && pidx < numportals);
+    vassert(portalsee);
     return !!(portalsee[pidx/8]&(vuint8)(1u<<(pidx&7)));
   }
 };
@@ -487,7 +487,7 @@ void VLevel::BuildPVS () {
       for (int s1idx = 0; s1idx < sslen; ++s1idx, vd1 += vslen) {
         if (vd0[s1idx>>3]&(1<<(s1idx&7))) {
           if ((vd1[s0idx>>3]&(1<<(s0idx&7))) == 0) {
-            //check(s0idx != s1idx);
+            //vassert(s0idx != s1idx);
             //GCon->Logf("subsector #%d can see subsector #%d, but not vice versa", s0idx, s1idx);
             vd1[s0idx>>3] |= (1<<(s0idx&7));
             ++mtfixcount;

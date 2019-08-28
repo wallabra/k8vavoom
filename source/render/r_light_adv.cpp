@@ -728,7 +728,7 @@ void VAdvancedRenderLevel::RenderLightSubRegion (subsector_t *sub, subregion_t *
 //
 //==========================================================================
 void VAdvancedRenderLevel::RenderLightSubsector (int num) {
-  check(num >= 0 && num < Level->NumSubsectors);
+  vassert(num >= 0 && num < Level->NumSubsectors);
   subsector_t *sub = &Level->Subsectors[num];
 
   if (!sub->sector->linecount) return; // skip sectors containing original polyobjs

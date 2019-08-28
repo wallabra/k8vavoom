@@ -95,7 +95,7 @@ void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, TVec *sv,
   const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority,
   bool useSprOrigin, const TVec &sprOrigin, vuint32 objid, int hangup)
 {
-  check(count >= 0);
+  vassert(count >= 0);
   if (count == 0 || Alpha < 0.01f) return;
 
   // make room
@@ -717,7 +717,7 @@ void VRenderLevelShared::DrawTranslucentPolys () {
       // masked polygon
       // for advanced rendere: non-translucent and non-additive polys are already done, and should not end up here anyway
       //if (IsAdvancedRenderer()) continue;
-      check(spr.surf);
+      vassert(spr.surf);
       if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); pofsEnabled = false; }
       Drawer->DrawMaskedPolygon(spr.surf, spr.Alpha, spr.Additive);
     }

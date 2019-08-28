@@ -309,7 +309,7 @@ int VAudio::AllocChannel () {
     abort(); // we should never come here
   }
   // we should never come here
-  check(ChanUsed >= NumChannels);
+  vassert(ChanUsed >= NumChannels);
   //memset((void *)&Channel[cidx], 0, sizeof(FChannel));
   //Channel[cidx].handle = -1;
   return -1;
@@ -331,7 +331,7 @@ void VAudio::DeallocChannel (int cidx) {
     // allocated channel, free it
     ChanBitmap[bidx] ^= mask;
     --ChanUsed;
-    check(Channel[cidx].handle == -1);
+    vassert(Channel[cidx].handle == -1);
     // just in case
     Channel[cidx].handle = -1;
     Channel[cidx].origin_id = 0;
@@ -772,7 +772,7 @@ void VAudio::UpdateSfx () {
   FOR_EACH_CHANNEL(i) {
     // active channel?
     if (!Channel[i].sound_id) {
-      check(Channel[i].handle == -1);
+      vassert(Channel[i].handle == -1);
       DeallocChannel(i);
       continue;
     }

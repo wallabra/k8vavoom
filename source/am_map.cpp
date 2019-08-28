@@ -1531,7 +1531,7 @@ static void amFlatsCheckSubsector (int num) {
     if (!flatsurf || !flatsurf->texinfo.Tex || flatsurf->texinfo.Tex->Type == TEXTYPE_Null) return; // just in case
   }
   if (!flatsurf->surfs) return;
-  //check(flatsurf->surfs->subsector == sub);
+  //vassert(flatsurf->surfs->subsector == sub);
   // update textures (why not? this updates floor animation)
   Drawer->RendLev->UpdateSubsectorFlatSurfaces(sub, amDoFloors, !amDoFloors);
   amSurfList.append(flatsurf);
@@ -1730,7 +1730,7 @@ static void AM_DrawSubsectorSegs (const subsector_t *sub, vuint32 color, bool dr
 //==========================================================================
 static void AM_DrawRenderedSubs () {
   subsector_t *mysub = GClLevel->PointInSubsector(cl->ViewOrg);
-  check(mysub);
+  vassert(mysub);
 
   const subsector_t *sub = &GClLevel->Subsectors[0];
   for (unsigned scount = GClLevel->NumSubsectors; scount--; ++sub) {

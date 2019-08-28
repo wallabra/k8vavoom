@@ -84,8 +84,8 @@ public:
 
   static inline __attribute__((warn_unused_result)) TVec Invalid () { return TVec(NAN, NAN, NAN); }
 
-  inline __attribute__((warn_unused_result)) const float &operator [] (size_t i) const { check(i < 3); return (&x)[i]; }
-  inline __attribute__((warn_unused_result)) float &operator [] (size_t i) { check(i < 3); return (&x)[i]; }
+  inline __attribute__((warn_unused_result)) const float &operator [] (size_t i) const { vassert(i < 3); return (&x)[i]; }
+  inline __attribute__((warn_unused_result)) float &operator [] (size_t i) { vassert(i < 3); return (&x)[i]; }
 
   inline __attribute__((warn_unused_result)) bool isValid () const { return (isFiniteF(x) && isFiniteF(y) && isFiniteF(z)); }
   inline __attribute__((warn_unused_result)) bool isZero () const { return (x == 0.0f && y == 0.0f && z == 0.0f); }
@@ -733,7 +733,7 @@ public:
 
   inline void clear () { fovx = fovy = 0.0f; }
 
-  inline __attribute__((warn_unused_result)) const TVec &operator [] (size_t idx) const { check(idx < 4); return clipbase[idx]; }
+  inline __attribute__((warn_unused_result)) const TVec &operator [] (size_t idx) const { vassert(idx < 4); return clipbase[idx]; }
 
   void setupFromFOVs (const float afovx, const float afovy);
 
@@ -851,8 +851,8 @@ void PerpendicularVector (TVec &dst, const TVec &src); // assumes "src" is norma
 // ////////////////////////////////////////////////////////////////////////// //
 // sometimes subsector bbox has invalid z; this fixes it
 static __attribute__((unused)) inline void FixBBoxZ (float bbox[6]) {
-  check(isFiniteF(bbox[2]));
-  check(isFiniteF(bbox[3+2]));
+  vassert(isFiniteF(bbox[2]));
+  vassert(isFiniteF(bbox[3+2]));
   if (bbox[2] > bbox[3+2]) {
     const float tmp = bbox[2];
     bbox[2] = bbox[3+2];

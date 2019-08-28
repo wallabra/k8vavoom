@@ -642,7 +642,7 @@ void VViewClipper::ClipInitFrustumRange (const TAVec &viewangles, const TVec &vi
                                          const TVec &viewright, const TVec &viewup,
                                          const float fovx, const float fovy)
 {
-  check(ClipIsEmpty());
+  vassert(ClipIsEmpty());
 
   ClipInitFrustumPlanes(viewangles, viewforward, viewright, viewup, fovx, fovy);
 

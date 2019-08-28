@@ -408,9 +408,9 @@ void MakeNormalVectors (const TVec &forward, TVec &right, TVec &up) {
 /*
 bool TPlane::checkBox (const float bbox[6]) const {
 #ifdef FRUSTUM_BBOX_CHECKS
-  check(bbox[0] <= bbox[3+0]);
-  check(bbox[1] <= bbox[3+1]);
-  check(bbox[2] <= bbox[3+2]);
+  vassert(bbox[0] <= bbox[3+0]);
+  vassert(bbox[1] <= bbox[3+1]);
+  vassert(bbox[2] <= bbox[3+2]);
 #endif
 #ifdef PLANE_BOX_USE_REJECT_ACCEPT
   // check reject point
@@ -435,9 +435,9 @@ bool TPlane::checkBox (const float bbox[6]) const {
 /*
 int TPlane::checkBoxEx (const float bbox[6]) const {
 #ifdef FRUSTUM_BBOX_CHECKS
-  check(bbox[0] <= bbox[3+0]);
-  check(bbox[1] <= bbox[3+1]);
-  check(bbox[2] <= bbox[3+2]);
+  vassert(bbox[0] <= bbox[3+0]);
+  vassert(bbox[1] <= bbox[3+1]);
+  vassert(bbox[2] <= bbox[3+2]);
 #endif
 #ifdef PLANE_BOX_USE_REJECT_ACCEPT
   // check reject point
@@ -643,7 +643,7 @@ void TFrustum::setup (const TClipBase &clipbase, const TFrustumParam &fp, bool c
     // k8: better be safe than sorry
     planes[4].SetPointNormal3D(fp.origin+fp.vforward*0.125f, fp.vforward);
     // sanity check: camera shouldn't be in frustum
-    //check(planes[4].PointOnSide(fp.origin));
+    //vassert(planes[4].PointOnSide(fp.origin));
     planes[4].clipflag = 1U<<4;
     planeCount = 5;
   } else {
@@ -719,9 +719,9 @@ bool TFrustum::checkSphere (const TVec &center, const float radius, const unsign
 bool TFrustum::checkBox (const float bbox[6], const unsigned mask) const {
   if (!planeCount || !mask) return true;
 #ifdef FRUSTUM_BBOX_CHECKS
-  check(bbox[0] <= bbox[3+0]);
-  check(bbox[1] <= bbox[3+1]);
-  check(bbox[2] <= bbox[3+2]);
+  vassert(bbox[0] <= bbox[3+0]);
+  vassert(bbox[1] <= bbox[3+1]);
+  vassert(bbox[2] <= bbox[3+2]);
 #endif
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
@@ -755,9 +755,9 @@ bool TFrustum::checkBox (const float bbox[6], const unsigned mask) const {
 int TFrustum::checkBoxEx (const float bbox[6], const unsigned mask) const {
   if (!planeCount || !mask) return INSIDE;
 #ifdef FRUSTUM_BBOX_CHECKS
-  check(bbox[0] <= bbox[3+0]);
-  check(bbox[1] <= bbox[3+1]);
-  check(bbox[2] <= bbox[3+2]);
+  vassert(bbox[0] <= bbox[3+0]);
+  vassert(bbox[1] <= bbox[3+1]);
+  vassert(bbox[2] <= bbox[3+2]);
 #endif
   int res = INSIDE; // assume that the aabb will be inside the frustum
   const TClipPlane *cp = &planes[0];
@@ -910,10 +910,10 @@ int R_ClipSurface (TVec *dest, const TVec *src, int vcount, const TPlane &plane)
     PlaneFront = 1,
   };
 
-  check(dest);
-  check(src);
-  check(dest != src);
-  check(vcount >= 3);
+  vassert(dest);
+  vassert(src);
+  vassert(dest != src);
+  vassert(vcount >= 3);
 
   static int *sides = nullptr;
   static float *dots = nullptr;

@@ -164,7 +164,7 @@ public:
   inline VStr cloneUnique () const {
     if (!dataptr) return VStr();
     int len = length();
-    check(len > 0);
+    vassert(len > 0);
     VStr res;
     res.setLength(len, 0); // fill with zeroes, why not?
     memcpy(res.dataptr, dataptr, len);

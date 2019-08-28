@@ -536,9 +536,9 @@ VAcsObject::VAcsObject (VAcsLevel *ALevel, int Lump) : Level(ALevel) {
     return;
   } else {
     VStream *Strm = W_CreateLumpReaderNum(Lump);
-    check(Strm);
+    vassert(Strm);
     int datasize = Strm->TotalSize();
-    check(datasize >= (int)sizeof(VAcsHeader));
+    vassert(datasize >= (int)sizeof(VAcsHeader));
     Data = new vuint8[datasize];
     Strm->Serialise(Data, Strm->TotalSize());
     if (Strm->IsError()) memset(Data, 0, datasize);
@@ -1711,7 +1711,7 @@ bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3, int
   if (Number >= 0) {
     Info = FindScript(Number, Object);
   } else {
-    check(Number < 0); // lol
+    vassert(Number < 0); // lol
     Info = FindScriptByName(Number, Object);
     //if (Info) GCon->Logf("ACS: Start: script=<%d>; found '%s'", Number, *Info->Name);
     //else GCon->Logf("ACS: Start: script=<%d> -- OOPS", Number);
@@ -1879,7 +1879,7 @@ VAcs *VAcsLevel::SpawnScript (VAcsInfo *Info, VAcsObject *Object,
 //==========================================================================
 /*
 VLevelScriptThinker *AcsLoadScriptFromStream (VLevel *XLevel, VStream &strm) {
-  check(strm.IsLoading());
+  vassert(strm.IsLoading());
   VAcs *script = new VAcs();
   //script->Level = XLevel->LevelInfo;
   //script->XLevel = XLevel;
@@ -1976,7 +1976,7 @@ void VAcs::Serialise (VStream &Strm) {
       if (!destroyed) Destroy();
       return;
     }
-    check(!destroyed);
+    vassert(!destroyed);
   } else {
     vuint8 isDead = (destroyed ? 1 : 0);
     Strm << isDead;
@@ -1991,8 +1991,8 @@ void VAcs::Serialise (VStream &Strm) {
   Strm << Level;
   Strm << XLevel;
 
-  check(Level);
-  check(XLevel);
+  vassert(Level);
+  vassert(XLevel);
 
   Strm << Activator;
 
@@ -3412,8 +3412,8 @@ public:
           acsStackBitmap |= (1U<<(stkPoolIdx&0x1f));
         }
       }
-      check(stkPoolIdx >= 0);
-      check(stk);
+      vassert(stkPoolIdx >= 0);
+      vassert(stk);
     }
   }
   ~ACSStack () {
@@ -3553,8 +3553,8 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
   vint32 resultValue = 1;
   //vint32 *stack = (vint32 *)Z_Calloc(ACS_STACK_DEPTH+256); // why not?
   //ACSStack stack(true);
-  //check(stack.stk);
-  check(mystack);
+  //vassert(stack.stk);
+  vassert(mystack);
   vint32 *optstart = nullptr;
   vint32 *locals = (savedlocals ? savedlocals : LocalVars);
   VAcsFunction *activeFunction = nullptr;
@@ -5141,7 +5141,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
           //k8: the following is wrong, 'cause caller can has something pushed at its stack
           //locals = sp-activeFunction->ArgCount-activeFunction->LocalCount-sizeof(VAcsCallReturn)/sizeof(vint32);
           // sanity check
-          check(sp >= retState->ReturnLocals);
+          vassert(sp >= retState->ReturnLocals);
           locals = retState->ReturnLocals;
           //!GCon->Logf("  :RET:%d: oldlocals=%p (%p); locals=%p; (isretval:%d; retval:%d; discard:%d); argc=%d; locc=%d (callee: argc=%d; locc=%d)", info->Number, oldlocals, retState->ReturnLocals, locals, (int)(cmd == PCD_ReturnVal), value, (int)(retState->bDiscardResult), activeFunction->ArgCount, activeFunction->LocalCount, oldactfunc->ArgCount, oldactfunc->LocalCount);
         }

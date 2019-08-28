@@ -3899,7 +3899,7 @@ void VParser::ParseClass () {
       } else {
         //fprintf(stderr, "BOOO! <%s>\n", *ClassName);
       }
-      //check(Class->Defined);
+      //vassert(Class->Defined);
       Class->Outer = Package;
     } else {
       ParseError(ClassLoc, "duplicate class declaration `%s`", *ClassName);

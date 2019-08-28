@@ -311,7 +311,7 @@ void VFont::ParseTextColors () {
   }
 
   // make sure all built-in colors are defined
-  check(TextColors.Num() >= NUM_TEXT_COLORS);
+  vassert(TextColors.Num() >= NUM_TEXT_COLORS);
 }
 
 
@@ -920,7 +920,7 @@ VSpecialFont::VSpecialFont (VName AName, const TArray<int>& CharIndexes, const T
   bool ColorsUsed[256];
   memset(ColorsUsed, 0, sizeof(ColorsUsed));
 
-  check(CharIndexes.Num() == CharLumps.Num());
+  vassert(CharIndexes.Num() == CharLumps.Num());
   for (int i = 0; i < CharIndexes.Num(); ++i) {
     int Char = CharIndexes[i];
     VName LumpName = CharLumps[i];

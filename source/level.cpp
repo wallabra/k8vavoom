@@ -838,8 +838,8 @@ void VLevel::AppendControlLink (const sector_t *src, const sector_t *dest) {
   VCtl2DestLink *lnk = &ControlLinks[srcidx];
   if (lnk->dest < 0) {
     // first slot
-    check(lnk->src == -1);
-    check(lnk->next == -1);
+    vassert(lnk->src == -1);
+    vassert(lnk->next == -1);
     lnk->src = srcidx;
     lnk->dest = destidx;
     lnk->next = -1;
@@ -855,7 +855,7 @@ void VLevel::AppendControlLink (const sector_t *src, const sector_t *dest) {
     int newidx = ControlLinks.length();
     VCtl2DestLink *newlnk = &ControlLinks.alloc();
     lnk = &ControlLinks[lastidx]; // refresh lnk, because array might be reallocated
-    check(lnk->next == -1);
+    vassert(lnk->next == -1);
     lnk->next = newidx;
     newlnk->src = srcidx;
     newlnk->dest = destidx;

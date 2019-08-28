@@ -144,11 +144,11 @@ struct CharClassifier {
     // sanity check
     for (int f = 0; f < 256; ++f) {
       if (f <= 32 || f == '.' || strchr(cIdTerm, f)) {
-        check(isCIdTerm(f));
-        if (f == '.') { check(!isCNumTerm(f)); } else { check(isCNumTerm(f)); }
+        vassert(isCIdTerm(f));
+        if (f == '.') { vassert(!isCNumTerm(f)); } else { vassert(isCNumTerm(f)); }
       } else {
-        check(!isCIdTerm(f));
-        check(!isCNumTerm(f));
+        vassert(!isCIdTerm(f));
+        vassert(!isCNumTerm(f));
       }
     }
   }

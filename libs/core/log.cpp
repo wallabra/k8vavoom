@@ -400,7 +400,7 @@ public:
         len -= left;
         s = esc;
       }
-      check(len > 0);
+      vassert(len > 0);
       ++s;
       --len;
       if (s[-1] != TEXT_COLOR_ESCAPE) continue;
@@ -478,7 +478,7 @@ public:
       }
       if (!eol[0]) break; // no more
       // new line
-      check(eol[0] == '\r' || eol[0] == '\n');
+      vassert(eol[0] == '\r' || eol[0] == '\n');
       if (!lastWasNL) xprintStr("\n", outfile());
       lastWasNL = true;
       Text = eol+1;

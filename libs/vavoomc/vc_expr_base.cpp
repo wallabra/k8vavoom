@@ -667,8 +667,8 @@ int VExpression::IsNumericLiteralExpr (VExpression *e) {
         t1 = IsNumericLiteralExpr(eb->op2);
         if (t1 == ExprNotNum) return ExprNotNum;
         if (t0 == ExprFloat || t1 == ExprFloat) return ExprFloat;
-        check(t0 == ExprInt);
-        check(t1 == ExprInt);
+        vassert(t0 == ExprInt);
+        vassert(t1 == ExprInt);
         return ExprInt;
       case VBinary::Equals:
       case VBinary::NotEquals:
@@ -726,7 +726,7 @@ struct LEVal {
 //
 //==========================================================================
 static LEVal calcLE (VExpression *e) {
-  check(e);
+  vassert(e);
   if (e->IsIntConst()) return LEVal(e->GetIntConst());
   if (e->IsFloatConst()) return LEVal(e->GetFloatConst());
   // parentheses
@@ -767,7 +767,7 @@ static LEVal calcLE (VExpression *e) {
     } else if (val2.isFloat) {
       val1 = val1.toFloat();
     }
-    check(val1.isFloat == val2.isFloat);
+    vassert(val1.isFloat == val2.isFloat);
     switch (eb->Oper) {
       case VBinary::Add:
         return (val1.isFloat ? LEVal(val1.fv+val2.fv) : LEVal((vint32)(val1.iv+val2.iv)));

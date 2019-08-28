@@ -67,8 +67,8 @@ void VLevel::RemoveScriptThinker (VLevelScriptThinker *sth) {
 //==========================================================================
 void VLevel::AddScriptThinker (VLevelScriptThinker *sth, bool ImmediateRun) {
   if (!sth) return;
-  check(!sth->XLevel);
-  check(!sth->Level);
+  vassert(!sth->XLevel);
+  vassert(!sth->Level);
   sth->XLevel = this;
   sth->Level = LevelInfo;
   if (ImmediateRun) return;
@@ -99,7 +99,7 @@ void VLevel::AddScriptThinker (VLevelScriptThinker *sth, bool ImmediateRun) {
         VLevelScriptThinker *scthr = scriptThinkers[currIdx];
         if (scthr) {
           // alive
-          check(firstEmpty < currIdx);
+          vassert(firstEmpty < currIdx);
           scriptThinkers[firstEmpty] = scthr;
           scriptThinkers[currIdx] = nullptr;
           // find next empty slot
@@ -263,7 +263,7 @@ void VLevel::RunScriptThinkers (float DeltaTime) {
       VLevelScriptThinker *sth = scriptThinkers[currIdx];
       if (sth) {
         // alive
-        check(firstEmpty < currIdx);
+        vassert(firstEmpty < currIdx);
         scriptThinkers[firstEmpty] = sth;
         scriptThinkers[currIdx] = nullptr;
         // find next empty slot
@@ -431,7 +431,7 @@ void VLevel::TickWorld (float DeltaTime) {
 VThinker *VLevel::SpawnThinker (VClass *AClass, const TVec &AOrigin,
                                 const TAVec &AAngles, mthing_t *mthing, bool AllowReplace)
 {
-  check(AClass);
+  vassert(AClass);
   VClass *Class = (AllowReplace ? AClass->GetReplacement() : AClass);
   if (!Class) Class = AClass;
   VThinker *Ret = (VThinker *)StaticSpawnNoReplace(Class);

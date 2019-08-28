@@ -34,7 +34,7 @@
 //
 //==========================================================================
 void VTextureID::Serialise (VStream &strm) const {
-  check(!strm.IsLoading());
+  vassert(!strm.IsLoading());
   vint32 aid = this->id;
   if (aid > 0 && GTextureManager.getIgnoreAnim(aid)) {
     strm << STRM_INDEX(aid);

@@ -680,7 +680,7 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Return)
-        checkSlow(sp == local_vars+func->NumLocals);
+        vensure(sp == local_vars+func->NumLocals);
 #ifdef VMEXEC_RUNDUMP
         printIndent(); fprintf(stderr, "LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
 #endif
@@ -689,7 +689,7 @@ func_loop:
         return;
 
       PR_VM_CASE(OPC_ReturnL)
-        checkSlow(sp == local_vars+func->NumLocals+1);
+        vensure(sp == local_vars+func->NumLocals+1);
 #ifdef VMEXEC_RUNDUMP
         printIndent(); fprintf(stderr, "LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
 #endif
@@ -699,7 +699,7 @@ func_loop:
         return;
 
       PR_VM_CASE(OPC_ReturnV)
-        checkSlow(sp == local_vars+func->NumLocals+3);
+        vensure(sp == local_vars+func->NumLocals+3);
 #ifdef VMEXEC_RUNDUMP
         printIndent(); fprintf(stderr, "LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
 #endif
@@ -3072,16 +3072,16 @@ VFuncRes VObject::ExecuteFunction (VMethod *func) {
     const int tsz = func->ReturnType.GetStackSize()/4;
     switch (func->ReturnType.Type) {
       case TYPE_Void: abort(); // the thing that should not be
-      case TYPE_Int: check(tsz == 1); ret = VFuncRes(pr_stackPtr[-1].i); break;
-      case TYPE_Byte: check(tsz == 1); ret = VFuncRes(pr_stackPtr[-1].i); break;
-      case TYPE_Bool: check(tsz == 1); ret = VFuncRes(pr_stackPtr[-1].i); break;
-      case TYPE_Float: check(tsz == 1); ret = VFuncRes(pr_stackPtr[-1].f); break;
-      case TYPE_Name: check(tsz == 1); ret = VFuncRes(*(VName *)(&pr_stackPtr[-1])); break;
-      case TYPE_String: check(tsz == 1); ret = VFuncRes(*(VStr *)(&pr_stackPtr[-1].p)); ((VStr *)(&pr_stackPtr[-1].p))->clear(); break;
-      case TYPE_Reference: check(tsz == 1); ret = VFuncRes((VClass *)(pr_stackPtr[-1].p)); break;
-      case TYPE_Class: check(tsz == 1); ret = VFuncRes((VObject *)(pr_stackPtr[-1].p)); break;
-      case TYPE_State: check(tsz == 1); ret = VFuncRes((VState *)(pr_stackPtr[-1].p)); break;
-      case TYPE_Vector: check(tsz == 3); ret = VFuncRes(pr_stackPtr[-3].f, pr_stackPtr[-2].f, pr_stackPtr[-1].f); break;
+      case TYPE_Int: vassert(tsz == 1); ret = VFuncRes(pr_stackPtr[-1].i); break;
+      case TYPE_Byte: vassert(tsz == 1); ret = VFuncRes(pr_stackPtr[-1].i); break;
+      case TYPE_Bool: vassert(tsz == 1); ret = VFuncRes(pr_stackPtr[-1].i); break;
+      case TYPE_Float: vassert(tsz == 1); ret = VFuncRes(pr_stackPtr[-1].f); break;
+      case TYPE_Name: vassert(tsz == 1); ret = VFuncRes(*(VName *)(&pr_stackPtr[-1])); break;
+      case TYPE_String: vassert(tsz == 1); ret = VFuncRes(*(VStr *)(&pr_stackPtr[-1].p)); ((VStr *)(&pr_stackPtr[-1].p))->clear(); break;
+      case TYPE_Reference: vassert(tsz == 1); ret = VFuncRes((VClass *)(pr_stackPtr[-1].p)); break;
+      case TYPE_Class: vassert(tsz == 1); ret = VFuncRes((VObject *)(pr_stackPtr[-1].p)); break;
+      case TYPE_State: vassert(tsz == 1); ret = VFuncRes((VState *)(pr_stackPtr[-1].p)); break;
+      case TYPE_Vector: vassert(tsz == 3); ret = VFuncRes(pr_stackPtr[-3].f, pr_stackPtr[-2].f, pr_stackPtr[-1].f); break;
       default: break;
     }
     pr_stackPtr -= tsz;

@@ -561,7 +561,7 @@ int W_FindFirstLumpOccurence (VName lmpname, EWadNamespace NS) {
 //
 //==========================================================================
 int W_GetNumForName (VName Name, EWadNamespace NS) {
-  check(Name != NAME_None);
+  vassert(Name != NAME_None);
   int i = W_CheckNumForName(Name, NS);
   if (i == -1) Sys_Error("W_GetNumForName: \"%s\" not found!", *Name);
   return i;
@@ -990,7 +990,7 @@ VStr W_LoadTextLump (VName name) {
 void W_LoadLumpIntoArrayIdx (int Lump, TArray<vuint8> &Array) {
   VStream *Strm = W_CreateLumpReaderNum(Lump);
   if (!Strm) Sys_Error("error reading lump with index %d", Lump);
-  check(Strm);
+  vassert(Strm);
   Array.SetNum(Strm->TotalSize());
   Strm->Serialise(Array.Ptr(), Strm->TotalSize());
   if (Strm->IsError()) { delete Strm; Sys_Error("error reading lump '%s'", *W_FullLumpName(Lump)); }
@@ -1007,7 +1007,7 @@ void W_LoadLumpIntoArray (VName LumpName, TArray<vuint8> &Array) {
   int Lump = W_CheckNumForFileName(*LumpName);
   if (Lump < 0) Lump = W_GetNumForName(LumpName);
   VStream *Strm = W_CreateLumpReaderNum(Lump);
-  check(Strm);
+  vassert(Strm);
   Array.SetNum(Strm->TotalSize());
   Strm->Serialise(Array.Ptr(), Strm->TotalSize());
   if (Strm->IsError()) { delete Strm; Sys_Error("error reading lump '%s'", *W_FullLumpName(Lump)); }

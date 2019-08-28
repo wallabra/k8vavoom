@@ -77,7 +77,7 @@ VMemberBase::VMemberBase (vuint8 AMemberType, VName AName, VMemberBase *AOuter, 
 {
   if (lastUsedMemberId == 0xffffffffu) Sys_Error("too many VC members");
   mMemberId = ++lastUsedMemberId;
-  check(mMemberId != 0);
+  vassert(mMemberId != 0);
   if (GObjInitialised) {
     MemberIndex = GMembers.Append(this);
     /*
@@ -124,12 +124,12 @@ void VMemberBase::CompilerShutdown () {
 void VMemberBase::PutToNameHash (VMemberBase *self) {
   if (!self || self->Name == NAME_None) return;
   //fprintf(stderr, "REGISTERING: <%s>\n", *self->Name);
-  check(self->HashNext == nullptr);
-  check(self->HashNextLC == nullptr);
+  vassert(self->HashNext == nullptr);
+  vassert(self->HashNextLC == nullptr);
   {
     VMemberBase **mpp = gMembersMap.find(self->Name);
     if (mpp) {
-      check(*mpp != self);
+      vassert(*mpp != self);
       self->HashNext = (*mpp);
       *mpp = self;
     } else {
@@ -299,11 +299,11 @@ void VMemberBase::Shutdown () {
 //
 //==========================================================================
 void VMemberBase::StaticInit () {
-  check(!GObjInitialised);
-  check(!GObjShuttingDown);
+  vassert(!GObjInitialised);
+  vassert(!GObjShuttingDown);
   // add native classes to the list
   for (VClass *C = GClasses; C; C = C->LinkNext) {
-    check(C->MemberIndex == -666);
+    vassert(C->MemberIndex == -666);
     C->MemberIndex = GMembers.Append(C);
     PutToNameHash(C);
   }
@@ -324,7 +324,7 @@ void VMemberBase::StaticInit () {
 //
 //==========================================================================
 void VMemberBase::StaticExit () {
-  check(!GObjShuttingDown);
+  vassert(!GObjShuttingDown);
   /*
   for (int i = 0; i < GMembers.Num(); ++i) {
     if (!GMembers[i]) continue;
@@ -378,7 +378,7 @@ void VMemberBase::StaticAddPackagePath (const char *Path) {
 //
 //==========================================================================
 VPackage *VMemberBase::StaticLoadPackage (VName AName, const TLocation &l) {
-  check(AName != NAME_None);
+  vassert(AName != NAME_None);
   // check if already loaded
   for (int i = 0; i < GLoadedPackages.Num(); ++i) if (GLoadedPackages[i]->Name == AName) return GLoadedPackages[i];
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
@@ -509,7 +509,7 @@ VFieldType VMemberBase::StaticFindType (VClass *AClass, VName Name) {
 VClass *VMemberBase::StaticFindClass (VName AName, bool caseSensitive) {
   if (AName == NAME_None) return nullptr;
   if (!caseSensitive) return StaticFindClass(*AName, false); // use slightly slower search
-  check(caseSensitive);
+  vassert(caseSensitive);
   VMemberBase **mpp = gMembersMap.find(AName);
   if (!mpp) return nullptr;
   for (VMemberBase *m = *mpp; m; m = m->HashNext) {
@@ -530,7 +530,7 @@ VClass *VMemberBase::StaticFindClass (VName AName, bool caseSensitive) {
 VClass *VMemberBase::StaticFindClass (const char *AName, bool caseSensitive) {
   if (!AName || !AName[0]) return nullptr;
   if (caseSensitive) return StaticFindClass(VName(AName, VName::Find), true); // use slightly faster search-by-name
-  check(!caseSensitive);
+  vassert(!caseSensitive);
   // use lower-case map
   VName loname = VName(AName, VName::FindLower);
   if (loname == NAME_None) return nullptr; // no such name, no chance to find a member

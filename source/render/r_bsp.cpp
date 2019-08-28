@@ -109,16 +109,16 @@ void VRenderLevelShared::PrepareWorldRender (const refdef_t *rd, const VViewClip
 void VRenderLevelShared::ChooseFlatSurfaces (sec_surface_t *&f0, sec_surface_t *&f1, sec_surface_t *flat0, sec_surface_t *flat1) {
   if (!flat0 || !flat1) {
     if (flat0) {
-      check(!flat1);
+      vassert(!flat1);
       f0 = flat0;
       f1 = nullptr;
     } else if (flat1) {
-      check(!flat0);
+      vassert(!flat0);
       f0 = flat1;
       f1 = nullptr;
     } else {
-      check(!flat0);
-      check(!flat1);
+      vassert(!flat0);
+      vassert(!flat1);
       f0 = f1 = nullptr;
     }
     return;

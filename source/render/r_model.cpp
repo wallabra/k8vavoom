@@ -828,7 +828,7 @@ static void ParseGZModelDefs () {
   int cnt = 0;
   for (auto &&mdl : gzmdlist) {
     VClass *xcls = VClass::FindClassNoCase(*mdl->className);
-    check(xcls);
+    vassert(xcls);
     // get xml here, because we're going to modify the model
     auto xml = mdl->createXml();
     // create impossible name, because why not?
@@ -1519,8 +1519,8 @@ static int FindFrame (VClassModelScript &Cls, const VAliasModelFrameInfo &Frame,
       // sprite cache
       if (frm.sprite != NAME_None) {
         //FIXME: sanity checks
-        check(frm.frame >= 0 && frm.frame < 4096);
-        check(frm.sprite.GetIndex() > 0 && frm.sprite.GetIndex() < 524288);
+        vassert(frm.frame >= 0 && frm.frame < 4096);
+        vassert(frm.sprite.GetIndex() > 0 && frm.sprite.GetIndex() < 524288);
         vuint32 nfi = SprNameFrameToInt(frm.sprite, frm.frame);
         if (!Cls.SprFrameMap.has(nfi)) {
           // new one

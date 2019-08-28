@@ -48,8 +48,8 @@ VMiAStarGraphIntr::VMiAStarGraphIntr (VMiAStarGraphBase *aifc)
 //==========================================================================
 float VMiAStarGraphIntr::LeastCostEstimate (void *stateStart, void *stateEnd) {
 #if !defined(IN_VCC)
-  check(vcifc);
-  check(mtLeastCostEstimate);
+  vassert(vcifc);
+  vassert(mtLeastCostEstimate);
   P_PASS_REF(vcifc);
   P_PASS_REF(stateStart);
   P_PASS_REF(stateEnd);
@@ -66,8 +66,8 @@ float VMiAStarGraphIntr::LeastCostEstimate (void *stateStart, void *stateEnd) {
 //
 //==========================================================================
 void VMiAStarGraphIntr::AdjacentCost (void *state, MP_VECTOR<micropather::StateCost> *adjacent) {
-  check(vcifc);
-  check(mtAdjacentCost);
+  vassert(vcifc);
+  vassert(mtAdjacentCost);
   vcifc->adjarray = adjacent;
   try {
     P_PASS_REF(vcifc);
@@ -211,8 +211,8 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, PathArrayPushNode) {
   P_GET_SELF;
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::PathArrayNode"); }
   Self->EnsureInterfaces();
-  check(Self->intr);
-  check(Self->pather);
+  vassert(Self->intr);
+  vassert(Self->pather);
   Self->intr->path.push_back((void *)node);
 }
 
@@ -276,8 +276,8 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayPushNode) {
   P_GET_SELF;
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::PathArrayNode"); }
   Self->EnsureInterfaces();
-  check(Self->intr);
-  check(Self->pather);
+  vassert(Self->intr);
+  vassert(Self->pather);
   micropather::StateCost cst;
   cst.state = (void *)node;
   cst.cost = cost;
@@ -297,8 +297,8 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, Solve) {
     return;
   }
   Self->EnsureInterfaces();
-  check(Self->intr);
-  check(Self->pather);
+  vassert(Self->intr);
+  vassert(Self->pather);
   Self->intr->path.clear();
   int res = Self->pather->Solve((void *)startState, (void *)endState, &Self->intr->path, &Self->pathCost);
   if (res == micropather::MicroPather::SOLVED) {
@@ -336,8 +336,8 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, SolveForNearStates) {
     return;
   }
   Self->EnsureInterfaces();
-  check(Self->intr);
-  check(Self->pather);
+  vassert(Self->intr);
+  vassert(Self->pather);
   Self->intr->mNear.clear();
   int res = Self->pather->SolveForNearStates(startState, &Self->intr->mNear, maxCost);
   if (res == micropather::MicroPather::SOLVED) {
@@ -359,7 +359,7 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, Reset) {
   P_GET_SELF;
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::Reset"); }
   if (Self->intr) {
-    check(Self->pather);
+    vassert(Self->pather);
     Self->pather->Reset();
   }
 }

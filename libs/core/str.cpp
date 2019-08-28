@@ -195,20 +195,20 @@ VStr::VStr (double v) : dataptr(nullptr) {
 VStream &VStr::Serialise (VStream &Strm) {
   vint32 len = vint32(length());
   Strm << STRM_INDEX(len);
-  check(len >= 0);
+  vassert(len >= 0);
   if (Strm.IsLoading()) {
     if (len) {
       resize(len);
       makeMutable();
       Strm.Serialise(dataptr, len+1); // eat last byte which should be zero...
-      check(dataptr[len] == 0);
+      vassert(dataptr[len] == 0);
       //dataptr[len] = 0; // ...and force zero
     } else {
       clear();
       // zero byte is always there
       vuint8 b;
       Strm << b;
-      check(b == 0);
+      vassert(b == 0);
     }
   } else {
     if (len) Strm.Serialise(getData(), len);
@@ -222,7 +222,7 @@ VStream &VStr::Serialise (VStream &Strm) {
 
 // serialisation operator
 VStream &VStr::Serialise (VStream &Strm) const {
-  check(!Strm.IsLoading());
+  vassert(!Strm.IsLoading());
   vint32 len = vint32(length());
   Strm << STRM_INDEX(len);
   if (len) Strm.Serialise(getData(), len);
@@ -668,7 +668,7 @@ void VStr::resize (int newlen) {
     //if (store()->rc > 0) --store()->rc;
     if (!atomicIsImmutable()) {
       int nrc = atomicDecRC();
-      check(nrc > 0);
+      vassert(nrc > 0);
     }
     #ifdef VAVOOM_TEST_VSTR
     fprintf(stderr, "VStr: realloced(new): old=%p(%d); new=%p(%d)\n", dataptr, store()->rc, ns+1, ns->rc);
@@ -1056,10 +1056,10 @@ VStr VStr::Replace (VStr Search, VStr Replacement) const {
 
 
 VStr VStr::Utf8Substring (int start, int len) const {
-  check(start >= 0);
-  check(start <= (int)Utf8Length());
-  check(len >= 0);
-  check(start+len <= (int)Utf8Length());
+  vassert(start >= 0);
+  vassert(start <= (int)Utf8Length());
+  vassert(len >= 0);
+  vassert(start+len <= (int)Utf8Length());
   if (!len) return VStr();
   int RealStart = int(ByteLengthForUtf8(getData(), start));
   int RealLen = int(ByteLengthForUtf8(getData(), start+len)-RealStart);
@@ -1615,7 +1615,7 @@ size_t VStr::ByteLengthForUtf8 (const char *s, size_t N) {
         ++count;
       }
     }
-    check(N == count);
+    vassert(N == count);
     return c-s;
   } else {
     return 0;
@@ -2069,7 +2069,7 @@ void VStr::Tokenise (TArray <VStr> &args) const {
           ss += *str++;
         }
       }
-      if (*str) { check(*str == qch); ++str; } // skip closing quote
+      if (*str) { vassert(*str == qch); ++str; } // skip closing quote
       //fprintf(stderr, "*#*<%s>\n", *ss);
       args.append(ss);
     } else {

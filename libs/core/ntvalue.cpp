@@ -49,7 +49,7 @@ VStream &operator << (VStream &strm, const VNTValue &val) {
 //
 //==========================================================================
 VNTValue::VNTValue (VName aname, const vuint8 *buf, int bufsz, bool doCopyData) {
-  check(bufsz >= 0);
+  vassert(bufsz >= 0);
   memset((void *)this, 0, sizeof(VNTValue));
   type = T_Blob;
   name = aname;
@@ -73,7 +73,7 @@ VNTValue::VNTValue (VName aname, const vuint8 *buf, int bufsz, bool doCopyData) 
 //
 //==========================================================================
 bool VNTValue::ReadTypeName (VStream &strm, vuint8 *otype, VName *oname) {
-  check(strm.IsLoading());
+  vassert(strm.IsLoading());
   vuint8 atype = T_Invalid;
   strm << atype;
   if (atype <= T_Invalid || atype > T_Blob) {
@@ -97,7 +97,7 @@ bool VNTValue::ReadTypeName (VStream &strm, vuint8 *otype, VName *oname) {
 //
 //==========================================================================
 bool VNTValue::SkipValue (VStream &strm, vuint8 atype) {
-  check(strm.IsLoading());
+  vassert(strm.IsLoading());
   if (!isValidType(atype)) return false;
   if (strm.IsError()) return false;
   switch (atype) {
@@ -131,7 +131,7 @@ bool VNTValue::SkipValue (VStream &strm, vuint8 atype) {
 //
 //==========================================================================
 VNTValue VNTValue::ReadValue (VStream &strm, vuint8 atype, VName aname) {
-  check(strm.IsLoading());
+  vassert(strm.IsLoading());
   if (!isValidType(atype)) return VNTValue();
   if (strm.IsError()) return VNTValue();
   VNTValue res;
@@ -227,7 +227,7 @@ void VNTValue::Serialise (VStream &strm) {
 //
 //==========================================================================
 void VNTValue::WriteTo (VStream &strm) const {
-  check(!strm.IsLoading());
+  vassert(!strm.IsLoading());
   vuint8 atype = type;
   strm << atype;
   VName aname = name;
@@ -260,7 +260,7 @@ void VNTValue::WriteTo (VStream &strm) const {
 //
 //==========================================================================
 void VNTValue::SkipSerialised (VStream &strm, vuint8 *otype, VName *oname) {
-  check(strm.IsLoading());
+  vassert(strm.IsLoading());
   vuint8 atype = T_Invalid;
   strm << atype;
   if (atype <= T_Invalid || atype > T_Blob) Sys_Error("invalid NTValue type (%d)", atype);
@@ -308,7 +308,7 @@ VNTValueReader::VNTValueReader (VStream *ASrcStream)
   , strmendofs(0)
   , bError(false)
 {
-  check(srcStream);
+  vassert(srcStream);
   if (srcStream->IsError()) { setError(); return; }
   *srcStream << STRM_INDEX(valleft);
   if (srcStream->IsError()) { setError(); return; }
@@ -576,8 +576,8 @@ VNTValueWriter::VNTValueWriter (VStream *astrm)
   : strm(astrm)
   , vlist()
 {
-  check(astrm);
-  check(!astrm->IsLoading());
+  vassert(astrm);
+  vassert(!astrm->IsLoading());
 }
 
 
@@ -599,7 +599,7 @@ VNTValueWriter::~VNTValueWriter () {
 void VNTValueWriter::WriteTo (VStream &strm) {
   vint32 count = vlist.length();
   strm << STRM_INDEX(count);
-  check(vlist.length() == count);
+  vassert(vlist.length() == count);
   for (vint32 f = 0; f < count; ++f) {
     vlist[f].WriteTo(strm);
     if (strm.IsError()) return;
@@ -654,7 +654,7 @@ VNTValueIO::VNTValueIO (VStream *astrm)
   , wr(nullptr)
   , bError(false)
 {
-  check(astrm);
+  vassert(astrm);
   if (astrm->IsLoading()) {
     rd = new VNTValueReader(astrm);
   } else {
@@ -680,10 +680,10 @@ VNTValueIO::~VNTValueIO () {
 //
 //==========================================================================
 void VNTValueIO::setup (VStream *astrm) {
-  check(!rd);
-  check(!wr);
-  check(!bError);
-  check(astrm);
+  vassert(!rd);
+  vassert(!wr);
+  vassert(!bError);
+  vassert(astrm);
   if (astrm->IsLoading()) {
     rd = new VNTValueReader(astrm);
   } else {

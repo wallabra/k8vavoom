@@ -403,13 +403,13 @@ void VLevel::SerialiseOther (VStream &Strm) {
           Strm.Seek(currPos);
         }
       } else {
-        check(Strm.IsLoading());
+        vassert(Strm.IsLoading());
         if (dcSize < 0) Host_Error("invalid segmap size");
         GCon->Logf("segcount doesn't match for seg mapping (this is harmless)");
         Strm.Seek(dcStartPos+4+dcSize);
       }
     } else {
-      check(Strm.IsLoading());
+      vassert(Strm.IsLoading());
       Strm << dcSize; // will be fixed later for writer
       if (dcSize < 0) Host_Error("invalid segmap size");
       GCon->Logf("seg hash doesn't match for seg mapping (this is harmless)");
@@ -456,7 +456,7 @@ void VLevel::SerialiseOther (VStream &Strm) {
         // do not replace user marks
       }
       #else
-      check(number == 0);
+      vassert(number == 0);
       #endif
     }
   }

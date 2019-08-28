@@ -154,22 +154,22 @@ static inline __attribute__((unused)) VStream &operator << (VStream &Strm, float
 static inline __attribute__((unused)) VStream &operator << (VStream &Strm, double &Val) { Strm.SerialiseLittleEndian(&Val, sizeof(Val)); return Strm; }
 
 // writers
-static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const VName &v) { check(!Strm.IsLoading()); Strm.io((VName &)v); return Strm; }
-static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const VStr &v) { check(!Strm.IsLoading()); Strm.io((VStr &)v); return Strm; }
-static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const VObject *&v) { check(!Strm.IsLoading()); Strm.io((VObject *&)v); return Strm; }
-static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const VMemberBase *&v) { check(!Strm.IsLoading()); Strm.io((VMemberBase *&)v); return Strm; }
-static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const VSerialisable *&v) { check(!Strm.IsLoading()); Strm.io((VSerialisable *&)v); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const VName &v) { vassert(!Strm.IsLoading()); Strm.io((VName &)v); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const VStr &v) { vassert(!Strm.IsLoading()); Strm.io((VStr &)v); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const VObject *&v) { vassert(!Strm.IsLoading()); Strm.io((VObject *&)v); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const VMemberBase *&v) { vassert(!Strm.IsLoading()); Strm.io((VMemberBase *&)v); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const VSerialisable *&v) { vassert(!Strm.IsLoading()); Strm.io((VSerialisable *&)v); return Strm; }
 
-static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const vint8 &Val) { check(!Strm.IsLoading()); Strm.Serialise((void *)&Val, 1); return Strm; }
-static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const vuint8 &Val) { check(!Strm.IsLoading()); Strm.Serialise((void *)&Val, 1); return Strm; }
-static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const vint16 &Val) { check(!Strm.IsLoading()); Strm.SerialiseLittleEndian((void *)&Val, sizeof(Val)); return Strm; }
-static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const vuint16 &Val) { check(!Strm.IsLoading()); Strm.SerialiseLittleEndian((void *)&Val, sizeof(Val)); return Strm; }
-static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const vint32 &Val) { check(!Strm.IsLoading()); Strm.SerialiseLittleEndian((void *)&Val, sizeof(Val)); return Strm; }
-static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const vuint32 &Val) { check(!Strm.IsLoading()); Strm.SerialiseLittleEndian((void *)&Val, sizeof(Val)); return Strm; }
-static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const vint64 &Val) { check(!Strm.IsLoading()); Strm.SerialiseLittleEndian((void *)&Val, sizeof(Val)); return Strm; }
-static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const vuint64 &Val) { check(!Strm.IsLoading()); Strm.SerialiseLittleEndian((void *)&Val, sizeof(Val)); return Strm; }
-static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const float &Val) { check(!Strm.IsLoading()); Strm.SerialiseLittleEndian((void *)&Val, sizeof(Val)); return Strm; }
-static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const double &Val) { check(!Strm.IsLoading()); Strm.SerialiseLittleEndian((void *)&Val, sizeof(Val)); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const vint8 &Val) { vassert(!Strm.IsLoading()); Strm.Serialise((void *)&Val, 1); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const vuint8 &Val) { vassert(!Strm.IsLoading()); Strm.Serialise((void *)&Val, 1); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const vint16 &Val) { vassert(!Strm.IsLoading()); Strm.SerialiseLittleEndian((void *)&Val, sizeof(Val)); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const vuint16 &Val) { vassert(!Strm.IsLoading()); Strm.SerialiseLittleEndian((void *)&Val, sizeof(Val)); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const vint32 &Val) { vassert(!Strm.IsLoading()); Strm.SerialiseLittleEndian((void *)&Val, sizeof(Val)); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const vuint32 &Val) { vassert(!Strm.IsLoading()); Strm.SerialiseLittleEndian((void *)&Val, sizeof(Val)); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const vint64 &Val) { vassert(!Strm.IsLoading()); Strm.SerialiseLittleEndian((void *)&Val, sizeof(Val)); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const vuint64 &Val) { vassert(!Strm.IsLoading()); Strm.SerialiseLittleEndian((void *)&Val, sizeof(Val)); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const float &Val) { vassert(!Strm.IsLoading()); Strm.SerialiseLittleEndian((void *)&Val, sizeof(Val)); return Strm; }
+static inline __attribute__((unused)) VStream &operator << (VStream &Strm, const double &Val) { vassert(!Strm.IsLoading()); Strm.SerialiseLittleEndian((void *)&Val, sizeof(Val)); return Strm; }
 
 
 // ////////////////////////////////////////////////////////////////////////// //

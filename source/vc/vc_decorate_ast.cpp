@@ -345,9 +345,9 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
             bool stillError = true;
             if (argnum == 1 && VStr::strEqu("A_GiveInventory", funcName)) {
               static VClass *invCls = nullptr;
-              if (invCls == nullptr) { invCls = VClass::FindClass("Inventory"); check(invCls); }
+              if (invCls == nullptr) { invCls = VClass::FindClass("Inventory"); vassert(invCls); }
               static VClass *rndCls = nullptr;
-              if (rndCls == nullptr) { rndCls = VClass::FindClass("RandomSpawner"); check(rndCls); }
+              if (rndCls == nullptr) { rndCls = VClass::FindClass("RandomSpawner"); vassert(rndCls); }
               if (destType.Class->IsChildOf(invCls) && Cls->IsChildOf(rndCls)) {
                 stillError = false;
                 ParseWarningArError((aloc ? *aloc : Loc), "using class `%s` (RandomSpawner) for argument #%d of `%s`", Cls->GetName(), argnum, funcName);
@@ -416,7 +416,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
           Offs = 1;
         }
         // positive jump
-        check(CallerState);
+        vassert(CallerState);
         VState *S = CallerState->GetPlus(Offs, true);
         if (!S) {
           ParseError((aloc ? *aloc : Loc), "Bad state jump offset");
@@ -456,7 +456,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
               return nullptr;
             }
           }
-          check(CheckClass);
+          vassert(CheckClass);
           VStr LblName(Lbl, DCol+2, Lbl.Length()-DCol-2);
           TArray<VName> Names;
           VMemberBase::StaticSplitStateLabel(LblName, Names);
@@ -1566,7 +1566,7 @@ VExpression *VDecorateRndPick::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VDecorateRndPick::Emit (VEmitContext &ec) {
-  check(numbers.length() > 0);
+  vassert(numbers.length() > 0);
   if (numbers.length() == 1) {
     numbers[0]->Emit(ec); // number
   } else {

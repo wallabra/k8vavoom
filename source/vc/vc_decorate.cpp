@@ -309,7 +309,7 @@ static void DoClassReplacement (VClass *oldcls, VClass *newcls) {
       GLog.Logf(NAME_Warning, "%s: skipped blood replacement class '%s'", *newcls->Loc.toStringNoCol(), newcls->GetName());
       return;
     }
-    check(repl);
+    vassert(repl);
     auto orpp = currFileRepls.find(oldcls);
     if (orpp) {
       //GLog.Logf("*** duplicate replacement of '%s' with '%s' (current is '%s')", *oldcls->GetFullName(), *newcls->GetFullName(), *repl->GetFullName());
@@ -356,7 +356,7 @@ public:
   inline int getSlotWeaponCount (int idx) const { return (isValidSlot(idx) ? slots[normSlotNumber(idx)].length() : 0); }
 
   inline const TArray<VStr> &getSlotWeaponList (int idx) const {
-    check(idx >= 0 && idx < NUM_WEAPON_SLOTS);
+    vassert(idx >= 0 && idx < NUM_WEAPON_SLOTS);
     return slots[/*normSlotNumber*/(idx)];
   }
 
@@ -382,7 +382,7 @@ public:
 
 
 static VWeaponSlotFixups &allocWeaponSlotsFor (TArray<VWeaponSlotFixups> &list, VClass *klass) {
-  check(klass);
+  vassert(klass);
   for (auto &&el : list) {
     if (el.getPlayerClassName().strEquCI(klass->GetName())) return el;
   }
@@ -1294,7 +1294,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       // some degenerative mod authors do this
       if (LastState && GotoOffset == 0 && VStr::strEquCI(*GotoLabel, "Fail")) {
         GLog.Logf(NAME_Warning, "%s: fixed `Goto Fail`, mod author is a mo...dder.", *TmpLoc.toStringNoCol());
-        check(LastState);
+        vassert(LastState);
         LastState->NextState = LastState;
         PrevState = nullptr; // new execution chain
       } else {
@@ -1327,7 +1327,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
           }
           LastState->GotoLabel = GotoLabel;
           LastState->GotoOffset = GotoOffset;
-          check(NewLabelsStart == Class->StateLabelDefs.Num());
+          vassert(NewLabelsStart == Class->StateLabelDefs.Num());
           /*k8: this doesn't work, see above
           for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) {
             Class->StateLabelDefs[i].GotoLabel = GotoLabel;
@@ -1367,7 +1367,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       }
       NewLabelsStart = Class->StateLabelDefs.Num(); // no current label
 
-      check(NewLabelsStart == Class->StateLabelDefs.Num());
+      vassert(NewLabelsStart == Class->StateLabelDefs.Num());
       PrevState = nullptr; // new execution chain
       if (!sc->Crossed && sc->Check(";")) {}
       continue;
@@ -1383,7 +1383,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       }
       NewLabelsStart = Class->StateLabelDefs.Num(); // no current label
 
-      check(NewLabelsStart == Class->StateLabelDefs.Num());
+      vassert(NewLabelsStart == Class->StateLabelDefs.Num());
       PrevState = nullptr; // new execution chain
       if (!sc->Crossed && sc->Check(";")) {}
       continue;
@@ -1603,7 +1603,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     PrevState = State;
     LastState = State;
 
-    check(!State->funcIsCopy);
+    vassert(!State->funcIsCopy);
     for (int i = 1; i < FramesString.Length(); ++i) {
       vint32 frm = (State->Frame&~(VState::FF_FRAMEMASK|VState::FF_DONTCHANGE|VState::FF_SKIPOFFS));
 
@@ -3186,7 +3186,7 @@ static void ParseDecorate (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, 
 //==========================================================================
 void ReadLineSpecialInfos () {
   VStream *Strm = FL_OpenFileRead("line_specials.txt");
-  check(Strm);
+  vassert(Strm);
   VScriptParser *sc = new VScriptParser("line_specials.txt", Strm);
   while (!sc->AtEnd()) {
     VLineSpecInfo &I = LineSpecialInfos.Alloc();
@@ -3233,7 +3233,7 @@ void ProcessDecorateScripts () {
   for (int Lump = W_IterateFile(-1, "decorate_ignore.txt"); Lump != -1; Lump = W_IterateFile(Lump, "decorate_ignore.txt")) {
     GLog.Logf(NAME_Init, "Parsing DECORATE ignore file '%s'...", *W_FullLumpName(Lump));
     VStream *Strm = W_CreateLumpReaderNum(Lump);
-    check(Strm);
+    vassert(Strm);
     VScriptParser *sc = new VScriptParser(W_FullLumpName(Lump), Strm);
     while (sc->GetString()) {
       if (sc->String.length() == 0) continue;
@@ -3251,7 +3251,7 @@ void ProcessDecorateScripts () {
       if (Sys_FileExists(fname)) {
         VStream *Strm = FL_OpenSysFileRead(fname);
         GLog.Logf(NAME_Init, "Parsing DECORATE ignore file '%s'...", *fname);
-        check(Strm);
+        vassert(Strm);
         VScriptParser *sc = new VScriptParser(fname, Strm);
         while (sc->GetString()) {
           if (sc->String.length() == 0) continue;
@@ -3276,7 +3276,7 @@ void ProcessDecorateScripts () {
   for (int Lump = W_IterateFile(-1, "vavoom_decorate_defs.xml"); Lump != -1; Lump = W_IterateFile(Lump, "vavoom_decorate_defs.xml")) {
     //GLog.Logf(NAME_Init, "  %s", *W_FullLumpName(Lump));
     VStream *Strm = W_CreateLumpReaderNum(Lump);
-    check(Strm);
+    vassert(Strm);
     VXmlDocument *Doc = new VXmlDocument();
     Doc->Parse(*Strm, "vavoom_decorate_defs.xml");
     delete Strm;
@@ -3353,7 +3353,7 @@ void ProcessDecorateScripts () {
   for (int i = 0; i < ClassFixups.Num(); ++i) {
     VClassFixup &CF = ClassFixups[i];
     if (!CF.ReqParent) Sys_Error("Invalid decorate class fixup (no parent); class is '%s', offset is %d, name is '%s'", (CF.Class ? *CF.Class->GetFullName() : "None"), CF.Offset, *CF.Name);
-    check(CF.ReqParent);
+    vassert(CF.ReqParent);
     //GLog.Logf("*** FIXUP (class='%s'; name='%s'; ofs=%d)", CF.Class->GetName(), *CF.Name, CF.Offset);
     if (CF.Name.length() == 0 || CF.Name.ICmp("None") == 0) {
       *(VClass **)(CF.Class->Defaults+CF.Offset) = nullptr;
@@ -3437,7 +3437,7 @@ void ProcessDecorateScripts () {
           // clear this slot
           dclist.append(wpnbase); // special value
           for (auto &&wname : wplist) {
-            check(!wname.isEmpty());
+            vassert(!wname.isEmpty());
             VClass *wc = VClass::FindClassNoCase(*wname);
             if (!wc) { GLog.Logf(NAME_Warning, "unknown weapon class `%s` in player pawn class `%s`", *wname, pawn->GetName()); continue; }
             if (!wc->IsChildOf(wpnbase)) { GLog.Logf(NAME_Warning, "class '%s' is not a weapon in player pawn class `%s`", *wname, pawn->GetName()); continue; }

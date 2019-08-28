@@ -96,20 +96,20 @@ public:
   inline const T *ptr () const { return ArrData; }
 
   inline void SetPointerData (void *adata, int datalen) {
-    check(datalen >= 0);
+    vassert(datalen >= 0);
     if (datalen == 0) {
       if (ArrData && adata) {
         Flatten();
-        check((uintptr_t)adata < (uintptr_t)ArrData || (uintptr_t)adata >= (uintptr_t)(ArrData+ArrSize));
+        vassert((uintptr_t)adata < (uintptr_t)ArrData || (uintptr_t)adata >= (uintptr_t)(ArrData+ArrSize));
       }
       clear();
       if (adata) Z_Free(adata);
     } else {
-      check(adata);
-      check(datalen%(int)sizeof(T) == 0);
+      vassert(adata);
+      vassert(datalen%(int)sizeof(T) == 0);
       if (ArrData) {
         Flatten();
-        check((uintptr_t)adata < (uintptr_t)ArrData || (uintptr_t)adata >= (uintptr_t)(ArrData+ArrSize));
+        vassert((uintptr_t)adata < (uintptr_t)ArrData || (uintptr_t)adata >= (uintptr_t)(ArrData+ArrSize));
         clear();
       }
       ArrData = (T *)adata;
@@ -119,7 +119,7 @@ public:
 
   // this changes only capacity, length will not be increased (but can be decreased)
   void Resize (int NewSize) {
-    check(NewSize >= 0);
+    vassert(NewSize >= 0);
 
     if (NewSize <= 0) { clear(); return; }
 
@@ -139,10 +139,10 @@ public:
   inline void resize (int NewSize) { Resize(NewSize); }
 
   void SetNum (int NewNum, bool bResize=true) {
-    check(NewNum >= 0);
+    vassert(NewNum >= 0);
     Flatten(); // just in case
     if (bResize || NewNum > ArrSize) Resize(NewNum);
-    check(ArrSize >= NewNum);
+    vassert(ArrSize >= NewNum);
     if (ArrNum > NewNum) {
       // destroy freed elements
       for (int i = NewNum; i < ArrNum; ++i) ArrData[i].~T();
@@ -158,7 +158,7 @@ public:
   inline void SetLength (int NewNum, bool bResize=true) { SetNum(NewNum, bResize); }
 
   inline void SetNumWithReserve (int NewNum) {
-    check(NewNum >= 0);
+    vassert(NewNum >= 0);
     if (NewNum > ArrSize) {
 #ifdef VAVOOM_CORELIB_ARRAY_MINIMAL_RESIZE
       Resize(NewNum+64);
@@ -176,7 +176,7 @@ public:
   // this won't copy capacity (there is no reason to do it)
   TArray<T> &operator = (const TArray<T> &other) {
     if (&other == this) return *this; // oops
-    check(!other.Is2D());
+    vassert(!other.Is2D());
     clear();
     int newsz = other.ArrNum;
     if (newsz) {
@@ -192,31 +192,31 @@ public:
   }
 
   inline T &operator [] (int index) {
-    check(index >= 0);
-    check(index < ArrNum);
+    vassert(index >= 0);
+    vassert(index < ArrNum);
     return ArrData[index];
   }
 
   inline const T &operator [] (int index) const {
-    check(index >= 0);
-    check(index < ArrNum);
+    vassert(index >= 0);
+    vassert(index < ArrNum);
     return ArrData[index];
   }
 
   inline T &last () {
-    check(!Is2D());
-    check(ArrNum > 0);
+    vassert(!Is2D());
+    vassert(ArrNum > 0);
     return ArrData[ArrNum-1];
   }
 
   inline const T &last () const {
-    check(!Is2D());
-    check(ArrNum > 0);
+    vassert(!Is2D());
+    vassert(ArrNum > 0);
     return ArrData[ArrNum-1];
   }
 
   inline void drop () {
-    check(!Is2D());
+    vassert(!Is2D());
     if (ArrNum > 0) {
       --ArrNum;
       ArrData[ArrNum].~T();
@@ -224,7 +224,7 @@ public:
   }
 
   inline void Insert (int index, const T &item) {
-    check(!Is2D());
+    vassert(!Is2D());
     int oldlen = ArrNum;
     setLengthReserve(oldlen+1);
     for (int i = oldlen; i > index; --i) ArrData[i] = ArrData[i-1];
@@ -233,7 +233,7 @@ public:
   inline void insert (int index, const T &item) { Insert(index, item); }
 
   inline int Append (const T &item) {
-    check(!Is2D());
+    vassert(!Is2D());
     int oldlen = ArrNum;
     setLengthReserve(oldlen+1);
     ArrData[oldlen] = item;
@@ -242,7 +242,7 @@ public:
   inline int append (const T &item) { return Append(item); }
 
   inline T &Alloc () {
-    check(!Is2D());
+    vassert(!Is2D());
     int oldlen = ArrNum;
     setLengthReserve(oldlen+1);
     return ArrData[oldlen];
@@ -250,9 +250,9 @@ public:
   inline T &alloc () { return Alloc(); }
 
   inline void RemoveIndex (int index) {
-    check(ArrData != nullptr);
-    check(index >= 0);
-    check(index < ArrNum);
+    vassert(ArrData != nullptr);
+    vassert(index >= 0);
+    vassert(index < ArrNum);
     Flatten(); // just in case
     --ArrNum;
     for (int i = index; i < ArrNum; ++i) ArrData[i] = ArrData[i+1];
@@ -271,7 +271,7 @@ public:
   inline int remove (const T &item) { return Remove(item); }
 
   friend VStream &operator << (VStream &Strm, TArray<T> &Array) {
-    check(!Array.Is2D());
+    vassert(!Array.Is2D());
     int NumElem = Array.Num();
     Strm << STRM_INDEX(NumElem);
     if (Strm.IsLoading()) Array.SetNum(NumElem);

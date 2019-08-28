@@ -168,7 +168,7 @@ static __attribute__((unused)) bool CheckVendorString (VStr vs, const char *fuck
 //
 //==========================================================================
 GLint VOpenGLDrawer::glGetUniLoc (const char *prog, GLhandleARB pid, const char *name, bool optional) {
-  check(name);
+  vassert(name);
   if (!pid) Sys_Error("shader program '%s' not loaded", prog);
   (void)glGetError(); // reset error flag
   GLint res = p_glGetUniformLocationARB(pid, name);
@@ -188,7 +188,7 @@ GLint VOpenGLDrawer::glGetUniLoc (const char *prog, GLhandleARB pid, const char 
 //
 //==========================================================================
 GLint VOpenGLDrawer::glGetAttrLoc (const char *prog, GLhandleARB pid, const char *name, bool optional) {
-  check(name);
+  vassert(name);
   if (!pid) Sys_Error("shader program '%s' not loaded", prog);
   (void)glGetError(); // reset error flag
   GLint res = p_glGetAttribLocationARB(pid, name);
@@ -1085,7 +1085,7 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     //const float ofsz1 = inworld.z-radius;
     const float ofsz0 = bbox[5];
     const float ofsz1 = bbox[2];
-    check(ofsz1 <= -1.0f);
+    vassert(ofsz1 <= -1.0f);
 
     float pjwz0 = -1.0f/ofsz0;
     float pjwz1 = -1.0f/ofsz1;
@@ -1396,9 +1396,9 @@ void *VOpenGLDrawer::ReadScreen (int *bpp, bool *bot2top) {
 //==========================================================================
 void VOpenGLDrawer::ReadBackScreen (int Width, int Height, rgba_t *Dest) {
   if (Width < 1 || Height < 1) return;
-  //check(Width > 0);
-  //check(Height > 0);
-  check(Dest);
+  //vassert(Width > 0);
+  //vassert(Height > 0);
+  vassert(Dest);
 
   if (ScreenWidth < 1 || ScreenHeight < 1) {
     memset((void *)Dest, 0, Width*Height*sizeof(rgba_t));
@@ -1414,7 +1414,7 @@ void VOpenGLDrawer::ReadBackScreen (int Width, int Height, rgba_t *Dest) {
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   //rgba_t *temp = new rgba_t[ScreenWidth*ScreenHeight];
   rgba_t *temp = (rgba_t *)readBackTempBuf;
-  check(temp);
+  vassert(temp);
   glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp);
   glBindTexture(GL_TEXTURE_2D, 0);
   if (Width <= ScreenWidth) {
@@ -1839,9 +1839,9 @@ void VOpenGLDrawer::FBO::destroy () {
 //==========================================================================
 void VOpenGLDrawer::FBO::create (VOpenGLDrawer *aowner, int awidth, int aheight, bool createDepthStencil) {
   destroy();
-  check(aowner);
-  check(awidth > 0);
-  check(aheight > 0);
+  vassert(aowner);
+  vassert(awidth > 0);
+  vassert(aheight > 0);
 
   // allocate FBO object
   aowner->glGenFramebuffers(1, &mFBO);

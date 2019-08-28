@@ -210,7 +210,7 @@ vuint8 *VTexture::GetPixels8 () {
     Pixels8BitValid = true;
     return Pixels8Bit;
   }
-  check(Format == TEXFMT_8);
+  vassert(Format == TEXFMT_8);
   return pixdata;
 }
 
@@ -236,7 +236,7 @@ pala_t *VTexture::GetPixels8A () {
   translucent = false;
 
   if (Format == TEXFMT_8Pal || Format == TEXFMT_8) {
-    check(Format == mFormat);
+    vassert(Format == mFormat);
     // remap to game palette
     //GCon->Logf("*** remapping paletted '%s' to 8A... (%dx%d:%d) (%d)", *Name, Width, Height, NumPixels, mFormat);
     vuint8 remap[256];
@@ -343,7 +343,7 @@ VTexture *VTexture::GetHighResolutionTexture () {
 //==========================================================================
 void VTexture::FixupPalette (rgba_t *Palette) {
   if (Width < 1 || Height < 1) return;
-  check(Pixels);
+  vassert(Pixels);
   // find black color for remaping
   int black = 0;
   int best_dist = 0x10000;
@@ -739,8 +739,8 @@ rgba_t VTexture::getPixel (int x, int y) {
 //==========================================================================
 void VTexture::ConvertPixelsToRGBA () {
   if (Width > 0 && Height > 0 && mFormat != TEXFMT_RGBA) {
-    check(Pixels);
-    check(mFormat == TEXFMT_8 || mFormat == TEXFMT_8Pal);
+    vassert(Pixels);
+    vassert(mFormat == TEXFMT_8 || mFormat == TEXFMT_8Pal);
     rgba_t *newpic = new rgba_t[Width*Height];
     rgba_t *dest = newpic;
     const rgba_t *pal = (mFormat == TEXFMT_8Pal ? GetPalette() : r_palette);
@@ -780,9 +780,9 @@ void VTexture::ConvertPixelsToShaded () {
 //==========================================================================
 void VTexture::shadePixelsRGBA (int shadeColor) {
   if (Width < 1 || Height < 1) return;
-  check(Pixels);
-  check(shadeColor >= 0);
-  check(mFormat == TEXFMT_RGBA);
+  vassert(Pixels);
+  vassert(shadeColor >= 0);
+  vassert(mFormat == TEXFMT_RGBA);
   const vuint8 shadeR = (shadeColor>>16)&0xff;
   const vuint8 shadeG = (shadeColor>>8)&0xff;
   const vuint8 shadeB = (shadeColor)&0xff;
@@ -812,9 +812,9 @@ void VTexture::shadePixelsRGBA (int shadeColor) {
 //==========================================================================
 void VTexture::stencilPixelsRGBA (int shadeColor) {
   if (Width < 1 || Height < 1) return;
-  check(Pixels);
-  check(shadeColor >= 0);
-  check(mFormat == TEXFMT_RGBA);
+  vassert(Pixels);
+  vassert(shadeColor >= 0);
+  vassert(mFormat == TEXFMT_RGBA);
   const float shadeR = (shadeColor>>16)&0xff;
   const float shadeG = (shadeColor>>8)&0xff;
   const float shadeB = (shadeColor)&0xff;
@@ -961,7 +961,7 @@ void VTexture::PremultiplyImage (rgba_t *pic, int wdt, int hgt) {
 //==========================================================================
 void VTexture::Shade (int shade) {
   if (shadeColor == shade) return;
-  check(shadeColor == -1);
+  vassert(shadeColor == -1);
   // remember shading
   shadeColor = shade;
 }

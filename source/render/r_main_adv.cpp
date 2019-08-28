@@ -110,7 +110,7 @@ void VAdvancedRenderLevel::RenderTranslucentWallsDecals () {
   for (int f = traspFirst; f < traspUsed; ++f, ++twi) {
     if (twi->type) continue; // not a wall
     if (twi->Alpha >= 1.0f) continue; // not a translucent
-    check(twi->surf);
+    vassert(twi->surf);
     Drawer->DrawTranslucentPolygonDecals(twi->surf, twi->Alpha, twi->Additive);
   }
 }
@@ -167,7 +167,7 @@ void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *
     }
     view_frustum.planes[TFrustum::Back].clipflag = TFrustum::BackBit;
     view_frustum.planeCount = 5;
-    //check(view_frustum.planes[4].PointOnSide(vieworg));
+    //vassert(view_frustum.planes[4].PointOnSide(vieworg));
   }
 #endif
 

@@ -477,7 +477,7 @@ int GZModelDef::findModelFrame (int mdlindex, int mdlframe, bool allowAppend) {
   if (!mn.isEmpty() && mn != ".md2" && mn != ".md3") return -1;
   for (auto &&it : models[mdlindex].frameMap.itemsIdx()) {
     const MdlFrameInfo &fi = it.value();
-    check(fi.mdlindex == mdlindex);
+    vassert(fi.mdlindex == mdlindex);
     if (fi.mdlframe == mdlframe) return it.index();
   }
   if (!allowAppend) return -1;
@@ -574,7 +574,7 @@ void GZModelDef::checkModelSanity (VScriptParser *sc) {
         ++fidx;
       }
     }
-    check(frames.length() > 0); // invariant
+    vassert(frames.length() > 0); // invariant
   }
 
   // clear unused model names
@@ -712,7 +712,7 @@ void GZModelDef::merge (GZModelDef &other) {
         --unusedFramesCount;
       }
     }
-    check(unusedFramesCount >= 0);
+    vassert(unusedFramesCount >= 0);
     if (unusedFramesCount == 0) return; // nothing to do
 
     // rebuild frame maps
@@ -731,7 +731,7 @@ void GZModelDef::merge (GZModelDef &other) {
       for (auto &&frm : frames) {
         if (frm.vvindex < 0) continue; // just in case
         if (frm.mdindex != mit.index()) continue;
-        check(newvvindex[frm.vvindex] >= 0);
+        vassert(newvvindex[frm.vvindex] >= 0);
         frm.vvindex = newvvindex[frm.vvindex];
       }
       mdl.frameMap = newmap;
@@ -791,7 +791,7 @@ VStr GZModelDef::createXml () {
   for (auto &&it : models.itemsIdx()) {
     const MSDef &mdl = it.value();
     if (mdl.frameMap.length() == 0) continue; // this model is unused
-    check(!mdl.modelFile.isEmpty());
+    vassert(!mdl.modelFile.isEmpty());
     const char *mdtag = (mdl.modelFile.extractFileExtension().strEquCI(".md2") ? "md2" : "md3");
     res += va("  <model name=\"%s_%d\">\n", *className.toLowerCase().xmlEscape(), it.index());
     res += va("    <%s file=\"%s\" noshadow=\"false\"", mdtag, *mdl.modelFile.xmlEscape());
@@ -806,8 +806,8 @@ VStr GZModelDef::createXml () {
     // write frame list
     for (auto &&fit : mdl.frameMap.itemsIdx()) {
       const MdlFrameInfo &fi = fit.value();
-      check(it.index() == fi.mdlindex);
-      check(fit.index() == fi.vvframe);
+      vassert(it.index() == fi.mdlindex);
+      vassert(fit.index() == fi.vvframe);
       res += va("      <frame index=\"%d\"", fi.mdlframe);
       appendScale(res, fi.scale, &scale);
       if (fi.offset.x != offset.x) res += va(" offset_x=\"%g\"", fi.offset.x);

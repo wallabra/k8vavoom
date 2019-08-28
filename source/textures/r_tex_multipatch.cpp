@@ -434,7 +434,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
     translucent = false;
     int neww = xmax-xmin+1;
     int newh = ymax-ymin+1;
-    check(neww > 0 && newh > 0);
+    vassert(neww > 0 && newh > 0);
     vuint8 *np = new vuint8[neww*newh*4];
     rgba_t *newpix = (rgba_t *)np;
     for (int y = 0; y < newh; ++y) {
@@ -449,7 +449,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
     }
     delete [] Pixels;
     Pixels = np;
-    check(Format == TEXFMT_RGBA);
+    vassert(Format == TEXFMT_RGBA);
     // fix offsets
     SOffset += (320/2)-xmax;
     TOffset += (200/2)-ymax;

@@ -621,7 +621,7 @@ void VSdlInputDevice::StartupJoystick () {
   for (int jparm = GArgs.CheckParmFrom("-joy", -1, true); jparm; jparm = GArgs.CheckParmFrom("-joy", jparm, true)) {
     const char *jarg = GArgs[jparm];
     //GCon->Logf("***%d:<%s>", jparm, jarg);
-    check(jarg); // just in case
+    vassert(jarg); // just in case
     jarg += 4;
     if (!jarg[0]) continue;
     int n = -1;

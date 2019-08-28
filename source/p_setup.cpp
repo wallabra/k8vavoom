@@ -1440,10 +1440,10 @@ void VLevel::BuildDecalsVVList () {
       vi->next = nullptr;
       auto vaidxp = vmap.find(*vi);
       if (vaidxp) {
-        //check(*vaidxp != vi->aidx);
+        //vassert(*vaidxp != vi->aidx);
         VectorInfo *cv = &va[*vaidxp];
         while (cv->next) {
-          //check(cv->aidx < aidx);
+          //vassert(cv->aidx < aidx);
           if (*cv != *vi) Sys_Error("VLevel::BuildDecalsVVList: OOPS(0)!");
           cv = cv->next;
         }
@@ -1742,7 +1742,7 @@ void VLevel::CreateSides () {
       Sides[Line->sidenum[0]].TopTexture = Line->arg1;
     }
   }
-  check(CurrentSide == NumNewSides);
+  vassert(CurrentSide == NumNewSides);
 
   NumSides = NumNewSides;
 }
@@ -2118,8 +2118,8 @@ void VLevel::PostLoadSubsectors () {
     ss->sector = nullptr;
     for (auto &&seg : allSubSegs(ss)) {
       if (seg.linedef) {
-        check(seg.sidedef);
-        check(seg.sidedef->Sector);
+        vassert(seg.sidedef);
+        vassert(seg.sidedef->Sector);
         ss->sector = seg.sidedef->Sector;
         ss->seclink = ss->sector->subsectors;
         ss->sector->subsectors = ss;
@@ -3371,7 +3371,7 @@ void VLevel::GroupLines () {
       const sector_t *bsec = (&sector == line->frontsector ? line->backsector : line->frontsector);
       if (!bsec) continue; // just in case
       int snum = (int)(ptrdiff_t)(bsec-Sectors);
-      check(snum >= 0 && snum < NumSectors);
+      vassert(snum >= 0 && snum < NumSectors);
       if (ssmark[snum]) continue;
       ssmark[snum] = 1;
       ++sector.nbseccount;
@@ -3392,7 +3392,7 @@ void VLevel::GroupLines () {
         sector_t *bsec = (&sector == line->frontsector ? line->backsector : line->frontsector);
         if (!bsec) continue; // just in case
         int snum = (int)(ptrdiff_t)(bsec-Sectors);
-        check(snum >= 0 && snum < NumSectors);
+        vassert(snum >= 0 && snum < NumSectors);
         if (ssmark[snum]) continue;
         ssmark[snum] = 1;
         nbsbuffer[0] = bsec;
@@ -3400,7 +3400,7 @@ void VLevel::GroupLines () {
       }
     }
   }
-  check(nbsbuffer == Sectors[0].nbsecs+nbstotal);
+  vassert(nbsbuffer == Sectors[0].nbsecs+nbstotal);
   //GCon->Logf("nbs buffer size: %d", nbstotal);
 }
 
@@ -4079,12 +4079,12 @@ void VLevel::FixDeepWaters () {
         }
       }
       if (!valid || !foundSomething) continue;
-      check(sursec);
+      vassert(sursec);
       // ok, it looks like a bridge; create fake floor and ceiling
       GCon->Logf("BRIDGEFIX: found bridge at sector #%d", sidx);
       sec->othersecFloor = sursec;
       // allocate fakefloor data (engine require it to complete setup)
-      check(!sec->fakefloors);
+      vassert(!sec->fakefloors);
       sec->fakefloors = new fakefloor_t;
       fakefloor_t *ff = sec->fakefloors;
       memset((void *)ff, 0, sizeof(fakefloor_t));

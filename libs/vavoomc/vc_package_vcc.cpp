@@ -261,10 +261,10 @@ public:
     int ObjIndex;
     *this << STRM_INDEX(ObjIndex);
     if (ObjIndex > 0) {
-      check(ObjIndex <= NumExports);
+      vassert(ObjIndex <= NumExports);
       Ref = Exports[ObjIndex-1].Obj;
     } else if (ObjIndex < 0) {
-      check(-ObjIndex <= NumImports);
+      vassert(-ObjIndex <= NumImports);
       Ref = Imports[-ObjIndex-1].Obj;
     } else {
       Ref = nullptr;
@@ -465,7 +465,7 @@ void VPackage::LoadBinaryObject (VStream *Strm, VStr filename, TLocation l) {
     char EName[NAME_SIZE+1];
     vuint8 len = 0;
     *Reader << len;
-    check(len <= NAME_SIZE);
+    vassert(len <= NAME_SIZE);
     if (len) Reader->Serialise(EName, len);
     EName[len] = 0;
     NameRemap[i] = VName(EName);

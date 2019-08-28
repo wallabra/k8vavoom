@@ -676,8 +676,8 @@ bool VStruct::NetSerialiseObject (VStream &Strm, VNetObjectsMapBase *Map, vuint8
 //
 //==========================================================================
 VStruct *VStruct::CreateWrapperStruct (VExpression *aTypeExpr, VMemberBase *AOuter, TLocation ALoc) {
-  check(aTypeExpr);
-  check(AOuter);
+  vassert(aTypeExpr);
+  vassert(AOuter);
   VStruct *st = new VStruct(NAME_None, AOuter, ALoc);
   st->Defined = false;
   st->IsVector = false;

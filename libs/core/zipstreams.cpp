@@ -77,7 +77,7 @@ VZipStreamReader::VZipStreamReader (VStr fname, VStream *ASrcStream, vuint32 ACo
   , wholeBuf(nullptr)
   , wholeSize(-2)
 {
-  check(ASrcStream);
+  vassert(ASrcStream);
   initialize();
 }
 
@@ -105,7 +105,7 @@ VZipStreamReader::VZipStreamReader (bool useCurrSrcPos, VStream *ASrcStream, vui
   , wholeBuf(nullptr)
   , wholeSize(-2)
 {
-  check(ASrcStream);
+  vassert(ASrcStream);
   initialize();
 }
 
@@ -133,7 +133,7 @@ VZipStreamReader::VZipStreamReader (bool useCurrSrcPos, VStr fname, VStream *ASr
   , wholeBuf(nullptr)
   , wholeSize(-2)
 {
-  check(ASrcStream);
+  vassert(ASrcStream);
   initialize();
 }
 
@@ -385,9 +385,9 @@ void VZipStreamReader::Serialise (void* buf, int len) {
   //if (currpos < nextpos) fprintf(stderr, "+++ SKIPPING <%s>: currpos=%d; nextpos=%d; toskip=%d\n", *GetName(), currpos, nextpos, nextpos-currpos);
   if (currpos < nextpos) {
     int bsz = nextpos-currpos;
-    check(bsz > 0);
+    vassert(bsz > 0);
     if (bsz > 65536) bsz = 65536;
-    check(!wholeBuf);
+    vassert(!wholeBuf);
     wholeBuf = (vuint8 *)Z_Malloc(bsz);
     while (currpos < nextpos) {
       int toread = nextpos-currpos;
@@ -574,7 +574,7 @@ VZipStreamWriter::VZipStreamWriter (VStream *ADstStream, int clevel, Type atype)
   // initialise zip stream structure
   memset((void *)&zStream, 0, sizeof(zStream));
 
-  check(ADstStream);
+  vassert(ADstStream);
 
   if (clevel < 0) clevel = 0; else if (clevel > 9) clevel = 9;
 
@@ -675,7 +675,7 @@ void VZipStreamWriter::Serialise (void *buf, int len) {
       if (dstStream->IsError()) { setError(); return; }
     }
   } while (zStream.avail_out == 0);
-  //check(zStream.avail_in == 0);
+  //vassert(zStream.avail_in == 0);
 }
 
 

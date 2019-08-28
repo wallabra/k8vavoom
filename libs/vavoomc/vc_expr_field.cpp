@@ -165,7 +165,7 @@ VExpression *VPointerField::DoResolve (VEmitContext &ec) {
     if (!type.Struct) {
 #if defined(IN_VCC) /*&& !defined(VCC_STANDALONE_EXECUTOR)*/
       VClass *ocls = (VClass *)VMemberBase::StaticFindMember("Object", ANY_PACKAGE, MEMBER_Class);
-      check(ocls);
+      vassert(ocls);
       VStruct *tvs = (VStruct *)VMemberBase::StaticFindMember("TVec", ocls, MEMBER_Struct);
 #else
       VStruct *tvs = (VStruct *)VMemberBase::StaticFindMember("TVec", /*ANY_PACKAGE*/VObject::StaticClass(), MEMBER_Struct);
@@ -192,12 +192,12 @@ VExpression *VPointerField::DoResolve (VEmitContext &ec) {
 
   VField *field;
   if (type.Type == TYPE_Struct || type.Type == TYPE_Vector) {
-    check(type.Struct);
+    vassert(type.Struct);
     field = type.Struct->FindField(FieldName);
     if (!field) return TryUFCS(ec, opcopy, "struct", type.Struct);
   } else {
-    check(type.Type == TYPE_Reference);
-    check(type.Class);
+    vassert(type.Type == TYPE_Reference);
+    vassert(type.Class);
     field = type.Class->FindField(FieldName);
     if (!field) return TryUFCS(ec, opcopy, "class", type.Class);
   }
@@ -554,7 +554,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
       const char *s = *FieldName;
       int swidx = VVectorSwizzleExpr::ParseSwizzles(s);
       if (swidx >= 0) {
-        check(type.Struct);
+        vassert(type.Struct);
         // vector swizzling
         if (assType != AssType::AssTarget) {
           //int opflags = op->Flags;

@@ -229,9 +229,9 @@ void VPortal::SetUpRanges (const refdef_t &refdef, VViewClipper &Range, bool Rev
       // wall
       //seg_t *Seg = (seg_t *)Surfs[i]->eplane;
       seg_t *Seg = Surfs[i]->seg;
-      check(Seg);
-      check(Seg >= RLev->Level->Segs);
-      check(Seg < RLev->Level->Segs+RLev->Level->NumSegs);
+      vassert(Seg);
+      vassert(Seg >= RLev->Level->Segs);
+      vassert(Seg < RLev->Level->Segs+RLev->Level->NumSegs);
       if (Revert) {
         Range.AddClipRange(*Seg->v1, *Seg->v2);
       } else {

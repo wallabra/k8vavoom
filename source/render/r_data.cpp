@@ -93,7 +93,7 @@ static VCvarB spr_report_missing_patches("spr_report_missing_patches", false, "R
 //==========================================================================
 static void SetClassFieldInt (VClass *Class, const char *FieldName, int Value, int Idx=0) {
   VField *F = Class->FindFieldChecked(FieldName);
-  check(F->Type.Type == TYPE_Int);
+  vassert(F->Type.Type == TYPE_Int);
   vint32 *Ptr = (vint32 *)(Class->Defaults+F->Ofs);
   Ptr[Idx] = Value;
 }
@@ -106,7 +106,7 @@ static void SetClassFieldInt (VClass *Class, const char *FieldName, int Value, i
 //==========================================================================
 static void SetClassFieldBool (VClass *Class, const char *FieldName, int Value) {
   VField *F = Class->FindFieldChecked(FieldName);
-  check(F->Type.Type == TYPE_Bool);
+  vassert(F->Type.Type == TYPE_Bool);
   vuint32 *Ptr = (vuint32 *)(Class->Defaults+F->Ofs);
   if (Value) *Ptr |= F->Type.BitMask; else *Ptr &= ~F->Type.BitMask;
 }
@@ -119,7 +119,7 @@ static void SetClassFieldBool (VClass *Class, const char *FieldName, int Value) 
 //==========================================================================
 static void SetClassFieldFloat (VClass *Class, const char *FieldName, float Value) {
   VField *F = Class->FindFieldChecked(FieldName);
-  check(F->Type.Type == TYPE_Float);
+  vassert(F->Type.Type == TYPE_Float);
   float *Ptr = (float*)(Class->Defaults+F->Ofs);
   *Ptr = Value;
 }
@@ -132,7 +132,7 @@ static void SetClassFieldFloat (VClass *Class, const char *FieldName, float Valu
 //==========================================================================
 static void SetClassFieldVec (VClass *Class, const char *FieldName, const TVec &Value) {
   VField *F = Class->FindFieldChecked(FieldName);
-  check(F->Type.Type == TYPE_Vector);
+  vassert(F->Type.Type == TYPE_Vector);
   TVec *Ptr = (TVec*)(Class->Defaults+F->Ofs);
   *Ptr = Value;
 }
@@ -238,7 +238,7 @@ static void InitRgbTable () {
             if (!dist) break;
           }
         }
-        check(best_color > 0 && best_color <= 255);
+        vassert(best_color > 0 && best_color <= 255);
         r_rgbtable[ir*VAVOOM_COLOR_COMPONENT_MAX*VAVOOM_COLOR_COMPONENT_MAX+ig*VAVOOM_COLOR_COMPONENT_MAX+ib] = best_color;
       }
     }
@@ -466,10 +466,10 @@ static void BuildSpriteTexturesList () {
       if (pip) {
         // append to the list
         int last = *pip;
-        check(last >= 0 && last < spriteTextures.length()-1);
+        vassert(last >= 0 && last < spriteTextures.length()-1);
         while (spriteTextures[last].next) last = spriteTextures[last].next;
-        check(last >= 0 && last < spriteTextures.length()-1);
-        check(spriteTextures[last].next == 0);
+        vassert(last >= 0 && last < spriteTextures.length()-1);
+        vassert(spriteTextures[last].next == 0);
         spriteTextures[last].next = cidx;
       } else {
         // list head
@@ -527,7 +527,7 @@ void R_InstallSprite (const char *name, int index) {
     ss.numframes = 0;
     ss.spriteframes = nullptr;
   }
-  check(index < sprites.length());
+  vassert(index < sprites.length());
   sprites[index].numframes = 0;
   if (sprites[index].spriteframes) Z_Free(sprites[index].spriteframes);
   sprites[index].spriteframes = nullptr;
@@ -570,7 +570,7 @@ void R_InstallSprite (const char *name, int index) {
       do {
         int l = spriteTextures[slidx].texid;
         slidx = spriteTextures[slidx].next;
-        check(GTextureManager[l]->Type == TEXTYPE_Sprite);
+        vassert(GTextureManager[l]->Type == TEXTYPE_Sprite);
         const char *lumpname = *GTextureManager[l]->Name;
         if (lumpname[0] && lumpname[1] && lumpname[2] && lumpname[3] && lumpname[4] && lumpname[5]) {
           if (memcmp(lumpname, intname, 4) == 0) {
@@ -1258,8 +1258,8 @@ static void ParseBrightmap (int SrcLump, VScriptParser *sc) {
           *img, basetex->GetWidth(), basetex->GetHeight(), *bmap, bm->GetWidth(), bm->GetHeight());
       }
       bm->ResizeCanvas(basetex->GetWidth(), basetex->GetHeight());
-      check(bm->GetWidth() == basetex->GetWidth());
-      check(bm->GetHeight() == basetex->GetHeight());
+      vassert(bm->GetWidth() == basetex->GetWidth());
+      vassert(bm->GetHeight() == basetex->GetHeight());
     }
 
     basetex->Brightmap = bm;

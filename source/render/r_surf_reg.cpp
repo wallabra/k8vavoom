@@ -318,7 +318,7 @@ static bool SplitSurface (SClipInfo &clip, surface_t *surf, const TVec &axis) {
 surface_t *VRenderLevel::SubdivideFace (surface_t *surf, const TVec &axis, const TVec *nextaxis) {
   subsector_t *sub = surf->subsector;
   seg_t *seg = surf->seg;
-  check(sub);
+  vassert(sub);
 
   if (surf->count < 2) {
     //Sys_Error("surface with less than three (%d) vertices)", f->count);
@@ -338,8 +338,8 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *surf, const TVec &axis, const
     return (nextaxis ? SubdivideFace(surf, *nextaxis, nullptr) : surf);
   }
 
-  check(clip.vcount[0] > 2);
-  check(clip.vcount[1] > 2);
+  vassert(clip.vcount[0] > 2);
+  vassert(clip.vcount[1] > 2);
 
   ++c_subdivides;
 
@@ -377,8 +377,8 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *surf, const TVec &axis, const
 //==========================================================================
 surface_t *VRenderLevel::SubdivideSeg (surface_t *surf, const TVec &axis, const TVec *nextaxis, seg_t *seg) {
   subsector_t *sub = surf->subsector;
-  check(surf->seg == seg);
-  check(sub);
+  vassert(surf->seg == seg);
+  vassert(sub);
 
   if (surf->count < 2) {
     //Sys_Error("surface with less than three (%d) vertices)", surf->count);
@@ -398,12 +398,12 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *surf, const TVec &axis, const 
     return (nextaxis ? SubdivideSeg(surf, *nextaxis, nullptr, seg) : surf);
   }
 
-  check(clip.vcount[0] > 2);
-  check(clip.vcount[1] > 2);
+  vassert(clip.vcount[0] > 2);
+  vassert(clip.vcount[1] > 2);
 
   ++c_seg_div;
 
-  check(clip.vcount[1] <= surface_t::MAXWVERTS);
+  vassert(clip.vcount[1] <= surface_t::MAXWVERTS);
   surf->count = clip.vcount[1];
   memcpy(surf->verts, clip.verts[1], surf->count*sizeof(TVec));
 

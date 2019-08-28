@@ -924,7 +924,7 @@ void VScriptArray::Reset (const VFieldType &Type) {
 //
 //==========================================================================
 void VScriptArray::Resize (int NewSize, const VFieldType &Type) {
-  check(NewSize >= 0);
+  vassert(NewSize >= 0);
 
   if (NewSize <= 0) { Clear(Type); return; }
 
@@ -1020,7 +1020,7 @@ void VScriptArray::SetSize2D (int dim1, int dim2, const VFieldType &Type) {
 //
 //==========================================================================
 void VScriptArray::SetNum (int NewNum, const VFieldType &Type, bool doShrink) {
-  check(NewNum >= 0);
+  vassert(NewNum >= 0);
   Flatten(); // flatten 2d array
   if (!doShrink && NewNum == 0) {
     if (ArrNum > 0) {
@@ -1088,9 +1088,9 @@ void VScriptArray::SetNumPlus (int NewNum, const VFieldType &Type) {
 //==========================================================================
 void VScriptArray::Insert (int Index, int Count, const VFieldType &Type) {
   Flatten(); // flatten 2d array
-  //check(ArrData != nullptr);
-  check(Index >= 0);
-  check(Index <= ArrNum);
+  //vassert(ArrData != nullptr);
+  vassert(Index >= 0);
+  vassert(Index <= ArrNum);
 
   if (Count <= 0) return;
 
@@ -1118,9 +1118,9 @@ void VScriptArray::Insert (int Index, int Count, const VFieldType &Type) {
 //==========================================================================
 void VScriptArray::Remove (int Index, int Count, const VFieldType &Type) {
   Flatten(); // flatten 2d array
-  //check(ArrData != nullptr);
-  check(Index >= 0);
-  check(Index+Count <= ArrNum);
+  //vassert(ArrData != nullptr);
+  vassert(Index >= 0);
+  vassert(Index+Count <= ArrNum);
 
   auto oldnum = ArrNum;
   if (Count > oldnum) Count = oldnum; // just in case
@@ -1153,9 +1153,9 @@ void VScriptArray::Remove (int Index, int Count, const VFieldType &Type) {
 //
 //==========================================================================
 vuint8 *VScriptArray::Alloc (const VFieldType &Type) {
-  check(ArrNum <= ArrSize);
+  vassert(ArrNum <= ArrSize);
   SetNum(ArrNum+1, Type, false);
-  check(ArrNum > 0);
+  vassert(ArrNum > 0);
   const int InnerSize = Type.GetSize();
   return ArrData+(ArrNum-1)*InnerSize;
 }
@@ -1680,7 +1680,7 @@ void VScriptDictElem::Serialise (VStream &strm, const VFieldType &dtp/*, VStr fu
 //
 //==========================================================================
 void VScriptDictElem::Serialise (VStream &strm, const VFieldType &dtp/*, VStr fullname*/) const {
-  check(!strm.IsLoading());
+  vassert(!strm.IsLoading());
   // writing
   vuint8 *ptr;
   if (type.Type == TYPE_String || isSimpleType(type)) {
@@ -1715,10 +1715,10 @@ int VScriptDict::capacity () const { return (map ? map->capacity() : 0); }
 //
 //==========================================================================
 void VScriptDict::copyTo (VScriptDict *dest) const {
-  check(dest);
+  vassert(dest);
   if (dest == this) return;
   dest->clear();
-  check(dest->map == nullptr);
+  vassert(dest->map == nullptr);
   if (map) {
     // copy hashtable
     dest->map = new TMapDtor<VScriptDictElem, VScriptDictElem>;
@@ -1928,7 +1928,7 @@ void VScriptDict::Serialise (VStream &strm, const VFieldType &dtp/*, VStr fullna
         it.getKey().Serialise(strm, dtp.GetDictKeyType());
         it.getValue().Serialise(strm, dtp.GetDictValueType());
       }
-      check(count == 0);
+      vassert(count == 0);
     }
   }
 }

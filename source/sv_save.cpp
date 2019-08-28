@@ -125,7 +125,7 @@ public:
   ~VSavedCheckpoint () { Clear(); }
 
   void AddEntity (VEntity *ent) {
-    check(ent);
+    vassert(ent);
     const int len = EList.length();
     for (int f = 0; f < len; ++f) {
       if (EList[f].ent == ent) return;
@@ -1216,7 +1216,7 @@ static void UnarchiveNames (VSaveLoaderStream *Loader) {
     char EName[NAME_SIZE+1];
     vuint8 len = 0;
     *Loader << len;
-    check(len <= NAME_SIZE);
+    vassert(len <= NAME_SIZE);
     if (len) Loader->Serialise(EName, len);
     EName[len] = 0;
     Loader->NameRemap[i] = VName(EName);
@@ -1256,7 +1256,7 @@ static void ArchiveThinkers (VSaveWriterStream *Saver, bool SavingPlayers) {
 
   // add players
   {
-    check(MAXPLAYERS >= 0 && MAXPLAYERS <= 254);
+    vassert(MAXPLAYERS >= 0 && MAXPLAYERS <= 254);
     vuint8 mpl = MAXPLAYERS;
     *Saver << mpl;
   }
@@ -1388,7 +1388,7 @@ static void UnarchiveThinkers (VSaveLoaderStream *Loader) {
   GLevelInfo->World = GGameInfo->WorldInfo;
 
   for (int i = 0; i < Loader->Exports.Num(); ++i) {
-    check(Loader->Exports[i]);
+    vassert(Loader->Exports[i]);
 #ifdef VAVOOM_LOADER_CAN_SKIP_CLASSES
     auto dpp = deadThinkers.find(Loader->Exports[i]);
     if (dpp) {
@@ -1724,7 +1724,7 @@ static bool SV_LoadMap (VName MapName, bool allowCheckpoints, bool hubTeleport) 
         if (dbg_checkpoints) GCon->Logf("QS:  #%d:player: %s", f, *qv.toString());
       } else {
         qv.ent = cp.EList[qv.objidx-1].ent;
-        check(qv.ent);
+        vassert(qv.ent);
         if (dbg_checkpoints) GCon->Logf("QS:  #%d:%s: %s", f, qv.ent->GetClass()->GetName(), *qv.toString());
       }
       QS_EnterValue(qv);
@@ -1759,7 +1759,7 @@ static bool SV_LoadMap (VName MapName, bool allowCheckpoints, bool hubTeleport) 
   Host_ResetSkipFrames();
 
   VSavedMap *Map = BaseSlot.FindMap(MapName);
-  check(Map);
+  vassert(Map);
 
   // decompress map data
   TArray<vuint8> DecompressedData;

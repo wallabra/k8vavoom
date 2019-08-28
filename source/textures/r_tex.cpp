@@ -135,7 +135,7 @@ VTextureManager::VTextureManager ()
 //
 //==========================================================================
 void VTextureManager::Init () {
-  check(inMapTextures == 0);
+  vassert(inMapTextures == 0);
 
   // we have to force-load textures after adding textures lump, so
   // texture numbering for animations won't break
@@ -213,8 +213,8 @@ void VTextureManager::DumpHashStats (EName logName) {
 void VTextureManager::rehashTextures () {
   for (int i = 0; i < HASH_SIZE; ++i) TextureHash[i] = -1;
   if (Textures.length()) {
-    check(Textures[0]->Name == NAME_None);
-    check(Textures[0]->Type == TEXTYPE_Null);
+    vassert(Textures[0]->Name == NAME_None);
+    vassert(Textures[0]->Type == TEXTYPE_Null);
     for (int f = 1; f < Textures.length(); ++f) if (Textures[f]) AddToHash(f);
   }
   for (int f = 0; f < MapTextures.length(); ++f) if (MapTextures[f]) AddToHash(FirstMapTextureIndex+f);
@@ -261,7 +261,7 @@ void VTextureManager::ResetMapTextures () {
     return;
   }
 
-  check(MapTextures.length() != 0);
+  vassert(MapTextures.length() != 0);
 
   GCon->Logf(NAME_Dev, "*** *** MapTextures.length()=%d *** ***", MapTextures.length());
 #ifdef CLIENT
@@ -321,7 +321,7 @@ int VTextureManager::AddTexture (VTexture *Tex) {
         break;
       }
       if (repidx > 0) {
-        check(repidx > 0 && repidx < FirstMapTextureIndex);
+        vassert(repidx > 0 && repidx < FirstMapTextureIndex);
         static int warnReplace = -1;
         if (warnReplace < 0) warnReplace = (GArgs.CheckParm("-Wduplicate-textures") ? 1 : 0);
         if (warnReplace > 0 || developer) GCon->Logf(NAME_Warning, "replacing duplicate texture '%s' with new one (id=%d)", *Tex->Name, repidx);
@@ -350,9 +350,9 @@ int VTextureManager::AddTexture (VTexture *Tex) {
 //
 //==========================================================================
 void VTextureManager::ReplaceTexture (int Index, VTexture *NewTex) {
-  check(Index >= 0);
-  check((Index < FirstMapTextureIndex && Index < Textures.length()) || (Index >= FirstMapTextureIndex && Index-FirstMapTextureIndex < MapTextures.length()));
-  check(NewTex);
+  vassert(Index >= 0);
+  vassert((Index < FirstMapTextureIndex && Index < Textures.length()) || (Index >= FirstMapTextureIndex && Index-FirstMapTextureIndex < MapTextures.length()));
+  vassert(NewTex);
   //VTexture *OldTex = Textures[Index];
   VTexture *OldTex = getTxByIndex(Index);
   if (OldTex == NewTex) return;
@@ -377,7 +377,7 @@ void VTextureManager::ReplaceTexture (int Index, VTexture *NewTex) {
 //==========================================================================
 void VTextureManager::AddToHash (int Index) {
   VTexture *tx = getTxByIndex(Index);
-  check(tx);
+  vassert(tx);
   tx->HashNext = -1;
   if (tx->Name == NAME_None || (*tx->Name)[0] == 0x7f) return;
   int HashIndex = GetTypeHash(tx->Name)&(HASH_SIZE-1);
@@ -872,7 +872,7 @@ int VTextureManager::AddPatch (VName Name, int Type, bool Silent) {
 //
 //==========================================================================
 int VTextureManager::AddPatchLump (int LumpNum, VName Name, int Type, bool Silent) {
-  check(Name != NAME_None);
+  vassert(Name != NAME_None);
 
   // check if it's already registered
   int i = CheckNumForName(Name, Type);
@@ -884,7 +884,7 @@ int VTextureManager::AddPatchLump (int LumpNum, VName Name, int Type, bool Silen
       tex->Name = Name;
       GTextureManager.AddTexture(tex);
       int tidx = CheckNumForName(Name, Type);
-      check(tidx > 0);
+      vassert(tidx > 0);
       return tidx;
     }
   }
@@ -1130,7 +1130,7 @@ int VTextureManager::CheckNumForNameAndForce (VName Name, int Type, bool bOverlo
           GCon->Logf(NAME_Dev, "  %d: name='%s'; type=%d", i, *tx->Name, tx->Type);
         }
       }
-      check(tidx > 0);
+      vassert(tidx > 0);
       */
       return tidx;
     }
@@ -1266,7 +1266,7 @@ void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtex
       if (PIdx >= 0) {
         //patchtexlookup[i] = Textures[PIdx];
         wpi.tx = Textures[PIdx];
-        check(wpi.tx);
+        vassert(wpi.tx);
         if (developer) GCon->Logf(NAME_Dev, "PNAMES(%s): found texture patch '%s' (%d/%d)", *W_FullLumpName(NamesLump), *PatchName, i, nummappatches-1);
         continue;
       }
@@ -1292,7 +1292,7 @@ void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtex
         wpi.tx = VTexture::CreateTexture((isFlat ? TEXTYPE_Flat : TEXTYPE_WallPatch), LNum);
         if (!wpi.tx) GCon->Logf(NAME_Warning, "%s: loading patch '%s' (%d/%d) failed", *W_FullLumpName(NamesLump), *PatchName, i, nummappatches-1);
         if (wpi.tx) {
-          check(wpi.tx->SourceLump == LNum);
+          vassert(wpi.tx->SourceLump == LNum);
           AddTexture(wpi.tx);
         }
       }
@@ -1303,7 +1303,7 @@ void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtex
 
   if (developer) {
     for (int f = 0; f < patchtexlookup.length(); ++f) {
-      check(patchtexlookup[f].index == f);
+      vassert(patchtexlookup[f].index == f);
       VTexture *tx = patchtexlookup[f].tx;
       GCon->Logf(NAME_Dev, "%s:PNAME (%d/%d): name=%s; tx=%d; txname=%s (%s : %s)", *pkname, f, patchtexlookup.length()-1, *patchtexlookup[f].name, (tx ? 1 : 0), (tx ? *tx->Name : "----"),
         (tx && tx->SourceLump >= 0 ? *W_FullLumpName(tx->SourceLump) : "<?>"), (tx ? VTexture::TexTypeToStr(tx->Type) : "(none)"));
@@ -1350,7 +1350,7 @@ void VTextureManager::AddMissingNumberedTextures (TArray<VName> &numberedNames) 
 void VTextureManager::AddTexturesLump (TArray<WallPatchInfo> &patchtexlookup, int TexLump, int FirstTex, bool First) {
   if (TexLump < 0) return;
 
-  check(inMapTextures == 0);
+  vassert(inMapTextures == 0);
   VName tlname = W_LumpName(TexLump);
   TMapNC<VName, bool> tseen; // only the first seen texture is relevant, so ignore others
 
@@ -1440,7 +1440,7 @@ void VTextureManager::AddGroup (int Type, EWadNamespace Namespace) {
 //
 //==========================================================================
 void VTextureManager::AddTextureTextLumps (bool onlyHiRes) {
-  check(inMapTextures == 0);
+  vassert(inMapTextures == 0);
   //GCon->Logf("HIRES: %d", (r_hirestex ? 1 : 0));
 
   if (onlyHiRes) {
@@ -1664,7 +1664,7 @@ void R_InitTexture () {
   GTextureManager.Init();
   R_InitFTAnims(); // init flat and texture animations
   GTextureManager.WipeWallPatches();
-  check(GTextureManager.MapTextures.length() == 0);
+  vassert(GTextureManager.MapTextures.length() == 0);
   if (developer) GTextureManager.DumpHashStats(NAME_Dev);
   if (GArgs.CheckParm("-dbg-dump-textures")) {
     R_DumpTextures();

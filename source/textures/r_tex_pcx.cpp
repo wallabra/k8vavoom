@@ -242,7 +242,7 @@ vuint8 *VPcxTexture::GetPixels () {
           } else {
             count = 1;
           }
-          check(count > 0);
+          vassert(count > 0);
           //GLog.WriteLine("    p=%d; n=%d; count=%d; b=0x%02x; fpos=%d, fsize=%d", p, n, count, b, Strm.Tell(), Strm.TotalSize());
         }
         line[lpos+n] = b;

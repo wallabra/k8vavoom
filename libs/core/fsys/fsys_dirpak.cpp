@@ -116,8 +116,8 @@ void VDirPakFile::ScanDirectory (VStr relpath, int depth) {
       fe.filesize = -1; // unknown yet
       fe.fileName = loname;
       fe.diskName = diskname;
-      check(fe.lumpName == NAME_None);
-      check(fe.lumpNamespace == -1);
+      vassert(fe.lumpName == NAME_None);
+      vassert(fe.lumpNamespace == -1);
       // fe.lumpNamespace = ns;
       //GLog.Logf(NAME_Dev, "%d: ns=%d; pakname=<%s>; diskname=<%s>; lumpname=<%s>", files.length()-1, fe.ns, *fe.pakname, *fe.diskname, *fe.lumpname);
       pakdir.append(fe);
@@ -150,11 +150,11 @@ VStream *VDirPakFile::OpenFileRead (VStr fname) {
 //
 //==========================================================================
 int VDirPakFile::LumpLength (int LumpNum) {
-  check(LumpNum >= 0);
-  check(LumpNum < pakdir.files.length());
+  vassert(LumpNum >= 0);
+  vassert(LumpNum < pakdir.files.length());
   if (pakdir.files[LumpNum].filesize == -1) {
     VStream *Strm = CreateLumpReaderNum(LumpNum);
-    check(Strm);
+    vassert(Strm);
     pakdir.files[LumpNum].filesize = Strm->TotalSize();
     delete Strm;
   }
@@ -168,8 +168,8 @@ int VDirPakFile::LumpLength (int LumpNum) {
 //
 //==========================================================================
 VStream *VDirPakFile::CreateLumpReaderNum (int lump) {
-  check(lump >= 0);
-  check(lump < pakdir.files.length());
+  vassert(lump >= 0);
+  vassert(lump < pakdir.files.length());
   VStr tmpname = PakFileName+"/"+pakdir.files[lump].diskName;
   FILE *fl = fopen(*tmpname, "rb");
   if (!fl) return nullptr;

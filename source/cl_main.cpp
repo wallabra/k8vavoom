@@ -436,7 +436,7 @@ void CL_ReadFromServerInfo () {
 //
 //==========================================================================
 void CL_ParseServerInfo (const ClientServerInfo *sinfo) {
-  check(sinfo);
+  vassert(sinfo);
   CL_Clear();
 
   //msg << GClGame->serverinfo;

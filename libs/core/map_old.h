@@ -41,7 +41,7 @@ protected:
   vint32 HashSize;
 
   void Rehash () {
-    checkSlow(HashSize >= 16);
+    vensure(HashSize >= 16);
     if (HashTable) {
       delete[] HashTable;
       HashTable = nullptr;

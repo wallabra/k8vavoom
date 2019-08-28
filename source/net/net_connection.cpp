@@ -98,7 +98,7 @@ VNetConnection::~VNetConnection () {
   }
   NetCon = nullptr;
   if (Context->ServerConnection) {
-    checkSlow(Context->ServerConnection == this);
+    vensure(Context->ServerConnection == this);
     Context->ServerConnection = nullptr;
   } else {
     Context->ClientConnections.Remove(this);
@@ -162,7 +162,7 @@ void VNetConnection::GetMessages () {
 //
 //==========================================================================
 int VNetConnection::GetRawPacket (TArray<vuint8> &Data) {
-  checkSlow(NetCon);
+  vensure(NetCon);
   return NetCon->GetMessage(Data);
 }
 
@@ -517,7 +517,7 @@ void VNetConnection::SetUpFatPVS () {
 //==========================================================================
 void VNetConnection::SetUpPvsNode (int BspNum, float *BBox) {
   VLevel *Level = Context->GetLevel();
-  check(Level);
+  vassert(Level);
 #ifdef VV_CLIPPER_FULL_CHECK
   if (Clipper.ClipIsFull()) return;
 #endif

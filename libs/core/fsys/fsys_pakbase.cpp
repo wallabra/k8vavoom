@@ -447,7 +447,7 @@ void VFileDirectory::buildNameMaps (bool rebuilding) {
         lastSeenLump.put(lmp, f); // for index chain
       } else {
         // we'we seen it before
-        check(files[*lsidp].nextLump == -1);
+        vassert(files[*lsidp].nextLump == -1);
         files[*lsidp].nextLump = f; // link to previous one
         *lsidp = f; // update index
         if (doReports) {
@@ -797,8 +797,8 @@ int VPakFileBase::FindACSObject (VStr fname) {
 //
 //==========================================================================
 void VPakFileBase::ReadFromLump (int Lump, void *Dest, int Pos, int Size) {
-  check(Lump >= 0);
-  check(Lump < pakdir.files.length());
+  vassert(Lump >= 0);
+  vassert(Lump < pakdir.files.length());
   VStream *Strm = CreateLumpReaderNum(Lump);
   Strm->Seek(Pos);
   Strm->Serialise(Dest, Size);

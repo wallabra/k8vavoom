@@ -317,8 +317,8 @@ int VOpenALDevice::LoadSound (int sound_id, ALuint *src) {
 
   if (res == VSoundManager::LS_Pending) {
     // pending sound, generate new source, and add it to pending list
-    check(!sourcesPending.find(sound_id));
-    check(!srcPendingSet.find(*src));
+    vassert(!sourcesPending.find(sound_id));
+    vassert(!srcPendingSet.find(*src));
     PendingSrc *psrc = new PendingSrc;
     psrc->src = *src;
     psrc->sound_id = sound_id;
@@ -538,7 +538,7 @@ void VOpenALDevice::NotifySoundLoaded (int sound_id, bool success) {
   PendingSrc *cur = *pss;
   while (cur) {
     PendingSrc *next = cur->next;
-    check(cur->sound_id == sound_id);
+    vassert(cur->sound_id == sound_id);
     srcPendingSet.del(cur->src);
     if (success) {
       // play it

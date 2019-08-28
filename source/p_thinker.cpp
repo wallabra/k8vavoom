@@ -372,7 +372,7 @@ VThinker *VThinker::SpawnCommon (bool allowNoneClass, bool checkKillEntityEx, bo
 
   // check it
   if (th && checkKillEntityEx && !th->GetClass()->IsChildOf(eexCls)) {
-    check(eexCls);
+    vassert(eexCls);
     GCon->Logf(NAME_Warning, "%s: tried to spawn class `%s`, got class `%s`, which is not `EntityEx` (this is mostly harmless)", Self->GetClass()->GetName(), Class->GetName(), th->GetClass()->GetName());
     th->DestroyThinker();
     th = nullptr;

@@ -102,7 +102,7 @@ public:
   ~VQueueLifo () { clear(); }
 
   T operator [] (int idx) {
-    check(idx >= 0 && idx < used);
+    vassert(idx >= 0 && idx < used);
     int bnum = idx/ItemsPerBlock;
     T *blk = first;
     while (bnum--) blk = getNextBlock(blk);
@@ -146,32 +146,32 @@ public:
         if (nb) {
           currblock = nb;
           ++used;
-          check(freeInCurrBlock() == 1);
+          vassert(freeInCurrBlock() == 1);
           return nb;
         }
       } else {
         // no used items, yay
-        check(currblock == first);
+        vassert(currblock == first);
         ++used;
         return currblock;
       }
     } else {
-      check(used == 0);
+      vassert(used == 0);
     }
     // need a new block
-    check(getNextBlock(currblock) == nullptr);
+    vassert(getNextBlock(currblock) == nullptr);
     ++blocksAlloted;
     T *nblk = (T *)Z_Malloc(BlockSize);
     setPrevBlock(nblk, currblock);
     setNextBlock(nblk, nullptr);
     setNextBlock(currblock, nblk);
     if (!first) {
-      check(used == 0);
+      vassert(used == 0);
       first = nblk;
     }
     currblock = nblk;
     ++used;
-    check(freeInCurrBlock() == 1);
+    vassert(freeInCurrBlock() == 1);
     return nblk;
   }
 
@@ -180,7 +180,7 @@ public:
 
   // forget last element
   inline void pop () {
-    check(used);
+    vassert(used);
     if (freeInCurrBlock() == 1) {
       // go to previous block (but don't go beyond first one)
       T *pblk = getPrevBlock(currblock);
@@ -191,7 +191,7 @@ public:
 
   // forget last element
   inline T popValue () {
-    check(used);
+    vassert(used);
     T *res = getLast();
     pop();
     return *res;
@@ -352,7 +352,7 @@ void VMethodProxy::ResolveChecked (VObject *Self) {
 VFuncRes VMethodProxy::Execute (VObject *Self) {
   if (!Resolve(Self)) Sys_Error("cannot find method `%s` in class `%s`", (MethodName ? MethodName : "<unnamed>"), (Class ? Class->GetName() : "<unnamed>"));
   if (!(Method->Flags&FUNC_Static)) {
-    check(Self);
+    vassert(Self);
     if (!Self->IsA(Class)) {
       //VObject::VMDumpCallStack();
       Sys_Error("object of class `%s` is not a subclass of `%s` for method `%s`", Self->GetClass()->GetName(), Class->GetName(), MethodName);
@@ -378,7 +378,7 @@ VFuncRes VMethodProxy::ExecuteNoCheck (VObject *Self) {
   if (!Resolve(Self)) Sys_Error("cannot find method `%s` in class `%s`", (MethodName ? MethodName : "<unnamed>"), (Class ? Class->GetName() : "<unnamed>"));
   if (Method->VTableIndex < -1) Sys_Error("method `%s` in class `%s` wasn't postloaded", (MethodName ? MethodName : "<unnamed>"), (Class ? Class->GetName() : "<unnamed>"));
   if (Method->VTableIndex != -1) {
-    check(Self);
+    vassert(Self);
     return VObject::ExecuteFunction(Self->vtable[Method->VTableIndex]);
   } else {
     return VObject::ExecuteFunction(Method);
@@ -413,14 +413,14 @@ void VObject::PostCtor () {
 //
 //==========================================================================
 VObject::~VObject () {
-  check(Index >= 0); // the thing that should be
+  vassert(Index >= 0); // the thing that should be
 
   ConditionalDestroy();
   GObjObjects[Index] = nullptr;
 
   if (!GInGarbageCollection) {
-    check(GNumDeleted > 0);
-    check(ObjectFlags&_OF_Destroyed);
+    vassert(GNumDeleted > 0);
+    vassert(ObjectFlags&_OF_Destroyed);
     --GNumDeleted;
     --gcLastStats.markedDead;
     ObjectFlags |= _OF_CleanupRef;
@@ -448,7 +448,7 @@ VObject::~VObject () {
 //==========================================================================
 void *VObject::operator new (size_t) {
   //Sys_Error("do not use `new` on `VObject`");
-  check(GNewObject);
+  vassert(GNewObject);
   return GNewObject;
 }
 
@@ -460,7 +460,7 @@ void *VObject::operator new (size_t) {
 //==========================================================================
 void *VObject::operator new (size_t, const char *, int) {
   //Sys_Error("do not use `new` on `VObject`");
-  check(GNewObject);
+  vassert(GNewObject);
   return GNewObject;
 }
 
@@ -513,7 +513,7 @@ void VObject::StaticExit () {
 //
 //==========================================================================
 VObject *VObject::StaticSpawnObject (VClass *AClass, bool skipReplacement) {
-  check(AClass);
+  vassert(AClass);
 
   VObject *Obj = nullptr;
   try {
@@ -531,14 +531,14 @@ VObject *VObject::StaticSpawnObject (VClass *AClass, bool skipReplacement) {
     while (NativeClass != nullptr && !(NativeClass->ObjectFlags&CLASSOF_Native)) {
       NativeClass = NativeClass->GetSuperClass();
     }
-    check(NativeClass);
+    vassert(NativeClass);
 
     // call constructor of the native class to set up C++ virtual table
     GNewObject = Obj;
     NativeClass->ClassConstructor();
 
     // copy values from the default object
-    check(AClass->Defaults);
+    vassert(AClass->Defaults);
     //GLog.Logf(NAME_Dev, "000: INITIALIZING fields of `%s`...", AClass->GetName());
     AClass->CopyObject(AClass->Defaults, (vuint8 *)Obj);
     //GLog.Logf(NAME_Dev, "001: DONE INITIALIZING fields of `%s`...", AClass->GetName());
@@ -555,7 +555,7 @@ VObject *VObject::StaticSpawnObject (VClass *AClass, bool skipReplacement) {
     throw;
   }
   GNewObject = nullptr;
-  check(Obj);
+  vassert(Obj);
 
   // register in pool
   // this sets `Index` and `UniqueId`
@@ -580,12 +580,12 @@ void VObject::Register () {
     gcLastStats.firstFree = gObjFirstFree;
   } else {
 #ifdef VC_GARBAGE_COLLECTOR_CHECKS
-    check(gObjFirstFree == GObjObjects.length());
+    vassert(gObjFirstFree == GObjObjects.length());
 #endif
     Index = GObjObjects.append(this);
     gObjFirstFree = Index+1;
 #ifdef VC_GARBAGE_COLLECTOR_CHECKS
-    check(gObjFirstFree == GObjObjects.length());
+    vassert(gObjFirstFree == GObjObjects.length());
 #endif
     gcLastStats.firstFree = gObjFirstFree;
     gcLastStats.poolSize = gObjFirstFree;
@@ -668,14 +668,14 @@ bool destroyDelayed
 #endif
 ) {
   if (GInGarbageCollection) return; // recursive calls are not allowed
-  //check(GObjInitialised);
+  //vassert(GObjInitialised);
 
 #ifdef VCC_STANDALONE_EXECUTOR
   if (!GNumDeleted && !destroyDelayed) return;
-  check(GNumDeleted >= 0);
+  vassert(GNumDeleted >= 0);
 #else
   if (!GNumDeleted) return;
-  check(GNumDeleted > 0);
+  vassert(GNumDeleted > 0);
 #endif
 
   GInGarbageCollection = true;
@@ -687,7 +687,7 @@ bool destroyDelayed
   if (destroyDelayed) {
     while (gDelayDeadObjects.length()) {
       int idx = gDelayDeadObjects.popValue();
-      check(idx >= 0 && idx < gObjFirstFree);
+      vassert(idx >= 0 && idx < gObjFirstFree);
       VObject *obj = GObjObjects[idx];
       if (!obj) continue;
       if ((obj->ObjectFlags&(_OF_Destroyed|_OF_DelayedDestroy)) == _OF_DelayedDestroy) {
@@ -739,7 +739,7 @@ bool destroyDelayed
     }
 
     // sanity check
-    check(finger < 0 || (goptr[finger] && (goptr[finger]->ObjectFlags&_OF_Destroyed) == 0));
+    vassert(finger < 0 || (goptr[finger] && (goptr[finger]->ObjectFlags&_OF_Destroyed) == 0));
 
 #ifdef VC_GARBAGE_COLLECTOR_COMPACTING_DEBUG
     fprintf(stderr, "ilen=%d; finger=%d\n", ilen, finger);
@@ -758,7 +758,7 @@ bool destroyDelayed
         obj->Index = itpos;
         goptr[finger] = nullptr; // it is moved
 #ifdef VC_GARBAGE_COLLECTOR_CHECKS
-        check(obj && (obj->ObjectFlags&_OF_Destroyed) == 0);
+        vassert(obj && (obj->ObjectFlags&_OF_Destroyed) == 0);
 #endif
         // move finger
         --finger; // anyway
@@ -777,14 +777,14 @@ bool destroyDelayed
 #endif
         VObject *liveobj = goptr[finger];
 #ifdef VC_GARBAGE_COLLECTOR_CHECKS
-        check(obj->Index == itpos);
-        check(liveobj && liveobj->Index == finger && (liveobj->ObjectFlags&_OF_Destroyed) == 0);
+        vassert(obj->Index == itpos);
+        vassert(liveobj && liveobj->Index == finger && (liveobj->ObjectFlags&_OF_Destroyed) == 0);
 #endif
         obj->Index = finger;
         liveobj->Index = itpos;
         goptr[finger] = obj;
         obj = (goptr[itpos] = liveobj);
-        check(obj && (obj->ObjectFlags&_OF_Destroyed) == 0);
+        vassert(obj && (obj->ObjectFlags&_OF_Destroyed) == 0);
         // move finger
         --finger; // anyway
         while (finger > itpos) {
@@ -797,7 +797,7 @@ bool destroyDelayed
 #endif
       }
 #ifdef VC_GARBAGE_COLLECTOR_CHECKS
-      check(obj && (obj->ObjectFlags&_OF_Destroyed) == 0 && obj->Index == itpos);
+      vassert(obj && (obj->ObjectFlags&_OF_Destroyed) == 0 && obj->Index == itpos);
 #endif
       // we have alive object, clear references
       obj->ClearReferences();
@@ -820,12 +820,12 @@ bool destroyDelayed
         fprintf(stderr, "  killing object #%d of %d (dead=%d) (%s)\n", itpos, ilen-1, (obj->ObjectFlags&_OF_Destroyed ? 1 : 0), *obj->GetClass()->Name);
 #endif
 #ifdef VC_GARBAGE_COLLECTOR_CHECKS
-        check(obj->Index == itpos && (obj->ObjectFlags&_OF_Destroyed) != 0);
+        vassert(obj->Index == itpos && (obj->ObjectFlags&_OF_Destroyed) != 0);
 #endif
         ++bodycount;
         delete obj;
 #ifdef VC_GARBAGE_COLLECTOR_CHECKS
-        check(goptr[itpos] == nullptr); // sanity check
+        vassert(goptr[itpos] == nullptr); // sanity check
 #endif
       }
       ++itpos;
@@ -872,7 +872,7 @@ bool destroyDelayed
 //
 //==========================================================================
 VObject *VObject::GetIndexObject (int Index) {
-  check(Index >= 0 && Index < GObjObjects.length());
+  vassert(Index >= 0 && Index < GObjObjects.length());
   return GObjObjects[Index];
 }
 

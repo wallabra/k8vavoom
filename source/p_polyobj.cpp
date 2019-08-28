@@ -46,12 +46,12 @@ void polyobj_t::RelinkToSubsector (subsector_t *asub) {
   if (sub) UnlinkFromSubsector();
   if (!asub) return;
   // just prepend, the order doesn't really matter
-  check(!subprev);
-  check(!subnext);
+  vassert(!subprev);
+  vassert(!subnext);
   subnext = asub->polyfirst;
   if (asub->polyfirst) {
-    check(asub->polyfirst != this);
-    check(!asub->polyfirst->subprev);
+    vassert(asub->polyfirst != this);
+    vassert(!asub->polyfirst->subprev);
     asub->polyfirst->subprev = this;
   }
   asub->polyfirst = this;
@@ -145,7 +145,7 @@ void VLevel::SpawnPolyobj (float x, float y, int tag, bool crush, bool hurt) {
             Segs[i].frontsector->linecount = 0;
             PolyObjs[index].numsegs++;
             ++psIndex;
-            check(psIndex <= PO_MAXPOLYSEGS);
+            vassert(psIndex <= PO_MAXPOLYSEGS);
           }
         }
       }

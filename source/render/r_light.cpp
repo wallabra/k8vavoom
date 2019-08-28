@@ -320,7 +320,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
       auto idxp = dlowners.find(Owner->GetUniqueId());
       if (idxp) {
         dlowner = &DLights[*idxp];
-        check(dlowner->Owner == Owner);
+        vassert(dlowner->Owner == Owner);
       }
     } else {
       dl = DLights;
@@ -375,7 +375,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   if (dlowner) {
     // remove replaced light
     //if (dlreplace && dlreplace != dlowner) memset((void *)dlreplace, 0, sizeof(*dlreplace));
-    check(dlowner->Owner == Owner);
+    vassert(dlowner->Owner == Owner);
     dl = dlowner;
   } else {
     dl = dlreplace;
@@ -470,7 +470,7 @@ void VRenderLevelShared::RemoveOwnedLight (VThinker *Owner) {
   auto idxp = dlowners.find(Owner->GetUniqueId());
   if (idxp) {
     dlight_t *dl = &DLights[*idxp];
-    check(dl->Owner == Owner);
+    vassert(dl->Owner == Owner);
     dl->radius = 0;
     dl->flags = 0;
     dl->Owner = nullptr;

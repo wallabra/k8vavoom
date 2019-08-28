@@ -124,7 +124,7 @@ VZipFile::VZipFile (VStr zipfile)
   mythread_mutex_init(&rdlock);
   if (fsys_report_added_paks) GLog.Logf(NAME_Init, "Adding \"%s\"...", *PakFileName);
   auto fstream = FL_OpenSysFileRead(PakFileName);
-  check(fstream);
+  vassert(fstream);
   OpenArchive(fstream);
 }
 
@@ -147,7 +147,7 @@ VZipFile::~VZipFile () {
 //==========================================================================
 void VZipFile::OpenArchive (VStream *fstream, vuint32 cdofs) {
   FileStream = fstream;
-  check(FileStream);
+  vassert(FileStream);
 
   vuint32 central_pos = (cdofs ? cdofs : SearchCentralDir(FileStream));
   if (central_pos == 0 || (vint32)central_pos == -1) {
@@ -160,7 +160,7 @@ void VZipFile::OpenArchive (VStream *fstream, vuint32 cdofs) {
     }
     Sys_Error("cannot load zip/pk3 file \"%s\"", *PakFileName);
   }
-  //check(central_pos);
+  //vassert(central_pos);
 
   FileStream->Seek(central_pos);
 
@@ -183,9 +183,9 @@ void VZipFile::OpenArchive (VStream *fstream, vuint32 cdofs) {
     // total number of entries in the central dir
     << number_entry_CD;
 
-  check(number_entry_CD == NumFiles);
-  check(number_disk_with_CD == 0);
-  check(number_disk == 0);
+  vassert(number_entry_CD == NumFiles);
+  vassert(number_disk_with_CD == 0);
+  vassert(number_disk == 0);
 
   vuint32 size_central_dir; // size of the central directory
   vuint32 offset_central_dir; // offset of start of central directory with respect to the starting disk number
@@ -195,7 +195,7 @@ void VZipFile::OpenArchive (VStream *fstream, vuint32 cdofs) {
     << offset_central_dir
     << size_comment;
 
-  check(central_pos >= offset_central_dir+size_central_dir);
+  vassert(central_pos >= offset_central_dir+size_central_dir);
 
   BytesBeforeZipFile = central_pos-(offset_central_dir+size_central_dir);
 
@@ -383,8 +383,8 @@ void VZipFile::Close () {
 //
 //==========================================================================
 VStream *VZipFile::CreateLumpReaderNum (int Lump) {
-  check(Lump >= 0);
-  check(Lump < pakdir.files.length());
+  vassert(Lump >= 0);
+  vassert(Lump < pakdir.files.length());
   return new VZipFileReader(PakFileName+":"+pakdir.files[Lump].fileName, FileStream, BytesBeforeZipFile, pakdir.files[Lump], &rdlock);
 }
 

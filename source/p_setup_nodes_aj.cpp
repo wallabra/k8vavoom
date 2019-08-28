@@ -234,7 +234,7 @@ static int ajUploadVertex (TMap<VertexInfo, int> &vmap, VLevel *Level, const TVe
   VertexInfo vi(*v, ajbsp::num_vertices);
   auto pp = vmap.find(vi);
   if (pp) return *pp;
-  check(vi.getIndex() == ajbsp::num_vertices);
+  vassert(vi.getIndex() == ajbsp::num_vertices);
   vmap.put(vi, vi.getIndex());
   ajbsp::vertex_t *vert = ajbsp::NewVertex();
   memset(vert, 0, sizeof(*vert));
@@ -320,7 +320,7 @@ struct CopyInfo {
 //
 //==========================================================================
 static inline int AJVertexIndex (CopyInfo &nfo, const ajbsp::vertex_t *v) {
-  check(v != nullptr);
+  vassert(v != nullptr);
   auto ip = nfo.ajvidx.find(v);
   if (!ip) Sys_Error("AJBSP: found unknown vertex");
   return *ip;

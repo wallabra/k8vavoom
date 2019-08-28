@@ -333,7 +333,7 @@ bool FluidManager::InitFluid () {
   fluid_set_log_function(FLUID_INFO, &shutTheFuckUpFluid, nullptr);
   fluid_set_log_function(FLUID_DBG, &shutTheFuckUpFluid, nullptr);
 
-  check(sf2id < 0);
+  vassert(sf2id < 0);
 
   if (autoloadSF2 != snd_timidity_autoload_sf2.asBool()) forceMidiBanksScan();
 
@@ -509,7 +509,7 @@ int VFluidAudioCodec::Decode (short *Data, int NumSamples) {
     res += rdf*2;
     NumSamples -= rdf;
     framesUntilEvent -= rdf;
-    check(framesUntilEvent >= 0);
+    vassert(framesUntilEvent >= 0);
   }
   if (res == 0) FluidManager::ResetSynth();
   return res;

@@ -94,7 +94,7 @@ public:
   int findInFileFrom (int stidx, VName aname) const;
 
   inline int length () const { return list.length(); }
-  const ListLump &operator [] (int idx) const { check(idx >= 0 && idx < list.length()); return list[idx]; }
+  const ListLump &operator [] (int idx) const { vassert(idx >= 0 && idx < list.length()); return list[idx]; }
 
 public:
   struct NameIterator {
@@ -142,11 +142,11 @@ void ListOfLumps::append (VName txname, int filenum) {
     // append to the name chain
     int lidx = *mip;
     while (list[lidx].nextIndex != -1) {
-      check(list[lidx].texName == txname);
+      vassert(list[lidx].texName == txname);
       lidx = list[lidx].nextIndex;
     }
-    check(lidx >= 0 && lidx < list.length()-1);
-    check(list[lidx].nextIndex == -1);
+    vassert(lidx >= 0 && lidx < list.length()-1);
+    vassert(list[lidx].nextIndex == -1);
     list[lidx].nextIndex = list.length()-1;
   } else {
     // first with such name
@@ -336,7 +336,7 @@ static void BuildTextureRange (int wadfile, VName nfirst, VName nlast, int txtyp
     //!!!if (it.getFile() > wadfile) continue;
     if (it.getFile() == skipFile) continue;
     if (!W_IsWADFile(it.getFile())) continue; // ignore non-wad paks
-    check(it.getName() == nfirst);
+    vassert(it.getName() == nfirst);
     // skip this file in any case
     skipFile = it.getFile();
     // find list end, set `firstIdx` and `listLen` if found
@@ -652,9 +652,9 @@ static void ParseFTAnim (int wadfile, VScriptParser *sc, int fttype) {
     if (vanilla) {
       sc->ExpectName8Warn();
       if (!ignore) {
-        check(ad.range == 1);
+        vassert(ad.range == 1);
         // simple pic
-        check(CurType == 1);
+        vassert(CurType == 1);
         fd.Index = GTextureManager.CheckNumForNameAndForce(sc->Name8, (fttype == FT_Flat ? TEXTYPE_Flat : TEXTYPE_Wall), true, optional);
         if (fd.Index == -1 && !optional) sc->Message(va("Unknown texture \"%s\"", *sc->String));
         animPicSeen.put(sc->Name8, true);
@@ -672,7 +672,7 @@ static void ParseFTAnim (int wadfile, VScriptParser *sc, int fttype) {
         if (!ignore) {
           if (!ad.range) {
             // simple pic
-            check(CurType == 1);
+            vassert(CurType == 1);
             if (sc->Number < 0) sc->Number = 1;
             int txidx = GetTextureIdWithOffset(wadfile, currStBase, sc->Number-1, fttype, optional);
             if (txidx == -1) {
@@ -683,7 +683,7 @@ static void ParseFTAnim (int wadfile, VScriptParser *sc, int fttype) {
             fd.Index = txidx;
           } else {
             // range
-            check(CurType == 2);
+            vassert(CurType == 2);
             // create frames
             for (int ofs = 0; ofs <= sc->Number; ++ofs) {
               int txidx = GetTextureIdWithOffset(wadfile, currStBase, ofs, fttype, optional);
@@ -702,13 +702,13 @@ static void ParseFTAnim (int wadfile, VScriptParser *sc, int fttype) {
         if (!ignore) {
           if (!ad.range) {
             // simple pic
-            check(CurType == 1);
+            vassert(CurType == 1);
             fd.Index = GTextureManager.CheckNumForNameAndForce(sc->Name8, (fttype == FT_Flat ? TEXTYPE_Flat : TEXTYPE_Wall), true, optional);
             if (fd.Index == -1 && !optional) sc->Message(va("Unknown texture \"%s\"", *sc->String));
             animPicSeen.put(sc->Name8, true);
           } else {
             // range
-            check(CurType == 2);
+            vassert(CurType == 2);
             int txtype = (fttype == FT_Flat ? TEXTYPE_Flat : TEXTYPE_Wall);
             BuildTextureRange(wadfile, GTextureManager.GetTextureName(ad.Index), sc->Name8, txtype, ids);
             for (int f = 0; f < ids.length(); ++f) animPicSeen.put(GTextureManager.GetTextureName(ids[f]), true);
@@ -739,7 +739,7 @@ static void ParseFTAnim (int wadfile, VScriptParser *sc, int fttype) {
 
     // create range frames, if necessary
     if (CurType == 2) {
-      check(ad.range == 1);
+      vassert(ad.range == 1);
       if (ids.length() == 0) continue; // nothing to do
       for (int f = 0; f < ids.length(); ++f) {
         FrameDef_t &nfd = FrameDefs.alloc();
@@ -748,8 +748,8 @@ static void ParseFTAnim (int wadfile, VScriptParser *sc, int fttype) {
       }
     } else {
       // this is simple pic
-      check(CurType == 1);
-      check(ad.range == 0 || vanilla);
+      vassert(CurType == 1);
+      vassert(ad.range == 0 || vanilla);
       if (fd.Index != -1) FrameDefs.Append(fd);
     }
   }

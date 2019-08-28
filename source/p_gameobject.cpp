@@ -105,11 +105,11 @@ void tagHashPut (TagHash *th, int tag, void *ptr) {
   bk.ptr = ptr;
   bk.next = -1;
   if (lastBIdx == -1) {
-    check(th->first[hash] == -1);
+    vassert(th->first[hash] == -1);
     th->first[hash] = th->buckets.length()-1;
   } else {
-    check(th->first[hash] != -1);
-    check(th->buckets[lastBIdx].next == -1);
+    vassert(th->first[hash] != -1);
+    vassert(th->buckets[lastBIdx].next == -1);
     th->buckets[lastBIdx].next = th->buckets.length()-1;
   }
 }
@@ -245,7 +245,7 @@ int tagHashTag (const TagHash *th, int index) {
 //
 //==========================================================================
 void sector_t::CreateBaseRegion () {
-  check(!eregions);
+  vassert(!eregions);
   sec_region_t *reg = (sec_region_t *)Z_Calloc(sizeof(sec_region_t));
   reg->efloor.set(&floor, false);
   reg->eceiling.set(&ceiling, false);

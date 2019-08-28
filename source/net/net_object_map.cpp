@@ -116,13 +116,13 @@ bool VNetObjectsMap::SerialiseName (VStream &Strm, VName &Name) {
     return true;
   } else {
     const int namecount = VName::GetNumNames();
-    check(namecount > 0 && namecount < 1024*1024);
+    vassert(namecount > 0 && namecount < 1024*1024);
     // update tables
     /*
     if (NameMap.length() < namecount) {
       const int oldcount = NameMap.length();
       GCon->Logf(NAME_Warning, "*** got %d new names", namecount-NameMap.length());
-      check(NameMap.length() == NameLookup.length());
+      vassert(NameMap.length() == NameLookup.length());
       NameMap.SetNum(namecount);
       NameLookup.SetNum(namecount);
       for (int i = oldcount; i < namecount; ++i) {
@@ -228,7 +228,7 @@ bool VNetObjectsMap::SerialiseState (VStream &Strm, VState *&State) {
     if (State) {
       vuint32 *ClassId = ClassMap.Find((VClass*)State->Outer);
       vuint32 StateId = State->NetId;
-      checkSlow(ClassId);
+      vensure(ClassId);
       Strm.SerialiseInt(*ClassId/*, ClassLookup.Num()*/);
       Strm.SerialiseInt(StateId/*, ((VClass *)State->Outer)->StatesLookup.Num()*/);
     } else {

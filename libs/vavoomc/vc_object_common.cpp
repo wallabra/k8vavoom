@@ -196,8 +196,8 @@ IMPLEMENT_FUNCTION(VObject, AngleVectors) {
   P_GET_PTR(TVec, vforward);
   P_GET_AVEC(angles);
   if (specified_vup || specified_vright) {
-    check(vup);
-    check(vright);
+    vassert(vup);
+    vassert(vright);
     AngleVectors(angles, *vforward, *vright, *vup);
   } else {
     AngleVector(angles, *vforward);

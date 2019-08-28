@@ -293,7 +293,7 @@ void VEntity::UnlinkFromWorld () {
       // we are the first entity in blockmap cell
       BlockMapCell -= 1; // real cell number
       // do some sanity checks
-      check(XLevel->BlockLinks[BlockMapCell] == this);
+      vassert(XLevel->BlockLinks[BlockMapCell] == this);
       // fix list head
       XLevel->BlockLinks[BlockMapCell] = BlockMapNext;
     }
@@ -412,7 +412,7 @@ void VEntity::LinkToWorld (bool properFloorCheck) {
 
   // link into blockmap
   if (!(EntityFlags&EF_NoBlockmap)) {
-    check(BlockMapCell == 0);
+    vassert(BlockMapCell == 0);
     // inert things don't need to be in blockmap
     int blockx = MapBlock(Origin.x-XLevel->BlockMapOrgX);
     int blocky = MapBlock(Origin.y-XLevel->BlockMapOrgY);

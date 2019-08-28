@@ -367,8 +367,8 @@ bool TimidityManager::InitTimidity () {
 
   if (timidityInitialised >= 0) return (timidityInitialised > 0);
 
-  check(!patches);
-  check(!sf2_data);
+  vassert(!patches);
+  vassert(!sf2_data);
 
   if (autoloadSF2 != snd_timidity_autoload_sf2.asBool()) diskScanned = false;
 

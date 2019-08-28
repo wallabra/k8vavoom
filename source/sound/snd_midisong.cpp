@@ -87,7 +87,7 @@ void MIDIData::restart () {
   currtime = 0;
   currtrack = 0;
   for (auto &&track : tracks) {
-    check(track.getSong() == this);
+    vassert(track.getSong() == this);
     track.reset();
     // perform first advance
     if (!track.isEndOfData()) track.advanceTics(track.getDeltaTic());
@@ -168,7 +168,7 @@ bool MIDIData::parseMem () {
     if (memcmp(indata+4+4, "RMID", 4) != 0) return false; // invalid signature
     indata += 4+4+4; // skip all headers
     inleft -= 4+4+4;
-    check(inleft >= 14);
+    vassert(inleft >= 14);
     memcpy(&header[0], indata, 4); indata += 4;
   }
 
@@ -238,7 +238,7 @@ bool MIDIData::parseMem () {
 //==========================================================================
 bool MIDIData::parseStream (VStream &strm) {
   clear();
-  check(!midiData);
+  vassert(!midiData);
   if (strm.IsError()) return false;
   dataSize = strm.TotalSize()-strm.Tell();
   if (dataSize < 14) { dataSize = 0; return false; }
@@ -270,7 +270,7 @@ bool MIDIData::runTrack (int tidx, EventCBType cb, void *udata) {
   if (tidx < 0 || tidx >= tracks.length()) return false;
 
   MidiTrack &track = tracks[tidx];
-  check(track.getSong() == this);
+  vassert(track.getSong() == this);
 
   if (currtime < track.nextEventTime()) return true;
 
@@ -405,7 +405,7 @@ bool MIDIData::runTrack (int tidx, EventCBType cb, void *udata) {
             if (snd_midi_messages && data.length() != 0 && mstype) {
               TArray<VStr> lines;
               data.split('\n', lines);
-              check(lines.length() > 0);
+              vassert(lines.length() > 0);
               const char *pfx = "";
               for (auto &&ls : lines) {
                 GCon->Logf("FluidSynth: MIDI track #%d %s: %s%s", tidx, mstype, pfx, *ls);

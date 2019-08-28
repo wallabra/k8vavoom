@@ -101,8 +101,8 @@ TMap<VName, Type *> vcTypes;
 //==========================================================================
 Type *findShitppType (const Type *tp) {
   if (!tp) return nullptr;
-  check(!tp->shitpp);
-  check(tp->name != NAME_None);
+  vassert(!tp->shitpp);
+  vassert(tp->name != NAME_None);
   auto spp = shitppTypes.find(tp->name);
   if (spp) return *spp;
   // try mangled name
@@ -165,8 +165,8 @@ VStr Type::toString () const {
 //
 //==========================================================================
 void Type::appendField (Field *fld) {
-  check(!fld->next);
-  check(!fld->owner);
+  vassert(!fld->next);
+  vassert(!fld->owner);
   fld->owner = this;
   if (!fields) { fields = fld; return; }
   Field *f = fields;
@@ -355,8 +355,8 @@ void compressBools (Type *tp) {
   }
   // fix some special VC cases
   if (!tp->shitpp && tp->name == "node_t") {
-    check(tp->fields->type->toString() == "float[6]");
-    check(tp->fields->next->type->toString() == "float[6]");
+    vassert(tp->fields->type->toString() == "float[6]");
+    vassert(tp->fields->next->type->toString() == "float[6]");
     tp->fields->type->dimension *= 2;
     tp->fields->next = tp->fields->next->next;
   }
@@ -868,7 +868,7 @@ Type *parseVCType (SemParser *par, bool basic=false) {
     // currently we cannot
     if (par->eat("delegate")) {
       Type *tpg = parseVCType(par);
-      check(tpg);
+      vassert(tpg);
       tpg->delegate = true;
       tpg->name = "VObjectDelegate";
       //GLog.Logf(NAME_Debug, "%s:*: %s", *par->srcfile, *tpg->toString());
@@ -1058,7 +1058,7 @@ void parseVCSource (VStr filename, VStr className=VStr::EmptyString) {
           continue;
         }
         Type *ftx = parseVCType(par);
-        if (!ftx) { check(!par->isEOF()); continue; }
+        if (!ftx) { vassert(!par->isEOF()); continue; }
         // new field
         for (;;) {
           VStr fldname = par->expectId();
@@ -1143,7 +1143,7 @@ void parseVCSource (VStr filename, VStr className=VStr::EmptyString) {
       Field *fld = new Field();
       fld->name = VName(*fldname, VName::Add);
       fld->type = fldtype->clone();
-      check(fld->type->delegate == fldtype->delegate);
+      vassert(fld->type->delegate == fldtype->delegate);
       parseVCTypeDim(par, fld->type);
       tp->appendField(fld);
       //if (tp->name == "Widget") GLog.Logf(NAME_Debug, "WIDGET: %s : %s", *fld->name, *fld->type->toString());
@@ -1177,7 +1177,7 @@ void parseVCSource (VStr filename, VStr className=VStr::EmptyString) {
 //==========================================================================
 void checkVCType (Type *tp) {
   if (!tp) return;
-  check(!tp->shitpp);
+  vassert(!tp->shitpp);
   Type *spt = findShitppType(tp);
   if (!spt) {
     if (tp->name == "MobjByTIDIteratorInfo") return;
@@ -1328,9 +1328,9 @@ int main (int argc, char **argv) {
     auto tpp = vcTypes.find(VName("Object"));
     Type *tpvcObj = *tpp;
     compressBools(tpvcObj);
-    check(tpvcObj->name == "Object");
+    vassert(tpvcObj->name == "Object");
     // shitpp vmt
-    check(tpvcObj->fields->name == "__CxxVTable");
+    vassert(tpvcObj->fields->name == "__CxxVTable");
     tpvcObj->fields = tpvcObj->fields->next;
   }
 

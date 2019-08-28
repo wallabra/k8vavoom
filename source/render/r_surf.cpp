@@ -56,7 +56,7 @@ static inline __attribute__((const)) float TextureOffsetTScale (const VTexture *
 //
 //==========================================================================
 static void AppendSurfaces (segpart_t *sp, surface_t *newsurfs) {
-  check(sp);
+  vassert(sp);
   if (!newsurfs) return; // nothing to do
   // new list will start with `newsurfs`
   surface_t *ss = sp->surfs;
@@ -128,7 +128,7 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
     if (vcount < 1) Sys_Error("ONE VERTEX. WTF?!");
     if (ssurf) return ssurf;
   }
-  //check(vcount >= 3);
+  //vassert(vcount >= 3);
 
   // if we're simply changing sky, and already have surface created, do not recreate it, it is pointless
   bool isSkyFlat = (InSplane.splane->pic == skyflatnum);
@@ -269,7 +269,7 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
     if ((splane.splane->pic == skyflatnum) != (RealPlane.splane->pic == skyflatnum)) {
       // sky <-> non-sky, simply recreate it
       sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane);
-      check(newsurf == ssurf); // sanity check
+      vassert(newsurf == ssurf); // sanity check
       ssurf->texinfo.ColorMap = ColorMap; // just in case
       // nothing more to do
       return;
@@ -279,7 +279,7 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
       if (splane.splane != &sky_plane) {
         // recreate it, just in case
         sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane);
-        check(newsurf == ssurf); // sanity check
+        vassert(newsurf == ssurf); // sanity check
         ssurf->texinfo.ColorMap = ColorMap; // just in case
         // nothing more to do
         return;
@@ -304,7 +304,7 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
       ssurf->Angle, splane.splane->BaseAngle-splane.splane->Angle);
     */
     sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane);
-    check(newsurf == ssurf); // sanity check
+    vassert(newsurf == ssurf); // sanity check
     ssurf->texinfo.ColorMap = (!ignoreColorMap ? ColorMap : 0); // just in case
     // nothing more to do
     return;
@@ -1466,7 +1466,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     // update 3d floors
     for (sp = dseg->extra; sp; sp = sp->next) {
       sec_region_t *reg = sp->basereg;
-      check(reg->extraline);
+      vassert(reg->extraline);
       side_t *extraside = &Level->Sides[reg->extraline->sidenum[0]];
 
       VTexture *MTex = GTextureManager(extraside->MidTexture);
@@ -1528,7 +1528,7 @@ void VRenderLevelShared::SegMoved (seg_t *seg) {
 void VRenderLevelShared::CreateWorldSurfaces () {
   inWorldCreation = true;
 
-  check(!free_wsurfs);
+  vassert(!free_wsurfs);
   SetupSky();
 
   // set up fake floors
@@ -2129,7 +2129,7 @@ void VRenderLevelShared::SetupFakeFloors (sector_t *sector) {
 //
 //==========================================================================
 surface_t *VRenderLevelShared::ReallocSurface (surface_t *surfs, int vcount) {
-  check(vcount > 2); // just in case
+  vassert(vcount > 2); // just in case
   surface_t *surf = surfs;
   if (surf) {
     // clear first surface

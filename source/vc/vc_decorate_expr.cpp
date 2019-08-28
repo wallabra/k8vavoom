@@ -389,7 +389,7 @@ static VExpression *ParsePostfixIncDec (VScriptParser *sc, VClass *Class, VExpre
 //
 //==========================================================================
 static VExpression *ParseExpressionGeneral (VScriptParser *sc, VClass *Class, int prio) {
-  check(prio >= 0);
+  vassert(prio >= 0);
 
   // term
   if (prio == 0) {
@@ -509,7 +509,7 @@ static VExpression *ParseExpressionGeneral (VScriptParser *sc, VClass *Class, in
     for (const MathOpHandler *mop = oplist; mop->op; ++mop) {
       if (mop->prio != prio) continue;
       if (token.strEqu(mop->op)) {
-        check(mop->type == MOP_Unary);
+        vassert(mop->type == MOP_Unary);
         const TLocation l = sc->GetLoc();
         VExpression *lhs = ParseExpressionGeneral(sc, Class, prio); // rassoc
         if (!lhs) return nullptr;
@@ -1087,7 +1087,7 @@ static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State) {
       bool inIgnoreList = false;
       Func = ParseFunCallWithName(sc, FuncName, Class, NumArgs, Args, false, &inIgnoreList); // no paren
       if (inIgnoreList) {
-        check(!Func);
+        vassert(!Func);
         State->FunctionName = NAME_None;
       } else {
         if (!Func) {
@@ -1123,7 +1123,7 @@ static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State) {
         } else {
           //GCon->Logf(NAME_Debug, "*** %s: func=`%s` (%s) (params=%d; args=%d; final=%d; static=%d)", Class->GetName(), Func->GetName(), *FuncName, Func->NumParams, NumArgs, (Func->Flags&FUNC_Final ? 1 : 0), (Func->Flags&FUNC_Static ? 1 : 0));
           State->FunctionName = Func->Name;
-          check(State->FunctionName != NAME_None);
+          vassert(State->FunctionName != NAME_None);
           Func = nullptr;
         }
       }

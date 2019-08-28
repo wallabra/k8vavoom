@@ -3023,7 +3023,7 @@ void VStructZero::DoSyntaxCopyTo (VExpression *e) {
 //==========================================================================
 VExpression *VStructZero::DoResolve (VEmitContext &ec) {
   if (!sexpr) { delete this; return nullptr; }
-  check(sexpr->Type.Type == TYPE_Struct || sexpr->Type.Type == TYPE_Vector);
+  vassert(sexpr->Type.Type == TYPE_Struct || sexpr->Type.Type == TYPE_Vector);
   if (sexpr->Flags&FIELD_ReadOnly) {
     ParseError(Loc, "cannot zero read-only struct");
     delete this;

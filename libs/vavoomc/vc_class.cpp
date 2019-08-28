@@ -2105,7 +2105,7 @@ void VClass::CreateVTable () {
   if (ParentClass) memcpy(ClassVTable, ParentClass->ClassVTable, ParentClass->ClassNumMethods*sizeof(VMethod *));
   for (int i = 0; i < Methods.Num(); ++i) {
     VMethod *M = Methods[i];
-    check(M->VTableIndex >= -1);
+    vassert(M->VTableIndex >= -1);
     if (M->VTableIndex == -1) continue;
     ClassVTable[M->VTableIndex] = M;
   }
@@ -2432,7 +2432,7 @@ VClass *VClass::CreateDerivedClass (VName AName, VMemberBase *AOuter, TArray<VDe
 //
 //==========================================================================
 VClass *VClass::GetReplacement () {
-  check(this);
+  vassert(this);
   if (!Replacement) return this;
   // avoid looping recursion by temporarely nullptr-ing the field
   VClass *Temp = Replacement;

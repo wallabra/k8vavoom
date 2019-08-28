@@ -172,7 +172,7 @@ void VWadFile::Open (VStr FileName, bool FixVoices, VStream *InStream) {
 //==========================================================================
 void VWadFile::OpenSingleLumpStream (VStream *strm, VStr FileName) {
   // open the file and add to directory
-  check(strm);
+  vassert(strm);
   Stream = strm;
   if (fsys_report_added_paks) GLog.Logf(NAME_Init, "Adding \"%s\"...", *FileName);
 
@@ -385,7 +385,7 @@ void VWadFile::FixVoiceNamespaces () {
 //
 //==========================================================================
 VStream *VWadFile::CreateLumpReaderNum (int lump) {
-  check((vuint32)lump < (vuint32)pakdir.files.length());
+  vassert((vuint32)lump < (vuint32)pakdir.files.length());
   //lumpinfo_t &l = LumpInfo[lump];
   const VPakFileInfo &fi = pakdir.files[lump];
 
@@ -393,11 +393,11 @@ VStream *VWadFile::CreateLumpReaderNum (int lump) {
 #if 0
   void *ptr = (fi.filesize ? Z_Malloc(fi.filesize) : nullptr);
   if (fi.filesize) {
-    check(lockInited);
+    vassert(lockInited);
     MyThreadLocker locker(&rdlock);
     Stream->Seek(fi.pakdataofs);
     Stream->Serialise(ptr, fi.filesize);
-    //check(!Stream->IsError());
+    //vassert(!Stream->IsError());
     if (Stream->IsError()) Host_Error("cannot load lump '%s'", *W_FullLumpName(lump));
   }
 
@@ -449,8 +449,8 @@ int VWadFile::IterateNS (int Start, EWadNamespace NS, bool allowEmptyName8) {
 //
 //==========================================================================
 void VWadFile::ReadFromLump (int lump, void *dest, int pos, int size) {
-  check(size >= 0);
-  check(pos >= 0);
+  vassert(size >= 0);
+  vassert(pos >= 0);
   if ((vuint32)lump >= (vuint32)pakdir.files.length()) Sys_Error("VWadFile::ReadFromLump: %i >= numlumps", lump);
   VPakFileInfo &fi = pakdir.files[lump];
   if (pos >= fi.filesize || !size) {
@@ -458,11 +458,11 @@ void VWadFile::ReadFromLump (int lump, void *dest, int pos, int size) {
     return;
   }
   if (size > 0) {
-    check(lockInited);
+    vassert(lockInited);
     MyThreadLocker locker(&rdlock);
     Stream->Seek(fi.pakdataofs+pos);
     Stream->Serialise(dest, size);
-    check(!Stream->IsError());
+    vassert(!Stream->IsError());
   }
 }
 

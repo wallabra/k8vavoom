@@ -204,11 +204,11 @@ static void writeList (VStream *fo) {
       VStr s = fi.names[f].name;
       VStr bw = getBaseWad(s);
       auto ip = spmap.find(bw);
-      check(ip);
+      vassert(ip);
       *fo << STRM_INDEX(*ip);
       VStr ln = getLumpName(s);
       ip = spmap.find(ln);
-      check(ip);
+      vassert(ip);
       *fo << STRM_INDEX(*ip);
       // size
       vint32 size = fi.names[f].size;
@@ -343,7 +343,7 @@ int main (int argc, char **argv) {
   }
 
   if (doRegisterWads) {
-    for (int f = 0; f < flist.length(); ++f) W_AddFile(flist[f]);
+    for (int f = 0; f < flist.length(); ++f) W_AddDiskFile(flist[f]);
     GLog.WriteLine("calculating hashes...");
     for (int lump = W_IterateNS(-1, WADNS_Any); lump >= 0; lump = W_IterateNS(lump, WADNS_Any)) {
       if (W_LumpLength(lump) < 8) continue;
@@ -363,7 +363,7 @@ int main (int argc, char **argv) {
   } else {
     if (wadlist.length() == 0) Sys_Error("database file '%s' not found or empty", *dbname);
 
-    for (int f = 0; f < flist.length(); ++f) W_AddFile(flist[f]);
+    for (int f = 0; f < flist.length(); ++f) W_AddDiskFile(flist[f]);
 
     for (int lump = W_IterateNS(-1, WADNS_Any); lump >= 0; lump = W_IterateNS(lump, WADNS_Any)) {
       if (W_LumpLength(lump) < 8) continue;

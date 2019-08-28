@@ -123,7 +123,7 @@ void VObjectMapChannel::ReadCounters (VMessageIn &Msg) {
     vint32 NumNames = Msg.ReadInt();
     //Msg << NumNames;
     //if (!Msg.bOpen) GCon->Logf("MORE: names=%d (%d)", NumNames, Connection->ObjMap->NameLookup.length());
-    check(Connection->ObjMap->NameLookup.length() <= NumNames);
+    vassert(Connection->ObjMap->NameLookup.length() <= NumNames);
     Connection->ObjMap->NameLookup.SetNum(NumNames);
   }
 
@@ -131,7 +131,7 @@ void VObjectMapChannel::ReadCounters (VMessageIn &Msg) {
     vint32 NumClasses = Msg.ReadInt();
     //Msg << NumClasses;
     //if (!Msg.bOpen) GCon->Logf("MORE: classes=%d (%d)", NumClasses, Connection->ObjMap->ClassLookup.length());
-    check(Connection->ObjMap->ClassLookup.length() <= NumClasses);
+    vassert(Connection->ObjMap->ClassLookup.length() <= NumClasses);
     Connection->ObjMap->ClassLookup.SetNum(NumClasses);
   }
 
@@ -152,8 +152,8 @@ void VObjectMapChannel::Update () {
 
   if (CurrName == Connection->ObjMap->NameLookup.Num() && CurrClass == Connection->ObjMap->ClassLookup.Num()) {
     // everything has been sent
-    check(LastNameCount == Connection->ObjMap->NameLookup.Num());
-    check(LastClassCount == Connection->ObjMap->ClassLookup.Num());
+    vassert(LastNameCount == Connection->ObjMap->NameLookup.Num());
+    vassert(LastClassCount == Connection->ObjMap->ClassLookup.Num());
     return;
   }
 
@@ -235,7 +235,7 @@ void VObjectMapChannel::ParsePacket (VMessageIn &Msg) {
     VName Name;
     Connection->ObjMap->SerialiseName(Msg, Name);
     VClass *C = VMemberBase::StaticFindClass(Name);
-    check(C);
+    vassert(C);
     Connection->ObjMap->ClassLookup[CurrClass] = C;
     Connection->ObjMap->ClassMap.Set(C, CurrClass);
     ++CurrClass;

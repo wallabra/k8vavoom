@@ -1886,7 +1886,7 @@ static void ProcessSpriteState (VState *st, SpriteScanInfo &ssi) {
               for (int lidx = 0; lidx < 16; ++lidx) {
                 int stid = spf->lump[lidx];
                 if (stid < 1) continue;
-                check(stid < ssi.texturepresent->length());
+                vassert(stid < ssi.texturepresent->length());
                 if (!(*ssi.texturepresent)[stid]) {
                   (*ssi.texturepresent)[stid] = true;
                   ++ssi.sprtexcount;
@@ -1994,7 +1994,7 @@ void VRenderLevelShared::PrecacheLevel () {
     int mdltexcount = 0;
     for (auto &&mtid : AllModelTextures) {
       if (mtid < 1) continue;
-      check(mtid < texturepresent.length());
+      vassert(mtid < texturepresent.length());
       if (!texturepresent[mtid]) {
         texturepresent[mtid] = true;
         ++mdltexcount;
@@ -2021,7 +2021,7 @@ void VRenderLevelShared::PrecacheLevel () {
           for (int lidx = 0; lidx < 16; ++lidx) {
             int stid = spf->lump[lidx];
             if (stid < 1) continue;
-            check(stid < texturepresent.length());
+            vassert(stid < texturepresent.length());
             if (!texturepresent[stid]) {
               texturepresent[stid] = true;
               ++sprtexcount;
@@ -2034,7 +2034,7 @@ void VRenderLevelShared::PrecacheLevel () {
     }
     if (sprlimit && sprtexcount > sprlimit) {
       GCon->Logf(NAME_Warning, "too many sprite textures (%d), aborted at %d!", sprtexcount, sprlimit);
-      check(txsaved.length() == texturepresent.length());
+      vassert(txsaved.length() == texturepresent.length());
       for (int f = 0; f < texturepresent.length(); ++f) texturepresent[f] = txsaved[f];
       sprtexcount = 0;
     }

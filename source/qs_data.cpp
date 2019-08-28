@@ -149,7 +149,7 @@ static void putValue (const QSValue &val) {
   } else {
     int idx = *xptr, prev = -1;
     while (idx >= 0) {
-      check(qslist[idx].value.ent == val.ent);
+      vassert(qslist[idx].value.ent == val.ent);
       if (qslist[idx].value.name.Cmp(val.name) == 0) {
         qslist[idx].value = val;
         return;
@@ -157,12 +157,12 @@ static void putValue (const QSValue &val) {
       prev = idx;
       idx = qslist[idx].next;
     }
-    check(prev != -1);
+    vassert(prev != -1);
     int nidx = qslist.length();
     QLItem &li = qslist.alloc();
     li.value = val;
     li.next = -1;
-    check(qslist[prev].next == -1);
+    vassert(qslist[prev].next == -1);
     qslist[prev].next = nidx;
   }
 }
@@ -185,7 +185,7 @@ QSValue QS_GetValue (VEntity *ent, VStr name) {
   auto xptr = qsmap.find(ent);
   if (!xptr) return QSValue();
   for (int idx = *xptr; idx >= 0; idx = qslist[idx].next) {
-    check(qslist[idx].value.ent == ent);
+    vassert(qslist[idx].value.ent == ent);
     if (qslist[idx].value.name.Cmp(name) == 0) return qslist[idx].value;
   }
   return QSValue();

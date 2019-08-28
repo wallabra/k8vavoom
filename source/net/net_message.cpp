@@ -105,12 +105,12 @@ bool VMessageOut::NeedSplit () const {
 //
 //==========================================================================
 void VMessageOut::SendSplitMessage () {
-  check(bReliable);
-  check(mChannel);
+  vassert(bReliable);
+  vassert(mChannel);
   if (IsError() || !NeedSplit()) return; // just in case
   if (Pos-markPos > OUT_MESSAGE_SIZE) { bError = true; return; } // oops
-  check(!bOpen);
-  check(!bClose);
+  vassert(!bOpen);
+  vassert(!bClose);
 
   //GCon->Logf(NAME_DevNet, "SPLIT! max=%d, size=%d, markPos=%d, extra=%d", Max, Pos, markPos, Pos-markPos);
 

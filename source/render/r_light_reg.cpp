@@ -578,7 +578,7 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
 
   LMapTraceInfo lmi;
   //lmi.points_calculated = false;
-  check(!lmi.pointsCalced);
+  vassert(!lmi.pointsCalced);
 
   const vuint8 *facevis = (leaf && Level->HasPVS() ? Level->LeafPVS(leaf) : nullptr);
   lmi.light_hit = false;
@@ -610,8 +610,8 @@ void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
 
   const int w = (surf->extents[0]>>4)+1;
   const int h = (surf->extents[1]>>4)+1;
-  check(w > 0);
-  check(h > 0);
+  vassert(w > 0);
+  vassert(h > 0);
 
   // if the surface already has a static lightmap, we will reuse it,
   // otherwise we must allocate a new one
@@ -777,7 +777,7 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
   //float mids = 0, midt = 0;
   //TVec facemid = TVec(0,0,0);
   LMapTraceInfo lmi;
-  check(!lmi.pointsCalced);
+  vassert(!lmi.pointsCalced);
 
   int smax = (surf->extents[0]>>4)+1;
   int tmax = (surf->extents[1]>>4)+1;
@@ -1109,8 +1109,8 @@ void VRenderLevel::BuildLightMap (surface_t *surf) {
   r_light_add = false;
   int smax = (surf->extents[0]>>4)+1;
   int tmax = (surf->extents[1]>>4)+1;
-  check(smax > 0);
-  check(tmax > 0);
+  vassert(smax > 0);
+  vassert(tmax > 0);
   if (smax > LMapTraceInfo::GridSize) smax = LMapTraceInfo::GridSize;
   if (tmax > LMapTraceInfo::GridSize) tmax = LMapTraceInfo::GridSize;
   int size = smax*tmax;
@@ -1462,8 +1462,8 @@ bool VRenderLevel::CacheSurface (surface_t *surface) {
   // determine shape of surface
   int smax = (surface->extents[0]>>4)+1;
   int tmax = (surface->extents[1]>>4)+1;
-  check(smax > 0);
-  check(tmax > 0);
+  vassert(smax > 0);
+  vassert(tmax > 0);
   if (smax > LMapTraceInfo::GridSize) smax = LMapTraceInfo::GridSize;
   if (tmax > LMapTraceInfo::GridSize) tmax = LMapTraceInfo::GridSize;
 
@@ -1496,8 +1496,8 @@ bool VRenderLevel::CacheSurface (surface_t *surface) {
   bnum = cache->blocknum;
   block_changed[bnum] = true;
 
-  check(cache->t >= 0);
-  check(cache->s >= 0);
+  vassert(cache->t >= 0);
+  vassert(cache->s >= 0);
 
   for (int j = 0; j < tmax; ++j) {
     for (int i = 0; i < smax; ++i) {

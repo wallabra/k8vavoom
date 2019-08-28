@@ -1156,19 +1156,19 @@ void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
         sector_t *sector = Sides[line->sidenum[sideidx]].Sector;
         if (!sector) continue; // just in case
         int snum = (int)(ptrdiff_t)(sector-&Sectors[0]);
-        check(snum >= 0 && snum < NumSectors);
+        vassert(snum >= 0 && snum < NumSectors);
         SecLines *sl = &seclines[snum];
         if (sl->invalid) continue;
         int slidx = 0;
         for (; slidx < 3; ++slidx) if (!sl->lines[slidx]) break;
-        if (slidx == 3) { check(goodSectorCount > 0); --goodSectorCount; sl->invalid = true; continue; }
+        if (slidx == 3) { vassert(goodSectorCount > 0); --goodSectorCount; sl->invalid = true; continue; }
         sl->lines[slidx] = line;
         sl->ulines[slidx] = &Parser.ParsedLines[i];
         sl->idx[slidx] = i;
         if (slidx == 2) ++goodSectorCount;
       }
     }
-    check(goodSectorCount >= 0);
+    vassert(goodSectorCount >= 0);
 
     // if we don't have good sectors, there is no reason to process anything
     if (goodSectorCount) {
@@ -1183,7 +1183,7 @@ void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
             if (line->sidenum[sideidx] < 0) continue;
             sector_t *sector = Sides[line->sidenum[sideidx]].Sector;
             int snum = (int)(ptrdiff_t)(sector-&Sectors[0]);
-            check(snum >= 0 && snum < NumSectors);
+            vassert(snum >= 0 && snum < NumSectors);
             SecLines *sl = &seclines[snum];
             if (sl->invalid) continue;
             if (!sl->lines[0] || !sl->lines[1] || !sl->lines[2]) continue;
