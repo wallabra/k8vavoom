@@ -121,6 +121,8 @@ public:
       // be conservative here
       if (x < -32767 || x > 32767) Host_Error("%s: UDMF: vertex #%d `x` is out of range (%g) (used in linedef #%d)", *loc.toStringNoCol(), index, x, ldefidx);
       if (y < -32767 || y > 32767) Host_Error("%s: UDMF: vertex #%d `y` is out of range (%g) (used in linedef #%d)", *loc.toStringNoCol(), index, y, ldefidx);
+      if (hasFloorZ && (floorz < -32767 || floorz > 32767)) Host_Error("%s: UDMF: vertex #%d `zfloor` is out of range (%g) (used in linedef #%d)", *loc.toStringNoCol(), index, floorz, ldefidx);
+      if (hasCeilingZ && (ceilingz < -32767 || ceilingz > 32767)) Host_Error("%s: UDMF: vertex #%d `zceiling` is out of range (%g) (used in linedef #%d)", *loc.toStringNoCol(), index, ceilingz, ldefidx);
       checked = true;
     }
   };
