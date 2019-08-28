@@ -119,9 +119,9 @@ public:
   TArray<QSValue> QSList;
   TArray<EntityInfo> EList;
   vint32 ReadyWeapon; // 0: none, otherwise entity index+1
-  vint32 invCount;
+  vint32 Skill; // -1 means "don't change"
 
-  VSavedCheckpoint () : QSList(), EList(), ReadyWeapon(0) {}
+  VSavedCheckpoint () : QSList(), EList(), ReadyWeapon(0), Skill(-1) {}
   ~VSavedCheckpoint () { Clear(); }
 
   void AddEntity (VEntity *ent) {
@@ -151,6 +151,73 @@ public:
     QSList.Clear();
     EList.Clear();
     ReadyWeapon = 0;
+    Skill = -1; // this should be "no skill"
+  }
+
+  void Serialise (VStream *strm) {
+    vassert(strm);
+    if (strm->IsLoading()) {
+      // load players inventory
+      Clear();
+      // load ready weapon
+      vint32 rw = 0;
+      *strm << STRM_INDEX(rw);
+      ReadyWeapon = rw;
+      // load entity list
+      vint32 entCount;
+      *strm << STRM_INDEX(entCount);
+      if (dbg_save_verbose&0x20) GCon->Logf("*** LOAD: rw=%d; entCount=%d", rw, entCount);
+      if (entCount < 0 || entCount > 1024*1024) Host_Error("invalid entity count (%d)", entCount);
+      for (int f = 0; f < entCount; ++f) {
+        EntityInfo &ei = EList.alloc();
+        ei.ent = nullptr;
+        *strm << ei.ClassName;
+        if (dbg_save_verbose&0x20) GCon->Logf("  ent #%d: '%s'", f+1, *ei.ClassName);
+      }
+      // load value list
+      vint32 valueCount;
+      *strm << STRM_INDEX(valueCount);
+      if (dbg_save_verbose&0x20) GCon->Logf(" valueCount=%d", valueCount);
+      for (int f = 0; f < valueCount; ++f) {
+        QSValue &v = QSList.alloc();
+        v.Serialise(*strm);
+        // check for special values
+        if (v.ent == nullptr) {
+          if (v.name.strEqu("\x07 skill")) {
+            if (v.type != QST_Int) Host_Error("invalid skill variable type in checkpoint save");
+            Skill = v.ival;
+            QSList.removeAt(QSList.length()-1);
+            continue;
+          }
+        }
+        if (dbg_save_verbose&0x20) GCon->Logf("  val #%d(%d): %s", f, v.objidx, *v.toString());
+      }
+      if (ReadyWeapon < 0 || ReadyWeapon > EList.length()) Host_Error("invalid ready weapon index (%d)", ReadyWeapon);
+      if (dbg_checkpoints) GCon->Logf(NAME_Debug, "checkpoint data loaded (rw=%d; skill=%d)", ReadyWeapon, Skill);
+    } else {
+      // save players inventory
+      // ready weapon
+      vint32 rw = ReadyWeapon;
+      *strm << STRM_INDEX(rw);
+      // save entity list
+      vint32 entCount = EList.length();
+      *strm << STRM_INDEX(entCount);
+      for (int f = 0; f < entCount; ++f) {
+        EntityInfo &ei = EList[f];
+        *strm << ei.ClassName;
+      }
+      const int addvalsCount = 1;
+      // save value list
+      vint32 valueCount = QSList.length()+addvalsCount; // one is reserved for skill
+      *strm << STRM_INDEX(valueCount);
+      // write special variables (only the skill for now)
+      {
+        QSValue v = QSValue::CreateInt(nullptr, "\x07 skill", Skill);
+        v.Serialise(*strm);
+      }
+      for (auto &&v : QSList) v.Serialise(*strm);
+      //GCon->Logf("*** SAVE: rw=%d; entCount=%d", rw, entCount);
+    }
   }
 };
 
@@ -715,14 +782,14 @@ static VStr LoadDateStrExtData (VStream *Strm) {
 
     if (id == SAVE_EXTDATA_ID_DATEVAL && size == (vint32)sizeof(tv)) {
       tvvalid = true;
-      Strm->Serialize(&tv, sizeof(tv));
+      Strm->Serialise(&tv, sizeof(tv));
       continue;
     }
 
     if (id == SAVE_EXTDATA_ID_DATESTR && size > 0 && size < 64) {
       char buf[65];
       memset(buf, 0, sizeof(buf));
-      Strm->Serialize(buf, size);
+      Strm->Serialise(buf, size);
       if (buf[0]) res = VStr(buf);
       continue;
     }
@@ -757,7 +824,7 @@ static bool LoadDateTValExtData (VStream *Strm, TTimeVal *tv) {
     if (size < 0 || size > 65536) break;
 
     if (id == SAVE_EXTDATA_ID_DATEVAL && size == (vint32)sizeof(*tv)) {
-      Strm->Serialize(tv, sizeof(tv));
+      Strm->Serialise(tv, sizeof(tv));
       //fprintf(stderr, "  found TV[%s] (%s)\n", *TimeVal2Str(tv), (Strm->IsError() ? "ERROR" : "OK"));
       return !Strm->IsError();
     }
@@ -867,32 +934,7 @@ bool VSaveSlot::LoadSlot (int Slot) {
   if (NumMaps == 0) {
     // load players inventory
     VSavedCheckpoint &cp = CheckPoint;
-    cp.Clear();
-    // ready weapon
-    vint32 rw;
-    *Strm << STRM_INDEX(rw);
-    cp.ReadyWeapon = rw;
-    // load entity list
-    vint32 entCount;
-    *Strm << STRM_INDEX(entCount);
-    if (dbg_save_verbose&0x20) GCon->Logf("*** LOAD: rw=%d; entCount=%d", rw, entCount);
-    if (entCount < 0 || entCount > 1024*1024) Host_Error("invalid entity count (%d)", entCount);
-    for (int f = 0; f < entCount; ++f) {
-      VSavedCheckpoint::EntityInfo &ei = cp.EList.alloc();
-      ei.ent = nullptr;
-      *Strm << ei.ClassName;
-      if (dbg_save_verbose&0x20) GCon->Logf("  ent #%d: '%s'", f+1, *ei.ClassName);
-    }
-    // load value list
-    vint32 valueCount;
-    *Strm << STRM_INDEX(valueCount);
-    if (dbg_save_verbose&0x20) GCon->Logf(" valueCount=%d", valueCount);
-    for (int f = 0; f < valueCount; ++f) {
-      QSValue &v = cp.QSList.alloc();
-      v.Serialise(*Strm);
-      if (dbg_save_verbose&0x20) GCon->Logf("  val #%d(%d): %s", f, v.objidx, *v.toString());
-    }
-    if (rw < 0 || rw > cp.EList.length()) Host_Error("invalid ready weapon index (%d)", rw);
+    cp.Serialise(Strm);
   } else {
     VSavedCheckpoint &cp = CheckPoint;
     cp.Clear();
@@ -938,7 +980,7 @@ void VSaveSlot::SaveToSlot (int Slot) {
     *Strm << STRM_INDEX(id);
     vint32 size = (vint32)sizeof(tv);
     *Strm << STRM_INDEX(size);
-    Strm->Serialize(&tv, sizeof(tv));
+    Strm->Serialise(&tv, sizeof(tv));
 
     // date string
     VStr dstr = TimeVal2Str(&tv);
@@ -946,7 +988,7 @@ void VSaveSlot::SaveToSlot (int Slot) {
     *Strm << STRM_INDEX(id);
     size = dstr.length();
     *Strm << STRM_INDEX(size);
-    Strm->Serialize(*dstr, size);
+    Strm->Serialise(*dstr, size);
 
     // end of data marker
     id = SAVE_EXTDATA_ID_END;
@@ -977,24 +1019,7 @@ void VSaveSlot::SaveToSlot (int Slot) {
   if (NumMaps == 0) {
     // save players inventory
     VSavedCheckpoint &cp = CheckPoint;
-    // ready weapon
-    vint32 rw = cp.ReadyWeapon;
-    *Strm << STRM_INDEX(rw);
-    // save entity list
-    vint32 entCount = cp.EList.length();
-    *Strm << STRM_INDEX(entCount);
-    for (int f = 0; f < entCount; ++f) {
-      VSavedCheckpoint::EntityInfo &ei = cp.EList[f];
-      *Strm << ei.ClassName;
-    }
-    // save value list
-    vint32 valueCount = cp.QSList.length();
-    *Strm << STRM_INDEX(valueCount);
-    for (int f = 0; f < valueCount; ++f) {
-      QSValue &v = cp.QSList[f];
-      v.Serialise(*Strm);
-    }
-    //GCon->Logf("*** SAVE: rw=%d; entCount=%d", rw, entCount);
+    cp.Serialise(Strm);
   }
 
   bool err = Strm->IsError();
@@ -1592,28 +1617,27 @@ static bool SV_SaveCheckpoint () {
   QS_StartPhase(QSPhase::QSP_Save);
   VSavedCheckpoint &cp = BaseSlot.CheckPoint;
   cp.Clear();
+  cp.Skill = GGameInfo->WorldInfo->GameSkill;
   VEntity *rwe = plr->eventGetReadyWeapon();
 
-  if (dbg_checkpoints) GCon->Logf("QS: === creating ===");
+  if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS: === creating ===");
   for (VEntity *invFirst = plr->MO->QS_GetEntityInventory();
        invFirst;
        invFirst = invFirst->QS_GetEntityInventory())
   {
     cp.AddEntity(invFirst);
-    if (dbg_checkpoints) GCon->Logf("QS: inventory item '%s'", invFirst->GetClass()->GetName());
+    if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS: inventory item '%s'", invFirst->GetClass()->GetName());
   }
-  if (dbg_checkpoints) GCon->Logf("QS: getting properties...");
+  if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS: getting properties...");
 
   plr->QS_Save();
-  for (int f = 0; f < cp.EList.length(); ++f) {
-    cp.EList[f].ent->QS_Save();
-  }
+  for (auto &&qse : cp.EList) qse.ent->QS_Save();
   cp.QSList = QS_GetCurrentArray();
 
   // count entities, build entity list
   for (int f = 0; f < cp.QSList.length(); ++f) {
     QSValue &qv = cp.QSList[f];
-    if (dbg_checkpoints) GCon->Logf("QS: property #%d of '%s': %s", f, (qv.ent ? qv.ent->GetClass()->GetName() : "player"), *qv.toString());
+    if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS: property #%d of '%s': %s", f, (qv.ent ? qv.ent->GetClass()->GetName() : "player"), *qv.toString());
     if (!qv.ent) {
       qv.objidx = 0;
     } else {
@@ -1623,7 +1647,9 @@ static bool SV_SaveCheckpoint () {
   }
 
   QS_StartPhase(QSPhase::QSP_None);
-  if (dbg_checkpoints) GCon->Logf("QS: === complete ===");
+
+  if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS: game skill is %d, cp skill is %d", GGameInfo->WorldInfo->GameSkill, cp.Skill);
+  if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS: === complete ===");
 
   return true;
 }
@@ -1658,6 +1684,17 @@ static bool SV_LoadMap (VName MapName, bool allowCheckpoints, bool hubTeleport) 
   if (!hubTeleport) SV_ResetPlayers();
   try {
     VBasePlayer::isCheckpointSpawn = isCheckpoint;
+#ifdef CLIENT
+    // setup skill for server here, so checkpoints will start with a right one
+    if (isCheckpoint) {
+      VSavedCheckpoint &cp = BaseSlot.CheckPoint;
+      if (dbg_checkpoints) GCon->Logf(NAME_Debug, "*** CP SKILL: %d", cp.Skill);
+      if (cp.Skill >= 0) {
+        if (dbg_checkpoints) GCon->Logf(NAME_Debug, "*** setting skill from a checkpoint: %d", cp.Skill);
+        Skill = cp.Skill;
+      }
+    }
+#endif
     SV_SpawnServer(*MapName, isCheckpoint/*spawn thinkers*/);
   } catch (...) {
     VBasePlayer::isCheckpointSpawn = false;
@@ -1695,13 +1732,13 @@ static bool SV_LoadMap (VName MapName, bool allowCheckpoints, bool hubTeleport) 
 
     QS_StartPhase(QSPhase::QSP_Load);
 
-    if (dbg_checkpoints) GCon->Logf("QS: === loading ===");
-    if (dbg_checkpoints) GCon->Logf("QS: --- (starting inventory)");
+    if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS: === loading ===");
+    if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS: --- (starting inventory)");
     if (dbg_checkpoints) plr->CallDumpInventory();
     plr->MO->QS_ClearEntityInventory();
-    if (dbg_checkpoints) GCon->Logf("QS: --- (cleared inventory)");
+    if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS: --- (cleared inventory)");
     if (dbg_checkpoints) plr->CallDumpInventory();
-    if (dbg_checkpoints) GCon->Logf("QS: ---");
+    if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS: ---");
 
     // create inventory items
     // have to do it backwards due to the way `AttachToOwner()` works
@@ -1709,31 +1746,31 @@ static bool SV_LoadMap (VName MapName, bool allowCheckpoints, bool hubTeleport) 
       VSavedCheckpoint::EntityInfo &ei = cp.EList[f];
       VEntity *inv = plr->MO->QS_SpawnEntityInventory(VName(*ei.ClassName));
       if (!inv) Host_Error("cannot spawn inventory item '%s'", *ei.ClassName);
-      if (dbg_checkpoints) GCon->Logf("QS: spawned '%s'", inv->GetClass()->GetName());
+      if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS: spawned '%s'", inv->GetClass()->GetName());
       ei.ent = inv;
       if (cp.ReadyWeapon == f+1) rwe = inv;
     }
-    if (dbg_checkpoints) GCon->Logf("QS: --- (spawned inventory)");
+    if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS: --- (spawned inventory)");
     if (dbg_checkpoints) plr->CallDumpInventory();
-    if (dbg_checkpoints) GCon->Logf("QS: ---");
+    if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS: ---");
 
     for (int f = 0; f < cp.QSList.length(); ++f) {
       QSValue &qv = cp.QSList[f];
       if (qv.objidx == 0) {
         qv.ent = nullptr;
-        if (dbg_checkpoints) GCon->Logf("QS:  #%d:player: %s", f, *qv.toString());
+        if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS:  #%d:player: %s", f, *qv.toString());
       } else {
         qv.ent = cp.EList[qv.objidx-1].ent;
         vassert(qv.ent);
-        if (dbg_checkpoints) GCon->Logf("QS:  #%d:%s: %s", f, qv.ent->GetClass()->GetName(), *qv.toString());
+        if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS:  #%d:%s: %s", f, qv.ent->GetClass()->GetName(), *qv.toString());
       }
       QS_EnterValue(qv);
     }
 
-    if (dbg_checkpoints) GCon->Logf("QS: --- (inventory before setting properties)");
+    if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS: --- (inventory before setting properties)");
     if (dbg_checkpoints) plr->CallDumpInventory();
-    if (dbg_checkpoints) GCon->Logf("QS: ---");
-    if (dbg_checkpoints) GCon->Logf("QS: calling loaders...");
+    if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS: ---");
+    if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS: calling loaders...");
     // call player loader, then entity loaders
     plr->QS_Load();
     for (int f = 0; f < cp.EList.length(); ++f) {
@@ -1741,9 +1778,9 @@ static bool SV_LoadMap (VName MapName, bool allowCheckpoints, bool hubTeleport) 
       ei.ent->QS_Load();
     }
 
-    if (dbg_checkpoints) GCon->Logf("QS: --- (final inventory)");
+    if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS: --- (final inventory)");
     if (dbg_checkpoints) plr->CallDumpInventory();
-    if (dbg_checkpoints) GCon->Logf("QS: === done ===");
+    if (dbg_checkpoints) GCon->Logf(NAME_Debug, "QS: === done ===");
     QS_StartPhase(QSPhase::QSP_None);
 
     plr->eventAfterUnarchiveThinkers();
