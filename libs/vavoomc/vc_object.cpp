@@ -39,19 +39,9 @@
 //
 //==========================================================================
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR) && defined(VC_GARBAGE_COLLECTOR_LOGS_BASE)
-static inline int showGCMessages () {
-  static int lmsg = -1;
-  if (lmsg < 0) {
-    lmsg = (GArgs.CheckParm("-vc-dev-gc") ? 1 : 0);
-  }
-  return (lmsg > 0);
-}
-
-#define vdgclogf(...)  if (GCDebugMessagesAllowed && showGCMessages()) GLog.Logf(NAME_Debug, __VA_ARGS__)
+# define vdgclogf(...)  if (GCDebugMessagesAllowed && cliShowGCMessages) GLog.Logf(NAME_Debug, __VA_ARGS__)
 #else
-
-#define vdgclogf(...)  do {} while (0)
-
+# define vdgclogf(...)  do {} while (0)
 #endif
 
 
@@ -64,6 +54,14 @@ static inline int showGCMessages () {
 //#define VC_GARBAGE_COLLECTOR_COMPACTING_DEBUG
 
 //static VCvarB gc_use_compacting_collector("gc_use_compacting_collector", true, "Use new compacting GC?", 0);
+
+
+int VObject::cliShowReplacementMessages = 0; // default is false
+int VObject::cliShowLoadingMessages = 0; // default is false
+int VObject::cliShowGCMessages = 0; // default is false
+int VObject::cliShowIODebugMessages = 0; // default is false
+int VObject::cliDumpNameTables = 0; // default is false
+int VObject::cliAllErrorsAreFatal = 0; // default is false
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -509,6 +507,25 @@ void VObject::StaticExit () {
 
 //==========================================================================
 //
+//  VObject::StaticInitOptions
+//
+//==========================================================================
+void VObject::StaticInitOptions (VParsedArgs &pargs) {
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+  pargs.RegisterFlagSet("-vc-dev-replacement", nullptr, &cliShowReplacementMessages);
+  pargs.RegisterFlagSet("-vc-dev-loading", nullptr, &cliShowLoadingMessages);
+  #if defined(VC_GARBAGE_COLLECTOR_LOGS_BASE)
+  pargs.RegisterFlagSet("-vc-dev-gc", nullptr, &cliShowGCMessages);
+  #endif
+  pargs.RegisterFlagSet("-vc-io-debug", nullptr, &cliShowIODebugMessages);
+  pargs.RegisterFlagSet("-vc-dev-dump-name-tables", nullptr, &cliDumpNameTables);
+  pargs.RegisterFlagSet("-vc-all-errors-are-fatal", nullptr, &cliAllErrorsAreFatal);
+#endif
+}
+
+
+//==========================================================================
+//
 //  VObject::StaticSpawnObject
 //
 //==========================================================================
@@ -896,8 +913,7 @@ int VObject::GetObjectsCount () {
 //==========================================================================
 void VObject::SerialiseFields (VStream &Strm) {
 #if !defined(IN_VCC)
-  static int debugDump = -1;
-  if (debugDump < 0) debugDump = (GArgs.CheckParm("-vc-io-debug") ? 1 : 0);
+  bool debugDump = cliShowIODebugMessages;
   //GetClass()->SerialiseObject(Strm, this);
   if (Strm.IsLoading()) {
     // reading

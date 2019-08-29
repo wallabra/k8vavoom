@@ -27,25 +27,10 @@
 #include "vc_local.h"
 
 
-//==========================================================================
-//
-//  showReplacementMessages
-//
-//==========================================================================
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-static inline int showReplacementMessages () {
-  static int lmsg = -1;
-  if (lmsg < 0) {
-    lmsg = (GArgs.CheckParm("-vc-dev-replacement") ? 1 : 0);
-  }
-  return (lmsg > 0);
-}
-
-#define vdrlogf(...)  if (showReplacementMessages()) GLog.Logf(NAME_Debug, __VA_ARGS__)
+# define vdrlogf(...)  if (VObject::cliShowReplacementMessages) GLog.Logf(NAME_Debug, __VA_ARGS__)
 #else
-
-#define vdrlogf(...)  do {} while (0)
-
+# define vdrlogf(...)  do {} while (0)
 #endif
 
 

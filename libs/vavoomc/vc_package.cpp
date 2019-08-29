@@ -27,25 +27,10 @@
 #include "vc_local.h"
 
 
-//==========================================================================
-//
-//  showLoadingMessages
-//
-//==========================================================================
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-static inline int showLoadingMessages () {
-  static int lmsg = -1;
-  if (lmsg < 0) {
-    lmsg = (GArgs.CheckParm("-vc-dev-loading") ? 1 : 0);
-  }
-  return (lmsg > 0);
-}
-
-#define vdlogf(...)  if (showLoadingMessages()) GLog.Logf(NAME_Init, __VA_ARGS__)
+# define vdlogf(...)  if (VObject::cliShowLoadingMessages) GLog.Logf(NAME_Init, __VA_ARGS__)
 #else
-
-#define vdlogf(...)  do {} while (0)
-
+# define vdlogf(...)  do {} while (0)
 #endif
 
 

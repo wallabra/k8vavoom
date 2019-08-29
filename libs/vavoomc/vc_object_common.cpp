@@ -149,7 +149,7 @@ IMPLEMENT_FUNCTION(VObject, GC_CollectGarbage) {
 IMPLEMENT_FUNCTION(VObject, Error) {
 #if !defined(IN_VCC)
   VObject::VMDumpCallStack();
-  if (GArgs.CheckParm("-vc-all-errors-are-fatal")) {
+  if (VObject::cliAllErrorsAreFatal) {
     Sys_Error("%s", *PF_FormatString());
   } else {
     Host_Error("%s", *PF_FormatString());

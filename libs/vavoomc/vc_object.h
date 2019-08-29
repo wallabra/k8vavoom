@@ -380,6 +380,14 @@ class VObject : public VInterface {
   friend class FObjectIterator;
   friend class VMethodProxy;
 
+public:
+  static int cliShowReplacementMessages; // default is false
+  static int cliShowLoadingMessages; // default is false
+  static int cliShowGCMessages; // default is false
+  static int cliShowIODebugMessages; // default is false
+  static int cliDumpNameTables; // default is false
+  static int cliAllErrorsAreFatal; // default is false
+
 #if defined(VCC_STANDALONE_EXECUTOR)
 # define VCC_OBJECT_DEFAULT_SKIP_REPLACE_ON_SPAWN  false
 #else
@@ -454,6 +462,8 @@ public:
   static void StaticInit ();
   // call this before exiting from `main()`, so VC can skip some destructor duties
   static void StaticExit ();
+  // call to register options in `GParsedArgs`
+  static void StaticInitOptions (VParsedArgs &pargs);
 
   static VObject *StaticSpawnObject (VClass *AClass, bool skipReplacement=VCC_OBJECT_DEFAULT_SKIP_REPLACE_ON_SPAWN);
 

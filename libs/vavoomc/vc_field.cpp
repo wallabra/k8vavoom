@@ -278,8 +278,6 @@ void VField::SkipSerialisedValue (VStream &Strm) {
 //
 //==========================================================================
 void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType &Type) {
-  //static int ignoreArrayErrors = -1;
-  //if (ignoreArrayErrors < 0) ignoreArrayErrors = (GArgs.CheckParm("-vc-io-lax-arrays") ? 1 : 0);
   vuint8 tp = Type.Type;
   Strm << tp;
   if (Strm.IsLoading()) {

@@ -493,8 +493,7 @@ void VStruct::SkipSerialisedObject (VStream &Strm) {
 //
 //==========================================================================
 void VStruct::SerialiseObject (VStream &Strm, vuint8 *Data) {
-  static int debugDump = -1;
-  if (debugDump < 0) debugDump = (GArgs.CheckParm("-vc-io-debug") ? 1 : 0);
+  bool debugDump = VObject::cliShowIODebugMessages;
   if (Strm.IsLoading()) {
     // reading
     // read field count

@@ -179,7 +179,7 @@ void VMemberBase::DumpNameMap (TMapNC<VName, VMemberBase *> &map, bool caseSensi
 //==========================================================================
 void VMemberBase::DumpNameMaps () {
 #if !defined(IN_VCC)
-  if (!GArgs.CheckParm("-dev-dump-name-tables")) return;
+  if (!VObject::cliDumpNameTables) return;
   DumpNameMap(gMembersMap, true);
   DumpNameMap(gMembersMapLC, false);
 #endif
