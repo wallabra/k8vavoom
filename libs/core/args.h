@@ -73,3 +73,78 @@ public:
 
 
 extern VArgs GArgs;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// parsed arguments should be used instead of `GArgs`
+class VParsedArgs {
+public:
+  // return next index (if you eat some args), or 0 to continue as normal
+  // idx points at the argument name
+  typedef int (*ArgCB) (VArgs &args, int idx);
+
+  // handler types
+  enum {
+    AT_Callback, // just a nornal arg with a callback, nothing special
+    AT_StringOption, // just a string option, latest is used
+    AT_FlagSet, // "set flag" argument
+    AT_FlagReset, // "reset flag" argument
+    AT_FlagToggle, // "toggle flag" arguments
+    AT_Ignore,
+  };
+
+protected:
+  struct ArgInfo {
+    const char *name; // full, i.e. "-argname"
+    const char *help; // short help (nullptr to hide)
+    int *flagptr; // can be `nullptr`
+    const char **strptr; // can be `nullptr`
+    char *strarg;
+    int type; // AT_xxx
+    ArgCB cb;
+    ArgInfo *next;
+  };
+
+  static ArgInfo *argInfoHead;
+  static ArgInfo *argInfoFileArg;
+  static ArgInfo *argInfoCmdArg;
+
+  static ArgInfo *allocArgInfo (const char *argname, const char *shorthelp);
+
+  static ArgInfo *findNamedArgInfo (const char *argname);
+
+protected:
+  char *mBinPath;
+
+protected:
+  void clear ();
+
+public:
+  static bool IsArgBreaker (VArgs &args, int idx);
+
+public:
+  VParsedArgs ();
+
+  void parse (VArgs &args);
+
+  // `nullptr` as name means "file argument handler"
+  // "+" as name means "command handler"
+  static bool RegisterCallback (const char *argname, const char *shorthelp, ArgCB acb);
+  // simple string option, later will override
+  static bool RegisterStringOption (const char *argname, const char *shorthelp, const char **strptr);
+  // flags are int, because caller may set them to `-1`, for example, to indicate "no flag arg was seen"
+  // the parser itself will only use `0` or `1`
+  // toggling negative flag will turn it into `1`
+  static bool RegisterFlagSet (const char *argname, const char *shorthelp, int *flagptr);
+  static bool RegisterFlagReset (const char *argname, const char *shorthelp, int *flagptr);
+  static bool RegisterFlagToggle (const char *argname, const char *shorthelp, int *flagptr);
+
+  // `oldname` should be already registered
+  static bool RegisterAlias (const char *argname, const char *oldname);
+
+  // with ending slash
+  inline VStr getBinPath () const { return VStr(mBinPath); }
+};
+
+
+extern VParsedArgs GParsedArgs;

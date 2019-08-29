@@ -432,3 +432,423 @@ void VArgs::removeAt (int idx) {
   Argv[Argc-1] = nullptr;
   --Argc;
 }
+
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+VParsedArgs::ArgInfo *VParsedArgs::argInfoHead = nullptr;
+VParsedArgs::ArgInfo *VParsedArgs::argInfoFileArg = nullptr;
+VParsedArgs::ArgInfo *VParsedArgs::argInfoCmdArg = nullptr;
+
+VParsedArgs GParsedArgs;
+
+
+//==========================================================================
+//
+//  VParsedArgs::VParsedArgs
+//
+//==========================================================================
+VParsedArgs::VParsedArgs () : mBinPath(nullptr) {}
+
+
+//==========================================================================
+//
+//  VParsedArgs::clear
+//
+//==========================================================================
+void VParsedArgs::clear () {
+  if (mBinPath) { ::free(mBinPath); mBinPath = nullptr; }
+}
+
+
+//==========================================================================
+//
+//  VParsedArgs::allocArgInfo
+//
+//==========================================================================
+VParsedArgs::ArgInfo *VParsedArgs::allocArgInfo (const char *argname, const char *shorthelp) {
+  ArgInfo *res = (ArgInfo *)::malloc(sizeof(ArgInfo));
+  memset((void *)res, 0, sizeof(ArgInfo));
+  res->name = argname;
+  res->help = shorthelp;
+  res->flagptr = nullptr;
+  res->strptr = nullptr;
+  res->strarg = nullptr;
+  res->type = AT_Ignore;
+  res->cb = nullptr;
+  res->next = nullptr;
+  // file argument handler?
+  if (!argname) {
+    if (argInfoFileArg) Sys_Error("duplicate handler for file arguments");
+    argInfoFileArg = res;
+    return res;
+  }
+  // command handler?
+  if (argname[0] == '+' && !argname[1]) {
+    if (argInfoCmdArg) Sys_Error("duplicate handler for command arguments");
+    argInfoCmdArg = res;
+    return res;
+  }
+  if (argname[0] != '-') Sys_Error("invalid CLI handler argument name '%s'", argname);
+  // check for duplicates
+  ArgInfo *prev = nullptr;
+  ArgInfo *curr = argInfoHead;
+  while (curr) {
+    if (strcmp(curr->name, argname) == 0) Sys_Error("duplicate handler for '%s' CLI arg", argname);
+    prev = curr;
+    curr = curr->next;
+  }
+  if (prev) {
+    // not first
+    prev->next = res;
+  } else {
+    // first
+    argInfoHead = res;
+  }
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VParsedArgs::findNamedArgInfo
+//
+//==========================================================================
+VParsedArgs::ArgInfo *VParsedArgs::findNamedArgInfo (const char *argname) {
+  if (!argname) return argInfoFileArg;
+  if (argname[0] == '+') return argInfoCmdArg;
+  if (argname[0] != '-') return nullptr;
+  for (ArgInfo *ai = argInfoHead; ai; ai = ai->next) {
+    if (strcmp(argname, ai->name) == 0) return ai;
+  }
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VParsedArgs::RegisterAlias
+//
+//  `oldname` should be already registered
+//
+//==========================================================================
+bool VParsedArgs::RegisterAlias (const char *argname, const char *oldname) {
+  vassert(argname && argname[0]);
+  vassert(oldname && oldname[0]);
+  ArgInfo *ai = findNamedArgInfo(oldname);
+  if (!ai) Sys_Error("cannot register alias for unknown cli argument '%s'", oldname);
+  ArgInfo *als = allocArgInfo(argname, nullptr);
+  als->flagptr = ai->flagptr;
+  als->strptr = ai->strptr;
+  als->type = ai->type;
+  als->cb = ai->cb;
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VParsedArgs::RegisterCallback
+//
+//  `nullptr` as name means "file argument handler"
+//  "+" as name means "command handler"
+//
+//==========================================================================
+bool VParsedArgs::RegisterCallback (const char *argname, const char *shorthelp, ArgCB acb) {
+  ArgInfo *ai = allocArgInfo(argname, shorthelp);
+  ai->type = AT_Callback;
+  ai->cb = acb;
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VParsedArgs::RegisterStringOption
+//
+//==========================================================================
+bool VParsedArgs::RegisterStringOption (const char *argname, const char *shorthelp, const char **strptr) {
+  ArgInfo *ai = allocArgInfo(argname, shorthelp);
+  ai->type = AT_StringOption;
+  ai->strptr = strptr;
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VParsedArgs::RegisterFlagSet
+//
+//==========================================================================
+bool VParsedArgs::RegisterFlagSet (const char *argname, const char *shorthelp, int *flagptr) {
+  ArgInfo *ai = allocArgInfo(argname, shorthelp);
+  ai->type = AT_FlagSet;
+  ai->flagptr = flagptr;
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VParsedArgs::RegisterFlagReset
+//
+//==========================================================================
+bool VParsedArgs::RegisterFlagReset (const char *argname, const char *shorthelp, int *flagptr) {
+  ArgInfo *ai = allocArgInfo(argname, shorthelp);
+  ai->type = AT_FlagReset;
+  ai->flagptr = flagptr;
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VParsedArgs::RegisterFlagToggle
+//
+//==========================================================================
+bool VParsedArgs::RegisterFlagToggle (const char *argname, const char *shorthelp, int *flagptr) {
+  ArgInfo *ai = allocArgInfo(argname, shorthelp);
+  ai->type = AT_FlagToggle;
+  ai->flagptr = flagptr;
+  return true;
+}
+
+
+//==========================================================================
+//
+//  VParsedArgs::IsArgBreaker
+//
+//==========================================================================
+bool VParsedArgs::IsArgBreaker (VArgs &args, int idx) {
+  if (idx < 1 || idx >= args.Count()) return true;
+  const char *aname = args[idx];
+  if (aname[0] == '+') return true;
+  if (aname[0] != '-') return false;
+  if (aname[1] == '-' && !aname[2]) return true;
+  // perform some smart checks
+  ArgInfo *ai = findNamedArgInfo(aname);
+  if (ai) return true;
+  // this may be "-arg=value" too
+  const char *equ = strchr(aname, '=');
+  if (!equ || equ == aname+1) return true;
+  size_t slen = strlen(aname);
+  char *tmp = (char *)::malloc(slen+4);
+  strcpy(tmp, aname);
+  char *etmp = (char *)strchr(tmp, '=');
+  *etmp = 0;
+  ai = findNamedArgInfo(tmp);
+  ::free(tmp);
+  return (ai ? true : false);
+}
+
+
+//==========================================================================
+//
+//  parseBoolArg
+//
+//==========================================================================
+static int parseBoolArg (const char *avalue) {
+  if (!avalue || !avalue[0]) return -1;
+  if (VStr::strEquCI(avalue, "true") ||
+      VStr::strEquCI(avalue, "tan") ||
+      VStr::strEquCI(avalue, "on") ||
+      VStr::strEquCI(avalue, "yes") ||
+      VStr::strEquCI(avalue, "1"))
+  {
+    return 1;
+  }
+  if (VStr::strEquCI(avalue, "false") ||
+      VStr::strEquCI(avalue, "ona") ||
+      VStr::strEquCI(avalue, "off") ||
+      VStr::strEquCI(avalue, "no") ||
+      VStr::strEquCI(avalue, "0"))
+  {
+    return 0;
+  }
+  if (VStr::strEquCI(avalue, "toggle")) return 666;
+  return -1;
+}
+
+
+//==========================================================================
+//
+//  VParsedArgs::parse
+//
+//==========================================================================
+void VParsedArgs::parse (VArgs &args) {
+  clear();
+  if (args.Count() == 0) return;
+  {
+    const char *bpath = args[0];
+    if (!bpath || !bpath[0]) {
+      mBinPath = (char *)::malloc(4);
+      strcpy(mBinPath, "./");
+    } else {
+      size_t plen = strlen(bpath);
+      mBinPath = (char *)::malloc(plen+4);
+      strcpy(mBinPath, bpath);
+      #ifdef _WIN32
+      for (size_t f = 0; f < plen; ++f) if (mBinPath[f] == '\\') mBinPath[f] = '/';
+      #endif
+      while (plen > 0 && mBinPath[plen-1] != '/') --plen;
+      if (plen) {
+        mBinPath[plen] = 0;
+      } else {
+        strcpy(mBinPath, "./");
+      }
+    }
+  }
+  int aidx = 1;
+  while (aidx < args.Count()) {
+    const char *aname = args[aidx];
+    if (!aname || !aname[0]) continue; // just in case
+    // command?
+    if (aname[0] == '+') {
+      if (argInfoCmdArg && argInfoCmdArg->cb) {
+        int inc = argInfoCmdArg->cb(args, aidx);
+        vassert(inc >= 0);
+        aidx = (inc ? inc : aidx+1);
+        continue;
+      }
+      // no handler, just skip until the next arg
+      for (++aidx; aidx < args.Count(); ++aidx) {
+        aname = args[aidx];
+        if (aname[0] == '-' || aname[0] == '+') break;
+      }
+      continue;
+    }
+    // no more args?
+    if (aname[0] == '-' && aname[1] == '-' && !aname[2]) break;
+    // argument?
+    if (aname[0] == '-') {
+      // find handler
+      ArgInfo *ai = findNamedArgInfo(aname);
+      // for callbacks, do no special parsing here
+      if (ai && ai->type == AT_Callback) {
+        if (!ai->cb) {
+          ++aidx;
+        } else {
+          int inc = ai->cb(args, aidx);
+          vassert(inc >= 0);
+          aidx = (inc ? inc : aidx+1);
+        }
+        continue;
+      }
+      // not a callback, or not found
+      const char *avalue = nullptr;
+      if (!ai) {
+        // this may be "-arg=value" too
+        const char *equ = strchr(aname, '=');
+        if (!equ || equ == aname+1) {
+          GLog.Logf(NAME_Warning, "unknown CLI argument '%s', ignored", aname);
+          ++aidx;
+          continue;
+        }
+        size_t slen = strlen(aname);
+        char *tmp = (char *)::malloc(slen+4);
+        strcpy(tmp, aname);
+        avalue = equ+1;
+        char *etmp = (char *)strchr(tmp, '=');
+        *etmp = 0;
+        ai = findNamedArgInfo(tmp);
+        if (!ai) {
+          GLog.Logf(NAME_Warning, "unknown CLI argument '%s', ignored", tmp);
+          ::free(tmp);
+          ++aidx;
+          continue;
+        }
+        if (ai->type == AT_Callback) {
+          GLog.Logf(NAME_Warning, "unknown CLI argument '%s' (it cannot have a '='-value), ignored", tmp);
+          ::free(tmp);
+          ++aidx;
+          continue;
+        }
+      }
+      ++aidx; // skip this arg
+      switch (ai->type) {
+        case AT_StringOption: // just a string option, latest is used
+          if (!avalue) {
+            // no '=value' part
+            if (aidx >= args.Count()) {
+              GLog.Logf(NAME_Error, "option '%s' requires a value!", aname);
+              break;
+            }
+            avalue = args[aidx];
+            if (avalue[0] == '+') {
+              GLog.Logf(NAME_Error, "option '%s' requires a value!", aname);
+              break;
+            } else if (avalue[0] == '-' && findNamedArgInfo(avalue)) {
+              GLog.Logf(NAME_Error, "option '%s' requires a value!", aname);
+              break;
+            }
+            ++aidx;
+          }
+          {
+            if (ai->strarg) ::free(ai->strarg);
+            size_t slen = strlen(avalue);
+            ai->strarg = (char *)::malloc(slen+4);
+            strcpy(ai->strarg, avalue);
+            if (ai->strptr) *ai->strptr = ai->strarg;
+          }
+          break;
+        case AT_FlagSet: // "set flag" argument
+        case AT_FlagReset: // "reset flag" argument
+        case AT_FlagToggle: // "toggle flag" arguments
+          if (avalue) {
+            int v = parseBoolArg(avalue);
+            if (v < 0) {
+              GLog.Logf(NAME_Error, "option '%s' requires a boolean value, not '%s'!", ai->name, avalue);
+              break;
+            }
+            if (v == 666) {
+              // toggle
+              if (ai->flagptr) {
+                v = *ai->flagptr;
+                if (v < 0) v = 0;
+                *ai->flagptr = (v ? 0 : 1);
+              }
+            } else {
+              // change
+              if (ai->type == AT_FlagReset) v = !v;
+              if (ai->flagptr) *ai->flagptr = (v ? 1 : 0);
+            }
+          } else {
+            switch (ai->type) {
+              case AT_FlagToggle:
+                if (ai->flagptr) {
+                  int v = *ai->flagptr;
+                  if (v < 0) v = 0;
+                  *ai->flagptr = (v ? 0 : 1);
+                }
+                break;
+              case AT_FlagReset:
+                if (ai->flagptr) *ai->flagptr = 0;
+                break;
+              case AT_FlagSet:
+                if (ai->flagptr) *ai->flagptr = 1;
+                break;
+            }
+          }
+        case AT_Ignore:
+          break;
+      }
+      continue;
+    }
+    // file
+    if (argInfoFileArg && argInfoFileArg->cb) {
+      int inc = argInfoFileArg->cb(args, aidx);
+      vassert(inc >= 0);
+      aidx = (inc ? inc : aidx+1);
+    } else {
+      ++aidx;
+    }
+  }
+  // if we got here, it means "all what is left are file names"
+  if (argInfoFileArg && argInfoFileArg->cb) {
+    while (aidx < args.Count()) {
+      int inc = argInfoFileArg->cb(args, aidx);
+      vassert(inc >= 0);
+      aidx = (inc ? inc : aidx+1);
+    }
+  }
+}
