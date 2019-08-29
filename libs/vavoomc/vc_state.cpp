@@ -164,10 +164,14 @@ void VState::Emit () {
       if (Function->Flags&FUNC_VarArgs) { ParseError(Loc, "State method must not have varargs"); return; }
       if (Function->ReturnType.Type != TYPE_Void) ParseError(Loc, "State method must not return a value");
       if (Function->NumParams) ParseError(Loc, "State method must not take any arguments");
+      // ok, state methods can be virtual and static now
+      if (Type != Vavoom && (Function->Flags&FUNC_Static) != 0) ParseError(Loc, "State method must not be static");
+      /*
       if (Function->Flags&FUNC_Static) ParseError(Loc, "State method must not be static");
       if (Type == Vavoom) {
         if (!(Function->Flags&FUNC_Final)) ParseError(Loc, "State method must be final"); //k8: why?
       }
+      */
       //GLog.Logf(NAME_Debug, "%s: direct function `%s` (%s)", *Loc.toString(), *Function->GetFullName(), *Function->Loc.toString());
     }
   }

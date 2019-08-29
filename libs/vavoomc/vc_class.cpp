@@ -1847,8 +1847,24 @@ void VClass::PostLoad () {
 //
 //==========================================================================
 void VClass::DecoratePostLoad () {
+  // fix method VMT indicies
+  int PrevClassNumMethods = ClassNumMethods;
+  int numMethods = (ParentClass ? ParentClass->ClassNumMethods : 0);
+  for (int i = 0; i < Methods.Num(); ++i) {
+    VMethod *M = (VMethod *)Methods[i];
+    int MOfs = -1;
+    if (ParentClass) MOfs = ParentClass->GetMethodIndex(M->Name);
+    //if (MOfs == -1 && (M->Flags&FUNC_Final) != 0) M->Flags |= FUNC_NonVirtual;
+    if (MOfs == -1 && (M->Flags&FUNC_Final) == 0) MOfs = numMethods++;
+    M->VTableIndex = MOfs;
+  }
+  if (ClassVTable && PrevClassNumMethods != ClassNumMethods) {
+    delete[] ClassVTable;
+    ClassVTable = nullptr;
+  }
+
   // compile
-  for (int i = 0; i < Methods.Num(); ++i) Methods[i]->PostLoad();
+  for (auto &&M : Methods) M->PostLoad();
   for (VState *S = States; S; S = S->Next) S->PostLoad();
   NetStates = States;
 

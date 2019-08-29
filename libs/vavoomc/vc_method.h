@@ -248,7 +248,8 @@ public:
   // called from decorate parser, mostly
   // if we're calling a "good" method, there is no need to create a wrapper
   // not sure what to do with network methods, though
-  inline bool IsGoodStateMethod () const { return (NumParams == 0 && (Flags&~(FUNC_Native|FUNC_Spawner|FUNC_Net|FUNC_NetReliable/*|FUNC_NonVirtual*/)) == FUNC_Final); }
+  // ok, state methods can be virtual and static now
+  inline bool IsGoodStateMethod () const { return (NumParams == 0 && (Flags&~(FUNC_Native|FUNC_Spawner|FUNC_Net|FUNC_NetReliable|FUNC_Static/*|FUNC_NonVirtual*/)) == /*FUNC_Final*/0); }
 
 private:
   // this generates VM (or other) executable code (to `Statements`) from IR `Instructions`

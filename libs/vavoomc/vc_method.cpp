@@ -572,7 +572,10 @@ void VMethod::DumpAsm () {
 //==========================================================================
 void VMethod::PostLoad () {
   //k8: it should be called only once, but let's play safe here
-  if (mPostLoaded) return;
+  if (mPostLoaded) {
+    //GLog.Logf(NAME_Debug, "method `%s` was already postloaded", *GetFullName());
+    return;
+  }
 
   if (defineResult < 0) Sys_Error("`Define()` not called for `%s`", *GetFullName());
   if (!emitCalled) {
@@ -581,6 +584,33 @@ void VMethod::PostLoad () {
       Sys_Error("`Emit()` not called before `PostLoad()` for `%s`", *GetFullName());
     }
     emitCalled = true; // why not?
+  }
+
+  // check if owning class correctly postloaded
+  // but don't do this for anonymous methods -- they're prolly created for delegates (FIXME: change this!)
+  if (VTableIndex < -1) {
+    if (Name != NAME_None) {
+      VMemberBase *origClass = Outer;
+      while (origClass) {
+        if (origClass->isClassMember()) {
+          // check for a valid class
+          Sys_Error("owning class `%s` for `%s` wasn't correctly postloaded", origClass->GetName(), *GetFullName());
+        } else if (origClass->isStateMember()) {
+          // it belongs to a state, so it is a wrapper
+          if ((Flags&FUNC_Final) == 0) Sys_Error("state method `%s` is not final", *GetFullName());
+          VTableIndex = -1;
+          break;
+        }
+        origClass = origClass->Outer;
+      }
+      if (!origClass) {
+        if ((Flags&FUNC_Final) == 0) Sys_Error("owner-less method `%s` is not final", *GetFullName());
+        VTableIndex = -1; // dunno, something strange here
+      }
+    } else {
+      // delegate dummy method (never called anyway)
+      VTableIndex = -1; // dunno, something strange here
+    }
   }
 
 #if !defined(IN_VCC)

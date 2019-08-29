@@ -3142,11 +3142,34 @@ VFuncRes VObject::ExecuteFunction (VMethod *func) {
 //
 //  VObject::ExecuteFunctionNoArgs
 //
-//  `self` must be pushed
-//
 //==========================================================================
-VFuncRes VObject::ExecuteFunctionNoArgs (VMethod *func) {
+VFuncRes VObject::ExecuteFunctionNoArgs (VObject *Self, VMethod *func, bool allowVMTLookups) {
   if (!func) Sys_Error("ExecuteFunctionNoArgs: null func!");
+  if (func->VTableIndex < -1) Sys_Error("method `%s` in class `%s` wasn't postloaded (%d)", *func->GetFullName(), (Self ? Self->GetClass()->GetName() : "<unknown>"), func->VTableIndex);
+
+  if (!(func->Flags&FUNC_Static)) {
+    if (!Self) Sys_Error("trying to call method `%s` without an object", *func->GetFullName());
+    // for virtual functions, check for correct class
+    VMemberBase *origClass = func->Outer;
+    while (origClass) {
+      if (origClass->isClassMember()) {
+        // check for a valid class
+        if (!Self->IsA((VClass *)origClass)) {
+          Sys_Error("object of class `%s` is not a subclass of `%s` for method `%s`", Self->GetClass()->GetName(), origClass->GetName(), *func->GetFullName());
+        }
+      } else if (origClass->isStateMember()) {
+        // it belongs to a state, so it is a wrapper
+        break;
+      }
+      origClass = origClass->Outer;
+    }
+    if (!origClass) Sys_Error("trying to call method `%s` which doesn't belong to a class, or to a state", *func->GetFullName());
+    // push `self`
+    P_PASS_REF(Self);
+  }
+
+  // route it with VMT
+  if (allowVMTLookups && func->VTableIndex >= 0) func = Self->vtable[func->VTableIndex];
 
   // placeholders for "ref" args
   int rints[VMethod::MAX_PARAMS];
@@ -3169,12 +3192,12 @@ VFuncRes VObject::ExecuteFunctionNoArgs (VMethod *func) {
   memset((void *)(&rnames[0]), 0, sizeof(rnames));
   memset(rptrs, 0, sizeof(rptrs));
 
-  if (func->NumParams > VMethod::MAX_PARAMS) Sys_Error("ExecuteFunctionNoArgs: function `%s` has too many parameters (%d)", *func->Name, func->NumParams); // sanity check
+  if (func->NumParams > VMethod::MAX_PARAMS) Sys_Error("ExecuteFunctionNoArgs: function `%s` has too many parameters (%d)", *func->GetFullName(), func->NumParams); // sanity check
   // push default values
   for (int f = 0; f < func->NumParams; ++f) {
     // out/ref arg
     if ((func->ParamFlags[f]&(FPARM_Out|FPARM_Ref)) != 0) {
-      if (func->ParamTypes[f].IsAnyArray()) Sys_Error("ExecuteFunctionNoArgs: function `%s`, argument #%d is ref/out array, this is not supported yet", *func->Name, f+1);
+      if (func->ParamTypes[f].IsAnyArray()) Sys_Error("ExecuteFunctionNoArgs: function `%s`, argument #%d is ref/out array, this is not supported yet", *func->GetFullName(), f+1);
       switch (func->ParamTypes[f].Type) {
         case TYPE_Int:
         case TYPE_Byte:
@@ -3210,12 +3233,12 @@ VFuncRes VObject::ExecuteFunctionNoArgs (VMethod *func) {
           rptrUsed += 2;
           break;
         default:
-          Sys_Error("%s", va("ExecuteFunctionNoArgs: function `%s`, argument #%d is of bad type `%s`", *func->Name, f+1, *func->ParamTypes[f].GetName()));
+          Sys_Error("%s", va("ExecuteFunctionNoArgs: function `%s`, argument #%d is of bad type `%s`", *func->GetFullName(), f+1, *func->ParamTypes[f].GetName()));
           break;
       }
       if ((func->ParamFlags[f]&FPARM_Optional) != 0) P_PASS_BOOL(false); // "specified" flag
     } else {
-      if ((func->ParamFlags[f]&FPARM_Optional) == 0) Sys_Error("ExecuteFunctionNoArgs: function `%s`, argument #%d is not optional!", *func->Name, f+1);
+      if ((func->ParamFlags[f]&FPARM_Optional) == 0) Sys_Error("ExecuteFunctionNoArgs: function `%s`, argument #%d is not optional!", *func->GetFullName(), f+1);
       // push empty values
       switch (func->ParamTypes[f].Type) {
         case TYPE_Int:
@@ -3246,7 +3269,7 @@ VFuncRes VObject::ExecuteFunctionNoArgs (VMethod *func) {
           P_PASS_PTR(nullptr);
           break;
         default:
-          Sys_Error("%s", va("ExecuteFunctionNoArgs: function `%s`, argument #%d is of bad type `%s`", *func->Name, f+1, *func->ParamTypes[f].GetName()));
+          Sys_Error("%s", va("ExecuteFunctionNoArgs: function `%s`, argument #%d is of bad type `%s`", *func->GetFullName(), f+1, *func->ParamTypes[f].GetName()));
           break;
       }
       P_PASS_BOOL(false); // "specified" flag

@@ -127,6 +127,17 @@ public:
   inline const char *GetMemberTypeString () const { return GetMemberTypeStringName(MemberType); }
 
 public:
+  inline bool isPackageMember () const { return (MemberType == MEMBER_Package); }
+  inline bool isFieldMember () const { return (MemberType == MEMBER_Field); }
+  inline bool isPropertyMember () const { return (MemberType == MEMBER_Property); }
+  inline bool isMethodMember () const { return (MemberType == MEMBER_Method); }
+  inline bool isStateMember () const { return (MemberType == MEMBER_State); }
+  inline bool isConstantMember () const { return (MemberType == MEMBER_Const); }
+  inline bool isStructMember () const { return (MemberType == MEMBER_Struct); }
+  inline bool isClassMember () const { return (MemberType == MEMBER_Class); }
+  inline bool isDecoClassMember () const { return (MemberType == MEMBER_DecorateClass); }
+
+public:
   VMemberBase (vuint8, VName, VMemberBase *, const TLocation &);
   virtual ~VMemberBase ();
 

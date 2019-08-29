@@ -474,8 +474,8 @@ public:
   static int GetObjectsCount ();
 
 #if !defined(IN_VCC)
-  static VFuncRes ExecuteFunction (VMethod *);
-  static VFuncRes ExecuteFunctionNoArgs (VMethod *); // `self` should be on the stack
+  static VFuncRes ExecuteFunction (VMethod *func); // all arguments should be on the stack
+  static VFuncRes ExecuteFunctionNoArgs (VObject *Self, VMethod *func, bool allowVMTLookups=true);
 #endif
   static void VMDumpCallStack ();
 #if !defined(IN_VCC)
