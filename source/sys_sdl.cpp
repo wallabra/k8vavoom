@@ -348,16 +348,13 @@ static void signal_handler (int s) {
 //==========================================================================
 static void mainloop (int argc, char **argv) {
   try {
+    VObject::StaticInitOptions(GParsedArgs);
     FL_InitOptions();
     GArgs.Init(argc, argv, "-file");
-
-    //{ GCon->Logf(NAME_Init, "mainloop:000:::ARGC=%d", GArgs.Count()); for (int f = 0; f < GArgs.Count(); ++f) GCon->Logf(NAME_Init, "  #%d: <%s>", f, GArgs[f]); }
     FL_CollectPreinits();
-    //{ GCon->Logf(NAME_Init, "mainloop:001:::ARGC=%d", GArgs.Count()); for (int f = 0; f < GArgs.Count(); ++f) GCon->Logf(NAME_Init, "  #%d: <%s>", f, GArgs[f]); }
+    GParsedArgs.parse(GArgs);
 
-    // if( SDL_InitSubSystem(SDL_INIT_VIDEO) < 0 )
     if (SDL_Init(SDL_INIT_VIDEO) < 0) Sys_Error("SDL_InitSubSystem(): %s\n",SDL_GetError());
-    //SDL_WM_SetCaption("k8vavoom", "k8vavoom");
 
 #ifdef USE_SIGNAL_HANDLER
     // install signal handlers

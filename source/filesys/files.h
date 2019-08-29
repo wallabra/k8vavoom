@@ -90,3 +90,5 @@ extern bool fsys_DisableBloodReplacement;
 extern VCvarS game_name;
 
 extern GameOptions game_options;
+
+extern int cli_WAll;

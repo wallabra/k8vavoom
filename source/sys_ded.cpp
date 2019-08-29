@@ -216,10 +216,11 @@ int main (int argc, char **argv) {
   try {
     printf("k8vavoom dedicated server " VERSION_TEXT "\n");
 
+    VObject::StaticInitOptions(GParsedArgs);
     FL_InitOptions();
     GArgs.Init(argc, argv, "-file");
-
     FL_CollectPreinits();
+    GParsedArgs.parse(GArgs);
 
 #ifdef USE_SIGNAL_HANDLER
     // install signal handlers

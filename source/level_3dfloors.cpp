@@ -27,6 +27,16 @@
 #include "gamedefs.h"
 
 
+static int cli_WGozzo3D = 0;
+static int cli_WVavoom3D = 0;
+static int cli_WFloors3D = 0;
+
+static bool cliRegister_wargs =
+  VParsedArgs::RegisterFlagSet("-Wgozzo-3d", nullptr, &cli_WGozzo3D) &&
+  VParsedArgs::RegisterFlagSet("-Wvavoom-3d", nullptr, &cli_WVavoom3D) &&
+  VParsedArgs::RegisterFlagSet("-3dfloors", nullptr, &cli_WFloors3D);
+
+
 //==========================================================================
 //
 //  getTexName
@@ -47,8 +57,7 @@ static __attribute__((unused)) const char *getTexName (int txid) {
 //
 //==========================================================================
 void VLevel::AddExtraFloorSane (line_t *line, sector_t *dst) {
-  static int doDump = -1;
-  if (doDump < 0) doDump = (GArgs.CheckParm("-Wall") || GArgs.CheckParm("-Wvavoom-3d") || GArgs.CheckParm("-W3dfloors") ? 1 : 0);
+  bool doDump = (cli_WAll || cli_WFloors3D || cli_WVavoom3D);
 
   sector_t *src = line->frontsector;
 
@@ -104,8 +113,7 @@ void VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
     NonSolid,
   };
 
-  static int doDump = -1;
-  if (doDump < 0) doDump = (GArgs.CheckParm("-Wall") || GArgs.CheckParm("-Wgozzo-3d") || GArgs.CheckParm("-W3dfloors") ? 1 : 0);
+  bool doDump = (cli_WAll || cli_WFloors3D || cli_WGozzo3D);
 
   //int eftype = (line->arg2&3);
   const bool isSolid = ((line->arg2&3) == Solid);

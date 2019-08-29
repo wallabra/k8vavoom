@@ -38,6 +38,7 @@ static VCvarB __dbg_debug_preinit("__dbg_debug_preinit", false, "Dump preinits?"
 
 VCvarS game_name("game_name", "unknown", "The Name Of The Game.", CVAR_Rom);
 
+int cli_WAll = 0;
 
 bool fsys_hasPwads = false; // or paks
 bool fsys_hasMapPwads = false; // or paks
@@ -49,6 +50,9 @@ int fsys_warp_n1 = -1;
 VStr fsys_warp_cmd;
 
 static bool fsys_onlyOneBaseFile = false;
+
+static VStr cliGameMode;
+static const char *cliGameCStr = nullptr;
 
 GameOptions game_options;
 
@@ -82,6 +86,9 @@ static int IWadIndex;
 static VStr warpTpl;
 static TArray<ArgVarValue> preinitCV;
 static ArgVarValue emptyAV;
+
+static TArray<VStr> cliModesList;
+static int cli_oldSprites = 0;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -470,37 +477,28 @@ static void ParseUserModes () {
 //==========================================================================
 static void ApplyUserModes (VStr basedir) {
   // apply modes
-  bool inMode = false;
-  for (int asp = 1; asp < GArgs.Count(); ++asp) {
-    if (VStr::Cmp(GArgs[asp], "-mode") == 0) {
-      inMode = true;
-    } else if (inMode) {
-      VStr mname = GArgs[asp];
-      if (!mname.isEmpty() && (*mname)[0] != '-' && (*mname)[0] != '+') {
-        CustomModeInfo *nfo = nullptr;
-        for (auto &&mode : userModes) {
-          if (mode.isGoodBaseDir(basedir) && mode.name.strEquCI(mname)) {
-            nfo = &mode;
-            break;
-          }
-        }
-        if (!nfo) {
-          for (auto &&mode : userModes) {
-            if (mode.isGoodBaseDir(basedir) && mode.isMyAlias(mname)) {
-              nfo = &mode;
-              break;
-            }
-          }
-        }
-        if (nfo) {
-          if (!nfo->reported) {
-            nfo->reported = true;
-            GCon->Logf(NAME_Init, "activating user mode '%s'", *nfo->name);
-          }
-          customMode.merge(*nfo);
+  for (auto &&mname : cliModesList) {
+    CustomModeInfo *nfo = nullptr;
+    for (auto &&mode : userModes) {
+      if (mode.isGoodBaseDir(basedir) && mode.name.strEquCI(mname)) {
+        nfo = &mode;
+        break;
+      }
+    }
+    if (!nfo) {
+      for (auto &&mode : userModes) {
+        if (mode.isGoodBaseDir(basedir) && mode.isMyAlias(mname)) {
+          nfo = &mode;
+          break;
         }
       }
-      inMode = false;
+    }
+    if (nfo) {
+      if (!nfo->reported) {
+        nfo->reported = true;
+        GCon->Logf(NAME_Init, "activating user mode '%s'", *nfo->name);
+      }
+      customMode.merge(*nfo);
     }
   }
 }
@@ -526,34 +524,25 @@ static void SetupCustomMode (VStr basedir) {
 
   // build active mode
   customMode.basedir = basedir;
-  bool inMode = false;
-  for (int asp = 1; asp < GArgs.Count(); ++asp) {
-    if (VStr::Cmp(GArgs[asp], "-mode") == 0) {
-      inMode = true;
-    } else if (inMode) {
-      VStr mname = GArgs[asp];
-      if (!mname.isEmpty() && (*mname)[0] != '-' && (*mname)[0] != '+') {
-        const CustomModeInfo *nfo = nullptr;
-        for (auto &&mode : modes) {
-          if (mode.name.strEquCI(mname)) {
-            nfo = &mode;
-            break;
-          }
-        }
-        if (!nfo) {
-          for (auto &&mode : modes) {
-            if (mode.isMyAlias(mname)) {
-              nfo = &mode;
-              break;
-            }
-          }
-        }
-        if (nfo) {
-          GCon->Logf(NAME_Init, "activating mode '%s'", *nfo->name);
-          customMode.merge(*nfo);
+  for (auto &&mname : cliModesList) {
+    const CustomModeInfo *nfo = nullptr;
+    for (auto &&mode : modes) {
+      if (mode.name.strEquCI(mname)) {
+        nfo = &mode;
+        break;
+      }
+    }
+    if (!nfo) {
+      for (auto &&mode : modes) {
+        if (mode.isMyAlias(mname)) {
+          nfo = &mode;
+          break;
         }
       }
-      inMode = false;
+    }
+    if (nfo) {
+      GCon->Logf(NAME_Init, "activating mode '%s'", *nfo->name);
+      customMode.merge(*nfo);
     }
   }
 }
@@ -580,73 +569,13 @@ struct PWadFile {
 
 
 static TArray<PWadFile> pwadList;
-static bool doStartMap = false;
+static int doStartMap = 0;
 
 
-static void collectPWads () {
-  int fp = GArgs.CheckParm("-file");
-  if (!fp) return;
-  bool wasAnyFile = false;
-  bool skipSounds = false;
-  bool skipSprites = false;
-  bool skipDehacked = fsys_skipDehacked;
-  bool storeInSave = true;
-  // setup flags
-  for (int f = 1; f < fp; ++f) {
-         if (VStr::Cmp(GArgs[f], "-skipsounds") == 0) skipSounds = true;
-    else if (VStr::Cmp(GArgs[f], "-allowsounds") == 0) skipSounds = false;
-    else if (VStr::Cmp(GArgs[f], "-skipsprites") == 0) skipSprites = true;
-    else if (VStr::Cmp(GArgs[f], "-allowsprites") == 0) skipSprites = false;
-    else if (VStr::Cmp(GArgs[f], "-skipdehacked") == 0) skipDehacked = true;
-    else if (VStr::Cmp(GArgs[f], "-allowdehacked") == 0) skipDehacked = false;
-  }
-  // process pwads
-  bool inFile = true;
-  while (++fp < GArgs.Count()) {
-    const char *arg = GArgs[fp];
-    if (!arg || !arg[0]) continue;
-    if (arg[0] == '-' || arg[0] == '+') {
-           if (VStr::Cmp(arg, "-skipsounds") == 0) skipSounds = true;
-      else if (VStr::Cmp(arg, "-allowsounds") == 0) skipSounds = false;
-      else if (VStr::Cmp(arg, "-skipsprites") == 0) skipSprites = true;
-      else if (VStr::Cmp(arg, "-allowsprites") == 0) skipSprites = false;
-      else if (VStr::Cmp(arg, "-skipdehacked") == 0) skipDehacked = true;
-      else if (VStr::Cmp(arg, "-allowdehacked") == 0) skipDehacked = false;
-      else if (VStr::Cmp(arg, "-cosmetic") == 0) storeInSave = false;
-      else { inFile = (VStr::Cmp(arg, "-file") == 0); if (inFile) { wasAnyFile = false; storeInSave = true; } }
-      continue;
-    }
-    if (!inFile) continue;
-
-    PWadFile pwf;
-    pwf.skipSounds = skipSounds;
-    pwf.skipSprites = skipSprites;
-    pwf.skipDehacked = skipDehacked;
-    pwf.storeInSave = storeInSave;
-    pwf.asDirectory = false;
-
-    if (Sys_DirExists(arg)) {
-      //REVERTED: never append dirs to saves, 'cause it is meant to be used by developers
-      pwf.asDirectory = true;
-      if (!wasAnyFile) {
-        wasAnyFile = true;
-      } else {
-        GCon->Logf(NAME_Init, "To mount directory '%s' as emulated PK3 file, you should use \"-file\".", arg);
-        continue;
-      }
-    } else if (Sys_FileExists(arg)) {
-      wasAnyFile = true;
-    } else {
-      GCon->Logf(NAME_Init, "WARNING: File \"%s\" doesn't exist.", arg);
-      continue;
-    }
-
-    pwf.fname = arg;
-    pwadList.append(pwf);
-
-    storeInSave = true; // autoreset
-  }
-}
+static int pwflag_SkipSounds = 0;
+static int pwflag_SkipSprites = 0;
+static int pwflag_SkipDehacked = 0;
+static int pwflag_StoreInSave = 0;
 
 
 static void tempMount (const PWadFile &pwf) {
@@ -809,6 +738,10 @@ static void CustomModeLoadPwads (int type) {
 }
 
 
+static TMap<VStr, bool> cliGroupMap; // true: enabled; false: disabled
+static TArray<GroupMask> cliGroupMask;
+
+
 //==========================================================================
 //
 //  AddAutoloadRC
@@ -819,8 +752,6 @@ void AddAutoloadRC (VStr aubasedir) {
   if (!aurc) return;
 
   // collect autoload groups to skip
-  TMap<VStr, bool> cliGroupMap; // true: enabled; false: disabled
-  TArray<GroupMask> cliGroupMask;
   // add skips from custom mode
   for (int f = 0; f < customMode.autoskips.length(); ++f) {
     GroupMask &gi = customMode.autoskips[f];
@@ -828,29 +759,6 @@ void AddAutoloadRC (VStr aubasedir) {
       cliGroupMask.append(gi);
     } else {
       cliGroupMap.put(gi.mask.toLowerCase(), false);
-    }
-  }
-  // add skips from command line
-  int inSkipArg = 0;
-  for (int asp = 1; asp < GArgs.Count(); ++asp) {
-    if (VStr::Cmp(GArgs[asp], "-skip-auto") == 0 || VStr::Cmp(GArgs[asp], "-skip-autoload") == 0 ||
-        VStr::Cmp(GArgs[asp], "-skipauto") == 0 || VStr::Cmp(GArgs[asp], "-skipautoload") == 0) {
-      inSkipArg = -1;
-    } else if (VStr::Cmp(GArgs[asp], "-auto") == 0 || VStr::Cmp(GArgs[asp], "-autoload") == 0) {
-      inSkipArg = 1;
-    } else if (inSkipArg) {
-      VStr sg = GArgs[asp];
-      if (!sg.isEmpty() && (*sg)[0] != '-' && (*sg)[0] != '+') {
-        GroupMask gi;
-        gi.mask = sg;
-        gi.enabled = (inSkipArg == 1);
-        if (gi.isGlob()) {
-          cliGroupMask.append(gi);
-        } else {
-          cliGroupMap.put(sg.toLowerCase(), gi.enabled);
-        }
-      }
-      inSkipArg = 0;
     }
   }
 
@@ -1127,7 +1035,7 @@ static void ParseBase (VStr name, VStr mainiwad) {
         if (sc->String.length() < 2 || sc->String[0] != '-') sc->Error(va("invalid game (%s) param!", *dst.GameDir));
         dst.param = (*sc->String)+1;
         if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, "  param: \"%s\"", (*sc->String)+1);
-        dst.ParmFound = GArgs.CheckParm(*sc->String);
+        dst.ParmFound = cliGameMode.strEquCI(sc->String);
         continue;
       }
       if (sc->Check("fixvoices")) {
@@ -1381,7 +1289,7 @@ static void RenameSprites () {
   }
   delete sc;
 
-  bool RenameAll = !!GArgs.CheckParm("-oldsprites");
+  bool RenameAll = !!cli_oldSprites;
   for (int i = 0; i < SearchPaths.length(); ++i) {
     if (RenameAll || i == IWadIndex) SearchPaths[i]->RenameSprites(Renames, LumpRenames);
     SearchPaths[i]->RenameSprites(AlwaysRenames, AlwaysLumpRenames);
@@ -1394,6 +1302,23 @@ extern VCvarB respawnparm;
 extern VCvarI fastparm;
 extern VCvarB NoMonsters;
 extern VCvarI Skill;
+
+static int cli_FastMonsters = -1; // not specified
+static int cli_Respawn = -1; // not specified
+static int cli_NoMonsters = -1; // not specified
+static int cli_NoMenuDef = -1; // not specified
+static int cli_GoreMod = -1; // not specified
+static int cli_BDWMod = -1; // not specified
+static int cli_SkeeHUD = -1; // not specified
+
+static const char *cli_BaseDir = nullptr;
+static const char *cli_IWadName = nullptr;
+static const char *cli_IWadDir = nullptr;
+static const char *cli_SaveDir = nullptr;
+
+static int reportIWads = 0;
+static int reportPWads = 1;
+static int cli_NakedBase = -1;
 
 
 //==========================================================================
@@ -1419,24 +1344,263 @@ static int countFmtHash (VStr str) {
 
 //==========================================================================
 //
+//  cliFnameCollector
+//
+//==========================================================================
+static int cliFnameCollector (VArgs &args, int idx) {
+  pwflag_StoreInSave = 0;
+  bool first = true;
+  //++idx; // done by the called
+  while (idx < args.Count()) {
+    if (VStr::strEqu(args[idx], "-cosmetic")) {
+      pwflag_StoreInSave = 1;
+      ++idx;
+      continue;
+    }
+    if (VParsedArgs::IsArgBreaker(args, idx)) break;
+    VStr fname = args[idx++];
+    //GCon->Logf(NAME_Debug, "idx=%d; fname=<%s>", idx-1, *fname);
+    if (fname.isEmpty()) { first = false; continue; }
+
+    PWadFile pwf;
+    pwf.fname = fname;
+    pwf.skipSounds = !!pwflag_SkipSounds;
+    pwf.skipSprites = !!pwflag_SkipSprites;
+    pwf.skipDehacked = !!pwflag_SkipDehacked;
+    pwf.storeInSave = !!pwflag_StoreInSave;
+    pwf.asDirectory = false;
+
+    if (Sys_DirExists(fname)) {
+      pwf.asDirectory = true;
+      if (!first) {
+        GCon->Logf(NAME_Init, "To mount directory '%s' as emulated PK3 file, you should use \"-file\".", *fname);
+      } else {
+        pwadList.append(pwf);
+      }
+    } else if (Sys_FileExists(fname)) {
+      pwadList.append(pwf);
+    } else {
+      GCon->Logf(NAME_Init, "WARNING: File \"%s\" doesn't exist.", *fname);
+    }
+    first = false;
+  }
+  return idx;
+}
+
+
+//==========================================================================
+//
 //  FL_InitOptions
 //
 //==========================================================================
 void FL_InitOptions () {
+  fsys_ignoreSquare = 0; // check for "Adventures of Square"
+  fsys_IgnoreZScript = 0;
+
   GArgs.AddFileOption("!1-game"); // '!' means "has args, and breaking" (number is argc)
   GArgs.AddFileOption("!1-logfile"); // don't register log file in saves
-  GArgs.AddFileOption("!1-iwad"); // don't register log file in saves
-  GArgs.AddFileOption("!1-iwaddir"); // don't register log file in saves
-  GArgs.AddFileOption("!1-skip-autoload");
-  GArgs.AddFileOption("!1-skip-auto");
-  GArgs.AddFileOption("!1-mode");
-  GArgs.AddFileOption("-skipsounds");
-  GArgs.AddFileOption("-allowsounds");
-  GArgs.AddFileOption("-skipsprites");
-  GArgs.AddFileOption("-allowsprites");
-  GArgs.AddFileOption("-skipdehacked");
-  GArgs.AddFileOption("-allowdehacked");
-  GArgs.AddFileOption("-cosmetic");
+  GArgs.AddFileOption("!1-iwad");
+  GArgs.AddFileOption("!1-iwaddir");
+
+  FSYS_InitOptions(GParsedArgs);
+
+  GParsedArgs.RegisterFlagSet("-skip-sounds", "skip sounds in the following pwads", &pwflag_SkipSounds);
+  GParsedArgs.RegisterFlagReset("-allow-sounds", "allow sounds in the following pwads", &pwflag_SkipSounds);
+  // aliases
+  GParsedArgs.RegisterFlagSet("-skipsounds", nullptr, &pwflag_SkipSounds);
+  GParsedArgs.RegisterFlagReset("-allowsounds", nullptr, &pwflag_SkipSounds);
+
+  GParsedArgs.RegisterFlagSet("-skip-sprites", "skip sprites in the following pwads", &pwflag_SkipSprites);
+  GParsedArgs.RegisterFlagReset("-allow-sprites", "allow sprites in the following pwads", &pwflag_SkipSprites);
+  // aliases
+  GParsedArgs.RegisterFlagSet("-skipsprites", nullptr, &pwflag_SkipSprites);
+  GParsedArgs.RegisterFlagReset("-allowsprites", nullptr, &pwflag_SkipSprites);
+
+  GParsedArgs.RegisterFlagSet("-skip-dehacked", "skip dehacked in the following pwads", &pwflag_SkipDehacked);
+  GParsedArgs.RegisterFlagReset("-allow-dehacked", "allow dehacked in the following pwads", &pwflag_SkipDehacked);
+  // aliases
+  GParsedArgs.RegisterFlagSet("-skipdehacked", nullptr, &pwflag_SkipDehacked);
+  GParsedArgs.RegisterFlagReset("-allowdehacked", nullptr, &pwflag_SkipDehacked);
+
+  GParsedArgs.RegisterFlagSet("-oldsprites", nullptr, &cli_oldSprites);
+  GParsedArgs.RegisterAlias("-old-sprites", "-oldsprites");
+
+
+  // filename collector
+  GParsedArgs.RegisterCallback(nullptr, nullptr, [] (VArgs &args, int idx) -> int { return cliFnameCollector(args, idx); });
+  GParsedArgs.RegisterCallback("-file", "add the following arguments as pwads", [] (VArgs &args, int idx) -> int { return cliFnameCollector(args, ++idx); });
+
+
+  // modes collector
+  GParsedArgs.RegisterCallback("-mode", "activate game mode from 'modes.rc'", [] (VArgs &args, int idx) -> int {
+    ++idx;
+    if (!VParsedArgs::IsArgBreaker(args, idx)) {
+      VStr mn = args[idx++];
+      if (!mn.isEmpty()) cliModesList.append(mn);
+    }
+    return idx;
+  });
+
+
+  // automatic groups collector
+  GParsedArgs.RegisterCallback("-autoload", "activate game mode from 'autoload.rc'", [] (VArgs &args, int idx) -> int {
+    ++idx;
+    if (!VParsedArgs::IsArgBreaker(args, idx)) {
+      VStr sg = args[idx++];
+      if (!sg.isEmpty()) {
+        GroupMask gi;
+        gi.mask = sg;
+        gi.enabled = true;
+        if (gi.isGlob()) {
+          cliGroupMask.append(gi);
+        } else {
+          cliGroupMap.put(sg.toLowerCase(), gi.enabled);
+        }
+      }
+    }
+    return idx;
+  });
+  GParsedArgs.RegisterAlias("-auto", "-autoload");
+  GParsedArgs.RegisterAlias("-auto-load", "-autoload");
+
+  GParsedArgs.RegisterCallback("-skip-autoload", "skip game mode from 'autoload.rc'", [] (VArgs &args, int idx) -> int {
+    ++idx;
+    if (!VParsedArgs::IsArgBreaker(args, idx)) {
+      VStr sg = args[idx++];
+      if (!sg.isEmpty()) {
+        GroupMask gi;
+        gi.mask = sg;
+        gi.enabled = false;
+        if (gi.isGlob()) {
+          cliGroupMask.append(gi);
+        } else {
+          cliGroupMap.put(sg.toLowerCase(), gi.enabled);
+        }
+      }
+    }
+    return idx;
+  });
+  GParsedArgs.RegisterAlias("-skipauto", "-skip-autoload");
+  GParsedArgs.RegisterAlias("-skip-auto-load", "-skip-autoload");
+
+  // game type
+  GParsedArgs.RegisterStringOption("-game", "select game type", &cliGameCStr);
+
+  // add known game aliases
+  //FIXME: unhardcode this!
+  GParsedArgs.RegisterCallback("-doom", "select Doom/Ultimate Doom game", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "doom"; return 0; });
+  GParsedArgs.RegisterAlias("-doom1", "-doom");
+  GParsedArgs.RegisterCallback("-doom2", "select Doom II game", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "doom2"; return 0; });
+  GParsedArgs.RegisterCallback("-tnt", "select TNT Evilution game", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "tnt"; return 0; });
+  GParsedArgs.RegisterAlias("-evilution", "-tnt");
+  GParsedArgs.RegisterCallback("-plutonia", "select Plutonia game", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "plutonia"; return 0; });
+  GParsedArgs.RegisterCallback("-nerve", "select Doom II + No Rest for the Living game", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "nerve"; return 0; });
+
+  GParsedArgs.RegisterCallback("-freedoom", "select Freedoom Phase I game", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "freedoom"; return 0; });
+  GParsedArgs.RegisterAlias("-freedoom1", "-freedoom");
+  GParsedArgs.RegisterCallback("-freedoom2", "select Freedoom Phase II game", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "freedoom2"; return 0; });
+
+  GParsedArgs.RegisterCallback("-heretic", "select Heretic game", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "heretic"; return 0; });
+  GParsedArgs.RegisterCallback("-hexen", "select Hexen game", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "hexen"; return 0; });
+
+  GParsedArgs.RegisterCallback("-strife", "select Strife game", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "strife"; return 0; });
+  GParsedArgs.RegisterCallback("-strifeteaser", "select Strife Teaser game", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "strifeteaser"; return 0; });
+
+  // hidden
+  GParsedArgs.RegisterCallback("-complete", nullptr, [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "complete"; return 0; });
+  GParsedArgs.RegisterCallback("-chex", nullptr, [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "chex"; return 0; });
+
+  GParsedArgs.RegisterFlagSet("-k8runmap", "try to detect and run first pwad map automatically", &doStartMap);
+
+  GParsedArgs.RegisterFlagSet("-fast", "fast monsters", &cli_FastMonsters);
+  GParsedArgs.RegisterFlagReset("-slow", "slow monsters", &cli_FastMonsters);
+
+  GParsedArgs.RegisterFlagSet("-respawn", "turn on respawning", &cli_Respawn);
+  GParsedArgs.RegisterFlagReset("-no-respawn", nullptr, &cli_Respawn);
+
+  GParsedArgs.RegisterFlagSet("-nomonsters", "disable monsters", &cli_NoMonsters);
+  GParsedArgs.RegisterAlias("-no-monsters", "-nomonsters");
+  GParsedArgs.RegisterFlagReset("-monsters", nullptr, &cli_NoMonsters);
+
+  GParsedArgs.RegisterFlagSet("-nomenudef", "disable monsters", &cli_NoMenuDef);
+  GParsedArgs.RegisterAlias("-no-menudef", "-nomenudef");
+  GParsedArgs.RegisterFlagReset("-allow-menudef", nullptr, &cli_NoMenuDef);
+
+  GParsedArgs.RegisterFlagSet("-gore", "enable gore mod", &cli_GoreMod);
+  GParsedArgs.RegisterFlagReset("-nogore", "disable gore mod", &cli_GoreMod);
+  GParsedArgs.RegisterAlias("-no-gore", "-nogore");
+
+  GParsedArgs.RegisterFlagSet("-bdw", "enable BDW (weapons) mod", &cli_BDWMod);
+  GParsedArgs.RegisterFlagReset("-nobdw", "disable BDW (weapons) mod", &cli_BDWMod);
+  GParsedArgs.RegisterAlias("-no-bdw", "-nobdw");
+
+  // hidden
+  GParsedArgs.RegisterFlagSet("-skeehud", nullptr, &cli_SkeeHUD);
+
+  // "-skill"
+  GParsedArgs.RegisterCallback("-skill", "select starting skill (3 is HMP; default is UV aka 4)", [] (VArgs &args, int idx) -> int {
+    ++idx;
+    if (!VParsedArgs::IsArgBreaker(args, idx)) {
+      int skn = -1;
+      if (!VStr::convertInt(args[idx], &skn)) {
+             if (VStr::strEquCI(args[idx], "itytd") || VStr::strEquCI(args[idx], "baby")) skn = 1;
+        else if (VStr::strEquCI(args[idx], "hntr") || VStr::strEquCI(args[idx], "easy")) skn = 2;
+        else if (VStr::strEquCI(args[idx], "hmp") || VStr::strEquCI(args[idx], "medium")) skn = 3;
+        else if (VStr::strEquCI(args[idx], "uv") || VStr::strEquCI(args[idx], "hard")) skn = 4;
+        else if (VStr::strEquCI(args[idx], "nightmare")) skn = 5;
+        else { GCon->Logf(NAME_Warning, "unknown skill name '%s'!", args[idx]); skn = 3; }
+      }
+      if (skn < 1) skn = 1; //else if (skn > 5) skn = 5;
+      Skill = skn-1;
+      ++idx;
+    } else {
+      GCon->Log(NAME_Warning, "skill name expected!");
+    }
+    return idx;
+  });
+
+  GParsedArgs.RegisterStringOption("-iwad", "override iwad file name", &cli_IWadName);
+  GParsedArgs.RegisterStringOption("-iwaddir", "set directory to look for iwads", &cli_IWadDir);
+  GParsedArgs.RegisterStringOption("-basedir", "set directory to look for base k8vavoom pk3s", &cli_BaseDir);
+  GParsedArgs.RegisterStringOption("-savedir", "set directory to store saves and config files", &cli_SaveDir);
+
+  // "-warp"
+  GParsedArgs.RegisterCallback("-warp", "warp to map number", [] (VArgs &args, int idx) -> int {
+    ++idx;
+    int wmap1 = -1, wmap2 = -1;
+    bool mapok = false, epiok = false;
+    if (!VParsedArgs::IsArgBreaker(args, idx)) {
+      mapok = VStr::convertInt(args[idx], &wmap1);
+      if (mapok) {
+        ++idx;
+        if (!VParsedArgs::IsArgBreaker(args, idx)) {
+          epiok = VStr::convertInt(args[idx], &wmap2);
+          if (epiok) ++idx;
+        }
+      }
+      if (!mapok) wmap1 = -1;
+      if (!epiok) wmap2 = -1;
+    }
+    if (wmap1 < 0) wmap1 = -1;
+    if (wmap2 < 0) wmap2 = -1;
+    fsys_warp_n0 = wmap1;
+    fsys_warp_n1 = wmap2;
+    return idx;
+  });
+
+  GParsedArgs.RegisterFlagSet("-reportiwad", "report loaded iwads (disabled by default)", &reportIWads);
+  GParsedArgs.RegisterAlias("-reportiwads", "-reportiwad");
+
+  GParsedArgs.RegisterFlagSet("-silentpwads", "do not report loaded iwads (report by default)", &reportPWads);
+  GParsedArgs.RegisterAlias("-silentpwad", "-silentpwads");
+  GParsedArgs.RegisterAlias("-silencepwad", "-silentpwads");
+  GParsedArgs.RegisterAlias("-silencepwads", "-silentpwads");
+
+  GParsedArgs.RegisterFlagSet("-nakedbase", "skip all autoloads", &cli_NakedBase);
+  GParsedArgs.RegisterAlias("-naked-base", "-nakedbase");
+
+  // hidden
+  GParsedArgs.RegisterFlagSet("-Wall", nullptr, &cli_WAll);
 }
 
 
@@ -1448,76 +1612,39 @@ void FL_InitOptions () {
 void FL_Init () {
   const char *p;
   VStr mainIWad = VStr();
-  int wmap1 = -1, wmap2 = -1; // warp
-
-  fsys_IgnoreZScript = false;
-
-  doStartMap = (GArgs.CheckParm("-k8runmap") != 0);
-
-  //GCon->Logf(NAME_Init, "=== INITIALIZING k8vavoom ===");
-
-       if (GArgs.CheckParm("-fast") != 0) fastparm = 1;
-  else if (GArgs.CheckParm("-slow") != 0) fastparm = -1;
-
-  if (GArgs.CheckParm("-respawn") != 0) respawnparm = true;
-  if (GArgs.CheckParm("-nomonsters") != 0 || GArgs.CheckParm("-nomonster") != 0) NoMonsters = true;
-
-  if (GArgs.CheckParm("-nomenudef") != 0) gz_skip_menudef = true;
-
-  bool isChex = false;
-
-  if (GArgs.CheckParm("-chex") != 0) {
-    //game_override_mode = GAME_Chex;
-    fsys_onlyOneBaseFile = true; // disable autoloads
-    isChex = true;
-  }
-
-  {
-    auto v = GArgs.CheckValue("-skill");
-    if (v) {
-      int skn = -1;
-      if (!VStr::convertInt(v, &skn)) skn = 3;
-      if (skn < 1) skn = 1; else if (skn > 5) skn = 5;
-      Skill = skn-1;
-    }
-  }
-
-  {
-    auto v = GArgs.CheckValue("-iwad");
-    if (v) mainIWad = VStr(v);
-  }
 
   fsys_warp_n0 = -1;
   fsys_warp_n1 = -1;
   fsys_warp_cmd = VStr();
 
-  {
-    int wp = GArgs.CheckParm("-warp");
-    if (wp && wp+1 < GArgs.Count()) {
-      bool mapok = VStr::convertInt(GArgs[wp+1], &wmap1);
-      bool epiok = VStr::convertInt(GArgs[wp+2], &wmap2);
-      if (!mapok) wmap1 = -1;
-      if (!epiok) wmap2 = -1;
-    }
-    if (wmap1 < 0) wmap1 = -1;
-    if (wmap2 < 0) wmap2 = -1;
-    fsys_warp_n0 = wmap1;
-    fsys_warp_n1 = wmap2;
+  // if it is set, than it was the latest
+  if (cliGameCStr) cliGameMode = VStr(cliGameCStr);
+
+       if (cli_FastMonsters == 1) fastparm = 1;
+  else if (cli_FastMonsters == 0) fastparm = -1;
+
+  if (cli_Respawn == 1) respawnparm = true;
+  if (cli_NoMonsters == 1) NoMonsters = true;
+  if (cli_NoMenuDef == 1) gz_skip_menudef = true;
+
+  bool isChex = false;
+  if (cliGameMode.strEquCI("chex")) {
+    cliGameMode = "doom2"; // arbitrary
+    //game_override_mode = GAME_Chex;
+    fsys_onlyOneBaseFile = true; // disable autoloads
+    isChex = true;
   }
 
+  if (cli_IWadName && cli_IWadName[0]) mainIWad = cli_IWadName;
 
-  bool reportIWads = (GArgs.CheckParm("-reportiwad") || GArgs.CheckParm("-reportiwads"));
-  bool reportPWads = (GArgs.CheckParm("-silentpwad") || GArgs.CheckParm("-silencepwad") || GArgs.CheckParm("-silentpwads") || GArgs.CheckParm("-silencepwads") ? false : true);
 
-  fsys_report_added_paks = reportIWads;
+  fsys_report_added_paks = !!reportIWads;
 
-  if (!isChex) {
-    fsys_onlyOneBaseFile = GArgs.CheckParm("-nakedbase");
-  }
+  if (!isChex) fsys_onlyOneBaseFile = (cli_NakedBase > 0);
 
   // set up base directory (main data files)
   fl_basedir = ".";
-  p = GArgs.CheckValue("-basedir");
+  p = cli_BaseDir;
   if (p) {
     fl_basedir = p;
     if (fl_basedir.isEmpty()) fl_basedir = ".";
@@ -1544,7 +1671,7 @@ void FL_Init () {
       VStr dir = VStr(*tbd);
       if (dir[0] == '!') {
         dir.chopLeft(1);
-        dir = GArgs[0]+dir;
+        dir = GParsedArgs.getBinPath()+dir;
       } else if (dir[0] == '~') {
         dir.chopLeft(1);
         const char *hdir = getenv("HOME");
@@ -1563,7 +1690,7 @@ void FL_Init () {
   }
 
   // set up save directory (files written by engine)
-  p = GArgs.CheckValue("-savedir");
+  p = cli_SaveDir;
   if (p && p[0]) {
     fl_savedir = p;
   } else {
@@ -1576,11 +1703,9 @@ void FL_Init () {
   }
 
   // set up additional directories where to look for IWAD files
-  int iwp = GArgs.CheckParm("-iwaddir");
-  if (iwp) {
-    while (++iwp != GArgs.Count() && GArgs[iwp][0] != '-' && GArgs[iwp][0] != '+') {
-      IWadDirs.Append(GArgs[iwp]);
-    }
+  p = cli_IWadDir;
+  if (p) {
+    if (p[0]) IWadDirs.Append(p);
   } else {
     static const char *defaultIwadDirs[] = {
       ".",
@@ -1611,7 +1736,7 @@ void FL_Init () {
       VStr dir = VStr(*tbd);
       if (dir[0] == '!') {
         dir.chopLeft(1);
-        dir = GArgs[0]+dir;
+        dir = GParsedArgs.getBinPath()+dir;
       } else if (dir[0] == '~') {
         dir.chopLeft(1);
         const char *hdir = getenv("HOME");
@@ -1645,7 +1770,7 @@ void FL_Init () {
 
   AddGameDir("basev/common");
 
-  collectPWads();
+  //collectPWads();
 
   ParseBase("basev/games.txt", mainIWad);
 #ifdef DEVELOPER
@@ -1655,10 +1780,10 @@ void FL_Init () {
 
   // process "warp", do it here, so "+var" will be processed after "map nnn"
   // postpone, and use `P_TranslateMapEx()` in host initialization
-  if (warpTpl.length() > 0 && wmap1 >= 0) {
+  if (warpTpl.length() > 0 && fsys_warp_n0 >= 0) {
     int fmtc = countFmtHash(warpTpl);
     if (fmtc >= 1 && fmtc <= 2) {
-      if (fmtc == 2 && wmap2 == -1) { wmap2 = wmap1; wmap1 = 1; } // "-warp n" is "-warp 1 n" for ExMx
+      if (fmtc == 2 && fsys_warp_n1 == -1) { fsys_warp_n1 = fsys_warp_n0; fsys_warp_n0 = 1; } // "-warp n" is "-warp 1 n" for ExMx
       VStr cmd = "map ";
       int spos = 0;
       int numidx = 0;
@@ -1667,7 +1792,7 @@ void FL_Init () {
           int len = 0;
           while (spos < warpTpl.length() && warpTpl[spos] == '#') { ++len; ++spos; }
           char tbuf[64];
-          snprintf(tbuf, sizeof(tbuf), "%d", (numidx == 0 ? wmap1 : wmap2));
+          snprintf(tbuf, sizeof(tbuf), "%d", (numidx == 0 ? fsys_warp_n0 : fsys_warp_n1));
           VStr n = VStr(tbuf);
           while (n.length() < len) n = VStr("0")+n;
           cmd += n;
@@ -1679,14 +1804,16 @@ void FL_Init () {
       cmd += "\n";
       //GCmdBuf.Insert(cmd);
       fsys_warp_cmd = cmd;
+      fsys_warp_n0 = -1;
+      fsys_warp_n1 = -1;
     }
   }
 
   if (!customMode.disableGoreMod) {
     if (/*game_release_mode ||*/ isChex) {
-      if (GArgs.CheckParm("-gore") != 0) AddGameDir("basev/mods/gore");
+      if (cli_GoreMod == 1) AddGameDir("basev/mods/gore"); // explicitly enabled
     } else {
-      if (GArgs.CheckParm("-nogore") == 0) AddGameDir("basev/mods/gore");
+      if (cli_GoreMod != 0) AddGameDir("basev/mods/gore"); // not disabled
     }
   } else {
     GCon->Logf(NAME_Init, "Gore mod disabled");
@@ -1771,11 +1898,14 @@ void FL_Init () {
   CustomModeLoadPwads(CM_POST_PWADS);
 
   fsys_report_added_paks = reportIWads;
-  if (!fsys_DisableBDW && GArgs.CheckParm("-bdw") != 0) AddGameDir("basev/mods/bdw");
-  if (GArgs.CheckParm("-skeehud") != 0 || fsys_detected_mod == AD_SKULLDASHEE) {
+
+  if (!fsys_DisableBDW && cli_BDWMod > 0) AddGameDir("basev/mods/bdw");
+
+  if (cli_SkeeHUD > 0 || fsys_detected_mod == AD_SKULLDASHEE) {
     if (fsys_detected_mod == AD_SKULLDASHEE) GCon->Logf(NAME_Init, "SkullDash EE detected, loading HUD");
     AddGameDir("basev/mods/skeehud");
   }
+
   fsys_report_added_paks = reportPWads;
 
   RenameSprites();
