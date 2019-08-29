@@ -2423,18 +2423,19 @@ void DisplayObituary (EntityEx inflictor, EntityEx source, name DmgType) {
 //  ClientRailTrail
 //
 //==========================================================================
-void ClientRailTrail (TVec From, TVec To, int Col1, int Col2, float MaxDiff) {
+void ClientRailTrail (TVec From, TVec To, optional int Col1, optional int Col2, float MaxDiff) {
+  if (!specified_Col1) Col1 = RGBA(255, 255, 255, 255);
+  if (!specified_Col2) Col2 = RGBA(0, 0, 255, 255);
+
+  if (!Col1 && !Col2) return;
+
   float Len = Length(To-From);
   TVec Dir = Normalise(To-From);
   TAVec Ang;
   VectorAngles(Dir, out Ang);
   Ang.roll = 270.0;
 
-  if (!Col1) Col1 = RGBA(255, 255, 255, 255);
-  if (!Col2) Col2 = RGBA(0, 0, 255, 255);
-
   TVec Diff;
-  TVec porg;
   for (float Offs = 0.0; Offs < Len; Offs += 3.0) {
     if (MaxDiff > 0.0) {
       int Rnd = P_Random();
@@ -2452,33 +2453,38 @@ void ClientRailTrail (TVec From, TVec To, int Col1, int Col2, float MaxDiff) {
       }
     }
 
-    porg = From+Dir*Offs+Diff;
-    particle_t *p = Level.NewParticle(porg);
-    if (!p) break;
-    p->type = LineSpecialLevelInfo::pt_rail;
-    p->Size = 0.5;
-    p->color = Col1;
-    p->die = Level.XLevel.Time+1.0;
-    p->vel.x = (Random()-0.5)*2.0;
-    p->vel.y = (Random()-0.5)*2.0;
-    p->vel.z = (Random()-0.5)*2.0;
-    p->accel = vector(0.0, 0.0, 0.0);
+    if (Col1) {
+      TVec porg = From+Dir*Offs+Diff;
+      particle_t *p = Level.NewParticle(porg);
+      if (!p) break; // cannot spawn any more particles, no sense in further tries
+      p->type = LineSpecialLevelInfo::pt_rail;
+      p->Size = 0.5;
+      p->color = Col1;
+      p->die = Level.XLevel.Time+1.0;
+      p->vel.x = (Random()-0.5)*2.0;
+      p->vel.y = (Random()-0.5)*2.0;
+      p->vel.z = (Random()-0.5)*2.0;
+      p->accel = vector(0.0, 0.0, 0.0);
+    }
 
     Ang.roll += 14.0;
-    TVec Forward;
-    TVec Right;
-    TVec Up;
-    AngleVectors(Ang, out Forward, out Right, out Up);
 
-    porg = From+Dir*Offs+Up*3.0;
-    p = Level.NewParticle(porg);
-    if (!p) break;
-    p->type = LineSpecialLevelInfo::pt_rail;
-    p->Size = 0.5;
-    p->color = Col2;
-    p->die = Level.XLevel.Time+1.0;
-    p->vel = Up;
-    p->accel = vector(0.0, 0.0, 0.0);
+    if (Col2) {
+      TVec Forward;
+      TVec Right;
+      TVec Up;
+      AngleVectors(Ang, out Forward, out Right, out Up);
+
+      TVec porg = From+Dir*Offs+Up*3.0;
+      particle_t *p = Level.NewParticle(porg);
+      if (!p) break; // cannot spawn any more particles, no sense in further tries
+      p->type = LineSpecialLevelInfo::pt_rail;
+      p->Size = 0.5;
+      p->color = Col2;
+      p->die = Level.XLevel.Time+1.0;
+      p->vel = Up;
+      p->accel = vector(0.0, 0.0, 0.0);
+    }
   }
 }
 

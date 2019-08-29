@@ -1094,8 +1094,11 @@ final void RailAttack (TVec dir, float Offset, int RailDamage,
     RailCheckPlanes(XLevel.PointInSector(dst), lineStart, lineEnd, distance, PuffType);
   }
 
-  PlayerEx P;
-  foreach AllActivePlayers(P) {
-    P.ClientRailTrail(shootOrigin, lineEnd, Col1, Col2, MaxDiff);
+  // yep, "not specified" is processed in client trail code
+  if (Col1 || Col2 || !specified_Col1 || !specified_Col2) {
+    PlayerEx P;
+    foreach AllActivePlayers(P) {
+      P.ClientRailTrail(shootOrigin, lineEnd, Col1!optional, Col2!optional, MaxDiff);
+    }
   }
 }
