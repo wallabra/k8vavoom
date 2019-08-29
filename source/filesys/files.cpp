@@ -93,6 +93,22 @@ static int cli_oldSprites = 0;
 
 // ////////////////////////////////////////////////////////////////////////// //
 void FL_CollectPreinits () {
+  if (GArgs.CheckParm("-help") || GArgs.CheckParm("--help")) {
+    TArray<VParsedArgs::ArgHelp> list;
+    VParsedArgs::GetArgList(list);
+    if (list.length()) {
+      int maxlen = 0;
+      for (auto &&ainfo : list) {
+        int len = (int)strlen(ainfo.argname);
+        if (maxlen < len) maxlen = len;
+      }
+      for (auto &&ainfo : list) {
+        GLog.Logf("%*s -- %s", -maxlen, ainfo.argname, ainfo.arghelp);
+      }
+    }
+    Z_Exit(0);
+  }
+
   int aidx = 1;
   bool inMinus = false;
   while (aidx < GArgs.Count()) {
