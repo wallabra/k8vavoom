@@ -852,3 +852,21 @@ void VParsedArgs::parse (VArgs &args) {
     }
   }
 }
+
+
+//==========================================================================
+//
+//  VParsedArgs::GetArgList
+//
+//  will not clear the list
+//
+//==========================================================================
+void VParsedArgs::GetArgList (TArray<ArgHelp> &list) {
+  for (ArgInfo *ai = argInfoHead; ai; ai = ai->next) {
+    if (ai->name && ai->name[0] && ai->help && ai->help[0]) {
+      ArgHelp &h = list.alloc();
+      h.argname = ai->name;
+      h.arghelp = ai->help;
+    }
+  }
+}

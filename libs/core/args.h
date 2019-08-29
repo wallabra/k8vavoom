@@ -144,6 +144,15 @@ public:
 
   // with ending slash
   inline VStr getBinPath () const { return VStr(mBinPath); }
+
+public:
+  struct ArgHelp {
+    const char *argname;
+    const char *arghelp;
+  };
+
+  // will not clear the list
+  static void GetArgList (TArray<ArgHelp> &list);
 };
 
 
