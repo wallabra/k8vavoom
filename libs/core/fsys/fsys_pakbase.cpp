@@ -371,7 +371,7 @@ void VFileDirectory::buildLumpNames () {
 void VFileDirectory::buildNameMaps (bool rebuilding) {
   bool doReports = (rebuilding ? false : !fsys_no_dup_reports);
   if (doReports) {
-    VStr fn = getArchiveName().ExtractFileBaseName();
+    VStr fn = getArchiveName().ExtractFileBaseName().toLowerCase();
     doReports =
       fn != "doom.wad" &&
       fn != "doomu.wad" &&
@@ -386,12 +386,12 @@ void VFileDirectory::buildNameMaps (bool rebuilding) {
       true;
   }
   vuint32 squareChecked = 0u;
-  if (GArgs.CheckParm("-ignore-square")) squareChecked = ~0u;
+  if (fsys_ignoreSquare) squareChecked = ~0u;
   lumpmap.clear();
   filemap.clear();
   TMap<VStr, bool> dupsReported;
-  //bool dumpZips = GArgs.CheckParm("-dev-dump-zips");
   TMapNC<VName, int> lastSeenLump;
+  bool warnZScript = true;
   for (int f = 0; f < files.length(); ++f) {
     VPakFileInfo &fi = files[f];
     // link lumps
@@ -408,28 +408,18 @@ void VFileDirectory::buildNameMaps (bool rebuilding) {
         if (squareChecked == 0b1111u) {
           fsys_IgnoreZScript = true;
           fsys_DisableBDW = true;
-          GLog.Logf(NAME_Init, "Detected Adventures Of Square");
+          warnZScript = false;
+          GLog.Logf(NAME_Init, "Detected 'Adventures of Square'");
         } else {
           squareChecked = ~0u;
         }
       }
       if (fsys_IgnoreZScript) {
+        if (warnZScript) { warnZScript = false; GLog.Logf(NAME_Error, "Archive \"%s\" contains zscript!", *getArchiveName()); }
         fi.lumpName = NAME_None;
-        continue;
-      }
-#ifdef VAVOOM_K8_DEVELOPER
-      if (GArgs.CheckParm("-ignore-zscript") != 0)
-#else
-      if (false)
-#endif
-      {
-        GLog.Logf(NAME_Warning, "Archive \"%s\" contains zscript", *getArchiveName());
-        fi.lumpName = NAME_None;
-        lmp = NAME_None;
-        fsys_IgnoreZScript = true;
         continue;
       } else {
-        Sys_Error("Archive \"%s\" contains zscript", *getArchiveName());
+        Sys_Error("Archive \"%s\" contains zscript!", *getArchiveName());
       }
     }
 
@@ -486,18 +476,16 @@ void VFileDirectory::buildNameMaps (bool rebuilding) {
       // put files into hashmap
       filemap.put(fi.fileName, f);
     }
-    //if (dumpZips) GLog.Logf(NAME_Dev, "%s: %s", *PakFileName, *Files[f].fileName);
+    //if (fsys_dev_dump_paks) GLog.Logf(NAME_Debug, "%s: %s", *PakFileName, *Files[f].fileName);
   }
 
-  if (!rebuilding && GArgs.CheckParm("-dump-paks")) {
+  if (!rebuilding && fsys_dev_dump_paks) {
     GLog.Logf("======== PAK: %s ========", *getArchiveName());
     for (int f = 0; f < files.length(); ++f) {
       VPakFileInfo &fi = files[f];
       GLog.Logf("  %d: file=<%s>; lump=<%s>; ns=%d; size=%d; ofs=%d", f, *fi.fileName, *fi.lumpName, fi.lumpNamespace, fi.filesize, fi.pakdataofs);
     }
   }
-    //if (LumpName.length() == 0) fprintf(stderr, "ZIP <%s> mapped to nothing\n", *Files[i].Name);
-    //fprintf(stderr, "ZIP <%s> mapped to <%s> (%d)\n", *Files[i].Name, *LumpName, Files[i].LumpNamespace);
 }
 
 

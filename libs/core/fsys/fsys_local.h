@@ -400,4 +400,6 @@ extern int fsys_detected_mod;
 
 extern mythread_mutex fsys_glock;
 
+extern int fsys_dev_dump_paks;
+
 #endif

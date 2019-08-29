@@ -39,6 +39,8 @@
 
 void FSYS_Shutdown ();
 
+void FSYS_InitOptions (VParsedArgs &pargs);
+
 bool FL_FileExists (VStr fname);
 void FL_CreatePath (VStr Path);
 
@@ -55,7 +57,7 @@ bool FL_IsSafeDiskFileName (VStr fname);
 
 
 extern bool fsys_developer_debug;
-extern bool fsys_IgnoreZScript;
+extern int fsys_IgnoreZScript;
 extern bool fsys_DisableBDW;
 
 // used for game detection
@@ -64,6 +66,9 @@ extern bool fsys_EnableAuxSearch;
 extern bool fsys_skipSounds;
 extern bool fsys_skipSprites;
 extern bool fsys_skipDehacked;
+
+// more cli args
+extern int fsys_ignoreSquare; // do not check for "Adventures of Square" (default is true)
 
 extern TArray<VStr> fsys_game_filters;
 

@@ -28,7 +28,7 @@
 
 
 bool fsys_developer_debug = false;
-bool fsys_IgnoreZScript = true;
+int fsys_IgnoreZScript = 1;
 bool fsys_DisableBDW = false;
 bool fsys_report_added_paks = true;
 
@@ -38,6 +38,12 @@ bool fsys_skipDehacked = false;
 
 // autodetected wad/pk3
 int fsys_detected_mod = AD_NONE;
+
+int fsys_ignoreSquare = 1; // do not check for "Adventures of Square"
+
+// local
+int fsys_dev_dump_paks = 0;
+
 
 TArray<VSearchPath *> SearchPaths;
 TArray<VStr> wadfiles;
@@ -55,6 +61,18 @@ public:
 };
 
 FSys_Internal_Init_Class fsys_internal_init_class_variable_(true);
+
+
+//==========================================================================
+//
+//  FSYS_Shutdown
+//
+//==========================================================================
+void FSYS_InitOptions (VParsedArgs &pargs) {
+  pargs.RegisterFlagSet("-ignore-square", "do not check for \"Adventures of Square\"", &fsys_ignoreSquare);
+  pargs.RegisterFlagSet("-ignore-zscript", "ignore zscript lumps", &fsys_IgnoreZScript);
+  pargs.RegisterFlagSet("-fsys-dump-paks", nullptr, &fsys_dev_dump_paks);
+}
 
 
 //==========================================================================
