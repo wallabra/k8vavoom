@@ -836,8 +836,8 @@ final void A_RailAttack (int RailDamage, optional float Offset,
     if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1)) return;
   }
 
-  int Col1 = (Color1 && stricmp(Color1, "none") != 0 ? ParseColor(Color1, retZeroIfInvalid:true) : 0);
-  int Col2 = (Color2 && stricmp(Color2, "none") != 0 ? ParseColor(Color2, retZeroIfInvalid:true) : 0);
+  int Col1 = (Color1 && stricmp(Color1, "none") != 0 ? ParseColor(Color1) : 0);
+  int Col2 = (Color2 && stricmp(Color2, "none") != 0 ? ParseColor(Color2) : 0);
   TVec Dir;
   AngleVector(Angles, out Dir);
   RailAttack(Dir, Offset, RailDamage, Col1, Col2, MaxDiff, PuffType, !!(Flags&1), !!(Flags&2),
