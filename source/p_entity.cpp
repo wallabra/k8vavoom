@@ -208,8 +208,7 @@ bool VEntity::SetState (VState *InState) {
       {
         SavedVObjectPtr svp(&_stateRouteSelf);
         _stateRouteSelf = nullptr;
-        P_PASS_SELF;
-        ExecuteFunctionNoArgs(st->Function);
+        ExecuteFunctionNoArgs(this, st->Function); // allow VMT lookups
         if (GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) {
           /*
           GCon->Logf(NAME_Warning, "   (01):%s: dead (0x%04x) after state action, state is %s (next is %s; State is %s)", *GetClass()->GetFullName(), GetFlags(), *st->Loc.toStringNoCol(),
@@ -369,8 +368,7 @@ bool VEntity::CallStateChain (VEntity *Actor, VState *AState) {
       // assume success by default
       XLevel->CallingState = S;
       Call.Result = true;
-      P_PASS_REF(Actor);
-      ExecuteFunctionNoArgs(S->Function);
+      ExecuteFunctionNoArgs(Actor, S->Function); // allow VMT lookups
       // at least one success means overal success
       if (Call.Result) Ret = true;
     }

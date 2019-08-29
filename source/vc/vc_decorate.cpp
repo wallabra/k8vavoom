@@ -3476,10 +3476,11 @@ void ProcessDecorateScripts () {
       // `VState::Emit()` clears `FunctionName` for direct calls
       if (sts->Function && sts->FunctionName == NAME_None) {
         if (!sts->funcIsCopy) {
-          //GLog.Logf("%s: generating code for `%s`", *sts->Loc.toString(), *sts->Function->GetFullName());
+          //GLog.Logf(NAME_Debug, "%s: generating code for `%s`", *sts->Loc.toString(), *sts->Function->GetFullName());
           sts->Function->PostLoad();
+          vassert(sts->Function->VTableIndex >= -1);
         } else {
-          //GLog.Logf("%s: don't generate code for copy `%s`", *sts->Loc.toString(), *sts->Function->GetFullName());
+          //GLog.Logf(NAME_Debug, "%s: don't generate code for copy `%s`", *sts->Loc.toString(), *sts->Function->GetFullName());
         }
       }
     }

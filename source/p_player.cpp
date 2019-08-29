@@ -86,11 +86,10 @@ bool VBasePlayer::ExecuteNetMethod (VMethod *Func) {
     while (Base->SuperMethod) Base = Base->SuperMethod;
     // execute it's replication condition method
     vassert(Base->ReplCond);
-    P_PASS_REF(this);
     vuint32 SavedFlags = PlayerFlags;
     PlayerFlags &= ~VBasePlayer::PF_IsClient;
     bool ShouldSend = false;
-    if (VObject::ExecuteFunctionNoArgs(Base->ReplCond).getBool()) ShouldSend = true;
+    if (VObject::ExecuteFunctionNoArgs(this, Base->ReplCond, false).getBool()) ShouldSend = true; // no VMT lookups
     PlayerFlags = SavedFlags;
 
     if (ShouldSend) {
@@ -113,8 +112,7 @@ bool VBasePlayer::ExecuteNetMethod (VMethod *Func) {
   while (Base->SuperMethod) Base = Base->SuperMethod;
   // execute it's replication condition method
   vassert(Base->ReplCond);
-  P_PASS_REF(this);
-  if (!VObject::ExecuteFunctionNoArgs(Base->ReplCond).getBool()) return false;
+  if (!VObject::ExecuteFunctionNoArgs(this, Base->ReplCond, false).getBool()) return false; // no VMT lookups
 
   if (Net) {
     // replication condition is true, the method must be replicated
@@ -352,8 +350,7 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
           //GCon->Logf("player(%s), MO(%s)-viewobject: `%s`, state `%s` (at %s)", *GetClass()->GetFullName(), *MO->GetClass()->GetFullName(), MO->_stateRouteSelf->GetClass()->GetName(), *state->GetFullName(), *state->Loc.toStringNoCol());
         }
         */
-        P_PASS_REF(MO);
-        ExecuteFunctionNoArgs(state->Function);
+        ExecuteFunctionNoArgs(MO, state->Function); // allow VMT lookups
       }
       if (!VSt.State) {
         //GCon->Logf("Player: viewobject DEAD(0)! state is %s", *state->Loc.toStringNoCol());
