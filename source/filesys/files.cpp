@@ -1593,7 +1593,7 @@ void FL_InitOptions () {
   GParsedArgs.RegisterAlias("-no-monsters", "-nomonsters");
   GParsedArgs.RegisterFlagReset("-monsters", nullptr, &cli_NoMonsters);
 
-  GParsedArgs.RegisterFlagSet("-nomenudef", "disable monsters", &cli_NoMenuDef);
+  GParsedArgs.RegisterFlagSet("-nomenudef", "disable gzdoom MENUDEF parsing", &cli_NoMenuDef);
   GParsedArgs.RegisterAlias("-no-menudef", "-nomenudef");
   GParsedArgs.RegisterFlagReset("-allow-menudef", nullptr, &cli_NoMenuDef);
 
