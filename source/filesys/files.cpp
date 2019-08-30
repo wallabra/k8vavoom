@@ -1101,7 +1101,7 @@ static void ParseBase (VStr name, VStr mainiwad) {
         if (sc->String.length() < 2 || sc->String[0] != '-') sc->Error(va("invalid game (%s) param!", *dst.GameDir));
         dst.param = (*sc->String)+1;
         if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, "  param: \"%s\"", (*sc->String)+1);
-        dst.ParmFound = cliGameMode.strEquCI(sc->String);
+        dst.ParmFound = cliGameMode.strEquCI(dst.param);
         continue;
       }
       if (sc->Check("fixvoices")) {
@@ -1689,7 +1689,7 @@ void FL_Init () {
   fsys_warp_cmd = VStr();
 
   // if it is set, than it was the latest
-  if (cliGameCStr) cliGameMode = VStr(cliGameCStr);
+  if (cliGameCStr) cliGameMode = cliGameCStr;
 
        if (cli_FastMonsters == 1) fastparm = 1;
   else if (cli_FastMonsters == 0) fastparm = -1;
