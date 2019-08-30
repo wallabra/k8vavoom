@@ -28,8 +28,8 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-bool VMemberBase::optDeprecatedLaxOverride = false;
-bool VMemberBase::optDeprecatedLaxStates = false;
+int VMemberBase::optDeprecatedLaxOverride = 0;
+int VMemberBase::optDeprecatedLaxStates = 0;
 vuint32 VMemberBase::lastUsedMemberId = 0; // monotonically increasing
 
 
@@ -53,10 +53,10 @@ TArray<VStr> VMemberBase::definelist;
 
 bool VMemberBase::doAsmDump = false;
 
-bool VMemberBase::unsafeCodeAllowed = true;
-bool VMemberBase::unsafeCodeWarning = true;
-bool VMemberBase::koraxCompatibility = false;
-bool VMemberBase::koraxCompatibilityWarnings = true;
+int VMemberBase::unsafeCodeAllowed = 1;
+int VMemberBase::unsafeCodeWarning = 1;
+int VMemberBase::koraxCompatibility = 0;
+int VMemberBase::koraxCompatibilityWarnings = 1;
 
 void *VMemberBase::userdata; // arbitrary pointer, not used by the lexer
 VStream *(*VMemberBase::dgOpenFile) (VStr filename, void *userdata);

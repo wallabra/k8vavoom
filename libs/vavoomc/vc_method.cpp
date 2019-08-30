@@ -257,7 +257,7 @@ bool VMethod::Define () {
   }
 
   if (SuperMethod) {
-    if (VMemberBase::optDeprecatedLaxOverride) Flags |= FUNC_Override; // force `override`
+    if (VMemberBase::optDeprecatedLaxOverride || VMemberBase::koraxCompatibility) Flags |= FUNC_Override; // force `override`
     if ((Flags&FUNC_Override) == 0) {
       ParseError(Loc, "Overriding virtual method `%s` without `override` keyword", *GetFullName());
       Ret = false;

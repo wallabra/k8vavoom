@@ -64,8 +64,12 @@ enum FERes {
 class VMemberBase {
 public:
   // some global options
-  static bool optDeprecatedLaxOverride; // true: don't require `override` on overriden methods
-  static bool optDeprecatedLaxStates; // true: ignore missing states in state resolver
+  static int optDeprecatedLaxOverride; // true: don't require `override` on overriden methods
+  static int optDeprecatedLaxStates; // true: ignore missing states in state resolver
+  static int unsafeCodeAllowed; // true by default
+  static int unsafeCodeWarning; // true by default
+  static int koraxCompatibility; // false by default
+  static int koraxCompatibilityWarnings; // true by default
 
 protected:
   vuint32 mMemberId; // never zero, monotonically increasing
@@ -102,11 +106,6 @@ public:
   static TArray<VClass *> GDecorateClassImports;
 
   static VClass *GClasses; // linked list of all classes
-
-  static bool unsafeCodeAllowed; // true by default
-  static bool unsafeCodeWarning; // true by default
-  static bool koraxCompatibility; // false by default
-  static bool koraxCompatibilityWarnings; // true by default
 
 public:
   static inline const char *GetMemberTypeStringName (vuint8 mtype) {

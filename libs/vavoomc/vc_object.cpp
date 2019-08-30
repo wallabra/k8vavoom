@@ -227,7 +227,7 @@ static void *GNewObject = nullptr;
 bool VObject::GImmediadeDelete = true;
 #endif
 bool VObject::GGCMessagesAllowed = false;
-bool VObject::GCDebugMessagesAllowed = false;
+int VObject::GCDebugMessagesAllowed = 0;
 #if !defined(IN_VCC)
 bool (*VObject::onExecuteNetMethodCB) (VObject *obj, VMethod *func) = nullptr; // return `false` to do normal execution
 #endif
@@ -511,7 +511,6 @@ void VObject::StaticExit () {
 //
 //==========================================================================
 void VObject::StaticInitOptions (VParsedArgs &pargs) {
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
   pargs.RegisterFlagSet("-vc-dev-replacement", nullptr, &cliShowReplacementMessages);
   pargs.RegisterFlagSet("-vc-dev-loading", nullptr, &cliShowLoadingMessages);
   #if defined(VC_GARBAGE_COLLECTOR_LOGS_BASE)
@@ -520,7 +519,20 @@ void VObject::StaticInitOptions (VParsedArgs &pargs) {
   pargs.RegisterFlagSet("-vc-io-debug", nullptr, &cliShowIODebugMessages);
   pargs.RegisterFlagSet("-vc-dev-dump-name-tables", nullptr, &cliDumpNameTables);
   pargs.RegisterFlagSet("-vc-all-errors-are-fatal", nullptr, &cliAllErrorsAreFatal);
-#endif
+
+  pargs.RegisterFlagSet("-vc-lax-override", nullptr, &VMemberBase::optDeprecatedLaxOverride);
+  pargs.RegisterFlagSet("-vc-lax-states", nullptr, &VMemberBase::optDeprecatedLaxStates);
+
+  pargs.RegisterFlagSet("-vc-allow-unsafe", nullptr, &VMemberBase::unsafeCodeAllowed);
+  pargs.RegisterFlagReset("-vc-disable-unsafe", nullptr, &VMemberBase::unsafeCodeAllowed);
+
+  pargs.RegisterFlagSet("-vc-warn-unsafe", nullptr, &VMemberBase::unsafeCodeWarning);
+  pargs.RegisterFlagReset("-vc-no-warn-unsafe", nullptr, &VMemberBase::unsafeCodeWarning);
+
+  pargs.RegisterFlagSet("-vc-legacy-korax", nullptr, &VMemberBase::koraxCompatibility);
+  pargs.RegisterFlagReset("-vc-legacy-korax-no-warnings", nullptr, &VMemberBase::koraxCompatibilityWarnings);
+
+  pargs.RegisterFlagSet("-vc-gc-debug", nullptr, &VObject::GCDebugMessagesAllowed);
 }
 
 

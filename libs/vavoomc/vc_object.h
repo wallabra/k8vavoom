@@ -427,7 +427,7 @@ public:
   static bool GImmediadeDelete;
 #endif
   static bool GGCMessagesAllowed;
-  static bool GCDebugMessagesAllowed;
+  static int GCDebugMessagesAllowed;
 #if !defined(IN_VCC)
   static bool (*onExecuteNetMethodCB) (VObject *obj, VMethod *func); // return `false` to do normal execution
 #endif
