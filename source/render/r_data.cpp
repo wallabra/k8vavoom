@@ -38,6 +38,16 @@ static VCvarI r_color_distance_algo("r_color_distance_algo", "1", "What algorith
 static VCvarB x_brightmaps_ignore_iwad("x_brightmaps_ignore_iwad", false, "Ignore \"iwad\" option when *loading* brightmaps?", CVAR_PreInit);
 
 
+static int cli_WarnBrightmaps = 0;
+static int cli_DumpBrightmaps = 0;
+static int cli_SprStrict = 0;
+
+static bool cliRegister_rdata_args =
+  VParsedArgs::RegisterFlagSet("-Wbrightmap", nullptr, &cli_WarnBrightmaps) &&
+  VParsedArgs::RegisterFlagSet("-sprstrict", nullptr, &cli_SprStrict) &&
+  VParsedArgs::RegisterFlagSet("-dump-brightmaps", nullptr, &cli_DumpBrightmaps);
+
+
 struct VTempSpriteEffectDef {
   VStr Sprite;
   VStr Light;
@@ -596,7 +606,7 @@ void R_InstallSprite (const char *name, int index) {
     switch ((int)sprtemp[frame].rotate) {
       case -1:
         // no rotations were found for that frame at all
-        if (GArgs.CheckParm("-sprstrict")) {
+        if (cli_SprStrict > 0) {
           Sys_Error("R_InstallSprite: No patches found for '%s' frame '%c'", spritename, frame+'A');
         } else {
           if (spr_report_missing_patches) {
@@ -624,7 +634,7 @@ void R_InstallSprite (const char *name, int index) {
         // must have all 8 frames
         for (int rotation = 0; rotation < 8; ++rotation) {
           if (sprtemp[frame].lump[rotation] == -1) {
-            if (GArgs.CheckParm("-sprstrict")) {
+            if (cli_SprStrict > 0) {
               Sys_Error("R_InstallSprite: Sprite '%s' frame '%c' is missing rotations", spritename, frame+'A');
             } else {
               if (spr_report_missing_rotations) {
@@ -1188,11 +1198,8 @@ static void ParseBrightmap (int SrcLump, VScriptParser *sc) {
   // there is no need to load brightmap textures for server
 #ifdef CLIENT
   if (img != NAME_None && !VTextureManager::IsDummyTextureName(img) && !bmap.isEmpty()) {
-    static int doWarn = -1;
-    if (doWarn < 0) doWarn = (GArgs.CheckParm("-Wall") || GArgs.CheckParm("-Wbrightmap") ? 1 : 0);
-
-    static int doLoadDump = -1;
-    if (doLoadDump < 0) doLoadDump = (GArgs.CheckParm("-dump-brightmaps") ? 1 : 0);
+    const bool doWarn = (cli_WAll > 0 || cli_WarnBrightmaps > 0);
+    const bool doLoadDump = (cli_DumpBrightmaps > 0);
 
     VTexture *basetex = GTextureManager.GetExistingTextureByName(VStr(img), ttype);
     if (!basetex) {

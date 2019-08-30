@@ -45,6 +45,11 @@ extern VCvarF gl_maxdist;
 extern VCvarB r_disable_world_update;
 
 
+static const char *videoDrvName = nullptr;
+static bool cliRegister_rmain_args =
+  VParsedArgs::RegisterStringOption("-video", nullptr, &videoDrvName);
+
+
 void R_FreeSkyboxData ();
 
 
@@ -2317,7 +2322,7 @@ void V_Init () {
     // pick first available as default
     if (DIdx == -1) DIdx = i;
     // check for user driver selection
-    if (DrawerList[i]->CmdLineArg && GArgs.CheckParm(DrawerList[i]->CmdLineArg)) DIdx = i;
+    if (DrawerList[i]->CmdLineArg && videoDrvName && videoDrvName[0] && VStr::strEquCI(videoDrvName, DrawerList[i]->CmdLineArg)) DIdx = i;
   }
   if (DIdx == -1) Sys_Error("No drawers are available");
   GCon->Logf(NAME_Init, "Selected %s", DrawerList[DIdx]->Description);

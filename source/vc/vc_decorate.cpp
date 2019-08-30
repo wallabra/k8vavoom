@@ -35,8 +35,8 @@ static VCvarB dbg_debug_weapon_slots("dbg_debug_weapon_slots", false, "Debug wea
 VCvarB dbg_show_missing_classes("dbg_show_missing_classes", false, "Show missing classes?", CVAR_PreInit|CVAR_Archive);
 VCvarB decorate_fail_on_unknown("decorate_fail_on_unknown", false, "Fail on unknown decorate properties?", CVAR_PreInit|CVAR_Archive);
 
-static bool disableBloodReplaces = false;
-static bool bloodOverrideAllowed = false;
+static int disableBloodReplaces = 0;
+static int bloodOverrideAllowed = 0;
 
 
 enum {
@@ -162,22 +162,64 @@ static void ParseConst (VScriptParser *sc, VMemberBase *parent, bool changeMode=
 static void ParseEnum (VScriptParser *sc, VMemberBase *parent, bool changeMode=true);
 
 
-static inline bool getDecorateDebug () {
-  static int decorateDebug = -1;
-  if (decorateDebug < 0) {
-    decorateDebug = (GArgs.CheckParm("-debug_decorate") || GArgs.CheckParm("-debug-decorate") ? 1 : 0);
-  }
-  return (decorateDebug > 0);
-}
+static int cli_DecorateDebug = 0;
+static int cli_DecorateMoronTolerant = 0;
+static int cli_DecorateOldReplacement = 0;
+static int cli_DecorateDumpReplaces = 0;
+static int cli_DecorateLaxParents = 0;
+static int cli_DecorateNonActorReplace = 0;
+static int cli_DecorateWarnPowerupRename = 0;
+static int cli_DecorateAllowUnsafe = 0;
+static int cli_CompilerReport = 0;
+static TArray<VStr> cli_DecorateIgnoreFiles;
+static TArray<VStr> cli_DecorateIgnoreActions;
+static TMap<VStrCI, bool> IgnoredDecorateActions;
 
 
-static inline bool getIgnoreMoronicStateCommands () {
-  static int decorateMoronTolerant = -1;
-  if (decorateMoronTolerant < 0) {
-    decorateMoronTolerant = (GArgs.CheckParm("-vc-decorate-moron-tolerant") ? 1 : 0);
-  }
-  return (decorateMoronTolerant > 0);
-}
+static bool cliRegister_decorate_args =
+  VParsedArgs::RegisterFlagSet("-debug-decorate", nullptr, &cli_DecorateDebug) &&
+  VParsedArgs::RegisterFlagSet("-vc-decorate-moron-tolerant", nullptr, &cli_DecorateMoronTolerant) &&
+  VParsedArgs::RegisterFlagSet("-vc-decorate-old-replacement", nullptr, &cli_DecorateOldReplacement) &&
+  VParsedArgs::RegisterFlagSet("-vc-decorate-dump-replaces", nullptr, &cli_DecorateDumpReplaces) &&
+  VParsedArgs::RegisterFlagSet("-vc-decorate-lax-parents", nullptr, &cli_DecorateLaxParents) &&
+  VParsedArgs::RegisterFlagSet("-vc-decorate-nonactor-replace", nullptr, &cli_DecorateNonActorReplace) &&
+
+  VParsedArgs::RegisterFlagSet("-disable-blood-replaces", nullptr, &disableBloodReplaces) &&
+  VParsedArgs::RegisterAlias("-disable-blood-replacement", "-disable-blood-replaces") &&
+  VParsedArgs::RegisterAlias("-no-blood-replaces", "-disable-blood-replaces") &&
+  VParsedArgs::RegisterAlias("-no-blood-replacement", "-disable-blood-replaces") &&
+
+  VParsedArgs::RegisterFlagSet("-decorate-allow-unsafe", nullptr, &cli_DecorateAllowUnsafe) &&
+  VParsedArgs::RegisterAlias("--decorate-allow-unsafe", "-decorate-allow-unsafe") &&
+
+  VParsedArgs::RegisterFlagSet("-Wdecorate-powerup-rename", nullptr, &cli_DecorateWarnPowerupRename) &&
+
+  VParsedArgs::RegisterFlagSet("-compiler", nullptr, &cli_CompilerReport) &&
+
+  VParsedArgs::RegisterCallback("-vc-decorate-ignore-file", nullptr, [] (VArgs &args, int idx) -> int {
+    ++idx;
+    if (!VParsedArgs::IsArgBreaker(args, idx)) {
+      VStr mn = args[idx];
+      if (!mn.isEmpty() && Sys_FileExists(mn)) {
+        cli_DecorateIgnoreFiles.append(mn);
+      }
+    }
+    return idx;
+  }) &&
+
+  VParsedArgs::RegisterCallback("-vc-decorate-ignore-actions", nullptr, [] (VArgs &args, int idx) -> int {
+    for (++idx; !VParsedArgs::IsArgBreaker(args, idx); ++idx) {
+      VStr mn = args[idx];
+      if (!mn.isEmpty()) {
+        IgnoredDecorateActions.put(mn, true);
+      }
+    }
+    return idx;
+  });
+
+
+static inline bool getDecorateDebug () { return !!cli_DecorateDebug; }
+static inline bool getIgnoreMoronicStateCommands () { return !!cli_DecorateMoronTolerant; }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -285,11 +327,8 @@ static bool IsAnyBloodClass (VClass *c) {
 static void DoClassReplacement (VClass *oldcls, VClass *newcls) {
   if (!oldcls) return;
 
-  static int doOldRepl = -1;
-  if (doOldRepl < 0) doOldRepl = (GArgs.CheckParm("-vc-decorate-old-replacement") ? 1 : 0);
-
-  static int dumpReplaces = -1;
-  if (dumpReplaces < 0) dumpReplaces = (GArgs.CheckParm("-vc-decorate-dump-replaces") ? 1 : 0);
+  const bool doOldRepl = (cli_DecorateOldReplacement > 0);
+  const bool dumpReplaces = (cli_DecorateDumpReplaces > 0);
 
   if (doOldRepl) {
     if (disableBloodReplaces && !bloodOverrideAllowed && IsAnyBloodClass(oldcls)) {
@@ -520,8 +559,6 @@ static VMethod *FuncA_FreezeDeath;
 static VMethod *FuncA_FreezeDeathChunks;
 
 static TArray<VFlagList> FlagList;
-
-static TMap<VStrCI, bool> IgnoredDecorateActions;
 
 static bool inCodeBlock = false;
 
@@ -1834,7 +1871,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
       } else if (isChexActor(ParentStr)) {
         sc->Message(va("Parent class `%s` from Chex Quest not found for actor `%s`, ignoring actor", *ParentStr, *NameStr));
         ParentClass = nullptr; // just in case
-      } else if (GArgs.CheckParm("-vc-decorate-lax-parents")) {
+      } else if (cli_DecorateLaxParents) {
         sc->Message(va("Parent class `%s` not found for actor `%s`, ignoring actor", *ParentStr, *NameStr));
         ParentClass = nullptr; // just in case
       } else {
@@ -1842,7 +1879,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
       }
     }
     if (ParentClass != nullptr && !ParentClass->IsChildOf(ActorClass)) {
-      if (GArgs.CheckParm("-vc-decorate-lax-parents")) {
+      if (cli_DecorateLaxParents) {
         sc->Message(va("Parent class `%s` is not an actor class", *ParentStr));
         ParentClass = nullptr; // just in case
       } else {
@@ -1900,7 +1937,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
       if (isChexActor(sc->String)) {
         ReplaceeClass = nullptr; // just in case
         sc->Message(va("Replaced class `%s` from Chex Quest not found for actor `%s`", *sc->String, *NameStr));
-      } else if (GArgs.CheckParm("-vc-decorate-lax-parents")) {
+      } else if (cli_DecorateLaxParents) {
         ReplaceeClass = nullptr; // just in case
         sc->Message(va("Replaced class `%s` not found for actor `%s`", *sc->String, *NameStr));
       } else {
@@ -1908,7 +1945,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
       }
     }
     if (ReplaceeClass != nullptr && !ReplaceeClass->IsChildOf(ActorClass)) {
-      if (GArgs.CheckParm("-vc-decorate-nonactor-replace")) {
+      if (cli_DecorateNonActorReplace) {
         ReplaceeClass = nullptr; // just in case
         sc->Message(va("Replaced class `%s` is not an actor class", *sc->String));
       } else {
@@ -2681,7 +2718,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
   DoClassReplacement(ReplaceeClass, Class);
   /*
   if (ReplaceeClass) {
-    if (GArgs.CheckParm("-vc-decorate-old-replacement")) {
+    if (cli_DecorateOldReplacement) {
       ReplaceeClass->Replacement = Class;
       Class->Replacee = ReplaceeClass;
     } else {
@@ -3223,11 +3260,6 @@ static void dumpFieldDefs (VClass *cls) {
 //
 //==========================================================================
 void ProcessDecorateScripts () {
-       if (GArgs.CheckParm("-disable-blood-replaces")) disableBloodReplaces = true;
-  else if (GArgs.CheckParm("-disable-blood-replacement")) disableBloodReplaces = true;
-  else if (GArgs.CheckParm("-no-blood-replaces")) disableBloodReplaces = true;
-  else if (GArgs.CheckParm("-no-blood-replacement")) disableBloodReplaces = true;
-
   if (!disableBloodReplaces && fsys_DisableBloodReplacement) disableBloodReplaces = true;
 
   for (int Lump = W_IterateFile(-1, "decorate_ignore.txt"); Lump != -1; Lump = W_IterateFile(Lump, "decorate_ignore.txt")) {
@@ -3243,15 +3275,11 @@ void ProcessDecorateScripts () {
     delete Strm;
   }
 
-  int fp = GArgs.CheckParm("-vc-decorate-ignore-file");
-  if (fp) {
-    while (++fp != GArgs.Count()) {
-      if (GArgs[fp][0] == '-' || GArgs[fp][0] == '+') break;
-      VStr fname = VStr(GArgs[fp]);
-      if (Sys_FileExists(fname)) {
-        VStream *Strm = FL_OpenSysFileRead(fname);
+  for (auto &&fname : cli_DecorateIgnoreFiles) {
+    if (Sys_FileExists(fname)) {
+      VStream *Strm = FL_OpenSysFileRead(fname);
+      if (Strm) {
         GLog.Logf(NAME_Init, "Parsing DECORATE ignore file '%s'...", *fname);
-        vassert(Strm);
         VScriptParser *sc = new VScriptParser(fname, Strm);
         while (sc->GetString()) {
           if (sc->String.length() == 0) continue;
@@ -3260,15 +3288,6 @@ void ProcessDecorateScripts () {
         delete sc;
         delete Strm;
       }
-    }
-  }
-
-  fp = GArgs.CheckParm("-vc-decorate-ignore-action");
-  if (fp) {
-    while (++fp != GArgs.Count()) {
-      if (GArgs[fp][0] == '-' || GArgs[fp][0] == '+') break;
-      VStr actname = VStr(GArgs[fp]);
-      if (!actname.isEmpty()) IgnoredDecorateActions.put(actname, true);
     }
   }
 
@@ -3367,7 +3386,7 @@ void ProcessDecorateScripts () {
         if (C) {
           if (!powerfixReported.find(pwfix)) {
             powerfixReported.put(pwfix, true);
-            if (GArgs.CheckParm("-Wdecorate-powerup-rename") || GArgs.CheckParm("-Wall")) {
+            if (cli_WAll > 0 || cli_DecorateWarnPowerupRename > 0) {
               GLog.Logf(NAME_Warning, "Decorate powerup fixup in effect: `%s` -> `%s`", *CF.Name, *(CF.PowerPrefix+CF.Name));
             }
           }
@@ -3691,7 +3710,7 @@ static const char *comatoze (vuint32 n) {
 //
 //==========================================================================
 void CompilerReportMemory () {
-  if (GArgs.CheckParm("-compiler") != 0 || GArgs.CheckParm("-c") != 0) {
+  if (cli_CompileAndExit > 0 || cli_CompilerReport > 0) {
     //GLog.Logf("Compiler allocated %u bytes.", VExpression::TotalMemoryUsed);
     GLog.Logf(NAME_Init, "Peak compiler memory usage: %s bytes.", comatoze(VExpression::PeakMemoryUsed));
     GLog.Logf(NAME_Init, "Released compiler memory  : %s bytes.", comatoze(VExpression::TotalMemoryFreed));

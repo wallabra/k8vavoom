@@ -29,6 +29,18 @@
 #include "snd_local.h"
 
 
+static int cli_NoSound = 0;
+static int cli_NoMusic = 0;
+static int cli_DebugSound = 0;
+
+static bool cliRegister_sndmain_args =
+  VParsedArgs::RegisterFlagSet("-nosound", "disable all sound (including music)", &cli_NoSound) &&
+  VParsedArgs::RegisterAlias("-no-sound", "-nosound") &&
+  VParsedArgs::RegisterFlagSet("-nomusic", "disable music", &cli_NoMusic) &&
+  VParsedArgs::RegisterAlias("-no-music", "-nomusic") &&
+  VParsedArgs::RegisterFlagSet("-debug-sound", nullptr, &cli_DebugSound);
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 class VSoundSeqNode {
 public:
@@ -350,7 +362,7 @@ void VAudio::DeallocChannel (int cidx) {
 //==========================================================================
 void VAudio::Init () {
   // initialise sound driver
-  if (!GArgs.CheckParm("-nosound") && !GArgs.CheckParm("-nosfx")) {
+  if (!cli_NoSound) {
     SoundDevice = new VOpenALDevice();
     if (!SoundDevice->Init()) {
       delete SoundDevice;
@@ -359,7 +371,7 @@ void VAudio::Init () {
   }
 
   // initialise stream music player
-  if (SoundDevice && !GArgs.CheckParm("-nomusic")) {
+  if (SoundDevice && !cli_NoMusic) {
     StreamMusicPlayer = new VStreamMusicPlayer(SoundDevice);
     StreamMusicPlayer->Init();
   }
@@ -461,9 +473,7 @@ void VAudio::PlaySound (int InSoundId, const TVec &origin, const TVec &velocity,
   if (chan == -1) return; // no free channels
 
   if (developer) {
-    static int checked = -1;
-    if (checked < 0) checked = (GArgs.CheckParm("-debug-sound") ? 1 : 0);
-    if (checked > 0) GCon->Logf(NAME_Dev, "PlaySound: sound(%d)='%s'; origin_id=%d; channel=%d; chan=%d", sound_id, *GSoundManager->S_sfx[sound_id].TagName, origin_id, channel, chan);
+    if (cli_DebugSound > 0) GCon->Logf(NAME_Dev, "PlaySound: sound(%d)='%s'; origin_id=%d; channel=%d; chan=%d", sound_id, *GSoundManager->S_sfx[sound_id].TagName, origin_id, channel, chan);
   }
 
   float pitch = 1.0f;

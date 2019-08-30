@@ -26,7 +26,8 @@
 //**************************************************************************
 #include <stdlib.h>
 #include <string.h>
-#include "../libs/core/hashfunc.h"
+//#include "../libs/core/hashfunc.h"
+#include "../libs/core/core.h"
 
 struct VertexInfo {
   float xy[2];
@@ -40,6 +41,13 @@ struct VertexInfo {
 };
 
 inline vuint32 GetTypeHash (const VertexInfo &vi) { return joaatHashBuf(vi.xy, sizeof(vi.xy)); }
+
+
+static int cli_WarnUnknownKeys = 1;
+
+static bool cliRegister_udmf_args =
+  VParsedArgs::RegisterFlagSet("-Wudmf-unknown-keys", nullptr, &cli_WarnUnknownKeys) &&
+  VParsedArgs::RegisterFlagReset("-Wno-udmf-unknown-keys", nullptr, &cli_WarnUnknownKeys);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -189,7 +197,7 @@ VUdmfParser::VUdmfParser (int Lump)
   : sc(*W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump))
   , srcLump(Lump)
 {
-  warnUnknownKeys = !GArgs.CheckParm("-wno-udmf-unknown-keys");
+  warnUnknownKeys = !!cli_WarnUnknownKeys;
 }
 
 

@@ -36,17 +36,23 @@ VCvarB r_draw_particles("r_draw_particles", true, "Draw particles?", CVAR_Archiv
 static VCvarF r_particle_max_distance("r_particle_max_distance", "3072", "Max distance for alive particles.", CVAR_Archive);
 
 
+static const char *cli_ParticleCount = nullptr;
+static bool cliRegister_rparticles_args =
+  VParsedArgs::RegisterStringOption("-particles", "maximum number of particles", &cli_ParticleCount);
+
+
 //==========================================================================
 //
 //  VRenderLevelShared::InitParticles
 //
 //==========================================================================
 void VRenderLevelShared::InitParticles () {
-  const char *p = GArgs.CheckValue("-particles");
+  const char *p = cli_ParticleCount;
 
-  if (p) {
+  if (p && p[0]) {
     NumParticles = VStr::atoi(p);
     if (NumParticles < ABSOLUTE_MIN_PARTICLES) NumParticles = ABSOLUTE_MIN_PARTICLES;
+    if (NumParticles > MAX_PARTICLES) NumParticles = MAX_PARTICLES;
   } else {
     NumParticles = MAX_PARTICLES;
   }

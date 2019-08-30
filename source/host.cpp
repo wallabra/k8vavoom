@@ -39,6 +39,18 @@ extern int fsys_warp_n1;
 extern VStr fsys_warp_cmd;
 
 
+static int cli_SetDeveloper = -1;
+static int cli_SetDeveloperDefine = -1;
+int cli_ShowEndText = 0;
+
+static bool cliRegister_host_args =
+  VParsedArgs::RegisterFlagSet("-developer", nullptr, &cli_SetDeveloper) &&
+  VParsedArgs::RegisterFlagReset("-vc-no-k8-developer", nullptr, &cli_SetDeveloperDefine) &&
+  VParsedArgs::RegisterFlagSet("-vc-k8-developer", nullptr, &cli_SetDeveloperDefine) &&
+  VParsedArgs::RegisterFlagSet("-endtext", nullptr/*"enable end text (disabled by default)"*/, &cli_ShowEndText);
+
+
+
 // state updates, number of tics/second
 #define TICRATE  (35)
 
@@ -137,6 +149,8 @@ static VCvarI cl_framerate("cl_framerate", "0", "Cap framerate for non-networkin
 void Host_Init () {
   (void)Sys_Time(); // this initializes timer
 
+  if (cli_SetDeveloper > 0) developer = true;
+
 #ifdef CLIENT
   C_Init();
 #else
@@ -168,27 +182,20 @@ void Host_Init () {
   GCon->Log(NAME_Init, "---------------------------------------------------------------");
   GCon->Logf(NAME_Init, "Memory allocator: %s", Z_GetAllocatorType());
 
+
   //{ GCon->Logf(NAME_Init, "HOST:::ARGC=%d", GArgs.Count()); for (int f = 0; f < GArgs.Count(); ++f) GCon->Logf(NAME_Init, "  #%d: <%s>", f, GArgs[f]); }
-
-  if (GArgs.CheckParm("-vc-lax-override")) VMemberBase::optDeprecatedLaxOverride = true;
-  if (GArgs.CheckParm("-vc-lax-states")) VMemberBase::optDeprecatedLaxStates = true;
-  if (GArgs.CheckParm("-developer")) developer = true;
-
-  if (GArgs.CheckParm("-vc-legacy-korax")) {
-    VMemberBase::koraxCompatibility = true;
-    VMemberBase::optDeprecatedLaxOverride = true;
+  if (cli_SetDeveloperDefine < 0) {
+    #ifdef VAVOOM_K8_DEVELOPER
+    cli_SetDeveloperDefine = 1;
+    #else
+    cli_SetDeveloperDefine = 0;
+    #endif
   }
-  if (GArgs.CheckParm("-vc-legacy-korax-no-warnings")) VMemberBase::koraxCompatibilityWarnings = false;
 
-  if (GArgs.CheckParm("-gd-debug")) VObject::GCDebugMessagesAllowed = true;
-
-#ifdef VAVOOM_K8_DEVELOPER
-  if (!GArgs.CheckParm("-vc-no-k8-developer")) VMemberBase::StaticAddDefine("K8_DEVELOPER");
-#else
-  if (GArgs.CheckParm("-vc-k8-developer")) VMemberBase::StaticAddDefine("K8_DEVELOPER");
-#endif
+  if (cli_SetDeveloperDefine > 0) VMemberBase::StaticAddDefine("K8_DEVELOPER");
 
   FL_ProcessPreInits();
+
 
   FL_Init();
 
@@ -218,7 +225,7 @@ void Host_Init () {
 #endif
 
   // "compile only"
-  if (GArgs.CheckParm("-c") != 0) {
+  if (cli_CompileAndExit) {
     Z_Exit(0);
   }
 
@@ -734,7 +741,7 @@ void Host_Quit () {
   // if option -noendtxt is set, don't print the text
   bool GotEndText = false;
   char EndText[80*25*2];
-  if (GArgs.CheckParm("-endtxt")) {
+  if (cli_ShowEndText > 0) {
     // find end text lump
     VStream *Strm = nullptr;
          if (W_CheckNumForName(NAME_endoom) >= 0) Strm = W_CreateLumpReaderName(NAME_endoom);

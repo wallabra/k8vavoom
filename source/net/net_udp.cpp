@@ -44,6 +44,15 @@
 #include "net_local.h"
 
 
+static int cli_NoUDP = 0;
+static const char *cli_IP = nullptr;
+
+static bool cliRegister_netudp_args =
+  VParsedArgs::RegisterFlagSet("-noudp", "disable UDP networking", &cli_NoUDP) &&
+  VParsedArgs::RegisterAlias("-no-udp", "-noudp") &&
+  VParsedArgs::RegisterStringOption("-ip", "explicitly set your IP address", &cli_IP);
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 class VUdpDriver : public VNetLanDriver {
 public:
@@ -116,7 +125,7 @@ VUdpDriver::VUdpDriver ()
 int VUdpDriver::Init () {
   char buff[MAXHOSTNAMELEN];
 
-  if (GArgs.CheckParm("-noudp")) return -1;
+  if (cli_NoUDP > 0) return -1;
 
 #ifdef WIN32
   if (winsock_initialised == 0) {
@@ -145,8 +154,8 @@ int VUdpDriver::Init () {
 #endif
   GCon->Logf(NAME_Init, "Host name: %s", buff);
 
-  const char *pp = GArgs.CheckValue("-ip");
-  if (pp) {
+  const char *pp = cli_IP;
+  if (pp && pp[0]) {
     myAddr = inet_addr(pp);
     if (myAddr == INADDR_NONE) Sys_Error("'%s' is not a valid IP address", pp);
     VStr::Cpy(Net->MyIpAddress, pp);

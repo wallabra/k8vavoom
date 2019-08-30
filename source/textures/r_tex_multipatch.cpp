@@ -29,6 +29,12 @@
 #include "render/r_local.h" /* for IceTranslation */
 
 
+static int cli_DumpMPData = 0;
+
+static bool cliRegister_txmpatch_args =
+  VParsedArgs::RegisterFlagSet("-dump-multipatch-texture-data", nullptr, &cli_DumpMPData);
+
+
 //==========================================================================
 //
 //  VMultiPatchTexture::VMultiPatchTexture
@@ -84,8 +90,7 @@ VMultiPatchTexture::VMultiPatchTexture (VStream &Strm, int DirectoryIndex,
   Patches = new VTexPatch[PatchCount];
   memset((void *)Patches, 0, sizeof(VTexPatch)*PatchCount);
 
-  static int dumpMPT = -1;
-  if (dumpMPT < 0) dumpMPT = (GArgs.CheckParm("-dump-multipatch-texture-data") ? 1 : 0);
+  int dumpMPT = (cli_DumpMPData > 0);
 
   if (dumpMPT > 0) GCon->Logf("=== MULTIPATCH DATA FOR '%s' (%s) (size:%dx%d, scale:%g/%g) ===", *Strm.GetName(), TmpName, Width, Height, SScale, TScale);
 

@@ -63,6 +63,18 @@ int main () {
 */
 
 
+static int cli_SVDumpDoomEd = 0;
+static int cli_SVDumpScriptId = 0;
+static int cli_SVShowExecTimes = 0;
+static int cli_SVNoTitleMap = 0;
+
+static bool cliRegister_svmain_args =
+  VParsedArgs::RegisterFlagSet("-dbg-dump-doomed", nullptr, &cli_SVDumpDoomEd) &&
+  VParsedArgs::RegisterFlagSet("-dbg-dump-scriptid", nullptr, &cli_SVDumpScriptId) &&
+  VParsedArgs::RegisterFlagSet("-show-exec-times", nullptr, &cli_SVShowExecTimes) &&
+  VParsedArgs::RegisterFlagSet("-notitlemap", "Do not load and run TITLEMAP", &cli_SVNoTitleMap);
+
+
 static void G_DoReborn (int playernum, bool cheatReborn);
 static void G_DoCompleted (bool ignoreNoExit);
 
@@ -230,8 +242,8 @@ void SV_Init () {
 
   GGameInfo->eventPostDecorateInit();
 
-  if (GArgs.CheckParm("-dbg-dump-doomed")) VClass::StaticDumpMObjInfo();
-  if (GArgs.CheckParm("-dbg-dump-scriptid")) VClass::StaticDumpScriptIds();
+  if (cli_SVDumpDoomEd > 0) VClass::StaticDumpMObjInfo();
+  if (cli_SVDumpScriptId > 0) VClass::StaticDumpScriptIds();
 
   GCon->Logf(NAME_Init, "registering %d sprites...", VClass::GSpriteNames.length());
   for (int i = 0; i < VClass::GSpriteNames.Num(); ++i) R_InstallSprite(*VClass::GSpriteNames[i], i);
@@ -653,8 +665,7 @@ void SV_Ticker () {
     if (i < 1) { GCon->Logf(NAME_Error, "WTF?! i must be at least one, but it is %f", i); i = 1; }
     int exec_times = (i > 0x1fffffff ? 0x1fffffff : (int)i);
     {
-      static int showExecTimes = -1;
-      if (showExecTimes < 0) showExecTimes = (GArgs.CheckParm("-show-exec-times") ? 1 : 0);
+      bool showExecTimes = (cli_SVShowExecTimes > 0);
       if (showExecTimes) {
         if (exec_times <= scap) GCon->Logf("exec_times=%d", exec_times); else GCon->Logf("exec_times=%d (capped to %d)", exec_times, scap);
       }
@@ -1722,7 +1733,7 @@ bool Host_StartTitleMap () {
 
   static bool loadingTitlemap = false;
 
-  if (GArgs.CheckParm("-notitlemap") != 0) return false;
+  if (cli_SVNoTitleMap > 0) return false;
 
   if (loadingTitlemap) {
     // it is completely fucked, ignore it
@@ -1786,7 +1797,7 @@ COMMAND(MaxPlayers) {
     GCmdBuf << "listen 0\n";
 #endif
     DeathMatch = 0;
-    NoMonsters = (GArgs.CheckParm("-nomonsters") != 0 ? 1 : 0);
+    NoMonsters = (cli_NoMonsters > 0 ? 1 : 0);
   } else {
 #ifdef CLIENT
     GCmdBuf << "listen 1\n";
@@ -1796,7 +1807,7 @@ COMMAND(MaxPlayers) {
       NoMonsters = 1;
     } else {
       //NoMonsters = (dmMode ? 1 : 0);
-      NoMonsters = (GArgs.CheckParm("-nomonsters") != 0 ? 1 : 0);
+      NoMonsters = (cli_NoMonsters > 0 ? 1 : 0);
     }
   }
 }

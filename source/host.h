@@ -57,3 +57,4 @@ extern double host_framefrac;
 extern double host_time; // used in UI and network heartbits; accumulates frame times
 extern double systime; // current `Sys_Time()`; used for consistency, updated in `FilterTime()`
 extern int host_framecount;
+extern int cli_ShowEndText;

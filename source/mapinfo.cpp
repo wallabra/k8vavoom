@@ -30,6 +30,16 @@
 #include "render/r_shared.h"
 
 
+static int cli_NoMapinfoPlrClasses = 0;
+static int cli_NoZMapinfo = 0;
+static int cli_MapperIsIdiot = 0;
+
+static bool cliRegister_mapinfo_args =
+  VParsedArgs::RegisterFlagSet("-nomapinfoplayerclasses", "ignore player classes from MAPINFO", &cli_NoMapinfoPlrClasses) &&
+  VParsedArgs::RegisterFlagSet("-nozmapinfo", "do not load ZMAPINFO", &cli_NoZMapinfo) &&
+  VParsedArgs::RegisterFlagSet("-mapper-is-idiot", nullptr, &cli_MapperIsIdiot);
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // switches to C mode
 struct SCParseModeSaver {
@@ -233,8 +243,7 @@ void mapInfo_t::dump (const char *msg) const{
 //
 //==========================================================================
 void P_SetupMapinfoPlayerClasses () {
-  if (GArgs.CheckParm("-nomapinfoplayerclasses") != 0) return;
-  //if (GArgs.CheckParm("-mapinfoplayerclasses") == 0) return;
+  if (cli_NoMapinfoPlrClasses > 0) return;
   if (MapInfoPlayerClasses.length() == 0) return;
   GCon->Logf("setting up %d player class%s from mapinfo...", MapInfoPlayerClasses.length(), (MapInfoPlayerClasses.length() != 1 ? "es" : ""));
   GGameInfo->PlayerClasses.Clear();
@@ -519,7 +528,7 @@ static void LoadAllMapInfoLumpsInFile (int miLump, int zmiLump) {
 //==========================================================================
 void InitMapInfo () {
   // use "zmapinfo" if it is present?
-  bool zmapinfoAllowed = !(GArgs.CheckParm("-nozmapinfo") || GArgs.CheckParm("-nozmap"));
+  bool zmapinfoAllowed = (cli_NoZMapinfo > 0);
   if (!zmapinfoAllowed) GCon->Logf(NAME_Init, "zmapinfo parsing disabled by user");
   int lastMapinfoFile = -1; // not seen yet
   int lastMapinfoLump = -1; // not seen yet
@@ -839,7 +848,7 @@ MAPINFOCMD(skybox) {
     info->Sky1Texture = GTextureManager.DefaultTexture;
     info->Sky2Texture = GTextureManager.DefaultTexture;
   } else {
-    if (GArgs.CheckParm("-mapper-is-idiot")) {
+    if (cli_MapperIsIdiot > 0) {
       miWarning(loc, "skybox '%s' not found (mapper is idiot)!", *sc->String);
     } else {
       sc->Error(va("skybox '%s' not found (this mapinfo is broken)", *sc->String));

@@ -31,6 +31,30 @@
 #include "gamedefs.h"
 
 
+static TArray<VStr> cli_DehList;
+static int cli_NoAnyDehacked = 0;
+
+static bool cliRegister_dehacked_args =
+  VParsedArgs::RegisterFlagSet("-disable-dehacked", "disable all and any dehacked patches", &cli_NoAnyDehacked) &&
+  GParsedArgs.RegisterCallback("-deh", "load next files as dehacked patch", [] (VArgs &args, int idx) -> int {
+    for (++idx; !VParsedArgs::IsArgBreaker(args, idx); ++idx) {
+      VStr mn = args[idx];
+      if (!mn.isEmpty() && Sys_FileExists(mn)) {
+        bool found = false;
+        for (auto &&s : cli_DehList) {
+          #ifdef _WIN32
+          if (s.strEquCI(mn)) { found = true; break; }
+          #else
+          if (s.strEqu(mn)) { found = true; break; }
+          #endif
+        }
+        if (!found) cli_DehList.append(mn);
+      }
+    }
+    return idx;
+  });
+
+
 struct VCodePtrInfo {
   VStr Name;
   VMethod *Method;
@@ -1373,9 +1397,9 @@ static void LoadDehackedFile (VStream *Strm) {
 //
 //==========================================================================
 void ProcessDehackedFiles () {
-  int p = GArgs.CheckParm("-deh");
+  if (cli_NoAnyDehacked) return;
   int LumpNum = W_CheckNumForName("dehacked");
-  if (!p && LumpNum < 0) return;
+  if (cli_DehList.length() == 0 && LumpNum < 0) return;
 
   // open dehinfo script
   VStream *Strm = FL_OpenFileRead("dehinfo.txt");
@@ -1540,17 +1564,15 @@ void ProcessDehackedFiles () {
   // parse dehacked patches
   if (LumpNum >= 0) {
     dehFileName = W_FullLumpName(LumpNum);
-    GLog.Logf(NAME_Init, "Processing dehacked patch lump: %s", *dehFileName);
+    GLog.Logf(NAME_Init, "Processing dehacked patch lump '%s'", *dehFileName);
     LoadDehackedFile(W_CreateLumpReaderNum(LumpNum));
   }
-  if (p) {
-    while (++p != GArgs.Count() && GArgs[p][0] != '-') {
-      GLog.Logf(NAME_Init, "Processing dehacked patch '%s'", GArgs[p]);
-      VStream *AStrm = FL_OpenSysFileRead(GArgs[p]);
-      if (!AStrm) { GLog.Logf(NAME_Init, "No dehacked file '%s'", GArgs[p]); continue; }
-      dehFileName = GArgs[p];
-      LoadDehackedFile(AStrm);
-    }
+  for (auto &&dhs : cli_DehList) {
+    GLog.Logf(NAME_Init, "Processing dehacked patch '%s'", *dhs);
+    VStream *AStrm = FL_OpenSysFileRead(dhs);
+    if (!AStrm) { GLog.Logf(NAME_Init, "No dehacked file '%s'", *dhs); continue; }
+    dehFileName = dhs;
+    LoadDehackedFile(AStrm);
   }
   dehFileName.clear();
 

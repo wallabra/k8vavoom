@@ -92,18 +92,68 @@ static int cli_oldSprites = 0;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+extern "C" {
+  int cliHelpSorter (const void *aa, const void *bb, void *) {
+    if (aa == bb) return 0;
+    const VParsedArgs::ArgHelp *a = (const VParsedArgs::ArgHelp *)aa;
+    const VParsedArgs::ArgHelp *b = (const VParsedArgs::ArgHelp *)bb;
+    // if any of it doesn't have help...
+    if (!!(a->arghelp) != !!(b->arghelp)) {
+      if (a->arghelp) {
+        vassert(!b->arghelp);
+        return -1;
+      }
+      if (b->arghelp) {
+        vassert(!a->arghelp);
+        return 1;
+      }
+      vassert(0);
+    }
+    return VStr::ICmp(a->argname, b->argname);
+  }
+}
+
+
 void FL_CollectPreinits () {
   if (GArgs.CheckParm("-help") || GArgs.CheckParm("--help")) {
     TArray<VParsedArgs::ArgHelp> list;
     VParsedArgs::GetArgList(list);
     if (list.length()) {
+      timsort_r(list.ptr(), list.length(), sizeof(VParsedArgs::ArgHelp), &cliHelpSorter, nullptr);
       int maxlen = 0;
       for (auto &&ainfo : list) {
         int len = (int)strlen(ainfo.argname);
         if (maxlen < len) maxlen = len;
       }
       for (auto &&ainfo : list) {
+        #ifdef _WIN32
+        fprintf(stderr, "%*s -- %s\n", -maxlen, ainfo.argname, ainfo.arghelp);
+        #else
         GLog.Logf("%*s -- %s", -maxlen, ainfo.argname, ainfo.arghelp);
+        #endif
+      }
+    }
+    Z_Exit(0);
+  }
+
+  if (GArgs.CheckParm("-help-developer") || GArgs.CheckParm("--help-developer") ||
+      GArgs.CheckParm("-help-dev") || GArgs.CheckParm("--help-dev"))
+  {
+    TArray<VParsedArgs::ArgHelp> list;
+    VParsedArgs::GetArgList(list, true);
+    if (list.length()) {
+      timsort_r(list.ptr(), list.length(), sizeof(VParsedArgs::ArgHelp), &cliHelpSorter, nullptr);
+      int maxlen = 0;
+      for (auto &&ainfo : list) {
+        int len = (int)strlen(ainfo.argname);
+        if (maxlen < len) maxlen = len;
+      }
+      for (auto &&ainfo : list) {
+        #ifdef _WIN32
+        fprintf(stderr, "%*s -- %s\n", -maxlen, ainfo.argname, (ainfo.arghelp ? ainfo.arghelp : "undocumented"));
+        #else
+        GLog.Logf("%*s -- %s", -maxlen, ainfo.argname, (ainfo.arghelp ? ainfo.arghelp : "undocumented"));
+        #endif
       }
     }
     Z_Exit(0);
@@ -1319,9 +1369,10 @@ extern VCvarI fastparm;
 extern VCvarB NoMonsters;
 extern VCvarI Skill;
 
+int cli_NoMonsters = -1; // not specified
+int cli_CompileAndExit = 0;
 static int cli_FastMonsters = -1; // not specified
 static int cli_Respawn = -1; // not specified
-static int cli_NoMonsters = -1; // not specified
 static int cli_NoMenuDef = -1; // not specified
 static int cli_GoreMod = -1; // not specified
 static int cli_BDWMod = -1; // not specified
@@ -1417,8 +1468,12 @@ void FL_InitOptions () {
   GArgs.AddFileOption("!1-logfile"); // don't register log file in saves
   GArgs.AddFileOption("!1-iwad");
   GArgs.AddFileOption("!1-iwaddir");
+  GArgs.AddFileOption("!1-deh");
+  GArgs.AddFileOption("!1-vc-decorate-ignore-file");
 
   FSYS_InitOptions(GParsedArgs);
+
+  GParsedArgs.RegisterFlagSet("-c", "compile VavoomC/decorate code and immediately exit", &cli_CompileAndExit);
 
   GParsedArgs.RegisterFlagSet("-skip-sounds", "skip sounds in the following pwads", &pwflag_SkipSounds);
   GParsedArgs.RegisterFlagReset("-allow-sounds", "allow sounds in the following pwads", &pwflag_SkipSounds);
@@ -1687,7 +1742,7 @@ void FL_Init () {
       VStr dir = VStr(*tbd);
       if (dir[0] == '!') {
         dir.chopLeft(1);
-        dir = GParsedArgs.getBinPath()+dir;
+        dir = GParsedArgs.getBinDir()+dir;
       } else if (dir[0] == '~') {
         dir.chopLeft(1);
         const char *hdir = getenv("HOME");
@@ -1752,7 +1807,7 @@ void FL_Init () {
       VStr dir = VStr(*tbd);
       if (dir[0] == '!') {
         dir.chopLeft(1);
-        dir = GParsedArgs.getBinPath()+dir;
+        dir = GParsedArgs.getBinDir()+dir;
       } else if (dir[0] == '~') {
         dir.chopLeft(1);
         const char *hdir = getenv("HOME");

@@ -47,6 +47,21 @@ static VCvarB r_model_autobobbing("r_model_autobobbing", true, "Allow model auto
 static VCvarB r_preload_alias_models("r_preload_alias_models", true, "Preload all alias models and their skins?", CVAR_Archive|CVAR_PreInit);
 
 
+static int cli_DisableModeldef = 0;
+static TMap<VStrCI, bool> cli_IgnoreModelClass;
+
+static bool cliRegister_rmodel_args =
+  VParsedArgs::RegisterFlagSet("-no-modeldef", "disable GZDoom MODELDEF lump parsing", &cli_DisableModeldef) &&
+  VParsedArgs::RegisterCallback("-model-ignore-classes", nullptr, [] (VArgs &args, int idx) -> int {
+    for (++idx; !VParsedArgs::IsArgBreaker(args, idx); ++idx) {
+      VStr mn = args[idx];
+      if (!mn.isEmpty()) cli_IgnoreModelClass.put(mn, true);
+    }
+    return idx;
+  });
+
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // RR GG BB or -1
 static int parseHexRGB (VStr str) {
@@ -325,12 +340,7 @@ void R_InitModels () {
     delete Doc;
   }
 
-  if (!GArgs.CheckParm("-no-modeldef") && !GArgs.CheckParm("-no-modeldefs") &&
-      !GArgs.CheckParm("-no-gzmodeldef") && !GArgs.CheckParm("-no-gzmodeldefs") &&
-      !GArgs.CheckParm("-no-gz-modeldef") && !GArgs.CheckParm("-no-gz-modeldefs"))
-  {
-    ParseGZModelDefs();
-  }
+  if (!cli_DisableModeldef) ParseGZModelDefs();
 }
 
 
@@ -609,13 +619,9 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) 
     Cls->CacheBuilt = false;
     Cls->isGZDoom = isGZDoom;
     bool deleteIt = false;
-    {
-      int fp = GArgs.CheckParm("-model-ignore-class");
-      while (++fp != GArgs.Count()) {
-        if (GArgs[fp][0] == '-' || GArgs[fp][0] == '+') break;
-        VStr cname = VStr(GArgs[fp]);
-        if (cname.ICmp(*Cls->Name) == 0) { deleteIt = true; break; }
-      }
+    if (cli_IgnoreModelClass.has(*Cls->Name)) {
+      GCon->Logf(NAME_Init, "model '%s' ignored by user request", *Cls->Name);
+      deleteIt = true;
     }
     if (!deleteIt && xcls) {
       if (!Mdl->DefaultClass) Mdl->DefaultClass = Cls;

@@ -84,7 +84,7 @@ static void PutEndText (const char *text) {
   char *col;
 
   // if option -noendtxt is set, don't print the text.
-  if (GArgs.CheckParm("-noendtxt")) return;
+  if (cli_ShowEndText <= 0) return;
 
   // if the xterm has more then 80 columns we need to add nl's
   col = getenv("COLUMNS");

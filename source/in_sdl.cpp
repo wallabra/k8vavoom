@@ -35,6 +35,15 @@
 #endif
 
 
+static int cli_NoMouse = 0;
+static int cli_NoJoy = 0;
+
+static bool cliRegister_input_args =
+  VParsedArgs::RegisterFlagSet("-nomouse", "Disable mouse controls", &cli_NoMouse) &&
+  VParsedArgs::RegisterFlagSet("-nojoystick", "Disable joysticks", &cli_NoJoy) &&
+  VParsedArgs::RegisterAlias("-nojoy", "-nojoystick");
+
+
 static VCvarB ui_control_waiting("ui_control_waiting", false, "Waiting for new control key (pass mouse buttons)?", 0);
 VCvarB want_mouse_at_zero("ui_want_mouse_at_zero", false, "Move real mouse cursor to (0,0) when UI activated?", CVAR_Archive);
 
@@ -214,7 +223,7 @@ VSdlInputDevice::VSdlInputDevice ()
 {
   // mouse and keyboard are setup using SDL's video interface
   mouse = true;
-  if (GArgs.CheckParm("-nomouse")) {
+  if (cli_NoMouse) {
     SDL_EventState(SDL_MOUSEMOTION,     SDL_IGNORE);
     SDL_EventState(SDL_MOUSEBUTTONDOWN, SDL_IGNORE);
     SDL_EventState(SDL_MOUSEBUTTONUP,   SDL_IGNORE);
@@ -612,11 +621,12 @@ void VSdlInputDevice::ShutdownJoystick () {
 void VSdlInputDevice::StartupJoystick () {
   ShutdownJoystick();
 
-  if (GArgs.CheckParm("-nojoystick") || GArgs.CheckParm("-nojoy")) {
+  if (cli_NoJoy) {
     GCon->Log(NAME_Init, "SDL: skipping joystick initialisation due to user request");
     return;
   }
 
+  //FIXME: change this!
   int joynum = 0;
   for (int jparm = GArgs.CheckParmFrom("-joy", -1, true); jparm; jparm = GArgs.CheckParmFrom("-joy", jparm, true)) {
     const char *jarg = GArgs[jparm];

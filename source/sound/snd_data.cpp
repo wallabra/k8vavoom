@@ -61,6 +61,12 @@ static VRawSampleLoader RawSampleLoader;
 static volatile bool sndThreadDebug = false;
 
 
+static int cli_DebugSoundMT = 0;
+
+static bool cliRegister_snddata_args =
+  VParsedArgs::RegisterFlagSet("-debug-sound-threading", nullptr, &cli_DebugSoundMT);
+
+
 //==========================================================================
 //
 //  IsNoneSoundName
@@ -348,7 +354,7 @@ void VSoundManager::Init () {
   }
 #endif
 
-  sndThreadDebug = (GArgs.CheckParm("-debug-sound-threading") != 0);
+  sndThreadDebug = !!cli_DebugSoundMT;
   loaderDoQuit = 0;
   loaderIsIdle = false;
   loaderThreadStarted = false;

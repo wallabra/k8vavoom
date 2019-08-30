@@ -748,7 +748,7 @@ static VStatement *ParseFunCallAsStmt (VScriptParser *sc, VClass *Class, VState 
 //
 //==========================================================================
 static void CheckUnsafeStatement (VScriptParser *sc, const char *msg) {
-  if (GArgs.CheckParm("-decorate-allow-unsafe") || GArgs.CheckParm("--decorate-allow-unsafe")) return;
+  if (cli_DecorateAllowUnsafe > 0) return;
   GCon->Logf(NAME_Error, "Unsafe decorate statement found.");
   GCon->Logf(NAME_Error, "You can allow unsafe statements with \"-decorate-allow-unsafe\", but it is not recommeded.");
   GCon->Logf(NAME_Error, "The engine can crash or hang with such mods.");

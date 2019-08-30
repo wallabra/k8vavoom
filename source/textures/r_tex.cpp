@@ -71,6 +71,18 @@
 VTextureManager GTextureManager;
 
 
+static int cli_WipeWallPatches = 0;
+static int cli_AddTextureDump = 0;
+static int cli_WarnDuplicateTextures = 0;
+static int cli_DumpTextures = 0;
+
+static bool cliRegister_txloader_args =
+  VParsedArgs::RegisterFlagSet("-wipe-wall-patches", nullptr, &cli_WipeWallPatches) &&
+  VParsedArgs::RegisterFlagSet("-dev-add-texture-dump", nullptr, &cli_AddTextureDump) &&
+  VParsedArgs::RegisterFlagSet("-Wduplicate-textures", nullptr, &cli_WarnDuplicateTextures) &&
+  VParsedArgs::RegisterFlagSet("-dbg-dump-textures", nullptr, &cli_DumpTextures);
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // Flats data
 // ////////////////////////////////////////////////////////////////////////// //
@@ -227,7 +239,7 @@ void VTextureManager::rehashTextures () {
 //
 //==========================================================================
 void VTextureManager::WipeWallPatches () {
-  if (GArgs.CheckParm("-wipe-wall-patches")) {
+  if (cli_WipeWallPatches > 0) {
     int count = 0;
     for (int f = 0; f < Textures.length(); ++f) {
       VTexture *tx = Textures[f];
@@ -298,14 +310,7 @@ int VTextureManager::AddTexture (VTexture *Tex) {
 
   if (Tex->Name == "-") return 0; // "no texture"
 
-  static int devTexDump = -1;
-  if (devTexDump < 0) {
-    if (developer) {
-      devTexDump = (GArgs.CheckParm("-dev-add-texture-dump") ? 1 : 0);
-    } else {
-      devTexDump = 0;
-    }
-  }
+  int devTexDump = (cli_AddTextureDump > 0);
 
   // also, replace existing texture with similar name, if we aren't in "map-local" mode
   if (!inMapTextures) {
@@ -322,8 +327,7 @@ int VTextureManager::AddTexture (VTexture *Tex) {
       }
       if (repidx > 0) {
         vassert(repidx > 0 && repidx < FirstMapTextureIndex);
-        static int warnReplace = -1;
-        if (warnReplace < 0) warnReplace = (GArgs.CheckParm("-Wduplicate-textures") ? 1 : 0);
+        int warnReplace = (cli_WarnDuplicateTextures > 0 ? 1 : 0);
         if (warnReplace > 0 || developer) GCon->Logf(NAME_Warning, "replacing duplicate texture '%s' with new one (id=%d)", *Tex->Name, repidx);
         ReplaceTexture(repidx, Tex);
         return repidx;
@@ -1666,7 +1670,7 @@ void R_InitTexture () {
   GTextureManager.WipeWallPatches();
   vassert(GTextureManager.MapTextures.length() == 0);
   if (developer) GTextureManager.DumpHashStats(NAME_Dev);
-  if (GArgs.CheckParm("-dbg-dump-textures")) {
+  if (cli_DumpTextures > 0) {
     R_DumpTextures();
   }
 }

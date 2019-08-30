@@ -31,6 +31,16 @@
 static VCvarB dbg_dump_animdef_ranges("dbg_dump_animdef_ranges", false, "Dump ANIMDEF ranges?", CVAR_PreInit);
 
 
+static int cli_WarnSwitchTextures = 0;
+static int cli_DisableAnimdefs = 0;
+static int cli_NoBoomAnimdefs = 0;
+
+static bool cliRegister_txanim_args =
+  VParsedArgs::RegisterFlagSet("-Wswitch-textures", nullptr, &cli_WarnSwitchTextures) &&
+  VParsedArgs::RegisterFlagSet("-no-animdefs", "disable ANIMDEF loading", &cli_DisableAnimdefs) &&
+  VParsedArgs::RegisterFlagSet("-no-boom-animated", "disable old Boom binary ANIMATED lump loading", &cli_NoBoomAnimdefs);
+
+
 enum {
   FT_Texture,
   FT_Flat,
@@ -797,7 +807,7 @@ static TSwitch *ParseSwitchState (VScriptParser *sc, bool IgnoreBad) {
   TArray<TSwitchFrame> Frames;
   int Sound = 0;
   bool Bad = false;
-  bool silentTexError = (GArgs.CheckParm("-Wswitch-textures") == 0);
+  bool silentTexError = !cli_WarnSwitchTextures;
 
   //GCon->Logf("+============+");
   while (1) {
@@ -858,7 +868,7 @@ static TSwitch *ParseSwitchState (VScriptParser *sc, bool IgnoreBad) {
 //
 //==========================================================================
 static void ParseSwitchDef (VScriptParser *sc) {
-  bool silentTexError = (GArgs.CheckParm("-Wswitch-textures") == 0);
+  bool silentTexError = !cli_WarnSwitchTextures;
 
   // skip game specifier
        if (sc->Check("doom")) { /*sc->ExpectNumber();*/ sc->CheckNumber(); }
@@ -1100,7 +1110,7 @@ static void ParseFTAnims (int wadfile, VScriptParser *sc) {
 //
 //==========================================================================
 void R_InitFTAnims () {
-  if (GArgs.CheckParm("-disable-animdefs")) return;
+  if (cli_DisableAnimdefs > 0) return;
 
   FillLists();
 
@@ -1112,7 +1122,7 @@ void R_InitFTAnims () {
 
   // read Boom's animated lump if present
   // do it here, so we can skip already animated textures
-  if (GArgs.CheckParm("-no-boom-animated") == 0) P_InitAnimated();
+  if (!cli_NoBoomAnimdefs) P_InitAnimated();
 
   animPicSeen.clear();
 

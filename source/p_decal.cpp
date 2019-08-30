@@ -31,6 +31,11 @@
 // ////////////////////////////////////////////////////////////////////////// //
 VCvarB r_decals_enabled("r_decals_enabled", true, "Enable decal spawning, processing and rendering?", CVAR_Archive);
 
+static int cli_DebugDecals = 0;
+
+static bool cliRegister_decal_args =
+  VParsedArgs::RegisterFlagSet("-debug-decals", nullptr, &cli_DebugDecals);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // all names are lowercased
@@ -968,7 +973,7 @@ void ParseDecalDef (VScriptParser *sc) {
         // find class
         VClass *klass = VClass::FindClassNoCase(*clsname);
         if (klass) {
-          if (developer && GArgs.CheckParm("-debug-decals")) GCon->Logf(NAME_Dev, "%s: class '%s': set decal '%s'", *sc->GetLoc().toStringNoCol(), klass->GetName(), *decname);
+          if (developer && cli_DebugDecals > 0) GCon->Logf(NAME_Dev, "%s: class '%s': set decal '%s'", *sc->GetLoc().toStringNoCol(), klass->GetName(), *decname);
           SetClassFieldName(klass, VName("DecalName"), VName(*decname));
           VClass *k2 = klass->GetReplacee();
           if (k2 && k2 != klass) {

@@ -219,7 +219,7 @@ void scanForMidiBanks () {
     for (const char **sfdir = SF2SearchPathes; *sfdir; ++sfdir) {
       VStr dirname = VStr(*sfdir);
       if (dirname.isEmpty()) continue;
-      if (dirname[0] == '!') { dirname.chopLeft(1); dirname = VStr(GArgs[0])+dirname; }
+      if (dirname[0] == '!') { dirname.chopLeft(1); dirname = GParsedArgs.getBinDir()+dirname; }
       #if !defined(_WIN32) && !defined(__SWITCH__)
       else if (dirname[0] == '~') {
         const char *home = getenv("HOME");

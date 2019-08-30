@@ -51,16 +51,17 @@ static VCvarF crosshair_alpha("crosshair_alpha", "0.6", "Crosshair opacity.", CV
 static VCvarI r_crosshair_yofs("r_crosshair_yofs", "0", "Crosshair y offset (>0: down).", CVAR_Archive);
 
 
+static int cli_WarnSprites = 0;
+static bool cliRegister_rsprites_args =
+  VParsedArgs::RegisterFlagSet("-Wpsprite", nullptr, &cli_WarnSprites);
+
+
 //==========================================================================
 //
 //  showPSpriteWarnings
 //
 //==========================================================================
-static bool showPSpriteWarnings () {
-  static int flag = -1;
-  if (flag < 0) flag = (GArgs.CheckParm("-Wpsprite") || GArgs.CheckParm("-Wall") ? 1 : 0);
-  return !!flag;
-}
+static bool showPSpriteWarnings () { return (cli_WAll > 0 || cli_WarnSprites > 0); }
 
 
 //==========================================================================

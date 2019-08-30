@@ -68,6 +68,13 @@
 #endif
 
 
+static int cli_NoLAN = 0;
+
+static bool cliRegister_datagram_args =
+  VParsedArgs::RegisterFlagSet("-nolan", "disable networking", &cli_NoLAN) &&
+  VParsedArgs::RegisterAlias("-no-lan", "-nolan");
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 class VDatagramSocket : public VSocket {
 public:
@@ -173,7 +180,7 @@ VDatagramDriver::VDatagramDriver () : VNetDriver(1, "Datagram") {
 //
 //==========================================================================
 int VDatagramDriver::Init () {
-  if (GArgs.CheckParm("-nolan")) return -1;
+  if (cli_NoLAN > 0) return -1;
 
   for (int i = 0; i < VNetworkLocal::NumLanDrivers; ++i) {
     VNetworkLocal::LanDrivers[i]->Net = Net;

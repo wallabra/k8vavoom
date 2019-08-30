@@ -28,6 +28,14 @@
 #include "net_local.h"
 
 
+static const char *cli_Port = nullptr;
+//static int cli_Listen = 0;
+
+static bool cliRegister_netmain_args =
+  VParsedArgs::RegisterStringOption("-port", "explicitly set your host port (default is 26000)", &cli_Port)
+  /*&& VParsedArgs::RegisterFlagSet("-listen", nullptr, &cli_Listen)*/;
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 class VNetwork : public VNetworkLocal {
 private:
@@ -189,12 +197,15 @@ VNetwork::~VNetwork () {
 //
 //==========================================================================
 void VNetwork::Init () {
-  const char *p = GArgs.CheckValue("-port");
-  if (p) DefaultHostPort = VStr::atoi(p);
+  const char *p = cli_Port;
+  if (p && p[0]) {
+    DefaultHostPort = VStr::atoi(p);
+    if (DefaultHostPort < 1 || DefaultHostPort > 65535) DefaultHostPort = 26000;
+  }
   HostPort = DefaultHostPort;
 
 #ifdef CLIENT
-  //if (GArgs.CheckParm("-listen") || cls.state == ca_dedicated) Listening = true;
+  //if (cli_Listen || cls.state == ca_dedicated) Listening = true;
 #else
   Listening = true;
 #endif

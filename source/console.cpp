@@ -34,6 +34,14 @@
 #define MAX_LINE_LENGTH  (80)
 
 
+static const char *cli_LogFileName = nullptr;
+
+static bool cliRegister_con_args =
+  VParsedArgs::RegisterStringOption("-logfile", "specify log file name", &cli_LogFileName) &&
+  VParsedArgs::RegisterAlias("-log-file", "-logfile") &&
+  VParsedArgs::RegisterAlias("--log-file", "-logfile");
+
+
 enum cons_state_t {
   cons_closed,
   cons_opening,
@@ -120,9 +128,8 @@ static void onShowCompletionMatchCB (bool isheader, VStr s) {
 void C_Init () {
   VCommand::onShowCompletionMatch = &onShowCompletionMatchCB;
 
-  {
-    auto v = GArgs.CheckValue("-logfile");
-    if (v) logfout = fopen(v, "w");
+  if (cli_LogFileName && cli_LogFileName[0]) {
+    logfout = fopen(cli_LogFileName, "w");
   }
 
 #if defined(_WIN32)
