@@ -114,7 +114,7 @@ protected:
   static ArgInfo *findNamedArgInfo (const char *argname);
 
 protected:
-  char *mBinPath;
+  char *mBinDir;
 
 protected:
   void clear ();
@@ -143,7 +143,7 @@ public:
   static bool RegisterAlias (const char *argname, const char *oldname);
 
   // with ending slash
-  inline VStr getBinPath () const { return VStr(mBinPath); }
+  inline VStr getBinDir () const { return VStr(mBinDir); }
 
 public:
   struct ArgHelp {
@@ -152,7 +152,7 @@ public:
   };
 
   // will not clear the list
-  static void GetArgList (TArray<ArgHelp> &list);
+  static void GetArgList (TArray<ArgHelp> &list, bool returnAll=false);
 };
 
 

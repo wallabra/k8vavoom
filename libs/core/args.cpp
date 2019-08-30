@@ -448,7 +448,7 @@ VParsedArgs GParsedArgs;
 //  VParsedArgs::VParsedArgs
 //
 //==========================================================================
-VParsedArgs::VParsedArgs () : mBinPath(nullptr) {}
+VParsedArgs::VParsedArgs () : mBinDir(nullptr) {}
 
 
 //==========================================================================
@@ -457,7 +457,7 @@ VParsedArgs::VParsedArgs () : mBinPath(nullptr) {}
 //
 //==========================================================================
 void VParsedArgs::clear () {
-  if (mBinPath) { ::free(mBinPath); mBinPath = nullptr; }
+  if (mBinDir) { ::free(mBinDir); mBinDir = nullptr; }
 }
 
 
@@ -681,21 +681,16 @@ void VParsedArgs::parse (VArgs &args) {
   {
     const char *bpath = args[0];
     if (!bpath || !bpath[0]) {
-      mBinPath = (char *)::malloc(4);
-      strcpy(mBinPath, "./");
+      mBinDir = (char *)::malloc(4);
+      strcpy(mBinDir, ".");
     } else {
       size_t plen = strlen(bpath);
-      mBinPath = (char *)::malloc(plen+4);
-      strcpy(mBinPath, bpath);
+      vassert(plen > 0);
+      mBinDir = (char *)::malloc(plen+4);
+      strcpy(mBinDir, bpath);
       #ifdef _WIN32
-      for (size_t f = 0; f < plen; ++f) if (mBinPath[f] == '\\') mBinPath[f] = '/';
+      for (size_t f = 0; f < plen; ++f) if (mBinDir[f] == '\\') mBinDir[f] = '/';
       #endif
-      while (plen > 0 && mBinPath[plen-1] != '/') --plen;
-      if (plen) {
-        mBinPath[plen] = 0;
-      } else {
-        strcpy(mBinPath, "./");
-      }
     }
   }
   int aidx = 1;
@@ -861,12 +856,12 @@ void VParsedArgs::parse (VArgs &args) {
 //  will not clear the list
 //
 //==========================================================================
-void VParsedArgs::GetArgList (TArray<ArgHelp> &list) {
+void VParsedArgs::GetArgList (TArray<ArgHelp> &list, bool returnAll) {
   for (ArgInfo *ai = argInfoHead; ai; ai = ai->next) {
-    if (ai->name && ai->name[0] && ai->help && ai->help[0]) {
+    if (ai->name && ai->name[0] && (returnAll || (ai->help && ai->help[0]))) {
       ArgHelp &h = list.alloc();
       h.argname = ai->name;
-      h.arghelp = ai->help;
+      h.arghelp = (ai->help && ai->help[0] ? ai->help : nullptr);
     }
   }
 }
