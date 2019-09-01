@@ -927,10 +927,12 @@ actor ZBarrel 8100
   Radius 15
   Height 32
   +Solid
-  +Pushable
   states
   {
   Spawn:
+    TNT1 A 0 MdlSkip
+    TNT1 A 0 MdlSkip A_JumpIf(!GetCvar(sv_pushable_barrels), +2)
+    TNT1 A 0 MdlSkip A_ChangeFlag("Pushable", true)
     ZBAR A -1
     Stop
   }
