@@ -157,10 +157,11 @@ final void decorate_A_BFGSpray (optional class!EntityEx FlashType,
   // target is the originator (player) of the missile
   // it may be missing, tho
   // also, zdoom wiki says "this function will create unpredictable effects if used on a non-missile"
-  if (!bMissile) return;
-  EntityEx spraySrc = (flags&BFGF_MISSILEORIGIN ? self : Target);
-  if (spraySrc) return;
+  // no, we cannot do such check here, because bfg ball is "exploded" at 'Death' state, and `bMissile` flag is removed
+  //if (!bMissile) return;
 
+  EntityEx spraySrc = (flags&BFGF_MISSILEORIGIN ? self : Target);
+  if (!spraySrc) return;
 
   if (!FlashType) FlashType = BFGExtra;
   if (NumRays <= 0) NumRays = 40;
