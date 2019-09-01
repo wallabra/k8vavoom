@@ -122,7 +122,7 @@ public:
     inline bool operator == (const NameIterator &b) const { return (list == b.list && currIndex == b.currIndex); }
     inline bool operator != (const NameIterator &b) const { return (list != b.list || currIndex != b.currIndex); }
     inline NameIterator operator * () const { return NameIterator(*this); } /* required for iterator */
-    inline void operator ++ () { if (currIndex > 0) currIndex = (*list)[currIndex].nextIndex; } /* this is enough for iterator */
+    inline void operator ++ () { if (currIndex >= 0) currIndex = (*list)[currIndex].nextIndex; } /* this is enough for iterator */
 
     inline bool isEmpty () const { return (currIndex < 0); }
     inline int index () const { return currIndex; }
