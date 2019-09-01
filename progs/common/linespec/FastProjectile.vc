@@ -115,7 +115,7 @@ override void Tick (float DeltaTime) {
             BlasterHitMobj(tmtrace.BlockingMobj);
           } else {
             // hit the wall
-            ExplodeMissile(Victim:none, tmtrace.BlockingLine);
+            ExplodeMissile(Victim:none, line:tmtrace.BlockingLine);
           }
           return;
         }

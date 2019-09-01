@@ -599,16 +599,16 @@ final void ZMovement (float DeltaTime, float OldFloorZ) {
 //
 //  HitLine
 //
-//  if entity is moving with transported, it should slide along walls
+//  if entity is moving with transporter, it should slide along walls
 //  in any case
 //
 //==========================================================================
 final void HitLine (tmtrace_t *tmtrace, float StepVelScale, bool forceSlide) {
   if (bMissile) {
     if (bBounceWalls || BounceType == BOUNCE_Doom || BounceType == BOUNCE_Hexen) {
-      // if number of bounces is limited.
+      // if number of bounces is limited
       if (BounceCount > 0 && --BounceCount <= 0) {
-        ExplodeMissile(none);
+        ExplodeMissile(none, line:(tmtrace ? tmtrace.BlockingLine : nullptr));
         return;
       }
 

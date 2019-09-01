@@ -76,7 +76,7 @@ final bool CheckMissileSpawn () {
       if (tmtrace.BlockingLine && tmtrace.BlockingLine->special == LNSPEC_LineHorizon) {
         Destroy();
       } else {
-        ExplodeMissile(EntityEx(tmtrace.BlockingMobj));
+        ExplodeMissile(EntityEx(tmtrace.BlockingMobj), line:tmtrace.BlockingLine);
       }
       return false;
     }
@@ -96,6 +96,14 @@ final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
     if (++Special2 < Special1) return false;
   }
 
+  if (line) {
+    // don't explode on horizon lines (just in case check)
+    if (line->special == LNSPEC_LineHorizon && !bExplodeOnSky) {
+      Destroy();
+      return false;
+    }
+  }
+
   TVec savedVelocity = Velocity;
 
   Velocity = vector(0.0, 0.0, 0.0);
@@ -108,6 +116,13 @@ final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
   if (!ExplState) ExplState = FindState('Death');
 
   if (!SetState(ExplState)) return false;
+
+  if (Victim) {
+    if (bHitTarget) Target = Victim;
+    if (bHitMaster) Master = Victim;
+    if (bHitTracer) Tracer = Victim;
+    // check for shootable corpses here
+  }
 
   //k8:TODO: this should be strictly client-side
   if (line && DecalName) {
