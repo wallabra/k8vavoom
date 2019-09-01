@@ -35,8 +35,8 @@
 #define TEXT_COLOR_ESCAPE_STR  "\034"
 
 
-extern char *va (const char *text, ...) __attribute__((format(printf, 1, 2)));
-extern char *vavarg (const char *text, va_list ap);
+extern char *va (const char *text, ...) __attribute__((format(printf, 1, 2))) __attribute__((warn_unused_result));
+extern char *vavarg (const char *text, va_list ap) __attribute__((warn_unused_result));
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -55,18 +55,18 @@ public:
   char *dataptr; // string, 0-terminated (0 is not in length); can be null
 
 protected:
-  inline Store *store () { return (dataptr ? (Store *)(dataptr-sizeof(Store)) : nullptr); }
-  inline Store *store () const { return (dataptr ? (Store *)(dataptr-sizeof(Store)) : nullptr); }
+  __attribute__((warn_unused_result)) inline Store *store () { return (dataptr ? (Store *)(dataptr-sizeof(Store)) : nullptr); }
+  __attribute__((warn_unused_result)) inline Store *store () const { return (dataptr ? (Store *)(dataptr-sizeof(Store)) : nullptr); }
 
   // should be called only when storage is available
-  inline int atomicGetRC () const { return __atomic_load_n(&((const Store *)(dataptr-sizeof(Store)))->rc, __ATOMIC_SEQ_CST); }
+  __attribute__((warn_unused_result)) inline int atomicGetRC () const { return __atomic_load_n(&((const Store *)(dataptr-sizeof(Store)))->rc, __ATOMIC_SEQ_CST); }
   // should be called only when storage is available
   inline void atomicSetRC (int newval) { __atomic_store_n(&((Store *)(dataptr-sizeof(Store)))->rc, newval, __ATOMIC_SEQ_CST); }
   // should be called only when storage is available
-  inline bool atomicIsImmutable () const { return (__atomic_load_n(&((const Store *)(dataptr-sizeof(Store)))->rc, __ATOMIC_SEQ_CST) < 0); }
+  __attribute__((warn_unused_result)) inline bool atomicIsImmutable () const { return (__atomic_load_n(&((const Store *)(dataptr-sizeof(Store)))->rc, __ATOMIC_SEQ_CST) < 0); }
   // should be called only when storage is available
   // immutable strings aren't unique
-  inline bool atomicIsUnique () const { return (__atomic_load_n(&((const Store *)(dataptr-sizeof(Store)))->rc, __ATOMIC_SEQ_CST) == 1); }
+  __attribute__((warn_unused_result)) inline bool atomicIsUnique () const { return (__atomic_load_n(&((const Store *)(dataptr-sizeof(Store)))->rc, __ATOMIC_SEQ_CST) == 1); }
   // should be called only when storage is available
   // returns new value
   // WARNING: will happily modify immutable RC!
@@ -76,8 +76,8 @@ protected:
   // WARNING: will happily modify immutable RC!
   inline int atomicDecRC () const { return __atomic_sub_fetch(&((Store *)(dataptr-sizeof(Store)))->rc, 1, __ATOMIC_SEQ_CST); }
 
-  inline char *getData () { return dataptr; }
-  inline const char *getData () const { return dataptr; }
+  __attribute__((warn_unused_result)) inline char *getData () { return dataptr; }
+  __attribute__((warn_unused_result)) inline const char *getData () const { return dataptr; }
 
   inline void incref () const { if (dataptr && !atomicIsImmutable()) atomicIncRC(); }
 
@@ -97,7 +97,7 @@ protected:
     }
   }
 
-  inline bool isMyData (const char *buf, int len) const { return (dataptr && buf && (uintptr_t)buf < (uintptr_t)dataptr+length() && (uintptr_t)buf+len >= (uintptr_t)dataptr); }
+  __attribute__((warn_unused_result)) inline bool isMyData (const char *buf, int len) const { return (dataptr && buf && (uintptr_t)buf < (uintptr_t)dataptr+length() && (uintptr_t)buf+len >= (uintptr_t)dataptr); }
 
   inline void assign (const VStr &instr) {
     if (&instr != this) {
@@ -161,7 +161,7 @@ public:
   ~VStr () { clear(); }
 
   // this will create an unique copy of the string, which (copy) can be used in other threads
-  inline VStr cloneUnique () const {
+  __attribute__((warn_unused_result)) inline VStr cloneUnique () const {
     if (!dataptr) return VStr();
     int len = length();
     vassert(len > 0);
@@ -172,7 +172,7 @@ public:
   }
 
   void makeImmutable ();
-  VStr &makeImmutableRetSelf ();
+  __attribute__((warn_unused_result)) VStr &makeImmutableRetSelf ();
 
   // clears the string
   inline void Clean () { decref(); }
@@ -180,8 +180,8 @@ public:
   inline void clear () { decref(); }
 
   // returns length of the string
-  inline int Length () const { return (dataptr ? store()->length : 0); }
-  inline int length () const { return (dataptr ? store()->length : 0); }
+  __attribute__((warn_unused_result)) inline int Length () const { return (dataptr ? store()->length : 0); }
+  __attribute__((warn_unused_result)) inline int length () const { return (dataptr ? store()->length : 0); }
 
   inline void setLength (int len, char fillChar=' ') {
     if (len < 0) len = 0;
@@ -190,31 +190,32 @@ public:
   }
   inline void SetLength (int len, char fillChar=' ') { setLength(len, fillChar); }
 
-  inline int getCapacity () const { return (dataptr ? store()->alloted : 0); }
+  __attribute__((warn_unused_result)) inline int getCapacity () const { return (dataptr ? store()->alloted : 0); }
 
   // returns number of characters in a UTF-8 string
-  inline int Utf8Length () const { return Utf8Length(getCStr(), length()); }
-  inline int utf8Length () const { return Utf8Length(getCStr(), length()); }
-  inline int utf8length () const { return Utf8Length(getCStr(), length()); }
+  __attribute__((warn_unused_result)) inline int Utf8Length () const { return Utf8Length(getCStr(), length()); }
+  __attribute__((warn_unused_result)) inline int utf8Length () const { return Utf8Length(getCStr(), length()); }
+  __attribute__((warn_unused_result)) inline int utf8length () const { return Utf8Length(getCStr(), length()); }
 
   // returns C string
-  inline const char *operator * () const { return (dataptr ? getData() : ""); }
-  inline const char *getCStr () const { return (dataptr ? getData() : ""); }
-  inline char *getMutableCStr () { makeMutable(); return (dataptr ? getData() : nullptr); }
+  // `*` can be used in some dummied-out macros
+  /*__attribute__((warn_unused_result))*/ inline const char *operator * () const { return (dataptr ? getData() : ""); }
+  __attribute__((warn_unused_result)) inline const char *getCStr () const { return (dataptr ? getData() : ""); }
+  __attribute__((warn_unused_result)) inline char *getMutableCStr () { makeMutable(); return (dataptr ? getData() : nullptr); }
 
   // character accessors
-  inline char operator [] (int idx) const { return (dataptr && idx >= 0 && idx < length() ? getData()[idx] : 0); }
-  inline char *GetMutableCharPointer (int idx) { makeMutable(); return (dataptr ? &dataptr[idx] : nullptr); }
+  __attribute__((warn_unused_result)) inline char operator [] (int idx) const { return (dataptr && idx >= 0 && idx < length() ? getData()[idx] : 0); }
+  __attribute__((warn_unused_result)) inline char *GetMutableCharPointer (int idx) { makeMutable(); return (dataptr ? &dataptr[idx] : nullptr); }
 
   // checks if string is empty
-  inline bool IsEmpty () const { return (length() == 0); }
-  inline bool isEmpty () const { return (length() == 0); }
-  inline bool IsNotEmpty () const { return (length() != 0); }
-  inline bool isNotEmpty () const { return (length() != 0); }
+  __attribute__((warn_unused_result)) inline bool IsEmpty () const { return (length() == 0); }
+  __attribute__((warn_unused_result)) inline bool isEmpty () const { return (length() == 0); }
+  __attribute__((warn_unused_result)) inline bool IsNotEmpty () const { return (length() != 0); }
+  __attribute__((warn_unused_result)) inline bool isNotEmpty () const { return (length() != 0); }
 
-  VStr mid (int start, int len) const;
-  VStr left (int len) const;
-  VStr right (int len) const;
+  __attribute__((warn_unused_result)) VStr mid (int start, int len) const;
+  __attribute__((warn_unused_result)) VStr left (int len) const;
+  __attribute__((warn_unused_result)) VStr right (int len) const;
   void chopLeft (int len);
   void chopRight (int len);
 
@@ -271,103 +272,103 @@ public:
   VStr &operator += (double v);
   inline VStr &operator += (const VName &v) { return operator+=(*v); }
 
-  friend VStr operator + (const VStr &S1, const char *S2) { VStr res(S1); res += S2; return res; }
-  friend VStr operator + (const VStr &S1, const VStr &S2) { VStr res(S1); res += S2; return res; }
-  friend VStr operator + (const VStr &S1, char S2) { VStr res(S1); res += S2; return res; }
-  friend VStr operator + (const VStr &S1, bool v) { VStr res(S1); res += v; return res; }
-  friend VStr operator + (const VStr &S1, int v) { VStr res(S1); res += v; return res; }
-  friend VStr operator + (const VStr &S1, unsigned v) { VStr res(S1); res += v; return res; }
-  friend VStr operator + (const VStr &S1, float v) { VStr res(S1); res += v; return res; }
-  friend VStr operator + (const VStr &S1, double v) { VStr res(S1); res += v; return res; }
-  friend VStr operator + (const VStr &S1, const VName &v) { VStr res(S1); res += v; return res; }
+  friend __attribute__((warn_unused_result)) VStr operator + (const VStr &S1, const char *S2) { VStr res(S1); res += S2; return res; }
+  friend __attribute__((warn_unused_result)) VStr operator + (const VStr &S1, const VStr &S2) { VStr res(S1); res += S2; return res; }
+  friend __attribute__((warn_unused_result)) VStr operator + (const VStr &S1, char S2) { VStr res(S1); res += S2; return res; }
+  friend __attribute__((warn_unused_result)) VStr operator + (const VStr &S1, bool v) { VStr res(S1); res += v; return res; }
+  friend __attribute__((warn_unused_result)) VStr operator + (const VStr &S1, int v) { VStr res(S1); res += v; return res; }
+  friend __attribute__((warn_unused_result)) VStr operator + (const VStr &S1, unsigned v) { VStr res(S1); res += v; return res; }
+  friend __attribute__((warn_unused_result)) VStr operator + (const VStr &S1, float v) { VStr res(S1); res += v; return res; }
+  friend __attribute__((warn_unused_result)) VStr operator + (const VStr &S1, double v) { VStr res(S1); res += v; return res; }
+  friend __attribute__((warn_unused_result)) VStr operator + (const VStr &S1, const VName &v) { VStr res(S1); res += v; return res; }
 
   // comparison operators
-  friend bool operator == (const VStr &S1, const char *S2) { return (Cmp(*S1, S2) == 0); }
-  friend bool operator == (const VStr &S1, const VStr &S2) { return (S1.getData() == S2.getData() ? true : (Cmp(*S1, *S2) == 0)); }
-  friend bool operator != (const VStr &S1, const char *S2) { return (Cmp(*S1, S2) != 0); }
-  friend bool operator != (const VStr &S1, const VStr &S2) { return (S1.getData() == S2.getData() ? false : (Cmp(*S1, *S2) != 0)); }
-  friend bool operator < (const VStr &S1, const char *S2) { return (Cmp(*S1, S2) < 0); }
-  friend bool operator < (const VStr &S1, const VStr &S2) { return (S1.getData() == S2.getData() ? false : (Cmp(*S1, *S2) < 0)); }
-  friend bool operator > (const VStr &S1, const char *S2) { return (Cmp(*S1, S2) > 0); }
-  friend bool operator > (const VStr &S1, const VStr &S2) { return (S1.getData() == S2.getData() ? false : (Cmp(*S1, *S2) > 0)); }
-  friend bool operator <= (const VStr &S1, const char *S2) { return (Cmp(*S1, S2) <= 0); }
-  friend bool operator <= (const VStr &S1, const VStr &S2) { return (S1.getData() == S2.getData() ? true : (Cmp(*S1, *S2) <= 0)); }
-  friend bool operator >= (const VStr &S1, const char *S2) { return (Cmp(*S1, S2) >= 0); }
-  friend bool operator >= (const VStr &S1, const VStr &S2) { return (S1.getData() == S2.getData() ? true : (Cmp(*S1, *S2) >= 0)); }
+  friend __attribute__((warn_unused_result)) bool operator == (const VStr &S1, const char *S2) { return (Cmp(*S1, S2) == 0); }
+  friend __attribute__((warn_unused_result)) bool operator == (const VStr &S1, const VStr &S2) { return (S1.getData() == S2.getData() ? true : (Cmp(*S1, *S2) == 0)); }
+  friend __attribute__((warn_unused_result)) bool operator != (const VStr &S1, const char *S2) { return (Cmp(*S1, S2) != 0); }
+  friend __attribute__((warn_unused_result)) bool operator != (const VStr &S1, const VStr &S2) { return (S1.getData() == S2.getData() ? false : (Cmp(*S1, *S2) != 0)); }
+  friend __attribute__((warn_unused_result)) bool operator < (const VStr &S1, const char *S2) { return (Cmp(*S1, S2) < 0); }
+  friend __attribute__((warn_unused_result)) bool operator < (const VStr &S1, const VStr &S2) { return (S1.getData() == S2.getData() ? false : (Cmp(*S1, *S2) < 0)); }
+  friend __attribute__((warn_unused_result)) bool operator > (const VStr &S1, const char *S2) { return (Cmp(*S1, S2) > 0); }
+  friend __attribute__((warn_unused_result)) bool operator > (const VStr &S1, const VStr &S2) { return (S1.getData() == S2.getData() ? false : (Cmp(*S1, *S2) > 0)); }
+  friend __attribute__((warn_unused_result)) bool operator <= (const VStr &S1, const char *S2) { return (Cmp(*S1, S2) <= 0); }
+  friend __attribute__((warn_unused_result)) bool operator <= (const VStr &S1, const VStr &S2) { return (S1.getData() == S2.getData() ? true : (Cmp(*S1, *S2) <= 0)); }
+  friend __attribute__((warn_unused_result)) bool operator >= (const VStr &S1, const char *S2) { return (Cmp(*S1, S2) >= 0); }
+  friend __attribute__((warn_unused_result)) bool operator >= (const VStr &S1, const VStr &S2) { return (S1.getData() == S2.getData() ? true : (Cmp(*S1, *S2) >= 0)); }
 
   // comparison functions
-  inline int Cmp (const char *S2) const { return Cmp(getData(), S2); }
-  inline int Cmp (const VStr &S2) const { return Cmp(getData(), *S2); }
-  inline int ICmp (const char *S2) const { return ICmp(getData(), S2); }
-  inline int ICmp (const VStr &S2) const { return ICmp(getData(), *S2); }
+  __attribute__((warn_unused_result)) inline int Cmp (const char *S2) const { return Cmp(getData(), S2); }
+  __attribute__((warn_unused_result)) inline int Cmp (const VStr &S2) const { return Cmp(getData(), *S2); }
+  __attribute__((warn_unused_result)) inline int ICmp (const char *S2) const { return ICmp(getData(), S2); }
+  __attribute__((warn_unused_result)) inline int ICmp (const VStr &S2) const { return ICmp(getData(), *S2); }
 
-  inline int cmp (const char *S2) const { return Cmp(getData(), S2); }
-  inline int cmp (const VStr &S2) const { return Cmp(getData(), *S2); }
-  inline int icmp (const char *S2) const { return ICmp(getData(), S2); }
-  inline int icmp (const VStr &S2) const { return ICmp(getData(), *S2); }
+  __attribute__((warn_unused_result)) inline int cmp (const char *S2) const { return Cmp(getData(), S2); }
+  __attribute__((warn_unused_result)) inline int cmp (const VStr &S2) const { return Cmp(getData(), *S2); }
+  __attribute__((warn_unused_result)) inline int icmp (const char *S2) const { return ICmp(getData(), S2); }
+  __attribute__((warn_unused_result)) inline int icmp (const VStr &S2) const { return ICmp(getData(), *S2); }
 
-  inline bool StrEqu (const char *S2) const { return (Cmp(getData(), S2) == 0); }
-  inline bool StrEqu (const VStr &S2) const { return (Cmp(getData(), *S2) == 0); }
-  inline bool StrEquCI (const char *S2) const { return (ICmp(getData(), S2) == 0); }
-  inline bool StrEquCI (const VStr &S2) const { return (ICmp(getData(), *S2) == 0); }
+  __attribute__((warn_unused_result)) inline bool StrEqu (const char *S2) const { return (Cmp(getData(), S2) == 0); }
+  __attribute__((warn_unused_result)) inline bool StrEqu (const VStr &S2) const { return (Cmp(getData(), *S2) == 0); }
+  __attribute__((warn_unused_result)) inline bool StrEquCI (const char *S2) const { return (ICmp(getData(), S2) == 0); }
+  __attribute__((warn_unused_result)) inline bool StrEquCI (const VStr &S2) const { return (ICmp(getData(), *S2) == 0); }
 
-  inline bool strequ (const char *S2) const { return (Cmp(getData(), S2) == 0); }
-  inline bool strequ (const VStr &S2) const { return (Cmp(getData(), *S2) == 0); }
-  inline bool strequCI (const char *S2) const { return (ICmp(getData(), S2) == 0); }
-  inline bool strequCI (const VStr &S2) const { return (ICmp(getData(), *S2) == 0); }
+  __attribute__((warn_unused_result)) inline bool strequ (const char *S2) const { return (Cmp(getData(), S2) == 0); }
+  __attribute__((warn_unused_result)) inline bool strequ (const VStr &S2) const { return (Cmp(getData(), *S2) == 0); }
+  __attribute__((warn_unused_result)) inline bool strequCI (const char *S2) const { return (ICmp(getData(), S2) == 0); }
+  __attribute__((warn_unused_result)) inline bool strequCI (const VStr &S2) const { return (ICmp(getData(), *S2) == 0); }
 
-  inline bool strEqu (const char *S2) const { return (Cmp(getData(), S2) == 0); }
-  inline bool strEqu (const VStr &S2) const { return (Cmp(getData(), *S2) == 0); }
-  inline bool strEquCI (const char *S2) const { return (ICmp(getData(), S2) == 0); }
-  inline bool strEquCI (const VStr &S2) const { return (ICmp(getData(), *S2) == 0); }
+  __attribute__((warn_unused_result)) inline bool strEqu (const char *S2) const { return (Cmp(getData(), S2) == 0); }
+  __attribute__((warn_unused_result)) inline bool strEqu (const VStr &S2) const { return (Cmp(getData(), *S2) == 0); }
+  __attribute__((warn_unused_result)) inline bool strEquCI (const char *S2) const { return (ICmp(getData(), S2) == 0); }
+  __attribute__((warn_unused_result)) inline bool strEquCI (const VStr &S2) const { return (ICmp(getData(), *S2) == 0); }
 
-  bool StartsWith (const char *) const;
-  bool StartsWith (const VStr &) const;
-  bool EndsWith (const char *) const;
-  bool EndsWith (const VStr &) const;
+  __attribute__((warn_unused_result)) bool StartsWith (const char *) const;
+  __attribute__((warn_unused_result)) bool StartsWith (const VStr &) const;
+  __attribute__((warn_unused_result)) bool EndsWith (const char *) const;
+  __attribute__((warn_unused_result)) bool EndsWith (const VStr &) const;
 
-  inline bool startsWith (const char *s) const { return StartsWith(s); }
-  inline bool startsWith (const VStr &s) const { return StartsWith(s); }
-  inline bool endsWith (const char *s) const { return EndsWith(s); }
-  inline bool endsWith (const VStr &s) const { return EndsWith(s); }
+  __attribute__((warn_unused_result)) inline bool startsWith (const char *s) const { return StartsWith(s); }
+  __attribute__((warn_unused_result)) inline bool startsWith (const VStr &s) const { return StartsWith(s); }
+  __attribute__((warn_unused_result)) inline bool endsWith (const char *s) const { return EndsWith(s); }
+  __attribute__((warn_unused_result)) inline bool endsWith (const VStr &s) const { return EndsWith(s); }
 
-  bool startsWithNoCase (const char *s) const;
-  bool startsWithNoCase (const VStr &s) const;
-  bool endsWithNoCase (const char *s) const;
-  bool endsWithNoCase (const VStr &s) const;
+  __attribute__((warn_unused_result)) bool startsWithNoCase (const char *s) const;
+  __attribute__((warn_unused_result)) bool startsWithNoCase (const VStr &s) const;
+  __attribute__((warn_unused_result)) bool endsWithNoCase (const char *s) const;
+  __attribute__((warn_unused_result)) bool endsWithNoCase (const VStr &s) const;
 
-  inline bool StartsWithNoCase (const char *s) const { return startsWithNoCase(s); }
-  inline bool StartsWithNoCase (const VStr &s) const { return startsWithNoCase(s); }
-  inline bool EndsWithNoCase (const char *s) const { return endsWithNoCase(s); }
-  inline bool EndsWithNoCase (const VStr &s) const { return endsWithNoCase(s); }
+  __attribute__((warn_unused_result)) inline bool StartsWithNoCase (const char *s) const { return startsWithNoCase(s); }
+  __attribute__((warn_unused_result)) inline bool StartsWithNoCase (const VStr &s) const { return startsWithNoCase(s); }
+  __attribute__((warn_unused_result)) inline bool EndsWithNoCase (const char *s) const { return endsWithNoCase(s); }
+  __attribute__((warn_unused_result)) inline bool EndsWithNoCase (const VStr &s) const { return endsWithNoCase(s); }
 
-  inline bool StartsWithCI (const char *s) const { return startsWithNoCase(s); }
-  inline bool StartsWithCI (const VStr &s) const { return startsWithNoCase(s); }
-  inline bool EndsWithCI (const char *s) const { return endsWithNoCase(s); }
-  inline bool EndsWithCI (const VStr &s) const { return endsWithNoCase(s); }
+  __attribute__((warn_unused_result)) inline bool StartsWithCI (const char *s) const { return startsWithNoCase(s); }
+  __attribute__((warn_unused_result)) inline bool StartsWithCI (const VStr &s) const { return startsWithNoCase(s); }
+  __attribute__((warn_unused_result)) inline bool EndsWithCI (const char *s) const { return endsWithNoCase(s); }
+  __attribute__((warn_unused_result)) inline bool EndsWithCI (const VStr &s) const { return endsWithNoCase(s); }
 
-  inline bool startsWithCI (const char *s) const { return startsWithNoCase(s); }
-  inline bool startsWithCI (const VStr &s) const { return startsWithNoCase(s); }
-  inline bool endsWithCI (const char *s) const { return endsWithNoCase(s); }
-  inline bool endsWithCI (const VStr &s) const { return endsWithNoCase(s); }
+  __attribute__((warn_unused_result)) inline bool startsWithCI (const char *s) const { return startsWithNoCase(s); }
+  __attribute__((warn_unused_result)) inline bool startsWithCI (const VStr &s) const { return startsWithNoCase(s); }
+  __attribute__((warn_unused_result)) inline bool endsWithCI (const char *s) const { return endsWithNoCase(s); }
+  __attribute__((warn_unused_result)) inline bool endsWithCI (const VStr &s) const { return endsWithNoCase(s); }
 
-  static bool startsWith (const char *str, const char *part);
-  static bool endsWith (const char *str, const char *part);
-  static bool startsWithNoCase (const char *str, const char *part);
-  static bool endsWithNoCase (const char *str, const char *part);
+  static __attribute__((warn_unused_result)) bool startsWith (const char *str, const char *part);
+  static __attribute__((warn_unused_result)) bool endsWith (const char *str, const char *part);
+  static __attribute__((warn_unused_result)) bool startsWithNoCase (const char *str, const char *part);
+  static __attribute__((warn_unused_result)) bool endsWithNoCase (const char *str, const char *part);
 
-  static inline bool StartsWith (const char *str, const char *part) { return startsWith(str, part); }
-  static inline bool SndsWith (const char *str, const char *part) { return endsWith(str, part); }
-  static inline bool startsWithCI (const char *str, const char *part) { return startsWithNoCase(str, part); }
-  static inline bool endsWithCI (const char *str, const char *part) { return endsWithNoCase(str, part); }
+  static __attribute__((warn_unused_result)) inline bool StartsWith (const char *str, const char *part) { return startsWith(str, part); }
+  static __attribute__((warn_unused_result)) inline bool SndsWith (const char *str, const char *part) { return endsWith(str, part); }
+  static __attribute__((warn_unused_result)) inline bool startsWithCI (const char *str, const char *part) { return startsWithNoCase(str, part); }
+  static __attribute__((warn_unused_result)) inline bool endsWithCI (const char *str, const char *part) { return endsWithNoCase(str, part); }
 
-  VStr ToLower () const;
-  VStr ToUpper () const;
+  __attribute__((warn_unused_result)) VStr ToLower () const;
+  __attribute__((warn_unused_result)) VStr ToUpper () const;
 
-  inline VStr toLowerCase () const { return ToLower(); }
-  inline VStr toUpperCase () const { return ToUpper(); }
+  __attribute__((warn_unused_result)) inline VStr toLowerCase () const { return ToLower(); }
+  __attribute__((warn_unused_result)) inline VStr toUpperCase () const { return ToUpper(); }
 
-  inline bool isLowerCase () const {
+  __attribute__((warn_unused_result)) inline bool isLowerCase () const {
     const char *dp = getData();
     for (int f = length()-1; f >= 0; --f, ++dp) {
       if (*dp >= 'A' && *dp <= 'Z') return false;
@@ -375,7 +376,7 @@ public:
     return true;
   }
 
-  inline static bool isLowerCase (const char *s) {
+  __attribute__((warn_unused_result)) inline static bool isLowerCase (const char *s) {
     if (!s) return true;
     while (*s) {
       if (*s >= 'A' && *s <= 'Z') return false;
@@ -384,29 +385,29 @@ public:
     return true;
   }
 
-  int IndexOf (char pch, int stpos=0) const;
-  int IndexOf (const char *ps, int stpos=0) const;
-  int IndexOf (const VStr &ps, int stpos=0) const;
-  int LastIndexOf (char pch, int stpos=0) const;
-  int LastIndexOf (const char *ps, int stpos=0) const;
-  int LastIndexOf (const VStr &ps, int stpos=0) const;
+  __attribute__((warn_unused_result)) int IndexOf (char pch, int stpos=0) const;
+  __attribute__((warn_unused_result)) int IndexOf (const char *ps, int stpos=0) const;
+  __attribute__((warn_unused_result)) int IndexOf (const VStr &ps, int stpos=0) const;
+  __attribute__((warn_unused_result)) int LastIndexOf (char pch, int stpos=0) const;
+  __attribute__((warn_unused_result)) int LastIndexOf (const char *ps, int stpos=0) const;
+  __attribute__((warn_unused_result)) int LastIndexOf (const VStr &ps, int stpos=0) const;
 
-  inline int indexOf (char v, int stpos=0) const { return IndexOf(v, stpos); }
-  inline int indexOf (const char *v, int stpos=0) const { return IndexOf(v, stpos); }
-  inline int indexOf (const VStr &v, int stpos=0) const { return IndexOf(v, stpos); }
-  inline int lastIndexOf (char v, int stpos=0) const { return LastIndexOf(v, stpos); }
-  inline int lastIndexOf (const char *v, int stpos=0) const { return LastIndexOf(v, stpos); }
-  inline int lastIndexOf (const VStr &v, int stpos=0) const { return LastIndexOf(v, stpos); }
+  __attribute__((warn_unused_result)) inline int indexOf (char v, int stpos=0) const { return IndexOf(v, stpos); }
+  __attribute__((warn_unused_result)) inline int indexOf (const char *v, int stpos=0) const { return IndexOf(v, stpos); }
+  __attribute__((warn_unused_result)) inline int indexOf (const VStr &v, int stpos=0) const { return IndexOf(v, stpos); }
+  __attribute__((warn_unused_result)) inline int lastIndexOf (char v, int stpos=0) const { return LastIndexOf(v, stpos); }
+  __attribute__((warn_unused_result)) inline int lastIndexOf (const char *v, int stpos=0) const { return LastIndexOf(v, stpos); }
+  __attribute__((warn_unused_result)) inline int lastIndexOf (const VStr &v, int stpos=0) const { return LastIndexOf(v, stpos); }
 
-  VStr Replace (const char *, const char *) const;
-  VStr Replace (VStr, VStr) const;
+  __attribute__((warn_unused_result)) VStr Replace (const char *, const char *) const;
+  __attribute__((warn_unused_result)) VStr Replace (VStr, VStr) const;
 
-  inline VStr replace (const char *s0, const char *s1) const { return Replace(s0, s1); }
-  inline VStr replace (const VStr &s0, const VStr &s1) const { return Replace(s0, s1); }
+  __attribute__((warn_unused_result)) inline VStr replace (const char *s0, const char *s1) const { return Replace(s0, s1); }
+  __attribute__((warn_unused_result)) inline VStr replace (const VStr &s0, const VStr &s1) const { return Replace(s0, s1); }
 
-  VStr Utf8Substring (int start, int len) const;
-  inline VStr utf8Substring (int start, int len) const { return Utf8Substring(start, len); }
-  inline VStr utf8substring (int start, int len) const { return Utf8Substring(start, len); }
+  __attribute__((warn_unused_result)) VStr Utf8Substring (int start, int len) const;
+  __attribute__((warn_unused_result)) inline VStr utf8Substring (int start, int len) const { return Utf8Substring(start, len); }
+  __attribute__((warn_unused_result)) inline VStr utf8substring (int start, int len) const { return Utf8Substring(start, len); }
 
   void Split (char, TArray<VStr> &) const;
   void Split (const char *, TArray<VStr> &) const;
@@ -420,94 +421,94 @@ public:
   void SplitPath (TArray<VStr> &) const;
   inline void splitPath (TArray<VStr> &a) const { SplitPath(a); }
 
-  bool IsValidUtf8 () const;
-  inline bool isValidUtf8 () const { return IsValidUtf8(); }
-  bool isUtf8Valid () const;
+  __attribute__((warn_unused_result)) bool IsValidUtf8 () const;
+  __attribute__((warn_unused_result)) inline bool isValidUtf8 () const { return IsValidUtf8(); }
+  __attribute__((warn_unused_result)) bool isUtf8Valid () const;
 
-  VStr Latin1ToUtf8 () const;
+  __attribute__((warn_unused_result)) VStr Latin1ToUtf8 () const;
 
   // serialisation operator
   VStream &Serialise (VStream &Strm);
   VStream &Serialise (VStream &Strm) const;
 
   // if `addQCh` is `true`, add '"' if something was quoted
-  VStr quote (bool addQCh=false) const;
-  bool needQuoting () const;
+  __attribute__((warn_unused_result)) VStr quote (bool addQCh=false) const;
+  __attribute__((warn_unused_result)) bool needQuoting () const;
 
-  VStr xmlEscape () const;
-  VStr xmlUnescape () const;
+  __attribute__((warn_unused_result)) VStr xmlEscape () const;
+  __attribute__((warn_unused_result)) VStr xmlUnescape () const;
 
-  VStr EvalEscapeSequences () const;
+  __attribute__((warn_unused_result)) VStr EvalEscapeSequences () const;
 
-  VStr RemoveColors () const;
-  bool MustBeSanitized () const;
-  static bool MustBeSanitized (const char *str);
+  __attribute__((warn_unused_result)) VStr RemoveColors () const;
+  __attribute__((warn_unused_result)) bool MustBeSanitized () const;
+  static __attribute__((warn_unused_result)) bool MustBeSanitized (const char *str);
 
-  VStr ExtractFilePath () const;
-  VStr ExtractFileName () const;
-  VStr ExtractFileBase (bool doSysError=true) const; // this tries to get only name w/o extension, and calls `Sys_Error()` on too long names
-  VStr ExtractFileBaseName () const;
-  VStr ExtractFileExtension () const; // with a dot
-  VStr StripExtension () const;
-  VStr DefaultPath (VStr basepath) const;
-  VStr DefaultExtension (VStr extension) const;
-  VStr FixFileSlashes () const;
+  __attribute__((warn_unused_result)) VStr ExtractFilePath () const;
+  __attribute__((warn_unused_result)) VStr ExtractFileName () const;
+  __attribute__((warn_unused_result)) VStr ExtractFileBase (bool doSysError=true) const; // this tries to get only name w/o extension, and calls `Sys_Error()` on too long names
+  __attribute__((warn_unused_result)) VStr ExtractFileBaseName () const;
+  __attribute__((warn_unused_result)) VStr ExtractFileExtension () const; // with a dot
+  __attribute__((warn_unused_result)) VStr StripExtension () const;
+  __attribute__((warn_unused_result)) VStr DefaultPath (VStr basepath) const;
+  __attribute__((warn_unused_result)) VStr DefaultExtension (VStr extension) const;
+  __attribute__((warn_unused_result)) VStr FixFileSlashes () const;
 
-  inline VStr extractFilePath () const { return ExtractFilePath(); }
-  inline VStr extractFileName () const { return ExtractFileName(); }
-  inline VStr extractFileBase (bool doSysError=true) const { return ExtractFileBase(doSysError); }
-  inline VStr extractFileBaseName () const { return ExtractFileBaseName(); }
-  inline VStr extractFileExtension () const { return ExtractFileExtension(); }
-  inline VStr stripExtension () const { return StripExtension(); }
-  inline VStr defaultPath (VStr basepath) const { return DefaultPath(basepath); }
-  inline VStr defaultExtension (VStr extension) const { return DefaultExtension(extension); }
-  inline VStr fixSlashes () const { return FixFileSlashes(); }
+  __attribute__((warn_unused_result)) inline VStr extractFilePath () const { return ExtractFilePath(); }
+  __attribute__((warn_unused_result)) inline VStr extractFileName () const { return ExtractFileName(); }
+  __attribute__((warn_unused_result)) inline VStr extractFileBase (bool doSysError=true) const { return ExtractFileBase(doSysError); }
+  __attribute__((warn_unused_result)) inline VStr extractFileBaseName () const { return ExtractFileBaseName(); }
+  __attribute__((warn_unused_result)) inline VStr extractFileExtension () const { return ExtractFileExtension(); }
+  __attribute__((warn_unused_result)) inline VStr stripExtension () const { return StripExtension(); }
+  __attribute__((warn_unused_result)) inline VStr defaultPath (VStr basepath) const { return DefaultPath(basepath); }
+  __attribute__((warn_unused_result)) inline VStr defaultExtension (VStr extension) const { return DefaultExtension(extension); }
+  __attribute__((warn_unused_result)) inline VStr fixSlashes () const { return FixFileSlashes(); }
 
   // removes all blanks
-  VStr trimRight () const;
-  VStr trimLeft () const;
-  VStr trimAll () const;
+  __attribute__((warn_unused_result)) VStr trimRight () const;
+  __attribute__((warn_unused_result)) VStr trimLeft () const;
+  __attribute__((warn_unused_result)) VStr trimAll () const;
 
   // from my iv.strex
-  inline VStr xstrip () const { return trimAll(); }
-  inline VStr xstripleft () const { return trimLeft(); }
-  inline VStr xstripright () const { return trimRight(); }
+  __attribute__((warn_unused_result)) inline VStr xstrip () const { return trimAll(); }
+  __attribute__((warn_unused_result)) inline VStr xstripleft () const { return trimLeft(); }
+  __attribute__((warn_unused_result)) inline VStr xstripright () const { return trimRight(); }
 
-  bool IsAbsolutePath () const;
-  inline bool isAbsolutePath () const { return IsAbsolutePath(); }
+  __attribute__((warn_unused_result)) bool IsAbsolutePath () const;
+  __attribute__((warn_unused_result)) inline bool isAbsolutePath () const { return IsAbsolutePath(); }
 
   // reject absolute names, names with ".", and names with "..", and names ends with path delimiter
-  bool isSafeDiskFileName () const;
+  __attribute__((warn_unused_result)) bool isSafeDiskFileName () const;
 
-  static inline int Length (const char *s) { return (s ? (int)strlen(s) : 0); }
-  static inline int length (const char *s) { return (s ? (int)strlen(s) : 0); }
-  static int Utf8Length (const char *s, int len=-1);
-  static inline int utf8Length (const char *s, int len=-1) { return (int)Utf8Length(s, len); }
-  static size_t ByteLengthForUtf8 (const char *, size_t);
+  static __attribute__((warn_unused_result)) inline int Length (const char *s) { return (s ? (int)strlen(s) : 0); }
+  static __attribute__((warn_unused_result)) inline int length (const char *s) { return (s ? (int)strlen(s) : 0); }
+  static __attribute__((warn_unused_result)) int Utf8Length (const char *s, int len=-1);
+  static __attribute__((warn_unused_result)) inline int utf8Length (const char *s, int len=-1) { return (int)Utf8Length(s, len); }
+  static __attribute__((warn_unused_result)) size_t ByteLengthForUtf8 (const char *, size_t);
   // get utf8 char; advances pointer, returns '?' on invalid char
-  static int Utf8GetChar (const char *&s);
-  static VStr FromUtf8Char (int);
+  static __attribute__((warn_unused_result)) int Utf8GetChar (const char *&s);
+  static __attribute__((warn_unused_result)) VStr FromUtf8Char (int);
 
-  static inline int Cmp (const char *S1, const char *S2) { return (S1 == S2 ? 0 : strcmp((S1 ? S1 : ""), (S2 ? S2 : ""))); }
-  static inline int NCmp (const char *S1, const char *S2, size_t N) { return (S1 == S2 ? 0 : strncmp((S1 ? S1 : ""), (S2 ? S2 : ""), N)); }
+  static __attribute__((warn_unused_result)) inline int Cmp (const char *S1, const char *S2) { return (S1 == S2 ? 0 : strcmp((S1 ? S1 : ""), (S2 ? S2 : ""))); }
+  static __attribute__((warn_unused_result)) inline int NCmp (const char *S1, const char *S2, size_t N) { return (S1 == S2 ? 0 : strncmp((S1 ? S1 : ""), (S2 ? S2 : ""), N)); }
 
-  static int ICmp (const char *s0, const char *s1);
-  static int NICmp (const char *s0, const char *s1, size_t max);
+  static __attribute__((warn_unused_result)) int ICmp (const char *s0, const char *s1);
+  static __attribute__((warn_unused_result)) int NICmp (const char *s0, const char *s1, size_t max);
 
-  static inline bool strequ (const char *S1, const char *S2) { return (Cmp(S1, S2) == 0); }
-  static inline bool strequCI (const char *S1, const char *S2) { return (ICmp(S1, S2) == 0); }
-  static inline bool nstrequ (const char *S1, const char *S2, size_t max) { return (NCmp(S1, S2, max) == 0); }
-  static inline bool nstrequCI (const char *S1, const char *S2, size_t max) { return (NICmp(S1, S2, max) == 0); }
+  static __attribute__((warn_unused_result)) inline bool strequ (const char *S1, const char *S2) { return (Cmp(S1, S2) == 0); }
+  static __attribute__((warn_unused_result)) inline bool strequCI (const char *S1, const char *S2) { return (ICmp(S1, S2) == 0); }
+  static __attribute__((warn_unused_result)) inline bool nstrequ (const char *S1, const char *S2, size_t max) { return (NCmp(S1, S2, max) == 0); }
+  static __attribute__((warn_unused_result)) inline bool nstrequCI (const char *S1, const char *S2, size_t max) { return (NICmp(S1, S2, max) == 0); }
 
-  static inline bool StrEqu (const char *S1, const char *S2) { return (Cmp(S1, S2) == 0); }
-  static inline bool StrEquCI (const char *S1, const char *S2) { return (ICmp(S1, S2) == 0); }
-  static inline bool NStrEqu (const char *S1, const char *S2, size_t max) { return (NCmp(S1, S2, max) == 0); }
-  static inline bool NStrEquCI (const char *S1, const char *S2, size_t max) { return (NICmp(S1, S2, max) == 0); }
+  static __attribute__((warn_unused_result)) inline bool StrEqu (const char *S1, const char *S2) { return (Cmp(S1, S2) == 0); }
+  static __attribute__((warn_unused_result)) inline bool StrEquCI (const char *S1, const char *S2) { return (ICmp(S1, S2) == 0); }
+  static __attribute__((warn_unused_result)) inline bool NStrEqu (const char *S1, const char *S2, size_t max) { return (NCmp(S1, S2, max) == 0); }
+  static __attribute__((warn_unused_result)) inline bool NStrEquCI (const char *S1, const char *S2, size_t max) { return (NICmp(S1, S2, max) == 0); }
 
-  static inline bool strEqu (const char *S1, const char *S2) { return (Cmp(S1, S2) == 0); }
-  static inline bool strEquCI (const char *S1, const char *S2) { return (ICmp(S1, S2) == 0); }
-  static inline bool nstrEqu (const char *S1, const char *S2, size_t max) { return (NCmp(S1, S2, max) == 0); }
-  static inline bool nstrEquCI (const char *S1, const char *S2, size_t max) { return (NICmp(S1, S2, max) == 0); }
+  static __attribute__((warn_unused_result)) inline bool strEqu (const char *S1, const char *S2) { return (Cmp(S1, S2) == 0); }
+  static __attribute__((warn_unused_result)) inline bool strEquCI (const char *S1, const char *S2) { return (ICmp(S1, S2) == 0); }
+  static __attribute__((warn_unused_result)) inline bool nstrEqu (const char *S1, const char *S2, size_t max) { return (NCmp(S1, S2, max) == 0); }
+  static __attribute__((warn_unused_result)) inline bool nstrEquCI (const char *S1, const char *S2, size_t max) { return (NICmp(S1, S2, max) == 0); }
 
   static inline void Cpy (char *dst, const char *src) {
     if (dst) { if (src) strcpy(dst, src); else *dst = 0; }
@@ -525,35 +526,35 @@ public:
     }
   }
 
-  static inline char ToUpper (char c) { return (c >= 'a' && c <= 'z' ? c-32 : c); }
-  static inline char ToLower (char c) { return (c >= 'A' && c <= 'Z' ? c+32 : c); }
+  static __attribute__((warn_unused_result)) inline char ToUpper (char c) { return (c >= 'a' && c <= 'z' ? c-32 : c); }
+  static __attribute__((warn_unused_result)) inline char ToLower (char c) { return (c >= 'A' && c <= 'Z' ? c+32 : c); }
 
-  static inline char toupper (char c) { return (c >= 'a' && c <= 'z' ? c-32 : c); }
-  static inline char tolower (char c) { return (c >= 'A' && c <= 'Z' ? c+32 : c); }
+  static __attribute__((warn_unused_result)) inline char toupper (char c) { return (c >= 'a' && c <= 'z' ? c-32 : c); }
+  static __attribute__((warn_unused_result)) inline char tolower (char c) { return (c >= 'A' && c <= 'Z' ? c+32 : c); }
 
   // append codepoint to this string, in utf-8
   VStr &utf8Append (vuint32 code);
 
-  VStr utf2win () const;
-  VStr win2utf () const;
+  __attribute__((warn_unused_result)) VStr utf2win () const;
+  __attribute__((warn_unused_result)) VStr win2utf () const;
 
-  VStr utf2koi () const;
-  VStr koi2utf () const;
+  __attribute__((warn_unused_result)) VStr utf2koi () const;
+  __attribute__((warn_unused_result)) VStr koi2utf () const;
 
-  VStr toLowerCase1251 () const;
-  VStr toUpperCase1251 () const;
+  __attribute__((warn_unused_result)) VStr toLowerCase1251 () const;
+  __attribute__((warn_unused_result)) VStr toUpperCase1251 () const;
 
-  VStr toLowerCaseKOI () const;
-  VStr toUpperCaseKOI () const;
+  __attribute__((warn_unused_result)) VStr toLowerCaseKOI () const;
+  __attribute__((warn_unused_result)) VStr toUpperCaseKOI () const;
 
-  inline bool equ1251CI (const VStr &s) const {
+  __attribute__((warn_unused_result)) inline bool equ1251CI (const VStr &s) const {
     size_t slen = (size_t)length();
     if (slen != (size_t)s.length()) return false;
     for (size_t f = 0; f < slen; ++f) if (locase1251(getData()[f]) != locase1251(s[f])) return false;
     return true;
   }
 
-  inline bool equ1251CI (const char *s) const {
+  __attribute__((warn_unused_result)) inline bool equ1251CI (const char *s) const {
     size_t slen = length();
     if (!s || !s[0]) return (slen == 0);
     if (slen != strlen(s)) return false;
@@ -561,14 +562,14 @@ public:
     return true;
   }
 
-  inline bool equKOICI (const VStr &s) const {
+  __attribute__((warn_unused_result)) inline bool equKOICI (const VStr &s) const {
     size_t slen = (size_t)length();
     if (slen != (size_t)s.length()) return false;
     for (size_t f = 0; f < slen; ++f) if (locaseKOI(getData()[f]) != locaseKOI(s[f])) return false;
     return true;
   }
 
-  inline bool equKOICI (const char *s) const {
+  __attribute__((warn_unused_result)) inline bool equKOICI (const char *s) const {
     size_t slen = length();
     if (!s || !s[0]) return (slen == 0);
     if (slen != strlen(s)) return false;
@@ -576,32 +577,32 @@ public:
     return true;
   }
 
-  inline bool fnameEqu1251CI (const VStr &s) const { return fnameEqu1251CI(s.getData()); }
-  bool fnameEqu1251CI (const char *s) const;
+  __attribute__((warn_unused_result)) inline bool fnameEqu1251CI (const VStr &s) const { return fnameEqu1251CI(s.getData()); }
+  __attribute__((warn_unused_result)) bool fnameEqu1251CI (const char *s) const;
 
-  inline bool fnameEquKOICI (const VStr &s) const { return fnameEquKOICI(s.getData()); }
-  bool fnameEquKOICI (const char *s) const;
+  __attribute__((warn_unused_result)) inline bool fnameEquKOICI (const VStr &s) const { return fnameEquKOICI(s.getData()); }
+  __attribute__((warn_unused_result)) bool fnameEquKOICI (const char *s) const;
 
-  static VStr buf2hex (const void *buf, int buflen);
+  static __attribute__((warn_unused_result)) VStr buf2hex (const void *buf, int buflen);
 
   inline bool convertInt (int *outv) const { return convertInt(getCStr(), outv); }
   inline bool convertFloat (float *outv) const { return convertFloat(getCStr(), outv); }
 
-  static bool globmatch (const char *str, const char *pat, bool caseSensitive=true);
-  inline bool globmatch (const char *pat, bool caseSensitive=true) const { return globmatch(getData(), pat, caseSensitive); }
-  inline bool globmatch (const VStr &pat, bool caseSensitive=true) const { return globmatch(getData(), *pat, caseSensitive); }
+  static __attribute__((warn_unused_result)) bool globmatch (const char *str, const char *pat, bool caseSensitive=true);
+  __attribute__((warn_unused_result)) inline bool globmatch (const char *pat, bool caseSensitive=true) const { return globmatch(getData(), pat, caseSensitive); }
+  __attribute__((warn_unused_result)) inline bool globmatch (const VStr &pat, bool caseSensitive=true) const { return globmatch(getData(), *pat, caseSensitive); }
 
-  static inline bool globMatch (const char *str, const char *pat, bool caseSensitive=true) { return globmatch(str, pat, caseSensitive); }
-  inline bool globMatch (const char *pat, bool caseSensitive=true) const { return globmatch(getData(), pat, caseSensitive); }
-  inline bool globMatch (const VStr &pat, bool caseSensitive=true) const { return globmatch(getData(), *pat, caseSensitive); }
+  static __attribute__((warn_unused_result)) inline bool globMatch (const char *str, const char *pat, bool caseSensitive=true) { return globmatch(str, pat, caseSensitive); }
+  __attribute__((warn_unused_result)) inline bool globMatch (const char *pat, bool caseSensitive=true) const { return globmatch(getData(), pat, caseSensitive); }
+  __attribute__((warn_unused_result)) inline bool globMatch (const VStr &pat, bool caseSensitive=true) const { return globmatch(getData(), *pat, caseSensitive); }
 
-  static inline bool globmatchCI (const char *str, const char *pat) { return globmatch(str, pat, false); }
-  inline bool globmatchCI (const char *pat) const { return globmatch(getData(), pat, false); }
-  inline bool globmatchCI (const VStr &pat) const { return globmatch(getData(), *pat, false); }
+  static __attribute__((warn_unused_result)) inline bool globmatchCI (const char *str, const char *pat) { return globmatch(str, pat, false); }
+  __attribute__((warn_unused_result)) inline bool globmatchCI (const char *pat) const { return globmatch(getData(), pat, false); }
+  __attribute__((warn_unused_result)) inline bool globmatchCI (const VStr &pat) const { return globmatch(getData(), *pat, false); }
 
-  static inline bool globMatchCI (const char *str, const char *pat) { return globmatch(str, pat, false); }
-  inline bool globMatchCI (const char *pat) const { return globmatch(getData(), pat, false); }
-  inline bool globMatchCI (const VStr &pat) const { return globmatch(getData(), *pat, false); }
+  static __attribute__((warn_unused_result)) inline bool globMatchCI (const char *str, const char *pat) { return globmatch(str, pat, false); }
+  __attribute__((warn_unused_result)) inline bool globMatchCI (const char *pat) const { return globmatch(getData(), pat, false); }
+  __attribute__((warn_unused_result)) inline bool globMatchCI (const VStr &pat) const { return globmatch(getData(), *pat, false); }
 
   // will not clear `args`
   void Tokenise (TArray <VStr> &args) const;
@@ -610,10 +611,10 @@ public:
   inline void tokenize (TArray <VStr> &args) const { Tokenise(args); }
 
 public:
-  static inline char wchar2win (vuint32 wc) { return (wc < 65536 ? wc2shitmap[wc] : '?'); }
-  static inline char wchar2koi (vuint32 wc) { return (wc < 65536 ? wc2koimap[wc] : '?'); }
+  static __attribute__((warn_unused_result)) inline char wchar2win (vuint32 wc) { return (wc < 65536 ? wc2shitmap[wc] : '?'); }
+  static __attribute__((warn_unused_result)) inline char wchar2koi (vuint32 wc) { return (wc < 65536 ? wc2koimap[wc] : '?'); }
 
-  static inline __attribute__((pure)) int digitInBase (char ch, int base=10) {
+  static __attribute__((warn_unused_result)) inline __attribute__((pure)) int digitInBase (char ch, int base=10) {
     if (base < 1 || base > 36 || ch < '0') return -1;
     if (base <= 10) return (ch < 48+base ? ch-48 : -1);
     if (ch >= '0' && ch <= '9') return ch-48;
@@ -622,7 +623,7 @@ public:
     return ch-65+10;
   }
 
-  static inline __attribute__((pure)) char upcase1251 (char ch) {
+  static __attribute__((warn_unused_result)) inline __attribute__((pure)) char upcase1251 (char ch) {
     if ((vuint8)ch < 128) return ch-(ch >= 'a' && ch <= 'z' ? 32 : 0);
     if ((vuint8)ch >= 224 /*&& (vuint8)ch <= 255*/) return (vuint8)ch-32;
     if ((vuint8)ch == 184 || (vuint8)ch == 186 || (vuint8)ch == 191) return (vuint8)ch-16;
@@ -630,7 +631,7 @@ public:
     return ch;
   }
 
-  static inline __attribute__((pure)) char locase1251 (char ch) {
+  static __attribute__((warn_unused_result)) inline __attribute__((pure)) char locase1251 (char ch) {
     if ((vuint8)ch < 128) return ch+(ch >= 'A' && ch <= 'Z' ? 32 : 0);
     if ((vuint8)ch >= 192 && (vuint8)ch <= 223) return (vuint8)ch+32;
     if ((vuint8)ch == 168 || (vuint8)ch == 170 || (vuint8)ch == 175) return (vuint8)ch+16;
@@ -638,7 +639,7 @@ public:
     return ch;
   }
 
-  static inline __attribute__((pure)) bool isAlpha2151 (char ch) {
+  static __attribute__((warn_unused_result)) inline __attribute__((pure)) bool isAlpha2151 (char ch) {
     if (ch >= 'A' && ch <= 'Z') return true;
     if (ch >= 'a' && ch <= 'z') return true;
     if ((vuint8)ch >= 191) return true;
@@ -651,7 +652,7 @@ public:
   }
 
   /* koi8-u */
-  static inline __attribute__((pure)) int locaseKOI (char ch) {
+  static __attribute__((warn_unused_result)) inline __attribute__((pure)) int locaseKOI (char ch) {
     if ((vuint8)ch < 128) {
       if (ch >= 'A' && ch <= 'Z') ch += 32;
     } else {
@@ -665,7 +666,7 @@ public:
     return ch;
   }
 
-  static inline __attribute__((pure)) int upcaseKOI (char ch) {
+  static __attribute__((warn_unused_result)) inline __attribute__((pure)) int upcaseKOI (char ch) {
     if ((vuint8)ch < 128) {
       if (ch >= 'a' && ch <= 'z') ch -= 32;
     } else {
@@ -679,7 +680,7 @@ public:
     return ch;
   }
 
-  static inline __attribute__((pure)) bool isAlphaKOI (char ch) {
+  static __attribute__((warn_unused_result)) inline __attribute__((pure)) bool isAlphaKOI (char ch) {
     if (ch >= 'A' && ch <= 'Z') return true;
     if (ch >= 'a' && ch <= 'z') return true;
     if ((vuint8)ch >= 192) return true;
@@ -691,14 +692,14 @@ public:
     return false;
   }
 
-  static inline __attribute__((pure)) bool isAlphaAscii (char ch) {
+  static __attribute__((warn_unused_result)) inline __attribute__((pure)) bool isAlphaAscii (char ch) {
     return
       (ch >= 'A' && ch <= 'Z') ||
       (ch >= 'a' && ch <= 'z');
   }
 
   // returns length of the following utf-8 sequence from its first char, or -1 for invalid first char
-  static inline __attribute__((pure)) int utf8CodeLen (char ch) {
+  static __attribute__((warn_unused_result)) inline __attribute__((pure)) int utf8CodeLen (char ch) {
     if ((vuint8)ch < 0x80) return 1;
     if ((ch&0xFE) == 0xFC) return 6;
     if ((ch&0xFC) == 0xF8) return 5;
@@ -708,7 +709,7 @@ public:
     return -1; // invalid
   }
 
-  static inline bool isPathDelimiter (const char ch) {
+  static __attribute__((warn_unused_result)) inline bool isPathDelimiter (const char ch) {
     #ifdef _WIN32
       return (ch == '/' || ch == '\\' || ch == ':');
     #else
@@ -716,7 +717,7 @@ public:
     #endif
   }
 
-  static bool isSafeDiskFileName (const VStr &fname) { return fname.isSafeDiskFileName(); }
+  static __attribute__((warn_unused_result)) bool isSafeDiskFileName (const VStr &fname) { return fname.isSafeDiskFileName(); }
 
 public:
   static const vuint16 cp1251[128];
@@ -766,11 +767,11 @@ public:
   inline void reset () { state = Accept; codepoint = 0; }
 
   // is current character valid and complete? take `codepoint` then
-  inline bool complete () const { return (state == Accept); }
+  __attribute__((warn_unused_result)) inline bool complete () const { return (state == Accept); }
   // is current character invalid and complete? take `Replacement` then
-  inline bool invalid () const { return (state == Reject); }
+  __attribute__((warn_unused_result)) inline bool invalid () const { return (state == Reject); }
   // is current character complete (valid or invaluid)? take `codepoint` then
-  inline bool hasCodePoint () const { return (state == Accept || state == Reject); }
+  __attribute__((warn_unused_result)) inline bool hasCodePoint () const { return (state == Accept || state == Reject); }
 
   // process another input byte; returns `true` if codepoint is complete
   inline bool put (vuint8 c) {
