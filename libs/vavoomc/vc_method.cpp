@@ -430,19 +430,16 @@ void VMethod::Emit () {
   NumLocals = ec.localsofs;
   ec.EndCode();
 
-  if (VMemberBase::doAsmDump) DumpAsm();
+       if (VMemberBase::doAsmDump) DumpAsm();
+  else if (VObject::cliAsmDumpMethods.has(VStr(Name))) DumpAsm();
 
   OptimizeInstructions();
 
   // and dump it again for optimized case
-  if (VMemberBase::doAsmDump) DumpAsm();
+       if (VMemberBase::doAsmDump) DumpAsm();
+  else if (VObject::cliAsmDumpMethods.has(VStr(Name))) DumpAsm();
 
-  // clear it here, 'cause why not?
-  /*
-  delete Statement;
-  Statement = nullptr;
-  */
-  //fprintf(stderr, "*** EMIT001: <%s> (%s); ParamsSize=%d; NumLocals=%d; NumParams=%d\n", *GetFullName(), *Loc.toStringNoCol(), ParamsSize, NumLocals, NumParams);
+  // do not clear statement list here (it will be done in `CompilerShutdown()`)
 }
 
 
@@ -466,7 +463,7 @@ int VMethod::FindArgByName (VName aname) const {
 //
 //  VMethod::DumpAsm
 //
-//  Disassembles a method.
+//  disassembles a method
 //
 //==========================================================================
 void VMethod::DumpAsm () {
@@ -474,11 +471,11 @@ void VMethod::DumpAsm () {
   while (PM->MemberType != MEMBER_Package) PM = PM->Outer;
   VPackage *Package = (VPackage *)PM;
 
-  GLog.Logf(NAME_Dev, "--------------------------------------------");
-  GLog.Logf(NAME_Dev, "Dump ASM function %s.%s (%d instructions)\n", *Outer->Name, *Name, (Flags&FUNC_Native ? 0 : Instructions.Num()));
+  GLog.Logf(NAME_Debug, "--------------------------------------------");
+  GLog.Logf(NAME_Debug, "Dump ASM function %s.%s (%d instructions)", *Outer->Name, *Name, (Flags&FUNC_Native ? 0 : Instructions.Num()));
   if (Flags&FUNC_Native) {
     //  Builtin function
-    GLog.Logf(NAME_Dev, "Builtin function.");
+    GLog.Logf(NAME_Debug, "*** Builtin function.");
     return;
   }
   for (int s = 0; s < Instructions.Num(); ++s) {
@@ -534,6 +531,7 @@ void VMethod::DumpAsm () {
         break;
       case OPCARGS_VTableIndex_Byte:
       case OPCARGS_FieldOffset_Byte:
+      case OPCARGS_FieldOffsetS_Byte:
         if (Instructions[s].Member) disstr += va(" %s %d", *Instructions[s].Member->Name, Instructions[s].Arg2); else disstr += va(" (0)%d", Instructions[s].Arg2);
         break;
       case OPCARGS_TypeSize:
@@ -560,7 +558,7 @@ void VMethod::DumpAsm () {
         disstr += va(" %s (%d)", *Instructions[s].TypeArg.GetName(), Instructions[s].Arg2);
         break;
     }
-    GLog.Logf(NAME_Dev, "%s", *disstr);
+    GLog.Logf(NAME_Debug, "%s", *disstr);
   }
 }
 

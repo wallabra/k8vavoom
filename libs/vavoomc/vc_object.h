@@ -388,6 +388,8 @@ public:
   static int cliDumpNameTables; // default is false
   static int cliAllErrorsAreFatal; // default is false
 
+  static TMap<VStrCI, bool> cliAsmDumpMethods;
+
 #if defined(VCC_STANDALONE_EXECUTOR)
 # define VCC_OBJECT_DEFAULT_SKIP_REPLACE_ON_SPAWN  false
 #else

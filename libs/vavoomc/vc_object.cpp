@@ -62,6 +62,7 @@ int VObject::cliShowGCMessages = 0; // default is false
 int VObject::cliShowIODebugMessages = 0; // default is false
 int VObject::cliDumpNameTables = 0; // default is false
 int VObject::cliAllErrorsAreFatal = 0; // default is false
+TMap<VStrCI, bool> VObject::cliAsmDumpMethods;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -533,6 +534,14 @@ void VObject::StaticInitOptions (VParsedArgs &pargs) {
   pargs.RegisterFlagReset("-vc-legacy-korax-no-warnings", nullptr, &VMemberBase::koraxCompatibilityWarnings);
 
   pargs.RegisterFlagSet("-vc-gc-debug", nullptr, &VObject::GCDebugMessagesAllowed);
+
+  pargs.RegisterCallback("-vc-asm-dump-methods", nullptr, [] (VArgs &args, int idx) -> int {
+    for (++idx; !VParsedArgs::IsArgBreaker(args, idx); ++idx) {
+      VStr mn = args[idx];
+      if (!mn.isEmpty()) cliAsmDumpMethods.put(mn, true);
+    }
+    return idx;
+  });
 }
 
 
@@ -568,9 +577,9 @@ VObject *VObject::StaticSpawnObject (VClass *AClass, bool skipReplacement) {
 
     // copy values from the default object
     vassert(AClass->Defaults);
-    //GLog.Logf(NAME_Dev, "000: INITIALIZING fields of `%s`...", AClass->GetName());
+    //GLog.Logf(NAME_Debug, "000: INITIALIZING fields of `%s`...", AClass->GetName());
     AClass->CopyObject(AClass->Defaults, (vuint8 *)Obj);
-    //GLog.Logf(NAME_Dev, "001: DONE INITIALIZING fields of `%s`...", AClass->GetName());
+    //GLog.Logf(NAME_Debug, "001: DONE INITIALIZING fields of `%s`...", AClass->GetName());
 
     // set up object fields
     Obj->Class = AClass;
