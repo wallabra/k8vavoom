@@ -35,6 +35,7 @@
 VZipStreamReader::VZipStreamReader (VStream *ASrcStream, vuint32 ACompressedSize, vuint32 AUncompressedSize, Type atype)
   : VStream()
   , srcStream(ASrcStream)
+  , rdlock(nullptr)
   , initialised(false)
   , compressedSize(ACompressedSize)
   , uncompressedSize(AUncompressedSize)
@@ -62,6 +63,7 @@ VZipStreamReader::VZipStreamReader (VStream *ASrcStream, vuint32 ACompressedSize
 VZipStreamReader::VZipStreamReader (VStr fname, VStream *ASrcStream, vuint32 ACompressedSize, vuint32 AUncompressedSize, Type atype)
   : VStream()
   , srcStream(ASrcStream)
+  , rdlock(nullptr)
   , initialised(false)
   , compressedSize(ACompressedSize)
   , uncompressedSize(AUncompressedSize)
@@ -90,6 +92,7 @@ VZipStreamReader::VZipStreamReader (VStr fname, VStream *ASrcStream, vuint32 ACo
 VZipStreamReader::VZipStreamReader (bool useCurrSrcPos, VStream *ASrcStream, vuint32 ACompressedSize, vuint32 AUncompressedSize, Type atype)
   : VStream()
   , srcStream(ASrcStream)
+  , rdlock(nullptr)
   , initialised(false)
   , compressedSize(ACompressedSize)
   , uncompressedSize(AUncompressedSize)
@@ -118,6 +121,122 @@ VZipStreamReader::VZipStreamReader (bool useCurrSrcPos, VStream *ASrcStream, vui
 VZipStreamReader::VZipStreamReader (bool useCurrSrcPos, VStr fname, VStream *ASrcStream, vuint32 ACompressedSize, vuint32 AUncompressedSize, Type atype)
   : VStream()
   , srcStream(ASrcStream)
+  , rdlock(nullptr)
+  , initialised(false)
+  , compressedSize(ACompressedSize)
+  , uncompressedSize(AUncompressedSize)
+  , nextpos(0)
+  , currpos(0)
+  , strmType(atype)
+  , origCrc32(0)
+  , currCrc32(0)
+  , doCrcCheck(false)
+  , forceRewind(false)
+  , mFileName(fname)
+  , doSeekToSrcStart(!useCurrSrcPos)
+  , wholeBuf(nullptr)
+  , wholeSize(-2)
+{
+  vassert(ASrcStream);
+  initialize();
+}
+
+
+//==========================================================================
+//
+//  VZipStreamReader::VZipStreamReader
+//
+//==========================================================================
+VZipStreamReader::VZipStreamReader (mythread_mutex *ardlock, VStream *ASrcStream, vuint32 ACompressedSize, vuint32 AUncompressedSize, Type atype)
+  : VStream()
+  , srcStream(ASrcStream)
+  , rdlock(ardlock)
+  , initialised(false)
+  , compressedSize(ACompressedSize)
+  , uncompressedSize(AUncompressedSize)
+  , nextpos(0)
+  , currpos(0)
+  , strmType(atype)
+  , origCrc32(0)
+  , currCrc32(0)
+  , doCrcCheck(false)
+  , forceRewind(false)
+  , mFileName(ASrcStream ? ASrcStream->GetName() : VStr::EmptyString)
+  , doSeekToSrcStart(true)
+  , wholeBuf(nullptr)
+  , wholeSize(-2)
+{
+  initialize();
+}
+
+
+//==========================================================================
+//
+//  VZipStreamReader::VZipStreamReader
+//
+//==========================================================================
+VZipStreamReader::VZipStreamReader (mythread_mutex *ardlock, VStr fname, VStream *ASrcStream, vuint32 ACompressedSize, vuint32 AUncompressedSize, Type atype)
+  : VStream()
+  , srcStream(ASrcStream)
+  , rdlock(ardlock)
+  , initialised(false)
+  , compressedSize(ACompressedSize)
+  , uncompressedSize(AUncompressedSize)
+  , nextpos(0)
+  , currpos(0)
+  , strmType(atype)
+  , origCrc32(0)
+  , currCrc32(0)
+  , doCrcCheck(false)
+  , forceRewind(false)
+  , mFileName(fname)
+  , doSeekToSrcStart(true)
+  , wholeBuf(nullptr)
+  , wholeSize(-2)
+{
+  vassert(ASrcStream);
+  initialize();
+}
+
+
+//==========================================================================
+//
+//  VZipStreamReader::VZipStreamReader
+//
+//==========================================================================
+VZipStreamReader::VZipStreamReader (mythread_mutex *ardlock, bool useCurrSrcPos, VStream *ASrcStream, vuint32 ACompressedSize, vuint32 AUncompressedSize, Type atype)
+  : VStream()
+  , srcStream(ASrcStream)
+  , rdlock(ardlock)
+  , initialised(false)
+  , compressedSize(ACompressedSize)
+  , uncompressedSize(AUncompressedSize)
+  , nextpos(0)
+  , currpos(0)
+  , strmType(atype)
+  , origCrc32(0)
+  , currCrc32(0)
+  , doCrcCheck(false)
+  , forceRewind(false)
+  , mFileName(ASrcStream ? ASrcStream->GetName() : VStr::EmptyString)
+  , doSeekToSrcStart(!useCurrSrcPos)
+  , wholeBuf(nullptr)
+  , wholeSize(-2)
+{
+  vassert(ASrcStream);
+  initialize();
+}
+
+
+//==========================================================================
+//
+//  VZipStreamReader::VZipStreamReader
+//
+//==========================================================================
+VZipStreamReader::VZipStreamReader (mythread_mutex *ardlock, bool useCurrSrcPos, VStr fname, VStream *ASrcStream, vuint32 ACompressedSize, vuint32 AUncompressedSize, Type atype)
+  : VStream()
+  , srcStream(ASrcStream)
+  , rdlock(ardlock)
   , initialised(false)
   , compressedSize(ACompressedSize)
   , uncompressedSize(AUncompressedSize)
@@ -164,18 +283,35 @@ void VZipStreamReader::initialize () {
 
   if (srcStream) {
     // read in some initial data
-    if (doSeekToSrcStart) {
-      srcStream->Seek(0);
-      stpos = 0;
-    } else {
-      stpos = srcStream->Tell();
-    }
-    if (compressedSize == UNKNOWN_SIZE) compressedSize = (vuint32)(srcStream->TotalSize()-stpos);
     vint32 bytesToRead = BUFFER_SIZE;
-    if (bytesToRead > (int)compressedSize) bytesToRead = (int)compressedSize;
-    srcStream->Seek(stpos);
-    srcStream->Serialise(buffer, bytesToRead);
-    if (srcStream->IsError()) {
+    bool strmerr = false;
+    bool seekerr = false;
+    {
+      MyThreadLocker locker(rdlock);
+      if (doSeekToSrcStart) {
+        srcStream->Seek(0);
+        stpos = 0;
+      } else {
+        stpos = srcStream->Tell();
+      }
+      seekerr = srcStream->IsError();
+      if (!seekerr) {
+        if (compressedSize == UNKNOWN_SIZE) compressedSize = (vuint32)(srcStream->TotalSize()-stpos);
+        if (bytesToRead > (int)compressedSize) bytesToRead = (int)compressedSize;
+        srcStream->Seek(stpos);
+        seekerr = srcStream->IsError();
+        if (!seekerr) {
+          srcStream->Serialise(buffer, bytesToRead);
+          strmerr = srcStream->IsError();
+        }
+      }
+    }
+    if (seekerr) {
+      GLog.WriteLine(NAME_Error, "%s", "Error seeking in source inflated stream");
+      setError();
+      return;
+    }
+    if (strmerr) {
       GLog.WriteLine(NAME_Error, "%s", "Error reading source inflated stream");
       setError();
       return;
@@ -271,7 +407,12 @@ int VZipStreamReader::readSomeBytes (void *buf, int len) {
   if (len <= 0) return -1;
   if (!srcStream) return -1;
   if (bError) return -1;
-  if (srcStream->IsError()) return -1;
+  /*
+  {
+    MyThreadLocker locker(rdlock);
+    if (srcStream->IsError()) return -1;
+  }
+  */
 
   zStream.next_out = (Bytef *)buf;
   zStream.avail_out = len;
@@ -281,15 +422,27 @@ int VZipStreamReader::readSomeBytes (void *buf, int len) {
     if (zStream.avail_in == 0) {
       vint32 left = (int)compressedSize-(srccurpos-stpos);
       if (left <= 0) break; // eof
-      srcStream->Seek(srccurpos);
-      if (srcStream->IsError()) {
+      vint32 bytesToRead = BUFFER_SIZE;
+      bool strmerr = false;
+      bool seekerr = false;
+      {
+        MyThreadLocker locker(rdlock);
+        strmerr = srcStream->IsError();
+        if (!strmerr) {
+          srcStream->Seek(srccurpos);
+          seekerr = srcStream->IsError();
+          if (!seekerr) {
+            if (bytesToRead > left) bytesToRead = left;
+            srcStream->Serialise(buffer, bytesToRead);
+            strmerr = srcStream->IsError();
+          }
+        }
+      }
+      if (seekerr) {
         GLog.WriteLine(NAME_Error, "%s", "Error seeking in source inflated stream");
         return -1;
       }
-      vint32 bytesToRead = BUFFER_SIZE;
-      if (bytesToRead > left) bytesToRead = left;
-      srcStream->Serialise(buffer, bytesToRead);
-      if (srcStream->IsError()) {
+      if (strmerr) {
         GLog.WriteLine(NAME_Error, "%s", "Error reading source inflated stream data");
         return -1;
       }

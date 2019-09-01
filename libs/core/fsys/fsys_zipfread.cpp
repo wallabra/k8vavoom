@@ -83,9 +83,9 @@ private:
 
 private:
   void setError ();
-  bool CheckCurrentFileCoherencyHeader (vuint32 *, vuint32);
-  bool LzmaRestart (); // `pos_in_zipfile` must be valid
-  void readBytes (void *buf, int length);
+  bool CheckCurrentFileCoherencyHeader (vuint32 *, vuint32); // does locking
+  bool LzmaRestart (); // `pos_in_zipfile` must be valid; does locking
+  void readBytes (void *buf, int length); // does locking, if necessary
   void cacheAllData ();
 
 public:
@@ -118,11 +118,10 @@ VZipFileReader::VZipFileReader (VStr afname, VStream *InStream, vuint32 BytesBef
   , currpos(0)
 {
   // open the file in the zip
+  // `rdlock` is not locked here
   usezlib = true;
 
   if (!rdlock) Sys_Error("VZipFileReader::VZipFileReader: empty lock!");
-
-  //MyThreadLocker locker(rdlock);
 
   vuint32 iSizeVar;
   if (!CheckCurrentFileCoherencyHeader(&iSizeVar, BytesBeforeZipFile)) {
@@ -224,8 +223,6 @@ void VZipFileReader::setError () {
 //
 //==========================================================================
 bool VZipFileReader::Close () {
-  //MyThreadLocker locker(rdlock);
-
   if (wholeBuf) { Z_Free(wholeBuf); wholeBuf = nullptr; }
   wholeSize = -2;
 
