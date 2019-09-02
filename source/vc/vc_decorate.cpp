@@ -39,6 +39,13 @@ static int disableBloodReplaces = 0;
 static int bloodOverrideAllowed = 0;
 
 
+/*
+static inline __attribute__((unused)) vuint32 GetTypeHashCI (const VStr &s) { return fnvHashStrCI(*s); }
+static inline __attribute__((unused)) vuint32 GetTypeHashCI (const char *s) { return fnvHashStrCI(s); }
+static inline __attribute__((unused)) vuint32 GetTypeHashCI (VName s) { return fnvHashStrCI(*s); }
+*/
+
+
 enum {
   PROPS_HASH_SIZE = 256,
   FLAGS_HASH_SIZE = 256,
@@ -477,6 +484,7 @@ struct VFlagDef {
   VName NFalse;
 
   bool ShowWarning;
+  bool RelinkToWorld; // for decorate actions
 
   inline void SetField (VClass *Class, const char *FieldName) {
     Field = Class->FindFieldChecked(FieldName);
@@ -500,7 +508,7 @@ struct VFlagList {
   VPropDef &NewProp (vuint8 Type, VXmlNode *PN, bool checkUnsupported=false) {
     VPropDef &P = Props.Alloc();
     P.Type = Type;
-    P.Name = *PN->GetAttribute("name").ToLower();
+    P.Name = VName(*PN->GetAttribute("name"), VName::AddLower);
     if (checkUnsupported && PN->HasAttribute("warning")) {
       VStr bs = PN->GetAttribute("warning");
       if (bs.strEquCI("true") || bs.strEquCI("tan")) P.ShowWarning = true;
@@ -514,10 +522,17 @@ struct VFlagList {
   VFlagDef &NewFlag (vuint8 Type, VXmlNode *PN, bool checkUnsupported=false) {
     VFlagDef &F = Flags.Alloc();
     F.Type = Type;
-    F.Name = *PN->GetAttribute("name").ToLower();
+    F.Name = VName(*PN->GetAttribute("name"), VName::AddLower);
     if (checkUnsupported && PN->HasAttribute("warning")) {
       VStr bs = PN->GetAttribute("warning");
       if (bs.strEquCI("true") || bs.strEquCI("tan")) F.ShowWarning = true;
+    }
+    if (PN->HasAttribute("relinktoworld")) {
+      VStr bs = PN->GetAttribute("relinktoworld");
+      if (bs.strEquCI("true") || bs.strEquCI("tan")) {
+        F.RelinkToWorld = true;
+        //GCon->Logf(NAME_Debug, "RELINK FLAG '%s'", *F.Name);
+      }
     }
     int HashIndex = GetTypeHash(F.Name)&(FLAGS_HASH_SIZE-1);
     F.HashNext = FlagsHash[HashIndex];
@@ -1236,41 +1251,47 @@ static bool ParseFlag (VScriptParser *sc, VClass *Class, bool Value, TArray<VCla
   auto floc = sc->GetLoc(); // for warnings
   // get full name of the flag
   sc->ExpectIdentifier();
-  VName FlagName(*sc->String.ToLower());
-  VName ClassFilter(NAME_None);
+  VStr ClassFilter;
+  VStr Flag = sc->String;
   if (sc->Check(".")) {
+    ClassFilter = Flag;
     sc->ExpectIdentifier();
-    ClassFilter = FlagName;
-    FlagName = *sc->String.ToLower();
+    Flag = sc->String;
   }
-  VObject *DefObj = (VObject*)Class->Defaults;
 
-  for (int j = 0; j < FlagList.Num(); ++j) {
-    VFlagList &ClassDef = FlagList[j];
-    if (ClassFilter != NAME_None && VStr::ICmp(*ClassDef.Class->/*LowerCase*/Name, *ClassFilter) != 0) continue;
-    if (!Class->IsChildOf(ClassDef.Class)) continue;
-    for (int i = ClassDef.FlagsHash[GetTypeHash(FlagName)&(FLAGS_HASH_SIZE-1)]; i != -1; i = ClassDef.Flags[i].HashNext) {
-      const VFlagDef &F = ClassDef.Flags[i];
-      if (FlagName == F.Name) {
-        switch (F.Type) {
-          case FLAG_Bool: F.Field->SetBool(DefObj, Value); break;
-          case FLAG_BoolInverted: F.Field->SetBool(DefObj, !Value); break;
-          case FLAG_Unsupported: if (F.ShowWarning || dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Unsupported flag %s in %s", *floc.toStringNoCol(), *FlagName, Class->GetName()); break;
-          case FLAG_Byte: F.Field->SetByte(DefObj, Value ? F.BTrue : F.BFalse); break;
-          case FLAG_Float: F.Field->SetFloat(DefObj, Value ? F.FTrue : F.FFalse); break;
-          case FLAG_Name: F.Field->SetName(DefObj, Value ? F.NTrue : F.NFalse); break;
-          case FLAG_Class: AddClassFixup(Class, F.Field, (Value ? *F.NTrue : *F.NFalse), ClassFixups); break;
-          case FLAG_NoClip: F.Field->SetBool(DefObj, !Value); F.Field2->SetBool(DefObj, !Value); break;
+  VName FlagName(*Flag, VName::FindLower);
+  //GCon->Logf(NAME_Debug, "ParseFlag: <%s> (%s) (cf=%s; fn=%s)", *sc->String, *Flag, *ClassFilter, *FlagName);
+  if (FlagName != NAME_None) {
+    for (auto &&ClassDef : FlagList) {
+      //VFlagList &ClassDef = FlagList[j];
+      if (!Class->IsChildOf(ClassDef.Class)) continue;
+      if (!ClassFilter.isEmpty() && !ClassFilter.strEquCI(*ClassDef.Class->Name)) continue;
+      for (int i = ClassDef.FlagsHash[GetTypeHash(FlagName)&(FLAGS_HASH_SIZE-1)]; i != -1; i = ClassDef.Flags[i].HashNext) {
+        const VFlagDef &F = ClassDef.Flags[i];
+        if (FlagName == F.Name) {
+          VObject *DefObj = (VObject *)Class->Defaults;
+          switch (F.Type) {
+            case FLAG_Bool: F.Field->SetBool(DefObj, Value); break;
+            case FLAG_BoolInverted: F.Field->SetBool(DefObj, !Value); break;
+            case FLAG_Unsupported: if (F.ShowWarning || dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Unsupported flag %s in %s", *floc.toStringNoCol(), *Flag, Class->GetName()); break;
+            case FLAG_Byte: F.Field->SetByte(DefObj, Value ? F.BTrue : F.BFalse); break;
+            case FLAG_Float: F.Field->SetFloat(DefObj, Value ? F.FTrue : F.FFalse); break;
+            case FLAG_Name: F.Field->SetName(DefObj, Value ? F.NTrue : F.NFalse); break;
+            case FLAG_Class: AddClassFixup(Class, F.Field, (Value ? *F.NTrue : *F.NFalse), ClassFixups); break;
+            case FLAG_NoClip: F.Field->SetBool(DefObj, !Value); F.Field2->SetBool(DefObj, !Value); break;
+          }
+          return true;
         }
-        return true;
       }
     }
   }
+
   if (decorate_fail_on_unknown) {
-    sc->Error(va("Unknown flag \"%s\"", *FlagName));
+    sc->Error(va("Unknown flag \"%s\"", *Flag));
     return false;
   }
-  GLog.Logf(NAME_Warning, "%s: Unknown flag \"%s\"", *floc.toStringNoCol(), *FlagName);
+
+  GLog.Logf(NAME_Warning, "%s: Unknown flag \"%s\"", *floc.toStringNoCol(), *Flag);
   return true;
 }
 
@@ -3535,78 +3556,59 @@ static TMap<VStr, bool> decoFlagsWarned;
 //
 //==========================================================================
 bool VEntity::SetDecorateFlag (VStr Flag, bool Value) {
-  // this ("special") flag means "actor can be picked up
-  // gzdoom does something with it, we cannot pickup anything except inventory anyway
-  // (and cannot reset this flag on inventory)
-  /*no, it is implemented
-  if (Flag.strEquCI("special") == 0) {
-    VClass *invCls = VClass::FindClass("Inventory");
-    if (invCls && GetClass()->IsChildOf(invCls)) {
-      if (Value) return true;
-    } else {
-      if (!Value) return true;
-    }
-    GCon->Logf(NAME_Debug, "setting 'SPECIAL' flag for `%s` to %d", *GetClass()->GetFullName(), (int)Value);
-    return false;
-  }
-  */
-
-  VName FlagName;
-  VName ClassFilter(NAME_None);
-  int DotPos = Flag.IndexOf('.');
+  VStr ClassFilter;
+  int DotPos = Flag.indexOf('.');
   if (DotPos >= 0) {
-    ClassFilter = *VStr(Flag, 0, DotPos).ToLower();
-    FlagName = *VStr(Flag, DotPos+1, Flag.Length()-DotPos-1).ToLower();
-  } else {
-    FlagName = *Flag.ToLower();
+    ClassFilter = Flag.left(DotPos);
+    Flag.chopLeft(DotPos+1);
   }
 
-  //if (VStr::ICmp(*FlagName, "noblockmap") == 0) return false; // cannot change it
-  //GLog.Logf("SETFLAG '%s'(%s) on '%s'", *FlagName, *Flag, *GetClass()->GetFullName());
-  //return false;
-
-  for (int j = 0; j < FlagList.Num(); ++j) {
-    VFlagList &ClassDef = FlagList[j];
-    if (ClassFilter != NAME_None && VStr::ICmp(*ClassDef.Class->/*LowerCase*/Name, *ClassFilter) != 0) continue;
-    if (!IsA(ClassDef.Class)) continue;
-    for (int i = ClassDef.FlagsHash[GetTypeHash(FlagName)&(FLAGS_HASH_SIZE-1)]; i != -1; i = ClassDef.Flags[i].HashNext) {
-      const VFlagDef &F = ClassDef.Flags[i];
-      if (FlagName == F.Name) {
-        //GLog.Logf("SETFLAG '%s'(%s) on '%s'", *FlagName, *Flag, *GetClass()->GetFullName());
-        //FIXME: unlink only for flags that needs it!
-        UnlinkFromWorld(); // some flags can affect word linking, so unlink here...
-        bool didset = true;
-        switch (F.Type) {
-          case FLAG_Bool: F.Field->SetBool(this, Value); break;
-          case FLAG_BoolInverted: F.Field->SetBool(this, !Value); break;
-          case FLAG_Unsupported:
-            if (F.ShowWarning || dbg_show_decorate_unsupported) {
-              VStr ws = va("Setting unsupported flag '%s' in `%s` to `%s`", *Flag, GetClass()->GetName(), (Value ? "true" : "false"));
-              if (!decoFlagsWarned.has(ws)) {
-                decoFlagsWarned.put(ws, true);
-                GLog.Log(NAME_Warning, *ws);
+  VName FlagName(*Flag, VName::FindLower);
+  if (FlagName != NAME_None) {
+    for (auto &&ClassDef : FlagList) {
+      //VFlagList &ClassDef = FlagList[j];
+      if (!IsA(ClassDef.Class)) continue;
+      if (!ClassFilter.isEmpty() && !ClassFilter.strEquCI(*ClassDef.Class->Name)) continue;
+      for (int i = ClassDef.FlagsHash[GetTypeHash(FlagName)&(FLAGS_HASH_SIZE-1)]; i != -1; i = ClassDef.Flags[i].HashNext) {
+        const VFlagDef &F = ClassDef.Flags[i];
+        if (FlagName == F.Name) {
+          //GLog.Logf("SETFLAG '%s'(%s) on '%s'", *Flag, *ClassFilter, *GetClass()->GetFullName());
+          //FIXME: unlink only for flags that needs it!
+          if (F.RelinkToWorld) UnlinkFromWorld(); // some flags can affect word linking, so unlink here...
+          bool didset = true;
+          switch (F.Type) {
+            case FLAG_Bool: F.Field->SetBool(this, Value); break;
+            case FLAG_BoolInverted: F.Field->SetBool(this, !Value); break;
+            case FLAG_Unsupported:
+              if (F.ShowWarning || dbg_show_decorate_unsupported) {
+                VStr ws = va("Setting unsupported flag '%s' in `%s` to `%s`", *Flag, GetClass()->GetName(), (Value ? "true" : "false"));
+                if (!decoFlagsWarned.has(ws)) {
+                  decoFlagsWarned.put(ws, true);
+                  GLog.Log(NAME_Warning, *ws);
+                }
               }
-            }
-            break;
-          case FLAG_Byte: F.Field->SetByte(this, Value ? F.BTrue : F.BFalse); break;
-          case FLAG_Float: F.Field->SetFloat(this, Value ? F.FTrue : F.FFalse); break;
-          case FLAG_Name: F.Field->SetName(this, Value ? F.NTrue : F.NFalse); break;
-          case FLAG_Class:
-            F.Field->SetClass(this, Value ?
-                F.NTrue != NAME_None ? VClass::FindClass(*F.NTrue) : nullptr :
-                F.NFalse != NAME_None ? VClass::FindClass(*F.NFalse) : nullptr);
-            break;
-          case FLAG_NoClip:
-            F.Field->SetBool(this, !Value);
-            F.Field2->SetBool(this, !Value);
-            break;
-          default: didset = false;
+              break;
+            case FLAG_Byte: F.Field->SetByte(this, Value ? F.BTrue : F.BFalse); break;
+            case FLAG_Float: F.Field->SetFloat(this, Value ? F.FTrue : F.FFalse); break;
+            case FLAG_Name: F.Field->SetName(this, Value ? F.NTrue : F.NFalse); break;
+            case FLAG_Class:
+              F.Field->SetClass(this, Value ?
+                  F.NTrue != NAME_None ? VClass::FindClass(*F.NTrue) : nullptr :
+                  F.NFalse != NAME_None ? VClass::FindClass(*F.NFalse) : nullptr);
+              break;
+            case FLAG_NoClip:
+              F.Field->SetBool(this, !Value);
+              F.Field2->SetBool(this, !Value);
+              break;
+            default: didset = false;
+          }
+          if (F.RelinkToWorld) LinkToWorld(true); // ...and link back again
+          return didset;
         }
-        LinkToWorld(true); // ...and link back again
-        return didset;
       }
     }
   }
+
   {
     VStr ws = va("Setting unknown flag '%s' in `%s` to `%s`", *Flag, GetClass()->GetName(), (Value ? "true" : "false"));
     if (!decoFlagsWarned.has(ws)) {
@@ -3624,56 +3626,46 @@ bool VEntity::SetDecorateFlag (VStr Flag, bool Value) {
 //
 //==========================================================================
 bool VEntity::GetDecorateFlag (VStr Flag) {
-  // this ("special") flag means "actor can be picked up
-  // gzdoom does something with it, we cannot pickup anything except inventory anyway
-  // (and cannot reset this flag on inventory)
-  /*no, it is implemented
-  if (Flag.strEquCI("special") == 0) {
-    //GCon->Logf(NAME_Debug, "getting 'SPECIAL' flag for `%s`", *GetClass()->GetFullName());
-    // inventory is always pickable, others aren't
-    VClass *invCls = VClass::FindClass("Inventory");
-    return (invCls && GetClass()->IsChildOf(invCls));
-  }
-  */
-
-  VName FlagName;
-  VName ClassFilter(NAME_None);
-  int DotPos = Flag.IndexOf('.');
+  VStr ClassFilter;
+  int DotPos = Flag.indexOf('.');
   if (DotPos >= 0) {
-    ClassFilter = *VStr(Flag, 0, DotPos).ToLower();
-    FlagName = *VStr(Flag, DotPos+1, Flag.Length()-DotPos-1).ToLower();
-  } else {
-    FlagName = *Flag.ToLower();
+    ClassFilter = Flag.left(DotPos);
+    Flag.chopLeft(DotPos+1);
   }
-  for (int j = 0; j < FlagList.Num(); ++j) {
-    VFlagList &ClassDef = FlagList[j];
-    if (ClassFilter != NAME_None && VStr::ICmp(*ClassDef.Class->/*LowerCase*/Name, *ClassFilter) != 0) continue;
-    if (!IsA(ClassDef.Class)) continue;
-    for (int i = ClassDef.FlagsHash[GetTypeHash(FlagName)&(FLAGS_HASH_SIZE-1)]; i != -1; i = ClassDef.Flags[i].HashNext) {
-      const VFlagDef &F = ClassDef.Flags[i];
-      if (FlagName == F.Name) {
-        switch (F.Type) {
-          case FLAG_Bool: return F.Field->GetBool(this);
-          case FLAG_BoolInverted: return !F.Field->GetBool(this);
-          case FLAG_Unsupported:
-            if (F.ShowWarning || dbg_show_decorate_unsupported) {
-              VStr ws = va("Getting unsupported flag '%s' in `%s`", *Flag, GetClass()->GetName());
-              if (!decoFlagsWarned.has(ws)) {
-                decoFlagsWarned.put(ws, true);
-                GLog.Log(NAME_Warning, *ws);
+
+  VName FlagName(*Flag, VName::FindLower);
+  if (FlagName != NAME_None) {
+    for (auto &&ClassDef : FlagList) {
+      //VFlagList &ClassDef = FlagList[j];
+      if (!IsA(ClassDef.Class)) continue;
+      if (!ClassFilter.isEmpty() && !ClassFilter.strEquCI(*ClassDef.Class->Name)) continue;
+      for (int i = ClassDef.FlagsHash[GetTypeHash(FlagName)&(FLAGS_HASH_SIZE-1)]; i != -1; i = ClassDef.Flags[i].HashNext) {
+        const VFlagDef &F = ClassDef.Flags[i];
+        if (FlagName == F.Name) {
+          switch (F.Type) {
+            case FLAG_Bool: return F.Field->GetBool(this);
+            case FLAG_BoolInverted: return !F.Field->GetBool(this);
+            case FLAG_Unsupported:
+              if (F.ShowWarning || dbg_show_decorate_unsupported) {
+                VStr ws = va("Getting unsupported flag '%s' in `%s`", *Flag, GetClass()->GetName());
+                if (!decoFlagsWarned.has(ws)) {
+                  decoFlagsWarned.put(ws, true);
+                  GLog.Log(NAME_Warning, *ws);
+                }
               }
-            }
-            return false;
-          case FLAG_Byte: return !!F.Field->GetByte(this);
-          case FLAG_Float: return (F.Field->GetFloat(this) != 0.0f);
-          case FLAG_Name: return (F.Field->GetNameValue(this) != NAME_None);
-          case FLAG_Class: return !!F.Field->GetClassValue(this);
-          case FLAG_NoClip: return (!F.Field->GetBool(this) && !F.Field2->GetBool(this)); //FIXME??
+              return false;
+            case FLAG_Byte: return !!F.Field->GetByte(this);
+            case FLAG_Float: return (F.Field->GetFloat(this) != 0.0f);
+            case FLAG_Name: return (F.Field->GetNameValue(this) != NAME_None);
+            case FLAG_Class: return !!F.Field->GetClassValue(this);
+            case FLAG_NoClip: return (!F.Field->GetBool(this) && !F.Field2->GetBool(this)); //FIXME??
+          }
+          return false;
         }
-        return false;
       }
     }
   }
+
   {
     VStr ws = va("Getting unknown flag '%s' in `%s`", *Flag, GetClass()->GetName());
     if (!decoFlagsWarned.has(ws)) {
