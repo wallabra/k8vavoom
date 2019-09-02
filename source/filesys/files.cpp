@@ -641,7 +641,7 @@ static int doStartMap = 0;
 static int pwflag_SkipSounds = 0;
 static int pwflag_SkipSprites = 0;
 static int pwflag_SkipDehacked = 0;
-static int pwflag_StoreInSave = 0;
+static int pwflag_StoreInSave = 1;
 
 
 static void tempMount (const PWadFile &pwf) {
@@ -1415,17 +1415,19 @@ static int countFmtHash (VStr str) {
 //
 //==========================================================================
 static int cliFnameCollector (VArgs &args, int idx) {
-  pwflag_StoreInSave = 0;
+  pwflag_StoreInSave = 1;
   bool first = true;
   //++idx; // done by the called
   while (idx < args.Count()) {
     if (VStr::strEqu(args[idx], "-cosmetic")) {
-      pwflag_StoreInSave = 1;
+      pwflag_StoreInSave = 0;
       ++idx;
       continue;
     }
     if (VParsedArgs::IsArgBreaker(args, idx)) break;
     VStr fname = args[idx++];
+    bool sts = !!pwflag_StoreInSave;
+    pwflag_StoreInSave = 1; // autoreset
     //GCon->Logf(NAME_Debug, "idx=%d; fname=<%s>", idx-1, *fname);
     if (fname.isEmpty()) { first = false; continue; }
 
@@ -1434,7 +1436,7 @@ static int cliFnameCollector (VArgs &args, int idx) {
     pwf.skipSounds = !!pwflag_SkipSounds;
     pwf.skipSprites = !!pwflag_SkipSprites;
     pwf.skipDehacked = !!pwflag_SkipDehacked;
-    pwf.storeInSave = !!pwflag_StoreInSave;
+    pwf.storeInSave = sts;
     pwf.asDirectory = false;
 
     if (Sys_DirExists(fname)) {
