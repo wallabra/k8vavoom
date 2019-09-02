@@ -105,7 +105,7 @@
     <prop_args name="Args" />
 
     <!-- Physics -->
-    <flag name="Solid" property="bSolid" />
+    <flag name="Solid" property="bSolid" relinktoworld="true" />
     <flag name="Shootable" property="bShootable" />
     <flag name="Float" property="bFloat" />
     <flag name="NoGravity" property="bNoGravity" />
@@ -114,8 +114,8 @@
     <flag name="DontFall" property="bNoGravKill" />
     <flag name="CanPass" property="bPassMobj" />
     <flag name="ActLikeBridge" property="bActLikeBridge" />
-    <flag name="NoBlockmap" property="bNoBlockmap" />
-    <flag name="MoveWithSector" property="bMoveWithSector" />
+    <flag name="NoBlockmap" property="bNoBlockmap" relinktoworld="true" />
+    <flag name="MoveWithSector" property="bMoveWithSector" relinktoworld="true" />
     <flag name="NoLiftDrop" property="bNoLiftDrop" />
     <flag name="SlidesOnWalls" property="bSlide" />
     <flag name="NoDropOff" property="bNoDropOff" />
@@ -152,17 +152,17 @@
     <flag name="ThruActors" property="bThruActors" />
     <flag name="ThruSpecies" property="bThruSpecies" />
     <flag name="MThruSpecies" property="bMThruSpecies" />
-    <flag name="Spectral" property="bSpectral" />
+    <flag name="Spectral" property="bSpectral" relinktoworld="true" />
     <flag name="Frightened" property="bFrightened" />
     <flag name="NoTarget" property="bNeverTarget" />
     <flag name="NoInfighting" property="bNoInfighting" />
-    <flag_unsupported name="NoTimeFreeze" warning="true" />
+    <!--flag_unsupported name="NoTimeFreeze" warning="true" /-->
     <flag name="NoFear" property="bNoFear" />
     <flag name="CantSeek" property="bCantSeek" />
     <flag name="Telestomp" property="bTelestomp" />
     <flag name="StayMorphed" property="bStayMorphed" />
     <flag name="CanBlast" property="bCanBlast" />
-    <flag name="NoBlockMonst" property="bNoBlockMonst" />
+    <flag name="NoBlockMonst" property="bNoBlockMonst" relinktoworld="true" />
     <flag name="CanBounceWater" property="bCanBounceWater" />
     <!-- Defenses -->
     <flag name="Invulnerable" property="bInvulnerable" />
@@ -172,7 +172,7 @@
     <flag name="Deflect" property="bDeflect" />
     <flag name="NoRadiusDmg" property="bNoRadiusDamage" />
     <flag name="DontBlast" property="bDontBlast" />
-    <flag name="Ghost" property="bGhost" />
+    <flag name="Ghost" property="bGhost" relinktoworld="true" />
     <flag name="DontMorph" property="bNoMorph" />
     <flag name="DontSquash" property="bDontSquash" />
     <flag name="NoTeleOther" property="bNoTeleOther" />
@@ -185,19 +185,19 @@
     <flag name="NoTimeFreeze" property="bNoTimeFreeze" />
     <!-- Appearance and sound -->
     <flag name="Bright" property="bBright" />
-    <flag name="Invisible" property="bInvisible" />
+    <flag name="Invisible" property="bInvisible" relinktoworld="true" />
     <flag name="Shadow" property="bShadow" />
     <flag name="NoBlood" property="bNoBlood" />
     <flag name="NoBloodDecals" property="bNoBloodDecals" />
     <flag name="Stealth" property="bStealth" />
-    <flag name="FloorClip" property="bFloorClip" />
-    <flag name="SpawnFloat" property="bSpawnFloat" />
-    <flag name="SpawnCeiling" property="bSpawnCeiling" />
-    <flag name="FloatBob" property="bFloatBob" />
+    <flag name="FloorClip" property="bFloorClip" relinktoworld="true" />
+    <flag name="SpawnFloat" property="bSpawnFloat" relinktoworld="true" />
+    <flag name="SpawnCeiling" property="bSpawnCeiling" relinktoworld="true" />
+    <flag name="FloatBob" property="bFloatBob" relinktoworld="true" />
     <flag name="NoIceDeath" property="bNoIceDeath" />
     <flag name="DontGib" property="bDontGib" />
     <flag name="DontSplash" property="bNoSplash" />
-    <flag name="DontOverlap" property="bDontOverlap" />
+    <flag name="DontOverlap" property="bDontOverlap" relinktoworld="true" />
     <flag name="FixMapThingPos" property="bFixMapthingPos" />
     <flag name="FullVolActive" property="bFullVolActive" />
     <flag name="FullVolDeath" property="bFullVolDeath" />
@@ -257,9 +257,9 @@
     <flag name="CanBounceOnWater" property="bCanBounceWater" />
     <flag_unsupported name="MBFBouncer" warning="true" />
     <!-- Miscellaneous -->
-    <flag name="Dropped" property="bDropped" />
+    <flag name="Dropped" property="bDropped" relinktoworld="true" />
     <flag name="IsMonster" property="bMonster" />
-    <flag name="Corpse" property="bCorpse" />
+    <flag name="Corpse" property="bCorpse" relinktoworld="true" />
     <flag name="CountKill" property="bCountKill" />
     <flag name="CountItem" property="bCountItem" />
     <flag name="NotDMatch" property="bNoDeathmatch" />
@@ -278,19 +278,19 @@
     <flag name="UseSpecial" property="bUseSpecial" />
     <flag name="BumpSpecial" property="bBumpSpecial" />
     <flag name="BossDeath" property="bBossDeath" />
-    <flag name="NoInteraction" property="bNoInteraction" />
-    <flag name="PickUp" property="bPickUp" />
+    <flag name="NoInteraction" property="bNoInteraction" relinktoworld="true" />
+    <flag name="PickUp" property="bPickUp" relinktoworld="true" />
     <flag name="Touchy" property="bTouchy" />
     <flag name="Special" property="bSpecial" />
     <!-- Limited use -->
     <flag name="SeesDaggers" property="bSeesDaggers" />
     <flag name="InCombat" property="bInCombat" />
-    <flag_noclip name="NoClip" />
-    <flag name="NoSector" property="bNoSector" />
+    <flag_noclip name="NoClip" relinktoworld="true" />
+    <flag name="NoSector" property="bNoSector" relinktoworld="true" />
     <flag name="IceCorpse" property="bIceCorpse" />
     <flag name="JustHit" property="bJustHit" />
     <flag name="JustAttacked" property="bJustAttacked" />
-    <flag name="Teleport" property="bTeleport" />
+    <flag name="Teleport" property="bTeleport" relinktoworld="true" />
     <flag name="Blasted" property="bBlasted" />
     <!--flag name="NeverRespawn" property="bNeverRespawn" already defined /-->
     <flag name="ExploCount" property="bExploCount" />
@@ -307,16 +307,16 @@
     <flag_byte name="HereticBounce" property="BounceType" true_value="2" false_value="0" />
     <flag_byte name="HexenBounce" property="BounceType" true_value="3" false_value="0" />
     <!-- Vavoom specific -->
-    <flag name="InFloat" property="bInFloat" />
-    <flag name="SkullFly" property="bSkullFly" />
+    <flag name="InFloat" property="bInFloat" relinktoworld="true" />
+    <flag name="SkullFly" property="bSkullFly" relinktoworld="true" />
     <flag name="LowSpectralResist" property="bLowSpectralResist" />
     <flag_name name="SpectralLow" property="DamageType" true_value="SpectralLow" false_value="None" />
     <flag name="FallingFriction" property="bFallingFriction" />
     <flag name="CantAutoAim" property="bCantAutoAim" />
     <flag name="CanJump" property="bCanJump" />
     <flag name="JumpDown" property="bJumpDown" />
-    <flag name="StickToFloor" property="bStickToFloor" />
-    <flag name="StickToCeiling" property="bStickToCeiling" />
+    <flag name="StickToFloor" property="bStickToFloor" relinktoworld="true" />
+    <flag name="StickToCeiling" property="bStickToCeiling" relinktoworld="true" />
     <flag name="KillOnUnarchive" property="bKillOnUnarchive" />
     <flag_byte name="OrientedOfs" property="SpriteType" true_value="6" false_value="0" />
     <!-- SkullTag Specific flags (useless) -->
