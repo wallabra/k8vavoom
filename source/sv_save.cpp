@@ -457,6 +457,7 @@ static vuint32 GetModListHash () {
     modlist += wadlist[f];
     modlist += "\n";
   }
+  //GCon->Logf(NAME_Debug, "modlist:\n%s", *modlist);
 #if 0
   // get list hash
   vuint8 sha512[SHA512_DIGEST_SIZE];
@@ -479,6 +480,7 @@ static vuint32 GetModListHash () {
 static VStr GetSaveSlotCommonDirectoryPrefix () {
   vuint32 hash = GetModListHash();
   VStr pfx = VStr::buf2hex(&hash, 4);
+  //GCon->Logf(NAME_Debug, "SAVE PFX: %s", *pfx);
   //pfx += "/";
   return pfx;
 }
@@ -2388,5 +2390,21 @@ COMMAND(AutoSaveEnter) {
 COMMAND(AutoSaveLeave) {
   SV_AutoSaveOnLevelExit();
   Host_ResetSkipFrames();
+}
+
+
+//==========================================================================
+//
+//  COMMAND ShowSavePrefix
+//
+//==========================================================================
+COMMAND(ShowSavePrefix) {
+  auto wadlist = FL_GetWadPk3List();
+  GCon->Log("==== MODS ====");
+  for (auto &&mname: wadlist) GCon->Logf("  %s", *mname);
+  GCon->Log("----");
+  vuint32 hash = GetModListHash();
+  VStr pfx = VStr::buf2hex(&hash, 4);
+  GCon->Logf("save prefix: %s", *pfx);
 }
 #endif
