@@ -70,9 +70,14 @@ menudef OptionsMenu {
 
   header "";
 
-  option submenu {
+  option submenu [__k8vavoom_developer_version > 0] {
     title = "Clipper Debug";
     submenu = ClipperOptions;
+  }
+
+  option submenu [am_cheating > 0] {
+    title = "Automap Cheating Options";
+    submenu = AmCheatingOptions;
   }
 
   header "";

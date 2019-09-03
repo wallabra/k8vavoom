@@ -1,0 +1,35 @@
+// HUD options menu
+menudef AmCheatingOptions {
+  Title = "AUTOMAP CHEAT OPTIONS";
+
+  option bool {
+    title = "Show secret walls";
+    cvar = am_show_secrets;
+  }
+
+  option bool {
+    title = "Show minisegs";
+    cvar = am_show_minisegs;
+    help = "Draw minisegs, so you can see how nodes were built?";
+  }
+
+  option bool {
+    title = "Draw static lights";
+    cvar = am_show_static_lights;
+  }
+
+  option bool {
+    title = "Draw dynamic lights";
+    cvar = am_show_dynamic_lights;
+  }
+
+  option bool {
+    title = "Show rendered nodes";
+    cvar = am_show_rendered_nodes;
+  }
+
+  option bool {
+    title = "Show rendered subsectors";
+    cvar = am_show_rendered_subs;
+  }
+}

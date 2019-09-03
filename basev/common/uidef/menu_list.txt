@@ -1,9 +1,6 @@
 menus {
-  "menus/advrender.txt",
-  "menus/advvideo.txt",
-  "menus/advvideolightfilter.txt",
+
   "menus/amoptions.txt",
-  "menus/fluid.txt",
   "menus/gameplay.txt",
   "menus/healthaccum.txt",
   "menus/hudoptions.txt",
@@ -11,11 +8,18 @@ menus {
   "menus/mouse.txt",
   "menus/options.txt",
   "menus/sound.txt",
-  "menus/sprvideo.txt",
   "menus/video.txt",
-  "menus/xmp.txt",
 
   "menus/controls_main.txt",
 
-  "menus/clipdebug.txt",
+  "menus/video/advrender.txt",
+  "menus/video/advvideo.txt",
+  "menus/video/advvideolightfilter.txt",
+  "menus/video/sprvideo.txt",
+
+  "menus/sound/xmp.txt",
+  "menus/sound/fluid.txt",
+
+  "menus/debug/amcheatoptions.txt",
+  "menus/debug/clipdebug.txt",
 }
