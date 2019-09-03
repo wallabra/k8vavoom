@@ -929,7 +929,7 @@ void VDecalAnim::Serialise (VStream &Strm, VDecalAnim *&aptr) {
 // ////////////////////////////////////////////////////////////////////////// //
 static void SetClassFieldName (VClass *Class, VName FieldName, VName Value) {
   VField *F = Class->FindFieldChecked(FieldName);
-  F->SetName((VObject *)Class->Defaults, Value);
+  F->SetNameValue((VObject *)Class->Defaults, Value);
 }
 
 
