@@ -107,7 +107,7 @@ public:
   inline void SetInt (VObject *Obj, int Value, int Idx) const { ((vint32*)((vuint8*)Obj+Ofs))[Idx] = Value; }
   inline void SetFloat (VObject *Obj, float Value) const { *(float*)((vuint8*)Obj+Ofs) = Value; }
   inline void SetFloat (VObject *Obj, float Value, int Idx) const { ((float*)((vuint8*)Obj+Ofs))[Idx] = Value; }
-  inline void SetName (VObject *Obj, VName Value) const { *(VName*)((vuint8*)Obj+Ofs) = Value; }
+  inline void SetNameValue (VObject *Obj, VName Value) const { *(VName*)((vuint8*)Obj+Ofs) = Value; }
   inline void SetStr (VObject *Obj, VStr Value) const { *(VStr*)((vuint8*)Obj+Ofs) = Value; }
 
   inline void SetBool (VObject *Obj, int Value) const {
@@ -119,5 +119,6 @@ public:
   }
 
   inline void SetVec (VObject *Obj, const TVec &Value) const { *(TVec*)((vuint8*)Obj+Ofs) = Value; }
-  inline void SetClass (VObject *Obj, VClass *Value) const { *(VClass**)((vuint8*)Obj+Ofs) = Value; }
+  inline void SetClassValue (VObject *Obj, VClass *Value) const { *(VClass**)((vuint8*)Obj+Ofs) = Value; }
+  inline void SetObjectValue (VObject *Obj, VObject *Value) const { *(VObject**)((vuint8*)Obj+Ofs) = Value; }
 };
