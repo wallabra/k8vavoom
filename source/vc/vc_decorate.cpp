@@ -32,6 +32,7 @@
 
 static VCvarB dbg_show_decorate_unsupported("dbg_show_decorate_unsupported", false, "Show unsupported decorate props/flags?", CVAR_PreInit|CVAR_Archive);
 static VCvarB dbg_debug_weapon_slots("dbg_debug_weapon_slots", false, "Debug weapon slots?", CVAR_PreInit);
+static VCvarB dbg_dump_flag_changes("dbg_dump_flag_changes", false, "Dump all flag changes?", CVAR_PreInit);
 VCvarB dbg_show_missing_classes("dbg_show_missing_classes", false, "Show missing classes?", CVAR_PreInit|CVAR_Archive);
 VCvarB decorate_fail_on_unknown("decorate_fail_on_unknown", false, "Fail on unknown decorate properties?", CVAR_PreInit|CVAR_Archive);
 
@@ -916,7 +917,7 @@ static void SetClassFieldBool (VClass *Class, VName FieldName, int Value) {
 //==========================================================================
 static void SetClassFieldName (VClass *Class, VName FieldName, VName Value) {
   VField *F = Class->FindFieldChecked(FieldName);
-  F->SetName((VObject*)Class->Defaults, Value);
+  F->SetNameValue((VObject*)Class->Defaults, Value);
 }
 
 
@@ -982,7 +983,7 @@ static __attribute__((unused)) void SetFieldBool (VObject *Obj, VName FieldName,
 //==========================================================================
 static __attribute__((unused)) void SetFieldName (VObject *Obj, VName FieldName, VName Value) {
   VField *F = Obj->GetClass()->FindFieldChecked(FieldName);
-  F->SetName(Obj, Value);
+  F->SetNameValue(Obj, Value);
 }
 
 
@@ -993,7 +994,7 @@ static __attribute__((unused)) void SetFieldName (VObject *Obj, VName FieldName,
 //==========================================================================
 static __attribute__((unused)) void SetFieldClass (VObject *Obj, VName FieldName, VClass *Value) {
   VField *F = Obj->GetClass()->FindFieldChecked(FieldName);
-  F->SetClass(Obj, Value);
+  F->SetClassValue(Obj, Value);
 }
 
 
@@ -1276,7 +1277,7 @@ static bool ParseFlag (VScriptParser *sc, VClass *Class, bool Value, TArray<VCla
             case FLAG_Unsupported: if (F.ShowWarning || dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Unsupported flag %s in %s", *floc.toStringNoCol(), *Flag, Class->GetName()); break;
             case FLAG_Byte: F.Field->SetByte(DefObj, Value ? F.BTrue : F.BFalse); break;
             case FLAG_Float: F.Field->SetFloat(DefObj, Value ? F.FTrue : F.FFalse); break;
-            case FLAG_Name: F.Field->SetName(DefObj, Value ? F.NTrue : F.NFalse); break;
+            case FLAG_Name: F.Field->SetNameValue(DefObj, Value ? F.NTrue : F.NFalse); break;
             case FLAG_Class: AddClassFixup(Class, F.Field, (Value ? *F.NTrue : *F.NFalse), ClassFixups); break;
             case FLAG_NoClip: F.Field->SetBool(DefObj, !Value); F.Field2->SetBool(DefObj, !Value); break;
           }
@@ -2152,11 +2153,11 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             break;
           case PROP_Name:
             sc->ExpectString();
-            P.Field->SetName(DefObj, *sc->String);
+            P.Field->SetNameValue(DefObj, *sc->String);
             break;
           case PROP_NameLower:
             sc->ExpectString();
-            P.Field->SetName(DefObj, *sc->String.ToLower());
+            P.Field->SetNameValue(DefObj, VName(*sc->String, VName::AddLower));
             break;
           case PROP_Str:
             sc->ExpectString();
@@ -3572,14 +3573,21 @@ bool VEntity::SetDecorateFlag (VStr Flag, bool Value) {
       for (int i = ClassDef.FlagsHash[GetTypeHash(FlagName)&(FLAGS_HASH_SIZE-1)]; i != -1; i = ClassDef.Flags[i].HashNext) {
         const VFlagDef &F = ClassDef.Flags[i];
         if (FlagName == F.Name) {
-          //GLog.Logf("SETFLAG '%s'(%s) on '%s'", *Flag, *ClassFilter, *GetClass()->GetFullName());
           //FIXME: unlink only for flags that needs it!
-          if (F.RelinkToWorld) UnlinkFromWorld(); // some flags can affect word linking, so unlink here...
+          bool doRelink = F.RelinkToWorld;
+          //if (F.RelinkToWorld) UnlinkFromWorld(); // some flags can affect word linking, so unlink here...
           bool didset = true;
           switch (F.Type) {
-            case FLAG_Bool: F.Field->SetBool(this, Value); break;
-            case FLAG_BoolInverted: F.Field->SetBool(this, !Value); break;
+            case FLAG_Bool:
+              if (doRelink) doRelink = (F.Field->GetBool(this) != Value);
+              F.Field->SetBool(this, Value);
+              break;
+            case FLAG_BoolInverted:
+              if (doRelink) doRelink = (F.Field->GetBool(this) == Value);
+              F.Field->SetBool(this, !Value);
+              break;
             case FLAG_Unsupported:
+              doRelink = false;
               if (F.ShowWarning || dbg_show_decorate_unsupported) {
                 VStr ws = va("Setting unsupported flag '%s' in `%s` to `%s`", *Flag, GetClass()->GetName(), (Value ? "true" : "false"));
                 if (!decoFlagsWarned.has(ws)) {
@@ -3588,21 +3596,60 @@ bool VEntity::SetDecorateFlag (VStr Flag, bool Value) {
                 }
               }
               break;
-            case FLAG_Byte: F.Field->SetByte(this, Value ? F.BTrue : F.BFalse); break;
-            case FLAG_Float: F.Field->SetFloat(this, Value ? F.FTrue : F.FFalse); break;
-            case FLAG_Name: F.Field->SetName(this, Value ? F.NTrue : F.NFalse); break;
+            case FLAG_Byte:
+              {
+                vuint8 bv = (Value ? F.BTrue : F.BFalse);
+                if (doRelink) {
+                  doRelink = (F.Field->GetByte(this) != bv);
+                  if (doRelink) UnlinkFromWorld(); // some flags can affect word linking, so unlink here...
+                }
+                F.Field->SetByte(this, bv);
+              }
+              break;
+            case FLAG_Float:
+              {
+                float fv = (Value ? F.FTrue : F.FFalse);
+                if (doRelink) {
+                  doRelink = (F.Field->GetFloat(this) != fv);
+                  if (doRelink) UnlinkFromWorld(); // some flags can affect word linking, so unlink here...
+                }
+                F.Field->SetFloat(this, fv);
+              }
+              break;
+            case FLAG_Name:
+              {
+                VName nv = (Value ? F.NTrue : F.NFalse);
+                if (doRelink) {
+                  doRelink = (F.Field->GetNameValue(this) != nv);
+                  if (doRelink) UnlinkFromWorld(); // some flags can affect word linking, so unlink here...
+                }
+                F.Field->SetNameValue(this, nv);
+              }
+              break;
             case FLAG_Class:
-              F.Field->SetClass(this, Value ?
+              {
+                VClass *cv = Value ?
                   F.NTrue != NAME_None ? VClass::FindClass(*F.NTrue) : nullptr :
-                  F.NFalse != NAME_None ? VClass::FindClass(*F.NFalse) : nullptr);
+                  F.NFalse != NAME_None ? VClass::FindClass(*F.NFalse) : nullptr;
+                if (doRelink) {
+                  doRelink = (F.Field->GetClassValue(this) != cv);
+                  if (doRelink) UnlinkFromWorld(); // some flags can affect word linking, so unlink here...
+                }
+                F.Field->SetClassValue(this, cv);
+              }
               break;
             case FLAG_NoClip:
+              if (doRelink) {
+                doRelink = (F.Field->GetBool(this) == Value || F.Field2->GetBool(this) == Value);
+                if (doRelink) UnlinkFromWorld(); // some flags can affect word linking, so unlink here...
+              }
               F.Field->SetBool(this, !Value);
               F.Field2->SetBool(this, !Value);
               break;
             default: didset = false;
           }
-          if (F.RelinkToWorld) LinkToWorld(true); // ...and link back again
+          if (doRelink) LinkToWorld(true); // ...and link back again
+          if (dbg_dump_flag_changes) GLog.Logf("SETFLAG '%s'(%s) on '%s' (relink=%d); value=%d", *Flag, *ClassFilter, *GetClass()->GetFullName(), (int)doRelink, (int)Value);
           return didset;
         }
       }
