@@ -3157,13 +3157,27 @@ VFuncRes VObject::ExecuteFunctionNoArgs (VObject *Self, VMethod *func, bool allo
         if (!Self->IsA((VClass *)origClass)) {
           Sys_Error("object of class `%s` is not a subclass of `%s` for method `%s`", Self->GetClass()->GetName(), origClass->GetName(), *func->GetFullName());
         }
+        break;
       } else if (origClass->isStateMember()) {
         // it belongs to a state, so it is a wrapper
         break;
       }
       origClass = origClass->Outer;
     }
-    if (!origClass) Sys_Error("trying to call method `%s` which doesn't belong to a class, or to a state", *func->GetFullName());
+    if (!origClass) {
+      #if 0
+      if (Self) {
+        GLog.Logf(NAME_Debug, "=== %s ===", Self->GetClass()->GetName());
+        for (VClass *cc = Self->GetClass(); cc; cc = cc->GetSuperClass()) GLog.Logf(NAME_Debug, "  %s", *cc->GetFullName());
+      }
+      origClass = func;
+      while (origClass) {
+        GLog.Logf(NAME_Debug, ": %s (%s)", *origClass->GetFullName(), origClass->GetMemberTypeString());
+        origClass = origClass->Outer;
+      }
+      #endif
+      Sys_Error("trying to call method `%s` which doesn't belong to a class, or to a state (self is `%s`)", *func->GetFullName(), (Self ? Self->GetClass()->GetName() : "<none>"));
+    }
     // push `self`
     P_PASS_REF(Self);
   }
