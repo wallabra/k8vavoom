@@ -327,6 +327,24 @@ bool TILine::Key (const event_t &ev) {
       }
       break;
 
+    // to the start of the line
+    case K_a:
+      if (ev.isCtrlDown()) {
+        curpos = 0;
+        ensureCursorVisible();
+        return true;
+      }
+      break;
+
+    // to the end of the line
+    case K_e:
+      if (ev.isCtrlDown()) {
+        curpos = len;
+        ensureCursorVisible();
+        return true;
+      }
+      break;
+
     // delete workd
     case K_w:
       if (ev.isCtrlDown()) {
