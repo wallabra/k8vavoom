@@ -201,6 +201,8 @@ native transient private array!Ctl2DestLink ControlLinks;
 // array of cached subsector centers
 native transient array!TVec ssCenters;
 
+native transient private int tsVisitedCount;
+
 // they are static
 //native transient private opening_t *openListHead;
 //native transient private opening_t *openListFree;

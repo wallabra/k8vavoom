@@ -345,6 +345,8 @@ class VLevel : public VGameObject {
   // array of cached subsector centers (used in VC code, no need to save/load it)
   TArray<TVec> ssCenters;
 
+  vint32 tsVisitedCount;
+
   // iterator
   struct CtlLinkIter {
     VLevel *level;
@@ -445,6 +447,8 @@ public:
 
   void SuspendNamedScriptThinkers (VStr name, int map);
   void TerminateNamedScriptThinkers (VStr name, int map);
+
+  vint32 nextVisitedCount ();
 
 public:
   // allocate new opening from list

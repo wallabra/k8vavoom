@@ -1285,6 +1285,24 @@ void VLevel::ChangeOneSectorInternal (sector_t *sector) {
 
 //==========================================================================
 //
+//  VLevel::nextVisitedCount
+//
+//==========================================================================
+vint32 VLevel::nextVisitedCount () {
+  if (tsVisitedCount == MAX_VINT32) {
+    tsVisitedCount = 1;
+    for (auto &&sector : allSectors()) {
+      for (msecnode_t *n = sector.TouchingThingList; n; n = n->SNext) n->Visited = 0;
+    }
+  } else {
+    ++tsVisitedCount;
+  }
+  return tsVisitedCount;
+}
+
+
+//==========================================================================
+//
 //  VLevel::ChangeSectorInternal
 //
 //  jff 3/19/98 added to just check monsters on the periphery of a moving
@@ -1310,36 +1328,38 @@ bool VLevel::ChangeSectorInternal (sector_t *sector, int crunch) {
   //
   // killough 4/7/98: simplified to avoid using complicated counter
   //
-  // ketmar: mostly rewritten
-
-  msecnode_t *n;
+  // ketmar: mostly rewritten, and reintroduced the counter
 
   // mark all things invalid
-  for (n = sector->TouchingThingList; n; n = n->SNext) n->Visited = 0;
+  //for (msecnode_t *n = sector->TouchingThingList; n; n = n->SNext) n->Visited = 0;
 
-  do {
-    // go through list
-    for (n = sector->TouchingThingList; n; n = n->SNext) {
-      if (!n->Visited) {
-        // unprocessed thing found, mark thing as processed
-        n->Visited = 1;
-        // process it
-        //TVec oldOrg = n->Thing->Origin;
-        if (!n->Thing->eventSectorChanged(crunch)) {
-          // doesn't fit, keep checking (crush other things)
-          // k8: no need to check flags, VC code does this for us
-          /*if (!(n->Thing->EntityFlags&VEntity::EF_NoBlockmap))*/
-          {
-            //GCon->Logf("Thing '%s' hit (old: %g; new: %g)", *n->Thing->GetClass()->GetFullName(), oldOrg.z, n->Thing->Origin.z);
-            if (ret) csTouched[secnum] |= 0x80000000U;
-            ret = true;
+  if (sector->TouchingThingList) {
+    const int visCount = nextVisitedCount();
+    msecnode_t *n = nullptr;
+    do {
+      // go through list
+      for (n = sector->TouchingThingList; n; n = n->SNext) {
+        if (n->Visited != visCount) {
+          // unprocessed thing found, mark thing as processed
+          n->Visited = visCount;
+          // process it
+          //TVec oldOrg = n->Thing->Origin;
+          if (!n->Thing->eventSectorChanged(crunch)) {
+            // doesn't fit, keep checking (crush other things)
+            // k8: no need to check flags, VC code does this for us
+            /*if (!(n->Thing->EntityFlags&VEntity::EF_NoBlockmap))*/
+            {
+              //GCon->Logf("Thing '%s' hit (old: %g; new: %g)", *n->Thing->GetClass()->GetFullName(), oldOrg.z, n->Thing->Origin.z);
+              if (ret) csTouched[secnum] |= 0x80000000U;
+              ret = true;
+            }
           }
+          // exit and start over
+          break;
         }
-        // exit and start over
-        break;
       }
-    }
-  } while (n); // repeat from scratch until all things left are marked valid
+    } while (n); // repeat from scratch until all things left are marked valid
+  }
 
   // this checks the case when 3d control sector moved (3d lifts)
   for (auto it = IterControlLinks(sector); !it.isEmpty(); it.next()) {
