@@ -2197,7 +2197,10 @@ void AM_Drawer () {
 //==========================================================================
 bool AM_Responder (event_t *ev) {
   AM_Check();
-  if (!automapactive) return false;
+  if (!automapactive) {
+    ui_freemouse = false;
+    return false;
+  }
 
   if (am_cheating > 2) {
     ui_freemouse = true;
