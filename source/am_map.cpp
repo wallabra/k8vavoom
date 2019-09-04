@@ -148,6 +148,7 @@ struct mline_t {
 int automapactive = 0;
 static VCvarB am_active("am_active", false, "Is automap active?", 0);
 extern VCvarI screen_size;
+extern VCvarB ui_freemouse;
 
 VCvarB am_always_update("am_always_update", true, "Update non-overlay automap?", CVAR_Archive);
 
@@ -1812,16 +1813,10 @@ static void AM_drawThings () {
       float x = morg.x;
       float y = morg.y;
       if (am_rotate) AM_rotatePoint(&x, &y);
-      if (!inSpriteMode) {
-        inSpriteMode = true;
-        Drawer->EndAutomap();
-      }
+      if (!inSpriteMode) { inSpriteMode = true; Drawer->EndAutomap(); }
       R_DrawSpritePatch(CXMTOFF(x), CYMTOFF(y), sprIdx, 0, 0, 0, 0, 0, scale_mtof, true); // draw, ignore vscr
     } else {
-      if (inSpriteMode) {
-        inSpriteMode = false;
-        Drawer->StartAutomap(am_overlay);
-      }
+      if (inSpriteMode) { inSpriteMode = false; Drawer->StartAutomap(am_overlay); }
 
       float x = FTOM(MTOF(morg.x));
       float y = FTOM(MTOF(morg.y));
@@ -1832,6 +1827,12 @@ static void AM_drawThings () {
         angle += 90.0f-cl->ViewAngles.yaw;
       }
       AM_drawLineCharacter(thintriangle_guy, NUMTHINTRIANGLEGUYLINES, 16.0f, angle, color, x, y);
+    }
+    // draw object box
+    if (am_cheating > 2) {
+      if (inSpriteMode) { inSpriteMode = false; Drawer->StartAutomap(am_overlay); }
+      //AM_DrawBox(mobj->Origin.x-mobj->Radius, mobj->Origin.y-mobj->Radius, mobj->Origin.x+mobj->Radius, mobj->Origin.y+mobj->Radius, color);
+      AM_DrawBox(morg.x-mobj->Radius, morg.y-mobj->Radius, morg.x+mobj->Radius, morg.y+mobj->Radius, color);
     }
   }
 
@@ -2197,6 +2198,21 @@ void AM_Drawer () {
 bool AM_Responder (event_t *ev) {
   AM_Check();
   if (!automapactive) return false;
+
+  if (am_cheating > 2) {
+    ui_freemouse = true;
+    if (ev->type == ev_keydown && ev->keycode == K_MOUSE1) {
+      //float x = FTOM(MTOF(morg.x));
+      //float y = FTOM(MTOF(morg.y));
+      float x = FTOM(ev->x-f_x)+m_x;
+      float y = FTOM(f_h-ev->y-f_y)+m_y;
+      GCon->Logf(NAME_Debug, "ms=(%d,%d); map=(%g,%g) (%g,%g)", ev->x, ev->y, x, y, cl->ViewOrg.x, cl->ViewOrg.y);
+      return true;
+    }
+  } else {
+    ui_freemouse = false;
+  }
+
   bool rc = false;
   if (ev->type == ev_keydown) {
     rc = true;

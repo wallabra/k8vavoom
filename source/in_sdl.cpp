@@ -44,10 +44,6 @@ static bool cliRegister_input_args =
   VParsedArgs::RegisterAlias("-nojoy", "-nojoystick");
 
 
-static VCvarB ui_control_waiting("ui_control_waiting", false, "Waiting for new control key (pass mouse buttons)?", 0);
-VCvarB want_mouse_at_zero("ui_want_mouse_at_zero", false, "Move real mouse cursor to (0,0) when UI activated?", CVAR_Archive);
-
-
 // ////////////////////////////////////////////////////////////////////////// //
 class VSdlInputDevice : public VInputDevice {
 public:
@@ -94,9 +90,12 @@ private:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+VCvarB ui_freemouse("__ui_freemouse", false, "Used in various debug modes?", 0);
+VCvarB want_mouse_at_zero("ui_want_mouse_at_zero", false, "Move real mouse cursor to (0,0) when UI activated?", CVAR_Archive);
 static VCvarB m_filter("m_filter", true, "Filter input?", CVAR_Archive);
 static VCvarB ui_mouse("ui_mouse", false, "Allow using mouse in UI?", CVAR_Archive);
-static VCvarB ui_active("ui_active", false, "Is UI active (used to stop mouse warping if \"ui_mouse\" is false)?", 0);
+static VCvarB ui_active("__ui_active", false, "Is UI active (used to stop mouse warping if \"ui_mouse\" is false)?", 0);
+static VCvarB ui_control_waiting("__ui_control_waiting", false, "Waiting for new control key (pass mouse buttons)?", 0);
 static VCvarB m_nograb("m_nograb", false, "Do not grab mouse?", CVAR_Archive);
 static VCvarB m_dbg_cursor("m_dbg_cursor", false, "Do not hide (true) mouse cursor on startup?", CVAR_PreInit);
 
@@ -415,7 +414,7 @@ void VSdlInputDevice::ReadInput () {
         else if (ev.button.button == SDL_BUTTON_X2) vev.data1 = K_MOUSE5;
         else break;
         if (Drawer) Drawer->GetMousePosition(&vev.data2, &vev.data3);
-        if (ui_mouse || !ui_active || ui_control_waiting) VObject::PostEvent(vev);
+        if (ui_mouse || !ui_active || ui_control_waiting || ui_freemouse) VObject::PostEvent(vev);
         // now fix flags
              if (ev.button.button == SDL_BUTTON_LEFT) { if (ev.button.state == SDL_PRESSED) curmodflags |= bLMB; else curmodflags &= ~bLMB; }
         else if (ev.button.button == SDL_BUTTON_RIGHT) { if (ev.button.state == SDL_PRESSED) curmodflags |= bRMB; else curmodflags &= ~bRMB; }
@@ -427,7 +426,7 @@ void VSdlInputDevice::ReadInput () {
         else if (ev.wheel.y < 0) vev.data1 = K_MWHEELDOWN;
         else break;
         if (Drawer) Drawer->GetMousePosition(&vev.data2, &vev.data3);
-        if (ui_mouse || !ui_active || ui_control_waiting) VObject::PostEvent(vev);
+        if (ui_mouse || !ui_active || ui_control_waiting || ui_freemouse) VObject::PostEvent(vev);
         break;
       case SDL_JOYAXISMOTION:
         normal_value = ev.jaxis.value*127/32767;
@@ -453,7 +452,7 @@ void VSdlInputDevice::ReadInput () {
             vev.modflags = 0;
             if (!winactive && mouse) {
               if (Drawer) {
-                if (!ui_active || ui_mouse) Drawer->WarpMouseToWindowCenter();
+                if (!ui_freemouse && (!ui_active || ui_mouse)) Drawer->WarpMouseToWindowCenter();
                 SDL_GetMouseState(&mouse_oldx, &mouse_oldy);
               }
             }
@@ -498,13 +497,15 @@ void VSdlInputDevice::ReadInput () {
 
   // read mouse separately
   if (mouse && winactive && Drawer) {
+    bool currMouseInUI = (ui_active.asBool() || ui_freemouse.asBool());
+    bool currMouseGrabbed = (ui_freemouse.asBool() ? false : ui_mouse.asBool());
     SDL_GetMouseState(&mouse_x, &mouse_y);
     // check for UI activity changes
-    if (ui_active != uiwasactive) {
+    if (currMouseInUI != uiwasactive) {
       // UI activity changed
-      uiwasactive = ui_active;
-      uimouselast = ui_mouse;
-      if (!ui_active) {
+      uiwasactive = currMouseInUI;
+      uimouselast = currMouseGrabbed;
+      if (!uiwasactive) {
         // ui deactivated
         if (!m_nograb) SDL_CaptureMouse(SDL_TRUE);
         firsttime = true;
@@ -512,30 +513,30 @@ void VSdlInputDevice::ReadInput () {
       } else {
         // ui activted
         SDL_CaptureMouse(SDL_FALSE);
-        if (!ui_mouse) {
+        if (!uimouselast) {
           if (curHidden && want_mouse_at_zero) SDL_WarpMouseGlobal(0, 0);
           ShowRealMouse();
         }
       }
     }
     // check for "allow mouse in UI" changes
-    if (ui_mouse != uimouselast) {
+    if (currMouseGrabbed != uimouselast) {
       // "allow mouse in UI" changed
-      if (ui_active) {
+      if (uiwasactive) {
         if (gl_current_screen_fsmode == 0) {
-          if (ui_mouse) HideRealMouse(); else ShowRealMouse();
+          if (currMouseGrabbed) HideRealMouse(); else ShowRealMouse();
         } else {
           HideRealMouse();
         }
-        if (GRoot) GRoot->SetMouse(ui_mouse);
+        if (GRoot) GRoot->SetMouse(currMouseGrabbed);
       }
-      uimouselast = ui_mouse;
+      uimouselast = currMouseGrabbed;
     }
     // hide real mouse in fullscreen mode, show in windowed mode (if necessary)
     if (gl_current_screen_fsmode != 0 && !curHidden) HideRealMouse();
-    if (gl_current_screen_fsmode == 0 && curHidden && ui_active && !ui_mouse) ShowRealMouse();
+    if (gl_current_screen_fsmode == 0 && curHidden && currMouseInUI && !currMouseGrabbed) ShowRealMouse();
     // generate events
-    if (!ui_active || ui_mouse) {
+    if (!currMouseInUI || currMouseGrabbed) {
       if (Drawer) Drawer->WarpMouseToWindowCenter();
       int dx = mouse_x-mouse_oldx;
       int dy = mouse_oldy-mouse_y;
