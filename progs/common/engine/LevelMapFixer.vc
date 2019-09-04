@@ -512,4 +512,11 @@ void KnownMapBugFixer () {
     Things[286].type = 11;
     Things[286].angle = 180;
   }
+
+  //k8: Maps Of Chaos (Overkill), MAP01 thing 131 (demon) is blocking a closet wall
+  if (MapHashMD5 == "920e8c47e172a6a265b6b57039c3f209" && Things.length == 360) {
+    printwarn("MAPFIX: Maps Of Chaos (Overkill), MAP01");
+    // move demon a little, so it won't block a wall
+    Things[131].x = -221;
+  }
 }
