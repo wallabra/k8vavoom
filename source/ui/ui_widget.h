@@ -235,6 +235,12 @@ public:
   void DrawCursor ();
   void DrawCursorAt (int, int);
 
+  inline void SetCursorPos (int ax, int ay) { LastX = ax; LastY = ay; }
+  inline void SetCursorX (int v) { LastX = v; }
+  inline void SetCursorY (int v) { LastY = v; }
+  inline int GetCursorX () const { return LastX; }
+  inline int GetCursorY () const { return LastY; }
+
   static VWidget *CreateNewWidget (VClass *, VWidget *);
 
   // events
@@ -323,6 +329,12 @@ public:
   DECLARE_FUNCTION(SplitTextWithNewlines)
   DECLARE_FUNCTION(DrawText)
   DECLARE_FUNCTION(DrawCursor)
+  DECLARE_FUNCTION(DrawCursorAt)
+  DECLARE_FUNCTION(SetCursorPos)
+  DECLARE_FUNCTION(get_CursorX)
+  DECLARE_FUNCTION(get_CursorY)
+  DECLARE_FUNCTION(set_CursorX)
+  DECLARE_FUNCTION(set_CursorY)
   DECLARE_FUNCTION(FindTextColor)
 
   DECLARE_FUNCTION(TranslateXY)

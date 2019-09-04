@@ -89,6 +89,9 @@ int T_FontHeight ();
 
 void T_DrawCursor ();
 void T_DrawCursorAt (int, int);
+void T_SetCursorPos (int cx, int cy);
+int T_GetCursorX ();
+int T_GetCursorY ();
 
 extern VFont *SmallFont;
 extern VFont *ConFont;

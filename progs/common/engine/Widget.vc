@@ -225,6 +225,11 @@ native final void DrawText (int X, int Y, string Text, optional int Color,
   optional int BoldColor, optional float Alpha);
 // draws a cursor at the end of last drawn string
 native final void DrawCursor ();
+// doesn't change current cursor position
+native final void DrawCursorAt (int cx, int cy);
+native final void SetCursorPos (int cx, int cy);
+native final int CursorX { get; set; }
+native final int CursorY { get; set; }
 // returns color ID for specified name
 native static final int FindTextColor (string Name);
 

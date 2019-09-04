@@ -1385,11 +1385,44 @@ IMPLEMENT_FUNCTION(VWidget, DrawCursor) {
   Self->DrawCursor();
 }
 
+IMPLEMENT_FUNCTION(VWidget, DrawCursorAt) {
+  int cx, cy;
+  vobjGetParamSelf(cx, cy);
+  Self->DrawCursorAt(cx, cy);
+}
+
+IMPLEMENT_FUNCTION(VWidget, SetCursorPos) {
+  int cx, cy;
+  vobjGetParamSelf(cx, cy);
+  Self->SetCursorPos(cx, cy);
+}
+
+IMPLEMENT_FUNCTION(VWidget, get_CursorX) {
+  P_GET_SELF;
+  RET_INT(Self->GetCursorX());
+}
+
+IMPLEMENT_FUNCTION(VWidget, get_CursorY) {
+  P_GET_SELF;
+  RET_INT(Self->GetCursorY());
+}
+
+IMPLEMENT_FUNCTION(VWidget, set_CursorX) {
+  int v;
+  vobjGetParamSelf(v);
+  Self->SetCursorX(v);
+}
+
+IMPLEMENT_FUNCTION(VWidget, set_CursorY) {
+  int v;
+  vobjGetParamSelf(v);
+  Self->SetCursorY(v);
+}
+
 IMPLEMENT_FUNCTION(VWidget, FindTextColor) {
   P_GET_STR(Name);
   RET_INT(VFont::FindTextColor(*Name.ToLower()));
 }
-
 
 IMPLEMENT_FUNCTION(VWidget, TranslateXY) {
   P_GET_PTR(float, py);
