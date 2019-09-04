@@ -420,6 +420,11 @@ COMMAND(ToggleAlwaysRun) {
 COMMAND(Use) {
   if (Args.Num() < 1) return;
 #ifdef CLIENT
+  if (!cl || !GClGame || !GGameInfo || GClGame->InIntermission() || GGameInfo->NetMode <= NM_TitleMap) {
+    return;
+  }
+  //if (GGameInfo->IsPaused()) return;
+  //GCon->Logf(NAME_Debug, "USE: <%s>", *Args[1]);
   cl->eventUseInventory(*Args[1]);
 #endif
 }

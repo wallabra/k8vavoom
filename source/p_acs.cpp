@@ -6993,6 +6993,10 @@ COMMAND(PukeName) {
     return;
   }
 
+  if (!Player || sv.intermission || !GGameInfo || GGameInfo->NetMode < NM_Standalone) {
+    GCon->Logf(NAME_Error, "cannot call named ACS script when no game is running!");
+  }
+
   if (Args.Num() < 2 || Args[1].length() == 0) return;
 
   VName Script = VName(*Args[1], VName::AddLower);
