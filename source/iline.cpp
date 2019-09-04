@@ -345,7 +345,7 @@ bool TILine::Key (const event_t &ev) {
       }
       break;
 
-    // delete workd
+    // delete word
     case K_w:
       if (ev.isCtrlDown()) {
         DelWord();
