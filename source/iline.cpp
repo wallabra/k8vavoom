@@ -35,7 +35,7 @@
 //==========================================================================
 void TILine::Init () {
   len = 0;
-  Data[0] = 0;
+  data[0] = 0;
 }
 
 
@@ -46,8 +46,8 @@ void TILine::Init () {
 //==========================================================================
 void TILine::AddChar (char ch) {
   if (len < MAX_ILINE_LENGTH) {
-    Data[len++] = ch;
-    Data[len] = 0;
+    data[len++] = ch;
+    data[len] = 0;
   }
 }
 
@@ -58,7 +58,7 @@ void TILine::AddChar (char ch) {
 //
 //==========================================================================
 void TILine::DelChar () {
-  if (len) Data[--len] = 0;
+  if (len) data[--len] = 0;
 }
 
 
@@ -69,12 +69,12 @@ void TILine::DelChar () {
 //==========================================================================
 void TILine::DelWord () {
   if (!len) return;
-  if ((vuint8)Data[len-1] <= ' ') {
-    while (len > 0 && (vuint8)Data[len-1] <= ' ') --len;
+  if ((vuint8)data[len-1] <= ' ') {
+    while (len > 0 && (vuint8)data[len-1] <= ' ') --len;
   } else {
-    while (len > 0 && (vuint8)Data[len-1] > ' ') --len;
+    while (len > 0 && (vuint8)data[len-1] > ' ') --len;
   }
-  Data[len] = 0;
+  data[len] = 0;
 }
 
 
@@ -96,7 +96,7 @@ bool TILine::Key (const event_t &ev) {
         vuint32 flg = ev.modflags&(bCtrl|bAlt|bShift|bHyper);
         // ctrl+insert: copy to clipboard
         if (flg == bCtrl) {
-          GInput->SetClipboardText(VStr(Data));
+          GInput->SetClipboardText(VStr(data));
           return true;
         }
         // shift+insert: insert from clipboard
@@ -108,7 +108,7 @@ bool TILine::Key (const event_t &ev) {
               char ch = ntx[f];
               if (ch < 0) continue;
               if (ch == '\n') {
-                if (Data[len] != ' ' && Data[len] != '\t') AddChar(' ');
+                if (data[len] != ' ' && data[len] != '\t') AddChar(' ');
                 AddChar(';');
                 prevWasBlank = false;
                 continue;

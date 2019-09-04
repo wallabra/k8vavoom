@@ -248,14 +248,15 @@ bool C_Active () {
 static void DrawInputLine (int y) {
   // input line
   T_DrawText(4, y, ">", CR_YELLOW);
-  int llen = VStr::Length(c_iline.Data);
+  const char *line = c_iline.getCStr();
+  int llen = VStr::Length(line);
   if (llen > MAX_LINE_LENGTH-3) {
     T_DrawText(12, y, ".", CR_FIRE);
     int x = 12+8;
     llen -= MAX_LINE_LENGTH-3-1;
-    T_DrawText(x, y, c_iline.Data+llen, CR_ORANGE);
+    T_DrawText(x, y, line+llen, CR_ORANGE);
   } else {
-    T_DrawText(12, y, c_iline.Data, CR_ORANGE);
+    T_DrawText(12, y, line, CR_ORANGE);
   }
   T_DrawCursor();
 }
@@ -350,15 +351,15 @@ bool C_Responder (event_t *ev) {
     // execute entered command
     case K_ENTER:
     case K_PADENTER:
-      if (c_iline.Data && c_iline.Data[0]) {
+      if (c_iline.length() != 0) {
         // print it
-        GCon->Logf(">%s", c_iline.Data);
+        GCon->Logf(">%s", c_iline.getCStr());
         MyThreadLocker lock(&conLogLock);
 
         // add to history (but if it is a duplicate, move it to history top)
         int dupidx = -1;
         for (int f = 0; f < c_history_size; ++f) {
-          if (VStr::Cmp(c_iline.Data, c_history[f]) == 0) {
+          if (VStr::Cmp(c_iline.getCStr(), c_history[f]) == 0) {
             dupidx = f;
             break;
           }
@@ -380,7 +381,7 @@ bool C_Responder (event_t *ev) {
             ++c_history_size;
           }
           char *dest = c_history[c_history_size-1];
-          const char *newstr = c_iline.Data;
+          const char *newstr = c_iline.getCStr();
           if (!newstr) newstr = "";
           auto cldlen = (int)strlen(newstr);
           if (cldlen < MAX_LINE_LENGTH) {
@@ -393,7 +394,7 @@ bool C_Responder (event_t *ev) {
         c_history_current = -1;
 
         // add to command buffer
-        GCmdBuf << c_iline.Data << "\n";
+        GCmdBuf << c_iline.getCStr() << "\n";
       }
 
       // clear line
@@ -460,8 +461,8 @@ bool C_Responder (event_t *ev) {
 
     // auto complete
     case K_TAB:
-      if (c_iline.Data[0]) {
-        VStr cline = c_iline.Data;
+      if (c_iline.length() != 0) {
+        VStr cline = c_iline.getCStr();
         // find last command
         int cmdstart = cline.findNextCommand();
         for (;;) {

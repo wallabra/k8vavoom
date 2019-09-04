@@ -98,7 +98,9 @@ bool CT_Responder (event_t *ev) {
 
   eatkey = w_chat.Key(*ev);
   if (ev->data1 == K_ENTER || ev->data1 == K_PADENTER) {
-    GCmdBuf << "Say " << w_chat.Data << "\n";
+    if (w_chat.length() != 0) {
+      GCmdBuf << "Say " << VStr(w_chat.getCStr()).quote() << "\n";
+    }
     CT_Stop();
     return true;
   } else if (ev->data1 == K_ESCAPE) {
@@ -129,7 +131,7 @@ void CT_Drawer () {
   if (chatmodeon) {
     T_SetFont(SmallFont);
     T_SetAlign(hleft, vtop);
-    T_DrawText(25, 10, w_chat.Data, CR_UNTRANSLATED);
+    T_DrawText(25, 10, w_chat.getCStr(), CR_UNTRANSLATED);
     T_DrawCursor();
   }
 }

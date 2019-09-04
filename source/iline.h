@@ -33,14 +33,19 @@
 
 // input text line widget
 class TILine {
-public:
-  char Data[MAX_ILINE_LENGTH+1]; // line of text
+protected:
+  char data[MAX_ILINE_LENGTH+1]; // line of text (zero-terminated)
   int len; // current line length
   int maxlen;
 
 public:
-  TILine () { Data[0] = 0; len = 0; maxlen = MAX_ILINE_LENGTH; }
-  TILine (int amaxlen) { Data[0] = 0; len = 0; if (amaxlen < 1 || amaxlen > MAX_ILINE_LENGTH) amaxlen = MAX_ILINE_LENGTH; maxlen = amaxlen; }
+  TILine () { data[0] = 0; len = 0; maxlen = MAX_ILINE_LENGTH; }
+  TILine (int amaxlen) { data[0] = 0; len = 0; if (amaxlen < 1 || amaxlen > MAX_ILINE_LENGTH) amaxlen = MAX_ILINE_LENGTH; maxlen = amaxlen; }
+
+  inline int length () const { return len; }
+  inline int maxLength () const { return maxlen; }
+  inline const char *getCStr () const { return data; }
+  inline const char *operator * () const { return data; }
 
   void Init ();
   void AddChar (char ch);
