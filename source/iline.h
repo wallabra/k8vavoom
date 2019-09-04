@@ -35,13 +35,21 @@ protected:
   char *data; // line of text (zero-terminated)
   int len; // current line length
   int maxlen;
+  int curpos;
+  int vischars; // number of on-screen visible chars
+  int visfirst; // first visible char in current string
+  // temp buffer for renderer
+  char *temp;
+  int tempsize;
 
 protected:
   void setup ();
 
+  void ensureCursorVisible ();
+
 public:
-  TILine () : data(nullptr), len(0), maxlen(0) { setup(); }
-  TILine (int amaxlen) : data(nullptr), len(0), maxlen(amaxlen) { setup(); }
+  TILine () : data(nullptr), len(0), maxlen(0), curpos(0), vischars(80), visfirst(0), temp(nullptr), tempsize(0) { setup(); }
+  TILine (int amaxlen) : data(nullptr), len(0), maxlen(amaxlen), curpos(0), vischars(80), visfirst(0), temp(nullptr), tempsize(0) { setup(); }
   ~TILine ();
 
   inline int length () const { return len; }
@@ -49,9 +57,17 @@ public:
   inline const char *getCStr () const { return data; }
   inline const char *operator * () const { return data; }
 
+  inline int getCurPos () const { return curpos; }
+
+  void SetVisChars (int vc);
+
   void Init ();
   void AddChar (char ch);
-  void DelChar ();
+  void DelChar (); // this does "backspace"
+  void RemoveChar (); // this removes char at the current cursor position, and doesn't move cursor
   void DelWord ();
   bool Key (const event_t &ev); // whether eaten
+
+  // font and align should be already set
+  void DrawAt (int x0, int y0, int clrNormal=CR_ORANGE, int clrLR=CR_FIRE);
 };

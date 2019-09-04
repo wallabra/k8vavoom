@@ -64,6 +64,7 @@ static VCvarS *chat_macros[10] = {
 //
 //===========================================================================
 void CT_Init () {
+  w_chat.SetVisChars(42);
   chatmodeon = false;
 }
 
@@ -131,7 +132,8 @@ void CT_Drawer () {
   if (chatmodeon) {
     T_SetFont(SmallFont);
     T_SetAlign(hleft, vtop);
-    T_DrawText(25, 10, w_chat.getCStr(), CR_UNTRANSLATED);
-    T_DrawCursor();
+    w_chat.DrawAt(25, 10, CR_UNTRANSLATED);
+    //T_DrawText(25, 10, w_chat.getCStr(), CR_UNTRANSLATED);
+    //T_DrawCursor();
   }
 }

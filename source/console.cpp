@@ -182,6 +182,9 @@ void C_Init () {
     vassert(c_history[f].bufsize == 0);
   }
   GLog.AddListener(&ConsoleLog);
+
+  // prompt, cursor, and one char reserved
+  c_iline.SetVisChars(MAX_LINE_LENGTH-3);
 }
 
 
@@ -286,17 +289,7 @@ bool C_Active () {
 static void DrawInputLine (int y) {
   // input line
   T_DrawText(4, y, ">", CR_YELLOW);
-  const char *line = c_iline.getCStr();
-  int llen = VStr::Length(line);
-  if (llen > MAX_LINE_LENGTH-3) {
-    T_DrawText(12, y, ".", CR_FIRE);
-    int x = 12+8;
-    llen -= MAX_LINE_LENGTH-3-1;
-    T_DrawText(x, y, line+llen, CR_ORANGE);
-  } else {
-    T_DrawText(12, y, line, CR_ORANGE);
-  }
-  T_DrawCursor();
+  c_iline.DrawAt(12, y, CR_ORANGE, CR_FIRE);
 }
 
 
@@ -433,7 +426,7 @@ bool C_Responder (event_t *ev) {
     case K_PAGEUP:
       {
         MyThreadLocker lock(&conLogLock);
-        for (int i = 0; i < (GInput->ShiftDown ? 1 : max2(2, (int)con_height/9-2)); ++i) {
+        for (int i = 0; i < (ev->isShiftDown() ? 1 : max2(2, (int)con_height/9-2)); ++i) {
           if (last_line > 1) --last_line;
         }
       }
@@ -443,7 +436,7 @@ bool C_Responder (event_t *ev) {
     case K_PAGEDOWN:
       {
         MyThreadLocker lock(&conLogLock);
-        for (int i = 0; i < (GInput->ShiftDown ? 1 : max2(2, (int)con_height/9-2)); ++i) {
+        for (int i = 0; i < (ev->isShiftDown() ? 1 : max2(2, (int)con_height/9-2)); ++i) {
           if (last_line < num_lines) ++last_line;
         }
       }
@@ -451,19 +444,21 @@ bool C_Responder (event_t *ev) {
 
     // go to first line
     case K_HOME:
-      {
+      if (ev->isShiftDown()) {
         MyThreadLocker lock(&conLogLock);
         last_line = 1;
+        return true;
       }
-      return true;
+      return c_iline.Key(*ev);
 
     // go to last line
     case K_END:
-      {
+      if (ev->isShiftDown()) {
         MyThreadLocker lock(&conLogLock);
         last_line = num_lines;
+        return true;
       }
-      return true;
+      return c_iline.Key(*ev);
 
     // command history up
     case K_UPARROW:
@@ -489,7 +484,8 @@ bool C_Responder (event_t *ev) {
 
     // auto complete
     case K_TAB:
-      if (c_iline.length() != 0) {
+      //TODO: autocompletion with moved cursor
+      if (c_iline.length() != 0 && c_iline.getCurPos() == c_iline.length()) {
         VStr cline = c_iline.getCStr();
         // find last command
         int cmdstart = cline.findNextCommand();

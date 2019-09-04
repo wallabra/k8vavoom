@@ -39,6 +39,9 @@ TILine::~TILine () {
   Z_Free(data);
   data = nullptr;
   len = maxlen = 0;
+  Z_Free(temp);
+  temp = nullptr;
+  tempsize = 0;
 }
 
 
@@ -51,10 +54,12 @@ void TILine::setup () {
        if (maxlen < 0) maxlen = 80;
   else if (maxlen == 0 || maxlen > MAX_ILINE_LENGTH) maxlen = MAX_ILINE_LENGTH;
   vassert(maxlen > 0);
-  data = (char *)Z_Realloc(data, maxlen+1);
+  data = (char *)Z_Realloc(data, maxlen+16);
   vassert(data);
   data[0] = 0;
   len = 0;
+  curpos = 0;
+  visfirst = 0;
 }
 
 
@@ -65,7 +70,45 @@ void TILine::setup () {
 //==========================================================================
 void TILine::Init () {
   len = 0;
+  curpos = 0;
+  visfirst = 0;
   data[0] = 0;
+}
+
+
+//==========================================================================
+//
+//  TILine::SetVisChars
+//
+//==========================================================================
+void TILine::SetVisChars (int vc) {
+  if (vc < 8) vc = 8;
+  if (vc == vischars) return;
+  vischars = vc;
+  ensureCursorVisible();
+}
+
+
+//==========================================================================
+//
+//  TILine::ensureCursorVisible
+//
+//==========================================================================
+void TILine::ensureCursorVisible () {
+  curpos = clampval(curpos, 0, len);
+  if (curpos == len) {
+    // special case
+    visfirst = max2(0, len-(vischars-1));
+    return;
+  }
+  if (curpos < visfirst) {
+    // move left
+    visfirst = max2(0, curpos-4);
+  } else if (curpos-visfirst >= vischars-1) {
+    visfirst = curpos-(vischars-4);
+    if (visfirst+vischars > len) visfirst = len-(vischars-1);
+    if (visfirst < 0) visfirst = 0;
+  }
 }
 
 
@@ -75,10 +118,22 @@ void TILine::Init () {
 //
 //==========================================================================
 void TILine::AddChar (char ch) {
-  if (len < MAX_ILINE_LENGTH) {
+  if (ch == '\t') ch = ' '; // why not?
+  if ((vuint8)ch < ' ' || (vuint8)ch >= 127) return;
+  if (len >= maxlen) return;
+  if (curpos >= len) {
     data[len++] = ch;
     data[len] = 0;
+    curpos = len;
+  } else {
+    if (curpos < 0) curpos = 0;
+    for (int f = len; f > curpos; --f) data[f] = data[f-1];
+    ++len;
+    data[len] = 0; // just in case
+    data[curpos] = ch;
+    ++curpos;
   }
+  ensureCursorVisible();
 }
 
 
@@ -88,7 +143,27 @@ void TILine::AddChar (char ch) {
 //
 //==========================================================================
 void TILine::DelChar () {
-  if (len) data[--len] = 0;
+  if (len == 0 || curpos < 1) return;
+  --curpos;
+  for (int f = curpos; f < len; ++f) data[f] = data[f+1];
+  data[--len] = 0;
+  ensureCursorVisible();
+}
+
+
+//==========================================================================
+//
+//  TILine::RemoveChar
+//
+//  this removes char at the current cursor position
+//  and doesn't move cursor
+//
+//==========================================================================
+void TILine::RemoveChar () {
+  if (curpos >= len) return;
+  for (int f = curpos; f < len; ++f) data[f] = data[f+1];
+  data[--len] = 0;
+  ensureCursorVisible();
 }
 
 
@@ -98,13 +173,15 @@ void TILine::DelChar () {
 //
 //==========================================================================
 void TILine::DelWord () {
-  if (!len) return;
-  if ((vuint8)data[len-1] <= ' ') {
-    while (len > 0 && (vuint8)data[len-1] <= ' ') --len;
+  ensureCursorVisible();
+  if (curpos == 0) return;
+  if ((vuint8)data[curpos-1] <= ' ') {
+    // delete trailing spaces
+    while (curpos > 0 && (vuint8)data[curpos-1] <= ' ') DelChar();
   } else {
-    while (len > 0 && (vuint8)data[len-1] > ' ') --len;
+    // delete text
+    while (curpos > 0 && (vuint8)data[curpos-1] > ' ') DelChar();
   }
-  data[len] = 0;
 }
 
 
@@ -156,9 +233,73 @@ bool TILine::Key (const event_t &ev) {
       }
       return true;
 
+    case K_DELETE:
+      {
+        vuint32 flg = ev.modflags&(bCtrl|bAlt|bShift|bHyper);
+        // ctrl+del: delete to the end of the line
+        if (flg == bCtrl) {
+          if (curpos < len) {
+            data[curpos] = 0;
+            len = curpos;
+          }
+          ensureCursorVisible();
+          return true;
+        }
+        // del: delete char
+        if (flg == 0) {
+          RemoveChar();
+          return true;
+        }
+      }
+      break;
+
+    // cursor movement
+    case K_LEFTARROW:
+      if (curpos > 0) {
+        if (ev.isCtrlDown()) {
+          // word left
+          if ((vuint8)data[curpos-1] <= ' ') {
+            // spaces
+            while (curpos > 0 && (vuint8)data[curpos-1] <= ' ') --curpos;
+          } else {
+            // word
+            while (curpos > 0 && (vuint8)data[curpos-1] > ' ') --curpos;
+          }
+        } else {
+          --curpos;
+        }
+        ensureCursorVisible();
+      }
+      return true;
+    case K_RIGHTARROW:
+      if (curpos < len) {
+        if (ev.isCtrlDown()) {
+          // word right
+          if ((vuint8)data[curpos] <= ' ') {
+            // spaces
+            while (curpos < len && (vuint8)data[curpos] <= ' ') ++curpos;
+          } else {
+            // word
+            while (curpos < len && (vuint8)data[curpos] > ' ') ++curpos;
+          }
+        } else {
+          ++curpos;
+        }
+        ensureCursorVisible();
+      }
+      return true;
+    case K_HOME:
+      curpos = 0;
+      ensureCursorVisible();
+      return true;
+    case K_END:
+      curpos = len;
+      ensureCursorVisible();
+      return true;
+
     // clear line
     case K_y:
-      if (ev.modflags&bCtrl) {
+      if (ev.isCtrlDown()) {
         // clear line
         Init();
         return true;
@@ -167,7 +308,7 @@ bool TILine::Key (const event_t &ev) {
 
     // delete workd
     case K_w:
-      if (ev.modflags&bCtrl) {
+      if (ev.isCtrlDown()) {
         DelWord();
         return true;
       }
@@ -187,4 +328,51 @@ bool TILine::Key (const event_t &ev) {
   }
 
   return false; // did not eat key
+}
+
+
+//==========================================================================
+//
+//  TILine::DrawAt
+//
+//==========================================================================
+void TILine::DrawAt (int x0, int y0, int clrNormal, int clrLR) {
+  if (!data) return; // just in case
+  ensureCursorVisible();
+  // ensure that our temporary buffer is ok
+  if (tempsize < vischars+8) {
+    tempsize = vischars+16;
+    temp = (char *)Z_Realloc(temp, tempsize);
+  }
+  // draw left "arrow"
+  if (visfirst > 0) { T_DrawText(x0, y0, "<", CR_FIRE); x0 = T_GetCursorX(); }
+  // draw text before cursor
+  int cpos = visfirst;
+  int tpos = 0;
+  while (cpos < curpos) {
+    vassert(tpos < tempsize+4);
+    temp[tpos++] = data[cpos++];
+  }
+  if (tpos > 0) {
+    temp[tpos] = 0;
+    T_DrawText(x0, y0, temp, clrNormal);
+  }
+  // remember cursor position
+  x0 = T_GetCursorX();
+  y0 = T_GetCursorY();
+  // draw text after cursor
+  tpos = 0;
+  while (cpos < len && cpos-visfirst < vischars) {
+    vassert(tpos < tempsize+4);
+    temp[tpos++] = data[cpos++];
+  }
+  if (tpos > 0) {
+    if (cpos < len) --tpos;
+    temp[tpos] = 0;
+    T_DrawText(x0, y0, temp, clrNormal);
+    // draw right "arrow"
+    if (cpos < len) T_DrawText(T_GetCursorX(), y0, ">", CR_FIRE);
+  }
+  // draw cursor
+  T_DrawCursorAt(x0, y0);
 }
