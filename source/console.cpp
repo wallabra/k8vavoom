@@ -29,7 +29,7 @@
 #include "drawer.h"
 
 
-#define MAXHISTORY       (32)
+#define MAXHISTORY       (64)
 #define MAX_LINES        (1024)
 #define MAX_LINE_LENGTH  (80)
 
@@ -89,10 +89,46 @@ static int num_lines = 0;
 static int first_line = 0;
 static int last_line = 0;
 
-static char c_history_buf[MAXHISTORY][MAX_ILINE_LENGTH];
+
+struct HistoryLine {
+  char *str;
+  int bufsize; // including trailing zero; NOT line length!
+
+  HistoryLine () : str(nullptr), bufsize(0) {}
+  ~HistoryLine () { Z_Free(str); str = nullptr; bufsize = 0; }
+
+  HistoryLine &operator = (const HistoryLine &src) = delete;
+
+  inline void swap (HistoryLine &src) {
+    if (&src == this) return;
+    { char *tmp = str; str = src.str; src.str = tmp; }
+    { int tmp = bufsize; bufsize = src.bufsize; src.bufsize = tmp; }
+  }
+
+  inline const char *getCStr () const { return (str ? str : ""); }
+
+  inline bool strEqu (const char *s) const {
+    if (!str) return false; // not initialized
+    if (!s || !s[0]) return (str[0] == 0);
+    return (VStr::Cmp(str, s) == 0);
+  }
+
+  inline void putStr (const char *s) {
+    if (!s) s = "";
+    int slen = (int)strlen(s)+1;
+    int newsz = (slen|0xff)+1;
+    if (bufsize < newsz) {
+      str = (char *)Z_Realloc(str, newsz);
+      bufsize = newsz;
+    }
+    strcpy(str, s);
+  }
+};
+
 static int c_history_size = 0;
 static int c_history_current = -1;
-static char *c_history[MAXHISTORY] = {nullptr}; // 0 is oldest
+static HistoryLine c_history[MAXHISTORY]; // 0 is oldest
+
 
 static float cons_h = 0;
 
@@ -139,10 +175,12 @@ void C_Init () {
 #endif
 
   memset((void *)&clines[0], 0, sizeof(clines));
-  memset(c_history_buf, 0, sizeof(c_history_buf));
   c_history_size = 0;
   c_history_current = -1;
-  for (int f = 0; f < MAXHISTORY; ++f) c_history[f] = c_history_buf[f];
+  for (int f = 0; f < MAXHISTORY; ++f) {
+    vassert(c_history[f].str == nullptr);
+    vassert(c_history[f].bufsize == 0);
+  }
   GLog.AddListener(&ConsoleLog);
 }
 
@@ -351,50 +389,40 @@ bool C_Responder (event_t *ev) {
     // execute entered command
     case K_ENTER:
     case K_PADENTER:
-      if (c_iline.length() != 0) {
-        // print it
-        GCon->Logf(">%s", c_iline.getCStr());
-        MyThreadLocker lock(&conLogLock);
+      {
+        VStr ccmds = VStr(c_iline.getCStr()).xstrip();
+        if (ccmds.length() != 0) {
+          // print it
+          GCon->Logf(">%s", *ccmds);
+          MyThreadLocker lock(&conLogLock);
 
-        // add to history (but if it is a duplicate, move it to history top)
-        int dupidx = -1;
-        for (int f = 0; f < c_history_size; ++f) {
-          if (VStr::Cmp(c_iline.getCStr(), c_history[f]) == 0) {
-            dupidx = f;
-            break;
+          // add to history (but if it is a duplicate, move it to history top)
+          int dupidx = -1;
+          for (int f = 0; f < c_history_size; ++f) {
+            if (c_history[f].strEqu(*ccmds)) {
+              dupidx = f;
+              break;
+            }
           }
-        }
-        if (dupidx >= 0) {
-          if (dupidx != c_history_size-1) {
+          if (dupidx >= 0) {
+            // duplicate found
             // move to history bottom (or top, it depends of your PoV)
-            char *cplp = c_history[dupidx];
-            for (int f = dupidx+1; f < c_history_size; ++f) c_history[f-1] = c_history[f];
-            c_history[c_history_size-1] = cplp;
-          }
-        } else {
-          if (c_history_size == MAXHISTORY) {
-            // move oldest line to bottom, and reuse it
-            char *cplp = c_history[0];
-            for (int f = 1; f < MAXHISTORY; ++f) c_history[f-1] = c_history[f];
-            c_history[MAXHISTORY-1] = cplp;
+            for (int f = dupidx+1; f <= c_history_size-1; ++f) c_history[f-1].swap(c_history[f]);
           } else {
-            ++c_history_size;
+            // no duplicate, append to history buffer
+            if (c_history_size == MAXHISTORY) {
+              // move oldest line to bottom, and reuse it
+              for (int f = 1; f < MAXHISTORY; ++f) c_history[f-1].swap(c_history[f]);
+            } else {
+              ++c_history_size;
+            }
+            c_history[c_history_size-1].putStr(*ccmds);
           }
-          char *dest = c_history[c_history_size-1];
-          const char *newstr = c_iline.getCStr();
-          if (!newstr) newstr = "";
-          auto cldlen = (int)strlen(newstr);
-          if (cldlen < MAX_LINE_LENGTH) {
-            memcpy(dest, newstr, cldlen+1);
-          } else {
-            memcpy(dest, newstr, MAX_LINE_LENGTH-1);
-          }
-          dest[MAX_LINE_LENGTH-1] = 0;
-        }
-        c_history_current = -1;
+          c_history_current = -1;
 
-        // add to command buffer
-        GCmdBuf << c_iline.getCStr() << "\n";
+          // add to command buffer
+          GCmdBuf << ccmds << "\n";
+        }
       }
 
       // clear line
@@ -442,7 +470,7 @@ bool C_Responder (event_t *ev) {
       if (c_history_size > 0 && c_history_current < c_history_size-1) {
         ++c_history_current;
         c_iline.Init();
-        cp = c_history[c_history_size-c_history_current-1];
+        cp = c_history[c_history_size-c_history_current-1].getCStr();
         while (*cp) c_iline.AddChar(*cp++);
       }
       return true;
@@ -453,7 +481,7 @@ bool C_Responder (event_t *ev) {
         --c_history_current;
         c_iline.Init();
         if (c_history_current >= 0) {
-          cp = c_history[c_history_size-c_history_current-1];
+          cp = c_history[c_history_size-c_history_current-1].getCStr();
           while (*cp) c_iline.AddChar(*cp++);
         }
       }

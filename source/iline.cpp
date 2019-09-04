@@ -27,6 +27,36 @@
 #include "gamedefs.h"
 #include "cl_local.h"
 
+#define MAX_ILINE_LENGTH  (4096)
+
+
+//==========================================================================
+//
+//  TILine::~TILine
+//
+//==========================================================================
+TILine::~TILine () {
+  Z_Free(data);
+  data = nullptr;
+  len = maxlen = 0;
+}
+
+
+//==========================================================================
+//
+//  TILine::setup
+//
+//==========================================================================
+void TILine::setup () {
+       if (maxlen < 0) maxlen = 80;
+  else if (maxlen == 0 || maxlen > MAX_ILINE_LENGTH) maxlen = MAX_ILINE_LENGTH;
+  vassert(maxlen > 0);
+  data = (char *)Z_Realloc(data, maxlen+1);
+  vassert(data);
+  data[0] = 0;
+  len = 0;
+}
+
 
 //==========================================================================
 //
