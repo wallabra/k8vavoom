@@ -468,41 +468,10 @@ static VBasePlayer *findPlayer () {
 VStr VCommand::GetAutoComplete (VStr prefix) {
   if (prefix.length() == 0) return prefix; // oops
 
-  // cut all ';'
-  VStr prevcmd;
-  for (;;) {
-    int smpos = prefix.indexOf(';');
-    if (smpos < 0) break;
-    smpos = 0;
-    char qch = 0;
-    bool foundsemi = false;
-    while (smpos < prefix.length()) {
-      char ch = prefix[smpos++];
-      // in a string?
-      if (qch) {
-        if (ch == qch) { qch = 0; continue; }
-        if (ch == '\\') {
-          if (smpos < prefix.length()) ++smpos;
-        }
-        continue;
-      }
-      // not in a string
-      if (ch == ';') {
-        foundsemi = true;
-        while (smpos < prefix.length() && (vuint8)prefix[smpos] <= 32) ++smpos;
-        prevcmd += prefix.left(smpos);
-        prefix.chopLeft(smpos);
-        break;
-      }
-      if (ch == '"') qch = ch;
-    }
-    if (!foundsemi) break;
-  }
-
   TArray<VStr> args;
   prefix.tokenize(args);
   int aidx = args.length();
-  if (aidx == 0) return prevcmd+prefix; // wtf?!
+  if (aidx == 0) return prefix; // wtf?!
 
   bool endsWithBlank = ((vuint8)prefix[prefix.length()-1] <= ' ');
 
@@ -519,10 +488,10 @@ VStr VCommand::GetAutoComplete (VStr prefix) {
         for (int f = 0; f < AutoCompleteTable.length(); ++f) newlist[f] = AutoCompleteTable[f];
         AutoCompleteTable.setLength(otbllen, false); // don't resize
         timsort_r(newlist.ptr(), newlist.length(), sizeof(VStr), &sortCmpVStrCI, nullptr);
-        return prevcmd+AutoCompleteFromList(prefix, newlist);
+        return AutoCompleteFromList(prefix, newlist);
       }
     }
-    return prevcmd+AutoCompleteFromList(prefix, AutoCompleteTable);
+    return AutoCompleteFromList(prefix, AutoCompleteTable);
   }
 
   // autocomplete new arg?
@@ -551,10 +520,10 @@ VStr VCommand::GetAutoComplete (VStr prefix) {
       }
       res += ac;
       if (addSpace) res += ' ';
-      return prevcmd+res;
+      return res;
     }
     // cannot complete, nothing's changed
-    return prevcmd+prefix;
+    return prefix;
   }
 
   // try player
@@ -563,7 +532,7 @@ VStr VCommand::GetAutoComplete (VStr prefix) {
     if (plr) {
       TArray<VStr> aclist;
       if (plr->ExecConCommandAC(args, endsWithBlank, aclist)) {
-        if (aclist.length() == 0) return prevcmd+prefix; // nothing's found
+        if (aclist.length() == 0) return prefix; // nothing's found
         // rebuild string
         VStr res;
         for (int f = 0; f < aidx; ++f) {
@@ -585,7 +554,7 @@ VStr VCommand::GetAutoComplete (VStr prefix) {
           res += ac;
           if (addSpace) res += ' ';
         }
-        return prevcmd+res;
+        return res;
       }
     }
   }
@@ -605,7 +574,7 @@ VStr VCommand::GetAutoComplete (VStr prefix) {
   }
 
   // nothing's found
-  return prevcmd+prefix;
+  return prefix;
 }
 
 

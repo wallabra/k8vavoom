@@ -461,11 +461,21 @@ bool C_Responder (event_t *ev) {
     // auto complete
     case K_TAB:
       if (c_iline.Data[0]) {
-        VStr oldpfx = c_iline.Data;
+        VStr cline = c_iline.Data;
+        // find last command
+        int cmdstart = cline.findNextCommand();
+        for (;;) {
+          const int cmdstnext = cline.findNextCommand(cmdstart);
+          if (cmdstnext == cmdstart) break;
+          cmdstart = cmdstnext;
+        }
+        VStr oldpfx = cline;
+        oldpfx.chopLeft(cmdstart); // remove completed commands
         VStr newpfx = VCommand::GetAutoComplete(oldpfx);
         if (oldpfx != newpfx) {
           c_iline.Init();
-          for (int i = 0; i < (int)newpfx.length(); ++i) c_iline.AddChar(newpfx[i]);
+          for (int i = 0; i < cmdstart; ++i) c_iline.AddChar(cline[i]);
+          for (int i = 0; i < newpfx.length(); ++i) c_iline.AddChar(newpfx[i]);
         }
       }
       return true;
