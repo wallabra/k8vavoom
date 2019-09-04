@@ -487,8 +487,10 @@ bool C_Responder (event_t *ev) {
     // auto complete
     case K_TAB:
       //TODO: autocompletion with moved cursor
-      if (c_iline.length() != 0 && c_iline.getCurPos() == c_iline.length()) {
-        VStr cline = c_iline.getCStr();
+      if (c_iline.length() != 0) {
+        VStr clineRest = c_iline.getCStr();
+        VStr cline = clineRest.left(c_iline.getCurPos());
+        clineRest.chopLeft(c_iline.getCurPos());
         // find last command
         int cmdstart = cline.findNextCommand();
         for (;;) {
@@ -501,8 +503,14 @@ bool C_Responder (event_t *ev) {
         VStr newpfx = VCommand::GetAutoComplete(oldpfx);
         if (oldpfx != newpfx) {
           c_iline.Init();
-          for (int i = 0; i < cmdstart; ++i) c_iline.AddChar(cline[i]);
-          for (int i = 0; i < newpfx.length(); ++i) c_iline.AddChar(newpfx[i]);
+          c_iline.AddString(cline.left(cmdstart));
+          c_iline.AddString(newpfx);
+          // append rest of cline
+          if (clineRest.length()) {
+            int cpos = c_iline.getCurPos();
+            c_iline.AddString(clineRest);
+            c_iline.setCurPos(cpos);
+          }
         }
       }
       return true;

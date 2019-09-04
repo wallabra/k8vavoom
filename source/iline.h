@@ -57,11 +57,14 @@ public:
   inline const char *getCStr () const { return data; }
   inline const char *operator * () const { return data; }
 
-  inline int getCurPos () const { return curpos; }
+  inline int getCurPos () const { return clampval(curpos, 0, len); }
+  inline void setCurPos (int cpos) { curpos = cpos; ensureCursorVisible(); }
 
   void SetVisChars (int vc);
 
   void Init ();
+  void AddString (VStr s);
+  void AddString (const char *s);
   void AddChar (char ch);
   void DelChar (); // this does "backspace"
   void RemoveChar (); // this removes char at the current cursor position, and doesn't move cursor
