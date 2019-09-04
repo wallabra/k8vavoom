@@ -356,6 +356,7 @@ bool TILine::Key (const event_t &ev) {
 
   if (ev.keycode == K_BACKSPACE) {
     if (ev.isCtrlDown()) DelWord(); else DelChar();
+    return true;
   } else if (ev.keycode == K_ENTER || ev.keycode == K_PADENTER) {
     return true;
   } else {
@@ -378,6 +379,8 @@ bool TILine::Key (const event_t &ev) {
 void TILine::DrawAt (int x0, int y0, int clrNormal, int clrLR) {
   if (!data) return; // just in case
   ensureCursorVisible();
+  T_SetCursorPos(x0, y0); // for empty input lines
+  if (len == 0) { T_DrawCursor(); return; }
   // ensure that our temporary buffer is ok
   if (tempsize < vischars+8) {
     tempsize = vischars+16;
