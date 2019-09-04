@@ -610,6 +610,12 @@ public:
   inline void tokenise (TArray <VStr> &args) const { Tokenise(args); }
   inline void tokenize (TArray <VStr> &args) const { Tokenise(args); }
 
+  // this finds start of the next command
+  // commands are ';'-delimited
+  // processes quotes as `tokenise` does
+  // skips all leading spaces by default (i.e. result can be >0 even if there are no ';')
+  int findNextCommand (int stpos=0, bool skipLeadingSpaces=true) const;
+
 public:
   static __attribute__((warn_unused_result)) inline char wchar2win (vuint32 wc) { return (wc < 65536 ? wc2shitmap[wc] : '?'); }
   static __attribute__((warn_unused_result)) inline char wchar2koi (vuint32 wc) { return (wc < 65536 ? wc2koimap[wc] : '?'); }

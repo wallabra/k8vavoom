@@ -2092,6 +2092,43 @@ void VStr::Tokenise (TArray <VStr> &args) const {
 
 //==========================================================================
 //
+//  VStr::findNextCommand
+//
+//  this finds start of the next command
+//  commands are ';'-delimited
+//  processes quotes as `tokenise` does
+//  skips all leading spaces by default
+//  (i.e. result can be >0 even if there are no ';')
+//
+//==========================================================================
+int VStr::findNextCommand (int stpos, bool skipLeadingSpaces) const {
+  if (stpos < 0) stpos = 0;
+  const int len = length();
+  if (stpos >= len) return len;
+  const char *str = getCStr();
+  char qch = 0; // quote end char
+  if (skipLeadingSpaces) { while (stpos < len && (vuint8)str[stpos] <= ' ') ++stpos; }
+  vassert(stpos <= len);
+  int lastGoodPos = stpos;
+  while (stpos < len) {
+    const char ch = str[stpos++];
+    if (qch) {
+      // in a string
+           if (ch == qch) qch = 0;
+      else if (ch == '\\') ++stpos;
+    } else if (ch == ';') {
+      // found command end, skip spaces
+      if (skipLeadingSpaces) { while (stpos < len && (vuint8)str[stpos] <= ' ') ++stpos; }
+      lastGoodPos = stpos;
+    } else if (ch == '"' || ch == '\'') qch = ch;
+  }
+  vassert(lastGoodPos <= len);
+  return lastGoodPos;
+}
+
+
+//==========================================================================
+//
 //  VStr::isSafeDiskFileName
 //
 //==========================================================================
