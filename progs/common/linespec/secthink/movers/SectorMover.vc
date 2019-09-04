@@ -91,7 +91,7 @@ void Finished () {
 //  returns `false` if movement was blocked
 //
 //==========================================================================
-final bool MoveLinkedSectorsPlane (sector_t *sector, int floorOrCeiling, const ref SavedFlatInfo saved, int crush, bool StopOnCrush, bool forced) {
+final bool MoveLinkedSectorsPlane (sector_t *sector, int floorOrCeiling, const ref SavedFlatInfo saved, int crush, bool stopOnCrush, bool forced) {
   if (!sector) return true;
 
   float floordelta = (!floorOrCeiling ? sector->floor.dist-saved.lastpos : sector->ceiling.dist-saved.lastpos);
@@ -126,7 +126,7 @@ final bool MoveLinkedSectorsPlane (sector_t *sector, int floorOrCeiling, const r
     }
     int flag = XLevel.ChangeSector(sc, crush);
     if (!forced && flag) {
-      if (!crush || StopOnCrush) {
+      if (!crush || stopOnCrush) {
         // restore all changed sectors
         foreach (ref auto sv; origLinkPlanes; reverse) {
           if (!floorOrCeiling) {
@@ -154,7 +154,7 @@ final bool MoveLinkedSectorsPlane (sector_t *sector, int floorOrCeiling, const r
 //
 //==========================================================================
 int MovePlane (sector_t *sector, float amount, float dest, int crush,
-               int floorOrCeiling, int direction, bool StopOnCrush)
+               int floorOrCeiling, int direction, bool stopOnCrush)
 {
   bool flag;
   SavedFlatInfo saved;
@@ -179,22 +179,22 @@ int MovePlane (sector_t *sector, float amount, float dest, int crush,
               RestoreFlat(ref sector->floor, ref saved);
               XLevel.ChangeSector(sector, crush);
             }
-            MoveLinkedSectorsPlane(sector, floorOrCeiling, ref saved, crush, StopOnCrush, forced:true);
+            MoveLinkedSectorsPlane(sector, floorOrCeiling, ref saved, crush, stopOnCrush, forced:true);
             return RES_PASTDEST;
           } else {
             flag = XLevel.ChangeSector(sector, crush);
             if (flag) {
-              if (!crush || StopOnCrush) {
+              if (!crush || stopOnCrush) {
                 RestoreFlat(ref sector->floor, ref saved);
                 XLevel.ChangeSector(sector, crush);
               } else {
-                MoveLinkedSectorsPlane(sector, floorOrCeiling, ref saved, crush, StopOnCrush, forced:true);
+                MoveLinkedSectorsPlane(sector, floorOrCeiling, ref saved, crush, stopOnCrush, forced:true);
               }
               return RES_CRUSHED;
             }
-            if (!MoveLinkedSectorsPlane(sector, floorOrCeiling, ref saved, crush, StopOnCrush, forced:false)) {
+            if (!MoveLinkedSectorsPlane(sector, floorOrCeiling, ref saved, crush, stopOnCrush, forced:false)) {
               // oops, cannot move; all movement restored (if necessary); restore original plane
-              if (!crush || StopOnCrush) {
+              if (!crush || stopOnCrush) {
                 RestoreFlat(ref sector->floor, ref saved);
                 XLevel.ChangeSector(sector, crush);
               }
@@ -224,25 +224,25 @@ int MovePlane (sector_t *sector, float amount, float dest, int crush,
               RestoreFlat(ref sector->floor, ref saved);
               XLevel.ChangeSector(sector, crush);
             } else {
-              MoveLinkedSectorsPlane(sector, floorOrCeiling, ref saved, crush, StopOnCrush, forced:true);
+              MoveLinkedSectorsPlane(sector, floorOrCeiling, ref saved, crush, stopOnCrush, forced:true);
             }
             return RES_PASTDEST;
           } else {
             // COULD GET CRUSHED
             flag = XLevel.ChangeSector(sector, crush);
             if (flag) {
-              if (!crush || StopOnCrush) {
+              if (!crush || stopOnCrush) {
                 RestoreFlat(ref sector->floor, ref saved);
                 XLevel.ChangeSector(sector, crush);
               } else {
-                MoveLinkedSectorsPlane(sector, floorOrCeiling, ref saved, crush, StopOnCrush, forced:true);
+                MoveLinkedSectorsPlane(sector, floorOrCeiling, ref saved, crush, stopOnCrush, forced:true);
               }
               return RES_CRUSHED;
             }
           }
-          if (!MoveLinkedSectorsPlane(sector, floorOrCeiling, ref saved, crush, StopOnCrush, forced:true)) {
+          if (!MoveLinkedSectorsPlane(sector, floorOrCeiling, ref saved, crush, stopOnCrush, forced:true)) {
             // oops, cannot move; all movement restored (if necessary); restore original plane
-            if (!crush || StopOnCrush) {
+            if (!crush || stopOnCrush) {
               RestoreFlat(ref sector->floor, ref saved);
               XLevel.ChangeSector(sector, crush);
             }
@@ -282,7 +282,7 @@ int MovePlane (sector_t *sector, float amount, float dest, int crush,
             // COULD GET CRUSHED
             flag = XLevel.ChangeSector(sector, crush);
             if (flag) {
-              if (!crush || StopOnCrush) {
+              if (!crush || stopOnCrush) {
                 RestoreFlat(ref sector->ceiling, ref saved);
                 XLevel.ChangeSector(sector, crush);
               }
@@ -307,7 +307,7 @@ int MovePlane (sector_t *sector, float amount, float dest, int crush,
           } else {
             flag = XLevel.ChangeSector(sector, crush);
             if (flag) {
-              if (!crush || StopOnCrush) {
+              if (!crush || stopOnCrush) {
                 RestoreFlat(ref sector->ceiling, ref saved);
                 XLevel.ChangeSector(sector, crush);
               }

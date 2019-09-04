@@ -139,24 +139,24 @@ override void Tick (float DeltaTime) {
 
   if (floorIsFirst) {
     // first, move floor
-    Res = MovePlane(Sector, Speed*DeltaTime, FloorDestDist, crush:0, floorOrCeiling:0, Direction, StopOnCrush:false);
+    Res = MovePlane(Sector, Speed*DeltaTime, FloorDestDist, crush:0, floorOrCeiling:0, Direction, stopOnCrush:false);
     if (Res == RES_OK || Res == RES_PASTDEST) {
       // ok, floor moved, move ceiling
-      Res = MovePlane(Sector, Speed*DeltaTime, CeilingDestDist, crush:0, floorOrCeiling:1, Direction, StopOnCrush:false);
+      Res = MovePlane(Sector, Speed*DeltaTime, CeilingDestDist, crush:0, floorOrCeiling:1, Direction, stopOnCrush:false);
       if (Res == RES_CRUSHED) {
         // move floor back
-        MovePlane(Sector, Speed*DeltaTime, FloorHeight, crush:0, floorOrCeiling:0, -Direction, StopOnCrush:false);
+        MovePlane(Sector, Speed*DeltaTime, FloorHeight, crush:0, floorOrCeiling:0, -Direction, stopOnCrush:false);
       }
     }
   } else {
     // first, move ceiling
-    Res = MovePlane(Sector, Speed*DeltaTime, CeilingDestDist, crush:0, floorOrCeiling:1, Direction, StopOnCrush:false);
+    Res = MovePlane(Sector, Speed*DeltaTime, CeilingDestDist, crush:0, floorOrCeiling:1, Direction, stopOnCrush:false);
     if (Res == RES_OK || Res == RES_PASTDEST) {
       // ok, ceiling moved, move floor
-      Res = MovePlane(Sector, Speed*DeltaTime, FloorDestDist, crush:0, floorOrCeiling:0, Direction, StopOnCrush:false);
+      Res = MovePlane(Sector, Speed*DeltaTime, FloorDestDist, crush:0, floorOrCeiling:0, Direction, stopOnCrush:false);
       if (Res == RES_CRUSHED) {
         // move ceiling back
-        MovePlane(Sector, Speed*DeltaTime, CeilingHeight, crush:0, floorOrCeiling:1, -Direction, StopOnCrush:false);
+        MovePlane(Sector, Speed*DeltaTime, CeilingHeight, crush:0, floorOrCeiling:1, -Direction, stopOnCrush:false);
       }
     }
   }
