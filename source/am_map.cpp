@@ -447,10 +447,146 @@ static int getSpriteIndex (VClass *cls) {
 
 //==========================================================================
 //
+//  AM_addMark
+//
+//  adds a marker at the current location
+//
+//==========================================================================
+static int AM_addMark () {
+  if (!mapMarksAllowed) return -1;
+  // if the player just deleted a mark, reuse its slot
+  if (markActive >= 0 && markActive < AM_NUMMARKPOINTS && !markpoints[markActive].isActive()) {
+    MarkPoint &mp = markpoints[markActive];
+    mp.x = m_x+m_w/2.0f;
+    mp.y = m_y+m_h/2.0f;
+    mp.activate();
+    return markActive;
+  }
+  // find empty mark slot
+  for (int mn = 0; mn < AM_NUMMARKPOINTS; ++mn) {
+    MarkPoint &mp = markpoints[mn];
+    if (!mp.isActive()) {
+      if (markActive == mn) markActive = -1;
+      mp.x = m_x+m_w/2.0f;
+      mp.y = m_y+m_h/2.0f;
+      mp.activate();
+      return mn;
+    }
+  }
+  return -1;
+}
+
+
+//==========================================================================
+//
+//  AM_clearMarks
+//
+//==========================================================================
+static bool AM_clearMarks () {
+  bool res = false;
+  markActive = -1;
+  for (int mn = 0; mn < AM_NUMMARKPOINTS; ++mn) {
+    MarkPoint &mp = markpoints[mn];
+    res = (res || mp.isActive());
+    mp.deactivate();
+  }
+  return res;
+}
+
+
+//==========================================================================
+//
+//  AM_GetMaxMarks
+//
+//  automap marks API
+//
+//==========================================================================
+int AM_GetMaxMarks () {
+  return AM_NUMMARKPOINTS;
+}
+
+
+//==========================================================================
+//
+//  AM_IsMarkActive
+//
+//==========================================================================
+bool AM_IsMarkActive (int index) {
+  return (index >= 0 && index < AM_NUMMARKPOINTS ? markpoints[index].isActive() : false);
+}
+
+
+//==========================================================================
+//
+//  AM_GetMarkX
+//
+//==========================================================================
+float AM_GetMarkX (int index) {
+  return (index >= 0 && index < AM_NUMMARKPOINTS && markpoints[index].isActive() ? markpoints[index].x : 0.0f);
+}
+
+
+//==========================================================================
+//
+//  AM_GetMarkY
+//
+//==========================================================================
+float AM_GetMarkY (int index) {
+  return (index >= 0 && index < AM_NUMMARKPOINTS && markpoints[index].isActive() ? markpoints[index].y : 0.0f);
+}
+
+
+//==========================================================================
+//
+//  AM_ClearMarks
+//
+//==========================================================================
+void AM_ClearMarks () {
+  (void)AM_clearMarks();
+}
+
+
+//==========================================================================
+//
+//  AM_SetMarkXY
+//
+//==========================================================================
+void AM_SetMarkXY (int index, float x, float y) {
+  if (index < 0 || index >= AM_NUMMARKPOINTS) return;
+  MarkPoint &mp = markpoints[index];
+  mp.x = x;
+  mp.y = y;
+  mp.activate();
+}
+
+
+//==========================================================================
+//
 //  AM_Init
 //
 //==========================================================================
 void AM_Init () {
+}
+
+
+//==========================================================================
+//
+//  AM_ClearAutomap
+//
+//==========================================================================
+void AM_ClearAutomap () {
+  if (!GClLevel) return;
+  for (int i = 0; i < GClLevel->NumLines; ++i) {
+    line_t &line = GClLevel->Lines[i];
+    line.flags &= ~ML_MAPPED;
+    line.exFlags &= ~(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
+  }
+  for (int i = 0; i < GClLevel->NumSegs; ++i) {
+    GClLevel->Segs[i].flags &= ~SF_MAPPED;
+  }
+  for (unsigned f = 0; f < (unsigned)GClLevel->NumSubsectors; ++f) {
+    GClLevel->Subsectors[f].miscFlags &= ~subsector_t::SSMF_Rendered;
+  }
 }
 
 
@@ -624,55 +760,6 @@ static void AM_changeWindowLoc () {
 
 //==========================================================================
 //
-//  AM_addMark
-//
-//  adds a marker at the current location
-//
-//==========================================================================
-static int AM_addMark () {
-  if (!mapMarksAllowed) return -1;
-  // if the player just deleted a mark, reuse its slot
-  if (markActive >= 0 && markActive < AM_NUMMARKPOINTS && !markpoints[markActive].isActive()) {
-    MarkPoint &mp = markpoints[markActive];
-    mp.x = m_x+m_w/2.0f;
-    mp.y = m_y+m_h/2.0f;
-    mp.activate();
-    return markActive;
-  }
-  // find empty mark slot
-  for (int mn = 0; mn < AM_NUMMARKPOINTS; ++mn) {
-    MarkPoint &mp = markpoints[mn];
-    if (!mp.isActive()) {
-      if (markActive == mn) markActive = -1;
-      mp.x = m_x+m_w/2.0f;
-      mp.y = m_y+m_h/2.0f;
-      mp.activate();
-      return mn;
-    }
-  }
-  return -1;
-}
-
-
-//==========================================================================
-//
-//  AM_clearMarks
-//
-//==========================================================================
-static bool AM_clearMarks () {
-  bool res = false;
-  markActive = -1;
-  for (int mn = 0; mn < AM_NUMMARKPOINTS; ++mn) {
-    MarkPoint &mp = markpoints[mn];
-    res = (res || mp.isActive());
-    mp.deactivate();
-  }
-  return res;
-}
-
-
-//==========================================================================
-//
 //  AM_initVariables
 //
 //==========================================================================
@@ -797,132 +884,6 @@ static void AM_Check () {
     if (am_active) AM_Start(); else AM_Stop();
   }
   if (am_active) automapactive = (am_overlay ? -1 : 1);
-}
-
-
-//==========================================================================
-//
-//  AM_Responder
-//
-//  Handle events (user inputs) in automap mode
-//
-//==========================================================================
-bool AM_Responder (event_t *ev) {
-  AM_Check();
-  if (!automapactive) return false;
-  bool rc = false;
-  if (ev->type == ev_keydown) {
-    rc = true;
-    switch (ev->data1) {
-      case AM_PANRIGHTKEY: // pan right
-        if (!am_follow_player) m_paninc.x = FTOM(F_PANINC/2.0f); else rc = false;
-        break;
-      case AM_PANLEFTKEY: // pan left
-        if (!am_follow_player) m_paninc.x = -FTOM(F_PANINC/2.0f); else rc = false;
-        break;
-      case AM_PANUPKEY: // pan up
-        if (!am_follow_player) m_paninc.y = FTOM(F_PANINC/2.0f); else rc = false;
-        break;
-      case AM_PANDOWNKEY: // pan down
-        if (!am_follow_player) m_paninc.y = -FTOM(F_PANINC/2.0f); else rc = false;
-        break;
-      case AM_ZOOMOUTKEY: // zoom out
-        if (!amWholeScale) {
-          mtof_zoommul = M_ZOOMOUT;
-          ftom_zoommul = M_ZOOMIN;
-        }
-        break;
-      case AM_ZOOMINKEY: // zoom in
-        if (!amWholeScale) {
-          mtof_zoommul = M_ZOOMIN;
-          ftom_zoommul = M_ZOOMOUT;
-        }
-        break;
-      /*
-      case AM_ENDKEY:
-        AM_Stop();
-        break;
-      */
-      case AM_GOBIGKEY:
-        mtof_zoommul = 1.0f;
-        ftom_zoommul = 1.0f;
-        amWholeScale = (amWholeScale ? 0 : 1);
-        if (amWholeScale) {
-          AM_saveScaleAndLoc();
-          AM_minOutWindowScale();
-        } else {
-          AM_restoreScaleAndLoc();
-        }
-        break;
-      case AM_FOLLOWKEY:
-        am_follow_player = !am_follow_player;
-        f_oldloc.x = 99999.0f;
-        cl->Printf(am_follow_player ? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF);
-        break;
-      case AM_GRIDKEY:
-        am_draw_grid = !am_draw_grid;
-        cl->Printf(am_draw_grid ? AMSTR_GRIDON : AMSTR_GRIDOFF);
-        break;
-      case AM_MARKKEY:
-      case K_INSERT:
-        if (mapMarksAllowed) {
-          int mnum = AM_addMark();
-          if (mnum >= 0) cl->Printf("%s %d", AMSTR_MARKEDSPOT, mnum);
-        }
-        break;
-      case AM_NEXTMARKKEY:
-        if (mapMarksAllowed) {
-          ++markActive;
-          if (markActive < 0) markActive = 0;
-          // find next active mark
-          while (markActive < AM_NUMMARKPOINTS) {
-            if (markpoints[markActive].isActive()) break;
-            ++markActive;
-          }
-          if (markActive >= AM_NUMMARKPOINTS) markActive = -1;
-        }
-        break;
-      case AM_CLEARMARKKEY:
-      case K_DELETE:
-        if (mapMarksAllowed && (ev->isShiftDown() || ev->keycode == K_DELETE)) {
-          if (markActive >= 0 && markActive < AM_NUMMARKPOINTS && markpoints[markActive].isActive()) {
-            markpoints[markActive].deactivate();
-            cl->Printf("%s %d", AMSTR_MARKEDSPOTDEL, markActive);
-          } else {
-            if (AM_clearMarks()) cl->Printf(AMSTR_MARKSCLEARED);
-          }
-        }
-        break;
-      case AM_TOGGLETEXKEY:
-        am_draw_type = (am_draw_type+1)%3;
-        break;
-      default:
-        rc = false;
-        break;
-    }
-  } else if (ev->type == ev_keyup) {
-    rc = false;
-    switch (ev->data1) {
-      case AM_PANRIGHTKEY:
-        if (!am_follow_player) m_paninc.x = 0.0f;
-        break;
-      case AM_PANLEFTKEY:
-        if (!am_follow_player) m_paninc.x = 0.0f;
-        break;
-      case AM_PANUPKEY:
-        if (!am_follow_player) m_paninc.y = 0.0f;
-        break;
-      case AM_PANDOWNKEY:
-        if (!am_follow_player) m_paninc.y = 0.0f;
-        break;
-      case AM_ZOOMOUTKEY:
-      case AM_ZOOMINKEY:
-        mtof_zoommul = 1.0f;
-        ftom_zoommul = 1.0f;
-        break;
-    }
-  }
-  return rc;
 }
 
 
@@ -2228,88 +2189,127 @@ void AM_Drawer () {
 
 //==========================================================================
 //
-//  AM_GetMaxMarks
+//  AM_Responder
 //
-//  automap marks API
-//
-//==========================================================================
-int AM_GetMaxMarks () {
-  return AM_NUMMARKPOINTS;
-}
-
-
-//==========================================================================
-//
-//  AM_IsMarkActive
+//  Handle events (user inputs) in automap mode
 //
 //==========================================================================
-bool AM_IsMarkActive (int index) {
-  return (index >= 0 && index < AM_NUMMARKPOINTS ? markpoints[index].isActive() : false);
-}
-
-
-//==========================================================================
-//
-//  AM_GetMarkX
-//
-//==========================================================================
-float AM_GetMarkX (int index) {
-  return (index >= 0 && index < AM_NUMMARKPOINTS && markpoints[index].isActive() ? markpoints[index].x : 0.0f);
-}
-
-
-//==========================================================================
-//
-//  AM_GetMarkY
-//
-//==========================================================================
-float AM_GetMarkY (int index) {
-  return (index >= 0 && index < AM_NUMMARKPOINTS && markpoints[index].isActive() ? markpoints[index].y : 0.0f);
-}
-
-
-//==========================================================================
-//
-//  AM_ClearMarks
-//
-//==========================================================================
-void AM_ClearMarks () {
-  (void)AM_clearMarks();
-}
-
-
-//==========================================================================
-//
-//  AM_SetMarkXY
-//
-//==========================================================================
-void AM_SetMarkXY (int index, float x, float y) {
-  if (index < 0 || index >= AM_NUMMARKPOINTS) return;
-  MarkPoint &mp = markpoints[index];
-  mp.x = x;
-  mp.y = y;
-  mp.activate();
-}
-
-
-//==========================================================================
-//
-//  AM_ClearAutomap
-//
-//==========================================================================
-void AM_ClearAutomap () {
-  if (!GClLevel) return;
-  for (int i = 0; i < GClLevel->NumLines; ++i) {
-    line_t &line = GClLevel->Lines[i];
-    line.flags &= ~ML_MAPPED;
-    line.exFlags &= ~(ML_EX_PARTIALLY_MAPPED|ML_EX_CHECK_MAPPED);
+bool AM_Responder (event_t *ev) {
+  AM_Check();
+  if (!automapactive) return false;
+  bool rc = false;
+  if (ev->type == ev_keydown) {
+    rc = true;
+    switch (ev->data1) {
+      case AM_PANRIGHTKEY: // pan right
+        if (!am_follow_player) m_paninc.x = FTOM(F_PANINC/2.0f); else rc = false;
+        break;
+      case AM_PANLEFTKEY: // pan left
+        if (!am_follow_player) m_paninc.x = -FTOM(F_PANINC/2.0f); else rc = false;
+        break;
+      case AM_PANUPKEY: // pan up
+        if (!am_follow_player) m_paninc.y = FTOM(F_PANINC/2.0f); else rc = false;
+        break;
+      case AM_PANDOWNKEY: // pan down
+        if (!am_follow_player) m_paninc.y = -FTOM(F_PANINC/2.0f); else rc = false;
+        break;
+      case AM_ZOOMOUTKEY: // zoom out
+        if (!amWholeScale) {
+          mtof_zoommul = M_ZOOMOUT;
+          ftom_zoommul = M_ZOOMIN;
+        }
+        break;
+      case AM_ZOOMINKEY: // zoom in
+        if (!amWholeScale) {
+          mtof_zoommul = M_ZOOMIN;
+          ftom_zoommul = M_ZOOMOUT;
+        }
+        break;
+      /*
+      case AM_ENDKEY:
+        AM_Stop();
+        break;
+      */
+      case AM_GOBIGKEY:
+        mtof_zoommul = 1.0f;
+        ftom_zoommul = 1.0f;
+        amWholeScale = (amWholeScale ? 0 : 1);
+        if (amWholeScale) {
+          AM_saveScaleAndLoc();
+          AM_minOutWindowScale();
+        } else {
+          AM_restoreScaleAndLoc();
+        }
+        break;
+      case AM_FOLLOWKEY:
+        am_follow_player = !am_follow_player;
+        f_oldloc.x = 99999.0f;
+        cl->Printf(am_follow_player ? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF);
+        break;
+      case AM_GRIDKEY:
+        am_draw_grid = !am_draw_grid;
+        cl->Printf(am_draw_grid ? AMSTR_GRIDON : AMSTR_GRIDOFF);
+        break;
+      case AM_MARKKEY:
+      case K_INSERT:
+        if (mapMarksAllowed) {
+          int mnum = AM_addMark();
+          if (mnum >= 0) cl->Printf("%s %d", AMSTR_MARKEDSPOT, mnum);
+        }
+        break;
+      case AM_NEXTMARKKEY:
+        if (mapMarksAllowed) {
+          ++markActive;
+          if (markActive < 0) markActive = 0;
+          // find next active mark
+          while (markActive < AM_NUMMARKPOINTS) {
+            if (markpoints[markActive].isActive()) break;
+            ++markActive;
+          }
+          if (markActive >= AM_NUMMARKPOINTS) markActive = -1;
+        }
+        break;
+      case AM_CLEARMARKKEY:
+      case K_DELETE:
+        if (mapMarksAllowed && (ev->isShiftDown() || ev->keycode == K_DELETE)) {
+          if (markActive >= 0 && markActive < AM_NUMMARKPOINTS && markpoints[markActive].isActive()) {
+            markpoints[markActive].deactivate();
+            cl->Printf("%s %d", AMSTR_MARKEDSPOTDEL, markActive);
+          } else {
+            if (AM_clearMarks()) cl->Printf(AMSTR_MARKSCLEARED);
+          }
+        }
+        break;
+      case AM_TOGGLETEXKEY:
+        am_draw_type = (am_draw_type+1)%3;
+        break;
+      default:
+        rc = false;
+        break;
+    }
+  } else if (ev->type == ev_keyup) {
+    rc = false;
+    switch (ev->data1) {
+      case AM_PANRIGHTKEY:
+        if (!am_follow_player) m_paninc.x = 0.0f;
+        break;
+      case AM_PANLEFTKEY:
+        if (!am_follow_player) m_paninc.x = 0.0f;
+        break;
+      case AM_PANUPKEY:
+        if (!am_follow_player) m_paninc.y = 0.0f;
+        break;
+      case AM_PANDOWNKEY:
+        if (!am_follow_player) m_paninc.y = 0.0f;
+        break;
+      case AM_ZOOMOUTKEY:
+      case AM_ZOOMINKEY:
+        mtof_zoommul = 1.0f;
+        ftom_zoommul = 1.0f;
+        break;
+    }
   }
-  for (int i = 0; i < GClLevel->NumSegs; ++i) {
-    GClLevel->Segs[i].flags &= ~SF_MAPPED;
-  }
-  for (unsigned f = 0; f < (unsigned)GClLevel->NumSubsectors; ++f) {
-    GClLevel->Subsectors[f].miscFlags &= ~subsector_t::SSMF_Rendered;
-  }
+  return rc;
 }
 
 
