@@ -134,6 +134,7 @@ static float cons_h = 0;
 
 static VCvarF con_height("con_height", "240", "Console height.", CVAR_Archive);
 static VCvarF con_speed("con_speed", "6666", "Console sliding speed.", CVAR_Archive);
+static VCvarB con_clear_input_on_open("con_clear_input_on_open", true, "Clear input line when console opens?", CVAR_Archive);
 
 static FConsoleLog ConsoleLog;
 
@@ -185,6 +186,7 @@ void C_Init () {
 
   // prompt, cursor, and one char reserved
   c_iline.SetVisChars(MAX_LINE_LENGTH-3);
+  c_iline.Init();
 }
 
 
@@ -210,7 +212,7 @@ void C_Start () {
   MN_DeactivateMenu();
   MyThreadLocker lock(&conLogLock);
   if (consolestate == cons_closed) {
-    c_iline.Init();
+    if (con_clear_input_on_open) c_iline.Init();
     last_line = num_lines;
   }
   consolestate = cons_opening;
