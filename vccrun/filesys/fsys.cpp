@@ -1468,7 +1468,7 @@ void VZipStreamWriter::Serialise (void *buf, int len) {
       if (dstStream->IsError()) { setError(); return; }
     }
   } while (zStream.avail_out == 0);
-  //check(zStream.avail_in == 0);
+  //vassert(zStream.avail_in == 0);
 }
 
 

@@ -187,7 +187,7 @@ int VZipFile::getNameCount () const {
 void VZipFile::openArchive () {
   vuint32 central_pos = searchCentralDir();
   if (central_pos == 0) { fileStream = nullptr; return; } // signal failure
-  //check(central_pos);
+  //vassert(central_pos);
 
   //fprintf(stderr, "cdpos=0x%08x\n", central_pos);
 
@@ -212,9 +212,9 @@ void VZipFile::openArchive () {
     // total number of entries in the central dir
     << number_entry_CD;
 
-  //check(number_entry_CD == fileCount);
-  //check(number_disk_with_CD == 0);
-  //check(number_disk == 0);
+  //vassert(number_entry_CD == fileCount);
+  //vassert(number_disk_with_CD == 0);
+  //vassert(number_disk == 0);
 
   fileCount = fcount16;
 
@@ -228,7 +228,7 @@ void VZipFile::openArchive () {
     << offset_central_dir
     << size_comment;
 
-  //check(central_pos >= offset_central_dir+size_central_dir);
+  //vassert(central_pos >= offset_central_dir+size_central_dir);
 
   bytesBeforeZipFile = central_pos-(offset_central_dir+size_central_dir);
 
@@ -855,8 +855,8 @@ void VZipFileReader::Serialise (void* buf, int len) {
     rest_read_uncompressed = info.uncompressed_size;
     pos_in_zipfile = start_pos;
     if (info.compression_method == Z_DEFLATED) {
-      check(stream_initialised);
-      check(usezlib);
+      vassert(stream_initialised);
+      vassert(usezlib);
       if (stream_initialised) { inflateEnd(&stream); stream_initialised = false; }
       memset(&stream, 0, sizeof(stream));
       if (inflateInit2(&stream, -MAX_WBITS) != Z_OK) { bError = true; return; }
@@ -865,8 +865,8 @@ void VZipFileReader::Serialise (void* buf, int len) {
 #ifdef K8_UNLZMA_DEBUG
       fprintf(stderr, "LZMA: rewind (nextpos=%d)\n", nextpos);
 #endif
-      check(stream_initialised);
-      check(!usezlib);
+      vassert(stream_initialised);
+      vassert(!usezlib);
       if (!lzmaRestart()) return; // error already set
     } else {
       memset(&stream, 0, sizeof(stream));

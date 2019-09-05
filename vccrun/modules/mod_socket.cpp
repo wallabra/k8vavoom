@@ -175,8 +175,8 @@ struct SocketBuf {
       data = (vuint8 *)Z_Realloc(data, newsz);
       size = newsz;
     }
-    check(size <= maxsize);
-    check(used+len <= size);
+    vassert(size <= maxsize);
+    vassert(used+len <= size);
     memcpy(data+used, buf, len);
     used += len;
     return true;
@@ -376,7 +376,7 @@ static SocketObj *allocSocket () {
     socklist = (SocketObj *)Z_Realloc(socklist, socksize*sizeof(SocketObj));
     //memset((void *)(socklist+oldsz), 0, (socksize-oldsz)*sizeof(SocketObj));
   }
-  check(sockused < socksize);
+  vassert(sockused < socksize);
   SocketObj *so = &socklist[sockused++];
   memset((void *)so, 0, sizeof(SocketObj));
   so->id = nextSockId++;

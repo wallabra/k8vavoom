@@ -170,7 +170,7 @@ static bool onExecuteNetMethod (VObject *aself, VMethod *func) {
     VMethod *Base = func;
     while (Base->SuperMethod) Base = Base->SuperMethod;
     // execute it's replication condition method
-    check(Base->ReplCond);
+    vassert(Base->ReplCond);
     P_PASS_REF(this);
     vuint32 SavedFlags = PlayerFlags;
     PlayerFlags &= ~VBasePlayer::PF_IsClient;
@@ -199,7 +199,7 @@ static bool onExecuteNetMethod (VObject *aself, VMethod *func) {
   VMethod *Base = func;
   while (Base->SuperMethod) Base = Base->SuperMethod;
   // execute it's replication condition method
-  check(Base->ReplCond);
+  vassert(Base->ReplCond);
   P_PASS_REF(aself);
   if (!VObject::ExecuteFunction(Base->ReplCond).getBool()) {
     //fprintf(stderr, "rpc call to `%s` (%s) is not done\n", aself->GetClass()->GetName(), *func->GetFullName());
