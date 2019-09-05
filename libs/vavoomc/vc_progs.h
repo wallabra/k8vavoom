@@ -56,6 +56,14 @@ inline void PR_Push (int value) {
 }
 
 
+inline void PR_PushBool (bool value) {
+#if !defined(IN_VCC)
+  pr_stackPtr->i = (value ? 1 : 0);
+  ++pr_stackPtr;
+#endif
+}
+
+
 inline int PR_Pop () {
 #if !defined(IN_VCC)
   --pr_stackPtr;

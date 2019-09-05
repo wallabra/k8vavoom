@@ -29,34 +29,34 @@
 //**
 //**************************************************************************
 
-// Define private default constructor.
+// define private default constructor
 #define NO_DEFAULT_CONSTRUCTOR(cls) \
   protected: cls() {} public:
 
-// Declare the base VObject class.
+// declare the base VObject class
 #define DECLARE_BASE_CLASS(TClass, TSuperClass, TStaticFlags) \
 public: \
-  /* Identification */ \
+  /* identification */ \
   enum {StaticClassFlags = TStaticFlags|CLASS_Native}; \
   private: static VClass PrivateStaticClass; public: \
   typedef TSuperClass Super; \
   typedef TClass ThisClass; \
   static VClass *StaticClass() { return &PrivateStaticClass; }
 
-// Declare a concrete class.
+// declare a concrete class
 #define DECLARE_CLASS(TClass, TSuperClass, TStaticFlags) \
   DECLARE_BASE_CLASS(TClass, TSuperClass, TStaticFlags|CLASS_Native) \
   virtual ~TClass() { ConditionalDestroy(); } \
   friend inline VStream &operator<<(VStream &Strm, TClass *&Obj) { return Strm << *(VObject**)&Obj; } \
   static void InternalConstructor() { new TClass(); }
 
-// Declare an abstract class.
+// declare an abstract class
 #define DECLARE_ABSTRACT_CLASS(TClass, TSuperClass, TStaticFlags) \
   DECLARE_BASE_CLASS(TClass, TSuperClass, TStaticFlags|CLASS_Abstract) \
   virtual ~TClass() { ConditionalDestroy(); } \
   friend inline VStream &operator<<(VStream &Strm, TClass *&Obj) { return Strm << *(VObject**)&Obj; }
 
-// Register a class at startup time.
+// register a class at startup time
 #define IMPLEMENT_CLASS(Pre, TClass) \
   VClass Pre##TClass::PrivateStaticClass \
   ( \
@@ -357,11 +357,11 @@ enum EObjectFlags {
   _OF_Destroyed      = 0x00000001,
   // for k8vavoom: this thinker is marked for deletion on a next tick
   //               tick processor will take care of calling `Destroy()` on it
-  // for VccRun: you can call `CollectGarbage(true)` to destroy that objects
+  // for VccRun: you can call `CollectGarbage(true)` to destroy those objects
   _OF_DelayedDestroy = 0x00000002,
   // this object is going to be destroyed; only GC will set this flag, and
   // you have to check it in your `ClearReferences()`
-  _OF_CleanupRef     = 0x00000004, // this object is goind to be destroyed
+  _OF_CleanupRef     = 0x00000004, // this object is going to be destroyed
 };
 
 
@@ -660,33 +660,6 @@ inline vuint32 GetTypeHash (const VObject *Obj) { return (Obj ? hashU32(Obj->Get
 #define P_PASS_PTR(v)    PR_PushPtr(v)
 #define P_PASS_SELF      PR_PushPtr(this)
 
-/*
-// macros for calling VavoomC methods with different return types
-#define EV_RET_VOID(v)    (void)ExecuteFunction(GetVFunction(v))
-#define EV_RET_INT(v)     return ExecuteFunction(GetVFunction(v)).getInt()
-#define EV_RET_BYTE(v)    return ExecuteFunction(GetVFunction(v)).getInt()
-#define EV_RET_FLOAT(v)   return ExecuteFunction(GetVFunction(v)).getFloat()
-#define EV_RET_BOOL(v)    return !!ExecuteFunction(GetVFunction(v)).getInt()
-#define EV_RET_NAME(v)    return ExecuteFunction(GetVFunction(v)).getName()
-#define EV_RET_STR(v)     return ExecuteFunction(GetVFunction(v)).getStr()
-#define EV_RET_VEC(v)     return ExecuteFunction(GetVFunction(v)).getVector()
-//#define EV_RET_AVEC(v)    Sys_Error("Not implemented") / *ExecuteFunction(GetVFunction(v))* /
-#define EV_RET_REF(t, v)  return (t *)ExecuteFunction(GetVFunction(v)).getObject()
-#define EV_RET_PTR(t, v)  return (t *)ExecuteFunction(GetVFunction(v)).getClass()
-
-#define EV_RET_VOID_IDX(v)    (void)ExecuteFunction(GetVFunctionIdx(v))
-#define EV_RET_INT_IDX(v)     return ExecuteFunction(GetVFunctionIdx(v)).getInt()
-#define EV_RET_BYTE_IDX(v)    return ExecuteFunction(GetVFunctionIdx(v)).getInt()
-#define EV_RET_FLOAT_IDX(v)   return ExecuteFunction(GetVFunctionIdx(v)).getFloat()
-#define EV_RET_BOOL_IDX(v)    return !!ExecuteFunction(GetVFunctionIdx(v)).getInt()
-#define EV_RET_NAME_IDX(v)    return ExecuteFunction(GetVFunctionIdx(v)).getName()
-#define EV_RET_STR_IDX(v)     return ExecuteFunction(GetVFunctionIdx(v)).getStr()
-#define EV_RET_VEC_IDX(v)     return ExecuteFunction(GetVFunctionIdx(v)).getVector()
-//#define EV_RET_AVEC_IDX(v)    return ExecuteFunction(GetVFunctionIdx(v)).getVector()
-#define EV_RET_REF_IDX(t, v)  return (t *)ExecuteFunction(GetVFunctionIdx(v)).getObject()
-#define EV_RET_PTR_IDX(t, v)  return (t *)ExecuteFunction(GetVFunctionIdx(v)).getClass()
-*/
-
 // macros for calling VavoomC methods with different return types
 // this is for `VMethodProxy`
 #define VMT_RET_VOID(v)    (void)(v).Execute(this)
@@ -712,7 +685,7 @@ inline vuint32 GetTypeHash (const VObject *Obj) { return (Obj ? hashU32(Obj->Get
 #define P_GET_AVEC(v)    TAVec v = PR_Popav()
 #define P_GET_REF(c, v)  c *v = (c*)PR_PopPtr()
 #define P_GET_PTR(t, v)  t *v = (t*)PR_PopPtr()
-#define P_GET_SELF       ThisClass *Self = (ThisClass*)PR_PopPtr()
+#define P_GET_SELF       ThisClass *Self = (ThisClass *)PR_PopPtr()
 
 #define P_GET_INT_OPT(v, d)     bool specified_##v = !!PR_Pop(); vint32 v = PR_Pop(); if (!specified_##v) v = d
 #define P_GET_BYTE_OPT(v, d)    bool specified_##v = !!PR_Pop(); vuint8 v = PR_Pop(); if (!specified_##v) v = d
@@ -733,7 +706,7 @@ inline vuint32 GetTypeHash (const VObject *Obj) { return (Obj ? hashU32(Obj->Get
 #define RET_INT(v)    PR_Push(v)
 #define RET_BYTE(v)   PR_Push(v)
 #define RET_FLOAT(v)  PR_Pushf(v)
-#define RET_BOOL(v)   PR_Push(v)
+#define RET_BOOL(v)   PR_PushBool(!!(v))
 #define RET_NAME(v)   PR_PushName(v)
 #define RET_STR(v)    PR_PushStr(v)
 #define RET_VEC(v)    PR_Pushv(v)
@@ -800,6 +773,12 @@ template<class C> static __attribute__((unused)) inline void vobj_get_param (VOp
   if (n.specified || n.popDummy) n.value = (C *)PR_PopPtr(); else (void)PR_PopPtr();
 }
 
+/* usage of optional params:
+  int ofs;
+  VOptParamInt whence(SeekStart); // will retain its value if not specified
+  vobjGetParamSelf(ofs, whence);
+  if (whence.specified) { ... }
+*/
 
 template<typename T, typename... Args> static __attribute__((unused)) inline void vobj_get_param (T &n, Args&... args) {
   vobj_get_param(args...);
@@ -831,13 +810,14 @@ template<class C> static __attribute__((unused)) inline void vobj_put_param (C *
 struct VOptPutParam##tname_ { \
   bool specified; \
   type_ value; \
-  VOptPutParam##tname_ () : specified(false), value(defval_) {} \
-  VOptPutParam##tname_ (type_ avalue, bool aspecified=true) : specified(aspecified), value(avalue) {} \
+  type_ defvalue; \
+  VOptPutParam##tname_ () : specified(false), value(defval_), defvalue(defval_) {} \
+  VOptPutParam##tname_ (type_ avalue, bool aspecified=true) : specified(aspecified), value(avalue), defvalue(defval_) {} \
   inline operator type_ () { return value; } \
 }; \
 static __attribute__((unused)) inline void vobj_put_param (VOptPutParam##tname_ &v) { \
-  push_(v.value); \
-  PR_Push(!!v.specified); \
+  if (v.specified) push_(v.value); else push_(v.defvalue); \
+  PR_PushBool(v.specified); \
 }
 
 VC_DEFINE_OPTPARAM_PUT(Int, int, 0, PR_Push) // VOptPutParamInt
@@ -849,6 +829,9 @@ VC_DEFINE_OPTPARAM_PUT(Name, VName, NAME_None, PR_PushName) // VOptPutParamName
 VC_DEFINE_OPTPARAM_PUT(Vec, TVec, TVec(0.0f, 0.0f, 0.0f), PR_Pushv) // VOptPutParamVec
 VC_DEFINE_OPTPARAM_PUT(AVec, TAVec, TAVec(0.0f, 0.0f, 0.0f), PR_Pushav) // VOptPutParamAVec
 
+//WARNING! you'd better provide a dummy non-nullptr pointer here if this is not a class/object!
+//         most of VC code expects that it can safely use ommited pointer argment, because
+//         the compiler creates a dummy object for those.
 template<class C> struct VOptPutParamPtr {
   bool specified;
   C *value;
@@ -858,8 +841,19 @@ template<class C> struct VOptPutParamPtr {
 };
 template<class C> static __attribute__((unused)) inline void vobj_put_param (VOptPutParamPtr<C> v) {
   PR_PushPtr((void *)v.value);
-  PR_Push(!!v.specified);
+  PR_PushBool(v.specified);
 }
+
+/* usage of optional arguments:
+  static VMethodProxy method("PickActor");
+  vobjPutParamSelf(
+    VOptPutParamVec(orig, specified_orig), // second is boolean "specified" flag
+    dir, dist,
+    VOptPutParamInt(actmask, specified_actmask),
+    VOptPutParamInt(wallmask, specified_wallmask)
+  );
+  VMT_RET_REF(VEntity, method);
+*/
 
 
 template<typename T, typename... Args> static __attribute__((unused)) inline void vobj_put_param (T v, Args... args) {
