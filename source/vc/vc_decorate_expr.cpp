@@ -560,10 +560,10 @@ static VExpression *ParseExpressionGeneral (VScriptParser *sc, VClass *Class, in
     // hacks for some dumbfucks
     if (!inCodeBlock) {
       if (token.strEqu("||")) {
-        if (prio == 10) GCon->Logf(NAME_Error, "%s: Spanish Inquisition says: in decorate, you shall use `|` to combine constants, or you will be executed!", *sc->GetLoc().toStringNoCol());
+        if (prio == 10 && !vcWarningsSilenced) GCon->Logf(NAME_Error, "%s: Spanish Inquisition says: in decorate, you shall use `|` to combine constants, or you will be executed!", *sc->GetLoc().toStringNoCol());
         token = "|";
       } else if (token.strEqu("=")) {
-        if (prio == 7) GLog.Logf(NAME_Warning, "%s: Spanish Inquisition says: in decorate, you shall use `==` for comparisons, or you will be executed!", *sc->GetLoc().toStringNoCol());
+        if (prio == 7 && !vcWarningsSilenced) GLog.Logf(NAME_Error, "%s: Spanish Inquisition says: in decorate, you shall use `==` for comparisons, or you will be executed!", *sc->GetLoc().toStringNoCol());
         token = "==";
       }
     }
@@ -1091,7 +1091,7 @@ static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State) {
         State->FunctionName = NAME_None;
       } else {
         if (!Func) {
-          GLog.Logf(NAME_Warning, "%s: Unknown state action `%s` in `%s` (replaced with NOP)", *actionLoc.toStringNoCol(), *FuncName, Class->GetName());
+          if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "%s: Unknown state action `%s` in `%s` (replaced with NOP)", *actionLoc.toStringNoCol(), *FuncName, Class->GetName());
           // if function is not found, it means something is wrong
           // in that case we need to free argument expressions
           for (int i = 0; i < NumArgs; ++i) {

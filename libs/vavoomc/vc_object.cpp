@@ -542,6 +542,8 @@ void VObject::StaticInitOptions (VParsedArgs &pargs) {
     }
     return idx;
   });
+
+  pargs.RegisterFlagSet("-vc-silence-warnings", nullptr, &vcWarningsSilenced);
 }
 
 

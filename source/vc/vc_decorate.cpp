@@ -1067,7 +1067,7 @@ static void ParseConst (VScriptParser *sc, VMemberBase *parent, bool changeMode)
                if (Expr->GetFloatConst() < -0x3fffffff) Val = -0x3fffffff;
           else if (Expr->GetFloatConst() > 0x3fffffff) Val = 0x3fffffff;
           else Val = (int)Expr->GetFloatConst();
-          GCon->Logf(NAME_Warning, "%s: some mo...dder cannot put a proper float type to a constant `%s`; %g truncated to %d", *sc->GetLoc().toStringNoCol(), *Name, Expr->GetFloatConst(), Val);
+          if (!vcWarningsSilenced) GCon->Logf(NAME_Warning, "%s: some mo...dder cannot put a proper float type to a constant `%s`; %g truncated to %d", *sc->GetLoc().toStringNoCol(), *Name, Expr->GetFloatConst(), Val);
         } else {
           if (!Expr->IsIntConst()) sc->Error(va("%s: expected integer literal", *sc->GetLoc().toStringNoCol()));
           Val = Expr->GetIntConst();
@@ -1274,7 +1274,7 @@ static bool ParseFlag (VScriptParser *sc, VClass *Class, bool Value, TArray<VCla
           switch (F.Type) {
             case FLAG_Bool: F.Field->SetBool(DefObj, Value); break;
             case FLAG_BoolInverted: F.Field->SetBool(DefObj, !Value); break;
-            case FLAG_Unsupported: if (F.ShowWarning || dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Unsupported flag %s in %s", *floc.toStringNoCol(), *Flag, Class->GetName()); break;
+            case FLAG_Unsupported: if (!vcWarningsSilenced && (F.ShowWarning || dbg_show_decorate_unsupported)) GLog.Logf(NAME_Warning, "%s: Unsupported flag %s in %s", *floc.toStringNoCol(), *Flag, Class->GetName()); break;
             case FLAG_Byte: F.Field->SetByte(DefObj, Value ? F.BTrue : F.BFalse); break;
             case FLAG_Float: F.Field->SetFloat(DefObj, Value ? F.FTrue : F.FFalse); break;
             case FLAG_Name: F.Field->SetNameValue(DefObj, Value ? F.NTrue : F.NFalse); break;
@@ -1292,7 +1292,7 @@ static bool ParseFlag (VScriptParser *sc, VClass *Class, bool Value, TArray<VCla
     return false;
   }
 
-  GLog.Logf(NAME_Warning, "%s: Unknown flag \"%s\"", *floc.toStringNoCol(), *Flag);
+  if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "%s: Unknown flag \"%s\"", *floc.toStringNoCol(), *Flag);
   return true;
 }
 
@@ -1352,7 +1352,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       }
       // some degenerative mod authors do this
       if (LastState && GotoOffset == 0 && VStr::strEquCI(*GotoLabel, "Fail")) {
-        GLog.Logf(NAME_Warning, "%s: fixed `Goto Fail`, mod author is a mo...dder.", *TmpLoc.toStringNoCol());
+        if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "%s: fixed `Goto Fail`, mod author is a mo...dder.", *TmpLoc.toStringNoCol());
         vassert(LastState);
         LastState->NextState = LastState;
         PrevState = nullptr; // new execution chain
@@ -1411,16 +1411,18 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
         // nope, zdoom wiki says that this should make state "invisible"
         //FIXME: for now, this is not working right (it seems; need to be checked!)
         if (!LastState) {
-          GLog.Logf(NAME_Warning, "%s: Empty state detected; this may not work as you expect!", *TmpLoc.toStringNoCol());
-          GLog.Logf(NAME_Warning, "%s:   this will remove a state, not an actor!", *TmpLoc.toStringNoCol());
-          GLog.Logf(NAME_Warning, "%s:   you can use k8vavoom-specific `RemoveState` command to get rid of this warning.", *TmpLoc.toStringNoCol());
+          if (!vcWarningsSilenced) {
+            GLog.Logf(NAME_Warning, "%s: Empty state detected; this may not work as you expect!", *TmpLoc.toStringNoCol());
+            GLog.Logf(NAME_Warning, "%s:   this will remove a state, not an actor!", *TmpLoc.toStringNoCol());
+            GLog.Logf(NAME_Warning, "%s:   you can use k8vavoom-specific `RemoveState` command to get rid of this warning.", *TmpLoc.toStringNoCol());
+          }
         }
         if (LastState) LastState->NextState = nullptr;
 
         // if we have no defined states for latest labels, simply redirect labels to nowhere
         // this will make `FindStateLabel()` to return `nullptr`, effectively removing the state
         for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) {
-          GLog.Logf(NAME_Warning, "%s: removed state '%s'!", *TmpLoc.toStringNoCol(), *Class->StateLabelDefs[i].Name);
+          if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "%s: removed state '%s'!", *TmpLoc.toStringNoCol(), *Class->StateLabelDefs[i].Name);
           Class->StateLabelDefs[i].State = nullptr;
         }
       }
@@ -1541,7 +1543,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       if (sc->Number < 0) {
         //State->Time = sc->Number;
         if (sc->Number != -1) {
-          GLog.Logf(NAME_Warning, "%s: negative state duration %d (only -1 is allowed)!", *TmpLoc.toStringNoCol(), sc->Number);
+          if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "%s: negative state duration %d (only -1 is allowed)!", *TmpLoc.toStringNoCol(), sc->Number);
         }
         State->Time = -1;
       } else {
@@ -2078,7 +2080,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
           case PROP_IntUnsupported:
             //FIXME
             sc->CheckNumberWithSign();
-            if (P.ShowWarning || dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+            if (!vcWarningsSilenced && (P.ShowWarning || dbg_show_decorate_unsupported)) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
             break;
           case PROP_IntIdUnsupported:
             //FIXME
@@ -2090,7 +2092,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
               sc->ExpectIdentifier();
               if (sc->Check(",")) sc->ExpectIdentifier();
               //sc->SetCMode(oldcm);
-              if (P.ShowWarning || dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+              if (!vcWarningsSilenced && (P.ShowWarning || dbg_show_decorate_unsupported)) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
             }
             break;
           case PROP_BitIndex:
@@ -2104,7 +2106,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
           case PROP_FloatUnsupported:
             //FIXME
             sc->ExpectFloatWithSign();
-            if (P.ShowWarning || dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+            if (!vcWarningsSilenced && (P.ShowWarning || dbg_show_decorate_unsupported)) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
             break;
           case PROP_Speed:
             sc->ExpectFloatWithSign();
@@ -2166,7 +2168,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
           case PROP_StrUnsupported:
             //FIXME
             sc->ExpectString();
-            if (P.ShowWarning || dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+            if (!vcWarningsSilenced && (P.ShowWarning || dbg_show_decorate_unsupported)) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
             break;
           case PROP_Class:
             sc->ExpectString();
@@ -2176,7 +2178,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             sc->ExpectNumberWithSign();
             P.Field->SetInt(DefObj, sc->Number);
             if (sc->Check(",")) {
-              GLog.Logf(NAME_Warning, "%s: Additional arguments to property '%s' in '%s' are not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+              if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "%s: Additional arguments to property '%s' in '%s' are not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
               for (;;) {
                 sc->ExpectNumberWithSign();
                 if (!sc->Check(",")) break;
@@ -2220,7 +2222,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             } else {
               sc->ExpectString();
               if (sc->String.length() != 0) sc->Error("'spawnid' should be a number!");
-              GLog.Logf(NAME_Warning, "%s: 'spawnid' should be a number, not an empty string! FIX YOUR BROKEN CODE!", *sc->GetLoc().toStringNoCol());
+              if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "%s: 'spawnid' should be a number, not an empty string! FIX YOUR BROKEN CODE!", *sc->GetLoc().toStringNoCol());
               SpawnNum = 0;
             }
             break;
@@ -2345,10 +2347,10 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
               else if (sc->Check("Dark")) RenderStyle = STYLE_Dark;
               else if (sc->Check("Stencil")) RenderStyle = STYLE_Stencil;
               else if (sc->Check("AddStencil")) RenderStyle = STYLE_AddStencil;
-              else if (sc->Check("Subtract")) { RenderStyle = STYLE_Subtract; /*if (dbg_show_decorate_unsupported)*/ GLog.Log(va("%s: Render style 'Subtract' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
-              else if (sc->Check("Shaded")) { RenderStyle = STYLE_Shaded; /*if (dbg_show_decorate_unsupported)*/ GLog.Log(va("%s: Render style 'Shaded' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
-              else if (sc->Check("AddShaded")) { RenderStyle = STYLE_AddShaded; /*if (dbg_show_decorate_unsupported)*/ GLog.Log(va("%s: Render style 'AddShaded' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
-              else if (sc->Check("Shadow")) { RenderStyle = STYLE_Shadow; /*if (dbg_show_decorate_unsupported)*/ GLog.Log(va("%s: Render style 'Shadow' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
+              else if (sc->Check("Subtract")) { RenderStyle = STYLE_Subtract; /*if (dbg_show_decorate_unsupported)*/ if (!vcWarningsSilenced) GLog.Log(va("%s: Render style 'Subtract' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
+              else if (sc->Check("Shaded")) { RenderStyle = STYLE_Shaded; /*if (dbg_show_decorate_unsupported)*/ if (!vcWarningsSilenced) GLog.Log(va("%s: Render style 'Shaded' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
+              else if (sc->Check("AddShaded")) { RenderStyle = STYLE_AddShaded; /*if (dbg_show_decorate_unsupported)*/ if (!vcWarningsSilenced) GLog.Log(va("%s: Render style 'AddShaded' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
+              else if (sc->Check("Shadow")) { RenderStyle = STYLE_Shadow; /*if (dbg_show_decorate_unsupported)*/ if (!vcWarningsSilenced) GLog.Log(va("%s: Render style 'Shadow' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
               else sc->Error("Bad render style");
               P.Field->SetByte(DefObj, RenderStyle);
             }
@@ -2687,7 +2689,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             break;
           case PROP_SkipLineUnsupported:
             {
-              if (P.ShowWarning || dbg_show_decorate_unsupported) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
+              if (!vcWarningsSilenced && (P.ShowWarning || dbg_show_decorate_unsupported)) GLog.Logf(NAME_Warning, "%s: Property '%s' in '%s' is not yet supported", *prloc.toStringNoCol(), *Prop, Class->GetName());
               sc->SkipLine();
             }
             break;
@@ -2702,7 +2704,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
     if (decorate_fail_on_unknown) {
       sc->Error(va("Unknown property \"%s\"", *Prop));
     } else {
-      GLog.Logf(NAME_Warning, "%s: Unknown property \"%s\"", *prloc.toStringNoCol(), *Prop);
+      if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "%s: Unknown property \"%s\"", *prloc.toStringNoCol(), *Prop);
     }
     sc->SkipLine();
   }
@@ -3047,7 +3049,7 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
       if (decorate_fail_on_unknown) {
         Sys_Error("Unknown property '%s'", *sc->String);
       } else {
-        GLog.Logf(NAME_Warning, "Unknown property '%s'", *sc->String);
+        if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "Unknown property '%s'", *sc->String);
       }
       sc->SkipLine();
       continue;
@@ -3165,7 +3167,7 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
 //
 //==========================================================================
 static void ParseDamageType (VScriptParser *sc) {
-  GLog.Logf(NAME_Warning, "%s: 'DamageType' in decorate is not implemented yet!", *sc->GetLoc().toStringNoCol());
+  if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "%s: 'DamageType' in decorate is not implemented yet!", *sc->GetLoc().toStringNoCol());
   sc->SkipBracketed();
 }
 
@@ -3282,6 +3284,10 @@ static void dumpFieldDefs (VClass *cls) {
 //
 //==========================================================================
 void ProcessDecorateScripts () {
+#ifndef VAVOOM_K8_DEVELOPER
+  // no wai
+  vcWarningsSilenced = 0;
+#endif
   if (!disableBloodReplaces && fsys_DisableBloodReplacement) disableBloodReplaces = true;
 
   for (int Lump = W_IterateFile(-1, "decorate_ignore.txt"); Lump != -1; Lump = W_IterateFile(Lump, "decorate_ignore.txt")) {
@@ -3440,9 +3446,9 @@ void ProcessDecorateScripts () {
       if (DI.TypeName == NAME_None) { DI.Type = nullptr; continue; }
       VClass *C = VClass::FindClassNoCase(*DI.TypeName);
       if (!C) {
-        GLog.Logf(NAME_Warning, "No such class `%s` (DropItemList for `%s`)", *DI.TypeName, *DecPkg->ParsedClasses[i]->GetFullName());
+        if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "No such class `%s` (DropItemList for `%s`)", *DI.TypeName, *DecPkg->ParsedClasses[i]->GetFullName());
       } else if (!C->IsChildOf(ActorClass)) {
-        GLog.Logf(NAME_Warning, "Class `%s` is not an actor class (DropItemList for `%s`)", *DI.TypeName, *DecPkg->ParsedClasses[i]->GetFullName());
+        if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "Class `%s` is not an actor class (DropItemList for `%s`)", *DI.TypeName, *DecPkg->ParsedClasses[i]->GetFullName());
         C = nullptr;
       }
       DI.Type = C;

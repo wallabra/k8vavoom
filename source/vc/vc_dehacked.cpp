@@ -190,6 +190,7 @@ static VStr dehFileName;
 //
 //==========================================================================
 static __attribute__((format(printf, 1, 2))) void Warning (const char *fmt, ...) {
+  if (vcWarningsSilenced) return;
   va_list ap;
   va_start(ap, fmt);
   char *res = vavarg(fmt, ap);

@@ -33,6 +33,7 @@ int vcErrorCount = 0;
 int vcGagErrorCount = 0;
 int vcGagErrors = 0; // !0: errors are gagged
 bool vcErrorIncludeCol = true;
+int vcWarningsSilenced = 0;
 
 
 static const char *ErrorNames[NUM_ERRORS] = {
@@ -95,7 +96,7 @@ __attribute__((noreturn)) void BailOut () {
 //
 //==========================================================================
 __attribute__((format(printf, 2, 3))) void ParseWarning (const TLocation &l, const char *text, ...) {
-  if (vcGagErrors) return;
+  if (vcGagErrors || vcWarningsSilenced) return;
   va_list argPtr;
   va_start(argPtr, text);
   const char *buf = vavarg(text, argPtr);
@@ -110,11 +111,11 @@ __attribute__((format(printf, 2, 3))) void ParseWarning (const TLocation &l, con
 
 //==========================================================================
 //
-//  ParseWarningArError
+//  ParseWarningAsError
 //
 //==========================================================================
-__attribute__((format(printf, 2, 3))) void ParseWarningArError (const TLocation &l, const char *text, ...) {
-  if (vcGagErrors) return;
+__attribute__((format(printf, 2, 3))) void ParseWarningAsError (const TLocation &l, const char *text, ...) {
+  if (vcGagErrors || vcWarningsSilenced) return;
   va_list argPtr;
   va_start(argPtr, text);
   const char *buf = vavarg(text, argPtr);
