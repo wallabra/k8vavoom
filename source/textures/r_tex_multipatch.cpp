@@ -31,7 +31,7 @@
 
 static int cli_DumpMPData = 0;
 
-static bool cliRegister_txmpatch_args =
+/*static*/ bool cliRegister_txmpatch_args =
   VParsedArgs::RegisterFlagSet("-dump-multipatch-texture-data", "!do not use", &cli_DumpMPData);
 
 

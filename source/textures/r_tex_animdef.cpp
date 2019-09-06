@@ -35,7 +35,7 @@ static int cli_WarnSwitchTextures = 0;
 static int cli_DisableAnimdefs = 0;
 static int cli_NoBoomAnimdefs = 0;
 
-static bool cliRegister_txanim_args =
+/*static*/ bool cliRegister_txanim_args =
   VParsedArgs::RegisterFlagSet("-Wswitch-textures", "!show some info/warnings about switch textures", &cli_WarnSwitchTextures) &&
   VParsedArgs::RegisterFlagSet("-no-animdefs", "disable ANIMDEF loading", &cli_DisableAnimdefs) &&
   VParsedArgs::RegisterFlagSet("-no-boom-animated", "disable old Boom binary ANIMATED lump loading", &cli_NoBoomAnimdefs);

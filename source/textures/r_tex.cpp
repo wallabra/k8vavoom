@@ -76,7 +76,7 @@ static int cli_AddTextureDump = 0;
 static int cli_WarnDuplicateTextures = 0;
 static int cli_DumpTextures = 0;
 
-static bool cliRegister_txloader_args =
+/*static*/ bool cliRegister_txloader_args =
   VParsedArgs::RegisterFlagSet("-wipe-wall-patches", "!do not use", &cli_WipeWallPatches) &&
   VParsedArgs::RegisterFlagSet("-dev-add-texture-dump", "!do not use", &cli_AddTextureDump) &&
   VParsedArgs::RegisterFlagSet("-Wduplicate-textures", "!warn about dumplicate textures", &cli_WarnDuplicateTextures) &&

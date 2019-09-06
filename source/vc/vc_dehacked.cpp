@@ -34,7 +34,7 @@
 static TArray<VStr> cli_DehList;
 static int cli_NoAnyDehacked = 0;
 
-static bool cliRegister_dehacked_args =
+/*static*/ bool cliRegister_dehacked_args =
   VParsedArgs::RegisterFlagSet("-disable-dehacked", "disable all and any dehacked patches", &cli_NoAnyDehacked) &&
   GParsedArgs.RegisterCallback("-deh", "load next files as dehacked patch", [] (VArgs &args, int idx) -> int {
     for (++idx; !VParsedArgs::IsArgBreaker(args, idx); ++idx) {

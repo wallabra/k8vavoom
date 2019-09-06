@@ -37,7 +37,7 @@ static VCvarF r_particle_max_distance("r_particle_max_distance", "3072", "Max di
 
 
 static const char *cli_ParticleCount = nullptr;
-static bool cliRegister_rparticles_args =
+/*static*/ bool cliRegister_rparticles_args =
   VParsedArgs::RegisterStringOption("-particles", "maximum number of particles", &cli_ParticleCount);
 
 

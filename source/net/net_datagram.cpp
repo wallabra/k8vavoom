@@ -70,7 +70,7 @@
 
 static int cli_NoLAN = 0;
 
-static bool cliRegister_datagram_args =
+/*static*/ bool cliRegister_datagram_args =
   VParsedArgs::RegisterFlagSet("-nolan", "disable networking", &cli_NoLAN) &&
   VParsedArgs::RegisterAlias("-no-lan", "-nolan");
 

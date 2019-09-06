@@ -43,7 +43,7 @@ static int cli_SetDeveloper = -1;
 static int cli_SetDeveloperDefine = -1;
 int cli_ShowEndText = 0;
 
-static bool cliRegister_host_args =
+/*static*/ bool cliRegister_host_args =
   VParsedArgs::RegisterFlagSet("-developer", "!do not use if you don't know what it is (and you certainly don't know)", &cli_SetDeveloper) &&
   VParsedArgs::RegisterFlagReset("-vc-no-k8-developer", "!", &cli_SetDeveloperDefine) &&
   VParsedArgs::RegisterFlagSet("-vc-k8-developer", "!", &cli_SetDeveloperDefine) &&

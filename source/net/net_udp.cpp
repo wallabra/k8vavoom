@@ -47,7 +47,7 @@
 static int cli_NoUDP = 0;
 static const char *cli_IP = nullptr;
 
-static bool cliRegister_netudp_args =
+/*static*/ bool cliRegister_netudp_args =
   VParsedArgs::RegisterFlagSet("-noudp", "disable UDP networking", &cli_NoUDP) &&
   VParsedArgs::RegisterAlias("-no-udp", "-noudp") &&
   VParsedArgs::RegisterStringOption("-ip", "explicitly set your IP address", &cli_IP);

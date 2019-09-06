@@ -36,7 +36,7 @@
 
 static const char *cli_LogFileName = nullptr;
 
-static bool cliRegister_con_args =
+/*static*/ bool cliRegister_con_args =
   VParsedArgs::RegisterStringOption("-logfile", "specify log file name", &cli_LogFileName) &&
   VParsedArgs::RegisterAlias("-log-file", "-logfile") &&
   VParsedArgs::RegisterAlias("--log-file", "-logfile");

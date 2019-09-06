@@ -31,7 +31,7 @@ static int cli_WGozzo3D = 0;
 static int cli_WVavoom3D = 0;
 static int cli_WFloors3D = 0;
 
-static bool cliRegister_wargs =
+/*static*/ bool cliRegister_3dfloor_wargs =
   VParsedArgs::RegisterFlagSet("-Wgozzo-3d", "!GZDoom 3d floors warnings", &cli_WGozzo3D) &&
   VParsedArgs::RegisterFlagSet("-Wvavoom-3d", "!Vavoom 3d floors warnings", &cli_WVavoom3D) &&
   VParsedArgs::RegisterFlagSet("-W3dfloors", "!various 3d floors warnings", &cli_WFloors3D);

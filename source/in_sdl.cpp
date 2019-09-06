@@ -38,7 +38,7 @@
 static int cli_NoMouse = 0;
 static int cli_NoJoy = 0;
 
-static bool cliRegister_input_args =
+/*static*/ bool cliRegister_input_args =
   VParsedArgs::RegisterFlagSet("-nomouse", "Disable mouse controls", &cli_NoMouse) &&
   VParsedArgs::RegisterFlagSet("-nojoystick", "Disable joysticks", &cli_NoJoy) &&
   VParsedArgs::RegisterAlias("-nojoy", "-nojoystick");

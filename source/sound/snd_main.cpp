@@ -33,7 +33,7 @@ static int cli_NoSound = 0;
 static int cli_NoMusic = 0;
 static int cli_DebugSound = 0;
 
-static bool cliRegister_sndmain_args =
+/*static*/ bool cliRegister_sndmain_args =
   VParsedArgs::RegisterFlagSet("-nosound", "disable all sound (including music)", &cli_NoSound) &&
   VParsedArgs::RegisterAlias("-no-sound", "-nosound") &&
   VParsedArgs::RegisterFlagSet("-nomusic", "disable music", &cli_NoMusic) &&

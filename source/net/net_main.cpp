@@ -31,7 +31,7 @@
 static const char *cli_Port = nullptr;
 //static int cli_Listen = 0;
 
-static bool cliRegister_netmain_args =
+/*static*/ bool cliRegister_netmain_args =
   VParsedArgs::RegisterStringOption("-port", "explicitly set your host port (default is 26000)", &cli_Port)
   /*&& VParsedArgs::RegisterFlagSet("-listen", nullptr, &cli_Listen)*/;
 

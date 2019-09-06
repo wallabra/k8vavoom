@@ -46,7 +46,7 @@ extern VCvarB r_disable_world_update;
 
 
 static const char *videoDrvName = nullptr;
-static bool cliRegister_rmain_args =
+/*static*/ bool cliRegister_rmain_args =
   VParsedArgs::RegisterStringOption("-video", "!", &videoDrvName);
 
 

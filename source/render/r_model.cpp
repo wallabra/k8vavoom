@@ -50,7 +50,7 @@ static VCvarB r_preload_alias_models("r_preload_alias_models", true, "Preload al
 static int cli_DisableModeldef = 0;
 static TMap<VStrCI, bool> cli_IgnoreModelClass;
 
-static bool cliRegister_rmodel_args =
+/*static*/ bool cliRegister_rmodel_args =
   VParsedArgs::RegisterFlagSet("-no-modeldef", "disable GZDoom MODELDEF lump parsing", &cli_DisableModeldef) &&
   VParsedArgs::RegisterCallback("-model-ignore-classes", "!do not use model for the following class names", [] (VArgs &args, int idx) -> int {
     for (++idx; !VParsedArgs::IsArgBreaker(args, idx); ++idx) {

@@ -68,7 +68,7 @@ static int cli_SVDumpScriptId = 0;
 static int cli_SVShowExecTimes = 0;
 static int cli_SVNoTitleMap = 0;
 
-static bool cliRegister_svmain_args =
+/*static*/ bool cliRegister_svmain_args =
   VParsedArgs::RegisterFlagSet("-dbg-dump-doomed", "!dump doomed numbers", &cli_SVDumpDoomEd) &&
   VParsedArgs::RegisterFlagSet("-dbg-dump-scriptid", "!dump scriptid numbers", &cli_SVDumpScriptId) &&
   VParsedArgs::RegisterFlagSet("-show-exec-times", "!show some developer info", &cli_SVShowExecTimes) &&

@@ -42,7 +42,7 @@ static int cli_WarnBrightmaps = 0;
 static int cli_DumpBrightmaps = 0;
 static int cli_SprStrict = 0;
 
-static bool cliRegister_rdata_args =
+/*static*/ bool cliRegister_rdata_args =
   VParsedArgs::RegisterFlagSet("-Wbrightmap", "!show warnings about brightmaps", &cli_WarnBrightmaps) &&
   VParsedArgs::RegisterFlagSet("-sprstrict", "!strict sprite name checking", &cli_SprStrict) &&
   VParsedArgs::RegisterFlagSet("-dump-brightmaps", "!debug brightmap loading", &cli_DumpBrightmaps);

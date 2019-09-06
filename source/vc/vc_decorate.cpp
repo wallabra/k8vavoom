@@ -184,7 +184,7 @@ static TArray<VStr> cli_DecorateIgnoreActions;
 static TMap<VStrCI, bool> IgnoredDecorateActions;
 
 
-static bool cliRegister_decorate_args =
+/*static*/ bool cliRegister_decorate_args =
   VParsedArgs::RegisterFlagSet("-debug-decorate", "!show various debug messages from decorate parser", &cli_DecorateDebug) &&
   VParsedArgs::RegisterFlagSet("-vc-decorate-moron-tolerant", "!decorate parser tolerancy", &cli_DecorateMoronTolerant) &&
   VParsedArgs::RegisterFlagSet("-vc-decorate-old-replacement", "!decorate parser tolerancy", &cli_DecorateOldReplacement) &&

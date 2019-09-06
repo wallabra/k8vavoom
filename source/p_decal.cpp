@@ -33,7 +33,7 @@ VCvarB r_decals_enabled("r_decals_enabled", true, "Enable decal spawning, proces
 
 static int cli_DebugDecals = 0;
 
-static bool cliRegister_decal_args =
+/*static*/ bool cliRegister_decal_args =
   VParsedArgs::RegisterFlagSet("-debug-decals", "!show some debug info for decals", &cli_DebugDecals);
 
 
