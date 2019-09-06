@@ -835,6 +835,24 @@ void VCmdBuf::Print (VStr data) {
 
 //==========================================================================
 //
+//  VCmdBuf::checkWait
+//
+//  returns `false` (and resets `Wait`) if wait expired
+//
+//==========================================================================
+bool VCmdBuf::checkWait () {
+  if (!WaitEndTime) return false;
+  double currTime = Sys_Time();
+  if (currTime >= WaitEndTime) {
+    WaitEndTime = 0;
+    return false;
+  }
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VCmdBuf::Exec
 //
 //==========================================================================
@@ -845,6 +863,8 @@ void VCmdBuf::Exec () {
   VStr ParsedCmd;
 
   do {
+    if (checkWait()) break;
+
     quotes = 0;
     comment = false;
     ParsedCmd.Clean();
@@ -874,12 +894,6 @@ void VCmdBuf::Exec () {
     VCommand::ExecuteString(ParsedCmd, VCommand::SRC_Command, nullptr);
 
     if (host_request_exit) return;
-
-    if (Wait) {
-      // skip out while text still remains in buffer, leaving it for next frame
-      Wait = false;
-      break;
-    }
   } while (len);
 }
 
@@ -1097,7 +1111,31 @@ COMMAND(Exec) {
 //
 //==========================================================================
 COMMAND(Wait) {
-  GCmdBuf.Wait = true;
+  int msecs = 0;
+  if (Args.length() > 1) {
+    if (!VStr::convertInt(*Args[1], &msecs)) msecs = 0;
+  }
+
+  // negative means "milliseconds"
+  if (msecs < 0) {
+    // no more than 3 seconds
+    if (msecs < -3000) msecs = -3000;
+    msecs = -msecs;
+    GCmdBuf.WaitEndTime = Sys_Time()+((double)msecs/1000.0);
+    return;
+  }
+
+  // positive means "tics" (roughly)
+  if (msecs > 0) {
+    // no more than 3 seconds
+    if (msecs > 3*35) msecs = 10*35;
+    GCmdBuf.WaitEndTime = Sys_Time()+((double)msecs/35.0+0.000001); // ticks (roughly)
+    return;
+  }
+
+  // error or zero
+  GCmdBuf.WaitEndTime = Sys_Time()+(1.0/35.0+0.000001); // roughly one tick
+  return;
 }
 
 

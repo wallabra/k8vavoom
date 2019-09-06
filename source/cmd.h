@@ -171,10 +171,14 @@ VStr TCmd ## name::AutoCompleteArg (const TArray<VStr> &args, int aidx) { \
 class VCmdBuf {
 private:
   VStr Buffer;
-  bool Wait;
+  double WaitEndTime;
+
+private:
+  // returns `false` if wait expired
+  bool checkWait ();
 
 public:
-  VCmdBuf () : Wait(false) {}
+  VCmdBuf () : WaitEndTime(0) {}
   void Insert (const char *);
   void Insert (VStr);
   void Print (const char *);
