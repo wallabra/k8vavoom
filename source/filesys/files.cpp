@@ -988,6 +988,8 @@ static void AddGameDir (VStr dir) {
 static VStr FindMainWad (VStr MainWad) {
   if (MainWad.length() == 0) return VStr();
 
+  //GLog.Logf(NAME_Debug, "trying to find iwad '%s'...", *MainWad);
+
   // if we have path separators, try relative path first
   bool hasSep = false;
   for (const char *s = *MainWad; *s; ++s) {
@@ -1006,8 +1008,12 @@ static VStr FindMainWad (VStr MainWad) {
   }
 
   // first check in IWAD directories
-  for (int i = 0; i < IWadDirs.length(); ++i) {
-    if (Sys_FileExists(IWadDirs[i]+"/"+MainWad)) return IWadDirs[i]+"/"+MainWad;
+  for (auto &&dir : IWadDirs) {
+    //GLog.Logf(NAME_Debug, "  looking for iwad '%s/%s'...", *dir, *MainWad);
+    if (Sys_FileExists(dir+"/"+MainWad)) {
+      //GLog.Logf(NAME_Debug, "    FOUND iwad '%s/%s'!", *dir, *MainWad);
+      return dir+"/"+MainWad;
+    }
   }
 
   // then look in the save directory
@@ -1819,7 +1825,10 @@ void FL_Init () {
           continue;
         }
       }
-      if (Sys_DirExists(dir)) IWadDirs.Append(dir);
+      if (Sys_DirExists(dir)) {
+        //GLog.Logf(NAME_Debug, "found iwad dir '%s'", *dir);
+        IWadDirs.Append(dir);
+      }
     }
   }
   // envvar
