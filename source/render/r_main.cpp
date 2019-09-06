@@ -1713,12 +1713,29 @@ vuint32 VRenderLevelShared::GetFade (sec_region_t *reg) {
 //
 //==========================================================================
 void R_DrawPic (int x, int y, int handle, float Alpha) {
-  if (handle < 0) return;
+  if (handle < 0 || Alpha <= 0.0f || !isFiniteF(Alpha)) return;
+  if (Alpha > 1.0f) Alpha = 1.0f;
   VTexture *Tex = GTextureManager(handle);
   if (!Tex || Tex->Type == TEXTYPE_Null) return;
   x -= Tex->GetScaledSOffset();
   y -= Tex->GetScaledTOffset();
   Drawer->DrawPic(fScaleX*x, fScaleY*y, fScaleX*(x+Tex->GetScaledWidth()), fScaleY*(y+Tex->GetScaledHeight()), 0, 0, Tex->GetWidth(), Tex->GetHeight(), Tex, nullptr, Alpha);
+}
+
+
+//==========================================================================
+//
+//  R_DrawPicScaled
+//
+//==========================================================================
+void R_DrawPicScaled (int x, int y, int handle, float scale, float Alpha) {
+  if (handle < 0 || Alpha <= 0.0f || !isFiniteF(Alpha) || !isFiniteF(scale) || scale <= 0.0f) return;
+  if (Alpha > 1.0f) Alpha = 1.0f;
+  VTexture *Tex = GTextureManager(handle);
+  if (!Tex || Tex->Type == TEXTYPE_Null) return;
+  x -= Tex->GetScaledSOffset()*scale;
+  y -= Tex->GetScaledTOffset()*scale;
+  Drawer->DrawPic(fScaleX*x, fScaleY*y, fScaleX*(x+Tex->GetScaledWidth()*scale), fScaleY*(y+Tex->GetScaledHeight()*scale), 0, 0, Tex->GetWidth(), Tex->GetHeight(), Tex, nullptr, Alpha);
 }
 
 

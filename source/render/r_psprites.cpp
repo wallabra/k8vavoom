@@ -49,6 +49,7 @@ extern VCvarF r_transsouls;
 static VCvarI crosshair("crosshair", "2", "Crosshair type (0-2).", CVAR_Archive);
 static VCvarF crosshair_alpha("crosshair_alpha", "0.6", "Crosshair opacity.", CVAR_Archive);
 static VCvarI r_crosshair_yofs("r_crosshair_yofs", "0", "Crosshair y offset (>0: down).", CVAR_Archive);
+static VCvarF crosshair_scale("crosshair_scale", "1", "Crosshair scale.", CVAR_Archive);
 
 
 static int cli_WarnSprites = 0;
@@ -337,7 +338,10 @@ void VRenderLevelShared::DrawPlayerSprites () {
 void VRenderLevelShared::DrawCrosshair () {
   static int prevCH = -666;
   int ch = (int)crosshair;
-  if (ch > 0 && ch < 10 && crosshair_alpha > 0.0f) {
+  const float scale = crosshair_scale.asFloat();
+  float alpha = crosshair_alpha.asFloat();
+  if (!isFiniteF(alpha)) alpha = 0;
+  if (ch > 0 && ch < 10 && alpha > 0.0f && isFiniteF(scale) && scale > 0.0f) {
     static int handle = 0;
     if (!handle || prevCH != ch) {
       prevCH = ch;
@@ -346,12 +350,12 @@ void VRenderLevelShared::DrawCrosshair () {
     }
     if (handle > 0) {
       //if (crosshair_alpha < 0.0f) crosshair_alpha = 0.0f;
-      if (crosshair_alpha > 1.0f) crosshair_alpha = 1.0f;
+      if (alpha > 1.0f) alpha = 1.0f;
       int cy = (screenblocks < 11 ? (VirtualHeight-sb_height)/2 : VirtualHeight/2);
       cy += r_crosshair_yofs;
       bool oldflt = gl_pic_filtering;
       gl_pic_filtering = false;
-      R_DrawPic(VirtualWidth/2, cy, handle, crosshair_alpha);
+      R_DrawPicScaled(VirtualWidth/2, cy, handle, scale, alpha);
       gl_pic_filtering = oldflt;
     }
   }
