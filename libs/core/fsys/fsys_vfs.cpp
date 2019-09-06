@@ -30,6 +30,8 @@
 //**************************************************************************
 #include "fsys_local.h"
 
+//#define VAVOOM_FSYS_DEBUG_OPENERS
+
 
 #define GET_LUMP_FILE(num)    SearchPaths[((num)>>16)&0xffff]
 #define FILE_INDEX(num)       ((num)>>16)
@@ -96,7 +98,9 @@ FArchiveReaderInfo::FArchiveReaderInfo (const char *afmtname, OpenCB ocb, const 
     arcInfoHead = this;
   }
   arcInfoArrayRecreate = true;
-  //fprintf(stderr, "*** REGISTERING OPENER FOR '%s' (signature is '%s') ***\n", afmtname, (asign ? asign : ""));
+  #ifdef VAVOOM_FSYS_DEBUG_OPENERS
+  fprintf(stderr, "*** REGISTERING OPENER FOR '%s' (signature is '%s') ***\n", afmtname, (asign ? asign : ""));
+  #endif
 }
 
 
@@ -130,9 +134,13 @@ VSearchPath *FArchiveReaderInfo::OpenArchive (VStream *strm, VStr filename, bool
 
   if (arcInfoSignBuf.length() != arcInfoMaxSignLen) arcInfoSignBuf.setLength(arcInfoMaxSignLen);
   int lastsignlen = 0;
-  //GLog.Logf(NAME_Debug, "=== checking '%s' with %d openers ===", *filename, fsysArchiveOpeners.length());
+  #ifdef VAVOOM_FSYS_DEBUG_OPENERS
+  GLog.Logf(NAME_Debug, "=== checking '%s' with %d openers ===", *filename, fsysArchiveOpeners.length());
+  #endif
   for (auto &&op : fsysArchiveOpeners) {
-    //GLog.Logf(NAME_Debug, "  trying opener for '%s'...", op->fmtname);
+    #ifdef VAVOOM_FSYS_DEBUG_OPENERS
+    GLog.Logf(NAME_Debug, "  trying opener for '%s'...", op->fmtname);
+    #endif
     // has signature?
     if (op->sign && op->sign[0]) {
       // has signature, perform signature check
@@ -147,14 +155,18 @@ VSearchPath *FArchiveReaderInfo::OpenArchive (VStream *strm, VStr filename, bool
       }
       if (memcmp(arcInfoSignBuf.ptr(), op->sign, slen) != 0) {
         // bad signature
-        //GLog.Logf(NAME_Debug, "    signature check failed for '%s'...", op->fmtname);
+        #ifdef VAVOOM_FSYS_DEBUG_OPENERS
+        GLog.Logf(NAME_Debug, "    signature check failed for '%s'...", op->fmtname);
+        #endif
         continue;
       }
       if (strm->Tell() != slen) strm->Seek(0);
       if (strm->IsError()) return nullptr;
       VSearchPath *spt = op->openCB(strm, filename, FixVoices);
       if (spt) {
-        //GLog.Logf(NAME_Debug, "  opened '%s' as '%s'...", *filename, op->fmtname);
+        #ifdef VAVOOM_FSYS_DEBUG_OPENERS
+        GLog.Logf(NAME_Debug, "  opened '%s' as '%s'...", *filename, op->fmtname);
+        #endif
         return spt;
       }
     } else {
@@ -163,7 +175,9 @@ VSearchPath *FArchiveReaderInfo::OpenArchive (VStream *strm, VStr filename, bool
       if (strm->IsError()) return nullptr;
       VSearchPath *spt = op->openCB(strm, filename, FixVoices);
       if (spt) {
-        //GLog.Logf(NAME_Debug, "  opened '%s' as '%s'...", *filename, op->fmtname);
+        #ifdef VAVOOM_FSYS_DEBUG_OPENERS
+        GLog.Logf(NAME_Debug, "  opened '%s' as '%s'...", *filename, op->fmtname);
+        #endif
         return spt;
       }
     }
