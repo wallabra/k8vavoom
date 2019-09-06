@@ -70,8 +70,8 @@ FSys_Internal_Init_Class fsys_internal_init_class_variable_(true);
 //==========================================================================
 void FSYS_InitOptions (VParsedArgs &pargs) {
   pargs.RegisterFlagSet("-ignore-square", "do not check for \"Adventures of Square\"", &fsys_ignoreSquare);
-  pargs.RegisterFlagSet("-ignore-zscript", nullptr, &fsys_IgnoreZScript);
-  pargs.RegisterFlagSet("-fsys-dump-paks", nullptr, &fsys_dev_dump_paks);
+  pargs.RegisterFlagSet("-ignore-zscript", "!", &fsys_IgnoreZScript);
+  pargs.RegisterFlagSet("-fsys-dump-paks", "!dump loaded pak files", &fsys_dev_dump_paks);
 }
 
 
