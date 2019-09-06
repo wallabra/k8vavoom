@@ -76,6 +76,8 @@ protected:
 
 public:
   static bool ParsingKeyConf;
+  static VStr CurrKeyConfKeySection;
+  static VStr CurrKeyConfWeaponSection;
   static void (*onShowCompletionMatch) (bool isheader, VStr s);
 
   // will be added before real CLI console commands

@@ -475,9 +475,10 @@ native static final void SV_GetSaveDateString (int i, string *buf);
 native static final void StartSearch (bool Master);
 native static final slist_t *GetSlist ();
 native static final string KeyNameForNum (int KeyNr);
-native static final void IN_GetBindingKeys (string cmd, int *key1, int *key2, optional int strifemode);
+native static final void IN_GetBindingKeys (string cmd, int *key1, int *key2, int strifemode, string modSection, out int isActive);
+native static final void IN_GetDefaultModBindingKeys (string cmd, int *key1, int *key2, string modSection);
 // strifemode: <0: only for non-strife; >0: only for strife; 0: for all
-native static final void IN_SetBinding (int key, string ondown, string onup, optional int strifemode);
+native static final void IN_SetBinding (int key, string ondown, string onup, int strifemode, string modSection);
 native static final string LoadTextLump (name Name);
 
 native static bool IsLineTagEqual (const GameObject::line_t *line, int tag);

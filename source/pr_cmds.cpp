@@ -725,20 +725,33 @@ IMPLEMENT_FREE_FUNCTION(VObject, KeyNameForNum) {
 
 
 IMPLEMENT_FREE_FUNCTION(VObject, IN_GetBindingKeys) {
-  P_GET_INT_OPT(strifemode, 0);
+  P_GET_PTR(int, isActive);
+  P_GET_STR(modsection);
+  P_GET_INT(strifemode);
   P_GET_PTR(int, key2);
   P_GET_PTR(int, key1);
   P_GET_STR(name);
-  GInput->GetBindingKeys(name, *key1, *key2, strifemode);
+  GInput->GetBindingKeys(name, *key1, *key2, modsection, strifemode, isActive);
+}
+
+
+//native static final void IN_GetDefaultModBindingKeys (string cmd, int *key1, int *key2, string modSection);
+IMPLEMENT_FREE_FUNCTION(VObject, IN_GetDefaultModBindingKeys) {
+  P_GET_STR(modsection);
+  P_GET_PTR(int, key2);
+  P_GET_PTR(int, key1);
+  P_GET_STR(name);
+  GInput->GetDefaultModBindingKeys(name, *key1, *key2, modsection);
 }
 
 
 IMPLEMENT_FREE_FUNCTION(VObject, IN_SetBinding) {
-  P_GET_INT_OPT(strifemode, 0);
+  P_GET_STR(modsection);
+  P_GET_INT(strifemode);
   P_GET_STR(onup);
   P_GET_STR(ondown);
   P_GET_INT(keynum);
-  GInput->SetBinding(keynum, ondown, onup, true, strifemode);
+  GInput->SetBinding(keynum, ondown, onup, modsection, strifemode);
 }
 
 

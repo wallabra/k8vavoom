@@ -59,10 +59,12 @@ public:
 
   // handling of key bindings
   virtual void ClearBindings () override;
-  virtual void GetBindingKeys (VStr Binding, int &Key1, int &Key2, int strifemode=0) override;
+  virtual void GetBindingKeys (VStr Binding, int &Key1, int &Key2, VStr modSection, int strifemode, int *isActive) override;
+  virtual void GetDefaultModBindingKeys (VStr Binding, int &Key1, int &Key2, VStr modSection) override;
   virtual void GetBinding (int KeyNum, VStr &Down, VStr &Up) override;
-  virtual void SetBinding (int KeyNum, VStr Down, VStr Up, bool Save=true, int strifemode=0) override;
+  virtual void SetBinding (int KeyNum, VStr Down, VStr Up, VStr modSection, int strifemode, bool allowOverride=true) override;
   virtual void WriteBindings (VStream *st) override;
+  virtual void AddActiveMod (VStr modSection) override;
 
   virtual int TranslateKey (int ch) override;
 
@@ -81,52 +83,44 @@ private:
   int strifeMode = -666;
 
   inline const bool IsStrife () {
-    if (strifeMode == -666) strifeMode = (game_name.asStr().ICmp("strife") == 0 ? 1 : 0);
+    if (strifeMode == -666) strifeMode = (game_name.asStr().strEquCI("strife") ? 1 : 0);
     return strifeMode;
   }
 
   bool lastWasGameBinding = false;
 
-  /*
-  struct Binding {
-    //VStr cmdDown;
-    //VStr cmdUp;
-    VStr cmdDownStrife;
-    VStr cmdUpStrife;
-    VStr cmdDownNonStrife;
-    VStr cmdUpNonStrife;
-    bool save;
-
-    Binding () : cmdDownStrife(), cmdUpStrife(), cmdDownNonStrife(), cmdUpNonStrife(), save(false) {}
-
-    bool IsEmpty () const {
-      return
-        cmdDownStrife.isEmpty() ||
-        cmdUpStrife.isEmpty() ||
-        cmdDownNonStrife.isEmpty() ||
-        cmdUpNonStrife.isEmpty();
-    }
-
-    //bool IsStrifeOnly () const { return (IsEmpty() && (!cmdDownStrife.isEmpty() || !cmdUpStrife.isEmpty())); }
-    //bool IsNonStrifeOnly () const { return (IsEmpty() && (!cmdDownNonStrife.isEmpty() || !cmdUpNonStrife.isEmpty())); }
-  };
-  Binding KeyBindings[256];
-  */
-
+public:
   struct Binding {
     VStr cmdDown;
     VStr cmdUp;
-    Binding () : cmdDown(), cmdUp() {}
+    // for mods
+    VStr modName;
+    int keyNum;
+    bool defbind; // default mod binding?
+    // note that mod binding may be empty, which means "user deleted it"
+
+    Binding () : cmdDown(), cmdUp(), modName(), keyNum(0), defbind(false) {}
     inline bool IsEmpty () const { return (cmdDown.isEmpty() && cmdUp.isEmpty()); }
     inline void Clear () { cmdDown.clear(); cmdUp.clear(); }
   };
 
+private:
+  //typedef Binding BindingArray[256];
+
   Binding KeyBindingsAll[256];
   Binding KeyBindingsStrife[256];
   Binding KeyBindingsNonStrife[256];
-  bool KeyBindingsSave[256];
+  TArray<Binding> ModBindings;
+  TArray<Binding> DefaultModBindings;
+  // this is to map key to console command in input handler
+  Binding ModKeyBindingsActive[256];
+  TArray<VStr> ActiveModList;
 
   VStr getBinding (bool down, int idx);
+
+  void sortModKeys ();
+  // call after adding new active mod
+  void rebuildModBindings ();
 
   static const char ShiftXForm[128];
 };
@@ -180,6 +174,19 @@ TArray<VInputPublic::CheatCode> VInputPublic::kbcheats;
 char VInputPublic::currkbcheat[VInputPublic::MAX_KBCHEAT_LENGTH+1];
 
 
+extern "C" {
+  static int cmpKeyBinding (const void *aa, const void *bb, void *) {
+    if (aa == bb) return 0;
+    const VInput::Binding *a = (const VInput::Binding *)aa;
+    const VInput::Binding *b = (const VInput::Binding *)bb;
+    int sdiff = a->modName.ICmp(b->modName);
+    if (sdiff) return sdiff;
+    // same mod, sort by key index
+    return a->keyNum-b->keyNum;
+  }
+}
+
+
 //==========================================================================
 //
 //  VInputPublic::Create
@@ -208,7 +215,7 @@ void VInputPublic::KBCheatClearAll () {
 void VInputPublic::KBCheatAppend (VStr keys, VStr concmd) {
   if (keys.length() == 0) return;
   for (int f = 0; f < kbcheats.length(); ++f) {
-    if (kbcheats[f].keys.ICmp(keys) == 0) {
+    if (kbcheats[f].keys.strEquCI(keys)) {
       if (concmd.length() == 0) {
         kbcheats.removeAt(f);
       } else {
@@ -318,10 +325,10 @@ void VInputPublic::UnpressAll () {
 //
 //==========================================================================
 VInput::VInput () : Device(0) {
-  memset(KeyBindingsSave, 0, sizeof(KeyBindingsSave));
   memset((void *)&KeyBindingsAll[0], 0, sizeof(KeyBindingsAll[0]));
   memset((void *)&KeyBindingsStrife[0], 0, sizeof(KeyBindingsStrife[0]));
   memset((void *)&KeyBindingsNonStrife[0], 0, sizeof(KeyBindingsNonStrife[0]));
+  memset((void *)&ModKeyBindingsActive[0], 0, sizeof(ModKeyBindingsActive[0]));
 }
 
 
@@ -342,11 +349,83 @@ VInput::~VInput () {
 //==========================================================================
 void VInput::ClearBindings () {
   for (int f = 0; f < 256; ++f) {
-    KeyBindingsSave[f] = false;
+    ModKeyBindingsActive[f].Clear();
     KeyBindingsAll[f].Clear();
     KeyBindingsStrife[f].Clear();
     KeyBindingsNonStrife[f].Clear();
   }
+  // restore default mod bindings
+  ModBindings.clear();
+  for (auto &&bind : DefaultModBindings) ModBindings.append(bind);
+}
+
+
+//==========================================================================
+//
+//  VInput::sortModKeys
+//
+//==========================================================================
+void VInput::sortModKeys () {
+  if (ModBindings.length() < 2) return;
+  timsort_r(ModBindings.ptr(), ModBindings.length(), sizeof(Binding), &cmpKeyBinding, nullptr);
+}
+
+
+//==========================================================================
+//
+//  VInput::rebuildModBindings
+//
+//  call after adding new active mod
+//
+//==========================================================================
+void VInput::rebuildModBindings () {
+  for (auto &&bd : ModKeyBindingsActive) {
+    bd.Clear();
+    bd.modName.clear();
+  }
+
+  sortModKeys();
+  for (int midx = ActiveModList.length()-1; midx >= 0; --midx) {
+    VStr modname = ActiveModList[midx];
+    int stidx;
+    for (stidx = 0; stidx < ModBindings.length(); ++stidx) {
+      const Binding &bind = ModBindings[stidx];
+      if (bind.modName.strEquCI(modname)) break;
+    }
+    if (stidx >= ModBindings.length()) continue;
+    for (; stidx < ModBindings.length(); ++stidx) {
+      const Binding &bind = ModBindings[stidx];
+      if (!bind.modName.strEquCI(modname)) break;
+      if (bind.IsEmpty()) continue;
+      vassert(bind.keyNum > 0 && bind.keyNum < 256);
+      // default bindings cannot override game bindings
+      if (bind.defbind) {
+        if (!getBinding(true, bind.keyNum).isEmpty() || !getBinding(false, bind.keyNum).isEmpty()) continue;
+      }
+      ModKeyBindingsActive[bind.keyNum].cmdDown = bind.cmdDown;
+      ModKeyBindingsActive[bind.keyNum].cmdUp = bind.cmdUp;
+      ModKeyBindingsActive[bind.keyNum].modName = bind.modName;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VInput::AddActiveMod
+//
+//==========================================================================
+void VInput::AddActiveMod (VStr modSection) {
+  //modSection = modSection.xstrip();
+  if (modSection.IsEmpty()) return;
+  for (int f = 0; f < ActiveModList.length(); ++f) {
+    if (ActiveModList[f].strEquCI(modSection)) {
+      ActiveModList.removeAt(f);
+      break;
+    }
+  }
+  ActiveModList.append(modSection);
+  rebuildModBindings();
 }
 
 
@@ -357,6 +436,9 @@ void VInput::ClearBindings () {
 //==========================================================================
 VStr VInput::getBinding (bool down, int idx) {
   if (idx < 1 || idx > 255) return VStr::EmptyString;
+  if (!ModKeyBindingsActive[idx].IsEmpty()) {
+    return (down ? ModKeyBindingsActive[idx].cmdDown : ModKeyBindingsActive[idx].cmdUp);
+  }
   // for all games
   if (IsStrife()) {
     if (!KeyBindingsStrife[idx].IsEmpty()) {
@@ -516,32 +598,6 @@ int VInput::ReadKey () {
 
 //==========================================================================
 //
-//  VInput::GetBindingKeys
-//
-//==========================================================================
-void VInput::GetBindingKeys (VStr bindStr, int &Key1, int &Key2, int strifemode) {
-  Key1 = -1;
-  Key2 = -1;
-  if (bindStr.isEmpty()) return;
-  for (int i = 1; i < 256; ++i) {
-    int kf = -1;
-    if (strifemode < 0) {
-      if (!KeyBindingsNonStrife[i].IsEmpty() && KeyBindingsNonStrife[i].cmdDown.ICmp(bindStr) == 0) kf = i;
-    } else if (strifemode > 0) {
-      if (!KeyBindingsStrife[i].IsEmpty() && KeyBindingsStrife[i].cmdDown.ICmp(bindStr) == 0) kf = i;
-    } else {
-      if (!KeyBindingsAll[i].IsEmpty() && KeyBindingsAll[i].cmdDown.ICmp(bindStr) == 0) kf = i;
-    }
-    if (kf > 0) {
-      if (Key1 != -1) { Key2 = kf; return; }
-      Key1 = kf;
-    }
-  }
-}
-
-
-//==========================================================================
-//
 //  VInput::GetBinding
 //
 //==========================================================================
@@ -555,23 +611,215 @@ void VInput::GetBinding (int KeyNum, VStr &Down, VStr &Up) {
 
 //==========================================================================
 //
+//  VInput::GetDefaultModBindingKeys
+//
+//==========================================================================
+void VInput::GetDefaultModBindingKeys (VStr bindStr, int &Key1, int &Key2, VStr modSection) {
+  Key1 = -1;
+  Key2 = -1;
+  if (bindStr.isEmpty() || modSection.isEmpty()) return;
+  for (auto &&bind : DefaultModBindings) {
+    if (bind.keyNum < 1 || bind.keyNum > 255) continue; // just in case
+    if (!bind.modName.strEquCI(modSection)) continue;
+    int kf = -1;
+    if (!bind.IsEmpty() && bind.cmdDown.strEquCI(bindStr)) kf = bind.keyNum;
+    if (kf > 0) {
+      if (Key1 != -1) { Key2 = kf; return; }
+      Key1 = kf;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VInput::GetBindingKeys
+//
+//==========================================================================
+void VInput::GetBindingKeys (VStr bindStr, int &Key1, int &Key2, VStr modSection, int strifemode, int *isActive) {
+  Key1 = -1;
+  Key2 = -1;
+  if (isActive) *isActive = 3;
+  if (bindStr.isEmpty()) return;
+  // mod?
+  if (!modSection.isEmpty()) {
+    //GCon->Logf(NAME_Debug, "*** bstr=\"%s\"; mod=\"%s\" (%d)", *bindStr.quote(), *modSection.quote(), ModBindings.length());
+    if (isActive) *isActive = 0;
+    for (auto &&bind : ModBindings) {
+      //GCon->Logf(NAME_Debug, "module %s: key=%d (%s : %s)", *bind.modName, bind.keyNum, *bind.cmdDown, *bind.cmdUp);
+      if (bind.keyNum < 1 || bind.keyNum > 255) continue; // just in case
+      if (!bind.modName.strEquCI(modSection)) continue;
+      //GCon->Logf(NAME_Debug, "module %s: key=%d (%s : %s)", *bind.modName, bind.keyNum, *bind.cmdDown, *bind.cmdUp);
+      int kf = -1;
+      if (!bind.IsEmpty() && bind.cmdDown.strEquCI(bindStr)) kf = bind.keyNum;
+      if (kf > 0) {
+        // check if it is active
+        if (isActive) {
+          if (!ModKeyBindingsActive[kf].IsEmpty() && ModKeyBindingsActive[kf].modName.strEquCI(modSection)) {
+            *isActive |= (Key1 != -1 ? 0x02 : 0x01);
+          }
+        }
+        if (Key1 != -1) { Key2 = kf; return; }
+        Key1 = kf;
+      }
+    }
+  } else {
+    // normal
+    for (int i = 1; i < 256; ++i) {
+      int kf = -1;
+      if (strifemode < 0) {
+        if (!KeyBindingsNonStrife[i].IsEmpty() && KeyBindingsNonStrife[i].cmdDown.strEquCI(bindStr)) kf = i;
+      } else if (strifemode > 0) {
+        if (!KeyBindingsStrife[i].IsEmpty() && KeyBindingsStrife[i].cmdDown.strEquCI(bindStr)) kf = i;
+      } else {
+        if (!KeyBindingsAll[i].IsEmpty() && KeyBindingsAll[i].cmdDown.strEquCI(bindStr)) kf = i;
+      }
+      if (kf > 0) {
+        if (Key1 != -1) { Key2 = kf; return; }
+        Key1 = kf;
+      }
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  VInput::SetBinding
 //
 //==========================================================================
-void VInput::SetBinding (int KeyNum, VStr Down, VStr Up, bool Save, int strifemode) {
+void VInput::SetBinding (int KeyNum, VStr Down, VStr Up, VStr modSection, int strifemode, bool allowOverride) {
   if (KeyNum < 1 || KeyNum > 255) return;
-  if (Down.IsEmpty() && Up.IsEmpty() && !KeyBindingsSave[KeyNum]) return;
-  KeyBindingsSave[KeyNum] = Save;
-  if (strifemode == 0) {
-    KeyBindingsAll[KeyNum].cmdDown = Down;
-    KeyBindingsAll[KeyNum].cmdUp = Up;
-  } else if (strifemode < 0) {
-    KeyBindingsNonStrife[KeyNum].cmdDown = Down;
-    KeyBindingsNonStrife[KeyNum].cmdUp = Up;
-  } else {
-    KeyBindingsStrife[KeyNum].cmdDown = Down;
-    KeyBindingsStrife[KeyNum].cmdUp = Up;
+
+  // totally remove mod binding?
+  if (Down.strEquCI("<modclear>")) {
+    for (int stpos = 0; stpos < ModBindings.length(); ++stpos) {
+      if (ModBindings[stpos].keyNum != KeyNum) continue;
+      if (!ModBindings[stpos].modName.strEquCI(modSection)) continue;
+      ModBindings.removeAt(stpos);
+      --stpos;
+    }
+    rebuildModBindings();
+    return;
   }
+
+  // restore default mod binding?
+  if (Down.strEquCI("<default>")) {
+    if (modSection.isEmpty()) return;
+    Binding *defbp = nullptr;
+    for (auto &&bind : DefaultModBindings) {
+      if (bind.keyNum != KeyNum) continue;
+      if (!bind.modName.strEquCI(modSection)) continue;
+      defbp = &bind;
+      break;
+    }
+    // remove?
+    if (!defbp) {
+      for (int stpos = 0; stpos < ModBindings.length(); ++stpos) {
+        Binding &bind = ModBindings[stpos];
+        if (bind.keyNum != KeyNum) continue;
+        if (!bind.modName.strEquCI(modSection)) continue;
+        ModBindings.removeAt(stpos);
+        --stpos;
+      }
+    } else {
+      // set from default
+      bool foundIt = false;
+      for (int stpos = 0; stpos < ModBindings.length(); ++stpos) {
+        Binding &bind = ModBindings[stpos];
+        if (bind.keyNum != KeyNum) continue;
+        if (!bind.modName.strEquCI(modSection)) continue;
+        bind.defbind = true;
+        bind.cmdDown = defbp->cmdDown;
+        bind.cmdUp = defbp->cmdUp;
+        foundIt = true;
+      }
+      // if not found, add default binding
+      if (!foundIt) {
+        Binding &bind = ModBindings.alloc();
+        bind.keyNum = KeyNum;
+        bind.defbind = true;
+        bind.cmdDown = defbp->cmdDown;
+        bind.cmdUp = defbp->cmdUp;
+      }
+    }
+    rebuildModBindings();
+    return;
+  }
+
+  // mod?
+  if (modSection.length()) {
+    // append default binding (if it is a default one)
+    if (!allowOverride && (!Down.isEmpty() || !Up.isEmpty())) {
+      Binding *bp = nullptr;
+      for (auto &&bind : DefaultModBindings) {
+        if (bind.keyNum != KeyNum) continue;
+        if (!bind.modName.strEquCI(modSection)) continue;
+        bp = &bind;
+        break;
+      }
+      if (!bp) {
+        bp = &DefaultModBindings.alloc();
+        vassert(bp);
+        bp->modName = modSection;
+        bp->keyNum = KeyNum;
+      }
+      vassert(bp);
+      vassert(bp->keyNum == KeyNum);
+      vassert(bp->modName.strEquCI(modSection));
+      bp->defbind = true;
+      bp->cmdDown = Down;
+      bp->cmdUp = Up;
+    }
+    // find existing one
+    Binding *bp = nullptr;
+    for (auto &&bind : ModBindings) {
+      if (bind.keyNum != KeyNum) continue;
+      if (!bind.modName.strEquCI(modSection)) continue;
+      bp = &bind;
+      break;
+    }
+    // not found?
+    if (!bp) {
+      if (Down.isEmpty() && Up.isEmpty()) return; // nothing to do
+      //GCon->Logf(NAME_Debug, "NEW MOD: \"%s\"", *modSection.quote());
+      // add new mod section
+      bp = &ModBindings.alloc();
+      vassert(bp);
+      //allowOverride = true;
+      bp->modName = modSection;
+      bp->keyNum = KeyNum;
+      bp->defbind = !allowOverride;
+    }
+    vassert(bp);
+    vassert(bp->keyNum == KeyNum);
+    vassert(bp->modName.strEquCI(modSection));
+    if (allowOverride || bp->defbind) {
+      //GCon->Logf(NAME_Debug, "SETTING KEY (mod=\"%s\"): key=%d; down=\"%s\"; up=\"%s\"", *modSection.quote(), KeyNum, *Down.quote(), *Up.quote());
+      bp->cmdDown = Down;
+      bp->cmdUp = Up;
+      bp->defbind = !allowOverride;
+    }
+  } else {
+    // normal; ignores "allow override"
+    if (strifemode == 0) {
+      KeyBindingsAll[KeyNum].cmdDown = Down;
+      KeyBindingsAll[KeyNum].cmdUp = Up;
+    } else if (strifemode < 0) {
+      KeyBindingsNonStrife[KeyNum].cmdDown = Down;
+      KeyBindingsNonStrife[KeyNum].cmdUp = Up;
+    } else {
+      KeyBindingsStrife[KeyNum].cmdDown = Down;
+      KeyBindingsStrife[KeyNum].cmdUp = Up;
+    }
+  }
+  rebuildModBindings();
+  /*
+  for (int f = 1; f < 256; ++f) {
+    if (ModKeyBindingsActive[f].IsEmpty()) continue;
+    GCon->Logf(NAME_Debug, "  key #%2d: name=\"%s\"; mod=\"%s\"; down=\"%s\"; up=\"%s\"", f, *KeyNameForNum(f).quote(), *ModKeyBindingsActive[f].modName.quote(), *ModKeyBindingsActive[f].cmdDown.quote(), *ModKeyBindingsActive[f].cmdUp.quote());
+  }
+  */
 }
 
 
@@ -585,11 +833,22 @@ void VInput::SetBinding (int KeyNum, VStr Down, VStr Up, bool Save, int strifemo
 void VInput::WriteBindings (VStream *st) {
   st->writef("UnbindAll\n");
   for (int i = 1; i < 256; ++i) {
-    if (!KeyBindingsSave[i]) continue;
     if (!KeyBindingsAll[i].IsEmpty()) st->writef("bind \"%s\" \"%s\" \"%s\"\n", *KeyNameForNum(i).quote(), *KeyBindingsAll[i].cmdDown.quote(), *KeyBindingsAll[i].cmdUp.quote());
     if (!KeyBindingsStrife[i].IsEmpty()) st->writef("bind strife \"%s\" \"%s\" \"%s\"\n", *KeyNameForNum(i).quote(), *KeyBindingsStrife[i].cmdDown.quote(), *KeyBindingsStrife[i].cmdUp.quote());
     if (!KeyBindingsNonStrife[i].IsEmpty()) st->writef("bind notstrife \"%s\" \"%s\" \"%s\"\n", *KeyNameForNum(i).quote(), *KeyBindingsNonStrife[i].cmdDown.quote(), *KeyBindingsNonStrife[i].cmdUp.quote());
   }
+  // write mod bindings
+  sortModKeys();
+  VStr lastHeader;
+  for (auto &&bind : ModBindings) {
+    if (bind.defbind) continue;
+    if (!bind.modName.strEquCI(lastHeader)) {
+      lastHeader = bind.modName;
+      st->writef("// module '%s'\n", *lastHeader);
+    }
+    st->writef("bind module \"%s\"  \"%s\" \"%s\" \"%s\"\n", *bind.modName.quote(), *KeyNameForNum(bind.keyNum).quote(), *bind.cmdDown.quote(), *bind.cmdUp.quote());
+  }
+  st->writef("// bindings complete\n\n");
 }
 
 
@@ -692,13 +951,20 @@ VStr VInput::GetClipboardText () {
 //
 //==========================================================================
 COMMAND(Unbind) {
+  if (ParsingKeyConf) return; // in keyconf
   int stidx = 1;
   int strifeFlag = 0;
+  VStr modSection;
 
   if (Args.length() > 1) {
-         if (Args[1].ICmp("strife") == 0) { strifeFlag = 1; ++stidx; }
-    else if (Args[1].ICmp("notstrife") == 0) { strifeFlag = -1; ++stidx; }
-    else if (Args[1].ICmp("all") == 0) { strifeFlag = 0; ++stidx; }
+         if (Args[1].strEquCI("strife")) { strifeFlag = 1; ++stidx; }
+    else if (Args[1].strEquCI("notstrife")) { strifeFlag = -1; ++stidx; }
+    else if (Args[1].strEquCI("all")) { strifeFlag = 0; ++stidx; }
+    else if (Args[stidx].strEquCI("module")) {
+      ++stidx;
+      if (stidx >= Args.length()) return; //FIXME: show error
+      modSection = Args[stidx++];
+    }
   }
 
   if (Args.length() != stidx+1) {
@@ -712,7 +978,7 @@ COMMAND(Unbind) {
     return;
   }
 
-  GInput->SetBinding(b, VStr(), VStr(), true, strifeFlag);
+  GInput->SetBinding(b, VStr(), VStr(), modSection, strifeFlag);
 }
 
 
@@ -722,6 +988,7 @@ COMMAND(Unbind) {
 //
 //==========================================================================
 COMMAND(UnbindAll) {
+  if (ParsingKeyConf) return; // in keyconf
   GInput->ClearBindings();
 }
 
@@ -731,25 +998,39 @@ COMMAND(UnbindAll) {
 //  COMMAND Bind
 //
 //==========================================================================
-static void bindCommon (const TArray<VStr> &Args, bool ParsingKeyConf) {
+static void bindCommon (const TArray<VStr> &Args, bool allowOverride=true) {
   const int argc = Args.length();
 
-  if (argc != 2 && argc != 3 && argc != 4 && argc != 5) {
-    GCon->Logf("%s [strife|nostrife|all] <key> [down_command] [up_command]: attach a command to a key", *Args[0]);
+  /*
+  if (!allowOverride) {
+    VStr cmds;
+    for (auto &&s : Args) cmds += va("\"%s\" ", *s.quote());
+    GCon->Logf(NAME_Debug, "bindCommon: %s", *cmds);
+  }
+  */
+
+  if (argc < 2 || argc > 6) {
+    GCon->Logf("%s [strife|nostrife|all|module <name>] <key> [down_command] [up_command]: attach a command to a key", *Args[0]);
     return;
   }
 
   int strifeFlag = 0;
   int stidx = 1;
+  VStr modSection;
 
-       if (Args[stidx].ICmp("strife") == 0) { strifeFlag = 1; ++stidx; }
-  else if (Args[stidx].ICmp("notstrife") == 0) { strifeFlag = -1; ++stidx; }
-  else if (Args[stidx].ICmp("all") == 0) { strifeFlag = 0; ++stidx; }
+       if (Args[stidx].strEquCI("strife")) { strifeFlag = 1; ++stidx; }
+  else if (Args[stidx].strEquCI("notstrife")) { strifeFlag = -1; ++stidx; }
+  else if (Args[stidx].strEquCI("all")) { strifeFlag = 0; ++stidx; }
+  else if (Args[stidx].strEquCI("module")) {
+    ++stidx;
+    if (stidx >= Args.length()) return; //FIXME: show error
+    modSection = Args[stidx++];
+  }
 
   int alen = argc-stidx;
 
   if (alen < 1) {
-    GCon->Logf("%s [strife|nostrife|all] <key> [down_command] [up_command]: attach a command to a key", *Args[0]);
+    GCon->Logf("%s [strife|nostrife|all|module <name>] <key> [down_command] [up_command]: attach a command to a key", *Args[0]);
     return;
   }
 
@@ -779,7 +1060,8 @@ static void bindCommon (const TArray<VStr> &Args, bool ParsingKeyConf) {
       GCon->Logf("\"%s\" is not bound", *kname.quote());
     }
   } else {
-    GInput->SetBinding(b, Args[stidx+1], (alen > 2 ? Args[stidx+2] : VStr()), !ParsingKeyConf, strifeFlag);
+    //GCon->Logf("key \"%s\" (%d); down=\"%s\"; up=\"%s\", mod=\"%s\", strifeFlag=%d; allowOverride=%d", *kname.quote(), b, *Args[stidx+1].quote(), (alen > 2 ? *Args[stidx+2].quote() : ""), *modSection.quote(), strifeFlag, (int)allowOverride);
+    GInput->SetBinding(b, Args[stidx+1], (alen > 2 ? Args[stidx+2] : VStr()), modSection, strifeFlag, allowOverride);
   }
 }
 
@@ -790,7 +1072,15 @@ static void bindCommon (const TArray<VStr> &Args, bool ParsingKeyConf) {
 //
 //==========================================================================
 COMMAND(Bind) {
-  bindCommon(Args, ParsingKeyConf);
+  if (ParsingKeyConf) {
+    // in keyconf
+    if (CurrKeyConfKeySection.isEmpty()) return; // alas
+    Args.insert(1, "module");
+    Args.insert(2, CurrKeyConfKeySection);
+    bindCommon(Args, false);
+  } else {
+    bindCommon(Args);
+  }
 }
 
 
@@ -800,5 +1090,42 @@ COMMAND(Bind) {
 //
 //==========================================================================
 COMMAND(DefaultBind) {
-  bindCommon(Args, ParsingKeyConf);
+  if (!ParsingKeyConf) return; // not in keyconf
+  if (CurrKeyConfKeySection.isEmpty()) return; // alas
+  Args.insert(1, "module");
+  Args.insert(2, CurrKeyConfKeySection);
+  bindCommon(Args, false);
+}
+
+
+//==========================================================================
+//
+//  COMMAND AddKeySection
+//
+//==========================================================================
+COMMAND(AddKeySection) {
+  // new keybinding section
+  if (!ParsingKeyConf) return; // not in keyconf
+  CurrKeyConfKeySection.clear();
+  //if (Args.length() == 1) { CurrKeyConfKeySection = "(unknown)"; return; }
+  if (Args.length() > 2) CurrKeyConfKeySection = Args[2];
+  if (CurrKeyConfKeySection.isEmpty() && Args.length() > 1) CurrKeyConfKeySection = Args[1];
+  if (CurrKeyConfKeySection.isEmpty()) CurrKeyConfKeySection = "(unknown)";
+#ifdef CLIENT
+  if (GInput) {
+    GInput->AddActiveMod(CurrKeyConfKeySection);
+    GCon->Logf(NAME_Debug, "mod keyconf key section '%s'", *CurrKeyConfKeySection);
+  } else {
+    GCon->Logf(NAME_Error, "'AddKeySection' without initialised input system");
+  }
+#endif
+}
+
+
+//==========================================================================
+//
+//  COMMAND AddMenuKey
+//
+//==========================================================================
+COMMAND(AddMenuKey) {
 }

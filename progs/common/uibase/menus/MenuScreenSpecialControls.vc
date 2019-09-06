@@ -27,26 +27,25 @@
 class MenuScreenSpecialControls : MenuScreenControls;
 
 // we'll create some arrays here for special controls
+/*
 struct alias_t {
   string alias_name; // name of the alias
   string command; // command to type from console
   string secid; // section id
 };
 
-
 struct bind {
   string bind_key; // key to bind this alias to
   string alias_name; // name of the alias
   string secid; // section id
 };
-
+*/
 
 struct menukey {
   string desc; // description of the key for menu
   string alias_name; // name of the alias
   string secid; // section id
 };
-
 
 struct SectionInfo {
   string secname;
@@ -55,9 +54,9 @@ struct SectionInfo {
 
 // jeep dynamic arrays of each of these so that we "build"
 // the special control sections in the menu
-array!alias_t aliases_list;
-array!bind dbinds_list;
-array!bind binds_list;
+//array!alias_t aliases_list;
+//array!bind dbinds_list;
+//array!bind binds_list;
 array!menukey menukeys_list;
 
 // all known sections
@@ -71,20 +70,27 @@ array!SectionInfo sections;
 //  returns section id
 //
 //==========================================================================
-protected final string FindOrAddKeySection (string secname, string secid) {
+protected final string FindOrAddKeySection (string secid, string secname) {
   if (!secid) {
-    secid = "Uncategorized";
-    if (!secname) secname = secid;
+    if (secname) {
+      secid = secname;
+    } else {
+      secid = "(unknown)";
+      secname = "Uncategorized";
+    }
   }
 
   foreach (ref const auto ss; sections) {
     if (stricmp(ss.secid, secid) == 0) {
+      /*
       if (!secname || stricmp(ss.secname, secname) == 0) {
         return secid;
       }
       // same id, different names; change id
       secid ~= ".other";
-      return FindOrAddKeySection(secname, secid);
+      return FindOrAddKeySection(secid, secname);
+      */
+      return secid;
     }
   }
 
@@ -107,7 +113,7 @@ void ParseKeyConfLump (int lump) {
   auto kc = SpawnObject(ScriptsParser);
   scope(exit) delete kc;
   kc.OpenLumpIndex(lump);
-  string secid = FindOrAddKeySection("", ""); // default sectoin
+  string secid = ""; //FindOrAddKeySection("", ""); // default section
   int scnum = 0;
   while (!kc.AtEnd()) {
     // We are only interested in a couple of commands, like
@@ -119,37 +125,52 @@ void ParseKeyConfLump (int lump) {
       //if (!secname) secname = va("--- %s ---", scnum++);
       // section id
       kc.ExpectString();
-      secid = kc.String;
-      if (!secid) secid = secname;
-      secid = FindOrAddKeySection(secid, secname);
+      //printdebug("*** section: '%s' (%s)", kc.String, secname);
+      secid = FindOrAddKeySection(kc.String, secname);
+      //printdebug("new section: '%s'", secid);
       continue;
     }
     if (kc.Check("alias")) {
       // store alias name in the special array
+      kc.ExpectString();
+      kc.ExpectString();
+      /*
       auto aa = aliases_list.alloc();
       kc.ExpectString();
       aa.alias_name = xstrip(kc.String);
       kc.ExpectString();
       aa.command = xstrip(kc.String);
       aa.secid = secid;
+      if (!secid) aliases_list.remove(aliases_list.length-1);
+      */
       continue;
     }
     if (kc.Check("defaultbind")) {
+      kc.ExpectString();
+      kc.ExpectString();
+      /*
       auto bb = dbinds_list.alloc();
       kc.ExpectString();
       bb.bind_key = xstrip(kc.String);
       kc.ExpectString();
       bb.alias_name = xstrip(kc.String);
       bb.secid = secid;
+      if (!secid) dbinds_list.remove(dbinds_list.length-1);
+      */
       continue;
     }
     if (kc.Check("bind")) {
+      kc.ExpectString();
+      kc.ExpectString();
+      /*
       auto bb = binds_list.alloc();
       kc.ExpectString();
       bb.bind_key = xstrip(kc.String);
       kc.ExpectString();
       bb.alias_name = xstrip(kc.String);
       bb.secid = secid;
+      if (!secid) binds_list.remove(binds_list.length-1);
+      */
       continue;
     }
     if (kc.Check("addmenukey")) {
@@ -159,6 +180,7 @@ void ParseKeyConfLump (int lump) {
       kc.ExpectString();
       mk.alias_name = xstrip(kc.String);
       mk.secid = secid;
+      if (!secid) menukeys_list.remove(menukeys_list.length-1);
       continue;
     }
     kc.GetString();
@@ -188,7 +210,7 @@ void GenerateArrays () {
 //  AddControl
 //
 //==========================================================================
-void AddControl (string Text, string CommandOn, string CommandOff) {
+void AddControl (string Text, string CommandOn, string CommandOff, string modName) {
   MenuControlKey newCtl = MenuControlKey(NewChild(MenuControlKey));
   //SetChoiceInitialSizeSimple(newCtl);
   newCtl.Width = Width;
@@ -199,9 +221,14 @@ void AddControl (string Text, string CommandOn, string CommandOff) {
   newCtl.Text = Text;
   newCtl.CommandOn = CommandOn;
   newCtl.CommandOff = CommandOff;
+  newCtl.ModSection = modName;
+  newCtl.strifeMode = 0;
+  //printdebug("%s (%s): %s %s", Text, modName, CommandOn, CommandOff);
+  /*
   newCtl.strifeMode = strifeMode;
        if (strifeMode < 0) newCtl.Disabled = IsStrife;
   else if (strifeMode > 0) newCtl.Disabled = !IsStrife;
+  */
   currentY += newCtl.Height;
 }
 
@@ -252,7 +279,7 @@ override void CreateChoices () {
         AddHeader(sec.secname, firstHdr);
         firstHdr = false;
       }
-      AddControl(mk.desc, mk.alias_name, "");
+      AddControl(mk.desc, mk.alias_name, "", sec.secid);
     }
   }
 

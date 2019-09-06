@@ -29,8 +29,9 @@ class MenuControlKey : MenuChoice;
 string Text;
 string CommandOn;
 string CommandOff;
+string ModSection;
 bool Disabled;
-int strifeMode;
+int strifeMode; // <0: non-strife; >1: strife; 0: don't care
 
 
 //==========================================================================
@@ -59,18 +60,23 @@ override void OnDraw () {
 
   DrawText(ctpos, 0, Text, Col);
 
-  IN_GetBindingKeys(CommandOn, &key1, &key2, strifeMode);
+  int isActive = 3;
+  IN_GetBindingKeys(CommandOn, &key1, &key2, strifeMode, ModSection, out isActive);
+  //if (ModSection) printdebug("%s (%s): %s %s", CommandOn, ModSection, key1, key2);
 
   SetTextAlign(hleft, vtop);
   //Col = IsFocus() ? CR_YELLOW : CR_OLIVE;
   Col = (Disabled ? CR_BLACK : IsFocus() ? CR_FIRE : /*CR_LIGHTBLUE*/CR_DARKGREEN);
+  // this binding can be inactive, if it is a mod default binding
+  //if (!Disabled && !isActive) Col = CR_RED;
+
   if (key1 >= 0) {
-    DrawText(ctpos+10, 0, KeyNameForNum(key1), Col);
+    DrawText(ctpos+10, 0, KeyNameForNum(key1), (Disabled || (isActive&1) != 0 ? Col : CR_RED));
   } else {
     DrawText(ctpos+10, 0, "---", /*Col*/CR_BLACK);
   }
   if (key2 >= 0) {
-    DrawText(ctpos+100, 0, KeyNameForNum(key2), Col);
+    DrawText(ctpos+100, 0, KeyNameForNum(key2), (Disabled || (isActive&2) != 0 ? Col : CR_RED));
   } else {
     DrawText(ctpos+100, 0, "---", /*Col*/CR_BLACK);
   }
@@ -104,9 +110,26 @@ override bool OnKeyDown (int key) {
     case K_MOUSE2:
     case K_DELETE:
       if (!Disabled) {
-        IN_GetBindingKeys(CommandOn, &key1, &key2, strifeMode);
-        if (GetClGame().ControlColumn == 0) IN_SetBinding(key1, "", "", strifeMode);
-        if (GetClGame().ControlColumn == 1) IN_SetBinding(key2, "", "", strifeMode);
+        int isActive;
+        IN_GetBindingKeys(CommandOn, &key1, &key2, strifeMode, ModSection, out isActive);
+        if (GetClGame().ControlColumn == 0) IN_SetBinding(key1, "", "", strifeMode, ModSection);
+        if (GetClGame().ControlColumn == 1) IN_SetBinding(key2, "", "", strifeMode, ModSection);
+        // restore default mod key?
+        if (key == K_BACKSPACE && ModSection) {
+          int mkey1, mkey2;
+          IN_GetDefaultModBindingKeys(CommandOn, &mkey1, &mkey2, ModSection);
+          //printdebug("mod=%s; command=%s; key=(%s,%s); mkey=(%s,%s)", ModSection, CommandOn, key1, key2, mkey1, mkey2);
+          // first, remove any mod bindings for the old key
+          // second, setup default mod bindings for the default mod key
+          if (mkey1 > 0 && GetClGame().ControlColumn == 0) {
+            IN_SetBinding(key1, "<modclear>", "", strifeMode, ModSection);
+            IN_SetBinding(mkey1, "<default>", "", strifeMode, ModSection);
+          }
+          if (mkey2 > 0 && GetClGame().ControlColumn == 1) {
+            IN_SetBinding(key2, "<modclear>", "", strifeMode, ModSection);
+            IN_SetBinding(mkey2, "<default>", "", strifeMode, ModSection);
+          }
+        }
       }
       return true;
   }

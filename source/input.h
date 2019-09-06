@@ -71,10 +71,13 @@ public:
 
   // handling of key bindings
   virtual void ClearBindings () = 0;
-  virtual void GetBindingKeys (VStr Binding, int &Key1, int &Key2, int strifemode=0) = 0;
+  // `isActive`: bit 0 for key1, bit 1 for key2
+  virtual void GetBindingKeys (VStr Binding, int &Key1, int &Key2, VStr modSection, int strifemode, int *isActive) = 0;
+  virtual void GetDefaultModBindingKeys (VStr Binding, int &Key1, int &Key2, VStr modSection) = 0;
   virtual void GetBinding (int KeyNum, VStr &Down, VStr &Up) = 0; // for current game mode
-  virtual void SetBinding (int KeyNum, VStr Down, VStr Up, bool Save=true, int strifemode=0) = 0;
+  virtual void SetBinding (int KeyNum, VStr Down, VStr Up, VStr modSection, int strifemode, bool allowOverride=true) = 0;
   virtual void WriteBindings (VStream *st) = 0;
+  virtual void AddActiveMod (VStr modSection) = 0;
 
   // returns translated ASCII char, or unchanged keycode
   // it is safe to call this with any keycode

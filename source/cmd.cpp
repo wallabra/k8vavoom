@@ -60,6 +60,9 @@ VStr VCommand::cliPreCmds;
 
 void (*VCommand::onShowCompletionMatch) (bool isheader, VStr s);
 
+VStr VCommand::CurrKeyConfKeySection;
+VStr VCommand::CurrKeyConfWeaponSection;
+
 static const char *KeyConfCommands[] = {
   "alias",
   "bind",
@@ -309,9 +312,12 @@ void VCommand::ProcessKeyConf () {
         args.reset();
         s.tokenise(args);
         if (args.length() == 0) continue;
+        /*
         if (args[0].strEquCI("defaultbind")) {
           GCon->Logf(NAME_Warning, "ignored keyconf command: %s", *s);
-        } else {
+        } else
+        */
+        {
           CmdBuf << s << "\n";
         }
       }
@@ -654,11 +660,6 @@ void VCommand::ExecuteString (VStr Acmd, ECmdSource src, VBasePlayer *APlayer) {
     }
     if (!Found) {
       GCon->Logf(NAME_Warning, "Invalid KeyConf command: %s", *Acmd);
-      return;
-    }
-    // the following commands are for UI VC code, and parsed there
-    // ignore them to avoid useless console spam
-    if (Args[0].strEquCI("addkeysection") || Args[0].strEquCI("addmenukey")) {
       return;
     }
   }

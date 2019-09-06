@@ -781,36 +781,42 @@ static final void DrawPicFS200VScroll2 (float fracofs, int Handle1, int Handle2,
 
 #ifdef VCC_STANDALONE_EXECUTOR
 #else
-static int ConvertBoundKey (int key) {
+static final void wgGetBindingKeys (string cmd, int *key1, int *key2) {
+  int isActive;
+  IN_GetBindingKeys(cmd, key1, key2, 0, "", out isActive);
+}
+
+
+static final int ConvertBoundKey (int key) {
   if (key <= 0) return key;
 
   int key1, key2;
 
-  IN_GetBindingKeys("+Forward", &key1, &key2);
+  wgGetBindingKeys("+Forward", &key1, &key2);
   if (key == key1 || key == key2) return K_UPARROW;
 
-  IN_GetBindingKeys("+Backward", &key1, &key2);
+  wgGetBindingKeys("+Backward", &key1, &key2);
   if (key == key1 || key == key2) return K_DOWNARROW;
 
-  IN_GetBindingKeys("+Left", &key1, &key2);
+  wgGetBindingKeys("+Left", &key1, &key2);
   if (key == key1 || key == key2) return K_LEFTARROW;
 
-  IN_GetBindingKeys("+MoveLeft", &key1, &key2);
+  wgGetBindingKeys("+MoveLeft", &key1, &key2);
   if (key == key1 || key == key2) return K_LEFTARROW;
 
-  IN_GetBindingKeys("+Right", &key1, &key2);
+  wgGetBindingKeys("+Right", &key1, &key2);
   if (key == key1 || key == key2) return K_RIGHTARROW;
 
-  IN_GetBindingKeys("+MoveRight", &key1, &key2);
+  wgGetBindingKeys("+MoveRight", &key1, &key2);
   if (key == key1 || key == key2) return K_RIGHTARROW;
 
-  IN_GetBindingKeys("+Attack", &key1, &key2);
+  wgGetBindingKeys("+Attack", &key1, &key2);
   if (key == key1 || key == key2) return K_ENTER;
 
-  IN_GetBindingKeys("+Use", &key1, &key2);
+  wgGetBindingKeys("+Use", &key1, &key2);
   if (key == key1 || key == key2) return K_ENTER;
 
-  IN_GetBindingKeys("+Strafe", &key1, &key2);
+  wgGetBindingKeys("+Strafe", &key1, &key2);
   if (key == key1 || key == key2) return K_ESCAPE;
 
   // convert numpad arrows

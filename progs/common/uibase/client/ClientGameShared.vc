@@ -789,14 +789,15 @@ void ControlResponse (int key, int msgtype) {
     // there is prolly '-d_reload' too, so force it here
     if (kb_down && !kb_up && kb_down[0] == "+" && kb_down.strIndexOf(";") < 0) kb_up = "-"~kb_down[1..$];
     if (kb_up == " " || kb_up == ";") kb_up = "";
-    IN_GetBindingKeys(kb_down, &key1, &key2, strifeMode);
+    int isActive;
+    IN_GetBindingKeys(kb_down, &key1, &key2, strifeMode, CurrentCtl.ModSection, out isActive);
     if (ControlColumn == 0) {
-      IN_SetBinding(key1, "", "", strifeMode);
-      IN_SetBinding(key, kb_down, kb_up, strifeMode);
+      IN_SetBinding(key1, "", "", strifeMode, CurrentCtl.ModSection);
+      IN_SetBinding(key, kb_down, kb_up, strifeMode, CurrentCtl.ModSection);
     }
     if (ControlColumn == 1) {
-      IN_SetBinding(key2, "", "", strifeMode);
-      IN_SetBinding(key, kb_down, kb_up, strifeMode);
+      IN_SetBinding(key2, "", "", strifeMode, CurrentCtl.ModSection);
+      IN_SetBinding(key, kb_down, kb_up, strifeMode, CurrentCtl.ModSection);
     }
   }
 }
