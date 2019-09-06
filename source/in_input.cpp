@@ -122,6 +122,10 @@ private:
   // call after adding new active mod
   void rebuildModBindings ();
 
+  bool hasModBinding (VStr Down, VStr modSection);
+  bool isDefaultModBinding (VStr Down, VStr modSection);
+  void clearDefaultModBindings (VStr Down, VStr modSection);
+
   static const char ShiftXForm[128];
 };
 
@@ -412,6 +416,57 @@ void VInput::rebuildModBindings () {
 
 //==========================================================================
 //
+//  VInput::hasModBinding
+//
+//==========================================================================
+bool VInput::hasModBinding (VStr Down, VStr modSection) {
+  if (Down.isEmpty() || modSection.isEmpty()) return false;
+  for (auto &&bind : ModBindings) {
+    if (!bind.modName.strEquCI(modSection)) continue;
+    if (bind.cmdDown == Down) return true;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VInput::isDefaultModBinding
+//
+//==========================================================================
+bool VInput::isDefaultModBinding (VStr Down, VStr modSection) {
+  if (Down.isEmpty() || modSection.isEmpty()) return false;
+  bool found = false;
+  for (auto &&bind : ModBindings) {
+    if (!bind.modName.strEquCI(modSection)) continue;
+    if (bind.cmdDown != Down) continue;
+    if (!bind.defbind) return false;
+    found = true;
+  }
+  return found;
+}
+
+
+//==========================================================================
+//
+//  VInput::clearDefaultModBindings
+//
+//==========================================================================
+void VInput::clearDefaultModBindings (VStr Down, VStr modSection) {
+  if (Down.isEmpty() || modSection.isEmpty()) return;
+  for (int stidx = 0; stidx < ModBindings.length(); ++stidx) {
+    Binding &bind = ModBindings[stidx];
+    if (!bind.defbind) continue;
+    if (!bind.modName.strEquCI(modSection)) continue;
+    if (bind.cmdDown != Down) continue;
+    ModBindings.removeAt(stidx);
+    --stidx;
+  }
+}
+
+
+//==========================================================================
+//
 //  VInput::AddActiveMod
 //
 //==========================================================================
@@ -694,8 +749,9 @@ void VInput::SetBinding (int KeyNum, VStr Down, VStr Up, VStr modSection, int st
   // totally remove mod binding?
   if (Down.strEquCI("<modclear>")) {
     for (int stpos = 0; stpos < ModBindings.length(); ++stpos) {
-      if (ModBindings[stpos].keyNum != KeyNum) continue;
-      if (!ModBindings[stpos].modName.strEquCI(modSection)) continue;
+      Binding &bind = ModBindings[stpos];
+      if (bind.keyNum != KeyNum) continue;
+      if (!bind.modName.strEquCI(modSection)) continue;
       ModBindings.removeAt(stpos);
       --stpos;
     }
@@ -738,6 +794,7 @@ void VInput::SetBinding (int KeyNum, VStr Down, VStr Up, VStr modSection, int st
       if (!foundIt) {
         Binding &bind = ModBindings.alloc();
         bind.keyNum = KeyNum;
+        bind.modName = defbp->modName;
         bind.defbind = true;
         bind.cmdDown = defbp->cmdDown;
         bind.cmdUp = defbp->cmdUp;
@@ -749,27 +806,37 @@ void VInput::SetBinding (int KeyNum, VStr Down, VStr Up, VStr modSection, int st
 
   // mod?
   if (modSection.length()) {
+    // find default binding
+    Binding *defbp = nullptr;
+    for (auto &&bind : DefaultModBindings) {
+      if (bind.keyNum != KeyNum) continue;
+      if (!bind.modName.strEquCI(modSection)) continue;
+      defbp = &bind;
+      break;
+    }
+    bool newdefbind = false;
     // append default binding (if it is a default one)
-    if (!allowOverride && (!Down.isEmpty() || !Up.isEmpty())) {
-      Binding *bp = nullptr;
-      for (auto &&bind : DefaultModBindings) {
-        if (bind.keyNum != KeyNum) continue;
-        if (!bind.modName.strEquCI(modSection)) continue;
-        bp = &bind;
-        break;
+    if (!allowOverride) {
+      if (!defbp) {
+        newdefbind = true;
+        defbp = &DefaultModBindings.alloc();
+        vassert(defbp);
+        defbp->modName = modSection;
+        defbp->keyNum = KeyNum;
       }
-      if (!bp) {
-        bp = &DefaultModBindings.alloc();
-        vassert(bp);
-        bp->modName = modSection;
-        bp->keyNum = KeyNum;
-      }
-      vassert(bp);
-      vassert(bp->keyNum == KeyNum);
-      vassert(bp->modName.strEquCI(modSection));
-      bp->defbind = true;
-      bp->cmdDown = Down;
-      bp->cmdUp = Up;
+      vassert(defbp);
+      vassert(defbp->keyNum == KeyNum);
+      vassert(defbp->modName.strEquCI(modSection));
+      defbp->defbind = true;
+      defbp->cmdDown = Down;
+      defbp->cmdUp = Up;
+      // if we already have binding for this mod action, do not modify anything (this is keyconf parser)
+      //GCon->Logf(NAME_Debug, "DEFAULT MOD(%s): down=%s", *modSection, *Down);
+      //if (hasModBinding(Down, modSection)) return;
+    } else {
+      //GCon->Logf(NAME_Debug, "MOD(%s): down=%s", *modSection, *Down);
+      // clear default bindings, if this is not a default one
+      if (isDefaultModBinding(Down, modSection)) clearDefaultModBindings(Down, modSection);
     }
     // find existing one
     Binding *bp = nullptr;
@@ -781,7 +848,6 @@ void VInput::SetBinding (int KeyNum, VStr Down, VStr Up, VStr modSection, int st
     }
     // not found?
     if (!bp) {
-      if (Down.isEmpty() && Up.isEmpty()) return; // nothing to do
       //GCon->Logf(NAME_Debug, "NEW MOD: \"%s\"", *modSection.quote());
       // add new mod section
       bp = &ModBindings.alloc();
@@ -790,15 +856,22 @@ void VInput::SetBinding (int KeyNum, VStr Down, VStr Up, VStr modSection, int st
       bp->modName = modSection;
       bp->keyNum = KeyNum;
       bp->defbind = !allowOverride;
+      if (Down.isEmpty() && Up.isEmpty()) {
+        rebuildModBindings();
+        return;
+      }
     }
     vassert(bp);
     vassert(bp->keyNum == KeyNum);
     vassert(bp->modName.strEquCI(modSection));
-    if (allowOverride || bp->defbind) {
+    if (allowOverride || bp->IsEmpty()) {
       //GCon->Logf(NAME_Debug, "SETTING KEY (mod=\"%s\"): key=%d; down=\"%s\"; up=\"%s\"", *modSection.quote(), KeyNum, *Down.quote(), *Up.quote());
       bp->cmdDown = Down;
       bp->cmdUp = Up;
       bp->defbind = !allowOverride;
+    }
+    if (newdefbind && bp->cmdDown == Down && bp->cmdUp == Up) {
+      bp->defbind = true;
     }
   } else {
     // normal; ignores "allow override"
