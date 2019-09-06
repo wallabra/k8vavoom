@@ -208,6 +208,50 @@ void TILine::DelWord () {
 
 //==========================================================================
 //
+//  TILine::WordLeft
+//
+//==========================================================================
+void TILine::WordLeft () {
+  // word left
+  if ((vuint8)data[curpos-1] <= ' ') {
+    // spaces
+    while (curpos > 0 && (vuint8)data[curpos-1] <= ' ') --curpos;
+  } else {
+    // word
+    if (data[curpos-1] == ';') { --curpos; return; }
+    while (curpos > 0) {
+      vuint8 ch = (vuint8)data[curpos-1];
+      if (ch <= ' ' || ch == ';') break;
+      --curpos;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  TILine::WordRight
+//
+//==========================================================================
+void TILine::WordRight () {
+  // word right
+  if ((vuint8)data[curpos] <= ' ') {
+    // spaces
+    while (curpos < len && (vuint8)data[curpos] <= ' ') ++curpos;
+  } else {
+    // word
+    if (data[curpos] == ';') { ++curpos; return; }
+    while (curpos < len) {
+      vuint8 ch = (vuint8)data[curpos];
+      if (ch <= ' ' || ch == ';') break;
+      ++curpos;
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  TILine::Key
 //
 //  Wrapper function for handling general keyed input.
@@ -277,35 +321,13 @@ bool TILine::Key (const event_t &ev) {
     // cursor movement
     case K_LEFTARROW:
       if (curpos > 0) {
-        if (ev.isCtrlDown()) {
-          // word left
-          if ((vuint8)data[curpos-1] <= ' ') {
-            // spaces
-            while (curpos > 0 && (vuint8)data[curpos-1] <= ' ') --curpos;
-          } else {
-            // word
-            while (curpos > 0 && (vuint8)data[curpos-1] > ' ') --curpos;
-          }
-        } else {
-          --curpos;
-        }
+        if (ev.isCtrlDown()) WordLeft(); else --curpos;
         ensureCursorVisible();
       }
       return true;
     case K_RIGHTARROW:
       if (curpos < len) {
-        if (ev.isCtrlDown()) {
-          // word right
-          if ((vuint8)data[curpos] <= ' ') {
-            // spaces
-            while (curpos < len && (vuint8)data[curpos] <= ' ') ++curpos;
-          } else {
-            // word
-            while (curpos < len && (vuint8)data[curpos] > ' ') ++curpos;
-          }
-        } else {
-          ++curpos;
-        }
+        if (ev.isCtrlDown()) WordRight(); else ++curpos;
         ensureCursorVisible();
       }
       return true;

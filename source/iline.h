@@ -69,6 +69,8 @@ public:
   void DelChar (); // this does "backspace"
   void RemoveChar (); // this removes char at the current cursor position, and doesn't move cursor
   void DelWord ();
+  void WordLeft ();
+  void WordRight ();
   bool Key (const event_t &ev); // whether eaten
 
   // font and align should be already set
