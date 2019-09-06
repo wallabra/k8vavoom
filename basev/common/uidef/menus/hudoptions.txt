@@ -60,6 +60,14 @@ menudef HUDOptions {
     max = 1;
   }
 
+  option slider {
+    title = "Crosshair Scale";
+    cvar = crosshair_scale;
+    step = 0.1;
+    min = 0.1;
+    max = 10;
+  }
+
 
   header "Service Messages";
 
