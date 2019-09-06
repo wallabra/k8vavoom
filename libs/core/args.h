@@ -101,6 +101,7 @@ protected:
     const char **strptr; // can be `nullptr`
     char *strarg;
     int type; // AT_xxx
+    bool isAlias;
     ArgCB cb;
     ArgInfo *next;
   };

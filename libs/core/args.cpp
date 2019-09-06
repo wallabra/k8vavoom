@@ -475,6 +475,7 @@ VParsedArgs::ArgInfo *VParsedArgs::allocArgInfo (const char *argname, const char
   res->strptr = nullptr;
   res->strarg = nullptr;
   res->type = AT_Ignore;
+  res->isAlias = false;
   res->cb = nullptr;
   res->next = nullptr;
   // file argument handler?
@@ -541,6 +542,7 @@ bool VParsedArgs::RegisterAlias (const char *argname, const char *oldname) {
   als->flagptr = ai->flagptr;
   als->strptr = ai->strptr;
   als->type = ai->type;
+  als->isAlias = true;
   als->cb = ai->cb;
   return true;
 }
@@ -858,10 +860,14 @@ void VParsedArgs::parse (VArgs &args) {
 //==========================================================================
 void VParsedArgs::GetArgList (TArray<ArgHelp> &list, bool returnAll) {
   for (ArgInfo *ai = argInfoHead; ai; ai = ai->next) {
-    if (ai->name && ai->name[0] && (returnAll || (ai->help && ai->help[0]))) {
+    if (ai->isAlias) continue;
+    if (!ai->name || !ai->name[0]) continue;
+    if (ai->help && ai->help[0] == '!' && !ai->help[1]) continue;
+    if (returnAll || (ai->help && ai->help[0] && ai->help[0] != '!')) {
       ArgHelp &h = list.alloc();
       h.argname = ai->name;
       h.arghelp = (ai->help && ai->help[0] ? ai->help : nullptr);
+      if (h.arghelp && h.arghelp[0] == '!') ++h.arghelp;
     }
   }
 }
