@@ -512,30 +512,30 @@ void VObject::StaticExit () {
 //
 //==========================================================================
 void VObject::StaticInitOptions (VParsedArgs &pargs) {
-  pargs.RegisterFlagSet("-vc-dev-replacement", nullptr, &cliShowReplacementMessages);
-  pargs.RegisterFlagSet("-vc-dev-loading", nullptr, &cliShowLoadingMessages);
+  pargs.RegisterFlagSet("-vc-dev-replacement", "!show replacement debug messages", &cliShowReplacementMessages);
+  pargs.RegisterFlagSet("-vc-dev-loading", "!show various package loading messages", &cliShowLoadingMessages);
   #if defined(VC_GARBAGE_COLLECTOR_LOGS_BASE)
-  pargs.RegisterFlagSet("-vc-dev-gc", nullptr, &cliShowGCMessages);
+  pargs.RegisterFlagSet("-vc-dev-gc", "!debug GC", &cliShowGCMessages);
   #endif
-  pargs.RegisterFlagSet("-vc-io-debug", nullptr, &cliShowIODebugMessages);
-  pargs.RegisterFlagSet("-vc-dev-dump-name-tables", nullptr, &cliDumpNameTables);
-  pargs.RegisterFlagSet("-vc-all-errors-are-fatal", nullptr, &cliAllErrorsAreFatal);
+  pargs.RegisterFlagSet("-vc-io-debug", "!show debug info from serialiser", &cliShowIODebugMessages);
+  pargs.RegisterFlagSet("-vc-dev-dump-name-tables", "!debug dump of name maps", &cliDumpNameTables);
+  pargs.RegisterFlagSet("-vc-all-errors-are-fatal", "!abort the engine instead of only host server on errors (do not use)", &cliAllErrorsAreFatal);
 
-  pargs.RegisterFlagSet("-vc-lax-override", nullptr, &VMemberBase::optDeprecatedLaxOverride);
-  pargs.RegisterFlagSet("-vc-lax-states", nullptr, &VMemberBase::optDeprecatedLaxStates);
+  pargs.RegisterFlagSet("-vc-lax-override", "!allow omiting `override` keyword for methods", &VMemberBase::optDeprecatedLaxOverride);
+  pargs.RegisterFlagSet("-vc-lax-states", "!missing actor state is not an error", &VMemberBase::optDeprecatedLaxStates);
 
-  pargs.RegisterFlagSet("-vc-allow-unsafe", nullptr, &VMemberBase::unsafeCodeAllowed);
-  pargs.RegisterFlagReset("-vc-disable-unsafe", nullptr, &VMemberBase::unsafeCodeAllowed);
+  pargs.RegisterFlagSet("-vc-allow-unsafe", "!allow unsafe VC operations", &VMemberBase::unsafeCodeAllowed);
+  pargs.RegisterFlagReset("-vc-disable-unsafe", "!do not allow unsafe VC operations", &VMemberBase::unsafeCodeAllowed);
 
-  pargs.RegisterFlagSet("-vc-warn-unsafe", nullptr, &VMemberBase::unsafeCodeWarning);
-  pargs.RegisterFlagReset("-vc-no-warn-unsafe", nullptr, &VMemberBase::unsafeCodeWarning);
+  pargs.RegisterFlagSet("-vc-warn-unsafe", "!warn about unsafe VC operations", &VMemberBase::unsafeCodeWarning);
+  pargs.RegisterFlagReset("-vc-no-warn-unsafe", "!do not warn about unsafe VC operations", &VMemberBase::unsafeCodeWarning);
 
-  pargs.RegisterFlagSet("-vc-legacy-korax", nullptr, &VMemberBase::koraxCompatibility);
-  pargs.RegisterFlagReset("-vc-legacy-korax-no-warnings", nullptr, &VMemberBase::koraxCompatibilityWarnings);
+  pargs.RegisterFlagSet("-vc-legacy-korax", "!Scattered Evil compatibility option", &VMemberBase::koraxCompatibility);
+  pargs.RegisterFlagReset("-vc-legacy-korax-no-warnings", "!Scattered Evil compatibility option", &VMemberBase::koraxCompatibilityWarnings);
 
-  pargs.RegisterFlagSet("-vc-gc-debug", nullptr, &VObject::GCDebugMessagesAllowed);
+  pargs.RegisterFlagSet("-vc-gc-debug", "!show debug GC messages", &VObject::GCDebugMessagesAllowed);
 
-  pargs.RegisterCallback("-vc-asm-dump-methods", nullptr, [] (VArgs &args, int idx) -> int {
+  pargs.RegisterCallback("-vc-asm-dump-methods", "!must be followed by method names; shows disasm", [] (VArgs &args, int idx) -> int {
     for (++idx; !VParsedArgs::IsArgBreaker(args, idx); ++idx) {
       VStr mn = args[idx];
       if (!mn.isEmpty()) cliAsmDumpMethods.put(mn, true);
@@ -543,7 +543,7 @@ void VObject::StaticInitOptions (VParsedArgs &pargs) {
     return idx;
   });
 
-  pargs.RegisterFlagSet("-vc-silence-warnings", nullptr, &vcWarningsSilenced);
+  pargs.RegisterFlagSet("-vc-silence-warnings", "!suppress most warnings", &vcWarningsSilenced);
 }
 
 
