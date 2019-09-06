@@ -52,7 +52,7 @@ static TMap<VStrCI, bool> cli_IgnoreModelClass;
 
 static bool cliRegister_rmodel_args =
   VParsedArgs::RegisterFlagSet("-no-modeldef", "disable GZDoom MODELDEF lump parsing", &cli_DisableModeldef) &&
-  VParsedArgs::RegisterCallback("-model-ignore-classes", nullptr, [] (VArgs &args, int idx) -> int {
+  VParsedArgs::RegisterCallback("-model-ignore-classes", "!do not use model for the following class names", [] (VArgs &args, int idx) -> int {
     for (++idx; !VParsedArgs::IsArgBreaker(args, idx); ++idx) {
       VStr mn = args[idx];
       if (!mn.isEmpty()) cli_IgnoreModelClass.put(mn, true);

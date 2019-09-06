@@ -32,9 +32,9 @@ static int cli_WVavoom3D = 0;
 static int cli_WFloors3D = 0;
 
 static bool cliRegister_wargs =
-  VParsedArgs::RegisterFlagSet("-Wgozzo-3d", nullptr, &cli_WGozzo3D) &&
-  VParsedArgs::RegisterFlagSet("-Wvavoom-3d", nullptr, &cli_WVavoom3D) &&
-  VParsedArgs::RegisterFlagSet("-3dfloors", nullptr, &cli_WFloors3D);
+  VParsedArgs::RegisterFlagSet("-Wgozzo-3d", "!GZDoom 3d floors warnings", &cli_WGozzo3D) &&
+  VParsedArgs::RegisterFlagSet("-Wvavoom-3d", "!Vavoom 3d floors warnings", &cli_WVavoom3D) &&
+  VParsedArgs::RegisterFlagSet("-W3dfloors", "!Various 3d floors warnings", &cli_WFloors3D);
 
 
 //==========================================================================

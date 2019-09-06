@@ -1486,22 +1486,22 @@ void FL_InitOptions () {
   GParsedArgs.RegisterFlagSet("-skip-sounds", "skip sounds in the following pwads", &pwflag_SkipSounds);
   GParsedArgs.RegisterFlagReset("-allow-sounds", "allow sounds in the following pwads", &pwflag_SkipSounds);
   // aliases
-  GParsedArgs.RegisterFlagSet("-skipsounds", nullptr, &pwflag_SkipSounds);
-  GParsedArgs.RegisterFlagReset("-allowsounds", nullptr, &pwflag_SkipSounds);
+  GParsedArgs.RegisterAlias("-skipsounds", "-skip-sounds");
+  GParsedArgs.RegisterAlias("-allowsounds", "-allow-sounds");
 
   GParsedArgs.RegisterFlagSet("-skip-sprites", "skip sprites in the following pwads", &pwflag_SkipSprites);
   GParsedArgs.RegisterFlagReset("-allow-sprites", "allow sprites in the following pwads", &pwflag_SkipSprites);
   // aliases
-  GParsedArgs.RegisterFlagSet("-skipsprites", nullptr, &pwflag_SkipSprites);
-  GParsedArgs.RegisterFlagReset("-allowsprites", nullptr, &pwflag_SkipSprites);
+  GParsedArgs.RegisterAlias("-skipsprites", "-skip-sprites");
+  GParsedArgs.RegisterAlias("-allowsprites", "-allow-sprites");
 
   GParsedArgs.RegisterFlagSet("-skip-dehacked", "skip dehacked in the following pwads", &pwflag_SkipDehacked);
   GParsedArgs.RegisterFlagReset("-allow-dehacked", "allow dehacked in the following pwads", &pwflag_SkipDehacked);
   // aliases
-  GParsedArgs.RegisterFlagSet("-skipdehacked", nullptr, &pwflag_SkipDehacked);
-  GParsedArgs.RegisterFlagReset("-allowdehacked", nullptr, &pwflag_SkipDehacked);
+  GParsedArgs.RegisterAlias("-skipdehacked", "-skip-dehacked");
+  GParsedArgs.RegisterAlias("-allowdehacked", "-allow-dehacked");
 
-  GParsedArgs.RegisterFlagSet("-oldsprites", nullptr, &cli_oldSprites);
+  GParsedArgs.RegisterFlagSet("-oldsprites", "!some sprite renaming crap (do not bother)", &cli_oldSprites);
   GParsedArgs.RegisterAlias("-old-sprites", "-oldsprites");
 
 
@@ -1586,8 +1586,8 @@ void FL_InitOptions () {
   GParsedArgs.RegisterCallback("-strifeteaser", "select Strife Teaser game", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "strifeteaser"; return 0; });
 
   // hidden
-  GParsedArgs.RegisterCallback("-complete", nullptr, [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "complete"; return 0; });
-  GParsedArgs.RegisterCallback("-chex", nullptr, [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "chex"; return 0; });
+  GParsedArgs.RegisterCallback("-complete", "!DooM Complete game (broken for now)", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "complete"; return 0; });
+  GParsedArgs.RegisterCallback("-chex", "!Chex Quest game (semi-broken)", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "chex"; return 0; });
 
   GParsedArgs.RegisterFlagSet("-k8runmap", "try to detect and run first pwad map automatically", &doStartMap);
 
@@ -1595,15 +1595,15 @@ void FL_InitOptions () {
   GParsedArgs.RegisterFlagReset("-slow", "slow monsters", &cli_FastMonsters);
 
   GParsedArgs.RegisterFlagSet("-respawn", "turn on respawning", &cli_Respawn);
-  GParsedArgs.RegisterFlagReset("-no-respawn", nullptr, &cli_Respawn);
+  GParsedArgs.RegisterFlagReset("-no-respawn", "!reverse of \"-respawn\"", &cli_Respawn);
 
   GParsedArgs.RegisterFlagSet("-nomonsters", "disable monsters", &cli_NoMonsters);
   GParsedArgs.RegisterAlias("-no-monsters", "-nomonsters");
-  GParsedArgs.RegisterFlagReset("-monsters", nullptr, &cli_NoMonsters);
+  GParsedArgs.RegisterFlagReset("-monsters", "!reverse of \"monsters\"", &cli_NoMonsters);
 
   GParsedArgs.RegisterFlagSet("-nomenudef", "disable gzdoom MENUDEF parsing", &cli_NoMenuDef);
   GParsedArgs.RegisterAlias("-no-menudef", "-nomenudef");
-  GParsedArgs.RegisterFlagReset("-allow-menudef", nullptr, &cli_NoMenuDef);
+  GParsedArgs.RegisterFlagReset("-allow-menudef", "!reverse of \"-nomenudef\"", &cli_NoMenuDef);
 
   GParsedArgs.RegisterFlagSet("-gore", "enable gore mod", &cli_GoreMod);
   GParsedArgs.RegisterFlagReset("-nogore", "disable gore mod", &cli_GoreMod);
@@ -1614,7 +1614,7 @@ void FL_InitOptions () {
   GParsedArgs.RegisterAlias("-no-bdw", "-nobdw");
 
   // hidden
-  GParsedArgs.RegisterFlagSet("-skeehud", nullptr, &cli_SkeeHUD);
+  GParsedArgs.RegisterFlagSet("-skeehud", "!force SkullDash EE HUD", &cli_SkeeHUD);
 
   // "-skill"
   GParsedArgs.RegisterCallback("-skill", "select starting skill (3 is HMP; default is UV aka 4)", [] (VArgs &args, int idx) -> int {
@@ -1679,7 +1679,7 @@ void FL_InitOptions () {
   GParsedArgs.RegisterAlias("-naked-base", "-nakedbase");
 
   // hidden
-  GParsedArgs.RegisterFlagSet("-Wall", nullptr, &cli_WAll);
+  GParsedArgs.RegisterFlagSet("-Wall", "!turn on various useless warnings", &cli_WAll);
 }
 
 

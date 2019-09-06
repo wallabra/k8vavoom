@@ -38,7 +38,7 @@ static bool cliRegister_sndmain_args =
   VParsedArgs::RegisterAlias("-no-sound", "-nosound") &&
   VParsedArgs::RegisterFlagSet("-nomusic", "disable music", &cli_NoMusic) &&
   VParsedArgs::RegisterAlias("-no-music", "-nomusic") &&
-  VParsedArgs::RegisterFlagSet("-debug-sound", nullptr, &cli_DebugSound);
+  VParsedArgs::RegisterFlagSet("-debug-sound", "!show some debug messages from sound system", &cli_DebugSound);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

@@ -53,7 +53,7 @@ static VCvarI r_crosshair_yofs("r_crosshair_yofs", "0", "Crosshair y offset (>0:
 
 static int cli_WarnSprites = 0;
 static bool cliRegister_rsprites_args =
-  VParsedArgs::RegisterFlagSet("-Wpsprite", nullptr, &cli_WarnSprites);
+  VParsedArgs::RegisterFlagSet("-Wpsprite", "!show some warnings about sprites", &cli_WarnSprites);
 
 
 //==========================================================================

@@ -64,7 +64,7 @@ static volatile bool sndThreadDebug = false;
 static int cli_DebugSoundMT = 0;
 
 static bool cliRegister_snddata_args =
-  VParsedArgs::RegisterFlagSet("-debug-sound-threading", nullptr, &cli_DebugSoundMT);
+  VParsedArgs::RegisterFlagSet("-debug-sound-threading", "!show debug messages from MT sound loader", &cli_DebugSoundMT);
 
 
 //==========================================================================

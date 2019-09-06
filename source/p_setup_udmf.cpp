@@ -46,8 +46,8 @@ inline vuint32 GetTypeHash (const VertexInfo &vi) { return joaatHashBuf(vi.xy, s
 static int cli_WarnUnknownKeys = 1;
 
 static bool cliRegister_udmf_args =
-  VParsedArgs::RegisterFlagSet("-Wudmf-unknown-keys", nullptr, &cli_WarnUnknownKeys) &&
-  VParsedArgs::RegisterFlagReset("-Wno-udmf-unknown-keys", nullptr, &cli_WarnUnknownKeys);
+  VParsedArgs::RegisterFlagSet("-Wudmf-unknown-keys", "!show warnings about unknown UDMF keys", &cli_WarnUnknownKeys) &&
+  VParsedArgs::RegisterFlagReset("-Wno-udmf-unknown-keys", "!do not show warnings about unknown UDMF keys", &cli_WarnUnknownKeys);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

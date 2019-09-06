@@ -77,10 +77,10 @@ static int cli_WarnDuplicateTextures = 0;
 static int cli_DumpTextures = 0;
 
 static bool cliRegister_txloader_args =
-  VParsedArgs::RegisterFlagSet("-wipe-wall-patches", nullptr, &cli_WipeWallPatches) &&
-  VParsedArgs::RegisterFlagSet("-dev-add-texture-dump", nullptr, &cli_AddTextureDump) &&
-  VParsedArgs::RegisterFlagSet("-Wduplicate-textures", nullptr, &cli_WarnDuplicateTextures) &&
-  VParsedArgs::RegisterFlagSet("-dbg-dump-textures", nullptr, &cli_DumpTextures);
+  VParsedArgs::RegisterFlagSet("-wipe-wall-patches", "!do not use", &cli_WipeWallPatches) &&
+  VParsedArgs::RegisterFlagSet("-dev-add-texture-dump", "!do not use", &cli_AddTextureDump) &&
+  VParsedArgs::RegisterFlagSet("-Wduplicate-textures", "!warn about dumplicate textures", &cli_WarnDuplicateTextures) &&
+  VParsedArgs::RegisterFlagSet("-dbg-dump-textures", "!do not use", &cli_DumpTextures);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

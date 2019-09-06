@@ -185,26 +185,26 @@ static TMap<VStrCI, bool> IgnoredDecorateActions;
 
 
 static bool cliRegister_decorate_args =
-  VParsedArgs::RegisterFlagSet("-debug-decorate", nullptr, &cli_DecorateDebug) &&
-  VParsedArgs::RegisterFlagSet("-vc-decorate-moron-tolerant", nullptr, &cli_DecorateMoronTolerant) &&
-  VParsedArgs::RegisterFlagSet("-vc-decorate-old-replacement", nullptr, &cli_DecorateOldReplacement) &&
-  VParsedArgs::RegisterFlagSet("-vc-decorate-dump-replaces", nullptr, &cli_DecorateDumpReplaces) &&
-  VParsedArgs::RegisterFlagSet("-vc-decorate-lax-parents", nullptr, &cli_DecorateLaxParents) &&
-  VParsedArgs::RegisterFlagSet("-vc-decorate-nonactor-replace", nullptr, &cli_DecorateNonActorReplace) &&
+  VParsedArgs::RegisterFlagSet("-debug-decorate", "!show various debug messages from decorate parser", &cli_DecorateDebug) &&
+  VParsedArgs::RegisterFlagSet("-vc-decorate-moron-tolerant", "!decorate parser tolerancy", &cli_DecorateMoronTolerant) &&
+  VParsedArgs::RegisterFlagSet("-vc-decorate-old-replacement", "!decorate parser tolerancy", &cli_DecorateOldReplacement) &&
+  VParsedArgs::RegisterFlagSet("-vc-decorate-dump-replaces", "!decorate parser tolerancy", &cli_DecorateDumpReplaces) &&
+  VParsedArgs::RegisterFlagSet("-vc-decorate-lax-parents", "!decorate parser tolerancy", &cli_DecorateLaxParents) &&
+  VParsedArgs::RegisterFlagSet("-vc-decorate-nonactor-replace", "!decorate parser tolerancy", &cli_DecorateNonActorReplace) &&
 
-  VParsedArgs::RegisterFlagSet("-disable-blood-replaces", nullptr, &disableBloodReplaces) &&
+  VParsedArgs::RegisterFlagSet("-disable-blood-replaces", "!do not use", &disableBloodReplaces) &&
   VParsedArgs::RegisterAlias("-disable-blood-replacement", "-disable-blood-replaces") &&
   VParsedArgs::RegisterAlias("-no-blood-replaces", "-disable-blood-replaces") &&
   VParsedArgs::RegisterAlias("-no-blood-replacement", "-disable-blood-replaces") &&
 
-  VParsedArgs::RegisterFlagSet("-decorate-allow-unsafe", nullptr, &cli_DecorateAllowUnsafe) &&
+  VParsedArgs::RegisterFlagSet("-decorate-allow-unsafe", "allow loops in decorate anonymous functions", &cli_DecorateAllowUnsafe) &&
   VParsedArgs::RegisterAlias("--decorate-allow-unsafe", "-decorate-allow-unsafe") &&
 
-  VParsedArgs::RegisterFlagSet("-Wdecorate-powerup-rename", nullptr, &cli_DecorateWarnPowerupRename) &&
+  VParsedArgs::RegisterFlagSet("-Wdecorate-powerup-rename", "!warn about powerup renames (internal k8vavoom feature)", &cli_DecorateWarnPowerupRename) &&
 
-  VParsedArgs::RegisterFlagSet("-compiler", nullptr, &cli_CompilerReport) &&
+  VParsedArgs::RegisterFlagSet("-compiler", "report some compiler info", &cli_CompilerReport) &&
 
-  VParsedArgs::RegisterCallback("-vc-decorate-ignore-file", nullptr, [] (VArgs &args, int idx) -> int {
+  VParsedArgs::RegisterCallback("-vc-decorate-ignore-file", "!", [] (VArgs &args, int idx) -> int {
     ++idx;
     if (!VParsedArgs::IsArgBreaker(args, idx)) {
       VStr mn = args[idx];
@@ -215,7 +215,7 @@ static bool cliRegister_decorate_args =
     return idx;
   }) &&
 
-  VParsedArgs::RegisterCallback("-vc-decorate-ignore-actions", nullptr, [] (VArgs &args, int idx) -> int {
+  VParsedArgs::RegisterCallback("-vc-decorate-ignore-actions", "!", [] (VArgs &args, int idx) -> int {
     for (++idx; !VParsedArgs::IsArgBreaker(args, idx); ++idx) {
       VStr mn = args[idx];
       if (!mn.isEmpty()) {

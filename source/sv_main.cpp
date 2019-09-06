@@ -69,9 +69,9 @@ static int cli_SVShowExecTimes = 0;
 static int cli_SVNoTitleMap = 0;
 
 static bool cliRegister_svmain_args =
-  VParsedArgs::RegisterFlagSet("-dbg-dump-doomed", nullptr, &cli_SVDumpDoomEd) &&
-  VParsedArgs::RegisterFlagSet("-dbg-dump-scriptid", nullptr, &cli_SVDumpScriptId) &&
-  VParsedArgs::RegisterFlagSet("-show-exec-times", nullptr, &cli_SVShowExecTimes) &&
+  VParsedArgs::RegisterFlagSet("-dbg-dump-doomed", "!dump doomed numbers", &cli_SVDumpDoomEd) &&
+  VParsedArgs::RegisterFlagSet("-dbg-dump-scriptid", "!dump scriptid numbers", &cli_SVDumpScriptId) &&
+  VParsedArgs::RegisterFlagSet("-show-exec-times", "!show some developer info", &cli_SVShowExecTimes) &&
   VParsedArgs::RegisterFlagSet("-notitlemap", "Do not load and run TITLEMAP", &cli_SVNoTitleMap);
 
 

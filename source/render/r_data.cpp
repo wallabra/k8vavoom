@@ -43,9 +43,9 @@ static int cli_DumpBrightmaps = 0;
 static int cli_SprStrict = 0;
 
 static bool cliRegister_rdata_args =
-  VParsedArgs::RegisterFlagSet("-Wbrightmap", nullptr, &cli_WarnBrightmaps) &&
-  VParsedArgs::RegisterFlagSet("-sprstrict", nullptr, &cli_SprStrict) &&
-  VParsedArgs::RegisterFlagSet("-dump-brightmaps", nullptr, &cli_DumpBrightmaps);
+  VParsedArgs::RegisterFlagSet("-Wbrightmap", "!show warnings about brightmaps", &cli_WarnBrightmaps) &&
+  VParsedArgs::RegisterFlagSet("-sprstrict", "!strict sprite name checking", &cli_SprStrict) &&
+  VParsedArgs::RegisterFlagSet("-dump-brightmaps", "!debug brightmap loading", &cli_DumpBrightmaps);
 
 
 struct VTempSpriteEffectDef {

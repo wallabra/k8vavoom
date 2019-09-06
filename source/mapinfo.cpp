@@ -37,7 +37,7 @@ static int cli_MapperIsIdiot = 0;
 static bool cliRegister_mapinfo_args =
   VParsedArgs::RegisterFlagSet("-nomapinfoplayerclasses", "ignore player classes from MAPINFO", &cli_NoMapinfoPlrClasses) &&
   VParsedArgs::RegisterFlagSet("-nozmapinfo", "do not load ZMAPINFO", &cli_NoZMapinfo) &&
-  VParsedArgs::RegisterFlagSet("-mapper-is-idiot", nullptr, &cli_MapperIsIdiot);
+  VParsedArgs::RegisterFlagSet("-mapper-is-idiot", "!", &cli_MapperIsIdiot);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

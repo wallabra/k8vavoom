@@ -44,10 +44,10 @@ static int cli_SetDeveloperDefine = -1;
 int cli_ShowEndText = 0;
 
 static bool cliRegister_host_args =
-  VParsedArgs::RegisterFlagSet("-developer", nullptr, &cli_SetDeveloper) &&
-  VParsedArgs::RegisterFlagReset("-vc-no-k8-developer", nullptr, &cli_SetDeveloperDefine) &&
-  VParsedArgs::RegisterFlagSet("-vc-k8-developer", nullptr, &cli_SetDeveloperDefine) &&
-  VParsedArgs::RegisterFlagSet("-endtext", nullptr/*"enable end text (disabled by default)"*/, &cli_ShowEndText);
+  VParsedArgs::RegisterFlagSet("-developer", "!do not use if you don't know what it is (and you certainly don't know)", &cli_SetDeveloper) &&
+  VParsedArgs::RegisterFlagReset("-vc-no-k8-developer", "!", &cli_SetDeveloperDefine) &&
+  VParsedArgs::RegisterFlagSet("-vc-k8-developer", "!", &cli_SetDeveloperDefine) &&
+  VParsedArgs::RegisterFlagSet("-endtext", "!enable end text (disabled by default)", &cli_ShowEndText);
 
 
 
