@@ -1,73 +1,8 @@
+// arguments doesn't have any meaning here, they're simply ignored by the parser
+// use them as a reference, but don't bet on them
+
 //------------------------------------------------------------------------------
-class Actor extends Thinker
-  native
-{
-  /*
-  field x = _GetOriginX;
-  field y = _GetOriginY;
-  field z = _GetOriginZ;
-
-  field velx = _GetVelocityX;
-  field vely = _GetVelocityY;
-  field velz = _GetVelocityZ;
-
-  // "momentum", deprecated
-  field momx = _GetVelocityX;
-  field momy = _GetVelocityY;
-  field momz = _GetVelocityZ;
-
-  field angle = _GetAnglesYaw;
-  field yaw = _GetAnglesYaw;
-  field pitch = _GetAnglesPitch;
-  field roll = _GetAnglesRoll;
-  */
-
-  /* in code
-  field x = Origin.x;
-  field y = Origin.y;
-  field z = Origin.z;
-
-  field velx = Velocity.x;
-  field vely = Velocity.y;
-  field velz = Velocity.z;
-
-  // "momentum", deprecated
-  field momx = Velocity.x;
-  field momy = Velocity.y;
-  field momz = Velocity.z;
-
-  field angle = Angles.yaw;
-  field yaw = Angles.yaw;
-  field pitch = Angles.pitch;
-  field roll = Angles.roll;
-
-  field height = Height;
-  field ceilingz = CeilingZ;
-  field floorz = FloorZ;
-  field alpha = Alpha;
-  field health = Health;
-  field waterlevel = WaterLevel;
-  field TID = TID;
-  field TIDToHate = TIDToHate;
-  field radius = Radius;
-  field scalex = ScaleX;
-  field scaley = ScaleY;
-  field mass = Mass;
-  field gravity = Gravity;
-  field MeleeRange = MeleeRange;
-  field reactiontime = ReactionTime;
-  field speed = speed;
-  field watertype = WaterType;
-  field Threshold = Threshold;
-  field Damage = MissileDamage; //k8: i think so
-  */
-
-  //alias random = random;
-  //alias frandom = frandom;
-  //alias random2 = random2;
-  //alias randompick = randompick;
-  //alias frandompick = frandompick;
-
+class Actor extends Thinker native {
   alias CheckClass = CheckClass;
 
   alias GetUID = _GetUID;
@@ -98,31 +33,27 @@ class Actor extends Thinker
 
   action native A_RearrangePointers (pointer target, pointer master, pointer tracer, int flags);
 
-  //
-  //  Monster AI
-  //
-  action native A_Look();
-  action native A_Look2();
-  action native A_LookEx(eval int flags, eval float minseedist, eval float maxseedist, eval float maxheardist,
-      eval float fov, eval name wakestate);
-  action native A_TurretLook();
-  action native A_Wander();
-  action native A_Chase(optional state melee, optional state missile, optional eval int flags);
-  action native A_FastChase();
-  action native A_VileChase();
-  action native A_ExtChase(eval bool usemelee, eval bool usemissile,
-    optional evalnot bool playactive, optional eval bool nightmarefast);
-  action native A_FaceTarget(optional float max_turn, optional float max_pitch, optional float ang_offset, optional float pitch_offset, optional int flags, optional float z_ofs);
-  action native A_FaceTracer(optional float max_turn, optional float max_pitch, optional float ang_offset, optional float pitch_offset, optional int flags, optional float z_ofs);
-  action native A_FaceMaster(optional float max_turn, optional float max_pitch, optional float ang_offset, optional float pitch_offset, optional int flags, optional float z_ofs);
-  action native A_Die(optional DamageType);
-  action native A_CentaurDefend();
-  action native A_AlertMonsters();
-  action native A_ClearTarget();
-  action native A_ClearSoundTarget();
-  action native A_KillMaster();
-  action native A_KillTarget();
-  action native A_KillTracer();
+  // monster AI
+  action native A_Look ();
+  action native A_Look2 ();
+  action native A_LookEx (eval int flags, eval float minseedist, eval float maxseedist, eval float maxheardist, eval float fov, eval name wakestate);
+  action native A_TurretLook ();
+  action native A_Wander ();
+  action native A_Chase (optional state melee, optional state missile, optional eval int flags);
+  action native A_FastChase ();
+  action native A_VileChase ();
+  action native A_ExtChase (eval bool usemelee, eval bool usemissile, optional evalnot bool playactive, optional eval bool nightmarefast);
+  action native A_FaceTarget (optional float max_turn, optional float max_pitch, optional float ang_offset, optional float pitch_offset, optional int flags, optional float z_ofs);
+  action native A_FaceTracer (optional float max_turn, optional float max_pitch, optional float ang_offset, optional float pitch_offset, optional int flags, optional float z_ofs);
+  action native A_FaceMaster (optional float max_turn, optional float max_pitch, optional float ang_offset, optional float pitch_offset, optional int flags, optional float z_ofs);
+  action native A_Die (optional DamageType);
+  action native A_CentaurDefend ();
+  action native A_AlertMonsters ();
+  action native A_ClearTarget ();
+  action native A_ClearSoundTarget ();
+  action native A_KillMaster ();
+  action native A_KillTarget ();
+  action native A_KillTracer ();
   action native A_KillChildren(optional string damagetype, optional int flags, optional string filter, optional string species, optional int src, optional int inflict);
   action native A_KillSiblings(optional string damagetype, optional int flags, optional string filter, optional string species, optional int src, optional int inflict);
   action native A_SentinelBob();
@@ -134,9 +65,7 @@ class Actor extends Thinker
 
   action native A_CheckProximity (state jump, name classname, float distance, optional int count, optional int flags, optional int ptr);
 
-  //
-  //  Generic monster attacks
-  //
+  // generic monster attacks
   action native A_CustomMissile(class<Actor> missiletype, optional eval float spawnheight,
     optional eval int spawnoffs_xy, optional eval float angle, optional eval int aimmode,
     optional eval float pitch);
