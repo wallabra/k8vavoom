@@ -499,8 +499,8 @@ public:
   bool SetState (VState *);
   void SetInitialState (VState *);
   bool AdvanceState (float);
-  VState *FindState (VName, VName = NAME_None, bool = false);
-  VState *FindStateEx (VStr, bool);
+  VState *FindState (VName StateName, VName SubLabel=NAME_None, bool Exact=false);
+  VState *FindStateEx (VStr StateName, bool Exact);
   bool HasSpecialStates (VName);
   void GetStateEffects (TArray<VLightEffectDef *> &, TArray<VParticleEffectDef *> &) const;
   bool CallStateChain (VEntity *, VState *);
