@@ -1114,15 +1114,6 @@ VClass *VClass::FindBestLatestChild (VName ignoreThis) {
 //==========================================================================
 bool VClass::Define () {
   // check for duplicates
-  /*
-  int HashIndex = Name.GetIndex()&4095;
-  for (VMemberBase *m = GMembersHash[HashIndex]; m; m = m->HashNext) {
-    if (m->Name == Name && m->MemberType == MEMBER_Class && ((VClass *)m)->Defined) {
-      if (((VClass *)m)->DefinedAsDependency) return true;
-      ParseError(Loc, "Class `%s` already has been declared", *Name);
-    }
-  }
-  */
   if (Name != NAME_None) {
     VClass *cc = StaticFindClass(Name);
     if (cc) {

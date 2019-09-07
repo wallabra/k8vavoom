@@ -85,10 +85,14 @@ public:
 
 private:
   VMemberBase *HashNext;
-  VMemberBase *HashNextLC;
+  VMemberBase *HashNextAnyLC;
+  VMemberBase *HashNextClassLC;
+  VMemberBase *HashNextPropLC;
 
   static TMapNC<VName, VMemberBase *> gMembersMap;
-  static TMapNC<VName, VMemberBase *> gMembersMapLC; // lower-cased names
+  static TMapNC<VName, VMemberBase *> gMembersMapAnyLC; // lower-cased names
+  static TMapNC<VName, VMemberBase *> gMembersMapClassLC; // lower-cased class names
+  static TMapNC<VName, VMemberBase *> gMembersMapPropLC; // lower-cased property names
   static TArray<VPackage *> gPackageList;
 
   static void PutToNameHash (VMemberBase *self);
@@ -161,9 +165,9 @@ public:
       // use lower-case map
       aname = VName(*aname, VName::FindLower);
       if (aname == NAME_None) return nullptr; // no such name, no chance to find a member
-      VMemberBase **mpp = gMembersMapLC.find(aname);
+      VMemberBase **mpp = gMembersMapAnyLC.find(aname);
       if (!mpp) return nullptr;
-      for (VMemberBase *m = *mpp; m; m = m->HashNextLC) {
+      for (VMemberBase *m = *mpp; m; m = m->HashNextAnyLC) {
         FERes res = dg(m);
         if (res == FERes::FOREACH_STOP) return m;
       }
@@ -200,7 +204,6 @@ public:
   static void StaticAddPackagePath (const char *);
   static VPackage *StaticLoadPackage (VName, const TLocation &);
   static VMemberBase *StaticFindMember (VName AName, VMemberBase *AOuter, vuint8 AType, VName EnumName=NAME_None);
-  // the following is *VERY* slow!
   static VMemberBase *StaticFindMemberNoCase (VStr AName, VMemberBase *AOuter, vuint8 AType, VName EnumName=NAME_None);
 
   //FIXME: this looks ugly

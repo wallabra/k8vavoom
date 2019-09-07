@@ -39,7 +39,9 @@ bool VMemberBase::GObjShuttingDown = false;
 TArray<VMemberBase *> VMemberBase::GMembers;
 //static VMemberBase *GMembersHash[4096];
 TMapNC<VName, VMemberBase *> VMemberBase::gMembersMap;
-TMapNC<VName, VMemberBase *> VMemberBase::gMembersMapLC; // lower-cased names
+TMapNC<VName, VMemberBase *> VMemberBase::gMembersMapAnyLC; // lower-cased names
+TMapNC<VName, VMemberBase *> VMemberBase::gMembersMapClassLC; // lower-cased class names
+TMapNC<VName, VMemberBase *> VMemberBase::gMembersMapPropLC; // lower-cased property names
 TArray<VPackage *> VMemberBase::gPackageList;
 
 TArray<VStr> VMemberBase::GPackagePath;
@@ -73,18 +75,15 @@ VMemberBase::VMemberBase (vuint8 AMemberType, VName AName, VMemberBase *AOuter, 
   , Outer(AOuter)
   , Loc(ALoc)
   , HashNext(nullptr)
-  , HashNextLC(nullptr)
+  , HashNextAnyLC(nullptr)
+  , HashNextClassLC(nullptr)
+  , HashNextPropLC(nullptr)
 {
   if (lastUsedMemberId == 0xffffffffu) Sys_Error("too many VC members");
   mMemberId = ++lastUsedMemberId;
   vassert(mMemberId != 0);
   if (GObjInitialised) {
     MemberIndex = GMembers.Append(this);
-    /*
-    int HashIndex = Name.GetIndex()&4095;
-    HashNext = GMembersHash[HashIndex];
-    GMembersHash[HashIndex] = this;
-    */
     PutToNameHash(this);
   } else {
     MemberIndex = -666;
@@ -118,6 +117,23 @@ void VMemberBase::CompilerShutdown () {
 
 //==========================================================================
 //
+//  VMemberBase::AddToHashMC
+//
+//==========================================================================
+#define AddToHashMC(xname,map,HNext)  do { \
+  VMemberBase **mpp = map.find(xname); \
+  if (mpp) { \
+    self->HNext = (*mpp); \
+    *mpp = self; \
+  } else { \
+    self->HNext = nullptr; \
+    map.put(xname, self); \
+  } \
+} while (0)
+
+
+//==========================================================================
+//
 //  VMemberBase::PutToNameHash
 //
 //==========================================================================
@@ -125,32 +141,15 @@ void VMemberBase::PutToNameHash (VMemberBase *self) {
   if (!self || self->Name == NAME_None) return;
   //fprintf(stderr, "REGISTERING: <%s>\n", *self->Name);
   vassert(self->HashNext == nullptr);
-  vassert(self->HashNextLC == nullptr);
-  {
-    VMemberBase **mpp = gMembersMap.find(self->Name);
-    if (mpp) {
-      vassert(*mpp != self);
-      self->HashNext = (*mpp);
-      *mpp = self;
-    } else {
-      self->HashNext = nullptr;
-      gMembersMap.put(self->Name, self);
-    }
-  }
-  // case-insensitive search is required only for classes and properties
-  if (self->MemberType != MEMBER_Class) return;
-  // locase map
-  {
-    VName lname = VName(*self->Name, VName::AddLower);
-    VMemberBase **mpp = gMembersMapLC.find(lname);
-    if (mpp) {
-      self->HashNextLC = (*mpp);
-      *mpp = self;
-    } else {
-      self->HashNextLC = nullptr;
-      gMembersMapLC.put(lname, self);
-    }
-  }
+  vassert(self->HashNextAnyLC == nullptr);
+  vassert(self->HashNextClassLC == nullptr);
+  vassert(self->HashNextPropLC == nullptr);
+  AddToHashMC(self->Name, gMembersMap, HashNext);
+  // case-insensitive search
+  VName lname = VName(*self->Name, VName::AddLower);
+  AddToHashMC(lname, gMembersMapAnyLC, HashNextAnyLC);
+  if (self->MemberType == MEMBER_Class) AddToHashMC(lname, gMembersMapClassLC, HashNextClassLC);
+  if (self->MemberType == MEMBER_Property) AddToHashMC(lname, gMembersMapPropLC, HashNextPropLC);
 }
 
 
@@ -164,7 +163,7 @@ void VMemberBase::DumpNameMap (TMapNC<VName, VMemberBase *> &map, bool caseSensi
   GLog.Logf("=== CASE-%sSENSITIVE NAME MAP ===", (caseSensitive ? "" : "IN"));
   for (auto it = map.first(); it; ++it) {
     GLog.Logf(" --- <%s>", *it.getKey());
-    for (VMemberBase *m = it.getValue(); m; m = (caseSensitive ? m->HashNext : m->HashNextLC)) {
+    for (VMemberBase *m = it.getValue(); m; m = (caseSensitive ? m->HashNext : m->HashNextAnyLC)) {
       GLog.Logf("  <%s> : <%s>", *m->Name, *m->GetFullName());
     }
   }
@@ -181,9 +180,36 @@ void VMemberBase::DumpNameMaps () {
 #if !defined(IN_VCC)
   if (!VObject::cliDumpNameTables) return;
   DumpNameMap(gMembersMap, true);
-  DumpNameMap(gMembersMapLC, false);
+  DumpNameMap(gMembersMapAnyLC, false);
 #endif
 }
+
+
+//==========================================================================
+//
+//  VMemberBase::DelFromHashMC
+//
+//==========================================================================
+#define DelFromHashMC(xname,map,HNext)  do { \
+  if (xname == NAME_None) { \
+    vassert(self->HNext == nullptr); \
+    break; \
+  } \
+  VMemberBase **mpp = map.find(xname); \
+  if (!mpp) { \
+    vassert(self->HNext == nullptr); \
+    break; \
+  } \
+  VMemberBase *mprev = nullptr, *m = *mpp; \
+  while (m && m != self) { mprev = m; m = m->HNext; } \
+  if (m) { \
+    if (mprev) { \
+      mprev->HNext = m->HNext; \
+    } else { \
+      if (m->HNext) *mpp = m->HNext; else map.remove(xname); \
+    } \
+  } \
+} while (0)
 
 
 //==========================================================================
@@ -194,38 +220,11 @@ void VMemberBase::DumpNameMaps () {
 void VMemberBase::RemoveFromNameHash (VMemberBase *self) {
   if (!self || self->Name == NAME_None) return;
   //fprintf(stderr, "UNREGISTERING: <%s>\n", *self->Name);
-  {
-    VMemberBase **mpp = gMembersMap.find(self->Name);
-    if (mpp) {
-      VMemberBase *mprev = nullptr, *m = *mpp;
-      while (m && m != self) { mprev = m; m = m->HashNext; }
-      if (m) {
-        if (mprev) {
-          mprev->HashNext = m->HashNext;
-        } else {
-          if (m->HashNext) *mpp = m->HashNext; else gMembersMap.remove(m->Name);
-        }
-      }
-    }
-  }
-  // locase map
-  {
-    VName lname = VName(*self->Name, VName::FindLower);
-    if (lname != NAME_None) {
-      VMemberBase **mpp = gMembersMapLC.find(lname);
-      if (mpp) {
-        VMemberBase *mprev = nullptr, *m = *mpp;
-        while (m && m != self) { mprev = m; m = m->HashNextLC; }
-        if (m) {
-          if (mprev) {
-            mprev->HashNextLC = m->HashNextLC;
-          } else {
-            if (m->HashNextLC) *mpp = m->HashNextLC; else gMembersMapLC.remove(lname);
-          }
-        }
-      }
-    }
-  }
+  DelFromHashMC(self->Name, gMembersMap, HashNext);
+  VName lname = VName(*self->Name, VName::FindLower);
+  DelFromHashMC(lname, gMembersMapAnyLC, HashNextAnyLC);
+  if (self->MemberType == MEMBER_Class) DelFromHashMC(lname, gMembersMapClassLC, HashNextClassLC);
+  if (self->MemberType == MEMBER_Property) DelFromHashMC(lname, gMembersMapPropLC, HashNextPropLC);
 }
 
 
@@ -435,13 +434,24 @@ VMemberBase *VMemberBase::StaticFindMemberNoCase (VStr AName, VMemberBase *AOute
     nn += AName;
     AName = nn;
   }
-  // locase map is only for classes, so use slow loop
-  for (auto &&m : GMembers) {
+  VName lname = VName(*AName, VName::FindLower);
+  if (lname == NAME_None) return nullptr;
+  // locase map
+  VMemberBase **mpp = nullptr;
+       if (AType == MEMBER_Class) mpp = gMembersMapClassLC.find(lname);
+  else if (AType == MEMBER_Property) mpp = gMembersMapPropLC.find(lname);
+  else mpp = gMembersMapAnyLC.find(lname);
+  if (!mpp) return nullptr;
+  VMemberBase *m = *mpp;
+  while (m) {
     if ((m->Outer == AOuter || (AOuter == ANY_PACKAGE && m->Outer && m->Outer->MemberType == MEMBER_Package)) &&
         (AType == ANY_MEMBER || m->MemberType == AType))
     {
       if (AName.strEquCI(*m->Name)) return m;
     }
+         if (AType == MEMBER_Class) m = m->HashNextClassLC;
+    else if (AType == MEMBER_Property) m = m->HashNextPropLC;
+    else m = m->HashNextAnyLC;
   }
   return nullptr;
 }
@@ -456,25 +466,9 @@ VMemberBase *VMemberBase::StaticFindMemberNoCase (VStr AName, VMemberBase *AOute
 //==========================================================================
 void VMemberBase::StaticGetClassListNoCase (TArray<VStr> &list, VStr prefix, VClass *isaClass) {
   //FIXME: make this faster
-#if 0
-  int len = GMembers.length();
-  for (int f = 0; f < len; ++f) {
-    VMemberBase *m = GMembers[f];
-    if (m->MemberType == MEMBER_Class && m->Name != NAME_None) {
-      VClass *cls = (VClass *)m;
-      if (isaClass && !cls->IsChildOf(isaClass)) continue;
-      VStr n = *m->Name;
-      if (prefix.length()) {
-        if (n.length() < prefix.length()) continue;
-        if (!n.startsWithNoCase(prefix)) continue;
-      }
-      list.append(n);
-    }
-  }
-#else
-  // use locase member map, it consists mostly of classes
-  for (auto it = gMembersMapLC.first(); it; ++it) {
-    for (VMemberBase *m = it.getValue(); m; m = m->HashNextLC) {
+  // use locase class member map
+  for (auto it = gMembersMapClassLC.first(); it; ++it) {
+    for (VMemberBase *m = it.getValue(); m; m = m->HashNextClassLC) {
       if (m->MemberType == MEMBER_Class && m->Name != NAME_None) {
         VClass *cls = (VClass *)m;
         if (isaClass && !cls->IsChildOf(isaClass)) continue;
@@ -487,7 +481,6 @@ void VMemberBase::StaticGetClassListNoCase (TArray<VStr> &list, VStr prefix, VCl
       }
     }
   }
-#endif
 }
 
 
@@ -560,9 +553,9 @@ VClass *VMemberBase::StaticFindClass (const char *AName, bool caseSensitive) {
   // use lower-case map
   VName loname = VName(AName, VName::FindLower);
   if (loname == NAME_None) return nullptr; // no such name, no chance to find a member
-  VMemberBase **mpp = gMembersMapLC.find(loname);
+  VMemberBase **mpp = gMembersMapClassLC.find(loname);
   if (!mpp) return nullptr;
-  for (VMemberBase *m = *mpp; m; m = m->HashNextLC) {
+  for (VMemberBase *m = *mpp; m; m = m->HashNextClassLC) {
     if (m->Outer && m->Outer->MemberType == MEMBER_Package && m->MemberType == MEMBER_Class) {
       if (!VStr::strEquCI(*m->Name, AName)) continue;
       return (VClass *)m;
