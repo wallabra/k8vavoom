@@ -344,6 +344,17 @@ void VEntity::GetStateEffects (TArray<VLightEffectDef *> &Lights, TArray<VPartic
 }
 
 
+struct PCSaver {
+  VStateCall **ptr;
+  VStateCall *PrevCall;
+
+  inline PCSaver (VStateCall **aptr) : ptr(aptr), PrevCall(nullptr) { if (ptr) PrevCall = *ptr; }
+  PCSaver (const PCSaver &) = delete;
+  inline ~PCSaver () { if (ptr) *ptr = PrevCall; ptr = nullptr; }
+  PCSaver &operator = (const PCSaver &) = delete;
+};
+
+
 //==========================================================================
 //
 //  VEntity::CallStateChain
@@ -354,9 +365,14 @@ bool VEntity::CallStateChain (VEntity *Actor, VState *AState) {
 
   // set up state call structure
   VStateCall *PrevCall = XLevel->StateCall;
+  bool Ret = false;
+  {
+  //GCon->Logf(NAME_Debug, "%s: CHAIN (Actor=%s)", *GetClass()->GetFullName(), *Actor->GetClass()->GetFullName());
+  PCSaver saver(&XLevel->StateCall);
   VStateCall Call;
   Call.Item = this;
-  bool Ret = false;
+  Call.State = AState;
+  Call.Result = 1;
   XLevel->StateCall = &Call;
 
   int RunAway = 0;
@@ -395,7 +411,9 @@ bool VEntity::CallStateChain (VEntity *Actor, VState *AState) {
     }
   }
 
-  XLevel->StateCall = PrevCall;
+  //XLevel->StateCall = PrevCall;
+  }
+  vassert(XLevel->StateCall == PrevCall);
   return Ret;
 }
 
