@@ -128,8 +128,14 @@ bool VProperty::Define () {
   VProperty *BaseProp = nullptr;
   if (((VClass *)Outer)->ParentClass) BaseProp = ((VClass*)Outer)->ParentClass->FindProperty(Name);
   if (BaseProp) {
-    if (BaseProp->Flags&PROP_Final) ParseError(Loc, "Property alaready has been declared final and cannot be overridden");
+    if (VMemberBase::optDeprecatedLaxOverride || VMemberBase::koraxCompatibility) Flags |= PROP_Override; // force `override`
+    if ((Flags&PROP_Override) == 0) ParseError(Loc, "Overriding virtual property `%s` without `override` keyword", *GetFullName());
+    if (BaseProp->Flags&PROP_Final) ParseError(Loc, "Property `%s` alaready has been declared `final` and cannot be overridden", *GetFullName());
+         if (BaseProp->Flags&PROP_Private) ParseError(Loc, "Overriding private property `%s` is not allowed", *GetFullName());
+    else if ((BaseProp->Flags&PROP_VisibilityMask) != (Flags&PROP_VisibilityMask)) ParseError(Loc, "Overriding property `%s` with different visibility is not allowed", *GetFullName());
     if (!Type.Equals(BaseProp->Type)) ParseError(Loc, "Property redeclared with a different type");
+    // transfer decorate visibility
+    Flags |= BaseProp->Flags&(PROP_Decorate);
   }
 
   return true;

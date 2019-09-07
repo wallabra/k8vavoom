@@ -231,7 +231,10 @@ int TModifiers::PropAttr (int Modifiers) {
   if (Modifiers&Native) Attributes |= PROP_Native;
   if (Modifiers&Final) Attributes |= PROP_Final;
   if (Modifiers&Static) Attributes |= PROP_Final; // anyway for now
+  if (Modifiers&Private) Attributes |= PROP_Private|PROP_Final;
   if (Modifiers&Protected) Attributes |= PROP_Protected;
+  if (Modifiers&Override) Attributes |= PROP_Override;
+  if (Modifiers&DecVisible) Attributes |= PROP_Decorate;
   return Attributes;
 }
 

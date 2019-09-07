@@ -306,13 +306,21 @@ bool VMethod::Define () {
       }
     }
 
-    // inherit network flags
-    Flags |= SuperMethod->Flags&FUNC_NetFlags;
+    // inherit network flags and decorate visibility
+    Flags |= SuperMethod->Flags&(FUNC_NetFlags|FUNC_Decorate);
   } else {
     if ((Flags&FUNC_Override) != 0) {
       ParseError(Loc, "Trying to override non-existing method `%s`", *GetFullName());
       Ret = false;
     }
+  }
+
+  // check for invalid decorate methods
+  if (Flags&FUNC_Decorate) {
+    if (Flags&FUNC_VarArgs) { ParseError(Loc, "Decorate action method cannot be vararg `%s`", *GetFullName()); Ret = false; }
+    if (Flags&FUNC_Iterator) { ParseError(Loc, "Decorate action method cannot be iterator `%s`", *GetFullName()); Ret = false; }
+    if (Flags&FUNC_Private) { ParseError(Loc, "Decorate action method cannot be private `%s`", *GetFullName()); Ret = false; }
+    if (Flags&FUNC_Protected) { ParseError(Loc, "Decorate action method cannot be protected `%s`", *GetFullName()); Ret = false; }
   }
 
   if (Flags&FUNC_Spawner) {

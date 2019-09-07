@@ -52,7 +52,7 @@ public:
     MethodSet = Native|Static|Final|Spawner|Override|Private|Protected|DecVisible,
     ClassFieldSet = Native|Transient|Private|ReadOnly|Protected|Repnotify|Internal|Published,
     StructFieldSet = Native|Transient|Private|ReadOnly|Internal|Protected|Published,
-    PropertySet = Native|Final|Static|Protected|Private|Override,
+    PropertySet = Native|Final|Static|Protected|Private|Override|DecVisible,
     ParamSet = Optional|Out|Ref|Const|Scope,
   };
 
