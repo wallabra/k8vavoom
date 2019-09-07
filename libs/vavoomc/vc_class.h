@@ -34,6 +34,7 @@ enum EClassFlags {
   CLASS_Native               = 0x0001,
   CLASS_Abstract             = 0x0002, // class is abstract and can't be instantiated directly
   CLASS_SkipSuperStateLabels = 0x0004, // don't copy state labels
+  CLASS_DecorateVisible      = 0x1000, // this class, and all its children are visible to decorate code
   CLASS_Transient            = 0x8000,
 };
 

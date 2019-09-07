@@ -46,7 +46,17 @@ public:
     Scope     = 0x008000,
     Internal  = 0x010000,
     Published = 0x020000,
+    DecVisible= 0x040000,
+
+    ClassSet = Native|Abstract|Transient|DecVisible,
+    MethodSet = Native|Static|Final|Spawner|Override|Private|Protected,
+    ClassFieldSet = Native|Transient|Private|ReadOnly|Protected|Repnotify|Internal|Published,
+    StructFieldSet = Native|Transient|Private|ReadOnly|Internal|Protected|Published,
+    PropertySet = Native|Final|Static|Protected|Private|Override,
+    ParamSet = Optional|Out|Ref|Const|Scope,
   };
+
+  static void ShowBadAttributes (int Modifiers, const TLocation &l);
 
   static int Parse (VLexer &Lex);
   static const char *Name (int Modifier);

@@ -1750,8 +1750,7 @@ VExpression *VParser::ParseType (bool allowDelegates) {
       do {
         VMethodParam &P = dg->Params[dg->NumParams];
         int ParmModifiers = TModifiers::Parse(Lex);
-        dg->ParamFlags[dg->NumParams] = TModifiers::ParmAttr(TModifiers::Check(
-            ParmModifiers, TModifiers::Optional|TModifiers::Out|TModifiers::Ref|TModifiers::Const|TModifiers::Scope, Lex.Location));
+        dg->ParamFlags[dg->NumParams] = TModifiers::ParmAttr(TModifiers::Check(ParmModifiers, TModifiers::ParamSet, Lex.Location));
         P.TypeExpr = ParseTypeWithPtrs(true);
         if (!P.TypeExpr && dg->NumParams == 0) break;
         if (Lex.Token == TK_Identifier) {
@@ -1816,10 +1815,7 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
   if (InClass->FindMethod(MName, false)) ParseError(MethodLoc, "Redeclared method `%s.%s`", *InClass->Name, *MName);
 
   VMethod *Func = new VMethod(MName, InClass, MethodLoc);
-  Func->Flags = TModifiers::MethodAttr(TModifiers::Check(Modifiers,
-    TModifiers::Native|TModifiers::Static|TModifiers::Final|
-    TModifiers::Spawner|TModifiers::Override|
-    TModifiers::Private|TModifiers::Protected, MethodLoc));
+  Func->Flags = TModifiers::MethodAttr(TModifiers::Check(Modifiers, TModifiers::MethodSet, MethodLoc));
   Func->ReturnTypeExpr = RetType;
   if (Iterator) Func->Flags |= FUNC_Iterator;
   InClass->AddMethod(Func);
@@ -1834,8 +1830,7 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
     VMethodParam &P = Func->Params[Func->NumParams];
 
     int ParmModifiers = TModifiers::Parse(Lex);
-    Func->ParamFlags[Func->NumParams] = TModifiers::ParmAttr(TModifiers::Check(ParmModifiers,
-        TModifiers::Optional|TModifiers::Out|TModifiers::Ref|TModifiers::Const|TModifiers::Scope, Lex.Location));
+    Func->ParamFlags[Func->NumParams] = TModifiers::ParmAttr(TModifiers::Check(ParmModifiers, TModifiers::ParamSet, Lex.Location));
 
     P.TypeExpr = ParseTypeWithPtrs(true);
     if (!P.TypeExpr && Func->NumParams == 0) break;
@@ -1951,8 +1946,7 @@ void VParser::ParseDelegate (VExpression *RetType, VField *Delegate) {
   do {
     VMethodParam &P = Func->Params[Func->NumParams];
     int ParmModifiers = TModifiers::Parse(Lex);
-    Func->ParamFlags[Func->NumParams] = TModifiers::ParmAttr(TModifiers::Check(ParmModifiers,
-      TModifiers::Optional|TModifiers::Out|TModifiers::Ref|TModifiers::Const|TModifiers::Scope, Lex.Location));
+    Func->ParamFlags[Func->NumParams] = TModifiers::ParmAttr(TModifiers::Check(ParmModifiers, TModifiers::ParamSet, Lex.Location));
     P.TypeExpr = ParseTypeWithPtrs(true);
     if (!P.TypeExpr && Func->NumParams == 0) break;
     if (Lex.Token == TK_Identifier) {
@@ -2003,8 +1997,7 @@ VExpression *VParser::ParseLambda () {
     for (;;) {
       VMethodParam &P = Func->Params[Func->NumParams];
       int ParmModifiers = TModifiers::Parse(Lex);
-      Func->ParamFlags[Func->NumParams] = TModifiers::ParmAttr(TModifiers::Check(
-            ParmModifiers, TModifiers::Optional|TModifiers::Out|TModifiers::Ref|TModifiers::Const|TModifiers::Scope, Lex.Location));
+      Func->ParamFlags[Func->NumParams] = TModifiers::ParmAttr(TModifiers::Check(ParmModifiers, TModifiers::ParamSet, Lex.Location));
       P.TypeExpr = ParseTypeWithPtrs(true);
       if (!P.TypeExpr) break;
       if (Lex.Token == TK_Identifier) {
@@ -2176,9 +2169,7 @@ void VParser::ParseStruct (VClass *InClass, bool IsVector) {
         // create field
         VField *fi = new VField(FieldName, Struct, FieldLoc);
         fi->TypeExpr = FieldType;
-        fi->Flags = TModifiers::FieldAttr(TModifiers::Check(Modifiers,
-          TModifiers::Native|TModifiers::Private|TModifiers::Protected|
-          TModifiers::ReadOnly|TModifiers::Transient|TModifiers::Internal|TModifiers::Published, FieldLoc));
+        fi->Flags = TModifiers::FieldAttr(TModifiers::Check(Modifiers, TModifiers::StructFieldSet, FieldLoc));
         // delegate?
         if (FieldType->IsDelegateType()) {
           fi->Func = ((VDelegateType *)FieldType)->CreateDelegateMethod(Struct);
@@ -2211,9 +2202,7 @@ void VParser::ParseStruct (VClass *InClass, bool IsVector) {
       // create field
       VField *fi = new VField(FieldName, Struct, FieldLoc);
       fi->TypeExpr = FieldType;
-      fi->Flags = TModifiers::FieldAttr(TModifiers::Check(Modifiers,
-        TModifiers::Native|TModifiers::Private|TModifiers::Protected|
-        TModifiers::ReadOnly|TModifiers::Transient|TModifiers::Internal|TModifiers::Published, FieldLoc));
+      fi->Flags = TModifiers::FieldAttr(TModifiers::Check(Modifiers, TModifiers::StructFieldSet, FieldLoc));
       // delegate?
       if (FieldType->IsDelegateType()) {
         fi->Func = ((VDelegateType *)FieldType)->CreateDelegateMethod(Struct);
@@ -3974,10 +3963,7 @@ void VParser::ParseClass () {
   int defcount = 0;
   int defallot = 0;
 
-  Class->ClassFlags = TModifiers::ClassAttr(
-    TModifiers::Check(TModifiers::Parse(Lex),
-      TModifiers::Native|TModifiers::Abstract|TModifiers::Transient,
-      Lex.Location));
+  Class->ClassFlags = TModifiers::ClassAttr(TModifiers::Check(TModifiers::Parse(Lex), TModifiers::ClassSet, Lex.Location));
 
   // parse class attributes
   do {
@@ -4258,9 +4244,7 @@ void VParser::ParseClass () {
 
         VField *fi = new VField(FieldName, Class, FieldLoc);
         fi->TypeExpr = FieldType;
-        fi->Flags = TModifiers::FieldAttr(TModifiers::Check(Modifiers,
-          TModifiers::Native|TModifiers::Private|TModifiers::Protected|
-          TModifiers::ReadOnly|TModifiers::Transient|TModifiers::Repnotify|TModifiers::Internal|TModifiers::Published, FieldLoc));
+        fi->Flags = TModifiers::FieldAttr(TModifiers::Check(Modifiers, TModifiers::ClassFieldSet, FieldLoc));
         Class->AddField(fi);
         //Lex.Expect(TK_Semicolon, ERR_MISSING_SEMICOLON);
         need_semicolon = true;
@@ -4284,7 +4268,7 @@ void VParser::ParseClass () {
 
       // property?
       if (Lex.Check(TK_LBrace)) {
-        Modifiers = TModifiers::Check(Modifiers, TModifiers::Native|TModifiers::Final|TModifiers::Private|TModifiers::Protected|TModifiers::Static|TModifiers::Override, FieldLoc);
+        Modifiers = TModifiers::Check(Modifiers, TModifiers::PropertySet, FieldLoc);
         VProperty *Prop = new VProperty(FieldName, Class, FieldLoc);
         Prop->TypeExpr = FieldType;
         Prop->Flags = TModifiers::PropAttr(Modifiers);
@@ -4432,9 +4416,7 @@ void VParser::ParseClass () {
 
       VField *fi = new VField(FieldName, Class, FieldLoc);
       fi->TypeExpr = FieldType;
-      fi->Flags = TModifiers::FieldAttr(TModifiers::Check(Modifiers,
-        TModifiers::Native|TModifiers::Private|TModifiers::Protected|
-        TModifiers::ReadOnly|TModifiers::Transient|TModifiers::Repnotify|TModifiers::Internal|TModifiers::Published, FieldLoc));
+      fi->Flags = TModifiers::FieldAttr(TModifiers::Check(Modifiers, TModifiers::ClassFieldSet, FieldLoc));
       Class->AddField(fi);
 
       // new-style delegate syntax: `type delegate (args) name;`

@@ -72,14 +72,22 @@ int TModifiers::Parse (VLexer &Lex) {
         break;
       } else if (Lex.Check(TK_LBracket)) {
         // [opt]
-        Lex.Expect(TK_Identifier);
-        if (Lex.Name == "internal") {
-          if (Modifiers&Internal) ParseError(Lex.Location, "duplicate modifier");
-          Modifiers |= Internal;
-        } else {
-          ParseError(Lex.Location, "unknown modifier");
+        bool rbParsed = false;
+        for (;;) {
+          if (Lex.Check(TK_RBracket)) { rbParsed = true; break; }
+          Lex.Expect(TK_Identifier);
+          if (Lex.Name == "internal") {
+            if (Modifiers&Internal) ParseError(Lex.Location, "duplicate modifier '%s'", *Lex.Name);
+            Modifiers |= Internal;
+          } else if (Lex.Name == "decorate") {
+            if (Modifiers&DecVisible) ParseError(Lex.Location, "duplicate modifier '%s'", *Lex.Name);
+            Modifiers |= DecVisible;
+          } else {
+            ParseError(Lex.Location, "unknown modifier '%s'", *Lex.Name);
+          }
+          if (!Lex.Check(TK_Comma)) break;
         }
-        Lex.Expect(TK_RBracket);
+        if (!rbParsed) Lex.Expect(TK_RBracket);
       }
     }
     if (!wasHit) break;
@@ -115,8 +123,20 @@ const char *TModifiers::Name (int Modifier) {
     case Scope: return "scope";
     case Internal: return "[internal]";
     case Published: return "published";
+    case DecVisible: return "[decorate]";
   }
   return "";
+}
+
+
+//==========================================================================
+//
+//  TModifiers::ShowBadAttributes
+//
+//==========================================================================
+void TModifiers::ShowBadAttributes (int Modifiers, const TLocation &l) {
+  if (!Modifiers) return;
+  for (int i = 0; i < 31; ++i) if (Modifiers&(1<<i)) ParseError(l, "`%s` modifier is not allowed", Name(1<<i));
 }
 
 
@@ -133,14 +153,8 @@ int TModifiers::Check (int Modifers, int Allowed, const TLocation &l) {
   int protcount = 0;
   for (int f = 0; ProtAttrs[f]; ++f) if (Modifers&ProtAttrs[f]) ++protcount;
   if (protcount > 1) ParseError(l, "conflicting protection modifiers"); // TODO: print modifiers
-
-  int Bad = Modifers&~Allowed;
-  if (Bad) {
-    for (int i = 0; i < 32; ++i) if (Bad&(1<<i)) ParseError(l, "`%s` modifier is not allowed", Name(1<<i));
-    return (Modifers&Allowed);
-  }
-
-  return Modifers;
+  ShowBadAttributes(Modifers&~Allowed, l);
+  return Modifers&Allowed;
 }
 
 
@@ -176,6 +190,7 @@ int TModifiers::ClassAttr (int Modifiers) {
   if (Modifiers&Native) Attributes |= CLASS_Native;
   if (Modifiers&Abstract) Attributes |= CLASS_Abstract;
   if (Modifiers&Transient) Attributes |= CLASS_Transient;
+  if (Modifiers&DecVisible) Attributes |= CLASS_DecorateVisible;
   return Attributes;
 }
 
