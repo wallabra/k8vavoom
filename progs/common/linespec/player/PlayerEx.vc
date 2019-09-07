@@ -2402,7 +2402,7 @@ void DisplayObituary (EntityEx inflictor, EntityEx source, name DmgType) {
   if (!Msg) Msg = "$ob_default"; // generic death
 
   // look up string in language lump if necesary
-  if (StrStartsWith(Msg, "$")) Msg = GetLangString(name(Msg[1..$]));
+  if (StrStartsWith(Msg, "$")) Msg = GetLangString(Msg[1..$]);
 
   // do replacements
   /*

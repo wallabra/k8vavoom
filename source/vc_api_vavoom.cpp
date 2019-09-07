@@ -166,9 +166,14 @@ IMPLEMENT_FREE_FUNCTION(VObject, IsAnimatedTexture) {
   RET_BOOL(R_IsAnimatedTexture(texid));
 }
 
+IMPLEMENT_FREE_FUNCTION(VObject, HasLangString) {
+  P_GET_STR(Id);
+  RET_BOOL(GLanguage.HasTranslation(*Id));
+}
+
 IMPLEMENT_FREE_FUNCTION(VObject, GetLangString) {
-  P_GET_NAME(Id);
-  RET_STR(GLanguage[Id]);
+  P_GET_STR(Id);
+  RET_STR(GLanguage[*Id]);
 }
 
 IMPLEMENT_FREE_FUNCTION(VObject, RGB) {

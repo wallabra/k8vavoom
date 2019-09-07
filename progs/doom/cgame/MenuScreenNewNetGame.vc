@@ -59,7 +59,7 @@ override void CreateMapList (int episode, out array!string mapnames) {
     EpisodeDef *EDef = P_GetEpisodeDef(i);
     name startMap = EDef->Name;
     if (EDef->TeaserName && !IsMapPresent(EDef->Name)) startMap = EDef->TeaserName;
-    print("EPISODE #%d (%s:%s): start map is %s", i, EDef->Text, GetLangString(name(EDef->Text)), startMap);
+    print("EPISODE #%d (%s:%s): start map is %s", i, EDef->Text, GetLangString(EDef->Text), startMap);
   }
   */
 
