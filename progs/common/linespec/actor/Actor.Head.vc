@@ -346,7 +346,7 @@ override void Destroyed () {
 //  just before exploding. This one can be used in DECORATE now.
 //
 //==========================================================================
-void A_PreExplode (int Style, float A) {
+[decorate] final void A_PreExplode (int Style, float A) {
   RenderStyle = Style;
   Alpha = A;
 }

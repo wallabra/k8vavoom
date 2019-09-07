@@ -3,9 +3,9 @@
 
 //------------------------------------------------------------------------------
 class Actor extends Thinker native {
+  /*
   alias CheckClass = CheckClass;
 
-  /*
   alias GetUID = _GetUID;
   alias GetSelf = _GetSelf;
   alias GetSSR = _GetSSR;
@@ -360,12 +360,14 @@ class Actor extends Thinker native {
   action native ACS_NamedExecuteAlways (string script, int map, optional int s_arg1, optional int s_arg2, optional int s_arg3);
   action native ACS_NamedExecuteWithResult (string script, optional int s_arg1, optional int s_arg2, optional int s_arg3);
 
+  /*
   alias CallACS = ACS_NamedExecuteWithResult;
 
   alias GetCVar = GetCvarF;
   alias GetCVarF = GetCvarF;
   alias GetCVarI = GetCvarI;
   alias GetCVarB = GetCvarB;
+  */
 
   action native CountInv (string itemtype, optional int ptr_select);
   action native G_SkillPropertyInt (int prop);

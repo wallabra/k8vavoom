@@ -735,7 +735,7 @@ final void DoExplode (int damage, float distance, bool damageSelf, optional int 
 //  A_CheckForReload
 //
 //==========================================================================
-void A_CheckForReload (int Count, state Jump, optional bool DoIncrement) {
+[decorate] final void A_CheckForReload (int Count, state Jump, optional bool DoIncrement) {
   if (Count <= 0) return;
 
   if (bIsPlayer) {
@@ -771,7 +771,7 @@ void A_CheckForReload (int Count, state Jump, optional bool DoIncrement) {
 //  A_ResetReloadCounter
 //
 //==========================================================================
-void A_ResetReloadCounter () {
+[decorate] final void A_ResetReloadCounter () {
   if (bIsPlayer) {
     Weapon Wpn = PlayerEx(Player).ReadyWeapon;
     if (Wpn) Wpn.ReloadCounter = 0;
@@ -784,7 +784,7 @@ void A_ResetReloadCounter () {
 //  A_ZoomFactor
 //
 //==========================================================================
-void A_ZoomFactor (float zoom, optional int flags) {
+[decorate] final void A_ZoomFactor (float zoom, optional int flags) {
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (Wpn && bIsPlayer) {
     if (!zoom) zoom = 1.0;

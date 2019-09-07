@@ -1144,6 +1144,61 @@ static void ParseEnum (VScriptParser *sc, VMemberBase *parent, bool changeMode) 
 }
 
 
+
+
+//==========================================================================
+//
+//  RegisterDecorateMethods
+//
+//==========================================================================
+static void RegisterDecorateMethods () {
+#if 0
+  VClass::ForEachClass([](VClass *cls) -> FERes {
+    /*
+    for (auto it = cls->MethodMap.first(); it; ++it) {
+      VName mtname = it.getKey();
+      if (mtname == NAME_None) continue;
+      VMethod *mt = it.getValue();
+      if (!mt) continue; // just in case
+      if ((mt->Flags&FUNC_Decorate) == 0) continue;
+      VStr mts = VStr(mtname);
+      // only register "decorate_" counterpart if we have no decorate method without that prefix
+      // also, remove prefix in this case
+      if (mts.startsWith("decorate_")) {
+        VStr shortname = mts.mid(9, mts.length());
+        VName xn = VName(*shortname, VName::Find);
+        if (xn != NAME_None) {
+          auto mtx = cls->MethodMap.find(xn);
+          if (mtx) {
+            if (((*mtx)->Flags&FUNC_Decorate) == 0) {
+              GLog.Logf(NAME_Warning, "%s: decorate method `%s` has non-decorate VC counterpart at `%s`", *mt->Loc.toString(), *mt->GetFullName(), *(*mtx)->Loc.toString());
+            } else {
+              continue;
+            }
+          }
+        }
+        mts = shortname;
+      }
+      VDecorateStateAction &A = cls->DecorateStateActions.Alloc();
+      A.Name = VName(*mts, VName::AddLower);
+      A.Method = mt;
+      //GLog.Logf(NAME_Debug, "%s: found decorate method `%s` (%s)", cls->GetName(), mt->GetName(), *A.Name);
+    }
+    */
+    /*
+    for (auto &&mt : cls->Methods) {
+      if (!mt || mt->Name == NAME_None) continue;
+      if ((mt->Flags&FUNC_Decorate) == 0) continue;
+      //if (!actname.strEquCI(*mt->name)) continue;
+      return mt;
+    }
+    */
+    return FERes::FOREACH_NEXT;
+  });
+#endif
+}
+
+
 //==========================================================================
 //
 //  ParseActionDef
@@ -1154,17 +1209,17 @@ static void ParseActionDef (VScriptParser *sc, VClass *Class) {
   sc->Expect("native");
   // find the method: first try with decorate_ prefix, then without
   sc->ExpectIdentifier();
+  if (!Class->FindDecorateStateAction(sc->String)) {
+    sc->Error(va("Decorate method `%s` not found in class `%s`", *sc->String, Class->GetName()));
+  }
+  /*
   VMethod *M = Class->FindMethod(va("decorate_%s", *sc->String));
   if (!M) M = Class->FindMethod(*sc->String);
   if (!M) sc->Error(va("Method `%s` not found in class `%s`", *sc->String, Class->GetName()));
-  if (M && M->ReturnType.Type != TYPE_Void) {
-    //k8: engine is capable of calling non-void methods, why
-    //sc->Error(va("State action %s doesn't return void", *sc->String));
-  }
-  //GLog.Logf("***: <%s> -> <%s>", *sc->String, *sc->String.ToLower());
   VDecorateStateAction &A = Class->DecorateStateActions.Alloc();
   A.Name = *sc->String.ToLower();
   A.Method = M;
+  */
   // skip arguments, right now I don't care bout them
   sc->Expect("(");
   while (!sc->Check(")")) sc->ExpectString();
@@ -1177,6 +1232,7 @@ static void ParseActionDef (VScriptParser *sc, VClass *Class) {
 //  ParseActionAlias
 //
 //==========================================================================
+/*
 static void ParseActionAlias (VScriptParser *sc, VClass *Class) {
   // parse alias
   sc->ExpectIdentifier();
@@ -1193,8 +1249,10 @@ static void ParseActionAlias (VScriptParser *sc, VClass *Class) {
   A.Method = M;
   sc->Expect(";");
 }
+*/
 
 
+/*
 //==========================================================================
 //
 //  ParseFieldAlias
@@ -1215,6 +1273,7 @@ static void ParseFieldAlias (VScriptParser *sc, VClass *Class) {
   Class->DecorateStateFieldTrans.put(VName(*newname.toLowerCase()), VName(*oldname));
   sc->Expect(";");
 }
+*/
 
 
 //==========================================================================
@@ -1235,8 +1294,8 @@ static void ParseClass (VScriptParser *sc) {
   sc->Expect("{");
   while (!sc->Check("}")) {
          if (sc->Check("action")) ParseActionDef(sc, Class);
-    else if (sc->Check("alias")) ParseActionAlias(sc, Class);
-    else if (sc->Check("field")) ParseFieldAlias(sc, Class);
+    //else if (sc->Check("alias")) ParseActionAlias(sc, Class);
+    //else if (sc->Check("field")) ParseFieldAlias(sc, Class);
     else sc->Error(va("Unknown class property '%s'", *sc->String));
   }
   sc->SetCMode(false);
@@ -2024,10 +2083,12 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
       continue;
     }
 
+    /*
     if (sc->Check("alias")) {
       ParseActionAlias(sc, Class);
       continue;
     }
+    */
 
     if (sc->Check("const")) {
       ParseConst(sc, Class, false); // don't touch scanner mode
@@ -3289,6 +3350,8 @@ void ProcessDecorateScripts () {
   vcWarningsSilenced = 0;
 #endif
   if (!disableBloodReplaces && fsys_DisableBloodReplacement) disableBloodReplaces = true;
+
+  RegisterDecorateMethods();
 
   for (int Lump = W_IterateFile(-1, "decorate_ignore.txt"); Lump != -1; Lump = W_IterateFile(Lump, "decorate_ignore.txt")) {
     GLog.Logf(NAME_Init, "Parsing DECORATE ignore file '%s'...", *W_FullLumpName(Lump));

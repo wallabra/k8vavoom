@@ -1,10 +1,11 @@
 // the thing is that "actor fuck { ... }" should not have any gravity (dunno why, but it should be this way)
-// yet most standard VaVoom actors are done exactly like this
+// yet most standard Vavoom actors are done exactly like this
 // so this section tells k8vavoom that it is going to parse "base" actors, and hack should not apply
 k8vavoom { basepak = tan }
 
 #include "actors/constants.txt"
-#include "actors/nativeclasses.txt"
+// we don't need this anymore
+//#include "actors/nativeclasses.txt"
 
 #include "actors/shared/blood.txt"
 #include "actors/shared/debris.txt"

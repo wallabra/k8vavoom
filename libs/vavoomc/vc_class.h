@@ -131,17 +131,6 @@ struct VRepInfo {
 
 //==========================================================================
 //
-//  VDecorateStateAction
-//
-//==========================================================================
-struct VDecorateStateAction {
-  VName Name;
-  VMethod *Method;
-};
-
-
-//==========================================================================
-//
 //  VDecorateUserVarDef
 //
 //==========================================================================
@@ -279,6 +268,7 @@ public:
   bool DefinedAsDependency;
 
   // this is built when class postloaded
+  // it contains all methods (including those from parents)
   TMapNC<VName, VMethod *> MethodMap;
   // contains both commands and autocompleters
   TMap<VStr, VMethod *> ConCmdListMts; // names are lowercased
@@ -313,7 +303,8 @@ public:
   VClass *Replacement;
   VClass *Replacee;
 
-  TArray<VDecorateStateAction> DecorateStateActions;
+  TMap<VStrCI, VMethod *> DecorateStateActions;
+  bool DecorateStateActionsBuilt;
   TMapNC<VName, VName> DecorateStateFieldTrans; // field translation; key is decorate name (lowercased), value is real field name
 
   TArray<VSpriteEffect> SpriteEffects;
@@ -403,7 +394,8 @@ public:
   VStateLabel *FindStateLabel (VName AName, VName SubLabel=NAME_None, bool Exact=false);
   VStateLabel *FindStateLabel (TArray<VName> &, bool);
 
-  VDecorateStateAction *FindDecorateStateAction (VName);
+  VMethod *FindDecorateStateActionExact (VStr actname); // but case-insensitive
+  VMethod *FindDecorateStateAction (VStr actname);
   VName FindDecorateStateFieldTrans (VName dcname);
 
   VClass *FindBestLatestChild (VName ignoreThis);
@@ -502,6 +494,23 @@ public:
   template<typename TDg> static VClass *ForEachChildOf (const char *clsname, TDg &&dg) {
     if (!clsname || !clsname[0]) return nullptr;
     return ForEachChildOf(VClass::FindClass(clsname), dg);
+  }
+
+  // WARNING! don't add/remove ANY named members from callback!
+  // return `FERes::FOREACH_STOP` from callback to stop (and return current member)
+  // template function should accept `VClass *`, and return `FERes`
+  // templated, so i can use lambdas
+  // k8: don't even ask me. fuck shitplusplus.
+  template<typename TDg> static VClass *ForEachClass (TDg &&dg) {
+    decltype(dg((VClass *)nullptr)) test_ = FERes::FOREACH_NEXT;
+    (void)test_;
+    for (auto &&m : GMembers) {
+      if (m->MemberType != MEMBER_Class) continue;
+      VClass *cls = (VClass *)m;
+      FERes res = dg(cls);
+      if (res == FERes::FOREACH_STOP) return cls;
+    }
+    return nullptr;
   }
 
 private:

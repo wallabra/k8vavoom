@@ -211,10 +211,7 @@ static VMethod *ParseFunCallWithName (VScriptParser *sc, VStr FuncName, VClass *
       }
     }
 
-    if (!Func) {
-      VDecorateStateAction *Act = Class->FindDecorateStateAction(*FuncNameLower);
-      Func = (Act ? Act->Method : nullptr);
-    }
+    if (!Func) Func = Class->FindDecorateStateAction(FuncNameLower);
   } else {
     if (inIgnoreList) *inIgnoreList = true;
   }

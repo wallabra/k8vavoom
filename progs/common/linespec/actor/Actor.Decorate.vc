@@ -318,7 +318,7 @@ private final float clampPitch (float newpitch) {
 //  ACS_Execute
 //
 //==========================================================================
-final bool ACS_Execute (int script, optional int map, optional int s_arg1, optional int s_arg2, optional int s_arg3, optional int s_arg4) {
+[decorate] final bool ACS_Execute (int script, optional int map, optional int s_arg1, optional int s_arg2, optional int s_arg3, optional int s_arg4) {
   return XLevel.RunACS(self, script, map, s_arg1, s_arg2, s_arg3, s_arg4);
 }
 
@@ -328,7 +328,7 @@ final bool ACS_Execute (int script, optional int map, optional int s_arg1, optio
 //  ACS_ExecuteAlways
 //
 //==========================================================================
-final bool ACS_ExecuteAlways (int script, optional int map, optional int s_arg1, optional int s_arg2, optional int s_arg3, optional int s_arg4) {
+[decorate] final bool ACS_ExecuteAlways (int script, optional int map, optional int s_arg1, optional int s_arg2, optional int s_arg3, optional int s_arg4) {
   return XLevel.RunACSAlways(self, script, map, s_arg1, s_arg2, s_arg3, s_arg4);
 }
 
@@ -338,7 +338,7 @@ final bool ACS_ExecuteAlways (int script, optional int map, optional int s_arg1,
 //  ACS_ExecuteWithResult
 //
 //==========================================================================
-final int ACS_ExecuteWithResult (int script, optional int s_arg1, optional int s_arg2, optional int s_arg3, optional int s_arg4) {
+[decorate] final int ACS_ExecuteWithResult (int script, optional int s_arg1, optional int s_arg2, optional int s_arg3, optional int s_arg4) {
   return XLevel.RunACSWithResult(self, script, s_arg1, s_arg2, s_arg3, s_arg4);
 }
 
@@ -348,7 +348,7 @@ final int ACS_ExecuteWithResult (int script, optional int s_arg1, optional int s
 //  ACS_NamedExecute
 //
 //==========================================================================
-final bool ACS_NamedExecute (string script, optional int map, optional int s_arg1, optional int s_arg2, optional int s_arg3, optional int s_arg4) {
+[decorate] final bool ACS_NamedExecute (string script, optional int map, optional int s_arg1, optional int s_arg2, optional int s_arg3, optional int s_arg4) {
   return XLevel.RunNamedACS(self, script, map, s_arg1, s_arg2, s_arg3, s_arg4);
 }
 
@@ -358,7 +358,7 @@ final bool ACS_NamedExecute (string script, optional int map, optional int s_arg
 //  ACS_NamedExecuteAlways
 //
 //==========================================================================
-final bool ACS_NamedExecuteAlways (string script, optional int map, optional int s_arg1, optional int s_arg2, optional int s_arg3, optional int s_arg4) {
+[decorate] final bool ACS_NamedExecuteAlways (string script, optional int map, optional int s_arg1, optional int s_arg2, optional int s_arg3, optional int s_arg4) {
   //print("ACS_NamedExecuteAlways: script=%s; map=%d; args=(%d,%d,%d,%d)", script, map, s_arg1, s_arg2, s_arg3, s_arg4);
   return XLevel.RunNamedACSAlways(self, script, map, s_arg1, s_arg2, s_arg3, s_arg4);
 }
@@ -369,7 +369,17 @@ final bool ACS_NamedExecuteAlways (string script, optional int map, optional int
 //  ACS_NamedExecuteWithResult
 //
 //==========================================================================
-final int ACS_NamedExecuteWithResult (string script, optional int s_arg1, optional int s_arg2, optional int s_arg3, optional int s_arg4) {
+[decorate] final int ACS_NamedExecuteWithResult (string script, optional int s_arg1, optional int s_arg2, optional int s_arg3, optional int s_arg4) {
+  return XLevel.RunNamedACSWithResult(self, script, s_arg1, s_arg2, s_arg3, s_arg4);
+}
+
+
+//==========================================================================
+//
+//  CallACS
+//
+//==========================================================================
+[decorate] final int CallACS (string script, optional int s_arg1, optional int s_arg2, optional int s_arg3, optional int s_arg4) {
   return XLevel.RunNamedACSWithResult(self, script, s_arg1, s_arg2, s_arg3, s_arg4);
 }
 

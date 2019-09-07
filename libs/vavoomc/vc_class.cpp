@@ -142,6 +142,7 @@ VClass::VClass (VName AName, VMemberBase *AOuter, const TLocation &ALoc)
   LinkNext = GClasses;
   GClasses = this;
   ClassGameObjName = NAME_None;
+  DecorateStateActionsBuilt = false;
   //HashLowerCased();
 }
 
@@ -188,6 +189,7 @@ VClass::VClass (ENativeConstructor, size_t ASize, vuint32 AClassFlags, VClass *A
   LinkNext = GClasses;
   GClasses = this;
   ClassGameObjName = NAME_None;
+  DecorateStateActionsBuilt = false;
 }
 
 
@@ -535,8 +537,9 @@ void VClass::Shutdown () {
   Properties.Clear();
   Methods.Clear();
   StateLabelDefs.Clear();
-  DecorateStateActions.Clear();
+  DecorateStateActions.clear();
   SpriteEffects.Clear();
+  DecorateStateActionsBuilt = false;
   ClassGameObjName = NAME_None;
 }
 
@@ -602,6 +605,7 @@ void VClass::AddState (VState *s) {
 //==========================================================================
 void VClass::AddMethod (VMethod *m) {
   Methods.Append(m);
+  DecorateStateActionsBuilt = false; // just in case
 }
 
 
@@ -958,15 +962,45 @@ VStateLabel *VClass::FindStateLabelChecked (TArray<VName> &Names, bool Exact) {
 
 //==========================================================================
 //
+//  VClass::FindDecorateStateActionExact
+//
+//  but case-insensitive
+//
+//==========================================================================
+VMethod *VClass::FindDecorateStateActionExact (VStr actname) {
+  if (actname.isEmpty()) return nullptr;
+  // build map, if necessary
+  if (!DecorateStateActionsBuilt) {
+    DecorateStateActionsBuilt = true;
+    DecorateStateActions.clear();
+    for (auto &&mt : Methods) {
+      if (!mt || mt->Name == NAME_None) continue;
+      if ((mt->Flags&FUNC_Decorate) == 0) continue;
+      DecorateStateActions.put(*mt->Name, mt);
+      //GLog.Logf("class '%s', decorate method '%s' (%s)", *GetFullName(), *mt->GetFullName, *mt->Name);
+    }
+  }
+  // find metod
+  auto mtp = DecorateStateActions.find(actname);
+  if (mtp) return *mtp;
+  // try parent class
+  if (ParentClass) return ParentClass->FindDecorateStateActionExact(actname);
+  return nullptr;
+}
+
+
+//==========================================================================
+//
 //  VClass::FindDecorateStateAction
 //
 //==========================================================================
-VDecorateStateAction *VClass::FindDecorateStateAction (VName ActName) {
-  for (int i = 0; i < DecorateStateActions.Num(); ++i) {
-    if (DecorateStateActions[i].Name == ActName) return &DecorateStateActions[i];
+VMethod *VClass::FindDecorateStateAction (VStr actname) {
+  if (actname.isEmpty()) return nullptr;
+  if (!actname.startsWithCI("decorate_")) {
+    VMethod *mt = FindDecorateStateActionExact(VStr("decorate_")+actname);
+    if (mt) return mt;
   }
-  if (ParentClass) return ParentClass->FindDecorateStateAction(ActName);
-  return nullptr;
+  return FindDecorateStateActionExact(actname);
 }
 
 

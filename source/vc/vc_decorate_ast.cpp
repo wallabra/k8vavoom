@@ -546,6 +546,8 @@ public:
 protected:
   VDecorateInvocation () {}
   virtual void DoSyntaxCopyTo (VExpression *e) override;
+
+  bool HasFloatArg (VEmitContext &ec);
 };
 
 
@@ -720,6 +722,27 @@ void VDecorateInvocation::DoSyntaxCopyTo (VExpression *e) {
 
 //==========================================================================
 //
+//  VDecorateInvocation::HasFloatArg
+//
+//==========================================================================
+bool VDecorateInvocation::HasFloatArg (VEmitContext &ec) {
+  for (int i = 0; i < NumArgs; ++i) {
+    if (!Args[i] || Args[i]->IsDefaultArg()) continue;
+    VGagErrors gag;
+    VExpression *e = Args[i]->SyntaxCopy()->Resolve(ec);
+    if (!e) continue;
+    if (e->Type.Type == TYPE_Float) {
+      delete e;
+      return true;
+    }
+    delete e;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
 //  VDecorateInvocation::DoResolve
 //
 //==========================================================================
@@ -728,11 +751,12 @@ VExpression *VDecorateInvocation::DoResolve (VEmitContext &ec) {
   if (ec.SelfClass) {
     //FIXME: sanitize this!
     // first try with decorate_ prefix, then without
-    VMethod *M = ec.SelfClass->FindMethod/*NoCase*/(va("decorate_%s", *Name));
-    if (!M) M = ec.SelfClass->FindMethod/*NoCase*/(Name);
+    /*
+    VMethod *M = ec.SelfClass->FindMethod(va("decorate_%s", *Name));
+    if (!M) M = ec.SelfClass->FindMethod(Name);
     if (!M) {
       VStr loname = VStr(Name).toLowerCase();
-      M = ec.SelfClass->FindMethod/*NoCase*/(va("decorate_%s", *loname));
+      M = ec.SelfClass->FindMethod(va("decorate_%s", *loname));
       if (!M) M = ec.SelfClass->FindMethod(VName(*loname));
       if (!M && ec.SelfClass) {
         // just in case
@@ -740,6 +764,25 @@ VExpression *VDecorateInvocation::DoResolve (VEmitContext &ec) {
         if (Act) M = Act->Method;
       }
       if (M) Name = VName(*loname);
+    }
+    */
+    VMethod *M;
+    if (VStr::strEquCI(*Name, "va") ||
+        VStr::strEquCI(*Name, "fmin") || VStr::strEquCI(*Name, "fmax") ||
+        VStr::strEquCI(*Name, "fclamp"))
+    {
+      M = ec.SelfClass->FindMethod(Name);
+    } else if (VStr::strEquCI(*Name, "min") || VStr::strEquCI(*Name, "max") || VStr::strEquCI(*Name, "clamp")) {
+      // determine if we want an integer one
+      if (HasFloatArg(ec)) {
+        VStr fname = VStr("f")+(*Name);
+        VName nn = VName(*fname, VName::AddLower);
+        M = ec.SelfClass->FindMethod(nn);
+      } else {
+        M = ec.SelfClass->FindMethod(Name);
+      }
+    } else {
+      M = ec.SelfClass->FindDecorateStateAction(*Name);
     }
     if (M) {
       if (M->Flags&FUNC_Iterator) {

@@ -173,6 +173,7 @@
 }
 
 
+/*
 //==========================================================================
 //
 //  decorate_clamp
@@ -181,6 +182,35 @@
 [decorate] final float decorate_clamp (float val, float min, float max) {
   return fclamp(val, min, max);
 }
+
+
+//==========================================================================
+//
+//  decorate_min
+//
+//==========================================================================
+[decorate] final int decorate_min (int a, int b) {
+  return min(a, b);
+}
+
+
+//==========================================================================
+//
+//  decorate_max
+//
+//==========================================================================
+[decorate] final int decorate_max (int a, int b) {
+  return max(a, b);
+}
+*/
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+[decorate] final float decorate_GetCVar (name Name) { return GetCvarF(Name); }
+[decorate] final float decorate_GetCVarF (name Name) { return GetCvarF(Name); }
+[decorate] final int decorate_GetCVarI (name Name) { return GetCvarI(Name); }
+[decorate] final bool decorate_GetCVarB (name Name) { return GetCvarB(Name); }
+[decorate] final string decorate_GetCVarS (name Name) { return GetCvarS(Name); }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
