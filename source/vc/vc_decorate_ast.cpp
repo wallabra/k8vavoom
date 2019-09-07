@@ -755,7 +755,9 @@ VExpression *VDecorateInvocation::DoResolve (VEmitContext &ec) {
         VStr::strEquCI(*Name, "fclamp"))
     {
       M = ec.SelfClass->FindMethod(Name);
-    } else if (VStr::strEquCI(*Name, "min") || VStr::strEquCI(*Name, "max") || VStr::strEquCI(*Name, "clamp")) {
+    } else if (VStr::strEquCI(*Name, "min") || VStr::strEquCI(*Name, "max") ||
+               VStr::strEquCI(*Name, "clamp") || VStr::strEquCI(*Name, "abs"))
+    {
       // determine if we want an integer one
       if (HasFloatArg(ec)) {
         VStr fname = VStr("f")+(*Name);
@@ -1073,23 +1075,10 @@ VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
   }
 
   //GLog.Logf(NAME_Debug, "%s: field '%s'", *Loc.toString(), *Name);
-
-  VName CheckName = VName(*Name, VName::AddLower);
-  // non-prefixed constant
-  // look only for constants defined in DECORATE scripts (and in the current class)
-  VConstant *Const = (ec.SelfClass ? ec.SelfClass->FindPackageConstant(ec.Package, CheckName) : nullptr);
-  if (!Const) Const = ec.Package->FindConstant(CheckName);
-  if (Const) {
-    VExpression *e = new VConstantValue(Const, Loc);
-    delete this;
-    return e->Resolve(ec);
-  }
-
-
   if (ec.SelfClass) {
     VName ExtName = va("decorate_%s", *Name.toLowerCase());
     // prefixed constant
-    Const = ec.SelfClass->FindConstant(ExtName);
+    VConstant *Const = ec.SelfClass->FindConstant(ExtName);
     if (Const) {
       VExpression *e = new VConstantValue(Const, Loc);
       delete this;
@@ -1122,6 +1111,19 @@ VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
     }
   }
   */
+
+  VName CheckName = VName(*Name, VName::AddLower);
+  // non-prefixed constant
+  // look only for constants defined in DECORATE scripts (and in the current class)
+  {
+    VConstant *Const = (ec.SelfClass ? ec.SelfClass->FindPackageConstant(ec.Package, CheckName) : nullptr);
+    if (!Const) Const = ec.Package->FindConstant(CheckName);
+    if (Const) {
+      VExpression *e = new VConstantValue(Const, Loc);
+      delete this;
+      return e->Resolve(ec);
+    }
+  }
 
   ParseError(Loc, "Illegal expression identifier `%s`", *Name);
   delete this;
