@@ -3811,7 +3811,7 @@ void VParser::ParseClass () {
   if (Lex.Check(TK_Colon)) {
     // replaces(Name)?
     if (Lex.Token == TK_Identifier && Lex.Name == "replaces" && Lex.peekTokenType(1) == TK_LParen) {
-      doesReplacement = VClass::ReplaceType::Replace_Normal;
+      doesReplacement = VClass::ReplaceType::/*Replace_Normal*/Replace_NextParents;
       Lex.NextToken();
       Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
       if (Lex.Token != TK_Identifier) {
@@ -3830,14 +3830,62 @@ void VParser::ParseClass () {
           if (Lex.Token != TK_Identifier) {
             ParseError(Lex.Location, "Parent class name expected");
           } else {
-            doesReplacement = VClass::ReplaceType::Replace_LatestChild;
+            doesReplacement = VClass::ReplaceType::/*Replace_LatestChild*/Replace_NextParents_LastChild;
             ParentClassName = Lex.Name;
             ParentClassLoc = Lex.Location;
             Lex.NextToken();
           }
         }
       }
-      Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
+      // options
+      bool parenEaten = false;
+      while (Lex.Check(TK_Comma)) {
+        if (Lex.Check(TK_RParen)) { parenEaten = true; break; }
+        if (Lex.Check(TK_Semicolon)) {
+          ParseError(Lex.Location, "')' expected");
+          parenEaten = true;
+          break;
+        }
+        // replace parents?
+        if (Lex.Check("forceparents", false)) {
+          vassert(doesReplacement != VClass::ReplaceType::Replace_None);
+          switch (doesReplacement) {
+            case VClass::ReplaceType::Replace_Normal:
+            case VClass::ReplaceType::Replace_NextParents:
+            case VClass::ReplaceType::Replace_Parents:
+              doesReplacement = VClass::ReplaceType::Replace_Parents;
+              break;
+            case VClass::ReplaceType::Replace_LatestChild:
+            case VClass::ReplaceType::Replace_NextParents_LastChild:
+            case VClass::ReplaceType::Replace_Parents_LatestChild:
+              doesReplacement = VClass::ReplaceType::Replace_Parents_LatestChild;
+              break;
+            default :Sys_Error("internal error in vc compiler (replacement type)");
+          }
+          continue;
+        }
+        // weak (decorate-like)?
+        if (Lex.Check("weak", false) || Lex.Check("decorate", false)) {
+          vassert(doesReplacement != VClass::ReplaceType::Replace_None);
+          switch (doesReplacement) {
+            case VClass::ReplaceType::Replace_Normal:
+            case VClass::ReplaceType::Replace_NextParents:
+            case VClass::ReplaceType::Replace_Parents:
+              doesReplacement = VClass::ReplaceType::Replace_Normal;
+              break;
+            case VClass::ReplaceType::Replace_LatestChild:
+            case VClass::ReplaceType::Replace_NextParents_LastChild:
+            case VClass::ReplaceType::Replace_Parents_LatestChild:
+              doesReplacement = VClass::ReplaceType::Replace_LatestChild;
+              break;
+            default :Sys_Error("internal error in vc compiler (replacement type)");
+          }
+          continue;
+        }
+        ParseError(Lex.Location, "unknown replacement option");
+        Lex.NextToken();
+      }
+      if (!parenEaten) Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
     } else {
       if (Lex.Token != TK_Identifier) {
         ParseError(Lex.Location, "Parent class name expected");

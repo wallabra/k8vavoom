@@ -226,14 +226,31 @@ public:
   enum ReplaceType {
     Replace_None = 0,
     // decorate-style replace
-    Replace_Normal = 1,
+    Replace_Normal,
     // HACK: find the latest child, and replace it.
     //       this will obviously not work if class has many children,
     //       but still useful to replace things like `LineSpecialLevelInfo`,
     //       because each game creates its own subclass of that.
     //       actually, we will replace subclass with the longest subclassing chain.
-    Replace_LatestChild = 2,
+    Replace_LatestChild,
+    // VavoomC replacement, affect parents (but doesn't force replaces)
+    Replace_NextParents,
+    Replace_NextParents_LastChild,
+    // this does decorate-style replacement, and also replaces
+    // all parents for direct children
+    Replace_Parents,
+    Replace_Parents_LatestChild,
   };
+
+  inline bool DoesLastChildReplacement () const {
+    return
+      DoesReplacement == ReplaceType::Replace_LatestChild ||
+      DoesReplacement == ReplaceType::Replace_NextParents_LastChild ||
+      DoesReplacement == ReplaceType::Replace_Parents_LatestChild;
+  }
+
+  inline bool DoesParentReplacement () const { return (DoesReplacement >= ReplaceType::Replace_NextParents); }
+  inline bool DoesForcedParentReplacement () const { return (DoesReplacement >= ReplaceType::Replace_Parents); }
 
 public:
   // persistent fields

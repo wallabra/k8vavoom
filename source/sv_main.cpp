@@ -228,9 +228,10 @@ void SV_Init () {
   svs.max_clients = 1;
 
   VMemberBase::StaticLoadPackage(NAME_game, TLocation());
-
   // load user-specified Vavoom C script files
   G_LoadVCMods("loadvcs", "server");
+  // this emits code for all `PackagesToEmit()`
+  VPackage::StaticEmitPackages();
 
   GGameInfo = (VGameInfo *)VObject::StaticSpawnWithReplace(VClass::FindClass("MainGameInfo"));
   GCon->Logf(NAME_Init, "Spawned game info object of class '%s'", *GGameInfo->GetClass()->GetFullName());

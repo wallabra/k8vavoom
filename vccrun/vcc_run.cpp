@@ -556,6 +556,8 @@ int main (int argc, char **argv) {
 
     VMemberBase::StaticLoadPackage(VName("engine"), TLocation());
     //VMemberBase::StaticLoadPackage(VName("ui"), TLocation());
+    // this emits code for all `PackagesToEmit()`
+    VPackage::StaticEmitPackages();
 
     VPackage *CurrentPackage = new VPackage(VName("vccrun"));
 

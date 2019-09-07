@@ -65,6 +65,8 @@ public:
 
   int NumBuiltins;
 
+  static TArray<VPackage *> PackagesToEmit;
+
 public:
   VPackage ();
   VPackage (VName InName);
@@ -96,6 +98,10 @@ public:
   // will delete `Strm`
   void LoadBinaryObject (VStream *Strm, VStr filename, TLocation l);
 #endif
+
+  // this emits code for all `PackagesToEmit()`
+  // this *MUST* be called after `StaticLoadPackage()!`
+  static void StaticEmitPackages ();
 
   friend inline VStream &operator << (VStream &Strm, VPackage *&Obj) { return Strm << *(VMemberBase **)&Obj; }
 };

@@ -1086,12 +1086,15 @@ bool VClass::Define () {
       ParentClass->DefinedAsDependency = true;
       if (!xdres) return false;
     }
+/*
 #if defined(VCC_STANDALONE_EXECUTOR)
     // process replacements
     // first get actual replacement
     ParentClass = ParentClass->GetReplacement();
     if (!ParentClass) FatalError("VC Internal Error: VClass::Define: cannot find replacement");
-    if (DoesReplacement == ReplaceType::Replace_LatestChild) ParentClass = ParentClass->FindBestLatestChild(Name);
+    if (DoesReplacement == ReplaceType::Replace_LatestChild || DoesReplacement == ReplaceType::Replace_Parents_LatestChild) {
+      ParentClass = ParentClass->FindBestLatestChild(Name);
+    }
     if (!ParentClass->Defined) {
       bool xdres = ParentClass->Define();
       ParentClass->DefinedAsDependency = true;
@@ -1103,13 +1106,24 @@ bool VClass::Define () {
       if (!ParentClass->SetReplacement(this)) ParseError(ParentClassLoc, "Cannot replace class `%s`", *ParentClassName);
     }
 #else
-    if (DoesReplacement) {
-      if (DoesReplacement == ReplaceType::Replace_LatestChild) {
+*/
+#if defined(VCC_STANDALONE_EXECUTOR)
+    // process replacements
+    // first get actual replacement
+    ParentClass = ParentClass->GetReplacement();
+    if (!ParentClass) FatalError("VC Internal Error: VClass::Define: cannot find replacement");
+#endif
+    if (DoesReplacement != ReplaceType::Replace_None) {
+      VClass *origParent = ParentClass;
+      if (DoesLastChildReplacement()) {
         vdrlogf("VClass::Define: class `%s` tries to replace latest child of class `%s` (actual is `%s`)", GetName(), *ParentClassName, ParentClass->GetName());
         ParentClass = ParentClass->FindBestLatestChild(Name);
         vdrlogf("VClass::Define:   latest child is `%s`", ParentClass->GetName());
       } else {
+#if !defined(VCC_STANDALONE_EXECUTOR)
+        //k8: should we do this?
         ParentClass = ParentClass->GetReplacement();
+#endif
       }
       if (!ParentClass) FatalError("VC Internal Error: VClass::Define: cannot find replacement");
       //fprintf(stderr, "VClass::Define: requested parent is `%s`, actual parent is `%s`\n", *ParentClassName, ParentClass->GetName());
@@ -1119,11 +1133,38 @@ bool VClass::Define () {
         if (!xdres) return false;
       }
       vdrlogf("VClass::Define: class `%s` tries to replace class `%s` (actual is `%s`)...", GetName(), *ParentClassName, ParentClass->GetName());
+      // now set replacement for the actual replacement
       if (!ParentClass->SetReplacement(this)) {
         ParseError(ParentClassLoc, "Cannot replace class `%s`", *ParentClassName);
       }
-    }
+      // process all known classes, and force parent replacement, if necessary
+      if (DoesForcedParentReplacement()) {
+        for (auto &&member : GMembers) {
+          if (member->MemberType != MEMBER_Class) continue;
+          if (member == this || member == ParentClass || member == origParent) continue; // do not touch these
+          VClass *c = (VClass *)member;
+          if (c->ParentClass == origParent) {
+            vdrlogf("VClass::Define (%s): parent `%s` for class `%s` replaced with self", GetName(), c->ParentClass->GetName(), c->GetName());
+            c->ParentClass = this;
+          }
+        }
+      }
+    } else {
+      // check replacement parent
+#if !defined(VCC_STANDALONE_EXECUTOR)
+      VClass *prepl = ParentClass->GetReplacement();
+      if (prepl && prepl != ParentClass && prepl->IsChildOf(ParentClass) && prepl->DoesParentReplacement()) {
+        vdrlogf("VClass::Define (%s): parent `%s` force-replaced with `%s`", GetName(), ParentClass->GetName(), prepl->GetName());
+        ParentClass = prepl;
+        if (!ParentClass->Defined) {
+          bool xdres = ParentClass->Define();
+          ParentClass->DefinedAsDependency = true;
+          if (!xdres) return false;
+        }
+      }
 #endif
+    }
+//#endif
   }
 #if !defined(IN_VCC)
   if ((ObjectFlags&CLASSOF_Native) && ParentClass != PrevParent) {
