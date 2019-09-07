@@ -1072,11 +1072,24 @@ VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
     return e->Resolve(ec);
   }
 
-  GLog.Logf(NAME_Debug, "%s: field '%s'", *Loc.toString(), *Name);
+  //GLog.Logf(NAME_Debug, "%s: field '%s'", *Loc.toString(), *Name);
+
+  VName CheckName = VName(*Name, VName::AddLower);
+  // non-prefixed constant
+  // look only for constants defined in DECORATE scripts (and in the current class)
+  VConstant *Const = (ec.SelfClass ? ec.SelfClass->FindPackageConstant(ec.Package, CheckName) : nullptr);
+  if (!Const) Const = ec.Package->FindConstant(CheckName);
+  if (Const) {
+    VExpression *e = new VConstantValue(Const, Loc);
+    delete this;
+    return e->Resolve(ec);
+  }
+
+
   if (ec.SelfClass) {
     VName ExtName = va("decorate_%s", *Name.toLowerCase());
     // prefixed constant
-    VConstant *Const = ec.SelfClass->FindConstant(ExtName);
+    Const = ec.SelfClass->FindConstant(ExtName);
     if (Const) {
       VExpression *e = new VConstantValue(Const, Loc);
       delete this;
@@ -1097,8 +1110,6 @@ VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
     }
   }
 
-  VName CheckName = VName(*Name, VName::AddLower);
-
   /* this is done above
   if (ec.SelfClass) {
     // non-prefixed checked field access
@@ -1111,16 +1122,6 @@ VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
     }
   }
   */
-
-  // non-prefixed constant
-  // look only for constants defined in DECORATE scripts (and in the current class)
-  VConstant *Const = (ec.SelfClass ? ec.SelfClass->FindPackageConstant(ec.Package, CheckName) : nullptr);
-  if (!Const) Const = ec.Package->FindConstant(CheckName);
-  if (Const) {
-    VExpression *e = new VConstantValue(Const, Loc);
-    delete this;
-    return e->Resolve(ec);
-  }
 
   ParseError(Loc, "Illegal expression identifier `%s`", *Name);
   delete this;
