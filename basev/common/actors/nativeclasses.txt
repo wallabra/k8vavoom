@@ -5,6 +5,7 @@
 class Actor extends Thinker native {
   alias CheckClass = CheckClass;
 
+  /*
   alias GetUID = _GetUID;
   alias GetSelf = _GetSelf;
   alias GetSSR = _GetSSR;
@@ -12,7 +13,7 @@ class Actor extends Thinker native {
   alias GetTracer = _GetTracer;
   alias GetMaster = _GetMaster;
   alias GetOwner = _GetOwner;
-
+  */
 
   action native A_JumpIfRadiusAmountGreater (int radius, int amount, name className, state label, optional bool exact);
   action native A_JumpIfTracerCloser (float distance, state st, optional bool noz);
