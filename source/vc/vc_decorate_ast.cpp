@@ -747,25 +747,8 @@ bool VDecorateInvocation::HasFloatArg (VEmitContext &ec) {
 //
 //==========================================================================
 VExpression *VDecorateInvocation::DoResolve (VEmitContext &ec) {
-  //if (VStr::ICmp(*Name, "CallACS") == 0) Name = VName("ACS_NamedExecuteWithResult"); // decorate hack
   if (ec.SelfClass) {
     //FIXME: sanitize this!
-    // first try with decorate_ prefix, then without
-    /*
-    VMethod *M = ec.SelfClass->FindMethod(va("decorate_%s", *Name));
-    if (!M) M = ec.SelfClass->FindMethod(Name);
-    if (!M) {
-      VStr loname = VStr(Name).toLowerCase();
-      M = ec.SelfClass->FindMethod(va("decorate_%s", *loname));
-      if (!M) M = ec.SelfClass->FindMethod(VName(*loname));
-      if (!M && ec.SelfClass) {
-        // just in case
-        VDecorateStateAction *Act = ec.SelfClass->FindDecorateStateAction(*loname);
-        if (Act) M = Act->Method;
-      }
-      if (M) Name = VName(*loname);
-    }
-    */
     VMethod *M;
     if (VStr::strEquCI(*Name, "va") ||
         VStr::strEquCI(*Name, "fmin") || VStr::strEquCI(*Name, "fmax") ||
@@ -893,6 +876,7 @@ void VDecorateUserVar::DoSyntaxCopyTo (VExpression *e) {
 //==========================================================================
 VExpression *VDecorateUserVar::DoResolve (VEmitContext &ec) {
   if (!ec.SelfClass) Sys_Error("VDecorateUserVar::DoResolve: internal compiler error");
+  //GLog.Logf(NAME_Debug, "%s: user field '%s'", *Loc.toString(), *fldname);
   VName fldnamelo = (fldname == NAME_None ? fldname : VName(*fldname, VName::AddLower));
   VName fldn = ec.SelfClass->FindDecorateStateFieldTrans(fldnamelo);
   if (fldn == NAME_None) {
@@ -901,6 +885,7 @@ VExpression *VDecorateUserVar::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
   // first try to find the corresponding non-array method
+  /*
   if (!index) {
     VMethod *mt = ec.SelfClass->FindMethod(fldn);
     if (mt) {
@@ -910,6 +895,7 @@ VExpression *VDecorateUserVar::DoResolve (VEmitContext &ec) {
       return e->Resolve(ec);
     }
   }
+  */
   // no method, use checked field access
   VField *fld = ec.SelfClass->FindField(fldn);
   if (!fld) {
@@ -1079,10 +1065,18 @@ void VDecorateSingleName::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
-  VName CheckName = va("decorate_%s", *Name.ToLower());
+  // route uservar
+  if (VStr::startsWithCI(*Name, "user_")) {
+    VExpression *e = new VDecorateUserVar(VName(*Name, VName::Add), Loc);
+    delete this;
+    return e->Resolve(ec);
+  }
+
+  GLog.Logf(NAME_Debug, "%s: field '%s'", *Loc.toString(), *Name);
   if (ec.SelfClass) {
+    VName ExtName = va("decorate_%s", *Name.toLowerCase());
     // prefixed constant
-    VConstant *Const = ec.SelfClass->FindConstant(CheckName);
+    VConstant *Const = ec.SelfClass->FindConstant(ExtName);
     if (Const) {
       VExpression *e = new VConstantValue(Const, Loc);
       delete this;
@@ -1090,7 +1084,7 @@ VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
     }
 
     // prefixed property
-    VProperty *Prop = ec.SelfClass->FindProperty(CheckName);
+    VProperty *Prop = ec.SelfClass->FindDecorateProperty(Name);
     if (Prop) {
       if (!Prop->GetFunc) {
         ParseError(Loc, "Property `%s` cannot be read", *Name);
@@ -1103,8 +1097,9 @@ VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
     }
   }
 
-  CheckName = *Name.ToLower();
+  VName CheckName = VName(*Name, VName::AddLower);
 
+  /* this is done above
   if (ec.SelfClass) {
     // non-prefixed checked field access
     VName fldn = ec.SelfClass->FindDecorateStateFieldTrans(CheckName);
@@ -1115,6 +1110,7 @@ VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
       return e->Resolve(ec);
     }
   }
+  */
 
   // non-prefixed constant
   // look only for constants defined in DECORATE scripts (and in the current class)

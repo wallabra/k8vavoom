@@ -137,7 +137,7 @@ void VMemberBase::PutToNameHash (VMemberBase *self) {
       gMembersMap.put(self->Name, self);
     }
   }
-  // case-insensitive search is required only for classes
+  // case-insensitive search is required only for classes and properties
   if (self->MemberType != MEMBER_Class) return;
   // locase map
   {
@@ -415,6 +415,32 @@ VMemberBase *VMemberBase::StaticFindMember (VName AName, VMemberBase *AOuter, vu
     {
       //if (AName == "TVec") fprintf(stderr, "  FOUND: V: <%s> %d : %d\n", *m->GetFullName(), m->MemberType, AType);
       return m;
+    }
+  }
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VMemberBase::StaticFindMemberNoCase
+//
+//==========================================================================
+VMemberBase *VMemberBase::StaticFindMemberNoCase (VStr AName, VMemberBase *AOuter, vuint8 AType, VName EnumName) {
+  if (AName.isEmpty()) return nullptr;
+  // rewrite name, if necessary
+  if (AType == MEMBER_Const && EnumName != NAME_None) {
+    VStr nn(*EnumName);
+    nn += " ";
+    nn += AName;
+    AName = nn;
+  }
+  // locase map is only for classes, so use slow loop
+  for (auto &&m : GMembers) {
+    if ((m->Outer == AOuter || (AOuter == ANY_PACKAGE && m->Outer && m->Outer->MemberType == MEMBER_Package)) &&
+        (AType == ANY_MEMBER || m->MemberType == AType))
+    {
+      if (AName.strEquCI(*m->Name)) return m;
     }
   }
   return nullptr;

@@ -199,7 +199,9 @@ public:
 
   static void StaticAddPackagePath (const char *);
   static VPackage *StaticLoadPackage (VName, const TLocation &);
-  static VMemberBase *StaticFindMember (VName AName, VMemberBase *AOuter, vuint8 AType, VName EnumName=NAME_None/*, bool caseSensitive=true*/);
+  static VMemberBase *StaticFindMember (VName AName, VMemberBase *AOuter, vuint8 AType, VName EnumName=NAME_None);
+  // the following is *VERY* slow!
+  static VMemberBase *StaticFindMemberNoCase (VStr AName, VMemberBase *AOuter, vuint8 AType, VName EnumName=NAME_None);
 
   //FIXME: this looks ugly
   static VFieldType StaticFindType (VClass *, VName);

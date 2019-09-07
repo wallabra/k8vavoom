@@ -700,10 +700,43 @@ VField *VClass::FindFieldChecked (VName AName) {
 VProperty *VClass::FindProperty (VName Name) {
   if (Name == NAME_None) return nullptr;
   Name = ResolveAlias(Name);
-  VProperty *P = (VProperty*)StaticFindMember(Name, this, MEMBER_Property);
+  VProperty *P = (VProperty *)StaticFindMember(Name, this, MEMBER_Property);
   if (P) return P;
   if (ParentClass) return ParentClass->FindProperty(Name);
   return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VClass::FindDecoratePropertyExact
+//
+//==========================================================================
+VProperty *VClass::FindDecoratePropertyExact (VStr Name) {
+  if (Name.isEmpty()) return nullptr;
+  //FIXME: aliases doesn't work for decorate properties yet
+  //Name = ResolveAlias(Name);
+  VProperty *P = (VProperty *)StaticFindMemberNoCase(Name, this, MEMBER_Property);
+  if (P) return (P->Flags&PROP_Decorate ? P : nullptr);
+  if (ParentClass) return ParentClass->FindDecoratePropertyExact(Name);
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VClass::FindDecorateProperty
+//
+//==========================================================================
+VProperty *VClass::FindDecorateProperty (VStr Name) {
+  if (Name.isEmpty()) return nullptr;
+  // first, try with `decorate_` prefix
+  if (!Name.startsWithCI("decorate_")) {
+    VStr xn = VStr("decorate_")+Name;
+    VProperty *res = FindDecoratePropertyExact(xn);
+    if (res) return res;
+  }
+  return FindDecoratePropertyExact(Name);
 }
 
 
@@ -2474,7 +2507,6 @@ VClass *VClass::CreateDerivedClass (VName AName, VMemberBase *AOuter, TArray<VDe
       }
       PrevBool = (fi->Type.Type == TYPE_Bool ? fi : nullptr);
     }
-
   }
 
   if (!NewClass->DefineRepInfos()) Sys_Error("cannot post-process replication info for class '%s'", *AName);

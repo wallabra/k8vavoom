@@ -379,7 +379,9 @@ public:
   VField *FindField (VName, const TLocation &, VClass *);
   VField *FindFieldChecked (VName);
 
-  VProperty *FindProperty (VName);
+  VProperty *FindProperty (VName Name);
+  VProperty *FindDecoratePropertyExact (VStr Name);
+  VProperty *FindDecorateProperty (VStr Name);
 
   VMethod *FindMethod (VName Name, bool bRecursive=true);
   // this will follow `ParentClassName` instead of `ParentClass`
