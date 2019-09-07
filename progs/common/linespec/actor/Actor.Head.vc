@@ -28,7 +28,7 @@
 //**  Class for Actor state action methods.
 //**
 //**************************************************************************
-class Actor : EntityEx abstract;
+class Actor : EntityEx abstract [decorate];
 
 // flags for A_WeaponReady
 const int WRF_NOBOB       = 1;

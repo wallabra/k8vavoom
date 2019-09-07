@@ -74,7 +74,7 @@ enum {
 #include "entityex/EntityEx.TracePath.vc"
 #include "entityex/EntityEx.Defaults.vc"
 
-#include "actor/Actor.Misc.vc"
+#include "actor/Actor.Head.vc"
 #include "actor/Actor.Decorate.vc"
 #include "actor/Actor.MonsterAi.vc"
 #include "actor/Actor.GenericAttacks.vc"
