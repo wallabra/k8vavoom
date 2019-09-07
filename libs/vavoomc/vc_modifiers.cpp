@@ -176,6 +176,7 @@ int TModifiers::MethodAttr (int Modifiers) {
   if (Modifiers&Override) Attributes |= FUNC_Override;
   if (Modifiers&Private) Attributes |= FUNC_Private|FUNC_Final; // private methods can always be marked as `final`
   if (Modifiers&Protected) Attributes |= FUNC_Protected;
+  if (Modifiers&DecVisible) Attributes |= FUNC_Decorate;
   return Attributes;
 }
 

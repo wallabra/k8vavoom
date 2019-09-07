@@ -40,6 +40,8 @@ enum {
   FUNC_NetReliable = 0x0040, // sent reliably over the network
   FUNC_Iterator    = 0x0080, // can be used in foreach statements
 
+  FUNC_Decorate    = 0x0100, // can be called from decorate code
+
   FUNC_Override    = 0x1000, // used to check overrides
   FUNC_Private     = 0x2000,
   FUNC_Protected   = 0x4000,
