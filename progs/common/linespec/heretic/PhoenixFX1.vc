@@ -51,7 +51,7 @@ override int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 //
 //===========================================================================
 
-final void A_PhoenixPuff()
+[decorate] final void A_PhoenixPuff()
 {
   SeekerMissile(5.0, 10.0);
 

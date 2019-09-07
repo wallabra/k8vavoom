@@ -32,7 +32,7 @@ class Bridge : Actor game(GAME_Raven) __mobjinfo__(118) __scriptid__(21);
 //  A_BridgeInit
 //
 //==========================================================================
-final void A_BridgeInit () {
+[decorate] final void A_BridgeInit () {
   float StartAngle;
   BridgeBall ball1;
   BridgeBall ball2;

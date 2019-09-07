@@ -49,7 +49,7 @@ override int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 //
 //===========================================================================
 
-final void A_FlameEnd()
+[decorate] final void A_FlameEnd()
 {
   Velocity.z += 1.5 * 35.0;
 }
@@ -60,7 +60,7 @@ final void A_FlameEnd()
 //
 //===========================================================================
 
-final void A_FloatPuff()
+[decorate] final void A_FloatPuff()
 {
   Velocity.z += 1.8 * 35.0;
 }

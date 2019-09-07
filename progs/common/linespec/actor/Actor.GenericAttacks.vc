@@ -82,7 +82,7 @@ const int CBAF_PUFFTRACER    = 128;
 //  A_CustomMissile
 //
 //==========================================================================
-final void A_CustomMissile (class!Actor MissileType, optional float SpawnHeight,
+[decorate] final void A_CustomMissile (class!Actor MissileType, optional float SpawnHeight,
                             optional int SpawnXYOffset, optional float Angle, optional int Flags/*AimMode*/,
                             optional float Pitch, optional int aptr)
 {
@@ -188,7 +188,7 @@ final void FireSuperBullet () {
 //  A_CustomBulletAttack
 //
 //==========================================================================
-final void A_CustomBulletAttack (float SpreadHoriz, float SpreadVert,
+[decorate] final void A_CustomBulletAttack (float SpreadHoriz, float SpreadVert,
                                  int NumBullets, int DamagePerBullet, optional class!Actor PuffType,
                                  optional float Range, optional int Flags, optional int aptr,
                                  optional class!Actor missile, optional float spawnheight, optional float spawnofsxy)
@@ -255,7 +255,7 @@ final void A_CustomBulletAttack (float SpreadHoriz, float SpreadVert,
 //  A_CustomRailgun
 //
 //===========================================================================
-final void A_CustomRailgun (int RailDamage, optional float Offset,
+[decorate] final void A_CustomRailgun (int RailDamage, optional float Offset,
                             optional string Color1, optional string Color2, optional int Flags,
                             optional bool DoAim, optional float MaxDiff,
                             optional class!Actor PuffType,
@@ -315,7 +315,7 @@ final void A_CustomRailgun (int RailDamage, optional float Offset,
 //  A_CustomMeleeAttack
 //
 //==========================================================================
-final void A_CustomMeleeAttack (int MeleeDamage, optional name MeleeSound,
+[decorate] final void A_CustomMeleeAttack (int MeleeDamage, optional name MeleeSound,
                                 optional name MissSound, optional name DamageType, optional bool Bleed)
 {
   if (!Target) return;
@@ -336,7 +336,7 @@ final void A_CustomMeleeAttack (int MeleeDamage, optional name MeleeSound,
 //  A_CustomComboAttack
 //
 //==========================================================================
-final void A_CustomComboAttack (class!Actor MissileType, float MissileHeight,
+[decorate] final void A_CustomComboAttack (class!Actor MissileType, float MissileHeight,
                                 int MeleeDamage, optional name MeleeSound, optional name DamageType,
                                 optional bool Bleed)
 {
@@ -391,7 +391,7 @@ final void DoAttack (bool DoMelee, bool DoMissile, int MeleeDamage,
 //  A_MeleeAttack
 //
 //==========================================================================
-final void A_MeleeAttack () {
+[decorate] final void A_MeleeAttack () {
   DoAttack(true, false, MeleeDamage, MeleeSound, MissileType, MissileHeight);
 }
 
@@ -401,7 +401,7 @@ final void A_MeleeAttack () {
 //  A_MissileAttack
 //
 //==========================================================================
-final void A_MissileAttack () {
+[decorate] final void A_MissileAttack () {
   DoAttack(false, true, MeleeDamage, MeleeSound, MissileType, MissileHeight);
 }
 
@@ -411,7 +411,7 @@ final void A_MissileAttack () {
 //  A_ComboAttack
 //
 //==========================================================================
-final void A_ComboAttack () {
+[decorate] final void A_ComboAttack () {
   DoAttack(true, true, MeleeDamage, MeleeSound, MissileType, MissileHeight);
 }
 
@@ -421,7 +421,7 @@ final void A_ComboAttack () {
 //  A_BasicAttack
 //
 //==========================================================================
-final void A_BasicAttack (int AMeleeDamage, name AMeleeSound, class!Actor AMissileType, float AMissileHeight) {
+[decorate] final void A_BasicAttack (int AMeleeDamage, name AMeleeSound, class!Actor AMissileType, float AMissileHeight) {
   DoAttack(true, true, AMeleeDamage, AMeleeSound, AMissileType, AMissileHeight);
 }
 
@@ -431,7 +431,7 @@ final void A_BasicAttack (int AMeleeDamage, name AMeleeSound, class!Actor AMissi
 //  A_BulletAttack
 //
 //==========================================================================
-final void A_BulletAttack () {
+[decorate] final void A_BulletAttack () {
   if (!Target) return;
 
   if (AttackSound) PlaySound(AttackSound, CHAN_WEAPON);
@@ -455,7 +455,7 @@ final void A_BulletAttack () {
 //  A_MonsterRail
 //
 //===========================================================================
-final void A_MonsterRail () {
+[decorate] final void A_MonsterRail () {
   if (!Target) return;
 
   // Andy Baker's stealth monsters
@@ -528,7 +528,7 @@ final void DoExplode (int damage, float distance, bool damageSelf, optional int 
 //  Handles a bunch of exploding things.
 //
 //==========================================================================
-final void A_Explode (optional int damage, optional float radius, optional int flags) {
+[decorate] final void A_Explode (optional int damage, optional float radius, optional int flags) {
   ubyte damageSelf;
 
   if (!specified_damage) damage = 128;
@@ -564,7 +564,7 @@ final void A_Explode (optional int damage, optional float radius, optional int f
 //  A_ExplodeAndAlert
 //
 //==========================================================================
-final void A_ExplodeAndAlert () {
+[decorate] final void A_ExplodeAndAlert () {
   A_Explode();
   if (Target && Target.bIsPlayer) LineSpecialLevelInfo(Level).NoiseAlert(Target, self);
 }
@@ -575,7 +575,7 @@ final void A_ExplodeAndAlert () {
 //  A_ExplodeParms
 //
 //==========================================================================
-final void A_ExplodeParms () {
+[decorate] final void A_ExplodeParms () {
   int damage = ExplosionDamage;
   float distance = float(ExplosionRadius);
   ubyte damageSelf = !bExplosionDontHurtSelf;
@@ -591,7 +591,7 @@ final void A_ExplodeParms () {
 //  decorate_A_Explode
 //
 //==========================================================================
-final void decorate_A_Explode (optional int damage, optional float distance,
+[decorate] final void decorate_A_Explode (optional int damage, optional float distance,
                                optional int flags, optional bool Alert, optional int dmgdistance,
                                optional int nails, optional int naildamage,
                                optional class!EntityEx PuffType, optional name dmgType)
@@ -654,7 +654,7 @@ final void decorate_A_Explode (optional int damage, optional float distance,
 //  A_RadiusThrust
 //
 //==========================================================================
-final void A_RadiusThrust (optional int Force, optional int Distance, optional int flags,
+[decorate] final void A_RadiusThrust (optional int Force, optional int Distance, optional int flags,
                            optional float fullthrustdistance)
 {
   if (!Force) Force = 128;
@@ -675,7 +675,7 @@ final void A_RadiusThrust (optional int Force, optional int Distance, optional i
 //  A_Detonate
 //
 //==========================================================================
-final void A_Detonate () {
+[decorate] final void A_Detonate () {
   int damage = GetMissileDamage(0, 1);
   DoExplode(damage, float(damage), true);
 }
@@ -686,7 +686,7 @@ final void A_Detonate () {
 //  A_ThrowGrenade
 //
 //==========================================================================
-final void A_ThrowGrenade (class!Actor ItemType, optional float SpawnHeight,
+[decorate] final void A_ThrowGrenade (class!Actor ItemType, optional float SpawnHeight,
                            optional float XYVel, optional float ZVel, optional bool UseAmmo)
 {
   if (!specified_UseAmmo) UseAmmo = true;
@@ -878,7 +878,7 @@ final void BlastActor (Actor victim, Actor source, float speed, class!Actor Blas
 //  A_Blast
 //
 //==========================================================================
-final void A_Blast (optional int BlastFlags, optional float Strength/*ignored*/,
+[decorate] final void A_Blast (optional int BlastFlags, optional float Strength/*ignored*/,
                     optional float Radius, optional float Speed,
                     optional class!Actor BlastEffect, optional name BlastSound)
 {
@@ -928,7 +928,7 @@ final void A_Blast (optional int BlastFlags, optional float Strength/*ignored*/,
 //  A_MonsterRefire
 //
 //==========================================================================
-final void A_MonsterRefire (int prob, state jump) {
+[decorate] final void A_MonsterRefire (int prob, state jump) {
   // keep firing unless target got out of sight
   A_FaceTarget();
 
@@ -1007,7 +1007,7 @@ final EntityEx FindEnemyMaster () {
 //  Look for enemy of player
 //
 //==========================================================================
-final void A_MinotaurLook () {
+[decorate] final void A_MinotaurLook () {
   Actor mo;
 
   if (!bSummonedMonster) {
@@ -1069,7 +1069,7 @@ final void A_MinotaurLook () {
 //  A_MinotaurChase
 //
 //==========================================================================
-final void A_MinotaurChase () {
+[decorate] final void A_MinotaurChase () {
   RenderStyle = STYLE_Normal;
   Alpha = 1.0; // in case pain caused him to skip his fade in
 
@@ -1120,7 +1120,7 @@ final void A_MinotaurChase () {
 //  A_MinotaurRoam
 //
 //==========================================================================
-final void A_MinotaurRoam () {
+[decorate] final void A_MinotaurRoam () {
   RenderStyle = STYLE_Normal;
   Alpha = 1.0; // in case pain caused him to skip his fade in.
 
@@ -1152,7 +1152,7 @@ final void A_MinotaurRoam () {
 //  Melee attack.
 //
 //==========================================================================
-final void A_MinotaurAtk1 () {
+[decorate] final void A_MinotaurAtk1 () {
   if (!Target) return;
 
   PlaySound('minotaur/melee', CHAN_WEAPON);
@@ -1174,7 +1174,7 @@ final void A_MinotaurAtk1 () {
 //  Choose a missile attack.
 //
 //==========================================================================
-final void A_MinotaurDecide () {
+[decorate] final void A_MinotaurDecide () {
   if (!Target) return;
   if (!bSummonedMonster) PlaySound('minotaur/sight', CHAN_VOICE);
 
@@ -1212,7 +1212,7 @@ final void A_MinotaurDecide () {
 //  Swing attack.
 //
 //==========================================================================
-final void A_MinotaurAtk2 () {
+[decorate] final void A_MinotaurAtk2 () {
   TAVec ang;
 
   if (!Target) return;
@@ -1241,7 +1241,7 @@ final void A_MinotaurAtk2 () {
 //  Floor fire attack.
 //
 //==========================================================================
-final void A_MinotaurAtk3 () {
+[decorate] final void A_MinotaurAtk3 () {
   if (!Target) return;
 
   PlaySound('minotaur/attack3', CHAN_WEAPON);
@@ -1269,7 +1269,7 @@ final void A_MinotaurAtk3 () {
 //  A_MinotaurCharge
 //
 //==========================================================================
-final void A_MinotaurCharge () {
+[decorate] final void A_MinotaurCharge () {
   if (!Target) return;
 
   if (Special1 > 0) {

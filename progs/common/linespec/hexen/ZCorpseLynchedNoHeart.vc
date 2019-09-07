@@ -48,7 +48,7 @@ override void BeginPlay()
 //
 //==========================================================================
 
-final void A_CorpseBloodDrip()
+[decorate] final void A_CorpseBloodDrip()
 {
   if (Random() > 0.5)
   {

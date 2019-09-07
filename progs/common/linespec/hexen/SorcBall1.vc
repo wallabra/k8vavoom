@@ -34,7 +34,7 @@ class SorcBall1 : SorcBall;
 //
 //==========================================================================
 
-final void A_SorcOffense1()
+[decorate] final void A_SorcOffense1()
 {
   EntityEx mo;
   float ang1, ang2;

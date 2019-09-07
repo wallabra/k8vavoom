@@ -33,7 +33,7 @@
 //  A_PlaySound
 //
 //==========================================================================
-final void A_PlaySound (optional name Sound, optional int ChannelNameOrNumber, optional float volume,
+[decorate] final void A_PlaySound (optional name Sound, optional int ChannelNameOrNumber, optional float volume,
                         optional bool looping, optional float attenuation,
                         optional bool local)
 {
@@ -54,7 +54,7 @@ final void A_PlaySound (optional name Sound, optional int ChannelNameOrNumber, o
 //  fuck you, gozzo!
 //
 //==========================================================================
-final void A_PlaySoundEx (name Sound, int ChannelNameOrNumber, optional bool Loop, optional int Attenuation) {
+[decorate] final void A_PlaySoundEx (name Sound, int ChannelNameOrNumber, optional bool Loop, optional int Attenuation) {
   // attenuation
   float Atten = ATTN_NORMAL;
   switch (Attenuation) {
@@ -71,7 +71,7 @@ final void A_PlaySoundEx (name Sound, int ChannelNameOrNumber, optional bool Loo
 //  A_PlayWeaponSound
 //
 //==========================================================================
-final void A_PlayWeaponSound (name Sound) {
+[decorate] final void A_PlayWeaponSound (name Sound) {
   PlaySound(Sound, CHAN_WEAPON);
 }
 
@@ -81,7 +81,7 @@ final void A_PlayWeaponSound (name Sound) {
 //  A_ActiveSound
 //
 //==========================================================================
-final void A_ActiveSound () {
+[decorate] final void A_ActiveSound () {
   if (ActiveSound) PlaySound(ActiveSound, CHAN_VOICE);
 }
 
@@ -91,7 +91,7 @@ final void A_ActiveSound () {
 //  A_LoopActiveSound
 //
 //==========================================================================
-final void A_LoopActiveSound () {
+[decorate] final void A_LoopActiveSound () {
   if (ActiveSound) PlaySound(ActiveSound, CHAN_VOICE, default, default, true);
 }
 
@@ -101,7 +101,7 @@ final void A_LoopActiveSound () {
 //  A_FLoopActiveSound
 //
 //==========================================================================
-final void A_FLoopActiveSound () {
+[decorate] final void A_FLoopActiveSound () {
   if (ActiveSound && !GetSoundPlayingInfo(self, GetSoundID(ActiveSound))) {
     PlaySound(ActiveSound, CHAN_VOICE);
   }
@@ -113,7 +113,7 @@ final void A_FLoopActiveSound () {
 //  A_StopSound
 //
 //==========================================================================
-final void A_StopSound (optional int ChannelNameOrNumber) {
+[decorate] final void A_StopSound (optional int ChannelNameOrNumber) {
   if (!specified_ChannelNameOrNumber) ChannelNameOrNumber = CHAN_VOICE;
   StopSound(ChannelNameOrNumber);
 }
@@ -124,7 +124,7 @@ final void A_StopSound (optional int ChannelNameOrNumber) {
 //  A_StopSoundEx
 //
 //==========================================================================
-final void A_StopSoundEx (int ChannelNameOrNumber) {
+[decorate] final void A_StopSoundEx (int ChannelNameOrNumber) {
   StopSound(ChannelNameOrNumber);
 }
 
@@ -134,7 +134,7 @@ final void A_StopSoundEx (int ChannelNameOrNumber) {
 //  A_Pain
 //
 //==========================================================================
-final void A_Pain () {
+[decorate] final void A_Pain () {
   if (bIsPlayer && !PlayerEx(Player).MorphTime) {
          if (Health < 25) PlaySound('*pain25', CHAN_VOICE);
     else if (Health < 50) PlaySound('*pain50', CHAN_VOICE);
@@ -153,7 +153,7 @@ final void A_Pain () {
 //  Death sound.
 //
 //==========================================================================
-final void A_Scream () {
+[decorate] final void A_Scream () {
   // remove muzzle flash & other light effects
   bDynamicLight = false;
   if (DeathSound) {
@@ -170,7 +170,7 @@ final void A_Scream () {
 //  Explode death sound.
 //
 //==========================================================================
-final void A_XScream () {
+[decorate] final void A_XScream () {
   PlaySound((bIsPlayer ? '*gibbed' : 'misc/gibbed'), CHAN_BODY);
 }
 
@@ -182,7 +182,7 @@ final void A_XScream () {
 //  Arch-vile attack start sound.
 //
 //==========================================================================
-final void A_VileStart () {
+[decorate] final void A_VileStart () {
   PlaySound('vile/start', CHAN_WEAPON);
 }
 
@@ -194,7 +194,7 @@ final void A_VileStart () {
 //  Brain pain sound.
 //
 //==========================================================================
-final void A_BrainPain () {
+[decorate] final void A_BrainPain () {
   PlaySound('brain/pain', CHAN_VOICE, 1.0, ATTN_NONE);
 }
 
@@ -206,7 +206,7 @@ final void A_BrainPain () {
 //  Init boss spawner.
 //
 //==========================================================================
-final void A_BrainAwake () {
+[decorate] final void A_BrainAwake () {
   // do just a sound, like in Boom
   PlaySound('brain/sight', CHAN_VOICE, 1.0, ATTN_NONE);
 }
@@ -217,7 +217,7 @@ final void A_BrainAwake () {
 //  A_PlayerScream
 //
 //==========================================================================
-final void A_PlayerScream () {
+[decorate] final void A_PlayerScream () {
   if (!bIsPlayer || DeathSound) {
     PlaySound(DeathSound, CHAN_VOICE);
     return;

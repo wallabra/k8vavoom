@@ -30,7 +30,7 @@
 //  decorate_random
 //
 //==========================================================================
-final int decorate_random (int From, int To) {
+[decorate] final int decorate_random (int From, int To) {
   if (From > To) {
     int Tmp = From;
     From = To;
@@ -51,7 +51,7 @@ final int decorate_random (int From, int To) {
 //  decorate_random2
 //
 //==========================================================================
-final int decorate_random2 (optional int Mask) {
+[decorate] final int decorate_random2 (optional int Mask) {
   if (specified_Mask) return (P_Random()&Mask)-(P_Random()&Mask);
   return P_Random()-P_Random();
 }
@@ -62,7 +62,7 @@ final int decorate_random2 (optional int Mask) {
 //  decorate_frandom
 //
 //==========================================================================
-final float decorate_frandom (float From, float To) {
+[decorate] final float decorate_frandom (float From, float To) {
   return From+FRandomFull()*(To-From);
 }
 
@@ -73,7 +73,7 @@ final float decorate_frandom (float From, float To) {
 //
 //==========================================================================
 /*
-final int decorate_randompick (int v0, optional int v1, optional int v2, optional int v3,
+[decorate] final int decorate_randompick (int v0, optional int v1, optional int v2, optional int v3,
                                optional int v4, optional int v5, optional int v6,
                                optional int v7, optional int v8, optional int v9,
                                optional int v10, optional int v11, optional int v12,
@@ -124,7 +124,7 @@ final int decorate_randompick (int v0, optional int v1, optional int v2, optiona
 //
 //==========================================================================
 /*
-final float decorate_frandompick (float v0, optional float v1, optional float v2, optional float v3,
+[decorate] final float decorate_frandompick (float v0, optional float v1, optional float v2, optional float v3,
                                   optional float v4, optional float v5, optional float v6,
                                   optional float v7, optional float v8, optional float v9,
                                   optional float v10, optional float v11, optional float v12,
@@ -158,7 +158,7 @@ final float decorate_frandompick (float v0, optional float v1, optional float v2
 //  decorate_sin
 //
 //==========================================================================
-final float decorate_sin (float Angle) {
+[decorate] final float decorate_sin (float Angle) {
   return sin(Angle);
 }
 
@@ -168,7 +168,7 @@ final float decorate_sin (float Angle) {
 //  decorate_cos
 //
 //==========================================================================
-final float decorate_cos (float Angle) {
+[decorate] final float decorate_cos (float Angle) {
   return cos(Angle);
 }
 
@@ -178,45 +178,53 @@ final float decorate_cos (float Angle) {
 //  decorate_clamp
 //
 //==========================================================================
-final float decorate_clamp (float val, float min, float max) {
+[decorate] final float decorate_clamp (float val, float min, float max) {
   return fclamp(val, min, max);
 }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-///*final*/ int *decorate_args { get { return &Args[0]; } }
-/*final*/ float decorate_alpha { get { return Alpha; } }
-/*final*/ float decorate_angle { get { return AngleMod360(Angles.yaw); } }
-/*final*/ float decorate_yaw { get { return AngleMod360(Angles.yaw); } }
-/*final*/ float decorate_pitch { get { return AngleMod360(Angles.pitch); } }
-/*final*/ float decorate_roll { get { return AngleMod360(Angles.roll); } }
-/*final*/ float decorate_ceilingz { get { return CeilingZ; } }
-/*final*/ float decorate_floorz { get { return FloorZ; } }
-/*final*/ int decorate_health { get { return Health; } }
-/*final*/ float decorate_radius { get { return Radius; } }
-/*final*/ float decorate_height { get { return Height; } }
-/*final*/ float decorate_scalex { get { return ScaleX; } }
-/*final*/ float decorate_scaley { get { return ScaleY; } }
-/*final*/ float decorate_mass { get { return Mass; } }
-/*final*/ float decorate_gravity { get { return Gravity; } }
-/*final*/ float decorate_meleerange { get { return MeleeRange; } }
-/*final*/ float decorate_reactiontime { get { return ReactionTime*35.0; } }
-/*final*/ float decorate_speed { get { return Speed/35.0; } }
-/*final*/ float decorate_floatspeed { get { return FloatSpeed/35.0; } }
-/*final*/ int decorate_special { get { return Special; } }
-/*final*/ int decorate_tid { get { return TID; } }
-/*final*/ int decorate_tidtohate { get { return TIDToHate; } }
-/*final*/ int decorate_waterlevel { get { return WaterLevel; } }
-/*final*/ int decorate_watertype { get { return WaterType; } }
-/*final*/ int decorate_threshold { get { return Threshold; } }
-/*final*/ int decorate_damage { get { return MissileDamage; } } //k8: i think so
-/*final*/ float decorate_x { get { return Origin.x; } }
-/*final*/ float decorate_y { get { return Origin.y; } }
-/*final*/ float decorate_z { get { return Origin.z; } }
-/*final*/ float decorate_momx { get { return Velocity.x/35.0; } }
-/*final*/ float decorate_momy { get { return Velocity.y/35.0; } }
-/*final*/ float decorate_momz { get { return Velocity.z/35.0; } }
-/*final*/ float decorate_velx { get { return Velocity.x/35.0; } }
-/*final*/ float decorate_vely { get { return Velocity.y/35.0; } }
-/*final*/ float decorate_velz { get { return Velocity.z/35.0; } }
-/*final*/ float decorate_missileMore { get { return (bTriggerHappy ? 1.0 : 0.0); } }
+//final int *decorate_args { get { return &Args[0]; } }
+[decorate] final float decorate_alpha { get { return Alpha; } }
+[decorate] final float decorate_angle { get { return AngleMod360(Angles.yaw); } }
+[decorate] final float decorate_yaw { get { return AngleMod360(Angles.yaw); } }
+[decorate] final float decorate_pitch { get { return AngleMod360(Angles.pitch); } }
+[decorate] final float decorate_roll { get { return AngleMod360(Angles.roll); } }
+[decorate] final float decorate_ceilingz { get { return CeilingZ; } }
+[decorate] final float decorate_floorz { get { return FloorZ; } }
+[decorate] final int decorate_health { get { return Health; } }
+[decorate] final float decorate_radius { get { return Radius; } }
+[decorate] final float decorate_height { get { return Height; } }
+[decorate] final float decorate_scalex { get { return ScaleX; } }
+[decorate] final float decorate_scaley { get { return ScaleY; } }
+[decorate] final float decorate_mass { get { return Mass; } }
+[decorate] final float decorate_gravity { get { return Gravity; } }
+[decorate] final float decorate_meleerange { get { return MeleeRange; } }
+[decorate] final float decorate_reactiontime { get { return ReactionTime*35.0; } }
+[decorate] final float decorate_speed { get { return Speed/35.0; } }
+[decorate] final float decorate_floatspeed { get { return FloatSpeed/35.0; } }
+[decorate] final int decorate_special { get { return Special; } }
+[decorate] final int decorate_tid { get { return TID; } }
+[decorate] final int decorate_tidtohate { get { return TIDToHate; } }
+[decorate] final int decorate_waterlevel { get { return WaterLevel; } }
+[decorate] final int decorate_watertype { get { return WaterType; } }
+[decorate] final int decorate_threshold { get { return Threshold; } }
+[decorate] final int decorate_damage { get { return MissileDamage; } } //k8: i think so
+[decorate] final float decorate_x { get { return Origin.x; } }
+[decorate] final float decorate_y { get { return Origin.y; } }
+[decorate] final float decorate_z { get { return Origin.z; } }
+[decorate] final float decorate_momx { get { return Velocity.x/35.0; } }
+[decorate] final float decorate_momy { get { return Velocity.y/35.0; } }
+[decorate] final float decorate_momz { get { return Velocity.z/35.0; } }
+[decorate] final float decorate_velx { get { return Velocity.x/35.0; } }
+[decorate] final float decorate_vely { get { return Velocity.y/35.0; } }
+[decorate] final float decorate_velz { get { return Velocity.z/35.0; } }
+[decorate] final float decorate_missileMore { get { return (bTriggerHappy ? 1.0 : 0.0); } }
+
+[decorate] final int decorate_GetUID () { return __ObjectUniqueId; }
+[decorate] final Object decorate_GetSelf () { return self; }
+[decorate] final Object decorate_GetSSR () { /*print("(SSR.self=%C)", self);*/ return _stateRouteSelf; }
+[decorate] final Object decorate_GetTarget () { return Target; }
+[decorate] final Object decorate_GetTracer () { return Tracer; }
+[decorate] final Object decorate_GetMaster () { return Master; }
+[decorate] final Object decorate_GetOwner () { return Owner; }

@@ -168,7 +168,7 @@ void GiveSigilPiece(EntityEx Receiver)
 //
 //==========================================================================
 
-final void A_SelectPiece()
+[decorate] final void A_SelectPiece()
 {
   if (NumPieces > 1)
   {
@@ -182,7 +182,7 @@ final void A_SelectPiece()
 //
 //==========================================================================
 
-final void A_SelectSigilReady()
+[decorate] final void A_SelectSigilReady()
 {
   if (!bIsPlayer)
   {
@@ -221,7 +221,7 @@ final void A_SelectSigilReady()
 //
 //==========================================================================
 
-final void A_SelectSigilDown()
+[decorate] final void A_SelectSigilDown()
 {
   if (!bIsPlayer)
   {
@@ -266,7 +266,7 @@ final void A_SelectSigilDown()
 //
 //==========================================================================
 
-final void A_SelectSigilUp()
+[decorate] final void A_SelectSigilUp()
 {
   if (!bIsPlayer)
   {
@@ -305,7 +305,7 @@ final void A_SelectSigilUp()
 //
 //==========================================================================
 
-final void A_SelectSigilAttack()
+[decorate] final void A_SelectSigilAttack()
 {
   if (!bIsPlayer)
   {
@@ -344,7 +344,7 @@ final void A_SelectSigilAttack()
 //
 //==========================================================================
 
-final void A_SigilCharge()
+[decorate] final void A_SigilCharge()
 {
   PlaySound('weapons/sigilcharge', CHAN_WEAPON);
   if (bIsPlayer)
@@ -359,7 +359,7 @@ final void A_SigilCharge()
 //
 //==========================================================================
 
-final void A_FireSigil1()
+[decorate] final void A_FireSigil1()
 {
   EntityEx  sigil;
   EntityEx  AimTarget;
@@ -401,7 +401,7 @@ final void A_FireSigil1()
 //
 //==========================================================================
 
-final void A_FireSigil2()
+[decorate] final void A_FireSigil2()
 {
   if (!bIsPlayer)
   {
@@ -420,7 +420,7 @@ final void A_FireSigil2()
 //
 //==========================================================================
 
-final void A_FireSigil3()
+[decorate] final void A_FireSigil3()
 {
   float   angle;
   EntityEx  sigilspread;
@@ -453,7 +453,7 @@ final void A_FireSigil3()
 //
 //==========================================================================
 
-final void A_FireSigil4()
+[decorate] final void A_FireSigil4()
 {
   if (!bIsPlayer)
   {
@@ -472,7 +472,7 @@ final void A_FireSigil4()
 //
 //==========================================================================
 
-final void A_FireSigil5()
+[decorate] final void A_FireSigil5()
 {
   if (!bIsPlayer)
   {

@@ -32,7 +32,7 @@ class IceChunk : Actor;
 //  A_IceSetTics
 //
 //============================================================================
-final void A_IceSetTics () {
+[decorate] final void A_IceSetTics () {
   StateTime = 2.0+Random()*2.0;
   VTerrainInfo *floor = GetFloorType();
        if (nameicmp(floor->DamageType, 'lava') == 0) StateTime /= 4.0;

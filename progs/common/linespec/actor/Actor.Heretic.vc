@@ -30,7 +30,7 @@
 //  A_MntrFloorFire
 //
 //==========================================================================
-final void A_MntrFloorFire () {
+[decorate] final void A_MntrFloorFire () {
   Origin.z = FloorZ;
   bIntrJustMoved = false; // disable interpolation
   EntityEx A = Spawn(MinotaurFX3, vector(Origin.x+(Random()-Random())*4.0, Origin.y+(Random()-Random())*4.0, ONFLOORZ));
@@ -46,7 +46,7 @@ final void A_MntrFloorFire () {
 //  A_DripBlood
 //
 //==========================================================================
-final void A_DripBlood () {
+[decorate] final void A_DripBlood () {
   EntityEx mo = Spawn(Blood, Origin+vector((Random()-Random())*8.0, (Random()-Random())*8.0, 0.0));
   if (!mo) return;
   mo.CarryBloodTranslations(self);
@@ -61,7 +61,7 @@ final void A_DripBlood () {
 //  A_LichIceImpact
 //
 //==========================================================================
-final void A_LichIceImpact () {
+[decorate] final void A_LichIceImpact () {
   foreach (auto i; 0..8) {
     EntityEx shard = Spawn(HeadFX2, Origin);
     if (!shard) continue;
@@ -81,7 +81,7 @@ final void A_LichIceImpact () {
 //  A_LichFireGrow
 //
 //==========================================================================
-final void A_LichFireGrow () {
+[decorate] final void A_LichFireGrow () {
   --Health;
   Origin.z += 9.0;
   if (Health == 0) SetState(FindState('NoGrow'));
@@ -93,7 +93,7 @@ final void A_LichFireGrow () {
 //  A_BlueSpark
 //
 //==========================================================================
-final void A_BlueSpark () {
+[decorate] final void A_BlueSpark () {
   foreach (auto i; 0..2) {
     EntityEx spark = Spawn(Sorcerer2FXSpark, Origin);
     if (!spark) continue;
@@ -109,7 +109,7 @@ final void A_BlueSpark () {
 //  A_MacePL1Check
 //
 //===========================================================================
-final void A_MacePL1Check () {
+[decorate] final void A_MacePL1Check () {
   if (Special1 == 0) return;
   Special1 -= 4;
   if (Special1 > 0) return;
@@ -128,7 +128,7 @@ final void A_MacePL1Check () {
 //  A_MaceBallImpact
 //
 //===========================================================================
-final void A_MaceBallImpact () {
+[decorate] final void A_MaceBallImpact () {
   if (Origin.z <= FloorZ && HitFloorType()) {
     // landed in some sort of liquid
     Destroy();
@@ -156,7 +156,7 @@ final void A_MaceBallImpact () {
 //  A_MaceBallImpact2
 //
 //===========================================================================
-final void A_MaceBallImpact2 () {
+[decorate] final void A_MaceBallImpact2 () {
   if (Origin.z <= FloorZ && HitFloorType()) {
     // landed in some sort of liquid
     Destroy();
@@ -207,7 +207,7 @@ final void A_MaceBallImpact2 () {
 //  A_Timebomb
 //
 //==========================================================================
-final void A_Timebomb () {
+[decorate] final void A_Timebomb () {
   // time bombs
   Origin.z += 32.0;
   RenderStyle = STYLE_Add;
@@ -221,7 +221,7 @@ final void A_Timebomb () {
 //  A_PodPain
 //
 //==========================================================================
-final void A_PodPain () {
+[decorate] final void A_PodPain () {
   int chance = P_Random();
   if (chance < 128) return;
   int count = (chance > 240 ? 2 : 1);
@@ -242,7 +242,7 @@ final void A_PodPain () {
 //  A_RemovePod
 //
 //==========================================================================
-final void A_RemovePod () {
+[decorate] final void A_RemovePod () {
   if (Master && Master.Special1 > 0) --Master.Special1;
 }
 
@@ -252,7 +252,7 @@ final void A_RemovePod () {
 //  A_MakePod
 //
 //==========================================================================
-final void A_MakePod () {
+[decorate] final void A_MakePod () {
   if (Special1 == 16) return; // too many generated pods
 
   float x = Origin.x;
@@ -279,7 +279,7 @@ final void A_MakePod () {
 //  A_AccTeleGlitter
 //
 //==========================================================================
-final void A_AccTeleGlitter () {
+[decorate] final void A_AccTeleGlitter () {
   if (++Health > 35) Velocity.z += Velocity.z/2.0;
 }
 
@@ -289,7 +289,7 @@ final void A_AccTeleGlitter () {
 //  A_VolcanoSet
 //
 //==========================================================================
-final void A_VolcanoSet () {
+[decorate] final void A_VolcanoSet () {
   StateTime = 3.0+Random()*3.5;
 }
 
@@ -299,7 +299,7 @@ final void A_VolcanoSet () {
 //  A_VolcanoBlast
 //
 //==========================================================================
-final void A_VolcanoBlast () {
+[decorate] final void A_VolcanoBlast () {
   int count = 1+(P_Random()%3);
   foreach (auto i; 0..count) {
     EntityEx blast = Spawn(VolcanoBlast, Origin+vector(0.0, 0.0, 44.0));
@@ -322,7 +322,7 @@ final void A_VolcanoBlast () {
 //  A_VolcBallImpact
 //
 //==========================================================================
-final void A_VolcBallImpact () {
+[decorate] final void A_VolcBallImpact () {
   if (Origin.z <= FloorZ) {
     bNoGravity = true;
     Gravity = 1.0;
@@ -348,7 +348,7 @@ final void A_VolcBallImpact () {
 //  A_ImpDeath
 //
 //==========================================================================
-final void A_ImpDeath () {
+[decorate] final void A_ImpDeath () {
   bSolid = false;
   bFloorClip = true;
   if (Origin.z <= FloorZ) SetState(FindState('Crash'));
@@ -360,7 +360,7 @@ final void A_ImpDeath () {
 //  A_ImpXDeath1
 //
 //==========================================================================
-final void A_ImpXDeath1 () {
+[decorate] final void A_ImpXDeath1 () {
   bSolid = false;
   bNoGravity = true;
   bFloorClip = true;
@@ -373,7 +373,7 @@ final void A_ImpXDeath1 () {
 //  A_ImpExplode
 //
 //==========================================================================
-final void A_ImpExplode () {
+[decorate] final void A_ImpExplode () {
   bNoGravity = false;
   EntityEx mo = Spawn(HereticImpChunk1, Origin);
   if (mo) {
@@ -398,7 +398,7 @@ final void A_ImpExplode () {
 //  A_KnightAttack
 //
 //==========================================================================
-final void A_KnightAttack () {
+[decorate] final void A_KnightAttack () {
   if (!Target) return;
   if (CheckMeleeRange()) {
     Target.Damage(self, self, HITDICE(3), spawnBlood:true);
@@ -422,7 +422,7 @@ final void A_KnightAttack () {
 //  A_WizAtk1
 //
 //==========================================================================
-final void A_WizAtk1 () {
+[decorate] final void A_WizAtk1 () {
   A_FaceTarget();
   RenderStyle = STYLE_Normal;
   Alpha = 1.0;
@@ -435,7 +435,7 @@ final void A_WizAtk1 () {
 //  A_WizAtk2
 //
 //==========================================================================
-final void A_WizAtk2 () {
+[decorate] final void A_WizAtk2 () {
   A_FaceTarget();
   RenderStyle = STYLE_Translucent;
   Alpha = 0.666;
@@ -448,7 +448,7 @@ final void A_WizAtk2 () {
 //  A_WizAtk3
 //
 //==========================================================================
-final void A_WizAtk3 () {
+[decorate] final void A_WizAtk3 () {
   TAVec ang;
 
   RenderStyle = STYLE_Normal;
@@ -477,7 +477,7 @@ final void A_WizAtk3 () {
 //  A_GhostOff
 //
 //==========================================================================
-final void A_GhostOff () {
+[decorate] final void A_GhostOff () {
   RenderStyle = STYLE_Normal;
   Alpha = 1.0;
   bGhost = false;
@@ -489,7 +489,7 @@ final void A_GhostOff () {
 //  A_LichAttack
 //
 //==========================================================================
-final void A_LichAttack () {
+[decorate] final void A_LichAttack () {
   // Ice ball     (close 20% : far 60%)
   // Fire column  (close 40% : far 20%)
   // Whirlwind    (close 40% : far 20%)
@@ -545,7 +545,7 @@ final void A_LichAttack () {
 //  A_GenWizard
 //
 //==========================================================================
-final void A_GenWizard () {
+[decorate] final void A_GenWizard () {
   EntityEx A = Spawn(Wizard, Origin, vector(0.0, 0.0, 0.0));
   if (!A) return;
   A.Origin.z = Origin.z-A.Height/2.0;
@@ -568,7 +568,7 @@ final void A_GenWizard () {
 //  A_StaffAttack
 //
 //===========================================================================
-final void A_StaffAttack (int damage, class!Actor PuffType) {
+[decorate] final void A_StaffAttack (int damage, class!Actor PuffType) {
   TVec dir;
 
   if (!bIsPlayer) return;
@@ -593,7 +593,7 @@ final void A_StaffAttack (int damage, class!Actor PuffType) {
 //  A_GauntletAttack
 //
 //===========================================================================
-final void A_GauntletAttack (int power) {
+[decorate] final void A_GauntletAttack (int power) {
   int damage;
   float slope;
   int randVal;
@@ -666,7 +666,7 @@ final void A_GauntletAttack (int power) {
 //  A_FireGoldWandPL1
 //
 //===========================================================================
-final void A_FireGoldWandPL1 () {
+[decorate] final void A_FireGoldWandPL1 () {
   TVec dir;
 
   if (!bIsPlayer) return;
@@ -688,7 +688,7 @@ final void A_FireGoldWandPL1 () {
 //  A_FireGoldWandPL2
 //
 //===========================================================================
-final void A_FireGoldWandPL2 () {
+[decorate] final void A_FireGoldWandPL2 () {
   TAVec angles;
   TVec dir;
 
@@ -717,7 +717,7 @@ final void A_FireGoldWandPL2 () {
 //  A_FireCrossbowPL1
 //
 //===========================================================================
-final void A_FireCrossbowPL1 () {
+[decorate] final void A_FireCrossbowPL1 () {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -735,7 +735,7 @@ final void A_FireCrossbowPL1 () {
 //  A_FireCrossbowPL2
 //
 //===========================================================================
-final void A_FireCrossbowPL2 () {
+[decorate] final void A_FireCrossbowPL2 () {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -755,7 +755,7 @@ final void A_FireCrossbowPL2 () {
 //  A_FireBlasterPL1
 //
 //===========================================================================
-final void A_FireBlasterPL1 () {
+[decorate] final void A_FireBlasterPL1 () {
   TVec dir;
 
   if (!bIsPlayer) return;
@@ -777,7 +777,7 @@ final void A_FireBlasterPL1 () {
 //  A_FireSkullRodPL1
 //
 //===========================================================================
-final void A_FireSkullRodPL1 () {
+[decorate] final void A_FireSkullRodPL1 () {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -800,7 +800,7 @@ final void A_FireSkullRodPL1 () {
 //  counter for the sound looping.
 //
 //===========================================================================
-final void A_FireSkullRodPL2 () {
+[decorate] final void A_FireSkullRodPL2 () {
   EntityEx AimTarget;
 
   if (!bIsPlayer) return;
@@ -834,7 +834,7 @@ final void A_FireSkullRodPL2 () {
 //  A_FireMacePL1
 //
 //===========================================================================
-final void A_FireMacePL1 () {
+[decorate] final void A_FireMacePL1 () {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -870,7 +870,7 @@ final void A_FireMacePL1 () {
 //  A_FireMacePL2
 //
 //===========================================================================
-final void A_FireMacePL2 () {
+[decorate] final void A_FireMacePL2 () {
   EntityEx AimTarget;
 
   if (!bIsPlayer) return;
@@ -901,7 +901,7 @@ final void A_FireMacePL2 () {
 //  scripts work properly. Uses Target to link them.
 //
 //==========================================================================
-final void A_SpawnMace () {
+[decorate] final void A_SpawnMace () {
   if (Target) return; // already done
 
   // link all mace spots
@@ -933,7 +933,7 @@ final void A_SpawnMace () {
 //  A_BeakRaise
 //
 //===========================================================================
-final void A_BeakRaise () {
+[decorate] final void A_BeakRaise () {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -950,7 +950,7 @@ final void A_BeakRaise () {
 //  A_BeakAttackPL1
 //
 //===========================================================================
-final void A_BeakAttackPL1 () {
+[decorate] final void A_BeakAttackPL1 () {
   TVec dir;
 
   if (!bIsPlayer) return;
@@ -976,7 +976,7 @@ final void A_BeakAttackPL1 () {
 //  A_BeakAttackPL2
 //
 //===========================================================================
-final void A_BeakAttackPL2 () {
+[decorate] final void A_BeakAttackPL2 () {
   TVec dir;
 
   if (!bIsPlayer) return;
@@ -1002,7 +1002,7 @@ final void A_BeakAttackPL2 () {
 //  A_Sor1Chase
 //
 //==========================================================================
-final void A_Sor1Chase () {
+[decorate] final void A_Sor1Chase () {
   if (Special1) {
     --Special1;
     StateTime -= 0.1;
@@ -1018,7 +1018,7 @@ final void A_Sor1Chase () {
 //  Sorcerer demon attack.
 //
 //==========================================================================
-final void A_Srcr1Attack () {
+[decorate] final void A_Srcr1Attack () {
   TAVec ang;
 
   if (!Target) return;
@@ -1061,7 +1061,7 @@ final void A_Srcr1Attack () {
 //  A_Sor1Pain
 //
 //==========================================================================
-final void A_Sor1Pain () {
+[decorate] final void A_Sor1Pain () {
   Special1 = 20; // number of steps to walk fast
   A_Pain();
 }
@@ -1072,7 +1072,7 @@ final void A_Sor1Pain () {
 //  A_SorcererRise
 //
 //==========================================================================
-final void A_SorcererRise () {
+[decorate] final void A_SorcererRise () {
   bSolid = false;
   Sorcerer2 S2 = SpawnEntityChecked(class!Sorcerer2, Sorcerer2, Origin);
   if (S2) {

@@ -152,7 +152,7 @@ final void SetSprite (class!EntityEx SrcClass) {
 //  A_MarineLook
 //
 //==========================================================================
-final void A_MarineLook () {
+[decorate] final void A_MarineLook () {
   A_MarineNoise();
   A_Look();
 }
@@ -163,7 +163,7 @@ final void A_MarineLook () {
 //  A_MarineNoise
 //
 //============================================================================
-final void A_MarineNoise () {
+[decorate] final void A_MarineNoise () {
   if (MeleeState == FindState('Melee', 'Chainsaw', true)) {
     PlaySound('weapons/sawidle', CHAN_WEAPON);
   }
@@ -175,7 +175,7 @@ final void A_MarineNoise () {
 //  A_MarineChase
 //
 //==========================================================================
-final void A_MarineChase () {
+[decorate] final void A_MarineChase () {
   A_MarineNoise();
   A_Chase();
 }
@@ -186,7 +186,7 @@ final void A_MarineChase () {
 //  A_M_SawRefire
 //
 //===========================================================================
-final void A_M_SawRefire () {
+[decorate] final void A_M_SawRefire () {
   // check if target is lost or dead
   if (!Target || Target.Health <= 0) {
     SetState(GetStatePlus(State, 1));
@@ -204,7 +204,7 @@ final void A_M_SawRefire () {
 //  A_M_Punch
 //
 //===========================================================================
-final void A_M_Punch () {
+[decorate] final void A_M_Punch () {
   decorate_A_M_Punch();
 }
 
@@ -214,7 +214,7 @@ final void A_M_Punch () {
 //  decorate_A_M_Punch
 //
 //===========================================================================
-final void decorate_A_M_Punch (optional int force) {
+[decorate] final void decorate_A_M_Punch (optional int force) {
   TVec dir;
 
   if (!Target) return;
@@ -242,7 +242,7 @@ final void decorate_A_M_Punch (optional int force) {
 //  A_M_BerserkPunch
 //
 //===========================================================================
-final void A_M_BerserkPunch () {
+[decorate] final void A_M_BerserkPunch () {
   TVec dir;
 
   if (!Target) return;
@@ -269,7 +269,7 @@ final void A_M_BerserkPunch () {
 //  A_M_Refire
 //
 //===========================================================================
-final void A_M_Refire () {
+[decorate] final void A_M_Refire () {
   decorate_A_M_Refire();
 }
 
@@ -279,7 +279,7 @@ final void A_M_Refire () {
 //  decorate_A_M_Refire
 //
 //===========================================================================
-final void decorate_A_M_Refire (optional bool ignoreMissile) {
+[decorate] final void decorate_A_M_Refire (optional bool ignoreMissile) {
   //printdebug("%C:REFIRE! (ignoreMissile=%B)", self, ignoreMissile);
   bool hasMissileState = (ignoreMissile ? false : !!MissileState);
   // check if target is lost or dead
@@ -307,7 +307,7 @@ final void decorate_A_M_Refire (optional bool ignoreMissile) {
 //  A_M_FirePistol
 //
 //===========================================================================
-final void A_M_FirePistol () {
+[decorate] final void A_M_FirePistol () {
   TVec dir;
 
   if (!Target) return;
@@ -325,7 +325,7 @@ final void A_M_FirePistol () {
 //  A_M_FirePistolInaccurate
 //
 //===========================================================================
-final void A_M_FirePistolInaccurate () {
+[decorate] final void A_M_FirePistolInaccurate () {
   TVec dir;
 
   if (!Target) return;
@@ -343,7 +343,7 @@ final void A_M_FirePistolInaccurate () {
 //  A_M_FireShotgun
 //
 //===========================================================================
-final void A_M_FireShotgun () {
+[decorate] final void A_M_FireShotgun () {
   TVec dir;
 
   if (!Target) return;
@@ -362,7 +362,7 @@ final void A_M_FireShotgun () {
 //  A_M_CheckAttack
 //
 //===========================================================================
-final void A_M_CheckAttack () {
+[decorate] final void A_M_CheckAttack () {
   if (Special1f || !Target) {
     SetState(FindState('SkipAttack'));
   } else {
@@ -376,7 +376,7 @@ final void A_M_CheckAttack () {
 //  A_M_FireShotgun2
 //
 //===========================================================================
-final void A_M_FireShotgun2 () {
+[decorate] final void A_M_FireShotgun2 () {
   TAVec rot;
   TVec aimDir;
 
@@ -403,7 +403,7 @@ final void A_M_FireShotgun2 () {
 //  A_M_FireCGunAccurate
 //
 //===========================================================================
-final void A_M_FireCGunAccurate () {
+[decorate] final void A_M_FireCGunAccurate () {
   TVec dir;
 
   if (!Target) return;
@@ -421,7 +421,7 @@ final void A_M_FireCGunAccurate () {
 //  A_M_FireCGun
 //
 //===========================================================================
-final void A_M_FireCGun () {
+[decorate] final void A_M_FireCGun () {
   TVec dir;
 
   if (!Target) return;
@@ -439,7 +439,7 @@ final void A_M_FireCGun () {
 //  A_M_FireMissile
 //
 //===========================================================================
-final void A_M_FireMissile () {
+[decorate] final void A_M_FireMissile () {
   if (!Target) return;
 
   if (CheckMeleeRange()) {
@@ -457,7 +457,7 @@ final void A_M_FireMissile () {
 //  A_M_FireRailgun
 //
 //===========================================================================
-final void A_M_FireRailgun () {
+[decorate] final void A_M_FireRailgun () {
   if (!Target) return;
 
   A_MonsterRail();
@@ -470,7 +470,7 @@ final void A_M_FireRailgun () {
 //  A_M_FirePlasma
 //
 //===========================================================================
-final void A_M_FirePlasma () {
+[decorate] final void A_M_FirePlasma () {
   if (!Target) return;
 
   A_FaceTarget();
@@ -484,7 +484,7 @@ final void A_M_FirePlasma () {
 //  A_M_BFGsound
 //
 //===========================================================================
-final void A_M_BFGsound () {
+[decorate] final void A_M_BFGsound () {
   if (!Target) return;
 
   if (Special1f) {
@@ -503,7 +503,7 @@ final void A_M_BFGsound () {
 //  A_M_FireBFG
 //
 //===========================================================================
-final void A_M_FireBFG () {
+[decorate] final void A_M_FireBFG () {
   if (!Target) return;
 
   A_FaceTarget();

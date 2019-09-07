@@ -51,7 +51,7 @@ override int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 //
 //===========================================================================
 
-final void A_SkullRodPL2Seek()
+[decorate] final void A_SkullRodPL2Seek()
 {
   SeekerMissile(10.0, 30.0);
 }
@@ -62,7 +62,7 @@ final void A_SkullRodPL2Seek()
 //
 //===========================================================================
 
-final void A_AddPlayerRain()
+[decorate] final void A_AddPlayerRain()
 {
   PlayerEx player;
 
@@ -114,7 +114,7 @@ final void A_AddPlayerRain()
 //
 //===========================================================================
 
-final void A_HideInCeiling()
+[decorate] final void A_HideInCeiling()
 {
   Origin.z = CeilingZ + 4.0;
 }
@@ -125,7 +125,7 @@ final void A_HideInCeiling()
 //  A_SkullRodStorm
 //
 //===========================================================================
-final void A_SkullRodStorm() {
+[decorate] final void A_SkullRodStorm() {
   PlayerEx player;
   class!Actor rain_type;
 

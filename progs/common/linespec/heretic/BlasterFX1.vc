@@ -74,7 +74,7 @@ override int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 //
 //===========================================================================
 
-final void A_SpawnRippers()
+[decorate] final void A_SpawnRippers()
 {
   foreach (int i; 0..8) {
     EntityEx ripper = Spawn(Ripper, Origin);

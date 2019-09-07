@@ -44,7 +44,7 @@ bool bBloody;   //  Bloody spike.
 //
 //==========================================================================
 
-final void A_ThrustInitUp()
+[decorate] final void A_ThrustInitUp()
 {
   RaiseSpeed = 5.0; // Raise speed
   bRaised = true;   // Mark as up
@@ -59,7 +59,7 @@ final void A_ThrustInitUp()
 //
 //==========================================================================
 
-final void A_ThrustInitDn()
+[decorate] final void A_ThrustInitDn()
 {
   RaiseSpeed = 5.0; // Raise speed
   bRaised = false;  // Mark as down
@@ -77,7 +77,7 @@ final void A_ThrustInitDn()
 //
 //==========================================================================
 
-final void A_ThrustRaise()
+[decorate] final void A_ThrustRaise()
 {
   // Raise spike from the ground
   FloorClip -= RaiseSpeed;
@@ -113,7 +113,7 @@ final void A_ThrustRaise()
 //
 //==========================================================================
 
-final void A_ThrustLower()
+[decorate] final void A_ThrustLower()
 {
   if (FloorClip < Height)
   {
@@ -136,7 +136,7 @@ final void A_ThrustLower()
 //
 //==========================================================================
 
-final void A_ThrustBlock()
+[decorate] final void A_ThrustBlock()
 {
   bSolid = true;
 }
@@ -147,7 +147,7 @@ final void A_ThrustBlock()
 //
 //==========================================================================
 
-final void A_ThrustImpale()
+[decorate] final void A_ThrustImpale()
 {
   Entity Other;
 

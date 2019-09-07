@@ -60,7 +60,7 @@ override int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 //
 //==========================================================================
 
-final void A_ShedShard()
+[decorate] final void A_ShedShard()
 {
   FrostMissile mo;
   int spermcount = Special2;

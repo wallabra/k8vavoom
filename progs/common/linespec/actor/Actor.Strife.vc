@@ -33,7 +33,7 @@ const float MAULERRANGE        = 33.0*64.0;
 //  A_FlameDie
 //
 //==========================================================================
-final void A_FlameDie () {
+[decorate] final void A_FlameDie () {
   bNoGravity = true;
   Velocity.z = (Random()*4.0/10.0)*35.0;
 }
@@ -44,7 +44,7 @@ final void A_FlameDie () {
 //  A_MaulerTorpedoWave
 //
 //==========================================================================
-final void A_MaulerTorpedoWave () {
+[decorate] final void A_MaulerTorpedoWave () {
   Angles.yaw = AngleMod360(Angles.yaw+180.0);
 
   // if the torpedo hit the ceiling, it should still spawn the wave
@@ -65,7 +65,7 @@ final void A_MaulerTorpedoWave () {
 //  A_SpectralLightning
 //
 //==========================================================================
-final void A_SpectralLightning () {
+[decorate] final void A_SpectralLightning () {
   if (Threshold) --Threshold;
 
   Velocity.x += (Random()-0.5)*6.0*35.0;
@@ -103,7 +103,7 @@ final void A_SpectralLightning () {
 //  A_SpectralLightningTail
 //
 //==========================================================================
-final void A_SpectralLightningTail () {
+[decorate] final void A_SpectralLightningTail () {
   EntityEx A = Spawn(SpectralLightningHTail, Origin);
   if (A) A.Angles.yaw = Angles.yaw;
 }
@@ -114,7 +114,7 @@ final void A_SpectralLightningTail () {
 //  A_SpectralBigBallLightning
 //
 //==========================================================================
-final void A_SpectralBigBallLightning () {
+[decorate] final void A_SpectralBigBallLightning () {
   A_Tracer2();
 
   float dir = Angles.yaw;
@@ -153,7 +153,7 @@ final void A_SpectralBigBallLightning () {
 //  A_Explose512
 //
 //==========================================================================
-final void A_Explose512 () {
+[decorate] final void A_Explose512 () {
   RadiusAttack(Target, 512, 512.0, true);
   if (Target && Target.bIsPlayer) Target.Player.ExtraLight = 5;
   RenderStyle = STYLE_Add;
@@ -165,7 +165,7 @@ final void A_Explose512 () {
 //  A_LightGoesOut
 //
 //==========================================================================
-final void A_LightGoesOut() {
+[decorate] final void A_LightGoesOut() {
   Sector->params.lightlevel = 0;
   Sector->floor.dist = Level.FindLowestFloorSurrounding(Sector, nullptr);
   foreach (auto i; 0..8) {
@@ -184,7 +184,7 @@ final void A_LightGoesOut() {
 //  A_ExtraLightOff
 //
 //==========================================================================
-final void A_ExtraLightOff () {
+[decorate] final void A_ExtraLightOff () {
   if (Target && Target.bIsPlayer) {
     Target.Player.ExtraLight = 0;
   }
@@ -204,7 +204,7 @@ final void A_ExtraLightOff () {
 //  Hide the Decepticon!
 //
 //==========================================================================
-final void A_HideDecepticon () {
+[decorate] final void A_HideDecepticon () {
   LineSpecialLevelInfo(Level).EV_DoDoor(999, 64, 0, 0, 0, VerticalDoor::DOOREV_Close, nullptr, none);
   if (Target && Target.bIsPlayer) {
     LineSpecialLevelInfo(Level).NoiseAlert(Target, self);
@@ -217,7 +217,7 @@ final void A_HideDecepticon () {
 //  A_AcolyteBits
 //
 //==========================================================================
-final void A_AcolyteBits () {
+[decorate] final void A_AcolyteBits () {
   if (SpawnPoint.options&LineSpecialLevelInfo::MTF_SHADOW) {
     A_BeShadowyFoe();
   } else if (SpawnPoint.options&LineSpecialLevelInfo::MTF_SHADOW) {
@@ -231,7 +231,7 @@ final void A_AcolyteBits () {
 //  A_AcolyteDeath
 //
 //==========================================================================
-final void A_AcolyteDeath () {
+[decorate] final void A_AcolyteDeath () {
   Actor Other;
   bool hasAlivePlayer;
 
@@ -270,7 +270,7 @@ final void A_AcolyteDeath () {
 //  A_StalkerLookInit
 //
 //==========================================================================
-final void A_StalkerLookInit () {
+[decorate] final void A_StalkerLookInit () {
   // set look state depending on floor/ceiling state
   if (bNoGravity) {
     SetState(FindState('LookCeiling'));
@@ -285,7 +285,7 @@ final void A_StalkerLookInit () {
 //  A_StalkerChaseDecide
 //
 //==========================================================================
-final void A_StalkerChaseDecide () {
+[decorate] final void A_StalkerChaseDecide () {
   if (!bNoGravity) {
     // walking on floor
     SetState(FindState('SeeFloor'));
@@ -301,7 +301,7 @@ final void A_StalkerChaseDecide () {
 //  A_StalkerAttack
 //
 //==========================================================================
-final void A_StalkerAttack () {
+[decorate] final void A_StalkerAttack () {
   if (bNoGravity) {
     // land if we are on ceiling
     SetState(FindState('Drop'));
@@ -319,7 +319,7 @@ final void A_StalkerAttack () {
 //  A_StalkerDrop
 //
 //==========================================================================
-final void A_StalkerDrop () {
+[decorate] final void A_StalkerDrop () {
   bNoGravity = false;
   bNoVerticalMeleeRange = false;
 }
@@ -330,7 +330,7 @@ final void A_StalkerDrop () {
 //  A_SentinelAttack
 //
 //==========================================================================
-final void A_SentinelAttack () {
+[decorate] final void A_SentinelAttack () {
   EntityEx missile = SpawnMissileZAimed(32.0, Target, SentinelFX2);
   if (missile && (missile.Velocity.x || missile.Velocity.y)) {
     for (int i = 8; i > 1; --i) {
@@ -354,7 +354,7 @@ final void A_SentinelAttack () {
 //  A_ReaverRanged
 //
 //==========================================================================
-final void A_ReaverRanged () {
+[decorate] final void A_ReaverRanged () {
   TVec aimDir;
 
   if (!Target) return;
@@ -376,7 +376,7 @@ final void A_ReaverRanged () {
 //  A_TemplarAttack
 //
 //==========================================================================
-final void A_TemplarAttack () {
+[decorate] final void A_TemplarAttack () {
   TVec aimDir;
 
   if (!Target) return;
@@ -409,7 +409,7 @@ final bool CrusaderCheckFlameRange () {
 //  A_CrusaderChoose
 //
 //==========================================================================
-final void A_CrusaderChoose () {
+[decorate] final void A_CrusaderChoose () {
   if (!Target) return;
 
   if (CrusaderCheckFlameRange()) {
@@ -437,7 +437,7 @@ final void A_CrusaderChoose () {
 //  A_CrusaderSweepLeft
 //
 //==========================================================================
-final void A_CrusaderSweepLeft () {
+[decorate] final void A_CrusaderSweepLeft () {
   Angles.yaw = AngleMod360(Angles.yaw+45.0/8.0);
   EntityEx misl = SpawnMissileZAimed(48.0, Target, FastFlameMissile);
   if (misl) misl.Velocity.z = 1.0*35.0;
@@ -449,7 +449,7 @@ final void A_CrusaderSweepLeft () {
 //  A_CrusaderSweepRight
 //
 //==========================================================================
-final void A_CrusaderSweepRight () {
+[decorate] final void A_CrusaderSweepRight () {
   Angles.yaw = AngleMod360(Angles.yaw-45.0/8.0);
   EntityEx misl = SpawnMissileZAimed(48.0, Target, FastFlameMissile);
   if (misl) misl.Velocity.z = 1.0*35.0;
@@ -461,7 +461,7 @@ final void A_CrusaderSweepRight () {
 //  A_CrusaderRefire
 //
 //==========================================================================
-final void A_CrusaderRefire () {
+[decorate] final void A_CrusaderRefire () {
   if (!Target || Target.Health <= 0 || !CanSee(Target, disableBetterSight:true)) {
     SetState(SeeState);
   }
@@ -473,7 +473,7 @@ final void A_CrusaderRefire () {
 //  A_CrusaderDeath
 //
 //==========================================================================
-final void A_CrusaderDeath () {
+[decorate] final void A_CrusaderDeath () {
   if (!CheckBossDeath()) return;
   LineSpecialLevelInfo(Level).EV_DoFloor(667, 8, 0, 0, 0, FloorMover::FLOOREV_LowerToLowest, nullptr);
 }
@@ -494,7 +494,7 @@ final bool InquisitorCheckDistance () {
 //  A_InquisitorDecide
 //
 //==========================================================================
-final void A_InquisitorDecide () {
+[decorate] final void A_InquisitorDecide () {
   if (Origin.z != FloorZ) return;
 
   PlaySound('inquisitor/active', CHAN_VOICE);
@@ -510,7 +510,7 @@ final void A_InquisitorDecide () {
 //  A_InquisitorCheckJump
 //
 //==========================================================================
-final void A_InquisitorCheckJump () {
+[decorate] final void A_InquisitorCheckJump () {
   EntityEx onmo = EntityEx(CheckOnmobj());
 
   if (Origin.z != Target.Origin.z) {
@@ -538,7 +538,7 @@ final void A_InquisitorCheckJump () {
 //  A_InquisitorAttack
 //
 //==========================================================================
-final void A_InquisitorAttack () {
+[decorate] final void A_InquisitorAttack () {
   if (!Target) return;
 
   A_FaceTarget();
@@ -566,7 +566,7 @@ final void A_InquisitorAttack () {
 //  A_InquisitorJump
 //
 //==========================================================================
-final void A_InquisitorJump () {
+[decorate] final void A_InquisitorJump () {
   if (!Target) return;
 
   EntityEx onmo = EntityEx(CheckOnmobj());
@@ -602,7 +602,7 @@ final void A_InquisitorJump () {
 //  A_InquisitorCheckLand
 //
 //==========================================================================
-final void A_InquisitorCheckLand () {
+[decorate] final void A_InquisitorCheckLand () {
   --ReactionCount;
   EntityEx onmo = EntityEx(CheckOnmobj());
 
@@ -634,7 +634,7 @@ final void A_InquisitorCheckLand () {
 //  A_TossArm
 //
 //==========================================================================
-final void A_TossArm () {
+[decorate] final void A_TossArm () {
   TossUpObject(InquisitorArm);
   TossUpObject(InquisitorArm);
 }
@@ -647,7 +647,7 @@ final void A_TossArm () {
 //  Used by Specter1 and Programmer.
 //
 //==========================================================================
-final void A_SpotLightning () {
+[decorate] final void A_SpotLightning () {
   if (!Target) return;
 
   EntityEx A = Spawn(SpectralLightningSpot, Target.Origin);
@@ -666,7 +666,7 @@ final void A_SpotLightning () {
 //  A_SpawnProgrammerBase
 //
 //==========================================================================
-final void A_SpawnProgrammerBase () {
+[decorate] final void A_SpawnProgrammerBase () {
   // spawn separate base object
   TossUpObject(ProgrammerBase);
 }
@@ -677,7 +677,7 @@ final void A_SpawnProgrammerBase () {
 //  A_ProgrammerDeath
 //
 //==========================================================================
-final void A_ProgrammerDeath () {
+[decorate] final void A_ProgrammerDeath () {
   if (!CheckBossDeath()) return;
 
   Level.ExecuteActionSpecial(LNSPEC_ExitNormal, 0, 0, 0, 0, 0, nullptr, 0, self);
@@ -691,7 +691,7 @@ final void A_ProgrammerDeath () {
 //  A_SpawnEntity
 //
 //==========================================================================
-final void A_SpawnEntity () {
+[decorate] final void A_SpawnEntity () {
   EntityEx entity = Spawn(EntityBoss, Origin+vector(0.0, 0.0, 70.0));
   if (entity) {
     entity.Angles.yaw = Angles.yaw;
@@ -708,7 +708,7 @@ final void A_SpawnEntity () {
 //  A_AttackAlert
 //
 //==========================================================================
-final void A_AttackAlert (EntityEx target, EntityEx emitter) {
+[decorate] final void A_AttackAlert (EntityEx target, EntityEx emitter) {
   Entity looker;
 
   if (emitter.LastHeard) return;
@@ -742,7 +742,7 @@ final void A_AttackAlert (EntityEx target, EntityEx emitter) {
 //  A_JabDagger
 //
 //==========================================================================
-final void A_JabDagger () {
+[decorate] final void A_JabDagger () {
   TVec dir;
 
   if (!bIsPlayer) return;
@@ -779,7 +779,7 @@ final void A_JabDagger () {
 //  A_ShowElectricFlash
 //
 //==========================================================================
-final void A_ShowElectricFlash () {
+[decorate] final void A_ShowElectricFlash () {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -795,7 +795,7 @@ final void A_ShowElectricFlash () {
 //  A_FireArrow
 //
 //==========================================================================
-final void A_FireArrow (class!Actor Proj) {
+[decorate] final void A_FireArrow (class!Actor Proj) {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -816,7 +816,7 @@ final void A_FireArrow (class!Actor Proj) {
 //  A_FireMiniMissile
 //
 //==========================================================================
-final void A_FireMiniMissile () {
+[decorate] final void A_FireMiniMissile () {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -836,7 +836,7 @@ final void A_FireMiniMissile () {
 //  A_FireGrenade
 //
 //==========================================================================
-final void A_FireGrenade (class!Actor grenadetype, float angleofs, state flash) {
+[decorate] final void A_FireGrenade (class!Actor grenadetype, float angleofs, state flash) {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -872,7 +872,7 @@ final void A_FireGrenade (class!Actor grenadetype, float angleofs, state flash) 
 //  A_FireFlamer
 //
 //==========================================================================
-final void A_FireFlamer () {
+[decorate] final void A_FireFlamer () {
   EntityEx A;
 
   if (!bIsPlayer) return;
@@ -895,7 +895,7 @@ final void A_FireFlamer () {
 //  A_FireMauler1
 //
 //==========================================================================
-final void A_FireMauler1 () {
+[decorate] final void A_FireMauler1 () {
   TAVec rot;
   TVec aimDir;
 
@@ -926,7 +926,7 @@ final void A_FireMauler1 () {
 //  A_FireMauler2Pre
 //
 //==========================================================================
-final void A_FireMauler2Pre () {
+[decorate] final void A_FireMauler2Pre () {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -943,7 +943,7 @@ final void A_FireMauler2Pre () {
 //  A_FireMauler2
 //
 //==========================================================================
-final void A_FireMauler2 () {
+[decorate] final void A_FireMauler2 () {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -963,7 +963,7 @@ final void A_FireMauler2 () {
 //  A_ClearFlash
 //
 //==========================================================================
-final void A_ClearFlash() {
+[decorate] final void A_ClearFlash() {
   if (!bIsPlayer) return;
 
   Player.SetViewState(PS_FLASH, none);

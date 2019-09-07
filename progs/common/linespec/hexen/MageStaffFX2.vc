@@ -110,7 +110,7 @@ override int SpecialMissileHit(EntityEx Other)
 //
 //==========================================================================
 
-final void A_MStaffTrack()
+[decorate] final void A_MStaffTrack()
 {
   if (!Tracer && (P_Random() < 50))
   {

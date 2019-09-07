@@ -37,7 +37,7 @@ enum {
 //  A_SetFloorClip
 //
 //==========================================================================
-final void A_SetFloorClip () {
+[decorate] final void A_SetFloorClip () {
   bFloorClip = true;
   HandleFloorclip();
 }
@@ -48,7 +48,7 @@ final void A_SetFloorClip () {
 //  A_UnSetFloorClip
 //
 //==========================================================================
-final void A_UnSetFloorClip () {
+[decorate] final void A_UnSetFloorClip () {
   bFloorClip = false;
   FloorClip = 0.0;
 }
@@ -59,7 +59,7 @@ final void A_UnSetFloorClip () {
 //  A_HideThing
 //
 //==========================================================================
-final void A_HideThing () {
+[decorate] final void A_HideThing () {
   bInvisible = true;
 }
 
@@ -69,7 +69,7 @@ final void A_HideThing () {
 //  A_UnHideThing
 //
 //==========================================================================
-final void A_UnHideThing () {
+[decorate] final void A_UnHideThing () {
   bInvisible = false;
 }
 
@@ -79,7 +79,7 @@ final void A_UnHideThing () {
 //  A_SetInvulnerable
 //
 //==========================================================================
-final void A_SetInvulnerable () {
+[decorate] final void A_SetInvulnerable () {
   bInvulnerable = true;
 }
 
@@ -89,7 +89,7 @@ final void A_SetInvulnerable () {
 //  A_UnSetInvulnerable
 //
 //==========================================================================
-final void A_UnSetInvulnerable () {
+[decorate] final void A_UnSetInvulnerable () {
   bInvulnerable = false;
 }
 
@@ -99,7 +99,7 @@ final void A_UnSetInvulnerable () {
 //  A_SetReflective
 //
 //==========================================================================
-final void A_SetReflective () {
+[decorate] final void A_SetReflective () {
   bReflective = true;
 }
 
@@ -109,7 +109,7 @@ final void A_SetReflective () {
 //  A_UnSetReflective
 //
 //==========================================================================
-final void A_UnSetReflective () {
+[decorate] final void A_UnSetReflective () {
   bReflective = false;
 }
 
@@ -119,7 +119,7 @@ final void A_UnSetReflective () {
 //  A_SetReflectiveInvulnerable
 //
 //==========================================================================
-final void A_SetReflectiveInvulnerable () {
+[decorate] final void A_SetReflectiveInvulnerable () {
   bReflective = true;
   A_SetInvulnerable();
 }
@@ -130,7 +130,7 @@ final void A_SetReflectiveInvulnerable () {
 //  A_UnSetReflectiveInvulnerable
 //
 //==========================================================================
-final void A_UnSetReflectiveInvulnerable () {
+[decorate] final void A_UnSetReflectiveInvulnerable () {
   bReflective = false;
   A_UnSetInvulnerable();
 }
@@ -141,7 +141,7 @@ final void A_UnSetReflectiveInvulnerable () {
 //  A_SetShootable
 //
 //==========================================================================
-final void A_SetShootable () {
+[decorate] final void A_SetShootable () {
   bNonShootable = false;
   bShootable = true;
 }
@@ -152,7 +152,7 @@ final void A_SetShootable () {
 //  A_UnSetShootable
 //
 //==========================================================================
-final void A_UnSetShootable () {
+[decorate] final void A_UnSetShootable () {
   bNonShootable = true;
   bShootable = false;
 }
@@ -163,7 +163,7 @@ final void A_UnSetShootable () {
 //  A_NoGravity
 //
 //===========================================================================
-final void A_NoGravity () {
+[decorate] final void A_NoGravity () {
   bNoGravity = true;
 }
 
@@ -173,7 +173,7 @@ final void A_NoGravity () {
 //  A_Gravity
 //
 //===========================================================================
-final void A_Gravity () {
+[decorate] final void A_Gravity () {
   bNoGravity = false;
   Gravity = 1.0;
 }
@@ -184,7 +184,7 @@ final void A_Gravity () {
 //  A_LowGravity
 //
 //===========================================================================
-final void A_LowGravity () {
+[decorate] final void A_LowGravity () {
   bNoGravity = false;
   Gravity = 0.125;
 }
@@ -197,7 +197,7 @@ final void A_LowGravity () {
 //  Unset blocking.
 //
 //==========================================================================
-final void A_NoBlocking () {
+[decorate] final void A_NoBlocking () {
   decorate_A_NoBlocking(true);
 }
 
@@ -209,7 +209,7 @@ final void A_NoBlocking () {
 //  Unset blocking.
 //
 //==========================================================================
-final void decorate_A_NoBlocking (optional bool drop) {
+[decorate] final void decorate_A_NoBlocking (optional bool drop) {
   int SpeechNum;
   FRogueConSpeech *Speech;
   class!EntityEx DropItemType;
@@ -262,7 +262,7 @@ final void decorate_A_NoBlocking (optional bool drop) {
 //  For compatibility
 //
 //==========================================================================
-final void A_Fall () {
+[decorate] final void A_Fall () {
   A_NoBlocking();
 }
 
@@ -272,7 +272,7 @@ final void A_Fall () {
 //  A_SetSolid
 //
 //==========================================================================
-final void A_SetSolid () {
+[decorate] final void A_SetSolid () {
   bSolid = true;
 }
 
@@ -282,7 +282,7 @@ final void A_SetSolid () {
 //  A_UnsetSolid
 //
 //==========================================================================
-final void A_UnsetSolid () {
+[decorate] final void A_UnsetSolid () {
   bSolid = false;
 }
 
@@ -292,7 +292,7 @@ final void A_UnsetSolid () {
 //  A_SetFloat
 //
 //==========================================================================
-final void A_SetFloat () {
+[decorate] final void A_SetFloat () {
   bFloat = true;
 }
 
@@ -302,7 +302,7 @@ final void A_SetFloat () {
 //  A_UnsetFloat
 //
 //==========================================================================
-final void A_UnsetFloat () {
+[decorate] final void A_UnsetFloat () {
   bFloat = false;
   bInFloat = false;
 }
@@ -315,7 +315,7 @@ final void A_UnsetFloat () {
 //  For breakable DECORATE decorations that have only one death state.
 //
 //==========================================================================
-final void A_ScreamAndUnblock () {
+[decorate] final void A_ScreamAndUnblock () {
   A_Scream();
   A_NoBlocking();
 }
@@ -328,7 +328,7 @@ final void A_ScreamAndUnblock () {
 //  For breakable DECORATE decorations that have only one death state.
 //
 //==========================================================================
-final void A_ActiveAndUnblock () {
+[decorate] final void A_ActiveAndUnblock () {
   A_ActiveSound();
   A_NoBlocking();
 }
@@ -339,7 +339,7 @@ final void A_ActiveAndUnblock () {
 //  A_SetShadow
 //
 //==========================================================================
-final void A_SetShadow () {
+[decorate] final void A_SetShadow () {
   bUnknown2 = true;
   bShadow = true;
   RenderStyle = STYLE_Translucent;
@@ -352,7 +352,7 @@ final void A_SetShadow () {
 //  A_ClearShadow
 //
 //==========================================================================
-final void A_ClearShadow () {
+[decorate] final void A_ClearShadow () {
   bUnknown2 = false;
   bShadow = false;
   RenderStyle = STYLE_Normal;
@@ -370,7 +370,7 @@ final void A_ClearShadow () {
 //    2: fuzz
 //
 //==========================================================================
-final void A_SetTranslucent (float AlphaVal, optional int Mode) {
+[decorate] final void A_SetTranslucent (float AlphaVal, optional int Mode) {
   Alpha = fclamp(AlphaVal, 0, 1);
   //RenderStyle = (Mode == 0 ? STYLE_Translucent : Mode == 2 ? STYLE_Fuzzy : STYLE_Add);
   RenderStyle = (Mode == 1 ? STYLE_Add : Mode == 2 ? STYLE_Fuzzy : STYLE_Translucent);
@@ -382,7 +382,7 @@ final void A_SetTranslucent (float AlphaVal, optional int Mode) {
 //  A_FadeIn
 //
 //==========================================================================
-final void A_FadeIn (optional float Val, optional int flags) {
+[decorate] final void A_FadeIn (optional float Val, optional int flags) {
   if (RenderStyle == STYLE_Normal) RenderStyle = STYLE_Translucent;
   if (!Val) Val = 0.1;
   Alpha += Val;
@@ -399,7 +399,7 @@ final void A_FadeIn (optional float Val, optional int flags) {
 //  A_FadeOut
 //
 //==========================================================================
-final void A_FadeOut (optional float Val, optional int flags) {
+[decorate] final void A_FadeOut (optional float Val, optional int flags) {
   if (RenderStyle == STYLE_Normal) RenderStyle = STYLE_Translucent;
   if (!Val) Val = 0.1;
   Alpha -= Val;
@@ -414,7 +414,7 @@ final void A_FadeOut (optional float Val, optional int flags) {
 //  A_FadeTo
 //
 //==========================================================================
-final void A_FadeTo (float target, optional float amount, optional int flags) {
+[decorate] final void A_FadeTo (float target, optional float amount, optional int flags) {
   if (!amount) amount = 0.1;
   amount = fabs(amount);
   if (RenderStyle == STYLE_Normal) RenderStyle = STYLE_Translucent;
@@ -450,7 +450,7 @@ final void A_FadeTo (float target, optional float amount, optional int flags) {
 //  Throw another corpse on the queue.
 //
 //==========================================================================
-final void A_QueueCorpse () {
+[decorate] final void A_QueueCorpse () {
   EntityEx corpse;
 
   if (LineSpecialLevelInfo(Level).corpseQueueSlot >= LineSpecialLevelInfo(Level).CorpseQueSize) {
@@ -470,7 +470,7 @@ final void A_QueueCorpse () {
 //  Remove a mobj from the queue (for resurrection)
 //
 //============================================================================
-final void A_DeQueueCorpse () {
+[decorate] final void A_DeQueueCorpse () {
   for (int slot = 0; slot < LineSpecialLevelInfo(Level).CorpseQueSize; ++slot) {
     if (LineSpecialLevelInfo(Level).corpseQueue[slot] == self) {
       LineSpecialLevelInfo(Level).corpseQueue[slot] = none;
@@ -485,7 +485,7 @@ final void A_DeQueueCorpse () {
 //  A_ChangeFlag
 //
 //============================================================================
-final void A_ChangeFlag (string Name, bool Value) {
+[decorate] final void A_ChangeFlag (string Name, bool Value) {
   bool CountKillBefore = CountsAsKill();
   bool CountItemBefore = bCountItem;
   SetDecorateFlag(Name, Value);

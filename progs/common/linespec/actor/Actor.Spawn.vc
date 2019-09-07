@@ -66,7 +66,7 @@ const int SXF_ISTRACER            = 1<<28;
 //  A_TossGib
 //
 //==========================================================================
-final void A_TossGib () {
+[decorate] final void A_TossGib () {
   class!EntityEx tp = (bNoBlood ? Junk : Meat);
 
   EntityEx gib = Spawn(tp, Origin+vector(0.0, 0.0, 24.0));
@@ -87,7 +87,7 @@ final void A_TossGib () {
 //  A_SpawnDebris
 //
 //==========================================================================
-final void A_SpawnDebris (class!Actor SpawnType, optional bool TransTransl,
+[decorate] final void A_SpawnDebris (class!Actor SpawnType, optional bool TransTransl,
                           optional float MultH, optional float MultV)
 {
   if (!SpawnType) return;
@@ -185,7 +185,7 @@ final void InitSpawnedItem (EntityEx A, bool TransTransl, bool SetMaster,
 //  A_SpawnItem
 //
 //==========================================================================
-final void A_SpawnItem (class!Actor ItemType, optional float Distance,
+[decorate] final void A_SpawnItem (class!Actor ItemType, optional float Distance,
                         optional float ZHeight, optional bool UseAmmo, optional bool TransTransl)
 {
   if (!specified_UseAmmo) UseAmmo = true;
@@ -225,7 +225,7 @@ final void A_SpawnItem (class!Actor ItemType, optional float Distance,
 //  A_SpawnItemEx
 //
 //==========================================================================
-final bool A_SpawnItemEx (class!Actor ItemType,
+[decorate] final bool A_SpawnItemEx (class!Actor ItemType,
                           optional float XOffs, optional float YOffs, optional float ZOffs,
                           optional float XVel, optional float YVel, optional float ZVel,
                           optional float Angle, optional int Flags, optional int Chance,

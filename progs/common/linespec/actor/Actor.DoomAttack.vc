@@ -44,7 +44,7 @@ enum /*EPainAttackFlags*/ {
 //  Zombieman attack.
 //
 //==========================================================================
-final void A_PosAttack () {
+[decorate] final void A_PosAttack () {
   TVec dir;
 
   if (!Target) return;
@@ -69,7 +69,7 @@ final void A_PosAttack () {
 //  For DeHackEd compatibility only.
 //
 //==========================================================================
-final void A_SPosAttack () {
+[decorate] final void A_SPosAttack () {
   if (!Target) return;
 
   PlaySound('shotguy/attack', CHAN_WEAPON);
@@ -84,7 +84,7 @@ final void A_SPosAttack () {
 //  Shotgun guy, Spider mastermind attack.
 //
 //==========================================================================
-final void A_SPosAttackUseAtkSound () {
+[decorate] final void A_SPosAttackUseAtkSound () {
   if (!Target) return;
 
   PlaySound(AttackSound, CHAN_WEAPON);
@@ -127,7 +127,7 @@ final void DoSPosAttack () {
 //  Heavy weapon dude attack.
 //
 //==========================================================================
-final void A_CPosAttack () {
+[decorate] final void A_CPosAttack () {
   int damage;
   TVec dir;
 
@@ -153,7 +153,7 @@ final void A_CPosAttack () {
 //  Heavy weapon dude refire.
 //
 //==========================================================================
-final void A_CPosRefire () {
+[decorate] final void A_CPosRefire () {
   // keep firing unless target got out of sight
   A_FaceTarget();
 
@@ -170,7 +170,7 @@ final void A_CPosRefire () {
 //  Spider mastermind refire.
 //
 //==========================================================================
-final void A_SpidRefire () {
+[decorate] final void A_SpidRefire () {
   // keep firing unless target got out of sight
   A_FaceTarget();
 
@@ -187,7 +187,7 @@ final void A_SpidRefire () {
 //  Imp attack.
 //
 //==========================================================================
-final void A_TroopAttack () {
+[decorate] final void A_TroopAttack () {
   if (!Target) return;
 
   A_FaceTarget();
@@ -210,7 +210,7 @@ final void A_TroopAttack () {
 //  Demon, Spectre attack.
 //
 //==========================================================================
-final void A_SargAttack () {
+[decorate] final void A_SargAttack () {
   if (!Target) return;
 
   A_FaceTarget();
@@ -228,7 +228,7 @@ final void A_SargAttack () {
 //  Cacodemon attack.
 //
 //==========================================================================
-final void A_HeadAttack () {
+[decorate] final void A_HeadAttack () {
   if (!Target) return;
 
   A_FaceTarget();
@@ -250,7 +250,7 @@ final void A_HeadAttack () {
 //  Hell knight, Baron of hell attack.
 //
 //==========================================================================
-final void A_BruisAttack () {
+[decorate] final void A_BruisAttack () {
   if (!Target) return;
 
   if (CheckMeleeRange()) {
@@ -272,7 +272,7 @@ final void A_BruisAttack () {
 //  Lost soul attack. Fly at the player like a missile.
 //
 //==========================================================================
-final void A_SkullAttack () {
+[decorate] final void A_SkullAttack () {
   if (!Target) return;
 
   bSkullFly = true;
@@ -287,7 +287,7 @@ final void A_SkullAttack () {
 //  A_SkullAttack
 //
 //==========================================================================
-final void decorate_A_SkullAttack (optional float SkullSpeed) {
+[decorate] final void decorate_A_SkullAttack (optional float SkullSpeed) {
   if (!Target) return;
   if (!specified_SkullSpeed) SkullSpeed = SKULLSPEED; else SkullSpeed *= 35.0;
 
@@ -305,7 +305,7 @@ final void decorate_A_SkullAttack (optional float SkullSpeed) {
 //  Arachnotron attack.
 //
 //==========================================================================
-final void A_BspiAttack () {
+[decorate] final void A_BspiAttack () {
   if (!Target) return;
 
   A_FaceTarget();
@@ -321,7 +321,7 @@ final void A_BspiAttack () {
 //  Cyberdemon attack.
 //
 //==========================================================================
-final void A_CyberAttack () {
+[decorate] final void A_CyberAttack () {
   if (!Target) return;
 
   A_FaceTarget();
@@ -336,7 +336,7 @@ final void A_CyberAttack () {
 //  Pain elemental attack. Spawn a lost soul and launch it at the target.
 //
 //==========================================================================
-final void A_PainAttack () {
+[decorate] final void A_PainAttack () {
   decorate_A_PainAttack(LostSoul);
 }
 
@@ -348,7 +348,7 @@ final void A_PainAttack () {
 //  Pain elemental attack. Spawn a lost soul and launch it at the target.
 //
 //==========================================================================
-final void decorate_A_PainAttack (optional class!Actor SpawnType, optional float angle,
+[decorate] final void decorate_A_PainAttack (optional class!Actor SpawnType, optional float angle,
                                   optional int flags, optional int limit)
 {
   if (!Target) return;
@@ -378,7 +378,7 @@ final void decorate_A_PainAttack (optional class!Actor SpawnType, optional float
 //  A_DualPainAttack
 //
 //==========================================================================
-final void A_DualPainAttack (optional class!Actor SpawnType) {
+[decorate] final void A_DualPainAttack (optional class!Actor SpawnType) {
   if (!Target) return;
   if (GetCvarB('k8ElvenPaineless')) return;
 
@@ -395,7 +395,7 @@ final void A_DualPainAttack (optional class!Actor SpawnType) {
 //  Pain elemental death.
 //
 //==========================================================================
-final void A_PainDie () {
+[decorate] final void A_PainDie () {
   decorate_A_PainDie(LostSoul);
 }
 
@@ -407,7 +407,7 @@ final void A_PainDie () {
 //  Pain elemental death.
 //
 //==========================================================================
-final void decorate_A_PainDie (optional class!Actor SpawnType) {
+[decorate] final void decorate_A_PainDie (optional class!Actor SpawnType) {
   A_Fall();
   PainShootSkull(SpawnType, Angles.yaw+90.0);
   PainShootSkull(SpawnType, Angles.yaw+180.0);
@@ -422,7 +422,7 @@ final void decorate_A_PainDie (optional class!Actor SpawnType) {
 //  Ravenant close attack.
 //
 //==========================================================================
-final void A_SkelFist () {
+[decorate] final void A_SkelFist () {
   if (!Target) return;
 
   A_FaceTarget();
@@ -442,7 +442,7 @@ final void A_SkelFist () {
 //  Ravenant far attack.
 //
 //==========================================================================
-final void A_SkelMissile () {
+[decorate] final void A_SkelMissile () {
   if (!Target) return;
 
   A_FaceTarget();
@@ -468,7 +468,7 @@ final void A_SkelMissile () {
 //  Mancubus attack, fire missile in first direction
 //
 //==========================================================================
-final void A_FatAttack1 () {
+[decorate] final void A_FatAttack1 () {
   decorate_A_FatAttack1(FatShot);
 }
 
@@ -480,7 +480,7 @@ final void A_FatAttack1 () {
 //  Mancubus attack, fire missile in first direction
 //
 //==========================================================================
-final void decorate_A_FatAttack1 (optional class!EntityEx SpawnType) {
+[decorate] final void decorate_A_FatAttack1 (optional class!EntityEx SpawnType) {
   if (!Target) return;
   if (!SpawnType) SpawnType = FatShot;
 
@@ -504,7 +504,7 @@ final void decorate_A_FatAttack1 (optional class!EntityEx SpawnType) {
 //  Mancubus attack, second direction.
 //
 //==========================================================================
-final void A_FatAttack2 () {
+[decorate] final void A_FatAttack2 () {
   decorate_A_FatAttack2(FatShot);
 }
 
@@ -516,7 +516,7 @@ final void A_FatAttack2 () {
 //  Mancubus attack, second direction.
 //
 //==========================================================================
-final void decorate_A_FatAttack2 (optional class!EntityEx SpawnType) {
+[decorate] final void decorate_A_FatAttack2 (optional class!EntityEx SpawnType) {
   if (!Target) return;
   if (!SpawnType) SpawnType = FatShot;
 
@@ -540,7 +540,7 @@ final void decorate_A_FatAttack2 (optional class!EntityEx SpawnType) {
 //  Mancubus attack, third direction.
 //
 //==========================================================================
-final void A_FatAttack3 () {
+[decorate] final void A_FatAttack3 () {
   decorate_A_FatAttack3(FatShot);
 }
 
@@ -552,7 +552,7 @@ final void A_FatAttack3 () {
 //  Mancubus attack, third direction.
 //
 //==========================================================================
-final void decorate_A_FatAttack3 (optional class!EntityEx SpawnType) {
+[decorate] final void decorate_A_FatAttack3 (optional class!EntityEx SpawnType) {
   if (!Target) return;
   if (!SpawnType) SpawnType = FatShot;
 
@@ -579,7 +579,7 @@ final void decorate_A_FatAttack3 (optional class!EntityEx SpawnType) {
 //  Spawn the hellfire.
 //
 //==========================================================================
-final void A_VileTarget (optional name firetype) {
+[decorate] final void A_VileTarget (optional name firetype) {
   if (!Target) return;
 
   A_FaceTarget();
@@ -613,7 +613,7 @@ final void A_VileTarget (optional name firetype) {
 //  Arch-vile attack.
 //
 //==========================================================================
-final void A_VileAttack (optional string sound, optional int initialdamage,
+[decorate] final void A_VileAttack (optional string sound, optional int initialdamage,
                          optional int blastdamage, optional int blastradius,
                          optional float thrustfactor, optional name damagetype,
                          optional int flags)
@@ -672,7 +672,7 @@ final void A_VileAttack (optional string sound, optional int initialdamage,
 //  Spawn a cube.
 //
 //==========================================================================
-final void A_BrainSpit () {
+[decorate] final void A_BrainSpit () {
   decorate_A_BrainSpit();
 }
 
@@ -684,7 +684,7 @@ final void A_BrainSpit () {
 //  Spawn a cube.
 //
 //==========================================================================
-final void decorate_A_BrainSpit (optional name actname) {
+[decorate] final void decorate_A_BrainSpit (optional name actname) {
   // find brain state object, create it if not found
   BrainState BState = none;
   foreach AllThinkers(BrainState, BState) {
@@ -786,7 +786,7 @@ final void SpawnFly (class!EntityEx SpawnType, name SpawnSound) {
 //  A_SpawnFly
 //
 //==========================================================================
-final void A_SpawnFly () {
+[decorate] final void A_SpawnFly () {
   SpawnFly(SpawnFire, 'brain/spawn');
 }
 
@@ -796,7 +796,7 @@ final void A_SpawnFly () {
 //  decorate_A_SpawnFly
 //
 //==========================================================================
-final void decorate_A_SpawnFly (optional class!EntityEx SpawnType) {
+[decorate] final void decorate_A_SpawnFly (optional class!EntityEx SpawnType) {
   name SpawnSound;
   if (SpawnType) {
     SpawnSound = SpawnType.default.SightSound;
@@ -815,7 +815,7 @@ final void decorate_A_SpawnFly (optional class!EntityEx SpawnType) {
 //  Travelling cube sound.
 //
 //==========================================================================
-final void A_SpawnSound () {
+[decorate] final void A_SpawnSound () {
   PlaySound('brain/cube', CHAN_VOICE);
   SpawnFly(SpawnFire, 'brain/spawn');
 }
@@ -828,7 +828,7 @@ final void A_SpawnSound () {
 //  Brain death sound, make explosions.
 //
 //==========================================================================
-final void A_BrainScream () {
+[decorate] final void A_BrainScream () {
   TVec org;
   for (org.x = Origin.x-196.0; org.x < Origin.x+320.0; org.x += 8.0) {
     org.y = Origin.y-320.0;
@@ -847,7 +847,7 @@ final void A_BrainScream () {
 //  Brain explosions.
 //
 //==========================================================================
-final void A_BrainExplode () {
+[decorate] final void A_BrainExplode () {
   TVec org;
   org.x = Origin.x+(Random()-Random())*8.0;
   org.y = Origin.y;
@@ -881,7 +881,7 @@ final void BrainishExplosion (TVec org) {
 //  A_Mushroom
 //
 //==========================================================================
-final void A_Mushroom () {
+[decorate] final void A_Mushroom () {
   decorate_A_Mushroom();
 }
 
@@ -894,7 +894,7 @@ final void A_Mushroom () {
 //  Original idea: Linguica
 //
 //==========================================================================
-final void decorate_A_Mushroom (optional class!Actor SpawnType,
+[decorate] final void decorate_A_Mushroom (optional class!Actor SpawnType,
                                 optional int Amount, optional int Flags,
                                 optional float vrange, optional float hrange)
 {
@@ -943,7 +943,7 @@ final void decorate_A_Mushroom (optional class!Actor SpawnType,
 //  A_M_Saw
 //
 //===========================================================================
-final void A_M_Saw () {
+[decorate] final void A_M_Saw () {
   TVec dir;
 
   if (!Target) return;
@@ -991,7 +991,7 @@ final void A_M_Saw () {
 //  A_SentinelRefire
 //
 //==========================================================================
-final void A_SentinelRefire () {
+[decorate] final void A_SentinelRefire () {
   // keep firing unless target got out of sight
   A_FaceTarget();
 

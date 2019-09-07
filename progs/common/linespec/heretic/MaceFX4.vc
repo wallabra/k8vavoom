@@ -87,7 +87,7 @@ final bool AutoUseChaosDevice(EntityEx Victim)
 //
 //===========================================================================
 
-final void A_DeathBallImpact()
+[decorate] final void A_DeathBallImpact()
 {
   int     i;
   float   angle;

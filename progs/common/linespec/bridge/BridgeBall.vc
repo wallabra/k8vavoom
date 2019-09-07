@@ -46,7 +46,7 @@ float OrbitAngle; // Angle of ball
 //  A_BridgeOrbit
 //
 //==========================================================================
-final void A_BridgeOrbit () {
+[decorate] final void A_BridgeOrbit () {
   if (Actor(Target).Special1) SetState(none);
   // 3.0 * 360.0 / 256.0 = 4.21875
   OrbitAngle = AngleMod360(OrbitAngle+4.21875);

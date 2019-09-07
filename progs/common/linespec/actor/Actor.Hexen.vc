@@ -70,7 +70,7 @@ const int KORAX_BOLT_LIFETIME = 3;
 //  A_SmBounce
 //
 //==========================================================================
-final void A_SmBounce () {
+[decorate] final void A_SmBounce () {
   // give some more momentum (x,y,&z)
   Origin.z = FloorZ+1.0;
   Velocity.z = (2.0+Random()*4.0)*35.0;
@@ -84,7 +84,7 @@ final void A_SmBounce () {
 //  A_IceGuyMissileExplode
 //
 //==========================================================================
-final void A_IceGuyMissileExplode () {
+[decorate] final void A_IceGuyMissileExplode () {
   foreach (auto i; 0..8) {
     EntityEx mo = SpawnMissileAngle(IceGuyFX2, float(i)*45.0, -0.3*35.0, 3.0);
     if (mo) mo.Target = Target;
@@ -97,7 +97,7 @@ final void A_IceGuyMissileExplode () {
 //  A_SerpentHeadCheck
 //
 //==========================================================================
-final void A_SerpentHeadCheck () {
+[decorate] final void A_SerpentHeadCheck () {
   if (Origin.z <= FloorZ) {
     if (GetFloorType()->bLiquid) {
       HitFloorType();
@@ -114,7 +114,7 @@ final void A_SerpentHeadCheck () {
 //  A_FloatGib
 //
 //==========================================================================
-final void A_FloatGib () {
+[decorate] final void A_FloatGib () {
   FloorClip -= 1.0;
 }
 
@@ -124,7 +124,7 @@ final void A_FloatGib () {
 //  A_SinkGib
 //
 //==========================================================================
-final void A_SinkGib () {
+[decorate] final void A_SinkGib () {
   FloorClip += 1.0;
 }
 
@@ -134,7 +134,7 @@ final void A_SinkGib () {
 //  A_DelayGib
 //
 //==========================================================================
-final void A_DelayGib () {
+[decorate] final void A_DelayGib () {
   StateTime -= Random()*2.0;
 }
 
@@ -146,7 +146,7 @@ final void A_DelayGib () {
 //  Spawns sparkle tail of missile.
 //
 //==========================================================================
-final void A_WraithFX2 () {
+[decorate] final void A_WraithFX2 () {
   float angle;
   foreach (auto i; 0..2) {
     EntityEx A = Spawn(WraithFX2, Origin);
@@ -171,7 +171,7 @@ final void A_WraithFX2 () {
 //  A_DragonFX2
 //
 //============================================================================
-final void A_DragonFX2 () {
+[decorate] final void A_DragonFX2 () {
   float delay = 0.5+Random();
   for (int i = 1+(P_Random()&3); i; --i) {
     EntityEx A = Spawn(DragonExplosion, Origin+vector((Random()-0.5)*64.0, (Random()-0.5)*64.0, (Random()-0.5)*16.0));
@@ -190,7 +190,7 @@ final void A_DragonFX2 () {
 //  Spawn spinning balls above head - actor is sorcerer.
 //
 //============================================================================
-final void A_SorcSpinBalls () {
+[decorate] final void A_SorcSpinBalls () {
   // to prevent spawning balls more than once
   IdleState = GetStatePlus(IdleState, 2);
 
@@ -224,7 +224,7 @@ final void A_SorcSpinBalls () {
 //  Yellow spell - offense
 //
 //==========================================================================
-final void A_SorcFX1Seek () {
+[decorate] final void A_SorcFX1Seek () {
   if (Args[4]-- <= 0) {
     if (Args[3]-- <= 0) {
       SetState(FindState('Death'));
@@ -253,7 +253,7 @@ final void A_SorcFX1Seek () {
 //  Split ball in two
 //
 //==========================================================================
-final void A_SorcFX2Split () {
+[decorate] final void A_SorcFX2Split () {
   EntityEx A = Spawn(SorcFX2, Origin, default, default/*, false*/);
   if (A) {
     A.Target = Target;
@@ -281,7 +281,7 @@ final void A_SorcFX2Split () {
 //  Orbit FX2 about sorcerer
 //
 //==========================================================================
-final void A_SorcFX2Orbit () {
+[decorate] final void A_SorcFX2Orbit () {
   float angle;
   float x, y, z;
   float dist = Target.Radius;
@@ -338,7 +338,7 @@ final void A_SorcFX2Orbit () {
 //  FX4 - rapid fire balls
 //
 //==========================================================================
-final void A_SorcFX4Check () {
+[decorate] final void A_SorcFX4Check () {
   if (Special2-- <= 0) SetState(FindState('Death'));
 }
 
@@ -348,7 +348,7 @@ final void A_SorcFX4Check () {
 //  A_KBoltRaise
 //
 //==========================================================================
-final void A_KBoltRaise () {
+[decorate] final void A_KBoltRaise () {
   // spawn a child upward
   float z = Origin.z+KORAX_BOLT_HEIGHT;
   if (z+KORAX_BOLT_HEIGHT < CeilingZ) {
@@ -365,7 +365,7 @@ final void A_KBoltRaise () {
 //  A_KBolt
 //
 //==========================================================================
-final void A_KBolt () {
+[decorate] final void A_KBolt () {
   // countdown lifetime
   if (Special1-- <= 0) SetState(none);
 }
@@ -376,7 +376,7 @@ final void A_KBolt () {
 //  A_KSpiritSeeker
 //
 //==========================================================================
-final void A_KSpiritSeeker (float thresh, float turnMax) {
+[decorate] final void A_KSpiritSeeker (float thresh, float turnMax) {
   float delta;
 
   if (Tracer == none) return;
@@ -424,7 +424,7 @@ final void A_KSpiritSeeker (float thresh, float turnMax) {
 //  A_KSpiritWeave
 //
 //==========================================================================
-final void A_KSpiritWeave () {
+[decorate] final void A_KSpiritWeave () {
   float angle = AngleMod360(Angles.yaw+90.0);
   int WeaveXY = Special2>>16;
   int WeaveZ = Special2&0xffff;
@@ -454,7 +454,7 @@ final void A_KSpiritWeave () {
 //  A_KSpiritRoam
 //
 //==========================================================================
-final void A_KSpiritRoam () {
+[decorate] final void A_KSpiritRoam () {
   if (Special1-- <= 0) {
     PlaySound('SpiritDie', CHAN_VOICE);
     SetState(FindState('Death'));
@@ -471,7 +471,7 @@ final void A_KSpiritRoam () {
 //  A_CFlameRotate
 //
 //==========================================================================
-final void A_CFlameRotate () {
+[decorate] final void A_CFlameRotate () {
   float an = AngleMod360(Angles.yaw+90.0);
   Velocity.x = Special1f+2.0*35.0*cos(an);
   Velocity.y = Special2f+2.0*35.0*sin(an);
@@ -522,7 +522,7 @@ final void CHolyTailRemove () {
 //  A_CHolyTail
 //
 //============================================================================
-final void A_CHolyTail () {
+[decorate] final void A_CHolyTail () {
   EntityEx parent = Target;
   if (parent) {
     if (!parent.bMissile) {
@@ -561,7 +561,7 @@ final void A_CHolyTail () {
 //  A_BatSpawnInit
 //
 //===========================================================================
-final void A_BatSpawnInit () {
+[decorate] final void A_BatSpawnInit () {
   Special1 = 0; // frequency count
 }
 
@@ -571,7 +571,7 @@ final void A_BatSpawnInit () {
 //  A_BatSpawn
 //
 //===========================================================================
-final void A_BatSpawn () {
+[decorate] final void A_BatSpawn () {
   // countdown until next spawn
   if (Special1-- > 0) return;
   Special1 = Args[0]; // reset frequency count
@@ -594,7 +594,7 @@ final void A_BatSpawn () {
 //  A_BatMove
 //
 //===========================================================================
-final void A_BatMove () {
+[decorate] final void A_BatMove () {
   float newangle;
 
   if (Special2 < 0) SetState(FindState('Death'));
@@ -626,7 +626,7 @@ final void A_BatMove () {
 //  A_TimeBomb
 //
 //==========================================================================
-final void A_TimeBomb () {
+[decorate] final void A_TimeBomb () {
   // time bombs
   Origin.z += 32.0;
   RenderStyle = STYLE_Normal;
@@ -640,7 +640,7 @@ final void A_TimeBomb () {
 //  A_CheckThrowBomb
 //
 //===========================================================================
-final void A_CheckThrowBomb () {
+[decorate] final void A_CheckThrowBomb () {
   if (!--Health) SetState(FindState('Death'));
 }
 
@@ -650,7 +650,7 @@ final void A_CheckThrowBomb () {
 //  A_CheckThrowBomb2
 //
 //===========================================================================
-final void A_CheckThrowBomb2 () {
+[decorate] final void A_CheckThrowBomb2 () {
   if (fabs(Velocity.x) < 1.5*35.0 &&
       fabs(Velocity.y) < 1.5*35.0 &&
       Velocity.z < 2.0*35.0)
@@ -684,7 +684,7 @@ final void A_CheckThrowBomb2 () {
 //  A_FogSpawn
 //
 //==========================================================================
-final void A_FogSpawn () {
+[decorate] final void A_FogSpawn () {
   EntityEx A;
 
   if (Special1-- > 0) return;
@@ -716,7 +716,7 @@ final void A_FogSpawn () {
 //  A_FogMove
 //
 //==========================================================================
-final void A_FogMove () {
+[decorate] final void A_FogMove () {
   if (!Args[4]) return;
 
   if (Args[3]-- <= 0) {
@@ -743,7 +743,7 @@ final void A_FogMove () {
 //  A_PotteryChooseBit
 //
 //==========================================================================
-final void A_PotteryChooseBit () {
+[decorate] final void A_PotteryChooseBit () {
   Special1 = 1+2*(P_Random()%5);
   SetState(GetStatePlus(FindState('Death'), Special1, IgnoreJump:true));
   StateTime = 8.0+Random()*16.0;
@@ -755,7 +755,7 @@ final void A_PotteryChooseBit () {
 //  A_PotteryCheck
 //
 //==========================================================================
-final void A_PotteryCheck () {
+[decorate] final void A_PotteryCheck () {
   foreach (auto i; 0..MAXPLAYERS) {
     if (!Level.Game.Players[i] || !Level.Game.Players[i].bSpawned) continue;
     Actor pmo = Actor(Level.Game.Players[i].MO);
@@ -773,7 +773,7 @@ final void A_PotteryCheck () {
 //  A_CorpseExplode
 //
 //============================================================================
-final void A_CorpseExplode () {
+[decorate] final void A_CorpseExplode () {
   EntityEx A;
   for (int i = (P_Random()&3)+3; i; --i) {
     A = Spawn(CorpseBit, Origin);
@@ -802,7 +802,7 @@ final void A_CorpseExplode () {
 //  A_LeafSpawn
 //
 //==========================================================================
-final void A_LeafSpawn () {
+[decorate] final void A_LeafSpawn () {
   for (int i = (P_Random()&3)+1; i; --i) {
     EntityEx A = Spawn((P_Random()&1 ? class!Actor(Leaf2) : class!Actor(Leaf1)),
                        Origin+vector((Random()-Random())*64.0, (Random()-Random())*64.0, Random()*64.0));
@@ -819,7 +819,7 @@ final void A_LeafSpawn () {
 //  A_LeafThrust
 //
 //==========================================================================
-final void A_LeafThrust () {
+[decorate] final void A_LeafThrust () {
   if (Random() > 0.375) return;
   Velocity.z += (Random()*2.0+1.0)*35.0;
 }
@@ -830,7 +830,7 @@ final void A_LeafThrust () {
 //  A_LeafCheck
 //
 //==========================================================================
-final void A_LeafCheck () {
+[decorate] final void A_LeafCheck () {
   ++Special1;
   if (Special1 >= 20) {
     SetState(none);
@@ -854,7 +854,7 @@ final void A_LeafCheck () {
 //  Suit of Armor Explode
 //
 //===========================================================================
-final void A_SoAExplode () {
+[decorate] final void A_SoAExplode () {
   EntityEx A;
 
   foreach (auto i; 0..10) {
@@ -890,7 +890,7 @@ final void A_SoAExplode () {
 //  A_FiredSpawnRock
 //
 //============================================================================
-final void A_FiredSpawnRock () {
+[decorate] final void A_FiredSpawnRock () {
   EntityEx mo;
   TVec rockOrg;
   class!Actor rtype;
@@ -927,7 +927,7 @@ final void A_FiredSpawnRock () {
 //  A_FiredRocks
 //
 //============================================================================
-final void A_FiredRocks () {
+[decorate] final void A_FiredRocks () {
   A_FiredSpawnRock();
   A_FiredSpawnRock();
   A_FiredSpawnRock();
@@ -941,7 +941,7 @@ final void A_FiredRocks () {
 //  A_FiredChase
 //
 //============================================================================
-final void A_FiredChase () {
+[decorate] final void A_FiredChase () {
   if (ReactionCount) --ReactionCount;
   if (Threshold) --Threshold;
 
@@ -1013,7 +1013,7 @@ final void A_FiredChase () {
 //  A_FiredAttack
 //
 //============================================================================
-final void A_FiredAttack () {
+[decorate] final void A_FiredAttack () {
   EntityEx mo = SpawnMissile(Target, FireDemonMissile);
   if (mo) PlaySound('FireDemonAttack', CHAN_WEAPON);
 }
@@ -1024,7 +1024,7 @@ final void A_FiredAttack () {
 //  A_FiredSplotch
 //
 //============================================================================
-final void A_FiredSplotch () {
+[decorate] final void A_FiredSplotch () {
   EntityEx A = Spawn(FireDemonSplotch1, Origin);
   if (A) {
     A.CopyTranslations(self);
@@ -1048,7 +1048,7 @@ final void A_FiredSplotch () {
 //  A_IceGuyLook
 //
 //==========================================================================
-final void A_IceGuyLook () {
+[decorate] final void A_IceGuyLook () {
   class!Actor tp;
   A_Look();
   if (Random() < 0.25) {
@@ -1065,7 +1065,7 @@ final void A_IceGuyLook () {
 //  A_IceGuyChase
 //
 //==========================================================================
-final void A_IceGuyChase () {
+[decorate] final void A_IceGuyChase () {
   class!Actor tp;
   A_Chase();
   if (Random() < 0.5) {
@@ -1086,7 +1086,7 @@ final void A_IceGuyChase () {
 //  A_IceGuyAttack
 //
 //==========================================================================
-final void A_IceGuyAttack () {
+[decorate] final void A_IceGuyAttack () {
   if (!Target) return;
 
   float an = AngleMod360(Angles.yaw+90.0);
@@ -1107,7 +1107,7 @@ final void A_IceGuyAttack () {
 //  A_BishopChase
 //
 //==========================================================================
-final void A_BishopChase () {
+[decorate] final void A_BishopChase () {
   float savedz = Origin.z;
 
   Origin.z -= Level.Game.FloatBobOffsets[Special2]/2.0;
@@ -1124,7 +1124,7 @@ final void A_BishopChase () {
 //  A_BishopDecide
 //
 //==========================================================================
-final void A_BishopDecide () {
+[decorate] final void A_BishopDecide () {
   if (P_Random() < 220) return;
   SetState(FindState('Blur'));
 }
@@ -1135,7 +1135,7 @@ final void A_BishopDecide () {
 //  A_BishopDoBlur
 //
 //==========================================================================
-final void A_BishopDoBlur () {
+[decorate] final void A_BishopDoBlur () {
   Special1 = (P_Random()&3)+3; // P_Random number of blurs
        if (P_Random() < 120) Thrust(AngleMod360(Angles.yaw+90.0), 11.0);
   else if (P_Random() > 125) Thrust(AngleMod360(Angles.yaw-90.0), 11.0);
@@ -1149,7 +1149,7 @@ final void A_BishopDoBlur () {
 //  A_BishopSpawnBlur
 //
 //==========================================================================
-final void A_BishopSpawnBlur () {
+[decorate] final void A_BishopSpawnBlur () {
   if (!--Special1) {
     Velocity.x = 0.0;
     Velocity.y = 0.0;
@@ -1173,7 +1173,7 @@ final void A_BishopSpawnBlur () {
 //  A_BishopAttack
 //
 //==========================================================================
-final void A_BishopAttack () {
+[decorate] final void A_BishopAttack () {
   if (!Target) return;
   PlaySound(AttackSound, CHAN_WEAPON);
   if (CheckMeleeRange()) {
@@ -1191,7 +1191,7 @@ final void A_BishopAttack () {
 //  Spawns one of a string of bishop missiles
 //
 //==========================================================================
-final void A_BishopAttack2 () {
+[decorate] final void A_BishopAttack2 () {
   if (!Target || !Special1) {
     Special1 = 0;
     SetState(SeeState);
@@ -1213,7 +1213,7 @@ final void A_BishopAttack2 () {
 //  A_BishopPainBlur
 //
 //==========================================================================
-final void A_BishopPainBlur () {
+[decorate] final void A_BishopPainBlur () {
   if (P_Random() < 64) {
     SetState(FindState('Blur'));
     return;
@@ -1236,7 +1236,7 @@ final void A_BishopPainBlur () {
 //  Decided whether to hump up or to missile attack
 //
 //==========================================================================
-final void A_SerpentHumpDecide () {
+[decorate] final void A_SerpentHumpDecide () {
   if (MissileState) {
     if (P_Random() > 30) return;
     if (P_Random() < 40) {
@@ -1269,7 +1269,7 @@ final void A_SerpentHumpDecide () {
 //  A_SerpentUnHide
 //
 //==========================================================================
-final void A_SerpentUnHide () {
+[decorate] final void A_SerpentUnHide () {
   bInvisible = false;
   FloorClip = 24.0;
 }
@@ -1282,7 +1282,7 @@ final void A_SerpentUnHide () {
 //  Raises the hump above the surface by raising the FloorClip level
 //
 //==========================================================================
-final void A_SerpentRaiseHump () {
+[decorate] final void A_SerpentRaiseHump () {
   FloorClip -= 4.0;
 }
 
@@ -1292,7 +1292,7 @@ final void A_SerpentRaiseHump () {
 //  A_SerpentLowerHump
 //
 //==========================================================================
-final void A_SerpentLowerHump () {
+[decorate] final void A_SerpentLowerHump () {
   FloorClip += 4.0;
 }
 
@@ -1302,7 +1302,7 @@ final void A_SerpentLowerHump () {
 //  A_SerpentHide
 //
 //==========================================================================
-final void A_SerpentHide () {
+[decorate] final void A_SerpentHide () {
   bInvisible = true;
   FloorClip = 0.0;
 }
@@ -1313,7 +1313,7 @@ final void A_SerpentHide () {
 //  A_SerpentCheckForAttack
 //
 //==========================================================================
-final void A_SerpentCheckForAttack () {
+[decorate] final void A_SerpentCheckForAttack () {
   if (!Target) return;
   if (MissileState && !CheckMeleeRange()) {
     SetState(FindState('Attack'));
@@ -1336,7 +1336,7 @@ final void A_SerpentCheckForAttack () {
 //  A_SerpentChooseAttack
 //
 //==========================================================================
-final void A_SerpentChooseAttack () {
+[decorate] final void A_SerpentChooseAttack () {
   if (MissileState) {
     if (!Target || (GetCvar('alternate_monster_attacks') && !CanSee(Target, disableBetterSight:true)) || CheckMeleeRange()) return;
     SetState(MissileState);
@@ -1349,7 +1349,7 @@ final void A_SerpentChooseAttack () {
 //  A_SerpentMeleeAttack
 //
 //==========================================================================
-final void A_SerpentMeleeAttack () {
+[decorate] final void A_SerpentMeleeAttack () {
   if (!Target) return;
   if (CheckMeleeRange()) {
     Target.Damage(self, self, HITDICE(5), spawnBlood:true);
@@ -1364,7 +1364,7 @@ final void A_SerpentMeleeAttack () {
 //  A_SerpentSpawnGibs
 //
 //==========================================================================
-final void A_SerpentSpawnGibs () {
+[decorate] final void A_SerpentSpawnGibs () {
   EntityEx A = Spawn(SerpentGib1, vector(Origin.x+(Random()-0.5)*16.0, Origin.y+(Random()-0.5)*16.0, FloorZ+1.0));
   if (A) {
     A.Velocity.x = (Random()-0.5)/4.0*35.0;
@@ -1402,7 +1402,7 @@ final void A_SerpentSpawnGibs () {
 //  A_WraithInit
 //
 //==========================================================================
-final void A_WraithInit () {
+[decorate] final void A_WraithInit () {
   Origin.z += 48.0;
   Special1 = 0; // index into floatbob
 }
@@ -1415,7 +1415,7 @@ final void A_WraithInit () {
 //  Spawn an FX3 around the actor during attacks.
 //
 //==========================================================================
-final void A_WraithFX3 () {
+[decorate] final void A_WraithFX3 () {
   int numdropped = P_Random()%15;
   foreach (auto i; 0..numdropped) {
     EntityEx A = Spawn(WraithFX3, Origin);
@@ -1436,7 +1436,7 @@ final void A_WraithFX3 () {
 //  Spawn an FX4 during movement.
 //
 //==========================================================================
-final void A_WraithFX4 () {
+[decorate] final void A_WraithFX4 () {
   int chance = P_Random();
   int spawn4, spawn5;
 
@@ -1472,7 +1472,7 @@ final void A_WraithFX4 () {
 //  A_WraithChase
 //
 //==========================================================================
-final void A_WraithChase () {
+[decorate] final void A_WraithChase () {
   float savedz = Origin.z;
   Origin.z += Level.Game.FloatBobOffsets[Special1];
   if (!TestMobjZ()) Origin.z = savedz;
@@ -1488,7 +1488,7 @@ final void A_WraithChase () {
 //  A_WraithMelee
 //
 //==========================================================================
-final void A_WraithMelee () {
+[decorate] final void A_WraithMelee () {
   // steal health from enemy and give to player
   if (CheckMeleeRange() && P_Random() < 220) {
     int amount = HITDICE(2);
@@ -1503,7 +1503,7 @@ final void A_WraithMelee () {
 //  A_WraithRaiseInit
 //
 //==========================================================================
-final void A_WraithRaiseInit () {
+[decorate] final void A_WraithRaiseInit () {
   bInvisible = false;
   bDontBlast = false;
   bNonShootable = false;
@@ -1541,7 +1541,7 @@ final bool RaiseFromFloor () {
 //  A_WraithRaise
 //
 //==========================================================================
-final void A_WraithRaise () {
+[decorate] final void A_WraithRaise () {
   if (RaiseFromFloor()) {
     // reached it's target height
     bNoMorph = false;
@@ -1557,7 +1557,7 @@ final void A_WraithRaise () {
 //  A_DragonInitFlight
 //
 //==========================================================================
-final void A_DragonInitFlight () {
+[decorate] final void A_DragonInitFlight () {
   Tracer = none;
   do {
     // find the first tid identical to the dragon's tid
@@ -1666,7 +1666,7 @@ final void DragonSeek (float thresh, float turnMax) {
 //  A_DragonFlight
 //
 //==========================================================================
-final void A_DragonFlight () {
+[decorate] final void A_DragonFlight () {
   DragonSeek(4.0, 8.0);
   if (Target) {
     if (!Target.bShootable) {
@@ -1693,7 +1693,7 @@ final void A_DragonFlight () {
 //  A_DragonFlap
 //
 //==========================================================================
-final void A_DragonFlap () {
+[decorate] final void A_DragonFlap () {
   A_DragonFlight();
   if (P_Random() < 240) {
     PlaySound('DragonWingflap', CHAN_BODY);
@@ -1708,7 +1708,7 @@ final void A_DragonFlap () {
 //  A_DragonPain
 //
 //==========================================================================
-final void A_DragonPain () {
+[decorate] final void A_DragonPain () {
   A_Pain();
   if (!Tracer) {
     // no destination spot yet
@@ -1752,7 +1752,7 @@ final void A_DragonPain () {
 //  A_KoraxChase
 //
 //==========================================================================
-final void A_KoraxChase () {
+[decorate] final void A_KoraxChase () {
   Actor spot;
 
   if (!Special2 && (Health <= (InitialHealth/2))) {
@@ -1787,7 +1787,7 @@ final void A_KoraxChase () {
 //  A_KoraxDecide
 //
 //==========================================================================
-final void A_KoraxDecide () {
+[decorate] final void A_KoraxDecide () {
   if (Random() < 0.859375) {
     SetState(FindState('Attack'));
   } else {
@@ -1898,7 +1898,7 @@ final void KoraxFire6 (class!Actor type) {
 //  A_KoraxMissile
 //
 //============================================================================
-final void A_KoraxMissile () {
+[decorate] final void A_KoraxMissile () {
   class!Actor mtype;
   name sound;
 
@@ -1945,7 +1945,7 @@ final void A_KoraxMissile () {
 //============================================================================
 // Call action code scripts (250-254)
 //============================================================================
-final void A_KoraxCommand () {
+[decorate] final void A_KoraxCommand () {
   PlaySound('KoraxCommand', CHAN_VOICE);
 
   // Shoot stream of lightning to ceiling
@@ -1971,7 +1971,7 @@ final void A_KoraxCommand () {
 //  A_KoraxBonePop
 //
 //============================================================================
-final void A_KoraxBonePop () {
+[decorate] final void A_KoraxBonePop () {
   EntityEx mo;
 
   // spawn 6 spirits equalangularly
@@ -2025,7 +2025,7 @@ final void KSpiritInit (EntityEx Spirit) {
 //  Spawns the spirits
 //
 //============================================================================
-final void A_CHolyAttack2 () {
+[decorate] final void A_CHolyAttack2 () {
   // float bob index
   foreach (auto j; 0..4) {
     EntityEx A = Spawn(HolySpirit, Origin);
@@ -2074,7 +2074,7 @@ final void A_CHolyAttack2 () {
 //  A_PoisonBagInit
 //
 //===========================================================================
-final void A_PoisonBagInit () {
+[decorate] final void A_PoisonBagInit () {
   EntityEx A = Spawn(PoisonCloud, Origin+vector(0.0, 0.0, 28.0));
   if (A) PoisonCloud(A).InitCloud(Actor(Target));
 }
@@ -2085,7 +2085,7 @@ final void A_PoisonBagInit () {
 //  A_PoisonShroom
 //
 //===========================================================================
-final void A_PoisonShroom () {
+[decorate] final void A_PoisonShroom () {
   StateTime = 4.0+Random()*16.0;
 }
 
@@ -2095,7 +2095,7 @@ final void A_PoisonShroom () {
 //  A_FighterAttack
 //
 //==========================================================================
-final void A_FighterAttack () {
+[decorate] final void A_FighterAttack () {
   if (!Target) return;
 
   SpawnMissileAngle(FSwordMissile, AngleMod360(Angles.yaw+45.0/4.0), 0.0);
@@ -2114,7 +2114,7 @@ final void A_FighterAttack () {
 //  Spawns the spirits
 //
 //==========================================================================
-final void A_ClericAttack () {
+[decorate] final void A_ClericAttack () {
   if (!Target) return;
 
   EntityEx A = SpawnMissile(Target, HolyMissile, 40.0);
@@ -2142,7 +2142,7 @@ final void MStaffSpawn2 (float angle) {
 //  A_MageAttack
 //
 //==========================================================================
-final void A_MageAttack () {
+[decorate] final void A_MageAttack () {
   if (!Target) return;
 
   MStaffSpawn2(Angles.yaw);
@@ -2157,7 +2157,7 @@ final void A_MageAttack () {
 //  A_SorcererBishopEntry
 //
 //============================================================================
-final void A_SorcererBishopEntry () {
+[decorate] final void A_SorcererBishopEntry () {
   Spawn(SorcFX3Explosion, Origin);
   PlaySound(SightSound, CHAN_VOICE);
 }
@@ -2170,7 +2170,7 @@ final void A_SorcererBishopEntry () {
 //  Green spell - spawn bishops
 //
 //============================================================================
-final void A_SpawnBishop () {
+[decorate] final void A_SpawnBishop () {
   EntityEx A = Spawn(Bishop, Origin);
   if (A) {
     if (!A.TestLocation()) {
@@ -2190,7 +2190,7 @@ final void A_SpawnBishop () {
 // Set balls to slow mode - actor is sorcerer
 //
 //============================================================================
-final void A_SlowBalls () {
+[decorate] final void A_SlowBalls () {
   Args[3] = SORC_DECELERATE; // slow mode
   Args[2] = SORCBALL_INITIAL_SPEED; // target speed
 }
@@ -2201,7 +2201,7 @@ final void A_SlowBalls () {
 //  Set balls to speed mode - actor is sorcerer
 //
 //============================================================================
-final void A_SpeedBalls () {
+[decorate] final void A_SpeedBalls () {
   Args[3] = SORC_ACCELERATE; // speed mode
   Args[2] = SORCBALL_TERMINAL_SPEED; // target speed
 }
@@ -2214,7 +2214,7 @@ final void A_SpeedBalls () {
 //  Resume ball spinning
 //
 //============================================================================
-final void A_SorcBossAttack () {
+[decorate] final void A_SorcBossAttack () {
   Args[3] = SORC_ACCELERATE;
   Args[2] = SORCBALL_INITIAL_SPEED;
 }
@@ -2228,7 +2228,7 @@ final void A_SorcBossAttack () {
 //  actor is sorcerer
 //
 //============================================================================
-final void A_StopBalls () {
+[decorate] final void A_StopBalls () {
   int chance = P_Random();
 
   Args[3] = SORC_STOPPING; // stopping mode
@@ -2247,7 +2247,7 @@ final void A_StopBalls () {
 //  Spell cast magic fizzle
 //
 //============================================================================
-final void A_SpawnFizzle () {
+[decorate] final void A_SpawnFizzle () {
   TVec org;
   float dist = 5.0;
   float angle = Angles.yaw;
@@ -2273,7 +2273,7 @@ final void A_SpawnFizzle () {
 //  Summon Minotaur
 //
 //==========================================================================
-final void A_Summon () {
+[decorate] final void A_Summon () {
   EntityEx A = Spawn(MinotaurFriend, Origin, default, default, true);
   if (A) {
     if (!A.TestLocation() || !Tracer) {

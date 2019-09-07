@@ -79,7 +79,7 @@ void TouchWhirlwind(Actor Other)
 //
 //==========================================================================
 
-final void A_WhirlwindSeek()
+[decorate] final void A_WhirlwindSeek()
 {
   Health -= 3;
   if (Health < 0)

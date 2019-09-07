@@ -46,7 +46,7 @@ override bool Touch(Entity InOther)
 //
 //==========================================================================
 
-final void A_Spectre2Attack()
+[decorate] final void A_Spectre2Attack()
 {
   EntityEx A;
 
@@ -63,7 +63,7 @@ final void A_Spectre2Attack()
 //
 //==========================================================================
 
-final void A_Spectre3Attack()
+[decorate] final void A_Spectre3Attack()
 {
   EntityEx spread;
   int i;
@@ -99,7 +99,7 @@ final void A_Spectre3Attack()
 //
 //==========================================================================
 
-final void A_Spectre4Attack()
+[decorate] final void A_Spectre4Attack()
 {
   EntityEx A;
 
@@ -116,7 +116,7 @@ final void A_Spectre4Attack()
 //
 //==========================================================================
 
-final void A_Spectre5Attack()
+[decorate] final void A_Spectre5Attack()
 {
   EntityEx A;
 
@@ -133,7 +133,7 @@ final void A_Spectre5Attack()
 //
 //==========================================================================
 
-final void A_SpectreChunkSmall()
+[decorate] final void A_SpectreChunkSmall()
 {
   TossUpObject(AlienChunkSmall);
 }
@@ -144,7 +144,7 @@ final void A_SpectreChunkSmall()
 //
 //==========================================================================
 
-final void A_SpectreChunkLarge()
+[decorate] final void A_SpectreChunkLarge()
 {
   TossUpObject(AlienChunkLarge);
 }
@@ -155,7 +155,7 @@ final void A_SpectreChunkLarge()
 //
 //==========================================================================
 
-final void A_AlienSpectreDeath()
+[decorate] final void A_AlienSpectreDeath()
 {
   //  We need this so that Sigil is dropped.
   A_NoBlocking();
@@ -267,7 +267,7 @@ final void A_AlienSpectreDeath()
 //
 //==========================================================================
 
-final void A_EntityAttack()
+[decorate] final void A_EntityAttack()
 {
   if (!Target) return;
 
@@ -287,7 +287,7 @@ final void A_EntityAttack()
 //
 //==========================================================================
 
-final void A_EntityDeath()
+[decorate] final void A_EntityDeath()
 {
   EntityEx Spot = Tracer;
   if (!Spot)
@@ -315,7 +315,7 @@ final void A_EntityDeath()
 //
 //==========================================================================
 
-final void A_SubEntityDeath()
+[decorate] final void A_SubEntityDeath()
 {
   if (!CheckBossDeath())
   {

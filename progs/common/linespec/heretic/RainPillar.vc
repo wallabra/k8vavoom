@@ -48,7 +48,7 @@ override int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 //
 //===========================================================================
 
-final void A_RainImpact()
+[decorate] final void A_RainImpact()
 {
   if (Origin.z > FloorZ)
   {

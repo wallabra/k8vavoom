@@ -34,7 +34,7 @@ class ZBell : Actor
 //
 //==========================================================================
 
-final void A_BellReset1()
+[decorate] final void A_BellReset1()
 {
   bNoGravity = true;
   Height *= 4.0;
@@ -61,7 +61,7 @@ override bool Activate(EntityEx Activator)
 //
 //==========================================================================
 
-final void A_BellReset2()
+[decorate] final void A_BellReset2()
 {
   bShootable = true;
   bCorpse = false;

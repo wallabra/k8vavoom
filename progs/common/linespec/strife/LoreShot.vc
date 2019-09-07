@@ -45,7 +45,7 @@ override int DoSpecialDamage(EntityEx Victim, EntityEx Source, int damage)
 //
 //==========================================================================
 
-final void A_ChainTend()
+[decorate] final void A_ChainTend()
 {
   int i;
 

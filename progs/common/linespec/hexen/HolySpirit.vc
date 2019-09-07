@@ -256,7 +256,7 @@ void CHolyWeave()
 //
 //============================================================================
 
-final void A_CHolySeek()
+[decorate] final void A_CHolySeek()
 {
   Health--;
   if (Health <= 0)
@@ -285,7 +285,7 @@ final void A_CHolySeek()
 //
 //============================================================================
 
-final void A_CHolyCheckScream()
+[decorate] final void A_CHolyCheckScream()
 {
   A_CHolySeek();
   if (P_Random() < 20)

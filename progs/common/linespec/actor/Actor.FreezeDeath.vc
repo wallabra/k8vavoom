@@ -32,7 +32,7 @@
 //  A_FreezeDeath
 //
 //============================================================================
-final void A_FreezeDeath () {
+[decorate] final void A_FreezeDeath () {
   StateTime = 2.0+Random()*8.0+Random()*8.0;
   bSolid = true;
   bShootable = true;
@@ -70,7 +70,7 @@ final void A_FreezeDeath () {
 //  A_GenericFreezeDeath
 //
 //============================================================================
-final void A_GenericFreezeDeath () {
+[decorate] final void A_GenericFreezeDeath () {
   A_FreezeDeath();
   Translation = (TRANSL_Standard<<TRANSL_TYPE_SHIFT)+7;
 }
@@ -81,7 +81,7 @@ final void A_GenericFreezeDeath () {
 //  A_FreezeDeathChunks
 //
 //============================================================================
-final void A_FreezeDeathChunks () {
+[decorate] final void A_FreezeDeathChunks () {
   Actor A;
 
   if (Length(Velocity) > 1.0) {
@@ -157,7 +157,7 @@ final void A_FreezeDeathChunks () {
 //  A_IceGuyDie
 //
 //==========================================================================
-final void A_IceGuyDie () {
+[decorate] final void A_IceGuyDie () {
   Velocity = vector(0.0, 0.0, 0.0);
   Height *= 4.0;
   A_FreezeDeathChunks();

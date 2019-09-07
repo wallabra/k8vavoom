@@ -72,7 +72,7 @@ override void GetExplodeParms(ref int damage, ref float distance, ref ubyte dama
 //
 //==========================================================================
 
-final void A_AccelBalls()
+[decorate] final void A_AccelBalls()
 {
   EntityEx sorc = Target;
 
@@ -99,7 +99,7 @@ final void A_AccelBalls()
 //
 //==========================================================================
 
-final void A_DecelBalls()
+[decorate] final void A_DecelBalls()
 {
   EntityEx sorc = Target;
 
@@ -121,7 +121,7 @@ final void A_DecelBalls()
 //
 //==========================================================================
 
-final void A_SorcUpdateBallAngle()
+[decorate] final void A_SorcUpdateBallAngle()
 {
   if (Class == SorcBall1)
   {
@@ -137,7 +137,7 @@ final void A_SorcUpdateBallAngle()
 //
 //==========================================================================
 
-final void A_SorcOffense2()
+[decorate] final void A_SorcOffense2()
 {
   float ang1;
   EntityEx mo;
@@ -180,7 +180,7 @@ void A_CastSorcererSpell()
 //
 //==========================================================================
 
-final void A_SorcBallOrbit()
+[decorate] final void A_SorcBallOrbit()
 {
   if (!Target)
   {
@@ -284,7 +284,7 @@ final void A_SorcBallOrbit()
 //
 //==========================================================================
 
-final void A_SorcBallPop()
+[decorate] final void A_SorcBallPop()
 {
   PlaySound('SorcererBallPop', CHAN_VOICE, 1.0, ATTN_NONE);
   bNoGravity = false;
@@ -302,7 +302,7 @@ final void A_SorcBallPop()
 //
 //==========================================================================
 
-final void A_BounceCheck()
+[decorate] final void A_BounceCheck()
 {
   if (Args[4]-- <= 0)
   {

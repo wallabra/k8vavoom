@@ -66,7 +66,7 @@ override void SpawnBlasterEffects()
 //
 //==========================================================================
 
-final void A_CFlamePuff()
+[decorate] final void A_CFlamePuff()
 {
   bInvisible = false;
   Velocity = vector(0.0, 0.0, 0.0);
@@ -79,7 +79,7 @@ final void A_CFlamePuff()
 //
 //==========================================================================
 
-final void A_CFlameMissile()
+[decorate] final void A_CFlameMissile()
 {
   int i;
   float an;

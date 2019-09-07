@@ -96,7 +96,7 @@ const int CHF_STOPIFBLOCKED    = 256;
 //  Stay in state until a player is sighted or has a goal.
 //
 //==========================================================================
-final void A_Look () {
+[decorate] final void A_Look () {
   EntityEx targ;
   Entity Ent;
   float fov = (bLookAllAround ? 360 : 0);
@@ -201,7 +201,7 @@ final void A_Look () {
 //  A_Look2
 //
 //==========================================================================
-final void A_Look2 () {
+[decorate] final void A_Look2 () {
   Threshold = 0; // any shot will wake up
   EntityEx targ = LastHeard;
   float fov = (bLookAllAround ? 360 : 0);
@@ -252,7 +252,7 @@ final void A_Look2 () {
 //  [KS] Borrowed the A_Look code to make a parameterized version.
 //
 //==========================================================================
-final void A_LookEx (int flags, optional float minseedist, optional float maxseedist,
+[decorate] final void A_LookEx (int flags, optional float minseedist, optional float maxseedist,
                      optional float maxheardist, optional float fov,
                      optional /*name*/state wakestate)
 {
@@ -387,7 +387,7 @@ final void A_LookEx (int flags, optional float minseedist, optional float maxsee
 //  Stay in state untill alarm is triggered.
 //
 //==========================================================================
-final void A_TurretLook () {
+[decorate] final void A_TurretLook () {
   Threshold = 0;
   EntityEx targ = LastHeard;
   if (targ && targ.Health > 0 && targ.bShootable && bFriendly != targ.bFriendly) {
@@ -407,7 +407,7 @@ final void A_TurretLook () {
 //  A_Wander
 //
 //==========================================================================
-final void A_Wander () {
+[decorate] final void A_Wander () {
   decorate_A_Wander();
 }
 
@@ -417,7 +417,7 @@ final void A_Wander () {
 //  decorate_A_Wander
 //
 //==========================================================================
-final void decorate_A_Wander (optional int flags) {
+[decorate] final void decorate_A_Wander (optional int flags) {
   bInCombat = false;
   if (bStanding) return;
 
@@ -765,7 +765,7 @@ final bool CheckForResurrect (bool UseVileStates) {
 //  A_Chase
 //
 //==========================================================================
-final void A_Chase () {
+[decorate] final void A_Chase () {
   DoChase(false, MeleeState, MissileState, LineSpecialGameInfo(Level.Game).bNightmareFastChase, true, false);
 }
 
@@ -775,7 +775,7 @@ final void A_Chase () {
 //  decorate_A_Chase
 //
 //==========================================================================
-final void decorate_A_Chase (optional state AMeleeState, optional state AMissileState, optional int Flags) {
+[decorate] final void decorate_A_Chase (optional state AMeleeState, optional state AMissileState, optional int Flags) {
   if (specified_AMeleeState) {
     if ((Flags&8) && CheckForResurrect(false)) return;
     DoChase(!!(Flags&1), AMeleeState, AMissileState,
@@ -792,7 +792,7 @@ final void decorate_A_Chase (optional state AMeleeState, optional state AMissile
 //  A_FastChase
 //
 //============================================================================
-final void A_FastChase () {
+[decorate] final void A_FastChase () {
   DoChase(true, MeleeState, MissileState, true, true, false);
 }
 
@@ -802,7 +802,7 @@ final void A_FastChase () {
 //  A_VileChase
 //
 //==========================================================================
-final void A_VileChase () {
+[decorate] final void A_VileChase () {
   if (!CheckForResurrect(true)) A_Chase(); // return to normal attack
 }
 
@@ -812,7 +812,7 @@ final void A_VileChase () {
 //  A_ExtChase
 //
 //==========================================================================
-final void A_ExtChase (bool UseMelee, bool UseMissile, optional bool PlayActive, optional bool NightmareFast) {
+[decorate] final void A_ExtChase (bool UseMelee, bool UseMissile, optional bool PlayActive, optional bool NightmareFast) {
   if (!specified_PlayActive) PlayActive = true;
   state Melee = MeleeState;
   if (!UseMelee) Melee = none;
@@ -827,7 +827,7 @@ final void A_ExtChase (bool UseMelee, bool UseMissile, optional bool PlayActive,
 //  A_FaceTarget
 //
 //==========================================================================
-final void A_FaceTarget () {
+[decorate] final void A_FaceTarget () {
   decorate_A_FaceTarget();
 }
 
@@ -837,7 +837,7 @@ final void A_FaceTarget () {
 //  decorate_A_FaceTarget
 //
 //==========================================================================
-final void decorate_A_FaceTarget (optional float max_turn, optional float max_pitch,
+[decorate] final void decorate_A_FaceTarget (optional float max_turn, optional float max_pitch,
                                   optional float ang_offset, optional float pitch_offset,
                                   optional int flags, optional float z_ofs)
 {
@@ -852,7 +852,7 @@ final void decorate_A_FaceTarget (optional float max_turn, optional float max_pi
 //  decorate_A_FaceTracer
 //
 //==========================================================================
-final void decorate_A_FaceTracer (optional float max_turn, optional float max_pitch,
+[decorate] final void decorate_A_FaceTracer (optional float max_turn, optional float max_pitch,
                                   optional float ang_offset, optional float pitch_offset,
                                   optional int flags, optional float z_ofs)
 {
@@ -867,7 +867,7 @@ final void decorate_A_FaceTracer (optional float max_turn, optional float max_pi
 //  decorate_A_FaceMaster
 //
 //==========================================================================
-final void decorate_A_FaceMaster (optional float max_turn, optional float max_pitch,
+[decorate] final void decorate_A_FaceMaster (optional float max_turn, optional float max_pitch,
                                   optional float ang_offset, optional float pitch_offset,
                                   optional int flags, optional float z_ofs)
 {
@@ -960,7 +960,7 @@ final void common_A_FaceSomething (EntityEx Tgt, optional float max_turn, option
 //  A_Die
 //
 //==========================================================================
-final void A_Die (optional name DamageType) {
+[decorate] final void A_Die (optional name DamageType) {
   if (!specified_DamageType) {
     Damage(none, none, Health, forced:true);
   } else {
@@ -974,7 +974,7 @@ final void A_Die (optional name DamageType) {
 //  A_CentaurDefend
 //
 //==========================================================================
-final void A_CentaurDefend () {
+[decorate] final void A_CentaurDefend () {
   A_FaceTarget();
   if (CheckMeleeRange() && Random() < 0.125) {
     A_UnSetInvulnerable();
@@ -988,7 +988,7 @@ final void A_CentaurDefend () {
 //  A_AlertMonsters
 //
 //==========================================================================
-final void A_AlertMonsters (optional float maxrange, optional int flags) {
+[decorate] final void A_AlertMonsters (optional float maxrange, optional int flags) {
   //print("A_AlertMonsters(%C): tgt=%C; plr=%s", self, Target, (Target && Target.bIsPlayer ? "tan" : "ona"));
   if (Target && (Target.bIsPlayer || (flags&(AMF_TARGETEMITTER|AMF_TARGETNONPLAYER)))) {
     LineSpecialLevelInfo(Level).NoiseAlert(target:Target, emitter:self, maxdist:maxrange!optional,
@@ -1012,7 +1012,7 @@ final void A_AlertMonsters (optional float maxrange, optional int flags) {
 //  A_ClearTarget
 //
 //==========================================================================
-final void A_ClearTarget () {
+[decorate] final void A_ClearTarget () {
   Target = none;
   LastEnemy = none;
   LastHeard = none;
@@ -1024,7 +1024,7 @@ final void A_ClearTarget () {
 //  A_ClearSoundTarget
 //
 //==========================================================================
-final void A_ClearSoundTarget () {
+[decorate] final void A_ClearSoundTarget () {
   Sector->SoundTarget = none;
   for (Entity Ent = Sector->ThingList; Ent; Ent = Ent.SNext) {
     EntityEx(Ent).LastHeard = none;
@@ -1069,7 +1069,7 @@ final void doKillXXX (EntityEx dest, name damagetype, int flags, optional name f
 //  A_KillMaster
 //
 //==========================================================================
-final void A_KillMaster (optional name damagetype, optional int flags,
+[decorate] final void A_KillMaster (optional name damagetype, optional int flags,
                          optional name filter, optional name species,
                          optional int src, optional int inflict)
 {
@@ -1083,7 +1083,7 @@ final void A_KillMaster (optional name damagetype, optional int flags,
 //  A_KillTarget
 //
 //==========================================================================
-final void A_KillTarget (optional name damagetype, optional int flags,
+[decorate] final void A_KillTarget (optional name damagetype, optional int flags,
                          optional name filter, optional name species,
                          optional int src, optional int inflict)
 {
@@ -1096,7 +1096,7 @@ final void A_KillTarget (optional name damagetype, optional int flags,
 //  A_KillTracer
 //
 //==========================================================================
-final void A_KillTracer (optional name damagetype, optional int flags,
+[decorate] final void A_KillTracer (optional name damagetype, optional int flags,
                          optional name filter, optional name species,
                          optional int src, optional int inflict)
 {
@@ -1109,7 +1109,7 @@ final void A_KillTracer (optional name damagetype, optional int flags,
 //  A_KillChildren
 //
 //==========================================================================
-final void A_KillChildren (optional name damagetype, optional int flags,
+[decorate] final void A_KillChildren (optional name damagetype, optional int flags,
                            optional name filter, optional name species,
                            optional int src, optional int inflict)
 {
@@ -1126,7 +1126,7 @@ final void A_KillChildren (optional name damagetype, optional int flags,
 //  A_KillSiblings
 //
 //==========================================================================
-final void A_KillSiblings (optional name damagetype, optional int flags,
+[decorate] final void A_KillSiblings (optional name damagetype, optional int flags,
                            optional name filter, optional name species,
                            optional int src, optional int inflict)
 {
@@ -1146,7 +1146,7 @@ final void A_KillSiblings (optional name damagetype, optional int flags,
 //  A_RaiseMaster
 //
 //==========================================================================
-final void A_RaiseMaster (optional int flags) {
+[decorate] final void A_RaiseMaster (optional int flags) {
   if (!Master) return;
   if (Master.DoThingRaise(!!(flags&RF_NOCHECKPOSITION))) {
     if (flags&RF_TRANSFERFRIENDLINESS) Master.CopyFriendliness(self, false);
@@ -1159,7 +1159,7 @@ final void A_RaiseMaster (optional int flags) {
 //  A_RaiseChildren
 //
 //==========================================================================
-final void A_RaiseChildren (optional int flags) {
+[decorate] final void A_RaiseChildren (optional int flags) {
   Actor A;
   foreach AllThinkers(Actor, A) {
     if (A.Master != self) continue;
@@ -1175,7 +1175,7 @@ final void A_RaiseChildren (optional int flags) {
 //  A_RaiseSiblings
 //
 //==========================================================================
-final void A_RaiseSiblings (optional int flags) {
+[decorate] final void A_RaiseSiblings (optional int flags) {
   EntityEx mainMaster = Master;
   if (!mainMaster) return;
   Actor A;
@@ -1194,7 +1194,7 @@ final void A_RaiseSiblings (optional int flags) {
 //  A_SentinelBob
 //
 //==========================================================================
-final void A_SentinelBob () {
+[decorate] final void A_SentinelBob () {
   if (bInFloat) { Velocity.z = 0.0; return; }
 
   if (Threshold) return;
@@ -1217,7 +1217,7 @@ final void A_SentinelBob () {
 //  A_Burst
 //
 //==========================================================================
-final void A_Burst (class!Actor ChunkType) {
+[decorate] final void A_Burst (class!Actor ChunkType) {
   if (!ChunkType) return;
   ChunkType = GetCompatibleClassReplacement(Actor, ChunkType);
   if (!ChunkType) return;
@@ -1368,7 +1368,7 @@ override bool do_CheckProximity (name classname, float distance, optional int co
 //  A_CheckProximity
 //
 //==========================================================================
-final void A_CheckProximity (state Label, name classname, float distance, optional int count, optional int flags, optional int aptr) {
+[decorate] final void A_CheckProximity (state Label, name classname, float distance, optional int count, optional int flags, optional int aptr) {
   // state jumps should not affect state chain results.
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
   if (do_CheckProximity(classname, distance, count!optional, flags!optional, aptr!optional)) {

@@ -167,7 +167,7 @@ override void MonsterMorphed()
 //
 //==========================================================================
 
-final void A_MinotaurFade0()
+[decorate] final void A_MinotaurFade0()
 {
   RenderStyle = STYLE_Translucent;
   Alpha = 0.333;
@@ -179,7 +179,7 @@ final void A_MinotaurFade0()
 //
 //==========================================================================
 
-final void A_MinotaurFade1()
+[decorate] final void A_MinotaurFade1()
 {
   // Second level of transparency
   RenderStyle = STYLE_Translucent;
@@ -192,7 +192,7 @@ final void A_MinotaurFade1()
 //
 //==========================================================================
 
-final void A_MinotaurFade2()
+[decorate] final void A_MinotaurFade2()
 {
   // Make fully visible
   RenderStyle = STYLE_Normal;
@@ -205,7 +205,7 @@ final void A_MinotaurFade2()
 //
 //==========================================================================
 
-final void A_SmokePuffExit()
+[decorate] final void A_SmokePuffExit()
 {
   Spawn(MinotaurSmokeExit, Origin);
 }

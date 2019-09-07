@@ -60,7 +60,7 @@ override void GetExplodeParms(ref int damage, ref float distance, ref ubyte dama
 //
 //==========================================================================
 
-final void A_FSwordFlames()
+[decorate] final void A_FSwordFlames()
 {
   int i;
 

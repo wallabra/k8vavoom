@@ -147,7 +147,7 @@ final void TeleportToPlayerStarts(Actor victim)
 //
 //==========================================================================
 
-final void A_TeloSpawnA()
+[decorate] final void A_TeloSpawnA()
 {
   EntityEx A = Spawn(TelOtherFX2, Origin);
   if (A)
@@ -165,7 +165,7 @@ final void A_TeloSpawnA()
 //
 //==========================================================================
 
-final void A_TeloSpawnB()
+[decorate] final void A_TeloSpawnB()
 {
   EntityEx A = Spawn(TelOtherFX3, Origin);
   if (A)
@@ -183,7 +183,7 @@ final void A_TeloSpawnB()
 //
 //==========================================================================
 
-final void A_TeloSpawnC()
+[decorate] final void A_TeloSpawnC()
 {
   EntityEx A = Spawn(TelOtherFX4, Origin);
   if (A)
@@ -201,7 +201,7 @@ final void A_TeloSpawnC()
 //
 //==========================================================================
 
-final void A_TeloSpawnD()
+[decorate] final void A_TeloSpawnD()
 {
   EntityEx A = Spawn(TelOtherFX5, Origin);
   if (A)
@@ -219,7 +219,7 @@ final void A_TeloSpawnD()
 //
 //==========================================================================
 
-final void A_CheckTeleRing()
+[decorate] final void A_CheckTeleRing()
 {
   if (Special1-- <= 0)
   {

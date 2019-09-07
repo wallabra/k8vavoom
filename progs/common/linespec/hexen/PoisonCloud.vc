@@ -102,7 +102,7 @@ void InitCloud(Actor InstigatedBy)
 //
 //===========================================================================
 
-final void A_PoisonBagDamage()
+[decorate] final void A_PoisonBagDamage()
 {
   A_Explode();
 
@@ -116,7 +116,7 @@ final void A_PoisonBagDamage()
 //
 //===========================================================================
 
-final void A_PoisonBagCheck()
+[decorate] final void A_PoisonBagCheck()
 {
   if (!--LifeCount)
   {

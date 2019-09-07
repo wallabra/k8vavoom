@@ -46,7 +46,7 @@ override void OnHitFloor()
 //
 //==========================================================================
 
-final void A_PotteryExplode()
+[decorate] final void A_PotteryExplode()
 {
   EntityEx A;
   int i;

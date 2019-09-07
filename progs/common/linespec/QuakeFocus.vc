@@ -39,7 +39,7 @@ name SoundName;
 //  A_FocusQuake
 //
 //==========================================================================
-final void A_FocusQuake () {
+[decorate] final void A_FocusQuake () {
   float an;
   PlayerEx pl;
   EntityEx victim;
@@ -82,7 +82,7 @@ final void A_FocusQuake () {
 //  A_ContMobjSound
 //
 //==========================================================================
-final void A_ContMobjSound () {
+[decorate] final void A_ContMobjSound () {
   //print("QuakeFocus: SOUND! dur=%s; power=%s", QuakeDuration, Richters);
   if (SoundName) PlaySound(/*'world/quake'*/SoundName, CHAN_VOICE);
 }
@@ -119,9 +119,9 @@ enum /*EQuakeFlags*/ {
 };
 
 /*
-final bool A_QuakeEx (float intensityX, float intensityY, float intensityZ, float ticduration, float damrad, float tremrad,
-                      optional name soundname, optional int flags, optional float mulwavex, optional float mulwavey, optional float mulwavez,
-                      optional int falloff, optional int highpoint, optional float rollIntensity, optional float rollWave)
+[decorate] final bool A_QuakeEx (float intensityX, float intensityY, float intensityZ, float ticduration, float damrad, float tremrad,
+                                 optional name soundname, optional int flags, optional float mulwavex, optional float mulwavey, optional float mulwavez,
+                                 optional int falloff, optional int highpoint, optional float rollIntensity, optional float rollWave)
 */
 
 // quake variables
@@ -150,7 +150,7 @@ float HighPoint;
 //  A_FocusQuake
 //
 //==========================================================================
-final void A_FocusQuakeEx () {
+[decorate] final void A_FocusQuakeEx () {
   float an;
   PlayerEx pl;
   EntityEx victim;
@@ -195,7 +195,7 @@ final void A_FocusQuakeEx () {
 //  A_ContMobjSound
 //
 //==========================================================================
-final void A_ContMobjSound () {
+[decorate] final void A_ContMobjSound () {
   //print("QuakeFocus: SOUND! dur=%s; power=%s", QuakeDuration, Richters);
   if (SoundName) PlaySound(/*'world/quake'*/SoundName, CHAN_VOICE);
 }

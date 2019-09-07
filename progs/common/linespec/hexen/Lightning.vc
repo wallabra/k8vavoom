@@ -128,7 +128,7 @@ override bool Touch(Entity InOther)
 //
 //==========================================================================
 
-final void A_LightningClip()
+[decorate] final void A_LightningClip()
 {
   EntityEx targ;
   int zigZag;
@@ -201,7 +201,7 @@ final void A_LightningClip()
 //
 //==========================================================================
 
-final void A_LightningZap()
+[decorate] final void A_LightningZap()
 {
   LightningZap Zap;
   float deltaZ;
@@ -252,7 +252,7 @@ final void A_LightningZap()
 //
 //==========================================================================
 
-final void A_LightningRemove()
+[decorate] final void A_LightningRemove()
 {
   if (LightningLink)
   {
@@ -267,7 +267,7 @@ final void A_LightningRemove()
 //
 //==========================================================================
 
-final void A_LastZap()
+[decorate] final void A_LastZap()
 {
   EntityEx A = Spawn(LightningZap, Origin);
   if (A)

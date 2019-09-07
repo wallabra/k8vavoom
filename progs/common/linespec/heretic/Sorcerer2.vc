@@ -69,7 +69,7 @@ override void BeginPlay()
 //
 //==========================================================================
 
-final void A_SorRise()
+[decorate] final void A_SorRise()
 {
   PlaySound('dsparil/rise', CHAN_VOICE, 1.0, ATTN_NONE);
 }
@@ -80,7 +80,7 @@ final void A_SorRise()
 //
 //==========================================================================
 
-final void A_SorSightSnd()
+[decorate] final void A_SorSightSnd()
 {
   PlaySound('dsparil/sight', CHAN_VOICE, 1.0, ATTN_NONE);
 }
@@ -148,7 +148,7 @@ final void DSparilTeleport()
 //
 //==========================================================================
 
-final void A_Srcr2Decide()
+[decorate] final void A_Srcr2Decide()
 {
   float chance;
 
@@ -199,7 +199,7 @@ final void A_Srcr2Decide()
 //
 //==========================================================================
 
-final void A_Srcr2Attack()
+[decorate] final void A_Srcr2Attack()
 {
   int chance;
 
@@ -235,7 +235,7 @@ final void A_Srcr2Attack()
 //
 //==========================================================================
 
-final void A_Sor2DthInit()
+[decorate] final void A_Sor2DthInit()
 {
   Special1 = 7; // Animation loop counter
   LineSpecialLevelInfo(Level).P_Massacre(); // Kill monsters early
@@ -247,7 +247,7 @@ final void A_Sor2DthInit()
 //
 //==========================================================================
 
-final void A_SorDSph()
+[decorate] final void A_SorDSph()
 {
   PlaySound('dsparil/scream', CHAN_VOICE, 1.0, ATTN_NONE);
 }
@@ -258,7 +258,7 @@ final void A_SorDSph()
 //
 //==========================================================================
 
-final void A_Sor2DthLoop()
+[decorate] final void A_Sor2DthLoop()
 {
   if (--Special1)
   {
@@ -273,7 +273,7 @@ final void A_Sor2DthLoop()
 //
 //==========================================================================
 
-final void A_SorDExp()
+[decorate] final void A_SorDExp()
 {
   PlaySound('dsparil/explode', CHAN_BODY, 1.0, ATTN_NONE);
 }
@@ -284,7 +284,7 @@ final void A_SorDExp()
 //
 //==========================================================================
 
-final void A_SorDBon()
+[decorate] final void A_SorDBon()
 {
   PlaySound('dsparil/bones', CHAN_BODY, 1.0, ATTN_NONE);
 }

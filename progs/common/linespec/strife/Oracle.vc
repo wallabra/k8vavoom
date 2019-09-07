@@ -34,7 +34,7 @@ class Oracle : Actor
 //
 //==========================================================================
 
-final void A_OracleDeath()
+[decorate] final void A_OracleDeath()
 {
   Actor A;
 

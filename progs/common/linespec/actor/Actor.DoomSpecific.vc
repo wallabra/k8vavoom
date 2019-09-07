@@ -41,7 +41,7 @@ enum /*EBFGSprayFlags*/ {
 //  Cyberdemon move with hoof sound.
 //
 //==========================================================================
-final void A_Hoof () {
+[decorate] final void A_Hoof () {
   PlaySound('cyber/hoof', CHAN_BODY);
   A_Chase();
 }
@@ -54,7 +54,7 @@ final void A_Hoof () {
 //  Cyberdemon move with metal sound.
 //
 //==========================================================================
-final void A_Metal () {
+[decorate] final void A_Metal () {
   PlaySound('spider/walk', CHAN_BODY);
   A_Chase();
 }
@@ -67,7 +67,7 @@ final void A_Metal () {
 //  Arachnotron move with metal sound.
 //
 //==========================================================================
-final void A_BabyMetal () {
+[decorate] final void A_BabyMetal () {
   PlaySound('baby/walk', CHAN_BODY);
   A_Chase();
 }
@@ -80,7 +80,7 @@ final void A_BabyMetal () {
 //  Mancubus attack sound.
 //
 //==========================================================================
-final void A_FatRaise () {
+[decorate] final void A_FatRaise () {
   A_FaceTarget();
   PlaySound('fatso/raiseguns', CHAN_WEAPON);
 }
@@ -93,7 +93,7 @@ final void A_FatRaise () {
 //  Ravenant attack sound.
 //
 //==========================================================================
-final void A_SkelWhoosh () {
+[decorate] final void A_SkelWhoosh () {
   if (!Target) return;
 
   A_FaceTarget();
@@ -108,7 +108,7 @@ final void A_SkelWhoosh () {
 //  Make fire start sound.
 //
 //==========================================================================
-final void A_StartFire () {
+[decorate] final void A_StartFire () {
   PlaySound('vile/firestrt', CHAN_VOICE);
   A_Fire();
 }
@@ -121,7 +121,7 @@ final void A_StartFire () {
 //  Fire sound.
 //
 //==========================================================================
-final void A_FireCrackle () {
+[decorate] final void A_FireCrackle () {
   PlaySound('vile/firecrkl', CHAN_VOICE);
   A_Fire();
 }
@@ -134,7 +134,7 @@ final void A_FireCrackle () {
 //  Spawn a BFG explosion on every monster in view
 //
 //===========================================================================
-final void A_BFGSpray () {
+[decorate] final void A_BFGSpray () {
   decorate_A_BFGSpray();
 }
 
@@ -146,7 +146,7 @@ final void A_BFGSpray () {
 //  Spawn a BFG explosion on every monster in view
 //
 //===========================================================================
-final void decorate_A_BFGSpray (optional class!EntityEx FlashType,
+[decorate] final void decorate_A_BFGSpray (optional class!EntityEx FlashType,
                                 optional int NumRays, optional int DamageAmount,
                                 optional float fov, optional float Distance,
                                 optional float vaimrange/*notyet*/, optional int explicitDamage,

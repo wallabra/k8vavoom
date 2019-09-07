@@ -77,7 +77,7 @@ override bool Use(bool Pickup)
 //
 //==========================================================================
 
-final void A_SummonRebel()
+[decorate] final void A_SummonRebel()
 {
   EntityEx  A;
 

@@ -47,7 +47,7 @@ override int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
 //
 //==========================================================================
 
-final void A_Burnination()
+[decorate] final void A_Burnination()
 {
   float xofs;
   float yofs;

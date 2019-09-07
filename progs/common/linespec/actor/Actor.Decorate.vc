@@ -154,8 +154,8 @@ enum /*EFSkillProperty*/ {
 //  A_k8ConLog
 //
 //==========================================================================
-final void decorate_A_k8ConLog (string msg) {
-  if (msg) print("DECORATE LOG: %s", msg);
+[decorate] final void decorate_A_k8ConLog (string msg) {
+  if (msg) printdebug("DECORATE LOG: %s", msg);
 }
 
 
@@ -164,7 +164,7 @@ final void decorate_A_k8ConLog (string msg) {
 //  A_RetDoJump
 //
 //==========================================================================
-final void decorate_A_RetDoJump (state State) {
+[decorate] final void decorate_A_RetDoJump (state State) {
   // state jumps should not affect state chain results
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
        if (XLevel.StateCall) XLevel.StateCall->State = State;
@@ -180,7 +180,7 @@ final void decorate_A_RetDoJump (state State) {
 //  decorate_GetArg
 //
 //==========================================================================
-final int decorate_GetArg (int n) {
+[decorate] final int decorate_GetArg (int n) {
   return (n >= 0 && n < 5 ? Args[n] : 0);
 }
 
@@ -190,7 +190,7 @@ final int decorate_GetArg (int n) {
 //  A_SetArg
 //
 //==========================================================================
-final void A_SetArg (int n, int v) {
+[decorate] final void A_SetArg (int n, int v) {
   if (n >= 0 && n < 5) Args[n] = v;
 }
 
@@ -200,7 +200,7 @@ final void A_SetArg (int n, int v) {
 //  A_SetAngle
 //
 //==========================================================================
-final void A_SetAngle (float newyaw, optional int flags, optional int aptr) {
+[decorate] final void A_SetAngle (float newyaw, optional int flags, optional int aptr) {
   Entity tgt = DecorDoAAPtr('A_SetAngle', aptr!optional);
   if (!tgt) return;
   tgt.Angles.yaw = AngleMod360(newyaw);
@@ -212,7 +212,7 @@ final void A_SetAngle (float newyaw, optional int flags, optional int aptr) {
 //  A_Turn
 //
 //==========================================================================
-final void A_Turn (float yawdelta) {
+[decorate] final void A_Turn (float yawdelta) {
   Angles.yaw = AngleMod360(Angles.yaw+yawdelta);
 }
 
@@ -222,7 +222,7 @@ final void A_Turn (float yawdelta) {
 //  A_SetSpeed
 //
 //==========================================================================
-final void A_SetSpeed (float speed, optional int aptr) {
+[decorate] final void A_SetSpeed (float speed, optional int aptr) {
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_SetSpeed', aptr!optional));
   if (!tgt) return;
   tgt.Speed = fmax(0, speed)*35.0;
@@ -234,7 +234,7 @@ final void A_SetSpeed (float speed, optional int aptr) {
 //  A_SetFloatSpeed
 //
 //==========================================================================
-final void A_SetFloatSpeed (float speed, optional int aptr) {
+[decorate] final void A_SetFloatSpeed (float speed, optional int aptr) {
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_SetFloatSpeed', aptr!optional));
   if (!tgt) return;
   tgt.FloatSpeed = fmax(0, speed)*35.0;
@@ -246,7 +246,7 @@ final void A_SetFloatSpeed (float speed, optional int aptr) {
 //  A_SetRenderStyle
 //
 //==========================================================================
-final void A_SetRenderStyle (float alpha, int style) {
+[decorate] final void A_SetRenderStyle (float alpha, int style) {
   Alpha = fclamp(alpha, 0.0, 1.0);
   RenderStyle = style;
 }
@@ -257,7 +257,7 @@ final void A_SetRenderStyle (float alpha, int style) {
 //  A_SetMass
 //
 //==========================================================================
-final void A_SetMass (float newmass) {
+[decorate] final void A_SetMass (float newmass) {
   if (newmass.isfinite) Mass = newmass;
 }
 
@@ -293,7 +293,7 @@ private final float clampPitch (float newpitch) {
 //  should be always clamped on player
 //
 //==========================================================================
-final void A_SetPitch (float newpitch, optional int flags, optional int aptr) {
+[decorate] final void A_SetPitch (float newpitch, optional int flags, optional int aptr) {
   Entity tgt = DecorDoAAPtr('A_SetPitch', aptr!optional);
   if (!tgt) return;
   if (tgt.bIsPlayer || (flags&0x01) != 0) newpitch = clampPitch(newpitch);
@@ -306,7 +306,7 @@ final void A_SetPitch (float newpitch, optional int flags, optional int aptr) {
 //  A_SetRoll
 //
 //==========================================================================
-final void A_SetRoll (float newroll, optional int flags, optional int aptr) {
+[decorate] final void A_SetRoll (float newroll, optional int flags, optional int aptr) {
   Entity tgt = DecorDoAAPtr('A_SetRoll', aptr!optional);
   if (!tgt) return;
   tgt.Angles.roll = AngleMod360(newroll);
@@ -379,7 +379,7 @@ final int ACS_NamedExecuteWithResult (string script, optional int s_arg1, option
 //  decorate_CountInv
 //
 //==========================================================================
-final int decorate_CountInv (name ItemName, optional int aptr) {
+[decorate] final int decorate_CountInv (name ItemName, optional int aptr) {
   Entity tgt = DecorDoAAPtr('decorate_CountInv', aptr!optional);
   if (!tgt) return 0;
   return tgt.CheckInventory(ItemName, allowReplacement:false); //k8: is it?
@@ -391,7 +391,7 @@ final int decorate_CountInv (name ItemName, optional int aptr) {
 //  decorate_G_SkillPropertyInt
 //
 //==========================================================================
-final int decorate_G_SkillPropertyInt (int prop) {
+[decorate] final int decorate_G_SkillPropertyInt (int prop) {
   switch (prop) {
     case SKILLP_FastMonsters: return Level.World.bSkillFastMonsters;
     case SKILLP_Respawn: printwarn("G_SkillPropertyInt: respawn time is not implemented!"); return 0;
@@ -416,7 +416,7 @@ final int decorate_G_SkillPropertyInt (int prop) {
 //  decorate_G_SkillPropertyFloat
 //
 //==========================================================================
-final float decorate_G_SkillPropertyFloat (int prop) {
+[decorate] final float decorate_G_SkillPropertyFloat (int prop) {
   switch (prop) {
     case SKILLP_AmmoFactor: return Level.World.GetAmmoFactor();
     case SKILLP_DropAmmoFactor: return 1.0;
@@ -438,7 +438,7 @@ final float decorate_G_SkillPropertyFloat (int prop) {
 //
 //==========================================================================
 //[float x[, float y[, float angle[, int flags[, int pick_pointer]]]]]
-final float decorate_GetZAt (optional float x, optional float y, optional float angle, optional int flags, optional int aptr) {
+[decorate] final float decorate_GetZAt (optional float x, optional float y, optional float angle, optional int flags, optional int aptr) {
   EntityEx tgt = EntityEx(DecorDoAAPtr('decorate_GetZAt', aptr!optional));
   if (!tgt) return (flags&GZF_CEILING ? CeilingZ : FloorZ);
 
@@ -485,7 +485,7 @@ final float decorate_GetZAt (optional float x, optional float y, optional float 
 //
 //==========================================================================
 //float GetDistance (bool checkz [, int ptr_select])
-final float decorate_GetDistance (bool checkz, optional int aptr) {
+[decorate] final float decorate_GetDistance (bool checkz, optional int aptr) {
   Entity tgt = DecorDoAAPtr('decorate_GetDistance', aptr!optional);
   if (!tgt) return 0;
   if (tgt == self) return 0;
@@ -499,7 +499,7 @@ final float decorate_GetDistance (bool checkz, optional int aptr) {
 //
 //==========================================================================
 //float GetAngle (int flags[, int ptr_select])
-final float decorate_GetAngle (optional int flags, optional int aptr) {
+[decorate] final float decorate_GetAngle (optional int flags, optional int aptr) {
   if (!specified_aptr || aptr == AAPTR_DEFAULT) aptr = AAPTR_TARGET;
   Entity tgt = DecorDoAAPtr('decorate_GetAngle', aptr);
   if (!tgt) return 0;
@@ -520,7 +520,7 @@ final float decorate_GetAngle (optional int flags, optional int aptr) {
 //  decorate_IsPointerEqual
 //
 //==========================================================================
-final bool decorate_IsPointerEqual (optional int aptr0, optional int aptr1) {
+[decorate] final bool decorate_IsPointerEqual (optional int aptr0, optional int aptr1) {
   Entity e0 = DecorDoAAPtr('IsPointerEqual', aptr0);
   Entity e1 = DecorDoAAPtr('IsPointerEqual', aptr1);
   return (e0 == e1);
@@ -532,7 +532,7 @@ final bool decorate_IsPointerEqual (optional int aptr0, optional int aptr1) {
 //  A_SpawnProjectile
 //
 //==========================================================================
-final void A_SpawnProjectile (name MissileTypeName, optional float SpawnHeight, optional float SpawnXYOffset,
+[decorate] final void A_SpawnProjectile (name MissileTypeName, optional float SpawnHeight, optional float SpawnXYOffset,
                               optional float Angle, optional int AimMode, optional float Pitch, optional int aptr)
 {
   if (!MissileTypeName) return;
@@ -596,7 +596,7 @@ final void A_SpawnProjectile (name MissileTypeName, optional float SpawnHeight, 
 //  A_Quake
 //
 //===========================================================================
-final bool A_Quake (float intensity, float ticduration, float damrad, float tremrad, optional name soundname) {
+[decorate] final bool A_Quake (float intensity, float ticduration, float damrad, float tremrad, optional name soundname) {
   if (ticduration < 1) return false;
   if (damrad < 1 && tremrad < 1) return false;
   damrad = fmax(0, damrad);
@@ -624,7 +624,7 @@ final bool A_Quake (float intensity, float ticduration, float damrad, float trem
 //  radii are in map units
 //
 //===========================================================================
-final bool A_QuakeEx (float intensityX, float intensityY, float intensityZ, float ticduration, float damrad, float tremrad,
+[decorate] final bool A_QuakeEx (float intensityX, float intensityY, float intensityZ, float ticduration, float damrad, float tremrad,
                       optional name soundname, optional int flags, optional float mulwavex, optional float mulwavey, optional float mulwavez,
                       optional int falloff, optional int highpoint, optional float rollIntensity, optional float rollWave)
 {
@@ -659,7 +659,7 @@ final bool A_QuakeEx (float intensityX, float intensityY, float intensityZ, floa
 //  decorate_A_CheckFlag
 //
 //==========================================================================
-final void decorate_A_CheckFlag (string flagname, state label, optional int aptr) {
+[decorate] final void decorate_A_CheckFlag (string flagname, state label, optional int aptr) {
   // state jumps should not affect state chain results
   //print("A_CheckFlag: name=<%s>; label=<%s>; aptr=%s", flagname, label, aptr);
   // state jumps should not affect state chain results
@@ -678,7 +678,7 @@ final void decorate_A_CheckFlag (string flagname, state label, optional int aptr
 //
 //==========================================================================
 /*
-final void decorate_A_ChangeFlag (string flagname, int value) {
+[decorate] final void decorate_A_ChangeFlag (string flagname, int value) {
   //decoDoFlagAction(flagname, self, !!value);
   print("A_ChangeFlag: name=<%s>; value=%s", flagname, value);
   //print("  nopain0=%s", bNoPain);
@@ -734,7 +734,7 @@ final void doDamageSomething (EntityEx dest, int amount, name damagetype, int fl
 //  decorate_A_DamageSelf
 //
 //==========================================================================
-final void decorate_A_DamageSelf (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
+[decorate] final void decorate_A_DamageSelf (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
   doDamageSomething(self, amount, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
 }
 
@@ -744,7 +744,7 @@ final void decorate_A_DamageSelf (int amount, optional name damagetype, optional
 //  decorate_A_DamageTarget
 //
 //==========================================================================
-final void decorate_A_DamageTarget (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
+[decorate] final void decorate_A_DamageTarget (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
   doDamageSomething(Target, amount, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
 }
 
@@ -754,7 +754,7 @@ final void decorate_A_DamageTarget (int amount, optional name damagetype, option
 //  decorate_A_DamageMaster
 //
 //==========================================================================
-final void decorate_A_DamageMaster (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
+[decorate] final void decorate_A_DamageMaster (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
   doDamageSomething(Master, amount, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
 }
 
@@ -764,7 +764,7 @@ final void decorate_A_DamageMaster (int amount, optional name damagetype, option
 //  decorate_A_DamageTracer
 //
 //==========================================================================
-final void decorate_A_DamageTracer (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
+[decorate] final void decorate_A_DamageTracer (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
   doDamageSomething(Tracer, amount, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
 }
 
@@ -774,7 +774,7 @@ final void decorate_A_DamageTracer (int amount, optional name damagetype, option
 //  decorate_A_DamageChildren
 //
 //==========================================================================
-final void decorate_A_DamageChildren (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
+[decorate] final void decorate_A_DamageChildren (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
   Actor A;
   foreach AllThinkers(Actor, A) {
     if (A.Master != self) continue;
@@ -788,7 +788,7 @@ final void decorate_A_DamageChildren (int amount, optional name damagetype, opti
 //  decorate_A_DamageSiblings
 //
 //==========================================================================
-final void decorate_A_DamageSiblings (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
+[decorate] final void decorate_A_DamageSiblings (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
   EntityEx mainMaster = Master;
   if (!mainMaster) return;
   Actor A;
@@ -805,7 +805,7 @@ final void decorate_A_DamageSiblings (int amount, optional name damagetype, opti
 //  decorate_A_SetTics
 //
 //==========================================================================
-final void decorate_A_SetTics (int tics) {
+[decorate] final void decorate_A_SetTics (int tics) {
   tics = max(tics, 0);
   StateTime = float(tics)/35.0;
 }
@@ -816,7 +816,7 @@ final void decorate_A_SetTics (int tics) {
 //  decorate_A_CheckFloorTextureGlob
 //
 //==========================================================================
-final void decorate_A_CheckFloorTextureGlob (string txname, state label, optional int aptr, optional bool dumpTexture) {
+[decorate] final void decorate_A_CheckFloorTextureGlob (string txname, state label, optional int aptr, optional bool dumpTexture) {
   // state jumps should not affect state chain results
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_CheckFloorTexture', aptr!optional));
@@ -834,7 +834,7 @@ final void decorate_A_CheckFloorTextureGlob (string txname, state label, optiona
 //  A_DropItem
 //
 //==========================================================================
-final void A_DropItem (name item, optional int dropamount, optional int chance) {
+[decorate] final void A_DropItem (name item, optional int dropamount, optional int chance) {
   if (!item) return;
 
   float dropChance = 1;
@@ -891,7 +891,7 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
 //  A_RemoveMaster
 //
 //==========================================================================
-final void A_RemoveMaster (optional int flags, optional name filter, optional name species) {
+[decorate] final void A_RemoveMaster (optional int flags, optional name filter, optional name species) {
   if (doRemoveSomethingCheck(Master, flags, filter!optional, species!optional)) delete Master;
 }
 
@@ -901,7 +901,7 @@ final void A_RemoveMaster (optional int flags, optional name filter, optional na
 //  A_RemoveTarget
 //
 //==========================================================================
-final void A_RemoveTarget (optional int flags, optional name filter, optional name species) {
+[decorate] final void A_RemoveTarget (optional int flags, optional name filter, optional name species) {
   if (doRemoveSomethingCheck(Target, flags, filter!optional, species!optional)) delete Target;
 }
 
@@ -911,7 +911,7 @@ final void A_RemoveTarget (optional int flags, optional name filter, optional na
 //  A_RemoveTracer
 //
 //==========================================================================
-final void A_RemoveTracer (optional int flags, optional name filter, optional name species) {
+[decorate] final void A_RemoveTracer (optional int flags, optional name filter, optional name species) {
   if (doRemoveSomethingCheck(Tracer, flags, filter!optional, species!optional)) delete Tracer;
 }
 
@@ -921,7 +921,7 @@ final void A_RemoveTracer (optional int flags, optional name filter, optional na
 //  A_RemoveChildren
 //
 //==========================================================================
-final void A_RemoveChildren (optional bool all, optional int flags, optional name filter, optional name species) {
+[decorate] final void A_RemoveChildren (optional bool all, optional int flags, optional name filter, optional name species) {
   Actor A;
   foreach AllThinkers(Actor, A) {
     if (A.Master != self) continue;
@@ -937,7 +937,7 @@ final void A_RemoveChildren (optional bool all, optional int flags, optional nam
 //  A_RemoveSiblings
 //
 //==========================================================================
-final void A_RemoveSiblings (optional bool all, optional int flags, optional name filter, optional name species) {
+[decorate] final void A_RemoveSiblings (optional bool all, optional int flags, optional name filter, optional name species) {
   EntityEx mainMaster = Master;
   if (!mainMaster) return;
   Actor A;
@@ -956,7 +956,7 @@ final void A_RemoveSiblings (optional bool all, optional int flags, optional nam
 //  A_RadiusGive
 //
 //==========================================================================
-final int A_RadiusGive (name itemname, float distance, int flags, optional int amount, optional name filter, optional name species, optional float mindist, optional int limit) {
+[decorate] final int A_RadiusGive (name itemname, float distance, int flags, optional int amount, optional name filter, optional name species, optional float mindist, optional int limit) {
   if (!specified_limit) limit = int.max;
   if (limit < 1) return 0;
 
@@ -1063,7 +1063,7 @@ final int A_RadiusGive (name itemname, float distance, int flags, optional int a
 //  decorate_CheckClass
 //
 //==========================================================================
-final bool decorate_CheckClass (name classname, optional int ptr_select, optional bool match_superclass) {
+[decorate] final bool decorate_CheckClass (name classname, optional int ptr_select, optional bool match_superclass) {
   Entity tgt = DecorDoAAPtr('decorate_CheckClass', ptr_select!optional);
   if (!tgt) return false;
   if (!classname) return false;
@@ -1084,7 +1084,7 @@ final bool decorate_CheckClass (name classname, optional int ptr_select, optiona
 //  don't include self
 //
 //==========================================================================
-final void A_JumpIfRadiusAmountGreater (float radius, int amount, class!Actor checkClass, state label, optional bool exact) {
+[decorate] final void A_JumpIfRadiusAmountGreater (float radius, int amount, class!Actor checkClass, state label, optional bool exact) {
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
 
   if (radius < 0) return;
@@ -1124,7 +1124,7 @@ final void A_JumpIfRadiusAmountGreater (float radius, int amount, class!Actor ch
 //  A_SpawnParticle
 //
 //==========================================================================
-final void A_SpawnParticle (int color1, optional int flags, optional int lifetime,
+[decorate] final void A_SpawnParticle (int color1, optional int flags, optional int lifetime,
                             optional float size, optional float angle,
                             optional float xoff, optional float yoff, optional float zoff,
                             optional float velx, optional float vely, optional float velz,
@@ -1163,7 +1163,7 @@ final void A_SpawnParticle (int color1, optional int flags, optional int lifetim
 //  A_JumpIfHigherOrLower
 //
 //==========================================================================
-final state A_JumpIfHigherOrLower (state high, state low, optional float offsethigh,
+[decorate] final state A_JumpIfHigherOrLower (state high, state low, optional float offsethigh,
                                    optional float offsetlow, optional bool includeHeight,
                                    optional int aptr)
 {
@@ -1194,7 +1194,7 @@ final state A_JumpIfHigherOrLower (state high, state low, optional float offseth
 //  A_FaceMovementDirection
 //
 //==========================================================================
-final bool A_FaceMovementDirection (optional float offset, optional float anglelimit,
+[decorate] final bool A_FaceMovementDirection (optional float offset, optional float anglelimit,
                                     optional float pitchlimit, optional int flags,
                                     optional int aptr)
 {
@@ -1250,7 +1250,7 @@ final bool A_FaceMovementDirection (optional float offset, optional float anglel
 //  A_Warp
 //
 //==========================================================================
-final bool A_Warp (int aptr, optional float xofs, optional float yofs, optional float zofs,
+[decorate] final bool A_Warp (int aptr, optional float xofs, optional float yofs, optional float zofs,
                     optional float angle, optional int flags, optional state success_state,
                     optional float heightoffset, optional float radiusoffset, optional float pitch)
 {
@@ -1403,7 +1403,7 @@ enum /*ELOFFlags*/ {
 //  A_CheckLOF
 //
 //==========================================================================
-final state A_CheckLOF (optional state jump, optional int flags, optional float range,
+[decorate] final state A_CheckLOF (optional state jump, optional int flags, optional float range,
                         optional float minrange, optional float angle, optional float pitch,
                         optional float offsetheight, optional float offsetwidth,
                         optional int ptr_target, optional float offsetforward)
@@ -1543,7 +1543,7 @@ final state A_CheckLOF (optional state jump, optional int flags, optional float 
 //  A_k8MoveBy
 //
 //==========================================================================
-final void A_k8MoveBy (optional float dx, optional float dy, optional float dz) {
+[decorate] final void A_k8MoveBy (optional float dx, optional float dy, optional float dz) {
   if (!dx.isfinite || !dy.isfinite || !dz.isfinite) return;
   // so link the thing into its new position
   if (dx || dy) UnlinkFromWorld();
@@ -1560,7 +1560,7 @@ final void A_k8MoveBy (optional float dx, optional float dy, optional float dz) 
 //  A_k8MoveTo
 //
 //==========================================================================
-final void A_k8MoveTo (optional float nx, optional float ny, optional float nz) {
+[decorate] final void A_k8MoveTo (optional float nx, optional float ny, optional float nz) {
   if (!nx.isfinite || !ny.isfinite || !nz.isfinite) return;
   // so link the thing into its new position
   if (specified_nx || specified_ny) UnlinkFromWorld();
@@ -1608,7 +1608,7 @@ final bool common_k8JumpIfLiquidFloor (EntityEx tgt, state label) {
 //  A_k8JumpIfLiquidFloor
 //
 //==========================================================================
-final bool A_k8JumpIfLiquidFloor (state label, optional int aptr) {
+[decorate] final bool A_k8JumpIfLiquidFloor (state label, optional int aptr) {
   // state jumps should not affect state chain results
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_k8JumpIfLiquidFloor', aptr!optional));
   return common_k8JumpIfLiquidFloor(tgt, label);
@@ -1620,7 +1620,7 @@ final bool A_k8JumpIfLiquidFloor (state label, optional int aptr) {
 //  A_k8JumpIfOnLiquidFloor
 //
 //==========================================================================
-final bool A_k8JumpIfOnLiquidFloor (state label, optional int aptr) {
+[decorate] final bool A_k8JumpIfOnLiquidFloor (state label, optional int aptr) {
   // state jumps should not affect state chain results
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_k8JumpIfOnLiquidFloor', aptr!optional));
@@ -1636,7 +1636,7 @@ final bool A_k8JumpIfOnLiquidFloor (state label, optional int aptr) {
 //  A_k8JumpIfOnFloorSky
 //
 //==========================================================================
-final bool A_k8JumpIfOnFloorSky (state label, optional int aptr) {
+[decorate] final bool A_k8JumpIfOnFloorSky (state label, optional int aptr) {
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_k8JumpIfSkyFloor', aptr!optional));
   // state jumps should not affect state chain results
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
@@ -1657,7 +1657,7 @@ final bool A_k8JumpIfOnFloorSky (state label, optional int aptr) {
 //  A_k8JumpIfFloorSky
 //
 //==========================================================================
-final bool A_k8JumpIfFloorSky (state label, optional int aptr) {
+[decorate] final bool A_k8JumpIfFloorSky (state label, optional int aptr) {
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_k8JumpIfSkyFloor', aptr!optional));
   // state jumps should not affect state chain results
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
@@ -1677,7 +1677,7 @@ final bool A_k8JumpIfFloorSky (state label, optional int aptr) {
 //  A_k8JumpIfCeilingSky
 //
 //==========================================================================
-final bool A_k8JumpIfCeilingSky (state label, optional int aptr) {
+[decorate] final bool A_k8JumpIfCeilingSky (state label, optional int aptr) {
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_k8JumpIfSkyFloor', aptr!optional));
   // state jumps should not affect state chain results
   if (XLevel.StateCall) XLevel.StateCall->Result = false;

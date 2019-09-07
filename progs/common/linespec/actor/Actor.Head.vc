@@ -64,7 +64,7 @@ override void Destroyed () {
 //  A_Log
 //
 //===========================================================================
-final void A_Log (string text) {
+[decorate] final void A_Log (string text) {
   print("<------------------------------->");
   print("%s", text);
   print("<------------------------------->");
@@ -76,7 +76,7 @@ final void A_Log (string text) {
 //  A_LogInt
 //
 //===========================================================================
-final void A_LogInt (int num) {
+[decorate] final void A_LogInt (int num) {
   print("<------------------------------->");
   print("%i", num);
   print("<------------------------------->");
@@ -88,7 +88,7 @@ final void A_LogInt (int num) {
 //  A_ChangeVelocity
 //
 //===========================================================================
-final void A_ChangeVelocity (float x, optional float y, optional float z, optional int flags, optional int aptr) {
+[decorate] final void A_ChangeVelocity (float x, optional float y, optional float z, optional int flags, optional int aptr) {
   Entity tgt = DecorDoAAPtr('A_ChangeVelocity', aptr!optional);
   if (!tgt) return;
 
@@ -120,7 +120,7 @@ final void A_ChangeVelocity (float x, optional float y, optional float z, option
 //  A_ScaleVelocity
 //
 //===========================================================================
-final void A_ScaleVelocity (float scale, optional int aptr) {
+[decorate] final void A_ScaleVelocity (float scale, optional int aptr) {
   Entity tgt = DecorDoAAPtr('A_ScaleVelocity', aptr!optional);
   if (!tgt) return;
   tgt.Velocity.x *= scale;
@@ -134,7 +134,7 @@ final void A_ScaleVelocity (float scale, optional int aptr) {
 //  A_SetGravity
 //
 //===========================================================================
-final void A_SetGravity (float Grav) {
+[decorate] final void A_SetGravity (float Grav) {
   Gravity = fclamp(Grav, 0, 1);
 }
 
@@ -144,7 +144,7 @@ final void A_SetGravity (float Grav) {
 //  A_Respawn
 //
 //===========================================================================
-final void A_Respawn (optional int Flags) {
+[decorate] final void A_Respawn (optional int Flags) {
   TVec Org;
   bool OK = false;
   Org.x = SpawnPoint.x;
@@ -192,7 +192,7 @@ final void A_Respawn (optional int Flags) {
 //  A_Feathers
 //
 //==========================================================================
-final void A_Feathers () {
+[decorate] final void A_Feathers () {
   int count;
 
   if (Health > 0) {
@@ -219,7 +219,7 @@ final void A_Feathers () {
 //  A_ShootGun
 //
 //==========================================================================
-final void A_ShootGun () {
+[decorate] final void A_ShootGun () {
   TVec dir;
 
   if (!Target) return;
@@ -238,7 +238,7 @@ final void A_ShootGun () {
 //  A_RocketInFlight
 //
 //==========================================================================
-final void A_RocketInFlight () {
+[decorate] final void A_RocketInFlight () {
   PlaySound('misc/missileinflight', CHAN_VOICE);
   SpawnPuff(Origin, MISSILERANGE, MiniMissilePuff, false);
   EntityEx A = Spawn(RocketTrail, Origin-Velocity/35.0);
@@ -251,7 +251,7 @@ final void A_RocketInFlight () {
 //  A_Bang4Cloud
 //
 //==========================================================================
-final void A_Bang4Cloud () {
+[decorate] final void A_Bang4Cloud () {
   Spawn(Bang4Cloud, Origin+vector((Random()-Random())*5.0/8.0, (Random()-Random())*5.0/8.0, 0.0));
 }
 
@@ -261,7 +261,7 @@ final void A_Bang4Cloud () {
 //  A_DropFire
 //
 //==========================================================================
-final void A_DropFire () {
+[decorate] final void A_DropFire () {
   Actor A = SpawnEntityChecked(class!Actor, FireDroplet, Origin+vector(0.0, 0.0, 24.0));
   if (A) {
     A.Velocity.z = -35.0;
@@ -275,7 +275,7 @@ final void A_DropFire () {
 //  decorate_A_GiveQuestItem
 //
 //==========================================================================
-final void decorate_A_GiveQuestItem (int QuestType) {
+[decorate] final void decorate_A_GiveQuestItem (int QuestType) {
   // this function does a lot more than just this
   if (DeathSound) {
     PlaySound(DeathSound, CHAN_VOICE);
@@ -297,7 +297,7 @@ final void decorate_A_GiveQuestItem (int QuestType) {
 //  A_RemoveForceField
 //
 //==========================================================================
-final void A_RemoveForceField () {
+[decorate] final void A_RemoveForceField () {
   bSpecial = false;
   foreach (auto i; 0..Sector.lines.length) {
     line_t *line = Sector->lines[i];
@@ -316,7 +316,7 @@ final void A_RemoveForceField () {
 //  A_PigPain
 //
 //==========================================================================
-final void A_PigPain () {
+[decorate] final void A_PigPain () {
   A_Pain();
   if (Origin.z <= FloorZ) Velocity.z = 3.5*35.0;
 }
@@ -327,7 +327,7 @@ final void A_PigPain () {
 //  A_ClassBossHealth
 //
 //============================================================================
-final void A_ClassBossHealth () {
+[decorate] final void A_ClassBossHealth () {
   if (Level.Game.netgame && !Level.Game.deathmatch) {
     // co-op only
     if (!Special1) {
@@ -359,7 +359,7 @@ void A_PreExplode (int Style, float A) {
 //  This is only a stub method
 //
 //============================================================================
-final void A_BarrelDestroy () {
+[decorate] final void A_BarrelDestroy () {
   // In ZDoom this method is used to preserve barrels because of
   // deathmatch flags... here the only relevant function for it
   // would be to make things invisible.
@@ -391,7 +391,7 @@ final void A_BarrelDestroy () {
 //  This is only a stub method
 //
 //============================================================================
-final void A_PlayerSkinCheck (state label) {
+[decorate] final void A_PlayerSkinCheck (state label) {
   // Vavoom doesn't support skins as of now...
   // but there are some MODs that use this method
   return;
@@ -403,7 +403,7 @@ final void A_PlayerSkinCheck (state label) {
 //  A_BeShadowyFoe
 //
 //==========================================================================
-final void A_BeShadowyFoe () {
+[decorate] final void A_BeShadowyFoe () {
   RenderStyle = STYLE_Translucent;
   Alpha = 0.333;
   bFriendly = false;
@@ -415,7 +415,7 @@ final void A_BeShadowyFoe () {
 //  A_FreeTargMobj
 //
 //==========================================================================
-final void A_FreeTargMobj () {
+[decorate] final void A_FreeTargMobj () {
   Velocity = vector(0.0, 0.0, 0.0);
   Origin.z = CeilingZ+4.0;
   bIntrJustMoved = false; // disable interpolation
@@ -444,7 +444,7 @@ final void A_FreeTargMobj () {
 //  A_ExecActionSpecial
 //
 //==========================================================================
-final int A_ExecActionSpecial (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Special) {
+[decorate] final int A_ExecActionSpecial (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Special) {
   return Level.ExecuteActionSpecial(Special, Arg1, Arg2, Arg3, Arg4, Arg5, nullptr, 0, self);
 }
 
@@ -454,7 +454,7 @@ final int A_ExecActionSpecial (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
 //  A_GiveQuestItem
 //
 //==========================================================================
-final void A_GiveQuestItem () {
+[decorate] final void A_GiveQuestItem () {
   decorate_A_GiveQuestItem(int(Speed/35.0));
 }
 
@@ -464,7 +464,7 @@ final void A_GiveQuestItem () {
 //  A_ItBurnsItBurns
 //
 //==========================================================================
-final void A_ItBurnsItBurns () {
+[decorate] final void A_ItBurnsItBurns () {
   DeathSound = 'human/imonfire';
   A_Scream();
   if (bIsPlayer) {
@@ -485,7 +485,7 @@ final void A_ItBurnsItBurns () {
 //  A_SetRoll
 //
 //==========================================================================
-final void A_SetRollExt (float newa) {
+[decorate] final void A_SetRollExt (float newa) {
   Angles.roll = /*AngleMod360*/(newa);
 }
 
@@ -495,7 +495,7 @@ final void A_SetRollExt (float newa) {
 //  A_SetYaw
 //
 //==========================================================================
-final void A_SetYawExt (float newa) {
+[decorate] final void A_SetYawExt (float newa) {
   Angles.yaw = /*AngleMod360*/(newa);
 }
 
@@ -505,7 +505,7 @@ final void A_SetYawExt (float newa) {
 //  A_SetPitchExt
 //
 //==========================================================================
-final void A_SetPitchExt (float newa) {
+[decorate] final void A_SetPitchExt (float newa) {
   Angles.pitch = /*AngleMod360*/(newa);
 }
 
@@ -523,7 +523,7 @@ final void A_SetPitchExt (float newa) {
 //           passed to scaleX, otherwise if it is true, the value of scaleY
 //           is used, instead. Default is false.
 //==========================================================================
-final void A_SetScale (float scaleX, optional float scaleY, optional int aptr, optional bool usezero) {
+[decorate] final void A_SetScale (float scaleX, optional float scaleY, optional int aptr, optional bool usezero) {
   Entity tgt = DecorDoAAPtr('A_SetScale', aptr!optional);
   if (!tgt) return;
   tgt.ScaleX = scaleX;
@@ -536,7 +536,7 @@ final void A_SetScale (float scaleX, optional float scaleY, optional int aptr, o
 //  A_SetSize
 //
 //==========================================================================
-final bool A_SetSize (optional float newradius, optional float newheight, optional bool testpos) {
+[decorate] final bool A_SetSize (optional float newradius, optional float newheight, optional bool testpos) {
   auto oldRadius = Radius;
   auto oldHeight = Height;
   if (specified_newradius && newradius >= 0) Radius = newradius;
@@ -554,7 +554,7 @@ final bool A_SetSize (optional float newradius, optional float newheight, option
 //  A_SetScaleXExt
 //
 //==========================================================================
-final void A_SetScaleXExt (float scale) {
+[decorate] final void A_SetScaleXExt (float scale) {
   ScaleX = scale;
 }
 
@@ -564,7 +564,7 @@ final void A_SetScaleXExt (float scale) {
 //  A_SetScaleYExt
 //
 //==========================================================================
-final void A_SetScaleYExt (float scale) {
+[decorate] final void A_SetScaleYExt (float scale) {
   ScaleY = scale;
 }
 
@@ -574,7 +574,7 @@ final void A_SetScaleYExt (float scale) {
 //  A_ChangeScaleXExt
 //
 //==========================================================================
-final void A_ChangeScaleXExt (float delta, optional float killLimit) {
+[decorate] final void A_ChangeScaleXExt (float delta, optional float killLimit) {
   ScaleX = fmax(0, ScaleX+delta);
   if (specified_killLimit && ScaleX < killLimit) Destroy();
 }
@@ -585,7 +585,7 @@ final void A_ChangeScaleXExt (float delta, optional float killLimit) {
 //  A_ChangeScaleYExt
 //
 //==========================================================================
-final void A_ChangeScaleYExt (float delta, optional float killLimit) {
+[decorate] final void A_ChangeScaleYExt (float delta, optional float killLimit) {
   ScaleY = fmax(0, ScaleY+delta);
   if (specified_killLimit && ScaleY < killLimit) Destroy();
 }
@@ -596,7 +596,7 @@ final void A_ChangeScaleYExt (float delta, optional float killLimit) {
 //  A_LayToFloorWithYaw
 //
 //==========================================================================
-final void A_LayToFloorWithYaw (float yaw) {
+[decorate] final void A_LayToFloorWithYaw (float yaw) {
   tmtrace_t tmtrace;
   GetFloorAndCeiling(out tmtrace);
   if (!tmtrace.EFloor.splane) {
@@ -644,7 +644,7 @@ final void A_LayToFloorWithYaw (float yaw) {
 //  A_LayToCeilingWithYaw
 //
 //==========================================================================
-final void A_LayToCeilingWithYaw (float yaw) {
+[decorate] final void A_LayToCeilingWithYaw (float yaw) {
   tmtrace_t tmtrace;
   GetFloorAndCeiling(out tmtrace);
   if (!tmtrace.ECeiling.splane) {
@@ -688,7 +688,7 @@ final void A_LayToCeilingWithYaw (float yaw) {
 //  A_LayToFloorWithYawSprite
 //
 //==========================================================================
-final void A_LayToFloorWithYawSprite (float yaw) {
+[decorate] final void A_LayToFloorWithYawSprite (float yaw) {
   tmtrace_t tmtrace;
   GetFloorAndCeiling(out tmtrace);
   if (!tmtrace.EFloor.splane) {
@@ -724,7 +724,7 @@ final void A_LayToFloorWithYawSprite (float yaw) {
 //  A_LayToCeilingWithYawSprite
 //
 //==========================================================================
-final void A_LayToCeilingWithYawSprite (float yaw) {
+[decorate] final void A_LayToCeilingWithYawSprite (float yaw) {
   tmtrace_t tmtrace;
   GetFloorAndCeiling(out tmtrace);
   if (!tmtrace.ECeiling.splane) {
@@ -802,7 +802,7 @@ final void WeaponReadyResetAttackState () {
 //  Follows after getting weapon up, or after previous attack/fire sequence.
 //
 //==========================================================================
-final void A_WeaponReady (optional int Flags) {
+[decorate] final void A_WeaponReady (optional int Flags) {
   if (!bIsPlayer) return;
 
   bool wasZoomDown = Player.bZoomDown;

@@ -119,7 +119,7 @@ override bool Touch(Entity InOther)
 //
 //==========================================================================
 
-final void A_ZapMimic()
+[decorate] final void A_ZapMimic()
 {
   if (LightningOwner)
   {

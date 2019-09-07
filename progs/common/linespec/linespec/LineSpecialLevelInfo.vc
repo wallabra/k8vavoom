@@ -6025,7 +6025,7 @@ final int implLocalQuake (int intensity, int duration, float damrad, float tremr
 //  A_LocalQuake
 //
 //===========================================================================
-final bool A_LocalQuake(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, Entity Activator) {
+[decorate] final bool A_LocalQuake (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, Entity Activator) {
   return implLocalQuake(Arg1, Arg2, float(Arg3)*64.0, float(Arg4)*64.0, Arg5, Activator);
 }
 
