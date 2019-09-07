@@ -141,6 +141,12 @@ MenuDefOptionModSubMenus findModSubMenuOption () {
 }
 
 
+private final static string TranslateText (string text) {
+  if (StrStartsWith(text, "$")) text = GetLangString(text[1..$]);
+  return text;
+}
+
+
 // fix GZDoom-style menudefs
 private final static void fixGZList (ref array!MenuDefOptionBase options, ref array!(ClientGameShared::OptionValue) ovals,
                                      bool delegate (string subname) gzCheckSub)
@@ -157,7 +163,7 @@ private final static void fixGZList (ref array!MenuDefOptionBase options, ref ar
           // i found her!
           foreach (ref auto v; oval.list) {
             eopt.list.length += 1;
-            eopt.list[$-1].caption = v.caption;
+            eopt.list[$-1].caption = TranslateText(v.caption);
             eopt.list[$-1].value = v.value;
           }
           eopt.gzOptValName = "";
