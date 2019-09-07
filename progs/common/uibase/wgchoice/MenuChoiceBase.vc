@@ -67,9 +67,12 @@ static final float FixFractionalValue (float value, float delta) {
 //
 //==========================================================================
 string getHelp () {
-  if (customHelpText) return customHelpText;
-  if (cvarSession) return GetCvarHelp(cvarSession);
-  return "";
+  string res = "";
+       if (customHelpText) res = customHelpText;
+  else if (cvarSession) res = GetCvarHelp(cvarSession);
+  else return "";
+  if (StrStartsWith(res, "$")) res = GetLangString(res[1..$]);
+  return res;
 }
 
 

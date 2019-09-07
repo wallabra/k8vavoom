@@ -42,6 +42,20 @@ delegate bool ValueChanging (Object Sender, float NewValue);
 
 //==========================================================================
 //
+//  SetText
+//
+//==========================================================================
+void SetText (string AText) {
+  if (StrStartsWith(AText, "$")) {
+    Text = GetLangString(AText[1..$]);
+  } else {
+    Text = AText;
+  }
+}
+
+
+//==========================================================================
+//
 //  findValue
 //
 //==========================================================================
@@ -105,6 +119,7 @@ void ClearAndReset () {
 void AddItem (string AValue, optional float val) {
   if (!specified_val && vallist.length) val = int(vallist[$-1].value)+1;
   vallist.length += 1;
+  if (StrStartsWith(AValue, "$")) AValue = GetLangString(AValue[1..$]);
   vallist[$-1].caption = AValue;
   vallist[$-1].value = val;
 }
