@@ -75,15 +75,17 @@ int TModifiers::Parse (VLexer &Lex) {
         bool rbParsed = false;
         for (;;) {
           if (Lex.Check(TK_RBracket)) { rbParsed = true; break; }
-          Lex.Expect(TK_Identifier);
-          if (Lex.Name == "internal") {
-            if (Modifiers&Internal) ParseError(Lex.Location, "duplicate modifier '%s'", *Lex.Name);
-            Modifiers |= Internal;
-          } else if (Lex.Name == "decorate") {
+          if (Lex.Check(TK_Decorate)) {
             if (Modifiers&DecVisible) ParseError(Lex.Location, "duplicate modifier '%s'", *Lex.Name);
             Modifiers |= DecVisible;
           } else {
-            ParseError(Lex.Location, "unknown modifier '%s'", *Lex.Name);
+            Lex.Expect(TK_Identifier);
+            if (Lex.Name == "internal") {
+              if (Modifiers&Internal) ParseError(Lex.Location, "duplicate modifier '%s'", *Lex.Name);
+              Modifiers |= Internal;
+            } else {
+              ParseError(Lex.Location, "unknown modifier '%s'", *Lex.Name);
+            }
           }
           if (!Lex.Check(TK_Comma)) break;
         }
