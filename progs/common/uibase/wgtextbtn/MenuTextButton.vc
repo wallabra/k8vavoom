@@ -34,6 +34,7 @@ int TextVAlign;
 class!MenuScreen submenuClass;
 string submenuName;
 string concmd;
+int hasSubMenuChecked; // <0: nope; 0: not checked; >0: ok
 
 
 delegate void Activated (Object Sender);
@@ -71,8 +72,12 @@ void ActivateEvent () {
   if (Parent && GetClGame()) {
     MenuScreen newMenu = none;
          if (submenuClass) newMenu = GetClGame().SpawnMenu(submenuClass);
-    else if (submenuName) newMenu = GetClGame().SpawnNamedMenuStr(submenuName);
-    if (newMenu) GetClGame().PushMenuScreen(newMenu);
+    else if (submenuName && GetClGame().HasNamedMenuStr(submenuName)) newMenu = GetClGame().SpawnNamedMenuStr(submenuName);
+    if (newMenu) {
+      GetClGame().PushMenuScreen(newMenu);
+    } else {
+      if (submenuName) printwarn("cannot activate submenu '%s'", submenuName);
+    }
   }
 }
 
@@ -95,10 +100,29 @@ override void OnMouseClick (int X, int Y) {
 }
 
 
+void CheckSubMenu (optional bool changeEnabled) {
+  if (!hasSubMenuChecked) {
+    if (submenuClass) {
+      hasSubMenuChecked = 1; //(submenuClass ? 1 : -1); // why not?
+    } else if (submenuName) {
+      if (Parent && GetClGame()) {
+        hasSubMenuChecked = (GetClGame().HasNamedMenuStr(submenuName) ? 1 : -1);
+      }
+    }
+    if (changeEnabled && hasSubMenuChecked < 0) Enabled = false;
+  }
+}
+
+
 override void OnDraw () {
+  CheckSubMenu();
+
+  int clr = (IsFocus() ? TextColorFocus : TextColor);
+  if (hasSubMenuChecked < 0) clr = CR_DARKGRAY;
+
   SetFont(TextFont);
   SetTextAlign(TextHAlign, TextVAlign);
-  DrawText(CursorXOffs, 0, Text, IsFocus() ? TextColorFocus : TextColor);
+  DrawText(CursorXOffs, 0, Text, clr);
 }
 
 

@@ -43,6 +43,7 @@ override void SetOrigin (int x, int y) {
 
 
 override void OnDraw () {
+  CheckSubMenu();
   DrawBackground();
 
   int y = 0;
@@ -51,7 +52,10 @@ override void OnDraw () {
   //FillRect(0, 0, Width, Height-2, 0xff_000000|(int(ClipRect.OriginY)&0xff));
   SetFont(TextFont);
   SetTextAlign(TextHAlign, TextVAlign);
-  DrawText(CursorXOffs, y, Text, IsFocus() ? TextColorFocus : TextColor);
+
+  int clr = (IsFocus() ? TextColorFocus : TextColor);
+  if (hasSubMenuChecked < 0) clr = CR_DARKGRAY;
+  DrawText(CursorXOffs, y, Text, clr);
 }
 
 

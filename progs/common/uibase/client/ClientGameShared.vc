@@ -463,6 +463,22 @@ MenuScreen SpawnMenu (class!MenuScreen CID) {
 
 //==========================================================================
 //
+//  HasNamedMenuStr
+//
+//  FIXME: SLOOOW!
+//
+//==========================================================================
+bool HasNamedMenuStr (string menuName) {
+  if (!menuName) return false;
+  foreach (MenuDefinition mdef; menudefs) {
+    if (stricmp(mdef.menuName, menuName) == 0) return true;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
 //  SpawnNamedMenuStr
 //
 //==========================================================================
