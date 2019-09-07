@@ -30,6 +30,7 @@
 //
 //  K8HS_IsGoodDamageType
 //
+//  return `true` if this damage type allowed for headshots
 //  virtual, so mods can override this
 //
 //==========================================================================
@@ -45,17 +46,131 @@ bool K8HS_IsGoodDamageType (name damageType) {
 
 //==========================================================================
 //
-//  IsIAmAKindOf
+//  K8HS_IsIAmAKindOf
 //
 //  checks if `self` is a subclass, or a replacement
+//  used to check for various insta-kill monster types
+//  virtual, so mods can override this
 //
 //==========================================================================
-final bool IsIAmAKindOf (name ClsName) {
+bool K8HS_IsIAmAKindOf (name ClsName) {
   if (!ClsName) return false;
   if (self isa ClsName) return true;
   class xreplCls = GetClassReplacee(self.Class);
   if (xreplCls) return (xreplCls isa ClsName);
   return false;
+}
+
+
+//==========================================================================
+//
+//  K8HS_IsHeadshotsAllowed
+//
+//  called to check if this entity can be headshotted (or critical-shotted)
+//  return `false` to completely disable headshots for this entity
+//  virtual, so mods can override this
+//
+//==========================================================================
+bool K8HS_IsHSAllowed () {
+  // do not allow headshots/criticals on non-monster objects
+  if (!bMonster) return false;
+  return true;
+}
+
+
+//==========================================================================
+//
+//  K8HS_IsCriticalsAllowed
+//
+//  called to check if this entity can be critical-shotted
+//  return `false` to avoid criticals on this entity
+//  virtual, so mods can override this
+//
+//==========================================================================
+bool K8HS_IsCriticalsAllowed () {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  K8HS_FastkillHook
+//
+//  return positive number to deal exact this damage to the entity
+//  return zero or negative to process as usual
+//  called before headshot checks
+//  virtual, so mods can override this
+//
+//==========================================================================
+int K8HS_FastkillHook () {
+  if (K8HS_IsIAmAKindOf('PainElemental')) {
+    if (GetCvarB('k8HSInstaKillPainElementals')) return Health+10;
+  } else if (K8HS_IsIAmAKindOf('LostSoul')) {
+    if (GetCvarB('k8HSInstaKillLostSouls')) return Health+10;
+  }
+  return 0;
+}
+
+
+//==========================================================================
+//
+//  K8HS_HeadshotFastKillHook
+//
+//  return positive number to deal exact this damage to the entity
+//  return zero or negative to process as usual
+//  called if headshot check passed
+//  virtual, so mods can override this
+//
+//==========================================================================
+int K8HS_HeadshotFastKillHook (int dodmg) {
+  if (K8HS_IsIAmAKindOf('Archvile')) {
+    int fastdamage = GetCvar('k8HSFastKillArchVileDamage');
+    if (fastdamage > 0 && dodmg < fastdamage) {
+      //Log(s:"Archvile superdamage: old=", d:dodmg, s:"; new=", d:fastdamage, s:"; health=", d:vicHealth);
+      return fastdamage;
+    }
+  }
+  return 0;
+}
+
+
+//==========================================================================
+//
+//  K8HS_CheckHeadshot
+//
+//  called to check if this entity headshotted
+//  return `true` if headshot registered
+//  virtual, so mods can override this
+//
+//==========================================================================
+bool K8HS_CheckHeadshot (EntityEx inflictor, TVec hitpos, int damage, name damageType, bool secondary) {
+  bool headshot = false;
+  float hithgt = hitpos.z; //-Pos.z;
+  float fromtop = Height-hithgt;
+
+  if (Height <= 56.0) {
+    // humans, archvile, cacodemon, demon, imp, lost soul, pain elemental, revenant
+    headshot = (fromtop <= 14.0);
+    //if (headshot && showHeadshots) print("HS56: TAN");
+  } else if (Height <= 64.0) {
+    // arachnotron(64)
+    // bruiser(64)
+    if (K8HS_IsIAmAKindOf('Arachnotron')) {
+      headshot = (fromtop <= 18.0);
+      //if (debugme) print("*******ARACHNO!");
+    } else {
+      headshot = (fromtop <= 15.0);
+    }
+    //if (headshot && showHeadshots) print("HS64: TAN");
+  } else {
+    // cyberdemon(110)
+    // mastermind(100)
+    // keen(72)
+    headshot = (fromtop <= 20.0);
+    //if (headshot && showHeadshots) print("HSBIG: TAN");
+  }
+
+  return headshot;
 }
 
 
@@ -71,13 +186,13 @@ final bool IsIAmAKindOf (name ClsName) {
 //
 //==========================================================================
 int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name damageType, bool secondary) {
-  // do not allow headshots/criticals on non-monster objects
-  if (!bMonster) return damage;
   // is it from player?
   if (!inflictor) return damage;
   if (!inflictor.bIsPlayer) return damage;
   if (!GetCvarB('k8HSEnabled')) return damage;
+
   if (!K8HS_IsGoodDamageType(damageType)) return damage;
+  if (!K8HS_IsHSAllowed()) return damage;
 
   bool debugme = GetCvarB('k8HSDebug');
 
@@ -91,36 +206,23 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
 
   bool fastkills = GetCvarB('k8HSFastKillAnnoyingMonsters');
 
-  int fastdamage = 0;
-
-  int vicHealth = Health; // current health
-  int vicSpHealth = InitialHealth; // spawning health (i.e. full health for monsters)
-
-  if (debugme) print("vicSpHealth=%d; vicHealth=%d", vicSpHealth, vicHealth);
-
-  if (vicSpHealth < 1 || vicHealth < 1) return damage; // something is very wrong with this monster!
-
+  //int vicHealth = Health; // current health
+  //int vicSpHealth = InitialHealth; // spawning health (i.e. full health for monsters)
   //int vicMass = Mass;
-  float vicRadius = Radius;
-  float vicHgt = Height;
+  //float vicRadius = Radius;
+  //float vicHgt = Height;
+
+  if (debugme) print("InitialHealth=%d; Health=%d", InitialHealth, Health);
+
+  if (InitialHealth < 1 || Health < 1) return damage; // something is very wrong with this monster!
 
   // kill certain monsters in one shot
+  int fastdamage = 0;
   if (fastkills) {
-    if (IsIAmAKindOf('PainElemental')) {
-      if (GetCvarB('k8HSInstaKillPainElementals')) fastdamage = vicHealth+10;
-    } else if (IsIAmAKindOf('LostSoul')) {
-      if (GetCvarB('k8HSInstaKillLostSouls')) fastdamage = vicHealth+10;
-    }
+    fastdamage = K8HS_FastkillHook();
     if (fastdamage > 0) return fastdamage;
   }
 
-  float hithgt = hitpos.z; //-Pos.z;
-  float fromtop = vicHgt-hithgt;
-  if (debugme) print("  hithgt=%f; fromtop=%f", hithgt, fromtop);
-
-  bool headshot = false;
-  bool showHeadshots = false;
-  if (debugme) showHeadshots = GetCvarB('k8HSShowHeadshots');
   int refire = PlayerEx(plr.Player).Refire;
   // set `refire` to:
   //   -666: totally fucked
@@ -146,14 +248,29 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
   if (refire > 0 && P_Random() >= 255/refire) return damage; // oops
   //print("refire2: %s", refire);
 
-  if (vicHgt <= 56.0) {
+  bool showHeadshots = false;
+  if (debugme) {
+    showHeadshots = GetCvarB('k8HSShowHeadshots');
+    float hithgt = hitpos.z; //-Pos.z;
+    float fromtop = Height-hithgt;
+    print("  hithgt=%f; fromtop=%f", hithgt, fromtop);
+  }
+
+  bool headshot = K8HS_CheckHeadshot(inflictor, hitpos, damage, damageType, secondary);
+  /*
+  float hithgt = hitpos.z; //-Pos.z;
+  float fromtop = Height-hithgt;
+  if (debugme) print("  hithgt=%f; fromtop=%f", hithgt, fromtop);
+
+  bool headshot = false;
+  if (Height <= 56.0) {
     // humans, archvile, cacodemon, demon, imp, lost soul, pain elemental, revenant
     headshot = (fromtop <= 14.0);
     if (headshot && showHeadshots) print("HS56: TAN");
-  } else if (vicHgt <= 64.0) {
+  } else if (Height <= 64.0) {
     // arachnotron(64)
     // bruiser(64)
-    if (IsIAmAKindOf('Arachnotron')) {
+    if (K8HS_IsIAmAKindOf('Arachnotron')) {
       headshot = (fromtop <= 18.0);
       if (debugme) print("*******ARACHNO!");
     } else {
@@ -167,13 +284,14 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
     headshot = (fromtop <= 20.0);
     if (headshot && showHeadshots) print("HSBIG: TAN");
   }
+  */
 
   // precision shot is headshot near thing vertical center
   int precisionShot = 0; // 0: nope; -2: very far; -1: too far; 1: almost
-  if (headshot && vicRadius > 0 && refire < 2) {
+  if (headshot && Radius > 0 && refire < 2) {
     //print("HITXY=(%s,%s)", hitpos.x, hitpos.y);
     float hc = fmin(fabs(hitpos.x), fabs(hitpos.y));
-    float r3 = vicRadius/3;
+    float r3 = Radius/3;
          if (hc <= r3*0.7) precisionShot = 2;
     else if (hc <= r3) precisionShot = 1;
     else if (hc > r3*2.4) precisionShot = -2;
@@ -199,11 +317,16 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
   // head shot
   if (headshot) {
     if (showHeadshots) {
-      //Log(s:"K8HS: Headshot! ", s:vicName, s:"; vicHgt=", d:vicHgt, s:"; fromtop=", d:fromtop, s:"; mass=", d:vicMass, s:"; radius=", d:vicRadius, s:"; len=", d:len);
-      print("K8HS: Headshot! %C; vicHgt=%f; fromtop=%f; radius=%f; len=%f", Class, vicHgt, fromtop, vicRadius, len);
+      //Log(s:"K8HS: Headshot! ", s:vicName, s:"; Height=", d:Height, s:"; fromtop=", d:fromtop, s:"; mass=", d:vicMass, s:"; radius=", d:Radius, s:"; len=", d:len);
+      float hithgt = hitpos.z; //-Pos.z;
+      float fromtop = Height-hithgt;
+      print("K8HS: Headshot! %C; Height=%f; fromtop=%f; radius=%f; len=%f", Class, Height, fromtop, Radius, len);
     }
+    bool allowCrits = K8HS_IsCriticalsAllowed();
+
     bool debugCrits = false;
     if (debugme) debugCrits = GetCvarB('k8HSDebug_Crits');
+
     int dodmg = damage; //*2 baron of hell and other Big Things
     int smallHealth = 50; // baron of hell and other Big Things
     int critChance = int(Random()*100);
@@ -227,14 +350,14 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
       } else if (plr.k8hsCount == 2) {
         // third hitscan; 1.25 damage sometimes
         critChance = 1;
-        if (Random()*100.0 > 75.0) {
+        if (allowCrits && Random()*100.0 > 75.0) {
           dodmg += dodmg/4;
           if (debugCrits) print("*Critx1.25 (2); d=%d", dodmg);
         }
       } else {
         // fourth and other hitscans; 1.25 damage sometimes
         critChance = 1;
-        if (Random()*100.0 > 80) {
+        if (allowCrits && Random()*100.0 > 80) {
           dodmg += dodmg/4;
           if (debugCrits) print("*Critx1.25 (3); d=%d", dodmg);
         }
@@ -267,6 +390,8 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
       else if (precisionShot < 0) critChance -= 13;
       //print("  chance-after=%s", critChance);
     }
+
+    if (!allowCrits) critChance = 0;
 
     // create message
     bool showMessage = false;
@@ -307,14 +432,14 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
 
     if (debugCrits) print("  critChance=%d; damage=%d; dodmg=%d", critChance, damage, dodmg);
 
-    if (vicSpHealth < 100) {
+    if (InitialHealth < 100) {
       // humans, imps, ...
       //dodmg = (damage <= 10 ? damage*4 : damage*3);
-      smallHealth = vicSpHealth/10;
-    } else if (vicSpHealth < 1000) {
+      smallHealth = InitialHealth/10;
+    } else if (InitialHealth < 1000) {
       // demons, cacodemons, ...
       //dodmg = (damage <= 10 ? damage*3 : damage*2);
-      smallHealth = vicSpHealth/10;
+      smallHealth = InitialHealth/10;
       if (smallHealth < 12) smallHealth = 12;
     }
 
@@ -328,19 +453,26 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
       }
 
       if (fastkills) {
-        if (IsIAmAKindOf('Archvile')) {
+        fastdamage = K8HS_HeadshotFastKillHook(dodmg);
+        if (fastdamage > 0) {
+          printdebug("%C: OLD dodmg=%s; NEW dodmg=%s", self, dodmg, fastdamage);
+          dodmg = fastdamage;
+        }
+        /*
+        if (K8HS_IsIAmAKindOf('Archvile')) {
           fastdamage = GetCvar('k8HSFastKillArchVileDamage');
           if (fastdamage > 0 && dodmg < fastdamage) {
             //Log(s:"Archvile superdamage: old=", d:dodmg, s:"; new=", d:fastdamage, s:"; health=", d:vicHealth);
             dodmg = fastdamage;
           }
         }
+        */
       }
       // if we will left victim with very small health, kill it instead
       bool instakill = false;
-      if (vicHealth-dodmg <= smallHealth) dodmg = vicHealth;
+      if (Health-dodmg <= smallHealth) dodmg = Health;
       int xdmg = dodmg;
-      if (vicHealth <= dodmg) {
+      if (Health <= dodmg) {
         // instakill, gore (fe, 'cause +1)
         instakill = true;
         dodmg = Health+5;

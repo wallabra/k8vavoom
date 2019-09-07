@@ -1149,7 +1149,7 @@ final void FaceMovementDirection () {
 override void OnMapSpawn (mthing_t *mthing) {
   ::OnMapSpawn(mthing);
 
-  //print("MAPSPAWN: %C (monster=%B; missile=%B)", self, bMonster, bMissile);
+  //printdebug("MAPSPAWN: %C (monster=%B; missile=%B)", self, bMonster, bMissile);
   // k8: let's hope this will work as intended
   if (bMonster && IsFast()) ReactionCount = 0;
 
