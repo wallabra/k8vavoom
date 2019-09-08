@@ -82,6 +82,7 @@ extern VCvarB dbg_vm_disable_thinkers;
 
 static VCvarB dbg_skipframe_player_tick("dbg_skipframe_player_tick", true, "Run player ticks on skipped frames?", CVAR_PreInit);
 static VCvarB dbg_skipframe_player_block_move("dbg_skipframe_player_block_move", false, "Keep moving on skipped player frames (this is wrong)?", CVAR_PreInit);
+static VCvarB dbg_report_orphan_weapons("dbg_report_orphan_weapons", false, "Report orphan weapon assign?", CVAR_PreInit);
 
 VCvarB real_time("real_time", true, "Run server in real time?");
 

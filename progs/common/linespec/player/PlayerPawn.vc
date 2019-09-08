@@ -417,21 +417,23 @@ void InitializeWeaponSlots () {
         if (!HasWeaponInAnySlot(wcls)) {
           // skip known  weapons
           name cname = GetClassName(wcls);
-          bool doreport = true;
-          switch (cname) {
-            case 'Chainsaw':
-            case 'Shotgun':
-            case 'SuperShotgun':
-            case 'Chaingun':
-            case 'RocketLauncher':
-            case 'PlasmaRifle':
-            case 'BFG9000':
-            case 'FWeapAxe':
-            case 'FWeapHammer':
-            case 'StrifeGrenadeLauncher':
-            case 'StrifeGrenadeLauncher2':
-              doreport = false;
-              break;
+          bool doreport = GetCvarB('dbg_report_orphan_weapons');
+          if (doreport) {
+            switch (cname) {
+              case 'Chainsaw':
+              case 'Shotgun':
+              case 'SuperShotgun':
+              case 'Chaingun':
+              case 'RocketLauncher':
+              case 'PlasmaRifle':
+              case 'BFG9000':
+              case 'FWeapAxe':
+              case 'FWeapHammer':
+              case 'StrifeGrenadeLauncher':
+              case 'StrifeGrenadeLauncher2':
+                doreport = false;
+                break;
+            }
           }
           if (doreport) {
             printwarn("weapon `%C` has no defined slot (put into slot 11): %s", wcls, GetClassLocationStr(wcls));
