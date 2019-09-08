@@ -352,6 +352,7 @@ VEmitContext::VEmitContext (VMemberBase *Member)
 
   if (Member != nullptr && Member->MemberType == MEMBER_Method) {
     CurrentFunc = (VMethod *)Member;
+    //CurrentFunc->SelfTypeClass = nullptr;
     CurrentFunc->Instructions.Clear();
     //k8: nope, don't do this. many (most!) states with actions are creating anonymous functions
     //    with several statements only. this is ALOT of functions. and each get several kb of RAM.
@@ -366,12 +367,14 @@ VEmitContext::VEmitContext (VMemberBase *Member)
       } else {
         if (newSelfClass) {
           VClass *cc = SelfClass;
-          while (cc && cc->Name != CurrentFunc->SelfTypeName) cc = cc->ParentClass;
+          while (cc && cc != newSelfClass) cc = cc->ParentClass;
                if (!cc) ParseError(CurrentFunc->Loc, "Forced self `%s` for class `%s`, which is not super (method `%s`)", *CurrentFunc->SelfTypeName, SelfClass->GetName(), *CurrentFunc->GetFullName());
           //else if (cc == SelfClass) ParseWarning(CurrentFunc->Loc, "Forced self `%s` for the same class (old=%s; new=%s) (method `%s`)", *CurrentFunc->SelfTypeName, *SelfClass->GetFullName(), *cc->GetFullName(), *CurrentFunc->GetFullName());
           //else GLog.Logf(NAME_Debug, "%s: forced class `%s` for class `%s` (method `%s`)", *CurrentFunc->Loc.toStringNoCol(), *CurrentFunc->SelfTypeName, SelfClass->GetName(), *CurrentFunc->GetFullName());
           if (!cc->Defined) ParseError(CurrentFunc->Loc, "Forced self class `%s` is not defined for method `%s`", *CurrentFunc->SelfTypeName, *CurrentFunc->GetFullName());
           SelfClass = cc;
+          if (CurrentFunc->SelfTypeClass && CurrentFunc->SelfTypeClass != cc) Sys_Error("internal compiler error (SelfTypeName)");
+          CurrentFunc->SelfTypeClass = cc;
         } else {
           ParseError(CurrentFunc->Loc, "Forced self `%s` for nothing (wtf?!) (method `%s`)", *CurrentFunc->SelfTypeName, *CurrentFunc->GetFullName());
         }

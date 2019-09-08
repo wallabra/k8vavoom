@@ -3150,20 +3150,15 @@ VFuncRes VObject::ExecuteFunctionNoArgs (VObject *Self, VMethod *func, bool allo
   if (!(func->Flags&FUNC_Static)) {
     if (!Self) Sys_Error("trying to call method `%s` without an object", *func->GetFullName());
     // for virtual functions, check for correct class
-    VMemberBase *origClass = func->Outer;
-    while (origClass) {
-      if (origClass->isClassMember()) {
-        // check for a valid class
-        if (!Self->IsA((VClass *)origClass)) {
-          Sys_Error("object of class `%s` is not a subclass of `%s` for method `%s`", Self->GetClass()->GetName(), origClass->GetName(), *func->GetFullName());
-        }
-        break;
-      } else if (origClass->isStateMember()) {
-        // it belongs to a state, so it is a wrapper
-        break;
+    VClass *origClass = func->GetSelfClass();
+    // for state wrapper, the class can be absent
+    if (origClass) {
+      // check for a valid class
+      if (!Self->IsA(origClass)) {
+        Sys_Error("object of class `%s` is not a subclass of `%s` for method `%s`", Self->GetClass()->GetName(), origClass->GetName(), *func->GetFullName());
       }
-      origClass = origClass->Outer;
     }
+    /*
     if (!origClass) {
       #if 0
       if (Self) {
@@ -3178,6 +3173,7 @@ VFuncRes VObject::ExecuteFunctionNoArgs (VObject *Self, VMethod *func, bool allo
       #endif
       Sys_Error("trying to call method `%s` which doesn't belong to a class, or to a state (self is `%s`)", *func->GetFullName(), (Self ? Self->GetClass()->GetName() : "<none>"));
     }
+    */
     // push `self`
     P_PASS_REF(Self);
     //GLog.Logf(NAME_Debug, "VObject::ExecuteFunctionNoArgs: class=`%s`; method=`%s`; allowVMT=%d; VTableIndex=%d", *Self->GetClass()->GetFullName(), *func->GetFullName(), (int)allowVMTLookups, func->VTableIndex);

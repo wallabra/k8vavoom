@@ -191,6 +191,7 @@ public:
   vint16 VTableIndex; // -666 means "not determined yet"
   vint32 NetIndex;
   VMethod *NextNetMethod;
+  VClass *SelfTypeClass; // set to non-nullptr if `SelfTypeName` is non-empty; set from `VEmitContext`
 
   // guard them, why not?
   int defineResult; // -1: not called yet
@@ -255,6 +256,16 @@ public:
   // not sure what to do with network methods, though
   // ok, state methods can be virtual and static now
   inline bool IsGoodStateMethod () const { return (NumParams == 0 && (Flags&~(FUNC_Native|FUNC_Spawner|FUNC_Net|FUNC_NetReliable|FUNC_Static/*|FUNC_NonVirtual*/)) == /*FUNC_Final*/0); }
+
+  // this must be called on a postloaded method only
+  inline VClass *GetSelfClass () {
+    if (SelfTypeClass) return SelfTypeClass;
+    for (VMemberBase *mt = this; mt; mt = mt->Outer) {
+      if (mt->isClassMember()) return (VClass *)mt;
+      if (mt->isStateMember()) return nullptr; // this is state wrapper
+    }
+    return nullptr;
+  }
 
 private:
   // this generates VM (or other) executable code (to `Statements`) from IR `Instructions`
