@@ -46,12 +46,21 @@ VName::VNameEntry VName::AutoNames[] = {
 };
 
 
+//==========================================================================
+//
+//  VName::GetAutoNameCounter
+//
+//==========================================================================
 int VName::GetAutoNameCounter () {
   return (int)ARRAY_COUNT(AutoNames);
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+//==========================================================================
+//
+//  VName::AppendNameEntry
+//
+//==========================================================================
 int VName::AppendNameEntry (VNameEntry *e) {
   vassert(e);
   if (NamesCount >= NamesAlloced) {
@@ -69,6 +78,11 @@ int VName::AppendNameEntry (VNameEntry *e) {
 }
 
 
+//==========================================================================
+//
+//  AllocateNameEntry
+//
+//==========================================================================
 static VName::VNameEntry *AllocateNameEntry (const char *Name, VName::VNameEntry *HashNext) {
   const int slen = int(VStr::Length(Name));
   size_t size = sizeof(VName::VNameEntry)-NAME_SIZE+slen+1;
@@ -82,7 +96,11 @@ static VName::VNameEntry *AllocateNameEntry (const char *Name, VName::VNameEntry
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+//==========================================================================
+//
+//  VName::VName
+//
+//==========================================================================
 VName::VName (const char *Name, ENameFindType FindType) {
   Index = NAME_None;
   // make sure name is valid
@@ -150,6 +168,11 @@ VName::VName (const char *Name, ENameFindType FindType) {
 }
 
 
+//==========================================================================
+//
+//  VName::operator ==
+//
+//==========================================================================
 bool VName::operator == (const VStr &s) const {
   if (Index == NAME_None) return s.isEmpty();
   if (Initialised) {
@@ -162,6 +185,11 @@ bool VName::operator == (const VStr &s) const {
 }
 
 
+//==========================================================================
+//
+//  VName::operator ==
+//
+//==========================================================================
 bool VName::operator == (const char *s) const {
   if (!s) s = "";
   if (Index == NAME_None) return (s[0] == 0);
@@ -175,6 +203,11 @@ bool VName::operator == (const char *s) const {
 }
 
 
+//==========================================================================
+//
+//  VName::SafeString
+//
+//==========================================================================
 const char *VName::SafeString (EName N) {
   if (N == NAME_None) return "";
   if (!Initialised) {
@@ -187,6 +220,28 @@ const char *VName::SafeString (EName N) {
 }
 
 
+//==========================================================================
+//
+//  VName::getCStr
+//
+//  won't abort on invalid index
+//
+//==========================================================================
+const char *VName::getCStr () const {
+  if (Initialised) {
+    if (Index >= 0 && Index < (int)NamesCount) return Names[Index]->Name;
+  } else {
+    if (Index >= 0 && Index < GetAutoNameCounter()) return AutoNames[Index].Name;
+  }
+  return va("<invalid name index %d>", Index);
+}
+
+
+//==========================================================================
+//
+//  VName::StaticInit
+//
+//==========================================================================
 void VName::StaticInit () {
   if (!Initialised) {
     memset((void *)HashTable, 0, sizeof(HashTable));
@@ -216,6 +271,11 @@ void VName::StaticInit () {
 }
 
 
+//==========================================================================
+//
+//  VName::DebugDumpHashStats
+//
+//==========================================================================
 void VName::DebugDumpHashStats () {
   unsigned bkUsed = 0, bkMax = 0;
   unsigned bkUsedSpc = 0, bkMaxSpc = 0;

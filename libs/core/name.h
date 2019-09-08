@@ -99,6 +99,9 @@ public:
     }
   }
 
+  // won't abort on invalid index
+  const char *getCStr () const;
+
   inline vint32 GetIndex () const { return Index; }
 
   inline bool isValid () const {
