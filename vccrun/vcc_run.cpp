@@ -569,6 +569,7 @@ int main (int argc, char **argv) {
     }
 
     CurrentPackage->LoadSourceObject(strm, SourceFileName, TLocation());
+    VPackage::StaticEmitPackages();
     devprintf("Total memory used: %u\n", VExpression::TotalMemoryUsed);
     //DumpAsm();
     endtime = time(0);
