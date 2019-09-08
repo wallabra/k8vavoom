@@ -82,6 +82,10 @@ add_library(core STATIC
   mimalloc/mimalloc.h
   mimalloc/static.c
 
+  # lzma decoder
+  lzmadec/LzmaDec.h
+  lzmadec/LzmaDec.c
+
   # fsys (aka VFS)
   fsys/fsys.h
   fsys/fsys.cpp

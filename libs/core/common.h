@@ -64,6 +64,8 @@ typedef uint32_t  __attribute__((__may_alias__)) vuint32;
 typedef int64_t   __attribute__((__may_alias__)) vint64;
 typedef uint64_t  __attribute__((__may_alias__)) vuint64;
 
+
+#ifdef __cplusplus
 //static_assert(sizeof(ubyte) == 1, "invalid ubyte");
 static_assert(sizeof(vint8) == 1, "invalid vint8");
 static_assert(sizeof(vuint8) == 1, "invalid vuint8");
@@ -120,6 +122,7 @@ class VName;
 class VMemberBase;
 class VStruct;
 class VObject;
+#endif
 
 
 #endif

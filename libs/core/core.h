@@ -117,6 +117,7 @@
 #include "ntvalue.h"
 
 #include "md5.h"
+#include "lzmadec/LzmaDec.h"
 
 #include "wlist.h"
 
