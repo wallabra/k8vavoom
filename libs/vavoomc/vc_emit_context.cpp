@@ -368,7 +368,7 @@ VEmitContext::VEmitContext (VMemberBase *Member)
           VClass *cc = SelfClass;
           while (cc && cc->Name != CurrentFunc->SelfTypeName) cc = cc->ParentClass;
                if (!cc) ParseError(CurrentFunc->Loc, "Forced self `%s` for class `%s`, which is not super (method `%s`)", *CurrentFunc->SelfTypeName, SelfClass->GetName(), *CurrentFunc->GetFullName());
-          else if (cc == SelfClass) ParseWarning(CurrentFunc->Loc, "Forced self `%s` for the same class (old=%s; new=%s) (method `%s`)", *CurrentFunc->SelfTypeName, *SelfClass->GetFullName(), *cc->GetFullName(), *CurrentFunc->GetFullName());
+          //else if (cc == SelfClass) ParseWarning(CurrentFunc->Loc, "Forced self `%s` for the same class (old=%s; new=%s) (method `%s`)", *CurrentFunc->SelfTypeName, *SelfClass->GetFullName(), *cc->GetFullName(), *CurrentFunc->GetFullName());
           //else GLog.Logf(NAME_Debug, "%s: forced class `%s` for class `%s` (method `%s`)", *CurrentFunc->Loc.toStringNoCol(), *CurrentFunc->SelfTypeName, SelfClass->GetName(), *CurrentFunc->GetFullName());
           if (!cc->Defined) ParseError(CurrentFunc->Loc, "Forced self class `%s` is not defined for method `%s`", *CurrentFunc->SelfTypeName, *CurrentFunc->GetFullName());
           SelfClass = cc;
