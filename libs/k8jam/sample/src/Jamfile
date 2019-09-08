@@ -4,9 +4,9 @@ Main pngtest :
   main_pngtest.cpp
 ;
 LinkLibraries pngtest :
-  libfsys.a
+  #libfsys.a
   libcore.a
-  $(STATIC_LZMA_LIB)
+  #$(STATIC_LZMA_LIB)
   $(STATIC_ZLIB_LIB)
 ;
 

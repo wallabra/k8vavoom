@@ -40,6 +40,8 @@ Library libcore.a :
   src/zone.cpp
   # mi-malloc
   src/mimalloc/static.c
+  # lzma
+  src/lzmadec/LzmaDec.c
   # fsys
   src/fsys/fsys.cpp
   src/fsys/fsys_dir.cpp
