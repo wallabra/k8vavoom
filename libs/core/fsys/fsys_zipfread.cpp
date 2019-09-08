@@ -546,7 +546,7 @@ void VZipFileReader::readBytes (void *buf, int length) {
   #define VZFR_LZMA_LEFT  lzmastream.avail_out
   #else
   vuint8 *lzmadest = (vuint8 *)buf;
-  size_t lzmadestleft = length;
+  size_t lzmadestleft = (size_t)length;
   #define VZFR_LZMA_LEFT  lzmadestleft
   #endif
 
