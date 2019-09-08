@@ -195,8 +195,8 @@ const float TRACE2ANGLE = 7.0*45.0/16.0;
 //
 //==========================================================================
 [decorate] final void A_BishopMissileWeave () {
-  int WeaveXY = Special2>>16;
-  int WeaveZ = Special2&0xffff;
+  int WeaveXY = (Special2>>16)&63;
+  int WeaveZ = (Special2&0xffff)&63;
   float angle = AngleMod360(Angles.yaw+90.0);
   float newX = Origin.x-cos(angle)*Level.Game.FloatBobOffsets[WeaveXY]*2.0;
   float newY = Origin.y-sin(angle)*Level.Game.FloatBobOffsets[WeaveXY]*2.0;
@@ -217,7 +217,7 @@ const float TRACE2ANGLE = 7.0*45.0/16.0;
 //
 //============================================================================
 [decorate] final void A_CStaffMissileSlither () {
-  int WeaveXY = Special2;
+  int WeaveXY = Special2&63;
   float angle = AngleMod360(Angles.yaw+90.0);
   float newX = Origin.x-cos(angle)*Level.Game.FloatBobOffsets[WeaveXY];
   float newY = Origin.y-sin(angle)*Level.Game.FloatBobOffsets[WeaveXY];
@@ -225,7 +225,7 @@ const float TRACE2ANGLE = 7.0*45.0/16.0;
   newX += cos(angle)*Level.Game.FloatBobOffsets[WeaveXY];
   newY += sin(angle)*Level.Game.FloatBobOffsets[WeaveXY];
   TryMove(vector(newX, newY, Origin.z), AllowDropOff:false);
-  Special2 = WeaveXY;
+  Special2 = (Special2&~0xffff)|WeaveXY;
 }
 
 

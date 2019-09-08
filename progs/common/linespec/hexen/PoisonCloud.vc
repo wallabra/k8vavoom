@@ -106,7 +106,7 @@ void InitCloud(Actor InstigatedBy)
 {
   A_Explode();
 
-  Origin.z += Level.Game.FloatBobOffsets[BobIndex] / 16.0;
+  Origin.z += Level.Game.FloatBobOffsets[BobIndex&63] / 16.0;
   BobIndex = (BobIndex + 1) & 63;
 }
 

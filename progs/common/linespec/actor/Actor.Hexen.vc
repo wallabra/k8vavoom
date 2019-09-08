@@ -426,8 +426,8 @@ const int KORAX_BOLT_LIFETIME = 3;
 //==========================================================================
 [decorate] final void A_KSpiritWeave () {
   float angle = AngleMod360(Angles.yaw+90.0);
-  int WeaveXY = Special2>>16;
-  int WeaveZ = Special2&0xffff;
+  int WeaveXY = (Special2>>16)&63;
+  int WeaveZ = (Special2&0xffff)&63;
   float newX = Origin.x-cos(angle)*Level.Game.FloatBobOffsets[WeaveXY]*4.0;
   float newY = Origin.y-sin(angle)*Level.Game.FloatBobOffsets[WeaveXY]*4.0;
 
@@ -615,7 +615,7 @@ final void CHolyTailRemove () {
 
   // handle Z movement
   float savedz = Origin.z;
-  Origin.z = Target.Origin.z+2.0*Level.Game.FloatBobOffsets[Args[0]];
+  Origin.z = Target.Origin.z+2.0*Level.Game.FloatBobOffsets[Args[0]&63];
   if (!TestMobjZ()) Origin.z = savedz;
   Args[0] = (Args[0]+3)&63;
 }
@@ -726,7 +726,7 @@ final void CHolyTailRemove () {
 
   if ((Args[3]%4) == 0) {
     float savedz = Origin.z;
-    Origin.z += Level.Game.FloatBobOffsets[Special2]/2.0;
+    Origin.z += Level.Game.FloatBobOffsets[Special2&63]/2.0;
     if (!TestMobjZ()) Origin.z = savedz;
     Special2 = (Special2+1)&63;
   }
@@ -947,7 +947,7 @@ final void CHolyTailRemove () {
 
   // float up and down
   float savedz = Origin.z;
-  Origin.z += Level.Game.FloatBobOffsets[Special1];
+  Origin.z += Level.Game.FloatBobOffsets[Special1&63];
   if (!TestMobjZ()) Origin.z = savedz;
   Special1 = (Special1+2)&63;
 
@@ -1110,11 +1110,11 @@ final void CHolyTailRemove () {
 [decorate] final void A_BishopChase () {
   float savedz = Origin.z;
 
-  Origin.z -= Level.Game.FloatBobOffsets[Special2]/2.0;
+  Origin.z -= Level.Game.FloatBobOffsets[Special2&63]/2.0;
   if (!TestMobjZ()) Origin.z = savedz;
   Special2 = (Special2+4)&63;
   savedz = Origin.z;
-  Origin.z += Level.Game.FloatBobOffsets[Special2]/2.0;
+  Origin.z += Level.Game.FloatBobOffsets[Special2&63]/2.0;
   if (!TestMobjZ()) Origin.z = savedz;
 }
 
@@ -1474,7 +1474,7 @@ final void CHolyTailRemove () {
 //==========================================================================
 [decorate] final void A_WraithChase () {
   float savedz = Origin.z;
-  Origin.z += Level.Game.FloatBobOffsets[Special1];
+  Origin.z += Level.Game.FloatBobOffsets[Special1&63];
   if (!TestMobjZ()) Origin.z = savedz;
   Special1 = (Special1+2)&63;
   //if (actor->FloorClip > 0) { SetState(S_WRAITH_RAISE2); return; }
