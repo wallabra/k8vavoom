@@ -240,6 +240,7 @@ void SV_Init () {
   ProcessDecorateScripts();
   ProcessDecalDefs();
   ProcessDehackedFiles();
+  VPackage::StaticEmitPackages(); // just in case
 
   GGameInfo->eventPostDecorateInit();
 
