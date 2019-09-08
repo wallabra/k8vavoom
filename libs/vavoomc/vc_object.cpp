@@ -53,15 +53,13 @@
 // compact slot storage on each GC cycle?
 //#define VC_GARBAGE_COLLECTOR_COMPACTING_DEBUG
 
-//static VCvarB gc_use_compacting_collector("gc_use_compacting_collector", true, "Use new compacting GC?", 0);
-
-
-int VObject::cliShowReplacementMessages = 0; // default is false
-int VObject::cliShowLoadingMessages = 0; // default is false
-int VObject::cliShowGCMessages = 0; // default is false
-int VObject::cliShowIODebugMessages = 0; // default is false
-int VObject::cliDumpNameTables = 0; // default is false
-int VObject::cliAllErrorsAreFatal = 0; // default is false
+int VObject::cliShowReplacementMessages = 0;
+int VObject::cliShowLoadingMessages = 0;
+int VObject::cliShowGCMessages = 0;
+int VObject::cliShowIODebugMessages = 0;
+int VObject::cliDumpNameTables = 0;
+int VObject::cliAllErrorsAreFatal = 0;
+int VObject::cliVirtualiseDecorateMethods = 0;
 TMap<VStrCI, bool> VObject::cliAsmDumpMethods;
 
 
@@ -544,6 +542,8 @@ void VObject::StaticInitOptions (VParsedArgs &pargs) {
   });
 
   pargs.RegisterFlagSet("-vc-silence-warnings", "!suppress most warnings", &vcWarningsSilenced);
+
+  pargs.RegisterFlagSet("-vc-virtualise-decorate", "!virtualise all `[decorate]` methods and properties", &cliVirtualiseDecorateMethods);
 }
 
 

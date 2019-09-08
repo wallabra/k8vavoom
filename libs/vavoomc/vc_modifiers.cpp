@@ -185,6 +185,13 @@ int TModifiers::MethodAttr (int Modifiers) {
   if (Modifiers&Private) Attributes |= FUNC_Private|FUNC_Final; // private methods can always be marked as `final`
   if (Modifiers&Protected) Attributes |= FUNC_Protected;
   if (Modifiers&DecVisible) Attributes |= FUNC_Decorate;
+  // `definalise` decorate methods
+  if (VObject::cliVirtualiseDecorateMethods) {
+    if ((Modifiers&(DecVisible|Static)) == DecVisible && (Attributes&FUNC_Final) != 0) {
+      Attributes &= ~FUNC_Final;
+      //GLog.Logf(NAME_Debug, "virtualised decorate method");
+    }
+  }
   return Attributes;
 }
 

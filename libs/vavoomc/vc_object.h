@@ -387,6 +387,7 @@ public:
   static int cliShowIODebugMessages; // default is false
   static int cliDumpNameTables; // default is false
   static int cliAllErrorsAreFatal; // default is false
+  static int cliVirtualiseDecorateMethods; // default is false
 
   static TMap<VStrCI, bool> cliAsmDumpMethods;
 
