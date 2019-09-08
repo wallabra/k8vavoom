@@ -352,13 +352,15 @@ bool FluidManager::InitFluid () {
   if (!settings) settings = new_fluid_settings();
   fluid_settings_setint(settings, "synth.midi-channels", MIDI_MAX_CHANNEL);
   fluid_settings_setint(settings, "synth.polyphony", clampval(snd_fluid_voices.asInt(), 16, 1024));
-  fluid_settings_setint(settings, "synth.cpu-cores", 0); // FluidSynth-Lite cannot work in multithreaded mode (segfault)
+  // actually, leave it as default, and let the library decide
+  //fluid_settings_setint(settings, "synth.cpu-cores", 1); // FluidSynth-Lite cannot work in multithreaded mode (segfault)
   fluid_settings_setnum(settings, "synth.sample-rate", 44100);
   fluid_settings_setnum(settings, "synth.gain", clampval(snd_fluid_gain.asFloat(), 0.0f, 10.0f));
   fluid_settings_setint(settings, "synth.reverb.active", (snd_fluid_reverb.asBool() ? 1 : 0));
   fluid_settings_setint(settings, "synth.chorus.active", (snd_fluid_chorus.asBool() ? 1 : 0));
 
-  fluid_settings_setint(settings, "synth.interpolation", interp);
+  // this seems to absent from both lite and v2
+  //fluid_settings_setint(settings, "synth.interpolation", interp);
 
   // init synth
   if (!synth) synth = new_fluid_synth(settings);
