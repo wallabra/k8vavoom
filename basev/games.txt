@@ -202,7 +202,8 @@ end
 game basev/chex
 base basev/doom
 // ultimate
-iwad chex2.wad
+iwad chex.wad
+addfile chex2.wad
 param -chex2
 gamename chex
 define CHEX_QUEST
