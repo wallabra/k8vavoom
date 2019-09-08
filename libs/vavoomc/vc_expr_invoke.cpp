@@ -1920,6 +1920,8 @@ bool VInvocation::RebuildArgs () {
 VExpression *VInvocation::DoResolve (VEmitContext &ec) {
   if (ec.Package->Name == NAME_decorate) CheckDecorateParams(ec);
 
+  //bool isDelegateCall = false;
+
   if (DelegateLocal >= 0) {
     //FIXME
     const VLocalVarDef &loc = ec.GetLocalByIndex(DelegateLocal);
@@ -1928,6 +1930,7 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
       delete this;
       return nullptr;
     }
+    //isDelegateCall = true;
   }
 
   if (DgPtrExpr) {
@@ -1936,7 +1939,21 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
       delete this;
       return nullptr;
     }
+    //isDelegateCall = true;
   }
+
+  // check for virutal method call
+  if (ec.VCallsDisabled) {
+    bool DirectCall = (BaseCall || (Func->Flags&FUNC_Final) != 0);
+    if (DirectCall || DelegateField || DelegateLocal >= 0 || DgPtrExpr) {
+      // not a virtual call
+    } else {
+      ParseError(Loc, "calling virtual method is disabled in current context");
+      delete this;
+      return nullptr;
+    }
+  }
+
 
   memset(optmarshall, 0, sizeof(optmarshall));
 

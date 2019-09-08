@@ -339,6 +339,7 @@ VEmitContext::VEmitContext (VMemberBase *Member)
   , FuncRetType(TYPE_Unknown)
   , localsofs(0)
   , InDefaultProperties(false)
+  , VCallsDisabled(false)
 {
   // find the class
   VMemberBase *CM = Member;

@@ -2587,7 +2587,7 @@ void VParser::ParseStates (VClass *InClass) {
     if (Lex.Check(TK_LBrace)) {
       State->Function = new VMethod(NAME_None, State, State->Loc);
       //State->Function = new VMethod(NAME_None, InClass, State->Loc);
-      State->Function->Flags = FUNC_Final;
+      State->Function->Flags = FUNC_Final|FUNC_NoVCalls;
       State->Function->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, Lex.Location);
       State->Function->ReturnType = VFieldType(TYPE_Void);
       State->Function->Statement = ParseCompoundStatement(stloc);
@@ -2620,7 +2620,7 @@ void VParser::ParseStates (VClass *InClass) {
           // create function
           //State->Function = new VMethod(NAME_None, InClass, State->Loc);
           State->Function = new VMethod(NAME_None, State, State->Loc);
-          State->Function->Flags = FUNC_Final;
+          State->Function->Flags = FUNC_Final|FUNC_NoVCalls;
           State->Function->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, Lex.Location);
           State->Function->ReturnType = VFieldType(TYPE_Void);
           State->Function->Statement = cst;

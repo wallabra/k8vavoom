@@ -208,6 +208,7 @@ bool VMethod::Define () {
   }
 
   VEmitContext ec(this);
+  if (Flags&FUNC_NoVCalls) ec.VCallsDisabled = true;
 
   if (ReturnTypeExpr) ReturnTypeExpr = ReturnTypeExpr->ResolveAsType(ec);
   if (ReturnTypeExpr) {
@@ -379,6 +380,7 @@ void VMethod::Emit () {
   //fprintf(stderr, "*** EMIT000: <%s> (%s); ParamsSize=%d; NumLocals=%d; NumParams=%d\n", *GetFullName(), *Loc.toStringNoCol(), ParamsSize, NumLocals, NumParams);
 
   VEmitContext ec(this);
+  if (Flags&FUNC_NoVCalls) ec.VCallsDisabled = true;
 
   ec.ClearLocalDefs();
   ec.localsofs = (Flags&FUNC_Static ? 0 : 1); // first is `self`

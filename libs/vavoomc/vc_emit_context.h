@@ -207,6 +207,7 @@ public:
   //VLabel LoopEnd;
 
   bool InDefaultProperties;
+  bool VCallsDisabled;
 
   VEmitContext (VMemberBase *Member);
   void EndCode ();

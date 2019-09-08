@@ -41,6 +41,9 @@ enum {
   FUNC_Iterator    = 0x0080, // can be used in foreach statements
 
   FUNC_Decorate    = 0x0100, // can be called from decorate code
+  // do not allow calls to virtual methods inside this one
+  // this is used in synthesized state methods, because they can be called with arbitrary `self`
+  FUNC_NoVCalls    = 0x0200,
 
   FUNC_Override    = 0x1000, // used to check overrides
   FUNC_Private     = 0x2000,

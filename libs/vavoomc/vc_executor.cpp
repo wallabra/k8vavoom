@@ -3180,10 +3180,19 @@ VFuncRes VObject::ExecuteFunctionNoArgs (VObject *Self, VMethod *func, bool allo
     }
     // push `self`
     P_PASS_REF(Self);
+    //GLog.Logf(NAME_Debug, "VObject::ExecuteFunctionNoArgs: class=`%s`; method=`%s`; allowVMT=%d; VTableIndex=%d", *Self->GetClass()->GetFullName(), *func->GetFullName(), (int)allowVMTLookups, func->VTableIndex);
+  } else {
+    vassert(func->VTableIndex == -1);
   }
 
   // route it with VMT
-  if (allowVMTLookups && func->VTableIndex >= 0) func = Self->vtable[func->VTableIndex];
+  if (func->VTableIndex >= 0) {
+    if (allowVMTLookups) {
+      func = Self->vtable[func->VTableIndex];
+    } else {
+      Sys_Error("trying to call virtual function `%s` in class `%s`, but VMT lookups are disabled", *func->GetFullName(), *Self->GetClass()->GetFullName());
+    }
+  }
 
   // placeholders for "ref" args
   int rints[VMethod::MAX_PARAMS];
