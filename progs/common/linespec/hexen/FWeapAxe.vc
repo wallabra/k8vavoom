@@ -80,7 +80,7 @@ override state GetAttackState(bool Hold)
 //
 //==========================================================================
 
-[decorate] final void A_FAxeCheckReady()
+[decorate] final void A_FAxeCheckReady() self(Actor)
 {
   if (!bIsPlayer)
   {
@@ -106,7 +106,7 @@ override state GetAttackState(bool Hold)
 //
 //==========================================================================
 
-[decorate] final void A_FAxeCheckReadyG()
+[decorate] final void A_FAxeCheckReadyG() self(Actor)
 {
   if (!bIsPlayer)
   {
@@ -132,7 +132,7 @@ override state GetAttackState(bool Hold)
 //
 //==========================================================================
 
-[decorate] final void A_FAxeCheckUp()
+[decorate] final void A_FAxeCheckUp() self(Actor)
 {
   if (!bIsPlayer)
   {
@@ -148,7 +148,7 @@ override state GetAttackState(bool Hold)
   }
   else
   {
-    A_Raise();
+    do_A_Raise();
   }
 }
 
@@ -158,7 +158,7 @@ override state GetAttackState(bool Hold)
 //
 //==========================================================================
 
-[decorate] final void A_FAxeCheckUpG()
+[decorate] final void A_FAxeCheckUpG() self(Actor)
 {
   if (!bIsPlayer)
   {
@@ -174,7 +174,7 @@ override state GetAttackState(bool Hold)
   }
   else
   {
-    A_Raise();
+    do_A_Raise();
   }
 }
 

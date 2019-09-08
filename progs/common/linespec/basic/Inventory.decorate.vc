@@ -170,65 +170,18 @@
 //  A_Raise
 //
 //==========================================================================
-[decorate] final void A_Raise () {
-  decorate_A_Raise();
+[decorate] final void A_Raise () self(Actor) {
+  do_A_Raise();
 }
 
 
 //==========================================================================
 //
-//  A_Raise
+//  decorate_A_Raise
 //
 //==========================================================================
 [decorate] final void decorate_A_Raise (optional float raisespeed) self(Actor) {
-  if (!bIsPlayer) return;
-
-  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-  if (!Wpn) return;
-  Wpn.bBobDisabled = true;
-
-  if (!specified_raisespeed) raisespeed = Weapon::RAISESPEED;
-  if (raisespeed <= 0) raisespeed = Weapon::RAISESPEED; //k8: sanity guard
-
-  //print("RAISING %C: curr=%s; top=%s; bot=%s; speed=%s; time=%s", Wpn, Player.ViewStates[PS_WEAPON].SY, Weapon::WEAPONTOP, Weapon::WEAPONBOTTOM, raisespeed, Player.ViewStates[PS_WEAPON].StateTime);
-
-  float prevsy = Player.ViewStates[PS_WEAPON].SY;
-
-  Player.PSpriteWeaponLoweringStartTime = 0;
-  Player.PSpriteWeaponLoweringDuration = 0;
-  Player.PSpriteWeaponLowerPrev = prevsy;
-
-  // FIXME!!
-  /*
-  if (Level.Game.frametime < 1.0/35.0) {
-    Player.ViewStates[PS_WEAPON].SY -= raisespeed;
-  } else {
-    Player.ViewStates[PS_WEAPON].SY -= raisespeed*35.0*Level.Game.frametime;
-  }
-  */
-  float sy = prevsy-raisespeed;
-  Player.ViewStates[PS_WEAPON].SY = sy;
-
-  if (sy > Weapon::WEAPONTOP) {
-    // not raised all the way yet
-    Player.PSpriteWeaponLoweringStartTime = XLevel.Time;
-    Player.PSpriteWeaponLoweringDuration = Player.ViewStates[PS_WEAPON].StateTime;
-    return;
-  }
-
-  if (prevsy > Weapon::WEAPONTOP) {
-    // raise last time
-    Player.PSpriteWeaponLoweringStartTime = XLevel.Time;
-    Player.PSpriteWeaponLoweringDuration = Player.ViewStates[PS_WEAPON].StateTime;
-  }
-
-  Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONTOP;
-  Player.SetViewObject(Wpn);
-  if (Wpn) {
-    Player.SetViewState(PS_WEAPON, Wpn.GetReadyState());
-  } else {
-    Player.SetViewState(PS_WEAPON, none);
-  }
+  do_A_Raise(raisespeed!optional);
 }
 
 
@@ -246,7 +199,7 @@
 
 //===========================================================================
 //
-//  A_ReFire
+//  decorate_A_ReFire
 //
 //===========================================================================
 [decorate] final void decorate_A_ReFire (optional state refirestate) {

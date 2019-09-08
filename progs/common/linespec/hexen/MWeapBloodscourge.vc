@@ -45,7 +45,7 @@ override int GetBlend()
 //
 //==========================================================================
 
-[decorate] final void A_MStaffPalette1()
+[decorate] final void A_MStaffPalette1() self(Actor)
 {
   if (!bIsPlayer)
   {
@@ -62,7 +62,7 @@ override int GetBlend()
 //
 //==========================================================================
 
-[decorate] final void A_MStaffPalette2()
+[decorate] final void A_MStaffPalette2() self(Actor)
 {
   if (!bIsPlayer)
   {
@@ -79,7 +79,7 @@ override int GetBlend()
 //
 //==========================================================================
 
-[decorate] final void A_MStaffPalette3()
+[decorate] final void A_MStaffPalette3() self(Actor)
 {
   if (!bIsPlayer)
   {

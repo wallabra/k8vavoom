@@ -45,7 +45,7 @@ override int GetBlend()
 //
 //============================================================================
 
-[decorate] final void A_CHolyPalette1()
+[decorate] final void A_CHolyPalette1() self(Actor)
 {
   if (!bIsPlayer)
   {
@@ -62,7 +62,7 @@ override int GetBlend()
 //
 //============================================================================
 
-[decorate] final void A_CHolyPalette2()
+[decorate] final void A_CHolyPalette2() self(Actor)
 {
   if (!bIsPlayer)
   {
@@ -79,7 +79,7 @@ override int GetBlend()
 //
 //============================================================================
 
-[decorate] final void A_CHolyPalette3()
+[decorate] final void A_CHolyPalette3() self(Actor)
 {
   if (!bIsPlayer)
   {
