@@ -52,6 +52,13 @@
 
 //#define K8_UNLZMA_DEBUG
 
+#ifndef VAVOOM_USE_LIBLZMA
+static const ISzAlloc fsysLzmaAlloc = {
+  .Alloc = [](ISzAllocPtr p, size_t size) -> void * { void *res = ::malloc((int)size); if (!res) Sys_Error("out of memory!"); return res; },
+  .Free = [](ISzAllocPtr p, void *addr) -> void { if (addr) ::free(addr); },
+};
+#endif
+
 
 // /////////////////////////////////////////////////////////////////////////// /
 enum {
@@ -84,9 +91,11 @@ private:
 
   Bytef readBuffer[UNZ_BUFSIZE];//  Internal buffer for compressed data
   z_stream stream;         //  ZLib stream structure for inflate
-  lzma_stream lzmastream;
-  lzma_options_lzma lzmaopts;
-  lzma_filter filters[2];
+  CLzmaDec lzmastate;
+  bool lzmainited;
+  int lzmatotalout;
+  vuint8 *lzmainbufpos;
+  size_t lzmainbufleft;
   bool usezlib;
   int nextpos; // position we want
   int currpos; // position we are currently on
@@ -446,6 +455,10 @@ VZipFileReader::VZipFileReader (VStream *InStream, vuint32 bytesBeforeZipFile, c
   : VStreamPakFile(aDriver)
   , fileStream(InStream)
   , info(aInfo)
+  , lzmainited(false)
+  , lzmatotalout(0)
+  , lzmainbufpos(nullptr)
+  , lzmainbufleft(0)
 {
   mythread_mutex_init(&lock);
   MyThreadLocker locker(&lock);
@@ -458,7 +471,6 @@ VZipFileReader::VZipFileReader (VStream *InStream, vuint32 bytesBeforeZipFile, c
   if (!checkCurrentFileCoherencyHeader(&iSizeVar, bytesBeforeZipFile)) { bError = true; return; }
 
   stream_initialised = false;
-  lzmastream = LZMA_STREAM_INIT;
 
   if (info.compression_method != Z_STORE && info.compression_method != Z_DEFLATED && info.compression_method != Z_LZMA) {
     bError = true;
@@ -469,7 +481,6 @@ VZipFileReader::VZipFileReader (VStream *InStream, vuint32 bytesBeforeZipFile, c
   Crc32 = 0;
 
   stream.total_out = 0;
-  lzmastream.total_out = 0;
   pos_in_zipfile = info.offset_curfile+SIZEZIPLOCALHEADER+iSizeVar+bytesBeforeZipFile;
   start_pos = pos_in_zipfile;
   rest_read_compressed = info.compressed_size;
@@ -503,7 +514,6 @@ VZipFileReader::VZipFileReader (VStream *InStream, vuint32 bytesBeforeZipFile, c
   }
 
   stream.avail_in = 0;
-  lzmastream.avail_in = 0;
   bLoading = true;
 }
 
@@ -524,7 +534,7 @@ void VZipFileReader::setError () {
   if (usezlib) {
     if (stream_initialised) inflateEnd(&stream);
   } else {
-    if (stream_initialised) lzma_end(&lzmastream);
+    if (lzmainited) { lzmainited = false; LzmaDec_Free(&lzmastate, &fsysLzmaAlloc); }
   }
   stream_initialised = false;
 }
@@ -537,7 +547,7 @@ bool VZipFileReader::Close () {
   if (usezlib) {
     if (stream_initialised) inflateEnd(&stream);
   } else {
-    if (stream_initialised) lzma_end(&lzmastream);
+    if (lzmainited) { lzmainited = false; LzmaDec_Free(&lzmastate, &fsysLzmaAlloc); }
   }
   stream_initialised = false;
   return !bError;
@@ -549,46 +559,36 @@ bool VZipFileReader::Close () {
 int VZipFileReader::readSomeBytes (void *buf, int len) {
   stream.next_out = (Bytef *)buf;
   stream.avail_out = len;
-  lzmastream.next_out = (Bytef *)buf;
-  lzmastream.avail_out = len;
-#ifdef K8_UNLZMA_DEBUG
-  fprintf(stderr, "VZipFileReader::readSomeBytes: %d available in out, %d bytes left in in\n", (int)(usezlib ? stream.avail_out : lzmastream.avail_out), (int)(usezlib ? stream.avail_in : lzmastream.avail_in));
-#endif
+  vuint8 *lzmadest = (vuint8 *)buf;
+  size_t lzmadestleft = (size_t)length;
   int res = 0;
-  while ((usezlib ? stream.avail_out : lzmastream.avail_out) > 0) {
+  while ((usezlib ? (int)stream.avail_out : (int)lzmadestleft) > 0) {
     // read compressed data (if necessary)
-    if ((usezlib ? stream.avail_in : lzmastream.avail_in) == 0) {
+    if ((usezlib ? (int)stream.avail_in : (int)lzmainbufleft) == 0) {
       if (rest_read_compressed > 0) {
         vuint32 uReadThis = UNZ_BUFSIZE;
         if (rest_read_compressed < uReadThis) uReadThis = rest_read_compressed;
-#ifdef K8_UNLZMA_DEBUG
-        /*if (!usezlib)*/ fprintf(stderr, "LZMA: reading compressed bytes from ofs %u\n", (unsigned)(pos_in_zipfile-start_pos));
-#endif
         fileStream->Seek(pos_in_zipfile);
         fileStream->Serialise(readBuffer, uReadThis);
         if (fileStream->IsError()) {
-#ifdef K8_UNLZMA_DEBUG
-          fprintf(stderr, "LZMA: FAILED to read %d compressed bytes\n", uReadThis);
-#endif
           setError();
           return -1;
         }
-#ifdef K8_UNLZMA_DEBUG
-        /*if (!usezlib)*/ fprintf(stderr, "LZMA: read %d compressed bytes\n", uReadThis);
-#endif
         pos_in_zipfile += uReadThis;
         rest_read_compressed -= uReadThis;
         stream.next_in = readBuffer;
         stream.avail_in = uReadThis;
-        lzmastream.next_in = readBuffer;
-        lzmastream.avail_in = uReadThis;
+        lzmainbufpos = (vuint8 *)readBuffer;
+        lzmainbufleft = (size_t)uReadThis;
       }
+    } else {
+      if (rest_read_compressed == 0 && (usezlib ? (stream.avail_in == 0) : (lzmadestleft == 0))) break;
     }
 
     // decompress data
     if (info.compression_method == Z_STORE) {
       // stored data
-      if (stream.avail_in == 0 && rest_read_compressed == 0) break;
+      //if (stream.avail_in == 0 && rest_read_compressed == 0) break;
       int uDoCopy = (stream.avail_out < stream.avail_in ? stream.avail_out : stream.avail_in);
       memcpy(stream.next_out, stream.next_in, uDoCopy);
       Crc32 = crc32(Crc32, stream.next_out, uDoCopy);
@@ -624,38 +624,31 @@ int VZipFileReader::readSomeBytes (void *buf, int len) {
       if (err != Z_OK) break;
     } else {
       // lzma data
-#ifdef K8_UNLZMA_DEBUG
-      fprintf(stderr, "LZMA: processing %u compressed bytes into %u uncompressed bytes\n", (unsigned)lzmastream.avail_in, (unsigned)lzmastream.avail_out);
-      auto inbefore = lzmastream.avail_in;
-#endif
-      auto outbefore = lzmastream.avail_out;
-      const Bytef *bufBefore = lzmastream.next_out;
-      int err = lzma_code(&lzmastream, LZMA_RUN);
-      if (err != LZMA_OK && err != LZMA_STREAM_END) {
-#ifdef K8_UNLZMA_DEBUG
-        fprintf(stderr, "LZMA: stream error (%d)\n", (int)err);
-#endif
-        setError();
-        return -1;
-      }
-      vuint32 uOutThis = outbefore-lzmastream.avail_out;
-#ifdef K8_UNLZMA_DEBUG
-      fprintf(stderr, "LZMA: processed %u packed bytes, unpacked %u bytes (err=%d)\n", (unsigned)(inbefore-lzmastream.avail_in), uOutThis, err);
-#endif
-      Crc32 = crc32(Crc32, bufBefore, (uInt)uOutThis);
-      rest_read_uncompressed -= uOutThis;
-      res += (uInt)uOutThis; //(uInt)(uTotalOutAfter - uTotalOutBefore);
-      if (err != LZMA_OK) {
-#ifdef K8_UNLZMA_DEBUG
-        fprintf(stderr, "LZMA: stream end\n");
-#endif
-        break;
-      }
+      vassert(lzmainbufleft > 0);
+      ELzmaStatus status;
+      size_t lzmainprocessed = lzmainbufleft;
+      size_t lzmaouted = lzmadestleft;
+      int lzmares = LzmaDec_DecodeToBuf(&lzmastate, lzmadest, &lzmaouted, lzmainbufpos, &lzmainprocessed, LZMA_FINISH_ANY, &status);
+      vassert(lzmaouted <= lzmadestleft);
+      vassert(lzmainprocessed <= lzmainbufleft);
+      //GLog.Logf(NAME_Debug, "LZMA: wanted %u (%u packed bytes in buffer), read %u (%u packed bytes read)", (unsigned)lzmadestleft, (unsigned)lzmainbufleft, (unsigned)lzmaouted, (unsigned)lzmainprocessed);
+      // calculate crc
+      if (lzmaouted) Crc32 = crc32(Crc32, lzmadest, (uInt)lzmaouted);
+      // move input pointer
+      lzmainbufleft -= lzmainprocessed;
+      lzmainbufpos += lzmainprocessed;
+      // move output pointer
+      lzmadestleft -= lzmaouted;
+      lzmadest += lzmaouted;
+      // bookkeeping
+      rest_read_uncompressed -= (int)lzmaouted;
+      lzmatotalout += (int)lzmaouted;
+      res += (uInt)lzmaouted;
+      //GLog.Logf(NAME_Debug, "LZMA: res=%d; rest_read_uncompressed=%d; iRead=%d", (int)lzmares, rest_read_uncompressed, iRead);
+      // check for errors
+      if (lzmares != SZ_OK) break;
     }
   }
-#ifdef K8_UNLZMA_DEBUG
-  fprintf(stderr, "VZipFileReader::readSomeBytes: read %d bytes\n", res);
-#endif
   return res;
 }
 
@@ -666,16 +659,14 @@ bool VZipFileReader::lzmaRestart () {
   vuint8 lzmaprhdr[5];
 
   if (usezlib) {
-#ifdef K8_UNLZMA_DEBUG
-    fprintf(stderr, "LZMA: FAILED to restart (not lzma)\n");
-#endif
     setError();
     return false;
   }
 
-  if (stream_initialised) { lzma_end(&lzmastream); stream_initialised = false; }
+  if (lzmainited) { lzmainited = false; LzmaDec_Free(&lzmastate, &fsysLzmaAlloc); }
+  lzmatotalout = 0;
+  Crc32 = 0;
   rest_read_uncompressed = info.uncompressed_size;
-  lzmastream = LZMA_STREAM_INIT;
 
   if (rest_read_compressed < 4+5) {
     bError = true;
@@ -719,40 +710,27 @@ bool VZipFileReader::lzmaRestart () {
     }
   }
 
-#ifdef K8_UNLZMA_DEBUG
-  fprintf(stderr, "LZMA: %u bytes in header\n", (unsigned)(fileStream->Tell()-pos_in_zipfile));
-#endif
-
-  lzma_lzma_preset(&lzmaopts, 9|LZMA_PRESET_EXTREME);
-  filters[0].id = LZMA_FILTER_LZMA1;
-  filters[0].options = &lzmaopts;
-  filters[1].id = LZMA_VLI_UNKNOWN;
-
-  vuint32 prpsize;
-  if (lzma_properties_size(&prpsize, &filters[0]) != LZMA_OK) {
-    bError = true;
-    //error->Log("Failed to initialise lzma stream");
-    return false;
-  }
-  if (prpsize != 5) {
-    bError = true;
-    //error->Log("Failed to initialise lzma stream");
-    return false;
-  }
-
-  if (lzma_properties_decode(&filters[0], nullptr, lzmaprhdr, prpsize) != LZMA_OK) {
-    bError = true;
-    //error->Log("Failed to initialise lzma stream");
-    return false;
-  }
-
-  if (lzma_raw_decoder(&lzmastream, &filters[0]) != LZMA_OK) {
-    bError = true;
-    //error->Log("Failed to initialise lzma stream");
-    return false;
-  }
-
   pos_in_zipfile = fileStream->Tell();
+  if (fileStream->IsError()) {
+    bError = true;
+    return false;
+  }
+
+  // header is: LZMA properties (5 bytes) and uncompressed size (8 bytes, little-endian)
+  static_assert(LZMA_PROPS_SIZE == 5, "invalid LZMA properties size");
+  static_assert(sizeof(vuint64) == 8, "invalid vuint64 size");
+  vuint8 lzmaheader[LZMA_PROPS_SIZE+8];
+  memcpy(lzmaheader, lzmaprhdr, LZMA_PROPS_SIZE);
+  vuint64 *sizeptr = (vuint64 *)(lzmaheader+LZMA_PROPS_SIZE);
+  *sizeptr = (vuint64)info.uncompressed_size;
+  LzmaDec_Construct(&lzmastate);
+  auto res = LzmaDec_Allocate(&lzmastate, lzmaheader, LZMA_PROPS_SIZE, &fsysLzmaAlloc);
+  if (res != SZ_OK) {
+    bError = true;
+    return false;
+  }
+  LzmaDec_Init(&lzmastate);
+  lzmainited = true;
 
   stream_initialised = true;
 
@@ -862,9 +840,6 @@ void VZipFileReader::Serialise (void* buf, int len) {
       if (inflateInit2(&stream, -MAX_WBITS) != Z_OK) { bError = true; return; }
       stream_initialised = true;
     } else if (info.compression_method == Z_LZMA) {
-#ifdef K8_UNLZMA_DEBUG
-      fprintf(stderr, "LZMA: rewind (nextpos=%d)\n", nextpos);
-#endif
       vassert(stream_initialised);
       vassert(!usezlib);
       if (!lzmaRestart()) return; // error already set
@@ -879,9 +854,6 @@ void VZipFileReader::Serialise (void* buf, int len) {
     if (toread > 256) toread = 256;
     int rd = readSomeBytes(tmpbuf, toread);
     if (rd <= 0) {
-#ifdef K8_UNLZMA_DEBUG
-      fprintf(stderr, "LZMA: skip error (rd=%d)\n", rd);
-#endif
       setError();
       return;
     }
