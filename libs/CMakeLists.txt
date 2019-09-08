@@ -1,9 +1,9 @@
 add_subdirectory(core)
 add_subdirectory(vavoomc)
 
-if(NOT WITH_SYS_LZMA)
-  add_subdirectory(liblzma)
-endif(NOT WITH_SYS_LZMA)
+#if(NOT WITH_SYS_LZMA)
+#  add_subdirectory(liblzma)
+#endif(NOT WITH_SYS_LZMA)
 
 if(NOT WITH_SYS_LIBJPG)
   add_subdirectory(jpeg)
