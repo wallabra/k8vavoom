@@ -10,14 +10,14 @@ terms of the MIT license. A copy of the license can be found in the file
 
 #include "mimalloc-types.h"
 
-#if defined(MI_MALLOC_OVERRIDE) && defined(__APPLE__)
+#if defined(MI_MALLOC_OVERRIDE) && (defined(__APPLE__) || defined(__OpenBSD__))
 #define MI_TLS_RECURSE_GUARD
 #endif
 
 #if (MI_DEBUG>0)
 #define mi_trace_message(...)  _mi_trace_message(__VA_ARGS__)
 #else
-#define mi_trace_message(...)  
+#define mi_trace_message(...)
 #endif
 
 
