@@ -1010,6 +1010,7 @@ void parseVCSource (VStr filename, VStr className=VStr::EmptyString) {
       if (par->eat("abstract")) continue;
       if (par->eat("transient")) continue;
       if (par->eat("game") || par->eat("__mobjinfo__") || par->eat("__scriptid__")) { par->expect("("); skipParens(par); continue; }
+      if (par->eat("[")) { while (!par->eat("]")) par->skipToken(); continue; }
       break;
     }
     if (par->eat("decorate")) {
