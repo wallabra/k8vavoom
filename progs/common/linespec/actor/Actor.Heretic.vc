@@ -109,7 +109,7 @@
 //  A_MacePL1Check
 //
 //===========================================================================
-[decorate] final void A_MacePL1Check () {
+[decorate] final void A_MacePL1Check () self(Actor) {
   if (Special1 == 0) return;
   Special1 -= 4;
   if (Special1 > 0) return;
@@ -568,7 +568,7 @@
 //  A_StaffAttack
 //
 //===========================================================================
-[decorate] final void A_StaffAttack (int damage, class!Actor PuffType) {
+[decorate] final void A_StaffAttack (int damage, class!Actor PuffType) self(Actor) {
   TVec dir;
 
   if (!bIsPlayer) return;
@@ -593,7 +593,7 @@
 //  A_GauntletAttack
 //
 //===========================================================================
-[decorate] final void A_GauntletAttack (int power) {
+[decorate] final void A_GauntletAttack (int power) self(Actor) {
   int damage;
   float slope;
   int randVal;
@@ -666,7 +666,7 @@
 //  A_FireGoldWandPL1
 //
 //===========================================================================
-[decorate] final void A_FireGoldWandPL1 () {
+[decorate] final void A_FireGoldWandPL1 () self(Actor) {
   TVec dir;
 
   if (!bIsPlayer) return;
@@ -688,7 +688,7 @@
 //  A_FireGoldWandPL2
 //
 //===========================================================================
-[decorate] final void A_FireGoldWandPL2 () {
+[decorate] final void A_FireGoldWandPL2 () self(Actor) {
   TAVec angles;
   TVec dir;
 
@@ -717,7 +717,7 @@
 //  A_FireCrossbowPL1
 //
 //===========================================================================
-[decorate] final void A_FireCrossbowPL1 () {
+[decorate] final void A_FireCrossbowPL1 () self(Actor) {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -735,7 +735,7 @@
 //  A_FireCrossbowPL2
 //
 //===========================================================================
-[decorate] final void A_FireCrossbowPL2 () {
+[decorate] final void A_FireCrossbowPL2 () self(Actor) {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -755,7 +755,7 @@
 //  A_FireBlasterPL1
 //
 //===========================================================================
-[decorate] final void A_FireBlasterPL1 () {
+[decorate] final void A_FireBlasterPL1 () self(Actor) {
   TVec dir;
 
   if (!bIsPlayer) return;
@@ -777,7 +777,7 @@
 //  A_FireSkullRodPL1
 //
 //===========================================================================
-[decorate] final void A_FireSkullRodPL1 () {
+[decorate] final void A_FireSkullRodPL1 () self(Actor) {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -800,7 +800,7 @@
 //  counter for the sound looping.
 //
 //===========================================================================
-[decorate] final void A_FireSkullRodPL2 () {
+[decorate] final void A_FireSkullRodPL2 () self(Actor) {
   EntityEx AimTarget;
 
   if (!bIsPlayer) return;
@@ -834,7 +834,7 @@
 //  A_FireMacePL1
 //
 //===========================================================================
-[decorate] final void A_FireMacePL1 () {
+[decorate] final void A_FireMacePL1 () self(Actor) {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -870,7 +870,7 @@
 //  A_FireMacePL2
 //
 //===========================================================================
-[decorate] final void A_FireMacePL2 () {
+[decorate] final void A_FireMacePL2 () self(Actor) {
   EntityEx AimTarget;
 
   if (!bIsPlayer) return;
@@ -933,7 +933,7 @@
 //  A_BeakRaise
 //
 //===========================================================================
-[decorate] final void A_BeakRaise () {
+[decorate] final void A_BeakRaise () self(Actor) {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -950,7 +950,7 @@
 //  A_BeakAttackPL1
 //
 //===========================================================================
-[decorate] final void A_BeakAttackPL1 () {
+[decorate] final void A_BeakAttackPL1 () self(Actor) {
   TVec dir;
 
   if (!bIsPlayer) return;
@@ -976,7 +976,7 @@
 //  A_BeakAttackPL2
 //
 //===========================================================================
-[decorate] final void A_BeakAttackPL2 () {
+[decorate] final void A_BeakAttackPL2 () self(Actor) {
   TVec dir;
 
   if (!bIsPlayer) return;

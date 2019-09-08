@@ -33,7 +33,7 @@ const float HammerRange = MELEERANGE+MELEERANGE/2.0;
 //  A_FPunchAttack
 //
 //==========================================================================
-[decorate] final void A_FPunchAttack () {
+[decorate] final void A_FPunchAttack () self(Actor) {
   TVec vforward;
   TAVec angles;
 
@@ -77,7 +77,7 @@ const float HammerRange = MELEERANGE+MELEERANGE/2.0;
 //  A_FAxeAttack
 //
 //==========================================================================
-[decorate] final void A_FAxeAttack () {
+[decorate] final void A_FAxeAttack () self(Actor) {
   int useMana;
   TAVec angles;
   TVec vforward;
@@ -127,7 +127,7 @@ const float HammerRange = MELEERANGE+MELEERANGE/2.0;
 //  A_FHammerAttack
 //
 //============================================================================
-[decorate] final void A_FHammerAttack () {
+[decorate] final void A_FHammerAttack () self(Actor) {
   TAVec angles;
   TVec vforward;
 
@@ -168,7 +168,7 @@ const float HammerRange = MELEERANGE+MELEERANGE/2.0;
 //  A_FHammerThrow
 //
 //============================================================================
-[decorate] final void A_FHammerThrow () {
+[decorate] final void A_FHammerThrow () self(Actor) {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -186,7 +186,7 @@ const float HammerRange = MELEERANGE+MELEERANGE/2.0;
 //  A_FSwordAttack
 //
 //============================================================================
-[decorate] final void A_FSwordAttack () {
+[decorate] final void A_FSwordAttack () self(Actor) {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -207,7 +207,7 @@ const float HammerRange = MELEERANGE+MELEERANGE/2.0;
 //  A_CMaceAttack
 //
 //===========================================================================
-[decorate] final void A_CMaceAttack () {
+[decorate] final void A_CMaceAttack () self(Actor) {
   TVec vforward;
 
   if (!bIsPlayer) return;
@@ -232,7 +232,7 @@ const float HammerRange = MELEERANGE+MELEERANGE/2.0;
 //  A_CStaffInitBlink
 //
 //==========================================================================
-[decorate] final void A_CStaffInitBlink () {
+[decorate] final void A_CStaffInitBlink () self(Actor) {
   if (!bIsPlayer) return;
 
   Special1 = (P_Random()>>1)+20;
@@ -244,7 +244,7 @@ const float HammerRange = MELEERANGE+MELEERANGE/2.0;
 //  A_CStaffCheckBlink
 //
 //==========================================================================
-[decorate] final void A_CStaffCheckBlink () {
+[decorate] final void A_CStaffCheckBlink () self(Actor) {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -263,7 +263,7 @@ const float HammerRange = MELEERANGE+MELEERANGE/2.0;
 //  A_CStaffCheck
 //
 //==========================================================================
-[decorate] final void A_CStaffCheck () {
+[decorate] final void A_CStaffCheck () self(Actor) {
   TAVec angles;
   TVec vforward;
 
@@ -301,7 +301,7 @@ const float HammerRange = MELEERANGE+MELEERANGE/2.0;
 //  A_CStaffAttack
 //
 //==========================================================================
-[decorate] final void A_CStaffAttack () {
+[decorate] final void A_CStaffAttack () self(Actor) {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -324,7 +324,7 @@ const float HammerRange = MELEERANGE+MELEERANGE/2.0;
 //  A_CFlameAttack
 //
 //============================================================================
-[decorate] final void A_CFlameAttack () {
+[decorate] final void A_CFlameAttack () self(Actor) {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -343,7 +343,7 @@ const float HammerRange = MELEERANGE+MELEERANGE/2.0;
 //  A_CHolyAttack
 //
 //============================================================================
-[decorate] final void A_CHolyAttack () {
+[decorate] final void A_CHolyAttack () self(Actor) {
   EntityEx AimTarget;
 
   if (!bIsPlayer) return;
@@ -366,7 +366,7 @@ const float HammerRange = MELEERANGE+MELEERANGE/2.0;
 //  A_FireConePL1
 //
 //==========================================================================
-[decorate] final void A_FireConePL1 () {
+[decorate] final void A_FireConePL1 () self(Actor) {
   int conedone = false;
   TVec Dir;
 
@@ -411,7 +411,7 @@ const float HammerRange = MELEERANGE+MELEERANGE/2.0;
 //  A_LightningReady
 //
 //==========================================================================
-[decorate] final void A_LightningReady () {
+[decorate] final void A_LightningReady () self(Actor) {
   A_WeaponReady();
   if (P_Random() < 160) PlaySound('MageLightningReady', CHAN_WEAPON);
 }
@@ -422,7 +422,7 @@ const float HammerRange = MELEERANGE+MELEERANGE/2.0;
 //  A_MLightningAttack
 //
 //==========================================================================
-[decorate] final void A_MLightningAttack () {
+[decorate] final void A_MLightningAttack () self(Actor) {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -466,7 +466,7 @@ final void MStaffSpawn (float angle) {
 //  A_MStaffAttack
 //
 //==========================================================================
-[decorate] final void A_MStaffAttack () {
+[decorate] final void A_MStaffAttack () self(Actor) {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -488,7 +488,7 @@ final void MStaffSpawn (float angle) {
 //  A_SnoutAttack
 //
 //==========================================================================
-[decorate] final void A_SnoutAttack () {
+[decorate] final void A_SnoutAttack () self(Actor) {
   TVec vforward;
 
   if (!bIsPlayer) return;
