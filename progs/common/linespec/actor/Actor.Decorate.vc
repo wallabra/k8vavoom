@@ -149,6 +149,110 @@ enum /*EFSkillProperty*/ {
 };
 
 
+// flags for A_FireBullets
+const int FBF_USEAMMO       = 1;
+const int FBF_NORANDOM      = 2;
+const int FBF_EXPLICITANGLE = 4;
+const int FBF_NOPITCH       = 8;
+const int FBF_NOFLASH       = 16;
+const int FBF_NORANDOMPUFFZ = 32;
+const int FBF_PUFFTARGET    = 64;
+const int FBF_PUFFMASTER    = 128;
+const int FBF_PUFFTRACER    = 256;
+
+
+enum /*EFireCustomMissileFlags*/ {
+  FPF_AIMATANGLE = 1,
+  FPF_TRANSFERTRANSLATION = 2,
+  FPF_NOAUTOAIM = 4,
+};
+
+// for `A_Saw`
+const int SF_NORANDOM = 1;
+const int SF_RANDOMLIGHTMISS = 2;
+const int SF_RANDOMLIGHTHIT = 4;
+const int SF_RANDOMLIGHTBOTH = 6;
+const int SF_NOUSEAMMOMISS = 8;
+const int SF_NOUSEAMMO = 16;
+const int SF_NOPULLIN = 32; // not implemented
+const int SF_NOTURN = 64;
+const int SF_STEALARMOR = 128; // not implemented
+
+
+const int CPF_USEAMMO       = 1;
+const int CPF_DAGGER        = 2;
+const int CPF_PULLIN        = 4;
+const int CPF_NORANDOMPUFFZ = 8;
+const int CPF_NOTURN        = 16;
+const int CPF_STEALARMOR    = 32; // not implemented yet
+
+
+//==========================================================================
+//
+//  DoRespawn
+//
+//  needed for `Inventory`
+//
+//==========================================================================
+bool DoRespawn () {
+  return true;
+}
+
+
+//===========================================================================
+//
+//  doFireMissileProjectile
+//
+//  `A_FireCustomMissile()` and `A_FireProjectile()` are the same thing, so
+//  they both will use this code
+//
+//===========================================================================
+final void doFireMissileProjectile (class!Actor MissileType, optional float Angle,
+  optional bool UseAmmo, optional int SpawnXY, optional float SpawnZ,
+  optional int Flags, optional float Pitch)
+{
+  if (!MissileType || !bIsPlayer) return;
+
+  if (!specified_UseAmmo) UseAmmo = true;
+
+  name decal = ''; // default
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (UseAmmo) {
+    if (!Wpn) return;
+    if (!Wpn.DepleteAmmo(Wpn.FireMode)) return;
+  }
+  if (Wpn) decal = Wpn.DecalName;
+
+  TVec ShootOrg = Origin;
+  if (SpawnXY) {
+    float s, c;
+    sincos(Angles.yaw-90.0, out s, out c);
+    ShootOrg.x += float(SpawnXY)*c;
+    ShootOrg.y += float(SpawnXY)*s;
+  }
+  ShootOrg.z += SpawnZ;
+
+  float ShootAngle = Angles.yaw;
+  if (Flags&FPF_AIMATANGLE) ShootAngle += Angle;
+  // Temporarily adjusts the pitch
+  float SavedPitch = Angles.pitch;
+  if (Flags&FPF_NOAUTOAIM) Angles.pitch += Pitch; // `A_FireCustomMissile()` does this another way
+
+  EntityEx AimTarget;
+  EntityEx A = SpawnPlayerMissileEx(MissileType, false, AimTarget, ShootAngle, ShootOrg, decal, noAutoAim:!!(Flags&FPF_NOAUTOAIM));
+  Angles.pitch = SavedPitch;
+
+  if (A) {
+    if (Flags&FPF_TRANSFERTRANSLATION) A.CopyTranslations(self);
+    // handle seeker missiles
+    if (A.bSeekerMissile) A.Tracer = AimTarget;
+    if (!(Flags&FPF_AIMATANGLE)) VectorRotateAroundZ(ref A.Velocity, Angle);
+  }
+}
+
+
+
+
 //==========================================================================
 //
 //  A_k8ConLog

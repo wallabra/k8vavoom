@@ -29,18 +29,6 @@
 //**
 //**************************************************************************
 
-// flags for A_FireBullets
-const int FBF_USEAMMO       = 1;
-const int FBF_NORANDOM      = 2;
-const int FBF_EXPLICITANGLE = 4;
-const int FBF_NOPITCH       = 8;
-const int FBF_NOFLASH       = 16;
-const int FBF_NORANDOMPUFFZ = 32;
-const int FBF_PUFFTARGET    = 64;
-const int FBF_PUFFMASTER    = 128;
-const int FBF_PUFFTRACER    = 256;
-
-
 //**************************************************************************
 //  State jumps
 //**************************************************************************
@@ -50,7 +38,7 @@ const int FBF_PUFFTRACER    = 256;
 //  A_JumpIfNoAmmo
 //
 //==========================================================================
-[decorate] final void A_JumpIfNoAmmo (state Label) {
+[decorate] final void A_JumpIfNoAmmo (state Label) self(Actor) {
   // state jumps should not affect state chain results
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
 
@@ -88,7 +76,7 @@ const int FBF_PUFFTRACER    = 256;
 //  Lowers current weapon, and changes weapon at bottom.
 //
 //==========================================================================
-[decorate] final void decorate_A_Lower (optional float lowerspeed) {
+[decorate] final void decorate_A_Lower (optional float lowerspeed) self(Actor) {
   if (!bIsPlayer) return;
 
   Weapon ready = PlayerEx(Player).ReadyWeapon;
@@ -192,7 +180,7 @@ const int FBF_PUFFTRACER    = 256;
 //  A_Raise
 //
 //==========================================================================
-[decorate] final void decorate_A_Raise (optional float raisespeed) {
+[decorate] final void decorate_A_Raise (optional float raisespeed) self(Actor) {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -251,7 +239,7 @@ const int FBF_PUFFTRACER    = 256;
 //  The player can re-fire the weapon without lowering it entirely.
 //
 //===========================================================================
-private final void do_A_ReFire (optional state refirestate) {
+private final void do_A_ReFire (optional state refirestate) self(Actor) {
   if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
@@ -311,7 +299,7 @@ private final void do_A_ReFire (optional state refirestate) {
 //  A_ClearReFire
 //
 //===========================================================================
-[decorate] final void A_ClearReFire () {
+[decorate] final void A_ClearReFire () self(Actor) {
   if (bIsPlayer) PlayerEx(Player).Refire = 0;
 }
 
@@ -333,7 +321,7 @@ private final void do_A_ReFire (optional state refirestate) {
 //  GFF_NOEXTCHANGE is 1
 //
 //===========================================================================
-[decorate] final void decorate_A_GunFlash (optional name newstate, optional int flags) {
+[decorate] final void decorate_A_GunFlash (optional name newstate, optional int flags) self(Actor) {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -352,7 +340,7 @@ private final void do_A_ReFire (optional state refirestate) {
 //  A_CheckReload
 //
 //===========================================================================
-[decorate] final void A_CheckReload () {
+[decorate] final void A_CheckReload () self(Actor) {
   if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (Wpn) Wpn.CheckAmmo(Wpn.FireMode, AutoSwitch:true);
@@ -364,7 +352,7 @@ private final void do_A_ReFire (optional state refirestate) {
 //  A_Light
 //
 //===========================================================================
-[decorate] final void A_Light (int LightValue) {
+[decorate] final void A_Light (int LightValue) self(Actor) {
   if (bIsPlayer) Player.ExtraLight = clamp(LightValue, 0, 20);
 }
 
@@ -374,7 +362,7 @@ private final void do_A_ReFire (optional state refirestate) {
 //  A_Light0
 //
 //===========================================================================
-[decorate] final void A_Light0 () {
+[decorate] final void A_Light0 () self(Actor) {
   if (bIsPlayer) Player.ExtraLight = 0;
 }
 
@@ -384,7 +372,7 @@ private final void do_A_ReFire (optional state refirestate) {
 //  A_Light1
 //
 //===========================================================================
-[decorate] final void A_Light1 () {
+[decorate] final void A_Light1 () self(Actor) {
   if (bIsPlayer) Player.ExtraLight = 1;
 }
 
@@ -394,7 +382,7 @@ private final void do_A_ReFire (optional state refirestate) {
 //  A_Light2
 //
 //===========================================================================
-[decorate] final void A_Light2 () {
+[decorate] final void A_Light2 () self(Actor) {
   if (bIsPlayer) Player.ExtraLight = 2;
 }
 
@@ -404,7 +392,7 @@ private final void do_A_ReFire (optional state refirestate) {
 //  A_LightInverse
 //
 //==========================================================================
-[decorate] final void A_LightInverse () {
+[decorate] final void A_LightInverse () self(Actor) {
   if (bIsPlayer) Player.ExtraLight = 255;
 }
 
@@ -442,7 +430,7 @@ private final void do_A_ReFire (optional state refirestate) {
   optional int SawDamage, optional class!Actor PuffType,
   optional int flags, optional float range, optional float spread_xy, optional float spread_z,
   optional float lifesteal, optional float lifestealmax, optional string armorbonustype,
-  optional bool alertIfHit, optional bool noAlertIfKilled)
+  optional bool alertIfHit, optional bool noAlertIfKilled) self(Actor)
 {
   TVec dir;
 
@@ -544,15 +532,6 @@ private final void do_A_ReFire (optional state refirestate) {
 
 
 //===========================================================================
-const int CPF_USEAMMO       = 1;
-const int CPF_DAGGER        = 2;
-const int CPF_PULLIN        = 4;
-const int CPF_NORANDOMPUFFZ = 8;
-const int CPF_NOTURN        = 16;
-const int CPF_STEALARMOR    = 32; // not implemented yet
-
-
-//===========================================================================
 //
 //  A_CustomPunch
 //
@@ -561,7 +540,7 @@ const int CPF_STEALARMOR    = 32; // not implemented yet
   optional int Flags, optional class!Actor PuffType,
   optional float Range, optional float LifeSteal,
   optional float lifestealmax, optional class!BasicArmorBonus armorbonustype,
-  optional name meleesound, optional name misssound)
+  optional name meleesound, optional name misssound) self(Actor)
 {
   TAVec aimAngles;
   TVec dir;
@@ -623,7 +602,7 @@ const int CPF_STEALARMOR    = 32; // not implemented yet
 [decorate] final void A_FireBullets (float SpreadHoriz, float SpreadVert, int NumBullets,
   int DamagePerBullet, optional class!Actor PuffType, optional int Flags,
   optional float Range,
-  optional class!Actor missile, optional float spawnheight, optional float spawnofsxy)
+  optional class!Actor missile, optional float spawnheight, optional float spawnofsxy) self(Actor)
 {
   TVec dir;
   int damage;
@@ -716,64 +695,12 @@ const int CPF_STEALARMOR    = 32; // not implemented yet
 
 //===========================================================================
 //
-//  doFireMissileProjectile
-//
-//  `A_FireCustomMissile()` and `A_FireProjectile()` are the same thing, so
-//  they both will use this code
-//
-//===========================================================================
-final void doFireMissileProjectile (class!Actor MissileType, optional float Angle,
-  optional bool UseAmmo, optional int SpawnXY, optional float SpawnZ,
-  optional int Flags, optional float Pitch)
-{
-  if (!MissileType || !bIsPlayer) return;
-
-  if (!specified_UseAmmo) UseAmmo = true;
-
-  name decal = ''; // default
-  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-  if (UseAmmo) {
-    if (!Wpn) return;
-    if (!Wpn.DepleteAmmo(Wpn.FireMode)) return;
-  }
-  if (Wpn) decal = Wpn.DecalName;
-
-  TVec ShootOrg = Origin;
-  if (SpawnXY) {
-    float s, c;
-    sincos(Angles.yaw-90.0, out s, out c);
-    ShootOrg.x += float(SpawnXY)*c;
-    ShootOrg.y += float(SpawnXY)*s;
-  }
-  ShootOrg.z += SpawnZ;
-
-  float ShootAngle = Angles.yaw;
-  if (Flags&FPF_AIMATANGLE) ShootAngle += Angle;
-  // Temporarily adjusts the pitch
-  float SavedPitch = Angles.pitch;
-  if (Flags&FPF_NOAUTOAIM) Angles.pitch += Pitch; // `A_FireCustomMissile()` does this another way
-
-  EntityEx AimTarget;
-  EntityEx A = SpawnPlayerMissileEx(MissileType, false, AimTarget, ShootAngle, ShootOrg, decal, noAutoAim:!!(Flags&FPF_NOAUTOAIM));
-  Angles.pitch = SavedPitch;
-
-  if (A) {
-    if (Flags&FPF_TRANSFERTRANSLATION) A.CopyTranslations(self);
-    // handle seeker missiles
-    if (A.bSeekerMissile) A.Tracer = AimTarget;
-    if (!(Flags&FPF_AIMATANGLE)) VectorRotateAroundZ(ref A.Velocity, Angle);
-  }
-}
-
-
-//===========================================================================
-//
 //  A_FireCustomMissile
 //
 //===========================================================================
 [decorate] final void A_FireCustomMissile (class!Actor MissileType, optional float Angle,
   optional bool UseAmmo, optional int SpawnXY, optional float SpawnZ,
-  optional int Flags, optional float Pitch)
+  optional int Flags, optional float Pitch) self(Actor)
 {
   Pitch = -Pitch; // this does it this way
   doFireMissileProjectile(MissileType, Angle!optional, UseAmmo!optional, SpawnXY!optional, SpawnZ!optional, Flags!optional, Pitch!optional);
@@ -785,7 +712,7 @@ final void doFireMissileProjectile (class!Actor MissileType, optional float Angl
 //  A_FireSTGrenade
 //
 //===========================================================================
-[decorate] final void A_FireSTGrenade (optional class!Actor GrenadeType) {
+[decorate] final void A_FireSTGrenade (optional class!Actor GrenadeType) self(Actor) {
   if (!specified_GrenadeType) {
     class!Actor gc = class!Actor(FindClassNoCase('Grenade'));
     if (!gc) return;
@@ -824,7 +751,7 @@ final void doFireMissileProjectile (class!Actor MissileType, optional float Angl
   optional float range,
   optional int duration, optional float sparsity, optional float driftspeed, // for particles
   optional class!Actor spawnclass, // for particles
-  optional float spawnofs_z, optional int spiraloffset, optional int limit)
+  optional float spawnofs_z, optional int spiraloffset, optional int limit) self(Actor)
 {
   if (!specified_UseAmmo) UseAmmo = true;
 
@@ -854,7 +781,7 @@ final void doFireMissileProjectile (class!Actor MissileType, optional float Angl
 //  A_FirePistol
 //
 //===========================================================================
-[decorate] final void A_FirePistol () {
+[decorate] final void A_FirePistol () self(Actor) {
   TVec dir;
   bool Accurate;
 
@@ -891,7 +818,7 @@ final void doFireMissileProjectile (class!Actor MissileType, optional float Angl
 //  A_FireShotgun
 //
 //===========================================================================
-[decorate] final void A_FireShotgun () {
+[decorate] final void A_FireShotgun () self(Actor) {
   if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
@@ -927,7 +854,7 @@ final void doFireMissileProjectile (class!Actor MissileType, optional float Angl
 //  A_FireShotgun2
 //
 //===========================================================================
-[decorate] final void A_FireShotgun2 () {
+[decorate] final void A_FireShotgun2 () self(Actor) {
   if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
@@ -966,7 +893,7 @@ final void doFireMissileProjectile (class!Actor MissileType, optional float Angl
 //  A_OpenShotgun2
 //
 //===========================================================================
-[decorate] final void A_OpenShotgun2 () {
+[decorate] final void A_OpenShotgun2 () self(Actor) {
   PlaySound('weapons/sshoto', CHAN_WEAPON);
 }
 
@@ -976,7 +903,7 @@ final void doFireMissileProjectile (class!Actor MissileType, optional float Angl
 //  A_LoadShotgun2
 //
 //===========================================================================
-[decorate] final void A_LoadShotgun2 () {
+[decorate] final void A_LoadShotgun2 () self(Actor) {
   PlaySound('weapons/sshotl', CHAN_WEAPON);
 }
 
@@ -997,7 +924,7 @@ final void doFireMissileProjectile (class!Actor MissileType, optional float Angl
 //  A_FireCGun
 //
 //===========================================================================
-[decorate] final void A_FireCGun () {
+[decorate] final void A_FireCGun () self(Actor) {
   if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
@@ -1033,7 +960,7 @@ final void doFireMissileProjectile (class!Actor MissileType, optional float Angl
 //  A_FireMissile
 //
 //===========================================================================
-[decorate] final void A_FireMissile () {
+[decorate] final void A_FireMissile () self(Actor) {
   if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   name decal = ''; // default
@@ -1050,7 +977,7 @@ final void doFireMissileProjectile (class!Actor MissileType, optional float Angl
 //  A_FirePlasma
 //
 //===========================================================================
-[decorate] final void A_FirePlasma () {
+[decorate] final void A_FirePlasma () self(Actor) {
   if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   name decal = ''; // default
@@ -1075,7 +1002,7 @@ final void doFireMissileProjectile (class!Actor MissileType, optional float Angl
 //  DoFireRailgun
 //
 //===========================================================================
-final void DoFireRailgun (float Offset) {
+final void DoFireRailgun (float Offset) self(Actor) {
   if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (Wpn) {
@@ -1131,7 +1058,7 @@ final void DoFireRailgun (float Offset) {
 //  A_RailWait
 //
 //===========================================================================
-[decorate] final void A_RailWait () {
+[decorate] final void A_RailWait () self(Actor) {
 }
 
 
@@ -1140,7 +1067,7 @@ final void DoFireRailgun (float Offset) {
 //  A_BFGsound
 //
 //===========================================================================
-[decorate] final void A_BFGsound () {
+[decorate] final void A_BFGsound () self(Actor) {
   PlaySound('weapons/bfgf', CHAN_WEAPON);
 }
 
@@ -1150,7 +1077,7 @@ final void DoFireRailgun (float Offset) {
 //  A_FireBFG
 //
 //===========================================================================
-[decorate] final void A_FireBFG () {
+[decorate] final void A_FireBFG () self(Actor) {
   if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   name decal = ''; // default
@@ -1173,7 +1100,7 @@ final void DoFireRailgun (float Offset) {
 //  Make a special thing visible again.
 //
 //==========================================================================
-[decorate] final void A_RestoreSpecialThing1 () {
+[decorate] final void A_RestoreSpecialThing1 () self(Actor) {
   bInvisible = false;
   if (DoRespawn()) PlaySound('misc/spawn', CHAN_VOICE);
 }
@@ -1184,7 +1111,7 @@ final void DoFireRailgun (float Offset) {
 //  A_RestoreSpecialThing2
 //
 //==========================================================================
-[decorate] final void A_RestoreSpecialThing2 () {
+[decorate] final void A_RestoreSpecialThing2 () self(Actor) {
   bSpecial = true;
   SetState(IdleState);
 }

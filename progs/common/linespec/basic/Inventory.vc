@@ -80,24 +80,6 @@ replication {
 }
 
 
-enum /*EFireCustomMissileFlags*/ {
-  FPF_AIMATANGLE = 1,
-  FPF_TRANSFERTRANSLATION = 2,
-  FPF_NOAUTOAIM = 4,
-};
-
-// for `A_Saw`
-const int SF_NORANDOM = 1;
-const int SF_RANDOMLIGHTMISS = 2;
-const int SF_RANDOMLIGHTHIT = 4;
-const int SF_RANDOMLIGHTBOTH = 6;
-const int SF_NOUSEAMMOMISS = 8;
-const int SF_NOUSEAMMO = 16;
-const int SF_NOPULLIN = 32; // not implemented
-const int SF_NOTURN = 64;
-const int SF_STEALARMOR = 128; // not implemented
-
-
 //==========================================================================
 //
 //  IsCheckpointSaveAllowed
@@ -551,9 +533,11 @@ final void GiveQuest (EntityEx Toucher) {
 //  DoRespawn
 //
 //==========================================================================
-bool DoRespawn () {
+/*
+override bool DoRespawn () {
   return true;
 }
+*/
 
 
 //==========================================================================
