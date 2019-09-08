@@ -1912,17 +1912,17 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
     if ((Func->Flags&FUNC_Native) != 0) ParseError(Func->Loc, "Non-native methods should not have a body");
     // self type specifier
     auto stloc = Lex.Location;
-    // func self(type) -- wtf?!
+    // func self(type)
     if (Lex.Check(TK_Self)) {
       Lex.Expect(TK_LParen);
       if (Lex.Token != TK_Identifier) {
         ParseError(Lex.Location, "Class name expected");
       } else {
-        //Func->SelfTypeName = Lex.Name;
+        Func->SelfTypeName = Lex.Name;
         Lex.NextToken();
       }
       Lex.Expect(TK_RParen);
-      ParseError(stloc, "`self(Class)` is deprecated");
+      //ParseError(stloc, "`self(Class)` is deprecated");
     }
     stloc = Lex.Location;
     Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
