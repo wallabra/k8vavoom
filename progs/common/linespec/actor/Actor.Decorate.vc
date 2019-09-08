@@ -201,13 +201,39 @@ bool DoRespawn () {
 
 //===========================================================================
 //
+//  DoFireRailgun
+//
+//===========================================================================
+protected final void DoFireRailgun (float Offset) {
+  if (!bIsPlayer) return;
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (Wpn) {
+    if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1)) return;
+    Player.SetViewObject(Wpn);
+    if (!(P_Random()&1)) {
+      Player.SetViewState(PS_FLASH, Wpn.FindState('Flash'));
+    } else {
+      Player.SetViewState(PS_FLASH, GetStatePlus(Wpn.FindState('Flash'), 1));
+    }
+    Wpn = PlayerEx(Player).ReadyWeapon;
+    if (!Wpn) return;
+  }
+  int RailDamage = (Level.Game.deathmatch ? 100 : 150);
+  TVec Dir;
+  AngleVector(Angles, out Dir);
+  RailAttack(Dir, Offset, RailDamage);
+}
+
+
+//===========================================================================
+//
 //  doFireMissileProjectile
 //
 //  `A_FireCustomMissile()` and `A_FireProjectile()` are the same thing, so
 //  they both will use this code
 //
 //===========================================================================
-final void doFireMissileProjectile (class!Actor MissileType, optional float Angle,
+protected final void doFireMissileProjectile (class!Actor MissileType, optional float Angle,
   optional bool UseAmmo, optional int SpawnXY, optional float SpawnZ,
   optional int Flags, optional float Pitch)
 {
@@ -250,6 +276,45 @@ final void doFireMissileProjectile (class!Actor MissileType, optional float Angl
   }
 }
 
+
+//===========================================================================
+//
+//  do_A_ReFire
+//
+//  The player can re-fire the weapon without lowering it entirely.
+//
+//===========================================================================
+protected final void do_A_ReFire (optional state refirestate) {
+  if (!bIsPlayer) return;
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+
+  if (!Wpn) {
+    PlayerEx(Player).Refire = 0;
+    return;
+  }
+
+  if (Wpn.FireMode == Weapon::FIRE_Primary &&
+      (Player.Buttons&BT_ATTACK) &&
+      !PlayerEx(Player).PendingWeapon && Player.MO.Health > 0)
+  {
+    //writeln("A_ReFire: primary");
+    ++PlayerEx(Player).Refire;
+    if (!k8InWeaponReady) PlayerEx(Player).FireWeapon(refirestate!optional);
+  }
+  else if (Wpn.FireMode == Weapon::FIRE_Secondary &&
+           (Player.Buttons&BT_ALT_ATTACK) &&
+           !PlayerEx(Player).PendingWeapon && Player.MO.Health > 0)
+  {
+    //writeln("A_ReFire: secondary");
+    ++PlayerEx(Player).Refire;
+    if (!k8InWeaponReady) PlayerEx(Player).AltFireWeapon(refirestate!optional);
+  } else {
+    //writeln("A_ReFire: nothing");
+    PlayerEx(Player).Refire = 0;
+    //k8: do we need to check ammo here at all?
+    Wpn.CheckAmmo(Wpn.FireMode, AutoSwitch:true); // k8: should we switch weapon here?
+  }
+}
 
 
 

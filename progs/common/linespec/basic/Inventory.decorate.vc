@@ -236,50 +236,10 @@
 //
 //  A_ReFire
 //
-//  The player can re-fire the weapon without lowering it entirely.
-//
-//===========================================================================
-private final void do_A_ReFire (optional state refirestate) self(Actor) {
-  if (!bIsPlayer) return;
-  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-
-  if (!Wpn) {
-    PlayerEx(Player).Refire = 0;
-    return;
-  }
-
-  if (Wpn.FireMode == Weapon::FIRE_Primary &&
-      (Player.Buttons&BT_ATTACK) &&
-      !PlayerEx(Player).PendingWeapon && Player.MO.Health > 0)
-  {
-    //writeln("A_ReFire: primary");
-    ++PlayerEx(Player).Refire;
-    if (!k8InWeaponReady) PlayerEx(Player).FireWeapon(refirestate!optional);
-  }
-  else if (Wpn.FireMode == Weapon::FIRE_Secondary &&
-           (Player.Buttons&BT_ALT_ATTACK) &&
-           !PlayerEx(Player).PendingWeapon && Player.MO.Health > 0)
-  {
-    //writeln("A_ReFire: secondary");
-    ++PlayerEx(Player).Refire;
-    if (!k8InWeaponReady) PlayerEx(Player).AltFireWeapon(refirestate!optional);
-  } else {
-    //writeln("A_ReFire: nothing");
-    PlayerEx(Player).Refire = 0;
-    //k8: do we need to check ammo here at all?
-    Wpn.CheckAmmo(Wpn.FireMode, AutoSwitch:true); // k8: should we switch weapon here?
-  }
-}
-
-
-//===========================================================================
-//
-//  A_ReFire
-//
 //  VC state function cannot have arguments yet
 //
 //===========================================================================
-[decorate] final void A_ReFire () {
+[decorate] final void A_ReFire () self(Actor) {
   do_A_ReFire();
 }
 
@@ -730,8 +690,9 @@ private final void do_A_ReFire (optional state refirestate) self(Actor) {
 //  A_FireProjectile
 //
 //===========================================================================
-[decorate] final void A_FireProjectile (class!Actor MissileType, optional float Angle, optional bool UseAmmo, optional int SpawnXY, optional float SpawnZ,
-   optional int Flags, optional float Pitch)
+[decorate] final void A_FireProjectile (class!Actor MissileType, optional float Angle,
+                                        optional bool UseAmmo, optional int SpawnXY, optional float SpawnZ,
+                                        optional int Flags, optional float Pitch) self(Actor)
 {
   doFireMissileProjectile(MissileType, Angle!optional, UseAmmo!optional, SpawnXY!optional, SpawnZ!optional, Flags!optional, Pitch!optional);
 }
@@ -913,9 +874,9 @@ private final void do_A_ReFire (optional state refirestate) self(Actor) {
 //  A_CloseShotgun2
 //
 //===========================================================================
-[decorate] final void A_CloseShotgun2 () {
+[decorate] final void A_CloseShotgun2 () self(Actor) {
   PlaySound('weapons/sshotc', CHAN_WEAPON);
-  A_ReFire();
+  do_A_ReFire();
 }
 
 
@@ -999,36 +960,10 @@ private final void do_A_ReFire (optional state refirestate) self(Actor) {
 
 //===========================================================================
 //
-//  DoFireRailgun
-//
-//===========================================================================
-final void DoFireRailgun (float Offset) self(Actor) {
-  if (!bIsPlayer) return;
-  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-  if (Wpn) {
-    if (!Wpn.DepleteAmmo(Wpn.FireMode, default, 1)) return;
-    Player.SetViewObject(Wpn);
-    if (!(P_Random()&1)) {
-      Player.SetViewState(PS_FLASH, Wpn.FindState('Flash'));
-    } else {
-      Player.SetViewState(PS_FLASH, GetStatePlus(Wpn.FindState('Flash'), 1));
-    }
-    Wpn = PlayerEx(Player).ReadyWeapon;
-    if (!Wpn) return;
-  }
-  int RailDamage = (Level.Game.deathmatch ? 100 : 150);
-  TVec Dir;
-  AngleVector(Angles, out Dir);
-  RailAttack(Dir, Offset, RailDamage);
-}
-
-
-//===========================================================================
-//
 //  A_FireRailgun
 //
 //===========================================================================
-[decorate] final void A_FireRailgun () {
+[decorate] final void A_FireRailgun () self(Actor) {
   DoFireRailgun(0.0);
 }
 
@@ -1038,7 +973,7 @@ final void DoFireRailgun (float Offset) self(Actor) {
 //  A_FireRailgunLeft
 //
 //===========================================================================
-[decorate] final void A_FireRailgunLeft () {
+[decorate] final void A_FireRailgunLeft () self(Actor) {
   DoFireRailgun(-10.0);
 }
 
@@ -1048,7 +983,7 @@ final void DoFireRailgun (float Offset) self(Actor) {
 //  A_FireRailgunRight
 //
 //===========================================================================
-[decorate] final void A_FireRailgunRight () {
+[decorate] final void A_FireRailgunRight () self(Actor) {
   DoFireRailgun(10.0);
 }
 
