@@ -153,8 +153,16 @@ int TModifiers::Check (int Modifers, int Allowed, const TLocation &l) {
   // check for conflicting protection
   static const int ProtAttrs[] = { Private, Protected, Published, 0 };
   int protcount = 0;
-  for (int f = 0; ProtAttrs[f]; ++f) if (Modifers&ProtAttrs[f]) ++protcount;
-  if (protcount > 1) ParseError(l, "conflicting protection modifiers"); // TODO: print modifiers
+  VStr mods;
+  for (int f = 0; ProtAttrs[f]; ++f) {
+    if (Modifers&ProtAttrs[f]) {
+      ++protcount;
+      if (!mods.isEmpty()) mods += ", ";
+      mods += va("`%s`", Name(ProtAttrs[f]));
+    }
+  }
+  if (protcount > 1) ParseError(l, "conflicting protection modifiers: %s", *mods);
+  if (protcount > 0 && (Modifers&DecVisible) != 0) ParseError(l, "`[decorate]` must be simply public");
   ShowBadAttributes(Modifers&~Allowed, l);
   return Modifers&Allowed;
 }
