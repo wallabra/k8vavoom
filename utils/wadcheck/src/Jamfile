@@ -5,7 +5,7 @@ Main wadcheck :
 ;
 LinkLibraries wadcheck :
   libcore.a
-  $(STATIC_LZMA_LIB)
+  #$(STATIC_LZMA_LIB)
   $(STATIC_ZLIB_LIB)
 ;
 
