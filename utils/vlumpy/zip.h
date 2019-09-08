@@ -49,13 +49,7 @@
 extern "C" {
 #endif
 
-#ifndef _ZLIB_H
-# ifdef USE_INTERNAL_ZLIB
-#  include "../../libs/zlib/zlib.h"
-# else
-#  include <zlib.h>
-# endif
-#endif
+#include "../../libs/core/miniz/miniz.h"
 
 #ifndef _ZLIBIOAPI_H
 #include "ioapi.h"

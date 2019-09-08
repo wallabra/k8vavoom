@@ -7,7 +7,7 @@ Main classcheck :
 LinkLibraries classcheck :
   libcore.a
   #$(STATIC_LZMA_LIB)
-  $(STATIC_ZLIB_LIB)
+  #$(STATIC_ZLIB_LIB)
 ;
 
 

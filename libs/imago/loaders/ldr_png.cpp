@@ -25,11 +25,6 @@
 
 #include "../../core/core.h"
 #include <stdlib.h>
-#ifdef USE_INTERNAL_ZLIB
-# include "../../zlib/zlib.h"
-#else
-# include <zlib.h>
-#endif
 
 #include "../imago.h"
 
@@ -122,10 +117,10 @@ VImage *imagoLoadPNG (VStream *strm) {
 
 
 // zlib includes some CRC32 stuff, so just use that
-static inline const uint32_t *GetCRCTable () { return (const uint32_t *)get_crc_table(); }
-static inline uint32_t CalcCRC32 (const uint8_t *buf, unsigned int len) { return crc32 (0, buf, len); }
-static inline uint32_t AddCRC32 (uint32_t crc, const uint8_t *buf, unsigned int len) { return crc32 (crc, buf, len); }
-static inline uint32_t CRC1 (uint32_t crc, const uint8_t c, const uint32_t *crcTable) { return crcTable[(crc & 0xff) ^ c] ^ (crc >> 8); }
+//static inline const uint32_t *GetCRCTable () { return (const uint32_t *)get_crc_table(); }
+static inline uint32_t CalcCRC32 (const uint8_t *buf, unsigned int len) { return mz_crc32 (0, buf, len); }
+//static inline uint32_t AddCRC32 (uint32_t crc, const uint8_t *buf, unsigned int len) { return crc32 (crc, buf, len); }
+//static inline uint32_t CRC1 (uint32_t crc, const uint8_t c, const uint32_t *crcTable) { return crcTable[(crc & 0xff) ^ c] ^ (crc >> 8); }
 
 
 PNGData::PNGData () : width(0), height(0), idatlen(0), pixbuf(nullptr) {
@@ -407,9 +402,9 @@ static bool pngReadIDAT (VStream &file, vuint8 *buffer, int width, int height, i
   static const vuint8 passrowoffset[8] =   { 0, 0, 4, 0, 2, 0, 1, 0 };
   static const vuint8 passcoloffset[8] =   { 0, 4, 0, 2, 0, 1, 0, 0 };
 
-  Byte *inputLine, *prev, *curr, *adam7buff[3], *bufferend;
-  Byte chunkbuffer[4096];
-  z_stream stream;
+  vuint8 *inputLine, *prev, *curr, *adam7buff[3], *bufferend;
+  vuint8 chunkbuffer[4096];
+  mz_stream stream;
   int err;
   int i, pass, passbuff, passpitch, passwidth;
   bool lastIDAT;
@@ -428,18 +423,18 @@ static bool pngReadIDAT (VStream &file, vuint8 *buffer, int width, int height, i
   i = 4+bytesPerRowOut*2;
   if (interlace) i += bytesPerRowOut*2;
 
-  inputLine = (Byte *)alloca(i);
+  inputLine = (vuint8 *)alloca(i);
   adam7buff[0] = inputLine+4+bytesPerRowOut;
   adam7buff[1] = adam7buff[0]+bytesPerRowOut;
   adam7buff[2] = adam7buff[1]+bytesPerRowOut;
   bufferend = buffer+pitch*height;
 
-  stream.next_in = Z_NULL;
+  stream.next_in = /*Z_NULL*/0;
   stream.avail_in = 0;
-  stream.zalloc = Z_NULL;
-  stream.zfree = Z_NULL;
-  err = inflateInit (&stream);
-  if (err != Z_OK) return false;
+  stream.zalloc = /*Z_NULL*/0;
+  stream.zfree = /*Z_NULL*/0;
+  err = mz_inflateInit (&stream);
+  if (err != MZ_OK) return false;
 
   lastIDAT = false;
   initpass = true;
@@ -451,7 +446,7 @@ static bool pngReadIDAT (VStream &file, vuint8 *buffer, int width, int height, i
   passwidth = passpitch = bytesPerRowIn = 0;
   passbuff = 0;
 
-  while (err != Z_STREAM_END && pass < 8-interlace) {
+  while (err != MZ_STREAM_END && pass < 8-interlace) {
     if (initpass) {
       int rowoffset, coloffset;
 
@@ -485,15 +480,15 @@ static bool pngReadIDAT (VStream &file, vuint8 *buffer, int width, int height, i
       if (rd > (int)chunklen) rd = (int)chunklen;
       file.Serialise(chunkbuffer, rd);
       if (file.IsError()) rd = 0;
-      stream.avail_in = (uInt)rd;
-      //stream.avail_in = (uInt)file.Read (chunkbuffer, MIN<vuint32>(chunklen,sizeof(chunkbuffer)));
+      stream.avail_in = (vuint32)rd;
+      //stream.avail_in = (vuint32)file.Read (chunkbuffer, MIN<vuint32>(chunklen,sizeof(chunkbuffer)));
       chunklen -= stream.avail_in;
     }
 
-    err = inflate (&stream, Z_SYNC_FLUSH);
-    if (err != Z_OK && err != Z_STREAM_END) {
+    err = mz_inflate (&stream, MZ_SYNC_FLUSH);
+    if (err != MZ_OK && err != MZ_STREAM_END) {
       // something unexpected happened
-      inflateEnd(&stream);
+      mz_inflateEnd(&stream);
       return false;
     }
 
@@ -569,7 +564,7 @@ static bool pngReadIDAT (VStream &file, vuint8 *buffer, int width, int height, i
     }
   }
 
-  inflateEnd(&stream);
+  mz_inflateEnd(&stream);
 
   if (bitdepth < 8) {
     // noninterlaced images must be unpacked completely

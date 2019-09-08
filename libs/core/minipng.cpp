@@ -32,11 +32,6 @@
 **
 */
 #include <stdlib.h>
-#ifdef USE_INTERNAL_ZLIB
-# include "../zlib/zlib.h"
-#else
-# include <zlib.h>
-#endif
 
 #include "core.h"
 
@@ -51,8 +46,8 @@
 // zlib includes some CRC32 stuff, so just use that
 
 //static inline const uint32_t *GetCRCTable () { return (const uint32_t *)get_crc_table(); }
-static inline uint32_t CalcCRC32 (const uint8_t *buf, unsigned int len) { return crc32 (0, buf, len); }
-static inline uint32_t AddCRC32 (uint32_t crc, const uint8_t *buf, unsigned int len) { return crc32 (crc, buf, len); }
+static inline uint32_t CalcCRC32 (const uint8_t *buf, unsigned int len) { return mz_crc32 (0, buf, len); }
+static inline uint32_t AddCRC32 (uint32_t crc, const uint8_t *buf, unsigned int len) { return mz_crc32 (crc, buf, len); }
 //static inline uint32_t CRC1 (uint32_t crc, const uint8_t c, const uint32_t *crcTable) { return crcTable[(crc & 0xff) ^ c] ^ (crc >> 8); }
 
 
@@ -677,9 +672,9 @@ bool M_ReadIDAT (VStream &file, vuint8 *buffer, int width, int height, int pitch
   static const vuint8 passrowoffset[8] =   { 0, 0, 4, 0, 2, 0, 1, 0 };
   static const vuint8 passcoloffset[8] =   { 0, 4, 0, 2, 0, 1, 0, 0 };
 
-  Byte *inputLine, *prev, *curr, *adam7buff[3], *bufferend;
-  Byte chunkbuffer[4096];
-  z_stream stream;
+  vuint8 *inputLine, *prev, *curr, *adam7buff[3], *bufferend;
+  vuint8 chunkbuffer[4096];
+  mz_stream stream;
   int err;
   int i, pass, passbuff, passpitch, passwidth;
   bool lastIDAT;
@@ -698,18 +693,18 @@ bool M_ReadIDAT (VStream &file, vuint8 *buffer, int width, int height, int pitch
   i = 4+bytesPerRowOut*2;
   if (interlace) i += bytesPerRowOut*2;
 
-  inputLine = (Byte *)alloca(i);
+  inputLine = (vuint8 *)alloca(i);
   adam7buff[0] = inputLine+4+bytesPerRowOut;
   adam7buff[1] = adam7buff[0]+bytesPerRowOut;
   adam7buff[2] = adam7buff[1]+bytesPerRowOut;
   bufferend = buffer+pitch*height;
 
-  stream.next_in = Z_NULL;
+  stream.next_in = /*Z_NULL*/0;
   stream.avail_in = 0;
-  stream.zalloc = Z_NULL;
-  stream.zfree = Z_NULL;
-  err = inflateInit (&stream);
-  if (err != Z_OK) return false;
+  stream.zalloc = /*Z_NULL*/0;
+  stream.zfree = /*Z_NULL*/0;
+  err = mz_inflateInit (&stream);
+  if (err != MZ_OK) return false;
 
   lastIDAT = false;
   initpass = true;
@@ -721,7 +716,7 @@ bool M_ReadIDAT (VStream &file, vuint8 *buffer, int width, int height, int pitch
   passwidth = passpitch = bytesPerRowIn = 0;
   passbuff = 0;
 
-  while (err != Z_STREAM_END && pass < 8-interlace) {
+  while (err != MZ_STREAM_END && pass < 8-interlace) {
     if (initpass) {
       int rowoffset, coloffset;
 
@@ -755,15 +750,15 @@ bool M_ReadIDAT (VStream &file, vuint8 *buffer, int width, int height, int pitch
       if (rd > (int)chunklen) rd = (int)chunklen;
       file.Serialise(chunkbuffer, rd);
       if (file.IsError()) rd = 0;
-      stream.avail_in = (uInt)rd;
+      stream.avail_in = (vuint32)rd;
       //stream.avail_in = (uInt)file.Read (chunkbuffer, min2<vuint32>(chunklen,sizeof(chunkbuffer)));
       chunklen -= stream.avail_in;
     }
 
-    err = inflate(&stream, Z_SYNC_FLUSH);
-    if (err != Z_OK && err != Z_STREAM_END) {
+    err = mz_inflate(&stream, MZ_SYNC_FLUSH);
+    if (err != MZ_OK && err != MZ_STREAM_END) {
       // something unexpected happened
-      inflateEnd(&stream);
+      mz_inflateEnd(&stream);
       return false;
     }
 
@@ -839,7 +834,7 @@ bool M_ReadIDAT (VStream &file, vuint8 *buffer, int width, int height, int pitch
     }
   }
 
-  inflateEnd(&stream);
+  mz_inflateEnd(&stream);
 
   if (bitdepth < 8) {
     // noninterlaced images must be unpacked completely
@@ -863,24 +858,24 @@ bool M_ReadIDAT (VStream &file, vuint8 *buffer, int width, int height, int pitch
 //==========================================================================
 //#define MAXWIDTH  (12000)
 bool M_SaveBitmap (const vuint8 *from, ESSType color_type, int width, int heightOrig, int pitch, VStream *file) {
-  //Byte temprow[1][1+MAXWIDTH*4];
-  Byte buffer[PNG_WRITE_SIZE];
-  z_stream stream;
+  //vuint8 temprow[1][1+MAXWIDTH*4];
+  vuint8 buffer[PNG_WRITE_SIZE];
+  mz_stream stream;
   int err;
   int y;
 
-  Byte *temprow = new Byte[width*4+8];
+  vuint8 *temprow = new vuint8[width*4+8];
   int height = (heightOrig < 0 ? -heightOrig : heightOrig);
 
   if (heightOrig < 0) from += pitch*(height-1);
 
-  stream.next_in = Z_NULL;
+  stream.next_in = /*Z_NULL*/0;
   stream.avail_in = 0;
-  stream.zalloc = Z_NULL;
-  stream.zfree = Z_NULL;
-  err = deflateInit(&stream, png_level);
+  stream.zalloc = /*Z_NULL*/0;
+  stream.zfree = /*Z_NULL*/0;
+  err = mz_deflateInit(&stream, png_level);
 
-  if (err != Z_OK) { delete [] temprow; return false; }
+  if (err != MZ_OK) { delete [] temprow; return false; }
 
   y = height;
   stream.next_out = buffer;
@@ -888,7 +883,7 @@ bool M_SaveBitmap (const vuint8 *from, ESSType color_type, int width, int height
 
   temprow[0] = 0; // always use filter type 0
 
-  while (y-- > 0 && err == Z_OK) {
+  while (y-- > 0 && err == MZ_OK) {
     switch (color_type) {
       case SS_PAL:
         memcpy(&temprow[1], from, width);
@@ -924,22 +919,22 @@ bool M_SaveBitmap (const vuint8 *from, ESSType color_type, int width, int height
 
     if (heightOrig > 0) from += pitch; else from -= pitch;
 
-    err = deflate(&stream, /*(y == 0) ? Z_FINISH :*/ 0);
-    if (err != Z_OK) break;
+    err = mz_deflate(&stream, /*(y == 0) ? MZ_FINISH :*/ 0);
+    if (err != MZ_OK) break;
     while (stream.avail_out == 0) {
       if (!WriteIDAT(file, buffer, sizeof(buffer))) { delete [] temprow; return false; }
       stream.next_out = buffer;
       stream.avail_out = sizeof(buffer);
       if (stream.avail_in != 0) {
-        err = deflate(&stream, /*(y == 0) ? Z_FINISH :*/ 0);
-        if (err != Z_OK) break;
+        err = mz_deflate(&stream, /*(y == 0) ? MZ_FINISH :*/ 0);
+        if (err != MZ_OK) break;
       }
     }
   }
 
-  while (err == Z_OK) {
-    err = deflate(&stream, Z_FINISH);
-    if (err != Z_OK) break;
+  while (err == MZ_OK) {
+    err = mz_deflate(&stream, MZ_FINISH);
+    if (err != MZ_OK) break;
     if (stream.avail_out == 0) {
       if (!WriteIDAT(file, buffer, sizeof(buffer))) { delete [] temprow; return false; }
       stream.next_out = buffer;
@@ -947,9 +942,9 @@ bool M_SaveBitmap (const vuint8 *from, ESSType color_type, int width, int height
     }
   }
 
-  deflateEnd(&stream);
+  mz_deflateEnd(&stream);
 
-  if (err != Z_STREAM_END) { delete [] temprow; return false; }
+  if (err != MZ_STREAM_END) { delete [] temprow; return false; }
 
   if (!WriteIDAT(file, buffer, sizeof(buffer)-stream.avail_out)) { delete [] temprow; return false; }
 

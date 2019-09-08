@@ -51,19 +51,6 @@
 
 #ifdef VAVOOM_USE_LIBLZMA
 # error "using liblzma is deprecated"
-/*
-# ifdef USE_INTERNAL_LZMA
-#  include "../../liblzma/api/lzma.h"
-# else
-#  include <lzma.h>
-# endif
-*/
-#endif
-
-#ifdef USE_INTERNAL_ZLIB
-# include "../../zlib/zlib.h"
-#else
-# include <zlib.h>
 #endif
 
 #define Z_LZMA  (14)

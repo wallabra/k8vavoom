@@ -61,11 +61,6 @@
 //**************************************************************************
 #include "gamedefs.h"
 #include "net_local.h"
-#ifdef USE_INTERNAL_ZLIB
-# include "../../libs/zlib/zlib.h"
-#else
-# include <zlib.h>
-#endif
 
 
 static int cli_NoLAN = 0;

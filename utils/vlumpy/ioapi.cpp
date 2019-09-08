@@ -10,11 +10,7 @@ Copyright (C) 1998-2004 Gilles Vollant
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef USE_INTERNAL_ZLIB
-# include "../../libs/zlib/zlib.h"
-#else
-# include <zlib.h>
-#endif
+#include "../../libs/core/miniz/miniz.h"
 #include "ioapi.h"
 
 

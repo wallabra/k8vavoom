@@ -86,6 +86,10 @@ add_library(core STATIC
   lzmadec/LzmaDec.h
   lzmadec/LzmaDec.c
 
+  # miniz
+  miniz/miniz.h
+  miniz/miniz.c
+
   # fsys (aka VFS)
   fsys/fsys.h
   fsys/fsys.cpp

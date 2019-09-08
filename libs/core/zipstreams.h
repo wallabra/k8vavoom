@@ -27,12 +27,6 @@
 #ifndef VAVOOM_CORELIB_ZIPSTREAMS_HEADER
 #define VAVOOM_CORELIB_ZIPSTREAMS_HEADER
 
-#ifdef USE_INTERNAL_ZLIB
-# include "../zlib/zlib.h"
-#else
-# include <zlib.h>
-#endif
-
 
 // this will cache the whole stream on 2nd back-seek
 class VZipStreamReader : public VStream {
@@ -52,8 +46,8 @@ private:
   int stpos;
   int srccurpos;
   mythread_mutex *rdlock; // can be `nullptr`
-  Bytef buffer[BUFFER_SIZE];
-  z_stream zStream;
+  vuint8 buffer[BUFFER_SIZE];
+  mz_stream zStream;
   bool initialised;
   vuint32 compressedSize;
   vuint32 uncompressedSize;
@@ -126,8 +120,8 @@ private:
   enum { BUFFER_SIZE = 16384 };
 
   VStream *dstStream;
-  Bytef buffer[BUFFER_SIZE];
-  z_stream zStream;
+  vuint8 buffer[BUFFER_SIZE];
+  mz_stream zStream;
   bool initialised;
   vuint32 currCrc32;
   bool doCrcCalc;

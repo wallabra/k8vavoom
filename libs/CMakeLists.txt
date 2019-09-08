@@ -9,9 +9,9 @@ if(NOT WITH_SYS_LIBJPG)
   add_subdirectory(jpeg)
 endif(NOT WITH_SYS_LIBJPG)
 
-if(NOT WITH_SYS_ZLIB)
-  add_subdirectory(zlib)
-endif(NOT WITH_SYS_ZLIB)
+#if(NOT WITH_SYS_ZLIB)
+#  add_subdirectory(zlib)
+#endif(NOT WITH_SYS_ZLIB)
 
 if(ENABLE_VCCRUN OR ENABLE_CLIENT)
   add_subdirectory(imago)

@@ -93,6 +93,11 @@
 #include "chacha20.h"
 #include "poly1305-donna.h"
 #include "ed25519.h"
+
+#include "lzmadec/LzmaDec.h"
+#include "miniz/miniz.h"
+#include "md5.h"
+
 #include "endianness.h" // endianes handling
 #include "exception.h" // exception handling
 #include "prngs.h"
@@ -115,9 +120,6 @@
 #include "colorutil.h"
 #include "xml.h" // xml file parsing
 #include "ntvalue.h"
-
-#include "md5.h"
-#include "lzmadec/LzmaDec.h"
 
 #include "wlist.h"
 

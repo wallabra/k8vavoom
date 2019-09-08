@@ -246,12 +246,6 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-#ifdef USE_INTERNAL_ZLIB
-# include "../../libs/zlib/zlib.h"
-#else
-# include <zlib.h>
-#endif
-
 /*
 class VZipStreamReader : public VStreamPakFile {
 private:
