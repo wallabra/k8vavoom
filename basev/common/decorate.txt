@@ -151,3 +151,11 @@ k8vavoom { basepak = tan }
 #include "actors/strife/questitems.txt"
 #include "actors/strife/strifestuff.txt"
 #include "actors/strife/thingstoblowup.txt"
+
+#include "actors/chex/chexmonsters.txt"
+#include "actors/chex/chexkeys.txt"
+#include "actors/chex/chexammo.txt"
+#include "actors/chex/chexweapons.txt"
+#include "actors/chex/chexitems.txt"
+#include "actors/chex/chexdecorations.txt"
+#include "actors/chex/chexplayer.txt"

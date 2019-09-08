@@ -14,6 +14,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     credits/*.txt
 
     actors/*.txt
+    actors/chex/*
     actors/doom/*
     actors/heretic/*.txt
     actors/hexen/*.txt

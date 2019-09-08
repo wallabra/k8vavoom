@@ -232,6 +232,7 @@ static inline bool getIgnoreMoronicStateCommands () { return !!cli_DecorateMoron
 
 // ////////////////////////////////////////////////////////////////////////// //
 //k8: sorry!
+/*
 static inline bool isChexActor (VStr cname) {
   static const char *namelist[] = {
     "ArmoredFlemoidusBipedicus",
@@ -301,6 +302,7 @@ static inline bool isChexActor (VStr cname) {
   }
   return false;
 }
+*/
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -1951,9 +1953,11 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
       if (optionalActor) {
         sc->Message(va("Skipping optional actor `%s`", *NameStr));
         ParentClass = nullptr; // just in case
+      /*
       } else if (isChexActor(ParentStr)) {
         sc->Message(va("Parent class `%s` from Chex Quest not found for actor `%s`, ignoring actor", *ParentStr, *NameStr));
         ParentClass = nullptr; // just in case
+      */
       } else if (cli_DecorateLaxParents) {
         sc->Message(va("Parent class `%s` not found for actor `%s`, ignoring actor", *ParentStr, *NameStr));
         ParentClass = nullptr; // just in case
@@ -2017,10 +2021,13 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
     sc->ExpectString();
     ReplaceeClass = VClass::FindClassNoCase(*sc->String);
     if (ReplaceeClass == nullptr || ReplaceeClass->MemberType != MEMBER_Class) {
+      /*
       if (isChexActor(sc->String)) {
         ReplaceeClass = nullptr; // just in case
         sc->Message(va("Replaced class `%s` from Chex Quest not found for actor `%s`", *sc->String, *NameStr));
-      } else if (cli_DecorateLaxParents) {
+      } else
+      */
+      if (cli_DecorateLaxParents) {
         ReplaceeClass = nullptr; // just in case
         sc->Message(va("Replaced class `%s` not found for actor `%s`", *sc->String, *NameStr));
       } else {

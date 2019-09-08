@@ -64,9 +64,11 @@ struct AuxFile {
 
 
 struct version_t {
-  VStr param;
+  TArray<VStr> params;
+  TArray<VStr> defines;
   TArray<VStr> MainWads;
   VStr GameDir;
+  VStr gamename;
   TArray<AuxFile> AddFiles;
   TArray<VStr> BaseDirs;
   int ParmFound;
@@ -1105,9 +1107,10 @@ static void ParseBase (VStr name, VStr mainiwad) {
       if (sc->Check("param")) {
         sc->ExpectString();
         if (sc->String.length() < 2 || sc->String[0] != '-') sc->Error(va("invalid game (%s) param!", *dst.GameDir));
-        dst.param = (*sc->String)+1;
-        if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, "  param: \"%s\"", (*sc->String)+1);
-        dst.ParmFound = cliGameMode.strEquCI(dst.param);
+        VStr pp = VStr((*sc->String)+1);
+        dst.params.append(pp);
+        if (!dst.ParmFound) dst.ParmFound = cliGameMode.strEquCI(pp);
+        if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, "  param: \"%s\" (%s; hit=%d)", *pp, *cliGameMode, (int)dst.ParmFound);
         continue;
       }
       if (sc->Check("fixvoices")) {
@@ -1130,7 +1133,21 @@ static void ParseBase (VStr name, VStr mainiwad) {
         dst.options.hexenGame = true;
         continue;
       }
+      if (sc->Check("gamename")) {
+        sc->ExpectString();
+        dst.gamename = sc->String;
+        continue;
+      }
+      if (sc->Check("define")) {
+        sc->ExpectString();
+        if (!sc->String.isEmpty()) dst.defines.append(sc->String);
+        continue;
+      }
       break;
+    }
+    if (dst.gamename.isEmpty()) {
+      if (dst.params.length() == 0) sc->Error("some game has no name");
+      dst.gamename = dst.params[0];
     }
     sc->Expect("end");
   }
@@ -1139,19 +1156,24 @@ static void ParseBase (VStr name, VStr mainiwad) {
 
   if (games.length() == 0) Sys_Error("No game definitions found!");
 
-  int bestPIdx = -1;
+  //int bestPIdx = -1;
   for (int gi = 0; gi < games.length(); ++gi) {
     version_t &G = games[gi];
+    //GCon->Logf(NAME_Debug, "game #%d (%s): ParmFound=%d", gi, *G.gamename, (int)G.ParmFound);
     if (!G.ParmFound) continue;
-    if (G.ParmFound > bestPIdx) {
-      bestPIdx = G.ParmFound;
+    //if (G.ParmFound > bestPIdx)
+    {
+      //bestPIdx = G.ParmFound;
       selectedGame = gi;
+      break;
     }
   }
 
   if (selectedGame >= 0) {
-    game_name = *games[selectedGame].param;
-    if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, "SELECTED GAME: \"%s\"", *games[selectedGame].param);
+    VStr gn = games[selectedGame].gamename;
+    if (gn.isEmpty()) gn = games[selectedGame].params[0];
+    game_name = *gn;
+    if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, "SELECTED GAME: \"%s\"", *gn);
   } else {
     if (games.length() != 1) {
       // try to select DooM or DooM II automatically
@@ -1184,7 +1206,7 @@ static void ParseBase (VStr name, VStr mainiwad) {
               for (int f = 0; f < gmi.MainWads.length(); ++f) {
                 VStr gw = gmi.MainWads[f].extractFileBaseName();
                 if (gw.strEquCI(iwadGI)) {
-                  GCon->Logf(NAME_Init, "Detected game is '%s' (from gameinfo)", *gmi.param);
+                  GCon->Logf(NAME_Init, "Detected game is '%s' (from gameinfo)", *gmi.params[0]);
                   selectedGame = gi;
                   W_CloseAuxiliary();
                   break;
@@ -1204,8 +1226,10 @@ static void ParseBase (VStr name, VStr mainiwad) {
             VStr gamename = (mname[0] == 'm' ? "doom2" : "doom");
             for (int gi = 0; gi < games.length(); ++gi) {
               version_t &G = games[gi];
-              if (G.param.Cmp(gamename) == 0) {
-                GCon->Logf(NAME_Init, "Detected game is '%s' (from map lump '%s')", *G.param, *mname);
+              VStr gn = G.gamename;
+              if (gn.isEmpty()) gn = G.params[0];
+              if (gn.strEquCI(gamename)) {
+                GCon->Logf(NAME_Init, "Detected game is '%s' (from map lump '%s')", *gn, *mname);
                 selectedGame = gi;
                 break;
               }
@@ -1227,7 +1251,7 @@ static void ParseBase (VStr name, VStr mainiwad) {
               if (mw.ICmp(gw) == 0) { okwad = true; break; }
             }
             if (okwad) {
-              GCon->Logf(NAME_Init, "Detected game is '%s' (from iwad)", *gmi.param);
+              GCon->Logf(NAME_Init, "Detected game is '%s' (from iwad)", *gmi.gamename);
               selectedGame = gi;
               break;
             }
@@ -1242,7 +1266,7 @@ static void ParseBase (VStr name, VStr mainiwad) {
           for (int f = 0; f < gmi.MainWads.length(); ++f) {
             mainWadPath = FindMainWad(gmi.MainWads[f]);
             if (!mainWadPath.isEmpty()) {
-              GCon->Logf(NAME_Init, "Detected game is '%s' (iwad search)", *gmi.param);
+              GCon->Logf(NAME_Init, "Detected game is '%s' (iwad search)", *gmi.gamename);
               selectedGame = gi;
               break;
             }
@@ -1252,8 +1276,8 @@ static void ParseBase (VStr name, VStr mainiwad) {
       }
 
       if (selectedGame >= 0) {
-        game_name = *games[selectedGame].param;
-        GCon->Logf(NAME_Init, "detected game: \"%s\"", *games[selectedGame].param);
+        game_name = *games[selectedGame].gamename;
+        GCon->Logf(NAME_Init, "detected game: \"%s\"", *games[selectedGame].gamename);
       }
     } else {
       selectedGame = 0;
@@ -1263,6 +1287,13 @@ static void ParseBase (VStr name, VStr mainiwad) {
 
   version_t &gmi = games[selectedGame];
   game_options = gmi.options;
+
+  for (auto &&ds : gmi.defines) {
+    if (!ds.isEmpty()) {
+      VMemberBase::StaticAddDefine(*ds);
+      GCon->Logf(NAME_Init, "added define '%s' for game '%s'", *ds, *gmi.gamename);
+    }
+  }
 
   // look for the main wad file
   VStr mainWadPath;
@@ -1587,7 +1618,11 @@ void FL_InitOptions () {
 
   // hidden
   GParsedArgs.RegisterCallback("-complete", "!DooM Complete game (broken for now)", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "complete"; return 0; });
-  GParsedArgs.RegisterCallback("-chex", "!Chex Quest game (semi-broken)", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "chex"; return 0; });
+
+  GParsedArgs.RegisterCallback("-chex", "Chex Quest game (semi-broken)", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "chex"; return 0; });
+  GParsedArgs.RegisterAlias("-chex1", "-chex");
+  GParsedArgs.RegisterCallback("-chex2", "Chex Quest 2 game (semi-broken)", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "chex2"; return 0; });
+  GParsedArgs.RegisterCallback("-chex3", "!Chex Quest 3 game (semi-broken)", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "chex3"; return 0; });
 
   GParsedArgs.RegisterFlagSet("-k8runmap", "try to detect and run first pwad map automatically", &doStartMap);
 
@@ -1706,6 +1741,7 @@ void FL_Init () {
   if (cli_NoMonsters == 1) NoMonsters = true;
   if (cli_NoMenuDef == 1) gz_skip_menudef = true;
 
+  /*
   bool isChex = false;
   if (cliGameMode.strEquCI("chex")) {
     cliGameMode = "doom2"; // arbitrary
@@ -1713,13 +1749,15 @@ void FL_Init () {
     fsys_onlyOneBaseFile = true; // disable autoloads
     isChex = true;
   }
+  */
 
   if (cli_IWadName && cli_IWadName[0]) mainIWad = cli_IWadName;
 
 
   fsys_report_added_paks = !!reportIWads;
 
-  if (!isChex) fsys_onlyOneBaseFile = (cli_NakedBase > 0);
+  //if (!isChex) fsys_onlyOneBaseFile = (cli_NakedBase > 0);
+  fsys_onlyOneBaseFile = (cli_NakedBase > 0);
 
   // set up base directory (main data files)
   fl_basedir = ".";
@@ -1892,16 +1930,20 @@ void FL_Init () {
   }
 
   if (!customMode.disableGoreMod) {
+    #if 0
     if (/*game_release_mode ||*/ isChex) {
       if (cli_GoreMod == 1) AddGameDir("basev/mods/gore"); // explicitly enabled
     } else {
       if (cli_GoreMod != 0) AddGameDir("basev/mods/gore"); // not disabled
     }
+    #else
+    if (cli_GoreMod != 0) AddGameDir("basev/mods/gore"); // not disabled
+    #endif
   } else {
     GCon->Logf(NAME_Init, "Gore mod disabled");
   }
 
-  if (isChex) AddGameDir("basev/mods/chex");
+  //if (isChex) AddGameDir("basev/mods/chex");
 
   // mark "iwad" flags
   for (int i = 0; i < SearchPaths.length(); ++i) {

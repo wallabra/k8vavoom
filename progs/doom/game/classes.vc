@@ -74,3 +74,23 @@ class RocketLauncher : Weapon decorate;
 class PlasmaRifle : Weapon decorate;
 class BFG9000 : Weapon decorate;
 class DoomPlayer : PlayerPawn decorate;
+
+
+#ifdef CHEX_QUEST
+//class ChexPlayer : DoomPlayer decorate;
+class ChexPlayer : PlayerPawn decorate;
+/*
+class Bootspoon : Fist decorate;
+class SuperBootspork : Chainsaw decorate;
+class MiniZorcher : Pistol decorate;
+class LargeZorcher : Shotgun decorate;
+class SuperLargeZorcher : SuperShotgun decorate;
+class RapidZorcher : Chaingun decorate;
+class ZorchPropulsor : RocketLauncher decorate;
+class PropulsorMissile : Rocket decorate;
+class PhasingZorcher : PlasmaRifle decorate;
+class PhaseZorchMissile : PlasmaBall decorate;
+class LAZDevice : BFG9000 decorate;
+class LAZBall : BFGBall decorate;
+*/
+#endif

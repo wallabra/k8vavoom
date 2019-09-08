@@ -1010,7 +1010,11 @@ defaultproperties {
     GameFilterFlag = EntityEx::GAME_Doom;
   }
   */
+#ifdef CHEX_QUEST
+  GameFilterFlag = EntityEx::GAME_Chex;
+#else
   GameFilterFlag = EntityEx::GAME_Doom;
+#endif
   bDefaultLaxMonsterActivation = true;
   bNoClipIgnoreFloor = true;
   bAlwaysSwitchNewWeapon = true;
@@ -1024,8 +1028,22 @@ defaultproperties {
   GOD_HEALTH = 100;
 
   PlayerClasses.Num = 1;
+#ifdef CHEX_QUEST
+  PlayerClasses[0] = ChexPlayer;
+  /*
+  WeaponSlots[1].Weapons[0] = Bootspoon;
+  WeaponSlots[1].Weapons[1] = SuperBootspork;
+  WeaponSlots[2].Weapons[0] = MiniZorcher;
+  WeaponSlots[3].Weapons[0] = LargeZorcher;
+  WeaponSlots[3].Weapons[1] = SuperLargeZorcher;
+  WeaponSlots[4].Weapons[0] = RapidZorcher;
+  WeaponSlots[5].Weapons[0] = ZorchPropulsor;
+  WeaponSlots[6].Weapons[0] = PhasingZorcher;
+  WeaponSlots[7].Weapons[0] = LAZDevice;
+  */
+#else
   PlayerClasses[0] = DoomPlayer;
-
+#endif
   WeaponSlots[1].Weapons[0] = Fist;
   WeaponSlots[1].Weapons[1] = Chainsaw;
   WeaponSlots[2].Weapons[0] = Pistol;

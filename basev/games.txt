@@ -1,5 +1,7 @@
 // Default game detection configuration file
-//NOTE Games are detected in backwards order
+// first param is also a game name, if "gamename" is absent
+// "gamename" is what will be put into "game_name" cvar
+
 
 // Doom II: Hell On Earth
 game basev/doom2
@@ -7,6 +9,7 @@ base basev/doom
 iwad doom2.wad
 altiwad doom2f.wad
 param -doom2
+gamename doom2
 warp MAP##
 filter doom
 filter game-doom
@@ -26,6 +29,8 @@ altiwad doom.wad
 // shareware
 altiwad doom1.wad
 param -doom
+param -doom1
+gamename doom
 warp E#M#
 filter doom
 filter game-doom
@@ -41,6 +46,8 @@ game basev/doom1
 base basev/doom
 iwad freedoom1.wad
 param -freedoom
+param -freedoom1
+gamename freedoom
 warp E#M#
 filter doom
 filter game-doom
@@ -55,6 +62,7 @@ game basev/doom2
 base basev/doom
 iwad freedoom2.wad
 param -freedoom2
+gamename freedoom2
 warp MAP##
 filter doom
 filter game-doom
@@ -70,6 +78,7 @@ base basev/doom
 base basev/doom2
 iwad tnt.wad
 param -tnt
+gamename tnt
 warp MAP##
 filter doom
 filter game-doom
@@ -85,6 +94,7 @@ base basev/doom
 base basev/doom2
 iwad plutonia.wad
 param -plutonia
+gamename plutonia
 warp MAP##
 filter doom
 filter game-doom
@@ -99,6 +109,7 @@ game basev/heretic
 iwad heretic.wad
 altiwad heretic1.wad
 param -heretic
+gamename heretic
 warp E#M#
 filter game-raven
 filter heretic
@@ -110,6 +121,7 @@ end
 game basev/hexen
 iwad hexen.wad
 param -hexen
+gamename hexen
 warp MAP##
 filter game-raven
 filter hexen
@@ -121,6 +133,7 @@ end
 game basev/strife
 iwad strife0.wad
 param -strifeteaser
+gamename strife
 fixvoices
 filter strife
 filter game-strife
@@ -131,6 +144,7 @@ game basev/strife
 iwad strife1.wad
 addfile optional voices.wad
 param -strife
+gamename strife
 filter strife
 filter game-strife
 end
@@ -142,6 +156,7 @@ base basev/doom2
 iwad doom2.wad
 addfile nerve.wad
 param -nerve
+gamename nerve
 warp MAP##
 filter doom
 filter game-doom
@@ -159,4 +174,62 @@ base basev/doom
 iwad complete.pk3
 altiwad doom_complete.pk3
 param -complete
+gamename doom2
+end
+
+
+// Chex Quest 1
+game basev/chex
+base basev/doom
+// ultimate
+iwad chex.wad
+altiwad chex1.wad
+param -chex
+param -chex1
+gamename chex
+define CHEX_QUEST
+warp E#M#
+filter doom
+filter game-doom
+filter game-doomstrifechex
+filter game-doomchex
+filter doom.doom1
+filter doom.doom1.registered
+filter doom.doom1.ultimate
+end
+
+// Chex Quest 2
+game basev/chex
+base basev/doom
+// ultimate
+iwad chex2.wad
+param -chex2
+gamename chex
+define CHEX_QUEST
+warp E#M#
+filter doom
+filter game-doom
+filter game-doomstrifechex
+filter game-doomchex
+filter doom.doom1
+filter doom.doom1.registered
+filter doom.doom1.ultimate
+end
+
+// Chex Quest 3
+game basev/chex
+base basev/doom
+// ultimate
+iwad chex3.wad
+param -chex3
+gamename chex
+define CHEX_QUEST
+warp E#M#
+filter doom
+filter game-doom
+filter game-doomstrifechex
+filter game-doomchex
+filter doom.doom1
+filter doom.doom1.registered
+filter doom.doom1.ultimate
 end

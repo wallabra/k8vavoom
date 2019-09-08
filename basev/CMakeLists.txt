@@ -12,6 +12,7 @@ add_subdirectory(nerve)
 add_subdirectory(plutonia)
 add_subdirectory(tnt)
 add_subdirectory(strife)
+add_subdirectory(chex)
 
 add_subdirectory(mods)
 
