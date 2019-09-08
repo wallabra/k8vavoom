@@ -1010,7 +1010,7 @@ static void ParseActionBlock (VScriptParser *sc, VClass *Class, VState *State) {
     #else
     VMethod *M = new VMethod(NAME_None, Class, sc->GetLoc());
     #endif
-    M->Flags = FUNC_Final;
+    M->Flags = FUNC_Final|FUNC_NoVCalls;
     M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, sc->GetLoc());
     M->ReturnType = VFieldType(TYPE_Void);
     M->Statement = stmt;
@@ -1051,7 +1051,7 @@ static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State) {
     #else
     VMethod *M = new VMethod(NAME_None, Class, sc->GetLoc());
     #endif
-    M->Flags = FUNC_Final;
+    M->Flags = FUNC_Final|FUNC_NoVCalls;
     M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, sc->GetLoc());
     M->ReturnType = VFieldType(TYPE_Void);
     M->Statement = suvst;
@@ -1070,7 +1070,7 @@ static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State) {
       #else
       VMethod *M = new VMethod(NAME_None, Class, sc->GetLoc());
       #endif
-      M->Flags = FUNC_Final;
+      M->Flags = FUNC_Final|FUNC_NoVCalls;
       M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, sc->GetLoc());
       M->ReturnType = VFieldType(TYPE_Void);
       M->Statement = Stmt;
@@ -1107,7 +1107,7 @@ static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State) {
           #else
           VMethod *M = new VMethod(NAME_None, Class, sc->GetLoc());
           #endif
-          M->Flags = FUNC_Final;
+          M->Flags = FUNC_Final|FUNC_NoVCalls;
           M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, sc->GetLoc());
           M->ReturnType = VFieldType(TYPE_Void);
           M->Statement = Stmt;
