@@ -1076,6 +1076,12 @@ IMPLEMENT_FUNCTION(VObject, SpawnObject) {
 #include <time.h>
 #include <sys/time.h>
 
+#ifdef _WIN32
+static inline struct tm *localtime_r (const time_t *_Time, struct tm *_Tm) {
+  return (localtime_s(_Tm, _Time) ? NULL : _Tm);
+}
+#endif
+
 /*
 #if 0
 #if !defined(VCC_STANDALONE_EXECUTOR)
