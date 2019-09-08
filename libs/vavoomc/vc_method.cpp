@@ -309,6 +309,8 @@ bool VMethod::Define () {
 
     // inherit network flags and decorate visibility
     Flags |= SuperMethod->Flags&(FUNC_NetFlags|FUNC_Decorate);
+
+    if (Flags&FUNC_Decorate) { ParseError(Loc, "Decorate action method cannot be virtual `%s`", *GetFullName()); Ret = false; }
   } else {
     if ((Flags&FUNC_Override) != 0) {
       ParseError(Loc, "Trying to override non-existing method `%s`", *GetFullName());
@@ -322,6 +324,7 @@ bool VMethod::Define () {
     if (Flags&FUNC_Iterator) { ParseError(Loc, "Decorate action method cannot be iterator `%s`", *GetFullName()); Ret = false; }
     if (Flags&FUNC_Private) { ParseError(Loc, "Decorate action method cannot be private `%s`", *GetFullName()); Ret = false; }
     if (Flags&FUNC_Protected) { ParseError(Loc, "Decorate action method cannot be protected `%s`", *GetFullName()); Ret = false; }
+    if (!(Flags&FUNC_Final)) { ParseError(Loc, "Decorate action method must be final `%s`", *GetFullName()); Ret = false; }
   }
 
   if (Flags&FUNC_Spawner) {
