@@ -234,8 +234,9 @@ void VMemberBase::RemoveFromNameHash (VMemberBase *self) {
 //
 //==========================================================================
 VStr VMemberBase::GetFullName () const {
-  if (Outer) return Outer->GetFullName()+"."+Name;
-  return VStr(Name);
+  if (Outer) return Outer->GetFullName()+"."+Name.getCStr();
+  if (Name.isValid()) return VStr(Name);
+  return VStr(Name.getCStr());
 }
 
 
