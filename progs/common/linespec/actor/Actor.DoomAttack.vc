@@ -29,13 +29,6 @@
 const float SKULLSPEED = 20.0*35.0;
 const float FatsoSpreadAngle = 90.0/8.0;
 
-// Flags for A_PainAttack
-enum /*EPainAttackFlags*/ {
-  PAF_NOSKULLATTACK = 1,
-  PAF_AIMFACING = 2,
-  PAF_NOTARGET = 4,
-};
-
 
 //==========================================================================
 //

@@ -82,7 +82,8 @@
 //**************************************************************************
 class Entity : Thinker native abstract;
 
-enum {
+// render style constants
+enum [decorate] /*ERenderStyle*/ {
   STYLE_None, // do not draw
   STYLE_Normal, // normal; just copy the image to the screen
   STYLE_Fuzzy, // draw silhouette using "fuzz" effect
@@ -114,16 +115,6 @@ enum {
 };
 
 const int TRANSL_TYPE_SHIFT = 16;
-
-// flags for A_LookEx method
-enum {
-  LOF_NOSIGHTCHECK = 1,
-  LOF_NOSOUNDCHECK = 2,
-  LOF_DONTCHASEGOAL = 4,
-  LOF_NOSEESOUND = 8,
-  LOF_FULLVOLSEESOUND = 16,
-  LOF_NOJUMP = 32,
-};
 
 
 struct LightEffectDef {

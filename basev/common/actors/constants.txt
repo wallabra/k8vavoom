@@ -1,3 +1,4 @@
+/* moved to VavoomC code
 // flags for A_Chase
 const int CHF_FASTCHASE        = 1;
 const int CHF_NOPLAYACTIVE     = 2;
@@ -16,12 +17,12 @@ const int CMF_AIMOFFSET       = 1;
 const int CMF_AIMDIRECTION    = 2;
 const int CMF_TRACKOWNER      = 4;
 const int CMF_CHECKTARGETDEAD = 8;
-/*
+/ *
 const int CMF_ABSOLUTEPITCH   = 16;
 const int CMF_OFFSETPITCH     = 32;
 const int CMF_SAVEPITCH       = 64;
 const int CMF_ABSOLUTEANGLE   = 128;
-*/
+* /
 //const int CMF_BADPITCH        = 256; // for compatibility handling only - avoid!
 
 // NOT IMPLEMENTED!
@@ -611,7 +612,7 @@ enum ERaise {
 
 
 // flags for A_Teleport
-enum /*ETeleportFlags*/ {
+enum / *ETeleportFlags* / {
   TF_TELEFRAG =   0x00000001, // Allow telefrag in order to teleport.
   TF_RANDOMDECIDE = 0x00000002, // Randomly fail based on health. (A_Srcr2Decide)
   TF_FORCED =     0x00000004, // Forget what's in the way. TF_Telefrag takes precedence though.
@@ -662,3 +663,4 @@ enum EFSkillProperty {
   SKILLP_FriendlyHealth,
   SKILLP_KickbackFactor,
 };
+*/

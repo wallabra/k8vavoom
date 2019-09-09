@@ -27,13 +27,6 @@
 //  Monster specific functions for Doom
 //**************************************************************************
 
-// flags for A_BFGSpray
-enum /*EBFGSprayFlags*/ {
-  BFGF_HURTSOURCE = 1,
-  BFGF_MISSILEORIGIN = 2,
-};
-
-
 //==========================================================================
 //
 //  A_Hoof

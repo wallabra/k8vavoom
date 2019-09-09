@@ -24,6 +24,71 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+// Flags for A_JumpIfTargetInLOS and A_JumpIfInTargetLOS
+//enum EJumpFlags
+const [decorate] int JLOSF_PROJECTILE = 1;
+const [decorate] int JLOSF_NOSIGHT = 1<<1;
+const [decorate] int JLOSF_CLOSENOFOV = 1<<2;
+const [decorate] int JLOSF_CLOSENOSIGHT = 1<<3;
+const [decorate] int JLOSF_CLOSENOJUMP = 1<<4;
+const [decorate] int JLOSF_DEADNOJUMP = 1<<5;
+const [decorate] int JLOSF_CHECKMASTER = 1<<6;
+const [decorate] int JLOSF_TARGETLOS = 1<<7;
+const [decorate] int JLOSF_FLIPFOV = 1<<8;
+const [decorate] int JLOSF_ALLYNOJUMP = 1<<9;
+const [decorate] int JLOSF_COMBATANTONLY = 1<<10;
+const [decorate] int JLOSF_NOAUTOAIM = 1<<11;
+const [decorate] int JLOSF_CHECKTRACER = 1<<12;
+
+
+// constants for `SetPlayerProperty()`
+const [decorate] int PROP_FROZEN = 0;
+const [decorate] int PROP_NOTARGET = 1;
+const [decorate] int PROP_INSTANTWEAPONSWITCH = 2;
+const [decorate] int PROP_FLY = 3;
+const [decorate] int PROP_TOTALLYFROZEN = 4;
+const [decorate] int PROP_INVULNERABILITY = 5;
+const [decorate] int PROP_STRENGTH = 6;
+const [decorate] int PROP_INVISIBILITY = 7;
+const [decorate] int PROP_RADIATIONSUIT = 8;
+const [decorate] int PROP_ALLMAP = 9;
+const [decorate] int PROP_INFRARED = 10;
+const [decorate] int PROP_WEAPONLEVEL2 = 11;
+const [decorate] int PROP_FLIGHT = 12;
+const [decorate] int PROP_SPEED = 15;
+const [decorate] int PROP_BUDDHA = 16; // not supported
+
+
+const [decorate] int PTROP_UNSAFETARGET = 1;
+const [decorate] int PTROP_UNSAFEMASTER = 2;
+const [decorate] int PTROP_NOSAFEGUARDS = PTROP_UNSAFETARGET|PTROP_UNSAFEMASTER;
+
+// Pointer constants, bitfield-enabled
+//enum EPointerFlags
+const [decorate] int AAPTR_DEFAULT = 0;
+const [decorate] int AAPTR_NULL   = 0x1;
+const [decorate] int AAPTR_TARGET = 0x2;
+const [decorate] int AAPTR_MASTER = 0x4;
+const [decorate] int AAPTR_TRACER = 0x8;
+
+const [decorate] int AAPTR_PLAYER_GETTARGET       = 0x10;
+const [decorate] int AAPTR_PLAYER_GETCONVERSATION = 0x20;
+
+const [decorate] int AAPTR_PLAYER1 = 0x40;
+const [decorate] int AAPTR_PLAYER2 = 0x80;
+const [decorate] int AAPTR_PLAYER3 = 0x100;
+const [decorate] int AAPTR_PLAYER4 = 0x200;
+const [decorate] int AAPTR_PLAYER5 = 0x400;
+const [decorate] int AAPTR_PLAYER6 = 0x800;
+const [decorate] int AAPTR_PLAYER7 = 0x1000;
+const [decorate] int AAPTR_PLAYER8 = 0x2000;
+
+const [decorate] int AAPTR_FRIENDPLAYER = 0x4000;
+const [decorate] int AAPTR_LINETARGET   = 0x8000;
+
+// k8vavoom extensions
+const [decorate] int AAPTR_OWNER = 0x10_0000;
+
 
 //==========================================================================
 //

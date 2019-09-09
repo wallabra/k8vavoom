@@ -36,47 +36,6 @@ const float ChargeSpeed = 455.0;
 float StartTime; // minotaur start time
 
 
-enum /*ERadiusThrustFlags*/ {
-  RTF_AFFECTSOURCE = 1,
-  RTF_NOIMPACTDAMAGE = 2,
-  RTF_NOTMISSILE = 4,
-  RTF_THRUSTZ = 16,
-};
-
-// A_ZoomFactor flags
-const int ZOOM_INSTANT        = 1;
-const int ZOOM_NOSCALETURNING = 2;
-
-
-// flags for A_CustomMissile
-const int CMF_AIMOFFSET       = 1;
-const int CMF_AIMDIRECTION    = 2;
-const int CMF_TRACKOWNER      = 4;
-const int CMF_CHECKTARGETDEAD = 8;
-const int CMF_ABSOLUTEPITCH   = 16;
-const int CMF_OFFSETPITCH     = 32;
-const int CMF_SAVEPITCH       = 64;
-const int CMF_ABSOLUTEANGLE   = 128;
-
-
-// flags for A_Blast
-const int BF_USEAMMO      = 1;
-const int BF_DONTWARN     = 2;
-const int BF_AFFECTBOSSES = 4;
-const int BF_NOIMPACTDAMAGE = 8;
-
-
-// flags for A_CustomBulletAttack
-const int CBAF_AIMFACING     = 1;
-const int CBAF_NORANDOM      = 2;
-const int CBAF_EXPLICITANGLE = 4;
-const int CBAF_NOPITCH       = 8;
-const int CBAF_NORANDOMPUFFZ = 16;
-const int CBAF_PUFFTARGET    = 32;
-const int CBAF_PUFFMASTER    = 64;
-const int CBAF_PUFFTRACER    = 128;
-
-
 //==========================================================================
 //
 //  A_CustomMissile

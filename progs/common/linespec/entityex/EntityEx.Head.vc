@@ -37,9 +37,6 @@ const int
 
 const int MAX_RANDOMSPAWNERS_RECURSION = 32; // Should be largely more than enough...
 
-const int PTROP_UNSAFETARGET = 1;
-const int PTROP_UNSAFEMASTER = 2;
-
 const float ONFLOORZ   = -99999.0;
 const float ONCEILINGZ = 99999.0;
 const float FLOATRANDZ = 99998.0;
@@ -125,24 +122,6 @@ enum {
   APROP_StencilColor  = 41,
 };
 
-enum {
-  PROP_FROZEN          = 0,
-  PROP_NOTARGET        = 1,
-  PROP_INSTANTWEAPONSWITCH = 2,
-  PROP_FLY             = 3,
-  PROP_TOTALLYFROZEN   = 4,
-  PROP_INVULNERABILITY = 5,
-  PROP_STRENGTH        = 6,
-  PROP_INVISIBILITY    = 7,
-  PROP_RADIATIONSUIT   = 8,
-  PROP_ALLMAP          = 9,
-  PROP_INFRARED        = 10,
-  PROP_WEAPONLEVEL2    = 11,
-  PROP_FLIGHT          = 12,
-  PROP_SPEED           = 15,
-  PROP_BUDDHA          = 16,
-};
-
 // constants for ClassifyActor
 enum {
   ACTOR_NONE       = 0x00000000,
@@ -155,13 +134,6 @@ enum {
   ACTOR_DEAD       = 0x00000040,
   ACTOR_MISSILE    = 0x00000080,
   ACTOR_GENERIC    = 0x00000100,
-};
-
-// constants for A_SeekerMissile
-enum {
-  SMF_LOOK     = 1,
-  SMF_PRECISE  = 2,
-  SMF_CURSPEED = 4,
 };
 
 // states

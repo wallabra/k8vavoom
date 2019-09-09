@@ -108,16 +108,6 @@ defaultproperties {
 // ////////////////////////////////////////////////////////////////////////// //
 class QuakeFocusEx : Actor;
 
-// flags for A_QuakeEx
-enum /*EQuakeFlags*/ {
-  QF_RELATIVE      = 1,
-  QF_SCALEDOWN     = 1<<1,
-  QF_SCALEUP       = 1<<2,
-  QF_MAX           = 1<<3,
-  QF_FULLINTENSITY = 1<<4,
-  QF_WAVE          = 1<<5,
-};
-
 /*
 [decorate] final bool A_QuakeEx (float intensityX, float intensityY, float intensityZ, float ticduration, float damrad, float tremrad,
                                  optional name soundname, optional int flags, optional float mulwavex, optional float mulwavey, optional float mulwavez,

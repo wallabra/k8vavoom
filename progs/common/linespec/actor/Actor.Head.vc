@@ -30,22 +30,6 @@
 //**************************************************************************
 class Actor : EntityEx abstract [decorate];
 
-// flags for A_WeaponReady
-const int WRF_NOBOB       = 1;
-const int WRF_NOSWITCH    = 2;
-const int WRF_NOPRIMARY   = 4;
-const int WRF_NOSECONDARY = 8;
-const int WRF_NOFIRE      = 12;
-const int WRF_ALLOWRELOAD = 16;
-const int WRF_ALLOWZOOM   = 32;
-const int WRF_DISABLESWITCH = 64;
-const int WRF_ALLOWREFIRE = 8192; // k8vavoom specific
-// not implemented yet
-const int WRF_ALLOWUSER1 = 128;
-const int WRF_ALLOWUSER2 = 256;
-const int WRF_ALLOWUSER3 = 512;
-const int WRF_ALLOWUSER4 = 1024;
-
 
 //==========================================================================
 //
@@ -94,7 +78,7 @@ override void Destroyed () {
 
   TVec nv = vector(x, y, z);
 
-  if (flags&1) {
+  if (flags&CVF_RELATIVE) {
     // relative axes - make x, y relative to actor's current angle
     float sina, cosa;
     sincos(tgt.Angles.yaw, out sina, out cosa);
@@ -105,7 +89,7 @@ override void Destroyed () {
   // translate to k8vavoom velocity
   nv *= 35.0;
 
-  if (flags&2) {
+  if (flags&CVF_REPLACE) {
     // discard old velocity - replace old velocity with new velocity
     tgt.Velocity = nv;
   } else {
