@@ -190,6 +190,34 @@ final bool CheckIfCloser (EntityEx targ, float Dist, bool noz) {
 
 //==========================================================================
 //
+//  A_JumpIfTargetInsideMeleeRange
+//
+//==========================================================================
+[decorate] final state A_JumpIfTargetInsideMeleeRange (state label) {
+  state stres = none;
+  if (CheckMeleeRange()) { stres = label; DoJump(label); }
+  // state jumps should not affect state chain results
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  return stres;
+}
+
+
+//==========================================================================
+//
+//  A_JumpIfTargetOutsideMeleeRange
+//
+//==========================================================================
+[decorate] final state A_JumpIfTargetOutsideMeleeRange (state label) {
+  state stres = none;
+  if (!CheckMeleeRange()) { stres = label; DoJump(label); }
+  // state jumps should not affect state chain results
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  return stres;
+}
+
+
+//==========================================================================
+//
 //  A_JumpIfHealthLower
 //
 //==========================================================================
