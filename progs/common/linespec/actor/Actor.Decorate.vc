@@ -1602,6 +1602,16 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
 }
 
 
+//===========================================================================
+//
+//  A_SetDamageType
+//
+//===========================================================================
+[decorate] final void A_SetDamageType (name atype) {
+  DamageType = atype;
+}
+
+
 //==========================================================================
 //
 //  A_k8MoveBy
