@@ -966,6 +966,18 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
 
 //==========================================================================
 //
+//  A_Remove
+//
+//==========================================================================
+[decorate] final void A_Remove (int aptr, optional int flags, optional name filter, optional name species) {
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_Remove', aptr));
+  if (!tgt) return;
+  if (doRemoveSomethingCheck(tgt, flags, filter!optional, species!optional)) delete tgt;
+}
+
+
+//==========================================================================
+//
 //  A_RemoveMaster
 //
 //==========================================================================
