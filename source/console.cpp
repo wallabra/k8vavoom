@@ -107,10 +107,18 @@ struct HistoryLine {
 
   inline const char *getCStr () const { return (str ? str : ""); }
 
-  inline bool strEqu (const char *s) const {
+  inline bool strEqu (const char *s, bool doStrip) const {
     if (!str) return false; // not initialized
     if (!s || !s[0]) return (str[0] == 0);
+    if (doStrip) return strEqu(VStr(s), true);
     return (VStr::Cmp(str, s) == 0);
+  }
+
+  inline bool strEqu (VStr s, bool doStrip) const {
+    if (!str) return false; // not initialized
+    if (s.isEmpty()) return (str[0] == 0);
+    if (!doStrip) return s.strEqu(str);
+    return s.xstrip().strEqu(VStr(str).xstrip());
   }
 
   inline void putStr (const char *s) {
@@ -396,6 +404,9 @@ bool C_Responder (event_t *ev) {
       {
         VStr ccmds = VStr(c_iline.getCStr()).xstrip();
         if (ccmds.length() != 0) {
+          VStr ccmdfull = VStr(c_iline.getCStr()).trimLeft();
+          // leave only one trailing space
+          if (!ccmdfull.isEmpty() && (vuint8)ccmdfull[ccmdfull.length()-1] <= ' ') ccmdfull = ccmdfull.xstrip()+" ";
           // print it
           GCon->Logf(">%s", *ccmds);
           MyThreadLocker lock(&conLogLock);
@@ -403,8 +414,10 @@ bool C_Responder (event_t *ev) {
           // add to history (but if it is a duplicate, move it to history top)
           int dupidx = -1;
           for (int f = 0; f < c_history_size; ++f) {
-            if (c_history[f].strEqu(*ccmds)) {
+            if (c_history[f].strEqu(ccmds, true)) {
               dupidx = f;
+              // if we have a space at the end, replace
+              if (ccmdfull.length() > ccmds.length()) c_history[f].putStr(*ccmdfull);
               break;
             }
           }
@@ -420,7 +433,7 @@ bool C_Responder (event_t *ev) {
             } else {
               ++c_history_size;
             }
-            c_history[c_history_size-1].putStr(*ccmds);
+            c_history[c_history_size-1].putStr(*ccmdfull);
           }
           c_history_current = -1;
 
