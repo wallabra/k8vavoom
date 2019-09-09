@@ -4072,12 +4072,14 @@ void VParser::ParseClass () {
     // enums
     if (Lex.Token == TK_Enum || Lex.Token == TK_BitEnum) {
       bool bitconst = (Lex.Token == TK_BitEnum);
-      vuint32 flags = TModifiers::ConstAttr(TModifiers::Check(TModifiers::Parse(Lex), TModifiers::ConstSet, Lex.Location));
+      auto eloc = Lex.Location;
       Lex.NextToken();
+      vuint32 flags = TModifiers::ConstAttr(TModifiers::Check(TModifiers::Parse(Lex), TModifiers::ConstSet, eloc));
       VConstant *PrevValue = nullptr;
       // check for `enum const = val;`
       if (Lex.Token == TK_Identifier && Lex.peekTokenType(1) == TK_Assign) {
-        if (Class->FindConstant(Lex.Name)) ParseError(Lex.Location, "Redefined identifier `%s`", *Lex.Name);
+        VConstant *oldConst = Class->FindConstant(Lex.Name);
+        if (oldConst) ParseError(Lex.Location, "Redefined identifier `%s` (prev at %s)", *Lex.Name, *oldConst->Loc.toStringNoCol());
         VConstant *cDef = new VConstant(Lex.Name, Class, Lex.Location);
         cDef->Type = TYPE_Int;
         cDef->bitconstant = bitconst;
@@ -4097,7 +4099,8 @@ void VParser::ParseClass () {
           ename = Lex.Name;
           if (flags&CONST_Decorate) ParseError(Lex.Location, "Named enums (`%s`) cannot be exported to decorate code (yet)", *ename);
           if (Class->AddKnownEnum(ename)) ParseError(Lex.Location, "Duplicate enum name `%s`", *ename);
-          if (Class->FindConstant(ename)) ParseError(Lex.Location, "Redefined identifier `%s`", *ename);
+          VConstant *oldConst = Class->FindConstant(ename);
+          if (oldConst) ParseError(Lex.Location, "Redefined identifier `%s` (prev at %s)", *ename, *oldConst->Loc.toStringNoCol());
           Lex.NextToken();
         }
         Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
@@ -4109,11 +4112,13 @@ void VParser::ParseClass () {
           VConstant *cDef;
           if (ename == NAME_None) {
             // unnamed enum
-            if (Class->FindConstant(Lex.Name)) ParseError(Lex.Location, "Redefined identifier `%s`", *Lex.Name);
+            VConstant *oldConst = Class->FindConstant(Lex.Name);
+            if (oldConst) ParseError(Lex.Location, "Redefined identifier `%s` (prev at %s)", *Lex.Name, *oldConst->Loc.toStringNoCol());
             cDef = new VConstant(Lex.Name, Class, Lex.Location);
           } else {
             // named enum
-            if (Class->FindConstant(Lex.Name, ename)) ParseError(Lex.Location, "Redefined identifier `%s::%s`", *ename, *Lex.Name);
+            VConstant *oldConst = Class->FindConstant(Lex.Name, ename);
+            if (oldConst) ParseError(Lex.Location, "Redefined identifier `%s::%s`", *ename, *Lex.Name);
             cDef = new VConstant(ename, Lex.Name, Class, Lex.Location);
           }
           cDef->bitconstant = bitconst;
@@ -4152,7 +4157,8 @@ void VParser::ParseClass () {
           Lex.NextToken();
           continue;
         }
-        if (Class->FindConstant(Lex.Name)) ParseError(Lex.Location, "Redefined identifier %s", *Lex.Name);
+        VConstant *oldConst = Class->FindConstant(Lex.Name);
+        if (oldConst) ParseError(Lex.Location, "Redefined identifier %s (prev at %s)", *Lex.Name, *oldConst->Loc.toStringNoCol());
         VConstant *cDef = new VConstant(Lex.Name, Class, Lex.Location);
         cDef->Type = Type;
         cDef->Flags = flags;
@@ -4513,7 +4519,8 @@ void VParser::Parse () {
           VConstant *PrevValue = nullptr;
           // check for `enum const = val;`
           if (Lex.Token == TK_Identifier && Lex.peekTokenType(1) == TK_Assign) {
-            if (Package->FindConstant(Lex.Name)) ParseError(Lex.Location, "Redefined identifier `%s`", *Lex.Name);
+            VConstant *oldConst = Package->FindConstant(Lex.Name);
+            if (oldConst) ParseError(Lex.Location, "Redefined identifier `%s` (prev at %s)", *Lex.Name, *oldConst->Loc.toStringNoCol());
             VConstant *cDef = new VConstant(Lex.Name, Package, Lex.Location);
             cDef->Type = TYPE_Int;
             cDef->bitconstant = bitconst;
@@ -4531,7 +4538,8 @@ void VParser::Parse () {
             if (Lex.Token == TK_Identifier) {
               ename = Lex.Name;
               if (Package->AddKnownEnum(ename)) ParseError(Lex.Location, "Duplicate enum name `%s`", *ename);
-              if (Package->FindConstant(ename)) ParseError(Lex.Location, "Redefined identifier `%s`", *ename);
+              VConstant *oldConst = Package->FindConstant(ename);
+              if (oldConst) ParseError(Lex.Location, "Redefined identifier `%s` (prev at %s)", *ename, *oldConst->Loc.toStringNoCol());
               Lex.NextToken();
             }
             Lex.Expect(TK_LBrace, ERR_MISSING_LBRACE);
@@ -4540,12 +4548,14 @@ void VParser::Parse () {
               VConstant *cDef;
               if (ename == NAME_None) {
                 // unnamed enum
-                if (Package->FindConstant(Lex.Name)) ParseError(Lex.Location, "Redefined identifier `%s`", *Lex.Name);
+                VConstant *oldConst = Package->FindConstant(Lex.Name);
+                if (oldConst) ParseError(Lex.Location, "Redefined identifier `%s` (prev at %s)", *Lex.Name, *oldConst->Loc.toStringNoCol());
                 cDef = new VConstant(Lex.Name, Package, Lex.Location);
               } else {
                 //if (!Package->IsKnownEnum(ename)) FatalError("VC: oops");
                 // named enum
-                if (Package->FindConstant(Lex.Name, ename)) ParseError(Lex.Location, "Redefined identifier `%s::%s`", *ename, *Lex.Name);
+                VConstant *oldConst = Package->FindConstant(Lex.Name, ename);
+                if (oldConst) ParseError(Lex.Location, "Redefined identifier `%s::%s` (prev at %s)", *ename, *Lex.Name, *oldConst->Loc.toStringNoCol());
                 cDef = new VConstant(ename, Lex.Name, Package, Lex.Location);
               }
               //fprintf(stderr, ":<%s>\n", *cDef->Name);
