@@ -1571,6 +1571,25 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
 }
 
 
+//===========================================================================
+//
+//  A_ResetHealth
+//
+//===========================================================================
+[decorate] final void A_ResetHealth (optional int aptr) {
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_ResetHealth', aptr!optional));
+  if (!tgt || tgt.Health <= 0) return;
+
+  if (tgt.bIsPlayer) {
+    int h = PlayerEx(tgt.Player).GetMaxHealth();
+    tgt.Player.Health = h;
+    tgt.Health = h;
+  } else {
+    tgt.Health = tgt.InitialHealth;
+  }
+}
+
+
 //==========================================================================
 //
 //  A_k8MoveBy
