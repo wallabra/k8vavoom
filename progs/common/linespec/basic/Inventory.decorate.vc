@@ -39,10 +39,8 @@
 //
 //==========================================================================
 [decorate] final void A_JumpIfNoAmmo (state Label) self(Actor) {
-  // state jumps should not affect state chain results
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
-
   // only for weapons
+  //k8: why it checks for callchain here? prolly to block accidental inventory calls?
   if (!bIsPlayer || XLevel.StateCall) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (!Wpn) return;
@@ -51,7 +49,12 @@
     PlayerEx(Player).SetViewObject(Wpn);
     DoJump(Label);
   }
+
+  // state jumps should not affect state chain results
+  // it is guaranteed to not be in a call chain
+  //if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
+
 
 //**************************************************************************
 //  Weapon functions

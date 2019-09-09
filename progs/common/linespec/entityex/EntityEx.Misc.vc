@@ -2845,6 +2845,8 @@ final void DoJump (state State) {
   } else {
     SetState(State);
   }
+  // state jumps should not affect state chain results
+  //if (!keepChainRes && XLevel.StateCall) XLevel.StateCall->Result = false;
 }
 
 

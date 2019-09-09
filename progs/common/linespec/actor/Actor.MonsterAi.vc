@@ -1308,9 +1308,9 @@ override bool do_CheckProximity (name classname, float distance, optional int co
 //
 //==========================================================================
 [decorate] final void A_CheckProximity (state Label, name classname, float distance, optional int count, optional int flags, optional int aptr) {
-  // state jumps should not affect state chain results.
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
   if (do_CheckProximity(classname, distance, count!optional, flags!optional, aptr!optional)) {
     DoJump(Label);
   }
+  // state jumps should not affect state chain results.
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }

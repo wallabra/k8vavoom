@@ -714,7 +714,7 @@ final void DoExplode (int damage, float distance, bool damageSelf, optional int 
     if (ReloadCounter != 0) {
       // go back to the refire frames, instead of continuing on to the reload frames
       PlayerEx(Player).SetViewObject(Wpn);
-      DoJump(Jump);
+      DoJump(Jump); // do not modify chain result
     } else {
       // we need to reload; however, don't reload if we're out of ammo
       Wpn.CheckAmmo(Weapon::FIRE_Either, AutoSwitch:false, RequireAmmo:true); //k8: don't require ammo here?
@@ -893,7 +893,9 @@ final void BlastActor (Actor victim, Actor source, float speed, class!Actor Blas
 
   if (P_Random() < prob) return;
 
-  if (!Target || Target.Health <= 0 || !CanSee(Target, disableBetterSight:true)) DoJump(jump);
+  if (!Target || Target.Health <= 0 || !CanSee(Target, disableBetterSight:true)) {
+    DoJump(jump); // do not modify chain result (k8: why?)
+  }
 }
 
 

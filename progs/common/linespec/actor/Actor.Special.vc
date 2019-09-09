@@ -243,9 +243,6 @@
 //
 //============================================================================
 [decorate] final void A_CheckSight (state Label) {
-  // state jumps should not affect state chain results
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
-
   foreach (auto i; 0..MAXPLAYERS) {
     if (!Level.Game.Players[i] || !Level.Game.Players[i].bSpawned) continue;
     auto cam = Level.Game.Players[i].Camera;
@@ -259,6 +256,9 @@
   }
 
   DoJump(Label);
+
+  // state jumps should not affect state chain results
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
 
 
@@ -268,9 +268,6 @@
 //
 //============================================================================
 [decorate] final void A_CheckSightOrRange (float dist, state Label, optional bool do2dcheck) {
-  // state jumps should not affect state chain results
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
-
   // check distance
   foreach (auto i; 0..MAXPLAYERS) {
     if (!Level.Game.Players[i] || !Level.Game.Players[i].bSpawned) continue;
@@ -297,6 +294,9 @@
   }
 
   DoJump(Label);
+
+  // state jumps should not affect state chain results
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
 
 
@@ -308,9 +308,9 @@
 //
 //==========================================================================
 [decorate] final void A_CheckFloor (state Label) {
+  if (Origin.z <= FloorZ) DoJump(Label);
   // state jumps should not affect state chain results
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
-  if (Origin.z <= FloorZ) DoJump(Label);
 }
 
 
@@ -322,9 +322,9 @@
 //
 //==========================================================================
 [decorate] final void A_CheckCeiling (state Label) {
+  if (Origin.z >= CeilingZ) DoJump(Label);
   // state jumps should not affect state chain results
   if (XLevel.StateCall) XLevel.StateCall->Result = false;
-  if (Origin.z >= CeilingZ) DoJump(Label);
 }
 
 
