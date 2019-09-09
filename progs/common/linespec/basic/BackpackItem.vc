@@ -122,8 +122,8 @@ override Inventory CreateCopy (EntityEx Toucher) {
 //  AttachToOwner
 //
 //==========================================================================
-override void AttachToOwner (EntityEx NewOwner) {
-  ::AttachToOwner(NewOwner);
+override void AttachToOwner (EntityEx NewOwner, optional Inventory oldInv) {
+  ::AttachToOwner(NewOwner, oldInv!optional);
   if (NewOwner && NewOwner.bIsPlayer) {
     PlayerEx plr = PlayerEx(Owner.Player);
     if (plr) {

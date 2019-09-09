@@ -357,6 +357,7 @@ override void Destroyed () {
     bShootable = false;
     bPickUp = false;
     bNoBlood = true;
+    //FIXME: if (!bDontCorpse)?
     bCorpse = true; // just in case
     bMonster = false;
     //bNoGravity = true; // don't bother

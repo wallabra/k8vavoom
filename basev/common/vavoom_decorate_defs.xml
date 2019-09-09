@@ -160,6 +160,7 @@
     <flag name="NoFear" property="bNoFear" />
     <flag name="CantSeek" property="bCantSeek" />
     <flag name="Telestomp" property="bTelestomp" />
+    <flag_inverted name="NoTelestomp" property="bTelestomp" />
     <flag name="StayMorphed" property="bStayMorphed" />
     <flag name="CanBlast" property="bCanBlast" />
     <flag name="NoBlockMonst" property="bNoBlockMonst" relinktoworld="true" />
@@ -337,12 +338,14 @@
     <prop_int_unsupported name="VisibleToTeam" />
     <prop_int_unsupported name="LimitedToPlayerClass" />
     <flag_unsupported name="RelativeToFloor" warning="true" />
+    <flag_unsupported name="NotOnAutomap" warning="false" />
+    <flag_unsupported name="DontDrain" warning="false" />
     <!-- used in blood replacements -->
     <flag name="BloodDontSplat" property="bBloodDisableSplats" />
     <!-- more gozzo shit -->
     <flag name="UseKillScripts" property="bUseKillScripts" />
     <flag name="NoKillScripts" property="bNoKillScripts" />
-    <!-- flag name="DontCorpse" property="bDontCorpse" / -->
+    <flag name="DontCorpse" property="bDontCorpse" />
   </class>
 
   <class name="Inventory">
@@ -364,7 +367,8 @@
     <flag name="Undroppable" property="bUndroppable" />
     <flag name="InvBar" property="bInvBar" />
     <flag name="HubPower" property="bHubPower" />
-    <flag_unsupported name="PersistentPower" warning="true" />
+    <flag_unsupported name="PersistentPower" warning="false" />
+    <flag_unsupported name="Untossable" warning="false" />
     <flag name="InterHubStrip" property="bInterHubStrip" />
     <flag_class name="PickupFlash" property="PickupFlashType" true_value="PickupFlash" false_value="None" />
     <flag name="AlwaysPickup" property="bAlwaysPickup" />
@@ -377,6 +381,7 @@
     <flag name="HitscanWeapon" property="bIsHitscanWeapon" />
     <flag_unsupported name="AlwaysActivate" /> <!-- From SkulTag ? -->
     <flag name="NeverRespawn" property="bNeverRespawn" />
+    <flag name="Transfer" property="bTransferInventory" />
   </class>
 
   <class name="Ammo">

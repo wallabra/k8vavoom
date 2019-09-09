@@ -68,6 +68,7 @@ bool bQuiet; // no feedback when picked up
 bool bAdditiveTime; // when picked up while it's still active, time is added
 bool bCreateCopyMoved; // CreateCopy changed the owner
 bool bInitEffectFailed; // powerup failed to activate
+bool bTransferInventory; // transfer inventory on pickup
 
 bool bNoAutoaim;
 bool bIsHitscanWeapon;
@@ -209,10 +210,30 @@ final void BecomePickup () {
 //
 //  AttachToOwner
 //
+//  `oldInv` is used to transfer inventory
+//  because this is ususally called on a copy, we need to pass the
+//  original item here
+//
 //==========================================================================
-void AttachToOwner (EntityEx NewOwner) {
+void AttachToOwner (EntityEx NewOwner, optional Inventory oldInv) {
   BecomeItem();
   NewOwner.AddInventory(self);
+  if (oldInv) {
+    if (!oldInv.bTransferInventory) return;
+    for (;;) {
+      Inventory inv = oldInv.Inventory;
+      if (!inv) break;
+      oldInv.RemoveInventory(inv);
+      NewOwner.AddInventory(inv);
+    }
+  } else if (bTransferInventory) {
+    for (;;) {
+      Inventory inv = Inventory;
+      if (!inv) break;
+      RemoveInventory(inv);
+      NewOwner.AddInventory(inv);
+    }
+  }
 }
 
 
@@ -303,7 +324,7 @@ bool TryPickup (EntityEx Toucher) {
         Copy.Owner = none;
         Copy.bCreateCopyMoved = false;
       }
-      Copy.AttachToOwner(NewToucher);
+      Copy.AttachToOwner(NewToucher, self);
       if (bAutoActivate && Copy.Use(true)) {
         --Copy.Amount;
         if (Copy.Amount <= 0) {

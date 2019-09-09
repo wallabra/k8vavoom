@@ -987,8 +987,10 @@ void Died (EntityEx source, EntityEx inflictor) {
   // gozzo does it like this:
   //   only mosters and things with raise state can become corpses
   //   k8: not that i care even a little
-  bCorpse = true;
-  bPassMobj = false;
+  if (!bDontCorpse) {
+    bCorpse = true;
+    bPassMobj = false;
+  }
 
   // [JM] Fire KILL type scripts for actor. Not needed for players, since they have the "DEATH" script type.
   //printdebug("DEAD: `%C`; bNoKillScripts=%B; bUseKillScripts=%B; bForceKillScripts=%B", self, bNoKillScripts, bUseKillScripts, Level.Game.bForceKillScripts);

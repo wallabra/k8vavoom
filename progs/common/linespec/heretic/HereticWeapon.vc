@@ -24,27 +24,24 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class HereticWeapon : Weapon
-  abstract;
+class HereticWeapon : Weapon abstract;
+
 
 //==========================================================================
 //
 //  AttachToOwner
 //
 //==========================================================================
-
-override void AttachToOwner(EntityEx NewOwner)
-{
-  ::AttachToOwner(NewOwner);
-  //  In deathmatch powered-up weapons use the same amount of ammo per
-  // shot as non-powered ones.
-  if (bPoweredUp && Level.Game.deathmatch && SisterWeapon)
-  {
+override void AttachToOwner (EntityEx NewOwner, optional Inventory oldInv) {
+  ::AttachToOwner(NewOwner, oldInv!optional);
+  // in deathmatch powered-up weapons use the same amount of ammo per
+  // shot as non-powered ones
+  if (bPoweredUp && Level.Game.deathmatch && SisterWeapon) {
     AmmoUse1 = SisterWeapon.AmmoUse1;
   }
 }
 
-defaultproperties
-{
+
+defaultproperties {
   Kickback = 150.0;
 }

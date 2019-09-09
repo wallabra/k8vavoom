@@ -506,7 +506,7 @@ bool k8InWeaponReady; // otherwise recursive calls to it may overflow stack
 // gozzo crap
 bool bUseKillScripts;
 bool bNoKillScripts;
-//bool bDontCorpse;
+bool bDontCorpse;
 
 
 // temporary for physics z change due to stepping

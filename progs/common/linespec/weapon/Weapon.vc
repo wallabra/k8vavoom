@@ -307,8 +307,8 @@ override Inventory CreateTossable () {
 //  AttachToOwner
 //
 //==========================================================================
-override void AttachToOwner (EntityEx NewOwner) {
-  ::AttachToOwner(NewOwner);
+override void AttachToOwner (EntityEx NewOwner, optional Inventory oldInv) {
+  ::AttachToOwner(NewOwner, oldInv!optional);
 
   // set up references to ammo items since they are used a lots
   Ammo1 = AddAmmo(NewOwner, AmmoType1, AmmoGive1);
