@@ -82,9 +82,9 @@
     if (Chance > 255 || P_Random() < Chance) {
       int n = 0;
       if (count > 1) n = P_Random()%count;
+      DoJump(List[n]);
       // state jumps should not affect state chain results
       if (XLevel.StateCall) XLevel.StateCall->Result = false;
-      DoJump(List[n]);
       return;
     }
   }
@@ -344,8 +344,6 @@ final void worker_JumpIfInInventory (EntityEx tgt, class!Actor ItemType, int Amo
 //
 //==========================================================================
 [decorate] final void A_CheckRange (float distance, state label, optional bool check2d) {
-  // state jumps should not affect state chain results
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
   distance = fmax(0, distance);
   foreach (auto playnum; 0..MAXPLAYERS) {
     auto plr = PlayerEx(Level.Game.Players[playnum]);
@@ -359,4 +357,6 @@ final void worker_JumpIfInInventory (EntityEx tgt, class!Actor ItemType, int Amo
     }
   }
   DoJump(label);
+  // state jumps should not affect state chain results
+  if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
