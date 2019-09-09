@@ -281,6 +281,7 @@
       if (!hearTarget || Target != hearTarget) {
         // can we see a target?
         if (!doSightCheck) return; // blind moster won't find a new target
+        targ = Target;
         float tdist = (minseedist || maxseedist ? DistTo(targ) : 0); // in case we're not interested in distance checks, don't bother calculating it
         bool targetInRange = ((!minseedist || tdist >= minseedist) && (!maxseedist || tdist <= maxseedist));
         bool seeTarget = (targetInRange ? CanSee(targ) : false);
