@@ -129,13 +129,13 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
     case TYPE_Bool:
       if (IsStrConst()) {
         VStr str = GetStrConst(ec.Package);
-        if (str.length() == 0 || str.ICmp("none") == 0 || str.ICmp("null") == 0 || str.ICmp("nil") == 0 || str.ICmp("false") == 0) {
+        if (str.isEmpty() || str.strEquCI("none") || str.strEquCI("null") || str.strEquCI("nil") || str.strEquCI("false")) {
           ParseWarningAsError((aloc ? *aloc : Loc), "`%s` argument #%d should be number (replaced with 0); PLEASE, FIX THE CODE!", funcName, argnum);
           VExpression *enew = new VIntLiteral(0, Loc);
           delete this;
           return enew;
         }
-        if (str.ICmp("true") == 0) {
+        if (str.strEquCI("true")) {
           ParseWarningAsError((aloc ? *aloc : Loc), "`%s` argument #%d should be number (replaced with 1); PLEASE, FIX THE CODE!", funcName, argnum);
           VExpression *enew = new VIntLiteral(1, Loc);
           delete this;
@@ -311,7 +311,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
       if (IsStrConst()) {
         VStr CName = GetStrConst(ec.Package);
         //TLocation ALoc = Loc;
-        if (CName.length() == 0 || CName.ICmp("None") == 0 || CName.ICmp("nil") == 0 || CName.ICmp("null") == 0) {
+        if (CName.isEmpty() || CName.strEquCI("None") || CName.strEquCI("nil") || CName.strEquCI("null")) {
           //ParseWarning(ALoc, "NONE CLASS `%s`", CName);
           VExpression *enew = new VNoneLiteral(Loc);
           delete this;
@@ -436,7 +436,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
           // jump to a specific parent class state, resolve it and pass value directly
           VStr ClassName(Lbl, 0, DCol);
           VClass *CheckClass;
-          if (ClassName.ICmp("Super") == 0) {
+          if (ClassName.strEquCI("Super")) {
             CheckClass = ec.SelfClass->ParentClass;
             if (!CheckClass) {
               ParseError((aloc ? *aloc : Loc), "`%s` argument #%d wants `Super` without superclass!", funcName, argnum);
