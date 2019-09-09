@@ -805,6 +805,7 @@ void parseShitppSource (const VStr &filename) {
     else if (par->token.strEqu("IMPLEMENT_FUNCTION")) skipMethod(par);
     else if (par->token.strEqu("#")) skipPreprocessor(par);
     else if (par->token.strEqu("{")) skipBrackets(par);
+    else if (par->token.strEqu("static")) parseShitppSkipTemplateShit(par);
     //GLog.Logf("line #%d: <%s>", par->getTokenLine(), *par->token);
   }
   delete par;
