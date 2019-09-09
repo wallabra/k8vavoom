@@ -62,6 +62,7 @@ const [decorate] int PROP_BUDDHA = 16; // not supported
 const [decorate] int PTROP_UNSAFETARGET = 1;
 const [decorate] int PTROP_UNSAFEMASTER = 2;
 const [decorate] int PTROP_NOSAFEGUARDS = PTROP_UNSAFETARGET|PTROP_UNSAFEMASTER;
+const [decorate] int PTROP_NOSAFEGUARDS_FOUR = 4;
 
 // Pointer constants, bitfield-enabled
 //enum EPointerFlags

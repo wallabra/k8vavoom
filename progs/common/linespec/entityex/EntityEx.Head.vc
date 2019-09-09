@@ -734,6 +734,8 @@ final EntityEx decoRearrangePtrGetPtr (int aptr, EntityEx defval,
   EntityEx oldMaster = Master;
   EntityEx oldTracer = Tracer;
 
+  if (flags&PTROP_NOSAFEGUARDS_FOUR) flags = PTROP_NOSAFEGUARDS;
+
   Target = decoRearrangePtrGetPtr(aptrtarget, oldTarget, oldTarget, oldMaster, oldTracer);
   if (!(flags&PTROP_UNSAFETARGET)) VerifyTargetChain();
 
@@ -744,6 +746,40 @@ final EntityEx decoRearrangePtrGetPtr (int aptr, EntityEx defval,
 
   if (specified_aptrtracer) {
     Tracer = decoRearrangePtrGetPtr(aptrtracer, oldTracer, oldTarget, oldMaster, oldTracer);
+  }
+}
+
+
+//===========================================================================
+//
+//  A_TransferPointer
+//
+//===========================================================================
+[decorate] final void A_TransferPointer (int aptrsource, int aptrrecipient, int aptrsourcefield, int aptrrecipientfield, optional int flags) {
+  EntityEx src = EntityEx(DecorDoAAPtr('A_TransferPointer', aptrsource));
+  //if (!src) return; //k8: dunno if this is right
+
+  EntityEx dest = EntityEx(DecorDoAAPtr('A_TransferPointer', aptrrecipient));
+  if (!dest) return;
+
+  if (flags&PTROP_NOSAFEGUARDS_FOUR) flags = PTROP_NOSAFEGUARDS;
+
+  EntityEx newval = (src ? src.decoRearrangePtrGetPtr(aptrsourcefield, src, src.Target, src.Master, src.Tracer) : none);
+
+  switch (aptrrecipientfield) {
+    case AAPTR_DEFAULT: break; // wtf?!
+    case AAPTR_NULL: break; // wtf?!
+    case AAPTR_TARGET:
+      dest.Target = newval;
+      if (!(flags&PTROP_UNSAFETARGET)) VerifyTargetChain();
+      break;
+    case AAPTR_MASTER:
+      dest.Master = newval;
+      if (!(flags&PTROP_UNSAFEMASTER)) VerifyMasterChain();
+      break;
+    case AAPTR_TRACER:
+      dest.Tracer = newval;
+      break;
   }
 }
 
