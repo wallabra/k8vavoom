@@ -1612,6 +1612,19 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
 }
 
 
+//===========================================================================
+//
+//  A_CopyFriendliness
+//
+//===========================================================================
+[decorate] final void A_CopyFriendliness (optional int aptrfrom) {
+  if (!specified_aptrfrom) aptrfrom = AAPTR_MASTER;
+  EntityEx src = EntityEx(DecorDoAAPtr('A_CopyFriendliness', aptrfrom));
+  if (!src || src == self) return;
+  CopyFriendliness(src, ChangeTarget:true);
+}
+
+
 //==========================================================================
 //
 //  A_k8MoveBy
