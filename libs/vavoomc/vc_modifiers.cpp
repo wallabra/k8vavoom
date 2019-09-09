@@ -269,3 +269,17 @@ int TModifiers::ParmAttr (int Modifiers) {
   if (Modifiers&Const) Attributes |= FPARM_Const;
   return Attributes;
 }
+
+
+//==========================================================================
+//
+//  TModifiers::ConstAttr
+//
+//  Convert modifiers to constant attributes.
+//
+//==========================================================================
+int TModifiers::ConstAttr (int Modifiers) {
+  int Attributes = 0;
+  if (Modifiers&DecVisible) Attributes |= CONST_Decorate;
+  return Attributes;
+}

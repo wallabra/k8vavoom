@@ -25,6 +25,14 @@
 //**
 //**************************************************************************
 
+// ////////////////////////////////////////////////////////////////////////// //
+// constant flags
+enum {
+  CONST_Decorate = 0x0100, // visible from decorate
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 class VConstant : public VMemberBase {
 private:
   bool alreadyDefined;
@@ -42,6 +50,9 @@ public:
   VExpression *ValueExpr;
   VConstant *PrevEnumValue;
 
+  vuint32 Flags;
+
+public:
   VConstant (VName AName, VMemberBase *AOuter, const TLocation &ALoc);
   VConstant (VName AEnumName, VName AName, VMemberBase *AOuter, const TLocation &ALoc);
   virtual ~VConstant () override;

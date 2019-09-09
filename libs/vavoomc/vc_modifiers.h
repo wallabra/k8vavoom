@@ -54,6 +54,7 @@ public:
     StructFieldSet = Native|Transient|Private|ReadOnly|Internal|Protected|Published,
     PropertySet = Native|Final|Static|Protected|Private|Override|DecVisible,
     ParamSet = Optional|Out|Ref|Const|Scope,
+    ConstSet = Published|DecVisible,
   };
 
   static void ShowBadAttributes (int Modifiers, const TLocation &l);
@@ -66,4 +67,5 @@ public:
   static int FieldAttr (int Modifers);
   static int PropAttr (int Modifers);
   static int ParmAttr (int Modifers);
+  static int ConstAttr (int Modifers);
 };

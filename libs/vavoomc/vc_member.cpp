@@ -42,6 +42,7 @@ TMapNC<VName, VMemberBase *> VMemberBase::gMembersMap;
 TMapNC<VName, VMemberBase *> VMemberBase::gMembersMapAnyLC; // lower-cased names
 TMapNC<VName, VMemberBase *> VMemberBase::gMembersMapClassLC; // lower-cased class names
 TMapNC<VName, VMemberBase *> VMemberBase::gMembersMapPropLC; // lower-cased property names
+TMapNC<VName, VMemberBase *> VMemberBase::gMembersMapConstLC; // lower-cased constant names
 TArray<VPackage *> VMemberBase::gPackageList;
 
 TArray<VStr> VMemberBase::GPackagePath;
@@ -78,6 +79,7 @@ VMemberBase::VMemberBase (vuint8 AMemberType, VName AName, VMemberBase *AOuter, 
   , HashNextAnyLC(nullptr)
   , HashNextClassLC(nullptr)
   , HashNextPropLC(nullptr)
+  , HashNextConstLC(nullptr)
 {
   if (lastUsedMemberId == 0xffffffffu) Sys_Error("too many VC members");
   mMemberId = ++lastUsedMemberId;
@@ -144,12 +146,14 @@ void VMemberBase::PutToNameHash (VMemberBase *self) {
   vassert(self->HashNextAnyLC == nullptr);
   vassert(self->HashNextClassLC == nullptr);
   vassert(self->HashNextPropLC == nullptr);
+  vassert(self->HashNextConstLC == nullptr);
   AddToHashMC(self->Name, gMembersMap, HashNext);
   // case-insensitive search
   VName lname = VName(*self->Name, VName::AddLower);
   AddToHashMC(lname, gMembersMapAnyLC, HashNextAnyLC);
   if (self->MemberType == MEMBER_Class) AddToHashMC(lname, gMembersMapClassLC, HashNextClassLC);
   if (self->MemberType == MEMBER_Property) AddToHashMC(lname, gMembersMapPropLC, HashNextPropLC);
+  if (self->MemberType == MEMBER_Const) AddToHashMC(lname, gMembersMapConstLC, HashNextConstLC);
 }
 
 
@@ -225,6 +229,7 @@ void VMemberBase::RemoveFromNameHash (VMemberBase *self) {
   DelFromHashMC(lname, gMembersMapAnyLC, HashNextAnyLC);
   if (self->MemberType == MEMBER_Class) DelFromHashMC(lname, gMembersMapClassLC, HashNextClassLC);
   if (self->MemberType == MEMBER_Property) DelFromHashMC(lname, gMembersMapPropLC, HashNextPropLC);
+  if (self->MemberType == MEMBER_Const) DelFromHashMC(lname, gMembersMapConstLC, HashNextConstLC);
 }
 
 
@@ -441,6 +446,7 @@ VMemberBase *VMemberBase::StaticFindMemberNoCase (VStr AName, VMemberBase *AOute
   VMemberBase **mpp = nullptr;
        if (AType == MEMBER_Class) mpp = gMembersMapClassLC.find(lname);
   else if (AType == MEMBER_Property) mpp = gMembersMapPropLC.find(lname);
+  else if (AType == MEMBER_Const) mpp = gMembersMapConstLC.find(lname);
   else mpp = gMembersMapAnyLC.find(lname);
   if (!mpp) return nullptr;
   VMemberBase *m = *mpp;
@@ -452,6 +458,7 @@ VMemberBase *VMemberBase::StaticFindMemberNoCase (VStr AName, VMemberBase *AOute
     }
          if (AType == MEMBER_Class) m = m->HashNextClassLC;
     else if (AType == MEMBER_Property) m = m->HashNextPropLC;
+    else if (AType == MEMBER_Const) m = m->HashNextConstLC;
     else m = m->HashNextAnyLC;
   }
   return nullptr;

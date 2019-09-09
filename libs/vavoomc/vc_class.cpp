@@ -742,6 +742,39 @@ VProperty *VClass::FindDecorateProperty (VStr Name) {
 
 //==========================================================================
 //
+//  VClass::FindDecorateConstantExact
+//
+//==========================================================================
+VConstant *VClass::FindDecorateConstantExact (VStr Name) {
+  if (Name.isEmpty()) return nullptr;
+  //FIXME: aliases doesn't work for decorate constants yet
+  //Name = ResolveAlias(Name);
+  VConstant *C = (VConstant *)StaticFindMemberNoCase(Name, this, MEMBER_Const);
+  if (C) return (C->Flags&CONST_Decorate ? C : nullptr);
+  if (ParentClass) return ParentClass->FindDecorateConstantExact(Name);
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VClass::FindDecorateConstant
+//
+//==========================================================================
+VConstant *VClass::FindDecorateConstant (VStr Name) {
+  if (Name.isEmpty()) return nullptr;
+  // first, try with `decorate_` prefix
+  if (!Name.startsWithCI("decorate_")) {
+    VStr xn = VStr("decorate_")+Name;
+    VConstant *res = FindDecorateConstantExact(xn);
+    if (res) return res;
+  }
+  return FindDecorateConstantExact(Name);
+}
+
+
+//==========================================================================
+//
 //  VClass::FindMethod
 //
 //==========================================================================

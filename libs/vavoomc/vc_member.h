@@ -88,11 +88,13 @@ private:
   VMemberBase *HashNextAnyLC;
   VMemberBase *HashNextClassLC;
   VMemberBase *HashNextPropLC;
+  VMemberBase *HashNextConstLC;
 
   static TMapNC<VName, VMemberBase *> gMembersMap;
   static TMapNC<VName, VMemberBase *> gMembersMapAnyLC; // lower-cased names
   static TMapNC<VName, VMemberBase *> gMembersMapClassLC; // lower-cased class names
   static TMapNC<VName, VMemberBase *> gMembersMapPropLC; // lower-cased property names
+  static TMapNC<VName, VMemberBase *> gMembersMapConstLC; // lower-cased constant names
   static TArray<VPackage *> gPackageList;
 
   static void PutToNameHash (VMemberBase *self);

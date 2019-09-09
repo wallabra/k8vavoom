@@ -383,6 +383,9 @@ public:
   VProperty *FindDecoratePropertyExact (VStr Name);
   VProperty *FindDecorateProperty (VStr Name);
 
+  VConstant *FindDecorateConstantExact (VStr Name);
+  VConstant *FindDecorateConstant (VStr Name);
+
   VMethod *FindMethod (VName Name, bool bRecursive=true);
   // this will follow `ParentClassName` instead of `ParentClass`
   VMethod *FindMethodNonPostLoaded (VName Name, bool bRecursive=true);

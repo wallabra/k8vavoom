@@ -40,6 +40,7 @@ VConstant::VConstant (VName AName, VMemberBase *AOuter, const TLocation &ALoc)
   , Value(0)
   , ValueExpr(nullptr)
   , PrevEnumValue(nullptr)
+  , Flags(0)
 {
 }
 
@@ -57,6 +58,7 @@ VConstant::VConstant (VName AEnumName, VName AName, VMemberBase *AOuter, const T
   , Value(0)
   , ValueExpr(nullptr)
   , PrevEnumValue(nullptr)
+  , Flags(0)
 {
 }
 
@@ -89,9 +91,10 @@ void VConstant::CompilerShutdown () {
 //==========================================================================
 void VConstant::Serialise (VStream &Strm) {
   VMemberBase::Serialise(Strm);
-  vuint8 xver = 0; // current version is 0
+  vuint8 xver = 1; // current version is 1
   Strm << xver;
   Strm << Type;
+  Strm << Flags;
   switch (Type) {
     case TYPE_Float: Strm << FloatValue; break;
     case TYPE_Name: Strm << *(VName *)&Value; break;
