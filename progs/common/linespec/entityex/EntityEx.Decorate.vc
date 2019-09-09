@@ -153,56 +153,33 @@
 */
 
 
-//==========================================================================
-//
-//  decorate_sin
-//
-//==========================================================================
-[decorate] final float decorate_sin (float Angle) {
-  return sin(Angle);
-}
-
-
-//==========================================================================
-//
-//  decorate_cos
-//
-//==========================================================================
-[decorate] final float decorate_cos (float Angle) {
-  return cos(Angle);
-}
-
-
-/*
-//==========================================================================
-//
-//  decorate_clamp
-//
-//==========================================================================
-[decorate] final float decorate_clamp (float val, float min, float max) {
-  return fclamp(val, min, max);
-}
-
-
-//==========================================================================
-//
-//  decorate_min
-//
-//==========================================================================
-[decorate] final int decorate_min (int a, int b) {
-  return min(a, b);
-}
-
-
-//==========================================================================
-//
-//  decorate_max
-//
-//==========================================================================
-[decorate] final int decorate_max (int a, int b) {
-  return max(a, b);
-}
-*/
+// ////////////////////////////////////////////////////////////////////////// //
+[decorate] final float decorate_sin (float Angle) { return sin(Angle); }
+[decorate] final float decorate_cos (float Angle) { return cos(Angle); }
+[decorate] final float decorate_tan (float Angle) { return tan(Angle); }
+[decorate] final float decorate_asin (float x) { return asin(x); }
+[decorate] final float decorate_acos (float x) { return acos(x); }
+[decorate] final float decorate_atan (float slope) { return atan(slope); }
+[decorate] final float decorate_atan2 (float y, float x) { return atan2(y, x); }
+[decorate] final float decorate_sqrt (float v) { return sqrt(v); }
+[decorate] final int decorate_roundi (float v) { return roundi(v); }
+[decorate] final float decorate_fround (float v) { return fround(v); }
+[decorate] final int decorate_trunci (float v) { return trunci(v); }
+[decorate] final float decorate_ftrunc (float v) { return ftrunc(v); }
+[decorate] final float decorate_fceil (float v) { return fceil(v); }
+[decorate] final float decorate_ceil (float v) { return fceil(v); }
+[decorate] final float decorate_ffloor (float v) { return ffloor(v); }
+[decorate] final float decorate_floor (float v) { return ffloor(v); }
+[decorate] final float decorate_flerp (float a, float b, float delta) { return flerp(a, b, delta); }
+[decorate] final int decorate_ilerp (int a, int b, float delta) { return lerp(a, b, delta); }
+[decorate] final float decorate_smoothstep (float edge0, float edge1, float x) { return smoothstep(edge0, edge1, x); }
+[decorate] final float decorate_smoothstepPerlin (float edge0, float edge1, float x) { return smoothstepPerlin(edge0, edge1, x); }
+[decorate] final float decorate_AngleMod360 (float angle) { return AngleMod360(angle); }
+[decorate] final float decorate_AngleMod180 (float angle) { return AngleMod180(angle); }
+[decorate] final float decorate_AngleDiff (float afrom, float ato) { return AngleDiff(afrom, ato); }
+[decorate] final float decorate_deg2rad (float angle) { return deg2rad(angle); }
+[decorate] final float decorate_rad2deg (float angle) { return rad2deg(angle); }
+[decorate] final int decorate_sign (float v) { return int(fsign(v)); }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
