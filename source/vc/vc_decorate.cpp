@@ -169,7 +169,11 @@ struct VClassFixup {
 static void ParseConst (VScriptParser *sc, VMemberBase *parent, bool changeMode=true);
 static void ParseEnum (VScriptParser *sc, VMemberBase *parent, bool changeMode=true);
 
-
+#ifdef VAVOOM_K8_DEVELOPER
+# define VC_DECO_DEF_WARNS  0
+#else
+# define VC_DECO_DEF_WARNS  1
+#endif
 static int cli_DecorateDebug = 0;
 static int cli_DecorateMoronTolerant = 0;
 static int cli_DecorateOldReplacement = 0;
@@ -179,6 +183,9 @@ static int cli_DecorateNonActorReplace = 0;
 static int cli_DecorateWarnPowerupRename = 0;
 static int cli_DecorateAllowUnsafe = 0;
 static int cli_CompilerReport = 0;
+static int cli_ShowClassRTRouting = VC_DECO_DEF_WARNS;
+static int cli_ShowDropItemMissingClasses = VC_DECO_DEF_WARNS;
+static int cli_ShowRemoveStateWarning = VC_DECO_DEF_WARNS;
 static TArray<VStr> cli_DecorateIgnoreFiles;
 static TArray<VStr> cli_DecorateIgnoreActions;
 static TMap<VStrCI, bool> IgnoredDecorateActions;
@@ -191,6 +198,15 @@ static TMap<VStrCI, bool> IgnoredDecorateActions;
   VParsedArgs::RegisterFlagSet("-vc-decorate-dump-replaces", "!decorate parser tolerancy", &cli_DecorateDumpReplaces) &&
   VParsedArgs::RegisterFlagSet("-vc-decorate-lax-parents", "!decorate parser tolerancy", &cli_DecorateLaxParents) &&
   VParsedArgs::RegisterFlagSet("-vc-decorate-nonactor-replace", "!decorate parser tolerancy", &cli_DecorateNonActorReplace) &&
+
+  VParsedArgs::RegisterFlagSet("-vc-decorate-rt-warnings", "show \"class rt-routed\" decorate warnings", &cli_ShowClassRTRouting) &&
+  VParsedArgs::RegisterFlagReset("-vc-no-decorate-rt-warnings", "hide \"class rt-routed\" decorate warnings", &cli_ShowClassRTRouting) &&
+
+  VParsedArgs::RegisterFlagSet("-vc-decorate-dropitem-warnings", "show \"bad DropItem class\" decorate warnings", &cli_ShowDropItemMissingClasses) &&
+  VParsedArgs::RegisterFlagReset("-vc-no-decorate-dropitem-warnings", "hide \"bad DropItem class\" decorate warnings", &cli_ShowDropItemMissingClasses) &&
+
+  VParsedArgs::RegisterFlagSet("-vc-decorate-removestate-warnings", "show \"use RemoveState\" decorate warnings", &cli_ShowRemoveStateWarning) &&
+  VParsedArgs::RegisterFlagReset("-vc-no-decorate-removestate-warnings", "hide \"use RemoveState\" decorate warnings", &cli_ShowRemoveStateWarning) &&
 
   VParsedArgs::RegisterFlagSet("-disable-blood-replaces", "!do not use", &disableBloodReplaces) &&
   VParsedArgs::RegisterAlias("-disable-blood-replacement", "-disable-blood-replaces") &&
@@ -1306,6 +1322,17 @@ static void ParseClass (VScriptParser *sc) {
 
 //==========================================================================
 //
+//  BuildFlagName
+//
+//==========================================================================
+static VStr BuildFlagName (VStr ClassFilter, VStr Flag) {
+  if (ClassFilter.isEmpty()) return Flag;
+  return ClassFilter+"."+Flag;
+}
+
+
+//==========================================================================
+//
 //  ParseFlag
 //
 //==========================================================================
@@ -1321,6 +1348,9 @@ static bool ParseFlag (VScriptParser *sc, VClass *Class, bool Value, TArray<VCla
     Flag = sc->String;
   }
 
+  //sorry!
+  if (ClassFilter.strEquCI("POWERSPEED")) return true;
+
   VName FlagName(*Flag, VName::FindLower);
   //GCon->Logf(NAME_Debug, "ParseFlag: <%s> (%s) (cf=%s; fn=%s)", *sc->String, *Flag, *ClassFilter, *FlagName);
   if (FlagName != NAME_None) {
@@ -1335,7 +1365,7 @@ static bool ParseFlag (VScriptParser *sc, VClass *Class, bool Value, TArray<VCla
           switch (F.Type) {
             case FLAG_Bool: F.Field->SetBool(DefObj, Value); break;
             case FLAG_BoolInverted: F.Field->SetBool(DefObj, !Value); break;
-            case FLAG_Unsupported: if (!vcWarningsSilenced && (F.ShowWarning || dbg_show_decorate_unsupported)) GLog.Logf(NAME_Warning, "%s: Unsupported flag %s in %s", *floc.toStringNoCol(), *Flag, Class->GetName()); break;
+            case FLAG_Unsupported: if (!vcWarningsSilenced && (F.ShowWarning || dbg_show_decorate_unsupported)) GLog.Logf(NAME_Warning, "%s: Unsupported flag %s in %s", *floc.toStringNoCol(), *BuildFlagName(ClassFilter, Flag), Class->GetName()); break;
             case FLAG_Byte: F.Field->SetByte(DefObj, Value ? F.BTrue : F.BFalse); break;
             case FLAG_Float: F.Field->SetFloat(DefObj, Value ? F.FTrue : F.FFalse); break;
             case FLAG_Name: F.Field->SetNameValue(DefObj, Value ? F.NTrue : F.NFalse); break;
@@ -1349,11 +1379,11 @@ static bool ParseFlag (VScriptParser *sc, VClass *Class, bool Value, TArray<VCla
   }
 
   if (decorate_fail_on_unknown) {
-    sc->Error(va("Unknown flag \"%s\"", *Flag));
+    sc->Error(va("Unknown flag \"%s\"", *BuildFlagName(ClassFilter, Flag)));
     return false;
   }
 
-  if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "%s: Unknown flag \"%s\"", *floc.toStringNoCol(), *Flag);
+  if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "%s: Unknown flag \"%s\"", *floc.toStringNoCol(), *BuildFlagName(ClassFilter, Flag));
   return true;
 }
 
@@ -1472,7 +1502,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
         // nope, zdoom wiki says that this should make state "invisible"
         //FIXME: for now, this is not working right (it seems; need to be checked!)
         if (!LastState) {
-          if (!vcWarningsSilenced) {
+          if (!vcWarningsSilenced && cli_ShowRemoveStateWarning > 0) {
             GLog.Logf(NAME_Warning, "%s: Empty state detected; this may not work as you expect!", *TmpLoc.toStringNoCol());
             GLog.Logf(NAME_Warning, "%s:   this will remove a state, not an actor!", *TmpLoc.toStringNoCol());
             GLog.Logf(NAME_Warning, "%s:   you can use k8vavoom-specific `RemoveState` command to get rid of this warning.", *TmpLoc.toStringNoCol());
@@ -1483,7 +1513,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
         // if we have no defined states for latest labels, simply redirect labels to nowhere
         // this will make `FindStateLabel()` to return `nullptr`, effectively removing the state
         for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) {
-          if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "%s: removed state '%s'!", *TmpLoc.toStringNoCol(), *Class->StateLabelDefs[i].Name);
+          if (!vcWarningsSilenced && cli_ShowRemoveStateWarning > 0) GLog.Logf(NAME_Warning, "%s: removed state '%s'!", *TmpLoc.toStringNoCol(), *Class->StateLabelDefs[i].Name);
           Class->StateLabelDefs[i].State = nullptr;
         }
       }
@@ -3516,7 +3546,7 @@ void ProcessDecorateScripts () {
       if (DI.TypeName == NAME_None) { DI.Type = nullptr; continue; }
       VClass *C = VClass::FindClassNoCase(*DI.TypeName);
       if (!C) {
-        if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "No such class `%s` (DropItemList for `%s`)", *DI.TypeName, *DecPkg->ParsedClasses[i]->GetFullName());
+        if (!vcWarningsSilenced && cli_ShowDropItemMissingClasses > 0) GLog.Logf(NAME_Warning, "No such class `%s` (DropItemList for `%s`)", *DI.TypeName, *DecPkg->ParsedClasses[i]->GetFullName());
       } else if (!C->IsChildOf(ActorClass)) {
         if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "Class `%s` is not an actor class (DropItemList for `%s`)", *DI.TypeName, *DecPkg->ParsedClasses[i]->GetFullName());
         C = nullptr;
