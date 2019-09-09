@@ -1267,17 +1267,17 @@ VExpression *VDecorateAJump::DoResolve (VEmitContext &ec) {
   }
 
   /* generate this code:
+    if (prob > 0) {
+      if (prob > 255 || P_Random() < prob) {
+        switch (P_Random()%label.length()) {
+          case n: do_jump_to_label_n;
+        }
+      }
+    }
     if (XLevel.StateCall) XLevel.StateCall->Result = false;
-     if (prob > 0) {
-       if (prob > 255 || P_Random() < prob) {
-         switch (P_Random()%label.length()) {
-           case n: do_jump_to_label_n;
-         }
-       }
-     }
 
-     do it by allocate local array for labels, populate it, and generate code
-     for checks and sets
+    do it by allocate local array for labels, populate it, and generate code
+    for checks and sets
    */
 
   // create `XLevel.StateCall` access expression
@@ -1299,6 +1299,7 @@ VExpression *VDecorateAJump::DoResolve (VEmitContext &ec) {
 
   xass = xass->Resolve(ec);
   if (!xass) { delete this; return nullptr; }
+  vassert(xass->Type.Type == TYPE_Void);
 
   crnd0 = crnd0->Resolve(ec);
   if (!crnd0) { delete this; return nullptr; }
@@ -1334,7 +1335,6 @@ VExpression *VDecorateAJump::DoResolve (VEmitContext &ec) {
 //==========================================================================
 void VDecorateAJump::Emit (VEmitContext &ec) {
   /* generate this code:
-     if (XLevel.StateCall) XLevel.StateCall->Result = false;
      if (prob <= 0) goto end;
      if (prob > 255) goto doit;
      if (P_Random() >= prob) goto end;
@@ -1343,18 +1343,11 @@ void VDecorateAJump::Emit (VEmitContext &ec) {
          case n: do_jump_to_label_n;
        }
      end:
+     if (XLevel.StateCall) XLevel.StateCall->Result = false;
 
      do it by allocate local array for labels, populate it, and generate code
      for checks and sets
    */
-
-  //if (XLevel.StateCall) XLevel.StateCall->Result = false;
-  VLabel falseTarget = ec.DefineLabel();
-  // expression
-  xstc->EmitBranchable(ec, falseTarget, false);
-  // true statement
-  xass->Emit(ec);
-  ec.MarkLabel(falseTarget);
 
   VLabel endTarget = ec.DefineLabel();
   VLabel doitTarget = ec.DefineLabel();
@@ -1435,6 +1428,14 @@ void VDecorateAJump::Emit (VEmitContext &ec) {
 
   ec.MarkLabel(endTarget); // prob
   if (doDrop) ec.AddStatement(OPC_DropPOD, Loc);
+
+  //if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  VLabel falseTarget = ec.DefineLabel();
+  // expression
+  xstc->EmitBranchable(ec, falseTarget, false);
+  // true statement
+  xass->Emit(ec);
+  ec.MarkLabel(falseTarget);
 }
 
 
