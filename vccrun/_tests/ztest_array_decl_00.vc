@@ -1,0 +1,8 @@
+class Main : Object;
+
+void main () {
+  int[2] foo;
+  foo[0] = 666;
+  foo[1] = 69;
+  print("%s: %s %s", foo.length, foo[0], foo[1]);
+}

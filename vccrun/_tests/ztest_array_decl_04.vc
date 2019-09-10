@@ -1,0 +1,12 @@
+class Main : Object;
+
+struct Value {
+  int v;
+}
+
+void main () {
+  Value foo[2];
+  foo[0].v = 666;
+  foo[1].v = 69;
+  print("%s: %s %s", foo.length, foo[0].v, foo[1].v);
+}
