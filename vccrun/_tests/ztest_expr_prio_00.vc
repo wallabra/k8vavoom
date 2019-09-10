@@ -1,0 +1,10 @@
+class Main : Object;
+
+int a = 12;
+int b = 5;
+int c = 6;
+int res = 42;
+
+void main () {
+  assert(a+b*c == res);
+}
