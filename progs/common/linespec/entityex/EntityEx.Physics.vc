@@ -1335,8 +1335,34 @@ override void ApplyFriction (float DeltaTime) {
   //    was: `WaterLevel < 2`
   if (Origin.z > FloorZ && !bOnMobj && WaterLevel == 0 && !bFly && !bFallingFriction) {
     // no friction when airborne
-    //print("AIRBORNE!");
-    return;
+    // but do friction on slopes
+    /*
+    float fzdist = fabs(Sector.floor.maxz-Sector.floor.minz);
+    if (fzdist && fzdist <= MaxStepHeight && Origin.z-FloorZ <= MaxStepHeight/3) {
+      //TVec Vel = EFloor.spGetNormal();
+      //if (!Vel.xy) return; // not a slope
+      //float dot = DotProduct(Velocity, Vel);
+      //if (dot >= 0.0) return; // bad floor (it seems)
+      if (bIsPlayer) {
+        tmtrace_t tmtrace;
+        GetFloorAndCeilingEx(out tmtrace, Origin, collideWorld:true);
+        TVec Vel = EFloor.spGetNormal();
+        printdebug("*** SKIP SLOPING! height=%s; vel=%s; dot=%s; vdot=%s; z=%s; cz=%s tz=%s; tfz=%s (%s)", fabs(Sector.floor.maxz-Sector.floor.minz), Vel, DotProduct(Velocity, Vel), Vel*DotProduct(Velocity, Vel),
+          Origin.z, EFloor.spGetPointZ(Origin), tmtrace.FloorZ, tmtrace.EFloor.spGetPointZ(Origin), (Origin.z-tmtrace.EFloor.spGetPointZ(Origin)));
+        if (tmtrace.FloorLine) printdebug("  HAS FLOOR LINE!");
+        float dot = DotProduct(Velocity, Vel);
+        if (dot < 0.0) {
+          Vel *= dot*0.5;
+          Velocity -= Vel.xy;
+        }
+      }
+      return;
+    } else
+    */
+    {
+      //print("AIRBORNE!");
+      return;
+    }
   }
 
   // vanilla hack: floor with height -32768 teleports entity to ceiling
@@ -1363,7 +1389,7 @@ override void ApplyFriction (float DeltaTime) {
       //print("noclip cheat!");
       Vel = vector(0, 0, 0);
     }
-    if (Vel.x || Vel.y) {
+    if (Vel.xy) {
       float dot = DotProduct(Velocity, Vel);
       if (dot < 0.0) {
         //TVec Vel = dot*EFloor.spGetNormal();
@@ -1377,12 +1403,23 @@ override void ApplyFriction (float DeltaTime) {
         Velocity -= Vel.xy;
       }
     }
+  } else {
+    /*
+    if (bIsPlayer && Origin.z <= FloorZ && fabs(Sector.floor.maxz-Sector.floor.minz) && fabs(Sector.floor.maxz-Sector.floor.minz) <= MaxStepHeight) {
+      TVec Vel = EFloor.spGetNormal();
+      printdebug("SKIP SLOPING! height=%s; vel=%s; dot=%s; vdot=%s; z=%s : %s", fabs(Sector.floor.maxz-Sector.floor.minz), Vel, DotProduct(Velocity, Vel), Vel*DotProduct(Velocity, Vel),
+        Origin.z, EFloor.spGetPointZ(Origin));
+    }
+    */
   }
+
+  float vx = Velocity.x;
+  float vy = Velocity.y;
 
   if (bCorpse) {
     // don't stop sliding if halfway off a step with some momentum
-    if (Velocity.x > 0.25*35.0 || Velocity.x < -0.25*35.0 ||
-        Velocity.y > 0.25*35.0 || Velocity.y < -0.25*35.0)
+    if (vx > 0.25*35.0 || vx < -0.25*35.0 ||
+        vy > 0.25*35.0 || vy < -0.25*35.0)
     {
       if ((Sector && FloorZ > GetPointZClamped(ref Sector->floor, Origin)) || DropOffZ != FloorZ) {
         return;
@@ -1390,8 +1427,7 @@ override void ApplyFriction (float DeltaTime) {
     }
   }
 
-  if (fabs(Velocity.x) < STOPSPEED &&
-      fabs(Velocity.y) < STOPSPEED &&
+  if (fabs(vx) < STOPSPEED && fabs(vy) < STOPSPEED &&
       (!bIsPlayer || (Player.MO == self && !Player.ForwardMove && !Player.SideMove)))
   {
     if (bIsPlayer) {
@@ -1402,13 +1438,15 @@ override void ApplyFriction (float DeltaTime) {
     Velocity.y = 0.0;
   } else {
     // slow down
-    Velocity.x -= Velocity.x*(GetFriction()*DeltaTime);
-    Velocity.y -= Velocity.y*(GetFriction()*DeltaTime);
+    TVec vdiff = Velocity.xy*(GetFriction()*DeltaTime);
+    Velocity -= vdiff;
+    //Velocity.x -= Velocity.x*(GetFriction()*DeltaTime);
+    //Velocity.y -= Velocity.y*(GetFriction()*DeltaTime);
     // roughly smaller than lowest fixed point 16.16 (it is more like 0.0000152587890625)
-    if (fabs(Velocity.x) < 0.00001) Velocity.x = 0;
-    if (fabs(Velocity.y) < 0.00001) Velocity.y = 0;
+    if (fabs(Velocity.x) < 0.000016) Velocity.x = 0;
+    if (fabs(Velocity.y) < 0.000016) Velocity.y = 0;
     //k8: do we need this for Voodoo Dolls?
-    if (bIsPlayer && !Velocity.x && !Velocity.y) {
+    if (bIsPlayer && !Velocity.xy) {
       // if in a walking frame, stop moving
       if (StateIsInRange(State, SeeState, none, 4)) SetState(IdleState);
     }
