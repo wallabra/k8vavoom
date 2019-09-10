@@ -264,6 +264,8 @@ static void InitRgbTable () {
 static void InitTranslationTables () {
   GCon->Log(NAME_Init, "building texture translations tables...");
   {
+    int tlump = W_GetNumForName(NAME_translat);
+    GCon->Logf(NAME_Init, "using translation table from '%s'", *W_FullLumpName(tlump));
     VStream *lumpstream = W_CreateLumpReaderName(NAME_translat);
     VCheckedStream Strm(lumpstream);
     NumTranslationTables = Strm.TotalSize()/256;
