@@ -9,7 +9,7 @@ game "doom2" {
   game = "basev/doom2";
   base = "basev/doom";
   iwad = "doom2.wad";
-  iwad = "doom2f.wad";
+  iwad = "doom2f.wad" : "Doom II: Hell On Earth (French)";
   //param - "doom2"; // defaults to game name
   warp = "MAP##"; // template for "-warp"
   filter = {
@@ -28,9 +28,9 @@ game "doom" {
   description = "Doom / Ultimate Doom";
   game = "basev/doom1";
   base = "basev/doom";
-  iwad = "doomu.wad"; // ultimate
-  iwad = "doom.wad"; // normal
-  iwad = "doom1.wad"; // shareware
+  iwad = "doomu.wad" : "Ultimate Doom";
+  iwad = "doom.wad" : "Doom"; // normal
+  iwad = "doom1.wad" : "Doom Shareware";
   param = { "doom", "doom1" }
   warp = "E#M#";
   filter = {
@@ -122,7 +122,7 @@ game "heretic" {
   description = "Heretic";
   game = "basev/heretic";
   iwad = "heretic.wad";
-  iwad = "heretic1.wad";
+  iwad = "heretic1.wad" : "Heretic Shareware";
   warp = "E#M#";
   filter = {
     "game-raven",
@@ -138,6 +138,21 @@ game "hexen" {
   description = "Hexen: Beyond Heretic";
   game = "basev/hexen";
   iwad = "hexen.wad";
+  warp = "MAP##";
+  filter = {
+    "game-raven",
+    "hexen",
+    "game-hexen",
+    "hexen.hexen",
+  }
+}
+
+
+// Hexen: Deathkings of the Dark Citadel
+game "hexendd" {
+  description = "Hexen: Deathkings of the Dark Citadel";
+  game = "basev/hexen";
+  iwad = { "hexen.wad", "hexdd.wad" }
   warp = "MAP##";
   filter = {
     "game-raven",

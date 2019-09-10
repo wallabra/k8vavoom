@@ -60,6 +60,7 @@ GameOptions game_options;
 struct MainWadFiles {
   VStr main;
   TArray<VStr> aux; // list of additinal files (if fname starts with "?", the file is optional)
+  VStr description;
 };
 
 
@@ -1046,7 +1047,7 @@ static void SetupGameDir (VStr dirname) {
 //  ParseStringValueOrList
 //
 //==========================================================================
-static void ParseStringValueOrList (VScriptParser *sc, TArray<VStr> &list) {
+static void ParseStringValueOrList (VScriptParser *sc, TArray<VStr> &list, VStr *dsc=nullptr) {
   sc->Expect("=");
   if (sc->Check("{")) {
     // parse list
@@ -1058,11 +1059,19 @@ static void ParseStringValueOrList (VScriptParser *sc, TArray<VStr> &list) {
         break;
       }
     }
+    if (dsc && sc->Check(":")) {
+      sc->ExpectString();
+      *dsc = sc->String;
+    }
     sc->Check(";"); // optional
   } else {
     // single value
     sc->ExpectString();
     list.append(sc->String);
+    if (dsc && sc->Check(":")) {
+      sc->ExpectString();
+      *dsc = sc->String;
+    }
     sc->Expect(";");
   }
 }
@@ -1120,11 +1129,13 @@ static void ParseGameDef (VScriptParser *sc, version_t &game) {
     // iwad
     if (sc->Check("iwad")) {
       TArray<VStr> iwads; // 2nd and next iwads will be added to addfiles
-      ParseStringValueOrList(sc, iwads);
+      VStr dsc;
+      ParseStringValueOrList(sc, iwads, &dsc);
       if (iwads.length() == 0) continue;
       if (iwads[0].isEmpty()) sc->Error(va("game '%s' has empty main wad", *game.gamename));
       MainWadFiles &wf = game.mainWads.alloc();
       wf.main = iwads[0];
+      wf.description = dsc;
       for (int f = 1; f < iwads.length(); ++f) {
         VStr s = iwads[f];
         if (s.isEmpty()) continue;
@@ -1187,6 +1198,11 @@ static void ParseGameDef (VScriptParser *sc, version_t &game) {
   if (game.params.length() == 0) game.params.append(game.gamename);
   if (game.mainWads.length() == 0) sc->Error(va("game '%s' has no iwads", *game.gamename));
   if (game.GameDir.isEmpty()) sc->Error(va("game '%s' has no game dir", *game.gamename));
+
+  // fix iwad descritions
+  for (auto &&wfi : game.mainWads) {
+    if (wfi.description.isEmpty()) wfi.description = game.description;
+  }
 }
 
 
@@ -1255,17 +1271,16 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
       // try to detect game by custom iwad
       if (!selectedGame && mainiwad.length() > 0) {
         for (auto &&game : games) {
-          bool okwad = false;
           VStr mw = mainiwad.extractFileBaseName();
           for (auto &&mwi : game.mainWads) {
             VStr gw = mwi.main.extractFileBaseName();
-            if (gw.strEquCI(mw)) { okwad = true; break; }
+            if (gw.strEquCI(mw)) {
+              GCon->Logf(NAME_Init, "Detected game is '%s' (from iwad)", *mwi.description);
+              selectedGame = &game;
+              break;
+            }
           }
-          if (okwad) {
-            GCon->Logf(NAME_Init, "Detected game is '%s' (from iwad)", *game.description);
-            selectedGame = &game;
-            break;
-          }
+          if (selectedGame) break;
         }
       }
 
@@ -1298,7 +1313,7 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
               for (auto &&mwi : game.mainWads) {
                 VStr gw = mwi.main.extractFileBaseName();
                 if (gw.strEquCI(iwadGI)) {
-                  GCon->Logf(NAME_Init, "Detected game is '%s' (from gameinfo)", *game.description);
+                  GCon->Logf(NAME_Init, "Detected game is '%s' (from gameinfo)", *mwi.description);
                   selectedGame = &game;
                   W_CloseAuxiliary();
                   break;
@@ -1325,13 +1340,13 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
               VStr mwp;
               for (auto &&mwi : game.mainWads) {
                 mwp = FindMainWad(mwi.main);
-                if (!mwp.isEmpty()) break;
+                if (!mwp.isEmpty()) {
+                  GCon->Logf(NAME_Init, "Detected game is '%s' (from map lump '%s')", *mwi.description, *mname);
+                  selectedGame = &game;
+                  break;
+                }
               }
-              if (!mwp.isEmpty()) {
-                GCon->Logf(NAME_Init, "Detected game is '%s' (from map lump '%s')", *game.description, *mname);
-                selectedGame = &game;
-                break;
-              }
+              if (selectedGame) break;
             }
           }
         }
@@ -1345,7 +1360,7 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
           for (auto &&mwi : game.mainWads) {
             mainWadPath = FindMainWad(mwi.main);
             if (!mainWadPath.isEmpty()) {
-              GCon->Logf(NAME_Init, "Detected game is '%s' (iwad search)", *game.description);
+              GCon->Logf(NAME_Init, "Detected game is '%s' (iwad search)", *mwi.description);
               selectedGame = &game;
               break;
             }
@@ -1382,16 +1397,21 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
 
   // try user-specified iwad
   int iwadidx = -1;
+  VStr gameDsc;
   if (mainiwad.length() > 0) {
     GCon->Logf(NAME_Init, "trying custom IWAD '%s'...", *mainiwad);
     mainWadPath = FindMainWad(mainiwad);
     if (mainWadPath.isEmpty()) Sys_Error("custom IWAD '%s' not found!", *mainiwad);
     GCon->Logf(NAME_Init, "found custom IWAD '%s'...", *mainWadPath);
+    gameDsc = game.description;
   } else {
     // try default iwads
     for (iwadidx = 0; iwadidx < game.mainWads.length(); ++iwadidx) {
       mainWadPath = FindMainWad(game.mainWads[iwadidx].main);
-      if (!mainWadPath.isEmpty()) break;
+      if (!mainWadPath.isEmpty()) {
+        gameDsc = game.mainWads[iwadidx].description;
+        break;
+      }
     }
     if (mainWadPath.isEmpty()) Sys_Error("Main wad file \"%s\" not found.", *game.mainWads[0].main);
     vassert(iwadidx >= 0 && iwadidx < game.mainWads.length());
@@ -1405,7 +1425,7 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
   IWadIndex = SearchPaths.length();
   //GCon->Logf("MAIN WAD(1): '%s'", *MainWadPath);
 
-  GCon->Logf(NAME_Init, "loading game %s", *game.description);
+  GCon->Logf(NAME_Init, "loading game %s", *gameDsc);
   GCon->Logf(NAME_Init, "using iwad \"%s\"...", *mainWadPath);
   wpkAppend(mainWadPath, false); // mark iwad as "non-system" file, so path won't be stored in savegame
   AddAnyFile(mainWadPath, false, game.FixVoices);
@@ -1701,6 +1721,7 @@ void FL_InitOptions () {
 
   GParsedArgs.RegisterCallback("-heretic", "select Heretic game", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "heretic"; return 0; });
   GParsedArgs.RegisterCallback("-hexen", "select Hexen game", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "hexen"; return 0; });
+  GParsedArgs.RegisterCallback("-hexendd", "select Hexen:Deathkings game", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "hexendd"; return 0; });
 
   GParsedArgs.RegisterCallback("-strife", "select Strife game", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "strife"; return 0; });
   GParsedArgs.RegisterCallback("-strifeteaser", "select Strife Teaser game", [] (VArgs &args, int idx) -> int { cliGameCStr = nullptr; cliGameMode = "strifeteaser"; return 0; });
