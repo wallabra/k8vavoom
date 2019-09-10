@@ -253,6 +253,30 @@ replication {
 
 //==========================================================================
 //
+//  FixCheatFlags
+//
+//  fix various cheat flags
+//
+//==========================================================================
+void FixCheatFlags () {
+  Level.bFrozen = !!(Cheats&CF_TIMEFREEZE);
+  if (MO) {
+    if (Cheats&CF_GODMODE) {
+      if (LineSpecialGameInfo(Level.Game).GOD_HEALTH) {
+        if (MO) MO.Health = LineSpecialGameInfo(Level.Game).GOD_HEALTH;
+        Health = LineSpecialGameInfo(Level.Game).GOD_HEALTH;
+      }
+    }
+    if (Cheats&CF_NOCLIP) {
+      MO.bColideWithThings = !(Cheats&CF_NOCLIP);
+      MO.bColideWithWorld = !(Cheats&CF_NOCLIP);
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  ResetToDefaults
 //
 //  this is called on save loading, etc.
@@ -373,6 +397,8 @@ override void QS_Load () {
   Health = QS_GetInt("Health");
   MO.Health = Health;
   Cheats = QS_GetInt("Cheats");
+
+  FixCheatFlags();
 
   bNoTarget = !!QS_GetInt("bNoTarget");
   bInstantWeaponSwitch = !!QS_GetInt("bInstantWeaponSwitch");
@@ -2973,6 +2999,8 @@ void ResetPlayerOnSpawn (optional bool keepPlayerState) {
 
   k8BossesDetected = 666;
   k8ElvenGiftMessageTime = 666;
+
+  Cheats &= ~(CF_NOCLIP|CF_TIMEFREEZE);
 }
 
 
