@@ -195,7 +195,7 @@ VLocalDecl *VParser::CreateUnnamedLocal (VFieldType type, const TLocation &loc) 
 //  VParser::ParseLocalVar
 //
 //==========================================================================
-VLocalDecl *VParser::ParseLocalVar (VExpression *TypeExpr, LocalType lt) {
+VLocalDecl *VParser::ParseLocalVar (VExpression *TypeExpr, LocalType lt, VExpression *size0, VExpression *size1) {
   VLocalDecl *Decl = new VLocalDecl(Lex.Location);
   bool isFirstVar = true;
   bool wasNewArray = false;
@@ -204,25 +204,27 @@ VLocalDecl *VParser::ParseLocalVar (VExpression *TypeExpr, LocalType lt) {
     e.TypeExpr = TypeExpr->SyntaxCopy();
     e.TypeExpr = ParseTypePtrs(e.TypeExpr);
     // check for `type[size] arr` syntax
-    if (Lex.Check(TK_LBracket)) {
+    if (size0 || Lex.Check(TK_LBracket)) {
       if (lt != LocalNormal) ParseError(Lex.Location, "Loop variable cannot be an array");
       // arrays cannot be initialized (it seems), so they cannot be automatic
       if (lt != LocalForeach && TypeExpr->Type.Type == TYPE_Automatic) {
         ParseError(Lex.Location, "Automatic variable requires initializer");
       }
       if (!isFirstVar) {
-        ParseError(Lex.Location, "Only one array can be declared with `type[size] name` syntex");
+        ParseError(Lex.Location, "Only one array can be declared with `type[size] name` syntax");
         delete e.TypeExpr;
         e.TypeExpr = nullptr;
         continue;
       }
       isFirstVar = false;
       // size
-      TLocation SLoc = Lex.Location;
-      VExpression *SE = ParseExpression();
-      VExpression *SE2 = nullptr;
-      if (Lex.Check(TK_Comma)) SE2 = ParseExpression();
-      Lex.Expect(TK_RBracket, ERR_MISSING_RFIGURESCOPE);
+      TLocation SLoc = (size0 ? size0->Loc : Lex.Location);
+      VExpression *SE = size0, *SE2 = size1;
+      if (!size0) {
+        SE = ParseExpression();
+        if (Lex.Check(TK_Comma)) SE2 = ParseExpression();
+        Lex.Expect(TK_RBracket, ERR_MISSING_RFIGURESCOPE);
+      }
       // name
       if (Lex.Token != TK_Identifier) {
         ParseError(Lex.Location, "Invalid identifier, variable name expected");
@@ -395,49 +397,6 @@ VExpression *VParser::ParseExpressionPriority0 () {
 
         if (bLocals && Lex.Token == TK_Asterisk) return ParseLocalVar(new VSingleName(Name, l));
 
-        // check for `identifier[size]` array declaration
-        if (bLocals && Lex.Token == TK_LBracket) {
-          // this must be `id[size] id<;,>`
-          int dimCount = 1;
-          int ofs = 1;
-          bool done = false;
-          while (!done) {
-            auto tp = Lex.peekTokenType(ofs++);
-            // invalid tokens
-            switch (tp) {
-              case TK_LBracket:
-              case TK_LBrace:
-              case TK_RBrace:
-              case TK_EOF:
-                ofs = 0; // invalid
-                done = true;
-                break;
-              case TK_RBracket: // end of possible size decl
-                // there could be a second dimension
-                if (dimCount < 2 && Lex.peekTokenType(ofs) == TK_LBracket) {
-                  // ok, it looks like a second dimension
-                  ++dimCount;
-                  ++ofs;
-                } else {
-                  done = true;
-                }
-                break;
-              default:
-                break;
-            }
-          }
-          while (ofs && Lex.peekTokenType(ofs) == TK_Asterisk) ++ofs; // skip pointer stars
-          if (ofs && Lex.peekTokenType(ofs) == TK_Identifier) {
-            auto tp = Lex.peekTokenType(ofs+1);
-            // there are no array initialisers, so only comma or semicolon
-            if (tp == TK_Comma || tp == TK_Semicolon) {
-              // ok, this looks like a declaration of a local
-              //GLog.Logf(NAME_Debug, "%s: !!!! ofs=%d", *Lex.Location.toString(), ofs);
-              return ParseLocalVar(new VSingleName(Name, l));
-            }
-          }
-        }
-
         return new VSingleName(Name, l);
       }
     case TK_Default:
@@ -602,6 +561,13 @@ VExpression *VParser::ParseExpressionPriority1 () {
         // second index
         if (Lex.Check(TK_Comma)) ind2 = ParseExpressionPriority13();
         Lex.Expect(TK_RBracket, ERR_BAD_ARRAY);
+        // local declaration?
+        if (op->IsSingleName()) {
+          int ofs = 0;
+          while (Lex.peekTokenType(ofs) == TK_Asterisk) ++ofs; // skip pointer stars
+          if (Lex.peekTokenType(ofs) == TK_Identifier) return ParseLocalVar(op, LocalNormal, ind, ind2);
+        }
+        // array indexing
         op = new VArrayElement(op, ind, ind2, l);
       }
     } else {

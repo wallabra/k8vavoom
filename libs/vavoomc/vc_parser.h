@@ -57,7 +57,7 @@ private:
   VExpression *ParseDotMethodCall (VExpression *, VName, const TLocation &);
   VExpression *ParseBaseMethodCall (VName, const TLocation &);
   VExpression *ParseMethodCallOrCast (VName, const TLocation &);
-  VLocalDecl *ParseLocalVar (VExpression *TypeExpr, LocalType lt=LocalNormal);
+  VLocalDecl *ParseLocalVar (VExpression *TypeExpr, LocalType lt=LocalNormal, VExpression *size0=nullptr, VExpression *size1=nullptr);
   VExpression *ParseExpressionPriority0 ();
   VExpression *ParseExpressionPriority1 ();
   VExpression *ParseExpressionPriority2 ();
