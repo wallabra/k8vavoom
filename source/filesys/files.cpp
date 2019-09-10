@@ -1146,7 +1146,7 @@ static void ParseGameDef (VScriptParser *sc, version_t &game) {
     }
     // CLI params
     if (sc->Check("param")) {
-      game.BaseDirs.clear();
+      game.params.clear();
       ParseStringValueOrList(sc, game.params);
       continue;
     }
@@ -1405,6 +1405,7 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
   IWadIndex = SearchPaths.length();
   //GCon->Logf("MAIN WAD(1): '%s'", *MainWadPath);
 
+  GCon->Logf(NAME_Init, "loading game %s", *game.description);
   GCon->Logf(NAME_Init, "using iwad \"%s\"...", *mainWadPath);
   wpkAppend(mainWadPath, false); // mark iwad as "non-system" file, so path won't be stored in savegame
   AddAnyFile(mainWadPath, false, game.FixVoices);
@@ -1425,6 +1426,7 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
     }
   }
 
+  //GCon->Logf(NAME_Debug, "BDIRS: %d", game.BaseDirs.length());
   for (auto &&bdir : game.BaseDirs) if (!bdir.isEmpty()) AddGameDir(bdir);
 
   SetupGameDir(game.GameDir);
