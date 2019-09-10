@@ -299,9 +299,9 @@ VLocalDecl *VParser::ParseLocalVar (VExpression *TypeExpr, LocalType lt) {
 
 //==========================================================================
 //
-// VParser::ParseExpressionPriority0
+//  VParser::ParseExpressionPriority0
 //
-// term
+//  term
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority0 () {
@@ -512,9 +512,9 @@ VExpression *VParser::ParseExpressionPriority0 () {
 
 //==========================================================================
 //
-// VParser::ParseExpressionPriority1
+//  VParser::ParseExpressionPriority1
 //
-// `->`, `.`, `[]`
+//  `->`, `.`, `[]`
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority1 () {
@@ -571,11 +571,11 @@ VExpression *VParser::ParseExpressionPriority1 () {
 
 //==========================================================================
 //
-// VParser::ParseExpressionPriority2
+//  VParser::ParseExpressionPriority2
 //
-// unary: `+`, `-`, `!`, `~`, `&`, `*`
-// prefix: `++`, `--`
-// postfix: `++`, `--`
+//  unary: `+`, `-`, `!`, `~`, `&`, `*`
+//  prefix: `++`, `--`
+//  postfix: `++`, `--`
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority2 () {
@@ -605,9 +605,9 @@ VExpression *VParser::ParseExpressionPriority2 () {
 
 //==========================================================================
 //
-// VParser::ParseExpressionPriority3
+//  VParser::ParseExpressionPriority3
 //
-// binary: `*`, `/`, `%`
+//  binary: `*`, `/`, `%`
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority3 () {
@@ -634,9 +634,9 @@ VExpression *VParser::ParseExpressionPriority3 () {
 
 //==========================================================================
 //
-// VParser::ParseExpressionPriority4
+//  VParser::ParseExpressionPriority4
 //
-// binary: `+`, `-`, `~`
+//  binary: `+`, `-`, `~`
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority4 () {
@@ -663,9 +663,9 @@ VExpression *VParser::ParseExpressionPriority4 () {
 
 //==========================================================================
 //
-// VParser::ParseExpressionPriority5
+//  VParser::ParseExpressionPriority5
 //
-// binary: `<<`, `>>`
+//  binary: `<<`, `>>`
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority5 () {
@@ -692,9 +692,9 @@ VExpression *VParser::ParseExpressionPriority5 () {
 
 //==========================================================================
 //
-// VParser::ParseExpressionPriority5_1
+//  VParser::ParseExpressionPriority5_1
 //
-// binary: `isa`, `!isa`
+//  binary: `isa`, `!isa`
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority5_1 () {
@@ -720,9 +720,9 @@ VExpression *VParser::ParseExpressionPriority5_1 () {
 
 //==========================================================================
 //
-// VParser::ParseExpressionPriority6
+//  VParser::ParseExpressionPriority6
 //
-// binary: `<`, `<=`, `>`, `>=`
+//  binary: `<`, `<=`, `>`, `>=`
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority6 () {
@@ -752,9 +752,9 @@ VExpression *VParser::ParseExpressionPriority6 () {
 
 //==========================================================================
 //
-// VParser::ParseExpressionPriority7
+//  VParser::ParseExpressionPriority7
 //
-// binary: `==`, `!=`
+//  binary: `==`, `!=`
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority7 () {
@@ -778,9 +778,9 @@ VExpression *VParser::ParseExpressionPriority7 () {
 
 //==========================================================================
 //
-// VParser::ParseExpressionPriority8
+//  VParser::ParseExpressionPriority8
 //
-// binary: `&`
+//  binary: `&`
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority8 () {
@@ -798,9 +798,9 @@ VExpression *VParser::ParseExpressionPriority8 () {
 
 //==========================================================================
 //
-// VParser::ParseExpressionPriority9
+//  VParser::ParseExpressionPriority9
 //
-// binary: `^`
+//  binary: `^`
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority9 () {
@@ -818,9 +818,9 @@ VExpression *VParser::ParseExpressionPriority9 () {
 
 //==========================================================================
 //
-// VParser::ParseExpressionPriority10
+//  VParser::ParseExpressionPriority10
 //
-// binary: `|`
+//  binary: `|`
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority10 () {
@@ -838,9 +838,9 @@ VExpression *VParser::ParseExpressionPriority10 () {
 
 //==========================================================================
 //
-// VParser::ParseExpressionPriority11
+//  VParser::ParseExpressionPriority11
 //
-// binary: `&&`
+//  binary: `&&`
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority11 () {
@@ -858,9 +858,9 @@ VExpression *VParser::ParseExpressionPriority11 () {
 
 //==========================================================================
 //
-// VParser::ParseExpressionPriority12
+//  VParser::ParseExpressionPriority12
 //
-// binary: `||`
+//  binary: `||`
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority12 () {
@@ -878,9 +878,9 @@ VExpression *VParser::ParseExpressionPriority12 () {
 
 //==========================================================================
 //
-// VParser::ParseExpressionPriority13
+//  VParser::ParseExpressionPriority13
 //
-// ternary: `?:`
+//  ternary: `?:`
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority13 () {
@@ -905,9 +905,9 @@ VExpression *VParser::ParseExpressionPriority13 () {
 
 //==========================================================================
 //
-// VParser::ParseExpressionPriority14
+//  VParser::ParseExpressionPriority14
 //
-// assignmnets: `=`, and various `op=`
+//  assignmnets: `=`, and various `op=`
 //
 //==========================================================================
 VExpression *VParser::ParseExpressionPriority14 (bool allowAssign) {
@@ -939,9 +939,9 @@ VExpression *VParser::ParseExpressionPriority14 (bool allowAssign) {
 
 //==========================================================================
 //
-// VParser::ParseExpression
+//  VParser::ParseExpression
 //
-// general expression parser
+//  general expression parser
 //
 //==========================================================================
 VExpression *VParser::ParseExpression (bool allowAssign) {
@@ -1517,7 +1517,7 @@ VStatement *VParser::ParseStatement () {
 
 //==========================================================================
 //
-// VParser::ParseCompoundStatement
+//  VParser::ParseCompoundStatement
 //
 //==========================================================================
 VStatement *VParser::ParseCompoundStatement (const TLocation &l) {
@@ -1581,9 +1581,9 @@ VStatement *VParser::ParseCompoundStatement (const TLocation &l) {
 
 //==========================================================================
 //
-// VParser::ParsePrimitiveType
+//  VParser::ParsePrimitiveType
 //
-// this won't parse `type*` and delegates
+//  this won't parse `type*` and delegates
 //
 //==========================================================================
 VExpression *VParser::ParsePrimitiveType () {
@@ -1708,7 +1708,7 @@ VExpression *VParser::ParsePrimitiveType () {
 
 //==========================================================================
 //
-// VParser::ParseType
+//  VParser::ParseType
 //
 //==========================================================================
 VExpression *VParser::ParseType (bool allowDelegates) {
@@ -1775,9 +1775,9 @@ VExpression *VParser::ParseType (bool allowDelegates) {
 
 //==========================================================================
 //
-// VParser::ParseTypePtrs
+//  VParser::ParseTypePtrs
 //
-// call this after `ParseType` to parse asterisks
+//  call this after `ParseType` to parse asterisks
 //
 //==========================================================================
 VExpression *VParser::ParseTypePtrs (VExpression *type) {
@@ -1794,9 +1794,9 @@ VExpression *VParser::ParseTypePtrs (VExpression *type) {
 
 //==========================================================================
 //
-// VParser::ParseTypeWithPtrs
+//  VParser::ParseTypeWithPtrs
 //
-// convenient wrapper
+//  convenient wrapper
 //
 //==========================================================================
 VExpression *VParser::ParseTypeWithPtrs (bool allowDelegates) {
@@ -1806,7 +1806,7 @@ VExpression *VParser::ParseTypeWithPtrs (bool allowDelegates) {
 
 //==========================================================================
 //
-// VParser::ParseMethodDef
+//  VParser::ParseMethodDef
 //
 //==========================================================================
 void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation &MethodLoc,
@@ -1936,7 +1936,7 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
 
 //==========================================================================
 //
-// VParser::ParseDelegate
+//  VParser::ParseDelegate
 //
 //==========================================================================
 void VParser::ParseDelegate (VExpression *RetType, VField *Delegate) {
@@ -1969,7 +1969,7 @@ void VParser::ParseDelegate (VExpression *RetType, VField *Delegate) {
 
 //==========================================================================
 //
-// VParser::ParseLambda
+//  VParser::ParseLambda
 //
 //==========================================================================
 VExpression *VParser::ParseLambda () {
@@ -2033,7 +2033,7 @@ VExpression *VParser::ParseLambda () {
 
 //==========================================================================
 //
-// VParser::ParseDefaultProperties
+//  VParser::ParseDefaultProperties
 //
 //==========================================================================
 void VParser::ParseDefaultProperties (VClass *InClass, bool doparse, int defcount, VStatement **stats) {
@@ -3719,7 +3719,7 @@ void VParser::ParseStatesNewStyle (VClass *inClass) {
 
 //==========================================================================
 //
-// VParser::ParseReplication
+//  VParser::ParseReplication
 //
 //==========================================================================
 void VParser::ParseReplication (VClass *Class) {
