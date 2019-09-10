@@ -1920,8 +1920,6 @@ bool VInvocation::RebuildArgs () {
 VExpression *VInvocation::DoResolve (VEmitContext &ec) {
   if (ec.Package->Name == NAME_decorate) CheckDecorateParams(ec);
 
-  //bool isDelegateCall = false;
-
   if (DelegateLocal >= 0) {
     //FIXME
     const VLocalVarDef &loc = ec.GetLocalByIndex(DelegateLocal);
@@ -1930,7 +1928,6 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
       delete this;
       return nullptr;
     }
-    //isDelegateCall = true;
   }
 
   if (DgPtrExpr) {
@@ -1939,7 +1936,6 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
       delete this;
       return nullptr;
     }
-    //isDelegateCall = true;
   }
 
   // check for virutal method call
@@ -1953,7 +1949,6 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
       return nullptr;
     }
   }
-
 
   memset(optmarshall, 0, sizeof(optmarshall));
 
@@ -1990,14 +1985,6 @@ VExpression *VInvocation::DoResolve (VEmitContext &ec) {
       }
       Args[i] = Args[i]->Resolve(ec);
       if (!Args[i]) { ArgsOk = false; break; }
-    } else {
-      /*
-      if (!(Func->ParamFlags[i]&FPARM_Optional)) {
-        ParseError(Loc, "Cannot omit non-optional argument");
-        ArgsOk = false;
-        break;
-      }
-      */
     }
   }
 
@@ -2906,11 +2893,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
     if (Args[0] && Args[0]->IsIntConst() && VStr::Cmp(Func->GetName(), "A_Jump") == 0) {
       // warn for `A_Jump(256<or-more>, "Label")`
       int prob = Args[0]->GetIntConst();
-      if (NumArgs < 3 && prob > 255) {
-        ParseWarning(Loc, "this `A_Jump` is uncoditional; this is probably a bug (replace it with `Goto` if it isn't)");
-      } else if (prob < 1) {
-        ParseWarning(Loc, "this `A_Jump` is never taken");
-      }
+      if (prob < 1) ParseWarning(Loc, "this `A_Jump` is never taken");
     }
   }
 }

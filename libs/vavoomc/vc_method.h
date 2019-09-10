@@ -133,14 +133,11 @@ public:
   VName Name;
   TLocation Loc;
 
-  VMethodParam ();
-  //VMethodParam (const VMethodParam &v);
-  ~VMethodParam ();
+  inline VMethodParam () : TypeExpr(nullptr), Name(NAME_None), Loc() {}
+  inline ~VMethodParam () { clear(); }
 
+  // this has to be non-inline due to `delete TypeExpr`
   void clear ();
-
-  // WARNING: assignment and copy ctors WILL CREATE syntax copy of `TypeExpr`!!!
-  //VMethodParam &operator = (const VMethodParam &v);
 };
 
 

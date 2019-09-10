@@ -63,30 +63,15 @@ static void PF_Fixme () {
 
 //==========================================================================
 //
-//  VMethodParam::VMethodParam
-//
-//==========================================================================
-VMethodParam::VMethodParam () : TypeExpr(nullptr), Name(NAME_None) {
-}
-
-
-//==========================================================================
-//
-//  VMethodParam::~VMethodParam
-//
-//==========================================================================
-VMethodParam::~VMethodParam () {
-  delete TypeExpr; TypeExpr = nullptr;
-}
-
-
-//==========================================================================
-//
 //  VMethodParam::clear
+//
+//  this has to be non-inline due to `delete TypeExpr`
 //
 //==========================================================================
 void VMethodParam::clear () {
   delete TypeExpr; TypeExpr = nullptr;
+  Name = NAME_None;
+  Loc = TLocation();
 }
 
 
