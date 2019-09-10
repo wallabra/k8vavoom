@@ -395,6 +395,49 @@ VExpression *VParser::ParseExpressionPriority0 () {
 
         if (bLocals && Lex.Token == TK_Asterisk) return ParseLocalVar(new VSingleName(Name, l));
 
+        // check for `identifier[size]` array declaration
+        if (bLocals && Lex.Token == TK_LBracket) {
+          // this must be `id[size] id<;,>`
+          int dimCount = 1;
+          int ofs = 1;
+          bool done = false;
+          while (!done) {
+            auto tp = Lex.peekTokenType(ofs++);
+            // invalid tokens
+            switch (tp) {
+              case TK_LBracket:
+              case TK_LBrace:
+              case TK_RBrace:
+              case TK_EOF:
+                ofs = 0; // invalid
+                done = true;
+                break;
+              case TK_RBracket: // end of possible size decl
+                // there could be a second dimension
+                if (dimCount < 2 && Lex.peekTokenType(ofs) == TK_LBracket) {
+                  // ok, it looks like a second dimension
+                  ++dimCount;
+                  ++ofs;
+                } else {
+                  done = true;
+                }
+                break;
+              default:
+                break;
+            }
+          }
+          while (ofs && Lex.peekTokenType(ofs) == TK_Asterisk) ++ofs; // skip pointer stars
+          if (ofs && Lex.peekTokenType(ofs) == TK_Identifier) {
+            auto tp = Lex.peekTokenType(ofs+1);
+            // there are no array initialisers, so only comma or semicolon
+            if (tp == TK_Comma || tp == TK_Semicolon) {
+              // ok, this looks like a declaration of a local
+              //GLog.Logf(NAME_Debug, "%s: !!!! ofs=%d", *Lex.Location.toString(), ofs);
+              return ParseLocalVar(new VSingleName(Name, l));
+            }
+          }
+        }
+
         return new VSingleName(Name, l);
       }
     case TK_Default:
