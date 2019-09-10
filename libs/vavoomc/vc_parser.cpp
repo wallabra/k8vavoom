@@ -1749,7 +1749,7 @@ VExpression *VParser::ParseType (bool allowDelegates) {
       VDelegateType *dg = new VDelegateType(Type, stloc);
       do {
         VMethodParam &P = dg->Params[dg->NumParams];
-        int ParmModifiers = TModifiers::Parse(Lex);
+        int ParmModifiers = TModifiers::Parse(Lex/*, &dg->Params[dg->NumParams].NamedFlags*/); // no, not for delegates
         dg->ParamFlags[dg->NumParams] = TModifiers::ParmAttr(TModifiers::Check(ParmModifiers, TModifiers::ParamSet, Lex.Location));
         P.TypeExpr = ParseTypeWithPtrs(true);
         if (!P.TypeExpr && dg->NumParams == 0) break;
@@ -1829,7 +1829,7 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
 
     VMethodParam &P = Func->Params[Func->NumParams];
 
-    int ParmModifiers = TModifiers::Parse(Lex);
+    int ParmModifiers = TModifiers::Parse(Lex, &Func->Params[Func->NumParams].NamedFlags);
     Func->ParamFlags[Func->NumParams] = TModifiers::ParmAttr(TModifiers::Check(ParmModifiers, TModifiers::ParamSet, Lex.Location));
 
     P.TypeExpr = ParseTypeWithPtrs(true);
@@ -1945,7 +1945,7 @@ void VParser::ParseDelegate (VExpression *RetType, VField *Delegate) {
   Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
   do {
     VMethodParam &P = Func->Params[Func->NumParams];
-    int ParmModifiers = TModifiers::Parse(Lex);
+    int ParmModifiers = TModifiers::Parse(Lex/*, &Func->Params[Func->NumParams].NamedFlags*/); // no, not for delegate
     Func->ParamFlags[Func->NumParams] = TModifiers::ParmAttr(TModifiers::Check(ParmModifiers, TModifiers::ParamSet, Lex.Location));
     P.TypeExpr = ParseTypeWithPtrs(true);
     if (!P.TypeExpr && Func->NumParams == 0) break;
@@ -1996,7 +1996,7 @@ VExpression *VParser::ParseLambda () {
   if (Lex.Token != TK_RParen) {
     for (;;) {
       VMethodParam &P = Func->Params[Func->NumParams];
-      int ParmModifiers = TModifiers::Parse(Lex);
+      int ParmModifiers = TModifiers::Parse(Lex/*, &Func->Params[Func->NumParams].NamedFlags*/); // no, not for lambda
       Func->ParamFlags[Func->NumParams] = TModifiers::ParmAttr(TModifiers::Check(ParmModifiers, TModifiers::ParamSet, Lex.Location));
       P.TypeExpr = ParseTypeWithPtrs(true);
       if (!P.TypeExpr) break;

@@ -33,8 +33,8 @@
 //  A_PlaySound
 //
 //==========================================================================
-[decorate] final void A_PlaySound (optional name Sound, optional int ChannelNameOrNumber, optional float volume,
-                        optional bool looping, optional float attenuation,
+[decorate] final void A_PlaySound (optional name Sound, optional [soundchannel] int ChannelNameOrNumber,
+                        optional float volume, optional bool looping, optional float attenuation,
                         optional bool local)
 {
   if (!specified_Sound) Sound = 'weapons/pistol';
@@ -50,18 +50,14 @@
 //
 //  A_PlaySoundEx
 //
-//  `ChannelNameOrNumber` is a special hacky name for decorate parser
-//  fuck you, gozzo!
-//
 //==========================================================================
-[decorate] final void A_PlaySoundEx (name Sound, int ChannelNameOrNumber, optional bool Loop, optional int Attenuation) {
+[decorate] final void A_PlaySoundEx (name Sound, [soundchannel] int ChannelNameOrNumber, optional bool Loop, optional int Attenuation) {
   // attenuation
   float Atten = ATTN_NORMAL;
   switch (Attenuation) {
     case -1: Atten = ATTN_STATIC; break;
     case 1: Atten = ATTN_NONE; break;
   }
-
   PlaySound(Sound, ChannelNameOrNumber, default, Atten, Loop);
 }
 
@@ -113,7 +109,7 @@
 //  A_StopSound
 //
 //==========================================================================
-[decorate] final void A_StopSound (optional int ChannelNameOrNumber) {
+[decorate] final void A_StopSound (optional [soundchannel] int ChannelNameOrNumber) {
   if (!specified_ChannelNameOrNumber) ChannelNameOrNumber = CHAN_VOICE;
   StopSound(ChannelNameOrNumber);
 }
@@ -124,7 +120,7 @@
 //  A_StopSoundEx
 //
 //==========================================================================
-[decorate] final void A_StopSoundEx (int ChannelNameOrNumber) {
+[decorate] final void A_StopSoundEx ([soundchannel] int ChannelNameOrNumber) {
   StopSound(ChannelNameOrNumber);
 }
 

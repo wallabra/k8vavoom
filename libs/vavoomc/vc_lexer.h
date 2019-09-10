@@ -206,6 +206,7 @@ public:
   bool Check (EToken tk);
   void Expect (EToken tk);
   void Expect (EToken tk, ECompileError error);
+  VStr ExpectAnyIdentifier (); // this also allows keywords
 
   // check for identifier (it cannot be a keyword)
   bool Check (const char *id, bool caseSensitive=true);

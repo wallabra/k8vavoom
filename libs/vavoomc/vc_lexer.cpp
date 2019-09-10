@@ -1464,6 +1464,23 @@ void VLexer::Expect (EToken tk, ECompileError error) {
 
 //==========================================================================
 //
+//  VLexer::ExpectAnyIdentifier
+//
+//  this also allows keywords
+//
+//==========================================================================
+VStr VLexer::ExpectAnyIdentifier () {
+  VStr res;
+       if (Token == TK_Identifier) res = VStr(Name);
+  else if (Token >= TK_Abstract && Token < TK_URShiftAssign) res = TokenNames[Token]; //WARNING! sync this with keywords!
+  else { ParseError(Location, "identifier expected"); res = "<unknown>"; }
+  NextToken();
+  return res;
+}
+
+
+//==========================================================================
+//
 //  VLexer::Check
 //
 //  check for identifier (it cannot be a keyword)

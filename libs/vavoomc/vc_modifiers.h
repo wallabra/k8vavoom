@@ -59,7 +59,7 @@ public:
 
   static void ShowBadAttributes (int Modifiers, const TLocation &l);
 
-  static int Parse (VLexer &Lex);
+  static int Parse (VLexer &Lex, TArray<VName> *exatts=nullptr);
   static const char *Name (int Modifier);
   static int Check (int Modifers, int Allowed, const TLocation &l);
   static int MethodAttr (int Modifers);

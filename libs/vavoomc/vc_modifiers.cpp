@@ -34,7 +34,7 @@
 //  Parse supported modifiers.
 //
 //==========================================================================
-int TModifiers::Parse (VLexer &Lex) {
+int TModifiers::Parse (VLexer &Lex, TArray<VName> *exatts) {
   struct Mod {
     EToken token;
     int flag;
@@ -76,15 +76,18 @@ int TModifiers::Parse (VLexer &Lex) {
         for (;;) {
           if (Lex.Check(TK_RBracket)) { rbParsed = true; break; }
           if (Lex.Check(TK_Decorate)) {
-            if (Modifiers&DecVisible) ParseError(Lex.Location, "duplicate modifier '%s'", *Lex.Name);
+            if (Modifiers&DecVisible) ParseError(Lex.Location, "duplicate modifier '%s'", "decorate");
             Modifiers |= DecVisible;
           } else {
-            Lex.Expect(TK_Identifier);
-            if (Lex.Name == "internal") {
-              if (Modifiers&Internal) ParseError(Lex.Location, "duplicate modifier '%s'", *Lex.Name);
+            VStr id = Lex.ExpectAnyIdentifier();
+            if (id == "internal") {
+              if (Modifiers&Internal) ParseError(Lex.Location, "duplicate modifier '%s'", *id);
               Modifiers |= Internal;
+            } else if (exatts) {
+              // collect unknown attributes
+              (*exatts).append(VName(*id));
             } else {
-              ParseError(Lex.Location, "unknown modifier '%s'", *Lex.Name);
+              ParseError(Lex.Location, "unknown modifier '%s'", *id);
             }
           }
           if (!Lex.Check(TK_Comma)) break;
