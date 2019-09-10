@@ -959,7 +959,11 @@ VExpression *VParser::ParseExpression (bool allowAssign) {
 //  returns null if this is not a type decl
 //
 //==========================================================================
-VExpression *VParser::ParseOptionalTypeDecl (EToken tkend) {
+VExpression *VParser::ParseOptionalTypeDecl (EToken tkend, int *constref) {
+  if (constref) {
+    *constref = 0;
+    ParseOptionalConstRef(constref);
+  }
   // allow local declaration here
   switch (Lex.Token) {
     case TK_Bool:
@@ -972,14 +976,22 @@ VExpression *VParser::ParseOptionalTypeDecl (EToken tkend) {
     case TK_String:
     case TK_Auto:
       // indirections are processed in `ParseLocalVar()`, 'cause they belongs to vars
-      return ParseType(true);
+      return ParseType(true, constref);
     case TK_Identifier: // this can be something like `Type var = ...`, so check for it
       {
         int ofs = 1; // skip identifier
-        while (Lex.peekTokenType(ofs) == TK_Asterisk) ++ofs;
+        if (constref) {
+          for (;;) {
+            auto tp = Lex.peekTokenType(ofs);
+            if (tp != TK_Asterisk && tp != TK_Ref && tp != TK_Const) break;
+            ++ofs;
+          }
+        } else {
+          while (Lex.peekTokenType(ofs) == TK_Asterisk) ++ofs;
+        }
         if (Lex.peekTokenType(ofs) == TK_Identifier && Lex.peekTokenType(ofs+1) == tkend) {
           // yep, declarations
-          return ParseType(true);
+          return ParseType(true, constref);
         }
       }
       /* fallthrough */
@@ -1057,21 +1069,10 @@ VStatement *VParser::ParseForeachRange (const TLocation &l) {
       VLocalDecl *decl = nullptr;
       VExpression *vexpr = nullptr;
       auto refloc = Lex.Location;
-      bool isRef = false, isConst = false;
-      for (;;) {
-        if (Lex.Check(TK_Ref)) {
-          if (isRef) ParseError(Lex.Location, "duplicate `ref`");
-          isRef = true;
-          continue;
-        }
-        if (Lex.Check(TK_Const)) {
-          if (isConst) ParseError(Lex.Location, "duplicate `const`");
-          isConst = true;
-          continue;
-        }
-        break;
-      }
-      auto vtype = ParseOptionalTypeDecl(TK_Semicolon);
+      int constref = 0;
+      auto vtype = ParseOptionalTypeDecl(TK_Semicolon, &constref);
+      bool isRef = !!(constref&TCRF_Ref);
+      bool isConst = !!(constref&TCRF_Const);
       if (vtype) {
         decl = ParseLocalVar(vtype, LocalForeach);
         if (decl && decl->Vars.length() != 1) {
@@ -1315,7 +1316,7 @@ VStatement *VParser::ParseStatement () {
 
         // parse init expr(s)
         while (Lex.Token != TK_Semicolon) {
-          auto vtype = ParseOptionalTypeDecl(TK_Assign);
+          auto vtype = ParseOptionalTypeDecl(TK_Assign, nullptr); // no `const` or `ref` allowed here
           if (vtype) {
             needCompound = true; // wrap it
             VLocalDecl *decl = ParseLocalVar(vtype, LocalFor);
@@ -1708,13 +1709,37 @@ VExpression *VParser::ParsePrimitiveType () {
 
 //==========================================================================
 //
+//  VParser::ParseOptionalConstRef
+//
+//==========================================================================
+void VParser::ParseOptionalConstRef (int *constref) {
+  if (!constref) return;
+  for (;;) {
+    if (Lex.Check(TK_Ref)) {
+      if ((*constref)&TCRF_Ref) ParseError(Lex.Location, "duplicate `ref`");
+      *constref |= TCRF_Ref;
+      continue;
+    }
+    if (Lex.Check(TK_Const)) {
+      if ((*constref)&TCRF_Const) ParseError(Lex.Location, "duplicate `const`");
+      *constref |= TCRF_Const;
+      continue;
+    }
+    break;
+  }
+}
+
+
+//==========================================================================
+//
 //  VParser::ParseType
 //
 //==========================================================================
-VExpression *VParser::ParseType (bool allowDelegates) {
+VExpression *VParser::ParseType (bool allowDelegates, int *constref) {
   auto stloc = Lex.Location;
   auto Type = ParsePrimitiveType();
   if (!Type) return nullptr; // either error, or not a type
+  ParseOptionalConstRef(constref);
 
   // skip `*`
   int ofs = 0;

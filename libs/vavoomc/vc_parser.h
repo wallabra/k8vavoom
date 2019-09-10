@@ -82,9 +82,11 @@ private:
   VStatement *ParseForeach ();
   VStatement *ParseStatement ();
   /*VCompound*/VStatement *ParseCompoundStatement (const TLocation &l);
-  VExpression *ParseOptionalTypeDecl (EToken tkend); // used in things like `for (type var = ...)`
+  enum { TCRF_Const=0x01, TCRF_Ref=0x02 };
+  void ParseOptionalConstRef (int *constref);
+  VExpression *ParseOptionalTypeDecl (EToken tkend, int *constref); // used in things like `for (type var = ...)`
   VExpression *ParsePrimitiveType (); // this won't parse `type*` and delegates
-  VExpression *ParseType (bool allowDelegates=false); // this won't parse `type*`
+  VExpression *ParseType (bool allowDelegates=false, int *constref=nullptr); // this won't parse `type*`
   VExpression *ParseTypePtrs (VExpression *type); // call this after `ParseType` to parse asterisks
   VExpression *ParseTypeWithPtrs (bool allowDelegates=false); // convenient wrapper
   void ParseMethodDef (VExpression *, VName, const TLocation &, VClass *, vint32, bool);
