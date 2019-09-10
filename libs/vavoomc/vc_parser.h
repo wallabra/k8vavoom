@@ -58,22 +58,11 @@ private:
   VExpression *ParseBaseMethodCall (VName, const TLocation &);
   VExpression *ParseMethodCallOrCast (VName, const TLocation &);
   VLocalDecl *ParseLocalVar (VExpression *TypeExpr, LocalType lt=LocalNormal, VExpression *size0=nullptr, VExpression *size1=nullptr);
-  VExpression *ParseExpressionPriority0 ();
-  VExpression *ParseExpressionPriority1 ();
-  VExpression *ParseExpressionPriority2 ();
-  VExpression *ParseExpressionPriority3 ();
-  VExpression *ParseExpressionPriority4 ();
-  VExpression *ParseExpressionPriority5 ();
-  VExpression *ParseExpressionPriority5_1 ();
-  VExpression *ParseExpressionPriority6 ();
-  VExpression *ParseExpressionPriority7 ();
-  VExpression *ParseExpressionPriority8 ();
-  VExpression *ParseExpressionPriority9 ();
-  VExpression *ParseExpressionPriority10 ();
-  VExpression *ParseExpressionPriority11 ();
-  VExpression *ParseExpressionPriority12 ();
-  VExpression *ParseExpressionPriority13 ();
-  VExpression *ParseExpressionPriority14 (bool allowAssign=false);
+  VExpression *ParseExpressionPriority0 (); // term
+  VExpression *ParseExpressionPriority1 (); // indexing, field access
+  VExpression *ParseExpressionInternal (int prio, bool allowAssign);
+  VExpression *ParseTernaryExpression ();
+  VExpression *ParseAssignExpression (); // this automatically allows assign
   VExpression *ParseExpression (bool allowAssign=false);
   VLocalDecl *CreateUnnamedLocal (VFieldType type, const TLocation &loc);
   VStatement *ParseForeachIterator (const TLocation &l);

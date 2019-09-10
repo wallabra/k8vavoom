@@ -27,6 +27,164 @@
 #include "vc_local.h"
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+struct OperInfo {
+  enum Type {
+    Unary,
+    UnaryAsterisk,
+    PrefixIncDec,
+    Binary,
+    NotIsA,
+    BinaryLogical,
+    Ternary,
+    Assign,
+  };
+
+  int prio;
+  EToken tk;
+  int oper;
+  Type type;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+static OperInfo operList[] = {
+  // priority 2 (unaries)
+  { .prio = 2, .tk = TK_Plus,     .oper = (int)VUnary::Plus,        .type = OperInfo::Unary },
+  { .prio = 2, .tk = TK_Minus,    .oper = (int)VUnary::Minus,       .type = OperInfo::Unary },
+  { .prio = 2, .tk = TK_Not,      .oper = (int)VUnary::Not,         .type = OperInfo::Unary },
+  { .prio = 2, .tk = TK_Tilde,    .oper = (int)VUnary::BitInvert,   .type = OperInfo::Unary },
+  { .prio = 2, .tk = TK_And,      .oper = (int)VUnary::TakeAddress, .type = OperInfo::Unary },
+  { .prio = 2, .tk = TK_Asterisk, .oper = 0,                        .type = OperInfo::UnaryAsterisk },
+  // prefix inc/dec
+  { .prio = 2, .tk = TK_Inc, .oper = (int)VUnaryMutator::PreInc, .type = OperInfo::PrefixIncDec },
+  { .prio = 2, .tk = TK_Dec, .oper = (int)VUnaryMutator::PreDec, .type = OperInfo::PrefixIncDec },
+
+  // priority 3 (multiplication)
+  { .prio = 3, .tk = TK_Asterisk, .oper = (int)VBinary::Multiply, .type = OperInfo::Binary },
+  { .prio = 3, .tk = TK_Slash,    .oper = (int)VBinary::Divide,   .type = OperInfo::Binary },
+  { .prio = 3, .tk = TK_Percent,  .oper = (int)VBinary::Modulus,  .type = OperInfo::Binary },
+
+  // priority 4 (additions)
+  { .prio = 4, .tk = TK_Plus,  .oper = (int)VBinary::Add,      .type = OperInfo::Binary },
+  { .prio = 4, .tk = TK_Minus, .oper = (int)VBinary::Subtract, .type = OperInfo::Binary },
+  { .prio = 4, .tk = TK_Tilde, .oper = (int)VBinary::StrCat,   .type = OperInfo::Binary },
+
+  // priority 5 (shifts)
+  { .prio = 5, .tk = TK_LShift,  .oper = (int)VBinary::LShift,  .type = OperInfo::Binary },
+  { .prio = 5, .tk = TK_RShift,  .oper = (int)VBinary::RShift,  .type = OperInfo::Binary },
+  { .prio = 5, .tk = TK_URShift, .oper = (int)VBinary::URShift, .type = OperInfo::Binary },
+
+  // priority 6 (isa, !sia)
+  { .prio = 6, .tk = TK_IsA, .oper = (int)VBinary::IsA,    .type = OperInfo::Binary },
+  { .prio = 6, .tk = TK_EOF, .oper = (int)VBinary::NotIsA, .type = OperInfo::NotIsA }, // special
+
+  // priority 7 (comparisons)
+  { .prio = 7, .tk = TK_Less,          .oper = (int)VBinary::Less,          .type = OperInfo::Binary },
+  { .prio = 7, .tk = TK_LessEquals,    .oper = (int)VBinary::LessEquals,    .type = OperInfo::Binary },
+  { .prio = 7, .tk = TK_Greater,       .oper = (int)VBinary::Greater,       .type = OperInfo::Binary },
+  { .prio = 7, .tk = TK_GreaterEquals, .oper = (int)VBinary::GreaterEquals, .type = OperInfo::Binary },
+
+  // priority 8 (equality)
+  { .prio = 8, .tk = TK_Equals,    .oper = (int)VBinary::Equals,    .type = OperInfo::Binary },
+  { .prio = 8, .tk = TK_NotEquals, .oper = (int)VBinary::NotEquals, .type = OperInfo::Binary },
+
+  // priority 9 (binary and)
+  { .prio = 9, .tk = TK_And, .oper = (int)VBinary::And, .type = OperInfo::Binary },
+
+  // priority 10 (binary xor)
+  { .prio = 10, .tk = TK_XOr, .oper = (int)VBinary::XOr, .type = OperInfo::Binary },
+
+  // priority 11 (binary or)
+  { .prio = 11, .tk = TK_Or, .oper = (int)VBinary::Or, .type = OperInfo::Binary },
+
+  // priority 12 (logical and)
+  { .prio = 12, .tk = TK_AndLog, .oper = (int)VBinaryLogical::And, .type = OperInfo::BinaryLogical },
+
+  // priority 13 (logical or)
+  { .prio = 13, .tk = TK_OrLog, .oper = (int)VBinaryLogical::Or, .type = OperInfo::BinaryLogical },
+
+  // priority 14 (ternary)
+  { .prio = 14, .tk = TK_EOF, .oper = 0, .type = OperInfo::Ternary },
+
+  // priority 15 (assign)
+  { .prio = 15, .tk = TK_Assign, .oper = (int)VAssignment::Assign,                 .type = OperInfo::Assign },
+  { .prio = 15, .tk = TK_AddAssign, .oper = (int)VAssignment::AddAssign,           .type = OperInfo::Assign },
+  { .prio = 15, .tk = TK_MinusAssign, .oper = (int)VAssignment::MinusAssign,       .type = OperInfo::Assign },
+  { .prio = 15, .tk = TK_MultiplyAssign, .oper = (int)VAssignment::MultiplyAssign, .type = OperInfo::Assign },
+  { .prio = 15, .tk = TK_DivideAssign, .oper = (int)VAssignment::DivideAssign,     .type = OperInfo::Assign },
+  { .prio = 15, .tk = TK_ModAssign, .oper = (int)VAssignment::ModAssign,           .type = OperInfo::Assign },
+  { .prio = 15, .tk = TK_AndAssign, .oper = (int)VAssignment::AndAssign,           .type = OperInfo::Assign },
+  { .prio = 15, .tk = TK_OrAssign, .oper = (int)VAssignment::OrAssign,             .type = OperInfo::Assign },
+  { .prio = 15, .tk = TK_XOrAssign, .oper = (int)VAssignment::XOrAssign,           .type = OperInfo::Assign },
+  { .prio = 15, .tk = TK_LShiftAssign, .oper = (int)VAssignment::LShiftAssign,     .type = OperInfo::Assign },
+  { .prio = 15, .tk = TK_RShiftAssign, .oper = (int)VAssignment::RShiftAssign,     .type = OperInfo::Assign },
+  { .prio = 15, .tk = TK_URShiftAssign, .oper = (int)VAssignment::URShiftAssign,   .type = OperInfo::Assign },
+  { .prio = 15, .tk = TK_CatAssign, .oper = (int)VAssignment::CatAssign,           .type = OperInfo::Assign },
+
+  // end
+  { .prio = 666, .tk = TK_EOF, .oper = 0, .type = OperInfo::Binary },
+};
+
+static TArray<int> prioStart;
+static int MaxPriority = 0; // not initialised yet
+static int TernaryPriority = 0; // not initialised yet
+static int AssignPriority = 0; // not initialised yet
+
+
+//==========================================================================
+//
+//  GetMaxPriority
+//
+//==========================================================================
+static int GetMaxPriority () {
+  if (!MaxPriority) {
+    // find max priority, init priority starts
+    for (int f = 0; operList[f].prio < 666; ++f) {
+      if (operList[f].prio < MaxPriority) Sys_Error("internal compiler error (priorities)");
+      if (operList[f].prio != MaxPriority) {
+        MaxPriority = operList[f].prio;
+        while (prioStart.length() <= MaxPriority) prioStart.append(-1);
+        vassert(MaxPriority < prioStart.length());
+        vassert(prioStart[MaxPriority] == -1);
+        prioStart[MaxPriority] = f; // remember first index
+      }
+      if (operList[f].type == OperInfo::Ternary) {
+        vassert(TernaryPriority == 0);
+        TernaryPriority = operList[f].prio;
+      }
+      if (!AssignPriority && operList[f].type == OperInfo::Assign) {
+        AssignPriority = operList[f].prio;
+      }
+    }
+    vassert(TernaryPriority != 0);
+  }
+  return MaxPriority;
+}
+
+
+//==========================================================================
+//
+//  GetTernaryPriority
+//
+//==========================================================================
+static int GetTernaryPriority () {
+  if (!MaxPriority || !TernaryPriority) (void)GetMaxPriority(); // init tables
+  return TernaryPriority;
+}
+
+
+//==========================================================================
+//
+//  GetAssignPriority
+//
+//==========================================================================
+static int GetAssignPriority () {
+  if (!MaxPriority || !AssignPriority) (void)GetMaxPriority(); // init tables
+  return AssignPriority;
+}
+
+
 //==========================================================================
 //
 //  VParser::VParser
@@ -95,7 +253,7 @@ int VParser::ParseArgList (const TLocation &stloc, VExpression **argv) {
         Lex.Expect(TK_Default);
       } else {
         auto argloc = Lex.Location;
-        arg = ParseExpressionPriority13();
+        arg = ParseTernaryExpression();
         // omiting arguments is deprecated; use `default` instead
         if (!arg) {
           if (VMemberBase::koraxCompatibility) {
@@ -282,7 +440,7 @@ VLocalDecl *VParser::ParseLocalVar (VExpression *TypeExpr, LocalType lt, VExpres
       if (Lex.Token == TK_Assign) {
         if (lt == LocalForeach) ParseError(Lex.Location, "Foreach variable cannot be initialized");
         Lex.NextToken();
-        e.Value = ParseExpressionPriority13();
+        e.Value = ParseTernaryExpression();
       } else {
         // automatic type cannot be declared without initializer if it is outside `foreach`
         if (lt != LocalForeach && TypeExpr->Type.Type == TYPE_Automatic) {
@@ -350,10 +508,10 @@ VExpression *VParser::ParseExpressionPriority0 () {
         VExpression *op2 = nullptr;
         VExpression *op3 = nullptr;
         if (!Lex.Check(TK_RParen)) {
-          op1 = ParseExpressionPriority13();
+          op1 = ParseTernaryExpression();
           if (Lex.Check(TK_Comma)) {
-            op2 = ParseExpressionPriority13();
-            if (Lex.Check(TK_Comma)) op3 = ParseExpressionPriority13();
+            op2 = ParseTernaryExpression();
+            if (Lex.Check(TK_Comma)) op3 = ParseTernaryExpression();
           }
           Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
         }
@@ -365,8 +523,7 @@ VExpression *VParser::ParseExpressionPriority0 () {
     case TK_LParen:
       {
         Lex.NextToken();
-        VExpression *op = ParseExpressionPriority13();
-        //VExpression *op = ParseExpressionPriority14(false);
+        VExpression *op = ParseTernaryExpression();
         if (!op) ParseError(l, "Expression expected");
         Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
         return new VExprParens(op, l);
@@ -438,7 +595,7 @@ VExpression *VParser::ParseExpressionPriority0 () {
         // special construct: `class!Name` (without a paren)
         // used to get, for example, `Inventory` class when there is `Inventory` field
         if (Lex.Check(TK_LParen)) {
-          VExpression *Expr = ParseExpressionPriority13();
+          VExpression *Expr = ParseTernaryExpression();
           if (!Expr) ParseError(Lex.Location, "Expression expected");
           Lex.Expect(TK_RParen);
           return new VDynamicClassCast(ClassName, Expr, l);
@@ -475,7 +632,7 @@ VExpression *VParser::ParseExpressionPriority0 () {
           // string(val) --> convert name to string
           // name(val) --> convert string to name
           Lex.Expect(TK_LParen);
-          VExpression *op = ParseExpressionPriority13(); //k8:???
+          VExpression *op = ParseTernaryExpression();
           if (!op) ParseError(l, "Expression expected");
           Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
           switch (tk) {
@@ -550,16 +707,16 @@ VExpression *VParser::ParseExpressionPriority1 () {
         }
       }
     } else if (Lex.Check(TK_LBracket)) {
-      VExpression *ind = ParseExpressionPriority13();
+      VExpression *ind = ParseTernaryExpression();
       // slice?
       if (Lex.Check(TK_DotDot)) {
-        VExpression *hi = ParseExpressionPriority13();
+        VExpression *hi = ParseTernaryExpression();
         Lex.Expect(TK_RBracket, ERR_BAD_ARRAY);
         op = new VSliceOp(op, ind, hi, l);
       } else {
         VExpression *ind2 = nullptr;
         // second index
-        if (Lex.Check(TK_Comma)) ind2 = ParseExpressionPriority13();
+        if (Lex.Check(TK_Comma)) ind2 = ParseTernaryExpression();
         Lex.Expect(TK_RBracket, ERR_BAD_ARRAY);
         // local declaration?
         if (op->IsSingleName()) {
@@ -580,368 +737,108 @@ VExpression *VParser::ParseExpressionPriority1 () {
 
 //==========================================================================
 //
-//  VParser::ParseExpressionPriority2
-//
-//  unary: `+`, `-`, `!`, `~`, `&`, `*`
-//  prefix: `++`, `--`
-//  postfix: `++`, `--`
+//  VParser::ParseExpressionInternal
 //
 //==========================================================================
-VExpression *VParser::ParseExpressionPriority2 () {
-  VExpression *op;
-  TLocation l = Lex.Location;
+VExpression *VParser::ParseExpressionInternal (int prio, bool allowAssign) {
+  vassert(prio >= 0);
 
-  if (Lex.Check(TK_Plus)) { op = ParseExpressionPriority2(); return new VUnary(VUnary::Plus, op, l); }
-  if (Lex.Check(TK_Minus)) { op = ParseExpressionPriority2(); return new VUnary(VUnary::Minus, op, l); }
-  if (Lex.Check(TK_Not)) { op = ParseExpressionPriority2(); return new VUnary(VUnary::Not, op, l); }
-  if (Lex.Check(TK_Tilde)) { op = ParseExpressionPriority2(); return new VUnary(VUnary::BitInvert, op, l); }
-  if (Lex.Check(TK_And)) { op = ParseExpressionPriority1(); return new VUnary(VUnary::TakeAddress, op, l); }
-  if (Lex.Check(TK_Asterisk)) { op = ParseExpressionPriority2(); return new VPushPointed(op, l); }
-  if (Lex.Check(TK_Inc)) { op = ParseExpressionPriority2(); return new VUnaryMutator(VUnaryMutator::PreInc, op, l); }
-  if (Lex.Check(TK_Dec)) { op = ParseExpressionPriority2(); return new VUnaryMutator(VUnaryMutator::PreDec, op, l); }
+  // two special priorities
+  if (prio == 0) return ParseExpressionPriority0();
+  if (prio == 1) return ParseExpressionPriority1();
 
-  op = ParseExpressionPriority1();
-  if (!op) return nullptr;
-
-  l = Lex.Location;
-
-  if (Lex.Check(TK_Inc)) return new VUnaryMutator(VUnaryMutator::PostInc, op, l);
-  if (Lex.Check(TK_Dec)) return new VUnaryMutator(VUnaryMutator::PostDec, op, l);
-
-  return op;
-}
-
-
-//==========================================================================
-//
-//  VParser::ParseExpressionPriority3
-//
-//  binary: `*`, `/`, `%`
-//
-//==========================================================================
-VExpression *VParser::ParseExpressionPriority3 () {
-  VExpression *op1 = ParseExpressionPriority2();
-  if (!op1) return nullptr;
-  for (;;) {
+  // ternary (here, to initialise priority index table if it is not initialised yet)
+  if (prio == GetTernaryPriority()) {
+    VExpression *op = ParseExpressionInternal(prio-1, allowAssign);
+    if (!op) return nullptr;
     TLocation l = Lex.Location;
-    if (Lex.Check(TK_Asterisk)) {
-      VExpression *op2 = ParseExpressionPriority2();
-      op1 = new VBinary(VBinary::Multiply, op1, op2, l);
-    } else if (Lex.Check(TK_Slash)) {
-      VExpression *op2 = ParseExpressionPriority2();
-      op1 = new VBinary(VBinary::Divide, op1, op2, l);
-    } else if (Lex.Check(TK_Percent)) {
-      VExpression *op2 = ParseExpressionPriority2();
-      op1 = new VBinary(VBinary::Modulus, op1, op2, l);
-    } else {
-      break;
+    if (Lex.Check(TK_Quest)) {
+      // check for `?:`, and duplicate op
+      if (Lex.Check(TK_Colon)) {
+        VExpression *op2 = ParseExpressionInternal(prio, allowAssign); // right-associative
+        op = new VConditional(op, op->SyntaxCopy(), op2, l);
+      } else {
+        VExpression *op1 = ParseExpressionInternal(prio, allowAssign); // right-associative
+        Lex.Expect(TK_Colon, ERR_MISSING_COLON);
+        VExpression *op2 = ParseExpressionInternal(prio, allowAssign); // right-associative
+        op = new VConditional(op, op1, op2, l);
+      }
     }
+    // done, it is right-associative
+    return op;
   }
-  return op1;
-}
 
+  vassert(prio < prioStart.length() && prioStart[prio] >= 0);
 
-//==========================================================================
-//
-//  VParser::ParseExpressionPriority4
-//
-//  binary: `+`, `-`, `~`
-//
-//==========================================================================
-VExpression *VParser::ParseExpressionPriority4 () {
-  VExpression *op1 = ParseExpressionPriority3();
-  if (!op1) return nullptr;
-  for (;;) {
+  // unaries
+  if (prio == 2) {
     TLocation l = Lex.Location;
-    if (Lex.Check(TK_Plus)) {
-      VExpression *op2 = ParseExpressionPriority3();
-      op1 = new VBinary(VBinary::Add, op1, op2, l);
-    } else if (Lex.Check(TK_Minus)) {
-      VExpression *op2 = ParseExpressionPriority3();
-      op1 = new VBinary(VBinary::Subtract, op1, op2, l);
-    } else if (Lex.Check(TK_Tilde)) {
-      VExpression *op2 = ParseExpressionPriority3();
-      op1 = new VBinary(VBinary::StrCat, op1, op2, l);
-    } else {
-      break;
+    VExpression *op;
+    for (const OperInfo *oinf = operList+prioStart[prio]; oinf->prio <= prio; ++oinf) {
+      if (oinf->prio == prio && Lex.Check(oinf->tk)) {
+        op = ParseExpressionInternal(prio, allowAssign); // right-associative
+        if (!op) return nullptr;
+        switch (oinf->type) {
+          case OperInfo::Unary: return new VUnary((VUnary::EUnaryOp)oinf->oper, op, l);
+          case OperInfo::UnaryAsterisk: return new VPushPointed(op, l);
+          case OperInfo::PrefixIncDec: return new VUnaryMutator((VUnaryMutator::EIncDec)oinf->oper, op, l);
+          default: Sys_Error("internal compiler error in unary expression parser");
+        }
+      }
     }
-  }
-  return op1;
-}
-
-
-//==========================================================================
-//
-//  VParser::ParseExpressionPriority5
-//
-//  binary: `<<`, `>>`
-//
-//==========================================================================
-VExpression *VParser::ParseExpressionPriority5 () {
-  VExpression *op1 = ParseExpressionPriority4();
-  if (!op1) return nullptr;
-  for (;;) {
-    TLocation l = Lex.Location;
-    if (Lex.Check(TK_LShift)) {
-      VExpression *op2 = ParseExpressionPriority4();
-      op1 = new VBinary(VBinary::LShift, op1, op2, l);
-    } else if (Lex.Check(TK_RShift)) {
-      VExpression *op2 = ParseExpressionPriority4();
-      op1 = new VBinary(VBinary::RShift, op1, op2, l);
-    } else if (Lex.Check(TK_URShift)) {
-      VExpression *op2 = ParseExpressionPriority4();
-      op1 = new VBinary(VBinary::URShift, op1, op2, l);
-    } else {
-      break;
-    }
-  }
-  return op1;
-}
-
-
-//==========================================================================
-//
-//  VParser::ParseExpressionPriority5_1
-//
-//  binary: `isa`, `!isa`
-//
-//==========================================================================
-VExpression *VParser::ParseExpressionPriority5_1 () {
-  VExpression *op1 = ParseExpressionPriority5();
-  if (!op1) return nullptr;
-  for (;;) {
-    TLocation l = Lex.Location;
-    if (Lex.Check(TK_IsA)) {
-      VExpression *op2 = ParseExpressionPriority5();
-      op1 = new VBinary(VBinary::IsA, op1, op2, l);
-    } else if (Lex.Token == TK_Not && Lex.peekTokenType(1) == TK_IsA) {
-      Lex.NextToken();
-      Lex.NextToken();
-      VExpression *op2 = ParseExpressionPriority5();
-      op1 = new VBinary(VBinary::NotIsA, op1, op2, l);
-    } else {
-      break;
-    }
-  }
-  return op1;
-}
-
-
-//==========================================================================
-//
-//  VParser::ParseExpressionPriority6
-//
-//  binary: `<`, `<=`, `>`, `>=`
-//
-//==========================================================================
-VExpression *VParser::ParseExpressionPriority6 () {
-  VExpression *op1 = ParseExpressionPriority5_1();
-  if (!op1) return nullptr;
-  for (;;) {
-    TLocation l = Lex.Location;
-    if (Lex.Check(TK_Less)) {
-      VExpression *op2 = ParseExpressionPriority5_1();
-      op1 = new VBinary(VBinary::Less, op1, op2, l);
-    } else if (Lex.Check(TK_LessEquals)) {
-      VExpression *op2 = ParseExpressionPriority5_1();
-      op1 = new VBinary(VBinary::LessEquals, op1, op2, l);
-    } else if (Lex.Check(TK_Greater)) {
-      VExpression *op2 = ParseExpressionPriority5_1();
-      op1 = new VBinary(VBinary::Greater, op1, op2, l);
-    } else if (Lex.Check(TK_GreaterEquals)) {
-      VExpression *op2 = ParseExpressionPriority5_1();
-      op1 = new VBinary(VBinary::GreaterEquals, op1, op2, l);
-    } else {
-      break;
-    }
-  }
-  return op1;
-}
-
-
-//==========================================================================
-//
-//  VParser::ParseExpressionPriority7
-//
-//  binary: `==`, `!=`
-//
-//==========================================================================
-VExpression *VParser::ParseExpressionPriority7 () {
-  VExpression *op1 = ParseExpressionPriority6();
-  if (!op1) return nullptr;
-  for (;;) {
-    TLocation l = Lex.Location;
-    if (Lex.Check(TK_Equals)) {
-      VExpression *op2 = ParseExpressionPriority6();
-      op1 = new VBinary(VBinary::Equals, op1, op2, l);
-    } else if (Lex.Check(TK_NotEquals)) {
-      VExpression *op2 = ParseExpressionPriority6();
-      op1 = new VBinary(VBinary::NotEquals, op1, op2, l);
-    } else {
-      break;
-    }
-  }
-  return op1;
-}
-
-
-//==========================================================================
-//
-//  VParser::ParseExpressionPriority8
-//
-//  binary: `&`
-//
-//==========================================================================
-VExpression *VParser::ParseExpressionPriority8 () {
-  VExpression *op1 = ParseExpressionPriority7();
-  if (!op1) return nullptr;
-  TLocation l = Lex.Location;
-  while (Lex.Check(TK_And)) {
-    VExpression *op2 = ParseExpressionPriority7();
-    op1 = new VBinary(VBinary::And, op1, op2, l);
+    // higher priority
+    op = ParseExpressionInternal(prio-1, allowAssign);
+    if (!op) return nullptr;
+    // postfix inc/dec
     l = Lex.Location;
+         if (Lex.Check(TK_Inc)) op = new VUnaryMutator(VUnaryMutator::PostInc, op, l);
+    else if (Lex.Check(TK_Dec)) op = new VUnaryMutator(VUnaryMutator::PostDec, op, l);
+    return op;
   }
-  return op1;
-}
 
-
-//==========================================================================
-//
-//  VParser::ParseExpressionPriority9
-//
-//  binary: `^`
-//
-//==========================================================================
-VExpression *VParser::ParseExpressionPriority9 () {
-  VExpression *op1 = ParseExpressionPriority8();
+  // binaries
+  vassert(prio >= 3);
+  VExpression *op1 = ParseExpressionInternal(prio-1, allowAssign);
   if (!op1) return nullptr;
-  TLocation l = Lex.Location;
-  while (Lex.Check(TK_XOr)) {
-    VExpression *op2 = ParseExpressionPriority8();
-    op1 = new VBinary(VBinary::XOr, op1, op2, l);
-    l = Lex.Location;
-  }
-  return op1;
-}
 
+  for (;;) {
+    TLocation l = Lex.Location;
 
-//==========================================================================
-//
-//  VParser::ParseExpressionPriority10
-//
-//  binary: `|`
-//
-//==========================================================================
-VExpression *VParser::ParseExpressionPriority10 () {
-  VExpression *op1 = ParseExpressionPriority9();
-  if (!op1) return nullptr;
-  TLocation l = Lex.Location;
-  while (Lex.Check(TK_Or)) {
-    VExpression *op2 = ParseExpressionPriority9();
-    op1 = new VBinary(VBinary::Or, op1, op2, l);
-    l = Lex.Location;
-  }
-  return op1;
-}
+    // find operator
+    const OperInfo *oinf;
+    for (oinf = operList+prioStart[prio]; oinf->prio <= prio; ++oinf) {
+      if (oinf->prio == prio) {
+        if (oinf->type == OperInfo::NotIsA) {
+          // special check for `!isa`
+          if (Lex.Token == TK_Not && Lex.peekTokenType(1) == TK_IsA) {
+            // skip both tokens
+            Lex.NextToken();
+            Lex.NextToken();
+            break;
+          }
+        } else {
+          if (Lex.Check(oinf->tk)) break;
+        }
+      }
+    }
+    if (oinf->prio != prio) break; // not found
 
-
-//==========================================================================
-//
-//  VParser::ParseExpressionPriority11
-//
-//  binary: `&&`
-//
-//==========================================================================
-VExpression *VParser::ParseExpressionPriority11 () {
-  VExpression *op1 = ParseExpressionPriority10();
-  if (!op1) return nullptr;
-  TLocation l = Lex.Location;
-  while (Lex.Check(TK_AndLog)) {
-    VExpression *op2 = ParseExpressionPriority10();
-    op1 = new VBinaryLogical(VBinaryLogical::And, op1, op2, l);
-    l = Lex.Location;
-  }
-  return op1;
-}
-
-
-//==========================================================================
-//
-//  VParser::ParseExpressionPriority12
-//
-//  binary: `||`
-//
-//==========================================================================
-VExpression *VParser::ParseExpressionPriority12 () {
-  VExpression *op1 = ParseExpressionPriority11();
-  if (!op1) return nullptr;
-  TLocation l = Lex.Location;
-  while (Lex.Check(TK_OrLog)) {
-    VExpression *op2 = ParseExpressionPriority11();
-    op1 = new VBinaryLogical(VBinaryLogical::Or, op1, op2, l);
-    l = Lex.Location;
-  }
-  return op1;
-}
-
-
-//==========================================================================
-//
-//  VParser::ParseExpressionPriority13
-//
-//  ternary: `?:`
-//
-//==========================================================================
-VExpression *VParser::ParseExpressionPriority13 () {
-  VExpression *op = ParseExpressionPriority12();
-  if (!op) return nullptr;
-  TLocation l = Lex.Location;
-  if (Lex.Check(TK_Quest)) {
-    // check for `?:`, and duplicate op
-    if (Lex.Check(TK_Colon)) {
-      VExpression *op2 = ParseExpressionPriority13();
-      op = new VConditional(op, op->SyntaxCopy(), op2, l);
-    } else {
-      VExpression *op1 = ParseExpressionPriority13();
-      Lex.Expect(TK_Colon, ERR_MISSING_COLON);
-      VExpression *op2 = ParseExpressionPriority13();
-      op = new VConditional(op, op1, op2, l);
+    VExpression *op2 = ParseExpressionInternal(prio-1, allowAssign);
+    switch (oinf->type) {
+      case OperInfo::Binary:
+      case OperInfo::NotIsA:
+        op1 = new VBinary((VBinary::EBinOp)oinf->oper, op1, op2, l);
+        break;
+      case OperInfo::BinaryLogical:
+        op1 = new VBinaryLogical((VBinaryLogical::ELogOp)oinf->oper, op1, op2, l);
+        break;
+      case OperInfo::Assign:
+        op1 = new VAssignment((VAssignment::EAssignOper)oinf->oper, op1, op2, l);
+        return op1; // return here, as assignment has no result
+      default: Sys_Error("internal compiler error in binary expression parser");
     }
   }
-  return op;
-}
 
-
-//==========================================================================
-//
-//  VParser::ParseExpressionPriority14
-//
-//  assignmnets: `=`, and various `op=`
-//
-//==========================================================================
-VExpression *VParser::ParseExpressionPriority14 (bool allowAssign) {
-  VExpression *op1 = ParseExpressionPriority13();
-  if (!op1) return nullptr;
-  TLocation l = Lex.Location;
-  VAssignment::EAssignOper oper = VAssignment::Assign;
-       if (Lex.Check(TK_Assign)) oper = VAssignment::Assign;
-  else if (Lex.Check(TK_AddAssign)) oper = VAssignment::AddAssign;
-  else if (Lex.Check(TK_MinusAssign)) oper = VAssignment::MinusAssign;
-  else if (Lex.Check(TK_MultiplyAssign)) oper = VAssignment::MultiplyAssign;
-  else if (Lex.Check(TK_DivideAssign)) oper = VAssignment::DivideAssign;
-  else if (Lex.Check(TK_ModAssign)) oper = VAssignment::ModAssign;
-  else if (Lex.Check(TK_AndAssign)) oper = VAssignment::AndAssign;
-  else if (Lex.Check(TK_OrAssign)) oper = VAssignment::OrAssign;
-  else if (Lex.Check(TK_XOrAssign)) oper = VAssignment::XOrAssign;
-  else if (Lex.Check(TK_LShiftAssign)) oper = VAssignment::LShiftAssign;
-  else if (Lex.Check(TK_RShiftAssign)) oper = VAssignment::RShiftAssign;
-  else if (Lex.Check(TK_URShiftAssign)) oper = VAssignment::URShiftAssign;
-  else if (Lex.Check(TK_CatAssign)) oper = VAssignment::CatAssign;
-  else return op1;
-  // parse `n = delegate ...`
-  VExpression *op2 = ParseExpressionPriority13();
-  op1 = new VAssignment(oper, op1, op2, l);
-  if (!allowAssign) ParseError(l, "assignment is not allowed here");
   return op1;
 }
 
@@ -956,7 +853,28 @@ VExpression *VParser::ParseExpressionPriority14 (bool allowAssign) {
 VExpression *VParser::ParseExpression (bool allowAssign) {
   CheckForLocal = false;
   if (!allowAssign && Lex.Token == TK_LParen) allowAssign = true;
-  return ParseExpressionPriority14(allowAssign);
+  return ParseExpressionInternal(GetMaxPriority(), allowAssign);
+}
+
+
+//==========================================================================
+//
+//  VParser::ParseTernaryExpression
+//
+//==========================================================================
+VExpression *VParser::ParseTernaryExpression () {
+  CheckForLocal = false;
+  return ParseExpressionInternal(GetTernaryPriority(), /*allowAssign*/false);
+}
+
+
+//==========================================================================
+//
+//  VParser::ParseAssignExpression
+//
+//==========================================================================
+VExpression *VParser::ParseAssignExpression () {
+  return ParseExpressionInternal(GetAssignPriority(), /*allowAssign*/true);
 }
 
 
@@ -1499,7 +1417,7 @@ VStatement *VParser::ParseStatement () {
       }
       // expression
       CheckForLocal = true;
-      VExpression *Expr = ParseExpressionPriority14(true);
+      VExpression *Expr = ParseAssignExpression();
       if (!Expr) {
         if (!Lex.Check(TK_Semicolon)) {
           ParseError(l, "Token %s makes no sense here", VLexer::TokenNames[Lex.Token]);
