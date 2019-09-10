@@ -6150,6 +6150,7 @@ void CheatHelper_AllWeapons () {
     class!Weapon repl = class!Weapon(GetClassReplacement(WpnCls));
     if (repl && repl != WpnCls) continue;
     // check if it is valid
+    if (!EntityEx.CheckSpawnGameFilter(WpnCls, Level.Game)) continue;
     if (!Weapon.IsUsableWeaponClass(WpnCls)) continue;
     // check if already have it
     if (EntityEx(MO).FindInventory(WpnCls, disableReplacement:true)) continue;
@@ -6179,6 +6180,7 @@ void CheatHelper_AllAmmo () {
   foreach AllClasses(Ammo, out Cls) {
     // only direct descendants
     if (GetClassParent(Cls) != Ammo) continue;
+    if (!EntityEx.CheckSpawnGameFilter(Cls, Level.Game)) continue;
     Ammo AmmoItem = EntityEx.SpawnAmmoType(Level, class!Ammo(Cls));
     if (!AmmoItem) continue;
     Inventory invAmmo = EntityEx(MO).FindInventory(Cls);
@@ -6212,6 +6214,7 @@ void CheatHelper_AllKeys () {
   foreach AllClasses(Key, out Cls) {
     class!Key repl = class!Key(GetClassReplacement(Cls));
     if (repl && repl != Cls) continue;
+    if (!EntityEx.CheckSpawnGameFilter(Cls, Level.Game)) continue;
     if (!EntityEx.IsSpawnableClass(Cls)) continue;
     if (EntityEx(MO).FindInventory(Cls, disableReplacement:true)) continue;
     EntityEx(MO).GiveInventoryType(Cls, disableReplace:true);

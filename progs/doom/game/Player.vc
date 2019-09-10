@@ -300,6 +300,7 @@ void Cheat_Gimme () {
       if (WpnCls.default.bCheatNotWeapon) continue;
       class!Weapon repl = class!Weapon(GetClassReplacement(WpnCls));
       if (repl && repl != WpnCls) continue;
+      if (!EntityEx.CheckSpawnGameFilter(WpnCls, MO.Level.Game)) continue;
       if (!Weapon.IsUsableWeaponClass(WpnCls)) continue;
       if (WpnCls !isa 'Chainsaw') continue;
       if (EntityEx(MO).FindInventory(WpnCls, disableReplacement:true)) {
@@ -328,6 +329,7 @@ void Cheat_Gimme () {
         if (WpnCls.default.bCheatNotWeapon) continue;
         class!Weapon repl = class!Weapon(GetClassReplacement(WpnCls));
         if (repl && repl != WpnCls) continue;
+        if (!EntityEx.CheckSpawnGameFilter(WpnCls, MO.Level.Game)) continue;
         if (!Weapon.IsUsableWeaponClass(WpnCls)) continue;
         if (WpnCls isa 'Chainsaw') continue;
         if (GetClassReplacee(WpnCls) !isa 'Chainsaw') continue;

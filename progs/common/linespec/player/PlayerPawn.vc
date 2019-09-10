@@ -383,6 +383,7 @@ void InitializeWeaponSlots () {
         continue;
       }
       // check if this weapon can be "readied"
+      if (!EntityEx.CheckSpawnGameFilter(wcls, Level.Game)) continue;
       if (!Weapon.IsUsableWeaponClass(wcls)) {
         if (debugDump) printdebug("*** %C: this weapon is unusable, skipping it", wcls);
         continue;
@@ -418,6 +419,7 @@ void InitializeWeaponSlots () {
           // skip known  weapons
           name cname = GetClassName(wcls);
           bool doreport = GetCvarB('dbg_report_orphan_weapons');
+          /*
           if (doreport) {
             switch (cname) {
               case 'Chainsaw':
@@ -435,6 +437,7 @@ void InitializeWeaponSlots () {
                 break;
             }
           }
+          */
           if (doreport) {
             printwarn("weapon `%C` has no defined slot (put into slot 11): %s", wcls, GetClassLocationStr(wcls));
           }

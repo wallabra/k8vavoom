@@ -527,6 +527,20 @@ replication {
 
 //==========================================================================
 //
+//  CheckSpawnGameFilter
+//
+//==========================================================================
+static bool CheckSpawnGameFilter (class cls, GameInfo gi) {
+  if (!cls) return false;
+  if (!gi) return true;
+  class!EntityEx e = class!EntityEx(cls);
+  if (!e) return true;
+  return !!(e.default.GameFilter&gi.GameFilterFlag);
+}
+
+
+//==========================================================================
+//
 //  CopyTranslations
 //
 //==========================================================================
