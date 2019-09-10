@@ -132,6 +132,7 @@ public:
   VExpression *TypeExpr;
   VName Name;
   TLocation Loc;
+  TArray<VName> NamedFlags; // used in decorate
 
   inline VMethodParam () : TypeExpr(nullptr), Name(NAME_None), Loc() {}
   inline ~VMethodParam () { clear(); }

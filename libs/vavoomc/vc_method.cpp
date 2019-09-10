@@ -70,8 +70,9 @@ static void PF_Fixme () {
 //==========================================================================
 void VMethodParam::clear () {
   delete TypeExpr; TypeExpr = nullptr;
-  Name = NAME_None;
-  Loc = TLocation();
+  // don't clear name, we'll need it
+  //Name = NAME_None;
+  //Loc = TLocation();
 }
 
 

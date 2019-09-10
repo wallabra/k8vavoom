@@ -1918,7 +1918,8 @@ bool VInvocation::RebuildArgs () {
 //
 //==========================================================================
 VExpression *VInvocation::DoResolve (VEmitContext &ec) {
-  if (ec.Package->Name == NAME_decorate) CheckDecorateParams(ec);
+       if (Func && (Func->Flags&FUNC_Decorate) != 0) CheckDecorateParams(ec);
+  else if (ec.Package->Name == NAME_decorate) CheckDecorateParams(ec);
 
   if (DelegateLocal >= 0) {
     //FIXME
@@ -2803,13 +2804,8 @@ void VInvocation::CheckParams (VEmitContext &ec) {
 //
 //==========================================================================
 void VInvocation::CheckDecorateParams (VEmitContext &ec) {
-  int maxParams;
   int requiredParams = Func->NumParams;
-  if (Func->Flags&FUNC_VarArgs) {
-    maxParams = VMethod::MAX_PARAMS-1;
-  } else {
-    maxParams = Func->NumParams;
-  }
+  int maxParams = (Func->Flags&FUNC_VarArgs ? VMethod::MAX_PARAMS-1 : Func->NumParams);
 
   if (NumArgs > maxParams) ParseError(Loc, "Incorrect number of arguments to `%s`, need %d, got %d", Func->GetName(), maxParams, NumArgs);
 
@@ -2853,33 +2849,10 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
             else v = 0;
           }
         }
-        //if (v < 0 || v > 7) v = 0;
-        //v &= 7;
         if (v < 0 || v > 127) v = 0;
-        //k8: don't show warning, it was only for debugging
-        //ParseWarning(Args[i]->Loc, "`%s` argument #%d converted from '%s' to %d", Func->GetName(), i+1, *s, v);
         VExpression *e = new VIntLiteral(v, Args[i]->Loc);
         delete Args[i];
         Args[i] = e;
-        /*
-        int chan = (Args[i]->GetIntConst()&7);
-        const char *chanName;
-        switch (chan) {
-          default:
-          case 0: chanName = "Auto"; break;
-          case 1: chanName = "Weapon"; break;
-          case 2: chanName = "Voice"; break;
-          case 3: chanName = "Item"; break;
-          case 4: chanName = "Body"; break;
-          case 5: chanName = "SoundSlot5"; break;
-          case 6: chanName = "SoundSlot6"; break;
-          case 7: chanName = "SoundSlot7"; break;
-        }
-        ParseWarning(Args[i]->Loc, "`%s` argument #%d should be string (replaced %d with \"%s\"); PLEASE, FIX THE CODE!", Func->GetName(), i+1, Args[i]->GetIntConst(), chanName);
-        VExpression *e = new VStringLiteral(VStr(chanName), ec.Package->FindString(chanName), Args[i]->Loc);
-        delete Args[i];
-        Args[i] = e;
-        */
       }
     }
 
@@ -2891,7 +2864,6 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
     ParseError(Loc, "Incorrect number of arguments to `%s`, need %d, got %d", Func->GetName(), maxParams, NumArgs);
   } else {
     if (Args[0] && Args[0]->IsIntConst() && VStr::Cmp(Func->GetName(), "A_Jump") == 0) {
-      // warn for `A_Jump(256<or-more>, "Label")`
       int prob = Args[0]->GetIntConst();
       if (prob < 1) ParseWarning(Loc, "this `A_Jump` is never taken");
     }
