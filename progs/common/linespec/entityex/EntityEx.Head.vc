@@ -512,6 +512,12 @@ bool bDontCorpse;
 // temporary for physics z change due to stepping
 transient float tmp_phys_z_change;
 
+// so we can check it in various spawners
+// there is no need to save it
+// set in decorate parser
+// default value is "everything"
+transient int GameFilter = -1;
+
 
 replication {
   reliable if (Role == ROLE_Authority && bNetOwner)

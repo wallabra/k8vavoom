@@ -2837,6 +2837,8 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
     //if (nfo) nfo->Class = Class;
   }
 
+  SetClassFieldInt(Class, "GameFilter", (GameFilter ? GameFilter : -1));
+
   DoClassReplacement(ReplaceeClass, Class);
   /*
   if (ReplaceeClass) {
