@@ -1,0 +1,15 @@
+============
+idx=0; val=42
+idx=1; val=666
+idx=2; val=69
+idx=3; val=999
+============
+idx=0; val=1042
+idx=1; val=1666
+idx=2; val=1069
+idx=3; val=1999
+============
+idx=0; val=1042
+idx=1; val=1666
+idx=2; val=1069
+idx=3; val=1999
