@@ -66,8 +66,13 @@ private:
 
 private:
   void initialize ();
-
   void setError ();
+
+  // returns 0 if no more data, -1 on error, 1 if something was read
+  int fillPackedBuffer (); // this locks; also, calls `setError()` if necessary
+
+  bool resetZStream (); // this locks; also, calls `setError()` if necessary
+  void deinitZStream ();
 
   // just read, no `nextpos` advancement
   // returns number of bytes read, -1 on error, or 0 on EOF
