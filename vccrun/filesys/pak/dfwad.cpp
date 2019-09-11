@@ -152,7 +152,7 @@ bool VDFWadFile::openArchive () {
 VStream *VDFWadFile::openWithIndex (int idx) {
   if (idx < 0 || idx >= fileCount) return nullptr;
   fileStream->Seek(files[idx].pkofs);
-  return new VZipStreamReader(files[idx].name, fileStream, files[idx].pksize);
+  return new VZipStreamReader(true, files[idx].name, fileStream, files[idx].pksize);
 }
 
 
