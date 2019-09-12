@@ -20,124 +20,6 @@
 #include <math.h>
 
 
-//, left:Number, right:Number, top:Number, bottom:Number) : Boolean
-/*
-static bool lineRectangleIntersect (int x0, int y0, int x1, int y1) {
-  // calculate m and c for the equation for the line (y = mx+c)
-  m = (y1-y0)/(x1-x0);
-  c = y0-(m*x0);
-
-  if (m > 0) {
-    // going up from right to left then the top intersect point is on the left
-    top_intersection = (m*l+c);
-    bottom_intersection = (m*r+c);
-  } else {
-    // otherwise it's on the right
-    top_intersection = (m*r+c);
-    bottom_intersection = (m*l+c);
-  }
-
-  // work out the top and bottom extents for the triangle
-  if (y0 < y1) {
-    toptrianglepoint = y0;
-    bottomtrianglepoint = y1;
-  } else {
-    toptrianglepoint = y1;
-    bottomtrianglepoint = y0;
-  }
-
-  var topoverlap : Number;
-  var botoverlap : Number;
-
-  // and calculate the overlap between those two bounds
-  topoverlap = top_intersection>toptrianglepoint ? top_intersection : toptrianglepoint;
-  botoverlap = bottom_intersection<bottomtrianglepoint ? bottom_intersection : bottomtrianglepoint;
-
-  // (topoverlap<botoverlap) :
-  // if the intersection isn't the right way up then we have no overlap
-
-  // (!((botoverlap<t) || (topoverlap>b)) :
-  // If the bottom overlap is higher than the top of the rectangle or the top overlap is
-  // lower than the bottom of the rectangle we don't have intersection. So return the negative
-  // of that. Much faster than checking each of the points is within the bounds of the rectangle.
-  return (topoverlap<botoverlap) && (!((botoverlap<t) || (topoverlap>b)));
-}
-*/
-
-/*
-static bool LSegsIntersectionPoint (int l0x0, int l0y0, int l0x1, int l0y1, int l1x0, int l1y0, int l1x1, int l1y1) {
-  // Get A,B of first line - points : ps1 to pe1
-  float A1 = l0y1-l0y0;
-  float B1 = l0x0-l0x1;
-  // Get A,B of second line - points : ps2 to pe2
-  float A2 = l1y1-l1y0;
-  float B2 = l1x0-l1x1;
-
-  // Get delta and check if the lines are parallel
-  float delta = A1*B2 - A2*B1;
-  if(delta == 0) return null;
-
-  // Get C of first and second lines
-  float C2 = A2*l1x0+B2*l1y0;
-  float C1 = A1*l0x0+B1*l0y0;
-  //invert delta to make division cheaper
-  float invdelta = 1/delta;
-  // now return the Vector2 intersection point
-  return new Vector2( (B2*C1 - B1*C2)*invdelta, (A1*C2 - A2*C1)*invdelta );
-}
-*/
-
-
-/*
-Vector2? LSegRec_IntersPoint_v02(Vector2 p1, Vector2 p2, float min_x, float min_y, float max_x, float max_y)
-{
-    Vector2? intersection;
-
-    if (p2.x < min_x) //If the second point of the segment is at left/bottom-left/top-left of the AABB
-    {
-        if (p2.y > min_y && p2.y < max_y) { return LSegsIntersectionPoint(p1, p2, new Vector2(min_x, min_y), new Vector2(min_x, max_y)); } //If it is at the left
-        else if (p2.y < min_y) //If it is at the bottom-left
-        {
-            intersection = LSegsIntersectionPoint(p1, p2, new Vector2(min_x, min_y), new Vector2(max_x, min_y));
-            if (intersection == null) intersection = LSegsIntersectionPoint(p1, p2, new Vector2(min_x, min_y), new Vector2(min_x, max_y));
-            return intersection;
-        }
-        else //if p2.y > max_y, i.e. if it is at the top-left
-        {
-            intersection = LSegsIntersectionPoint(p1, p2, new Vector2(min_x, max_y), new Vector2(max_x, max_y));
-            if (intersection == null) intersection = LSegsIntersectionPoint(p1, p2, new Vector2(min_x, min_y), new Vector2(min_x, max_y));
-            return intersection;
-        }
-    }
-
-    else if (p2.x > max_x) //If the second point of the segment is at right/bottom-right/top-right of the AABB
-    {
-        if (p2.y > min_y && p2.y < max_y) { return LSegsIntersectionPoint(p1, p2, new Vector2(max_x, min_y), new Vector2(max_x, max_y)); } //If it is at the right
-        else if (p2.y < min_y) //If it is at the bottom-right
-        {
-            intersection = LSegsIntersectionPoint(p1, p2, new Vector2(min_x, min_y), new Vector2(max_x, min_y));
-            if (intersection == null) intersection = LSegsIntersectionPoint(p1, p2, new Vector2(max_x, min_y), new Vector2(max_x, max_y));
-            return intersection;
-        }
-        else //if p2.y > max_y, i.e. if it is at the top-left
-        {
-            intersection = LSegsIntersectionPoint(p1, p2, new Vector2(min_x, max_y), new Vector2(max_x, max_y));
-            if (intersection == null) intersection = LSegsIntersectionPoint(p1, p2, new Vector2(max_x, min_y), new Vector2(max_x, max_y));
-            return intersection;
-        }
-    }
-
-    else //If the second point of the segment is at top/bottom of the AABB
-    {
-        if (p2.y < min_y) return LSegsIntersectionPoint(p1, p2, new Vector2(min_x, min_y), new Vector2(max_x, min_y)); //If it is at the bottom
-        if (p2.y > max_y) return LSegsIntersectionPoint(p1, p2, new Vector2(min_x, max_y), new Vector2(max_x, max_y)); //If it is at the top
-    }
-
-    return null;
-
-}
-*/
-
 // Liang-Barsky
 // returns -1 if no collision, -2 if the line is inside the box, otherwise entering side
 // enter time defined only for intersection case
@@ -192,6 +74,285 @@ static __attribute__((unused)) int lineAABB (int x0, int y0, int x1, int y1,
 
   return (int)enterSide;
 }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+struct DDALineWalker {
+private:
+  enum { STCSize = 64 }; // up 8x8 box won't require allocations
+
+  struct __attribute__((packed)) Point { vint32 x, y; };
+
+private:
+  // on each step, we'll put all new coords in a buffer
+  Point stCoords[STCSize];
+  Point *dynCoords;
+  unsigned dynCoordsSize;
+
+  vint32 x0, y0, x1, y1;
+  vint32 tileWidth, tileHeight;
+  vint32 boxWidth, boxHeight;
+
+  unsigned pointCount, pointCurr;
+
+private:
+  float fltx0, flty0;
+  float fltx1, flty1;
+  float deltaDistX, deltaDistY; // length of ray from one x or y-side to next x or y-side
+  float sideDistX, sideDistY; // length of ray from current position to next x-side
+  vint32 stepX, stepY; // what direction to step in x/y (either +1 or -1)
+  vint32 currX, currY; // for simple walkers
+  vint32 currTileX, currTileY;
+  vint32 endTileX, endTileY;
+
+private:
+  inline void resetPoints () { pointCount = pointCurr = 0; }
+  Point *allocPoint ();
+
+  // returns nullptr if we have no more points at this step
+  inline const Point *nextPoint () {
+    unsigned ptc = pointCurr++;
+    if (ptc >= pointCount) return nullptr;
+    return (ptc < STCSize ? &stCoords[ptc] : &dynCoords[ptc-STCSize]);
+  }
+
+  // coords are in pixels
+  void reportBoxPointsAt (vint32 x, vint32 y);
+
+  // returns `false` if we're done
+  bool doStep ();
+
+public:
+  inline DDALineWalker () : dynCoords(nullptr), dynCoordsSize(0), x0(0), y0(0), x1(0), y1(0), pointCount(0), pointCurr(0), currTileX(0), currTileY(0), endTileX(0), endTileY(0) {}
+  inline ~DDALineWalker () { Z_Free(dynCoords); }
+
+  inline vint32 getX0 () const { return x0; }
+  inline vint32 getY0 () const { return y0; }
+  inline vint32 getX1 () const { return x1; }
+  inline vint32 getY1 () const { return y1; }
+  inline vint32 getTileWidth () const { return tileWidth; }
+  inline vint32 getTileHeight () const { return tileHeight; }
+  inline vint32 getBoxWidth () const { return boxWidth; }
+  inline vint32 getBoxHeight () const { return boxHeight; }
+
+  // you can walk with a box by setting box size (in this case starting coords are box mins)
+  // coordinates are in pixels
+  void start (vint32 aTileWidth, vint32 aTileHeight, vint32 ax0, vint32 ay0, vint32 ax1, vint32 ay1, vint32 aBoxWidth=0, vint32 aBoxHeight=0);
+
+  // next tile to check
+  // returns `false` if you're arrived to a destination
+  // if `false` is returned, tile coordinates are undefined (there's nothing more to check)
+  // for box walks, it may report the same tile several times (yet it tries to not do that)
+  // it may also report out-of-path tiles sometimes
+  bool next (vint32 *tilex, vint32 *tiley);
+};
+
+
+//==========================================================================
+//
+//  DDALineWalker::allocPoint
+//
+//==========================================================================
+DDALineWalker::Point *DDALineWalker::allocPoint () {
+  unsigned ptc = pointCount++;
+  if (ptc < STCSize) return &stCoords[ptc];
+  ptc -= STCSize;
+  // check if we need more dynamic points
+  if (ptc == dynCoordsSize) {
+    dynCoordsSize += 128;
+    dynCoords = (Point *)Z_Realloc(dynCoords, dynCoordsSize*sizeof(dynCoords[0]));
+  }
+  return &dynCoords[ptc];
+}
+
+
+//==========================================================================
+//
+//  DDALineWalker::reportBoxPointsAt
+//
+//  coords are in pixels
+//
+//==========================================================================
+void DDALineWalker::reportBoxPointsAt (vint32 x, vint32 y) {
+  vassert(boxWidth);
+  vint32 tx0 = x/tileWidth;
+  vint32 ty0 = y/tileHeight;
+  vint32 tx1 = (x+boxWidth-1+tileWidth-1)/tileWidth;
+  vint32 ty1 = (y+boxHeight-1+tileHeight-1)/tileHeight;
+  for (vint32 ty = ty0; ty <= ty1; ++ty) {
+    for (vint32 tx = tx0; tx <= tx1; ++tx) {
+      Point *p = allocPoint();
+      p->x = tx;
+      p->y = ty;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  DDALineWalker::start
+//
+//==========================================================================
+void DDALineWalker::start (vint32 aTileWidth, vint32 aTileHeight, vint32 ax0, vint32 ay0, vint32 ax1, vint32 ay1, vint32 aBoxWidth, vint32 aBoxHeight) {
+  vassert(aTileWidth > 0);
+  vassert(aTileHeight > 0);
+  vassert(aBoxWidth >= 0);
+  vassert(aBoxHeight >= 0);
+
+  resetPoints();
+
+  if (!aBoxWidth || !aBoxHeight) {
+    aBoxWidth = aBoxHeight = 0; // a point
+  } else {
+    // force box to cover integral number of tiles
+    /*
+    if (aBoxWidth%aTileWidth) aBoxWidth = (aBoxWidth/aTileWidth)*aTileWidth+1;
+    if (aBoxHeight%aTileHeight) aBoxHeight = (aBoxHeight/aTileHeight)*aTileHeight+1;
+    aBoxWidth /= aTileWidth;
+    aBoxHeight /= aTileHeight;
+    vassert(aBoxWidth > 0);
+    vassert(aBoxHeight > 0);
+    */
+  }
+
+  x0 = ax0;
+  y0 = ay0;
+  x1 = ax1;
+  y1 = ay1;
+  tileWidth = aTileHeight;
+  tileHeight = aTileHeight;
+  boxWidth = aBoxWidth;
+  boxHeight = aBoxHeight;
+
+  // fill initial set
+  vint32 tileSX = ax0/aTileWidth, tileSY = ay0/aTileHeight;
+  currTileX = tileSX;
+  currTileY = tileSY;
+  endTileX = ax1/aTileWidth;
+  endTileY = ay1/aTileHeight;
+
+  if (aBoxWidth) {
+    // box
+    reportBoxPointsAt(ax0, ay0);
+  } else {
+    // point
+    Point *p = allocPoint();
+    p->x = tileSX;
+    p->y = tileSY;
+  }
+
+  currX = ax0;
+  currY = ay0;
+  if (ax0 == ax1 || ay0 == ay1) return; // point or a straight line, no need to calculate anything here
+
+  // convert coordinates to floating point
+  fltx0 = float(ax0)/float(aTileWidth);
+  flty0 = float(ay0)/float(aTileHeight);
+  fltx1 = float(ax1)/float(aTileWidth);
+  flty1 = float(ay1)/float(aTileHeight);
+
+  //vint32 tileSX = (int)fltx0, tileSY = (int)flty0;
+  //vint32 tileEX = (int)fltx1, tileEY = (int)flty1;
+
+  // calculate ray direction
+  //TVec dv = (vector(fltx1, flty1)-vector(fltx0, flty0)).normalise2d;
+  float dvx = fltx1-fltx0;
+  float dvy = flty1-flty0;
+  float dvinvlen = sqrtf(dvx*dvx+dvy*dvy); // inverted lentgh
+  // length of ray from one x or y-side to next x or y-side
+  // this is 1/normalized_component, which is the same as inverted normalised component
+  deltaDistX = dvinvlen/dvx;
+  deltaDistY = dvinvlen/dvy;
+
+  // calculate step and initial sideDists
+  if (dvx < 0) {
+    stepX = -1;
+    sideDistX = (fltx0-tileSX)*deltaDistX;
+  } else {
+    stepX = 1;
+    sideDistX = (tileSX+1.0f-fltx0)*deltaDistX;
+  }
+
+  if (dvy < 0) {
+    stepY = -1;
+    sideDistY = (flty0-tileSY)*deltaDistY;
+  } else {
+    stepY = 1;
+    sideDistY = (tileSY+1.0f-flty0)*deltaDistY;
+  }
+}
+
+
+//==========================================================================
+//
+//  DDALineWalker::doStep
+//
+//  returns `false` if we're done
+//
+//==========================================================================
+bool DDALineWalker::doStep () {
+  // clear points array
+  resetPoints();
+
+  // check if we're done
+  if (currTileX == endTileX && currTileY == endTileY) return false;
+
+  if (y0 == y1) {
+    // horizontal line
+    vassert(x0 != x1);
+    currTileX += (x0 < x1 ? 1 : -1);
+  } else if (x0 == x1) {
+    // vertical line
+    vassert(y0 != y1);
+    currTileY += (y0 < y1 ? 1 : -1);
+  } else {
+    // perform DDA
+    //int side; // was a NS or a EW wall hit?
+    // jump to next map square, either in x-direction, or in y-direction
+    if (sideDistX < sideDistY) {
+      sideDistX += deltaDistX;
+      currTileX += stepX;
+      //side = 0; // EW
+    } else {
+      sideDistY += deltaDistY;
+      currTileY += stepY;
+      //side = 1; // NS
+    }
+  }
+
+  // got some points
+  if (!boxWidth) {
+    // point
+    Point *p = allocPoint();
+    p->x = currTileX;
+    p->y = currTileY;
+  } else {
+    // box
+    reportBoxPointsAt(currTileX*tileWidth, currTileY*tileHeight);
+  }
+
+  return true;
+}
+
+
+//==========================================================================
+//
+//  DDALineWalker::next
+//
+//==========================================================================
+bool DDALineWalker::next (vint32 *tilex, vint32 *tiley) {
+  for (;;) {
+    const Point *p = nextPoint();
+    if (p) {
+      if (tilex) *tilex = p->x;
+      if (tiley) *tiley = p->y;
+      return true;
+    }
+    if (!doStep()) return false;
+  }
+}
+
 
 
 //==========================================================================
@@ -451,102 +612,3 @@ IMPLEMENT_FUNCTION(VEntityGridBase, Create) {
   Self->impl->setup(cellWdt, cellHgt);
   RET_REF(Self);
 }
-
-
-/*
-final GameEntity checkTilesAtLine (int ax0, int ay0, int ax1, int ay1, optional scope bool delegate (GameEntity dg) dg) {
-  // point check?
-  if (ax0 == ax1 && ay0 == ay1) {
-    foreach (GameEntity ge; inCellPix(ax0, ay0, precise:true, castClass:GameEntity)) {
-      if (!dg || dg(ge)) return ge;
-    }
-    return none;
-  }
-
-  // do it faster if we can
-  #if 0
-  // strict vertical check?
-  if (ax0 == ax1 && ay0 <= ay1) return checkTilesInRect(ax0, ay0, 1, ay1-ay0+1, dg!optional);
-  // strict horizontal check?
-  if (ay0 == ay1 && ax0 <= ax1) return checkTilesInRect(ax0, ay0, ax1-ax0+1, 1, dg!optional);
-  #endif
-
-  float x0 = float(ax0-mXOfs)/float(CellSize), y0 = float(ay0-mYOfs)/float(CellSize);
-  float x1 = float(ax1-mXOfs)/float(CellSize), y1 = float(ay1-mYOfs)/float(CellSize);
-
-  // fix delegate
-  //if (!dg) dg = &cbCollisionAnySolid;
-
-  int gridW = mWidth, grigH = mHeight;
-
-  // get starting and enging tile
-  int tileSX = trunci(x0), tileSY = trunci(y0);
-  int tileEX = trunci(x1), tileEY = trunci(y1);
-
-  // first hit is always landed
-  if (tileSX >= 0 && tileSY >= 0 && tileSX < gridW && tileSY < grigH) {
-    foreach (GameEntity ge; inCellPix(tileSX*CellSize, tileSY+CellSize, precise:false, castClass:GameEntity)) {
-      if (!Geom.lineAABBIntersects(ax0, ay0, ax1, ay1, ge.x0, ge.y0, ge.width, ge.height)) continue;
-      if (!dg || dg(ge)) return ge;
-    }
-  }
-
-  // if starting and ending tile is the same, we don't need to do anything more
-  if (tileSX == tileEX && tileSY == tileEY) return none;
-
-  // calculate ray direction
-  TVec dv = (vector(x1, y1)-vector(x0, y0)).normalise2d;
-
-  // length of ray from one x or y-side to next x or y-side
-  float deltaDistX = (fabs(dv.x) > 0.0001 ? fabs(1.0/dv.x) : 0.0);
-  float deltaDistY = (fabs(dv.y) > 0.0001 ? fabs(1.0/dv.y) : 0.0);
-
-  // calculate step and initial sideDists
-
-  float sideDistX; // length of ray from current position to next x-side
-  int stepX; // what direction to step in x (either +1 or -1)
-  if (dv.x < 0) {
-    stepX = -1;
-    sideDistX = (x0-tileSX)*deltaDistX;
-  } else {
-    stepX = 1;
-    sideDistX = (tileSX+1.0-x0)*deltaDistX;
-  }
-
-  float sideDistY; // length of ray from current position to next y-side
-  int stepY; // what direction to step in y (either +1 or -1)
-  if (dv.y < 0) {
-    stepY = -1;
-    sideDistY = (y0-tileSY)*deltaDistY;
-  } else {
-    stepY = 1;
-    sideDistY = (tileSY+1.0-y0)*deltaDistY;
-  }
-
-  // perform DDA
-  //int side; // was a NS or a EW wall hit?
-  for (;;) {
-    // jump to next map square, either in x-direction, or in y-direction
-    if (sideDistX < sideDistY) {
-      sideDistX += deltaDistX;
-      tileSX += stepX;
-      //side = 0; // EW
-    } else {
-      sideDistY += deltaDistY;
-      tileSY += stepY;
-      //side = 1; // NS
-    }
-    // check tile
-    if (tileSX >= 0 && tileSY >= 0 && tileSX < gridW && tileSY < grigH) {
-      foreach (GameEntity ge; inCellPix(tileSX*CellSize, tileSY+CellSize, precise:false, castClass:GameEntity)) {
-        if (!Geom.lineAABBIntersects(ax0, ay0, ax1, ay1, ge.x0, ge.y0, ge.width, ge.height)) continue;
-        if (!dg || dg(ge)) return ge;
-      }
-    }
-    // did we arrived at the destination?
-    if (tileSX == tileEX && tileSY == tileEY) break;
-  }
-
-  return none;
-}
-*/
