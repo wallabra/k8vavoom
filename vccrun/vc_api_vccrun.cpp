@@ -48,9 +48,9 @@ void VPackage::LoadObject (TLocation l) {
       const char *pif = GetPkgImportFile(pidx);
       if (!pif) break;
       VStr mainVC = GPackagePath[i]+"/"+Name+"/"+pif;
-      vdlogf("  <%s>", *mainVC);
+      //vdlogf("  <%s>", *mainVC);
       VStream *Strm = vc_OpenFile(mainVC);
-      if (Strm) { vdlogf("  '%s'", *mainVC); LoadSourceObject(Strm, mainVC, l); return; }
+      if (Strm) { /*vdlogf("  '%s'", *mainVC);*/ LoadSourceObject(Strm, mainVC, l); return; }
     }
   }
 
@@ -61,7 +61,7 @@ void VPackage::LoadObject (TLocation l) {
       if (!pif) break;
       VStr mainVC = VStr("packages/")+Name+"/"+pif;
       VStream *Strm = vc_OpenFile(mainVC);
-      if (Strm) { vdlogf("  '%s'", *mainVC); LoadSourceObject(Strm, mainVC, l); return; }
+      if (Strm) { /*vdlogf("  '%s'", *mainVC);*/ LoadSourceObject(Strm, mainVC, l); return; }
     }
   }
 
