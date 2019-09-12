@@ -37,6 +37,41 @@ VStream *vc_OpenFile (VStr fname) { return fsysOpenFileSimple(fname); }
 
 //==========================================================================
 //
+//  VPackage::LoadObject
+//
+//==========================================================================
+void VPackage::LoadObject (TLocation l) {
+  //vdlogf("Loading package '%s'...", *Name);
+
+  for (int i = 0; i < GPackagePath.length(); ++i) {
+    for (unsigned pidx = 0; ; ++pidx) {
+      const char *pif = GetPkgImportFile(pidx);
+      if (!pif) break;
+      VStr mainVC = GPackagePath[i]+"/"+Name+"/"+pif;
+      vdlogf("  <%s>", *mainVC);
+      VStream *Strm = vc_OpenFile(mainVC);
+      if (Strm) { vdlogf("  '%s'", *mainVC); LoadSourceObject(Strm, mainVC, l); return; }
+    }
+  }
+
+  // if no package pathes specified, try "packages/"
+  if (GPackagePath.length() == 0) {
+    for (unsigned pidx = 0; ; ++pidx) {
+      const char *pif = GetPkgImportFile(pidx);
+      if (!pif) break;
+      VStr mainVC = VStr("packages/")+Name+"/"+pif;
+      VStream *Strm = vc_OpenFile(mainVC);
+      if (Strm) { vdlogf("  '%s'", *mainVC); LoadSourceObject(Strm, mainVC, l); return; }
+    }
+  }
+
+  ParseError(l, "Can't find package %s", *Name);
+  BailOut();
+}
+
+
+//==========================================================================
+//
 //  VInvocation::MassageDecorateArg
 //
 //  this will try to coerce some decorate argument to something sensible

@@ -390,7 +390,7 @@ public:
 
   static int cliShowPackageLoading; // default is false
   static int compilerDisablePostloading; // default is false; used for VCC
-  static int engineAllowNotImplementedBuiltins; // default is false
+  static int engineAllowNotImplementedBuiltins; // default is false (and hidden classes)
 
   static TMap<VStrCI, bool> cliAsmDumpMethods;
 

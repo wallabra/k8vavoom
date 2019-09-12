@@ -87,7 +87,7 @@ public:
   VClass *FindDecorateImportClass (VName) const;
 
   void Emit ();
-  void LoadObject (TLocation);
+  void LoadObject (TLocation); // should be defined by library importer
 
   // will delete `Strm`
   void LoadSourceObject (VStream *Strm, VStr filename, TLocation l);
@@ -101,4 +101,8 @@ public:
   static void StaticEmitPackages ();
 
   friend inline VStream &operator << (VStream &Strm, VPackage *&Obj) { return Strm << *(VMemberBase **)&Obj; }
+
+public:
+  // returns `nullptr` on list end; starts with 0
+  static const char *GetPkgImportFile (unsigned idx);
 };

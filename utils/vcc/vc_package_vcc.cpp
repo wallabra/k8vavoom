@@ -31,6 +31,39 @@
 
 //#define vdlogf(...)  if (VObject::cliShowLoadingMessages) GLog.Logf(NAME_Init, __VA_ARGS__)
 #define vdlogf(...)  do {} while (0)
+#define vdlogfEx(...)  if (VObject::cliShowLoadingMessages) GLog.Logf(NAME_Init, __VA_ARGS__)
+
+
+//==========================================================================
+//
+//  VPackage::LoadObject
+//
+//==========================================================================
+void VPackage::LoadObject (TLocation l) {
+  vdlogfEx("Loading package %s", *Name);
+
+  // load PROGS from a specified file
+  VStream *f = vc_OpenFile(va("%s.dat", *Name));
+  if (f) { LoadBinaryObject(f, va("%s.dat", *Name), l); return; }
+
+  for (int i = 0; i < GPackagePath.length(); ++i) {
+    for (unsigned pidx = 0; ; ++pidx) {
+      const char *pif = GetPkgImportFile(pidx);
+      if (!pif) break;
+      //VStr mainVC = va("%s/progs/%s/%s", *GPackagePath[i], *Name, pif);
+      VStr mainVC = va("%s/%s/%s", *GPackagePath[i], *Name, pif);
+      //GLog.Logf(": <%s>", *mainVC);
+      VStream *Strm = vc_OpenFile(*mainVC);
+      if (Strm) {
+        LoadSourceObject(Strm, mainVC, l);
+        return;
+      }
+    }
+  }
+
+  ParseError(l, "Can't find package %s", *Name);
+}
+
 
 
 #define PROG_MAGIC    "VPRG"

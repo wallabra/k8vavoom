@@ -39,6 +39,29 @@ void VPackage::LoadBinaryObject (VStream *Strm, VStr filename, TLocation l) { Sy
 VStream *vc_OpenFile (VStr fname) { return FL_OpenFileRead(fname); }
 
 
+//==========================================================================
+//
+//  VPackage::LoadObject
+//
+//==========================================================================
+void VPackage::LoadObject (TLocation l) {
+  // main engine
+  for (unsigned pidx = 0; ; ++pidx) {
+    const char *pif = GetPkgImportFile(pidx);
+    if (!pif) break;
+    VStr mainVC = va("progs/%s/%s", *Name, pif);
+    if (FL_FileExists(*mainVC)) {
+      // compile package
+      //fprintf(stderr, "Loading package '%s' (%s)...\n", *Name, *mainVC);
+      VStream *Strm = vc_OpenFile(*mainVC);
+      LoadSourceObject(Strm, mainVC, l);
+      return;
+    }
+  }
+  Sys_Error("Progs package %s not found", *Name);
+}
+
+
 IMPLEMENT_FREE_FUNCTION(VObject, CvarUnlatchAll) {
   if (GGameInfo && GGameInfo->NetMode < NM_DedicatedServer) {
     VCvar::Unlatch();
