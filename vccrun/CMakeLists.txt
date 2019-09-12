@@ -53,85 +53,6 @@ if (ENABLE_VCCRUN)
     set(VCCRUN_DEFINES "VCCRUN_HAS_OPENGL" ${VCCRUN_DEFINES})
   endif(WITH_SDL2 AND SDL2_FOUND)
 
-  set(VCCRUN_COMPILER_SOURCES
-    #../source/common.h
-    ../libs/vavoomc/vc_local.h
-    ../libs/vavoomc/vc_public.h
-    ../libs/vavoomc/vc_progs.h
-
-    ../libs/vavoomc/vc_location.h
-    ../libs/vavoomc/vc_location.cpp
-    ../libs/vavoomc/vc_error.h
-    ../libs/vavoomc/vc_error.cpp
-    ../libs/vavoomc/vc_type.h
-    ../libs/vavoomc/vc_type.cpp
-    ../libs/vavoomc/vc_member.h
-    ../libs/vavoomc/vc_member.cpp
-    ../libs/vavoomc/vc_constant.h
-    ../libs/vavoomc/vc_constant.cpp
-    ../libs/vavoomc/vc_property.h
-    ../libs/vavoomc/vc_property.cpp
-    ../libs/vavoomc/vc_state.h
-    ../libs/vavoomc/vc_state.cpp
-    ../libs/vavoomc/vc_field.h
-    ../libs/vavoomc/vc_field.cpp
-    ../libs/vavoomc/vc_method.h
-    ../libs/vavoomc/vc_method.cpp
-    ../libs/vavoomc/vc_struct.h
-    ../libs/vavoomc/vc_struct.cpp
-    ../libs/vavoomc/vc_class.h
-    ../libs/vavoomc/vc_class.cpp
-    ../libs/vavoomc/vc_object.h
-    ../libs/vavoomc/vc_object.cpp
-    ../libs/vavoomc/vc_package.h
-    ../libs/vavoomc/vc_package.cpp
-
-    #../libs/vavoomc/vc_zastar.h
-    #../libs/vavoomc/vc_zastar.cpp
-
-    ../libs/vavoomc/vc_emit_context.h
-    ../libs/vavoomc/vc_emit_context.cpp
-    ../libs/vavoomc/vc_expr_base.h
-    ../libs/vavoomc/vc_expr_base.cpp
-
-    ../libs/vavoomc/vc_expr_array.h
-    ../libs/vavoomc/vc_expr_array.cpp
-    ../libs/vavoomc/vc_expr_assign.h
-    ../libs/vavoomc/vc_expr_assign.cpp
-    ../libs/vavoomc/vc_expr_cast.h
-    ../libs/vavoomc/vc_expr_cast.cpp
-    ../libs/vavoomc/vc_expr_field.h
-    ../libs/vavoomc/vc_expr_field.cpp
-    ../libs/vavoomc/vc_expr_invoke.h
-    ../libs/vavoomc/vc_expr_invoke.cpp
-    ../libs/vavoomc/vc_expr_literal.h
-    ../libs/vavoomc/vc_expr_literal.cpp
-    ../libs/vavoomc/vc_expr_local.h
-    ../libs/vavoomc/vc_expr_local.cpp
-    ../libs/vavoomc/vc_expr_misc.h
-    ../libs/vavoomc/vc_expr_misc.cpp
-    ../libs/vavoomc/vc_expr_type.h
-    ../libs/vavoomc/vc_expr_type.cpp
-    ../libs/vavoomc/vc_expr_unary_binary.h
-    ../libs/vavoomc/vc_expr_unary_binary.cpp
-    ../libs/vavoomc/vc_statement.h
-    ../libs/vavoomc/vc_statement.cpp
-
-    ../libs/vavoomc/vc_lexer.h
-    ../libs/vavoomc/vc_lexer_tokens.h
-    ../libs/vavoomc/vc_lexer.cpp
-    ../libs/vavoomc/vc_modifiers.h
-    ../libs/vavoomc/vc_modifiers.cpp
-    ../libs/vavoomc/vc_parser.h
-    ../libs/vavoomc/vc_parser.cpp
-
-    ../libs/vavoomc/vc_executor.cpp
-    ../libs/vavoomc/vc_api_common.cpp
-
-    vc_api_vccrun.h
-    vc_api_vccrun.cpp
-  )
-
   set(VCCRUN_RUNTIME_SOURCES
     ../source/scripts.h
     ../source/scripts.cpp
@@ -195,7 +116,6 @@ if (ENABLE_VCCRUN)
 
 
   add_executable(vccrun
-    ${VCCRUN_COMPILER_SOURCES}
     ${VCCRUN_RUNTIME_SOURCES}
     ${VCCRUN_FSYS_SOURCES}
     convars.h
@@ -205,6 +125,7 @@ if (ENABLE_VCCRUN)
     vcc_netobj.h
     vcc_netobj.cpp
     vc_api_vccrun.h
+    vc_api_vccrun.cpp
     # ini
     modules/mod_ini.h
     modules/mod_ini.cpp
@@ -243,6 +164,6 @@ if (ENABLE_VCCRUN)
   set_target_properties(vccrun PROPERTIES OUTPUT_NAME vccrun)
   target_compile_definitions(vccrun PRIVATE ${VCCRUN_DEFINES})
   #target_link_libraries(vccrun core ${LIBLZMA_LIBRARIES} ${VCCRUN_LINKLIBS})
-  target_link_libraries(vccrun core ${VCCRUN_LINKLIBS})
-  add_dependencies(vccrun core ${VCCRUN_DEPS})
+  add_dependencies(vccrun core vavoomc ${VCCRUN_DEPS})
+  target_link_libraries(vccrun vavoomc core ${VCCRUN_LINKLIBS})
 endif(ENABLE_VCCRUN)

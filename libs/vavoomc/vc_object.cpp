@@ -48,6 +48,7 @@ int VObject::cliShowPackageLoading = 0;
 int VObject::cliShowUndefinedBuiltins = 1;
 int VObject::compilerDisablePostloading = 0;
 int VObject::engineAllowNotImplementedBuiltins = 0;
+int VObject::standaloneExecutor = 0;
 TMap<VStrCI, bool> VObject::cliAsmDumpMethods;
 
 
@@ -222,17 +223,13 @@ static int gObjFirstFree = 0; // frist free index in `GObjObjects`
 int VObject::GNumDeleted = 0;
 bool VObject::GInGarbageCollection = false;
 static void *GNewObject = nullptr;
-#ifdef VCC_STANDALONE_EXECUTOR
 bool VObject::GImmediadeDelete = true;
-#endif
 bool VObject::GGCMessagesAllowed = false;
 int VObject::GCDebugMessagesAllowed = 0;
 bool (*VObject::onExecuteNetMethodCB) (VObject *obj, VMethod *func) = nullptr; // return `false` to do normal execution
 bool VObject::DumpBacktraceToStdErr = false;
 
-#ifdef VCC_STANDALONE_EXECUTOR
 static VQueueLifo<vint32> gDelayDeadObjects;
-#endif
 
 
 VObject::GCStats VObject::gcLastStats;
@@ -652,14 +649,13 @@ void VObject::SetFlags (vuint32 NewFlags) {
     ++GNumDeleted;
     ++gcLastStats.markedDead;
     vdgclogf("marked object(%u) #%d: %p (%s)", UniqueId, Index, this, GetClass()->GetName());
+  } else if (VObject::standaloneExecutor) {
+    if ((NewFlags&_OF_DelayedDestroy) && !(ObjectFlags&_OF_DelayedDestroy)) {
+      // "delayed destroy" flag is set, put it into delayed list
+      gDelayDeadObjects.push(Index);
+      ++GNumDeleted;
+    }
   }
-#ifdef VCC_STANDALONE_EXECUTOR
-  else if ((NewFlags&_OF_DelayedDestroy) && !(ObjectFlags&_OF_DelayedDestroy)) {
-    // "delayed destroy" flag is set, put it into delayed list
-    gDelayDeadObjects.push(Index);
-    ++GNumDeleted;
-  }
-#endif
   ObjectFlags |= NewFlags;
 }
 
@@ -704,27 +700,19 @@ void VObject::ClearReferences () {
 //  VObject::CollectGarbage
 //
 //==========================================================================
-void VObject::CollectGarbage (
-#ifdef VCC_STANDALONE_EXECUTOR
-bool destroyDelayed
-#endif
-) {
+void VObject::CollectGarbage (bool destroyDelayed) {
   if (GInGarbageCollection) return; // recursive calls are not allowed
   //vassert(GObjInitialised);
 
-#ifdef VCC_STANDALONE_EXECUTOR
+  if (!VObject::standaloneExecutor) destroyDelayed = false; // k8vavoom engine requires this
+
   if (!GNumDeleted && !destroyDelayed) return;
   vassert(GNumDeleted >= 0);
-#else
-  if (!GNumDeleted) return;
-  vassert(GNumDeleted > 0);
-#endif
 
   GInGarbageCollection = true;
 
   vdgclogf("collecting garbage...");
 
-#ifdef VCC_STANDALONE_EXECUTOR
   // destroy all delayed-destroy objects
   if (destroyDelayed) {
     while (gDelayDeadObjects.length()) {
@@ -737,7 +725,6 @@ bool destroyDelayed
       }
     }
   }
-#endif
 
   // no need to mark objects to be cleaned, `_OF_CleanupRef` was set in `SetFlag()`
   int alive = 0, bodycount = 0;

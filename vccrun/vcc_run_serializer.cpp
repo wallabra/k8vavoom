@@ -653,7 +653,7 @@ public:
       if (n == 0 || n > nameCount || strm.IsError()) return false;
       VClass *c = VMemberBase::StaticFindClass(namearr[n]);
       if (!c) { fprintf(stderr, "Object Loader: class `%s` not found!\n", *namearr[n]); return false; }
-      objarr[f] = VObject::StaticSpawnObject(c, true); // no replacement
+      objarr[f] = VObject::StaticSpawnNoReplace(c);
       if (!objarr[f]) abort();
     }
     // objects

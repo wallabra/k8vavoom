@@ -41,6 +41,15 @@ IMPLEMENT_FUNCTION(VObject, get_GC_LastCollectTime) { RET_FLOAT((float)gcLastSta
 IMPLEMENT_FUNCTION(VObject, get_GC_MessagesAllowed) { RET_BOOL(GGCMessagesAllowed); }
 IMPLEMENT_FUNCTION(VObject, set_GC_MessagesAllowed) { P_GET_BOOL(val); GGCMessagesAllowed = val; }
 
+//WARNING! must be defined by all api users separately!
+/*
+IMPLEMENT_FUNCTION(VObject, CvarUnlatchAll) {
+  if (GGameInfo && GGameInfo->NetMode < NM_DedicatedServer) {
+    VCvar::Unlatch();
+  }
+}
+*/
+
 
 static TMap<VStr, bool> setOfNameSets;
 
@@ -75,16 +84,11 @@ static bool setNameCheck (VName setName, VName value) {
 IMPLEMENT_FUNCTION(VObject, Destroy) {
   P_GET_SELF;
   if (Self) {
-#ifdef VCC_STANDALONE_EXECUTOR
-    if (GImmediadeDelete) {
+    if (VObject::standaloneExecutor && GImmediadeDelete) {
       delete Self;
     } else {
       Self->ConditionalDestroy();
     }
-#else
-    //delete Self;
-    Self->ConditionalDestroy();
-#endif
   }
 }
 
@@ -126,12 +130,9 @@ IMPLEMENT_FUNCTION(VObject, IsDestroyed) {
 // static final void CollectGarbage (optional bool destroyDelayed);
 IMPLEMENT_FUNCTION(VObject, GC_CollectGarbage) {
   P_GET_BOOL_OPT(destroyDelayed, false);
-#if defined(VCC_STANDALONE_EXECUTOR)
+  // meh, `CollectGarbage()` will take care of it
+  //if (!VObject::standaloneExecutor) destroyDelayed = false; // anyway
   CollectGarbage(destroyDelayed);
-#else
-  (void)destroyDelayed;
-  CollectGarbage();
-#endif
 }
 
 
@@ -602,13 +603,6 @@ IMPLEMENT_FUNCTION(VObject, GenRandomU31) {
 }
 
 IMPLEMENT_FUNCTION(VObject, P_Random) {
-/*
-#if defined(VCC_STANDALONE_EXECUTOR)
-  vuint8 b;
-  ed25519_randombytes(&b, sizeof(b));
-  RET_INT(b);
-#else
-*/
   RET_INT(P_Random());
 }
 
@@ -1046,11 +1040,7 @@ IMPLEMENT_FUNCTION(VObject, AllClassStates) {
 //   `false` for vccrun
 // native static final spawner Object SpawnObject (class cid, optional bool skipReplacement);
 IMPLEMENT_FUNCTION(VObject, SpawnObject) {
-#ifdef VCC_STANDALONE_EXECUTOR
-  P_GET_BOOL_OPT(skipReplacement, false);
-#else
-  P_GET_BOOL_OPT(skipReplacement, /*true*/false);
-#endif
+  P_GET_BOOL_OPT(skipReplacement, false); //FIXME: `true` for k8vavoom?
   P_GET_PTR(VClass, Class);
   if (!Class) { VMDumpCallStack(); Sys_Error("Cannot spawn `none`"); }
   if (skipReplacement) {
@@ -1070,20 +1060,6 @@ static inline struct tm *localtime_r (const time_t *_Time, struct tm *_Tm) {
   return (localtime_s(_Tm, _Time) ? NULL : _Tm);
 }
 #endif
-
-/*
-#if 0
-#if !defined(VCC_STANDALONE_EXECUTOR)
-#ifdef _WIN32
-static struct tm *localtime_r (const time_t * timep, struct tm *result) {
-  // Note: Win32 localtime() is thread-safe
-  memcpy(result, localtime(timep), sizeof(struct tm));
-  return result;
-}
-#endif
-#endif
-#endif
-*/
 
 
 struct TTimeVal {
@@ -1289,17 +1265,6 @@ IMPLEMENT_FUNCTION(VObject, GetCvarHelp) {
   P_GET_NAME(name);
   RET_STR(VStr(VCvar::GetHelp(*name)));
 }
-
-//WARNING! must be defined by all api users separately!
-/*
-IMPLEMENT_FUNCTION(VObject, CvarUnlatchAll) {
-#if !defined(VCC_STANDALONE_EXECUTOR)
-  if (GGameInfo && GGameInfo->NetMode < NM_DedicatedServer) {
-    VCvar::Unlatch();
-  }
-#endif
-}
-*/
 
 
 // native static final bool SetNamePutElement (name setName, name value);

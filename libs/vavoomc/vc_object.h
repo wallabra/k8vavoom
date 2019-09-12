@@ -392,13 +392,9 @@ public:
   static int compilerDisablePostloading; // default is false; used for VCC
   static int engineAllowNotImplementedBuiltins; // default is false (and hidden classes)
 
-  static TMap<VStrCI, bool> cliAsmDumpMethods;
+  static int standaloneExecutor; // default is false
 
-#if defined(VCC_STANDALONE_EXECUTOR)
-# define VCC_OBJECT_DEFAULT_SKIP_REPLACE_ON_SPAWN  false
-#else
-# define VCC_OBJECT_DEFAULT_SKIP_REPLACE_ON_SPAWN  true
-#endif
+  static TMap<VStrCI, bool> cliAsmDumpMethods;
 
 public:
   struct GCStats {
@@ -429,9 +425,7 @@ private:
   static GCStats gcLastStats;
 
 public:
-#ifdef VCC_STANDALONE_EXECUTOR
-  static bool GImmediadeDelete;
-#endif
+  static bool GImmediadeDelete; // has any sense only for standalone executor
   static bool GGCMessagesAllowed;
   static int GCDebugMessagesAllowed;
   static bool (*onExecuteNetMethodCB) (VObject *obj, VMethod *func); // return `false` to do normal execution
@@ -469,7 +463,7 @@ public:
   // call to register options in `GParsedArgs`
   static void StaticInitOptions (VParsedArgs &pargs);
 
-  static VObject *StaticSpawnObject (VClass *AClass, bool skipReplacement=VCC_OBJECT_DEFAULT_SKIP_REPLACE_ON_SPAWN);
+  static VObject *StaticSpawnObject (VClass *AClass, bool skipReplacement);
 
   inline static VObject *StaticSpawnWithReplace (VClass *AClass) { return StaticSpawnObject(AClass, false); }
   inline static VObject *StaticSpawnNoReplace (VClass *AClass) { return StaticSpawnObject(AClass, true); }
@@ -478,11 +472,8 @@ public:
   // either `Destroy()` or (even better) `ConditionalDestroy()`
   // the difference is that `ConditionalDestroy()` will call `Destroy()`
   // by itself, and will do it only once
-#if defined(VCC_STANDALONE_EXECUTOR)
+  // WARNING! DO NOT PASS `true` FROM K8VAVOOM, OR EVERYTHING *WILL* BREAK!
   static void CollectGarbage (bool destroyDelayed=false);
-#else
-  static void CollectGarbage ();
-#endif
   static VObject *GetIndexObject (int);
 
   static int GetObjectsCount ();
@@ -633,7 +624,7 @@ public:
 
 
 // object creation template
-template<class T> T *Spawn () { return (T*)VObject::StaticSpawnObject(T::StaticClass()); }
+//template<class T> T *Spawn () { return (T*)VObject::StaticSpawnObject(T::StaticClass()); }
 template<class T> T *SpawnWithReplace () { return (T*)VObject::StaticSpawnObject(T::StaticClass(), false); } // don't skip replacement
 template<class T> T *SpawnNoReplace () { return (T*)VObject::StaticSpawnObject(T::StaticClass(), true); } // skip replacement
 

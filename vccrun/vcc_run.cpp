@@ -536,6 +536,7 @@ int main (int argc, char **argv) {
   VCvar::Init();
   VCvar::HostInitComplete();
 
+  VObject::standaloneExecutor = 1; // required
   VObject::engineAllowNotImplementedBuiltins = 1;
   VObject::cliShowUndefinedBuiltins = 0; // for now
 
@@ -595,9 +596,9 @@ int main (int argc, char **argv) {
         int atp = checkArg(mmain);
         if (atp < 0) VCFatalError("Main::main() should be either arg-less, or have one `array!string*` argument, and should be either `void`, or return `int`!");
         auto sss = pr_stackPtr;
-        mainObject = VObject::StaticSpawnObject(mklass, false); // replacement
+        mainObject = VObject::StaticSpawnWithReplace(mklass);
         if ((mmain->Flags&FUNC_Static) == 0) {
-          //auto imain = Spawn<VLevel>();
+          //auto imain = SpawnWithReplace<VLevel>();
           P_PASS_REF((VObject *)mainObject);
         }
         if (atp&0x01) {

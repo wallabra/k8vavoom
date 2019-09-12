@@ -376,7 +376,6 @@ void VPackage::StaticEmitPackages () {
       }
     }
 
-    //#if !defined(VCC_STANDALONE_EXECUTOR)
     // we need to do this, 'cause k8vavoom 'engine' package has some classes w/o definitions (`Acs`, `Button`)
     if (wasEngine && !VObject::engineAllowNotImplementedBuiltins) {
       for (VClass *Cls = GClasses; Cls; Cls = Cls->LinkNext) {
@@ -385,7 +384,6 @@ void VPackage::StaticEmitPackages () {
         }
       }
     }
-    //#endif
   }
 
   PackagesToEmit.clear();

@@ -253,7 +253,7 @@ IMPLEMENT_FUNCTION(VIniFile, Load) {
   P_GET_STR(fname);
   VClass *iclass = VClass::FindClass("IniFile");
   if (iclass) {
-    auto ifileo = VObject::StaticSpawnObject(iclass);
+    auto ifileo = VObject::StaticSpawnWithReplace(iclass); // disable replacements?
     auto ifile = (VIniFile *)ifileo;
     if (!ifile->load(fname)) { delete ifileo; ifileo = nullptr; }
     RET_REF((VObject *)ifileo);

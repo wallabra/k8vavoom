@@ -1150,12 +1150,12 @@ bool VClass::Define () {
       ParentClass->DefinedAsDependency = true;
       if (!xdres) return false;
     }
-    #if defined(VCC_STANDALONE_EXECUTOR)
-    // process replacements
-    // first get actual replacement
-    ParentClass = ParentClass->GetReplacement();
-    if (!ParentClass) VCFatalError("VC Internal Error: VClass::Define: cannot find replacement");
-    #endif
+    if (VObject::standaloneExecutor) {
+      // process replacements
+      // first get actual replacement
+      ParentClass = ParentClass->GetReplacement();
+      if (!ParentClass) VCFatalError("VC Internal Error: VClass::Define: cannot find replacement");
+    }
     if (DoesReplacement != ReplaceType::Replace_None) {
       VClass *origParent = ParentClass;
       if (DoesLastChildReplacement()) {
@@ -1163,10 +1163,10 @@ bool VClass::Define () {
         ParentClass = ParentClass->FindBestLatestChild(Name);
         vdrlogf("VClass::Define:   latest child is `%s`", ParentClass->GetName());
       } else {
-        #if !defined(VCC_STANDALONE_EXECUTOR)
-        //k8: should we do this?
-        ParentClass = ParentClass->GetReplacement();
-        #endif
+        if (!VObject::standaloneExecutor) {
+          //k8: should we do this?
+          ParentClass = ParentClass->GetReplacement();
+        }
       }
       if (!ParentClass) VCFatalError("VC Internal Error: VClass::Define: cannot find replacement");
       //fprintf(stderr, "VClass::Define: requested parent is `%s`, actual parent is `%s`\n", *ParentClassName, ParentClass->GetName());
@@ -1194,18 +1194,18 @@ bool VClass::Define () {
       }
     } else {
       // check replacement parent
-      #if !defined(VCC_STANDALONE_EXECUTOR)
-      VClass *prepl = ParentClass->GetReplacement();
-      if (prepl && prepl != ParentClass && prepl->IsChildOf(ParentClass) && prepl->DoesParentReplacement()) {
-        vdrlogf("VClass::Define (%s): parent `%s` force-replaced with `%s`", GetName(), ParentClass->GetName(), prepl->GetName());
-        ParentClass = prepl;
-        if (!ParentClass->Defined) {
-          bool xdres = ParentClass->Define();
-          ParentClass->DefinedAsDependency = true;
-          if (!xdres) return false;
+      if (!VObject::standaloneExecutor) {
+        VClass *prepl = ParentClass->GetReplacement();
+        if (prepl && prepl != ParentClass && prepl->IsChildOf(ParentClass) && prepl->DoesParentReplacement()) {
+          vdrlogf("VClass::Define (%s): parent `%s` force-replaced with `%s`", GetName(), ParentClass->GetName(), prepl->GetName());
+          ParentClass = prepl;
+          if (!ParentClass->Defined) {
+            bool xdres = ParentClass->Define();
+            ParentClass->DefinedAsDependency = true;
+            if (!xdres) return false;
+          }
         }
       }
-      #endif
     }
   }
   if ((ObjectFlags&CLASSOF_Native) && ParentClass != PrevParent) {

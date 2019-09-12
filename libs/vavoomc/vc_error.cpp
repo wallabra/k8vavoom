@@ -76,15 +76,13 @@ static TArray<VStr> vcParseErrors;
 //
 //==========================================================================
 __attribute__((noreturn)) void BailOut () {
-#if !defined(VCC_STANDALONE_EXECUTOR)
-  if (vcParseErrors.length()) {
+  if (!VObject::standaloneExecutor && vcParseErrors.length()) {
     GLog.Log(NAME_Error, "");
     GLog.Log(NAME_Error, "Let me show you all the errors again...");
     GLog.Logf(NAME_Error, "%s", "=============================");
     for (auto &&s : vcParseErrors) GLog.Logf(NAME_Error, "%s", *s);
     GLog.Logf(NAME_Error, "%s", "=============================");
   }
-#endif
   Sys_Error("Confused by previous errors, bailing out");
 }
 

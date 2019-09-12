@@ -1526,7 +1526,7 @@ IMPLEMENT_FUNCTION(VGLTexture, Load) {
   P_GET_STR(fname);
   VOpenGLTexture *tex = VOpenGLTexture::Load(fname);
   if (tex) {
-    VGLTexture *ifile = Spawn<VGLTexture>();
+    VGLTexture *ifile = SpawnWithReplace<VGLTexture>();
     ifile->tex = tex;
     ifile->id = vcGLAllocId(ifile);
     //fprintf(stderr, "created texture object %p (%p)\n", ifile, ifile->tex);
@@ -1645,7 +1645,7 @@ IMPLEMENT_FUNCTION(VGLTexture, CreateEmpty) {
   if (wdt < 1 || hgt < 1 || wdt > 32768 || hgt > 32768) { RET_REF(nullptr); return; }
   VOpenGLTexture *tex = VOpenGLTexture::CreateEmpty(txname, wdt, hgt);
   if (tex) {
-    VGLTexture *ifile = Spawn<VGLTexture>();
+    VGLTexture *ifile = SpawnWithReplace<VGLTexture>();
     ifile->tex = tex;
     ifile->id = vcGLAllocId(ifile);
     //fprintf(stderr, "created texture object %p (%p)\n", ifile, ifile->tex);
@@ -3877,7 +3877,7 @@ VFont *VFont::LoadPCF (VName aname, const VStr &filename) {
     ++totalCount;
 
     /*
-    VGLTexture *ifile = Spawn<VGLTexture>();
+    VGLTexture *ifile = SpawnWithReplace<VGLTexture>();
     ifile->tex = fc.tex;
     ifile->id = vcGLAllocId(ifile);
     */

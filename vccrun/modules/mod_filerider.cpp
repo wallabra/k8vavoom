@@ -35,7 +35,7 @@ IMPLEMENT_FUNCTION(VFileReader, Open) {
   if (fname.isEmpty()) { RET_REF(nullptr); return; }
   VStream *fs = fsysOpenFile(fname);
   if (!fs) { RET_REF(nullptr); return; }
-  VFileReader *res = (VFileReader *)StaticSpawnObject(StaticClass());
+  VFileReader *res = (VFileReader *)StaticSpawnWithReplace(StaticClass()); // disable replacements?
   res->fstream = fs;
   RET_REF(res);
 }

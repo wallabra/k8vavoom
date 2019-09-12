@@ -445,7 +445,7 @@ IMPLEMENT_FUNCTION(VEntityGridBase, Create) {
   //if (!Self) { VObject::VMDumpCallStack(); Sys_Error("empty self"); }
   if (cellWdt < 1 || cellWdt > 8192) { VObject::VMDumpCallStack(); Sys_Error("invalid cell width (%d)", cellWdt); }
   if (cellHgt < 1 || cellHgt > 8192) { VObject::VMDumpCallStack(); Sys_Error("invalid cell height (%d)", cellHgt); }
-  VEntityGridBase *Self = (VEntityGridBase *)StaticSpawnObject(StaticClass());
+  VEntityGridBase *Self = (VEntityGridBase *)StaticSpawnWithReplace(StaticClass()); // disable replacements?
   vassert(!Self->impl);
   Self->impl = new EntityGridImpl();
   Self->impl->setup(cellWdt, cellHgt);

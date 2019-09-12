@@ -751,7 +751,7 @@ IMPLEMENT_FUNCTION(VDFMap, Load) {
   P_GET_STR(fname);
   VClass *iclass = VClass::FindClass("DFMap");
   if (iclass) {
-    auto ifileo = VObject::StaticSpawnObject(iclass);
+    auto ifileo = VObject::StaticSpawnWithReplace(iclass); // disable replacements?
     auto ifile = (VDFMap *)ifileo;
     if (!ifile->load(fname)) { delete ifileo; ifileo = nullptr; }
     RET_REF((VObject *)ifileo);
