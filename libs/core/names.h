@@ -381,6 +381,8 @@ REGISTER_NAME(Socket)
 REGISTER_NAME(MiAStarGraphBase)
 REGISTER_NAME(MiAStarNodeBase)
 
+REGISTER_NAME(EntityGridBase)
+
 
 // closing
 #ifdef REGISTERING_ENUM
