@@ -29,6 +29,19 @@
 #include "../../libs/vavoomc/vc_local.h"
 
 
+void __attribute__((noreturn, format(printf, 1, 2))) __declspec(noreturn) Host_Error (const char *error, ...) {
+  va_list argptr;
+  static char string[4096];
+
+  va_start(argptr, error);
+  vsnprintf(string, sizeof(string), error, argptr);
+  va_end(argptr);
+
+  Sys_Error("%s", string);
+}
+
+
+/*
 //==========================================================================
 //
 //  PF_FormatString
@@ -55,6 +68,7 @@ void PR_DoWriteBuf (const char *buf, bool debugPrint, VName wrname) {
 //==========================================================================
 void VObject::VMDumpCallStack () {
 }
+*/
 
 
 //==========================================================================

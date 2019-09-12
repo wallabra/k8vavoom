@@ -33,6 +33,8 @@ set(VC_COMPILER_SOURCES
   ../../libs/vavoomc/vc_package.h
   ../../libs/vavoomc/vc_package.cpp
 
+  ../../libs/vavoomc/vc_executor.cpp
+
   ../../libs/vavoomc/vc_emit_context.h
   ../../libs/vavoomc/vc_emit_context.cpp
   ../../libs/vavoomc/vc_expr_base.h
@@ -68,6 +70,8 @@ set(VC_COMPILER_SOURCES
   ../../libs/vavoomc/vc_modifiers.cpp
   ../../libs/vavoomc/vc_parser.h
   ../../libs/vavoomc/vc_parser.cpp
+
+  ../../libs/vavoomc/vc_api_common.cpp
 )
 
 #set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Og -O3" )
@@ -79,6 +83,7 @@ add_executable(vcc
   vcc.h
   vc_api_vcc.h
   vc_api_vcc.cpp
+  vc_package_vcc.cpp
 )
 set_target_properties(vcc PROPERTIES OUTPUT_NAME ../bin/vcc)
 #set_target_properties(vcc PROPERTIES COMPILE_FLAGS IN_VCC)

@@ -108,7 +108,7 @@ VStream* fsysOpenFileSimple (VStr Name) {
 //==========================================================================
 static void OpenDebugFile (const VStr& name) {
   DebugFile = fopen(*name, "w");
-  if (!DebugFile) FatalError("Can\'t open debug file \"%s\".", *name);
+  if (!DebugFile) VCFatalError("Can\'t open debug file \"%s\".", *name);
 }
 
 
@@ -236,7 +236,7 @@ int main (int argc, char **argv) {
     devprintf("Time elapsed: %02d:%02d\n", (endtime-starttime)/60, (endtime-starttime)%60);
     //VMemberBase::StaticExit(); //k8: no reason to do this
   } catch (VException& e) {
-    FatalError("%s", e.What());
+    VCFatalError("%s", e.What());
   }
 
   Z_ShuttingDown();
