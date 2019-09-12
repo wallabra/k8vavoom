@@ -27,11 +27,7 @@
 #include "vc_local.h"
 
 
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-# define vdlogf(...)  if (VObject::cliShowLoadingMessages) GLog.Logf(NAME_Init, __VA_ARGS__)
-#else
-# define vdlogf(...)  do {} while (0)
-#endif
+#define vdlogf(...)  if (VObject::cliShowLoadingMessages) GLog.Logf(NAME_Init, __VA_ARGS__)
 
 
 TArray<VPackage *> VPackage::PackagesToEmit;
@@ -328,53 +324,54 @@ void VPackage::Emit () {
 //
 //==========================================================================
 void VPackage::StaticEmitPackages () {
-#if !defined(IN_VCC)
-  for (auto &pkg : PackagesToEmit) {
-    if (pkg->ParsedClasses.length() > 0) {
-      vdlogf("Emiting %d class%s for '%s'...", pkg->ParsedClasses.length(), (pkg->ParsedClasses.length() != 1 ? "es" : ""), *pkg->Name);
-      for (auto &&cls : pkg->ParsedClasses) {
-        vdlogf("  emitting class '%s' (parent is '%s')...", *cls->Name, (cls->ParentClass ? *cls->ParentClass->Name : "none"));
-        cls->Emit();
+  if (!VObject::compilerDisablePostloading) {
+    for (auto &pkg : PackagesToEmit) {
+      if (pkg->ParsedClasses.length() > 0) {
+        vdlogf("Emiting %d class%s for '%s'...", pkg->ParsedClasses.length(), (pkg->ParsedClasses.length() != 1 ? "es" : ""), *pkg->Name);
+        for (auto &&cls : pkg->ParsedClasses) {
+          vdlogf("  emitting class '%s' (parent is '%s')...", *cls->Name, (cls->ParentClass ? *cls->ParentClass->Name : "none"));
+          cls->Emit();
+        }
+        if (vcErrorCount) BailOut();
+      }
+    }
+
+    #if !defined(VCC_STANDALONE_EXECUTOR)
+    bool wasEngine = false;
+    #endif
+
+    for (auto &pkg : PackagesToEmit) {
+      #if !defined(VCC_STANDALONE_EXECUTOR)
+      wasEngine = wasEngine || (pkg->Name == NAME_engine);
+      GLog.Logf(NAME_Init, "VavoomC: generating code for package '%s'...", *pkg->Name);
+      #endif
+      for (auto &&mm : GMembers) {
+        if (mm->IsIn(pkg)) {
+          //vdlogf("  package '%s': calling `PostLoad()` for %s `%s`", *pkg->Name, mm->GetMemberTypeString(), *mm->Name);
+          mm->PostLoad();
+        }
       }
       if (vcErrorCount) BailOut();
     }
-  }
 
-  #if !defined(VCC_STANDALONE_EXECUTOR)
-  bool wasEngine = false;
-  #endif
-
-  for (auto &pkg : PackagesToEmit) {
-    #if !defined(VCC_STANDALONE_EXECUTOR)
-    wasEngine = wasEngine || (pkg->Name == NAME_engine);
-    GLog.Logf(NAME_Init, "VavoomC: generating code for package '%s'...", *pkg->Name);
-    #endif
-    for (auto &&mm : GMembers) {
-      if (mm->IsIn(pkg)) {
-        //vdlogf("  package '%s': calling `PostLoad()` for %s `%s`", *pkg->Name, mm->GetMemberTypeString(), *mm->Name);
-        mm->PostLoad();
+    for (auto &pkg : PackagesToEmit) {
+      // create default objects
+      for (auto &&cls : pkg->ParsedClasses) {
+        cls->CreateDefaults();
+        if (!cls->Outer) cls->Outer = pkg;
       }
     }
-    if (vcErrorCount) BailOut();
+
+    #if !defined(VCC_STANDALONE_EXECUTOR)
+    // we need to do this, 'cause k8vavoom 'engine' package has some classes w/o definitions (`Acs`, `Button`)
+    if (wasEngine) {
+      for (VClass *Cls = GClasses; Cls; Cls = Cls->LinkNext) {
+        if (!Cls->Outer && Cls->MemberType == MEMBER_Class) Sys_Error("package `engine` has hidden class `%s`", *Cls->Name);
+      }
+    }
+    #endif
   }
 
-  for (auto &pkg : PackagesToEmit) {
-    // create default objects
-    for (auto &&cls : pkg->ParsedClasses) {
-      cls->CreateDefaults();
-      if (!cls->Outer) cls->Outer = pkg;
-    }
-  }
-
-  #if !defined(VCC_STANDALONE_EXECUTOR)
-  // we need to do this, 'cause k8vavoom 'engine' package has some classes w/o definitions (`Acs`, `Button`)
-  if (wasEngine) {
-    for (VClass *Cls = GClasses; Cls; Cls = Cls->LinkNext) {
-      if (!Cls->Outer && Cls->MemberType == MEMBER_Class) Sys_Error("package `engine` has hidden class `%s`", *Cls->Name);
-    }
-  }
-  #endif
-#endif
   PackagesToEmit.clear();
 }
 
@@ -456,7 +453,7 @@ void VPackage::LoadObject (TLocation l) {
   vdlogf("Loading package %s", *Name);
 
   // load PROGS from a specified file
-  VStream *f = fsysOpenFileSimple(va("%s.dat", *Name));
+  VStream *f = vc_OpenFile(va("%s.dat", *Name));
   if (f) { LoadBinaryObject(f, va("%s.dat", *Name), l); return; }
 
   for (int i = 0; i < GPackagePath.length(); ++i) {
@@ -464,7 +461,7 @@ void VPackage::LoadObject (TLocation l) {
       //VStr mainVC = va("%s/progs/%s/%s", *GPackagePath[i], *Name, *pif);
       VStr mainVC = va("%s/%s/%s", *GPackagePath[i], *Name, *pif);
       //GLog.Logf(": <%s>", *mainVC);
-      VStream *Strm = fsysOpenFileSimple(*mainVC);
+      VStream *Strm = vc_OpenFile(*mainVC);
       if (Strm) {
         LoadSourceObject(Strm, mainVC, l);
         return;
@@ -481,7 +478,7 @@ void VPackage::LoadObject (TLocation l) {
     for (const char **pif = pkgImportFiles; *pif; ++pif) {
       VStr mainVC = GPackagePath[i]+"/"+Name+"/"+(*pif);
       vdlogf("  <%s>", *mainVC);
-      VStream *Strm = fsysOpenFileSimple(mainVC);
+      VStream *Strm = vc_OpenFile(mainVC);
       if (Strm) { vdlogf("  '%s'", *mainVC); LoadSourceObject(Strm, mainVC, l); return; }
     }
   }
@@ -490,7 +487,7 @@ void VPackage::LoadObject (TLocation l) {
   if (GPackagePath.length() == 0) {
     for (const char **pif = pkgImportFiles; *pif; ++pif) {
       VStr mainVC = VStr("packages/")+Name+"/"+(*pif);
-      VStream *Strm = fsysOpenFileSimple(mainVC);
+      VStream *Strm = vc_OpenFile(mainVC);
       if (Strm) { vdlogf("  '%s'", *mainVC); LoadSourceObject(Strm, mainVC, l); return; }
     }
   }
@@ -505,7 +502,7 @@ void VPackage::LoadObject (TLocation l) {
     if (FL_FileExists(*mainVC)) {
       // compile package
       //fprintf(stderr, "Loading package '%s' (%s)...\n", *Name, *mainVC);
-      VStream *Strm = FL_OpenFileRead(*mainVC);
+      VStream *Strm = vc_OpenFile(*mainVC);
       LoadSourceObject(Strm, mainVC, l);
       return;
     }

@@ -26,12 +26,7 @@
 //**************************************************************************
 #include "vc_local.h"
 
-
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-# define vdrlogf(...)  if (VObject::cliShowReplacementMessages) GLog.Logf(NAME_Debug, __VA_ARGS__)
-#else
-# define vdrlogf(...)  do {} while (0)
-#endif
+#define vdrlogf(...)  if (VObject::cliShowReplacementMessages) GLog.Logf(NAME_Debug, __VA_ARGS__)
 
 
 // ////////////////////////////////////////////////////////////////////////// //

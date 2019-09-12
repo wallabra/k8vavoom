@@ -387,6 +387,9 @@ public:
   static int cliAllErrorsAreFatal; // default is false
   static int cliVirtualiseDecorateMethods; // default is false
 
+  static int cliShowPackageLoading; // default is false
+  static int compilerDisablePostloading; // default is false; used for VCC
+
   static TMap<VStrCI, bool> cliAsmDumpMethods;
 
 #if defined(VCC_STANDALONE_EXECUTOR)

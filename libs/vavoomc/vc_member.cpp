@@ -382,9 +382,7 @@ VPackage *VMemberBase::StaticLoadPackage (VName AName, const TLocation &l) {
   vassert(AName != NAME_None);
   // check if already loaded
   for (int i = 0; i < GLoadedPackages.Num(); ++i) if (GLoadedPackages[i]->Name == AName) return GLoadedPackages[i];
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-  GLog.WriteLine(NAME_Init, "VavoomC: loading package '%s'...", *AName);
-#endif
+  if (VObject::cliShowPackageLoading) GLog.WriteLine(NAME_Init, "VavoomC: loading package '%s'...", *AName);
   VPackage *Pkg = new VPackage(AName);
   GLoadedPackages.Append(Pkg);
   Pkg->LoadObject(l);
@@ -663,11 +661,7 @@ void VMemberBase::StaticAddDefine (const char *s) {
 //==========================================================================
 static VStream *pkgOpenFileDG (VLexer *self, VStr filename) {
   if (VMemberBase::dgOpenFile) return VMemberBase::dgOpenFile(filename, VMemberBase::userdata);
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-  return FL_OpenFileRead(filename);
-#else
-  return fsysOpenFileSimple(filename);
-#endif
+  return vc_OpenFile(filename);
 }
 
 

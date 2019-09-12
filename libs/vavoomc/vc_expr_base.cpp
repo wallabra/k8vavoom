@@ -24,10 +24,8 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#ifndef IN_VCC
-//# define VCC_DEBUG_COMPILER_LEAKS
-//# define VCC_DEBUG_COMPILER_LEAKS_CHECKS
-#endif
+//#define VCC_DEBUG_COMPILER_LEAKS
+//#define VCC_DEBUG_COMPILER_LEAKS_CHECKS
 
 #include "vc_local.h"
 

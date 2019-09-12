@@ -92,10 +92,10 @@ void Free (void* ptr) {
 
 //==========================================================================
 //
-//  fsysOpenFileSimple
+//  vc_OpenFile
 //
 //==========================================================================
-VStream* fsysOpenFileSimple (VStr Name) {
+VStream* vc_OpenFile (VStr Name) {
   FILE *file = fopen(*Name, "rb");
   return (file ? new VStdFileStreamRead(file, Name) : nullptr);
 }
@@ -217,6 +217,7 @@ int main (int argc, char **argv) {
     Init();
     ProcessArgs(argc, argv);
     VMemberBase::StaticAddDefine("IN_VCC");
+    VObject::compilerDisablePostloading = true; // compile only
 
     VLexer Lex;
     VMemberBase::InitLexer(Lex);

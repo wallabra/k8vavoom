@@ -156,11 +156,7 @@ VStream *VLexer::doOpenFile (VStr filename) {
   fname = fname.fixSlashes();
 #endif
   if (dgOpenFile) return dgOpenFile(this, fname);
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-  return FL_OpenFileRead(fname);
-#else
-  return fsysOpenFileSimple(fname);
-#endif
+  return vc_OpenFile(fname);
 }
 
 

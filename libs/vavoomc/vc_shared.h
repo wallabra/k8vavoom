@@ -40,11 +40,9 @@ class VStruct;
 class VClass;
 
 
+// the following API should be implemented by library importer
 extern void __attribute__((noreturn, format(printf, 1, 2))) __declspec(noreturn) Host_Error (const char *error, ...);
-
-#if defined(IN_VCC) || defined(VCC_STANDALONE_EXECUTOR)
-extern VStream *fsysOpenFileSimple (VStr Name);
-#endif
+extern VStream *vc_OpenFile (VStr Name);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

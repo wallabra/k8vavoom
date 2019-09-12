@@ -29,18 +29,6 @@
 #define VC_IO_ERROR  Host_Error
 
 
-//==========================================================================
-//
-//  showGCMessages
-//
-//==========================================================================
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR) && defined(VC_GARBAGE_COLLECTOR_LOGS_BASE)
-# define vdgclogf(...)  if (GCDebugMessagesAllowed && cliShowGCMessages) GLog.Logf(NAME_Debug, __VA_ARGS__)
-#else
-# define vdgclogf(...)  do {} while (0)
-#endif
-
-
 #define VC_GARBAGE_COLLECTOR_CHECKS
 //#define VC_GARBAGE_COLLECTOR_LOGS_BASE
 //#define VC_GARBAGE_COLLECTOR_LOGS_MORE
@@ -56,7 +44,21 @@ int VObject::cliShowIODebugMessages = 0;
 int VObject::cliDumpNameTables = 0;
 int VObject::cliAllErrorsAreFatal = 0;
 int VObject::cliVirtualiseDecorateMethods = 0;
+int VObject::cliShowPackageLoading = 0;
+int VObject::compilerDisablePostloading = 0;
 TMap<VStrCI, bool> VObject::cliAsmDumpMethods;
+
+
+//==========================================================================
+//
+//  showGCMessages
+//
+//==========================================================================
+#if defined(VC_GARBAGE_COLLECTOR_LOGS_BASE)
+# define vdgclogf(...)  if (GCDebugMessagesAllowed && cliShowGCMessages) GLog.Logf(NAME_Debug, __VA_ARGS__)
+#else
+# define vdgclogf(...)  do {} while (0)
+#endif
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -510,6 +512,9 @@ void VObject::StaticInitOptions (VParsedArgs &pargs) {
   pargs.RegisterFlagSet("-vc-io-debug", "!show debug info from serialiser", &cliShowIODebugMessages);
   pargs.RegisterFlagSet("-vc-dev-dump-name-tables", "!debug dump of name maps", &cliDumpNameTables);
   pargs.RegisterFlagSet("-vc-all-errors-are-fatal", "!abort the engine instead of only host server on errors (do not use)", &cliAllErrorsAreFatal);
+
+  pargs.RegisterFlagSet("-vc-show-package-loading", "!log loaded packages", &cliShowPackageLoading);
+  pargs.RegisterFlagReset("-vc-no-show-package-loading", "!do not log loaded packages", &cliShowPackageLoading);
 
   pargs.RegisterFlagSet("-vc-lax-override", "!allow omiting `override` keyword for methods", &VMemberBase::optDeprecatedLaxOverride);
   pargs.RegisterFlagSet("-vc-lax-states", "!missing actor state is not an error", &VMemberBase::optDeprecatedLaxStates);

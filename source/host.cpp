@@ -172,6 +172,9 @@ void Host_Init () {
   Cvars_Init();
   VCommand::Init();
 
+  VObject::cliShowPackageLoading = true;
+  VObject::compilerDisablePostloading = false; // just in case
+
   GCon->Log(NAME_Init, "---------------------------------------------------------------");
   GCon->Logf(NAME_Init, "k8vavoom Game Engine, started by Janis Legzdinsh | %s", __DATE__);
   GCon->Log(NAME_Init, "also starring Francisco Ortega, and others (k8:drop me a note!)");
