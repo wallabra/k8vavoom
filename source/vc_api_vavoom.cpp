@@ -31,6 +31,11 @@
 #endif
 
 
+// for VCC; implement as "aborters" in other code
+void VPackage::WriteObject (VStr) { Sys_Error("VPackage::WriteObject should not be ever called"); }
+void VPackage::LoadBinaryObject (VStream *Strm, VStr filename, TLocation l) { Sys_Error("VPackage::LoadBinaryObject should not be ever called"); }
+
+
 IMPLEMENT_FREE_FUNCTION(VObject, CvarUnlatchAll) {
   if (GGameInfo && GGameInfo->NetMode < NM_DedicatedServer) {
     VCvar::Unlatch();
