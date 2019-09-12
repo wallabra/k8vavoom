@@ -3567,7 +3567,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
   //memset(mystack, 0, (ACS_STACK_DEPTH+256)*sizeof(vint32)); // just in case
   VTextureTranslation *Translation = nullptr;
 #if !USE_COMPUTED_GOTO
-  GCon->Logf("ACS: === ENTERING SCRIPT %d(%s) at ip: %p (%d) ===", info->Number, *info->Name, ip, (int)(ptrdiff_t)(ip-info->Address));
+  GCon->Logf(NAME_Debug, "ACS: === ENTERING SCRIPT %d(%s) at ip: %p (%d) ===", info->Number, *info->Name, ip, (int)(ptrdiff_t)(ip-info->Address));
 #endif
 
   // init watchcat
