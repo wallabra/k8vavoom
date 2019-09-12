@@ -171,7 +171,7 @@ public:
   vuint32 getObjectId (VObject *o) {
     if (!o) return 0;
     auto idp = objmap.find(o);
-    if (!idp) FatalError("tried to save unregistered object (%s)", *o->GetClass()->Name);
+    if (!idp) VCFatalError("tried to save unregistered object (%s)", *o->GetClass()->Name);
     return *idp;
   }
 
@@ -182,7 +182,7 @@ public:
       for (int f = 0; f < namearr.length(); ++f) {
         if (namearr[f] == n) abort();
       }
-      FatalError("tried to save unregistered name '%s'", *n);
+      VCFatalError("tried to save unregistered name '%s'", *n);
     }
     return *idp;
   }
@@ -190,7 +190,7 @@ public:
   vuint32 getStrId (const VStr &s) {
     if (s.isEmpty()) return 0;
     auto idp = strmap.find(s);
-    if (!idp) FatalError("tried to save unregistered string");
+    if (!idp) VCFatalError("tried to save unregistered string");
     return *idp;
   }
 
@@ -236,7 +236,7 @@ private:
 
   void putName (VName n) {
     if (n == NAME_None || namemap.has(n)) return;
-    if ((vint32)nameCount != namearr.length()) FatalError("oops: putName");
+    if ((vint32)nameCount != namearr.length()) VCFatalError("oops: putName");
     //fprintf(stderr, "PN: <%s>\n", *n);
     namemap.put(n, ++nameCount);
     namearr.append(n);
@@ -244,14 +244,14 @@ private:
 
   void putStr (const VStr &s) {
     if (s.isEmpty() || strmap.has(s)) return;
-    if ((vint32)strCount != strarr.length()) FatalError("oops: putStr");
+    if ((vint32)strCount != strarr.length()) VCFatalError("oops: putStr");
     strmap.put(s, ++strCount);
     strarr.append(s);
   }
 
   void putObject (VObject *obj) {
-    if (!obj) FatalError("oops(0): putObject");
-    if ((vint32)objCount != objarr.length()) FatalError("oops(1): putObject");
+    if (!obj) VCFatalError("oops(0): putObject");
+    if ((vint32)objCount != objarr.length()) VCFatalError("oops(1): putObject");
     //fprintf(stderr, "object %p of class `%s`\n", obj, *obj->GetClass()->Name);
     objmap.put(obj, ++objCount);
     objarr.append(obj);

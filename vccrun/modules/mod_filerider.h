@@ -38,8 +38,6 @@ public:
   virtual void Destroy () override;
 
 public:
-  DECLARE_FUNCTION(Destroy)
-
   DECLARE_FUNCTION(Open)
   DECLARE_FUNCTION(close)
   DECLARE_FUNCTION(seek)

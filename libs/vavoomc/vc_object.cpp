@@ -45,7 +45,9 @@ int VObject::cliDumpNameTables = 0;
 int VObject::cliAllErrorsAreFatal = 0;
 int VObject::cliVirtualiseDecorateMethods = 0;
 int VObject::cliShowPackageLoading = 0;
+int VObject::cliShowUndefinedBuiltins = 1;
 int VObject::compilerDisablePostloading = 0;
+int VObject::engineAllowNotImplementedBuiltins = 0;
 TMap<VStrCI, bool> VObject::cliAsmDumpMethods;
 
 
@@ -515,6 +517,9 @@ void VObject::StaticInitOptions (VParsedArgs &pargs) {
 
   pargs.RegisterFlagSet("-vc-show-package-loading", "!log loaded packages", &cliShowPackageLoading);
   pargs.RegisterFlagReset("-vc-no-show-package-loading", "!do not log loaded packages", &cliShowPackageLoading);
+
+  pargs.RegisterFlagSet("-vc-show-undefined-builtins", "!show undefined builtins", &cliShowUndefinedBuiltins);
+  pargs.RegisterFlagReset("-vc-no-show-undefined-builtins", "!do not show undefined builtins", &cliShowUndefinedBuiltins);
 
   pargs.RegisterFlagSet("-vc-lax-override", "!allow omiting `override` keyword for methods", &VMemberBase::optDeprecatedLaxOverride);
   pargs.RegisterFlagSet("-vc-lax-states", "!missing actor state is not an error", &VMemberBase::optDeprecatedLaxStates);

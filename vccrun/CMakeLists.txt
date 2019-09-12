@@ -222,6 +222,9 @@ if (ENABLE_VCCRUN)
     ${MODSOCK_SRC}
     # sound system
     ${VCCRUN_SOUND_SOURCES}
+    # entity grid
+    modules/mod_entgrid.h
+    modules/mod_entgrid.cpp
     ../source/misc.cpp
   )
 

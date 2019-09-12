@@ -1,0 +1,80 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**  Copyright (C) 2018-2019 Ketmar Dark
+//**
+//**  This program is free software: you can redistribute it and/or modify
+//**  it under the terms of the GNU General Public License as published by
+//**  the Free Software Foundation, either version 3 of the License, or
+//**  (at your option) any later version.
+//**
+//**  This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**  You should have received a copy of the GNU General Public License
+//**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//**
+//**************************************************************************
+class EntityGridBase : Object;
+
+//TODO: serialisation
+private transient void *impl;
+
+native static final EntityGridBase Create (int cellWdt, int cellHgt);
+
+native final int cellWidth { get; }
+native final int cellHeight { get; }
+
+native final void insert (Object obj, int x, int y, int w, int h);
+native final void remove (Object obj);
+native final bool has (Object obj);
+native final bool find (Object obj, optional out int x, optional out int y, optional out int w, optional out int h);
+// the following functions return `false` if no such object found in the grid
+native final bool change (Object obj, int x, int y, int w, int h); // this CANNOT insert a new object!
+native final bool move (Object obj, int x, int y);
+native final bool moveBy (Object obj, int dx, int dy);
+native final bool resize (Object obj, int w, int h);
+native final bool resizeBy (Object obj, int dw, int dh);
+
+// order is undefined
+native final iterator allInAABB (int x, int y, int w, int h, out Object obj, optional out int ox, optional out int oy, optional out int ow, optional out int oh);
+
+// order is from the nearest to the furthest
+// if starts inside some object, returns only that object
+// note that if the starting point is inside of several objects, any of them can be returned
+native final iterator allAtLine (int ax0, int ay0, int ax1, int ay1, out Object obj, optional out int ox, optional out int oy, optional out int ow, optional out int oh);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// sweep edges
+enum Edge {
+  None,
+  Top,
+  Right,
+  Bottom,
+  Left,
+}
+
+// if the ray is inside an object, returns `Edge.None`, and sets `obj`
+// hit coordinates are defined only if there is intersection
+// note that if the starting point is inside of several objects, any of them can be returned
+native final Edge castRay (int x0, int y0, int x1, int y1, out Object obj, optional out int hitx, optional out int hity);
+
+// sweeps AABB, and finds a collision, if there is any
+// returns `true` if collision was detected, or if my box is embedded in some grid box
+//   hitedge: undefined if no collision detected; `Edge.None` if embedded
+//   hitx, hity: guaranteed to be before embedding if my box wasn't embedded
+// note that if the starting point is inside of several objects, any of them can be returned
+native final bool sweepAABB (int mex0, int mey0, int mew, int meh, // my box
+                             int medx, int medy, // my speed
+                             optional out Object obj, // grid box hit
+                             optional int hitedge, // Edge.XXX
+                             optional int hitx, optional int hity); // my box stop coords

@@ -53,12 +53,10 @@ FBuiltinInfo::FBuiltinInfo (const char *InName, VClass *InClass, builtin_t InFun
 //  PF_Fixme
 //
 //==========================================================================
-/*
 static void PF_Fixme () {
   VObject::VMDumpCallStack();
-  Sys_Error("unimplemented bulitin");
+  VCFatalError("unimplemented bulitin");
 }
-*/
 
 
 //==========================================================================
@@ -627,20 +625,21 @@ void VMethod::PostLoad () {
     }
   }
   if (builtinOpc < 0 && !NativeFunc && (Flags&FUNC_Native) != 0) {
-    // default builtin
-    /*
-    NativeFunc = PF_Fixme;
-    // don't abort with error, because it will be done, when this
-    // function will be called (if it will be called)
-    GLog.Logf(NAME_Error, "Builtin `%s` not found!", *GetFullName());
-    */
-    // k8: actually, abort. define all builtins.
+    if (VObject::engineAllowNotImplementedBuiltins) {
+      // default builtin
+      NativeFunc = PF_Fixme;
+      // don't abort with error, because it will be done, when this
+      // function will be called (if it will be called)
+      if (VObject::cliShowUndefinedBuiltins) GLog.Logf(NAME_Error, "Builtin `%s` not found!", *GetFullName());
+    } else {
+      // k8: actually, abort. define all builtins.
+      Sys_Error("Builtin `%s` not implemented!", *GetFullName());
+    }
     /*
     for (FBuiltinInfo *B = FBuiltinInfo::Builtins; B; B = B->Next) {
       GLog.Logf(NAME_Debug, "BUILTIN: `%s::%s`", *B->OuterClass->Name, B->Name);
     }
     */
-    Sys_Error("Builtin `%s` not implemented!", *GetFullName());
   }
 
   GenerateCode();

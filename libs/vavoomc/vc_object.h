@@ -386,9 +386,11 @@ public:
   static int cliDumpNameTables; // default is false
   static int cliAllErrorsAreFatal; // default is false
   static int cliVirtualiseDecorateMethods; // default is false
+  static int cliShowUndefinedBuiltins; // default is true
 
   static int cliShowPackageLoading; // default is false
   static int compilerDisablePostloading; // default is false; used for VCC
+  static int engineAllowNotImplementedBuiltins; // default is false
 
   static TMap<VStrCI, bool> cliAsmDumpMethods;
 

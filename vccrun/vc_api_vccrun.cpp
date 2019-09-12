@@ -28,6 +28,13 @@
 #include "../libs/vavoomc/vc_local.h"
 
 
+// for VCC; implement as "aborters" in other code
+void VPackage::WriteObject (VStr) { Sys_Error("VPackage::WriteObject should not be ever called"); }
+void VPackage::LoadBinaryObject (VStream *Strm, VStr filename, TLocation l) { Sys_Error("VPackage::LoadBinaryObject should not be ever called"); }
+
+VStream *vc_OpenFile (VStr fname) { return fsysOpenFileSimple(fname); }
+
+
 //==========================================================================
 //
 //  VInvocation::MassageDecorateArg

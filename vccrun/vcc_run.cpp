@@ -189,7 +189,7 @@ __attribute__((format(printf, 1, 2))) int devprintf (const char *text, ...) {
 void* Malloc (size_t size) {
   if (!size) return nullptr;
   void *ptr = Z_Malloc(size);
-  if (!ptr) FatalError("FATAL: couldn't alloc %d bytes", (int)size);
+  if (!ptr) VCFatalError("FATAL: couldn't alloc %d bytes", (int)size);
   memset(ptr, 0, size);
   return ptr;
 }
@@ -226,7 +226,7 @@ VStream* OpenFile (const VStr& Name) {
 //==========================================================================
 static void OpenDebugFile (const VStr& name) {
   DebugFile = fopen(*name, "w");
-  if (!DebugFile) FatalError("FATAL: can\'t open debug file \"%s\".", *name);
+  if (!DebugFile) VCFatalError("FATAL: can\'t open debug file \"%s\".", *name);
 }
 
 
@@ -536,6 +536,9 @@ int main (int argc, char **argv) {
   VCvar::Init();
   VCvar::HostInitComplete();
 
+  VObject::engineAllowNotImplementedBuiltins = 1;
+  VObject::cliShowUndefinedBuiltins = 0; // for now
+
   srand(time(nullptr));
   SysErrorCB = &OnSysError;
   PR_WriterCB = &vmWriter;
@@ -565,7 +568,7 @@ int main (int argc, char **argv) {
 
     VStream *strm = OpenFile(SourceFileName);
     if (!strm) {
-      FatalError("FATAL: cannot open file '%s'", *SourceFileName);
+      VCFatalError("FATAL: cannot open file '%s'", *SourceFileName);
     }
 
     CurrentPackage->LoadSourceObject(strm, SourceFileName, TLocation());
@@ -590,7 +593,7 @@ int main (int argc, char **argv) {
       if (mmain) {
         devprintf(" Found method 'main()' (return type: %u:%s)\n", mmain->ReturnType.Type, *mmain->ReturnType.GetName());
         int atp = checkArg(mmain);
-        if (atp < 0) FatalError("Main::main() should be either arg-less, or have one `array!string*` argument, and should be either `void`, or return `int`!");
+        if (atp < 0) VCFatalError("Main::main() should be either arg-less, or have one `array!string*` argument, and should be either `void`, or return `int`!");
         auto sss = pr_stackPtr;
         mainObject = VObject::StaticSpawnObject(mklass, false); // replacement
         if ((mmain->Flags&FUNC_Static) == 0) {
@@ -607,7 +610,7 @@ int main (int argc, char **argv) {
         }
         ret = VObject::ExecuteFunction(mmain);
         if ((atp&0x02) == 0) ret = VFuncRes((int)0);
-        if (sss != pr_stackPtr) FatalError("FATAL: stack imbalance!");
+        if (sss != pr_stackPtr) VCFatalError("FATAL: stack imbalance!");
       }
     }
 
@@ -619,9 +622,9 @@ int main (int argc, char **argv) {
   } catch (VException &e) {
     ret = VFuncRes((int)-1);
 #ifndef WIN32
-    FatalError("FATAL: %s", e.What());
+    VCFatalError("FATAL: %s", e.What());
 #else
-    FatalError("%s", e.What());
+    VCFatalError("%s", e.What());
 #endif
   }
   VObject::StaticExit();
