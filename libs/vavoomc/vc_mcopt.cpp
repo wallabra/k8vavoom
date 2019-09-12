@@ -837,7 +837,7 @@ struct Instr {
             return;
           case OPC_DynArrDispatch_DynArrayAlloc:
             return;
-          default: FatalError("Unknown dynarr opcode");
+          default: VCFatalError("Unknown dynarr opcode");
         }
         break;
       case OPC_DynArrayElement2D:
@@ -998,7 +998,7 @@ struct Instr {
             return;
           case OPC_Builtin_NameToIIndex:
             return;
-          default: FatalError("Unknown builtin");
+          default: VCFatalError("Unknown builtin");
         }
 
       case OPC_DictDispatch:
@@ -1037,11 +1037,11 @@ struct Instr {
           case OPC_DictDispatch_Rehash:
             spdelta -= 1;
             return;
-          default: FatalError("Unknown dictionary opcode");
+          default: VCFatalError("Unknown dictionary opcode");
         }
     }
-    FatalError("setStackOffsets: unhandled opcode %d", Opcode);
-    //FatalError("setStackOffsets: unhandled opcode %d (%s)", Opcode, StatementInfo[Opcode].name);
+    VCFatalError("setStackOffsets: unhandled opcode %d", Opcode);
+    //VCFatalError("setStackOffsets: unhandled opcode %d (%s)", Opcode, StatementInfo[Opcode].name);
   }
 
   // calculate compiled instruction size, in bytes
@@ -1248,7 +1248,7 @@ void VMCOptimizer::setupFrom (VMethod *afunc, TArray<FInstruction> *aorig) {
   for (int f = 0; f < olist.length(); ++f) {
     // done must be the last one, and we aren't interested in it at all
     if (olist[f].Opcode == OPC_Done) {
-      if (f != olist.length()-1) FatalError("VCOPT: OPC_Done is not a last one");
+      if (f != olist.length()-1) VCFatalError("VCOPT: OPC_Done is not a last one");
       break;
     }
     auto i = new Instr(this, olist[f]);
@@ -1266,7 +1266,7 @@ void VMCOptimizer::finish () {
   olist.setLength(countInstrs()+1); // one for `Done`
   int iofs = 0;
   for (Instr *it = ilistHead; it; it = it->next, ++iofs) {
-    if (iofs != it->idx) FatalError("VCOPT: internal optimizer inconsistency");
+    if (iofs != it->idx) VCFatalError("VCOPT: internal optimizer inconsistency");
     it->copyTo(olist[iofs]);
   }
   // append `Done`
@@ -1505,7 +1505,7 @@ bool VMCOptimizer::isPathEndsWithReturn (int iidx) {
   while (iidx >= 0 && iidx < instrCount) {
     Instr *it = getInstrAt(iidx);
     if (!it) return false; // oops
-    if (it->idx != iidx) FatalError("VCOPT: internal inconsisitency (VMCOptimizer::isPathEndsWithReturn)");
+    if (it->idx != iidx) VCFatalError("VCOPT: internal inconsisitency (VMCOptimizer::isPathEndsWithReturn)");
     if (it->retflag) return true; // anyway
     // mark it as visited
     it->retflag = 1;
@@ -1779,7 +1779,7 @@ bool VMCOptimizer::removeRedunantJumps () {
     // (as this is what this code does anyway)
     if (it->isMeJumpTarget()) {
       // mark next instruction as jump target
-      if (it->next->idx != it->idx+1) FatalError("VCOPT: internal error in (VMCOptimizer::removeRedunantJumps)");
+      if (it->next->idx != it->idx+1) VCFatalError("VCOPT: internal error in (VMCOptimizer::removeRedunantJumps)");
       it->next->meJumpTarget = true;
       // fix jumps to `it`
       for (Instr *jmptoit = jplistHead; jmptoit; jmptoit = jmptoit->jpnext) {
@@ -1822,7 +1822,7 @@ bool VMCOptimizer::simplifyIfJumps () {
       /*
       fprintf(stderr, "===================== %s =====================\n", *func->GetFullName());
       disasmAll();
-      FatalError("VCOPT: failed to get destination for instruction %d (destination is %d)", it->idx, it->getBranchDest());
+      VCFatalError("VCOPT: failed to get destination for instruction %d (destination is %d)", it->idx, it->getBranchDest());
       */
     }
     // `goto` to `return`?
@@ -1962,9 +1962,9 @@ bool VMCOptimizer::removeDeadIfs () {
       // check if that `goto` leads further down
       if (jdm1->getBranchDest() <= jdm1->idx+1) continue;
       int estart = jdm1->idx; // it starts from `goto endif`
-      if (estart+1 != it->getBranchDest()) FatalError("VCOPT: internal error (0) at (VMCOptimizer::removeDeadIfs) (%d, %d)", estart, it->getBranchDest());
+      if (estart+1 != it->getBranchDest()) VCFatalError("VCOPT: internal error (0) at (VMCOptimizer::removeDeadIfs) (%d, %d)", estart, it->getBranchDest());
       int eend = jdm1->getBranchDest()-1; // range is inclusive
-      if (estart > eend) FatalError("VCOPT: internal error (1) at (VMCOptimizer::removeDeadIfs) (%d,%d)", estart, eend);
+      if (estart > eend) VCFatalError("VCOPT: internal error (1) at (VMCOptimizer::removeDeadIfs) (%d,%d)", estart, eend);
       // check if we can remove `push` and `ifgoto` (we won't need 'em in any case)
       // moved down, to avoid some false positives
       //if (!canRemoveRange(itprev->idx, it->idx)) continue; // alas
@@ -2131,7 +2131,7 @@ void VMCOptimizer::calcStackDepth () {
     cursp += it->spdelta;
     if (cursp < 0) {
       fprintf(stderr, "==== %s ====\n", *func->GetFullName()); disasmAll();
-      FatalError("unbalanced stack(0) (f=%d; spcur=%d; cursp=%d; delta=%d)", f, it->spcur, cursp, it->spdelta);
+      VCFatalError("unbalanced stack(0) (f=%d; spcur=%d; cursp=%d; delta=%d)", f, it->spcur, cursp, it->spdelta);
     }
     if (it->isAnyBranch()) {
       int dest = it->getBranchDest();
@@ -2140,7 +2140,7 @@ void VMCOptimizer::calcStackDepth () {
       if (dest < f) {
         if (getInstrAt(dest)->spcur != newsp) {
           fprintf(stderr, "==== %s ====\n", *func->GetFullName()); disasmAll();
-          FatalError("unbalanced stack(1) (f=%d; dest=%d; spcur=%d; newsp=%d)", f, dest, getInstrAt(dest)->spcur, newsp);
+          VCFatalError("unbalanced stack(1) (f=%d; dest=%d; spcur=%d; newsp=%d)", f, dest, getInstrAt(dest)->spcur, newsp);
         }
       } else if (dest > f) {
         getInstrAt(dest)->spcur = newsp;

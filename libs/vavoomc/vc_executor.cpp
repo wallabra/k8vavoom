@@ -33,7 +33,6 @@
 
 #include "vc_public.h"
 #include "vc_progdefs.h"
-//#include "vc_shared.h"
 
 // builtin codes
 #define BUILTIN_OPCODE_INFO

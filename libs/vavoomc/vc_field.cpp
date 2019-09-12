@@ -145,7 +145,6 @@ bool VField::Define () {
 //
 //==========================================================================
 void VField::CopyFieldValue (const vuint8 *Src, vuint8 *Dst, const VFieldType &Type) {
-#if !defined(IN_VCC)
   if (Src == Dst) return; // nothing to do
   switch (Type.Type) {
     case TYPE_Int: *(vint32 *)Dst = *(const vint32 *)Src; break;
@@ -197,11 +196,9 @@ void VField::CopyFieldValue (const vuint8 *Src, vuint8 *Dst, const VFieldType &T
       }
       break;
   }
-#endif
 }
 
 
-#if !defined(IN_VCC)
 //==========================================================================
 //
 //  VField::SkipSerialisedType
@@ -546,7 +543,6 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
       Host_Error("I/O Error: unknown data type");
   }
 }
-#endif
 
 
 //==========================================================================
@@ -579,7 +575,6 @@ bool VField::NeedToCleanField (const VFieldType &Type) {
 //
 //==========================================================================
 bool VField::CleanField (vuint8 *Data, const VFieldType &Type) {
-#if !defined(IN_VCC)
   VFieldType IntType;
   int InnerSize;
   bool res = false;
@@ -630,9 +625,6 @@ bool VField::CleanField (vuint8 *Data, const VFieldType &Type) {
       break;
   }
   return res;
-#else /* !defined(IN_VCC) */
-  return false;
-#endif
 }
 
 
@@ -652,7 +644,6 @@ bool VField::NeedToDestructField (const VFieldType &atype) {
 //
 //==========================================================================
 void VField::DestructField (vuint8 *Data, const VFieldType &Type, bool zeroIt) {
-#if !defined(IN_VCC)
   //if (zeroIt) fprintf(stderr, "***ZERO<%s>: %d\n", *Type.GetName(), (int)NeedDtor(Type));
   if (zeroIt && !NeedDtor(Type)) {
     //fprintf(stderr, "   ZEROED (%d)!\n", Type.GetSize());
@@ -698,7 +689,6 @@ void VField::DestructField (vuint8 *Data, const VFieldType &Type, bool zeroIt) {
       }
       break;
   }
-#endif
 }
 
 
@@ -763,7 +753,6 @@ bool VField::IdenticalValue (const vuint8 *Val1, const vuint8 *Val2, const VFiel
 }
 
 
-#if !defined(IN_VCC)
 //==========================================================================
 //
 //  VField::NetSerialiseValue
@@ -848,4 +837,3 @@ bool VField::NetSerialiseValue (VStream &Strm, VNetObjectsMapBase *Map, vuint8 *
   }
   return Ret;
 }
-#endif

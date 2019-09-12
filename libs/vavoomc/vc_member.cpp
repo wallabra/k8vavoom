@@ -163,7 +163,6 @@ void VMemberBase::PutToNameHash (VMemberBase *self) {
 //
 //==========================================================================
 void VMemberBase::DumpNameMap (TMapNC<VName, VMemberBase *> &map, bool caseSensitive) {
-#if !defined(IN_VCC)
   GLog.Logf("=== CASE-%sSENSITIVE NAME MAP ===", (caseSensitive ? "" : "IN"));
   for (auto it = map.first(); it; ++it) {
     GLog.Logf(" --- <%s>", *it.getKey());
@@ -171,7 +170,6 @@ void VMemberBase::DumpNameMap (TMapNC<VName, VMemberBase *> &map, bool caseSensi
       GLog.Logf("  <%s> : <%s>", *m->Name, *m->GetFullName());
     }
   }
-#endif
 }
 
 
@@ -181,11 +179,9 @@ void VMemberBase::DumpNameMap (TMapNC<VName, VMemberBase *> &map, bool caseSensi
 //
 //==========================================================================
 void VMemberBase::DumpNameMaps () {
-#if !defined(IN_VCC)
   if (!VObject::cliDumpNameTables) return;
   DumpNameMap(gMembersMap, true);
   DumpNameMap(gMembersMapAnyLC, false);
-#endif
 }
 
 

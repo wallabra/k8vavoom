@@ -623,7 +623,7 @@ VExpression *VParser::ParseExpressionPriority0 () {
             case TK_Float: te = VTypeExpr::NewTypeExpr(VFieldType(TYPE_Float), l); break;
             case TK_String: te = VTypeExpr::NewTypeExpr(VFieldType(TYPE_String), l); break;
             case TK_Name: te = VTypeExpr::NewTypeExpr(VFieldType(TYPE_Name), l); break;
-            default: FatalError("VC: Ketmar forgot to handle some type in `VParser::ParseExpressionPriority0()`");
+            default: VCFatalError("VC: Ketmar forgot to handle some type in `VParser::ParseExpressionPriority0()`");
           }
           return new VTypeInvocation(te, mtname, l, NumArgs, Args);
         } else {
@@ -640,7 +640,7 @@ VExpression *VParser::ParseExpressionPriority0 () {
             case TK_Float: return new VScalarToFloat(op, false);
             case TK_String: return new VCastToString(op, false);
             case TK_Name: return new VCastToName(op, false);
-            default: FatalError("VC: Ketmar forgot to handle some type in `VParser::ParseExpressionPriority0()`");
+            default: VCFatalError("VC: Ketmar forgot to handle some type in `VParser::ParseExpressionPriority0()`");
           }
         }
       }
@@ -3845,7 +3845,6 @@ void VParser::ParseClass () {
 
     if (ExistingClass) return;
 
-#if !defined(IN_VCC)
     // check if it already exists in DECORATE imports
     for (int i = 0; i < VMemberBase::GDecorateClassImports.Num(); ++i) {
       if (VMemberBase::GDecorateClassImports[i]->Name == ClassName) {
@@ -3853,7 +3852,6 @@ void VParser::ParseClass () {
         return;
       }
     }
-#endif
 
     // new class
     VClass *Class = new VClass(ClassName, Package, ClassLoc);
@@ -3869,15 +3867,12 @@ void VParser::ParseClass () {
     Class->MemberType = MEMBER_DecorateClass;
     Class->Outer = nullptr;
     Package->ParsedDecorateImportClasses.Append(Class);
-#if !defined(IN_VCC)
     VMemberBase::GDecorateClassImports.Append(Class);
-#endif
     return;
   }
 
   // for engine package use native class objects (k8: not necessary anymore)
   VClass *Class;
-#if !defined(IN_VCC)
   Class = nullptr;
   /*if (Package->Name == NAME_engine)*/ Class = VClass::FindClass(*ClassName);
   if (Class) {
@@ -3893,10 +3888,7 @@ void VParser::ParseClass () {
     } else {
       ParseError(ClassLoc, "duplicate class declaration `%s`", *ClassName);
     }
-  }
-  else
-#endif
-  {
+  } else {
     // new class
     Class = new VClass(ClassName, Package, ClassLoc);
   }
@@ -4504,7 +4496,7 @@ void VParser::Parse () {
                 if (oldConst) ParseError(Lex.Location, "Redefined identifier `%s` (prev at %s)", *Lex.Name, *oldConst->Loc.toStringNoCol());
                 cDef = new VConstant(Lex.Name, Package, Lex.Location);
               } else {
-                //if (!Package->IsKnownEnum(ename)) FatalError("VC: oops");
+                //if (!Package->IsKnownEnum(ename)) VCFatalError("VC: oops");
                 // named enum
                 VConstant *oldConst = Package->FindConstant(Lex.Name, ename);
                 if (oldConst) ParseError(Lex.Location, "Redefined identifier `%s::%s` (prev at %s)", *ename, *Lex.Name, *oldConst->Loc.toStringNoCol());

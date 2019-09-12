@@ -25,7 +25,6 @@
 //**
 //**************************************************************************
 #include "vc_local.h"
-//#include "vc_shared.h"
 
 // builtin codes
 #define BUILTIN_OPCODE_INFO
@@ -163,13 +162,11 @@ VExpression *VPointerField::DoResolve (VEmitContext &ec) {
   } else if (type.Type == TYPE_Vector) {
     // vectors are such structs
     if (!type.Struct) {
-#if defined(IN_VCC) /*&& !defined(VCC_STANDALONE_EXECUTOR)*/
+      // vcc cannot do this, so let's play safe
+      //VStruct *tvs = (VStruct *)VMemberBase::StaticFindMember("TVec", /*ANY_PACKAGE*/VObject::StaticClass(), MEMBER_Struct);
       VClass *ocls = (VClass *)VMemberBase::StaticFindMember("Object", ANY_PACKAGE, MEMBER_Class);
       vassert(ocls);
       VStruct *tvs = (VStruct *)VMemberBase::StaticFindMember("TVec", ocls, MEMBER_Struct);
-#else
-      VStruct *tvs = (VStruct *)VMemberBase::StaticFindMember("TVec", /*ANY_PACKAGE*/VObject::StaticClass(), MEMBER_Struct);
-#endif
       if (!tvs) {
         ParseError(Loc, "Cannot find `TVec` struct for vector type");
         delete this;
@@ -705,7 +702,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
           case OPC_Builtin_FloatIsNaN: e = new VIntLiteral((isNaNF(op->GetFloatConst()) ? 1 : 0), op->Loc); break;
           case OPC_Builtin_FloatIsInf: e = new VIntLiteral((isInfF(op->GetFloatConst()) ? 1 : 0), op->Loc); break;
           case OPC_Builtin_FloatIsFinite: e = new VIntLiteral((isFiniteF(op->GetFloatConst()) ? 1 : 0), op->Loc); break;
-          default: FatalError("VC: internal compiler error (float property `%s`)", *FieldName);
+          default: VCFatalError("VC: internal compiler error (float property `%s`)", *FieldName);
         }
         delete this;
         return e->Resolve(ec);

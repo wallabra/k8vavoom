@@ -286,7 +286,7 @@ VFieldType VFieldType::MakePointerType () const {
 //==========================================================================
 VFieldType VFieldType::GetPointerInnerType () const {
   if (Type != TYPE_Pointer) {
-    FatalError("Not a pointer type");
+    VCFatalError("Not a pointer type");
     return *this;
   }
   VFieldType ret = *this;
@@ -368,7 +368,7 @@ VFieldType VFieldType::MakeSliceType (const TLocation &l) const {
 //==========================================================================
 VFieldType VFieldType::GetArrayInnerType () const {
   if (Type != TYPE_Array && Type != TYPE_DynamicArray && Type != TYPE_SliceArray) {
-    FatalError("Not an array type");
+    VCFatalError("Not an array type");
     return *this;
   }
   VFieldType ret = *this;
@@ -386,7 +386,7 @@ VFieldType VFieldType::GetArrayInnerType () const {
 //==========================================================================
 VFieldType VFieldType::GetDictKeyType () const {
   if (Type != TYPE_Dictionary) {
-    FatalError("Not a dictionary type");
+    VCFatalError("Not a dictionary type");
     return *this;
   }
   VFieldType ret = *this;
@@ -420,7 +420,7 @@ VFieldType VFieldType::GetDictKeyType () const {
 //==========================================================================
 VFieldType VFieldType::GetDictValueType () const {
   if (Type != TYPE_Dictionary) {
-    FatalError("Not a dictionary type");
+    VCFatalError("Not a dictionary type");
     return *this;
   }
   VFieldType ret = *this;
@@ -853,7 +853,6 @@ VFieldType VFieldType::WrapStructType () const {
 // VScriptArray
 // ////////////////////////////////////////////////////////////////////////// //
 
-#if !defined(IN_VCC)
 //==========================================================================
 //
 //  VScriptArray::VScriptArray
@@ -1010,7 +1009,7 @@ void VScriptArray::SetSize2D (int dim1, int dim2, const VFieldType &Type) {
   // resize flattened it, convert to 2d
   ArrNum = dim1|0x80000000;
   ArrSize = dim2|0x80000000;
-  if (!Is2D()) FatalError("VC: internal error in (VScriptArray::SetSize2D)");
+  if (!Is2D()) VCFatalError("VC: internal error in (VScriptArray::SetSize2D)");
 }
 
 
@@ -1048,7 +1047,7 @@ void VScriptArray::SetNum (int NewNum, const VFieldType &Type, bool doShrink) {
       memset(ArrData+NewNum*InnerSize, 0, (ArrNum-NewNum)*InnerSize);
     }
   }
-  if (ArrSize < NewNum) FatalError("VC: internal error in (VScriptArray::SetNum)");
+  if (ArrSize < NewNum) VCFatalError("VC: internal error in (VScriptArray::SetNum)");
   ArrNum = NewNum;
 }
 
@@ -1075,7 +1074,7 @@ void VScriptArray::SetNumMinus (int NewNum, const VFieldType &Type) {
 void VScriptArray::SetNumPlus (int NewNum, const VFieldType &Type) {
   Flatten(); // flatten 2d array
   if (NewNum <= 0) return;
-  if (ArrNum >= 0x3fffffff || 0x3fffffff-ArrNum < NewNum) FatalError("out of memory for dynarray");
+  if (ArrNum >= 0x3fffffff || 0x3fffffff-ArrNum < NewNum) VCFatalError("out of memory for dynarray");
   NewNum += ArrNum;
   SetNum(NewNum, Type, false);
 }
@@ -1127,10 +1126,10 @@ void VScriptArray::Remove (int Index, int Count, const VFieldType &Type) {
   if (Count <= 0) return;
 
   if (Count == oldnum) {
-    if (Index != 0) FatalError("VC: internal error 0 (VScriptArray::Remove)");
+    if (Index != 0) VCFatalError("VC: internal error 0 (VScriptArray::Remove)");
     // array is empty, so just clear it (but don't shrink)
     SetNum(0, Type, false);
-    if (ArrNum != 0) FatalError("VC: internal error 1 (VScriptArray::Remove)");
+    if (ArrNum != 0) VCFatalError("VC: internal error 1 (VScriptArray::Remove)");
   } else {
     // move elements that are after removed ones
     int InnerSize = Type.GetSize();
@@ -1443,7 +1442,6 @@ bool VScriptArray::Sort (const VFieldType &Type, VObject *self, VMethod *fncmp) 
 
   return true;
 }
-#endif // !defined(IN_VCC)
 
 
 
@@ -1451,7 +1449,6 @@ bool VScriptArray::Sort (const VFieldType &Type, VObject *self, VMethod *fncmp) 
 // VScriptDict
 // ////////////////////////////////////////////////////////////////////////// //
 
-#if !defined(IN_VCC)
 //==========================================================================
 //
 //  GetTypeHash
@@ -1932,4 +1929,3 @@ void VScriptDict::Serialise (VStream &strm, const VFieldType &dtp/*, VStr fullna
     }
   }
 }
-#endif // !defined(IN_VCC)

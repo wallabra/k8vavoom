@@ -92,7 +92,7 @@ VExpression *VExprParens::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 void VExprParens::Emit (VEmitContext &) {
-  FatalError("VExprParens::Emit: the thing that should not be");
+  VCFatalError("VExprParens::Emit: the thing that should not be");
 }
 
 
@@ -497,7 +497,7 @@ VExpression *VUnaryMutator::AddDropResult () {
   switch (Oper) {
     case PreInc: case PostInc: Oper = Inc; break;
     case PreDec: case PostDec: Oper = Dec; break;
-    case Inc: case Dec: FatalError("Should not happen (inc/dec)");
+    case Inc: case Dec: VCFatalError("Should not happen (inc/dec)");
   }
   Type = TYPE_Void;
   return this;
@@ -637,7 +637,7 @@ int VBinary::calcPrio (EBinOp op) {
     case NotIsA:
       return 1;
   };
-  FatalError("VC: internal error (VBinary::calcPrio)");
+  VCFatalError("VC: internal error (VBinary::calcPrio)");
   return -1;
 }
 
@@ -1038,14 +1038,14 @@ void VBinary::Emit (VEmitContext &ec) {
 
   if (Oper == IsA || Oper == NotIsA) {
     if (op1->Type.Type == TYPE_Class && op2->Type.Type == TYPE_Class) {
-      //FatalError("VC: internal compiler error (VBinary::Emit:Class:Class)");
+      //VCFatalError("VC: internal compiler error (VBinary::Emit:Class:Class)");
       op1->Emit(ec);
       op2->Emit(ec);
       ec.AddStatement((Oper == IsA ? OPC_ClassIsAClass : OPC_ClassIsNotAClass), Loc);
     } else if (op1->Type.Type == TYPE_Class || op1->Type.Type == TYPE_Reference) {
       if (op2->Type.Type != TYPE_Name) {
         if (op2->Type.Type != TYPE_Class && op2->Type.Type != TYPE_Reference) {
-          FatalError("VC: internal compiler error (VBinary::Emit:ClassObj:?)");
+          VCFatalError("VC: internal compiler error (VBinary::Emit:ClassObj:?)");
         }
       }
       op1->Emit(ec);
@@ -1059,7 +1059,7 @@ void VBinary::Emit (VEmitContext &ec) {
       }
       return;
     } else {
-      FatalError("VC: internal compiler error (VBinary::Emit:?:?)");
+      VCFatalError("VC: internal compiler error (VBinary::Emit:?:?)");
     }
     return;
   }
@@ -1156,7 +1156,7 @@ void VBinary::Emit (VEmitContext &ec) {
     case StrCat:
       if (op1->Type.Type == TYPE_String && op2->Type.Type == TYPE_String) ec.AddStatement(OPC_StrCat, Loc);
       break;
-    case IsA: case NotIsA: FatalError("wtf?!");
+    case IsA: case NotIsA: VCFatalError("wtf?!");
   }
 }
 

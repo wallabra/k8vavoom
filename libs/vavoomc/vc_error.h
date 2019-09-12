@@ -65,11 +65,7 @@ void ParseError (const TLocation &, const char *text, ...) __attribute__((format
 void ParseError (const TLocation &, ECompileError error);
 void ParseError (const TLocation &, ECompileError error, const char *text, ...) __attribute__((format(printf, 3, 4)));
 void BailOut () __attribute__((noreturn));
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-# define FatalError Sys_Error
-#else
-void FatalError (const char *text, ...) __attribute__((noreturn, format(printf, 1, 2)));
-#endif
+void VCFatalError (const char *text, ...) __attribute__((noreturn, format(printf, 1, 2)));
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -89,7 +85,7 @@ private:
   int mGagCount; // consistency checks
 public:
   VGagErrors () : mGagErrCount(vcGagErrorCount), mGagCount(vcGagErrors) { ++vcGagErrors; }
-  ~VGagErrors () { --vcGagErrors; if (vcGagErrors != mGagCount) FatalError("unbalanced `VGagErrors`"); }
+  ~VGagErrors () { --vcGagErrors; if (vcGagErrors != mGagCount) VCFatalError("unbalanced `VGagErrors`"); }
   // check if there were some new errors since gagging with this object
   inline bool wasErrors () const { return (vcGagErrorCount > mGagErrCount); }
 private: // no copies

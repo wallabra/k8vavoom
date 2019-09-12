@@ -76,12 +76,10 @@ public:
   bool NeedsDestructor () const;
   bool Define ();
 
-#if !defined(IN_VCC)
   static void SerialiseFieldValue (VStream &, vuint8 *, const VFieldType &);
   static void SkipSerialisedType (VStream &);
   static void SkipSerialisedValue (VStream &);
   static bool NetSerialiseValue (VStream &, VNetObjectsMapBase *, vuint8 *, const VFieldType &);
-#endif
   static void CopyFieldValue (const vuint8 *Src, vuint8 *Dst, const VFieldType &);
   static bool CleanField (vuint8 *, const VFieldType &); // returns `true` if something was cleaned
   static void DestructField (vuint8 *, const VFieldType &, bool zeroIt=false);

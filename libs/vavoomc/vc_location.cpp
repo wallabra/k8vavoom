@@ -24,7 +24,6 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-//#define VC_PUBLIC_WANT_CORE
 #include "vc_public.h"
 
 

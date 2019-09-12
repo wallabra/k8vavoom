@@ -68,7 +68,7 @@ VTypeExpr *VTypeExpr::NewTypeExpr (VFieldType atype, const TLocation &aloc) {
       /*
       fprintf(stderr, "<%s>\n", *atype.GetName());
       abort();
-      FatalError("VC: VTypeExpr::NewTypeExpr: no delegates yet");
+      VCFatalError("VC: VTypeExpr::NewTypeExpr: no delegates yet");
       */
       return new VDelegateType(atype, aloc);
     case TYPE_Array:
@@ -107,13 +107,11 @@ VTypeExpr *VTypeExpr::NewTypeExprFromAuto (VFieldType atype, const TLocation &al
   // convert vector to `TVec` struct
   if (atype.Type == TYPE_Vector || (atype.Type == TYPE_Pointer && atype.InnerType == TYPE_Vector)) {
     if (!atype.Struct) {
-#if defined(IN_VCC) /*&& !defined(VCC_STANDALONE_EXECUTOR)*/
+      // vcc cannot do this, so let's play safe
+      //VStruct *tvs = (VStruct *)VMemberBase::StaticFindMember("TVec", /*ANY_PACKAGE*/VObject::StaticClass(), MEMBER_Struct);
       VClass *ocls = (VClass *)VMemberBase::StaticFindMember("Object", ANY_PACKAGE, MEMBER_Class);
       vassert(ocls);
       VStruct *tvs = (VStruct *)VMemberBase::StaticFindMember("TVec", ocls, MEMBER_Struct);
-#else
-      VStruct *tvs = (VStruct *)VMemberBase::StaticFindMember("TVec", /*ANY_PACKAGE*/VObject::StaticClass(), MEMBER_Struct);
-#endif
       if (!tvs) {
         ParseError(aloc, "Cannot find `TVec` struct for vector type");
         return NewTypeExpr(atype, aloc);
@@ -655,7 +653,7 @@ VDelegateType::VDelegateType (VFieldType atype, const TLocation &aloc)
   Expr = nullptr;
   memset(Params, 0, sizeof(Params));
   memset(ParamFlags, 0, sizeof(ParamFlags));
-  //FatalError("VC: VDelegateType::VDelegateType: no `auto` delegates yet, use the full declaration");
+  //VCFatalError("VC: VDelegateType::VDelegateType: no `auto` delegates yet, use the full declaration");
 }
 
 

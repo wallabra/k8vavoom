@@ -47,16 +47,12 @@ VMiAStarGraphIntr::VMiAStarGraphIntr (VMiAStarGraphBase *aifc)
 //
 //==========================================================================
 float VMiAStarGraphIntr::LeastCostEstimate (void *stateStart, void *stateEnd) {
-#if !defined(IN_VCC)
   vassert(vcifc);
   vassert(mtLeastCostEstimate);
   P_PASS_REF(vcifc);
   P_PASS_REF(stateStart);
   P_PASS_REF(stateEnd);
   return VObject::ExecuteFunction(mtLeastCostEstimate).getFloat();
-#else
-  return 0;
-#endif
 }
 
 
@@ -72,9 +68,7 @@ void VMiAStarGraphIntr::AdjacentCost (void *state, MP_VECTOR<micropather::StateC
   try {
     P_PASS_REF(vcifc);
     P_PASS_REF(state);
-#if !defined(IN_VCC)
     (void)VObject::ExecuteFunction(mtAdjacentCost);
-#endif
   } catch (...) {
     vcifc->adjarray = nullptr;
     throw;

@@ -309,11 +309,7 @@ public:
 
   TArray<VSpriteEffect> SpriteEffects;
 
-  //VName LowerCaseName;
-  //VClass *LowerCaseHashNext;
-
   static TArray<VName> GSpriteNames;
-  //static VClass *GLowerCaseHashTable[LOWER_CASE_HASH_SIZE];
 
   struct AliasInfo {
     VName aliasName;
@@ -464,8 +460,6 @@ public:
   // returns `false` if replacee cannot be set for some reason
   bool SetReplacement (VClass *cls); // assign `cls` as a replacement for this
 
-  //void HashLowerCased ();
-
   // df state thingy
   void DFStateSetTexDir (VStr adir);
   void DFStateAddTexture (VStr tname, const TextureInfo &ti);
@@ -526,9 +520,7 @@ private:
   void CreateVTable ();
   void CreateMethodMap (); // called from `CreateVTable()`
   void InitStatesLookup ();
-#if !defined(IN_VCC)
   void CreateDefaults ();
-#endif
 
 public:
   friend inline VStream &operator << (VStream &Strm, VClass *&Obj) { return Strm << *(VMemberBase **)&Obj; }

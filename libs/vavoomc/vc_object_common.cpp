@@ -26,12 +26,6 @@
 //**************************************************************************
 #include "vc_object_rtti.cpp"
 
-#if !defined(IN_VCC)
-# define VC_HOST_ERROR  Host_Error
-#else
-# define VC_HOST_ERROR  Sys_Error
-#endif
-
 
 //**************************************************************************
 //
@@ -147,16 +141,12 @@ IMPLEMENT_FUNCTION(VObject, GC_CollectGarbage) {
 //
 //**************************************************************************
 IMPLEMENT_FUNCTION(VObject, Error) {
-#if !defined(IN_VCC)
   VObject::VMDumpCallStack();
   if (VObject::cliAllErrorsAreFatal) {
     Sys_Error("%s", *PF_FormatString());
   } else {
     Host_Error("%s", *PF_FormatString());
   }
-#else
-  Sys_Error("%s", *PF_FormatString());
-#endif
 }
 
 IMPLEMENT_FUNCTION(VObject, FatalError) {
@@ -924,14 +914,12 @@ IMPLEMENT_FUNCTION(VObject, StateHasAction) {
 }
 
 IMPLEMENT_FUNCTION(VObject, CallStateAction) {
-#if !defined(IN_VCC)
   P_GET_PTR(VState, State);
   P_GET_PTR(VObject, obj);
   if (State && State->Function) {
     P_PASS_REF(obj);
     (void)ExecuteFunction(State->Function);
   }
-#endif
 }
 
 // by execution
@@ -1157,9 +1145,7 @@ IMPLEMENT_FUNCTION(VObject, DecodeTimeVal) {
     tmres->isdst = ctm.tm_isdst;
     RET_BOOL(true);
   } else {
-#if !defined(IN_VCC)
     memset(tmres, 0, sizeof(*tmres));
-#endif
     RET_BOOL(false);
   }
 }
@@ -1185,9 +1171,7 @@ IMPLEMENT_FUNCTION(VObject, EncodeTimeVal) {
   auto tt = mktime(&ctm);
   if (tt == (time_t)-1) {
     // oops
-#if !defined(IN_VCC)
     memset(tvres, 0, sizeof(*tvres));
-#endif
     RET_BOOL(false);
   } else {
     // update it

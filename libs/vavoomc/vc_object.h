@@ -253,7 +253,6 @@ struct event_t {
 };
 
 
-#if !defined(IN_VCC)
 // ////////////////////////////////////////////////////////////////////////// //
 // `ExecuteFunction()` returns this
 // we cannot return arrays
@@ -348,7 +347,6 @@ public:
 
   inline operator bool () const { return getBool(); }
 };
-#endif
 
 
 // flags describing an object instance
@@ -431,9 +429,7 @@ public:
 #endif
   static bool GGCMessagesAllowed;
   static int GCDebugMessagesAllowed;
-#if !defined(IN_VCC)
   static bool (*onExecuteNetMethodCB) (VObject *obj, VMethod *func); // return `false` to do normal execution
-#endif
   static bool DumpBacktraceToStdErr;
 
 public:
@@ -450,6 +446,8 @@ public:
   void operator delete (void *);
   void operator delete (void *, const char *, int);
 
+  inline bool IsRefToCleanup () const { return !!(ObjectFlags&_OF_CleanupRef); }
+
   // VObject interface
   virtual void Register ();
   virtual void Destroy ();
@@ -457,9 +455,7 @@ public:
   virtual void SerialiseOther (VStream &); // this serialises other object internal data
   void Serialise (VStream &); // this calls field serialisation, then other serialisation (and writes metadata)
   virtual void ClearReferences ();
-#if !defined(IN_VCC)
   virtual bool ExecuteNetMethod (VMethod *);
-#endif
 
   // system-wide functions
   static void StaticInit ();
@@ -486,17 +482,13 @@ public:
 
   static int GetObjectsCount ();
 
-#if !defined(IN_VCC)
   static VFuncRes ExecuteFunction (VMethod *func); // all arguments should be on the stack
   static VFuncRes ExecuteFunctionNoArgs (VObject *Self, VMethod *func, bool allowVMTLookups=true);
-#endif
   static void VMDumpCallStack ();
-#if !defined(IN_VCC)
   static void VMDumpCallStackToStdErr ();
   static void ClearProfiles ();
   static void DumpProfile ();
   static void DumpProfileInternal (int type); // <0: only native; >0: only script; 0: everything
-#endif
 
   // functions
   void ConditionalDestroy ();
@@ -580,7 +572,6 @@ template<class T, class U> T *CastChecked (U *Src) {
 }
 
 
-#if !defined(IN_VCC)
 //==========================================================================
 //
 //  VMethodProxy
@@ -604,7 +595,6 @@ public:
   // this doesn't check is `Self` isa `Class`
   VFuncRes ExecuteNoCheck (VObject *Self);
 };
-#endif
 
 
 /*----------------------------------------------------------------------------

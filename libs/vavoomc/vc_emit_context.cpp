@@ -390,12 +390,12 @@ VEmitContext::VEmitContext (VMemberBase *Member)
 //
 //==========================================================================
 void VEmitContext::EndCode () {
-  if (lastFin) FatalError("Internal compiler error: unbalanced finalizers");
-  if (lastBC) FatalError("Internal compiler error: unbalanced break/cont");
+  if (lastFin) VCFatalError("Internal compiler error: unbalanced finalizers");
+  if (lastBC) VCFatalError("Internal compiler error: unbalanced break/cont");
 
   // fix-up labels.
   for (int i = 0; i < Fixups.Num(); ++i) {
-    if (Labels[Fixups[i].LabelIdx] < 0) FatalError("Label was not marked");
+    if (Labels[Fixups[i].LabelIdx] < 0) VCFatalError("Label was not marked");
     if (Fixups[i].Arg == 1) {
       CurrentFunc->Instructions[Fixups[i].Pos].Arg1 = Labels[Fixups[i].LabelIdx];
     } else {
@@ -502,7 +502,7 @@ VLocalVarDef &VEmitContext::AllocLocal (VName aname, const VFieldType &atype, co
     localsofs += ssz;
     if (localsofs > 1024) {
       ParseError(aloc, "Local vars > 1k");
-      FatalError("VC: too many locals");
+      VCFatalError("VC: too many locals");
     }
     return loc;
   }
@@ -598,8 +598,8 @@ VLabel VEmitContext::DefineLabel () {
 //
 //==========================================================================
 void VEmitContext::MarkLabel (VLabel l) {
-  if (l.Index < 0 || l.Index >= Labels.Num()) FatalError("Bad label index %d", l.Index);
-  if (Labels[l.Index] >= 0) FatalError("Label has already been marked");
+  if (l.Index < 0 || l.Index >= Labels.Num()) VCFatalError("Bad label index %d", l.Index);
+  if (Labels[l.Index] >= 0) VCFatalError("Label has already been marked");
   Labels[l.Index] = CurrentFunc->Instructions.Num();
 }
 
@@ -610,7 +610,7 @@ void VEmitContext::MarkLabel (VLabel l) {
 //
 //==========================================================================
 void VEmitContext::AddStatement (int statement, const TLocation &aloc) {
-  if (StatementInfo[statement].Args != OPCARGS_None) FatalError("Opcode doesn't take 0 params");
+  if (StatementInfo[statement].Args != OPCARGS_None) VCFatalError("Opcode doesn't take 0 params");
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
   I.Arg1 = 0;
@@ -630,7 +630,7 @@ void VEmitContext::AddStatement (int statement, int parm1, const TLocation &aloc
       StatementInfo[statement].Args != OPCARGS_Int &&
       StatementInfo[statement].Args != OPCARGS_String)
   {
-    FatalError("Opcode doesn't take 1 param");
+    VCFatalError("Opcode doesn't take 1 param");
   }
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
@@ -646,7 +646,7 @@ void VEmitContext::AddStatement (int statement, int parm1, const TLocation &aloc
 //
 //==========================================================================
 void VEmitContext::AddStatement (int statement, float FloatArg, const TLocation &aloc) {
-  if (StatementInfo[statement].Args != OPCARGS_Int) FatalError("Opcode does't take float argument");
+  if (StatementInfo[statement].Args != OPCARGS_Int) VCFatalError("Opcode does't take float argument");
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
   I.Arg1 = *(vint32 *)&FloatArg;
@@ -661,7 +661,7 @@ void VEmitContext::AddStatement (int statement, float FloatArg, const TLocation 
 //
 //==========================================================================
 void VEmitContext::AddStatement (int statement, VName NameArg, const TLocation &aloc) {
-  if (StatementInfo[statement].Args != OPCARGS_Name) FatalError("Opcode does't take name argument");
+  if (StatementInfo[statement].Args != OPCARGS_Name) VCFatalError("Opcode does't take name argument");
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
   I.NameArg = NameArg;
@@ -679,7 +679,7 @@ void VEmitContext::AddStatement (int statement, VMemberBase *Member, const TLoca
       StatementInfo[statement].Args != OPCARGS_FieldOffset &&
       StatementInfo[statement].Args != OPCARGS_VTableIndex)
   {
-    FatalError("Opcode does't take member as argument");
+    VCFatalError("Opcode does't take member as argument");
   }
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
@@ -698,7 +698,7 @@ void VEmitContext::AddStatement (int statement, VMemberBase *Member, int Arg, co
       StatementInfo[statement].Args != OPCARGS_FieldOffset_Byte &&
       StatementInfo[statement].Args != OPCARGS_Member_Int)
   {
-    FatalError("Opcode does't take member and byte as argument");
+    VCFatalError("Opcode does't take member and byte as argument");
   }
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
@@ -718,7 +718,7 @@ void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg, const
       StatementInfo[statement].Args != OPCARGS_Type &&
       StatementInfo[statement].Args != OPCARGS_A2DDimsAndSize)
   {
-    FatalError("Opcode doesn't take type as argument");
+    VCFatalError("Opcode doesn't take type as argument");
   }
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
@@ -737,7 +737,7 @@ void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg, int A
       StatementInfo[statement].Args != OPCARGS_ArrElemType_Int &&
       StatementInfo[statement].Args != OPCARGS_TypeAD)
   {
-    FatalError("Opcode doesn't take type as argument");
+    VCFatalError("Opcode doesn't take type as argument");
   }
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
@@ -754,7 +754,7 @@ void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg, int A
 //==========================================================================
 void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg, const VFieldType &TypeArg1, int OpCode, const TLocation &aloc) {
   if (StatementInfo[statement].Args != OPCARGS_TypeDD) {
-    FatalError("Opcode doesn't take types as argument");
+    VCFatalError("Opcode doesn't take types as argument");
   }
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
@@ -771,7 +771,7 @@ void VEmitContext::AddStatement (int statement, const VFieldType &TypeArg, const
 //
 //==========================================================================
 void VEmitContext::AddStatement (int statement, VLabel Lbl, const TLocation &aloc) {
-  if (StatementInfo[statement].Args != OPCARGS_BranchTarget) FatalError("Opcode does't take label as argument");
+  if (StatementInfo[statement].Args != OPCARGS_BranchTarget) VCFatalError("Opcode does't take label as argument");
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
   I.Arg1 = 0;
@@ -796,7 +796,7 @@ void VEmitContext::AddStatement (int statement, int parm1, VLabel Lbl, const TLo
       StatementInfo[statement].Args != OPCARGS_IntBranchTarget &&
       StatementInfo[statement].Args != OPCARGS_NameBranchTarget)
   {
-    FatalError("Opcode does't take 2 params");
+    VCFatalError("Opcode does't take 2 params");
   }
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = statement;
@@ -817,7 +817,7 @@ void VEmitContext::AddStatement (int statement, int parm1, VLabel Lbl, const TLo
 //
 //==========================================================================
 void VEmitContext::AddBuiltin (int b, const TLocation &aloc) {
-  //if (StatementInfo[statement].Args != OPCARGS_Builtin) FatalError("Opcode does't take builtin");
+  //if (StatementInfo[statement].Args != OPCARGS_Builtin) VCFatalError("Opcode does't take builtin");
   FInstruction &I = CurrentFunc->Instructions.Alloc();
   I.Opcode = OPC_Builtin;
   I.Arg1 = b;
@@ -911,10 +911,10 @@ void VEmitContext::EmitPushPointedCode (VFieldType type, const TLocation &aloc) 
 //
 //==========================================================================
 void VEmitContext::EmitLocalValue (int lcidx, const TLocation &aloc, int xofs) {
-  if (lcidx < 0 || lcidx >= LocalDefs.length()) FatalError("VC: internal compiler error (VEmitContext::EmitLocalValue)");
+  if (lcidx < 0 || lcidx >= LocalDefs.length()) VCFatalError("VC: internal compiler error (VEmitContext::EmitLocalValue)");
   const VLocalVarDef &loc = LocalDefs[lcidx];
   int Ofs = loc.Offset+xofs;
-  if (Ofs < 0 || Ofs > 1024*1024*32) FatalError("VC: internal compiler error (VEmitContext::EmitLocalValue)");
+  if (Ofs < 0 || Ofs > 1024*1024*32) VCFatalError("VC: internal compiler error (VEmitContext::EmitLocalValue)");
   if (Ofs < 256 && loc.Type.Type != TYPE_Delegate) {
     switch (loc.Type.Type) {
       case TYPE_Vector:
@@ -944,10 +944,10 @@ void VEmitContext::EmitLocalValue (int lcidx, const TLocation &aloc, int xofs) {
 //
 //==========================================================================
 void VEmitContext::EmitLocalPtrValue (int lcidx, const TLocation &aloc, int xofs) {
-  if (lcidx < 0 || lcidx >= LocalDefs.length()) FatalError("VC: internal compiler error (VEmitContext::EmitLocalValue)");
+  if (lcidx < 0 || lcidx >= LocalDefs.length()) VCFatalError("VC: internal compiler error (VEmitContext::EmitLocalValue)");
   const VLocalVarDef &loc = LocalDefs[lcidx];
   int Ofs = loc.Offset+xofs;
-  if (Ofs < 0 || Ofs > 1024*1024*32) FatalError("VC: internal compiler error (VEmitContext::EmitLocalPtrValue)");
+  if (Ofs < 0 || Ofs > 1024*1024*32) VCFatalError("VC: internal compiler error (VEmitContext::EmitLocalPtrValue)");
   if (Ofs < 256) {
     if (Ofs >= 0 && Ofs <= 7) AddStatement(OPC_LocalValue0+Ofs, aloc);
     else AddStatement(OPC_LocalValueB, Ofs, aloc);
@@ -1064,7 +1064,7 @@ VArrayElement *VEmitContext::SetIndexArray (VArrayElement *el) {
 //
 //==========================================================================
 void VEmitContext::EmitGotoTo (VName lblname, const TLocation &aloc) {
-  if (lblname == NAME_None) FatalError("VC: internal compiler error (VEmitContext::EmitGotoTo)");
+  if (lblname == NAME_None) VCFatalError("VC: internal compiler error (VEmitContext::EmitGotoTo)");
   for (int f = GotoLabels.length()-1; f >= 0; --f) {
     if (GotoLabels[f].name == lblname) {
       AddStatement(OPC_Goto, GotoLabels[f].jlbl, aloc);
@@ -1088,7 +1088,7 @@ void VEmitContext::EmitGotoTo (VName lblname, const TLocation &aloc) {
 //
 //==========================================================================
 void VEmitContext::EmitGotoLabel (VName lblname, const TLocation &aloc) {
-  if (lblname == NAME_None) FatalError("VC: internal compiler error (VEmitContext::EmitGotoTo)");
+  if (lblname == NAME_None) VCFatalError("VC: internal compiler error (VEmitContext::EmitGotoTo)");
   for (int f = GotoLabels.length()-1; f >= 0; --f) {
     if (GotoLabels[f].name == lblname) {
       if (GotoLabels[f].defined) {

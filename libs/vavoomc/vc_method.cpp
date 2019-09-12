@@ -567,6 +567,8 @@ void VMethod::DumpAsm () {
 //
 //  VMethod::PostLoad
 //
+//  this should be never called for VCC
+//
 //==========================================================================
 void VMethod::PostLoad () {
   //k8: it should be called only once, but let's play safe here
@@ -611,7 +613,6 @@ void VMethod::PostLoad () {
     }
   }
 
-#if !defined(IN_VCC)
   //GLog.Logf(NAME_Debug, "*** %s: %s", *Loc.toString(), *GetFullName());
   // set up builtins
   if (NumParams > VMethod::MAX_PARAMS) Sys_Error("Function has more than %i params", VMethod::MAX_PARAMS);
@@ -641,7 +642,6 @@ void VMethod::PostLoad () {
     */
     Sys_Error("Builtin `%s` not implemented!", *GetFullName());
   }
-#endif
 
   GenerateCode();
 
@@ -874,7 +874,6 @@ TLocation VMethod::FindPCLocation (const vuint8 *pc) {
 //
 //==========================================================================
 void VMethod::CleanupParams () const {
-#if !defined(IN_VCC)
   VStack *Param = pr_stackPtr-ParamsSize+(Flags&FUNC_Static ? 0 : 1); // skip self too
   for (int i = 0; i < NumParams; ++i) {
     switch (ParamTypes[i].Type) {
@@ -933,7 +932,6 @@ void VMethod::CleanupParams () const {
     default:
       Sys_Error("Bad return value type `%s`", *ReturnType.GetName());
   }
-#endif
 }
 
 

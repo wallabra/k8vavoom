@@ -62,9 +62,7 @@ public:
 private:
   // cache various requests (<0: not cached; 0: false; 1: true)
   int cacheNeedDTor;
-#if !defined(IN_VCC)
   int cacheNeedCleanup;
-#endif
 
 public:
   VStruct (VName, VMemberBase *, TLocation);
@@ -89,11 +87,9 @@ public:
   void CalcFieldOffsets ();
   void InitReferences ();
   void InitDestructorFields ();
-#if !defined(IN_VCC)
   static void SkipSerialisedObject (VStream &);
   void SerialiseObject (VStream &, vuint8 *);
   bool NetSerialiseObject (VStream &, VNetObjectsMapBase *, vuint8 *);
-#endif
   void CopyObject (const vuint8 *, vuint8 *);
   bool NeedToCleanObject ();
   bool CleanObject (vuint8 *); // returns `true` if something was cleaned

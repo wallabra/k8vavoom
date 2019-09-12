@@ -51,7 +51,6 @@ public:
 
 // ////////////////////////////////////////////////////////////////////////// //
 TArray<VName> VClass::GSpriteNames;
-//VClass *VClass::GLowerCaseHashTable[VClass::LOWER_CASE_HASH_SIZE];
 
 static TArray<mobjinfo_t> GMobjInfos;
 static TArray<mobjinfo_t> GScriptIds;
@@ -59,7 +58,6 @@ static TMapNC<vint32, vint32> GMobj2Arr; // key: doomedidx, value: index in GMob
 static TMapNC<vint32, vint32> GSId2Arr; // key: doomedidx, value: index in GScriptIds
 
 
-#if !defined(IN_VCC)
 struct XXMInfo {
   int idx;
   mobjinfo_t nfo;
@@ -78,7 +76,6 @@ extern "C" {
     //return (a->nfo.DoomEdNum-b->nfo.DoomEdNum);
   }
 }
-#endif
 
 
 //==========================================================================
@@ -143,7 +140,6 @@ VClass::VClass (VName AName, VMemberBase *AOuter, const TLocation &ALoc)
   GClasses = this;
   ClassGameObjName = NAME_None;
   DecorateStateActionsBuilt = false;
-  //HashLowerCased();
 }
 
 
@@ -207,13 +203,11 @@ VClass::~VClass () {
     delete[] ClassVTable;
     ClassVTable = nullptr;
   }
-#if !defined(IN_VCC)
   if (Defaults) {
     DestructObject((VObject*)Defaults);
     delete[] Defaults;
     Defaults = nullptr;
   }
-#endif
 
   if (!GObjInitialised || GObjShuttingDown) return;
 
@@ -226,9 +220,7 @@ VClass::~VClass () {
     if (Prev) {
       Prev->LinkNext = LinkNext;
     } else {
-#if !defined(IN_VCC)
       GLog.Log(NAME_Dev, "VClass Unlink: Class not in list");
-#endif
     }
   }
 }
@@ -430,9 +422,6 @@ void VClass::Serialise (VStream &Strm) {
   VMemberBase::Serialise(Strm);
   vuint8 xver = 0; // current version is 0
   Strm << xver;
-#if !defined(IN_VCC)
-  VClass *PrevParent = ParentClass;
-#endif
   // other data
   Strm << ParentClass
     << Fields
@@ -442,13 +431,6 @@ void VClass::Serialise (VStream &Strm) {
     << RepInfos
     << StateLabels
     << ClassGameObjName;
-#if !defined(IN_VCC)
-  if ((ObjectFlags&CLASSOF_Native) != 0 && ParentClass != PrevParent) {
-    Sys_Error("Bad parent class, class %s, C++ %s, VavoomC %s)",
-      GetName(), PrevParent ? PrevParent->GetName() : "(none)",
-      ParentClass ? ParentClass->GetName() : "(none)");
-  }
-#endif
   // aliases
   vint32 acount = (vint32)AliasList.count();
   Strm << STRM_INDEX(acount);
@@ -521,13 +503,11 @@ void VClass::Shutdown () {
     delete[] ClassVTable;
     ClassVTable = nullptr;
   }
-#if !defined(IN_VCC)
   if (Defaults) {
     DestructObject((VObject*)Defaults);
     delete[] Defaults;
     Defaults = nullptr;
   }
-#endif
   StatesLookup.Clear();
   RepInfos.Clear();
   SpriteEffects.Clear();
@@ -1162,9 +1142,7 @@ bool VClass::Define () {
   Defined = true;
   DefinedAsDependency = false;
 
-#if !defined(IN_VCC)
   VClass *PrevParent = ParentClass;
-#endif
   if (ParentClassName != NAME_None) {
     ParentClass = StaticFindClass(ParentClassName);
     if (!ParentClass) {
@@ -1177,33 +1155,12 @@ bool VClass::Define () {
       ParentClass->DefinedAsDependency = true;
       if (!xdres) return false;
     }
-/*
-#if defined(VCC_STANDALONE_EXECUTOR)
+    #if defined(VCC_STANDALONE_EXECUTOR)
     // process replacements
     // first get actual replacement
     ParentClass = ParentClass->GetReplacement();
-    if (!ParentClass) FatalError("VC Internal Error: VClass::Define: cannot find replacement");
-    if (DoesReplacement == ReplaceType::Replace_LatestChild || DoesReplacement == ReplaceType::Replace_Parents_LatestChild) {
-      ParentClass = ParentClass->FindBestLatestChild(Name);
-    }
-    if (!ParentClass->Defined) {
-      bool xdres = ParentClass->Define();
-      ParentClass->DefinedAsDependency = true;
-      if (!xdres) return false;
-    }
-    //fprintf(stderr, "VClass::Define: requested parent is `%s`, actual parent is `%s`\n", *ParentClassName, ParentClass->GetName());
-    // now set replacement for the actual replacement (if necessary)
-    if (DoesReplacement) {
-      if (!ParentClass->SetReplacement(this)) ParseError(ParentClassLoc, "Cannot replace class `%s`", *ParentClassName);
-    }
-#else
-*/
-#if defined(VCC_STANDALONE_EXECUTOR)
-    // process replacements
-    // first get actual replacement
-    ParentClass = ParentClass->GetReplacement();
-    if (!ParentClass) FatalError("VC Internal Error: VClass::Define: cannot find replacement");
-#endif
+    if (!ParentClass) VCFatalError("VC Internal Error: VClass::Define: cannot find replacement");
+    #endif
     if (DoesReplacement != ReplaceType::Replace_None) {
       VClass *origParent = ParentClass;
       if (DoesLastChildReplacement()) {
@@ -1211,12 +1168,12 @@ bool VClass::Define () {
         ParentClass = ParentClass->FindBestLatestChild(Name);
         vdrlogf("VClass::Define:   latest child is `%s`", ParentClass->GetName());
       } else {
-#if !defined(VCC_STANDALONE_EXECUTOR)
+        #if !defined(VCC_STANDALONE_EXECUTOR)
         //k8: should we do this?
         ParentClass = ParentClass->GetReplacement();
-#endif
+        #endif
       }
-      if (!ParentClass) FatalError("VC Internal Error: VClass::Define: cannot find replacement");
+      if (!ParentClass) VCFatalError("VC Internal Error: VClass::Define: cannot find replacement");
       //fprintf(stderr, "VClass::Define: requested parent is `%s`, actual parent is `%s`\n", *ParentClassName, ParentClass->GetName());
       if (!ParentClass->Defined) {
         bool xdres = ParentClass->Define();
@@ -1242,7 +1199,7 @@ bool VClass::Define () {
       }
     } else {
       // check replacement parent
-#if !defined(VCC_STANDALONE_EXECUTOR)
+      #if !defined(VCC_STANDALONE_EXECUTOR)
       VClass *prepl = ParentClass->GetReplacement();
       if (prepl && prepl != ParentClass && prepl->IsChildOf(ParentClass) && prepl->DoesParentReplacement()) {
         vdrlogf("VClass::Define (%s): parent `%s` force-replaced with `%s`", GetName(), ParentClass->GetName(), prepl->GetName());
@@ -1253,17 +1210,14 @@ bool VClass::Define () {
           if (!xdres) return false;
         }
       }
-#endif
+      #endif
     }
-//#endif
   }
-#if !defined(IN_VCC)
   if ((ObjectFlags&CLASSOF_Native) && ParentClass != PrevParent) {
     Sys_Error("Bad parent class, class %s, C++ %s, VavoomC %s)",
       GetName(), PrevParent ? PrevParent->GetName() : "(none)",
       ParentClass ? ParentClass->GetName() : "(none)");
   }
-#endif
 
   // process constants, so if other class will try to use constant it its declaration, that will succeed
   for (auto &&ct : Constants) if (!ct->Define()) return false;
@@ -1400,7 +1354,6 @@ bool VClass::DefineMembers () {
 //
 //==========================================================================
 void VClass::StaticDumpMObjInfo () {
-#if !defined(IN_VCC)
   TArray<XXMInfo> list;
   for (int f = 0; f < GMobjInfos.length(); ++f) {
     XXMInfo &xn = list.alloc();
@@ -1423,7 +1376,6 @@ void VClass::StaticDumpMObjInfo () {
       link = nfo->nextidx;
     }
   }
-#endif
 }
 
 
@@ -1433,7 +1385,6 @@ void VClass::StaticDumpMObjInfo () {
 //
 //==========================================================================
 void VClass::StaticDumpScriptIds () {
-#if !defined(IN_VCC)
   TArray<XXMInfo> list;
   for (int f = 0; f < GScriptIds.length(); ++f) {
     XXMInfo &xn = list.alloc();
@@ -1446,7 +1397,6 @@ void VClass::StaticDumpScriptIds () {
     mobjinfo_t *nfo = &list[f].nfo;
     GLog.Logf("  %5d: '%s'; flags:0x%02x; filter:0x%04x", nfo->DoomEdNum, (nfo->Class ? *nfo->Class->GetFullName() : "<none>"), nfo->flags, nfo->GameFilter);
   }
-#endif
 }
 
 
@@ -2345,7 +2295,6 @@ void VClass::InitStatesLookup () {
 }
 
 
-#if !defined(IN_VCC)
 //==========================================================================
 //
 //  VClass::CreateDefaults
@@ -2403,7 +2352,6 @@ void VClass::CreateDefaults () {
     VObject::ExecuteFunction(DefaultProperties);
   }
 }
-#endif //!defined(IN_VCC)
 
 
 //==========================================================================
@@ -2536,9 +2484,7 @@ VClass *VClass::CreateDerivedClass (VName AName, VMemberBase *AOuter, TArray<VDe
   if (!NewClass->DefineRepInfos()) Sys_Error("cannot post-process replication info for class '%s'", *AName);
 
   NewClass->PostLoad();
-#if !defined(IN_VCC)
   NewClass->CreateDefaults();
-#endif
 
   /*
   if (NewClass->Fields) {
@@ -2610,21 +2556,6 @@ bool VClass::SetReplacement (VClass *cls) {
   cls->Replacee = this;
   return true;
 }
-
-
-//==========================================================================
-//
-//  VClass::HashLowerCased
-//
-//==========================================================================
-/*
-void VClass::HashLowerCased () {
-  LowerCaseName = *VStr(Name).ToLower();
-  int HashIndex = GetTypeHash(LowerCaseName)&(LOWER_CASE_HASH_SIZE-1);
-  LowerCaseHashNext = GLowerCaseHashTable[HashIndex];
-  GLowerCaseHashTable[HashIndex] = this;
-}
-*/
 
 
 //==========================================================================

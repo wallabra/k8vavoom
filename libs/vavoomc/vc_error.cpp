@@ -24,7 +24,6 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-//#define VC_PUBLIC_WANT_CORE
 #include "vc_public.h"
 
 
@@ -101,11 +100,7 @@ __attribute__((format(printf, 2, 3))) void ParseWarning (const TLocation &l, con
   va_start(argPtr, text);
   const char *buf = vavarg(text, argPtr);
   va_end(argPtr);
-#if !defined(IN_VCC)
   GLog.Logf(NAME_Warning, "%s: warning: %s", *(vcErrorIncludeCol ? l.toString(): l.toStringNoCol()), buf);
-#else
-  fprintf(stderr, "%s: warning: %s\n", *(vcErrorIncludeCol ? l.toString(): l.toStringNoCol()), buf);
-#endif
 }
 
 
@@ -120,11 +115,7 @@ __attribute__((format(printf, 2, 3))) void ParseWarningAsError (const TLocation 
   va_start(argPtr, text);
   const char *buf = vavarg(text, argPtr);
   va_end(argPtr);
-#if !defined(IN_VCC)
   GLog.Logf(NAME_Error, "%s: shit! %s", *(vcErrorIncludeCol ? l.toString(): l.toStringNoCol()), buf);
-#else
-  fprintf(stderr, "%s: SHIT!: %s\n", *(vcErrorIncludeCol ? l.toString(): l.toStringNoCol()), buf);
-#endif
 }
 
 
@@ -146,11 +137,7 @@ __attribute__((format(printf, 2, 3))) void ParseError (const TLocation &l, const
   VStr err = va("%s: %s", *(vcErrorIncludeCol ? l.toString(): l.toStringNoCol()), buf);
   vcParseErrors.append(err);
 
-#if !defined(IN_VCC)
   GLog.Logf(NAME_Error, "%s", *err);
-#else
-  fprintf(stderr, "%s\n", *err);
-#endif
 
   if (vcErrorCount >= 128) BailOut();
 }
@@ -188,21 +175,12 @@ __attribute__((format(printf, 3, 4))) void ParseError (const TLocation &l, EComp
 }
 
 
-#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
-
- // nothing
-
-#else
-#if defined(WIN32)
-# include <windows.h>
-#endif
-
 //==========================================================================
 //
-//  FatalError
+//  VCFatalError
 //
 //==========================================================================
-__attribute__((noreturn, format(printf, 1, 2))) void FatalError (const char *text, ...) {
+__attribute__((noreturn, format(printf, 1, 2))) void VCFatalError (const char *text, ...) {
   va_list argPtr;
 
   va_start(argPtr, text);
@@ -211,5 +189,3 @@ __attribute__((noreturn, format(printf, 1, 2))) void FatalError (const char *tex
 
   Sys_Error("%s", buf);
 }
-
-#endif

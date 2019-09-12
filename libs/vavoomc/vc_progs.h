@@ -49,46 +49,32 @@ extern volatile unsigned vmAbortBySignal;
 // ////////////////////////////////////////////////////////////////////////// //
 // stack routines
 inline void PR_Push (int value) {
-#if !defined(IN_VCC)
   pr_stackPtr->i = value;
   ++pr_stackPtr;
-#endif
 }
 
 
 inline void PR_PushBool (bool value) {
-#if !defined(IN_VCC)
   pr_stackPtr->i = (value ? 1 : 0);
   ++pr_stackPtr;
-#endif
 }
 
 
 inline int PR_Pop () {
-#if !defined(IN_VCC)
   --pr_stackPtr;
   return pr_stackPtr->i;
-#else
-  return 0;
-#endif
 }
 
 
 inline void PR_Pushf (float value) {
-#if !defined(IN_VCC)
   pr_stackPtr->f = value;
   ++pr_stackPtr;
-#endif
 }
 
 
 inline float PR_Popf () {
-#if !defined(IN_VCC)
   --pr_stackPtr;
   return pr_stackPtr->f;
-#else
-  return 0;
-#endif
 }
 
 
@@ -125,69 +111,47 @@ inline TAVec PR_Popav () {
 
 
 inline void PR_PushName (VName value) {
-#if !defined(IN_VCC)
   pr_stackPtr->i = value.GetIndex();
   ++pr_stackPtr;
-#endif
 }
 
 
 inline VName PR_PopName () {
-#if !defined(IN_VCC)
   --pr_stackPtr;
   return *(VName*)&pr_stackPtr->i;
-#else
-  return NAME_None;
-#endif
 }
 
 
 inline void PR_PushPtr (void *value) {
-#if !defined(IN_VCC)
   pr_stackPtr->p = value;
   ++pr_stackPtr;
-#endif
 }
 
 
 inline void *PR_PopPtr () {
-#if !defined(IN_VCC)
   --pr_stackPtr;
   return pr_stackPtr->p;
-#else
-  return nullptr;
-#endif
 }
 
 
 inline VObject *PR_PopRef () {
-#if !defined(IN_VCC)
   --pr_stackPtr;
   return (VObject *)(pr_stackPtr->p);
-#else
-  return nullptr;
-#endif
 }
 
 
 inline void PR_PushStr (VStr value) {
-#if !defined(IN_VCC)
   pr_stackPtr->p = nullptr;
   *(VStr*)&pr_stackPtr->p = value;
   pr_stackPtr++;
-#endif
 }
 
 
 inline VStr PR_PopStr () {
-#if !defined(IN_VCC)
   --pr_stackPtr;
   VStr Ret = *(VStr*)&pr_stackPtr->p;
   ((VStr*)&pr_stackPtr->p)->Clean();
   return Ret;
-#else
-  return VStr();
-#endif
 }
 
 

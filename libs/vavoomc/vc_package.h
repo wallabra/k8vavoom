@@ -87,17 +87,14 @@ public:
   VClass *FindDecorateImportClass (VName) const;
 
   void Emit ();
-#if defined(IN_VCC)
-  void WriteObject (VStr); // binary
-#endif
   void LoadObject (TLocation);
 
   // will delete `Strm`
   void LoadSourceObject (VStream *Strm, VStr filename, TLocation l);
-#if defined(IN_VCC)
-  // will delete `Strm`
-  void LoadBinaryObject (VStream *Strm, VStr filename, TLocation l);
-#endif
+
+  // for VCC; implement as "aborters" in other code
+  void WriteObject (VStr);
+  void LoadBinaryObject (VStream *Strm, VStr filename, TLocation l); // will delete `Strm`
 
   // this emits code for all `PackagesToEmit()`
   // this *MUST* be called after `StaticLoadPackage()!`

@@ -34,9 +34,6 @@
 #endif
 
 
-#include "vc_package_vcc.cpp"
-
-
 TArray<VPackage *> VPackage::PackagesToEmit;
 
 

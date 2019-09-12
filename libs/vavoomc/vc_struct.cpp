@@ -48,9 +48,7 @@ VStruct::VStruct (VName AName, VMemberBase *AOuter, TLocation ALoc)
   , AliasList()
   , AliasFrameNum(0)
   , cacheNeedDTor(-1)
-#if !defined(IN_VCC)
   , cacheNeedCleanup(-1)
-#endif
 {
 }
 
@@ -130,9 +128,7 @@ void VStruct::Serialise (VStream &Strm) {
 
   if (Strm.IsLoading()) {
     cacheNeedDTor = -1;
-#if !defined(IN_VCC)
     cacheNeedCleanup = -1;
-#endif
   }
 }
 
@@ -160,9 +156,7 @@ void VStruct::AddField (VField *f) {
   f->Next = nullptr;
 
   cacheNeedDTor = -1;
-#if !defined(IN_VCC)
   cacheNeedCleanup = -1;
-#endif
 }
 
 
@@ -348,9 +342,7 @@ void VStruct::CalcFieldOffsets () {
 void VStruct::InitReferences () {
   // invalidate caches (just in case)
   cacheNeedDTor = -1;
-#if !defined(IN_VCC)
   cacheNeedCleanup = -1;
-#endif
   ReferenceFields = nullptr;
   if (ParentStruct) ReferenceFields = ParentStruct->ReferenceFields;
   for (VField *F = Fields; F; F = F->Next) {
@@ -416,19 +408,15 @@ void VStruct::InitReferences () {
 void VStruct::InitDestructorFields () {
   // invalidate caches (just in case)
   cacheNeedDTor = -1;
-#if !defined(IN_VCC)
   cacheNeedCleanup = -1;
-#endif
   DestructorFields = nullptr;
   if (ParentStruct) DestructorFields = ParentStruct->DestructorFields;
   for (VField *F = Fields; F; F = F->Next) {
     switch (F->Type.Type) {
-#if !defined(IN_VCC)
       case TYPE_Reference:
       case TYPE_Delegate:
         cacheNeedCleanup = 1;
         break;
-#endif
       case TYPE_String:
         cacheNeedDTor = 1; // anyway
         F->DestructorLink = DestructorFields;
@@ -467,7 +455,6 @@ void VStruct::InitDestructorFields () {
 }
 
 
-#if !defined(IN_VCC)
 //==========================================================================
 //
 //  VStruct::SkipSerialisedObject
@@ -559,7 +546,6 @@ void VStruct::SerialiseObject (VStream &Strm, vuint8 *Data) {
     }
   }
 }
-#endif //!defined(IN_VCC)
 
 
 //==========================================================================
@@ -584,16 +570,12 @@ void VStruct::CopyObject (const vuint8 *Src, vuint8 *Dst) {
 //
 //==========================================================================
 bool VStruct::NeedToCleanObject () {
-#if !defined(IN_VCC)
   if (cacheNeedCleanup >= 0) return (cacheNeedCleanup != 0);
   cacheNeedCleanup = 1;
-#endif
   //for (VField *F = ReferenceFields; F; F = F->NextReference) if (VField::NeedToCleanField(F->Type)) return true;
   for (VField *F = Fields; F; F = F->Next) if (VField::NeedToCleanField(F->Type)) return true;
   if (ParentStruct && ParentStruct->NeedToCleanObject()) return true;
-#if !defined(IN_VCC)
   cacheNeedCleanup = 0;
-#endif
   return false;
 }
 
@@ -650,7 +632,6 @@ bool VStruct::IdenticalObject (const vuint8 *Val1, const vuint8 *Val2) {
 }
 
 
-#if !defined(IN_VCC)
 //==========================================================================
 //
 //  VStruct::NetSerialiseObject
@@ -666,7 +647,6 @@ bool VStruct::NetSerialiseObject (VStream &Strm, VNetObjectsMapBase *Map, vuint8
   }
   return Ret;
 }
-#endif
 
 
 //==========================================================================

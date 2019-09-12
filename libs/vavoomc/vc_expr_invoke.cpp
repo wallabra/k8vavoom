@@ -1890,7 +1890,7 @@ bool VInvocation::RebuildArgs () {
       newIdx = realIdx;
     } else {
       // unnamed
-      if (newIdx < 0) FatalError("VC: internal compiler error (VInvocation::RebuildArgs)");
+      if (newIdx < 0) VCFatalError("VC: internal compiler error (VInvocation::RebuildArgs)");
       if (newIdx >= maxParams) {
         ParseError(Loc, "Too many method arguments");
         return false;
@@ -2424,7 +2424,7 @@ void VInvocation::Emit (VEmitContext &ec) {
     if (!Args[i]) {
       if (i < Func->NumParams && (Func->ParamFlags[i]&(FPARM_Out|FPARM_Ref)) != 0) {
         // get local address
-        if (lcidx[i] < 0) FatalError("VC: Internal compiler error (VInvocation::Emit)");
+        if (lcidx[i] < 0) VCFatalError("VC: Internal compiler error (VInvocation::Emit)");
         // make sure struct / class field offsets have been calculated
         if (Func->ParamTypes[i].Type == TYPE_Struct) {
           Func->ParamTypes[i].Struct->PostLoad();
@@ -2524,7 +2524,7 @@ void VInvocation::Emit (VEmitContext &ec) {
                 //HACK: it is safe (and necessary) to resolve here
                 VExpression *xlv = new VLocalVar(lidx, ve->Loc);
                 xlv = xlv->Resolve(ec);
-                if (!xlv) FatalError("VC: internal compiler error (13496)");
+                if (!xlv) VCFatalError("VC: internal compiler error (13496)");
                 xlv->Emit(ec);
                 delete xlv;
               }
@@ -2915,7 +2915,7 @@ VName VInvocation::GetMethodName () const {
 //
 //==========================================================================
 void VInvocation::SetMethodName (VName aname) {
-  FatalError("VC: Internal compiler error: `VInvocation::SetMethodName()` called");
+  VCFatalError("VC: Internal compiler error: `VInvocation::SetMethodName()` called");
 }
 
 
@@ -3088,7 +3088,7 @@ VName VInvokeWrite::GetMethodName () const {
 //
 //==========================================================================
 void VInvokeWrite::SetMethodName (VName aname) {
-  FatalError("VC: Internal compiler error: `VInvokeWrite::SetMethodName()` called");
+  VCFatalError("VC: Internal compiler error: `VInvokeWrite::SetMethodName()` called");
 }
 
 

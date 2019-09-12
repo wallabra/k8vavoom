@@ -26,11 +26,7 @@
 //**************************************************************************
 #include "vc_public.h"
 
-#if !defined(IN_VCC)
-# define VC_HOST_ERROR  Host_Error
-#else
-# define VC_HOST_ERROR  Sys_Error
-#endif
+#define VC_IO_ERROR  Host_Error
 
 
 //==========================================================================
@@ -227,9 +223,7 @@ bool VObject::GImmediadeDelete = true;
 #endif
 bool VObject::GGCMessagesAllowed = false;
 int VObject::GCDebugMessagesAllowed = 0;
-#if !defined(IN_VCC)
 bool (*VObject::onExecuteNetMethodCB) (VObject *obj, VMethod *func) = nullptr; // return `false` to do normal execution
-#endif
 bool VObject::DumpBacktraceToStdErr = false;
 
 #ifdef VCC_STANDALONE_EXECUTOR
@@ -267,7 +261,6 @@ void VScriptIterator::Finished () {
 }
 
 
-#if !defined(IN_VCC)
 //==========================================================================
 //
 //  VMethodProxy::VMethodProxy
@@ -381,7 +374,6 @@ VFuncRes VMethodProxy::ExecuteNoCheck (VObject *Self) {
     return VObject::ExecuteFunction(Method);
   }
 }
-#endif
 
 
 
@@ -895,12 +887,10 @@ bool destroyDelayed
   vdgclogf("garbage collection complete in %d msecs; %d objects deleted, %d objects live, %d of %d array slots used; firstfree=%d",
     (int)(gcLastStats.lastCollectDuration*1000), gcLastStats.lastCollected, gcLastStats.alive, gcLastStats.poolSize, gcLastStats.poolAllocated, gObjFirstFree);
 
-#if !defined(IN_VCC)
   if (GGCMessagesAllowed && bodycount) {
     const char *msg = va("GC: %d objects deleted, %d objects left; array:[%d/%d]; firstfree=%d", bodycount, alive, GObjObjects.length(), GObjObjects.NumAllocated(), gObjFirstFree);
     GLog.Log(msg);
   }
-#endif
 
   GInGarbageCollection = false;
 }
@@ -935,7 +925,6 @@ int VObject::GetObjectsCount () {
 //
 //==========================================================================
 void VObject::SerialiseFields (VStream &Strm) {
-#if !defined(IN_VCC)
   bool debugDump = cliShowIODebugMessages;
   //GetClass()->SerialiseObject(Strm, this);
   if (Strm.IsLoading()) {
@@ -943,7 +932,7 @@ void VObject::SerialiseFields (VStream &Strm) {
     // read field count
     vint32 fldcount = -1;
     Strm << STRM_INDEX(fldcount);
-    if (fldcount < 0) VC_HOST_ERROR("invalid number of saved fields in class `%s` (%d)", GetClass()->GetName(), fldcount);
+    if (fldcount < 0) VC_IO_ERROR("invalid number of saved fields in class `%s` (%d)", GetClass()->GetName(), fldcount);
     if (fldcount == 0) return; // nothing to do
     // build field list to speedup loading
     TMapNC<VName, VField *> fldmap;
@@ -952,7 +941,7 @@ void VObject::SerialiseFields (VStream &Strm) {
       for (VField *fld = cls->Fields; fld; fld = fld->Next) {
         if (fld->Flags&(FIELD_Native|FIELD_Transient)) continue;
         if (fld->Name == NAME_None) continue;
-        if (fldmap.put(fld->Name, fld)) VC_HOST_ERROR("duplicate field `%s` in class `%s`", *fld->Name, GetClass()->GetName());
+        if (fldmap.put(fld->Name, fld)) VC_IO_ERROR("duplicate field `%s` in class `%s`", *fld->Name, GetClass()->GetName());
       }
     }
     // now load fields
@@ -989,7 +978,7 @@ void VObject::SerialiseFields (VStream &Strm) {
       for (VField *fld = cls->Fields; fld; fld = fld->Next) {
         if (fld->Flags&(FIELD_Native|FIELD_Transient)) continue;
         if (fld->Name == NAME_None) continue;
-        if (fldseen.put(fld->Name, true)) VC_HOST_ERROR("duplicate field `%s` in class `%s`", *fld->Name, GetClass()->GetName());
+        if (fldseen.put(fld->Name, true)) VC_IO_ERROR("duplicate field `%s` in class `%s`", *fld->Name, GetClass()->GetName());
         fldlist.append(fld);
       }
     }
@@ -1002,7 +991,6 @@ void VObject::SerialiseFields (VStream &Strm) {
       VField::SerialiseFieldValue(Strm, (vuint8 *)this+fld->Ofs, fld->Type);
     }
   }
-#endif
 }
 
 
@@ -1029,37 +1017,37 @@ void VObject::Serialise (VStream &strm) {
     // reading
     VName clsname = NAME_None;
     strm << clsname;
-    if (strm.IsError()) VC_HOST_ERROR("error reading object of class `%s`", GetClass()->GetName());
-    if (clsname == NAME_None) VC_HOST_ERROR("cannot load object of `none` class");
+    if (strm.IsError()) VC_IO_ERROR("error reading object of class `%s`", GetClass()->GetName());
+    if (clsname == NAME_None) VC_IO_ERROR("cannot load object of `none` class");
     VClass *cls = VClass::FindClass(*clsname);
-    if (!cls) VC_HOST_ERROR("cannot load object of unknown `%s` class", *clsname);
-    //if (!GetClass()->IsChildOf(cls)) VC_HOST_ERROR("cannot load object of class `%s` class (not a subclass of `%s`)", GetClass()->GetName(), *clsname);
-    if (GetClass() != cls) VC_HOST_ERROR("cannot load object of class `%s` (expected class `%s`)", GetClass()->GetName(), *clsname);
+    if (!cls) VC_IO_ERROR("cannot load object of unknown `%s` class", *clsname);
+    //if (!GetClass()->IsChildOf(cls)) VC_IO_ERROR("cannot load object of class `%s` class (not a subclass of `%s`)", GetClass()->GetName(), *clsname);
+    if (GetClass() != cls) VC_IO_ERROR("cannot load object of class `%s` (expected class `%s`)", GetClass()->GetName(), *clsname);
     // skip data size
     vint32 size;
     strm << size;
-    if (size < 1) VC_HOST_ERROR("error reading object of class `%s` (invalid size: %d)", *clsname, size);
+    if (size < 1) VC_IO_ERROR("error reading object of class `%s` (invalid size: %d)", *clsname, size);
     auto endpos = strm.Tell()+size;
     // read flags
     vint32 flg;
     strm << STRM_INDEX(flg);
-    if (strm.IsError()) VC_HOST_ERROR("error reading object of class `%s`", *clsname);
+    if (strm.IsError()) VC_IO_ERROR("error reading object of class `%s`", *clsname);
     if (flg) SetFlags(flg);
     if (ObjectFlags&_OF_Destroyed) {
       // no need to read anything, just skip it all
-      if (strm.Tell() > endpos) VC_HOST_ERROR("error reading object of class `%s` (invalid data size)", *clsname);
+      if (strm.Tell() > endpos) VC_IO_ERROR("error reading object of class `%s` (invalid data size)", *clsname);
       strm.Seek(endpos);
-      if (strm.IsError()) VC_HOST_ERROR("error reading object of class `%s`", *clsname);
+      if (strm.IsError()) VC_IO_ERROR("error reading object of class `%s`", *clsname);
       return;
     }
     // read fields
     SerialiseFields(strm);
-    if (strm.IsError()) VC_HOST_ERROR("error reading object of class `%s`", *clsname);
+    if (strm.IsError()) VC_IO_ERROR("error reading object of class `%s`", *clsname);
     // read other data
     SerialiseOther(strm);
-    if (strm.IsError()) VC_HOST_ERROR("error reading object of class `%s`", *clsname);
+    if (strm.IsError()) VC_IO_ERROR("error reading object of class `%s`", *clsname);
     // check if all data was read
-    if (strm.Tell() != endpos) VC_HOST_ERROR("error reading object of class `%s` (not all data read)", *clsname);
+    if (strm.Tell() != endpos) VC_IO_ERROR("error reading object of class `%s` (not all data read)", *clsname);
   } else {
     // writing
     VName clsname = GetClass()->Name;
@@ -1090,7 +1078,6 @@ void VObject::Serialise (VStream &strm) {
 }
 
 
-#if !defined(IN_VCC)
 //==========================================================================
 //
 //  VObject::ExecuteNetMethod
@@ -1100,7 +1087,6 @@ bool VObject::ExecuteNetMethod (VMethod *func) {
   if (onExecuteNetMethodCB) return onExecuteNetMethodCB(this, func);
   return false;
 }
-#endif
 
 
 // ////////////////////////////////////////////////////////////////////////// //

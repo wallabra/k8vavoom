@@ -198,7 +198,7 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
       delete this;
       return nullptr;
     }
-    if (assTarget) FatalError("VC: internal compiler error (VArrayElement::InternalResolve)");
+    if (assTarget) VCFatalError("VC: internal compiler error (VArrayElement::InternalResolve)");
     VName mtname = VName("opIndex");
     // try typed method first: opIndex<index>
     VStr itname = "opIndex";
@@ -795,7 +795,7 @@ void VSliceOp::Emit (VEmitContext &ec) {
   } else if (op->Type.Type == TYPE_SliceArray) {
     ec.AddStatement(OPC_SliceSlice, op->Type.GetArrayInnerType(), Loc);
   } else {
-    FatalError("VC: the thing that should not be (VSliceOp::Emit)");
+    VCFatalError("VC: the thing that should not be (VSliceOp::Emit)");
   }
 }
 
@@ -870,7 +870,7 @@ void VDynArrayGetNum::Emit (VEmitContext &ec) {
     case 0: ec.AddStatement(OPC_DynArrayGetNum, Loc); break;
     case 1: ec.AddStatement(OPC_DynArrayGetNum1, Loc); break;
     case 2: ec.AddStatement(OPC_DynArrayGetNum2, Loc); break;
-    default: FatalError("VC: internal error in (VDynArrayGetNum::Emit)");
+    default: VCFatalError("VC: internal error in (VDynArrayGetNum::Emit)");
   }
 }
 

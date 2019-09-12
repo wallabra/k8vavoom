@@ -169,7 +169,7 @@ bool VAssertStatement::Resolve (VEmitContext &ec) {
     Message = new VStringLiteral(s, val, Loc);
   }
 
-  // find `FatalError()` method
+  // find `AssertError()` method
   VMethod *M = ec.SelfClass->FindAccessibleMethod("AssertError", ec.SelfClass, &Loc);
   if (!M) {
     ParseError(Loc, "`AssertError()` method not found");
@@ -1132,7 +1132,7 @@ VForeachIota::~VForeachIota () {
 //
 //==========================================================================
 VStatement *VForeachIota::SyntaxCopy () {
-  if (varinit || varnext || hiinit) FatalError("VC: `VForeachIota::SyntaxCopy()` called on resolved statement");
+  if (varinit || varnext || hiinit) VCFatalError("VC: `VForeachIota::SyntaxCopy()` called on resolved statement");
   auto res = new VForeachIota();
   DoSyntaxCopyTo(res);
   return res;
@@ -1417,7 +1417,7 @@ VForeachArray::~VForeachArray () {
 //
 //==========================================================================
 VStatement *VForeachArray::SyntaxCopy () {
-  //if (varinit || varnext || hiinit) FatalError("VC: `VForeachArray::SyntaxCopy()` called on resolved statement");
+  //if (varinit || varnext || hiinit) VCFatalError("VC: `VForeachArray::SyntaxCopy()` called on resolved statement");
   auto res = new VForeachArray();
   DoSyntaxCopyTo(res);
   return res;
@@ -1462,7 +1462,7 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
   // indent check
   if (statement && !CheckCondIndent(Loc, statement)) return false;
 
-  if (arr && arr->IsAnyInvocation()) FatalError("VC: Internal compiler error (VForeachArray::Resolve)");
+  if (arr && arr->IsAnyInvocation()) VCFatalError("VC: Internal compiler error (VForeachArray::Resolve)");
 
   // we will rewrite 'em later
   auto ivarR = (idxvar ? idxvar->SyntaxCopy()->Resolve(ec) : nullptr);
@@ -1760,7 +1760,7 @@ VForeachScripted::VForeachScripted (VExpression *aarr, int afeCount, Var *afevar
   , statement(nullptr)
   , reversed(false)
 {
-  if (afeCount < 0 || afeCount > VMethod::MAX_PARAMS) FatalError("VC: internal compiler error (VForeachScripted::VForeachScripted)");
+  if (afeCount < 0 || afeCount > VMethod::MAX_PARAMS) VCFatalError("VC: internal compiler error (VForeachScripted::VForeachScripted)");
   for (int f = 0; f < afeCount; ++f) fevars[f] = afevars[f];
 }
 
@@ -1790,7 +1790,7 @@ VForeachScripted::~VForeachScripted () {
 //
 //==========================================================================
 VStatement *VForeachScripted::SyntaxCopy () {
-  //if (varinit || varnext || hiinit) FatalError("VC: `VForeachScripted::SyntaxCopy()` called on resolved statement");
+  //if (varinit || varnext || hiinit) VCFatalError("VC: `VForeachScripted::SyntaxCopy()` called on resolved statement");
   auto res = new VForeachScripted();
   DoSyntaxCopyTo(res);
   return res;
@@ -3594,7 +3594,7 @@ bool VGotoStmt::ResolveGoto (VEmitContext &ec, VStatement *dest) {
     ParseError(Loc, "Cannot find common parent for `goto`, and label `%s`", *Name);
     return false;
   }
-  if (sidx == toself.length()-1 || lidx == tolabel.length()-1) FatalError("VC: internal compiler error (VGotoStmt::Resolve)");
+  if (sidx == toself.length()-1 || lidx == tolabel.length()-1) VCFatalError("VC: internal compiler error (VGotoStmt::Resolve)");
 
   // now go up to parent and down to label, checking if gotos are allowed
   for (int f = toself.length()-1; f >= 0; --f) {
@@ -3668,7 +3668,7 @@ void VGotoStmt::EmitCleanups (VEmitContext &ec, VStatement *dest) {
     ParseError(Loc, "Cannot find common parent for `goto`, and label `%s`", *Name);
     return;
   }
-  if (sidx == toself.length()-1 || lidx == tolabel.length()-1) FatalError("VC: internal compiler error (VGotoStmt::EmitCleanups)");
+  if (sidx == toself.length()-1 || lidx == tolabel.length()-1) VCFatalError("VC: internal compiler error (VGotoStmt::EmitCleanups)");
 
   // now go up to parent and down to label, checking if gotos are allowed
   for (int f = toself.length()-1; f >= 0; --f) {
@@ -3686,7 +3686,7 @@ void VGotoStmt::EmitCleanups (VEmitContext &ec, VStatement *dest) {
 bool VGotoStmt::Resolve (VEmitContext &ec) {
   if (Switch) {
     // goto case/default
-    if (GotoType == Normal) FatalError("VC: internal compiler error (VGotoStmt::Resolve) (0)");
+    if (GotoType == Normal) VCFatalError("VC: internal compiler error (VGotoStmt::Resolve) (0)");
     // find case or default
     VStatement *st = nullptr;
     if (GotoType == Default) {
@@ -3749,8 +3749,8 @@ bool VGotoStmt::Resolve (VEmitContext &ec) {
     return (st ? ResolveGoto(ec, st) : true);
   } else {
     // normal goto
-    if (GotoType != Normal) FatalError("VC: internal compiler error (VGotoStmt::Resolve) (1)");
-    if (Switch) FatalError("VC: internal compiler error (VGotoStmt::Resolve) (2)");
+    if (GotoType != Normal) VCFatalError("VC: internal compiler error (VGotoStmt::Resolve) (1)");
+    if (Switch) VCFatalError("VC: internal compiler error (VGotoStmt::Resolve) (2)");
     // find label
     VLabelStmt *lbl = ec.CurrentFunc->Statement->FindLabel(Name);
     if (!lbl) {
@@ -3782,7 +3782,7 @@ void VGotoStmt::DoEmit (VEmitContext &ec) {
       ParseError(Loc, "Misplaced `goto case` statement");
       return;
     }
-    if (!casedef->IsSwitchCase()) FatalError("VC: internal compiler error (VGotoStmt::DoEmit) (0)");
+    if (!casedef->IsSwitchCase()) VCFatalError("VC: internal compiler error (VGotoStmt::DoEmit) (0)");
     VSwitchCase *cc = (VSwitchCase *)casedef;
     EmitCleanups(ec, cc);
     ec.AddStatement(OPC_Goto, cc->gotoLbl, Loc);
@@ -3794,7 +3794,7 @@ void VGotoStmt::DoEmit (VEmitContext &ec) {
     EmitCleanups(ec, casedef);
     ec.AddStatement(OPC_Goto, Switch->DefaultAddress, Loc);
   } else {
-    FatalError("VC: internal compiler error (VGotoStmt::DoEmit)");
+    VCFatalError("VC: internal compiler error (VGotoStmt::DoEmit)");
   }
 }
 
