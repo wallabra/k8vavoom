@@ -77,6 +77,103 @@ static __attribute__((unused)) int lineAABB (int x0, int y0, int x1, int y1,
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+static inline bool axisOverlap (float &tin, float &tout, int &hitedge,
+                                int me0, int me1, int it0, int it1, int d, int he0, int he1)
+{
+  if (me1 < it0) {
+    if (d >= 0) return false; // oops, no hit
+    float t = (me1-it0+1)/d;
+    if (t > tin) { tin = t; hitedge = he1; }
+  } else if (it1 < me0) {
+    if (d <= 0) return false; // oops, no hit
+    float t = (me0-it1-1)/d;
+    if (t > tin) { tin = t; hitedge = he0; }
+  }
+
+  if (d < 0 && it1 > me0) {
+    float t = (me0-it1-1)/d;
+    if (t < tout) tout = t;
+  } else if (d > 0 && me1 > it0) {
+    float t = (me1-it0+1)/d;
+    if (t < tout) tout = t;
+  }
+
+  return true;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// sweep two AABB's to see if and when they are overlapping
+// returns `true` if collision was detected (but boxes aren't overlap)
+// `u1` and `u1` has no sense if no collision was detected (`hitx` and `hity` either)
+// u0 = normalized time of first collision (i.e. collision starts at myMove*u0)
+// u1 = normalized time of second collision (i.e. collision stops after myMove*u1)
+// hitedge for `it`: it will probably be `None` if no collision was detected, but it is not guaranteed
+// enter/exit coords will form non-intersecting configuration (i.e. will be before/after the actual collision)
+// but beware of floating point inexactness; `sweepAABB()` will try to (crudely) compensate for it
+// while calculating `hitx` and `hity`.
+__attribute__((unused))
+static bool sweepAABB (int mex0, int mey0, int mew, int meh, // my box
+                       int medx, int medy, // my speed
+                       int itx0, int ity0, int itw, int ith, // other box
+                       /*optional*/ float *u0, // enter time
+                       /*optional*/ int *hitedge, // Edge.XXX
+                       /*optional*/ float *u1, // exit time
+                       /*optional*/ int *hitx, /*optional*/ int *hity) // edge hit coords
+{
+  if (u0) *u0 = -1.0;
+  if (u1) *u1 = -1.0;
+  if (hitx) *hitx = mex0;
+  if (hity) *hity = mey0;
+  if (hitedge) *hitedge = EdgeNone;
+
+  if (mew < 1 || meh < 1 || itw < 1 || ith < 1) return false;
+
+  int mex1 = mex0+mew-1;
+  int mey1 = mey0+meh-1;
+  int itx1 = itx0+itw-1;
+  int ity1 = ity0+ith-1;
+
+  // check if they are overlapping right now (SAT)
+  //if (mex1 >= itx0) and (mex0 <= itx1) and (mey1 >= ity0) and (mey0 <= ity1) then begin result := true; exit; end;
+
+  if (medx == 0 && medy == 0) return false; // both boxes are sationary
+
+  // treat b as stationary, so invert v to get relative velocity
+  int vx = -medx;
+  int vy = -medy;
+
+  float tin = -100000000.0;
+  float tout = 100000000.0;
+  int hitedgeTmp = EdgeNone;
+
+  if (!axisOverlap(tin, tout, hitedgeTmp, mex0, mex1, itx0, itx1, vx, EdgeRight, EdgeLeft)) return false;
+  if (!axisOverlap(tin, tout, hitedgeTmp, mey0, mey1, ity0, ity1, vy, EdgeBottom, EdgeTop)) return false;
+
+  if (u0) *u0 = tin;
+  if (u1) *u1 = tout;
+  if (hitedge) *hitedge = hitedgeTmp;
+
+  if (tin <= tout && tin >= 0.0 && tin <= 1.0) {
+    if (hitx || hity) {
+      int ex = mex0+int(roundf(medx*tin)); // poor man's `roundi()`
+      int ey = mey0+int(roundf(medy*tin)); // poor man's `roundi()`
+      // just in case, compensate for floating point inexactness
+      if (ex >= itx0 && ey >= ity0 && ex < itx0+itw && ey < ity0+ith) {
+        ex = mex0+int(medx*tin);
+        ey = mey0+int(medy*tin);
+      }
+      if (hitx) *hitx = ex;
+      if (hity) *hity = ey;
+    }
+    return true;
+  }
+
+  return false;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 struct DDALineWalker {
 private:
   enum { STCSize = 64 }; // up 8x8 box won't require allocations
@@ -446,6 +543,7 @@ vuint32 EntityGridImpl::putObject (VObject *obj) {
     }
     objects[res].obj = obj;
     objects[res].refCount = 1;
+    objects[res].checkVis = 0;
     return res;
   }
 }
