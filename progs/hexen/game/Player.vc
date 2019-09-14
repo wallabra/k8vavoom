@@ -440,7 +440,7 @@ void Cheat_Class()
 override bool IsWeaponAlwaysExtremeDeath()
 {
   // Always extreme death from fourth weapon
-  return ReadyWeapon.bExtremeDeath;
+  return (ReadyWeapon ? ReadyWeapon.bExtremeDeath : false);
 }
 
 //==========================================================================

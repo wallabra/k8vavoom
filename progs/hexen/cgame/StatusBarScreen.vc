@@ -434,15 +434,17 @@ override void SB_DrawMainBar()
   }
 
   // Update mana graphics based upon mana count/weapon type
-  if (cl.ReadyWeapon.AmmoType1 != Mana1 && cl.ReadyWeapon.AmmoType2 != Mana1)
-  {
-    sb_mana1 = 0;
-    sb_manaVial1 = 0;
-  }
-  if (cl.ReadyWeapon.AmmoType1 != Mana2 && cl.ReadyWeapon.AmmoType2 != Mana2)
-  {
-    sb_mana2 = 0;
-    sb_manaVial2 = 0;
+  if (cl.ReadyWeapon) {
+    if (cl.ReadyWeapon.AmmoType1 != Mana1 && cl.ReadyWeapon.AmmoType2 != Mana1)
+    {
+      sb_mana1 = 0;
+      sb_manaVial1 = 0;
+    }
+    if (cl.ReadyWeapon.AmmoType1 != Mana2 && cl.ReadyWeapon.AmmoType2 != Mana2)
+    {
+      sb_mana2 = 0;
+      sb_manaVial2 = 0;
+    }
   }
 
   SB_DrawMNumber(BAR_X + 79, BAR_Y + 20, ManaItem1 ? ManaItem1.Amount : 0);
@@ -658,22 +660,14 @@ override void SB_DrawFullscreenStats () {
   // mana
   Inventory ManaItem1 = (cl.MO ? EntityEx(cl.MO).FindInventory(Mana1) : none);
   Inventory ManaItem2 = (cl.MO ? EntityEx(cl.MO).FindInventory(Mana2) : none);
-  if (!ManaItem1 || ManaItem1.Amount == 0) {
-    // draw dim mana icon
-    sb_mana1 = 0;
-  } else {
-    sb_mana1 = 1;
-  }
-  if (!ManaItem2 || ManaItem2.Amount == 0) {
-    // draw dim mana icon
-    sb_mana2 = 0;
-  } else {
-    sb_mana2 = 1;
-  }
+  sb_mana1 = (!ManaItem1 || ManaItem1.Amount == 0 ? 0 : 1); // dim or normal mana icon
+  sb_mana2 = (!ManaItem2 || ManaItem2.Amount == 0 ? 0 : 1); // dim or normal mana icon
 
   // update mana graphics based upon mana count/weapon type
-  if (cl.ReadyWeapon.AmmoType1 != Mana1 && cl.ReadyWeapon.AmmoType2 != Mana1) sb_mana1 = 0;
-  if (cl.ReadyWeapon.AmmoType1 != Mana2 && cl.ReadyWeapon.AmmoType2 != Mana2) sb_mana2 = 0;
+  if (cl.ReadyWeapon) {
+    if (cl.ReadyWeapon.AmmoType1 != Mana1 && cl.ReadyWeapon.AmmoType2 != Mana1) sb_mana1 = 0;
+    if (cl.ReadyWeapon.AmmoType1 != Mana2 && cl.ReadyWeapon.AmmoType2 != Mana2) sb_mana2 = 0;
+  }
 
   if (ManaItem1 && ManaItem1.Amount) {
     DrawPic(xfix(581), yfix(442), pic_manadim1[sb_mana1], (sb_mana1 ? 1.0 : 0.6));

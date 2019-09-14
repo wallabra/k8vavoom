@@ -52,8 +52,7 @@ override int GetBlend()
     return;
   }
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-
-  CWeapWraithverge(Wpn).CShift = RGBA(255, 255, 255, 51);
+  if (Wpn) CWeapWraithverge(Wpn).CShift = RGBA(255, 255, 255, 51);
 }
 
 //============================================================================
@@ -69,8 +68,7 @@ override int GetBlend()
     return;
   }
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-
-  CWeapWraithverge(Wpn).CShift = RGBA(255, 255, 255, 36);
+  if (Wpn) CWeapWraithverge(Wpn).CShift = RGBA(255, 255, 255, 36);
 }
 
 //============================================================================
@@ -86,9 +84,8 @@ override int GetBlend()
     return;
   }
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-
   // reset back to original playpal
-  CWeapWraithverge(Wpn).CShift = 0;
+  if (Wpn) CWeapWraithverge(Wpn).CShift = 0;
 }
 
 states

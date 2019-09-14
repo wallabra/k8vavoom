@@ -34,13 +34,9 @@ class PhoenixRodPowered : PhoenixRod;
 
 [decorate] final void A_InitPhoenixPL2() self(Actor)
 {
-  if (!bIsPlayer)
-  {
-    return;
-  }
+  if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-
-  PhoenixRod(Wpn).FlameCount = 10 * 35;
+  if (Wpn) PhoenixRod(Wpn).FlameCount = 10 * 35;
 }
 
 //===========================================================================
@@ -56,10 +52,7 @@ class PhoenixRodPowered : PhoenixRod;
   TVec dir;
   TVec org;
 
-  if (!bIsPlayer)
-  {
-    return;
-  }
+  if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (!Wpn) return;
 
@@ -96,13 +89,9 @@ class PhoenixRodPowered : PhoenixRod;
 
 [decorate] final void A_ShutdownPhoenixPL2() self(Actor)
 {
-  if (!bIsPlayer)
-  {
-    return;
-  }
+  if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-
-  Wpn.DepleteAmmo(Wpn.FireMode);
+  if (Wpn) Wpn.DepleteAmmo(Wpn.FireMode);
 }
 
 states

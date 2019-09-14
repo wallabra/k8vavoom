@@ -52,8 +52,7 @@ override int GetBlend()
     return;
   }
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-
-  MWeapBloodscourge(Wpn).CShift = RGBA(255, 187, 4, 63);
+  if (Wpn) MWeapBloodscourge(Wpn).CShift = RGBA(255, 187, 4, 63);
 }
 
 //==========================================================================
@@ -69,8 +68,7 @@ override int GetBlend()
     return;
   }
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-
-  MWeapBloodscourge(Wpn).CShift = RGBA(255, 187, 4, 51);
+  if (Wpn) MWeapBloodscourge(Wpn).CShift = RGBA(255, 187, 4, 51);
 }
 
 //==========================================================================
@@ -86,9 +84,8 @@ override int GetBlend()
     return;
   }
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-
   // reset back to original playpal
-  MWeapBloodscourge(Wpn).CShift = 0;
+  if (Wpn) MWeapBloodscourge(Wpn).CShift = 0;
 }
 
 states

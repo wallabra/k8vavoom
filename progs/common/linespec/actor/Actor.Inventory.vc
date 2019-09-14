@@ -299,6 +299,7 @@ final void DoTakeInventory (class!Inventory ItemType, int Amount, EntityEx Recei
 
   if (bIsPlayer) {
     Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+    if (!Wpn) return;
     if (!Wpn.DepleteAmmo(Wpn.FireMode)) return;
 
     SetState(MissileState);

@@ -60,7 +60,7 @@ override int GetRebornHealth () {
 override void GotAmmo (Ammo NewAmmo) {
   // we were down to zero, so select a new weapon
   // preferences are not user selectable
-  if (ReadyWeapon.bWimpyWeapon) {
+  if (ReadyWeapon && ReadyWeapon.bWimpyWeapon) {
     Weapon Best = BestWeapon(class!Ammo(NewAmmo.Class));
     if (Best && Best.SelectionOrder < ReadyWeapon.SelectionOrder) {
       PendingWeapon = Best;

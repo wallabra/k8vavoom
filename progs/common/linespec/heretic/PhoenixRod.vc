@@ -39,18 +39,15 @@ int FlameCount; // for flame thrower duration
 
 [decorate] final void A_FirePhoenixPL1() self(Actor)
 {
-  TVec vforward;
-
-  if (!bIsPlayer)
-  {
-    return;
-  }
+  if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-
-  Wpn.DepleteAmmo(Wpn.FireMode);
-  SpawnPlayerMissile(PhoenixFX1);
-  AngleVector(Angles, out vforward);
-  Velocity -= vforward * 140.0;
+  if (Wpn) {
+    Wpn.DepleteAmmo(Wpn.FireMode);
+    SpawnPlayerMissile(PhoenixFX1);
+    TVec vforward;
+    AngleVector(Angles, out vforward);
+    Velocity -= vforward * 140.0;
+  }
 }
 
 states

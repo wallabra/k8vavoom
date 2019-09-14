@@ -189,6 +189,7 @@ void GiveSigilPiece(EntityEx Receiver)
     return;
   }
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!Wpn || !Sigil(Wpn)) return;
 
   switch (Sigil(Wpn).NumPieces)
   {
@@ -228,6 +229,7 @@ void GiveSigilPiece(EntityEx Receiver)
     return;
   }
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!Wpn || !Sigil(Wpn)) return;
 
   int Pieces = Sigil(Wpn).DownPieces;
   Sigil(Wpn).DownPieces = 0;
@@ -273,6 +275,7 @@ void GiveSigilPiece(EntityEx Receiver)
     return;
   }
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!Wpn || !Sigil(Wpn)) return;
 
   switch (Sigil(Wpn).NumPieces)
   {
@@ -312,6 +315,7 @@ void GiveSigilPiece(EntityEx Receiver)
     return;
   }
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!Wpn || !Sigil(Wpn)) return;
 
   switch (Sigil(Wpn).NumPieces)
   {
