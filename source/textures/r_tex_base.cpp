@@ -45,6 +45,7 @@ VTexture *VTexture::CreateTexture (int Type, int LumpNum, bool setName) {
     { VImgzTexture::Create,     TEXTYPE_Any },
     { VPngTexture::Create,      TEXTYPE_Any },
     { VJpegTexture::Create,     TEXTYPE_Any },
+    //{ VSTBTexture::Create,      TEXTYPE_Any }, // this loads jpegs and bmps
     { VPcxTexture::Create,      TEXTYPE_Any },
     { VTgaTexture::Create,      TEXTYPE_Any },
     { VFlatTexture::Create,     TEXTYPE_Flat },

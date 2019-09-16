@@ -178,7 +178,15 @@ static VCvarB draw_cycles("draw_cycles", false, "Draw cycle counter?", 0); //NOO
 //  Screenshots
 //
 //**************************************************************************
-#ifdef VAVOOM_USE_LIBJPG
+#ifdef VAVOOM_DISABLE_STB_IMAGE_JPEG
+# ifdef VAVOOM_USE_LIBJPG
+#  define VV_SWR_HAS_JPEG
+# endif
+#else
+# define VV_SWR_HAS_JPEG
+#endif
+
+#ifdef VV_SWR_HAS_JPEG
 static VCvarS screenshot_type("screenshot_type", "png", "Screenshot type (png/jpg/tga/pcx).", CVAR_Archive);
 #else
 static VCvarS screenshot_type("screenshot_type", "png", "Screenshot type (png/tga/pcx).", CVAR_Archive);
@@ -187,7 +195,7 @@ static VCvarS screenshot_type("screenshot_type", "png", "Screenshot type (png/tg
 extern void WriteTGA (VStr FileName, void *data, int width, int height, int bpp, bool bot2top);
 extern void WritePCX (VStr FileName, void *data, int width, int height, int bpp, bool bot2top);
 extern void WritePNG (VStr FileName, const void *Data, int Width, int Height, int Bpp, bool Bot2top);
-#ifdef VAVOOM_USE_LIBJPG
+#ifdef VV_SWR_HAS_JPEG
 extern void WriteJPG (VStr FileName, const void *Data, int Width, int Height, int Bpp, bool Bot2top);
 #endif
 
@@ -205,23 +213,24 @@ COMMAND(ScreenShot) {
   VStr filename;
   char tmpbuf[128];
 
-  if (strlen(screenshot_type) > 8) {
-    GCon->Log("Screenshot extension too long");
-    return;
-  }
+  VStr sst = screenshot_type.asStr().toLowerCase();
+  if (sst.length() > 0 && sst[0] == '.') sst.chopLeft(1);
+  if (sst.strEqu("jpeg")) sst = "jpg";
+  if (sst.isEmpty()) { GCon->Log(NAME_Error, "Empty screenshot type"); return; }
+  if (sst.length() > 3) { GCon->Log(NAME_Error, "Screenshot type too long"); return; }
 
   // find a file name to save it to
   VStr BaseDir = FL_GetScreenshotsDir();
   if (BaseDir.isEmpty()) return;
 
   for (i = 0; i <= 9999; ++i) {
-    snprintf(tmpbuf, sizeof(tmpbuf), "shot%04d.%s", i, (const char*)screenshot_type);
+    snprintf(tmpbuf, sizeof(tmpbuf), "shot%04d.%s", i, *sst);
     filename = BaseDir+"/"+tmpbuf;
     if (!Sys_FileExists(filename)) break; // file doesn't exist
   }
 
   if (i == 10000) {
-    GCon->Log("Couldn't create a screenshot file");
+    GCon->Log(NAME_Error, "Couldn't create a screenshot file");
     return;
   }
 
@@ -229,21 +238,26 @@ COMMAND(ScreenShot) {
   data = Drawer->ReadScreen(&bpp, &bot2top);
   if (data) {
     bool report = true;
-         if (!VStr::ICmp(screenshot_type, "pcx")) WritePCX(filename, data, ScreenWidth, ScreenHeight, bpp, bot2top);
-    else if (!VStr::ICmp(screenshot_type, "tga")) WriteTGA(filename, data, ScreenWidth, ScreenHeight, bpp, bot2top);
-    else if (!VStr::ICmp(screenshot_type, "png")) WritePNG(filename, data, ScreenWidth, ScreenHeight, bpp, bot2top);
-#ifdef VAVOOM_USE_LIBJPG
-    else if (!VStr::ICmp(screenshot_type, "jpg")) WriteJPG(filename, data, ScreenWidth, ScreenHeight, bpp, bot2top);
+    // type is already lowercased
+         if (sst.strEqu("pcx")) WritePCX(filename, data, ScreenWidth, ScreenHeight, bpp, bot2top);
+    else if (sst.strEqu("tga")) WriteTGA(filename, data, ScreenWidth, ScreenHeight, bpp, bot2top);
+    else if (sst.strEqu("png")) WritePNG(filename, data, ScreenWidth, ScreenHeight, bpp, bot2top);
+#ifdef VV_SWR_HAS_JPEG
+    else if (sst.strEqu("jpg")) WriteJPG(filename, data, ScreenWidth, ScreenHeight, bpp, bot2top);
 #endif
     else {
       report = false;
-      GCon->Log("Bad screenshot type");
-      GCon->Log("Supported formats are pcx, tga, png and jpg");
+      GCon->Log(NAME_Error, "Bad screenshot type");
+#ifdef VV_SWR_HAS_JPEG
+      GCon->Log(NAME_Error, "Supported formats are pcx, tga, png, jpg");
+#else
+      GCon->Log(NAME_Error, "Supported formats are pcx, tga, png");
+#endif
     }
     if (report) GCon->Logf("Saved screenshot to '%s'", *filename);
     Z_Free(data);
   } else {
-    GCon->Log("Not enough memory to take a screenshot");
+    GCon->Log(NAME_Error, "Not enough memory to take a screenshot");
   }
 }
 

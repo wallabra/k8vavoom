@@ -27,25 +27,38 @@
 #include "gamedefs.h"
 #include "r_tex.h"
 
-//#ifdef CLIENT
-extern "C"
-{
-#ifdef VAVOOM_USE_LIBJPG
-# include <jpeglib.h>
-#else
-# include "../../libs/jpeg/jpeglib.h"
-#endif
+#ifdef VAVOOM_DISABLE_STB_IMAGE_JPEG
+extern "C" {
+# ifdef VAVOOM_USE_LIBJPG
+#  include <jpeglib.h>
+# else
+#  include "../../libs/jpeg/jpeglib.h"
+# endif
 }
-//#endif
+#else
+# define STB_IMAGE_IMPLEMENTATION
+# define STBI_ONLY_JPEG
+# define STBI_NO_STDIO
+# define STBI_MALLOC   Z_Malloc
+# define STBI_REALLOC  Z_Realloc
+# define STBI_FREE     Z_Free
+# include "stb_image.h"
+# define STB_IMAGE_WRITE_IMPLEMENTATION
+# define STBI_WRITE_NO_STDIO
+# define STBIW_MALLOC   Z_Malloc
+# define STBIW_REALLOC  Z_Realloc
+# define STBIW_FREE     Z_Free
+# include "stb_image_write.h"
+#endif
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-//#ifdef CLIENT
+#ifdef VAVOOM_DISABLE_STB_IMAGE_JPEG
 struct VJpegClientData {
   VStream *Strm;
   JOCTET Buffer[4096];
 };
-//#endif
+#endif
 
 static VCvarI jpeg_quality("jpeg_quality", "80", "Jpeg screenshot quality.", CVAR_Archive);
 
@@ -127,7 +140,7 @@ VJpegTexture::~VJpegTexture () {
 }
 
 
-//#ifdef CLIENT
+#ifdef VAVOOM_DISABLE_STB_IMAGE_JPEG
 //==========================================================================
 //
 //  my_init_source
@@ -216,7 +229,6 @@ static void my_output_message (j_common_ptr cinfo) {
   cinfo->err->format_message(cinfo, Msg);
   GCon->Log(Msg);
 }
-//#endif
 
 
 //==========================================================================
@@ -225,7 +237,6 @@ static void my_output_message (j_common_ptr cinfo) {
 //
 //==========================================================================
 vuint8 *VJpegTexture::GetPixels () {
-//#ifdef CLIENT
   // if we already have loaded pixels, return them
   if (Pixels) return Pixels;
   transparent = false;
@@ -340,14 +351,112 @@ vuint8 *VJpegTexture::GetPixels () {
 
   ConvertPixelsToShaded();
   return Pixels;
-
-/*
-#else
-  Sys_Error("ReadPixels on dedicated server");
-  return nullptr;
-#endif
-*/
 }
+
+#else /* stb_image interface */
+
+struct CBReadInfo {
+  VStream *strm;
+  int strmStart;
+  int strmSize;
+  int strmPos;
+};
+
+
+static const stbi_io_callbacks stbcbacks = {
+  // fill 'data' with 'size' bytes; return number of bytes actually read
+  .read = [](void *user, char *data, int size) -> int {
+    if (size <= 0) return 0; // just in case
+    CBReadInfo *nfo = (CBReadInfo *)user;
+    int left = nfo->strmSize-nfo->strmPos;
+    if (size > left) size = left;
+    if (size) nfo->strm->Serialise(data, size);
+    nfo->strmPos += size;
+    return size;
+  },
+  // skip the next 'n' bytes, or 'unget' the last -n bytes if negative
+  .skip = [](void *user, int n) -> void {
+    if (n == 0) return;
+    CBReadInfo *nfo = (CBReadInfo *)user;
+    n = nfo->strmPos+n; // ignore overflow, meh
+    if (n < 0 || n > nfo->strmSize) abort(); // this should not happen
+    nfo->strmPos = n;
+    nfo->strm->Seek(n);
+  },
+  // returns nonzero if we are at end of file/data
+  .eof = [](void *user) -> int {
+    CBReadInfo *nfo = (CBReadInfo *)user;
+    return !!(nfo->strmPos >= nfo->strmSize);
+  },
+};
+
+
+//==========================================================================
+//
+//  VJpegTexture::GetPixels
+//
+//==========================================================================
+vuint8 *VJpegTexture::GetPixels () {
+  // if we already have loaded pixels, return them
+  if (Pixels) return Pixels;
+  transparent = false;
+  translucent = false;
+
+  mFormat = TEXFMT_RGBA;
+  Pixels = new vuint8[Width*Height*4];
+  memset(Pixels, 0, Width*Height*4);
+
+  // open stream
+  VStream *Strm = W_CreateLumpReaderNum(SourceLump);
+  if (!Strm) Sys_Error("cannot load jpeg texture from '%s'", *W_FullLumpName(SourceLump));
+
+  CBReadInfo nfo;
+  nfo.strm = Strm;
+  nfo.strmStart = 0;
+  nfo.strmSize = Strm->TotalSize();
+  nfo.strmPos = 0;
+  if (Strm->IsError()) {
+    delete Strm;
+    Sys_Error("error reading jpeg texture from '%s'", *W_FullLumpName(SourceLump));
+  }
+
+  int imgwidth = 0, imgheight = 0, imgchans = 0;
+  vuint8 *data = (vuint8 *)stbi_load_from_callbacks(&stbcbacks, (void *)&nfo, &imgwidth, &imgheight, &imgchans, 4); // request RGBA
+  if (Strm->IsError()) {
+    if (data) stbi_image_free(data);
+    delete Strm;
+    Sys_Error("error reading jpeg texture from '%s'", *W_FullLumpName(SourceLump));
+  }
+  delete Strm;
+
+  if (!data) Sys_Error("cannot load jpeg texture from '%s'", *W_FullLumpName(SourceLump));
+
+  if (Width != imgwidth || Height != imgheight) {
+    stbi_image_free(data);
+    Sys_Error("cannot load jpeg texture from '%s' (detected dims are %dx%d, loaded dims are %dx%d", *W_FullLumpName(SourceLump), Width, Height, imgwidth, imgheight);
+  }
+
+  // copy image
+  vuint8 *pDst = Pixels;
+  const vuint8 *pSrc = data;
+  for (int y = 0; y < imgheight; ++y) {
+    for (int x = 0; x < imgwidth; ++x) {
+      pDst[0] = pSrc[0];
+      pDst[1] = pSrc[1];
+      pDst[2] = pSrc[2];
+      pDst[3] = 0xff;
+      pSrc += 4;
+      pDst += 4;
+    }
+  }
+
+  // free memory
+  stbi_image_free(data);
+
+  ConvertPixelsToShaded();
+  return Pixels;
+}
+#endif
 
 
 //==========================================================================
@@ -365,7 +474,8 @@ void VJpegTexture::Unload () {
 
 #ifdef CLIENT
 
-#ifdef VAVOOM_USE_LIBJPG
+#ifdef VAVOOM_DISABLE_STB_IMAGE_JPEG
+# ifdef VAVOOM_USE_LIBJPG
 //==========================================================================
 //
 //  my_init_destination
@@ -447,7 +557,7 @@ void WriteJPG (VStr FileName, const void *Data, int Width, int Height, int Bpp, 
 
     // set up compression
     jpeg_set_defaults(&cinfo);
-    jpeg_set_quality(&cinfo, jpeg_quality, TRUE);
+    jpeg_set_quality(&cinfo, clampval(jpeg_quality.asInt(), 1, 100), TRUE);
 
     // perform compression
     jpeg_start_compress(&cinfo, TRUE);
@@ -481,6 +591,78 @@ void WriteJPG (VStr FileName, const void *Data, int Width, int Height, int Bpp, 
   Strm->Close();
   delete Strm;
 }
+# endif /* VAVOOM_USE_LIBJPG */
+
+#else /* !VAVOOM_DISABLE_STB_IMAGE_JPEG */
+
+extern "C" {
+  static void stbWriter (void *context, void *data, int size) {
+    VStream *strm = (VStream *)context;
+    if (size > 0) strm->Serialise(data, size);
+  }
+}
+
+//==========================================================================
+//
+//  WriteJPG
+//
+//==========================================================================
+void WriteJPG (VStr FileName, const void *Data, int Width, int Height, int Bpp, bool Bot2top) {
+  if (Width < 1 || Height < 1 || (Bpp != 8 && Bpp != 24 && Bpp != 32)) {
+    GCon->Log(NAME_Warning, "Couldn't write jpg (invalid parameters)");
+    return;
+  }
+
+  VStream *Strm = FL_OpenFileWrite(FileName, true);
+  if (!Strm) {
+    GCon->Logf(NAME_Warning, "Couldn't write jpg (error creating output stream for '%s')", *FileName);
+    return;
+  }
+
+  TArray<vuint8> imgdata;
+  imgdata.setLength(Width*Height*3);
+  const vuint8 *src = (const vuint8 *)Data;
+  if (Bot2top) src += (Width*(Bpp/8))*(Height-1);
+  vuint8 *dest = imgdata.ptr();
+  for (int y = 0; y < Height; ++y) {
+    const vuint8 *line = src;
+    if (Bot2top) src -= Width*(Bpp/8); else src += Width*(Bpp/8);
+    for (int x = 0; x < Width; ++x) {
+      switch (Bpp) {
+        case 8:
+          {
+            const vuint8 col = *line++;
+            dest[0] = r_palette[col].r;
+            dest[1] = r_palette[col].g;
+            dest[2] = r_palette[col].b;
+          }
+          break;
+        case 24:
+          dest[0] = *line++;
+          dest[1] = *line++;
+          dest[2] = *line++;
+          break;
+        case 32:
+          dest[0] = *line++;
+          dest[1] = *line++;
+          dest[2] = *line++;
+          ++line; // skip alpha
+          break;
+        default: Sys_Error("the thing that should not be");
+      }
+      dest += 3;
+    }
+  }
+
+  //stbi_flip_vertically_on_write(Bot2top ? 1 : 0);
+  int res = stbi_write_jpg_to_func(&stbWriter, (void *)Strm, Width, Height, 3, imgdata.ptr(), clampval(jpeg_quality.asInt(), 1, 100));
+  if (res && Strm->IsError()) res = 0;
+  Strm->Close();
+  delete Strm;
+
+  if (!res) GCon->Logf(NAME_Error, "error writing '%s'", *FileName);
+}
+
 #endif
 
 
