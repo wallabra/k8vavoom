@@ -513,7 +513,8 @@ public:
     if (mBucketsUsed == 0) return false;
     const vuint32 bhigh = (vuint32)(mEBSize-1);
     vuint32 khash = GetTypeHash(akey);
-    if (!khash) khash = 1; // avoid zero hash value
+    khash += !khash; // avoid zero hash value
+    //if (!khash) khash = 1; // avoid zero hash value
 #ifndef TMAP_USE_MULTIPLY
     vuint32 idx = (khash^mSeed)&bhigh;
 #else
@@ -536,7 +537,8 @@ public:
     if (mBucketsUsed == 0) return nullptr;
     const vuint32 bhigh = (vuint32)(mEBSize-1);
     vuint32 khash = GetTypeHash(akey);
-    if (!khash) khash = 1; // avoid zero hash value
+    khash += !khash; // avoid zero hash value
+    //if (!khash) khash = 1; // avoid zero hash value
 #ifndef TMAP_USE_MULTIPLY
     vuint32 idx = (khash^mSeed)&bhigh;
 #else
@@ -557,7 +559,8 @@ public:
     if (mBucketsUsed == 0) return nullptr;
     const vuint32 bhigh = (vuint32)(mEBSize-1);
     vuint32 khash = GetTypeHash(akey);
-    if (!khash) khash = 1; // avoid zero hash value
+    khash += !khash; // avoid zero hash value
+    //if (!khash) khash = 1; // avoid zero hash value
 #ifndef TMAP_USE_MULTIPLY
     vuint32 idx = (khash^mSeed)&bhigh;
 #else
@@ -593,7 +596,8 @@ public:
 
     const vuint32 bhigh = (vuint32)(mEBSize-1);
     vuint32 khash = GetTypeHash(akey);
-    if (!khash) khash = 1; // avoid zero hash value
+    khash += !khash; // avoid zero hash value
+    //if (!khash) khash = 1; // avoid zero hash value
 #ifndef TMAP_USE_MULTIPLY
     vuint32 idx = (khash^mSeed)&bhigh;
 #else
@@ -642,7 +646,8 @@ public:
   bool put (const TK &akey, const TV &aval) {
     const vuint32 bhigh = (vuint32)(mEBSize-1);
     vuint32 khash = GetTypeHash(akey);
-    if (!khash) khash = 1; // avoid zero hash value
+    khash += !khash; // avoid zero hash value
+    //if (!khash) khash = 1; // avoid zero hash value
 #ifndef TMAP_USE_MULTIPLY
     vuint32 idx = (khash^mSeed)&bhigh;
 #else
