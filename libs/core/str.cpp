@@ -531,7 +531,7 @@ void VStr::makeImmutable () {
   if (!dataptr) return; // nothing to do
   if (!atomicIsImmutable()) {
     //store()->rc = -0x0fffffff; // any negative means "immutable"
-    atomicSetRC(-0x0fffffff); // any negative means "immutable"
+    atomicSetRC(-0x00ffffff); // any negative means "immutable"
   }
 }
 

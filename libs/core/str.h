@@ -45,12 +45,15 @@ extern char *vavarg (const char *text, va_list ap) __attribute__((warn_unused_re
 //          make sure to `cloneUnique()` it, and pass to each thread its own VStr!
 class VStr {
 public:
-  struct Store {
-    int length;
-    int alloted;
-    int rc; // negative number means "immutable string"
+  struct __attribute__((packed)) Store {
+    vint32 length;
+    vint32 alloted;
+    vint32 rc; // negative number means "immutable string"
     // actual string data starts after this struct; and this is where `data` points
+    vint32 dummy; // this is to get natural align on 8-byte boundary
   };
+  static_assert(sizeof(Store) == 8*2, "invalid size for `VStr::Store` struct");
+  static_assert(__builtin_offsetof(Store, rc)%8 == 0, "invalid rc alignent for `VStr::Store` struct");
 
   char *dataptr; // string, 0-terminated (0 is not in length); can be null
 

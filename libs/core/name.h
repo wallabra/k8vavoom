@@ -43,13 +43,19 @@ class VName {
 public:
   // entry in the names table
   // WARNING! this should be kept in sync with `VStr` storage!
-  struct VNameEntry {
+  struct __attribute__((packed)) VNameEntry {
     VNameEntry *HashNext; // next name for this hash list
-    vint32 Index; // index of the name
+    // align to 8 bytes (dirty trick, i know)
+    union __attribute__((packed)) {
+      vint32 Index; // index of the name
+      void *dummyptr;
+    };
     // `VStr` data follows (WARNING! it is invalid prior to calling `StaticInit()`)
-    int length;
-    int alloted;
-    int rc; // negative number means "immutable string" (and it is always negative here)
+    // this is first, so `rc` will be naturally aligned
+    vint32 length;
+    vint32 alloted;
+    vint32 rc; // negative number means "immutable string" (and it is always negative here)
+    vint32 dummy;
     char Name[NAME_SIZE]; // name value
   };
 
@@ -142,9 +148,7 @@ public:
   static void DebugDumpHashStats ();
 };
 
-static_assert(sizeof(VName) == sizeof(vint32), "invalid VName class size!"); // for Vavoom C
-
-static_assert(__builtin_offsetof(VName::VNameEntry, rc)+sizeof(int) == __builtin_offsetof(VName::VNameEntry, Name), "VNameEntry layout failure");
+static_assert(sizeof(VName) == sizeof(vint32), "invalid VName class size!"); // for VavoomC
 
 
 inline vuint32 GetTypeHash (const VName &N) { return hashU32((vuint32)(N.GetIndex())); }

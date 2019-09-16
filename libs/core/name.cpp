@@ -37,11 +37,22 @@ bool VName::Initialised = false;
 static VName::VNameEntry *HashTable[HASH_SIZE];
 static VName::VNameEntry *HashTableSpc[HASH_SIZE];
 
+// check alignment
+static_assert(__builtin_offsetof(VName::VNameEntry, length)%8 == 0, "invalid vstr store emulation (alignment)");
+static_assert(__builtin_offsetof(VName::VNameEntry, rc)%8 == 0, "invalid vstr store emulation (rc alignment)");
+
+static_assert(__builtin_offsetof(VName::VNameEntry, Name)-__builtin_offsetof(VName::VNameEntry, length) == sizeof(VStr::Store), "invalid vstr store emulation (size)");
+static_assert(__builtin_offsetof(VName::VNameEntry, length)-__builtin_offsetof(VName::VNameEntry, length) == __builtin_offsetof(VStr::Store, length), "invalid vstr store emulation (length field)");
+static_assert(__builtin_offsetof(VName::VNameEntry, alloted)-__builtin_offsetof(VName::VNameEntry, length) == __builtin_offsetof(VStr::Store, alloted), "invalid vstr store emulation (alloted field)");
+static_assert(__builtin_offsetof(VName::VNameEntry, rc)-__builtin_offsetof(VName::VNameEntry, length) == __builtin_offsetof(VStr::Store, rc), "invalid vstr store emulation (rc field)");
+
 
 // ////////////////////////////////////////////////////////////////////////// //
-#define REGISTER_NAME(name)   { nullptr, NAME_##name, 0, 0, -0x0fffffff, #name },
+static int constexpr stlen (const char *s) { return (s && *s ? 1+stlen(s+1) : 0); }
+
+#define REGISTER_NAME(name)   { .HashNext=nullptr, .Index=NAME_##name, .length=stlen(#name), .alloted=stlen(#name)+1, .rc=-0x00ffffff, .dummy=0, #name },
 VName::VNameEntry VName::AutoNames[] = {
-  { nullptr, NAME_none, 0, 0, -0x0fffffff, "" },
+  { .HashNext=nullptr, .Index=NAME_none, .length=0, .alloted=1, .rc=-0x00ffffff, .dummy=0, "" },
 #include "names.h"
 };
 
@@ -87,9 +98,9 @@ static VName::VNameEntry *AllocateNameEntry (const char *Name, VName::VNameEntry
   const int slen = int(VStr::Length(Name));
   size_t size = sizeof(VName::VNameEntry)-NAME_SIZE+slen+1;
   VName::VNameEntry *e = (VName::VNameEntry *)Z_Calloc(size);
-  e->rc = -0x0fffffff; // "immutable" VStr flag
-  e->length = slen;
-  e->alloted = slen+1;
+  e->/*vstr.*/rc = -0x00ffffff; // "immutable" VStr flag
+  e->/*vstr.*/length = slen;
+  e->/*vstr.*/alloted = slen+1;
   if (Name && Name[0]) strcpy(e->Name, Name);
   e->HashNext = HashNext;
   return e;
@@ -250,9 +261,11 @@ void VName::StaticInit () {
     for (int i = 0; i < (int)ARRAY_COUNT(AutoNames); ++i) {
       // fixup name entry
       VNameEntry &e = AutoNames[i];
-      vassert(e.rc == -0x0fffffff);
-      e.length = VStr::Length(e.Name);
-      e.alloted = e.length+1;
+      vassert(e./*vstr.*/rc == -0x00ffffff);
+      vassert(e./*vstr.*/length == VStr::Length(e.Name));
+      vassert(e./*vstr.*/alloted == e./*vstr.*/length+1);
+      //e./*vstr.*/length = VStr::Length(e.Name);
+      //e./*vstr.*/alloted = e./*vstr.*/length+1;
       AppendNameEntry(&AutoNames[i]);
       if (i) {
         vuint32 HashIndex = GetTypeHash(e.Name)&(HASH_SIZE-1);
