@@ -37,6 +37,7 @@ typedef unsigned int vuint32;
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#define vassert(cond_)  if (!(cond_)) abort()
 
 
 static vuint32 GetTypeHash (int a) {
@@ -85,7 +86,6 @@ enum { MaxItems = 16384 };
 
 
 int its[MaxItems];
-bool marks[MaxItems];
 TMap<int, int> hash;
 
 
@@ -112,22 +112,39 @@ void checkHash (bool dump=false) {
 }
 
 
-void testIterator () {
+void testIterator (bool verbose) {
+  if (verbose) printf("  (iteration, normal)\n");
+  static int marks[MaxItems];
   int count = 0;
-  for (int i = 0; i < MaxItems; ++i) marks[i] = false;
+  for (int i = 0; i < MaxItems; ++i) marks[i] = 0;
   for (auto it = hash.first(); it; ++it) {
     //writeln('key=', k, '; value=', v);
     auto k = it.getKey();
     auto v = it.getValue();
     if (marks[k]) fatal("duplicate entry in iterator");
     if (its[k] != v) fatal("invalid entry in iterator");
-    marks[k] = true;
+    marks[k] = 1;
     ++count;
   }
-  if (count != hash.count()) {
+  if (count != hash.length()) {
     printf("0: count=%d; hash.count=%d\n", count, hash.count());
     //raise Exception.Create('lost entries in iterator');
   }
+  if (verbose) printf("  (iteration, foreach)\n");
+  // foreach iterator
+  for (auto &&it : hash.first()) {
+    auto k = it.getKey();
+    auto v = it.getValue();
+    if (marks[k] != 1) fatal("foreach iterator fuckup");
+    if (its[k] != v) fatal("invalid entry in foreach iterator");
+    ++marks[k];
+    --count;
+  }
+  if (count != 0) {
+    printf("0: count=%d; hash.count=%d\n", count, hash.count());
+    //raise Exception.Create('lost entries in iterator');
+  }
+  if (verbose) printf("  (iteration, counters)\n");
   count = 0;
   for (int i = 0; i < MaxItems; ++i) if (marks[i]) ++count;
   if (count != hash.count()) {
@@ -169,12 +186,12 @@ int main () {
     checkHash();
     #endif
     #ifdef EXCESSIVE_CHECKS_ITERATOR
-    testIterator();
+    testIterator(false);
     #endif
   }
   if (xcount != hash.count()) fatal("(1.5) fuuuuuuuuuuuu");
   checkHash();
-  testIterator();
+  testIterator(true);
 
   printf("testing: deletion\n");
   for (int i = 0; i < MaxItems*8; ++i) {
@@ -198,14 +215,14 @@ int main () {
     checkHash();
     #endif
     #ifdef EXCESSIVE_CHECKS_ITERATOR
-    testIterator();
+    testIterator(false);
     #endif
     if (hash.count() == 0) break;
   }
 
   printf("testing: complete\n");
   checkHash();
-  testIterator();
+  testIterator(true);
 
   return 0;
 }

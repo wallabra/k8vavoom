@@ -27,7 +27,9 @@
 //**  Template for mapping kays to values.
 //**
 //**************************************************************************
+// define this to call destructors on both keys and values
 //#define TMAP_DO_DTOR
+// define this to skip clearing keys and values (can be useful for PODs)
 //#define TMAP_NO_CLEAR
 
 // see https://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction/
@@ -70,7 +72,6 @@ private:
   struct TEntry {
     vuint32 hash; // 0 means "empty"
     TEntry *nextFree; // next free entry
-    //bool empty;
     TK key;
     TV value;
 
@@ -91,46 +92,69 @@ private:
 public:
   class TIterator {
   private:
-    TMap_Class_Name &map;
+    TMap_Class_Name *map;
     vuint32 index;
+
   public:
-    TIterator (TMap_Class_Name &amap) : map(amap), index(0) {
-      if (amap.mFirstEntry < 0) {
-        index = amap.mEBSize;
+    // ctor
+    inline TIterator (TMap_Class_Name *amap) : map(amap), index(0) {
+      vassert(amap);
+      if (amap->mFirstEntry < 0) {
+        index = amap->mEBSize;
       } else {
-        index = (vuint32)amap.mFirstEntry;
-        while ((vint32)index <= amap.mLastEntry && index < amap.mEBSize && amap.mEntries[index].isEmpty()) ++index;
-        if ((vint32)index > amap.mLastEntry) index = amap.mEBSize;
+        index = (vuint32)amap->mFirstEntry;
+        while ((int)index <= amap->mLastEntry && index < amap->mEBSize && amap->mEntries[index].isEmpty()) ++index;
+        if ((int)index > amap->mLastEntry) index = amap->mEBSize;
       }
     }
-    inline operator bool () const { return ((vint32)index <= map.mLastEntry); }
+
+    // special ctor that will create "end pointer"
+    inline TIterator (const TIterator &src, bool dummy) : map(src.map), index(src.map->mEBSize) {}
+
+    inline TIterator (const TIterator &src) : map(src.map), index(src.index) {}
+    inline TIterator &operator = (const TIterator &src) { if (&src != this) { map = src.map; index = src.index; } return *this; }
+
+    // convert to bool
+    inline operator bool () const { return ((int)index <= map->mLastEntry); }
+
+    // next (prefix increment)
     inline void operator ++ () {
-      if (index < map.mEBSize) {
+      if (index < map->mEBSize) {
         ++index;
-        while ((vint32)index <= map.mLastEntry && index < map.mEBSize && map.mEntries[index].isEmpty()) ++index;
-        if ((int)index > map.mLastEntry) index = map.mEBSize;
+        while ((int)index <= map->mLastEntry && index < map->mEBSize && map->mEntries[index].isEmpty()) ++index;
+        if ((int)index > map->mLastEntry) index = map->mEBSize;
       }
     }
-    inline const TK &GetKey () const { return map.mEntries[index].key; }
-    inline const TV &GetValue () const { return map.mEntries[index].value; }
-    inline TV &GetValue () { return map.mEntries[index].value; }
-    inline const TK &getKey () const { return map.mEntries[index].key; }
-    inline const TV &getValue () const { return map.mEntries[index].value; }
-    inline TV &getValue () { return map.mEntries[index].value; }
+
+    // `foreach` interface
+    inline TIterator begin () { return TIterator(*this); }
+    inline TIterator end () { return TIterator(*this, true); }
+    inline bool operator != (const TIterator &b) const { return (map != b.map || index != b.index); } /* used to compare with end */
+    inline TIterator operator * () const { return TIterator(*this); } /* required for iterator */
+
+    // key/value getters
+    inline const TK &GetKey () const { return map->mEntries[index].key; }
+    inline const TV &GetValue () const { return map->mEntries[index].value; }
+    inline TV &GetValue () { return map->mEntries[index].value; }
+    inline const TK &getKey () const { return map->mEntries[index].key; }
+    inline const TV &getValue () const { return map->mEntries[index].value; }
+    inline TV &getValue () { return map->mEntries[index].value; }
+
     inline void removeCurrent () {
-      if ((vint32)index <= map.mLastEntry && index < map.mEBSize) {
-        if (!map.mEntries[index].isEmpty()) map.del(map.mEntries[index].key);
+      if ((int)index <= map->mLastEntry && index < map->mEBSize) {
+        if (!map->mEntries[index].isEmpty()) map->del(map->mEntries[index].key);
         operator++();
       }
     }
     inline void RemoveCurrent () { removeCurrent(); }
+
     inline void resetToFirst () {
-      if (map.mFirstEntry < 0) {
-        index = map.mEBSize;
+      if (map->mFirstEntry < 0) {
+        index = map->mEBSize;
       } else {
-        index = (vuint32)map.mFirstEntry;
-        while ((vint32)index <= map.mLastEntry && index < map.mEBSize && map.mEntries[index].isEmpty()) ++index;
-        if ((vint32)index > map.mLastEntry) index = map.mEBSize;
+        index = (vuint32)map->mFirstEntry;
+        while ((int)index <= map->mLastEntry && index < map->mEBSize && map->mEntries[index].isEmpty()) ++index;
+        if ((int)index > map->mLastEntry) index = map->mEBSize;
       }
     }
   };
@@ -138,17 +162,17 @@ public:
   friend class TIterator;
 
 public:
-  // this is for k8vavoom C VM
+  // this is for VavoomC VM
   inline bool isValidIIdx (vint32 index) const {
     return (index >= 0 && index <= mLastEntry);
   }
 
-  // this is for k8vavoom C VM
+  // this is for VavoomC VM
   inline vint32 getFirstIIdx () const {
     if (mFirstEntry < 0) return -1;
-    vint32 index = mFirstEntry;
-    while (index <= mLastEntry && index < (vint32)mEBSize && mEntries[index].isEmpty()) ++index;
-    return (index <= mLastEntry ? index : -1);
+    int index = mFirstEntry;
+    while (index <= mLastEntry && index < (int)mEBSize && mEntries[index].isEmpty()) ++index;
+    return (vint32)(index <= mLastEntry ? index : -1);
   }
 
   // <0: done
@@ -686,5 +710,5 @@ public:
   }
 #endif
 
-  TIterator first () { return TIterator(*this); }
+  TIterator first () { return TIterator(this); }
 };
