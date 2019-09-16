@@ -33,7 +33,9 @@ class VStr;
 
 
 // maximum length of a name (without trailing zero)
-enum { NAME_SIZE = 127 };
+enum { NAME_SIZE = 255 };
+// maximum length of a predefined name (without trailing zero)
+enum { PREDEFINED_NAME_SIZE = 63 };
 
 
 // names are stored as indexes in the global name table.
@@ -45,18 +47,14 @@ public:
   // WARNING! this should be kept in sync with `VStr` storage!
   struct __attribute__((packed)) VNameEntry {
     VNameEntry *HashNext; // next name for this hash list
-    // align to 8 bytes (dirty trick, i know)
-    union __attribute__((packed)) {
-      vint32 Index; // index of the name
-      void *dummyptr;
-    };
+    vint32 Index; // index of the name
     // `VStr` data follows (WARNING! it is invalid prior to calling `StaticInit()`)
     // this is first, so `rc` will be naturally aligned
-    vint32 length;
+    vint32 length __attribute__((aligned(8)));
     vint32 alloted;
     vint32 rc; // negative number means "immutable string" (and it is always negative here)
     vint32 dummy;
-    char Name[NAME_SIZE]; // name value
+    char Name[PREDEFINED_NAME_SIZE+1]; // name value
   };
 
 private:
@@ -67,8 +65,6 @@ private:
   static size_t NamesAlloced;
   static size_t NamesCount;
   static bool Initialised;
-  //static VNameEntry *HashTable[HASH_SIZE]; // names without spaces
-  //static VNameEntry *HashTableSpc[HASH_SIZE]; // names with spaces (VC compiler generates alot of these)
 
   static VNameEntry AutoNames[];
 
