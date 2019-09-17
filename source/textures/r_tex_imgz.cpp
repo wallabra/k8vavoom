@@ -44,7 +44,7 @@ VTexture *VImgzTexture::Create (VStream &Strm, int LumpNum) {
 
   Strm.Seek(0);
   Strm.Serialise(Id, 4);
-  if (Id[0] != 'I' || Id[1] != 'M' || Id[2] != 'G' || Id[3] == 'Z') return nullptr;
+  if (memcmp(Id, "IMGZ", 4) != 0) return nullptr;
 
   Strm << Width << Height << SOffset << TOffset;
   return new VImgzTexture(LumpNum, Width, Height, SOffset, TOffset);
