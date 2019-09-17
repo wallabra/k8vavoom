@@ -5,6 +5,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/basepak.ls vlumpy
     graphics/autopage.lmp
     graphics/croshai*.*
+    graphics/croshai*
     basepak.ls.in
     bigfont.pcx
     #animated.lmp
