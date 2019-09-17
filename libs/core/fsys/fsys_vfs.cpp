@@ -738,6 +738,8 @@ static int tryWithExtension (VStr name, const char *ext) {
 //
 //==========================================================================
 int W_CheckNumForTextureFileName (VStr Name) {
+  static const char *textureExts[] = { ".png", ".jpg", ".tga", ".imgz", ".lmp", ".jpeg", ".pcx", ".bmp", nullptr };
+
   MyThreadLocker glocker(&fsys_glock);
   VStr loname = (Name.isLowerCase() ? Name : Name.toLowerCase());
   auto ip = fullNameTexLumpChecked.find(loname);
@@ -751,11 +753,9 @@ int W_CheckNumForTextureFileName (VStr Name) {
   VStr fname = VStr("textures/")+Name;
   if ((res = tryWithExtension(fname, nullptr)) >= 0) { fullNameTexLumpChecked.put(loname, res); return res; }
   // various other image extensions
-  if ((res = tryWithExtension(fname, ".png")) >= 0) { fullNameTexLumpChecked.put(loname, res); return res; }
-  if ((res = tryWithExtension(fname, ".jpg")) >= 0) { fullNameTexLumpChecked.put(loname, res); return res; }
-  if ((res = tryWithExtension(fname, ".tga")) >= 0) { fullNameTexLumpChecked.put(loname, res); return res; }
-  if ((res = tryWithExtension(fname, ".lmp")) >= 0) { fullNameTexLumpChecked.put(loname, res); return res; }
-  if ((res = tryWithExtension(fname, ".jpeg")) >= 0) { fullNameTexLumpChecked.put(loname, res); return res; }
+  for (const char **extptr = textureExts; *extptr; ++extptr) {
+    if ((res = tryWithExtension(fname, *extptr)) >= 0) { fullNameTexLumpChecked.put(loname, res); return res; }
+  }
 
   fullNameTexLumpChecked.put(loname, -1);
   return -1;

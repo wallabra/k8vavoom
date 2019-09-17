@@ -57,6 +57,7 @@ static const char *PK3IgnoreExts[] = {
   ".pk3",
   ".pk7",
   ".exe",
+  ".com",
   ".bat",
   ".ini",
   ".cpp",
