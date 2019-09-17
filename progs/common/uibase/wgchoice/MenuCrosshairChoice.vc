@@ -63,7 +63,7 @@ void SetText (string AText) {
 final int loadPic (int v) {
   if (v <= 0) return 0;
   if (v > 9) return 0;
-  name pn = name(va("CROSHAI%d", v));
+  name pn = name(va("croshai%x", v));
   int pic = R_RegisterPic(pn);
   if (pic > 0) return pic;
   return 0;
@@ -78,7 +78,7 @@ final int loadPic (int v) {
 final bool isValidValue (int v) {
   if (v < 0) return false;
   if (v == 0) return true;
-  if (v > 9) return false;
+  if (v > 15) return false;
   return !!loadPic(v);
 }
 

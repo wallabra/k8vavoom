@@ -751,7 +751,7 @@ static int findAndLoadTexture (VName Name, int Type, EWadNamespace NS) {
   TArray<int> fulllist; // full names
   TArray<int> shortlist; // short names
   for (int LNum = W_IterateNS(-1, NS); LNum >= 0; LNum = W_IterateNS(LNum, NS)) {
-    //GCon->Logf("FOR '%s': #%d is '%s'", *Name, LNum, *W_LumpName(LNum));
+    //GCon->Logf(NAME_Debug, "FOR '%s': #%d is '%s'", *Name, LNum, *W_LumpName(LNum));
     VName lmpname = W_LumpName(LNum);
          if (VStr::ICmp(*lmpname, *Name) == 0) fulllist.append(LNum);
     else if (VStr::ICmp(*lmpname, *PatchName) == 0) shortlist.append(LNum);

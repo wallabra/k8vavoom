@@ -81,6 +81,11 @@ void CL_Init () {
   GClGame->Game = GGameInfo;
   GClGame->eventPostSpawn();
   CurrentSongLump = NAME_None;
+  // preload crosshairs, why not?
+  for (int cnum = 1; cnum < 16; ++cnum) {
+    int handle = GTextureManager.AddPatch(VName(va("croshai%x", cnum), VName::AddLower8), TEXTYPE_Pic, true/*silent*/);
+    if (handle > 0) GCon->Logf(NAME_Init, "found crosshair #%d", cnum);
+  }
 }
 
 

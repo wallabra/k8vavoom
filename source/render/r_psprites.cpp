@@ -341,11 +341,11 @@ void VRenderLevelShared::DrawCrosshair () {
   const float scale = crosshair_scale.asFloat();
   float alpha = crosshair_alpha.asFloat();
   if (!isFiniteF(alpha)) alpha = 0;
-  if (ch > 0 && ch < 10 && alpha > 0.0f && isFiniteF(scale) && scale > 0.0f) {
+  if (ch > 0 && ch < 16 && alpha > 0.0f && isFiniteF(scale) && scale > 0.0f) {
     static int handle = 0;
     if (!handle || prevCH != ch) {
       prevCH = ch;
-      handle = GTextureManager.AddPatch(VName(va("CROSHAI%i", ch), VName::AddLower8), TEXTYPE_Pic);
+      handle = GTextureManager.AddPatch(VName(va("croshai%x", ch), VName::AddLower8), TEXTYPE_Pic, true/*silent*/);
       if (handle < 0) handle = 0;
     }
     if (handle > 0) {
