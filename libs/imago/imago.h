@@ -161,6 +161,8 @@ public:
 // ////////////////////////////////////////////////////////////////////////// //
 typedef VImage *(*VImageLoaderFn) (VStream *);
 
+enum { ImagoDefaultPriority = 1000 };
+
 // `ext` may, or may not include dot
 // loaders with higher priority will be tried first
 void ImagoRegisterLoader (const char *fmtext, const char *fmtdesc, VImageLoaderFn ldr, int prio=1000);

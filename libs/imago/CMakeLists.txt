@@ -4,4 +4,5 @@ add_library(imago STATIC
   # loaders
   loaders/ldr_png.cpp
   loaders/ldr_tga.cpp
+  loaders/ldr_pcx.cpp
 )

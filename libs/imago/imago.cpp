@@ -28,6 +28,7 @@
 // ////////////////////////////////////////////////////////////////////////// //
 extern VImage *imagoLoadPNG (VStream *strm);
 extern VImage *imagoLoadTGA (VStream *strm);
+extern VImage *imagoLoadPCX (VStream *strm);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -274,9 +275,10 @@ class VLoaderReg {
 public:
   VLoaderReg (int n) {
     ImagoRegisterLoader("png", "Portable Network Graphics", &imagoLoadPNG);
+    ImagoRegisterLoader("pcx", "PCX image", &imagoLoadPCX, 500);
     ImagoRegisterLoader("tga", "Targa Image", &imagoLoadTGA, 600);
   }
 };
 
 
-static VLoaderReg ldreg(666);
+__attribute__((used)) VLoaderReg imago_loader_registrator_variable_(666);
