@@ -174,6 +174,7 @@ static bool sweepAABB (int mex0, int mey0, int mew, int meh, // my box
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// this is using float numbers, so try to keep coordinates inside 16 signed bits
 struct DDALineWalker {
 private:
   int x0, y0, x1, y1;
@@ -182,10 +183,10 @@ private:
   int currTileX, currTileY;
   int endTileX, endTileY;
   bool reportFirstPoint;
-  double fltx0, flty0;
-  double fltx1, flty1;
-  double deltaDistX, deltaDistY; // length of ray from one x or y-side to next x or y-side
-  double sideDistX, sideDistY; // length of ray from current position to next x-side
+  float fltx0, flty0;
+  float fltx1, flty1;
+  float deltaDistX, deltaDistY; // length of ray from one x or y-side to next x or y-side
+  float sideDistX, sideDistY; // length of ray from current position to next x-side
   int stepX, stepY; // what direction to step in x/y (either +1 or -1)
   int currX, currY; // for simple walkers
   int lastStepVert; // -1: none (first point); 0: horizontal; 1: vertical
@@ -257,20 +258,19 @@ void DDALineWalker::start (int aTileWidth, int aTileHeight, int ax0, int ay0, in
   if (tileSX == endTileX && tileSY == endTileY) return; // nowhere to go anyway
 
   // convert coordinates to floating point
-  fltx0 = double(ax0)/double(aTileWidth);
-  flty0 = double(ay0)/double(aTileHeight);
-  fltx1 = double(ax1)/double(aTileWidth);
-  flty1 = double(ay1)/double(aTileHeight);
+  fltx0 = float(ax0)/float(aTileWidth);
+  flty0 = float(ay0)/float(aTileHeight);
+  fltx1 = float(ax1)/float(aTileWidth);
+  flty1 = float(ay1)/float(aTileHeight);
 
   // calculate ray direction
-  //TVec dv = (vector(fltx1, flty1)-vector(fltx0, flty0)).normalise2d;
-  const double dvx = fltx1-fltx0;
-  const double dvy = flty1-flty0;
-  const double dvinvlen = sqrtf(dvx*dvx+dvy*dvy); // inverted length
+  const float dvx = fltx1-fltx0;
+  const float dvy = flty1-flty0;
+  const float dvlen = sqrt(dvx*dvx+dvy*dvy); // length
   // length of ray from one x or y-side to next x or y-side
-  // this is 1/normalized_component, which is the same as inverted normalised component
-  deltaDistX = dvinvlen/dvx;
-  deltaDistY = dvinvlen/dvy;
+  // this is 1/normalized_component, which is the same as length/component
+  deltaDistX = dvlen/dvx;
+  deltaDistY = dvlen/dvy;
 
   // calculate step and initial sideDists
   if (dvx < 0) {
