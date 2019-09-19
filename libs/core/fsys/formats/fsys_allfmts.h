@@ -112,11 +112,8 @@ private:
 public:
   VDirPakFile (VStr);
 
-  //inline bool hasFiles () const { return (files.length() > 0); }
-
   virtual VStream *OpenFileRead (VStr)  override;
   virtual VStream *CreateLumpReaderNum (int) override;
-  //virtual int LumpLength (int) override;
 };
 
 

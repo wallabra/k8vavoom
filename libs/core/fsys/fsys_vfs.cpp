@@ -340,10 +340,7 @@ bool W_AddDiskFileOptional (VStr FileName, bool FixVoices) {
 void W_MountDiskDir (VStr dirname) {
   if (dirname.isEmpty()) return;
   VDirPakFile *dpak = new VDirPakFile(dirname);
-  //if (!dpak->hasFiles()) { delete dpak; return; }
-
   SearchPaths.append(dpak);
-
   AddArchiveFile_NoLock(dirname, dpak, true); // allow nested wads
 }
 

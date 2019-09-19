@@ -151,26 +151,6 @@ VStream *VDirPakFile::OpenFileRead (VStr fname) {
 
 //==========================================================================
 //
-//  VDirPakFile::LumpLength
-//
-//==========================================================================
-/*
-int VDirPakFile::LumpLength (int LumpNum) {
-  vassert(LumpNum >= 0);
-  vassert(LumpNum < pakdir.files.length());
-  if (pakdir.files[LumpNum].filesize == -1) {
-    VStream *Strm = CreateLumpReaderNum(LumpNum);
-    vassert(Strm);
-    pakdir.files[LumpNum].filesize = Strm->TotalSize();
-    delete Strm;
-  }
-  return pakdir.files[LumpNum].filesize;
-}
-*/
-
-
-//==========================================================================
-//
 //  VDirPakFile::CreateLumpReaderNum
 //
 //==========================================================================

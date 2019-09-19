@@ -231,8 +231,6 @@ public:
   VPakFileBase (VStr apakfilename, bool aaszip=true);
   virtual ~VPakFileBase () override;
 
-  //inline bool hasFiles () const { return (pakdir.files.length() > 0); }
-
   virtual void Close () override;
 
   virtual bool FileExists (VStr fname) override;
