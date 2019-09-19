@@ -52,7 +52,6 @@ public:
   virtual void Close () override;
   virtual VStream *CreateLumpReaderNum (int) override;
   virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=true) override;
-  virtual void ReadFromLump (int lump, void *dest, int pos, int size) override;
   virtual int IterateNS (int, EWadNamespace, bool allowEmptyName8=false) override;
 };
 
@@ -102,7 +101,6 @@ public:
   virtual ~VQuakePakFile () override;
 
   virtual VStream *CreateLumpReaderNum (int) override;
-  virtual void ReadFromLump (int lump, void *dest, int pos, int size) override;
   virtual void Close () override;
 };
 
@@ -110,8 +108,6 @@ public:
 //==========================================================================
 //  VDFWadFile
 //==========================================================================
-#if 0
-// not implemented yet
 class VDFWadFile : public VPakFileBase {
 private:
   mythread_mutex rdlock;
@@ -122,13 +118,12 @@ private:
 public:
   VDFWadFile (VStr);
   VDFWadFile (VStream *fstream); // takes ownership
+  VDFWadFile (VStream *fstream, VStr name); // takes ownership
   virtual ~VDFWadFile () override;
 
   virtual VStream *CreateLumpReaderNum (int) override;
-  virtual void ReadFromLump (int lump, void *dest, int pos, int size) override;
   virtual void Close () override;
 };
-#endif
 
 
 //==========================================================================
@@ -148,7 +143,7 @@ public:
 
   virtual VStream *OpenFileRead (VStr)  override;
   virtual VStream *CreateLumpReaderNum (int) override;
-  virtual int LumpLength (int) override;
+  //virtual int LumpLength (int) override;
 };
 
 

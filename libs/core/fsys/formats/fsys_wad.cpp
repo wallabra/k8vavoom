@@ -438,29 +438,3 @@ int VWadFile::IterateNS (int Start, EWadNamespace NS, bool allowEmptyName8) {
   if (NS > WADNS_ZipSpecial && NS != WADNS_Any) NS = WADNS_Global;
   return VPakFileBase::IterateNS(Start, NS, allowEmptyName8);
 }
-
-
-//==========================================================================
-//
-//  VWadFile::ReadFromLump
-//
-//  Loads part of the lump into the given buffer.
-//
-//==========================================================================
-void VWadFile::ReadFromLump (int lump, void *dest, int pos, int size) {
-  vassert(size >= 0);
-  vassert(pos >= 0);
-  if ((vuint32)lump >= (vuint32)pakdir.files.length()) Sys_Error("VWadFile::ReadFromLump: %i >= numlumps", lump);
-  VPakFileInfo &fi = pakdir.files[lump];
-  if (pos >= fi.filesize || !size) {
-    if (size > 0) memset(dest, 0, (unsigned)size);
-    return;
-  }
-  if (size > 0) {
-    vassert(lockInited);
-    MyThreadLocker locker(&rdlock);
-    Stream->Seek(fi.pakdataofs+pos);
-    Stream->Serialise(dest, size);
-    vassert(!Stream->IsError());
-  }
-}

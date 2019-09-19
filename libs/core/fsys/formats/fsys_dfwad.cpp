@@ -27,42 +27,11 @@
 
 //==========================================================================
 //
-//  VQuakePakFile::VQuakePakFile
-//
-//  takes ownership
+//  VDFWadFile::VDFWadFile
 //
 //==========================================================================
-VQuakePakFile::VQuakePakFile (VStream *fstream)
-  : VPakFileBase("<memory>", true)
-{
-  mythread_mutex_init(&rdlock);
-  if (fstream->GetName().length()) PakFileName = fstream->GetName();
-  OpenArchive(fstream);
-}
-
-
-//==========================================================================
-//
-//  VQuakePakFile::VQuakePakFile
-//
-//  takes ownership
-//
-//==========================================================================
-VQuakePakFile::VQuakePakFile (VStream *fstream, VStr name, int signtype)
-  : VPakFileBase(name, true)
-{
-  mythread_mutex_init(&rdlock);
-  OpenArchive(fstream, signtype);
-}
-
-
-//==========================================================================
-//
-//  VQuakePakFile::VQuakePakFile
-//
-//==========================================================================
-VQuakePakFile::VQuakePakFile (VStr zipfile)
-  : VPakFileBase(zipfile, true)
+VDFWadFile::VDFWadFile (VStr fname)
+  : VPakFileBase(fname, true)
 {
   mythread_mutex_init(&rdlock);
   if (fsys_report_added_paks) GLog.Logf(NAME_Init, "Adding \"%s\"...", *PakFileName);
@@ -74,10 +43,40 @@ VQuakePakFile::VQuakePakFile (VStr zipfile)
 
 //==========================================================================
 //
-//  VQuakePakFile::~VQuakePakFile
+//  VDFWadFile::VDFWadFile
+//
+//  takes ownership
 //
 //==========================================================================
-VQuakePakFile::~VQuakePakFile () {
+VDFWadFile::VDFWadFile (VStream *fstream)
+  : VPakFileBase("<memory>", true)
+{
+  mythread_mutex_init(&rdlock);
+  if (fstream->GetName().length()) PakFileName = fstream->GetName();
+  OpenArchive(fstream);
+}
+
+
+//==========================================================================
+//
+//  VDFWadFile::VDFWadFile
+//
+//==========================================================================
+VDFWadFile::VDFWadFile (VStream *fstream, VStr fname)
+  : VPakFileBase(fname, true)
+{
+  mythread_mutex_init(&rdlock);
+  vassert(fstream);
+  OpenArchive(fstream);
+}
+
+
+//==========================================================================
+//
+//  VDFWadFile::~VDFWadFile
+//
+//==========================================================================
+VDFWadFile::~VDFWadFile () {
   Close();
   mythread_mutex_destroy(&rdlock);
 }
@@ -85,66 +84,53 @@ VQuakePakFile::~VQuakePakFile () {
 
 //==========================================================================
 //
-//  VQuakePakFile::VQuakePakFile
+//  VDFWadFile::VDFWadFile
 //
 //==========================================================================
-void VQuakePakFile::OpenArchive (VStream *fstream, int signtype) {
+void VDFWadFile::OpenArchive (VStream *fstream) {
   Stream = fstream;
   vassert(Stream);
 
-  bool isSinPack = false;
+  char sign[6];
+  memset(sign, 0, 6);
+  Stream->Serialise(sign, 6);
+  if (memcmp(sign, "DFWAD\x01", 6) != 0) Sys_Error("not a DFWAD file \"%s\"", *PakFileName);
 
-  //Stream->Seek(0);
-  if (!signtype) {
-    char sign[4];
-    memset(sign, 0, 4);
-    Stream->Serialise(sign, 4);
-         if (memcmp(sign, "PACK", 4) == 0) isSinPack = false;
-    else if (memcmp(sign, "SPAK", 4) == 0) isSinPack = true;
-    else Sys_Error("not a quake pak file \"%s\"", *PakFileName);
-  } else {
-    isSinPack = (signtype > 1);
-  }
+  vuint16 count;
+  *Stream << count;
+  if (Stream->IsError()) Sys_Error("error reading DFWAD file \"%s\"", *PakFileName);
 
-  vuint32 dirofs;
-  vuint32 dirsize;
-
-  *Stream << dirofs << dirsize;
-
-  if (!isSinPack) dirsize /= 64;
-
-  char namebuf[121];
-  vuint32 ofs, size;
-
-  Stream->Seek(dirofs);
-  if (Stream->IsError()) Sys_Error("cannot read quake pak file \"%s\"", *PakFileName);
-
-  while (dirsize > 0) {
-    --dirsize;
-    memset(namebuf, 0, sizeof(namebuf));
-    if (!isSinPack) {
-      Stream->Serialise(namebuf, 56);
-    } else {
-      Stream->Serialise(namebuf, 120);
+  VStr curpath = VStr();
+  char namebuf[17];
+  while (count--) {
+    //files[i].name = VStr();
+    //memset(namebuf, 0, sizeof(namebuf));
+    Stream->Serialize(namebuf, 16);
+    for (int f = 0; f < 16; ++f) {
+      char ch = namebuf[f];
+      if (!ch) break;
+      if (ch == '/') ch = '_';
+      namebuf[f] = VStr::locase1251(ch);
     }
-    *Stream << ofs << size;
-    if (Stream->IsError()) Sys_Error("cannot read quake pak file \"%s\"", *PakFileName);
+    namebuf[16] = 0;
 
-    VStr zfname = VStr(namebuf).ToLower().FixFileSlashes();
+    vuint32 pkofs, pksize;
+    *Stream << pkofs << pksize;
 
-    // fix some idiocity introduced by some shitdoze doom tools
-    for (;;) {
-           if (zfname.startsWith("./")) zfname.chopLeft(2);
-      else if (zfname.startsWith("../")) zfname.chopLeft(3);
-      else if (zfname.startsWith("/")) zfname.chopLeft(1);
-      else break;
+    if (!namebuf[0]) continue; // ignore empty names
+
+    // directory?
+    if (pkofs == 0 && pksize == 0) {
+      curpath = VStr(namebuf);
+      if (curpath.length() && !curpath.endsWith("/")) curpath += "/";
+      continue;
     }
-    if (zfname.length() == 0 || zfname.endsWith("/")) continue; // something strange
 
     VPakFileInfo fi;
-    fi.fileName = zfname;
-    fi.pakdataofs = ofs;
-    fi.filesize = size;
+    fi.fileName = curpath+VStr(namebuf);
+    fi.pakdataofs = pkofs;
+    fi.packedsize = pksize;
+    fi.filesize = -1;
     pakdir.append(fi);
   }
 
@@ -155,10 +141,10 @@ void VQuakePakFile::OpenArchive (VStream *fstream, int signtype) {
 
 //==========================================================================
 //
-//  VQuakePakFile::Close
+//  VDFWadFile::Close
 //
 //==========================================================================
-void VQuakePakFile::Close () {
+void VDFWadFile::Close () {
   VPakFileBase::Close();
   if (Stream) { delete Stream; Stream = nullptr; }
 }
@@ -166,10 +152,10 @@ void VQuakePakFile::Close () {
 
 //==========================================================================
 //
-//  VQuakePakFile::CreateLumpReaderNum
+//  VDFWadFile::CreateLumpReaderNum
 //
 //==========================================================================
-VStream *VQuakePakFile::CreateLumpReaderNum (int Lump) {
+VStream *VDFWadFile::CreateLumpReaderNum (int Lump) {
   vassert(Lump >= 0);
   vassert(Lump < pakdir.files.length());
   const VPakFileInfo &fi = pakdir.files[Lump];

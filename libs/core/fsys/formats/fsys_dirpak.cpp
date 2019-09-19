@@ -139,7 +139,13 @@ VStream *VDirPakFile::OpenFileRead (VStr fname) {
   VStr tmpname = PakFileName+"/"+pakdir.files[lump].diskName;
   FILE *fl = fopen(*tmpname, "rb");
   if (!fl) return nullptr;
-  return new VStdFileStreamRead(fl, pakdir.files[lump].diskName);
+  VStream *strm = new VStdFileStreamRead(fl, pakdir.files[lump].diskName);
+  // update size, why not
+  if (pakdir.files[lump].filesize < 0) {
+    pakdir.files[lump].filesize = strm->TotalSize();
+    strm->Seek(0);
+  }
+  return strm;
 }
 
 
@@ -148,6 +154,7 @@ VStream *VDirPakFile::OpenFileRead (VStr fname) {
 //  VDirPakFile::LumpLength
 //
 //==========================================================================
+/*
 int VDirPakFile::LumpLength (int LumpNum) {
   vassert(LumpNum >= 0);
   vassert(LumpNum < pakdir.files.length());
@@ -159,6 +166,7 @@ int VDirPakFile::LumpLength (int LumpNum) {
   }
   return pakdir.files[LumpNum].filesize;
 }
+*/
 
 
 //==========================================================================

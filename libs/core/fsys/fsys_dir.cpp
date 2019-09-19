@@ -157,10 +157,12 @@ void VFilesDir::ReadFromLump (int LumpNum, void *Dest, int Pos, int Size) {
   vassert(LumpNum >= 0);
   vassert(LumpNum < cachedFiles.length());
   VStream *Strm = CreateLumpReaderNum(LumpNum);
-  vassert(Strm);
+  if (!Strm) Sys_Error("error reading lump '%s:%s'", *GetPrefix(), *cachedFiles[LumpNum]);
   Strm->Seek(Pos);
   Strm->Serialise(Dest, Size);
+  bool wasErr = Strm->IsError();
   delete Strm;
+  if (wasErr) Sys_Error("error reading lump '%s:%s'", *GetPrefix(), *cachedFiles[LumpNum]);
 }
 
 

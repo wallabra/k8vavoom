@@ -102,6 +102,15 @@ public:
         return new VQuakePakFile(strm, filename, 2);
       }, "SPAK");
 
+    // DFWAD
+    static __attribute__((used)) FArchiveReaderInfo vavoom_fsys_archive_opener_dfwad("dfwad",
+      [](VStream *strm, VStr filename, bool FixVoices) -> VSearchPath* {
+        if (strm->TotalSize() < 8) return nullptr;
+        strm->Seek(0);
+        if (strm->IsError()) return nullptr;
+        return new VDFWadFile(strm, filename);
+      }, "DFWAD\x01");
+
     // ZIP
     // checking for this is slow, but the sorter will check it last, as it has no signature
     // still, give it lower priority in case we'll have other signature-less formats

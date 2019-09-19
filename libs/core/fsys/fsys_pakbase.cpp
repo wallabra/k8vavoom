@@ -751,7 +751,7 @@ int VPakFileBase::FindACSObject (VStr fname) {
     const VPakFileInfo &fi = pakdir.files[f];
     if (fi.lumpNamespace != WADNS_ACSLibrary) continue;
     if (fi.lumpName != ln) continue;
-    if (fi.filesize >= 0 && fi.filesize < 12) continue; // why not? (<0 for disk mounts)
+    if (fi.filesize >= 0 && fi.filesize < 12) continue; // why not? (it is <0 for disk mounts, so check them anyway)
     if (fsys_developer_debug) GLog.Logf(NAME_Dev, "*** ACS0: fi='%s', lump='%s', ns=%d (%d)", *fi.fileName, *fi.lumpName, fi.lumpNamespace, WADNS_ACSLibrary);
     const VStr fn = fi.fileName.ExtractFileBaseName().StripExtension();
     if (fn.ICmp(afn) == 0) {
@@ -787,10 +787,25 @@ int VPakFileBase::FindACSObject (VStr fname) {
 void VPakFileBase::ReadFromLump (int Lump, void *Dest, int Pos, int Size) {
   vassert(Lump >= 0);
   vassert(Lump < pakdir.files.length());
+  vassert(Size >= 0);
+  if (Size == 0) return;
   VStream *Strm = CreateLumpReaderNum(Lump);
+  if (!Strm) Sys_Error("error reading lump '%s:%s'", *GetPrefix(), *pakdir.files[Lump].fileName);
+  // special case: unpacked size is unknown, cache it
+  int fsize = pakdir.files[Lump].filesize;
+  if (fsize == -1) {
+    pakdir.files[Lump].filesize = Strm->TotalSize();
+    fsize = pakdir.files[Lump].filesize;
+  }
+  if (fsize < 0 || Pos >= fsize || fsize-Pos < Size) {
+    delete Strm;
+    Sys_Error("error reading lump '%s:%s' (out of data)", *GetPrefix(), *pakdir.files[Lump].fileName);
+  }
   Strm->Seek(Pos);
   Strm->Serialise(Dest, Size);
+  bool wasError = Strm->IsError();
   delete Strm;
+  if (wasError) Sys_Error("error reading lump '%s:%s'", *GetPrefix(), *pakdir.files[Lump].fileName);
 }
 
 
@@ -801,6 +816,15 @@ void VPakFileBase::ReadFromLump (int Lump, void *Dest, int Pos, int Size) {
 //==========================================================================
 int VPakFileBase::LumpLength (int Lump) {
   if (Lump < 0 || Lump >= pakdir.files.length()) return 0;
+  // special case: unpacked size is unknown, read and cache it
+  if (pakdir.files[Lump].filesize == -1) {
+    VStream *Strm = CreateLumpReaderNum(Lump);
+    if (!Strm) Sys_Error("cannot get length for lump '%s:%s'", *GetPrefix(), *pakdir.files[Lump].fileName);
+    pakdir.files[Lump].filesize = Strm->TotalSize();
+    bool wasError = Strm->IsError();
+    delete Strm;
+    if (wasError || pakdir.files[Lump].filesize < 0) Sys_Error("cannot get length for lump '%s:%s'", *GetPrefix(), *pakdir.files[Lump].fileName);
+  }
   return pakdir.files[Lump].filesize;
 }
 

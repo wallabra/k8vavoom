@@ -102,6 +102,7 @@ add_library(core STATIC
   fsys/formats/fsys_wad.cpp
   fsys/formats/fsys_zip.cpp
   fsys/formats/fsys_qkpak.cpp
+  fsys/formats/fsys_dfwad.cpp
   # included directly in "fsys.cpp", otherwise "smart" linker will throw it away
   #fsys/fsys_register.cpp
 )
