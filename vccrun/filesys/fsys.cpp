@@ -1523,7 +1523,7 @@ bool VZipStreamWriter::Close () {
 
 // ////////////////////////////////////////////////////////////////////////// //
 int fsysDiskFileTime (VStr path) { return Sys_FileTime(path); }
-bool fysCreateDirectory (VStr path) { return Sys_CreateDirectory(path); }
+bool fsysCreateDirectory (VStr path) { return Sys_CreateDirectory(path); }
 bool fsysDirExists (VStr path) { return Sys_DirExists(path); }
 void *fsysOpenDir (VStr path) { return Sys_OpenDir(path); }
 VStr fsysReadDir (void *adir) { return Sys_ReadDir(adir); }

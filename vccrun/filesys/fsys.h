@@ -377,7 +377,7 @@ public:
 // returns -1 if not present
 int fsysDiskFileTime (VStr path);
 bool fsysDirExists (VStr path);
-bool fysCreateDirectory (VStr path);
+bool fsysCreateDirectory (VStr path);
 
 void *fsysOpenDir (VStr path);
 VStr fsysReadDir (void *adir);
