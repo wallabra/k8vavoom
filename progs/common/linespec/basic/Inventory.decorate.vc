@@ -568,16 +568,21 @@
   if (missile && !specified_spawnheight) spawnheight = CalculateLineAttackZOfs(); // fix missile height
 
   EntityEx puff;
+  TVec hitPoint; // used to aim a missile
   if ((NumBullets == 1 && !PlayerEx(Player).Refire) || NumBullets == 0) {
     damage = DamagePerBullet;
     if (randDamage) damage *= (P_Random()%3+1);
     LineAttack(aimDir, Range, damage, PuffType, NoAttackGhosts:default,
-               outHitPoint:default, PuffType.default.DamageType, secondary:false,
+               outHitPoint:&hitPoint, PuffType.default.DamageType, secondary:false,
                decalType:decal, disableRandomZ:!doRandPuffZ, out puffEntity:puff);
     if (missile) {
-      VectorAngles(aimDir, out rot);
-      EntityEx msl = SpawnMissileAngles(missile, rot.yaw, rot.pitch, spawnheight, spawnofsxy!optional);
-      //printdebug("0: spawnheight=%s; msl=%C; FloorClip=%s; bIgnoreCeilingStep=%B; bIgnoreFloorStep=%B", spawnheight, msl, FloorClip, msl.bIgnoreCeilingStep, msl.bIgnoreFloorStep);
+      EntityEx msl;
+      if (Flags&FBF_MISSILEHRANDOM) {
+        msl = helperSpawnShotSupplementalMissile(missile, hitPoint, spawnheight, spawnofsxy!optional, scatter:2);
+      } else {
+        VectorAngles(aimDir, out rot);
+        msl = SpawnMissileAngles(missile, rot.yaw, rot.pitch, spawnheight, spawnofsxy!optional);
+      }
       if (msl && puff) {
         if (Flags&FBF_PUFFTARGET) msl.Target = puff;
         if (Flags&FBF_PUFFMASTER) msl.Master = puff;
@@ -599,12 +604,16 @@
       damage = DamagePerBullet;
       if (randDamage) damage *= (P_Random()%3+1);
       LineAttack(dir, Range, damage, PuffType, NoAttackGhosts:default,
-                 outHitPoint:default, PuffType.default.DamageType, secondary:(i != 0),
+                 outHitPoint:&hitPoint, PuffType.default.DamageType, secondary:(i != 0),
                  decalType:decal, disableRandomZ:!doRandPuffZ, out puffEntity:puff);
       if (missile) {
-        VectorAngles(dir, out rot);
-        EntityEx msl = SpawnMissileAngles(missile, rot.yaw, rot.pitch, spawnheight, spawnofsxy!optional);
-        //printdebug("1: spawnheight=%s; msl=%C; FloorClip=%s; bIgnoreCeilingStep=%B; bIgnoreFloorStep=%B", spawnheight, msl, FloorClip, msl.bIgnoreCeilingStep, msl.bIgnoreFloorStep);
+        EntityEx msl;
+        if (Flags&FBF_MISSILEHRANDOM) {
+          msl = helperSpawnShotSupplementalMissile(missile, hitPoint, spawnheight, spawnofsxy!optional, scatter:1);
+        } else {
+          VectorAngles(dir, out rot);
+          msl = SpawnMissileAngles(missile, rot.yaw, rot.pitch, spawnheight, spawnofsxy!optional);
+        }
         if (msl && puff) {
           if (Flags&FBF_PUFFTARGET) msl.Target = puff;
           if (Flags&FBF_PUFFMASTER) msl.Master = puff;

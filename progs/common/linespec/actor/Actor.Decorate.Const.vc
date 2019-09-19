@@ -124,8 +124,9 @@ const [decorate] int CBAF_PUFFTARGET    = 32;
 const [decorate] int CBAF_PUFFMASTER    = 64;
 const [decorate] int CBAF_PUFFTRACER    = 128;
 // k8vavoom special
-const [decorate] int CBAF_DISABLEMISSILE = 0x100_000; // do not spawn missile even if it is specified
-const [decorate] int CBAF_NOMISSILENO3D  = 0x200_000; // do not spawn missile if 3d models are disabled
+const [decorate] int CBAF_DISABLEMISSILE = 0x100_0000; // do not spawn missile even if it is specified
+const [decorate] int CBAF_NOMISSILENO3D  = 0x200_0000; // do not spawn missile if 3d models are disabled
+const [decorate] int CBAF_MISSILEHRANDOM = 0x400_0000; // move missile left or right a little (but aim it at hit destination)
 
 // flags for A_FireBullets
 const [decorate] int FBF_USEAMMO       = 1;
@@ -138,8 +139,9 @@ const [decorate] int FBF_PUFFTARGET    = 64;
 const [decorate] int FBF_PUFFMASTER    = 128;
 const [decorate] int FBF_PUFFTRACER    = 256;
 // k8vavoom special
-const [decorate] int FBF_DISABLEMISSILE = 0x100_000; // do not spawn missile even if it is specified
-const [decorate] int FBF_NOMISSILENO3D  = 0x200_000; // do not spawn missile if 3d models are disabled
+const [decorate] int FBF_DISABLEMISSILE = 0x100_0000; // do not spawn missile even if it is specified
+const [decorate] int FBF_NOMISSILENO3D  = 0x200_0000; // do not spawn missile if 3d models are disabled
+const [decorate] int FBF_MISSILEHRANDOM = 0x400_0000; // move missile left or right a little (but aim it at hit destination)
 
 // flags for A_LookEx
 const [decorate] int LOF_NOSIGHTCHECK    = 1;

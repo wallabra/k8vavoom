@@ -35,6 +35,30 @@ const float ChargeSpeed = 455.0;
 float StartTime; // minotaur start time
 
 
+//===========================================================================
+//
+//  helperSpawnShotSupplementalMissile
+//
+//===========================================================================
+final EntityEx helperSpawnShotSupplementalMissile (class!Actor missile, TVec hitPoint,
+                                                   float spawnheight, optional float spawnofsxy,
+                                                   float scatter, optional bool nopitch)
+{
+  if (!missile) return none;
+  TVec neworg = Origin;
+  neworg.z += spawnheight;
+  // move left-right a little
+  TVec right = AngleYawVector(Angles.yaw+90); //k8: or -90?
+  neworg += right*(FRandomBetween(-scatter, scatter));
+  TVec newdir = (hitPoint-neworg).normalise;
+  TAVec rot;
+  VectorAngles(newdir, out rot);
+  neworg.z -= spawnheight;
+  if (nopitch) rot.pitch = 0;
+  return SpawnMissileAngles(missile, rot.yaw, rot.pitch, spawnheight, spawnofsxy!optional, customOrigin:neworg);
+}
+
+
 //==========================================================================
 //
 //  A_CustomMissile
@@ -182,6 +206,7 @@ final void FireSuperBullet () {
 
   TAVec rot;
   EntityEx puff;
+  TVec hitPoint;
   foreach (auto i; 0..NumBullets) {
     if (Flags&CBAF_EXPLICITANGLE) {
       rot.pitch = SpreadVert;
@@ -195,14 +220,18 @@ final void FireSuperBullet () {
     TVec dir = RotateDirectionVector(aimDir, rot);
     int damage = DamagePerBullet;
     if (!(Flags&CBAF_NORANDOM)) damage *= ((P_Random()%3)+1);
-    //TODO:CBAF_NORANDOMPUFFZ
     LineAttack(dir, Range, damage, PuffType, NoAttackGhosts:default,
-               outHitPoint:default, PuffType.default.DamageType, secondary:(i != 0),
+               outHitPoint:&hitPoint, PuffType.default.DamageType, secondary:(i != 0),
                disableRandomZ:!!(Flags&CBAF_NORANDOMPUFFZ), out puffEntity:puff);
     if (missile) {
-      VectorAngles(dir, out rot);
-      if (Flags&CBAF_NOPITCH) rot.pitch = 0;
-      EntityEx msl = SpawnMissileAngles(missile, rot.yaw, rot.pitch, spawnheight, spawnofsxy!optional);
+      EntityEx msl;
+      if (Flags&CBAF_MISSILEHRANDOM) {
+        msl = helperSpawnShotSupplementalMissile(missile, hitPoint, spawnheight, spawnofsxy!optional, scatter:1, nopitch:!!(Flags&CBAF_NOPITCH));
+      } else {
+        VectorAngles(dir, out rot);
+        if (Flags&CBAF_NOPITCH) rot.pitch = 0;
+        msl = SpawnMissileAngles(missile, rot.yaw, rot.pitch, spawnheight, spawnofsxy!optional);
+      }
       if (msl && puff) {
         if (Flags&CBAF_PUFFTARGET) msl.Target = puff;
         if (Flags&CBAF_PUFFMASTER) msl.Master = puff;

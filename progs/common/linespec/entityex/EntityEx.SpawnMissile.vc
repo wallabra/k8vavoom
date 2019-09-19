@@ -347,12 +347,13 @@ final EntityEx SpawnMissileZAimed (float z, EntityEx dest, class!EntityEx type) 
 //
 //==========================================================================
 final EntityEx SpawnMissileAngles (class!EntityEx type, float yaw, float pitch,
-                                   optional float spawnheight, optional float spawnxyofs)
+                                   optional float spawnheight, optional float spawnxyofs,
+                                   optional TVec customOrigin)
 {
   if (!type) return none;
   TVec dir;
 
-  TVec org = Origin;
+  TVec org = (specified_customOrigin ? customOrigin : Origin);
 
   if (spawnxyofs) {
     TVec right = AngleYawVector(Angles.yaw+90); //k8: or -90?
