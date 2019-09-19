@@ -34,22 +34,15 @@
 //==========================================================================
 class VWadFile : public VPakFileBase {
 private:
-  mythread_mutex rdlock;
-  VStream *Stream;
-  bool lockInited;
-
-private:
   void InitNamespaces ();
   void FixVoiceNamespaces ();
   void InitNamespace (EWadNamespace NS, VName Start, VName End, VName AltStart=NAME_None, VName AltEnd=NAME_None, bool flatNS=false);
 
 public:
   VWadFile ();
-  virtual ~VWadFile () override;
 
   void Open (VStr FileName, bool FixVoices, VStream *InStream);
   void OpenSingleLumpStream (VStream *strm, VStr FileName);
-  virtual void Close () override;
   virtual VStream *CreateLumpReaderNum (int) override;
   virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=true) override;
   virtual int IterateNS (int, EWadNamespace, bool allowEmptyName8=false) override;
@@ -61,8 +54,6 @@ public:
 //==========================================================================
 class VZipFile : public VPakFileBase {
 private:
-  mythread_mutex rdlock;
-  VStream *FileStream; // source stream of the zipfile
   vuint32 BytesBeforeZipFile; // byte before the zipfile, (>0 for sfx)
 
   // you can pass central dir offset here
@@ -73,10 +64,8 @@ public:
   VZipFile (VStream *fstream); // takes ownership
   // you can pass central dir offset here
   VZipFile (VStream *fstream, VStr name, vuint32 cdofs=0); // takes ownership
-  virtual ~VZipFile () override;
 
   virtual VStream *CreateLumpReaderNum (int) override;
-  virtual void Close () override;
 
 public: // fuck shitpp friend idiocity
   // returns 0 if not found
@@ -89,19 +78,14 @@ public: // fuck shitpp friend idiocity
 //==========================================================================
 class VQuakePakFile : public VPakFileBase {
 private:
-  mythread_mutex rdlock;
-  VStream *Stream; // source stream of the zipfile
-
   void OpenArchive (VStream *fstream, int signtype=0);
 
 public:
   VQuakePakFile (VStr);
   VQuakePakFile (VStream *fstream); // takes ownership
   VQuakePakFile (VStream *fstream, VStr name, int signtype=0); // takes ownership
-  virtual ~VQuakePakFile () override;
 
   virtual VStream *CreateLumpReaderNum (int) override;
-  virtual void Close () override;
 };
 
 
@@ -110,19 +94,14 @@ public:
 //==========================================================================
 class VDFWadFile : public VPakFileBase {
 private:
-  mythread_mutex rdlock;
-  VStream *Stream; // source stream of the zipfile
-
   void OpenArchive (VStream *fstream);
 
 public:
   VDFWadFile (VStr);
   VDFWadFile (VStream *fstream); // takes ownership
   VDFWadFile (VStream *fstream, VStr name); // takes ownership
-  virtual ~VDFWadFile () override;
 
   virtual VStream *CreateLumpReaderNum (int) override;
-  virtual void Close () override;
 };
 
 

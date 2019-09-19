@@ -216,6 +216,16 @@ class VPakFileBase : public VSearchPath {
 public:
   VStr PakFileName; // never ends with slash
   VFileDirectory pakdir;
+  // most archives needs this; it will be *deleted* in `Close()`/dtor!
+  VStream *archStream;
+  // most archives require shared lock, so i moved it here
+  bool rdlockInited;
+  mythread_mutex rdlock;
+
+protected:
+  // WARNING! lock init/deinit is not recursive, they're protected with a simple `bool` value!
+  void initLock (); // call this in ctor
+  void deinitLock (); // call this in `Clear()`/dtor
 
 public:
   VPakFileBase (VStr apakfilename, bool aaszip=false);

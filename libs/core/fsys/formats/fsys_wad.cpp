@@ -64,20 +64,8 @@ struct lumpinfo_t {
 //==========================================================================
 VWadFile::VWadFile ()
   : VPakFileBase("")
-  , Stream(nullptr)
-  , lockInited(false)
 {
   normalwad = true;
-}
-
-
-//==========================================================================
-//
-//  VWadFile::~VWadFile
-//
-//==========================================================================
-VWadFile::~VWadFile () {
-  Close();
 }
 
 
@@ -89,27 +77,22 @@ VWadFile::~VWadFile () {
 void VWadFile::Open (VStr FileName, bool FixVoices, VStream *InStream) {
   wadinfo_t header;
 
-  if (!lockInited) {
-    lockInited = true;
-    mythread_mutex_init(&rdlock);
-  }
-
   PakFileName = FileName;
   pakdir.clear();
 
   if (InStream) {
-    Stream = InStream;
-    //Stream->Seek(0);
+    archStream = InStream;
+    //archStream->Seek(0);
   } else {
     // open the file and add to directory
-    Stream = FL_OpenSysFileRead(FileName);
-    if (!Stream) Sys_Error("Couldn't open \"%s\"", *FileName);
+    archStream = FL_OpenSysFileRead(FileName);
+    if (!archStream) Sys_Error("Couldn't open \"%s\"", *FileName);
   }
   if (fsys_report_added_paks && !FileName.isEmpty()) GLog.Logf(NAME_Init, "Adding \"%s\"...", *FileName);
 
   // WAD file or homebrew levels?
   memset(&header, 0, sizeof(header));
-  Stream->Serialise(&header, sizeof(header));
+  archStream->Serialise(&header, sizeof(header));
   if (VStr::NCmp(header.identification, "IWAD", 4) != 0 &&
       VStr::NCmp(header.identification, "PWAD", 4) != 0)
   {
@@ -123,19 +106,19 @@ void VWadFile::Open (VStr FileName, bool FixVoices, VStream *InStream) {
 
   // moved here to make static data less fragmented
   if (NumLumps > 0) {
-    Stream->Seek(header.infotableofs);
-    //Stream->Serialise(waddir.ptr(), length);
-    //if (Stream->IsError()) Sys_Error("cannot read directory of wad file '%s'", *FileName);
+    archStream->Seek(header.infotableofs);
+    //archStream->Serialise(waddir.ptr(), length);
+    //if (archStream->IsError()) Sys_Error("cannot read directory of wad file '%s'", *FileName);
 
     for (int decount = NumLumps; decount > 0; --decount) {
       VPakFileInfo fi;
 
       vuint32 ofs, size;
-      *Stream << ofs << size;
+      *archStream << ofs << size;
 
       char namebuf[9];
-      Stream->Serialise(namebuf, 8);
-      if (Stream->IsError()) Sys_Error("cannot read wad file '%s'", *PakFileName);
+      archStream->Serialise(namebuf, 8);
+      if (archStream->IsError()) Sys_Error("cannot read wad file '%s'", *PakFileName);
       if (!namebuf[0]) continue; // something strange happened here
 
       // Mac demo hexen.wad: many (1784) of the lump names
@@ -172,7 +155,7 @@ void VWadFile::Open (VStr FileName, bool FixVoices, VStream *InStream) {
 void VWadFile::OpenSingleLumpStream (VStream *strm, VStr FileName) {
   // open the file and add to directory
   vassert(strm);
-  Stream = strm;
+  archStream = strm;
   if (fsys_report_added_paks) GLog.Logf(NAME_Init, "Adding \"%s\"...", *FileName);
 
   PakFileName = FileName;
@@ -181,30 +164,12 @@ void VWadFile::OpenSingleLumpStream (VStream *strm, VStr FileName) {
   // fill in lumpinfo
   fi.lumpName = VName(*FileName.ExtractFileBase(), VName::AddLower8);
   fi.pakdataofs = 0;
-  fi.filesize = Stream->TotalSize();
+  fi.filesize = archStream->TotalSize();
   fi.lumpNamespace = WADNS_Global;
   fi.fileName = FileName.toLowerCase();
   //pakdir.appendAndRegister(fi);
   pakdir.append(fi);
   pakdir.buildNameMaps();
-}
-
-
-//==========================================================================
-//
-//  VWadFile::Close
-//
-//==========================================================================
-void VWadFile::Close () {
-  VPakFileBase::Close();
-  if (Stream) {
-    delete Stream;
-    Stream = nullptr;
-  }
-  if (lockInited) {
-    mythread_mutex_destroy(&rdlock);
-    lockInited = false;
-  }
 }
 
 
@@ -392,19 +357,18 @@ VStream *VWadFile::CreateLumpReaderNum (int lump) {
 #if 0
   void *ptr = (fi.filesize ? Z_Malloc(fi.filesize) : nullptr);
   if (fi.filesize) {
-    vassert(lockInited);
     MyThreadLocker locker(&rdlock);
-    Stream->Seek(fi.pakdataofs);
-    Stream->Serialise(ptr, fi.filesize);
-    //vassert(!Stream->IsError());
-    if (Stream->IsError()) Host_Error("cannot load lump '%s'", *W_FullLumpName(lump));
+    archStream->Seek(fi.pakdataofs);
+    archStream->Serialise(ptr, fi.filesize);
+    //vassert(!archStream->IsError());
+    if (archStream->IsError()) Host_Error("cannot load lump '%s'", *W_FullLumpName(lump));
   }
 
   // create stream
   VStream *S = new VMemoryStream(GetPrefix()+":"+fi.fileName, ptr, fi.filesize, true);
 #else
   // this is mt-protected
-  VStream *S = new VPartialStreamRO(GetPrefix()+":"+fi.fileName, Stream, fi.pakdataofs, fi.filesize, &rdlock);
+  VStream *S = new VPartialStreamRO(GetPrefix()+":"+fi.fileName, archStream, fi.pakdataofs, fi.filesize, &rdlock);
 #endif
 
   //GLog.Logf("WAD<%s>: lump=%d; name=<%s>; size=(%d:%d); ofs=0x%08x", *PakFileName, lump, *fi.lumpName, fi.filesize, S->TotalSize(), fi.pakdataofs);

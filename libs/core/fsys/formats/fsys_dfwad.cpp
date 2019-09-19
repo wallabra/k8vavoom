@@ -33,7 +33,6 @@
 VDFWadFile::VDFWadFile (VStr fname)
   : VPakFileBase(fname, true)
 {
-  mythread_mutex_init(&rdlock);
   if (fsys_report_added_paks) GLog.Logf(NAME_Init, "Adding \"%s\"...", *PakFileName);
   auto fstream = FL_OpenSysFileRead(PakFileName);
   vassert(fstream);
@@ -51,7 +50,6 @@ VDFWadFile::VDFWadFile (VStr fname)
 VDFWadFile::VDFWadFile (VStream *fstream)
   : VPakFileBase("<memory>", true)
 {
-  mythread_mutex_init(&rdlock);
   if (fstream->GetName().length()) PakFileName = fstream->GetName();
   OpenArchive(fstream);
 }
@@ -65,20 +63,8 @@ VDFWadFile::VDFWadFile (VStream *fstream)
 VDFWadFile::VDFWadFile (VStream *fstream, VStr fname)
   : VPakFileBase(fname, true)
 {
-  mythread_mutex_init(&rdlock);
   vassert(fstream);
   OpenArchive(fstream);
-}
-
-
-//==========================================================================
-//
-//  VDFWadFile::~VDFWadFile
-//
-//==========================================================================
-VDFWadFile::~VDFWadFile () {
-  Close();
-  mythread_mutex_destroy(&rdlock);
 }
 
 
@@ -88,24 +74,24 @@ VDFWadFile::~VDFWadFile () {
 //
 //==========================================================================
 void VDFWadFile::OpenArchive (VStream *fstream) {
-  Stream = fstream;
-  vassert(Stream);
+  archStream = fstream;
+  vassert(archStream);
 
   char sign[6];
   memset(sign, 0, 6);
-  Stream->Serialise(sign, 6);
+  archStream->Serialise(sign, 6);
   if (memcmp(sign, "DFWAD\x01", 6) != 0) Sys_Error("not a DFWAD file \"%s\"", *PakFileName);
 
   vuint16 count;
-  *Stream << count;
-  if (Stream->IsError()) Sys_Error("error reading DFWAD file \"%s\"", *PakFileName);
+  *archStream << count;
+  if (archStream->IsError()) Sys_Error("error reading DFWAD file \"%s\"", *PakFileName);
 
   VStr curpath = VStr();
   char namebuf[17];
   while (count--) {
     //files[i].name = VStr();
     //memset(namebuf, 0, sizeof(namebuf));
-    Stream->Serialize(namebuf, 16);
+    archStream->Serialize(namebuf, 16);
     for (int f = 0; f < 16; ++f) {
       char ch = namebuf[f];
       if (!ch) break;
@@ -115,7 +101,7 @@ void VDFWadFile::OpenArchive (VStream *fstream) {
     namebuf[16] = 0;
 
     vuint32 pkofs, pksize;
-    *Stream << pkofs << pksize;
+    *archStream << pkofs << pksize;
 
     if (!namebuf[0]) continue; // ignore empty names
 
@@ -141,17 +127,6 @@ void VDFWadFile::OpenArchive (VStream *fstream) {
 
 //==========================================================================
 //
-//  VDFWadFile::Close
-//
-//==========================================================================
-void VDFWadFile::Close () {
-  VPakFileBase::Close();
-  if (Stream) { delete Stream; Stream = nullptr; }
-}
-
-
-//==========================================================================
-//
 //  VDFWadFile::CreateLumpReaderNum
 //
 //==========================================================================
@@ -160,6 +135,6 @@ VStream *VDFWadFile::CreateLumpReaderNum (int Lump) {
   vassert(Lump < pakdir.files.length());
   const VPakFileInfo &fi = pakdir.files[Lump];
   // this is mt-protected
-  VStream *S = new VPartialStreamRO(GetPrefix()+":"+fi.fileName, Stream, fi.pakdataofs, fi.filesize, &rdlock);
+  VStream *S = new VPartialStreamRO(GetPrefix()+":"+fi.fileName, archStream, fi.pakdataofs, fi.filesize, &rdlock);
   return S;
 }

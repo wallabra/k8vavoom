@@ -617,12 +617,20 @@ int VFileDirectory::nextLump (vint32 curridx, vint32 ns, bool allowEmptyName8) {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+
+//==========================================================================
+//
+//  VPakFileBase::VPakFileBase
+//
+//==========================================================================
 VPakFileBase::VPakFileBase (VStr apakfilename, bool aaszip)
   : VSearchPath()
   , PakFileName(apakfilename)
   , pakdir(this, aaszip)
+  , archStream(nullptr)
+  , rdlockInited(false)
 {
+  initLock();
 }
 
 
@@ -633,6 +641,35 @@ VPakFileBase::VPakFileBase (VStr apakfilename, bool aaszip)
 //==========================================================================
 VPakFileBase::~VPakFileBase () {
   Close();
+  // just in case
+  if (archStream) { archStream->Close(); delete archStream; archStream = nullptr; }
+  deinitLock();
+}
+
+
+//==========================================================================
+//
+//  VPakFileBase::initLock
+//
+//==========================================================================
+void VPakFileBase::initLock () {
+  if (!rdlockInited) {
+    mythread_mutex_init(&rdlock);
+    rdlockInited = true;
+  }
+}
+
+
+//==========================================================================
+//
+//  VPakFileBase::deinitLock
+//
+//==========================================================================
+void VPakFileBase::deinitLock () {
+  if (rdlockInited) {
+    rdlockInited = false;
+    mythread_mutex_destroy(&rdlock);
+  }
 }
 
 
@@ -707,6 +744,8 @@ bool VPakFileBase::FileExists (VStr fname) {
 //==========================================================================
 void VPakFileBase::Close () {
   pakdir.clear();
+  if (archStream) { archStream->Close(); delete archStream; archStream = nullptr; }
+  deinitLock();
 }
 
 

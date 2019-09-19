@@ -84,7 +84,6 @@ static const char *moreresdirs[] = {
 VZipFile::VZipFile (VStream *fstream)
   : VPakFileBase("<memory>", true)
 {
-  mythread_mutex_init(&rdlock);
   if (fstream->GetName().length()) PakFileName = fstream->GetName();
   OpenArchive(fstream);
 }
@@ -100,7 +99,6 @@ VZipFile::VZipFile (VStream *fstream)
 VZipFile::VZipFile (VStream *fstream, VStr name, vuint32 cdofs)
   : VPakFileBase(name, true)
 {
-  mythread_mutex_init(&rdlock);
   OpenArchive(fstream, cdofs);
 }
 
@@ -113,7 +111,6 @@ VZipFile::VZipFile (VStream *fstream, VStr name, vuint32 cdofs)
 VZipFile::VZipFile (VStr zipfile)
   : VPakFileBase(zipfile, true)
 {
-  mythread_mutex_init(&rdlock);
   if (fsys_report_added_paks) GLog.Logf(NAME_Init, "Adding \"%s\"...", *PakFileName);
   auto fstream = FL_OpenSysFileRead(PakFileName);
   vassert(fstream);
@@ -123,25 +120,14 @@ VZipFile::VZipFile (VStr zipfile)
 
 //==========================================================================
 //
-//  VZipFile::~VZipFile
-//
-//==========================================================================
-VZipFile::~VZipFile () {
-  Close();
-  mythread_mutex_destroy(&rdlock);
-}
-
-
-//==========================================================================
-//
 //  VZipFile::VZipFile
 //
 //==========================================================================
 void VZipFile::OpenArchive (VStream *fstream, vuint32 cdofs) {
-  FileStream = fstream;
-  vassert(FileStream);
+  archStream = fstream;
+  vassert(archStream);
 
-  vuint32 central_pos = (cdofs ? cdofs : SearchCentralDir(FileStream));
+  vuint32 central_pos = (cdofs ? cdofs : SearchCentralDir(archStream));
   if (central_pos == 0 || (vint32)central_pos == -1) {
     // check for 7zip idiocity
     if (!fstream->IsError() && fstream->TotalSize() >= 2) {
@@ -154,7 +140,7 @@ void VZipFile::OpenArchive (VStream *fstream, vuint32 cdofs) {
   }
   //vassert(central_pos);
 
-  FileStream->Seek(central_pos);
+  archStream->Seek(central_pos);
 
   vuint32 Signature;
   vuint16 number_disk; // number of the current dist, used for spaning ZIP
@@ -163,7 +149,7 @@ void VZipFile::OpenArchive (VStream *fstream, vuint32 cdofs) {
   vuint16 size_comment; // size of the global comment of the zipfile
   vuint16 NumFiles;
 
-  *FileStream
+  *archStream
     // the signature, already checked
     << Signature
     // number of this disk
@@ -182,7 +168,7 @@ void VZipFile::OpenArchive (VStream *fstream, vuint32 cdofs) {
   vuint32 size_central_dir; // size of the central directory
   vuint32 offset_central_dir; // offset of start of central directory with respect to the starting disk number
 
-  *FileStream
+  *archStream
     << size_central_dir
     << offset_central_dir
     << size_comment;
@@ -202,7 +188,7 @@ void VZipFile::OpenArchive (VStream *fstream, vuint32 cdofs) {
     //VPakFileInfo &file_info = files[i];
     VPakFileInfo file_info;
 
-    FileStream->Seek(pos_in_central_dir+BytesBeforeZipFile);
+    archStream->Seek(pos_in_central_dir+BytesBeforeZipFile);
 
     vuint32 Magic;
     vuint16 version; // version made by
@@ -215,7 +201,7 @@ void VZipFile::OpenArchive (VStream *fstream, vuint32 cdofs) {
     vuint32 external_fa; // external file attributes
 
     // we check the magic
-    *FileStream
+    *archStream
       << Magic
       << version
       << version_needed
@@ -237,7 +223,7 @@ void VZipFile::OpenArchive (VStream *fstream, vuint32 cdofs) {
 
     char *filename_inzip = new char[file_info.filenamesize+1];
     filename_inzip[file_info.filenamesize] = '\0';
-    FileStream->Serialise(filename_inzip, file_info.filenamesize);
+    archStream->Serialise(filename_inzip, file_info.filenamesize);
     VStr zfname = VStr(filename_inzip).ToLower().FixFileSlashes();
     delete[] filename_inzip;
     filename_inzip = nullptr;
@@ -360,22 +346,11 @@ vuint32 VZipFile::SearchCentralDir (VStream *strm) {
 
 //==========================================================================
 //
-//  VZipFile::Close
-//
-//==========================================================================
-void VZipFile::Close () {
-  VPakFileBase::Close();
-  if (FileStream) { delete FileStream; FileStream = nullptr; }
-}
-
-
-//==========================================================================
-//
 //  VZipFile::CreateLumpReaderNum
 //
 //==========================================================================
 VStream *VZipFile::CreateLumpReaderNum (int Lump) {
   vassert(Lump >= 0);
   vassert(Lump < pakdir.files.length());
-  return new VZipFileReader(PakFileName+":"+pakdir.files[Lump].fileName, FileStream, BytesBeforeZipFile, pakdir.files[Lump], &rdlock);
+  return new VZipFileReader(PakFileName+":"+pakdir.files[Lump].fileName, archStream, BytesBeforeZipFile, pakdir.files[Lump], &rdlock);
 }

@@ -35,7 +35,6 @@
 VQuakePakFile::VQuakePakFile (VStream *fstream)
   : VPakFileBase("<memory>", true)
 {
-  mythread_mutex_init(&rdlock);
   if (fstream->GetName().length()) PakFileName = fstream->GetName();
   OpenArchive(fstream);
 }
@@ -51,7 +50,6 @@ VQuakePakFile::VQuakePakFile (VStream *fstream)
 VQuakePakFile::VQuakePakFile (VStream *fstream, VStr name, int signtype)
   : VPakFileBase(name, true)
 {
-  mythread_mutex_init(&rdlock);
   OpenArchive(fstream, signtype);
 }
 
@@ -64,7 +62,6 @@ VQuakePakFile::VQuakePakFile (VStream *fstream, VStr name, int signtype)
 VQuakePakFile::VQuakePakFile (VStr zipfile)
   : VPakFileBase(zipfile, true)
 {
-  mythread_mutex_init(&rdlock);
   if (fsys_report_added_paks) GLog.Logf(NAME_Init, "Adding \"%s\"...", *PakFileName);
   auto fstream = FL_OpenSysFileRead(PakFileName);
   vassert(fstream);
@@ -74,31 +71,20 @@ VQuakePakFile::VQuakePakFile (VStr zipfile)
 
 //==========================================================================
 //
-//  VQuakePakFile::~VQuakePakFile
-//
-//==========================================================================
-VQuakePakFile::~VQuakePakFile () {
-  Close();
-  mythread_mutex_destroy(&rdlock);
-}
-
-
-//==========================================================================
-//
 //  VQuakePakFile::VQuakePakFile
 //
 //==========================================================================
 void VQuakePakFile::OpenArchive (VStream *fstream, int signtype) {
-  Stream = fstream;
-  vassert(Stream);
+  archStream = fstream;
+  vassert(archStream);
 
   bool isSinPack = false;
 
-  //Stream->Seek(0);
+  //archStream->Seek(0);
   if (!signtype) {
     char sign[4];
     memset(sign, 0, 4);
-    Stream->Serialise(sign, 4);
+    archStream->Serialise(sign, 4);
          if (memcmp(sign, "PACK", 4) == 0) isSinPack = false;
     else if (memcmp(sign, "SPAK", 4) == 0) isSinPack = true;
     else Sys_Error("not a quake pak file \"%s\"", *PakFileName);
@@ -109,26 +95,26 @@ void VQuakePakFile::OpenArchive (VStream *fstream, int signtype) {
   vuint32 dirofs;
   vuint32 dirsize;
 
-  *Stream << dirofs << dirsize;
+  *archStream << dirofs << dirsize;
 
   if (!isSinPack) dirsize /= 64;
 
   char namebuf[121];
   vuint32 ofs, size;
 
-  Stream->Seek(dirofs);
-  if (Stream->IsError()) Sys_Error("cannot read quake pak file \"%s\"", *PakFileName);
+  archStream->Seek(dirofs);
+  if (archStream->IsError()) Sys_Error("cannot read quake pak file \"%s\"", *PakFileName);
 
   while (dirsize > 0) {
     --dirsize;
     memset(namebuf, 0, sizeof(namebuf));
     if (!isSinPack) {
-      Stream->Serialise(namebuf, 56);
+      archStream->Serialise(namebuf, 56);
     } else {
-      Stream->Serialise(namebuf, 120);
+      archStream->Serialise(namebuf, 120);
     }
-    *Stream << ofs << size;
-    if (Stream->IsError()) Sys_Error("cannot read quake pak file \"%s\"", *PakFileName);
+    *archStream << ofs << size;
+    if (archStream->IsError()) Sys_Error("cannot read quake pak file \"%s\"", *PakFileName);
 
     VStr zfname = VStr(namebuf).ToLower().FixFileSlashes();
 
@@ -155,17 +141,6 @@ void VQuakePakFile::OpenArchive (VStream *fstream, int signtype) {
 
 //==========================================================================
 //
-//  VQuakePakFile::Close
-//
-//==========================================================================
-void VQuakePakFile::Close () {
-  VPakFileBase::Close();
-  if (Stream) { delete Stream; Stream = nullptr; }
-}
-
-
-//==========================================================================
-//
 //  VQuakePakFile::CreateLumpReaderNum
 //
 //==========================================================================
@@ -174,6 +149,6 @@ VStream *VQuakePakFile::CreateLumpReaderNum (int Lump) {
   vassert(Lump < pakdir.files.length());
   const VPakFileInfo &fi = pakdir.files[Lump];
   // this is mt-protected
-  VStream *S = new VPartialStreamRO(GetPrefix()+":"+fi.fileName, Stream, fi.pakdataofs, fi.filesize, &rdlock);
+  VStream *S = new VPartialStreamRO(GetPrefix()+":"+fi.fileName, archStream, fi.pakdataofs, fi.filesize, &rdlock);
   return S;
 }
