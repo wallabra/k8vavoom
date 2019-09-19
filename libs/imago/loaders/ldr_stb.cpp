@@ -50,7 +50,12 @@ static void *X_Realloc (void *p, size_t size) {
 }
 
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
 #define STB_IMAGE_IMPLEMENTATION
+//#define STB_IMAGE_STATIC
+//#define STBIDEF  static __attribute__((unused))
+#define STBIDEF  __attribute__((unused)) static
 #define STBI_NO_STDIO
 #define STBI_NO_PNG  /* we have our own loader for this */
 #define STBI_NO_TGA  /* we have our own loader for this */
@@ -60,6 +65,7 @@ static void *X_Realloc (void *p, size_t size) {
 #define STBI_REALLOC  X_Realloc
 #define STBI_FREE     X_Free
 #include "stb_image.h"
+#pragma GCC diagnostic pop
 
 
 // ////////////////////////////////////////////////////////////////////////// //
