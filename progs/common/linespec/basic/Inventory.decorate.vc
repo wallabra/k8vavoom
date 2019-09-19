@@ -590,6 +590,7 @@
       }
     }
   } else {
+    float scatter = (Flags&FBF_MISSILEEXSCATTER ? 2 : 1);
     if (NumBullets == -1) NumBullets = 1;
     foreach (auto i; 0..NumBullets) {
       if (randSpread) {
@@ -609,7 +610,7 @@
       if (missile) {
         EntityEx msl;
         if (Flags&FBF_MISSILEHRANDOM) {
-          msl = helperSpawnShotSupplementalMissile(missile, hitPoint, spawnheight, spawnofsxy!optional, scatter:1);
+          msl = helperSpawnShotSupplementalMissile(missile, hitPoint, spawnheight, spawnofsxy!optional, scatter:scatter);
         } else {
           VectorAngles(dir, out rot);
           msl = SpawnMissileAngles(missile, rot.yaw, rot.pitch, spawnheight, spawnofsxy!optional);
