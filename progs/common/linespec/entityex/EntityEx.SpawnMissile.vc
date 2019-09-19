@@ -201,11 +201,11 @@ final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
 //  a Actor reference to the missile.
 //
 //==========================================================================
-final EntityEx SpawnMissile (EntityEx dest, class!EntityEx type, optional float SpawnHeight) {
+final EntityEx SpawnMissile (EntityEx dest, class!EntityEx type, optional float spawnheight) {
   TVec dir;
 
   TVec org = Origin;
-       if (specified_SpawnHeight) org.z += SpawnHeight;
+       if (specified_spawnheight) org.z += spawnheight;
   else if (type.default.bIgnoreFloorStep) org.z = ONFLOORZ+FloorClip;
   else if (type.default.bIgnoreCeilingStep) org.z = ONCEILINGZ;
   else org.z += 32.0;
@@ -347,7 +347,7 @@ final EntityEx SpawnMissileZAimed (float z, EntityEx dest, class!EntityEx type) 
 //
 //==========================================================================
 final EntityEx SpawnMissileAngles (class!EntityEx type, float yaw, float pitch,
-                                   optional float SpawnHeight, optional float spawnxyofs)
+                                   optional float spawnheight, optional float spawnxyofs)
 {
   if (!type) return none;
   TVec dir;
@@ -359,7 +359,7 @@ final EntityEx SpawnMissileAngles (class!EntityEx type, float yaw, float pitch,
     org += right*spawnxyofs;
   }
 
-       if (specified_SpawnHeight) org.z += SpawnHeight;
+       if (specified_spawnheight) org.z += spawnheight;
   else if (type.default.bIgnoreFloorStep) org.z = ONFLOORZ+FloorClip;
   else if (type.default.bIgnoreCeilingStep) org.z = ONCEILINGZ;
   else org.z += 32.0;
@@ -391,12 +391,12 @@ final EntityEx SpawnMissileAngles (class!EntityEx type, float yaw, float pitch,
 //
 //==========================================================================
 final EntityEx SpawnMissileAngle (class!EntityEx type, float angle,
-                                  float momz, optional float SpawnHeight)
+                                  float momz, optional float spawnheight)
 {
   if (!type) return none;
 
   TVec org = Origin;
-       if (specified_SpawnHeight) org.z += SpawnHeight;
+       if (specified_spawnheight) org.z += spawnheight;
   else if (type.default.bIgnoreFloorStep) org.z = ONFLOORZ+FloorClip; // minotaur floor fire missile
   else if (type.default.bIgnoreCeilingStep) org.z = ONCEILINGZ;
   else org.z += 32.0;

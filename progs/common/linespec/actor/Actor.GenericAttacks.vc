@@ -158,6 +158,9 @@ final void FireSuperBullet () {
   //FIXME: not specified and none are two different things
   if (!PuffType || !specified_PuffType) PuffType = BulletPuff;
 
+  if (Flags&CBAF_DISABLEMISSILE) missile = none;
+  if (missile && (Flags&CBAF_NOMISSILENO3D) && !GetCvarB('r_models')) missile = none;
+
   if (!(Flags&CBAF_AIMFACING)) {
     if (tgt) common_A_FaceSomething(tgt);
   }
@@ -174,6 +177,8 @@ final void FireSuperBullet () {
   } else {
     AimLineAttack(aimDir, Angles, MISSILERANGE);
   }
+
+  if (missile && !specified_spawnheight) spawnheight = CalculateLineAttackZOfs(); // fix missile height
 
   TAVec rot;
   EntityEx puff;
@@ -197,7 +202,7 @@ final void FireSuperBullet () {
     if (missile) {
       VectorAngles(dir, out rot);
       if (Flags&CBAF_NOPITCH) rot.pitch = 0;
-      EntityEx msl = SpawnMissileAngles(missile, rot.yaw, rot.pitch, spawnheight!optional, spawnofsxy!optional);
+      EntityEx msl = SpawnMissileAngles(missile, rot.yaw, rot.pitch, spawnheight, spawnofsxy!optional);
       if (msl && puff) {
         if (Flags&CBAF_PUFFTARGET) msl.Target = puff;
         if (Flags&CBAF_PUFFMASTER) msl.Master = puff;

@@ -533,6 +533,9 @@
   if (!PuffType || !specified_PuffType) PuffType = BulletPuff;
   if (!specified_Range || !Range) Range = 8192; //MISSILERANGE;
 
+  if (Flags&FBF_DISABLEMISSILE) missile = none;
+  if (missile && (Flags&FBF_NOMISSILENO3D) && !GetCvarB('r_models')) missile = none;
+
   if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
@@ -562,6 +565,8 @@
 
   Aim(aimDir, 16.0*64.0, default, noAAim, noAimPitch);
 
+  if (missile && !specified_spawnheight) spawnheight = CalculateLineAttackZOfs(); // fix missile height
+
   EntityEx puff;
   if ((NumBullets == 1 && !PlayerEx(Player).Refire) || NumBullets == 0) {
     damage = DamagePerBullet;
@@ -571,7 +576,8 @@
                decalType:decal, disableRandomZ:!doRandPuffZ, out puffEntity:puff);
     if (missile) {
       VectorAngles(aimDir, out rot);
-      EntityEx msl = SpawnMissileAngles(missile, rot.yaw, rot.pitch, spawnheight!optional, spawnofsxy!optional);
+      EntityEx msl = SpawnMissileAngles(missile, rot.yaw, rot.pitch, spawnheight, spawnofsxy!optional);
+      //printdebug("0: spawnheight=%s; msl=%C; FloorClip=%s; bIgnoreCeilingStep=%B; bIgnoreFloorStep=%B", spawnheight, msl, FloorClip, msl.bIgnoreCeilingStep, msl.bIgnoreFloorStep);
       if (msl && puff) {
         if (Flags&FBF_PUFFTARGET) msl.Target = puff;
         if (Flags&FBF_PUFFMASTER) msl.Master = puff;
@@ -596,7 +602,9 @@
                  outHitPoint:default, PuffType.default.DamageType, secondary:(i != 0),
                  decalType:decal, disableRandomZ:!doRandPuffZ, out puffEntity:puff);
       if (missile) {
-        EntityEx msl = SpawnMissileAngles(missile, rot.yaw, rot.pitch, spawnheight!optional, spawnofsxy!optional);
+        VectorAngles(dir, out rot);
+        EntityEx msl = SpawnMissileAngles(missile, rot.yaw, rot.pitch, spawnheight, spawnofsxy!optional);
+        //printdebug("1: spawnheight=%s; msl=%C; FloorClip=%s; bIgnoreCeilingStep=%B; bIgnoreFloorStep=%B", spawnheight, msl, FloorClip, msl.bIgnoreCeilingStep, msl.bIgnoreFloorStep);
         if (msl && puff) {
           if (Flags&FBF_PUFFTARGET) msl.Target = puff;
           if (Flags&FBF_PUFFMASTER) msl.Master = puff;

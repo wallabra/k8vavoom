@@ -84,6 +84,18 @@ static final bool CalcProperThingHit (ref TVec hit_point, Entity th, const TVec 
 
 //==========================================================================
 //
+//  CalculateLineAttackZOfs
+//
+//  calculate z offset for line attack (will be added to origin)
+//
+//==========================================================================
+float CalculateLineAttackZOfs (optional bool asMissile) {
+  return Height*0.5-FloorClip+(bIsPlayer ? PlayerEx(Player).GetAttackZOfs(missile:asMissile) : 8.0);
+}
+
+
+//==========================================================================
+//
 //  PickActor
 //
 //==========================================================================
@@ -98,8 +110,7 @@ override Entity PickActor (optional TVec org, TVec dir, float distance, optional
 
   if (!specified_org) {
     org = Origin;
-    org.z += Height*0.5-FloorClip;
-    org.z += (bIsPlayer ? PlayerEx(Player).GetAttackZOfs : 8.0);
+    org.z += CalculateLineAttackZOfs();
   }
 
   TVec shootOrigin = org;
@@ -218,8 +229,7 @@ final void DebugCheckMidTex () {
   AngleVector(Angles, out aimDir);
 
   auto shootOrigin = Origin;
-  shootOrigin.z += Height*0.5-FloorClip;
-  shootOrigin.z += (bIsPlayer ? PlayerEx(Player).GetAttackZOfs : 8.0);
+  shootOrigin.z += CalculateLineAttackZOfs();
 
   trsplat_t tr;
   TraceLineEx(shootOrigin, aimDir, 8192, allowEntities:false, &tr, stopat3dmidtex:true, nozofs:true);
@@ -472,12 +482,7 @@ final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance,
   AngleVector(angles, out aim_dir);
   x2 = Origin.x+distance*aim_dir.x;
   y2 = Origin.y+distance*aim_dir.y;
-  aim_z = Origin.z+Height*0.5-FloorClip;
-  if (bIsPlayer) {
-    aim_z += PlayerEx(Player).GetAttackZOfs(missile:isRocket);
-  } else {
-    aim_z += 8.0;
-  }
+  aim_z = Origin.z+CalculateLineAttackZOfs(asMissile:isRocket);
   aim_range2d = Length2D(vector(distance*aim_dir.x, distance*aim_dir.y));
 
   // can't shoot outside view angles
@@ -755,8 +760,7 @@ final bool LineAttack (TVec dir, float distance, int LADamage,
   hitEntity = none;
 
   shootOrigin = Origin;
-  shootOrigin.z += Height*0.5-FloorClip;
-  shootOrigin.z += (bIsPlayer ? PlayerEx(Player).GetAttackZOfs : 8.0);
+  shootOrigin.z += CalculateLineAttackZOfs();
 
   dst = shootOrigin+distance*dir;
   lineStart = shootOrigin;
@@ -962,12 +966,7 @@ final void RailAttack (TVec dir, float Offset, int RailDamage,
   if (PuffType && PuffType.default.DamageType) DmgType = PuffType.default.DamageType;
 
   shootOrigin = Origin;
-  shootOrigin.z += Height*0.5-FloorClip;
-  if (bIsPlayer) {
-    shootOrigin.z += PlayerEx(Player).GetAttackZOfs;
-  } else {
-    shootOrigin.z += 8.0;
-  }
+  shootOrigin.z += CalculateLineAttackZOfs();
   shootOrigin.z += spawnofs_z;
   sincos(Angles.yaw-90.0, out sina, out cosa);
   shootOrigin.x += Offset*cosa;
