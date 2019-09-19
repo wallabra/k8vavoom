@@ -396,6 +396,7 @@ void scanSources (TArray<VStr> &list, VStr path, const VStr &mask1, const VStr &
       if (name == "vccrun/") continue;
       scanSources(list, path+name, mask1, mask2);
     } else {
+      if (name.startsWith("stb_")) continue;
            if (!mask1.isEmpty() && name.globMatch(mask1)) list.append(path+name);
       else if (!mask2.isEmpty() && name.globMatch(mask2)) list.append(path+name);
     }
