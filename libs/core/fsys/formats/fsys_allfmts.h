@@ -57,13 +57,11 @@ private:
   vuint32 BytesBeforeZipFile; // byte before the zipfile, (>0 for sfx)
 
   // you can pass central dir offset here
-  void OpenArchive (VStream *fstream, vuint32 cdofs=0);
+  void OpenArchive (VStream *fstream, vuint32 cdofs);
 
 public:
-  VZipFile (VStr zipfile); // only disk files
-  VZipFile (VStream *fstream); // takes ownership
   // you can pass central dir offset here
-  VZipFile (VStream *fstream, VStr name, vuint32 cdofs=0); // takes ownership
+  VZipFile (VStream *fstream, VStr name, vuint32 cdofs); // takes ownership
 
   virtual VStream *CreateLumpReaderNum (int) override;
 
@@ -78,12 +76,10 @@ public: // fuck shitpp friend idiocity
 //==========================================================================
 class VQuakePakFile : public VPakFileBase {
 private:
-  void OpenArchive (VStream *fstream, int signtype=0);
+  void OpenArchive (VStream *fstream, int signtype);
 
 public:
-  VQuakePakFile (VStr);
-  VQuakePakFile (VStream *fstream); // takes ownership
-  VQuakePakFile (VStream *fstream, VStr name, int signtype=0); // takes ownership
+  VQuakePakFile (VStream *fstream, VStr name, int signtype); // takes ownership
 
   virtual VStream *CreateLumpReaderNum (int) override;
 };
@@ -97,8 +93,6 @@ private:
   void OpenArchive (VStream *fstream);
 
 public:
-  VDFWadFile (VStr);
-  VDFWadFile (VStream *fstream); // takes ownership
   VDFWadFile (VStream *fstream, VStr name); // takes ownership
 
   virtual VStream *CreateLumpReaderNum (int) override;

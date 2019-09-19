@@ -30,38 +30,8 @@
 //  VDFWadFile::VDFWadFile
 //
 //==========================================================================
-VDFWadFile::VDFWadFile (VStr fname)
-  : VPakFileBase(fname, true)
-{
-  if (fsys_report_added_paks) GLog.Logf(NAME_Init, "Adding \"%s\"...", *PakFileName);
-  auto fstream = FL_OpenSysFileRead(PakFileName);
-  vassert(fstream);
-  OpenArchive(fstream);
-}
-
-
-//==========================================================================
-//
-//  VDFWadFile::VDFWadFile
-//
-//  takes ownership
-//
-//==========================================================================
-VDFWadFile::VDFWadFile (VStream *fstream)
-  : VPakFileBase("<memory>", true)
-{
-  if (fstream->GetName().length()) PakFileName = fstream->GetName();
-  OpenArchive(fstream);
-}
-
-
-//==========================================================================
-//
-//  VDFWadFile::VDFWadFile
-//
-//==========================================================================
 VDFWadFile::VDFWadFile (VStream *fstream, VStr fname)
-  : VPakFileBase(fname, true)
+  : VPakFileBase(fname)
 {
   vassert(fstream);
   OpenArchive(fstream);

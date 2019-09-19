@@ -32,40 +32,10 @@
 //  takes ownership
 //
 //==========================================================================
-VQuakePakFile::VQuakePakFile (VStream *fstream)
-  : VPakFileBase("<memory>", true)
-{
-  if (fstream->GetName().length()) PakFileName = fstream->GetName();
-  OpenArchive(fstream);
-}
-
-
-//==========================================================================
-//
-//  VQuakePakFile::VQuakePakFile
-//
-//  takes ownership
-//
-//==========================================================================
 VQuakePakFile::VQuakePakFile (VStream *fstream, VStr name, int signtype)
-  : VPakFileBase(name, true)
+  : VPakFileBase(name)
 {
   OpenArchive(fstream, signtype);
-}
-
-
-//==========================================================================
-//
-//  VQuakePakFile::VQuakePakFile
-//
-//==========================================================================
-VQuakePakFile::VQuakePakFile (VStr zipfile)
-  : VPakFileBase(zipfile, true)
-{
-  if (fsys_report_added_paks) GLog.Logf(NAME_Init, "Adding \"%s\"...", *PakFileName);
-  auto fstream = FL_OpenSysFileRead(PakFileName);
-  vassert(fstream);
-  OpenArchive(fstream);
 }
 
 

@@ -46,7 +46,7 @@ static VSearchPath *openArchiveWAD (VStream *strm, VStr filename, bool FixVoices
   */
   strm->Seek(0);
   if (strm->IsError()) return nullptr;
-  VWadFile *wad = new VWadFile;
+  VWadFile *wad = new VWadFile();
   wad->Open(filename, FixVoices, strm);
   return wad;
 }
@@ -76,13 +76,6 @@ public:
     static __attribute__((used)) FArchiveReaderInfo vavoom_fsys_archive_opener_pak("pak",
       [](VStream *strm, VStr filename, bool FixVoices) -> VSearchPath* {
         if (strm->TotalSize() < 12) return nullptr;
-        /* already checked by a caller
-        char sign[4];
-        memset(sign, 0, 4);
-        strm->Serialise(sign, 4);
-        if (strm->IsError()) return nullptr;
-        if (memcmp(sign, "PACK", 4) != 0) return nullptr;
-        */
         strm->Seek(0);
         if (strm->IsError()) return nullptr;
         return new VQuakePakFile(strm, filename, 1);
@@ -90,13 +83,6 @@ public:
     static __attribute__((used)) FArchiveReaderInfo vavoom_fsys_archive_opener_sin("sin",
       [](VStream *strm, VStr filename, bool FixVoices) -> VSearchPath* {
         if (strm->TotalSize() < 12) return nullptr;
-        /* already checked by a caller
-        char sign[4];
-        memset(sign, 0, 4);
-        strm->Serialise(sign, 4);
-        if (strm->IsError()) return nullptr;
-        if (memcmp(sign, "PACK", 4) != 0) return nullptr;
-        */
         strm->Seek(0);
         if (strm->IsError()) return nullptr;
         return new VQuakePakFile(strm, filename, 2);

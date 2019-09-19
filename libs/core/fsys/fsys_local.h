@@ -228,7 +228,7 @@ protected:
   void deinitLock (); // call this in `Clear()`/dtor
 
 public:
-  VPakFileBase (VStr apakfilename, bool aaszip=false);
+  VPakFileBase (VStr apakfilename, bool aaszip=true);
   virtual ~VPakFileBase () override;
 
   //inline bool hasFiles () const { return (pakdir.files.length() > 0); }

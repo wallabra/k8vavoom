@@ -81,40 +81,10 @@ static const char *moreresdirs[] = {
 //  takes ownership
 //
 //==========================================================================
-VZipFile::VZipFile (VStream *fstream)
-  : VPakFileBase("<memory>", true)
-{
-  if (fstream->GetName().length()) PakFileName = fstream->GetName();
-  OpenArchive(fstream);
-}
-
-
-//==========================================================================
-//
-//  VZipFile::VZipFile
-//
-//  takes ownership
-//
-//==========================================================================
 VZipFile::VZipFile (VStream *fstream, VStr name, vuint32 cdofs)
-  : VPakFileBase(name, true)
+  : VPakFileBase(name)
 {
   OpenArchive(fstream, cdofs);
-}
-
-
-//==========================================================================
-//
-//  VZipFile::VZipFile
-//
-//==========================================================================
-VZipFile::VZipFile (VStr zipfile)
-  : VPakFileBase(zipfile, true)
-{
-  if (fsys_report_added_paks) GLog.Logf(NAME_Init, "Adding \"%s\"...", *PakFileName);
-  auto fstream = FL_OpenSysFileRead(PakFileName);
-  vassert(fstream);
-  OpenArchive(fstream);
 }
 
 

@@ -444,7 +444,7 @@ void VFileDirectory::buildNameMaps (bool rebuilding) {
           if (lmp == "decorate" || lmp == "sndinfo" || lmp == "dehacked") {
             if (!dupsReported.put(fi.fileName, true)) {
               GLog.Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *fi.fileName, *getArchiveName());
-              GLog.Logf(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE %s FILES!", (aszip ? "PK3/ZIP" : "WAD"));
+              GLog.Logf(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE %s FILES!", (aszip ? "ARCHIVE" : "WAD"));
             }
           }
         }
@@ -456,7 +456,7 @@ void VFileDirectory::buildNameMaps (bool rebuilding) {
         if ((aszip || lmp == "decorate") && filemap.has(fi.fileName)) {
           if (!dupsReported.put(fi.fileName, true)) {
             GLog.Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *fi.fileName, *getArchiveName());
-            GLog.Logf(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE %s FILES!", (aszip ? "PK3/ZIP" : "WAD"));
+            GLog.Logf(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE %s FILES!", (aszip ? "ARCHIVE" : "WAD"));
           }
         } else if (f > 0) {
           for (int pidx = f-1; pidx >= 0; --pidx) {
@@ -465,7 +465,7 @@ void VFileDirectory::buildNameMaps (bool rebuilding) {
                 if (!dupsReported.put(fi.fileName, true)) {
                   //GLog.Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\" (%d:%d).", *fi.fileName, *getArchiveName(), pidx, f);
                   GLog.Logf(NAME_Warning, "duplicate file \"%s\" in archive \"%s\".", *fi.fileName, *getArchiveName());
-                  GLog.Logf(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE %s FILES!", (aszip ? "PK3/ZIP" : "WAD"));
+                  GLog.Logf(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE %s FILES!", (aszip ? "ARCHIVE" : "WAD"));
                 }
               }
               break;
