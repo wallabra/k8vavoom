@@ -83,7 +83,7 @@ void CL_Init () {
   // preload crosshairs, why not?
   for (int cnum = 1; cnum < 16; ++cnum) {
     int handle = GTextureManager.AddPatch(VName(va("croshai%x", cnum), VName::AddLower8), TEXTYPE_Pic, true/*silent*/);
-    if (handle > 0) GCon->Logf(NAME_Init, "found crosshair #%d", cnum);
+    if (handle > 0 && developer) GCon->Logf(NAME_Debug, "found crosshair #%d", cnum);
   }
 }
 
