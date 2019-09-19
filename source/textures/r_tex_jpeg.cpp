@@ -35,7 +35,11 @@ extern "C" {
 # endif
 }
 #else
+# pragma GCC diagnostic push
+# pragma GCC diagnostic ignored "-Wunused-function"
 # define STB_IMAGE_IMPLEMENTATION
+//# define STB_IMAGE_STATIC
+# define STBIDEF  __attribute__((unused)) static
 # define STBI_ONLY_JPEG
 # define STBI_NO_STDIO
 # define STBI_MALLOC   Z_Malloc
@@ -43,11 +47,14 @@ extern "C" {
 # define STBI_FREE     Z_Free
 # include "stb_image.h"
 # define STB_IMAGE_WRITE_IMPLEMENTATION
+//# define STB_IMAGE_WRITE_STATIC
+# define STBIWDEF  __attribute__((unused)) static
 # define STBI_WRITE_NO_STDIO
 # define STBIW_MALLOC   Z_Malloc
 # define STBIW_REALLOC  Z_Realloc
 # define STBIW_FREE     Z_Free
 # include "stb_image_write.h"
+# pragma GCC diagnostic pop
 #endif
 
 
