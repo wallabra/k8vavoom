@@ -176,114 +176,54 @@ static bool sweepAABB (int mex0, int mey0, int mew, int meh, // my box
 // ////////////////////////////////////////////////////////////////////////// //
 struct DDALineWalker {
 private:
-  enum { STCSize = 64 }; // up 8x8 box won't require allocations
-
-  struct __attribute__((packed)) Point { vint32 x, y; };
-
-private:
-  // on each step, we'll put all new coords in a buffer
-  Point stCoords[STCSize];
-  Point *dynCoords;
-  unsigned dynCoordsSize;
-
-  vint32 x0, y0, x1, y1;
-  vint32 tileWidth, tileHeight;
-  vint32 boxWidth, boxHeight;
-
-  unsigned pointCount, pointCurr;
+  int x0, y0, x1, y1;
+  int tileWidth, tileHeight;
+  // worker variables
+  int currTileX, currTileY;
+  int endTileX, endTileY;
+  bool reportFirstPoint;
+  double fltx0, flty0;
+  double fltx1, flty1;
+  double deltaDistX, deltaDistY; // length of ray from one x or y-side to next x or y-side
+  double sideDistX, sideDistY; // length of ray from current position to next x-side
+  int stepX, stepY; // what direction to step in x/y (either +1 or -1)
+  int currX, currY; // for simple walkers
+  int lastStepVert; // -1: none (first point); 0: horizontal; 1: vertical
 
 private:
-  float fltx0, flty0;
-  float fltx1, flty1;
-  float deltaDistX, deltaDistY; // length of ray from one x or y-side to next x or y-side
-  float sideDistX, sideDistY; // length of ray from current position to next x-side
-  vint32 stepX, stepY; // what direction to step in x/y (either +1 or -1)
-  vint32 currX, currY; // for simple walkers
-  vint32 currTileX, currTileY;
-  vint32 endTileX, endTileY;
-
-private:
-  inline void resetPoints () { pointCount = pointCurr = 0; }
-  Point *allocPoint ();
-
-  // returns nullptr if we have no more points at this step
-  inline const Point *nextPoint () {
-    unsigned ptc = pointCurr++;
-    if (ptc >= pointCount) return nullptr;
-    return (ptc < STCSize ? &stCoords[ptc] : &dynCoords[ptc-STCSize]);
-  }
-
-  // coords are in pixels
-  void reportBoxPointsAt (vint32 x, vint32 y);
-
   // returns `false` if we're done
   bool doStep ();
 
 public:
-  inline DDALineWalker () : dynCoords(nullptr), dynCoordsSize(0), x0(0), y0(0), x1(0), y1(0), pointCount(0), pointCurr(0), currTileX(0), currTileY(0), endTileX(0), endTileY(0) {}
-  inline ~DDALineWalker () { Z_Free(dynCoords); }
+  inline DDALineWalker () : x0(0), y0(0), x1(0), y1(0), tileWidth(1), tileHeight(1), currTileX(0), currTileY(0), endTileX(0), endTileY(0), reportFirstPoint(false), lastStepVert(-1) {}
 
-  inline vint32 getX0 () const { return x0; }
-  inline vint32 getY0 () const { return y0; }
-  inline vint32 getX1 () const { return x1; }
-  inline vint32 getY1 () const { return y1; }
-  inline vint32 getTileWidth () const { return tileWidth; }
-  inline vint32 getTileHeight () const { return tileHeight; }
-  inline vint32 getBoxWidth () const { return boxWidth; }
-  inline vint32 getBoxHeight () const { return boxHeight; }
+  inline int getX0 () const { return x0; }
+  inline int getY0 () const { return y0; }
+  inline int getX1 () const { return x1; }
+  inline int getY1 () const { return y1; }
+  inline int getTileWidth () const { return tileWidth; }
+  inline int getTileHeight () const { return tileHeight; }
+
+  // -1: no steps was done yet
+  inline int getLastStepVert () const { return lastStepVert; }
+  inline int getXSign () const { return stepX; }
+  inline int getYSign () const { return stepY; }
 
   // you can walk with a box by setting box size (in this case starting coords are box mins)
   // coordinates are in pixels
-  void start (vint32 aTileWidth, vint32 aTileHeight, vint32 ax0, vint32 ay0, vint32 ax1, vint32 ay1, vint32 aBoxWidth=0, vint32 aBoxHeight=0);
+  void start (int aTileWidth, int aTileHeight, int ax0, int ay0, int ax1, int ay1);
 
   // next tile to check
   // returns `false` if you're arrived to a destination
   // if `false` is returned, tile coordinates are undefined (there's nothing more to check)
-  // for box walks, it may report the same tile several times (yet it tries to not do that)
-  // it may also report out-of-path tiles sometimes
-  bool next (vint32 *tilex, vint32 *tiley);
+  // it may report out-of-path or duplicate tiles sometimes
+  bool next (int *tilex, int *tiley);
+
+  // for box walking, we will move starting point to the corresponding box corner
+  // (the one at the direction of the tracing), and then we'll step with it.
+  // this way, the walker can only check a correspondig row.
+  // destination point will be moved too.
 };
-
-
-//==========================================================================
-//
-//  DDALineWalker::allocPoint
-//
-//==========================================================================
-DDALineWalker::Point *DDALineWalker::allocPoint () {
-  unsigned ptc = pointCount++;
-  if (ptc < STCSize) return &stCoords[ptc];
-  ptc -= STCSize;
-  // check if we need more dynamic points
-  if (ptc == dynCoordsSize) {
-    dynCoordsSize += 128;
-    dynCoords = (Point *)Z_Realloc(dynCoords, dynCoordsSize*sizeof(dynCoords[0]));
-  }
-  return &dynCoords[ptc];
-}
-
-
-//==========================================================================
-//
-//  DDALineWalker::reportBoxPointsAt
-//
-//  coords are in pixels
-//
-//==========================================================================
-void DDALineWalker::reportBoxPointsAt (vint32 x, vint32 y) {
-  vassert(boxWidth);
-  vint32 tx0 = x/tileWidth;
-  vint32 ty0 = y/tileHeight;
-  vint32 tx1 = (x+boxWidth-1+tileWidth-1)/tileWidth;
-  vint32 ty1 = (y+boxHeight-1+tileHeight-1)/tileHeight;
-  for (vint32 ty = ty0; ty <= ty1; ++ty) {
-    for (vint32 tx = tx0; tx <= tx1; ++tx) {
-      Point *p = allocPoint();
-      p->x = tx;
-      p->y = ty;
-    }
-  }
-}
 
 
 //==========================================================================
@@ -291,27 +231,9 @@ void DDALineWalker::reportBoxPointsAt (vint32 x, vint32 y) {
 //  DDALineWalker::start
 //
 //==========================================================================
-void DDALineWalker::start (vint32 aTileWidth, vint32 aTileHeight, vint32 ax0, vint32 ay0, vint32 ax1, vint32 ay1, vint32 aBoxWidth, vint32 aBoxHeight) {
+void DDALineWalker::start (int aTileWidth, int aTileHeight, int ax0, int ay0, int ax1, int ay1) {
   vassert(aTileWidth > 0);
   vassert(aTileHeight > 0);
-  vassert(aBoxWidth >= 0);
-  vassert(aBoxHeight >= 0);
-
-  resetPoints();
-
-  if (!aBoxWidth || !aBoxHeight) {
-    aBoxWidth = aBoxHeight = 0; // a point
-  } else {
-    // force box to cover integral number of tiles
-    /*
-    if (aBoxWidth%aTileWidth) aBoxWidth = (aBoxWidth/aTileWidth)*aTileWidth+1;
-    if (aBoxHeight%aTileHeight) aBoxHeight = (aBoxHeight/aTileHeight)*aTileHeight+1;
-    aBoxWidth /= aTileWidth;
-    aBoxHeight /= aTileHeight;
-    vassert(aBoxWidth > 0);
-    vassert(aBoxHeight > 0);
-    */
-  }
 
   x0 = ax0;
   y0 = ay0;
@@ -319,44 +241,32 @@ void DDALineWalker::start (vint32 aTileWidth, vint32 aTileHeight, vint32 ax0, vi
   y1 = ay1;
   tileWidth = aTileHeight;
   tileHeight = aTileHeight;
-  boxWidth = aBoxWidth;
-  boxHeight = aBoxHeight;
+  reportFirstPoint = true;
+  lastStepVert = -1;
 
   // fill initial set
-  vint32 tileSX = ax0/aTileWidth, tileSY = ay0/aTileHeight;
+  int tileSX = ax0/aTileWidth, tileSY = ay0/aTileHeight;
   currTileX = tileSX;
   currTileY = tileSY;
   endTileX = ax1/aTileWidth;
   endTileY = ay1/aTileHeight;
 
-  if (aBoxWidth) {
-    // box
-    reportBoxPointsAt(ax0, ay0);
-  } else {
-    // point
-    Point *p = allocPoint();
-    p->x = tileSX;
-    p->y = tileSY;
-  }
-
   currX = ax0;
   currY = ay0;
   if (ax0 == ax1 || ay0 == ay1) return; // point or a straight line, no need to calculate anything here
+  if (tileSX == endTileX && tileSY == endTileY) return; // nowhere to go anyway
 
   // convert coordinates to floating point
-  fltx0 = float(ax0)/float(aTileWidth);
-  flty0 = float(ay0)/float(aTileHeight);
-  fltx1 = float(ax1)/float(aTileWidth);
-  flty1 = float(ay1)/float(aTileHeight);
-
-  //vint32 tileSX = (int)fltx0, tileSY = (int)flty0;
-  //vint32 tileEX = (int)fltx1, tileEY = (int)flty1;
+  fltx0 = double(ax0)/double(aTileWidth);
+  flty0 = double(ay0)/double(aTileHeight);
+  fltx1 = double(ax1)/double(aTileWidth);
+  flty1 = double(ay1)/double(aTileHeight);
 
   // calculate ray direction
   //TVec dv = (vector(fltx1, flty1)-vector(fltx0, flty0)).normalise2d;
-  float dvx = fltx1-fltx0;
-  float dvy = flty1-flty0;
-  float dvinvlen = sqrtf(dvx*dvx+dvy*dvy); // inverted lentgh
+  const double dvx = fltx1-fltx0;
+  const double dvy = flty1-flty0;
+  const double dvinvlen = sqrtf(dvx*dvx+dvy*dvy); // inverted length
   // length of ray from one x or y-side to next x or y-side
   // this is 1/normalized_component, which is the same as inverted normalised component
   deltaDistX = dvinvlen/dvx;
@@ -368,7 +278,7 @@ void DDALineWalker::start (vint32 aTileWidth, vint32 aTileHeight, vint32 ax0, vi
     sideDistX = (fltx0-tileSX)*deltaDistX;
   } else {
     stepX = 1;
-    sideDistX = (tileSX+1.0f-fltx0)*deltaDistX;
+    sideDistX = (tileSX+1-fltx0)*deltaDistX;
   }
 
   if (dvy < 0) {
@@ -376,7 +286,7 @@ void DDALineWalker::start (vint32 aTileWidth, vint32 aTileHeight, vint32 ax0, vi
     sideDistY = (flty0-tileSY)*deltaDistY;
   } else {
     stepY = 1;
-    sideDistY = (tileSY+1.0f-flty0)*deltaDistY;
+    sideDistY = (tileSY+1-flty0)*deltaDistY;
   }
 }
 
@@ -389,9 +299,6 @@ void DDALineWalker::start (vint32 aTileWidth, vint32 aTileHeight, vint32 ax0, vi
 //
 //==========================================================================
 bool DDALineWalker::doStep () {
-  // clear points array
-  resetPoints();
-
   // check if we're done
   if (currTileX == endTileX && currTileY == endTileY) return false;
 
@@ -405,28 +312,16 @@ bool DDALineWalker::doStep () {
     currTileY += (y0 < y1 ? 1 : -1);
   } else {
     // perform DDA
-    //int side; // was a NS or a EW wall hit?
     // jump to next map square, either in x-direction, or in y-direction
     if (sideDistX < sideDistY) {
       sideDistX += deltaDistX;
       currTileX += stepX;
-      //side = 0; // EW
+      lastStepVert = 0; // EW, horizontal step
     } else {
       sideDistY += deltaDistY;
       currTileY += stepY;
-      //side = 1; // NS
+      lastStepVert = 1; // NS, vertical step
     }
-  }
-
-  // got some points
-  if (!boxWidth) {
-    // point
-    Point *p = allocPoint();
-    p->x = currTileX;
-    p->y = currTileY;
-  } else {
-    // box
-    reportBoxPointsAt(currTileX*tileWidth, currTileY*tileHeight);
   }
 
   return true;
@@ -438,16 +333,17 @@ bool DDALineWalker::doStep () {
 //  DDALineWalker::next
 //
 //==========================================================================
-bool DDALineWalker::next (vint32 *tilex, vint32 *tiley) {
-  for (;;) {
-    const Point *p = nextPoint();
-    if (p) {
-      if (tilex) *tilex = p->x;
-      if (tiley) *tiley = p->y;
-      return true;
-    }
+bool DDALineWalker::next (int *tilex, int *tiley) {
+  // first point?
+  if (!reportFirstPoint) {
+    // perform a step
     if (!doStep()) return false;
+  } else {
+    reportFirstPoint = false;
   }
+  if (tilex) *tilex = currTileX;
+  if (tiley) *tiley = currTileY;
+  return true;
 }
 
 
