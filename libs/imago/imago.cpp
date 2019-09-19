@@ -29,6 +29,7 @@
 extern VImage *imagoLoadPNG (VStream *strm);
 extern VImage *imagoLoadTGA (VStream *strm);
 extern VImage *imagoLoadPCX (VStream *strm);
+extern VImage *imagoLoadSTB (VStream *strm);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -277,6 +278,7 @@ public:
     ImagoRegisterLoader("png", "Portable Network Graphics", &imagoLoadPNG);
     ImagoRegisterLoader("pcx", "PCX image", &imagoLoadPCX, 500);
     ImagoRegisterLoader("tga", "Targa Image", &imagoLoadTGA, 600);
+    ImagoRegisterLoader("stb", "STB_Image image", &imagoLoadSTB, 600);
   }
 };
 
