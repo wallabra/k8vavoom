@@ -84,41 +84,6 @@ public:
 
 
 //==========================================================================
-//  VFilesDir
-//==========================================================================
-class VFilesDir : public VSearchPath {
-private:
-  VStr path;
-  TArray<VStr> cachedFiles;
-  TMap<VStr, int> cachedMap;
-  //bool cacheInited;
-
-private:
-  //void cacheDir ();
-
-  // -1, or index in `CachedFiles`
-  int findFileCI (VStr fname);
-
-public:
-  VFilesDir (VStr aPath);
-  virtual ~VFilesDir () override;
-  virtual bool FileExists (VStr) override;
-  virtual VStream *OpenFileRead (VStr) override;
-  virtual VStream *CreateLumpReaderNum (int) override;
-  virtual void Close () override;
-  virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=true) override;
-  virtual int CheckNumForFileName (VStr) override;
-  virtual void ReadFromLump (int, void*, int, int) override;
-  virtual int LumpLength (int) override;
-  virtual VName LumpName (int) override;
-  virtual VStr LumpFileName (int) override;
-  virtual int IterateNS (int, EWadNamespace, bool allowEmptyName8=false) override;
-  virtual void RenameSprites (const TArray<VSpriteRename>&, const TArray<VLumpRename>&) override;
-  virtual VStr GetPrefix () override { return path; }
-};
-
-
-//==========================================================================
 //  VPakFileInfo
 //==========================================================================
 // information about a file in the zipfile

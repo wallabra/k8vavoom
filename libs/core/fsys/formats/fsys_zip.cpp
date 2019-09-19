@@ -85,6 +85,7 @@ VZipFile::VZipFile (VStream *fstream, VStr name, vuint32 cdofs)
   : VPakFileBase(name)
 {
   OpenArchive(fstream, cdofs);
+  if (fstream->IsError()) Sys_Error("error opening archive \"%s\"", *PakFileName);
 }
 
 

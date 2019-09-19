@@ -36,6 +36,7 @@ VQuakePakFile::VQuakePakFile (VStream *fstream, VStr name, int signtype)
   : VPakFileBase(name)
 {
   OpenArchive(fstream, signtype);
+  if (fstream->IsError()) Sys_Error("error opening archive \"%s\"", *PakFileName);
 }
 
 

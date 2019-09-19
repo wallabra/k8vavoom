@@ -44,7 +44,6 @@ Library libcore.a :
   src/lzmadec/LzmaDec.c
   # fsys (aka VFS)
   src/fsys/fsys.cpp
-  src/fsys/fsys_dir.cpp
   src/fsys/fsys_pakbase.cpp
   src/fsys/fsys_vfs.cpp
   # formats

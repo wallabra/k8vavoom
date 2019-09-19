@@ -144,6 +144,8 @@ VWadFile *VWadFile::Create (VStr FileName, bool FixVoices, VStream *InStream) {
 
   wad->pakdir.buildNameMaps();
 
+  if (wad->archStream->IsError()) { delete wad; Sys_Error("error opening archive \"%s\"", *FileName); }
+
   return wad;
 }
 
@@ -173,6 +175,8 @@ VWadFile *VWadFile::CreateSingleLumpStream (VStream *strm, VStr FileName) {
   fi.fileName = FileName.toLowerCase();
   wad->pakdir.append(fi);
   wad->pakdir.buildNameMaps();
+
+  if (wad->archStream->IsError()) { delete wad; Sys_Error("error opening file \"%s\"", *FileName); }
 
   return wad;
 }

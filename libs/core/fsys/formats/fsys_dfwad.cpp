@@ -35,6 +35,7 @@ VDFWadFile::VDFWadFile (VStream *fstream, VStr fname)
 {
   vassert(fstream);
   OpenArchive(fstream);
+  if (fstream->IsError()) Sys_Error("error opening archive \"%s\"", *PakFileName);
 }
 
 
