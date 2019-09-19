@@ -10,4 +10,7 @@
 	<class name="BDW_Tracer">
 		<state index="-1" model="bdw_tracer" frame_index="0" />
 	</class>
+	<class name="BDW_TracerSlow">
+		<state index="-1" model="bdw_tracer" frame_index="0" />
+	</class>
 </vavoom_model_definition>

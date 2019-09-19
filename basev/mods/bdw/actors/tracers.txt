@@ -9,8 +9,8 @@ Actor BDW_Tracer : FastProjectile {
   Damage 0
   Radius 2
   Height 2
-  Speed 60
-  //Speed 2
+  //Speed 60
+  Speed 40
   RenderStyle Add
   Alpha 0.9
   Scale .15
@@ -32,4 +32,9 @@ Actor BDW_Tracer : FastProjectile {
       TNT1 A 0
       Stop
   }
+}
+
+
+Actor BDW_TracerSlow : BDW_Tracer {
+  Speed 30
 }
