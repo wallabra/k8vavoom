@@ -360,6 +360,11 @@ bool VZipStreamReader::resetZStream () {
     srccurpos = stpos;
     srcStream->Seek(stpos);
     wasError = srcStream->IsError();
+    if (!wasError && compressedSize == UNKNOWN_SIZE) {
+      int sz = srcStream->TotalSize();
+      wasError = srcStream->IsError();
+      if (sz >= stpos) compressedSize = (vuint32)(sz-stpos);
+    }
   }
   if (wasError) {
     GLog.Log(NAME_Error, "Error seeking in source inflated stream");
@@ -435,7 +440,8 @@ int VZipStreamReader::fillPackedBuffer () {
   if (zStream.avail_in >= BUFFER_SIZE) return 1;
   vint32 left = (int)compressedSize-(srccurpos-stpos);
   if (left < 0) {
-    GLog.Logf(NAME_Error, "internal error 0 in VZipStreamReader::fillPackedBuffer");
+    GLog.Logf(NAME_Error, "internal error 0 in VZipStreamReader::fillPackedBuffer (csz=%d; stpos=%d; cpos=%d; left=%d)", (int)compressedSize, (int)stpos, (int)srccurpos, (int)left);
+    //Sys_Error("fuck!");
     setError();
     return -1;
   }
