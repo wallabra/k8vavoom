@@ -62,8 +62,7 @@ struct lumpinfo_t {
 //  VWadFile::VWadFile
 //
 //==========================================================================
-VWadFile::VWadFile ()
-  : VPakFileBase("", false) // not a zip
+VWadFile::VWadFile () : VPakFileBase("", false) // not a zip
 {
   normalwad = true;
 }
@@ -74,51 +73,51 @@ VWadFile::VWadFile ()
 //  VWadFile::Open
 //
 //==========================================================================
-void VWadFile::Open (VStr FileName, bool FixVoices, VStream *InStream) {
+VWadFile *VWadFile::Create (VStr FileName, bool FixVoices, VStream *InStream) {
   wadinfo_t header;
 
-  PakFileName = FileName;
-  pakdir.clear();
+  VWadFile *wad = new VWadFile();
+
+  wad->PakFileName = FileName;
+  wad->pakdir.clear();
 
   if (InStream) {
-    archStream = InStream;
+    wad->archStream = InStream;
     //archStream->Seek(0);
   } else {
     // open the file and add to directory
-    archStream = FL_OpenSysFileRead(FileName);
-    if (!archStream) Sys_Error("Couldn't open \"%s\"", *FileName);
+    wad->archStream = FL_OpenSysFileRead(FileName);
+    if (!wad->archStream) { delete wad; Sys_Error("Couldn't open \"%s\"", *FileName); }
   }
   if (fsys_report_added_paks && !FileName.isEmpty()) GLog.Logf(NAME_Init, "Adding \"%s\"...", *FileName);
 
   // WAD file or homebrew levels?
   memset(&header, 0, sizeof(header));
-  archStream->Serialise(&header, sizeof(header));
+  wad->archStream->Serialise(&header, sizeof(header));
   if (VStr::NCmp(header.identification, "IWAD", 4) != 0 &&
       VStr::NCmp(header.identification, "PWAD", 4) != 0)
   {
+    delete wad;
     Sys_Error("Wad file \"%s\" is neither IWAD nor PWAD", *FileName);
   }
 
   header.numlumps = LittleLong(header.numlumps);
   header.infotableofs = LittleLong(header.infotableofs);
   int NumLumps = header.numlumps;
-  if (NumLumps < 0 || NumLumps > 65520) Sys_Error("invalid number of lumps in wad file '%s'", *FileName);
+  if (NumLumps < 0 || NumLumps > 65520) { delete wad; Sys_Error("invalid number of lumps in wad file '%s'", *FileName); }
 
   // moved here to make static data less fragmented
   if (NumLumps > 0) {
-    archStream->Seek(header.infotableofs);
-    //archStream->Serialise(waddir.ptr(), length);
-    //if (archStream->IsError()) Sys_Error("cannot read directory of wad file '%s'", *FileName);
-
+    wad->archStream->Seek(header.infotableofs);
     for (int decount = NumLumps; decount > 0; --decount) {
       VPakFileInfo fi;
 
       vuint32 ofs, size;
-      *archStream << ofs << size;
+      *wad->archStream << ofs << size;
 
       char namebuf[9];
-      archStream->Serialise(namebuf, 8);
-      if (archStream->IsError()) Sys_Error("cannot read wad file '%s'", *PakFileName);
+      wad->archStream->Serialise(namebuf, 8);
+      if (wad->archStream->IsError()) { delete wad; Sys_Error("cannot read wad file '%s'", *FileName); }
       if (!namebuf[0]) continue; // something strange happened here
 
       // Mac demo hexen.wad: many (1784) of the lump names
@@ -134,16 +133,18 @@ void VWadFile::Open (VStr FileName, bool FixVoices, VStream *InStream) {
       fi.filesize = size;
       fi.lumpNamespace = WADNS_Global;
       fi.fileName = VStr(fi.lumpName);
-      pakdir.append(fi);
+      wad->pakdir.append(fi);
     }
   }
 
   // set up namespaces
-  InitNamespaces();
+  wad->InitNamespaces();
 
-  if (FixVoices) FixVoiceNamespaces();
+  if (FixVoices) wad->FixVoiceNamespaces();
 
-  pakdir.buildNameMaps();
+  wad->pakdir.buildNameMaps();
+
+  return wad;
 }
 
 
@@ -151,25 +152,29 @@ void VWadFile::Open (VStr FileName, bool FixVoices, VStream *InStream) {
 //
 //  VWadFile::OpenSingleLumpStream
 //
+//  open the file and add to directory
+//
 //==========================================================================
-void VWadFile::OpenSingleLumpStream (VStream *strm, VStr FileName) {
-  // open the file and add to directory
+VWadFile *VWadFile::CreateSingleLumpStream (VStream *strm, VStr FileName) {
   vassert(strm);
-  archStream = strm;
+
+  VWadFile *wad = new VWadFile();
+  wad->archStream = strm;
   if (fsys_report_added_paks) GLog.Logf(NAME_Init, "Adding \"%s\"...", *FileName);
 
-  PakFileName = FileName;
+  wad->PakFileName = FileName;
   VPakFileInfo fi;
 
   // fill in lumpinfo
   fi.lumpName = VName(*FileName.ExtractFileBase(), VName::AddLower8);
   fi.pakdataofs = 0;
-  fi.filesize = archStream->TotalSize();
+  fi.filesize = wad->archStream->TotalSize();
   fi.lumpNamespace = WADNS_Global;
   fi.fileName = FileName.toLowerCase();
-  //pakdir.appendAndRegister(fi);
-  pakdir.append(fi);
-  pakdir.buildNameMaps();
+  wad->pakdir.append(fi);
+  wad->pakdir.buildNameMaps();
+
+  return wad;
 }
 
 

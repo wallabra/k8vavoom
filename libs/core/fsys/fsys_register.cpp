@@ -37,18 +37,9 @@
 // ////////////////////////////////////////////////////////////////////////// //
 static VSearchPath *openArchiveWAD (VStream *strm, VStr filename, bool FixVoices) {
   if (strm->TotalSize() < 12) return nullptr;
-  /* already checked by a caller
-  char sign[4];
-  memset(sign, 0, 4);
-  strm->Serialise(sign, 4);
-  if (strm->IsError()) return nullptr;
-  if (memcmp(sign, "IWAD", 4) != 0 && memcmp(sign, "PWAD", 4) != 0) return nullptr;
-  */
   strm->Seek(0);
   if (strm->IsError()) return nullptr;
-  VWadFile *wad = new VWadFile();
-  wad->Open(filename, FixVoices, strm);
-  return wad;
+  return VWadFile::Create(filename, FixVoices, strm);
 }
 
 

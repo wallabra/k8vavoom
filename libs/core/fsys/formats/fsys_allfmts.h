@@ -38,11 +38,13 @@ private:
   void FixVoiceNamespaces ();
   void InitNamespace (EWadNamespace NS, VName Start, VName End, VName AltStart=NAME_None, VName AltEnd=NAME_None, bool flatNS=false);
 
-public:
+protected:
   VWadFile ();
 
-  void Open (VStr FileName, bool FixVoices, VStream *InStream);
-  void OpenSingleLumpStream (VStream *strm, VStr FileName);
+public:
+  static VWadFile *Create (VStr FileName, bool FixVoices, VStream *InStream);
+  static VWadFile *CreateSingleLumpStream (VStream *strm, VStr FileName);
+
   virtual VStream *CreateLumpReaderNum (int) override;
   virtual int CheckNumForName (VName LumpName, EWadNamespace InNS, bool wantFirst=true) override;
   virtual int IterateNS (int, EWadNamespace, bool allowEmptyName8=false) override;

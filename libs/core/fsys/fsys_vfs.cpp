@@ -271,10 +271,7 @@ void W_AddDiskFile (VStr FileName, bool FixVoices) {
 
   if (!Wad) {
     if (strm->IsError()) Sys_Error("Cannot read required file \"%s\"!", *FileName);
-    //delete strm;
-    VWadFile *wadone = new VWadFile();
-    wadone->OpenSingleLumpStream(strm, FileName);
-    Wad = wadone;
+    Wad = VWadFile::CreateSingleLumpStream(strm, FileName);
   } else {
     doomWad = Wad->normalwad;
   }
@@ -316,9 +313,7 @@ bool W_AddDiskFileOptional (VStr FileName, bool FixVoices) {
   if (!Wad) {
     if (strm->IsError()) { delete strm; return false; }
     GLog.Logf(NAME_Debug, "OPTDISKFILE: cannot detect format for '%s'...", *FileName);
-    VWadFile *wadone = new VWadFile();
-    wadone->OpenSingleLumpStream(strm, FileName);
-    Wad = wadone;
+    Wad = VWadFile::CreateSingleLumpStream(strm, FileName);
   } else {
     doomWad = Wad->normalwad;
   }
@@ -354,8 +349,7 @@ void W_AddFileFromZip (VStr WadName, VStream *WadStrm) {
   // add WAD file
   MyThreadLocker glocker(&fsys_glock);
   wadfiles.Append(WadName);
-  VWadFile *Wad = new VWadFile();
-  Wad->Open(WadName, false, WadStrm);
+  VWadFile *Wad = VWadFile::Create(WadName, false, WadStrm);
   SearchPaths.Append(Wad);
 }
 
@@ -420,8 +414,7 @@ int W_OpenAuxiliary (VStr FileName) {
   VSearchPath *Wad = FArchiveReaderInfo::OpenArchive(WadStrm, FileName);
   if (!Wad) {
     if (WadStrm->IsError()) Sys_Error("Cannot read required file \"%s\"!", *FileName);
-    VWadFile *wadone = new VWadFile();
-    wadone->OpenSingleLumpStream(WadStrm, FileName);
+    VWadFile *wadone = VWadFile::CreateSingleLumpStream(WadStrm, FileName);
     SearchPaths.Append(wadone);
   } else {
     SearchPaths.Append(Wad);
@@ -464,8 +457,7 @@ static void zipAddWads (VSearchPath *zip, VStr zipName) {
     memstrm->Serialise(sign, 4);
     if (memcmp(sign, "PWAD", 4) != 0 && memcmp(sign, "IWAD", 4) != 0) { delete memstrm; continue; }
     memstrm->Seek(0);
-    VWadFile *wad = new VWadFile();
-    wad->Open(zipName+":"+wadname, false, memstrm);
+    VWadFile *wad = VWadFile::Create(zipName+":"+wadname, false, memstrm);
     SearchPaths.Append(wad);
   }
 }
@@ -518,9 +510,7 @@ int W_AddAuxiliaryStream (VStream *strm, WAuxFileType ftype) {
       }
     }
   } else {
-    VWadFile *wad = new VWadFile();
-    //GLog.Logf("AUX: %s", *(strm->GetName()));
-    wad->Open(strm->GetName(), false, strm);
+    VWadFile *wad = VWadFile::Create(strm->GetName(), false, strm);
     SearchPaths.Append(wad);
   }
 
