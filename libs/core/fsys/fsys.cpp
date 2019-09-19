@@ -59,7 +59,7 @@ public:
   }
 };
 
-FSys_Internal_Init_Class fsys_internal_init_class_variable_(true);
+__attribute__((used)) FSys_Internal_Init_Class fsys_internal_init_class_variable_(true);
 
 
 //==========================================================================
@@ -253,6 +253,4 @@ bool FL_IsSafeDiskFileName (VStr fname) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 // i have to do this, otherwise the linker will optimise openers away
-#include "fsys_wad.cpp"
-#include "fsys_zip.cpp"
-#include "fsys_qkpak.cpp"
+#include "fsys_register.cpp"

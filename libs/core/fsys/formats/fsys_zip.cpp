@@ -46,7 +46,7 @@
 //**  distribution.
 //**
 //**************************************************************************
-#include "fsys_local.h"
+#include "../fsys_local.h"
 
 #ifdef VAVOOM_USE_LIBLZMA
 # error "using liblzma is deprecated"
@@ -379,17 +379,3 @@ VStream *VZipFile::CreateLumpReaderNum (int Lump) {
   vassert(Lump < pakdir.files.length());
   return new VZipFileReader(PakFileName+":"+pakdir.files[Lump].fileName, FileStream, BytesBeforeZipFile, pakdir.files[Lump], &rdlock);
 }
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-static VSearchPath *openArchiveZIP (VStream *strm, VStr filename, bool FixVoices) {
-  if (strm->TotalSize() < 16) return nullptr;
-  vuint32 cdofs = VZipFile::SearchCentralDir(strm);
-  if (cdofs == 0) return nullptr;
-  return new VZipFile(strm, filename, cdofs);
-}
-
-
-// checking for this is slow, but the sorter will check it last, as it has no signature
-// still, give it lower priority in case we'll have other signature-less formats
-FArchiveReaderInfo vavoom_fsys_archive_opener_zip("zip", &openArchiveZIP, nullptr, 999);

@@ -22,7 +22,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "fsys_local.h"
+#include "../fsys_local.h"
 
 
 //==========================================================================
@@ -202,38 +202,3 @@ void VQuakePakFile::ReadFromLump (int lump, void *dest, int pos, int size) {
     vassert(!Stream->IsError());
   }
 }
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-static VSearchPath *openArchivePAK (VStream *strm, VStr filename, bool FixVoices) {
-  if (strm->TotalSize() < 12) return nullptr;
-  /* already checked by a caller
-  char sign[4];
-  memset(sign, 0, 4);
-  strm->Serialise(sign, 4);
-  if (strm->IsError()) return nullptr;
-  if (memcmp(sign, "PACK", 4) != 0) return nullptr;
-  */
-  strm->Seek(0);
-  if (strm->IsError()) return nullptr;
-  return new VQuakePakFile(strm, filename, 1);
-}
-
-
-static VSearchPath *openArchiveSiN (VStream *strm, VStr filename, bool FixVoices) {
-  if (strm->TotalSize() < 12) return nullptr;
-  /* already checked by a caller
-  char sign[4];
-  memset(sign, 0, 4);
-  strm->Serialise(sign, 4);
-  if (strm->IsError()) return nullptr;
-  if (memcmp(sign, "PACK", 4) != 0) return nullptr;
-  */
-  strm->Seek(0);
-  if (strm->IsError()) return nullptr;
-  return new VQuakePakFile(strm, filename, 2);
-}
-
-
-FArchiveReaderInfo vavoom_fsys_archive_opener_pak("pak", &openArchivePAK, "PACK");
-FArchiveReaderInfo vavoom_fsys_archive_opener_sin("sin", &openArchiveSiN, "SPAK");

@@ -95,10 +95,13 @@ add_library(core STATIC
   fsys/fsys.cpp
   fsys/fsys_local.h
   fsys/fsys_dir.cpp
-  fsys/fsys_dirpak.cpp
   fsys/fsys_pakbase.cpp
-  #fsys/fsys_wad.cpp
-  #fsys/fsys_zip.cpp
-  #fsys/fsys_qkpak.cpp
   fsys/fsys_vfs.cpp
+  # formats
+  fsys/formats/fsys_dirpak.cpp
+  fsys/formats/fsys_wad.cpp
+  fsys/formats/fsys_zip.cpp
+  fsys/formats/fsys_qkpak.cpp
+  # included directly in "fsys.cpp", otherwise "smart" linker will throw it away
+  #fsys/fsys_register.cpp
 )

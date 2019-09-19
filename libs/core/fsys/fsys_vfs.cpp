@@ -185,23 +185,6 @@ VSearchPath *FArchiveReaderInfo::OpenArchive (VStream *strm, VStr filename, bool
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-static VSearchPath *openArchive7Z (VStream *strm, VStr filename, bool FixVoices) {
-  Sys_Error("7z archives aren't supported, so '%s' cannot be opened!", *filename);
-  return nullptr;
-}
-
-static VSearchPath *openArchiveRAR (VStream *strm, VStr filename, bool FixVoices) {
-  Sys_Error("RAR archives aren't supported, so '%s' cannot be opened!", *filename);
-  return nullptr;
-}
-
-
-// check for 7z and other faulty archive formats first
-FArchiveReaderInfo vavoom_fsys_archive_opener_7z("7z", &openArchive7Z, "7z\xbc\xaf\x27\x1c", -666);
-FArchiveReaderInfo vavoom_fsys_archive_opener_rar("rar", &openArchiveRAR, "Rar!", -666);
-
-
 //==========================================================================
 //
 //  VSearchPath::ListWadFiles

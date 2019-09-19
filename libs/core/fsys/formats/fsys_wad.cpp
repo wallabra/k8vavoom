@@ -23,7 +23,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include "fsys_local.h"
+#include "../fsys_local.h"
 
 
 extern bool fsys_skipSounds;
@@ -464,25 +464,3 @@ void VWadFile::ReadFromLump (int lump, void *dest, int pos, int size) {
     vassert(!Stream->IsError());
   }
 }
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-static VSearchPath *openArchiveWAD (VStream *strm, VStr filename, bool FixVoices) {
-  if (strm->TotalSize() < 12) return nullptr;
-  /* already checked by a caller
-  char sign[4];
-  memset(sign, 0, 4);
-  strm->Serialise(sign, 4);
-  if (strm->IsError()) return nullptr;
-  if (memcmp(sign, "IWAD", 4) != 0 && memcmp(sign, "PWAD", 4) != 0) return nullptr;
-  */
-  strm->Seek(0);
-  if (strm->IsError()) return nullptr;
-  VWadFile *wad = new VWadFile;
-  wad->Open(filename, FixVoices, strm);
-  return wad;
-}
-
-
-FArchiveReaderInfo vavoom_fsys_archive_opener_iwad("iwad", &openArchiveWAD, "IWAD");
-FArchiveReaderInfo vavoom_fsys_archive_opener_pwad("pwad", &openArchiveWAD, "PWAD");
