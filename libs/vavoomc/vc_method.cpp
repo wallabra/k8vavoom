@@ -444,7 +444,8 @@ void VMethod::Emit () {
 //
 //  VMethod::FindArgByName
 //
-//  <0: not found
+//  -1: not found
+//  -2: several case-insensitive matches
 //
 //==========================================================================
 int VMethod::FindArgByName (VName aname) const {
@@ -452,7 +453,15 @@ int VMethod::FindArgByName (VName aname) const {
   for (int f = 0; f < NumParams; ++f) {
     if (Params[f].Name == aname) return f;
   }
-  return -1;
+  // try case-insensitive search, because why not?
+  int res = -1;
+  for (int f = 0; f < NumParams; ++f) {
+    if (VStr::strEquCI(*Params[f].Name, *aname)) {
+      if (res >= 0) return -1; // oops
+      res = f;
+    }
+  }
+  return res;
 }
 
 

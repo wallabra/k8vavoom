@@ -1879,7 +1879,11 @@ bool VInvocation::RebuildArgs () {
         if (ss[0] && ss[strlen(ss)-1] == '_') realIdx = firstNamed;
       }
       if (realIdx < 0) {
-        ParseError(Args[firstNamed]->Loc, "no argument named `%s`", *Args[firstNamed]->GetArgName());
+        if (realIdx < -1) {
+          ParseError(Args[firstNamed]->Loc, "there are several arguments named `%s`, differs only in case", *Args[firstNamed]->GetArgName());
+        } else {
+          ParseError(Args[firstNamed]->Loc, "no argument named `%s`", *Args[firstNamed]->GetArgName());
+        }
         return false;
       }
       if (isSet[realIdx]) {
