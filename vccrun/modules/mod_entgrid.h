@@ -306,7 +306,7 @@ public:
   // order is from the nearest to the furthest
   // if starts inside some object, returns only that object
   // note that if the starting point is inside of several objects, any of them can be returned
-  //IteratorLine allAtPath (int ax0, int ay0, int ax1, int ay1, int aBoxWidth=0, int aBoxHeight=0);
+  //IteratorLine allAtPath (int ax0, int ay0, int ax1, int ay1);
 };
 
 

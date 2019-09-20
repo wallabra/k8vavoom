@@ -72,8 +72,22 @@ native final Edge castRay (int x0, int y0, int x1, int y1, out Object obj, optio
 //   hitedge: undefined if no collision detected; `Edge.None` if embedded
 //   hitx, hity: guaranteed to be before embedding if my box wasn't embedded
 // note that if the starting point is inside of several objects, any of them can be returned
-native final bool sweepAABB (int mex0, int mey0, int mew, int meh, // my box
-                             int medx, int medy, // my speed
-                             optional out Object obj, // grid box hit
-                             optional int hitedge, // Edge.XXX
-                             optional int hitx, optional int hity); // my box stop coords
+native final bool castAABB (int mex0, int mey0, int mew, int meh, // my box
+                            int medx, int medy, // my speed
+                            optional out Object obj, // grid box hit
+                            optional out int hitedge, // Edge.XXX
+                            optional out int hitx, optional out int hity); // my box stop coords
+
+native static final bool sweepAABB (int mex0, int mey0, int mew, int meh, // my box
+                                    int medx, int medy, // my speed
+                                    int itx0, int ity0, int itw, int ith, // other box
+                                    optional out float u0, // enter time
+                                    optional out int hitedge, // Edge.XXX
+                                    optional out float u1, // exit time
+                                    optional out int hitx, optional out int hity); // my box stop coords
+
+// returns -1 if no collision, -2 if the line is inside the box, otherwise entering side
+// enter time defined only for intersection case
+native static final int lineAABB (int x0, int y0, int x1, int y1,
+                                  int boxx0, int boxy0, int boxwdt, int boxhgt,
+                                  optional out float enterTime);
