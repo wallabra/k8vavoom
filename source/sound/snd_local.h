@@ -196,11 +196,15 @@ private:
   TMapNC<ALuint, bool> srcErrorSet; // key is source id
   TMapNC<ALuint, bool> activeSourceSet; // key is source id
 
+private:
   static VCvarF doppler_factor;
   static VCvarF doppler_velocity;
   static VCvarF rolloff_factor;
   static VCvarF reference_distance;
   static VCvarF max_distance;
+
+private:
+  static bool IsError (const char *errmsg, bool errabort=false);
 
   bool AllocSource (ALuint *src);
 
