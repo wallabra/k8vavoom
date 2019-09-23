@@ -1,0 +1,4 @@
+i, ketmar, hereby allowing to upgrade k8vavoom to any GPL version after v3 in
+case of my death, or if this project won't get any commit in five years.
+
+Ketmar Dark.
