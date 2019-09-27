@@ -43,6 +43,7 @@
 void polyobj_t::RelinkToSubsector (subsector_t *asub) {
   if (asub == sub) return; // nothing to do
   if (sub) UnlinkFromSubsector();
+  vassert(!sub);
   if (!asub) return;
   // just prepend, the order doesn't really matter
   vassert(!subprev);
@@ -54,6 +55,7 @@ void polyobj_t::RelinkToSubsector (subsector_t *asub) {
     asub->polyfirst->subprev = this;
   }
   asub->polyfirst = this;
+  sub = asub;
 }
 
 
