@@ -679,11 +679,7 @@ IMPLEMENT_FUNCTION(VObject, pcg3264Seed) {
 // native static final void pcg3264SeedRandom (out PCG3264_Ctx ctx);
 IMPLEMENT_FUNCTION(VObject, pcg3264SeedRandom) {
   P_GET_PTR(PCG3264_Ctx, ctx);
-  if (ctx) {
-    vuint32 rn;
-    ed25519_randombytes(&rn, sizeof(rn));
-    pcg3264_seedU32(ctx, (vuint32)rn);
-  }
+  if (ctx) ed25519_randombytes(ctx, sizeof(PCG3264_Ctx));
 }
 
 // full 32-bit value (so it can be negative)
