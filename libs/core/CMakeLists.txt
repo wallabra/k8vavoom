@@ -75,6 +75,9 @@ add_library(core STATIC
   cvarsys.h
   cvarsys.cpp
 
+  chachaprng_c.h
+  chachaprng_cpp.h
+
   # mimalloc
   mimalloc/mimalloc-atomic.h
   mimalloc/mimalloc-internal.h

@@ -132,6 +132,9 @@
 
 #include "cvarsys.h"
 
+#include "chachaprng_c.h"
+#include "chachaprng_cpp.h"
+
 #include "fsys/fsys.h"
 
 #endif
