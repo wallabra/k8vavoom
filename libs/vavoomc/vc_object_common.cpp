@@ -613,11 +613,28 @@ IMPLEMENT_FUNCTION(VObject, bjprngSeed) {
   if (ctx) bjprng_raninit(ctx, (vuint32)aseed);
 }
 
+// native static final void bjprngSeedRandom (out BJPRNGCtx ctx);
+IMPLEMENT_FUNCTION(VObject, bjprngSeedRandom) {
+  P_GET_PTR(BJPRNGCtx, ctx);
+  if (ctx) {
+    vuint32 rn;
+    do { ed25519_randombytes(&rn, sizeof(rn)); } while (!rn);
+    bjprng_raninit(ctx, (vuint32)rn);
+  }
+}
+
 // full 32-bit value (so it can be negative)
 //native static final int bjprngNext (ref BJPRNGCtx ctx);
 IMPLEMENT_FUNCTION(VObject, bjprngNext) {
   P_GET_PTR(BJPRNGCtx, ctx);
   RET_INT(ctx ? bjprng_ranval(ctx) : 0);
+}
+
+// only positives, 31-bit
+//native static final int bjprngNextU31 (ref BJPRNGCtx ctx);
+IMPLEMENT_FUNCTION(VObject, bjprngNextU31) {
+  P_GET_PTR(BJPRNGCtx, ctx);
+  RET_INT(ctx ? bjprng_ranval(ctx)&0x7fffffffu : 0);
 }
 
 // [0..1) (WARNING! not really uniform!)
@@ -629,6 +646,76 @@ IMPLEMENT_FUNCTION(VObject, bjprngNextFloat) {
       float v = ((double)bjprng_ranval(ctx))/((double)0xffffffffu);
       if (v < 1.0f) { RET_FLOAT(v); return; }
     }
+  } else {
+    RET_FLOAT(0);
+  }
+}
+
+// [0..1] (WARNING! not really uniform!)
+//native static final float bjprngNextFloatFull (ref BJPRNGCtx ctx);
+IMPLEMENT_FUNCTION(VObject, bjprngNextFloatFull) {
+  P_GET_PTR(BJPRNGCtx, ctx);
+  if (ctx) {
+    const float v = ((double)bjprng_ranval(ctx))/((double)0xffffffffu);
+    RET_FLOAT(v);
+  } else {
+    RET_FLOAT(0);
+  }
+}
+
+
+// native static final void pcg3264Seed (out PCG3264_Ctx ctx, int aseed);
+IMPLEMENT_FUNCTION(VObject, pcg3264Seed) {
+  P_GET_INT(aseed);
+  P_GET_PTR(PCG3264_Ctx, ctx);
+  if (ctx) pcg3264_seedU32(ctx, (vuint32)aseed);
+}
+
+// native static final void pcg3264SeedRandom (out PCG3264_Ctx ctx);
+IMPLEMENT_FUNCTION(VObject, pcg3264SeedRandom) {
+  P_GET_PTR(PCG3264_Ctx, ctx);
+  if (ctx) {
+    vuint32 rn;
+    ed25519_randombytes(&rn, sizeof(rn));
+    pcg3264_seedU32(ctx, (vuint32)rn);
+  }
+}
+
+// full 32-bit value (so it can be negative)
+//native static final int pcg3264Next (ref PCG3264_Ctx ctx);
+IMPLEMENT_FUNCTION(VObject, pcg3264Next) {
+  P_GET_PTR(PCG3264_Ctx, ctx);
+  RET_INT(ctx ? pcg3264_next(ctx) : 0);
+}
+
+// only positives, 31-bit
+//native static final int pcg3264NextU31 (ref PCG3264_Ctx ctx);
+IMPLEMENT_FUNCTION(VObject, pcg3264NextU31) {
+  P_GET_PTR(PCG3264_Ctx, ctx);
+  RET_INT(ctx ? pcg3264_next(ctx)&0x7fffffffu : 0);
+}
+
+// [0..1) (WARNING! not really uniform!)
+//native static final float pcg3264NextFloat (ref PCG3264_Ctx ctx);
+IMPLEMENT_FUNCTION(VObject, pcg3264NextFloat) {
+  P_GET_PTR(PCG3264_Ctx, ctx);
+  if (ctx) {
+    for (;;) {
+      float v = ((double)pcg3264_next(ctx))/((double)0xffffffffu);
+      if (v < 1.0f) { RET_FLOAT(v); return; }
+    }
+  } else {
+    RET_FLOAT(0);
+  }
+}
+
+// [0..1] (WARNING! not really uniform!)
+//native static final float pcg3264NextFloatFull (ref PCG3264_Ctx ctx);
+IMPLEMENT_FUNCTION(VObject, pcg3264NextFloatFull) {
+  P_GET_PTR(PCG3264_Ctx, ctx);
+  if (ctx) {
+    const float v = ((double)pcg3264_next(ctx))/((double)0xffffffffu);
+    RET_FLOAT(v);
   } else {
     RET_FLOAT(0);
   }

@@ -745,17 +745,43 @@ native static final int GenRandomSeedU32 ();
 // generates a random number in range [0..0x7fff_ffff]
 native static final int GenRandomU31 ();
 
+// ////////////////////////////////////////////////////////////////////////// //
 // http://burtleburtle.net/bob/rand/smallprng.html
 struct BJPRNGCtx {
   int a, b, c, d;
 }
 
+// seed with a random seed
+native static final void bjprngSeedRandom (out BJPRNGCtx ctx);
+// seed with the given seed
 native static final void bjprngSeed (out BJPRNGCtx ctx, int aseed);
 // full 32-bit value (so it can be negative)
 native static final int bjprngNext (ref BJPRNGCtx ctx);
+// only positives, 31-bit
+native static final int bjprngNextU31 (ref BJPRNGCtx ctx);
 // [0..1) (WARNING! not really uniform!)
 native static final float bjprngNextFloat (ref BJPRNGCtx ctx);
+// [0..1] (WARNING! not really uniform!)
+native static final float bjprngNextFloatFull (ref BJPRNGCtx ctx);
 
+// ////////////////////////////////////////////////////////////////////////// //
+// 64-bit number
+struct PCG3264Ctx {
+  int lo, hi;
+}
+
+// seed with a random seed
+native static final void pcg3264SeedRandom (out PCG3264Ctx ctx);
+// seed with the given seed
+native static final void pcg3264Seed (out PCG3264Ctx ctx, int aseed);
+// full 32-bit value (so it can be negative)
+native static final int pcg3264Next (ref PCG3264Ctx ctx);
+// only positives, 31-bit
+native static final int pcg3264NextU31 (ref PCG3264Ctx ctx);
+// [0..1) (WARNING! not really uniform!)
+native static final float pcg3264NextFloat (ref PCG3264Ctx ctx);
+// [0..1] (WARNING! not really uniform!)
+native static final float pcg3264NextFloatFull (ref PCG3264Ctx ctx);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
