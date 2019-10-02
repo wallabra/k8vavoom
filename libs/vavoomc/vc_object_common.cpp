@@ -24,6 +24,11 @@
 //**
 //**************************************************************************
 #include "vc_object_rtti.cpp"
+#define CORE_CHACHAPRNG_C
+// it must be disabled, so we can use it in VavoomC
+#define CHACHA_C_DISABLE_SSE
+#include "../core/chachaprng_c.h"
+static_assert(sizeof(ChaChaR) == 105, "invalid `ChaChaR` size");
 
 
 //**************************************************************************
@@ -715,6 +720,101 @@ IMPLEMENT_FUNCTION(VObject, pcg3264NextFloatFull) {
   P_GET_PTR(PCG3264_Ctx, ctx);
   if (ctx) {
     const float v = ((double)pcg3264_next(ctx))/((double)0xffffffffu);
+    RET_FLOAT(v);
+  } else {
+    RET_FLOAT(0);
+  }
+}
+
+
+// native static final bool chachaIsValid (const ref ChaChaCtx ctx);
+IMPLEMENT_FUNCTION(VObject, chachaIsValid) {
+  P_GET_PTR(ChaChaR, ctx);
+  RET_BOOL(ctx ? (ctx->rounds > 0 && ctx->rounds <= 64 && (ctx->rounds&1) == 0) : false);
+}
+
+// native static final int chachaGetRounds (const ref ChaChaCtx ctx);
+IMPLEMENT_FUNCTION(VObject, chachaGetRounds) {
+  P_GET_PTR(ChaChaR, ctx);
+  RET_INT(ctx ? ctx->rounds : 0);
+}
+
+// seed with a random seed (chacha20)
+// native static final void chachaSeedRandom (out ChaChaCtx ctx);
+IMPLEMENT_FUNCTION(VObject, chachaSeedRandom) {
+  P_GET_PTR(ChaChaR, ctx);
+  if (ctx) {
+    vuint64 seedval, stream;
+    ed25519_randombytes(&seedval, sizeof(seedval));
+    ed25519_randombytes(&stream, sizeof(stream));
+    if (chacha_init_ex(ctx, seedval, stream, CHACHA_DEFAULT_ROUNDS) != 0) ctx->rounds = 0;
+  }
+}
+
+// seed with the given seed (chacha20)
+// native static final void chachaSeed (out ChaChaCtx ctx, int aseed);
+IMPLEMENT_FUNCTION(VObject, chachaSeed) {
+  P_GET_INT(aseed);
+  P_GET_PTR(ChaChaR, ctx);
+  if (ctx) {
+    if (chacha_init(ctx, (vuint32)aseed) != 0) ctx->rounds = 0;
+  }
+}
+
+// seed with the given seeds and rounds
+// native static final void chachaSeedEx (out ChaChaCtx ctx, int aseed0, int aseed1, int astream0, int astream1, int rounds);
+IMPLEMENT_FUNCTION(VObject, chachaSeedEx) {
+  P_GET_INT(rounds);
+  P_GET_INT(astream1);
+  P_GET_INT(astream0);
+  P_GET_INT(aseed1);
+  P_GET_INT(aseed0);
+  P_GET_PTR(ChaChaR, ctx);
+  if (ctx) {
+    vuint64 seedval = (vuint32)aseed1;
+    seedval <<= 32;
+    seedval |= (vuint32)aseed0;
+    vuint64 stream = (vuint32)astream1;
+    stream <<= 32;
+    stream |= (vuint32)astream0;
+    if (chacha_init_ex(ctx, seedval, stream, rounds) != 0) ctx->rounds = 0;
+  }
+}
+
+// full 32-bit value (so it can be negative)
+// native static final int chachaNext (ref ChaChaCtx ctx);
+IMPLEMENT_FUNCTION(VObject, chachaNext) {
+  P_GET_PTR(ChaChaR, ctx);
+  RET_INT(ctx ? chacha_next(ctx) : 0);
+}
+
+// only positives, 31-bit
+// native static final int chachaNextU31 (ref ChaChaCtx ctx);
+IMPLEMENT_FUNCTION(VObject, chachaNextU31) {
+  P_GET_PTR(ChaChaR, ctx);
+  RET_INT(ctx ? chacha_next(ctx)&0x7fffffffu : 0);
+}
+
+// [0..1) (WARNING! not really uniform!)
+// native static final float chachaNextFloat (ref ChaChaCtx ctx);
+IMPLEMENT_FUNCTION(VObject, chachaNextFloat) {
+  P_GET_PTR(ChaChaR, ctx);
+  if (ctx) {
+    for (;;) {
+      float v = ((double)chacha_next(ctx))/((double)0xffffffffu);
+      if (v < 1.0f) { RET_FLOAT(v); return; }
+    }
+  } else {
+    RET_FLOAT(0);
+  }
+}
+
+// [0..1] (WARNING! not really uniform!)
+// native static final float chachaNextFloatFull (ref ChaChaCtx ctx);
+IMPLEMENT_FUNCTION(VObject, chachaNextFloatFull) {
+  P_GET_PTR(ChaChaR, ctx);
+  if (ctx) {
+    const float v = ((double)chacha_next(ctx))/((double)0xffffffffu);
     RET_FLOAT(v);
   } else {
     RET_FLOAT(0);

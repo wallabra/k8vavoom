@@ -783,6 +783,31 @@ native static final float pcg3264NextFloat (ref PCG3264Ctx ctx);
 // [0..1] (WARNING! not really uniform!)
 native static final float pcg3264NextFloatFull (ref PCG3264Ctx ctx);
 
+// ////////////////////////////////////////////////////////////////////////// //
+struct ChaChaCtx {
+  ubyte[105] state_;
+}
+
+// is given chacha prng valid?
+// WARNING! call this after seeding too!
+native static final bool chachaIsValid (const ref ChaChaCtx ctx);
+// get number of chacha rounds (undefined on invalid prng)
+native static final int chachaGetRounds (const ref ChaChaCtx ctx);
+// seed with a random seed (chacha20)
+native static final void chachaSeedRandom (out ChaChaCtx ctx);
+// seed with the given seed (chacha20)
+native static final void chachaSeed (out ChaChaCtx ctx, int aseed);
+// seed with the given seeds and rounds
+native static final void chachaSeedEx (out ChaChaCtx ctx, int aseed0, int aseed1, int astream0, int astream1, int rounds);
+// full 32-bit value (so it can be negative)
+native static final int chachaNext (ref ChaChaCtx ctx);
+// only positives, 31-bit
+native static final int chachaNextU31 (ref ChaChaCtx ctx);
+// [0..1) (WARNING! not really uniform!)
+native static final float chachaNextFloat (ref ChaChaCtx ctx);
+// [0..1] (WARNING! not really uniform!)
+native static final float chachaNextFloatFull (ref ChaChaCtx ctx);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // string functions

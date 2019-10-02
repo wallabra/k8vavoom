@@ -120,6 +120,16 @@
   DECLARE_FUNCTION(pcg3264NextFloat)
   DECLARE_FUNCTION(pcg3264NextFloatFull)
 
+  DECLARE_FUNCTION(chachaIsValid)
+  DECLARE_FUNCTION(chachaGetRounds)
+  DECLARE_FUNCTION(chachaSeedRandom)
+  DECLARE_FUNCTION(chachaSeed)
+  DECLARE_FUNCTION(chachaSeedEx)
+  DECLARE_FUNCTION(chachaNext)
+  DECLARE_FUNCTION(chachaNextU31)
+  DECLARE_FUNCTION(chachaNextFloat)
+  DECLARE_FUNCTION(chachaNextFloatFull)
+
   // printing in console
   DECLARE_FUNCTION(print)
   DECLARE_FUNCTION(dprint)
