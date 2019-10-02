@@ -29,9 +29,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-//#define CHACHA_DISABLE_SSE
+#define CHACHA_C_DISABLE_SSE
 
-#if !defined(CHACHA_DISABLE_SSE) && defined(__SSE2__)
+#if !defined(CHACHA_C_DISABLE_SSE) && defined(__SSE2__)
 # include "emmintrin.h"
 # if !defined(__XOP__)
 #  if defined(__SSSE3__)
@@ -42,10 +42,14 @@
 # endif
 #endif
 
-typedef struct {
+typedef struct
+#ifdef CHACHA_C_DISABLE_SSE
+__attribute__((packed))
+#endif
+{
 /*private:*/
   uint32_t
-#if !defined(CHACHA_DISABLE_SSE) && defined(__SSE2__)
+#if !defined(CHACHA_C_DISABLE_SSE) && defined(__SSE2__)
   __attribute__((aligned(16)))
 #endif
     block[16];
@@ -55,8 +59,16 @@ typedef struct {
   uint8_t rounds;
 } ChaChaR;
 
+#ifdef CHACHA_C_DISABLE_SSE
+# if defined(__cplusplus)
+  static_assert(sizeof(ChaChaR) == 105, "invalid `ChaChaR` size");
+# else
+  _Static_assert(sizeof(ChaChaR) == 105, "invalid `ChaChaR` size");
+# endif
+#endif
 
-#if !defined(CHACHA_DISABLE_SSE) && defined(__SSE2__)
+
+#if !defined(CHACHA_C_DISABLE_SSE) && defined(__SSE2__)
   /*#include "emmintrin.h"*/
 
   // get an efficient _mm_roti_epi32 based on enabled features
@@ -107,7 +119,8 @@ typedef struct {
     __m128i c = _mm_load_si128((__m128i *)(cha->block+8));
     __m128i d = _mm_load_si128((__m128i *)(cha->block+12));
 
-    for (unsigned i = 0; i < cha->rounds; i += 2) {
+    const unsigned rcount = cha->rounds;
+    for (unsigned i = 0; i < rcount; i += 2) {
       a = _mm_add_epi32(a, b);
       d = _mm_xor_si128(d, a);
       d = _mm_roti_epi32_chacha(d, 16);
@@ -157,7 +170,7 @@ typedef struct {
     #undef _mm_roti_epi32_chacha
   #endif
 #else
-  static __attribute__((unused)) inline void chacha_core (ChaChaR *cha) {
+  static __attribute__((unused)) inline void chacha_internal_chacha_core (ChaChaR *cha) {
     #define CHACHA_ROTL32(x, n) (((x)<<(n))|((x)>>(32-(n))))
 
     #define CHACHA_QUARTERROUND(x, a, b, c, d) \
@@ -166,7 +179,8 @@ typedef struct {
         x[a] = x[a]+x[b]; x[d] ^= x[a]; x[d] = CHACHA_ROTL32(x[d],  8); \
         x[c] = x[c]+x[d]; x[b] ^= x[c]; x[b] = CHACHA_ROTL32(x[b],  7)
 
-    for (unsigned i = 0; i < cha->rounds; i += 2) {
+    const unsigned rcount = cha->rounds;
+    for (unsigned i = 0; i < rcount; i += 2) {
       CHACHA_QUARTERROUND(cha->block, 0, 4,  8, 12);
       CHACHA_QUARTERROUND(cha->block, 1, 5,  9, 13);
       CHACHA_QUARTERROUND(cha->block, 2, 6, 10, 14);

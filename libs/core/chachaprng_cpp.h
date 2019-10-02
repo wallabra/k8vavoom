@@ -29,9 +29,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-//#define CHACHA_DISABLE_SSE
+//#define CHACHA_CPP_DISABLE_SSE
 
-#if !defined(CHACHA_DISABLE_SSE) && defined(__SSE2__)
+#if !defined(CHACHA_CPP_DISABLE_SSE) && defined(__SSE2__)
 # include "emmintrin.h"
 # if !defined(__XOP__)
 #  if defined(__SSSE3__)
@@ -46,7 +46,7 @@
 template<size_t R> class ChaCha {
   static_assert(R > 0 && R <= 64 && (R&1) == 0, "invalid number of rounds for ChaCha");
 private:
-#if !defined(CHACHA_DISABLE_SSE) && defined(__SSE2__)
+#if !defined(CHACHA_CPP_DISABLE_SSE) && defined(__SSE2__)
   alignas(16)
 #endif
   uint32_t block[16];
@@ -112,7 +112,7 @@ private:
     for (unsigned i = 0u; i < 16u; ++i) block[i] += input[i];
   }
 
-  #if !defined(CHACHA_DISABLE_SSE) && defined(__SSE2__)
+  #if !defined(CHACHA_CPP_DISABLE_SSE) && defined(__SSE2__)
     /*#include "emmintrin.h"*/
 
     // get an efficient _mm_roti_epi32 based on enabled features
