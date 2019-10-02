@@ -26,7 +26,8 @@
 #include "core.h"
 
 
-BJPRNGCtx g_bjprng_ctx;
+//BJPRNGCtx g_bjprng_ctx;
+PCG3264_Ctx g_pcg3264_ctx = 0x853c49e6748fea9bULL;
 
 
 //==========================================================================
@@ -37,9 +38,12 @@ BJPRNGCtx g_bjprng_ctx;
 //
 //==========================================================================
 void RandomInit () {
-  vint32 rn;
-  do { ed25519_randombytes(&rn, sizeof(rn)); } while (!rn);
-  bjprng_raninit(&g_bjprng_ctx, rn);
+  //vint32 rn;
+  //do { ed25519_randombytes(&rn, sizeof(rn)); } while (!rn);
+  //bjprng_raninit(&g_bjprng_ctx, rn);
+  vuint32 rn;
+  ed25519_randombytes(&rn, sizeof(rn));
+  pcg3264_seedU32(&g_pcg3264_ctx, rn);
 }
 
 
