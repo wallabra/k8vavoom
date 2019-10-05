@@ -89,7 +89,12 @@ static inline void U64TO8_LE(unsigned char *p, const uint64_t v) {
 typedef struct isaacp_state_t {
 	uint32_t state[256];
 	unsigned char buffer[1024];
-	uint32_t a, b, c;
+	union __attribute__((packed)) {
+		uint32_t abc[3];
+		struct __attribute__((packed)) {
+			uint32_t a, b, c;
+		};
+	};
 	size_t left;
 } isaacp_state;
 
@@ -156,6 +161,7 @@ isaacp_random(isaacp_state *st, void *p, size_t len) {
 #include <windows.h>
 #include <stdio.h>
 
+/*
 static inline uint32_t hashU32 (uint32_t a) {
   uint32_t res = (uint32_t)a;
   res -= (res<<6);
@@ -166,6 +172,42 @@ static inline uint32_t hashU32 (uint32_t a) {
   res = res^(res<<10);
   res = res^(res>>15);
   return res;
+}
+*/
+
+// ////////////////////////////////////////////////////////////////////////// //
+// SplitMix; mostly used to generate 64-bit seeds
+static __attribute__((unused)) inline uint64_t splitmix64_next (uint64_t *state) {
+  uint64_t result = *state;
+  *state = result+(uint64_t)0x9E3779B97f4A7C15ULL;
+  result = (result^(result>>30))*(uint64_t)0xBF58476D1CE4E5B9ULL;
+  result = (result^(result>>27))*(uint64_t)0x94D049BB133111EBULL;
+  return result^(result>>31);
+}
+
+static __attribute__((unused)) inline void splitmix64_seedU64 (uint64_t *state, uint32_t seed0, uint32_t seed1) {
+  // hashU32
+  uint32_t res = seed0;
+  res -= (res<<6);
+  res ^= (res>>17);
+  res -= (res<<9);
+  res ^= (res<<4);
+  res -= (res<<3);
+  res ^= (res<<10);
+  res ^= (res>>15);
+  uint64_t n = res;
+  n <<= 32;
+  // hashU32
+  res = seed1;
+  res -= (res<<6);
+  res ^= (res>>17);
+  res -= (res<<9);
+  res ^= (res<<4);
+  res -= (res<<3);
+  res ^= (res<<10);
+  res ^= (res>>15);
+  n |= res;
+  *state = n;
 }
 
 //#include <ntsecapi.h>
@@ -188,34 +230,35 @@ static void RtlGenRandomX (PVOID RandomBuffer, ULONG RandomBufferLength) {
     if (RtlGenRandomXX(RandomBuffer, RandomBufferLength)) return;
     fprintf(stderr, "WARNING: `RtlGenRandom()` fallback for %u bytes!\n", (unsigned)RandomBufferLength);
   }
-  unsigned char *dest = (unsigned char *)RandomBuffer;
-  uint32_t ctt;
-  //while (!ctt) ctt = hashU32(GetTickCount());
-  for (;;) {
+  static __thread int initialized = 0;
+  static __thread isaacp_state rng;
+  // need init?
+  if (!initialized) {
+    // initialise isaacp with some shit
+    initialized = 1;
+    uint32_t smxseed0 = 0;
+    uint32_t smxseed1 = (uint32_t)GetCurrentProcessId();
     SYSTEMTIME st;
     FILETIME ft;
     GetLocalTime(&st);
     if (!SystemTimeToFileTime(&st, &ft)) {
       fprintf(stderr, "SHIT: `SystemTimeToFileTime()` failed!\n");
-      do { ctt = hashU32(GetTickCount()); } while (!ctt);
-      break;
+      smxseed0 = /*hashU32*/(uint32_t)(GetTickCount());
     } else {
-      ctt = hashU32(ft.dwLowDateTime);
-      //fprintf(stderr, "ft=0x%08x (0x%08x)\n", (uint32_t)ft.dwLowDateTime, ctt);
-      if (ctt) break;
+      smxseed0 = /*hashU32*/(uint32_t)(ft.dwLowDateTime);
+      //fprintf(stderr, "ft=0x%08x (0x%08x)\n", (uint32_t)ft.dwLowDateTime, smxseed);
     }
+    uint64_t smx;
+    splitmix64_seedU64(&smx, smxseed0, smxseed1);
+    for (unsigned n = 0; n < 256; ++n) rng.state[n] = splitmix64_next(&smx);
+    rng.a = splitmix64_next(&smx);
+    rng.b = splitmix64_next(&smx);
+    rng.c = splitmix64_next(&smx);
+    isaacp_mix(&rng);
+    isaacp_mix(&rng);
   }
-  while (RandomBufferLength > 0) {
-    if (RandomBufferLength >= sizeof(ctt)) {
-      memcpy(dest, &ctt, sizeof(ctt));
-      RandomBufferLength -= sizeof(ctt);
-      //fprintf(stderr, ":: ctt=0x%08x\n", ctt);
-      do { ctt = hashU32(ctt+1); } while (!ctt);
-    } else {
-      memcpy(dest, &ctt, RandomBufferLength);
-      break;
-    }
-  }
+  // generate random bytes with ISAAC+
+  isaacp_random(&rng, RandomBuffer, RandomBufferLength);
 }
 #endif
 
@@ -229,14 +272,17 @@ ED25519_FN(ed25519_randombytes) (void *p, size_t len) {
 		memset(&rng, 0, sizeof(rng));
 #ifdef __SWITCH__
 		randomGet(rng.state, sizeof(rng.state));
+		randomGet(rng.abc, sizeof(rng.abc));
 #elif !defined(WIN32)
 		int fd = open("/dev/urandom", O_RDONLY|O_CLOEXEC);
 		if (fd >= 0) {
 			read(fd, rng.state, sizeof(rng.state));
+			read(fd, rng.abc, sizeof(rng.abc));
 			close(fd);
 		}
 #else
 		RtlGenRandomX(rng.state, sizeof(rng.state));
+		RtlGenRandomX(rng.abc, sizeof(rng.abc));
 #endif
 		isaacp_mix(&rng);
 		isaacp_mix(&rng);
