@@ -149,6 +149,138 @@ static __attribute__((unused)) inline vuint32 pcg32_next (PCG32_Ctx *rng) {
 }
 
 
+//**************************************************************************
+// Bob Jenkins' ISAAC Crypto-PRNG
+//**************************************************************************
+// this will throw away four initial blocks, in attempt to avoid
+// potential weakness in the first 8192 bits of output.
+// this is deemed to be unnecessary, though.
+#define ISAAC_BETTER_INIT
+
+
+#define ISAAC_RAND_SIZE_SHIFT  (8)
+#define ISAAC_RAND_SIZE        (1u<<ISAAC_RAND_SIZE_SHIFT)
+
+// context of random number generator
+typedef struct {
+  uint32_t randcnt;
+  uint32_t randrsl[ISAAC_RAND_SIZE];
+  uint32_t randmem[ISAAC_RAND_SIZE];
+  uint32_t randa;
+  uint32_t randb;
+  uint32_t randc;
+} ISAAC_Ctx;
+
+
+#define ISAAC_MIX(a,b,c,d,e,f,g,h)  { \
+  a ^= b<<11;               d += a; b += c; \
+  b ^= (c&0xffffffffu)>>2;  e += b; c += d; \
+  c ^= d<<8;                f += c; d += e; \
+  d ^= (e&0xffffffffu)>>16; g += d; e += f; \
+  e ^= f<<10;               h += e; f += g; \
+  f ^= (g&0xffffffffu)>>4;  a += f; g += h; \
+  g ^= h<<8;                b += g; h += a; \
+  h ^= (a&0xffffffffu)>>9;  c += h; a += b; \
+}
+
+
+#define ISAAC_ind(mm,x)  ((mm)[(x>>2)&(ISAAC_RAND_SIZE-1)])
+#define ISAAC_step(mix,a,b,mm,m,m2,r,x)  { \
+  x = *m;  \
+  a = ((a^(mix))+(*(m2++))); \
+  *(m++) = y = (ISAAC_ind(mm, x)+a+b); \
+  *(r++) = b = (ISAAC_ind(mm, y>>ISAAC_RAND_SIZE_SHIFT)+x)&0xffffffffu; \
+}
+
+
+static __attribute__((unused)) void ISAAC_nextblock (ISAAC_Ctx *ctx) {
+  uint32_t x, y, *m, *m2, *mend;
+  uint32_t *mm = ctx->randmem;
+  uint32_t *r = ctx->randrsl;
+  uint32_t a = ctx->randa;
+  uint32_t b = ctx->randb+(++ctx->randc);
+  for (m = mm, mend = m2 = m+(ISAAC_RAND_SIZE/2u); m < mend; ) {
+    ISAAC_step(a<<13, a, b, mm, m, m2, r, x);
+    ISAAC_step((a&0xffffffffu) >>6 , a, b, mm, m, m2, r, x);
+    ISAAC_step(a<<2 , a, b, mm, m, m2, r, x);
+    ISAAC_step((a&0xffffffffu) >>16, a, b, mm, m, m2, r, x);
+  }
+  for (m2 = mm; m2 < mend; ) {
+    ISAAC_step(a<<13, a, b, mm, m, m2, r, x);
+    ISAAC_step((a&0xffffffffu) >>6 , a, b, mm, m, m2, r, x);
+    ISAAC_step(a<<2 , a, b, mm, m, m2, r, x);
+    ISAAC_step((a&0xffffffffu) >>16, a, b, mm, m, m2, r, x);
+  }
+  ctx->randa = a;
+  ctx->randb = b;
+}
+
+
+// if (flag==TRUE), then use the contents of randrsl[0..ISAAC_RAND_SIZE-1] to initialize mm[]
+static __attribute__((unused)) void ISAAC_init (ISAAC_Ctx *ctx, unsigned flag) {
+  uint32_t a, b, c, d, e, f, g, h;
+  uint32_t *m;
+  uint32_t *r;
+
+  ctx->randa = ctx->randb = ctx->randc = 0;
+  m = ctx->randmem;
+  r = ctx->randrsl;
+  a = b = c = d = e = f = g = h = 0x9e3779b9u; // the golden ratio
+
+  // scramble it
+  for (unsigned i = 0; i < 4u; ++i) ISAAC_MIX(a, b, c, d, e, f, g, h);
+
+  if (flag) {
+    // initialize using the contents of r[] as the seed
+    for (unsigned i = 0; i < ISAAC_RAND_SIZE; i += 8) {
+      a += r[i  ]; b += r[i+1];
+      c += r[i+2]; d += r[i+3];
+      e += r[i+4]; f += r[i+5];
+      g += r[i+6]; h += r[i+7];
+      ISAAC_MIX(a, b, c, d, e, f, g, h);
+      m[i  ] = a; m[i+1] = b; m[i+2] = c; m[i+3] = d;
+      m[i+4] = e; m[i+5] = f; m[i+6] = g; m[i+7] = h;
+    }
+    // do a second pass to make all of the seed affect all of m
+    for (unsigned i = 0; i < ISAAC_RAND_SIZE; i += 8) {
+      a += m[i  ]; b += m[i+1];
+      c += m[i+2]; d += m[i+3];
+      e += m[i+4]; f += m[i+5];
+      g += m[i+6]; h += m[i+7];
+      ISAAC_MIX(a, b, c, d, e, f, g, h);
+      m[i  ] = a; m[i+1] = b; m[i+2] = c; m[i+3] = d;
+      m[i+4] = e; m[i+5] = f; m[i+6] = g; m[i+7] = h;
+    }
+  } else {
+    for (unsigned i = 0; i < ISAAC_RAND_SIZE; i += 8) {
+      // fill in mm[] with messy stuff
+      ISAAC_MIX(a, b, c, d, e, f, g, h);
+      m[i  ] = a; m[i+1] = b; m[i+2] = c; m[i+3] = d;
+      m[i+4] = e; m[i+5] = f; m[i+6] = g; m[i+7] = h;
+    }
+  }
+
+  #ifdef ISAAC_BETTER_INIT
+  // throw away first 8192 bits
+  ISAAC_nextblock(ctx);
+  ISAAC_nextblock(ctx);
+  ISAAC_nextblock(ctx);
+  ISAAC_nextblock(ctx);
+  #endif
+  ISAAC_nextblock(ctx); // fill in the first set of results
+  ctx->randcnt = ISAAC_RAND_SIZE; // prepare to use the first set of results
+}
+
+
+// call to retrieve a single 32-bit random value
+static __attribute__((unused)) inline uint32_t ISAAC_next (ISAAC_Ctx *ctx) {
+  return
+   ctx->randcnt-- ?
+     (uint32_t)ctx->randrsl[ctx->randcnt] :
+     (ISAAC_nextblock(ctx), ctx->randcnt = ISAAC_RAND_SIZE-1, (uint32_t)ctx->randrsl[ctx->randcnt]);
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // initialized with `RandomInit()`
 //extern BJPRNGCtx g_bjprng_ctx;
