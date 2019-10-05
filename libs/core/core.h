@@ -139,6 +139,8 @@
 # include "chachaprng_cpp.h"
 #endif
 
+#include "SpookyV2.h"
+
 #include "fsys/fsys.h"
 
 #endif

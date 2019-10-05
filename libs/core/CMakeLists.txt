@@ -78,6 +78,9 @@ add_library(core STATIC
   chachaprng_c.h
   chachaprng_cpp.h
 
+  SpookyV2.h
+  SpookyV2.c
+
   # mimalloc
   mimalloc/mimalloc-atomic.h
   mimalloc/mimalloc-internal.h

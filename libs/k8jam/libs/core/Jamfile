@@ -38,6 +38,7 @@ Library libcore.a :
   src/cvarsys.cpp
   src/micropather.cpp
   src/zone.cpp
+  src/SpookyV2.c
   # mi-malloc
   src/mimalloc/static.c
   # lzma
