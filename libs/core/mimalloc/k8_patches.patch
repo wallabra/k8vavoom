@@ -1,9 +1,30 @@
-diff -puEZBbw -r _curr/alloc.c _patched/alloc.c
---- _curr/alloc.c	2019-08-15 13:51:52.000000000 +0300
-+++ _patched/alloc.c	2019-08-15 14:05:45.000000000 +0300
-@@ -10,9 +10,11 @@ terms of the MIT license. A copy of the
- 
- #include <string.h>  // memset
+diff -puEZBbw -r _new/alloc-posix.c _pt/alloc-posix.c
+--- _new/alloc-posix.c	2019-10-13 08:38:59.000000000 +0300
++++ _pt/alloc-posix.c	2019-10-13 08:56:13.000000000 +0300
+@@ -107,7 +107,7 @@ unsigned char* mi_mbsdup(const unsigned
+ int mi_dupenv_s(char** buf, size_t* size, const char* name) mi_attr_noexcept {
+   if (buf==NULL || name==NULL) return EINVAL;
+   if (size != NULL) *size = 0;
+-  #pragma warning(suppress:4996)
++  //k8:fuck you, m$vc:#pragma warning(suppress:4996)
+   char* p = getenv(name);
+   if (p==NULL) {
+     *buf = NULL;
+@@ -128,7 +128,7 @@ int mi_wdupenv_s(unsigned short** buf, s
+   *buf = NULL;
+   return EINVAL;
+ #else
+-  #pragma warning(suppress:4996)
++  //k8:fuck you, m$vc:#pragma warning(suppress:4996)
+   unsigned short* p = (unsigned short*)_wgetenv((const wchar_t*)name);
+   if (p==NULL) {
+     *buf = NULL;
+diff -puEZBbw -r _new/alloc.c _pt/alloc.c
+--- _new/alloc.c	2019-10-13 08:38:59.000000000 +0300
++++ _pt/alloc.c	2019-10-13 08:42:49.000000000 +0300
+@@ -11,9 +11,11 @@ terms of the MIT license. A copy of the
+ #include <string.h>  // memset, memcpy, strlen
+ #include <stdlib.h>  // malloc, exit
  
 +/*k8: no overrides
  #define MI_IN_ALLOC_C
@@ -13,25 +34,10 @@ diff -puEZBbw -r _curr/alloc.c _patched/alloc.c
  
  // ------------------------------------------------------
  // Allocation
-diff -puEZBbw -r _curr/init.c _patched/init.c
---- _curr/init.c	2019-08-15 13:51:52.000000000 +0300
-+++ _patched/init.c	2019-08-15 14:37:50.000000000 +0300
-@@ -102,13 +102,13 @@ mi_heap_t _mi_heap_main = {
-   MI_PAGE_QUEUES_EMPTY,
-   NULL,
-   0,
--  0,
- #if MI_INTPTR_SIZE==8   // the cookie of the main heap can be fixed (unlike page cookies that need to be secure!)
-   0xCDCDCDCDCDCDCDCDUL,
- #else
-   0xCDCDCDCDUL,
- #endif
-   0,
-+  0,
-   false   // can reclaim
- };
- 
-@@ -286,10 +286,12 @@ static bool _mi_heap_done(void) {
+diff -puEZBbw -r _new/init.c _pt/init.c
+--- _new/init.c	2019-10-13 08:38:59.000000000 +0300
++++ _pt/init.c	2019-10-13 08:52:13.000000000 +0300
+@@ -293,10 +293,12 @@ static bool _mi_heap_done(void) {
    // use thread local storage keys to detect thread ending
    #include <windows.h>
    #include <fibersapi.h>
@@ -44,7 +50,7 @@ diff -puEZBbw -r _curr/init.c _patched/init.c
  #elif defined(MI_USE_PTHREADS)
    // use pthread locol storage keys to detect thread ending
    #include <pthread.h>
-@@ -311,7 +313,9 @@ static void mi_process_setup_auto_thread
+@@ -318,7 +320,9 @@ static void mi_process_setup_auto_thread
    #if defined(_WIN32) && defined(MI_SHARED_LIB)
      // nothing to do as it is done in DllMain
    #elif defined(_WIN32) && !defined(MI_SHARED_LIB)
@@ -54,7 +60,7 @@ diff -puEZBbw -r _curr/init.c _patched/init.c
    #elif defined(MI_USE_PTHREADS)
      pthread_key_create(&mi_pthread_key, &mi_pthread_done);
    #endif
-@@ -340,7 +344,9 @@ void mi_thread_init(void) mi_attr_noexce
+@@ -347,7 +351,9 @@ void mi_thread_init(void) mi_attr_noexce
    #if defined(_WIN32) && defined(MI_SHARED_LIB)
      // nothing to do as it is done in DllMain
    #elif defined(_WIN32) && !defined(MI_SHARED_LIB)
@@ -64,38 +70,50 @@ diff -puEZBbw -r _curr/init.c _patched/init.c
    #elif defined(MI_USE_PTHREADS)
      pthread_setspecific(mi_pthread_key, (void*)(_mi_thread_id()|1)); // set to a dummy value so that `mi_pthread_done` is called
    #endif
-@@ -434,6 +440,12 @@ static void mi_process_done(void) {
+@@ -506,6 +512,12 @@ static void mi_process_done(void) {
      return TRUE;
    }
  
 +#elif defined(__GNUC__) || defined(__clang__)
 +  // GCC,Clang: use the constructor attribute
 +  static void __attribute__((constructor)) _mi_process_init(void) {
-+    mi_process_init();
++    mi_process_load();
 +  }
 +
  #elif defined(__cplusplus)
    // C++: use static initialization to detect process start
    static bool _mi_process_init(void) {
-@@ -442,12 +454,6 @@ static void mi_process_done(void) {
+@@ -514,12 +526,6 @@ static void mi_process_done(void) {
    }
    static bool mi_initialized = _mi_process_init();
  
 -#elif defined(__GNUC__) || defined(__clang__)
 -  // GCC,Clang: use the constructor attribute
 -  static void __attribute__((constructor)) _mi_process_init(void) {
--    mi_process_init();
+-    mi_process_load();
 -  }
 -
  #elif defined(_MSC_VER)
    // MSVC: use data section magic for static libraries
    // See <https://www.codeguru.com/cpp/misc/misc/applicationcontrol/article.php/c6945/Running-Code-Before-and-After-Main.htm>
-diff -puEZBbw -r _curr/mimalloc.h _patched/mimalloc.h
---- _curr/mimalloc.h	2019-08-15 13:51:52.000000000 +0300
-+++ _patched/mimalloc.h	2019-08-15 14:02:54.000000000 +0300
+diff -puEZBbw -r _new/mimalloc-types.h _pt/mimalloc-types.h
+--- _new/mimalloc-types.h	2019-10-13 08:38:59.000000000 +0300
++++ _pt/mimalloc-types.h	2019-10-13 08:55:38.000000000 +0300
+@@ -10,7 +10,7 @@ terms of the MIT license. A copy of the
+ 
+ #include <stddef.h>   // ptrdiff_t
+ #include <stdint.h>   // uintptr_t, uint16_t, etc
+-#include <mimalloc-atomic.h>  // _Atomic
++#include "mimalloc-atomic.h"  // _Atomic
+ 
+ // ------------------------------------------------------
+ // Variants
+diff -puEZBbw -r _new/mimalloc.h _pt/mimalloc.h
+--- _new/mimalloc.h	2019-10-13 08:38:59.000000000 +0300
++++ _pt/mimalloc.h	2019-10-13 08:42:49.000000000 +0300
 @@ -10,6 +10,21 @@ terms of the MIT license. A copy of the
  
- #define MI_MALLOC_VERSION 100   // major + 2 digits minor
+ #define MI_MALLOC_VERSION 110   // major + 2 digits minor
  
 +#if defined(_MSC_VER)
 +# error "k8: m$vc support in mi-malloc is intentionally broken."
@@ -115,20 +133,29 @@ diff -puEZBbw -r _curr/mimalloc.h _patched/mimalloc.h
  // ------------------------------------------------------
  // Compiler specific attributes
  // ------------------------------------------------------
-diff -puEZBbw -r _curr/options.c _patched/options.c
---- _curr/options.c	2019-08-15 13:51:52.000000000 +0300
-+++ _patched/options.c	2019-08-15 14:06:47.000000000 +0300
-@@ -47,7 +47,8 @@ static mi_option_desc_t options[_mi_opti
+diff -puEZBbw -r _new/options.c _pt/options.c
+--- _new/options.c	2019-10-13 08:38:59.000000000 +0300
++++ _pt/options.c	2019-10-13 08:46:31.000000000 +0300
+@@ -54,7 +54,8 @@ static mi_option_desc_t options[_mi_opti
    // the following options are experimental and not all combinations make sense.
-   { 1, UNINIT, "eager_commit" },        // note: if eager_region_commit is on, this should be on too.
+   { 1, UNINIT, MI_OPTION(eager_commit) },        // note: needs to be on when eager_region_commit is enabled
    #ifdef _WIN32   // and BSD?
--  { 0, UNINIT, "eager_region_commit" }, // don't commit too eagerly on windows (just for looks...)
+-  { 0, UNINIT, MI_OPTION(eager_region_commit) }, // don't commit too eagerly on windows (just for looks...)
 +  //k8: fuck off, i don't care how it looks in shitdows shitmanager
-+  { 1, UNINIT, "eager_region_commit" }, // don't commit too eagerly on windows (just for looks...)
++  { 1, UNINIT, MI_OPTION(eager_region_commit) }, // don't commit too eagerly on windows (just for looks...)
    #else
-   { 1, UNINIT, "eager_region_commit" },
+   { 1, UNINIT, MI_OPTION(eager_region_commit) },
    #endif
-@@ -168,13 +169,13 @@ void _mi_assert_fail(const char* asserti
+@@ -146,7 +147,7 @@ static void mi_out_stderr(const char* ms
+ 
+ // Should be atomic but gives errors on many platforms as generally we cannot cast a function pointer to a uintptr_t.
+ // For now, don't register output from multiple threads.
+-#pragma warning(suppress:4180)
++//k8:fuck you, m$vc:#pragma warning(suppress:4180)
+ static mi_output_fun* volatile mi_out_default; // = NULL
+ 
+ static mi_output_fun* mi_out_get_default(void) {
+@@ -248,13 +249,13 @@ void _mi_assert_fail(const char* asserti
  
  static void mi_strlcpy(char* dest, const char* src, size_t dest_size) {
    dest[0] = 0;
@@ -144,40 +171,19 @@ diff -puEZBbw -r _curr/options.c _patched/options.c
    strncat(dest, src, dest_size - 1);
    dest[dest_size - 1] = 0;
  }
-@@ -185,14 +186,14 @@ static void mi_option_init(mi_option_des
-   char buf[32];
-   mi_strlcpy(buf, "mimalloc_", sizeof(buf));
-   mi_strlcat(buf, desc->name, sizeof(buf));
--  #pragma warning(suppress:4996)
-+  //k8:fuck you, m$vc:#pragma warning(suppress:4996)
-   char* s = getenv(buf);
-   if (s == NULL) {
-     size_t buf_size = strlen(buf);
-     for (size_t i = 0; i < buf_size; i++) {
-       buf[i] = toupper(buf[i]);
-     }
--    #pragma warning(suppress:4996)
-+    //k8:fuck you, m$vc:#pragma warning(suppress:4996)
-     s = getenv(buf);
-   }
-   if (s != NULL) {
-diff -puEZBbw -r _curr/os.c _patched/os.c
---- _curr/os.c	2019-08-15 13:51:52.000000000 +0300
-+++ _patched/os.c	2019-08-15 14:26:08.000000000 +0300
-@@ -88,10 +88,12 @@ static size_t mi_os_good_alloc_size(size
- // We use VirtualAlloc2 for aligned allocation, but it is only supported on Windows 10 and Windows Server 2016.
- // So, we need to look it up dynamically to run on older systems. (use __stdcall for 32-bit compatibility)
- // Same for DiscardVirtualMemory
-+/*k8:fuck you, m$vc:
- typedef PVOID(__stdcall *PVirtualAlloc2)(HANDLE, PVOID, SIZE_T, ULONG, ULONG, MEM_EXTENDED_PARAMETER*, ULONG);
- typedef DWORD(__stdcall *PDiscardVirtualMemory)(PVOID,SIZE_T);
- static PVirtualAlloc2 pVirtualAlloc2 = NULL;
- static PDiscardVirtualMemory pDiscardVirtualMemory = NULL;
-+*/
+diff -puEZBbw -r _new/os.c _pt/os.c
+--- _new/os.c	2019-10-13 08:38:59.000000000 +0300
++++ _pt/os.c	2019-10-13 09:00:06.000000000 +0300
+@@ -55,7 +55,7 @@ static void* mi_align_down_ptr(void* p,
+ static size_t os_page_size = 4096;
  
- void _mi_os_init(void) {
-   // get the page size
-@@ -100,6 +102,7 @@ void _mi_os_init(void) {
+ // minimal allocation granularity
+-static size_t os_alloc_granularity = 4096;
++static __attribute__((unused)) size_t os_alloc_granularity = 4096;
+ 
+ // if non-zero, use large page allocation
+ static size_t large_os_page_size = 0;
+@@ -141,6 +141,7 @@ void _mi_os_init(void) {
    if (si.dwPageSize > 0) os_page_size = si.dwPageSize;
    if (si.dwAllocationGranularity > 0) os_alloc_granularity = si.dwAllocationGranularity;
    // get the VirtualAlloc2 function
@@ -185,16 +191,16 @@ diff -puEZBbw -r _curr/os.c _patched/os.c
    HINSTANCE  hDll;
    hDll = LoadLibrary(TEXT("kernelbase.dll"));
    if (hDll != NULL) {
-@@ -140,6 +143,7 @@ void _mi_os_init(void) {
-       _mi_warning_message("cannot enable large OS page support, error %lu\n", err);
-     }
+@@ -157,6 +158,7 @@ void _mi_os_init(void) {
+   if (mi_option_is_enabled(mi_option_large_os_pages) || mi_option_is_enabled(mi_option_reserve_huge_os_pages)) {
+     mi_win_enable_large_os_pages();
    }
 +  */
  }
  #elif defined(__wasi__)
  void _mi_os_init() {
-@@ -179,7 +183,7 @@ static bool mi_os_mem_free(void* addr, s
-   _mi_stat_decrease(&stats->committed, size); // TODO: what if never committed?
+@@ -196,7 +198,7 @@ static bool mi_os_mem_free(void* addr, s
+   if (was_committed) _mi_stat_decrease(&stats->committed, size); 
    _mi_stat_decrease(&stats->reserved, size);
    if (err) {
 -#pragma warning(suppress:4996)
@@ -202,27 +208,19 @@ diff -puEZBbw -r _curr/os.c _patched/os.c
      _mi_warning_message("munmap failed: %s, addr 0x%8li, size %lu\n", strerror(errno), (size_t)addr, size);
      return false;
    }
-@@ -517,12 +521,15 @@ static bool mi_os_resetx(void* addr, siz
- #if defined(_WIN32)
-   // Testing shows that for us (on `malloc-large`) MEM_RESET is 2x faster than DiscardVirtualMemory
-   // (but this is for an access pattern that immediately reuses the memory)
-+/*k8:fuck you, m$vc:
-   if (mi_option_is_enabled(mi_option_reset_discards) && pDiscardVirtualMemory != NULL) {
-     DWORD ok = (*pDiscardVirtualMemory)(start, csize);
-     mi_assert_internal(ok == ERROR_SUCCESS);
-     if (ok != ERROR_SUCCESS) return false;
-   }
--  else {
-+  else
-+*/
-+  {
-     void* p = VirtualAlloc(start, csize, MEM_RESET, PAGE_READWRITE);
-     mi_assert_internal(p == start);
-     if (p != start) return false;
-diff -puEZBbw -r _curr/stats.c _patched/stats.c
---- _curr/stats.c	2019-08-15 13:51:52.000000000 +0300
-+++ _patched/stats.c	2019-08-15 14:30:29.000000000 +0300
-@@ -352,7 +352,7 @@ static double mi_clock_end(double start)
+@@ -441,7 +443,7 @@ static void* mi_os_get_aligned_hint(size
+   return (void*)hint;
+ }
+ #else
+-static void* mi_os_get_aligned_hint(size_t try_alignment, size_t size) {
++static __attribute__((unused)) void* mi_os_get_aligned_hint(size_t try_alignment, size_t size) {
+   UNUSED(try_alignment); UNUSED(size);
+   return NULL;
+ }
+diff -puEZBbw -r _new/stats.c _pt/stats.c
+--- _new/stats.c	2019-10-13 08:38:59.000000000 +0300
++++ _pt/stats.c	2019-10-13 08:42:49.000000000 +0300
+@@ -380,7 +380,7 @@ double _mi_clock_end(double start) {
  #if defined(_WIN32)
  #include <windows.h>
  #include <psapi.h>
@@ -231,7 +229,7 @@ diff -puEZBbw -r _curr/stats.c _patched/stats.c
  
  static double filetime_secs(const FILETIME* ftime) {
    ULARGE_INTEGER i;
-@@ -361,7 +361,9 @@ static double filetime_secs(const FILETI
+@@ -389,7 +389,9 @@ static double filetime_secs(const FILETI
    double secs = (double)(i.QuadPart) * 1.0e-7; // FILETIME is in 100 nano seconds
    return secs;
  }
@@ -241,7 +239,7 @@ diff -puEZBbw -r _curr/stats.c _patched/stats.c
    FILETIME ct;
    FILETIME ut;
    FILETIME st;
-@@ -376,6 +378,13 @@ static void mi_process_info(double* utim
+@@ -404,6 +406,13 @@ static void mi_process_info(double* utim
    *page_faults = (size_t)info.PageFaultCount;
    *peak_commit = (size_t)info.PeakPagefileUsage;
    *page_reclaim = 0;

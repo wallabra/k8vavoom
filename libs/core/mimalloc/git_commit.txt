@@ -1,2 +1,2 @@
 https://github.com/microsoft/mimalloc.git
-6e6e8ef800e2f639f0ba0069153573eb2618d55e
+e946d56ba0c1aa795ffb00f862fd32046a62da8e
