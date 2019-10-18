@@ -527,7 +527,7 @@ static void LoadAllMapInfoLumpsInFile (int miLump, int zmiLump) {
 //==========================================================================
 void InitMapInfo () {
   // use "zmapinfo" if it is present?
-  bool zmapinfoAllowed = (cli_NoZMapinfo > 0);
+  bool zmapinfoAllowed = (cli_NoZMapinfo >= 0);
   if (!zmapinfoAllowed) GCon->Logf(NAME_Init, "zmapinfo parsing disabled by user");
   int lastMapinfoFile = -1; // not seen yet
   int lastMapinfoLump = -1; // not seen yet
