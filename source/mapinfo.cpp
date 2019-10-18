@@ -405,7 +405,7 @@ static int findSavedPar (VName map) {
 //  loadSkyTexture
 //
 //==========================================================================
-static int loadSkyTexture (VScriptParser *sc, VName name) {
+static int loadSkyTexture (VScriptParser *sc, VName name, bool silent=false) {
   static TMapNC<VName, int> forceList;
 
   if (name == NAME_None) return GTextureManager.DefaultTexture;
@@ -456,6 +456,7 @@ static int loadSkyTexture (VScriptParser *sc, VName name) {
   if (Tex < 0) Tex = GTextureManager.AddPatch(name, TEXTYPE_WallPatch, true);
 
   if (Tex < 0) {
+    if (silent) return -1;
     miWarning(sc, "sky '%s' not found; replaced with 'sky1'", *name);
     Tex = GTextureManager.CheckNumForName("sky1", TEXTYPE_SkyMap, true);
     if (Tex < 0) Tex = GTextureManager.CheckNumForName("sky1", TEXTYPE_Wall, true);
@@ -1139,6 +1140,54 @@ MAPINFOCMD(lightmode) { skipUnimplementedCommand(sc, true); }
 
 //==========================================================================
 //
+//  FixSkyTexturesHack
+//
+//  another zdoom hack: check for "sky_maplump" sky texture
+//
+//==========================================================================
+static void FixOneSkyTextureHack (VScriptParser *sc, mapInfo_t *info, int skynum, vint32 &tx) {
+  if (tx < 1) return;
+
+  //GCon->Logf(NAME_Debug, "map '%s': sky1 '%s'", *info->LumpName, *GTextureManager.GetTextureName(tx));
+  VName skn = VName(*(VStr(*GTextureManager.GetTextureName(tx))+"_"+(*info->LumpName)), VName::AddLower);
+  if (VStr::length(*skn) <= 8) {
+    //GCon->Logf(NAME_Debug, "map '%s': trying sky1 '%s'", *info->LumpName, *skn);
+    int tt = loadSkyTexture(sc, skn, true);
+    if (tt > 0) {
+      GCon->Logf(NAME_Debug, "map '%s': sky%d '%s' replaced with '%s'", *info->LumpName, skynum, *GTextureManager.GetTextureName(tx), *GTextureManager.GetTextureName(tt));
+      tx = tt;
+      return;
+    }
+  }
+
+  skn = VName(*(VStr("sky_")+(*info->LumpName)), VName::AddLower);
+  if (VStr::length(*skn) <= 8) {
+    //GCon->Logf(NAME_Debug, "map '%s': trying sky1 '%s'", *info->LumpName, *skn);
+    int tt = loadSkyTexture(sc, skn, true);
+    if (tt > 0) {
+      GCon->Logf(NAME_Debug, "map '%s': sky%d '%s' replaced with '%s'", *info->LumpName, skynum, *GTextureManager.GetTextureName(tx), *GTextureManager.GetTextureName(tt));
+      tx = tt;
+      return;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  FixSkyTexturesHack
+//
+//  another zdoom hack: check for "sky_maplump" sky texture
+//
+//==========================================================================
+static void FixSkyTexturesHack (VScriptParser *sc, mapInfo_t *info) {
+  FixOneSkyTextureHack(sc, info, 1, info->Sky1Texture);
+  //FixOneSkyTextureHack(sc, info, 2, info->Sky2Texture);
+}
+
+
+//==========================================================================
+//
 //  ParseMapCommon
 //
 //==========================================================================
@@ -1202,6 +1251,7 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
   //if (newFormat) sc->SetCMode(false);
 
   // second sky defaults to first sky
+  FixSkyTexturesHack(sc, info);
   if (info->Sky2Texture == GTextureManager.DefaultTexture) info->Sky2Texture = info->Sky1Texture;
   if (info->Flags&VLevelInfo::LIF_DoubleSky) GTextureManager.SetFrontSkyLayer(info->Sky1Texture);
 }
