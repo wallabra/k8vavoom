@@ -354,7 +354,7 @@ struct side_t {
 //
 //==========================================================================
 enum {
-  SKY_FROM_SIDE = 0x8000u,
+  SKY_FROM_SIDE = 0x40000000u,
 };
 
 
@@ -716,7 +716,7 @@ struct sector_t {
   float MoveFactor;
   float Gravity; // Sector gravity (1.0 is normal)
 
-  vint32 Sky; //k8:??? document this!
+  vint32 Sky; // if SKY_FROM_SIDE set, this is replaced sky; sky2 for index 0, or top texture from side[index-1]
 
   vint32 Zone; // reverb zone id
 

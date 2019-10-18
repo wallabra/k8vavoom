@@ -1034,8 +1034,15 @@ void StaticInit (Level InLevel, line_t *line) {
       // scrolling, however, is only at a tiny fraction of the wall texture's scrolling speed.
       // this corresponds to the MBF sky transfer linetypes (271 and 272).
       // Note: the line's lower texture, if set and of the same dimensions as the upper texture, will be used during lightning flashes.
+      //printdebug("::: SKYTRANSFER: %s (%s)", line->sidenum[0], GetTextureName(InLevel.Sides[line->sidenum[0]].TopTexture));
       for (int hidx = InLevel.FindSectorFromTag(out sec, line->arg1); hidx >= 0; hidx = InLevel.FindSectorFromTag(out sec, line->arg1, hidx)) {
-        sec.Sky = (line->sidenum[0]+1)|SKY_FROM_SIDE;
+        //sec.Sky = (line->sidenum[0]+1)|SKY_FROM_SIDE;
+        int snum = line->sidenum[0];
+        if (snum >= 0 && snum < InLevel.Sides.length) {
+          //printdebug("::: SKYTRANSFER: %s (%s), sector %s", line->sidenum[0], GetTextureName(InLevel.Sides[line->sidenum[0]].TopTexture), sec-&InLevel.Sectors[0]);
+          //sec.Sky = (InLevel.Sides[snum].TopTexture)|SKY_FROM_SIDE;
+          sec.Sky = (line->sidenum[0]+1)|SKY_FROM_SIDE;
+        }
       }
       break;
   }

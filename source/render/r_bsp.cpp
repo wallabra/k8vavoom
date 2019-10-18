@@ -354,14 +354,16 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
   if (texinfo->Tex == GTextureManager[skyflatnum] || (IsStack && CheckSkyBoxAlways)) { //k8: i hope that the parens are right here
     VSky *Sky = nullptr;
     if (!SkyBox && (sub->sector->Sky&SKY_FROM_SIDE) != 0) {
+      //GCon->Logf(NAME_Debug, "SKYSIDE!!!");
       int Tex;
       bool Flip;
-      if (sub->sector->Sky == SKY_FROM_SIDE) {
+      if ((vuint32)sub->sector->Sky == SKY_FROM_SIDE) {
         Tex = Level->LevelInfo->Sky2Texture;
         Flip = true;
       } else {
         side_t *Side = &Level->Sides[(sub->sector->Sky&(SKY_FROM_SIDE-1))-1];
         Tex = Side->TopTexture;
+        //GCon->Logf(NAME_Debug, "SKYSIDE: %s", *GTextureManager[Tex]->Name);
         Flip = !!Level->Lines[Side->LineNum].arg3;
       }
       if (GTextureManager[Tex]->Type != TEXTYPE_Null) {

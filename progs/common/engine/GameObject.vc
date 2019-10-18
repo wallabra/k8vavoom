@@ -197,7 +197,7 @@ enum {
 };
 
 
-const int SKY_FROM_SIDE = 0x8000;
+const int SKY_FROM_SIDE = 0x4000_0000;
 
 // sound attenuation values
 const [decorate] float ATTN_NONE   = 0.0;
