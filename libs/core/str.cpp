@@ -68,7 +68,7 @@
 
 
 #ifdef VCORE_USE_STRTODEX
-static bool strtofEx (float *resptr, const char *s) {
+static bool strtofEx (float *resptr, const char *s) noexcept {
   if (!s || !s[0]) return false;
   char *end;
   float res = fmtstrtof(s, &end, nullptr);
@@ -110,7 +110,7 @@ char VStr::wc2shitmap[65536];
 char VStr::wc2koimap[65536];
 
 struct VstrInitr_fuck_you_gnu_binutils_fuck_you_fuck_you_fuck_you {
-  VstrInitr_fuck_you_gnu_binutils_fuck_you_fuck_you_fuck_you () {
+  VstrInitr_fuck_you_gnu_binutils_fuck_you_fuck_you_fuck_you () noexcept {
     // wc->1251
     memset(VStr::wc2shitmap, '?', sizeof(VStr::wc2shitmap));
     for (int f = 0; f < 128; ++f) VStr::wc2shitmap[f] = (char)f;
@@ -159,30 +159,30 @@ const vuint8 VUtf8DecoderFast::utf8dfa[0x16c] = {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-int VStr::float2str (char *buf, float v) { return f2s_buffered(v, buf); }
-int VStr::double2str (char *buf, double v) { return d2s_buffered(v, buf); }
+int VStr::float2str (char *buf, float v) noexcept { return f2s_buffered(v, buf); }
+int VStr::double2str (char *buf, double v) noexcept { return d2s_buffered(v, buf); }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-VStr::VStr (int v) : dataptr(nullptr) {
+VStr::VStr (int v) noexcept : dataptr(nullptr) {
   char buf[64];
   int len = (int)snprintf(buf, sizeof(buf), "%d", v);
   setContent(buf, len);
 }
 
-VStr::VStr (unsigned v) : dataptr(nullptr) {
+VStr::VStr (unsigned v) noexcept : dataptr(nullptr) {
   char buf[64];
   int len = (int)snprintf(buf, sizeof(buf), "%u", v);
   setContent(buf, len);
 }
 
-VStr::VStr (float v) : dataptr(nullptr) {
+VStr::VStr (float v) noexcept : dataptr(nullptr) {
   char buf[32];
   int len = f2s_buffered(v, buf);
   setContent(buf, len);
 }
 
-VStr::VStr (double v) : dataptr(nullptr) {
+VStr::VStr (double v) noexcept : dataptr(nullptr) {
   char buf[32];
   int len = d2s_buffered(v, buf);
   setContent(buf, len);
@@ -233,12 +233,12 @@ VStream &VStr::Serialise (VStream &Strm) const {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-VStr &VStr::operator += (float v) { char buf[32]; (void)f2s_buffered(v, buf); return operator+=(buf); }
-VStr &VStr::operator += (double v) { char buf[32]; (void)d2s_buffered(v, buf); return operator+=(buf); }
+VStr &VStr::operator += (float v) noexcept { char buf[32]; (void)f2s_buffered(v, buf); return operator+=(buf); }
+VStr &VStr::operator += (double v) noexcept { char buf[32]; (void)d2s_buffered(v, buf); return operator+=(buf); }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-VStr &VStr::utf8Append (vuint32 code) {
+VStr &VStr::utf8Append (vuint32 code) noexcept {
   if (code > 0x10FFFF) return operator+=('?');
   if (code <= 0x7f) return operator+=((char)(code&0xff));
   if (code <= 0x7FF) {
@@ -260,7 +260,7 @@ VStr &VStr::utf8Append (vuint32 code) {
 }
 
 
-__attribute__((warn_unused_result)) bool VStr::isUtf8Valid () const {
+__attribute__((warn_unused_result)) bool VStr::isUtf8Valid () const noexcept {
   int slen = length();
   if (slen < 1) return true;
   int pos = 0;
@@ -283,7 +283,7 @@ __attribute__((warn_unused_result)) bool VStr::isUtf8Valid () const {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-__attribute__((warn_unused_result)) VStr VStr::toLowerCase1251 () const {
+__attribute__((warn_unused_result)) VStr VStr::toLowerCase1251 () const noexcept {
   int slen = length();
   if (slen < 1) return VStr();
   const char *data = getData();
@@ -299,7 +299,7 @@ __attribute__((warn_unused_result)) VStr VStr::toLowerCase1251 () const {
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::toUpperCase1251 () const {
+__attribute__((warn_unused_result)) VStr VStr::toUpperCase1251 () const noexcept {
   int slen = length();
   if (slen < 1) return VStr();
   const char *data = getData();
@@ -316,7 +316,7 @@ __attribute__((warn_unused_result)) VStr VStr::toUpperCase1251 () const {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-__attribute__((warn_unused_result)) VStr VStr::toLowerCaseKOI () const {
+__attribute__((warn_unused_result)) VStr VStr::toLowerCaseKOI () const noexcept {
   int slen = length();
   if (slen < 1) return VStr();
   const char *data = getData();
@@ -332,7 +332,7 @@ __attribute__((warn_unused_result)) VStr VStr::toLowerCaseKOI () const {
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::toUpperCaseKOI () const {
+__attribute__((warn_unused_result)) VStr VStr::toUpperCaseKOI () const noexcept {
   int slen = length();
   if (slen < 1) return VStr();
   const char *data = getData();
@@ -349,7 +349,7 @@ __attribute__((warn_unused_result)) VStr VStr::toUpperCaseKOI () const {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-__attribute__((warn_unused_result)) int VStr::ICmp (const char *s0, const char *s1) {
+__attribute__((warn_unused_result)) int VStr::ICmp (const char *s0, const char *s1) noexcept {
   if (!s0) s0 = "";
   if (!s1) s1 = "";
   for (;;) {
@@ -365,7 +365,7 @@ __attribute__((warn_unused_result)) int VStr::ICmp (const char *s0, const char *
 }
 
 
-__attribute__((warn_unused_result)) int VStr::NICmp (const char *s0, const char *s1, size_t max) {
+__attribute__((warn_unused_result)) int VStr::NICmp (const char *s0, const char *s1, size_t max) noexcept {
   if (max == 0) return 0;
   if (!s0) s0 = "";
   if (!s1) s1 = "";
@@ -383,7 +383,7 @@ __attribute__((warn_unused_result)) int VStr::NICmp (const char *s0, const char 
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-__attribute__((warn_unused_result)) VStr VStr::utf2win () const {
+__attribute__((warn_unused_result)) VStr VStr::utf2win () const noexcept {
   // check if we should do anything at all
   int len = length();
   if (!len) return VStr(*this);
@@ -400,7 +400,7 @@ __attribute__((warn_unused_result)) VStr VStr::utf2win () const {
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::win2utf () const {
+__attribute__((warn_unused_result)) VStr VStr::win2utf () const noexcept {
   // check if we should do anything at all
   int len = length();
   if (!len) return VStr(*this);
@@ -420,7 +420,7 @@ __attribute__((warn_unused_result)) VStr VStr::win2utf () const {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-__attribute__((warn_unused_result)) VStr VStr::utf2koi () const {
+__attribute__((warn_unused_result)) VStr VStr::utf2koi () const noexcept {
   // check if we should do anything at all
   int len = length();
   if (!len) return VStr(*this);
@@ -437,7 +437,7 @@ __attribute__((warn_unused_result)) VStr VStr::utf2koi () const {
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::koi2utf () const {
+__attribute__((warn_unused_result)) VStr VStr::koi2utf () const noexcept {
   // check if we should do anything at all
   int len = length();
   if (!len) return VStr(*this);
@@ -457,7 +457,7 @@ __attribute__((warn_unused_result)) VStr VStr::koi2utf () const {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-__attribute__((warn_unused_result)) bool VStr::fnameEqu1251CI (const char *s) const {
+__attribute__((warn_unused_result)) bool VStr::fnameEqu1251CI (const char *s) const noexcept {
   size_t slen = length();
   if (!s || !s[0]) return (slen == 0);
   size_t pos = 0;
@@ -478,7 +478,7 @@ __attribute__((warn_unused_result)) bool VStr::fnameEqu1251CI (const char *s) co
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-__attribute__((warn_unused_result)) VStr VStr::mid (int start, int len) const {
+__attribute__((warn_unused_result)) VStr VStr::mid (int start, int len) const noexcept {
   int mylen = length();
   if (mylen == 0) return VStr();
   if (len <= 0 || start >= mylen) return VStr();
@@ -495,21 +495,21 @@ __attribute__((warn_unused_result)) VStr VStr::mid (int start, int len) const {
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::left (int len) const {
+__attribute__((warn_unused_result)) VStr VStr::left (int len) const noexcept {
   if (len < 1) return VStr();
   if (len >= length()) return VStr(*this);
   return mid(0, len);
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::right (int len) const {
+__attribute__((warn_unused_result)) VStr VStr::right (int len) const noexcept {
   if (len < 1) return VStr();
   if (len >= length()) return VStr(*this);
   return mid(length()-len, len);
 }
 
 
-void VStr::chopLeft (int len) {
+void VStr::chopLeft (int len) noexcept {
   if (len < 1) return;
   if (len >= length()) { clear(); return; }
   makeMutable();
@@ -518,7 +518,7 @@ void VStr::chopLeft (int len) {
 }
 
 
-void VStr::chopRight (int len) {
+void VStr::chopRight (int len) noexcept {
   if (len < 1) return;
   if (len >= length()) { clear(); return; }
   resize(length()-len);
@@ -526,7 +526,7 @@ void VStr::chopRight (int len) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-void VStr::makeImmutable () {
+void VStr::makeImmutable () noexcept {
   if (!dataptr) return; // nothing to do
   if (!atomicIsImmutable()) {
     //store()->rc = -0x0fffffff; // any negative means "immutable"
@@ -535,13 +535,13 @@ void VStr::makeImmutable () {
 }
 
 
-VStr &VStr::makeImmutableRetSelf () {
+VStr &VStr::makeImmutableRetSelf () noexcept {
   makeImmutable();
   return *this;
 }
 
 
-void VStr::makeMutable () {
+void VStr::makeMutable () noexcept {
   if (!dataptr || atomicIsUnique() == 1) return; // nothing to do
   // allocate new string
   Store *oldstore = store();
@@ -566,7 +566,7 @@ void VStr::makeMutable () {
 }
 
 
-void VStr::resize (int newlen) {
+void VStr::resize (int newlen) noexcept {
   // free string?
   if (newlen <= 0) {
     decref();
@@ -681,7 +681,7 @@ void VStr::resize (int newlen) {
 }
 
 
-void VStr::setContent (const char *s, int len) {
+void VStr::setContent (const char *s, int len) noexcept {
   if (s && s[0]) {
     if (len < 0) len = (int)strlen(s);
     size_t newsz = len+64;
@@ -705,7 +705,7 @@ void VStr::setContent (const char *s, int len) {
 }
 
 
-void VStr::setNameContent (const VName InName) {
+void VStr::setNameContent (const VName InName) noexcept {
   clear();
   if (!VName::IsInitialised()) {
     setContent(*InName);
@@ -716,7 +716,7 @@ void VStr::setNameContent (const VName InName) {
 }
 
 
-__attribute__((warn_unused_result)) bool VStr::StartsWith (const char *s) const {
+__attribute__((warn_unused_result)) bool VStr::StartsWith (const char *s) const noexcept {
   if (!s || !s[0]) return false;
   int l = length(s);
   if (l > length()) return false;
@@ -724,14 +724,14 @@ __attribute__((warn_unused_result)) bool VStr::StartsWith (const char *s) const 
 }
 
 
-__attribute__((warn_unused_result)) bool VStr::StartsWith (const VStr &s) const {
+__attribute__((warn_unused_result)) bool VStr::StartsWith (const VStr &s) const noexcept {
   int l = s.length();
   if (l > length()) return false;
   return (memcmp(getData(), *s, l) == 0);
 }
 
 
-__attribute__((warn_unused_result)) bool VStr::EndsWith (const char *s) const {
+__attribute__((warn_unused_result)) bool VStr::EndsWith (const char *s) const noexcept {
   if (!s || !s[0]) return false;
   int l = Length(s);
   if (l > length()) return false;
@@ -739,14 +739,14 @@ __attribute__((warn_unused_result)) bool VStr::EndsWith (const char *s) const {
 }
 
 
-__attribute__((warn_unused_result)) bool VStr::EndsWith (const VStr &s) const {
+__attribute__((warn_unused_result)) bool VStr::EndsWith (const VStr &s) const noexcept {
   int l = s.length();
   if (l > length()) return false;
   return (memcmp(getData()+length()-l, *s, l) == 0);
 }
 
 
-__attribute__((warn_unused_result)) bool VStr::startsWithNoCase (const char *s) const {
+__attribute__((warn_unused_result)) bool VStr::startsWithNoCase (const char *s) const noexcept {
   if (!s || !s[0]) return false;
   int l = length(s);
   if (l > length()) return false;
@@ -754,14 +754,14 @@ __attribute__((warn_unused_result)) bool VStr::startsWithNoCase (const char *s) 
 }
 
 
-__attribute__((warn_unused_result)) bool VStr::startsWithNoCase (const VStr &s) const {
+__attribute__((warn_unused_result)) bool VStr::startsWithNoCase (const VStr &s) const noexcept {
   int l = s.length();
   if (l > length()) return false;
   return (NICmp(getData(), *s, l) == 0);
 }
 
 
-__attribute__((warn_unused_result)) bool VStr::endsWithNoCase (const char *s) const {
+__attribute__((warn_unused_result)) bool VStr::endsWithNoCase (const char *s) const noexcept {
   if (!s || !s[0]) return false;
   int l = Length(s);
   if (l > length()) return false;
@@ -769,14 +769,14 @@ __attribute__((warn_unused_result)) bool VStr::endsWithNoCase (const char *s) co
 }
 
 
-__attribute__((warn_unused_result)) bool VStr::endsWithNoCase (const VStr &s) const {
+__attribute__((warn_unused_result)) bool VStr::endsWithNoCase (const VStr &s) const noexcept {
   int l = s.length();
   if (l > length()) return false;
   return (NICmp(getData()+length()-l, *s, l) == 0);
 }
 
 
-__attribute__((warn_unused_result)) bool VStr::startsWith (const char *str, const char *part) {
+__attribute__((warn_unused_result)) bool VStr::startsWith (const char *str, const char *part) noexcept {
   if (!str || !str[0]) return false;
   if (!part || !part[0]) return false;
   int slen = VStr::length(str);
@@ -786,7 +786,7 @@ __attribute__((warn_unused_result)) bool VStr::startsWith (const char *str, cons
 }
 
 
-__attribute__((warn_unused_result)) bool VStr::endsWith (const char *str, const char *part) {
+__attribute__((warn_unused_result)) bool VStr::endsWith (const char *str, const char *part) noexcept {
   if (!str || !str[0]) return false;
   if (!part || !part[0]) return false;
   int slen = VStr::length(str);
@@ -796,7 +796,7 @@ __attribute__((warn_unused_result)) bool VStr::endsWith (const char *str, const 
 }
 
 
-__attribute__((warn_unused_result)) bool VStr::startsWithNoCase (const char *str, const char *part) {
+__attribute__((warn_unused_result)) bool VStr::startsWithNoCase (const char *str, const char *part) noexcept {
   if (!str || !str[0]) return false;
   if (!part || !part[0]) return false;
   int slen = VStr::length(str);
@@ -806,7 +806,7 @@ __attribute__((warn_unused_result)) bool VStr::startsWithNoCase (const char *str
 }
 
 
-__attribute__((warn_unused_result)) bool VStr::endsWithNoCase (const char *str, const char *part) {
+__attribute__((warn_unused_result)) bool VStr::endsWithNoCase (const char *str, const char *part) noexcept {
   if (!str || !str[0]) return false;
   if (!part || !part[0]) return false;
   int slen = VStr::length(str);
@@ -816,7 +816,7 @@ __attribute__((warn_unused_result)) bool VStr::endsWithNoCase (const char *str, 
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::ToLower () const {
+__attribute__((warn_unused_result)) VStr VStr::ToLower () const noexcept {
   if (!dataptr) return VStr();
   bool hasWork = false;
   int l = length();
@@ -833,7 +833,7 @@ __attribute__((warn_unused_result)) VStr VStr::ToLower () const {
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::ToUpper () const {
+__attribute__((warn_unused_result)) VStr VStr::ToUpper () const noexcept {
   const char *data = getData();
   if (!data) return VStr();
   bool hasWork = false;
@@ -859,7 +859,7 @@ __attribute__((warn_unused_result)) VStr VStr::ToUpper () const {
 } while (0)
 
 
-static inline __attribute__((warn_unused_result)) const char *k8memmem (const char *hay, size_t haylen, const char *need, size_t needlen) {
+static inline __attribute__((warn_unused_result)) const char *k8memmem (const char *hay, size_t haylen, const char *need, size_t needlen) noexcept {
   if (haylen < needlen || needlen == 0) return nullptr;
   haylen -= needlen;
   ++haylen;
@@ -871,7 +871,7 @@ static inline __attribute__((warn_unused_result)) const char *k8memmem (const ch
 }
 
 
-static inline __attribute__((warn_unused_result)) const char *k8memrmem (const char *hay, size_t haylen, const char *need, size_t needlen) {
+static inline __attribute__((warn_unused_result)) const char *k8memrmem (const char *hay, size_t haylen, const char *need, size_t needlen) noexcept {
   if (haylen < needlen || needlen == 0) return nullptr;
   haylen -= needlen;
   hay += haylen;
@@ -884,7 +884,7 @@ static inline __attribute__((warn_unused_result)) const char *k8memrmem (const c
 }
 
 
-__attribute__((warn_unused_result)) int VStr::IndexOf (char c, int stpos) const {
+__attribute__((warn_unused_result)) int VStr::IndexOf (char c, int stpos) const noexcept {
   const char *data = getData();
   if (data && length()) {
     int l = int(length());
@@ -897,7 +897,7 @@ __attribute__((warn_unused_result)) int VStr::IndexOf (char c, int stpos) const 
 }
 
 
-__attribute__((warn_unused_result)) int VStr::IndexOf (const char *s, int stpos) const {
+__attribute__((warn_unused_result)) int VStr::IndexOf (const char *s, int stpos) const noexcept {
   if (!s || !s[0]) return -1;
   int sl = int(Length(s));
   int l = int(length());
@@ -916,7 +916,7 @@ __attribute__((warn_unused_result)) int VStr::IndexOf (const char *s, int stpos)
 }
 
 
-__attribute__((warn_unused_result)) int VStr::IndexOf (const VStr &s, int stpos) const {
+__attribute__((warn_unused_result)) int VStr::IndexOf (const VStr &s, int stpos) const noexcept {
   int sl = int(s.length());
   if (!sl) return -1;
   int l = int(length());
@@ -935,7 +935,7 @@ __attribute__((warn_unused_result)) int VStr::IndexOf (const VStr &s, int stpos)
 }
 
 
-__attribute__((warn_unused_result)) int VStr::LastIndexOf (char c, int stpos) const {
+__attribute__((warn_unused_result)) int VStr::LastIndexOf (char c, int stpos) const noexcept {
   const char *data = getData();
   if (data && length()) {
     int l = int(length());
@@ -954,7 +954,7 @@ __attribute__((warn_unused_result)) int VStr::LastIndexOf (char c, int stpos) co
 }
 
 
-__attribute__((warn_unused_result)) int VStr::LastIndexOf (const char *s, int stpos) const {
+__attribute__((warn_unused_result)) int VStr::LastIndexOf (const char *s, int stpos) const noexcept {
   if (!s || !s[0]) return -1;
   int sl = int(Length(s));
   int l = int(length());
@@ -973,7 +973,7 @@ __attribute__((warn_unused_result)) int VStr::LastIndexOf (const char *s, int st
 }
 
 
-__attribute__((warn_unused_result)) int VStr::LastIndexOf (const VStr &s, int stpos) const {
+__attribute__((warn_unused_result)) int VStr::LastIndexOf (const VStr &s, int stpos) const noexcept {
   int sl = int(s.length());
   if (!sl) return -1;
   int l = int(length());
@@ -994,7 +994,7 @@ __attribute__((warn_unused_result)) int VStr::LastIndexOf (const VStr &s, int st
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::Replace (const char *Search, const char *Replacement) const {
+__attribute__((warn_unused_result)) VStr VStr::Replace (const char *Search, const char *Replacement) const noexcept {
   if (length() == 0) return VStr(); // nothing to replace in an empty string
 
   size_t SLen = Length(Search);
@@ -1024,7 +1024,7 @@ __attribute__((warn_unused_result)) VStr VStr::Replace (const char *Search, cons
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::Replace (VStr Search, VStr Replacement) const {
+__attribute__((warn_unused_result)) VStr VStr::Replace (VStr Search, VStr Replacement) const noexcept {
   if (length() == 0) return VStr(); // nothing to replace in an empty string
 
   size_t SLen = Search.length();
@@ -1054,7 +1054,7 @@ __attribute__((warn_unused_result)) VStr VStr::Replace (VStr Search, VStr Replac
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::Utf8Substring (int start, int len) const {
+__attribute__((warn_unused_result)) VStr VStr::Utf8Substring (int start, int len) const noexcept {
   vassert(start >= 0);
   vassert(start <= (int)Utf8Length());
   vassert(len >= 0);
@@ -1066,7 +1066,7 @@ __attribute__((warn_unused_result)) VStr VStr::Utf8Substring (int start, int len
 }
 
 
-void VStr::Split (char c, TArray<VStr> &A) const {
+void VStr::Split (char c, TArray<VStr> &A) const noexcept {
   A.Clear();
   const char *data = getData();
   if (!data) return;
@@ -1081,7 +1081,7 @@ void VStr::Split (char c, TArray<VStr> &A) const {
 }
 
 
-void VStr::Split (const char *chars, TArray<VStr> &A) const {
+void VStr::Split (const char *chars, TArray<VStr> &A) const noexcept {
   A.Clear();
   const char *data = getData();
   if (!data) return;
@@ -1103,7 +1103,7 @@ void VStr::Split (const char *chars, TArray<VStr> &A) const {
 }
 
 
-void VStr::SplitOnBlanks (TArray<VStr> &A, bool doQuotedStrings) const {
+void VStr::SplitOnBlanks (TArray<VStr> &A, bool doQuotedStrings) const noexcept {
   A.Clear();
   const char *data = getData();
   if (!data) return;
@@ -1129,7 +1129,7 @@ void VStr::SplitOnBlanks (TArray<VStr> &A, bool doQuotedStrings) const {
 
 
 // split string to path components; first component can be '/', others has no slashes
-void VStr::SplitPath (TArray<VStr>& arr) const {
+void VStr::SplitPath (TArray<VStr>& arr) const noexcept {
   arr.Clear();
   const char *data = getData();
   if (!data) return;
@@ -1164,7 +1164,7 @@ void VStr::SplitPath (TArray<VStr>& arr) const {
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::trimRight () const {
+__attribute__((warn_unused_result)) VStr VStr::trimRight () const noexcept {
   const char *s = getCStr();
   int len = length();
   int pos = len;
@@ -1175,7 +1175,7 @@ __attribute__((warn_unused_result)) VStr VStr::trimRight () const {
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::trimLeft () const {
+__attribute__((warn_unused_result)) VStr VStr::trimLeft () const noexcept {
   const char *s = getCStr();
   int pos = 0, len = length();
   while (pos < len && (vuint8)(s[pos]) <= ' ') ++pos;
@@ -1185,7 +1185,7 @@ __attribute__((warn_unused_result)) VStr VStr::trimLeft () const {
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::trimAll () const {
+__attribute__((warn_unused_result)) VStr VStr::trimAll () const noexcept {
   const char *s = getCStr();
   int len = length();
   int lc = 0, rc = len;
@@ -1197,7 +1197,7 @@ __attribute__((warn_unused_result)) VStr VStr::trimAll () const {
 }
 
 
-__attribute__((warn_unused_result)) bool VStr::IsValidUtf8 () const {
+__attribute__((warn_unused_result)) bool VStr::IsValidUtf8 () const noexcept {
   const char *data = getData();
   if (!data) return true;
   for (const char *c = data; *c;) {
@@ -1220,7 +1220,7 @@ __attribute__((warn_unused_result)) bool VStr::IsValidUtf8 () const {
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::Latin1ToUtf8 () const {
+__attribute__((warn_unused_result)) VStr VStr::Latin1ToUtf8 () const noexcept {
   const char *data = getData();
   VStr res;
   for (int i = 0; i < length(); ++i) res += FromUtf8Char((vuint8)data[i]);
@@ -1229,7 +1229,7 @@ __attribute__((warn_unused_result)) VStr VStr::Latin1ToUtf8 () const {
 
 
 //FIXME: make this faster
-__attribute__((warn_unused_result)) VStr VStr::xmlEscape () const {
+__attribute__((warn_unused_result)) VStr VStr::xmlEscape () const noexcept {
   const char *c = getData();
   if (!c || !c[0]) return EmptyString;
   for (const char *s = c; *s; ++s) {
@@ -1262,7 +1262,7 @@ __attribute__((warn_unused_result)) VStr VStr::xmlEscape () const {
 
 
 //FIXME: make this faster
-__attribute__((warn_unused_result)) VStr VStr::xmlUnescape () const {
+__attribute__((warn_unused_result)) VStr VStr::xmlUnescape () const noexcept {
   VStr res;
   const char *c = getData();
   if (!c || !c[0]) return res;
@@ -1300,7 +1300,7 @@ __attribute__((warn_unused_result)) VStr VStr::xmlUnescape () const {
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::EvalEscapeSequences () const {
+__attribute__((warn_unused_result)) VStr VStr::EvalEscapeSequences () const noexcept {
   VStr res;
   const char *c = getData();
   if (!c || !c[0]) return res;
@@ -1356,7 +1356,7 @@ __attribute__((warn_unused_result)) VStr VStr::EvalEscapeSequences () const {
 }
 
 
-__attribute__((warn_unused_result)) bool VStr::MustBeSanitized () const {
+__attribute__((warn_unused_result)) bool VStr::MustBeSanitized () const noexcept {
   int len = (int)length();
   if (len < 1) return false;
   const vuint8 *s = (const vuint8 *)getData();
@@ -1371,7 +1371,7 @@ __attribute__((warn_unused_result)) bool VStr::MustBeSanitized () const {
 }
 
 
-__attribute__((warn_unused_result)) bool VStr::MustBeSanitized (const char *str) {
+__attribute__((warn_unused_result)) bool VStr::MustBeSanitized (const char *str) noexcept {
   if (!str || !str[0]) return false;
   for (const vuint8 *s = (const vuint8 *)str; *s; ++s) {
     if (*s != '\n' && *s != '\t' && *s != '\r') {
@@ -1382,7 +1382,7 @@ __attribute__((warn_unused_result)) bool VStr::MustBeSanitized (const char *str)
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::RemoveColors () const {
+__attribute__((warn_unused_result)) VStr VStr::RemoveColors () const noexcept {
   const char *data = getData();
   if (!data) return VStr();
   const int oldlen = (int)length();
@@ -1436,7 +1436,7 @@ __attribute__((warn_unused_result)) VStr VStr::RemoveColors () const {
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::ExtractFilePath () const {
+__attribute__((warn_unused_result)) VStr VStr::ExtractFilePath () const noexcept {
   const char *src = getData()+length();
 #if !defined(_WIN32)
   while (src != getData() && src[-1] != '/') --src;
@@ -1447,7 +1447,7 @@ __attribute__((warn_unused_result)) VStr VStr::ExtractFilePath () const {
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::ExtractFileName () const {
+__attribute__((warn_unused_result)) VStr VStr::ExtractFileName () const noexcept {
   const char *data = getData();
   const char *src = data+length();
 #if !defined(_WIN32)
@@ -1459,7 +1459,7 @@ __attribute__((warn_unused_result)) VStr VStr::ExtractFileName () const {
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::ExtractFileBase (bool doSysError) const {
+__attribute__((warn_unused_result)) VStr VStr::ExtractFileBase (bool doSysError) const noexcept {
   int i = int(length());
 
   if (i == 0) return VStr();
@@ -1486,7 +1486,7 @@ __attribute__((warn_unused_result)) VStr VStr::ExtractFileBase (bool doSysError)
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::ExtractFileBaseName () const {
+__attribute__((warn_unused_result)) VStr VStr::ExtractFileBaseName () const noexcept {
   int i = int(length());
 
   if (i == 0) return VStr();
@@ -1503,7 +1503,7 @@ __attribute__((warn_unused_result)) VStr VStr::ExtractFileBaseName () const {
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::ExtractFileExtension () const {
+__attribute__((warn_unused_result)) VStr VStr::ExtractFileExtension () const noexcept {
   const char *data = getData();
   const char *src = data+length();
   while (src != data) {
@@ -1520,7 +1520,7 @@ __attribute__((warn_unused_result)) VStr VStr::ExtractFileExtension () const {
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::StripExtension () const {
+__attribute__((warn_unused_result)) VStr VStr::StripExtension () const noexcept {
   const char *data = getData();
   const char *src = data+length();
   while (src != data) {
@@ -1537,7 +1537,7 @@ __attribute__((warn_unused_result)) VStr VStr::StripExtension () const {
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::DefaultPath (VStr basepath) const {
+__attribute__((warn_unused_result)) VStr VStr::DefaultPath (VStr basepath) const noexcept {
   const char *data = getData();
 #if !defined(_WIN32)
   if (data && data[0] == '/') return *this; // absolute path location
@@ -1551,7 +1551,7 @@ __attribute__((warn_unused_result)) VStr VStr::DefaultPath (VStr basepath) const
 
 
 // if path doesn't have a .EXT, append extension (extension should include the leading dot)
-__attribute__((warn_unused_result)) VStr VStr::DefaultExtension (VStr extension) const {
+__attribute__((warn_unused_result)) VStr VStr::DefaultExtension (VStr extension) const noexcept {
   const char *data = getData();
   const char *src = data+length();
   while (src != data) {
@@ -1568,7 +1568,7 @@ __attribute__((warn_unused_result)) VStr VStr::DefaultExtension (VStr extension)
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::FixFileSlashes () const {
+__attribute__((warn_unused_result)) VStr VStr::FixFileSlashes () const noexcept {
   const char *data = getData();
   bool hasWork = false;
   for (const char *c = data; *c; ++c) if (*c == '\\') { hasWork = true; break; }
@@ -1583,7 +1583,7 @@ __attribute__((warn_unused_result)) VStr VStr::FixFileSlashes () const {
 }
 
 
-__attribute__((warn_unused_result)) bool VStr::IsAbsolutePath () const {
+__attribute__((warn_unused_result)) bool VStr::IsAbsolutePath () const noexcept {
   if (length() < 1) return false;
   const char *data = getData();
 #ifdef _WIN32
@@ -1596,7 +1596,7 @@ __attribute__((warn_unused_result)) bool VStr::IsAbsolutePath () const {
 }
 
 
-__attribute__((warn_unused_result)) int VStr::Utf8Length (const char *s, int len) {
+__attribute__((warn_unused_result)) int VStr::Utf8Length (const char *s, int len) noexcept {
   if (len < 0) len = (s && s[0] ? (int)strlen(s) : 0);
   int count = 0;
   while (len-- > 0) if (((*s++)&0xc0) != 0x80) ++count;
@@ -1604,7 +1604,7 @@ __attribute__((warn_unused_result)) int VStr::Utf8Length (const char *s, int len
 }
 
 
-__attribute__((warn_unused_result)) size_t VStr::ByteLengthForUtf8 (const char *s, size_t N) {
+__attribute__((warn_unused_result)) size_t VStr::ByteLengthForUtf8 (const char *s, size_t N) noexcept {
   if (s) {
     size_t count = 0;
     const char *c;
@@ -1622,7 +1622,7 @@ __attribute__((warn_unused_result)) size_t VStr::ByteLengthForUtf8 (const char *
 }
 
 
-__attribute__((warn_unused_result)) int VStr::Utf8GetChar (const char *&s) {
+__attribute__((warn_unused_result)) int VStr::Utf8GetChar (const char *&s) noexcept {
   if ((vuint8)*s < 128) return *s++;
   int cnt, val;
   if ((*s&0xe0) == 0xc0) {
@@ -1654,7 +1654,7 @@ __attribute__((warn_unused_result)) int VStr::Utf8GetChar (const char *&s) {
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::FromUtf8Char (int c) {
+__attribute__((warn_unused_result)) VStr VStr::FromUtf8Char (int c) noexcept {
   char res[8];
   if (c < 0x80) {
     res[0] = c;
@@ -1679,7 +1679,7 @@ __attribute__((warn_unused_result)) VStr VStr::FromUtf8Char (int c) {
 }
 
 
-__attribute__((warn_unused_result)) bool VStr::needQuoting () const {
+__attribute__((warn_unused_result)) bool VStr::needQuoting () const noexcept {
   int len = length();
   const char *data = getData();
   for (int f = 0; f < len; ++f) {
@@ -1690,7 +1690,7 @@ __attribute__((warn_unused_result)) bool VStr::needQuoting () const {
 }
 
 
-__attribute__((warn_unused_result)) VStr VStr::quote (bool addQCh) const {
+__attribute__((warn_unused_result)) VStr VStr::quote (bool addQCh) const noexcept {
   int len = length();
   char hexb[6];
   const char *data = getData();
@@ -1737,7 +1737,7 @@ __attribute__((warn_unused_result)) VStr VStr::quote (bool addQCh) const {
 //  VStr::buf2hex
 //
 //==========================================================================
-__attribute__((warn_unused_result)) VStr VStr::buf2hex (const void *buf, int buflen) {
+__attribute__((warn_unused_result)) VStr VStr::buf2hex (const void *buf, int buflen) noexcept {
   static const char *hexd = "0123456789abcdef";
   VStr res;
   if (buflen < 0 || !buf) return res;
@@ -1758,7 +1758,7 @@ __attribute__((warn_unused_result)) VStr VStr::buf2hex (const void *buf, int buf
 //  VStr::convertInt
 //
 //==========================================================================
-bool VStr::convertInt (const char *s, int *outv, bool loose) {
+bool VStr::convertInt (const char *s, int *outv, bool loose) noexcept {
   bool neg = false;
   int dummy = 0;
   if (!outv) outv = &dummy;
@@ -1800,7 +1800,7 @@ bool VStr::convertInt (const char *s, int *outv, bool loose) {
 //  VStr::convertFloat
 //
 //==========================================================================
-bool VStr::convertFloat (const char *s, float *outv, const float *defval) {
+bool VStr::convertFloat (const char *s, float *outv, const float *defval) noexcept {
   float dummy = 0;
   if (!outv) outv = &dummy;
   *outv = 0.0f;
@@ -1935,7 +1935,7 @@ bool VStr::convertFloat (const char *s, float *outv, const float *defval) {
 //  VStr::globmatch
 //
 //==========================================================================
-__attribute__((warn_unused_result)) bool VStr::globmatch (const char *str, const char *pat, bool caseSensitive) {
+__attribute__((warn_unused_result)) bool VStr::globmatch (const char *str, const char *pat, bool caseSensitive) noexcept {
   bool star = false;
   if (!pat) pat = "";
   if (!str) str = "";
@@ -2023,7 +2023,7 @@ starCheck:
 //  VStr::Tokenise
 //
 //==========================================================================
-void VStr::Tokenise (TArray <VStr> &args) const {
+void VStr::Tokenise (TArray <VStr> &args) const noexcept {
   //args.reset();
   if (length() == 0) return;
   const char *str = getCStr();
@@ -2100,7 +2100,7 @@ void VStr::Tokenise (TArray <VStr> &args) const {
 //  (i.e. result can be >0 even if there are no ';')
 //
 //==========================================================================
-int VStr::findNextCommand (int stpos, bool skipLeadingSpaces) const {
+int VStr::findNextCommand (int stpos, bool skipLeadingSpaces) const noexcept {
   if (stpos < 0) stpos = 0;
   const int len = length();
   if (stpos >= len) return len;
@@ -2131,7 +2131,7 @@ int VStr::findNextCommand (int stpos, bool skipLeadingSpaces) const {
 //  VStr::isSafeDiskFileName
 //
 //==========================================================================
-__attribute__((warn_unused_result)) bool VStr::isSafeDiskFileName () const {
+__attribute__((warn_unused_result)) bool VStr::isSafeDiskFileName () const noexcept {
   if (length() == 0) return false;
   const char *s = getCStr();
   if (isPathDelimiter(s[0])) return false;
@@ -2158,10 +2158,10 @@ struct VaBuffer {
   bool alloced;
   char initbuf[32768];
 
-  VaBuffer () : buf(initbuf), bufsize(sizeof(initbuf)), alloced(false) {}
-  ~VaBuffer () { if (alloced) Z_Free(buf); buf = nullptr; alloced = false; bufsize = 0; }
+  VaBuffer () noexcept : buf(initbuf), bufsize(sizeof(initbuf)), alloced(false) {}
+  ~VaBuffer () noexcept { if (alloced) Z_Free(buf); buf = nullptr; alloced = false; bufsize = 0; }
 
-  void ensureSize (size_t size) {
+  void ensureSize (size_t size) noexcept {
     size = ((size+1)|0x1fff)+1;
     if (size <= bufsize) return;
     if (size > 1024*1024*2) Sys_Error("`va` buffer too big");
@@ -2184,7 +2184,7 @@ static thread_local unsigned vabufcurr = 0;
 //  vavarg
 //
 //==========================================================================
-__attribute__((warn_unused_result)) char *vavarg (const char *text, va_list ap) {
+__attribute__((warn_unused_result)) char *vavarg (const char *text, va_list ap) noexcept {
   const unsigned bufnum = vabufcurr;
   vabufcurr = (vabufcurr+1)%VA_BUFFER_COUNT;
   VaBuffer &vbuf = vabufs[bufnum];
@@ -2211,7 +2211,7 @@ __attribute__((warn_unused_result)) char *vavarg (const char *text, va_list ap) 
 //  varargs versions of all text functions.
 //
 //==========================================================================
-__attribute__((format(printf, 1, 2))) __attribute__((warn_unused_result)) char *va (const char *text, ...) {
+__attribute__((format(printf, 1, 2))) __attribute__((warn_unused_result)) char *va (const char *text, ...) noexcept {
   va_list ap;
   va_start(ap, text);
   char *res = vavarg(text, ap);

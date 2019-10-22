@@ -47,14 +47,14 @@ static volatile bool zShuttingDown = false;
 #endif
 
 
-static inline void ZManDeactivate () {
+static inline void ZManDeactivate () noexcept {
 #ifdef VAVOOM_USE_MIMALLOC
   __atomic_store_n(&zShuttingDown, true, __ATOMIC_SEQ_CST);
 #endif
 }
 
 
-static inline bool isZManActive () {
+static inline bool isZManActive () noexcept {
 #ifdef VAVOOM_USE_MIMALLOC
   bool res = false;
   __atomic_load(&zShuttingDown, &res, __ATOMIC_SEQ_CST);
@@ -76,7 +76,7 @@ static inline bool isZManActive () {
 #endif
 
 
-const char *Z_GetAllocatorType () {
+const char *Z_GetAllocatorType () noexcept {
 #ifdef VAVOOM_USE_MIMALLOC
   return "mi-malloc";
 #else
@@ -86,7 +86,7 @@ const char *Z_GetAllocatorType () {
 
 
 __attribute__((malloc)) __attribute__((alloc_size(1))) __attribute__((returns_nonnull))
-void *Z_Malloc (size_t size) {
+void *Z_Malloc (size_t size) noexcept {
 #ifdef VAVOOM_CORE_COUNT_ALLOCS
   ++zone_malloc_call_count;
 #endif
@@ -97,7 +97,7 @@ void *Z_Malloc (size_t size) {
 }
 
 
-__attribute__((alloc_size(2))) void *Z_Realloc (void *ptr, size_t size) {
+__attribute__((alloc_size(2))) void *Z_Realloc (void *ptr, size_t size) noexcept {
 #ifdef VAVOOM_CORE_COUNT_ALLOCS
   ++zone_realloc_call_count;
 #endif
@@ -116,7 +116,7 @@ __attribute__((alloc_size(2))) void *Z_Realloc (void *ptr, size_t size) {
 
 
 __attribute__((malloc)) __attribute__((alloc_size(1))) __attribute__((returns_nonnull))
-void *Z_Calloc (size_t size) {
+void *Z_Calloc (size_t size) noexcept {
 #if !defined(VAVOOM_USE_MIMALLOC)
   void *res = ::calloc(1, (size > 0 ? size : 1));
 #else
@@ -130,7 +130,7 @@ void *Z_Calloc (size_t size) {
 }
 
 
-void Z_Free (void *ptr) {
+void Z_Free (void *ptr) noexcept {
   if (!isZManActive()) return; // shitdoze hack
 #ifdef VAVOOM_CORE_COUNT_ALLOCS
   ++zone_free_call_count;
@@ -141,19 +141,19 @@ void Z_Free (void *ptr) {
 
 
 // call this when exiting a thread function, to reclaim thread heaps
-void Z_ThreadDone () {
+void Z_ThreadDone () noexcept {
 #if defined(VAVOOM_USE_MIMALLOC)
   if (isZManActive()) ::mi_thread_done();
 #endif
 }
 
 
-void Z_ShuttingDown () {
+void Z_ShuttingDown () noexcept {
   ZManDeactivate();
 }
 
 
-__attribute__((noreturn)) void Z_Exit (int exitcode) {
+__attribute__((noreturn)) void Z_Exit (int exitcode) noexcept {
   Z_ShuttingDown();
   exit(exitcode);
 }
@@ -173,15 +173,25 @@ void *operator new[] (size_t size) noexcept(false) {
   //fprintf(stderr, "NEW[]: %u\n", (unsigned int)size);
   return Z_Calloc(size);
 }
+/*
+void *operator new (size_t size) noexcept {
+  //fprintf(stderr, "NEW: %u\n", (unsigned int)size);
+  return Z_Calloc(size);
+}
 
-void operator delete (void *p) {
+void *operator new[] (size_t size) noexcept {
+  //fprintf(stderr, "NEW[]: %u\n", (unsigned int)size);
+  return Z_Calloc(size);
+}
+*/
+
+void operator delete (void *p) noexcept {
   if (!isZManActive()) return; // shitdoze hack
   //fprintf(stderr, "delete (%p)\n", p);
   Z_Free(p);
 }
 
-
-void operator delete[] (void *p) {
+void operator delete[] (void *p) noexcept {
   if (!isZManActive()) return; // shitdoze hack
   //fprintf(stderr, "delete[] (%p)\n", p);
   Z_Free(p);

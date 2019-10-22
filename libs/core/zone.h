@@ -28,6 +28,18 @@
 //**
 //**************************************************************************
 #ifdef __cplusplus
+#include <stdint.h>
+void *operator new (size_t size) noexcept(false);
+void *operator new[] (size_t size) noexcept(false);
+void operator delete (void *p) noexcept;
+void operator delete[] (void *p) noexcept;
+# define VV_ZONE_NOEXCEPT  noexcept
+#else
+# define VV_ZONE_NOEXCEPT
+#endif
+
+
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -38,31 +50,31 @@ extern int zone_free_call_count;
 #endif
 
 
-const char *Z_GetAllocatorType ();
+const char *Z_GetAllocatorType () VV_ZONE_NOEXCEPT;
 
 
 // shitdoze, for some idiotic shitdoze reason, calls our `delete` on
 // a thing it allocated with standard `new`. this causes segfault in mi-malloc.
 // so call this function before returning from `main()`.
-void Z_ShuttingDown ();
+void Z_ShuttingDown () VV_ZONE_NOEXCEPT;
 
 // this calls `Z_ShuttingDown()`
-__attribute__((noreturn)) void Z_Exit (int exitcode);
+__attribute__((noreturn)) void Z_Exit (int exitcode) VV_ZONE_NOEXCEPT;
 
 
 __attribute__((malloc)) __attribute__((alloc_size(1))) __attribute__((returns_nonnull))
-void *Z_Malloc (size_t size);
+void *Z_Malloc (size_t size) VV_ZONE_NOEXCEPT;
 
 __attribute__((alloc_size(2)))
-void *Z_Realloc (void *ptr, size_t size);
+void *Z_Realloc (void *ptr, size_t size) VV_ZONE_NOEXCEPT;
 
 __attribute__((malloc)) __attribute__((alloc_size(1))) __attribute__((returns_nonnull))
-void *Z_Calloc (size_t size);
+void *Z_Calloc (size_t size) VV_ZONE_NOEXCEPT;
 
-void Z_Free (void *ptr);
+void Z_Free (void *ptr) VV_ZONE_NOEXCEPT;
 
 // call this when exiting a thread function, to reclaim thread heaps
-void Z_ThreadDone ();
+void Z_ThreadDone () VV_ZONE_NOEXCEPT;
 
 
 #ifdef __cplusplus
