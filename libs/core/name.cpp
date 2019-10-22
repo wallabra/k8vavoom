@@ -63,7 +63,7 @@ VName::VNameEntry VName::AutoNames[] = {
 //  VName::GetAutoNameCounter
 //
 //==========================================================================
-int VName::GetAutoNameCounter () {
+int VName::GetAutoNameCounter () noexcept {
   return (int)ARRAY_COUNT(AutoNames);
 }
 
@@ -73,7 +73,7 @@ int VName::GetAutoNameCounter () {
 //  VName::AppendNameEntry
 //
 //==========================================================================
-int VName::AppendNameEntry (VNameEntry *e) {
+int VName::AppendNameEntry (VNameEntry *e) noexcept {
   vassert(e);
   if (NamesCount >= NamesAlloced) {
     if (NamesAlloced > 0x1fffffff) Sys_Error("too many names");
@@ -95,7 +95,7 @@ int VName::AppendNameEntry (VNameEntry *e) {
 //  AllocateNameEntry
 //
 //==========================================================================
-static VName::VNameEntry *AllocateNameEntry (const char *Name, VName::VNameEntry *HashNext) {
+static VName::VNameEntry *AllocateNameEntry (const char *Name, VName::VNameEntry *HashNext) noexcept {
   const int slen = int(VStr::Length(Name));
   size_t size = sizeof(VName::VNameEntry)-(PREDEFINED_NAME_SIZE+1)+slen+1;
   VName::VNameEntry *e = (VName::VNameEntry *)Z_Calloc(size);
@@ -113,7 +113,7 @@ static VName::VNameEntry *AllocateNameEntry (const char *Name, VName::VNameEntry
 //  VName::VName
 //
 //==========================================================================
-VName::VName (const char *Name, ENameFindType FindType) {
+VName::VName (const char *Name, ENameFindType FindType) noexcept {
   Index = NAME_None;
   // make sure name is valid
   if (!Name || !Name[0]) return;
@@ -188,7 +188,7 @@ VName::VName (const char *Name, ENameFindType FindType) {
 //  VName::operator ==
 //
 //==========================================================================
-bool VName::operator == (const VStr &s) const {
+bool VName::operator == (const VStr &s) const noexcept {
   if (Index == NAME_None) return s.isEmpty();
   if (Initialised) {
     vassert(Index >= 0 && Index < (int)NamesCount);
@@ -205,7 +205,7 @@ bool VName::operator == (const VStr &s) const {
 //  VName::operator ==
 //
 //==========================================================================
-bool VName::operator == (const char *s) const {
+bool VName::operator == (const char *s) const noexcept {
   if (!s) s = "";
   if (Index == NAME_None) return (s[0] == 0);
   if (Initialised) {
@@ -223,7 +223,7 @@ bool VName::operator == (const char *s) const {
 //  VName::SafeString
 //
 //==========================================================================
-const char *VName::SafeString (EName N) {
+const char *VName::SafeString (EName N) noexcept {
   if (N == NAME_None) return "";
   if (!Initialised) {
     if (N > NAME_None && N < (int)ARRAY_COUNT(AutoNames)) return AutoNames[N].Name;
@@ -242,7 +242,7 @@ const char *VName::SafeString (EName N) {
 //  won't abort on invalid index
 //
 //==========================================================================
-const char *VName::getCStr () const {
+const char *VName::getCStr () const noexcept {
   if (Initialised) {
     if (Index >= 0 && Index < (int)NamesCount) return Names[Index]->Name;
   } else {
@@ -257,7 +257,7 @@ const char *VName::getCStr () const {
 //  VName::StaticInit
 //
 //==========================================================================
-void VName::StaticInit () {
+void VName::StaticInit () noexcept {
   if (!Initialised) {
     memset((void *)HashTable, 0, sizeof(HashTable));
     // register hardcoded names
@@ -294,7 +294,7 @@ void VName::StaticInit () {
 //  VName::DebugDumpHashStats
 //
 //==========================================================================
-void VName::DebugDumpHashStats () {
+void VName::DebugDumpHashStats () noexcept {
   unsigned bkUsed = 0, bkMax = 0;
   unsigned spacedNames = 0;
   double bkSum = 0.0;
@@ -317,7 +317,7 @@ void VName::DebugDumpHashStats () {
 
 
 struct VNameAutoIniter {
-  VNameAutoIniter () { VName::StaticInit(); }
+  VNameAutoIniter () noexcept { VName::StaticInit(); }
   //~VNameAutoIniter () { VName::DebugDumpHashStats(); }
 };
 

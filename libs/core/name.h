@@ -67,8 +67,8 @@ private:
 
   static VNameEntry AutoNames[];
 
-  static int AppendNameEntry (VNameEntry *e);
-  static int GetAutoNameCounter ();
+  static int AppendNameEntry (VNameEntry *e) noexcept;
+  static int GetAutoNameCounter () noexcept;
 
 public:
   // different types of finding a name
@@ -82,15 +82,15 @@ public:
   };
 
   // constructors
-  VName () : Index(0) {}
-  VName (ENoInit) {}
-  VName (EName N) : Index(N) {}
-  VName (const char *, ENameFindType=Add);
+  VName ()  noexcept: Index(0) {}
+  VName (ENoInit)  noexcept{}
+  VName (EName N)  noexcept: Index(N) {}
+  VName (const char *, ENameFindType=Add) noexcept;
 
-  static inline bool IsInitialised () { return Initialised; }
+  static inline bool IsInitialised () noexcept { return Initialised; }
 
   // accessors
-  inline const char *operator * () const {
+  inline const char *operator * () const noexcept {
     if (Initialised) {
       vassert(Index >= 0 && Index < (int)NamesCount);
       return Names[Index]->Name;
@@ -101,11 +101,11 @@ public:
   }
 
   // won't abort on invalid index
-  const char *getCStr () const;
+  const char *getCStr () const noexcept;
 
-  inline vint32 GetIndex () const { return Index; }
+  inline vint32 GetIndex () const noexcept { return Index; }
 
-  inline bool isValid () const {
+  inline bool isValid () const noexcept {
     if (Initialised) {
       return (Index >= 0 && Index < (int)NamesCount);
     } else {
@@ -114,22 +114,22 @@ public:
   }
 
   // comparisons
-  inline bool operator == (const VName &Other) const { return (Index == Other.Index); }
-  inline bool operator != (const VName &Other) const { return (Index != Other.Index); }
-  bool operator == (const VStr &s) const; // alas, it has to be `&` due to include order
-  inline bool operator != (const VStr &s) const { return !(*this == s); }
-  bool operator == (const char *s) const; // alas, it has to be `&` due to include order
-  inline bool operator != (const char *s) const { return !(*this == s); }
+  inline bool operator == (const VName &Other) const noexcept { return (Index == Other.Index); }
+  inline bool operator != (const VName &Other) const noexcept { return (Index != Other.Index); }
+  bool operator == (const VStr &s) const noexcept; // alas, it has to be `&` due to include order
+  inline bool operator != (const VStr &s) const noexcept { return !(*this == s); }
+  bool operator == (const char *s) const noexcept; // alas, it has to be `&` due to include order
+  inline bool operator != (const char *s) const noexcept { return !(*this == s); }
 
   // global functions
-  static void StaticInit ();
-  //static void StaticExit ();
+  static void StaticInit () noexcept;
+  //static void StaticExit () noexcept;
 
-  static inline int GetNumNames () { return (Initialised ? (int)NamesCount : GetAutoNameCounter()); }
+  static inline int GetNumNames () noexcept { return (Initialised ? (int)NamesCount : GetAutoNameCounter()); }
 
-  static const char *SafeString (EName N);
+  static const char *SafeString (EName N) noexcept;
 
-  static VName CreateWithIndex (int i) {
+  static VName CreateWithIndex (int i) noexcept {
     if (Initialised) {
       vassert(i >= 0 && i < (int)NamesCount);
     } else {
@@ -140,7 +140,7 @@ public:
     return res;
   }
 
-  static void DebugDumpHashStats ();
+  static void DebugDumpHashStats () noexcept;
 };
 
 static_assert(sizeof(VName) == sizeof(vint32), "invalid VName class size!"); // for VavoomC
