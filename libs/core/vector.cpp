@@ -38,7 +38,7 @@ const TVec TVec::ZeroVector = TVec(0.0f, 0.0f, 0.0f);
 //  AngleVectors
 //
 //==========================================================================
-void AngleVectors (const TAVec &angles, TVec &forward, TVec &right, TVec &up) {
+void AngleVectors (const TAVec &angles, TVec &forward, TVec &right, TVec &up) noexcept {
   /*
   const float ay = DEG2RADF(angles.yaw);
   const float ap = DEG2RADF(angles.pitch);
@@ -103,7 +103,7 @@ void AngleVectors (const TAVec &angles, TVec &forward, TVec &right, TVec &up) {
 //  AngleRightVector
 //
 //==========================================================================
-void AngleRightVector (const TAVec &angles, TVec &right) {
+void AngleRightVector (const TAVec &angles, TVec &right) noexcept {
   float sy, cy;
   msincos(angles.yaw, &sy, &cy);
   if (angles.pitch) {
@@ -136,7 +136,7 @@ void AngleRightVector (const TAVec &angles, TVec &right) {
 //  YawVectorRight
 //
 //==========================================================================
-void YawVectorRight (float yaw, TVec &right) {
+void YawVectorRight (float yaw, TVec &right) noexcept {
   /*
   float sy, cy;
   msincos(yaw, &sy, &cy);
@@ -154,7 +154,7 @@ void YawVectorRight (float yaw, TVec &right) {
 //  AngleVector
 //
 //==========================================================================
-void AngleVector (const TAVec &angles, TVec &forward) {
+void AngleVector (const TAVec &angles, TVec &forward) noexcept {
   /*
   const float ay = DEG2RADF(angles.yaw);
   const float ap = DEG2RADF(angles.pitch);
@@ -186,7 +186,7 @@ void AngleVector (const TAVec &angles, TVec &forward) {
 //  VectorAngles
 //
 //==========================================================================
-void VectorAngles (const TVec &vec, TAVec &angles) {
+void VectorAngles (const TVec &vec, TAVec &angles) noexcept {
   const float fx = vec.x;
   const float fy = vec.y;
   const float len2d = VSUM2(fx*fx, fy*fy);
@@ -206,7 +206,7 @@ void VectorAngles (const TVec &vec, TAVec &angles) {
 //  VectorsAngles
 //
 //==========================================================================
-void VectorsAngles (const TVec &forward, const TVec &right, const TVec &up, TAVec &angles) {
+void VectorsAngles (const TVec &forward, const TVec &right, const TVec &up, TAVec &angles) noexcept {
   const float fx = forward.x;
   const float fy = forward.y;
   float len2d = VSUM2(fx*fx, fy*fy);
@@ -235,7 +235,7 @@ void VectorsAngles (const TVec &forward, const TVec &right, const TVec &up, TAVe
 //  assumes "src" is normalised
 //
 //==========================================================================
-void PerpendicularVector (TVec &dst, const TVec &src) {
+void PerpendicularVector (TVec &dst, const TVec &src) noexcept {
   unsigned pos;
   unsigned i;
   float minelem = 1.0f;
@@ -265,7 +265,7 @@ void PerpendicularVector (TVec &dst, const TVec &src) {
 //  RotateVectorAroundVector
 //
 //==========================================================================
-__attribute__((warn_unused_result)) TVec RotateVectorAroundVector (const TVec &Vector, const TVec &Axis, float Angle) {
+__attribute__((warn_unused_result)) TVec RotateVectorAroundVector (const TVec &Vector, const TVec &Axis, float Angle) noexcept {
   VRotMatrix M(Axis, Angle);
   return Vector*M;
 }
@@ -276,7 +276,7 @@ __attribute__((warn_unused_result)) TVec RotateVectorAroundVector (const TVec &V
 //  MatrixMultiply
 //
 //==========================================================================
-static void MatrixMultiply (const float in1[3][3], const float in2[3][3], float out[3][3]) {
+static void MatrixMultiply (const float in1[3][3], const float in2[3][3], float out[3][3]) noexcept {
   out[0][0] = in1[0][0]*in2[0][0]+in1[0][1]*in2[1][0]+in1[0][2]*in2[2][0];
   out[0][1] = in1[0][0]*in2[0][1]+in1[0][1]*in2[1][1]+in1[0][2]*in2[2][1];
   out[0][2] = in1[0][0]*in2[0][2]+in1[0][1]*in2[1][2]+in1[0][2]*in2[2][2];
@@ -296,7 +296,7 @@ static void MatrixMultiply (const float in1[3][3], const float in2[3][3], float 
 //  This is not implemented very well...
 //
 //==========================================================================
-void RotatePointAroundVector (TVec &dst, const TVec &dir, const TVec &point, float degrees) {
+void RotatePointAroundVector (TVec &dst, const TVec &dir, const TVec &point, float degrees) noexcept {
   float m[3][3];
   float im[3][3];
   float zrot[3][3];
@@ -354,7 +354,7 @@ void RotatePointAroundVector (TVec &dst, const TVec &dir, const TVec &point, flo
 //  RotateAroundDirection
 //
 //==========================================================================
-void RotateAroundDirection (TVec axis[3], float yaw) {
+void RotateAroundDirection (TVec axis[3], float yaw) noexcept {
   // create an arbitrary axis[1]
   PerpendicularVector(axis[1], axis[0]);
   // rotate it around axis[0] by yaw
@@ -375,7 +375,7 @@ void RotateAroundDirection (TVec axis[3], float yaw) {
 //  other perpendicular vectors
 //
 //==========================================================================
-void MakeNormalVectors (const TVec &forward, TVec &right, TVec &up) {
+void MakeNormalVectors (const TVec &forward, TVec &right, TVec &up) noexcept {
   // this rotate and negate guarantees a vector not colinear with the original
   right[1] = -forward[0];
   right[2] = forward[1];
@@ -405,7 +405,7 @@ void MakeNormalVectors (const TVec &forward, TVec &right, TVec &up) {
 //
 //==========================================================================
 /*
-bool TPlane::checkBox (const float bbox[6]) const {
+bool TPlane::checkBox (const float bbox[6]) const noexcept {
 #ifdef FRUSTUM_BBOX_CHECKS
   vassert(bbox[0] <= bbox[3+0]);
   vassert(bbox[1] <= bbox[3+1]);
@@ -432,7 +432,7 @@ bool TPlane::checkBox (const float bbox[6]) const {
 //
 //==========================================================================
 /*
-int TPlane::checkBoxEx (const float bbox[6]) const {
+int TPlane::checkBoxEx (const float bbox[6]) const noexcept {
 #ifdef FRUSTUM_BBOX_CHECKS
   vassert(bbox[0] <= bbox[3+0]);
   vassert(bbox[1] <= bbox[3+1]);
@@ -464,7 +464,7 @@ int TPlane::checkBoxEx (const float bbox[6]) const {
 //  CreateBBox
 //
 //==========================================================================
-static inline void CreateBBox (float bbox[6], const TVec &v0, const TVec &v1) {
+static inline void CreateBBox (float bbox[6], const TVec &v0, const TVec &v1) noexcept {
   if (v0.x < v1.x) {
     bbox[0+0] = v0.x;
     bbox[3+0] = v1.x;
@@ -496,7 +496,7 @@ static inline void CreateBBox (float bbox[6], const TVec &v0, const TVec &v1) {
 //  returns `false` is rect is on the back of the plane
 //
 //==========================================================================
-bool TPlane::checkRect (const TVec &v0, const TVec &v1) const {
+bool TPlane::checkRect (const TVec &v0, const TVec &v1) const noexcept {
   //FIXME: this can be faster
   float bbox[6];
   CreateBBox(bbox, v0, v1);
@@ -511,7 +511,7 @@ bool TPlane::checkRect (const TVec &v0, const TVec &v1) const {
 //  0: completely outside; >0: completely inside; <0: partially inside
 //
 //==========================================================================
-int TPlane::checkRectEx (const TVec &v0, const TVec &v1) const {
+int TPlane::checkRectEx (const TVec &v0, const TVec &v1) const noexcept {
   //FIXME: this can be faster
   float bbox[6];
   CreateBBox(bbox, v0, v1);
@@ -531,7 +531,7 @@ int TPlane::checkRectEx (const TVec &v0, const TVec &v1) const {
 //  3: in both
 //
 //==========================================================================
-int TPlane::BoxOnPlaneSide (const TVec &emins, const TVec &emaxs) const {
+int TPlane::BoxOnPlaneSide (const TVec &emins, const TVec &emaxs) const noexcept {
   TVec corners[2];
 
   // create the proper leading and trailing verts for the box
@@ -561,7 +561,7 @@ int TPlane::BoxOnPlaneSide (const TVec &emins, const TVec &emaxs) const {
 //  TClipBase::setupFromFOVs
 //
 //==========================================================================
-void TClipBase::setupFromFOVs (const float afovx, const float afovy) {
+void TClipBase::setupFromFOVs (const float afovx, const float afovy) noexcept {
   if (afovx == 0.0f || afovy == 0.0f || !isFiniteF(afovx) || !isFiniteF(afovy)) {
     clear();
   } else {
@@ -582,7 +582,7 @@ void TClipBase::setupFromFOVs (const float afovx, const float afovy) {
 //  TClipBase::setupViewport
 //
 //==========================================================================
-void TClipBase::setupViewport (int awidth, int aheight, float afov, float apixelAspect) {
+void TClipBase::setupViewport (int awidth, int aheight, float afov, float apixelAspect) noexcept {
   if (awidth < 1 || aheight < 1 || afov <= 0.01f || apixelAspect <= 0) {
     clear();
     return;
@@ -598,7 +598,7 @@ void TClipBase::setupViewport (int awidth, int aheight, float afov, float apixel
 //  TClipBase::setupViewport
 //
 //==========================================================================
-void TClipBase::setupViewport (const TClipParam &cp) {
+void TClipBase::setupViewport (const TClipParam &cp) noexcept {
   if (!cp.isValid()) {
     clear();
     return;
@@ -617,7 +617,7 @@ void TClipBase::setupViewport (const TClipParam &cp) {
 //  `clip_base` is from engine's `SetupFrame()` or `SetupCameraFrame()`
 //
 //==========================================================================
-void TFrustum::setup (const TClipBase &clipbase, const TFrustumParam &fp, bool createbackplane, const float farplanez) {
+void TFrustum::setup (const TClipBase &clipbase, const TFrustumParam &fp, bool createbackplane, const float farplanez) noexcept {
   clear();
   if (!clipbase.isValid() || !fp.isValid()) return;
   planeCount = 4; // anyway
@@ -666,7 +666,7 @@ void TFrustum::setup (const TClipBase &clipbase, const TFrustumParam &fp, bool c
 //  returns `false` is sphere is out of frustum (or frustum is not valid)
 //
 //==========================================================================
-bool TFrustum::checkPoint (const TVec &point, const unsigned mask) const {
+bool TFrustum::checkPoint (const TVec &point, const unsigned mask) const noexcept {
   if (!planeCount || !mask) return true;
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
@@ -686,7 +686,7 @@ bool TFrustum::checkPoint (const TVec &point, const unsigned mask) const {
 //  https://stackoverflow.com/questions/37512308/
 //
 //==========================================================================
-bool TFrustum::checkSphere (const TVec &center, const float radius, const unsigned mask) const {
+bool TFrustum::checkSphere (const TVec &center, const float radius, const unsigned mask) const noexcept {
   if (!planeCount || !mask) return true;
   if (radius <= 0) return checkPoint(center, mask);
   const TClipPlane *cp = &planes[0];
@@ -715,7 +715,7 @@ bool TFrustum::checkSphere (const TVec &center, const float radius, const unsign
 //    [5] is maxz
 //
 //==========================================================================
-bool TFrustum::checkBox (const float bbox[6], const unsigned mask) const {
+bool TFrustum::checkBox (const float bbox[6], const unsigned mask) const noexcept {
   if (!planeCount || !mask) return true;
 #ifdef FRUSTUM_BBOX_CHECKS
   vassert(bbox[0] <= bbox[3+0]);
@@ -751,7 +751,7 @@ bool TFrustum::checkBox (const float bbox[6], const unsigned mask) const {
 //  http://iquilezles.org/www/articles/frustumcorrect/frustumcorrect.htm
 //
 //==========================================================================
-int TFrustum::checkBoxEx (const float bbox[6], const unsigned mask) const {
+int TFrustum::checkBoxEx (const float bbox[6], const unsigned mask) const noexcept {
   if (!planeCount || !mask) return INSIDE;
 #ifdef FRUSTUM_BBOX_CHECKS
   vassert(bbox[0] <= bbox[3+0]);
@@ -804,7 +804,7 @@ int TFrustum::checkBoxEx (const float bbox[6], const unsigned mask) const {
 //  TFrustum::checkVerts
 //
 //==========================================================================
-bool TFrustum::checkVerts (const TVec *verts, const unsigned vcount, const unsigned mask) const {
+bool TFrustum::checkVerts (const TVec *verts, const unsigned vcount, const unsigned mask) const noexcept {
   if (!planeCount || !mask || !vcount) return true;
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
@@ -827,7 +827,7 @@ bool TFrustum::checkVerts (const TVec *verts, const unsigned vcount, const unsig
 //  TFrustum::checkVertsEx
 //
 //==========================================================================
-int TFrustum::checkVertsEx (const TVec *verts, const unsigned vcount, const unsigned mask) const {
+int TFrustum::checkVertsEx (const TVec *verts, const unsigned vcount, const unsigned mask) const noexcept {
   if (!planeCount || !mask || !vcount) return true;
   int res = INSIDE; // assume that the aabb will be inside the frustum
   const TClipPlane *cp = &planes[0];
@@ -863,7 +863,7 @@ int TFrustum::checkVertsEx (const TVec *verts, const unsigned vcount, const unsi
 //  TFrustum::checkQuadEx
 //
 //==========================================================================
-int TFrustum::checkQuadEx (const TVec &v1, const TVec &v2, const TVec &v3, const TVec &v4, const unsigned mask) const {
+int TFrustum::checkQuadEx (const TVec &v1, const TVec &v2, const TVec &v3, const TVec &v4, const unsigned mask) const noexcept {
   if (!planeCount || !mask) return true;
   int res = INSIDE;
   const TClipPlane *cp = &planes[0];
@@ -900,7 +900,7 @@ int TFrustum::checkQuadEx (const TVec &v1, const TVec &v2, const TVec &v3, const
 //  WARNING! not thread-safe, not reentrant!
 //
 //==========================================================================
-int R_ClipSurface (TVec *dest, const TVec *src, int vcount, const TPlane &plane) {
+int R_ClipSurface (TVec *dest, const TVec *src, int vcount, const TPlane &plane) noexcept {
 #define ON_EPSILON  (0.1f)
 
   enum {
@@ -976,7 +976,7 @@ int R_ClipSurface (TVec *dest, const TVec *src, int vcount, const TPlane &plane)
 //  size, or 0 if the line intersects the box.
 //
 //==========================================================================
-int BoxOnLineSide2D (const float *tmbox, TVec v1, TVec v2) {
+int BoxOnLineSide2D (const float *tmbox, TVec v1, TVec v2) noexcept {
   v1.z = v2.z = 0;
   TVec dir = v2-v1;
 
