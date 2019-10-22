@@ -42,10 +42,10 @@ public:
   float yaw; // left/right
   float roll; // around screen center
 
-  TAVec () noexcept {}
-  TAVec (ENoInit) noexcept {}
+  inline TAVec () noexcept {}
+  inline TAVec (ENoInit) noexcept {}
   //nope;TAVec () noexcept : pitch(0.0f), yaw(0.0f), roll(0.0f) {}
-  TAVec (float APitch, float AYaw, float ARoll=0.0f) noexcept : pitch(APitch), yaw(AYaw), roll(ARoll) {}
+  inline TAVec (float APitch, float AYaw, float ARoll=0.0f) noexcept : pitch(APitch), yaw(AYaw), roll(ARoll) {}
 
   inline bool isValid () const noexcept { return (isFiniteF(pitch) && isFiniteF(yaw) && isFiniteF(roll)); }
   inline bool isZero () const noexcept { return (pitch == 0.0f && yaw == 0.0f && roll == 0.0f); }
@@ -75,11 +75,11 @@ public:
   static const TVec ZeroVector;
 
 public:
-  TVec () noexcept {}
-  TVec (ENoInit) noexcept {}
+  inline TVec () noexcept {}
+  inline TVec (ENoInit) noexcept {}
   //nope;TVec () : x(0.0f), y(0.0f), z(0.0f) {}
-  TVec (float Ax, float Ay, float Az=0.0f) noexcept : x(Ax), y(Ay), z(Az) {}
-  TVec (const float f[3]) noexcept { x = f[0]; y = f[1]; z = f[2]; }
+  inline TVec (float Ax, float Ay, float Az=0.0f) noexcept : x(Ax), y(Ay), z(Az) {}
+  inline TVec (const float f[3]) noexcept { x = f[0]; y = f[1]; z = f[2]; }
 
   static inline __attribute__((warn_unused_result)) TVec Invalid () noexcept { return TVec(NAN, NAN, NAN); }
 
@@ -639,8 +639,8 @@ public:
 
 public:
   //TClipParam (ENoInit) {}
-  TClipParam () noexcept : width(0), height(0), fov(0.0f), pixelAspect(1.0f) {}
-  TClipParam (int awidth, int aheight, float afov, float apixelAspect=1.0f) noexcept : width(awidth), height(aheight), fov(afov), pixelAspect(apixelAspect) {}
+  inline TClipParam () noexcept : width(0), height(0), fov(0.0f), pixelAspect(1.0f) {}
+  inline TClipParam (int awidth, int aheight, float afov, float apixelAspect=1.0f) noexcept : width(awidth), height(aheight), fov(afov), pixelAspect(apixelAspect) {}
 
   inline bool isValid () const noexcept { return (width > 0 && height > 0 && isFiniteF(fov) && fov > 0.0f && isFiniteF(pixelAspect) && pixelAspect > 0.0f); }
 
@@ -660,9 +660,9 @@ public:
 
 public:
   //TFrustumParam (ENoInit) {}
-  TFrustumParam () noexcept : origin(0.0f, 0.0f, 0.0f), angles(0.0f, 0.0f, 0.0f), vforward(0.0f, 0.0f, 0.0f), vright(0.0f, 0.0f, 0.0f), vup(0.0f, 0.0f, 0.0f) {}
-  TFrustumParam (const TVec &aorigin, const TAVec &aangles, const TVec &vf, const TVec &vr, const TVec &vu) noexcept : origin(aorigin), angles(aangles), vforward(vf), vright(vr), vup(vu) {}
-  TFrustumParam (const TVec &aorigin, const TAVec &aangles) noexcept : origin(aorigin), angles(aangles) {
+  inline TFrustumParam () noexcept : origin(0.0f, 0.0f, 0.0f), angles(0.0f, 0.0f, 0.0f), vforward(0.0f, 0.0f, 0.0f), vright(0.0f, 0.0f, 0.0f), vup(0.0f, 0.0f, 0.0f) {}
+  inline TFrustumParam (const TVec &aorigin, const TAVec &aangles, const TVec &vf, const TVec &vr, const TVec &vu) noexcept : origin(aorigin), angles(aangles), vforward(vf), vright(vr), vup(vu) {}
+  inline TFrustumParam (const TVec &aorigin, const TAVec &aangles) noexcept : origin(aorigin), angles(aangles) {
     if (aangles.isValid()) {
       AngleVectors(aangles, vforward, vright, vup);
     } else {
@@ -723,10 +723,10 @@ public:
 
 public:
   //TClipBase (ENoInit) {}
-  TClipBase () noexcept : fovx(0.0f), fovy(0.0f) {}
-  TClipBase (int awidth, int aheight, float afov, float apixelAspect=1.0f) noexcept { setupViewport(awidth, aheight, afov, apixelAspect); }
-  TClipBase (const float afovx, const float afovy) noexcept { setupFromFOVs(afovx, afovy); }
-  TClipBase (const TClipParam &cp) noexcept { setupViewport(cp); }
+  inline TClipBase () noexcept : fovx(0.0f), fovy(0.0f) {}
+  inline TClipBase (int awidth, int aheight, float afov, float apixelAspect=1.0f) noexcept { setupViewport(awidth, aheight, afov, apixelAspect); }
+  inline TClipBase (const float afovx, const float afovy) noexcept { setupFromFOVs(afovx, afovy); }
+  inline TClipBase (const TClipParam &cp) noexcept { setupViewport(cp); }
 
   inline __attribute__((warn_unused_result)) bool isValid () const noexcept { return (fovx != 0.0f); }
 
@@ -788,8 +788,8 @@ public:
 
 public:
   //TFrustum (ENoInit) {}
-  TFrustum () noexcept : planeCount(0) { clear(); }
-  TFrustum (const TClipBase &clipbase, const TFrustumParam &fp, bool createbackplane=true, const float farplanez=0.0f) noexcept : planeCount(0) {
+  inline TFrustum () noexcept : planeCount(0) { clear(); }
+  inline TFrustum (const TClipBase &clipbase, const TFrustumParam &fp, bool createbackplane=true, const float farplanez=0.0f) noexcept : planeCount(0) {
     setup(clipbase, fp, createbackplane, farplanez);
   }
 

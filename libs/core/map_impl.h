@@ -38,7 +38,7 @@
 // ////////////////////////////////////////////////////////////////////////// //
 template<class TK, class TV> class TMap_Class_Name {
 public:
-  static inline vuint32 nextPOTU32 (vuint32 x) {
+  static inline vuint32 nextPOTU32 (vuint32 x) noexcept {
     vuint32 res = x;
     res |= (res>>1);
     res |= (res>>2);
@@ -50,7 +50,7 @@ public:
     return res;
   }
 
-  inline static vuint32 hashU32 (vuint32 a) {
+  inline static vuint32 hashU32 (vuint32 a) noexcept {
     vuint32 res = (vuint32)a;
     res -= (res<<6);
     res = res^(res>>17);
@@ -74,8 +74,8 @@ private:
     TK key;
     TV value;
 
-    inline bool isEmpty () const { return (hash == 0); }
-    inline void setEmpty () { hash = 0; }
+    inline bool isEmpty () const noexcept { return (hash == 0); }
+    inline void setEmpty () noexcept { hash = 0; }
   };
 
 private:
@@ -96,7 +96,7 @@ public:
 
   public:
     // ctor
-    inline TIterator (TMap_Class_Name *amap) : map(amap), index(0) {
+    inline TIterator (TMap_Class_Name *amap) noexcept : map(amap), index(0) {
       vassert(amap);
       if (amap->mFirstEntry < 0) {
         index = amap->mEBSize;
@@ -108,16 +108,16 @@ public:
     }
 
     // special ctor that will create "end pointer"
-    inline TIterator (const TIterator &src, bool dummy) : map(src.map), index(src.map->mEBSize) {}
+    inline TIterator (const TIterator &src, bool dummy) noexcept : map(src.map), index(src.map->mEBSize) {}
 
-    inline TIterator (const TIterator &src) : map(src.map), index(src.index) {}
-    inline TIterator &operator = (const TIterator &src) { if (&src != this) { map = src.map; index = src.index; } return *this; }
+    inline TIterator (const TIterator &src) noexcept : map(src.map), index(src.index) {}
+    inline TIterator &operator = (const TIterator &src) noexcept { if (&src != this) { map = src.map; index = src.index; } return *this; }
 
     // convert to bool
-    inline operator bool () const { return ((int)index <= map->mLastEntry); }
+    inline operator bool () const noexcept { return ((int)index <= map->mLastEntry); }
 
     // next (prefix increment)
-    inline void operator ++ () {
+    inline void operator ++ () noexcept {
       if (index < map->mEBSize) {
         ++index;
         while ((int)index <= map->mLastEntry && index < map->mEBSize && map->mEntries[index].isEmpty()) ++index;
@@ -126,28 +126,28 @@ public:
     }
 
     // `foreach` interface
-    inline TIterator begin () { return TIterator(*this); }
-    inline TIterator end () { return TIterator(*this, true); }
-    inline bool operator != (const TIterator &b) const { return (map != b.map || index != b.index); } /* used to compare with end */
-    inline TIterator operator * () const { return TIterator(*this); } /* required for iterator */
+    inline TIterator begin () noexcept { return TIterator(*this); }
+    inline TIterator end () noexcept { return TIterator(*this, true); }
+    inline bool operator != (const TIterator &b) const noexcept { return (map != b.map || index != b.index); } /* used to compare with end */
+    inline TIterator operator * () const noexcept { return TIterator(*this); } /* required for iterator */
 
     // key/value getters
-    inline const TK &GetKey () const { return map->mEntries[index].key; }
-    inline const TV &GetValue () const { return map->mEntries[index].value; }
-    inline TV &GetValue () { return map->mEntries[index].value; }
-    inline const TK &getKey () const { return map->mEntries[index].key; }
-    inline const TV &getValue () const { return map->mEntries[index].value; }
-    inline TV &getValue () { return map->mEntries[index].value; }
+    inline const TK &GetKey () const noexcept { return map->mEntries[index].key; }
+    inline const TV &GetValue () const noexcept { return map->mEntries[index].value; }
+    inline TV &GetValue () noexcept { return map->mEntries[index].value; }
+    inline const TK &getKey () const noexcept { return map->mEntries[index].key; }
+    inline const TV &getValue () const noexcept { return map->mEntries[index].value; }
+    inline TV &getValue () noexcept { return map->mEntries[index].value; }
 
-    inline void removeCurrent () {
+    inline void removeCurrent () noexcept {
       if ((int)index <= map->mLastEntry && index < map->mEBSize) {
         if (!map->mEntries[index].isEmpty()) map->del(map->mEntries[index].key);
         operator++();
       }
     }
-    inline void RemoveCurrent () { removeCurrent(); }
+    inline void RemoveCurrent () noexcept { removeCurrent(); }
 
-    inline void resetToFirst () {
+    inline void resetToFirst () noexcept {
       if (map->mFirstEntry < 0) {
         index = map->mEBSize;
       } else {
@@ -162,12 +162,12 @@ public:
 
 public:
   // this is for VavoomC VM
-  inline bool isValidIIdx (vint32 index) const {
+  inline bool isValidIIdx (vint32 index) const noexcept {
     return (index >= 0 && index <= mLastEntry);
   }
 
   // this is for VavoomC VM
-  inline vint32 getFirstIIdx () const {
+  inline vint32 getFirstIIdx () const noexcept {
     if (mFirstEntry < 0) return -1;
     int index = mFirstEntry;
     while (index <= mLastEntry && index < (int)mEBSize && mEntries[index].isEmpty()) ++index;
@@ -175,7 +175,7 @@ public:
   }
 
   // <0: done
-  inline vint32 getNextIIdx (vint32 index) const {
+  inline vint32 getNextIIdx (vint32 index) const noexcept {
     if (index >= 0 && index <= mLastEntry) {
       ++index;
       while (index <= mLastEntry && mEntries[index].isEmpty()) ++index;
@@ -184,7 +184,7 @@ public:
     return -1;
   }
 
-  inline vint32 removeCurrAndGetNextIIdx (vint32 index) {
+  inline vint32 removeCurrAndGetNextIIdx (vint32 index) noexcept {
     if (index >= 0 && index <= mLastEntry) {
       if (!mEntries[index].isEmpty()) del(mEntries[index].key);
       return getNextIIdx(index);
@@ -192,16 +192,16 @@ public:
     return -1;
   }
 
-  inline const TK *getKeyIIdx (vint32 index) const {
+  inline const TK *getKeyIIdx (vint32 index) const noexcept {
     return (isValidIIdx(index) && !mEntries[index].isEmpty() ? &mEntries[index].key : nullptr);
   }
 
-  inline TV *getValueIIdx (vint32 index) const {
+  inline TV *getValueIIdx (vint32 index) const noexcept {
     return (isValidIIdx(index) && !mEntries[index].isEmpty() ? &mEntries[index].value : nullptr);
   }
 
 private:
-  void freeEntries () {
+  void freeEntries () noexcept {
 #if defined(TMAP_DO_DTOR) || !defined(TMAP_NO_CLEAR)
     if (mFirstEntry >= 0) {
       const int end = mLastEntry;
@@ -228,7 +228,7 @@ private:
     mFirstEntry = mLastEntry = -1;
   }
 
-  TEntry *allocEntry () {
+  TEntry *allocEntry () noexcept {
     TEntry *res;
     if (!mFreeEntryHead) {
       // nothing was allocated, so allocate something now
@@ -259,7 +259,7 @@ private:
     return res;
   }
 
-  void releaseEntry (TEntry *e) {
+  void releaseEntry (TEntry *e) noexcept {
     int idx = (int)(e-&mEntries[0]);
 #if defined(TMAP_DO_DTOR)
     e->key.~TK();
@@ -292,7 +292,7 @@ private:
     }
   }
 
-  inline vuint32 distToStIdx (vuint32 idx) const {
+  inline vuint32 distToStIdx (vuint32 idx) const noexcept {
 #ifndef TMAP_USE_MULTIPLY
     vuint32 res = (mBuckets[idx]->hash^mSeed)&(vuint32)(mEBSize-1);
 #else
@@ -302,7 +302,7 @@ private:
     return res;
   }
 
-  void putEntryInternal (TEntry *swpe) {
+  void putEntryInternal (TEntry *swpe) noexcept {
     const vuint32 bhigh = (vuint32)(mEBSize-1);
 #ifndef TMAP_USE_MULTIPLY
     vuint32 idx = (swpe->hash^mSeed)&bhigh;
@@ -332,15 +332,15 @@ private:
   }
 
 public:
-  TMap_Class_Name () : mEBSize(0), mEntries(nullptr), mBuckets(nullptr), mBucketsUsed(0), mFreeEntryHead(nullptr), mFirstEntry(-1), mLastEntry(-1), mSeed(0), mSeedCount(0) {}
+  inline TMap_Class_Name () noexcept : mEBSize(0), mEntries(nullptr), mBuckets(nullptr), mBucketsUsed(0), mFreeEntryHead(nullptr), mFirstEntry(-1), mLastEntry(-1), mSeed(0), mSeedCount(0) {}
 
-  TMap_Class_Name (TMap_Class_Name &other) : mEBSize(0), mEntries(nullptr), mBuckets(nullptr), mBucketsUsed(0), mFreeEntryHead(nullptr), mFirstEntry(-1), mLastEntry(-1), mSeed(0), mSeedCount(0) {
+  inline TMap_Class_Name (TMap_Class_Name &other) noexcept : mEBSize(0), mEntries(nullptr), mBuckets(nullptr), mBucketsUsed(0), mFreeEntryHead(nullptr), mFirstEntry(-1), mLastEntry(-1), mSeed(0), mSeedCount(0) {
     operator=(other);
   }
 
-  ~TMap_Class_Name () { clear(); }
+  inline ~TMap_Class_Name () noexcept { clear(); }
 
-  TMap_Class_Name &operator = (const TMap_Class_Name &other) {
+  TMap_Class_Name &operator = (const TMap_Class_Name &other) noexcept {
     if (&other != this) {
       clear();
       // copy entries
@@ -373,7 +373,7 @@ public:
     return *this;
   }
 
-  void clear () {
+  void clear () noexcept {
 #if defined(TMAP_DO_DTOR) || !defined(TMAP_NO_CLEAR)
     freeEntries();
 #endif
@@ -389,7 +389,7 @@ public:
   }
 
   // won't shrink buckets
-  void reset () {
+  void reset () noexcept {
     freeEntries();
     if (mBucketsUsed > 0) {
       memset(mBuckets, 0, mEBSize*sizeof(TEntry *));
@@ -397,7 +397,7 @@ public:
     }
   }
 
-  void rehash () {
+  void rehash () noexcept {
     // clear buckets
     memset(mBuckets, 0, mEBSize*sizeof(TEntry *));
     mBucketsUsed = 0;
@@ -439,7 +439,7 @@ public:
 
   // call this instead of `rehash()` after alot of deletions
   // if `doRealloc` is `false`, force moving all entries to top
-  void compact (bool doRealloc=true) {
+  void compact (bool doRealloc=true) noexcept {
     vuint32 newsz = nextPOTU32((vuint32)mBucketsUsed);
     if (doRealloc) {
       if (newsz >= 1024*1024*1024) return;
@@ -508,7 +508,7 @@ public:
 #endif
   }
 
-  bool has (const TK &akey) const {
+  bool has (const TK &akey) const noexcept {
     if (mBucketsUsed == 0) return false;
     const vuint32 bhigh = (vuint32)(mEBSize-1);
     vuint32 khash = GetTypeHash(akey);
@@ -532,7 +532,7 @@ public:
     return res;
   }
 
-  const TV *get (const TK &akey) const {
+  const TV *get (const TK &akey) const noexcept {
     if (mBucketsUsed == 0) return nullptr;
     const vuint32 bhigh = (vuint32)(mEBSize-1);
     vuint32 khash = GetTypeHash(akey);
@@ -554,7 +554,7 @@ public:
     return nullptr;
   }
 
-  TV *get (const TK &akey) {
+  TV *get (const TK &akey) noexcept {
     if (mBucketsUsed == 0) return nullptr;
     const vuint32 bhigh = (vuint32)(mEBSize-1);
     vuint32 khash = GetTypeHash(akey);
@@ -577,20 +577,20 @@ public:
   }
 
   //WARNING! returned pointer will be invalidated by any map mutation
-  inline TV *Find (const TK &Key) { return get(Key); }
-  inline TV *find (const TK &Key) { return get(Key); }
-  inline const TV *Find (const TK &Key) const { return get(Key); }
-  inline const TV *find (const TK &Key) const { return get(Key); }
+  inline TV *Find (const TK &Key) noexcept { return get(Key); }
+  inline TV *find (const TK &Key) noexcept { return get(Key); }
+  inline const TV *Find (const TK &Key) const noexcept { return get(Key); }
+  inline const TV *find (const TK &Key) const noexcept { return get(Key); }
 
-  inline const TV FindPtr (const TK &Key) const {
+  inline const TV FindPtr (const TK &Key) const noexcept {
     auto res = get(Key);
     if (res) return *res;
     return nullptr;
   }
-  inline const TV findptr (const TK &Key) const { return FindPtr(Key); }
+  inline const TV findptr (const TK &Key) const noexcept { return FindPtr(Key); }
 
   // see http://codecapsule.com/2013/11/17/robin-hood-hashing-backward-shift-deletion/
-  bool del (const TK &akey) {
+  bool del (const TK &akey) noexcept {
     if (mBucketsUsed == 0) return false;
 
     const vuint32 bhigh = (vuint32)(mEBSize-1);
@@ -638,11 +638,11 @@ public:
     return true;
   }
 
-  bool Remove (const TK &Key) { return del(Key); }
-  bool remove (const TK &Key) { return del(Key); }
+  bool Remove (const TK &Key) noexcept { return del(Key); }
+  bool remove (const TK &Key) noexcept { return del(Key); }
 
   // returns `true` if old value was replaced
-  bool put (const TK &akey, const TV &aval) {
+  bool put (const TK &akey, const TV &aval) noexcept {
     const vuint32 bhigh = (vuint32)(mEBSize-1);
     vuint32 khash = GetTypeHash(akey);
     khash += !khash; // avoid zero hash value
@@ -699,20 +699,20 @@ public:
     return false;
   }
 
-  inline void Set (const TK &Key, const TV &Value) { put(Key, Value); }
-  inline void set (const TK &Key, const TV &Value) { put(Key, Value); }
+  inline void Set (const TK &Key, const TV &Value) noexcept { put(Key, Value); }
+  inline void set (const TK &Key, const TV &Value) noexcept { put(Key, Value); }
 
-  inline int count () const { return (int)mBucketsUsed; }
-  inline int length () const { return (int)mBucketsUsed; }
-  inline int capacity () const { return (int)mEBSize; }
+  inline int count () const noexcept { return (int)mBucketsUsed; }
+  inline int length () const noexcept { return (int)mBucketsUsed; }
+  inline int capacity () const noexcept { return (int)mEBSize; }
 
 #ifdef CORE_MAP_TEST
-  int countItems () const {
+  int countItems () const noexcept {
     int res = 0;
     for (vuint32 f = 0; f < mEBSize; ++f) if (!mEntries[f].isEmpty()) ++res;
     return res;
   }
 #endif
 
-  TIterator first () { return TIterator(this); }
+  TIterator first () noexcept { return TIterator(this); }
 };
