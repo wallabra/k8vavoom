@@ -678,7 +678,8 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Return)
-        vensure(sp == local_vars+func->NumLocals);
+        //vensure(sp == local_vars+func->NumLocals);
+        if (sp != local_vars+func->NumLocals) { cstDump(ip); Sys_Error("assertion failed: `sp == local_vars+func->NumLocals`: ip=%d; diff=%d; func->NumLocals=%d", (int)(ptrdiff_t)(ip-func->Statements.Ptr()), (int)(ptrdiff_t)(sp-(local_vars+func->NumLocals)), func->NumLocals); }
 #ifdef VMEXEC_RUNDUMP
         printIndent(); fprintf(stderr, "LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
 #endif
