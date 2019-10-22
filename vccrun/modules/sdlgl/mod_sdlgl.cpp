@@ -891,51 +891,52 @@ struct ScissorRect {
 // ////////////////////////////////////////////////////////////////////////// //
 //native static final int CreateTimer (int intervalms, optional bool oneShot);
 IMPLEMENT_FREE_FUNCTION(VObject, CreateTimer) {
-  P_GET_INT(specifiedOneShot);
-  P_GET_BOOL(oneShot);
-  P_GET_INT(intervalms);
-  if (!specifiedOneShot) oneShot = false; // just in case
+  int intervalms;
+  VOptParamBool oneShot(false);
+  vobjGetParam(intervalms, oneShot);
   RET_INT(VGLVideo::CreateTimerWithId(0, intervalms, oneShot));
 }
 
 //native static final bool CreateTimerWithId (int id, int intervalms, optional bool oneShot);
 IMPLEMENT_FREE_FUNCTION(VObject, CreateTimerWithId) {
-  P_GET_INT(specifiedOneShot);
-  P_GET_BOOL(oneShot);
-  P_GET_INT(intervalms);
-  P_GET_INT(id);
-  if (!specifiedOneShot) oneShot = false; // just in case
+  int id, intervalms;
+  VOptParamBool oneShot(false);
+  vobjGetParam(id, intervalms, oneShot);
   RET_BOOL(VGLVideo::CreateTimerWithId(id, intervalms, oneShot) > 0);
 }
 
 //native static final bool DeleteTimer (int id);
 IMPLEMENT_FREE_FUNCTION(VObject, DeleteTimer) {
-  P_GET_INT(id);
+  int id;
+  vobjGetParam(id);
   RET_BOOL(VGLVideo::DeleteTimer(id));
 }
 
 //native static final bool IsTimerExists (int id);
 IMPLEMENT_FREE_FUNCTION(VObject, IsTimerExists) {
-  P_GET_INT(id);
+  int id;
+  vobjGetParam(id);
   RET_BOOL(VGLVideo::IsTimerExists(id));
 }
 
 //native static final bool IsTimerOneShot (int id);
 IMPLEMENT_FREE_FUNCTION(VObject, IsTimerOneShot) {
-  P_GET_INT(id);
+  int id;
+  vobjGetParam(id);
   RET_BOOL(VGLVideo::IsTimerOneShot(id));
 }
 
 //native static final int GetTimerInterval (int id);
 IMPLEMENT_FREE_FUNCTION(VObject, GetTimerInterval) {
-  P_GET_INT(id);
+  int id;
+  vobjGetParam(id);
   RET_INT(VGLVideo::GetTimerInterval(id));
 }
 
 //native static final bool SetTimerInterval (int id, int intervalms);
 IMPLEMENT_FREE_FUNCTION(VObject, SetTimerInterval) {
-  P_GET_INT(intervalms);
-  P_GET_INT(id);
+  int id, intervalms;
+  vobjGetParam(id, intervalms);
   RET_BOOL(VGLVideo::SetTimerInterval(id, intervalms));
 }
 
@@ -1514,16 +1515,15 @@ void VGLTexture::Destroy () {
 
 
 IMPLEMENT_FUNCTION(VGLTexture, Destroy) {
-  P_GET_SELF;
-  //if (Self) Self->SetFlags(_OF_DelayedDestroy);
+  vobjGetParamSelf();
   if (Self) Self->ConditionalDestroy();
-  //delete Self;
 }
 
 
 //native final static GLTexture Load (string fname);
 IMPLEMENT_FUNCTION(VGLTexture, Load) {
-  P_GET_STR(fname);
+  VStr fname;
+  vobjGetParam(fname);
   VOpenGLTexture *tex = VOpenGLTexture::Load(fname);
   if (tex) {
     VGLTexture *ifile = SpawnWithReplace<VGLTexture>();
@@ -1531,15 +1531,16 @@ IMPLEMENT_FUNCTION(VGLTexture, Load) {
     ifile->id = vcGLAllocId(ifile);
     //fprintf(stderr, "created texture object %p (%p)\n", ifile, ifile->tex);
     RET_REF((VObject *)ifile);
-    return;
+  } else {
+    RET_REF(nullptr);
   }
-  RET_REF(nullptr);
 }
 
 
 // native final static GLTexture GetById (int id);
 IMPLEMENT_FUNCTION(VGLTexture, GetById) {
-  P_GET_INT(id);
+  int id;
+  vobjGetParam(id);
   if (id > 0 && id <= vcGLLastUsedId) {
     auto opp = vcGLTexMap.find(id);
     if (opp) RET_REF((VGLTexture *)(*opp)); else RET_REF(nullptr);
@@ -1550,98 +1551,75 @@ IMPLEMENT_FUNCTION(VGLTexture, GetById) {
 
 
 IMPLEMENT_FUNCTION(VGLTexture, width) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   RET_INT(Self && Self->tex ? Self->tex->width : 0);
 }
 
 IMPLEMENT_FUNCTION(VGLTexture, height) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   RET_INT(Self && Self->tex ? Self->tex->height : 0);
 }
 
 IMPLEMENT_FUNCTION(VGLTexture, isTransparent) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   RET_BOOL(Self && Self->tex ? Self->tex->isTransparent : true);
 }
 
 IMPLEMENT_FUNCTION(VGLTexture, isOpaque) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   RET_BOOL(Self && Self->tex ? Self->tex->isOpaque : false);
 }
 
 IMPLEMENT_FUNCTION(VGLTexture, isOneBitAlpha) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   RET_BOOL(Self && Self->tex ? Self->tex->isOneBitAlpha : true);
 }
 
 
 // void blitExt (int dx0, int dy0, int dx1, int dy1, int x0, int y0, optional int x1, optional int y1, optional float angle);
 IMPLEMENT_FUNCTION(VGLTexture, blitExt) {
-  P_GET_FLOAT_OPT(angle, 0);
-  P_GET_INT(specifiedY1);
-  P_GET_INT(y1);
-  P_GET_INT(specifiedX1);
-  P_GET_INT(x1);
-  P_GET_INT(y0);
-  P_GET_INT(x0);
-  P_GET_INT(dy1);
-  P_GET_INT(dx1);
-  P_GET_INT(dy0);
-  P_GET_INT(dx0);
-  P_GET_SELF;
-  if (!specifiedX1) x1 = -1;
-  if (!specifiedY1) y1 = -1;
+  int dx0, dy0, dx1, dy1;
+  int x0, y0;
+  VOptParamInt x1(-1), y1(-1);
+  VOptParamFloat angle(0);
+  vobjGetParamSelf(dx0, dy0, dx1, dy1, x0, y0, x1, y1, angle);
   if (Self && Self->tex) Self->tex->blitExt(dx0, dy0, dx1, dy1, x0, y0, x1, y1, angle);
 }
 
 
 // void blitExtRep (int dx0, int dy0, int dx1, int dy1, int x0, int y0, optional int x1, optional int y1);
 IMPLEMENT_FUNCTION(VGLTexture, blitExtRep) {
-  P_GET_INT(specifiedY1);
-  P_GET_INT(y1);
-  P_GET_INT(specifiedX1);
-  P_GET_INT(x1);
-  P_GET_INT(y0);
-  P_GET_INT(x0);
-  P_GET_INT(dy1);
-  P_GET_INT(dx1);
-  P_GET_INT(dy0);
-  P_GET_INT(dx0);
-  P_GET_SELF;
-  if (!specifiedX1) x1 = -1;
-  if (!specifiedY1) y1 = -1;
+  int dx0, dy0, dx1, dy1;
+  int x0, y0;
+  VOptParamInt x1(-1), y1(-1);
+  vobjGetParamSelf(dx0, dy0, dx1, dy1, x0, y0, x1, y1);
   if (Self && Self->tex) Self->tex->blitExtRep(dx0, dy0, dx1, dy1, x0, y0, x1, y1);
 }
 
 
 // void blitAt (int dx0, int dy0, optional float scale, optional float angle);
 IMPLEMENT_FUNCTION(VGLTexture, blitAt) {
-  P_GET_FLOAT_OPT(angle, 0);
-  P_GET_INT(specifiedScale);
-  P_GET_FLOAT(scale);
-  P_GET_INT(dy0);
-  P_GET_INT(dx0);
-  P_GET_SELF;
-  if (!specifiedScale) scale = 1;
+  int dx0, dy0;
+  VOptParamFloat scale(1), angle(0);
+  vobjGetParamSelf(dx0, dy0, scale, angle);
   if (Self && Self->tex) Self->tex->blitAt(dx0, dy0, scale, angle);
 }
 
 
 // native final void blitWithLightmap (const ref TexQuad t0, GLTexture lmap, const ref TexQuad t1);
 IMPLEMENT_FUNCTION(VGLTexture, blitWithLightmap) {
-  P_GET_PTR(VOpenGLTexture::TexQuad, t1);
-  P_GET_PTR(VGLTexture, lmap);
-  P_GET_PTR(VOpenGLTexture::TexQuad, t0);
-  P_GET_SELF;
+  VOpenGLTexture::TexQuad *t0, *t1;
+  VGLTexture *lmap;
+  vobjGetParamSelf(t0, lmap, t1);
   if (Self && Self->tex) Self->tex->blitWithLightmap(t0, (lmap ? lmap->tex : nullptr), t1);
 }
 
 
 // native final static GLTexture CreateEmpty (int wdt, int hgt, optional name txname);
 IMPLEMENT_FUNCTION(VGLTexture, CreateEmpty) {
-  P_GET_NAME_OPT(txname, NAME_None);
-  P_GET_INT(hgt);
-  P_GET_INT(wdt);
+  int wdt, hgt;
+  VOptParamName txname(NAME_None);
+  vobjGetParam(wdt, hgt, txname);
   if (wdt < 1 || hgt < 1 || wdt > 32768 || hgt > 32768) { RET_REF(nullptr); return; }
   VOpenGLTexture *tex = VOpenGLTexture::CreateEmpty(txname, wdt, hgt);
   if (tex) {
@@ -1650,17 +1628,16 @@ IMPLEMENT_FUNCTION(VGLTexture, CreateEmpty) {
     ifile->id = vcGLAllocId(ifile);
     //fprintf(stderr, "created texture object %p (%p)\n", ifile, ifile->tex);
     RET_REF((VObject *)ifile);
-    return;
+  } else {
+    RET_REF(nullptr);
   }
-  RET_REF(nullptr);
 }
 
 // native final static void setPixel (int x, int y, int argb); // aarrggbb; a==0 is completely opaque
 IMPLEMENT_FUNCTION(VGLTexture, setPixel) {
-  P_GET_INT(argb);
-  P_GET_INT(y);
-  P_GET_INT(x);
-  P_GET_SELF;
+  int x, y;
+  vuint32 argb;
+  vobjGetParamSelf(x, y, argb);
   if (Self && Self->tex && Self->tex->img) {
     vuint8 a = 255-((argb>>24)&0xff);
     vuint8 r = (argb>>16)&0xff;
@@ -1672,9 +1649,8 @@ IMPLEMENT_FUNCTION(VGLTexture, setPixel) {
 
 // native final static int getPixel (int x, int y); // aarrggbb; a==0 is completely opaque
 IMPLEMENT_FUNCTION(VGLTexture, getPixel) {
-  P_GET_INT(y);
-  P_GET_INT(x);
-  P_GET_SELF;
+  int x, y;
+  vobjGetParamSelf(x, y);
   if (Self && Self->tex && Self->tex->img) {
     auto c = Self->tex->img->getPixel(x, y);
     vuint32 argb = (((vuint32)c.r)<<16)|(((vuint32)c.g)<<8)|((vuint32)c.b)|(((vuint32)(255-c.a))<<24);
@@ -1686,13 +1662,13 @@ IMPLEMENT_FUNCTION(VGLTexture, getPixel) {
 
 // native final static void upload ();
 IMPLEMENT_FUNCTION(VGLTexture, upload) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   if (Self && Self->tex) Self->tex->update();
 }
 
 // native final void smoothEdges (); // call after manual texture building
 IMPLEMENT_FUNCTION(VGLTexture, smoothEdges) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   if (Self && Self->tex && Self->tex->img) {
     Self->tex->img->smoothEdges();
   }
@@ -2694,14 +2670,14 @@ IMPLEMENT_FUNCTION(VGLVideo, hideMouseCursor) { if (mInited) SDL_ShowCursor(SDL_
 IMPLEMENT_FUNCTION(VGLVideo, showMouseCursor) { if (mInited) SDL_ShowCursor(SDL_ENABLE); }
 
 IMPLEMENT_FUNCTION(VGLVideo, get_frameTime) { RET_BOOL(VGLVideo::getFrameTime()); }
-IMPLEMENT_FUNCTION(VGLVideo, set_frameTime) { P_GET_INT(newft); VGLVideo::setFrameTime(newft); VGLVideo::sendPing(); }
+IMPLEMENT_FUNCTION(VGLVideo, set_frameTime) { int newft; vobjGetParam(newft); VGLVideo::setFrameTime(newft); VGLVideo::sendPing(); }
 
 // native final static bool openScreen (string winname, int width, int height, optional int fullscreen);
 IMPLEMENT_FUNCTION(VGLVideo, openScreen) {
-  P_GET_INT_OPT(fs, 0);
-  P_GET_INT(hgt);
-  P_GET_INT(wdt);
-  P_GET_STR(wname);
+  VStr wname;
+  int wdt, hgt;
+  VOptParamInt fs(0);
+  vobjGetParam(wname, wdt, hgt, fs);
   RET_BOOL(VGLVideo::open(wname, wdt, hgt, fs));
 }
 
@@ -2713,8 +2689,8 @@ IMPLEMENT_FUNCTION(VGLVideo, closeScreen) {
 
 // native final static void getRealWindowSize (out int w, out int h);
 IMPLEMENT_FUNCTION(VGLVideo, getRealWindowSize) {
-  P_GET_PTR(int, h);
-  P_GET_PTR(int, w);
+  int *w, *h;
+  vobjGetParam(w, h);
   if (mInited) {
     //SDL_GetWindowSize(hw_window, w, h);
     SDL_GL_GetDrawableSize(hw_window, w, h);
@@ -2726,22 +2702,10 @@ IMPLEMENT_FUNCTION(VGLVideo, getRealWindowSize) {
 IMPLEMENT_FUNCTION(VGLVideo, runEventLoop) { VGLVideo::runEventLoop(); }
 
 IMPLEMENT_FUNCTION(VGLVideo, clearScreen) {
-  P_GET_INT_OPT(rgb, 0);
+  VOptParamUInt rgb(0);
+  vobjGetParam(rgb);
   VGLVideo::clear(rgb);
 }
-
-
-//native final static void setScale (float sx, float sy);
-/*
-IMPLEMENT_FUNCTION(VGLVideo, setScale) {
-  P_GET_FLOAT(sy);
-  P_GET_FLOAT(sx);
-  if (mInited) {
-    glLoadIdentity();
-    glScalef(sx, sy, 1);
-  }
-}
-*/
 
 
 IMPLEMENT_FUNCTION(VGLVideo, requestQuit) {
@@ -2771,7 +2735,8 @@ IMPLEMENT_FUNCTION(VGLVideo, forceSwap) {
 
 //native final static bool glHasExtension (string extname);
 IMPLEMENT_FUNCTION(VGLVideo, glHasExtension) {
-  P_GET_STR(extname);
+  VStr extname;
+  vobjGetParam(extname);
   if (extname.isEmpty() || !mInited) {
     RET_BOOL(false);
   } else {
@@ -2793,7 +2758,8 @@ IMPLEMENT_FUNCTION(VGLVideo, get_directMode) {
 }
 
 IMPLEMENT_FUNCTION(VGLVideo, set_directMode) {
-  P_GET_BOOL(m);
+  bool m;
+  vobjGetParam(m);
   if (!mInited) { directMode = m; return; }
   if (m != directMode) {
     directMode = m;
@@ -2806,7 +2772,8 @@ IMPLEMENT_FUNCTION(VGLVideo, get_depthTest) {
 }
 
 IMPLEMENT_FUNCTION(VGLVideo, set_depthTest) {
-  P_GET_BOOL(m);
+  bool m;
+  vobjGetParam(m);
   if (!mInited) { depthTest = m; return; }
   if (m != depthTest) {
     depthTest = m;
@@ -2819,7 +2786,8 @@ IMPLEMENT_FUNCTION(VGLVideo, get_depthFunc) {
 }
 
 IMPLEMENT_FUNCTION(VGLVideo, set_depthFunc) {
-  P_GET_INT(v);
+  int v;
+  vobjGetParam(v);
   if (v < 0 || v >= ZFunc_Max) return;
   if (!mInited) { depthFunc = v; return; }
   if (v != depthFunc) {
@@ -2833,7 +2801,8 @@ IMPLEMENT_FUNCTION(VGLVideo, get_currZ) {
 }
 
 IMPLEMENT_FUNCTION(VGLVideo, set_currZ) {
-  P_GET_INT(z);
+  int z;
+  vobjGetParam(z);
   if (z < 0) z = 0; else if (z > 65535) z = 65535;
   if (z == currZ) return;
   const float zNear = 1;
@@ -2854,15 +2823,16 @@ IMPLEMENT_FUNCTION(VGLVideo, get_scissorEnabled) {
 }
 
 IMPLEMENT_FUNCTION(VGLVideo, set_scissorEnabled) {
-  P_GET_BOOL(v);
+  bool v;
+  vobjGetParam(v);
   if (mInited) {
     if (v) glEnable(GL_SCISSOR_TEST); else glDisable(GL_SCISSOR_TEST);
   }
 }
 
 IMPLEMENT_FUNCTION(VGLVideo, copyScissor) {
-  P_GET_PTR(ScissorRect, s);
-  P_GET_PTR(ScissorRect, d);
+  ScissorRect *s, *d;
+  vobjGetParam(s, d);
   if (d) {
     if (s) {
       *d = *s;
@@ -2876,7 +2846,8 @@ IMPLEMENT_FUNCTION(VGLVideo, copyScissor) {
 }
 
 IMPLEMENT_FUNCTION(VGLVideo, getScissor) {
-  P_GET_PTR(ScissorRect, sr);
+  ScissorRect *sr;
+  vobjGetParam(sr);
   if (sr) {
     if (!mInited) { sr->x = sr->y = sr->w = sr->h = sr->enabled = 0; return; }
     sr->enabled = (glIsEnabled(GL_SCISSOR_TEST) ? 1 : 0);
@@ -2892,8 +2863,10 @@ IMPLEMENT_FUNCTION(VGLVideo, getScissor) {
 }
 
 IMPLEMENT_FUNCTION(VGLVideo, setScissor) {
-  P_GET_PTR_OPT(ScissorRect, sr, nullptr);
-  if (sr) {
+  VOptParamPtr<ScissorRect> sr;
+  vobjGetParam(sr);
+  //P_GET_PTR_OPT(ScissorRect, sr, nullptr);
+  if (!sr.isNull()) {
     if (!mInited) return;
     if (sr->enabled) glEnable(GL_SCISSOR_TEST); else glDisable(GL_SCISSOR_TEST);
     //glScissor(sr->x0, mHeight-sr->y0-1, sr->x1, mHeight-sr->y1-1);
@@ -2925,30 +2898,32 @@ IMPLEMENT_FUNCTION(VGLVideo, glLoadIdentity) { if (mInited) glLoadIdentity(); }
 
 // static native final void glScale (float sx, float sy, optional float sz);
 IMPLEMENT_FUNCTION(VGLVideo, glScale) {
-  P_GET_FLOAT_OPT(z, 1);
-  P_GET_FLOAT(y);
-  P_GET_FLOAT(x);
+  float x, y;
+  VOptParamFloat z(1);
+  vobjGetParam(x, y, z);
   if (mInited) glScalef(x, y, z);
 }
 
 // static native final void glTranslate (float dx, float dy, optional float dz);
 IMPLEMENT_FUNCTION(VGLVideo, glTranslate) {
-  P_GET_FLOAT_OPT(z, 0);
-  P_GET_FLOAT(y);
-  P_GET_FLOAT(x);
+  float x, y;
+  VOptParamFloat z(0);
+  vobjGetParam(x, y, z);
   if (mInited) glTranslatef(x, y, z);
 }
 
 // static native final void glRotate (float angle, TVec axis);
 IMPLEMENT_FUNCTION(VGLVideo, glRotate) {
-  P_GET_VEC(axis);
-  P_GET_FLOAT(angle);
+  float angle;
+  TVec axis;
+  vobjGetParam(angle, axis);
   if (mInited) glRotatef(angle, axis.x, axis.y, axis.z);
 }
 
 //static native final void glMatrixMode (int GLMatrix mode);
 IMPLEMENT_FUNCTION(VGLVideo, set_glMatrixMode) {
-  P_GET_INT(mode);
+  int mode;
+  vobjGetParam(mode);
   if (mInited) {
     switch (mode) {
       case GLMatrixMode_ModelView: glMatrixMode(GL_MODELVIEW); break;
@@ -2961,7 +2936,8 @@ IMPLEMENT_FUNCTION(VGLVideo, set_glMatrixMode) {
 // ////////////////////////////////////////////////////////////////////////// //
 //native final static void glSetup2D (optional bool bottomUp);
 IMPLEMENT_FUNCTION(VGLVideo, glSetup2D) {
-  P_GET_BOOL_OPT(bottomUp, false);
+  VOptParamBool bottomUp(false);
+  vobjGetParam(bottomUp);
 
   if (!mInited) return;
 
@@ -3017,8 +2993,10 @@ IMPLEMENT_FUNCTION(VGLVideo, glSetup2D) {
 // ////////////////////////////////////////////////////////////////////////// //
 //native final static void glSetup3D (float fov, optional float aspect);
 IMPLEMENT_FUNCTION(VGLVideo, glSetup3D) {
-  P_GET_FLOAT_OPT(aspect, 1.0f);
-  P_GET_FLOAT(fov);
+  float fov;
+  VOptParamFloat aspect(1);
+  vobjGetParam(fov, aspect);
+
   if (fov < 1) fov = 90; else if (fov > 179) fov = 179;
   if (aspect < 0.1f) aspect = 0.1f;
 
@@ -3104,7 +3082,8 @@ IMPLEMENT_FUNCTION(VGLVideo, glSetup3D) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 IMPLEMENT_FUNCTION(VGLVideo, set_glCullFace) {
-  P_GET_INT(mode);
+  int mode;
+  vobjGetParam(mode);
   if (mInited) {
     switch (mode) {
       case GLFaceCull_None: glDisable(GL_CULL_FACE); break;
@@ -3116,8 +3095,9 @@ IMPLEMENT_FUNCTION(VGLVideo, set_glCullFace) {
 
 //native final static void glSetTexture (GLTexture tx, optional bool repeat); // `none` means disable texturing
 IMPLEMENT_FUNCTION(VGLVideo, glSetTexture) {
-  P_GET_BOOL_OPT(repeat, false);
-  P_GET_REF(VGLTexture, tx);
+  VGLTexture *tx;
+  VOptParamBool repeat(false);
+  vobjGetParam(tx, repeat);
   if (mInited) {
     if (tx && tx->tex) {
       glEnable(GL_TEXTURE_2D);
@@ -3138,18 +3118,17 @@ IMPLEMENT_FUNCTION(VGLVideo, glSetColor) {
   VOptParamFloat a(1.0f);
   float r, g, b;
   vobjGetParam(r, g, b, a);
-  /*
-  P_GET_FLOAT_OPT(a, 1.0f);
-  P_GET_FLOAT(b);
-  P_GET_FLOAT(g);
-  P_GET_FLOAT(r);
-  */
+  r = clampval(r, 0.0f, 1.0f);
+  g = clampval(g, 0.0f, 1.0f);
+  b = clampval(b, 0.0f, 1.0f);
+  a = clampval(b, 0.0f, 1.0f);
   if (mInited) glColor4f(r, g, b, a);
 }
 
 // native final static void glBegin (GLBegin mode);
 IMPLEMENT_FUNCTION(VGLVideo, glBegin) {
-  P_GET_INT(mode);
+  int mode;
+  vobjGetParam(mode);
   if (mInited) {
     switch (mode) {
       case GLBegin_Points: glBegin(GL_POINTS); break;
@@ -3173,11 +3152,11 @@ IMPLEMENT_FUNCTION(VGLVideo, glEnd) {
 
 // native final static void glVertex (TVec p, optional float s, optional float t);
 IMPLEMENT_FUNCTION(VGLVideo, glVertex) {
-  P_GET_FLOAT_OPT(t, 0.0f);
-  P_GET_FLOAT_OPT(s, 0.0f);
-  P_GET_VEC(p);
+  TVec p;
+  VOptParamFloat s(0), t(0);
+  vobjGetParam(p, s, t);
   if (mInited) {
-    if (specified_t || specified_s) glTexCoord2f(s, t);
+    if (t.specified || s.specified) glTexCoord2f(s, t);
     glVertex3f(p.x, p.y, p.z);
   }
 }
@@ -3185,7 +3164,8 @@ IMPLEMENT_FUNCTION(VGLVideo, glVertex) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 IMPLEMENT_FUNCTION(VGLVideo, set_glFogMode) {
-  P_GET_INT(mode);
+  int mode;
+  vobjGetParam(mode);
   if (mInited) {
     switch (mode) {
       //case FM_None:
@@ -3198,26 +3178,32 @@ IMPLEMENT_FUNCTION(VGLVideo, set_glFogMode) {
 }
 
 IMPLEMENT_FUNCTION(VGLVideo, set_glFogDensity) {
-  P_GET_FLOAT(v);
+  float v;
+  vobjGetParam(v);
   if (mInited) glFogf(GL_FOG_DENSITY, v);
 }
 
 IMPLEMENT_FUNCTION(VGLVideo, set_glFogStart) {
-  P_GET_FLOAT(v);
+  float v;
+  vobjGetParam(v);
   if (mInited) glFogf(GL_FOG_START, v);
 }
 
 IMPLEMENT_FUNCTION(VGLVideo, set_glFogEnd) {
-  P_GET_FLOAT(v);
+  float v;
+  vobjGetParam(v);
   if (mInited) glFogf(GL_FOG_END, v);
 }
 
 // native final static void glSetFogColor (float r, float g, float b, optional float a);
 IMPLEMENT_FUNCTION(VGLVideo, glSetFogColor) {
-  P_GET_FLOAT_OPT(a, 0.0f);
-  P_GET_FLOAT(b);
-  P_GET_FLOAT(g);
-  P_GET_FLOAT(r);
+  VOptParamFloat a(0.0f);
+  float r, g, b;
+  vobjGetParam(r, g, b, a);
+  r = clampval(r, 0.0f, 1.0f);
+  g = clampval(g, 0.0f, 1.0f);
+  b = clampval(b, 0.0f, 1.0f);
+  a = clampval(b, 0.0f, 1.0f);
   GLfloat v[4] = { r, g, b, a };
   if (mInited) glFogfv(GL_FOG_COLOR, v);
 }
@@ -3229,7 +3215,8 @@ IMPLEMENT_FUNCTION(VGLVideo, get_smoothLine) {
 }
 
 IMPLEMENT_FUNCTION(VGLVideo, set_smoothLine) {
-  P_GET_BOOL(v);
+  bool v;
+  vobjGetParam(v);
   if (smoothLine != v) {
     smoothLine = v;
     if (mInited) {
@@ -3246,7 +3233,8 @@ IMPLEMENT_FUNCTION(VGLVideo, get_alphaTestFunc) {
 
 // native final static void set_alphaTestFunc (AlphaFunc v)
 IMPLEMENT_FUNCTION(VGLVideo, set_alphaTestFunc) {
-  P_GET_INT(atf);
+  int atf;
+  vobjGetParam(atf);
   if (alphaTestFunc != atf) {
     alphaTestFunc = atf;
     forceAlphaFunc();
@@ -3260,7 +3248,8 @@ IMPLEMENT_FUNCTION(VGLVideo, get_alphaTestVal) {
 
 // native final static void set_alphaTestVal (float v)
 IMPLEMENT_FUNCTION(VGLVideo, set_alphaTestVal) {
-  P_GET_FLOAT(v);
+  float v;
+  vobjGetParam(v);
   if (alphaFuncVal != v) {
     alphaFuncVal = v;
     forceAlphaFunc();
@@ -3283,7 +3272,8 @@ IMPLEMENT_FUNCTION(VGLVideo, get_stencil) {
 }
 
 IMPLEMENT_FUNCTION(VGLVideo, set_stencil) {
-  P_GET_BOOL(v);
+  bool v;
+  vobjGetParam(v);
   if (stencilEnabled != v) {
     stencilEnabled = v;
     if (mInited) {
@@ -3295,19 +3285,18 @@ IMPLEMENT_FUNCTION(VGLVideo, set_stencil) {
 
 //native final static void stencilOp (StencilOp sfail, StencilOp dpfail, optional StencilOp dppass);
 IMPLEMENT_FUNCTION(VGLVideo, stencilOp) {
-  P_GET_INT_OPT(dppass, STC_Keep);
-  P_GET_INT(dpfail);
-  P_GET_INT(sfail);
-  if (!specified_dppass) dppass = dpfail;
+  int sfail, dpfail;
+  VOptParamInt dppass(STC_Keep);
+  vobjGetParam(sfail, dpfail, dppass);
+  if (!dppass.specified) dppass = dpfail;
   if (mInited) glStencilOp(convertStencilOp(sfail), convertStencilOp(dpfail), convertStencilOp(dppass));
 }
 
 //native final static void stencilFunc (StencilFunc func, int refval, optional int mask);
 IMPLEMENT_FUNCTION(VGLVideo, stencilFunc) {
-  P_GET_INT_OPT(mask, -1);
-  P_GET_INT(refval);
-  P_GET_INT(func);
-  if (!specified_mask) mask = -1;
+  int func, refval;
+  VOptParamInt mask(-1);
+  vobjGetParam(func, refval, mask);
   if (mInited) glStencilFunc(convertStencilFunc(func), refval, mask);
 }
 
@@ -3319,8 +3308,9 @@ IMPLEMENT_FUNCTION(VGLVideo, get_colorARGB) {
 
 //native final static void setColorARGB (int v);
 IMPLEMENT_FUNCTION(VGLVideo, set_colorARGB) {
-  P_GET_INT(c);
-  setColor((vuint32)c);
+  vuint32 c;
+  vobjGetParam(c);
+  setColor(c);
 }
 
 //native final static int getBlendMode ();
@@ -3330,7 +3320,8 @@ IMPLEMENT_FUNCTION(VGLVideo, get_blendMode) {
 
 //native final static void set_blendMode (int v);
 IMPLEMENT_FUNCTION(VGLVideo, set_blendMode) {
-  P_GET_INT(c);
+  int c;
+  vobjGetParam(c);
   setBlendMode(c);
 }
 
@@ -3341,7 +3332,8 @@ IMPLEMENT_FUNCTION(VGLVideo, get_blendFunc) {
 
 //native final static void set_blendMode (int v);
 IMPLEMENT_FUNCTION(VGLVideo, set_blendFunc) {
-  P_GET_INT(v);
+  int v;
+  vobjGetParam(v);
   if (mBlendFunc != v) {
     mBlendFunc = v;
     forceBlendFunc();
@@ -3357,7 +3349,8 @@ IMPLEMENT_FUNCTION(VGLVideo, get_colorMask) {
 
 //native final static void set_colorMask (CMask mask);
 IMPLEMENT_FUNCTION(VGLVideo, set_colorMask) {
-  P_GET_INT(mask);
+  int mask;
+  vobjGetParam(mask);
   mask &= CMask_Red|CMask_Green|CMask_Blue|CMask_Alpha;
   if (mask != colorMask) {
     colorMask = mask;
@@ -3373,7 +3366,8 @@ IMPLEMENT_FUNCTION(VGLVideo, get_textureFiltering) {
 
 //native final static void set_textureFiltering (bool v);
 IMPLEMENT_FUNCTION(VGLVideo, set_textureFiltering) {
-  P_GET_BOOL(tf);
+  bool tf;
+  vobjGetParam(tf);
   setTexFiltering(tf);
 }
 
@@ -3382,11 +3376,6 @@ IMPLEMENT_FUNCTION(VGLVideo, set_textureFiltering) {
 // aborts if font cannot be loaded
 //native final static void loadFontDF (name fname, string fnameIni, string fnameTexture);
 IMPLEMENT_FUNCTION(VGLVideo, loadFontDF) {
-  /*
-  P_GET_STR(fnameTexture);
-  P_GET_STR(fnameIni);
-  P_GET_NAME(fname);
-  */
   VName fname;
   VStr fnameIni;
   VStr fnameTexture;
@@ -3400,8 +3389,9 @@ IMPLEMENT_FUNCTION(VGLVideo, loadFontDF) {
 // aborts if font cannot be loaded
 //native final static void loadFontPCF (name fname, string filename);
 IMPLEMENT_FUNCTION(VGLVideo, loadFontPCF) {
-  P_GET_STR(filename);
-  P_GET_NAME(fontname);
+  VName fontname;
+  VStr filename;
+  vobjGetParam(fontname, filename);
   if (VFont::findFont(fontname)) return;
   VFont::LoadPCF(fontname, filename);
 }
@@ -3419,8 +3409,9 @@ struct FontCharInfo {
 
 // native final static bool getCharInfo (int ch, out FontCharInfo ci); // returns `false` if char wasn't found
 IMPLEMENT_FUNCTION(VGLVideo, getCharInfo) {
-  P_GET_PTR(FontCharInfo, fc);
-  P_GET_INT(ch);
+  FontCharInfo *fc;
+  int ch;
+  vobjGetParam(fc, ch);
   if (!fc) { RET_BOOL(false); return; }
   if (!currFont) {
     memset(fc, 0, sizeof(*fc));
@@ -3448,7 +3439,8 @@ IMPLEMENT_FUNCTION(VGLVideo, getCharInfo) {
 
 //native final static void setFont (name fontname);
 IMPLEMENT_FUNCTION(VGLVideo, set_fontName) {
-  P_GET_NAME(fontname);
+  VName fontname;
+  vobjGetParam(fontname);
   setFont(fontname);
 }
 
@@ -3473,37 +3465,38 @@ IMPLEMENT_FUNCTION(VGLVideo, spaceWidth) {
 
 //native final static int charWidth (int ch);
 IMPLEMENT_FUNCTION(VGLVideo, charWidth) {
-  P_GET_INT(ch);
+  int ch;
+  vobjGetParam(ch);
   RET_INT(currFont ? currFont->charWidth(ch) : 0);
 }
 
 //native final static int textWidth (string text);
 IMPLEMENT_FUNCTION(VGLVideo, textWidth) {
-  P_GET_STR(text);
+  VStr text;
+  vobjGetParam(text);
   RET_INT(currFont ? currFont->textWidth(text) : 0);
 }
 
 //native final static int textHeight (string text);
 IMPLEMENT_FUNCTION(VGLVideo, textHeight) {
-  P_GET_STR(text);
+  VStr text;
+  vobjGetParam(text);
   RET_INT(currFont ? currFont->textHeight(text) : 0);
 }
 
 //native final static void drawText (int x, int y, string text);
 IMPLEMENT_FUNCTION(VGLVideo, drawTextAt) {
-  P_GET_STR(text);
-  P_GET_INT(y);
-  P_GET_INT(x);
+  int x, y;
+  VStr text;
+  vobjGetParam(x, y, text);
   drawTextAt(x, y, text);
 }
 
 
 //native final static void drawLine (int x0, int y0, int x1, int y1);
 IMPLEMENT_FUNCTION(VGLVideo, drawLine) {
-  P_GET_INT(y1);
-  P_GET_INT(x1);
-  P_GET_INT(y0);
-  P_GET_INT(x0);
+  int x0, y0, x1, y1;
+  vobjGetParam(x0, y0, x1, y1);
   if (!mInited /*|| isFullyTransparent()*/) return;
   setupBlending();
   glDisable(GL_TEXTURE_2D);
@@ -3517,10 +3510,8 @@ IMPLEMENT_FUNCTION(VGLVideo, drawLine) {
 
 //native final static void drawRect (int x0, int y0, int w, int h);
 IMPLEMENT_FUNCTION(VGLVideo, drawRect) {
-  P_GET_INT(h);
-  P_GET_INT(w);
-  P_GET_INT(y0);
-  P_GET_INT(x0);
+  int x0, y0, w, h;
+  vobjGetParam(x0, y0, w, h);
   if (!mInited /*|| isFullyTransparent()*/ || w < 1 || h < 1) return;
   setupBlending();
   glDisable(GL_TEXTURE_2D);
@@ -3536,10 +3527,8 @@ IMPLEMENT_FUNCTION(VGLVideo, drawRect) {
 
 //native final static void fillRect (int x0, int y0, int w, int h);
 IMPLEMENT_FUNCTION(VGLVideo, fillRect) {
-  P_GET_INT(h);
-  P_GET_INT(w);
-  P_GET_INT(y0);
-  P_GET_INT(x0);
+  int x0, y0, w, h;
+  vobjGetParam(x0, y0, w, h);
   if (!mInited /*|| isFullyTransparent()*/ || w < 1 || h < 1) return;
   setupBlending();
   glDisable(GL_TEXTURE_2D);
@@ -3556,8 +3545,8 @@ IMPLEMENT_FUNCTION(VGLVideo, fillRect) {
 
 // native final static bool getMousePos (out int x, out int y)
 IMPLEMENT_FUNCTION(VGLVideo, getMousePos) {
-  P_GET_PTR(int, yp);
-  P_GET_PTR(int, xp);
+  int *xp, *yp;
+  vobjGetParam(xp, yp);
   getMousePosition(xp, yp);
   RET_BOOL(mInited);
 }
@@ -3568,7 +3557,8 @@ IMPLEMENT_FUNCTION(VGLVideo, get_swapInterval) {
 }
 
 IMPLEMENT_FUNCTION(VGLVideo, set_swapInterval) {
-  P_GET_INT(si);
+  int si;
+  vobjGetParam(si);
   if (si < 0) si = -1; else if (si > 0) si = 1;
   if (!mInited) { swapInterval = si; return; }
   if (SDL_GL_SetSwapInterval(si) == -1) { if (si < 0) { si = 1; SDL_GL_SetSwapInterval(1); } }
