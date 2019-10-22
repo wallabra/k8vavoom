@@ -138,10 +138,12 @@ VZipFileReader::VZipFileReader (VStream *InStream, vuint32 bytesBeforeZipFile, c
       return;
     }
     stream_initialised = true;
+    //fprintf(stderr, "DBG: opened '%s' (deflate)\n", *aInfo.name);
   } else if (info.compression_method == Z_LZMA) {
     // LZMA
     usezlib = false;
     if (!lzmaRestart()) return; // error already set
+    //fprintf(stderr, "DBG: opened '%s' (lzma)\n", *aInfo.name);
   }
 
   stream.avail_in = 0;
@@ -295,14 +297,18 @@ bool VZipFileReader::lzmaRestart () {
     return false;
   }
 
+
   if (lzmainited) { lzmainited = false; LzmaDec_Free(&lzmastate, &fsysLzmaAlloc); }
   lzmatotalout = 0;
+  lzmainbufpos = nullptr;
+  lzmainbufleft = 0;
   Crc32 = 0;
   rest_read_uncompressed = info.uncompressed_size;
+  rest_read_compressed = info.compressed_size;
 
   if (rest_read_compressed < 4+5) {
     bError = true;
-    //error->Log("Invalid lzma header (out of data)");
+    //fprintf(stderr, "DBG: Invalid lzma header (out of data)\n");
     return false;
   }
 
@@ -313,13 +319,13 @@ bool VZipFileReader::lzmaRestart () {
 
   if (fileStream->IsError()) {
     bError = true;
-    //error->Log("error reading lzma headers");
+    //fprintf(stderr, "DBG: error reading lzma headers\n");
     return false;
   }
 
   if (ziplzmahdr[3] != 0 || ziplzmahdr[2] == 0 || ziplzmahdr[2] < 5) {
     bError = true;
-    //error->Log("Invalid lzma header (0)");
+    //fprintf(stderr, "DBG: Invalid lzma header (0)\n");
     return false;
   }
 
@@ -327,7 +333,7 @@ bool VZipFileReader::lzmaRestart () {
     vuint32 skip = ziplzmahdr[2]-5;
     if (rest_read_compressed < skip) {
       bError = true;
-      //error->Log("Invalid lzma header (out of extra data)");
+      //fprintf(stderr, "DBG: Invalid lzma header (out of extra data)\n");
       return false;
     }
     rest_read_compressed -= skip;
@@ -336,7 +342,7 @@ bool VZipFileReader::lzmaRestart () {
       *fileStream << tmp;
       if (fileStream->IsError()) {
         bError = true;
-        //error->Log("error reading extra lzma headers");
+        //fprintf(stderr, "DBG: error reading extra lzma headers\n");
         return false;
       }
     }
@@ -344,6 +350,7 @@ bool VZipFileReader::lzmaRestart () {
 
   pos_in_zipfile = fileStream->Tell();
   if (fileStream->IsError()) {
+    //fprintf(stderr, "DBG: error getting position in lzma restarter\n");
     bError = true;
     return false;
   }
@@ -351,6 +358,7 @@ bool VZipFileReader::lzmaRestart () {
   // header is: LZMA properties (5 bytes) and uncompressed size (8 bytes, little-endian)
   static_assert(LZMA_PROPS_SIZE == 5, "invalid LZMA properties size");
   static_assert(sizeof(vuint64) == 8, "invalid vuint64 size");
+
   vuint8 lzmaheader[LZMA_PROPS_SIZE+8];
   memcpy(lzmaheader, lzmaprhdr, LZMA_PROPS_SIZE);
   vuint64 *sizeptr = (vuint64 *)(lzmaheader+LZMA_PROPS_SIZE);
@@ -358,6 +366,7 @@ bool VZipFileReader::lzmaRestart () {
   LzmaDec_Construct(&lzmastate);
   auto res = LzmaDec_Allocate(&lzmastate, lzmaheader, LZMA_PROPS_SIZE, &fsysLzmaAlloc);
   if (res != SZ_OK) {
+    //fprintf(stderr, "DBG: error allocating lzma decoder\n");
     bError = true;
     return false;
   }
@@ -459,6 +468,7 @@ void VZipFileReader::Serialise (void* buf, int len) {
 
   if (currpos > nextpos) {
     // rewind stream
+    //fprintf(stderr, "DBG: rewinding '%s' (currpos=%d; nextpos=%d)\n", *info.name, currpos, nextpos);
     Crc32 = 0;
     currpos = 0;
     rest_read_compressed = info.compressed_size;
@@ -472,6 +482,7 @@ void VZipFileReader::Serialise (void* buf, int len) {
       if (mz_inflateInit2(&stream, -MAX_WBITS) != MZ_OK) { bError = true; return; }
       stream_initialised = true;
     } else if (info.compression_method == Z_LZMA) {
+      //fprintf(stderr, "DBG: rewind '%s' (lzma)\n", *info.name);
       vassert(stream_initialised);
       vassert(!usezlib);
       if (!lzmaRestart()) return; // error already set
