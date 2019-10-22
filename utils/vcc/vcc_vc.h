@@ -30,7 +30,6 @@
 #include "../../source/common.h"
 
 extern int devprintf (const char *text, ...) __attribute__((format(printf, 1, 2)));
-extern char *va (const char *text, ...) __attribute__((format(printf, 1, 2)));
 
 extern VStream *vc_OpenFile (VStr Name);
 
