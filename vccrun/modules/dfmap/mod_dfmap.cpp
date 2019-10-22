@@ -748,7 +748,8 @@ bool VDFMap::load (const VStr &fname) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 IMPLEMENT_FUNCTION(VDFMap, Load) {
-  P_GET_STR(fname);
+  VStr fname;
+  vobjGetParam(fname);
   VClass *iclass = VClass::FindClass("DFMap");
   if (iclass) {
     auto ifileo = VObject::StaticSpawnWithReplace(iclass); // disable replacements?
