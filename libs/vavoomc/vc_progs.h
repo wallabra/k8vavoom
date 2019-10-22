@@ -47,51 +47,51 @@ extern volatile unsigned vmAbortBySignal;
 
 // ////////////////////////////////////////////////////////////////////////// //
 // stack routines
-inline void PR_Push (int value) {
+inline void PR_Push (int value) noexcept {
   pr_stackPtr->i = value;
   ++pr_stackPtr;
 }
 
 
-inline void PR_PushBool (bool value) {
+inline void PR_PushBool (bool value) noexcept {
   pr_stackPtr->i = (value ? 1 : 0);
   ++pr_stackPtr;
 }
 
 
-inline int PR_Pop () {
+inline int PR_Pop () noexcept {
   --pr_stackPtr;
   return pr_stackPtr->i;
 }
 
 
-inline void PR_Pushf (float value) {
+inline void PR_Pushf (float value) noexcept {
   pr_stackPtr->f = value;
   ++pr_stackPtr;
 }
 
 
-inline float PR_Popf () {
+inline float PR_Popf () noexcept {
   --pr_stackPtr;
   return pr_stackPtr->f;
 }
 
 
-inline void PR_Pushv (const TVec &v) {
+inline void PR_Pushv (const TVec &v) noexcept {
   PR_Pushf(v.x);
   PR_Pushf(v.y);
   PR_Pushf(v.z);
 }
 
 
-inline void PR_Pushav (const TAVec &v) {
+inline void PR_Pushav (const TAVec &v) noexcept {
   PR_Pushf(v.pitch);
   PR_Pushf(v.yaw);
   PR_Pushf(v.roll);
 }
 
 
-inline TVec PR_Popv () {
+inline TVec PR_Popv () noexcept {
   TVec v;
   v.z = PR_Popf();
   v.y = PR_Popf();
@@ -100,7 +100,7 @@ inline TVec PR_Popv () {
 }
 
 
-inline TAVec PR_Popav () {
+inline TAVec PR_Popav () noexcept {
   TAVec v;
   v.roll = PR_Popf();
   v.yaw = PR_Popf();
@@ -109,44 +109,44 @@ inline TAVec PR_Popav () {
 }
 
 
-inline void PR_PushName (VName value) {
+inline void PR_PushName (VName value) noexcept {
   pr_stackPtr->i = value.GetIndex();
   ++pr_stackPtr;
 }
 
 
-inline VName PR_PopName () {
+inline VName PR_PopName () noexcept {
   --pr_stackPtr;
   return *(VName*)&pr_stackPtr->i;
 }
 
 
-inline void PR_PushPtr (void *value) {
+inline void PR_PushPtr (void *value) noexcept {
   pr_stackPtr->p = value;
   ++pr_stackPtr;
 }
 
 
-inline void *PR_PopPtr () {
+inline void *PR_PopPtr () noexcept {
   --pr_stackPtr;
   return pr_stackPtr->p;
 }
 
 
-inline VObject *PR_PopRef () {
+inline VObject *PR_PopRef () noexcept {
   --pr_stackPtr;
   return (VObject *)(pr_stackPtr->p);
 }
 
 
-inline void PR_PushStr (VStr value) {
+inline void PR_PushStr (VStr value) noexcept {
   pr_stackPtr->p = nullptr;
   *(VStr*)&pr_stackPtr->p = value;
   pr_stackPtr++;
 }
 
 
-inline VStr PR_PopStr () {
+inline VStr PR_PopStr () noexcept {
   --pr_stackPtr;
   VStr Ret = *(VStr*)&pr_stackPtr->p;
   ((VStr*)&pr_stackPtr->p)->Clean();
