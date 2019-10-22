@@ -40,7 +40,6 @@
 
 
 extern int devprintf (const char *text, ...) __attribute__((format(printf, 1, 2)));
-extern char *va (const char *text, ...) __attribute__((format(printf, 1, 2)));
 
 void Host_Error (const char *error, ...) __attribute__((noreturn, format(printf, 1, 2)));
 
