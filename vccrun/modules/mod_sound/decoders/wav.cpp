@@ -260,7 +260,8 @@ VAudioCodec *VWavAudioCodec::Create (VStream *InStrm) {
   char Header[12];
   InStrm->Seek(0);
   InStrm->Serialise(Header, 12);
-  if (!memcmp(Header, "RIFF", 4) && !memcmp(Header+8, "WAVE", 4)) {
+  if (InStrm->IsError()) return nullptr;
+  if (memcmp(Header, "RIFF", 4) == 0 && memcmp(Header+8, "WAVE", 4) == 0) {
     // it's a WAVE file
     VWavAudioCodec *Codec = new VWavAudioCodec(InStrm);
     if (Codec->SamplesLeft != -1) return Codec;

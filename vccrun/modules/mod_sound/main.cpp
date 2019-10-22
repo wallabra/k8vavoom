@@ -300,6 +300,12 @@ bool VSoundManager::LoadSound (int sound_id, const VStr &filename) {
     for (VSampleLoader *Ldr = VSampleLoader::List; Ldr && !S_sfx[sound_id].data; Ldr = Ldr->Next) {
       Strm->Seek(0);
       Ldr->Load(S_sfx[sound_id], *Strm);
+      if (Strm->IsError()) {
+        if (S_sfx[sound_id].data) Z_Free(S_sfx[sound_id].data);
+        S_sfx[sound_id].data = nullptr;
+        fprintf(stderr, "WARNING: Error loading sound '%s' from file '%s'\n", *S_sfx[sound_id].tagName, *filename);
+        break;
+      }
       if (S_sfx[sound_id].data) {
         //fprintf(stderr, "Loaded sound '%s' from file '%s'\n", *S_sfx[sound_id].tagName, *filename);
         break;
