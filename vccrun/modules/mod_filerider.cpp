@@ -43,7 +43,7 @@ IMPLEMENT_FUNCTION(VFileReader, Open) {
 // closes the file, but won't destroy the object
 //native void close ();
 IMPLEMENT_FUNCTION(VFileReader, close) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   if (Self && Self->fstream) {
     delete Self->fstream;
     Self->fstream = nullptr;
@@ -70,7 +70,7 @@ IMPLEMENT_FUNCTION(VFileReader, seek) {
 // returns 8-bit char or -1 on EOF/error
 //native int getch ();
 IMPLEMENT_FUNCTION(VFileReader, getch) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(-1); return; }
   vuint8 b;
   Self->fstream->Serialize(&b, 1);
@@ -108,14 +108,14 @@ IMPLEMENT_FUNCTION(VFileReader, readBuf) {
 // returns name of the opened file (it may be empty)
 //native string fileName { get; }
 IMPLEMENT_FUNCTION(VFileReader, get_fileName) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   RET_STR(Self && Self->fstream && !Self->fstream->IsError() ? Self->fstream->GetName() : VStr::EmptyString);
 }
 
 // is this object open (if object is error'd, it is not open)
 //native bool isOpen { get; }
 IMPLEMENT_FUNCTION(VFileReader, get_isOpen) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   RET_BOOL(Self && Self->fstream && !Self->fstream->IsError());
 }
 
@@ -123,21 +123,21 @@ IMPLEMENT_FUNCTION(VFileReader, get_isOpen) {
 // there is no reason to continue after an error (and this is UB)
 //native bool error { get; }
 IMPLEMENT_FUNCTION(VFileReader, get_error) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   RET_BOOL(Self && Self->fstream ? Self->fstream->IsError() : true);
 }
 
 // get file size
 //native int size { get; }
 IMPLEMENT_FUNCTION(VFileReader, get_size) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   RET_INT(Self && Self->fstream && !Self->fstream->IsError() ? Self->fstream->TotalSize() : 0);
 }
 
 // get current position
 //native int position { get; }
 IMPLEMENT_FUNCTION(VFileReader, get_position) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   RET_INT(Self && Self->fstream && !Self->fstream->IsError() ? Self->fstream->Tell() : 0);
 }
 
@@ -155,7 +155,7 @@ IMPLEMENT_FUNCTION(VFileReader, set_position) {
 
 // convenient functions
 IMPLEMENT_FUNCTION(VFileReader, readU8) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
   vuint8 b;
   Self->fstream->Serialize(&b, 1);
@@ -164,7 +164,7 @@ IMPLEMENT_FUNCTION(VFileReader, readU8) {
 }
 
 IMPLEMENT_FUNCTION(VFileReader, readU16) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
   vuint8 b[2];
   Self->fstream->Serialize(&b[0], 2);
@@ -173,7 +173,7 @@ IMPLEMENT_FUNCTION(VFileReader, readU16) {
 }
 
 IMPLEMENT_FUNCTION(VFileReader, readU32) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
   vuint8 b[4];
   Self->fstream->Serialize(&b[0], 4);
@@ -182,7 +182,7 @@ IMPLEMENT_FUNCTION(VFileReader, readU32) {
 }
 
 IMPLEMENT_FUNCTION(VFileReader, readI8) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
   vint8 b;
   Self->fstream->Serialize(&b, 1);
@@ -191,7 +191,7 @@ IMPLEMENT_FUNCTION(VFileReader, readI8) {
 }
 
 IMPLEMENT_FUNCTION(VFileReader, readI16) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
   vuint8 b[2];
   Self->fstream->Serialize(&b[0], 2);
@@ -200,7 +200,7 @@ IMPLEMENT_FUNCTION(VFileReader, readI16) {
 }
 
 IMPLEMENT_FUNCTION(VFileReader, readI32) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
   vuint8 b[4];
   Self->fstream->Serialize(&b[0], 4);
@@ -209,7 +209,7 @@ IMPLEMENT_FUNCTION(VFileReader, readI32) {
 }
 
 IMPLEMENT_FUNCTION(VFileReader, readU16BE) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
   vuint8 b[2];
   Self->fstream->Serialize(&b[0], 2);
@@ -218,7 +218,7 @@ IMPLEMENT_FUNCTION(VFileReader, readU16BE) {
 }
 
 IMPLEMENT_FUNCTION(VFileReader, readU32BE) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
   vuint8 b[4];
   Self->fstream->Serialize(&b[0], 4);
@@ -227,7 +227,7 @@ IMPLEMENT_FUNCTION(VFileReader, readU32BE) {
 }
 
 IMPLEMENT_FUNCTION(VFileReader, readI16BE) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
   vuint8 b[2];
   Self->fstream->Serialize(&b[0], 2);
@@ -236,7 +236,7 @@ IMPLEMENT_FUNCTION(VFileReader, readI16BE) {
 }
 
 IMPLEMENT_FUNCTION(VFileReader, readI32BE) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   if (!Self || !Self->fstream || Self->fstream->IsError()) { RET_INT(0); return; }
   vuint8 b[4];
   Self->fstream->Serialize(&b[0], 4);
