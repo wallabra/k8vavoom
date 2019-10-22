@@ -26,10 +26,11 @@
 
 //native static final int fsysAppendDir (string path, optional string pfx);
 IMPLEMENT_FREE_FUNCTION(VObject, fsysAppendDir) {
-  P_GET_STR_OPT(pfx, VStr());
-  P_GET_STR(fname);
+  VOptParamStr pfx;
+  VStr fname;
+  vobjGetParam(fname, pfx);
   //fprintf(stderr, "pakid(%d)=%d; fname=<%s>\n", (int)specified_pakid, pakid, *fname);
-  if (specified_pfx) {
+  if (pfx.specified) {
     RET_INT(fsysAppendDir(fname, pfx));
   } else {
     RET_INT(fsysAppendDir(fname));
@@ -42,10 +43,11 @@ IMPLEMENT_FREE_FUNCTION(VObject, fsysAppendDir) {
 // returns pack id or 0
 //native static final int fsysAppendPak (string fname, optional int pakid);
 IMPLEMENT_FREE_FUNCTION(VObject, fsysAppendPak) {
-  P_GET_INT_OPT(pakid, -1);
-  P_GET_STR(fname);
+  VStr fname;
+  VOptParamInt pakid(-1);
+  vobjGetParam(fname, pakid);
   //fprintf(stderr, "pakid(%d)=%d; fname=<%s>\n", (int)specified_pakid, pakid, *fname);
-  if (specified_pakid) {
+  if (pakid.specified) {
     RET_INT(fsysAppendPak(fname, pakid));
   } else {
     RET_INT(fsysAppendPak(fname));
@@ -55,29 +57,33 @@ IMPLEMENT_FREE_FUNCTION(VObject, fsysAppendPak) {
 // remove given pack from pack list
 //native static final void fsysRemovePak (int pakid);
 IMPLEMENT_FREE_FUNCTION(VObject, fsysRemovePak) {
-  P_GET_INT(pakid);
+  int pakid;
+  vobjGetParam(pakid);
   fsysRemovePak(pakid);
 }
 
 // remove all packs from pakid and later
 //native static final void fsysRemovePaksFrom (int pakid);
 IMPLEMENT_FREE_FUNCTION(VObject, fsysRemovePaksFrom) {
-  P_GET_INT(pakid);
+  int pakid;
+  vobjGetParam(pakid);
   fsysRemovePaksFrom(pakid);
 }
 
 // 0: no such pack
 //native static final int fsysFindPakByPrefix (string pfx);
 IMPLEMENT_FREE_FUNCTION(VObject, fsysFindPakByPrefix) {
-  P_GET_STR(pfx);
+  VStr pfx;
+  vobjGetParam(pfx);
   RET_BOOL(fsysFindPakByPrefix(pfx));
 }
 
 //native static final bool fsysFileExists (string fname, optional int pakid);
 IMPLEMENT_FREE_FUNCTION(VObject, fsysFileExists) {
-  P_GET_INT_OPT(pakid, -1);
-  P_GET_STR(fname);
-  if (specified_pakid) {
+  VStr fname;
+  VOptParamInt pakid(-1);
+  vobjGetParam(fname, pakid);
+  if (pakid.specified) {
     RET_BOOL(fsysFileExists(fname, pakid));
   } else {
     RET_BOOL(fsysFileExists(fname));
@@ -87,9 +93,10 @@ IMPLEMENT_FREE_FUNCTION(VObject, fsysFileExists) {
 // find file with any extension
 //native static final string fsysFileFindAnyExt (string fname, optional int pakid);
 IMPLEMENT_FREE_FUNCTION(VObject, fsysFileFindAnyExt) {
-  P_GET_INT_OPT(pakid, -1);
-  P_GET_STR(fname);
-  if (specified_pakid) {
+  VStr fname;
+  VOptParamInt pakid(-1);
+  vobjGetParam(fname, pakid);
+  if (pakid.specified) {
     RET_STR(fsysFileFindAnyExt(fname, pakid));
   } else {
     RET_STR(fsysFileFindAnyExt(fname));
@@ -100,14 +107,16 @@ IMPLEMENT_FREE_FUNCTION(VObject, fsysFileFindAnyExt) {
 // return pack file path for the given pack id (or empty string)
 //native static final string fsysGetPakPath (int pakid);
 IMPLEMENT_FREE_FUNCTION(VObject, fsysGetPakPath) {
-  P_GET_INT(pakid);
+  int pakid;
+  vobjGetParam(pakid);
   RET_STR(fsysGetPakPath(pakid));
 }
 
 // return pack prefix for the given pack id (or empty string)
 //native static final string fsysGetPakPrefix (int pakid);
 IMPLEMENT_FREE_FUNCTION(VObject, fsysGetPakPrefix) {
-  P_GET_INT(pakid);
+  int pakid;
+  vobjGetParam(pakid);
   RET_STR(fsysGetPakPrefix(pakid));
 }
 
@@ -123,14 +132,16 @@ IMPLEMENT_FREE_FUNCTION(VObject, get_fsysKillCommonZipPrefix) {
 }
 
 IMPLEMENT_FREE_FUNCTION(VObject, set_fsysKillCommonZipPrefix) {
-  P_GET_BOOL(v);
+  bool v;
+  vobjGetParam(v);
   fsysKillCommonZipPrefix = v;
 }
 
 
 // native final void appSetName (string appname);
 IMPLEMENT_FREE_FUNCTION(VObject, appSetName) {
-  P_GET_STR(aname);
+  VStr aname;
+  vobjGetParam(aname);
   appName = aname;
 }
 
@@ -173,13 +184,13 @@ extern "C" {
 #endif
 
 
-//native final bool appSaveOptions (Object optobj, optional string optfile, optional bool packit);
+//native final static bool appSaveOptions (Object optobj, optional string optfile, optional bool packit);
 IMPLEMENT_FREE_FUNCTION(VObject, appSaveOptions) {
-  P_GET_BOOL_OPT(packit, true);
+  VObject *optobj;
+  VOptParamStr optfile;
+  VOptParamBool packit(true);
+  vobjGetParam(optobj, optfile, packit);
   (void)packit;
-  (void)specified_packit;
-  P_GET_STR_OPT(optfile, VStr());
-  P_GET_REF(VObject, optobj);
   if (appName.isEmpty() || !optobj) { RET_BOOL(false); return; }
   if (optobj->GetClass()->Name == NAME_Object) { RET_BOOL(false); return; }
   ObjectSaveMap svmap(optobj);
@@ -235,10 +246,11 @@ IMPLEMENT_FREE_FUNCTION(VObject, appSaveOptions) {
 }
 
 
-//native final spawner Object appLoadOptions (class cls, optional string optfile);
+//native final static spawner Object appLoadOptions (class cls, optional string optfile);
 IMPLEMENT_FREE_FUNCTION(VObject, appLoadOptions) {
-  P_GET_STR_OPT(optfile, VStr());
-  P_GET_PTR(VClass, cls);
+  VClass *cls;
+  VOptParamStr optfile;
+  vobjGetParam(cls, optfile);
   if (!cls) { RET_REF(nullptr); return; }
   if (cls->Name == NAME_Object) { RET_REF(nullptr); return; }
   if (appName.isEmpty()) { RET_REF(nullptr); return; }
