@@ -33,8 +33,9 @@ IMPLEMENT_CLASS(V, SoundSFXManager);
 // ////////////////////////////////////////////////////////////////////////// //
 // static native final int AddSound (name tagName, string filename); // won't replace
 IMPLEMENT_FUNCTION(VSoundSFXManager, AddSound) {
-  P_GET_STR(filename);
-  P_GET_NAME(tagName);
+  VName tagName;
+  VStr filename;
+  vobjGetParam(tagName, filename);
   int res = 0;
   if (GSoundManager) res = GSoundManager->AddSound(tagName, filename);
   RET_INT(res);
@@ -43,29 +44,32 @@ IMPLEMENT_FUNCTION(VSoundSFXManager, AddSound) {
 
 // static native final int FindSound (name tagName);
 IMPLEMENT_FUNCTION(VSoundSFXManager, FindSound) {
-  P_GET_NAME(tagName);
+  VName tagName;
+  vobjGetParam(tagName);
   int res = 0;
   if (GSoundManager) res = GSoundManager->FindSound(tagName);
   RET_INT(res);
 }
 
 
-#define IMPLEMENT_VSS_SND_PROPERTY(atype,name) \
+#define IMPLEMENT_VSS_SND_PROPERTY(atype,rttype,name) \
   IMPLEMENT_FUNCTION(VSoundSFXManager, SetSound##name) { \
-    P_GET_##atype(v); \
-    P_GET_NAME(tagName); \
+    VName tagName; \
+    atype v; \
+    vobjGetParam(tagName, v); \
     if (GSoundManager) GSoundManager->SetSound##name(tagName, v); \
   } \
   \
   IMPLEMENT_FUNCTION(VSoundSFXManager, GetSound##name) { \
-    P_GET_NAME(tagName); \
-    if (GSoundManager) RET_##atype(GSoundManager->GetSound##name(tagName)); else RET_##atype(0); \
+    VName tagName; \
+    vobjGetParam(tagName); \
+    if (GSoundManager) RET_##rttype(GSoundManager->GetSound##name(tagName)); else RET_##rttype(0); \
   }
 
-IMPLEMENT_VSS_SND_PROPERTY(INT, Priority)
-IMPLEMENT_VSS_SND_PROPERTY(INT, Channels)
-IMPLEMENT_VSS_SND_PROPERTY(FLOAT, RandomPitch)
-IMPLEMENT_VSS_SND_PROPERTY(BOOL, Singular)
+IMPLEMENT_VSS_SND_PROPERTY(int, INT, Priority)
+IMPLEMENT_VSS_SND_PROPERTY(int, INT, Channels)
+IMPLEMENT_VSS_SND_PROPERTY(float, FLOAT, RandomPitch)
+IMPLEMENT_VSS_SND_PROPERTY(bool, BOOL, Singular)
 
 #undef IMPLEMENT_VSS_SND_PROPERTY
 
@@ -98,15 +102,16 @@ IMPLEMENT_FUNCTION(VSoundSystem, get_IsInitialized) {
 //   int origin_id, optional int channel, optional float volume, optional float attenuation, optional float pitch,
 //    optional bool loop);
 IMPLEMENT_FUNCTION(VSoundSystem, PlaySound) {
-  P_GET_BOOL_OPT(loop, false);
-  P_GET_FLOAT_OPT(pitch, 1.0);
-  P_GET_FLOAT_OPT(attenuation, 1.0);
-  P_GET_FLOAT_OPT(volume, 1.0);
-  P_GET_INT_OPT(channel, -1);
-  P_GET_INT(origin_id);
-  P_GET_VEC_OPT(velocity, TVec(0, 0, 0));
-  P_GET_VEC(origin);
-  P_GET_INT(sndid);
+  int sndid;
+  TVec origin;
+  VOptParamVec velocity(TVec(0, 0, 0));
+  int origin_id;
+  VOptParamInt channel(-1);
+  VOptParamFloat volume(1.0f);
+  VOptParamFloat attenuation(1.0f);
+  VOptParamFloat pitch(1.0f);
+  VOptParamBool loop(false);
+  vobjGetParam(sndid, origin, velocity, origin_id, channel, volume, attenuation, pitch, loop);
   int res = -1;
   if (GAudio) res = GAudio->PlaySound(sndid, origin, velocity, origin_id, channel, volume, attenuation, pitch, loop);
   RET_INT(res);
@@ -115,16 +120,16 @@ IMPLEMENT_FUNCTION(VSoundSystem, PlaySound) {
 
 // static native final void StopChannel (int origin_id, int channel);
 IMPLEMENT_FUNCTION(VSoundSystem, StopChannel) {
-  P_GET_INT(channel);
-  P_GET_INT(origin_id);
+  int origin_id, channel;
+  vobjGetParam(origin_id, channel);
   if (GAudio) GAudio->StopChannel(origin_id, channel);
 }
 
 
 // static native final void StopSound (int origin_id, int sound_id);
 IMPLEMENT_FUNCTION(VSoundSystem, StopSound) {
-  P_GET_INT(sound_id);
-  P_GET_INT(origin_id);
+  int origin_id, sound_id;
+  vobjGetParam(origin_id, sound_id);
   if (GAudio) GAudio->StopSound(origin_id, sound_id);
 }
 
@@ -137,8 +142,8 @@ IMPLEMENT_FUNCTION(VSoundSystem, StopSounds) {
 
 // static native final bool IsSoundActive (int origin_id, int sound_id);
 IMPLEMENT_FUNCTION(VSoundSystem, IsSoundActive) {
-  P_GET_INT(sound_id);
-  P_GET_INT(origin_id);
+  int origin_id, sound_id;
+  vobjGetParam(origin_id, sound_id);
   bool res = false;
   if (GAudio) res = GAudio->IsSoundActive(origin_id, sound_id);
   RET_BOOL(res);
@@ -146,8 +151,8 @@ IMPLEMENT_FUNCTION(VSoundSystem, IsSoundActive) {
 
 // static native final bool IsSoundPaused (int origin_id, int sound_id);
 IMPLEMENT_FUNCTION(VSoundSystem, IsSoundPaused) {
-  P_GET_INT(sound_id);
-  P_GET_INT(origin_id);
+  int origin_id, sound_id;
+  vobjGetParam(origin_id, sound_id);
   bool res = false;
   if (GAudio) res = GAudio->IsSoundPaused(origin_id, sound_id);
   RET_BOOL(res);
@@ -155,23 +160,23 @@ IMPLEMENT_FUNCTION(VSoundSystem, IsSoundPaused) {
 
 // static native final void PauseSound (int origin_id, int sound_id);
 IMPLEMENT_FUNCTION(VSoundSystem, PauseSound) {
-  P_GET_INT(sound_id);
-  P_GET_INT(origin_id);
+  int origin_id, sound_id;
+  vobjGetParam(origin_id, sound_id);
   if (GAudio) GAudio->PauseSound(origin_id, sound_id);
 }
 
 // static native final void ResumeSound (int origin_id, int sound_id);
 IMPLEMENT_FUNCTION(VSoundSystem, ResumeSound) {
-  P_GET_INT(sound_id);
-  P_GET_INT(origin_id);
+  int origin_id, sound_id;
+  vobjGetParam(origin_id, sound_id);
   if (GAudio) GAudio->ResumeSound(origin_id, sound_id);
 }
 
 
 // static native final bool IsChannelActive (int origin_id, int channel);
 IMPLEMENT_FUNCTION(VSoundSystem, IsChannelActive) {
-  P_GET_INT(channel);
-  P_GET_INT(origin_id);
+  int origin_id, channel;
+  vobjGetParam(origin_id, channel);
   bool res = false;
   if (GAudio) res = GAudio->IsChannelActive(origin_id, channel);
   RET_BOOL(res);
@@ -179,8 +184,8 @@ IMPLEMENT_FUNCTION(VSoundSystem, IsChannelActive) {
 
 // static native final bool IsChannelPaused (int origin_id, int channel);
 IMPLEMENT_FUNCTION(VSoundSystem, IsChannelPaused) {
-  P_GET_INT(channel);
-  P_GET_INT(origin_id);
+  int origin_id, channel;
+  vobjGetParam(origin_id, channel);
   bool res = false;
   if (GAudio) res = GAudio->IsChannelPaused(origin_id, channel);
   RET_BOOL(res);
@@ -188,15 +193,15 @@ IMPLEMENT_FUNCTION(VSoundSystem, IsChannelPaused) {
 
 // static native final void PauseChannel (int origin_id, int channel);
 IMPLEMENT_FUNCTION(VSoundSystem, PauseChannel) {
-  P_GET_INT(channel);
-  P_GET_INT(origin_id);
+  int origin_id, channel;
+  vobjGetParam(origin_id, channel);
   if (GAudio) GAudio->PauseChannel(origin_id, channel);
 }
 
 // static native final void ResumeChannel (int origin_id, int channel);
 IMPLEMENT_FUNCTION(VSoundSystem, ResumeChannel) {
-  P_GET_INT(channel);
-  P_GET_INT(origin_id);
+  int origin_id, channel;
+  vobjGetParam(origin_id, channel);
   if (GAudio) GAudio->ResumeChannel(origin_id, channel);
 }
 
@@ -212,22 +217,22 @@ IMPLEMENT_FUNCTION(VSoundSystem, ResumeSounds) {
 
 
 #define IMPLEMENT_VSS_SETSC_PROPERTY(atype,name) \
-IMPLEMENT_FUNCTION(VSoundSystem, SetSound##name) { P_GET_##atype(v); P_GET_INT(sc); P_GET_INT(oid); if (GAudio) GAudio->SetSound##name(oid, sc, v); } \
-IMPLEMENT_FUNCTION(VSoundSystem, SetChannel##name) { P_GET_##atype(v); P_GET_INT(sc); P_GET_INT(oid); if (GAudio) GAudio->SetChannel##name(oid, sc, v); }
+IMPLEMENT_FUNCTION(VSoundSystem, SetSound##name) { atype v; int sc, oid; vobjGetParam(oid, sc, v); if (GAudio) GAudio->SetSound##name(oid, sc, v); } \
+IMPLEMENT_FUNCTION(VSoundSystem, SetChannel##name) { atype v; int sc, oid; vobjGetParam(oid, sc, v); if (GAudio) GAudio->SetChannel##name(oid, sc, v); }
 
-IMPLEMENT_VSS_SETSC_PROPERTY(FLOAT, Pitch)
-IMPLEMENT_VSS_SETSC_PROPERTY(VEC, Origin)
-IMPLEMENT_VSS_SETSC_PROPERTY(VEC, Velocity)
-IMPLEMENT_VSS_SETSC_PROPERTY(FLOAT, Volume)
-IMPLEMENT_VSS_SETSC_PROPERTY(FLOAT, Attenuation)
+IMPLEMENT_VSS_SETSC_PROPERTY(float, Pitch)
+IMPLEMENT_VSS_SETSC_PROPERTY(TVec, Origin)
+IMPLEMENT_VSS_SETSC_PROPERTY(TVec, Velocity)
+IMPLEMENT_VSS_SETSC_PROPERTY(float, Volume)
+IMPLEMENT_VSS_SETSC_PROPERTY(float, Attenuation)
 
 #undef IMPLEMENT_VSS_SETSC_PROPERTY
 
 
 // static native final int FindInternalChannelForSound (int origin_id, int sound_id) = 0;
 IMPLEMENT_FUNCTION(VSoundSystem, FindInternalChannelForSound) {
-  P_GET_INT(sid);
-  P_GET_INT(oid);
+  int oid, sid;
+  vobjGetParam(oid, sid);
   int res = -1;
   if (GAudio) res = GAudio->FindInternalChannelForSound(oid, sid);
   RET_INT(res);
@@ -235,8 +240,8 @@ IMPLEMENT_FUNCTION(VSoundSystem, FindInternalChannelForSound) {
 
 // static native final int FindInternalChannelForChannel (int origin_id, int channel) = 0;
 IMPLEMENT_FUNCTION(VSoundSystem, FindInternalChannelForChannel) {
-  P_GET_INT(cid);
-  P_GET_INT(oid);
+  int oid, cid;
+  vobjGetParam(oid, cid);
   int res = -1;
   if (GAudio) res = GAudio->FindInternalChannelForChannel(oid, cid);
   RET_INT(res);
@@ -244,7 +249,8 @@ IMPLEMENT_FUNCTION(VSoundSystem, FindInternalChannelForChannel) {
 
 // static native final bool IsInternalChannelPlaying (int ichannel); // paused channels considered "playing"
 IMPLEMENT_FUNCTION(VSoundSystem, IsInternalChannelPlaying) {
-  P_GET_INT(ichannel);
+  int ichannel;
+  vobjGetParam(ichannel);
   bool res = false;
   if (GAudio) res = GAudio->IsInternalChannelPlaying(ichannel);
   RET_BOOL(res);
@@ -252,7 +258,8 @@ IMPLEMENT_FUNCTION(VSoundSystem, IsInternalChannelPlaying) {
 
 // static native final bool IsInternalChannelPaused (int ichannel);
 IMPLEMENT_FUNCTION(VSoundSystem, IsInternalChannelPaused) {
-  P_GET_INT(ichannel);
+  int ichannel;
+  vobjGetParam(ichannel);
   bool res = false;
   if (GAudio) res = GAudio->IsInternalChannelPaused(ichannel);
   RET_BOOL(res);
@@ -260,25 +267,29 @@ IMPLEMENT_FUNCTION(VSoundSystem, IsInternalChannelPaused) {
 
 // static native final void StopInternalChannel (int ichannel);
 IMPLEMENT_FUNCTION(VSoundSystem, StopInternalChannel) {
-  P_GET_INT(ichannel);
+  int ichannel;
+  vobjGetParam(ichannel);
   if (GAudio) GAudio->StopInternalChannel(ichannel);
 }
 
 // static native final void PauseInternalChannel (int ichannel);
 IMPLEMENT_FUNCTION(VSoundSystem, PauseInternalChannel) {
-  P_GET_INT(ichannel);
+  int ichannel;
+  vobjGetParam(ichannel);
   if (GAudio) GAudio->PauseInternalChannel(ichannel);
 }
 
 // static native final void ResumeInternalChannel (int ichannel);
 IMPLEMENT_FUNCTION(VSoundSystem, ResumeInternalChannel) {
-  P_GET_INT(ichannel);
+  int ichannel;
+  vobjGetParam(ichannel);
   if (GAudio) GAudio->ResumeInternalChannel(ichannel);
 }
 
 // static native final bool IsInternalChannelRelative (int ichannel);
 IMPLEMENT_FUNCTION(VSoundSystem, IsInternalChannelRelative) {
-  P_GET_INT(ichannel);
+  int ichannel;
+  vobjGetParam(ichannel);
   bool res = false;
   if (GAudio) res = GAudio->IsInternalChannelRelative(ichannel);
   RET_BOOL(res);
@@ -286,8 +297,9 @@ IMPLEMENT_FUNCTION(VSoundSystem, IsInternalChannelRelative) {
 
 // static native final void SetInternalChannelRelative (int ichannel, bool relative);
 IMPLEMENT_FUNCTION(VSoundSystem, SetInternalChannelRelative) {
-  P_GET_BOOL(relative);
-  P_GET_INT(ichannel);
+  int ichannel;
+  bool relative;
+  vobjGetParam(ichannel, relative);
   if (GAudio) GAudio->SetInternalChannelRelative(ichannel, relative);
 }
 
@@ -303,7 +315,8 @@ IMPLEMENT_FUNCTION(VSoundSystem, UnlockUpdates) {
 
 #define IMPLEMENT_VSS_LISTENER_PROPERTY(name) \
   IMPLEMENT_FUNCTION(VSoundSystem, set_Listener##name) { \
-    P_GET_VEC(v); \
+    TVec v; \
+    vobjGetParam(v); \
     if (GAudio) { \
       GAudio->LockUpdates(); \
       GAudio->Listener##name = v; \
@@ -328,7 +341,8 @@ IMPLEMENT_FUNCTION(VSoundSystem, get_SoundVolume) {
 }
 
 IMPLEMENT_FUNCTION(VSoundSystem, set_SoundVolume) {
-  P_GET_FLOAT(v);
+  float v;
+  vobjGetParam(v);
   if (v < 0) v = 0; else if (v > 1) v = 1;
   if (GAudio) GAudio->LockUpdates();
   VAudioPublic::snd_sfx_volume = v;
@@ -340,7 +354,8 @@ IMPLEMENT_FUNCTION(VSoundSystem, get_MusicVolume) {
 }
 
 IMPLEMENT_FUNCTION(VSoundSystem, set_MusicVolume) {
-  P_GET_FLOAT(v);
+  float v;
+  vobjGetParam(v);
   if (v < 0) v = 0; else if (v > 1) v = 1;
   if (GAudio) GAudio->LockUpdates();
   VAudioPublic::snd_music_volume = v;
@@ -352,7 +367,8 @@ IMPLEMENT_FUNCTION(VSoundSystem, get_SwapStereo) {
 }
 
 IMPLEMENT_FUNCTION(VSoundSystem, set_SwapStereo) {
-  P_GET_BOOL(v);
+  bool v;
+  vobjGetParam(v);
   if (GAudio) GAudio->LockUpdates();
   VAudioPublic::snd_swap_stereo = v;
   if (GAudio) GAudio->UnlockUpdates();
@@ -361,8 +377,9 @@ IMPLEMENT_FUNCTION(VSoundSystem, set_SwapStereo) {
 
 // static native final bool PlayMusic (string filename, optional bool Loop);
 IMPLEMENT_FUNCTION(VSoundSystem, PlayMusic) {
-  P_GET_BOOL_OPT(loop, false);
-  P_GET_STR(filename);
+  VStr filename;
+  VOptParamBool loop(false);
+  vobjGetParam(filename, loop);
   if (GAudio) {
     RET_BOOL(GAudio->PlayMusic(filename, loop));
   } else {
@@ -393,27 +410,29 @@ IMPLEMENT_FUNCTION(VSoundSystem, StopMusic) {
 
 // static native final void SetMusicPitch (float pitch);
 IMPLEMENT_FUNCTION(VSoundSystem, SetMusicPitch) {
-  P_GET_FLOAT(pitch);
+  float pitch;
+  vobjGetParam(pitch);
   if (GAudio) GAudio->SetMusicPitch(pitch);
 }
 
 
-#define IMPLEMENT_VSS_PROPERTY(atype,name,varname) \
-IMPLEMENT_FUNCTION(VSoundSystem, get_##name) { RET_##atype(varname); } \
-IMPLEMENT_FUNCTION(VSoundSystem, set_##name) { P_GET_##atype(v); varname = v; }
+#define IMPLEMENT_VSS_PROPERTY(atype,rttype,name,varname) \
+IMPLEMENT_FUNCTION(VSoundSystem, get_##name) { RET_##rttype(varname); } \
+IMPLEMENT_FUNCTION(VSoundSystem, set_##name) { atype v; vobjGetParam(v); varname = v; }
 
-IMPLEMENT_VSS_PROPERTY(FLOAT, DopplerFactor, VOpenALDevice::doppler_factor)
-IMPLEMENT_VSS_PROPERTY(FLOAT, DopplerVelocity, VOpenALDevice::doppler_velocity)
-IMPLEMENT_VSS_PROPERTY(FLOAT, RolloffFactor, VOpenALDevice::rolloff_factor)
-IMPLEMENT_VSS_PROPERTY(FLOAT, ReferenceDistance, VOpenALDevice::reference_distance)
-IMPLEMENT_VSS_PROPERTY(FLOAT, MaxDistance, VOpenALDevice::max_distance)
+IMPLEMENT_VSS_PROPERTY(float, FLOAT, DopplerFactor, VOpenALDevice::doppler_factor)
+IMPLEMENT_VSS_PROPERTY(float, FLOAT, DopplerVelocity, VOpenALDevice::doppler_velocity)
+IMPLEMENT_VSS_PROPERTY(float, FLOAT, RolloffFactor, VOpenALDevice::rolloff_factor)
+IMPLEMENT_VSS_PROPERTY(float, FLOAT, ReferenceDistance, VOpenALDevice::reference_distance)
+IMPLEMENT_VSS_PROPERTY(float, FLOAT, MaxDistance, VOpenALDevice::max_distance)
 
 #undef IMPLEMENT_VSS_PROPERTY
 
 IMPLEMENT_FUNCTION(VSoundSystem, get_NumChannels) { RET_INT(VAudioPublic::snd_channels); }
 
 IMPLEMENT_FUNCTION(VSoundSystem, set_NumChannels) {
-  P_GET_INT(v);
+  int v;
+  vobjGetParam(v);
   if (GAudio || v < 1 || v > 256) return;
   VAudioPublic::snd_channels = v;
 }
@@ -422,7 +441,8 @@ IMPLEMENT_FUNCTION(VSoundSystem, set_NumChannels) {
 IMPLEMENT_FUNCTION(VSoundSystem, get_MaxHearingDistance) { RET_INT(VAudioPublic::snd_max_distance); }
 
 IMPLEMENT_FUNCTION(VSoundSystem, set_MaxHearingDistance) {
-  P_GET_INT(v);
+  int v;
+  vobjGetParam(v);
   if (GAudio || v < 0) return;
   if (v > 0x000fffff) v = 0x000fffff;
   if (GAudio) GAudio->LockUpdates();
@@ -489,7 +509,8 @@ static void buildExtList (VScriptArray *arr, const ALCchar *list) {
 // ////////////////////////////////////////////////////////////////////////// //
 // static native final void getDeviceList (out array!string list);
 IMPLEMENT_FUNCTION(VSoundSystem, getDeviceList) {
-  P_GET_PTR(VScriptArray, arr);
+  VScriptArray *arr;
+  vobjGetParam(arr);
   const char *list;
   if (GAudio) {
     list = GAudio->GetDevList();
@@ -505,7 +526,8 @@ IMPLEMENT_FUNCTION(VSoundSystem, getDeviceList) {
 
 // static native final void getPhysDeviceList (out array!string list);
 IMPLEMENT_FUNCTION(VSoundSystem, getPhysDeviceList) {
-  P_GET_PTR(VScriptArray, arr);
+  VScriptArray *arr;
+  vobjGetParam(arr);
   const char *list;
   if (GAudio) {
     list = GAudio->GetAllDevList();
@@ -521,7 +543,8 @@ IMPLEMENT_FUNCTION(VSoundSystem, getPhysDeviceList) {
 
 // static native final void getExtensionsList (out array!string list);
 IMPLEMENT_FUNCTION(VSoundSystem, getExtensionsList) {
-  P_GET_PTR(VScriptArray, arr);
+  VScriptArray *arr;
+  vobjGetParam(arr);
   const char *list;
   if (GAudio) {
     list = GAudio->GetExtList();
