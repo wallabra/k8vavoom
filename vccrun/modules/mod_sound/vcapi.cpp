@@ -192,13 +192,13 @@ IMPLEMENT_FUNCTION(VSoundSystem, PauseChannel) {
   P_GET_INT(origin_id);
   if (GAudio) GAudio->PauseChannel(origin_id, channel);
 }
+
 // static native final void ResumeChannel (int origin_id, int channel);
 IMPLEMENT_FUNCTION(VSoundSystem, ResumeChannel) {
   P_GET_INT(channel);
   P_GET_INT(origin_id);
   if (GAudio) GAudio->ResumeChannel(origin_id, channel);
 }
-
 
 // static native final void PauseSounds ();
 IMPLEMENT_FUNCTION(VSoundSystem, PauseSounds) {

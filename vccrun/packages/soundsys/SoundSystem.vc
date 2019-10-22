@@ -65,7 +65,7 @@ static native final int MaxHearingDistance { get; set; } // default: 1200
 // i.e. you can play several sounds for one `origin_id`, otherwise new sound will replace
 // already playing sound for the given `origin_id`
 // if `origin_id` is 0, this is local player sound, otherwise it is a user-defined entity id
-static native final void PlaySound (int sound_id, const TVec origin, optional const TVec velocity,
+static native final int PlaySound (int sound_id, const TVec origin, optional const TVec velocity,
   int origin_id, optional int channel, optional float volume, optional float attenuation,
   optional float pitch, optional bool loop);
 
