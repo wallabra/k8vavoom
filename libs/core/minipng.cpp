@@ -98,9 +98,15 @@ bool PNGHandle::loadIDAT () {
   for (; ChunkPt < (vuint32)Chunks.length(); ++ChunkPt) {
     if (Chunks[ChunkPt].ID == MAKE_ID('I','D','A','T')) {
       // found the chunk
-      File->Seek(Chunks[ChunkPt++].Offset);
-      fidlen = Chunks[ChunkPt-1].Size;
-      break;
+      //GLog.Logf(NAME_Debug, "::: PNGHandle::loadIDAT(): found IDAT, chunk #%d; size=%d; pos=%d", ChunkPt, Chunks[ChunkPt].Size, Chunks[ChunkPt].Offset);
+      File->Seek(Chunks[ChunkPt].Offset);
+      if (File->IsError()) {
+        //GLog.Log(NAME_Debug, "::: PNGHandle::loadIDAT(): error seeking!");
+        return false;
+      }
+      fidlen = Chunks[ChunkPt].Size;
+      if (fidlen < 0) return false;
+      if (fidlen > 0) { ++ChunkPt; break; }
     }
   }
   if (fidlen == 0) return false;
@@ -656,6 +662,15 @@ void M_FreePNG (PNGHandle *png) {
 }
 
 
+struct TempBuff {
+  void *ptr;
+  inline TempBuff (int sz) { vassert(sz >= 0); ptr = Z_Malloc(sz+128); }
+  TempBuff (const TempBuff &) = delete;
+  TempBuff &operator = (const TempBuff &) = delete;
+  inline ~TempBuff () { if (ptr) Z_Free(ptr); ptr = nullptr; }
+};
+
+
 //==========================================================================
 //
 // ReadIDAT
@@ -693,7 +708,9 @@ bool M_ReadIDAT (VStream &file, vuint8 *buffer, int width, int height, int pitch
   i = 4+bytesPerRowOut*2;
   if (interlace) i += bytesPerRowOut*2;
 
-  inputLine = (vuint8 *)alloca(i);
+  TempBuff inputLineTmpBuff(i);
+  inputLine = (vuint8 *)inputLineTmpBuff.ptr;
+  //inputLine = (vuint8 *)alloca(i);
   adam7buff[0] = inputLine+4+bytesPerRowOut;
   adam7buff[1] = adam7buff[0]+bytesPerRowOut;
   adam7buff[2] = adam7buff[1]+bytesPerRowOut;
@@ -703,7 +720,7 @@ bool M_ReadIDAT (VStream &file, vuint8 *buffer, int width, int height, int pitch
   stream.avail_in = 0;
   stream.zalloc = /*Z_NULL*/0;
   stream.zfree = /*Z_NULL*/0;
-  err = mz_inflateInit (&stream);
+  err = mz_inflateInit(&stream);
   if (err != MZ_OK) return false;
 
   lastIDAT = false;
@@ -748,8 +765,14 @@ bool M_ReadIDAT (VStream &file, vuint8 *buffer, int width, int height, int pitch
       stream.next_in = chunkbuffer;
       int rd = (int)sizeof(chunkbuffer);
       if (rd > (int)chunklen) rd = (int)chunklen;
+      //GLog.Logf(NAME_Debug, "  png: reading %d bytes...", rd);
       file.Serialise(chunkbuffer, rd);
-      if (file.IsError()) rd = 0;
+      //if (file.IsError()) rd = 0;
+      if (file.IsError()) {
+        //GLog.Logf(NAME_Debug, "  png: error reading %d bytes...", rd);
+        mz_inflateEnd(&stream);
+        return false;
+      }
       stream.avail_in = (vuint32)rd;
       //stream.avail_in = (uInt)file.Read (chunkbuffer, min2<vuint32>(chunklen,sizeof(chunkbuffer)));
       chunklen -= stream.avail_in;
