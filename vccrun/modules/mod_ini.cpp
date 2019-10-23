@@ -250,7 +250,8 @@ void VIniFile::remove (const VStr &key) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 IMPLEMENT_FUNCTION(VIniFile, Load) {
-  P_GET_STR(fname);
+  VStr fname;
+  vobjGetParam(fname);
   VClass *iclass = VClass::FindClass("IniFile");
   if (iclass) {
     auto ifileo = VObject::StaticSpawnWithReplace(iclass); // disable replacements?
@@ -263,49 +264,48 @@ IMPLEMENT_FUNCTION(VIniFile, Load) {
 }
 
 IMPLEMENT_FUNCTION(VIniFile, save) {
-  P_GET_STR(fname);
-  P_GET_SELF;
+  VStr fname;
+  vobjGetParamSelf(fname);
   RET_BOOL(Self->save(fname));
 }
 
 IMPLEMENT_FUNCTION(VIniFile, clear) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->clear();
 }
 
 IMPLEMENT_FUNCTION(VIniFile, count) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   RET_INT(Self->count());
 }
 
 IMPLEMENT_FUNCTION(VIniFile, keyExists) {
-  P_GET_STR(key);
-  P_GET_SELF;
+  VStr key;
+  vobjGetParamSelf(key);
   RET_BOOL(Self->keyExists(key));
 }
 
 IMPLEMENT_FUNCTION(VIniFile, keyAt) {
-  P_GET_INT(idx);
-  P_GET_SELF;
+  int idx;
+  vobjGetParamSelf(idx);
   RET_STR(Self->keyAt(idx));
 }
 
 IMPLEMENT_FUNCTION(VIniFile, getValue) {
-  P_GET_STR(key);
-  P_GET_SELF;
+  VStr key;
+  vobjGetParamSelf(key);
   RET_STR(Self->get(key));
 }
 
 IMPLEMENT_FUNCTION(VIniFile, setValue) {
-  P_GET_STR(value);
-  P_GET_STR(key);
-  P_GET_SELF;
+  VStr key, value;
+  vobjGetParamSelf(key, value);
   Self->set(key, value);
 }
 
 IMPLEMENT_FUNCTION(VIniFile, remove) {
-  P_GET_STR(key);
-  P_GET_SELF;
+  VStr key;
+  vobjGetParamSelf(key);
   Self->remove(key);
 }
 
@@ -391,24 +391,23 @@ bool VIniKeyValueIterator::GetNext () {
 // ////////////////////////////////////////////////////////////////////////// //
 // native iterator allPathes (out string path);
 IMPLEMENT_FUNCTION(VIniFile, allPathes) {
-  P_GET_PTR(VStr, pstr);
-  P_GET_SELF;
+  VStr *pstr;
+  vobjGetParamSelf(pstr);
   RET_PTR(new VIniPathIterator(Self, pstr));
 }
 
 //native iterator allKeys (out string key, string path);
 IMPLEMENT_FUNCTION(VIniFile, allKeys) {
-  P_GET_STR(path);
-  P_GET_PTR(VStr, pkey);
-  P_GET_SELF;
+  VStr *pkey;
+  VStr path;
+  vobjGetParamSelf(pkey, path);
   RET_PTR(new VIniKeyValueIterator(Self, path, pkey, nullptr));
 }
 
 //native iterator allKeysValues (out string key, out string value, string path);
 IMPLEMENT_FUNCTION(VIniFile, allKeysValues) {
-  P_GET_STR(path);
-  P_GET_PTR(VStr, pvalue);
-  P_GET_PTR(VStr, pkey);
-  P_GET_SELF;
+  VStr *pkey, *pvalue;
+  VStr path;
+  vobjGetParamSelf(pkey, pvalue, path);
   RET_PTR(new VIniKeyValueIterator(Self, path, pkey, pvalue));
 }
