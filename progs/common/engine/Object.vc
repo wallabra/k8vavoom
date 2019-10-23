@@ -812,8 +812,6 @@ native static final float chachaNextFloatFull (ref ChaChaCtx ctx);
 // ////////////////////////////////////////////////////////////////////////// //
 // string functions
 
-// string length (utf8-aware)
-native static final int strlenutf8 (string s);
 // compare strings
 native static final int strcmp (string s1, string s2);
 // compare strings ingnoring case
@@ -826,6 +824,8 @@ native static final int namestricmp (name s1, string s2);
 native static final string strlwr (string s);
 // convert string to uppercase
 native static final string strupr (string s);
+// string length (utf8-aware)
+native static final int strlenutf8 (string s);
 // gets a substring (utf8-aware)
 native static final string substrutf8 (string Str, int Start, int Len);
 // creates one-char non-utf8 string from the given char code&0xff; 0 is allowed
