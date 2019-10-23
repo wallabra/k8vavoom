@@ -2865,7 +2865,6 @@ IMPLEMENT_FUNCTION(VGLVideo, getScissor) {
 IMPLEMENT_FUNCTION(VGLVideo, setScissor) {
   VOptParamPtr<ScissorRect> sr;
   vobjGetParam(sr);
-  //P_GET_PTR_OPT(ScissorRect, sr, nullptr);
   if (!sr.isNull()) {
     if (!mInited) return;
     if (sr->enabled) glEnable(GL_SCISSOR_TEST); else glDisable(GL_SCISSOR_TEST);
