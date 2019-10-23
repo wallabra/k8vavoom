@@ -117,7 +117,7 @@ void VMiAStarGraphBase::EnsureInterfaces () {
 
 // final bool IsInitialized ();
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, IsInitialized) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   if (!Self) { RET_BOOL(false); return; }
   RET_BOOL(!!Self->intr);
 }
@@ -126,9 +126,9 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, IsInitialized) {
 // this is used in `AdjacentCost()`
 // final void PushAdjacentCost (MiAStarNodeBase state, float cost);
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, PushAdjacentCost) {
-  P_GET_FLOAT(cost);
-  P_GET_REF(VMiAStarNodeBase, state);
-  P_GET_SELF;
+  VMiAStarNodeBase *state;
+  float cost;
+  vobjGetParamSelf(state, cost);
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::PushAdjacentCost"); }
   if (!Self->adjarray) { VObject::VMDumpCallStack(); Sys_Error("trying to push cost outside of cost calculator in MiAStarGraphBase::PushAdjacentCost"); }
   if (!isFiniteF(cost)) { VObject::VMDumpCallStack(); Sys_Error("invalid cost value in MiAStarGraphBase::PushAdjacentCost"); }
@@ -141,9 +141,8 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, PushAdjacentCost) {
 
 // float LeastCostEstimate (MiAStarNodeBase start, MiAStarNodeBase end); // abstract
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, LeastCostEstimate) {
-  P_GET_REF(VMiAStarNodeBase, end);
-  P_GET_REF(VMiAStarNodeBase, start);
-  P_GET_SELF;
+  VMiAStarNodeBase *start, *end;
+  vobjGetParamSelf(start, end);
   (void)end;
   (void)start;
   (void)Self;
@@ -154,8 +153,8 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, LeastCostEstimate) {
 
 // void AdjacentCost (MiAStarNodeBase state); // abstract
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, AdjacentCost) {
-  P_GET_REF(VMiAStarNodeBase, state);
-  P_GET_SELF;
+  VMiAStarNodeBase *state;
+  vobjGetParamSelf(state);
   (void)state;
   (void)Self;
   VObject::VMDumpCallStack();
@@ -165,7 +164,7 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, AdjacentCost) {
 
 // final void PathArrayClear ();
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, PathArrayClear) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::PathArrayClear"); }
   if (Self->intr) {
     Self->intr->path.clear();
@@ -174,7 +173,7 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, PathArrayClear) {
 
 // final int PathArrayLength ();
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, PathArrayLength) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::PathArrayLength"); }
   if (Self->intr) {
     RET_INT((int)Self->intr->path.size());
@@ -185,8 +184,8 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, PathArrayLength) {
 
 // final MiAStarNodeBase PathArrayNode (int index);
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, PathArrayNode) {
-  P_GET_INT(index);
-  P_GET_SELF;
+  int index;
+  vobjGetParamSelf(index);
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::PathArrayNode"); }
   if (Self->intr) {
     if (index < 0 || index >= (int)Self->intr->path.size()) { VObject::VMDumpCallStack(); Sys_Error("invalid index %d in MiAStarGraphBase::PathArrayNode, length is %d", index, (int)Self->intr->path.size()); }
@@ -200,8 +199,8 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, PathArrayNode) {
 
 // final void PathArrayPushNode (MiAStarNodeBase node);
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, PathArrayPushNode) {
-  P_GET_REF(VMiAStarNodeBase, node);
-  P_GET_SELF;
+  VMiAStarNodeBase *node;
+  vobjGetParamSelf(node);
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::PathArrayNode"); }
   Self->EnsureInterfaces();
   vassert(Self->intr);
@@ -212,7 +211,7 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, PathArrayPushNode) {
 
 // final void NearArrayClear ();
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayClear) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::NearArrayClear"); }
   if (Self->intr) {
     Self->intr->mNear.clear();
@@ -221,7 +220,7 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayClear) {
 
 // final int NearArrayLength ();
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayLength) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::NearArrayLength"); }
   if (Self->intr) {
     RET_INT((int)Self->intr->mNear.size());
@@ -232,8 +231,8 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayLength) {
 
 // final MiAStarNodeBase NearArrayNode (int index);
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayNode) {
-  P_GET_INT(index);
-  P_GET_SELF;
+  int index;
+  vobjGetParamSelf(index);
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::NearArrayNode"); }
   if (Self->intr) {
     if (index < 0 || index >= (int)Self->intr->mNear.size()) { VObject::VMDumpCallStack(); Sys_Error("invalid index %d in MiAStarGraphBase::NearArrayNode, max is %d", index, (int)Self->intr->mNear.size()); }
@@ -247,9 +246,9 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayNode) {
 
 // final MiAStarNodeBase NearArrayNodeAndCost (int index, out float cost);
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayNodeAndCost) {
-  P_GET_REF(float, pcost);
-  P_GET_INT(index);
-  P_GET_SELF;
+  int index;
+  float *pcost;
+  vobjGetParamSelf(index, pcost);
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::NearArrayNodeAndCost"); }
   if (Self->intr) {
     if (index < 0 || index >= (int)Self->intr->mNear.size()) { VObject::VMDumpCallStack(); Sys_Error("invalid index %d in MiAStarGraphBase::NearArrayNodeAndCost, max is %d", index, (int)Self->intr->mNear.size()); }
@@ -264,9 +263,9 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayNodeAndCost) {
 
 // final void NearArrayPushNode (MiAStarNodeBase node, float cost);
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayPushNode) {
-  P_GET_FLOAT(cost);
-  P_GET_REF(VMiAStarNodeBase, node);
-  P_GET_SELF;
+  VMiAStarNodeBase *node;
+  float cost;
+  vobjGetParamSelf(node, cost);
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::PathArrayNode"); }
   Self->EnsureInterfaces();
   vassert(Self->intr);
@@ -280,9 +279,8 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, NearArrayPushNode) {
 
 // final int Solve (MiAStarNodeBase startState, MiAStarNodeBase endState);
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, Solve) {
-  P_GET_REF(VMiAStarNodeBase, endState);
-  P_GET_REF(VMiAStarNodeBase, startState);
-  P_GET_SELF;
+  VMiAStarNodeBase *startState, *endState;
+  vobjGetParamSelf(startState, endState);
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::Solve"); }
   if (!startState || !endState) {
     if (Self->intr) Self->intr->path.clear();
@@ -319,9 +317,9 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, Solve) {
 
 // int SolveForNearStates (MiAStarNodeBase startState, float maxCost);
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, SolveForNearStates) {
-  P_GET_FLOAT(maxCost);
-  P_GET_REF(VMiAStarNodeBase, startState);
-  P_GET_SELF;
+  VMiAStarNodeBase *startState;
+  float maxCost;
+  vobjGetParamSelf(startState, maxCost);
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::SolveForNearStates"); }
   if (!startState) {
     if (Self->intr) Self->intr->mNear.clear();
@@ -349,7 +347,7 @@ IMPLEMENT_FUNCTION(VMiAStarGraphBase, SolveForNearStates) {
 
 // final void Reset ();
 IMPLEMENT_FUNCTION(VMiAStarGraphBase, Reset) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in MiAStarGraphBase::Reset"); }
   if (Self->intr) {
     vassert(Self->pather);
