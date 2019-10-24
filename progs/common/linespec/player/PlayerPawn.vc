@@ -484,7 +484,7 @@ void InitializeWeaponSlots () {
 
   // now sort all slots that needs sorting
   foreach (int slot; 0..needSlotSorting.length) {
-    if (!needSlotSorting[slot]) continue;
+    //if (!needSlotSorting[slot]) continue; // it is cheap to sort slots anyway
     actualWeaponSlots[slot].weapons.sort(&CompareWeaponPosition);
     // remove empty entries
     while (actualWeaponSlots[slot].weapons.length && !actualWeaponSlots[slot].weapons[$-1]) actualWeaponSlots[slot].weapons.length -= 1;
