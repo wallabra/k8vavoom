@@ -29,14 +29,16 @@
 // lightmap texture dimensions
 #define BLOCK_WIDTH         (128)
 #define BLOCK_HEIGHT        (128)
+// number of `surfcache_t` items in one pool entry
+#define NUM_CACHE_BLOCKS_IN_POOL_ENTRY  (4096)
 // NUM_BLOCK_SURFS: maximum lightmap textures
 // NUM_CACHE_BLOCKS: maximum pieces in all lightmap textures
 #if 1
 # define NUM_BLOCK_SURFS     (128)
-# define NUM_CACHE_BLOCKS    (32*1024)
+//# define NUM_CACHE_BLOCKS    (64*1024)
 #else
 # define NUM_BLOCK_SURFS     (32)
-# define NUM_CACHE_BLOCKS    (8*1024)
+//# define NUM_CACHE_BLOCKS    (8*1024)
 #endif
 
 
@@ -136,14 +138,16 @@ public:
 public:
   void initLightChain () {
     memset(light_block, 0, sizeof(light_block));
-    memset(block_changed, 0, sizeof(block_changed));
+    //memset(block_changed, 0, sizeof(block_changed));
     memset(light_chain, 0, sizeof(light_chain));
     memset(add_block, 0, sizeof(add_block));
-    memset(add_changed, 0, sizeof(add_changed));
+    //memset(add_changed, 0, sizeof(add_changed));
     memset(add_chain, 0, sizeof(add_chain));
     memset(light_chain_used, 0, sizeof(light_chain_used));
     memset(add_chain_used, 0, sizeof(add_chain_used));
     light_chain_head = add_chain_head = 0;
+    // force updating of all lightmaps (why not?)
+    for (unsigned f = 0; f < NUM_BLOCK_SURFS; ++f) block_changed[f] = add_changed[f] = true;
   }
 
   inline void advanceCacheFrame () {
@@ -152,14 +156,6 @@ public:
       light_chain_head = add_chain_head = 0;
       memset(light_chain_used, 0, sizeof(light_chain_used));
       memset(add_chain_used, 0, sizeof(add_chain_used));
-      //memset(block_changed, 0, sizeof(block_changed));
-      //memset(add_changed, 0, sizeof(add_changed));
-      /*
-      for (unsigned f = 0; f < NUM_BLOCK_SURFS; ++f) {
-        if (light_chain_used[f].lastframe == 0xffffffffu) light_chain_used[f].lastframe = 1;
-        if (add_chain_used[f].lastframe == 0xffffffffu) add_chain_used[f].lastframe = 1;
-      }
-      */
     }
   }
 

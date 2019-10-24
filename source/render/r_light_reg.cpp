@@ -1226,18 +1226,16 @@ void VRenderLevel::BuildLightMap (surface_t *surf) {
 //
 //==========================================================================
 void VRenderLevel::FlushCaches () {
-  memset(blockbuf, 0, sizeof(blockbuf));
+  //memset(blockbuf, 0, sizeof(blockbuf));
+  blockpool.clear();
   freeblocks = nullptr;
-  for (int i = 0; i < NUM_CACHE_BLOCKS; ++i) {
-    blockbuf[i].chain = freeblocks;
-    freeblocks = &blockbuf[i];
-  }
-  for (int i = 0; i < NUM_BLOCK_SURFS; ++i) {
-    cacheblocks[i] = freeblocks;
-    freeblocks = freeblocks->chain;
-    cacheblocks[i]->width = BLOCK_WIDTH;
-    cacheblocks[i]->height = BLOCK_HEIGHT;
-    cacheblocks[i]->blocknum = i;
+  // setup lightmap atlases (no allocations, all atlases are free)
+  for (unsigned i = 0; i < NUM_BLOCK_SURFS; ++i) {
+    surfcache_t *block = blockpool.alloc();
+    block->width = BLOCK_WIDTH;
+    block->height = BLOCK_HEIGHT;
+    block->blocknum = i;
+    cacheblocks[i] = block;
   }
   light_reset_surface_cache = 0;
 }
@@ -1319,7 +1317,7 @@ void VRenderLevel::FreeSurfCache (surfcache_t *&block) {
 //
 //==========================================================================
 void VRenderLevel::FlushOldCaches () {
-  for (int i = 0; i < NUM_BLOCK_SURFS; ++i) {
+  for (unsigned i = 0; i < NUM_BLOCK_SURFS; ++i) {
     for (surfcache_t *blines = cacheblocks[i]; blines; blines = blines->bnext) {
       for (surfcache_t *block = blines; block; block = block->lnext) {
         if (block->owner && cacheframecount != block->lastframe) block = FreeBlock(block, false);
@@ -1338,12 +1336,37 @@ void VRenderLevel::FlushOldCaches () {
 
 //==========================================================================
 //
+//  VRenderLevel::GetFreeBlock
+//
+//==========================================================================
+surfcache_t *VRenderLevel::GetFreeBlock (bool forceAlloc) {
+  surfcache_t *res = freeblocks;
+  if (res) {
+    freeblocks = res->chain;
+  } else {
+    // no free blocks
+    if (!forceAlloc && blockpool.itemCount() >= 32768) {
+      // too many blocks
+      FlushOldCaches();
+      res = freeblocks;
+      if (res) freeblocks = res->chain; else res = blockpool.alloc(); // force-allocate anyway
+    } else {
+      // allocate new block
+      res = blockpool.alloc();
+    }
+  }
+  return res;
+}
+
+
+//==========================================================================
+//
 //  VRenderLevel::GentlyFlushAllCaches
 //
 //==========================================================================
 void VRenderLevel::GentlyFlushAllCaches () {
   light_reset_surface_cache = 0;
-  for (int i = 0; i < NUM_BLOCK_SURFS; ++i) {
+  for (unsigned i = 0; i < NUM_BLOCK_SURFS; ++i) {
     for (surfcache_t *blines = cacheblocks[i]; blines; blines = blines->bnext) {
       for (surfcache_t *block = blines; block; block = block->lnext) {
         if (block->owner) block = FreeBlock(block, false);
@@ -1357,126 +1380,129 @@ void VRenderLevel::GentlyFlushAllCaches () {
 
 //==========================================================================
 //
+//  VRenderLevel::performBlockSplit
+//
+//==========================================================================
+surfcache_t *VRenderLevel::performBlockSplit (int width, int height, surfcache_t *block, vuint32 bnum) {
+  vassert(bnum < NUM_BLOCK_SURFS);
+  vassert(block->height >= height);
+  vassert(!block->lnext);
+
+  if (block->height > height) {
+    #ifdef VV_DEBUG_LMAP_ALLOCATOR
+    GCon->Logf(NAME_Debug, "  second loop: bnum=%d; w=%d; h=%d", bnum, block->width, block->height);
+    #endif
+    surfcache_t *other = GetFreeBlock();
+    if (!other) {
+      if (!light_reset_surface_cache) light_reset_surface_cache = 1;
+      return nullptr;
+    }
+    other->s = 0;
+    other->t = block->t+height;
+    other->width = block->width;
+    other->height = block->height-height;
+    other->lnext = nullptr;
+    other->lprev = nullptr;
+    other->bnext = block->bnext;
+    if (other->bnext) other->bnext->bprev = other;
+    block->bnext = other;
+    other->bprev = block;
+    block->height = height;
+    other->owner = nullptr;
+    other->blocknum = bnum;
+  }
+
+  {
+    surfcache_t *other = GetFreeBlock(true); // force allocate
+    if (!other) {
+      if (!light_reset_surface_cache) light_reset_surface_cache = 1;
+      return nullptr;
+    }
+    other->s = block->s+width;
+    other->t = block->t;
+    other->width = block->width-width;
+    other->height = block->height;
+    other->lnext = nullptr;
+    block->lnext = other;
+    other->lprev = block;
+    block->width = width;
+    other->owner = nullptr;
+    other->blocknum = bnum;
+  }
+
+  return block;
+}
+
+
+//==========================================================================
+//
 //  VRenderLevel::AllocBlock
 //
 //==========================================================================
 surfcache_t *VRenderLevel::AllocBlock (int width, int height) {
-  surfcache_t *blines;
-  surfcache_t *block;
-  surfcache_t *other;
-
   #ifdef VV_DEBUG_LMAP_ALLOCATOR
   GCon->Logf(NAME_Debug, "VRenderLevel::AllocBlock: w=%d; h=%d", width, height);
   #endif
 
-  for (int i = 0; i < NUM_BLOCK_SURFS; ++i) {
-    for (blines = cacheblocks[i]; blines; blines = blines->bnext) {
-      if (blines->height != height) continue;
-      for (block = blines; block; block = block->lnext) {
-        if (block->owner) continue;
-        if (block->width < width) continue;
-        if (block->width > width) {
-          #ifdef VV_DEBUG_LMAP_ALLOCATOR
-          GCon->Logf(NAME_Debug, "  first loop: i=%d; w=%d; h=%d", i, block->width, block->height);
-          #endif
-          if (!freeblocks) {
+  surfcache_t *splitBlock = nullptr;
+  vuint32 splitBNum = 0;
+
+  for (unsigned i = 0; i < NUM_BLOCK_SURFS; ++i) {
+    for (surfcache_t *blines = cacheblocks[i]; blines; blines = blines->bnext) {
+      if (blines->height < height) continue;
+      if (blines->height == height) {
+        for (surfcache_t *block = blines; block; block = block->lnext) {
+          if (block->owner) continue;
+          if (block->width < width) continue;
+          if (block->width > width) {
             #ifdef VV_DEBUG_LMAP_ALLOCATOR
-            GCon->Log(NAME_Debug, "    first loop: free old caches");
+            GCon->Logf(NAME_Debug, "  first loop: i=%d; w=%d; h=%d", i, block->width, block->height);
             #endif
-            FlushOldCaches();
-            if (!freeblocks) {
+            surfcache_t *other = GetFreeBlock();
+            if (!other) {
               if (!light_reset_surface_cache) light_reset_surface_cache = 1;
               return nullptr;
             }
+            other->s = block->s+width;
+            other->t = block->t;
+            other->width = block->width-width;
+            other->height = block->height;
+            other->lnext = block->lnext;
+            if (other->lnext) other->lnext->lprev = other;
+            block->lnext = other;
+            other->lprev = block;
+            block->width = width;
+            other->owner = nullptr;
+            other->blocknum = i;
           }
-          other = freeblocks;
-          freeblocks = other->chain;
-          other->s = block->s+width;
-          other->t = block->t;
-          other->width = block->width-width;
-          other->height = block->height;
-          other->lnext = block->lnext;
-          if (other->lnext) other->lnext->lprev = other;
-          block->lnext = other;
-          other->lprev = block;
-          block->width = width;
-          other->owner = nullptr;
-          other->blocknum = i;
+          return block;
         }
-        return block;
+      }
+      // possible split?
+      if (!splitBlock && !blines->lnext && blines->height >= height) {
+        splitBlock = blines;
+        splitBNum = i;
       }
     }
   }
 
-  for (int i = 0; i < NUM_BLOCK_SURFS; ++i) {
-    for (blines = cacheblocks[i]; blines; blines = blines->bnext) {
+  if (splitBlock) {
+    surfcache_t *other = performBlockSplit(width, height, splitBlock, splitBNum);
+    if (other) return other;
+  }
+
+  /*
+  for (unsigned i = 0; i < NUM_BLOCK_SURFS; ++i) {
+    for (surfcache_t *blines = cacheblocks[i]; blines; blines = blines->bnext) {
       if (blines->height < height) continue;
       if (blines->lnext) continue;
-      block = blines;
-      if (block->height > height) {
-        #ifdef VV_DEBUG_LMAP_ALLOCATOR
-        GCon->Logf(NAME_Debug, "  second loop: i=%d; w=%d; h=%d", i, block->width, block->height);
-        #endif
-        if (!freeblocks) {
-          #ifdef VV_DEBUG_LMAP_ALLOCATOR
-          GCon->Log(NAME_Debug, "    second loop: free old caches (0)");
-          #endif
-          FlushOldCaches();
-          if (!freeblocks) {
-            if (!light_reset_surface_cache) light_reset_surface_cache = 1;
-            return nullptr;
-          }
-        }
-        other = freeblocks;
-        freeblocks = other->chain;
-        other->s = 0;
-        other->t = block->t+height;
-        other->width = block->width;
-        other->height = block->height-height;
-        other->lnext = nullptr;
-        other->lprev = nullptr;
-        other->bnext = block->bnext;
-        if (other->bnext) other->bnext->bprev = other;
-        block->bnext = other;
-        other->bprev = block;
-        block->height = height;
-        other->owner = nullptr;
-        other->blocknum = i;
-      } else {
-        other = nullptr;
-      }
-      if (!freeblocks) {
-        #ifdef VV_DEBUG_LMAP_ALLOCATOR
-        GCon->Log(NAME_Debug, "    second loop: free old caches (1)");
-        #endif
-        // protect previous 'other'
-        int ofrm = (other ? other->lastframe : 0);
-        if (other) other->lastframe = cacheframecount;
-        FlushOldCaches();
-        // and unprotect
-        if (other) other->lastframe = ofrm;
-        if (!freeblocks) {
-          //if (other) FreeBlock(other, true); //k8:??? check lines? wtf?
-          if (!light_reset_surface_cache) light_reset_surface_cache = 1;
-          return nullptr;
-        }
-      }
-      other = freeblocks;
-      freeblocks = other->chain;
-      other->s = block->s+width;
-      other->t = block->t;
-      other->width = block->width-width;
-      other->height = block->height;
-      other->lnext = nullptr;
-      block->lnext = other;
-      other->lprev = block;
-      block->width = width;
-      other->owner = nullptr;
-      other->blocknum = i;
-
-      return block;
+      surfcache_t *other;
+      surfcache_t *block = blines;
+      surfcache_t *other = performBlockSplit(width, height, block, i);
+      if (other) return other;
     }
   }
+  */
 
   //Sys_Error("Surface cache overflow");
   if (!light_reset_surface_cache) {

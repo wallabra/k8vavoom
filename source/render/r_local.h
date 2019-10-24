@@ -713,15 +713,60 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+struct VCacheBlockPoolEntry {
+  surfcache_t page[NUM_CACHE_BLOCKS_IN_POOL_ENTRY];
+  VCacheBlockPoolEntry *prev;
+};
+
+
+struct VCacheBlockPool {
+public:
+  VCacheBlockPoolEntry *tail;
+  unsigned tailused;
+  unsigned entries;
+
+public:
+  VCacheBlockPool () noexcept : tail(nullptr), tailused(0), entries(0) {}
+  VCacheBlockPool (const VCacheBlockPool &) = delete;
+  VCacheBlockPool &operator = (const VCacheBlockPool &) = delete;
+  ~VCacheBlockPool () noexcept { clear(); }
+
+  inline unsigned itemCount () noexcept { return entries*NUM_CACHE_BLOCKS_IN_POOL_ENTRY; }
+
+  void clear () noexcept {
+    while (tail) {
+      VCacheBlockPoolEntry *c = tail;
+      tail = c->prev;
+      Z_Free(c);
+    }
+    tailused = 0;
+    entries = 0;
+  }
+
+  surfcache_t *alloc () noexcept {
+    if (tail && tailused < NUM_CACHE_BLOCKS_IN_POOL_ENTRY) return &tail->page[tailused++];
+    // allocate new pool entry
+    VCacheBlockPoolEntry *c = (VCacheBlockPoolEntry *)Z_Calloc(sizeof(VCacheBlockPoolEntry));
+    ++entries;
+    c->prev = tail;
+    tail = c;
+    tailused = 1;
+    return &tail->page[0];
+  }
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 class VRenderLevel : public VRenderLevelShared {
 private:
   int c_subdivides;
   int c_seg_div;
 
-  // surface cache
+  // surface (lightmap) cache
   surfcache_t *freeblocks;
   surfcache_t *cacheblocks[NUM_BLOCK_SURFS];
-  surfcache_t blockbuf[NUM_CACHE_BLOCKS];
+  //surfcache_t blockbuf[NUM_CACHE_BLOCKS];
+  VCacheBlockPool blockpool;
 
   bool invalidateRelight;
 
@@ -787,11 +832,15 @@ protected:
   void AddDynamicLights (surface_t *surf);
   //virtual void PushDlights () override;
 
+  // lightmap cache manager
   void FlushCaches ();
   void FlushOldCaches ();
   virtual void GentlyFlushAllCaches () override;
+  surfcache_t *GetFreeBlock (bool forceAlloc=false);
+  surfcache_t *performBlockSplit (int width, int height, surfcache_t *block, vuint32 bnum); // used in `AllocBlock()`
   surfcache_t *AllocBlock (int, int);
   surfcache_t *FreeBlock (surfcache_t*, bool);
+
   virtual void FreeSurfCache (surfcache_t *&block) override;
   virtual bool CacheSurface (surface_t*) override;
 
