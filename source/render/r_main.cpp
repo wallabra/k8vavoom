@@ -443,7 +443,6 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   , AllocatedSubRegions(nullptr)
   , AllocatedDrawSegs(nullptr)
   , AllocatedSegParts(nullptr)
-  , cacheframecount(0)
   , inWorldCreation(false)
   , updateWorldFrame(0)
   , bspVisRadius(nullptr)
@@ -454,13 +453,9 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   currDLightFrame = 0;
   currQueueFrame = 0;
   currVisFrame = 0;
+  cacheframecount = 0;
 
-  memset(light_block, 0, sizeof(light_block));
-  memset(block_changed, 0, sizeof(block_changed));
-  memset(light_chain, 0, sizeof(light_chain));
-  memset(add_block, 0, sizeof(add_block));
-  memset(add_changed, 0, sizeof(add_changed));
-  memset(add_chain, 0, sizeof(add_chain));
+  initLightChain();
   PortalDepth = 0;
   //VPortal::ResetFrame();
 
@@ -691,8 +686,9 @@ void VRenderLevelShared::ClearQueues () {
   IncQueueFrameCount();
   // this is prolly not required for advanced renderer
   if (!IsAdvancedRenderer()) {
-    memset(light_chain, 0, sizeof(light_chain));
-    memset(add_chain, 0, sizeof(add_chain));
+    //memset(light_chain, 0, sizeof(light_chain));
+    //memset(add_chain, 0, sizeof(add_chain));
+    resetLightChain();
   }
 }
 
@@ -1393,7 +1389,7 @@ void VRenderLevelShared::SetupFrame () {
   }
 
   Drawer->SetupView(this, &refdef);
-  ++cacheframecount;
+  advanceCacheFrame();
   PortalDepth = 0;
 }
 
@@ -1427,7 +1423,7 @@ void VRenderLevelShared::SetupCameraFrame (VEntity *Camera, VTexture *Tex, int F
   ColorMap = 0;
 
   Drawer->SetupView(this, rd);
-  cacheframecount++;
+  advanceCacheFrame();
   PortalDepth = 0;
   set_resolutioon_needed = true;
 }

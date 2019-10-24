@@ -26,6 +26,8 @@
 #include "gamedefs.h"
 #include "r_local.h"
 
+//#define VV_DEBUG_LMAP_ALLOCATOR
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern VCvarI r_ambient_min;
@@ -1243,6 +1245,76 @@ void VRenderLevel::FlushCaches () {
 
 //==========================================================================
 //
+//  VRenderLevel::FreeBlock
+//
+//==========================================================================
+surfcache_t *VRenderLevel::FreeBlock (surfcache_t *block, bool checkLines) {
+  surfcache_t *other;
+
+  if (block->owner) {
+    *block->owner = nullptr;
+    block->owner = nullptr;
+  }
+
+  if (block->lnext && !block->lnext->owner) {
+    other = block->lnext;
+    block->width += other->width;
+    block->lnext = other->lnext;
+    if (block->lnext) block->lnext->lprev = block;
+    other->chain = freeblocks;
+    freeblocks = other;
+  }
+
+  if (block->lprev && !block->lprev->owner) {
+    other = block;
+    block = block->lprev;
+    block->width += other->width;
+    block->lnext = other->lnext;
+    if (block->lnext) block->lnext->lprev = block;
+    other->chain = freeblocks;
+    freeblocks = other;
+  }
+
+  if (block->lprev || block->lnext || !checkLines) return block;
+
+  if (block->bnext && !block->bnext->lnext) {
+    other = block->bnext;
+    block->height += other->height;
+    block->bnext = other->bnext;
+    if (block->bnext) block->bnext->bprev = block;
+    other->chain = freeblocks;
+    freeblocks = other;
+  }
+
+  if (block->bprev && !block->bprev->lnext) {
+    other = block;
+    block = block->bprev;
+    block->height += other->height;
+    block->bnext = other->bnext;
+    if (block->bnext) block->bnext->bprev = block;
+    other->chain = freeblocks;
+    freeblocks = other;
+  }
+
+  return block;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevel::FreeSurfCache
+//
+//==========================================================================
+void VRenderLevel::FreeSurfCache (surfcache_t *&block) {
+  if (block) {
+    FreeBlock(block, true);
+    block = nullptr;
+  }
+}
+
+
+//==========================================================================
+//
 //  VRenderLevel::FlushOldCaches
 //
 //==========================================================================
@@ -1255,8 +1327,12 @@ void VRenderLevel::FlushOldCaches () {
       if (!blines->owner && !blines->lprev && !blines->lnext) blines = FreeBlock(blines, true);
     }
   }
-  if (!freeblocks) Sys_Error("No more free blocks");
-  GCon->Logf("Surface cache overflow, old caches flushed");
+  if (!freeblocks) {
+    //Sys_Error("No more free blocks");
+    GCon->Logf(NAME_Error, "Surface cache overflow, and no old surfaces found");
+  } else {
+    GCon->Logf(NAME_Debug, "Surface cache overflow, old caches flushed");
+  }
 }
 
 
@@ -1289,6 +1365,10 @@ surfcache_t *VRenderLevel::AllocBlock (int width, int height) {
   surfcache_t *block;
   surfcache_t *other;
 
+  #ifdef VV_DEBUG_LMAP_ALLOCATOR
+  GCon->Logf(NAME_Debug, "VRenderLevel::AllocBlock: w=%d; h=%d", width, height);
+  #endif
+
   for (int i = 0; i < NUM_BLOCK_SURFS; ++i) {
     for (blines = cacheblocks[i]; blines; blines = blines->bnext) {
       if (blines->height != height) continue;
@@ -1296,7 +1376,19 @@ surfcache_t *VRenderLevel::AllocBlock (int width, int height) {
         if (block->owner) continue;
         if (block->width < width) continue;
         if (block->width > width) {
-          if (!freeblocks) FlushOldCaches();
+          #ifdef VV_DEBUG_LMAP_ALLOCATOR
+          GCon->Logf(NAME_Debug, "  first loop: i=%d; w=%d; h=%d", i, block->width, block->height);
+          #endif
+          if (!freeblocks) {
+            #ifdef VV_DEBUG_LMAP_ALLOCATOR
+            GCon->Log(NAME_Debug, "    first loop: free old caches");
+            #endif
+            FlushOldCaches();
+            if (!freeblocks) {
+              if (!light_reset_surface_cache) light_reset_surface_cache = 1;
+              return nullptr;
+            }
+          }
           other = freeblocks;
           freeblocks = other->chain;
           other->s = block->s+width;
@@ -1322,7 +1414,19 @@ surfcache_t *VRenderLevel::AllocBlock (int width, int height) {
       if (blines->lnext) continue;
       block = blines;
       if (block->height > height) {
-        if (!freeblocks) FlushOldCaches();
+        #ifdef VV_DEBUG_LMAP_ALLOCATOR
+        GCon->Logf(NAME_Debug, "  second loop: i=%d; w=%d; h=%d", i, block->width, block->height);
+        #endif
+        if (!freeblocks) {
+          #ifdef VV_DEBUG_LMAP_ALLOCATOR
+          GCon->Log(NAME_Debug, "    second loop: free old caches (0)");
+          #endif
+          FlushOldCaches();
+          if (!freeblocks) {
+            if (!light_reset_surface_cache) light_reset_surface_cache = 1;
+            return nullptr;
+          }
+        }
         other = freeblocks;
         freeblocks = other->chain;
         other->s = 0;
@@ -1338,9 +1442,25 @@ surfcache_t *VRenderLevel::AllocBlock (int width, int height) {
         block->height = height;
         other->owner = nullptr;
         other->blocknum = i;
+      } else {
+        other = nullptr;
       }
-
-      if (!freeblocks) FlushOldCaches();
+      if (!freeblocks) {
+        #ifdef VV_DEBUG_LMAP_ALLOCATOR
+        GCon->Log(NAME_Debug, "    second loop: free old caches (1)");
+        #endif
+        // protect previous 'other'
+        int ofrm = (other ? other->lastframe : 0);
+        if (other) other->lastframe = cacheframecount;
+        FlushOldCaches();
+        // and unprotect
+        if (other) other->lastframe = ofrm;
+        if (!freeblocks) {
+          //if (other) FreeBlock(other, true); //k8:??? check lines? wtf?
+          if (!light_reset_surface_cache) light_reset_surface_cache = 1;
+          return nullptr;
+        }
+      }
       other = freeblocks;
       freeblocks = other->chain;
       other->s = block->s+width;
@@ -1360,77 +1480,10 @@ surfcache_t *VRenderLevel::AllocBlock (int width, int height) {
 
   //Sys_Error("Surface cache overflow");
   if (!light_reset_surface_cache) {
-    GCon->Logf("ERROR! ERROR! ERROR! Surface cache overflow!");
+    GCon->Logf(NAME_Error, "ERROR! ERROR! ERROR! Surface cache overflow!");
     light_reset_surface_cache = 1;
   }
   return nullptr;
-}
-
-
-//==========================================================================
-//
-//  VRenderLevel::FreeBlock
-//
-//==========================================================================
-surfcache_t *VRenderLevel::FreeBlock (surfcache_t *block, bool check_lines) {
-  surfcache_t *other;
-
-  if (block->owner) {
-    *block->owner = nullptr;
-    block->owner = nullptr;
-  }
-  if (block->lnext && !block->lnext->owner) {
-    other = block->lnext;
-    block->width += other->width;
-    block->lnext = other->lnext;
-    if (block->lnext) block->lnext->lprev = block;
-    other->chain = freeblocks;
-    freeblocks = other;
-  }
-  if (block->lprev && !block->lprev->owner) {
-    other = block;
-    block = block->lprev;
-    block->width += other->width;
-    block->lnext = other->lnext;
-    if (block->lnext) block->lnext->lprev = block;
-    other->chain = freeblocks;
-    freeblocks = other;
-  }
-
-  if (block->lprev || block->lnext || !check_lines) return block;
-
-  if (block->bnext && !block->bnext->lnext) {
-    other = block->bnext;
-    block->height += other->height;
-    block->bnext = other->bnext;
-    if (block->bnext) block->bnext->bprev = block;
-    other->chain = freeblocks;
-    freeblocks = other;
-  }
-  if (block->bprev && !block->bprev->lnext) {
-    other = block;
-    block = block->bprev;
-    block->height += other->height;
-    block->bnext = other->bnext;
-    if (block->bnext) block->bnext->bprev = block;
-    other->chain = freeblocks;
-    freeblocks = other;
-  }
-
-  return block;
-}
-
-
-//==========================================================================
-//
-//  VRenderLevel::FreeSurfCache
-//
-//==========================================================================
-void VRenderLevel::FreeSurfCache (surfcache_t *&block) {
-  if (block) {
-    FreeBlock(block, true);
-    block = nullptr;
-  }
 }
 
 
@@ -1443,18 +1496,19 @@ bool VRenderLevel::CacheSurface (surface_t *surface) {
   // HACK: return `true` for invalid surfaces, so they won't be queued as normal ones
   if (!SurfPrepareForRender(surface)) return true;
 
-  int bnum;
-
   // see if the cache holds appropriate data
   surfcache_t *cache = surface->CacheSurf;
 
   const vuint32 srflight = fixSurfLightLevel(surface);
 
   if (cache && !cache->dlight && surface->dlightframe != currDLightFrame && cache->Light == srflight) {
+    /*
     bnum = cache->blocknum;
     cache->chain = light_chain[bnum];
     light_chain[bnum] = cache;
     cache->lastframe = cacheframecount;
+    */
+    chainLightmap(cache);
     if (!(surface->drawflags&surface_t::DF_CALC_LMAP)) return true;
   }
 
@@ -1492,7 +1546,8 @@ bool VRenderLevel::CacheSurface (surface_t *surface) {
 
   // calculate the lightings
   BuildLightMap(surface);
-  bnum = cache->blocknum;
+
+  const vuint32 bnum = cache->blocknum;
   block_changed[bnum] = true;
 
   vassert(cache->t >= 0);
@@ -1507,9 +1562,12 @@ bool VRenderLevel::CacheSurface (surface_t *surface) {
       lb.a = 255;
     }
   }
+  chainLightmap(cache);
+  /*
   cache->chain = light_chain[bnum];
   light_chain[bnum] = cache;
   cache->lastframe = cacheframecount;
+  */
 
   // specular highlights
   for (int j = 0; j < tmax; ++j) {
@@ -1521,10 +1579,14 @@ bool VRenderLevel::CacheSurface (surface_t *surface) {
       lb.a = 255;
     }
   }
+
   if (r_light_add) {
+    chainAddmap(cache);
+    /*
     cache->addchain = add_chain[bnum];
     add_chain[bnum] = cache;
     add_changed[bnum] = true;
+    */
   }
 
   return true;

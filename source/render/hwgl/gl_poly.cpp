@@ -495,6 +495,7 @@ void VOpenGLDrawer::WorldDrawing () {
 
   // draw surfaces with lightmaps
   {
+    unsigned lmc = 0;
     SurfLightmap.Activate();
     SurfLightmap.SetTexture(0);
     SurfLightmap.SetLightMap(1);
@@ -504,8 +505,14 @@ void VOpenGLDrawer::WorldDrawing () {
     SurfLightmap.UploadChangedUniforms();
 
     lastTexinfo.resetLastUsed();
-    for (int lb = 0; lb < NUM_BLOCK_SURFS; ++lb) {
+    /*
+    for (int lb = 0; lb < NUM_BLOCK_SURFS; ++lb)
+    {
       if (!RendLev->light_chain[lb]) continue;
+    */
+    for (vuint32 lcbn = RendLev->light_chain_head; lcbn; lcbn = RendLev->light_chain_used[lcbn-1].next) {
+      const vuint32 lb = lcbn-1;
+      ++lmc;
 
       SelectTexture(1);
       glBindTexture(GL_TEXTURE_2D, lmap_id[lb]);
@@ -571,6 +578,7 @@ void VOpenGLDrawer::WorldDrawing () {
         }
       }
     }
+    //if (lmc) GCon->Logf(NAME_Debug, "rendered %u lightmap chains out of %u lightmap block surfs", lmc, (unsigned)NUM_BLOCK_SURFS);
   }
 
   // restore depth function

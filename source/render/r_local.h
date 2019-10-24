@@ -340,9 +340,6 @@ protected:
   DLightInfo dlinfo[MAX_DLIGHTS];
   TMapNC<vuint32, vuint32> dlowners; // key: object id; value: index in `DLights`
 
-  // only regular renderer needs this
-  vuint32 cacheframecount;
-
   // moved here so that model rendering methods can be merged
   TVec CurrLightPos;
   float CurrLightRadius;
