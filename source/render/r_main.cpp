@@ -1645,7 +1645,7 @@ again:
   if (light_reset_surface_cache != 0) {
     light_reset_surface_cache = 0;
     if (--renderattempts <= 0) Host_Error("*** Surface cache overflow, cannot repair");
-    GCon->Logf("*** Surface cache overflow, starting it all again, %d attempt%s left", renderattempts, (renderattempts != 1 ? "s" : ""));
+    GCon->Logf(NAME_Warning, "*** Surface cache overflow, starting it all again, %d attempt%s left", renderattempts, (renderattempts != 1 ? "s" : ""));
     GentlyFlushAllCaches();
     goto again;
   }

@@ -1238,6 +1238,7 @@ void VRenderLevel::FlushCaches () {
     cacheblocks[i] = block;
   }
   light_reset_surface_cache = 0;
+  initLightChain();
 }
 
 
@@ -1365,6 +1366,7 @@ surfcache_t *VRenderLevel::GetFreeBlock (bool forceAlloc) {
 //
 //==========================================================================
 void VRenderLevel::GentlyFlushAllCaches () {
+  //GCon->Logf(NAME_Warning, "nuking lightmap atlases...");
   light_reset_surface_cache = 0;
   for (unsigned i = 0; i < NUM_BLOCK_SURFS; ++i) {
     for (surfcache_t *blines = cacheblocks[i]; blines; blines = blines->bnext) {
@@ -1374,7 +1376,9 @@ void VRenderLevel::GentlyFlushAllCaches () {
       if (!blines->owner && !blines->lprev && !blines->lnext) blines = FreeBlock(blines, true);
     }
   }
-  if (!freeblocks) Sys_Error("No more free blocks");
+  //if (!freeblocks) Sys_Error("No more free blocks");
+  // nuke all lightmap caches, why not
+  FlushCaches();
 }
 
 
