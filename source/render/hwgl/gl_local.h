@@ -882,6 +882,7 @@ protected:
 
   GLuint lmap_id[NUM_BLOCK_SURFS];
   GLuint addmap_id[NUM_BLOCK_SURFS];
+  bool atlasesGenerated;
 
   GLenum ClampToEdge;
   GLfloat max_anisotropy; // 1.0: off
@@ -918,8 +919,7 @@ protected:
   void SetFade (vuint32 NewFade);
 
   // returns 0 if generation is disabled, and atlas is not created
-  GLuint GetLightAtlas (vuint32 bnum, bool allowGenerate);
-  GLuint GetLightAddAtlas (vuint32 bnum, bool allowGenerate);
+  void GenerateLightmapAtlasTextures ();
   void DeleteLightmapAtlases ();
 
   virtual void FlushOneTexture (VTexture *tex, bool forced=false) override; // unload one texture

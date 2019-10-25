@@ -1384,7 +1384,7 @@ void VRenderLevelShared::SetupFrame () {
   }
 
   Drawer->SetupView(this, &refdef);
-  advanceCacheFrame();
+  //advanceCacheFrame();
   PortalDepth = 0;
 }
 
@@ -1418,7 +1418,7 @@ void VRenderLevelShared::SetupCameraFrame (VEntity *Camera, VTexture *Tex, int F
   ColorMap = 0;
 
   Drawer->SetupView(this, rd);
-  advanceCacheFrame();
+  //advanceCacheFrame();
   PortalDepth = 0;
   set_resolutioon_needed = true;
 }
@@ -1641,7 +1641,7 @@ again:
     light_reset_surface_cache = 0;
     if (--renderattempts <= 0) Host_Error("*** Surface cache overflow, cannot repair");
     GCon->Logf(NAME_Warning, "*** Surface cache overflow, starting it all again, %d attempt%s left", renderattempts, (renderattempts != 1 ? "s" : ""));
-    GentlyFlushAllCaches();
+    NukeLightmapCache();
     goto again;
   }
 
@@ -1694,6 +1694,15 @@ vuint32 VRenderLevelShared::GetFade (sec_region_t *reg) {
   if (Level->LevelInfo->FadeTable == NAME_fogmap) return 0xff7f7f7fU;
   if (r_fade_light) return FADE_LIGHT; // simulate light fading using dark fog
   return 0;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::NukeLightmapCache
+//
+//==========================================================================
+void VRenderLevelShared::NukeLightmapCache () {
 }
 
 
@@ -1977,6 +1986,8 @@ void VRenderLevelShared::PrecacheLevel () {
   //k8: why?
   if (cls.demoplayback) return;
 
+  NukeLightmapCache();
+
   const int maxtex = GTextureManager.GetNumTextures();
 
   TArray<bool> texturepresent;
@@ -2145,15 +2156,6 @@ void VRenderLevelShared::BuildPlayerTranslations () {
 
     Tr->BuildPlayerTrans(It->TranslStart, It->TranslEnd, It->Color);
   }
-}
-
-
-//==========================================================================
-//
-//  VRenderLevelShared::advanceCacheFrame
-//
-//==========================================================================
-void VRenderLevelShared::advanceCacheFrame () {
 }
 
 
@@ -2465,4 +2467,17 @@ void V_Shutdown () {
   CachedTranslations.Clear();
   CachedTranslationsMap.clear();
   R_FreeSkyboxData();
+}
+
+
+//==========================================================================
+//
+//  COMMAND NukeLightmapCache
+//
+//==========================================================================
+COMMAND(NukeLightmapCache) {
+  if (GClLevel && GClLevel->RenderData) {
+    GClLevel->RenderData->NukeLightmapCache();
+    GCon->Logf("lightmap cache nuked.");
+  }
 }

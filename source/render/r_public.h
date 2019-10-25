@@ -125,6 +125,8 @@ public:
 
   virtual int GetDynamicLightCount () const = 0;
   virtual LightInfo GetDynamicLight (int idx) const = 0;
+
+  virtual void NukeLightmapCache () = 0;
 };
 
 

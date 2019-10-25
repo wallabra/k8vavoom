@@ -170,8 +170,8 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
   }
 #endif
 
-  //ClearQueues(); // moved to `RenderWorld()`
-  //MarkLeaves();
+  //ClearQueues(); // moved to `PrepareWorldRender()`
+  //MarkLeaves(); // moved to `PrepareWorldRender()`
   //if (!MirrorLevel && !r_disable_world_update) UpdateWorld(RD, Range);
 
   RenderWorld(RD, Range);

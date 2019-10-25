@@ -303,6 +303,7 @@ VOpenGLDrawer::VOpenGLDrawer ()
   decalStcVal = 255; // next value for stencil buffer (clear on the first use, and clear on each wrap)
   stencilBufferDirty = true; // just in case
   isShittyGPU = true; // let's play safe
+  atlasesGenerated = false;
 
   //surfList = nullptr;
   //surfListUsed = surfListSize = 0;
@@ -438,6 +439,7 @@ void VOpenGLDrawer::DeinitResolution () {
   mainFBO.destroy();
   //secondFBO.destroy();
   ambLightFBO.destroy();
+  DeleteLightmapAtlases();
 }
 
 
@@ -809,9 +811,8 @@ void VOpenGLDrawer::InitResolution () {
   glEnable(GL_TEXTURE_2D);
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
-  // clear lightmap atlases info
-  memset(lmap_id, 0, sizeof(lmap_id));
-  memset(addmap_id, 0, sizeof(addmap_id));
+  vassert(!atlasesGenerated);
+  GenerateLightmapAtlasTextures();
 
   //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -819,7 +820,6 @@ void VOpenGLDrawer::InitResolution () {
   glShadeModel(GL_FLAT);
 
   glDisable(GL_POLYGON_SMOOTH);
-
 
   // shaders
   shaderHead = nullptr; // just in case

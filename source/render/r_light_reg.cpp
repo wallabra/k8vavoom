@@ -1220,13 +1220,56 @@ void VRenderLevelLightmap::BuildLightMap (surface_t *surf) {
 
 //==========================================================================
 //
+//  ClearSurfCachePointers
+//
+//==========================================================================
+static inline void ClearSurfCachePointers (surface_t *s) {
+  for (; s; s = s->next) {
+    if (s->CacheSurf) GCon->Logf(NAME_Debug, "cleared surface cache pointer for surface %p", s);
+    s->CacheSurf = nullptr;
+  }
+}
+
+
+//==========================================================================
+//
+//  ClearSurfCachePointersSegPart
+//
+//==========================================================================
+static inline void ClearSurfCachePointersSegPart (segpart_t *sp) {
+  for (; sp; sp = sp->next) ClearSurfCachePointers(sp->surfs);
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelLightmap::FlushCaches
 //
 //==========================================================================
 void VRenderLevelLightmap::FlushCaches () {
-  //memset(blockbuf, 0, sizeof(blockbuf));
+  // clear surface cache pointers
+  for (int i = 0; i < Level->NumSubsectors; ++i) {
+    for (subregion_t *r = Level->Subsectors[i].regions; r != nullptr; r = r->next) {
+      if (r->realfloor != nullptr) ClearSurfCachePointers(r->realfloor->surfs);
+      if (r->realceil != nullptr) ClearSurfCachePointers(r->realceil->surfs);
+      if (r->fakefloor != nullptr) ClearSurfCachePointers(r->fakefloor->surfs);
+      if (r->fakeceil != nullptr) ClearSurfCachePointers(r->fakeceil->surfs);
+    }
+  }
+  // process seg parts
+  for (int i = 0; i < Level->NumSegs; ++i) {
+    for (drawseg_t *ds = Level->Segs[i].drawsegs; ds; ds = ds->next) {
+      ClearSurfCachePointersSegPart(ds->top);
+      ClearSurfCachePointersSegPart(ds->mid);
+      ClearSurfCachePointersSegPart(ds->bot);
+      ClearSurfCachePointersSegPart(ds->topsky);
+      ClearSurfCachePointersSegPart(ds->extra);
+    }
+  }
+  // clear blocks
   blockpool.clear();
   freeblocks = nullptr;
+  initLightChain();
   // setup lightmap atlases (no allocations, all atlases are free)
   for (unsigned i = 0; i < NUM_BLOCK_SURFS; ++i) {
     surfcache_t *block = blockpool.alloc();
@@ -1236,7 +1279,19 @@ void VRenderLevelLightmap::FlushCaches () {
     cacheblocks[i] = block;
   }
   light_reset_surface_cache = 0;
-  initLightChain();
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelLightmap::NukeLightmapCache
+//
+//==========================================================================
+void VRenderLevelLightmap::NukeLightmapCache () {
+  //GCon->Logf(NAME_Warning, "nuking lightmap atlases...");
+  light_reset_surface_cache = 0;
+  // nuke all lightmap caches
+  FlushCaches();
 }
 
 
@@ -1354,41 +1409,21 @@ surfcache_t *VRenderLevelLightmap::GetFreeBlock (bool forceAlloc) {
       res = blockpool.alloc();
     }
   }
+  //if (res) memset(res, 0, sizeof(surfcache_t));
   return res;
 }
 
 
 //==========================================================================
 //
-//  VRenderLevelLightmap::GentlyFlushAllCaches
+//  VRenderLevelLightmap::performBlockVSplit
 //
 //==========================================================================
-void VRenderLevelLightmap::GentlyFlushAllCaches () {
-  //GCon->Logf(NAME_Warning, "nuking lightmap atlases...");
-  light_reset_surface_cache = 0;
-  for (unsigned i = 0; i < NUM_BLOCK_SURFS; ++i) {
-    for (surfcache_t *blines = cacheblocks[i]; blines; blines = blines->bnext) {
-      for (surfcache_t *block = blines; block; block = block->lnext) {
-        if (block->owner) block = FreeBlock(block, false);
-      }
-      if (!blines->owner && !blines->lprev && !blines->lnext) blines = FreeBlock(blines, true);
-    }
-  }
-  //if (!freeblocks) Sys_Error("No more free blocks");
-  // nuke all lightmap caches, why not
-  FlushCaches();
-}
-
-
-//==========================================================================
-//
-//  VRenderLevelLightmap::performBlockSplit
-//
-//==========================================================================
-surfcache_t *VRenderLevelLightmap::performBlockSplit (int width, int height, surfcache_t *block, vuint32 bnum) {
-  vassert(bnum < NUM_BLOCK_SURFS);
+surfcache_t *VRenderLevelLightmap::performBlockVSplit (int width, int height, surfcache_t *block) {
   vassert(block->height >= height);
   vassert(!block->lnext);
+  vuint32 bnum = block->blocknum;
+  vassert(bnum < NUM_BLOCK_SURFS);
 
   if (block->height > height) {
     #ifdef VV_DEBUG_LMAP_ALLOCATOR
@@ -1447,7 +1482,6 @@ surfcache_t *VRenderLevelLightmap::AllocBlock (int width, int height) {
   #endif
 
   surfcache_t *splitBlock = nullptr;
-  vuint32 splitBNum = 0;
 
   for (unsigned i = 0; i < NUM_BLOCK_SURFS; ++i) {
     for (surfcache_t *blines = cacheblocks[i]; blines; blines = blines->bnext) {
@@ -1477,19 +1511,20 @@ surfcache_t *VRenderLevelLightmap::AllocBlock (int width, int height) {
             other->owner = nullptr;
             other->blocknum = i;
           }
+          vassert(block->blocknum == i);
           return block;
         }
       }
-      // possible split?
+      // possible vertical split?
       if (!splitBlock && !blines->lnext && blines->height >= height) {
         splitBlock = blines;
-        splitBNum = i;
+        vassert(blines->blocknum == i);
       }
     }
   }
 
   if (splitBlock) {
-    surfcache_t *other = performBlockSplit(width, height, splitBlock, splitBNum);
+    surfcache_t *other = performBlockVSplit(width, height, splitBlock);
     if (other) return other;
   }
 
@@ -1500,7 +1535,7 @@ surfcache_t *VRenderLevelLightmap::AllocBlock (int width, int height) {
       if (blines->lnext) continue;
       surfcache_t *other;
       surfcache_t *block = blines;
-      surfcache_t *other = performBlockSplit(width, height, block, i);
+      surfcache_t *other = performBlockVSplit(width, height, block);
       if (other) return other;
     }
   }
@@ -1529,15 +1564,19 @@ bool VRenderLevelLightmap::CacheSurface (surface_t *surface) {
 
   const vuint32 srflight = fixSurfLightLevel(surface);
 
-  if (cache && !cache->dlight && surface->dlightframe != currDLightFrame && cache->Light == srflight) {
-    /*
-    bnum = cache->blocknum;
-    cache->chain = light_chain[bnum];
-    light_chain[bnum] = cache;
-    cache->lastframe = cacheframecount;
-    */
-    chainLightmap(cache);
-    if (!(surface->drawflags&surface_t::DF_CALC_LMAP)) return true;
+  if (cache) {
+    if (cache->lastframe == cacheframecount) {
+      GCon->Log(NAME_Warning, "duplicate surface caching");
+      return true;
+    }
+    if (!(surface->drawflags&surface_t::DF_CALC_LMAP)) {
+      if (!cache->dlight && surface->dlightframe != currDLightFrame && cache->Light == srflight) {
+        chainLightmap(cache);
+        //GCon->Logf(NAME_Debug, "unchanged lightmap %p for surface %p", cache, surface);
+        //block_changed[cache->blocknum] = true;
+        return true;
+      }
+    }
   }
 
   // determine shape of surface
@@ -1563,6 +1602,11 @@ bool VRenderLevelLightmap::CacheSurface (surface_t *surface) {
     surface->CacheSurf = cache;
     cache->owner = &surface->CacheSurf;
     cache->surf = surface;
+    //GCon->Logf(NAME_Debug, "new lightmap %p for surface %p (bnum=%u)", cache, surface, cache->blocknum);
+  } else {
+    //GCon->Logf(NAME_Debug, "old lightmap %p for surface %p (bnum=%u)", cache, surface, cache->blocknum);
+    vassert(surface->CacheSurf == cache);
+    vassert(cache->surf == surface);
   }
 
   if (surface->dlightframe == currDLightFrame) {
@@ -1575,11 +1619,10 @@ bool VRenderLevelLightmap::CacheSurface (surface_t *surface) {
   // calculate the lightings
   BuildLightMap(surface);
 
-  const vuint32 bnum = cache->blocknum;
-  block_changed[bnum] = true;
-
   vassert(cache->t >= 0);
   vassert(cache->s >= 0);
+
+  const vuint32 bnum = cache->blocknum;
 
   for (int j = 0; j < tmax; ++j) {
     for (int i = 0; i < smax; ++i) {
@@ -1591,11 +1634,7 @@ bool VRenderLevelLightmap::CacheSurface (surface_t *surface) {
     }
   }
   chainLightmap(cache);
-  /*
-  cache->chain = light_chain[bnum];
-  light_chain[bnum] = cache;
-  cache->lastframe = cacheframecount;
-  */
+  block_changed[bnum] = true;
 
   // specular highlights
   for (int j = 0; j < tmax; ++j) {
@@ -1609,12 +1648,8 @@ bool VRenderLevelLightmap::CacheSurface (surface_t *surface) {
   }
 
   if (r_light_add) {
-    chainAddmap(cache);
-    /*
-    cache->addchain = add_chain[bnum];
-    add_chain[bnum] = cache;
+    //chainAddmap(cache);
     add_changed[bnum] = true;
-    */
   }
 
   return true;

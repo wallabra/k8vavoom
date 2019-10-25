@@ -61,9 +61,7 @@ VRenderLevelLightmap::VRenderLevelLightmap (VLevel *ALevel)
 //==========================================================================
 void VRenderLevelLightmap::ClearQueues () {
   VRenderLevelShared::ClearQueues();
-  //memset(light_chain, 0, sizeof(light_chain));
-  //memset(add_chain, 0, sizeof(add_chain));
-  resetLightChain();
+  advanceCacheFrame();
 }
 
 
@@ -73,13 +71,14 @@ void VRenderLevelLightmap::ClearQueues () {
 //
 //==========================================================================
 void VRenderLevelLightmap::advanceCacheFrame () {
-  VRenderLevelShared::advanceCacheFrame();
+  light_chain_head = /*add_chain_head =*/ 0;
   if (++cacheframecount == 0) {
     cacheframecount = 1;
-    light_chain_head = add_chain_head = 0;
     memset(light_chain_used, 0, sizeof(light_chain_used));
-    memset(add_chain_used, 0, sizeof(add_chain_used));
+    //memset(add_chain_used, 0, sizeof(add_chain_used));
+    blockpool.resetFrames();
   }
+  NukeLightmapCache();
 }
 
 
@@ -90,28 +89,15 @@ void VRenderLevelLightmap::advanceCacheFrame () {
 //==========================================================================
 void VRenderLevelLightmap::initLightChain () {
   memset(light_block, 0, sizeof(light_block));
-  //memset(block_changed, 0, sizeof(block_changed));
   memset(light_chain, 0, sizeof(light_chain));
   memset(add_block, 0, sizeof(add_block));
-  //memset(add_changed, 0, sizeof(add_changed));
-  memset(add_chain, 0, sizeof(add_chain));
+  //memset(add_chain, 0, sizeof(add_chain));
   memset(light_chain_used, 0, sizeof(light_chain_used));
-  memset(add_chain_used, 0, sizeof(add_chain_used));
-  light_chain_head = add_chain_head = 0;
-  // force updating of all lightmaps (why not?)
-  for (unsigned f = 0; f < NUM_BLOCK_SURFS; ++f) block_changed[f] = add_changed[f] = true;
-}
-
-
-//==========================================================================
-//
-//  VRenderLevelLightmap::resetLightChain
-//
-//==========================================================================
-void VRenderLevelLightmap::resetLightChain () {
-  memset(light_chain, 0, sizeof(light_chain));
-  memset(add_chain, 0, sizeof(add_chain));
-  light_chain_head = add_chain_head = 0;
+  //memset(add_chain_used, 0, sizeof(add_chain_used));
+  light_chain_head = /*add_chain_head =*/ 0;
+  // force updating of all lightmaps
+  //for (unsigned f = 0; f < NUM_BLOCK_SURFS; ++f) block_changed[f] = add_changed[f] = true;
+  for (unsigned f = 0; f < NUM_BLOCK_SURFS; ++f) block_changed[f] = add_changed[f] = false;
 }
 
 
@@ -142,6 +128,7 @@ void VRenderLevelLightmap::chainLightmap (surfcache_t *cache) {
 //  VRenderLevelLightmap::chainAddmap
 //
 //==========================================================================
+/*
 void VRenderLevelLightmap::chainAddmap (surfcache_t *cache) {
   vassert(cache);
   const vuint32 bnum = cache->blocknum;
@@ -155,8 +142,8 @@ void VRenderLevelLightmap::chainAddmap (surfcache_t *cache) {
   }
   cache->addchain = add_chain[bnum];
   add_chain[bnum] = cache;
-  add_changed[bnum] = true;
 }
+*/
 
 
 //==========================================================================
@@ -277,8 +264,8 @@ void VRenderLevelLightmap::RenderScene (const refdef_t *RD, const VViewClipper *
 
   Drawer->SetupViewOrg();
 
-  //ClearQueues(); // moved to `RenderWorld()`
-  //MarkLeaves();
+  //ClearQueues(); // moved to `PrepareWorldRender()`
+  //MarkLeaves(); // moved to `PrepareWorldRender()`
   //if (!MirrorLevel && !r_disable_world_update) UpdateWorld(RD, Range);
 
   RenderWorld(RD, Range);

@@ -38,6 +38,20 @@
 #define VAVOOM_RGB_TABLE_6_BITS
 //#define VAVOOM_RGB_TABLE_5_BITS
 
+// lightmap texture dimensions
+#define BLOCK_WIDTH         (128)
+#define BLOCK_HEIGHT        (128)
+// NUM_BLOCK_SURFS: maximum lightmap textures
+// NUM_CACHE_BLOCKS: maximum pieces in all lightmap textures
+#if 1
+# define NUM_BLOCK_SURFS     (128)
+//# define NUM_CACHE_BLOCKS    (64*1024)
+#else
+# define NUM_BLOCK_SURFS     (32)
+//# define NUM_CACHE_BLOCKS    (8*1024)
+#endif
+
+
 #include "drawer.h"
 
 
@@ -203,7 +217,7 @@ struct surfcache_t {
   surfcache_t *lprev;
   surfcache_t *lnext;
   surfcache_t *chain; // list of drawable surfaces, or next free block in `blockbuf`
-  surfcache_t *addchain; // list of specular surfaces
+  //surfcache_t *addchain; // list of specular surfaces (each lightmap has it, no need to chain)
   vuint32 blocknum; // light surface index
   surfcache_t **owner;
   vuint32 Light; // checked for strobe flash

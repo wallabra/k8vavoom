@@ -495,7 +495,7 @@ void VOpenGLDrawer::WorldDrawing () {
 
   // draw surfaces with lightmaps
   {
-    unsigned lmc = 0;
+    //unsigned lmc = 0;
     SurfLightmap.Activate();
     SurfLightmap.SetTexture(0);
     SurfLightmap.SetLightMap(1);
@@ -505,19 +505,17 @@ void VOpenGLDrawer::WorldDrawing () {
     SurfLightmap.UploadChangedUniforms();
 
     lastTexinfo.resetLastUsed();
-    bool lmapCreated = false, lmapaddCreated = false;
+    //GCon->Logf(NAME_Debug, "GL: ************ (%u)", RendLev->GetLightChainHead());
     for (vuint32 lcbn = RendLev->GetLightChainHead(); lcbn; lcbn = RendLev->GetLightChainNext(lcbn)) {
       const vuint32 lb = lcbn-1;
-      ++lmc;
+      vassert(lb < NUM_BLOCK_SURFS);
+      //++lmc;
+      //GCon->Logf(NAME_Debug, "GL: *** lightmap atlas #%u (%u : %u)", lb, lmap_id[lb], addmap_id[lb]);
+      //RendLev->SetLightBlockChanged(lb, true);
+      //RendLev->SetLightAddBlockChanged(lb, true);
 
       SelectTexture(1);
-      GLuint lmtid = GetLightAtlas(lb, false); // don't create
-      if (!lmtid) {
-        lmtid = GetLightAtlas(lb, true); // create
-        vassert(lmtid);
-        lmapCreated = true;
-      }
-      glBindTexture(GL_TEXTURE_2D, lmtid);
+      glBindTexture(GL_TEXTURE_2D, lmap_id[lb]);
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       if (anisotropyExists) {
@@ -526,21 +524,15 @@ void VOpenGLDrawer::WorldDrawing () {
         );
       }
 
-      if (lmapCreated || RendLev->IsLightAddBlockChanged(lb)) {
-        lmapCreated = false;
+      if (RendLev->IsLightAddBlockChanged(lb)) {
+        //GCon->Logf(NAME_Debug, "GL: updated lightmap atlas #%u", lb);
         RendLev->SetLightBlockChanged(lb, false);
         glTexImage2D(GL_TEXTURE_2D, 0, 4, BLOCK_WIDTH, BLOCK_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, RendLev->GetLightBlock(lb));
         RendLev->SetLightAddBlockChanged(lb, true);
       }
 
       SelectTexture(2);
-      GLuint lmatid = GetLightAddAtlas(lb, false); // don't create
-      if (!lmatid) {
-        lmatid = GetLightAddAtlas(lb, true); // create
-        vassert(lmatid);
-        lmapaddCreated = true;
-      }
-      glBindTexture(GL_TEXTURE_2D, lmatid);
+      glBindTexture(GL_TEXTURE_2D, addmap_id[lb]);
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       if (anisotropyExists) {
@@ -549,8 +541,8 @@ void VOpenGLDrawer::WorldDrawing () {
         );
       }
 
-      if (lmapaddCreated || RendLev->IsLightAddBlockChanged(lb)) {
-        lmapaddCreated = false;
+      if (RendLev->IsLightAddBlockChanged(lb)) {
+        //GCon->Logf(NAME_Debug, "GL: updated lightmap add atlas #%u", lb);
         RendLev->SetLightAddBlockChanged(lb, false);
         glTexImage2D(GL_TEXTURE_2D, 0, 4, BLOCK_WIDTH, BLOCK_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, RendLev->GetLightAddBlock(lb));
       }
