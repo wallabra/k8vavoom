@@ -1978,10 +1978,35 @@ void FL_Init () {
       }
     }
   }
-  // envvar
+  // envvars: DOOMWADDIR
   {
     const char *dwd = getenv("DOOMWADDIR");
     if (dwd && dwd[0]) IWadDirs.Append(dwd);
+  }
+  // envvars: DOOMWADPATH ( https://doomwiki.org/wiki/Environment_variables )
+  {
+    const char *dwp = getenv("DOOMWADPATH");
+    if (dwp) {
+      VStr s(dwp);
+      s = s.trimAll();
+      while (s.length()) {
+        int p0 = s.indexOf(':');
+        int p1 = s.indexOf(';');
+        #ifdef _WIN32
+        if (p0 == 1 && VStr::isAlphaAscii(s[0])) p0 = -1; // looks like 'a:'
+        #endif
+             if (p0 >= 0 && p1 >= 0) p0 = min2(p0, p1);
+        else if (p1 >= 0) { vassert(p0 < 0); p0 = p1; }
+        if (p0 < 0) p0 = s.length();
+        VStr pt = s.left(p0).trimAll();
+        s.chopLeft(p0+1);
+        s = s.trimLeft();
+        if (pt.length()) {
+          //GLog.Logf(NAME_Debug, "DWP: <%.*s>", pt.length(), *pt);
+          IWadDirs.Append(pt);
+        }
+      }
+    }
   }
 #ifdef _WIN32
   // home dir (if any)
