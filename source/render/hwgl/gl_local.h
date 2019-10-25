@@ -879,7 +879,6 @@ protected:
   FBO ambLightFBO; // we'll copy ambient light texture here, so we can use it in decal renderer to light decals
 
   GLint maxTexSize;
-  bool texturesGenerated;
 
   GLuint lmap_id[NUM_BLOCK_SURFS];
   GLuint addmap_id[NUM_BLOCK_SURFS];
@@ -918,7 +917,11 @@ protected:
 
   void SetFade (vuint32 NewFade);
 
-  void GenerateTextures ();
+  // returns 0 if generation is disabled, and atlas is not created
+  GLuint GetLightAtlas (vuint32 bnum, bool allowGenerate);
+  GLuint GetLightAddAtlas (vuint32 bnum, bool allowGenerate);
+  void DeleteLightmapAtlases ();
+
   virtual void FlushOneTexture (VTexture *tex, bool forced=false) override; // unload one texture
   virtual void FlushTextures (bool forced=false) override; // unload all textures
   void DeleteTextures ();

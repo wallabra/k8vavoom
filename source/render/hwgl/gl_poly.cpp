@@ -505,12 +505,19 @@ void VOpenGLDrawer::WorldDrawing () {
     SurfLightmap.UploadChangedUniforms();
 
     lastTexinfo.resetLastUsed();
+    bool lmapCreated = false, lmapaddCreated = false;
     for (vuint32 lcbn = RendLev->GetLightChainHead(); lcbn; lcbn = RendLev->GetLightChainNext(lcbn)) {
       const vuint32 lb = lcbn-1;
       ++lmc;
 
       SelectTexture(1);
-      glBindTexture(GL_TEXTURE_2D, lmap_id[lb]);
+      GLuint lmtid = GetLightAtlas(lb, false); // don't create
+      if (!lmtid) {
+        lmtid = GetLightAtlas(lb, true); // create
+        vassert(lmtid);
+        lmapCreated = true;
+      }
+      glBindTexture(GL_TEXTURE_2D, lmtid);
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       if (anisotropyExists) {
@@ -519,14 +526,21 @@ void VOpenGLDrawer::WorldDrawing () {
         );
       }
 
-      if (RendLev->IsLightAddBlockChanged(lb)) {
+      if (lmapCreated || RendLev->IsLightAddBlockChanged(lb)) {
+        lmapCreated = false;
         RendLev->SetLightBlockChanged(lb, false);
         glTexImage2D(GL_TEXTURE_2D, 0, 4, BLOCK_WIDTH, BLOCK_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, RendLev->GetLightBlock(lb));
         RendLev->SetLightAddBlockChanged(lb, true);
       }
 
       SelectTexture(2);
-      glBindTexture(GL_TEXTURE_2D, addmap_id[lb]);
+      GLuint lmatid = GetLightAddAtlas(lb, false); // don't create
+      if (!lmatid) {
+        lmatid = GetLightAddAtlas(lb, true); // create
+        vassert(lmatid);
+        lmapaddCreated = true;
+      }
+      glBindTexture(GL_TEXTURE_2D, lmatid);
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
       glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       if (anisotropyExists) {
@@ -535,7 +549,8 @@ void VOpenGLDrawer::WorldDrawing () {
         );
       }
 
-      if (RendLev->IsLightAddBlockChanged(lb)) {
+      if (lmapaddCreated || RendLev->IsLightAddBlockChanged(lb)) {
+        lmapaddCreated = false;
         RendLev->SetLightAddBlockChanged(lb, false);
         glTexImage2D(GL_TEXTURE_2D, 0, 4, BLOCK_WIDTH, BLOCK_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, RendLev->GetLightAddBlock(lb));
       }

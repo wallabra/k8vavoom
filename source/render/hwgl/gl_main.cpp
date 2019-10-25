@@ -282,7 +282,6 @@ VOpenGLDrawer::VOpenGLDrawer ()
   , surfList()
   , mainFBO()
   , ambLightFBO()
-  , texturesGenerated(false)
 {
   currentActiveShader = nullptr;
   lastgamma = 0;
@@ -809,7 +808,10 @@ void VOpenGLDrawer::InitResolution () {
 
   glEnable(GL_TEXTURE_2D);
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-  GenerateTextures();
+
+  // clear lightmap atlases info
+  memset(lmap_id, 0, sizeof(lmap_id));
+  memset(addmap_id, 0, sizeof(addmap_id));
 
   //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);

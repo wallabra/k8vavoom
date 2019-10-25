@@ -32,13 +32,52 @@ static VCvarB gl_recreate_changed_textures("gl_recreate_changed_textures", false
 
 //==========================================================================
 //
-//  VOpenGLDrawer::GenerateTextures
+//  VOpenGLDrawer::DeleteLightmapAtlases
 //
 //==========================================================================
-void VOpenGLDrawer::GenerateTextures () {
-  glGenTextures(NUM_BLOCK_SURFS, lmap_id);
-  glGenTextures(NUM_BLOCK_SURFS, addmap_id);
-  texturesGenerated = true;
+void VOpenGLDrawer::DeleteLightmapAtlases () {
+  for (unsigned f = 0; f < NUM_BLOCK_SURFS; ++f) {
+    if (lmap_id[f]) glDeleteTextures(1, &lmap_id[f]);
+    if (addmap_id[f]) glDeleteTextures(1, &addmap_id[f]);
+  }
+  memset(lmap_id, 0, sizeof(lmap_id));
+  memset(addmap_id, 0, sizeof(addmap_id));
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::GetLightAtlas
+//
+//  returns 0 if generation is disabled, and atlas is not created
+//
+//==========================================================================
+GLuint VOpenGLDrawer::GetLightAtlas (vuint32 bnum, bool allowGenerate) {
+  vassert(bnum < NUM_BLOCK_SURFS);
+  GLuint res = lmap_id[bnum];
+  if (!res && allowGenerate) {
+    glGenTextures(1, &lmap_id[bnum]);
+    res = lmap_id[bnum];
+  }
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::GetLightAddAtlas
+//
+//  returns 0 if generation is disabled, and atlas is not created
+//
+//==========================================================================
+GLuint VOpenGLDrawer::GetLightAddAtlas (vuint32 bnum, bool allowGenerate) {
+  vassert(bnum < NUM_BLOCK_SURFS);
+  GLuint res = addmap_id[bnum];
+  if (!res && allowGenerate) {
+    glGenTextures(1, &addmap_id[bnum]);
+    res = addmap_id[bnum];
+  }
+  return res;
 }
 
 
@@ -51,6 +90,8 @@ void VOpenGLDrawer::FlushTextures (bool forced) {
   for (int i = 0; i < GTextureManager.GetNumTextures(); ++i) {
     if (forced) DeleteTexture(GTextureManager[i]); else FlushTexture(GTextureManager[i]);
   }
+  // this is usually called when we need to do some cleanup, so recreate atlases, why not
+  DeleteLightmapAtlases();
 }
 
 
@@ -72,13 +113,7 @@ void VOpenGLDrawer::FlushOneTexture (VTexture *tex, bool forced) {
 //==========================================================================
 void VOpenGLDrawer::DeleteTextures () {
   FlushTextures(true); // forced
-
-  if (texturesGenerated) {
-    glDeleteTextures(NUM_BLOCK_SURFS, lmap_id);
-    glDeleteTextures(NUM_BLOCK_SURFS, addmap_id);
-    texturesGenerated = false;
-  }
-
+  DeleteLightmapAtlases();
   UnloadModels();
 }
 
