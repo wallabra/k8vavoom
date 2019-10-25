@@ -291,7 +291,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
     }
 
     // floodfill visibility check
-    if (/*!IsAdvancedRenderer() &&*/ r_dynamic_light_better_vis_check) {
+    if (/*!IsShadowVolumeRenderer() &&*/ r_dynamic_light_better_vis_check) {
       if (leafnum < 0) leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(lorg)-Level->Subsectors);
       if (!CheckBSPVisibility(lorg, (radius > 0 ? radius : 64), &Level->Subsectors[leafnum])) {
         //GCon->Logf("DYNAMIC DROP: visibility check");
@@ -707,7 +707,7 @@ void VRenderLevelShared::CalculateSubAmbient (float &l, float &lr, float &lg, fl
     lb = (SecLightColor&255)*l/255.0f;
 
     do {
-      if (!IsAdvancedRenderer()) {
+      if (!IsShadowVolumeRenderer()) {
         // light from floor's lightmap
         //FIXME: THIS IS WRONG!
         sec_surface_t *rfloor;
@@ -813,7 +813,7 @@ vuint32 VRenderLevelShared::LightPoint (const TVec &p, float radius, float heigh
   CalculateSubAmbient(l, lr, lg, lb, sub, p, radius, surfplane);
 
   // add static lights
-  if (IsAdvancedRenderer()) CalculateSubStatic(l, lr, lg, lb, sub, p, radius, surfplane);
+  if (IsShadowVolumeRenderer()) CalculateSubStatic(l, lr, lg, lb, sub, p, radius, surfplane);
 
   // add dynamic lights
   CalculateDynLightSub(l, lr, lg, lb, sub, p, radius, height, surfplane);

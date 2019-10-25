@@ -475,7 +475,7 @@ native static final void R_FillRect (float x, float y, float w, float h, int col
 // returns current aspect ratio
 native static final float R_GetAspectRatio ();
 // check if advrender can be used (for use in menu system only!)
-native static final bool R_SupportsAdvancedRendering ();
+native static final bool R_SupportsShadowVolumeRendering ();
 
 native static final int R_GetBloodTranslation (int color);
 

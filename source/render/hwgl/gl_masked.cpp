@@ -120,7 +120,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     }
   }
 
-  if (Alpha == 1.0f && !Additive && (surf->lightmap != nullptr || (!RendLev->IsAdvancedRenderer() && surf->dlightframe == RendLev->currDLightFrame))) {
+  if (Alpha == 1.0f && !Additive && (surf->lightmap != nullptr || (!RendLev->IsShadowVolumeRenderer() && surf->dlightframe == RendLev->currDLightFrame))) {
     RendLev->BuildLightMap(surf);
     int w = (surf->extents[0]>>4)+1;
     int h = (surf->extents[1]>>4)+1;
@@ -370,7 +370,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
   //light = 0xffff0000;
   //Fade = 0x3f323232;
   /*
-  if (Fade != FADE_LIGHT && RendLev->IsAdvancedRenderer()) {
+  if (Fade != FADE_LIGHT && RendLev->IsShadowVolumeRenderer()) {
     Fade ^= 0x00ffffff;
   }
   */

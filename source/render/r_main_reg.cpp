@@ -41,7 +41,7 @@ VRenderLevelLightmap::VRenderLevelLightmap (VLevel *ALevel)
   , invalidateRelight(false)
 {
   NeedsInfiniteFarClip = false;
-  mIsAdvancedRenderer = false;
+  mIsShadowVolumeRenderer = false;
 
   vassert(!blockpool.tail);
   vassert(!blockpool.tailused);

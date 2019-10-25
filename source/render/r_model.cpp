@@ -1717,7 +1717,7 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
   float ScaleX, float ScaleY, VClassModelScript &Cls, int FIdx, int NFIdx,
   VTextureTranslation *Trans, int ColorMap, int Version, vuint32 Light,
   vuint32 Fade, float Alpha, bool Additive, bool IsViewModel, float Inter,
-  bool Interpolate, const TVec &LightPos, float LightRadius, ERenderPass Pass, bool isAdvanced)
+  bool Interpolate, const TVec &LightPos, float LightRadius, ERenderPass Pass, bool isShadowVol)
 {
   VScriptedModelFrame &FDef = Cls.Frames[FIdx];
   VScriptedModelFrame &NFDef = Cls.Frames[NFIdx];
@@ -1916,13 +1916,13 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
     switch (Pass) {
       case RPASS_Normal:
       case RPASS_NonShadow:
-        if (true /*IsViewModel || !isAdvanced*/) {
+        if (true /*IsViewModel || !isShadowVol*/) {
           Drawer->DrawAliasModel(Md2Org, Md2Angle, Offset, Scale,
             SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
             Trans, ColorMap, Md2Light, Fade, Md2Alpha, Additive,
             IsViewModel, smooth_inter, Interpolate, SubMdl.UseDepth,
             SubMdl.AllowTransparency,
-            !IsViewModel && isAdvanced); // for advanced renderer, we need to fill z-buffer, but not color buffer
+            !IsViewModel && isShadowVol); // for advanced renderer, we need to fill z-buffer, but not color buffer
         }
         break;
       case RPASS_Ambient:
@@ -1981,7 +1981,7 @@ bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, const TVec &Org, const T
   DrawModel(Level, mobj, Org, Angles, ScaleX, ScaleY, *Mdl->DefaultClass, FIdx,
     NFIdx, Trans, ColorMap, Version, Light, Fade, Alpha, Additive,
     IsViewModel, InterpFrac, Interpolate, CurrLightPos, CurrLightRadius,
-    Pass, IsAdvancedRenderer());
+    Pass, IsShadowVolumeRenderer());
   return true;
 }
 
@@ -2027,7 +2027,7 @@ bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, VName clsName, const TVe
 
   DrawModel(Level, mobj, Org, Angles, ScaleX, ScaleY, *Cls, FIdx, NFIdx, Trans,
     ColorMap, Version, Light, Fade, Alpha, Additive, IsViewModel,
-    InterpFrac, Interpolate, CurrLightPos, CurrLightRadius, Pass, IsAdvancedRenderer());
+    InterpFrac, Interpolate, CurrLightPos, CurrLightRadius, Pass, IsShadowVolumeRenderer());
   return true;
 }
 

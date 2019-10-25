@@ -1538,7 +1538,7 @@ void VRenderLevelShared::CreateWorldSurfaces () {
   }
 
   if (inWorldCreation) {
-    if (IsAdvancedRenderer()) {
+    if (IsShadowVolumeRenderer()) {
       R_LdrMsgShowSecondary("CREATING WORLD SURFACES...");
     } else {
       R_LdrMsgShowSecondary("CALCULATING LIGHTMAPS...");

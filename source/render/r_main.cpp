@@ -388,14 +388,17 @@ void R_Init () {
 //==========================================================================
 void R_Start (VLevel *ALevel) {
   SCR_Update(false); // partial update
-  if (r_level_renderer > 1 && !Drawer->SupportsAdvancedRendering()) {
-    GCon->Logf(NAME_Warning, "Your GPU doesn't support Advanced Renderer, so I will switch to regular one.");
+  if (r_level_renderer > 1 && !Drawer->SupportsShadowVolumeRendering()) {
+    GCon->Logf(NAME_Warning, "Your GPU doesn't support Shadow Volume Renderer, so I will switch to the lightmapped one.");
     r_level_renderer = 1;
   } else if (r_level_renderer <= 0) {
-    if (Drawer->SupportsAdvancedRendering()) {
-      GCon->Logf(NAME_Warning, "Your GPU supports Advanced Renderer, but it is slow and unfinished, so i won't use it.");
+    if (Drawer->SupportsShadowVolumeRendering()) {
+      GCon->Logf("Your GPU supports Shadow Volume Renderer, so i will use it.");
+      r_level_renderer = 2;
+    } else {
+      GCon->Logf("Your GPU doesn't support Shadow Volume Renderer, so I will use the lightmapped one.");
+      r_level_renderer = 1;
     }
-    //r_level_renderer = 1;
   }
   // now create renderer
   if (r_level_renderer <= 1) {

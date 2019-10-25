@@ -855,10 +855,10 @@ bool VOpenGLDrawer::CheckExtension (const char *ext) {
 
 //==========================================================================
 //
-//  VOpenGLDrawer::SupportsAdvancedRendering
+//  VOpenGLDrawer::SupportsShadowVolumeRendering
 //
 //==========================================================================
-bool VOpenGLDrawer::SupportsAdvancedRendering () {
+bool VOpenGLDrawer::SupportsShadowVolumeRendering () {
   return (HaveStencilWrap && p_glStencilFuncSeparate && HaveDepthClamp);
 }
 

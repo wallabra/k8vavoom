@@ -85,7 +85,7 @@ VRenderLevelShadowVolume::VRenderLevelShadowVolume (VLevel *ALevel)
   : VRenderLevelShared(ALevel)
 {
   NeedsInfiniteFarClip = true;
-  mIsAdvancedRenderer = true;
+  mIsShadowVolumeRenderer = true;
 }
 
 
@@ -121,7 +121,7 @@ void VRenderLevelShadowVolume::RenderTranslucentWallsDecals () {
 //
 //==========================================================================
 void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipper *Range) {
-  if (!Drawer->SupportsAdvancedRendering()) Host_Error("Advanced rendering not supported by graphics card");
+  if (!Drawer->SupportsShadowVolumeRendering()) Host_Error("Shadow volume rendering is not supported by your graphics card");
 
   r_viewleaf = Level->PointInSubsector(vieworg);
 

@@ -715,7 +715,7 @@ void VRenderLevelShared::DrawTranslucentPolys () {
     } else {
       // masked polygon
       // for advanced rendere: non-translucent and non-additive polys are already done, and should not end up here anyway
-      //if (IsAdvancedRenderer()) continue;
+      //if (IsShadowVolumeRenderer()) continue;
       vassert(spr.surf);
       if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); pofsEnabled = false; }
       Drawer->DrawMaskedPolygon(spr.surf, spr.Alpha, spr.Additive);

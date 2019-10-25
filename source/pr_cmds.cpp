@@ -651,12 +651,12 @@ IMPLEMENT_FREE_FUNCTION(VObject, R_GetAspectRatio) {
 
 //==========================================================================
 //
-//  R_SupportsAdvancedRendering
+//  R_SupportsShadowVolumeRendering
 //
 //==========================================================================
-IMPLEMENT_FREE_FUNCTION(VObject, R_SupportsAdvancedRendering) {
+IMPLEMENT_FREE_FUNCTION(VObject, R_SupportsShadowVolumeRendering) {
   if (Drawer) {
-    RET_BOOL(Drawer->SupportsAdvancedRendering());
+    RET_BOOL(Drawer->SupportsShadowVolumeRendering());
   } else {
     // be conservative
     RET_BOOL(false);

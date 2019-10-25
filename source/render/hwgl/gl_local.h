@@ -682,7 +682,7 @@ public:
   virtual void EndAutomap () override;
 
   // advanced drawing.
-  virtual bool SupportsAdvancedRendering () override;
+  virtual bool SupportsShadowVolumeRendering () override;
 
   virtual void GetProjectionMatrix (VMatrix4 &mat) override;
   virtual void GetModelMatrix (VMatrix4 &mat) override;

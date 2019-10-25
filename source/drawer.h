@@ -73,7 +73,7 @@ struct surfcache_t; // see "render/r_shared.h"
 
 class VRenderLevelDrawer : public VRenderLevelPublic {
 protected:
-  bool mIsAdvancedRenderer;
+  bool mIsShadowVolumeRenderer;
 
 public:
   bool NeedsInfiniteFarClip;
@@ -117,7 +117,7 @@ public:
 
   virtual void UpdateSubsectorFlatSurfaces (subsector_t *sub, bool dofloors, bool doceils, bool forced=false) = 0;
 
-  inline bool IsAdvancedRenderer () const { return mIsAdvancedRenderer; }
+  inline bool IsShadowVolumeRenderer () const { return mIsShadowVolumeRenderer; }
 
   virtual bool IsNodeRendered (const node_t *node) const = 0;
   virtual bool IsSubsectorRendered (const subsector_t *sub) const = 0;
@@ -279,7 +279,7 @@ public:
   virtual void EndAutomap () = 0;
 
   // advanced drawing
-  virtual bool SupportsAdvancedRendering () = 0;
+  virtual bool SupportsShadowVolumeRendering () = 0;
   virtual void DrawWorldZBufferPass () = 0;
   virtual void DrawWorldAmbientPass () = 0;
   virtual void BeginShadowVolumesPass () = 0;
