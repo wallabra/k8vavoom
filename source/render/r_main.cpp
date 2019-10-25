@@ -399,7 +399,7 @@ void R_Start (VLevel *ALevel) {
   }
   // now create renderer
   if (r_level_renderer <= 1) {
-    ALevel->RenderData = new VRenderLevel(ALevel);
+    ALevel->RenderData = new VRenderLevelLightmap(ALevel);
   } else {
     ALevel->RenderData = new VAdvancedRenderLevel(ALevel);
   }

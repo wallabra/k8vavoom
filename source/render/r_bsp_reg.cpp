@@ -37,10 +37,10 @@ static VCvarB dbg_show_dlight_trace_info("dbg_show_dlight_trace_info", false, "S
 
 //==========================================================================
 //
-//  VRenderLevel::QueueWorldSurface
+//  VRenderLevelLightmap::QueueWorldSurface
 //
 //==========================================================================
-void VRenderLevel::QueueWorldSurface (surface_t *surf) {
+void VRenderLevelLightmap::QueueWorldSurface (surface_t *surf) {
   bool lightmaped = (surf->lightmap != nullptr || surf->dlightframe == currDLightFrame);
 
   if (surf->drawflags&surface_t::DF_CALC_LMAP) {
@@ -66,7 +66,7 @@ void VRenderLevel::QueueWorldSurface (surface_t *surf) {
 
 //==========================================================================
 //
-//  VRenderLevel::RenderWorld
+//  VRenderLevelLightmap::RenderWorld
 //
 //==========================================================================
 extern vuint32 glWDPolyTotal;
@@ -77,7 +77,7 @@ extern vuint32 gf_dynlights_processed;
 extern vuint32 gf_dynlights_traced;
 
 
-void VRenderLevel::RenderWorld (const refdef_t *rd, const VViewClipper *Range) {
+void VRenderLevelLightmap::RenderWorld (const refdef_t *rd, const VViewClipper *Range) {
   PrepareWorldRender(rd, Range);
 
   gf_dynlights_processed = 0;

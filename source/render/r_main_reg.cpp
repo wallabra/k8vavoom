@@ -29,10 +29,10 @@
 
 //==========================================================================
 //
-//  VRenderLevel::VRenderLevel
+//  VRenderLevelLightmap::VRenderLevelLightmap
 //
 //==========================================================================
-VRenderLevel::VRenderLevel (VLevel *ALevel)
+VRenderLevelLightmap::VRenderLevelLightmap (VLevel *ALevel)
   : VRenderLevelShared(ALevel)
   , c_subdivides(0)
   , c_seg_div(0)
@@ -54,12 +54,12 @@ VRenderLevel::VRenderLevel (VLevel *ALevel)
 
 //==========================================================================
 //
-//  VRenderLevel::ClearQueues
+//  VRenderLevelLightmap::ClearQueues
 //
 //  clears render queues
 //
 //==========================================================================
-void VRenderLevel::ClearQueues () {
+void VRenderLevelLightmap::ClearQueues () {
   VRenderLevelShared::ClearQueues();
   //memset(light_chain, 0, sizeof(light_chain));
   //memset(add_chain, 0, sizeof(add_chain));
@@ -69,10 +69,10 @@ void VRenderLevel::ClearQueues () {
 
 //==========================================================================
 //
-//  VRenderLevel::advanceCacheFrame
+//  VRenderLevelLightmap::advanceCacheFrame
 //
 //==========================================================================
-void VRenderLevel::advanceCacheFrame () {
+void VRenderLevelLightmap::advanceCacheFrame () {
   VRenderLevelShared::advanceCacheFrame();
   if (++cacheframecount == 0) {
     cacheframecount = 1;
@@ -85,10 +85,10 @@ void VRenderLevel::advanceCacheFrame () {
 
 //==========================================================================
 //
-//  VRenderLevel::initLightChain
+//  VRenderLevelLightmap::initLightChain
 //
 //==========================================================================
-void VRenderLevel::initLightChain () {
+void VRenderLevelLightmap::initLightChain () {
   memset(light_block, 0, sizeof(light_block));
   //memset(block_changed, 0, sizeof(block_changed));
   memset(light_chain, 0, sizeof(light_chain));
@@ -105,10 +105,10 @@ void VRenderLevel::initLightChain () {
 
 //==========================================================================
 //
-//  VRenderLevel::resetLightChain
+//  VRenderLevelLightmap::resetLightChain
 //
 //==========================================================================
-void VRenderLevel::resetLightChain () {
+void VRenderLevelLightmap::resetLightChain () {
   memset(light_chain, 0, sizeof(light_chain));
   memset(add_chain, 0, sizeof(add_chain));
   light_chain_head = add_chain_head = 0;
@@ -117,10 +117,10 @@ void VRenderLevel::resetLightChain () {
 
 //==========================================================================
 //
-//  VRenderLevel::chainLightmap
+//  VRenderLevelLightmap::chainLightmap
 //
 //==========================================================================
-void VRenderLevel::chainLightmap (surfcache_t *cache) {
+void VRenderLevelLightmap::chainLightmap (surfcache_t *cache) {
   vassert(cache);
   const vuint32 bnum = cache->blocknum;
   vassert(bnum < NUM_BLOCK_SURFS);
@@ -139,10 +139,10 @@ void VRenderLevel::chainLightmap (surfcache_t *cache) {
 
 //==========================================================================
 //
-//  VRenderLevel::chainAddmap
+//  VRenderLevelLightmap::chainAddmap
 //
 //==========================================================================
-void VRenderLevel::chainAddmap (surfcache_t *cache) {
+void VRenderLevelLightmap::chainAddmap (surfcache_t *cache) {
   vassert(cache);
   const vuint32 bnum = cache->blocknum;
   vassert(bnum < NUM_BLOCK_SURFS);
@@ -161,25 +161,25 @@ void VRenderLevel::chainAddmap (surfcache_t *cache) {
 
 //==========================================================================
 //
-//  VRenderLevel::GetLightChainHead
+//  VRenderLevelLightmap::GetLightChainHead
 //
 //  lightmap chain iterator (used in renderer)
 //  block number+1 or 0
 //
 //==========================================================================
-vuint32 VRenderLevel::GetLightChainHead () {
+vuint32 VRenderLevelLightmap::GetLightChainHead () {
   return light_chain_head;
 }
 
 
 //==========================================================================
 //
-//  VRenderLevel::GetLightChainNext
+//  VRenderLevelLightmap::GetLightChainNext
 //
 //  block number+1 or 0
 //
 //==========================================================================
-vuint32 VRenderLevel::GetLightChainNext (vuint32 bnum) {
+vuint32 VRenderLevelLightmap::GetLightChainNext (vuint32 bnum) {
   if (bnum--) {
     vassert(bnum < NUM_BLOCK_SURFS);
     return light_chain_used[bnum].next;
@@ -190,10 +190,10 @@ vuint32 VRenderLevel::GetLightChainNext (vuint32 bnum) {
 
 //==========================================================================
 //
-//  VRenderLevel::IsLightBlockChanged
+//  VRenderLevelLightmap::IsLightBlockChanged
 //
 //==========================================================================
-bool VRenderLevel::IsLightBlockChanged (vuint32 bnum) {
+bool VRenderLevelLightmap::IsLightBlockChanged (vuint32 bnum) {
   vassert(bnum < NUM_BLOCK_SURFS);
   return block_changed[bnum];
 }
@@ -201,10 +201,10 @@ bool VRenderLevel::IsLightBlockChanged (vuint32 bnum) {
 
 //==========================================================================
 //
-//  VRenderLevel::IsLightAddBlockChanged
+//  VRenderLevelLightmap::IsLightAddBlockChanged
 //
 //==========================================================================
-bool VRenderLevel::IsLightAddBlockChanged (vuint32 bnum) {
+bool VRenderLevelLightmap::IsLightAddBlockChanged (vuint32 bnum) {
   vassert(bnum < NUM_BLOCK_SURFS);
   return add_changed[bnum];
 }
@@ -212,10 +212,10 @@ bool VRenderLevel::IsLightAddBlockChanged (vuint32 bnum) {
 
 //==========================================================================
 //
-//  VRenderLevel::SetLightBlockChanged
+//  VRenderLevelLightmap::SetLightBlockChanged
 //
 //==========================================================================
-void VRenderLevel::SetLightBlockChanged (vuint32 bnum, bool value) {
+void VRenderLevelLightmap::SetLightBlockChanged (vuint32 bnum, bool value) {
   vassert(bnum < NUM_BLOCK_SURFS);
   block_changed[bnum] = value;
 }
@@ -223,10 +223,10 @@ void VRenderLevel::SetLightBlockChanged (vuint32 bnum, bool value) {
 
 //==========================================================================
 //
-//  VRenderLevel::SetLightAddBlockChanged
+//  VRenderLevelLightmap::SetLightAddBlockChanged
 //
 //==========================================================================
-void VRenderLevel::SetLightAddBlockChanged (vuint32 bnum, bool value) {
+void VRenderLevelLightmap::SetLightAddBlockChanged (vuint32 bnum, bool value) {
   vassert(bnum < NUM_BLOCK_SURFS);
   add_changed[bnum] = value;
 }
@@ -234,10 +234,10 @@ void VRenderLevel::SetLightAddBlockChanged (vuint32 bnum, bool value) {
 
 //==========================================================================
 //
-//  VRenderLevel::GetLightBlock
+//  VRenderLevelLightmap::GetLightBlock
 //
 //==========================================================================
-rgba_t *VRenderLevel::GetLightBlock (vuint32 bnum) {
+rgba_t *VRenderLevelLightmap::GetLightBlock (vuint32 bnum) {
   vassert(bnum < NUM_BLOCK_SURFS);
   return light_block[bnum];
 }
@@ -245,10 +245,10 @@ rgba_t *VRenderLevel::GetLightBlock (vuint32 bnum) {
 
 //==========================================================================
 //
-//  VRenderLevel::GetLightAddBlock
+//  VRenderLevelLightmap::GetLightAddBlock
 //
 //==========================================================================
-rgba_t *VRenderLevel::GetLightAddBlock (vuint32 bnum) {
+rgba_t *VRenderLevelLightmap::GetLightAddBlock (vuint32 bnum) {
   vassert(bnum < NUM_BLOCK_SURFS);
   return add_block[bnum];
 }
@@ -256,10 +256,10 @@ rgba_t *VRenderLevel::GetLightAddBlock (vuint32 bnum) {
 
 //==========================================================================
 //
-//  VRenderLevel::GetLightChainFirst
+//  VRenderLevelLightmap::GetLightChainFirst
 //
 //==========================================================================
-surfcache_t *VRenderLevel::GetLightChainFirst (vuint32 bnum) {
+surfcache_t *VRenderLevelLightmap::GetLightChainFirst (vuint32 bnum) {
   vassert(bnum < NUM_BLOCK_SURFS);
   return light_chain[bnum];
 }
@@ -267,10 +267,10 @@ surfcache_t *VRenderLevel::GetLightChainFirst (vuint32 bnum) {
 
 //==========================================================================
 //
-//  VRenderLevel::RenderScene
+//  VRenderLevelLightmap::RenderScene
 //
 //==========================================================================
-void VRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *Range) {
+void VRenderLevelLightmap::RenderScene (const refdef_t *RD, const VViewClipper *Range) {
   r_viewleaf = Level->PointInSubsector(vieworg);
 
   TransformFrustum();

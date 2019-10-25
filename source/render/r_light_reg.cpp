@@ -55,7 +55,7 @@ extern VCvarB dbg_adv_light_notrace_mark;
 // ////////////////////////////////////////////////////////////////////////// //
 static bool r_light_add;
 
-enum { GridSize = VRenderLevel::LMapTraceInfo::GridSize };
+enum { GridSize = VRenderLevelLightmap::LMapTraceInfo::GridSize };
 
 vuint32 blocklightsr[GridSize*GridSize];
 vuint32 blocklightsg[GridSize*GridSize];
@@ -143,12 +143,12 @@ static inline vuint32 fixSurfLightLevel (const surface_t *surf) {
 
 //==========================================================================
 //
-//  VRenderLevel::CastRay
+//  VRenderLevelLightmap::CastRay
 //
 //  Returns the distance between the points, or 0 if blocked
 //
 //==========================================================================
-float VRenderLevel::CastRay (sector_t *ssector, const TVec &p1, const TVec &p2, float squaredist) {
+float VRenderLevelLightmap::CastRay (sector_t *ssector, const TVec &p1, const TVec &p2, float squaredist) {
   const TVec delta = p2-p1;
   const float t = DotProduct(delta, delta);
   if (t >= squaredist) return 0.0f; // too far away
@@ -168,10 +168,10 @@ float VRenderLevel::CastRay (sector_t *ssector, const TVec &p1, const TVec &p2, 
 
 //==========================================================================
 //
-// VRenderLevel::CalcMinMaxs
+// VRenderLevelLightmap::CalcMinMaxs
 //
 //==========================================================================
-void VRenderLevel::CalcMinMaxs (LMapTraceInfo &lmi, const surface_t *surf) {
+void VRenderLevelLightmap::CalcMinMaxs (LMapTraceInfo &lmi, const surface_t *surf) {
   TVec smins(999999.0f, 999999.0f, 999999.0f);
   TVec smaxs(-999999.0f, -999999.0f, -999999.0f);
   const TVec *v = &surf->verts[0];
@@ -190,12 +190,12 @@ void VRenderLevel::CalcMinMaxs (LMapTraceInfo &lmi, const surface_t *surf) {
 
 //==========================================================================
 //
-//  VRenderLevel::CalcFaceVectors
+//  VRenderLevelLightmap::CalcFaceVectors
 //
 //  fills in texorg, worldtotex, and textoworld
 //
 //==========================================================================
-bool VRenderLevel::CalcFaceVectors (LMapTraceInfo &lmi, const surface_t *surf) {
+bool VRenderLevelLightmap::CalcFaceVectors (LMapTraceInfo &lmi, const surface_t *surf) {
   const texinfo_t *tex = surf->texinfo;
 
   lmi.worldtotex[0] = tex->saxis;
@@ -259,7 +259,7 @@ bool VRenderLevel::CalcFaceVectors (LMapTraceInfo &lmi, const surface_t *surf) {
 
 //==========================================================================
 //
-//  VRenderLevel::CalcPoints
+//  VRenderLevelLightmap::CalcPoints
 //
 //  for each texture aligned grid point, back project onto the plane
 //  to get the world xyz value of the sample point
@@ -267,7 +267,7 @@ bool VRenderLevel::CalcFaceVectors (LMapTraceInfo &lmi, const surface_t *surf) {
 //  for dynlights, set `lowres` to `true`
 //
 //==========================================================================
-void VRenderLevel::CalcPoints (LMapTraceInfo &lmi, const surface_t *surf, bool lowres) {
+void VRenderLevelLightmap::CalcPoints (LMapTraceInfo &lmi, const surface_t *surf, bool lowres) {
   int w, h;
   float step;
   float starts, startt;
@@ -383,10 +383,10 @@ template<typename T> void FilterLightmap (T *lmap, const int wdt, const int hgt)
 
 //==========================================================================
 //
-//  VRenderLevel::SingleLightFace
+//  VRenderLevelLightmap::SingleLightFace
 //
 //==========================================================================
-void VRenderLevel::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_t *surf, const vuint8 *facevis) {
+void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_t *surf, const vuint8 *facevis) {
   if (surf->count < 3) return; // wtf?!
 
   // check potential visibility
@@ -569,10 +569,10 @@ void VRenderLevel::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_
 
 //==========================================================================
 //
-//  VRenderLevel::LightFace
+//  VRenderLevelLightmap::LightFace
 //
 //==========================================================================
-void VRenderLevel::LightFace (surface_t *surf, subsector_t *leaf) {
+void VRenderLevelLightmap::LightFace (surface_t *surf, subsector_t *leaf) {
   if (surf->count < 3) return; // wtf?!
 
   LMapTraceInfo lmi;
@@ -765,12 +765,12 @@ this way, when level geometry changed, we can re-trace static lights too.
 
 //==========================================================================
 //
-//  VRenderLevel::AddDynamicLights
+//  VRenderLevelLightmap::AddDynamicLights
 //
 //  dlight frame already checked
 //
 //==========================================================================
-void VRenderLevel::AddDynamicLights (surface_t *surf) {
+void VRenderLevelLightmap::AddDynamicLights (surface_t *surf) {
   if (surf->count < 3) return; // wtf?!
 
   //float mids = 0, midt = 0;
@@ -912,10 +912,10 @@ void VRenderLevel::AddDynamicLights (surface_t *surf) {
 
 //==========================================================================
 //
-//  VRenderLevel::InvalidateSurfacesLMaps
+//  VRenderLevelLightmap::InvalidateSurfacesLMaps
 //
 //==========================================================================
-void VRenderLevel::InvalidateSurfacesLMaps (const TVec &org, float radius, surface_t *surf) {
+void VRenderLevelLightmap::InvalidateSurfacesLMaps (const TVec &org, float radius, surface_t *surf) {
   for (; surf; surf = surf->next) {
     if (surf->count < 3) continue; // just in case
     if (!surf->SphereTouches(org, radius)) continue;
@@ -940,10 +940,10 @@ void VRenderLevel::InvalidateSurfacesLMaps (const TVec &org, float radius, surfa
 
 //==========================================================================
 //
-//  VRenderLevel::InvalidateLineLMaps
+//  VRenderLevelLightmap::InvalidateLineLMaps
 //
 //==========================================================================
-void VRenderLevel::InvalidateLineLMaps (const TVec &org, float radius, drawseg_t *dseg) {
+void VRenderLevelLightmap::InvalidateLineLMaps (const TVec &org, float radius, drawseg_t *dseg) {
   const seg_t *seg = dseg->seg;
 
   if (!seg->linedef) return; // miniseg
@@ -965,10 +965,10 @@ void VRenderLevel::InvalidateLineLMaps (const TVec &org, float radius, drawseg_t
 
 //==========================================================================
 //
-//  VRenderLevel::InvalidateSubsectorLMaps
+//  VRenderLevelLightmap::InvalidateSubsectorLMaps
 //
 //==========================================================================
-void VRenderLevel::InvalidateSubsectorLMaps (const TVec &org, float radius, int num) {
+void VRenderLevelLightmap::InvalidateSubsectorLMaps (const TVec &org, float radius, int num) {
   subsector_t *sub = &Level->Subsectors[num];
   if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
   // polyobj
@@ -997,10 +997,10 @@ void VRenderLevel::InvalidateSubsectorLMaps (const TVec &org, float radius, int 
 
 //==========================================================================
 //
-//  VRenderLevel::InvalidateBSPNodeLMaps
+//  VRenderLevelLightmap::InvalidateBSPNodeLMaps
 //
 //==========================================================================
-void VRenderLevel::InvalidateBSPNodeLMaps (const TVec &org, float radius, int bspnum, const float *bbox) {
+void VRenderLevelLightmap::InvalidateBSPNodeLMaps (const TVec &org, float radius, int bspnum, const float *bbox) {
   if (bspnum == -1) {
     return InvalidateSubsectorLMaps(org, radius, 0);
   }
@@ -1043,10 +1043,10 @@ void VRenderLevel::InvalidateBSPNodeLMaps (const TVec &org, float radius, int bs
 
 //==========================================================================
 //
-//  VRenderLevel::InvalidateStaticLightmaps
+//  VRenderLevelLightmap::InvalidateStaticLightmaps
 //
 //==========================================================================
-void VRenderLevel::InvalidateStaticLightmaps (const TVec &org, float radius, bool relight) {
+void VRenderLevelLightmap::InvalidateStaticLightmaps (const TVec &org, float radius, bool relight) {
   //FIXME: make this faster!
   if (radius < 2.0f) return;
   invalidateRelight = relight;
@@ -1086,12 +1086,12 @@ static inline int xblight (int add, int sub) {
 
 //==========================================================================
 //
-//  VRenderLevel::BuildLightMap
+//  VRenderLevelLightmap::BuildLightMap
 //
 //  combine and scale multiple lightmaps into the 8.8 format in blocklights
 //
 //==========================================================================
-void VRenderLevel::BuildLightMap (surface_t *surf) {
+void VRenderLevelLightmap::BuildLightMap (surface_t *surf) {
   if (surf->count < 3) {
     surf->drawflags &= ~surface_t::DF_CALC_LMAP;
     return;
@@ -1220,10 +1220,10 @@ void VRenderLevel::BuildLightMap (surface_t *surf) {
 
 //==========================================================================
 //
-//  VRenderLevel::FlushCaches
+//  VRenderLevelLightmap::FlushCaches
 //
 //==========================================================================
-void VRenderLevel::FlushCaches () {
+void VRenderLevelLightmap::FlushCaches () {
   //memset(blockbuf, 0, sizeof(blockbuf));
   blockpool.clear();
   freeblocks = nullptr;
@@ -1242,10 +1242,10 @@ void VRenderLevel::FlushCaches () {
 
 //==========================================================================
 //
-//  VRenderLevel::FreeBlock
+//  VRenderLevelLightmap::FreeBlock
 //
 //==========================================================================
-surfcache_t *VRenderLevel::FreeBlock (surfcache_t *block, bool checkLines) {
+surfcache_t *VRenderLevelLightmap::FreeBlock (surfcache_t *block, bool checkLines) {
   surfcache_t *other;
 
   if (block->owner) {
@@ -1299,10 +1299,10 @@ surfcache_t *VRenderLevel::FreeBlock (surfcache_t *block, bool checkLines) {
 
 //==========================================================================
 //
-//  VRenderLevel::FreeSurfCache
+//  VRenderLevelLightmap::FreeSurfCache
 //
 //==========================================================================
-void VRenderLevel::FreeSurfCache (surfcache_t *&block) {
+void VRenderLevelLightmap::FreeSurfCache (surfcache_t *&block) {
   if (block) {
     FreeBlock(block, true);
     block = nullptr;
@@ -1312,10 +1312,10 @@ void VRenderLevel::FreeSurfCache (surfcache_t *&block) {
 
 //==========================================================================
 //
-//  VRenderLevel::FlushOldCaches
+//  VRenderLevelLightmap::FlushOldCaches
 //
 //==========================================================================
-void VRenderLevel::FlushOldCaches () {
+void VRenderLevelLightmap::FlushOldCaches () {
   for (unsigned i = 0; i < NUM_BLOCK_SURFS; ++i) {
     for (surfcache_t *blines = cacheblocks[i]; blines; blines = blines->bnext) {
       for (surfcache_t *block = blines; block; block = block->lnext) {
@@ -1335,10 +1335,10 @@ void VRenderLevel::FlushOldCaches () {
 
 //==========================================================================
 //
-//  VRenderLevel::GetFreeBlock
+//  VRenderLevelLightmap::GetFreeBlock
 //
 //==========================================================================
-surfcache_t *VRenderLevel::GetFreeBlock (bool forceAlloc) {
+surfcache_t *VRenderLevelLightmap::GetFreeBlock (bool forceAlloc) {
   surfcache_t *res = freeblocks;
   if (res) {
     freeblocks = res->chain;
@@ -1360,10 +1360,10 @@ surfcache_t *VRenderLevel::GetFreeBlock (bool forceAlloc) {
 
 //==========================================================================
 //
-//  VRenderLevel::GentlyFlushAllCaches
+//  VRenderLevelLightmap::GentlyFlushAllCaches
 //
 //==========================================================================
-void VRenderLevel::GentlyFlushAllCaches () {
+void VRenderLevelLightmap::GentlyFlushAllCaches () {
   //GCon->Logf(NAME_Warning, "nuking lightmap atlases...");
   light_reset_surface_cache = 0;
   for (unsigned i = 0; i < NUM_BLOCK_SURFS; ++i) {
@@ -1382,10 +1382,10 @@ void VRenderLevel::GentlyFlushAllCaches () {
 
 //==========================================================================
 //
-//  VRenderLevel::performBlockSplit
+//  VRenderLevelLightmap::performBlockSplit
 //
 //==========================================================================
-surfcache_t *VRenderLevel::performBlockSplit (int width, int height, surfcache_t *block, vuint32 bnum) {
+surfcache_t *VRenderLevelLightmap::performBlockSplit (int width, int height, surfcache_t *block, vuint32 bnum) {
   vassert(bnum < NUM_BLOCK_SURFS);
   vassert(block->height >= height);
   vassert(!block->lnext);
@@ -1438,12 +1438,12 @@ surfcache_t *VRenderLevel::performBlockSplit (int width, int height, surfcache_t
 
 //==========================================================================
 //
-//  VRenderLevel::AllocBlock
+//  VRenderLevelLightmap::AllocBlock
 //
 //==========================================================================
-surfcache_t *VRenderLevel::AllocBlock (int width, int height) {
+surfcache_t *VRenderLevelLightmap::AllocBlock (int width, int height) {
   #ifdef VV_DEBUG_LMAP_ALLOCATOR
-  GCon->Logf(NAME_Debug, "VRenderLevel::AllocBlock: w=%d; h=%d", width, height);
+  GCon->Logf(NAME_Debug, "VRenderLevelLightmap::AllocBlock: w=%d; h=%d", width, height);
   #endif
 
   surfcache_t *splitBlock = nullptr;
@@ -1517,10 +1517,10 @@ surfcache_t *VRenderLevel::AllocBlock (int width, int height) {
 
 //==========================================================================
 //
-//  VRenderLevel::CacheSurface
+//  VRenderLevelLightmap::CacheSurface
 //
 //==========================================================================
-bool VRenderLevel::CacheSurface (surface_t *surface) {
+bool VRenderLevelLightmap::CacheSurface (surface_t *surface) {
   // HACK: return `true` for invalid surfaces, so they won't be queued as normal ones
   if (!SurfPrepareForRender(surface)) return true;
 

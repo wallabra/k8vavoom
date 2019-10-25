@@ -777,7 +777,7 @@ public:
 
 // ////////////////////////////////////////////////////////////////////////// //
 // lightmapped renderer
-class VRenderLevel : public VRenderLevelShared {
+class VRenderLevelLightmap : public VRenderLevelShared {
 private:
   // light chain bookkeeping
   struct LCEntry {
@@ -919,7 +919,7 @@ protected:
   void RenderWorld (const refdef_t*, const VViewClipper*);
 
 public:
-  VRenderLevel (VLevel*);
+  VRenderLevelLightmap (VLevel*);
 
   virtual void PreRender () override;
 
@@ -1044,9 +1044,9 @@ extern VTextureTranslation IceTranslation;
 extern TArray<VTextureTranslation *> DecorateTranslations;
 extern TArray<VTextureTranslation *> BloodTranslations;
 
-extern vuint32 blocklightsr[VRenderLevel::LMapTraceInfo::GridSize*VRenderLevel::LMapTraceInfo::GridSize];
-extern vuint32 blocklightsg[VRenderLevel::LMapTraceInfo::GridSize*VRenderLevel::LMapTraceInfo::GridSize];
-extern vuint32 blocklightsb[VRenderLevel::LMapTraceInfo::GridSize*VRenderLevel::LMapTraceInfo::GridSize];
+extern vuint32 blocklightsr[VRenderLevelLightmap::LMapTraceInfo::GridSize*VRenderLevelLightmap::LMapTraceInfo::GridSize];
+extern vuint32 blocklightsg[VRenderLevelLightmap::LMapTraceInfo::GridSize*VRenderLevelLightmap::LMapTraceInfo::GridSize];
+extern vuint32 blocklightsb[VRenderLevelLightmap::LMapTraceInfo::GridSize*VRenderLevelLightmap::LMapTraceInfo::GridSize];
 
 
 #endif

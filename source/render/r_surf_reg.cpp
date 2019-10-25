@@ -97,10 +97,10 @@ static bool CalcSurfMinMax (surface_t *surf, float &outmins, float &outmaxs, con
 
 //==========================================================================
 //
-//  VRenderLevel::InitSurfs
+//  VRenderLevelLightmap::InitSurfs
 //
 //==========================================================================
-void VRenderLevel::InitSurfs (bool recalcStaticLightmaps, surface_t *ASurfs, texinfo_t *texinfo, const TPlane *plane, subsector_t *sub) {
+void VRenderLevelLightmap::InitSurfs (bool recalcStaticLightmaps, surface_t *ASurfs, texinfo_t *texinfo, const TPlane *plane, subsector_t *sub) {
   bool doPrecalc = (r_precalc_static_lights_override >= 0 ? !!r_precalc_static_lights_override : r_precalc_static_lights);
 
   for (surface_t *surf = ASurfs; surf; surf = surf->next) {
@@ -311,10 +311,10 @@ static bool SplitSurface (SClipInfo &clip, surface_t *surf, const TVec &axis) {
 
 //==========================================================================
 //
-//  VRenderLevel::SubdivideFace
+//  VRenderLevelLightmap::SubdivideFace
 //
 //==========================================================================
-surface_t *VRenderLevel::SubdivideFace (surface_t *surf, const TVec &axis, const TVec *nextaxis) {
+surface_t *VRenderLevelLightmap::SubdivideFace (surface_t *surf, const TVec &axis, const TVec *nextaxis) {
   subsector_t *sub = surf->subsector;
   seg_t *seg = surf->seg;
   vassert(sub);
@@ -371,10 +371,10 @@ surface_t *VRenderLevel::SubdivideFace (surface_t *surf, const TVec &axis, const
 
 //==========================================================================
 //
-//  VRenderLevel::SubdivideSeg
+//  VRenderLevelLightmap::SubdivideSeg
 //
 //==========================================================================
-surface_t *VRenderLevel::SubdivideSeg (surface_t *surf, const TVec &axis, const TVec *nextaxis, seg_t *seg) {
+surface_t *VRenderLevelLightmap::SubdivideSeg (surface_t *surf, const TVec &axis, const TVec *nextaxis, seg_t *seg) {
   subsector_t *sub = surf->subsector;
   vassert(surf->seg == seg);
   vassert(sub);
@@ -423,10 +423,10 @@ surface_t *VRenderLevel::SubdivideSeg (surface_t *surf, const TVec &axis, const 
 
 //==========================================================================
 //
-//  VRenderLevel::PreRender
+//  VRenderLevelLightmap::PreRender
 //
 //==========================================================================
-void VRenderLevel::PreRender () {
+void VRenderLevelLightmap::PreRender () {
   c_subdivides = 0;
   c_seg_div = 0;
   light_mem = 0;
