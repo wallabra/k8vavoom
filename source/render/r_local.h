@@ -395,6 +395,9 @@ protected:
   double prevChaseCamTime = -1.0;
   TVec prevChaseCamPos;
 
+  // used in lightmapped renderer, but should be here (sigh)
+  int light_reset_surface_cache;
+
 private:
   inline segpart_t *SurfCreatorGetPSPart () {
     if (pspartsLeft == 0) Sys_Error("internal level surface creation bug");
@@ -436,7 +439,7 @@ protected:
   }
 
   // clears render queues
-  void ClearQueues ();
+  virtual void ClearQueues ();
 
 protected:
   // entity must not be `nullptr`, and must have `SubSector` set
@@ -460,6 +463,22 @@ public:
   virtual void UpdateSubsectorFlatSurfaces (subsector_t *sub, bool dofloors, bool doceils, bool forced=false) override;
 
   virtual void PrecacheLevel () override;
+
+  virtual void advanceCacheFrame ();
+
+  // lightmap chain iterator (used in renderer)
+  // block number+1 or 0
+  virtual vuint32 GetLightChainHead () override;
+  // block number+1 or 0
+  virtual vuint32 GetLightChainNext (vuint32 bnum) override;
+
+  virtual bool IsLightBlockChanged (vuint32 bnum) override;
+  virtual bool IsLightAddBlockChanged (vuint32 bnum) override;
+  virtual void SetLightBlockChanged (vuint32 bnum, bool value) override;
+  virtual void SetLightAddBlockChanged (vuint32 bnum, bool value) override;
+  virtual rgba_t *GetLightBlock (vuint32 bnum) override;
+  virtual rgba_t *GetLightAddBlock (vuint32 bnum) override;
+  virtual surfcache_t *GetLightChainFirst (vuint32 bnum) override;
 
 protected:
   VRenderLevelShared (VLevel *ALevel);
@@ -757,10 +776,35 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// lightmapped renderer
 class VRenderLevel : public VRenderLevelShared {
+private:
+  // light chain bookkeeping
+  struct LCEntry {
+    vuint32 lastframe; // using `cacheframecount`
+    vuint32 next; // next used entry in this frame+1, or 0
+  };
+
 private:
   int c_subdivides;
   int c_seg_div;
+
+  // used in lightmap atlas manager
+  vuint32 cacheframecount;
+
+  // lightmaps
+  rgba_t light_block[NUM_BLOCK_SURFS][BLOCK_WIDTH*BLOCK_HEIGHT];
+  bool block_changed[NUM_BLOCK_SURFS];
+  surfcache_t *light_chain[NUM_BLOCK_SURFS];
+  LCEntry light_chain_used[NUM_BLOCK_SURFS];
+  vuint32 light_chain_head; // entry+1 (i.e. 0 means "none")
+
+  // specular lightmaps
+  rgba_t add_block[NUM_BLOCK_SURFS][BLOCK_WIDTH*BLOCK_HEIGHT];
+  bool add_changed[NUM_BLOCK_SURFS];
+  surfcache_t *add_chain[NUM_BLOCK_SURFS];
+  LCEntry add_chain_used[NUM_BLOCK_SURFS];
+  vuint32 add_chain_head; // entry+1 (i.e. 0 means "none")
 
   // surface (lightmap) cache
   surfcache_t *freeblocks;
@@ -812,6 +856,32 @@ protected:
   void InvalidateBSPNodeLMaps (const TVec &org, float radius, int bspnum, const float *bbox);
 
 protected:
+  virtual void advanceCacheFrame () override;
+
+  void initLightChain ();
+  void resetLightChain ();
+  void chainLightmap (surfcache_t *cache);
+  void chainAddmap (surfcache_t *cache);
+
+public:
+  // lightmap chain iterator (used in renderer)
+  // block number+1 or 0
+  virtual vuint32 GetLightChainHead () override;
+  // block number+1 or 0
+  virtual vuint32 GetLightChainNext (vuint32 bnum) override;
+
+  virtual bool IsLightBlockChanged (vuint32 bnum) override;
+  virtual bool IsLightAddBlockChanged (vuint32 bnum) override;
+  virtual void SetLightBlockChanged (vuint32 bnum, bool value) override;
+  virtual void SetLightAddBlockChanged (vuint32 bnum, bool value) override;
+  virtual rgba_t *GetLightBlock (vuint32 bnum) override;
+  virtual rgba_t *GetLightAddBlock (vuint32 bnum) override;
+  virtual surfcache_t *GetLightChainFirst (vuint32 bnum) override;
+
+protected:
+  // clears render queues
+  virtual void ClearQueues () override;
+
   virtual void InvalidateStaticLightmaps (const TVec &org, float radius, bool relight) override;
 
   // general

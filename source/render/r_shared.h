@@ -191,6 +191,29 @@ struct surface_t {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+struct surfcache_t {
+  // position in light surface
+  int s, t;
+  // size
+  int width, height;
+  // line list in block
+  surfcache_t *bprev;
+  surfcache_t *bnext;
+  // cache list in line
+  surfcache_t *lprev;
+  surfcache_t *lnext;
+  surfcache_t *chain; // list of drawable surfaces, or next free block in `blockbuf`
+  surfcache_t *addchain; // list of specular surfaces
+  vuint32 blocknum; // light surface index
+  surfcache_t **owner;
+  vuint32 Light; // checked for strobe flash
+  int dlight;
+  surface_t *surf;
+  vuint32 lastframe;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // camera texture
 class VCameraTexture : public VTexture {
 public:

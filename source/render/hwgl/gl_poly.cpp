@@ -505,12 +505,7 @@ void VOpenGLDrawer::WorldDrawing () {
     SurfLightmap.UploadChangedUniforms();
 
     lastTexinfo.resetLastUsed();
-    /*
-    for (int lb = 0; lb < NUM_BLOCK_SURFS; ++lb)
-    {
-      if (!RendLev->light_chain[lb]) continue;
-    */
-    for (vuint32 lcbn = RendLev->light_chain_head; lcbn; lcbn = RendLev->light_chain_used[lcbn-1].next) {
+    for (vuint32 lcbn = RendLev->GetLightChainHead(); lcbn; lcbn = RendLev->GetLightChainNext(lcbn)) {
       const vuint32 lb = lcbn-1;
       ++lmc;
 
@@ -524,10 +519,10 @@ void VOpenGLDrawer::WorldDrawing () {
         );
       }
 
-      if (RendLev->block_changed[lb]) {
-        RendLev->block_changed[lb] = false;
-        glTexImage2D(GL_TEXTURE_2D, 0, 4, BLOCK_WIDTH, BLOCK_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, RendLev->light_block[lb]);
-        RendLev->add_changed[lb] = true;
+      if (RendLev->IsLightAddBlockChanged(lb)) {
+        RendLev->SetLightBlockChanged(lb, false);
+        glTexImage2D(GL_TEXTURE_2D, 0, 4, BLOCK_WIDTH, BLOCK_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, RendLev->GetLightBlock(lb));
+        RendLev->SetLightAddBlockChanged(lb, true);
       }
 
       SelectTexture(2);
@@ -540,15 +535,15 @@ void VOpenGLDrawer::WorldDrawing () {
         );
       }
 
-      if (RendLev->add_changed[lb]) {
-        RendLev->add_changed[lb] = false;
-        glTexImage2D(GL_TEXTURE_2D, 0, 4, BLOCK_WIDTH, BLOCK_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, RendLev->add_block[lb]);
+      if (RendLev->IsLightAddBlockChanged(lb)) {
+        RendLev->SetLightAddBlockChanged(lb, false);
+        glTexImage2D(GL_TEXTURE_2D, 0, 4, BLOCK_WIDTH, BLOCK_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, RendLev->GetLightAddBlock(lb));
       }
 
       SelectTexture(0);
 
       if (!gl_sort_textures) {
-        for (surfcache_t *cache = RendLev->light_chain[lb]; cache; cache = cache->chain) {
+        for (surfcache_t *cache = RendLev->GetLightChainFirst(lb); cache; cache = cache->chain) {
           surface_t *surf = cache->surf;
           if (!surf->plvisible) continue; // viewer is in back side or on plane
           const texinfo_t *currTexinfo = surf->texinfo;
@@ -559,7 +554,7 @@ void VOpenGLDrawer::WorldDrawing () {
         }
       } else {
         surfListClear();
-        for (surfcache_t *cache = RendLev->light_chain[lb]; cache; cache = cache->chain) {
+        for (surfcache_t *cache = RendLev->GetLightChainFirst(lb); cache; cache = cache->chain) {
           surface_t *surf = cache->surf;
           if (!surf->plvisible) continue; // viewer is in back side or on plane
           surfListAppend(surf, cache);

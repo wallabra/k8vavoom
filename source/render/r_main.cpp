@@ -31,7 +31,6 @@
 
 //#define VAVOOM_DEBUG_PORTAL_POOL
 
-extern int light_reset_surface_cache; // in r_light_reg.cpp
 extern VCvarB r_draw_pobj;
 extern VCvarB r_advlight_opt_optimise_scissor;
 extern VCvarB dbg_clip_dump_added_ranges;
@@ -449,13 +448,12 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   , bspVisRadiusFrame(0)
   , pspart(nullptr)
   , pspartsLeft(0)
+  , light_reset_surface_cache(0)
 {
   currDLightFrame = 0;
   currQueueFrame = 0;
   currVisFrame = 0;
-  cacheframecount = 0;
 
-  initLightChain();
   PortalDepth = 0;
   //VPortal::ResetFrame();
 
@@ -684,12 +682,6 @@ void VRenderLevelShared::ClearQueues () {
   DrawSkyList.reset();
   DrawHorizonList.reset();
   IncQueueFrameCount();
-  // this is prolly not required for advanced renderer
-  if (!IsAdvancedRenderer()) {
-    //memset(light_chain, 0, sizeof(light_chain));
-    //memset(add_chain, 0, sizeof(add_chain));
-    resetLightChain();
-  }
 }
 
 
@@ -2150,6 +2142,107 @@ void VRenderLevelShared::BuildPlayerTranslations () {
 
     Tr->BuildPlayerTrans(It->TranslStart, It->TranslEnd, It->Color);
   }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::advanceCacheFrame
+//
+//==========================================================================
+void VRenderLevelShared::advanceCacheFrame () {
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::GetLightChainHead
+//
+//  block number+1 or 0
+//
+//==========================================================================
+vuint32 VRenderLevelShared::GetLightChainHead () {
+  return 0;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::GetLightChainNext
+//
+//  block number+1 or 0
+//
+//==========================================================================
+vuint32 VRenderLevelShared::GetLightChainNext (vuint32 bnum) {
+  return 0;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::IsLightBlockChanged
+//
+//==========================================================================
+bool VRenderLevelShared::IsLightBlockChanged (vuint32 bnum) {
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::IsLightAddBlockChanged
+//
+//==========================================================================
+bool VRenderLevelShared::IsLightAddBlockChanged (vuint32 bnum) {
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::SetLightBlockChanged
+//
+//==========================================================================
+void VRenderLevelShared::SetLightBlockChanged (vuint32 bnum, bool value) {
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::SetLightAddBlockChanged
+//
+//==========================================================================
+void VRenderLevelShared::SetLightAddBlockChanged (vuint32 bnum, bool value) {
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::GetLightBlock
+//
+//==========================================================================
+rgba_t *VRenderLevelShared::GetLightBlock (vuint32 bnum) {
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::GetLightAddBlock
+//
+//==========================================================================
+rgba_t *VRenderLevelShared::GetLightAddBlock (vuint32 bnum) {
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::GetLightChainFirst
+//
+//==========================================================================
+surfcache_t *VRenderLevelShared::GetLightChainFirst (vuint32 bnum) {
+  return nullptr;
 }
 
 

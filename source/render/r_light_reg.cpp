@@ -72,8 +72,6 @@ static vuint32 blocklightsbS[GridSize*GridSize];
 vuint8 light_remap[256];
 int light_mem = 0;
 
-int light_reset_surface_cache = 0;
-
 
 // ////////////////////////////////////////////////////////////////////////// //
  // *4 for extra filtering

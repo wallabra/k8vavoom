@@ -68,59 +68,15 @@ struct particle_t {
 };
 
 
-struct surfcache_t {
-  // position in light surface
-  int s, t;
-  // size
-  int width, height;
-  // line list in block
-  surfcache_t *bprev;
-  surfcache_t *bnext;
-  // cache list in line
-  surfcache_t *lprev;
-  surfcache_t *lnext;
-  surfcache_t *chain; // list of drawable surfaces, or next free block in `blockbuf`
-  surfcache_t *addchain; // list of specular surfaces
-  vuint32 blocknum; // light surface index
-  surfcache_t **owner;
-  vuint32 Light; // checked for strobe flash
-  int dlight;
-  surface_t *surf;
-  vuint32 lastframe;
-};
-
-
 // ////////////////////////////////////////////////////////////////////////// //
-class VRenderLevelDrawer : public VRenderLevelPublic {
-public:
-  // light chain bookkeeping
-  struct LCEntry {
-    vuint32 lastframe; // using `cacheframecount`
-    vuint32 next; // next used entry in this frame+1, or 0
-  };
+struct surfcache_t; // see "render/r_shared.h"
 
+class VRenderLevelDrawer : public VRenderLevelPublic {
 protected:
   bool mIsAdvancedRenderer;
 
 public:
   bool NeedsInfiniteFarClip;
-
-  // lightmaps
-  rgba_t light_block[NUM_BLOCK_SURFS][BLOCK_WIDTH*BLOCK_HEIGHT];
-  bool block_changed[NUM_BLOCK_SURFS];
-  surfcache_t *light_chain[NUM_BLOCK_SURFS];
-  LCEntry light_chain_used[NUM_BLOCK_SURFS];
-  vuint32 light_chain_head; // entry+1 (i.e. 0 means "none")
-
-  // specular lightmaps
-  rgba_t add_block[NUM_BLOCK_SURFS][BLOCK_WIDTH*BLOCK_HEIGHT];
-  bool add_changed[NUM_BLOCK_SURFS];
-  surfcache_t *add_chain[NUM_BLOCK_SURFS];
-  LCEntry add_chain_used[NUM_BLOCK_SURFS];
-  vuint32 add_chain_head; // entry+1 (i.e. 0 means "none")
-
-  // only regular renderer needs this
-  vuint32 cacheframecount;
 
   // render lists; various queue functions will put surfaces there
   // those arrays are never cleared, only reset
@@ -136,68 +92,20 @@ public:
   vuint32 currQueueFrame;
 
 public:
-  void initLightChain () {
-    memset(light_block, 0, sizeof(light_block));
-    //memset(block_changed, 0, sizeof(block_changed));
-    memset(light_chain, 0, sizeof(light_chain));
-    memset(add_block, 0, sizeof(add_block));
-    //memset(add_changed, 0, sizeof(add_changed));
-    memset(add_chain, 0, sizeof(add_chain));
-    memset(light_chain_used, 0, sizeof(light_chain_used));
-    memset(add_chain_used, 0, sizeof(add_chain_used));
-    light_chain_head = add_chain_head = 0;
-    // force updating of all lightmaps (why not?)
-    for (unsigned f = 0; f < NUM_BLOCK_SURFS; ++f) block_changed[f] = add_changed[f] = true;
-  }
+  // lightmap chain iterator (used in renderer)
+  // block number+1 or 0
+  virtual vuint32 GetLightChainHead () = 0;
+  // block number+1 or 0
+  virtual vuint32 GetLightChainNext (vuint32 bnum) = 0;
 
-  inline void advanceCacheFrame () {
-    if (++cacheframecount == 0) {
-      cacheframecount = 1;
-      light_chain_head = add_chain_head = 0;
-      memset(light_chain_used, 0, sizeof(light_chain_used));
-      memset(add_chain_used, 0, sizeof(add_chain_used));
-    }
-  }
+  virtual bool IsLightBlockChanged (vuint32 bnum) = 0;
+  virtual bool IsLightAddBlockChanged (vuint32 bnum) = 0;
+  virtual void SetLightBlockChanged (vuint32 bnum, bool value) = 0;
+  virtual void SetLightAddBlockChanged (vuint32 bnum, bool value) = 0;
+  virtual rgba_t *GetLightBlock (vuint32 bnum) = 0;
+  virtual rgba_t *GetLightAddBlock (vuint32 bnum) = 0;
+  virtual surfcache_t *GetLightChainFirst (vuint32 bnum) = 0;
 
-  inline void resetLightChain () {
-    memset(light_chain, 0, sizeof(light_chain));
-    memset(add_chain, 0, sizeof(add_chain));
-    light_chain_head = add_chain_head = 0;
-  }
-
-  inline void chainLightmap (surfcache_t *cache) {
-    vassert(cache);
-    const vuint32 bnum = cache->blocknum;
-    vassert(bnum < NUM_BLOCK_SURFS);
-    if (light_chain_used[bnum].lastframe != cacheframecount) {
-      // first time, put into list
-      light_chain_used[bnum].lastframe = cacheframecount;
-      light_chain_used[bnum].next = light_chain_head;
-      light_chain_head = bnum+1;
-      light_chain[bnum] = nullptr;
-    }
-    cache->chain = light_chain[bnum];
-    light_chain[bnum] = cache;
-    cache->lastframe = cacheframecount;
-  }
-
-  inline void chainAddmap (surfcache_t *cache) {
-    vassert(cache);
-    const vuint32 bnum = cache->blocknum;
-    vassert(bnum < NUM_BLOCK_SURFS);
-    if (add_chain_used[bnum].lastframe != cacheframecount) {
-      // first time, put into list
-      add_chain_used[bnum].lastframe = cacheframecount;
-      add_chain_used[bnum].next = add_chain_head;
-      add_chain_head = bnum+1;
-      add_chain[bnum] = nullptr;
-    }
-    cache->addchain = add_chain[bnum];
-    add_chain[bnum] = cache;
-    add_changed[bnum] = true;
-  }
-
-public:
   virtual void BuildLightMap (surface_t *) = 0;
 
   // defined only after `PushDlights()`
