@@ -78,7 +78,7 @@ void VRenderLevelLightmap::advanceCacheFrame () {
     //memset(add_chain_used, 0, sizeof(add_chain_used));
     blockpool.resetFrames();
   }
-  NukeLightmapCache();
+  //NukeLightmapCache();
 }
 
 

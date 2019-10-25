@@ -429,6 +429,20 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
 
 //==========================================================================
 //
+//  COMMAND dgl_ForceAtlasUpdate
+//
+//==========================================================================
+static bool forceAtlasUpdate = 0;
+COMMAND(dgl_ForceAtlasUpdate) {
+  if (!forceAtlasUpdate) {
+    forceAtlasUpdate = 1;
+    GCon->Logf("forcing lightmap atlas update.");
+  }
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::WorldDrawing
 //
 //  lightmapped rendering
@@ -505,14 +519,16 @@ void VOpenGLDrawer::WorldDrawing () {
     SurfLightmap.UploadChangedUniforms();
 
     lastTexinfo.resetLastUsed();
+    if (forceAtlasUpdate) {
+      forceAtlasUpdate = 0;
+      memset(atlases_updated, 0, sizeof(atlases_updated));
+    }
     //GCon->Logf(NAME_Debug, "GL: ************ (%u)", RendLev->GetLightChainHead());
     for (vuint32 lcbn = RendLev->GetLightChainHead(); lcbn; lcbn = RendLev->GetLightChainNext(lcbn)) {
       const vuint32 lb = lcbn-1;
       vassert(lb < NUM_BLOCK_SURFS);
       //++lmc;
       //GCon->Logf(NAME_Debug, "GL: *** lightmap atlas #%u (%u : %u)", lb, lmap_id[lb], addmap_id[lb]);
-      //RendLev->SetLightBlockChanged(lb, true);
-      //RendLev->SetLightAddBlockChanged(lb, true);
 
       SelectTexture(1);
       glBindTexture(GL_TEXTURE_2D, lmap_id[lb]);
@@ -524,8 +540,9 @@ void VOpenGLDrawer::WorldDrawing () {
         );
       }
 
-      if (RendLev->IsLightAddBlockChanged(lb)) {
+      if ((atlases_updated[lb]&0x01u) == 0 || RendLev->IsLightBlockChanged(lb)) {
         //GCon->Logf(NAME_Debug, "GL: updated lightmap atlas #%u", lb);
+        atlases_updated[lb] |= 0x01u;
         RendLev->SetLightBlockChanged(lb, false);
         glTexImage2D(GL_TEXTURE_2D, 0, 4, BLOCK_WIDTH, BLOCK_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, RendLev->GetLightBlock(lb));
         RendLev->SetLightAddBlockChanged(lb, true);
@@ -541,8 +558,9 @@ void VOpenGLDrawer::WorldDrawing () {
         );
       }
 
-      if (RendLev->IsLightAddBlockChanged(lb)) {
+      if ((atlases_updated[lb]&0x02u) == 0 || RendLev->IsLightAddBlockChanged(lb)) {
         //GCon->Logf(NAME_Debug, "GL: updated lightmap add atlas #%u", lb);
+        atlases_updated[lb] |= 0x02u;
         RendLev->SetLightAddBlockChanged(lb, false);
         glTexImage2D(GL_TEXTURE_2D, 0, 4, BLOCK_WIDTH, BLOCK_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, RendLev->GetLightAddBlock(lb));
       }

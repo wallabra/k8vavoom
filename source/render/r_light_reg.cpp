@@ -53,7 +53,7 @@ extern VCvarB dbg_adv_light_notrace_mark;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static bool r_light_add;
+static bool has_specular;
 
 enum { GridSize = VRenderLevelLightmap::LMapTraceInfo::GridSize };
 
@@ -1105,7 +1105,7 @@ void VRenderLevelLightmap::BuildLightMap (surface_t *surf) {
   }
 
   is_colored = false;
-  r_light_add = false;
+  has_specular = false;
   int smax = (surf->extents[0]>>4)+1;
   int tmax = (surf->extents[1]>>4)+1;
   vassert(smax > 0);
@@ -1176,7 +1176,7 @@ void VRenderLevelLightmap::BuildLightMap (surface_t *surf) {
       t = int(r_specular*t);
       if (t > 0xffff) t = 0xffff;
       blockaddlightsr[i] = t;
-      r_light_add = true;
+      has_specular = true;
     }
 
     t = blocklightsg[i]-blocklightsgS[i];
@@ -1186,7 +1186,7 @@ void VRenderLevelLightmap::BuildLightMap (surface_t *surf) {
       t = int(r_specular*t);
       if (t > 0xffff) t = 0xffff;
       blockaddlightsg[i] = t;
-      r_light_add = true;
+      has_specular = true;
     }
 
     t = blocklightsb[i]-blocklightsbS[i];
@@ -1196,7 +1196,7 @@ void VRenderLevelLightmap::BuildLightMap (surface_t *surf) {
       t = int(r_specular*t);
       if (t > 0xffff) t = 0xffff;
       blockaddlightsb[i] = t;
-      r_light_add = true;
+      has_specular = true;
     }
   }
 
@@ -1225,7 +1225,7 @@ void VRenderLevelLightmap::BuildLightMap (surface_t *surf) {
 //==========================================================================
 static inline void ClearSurfCachePointers (surface_t *s) {
   for (; s; s = s->next) {
-    if (s->CacheSurf) GCon->Logf(NAME_Debug, "cleared surface cache pointer for surface %p", s);
+    //if (s->CacheSurf) GCon->Logf(NAME_Debug, "cleared surface cache pointer for surface %p", s);
     s->CacheSurf = nullptr;
   }
 }
@@ -1644,10 +1644,11 @@ bool VRenderLevelLightmap::CacheSurface (surface_t *surface) {
       lb.g = clampToByte(blockaddlightsg[j*smax+i]>>8);
       lb.b = clampToByte(blockaddlightsb[j*smax+i]>>8);
       lb.a = 255;
+      //lb.r = lb.g = lb.b = 0;
     }
   }
 
-  if (r_light_add) {
+  if (has_specular) {
     //chainAddmap(cache);
     add_changed[bnum] = true;
   }

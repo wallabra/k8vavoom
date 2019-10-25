@@ -40,6 +40,8 @@ void VOpenGLDrawer::GenerateLightmapAtlasTextures () {
   glGenTextures(NUM_BLOCK_SURFS, lmap_id);
   glGenTextures(NUM_BLOCK_SURFS, addmap_id);
   atlasesGenerated = true;
+  memset(atlases_updated, 0, sizeof(atlases_updated));
+  //GCon->Log(NAME_Debug, "******** VOpenGLDrawer::GenerateLightmapAtlasTextures ********");
 }
 
 
@@ -53,6 +55,10 @@ void VOpenGLDrawer::DeleteLightmapAtlases () {
     glDeleteTextures(NUM_BLOCK_SURFS, lmap_id);
     glDeleteTextures(NUM_BLOCK_SURFS, addmap_id);
     atlasesGenerated = false;
+    memset(lmap_id, 0, sizeof(lmap_id));
+    memset(addmap_id, 0, sizeof(addmap_id));
+    memset(atlases_updated, 0, sizeof(atlases_updated));
+    //GCon->Log(NAME_Debug, "******** VOpenGLDrawer::DeleteLightmapAtlases ********");
   }
 }
 

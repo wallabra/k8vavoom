@@ -883,6 +883,7 @@ protected:
   GLuint lmap_id[NUM_BLOCK_SURFS];
   GLuint addmap_id[NUM_BLOCK_SURFS];
   bool atlasesGenerated;
+  vuint8 atlases_updated[NUM_BLOCK_SURFS];
 
   GLenum ClampToEdge;
   GLfloat max_anisotropy; // 1.0: off
