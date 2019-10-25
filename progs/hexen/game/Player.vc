@@ -484,6 +484,8 @@ override void KilledActor(EntityEx Victim)
 override void PlayerMorphed(EntityEx OldMO)
 {
   PClass = HexenDefs::PCLASS_PIG;
+  // so we can select weapons
+  if (PlayerPawn(MO)) PlayerPawn(MO).InitializeWeaponSlots();
 }
 
 defaultproperties

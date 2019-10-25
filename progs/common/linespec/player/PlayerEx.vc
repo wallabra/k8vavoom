@@ -5737,6 +5737,19 @@ int GetSigilPieces () {
 //
 //==========================================================================
 void PlayerMorphed (EntityEx OldMO) {
+  // so we can select weapons
+  if (PlayerPawn(MO)) PlayerPawn(MO).InitializeWeaponSlots();
+}
+
+
+//==========================================================================
+//
+//  PlayerUnmorphed
+//
+//==========================================================================
+void PlayerUnmorphed () {
+  // so we can select weapons
+  if (PlayerPawn(MO)) PlayerPawn(MO).InitializeWeaponSlots();
 }
 
 
@@ -5873,15 +5886,6 @@ void PlayerImpulse () {
     Impulse = 0;
     return;
   }
-}
-
-
-//==========================================================================
-//
-//  PlayerUnmorphed
-//
-//==========================================================================
-void PlayerUnmorphed () {
 }
 
 
