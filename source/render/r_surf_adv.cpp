@@ -29,10 +29,10 @@
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::InitSurfs
+//  VRenderLevelShadowVolume::InitSurfs
 //
 //==========================================================================
-void VAdvancedRenderLevel::InitSurfs (bool recalcStaticLightmaps, surface_t *surfs, texinfo_t *texinfo, const TPlane *plane, subsector_t *sub) {
+void VRenderLevelShadowVolume::InitSurfs (bool recalcStaticLightmaps, surface_t *surfs, texinfo_t *texinfo, const TPlane *plane, subsector_t *sub) {
   if (!texinfo && !plane) return;
   if (texinfo && plane) {
     for (; surfs; surfs = surfs->next) {
@@ -59,10 +59,10 @@ void VAdvancedRenderLevel::InitSurfs (bool recalcStaticLightmaps, surface_t *sur
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::SubdivideFace
+//  VRenderLevelShadowVolume::SubdivideFace
 //
 //==========================================================================
-surface_t *VAdvancedRenderLevel::SubdivideFace (surface_t *f, const TVec&, const TVec *) {
+surface_t *VRenderLevelShadowVolume::SubdivideFace (surface_t *f, const TVec&, const TVec *) {
   // advanced renderer can draw whole surface
   return f;
 }
@@ -70,10 +70,10 @@ surface_t *VAdvancedRenderLevel::SubdivideFace (surface_t *f, const TVec&, const
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::SubdivideSeg
+//  VRenderLevelShadowVolume::SubdivideSeg
 //
 //==========================================================================
-surface_t *VAdvancedRenderLevel::SubdivideSeg (surface_t *surf, const TVec &, const TVec *, seg_t *) {
+surface_t *VRenderLevelShadowVolume::SubdivideSeg (surface_t *surf, const TVec &, const TVec *, seg_t *) {
   // advanced renderer can draw whole surface
   return surf;
 }
@@ -81,9 +81,9 @@ surface_t *VAdvancedRenderLevel::SubdivideSeg (surface_t *surf, const TVec &, co
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::PreRender
+//  VRenderLevelShadowVolume::PreRender
 //
 //==========================================================================
-void VAdvancedRenderLevel::PreRender () {
+void VRenderLevelShadowVolume::PreRender () {
   CreateWorldSurfaces();
 }

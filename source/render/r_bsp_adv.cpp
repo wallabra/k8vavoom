@@ -33,20 +33,20 @@
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::QueueWorldSurface
+//  VRenderLevelShadowVolume::QueueWorldSurface
 //
 //==========================================================================
-void VAdvancedRenderLevel::QueueWorldSurface (surface_t *surf) {
+void VRenderLevelShadowVolume::QueueWorldSurface (surface_t *surf) {
   QueueSimpleSurf(surf);
 }
 
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::RenderWorld
+//  VRenderLevelShadowVolume::RenderWorld
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderWorld (const refdef_t *rd, const VViewClipper *Range) {
+void VRenderLevelShadowVolume::RenderWorld (const refdef_t *rd, const VViewClipper *Range) {
   PrepareWorldRender(rd, Range);
   RenderBspWorld(rd, Range);
   Drawer->DrawWorldAmbientPass();

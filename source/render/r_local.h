@@ -928,7 +928,7 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-class VAdvancedRenderLevel : public VRenderLevelShared {
+class VRenderLevelShadowVolume : public VRenderLevelShared {
 private:
   vuint32 CurrLightColor;
   // built in `BuildMobjsInCurrLight()`
@@ -1004,8 +1004,8 @@ protected:
   }
 
 public:
-  VAdvancedRenderLevel (VLevel *);
-  ~VAdvancedRenderLevel ();
+  VRenderLevelShadowVolume (VLevel *);
+  ~VRenderLevelShadowVolume ();
 
   virtual void PreRender () override;
 

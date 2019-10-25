@@ -401,7 +401,7 @@ void R_Start (VLevel *ALevel) {
   if (r_level_renderer <= 1) {
     ALevel->RenderData = new VRenderLevelLightmap(ALevel);
   } else {
-    ALevel->RenderData = new VAdvancedRenderLevel(ALevel);
+    ALevel->RenderData = new VRenderLevelShadowVolume(ALevel);
   }
 }
 

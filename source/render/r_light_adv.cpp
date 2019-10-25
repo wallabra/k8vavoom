@@ -127,10 +127,10 @@ VCvarB r_advlight_opt_optimise_scissor("r_advlight_opt_optimise_scissor", true, 
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::RefilterStaticLights
+//  VRenderLevelShadowVolume::RefilterStaticLights
 //
 //==========================================================================
-void VAdvancedRenderLevel::RefilterStaticLights () {
+void VRenderLevelShadowVolume::RefilterStaticLights () {
   staticLightsFiltered = true;
 
   float coeff = r_light_filter_static_coeff;
@@ -198,10 +198,10 @@ void VAdvancedRenderLevel::RefilterStaticLights () {
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::LightPointAmbient
+//  VRenderLevelShadowVolume::LightPointAmbient
 //
 //==========================================================================
-vuint32 VAdvancedRenderLevel::LightPointAmbient (const TVec &p, float radius, const subsector_t *psub) {
+vuint32 VRenderLevelShadowVolume::LightPointAmbient (const TVec &p, float radius, const subsector_t *psub) {
   if (FixedLight) return FixedLight|(FixedLight<<8)|(FixedLight<<16)|(FixedLight<<24);
 
   const subsector_t *sub = (psub ? psub : Level->PointInSubsector(p));
@@ -218,19 +218,19 @@ vuint32 VAdvancedRenderLevel::LightPointAmbient (const TVec &p, float radius, co
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::BuildLightMap
+//  VRenderLevelShadowVolume::BuildLightMap
 //
 //==========================================================================
-void VAdvancedRenderLevel::BuildLightMap (surface_t *surf) {
+void VRenderLevelShadowVolume::BuildLightMap (surface_t *surf) {
 }
 
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::DrawShadowSurfaces
+//  VRenderLevelShadowVolume::DrawShadowSurfaces
 //
 //==========================================================================
-void VAdvancedRenderLevel::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *texinfo,
+void VRenderLevelShadowVolume::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *texinfo,
                                                VEntity *SkyBox, bool CheckSkyBoxAlways, int LightCanCross)
 {
   if (!InSurfs) return;
@@ -298,12 +298,12 @@ void VAdvancedRenderLevel::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *te
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::RenderShadowLine
+//  VRenderLevelShadowVolume::RenderShadowLine
 //
 //  Clips the given segment and adds any visible pieces to the line list.
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderShadowLine (subsector_t *sub, sec_region_t *secregion, drawseg_t *dseg) {
+void VRenderLevelShadowVolume::RenderShadowLine (subsector_t *sub, sec_region_t *secregion, drawseg_t *dseg) {
   seg_t *seg = dseg->seg;
   if (!seg->linedef) return; // miniseg
 
@@ -361,12 +361,12 @@ void VAdvancedRenderLevel::RenderShadowLine (subsector_t *sub, sec_region_t *sec
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::RenderShadowSecSurface
+//  VRenderLevelShadowVolume::RenderShadowSecSurface
 //
 //  this is used for floor and ceilings
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderShadowSecSurface (sec_surface_t *ssurf, VEntity *SkyBox) {
+void VRenderLevelShadowVolume::RenderShadowSecSurface (sec_surface_t *ssurf, VEntity *SkyBox) {
   //const sec_plane_t &plane = *ssurf->secplane;
   if (!ssurf->esecplane.splane->pic) return;
 
@@ -385,14 +385,14 @@ void VAdvancedRenderLevel::RenderShadowSecSurface (sec_surface_t *ssurf, VEntity
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::AddPolyObjToLightClipper
+//  VRenderLevelShadowVolume::AddPolyObjToLightClipper
 //
 //  we have to do this separately, because for now we have to add
 //  invisible segs to clipper too
 //  i don't yet know why
 //
 //==========================================================================
-void VAdvancedRenderLevel::AddPolyObjToLightClipper (VViewClipper &clip, subsector_t *sub, bool asShadow) {
+void VRenderLevelShadowVolume::AddPolyObjToLightClipper (VViewClipper &clip, subsector_t *sub, bool asShadow) {
   if (sub && sub->HasPObjs() && r_draw_pobj && clip_use_1d_clipper) {
     for (auto &&it : sub->PObjFirst()) {
       polyobj_t *pobj = it.value();
@@ -410,10 +410,10 @@ void VAdvancedRenderLevel::AddPolyObjToLightClipper (VViewClipper &clip, subsect
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::RenderShadowPolyObj
+//  VRenderLevelShadowVolume::RenderShadowPolyObj
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderShadowPolyObj (subsector_t *sub) {
+void VRenderLevelShadowVolume::RenderShadowPolyObj (subsector_t *sub) {
   if (sub && sub->HasPObjs() && r_draw_pobj) {
     subregion_t *region = sub->regions;
     sec_region_t *secregion = region->secregion;
@@ -430,13 +430,13 @@ void VAdvancedRenderLevel::RenderShadowPolyObj (subsector_t *sub) {
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::RenderShadowSubRegion
+//  VRenderLevelShadowVolume::RenderShadowSubRegion
 //
 //  Determine floor/ceiling planes.
 //  Draw one or more line segments.
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderShadowSubRegion (subsector_t *sub, subregion_t *region) {
+void VRenderLevelShadowVolume::RenderShadowSubRegion (subsector_t *sub, subregion_t *region) {
 
   const bool nextFirst = NeedToRenderNextSubFirst(region);
   if (nextFirst) RenderShadowSubRegion(sub, region->next);
@@ -465,10 +465,10 @@ void VAdvancedRenderLevel::RenderShadowSubRegion (subsector_t *sub, subregion_t 
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::RenderShadowSubsector
+//  VRenderLevelShadowVolume::RenderShadowSubsector
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderShadowSubsector (int num) {
+void VRenderLevelShadowVolume::RenderShadowSubsector (int num) {
   subsector_t *sub = &Level->Subsectors[num];
 
   // don't do this check for shadows
@@ -517,13 +517,13 @@ void VAdvancedRenderLevel::RenderShadowSubsector (int num) {
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::RenderShadowBSPNode
+//  VRenderLevelShadowVolume::RenderShadowBSPNode
 //
 //  Renders all subsectors below a given node, traversing subtree
 //  recursively. Just call with BSP root.
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderShadowBSPNode (int bspnum, const float *bbox, bool LimitLights) {
+void VRenderLevelShadowVolume::RenderShadowBSPNode (int bspnum, const float *bbox, bool LimitLights) {
   if (LimitLights) {
     if (r_max_shadow_segs_all >= 0 && AllShadowsNumber > r_max_shadow_segs_all) return;
     if (r_max_shadow_segs_one >= 0 && CurrShadowsNumber > r_max_shadow_segs_one) return;
@@ -569,10 +569,10 @@ void VAdvancedRenderLevel::RenderShadowBSPNode (int bspnum, const float *bbox, b
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::DrawLightSurfaces
+//  VRenderLevelShadowVolume::DrawLightSurfaces
 //
 //==========================================================================
-void VAdvancedRenderLevel::DrawLightSurfaces (surface_t *InSurfs, texinfo_t *texinfo,
+void VRenderLevelShadowVolume::DrawLightSurfaces (surface_t *InSurfs, texinfo_t *texinfo,
                                               VEntity *SkyBox, bool CheckSkyBoxAlways, int LightCanCross)
 {
   if (!InSurfs) return;
@@ -600,12 +600,12 @@ void VAdvancedRenderLevel::DrawLightSurfaces (surface_t *InSurfs, texinfo_t *tex
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::RenderLightLine
+//  VRenderLevelShadowVolume::RenderLightLine
 //
 //  clips the given segment and adds any visible pieces to the line list
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderLightLine (sec_region_t *secregion, drawseg_t *dseg) {
+void VRenderLevelShadowVolume::RenderLightLine (sec_region_t *secregion, drawseg_t *dseg) {
   const seg_t *seg = dseg->seg;
 
   if (!seg->linedef) return; // miniseg
@@ -650,12 +650,12 @@ void VAdvancedRenderLevel::RenderLightLine (sec_region_t *secregion, drawseg_t *
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::RenderLightSecSurface
+//  VRenderLevelShadowVolume::RenderLightSecSurface
 //
 //  this is used for floor and ceilings
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderLightSecSurface (sec_surface_t *ssurf, VEntity *SkyBox) {
+void VRenderLevelShadowVolume::RenderLightSecSurface (sec_surface_t *ssurf, VEntity *SkyBox) {
   //const sec_plane_t &plane = *ssurf->secplane;
   if (!ssurf->esecplane.splane->pic) return;
 
@@ -670,10 +670,10 @@ void VAdvancedRenderLevel::RenderLightSecSurface (sec_surface_t *ssurf, VEntity 
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::RenderLightPolyObj
+//  VRenderLevelShadowVolume::RenderLightPolyObj
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderLightPolyObj (subsector_t *sub) {
+void VRenderLevelShadowVolume::RenderLightPolyObj (subsector_t *sub) {
   if (sub && sub->HasPObjs() && r_draw_pobj) {
     subregion_t *region = sub->regions;
     sec_region_t *secregion = region->secregion;
@@ -689,13 +689,13 @@ void VAdvancedRenderLevel::RenderLightPolyObj (subsector_t *sub) {
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::RenderLightSubRegion
+//  VRenderLevelShadowVolume::RenderLightSubRegion
 //
 //  Determine floor/ceiling planes.
 //  Draw one or more line segments.
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderLightSubRegion (subsector_t *sub, subregion_t *region) {
+void VRenderLevelShadowVolume::RenderLightSubRegion (subsector_t *sub, subregion_t *region) {
   const bool nextFirst = NeedToRenderNextSubFirst(region);
   if (nextFirst) RenderLightSubRegion(sub, region->next);
 
@@ -723,10 +723,10 @@ void VAdvancedRenderLevel::RenderLightSubRegion (subsector_t *sub, subregion_t *
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::RenderLightSubsector
+//  VRenderLevelShadowVolume::RenderLightSubsector
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderLightSubsector (int num) {
+void VRenderLevelShadowVolume::RenderLightSubsector (int num) {
   vassert(num >= 0 && num < Level->NumSubsectors);
   subsector_t *sub = &Level->Subsectors[num];
 
@@ -758,13 +758,13 @@ void VAdvancedRenderLevel::RenderLightSubsector (int num) {
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::RenderLightBSPNode
+//  VRenderLevelShadowVolume::RenderLightBSPNode
 //
 //  Renders all subsectors below a given node, traversing subtree
 //  recursively. Just call with BSP root.
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderLightBSPNode (int bspnum, const float *bbox, bool LimitLights) {
+void VRenderLevelShadowVolume::RenderLightBSPNode (int bspnum, const float *bbox, bool LimitLights) {
   if (LimitLights) {
      if (r_max_light_segs_all >= 0 && AllLightsNumber > r_max_light_segs_all) return;
      if (r_max_light_segs_one >= 0 && CurrLightsNumber > r_max_light_segs_one) return;
@@ -811,10 +811,10 @@ void VAdvancedRenderLevel::RenderLightBSPNode (int bspnum, const float *bbox, bo
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::RenderLightShadows
+//  VRenderLevelShadowVolume::RenderLightShadows
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderLightShadows (VEntity *ent, vuint32 dlflags, const refdef_t *RD,
+void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags, const refdef_t *RD,
                                                const VViewClipper *Range,
                                                TVec &Pos, float Radius, float LightMin, vuint32 Color,
                                                bool LimitLights, TVec coneDir, float coneAngle)

@@ -207,10 +207,10 @@ void VRenderLevelShared::BuildVisibleObjectsList () {
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::BuildMobjsInCurrLight
+//  VRenderLevelShadowVolume::BuildMobjsInCurrLight
 //
 //==========================================================================
-void VAdvancedRenderLevel::BuildMobjsInCurrLight (bool doShadows) {
+void VRenderLevelShadowVolume::BuildMobjsInCurrLight (bool doShadows) {
   mobjsInCurrLight.reset();
   if (!r_draw_mobjs || !r_models) return;
   // build new list
@@ -273,10 +273,10 @@ void VAdvancedRenderLevel::BuildMobjsInCurrLight (bool doShadows) {
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::RenderMobjsShadow
+//  VRenderLevelShadowVolume::RenderMobjsShadow
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderMobjsShadow (VEntity *owner, vuint32 dlflags) {
+void VRenderLevelShadowVolume::RenderMobjsShadow (VEntity *owner, vuint32 dlflags) {
   if (!r_draw_mobjs || !r_models || !r_model_shadows) return;
   if (!r_dbg_advthing_draw_shadow) return;
   int RendStyle;
@@ -297,10 +297,10 @@ void VAdvancedRenderLevel::RenderMobjsShadow (VEntity *owner, vuint32 dlflags) {
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::RenderMobjsLight
+//  VRenderLevelShadowVolume::RenderMobjsLight
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderMobjsLight () {
+void VRenderLevelShadowVolume::RenderMobjsLight () {
   if (!r_draw_mobjs || !r_models || !r_model_light) return;
   if (!r_dbg_advthing_draw_light) return;
   int RendStyle;
@@ -333,10 +333,10 @@ void VAdvancedRenderLevel::RenderMobjsLight () {
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::RenderMobjsAmbient
+//  VRenderLevelShadowVolume::RenderMobjsAmbient
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderMobjsAmbient () {
+void VRenderLevelShadowVolume::RenderMobjsAmbient () {
   if (!r_draw_mobjs || !r_models) return;
   if (!r_dbg_advthing_draw_ambient) return;
   const bool oldLight = (!r_model_light || !r_model_shadows);
@@ -378,10 +378,10 @@ void VAdvancedRenderLevel::RenderMobjsAmbient () {
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::RenderMobjsTextures
+//  VRenderLevelShadowVolume::RenderMobjsTextures
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderMobjsTextures () {
+void VRenderLevelShadowVolume::RenderMobjsTextures () {
   if (!r_draw_mobjs || !r_models) return;
   if (!r_dbg_advthing_draw_texture) return;
   const bool doDump = r_dbg_advthing_dump_textures.asBool();
@@ -402,10 +402,10 @@ void VAdvancedRenderLevel::RenderMobjsTextures () {
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::RenderMobjsFog
+//  VRenderLevelShadowVolume::RenderMobjsFog
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderMobjsFog () {
+void VRenderLevelShadowVolume::RenderMobjsFog () {
   if (!r_draw_mobjs || !r_models) return;
   if (!r_dbg_advthing_draw_fog) return;
   int RendStyle;

@@ -78,10 +78,10 @@ extern "C" {
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::VAdvancedRenderLevel
+//  VRenderLevelShadowVolume::VRenderLevelShadowVolume
 //
 //==========================================================================
-VAdvancedRenderLevel::VAdvancedRenderLevel (VLevel *ALevel)
+VRenderLevelShadowVolume::VRenderLevelShadowVolume (VLevel *ALevel)
   : VRenderLevelShared(ALevel)
 {
   NeedsInfiniteFarClip = true;
@@ -91,19 +91,19 @@ VAdvancedRenderLevel::VAdvancedRenderLevel (VLevel *ALevel)
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::~VAdvancedRenderLevel
+//  VRenderLevelShadowVolume::~VRenderLevelShadowVolume
 //
 //==========================================================================
-VAdvancedRenderLevel::~VAdvancedRenderLevel () {
+VRenderLevelShadowVolume::~VRenderLevelShadowVolume () {
 }
 
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::RenderTranslucentWallsDecals
+//  VRenderLevelShadowVolume::RenderTranslucentWallsDecals
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderTranslucentWallsDecals () {
+void VRenderLevelShadowVolume::RenderTranslucentWallsDecals () {
   if (traspFirst >= traspUsed) return;
   trans_sprite_t *twi = &trans_sprites[traspFirst];
   for (int f = traspFirst; f < traspUsed; ++f, ++twi) {
@@ -117,10 +117,10 @@ void VAdvancedRenderLevel::RenderTranslucentWallsDecals () {
 
 //==========================================================================
 //
-//  VAdvancedRenderLevel::RenderScene
+//  VRenderLevelShadowVolume::RenderScene
 //
 //==========================================================================
-void VAdvancedRenderLevel::RenderScene (const refdef_t *RD, const VViewClipper *Range) {
+void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipper *Range) {
   if (!Drawer->SupportsAdvancedRendering()) Host_Error("Advanced rendering not supported by graphics card");
 
   r_viewleaf = Level->PointInSubsector(vieworg);
