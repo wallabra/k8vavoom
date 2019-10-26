@@ -99,4 +99,5 @@ public:
   void expect (const VStr &s);
   int expectInt ();
   bool eat (const VStr &s);
+  bool check (const VStr &s); // same as eat, but doesn't eat
 };

@@ -323,6 +323,22 @@ bool SemParser::eat (const VStr &s) {
 
 //==========================================================================
 //
+//  SemParser::check
+//
+//  same as eat, but doesn't eat
+//
+//==========================================================================
+bool SemParser::check (const VStr &s) {
+  auto pos = savePos();
+  skipToken();
+  bool res = token.strEqu(s);
+  restorePos(pos);
+  return res;
+}
+
+
+//==========================================================================
+//
 //  SemParser::expectInt
 //
 //==========================================================================
@@ -352,6 +368,8 @@ int SemParser::expectInt () {
 
     if (token == "NUM_SPECIALS") return 666;
     if (token == "NUMTOTALBOTS") return 666;
+
+    if (token == "ISAAC_RAND_SIZE") return 256;
 
     restorePos(pos);
     Sys_Error("%s:%d: integer expected", *srcfile, getCurrLine());

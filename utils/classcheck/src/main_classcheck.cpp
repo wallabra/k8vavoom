@@ -629,6 +629,8 @@ bool ignoreClass (const VStr &name, VName parent) {
     "StLightInfo",
     //"FAmbientSound",
     "MapInfoCommand",
+    "VCacheBlockPoolEntry",
+    "VCacheBlockPool",
     nullptr,
   };
   for (const char *const *np = ignoreCN; *np; ++np) {
@@ -643,13 +645,19 @@ bool ignoreClass (const VStr &name, VName parent) {
 //  parseShitppClassStruct
 //
 //==========================================================================
-void parseShitppClassStruct (SemParser *par, bool isClass) {
+void parseShitppClassStruct (SemParser *par, bool isClass, bool isTypedefStruct=false) {
   while (par->eat("__attribute__")) {
     par->expect("(");
     skipParens(par);
   }
-  VStr name = par->expectId();
-  if (par->eat(";")) return;
+  VStr name;
+
+  if (!isTypedefStruct) {
+    name = par->expectId();
+    if (par->eat(";")) return;
+  } else {
+    if (!par->check("{")) par->expectId();
+  }
 
   if (name == "VMiAStarGraphIntr" || name == "VLanguage") {
     while (!par->eat("{")) par->skipToken();
@@ -765,6 +773,9 @@ void parseShitppClassStruct (SemParser *par, bool isClass) {
     }
     par->expect(";");
   }
+  if (isTypedefStruct) {
+    name = par->expectId();
+  }
   par->eat(";");
   // register type
   //GLog.Logf(NAME_Debug, "shitpp: %s", *tp->toString());
@@ -806,6 +817,14 @@ void parseShitppSource (const VStr &filename) {
     else if (par->token.strEqu("#")) skipPreprocessor(par);
     else if (par->token.strEqu("{")) skipBrackets(par);
     else if (par->token.strEqu("static")) parseShitppSkipTemplateShit(par);
+    else if (par->token.strEqu("typedef")) {
+      if (par->eat("struct")) {
+        //GLog.Logf("line #%d: <%s>", par->getTokenLine(), *par->token);
+        parseShitppClassStruct(par, false, true);
+      } else {
+        parseShitppSkipTemplateShit(par);
+      }
+    }
     //GLog.Logf("line #%d: <%s>", par->getTokenLine(), *par->token);
   }
   delete par;
