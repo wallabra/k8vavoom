@@ -207,6 +207,7 @@ static VCvarB am_show_stats("am_show_stats", false, "Show stats on automap?", CV
 static VCvarB am_show_map_name("am_show_map_name", false, "Show internal map name on automap?", CVAR_Archive);
 
 static VCvarI am_cheating("am_cheating", "0", "Oops! Automap cheats!", CVAR_Cheat);
+static VCvarB am_show_keys_cheat("am_show_keys_cheat", false, "Show keys on automap.", CVAR_Cheat);
 static VCvarB am_show_secrets("am_show_secrets", false, "Show secret walls on automap!", 0);
 static VCvarB am_show_minisegs("am_show_minisegs", false, "Show minisegs on automap (cheating should be turned on).", 0);
 static VCvarB am_show_static_lights("am_show_static_lights", false, "Show static lights on automap (cheating should be turned on).", 0);
@@ -225,10 +226,10 @@ static VCvarB am_draw_texture_lines("am_draw_texture_lines", true, "Draw automap
 static VCvarB am_draw_texture_with_bsp("am_draw_texture_with_bsp", true, "Draw textured automap using BSP tree?", CVAR_Archive);
 
 
-
 static VCvarB am_default_whole("am_default_whole", true, "Default scale is \"show all\"?", CVAR_Archive);
 
 static VCvarB am_draw_keys("am_draw_keys", true, "Draw keys on automap?", CVAR_Archive);
+static VCvarF am_keys_blink_time("am_keys_blink_time", "0.4", "Keys blinking time in seconds (set to 0 to disable)", CVAR_Archive);
 
 
 // cached color from cvar
@@ -1852,16 +1853,25 @@ static void AM_drawKeys () {
     if (!keyClass) return; // the thing that should not be
   }
 
+  // keys should blink
+  float cbt = am_keys_blink_time.asFloat();
+  if (isFiniteF(cbt) && cbt > 0.0f) {
+    if (cbt > 10.0f) cbt = 10.0f; // arbitrary limit
+    const float xtm = fmod(Sys_Time(), cbt*2.0);
+    if (xtm < cbt) return;
+  }
+
+  const bool allKeys = am_show_keys_cheat.asBool();
   bool inSpriteMode = false;
   for (TThinkerIterator<VEntity> Ent(GClLevel); Ent; ++Ent) {
     VEntity *mobj = *Ent;
     if (!mobj->State || (mobj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) continue;
-    if ((mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible|VEntity::EF_NoBlockmap)) || mobj->RenderStyle == STYLE_None) continue;
-    if (mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible|VEntity::EF_NoBlockmap)) continue;
+    if (mobj->RenderStyle == STYLE_None) continue;
+    if ((mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible|VEntity::EF_NoBlockmap)) != 0) continue;
 
     // check for seen subsector
     if (!mobj->SubSector) continue;
-    if (!(mobj->SubSector->miscFlags&subsector_t::SSMF_Rendered)) continue;
+    if (!allKeys && !(mobj->SubSector->miscFlags&subsector_t::SSMF_Rendered)) continue;
     //if (!(mobj->FlagsEx&VEntity::EFEX_Rendered)) continue;
 
     // check if this is a key
@@ -2172,7 +2182,7 @@ void AM_Drawer () {
   if (am_cheating >= 2 || (cl->PlayerFlags&VBasePlayer::PF_AutomapShowThings)) {
     AM_drawThings();
   }
-  if (am_draw_keys) AM_drawKeys();
+  if (am_draw_keys || am_show_keys_cheat) AM_drawKeys();
   if (am_cheating && am_show_static_lights) AM_drawStaticLights();
   if (am_cheating && am_show_dynamic_lights) AM_drawDynamicLights();
   if (am_cheating && am_show_minisegs) AM_DrawMinisegs();
