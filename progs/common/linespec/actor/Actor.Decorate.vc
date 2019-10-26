@@ -1684,10 +1684,15 @@ final bool common_k8JumpIfLiquidFloor (EntityEx tgt, state label) {
       globmatch(tname, "*nukage*", caseSensitive:false) ||
       globmatch(tname, "*lava*", caseSensitive:false) ||
       globmatch(tname, "*blood*", caseSensitive:false) ||
-      globmatch(tname, "*slime*", caseSensitive:false) ||
+      globmatch(tname, "*slime0*", caseSensitive:false) ||
       globmatch(tname, "*slimage*", caseSensitive:false) ||
       globmatch(tname, "f_watr*", caseSensitive:false)) // Strife water
   {
+    DoJump(label);
+    return true;
+  }
+  // slime13 and further are normal floors, not liquids
+  if (tname == "slime10" || tname == "slime11" || tname == "slime12") {
     DoJump(label);
     return true;
   }
