@@ -204,4 +204,9 @@ menudef HUDOptions {
     title = "Doomguy Face in Fullscreen";
     cvar = r_hud_draw_fs_face;
   }
+
+  option bool {
+    title = "Doomguy Face in center";
+    cvar = r_hud_fs_face_centered;
+  }
 }

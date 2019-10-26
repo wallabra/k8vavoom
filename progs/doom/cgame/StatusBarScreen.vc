@@ -509,6 +509,23 @@ override void SB_DrawFullscreenStats () {
     if (fsalpha < 0) fsalpha = ST_FULLSCREEN_ALPHA;
   }
 
+  // DoomGuy face
+  if (GetCvarB('r_hud_draw_fs_face')) {
+    // faces
+    //if (ClGame.maxclients > 1) DrawPic(12, ovh-32, pic_faceback, fsalpha, cl.MO.Translation);
+    //DrawPic(12, ovh-32, pic_faces[sb_faceindex], fsalpha);
+    picinfo_t pi;
+    R_GetPicInfo(pic_faces[sb_faceindex], &pi);
+    int rhgt = int((pi.height-pi.yoffset)*R_GetAspectRatio());
+    if (GetCvarB('r_hud_fs_face_centered')) {
+      int xpos = (Width-pi.width+pi.xoffset)/2;
+      DrawPicScaled(xpos, Height-rhgt-2-42, pic_faces[sb_faceindex], 1, R_GetAspectRatio(), fsalpha);
+    } else {
+      //print("hgt=%s; ofs=%s", pi.height, pi.yoffset);
+      DrawPicScaled(12, Height-rhgt-2, pic_faces[sb_faceindex], 1, R_GetAspectRatio(), fsalpha);
+    }
+  }
+
   // health
   SB_DrawTallNum(ST_TDHEALTHX, ST_TDHEALTHY, cl.Health, fsalpha, false);
   // draw berserk pack if player has berserk powerup
@@ -735,18 +752,6 @@ override void SB_DrawFullscreenStats () {
         DrawText(xpos, ypos, lastWeaponName, GetCvarI('r_hud_weapon_name_color'), CR_UNTRANSLATED, currAlpha);
       }
     }
-  }
-
-
-  if (GetCvarB('r_hud_draw_fs_face')) {
-    // faces
-    //if (ClGame.maxclients > 1) DrawPic(12, ovh-32, pic_faceback, fsalpha, cl.MO.Translation);
-    //DrawPic(12, ovh-32, pic_faces[sb_faceindex], fsalpha);
-    picinfo_t pi;
-    R_GetPicInfo(pic_faces[sb_faceindex], &pi);
-    int rhgt = int((pi.height-pi.yoffset)*R_GetAspectRatio());
-    //print("hgt=%s; ofs=%s", pi.height, pi.yoffset);
-    DrawPicScaled(12, Height-rhgt-2, pic_faces[sb_faceindex], 1, R_GetAspectRatio(), fsalpha);
   }
 
   // draw inventory bar or ready item when needed (it's drawn with transparency)
