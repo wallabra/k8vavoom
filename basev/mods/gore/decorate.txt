@@ -454,8 +454,8 @@ Actor K8Gore_BloodSpot : K8Gore_BloodBase {
       "####" "#" random(50, 100)
       // and fade out
     WaterFadeLoop:
-      "####" "#" random(9, 24)
-      "####" "#" 0 A_FadeOut(0.05)
+      "####" "#" random(2, 4)
+      "####" "#" 0 A_FadeOut(0.01)
       Loop
 
 
@@ -1394,8 +1394,8 @@ Actor K8Gore_BloodSpotTransient : K8Gore_BloodBaseTransient {
       "####" "#" random(50, 100)
       // and fade out
     WaterFadeLoop:
-      "####" "#" random(9, 24)
-      "####" "#" 0 A_FadeOut(0.05)
+      "####" "#" random(2, 4)
+      "####" "#" 0 A_FadeOut(0.01)
       Loop
 
 
