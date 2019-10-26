@@ -31,7 +31,7 @@ void main () {
 
   // convert to premultiplied
   vec4 FinalColor;
-  FinalColor.a = TexColor.a*lt.a;
+  FinalColor.a = lt.a;//TexColor.a*lt.a; //k8: non-additive and non-translucent should not end here anyway
   FinalColor.rgb = clamp(TexColor.rgb*FinalColor.a, 0.0, 1.0);
   //vec4 FinalColor = TexColor;
   $include "common/fog_calc.fs"
