@@ -204,12 +204,11 @@ public:
     // cache list in line
     Item *lprev;
     Item *lnext;
-    Item *freeChain; // list of drawable surfaces, or next free block in `blockbuf`
-    vuint32 atlasid; // light surface index
+    // next free block in `blockbuf`
+    Item *freeChain;
+    // light surface index
+    vuint32 atlasid;
     Item **owner;
-    //vuint32 Light; // checked for strobe flash
-    //int dlight;
-    //Item *surf;
     vuint32 lastframe;
   };
 
@@ -290,6 +289,7 @@ protected:
   TArray<Atlas> atlases;
   Item *freeblocks;
   VBlockPool blockpool;
+  vuint32 lastOldFreeFrame;
 
 public:
   vuint32 cacheframecount;
@@ -399,7 +399,7 @@ public:
   }
 
 public:
-  V2DCache () noexcept : atlases(), freeblocks(nullptr), blockpool(), cacheframecount(0) {}
+  V2DCache () noexcept : atlases(), freeblocks(nullptr), blockpool(), lastOldFreeFrame(0), cacheframecount(0) {}
   ~V2DCache () noexcept { /*clear();*/ }
 
   V2DCache (const V2DCache &) = delete;
@@ -433,6 +433,7 @@ public:
         }
       }
     }
+    lastOldFreeFrame = 0;
   }
 
   virtual void resetBlock (Item *block) noexcept = 0;
@@ -451,6 +452,8 @@ public:
 
   // `FreeSurfCache()` calls this with `true`
   Item *freeBlock (Item *block, bool checkLines) noexcept {
+    resetBlock(block);
+
     if (block->owner) {
       *block->owner = nullptr;
       block->owner = nullptr;
@@ -500,6 +503,7 @@ public:
   }
 
   void flushOldCaches () noexcept {
+    if (lastOldFreeFrame == cacheframecount) return; // already done
     for (auto &&it : atlases) {
       vassert(it.isValid());
       for (Item *blines = it.blocks; blines; blines = blines->bnext) {
@@ -599,22 +603,10 @@ public:
 struct surfcache_t {
   // position in light surface
   int s, t;
-  // size
-  //int width, height;
-  // line list in block
-  //surfcache_t *bprev;
-  //surfcache_t *bnext;
-  // cache list in line
-  //surfcache_t *lprev;
-  //surfcache_t *lnext;
   surfcache_t *chain; // list of drawable surfaces for the atlas
-  //surfcache_t *addchain; // list of specular surfaces (each lightmap has it, no need to chain)
-  //vuint32 blocknum; // light surface index
-  //surfcache_t **owner;
   vuint32 Light; // checked for strobe flash
   int dlight;
   surface_t *surf;
-  //vuint32 lastframe;
 };
 
 

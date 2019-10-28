@@ -1115,64 +1115,59 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigne
 void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper *Range) {
   static const float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
 
-  // if we hit a cache overflow, render everything again, to avoid partial frames
-  do {
-    if (light_reset_surface_cache) return;
+  //view_frustum.setupBoxIndicies(); // done automatically
+  ViewClip.ClearClipNodes(vieworg, Level);
+  ViewClip.ClipInitFrustumRange(viewangles, viewforward, viewright, viewup, rd->fovx, rd->fovy);
+  if (Range) ViewClip.ClipToRanges(*Range); // range contains a valid range, so we must clip away holes in it
+  memset(BspVis, 0, VisSize);
+  memset(BspVisThing, 0, VisSize);
+  if (PortalLevel == 0) {
+    if (WorldSurfs.NumAllocated() < 4096) WorldSurfs.Resize(4096);
+  }
+  MirrorClipSegs = (MirrorClip && !view_frustum.planes[5].normal.z);
+  if (!clip_frustum_mirror) {
+    MirrorClipSegs = false;
+    view_frustum.planes[5].clipflag = 0;
+  }
 
-    //view_frustum.setupBoxIndicies(); // done automatically
-    ViewClip.ClearClipNodes(vieworg, Level);
-    ViewClip.ClipInitFrustumRange(viewangles, viewforward, viewright, viewup, rd->fovx, rd->fovy);
-    if (Range) ViewClip.ClipToRanges(*Range); // range contains a valid range, so we must clip away holes in it
-    memset(BspVis, 0, VisSize);
-    memset(BspVisThing, 0, VisSize);
-    if (PortalLevel == 0) {
-      if (WorldSurfs.NumAllocated() < 4096) WorldSurfs.Resize(4096);
-    }
-    MirrorClipSegs = (MirrorClip && !view_frustum.planes[5].normal.z);
-    if (!clip_frustum_mirror) {
-      MirrorClipSegs = false;
-      view_frustum.planes[5].clipflag = 0;
-    }
+  // head node is the last node output
+  {
+    unsigned clipflags = 0;
+    const TClipPlane *cp = &view_frustum.planes[0];
+    for (unsigned i = view_frustum.planeCount; i--; ++cp) clipflags |= cp->clipflag;
+    RenderBSPNode(Level->NumNodes-1, dummy_bbox, clipflags /*(MirrorClip ? 0x3f : 0x1f)*/);
+  }
 
-    // head node is the last node output
-    {
-      unsigned clipflags = 0;
-      const TClipPlane *cp = &view_frustum.planes[0];
-      for (unsigned i = view_frustum.planeCount; i--; ++cp) clipflags |= cp->clipflag;
-      RenderBSPNode(Level->NumNodes-1, dummy_bbox, clipflags /*(MirrorClip ? 0x3f : 0x1f)*/);
-    }
-
-    if (PortalLevel == 0) {
-      // draw the most complex sky portal behind the scene first, without the need to use stencil buffer
-      VPortal *BestSky = nullptr;
-      int BestSkyIndex = -1;
-      for (int i = 0; i < Portals.length(); ++i) {
-        if (Portals[i] && Portals[i]->IsSky() && (!BestSky || BestSky->Surfs.Num() < Portals[i]->Surfs.Num())) {
-          BestSky = Portals[i];
-          BestSkyIndex = i;
-        }
+  if (PortalLevel == 0) {
+    // draw the most complex sky portal behind the scene first, without the need to use stencil buffer
+    VPortal *BestSky = nullptr;
+    int BestSkyIndex = -1;
+    for (int i = 0; i < Portals.length(); ++i) {
+      if (Portals[i] && Portals[i]->IsSky() && (!BestSky || BestSky->Surfs.Num() < Portals[i]->Surfs.Num())) {
+        BestSky = Portals[i];
+        BestSkyIndex = i;
       }
-      if (BestSky) {
-        PortalLevel = 1;
-        BestSky->Draw(false);
-        delete BestSky;
-        BestSky = nullptr;
-        Portals.RemoveIndex(BestSkyIndex);
-        PortalLevel = 0;
-      }
-
-      world_surf_t *wsurf = WorldSurfs.ptr();
-      for (int i = WorldSurfs.length(); i--; ++wsurf) {
-        switch (wsurf->Type) {
-          case 0: QueueWorldSurface(wsurf->Surf); break;
-          case 1: QueueSkyPortal(wsurf->Surf); break;
-          case 2: QueueHorizonPortal(wsurf->Surf); break;
-          default: Sys_Error("invalid queued 0-level world surface type %d", (int)wsurf->Type);
-        }
-      }
-      WorldSurfs.resetNoDtor();
     }
-  } while (light_reset_surface_cache);
+    if (BestSky) {
+      PortalLevel = 1;
+      BestSky->Draw(false);
+      delete BestSky;
+      BestSky = nullptr;
+      Portals.RemoveIndex(BestSkyIndex);
+      PortalLevel = 0;
+    }
+
+    world_surf_t *wsurf = WorldSurfs.ptr();
+    for (int i = WorldSurfs.length(); i--; ++wsurf) {
+      switch (wsurf->Type) {
+        case 0: QueueWorldSurface(wsurf->Surf); break;
+        case 1: QueueSkyPortal(wsurf->Surf); break;
+        case 2: QueueHorizonPortal(wsurf->Surf); break;
+        default: Sys_Error("invalid queued 0-level world surface type %d", (int)wsurf->Type);
+      }
+    }
+    WorldSurfs.resetNoDtor();
+  }
 }
 
 

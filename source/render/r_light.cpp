@@ -505,6 +505,15 @@ bool VRenderLevelShared::CacheSurface (surface_t *) {
 
 //==========================================================================
 //
+//  VRenderLevelShared::ProcessCachedSurfaces
+//
+//==========================================================================
+void VRenderLevelShared::ProcessCachedSurfaces () {
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::CheckLightPointCone
 //
 //==========================================================================

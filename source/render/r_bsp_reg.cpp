@@ -79,13 +79,12 @@ extern vuint32 gf_dynlights_traced;
 
 
 void VRenderLevelLightmap::RenderWorld (const refdef_t *rd, const VViewClipper *Range) {
-  PrepareWorldRender(rd, Range);
-
   gf_dynlights_processed = 0;
   gf_dynlights_traced = 0;
 
+  PrepareWorldRender(rd, Range);
   RenderBspWorld(rd, Range);
-  if (light_reset_surface_cache != 0) return;
+  ProcessCachedSurfaces();
 
   glWDPolyTotal = 0;
   glWDVertexTotal = 0;

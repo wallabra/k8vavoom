@@ -399,9 +399,6 @@ protected:
   double prevChaseCamTime = -1.0;
   TVec prevChaseCamPos;
 
-  // used in lightmapped renderer, but should be here (sigh)
-  int light_reset_surface_cache;
-
 private:
   inline segpart_t *SurfCreatorGetPSPart () {
     if (pspartsLeft == 0) Sys_Error("internal level surface creation bug");
@@ -528,6 +525,8 @@ protected:
   virtual void QueueWorldSurface (surface_t*) = 0;
   virtual void FreeSurfCache (surfcache_t *&block);
   virtual bool CacheSurface (surface_t*);
+  // this is called after surface queues built, so lightmap renderer can calculate new lightmaps
+  virtual void ProcessCachedSurfaces ();
 
   void PrepareWorldRender (const refdef_t*, const VViewClipper*);
   // this should be called after `RenderWorld()`
@@ -785,8 +784,13 @@ private:
   VCacheBlockPool blockpool;
   */
   VLMapCache lmcache;
+  TArray<surface_t *> LMSurfList; // list of all surfaces with lightmaps
 
   bool invalidateRelight;
+
+private:
+  // returns `false` if cannot allocate lightmap block
+  bool BuildSurfaceLightmap (surface_t *surface);
 
 public:
   struct LMapTraceInfo {
@@ -832,7 +836,6 @@ protected:
 protected:
   void initLightChain ();
   void chainLightmap (surfcache_t *cache);
-  //void chainAddmap (surfcache_t *cache);
   void advanceCacheFrame ();
 
 public:
@@ -877,14 +880,9 @@ protected:
 
   // lightmap cache manager
   void FlushCaches ();
-  void FlushOldCaches ();
-  //surfcache_t *GetFreeBlock (bool forceAlloc=false);
-  //surfcache_t *performBlockVSplit (int width, int height, surfcache_t *block); // used in `AllocBlock()`
-  //surfcache_t *AllocBlock (int, int);
-  //surfcache_t *FreeBlock (surfcache_t*, bool);
-
   virtual void FreeSurfCache (surfcache_t *&block) override;
   virtual bool CacheSurface (surface_t*) override;
+  virtual void ProcessCachedSurfaces () override;
 
   // world BSP rendering
   virtual void QueueWorldSurface (surface_t*) override;

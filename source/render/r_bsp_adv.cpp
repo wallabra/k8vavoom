@@ -49,6 +49,7 @@ void VRenderLevelShadowVolume::QueueWorldSurface (surface_t *surf) {
 void VRenderLevelShadowVolume::RenderWorld (const refdef_t *rd, const VViewClipper *Range) {
   PrepareWorldRender(rd, Range);
   RenderBspWorld(rd, Range);
+  ProcessCachedSurfaces();
   Drawer->DrawWorldAmbientPass();
   //RenderPortals();
 }

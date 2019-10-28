@@ -456,7 +456,6 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   , bspVisRadiusFrame(0)
   , pspart(nullptr)
   , pspartsLeft(0)
-  , light_reset_surface_cache(0)
 {
   currDLightFrame = 0;
   currQueueFrame = 0;
@@ -1596,9 +1595,6 @@ void R_RenderPlayerView () {
 void VRenderLevelShared::RenderPlayerView () {
   if (!Level->LevelInfo) return;
 
-  int renderattempts = 2;
-  bool didIt = false;
-
   IncUpdateWorldFrame();
 
   if (dbg_autoclear_automap) AM_ClearAutomap();
@@ -1610,7 +1606,6 @@ void VRenderLevelShared::RenderPlayerView () {
     UpdateWorld(/*rd, Range*/);
   }
 
-again:
   lastDLightView = TVec(-1e9, -1e9, -1e9);
   lastDLightViewSub = nullptr;
 
@@ -1618,11 +1613,8 @@ again:
 
   BuildPlayerTranslations();
 
-  if (!didIt) {
-    didIt = true;
-    AnimateSky(host_frametime);
-    UpdateParticles(host_frametime);
-  }
+  AnimateSky(host_frametime);
+  UpdateParticles(host_frametime);
 
   //TODO: we can separate BspVis building (and batching surfaces for rendering), and
   //      the actual rendering. this way we'll be able to do better dynlight checks
@@ -1641,14 +1633,6 @@ again:
   RenderScene(&refdef, nullptr);
 
   if (dbg_clip_dump_added_ranges) ViewClip.Dump();
-
-  if (light_reset_surface_cache != 0) {
-    light_reset_surface_cache = 0;
-    if (--renderattempts <= 0) Host_Error("*** Surface cache overflow, cannot repair");
-    GCon->Logf(NAME_Warning, "*** Surface cache overflow, starting it all again, %d attempt%s left", renderattempts, (renderattempts != 1 ? "s" : ""));
-    NukeLightmapCache();
-    goto again;
-  }
 
   // draw the psprites on top of everything
   if (/*fov <= 90.0f &&*/ cl->MO == cl->Camera && GGameInfo->NetMode != NM_TitleMap) DrawPlayerSprites();

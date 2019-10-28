@@ -40,6 +40,7 @@
 //==========================================================================
 void VLMapCache::resetBlock (Item *block) noexcept {
   if (block->surf) {
+    //GCon->Logf(NAME_Debug, "cleared surface cache pointer for surface %p", block->surf);
     block->surf->CacheSurf = nullptr;
     block->surf = nullptr;
   }
@@ -113,6 +114,7 @@ VRenderLevelLightmap::VRenderLevelLightmap (VLevel *ALevel)
 //==========================================================================
 void VRenderLevelLightmap::ClearQueues () {
   VRenderLevelShared::ClearQueues();
+  LMSurfList.reset();
   advanceCacheFrame();
 }
 
@@ -174,29 +176,6 @@ void VRenderLevelLightmap::chainLightmap (surfcache_t *cache) {
   light_chain[bnum] = cache;
   ((VLMapCache::Item *)cache)->lastframe = lmcache.cacheframecount;
 }
-
-
-//==========================================================================
-//
-//  VRenderLevelLightmap::chainAddmap
-//
-//==========================================================================
-/*
-void VRenderLevelLightmap::chainAddmap (surfcache_t *cache) {
-  vassert(cache);
-  const vuint32 bnum = cache->blocknum;
-  vassert(bnum < NUM_BLOCK_SURFS);
-  if (add_chain_used[bnum].lastframe != cacheframecount) {
-    // first time, put into list
-    add_chain_used[bnum].lastframe = cacheframecount;
-    add_chain_used[bnum].next = add_chain_head;
-    add_chain_head = bnum+1;
-    add_chain[bnum] = nullptr;
-  }
-  cache->addchain = add_chain[bnum];
-  add_chain[bnum] = cache;
-}
-*/
 
 
 //==========================================================================
@@ -322,7 +301,6 @@ void VRenderLevelLightmap::RenderScene (const refdef_t *RD, const VViewClipper *
   //if (!MirrorLevel && !r_disable_world_update) UpdateWorld(RD, Range);
 
   RenderWorld(RD, Range);
-  if (light_reset_surface_cache != 0) return;
 
   //k8: no need to build list here, as things only processed once
   //BuildVisibleObjectsList();
