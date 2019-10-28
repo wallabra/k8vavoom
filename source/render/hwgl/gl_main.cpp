@@ -303,10 +303,8 @@ VOpenGLDrawer::VOpenGLDrawer ()
   decalStcVal = 255; // next value for stencil buffer (clear on the first use, and clear on each wrap)
   stencilBufferDirty = true; // just in case
   isShittyGPU = true; // let's play safe
+  shittyGPUCheckDone = false; // just in case
   atlasesGenerated = false;
-
-  //surfList = nullptr;
-  //surfListUsed = surfListSize = 0;
 }
 
 
@@ -317,7 +315,6 @@ VOpenGLDrawer::VOpenGLDrawer ()
 //==========================================================================
 VOpenGLDrawer::~VOpenGLDrawer () {
   surfList.clear();
-
   if (tmpImgBuf0) { Z_Free(tmpImgBuf0); tmpImgBuf0 = nullptr; }
   if (tmpImgBuf1) { Z_Free(tmpImgBuf1); tmpImgBuf1 = nullptr; }
   tmpImgBufSize = 0;
@@ -467,9 +464,8 @@ void VOpenGLDrawer::InitResolution () {
     for (int i = 0; i < Exts.Num(); ++i) GCon->Log(NAME_Init, VStr("- ")+Exts[i]);
   }
 
-  isShittyGPU = false;
-  /*
-  {
+  if (!shittyGPUCheckDone) {
+    shittyGPUCheckDone = true;
     const char *vcstr = (const char *)glGetString(GL_VENDOR);
     VStr vs = VStr(vcstr).toLowerCase();
     isShittyGPU = CheckVendorString(vs, "intel");
@@ -482,7 +478,6 @@ void VOpenGLDrawer::InitResolution () {
       }
     }
   }
-  */
 
   if (!isShittyGPU && gl_dbg_force_gpu_blacklisting) {
     GCon->Log(NAME_Init, "User command is to blacklist GPU; I shall obey!");

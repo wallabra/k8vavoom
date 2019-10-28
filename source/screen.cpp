@@ -573,17 +573,32 @@ void SCR_Update (bool fullUpdate) {
 
 //==========================================================================
 //
-// Draw_TeleportIcon
+//  DrawSomeIcon
+//
+//==========================================================================
+static void DrawSomeIcon (VName icname) {
+  if (icname == NAME_None) return;
+  if (!Drawer || !Drawer->IsInited()) return;
+  int pt = GTextureManager.AddPatch(icname, TEXTYPE_Pic, true);
+  if (pt <= 0) return;
+  picinfo_t info;
+  GTextureManager.GetTextureInfo(pt, &info);
+  if (info.width < 1 || info.height < 1) return;
+  int xpos = (int)((float)ScreenWidth*260.0f/320.0f);
+  int ypos = (int)((float)ScreenHeight*68.0f/200.0f);
+  Drawer->StartUpdate(false); // don't clear
+  R_DrawPic(xpos, ypos, pt);
+  Drawer->Update();
+}
+
+
+//==========================================================================
+//
+//  Draw_TeleportIcon
 //
 //==========================================================================
 void Draw_TeleportIcon () {
-  /*
-  if (W_CheckNumForName(NAME_teleicon) >= 0) {
-    Drawer->BeginDirectUpdate();
-    R_DrawPic(260, 68, GTextureManager.AddPatch(NAME_teleicon, TEXTYPE_Pic));
-    Drawer->EndDirectUpdate();
-  }
-  */
+  DrawSomeIcon(NAME_teleicon);
 }
 
 
@@ -593,13 +608,7 @@ void Draw_TeleportIcon () {
 //
 //==========================================================================
 void Draw_SaveIcon () {
-  /*
-  if (W_CheckNumForName(NAME_saveicon) >= 0) {
-    Drawer->BeginDirectUpdate();
-    R_DrawPic(260, 68, GTextureManager.AddPatch(NAME_saveicon, TEXTYPE_Pic));
-    Drawer->EndDirectUpdate();
-  }
-  */
+  DrawSomeIcon(NAME_saveicon);
 }
 
 
@@ -609,13 +618,7 @@ void Draw_SaveIcon () {
 //
 //==========================================================================
 void Draw_LoadIcon () {
-  /*
-  if (W_CheckNumForName(NAME_loadicon) >= 0) {
-    Drawer->BeginDirectUpdate();
-    R_DrawPic(260, 68, GTextureManager.AddPatch(NAME_loadicon, TEXTYPE_Pic));
-    Drawer->EndDirectUpdate();
-  }
-  */
+  DrawSomeIcon(NAME_loadicon);
 }
 
 

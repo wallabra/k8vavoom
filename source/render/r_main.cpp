@@ -393,8 +393,13 @@ void R_Start (VLevel *ALevel) {
     r_level_renderer = 1;
   } else if (r_level_renderer <= 0) {
     if (Drawer->SupportsShadowVolumeRendering()) {
-      GCon->Logf("Your GPU supports Shadow Volume Renderer, so i will use it.");
-      r_level_renderer = 2;
+      if (Drawer->IsShittyGPU()) {
+        GCon->Logf("Your GPU is... not quite good, so I will use the lightmapped renderer.");
+        r_level_renderer = 1;
+      } else {
+        GCon->Logf("Your GPU supports Shadow Volume Renderer, so i will use it.");
+        r_level_renderer = 2;
+      }
     } else {
       GCon->Logf("Your GPU doesn't support Shadow Volume Renderer, so I will use the lightmapped one.");
       r_level_renderer = 1;

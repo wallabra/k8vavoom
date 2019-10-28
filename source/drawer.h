@@ -163,6 +163,7 @@ public:
 protected:
   bool mInitialized;
   bool isShittyGPU;
+  bool shittyGPUCheckDone;
   bool useReverseZ;
 
   static TArray<void (*) (int phase)> cbInitDeinit;
@@ -178,23 +179,22 @@ public:
 public:
   VRenderLevelDrawer *RendLev;
 
-  VDrawer () : mInitialized(false), isShittyGPU(false), useReverseZ(false), RendLev(nullptr) {}
+  VDrawer () : mInitialized(false), isShittyGPU(false), shittyGPUCheckDone(false), useReverseZ(false), RendLev(nullptr) {}
   virtual ~VDrawer () {}
 
-  inline bool CanUseRevZ () const { return useReverseZ; }
+  inline bool CanUseRevZ () const noexcept { return useReverseZ; }
+  inline bool IsShittyGPU () const noexcept { return isShittyGPU; }
+  inline bool IsInited () const noexcept { return mInitialized; }
 
   virtual void Init () = 0;
   // fsmode: 0: windowed; 1: scaled FS; 2: real FS
   virtual bool SetResolution (int AWidth, int AHeight, int fsmode) = 0;
   virtual void InitResolution () = 0;
   virtual void DeinitResolution () = 0;
-  inline bool IsInited () const { return mInitialized; }
 
   virtual void StartUpdate (bool allowClear=true) = 0;
   virtual void Setup2D () = 0;
   virtual void Update () = 0;
-  //virtual void BeginDirectUpdate() = 0;
-  //virtual void EndDirectUpdate() = 0;
   virtual void Shutdown () = 0;
   virtual void *ReadScreen (int *bpp, bool *bot2top) = 0;
   virtual void ReadBackScreen (int Width, int Height, rgba_t *Dest) = 0;

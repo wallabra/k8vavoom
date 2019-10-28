@@ -585,8 +585,6 @@ public:
   virtual void DeinitResolution () override;
   virtual void StartUpdate (bool allowClear=true) override;
   virtual void Setup2D () override;
-  //virtual void BeginDirectUpdate () override;
-  //virtual void EndDirectUpdate () override;
   virtual void *ReadScreen (int *, bool *) override;
   virtual void ReadBackScreen (int, int, rgba_t *) override;
 
