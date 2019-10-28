@@ -61,6 +61,17 @@ menudef AutomapOptions {
       "agree, you can turn this option off.";
   }
 
+  option slider {
+    title = "Key blinking time";
+    cvar = am_keys_blink_time;
+    step = 0.1;
+    min = 0;
+    max = 3;
+    help =
+      "You can make automap key icons blink, so they are easier to spot."
+      "Blink time is in seconds. Set to zero to disable blinking.";
+  }
+
   option enum {
     title = "Automap type";
     cvar = am_draw_type;
