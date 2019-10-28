@@ -26,8 +26,6 @@
 #include "gamedefs.h"
 #include "sv_local.h"
 
-#include "render/r_shared.h"
-
 
 static int cli_NoMapinfoPlrClasses = 0;
 static int cli_NoZMapinfo = 0;

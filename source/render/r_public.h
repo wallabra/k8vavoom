@@ -28,6 +28,16 @@ struct dlight_t;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// there is little need to use bigger translation tables
+// usually, 5 bits of color info is enough, so 32x32x32
+// color cube is ok for our purposes. but meh...
+
+//#define VAVOOM_RGB_TABLE_7_BITS
+#define VAVOOM_RGB_TABLE_6_BITS
+//#define VAVOOM_RGB_TABLE_5_BITS
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 struct refdef_t {
   int x, y;
   int width, height;
@@ -175,10 +185,81 @@ bool R_ModelNoSelfShadow (VName clsName);
 void R_InitSkyBoxes ();
 #endif
 
-bool IsSky (sec_plane_t *SPlane);
+// WARNING! this can call VM code!
+bool R_IsSkyFlatPlane (sec_plane_t *SPlane);
+
+VName R_HasNamedSkybox (VStr aname);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// camera texture
+class VCameraTexture : public VTexture {
+public:
+  bool bNeedsUpdate;
+  bool bUpdated;
+
+  VCameraTexture (VName, int, int);
+  virtual ~VCameraTexture () override;
+  virtual bool CheckModified () override;
+  virtual vuint8 *GetPixels () override;
+  virtual void Unload () override;
+  void CopyImage ();
+  virtual VTexture *GetHighResolutionTexture () override;
+};
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern TArray<int> AllModelTextures;
 extern int validcount; // defined in "sv_main.cpp"
 extern int validcountSZCache; // defined in "sv_main.cpp"
+
+extern rgba_t r_palette[256];
+extern vuint8 r_black_color;
+extern vuint8 r_white_color;
+
+#if defined(VAVOOM_RGB_TABLE_7_BITS)
+# define VAVOOM_COLOR_COMPONENT_MAX  (128)
+# define VAVOOM_COLOR_COMPONENT_BITS (7)
+#elif defined(VAVOOM_RGB_TABLE_6_BITS)
+# define VAVOOM_COLOR_COMPONENT_MAX  (64)
+# define VAVOOM_COLOR_COMPONENT_BITS (6)
+#else
+# define VAVOOM_COLOR_COMPONENT_MAX  (32)
+# define VAVOOM_COLOR_COMPONENT_BITS (5)
+#endif
+extern vuint8 r_rgbtable[VAVOOM_COLOR_COMPONENT_MAX*VAVOOM_COLOR_COMPONENT_MAX*VAVOOM_COLOR_COMPONENT_MAX+4];
+
+extern int usegamma;
+//extern const vuint8 gammatable[5][256];
+extern const vuint8 *getGammaTable (int idx);
+
+
+//==========================================================================
+//
+//  R_LookupRGB
+//
+//==========================================================================
+#if defined(VAVOOM_RGB_TABLE_7_BITS)
+# if defined(VAVOOM_RGB_TABLE_6_BITS) || defined(VAVOOM_RGB_TABLE_5_BITS)
+#  error "choose only one RGB table size"
+# endif
+static inline vuint8 __attribute__((unused)) R_LookupRGB (vint32 r, vint32 g, vint32 b) {
+  return r_rgbtable[(((vuint32)clampToByte(r)<<13)&0x1fc000)|(((vuint32)clampToByte(g)<<6)&0x3f80)|((clampToByte(b)>>1)&0x7fU)];
+}
+#elif defined(VAVOOM_RGB_TABLE_6_BITS)
+# if defined(VAVOOM_RGB_TABLE_7_BITS) || defined(VAVOOM_RGB_TABLE_5_BITS)
+#  error "choose only one RGB table size"
+# endif
+static inline vuint8 __attribute__((unused)) R_LookupRGB (vint32 r, vint32 g, vint32 b) {
+  return r_rgbtable[(((vuint32)clampToByte(r)<<10)&0x3f000U)|(((vuint32)clampToByte(g)<<4)&0xfc0U)|((clampToByte(b)>>2)&0x3fU)];
+}
+#elif defined(VAVOOM_RGB_TABLE_5_BITS)
+# if defined(VAVOOM_RGB_TABLE_6_BITS) || defined(VAVOOM_RGB_TABLE_7_BITS)
+#  error "choose only one RGB table size"
+# endif
+static inline vuint8 __attribute__((unused)) R_LookupRGB (vint32 r, vint32 g, vint32 b) {
+  return r_rgbtable[(((vuint32)clampToByte(r)<<7)&0x7c00U)|(((vuint32)clampToByte(g)<<2)&0x3e0U)|((clampToByte(b)>>3)&0x1fU)];
+}
+#else
+#  error "choose RGB table size"
+#endif

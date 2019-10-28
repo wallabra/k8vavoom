@@ -26,6 +26,7 @@
 #include "gamedefs.h"
 #include "r_tex.h"
 
+
 #ifdef VAVOOM_DISABLE_STB_IMAGE_JPEG
 extern "C" {
 # ifdef VAVOOM_USE_LIBJPG

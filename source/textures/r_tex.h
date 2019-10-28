@@ -27,7 +27,6 @@
 #define VAVOOM_R_TEX_HEADER
 
 #include "drawer.h"
-#include "render/r_shared.h"
 
 
 // dummy texture

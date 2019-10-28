@@ -666,7 +666,7 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
 
   VTexture *TTex = GTextureManager(sidedef->TopTexture);
   if (!TTex) TTex = GTextureManager[GTextureManager.DefaultTexture];
-  if (IsSky(r_ceiling.splane) && IsSky(back_ceiling) && r_ceiling.splane->SkyBox != back_ceiling->SkyBox) {
+  if (R_IsSkyFlatPlane(r_ceiling.splane) && R_IsSkyFlatPlane(back_ceiling) && r_ceiling.splane->SkyBox != back_ceiling->SkyBox) {
     TTex = GTextureManager[skyflatnum];
   }
 
@@ -695,7 +695,7 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
     float top_topz1 = topz1;
     float top_topz2 = topz2;
     float top_TexZ = r_ceiling.splane->TexZ;
-    if (IsSky(r_ceiling.splane) && IsSky(back_ceiling) && r_ceiling.splane->SkyBox == back_ceiling->SkyBox) {
+    if (R_IsSkyFlatPlane(r_ceiling.splane) && R_IsSkyFlatPlane(back_ceiling) && r_ceiling.splane->SkyBox == back_ceiling->SkyBox) {
       top_topz1 = back_topz1;
       top_topz2 = back_topz2;
       top_TexZ = back_ceiling->TexZ;
@@ -765,7 +765,7 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
     const float back_botz2 = back_floor->GetPointZ(*seg->v2);
 
     // hack to allow height changes in outdoor areas
-    if (IsSky(r_ceiling.splane) && IsSky(back_ceiling)) {
+    if (R_IsSkyFlatPlane(r_ceiling.splane) && R_IsSkyFlatPlane(back_ceiling)) {
       topz1 = back_ceiling->GetPointZ(*seg->v1);
       topz2 = back_ceiling->GetPointZ(*seg->v2);
       top_TexZ = back_ceiling->TexZ;
@@ -1223,7 +1223,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
     dseg->topsky = SurfCreatorGetPSPart();
     sp = dseg->topsky;
     sp->basereg = curreg;
-    if (IsSky(r_ceiling.splane)) SetupOneSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
+    if (R_IsSkyFlatPlane(r_ceiling.splane)) SetupOneSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
   } else {
     // two sided line
     // top wall
@@ -1235,7 +1235,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
     // sky above top
     dseg->topsky = SurfCreatorGetPSPart();
     dseg->topsky->basereg = curreg;
-    if (IsSky(r_ceiling.splane) && !IsSky(&seg->backsector->ceiling)) {
+    if (R_IsSkyFlatPlane(r_ceiling.splane) && !R_IsSkyFlatPlane(&seg->backsector->ceiling)) {
       sp = dseg->topsky;
       SetupTwoSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
     }
@@ -1332,7 +1332,7 @@ static inline bool CheckMidRecreate (seg_t *seg, segpart_t *sp, const TPlane *fl
 static inline bool CheckTopRecreate (seg_t *seg, segpart_t *sp, sec_plane_t *floor, sec_plane_t *ceiling) {
   sec_plane_t *back_ceiling = &seg->backsector->ceiling;
   VTexture *TTex = GTextureManager(seg->sidedef->TopTexture);
-  if (IsSky(ceiling) && IsSky(back_ceiling) && ceiling->SkyBox != back_ceiling->SkyBox) {
+  if (R_IsSkyFlatPlane(ceiling) && R_IsSkyFlatPlane(back_ceiling) && ceiling->SkyBox != back_ceiling->SkyBox) {
     TTex = GTextureManager[skyflatnum];
   }
   return CheckCommonRecreate(seg, sp, TTex, floor, ceiling);
@@ -1391,7 +1391,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     // top sky
     segpart_t *sp = dseg->topsky;
     if (sp) {
-      if (IsSky(r_ceiling.splane) && FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist)) {
+      if (R_IsSkyFlatPlane(r_ceiling.splane) && FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist)) {
         SetupOneSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
       }
       sp->texinfo.ColorMap = ColorMap;
@@ -1414,7 +1414,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     // sky above top
     segpart_t *sp = dseg->topsky;
     if (sp) {
-      if (IsSky(r_ceiling.splane) && !IsSky(back_ceiling) && FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist)) {
+      if (R_IsSkyFlatPlane(r_ceiling.splane) && !R_IsSkyFlatPlane(back_ceiling) && FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist)) {
         SetupTwoSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
       }
       sp->texinfo.ColorMap = ColorMap;

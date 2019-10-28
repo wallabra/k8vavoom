@@ -573,9 +573,9 @@ void VRenderLevelShared::AnimateSky(float frametime)
 
 //==========================================================================
 //
-//  IsSky
+//  R_IsSkyFlatPlane
 //
 //==========================================================================
-bool IsSky (sec_plane_t *SPlane) {
+bool R_IsSkyFlatPlane (sec_plane_t *SPlane) {
   return (SPlane->pic == skyflatnum || (SPlane->SkyBox && SPlane->SkyBox->eventSkyBoxGetAlways()));
 }

@@ -233,7 +233,7 @@ void VLevel::UpdateSubsectorBBox (int num, float bbox[6], const float skyheight)
   GetSubsectorBBox(sub, ssbbox);
   FixBBoxZ(ssbbox);
   ssbbox[2] = min2(ssbbox[2], sub->sector->floor.minz);
-  ssbbox[5] = max2(ssbbox[5], (IsSky(&sub->sector->ceiling) ? skyheight : sub->sector->ceiling.maxz));
+  ssbbox[5] = max2(ssbbox[5], (R_IsSkyFlatPlane(&sub->sector->ceiling) ? skyheight : sub->sector->ceiling.maxz));
   FixBBoxZ(ssbbox);
 
   /*
@@ -247,7 +247,7 @@ void VLevel::UpdateSubsectorBBox (int num, float bbox[6], const float skyheight)
   FixBBoxZ(bbox);
 
   //bbox[2] = sub->sector->floor.minz;
-  //bbox[5] = (IsSky(&sub->sector->ceiling) ? skyheight : sub->sector->ceiling.maxz);
+  //bbox[5] = (R_IsSkyFlatPlane(&sub->sector->ceiling) ? skyheight : sub->sector->ceiling.maxz);
   //FixBBoxZ(bbox);
 }
 
