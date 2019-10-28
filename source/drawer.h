@@ -249,7 +249,9 @@ public:
   virtual void FillRectWithFlatRepeat (float x1, float y1, float x2, float y2,
                                        float s1, float t1, float s2, float t2, VTexture *Tex) = 0;
   virtual void FillRect (float x1, float y1, float x2, float y2, vuint32 color, float alpha=1.0f) = 0;
-  virtual void ShadeRect (int x, int y, int w, int h, float darkening) = 0;
+  virtual void DrawRect (float x1, float y1, float x2, float y2, vuint32 color, float alpha=1.0f) = 0;
+  virtual void ShadeRect (float x1, float y1, float x2, float y2, float darkening) = 0;
+  virtual void DrawLine (float x1, float y1, float x2, float y2, vuint32 color, float alpha=1.0f) = 0;
   virtual void DrawConsoleBackground (int h) = 0;
   virtual void DrawSpriteLump (float x1, float y1, float x2, float y2,
                                VTexture *Tex, VTextureTranslation *Translation, bool flip) = 0;
@@ -260,7 +262,7 @@ public:
 
   // automap
   virtual void StartAutomap (bool asOverlay) = 0;
-  virtual void DrawLine (float x1, float y1, vuint32 c1, float x2, float y2, vuint32 c2) = 0;
+  virtual void DrawLineAM (float x1, float y1, vuint32 c1, float x2, float y2, vuint32 c2) = 0;
   virtual void EndAutomap () = 0;
 
   // advanced drawing

@@ -471,6 +471,10 @@ native static final void R_DrawModelFrame (TVec origin, float angle,
   int TranslEnd, int Color);
 // draws a colored rectangle
 native static final void R_FillRect (float x, float y, float w, float h, int color, optional float alpha/*=1.0*/);
+native static final void R_ShadeRect (float x, float y, float w, float h, float shade);
+// the last point will not be drawn
+native static final void R_DrawLine (float x0, float y0, float x1, float y1, int color, optional float alpha/*=1.0*/);
+native static final void R_DrawRect (float x, float y, float w, float h, int color, optional float alpha/*=1.0*/);
 
 // returns current aspect ratio
 native static final float R_GetAspectRatio ();

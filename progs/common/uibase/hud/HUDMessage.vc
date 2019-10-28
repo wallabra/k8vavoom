@@ -398,9 +398,9 @@ override void OnDraw () {
 
   foreach (auto i; 0..MsgLines.length) {
     if (bCentreX) {
-      DrawLine(i, x+(MsgWidth-MsgLines[i].Width)/2, y, MsgLines[i].Text);
+      DrawTextLine(i, x+(MsgWidth-MsgLines[i].Width)/2, y, MsgLines[i].Text);
     } else {
-      DrawLine(i, x, y, MsgLines[i].Text);
+      DrawTextLine(i, x, y, MsgLines[i].Text);
     }
     y += MsgHeight/MsgLines.length;
   }
@@ -409,10 +409,10 @@ override void OnDraw () {
 
 //==========================================================================
 //
-//  DrawLine
+//  DrawTextLine
 //
 //==========================================================================
-void DrawLine (int LineIdx, int x, int y, string Text) {
+void DrawTextLine (int LineIdx, int x, int y, string Text) {
   float alpha = (isTextFont ? MsgAlpha : (MsgAlpha >= 1 ? 0.99 : MsgAlpha));
   DrawText(x, y, Text, MsgColor, CR_YELLOW, alpha);
 }

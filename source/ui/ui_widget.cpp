@@ -829,7 +829,47 @@ void VWidget::ShadeRect (int X, int Y, int Width, int Height, float Shade) {
   float S2 = 0;
   float T2 = 0;
   if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
-    Drawer->ShadeRect((int)X1, (int)Y1, (int)X2-(int)X1, (int)Y2-(int)Y1, Shade);
+    Drawer->ShadeRect(X1, Y1, X2, Y2, Shade);
+  }
+}
+
+
+//==========================================================================
+//
+//  VWidget::DrawRect
+//
+//==========================================================================
+void VWidget::DrawRect (int X, int Y, int Width, int Height, int color, float alpha) {
+  float X1 = X;
+  float Y1 = Y;
+  float X2 = X+Width;
+  float Y2 = Y+Height;
+  float S1 = 0;
+  float T1 = 0;
+  float S2 = Width;
+  float T2 = Height;
+  if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
+    Drawer->DrawRect(X1, Y1, X2, Y2, color, alpha);
+  }
+}
+
+
+//==========================================================================
+//
+//  VWidget::DrawLine
+//
+//==========================================================================
+void VWidget::DrawLine (int aX0, int aY0, int aX1, int aY1, int color, float alpha) {
+  float X1 = aX0;
+  float Y1 = aY0;
+  float X2 = aX1;
+  float Y2 = aY1;
+  float S1 = 0;
+  float T1 = 0;
+  float S2 = 1;
+  float T2 = 1;
+  if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
+    Drawer->DrawLine(X1, Y1, X2, Y2, color, alpha);
   }
 }
 
@@ -1035,13 +1075,13 @@ void VWidget::DrawCursorAt (int x, int y) {
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VWidget, NewChild) {
-  P_GET_PTR(VClass, ChildClass);
-  P_GET_SELF;
+  VClass *ChildClass;
+  vobjGetParamSelf(ChildClass);
   RET_REF(CreateNewWidget(ChildClass, Self));
 }
 
 IMPLEMENT_FUNCTION(VWidget, Destroy) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   //k8: don't delete it, GC will do
   //delete Self;
   //Self = nullptr;
@@ -1052,7 +1092,7 @@ IMPLEMENT_FUNCTION(VWidget, Destroy) {
 }
 
 IMPLEMENT_FUNCTION(VWidget, MarkDead) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   if (Self && (Self->GetFlags()&_OF_Destroyed) == 0) {
     //Self->SetCleanupFlag();
     //Self->WidgetFlags |= WF_DeadManWalking;
@@ -1061,333 +1101,321 @@ IMPLEMENT_FUNCTION(VWidget, MarkDead) {
 }
 
 IMPLEMENT_FUNCTION(VWidget, DestroyAllChildren) {
-  P_GET_SELF;
-  Self->DestroyAllChildren();
+  vobjGetParamSelf();
+  if (Self) Self->DestroyAllChildren();
 }
 
 IMPLEMENT_FUNCTION(VWidget, GetRootWidget) {
-  P_GET_SELF;
-  RET_REF(Self->GetRootWidget());
+  vobjGetParamSelf();
+  RET_REF(Self ? Self->GetRootWidget() : nullptr);
 }
 
 IMPLEMENT_FUNCTION(VWidget, Lower) {
-  P_GET_SELF;
-  Self->Lower();
+  vobjGetParamSelf();
+  if (Self) Self->Lower();
 }
 
 IMPLEMENT_FUNCTION(VWidget, Raise) {
-  P_GET_SELF;
-  Self->Raise();
+  vobjGetParamSelf();
+  if (Self) Self->Raise();
 }
 
 IMPLEMENT_FUNCTION(VWidget, MoveBefore) {
-  P_GET_REF(VWidget, Other);
-  P_GET_SELF;
-  Self->MoveBefore(Other);
+  VWidget *Other;
+  vobjGetParamSelf(Other);
+  if (Self) Self->MoveBefore(Other);
 }
 
 IMPLEMENT_FUNCTION(VWidget, MoveAfter) {
-  P_GET_REF(VWidget, Other);
-  P_GET_SELF;
-  Self->MoveAfter(Other);
+  VWidget *Other;
+  vobjGetParamSelf(Other);
+  if (Self) Self->MoveAfter(Other);
 }
 
 IMPLEMENT_FUNCTION(VWidget, SetPos) {
-  P_GET_INT(NewY);
-  P_GET_INT(NewX);
-  P_GET_SELF;
-  Self->SetPos(NewX, NewY);
+  int NewX, NewY;
+  vobjGetParamSelf(NewX, NewY);
+  if (Self) Self->SetPos(NewX, NewY);
 }
 
 IMPLEMENT_FUNCTION(VWidget, SetX) {
-  P_GET_INT(NewX);
-  P_GET_SELF;
-  Self->SetX(NewX);
+  int NewX;
+  vobjGetParamSelf(NewX);
+  if (Self) Self->SetX(NewX);
 }
 
 IMPLEMENT_FUNCTION(VWidget, SetY) {
-  P_GET_INT(NewY);
-  P_GET_SELF;
-  Self->SetY(NewY);
+  int NewY;
+  vobjGetParamSelf(NewY);
+  if (Self) Self->SetY(NewY);
 }
 
 IMPLEMENT_FUNCTION(VWidget, SetOfsX) {
-  P_GET_INT(NewX);
-  P_GET_SELF;
-  Self->SetOfsX(NewX);
+  int NewX;
+  vobjGetParamSelf(NewX);
+  if (Self) Self->SetOfsX(NewX);
 }
 
 IMPLEMENT_FUNCTION(VWidget, SetOfsY) {
-  P_GET_INT(NewY);
-  P_GET_SELF;
-  Self->SetOfsY(NewY);
+  int NewY;
+  vobjGetParamSelf(NewY);
+  if (Self) Self->SetOfsY(NewY);
 }
 
 IMPLEMENT_FUNCTION(VWidget, SetSize) {
-  P_GET_INT(NewHeight);
-  P_GET_INT(NewWidth);
-  P_GET_SELF;
-  Self->SetSize(NewWidth, NewHeight);
+  int NewWidth, NewHeight;
+  vobjGetParamSelf(NewWidth, NewHeight);
+  if (Self) Self->SetSize(NewWidth, NewHeight);
 }
 
 IMPLEMENT_FUNCTION(VWidget, SetWidth) {
-  P_GET_INT(NewWidth);
-  P_GET_SELF;
-  Self->SetWidth(NewWidth);
+  int NewWidth;
+  vobjGetParamSelf(NewWidth);
+  if (Self) Self->SetWidth(NewWidth);
 }
 
 IMPLEMENT_FUNCTION(VWidget, SetHeight) {
-  P_GET_INT(NewHeight);
-  P_GET_SELF;
-  Self->SetHeight(NewHeight);
+  int NewHeight;
+  vobjGetParamSelf(NewHeight);
+  if (Self) Self->SetHeight(NewHeight);
 }
 
 IMPLEMENT_FUNCTION(VWidget, SetScale) {
-  P_GET_FLOAT(NewScaleY);
-  P_GET_FLOAT(NewScaleX);
-  P_GET_SELF;
-  Self->SetScale(NewScaleX, NewScaleY);
+  float NewScaleX, NewScaleY;
+  vobjGetParamSelf(NewScaleX, NewScaleY);
+  if (Self) Self->SetScale(NewScaleX, NewScaleY);
 }
 
 IMPLEMENT_FUNCTION(VWidget, SetConfiguration) {
-  P_GET_FLOAT_OPT(NewScaleY, 1.0f);
-  P_GET_FLOAT_OPT(NewScaleX, 1.0f);
-  P_GET_INT(NewHeight);
-  P_GET_INT(NewWidth);
-  P_GET_INT(NewY);
-  P_GET_INT(NewX);
-  P_GET_SELF;
-  Self->SetConfiguration(NewX, NewY, NewWidth, NewHeight, NewScaleX, NewScaleY);
+  int NewX, NewY, NewWidth, NewHeight;
+  VOptParamFloat NewScaleX(1.0f);
+  VOptParamFloat NewScaleY(1.0f);
+  vobjGetParamSelf(NewX, NewY, NewWidth, NewHeight, NewScaleX, NewScaleY);
+  if (Self) Self->SetConfiguration(NewX, NewY, NewWidth, NewHeight, NewScaleX, NewScaleY);
 }
 
 IMPLEMENT_FUNCTION(VWidget, SetVisibility) {
-  P_GET_BOOL(bNewVisibility);
-  P_GET_SELF;
-  Self->SetVisibility(bNewVisibility);
+  bool bNewVisibility;
+  vobjGetParamSelf(bNewVisibility);
+  if (Self) Self->SetVisibility(bNewVisibility);
 }
 
 IMPLEMENT_FUNCTION(VWidget, Show) {
-  P_GET_SELF;
-  Self->Show();
+  vobjGetParamSelf();
+  if (Self) Self->Show();
 }
 
 IMPLEMENT_FUNCTION(VWidget, Hide) {
-  P_GET_SELF;
-  Self->Hide();
+  vobjGetParamSelf();
+  if (Self) Self->Hide();
 }
 
 IMPLEMENT_FUNCTION(VWidget, IsVisible) {
-  P_GET_BOOL_OPT(Recurse, true);
-  P_GET_SELF;
-  RET_BOOL(Self->IsVisible(Recurse));
+  VOptParamBool Recurse(true);
+  vobjGetParamSelf(Recurse);
+  RET_BOOL(Self ? Self->IsVisible(Recurse) : false);
 }
 
 IMPLEMENT_FUNCTION(VWidget, SetEnabled) {
-  P_GET_BOOL(bNewEnabled);
-  P_GET_SELF;
-  Self->SetEnabled(bNewEnabled);
+  bool bNewEnabled;
+  vobjGetParamSelf(bNewEnabled);
+  if (Self) Self->SetEnabled(bNewEnabled);
 }
 
 IMPLEMENT_FUNCTION(VWidget, Enable) {
-  P_GET_SELF;
-  Self->Enable();
+  vobjGetParamSelf();
+  if (Self) Self->Enable();
 }
 
 IMPLEMENT_FUNCTION(VWidget, Disable) {
-  P_GET_SELF;
-  Self->Disable();
+  vobjGetParamSelf();
+  if (Self) Self->Disable();
 }
 
 IMPLEMENT_FUNCTION(VWidget, IsEnabled) {
-  P_GET_BOOL_OPT(Recurse, true);
-  P_GET_SELF;
-  RET_BOOL(Self->IsEnabled(Recurse));
+  VOptParamBool Recurse(true);
+  vobjGetParamSelf(Recurse);
+  RET_BOOL(Self ? Self->IsEnabled(Recurse) : false);
 }
 
 IMPLEMENT_FUNCTION(VWidget, SetFocusable) {
-  P_GET_BOOL(bNewFocusable);
-  P_GET_SELF;
-  Self->SetFocusable(bNewFocusable);
+  bool bNewFocusable;
+  vobjGetParamSelf(bNewFocusable);
+  if (Self) Self->SetFocusable(bNewFocusable);
 }
 
 IMPLEMENT_FUNCTION(VWidget, IsFocusable) {
-  P_GET_SELF;
-  RET_BOOL(Self->IsFocusable());
+  vobjGetParamSelf();
+  RET_BOOL(Self ? Self->IsFocusable() : false);
 }
 
 IMPLEMENT_FUNCTION(VWidget, SetCurrentFocusChild) {
-  P_GET_REF(VWidget, NewFocus);
-  P_GET_SELF;
-  Self->SetCurrentFocusChild(NewFocus);
+  VWidget *NewFocus;
+  vobjGetParamSelf(NewFocus);
+  if (Self) Self->SetCurrentFocusChild(NewFocus);
 }
 
 IMPLEMENT_FUNCTION(VWidget, GetCurrentFocus) {
-  P_GET_SELF;
-  RET_REF(Self->GetCurrentFocus());
+  vobjGetParamSelf();
+  RET_REF(Self ? Self->GetCurrentFocus() : nullptr);
 }
 
 IMPLEMENT_FUNCTION(VWidget, IsFocus) {
-  P_GET_BOOL_OPT(Recurse, true);
-  P_GET_SELF;
-  RET_BOOL(Self->IsFocus(Recurse));
+  VOptParamBool Recurse(true);
+  vobjGetParamSelf(Recurse);
+  RET_BOOL(Self ? Self->IsFocus(Recurse) : false);
 }
 
 IMPLEMENT_FUNCTION(VWidget, SetFocus) {
-  P_GET_SELF;
-  Self->SetFocus();
+  vobjGetParamSelf();
+  if (Self) Self->SetFocus();
 }
 
 IMPLEMENT_FUNCTION(VWidget, DrawPic) {
-  P_GET_INT_OPT(Translation, 0);
-  P_GET_FLOAT_OPT(Alpha, 1.0f);
-  P_GET_INT(Handle);
-  P_GET_INT(Y);
-  P_GET_INT(X);
-  P_GET_SELF;
-  Self->DrawPic(X, Y, Handle, Alpha, Translation);
+  int X, Y, Handle;
+  VOptParamFloat Alpha(1.0f);
+  VOptParamInt Translation(0);
+  vobjGetParamSelf(X, Y, Handle, Alpha, Translation);
+  if (Self) Self->DrawPic(X, Y, Handle, Alpha, Translation);
 }
 
-//void VWidget::DrawPicScaled (int X, int Y, int Handle, float scaleX, float scaleY, float Alpha, int Trans);
 IMPLEMENT_FUNCTION(VWidget, DrawPicScaled) {
-  P_GET_INT_OPT(Translation, 0);
-  P_GET_FLOAT_OPT(Alpha, 1.0f);
-  P_GET_FLOAT(scaleY);
-  P_GET_FLOAT(scaleX);
-  P_GET_INT(Handle);
-  P_GET_INT(Y);
-  P_GET_INT(X);
-  P_GET_SELF;
-  Self->DrawPicScaled(X, Y, Handle, scaleX, scaleY, Alpha, Translation);
+  int X, Y, Handle;
+  float scaleX, scaleY;
+  VOptParamFloat Alpha(1.0f);
+  VOptParamInt Translation(0);
+  vobjGetParamSelf(X, Y, Handle, scaleX, scaleY, Alpha, Translation);
+  if (Self) Self->DrawPicScaled(X, Y, Handle, scaleX, scaleY, Alpha, Translation);
 }
 
 IMPLEMENT_FUNCTION(VWidget, DrawShadowedPic) {
-  P_GET_INT(Handle);
-  P_GET_INT(Y);
-  P_GET_INT(X);
-  P_GET_SELF;
-  Self->DrawShadowedPic(X, Y, Handle);
+  int X, Y, Handle;
+  vobjGetParamSelf(X, Y, Handle);
+  if (Self) Self->DrawShadowedPic(X, Y, Handle);
 }
 
 IMPLEMENT_FUNCTION(VWidget, FillRectWithFlat) {
-  P_GET_NAME(Name);
-  P_GET_INT(Height);
-  P_GET_INT(Width);
-  P_GET_INT(Y);
-  P_GET_INT(X);
-  P_GET_SELF;
-  Self->FillRectWithFlat(X, Y, Width, Height, Name);
+  int X, Y, Width, Height;
+  VName Name;
+  vobjGetParamSelf(X, Y, Width, Height, Name);
+  if (Self) Self->FillRectWithFlat(X, Y, Width, Height, Name);
 }
 
 IMPLEMENT_FUNCTION(VWidget, FillRectWithFlatRepeat) {
-  P_GET_NAME(Name);
-  P_GET_INT(Height);
-  P_GET_INT(Width);
-  P_GET_INT(Y);
-  P_GET_INT(X);
-  P_GET_SELF;
-  Self->FillRectWithFlatRepeat(X, Y, Width, Height, Name);
+  int X, Y, Width, Height;
+  VName Name;
+  vobjGetParamSelf(X, Y, Width, Height, Name);
+  if (Self) Self->FillRectWithFlatRepeat(X, Y, Width, Height, Name);
 }
 
 IMPLEMENT_FUNCTION(VWidget, FillRect) {
-  P_GET_FLOAT_OPT(alpha, 1.0f);
-  P_GET_INT(color);
-  P_GET_INT(Height);
-  P_GET_INT(Width);
-  P_GET_INT(Y);
-  P_GET_INT(X);
-  P_GET_SELF;
-  Self->FillRect(X, Y, Width, Height, color, alpha);
+  int X, Y, Width, Height;
+  vuint32 color;
+  VOptParamFloat alpha(1.0f);
+  vobjGetParamSelf(X, Y, Width, Height, color, alpha);
+  if (Self) Self->FillRect(X, Y, Width, Height, color, alpha);
+}
+
+IMPLEMENT_FUNCTION(VWidget, DrawRect) {
+  int X, Y, Width, Height;
+  vuint32 color;
+  VOptParamFloat alpha(1.0f);
+  vobjGetParamSelf(X, Y, Width, Height, color, alpha);
+  if (Self) Self->DrawRect(X, Y, Width, Height, color, alpha);
 }
 
 IMPLEMENT_FUNCTION(VWidget, ShadeRect) {
-  P_GET_FLOAT(Shade);
-  P_GET_INT(Height);
-  P_GET_INT(Width);
-  P_GET_INT(Y);
-  P_GET_INT(X);
-  P_GET_SELF;
-  Self->ShadeRect(X, Y, Width, Height, Shade);
+  int X, Y, Width, Height;
+  float Shade;
+  vobjGetParamSelf(X, Y, Width, Height, Shade);
+  if (Self) Self->ShadeRect(X, Y, Width, Height, Shade);
+}
+
+IMPLEMENT_FUNCTION(VWidget, DrawLine) {
+  int X1, Y1, X2, Y2;
+  vuint32 color;
+  VOptParamFloat alpha(1.0f);
+  vobjGetParamSelf(X1, Y1, X2, Y2, color, alpha);
+  if (Self) Self->DrawLine(X1, Y1, X2, Y2, color, alpha);
 }
 
 IMPLEMENT_FUNCTION(VWidget, SetFont) {
-  P_GET_NAME(FontName);
-  P_GET_SELF;
-  Self->SetFont(FontName);
+  VName FontName;
+  vobjGetParamSelf(FontName);
+  if (Self) Self->SetFont(FontName);
 }
 
 IMPLEMENT_FUNCTION(VWidget, SetTextAlign) {
-  P_GET_INT(valign);
-  P_GET_INT(halign);
-  P_GET_SELF;
-  Self->SetTextAlign((halign_e)halign, (valign_e)valign);
+  int halign, valign;
+  vobjGetParamSelf(halign, valign);
+  if (Self) Self->SetTextAlign((halign_e)halign, (valign_e)valign);
 }
 
 IMPLEMENT_FUNCTION(VWidget, SetTextShadow) {
-  P_GET_BOOL(State);
-  P_GET_SELF;
-  Self->SetTextShadow(State);
+  bool State;
+  vobjGetParamSelf(State);
+  if (Self) Self->SetTextShadow(State);
 }
 
 IMPLEMENT_FUNCTION(VWidget, TextWidth) {
-  P_GET_STR(text);
-  P_GET_SELF;
-  RET_INT(Self->TextWidth(text));
+  VStr text;
+  vobjGetParamSelf(text);
+  RET_INT(Self ? Self->TextWidth(text) : 0);
 }
 
 IMPLEMENT_FUNCTION(VWidget, StringWidth) {
-  P_GET_STR(text);
-  P_GET_SELF;
-  RET_INT(Self->TextWidth(text));
+  VStr text;
+  vobjGetParamSelf(text);
+  RET_INT(Self ? Self->TextWidth(text) : 0);
 }
 
 IMPLEMENT_FUNCTION(VWidget, TextHeight) {
-  P_GET_STR(text);
-  P_GET_SELF;
-  RET_INT(Self->TextHeight(text));
+  VStr text;
+  vobjGetParamSelf(text);
+  RET_INT(Self ? Self->TextHeight(text) : 0);
 }
 
 IMPLEMENT_FUNCTION(VWidget, FontHeight) {
-  P_GET_SELF;
-  RET_INT(Self->FontHeight());
+  vobjGetParamSelf();
+  RET_INT(Self ? Self->FontHeight() : 0);
 }
 
 IMPLEMENT_FUNCTION(VWidget, SplitText) {
-  P_GET_BOOL_OPT(trimRight, true);
-  P_GET_INT(MaxWidth);
-  P_GET_PTR(TArray<VSplitLine>, Lines);
-  P_GET_STR(Text);
-  P_GET_SELF;
-  RET_INT(Self->Font->SplitText(Text, *Lines, MaxWidth, trimRight));
+  VStr Text;
+  TArray<VSplitLine> *Lines;
+  int MaxWidth;
+  VOptParamBool trimRight(true);
+  vobjGetParamSelf(Text, Lines, MaxWidth, trimRight);
+  RET_INT(Self ? Self->Font->SplitText(Text, *Lines, MaxWidth, trimRight) : 0);
 }
 
 IMPLEMENT_FUNCTION(VWidget, SplitTextWithNewlines) {
-  P_GET_BOOL_OPT(trimRight, true);
-  P_GET_INT(MaxWidth);
-  P_GET_STR(Text);
-  P_GET_SELF;
-  RET_STR(Self->Font->SplitTextWithNewlines(Text, MaxWidth, trimRight));
+  VStr Text;
+  int MaxWidth;
+  VOptParamBool trimRight(true);
+  vobjGetParamSelf(Text, MaxWidth, trimRight);
+  RET_STR(Self ? Self->Font->SplitTextWithNewlines(Text, MaxWidth, trimRight) : VStr::EmptyString);
 }
 
 IMPLEMENT_FUNCTION(VWidget, DrawText) {
-  P_GET_FLOAT_OPT(Alpha, 1.0f);
-  P_GET_INT_OPT(BoldColor, CR_UNTRANSLATED);
-  P_GET_INT_OPT(Color, CR_UNTRANSLATED);
-  P_GET_STR(String);
-  P_GET_INT(Y);
-  P_GET_INT(X);
-  P_GET_SELF;
-  Self->DrawText(X, Y, String, Color, BoldColor, Alpha);
+  int X, Y;
+  VStr String;
+  VOptParamInt Color(CR_UNTRANSLATED);
+  VOptParamInt BoldColor(CR_UNTRANSLATED);
+  VOptParamFloat Alpha(1.0f);
+  vobjGetParamSelf(X, Y, String, Color, BoldColor, Alpha);
+  if (Self) Self->DrawText(X, Y, String, Color, BoldColor, Alpha);
 }
 
 IMPLEMENT_FUNCTION(VWidget, DrawCursor) {
-  P_GET_SELF;
-  Self->DrawCursor();
+  vobjGetParamSelf();
+  if (Self) Self->DrawCursor();
 }
 
 IMPLEMENT_FUNCTION(VWidget, DrawCursorAt) {
   int cx, cy;
   vobjGetParamSelf(cx, cy);
-  Self->DrawCursorAt(cx, cy);
+  if (Self) Self->DrawCursorAt(cx, cy);
 }
 
 IMPLEMENT_FUNCTION(VWidget, SetCursorPos) {
@@ -1397,36 +1425,36 @@ IMPLEMENT_FUNCTION(VWidget, SetCursorPos) {
 }
 
 IMPLEMENT_FUNCTION(VWidget, get_CursorX) {
-  P_GET_SELF;
-  RET_INT(Self->GetCursorX());
+  vobjGetParamSelf();
+  RET_INT(Self ? Self->GetCursorX() : 0);
 }
 
 IMPLEMENT_FUNCTION(VWidget, get_CursorY) {
-  P_GET_SELF;
-  RET_INT(Self->GetCursorY());
+  vobjGetParamSelf();
+  RET_INT(Self ? Self->GetCursorY() : 0);
 }
 
 IMPLEMENT_FUNCTION(VWidget, set_CursorX) {
   int v;
   vobjGetParamSelf(v);
-  Self->SetCursorX(v);
+  if (Self) Self->SetCursorX(v);
 }
 
 IMPLEMENT_FUNCTION(VWidget, set_CursorY) {
   int v;
   vobjGetParamSelf(v);
-  Self->SetCursorY(v);
+  if (Self) Self->SetCursorY(v);
 }
 
 IMPLEMENT_FUNCTION(VWidget, FindTextColor) {
-  P_GET_STR(Name);
+  VStr Name;
+  vobjGetParam(Name);
   RET_INT(VFont::FindTextColor(*Name.ToLower()));
 }
 
 IMPLEMENT_FUNCTION(VWidget, TranslateXY) {
-  P_GET_PTR(float, py);
-  P_GET_PTR(float, px);
-  P_GET_SELF;
+  float *px, *py;
+  vobjGetParamSelf(px, py);
   if (px) *px = (Self->ClipRect.ScaleX*(*px)+Self->ClipRect.OriginX)/fScaleX;
   if (py) *py = (Self->ClipRect.ScaleY*(*py)+Self->ClipRect.OriginY)/fScaleY;
 }

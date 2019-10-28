@@ -60,7 +60,8 @@ override void OnDraw () {
   SetOrigin((GetVirtualWidth()-Width)/2, (atTop ? 2+16 : GetVirtualHeight()-Height-2));
   SetFont('smallfont');
   SetTextAlign(hleft, vtop);
-  ShadeRect(0, 0, Width, Height, GetCvarF('menu_darkening'));
+  ShadeRect(0, 0, Width, Height, /*GetCvarF('menu_darkening')*/0.8);
+  DrawRect(0, 0, Width, Height, RGB(255, 127, 0));
   DrawText(4, 4, mText, CR_ORANGE);
 }
 

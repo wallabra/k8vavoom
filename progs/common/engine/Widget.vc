@@ -198,6 +198,9 @@ native final void DrawShadowedPic (int X, int Y, int Handle);
 native final void FillRectWithFlat (int x, int y, int width, int height, name Name);
 native final void FillRectWithFlatRepeat (int x, int y, int width, int height, name Name);
 native final void FillRect (int x, int y, int width, int height, int color, optional float alpha/*=1.0*/);
+// the last point will not be drawn
+native final void DrawLine (int x0, int y0, int x1, int y1, int color, optional float alpha/*=1.0*/);
+native final void DrawRect (int x, int y, int width, int height, int color, optional float alpha/*=1.0*/);
 // darkens a screen region
 native final void ShadeRect (int x, int y, int w, int h, float shade);
 
@@ -220,8 +223,7 @@ native final int SplitText (string Text, out array!SplitLine Lines, int Maxwidth
 // splits text into lines that fit in specified width by inserting newlines (trimRight default is true)
 native final string SplitTextWithNewlines (string Text, int Maxwidth, optional bool trimRight);
 // draws text
-native final void DrawText (int X, int Y, string Text, optional int Color,
-  optional int BoldColor, optional float Alpha);
+native final void DrawText (int X, int Y, string Text, optional int Color, optional int BoldColor, optional float Alpha);
 // draws a cursor at the end of last drawn string
 native final void DrawCursor ();
 // doesn't change current cursor position

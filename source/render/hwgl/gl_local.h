@@ -658,19 +658,23 @@ public:
   virtual void EndParticles () override;
 
   // drawing
-  virtual void DrawPic(float, float, float, float, float, float, float, float,
-    VTexture*, VTextureTranslation*, float) override;
-  virtual void DrawPicShadow(float, float, float, float, float, float, float,
-    float, VTexture*, float) override;
-  virtual void FillRectWithFlat(float, float, float, float, float, float, float,
-    float, VTexture*) override;
-  virtual void FillRectWithFlatRepeat(float, float, float, float, float, float, float,
-    float, VTexture*) override;
-  virtual void FillRect(float, float, float, float, vuint32, float alpha=1.0f) override;
-  virtual void ShadeRect(int, int, int, int, float) override;
-  virtual void DrawConsoleBackground(int) override;
-  virtual void DrawSpriteLump(float, float, float, float, VTexture*,
-    VTextureTranslation*, bool) override;
+  virtual void DrawPic (float x1, float y1, float x2, float y2,
+                        float s1, float t1, float s2, float t2,
+                        VTexture *Tex, VTextureTranslation *Trans, float Alpha) override;
+  virtual void DrawPicShadow (float x1, float y1, float x2, float y2,
+                              float s1, float t1, float s2, float t2,
+                              VTexture *Tex, float shade) override;
+  virtual void FillRectWithFlat (float x1, float y1, float x2, float y2,
+                                 float s1, float t1, float s2, float t2, VTexture *Tex) override;
+  virtual void FillRectWithFlatRepeat (float x1, float y1, float x2, float y2,
+                                       float s1, float t1, float s2, float t2, VTexture *Tex) override;
+  virtual void FillRect (float x1, float y1, float x2, float y2, vuint32 color, float alpha=1.0f) override;
+  virtual void DrawRect (float x1, float y1, float x2, float y2, vuint32 color, float alpha=1.0f) override;
+  virtual void ShadeRect (float x1, float y1, float x2, float y2, float darkening) override;
+  virtual void DrawLine (float x1, float y1, float x2, float y2, vuint32 color, float alpha=1.0f) override;
+  virtual void DrawConsoleBackground (int h) override;
+  virtual void DrawSpriteLump (float x1, float y1, float x2, float y2,
+                               VTexture *Tex, VTextureTranslation *Translation, bool flip) override;
 
   virtual void BeginTexturedPolys () override;
   virtual void EndTexturedPolys () override;
@@ -678,7 +682,7 @@ public:
 
   // automap
   virtual void StartAutomap (bool asOverlay) override;
-  virtual void DrawLine (float x1, float y1, vuint32 c1, float x2, float y2, vuint32 c2) override;
+  virtual void DrawLineAM (float x1, float y1, vuint32 c1, float x2, float y2, vuint32 c2) override;
   virtual void EndAutomap () override;
 
   // advanced drawing.

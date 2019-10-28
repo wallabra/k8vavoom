@@ -641,6 +641,47 @@ IMPLEMENT_FREE_FUNCTION(VObject, R_FillRect) {
 
 //==========================================================================
 //
+//  R_ShadeRect
+//
+//==========================================================================
+IMPLEMENT_FREE_FUNCTION(VObject, R_ShadeRect) {
+  float x, y, width, height;
+  float darken;
+  vobjGetParam(x, y, width, height, darken);
+  if (Drawer) Drawer->ShadeRect(x*fScaleX, y*fScaleY, (x+width)*fScaleX, (y+height)*fScaleY, darken);
+}
+
+
+//==========================================================================
+//
+//  R_DrawRect
+//
+//==========================================================================
+IMPLEMENT_FREE_FUNCTION(VObject, R_DrawRect) {
+  float x, y, width, height;
+  vuint32 color;
+  VOptParamFloat alpha(1.0f);
+  vobjGetParam(x, y, width, height, color, alpha);
+  if (Drawer) Drawer->DrawRect(x*fScaleX, y*fScaleY, (x+width)*fScaleX, (y+height)*fScaleY, color, alpha);
+}
+
+
+//==========================================================================
+//
+//  R_DrawLine
+//
+//==========================================================================
+IMPLEMENT_FREE_FUNCTION(VObject, R_DrawLine) {
+  float x1, y1, x2, y2;
+  vuint32 color;
+  VOptParamFloat alpha(1.0f);
+  vobjGetParam(x1, y1, x2, y2, color, alpha);
+  if (Drawer) Drawer->DrawLine(x1*fScaleX, y1*fScaleY, x2*fScaleX, y2*fScaleY, color, alpha);
+}
+
+
+//==========================================================================
+//
 //  R_GetAspectRatio
 //
 //==========================================================================

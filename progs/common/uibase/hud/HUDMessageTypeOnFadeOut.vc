@@ -119,10 +119,10 @@ override void Tick (float DeltaTime) {
 
 //==========================================================================
 //
-//  DrawLine
+//  DrawTextLine
 //
 //==========================================================================
-override void DrawLine (int LineIdx, int x, int y, string Text) {
+override void DrawTextLine (int LineIdx, int x, int y, string Text) {
   if (State == 0) {
     if (LineIdx < CurrentLine) {
       DrawText(x, y, Text, MsgColor, CR_YELLOW, MsgAlpha);
@@ -130,7 +130,7 @@ override void DrawLine (int LineIdx, int x, int y, string Text) {
       DrawText(x, y, substrutf8(Text, 0, LineChars), MsgColor, CR_YELLOW, MsgAlpha);
     }
   } else {
-    ::DrawLine(LineIdx, x, y, Text);
+    ::DrawTextLine(LineIdx, x, y, Text);
   }
 }
 

@@ -1133,7 +1133,7 @@ static bool AM_clipMline (mline_t *ml, fline_t *fl) {
 //
 //==========================================================================
 static void AM_drawFline (fline_t *fl, vuint32 color) {
-  Drawer->DrawLine(fl->a.x, fl->a.y, color, fl->b.x, fl->b.y, color);
+  Drawer->DrawLineAM(fl->a.x, fl->a.y, color, fl->b.x, fl->b.y, color);
 }
 #endif
 
@@ -1150,7 +1150,7 @@ static void AM_drawMline (mline_t *ml, vuint32 color) {
   fline_t fl;
   if (AM_clipMline(ml, &fl)) AM_drawFline(&fl, color); // draws it on frame buffer using fb coords
 #else
-  Drawer->DrawLine(CXMTOFF(ml->a.x), CYMTOFF(ml->a.y), color, CXMTOFF(ml->b.x), CYMTOFF(ml->b.y), color);
+  Drawer->DrawLineAM(CXMTOFF(ml->a.x), CYMTOFF(ml->a.y), color, CXMTOFF(ml->b.x), CYMTOFF(ml->b.y), color);
 #endif
 }
 
@@ -1909,17 +1909,17 @@ static void AM_drawOneLight (const VRenderLevelPublic::LightInfo &lt) {
   float x = lt.origin.x;
   float y = lt.origin.y;
   if (am_rotate) AM_rotatePoint(&x, &y);
-  Drawer->DrawLine(CXMTOFF(x-2), CYMTOFF(y-2), lt.color, CXMTOFF(x+2), CYMTOFF(y-2), lt.color);
-  Drawer->DrawLine(CXMTOFF(x+2), CYMTOFF(y-2), lt.color, CXMTOFF(x+2), CYMTOFF(y+2), lt.color);
-  Drawer->DrawLine(CXMTOFF(x+2), CYMTOFF(y+2), lt.color, CXMTOFF(x-2), CYMTOFF(y+2), lt.color);
-  Drawer->DrawLine(CXMTOFF(x-2), CYMTOFF(y+2), lt.color, CXMTOFF(x-2), CYMTOFF(y-2), lt.color);
+  Drawer->DrawLineAM(CXMTOFF(x-2), CYMTOFF(y-2), lt.color, CXMTOFF(x+2), CYMTOFF(y-2), lt.color);
+  Drawer->DrawLineAM(CXMTOFF(x+2), CYMTOFF(y-2), lt.color, CXMTOFF(x+2), CYMTOFF(y+2), lt.color);
+  Drawer->DrawLineAM(CXMTOFF(x+2), CYMTOFF(y+2), lt.color, CXMTOFF(x-2), CYMTOFF(y+2), lt.color);
+  Drawer->DrawLineAM(CXMTOFF(x-2), CYMTOFF(y+2), lt.color, CXMTOFF(x-2), CYMTOFF(y-2), lt.color);
   // draw circle
   float px = 0, py = 0;
   for (float angle = 0; angle <= 360; angle += 10) {
     float x0 = x+msin(angle)*lt.radius;
     float y0 = y-mcos(angle)*lt.radius;
     if (angle) {
-      Drawer->DrawLine(CXMTOFF(px), CYMTOFF(py), lt.color, CXMTOFF(x0), CYMTOFF(y0), lt.color);
+      Drawer->DrawLineAM(CXMTOFF(px), CYMTOFF(py), lt.color, CXMTOFF(x0), CYMTOFF(y0), lt.color);
     }
     px = x0;
     py = y0;

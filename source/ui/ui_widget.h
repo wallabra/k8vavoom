@@ -221,6 +221,8 @@ public:
   void FillRectWithFlatRepeat (int, int, int, int, VName);
   void FillRect (int, int, int, int, int, float);
   void ShadeRect (int, int, int, int, float);
+  void DrawRect (int X, int Y, int Width, int Height, int color, float alpha);
+  void DrawLine (int aX0, int aY0, int aX1, int aY1, int color, float alpha);
 
   void SetFont (VFont*);
   void SetFont (VName);
@@ -315,7 +317,9 @@ public:
   DECLARE_FUNCTION(FillRectWithFlat)
   DECLARE_FUNCTION(FillRectWithFlatRepeat)
   DECLARE_FUNCTION(FillRect)
+  DECLARE_FUNCTION(DrawRect)
   DECLARE_FUNCTION(ShadeRect)
+  DECLARE_FUNCTION(DrawLine)
 
   DECLARE_FUNCTION(SetFont)
   DECLARE_FUNCTION(SetTextAlign)

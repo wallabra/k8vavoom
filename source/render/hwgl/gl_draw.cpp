@@ -175,20 +175,69 @@ void VOpenGLDrawer::FillRect (float x1, float y1, float x2, float y2, vuint32 co
 //  especially now that we use the small hudfont in the menus...
 //
 //==========================================================================
-void VOpenGLDrawer::ShadeRect (int x, int y, int w, int h, float darkening) {
+void VOpenGLDrawer::ShadeRect (float x1, float y1, float x2, float y2, float darkening) {
   DrawFixedCol.Activate();
   DrawFixedCol.SetColor(0.0f, 0.0f, 0.0f, darkening);
   DrawFixedCol.UploadChangedUniforms();
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
   //glEnable(GL_BLEND);
   glBegin(GL_QUADS);
-    glVertex2f(x, y);
-    glVertex2f(x+w, y);
-    glVertex2f(x+w, y+h);
-    glVertex2f(x, y+h);
+    glVertex2f(x1, y1);
+    glVertex2f(x2, y1);
+    glVertex2f(x2, y2);
+    glVertex2f(x1, y2);
   glEnd();
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   //glDisable(GL_BLEND);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::DrawLine
+//
+//==========================================================================
+void VOpenGLDrawer::DrawLine (float x1, float y1, float x2, float y2, vuint32 color, float alpha) {
+  if (alpha < 0.0f) return;
+  DrawFixedCol.Activate();
+  if (alpha < 1.0f) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
+  DrawFixedCol.SetColor(
+    (GLfloat)(((color>>16)&255)/255.0f),
+    (GLfloat)(((color>>8)&255)/255.0f),
+    (GLfloat)((color&255)/255.0f), min2(1.0f, alpha));
+  DrawFixedCol.UploadChangedUniforms();
+  glBegin(GL_LINES);
+    glVertex2f(x1, y1);
+    glVertex2f(x2, y2);
+  glEnd();
+  if (alpha < 1.0f) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::DrawRect
+//
+//==========================================================================
+void VOpenGLDrawer::DrawRect (float x1, float y1, float x2, float y2, vuint32 color, float alpha) {
+  if (alpha < 0.0f) return;
+  DrawFixedCol.Activate();
+  if (alpha < 1.0f) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
+  DrawFixedCol.SetColor(
+    (GLfloat)(((color>>16)&255)/255.0f),
+    (GLfloat)(((color>>8)&255)/255.0f),
+    (GLfloat)((color&255)/255.0f), min2(1.0f, alpha));
+  DrawFixedCol.UploadChangedUniforms();
+  glBegin(GL_LINE_LOOP);
+    glVertex2f(x1, y1);
+    glVertex2f(x2, y1);
+    glVertex2f(x2, y2);
+    glVertex2f(x1, y2);
+    // last line point
+         if (y2 < y1) glVertex2f(x1, y2-1);
+    else if (y2 > y1) glVertex2f(x1, y2+1);
+  glEnd();
+  if (alpha < 1.0f) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 
@@ -274,10 +323,10 @@ void VOpenGLDrawer::StartAutomap (bool asOverlay) {
 
 //==========================================================================
 //
-//  VOpenGLDrawer::DrawLine
+//  VOpenGLDrawer::DrawLineAM
 //
 //==========================================================================
-void VOpenGLDrawer::DrawLine (float x1, float y1, vuint32 c1, float x2, float y2, vuint32 c2) {
+void VOpenGLDrawer::DrawLineAM (float x1, float y1, vuint32 c1, float x2, float y2, vuint32 c2) {
   SetColor(c1);
   glVertex2f(x1, y1);
   SetColor(c2);
