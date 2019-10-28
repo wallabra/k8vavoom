@@ -58,6 +58,15 @@ void VLMapCache::clearCacheInfo () noexcept {
 
 //==========================================================================
 //
+//  VLMapCache::releaseAtlas
+//
+//==========================================================================
+void VLMapCache::releaseAtlas (vuint32 id) noexcept {
+}
+
+
+//==========================================================================
+//
 //  VLMapCache::allocAtlas
 //
 //==========================================================================
@@ -94,6 +103,7 @@ VRenderLevelLightmap::VRenderLevelLightmap (VLevel *ALevel)
   //, cacheframecount(0)
   //, freeblocks(nullptr)
   , lmcache()
+  , nukeLightmapsOnNextFrame(false)
   , invalidateRelight(false)
 {
   NeedsInfiniteFarClip = false;

@@ -48,6 +48,7 @@ static VCvarI r_lmap_filtering("r_lmap_filtering", "1", "Static lightmap filteri
 static VCvarB r_lmap_lowfilter("r_lmap_lowfilter", false, "Filter lightmaps without extra samples?", CVAR_Archive);
 static VCvarB r_static_add("r_static_add", true, "Are static lights additive in regular renderer?", CVAR_Archive);
 static VCvarF r_specular("r_specular", "0.1", "Specular light in regular renderer.", CVAR_Archive);
+static VCvarI r_lmap_atlas_limit("r_lmap_atlas_limit", "20", "Nuke lightmap cache if it reached this number of atlases.", CVAR_Archive);
 
 extern VCvarB dbg_adv_light_notrace_mark;
 
@@ -1218,6 +1219,7 @@ void VRenderLevelLightmap::BuildLightMap (surface_t *surf) {
 void VRenderLevelLightmap::FlushCaches () {
   lmcache.resetAllBlocks();
   lmcache.reset();
+  nukeLightmapsOnNextFrame = false;
   advanceCacheFrame(); // reset all chains
 }
 
@@ -1357,10 +1359,18 @@ bool VRenderLevelLightmap::BuildSurfaceLightmap (surface_t *surface) {
 //==========================================================================
 void VRenderLevelLightmap::ProcessCachedSurfaces () {
   if (LMSurfList.length() == 0) return; // nothing to do here
+  if (nukeLightmapsOnNextFrame) {
+    GCon->Log(NAME_Warning, "*** previous frame requested lightmaps nuking...");
+    FlushCaches();
+  }
   // first pass, try to perform normal allocation
   bool success = true;
   for (auto &&sfc : LMSurfList) if (!BuildSurfaceLightmap(sfc)) { success = false; break; }
-  if (success) return;
+  if (success) {
+    const int lim = r_lmap_atlas_limit.asInt();
+    if (lim > 0 && lmcache.getAtlasCount() > lim) nukeLightmapsOnNextFrame = true;
+    return;
+  }
   // second pass, nuke all lightmap caches, and do it all again
   GCon->Log(NAME_Warning, "*** out of surface cache blocks, retrying...");
   FlushCaches();

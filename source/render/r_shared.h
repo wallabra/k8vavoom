@@ -405,6 +405,8 @@ public:
   V2DCache (const V2DCache &) = delete;
   V2DCache &operator = (const V2DCache &) = delete;
 
+  inline int getAtlasCount () const noexcept { return atlases.length(); }
+
   // this resets all allocated blocks (but doesn't deallocate atlases)
   void reset () noexcept {
     clearCacheInfo();
@@ -412,6 +414,10 @@ public:
     blockpool.clear();
     freeblocks = nullptr;
     //initLightChain();
+    // release all lightmap atlases
+    for (int idx = atlases.length()-1; idx >= 0; --idx) releaseAtlas(atlases[idx].id);
+    atlases.reset();
+    /*
     // setup lightmap atlases (no allocations, all atlases are free)
     for (auto &&it : atlases) {
       vassert(it.isValid());
@@ -422,6 +428,7 @@ public:
       block->atlasid = it.id;
       it.blocks = block;
     }
+    */
   }
 
   // zero all `lastframe` fields
@@ -435,6 +442,8 @@ public:
     }
     lastOldFreeFrame = 0;
   }
+
+  virtual void releaseAtlas (vuint32 id) noexcept = 0;
 
   virtual void resetBlock (Item *block) noexcept = 0;
 
@@ -512,6 +521,7 @@ public:
         }
         if (!blines->owner && !blines->lprev && !blines->lnext) blines = freeBlock(blines, true);
       }
+      //FIXME: release free atlases here
     }
     if (!freeblocks) {
       //Sys_Error("No more free blocks");

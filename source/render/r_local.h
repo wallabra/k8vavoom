@@ -737,6 +737,7 @@ class VLMapCache : public V2DCache<surfcache_t> {
 public:
   VLMapCache () noexcept : V2DCache<surfcache_t>() {}
 
+  virtual void releaseAtlas (vuint32 id) noexcept override;
   virtual void resetBlock (Item *block) noexcept override;
   virtual void clearCacheInfo () noexcept override;
   virtual AtlasInfo allocAtlas (vuint32 aid, int minwidth, int minheight) noexcept override;
@@ -785,6 +786,7 @@ private:
   */
   VLMapCache lmcache;
   TArray<surface_t *> LMSurfList; // list of all surfaces with lightmaps
+  bool nukeLightmapsOnNextFrame;
 
   bool invalidateRelight;
 
