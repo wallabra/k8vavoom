@@ -691,6 +691,11 @@ public:
   virtual void GetProjectionMatrix (VMatrix4 &mat) override;
   virtual void GetModelMatrix (VMatrix4 &mat) override;
 
+  // call this before doing light scissor calculations (can be called once per scene)
+  // sets `vpmats`
+  // scissor setup will use those matrices (but won't modify them)
+  virtual void LoadVPMatrices () override;
+  // returns 0 if scissor has no sense; -1 if scissor is empty, and 1 if scissor is set
   virtual int SetupLightScissor (const TVec &org, float radius, int scoord[4], const TVec *geobbox=nullptr) override;
   virtual void ResetScissor () override;
 

@@ -170,6 +170,9 @@ protected:
   static void callICB (int phase);
 
 public:
+  VViewPortMats vpmats;
+
+public:
   static void RegisterICB (void (*cb) (int phase));
 
 public:
@@ -315,6 +318,11 @@ public:
   virtual void GetProjectionMatrix (VMatrix4 &mat) = 0;
   virtual void GetModelMatrix (VMatrix4 &mat) = 0;
 
+  // call this before doing light scissor calculations (can be called once per scene)
+  // sets `vpmats`
+  // scissor setup will use those matrices (but won't modify them)
+  // also, `SetupViewOrg()` automatically call this method
+  virtual void LoadVPMatrices () = 0;
   // returns 0 if scissor has no sense; -1 if scissor is empty, and 1 if scissor is set
   virtual int SetupLightScissor (const TVec &org, float radius, int scoord[4], const TVec *geobbox=nullptr) = 0;
   virtual void ResetScissor () = 0;

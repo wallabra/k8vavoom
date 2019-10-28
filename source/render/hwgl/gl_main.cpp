@@ -955,6 +955,25 @@ void VOpenGLDrawer::GetModelMatrix (VMatrix4 &mat) {
 
 //==========================================================================
 //
+//  VOpenGLDrawer::LoadVPMatrices
+//
+//  call this before doing light scissor calculations (can be called once per scene)
+//  sets `projMat` and `modelMat`
+//  scissor setup will use those matrices (but won't modify them)
+//
+//==========================================================================
+void VOpenGLDrawer::LoadVPMatrices () {
+  glGetFloatv(GL_PROJECTION_MATRIX, vpmats.projMat[0]);
+  glGetFloatv(GL_MODELVIEW_MATRIX, vpmats.modelMat[0]);
+  GLint vport[4];
+  glGetIntegerv(GL_VIEWPORT, vport);
+  vpmats.vport.setOrigin(vport[0], vport[1]);
+  vpmats.vport.setSize(vport[2], vport[3]);
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::SetupLightScissor
 //
 //  returns:
@@ -965,9 +984,6 @@ void VOpenGLDrawer::GetModelMatrix (VMatrix4 &mat) {
 //==========================================================================
 int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[4], const TVec *geobbox) {
   int tmpscoord[4];
-  VMatrix4 pmat, mmat;
-  glGetFloatv(GL_PROJECTION_MATRIX, pmat[0]);
-  glGetFloatv(GL_MODELVIEW_MATRIX, mmat[0]);
 
   if (!scoord) scoord = tmpscoord;
 
@@ -978,8 +994,16 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     return 0;
   }
 
+  // just in case
+  if (!vpmats.vport.isValid()) {
+    scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
+    currentSVScissor[SCS_MINX] = currentSVScissor[SCS_MINY] = currentSVScissor[SCS_MAXX] = currentSVScissor[SCS_MAXY] = 0;
+    glDisable(GL_SCISSOR_TEST);
+    return 0;
+  }
+
   // transform into world coords
-  TVec inworld = mmat*org;
+  TVec inworld = vpmats.toWorld(org);
 
   // the thing that should not be (completely behind)
   if (inworld.z-radius > -1.0f) {
@@ -1000,7 +1024,6 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
   bbox[3+2] = min2(-1.0f, inworld.z+radius); // clamp to znear
 
   // clamp it with geometry bbox, if there is any
-#if 1
   if (geobbox) {
     float gbb[6];
     gbb[0] = geobbox[0].x;
@@ -1011,7 +1034,7 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     gbb[5] = geobbox[1].z;
     float trbb[6] = { FLT_MAX, FLT_MAX, FLT_MAX, -FLT_MAX, -FLT_MAX, -FLT_MAX };
     for (unsigned f = 0; f < 8; ++f) {
-      TVec vtx = mmat*TVec(gbb[BBoxVertexIndex[f][0]], gbb[BBoxVertexIndex[f][1]], gbb[BBoxVertexIndex[f][2]]);
+      const TVec vtx = vpmats.toWorld(TVec(gbb[BBoxVertexIndex[f][0]], gbb[BBoxVertexIndex[f][1]], gbb[BBoxVertexIndex[f][2]]));
       trbb[0] = min2(trbb[0], vtx.x);
       trbb[1] = min2(trbb[1], vtx.y);
       trbb[2] = min2(trbb[2], vtx.z);
@@ -1052,10 +1075,10 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     }
 
     /*
-    TVec bc0 = mmat*geobbox[0];
-    TVec bc1 = mmat*geobbox[1];
-    TVec bmin = TVec(min2(bc0.x, bc1.x), min2(bc0.y, bc1.y), min2(-1.0f, min2(bc0.z, bc1.z)));
-    TVec bmax = TVec(max2(bc0.x, bc1.x), max2(bc0.y, bc1.y), min2(-1.0f, max2(bc0.z, bc1.z)));
+    const TVec bc0 = vpmats.toWorld(geobbox[0]);
+    const TVec bc1 = vpmats.toWorld(geobbox[1]);
+    const TVec bmin = TVec(min2(bc0.x, bc1.x), min2(bc0.y, bc1.y), min2(-1.0f, min2(bc0.z, bc1.z)));
+    const TVec bmax = TVec(max2(bc0.x, bc1.x), max2(bc0.y, bc1.y), min2(-1.0f, max2(bc0.z, bc1.z)));
     if (bmin.x > bbox[0] || bmin.y > bbox[1] || bmin.z > bbox[2] ||
         bmax.x < bbox[3] || bmax.y < bbox[4] || bmax.z < bbox[5])
     {
@@ -1075,7 +1098,6 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     }
     */
   }
-#endif
 
   // setup depth bounds
   if (hasBoundsTest && gl_enable_depth_bounds) {
@@ -1093,8 +1115,8 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
 
     // for reverse z, projz is always 1, so we can simply use pjw
     if (!revZ) {
-      pjwz0 *= pmat.Transform2OnlyZ(TVec(inworld.x, inworld.y, ofsz0));
-      pjwz1 *= pmat.Transform2OnlyZ(TVec(inworld.x, inworld.y, ofsz1));
+      pjwz0 *= vpmats.projMat.Transform2OnlyZ(TVec(inworld.x, inworld.y, ofsz0));
+      pjwz1 *= vpmats.projMat.Transform2OnlyZ(TVec(inworld.x, inworld.y, ofsz1));
     }
 
     // transformation for [-1..1] z range
@@ -1111,35 +1133,18 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     glEnable(GL_DEPTH_BOUNDS_TEST_EXT);
   }
 
-  GLint vport[4];
-  glGetIntegerv(GL_VIEWPORT, vport);
-  if (vport[2] < 1 || vport[3] < 1) {
-    scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
-    currentSVScissor[SCS_MINX] = currentSVScissor[SCS_MINY] = currentSVScissor[SCS_MAXX] = currentSVScissor[SCS_MAXY] = 0;
-    glDisable(GL_SCISSOR_TEST);
-    return 0;
-  }
-  //GCon->Logf("vport: (%d,%d)-(%d,%d)", vport[0], vport[1], vport[2], vport[3]);
-
-  int scrx1 = vport[0]+vport[2]-1;
-  int scry1 = vport[1]+vport[3]-1;
-
-  const float scrw = vport[2]*0.5f;
-  const float scrh = vport[3]*0.5f;
+  const int scrx0 = vpmats.vport.x0;
+  const int scry0 = vpmats.vport.y0;
+  const int scrx1 = vpmats.vport.getX1();
+  const int scry1 = vpmats.vport.getY1();
 
   int minx = scrx1+64, miny = scry1+64;
-  int maxx = -(vport[0]-64), maxy = -(vport[1]-64);
+  int maxx = -(scrx0-64), maxy = -(scry0-64);
 
   // transform points, get min and max
   for (unsigned f = 0; f < 8; ++f) {
-    TVec vtx = TVec(bbox[BBoxVertexIndex[f][0]], bbox[BBoxVertexIndex[f][1]], bbox[BBoxVertexIndex[f][2]]);
-    TVec proj = pmat.Transform2OnlyXY(vtx); // we don't care about z here
-    const float pjw = -1.0f/vtx.z;
-    proj.x *= pjw;
-    proj.y *= pjw;
-    int winx = vport[0]+(int)((1.0f+proj.x)*scrw);
-    int winy = vport[1]+(int)((1.0f+proj.y)*scrh);
-    //GCon->Logf("x=%f; y=%f; win=(%d,%d)", proj.x, proj.y, winx, winy);
+    int winx, winy;
+    vpmats.project(TVec(bbox[BBoxVertexIndex[f][0]], bbox[BBoxVertexIndex[f][1]], bbox[BBoxVertexIndex[f][2]]), &winx, &winy);
 
     if (minx > winx) minx = winx;
     if (miny > winy) miny = winy;
@@ -1147,21 +1152,7 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     if (maxy < winy) maxy = winy;
   }
 
-#if 0
-  //GCon->Logf("  radius=%f; (%d,%d)-(%d,%d)", radius, minx, miny, maxx, maxy);
-  if (minx >= ScreenWidth || miny >= ScreenHeight || maxx < 0 || maxy < 0) {
-    scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
-    glDisable(GL_SCISSOR_TEST);
-    if (hasBoundsTest && gl_enable_depth_bounds) glDisable(GL_DEPTH_BOUNDS_TEST_EXT);
-    return 0;
-  }
-
-  minx = midval(0, minx, ScreenWidth-1);
-  miny = midval(0, miny, ScreenHeight-1);
-  maxx = midval(0, maxx, ScreenWidth-1);
-  maxy = midval(0, maxy, ScreenHeight-1);
-#else
-  if (minx > scrx1 || miny > scry1 || maxx < vport[0] || maxy < vport[1]) {
+  if (minx > scrx1 || miny > scry1 || maxx < scrx0 || maxy < scry0) {
     scoord[0] = scoord[1] = scoord[2] = scoord[3] = 0;
     currentSVScissor[SCS_MINX] = currentSVScissor[SCS_MINY] = currentSVScissor[SCS_MAXX] = currentSVScissor[SCS_MAXY] = 0;
     glDisable(GL_SCISSOR_TEST);
@@ -1169,20 +1160,10 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     return 0;
   }
 
-  minx = midval(vport[0], minx, scrx1);
-  miny = midval(vport[1], miny, scry1);
-  maxx = midval(vport[0], maxx, scrx1);
-  maxy = midval(vport[1], maxy, scry1);
-#endif
-
-  /*
-  int cx = (minx+maxx)/2;
-  int cy = (minx+maxx)/2;
-  minx = cx-32;
-  miny = cy-32;
-  maxx = cx+32;
-  maxy = cy+32;
-  */
+  minx = midval(scrx0, minx, scrx1);
+  miny = midval(scry0, miny, scry1);
+  maxx = midval(scrx0, maxx, scrx1);
+  maxy = midval(scry0, maxy, scry1);
 
   //GCon->Logf("  radius=%f; (%d,%d)-(%d,%d)", radius, minx, miny, maxx, maxy);
   const int wdt = maxx-minx+1;
@@ -1340,6 +1321,7 @@ void VOpenGLDrawer::SetupViewOrg () {
   } else {
     glDisable(GL_CLIP_PLANE0);
   }
+  LoadVPMatrices();
 }
 
 
