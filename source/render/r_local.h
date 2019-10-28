@@ -30,15 +30,15 @@
 #include "r_shared.h"
 #include "fmd2defs.h"
 
-// number of `surfcache_t` items in one pool entry
-#define NUM_CACHE_BLOCKS_IN_POOL_ENTRY  (4096)
 
+// ////////////////////////////////////////////////////////////////////////// //
 //#define MAX_SPRITE_MODELS  (10*1024)
 
 // was 0.1
 #define FUZZY_ALPHA  (0.7f)
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 // dynamic light types
 enum DLType {
   DLTYPE_Point,
@@ -53,6 +53,7 @@ enum DLType {
 };
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 // Sprites are patches with a special naming convention so they can be recognized by R_InitSprites.
 // The base name is NNNNFx or NNNNFxFx, with x indicating the rotation, x = 0, 1-7.
 // The sprite and frame specified by a thing_t is range checked at run time.
@@ -733,53 +734,13 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-struct VCacheBlockPoolEntry {
-  surfcache_t page[NUM_CACHE_BLOCKS_IN_POOL_ENTRY];
-  VCacheBlockPoolEntry *prev;
-};
-
-
-struct VCacheBlockPool {
+class VLMapCache : public V2DCache<surfcache_t> {
 public:
-  VCacheBlockPoolEntry *tail;
-  unsigned tailused;
-  unsigned entries; // full
+  VLMapCache () noexcept : V2DCache<surfcache_t>() {}
 
-public:
-  VCacheBlockPool () noexcept : tail(nullptr), tailused(0), entries(0) {}
-  VCacheBlockPool (const VCacheBlockPool &) = delete;
-  VCacheBlockPool &operator = (const VCacheBlockPool &) = delete;
-  ~VCacheBlockPool () noexcept { clear(); }
-
-  inline unsigned itemCount () noexcept { return entries*NUM_CACHE_BLOCKS_IN_POOL_ENTRY+tailused; }
-
-  void clear () noexcept {
-    while (tail) {
-      VCacheBlockPoolEntry *c = tail;
-      tail = c->prev;
-      Z_Free(c);
-    }
-    tailused = 0;
-    entries = 0;
-  }
-
-  surfcache_t *alloc () noexcept {
-    if (tail && tailused < NUM_CACHE_BLOCKS_IN_POOL_ENTRY) return &tail->page[tailused++];
-    if (tail) ++entries; // full entries counter
-    // allocate new pool entry
-    VCacheBlockPoolEntry *c = (VCacheBlockPoolEntry *)Z_Calloc(sizeof(VCacheBlockPoolEntry));
-    c->prev = tail;
-    tail = c;
-    tailused = 1;
-    return &tail->page[0];
-  }
-
-  void resetFrames () {
-    for (VCacheBlockPoolEntry *c = tail; c; c = c->prev) {
-      surfcache_t *s = &c->page[0];
-      for (unsigned count = NUM_CACHE_BLOCKS_IN_POOL_ENTRY; count--; ++s) s->lastframe = 0;
-    }
-  }
+  virtual void resetBlock (Item *block) noexcept override;
+  virtual void clearCacheInfo () noexcept override;
+  virtual AtlasInfo allocAtlas (vuint32 aid, int minwidth, int minheight) noexcept override;
 };
 
 
@@ -798,7 +759,7 @@ private:
   int c_seg_div;
 
   // used in lightmap atlas manager
-  vuint32 cacheframecount;
+  //vuint32 cacheframecount;
 
   // lightmaps
   rgba_t light_block[NUM_BLOCK_SURFS][BLOCK_WIDTH*BLOCK_HEIGHT];
@@ -817,10 +778,13 @@ private:
   */
 
   // surface (lightmap) cache
+  /*
   surfcache_t *freeblocks;
   surfcache_t *cacheblocks[NUM_BLOCK_SURFS];
   //surfcache_t blockbuf[NUM_CACHE_BLOCKS];
   VCacheBlockPool blockpool;
+  */
+  VLMapCache lmcache;
 
   bool invalidateRelight;
 
@@ -914,10 +878,10 @@ protected:
   // lightmap cache manager
   void FlushCaches ();
   void FlushOldCaches ();
-  surfcache_t *GetFreeBlock (bool forceAlloc=false);
-  surfcache_t *performBlockVSplit (int width, int height, surfcache_t *block); // used in `AllocBlock()`
-  surfcache_t *AllocBlock (int, int);
-  surfcache_t *FreeBlock (surfcache_t*, bool);
+  //surfcache_t *GetFreeBlock (bool forceAlloc=false);
+  //surfcache_t *performBlockVSplit (int width, int height, surfcache_t *block); // used in `AllocBlock()`
+  //surfcache_t *AllocBlock (int, int);
+  //surfcache_t *FreeBlock (surfcache_t*, bool);
 
   virtual void FreeSurfCache (surfcache_t *&block) override;
   virtual bool CacheSurface (surface_t*) override;

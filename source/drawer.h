@@ -29,7 +29,7 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct surface_t;
-struct surfcache_t;
+struct surfcache_t; // see "render/r_shared.h"
 struct mmdl_t;
 struct VMeshModel;
 class VPortal;
@@ -54,8 +54,6 @@ struct particle_t {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-struct surfcache_t; // see "render/r_shared.h"
-
 class VRenderLevelDrawer : public VRenderLevelPublic {
 protected:
   bool mIsShadowVolumeRenderer;

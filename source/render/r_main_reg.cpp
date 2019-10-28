@@ -27,6 +27,60 @@
 #include "r_local.h"
 
 
+//**************************************************************************
+//
+// VLMapCache
+//
+//**************************************************************************
+
+//==========================================================================
+//
+//  VLMapCache::resetBlock
+//
+//==========================================================================
+void VLMapCache::resetBlock (Item *block) noexcept {
+  if (block->surf) {
+    block->surf->CacheSurf = nullptr;
+    block->surf = nullptr;
+  }
+}
+
+
+//==========================================================================
+//
+//  VLMapCache::clearCacheInfo
+//
+//==========================================================================
+void VLMapCache::clearCacheInfo () noexcept {
+}
+
+
+//==========================================================================
+//
+//  VLMapCache::allocAtlas
+//
+//==========================================================================
+VLMapCache::AtlasInfo VLMapCache::allocAtlas (vuint32 aid, int minwidth, int minheight) noexcept {
+  AtlasInfo res;
+  if (minwidth > BLOCK_WIDTH || minheight > BLOCK_HEIGHT) {
+    GLog.Logf(NAME_Error, "requesting new atlas WITH INVALID SIZE! id=%u; minsize=(%d,%d)", aid, minwidth, minheight);
+  } else {
+    GLog.Logf("requesting new atlas; id=%u; minsize=(%d,%d)", aid, minwidth, minheight);
+    if (aid < NUM_BLOCK_SURFS) {
+      res.width = BLOCK_WIDTH;
+      res.height = BLOCK_HEIGHT;
+    }
+  }
+  return res;
+}
+
+
+//**************************************************************************
+//
+// VRenderLevelLightmap
+//
+//**************************************************************************
+
 //==========================================================================
 //
 //  VRenderLevelLightmap::VRenderLevelLightmap
@@ -36,15 +90,13 @@ VRenderLevelLightmap::VRenderLevelLightmap (VLevel *ALevel)
   : VRenderLevelShared(ALevel)
   , c_subdivides(0)
   , c_seg_div(0)
-  , cacheframecount(0)
-  , freeblocks(nullptr)
+  //, cacheframecount(0)
+  //, freeblocks(nullptr)
+  , lmcache()
   , invalidateRelight(false)
 {
   NeedsInfiniteFarClip = false;
   mIsShadowVolumeRenderer = false;
-
-  vassert(!blockpool.tail);
-  vassert(!blockpool.tailused);
 
   initLightChain();
 
@@ -72,11 +124,12 @@ void VRenderLevelLightmap::ClearQueues () {
 //==========================================================================
 void VRenderLevelLightmap::advanceCacheFrame () {
   light_chain_head = /*add_chain_head =*/ 0;
-  if (++cacheframecount == 0) {
-    cacheframecount = 1;
+  if (++lmcache.cacheframecount == 0) {
+    lmcache.cacheframecount = 1;
     memset(light_chain_used, 0, sizeof(light_chain_used));
     //memset(add_chain_used, 0, sizeof(add_chain_used));
-    blockpool.resetFrames();
+    //blockpool.resetFrames();
+    lmcache.zeroFrames();
   }
   //NukeLightmapCache();
 }
@@ -108,18 +161,18 @@ void VRenderLevelLightmap::initLightChain () {
 //==========================================================================
 void VRenderLevelLightmap::chainLightmap (surfcache_t *cache) {
   vassert(cache);
-  const vuint32 bnum = cache->blocknum;
+  const vuint32 bnum = ((VLMapCache::Item *)cache)->atlasid;
   vassert(bnum < NUM_BLOCK_SURFS);
-  if (light_chain_used[bnum].lastframe != cacheframecount) {
+  if (light_chain_used[bnum].lastframe != lmcache.cacheframecount) {
     // first time, put into list
-    light_chain_used[bnum].lastframe = cacheframecount;
+    light_chain_used[bnum].lastframe = lmcache.cacheframecount;
     light_chain_used[bnum].next = light_chain_head;
     light_chain_head = bnum+1;
     light_chain[bnum] = nullptr;
   }
   cache->chain = light_chain[bnum];
   light_chain[bnum] = cache;
-  cache->lastframe = cacheframecount;
+  ((VLMapCache::Item *)cache)->lastframe = lmcache.cacheframecount;
 }
 
 

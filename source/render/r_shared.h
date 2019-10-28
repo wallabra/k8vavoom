@@ -191,25 +191,430 @@ struct surface_t {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+template<typename TBase> class V2DCache {
+public:
+  struct Item : public TBase {
+    // position in light surface
+    //int s, t; // must present in `TBase` (for now)
+    // size
+    int width, height;
+    // line list in block
+    Item *bprev;
+    Item *bnext;
+    // cache list in line
+    Item *lprev;
+    Item *lnext;
+    Item *freeChain; // list of drawable surfaces, or next free block in `blockbuf`
+    vuint32 atlasid; // light surface index
+    Item **owner;
+    //vuint32 Light; // checked for strobe flash
+    //int dlight;
+    //Item *surf;
+    vuint32 lastframe;
+  };
+
+  struct AtlasInfo {
+    int width;
+    int height;
+
+    inline AtlasInfo () noexcept : width(0), height(0) {}
+    inline bool isValid () const noexcept { return (width > 0 && height > 0 && width <= 4096 && height <= 4096); }
+  };
+
+protected:
+
+  // block pool
+  struct VBlockPool {
+  public:
+    // number of `Item` items in one pool entry
+    enum { NUM_CACHE_BLOCKS_IN_POOL_ENTRY = 4096u };
+
+  public:
+    struct PoolEntry {
+      Item page[NUM_CACHE_BLOCKS_IN_POOL_ENTRY];
+      PoolEntry *prev;
+    };
+
+  public:
+    PoolEntry *tail;
+    unsigned tailused;
+    unsigned entries; // full
+
+  public:
+    VBlockPool () noexcept : tail(nullptr), tailused(0), entries(0) {}
+    VBlockPool (const VBlockPool &) = delete;
+    VBlockPool &operator = (const VBlockPool &) = delete;
+    ~VBlockPool () noexcept { clear(); }
+
+    inline unsigned itemCount () noexcept { return entries*NUM_CACHE_BLOCKS_IN_POOL_ENTRY+tailused; }
+
+    void clear () noexcept {
+      while (tail) {
+        PoolEntry *c = tail;
+        tail = c->prev;
+        Z_Free(c);
+      }
+      tailused = 0;
+      entries = 0;
+    }
+
+    Item *alloc () noexcept {
+      if (tail && tailused < NUM_CACHE_BLOCKS_IN_POOL_ENTRY) return &tail->page[tailused++];
+      if (tail) ++entries; // full entries counter
+      // allocate new pool entry
+      PoolEntry *c = (PoolEntry *)Z_Calloc(sizeof(PoolEntry));
+      c->prev = tail;
+      tail = c;
+      tailused = 1;
+      return &tail->page[0];
+    }
+
+    void resetFrames () noexcept {
+      for (PoolEntry *c = tail; c; c = c->prev) {
+        Item *s = &c->page[0];
+        for (unsigned count = NUM_CACHE_BLOCKS_IN_POOL_ENTRY; count--; ++s) s->lastframe = 0;
+      }
+    }
+  };
+
+  struct Atlas {
+    int width;
+    int height;
+    vuint32 id;
+    Item *blocks;
+
+    inline bool isValid () const noexcept { return (width > 0 && height > 0 && width <= 4096 && height <= 4096); }
+  };
+
+protected:
+  TArray<Atlas> atlases;
+  Item *freeblocks;
+  VBlockPool blockpool;
+
+public:
+  vuint32 cacheframecount;
+
+protected:
+  Item *performBlockVSplit (int width, int height, Item *block, bool forceAlloc=false) {
+    vassert(block->height >= height);
+    vassert(!block->lnext);
+    const vuint32 aid = block->atlasid;
+
+    if (block->height > height) {
+      #ifdef VV_DEBUG_LMAP_ALLOCATOR
+      GLog.Logf(NAME_Debug, "  vsplit: aid=%d; w=%d; h=%d", aid, block->width, block->height);
+      #endif
+      Item *other = getFreeBlock(forceAlloc);
+      if (!other) return nullptr;
+      other->s = 0;
+      other->t = block->t+height;
+      other->width = block->width;
+      other->height = block->height-height;
+      other->lnext = nullptr;
+      other->lprev = nullptr;
+      other->bnext = block->bnext;
+      if (other->bnext) other->bnext->bprev = other;
+      block->bnext = other;
+      other->bprev = block;
+      block->height = height;
+      other->owner = nullptr;
+      other->atlasid = aid;
+      forceAlloc = true; // we need second block unconditionally
+    }
+
+    {
+      Item *other = getFreeBlock(forceAlloc);
+      if (!other) return nullptr;
+      other->s = block->s+width;
+      other->t = block->t;
+      other->width = block->width-width;
+      other->height = block->height;
+      other->lnext = nullptr;
+      block->lnext = other;
+      other->lprev = block;
+      block->width = width;
+      other->owner = nullptr;
+      other->atlasid = aid;
+    }
+
+    return block;
+  }
+
+  Item *performBlockHSplit (int width, Item *block, bool forceAlloc=false) {
+    if (block->width < width) return nullptr; // just in case
+    if (block->width == width) return block; // nothing to do
+    vassert(block->width > width);
+    #ifdef VV_DEBUG_LMAP_ALLOCATOR
+    GLog.Logf(NAME_Debug, "  hsplit: aid=%u; w=%d; h=%d", block->atlasid, block->width, block->height);
+    #endif
+    Item *other = getFreeBlock(forceAlloc);
+    if (!other) return nullptr;
+    other->s = block->s+width;
+    other->t = block->t;
+    other->width = block->width-width;
+    other->height = block->height;
+    other->lnext = block->lnext;
+    if (other->lnext) other->lnext->lprev = other;
+    block->lnext = other;
+    other->lprev = block;
+    block->width = width;
+    other->owner = nullptr;
+    other->atlasid = block->atlasid;
+    return block;
+  }
+
+  Item *getFreeBlock (bool forceAlloc) {
+    Item *res = freeblocks;
+    if (res) {
+      freeblocks = res->freeChain;
+    } else {
+      // no free blocks
+      if (!forceAlloc && blockpool.itemCount() >= 32768) {
+        // too many blocks
+        flushOldCaches();
+        res = freeblocks;
+        if (res) freeblocks = res->freeChain; else res = blockpool.alloc(); // force-allocate anyway
+      } else {
+        // allocate new block
+        res = blockpool.alloc();
+      }
+    }
+    if (res) memset(res, 0, sizeof(Item));
+    return res;
+  }
+
+public:
+  void debugDump () noexcept {
+    GLog.Logf("=== V2DCache: %d atlases ===", atlases.length());
+    for (auto &&it : atlases) {
+      GLog.Logf(" -- atlas #%u size=(%d,%d)--", it.id, it.width, it.height);
+      for (Item *blines = it.blocks; blines; blines = blines->bnext) {
+        vassert(blines->atlasid == it.id);
+        GLog.Logf("  line: ofs=(%d,%d); size=(%d,%d)", blines->s, blines->t, blines->width, blines->height);
+        for (Item *block = blines; block; block = block->lnext) {
+          GLog.Logf("   block: ofs=(%d,%d); size=(%d,%d)", block->s, block->t, block->width, block->height);
+        }
+      }
+    }
+  }
+
+public:
+  V2DCache () noexcept : atlases(), freeblocks(nullptr), blockpool(), cacheframecount(0) {}
+  ~V2DCache () noexcept { /*clear();*/ }
+
+  V2DCache (const V2DCache &) = delete;
+  V2DCache &operator = (const V2DCache &) = delete;
+
+  // this resets all allocated blocks (but doesn't deallocate atlases)
+  void reset () noexcept {
+    clearCacheInfo();
+    // clear blocks
+    blockpool.clear();
+    freeblocks = nullptr;
+    //initLightChain();
+    // setup lightmap atlases (no allocations, all atlases are free)
+    for (auto &&it : atlases) {
+      vassert(it.isValid());
+      Item *block = blockpool.alloc();
+      memset((void *)block, 0, sizeof(Item));
+      block->width = it.width;
+      block->height = it.height;
+      block->atlasid = it.id;
+      it.blocks = block;
+    }
+  }
+
+  // zero all `lastframe` fields
+  void zeroFrames () noexcept {
+    for (auto &&it : atlases) {
+      for (Item *blines = it.blocks; blines; blines = blines->bnext) {
+        for (Item *block = blines; block; block = block->lnext) {
+          block->lastframe = 0;
+        }
+      }
+    }
+  }
+
+  virtual void resetBlock (Item *block) noexcept = 0;
+
+  // called when we need to clear all cache pointers
+  // calls `resetBlock()`
+  void resetAllBlocks () noexcept {
+    for (auto &&it : atlases) {
+      for (Item *blines = it.blocks; blines; blines = blines->bnext) {
+        for (Item *block = blines; block; block = block->lnext) {
+          resetBlock(block);
+        }
+      }
+    }
+  }
+
+  // `FreeSurfCache()` calls this with `true`
+  Item *freeBlock (Item *block, bool checkLines) noexcept {
+    if (block->owner) {
+      *block->owner = nullptr;
+      block->owner = nullptr;
+    }
+
+    if (block->lnext && !block->lnext->owner) {
+      Item *other = block->lnext;
+      block->width += other->width;
+      block->lnext = other->lnext;
+      if (block->lnext) block->lnext->lprev = block;
+      other->freeChain = freeblocks;
+      freeblocks = other;
+    }
+
+    if (block->lprev && !block->lprev->owner) {
+      Item *other = block;
+      block = block->lprev;
+      block->width += other->width;
+      block->lnext = other->lnext;
+      if (block->lnext) block->lnext->lprev = block;
+      other->freeChain = freeblocks;
+      freeblocks = other;
+    }
+
+    if (block->lprev || block->lnext || !checkLines) return block;
+
+    if (block->bnext && !block->bnext->lnext) {
+      Item *other = block->bnext;
+      block->height += other->height;
+      block->bnext = other->bnext;
+      if (block->bnext) block->bnext->bprev = block;
+      other->freeChain = freeblocks;
+      freeblocks = other;
+    }
+
+    if (block->bprev && !block->bprev->lnext) {
+      Item *other = block;
+      block = block->bprev;
+      block->height += other->height;
+      block->bnext = other->bnext;
+      if (block->bnext) block->bnext->bprev = block;
+      other->freeChain = freeblocks;
+      freeblocks = other;
+    }
+
+    return block;
+  }
+
+  void flushOldCaches () noexcept {
+    for (auto &&it : atlases) {
+      vassert(it.isValid());
+      for (Item *blines = it.blocks; blines; blines = blines->bnext) {
+        for (Item *block = blines; block; block = block->lnext) {
+          if (block->owner && cacheframecount != block->lastframe) block = freeBlock(block, false);
+        }
+        if (!blines->owner && !blines->lprev && !blines->lnext) blines = freeBlock(blines, true);
+      }
+    }
+    if (!freeblocks) {
+      //Sys_Error("No more free blocks");
+      GLog.Logf(NAME_Warning, "Surface cache overflow, and no old surfaces found");
+    } else {
+      GLog.Logf(NAME_Debug, "Surface cache overflow, old caches flushed");
+    }
+  }
+
+  Item *allocBlock (int width, int height) noexcept {
+    vassert(width > 0);
+    vassert(height > 0);
+    #ifdef VV_DEBUG_LMAP_ALLOCATOR
+    GLog.Logf(NAME_Debug, "V2DCache::allocBlock: w=%d; h=%d", width, height);
+    #endif
+
+    Item *splitBlock = nullptr;
+
+    for (auto &&it : atlases) {
+      for (Item *blines = it.blocks; blines; blines = blines->bnext) {
+        if (blines->height < height) continue;
+        if (blines->height == height) {
+          for (Item *block = blines; block; block = block->lnext) {
+            if (block->owner) continue;
+            if (block->width < width) continue;
+            block = performBlockHSplit(width, block);
+            vassert(block->atlasid == it.id);
+            return block;
+          }
+        }
+        // possible vertical split?
+        if (!splitBlock && !blines->lnext && blines->height >= height) {
+          splitBlock = blines;
+          vassert(splitBlock->atlasid == it.id);
+        }
+      }
+    }
+
+    if (splitBlock) {
+      Item *other = performBlockVSplit(width, height, splitBlock);
+      if (other) return other;
+    }
+
+    // try to get a new atlas
+    AtlasInfo nfo = allocAtlas((vuint32)atlases.length(), width, height);
+    if (!nfo.isValid()) return nullptr;
+
+    // setup new atlas
+    Atlas &atp = atlases.alloc();
+    atp.width = nfo.width;
+    atp.height = nfo.height;
+    atp.id = (vuint32)atlases.length()-1;
+    atp.blocks = blockpool.alloc();
+    memset((void *)atp.blocks, 0, sizeof(Item));
+    atp.blocks->width = atp.width;
+    atp.blocks->height = atp.height;
+    atp.blocks->atlasid = atp.id;
+
+    // first split ever
+    {
+      Item *blines = atp.blocks;
+      if (blines->height < height || blines->width < width) return nullptr; // something is wrong with this atlas
+      Item *other;
+      if (blines->height == height) {
+        other = performBlockHSplit(width, blines, true);
+      } else {
+        other = performBlockVSplit(width, height, blines, true);
+      }
+      if (other) return other;
+    }
+
+    GLog.Logf(NAME_Error, "Surface cache overflow!");
+    return nullptr;
+  }
+
+  // this is called in `reset()` to perform necessary cleanups
+  // it is called before any other actions are done
+  virtual void clearCacheInfo () noexcept = 0;
+
+  // this method will be called when allocator runs out of atlases
+  // return invalid atlas info if no more free atlases available
+  // `aid` is the number of this atlas (starting from zero)
+  // it can be used to manage atlas resources
+  virtual AtlasInfo allocAtlas (vuint32 aid, int minwidth, int minheight) noexcept = 0;
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 struct surfcache_t {
   // position in light surface
   int s, t;
   // size
-  int width, height;
+  //int width, height;
   // line list in block
-  surfcache_t *bprev;
-  surfcache_t *bnext;
+  //surfcache_t *bprev;
+  //surfcache_t *bnext;
   // cache list in line
-  surfcache_t *lprev;
-  surfcache_t *lnext;
-  surfcache_t *chain; // list of drawable surfaces, or next free block in `blockbuf`
+  //surfcache_t *lprev;
+  //surfcache_t *lnext;
+  surfcache_t *chain; // list of drawable surfaces for the atlas
   //surfcache_t *addchain; // list of specular surfaces (each lightmap has it, no need to chain)
-  vuint32 blocknum; // light surface index
-  surfcache_t **owner;
+  //vuint32 blocknum; // light surface index
+  //surfcache_t **owner;
   vuint32 Light; // checked for strobe flash
   int dlight;
   surface_t *surf;
-  vuint32 lastframe;
+  //vuint32 lastframe;
 };
 
 

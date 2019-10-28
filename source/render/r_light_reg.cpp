@@ -1218,6 +1218,7 @@ void VRenderLevelLightmap::BuildLightMap (surface_t *surf) {
 }
 
 
+/*
 //==========================================================================
 //
 //  ClearSurfCachePointers
@@ -1239,6 +1240,7 @@ static inline void ClearSurfCachePointers (surface_t *s) {
 static inline void ClearSurfCachePointersSegPart (segpart_t *sp) {
   for (; sp; sp = sp->next) ClearSurfCachePointers(sp->surfs);
 }
+*/
 
 
 //==========================================================================
@@ -1248,6 +1250,7 @@ static inline void ClearSurfCachePointersSegPart (segpart_t *sp) {
 //==========================================================================
 void VRenderLevelLightmap::FlushCaches () {
   // clear surface cache pointers
+  /*
   for (int i = 0; i < Level->NumSubsectors; ++i) {
     for (subregion_t *r = Level->Subsectors[i].regions; r != nullptr; r = r->next) {
       if (r->realfloor != nullptr) ClearSurfCachePointers(r->realfloor->surfs);
@@ -1266,7 +1269,11 @@ void VRenderLevelLightmap::FlushCaches () {
       ClearSurfCachePointersSegPart(ds->extra);
     }
   }
+  */
+  lmcache.resetAllBlocks();
+  lmcache.reset();
   // clear blocks
+  /*
   blockpool.clear();
   freeblocks = nullptr;
   initLightChain();
@@ -1278,6 +1285,7 @@ void VRenderLevelLightmap::FlushCaches () {
     block->blocknum = i;
     cacheblocks[i] = block;
   }
+  */
   light_reset_surface_cache = 0;
 }
 
@@ -1300,6 +1308,7 @@ void VRenderLevelLightmap::NukeLightmapCache () {
 //  VRenderLevelLightmap::FreeBlock
 //
 //==========================================================================
+/*
 surfcache_t *VRenderLevelLightmap::FreeBlock (surfcache_t *block, bool checkLines) {
   surfcache_t *other;
 
@@ -1350,6 +1359,7 @@ surfcache_t *VRenderLevelLightmap::FreeBlock (surfcache_t *block, bool checkLine
 
   return block;
 }
+*/
 
 
 //==========================================================================
@@ -1359,7 +1369,7 @@ surfcache_t *VRenderLevelLightmap::FreeBlock (surfcache_t *block, bool checkLine
 //==========================================================================
 void VRenderLevelLightmap::FreeSurfCache (surfcache_t *&block) {
   if (block) {
-    FreeBlock(block, true);
+    lmcache.freeBlock((VLMapCache::Item *)block, true);
     block = nullptr;
   }
 }
@@ -1371,6 +1381,7 @@ void VRenderLevelLightmap::FreeSurfCache (surfcache_t *&block) {
 //
 //==========================================================================
 void VRenderLevelLightmap::FlushOldCaches () {
+  /*
   for (unsigned i = 0; i < NUM_BLOCK_SURFS; ++i) {
     for (surfcache_t *blines = cacheblocks[i]; blines; blines = blines->bnext) {
       for (surfcache_t *block = blines; block; block = block->lnext) {
@@ -1385,6 +1396,8 @@ void VRenderLevelLightmap::FlushOldCaches () {
   } else {
     GCon->Logf(NAME_Debug, "Surface cache overflow, old caches flushed");
   }
+  */
+  lmcache.flushOldCaches();
 }
 
 
@@ -1393,6 +1406,7 @@ void VRenderLevelLightmap::FlushOldCaches () {
 //  VRenderLevelLightmap::GetFreeBlock
 //
 //==========================================================================
+/*
 surfcache_t *VRenderLevelLightmap::GetFreeBlock (bool forceAlloc) {
   surfcache_t *res = freeblocks;
   if (res) {
@@ -1412,6 +1426,7 @@ surfcache_t *VRenderLevelLightmap::GetFreeBlock (bool forceAlloc) {
   //if (res) memset(res, 0, sizeof(surfcache_t));
   return res;
 }
+*/
 
 
 //==========================================================================
@@ -1419,6 +1434,7 @@ surfcache_t *VRenderLevelLightmap::GetFreeBlock (bool forceAlloc) {
 //  VRenderLevelLightmap::performBlockVSplit
 //
 //==========================================================================
+/*
 surfcache_t *VRenderLevelLightmap::performBlockVSplit (int width, int height, surfcache_t *block) {
   vassert(block->height >= height);
   vassert(!block->lnext);
@@ -1469,6 +1485,7 @@ surfcache_t *VRenderLevelLightmap::performBlockVSplit (int width, int height, su
 
   return block;
 }
+*/
 
 
 //==========================================================================
@@ -1476,6 +1493,7 @@ surfcache_t *VRenderLevelLightmap::performBlockVSplit (int width, int height, su
 //  VRenderLevelLightmap::AllocBlock
 //
 //==========================================================================
+/*
 surfcache_t *VRenderLevelLightmap::AllocBlock (int width, int height) {
   #ifdef VV_DEBUG_LMAP_ALLOCATOR
   GCon->Logf(NAME_Debug, "VRenderLevelLightmap::AllocBlock: w=%d; h=%d", width, height);
@@ -1528,7 +1546,7 @@ surfcache_t *VRenderLevelLightmap::AllocBlock (int width, int height) {
     if (other) return other;
   }
 
-  /*
+  / *
   for (unsigned i = 0; i < NUM_BLOCK_SURFS; ++i) {
     for (surfcache_t *blines = cacheblocks[i]; blines; blines = blines->bnext) {
       if (blines->height < height) continue;
@@ -1539,7 +1557,7 @@ surfcache_t *VRenderLevelLightmap::AllocBlock (int width, int height) {
       if (other) return other;
     }
   }
-  */
+  * /
 
   //Sys_Error("Surface cache overflow");
   if (!light_reset_surface_cache) {
@@ -1548,6 +1566,7 @@ surfcache_t *VRenderLevelLightmap::AllocBlock (int width, int height) {
   }
   return nullptr;
 }
+*/
 
 
 //==========================================================================
@@ -1560,12 +1579,13 @@ bool VRenderLevelLightmap::CacheSurface (surface_t *surface) {
   if (!SurfPrepareForRender(surface)) return true;
 
   // see if the cache holds appropriate data
-  surfcache_t *cache = surface->CacheSurf;
+  //surfcache_t *cache = surface->CacheSurf;
+  VLMapCache::Item *cache = (VLMapCache::Item *)surface->CacheSurf;
 
   const vuint32 srflight = fixSurfLightLevel(surface);
 
   if (cache) {
-    if (cache->lastframe == cacheframecount) {
+    if (cache->lastframe == lmcache.cacheframecount) {
       GCon->Log(NAME_Warning, "duplicate surface caching");
       return true;
     }
@@ -1590,7 +1610,7 @@ bool VRenderLevelLightmap::CacheSurface (surface_t *surface) {
   // allocate memory if needed
   // if a texture just animated, don't reallocate it
   if (!cache) {
-    cache = AllocBlock(smax, tmax);
+    cache = lmcache.allocBlock(smax, tmax);
     // in rare case of surface cache overflow, just skip the light
     if (!cache) {
       // alas
@@ -1600,7 +1620,7 @@ bool VRenderLevelLightmap::CacheSurface (surface_t *surface) {
       return false;
     }
     surface->CacheSurf = cache;
-    cache->owner = &surface->CacheSurf;
+    cache->owner = (VLMapCache::Item **)&surface->CacheSurf;
     cache->surf = surface;
     //GCon->Logf(NAME_Debug, "new lightmap %p for surface %p (bnum=%u)", cache, surface, cache->blocknum);
   } else {
@@ -1622,7 +1642,7 @@ bool VRenderLevelLightmap::CacheSurface (surface_t *surface) {
   vassert(cache->t >= 0);
   vassert(cache->s >= 0);
 
-  const vuint32 bnum = cache->blocknum;
+  const vuint32 bnum = cache->atlasid;
 
   for (int j = 0; j < tmax; ++j) {
     for (int i = 0; i < smax; ++i) {
