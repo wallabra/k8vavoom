@@ -346,6 +346,13 @@ class VLevel : public VGameObject {
 
   vint32 tsVisitedCount;
 
+  // set in `LoadMap()`, can be used by renderer to load/save lightmap cache
+  VStr cacheFileBase; // can be empty, otherwise it is path and file name w/o extension
+  enum {
+    CacheFlag_Ignore = 1u<<0,
+  };
+  vuint32 cacheFlags;
+
   // iterator
   struct CtlLinkIter {
     VLevel *level;
@@ -376,7 +383,7 @@ private:
   bool ChangeSectorInternal (sector_t *sector, int crunch);
   void ChangeOneSectorInternal (sector_t *sector);
 
-
+private:
   void xxHashLinedef (XXH32_state_t *xctx, const line_t &line) const {
     if (!xctx) return;
     // sides, front and back sectors

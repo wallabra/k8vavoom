@@ -792,6 +792,7 @@ void VLevel::LoadMap (VName AMapName) {
   AuxiliaryCloser auxCloser;
 
   bool killCache = loader_cache_ignore_one;
+  cacheFlags = (loader_cache_ignore_one ? CacheFlag_Ignore : 0);
   loader_cache_ignore_one = false;
   bool AuxiliaryMap = false;
   int lumpnum, xmaplumpnum = -1;
@@ -806,6 +807,7 @@ void VLevel::LoadMap (VName AMapName) {
   csTouched = nullptr;
 
 load_again:
+  cacheFileBase.clear();
   ResetLoadingTimings();
   GTextureManager.ResetMapTextures();
 
@@ -1406,6 +1408,8 @@ load_again:
   mapTextureWarns.clear();
 
   RecalcWorldBBoxes();
+
+  cacheFileBase = cacheFileName.stripExtension();
 }
 
 
