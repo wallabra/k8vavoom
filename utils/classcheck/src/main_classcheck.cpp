@@ -631,6 +631,7 @@ bool ignoreClass (const VStr &name, VName parent) {
     "MapInfoCommand",
     "VCacheBlockPoolEntry",
     "VCacheBlockPool",
+    "VLMapCache",
     nullptr,
   };
   for (const char *const *np = ignoreCN; *np; ++np) {
@@ -659,7 +660,9 @@ void parseShitppClassStruct (SemParser *par, bool isClass, bool isTypedefStruct=
     if (!par->check("{")) par->expectId();
   }
 
-  if (name == "VMiAStarGraphIntr" || name == "VLanguage") {
+  if (name == "VMiAStarGraphIntr" || name == "VLanguage" ||
+      name == "VLMapCache")
+  {
     while (!par->eat("{")) par->skipToken();
     skipBrackets(par);
     return;
