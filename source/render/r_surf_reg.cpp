@@ -40,11 +40,10 @@ static VCvarB r_precalc_static_lights("r_precalc_static_lights", true, "Precalcu
 int r_precalc_static_lights_override = -1; // <0: not set
 
 extern VCvarB loader_cache_data;
-extern VCvarF loader_cache_time_limit;
-extern VCvarI loader_cache_max_age_days;
-extern VCvarI loader_cache_compression_level;
+VCvarF loader_cache_time_limit_lightmap("loader_cache_time_limit_lightmap", "3", "Cache lightmap data if building took more than this number of seconds.", CVAR_Archive);
+VCvarI loader_cache_compression_level_lightmap("loader_cache_compression_level_lightmap", "6", "Lightmap cache file compression level [0..9]", CVAR_Archive);
 
-static VCvarB dbg_always_cache_lightmaps("dbg_always_cache_lightmaps", true, "Always cache lightmaps?", /*CVAR_Archive*/0);
+static VCvarB dbg_always_cache_lightmaps("dbg_always_cache_lightmaps", false, "Always cache lightmaps?", /*CVAR_Archive*/0);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -521,10 +520,10 @@ static void WriteSegLightmaps (VLevel *Level, VStream *strm, segpart_t *sp) {
 
 //==========================================================================
 //
-//  VRenderLevelLightmap::saveLightmaps
+//  VRenderLevelLightmap::saveLightmapsInternal
 //
 //==========================================================================
-void VRenderLevelLightmap::saveLightmaps (VStream *strm) {
+void VRenderLevelLightmap::saveLightmapsInternal (VStream *strm) {
   if (!strm) return;
   vuint32 surfCount = countAllSurfaces();
 
@@ -565,6 +564,20 @@ void VRenderLevelLightmap::saveLightmaps (VStream *strm) {
       WriteSegLightmaps(Level, strm, ds->extra);
     }
   }
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelLightmap::saveLightmaps
+//
+//==========================================================================
+void VRenderLevelLightmap::saveLightmaps (VStream *strm) {
+  if (!strm) return;
+  VZipStreamWriter *zipstrm = new VZipStreamWriter(strm, (int)loader_cache_compression_level_lightmap);
+  saveLightmapsInternal(zipstrm);
+  zipstrm->Close();
+  delete zipstrm;
 }
 
 
@@ -659,10 +672,10 @@ static bool LoadLightSegSurfaces (VRenderLevelLightmap *rdr, VLevel *Level, VStr
 
 //==========================================================================
 //
-//  VRenderLevelLightmap::loadLightmaps
+//  VRenderLevelLightmap::loadLightmapsInternal
 //
 //==========================================================================
-bool VRenderLevelLightmap::loadLightmaps (VStream *strm) {
+bool VRenderLevelLightmap::loadLightmapsInternal (VStream *strm) {
   if (!strm || strm->IsError()) return false;
 
   vuint32 surfCount = countAllSurfaces();
@@ -705,6 +718,20 @@ bool VRenderLevelLightmap::loadLightmaps (VStream *strm) {
   }
 
   return !strm->IsError();
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelLightmap::loadLightmaps
+//
+//==========================================================================
+bool VRenderLevelLightmap::loadLightmaps (VStream *strm) {
+  if (!strm || strm->IsError()) return false;
+  VZipStreamReader *zipstrm = new VZipStreamReader(strm, VZipStreamReader::UNKNOWN_SIZE, VZipStreamReader::UNKNOWN_SIZE/*Map->DecompressedSize*/);
+  bool ok = loadLightmapsInternal(zipstrm);
+  zipstrm->Close();
+  return ok;
 }
 
 
@@ -818,7 +845,7 @@ void VRenderLevelLightmap::PreRender () {
 
       // cache
       if (doWriteCache) {
-        const float tlim = loader_cache_time_limit.asFloat();
+        const float tlim = loader_cache_time_limit_lightmap.asFloat();
         stt += Sys_Time();
         if (dbg_always_cache_lightmaps || stt >= tlim) {
           VStream *lmc = FL_OpenSysFileWrite(ccfname);

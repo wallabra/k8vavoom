@@ -911,6 +911,10 @@ public:
   virtual bool isNeedLightmapCache () const noexcept override;
   virtual void saveLightmaps (VStream *strm) override;
   virtual bool loadLightmaps (VStream *strm) override;
+
+private:
+  void saveLightmapsInternal (VStream *strm);
+  bool loadLightmapsInternal (VStream *strm);
 };
 
 
