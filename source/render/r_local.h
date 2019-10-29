@@ -481,6 +481,9 @@ public:
 
   virtual void NukeLightmapCache () override;
 
+public:
+  vuint32 countAllSurfaces () const noexcept;
+
 protected:
   VRenderLevelShared (VLevel *ALevel);
   ~VRenderLevelShared ();
@@ -698,6 +701,7 @@ public:
   virtual void DecayLights (float) override;
   virtual void RemoveOwnedLight (VThinker *Owner) override;
 
+  virtual bool isNeedLightmapCache () const noexcept override;
   virtual void saveLightmaps (VStream *strm) override;
   virtual bool loadLightmaps (VStream *strm) override;
 
@@ -903,6 +907,10 @@ public:
   virtual void PreRender () override;
 
   virtual void BuildLightMap (surface_t *) override;
+
+  virtual bool isNeedLightmapCache () const noexcept override;
+  virtual void saveLightmaps (VStream *strm) override;
+  virtual bool loadLightmaps (VStream *strm) override;
 };
 
 

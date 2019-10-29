@@ -114,6 +114,7 @@ public:
 
 public:
   VRenderLevelPublic () : staticLightsFiltered(false) {}
+
   virtual void PreRender () = 0;
   virtual void SegMoved (seg_t *) = 0;
   virtual void SetupFakeFloors (sector_t *) = 0;
@@ -137,6 +138,10 @@ public:
   virtual LightInfo GetDynamicLight (int idx) const = 0;
 
   virtual void NukeLightmapCache () = 0;
+
+  virtual bool isNeedLightmapCache () const noexcept = 0;
+  virtual void saveLightmaps (VStream *strm) = 0;
+  virtual bool loadLightmaps (VStream *strm) = 0;
 };
 
 

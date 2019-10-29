@@ -2242,6 +2242,16 @@ surfcache_t *VRenderLevelShared::GetLightChainFirst (vuint32 bnum) {
 
 //==========================================================================
 //
+//  VRenderLevelShared::isNeedLightmapCache
+//
+//==========================================================================
+bool VRenderLevelShared::isNeedLightmapCache () const noexcept {
+  return false;
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::saveLightmaps
 //
 //==========================================================================
@@ -2256,6 +2266,62 @@ void VRenderLevelShared::saveLightmaps (VStream *strm) {
 //==========================================================================
 bool VRenderLevelShared::loadLightmaps (VStream *strm) {
   return false;
+}
+
+
+//==========================================================================
+//
+//  CountSurfacesInChain
+//
+//==========================================================================
+static vuint32 CountSurfacesInChain (const surface_t *s) {
+  vuint32 res = 0;
+  for (; s; s = s->next) ++res;
+  return res;
+}
+
+
+//==========================================================================
+//
+//  CountSegSurfaces
+//
+//==========================================================================
+static vuint32 CountSegSurfacesInChain (const segpart_t *sp) {
+  vuint32 res = 0;
+  for (; sp; sp = sp->next) res += CountSurfacesInChain(sp->surfs);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::countAllSurfaces
+//
+//  calculate total number of surfaces
+//
+//==========================================================================
+vuint32 VRenderLevelShared::countAllSurfaces () const noexcept {
+  vuint32 surfCount = 0;
+  for (auto &&sub : Level->allSubsectors()) {
+    for (subregion_t *r = sub.regions; r != nullptr; r = r->next) {
+      if (r->realfloor != nullptr) surfCount += CountSurfacesInChain(r->realfloor->surfs);
+      if (r->realceil != nullptr) surfCount += CountSurfacesInChain(r->realceil->surfs);
+      if (r->fakefloor != nullptr) surfCount += CountSurfacesInChain(r->fakefloor->surfs);
+      if (r->fakeceil != nullptr) surfCount += CountSurfacesInChain(r->fakeceil->surfs);
+    }
+  }
+
+  for (auto &&seg : Level->allSegs()) {
+    for (drawseg_t *ds = seg.drawsegs; ds; ds = ds->next) {
+      surfCount += CountSegSurfacesInChain(ds->top);
+      surfCount += CountSegSurfacesInChain(ds->mid);
+      surfCount += CountSegSurfacesInChain(ds->bot);
+      surfCount += CountSegSurfacesInChain(ds->topsky);
+      surfCount += CountSegSurfacesInChain(ds->extra);
+    }
+  }
+
+  return surfCount;
 }
 
 

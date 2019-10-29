@@ -107,9 +107,6 @@ public:
 
   virtual void PrecacheLevel () = 0;
 
-  virtual void saveLightmaps (VStream *strm) = 0;
-  virtual bool loadLightmaps (VStream *strm) = 0;
-
 public:
   static inline bool IsAdditiveStyle (int style) {
     switch (style) {

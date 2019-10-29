@@ -1913,9 +1913,26 @@ static void SV_SaveGame (int slot, VStr Description, bool checkpoint, bool isAut
 
   // write data to destination slot
   if (BaseSlot.SaveToSlot(slot)) {
-    if (checkpoint) {
-      GLevel->cacheFileBase = saveFileBase;
-      GLevel->cacheFlags &= ~VLevel::CacheFlag_Ignore;
+    if (!saveFileBase.isEmpty()) {
+      VStr ccfname = saveFileBase+".lmap";
+      bool deleteLMCache = true;
+      if (!checkpoint && GLevel->RenderData && GLevel->RenderData->isNeedLightmapCache()) {
+        GLevel->cacheFileBase = saveFileBase;
+        GLevel->cacheFlags &= ~VLevel::CacheFlag_Ignore;
+        VStream *lmc = FL_OpenSysFileWrite(ccfname);
+        if (lmc) {
+          GCon->Logf("writing lightmap cache to '%s'...", *ccfname);
+          GLevel->RenderData->saveLightmaps(lmc);
+          lmc->Close();
+          bool err = lmc->IsError();
+          delete lmc;
+          if (!err) deleteLMCache = false;
+        }
+      }
+      if (deleteLMCache) {
+        vassert(!ccfname.isEmpty());
+        Sys_FileDelete(ccfname);
+      }
     }
     SV_SendAfterSaveEvent(isAutosave, checkpoint);
   }
@@ -1939,6 +1956,8 @@ void SV_LoadGame (int slot) {
   // load the current map
   if (!SV_LoadMap(BaseSlot.CurrentMap, true/*allowCheckpoints*/, false/*hubTeleport*/)) {
     // not a checkpoint
+    GLevel->cacheFileBase = saveFileBase;
+    //GCon->Logf(NAME_Debug, "**********************: <%s>", *GLevel->cacheFileBase);
 #ifdef CLIENT
     if (GGameInfo->NetMode != NM_DedicatedServer) CL_SetUpLocalPlayer();
 #endif
@@ -1956,7 +1975,6 @@ void SV_LoadGame (int slot) {
     }
   } else {
     // checkpoint
-    GLevel->cacheFileBase = saveFileBase;
     GLevel->cacheFlags &= ~VLevel::CacheFlag_Ignore;
   }
 
