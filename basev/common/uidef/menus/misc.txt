@@ -187,6 +187,23 @@ menudef MiscOptions {
     max = 9;
   }
 
+  option numeric {
+    title = "Lighting cache timeout (seconds)";
+    cvar = loader_cache_time_limit_lightmap;
+    step = 0.5;
+    min = 0.5;
+    max = 16;
+    help = "How long level lighting should take to make engine cache lightmap data?";
+  }
+
+  option slider {
+    title = "Lightmap cache compression";
+    cvar = loader_cache_compression_level_lightmap;
+    step = 1;
+    min = 0;
+    max = 9;
+  }
+
 
   header "Deepwater options";
 
