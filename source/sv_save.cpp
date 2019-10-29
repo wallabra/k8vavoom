@@ -1916,6 +1916,7 @@ static void SV_SaveGame (int slot, VStr Description, bool checkpoint, bool isAut
     if (!saveFileBase.isEmpty()) {
       VStr ccfname = saveFileBase+".lmap";
       bool deleteLMCache = true;
+      if (!GLevel->RenderData || !GLevel->RenderData->isNeedLightmapCache()) deleteLMCache = false;
       if (!checkpoint && GLevel->RenderData && GLevel->RenderData->isNeedLightmapCache()) {
         GLevel->cacheFileBase = saveFileBase;
         GLevel->cacheFlags &= ~VLevel::CacheFlag_Ignore;
