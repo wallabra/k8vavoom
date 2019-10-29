@@ -2571,7 +2571,7 @@ COMMAND(NukeLightmapCache) {
 //  COMMAND LightmapsReset
 //
 //==========================================================================
-COMMAND(LightmapsReset) {
+COMMAND_WITH_AC(LightmapsReset) {
   if (GClLevel && GClLevel->RenderData) {
     bool recalcNow = true;
     if (Args.Num() > 1) recalcNow = false;
@@ -2579,4 +2579,12 @@ COMMAND(LightmapsReset) {
     GClLevel->RenderData->ResetLightmaps(recalcNow);
     GClLevel->RenderData->NukeLightmapCache();
   }
+}
+
+COMMAND_AC(LightmapsReset) {
+  if (aidx != 1) return VStr::EmptyString;
+  VStr prefix = (aidx < args.length() ? args[aidx] : VStr());
+  TArray<VStr> list;
+  list.append("defer");
+  return AutoCompleteFromList(prefix, list, true); // return unchanged as empty
 }
