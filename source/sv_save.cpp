@@ -70,16 +70,14 @@ static VCvarB sv_autoenter_checkpoints("sv_autoenter_checkpoints", true, "Use ch
 //static bool enterAutosavesEnabled = true;
 LastLoadedMapType mapLoaded = LMT_Unknown;
 
+static VStr saveFileBase;
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 #define QUICKSAVE_SLOT  (-666)
 
 #define EMPTYSTRING  "empty slot"
-#define MOBJ_NULL  (-1)
-/*
-#define SAVE_NAME(_slot)      (VStr("saves/save")+(_slot)+".vsg")
-#define SAVE_NAME_ABS(_slot)  (SV_GetSavesDir()+"/save"+(_slot)+".vsg")
-*/
+#define MOBJ_NULL    (-1)
 
 #define SAVE_DESCRIPTION_LENGTH    (24)
 //#define SAVE_VERSION_TEXT_NO_DATE  "Version 1.34.4"
@@ -239,7 +237,7 @@ public:
 
   void Clear ();
   bool LoadSlot (int Slot);
-  void SaveToSlot (int Slot);
+  bool SaveToSlot (int Slot);
   VSavedMap *FindMap (VName Name);
 };
 
@@ -526,9 +524,11 @@ static VStr GetSaveSlotBaseFileName (int slot) {
 //  SV_OpenSlotFileRead
 //
 //  open savegame slot file if it exists
+//  sets `saveFileBase`
 //
 //==========================================================================
 static VStream *SV_OpenSlotFileRead (int slot) {
+  saveFileBase.clear();
   if (isBadSlotIndex(slot)) return nullptr;
   // search save subdir
   auto svdir = SV_GetSavesDir()+"/"+GetSaveSlotCommonDirectoryPrefix();
@@ -540,7 +540,8 @@ static VStream *SV_OpenSlotFileRead (int slot) {
       if (fname.isEmpty()) break;
       if (fname.startsWithNoCase(svpfx) && fname.endsWithNoCase(".vsg")) {
         Sys_CloseDir(dir);
-        return FL_OpenSysFileRead(svdir+"/"+fname);
+        saveFileBase = svdir+"/"+fname;
+        return FL_OpenSysFileRead(saveFileBase);
       }
     }
     Sys_CloseDir(dir);
@@ -577,6 +578,8 @@ static VStream *SV_OpenSlotFileRead (int slot) {
 static bool removeSlotSaveFiles (int slot, VStr fignore) {
   TArray<VStr> tokill;
   if (isBadSlotIndex(slot)) return false;
+  VStr fignore2;
+  if (fignore.length()) fignore2 = fignore+".lmap";
   // search save subdir
   auto svdir = SV_GetSavesDir()+"/"+GetSaveSlotCommonDirectoryPrefix();
   auto dir = Sys_OpenDir(svdir);
@@ -585,9 +588,9 @@ static bool removeSlotSaveFiles (int slot, VStr fignore) {
     for (;;) {
       VStr fname = Sys_ReadDir(dir);
       if (fname.isEmpty()) break;
-      if (fname.startsWithNoCase(svpfx) && fname.endsWithNoCase(".vsg")) {
+      if (fname.startsWithNoCase(svpfx) && (fname.endsWithNoCase(".vsg") || fname.endsWithNoCase(".vsg.lmap"))) {
         VStr fn = svdir+"/"+fname;
-        if (fn != fignore) tokill.append(fn);
+        if (fn != fignore && fn != fignore2) tokill.append(fn);
       }
     }
     Sys_CloseDir(dir);
@@ -602,9 +605,9 @@ static bool removeSlotSaveFiles (int slot, VStr fignore) {
     for (;;) {
       VStr fname = Sys_ReadDir(dir);
       if (fname.isEmpty()) break;
-      if (fname.startsWithNoCase(svpfx) && fname.endsWithNoCase(".vsg")) {
+      if (fname.startsWithNoCase(svpfx) && (fname.endsWithNoCase(".vsg") || fname.endsWithNoCase(".vsg.lmap"))) {
         VStr fn = svdir+"/"+fname;
-        if (fn != fignore) tokill.append(fn);
+        if (fn != fignore && fn != fignore2) tokill.append(fn);
       }
     }
     Sys_CloseDir(dir);
@@ -621,9 +624,11 @@ static bool removeSlotSaveFiles (int slot, VStr fignore) {
 //
 //  create new savegame slot file
 //  also, removes any existing savegame file for the same slot
+//  sets `saveFileBase`
 //
 //==========================================================================
 static VStream *SV_CreateSlotFileWrite (int slot, VStr descr) {
+  saveFileBase.clear();
   if (isBadSlotIndex(slot)) return nullptr;
   if (slot == QUICKSAVE_SLOT) descr = VStr();
   //removeSlotSaveFiles(slot);
@@ -647,6 +652,7 @@ static VStream *SV_CreateSlotFileWrite (int slot, VStr descr) {
   // finalize file name
   if (newdesc.length()) { svpfx += "_"; svpfx += newdesc; }
   svpfx += ".vsg";
+  saveFileBase = svpfx;
   VStream *res = FL_OpenSysFileWrite(svpfx);
   if (res) removeSlotSaveFiles(slot, svpfx);
   return res;
@@ -851,9 +857,11 @@ static bool LoadDateTValExtData (VStream *Strm, TTimeVal *tv) {
 //==========================================================================
 bool VSaveSlot::LoadSlot (int Slot) {
   Clear();
+  saveFileBase.clear();
 
   VStream *Strm = SV_OpenSlotFileRead(Slot);
   if (!Strm) {
+    saveFileBase.clear();
     GCon->Log("Savegame file doesn't exist");
     return false;
   }
@@ -863,6 +871,7 @@ bool VSaveSlot::LoadSlot (int Slot) {
   memset(VersionText, 0, sizeof(VersionText));
   Strm->Serialise(VersionText, SAVE_VERSION_TEXT_LENGTH);
   if (VStr::Cmp(VersionText, SAVE_VERSION_TEXT) /*&& VStr::Cmp(VersionText, SAVE_VERSION_TEXT_NO_DATE)*/) {
+    saveFileBase.clear();
     // bad version
     Strm->Close();
     delete Strm;
@@ -876,6 +885,7 @@ bool VSaveSlot::LoadSlot (int Slot) {
   // skip extended data
   if (VStr::Cmp(VersionText, SAVE_VERSION_TEXT) == 0) {
     if (!SkipExtData(Strm) || Strm->IsError()) {
+      saveFileBase.clear();
       // bad file
       Strm->Close();
       delete Strm;
@@ -891,6 +901,7 @@ bool VSaveSlot::LoadSlot (int Slot) {
   *Strm << wcount;
 
   if (wcount < 1 || wcount > 8192) {
+    saveFileBase.clear();
     Strm->Close();
     delete Strm;
     Strm = nullptr;
@@ -900,6 +911,7 @@ bool VSaveSlot::LoadSlot (int Slot) {
 
   if (!dbg_save_ignore_wadlist) {
     if (wcount != wadlist.length()) {
+      saveFileBase.clear();
       Strm->Close();
       delete Strm;
       Strm = nullptr;
@@ -913,6 +925,7 @@ bool VSaveSlot::LoadSlot (int Slot) {
     *Strm << s;
     if (!dbg_save_ignore_wadlist) {
       if (s != wadlist[f]) {
+        saveFileBase.clear();
         Strm->Close();
         delete Strm;
         Strm = nullptr;
@@ -954,7 +967,13 @@ bool VSaveSlot::LoadSlot (int Slot) {
   delete Strm;
 
   Host_ResetSkipFrames();
-  return !err;
+
+  if (err) {
+    saveFileBase.clear();
+    return false;
+  }
+  vassert(!saveFileBase.isEmpty());
+  return true;
 }
 
 
@@ -963,11 +982,14 @@ bool VSaveSlot::LoadSlot (int Slot) {
 //  VSaveSlot::SaveToSlot
 //
 //==========================================================================
-void VSaveSlot::SaveToSlot (int Slot) {
+bool VSaveSlot::SaveToSlot (int Slot) {
+  saveFileBase.clear();
+
   VStream *Strm = SV_CreateSlotFileWrite(Slot, Description);
   if (!Strm) {
+    saveFileBase.clear();
     GCon->Logf("ERROR: cannot save to slot %d!", Slot);
-    return;
+    return false;
   }
 
   // write version info
@@ -1038,9 +1060,13 @@ void VSaveSlot::SaveToSlot (int Slot) {
   Host_ResetSkipFrames();
 
   if (err) {
+    saveFileBase.clear();
     GCon->Logf("ERROR: error saving to slot %d, savegame is corrupted!", Slot);
-    return;
+    return false;
   }
+
+  vassert(!saveFileBase.isEmpty());
+  return true;
 }
 
 
@@ -1886,9 +1912,9 @@ static void SV_SaveGame (int slot, VStr Description, bool checkpoint, bool isAut
   }
 
   // write data to destination slot
-  BaseSlot.SaveToSlot(slot);
-
-  SV_SendAfterSaveEvent(isAutosave, checkpoint);
+  if (BaseSlot.SaveToSlot(slot)) {
+    SV_SendAfterSaveEvent(isAutosave, checkpoint);
+  }
 
   Host_ResetSkipFrames();
 }
