@@ -746,14 +746,23 @@ bool VRenderLevelLightmap::loadLightmaps (VStream *strm) {
 //  LightSurfaces
 //
 //==========================================================================
-static int LightSurfaces (VRenderLevelLightmap *rdr, surface_t *s) {
+static int LightSurfaces (VRenderLevelLightmap *rdr, surface_t *s, bool recalcNow) {
   int res = 0;
-  for (; s; s = s->next) {
-    if (/*s->drawflags&surface_t::DF_CALC_LMAP*/true) {
+  if (recalcNow) {
+    for (; s; s = s->next) {
       s->drawflags &= ~surface_t::DF_CALC_LMAP;
       if (s->count >= 3) rdr->LightFace(s, s->subsector);
+      ++res;
     }
-    ++res;
+  } else {
+    for (; s; s = s->next) {
+      ++res;
+      if (s->count >= 3) {
+        s->drawflags |= surface_t::DF_CALC_LMAP;
+      } else {
+        s->drawflags &= ~surface_t::DF_CALC_LMAP;
+      }
+    }
   }
   return res;
 }
@@ -764,10 +773,50 @@ static int LightSurfaces (VRenderLevelLightmap *rdr, surface_t *s) {
 //  LightSegSurfaces
 //
 //==========================================================================
-static int LightSegSurfaces (VRenderLevelLightmap *rdr, segpart_t *sp) {
+static int LightSegSurfaces (VRenderLevelLightmap *rdr, segpart_t *sp, bool recalcNow) {
   int res = 0;
-  for (; sp; sp = sp->next) res += LightSurfaces(rdr, sp->surfs);
+  for (; sp; sp = sp->next) res += LightSurfaces(rdr, sp->surfs, recalcNow);
   return res;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelLightmap::ResetLightmaps
+//
+//==========================================================================
+void VRenderLevelLightmap::ResetLightmaps (bool recalcNow) {
+  vuint32 surfCount = 0;
+
+  if (recalcNow) {
+    surfCount = countAllSurfaces();
+    R_PBarReset();
+    R_PBarUpdate("Lightmaps", 0, (int)surfCount);
+  }
+
+  int processed = 0;
+  for (auto &&sub : Level->allSubsectors()) {
+    for (subregion_t *r = sub.regions; r != nullptr; r = r->next) {
+      if (r->realfloor != nullptr) processed += LightSurfaces(this, r->realfloor->surfs, recalcNow);
+      if (r->realceil != nullptr) processed += LightSurfaces(this, r->realceil->surfs, recalcNow);
+      if (r->fakefloor != nullptr) processed += LightSurfaces(this, r->fakefloor->surfs, recalcNow);
+      if (r->fakeceil != nullptr) processed += LightSurfaces(this, r->fakeceil->surfs, recalcNow);
+    }
+    if (recalcNow) R_PBarUpdate("Lightmaps", processed, (int)surfCount);
+  }
+
+  for (auto &&seg : Level->allSegs()) {
+    for (drawseg_t *ds = seg.drawsegs; ds; ds = ds->next) {
+      processed += LightSegSurfaces(this, ds->top, recalcNow);
+      processed += LightSegSurfaces(this, ds->mid, recalcNow);
+      processed += LightSegSurfaces(this, ds->bot, recalcNow);
+      processed += LightSegSurfaces(this, ds->topsky, recalcNow);
+      processed += LightSegSurfaces(this, ds->extra, recalcNow);
+    }
+    if (recalcNow) R_PBarUpdate("Lightmaps", processed, (int)surfCount);
+  }
+
+  if (recalcNow) R_PBarUpdate("Lightmaps", (int)surfCount, (int)surfCount, true);
 }
 
 
@@ -798,9 +847,6 @@ void VRenderLevelLightmap::PreRender () {
   if (doPrecalc || doReadCache || doWriteCache) {
     R_LdrMsgShowSecondary("CREATING LIGHTMAPS...");
 
-    // calculate total number of surfaces to process
-    vuint32 surfCount = countAllSurfaces();
-
     bool recalcLight = true;
     if (doReadCache) {
       VStream *lmc = FL_OpenSysFileRead(ccfname);
@@ -815,34 +861,8 @@ void VRenderLevelLightmap::PreRender () {
 
     if (recalcLight && doPrecalc) {
       GCon->Log("calculating static lighting...");
-      R_PBarReset();
-      R_PBarUpdate("Lightmaps", 0, (int)surfCount);
       double stt = -Sys_Time();
-      int surfProcessed = 0;
-      for (int i = 0; i < Level->NumSubsectors; ++i) {
-        subsector_t *sub = &Level->Subsectors[i];
-        for (subregion_t *r = sub->regions; r != nullptr; r = r->next) {
-          if (r->realfloor != nullptr) surfProcessed += LightSurfaces(this, r->realfloor->surfs);
-          if (r->realceil != nullptr) surfProcessed += LightSurfaces(this, r->realceil->surfs);
-          if (r->fakefloor != nullptr) surfProcessed += LightSurfaces(this, r->fakefloor->surfs);
-          if (r->fakeceil != nullptr) surfProcessed += LightSurfaces(this, r->fakeceil->surfs);
-        }
-        R_PBarUpdate("Lightmaps", surfProcessed, (int)surfCount);
-      }
-
-      for (int i = 0; i < Level->NumSegs; ++i) {
-        seg_t *seg = &Level->Segs[i];
-        for (drawseg_t *ds = seg->drawsegs; ds; ds = ds->next) {
-          surfProcessed += LightSegSurfaces(this, ds->top);
-          surfProcessed += LightSegSurfaces(this, ds->mid);
-          surfProcessed += LightSegSurfaces(this, ds->bot);
-          surfProcessed += LightSegSurfaces(this, ds->topsky);
-          surfProcessed += LightSegSurfaces(this, ds->extra);
-        }
-        R_PBarUpdate("Lightmaps", surfProcessed, (int)surfCount);
-      }
-      R_PBarUpdate("Lightmaps", surfCount, (int)surfCount, true);
-
+      ResetLightmaps(true);
       // cache
       if (doWriteCache) {
         const float tlim = loader_cache_time_limit_lightmap.asFloat();

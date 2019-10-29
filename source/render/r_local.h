@@ -701,6 +701,8 @@ public:
   virtual void DecayLights (float) override;
   virtual void RemoveOwnedLight (VThinker *Owner) override;
 
+  virtual void ResetLightmaps (bool recalcNow) override;
+
   virtual bool isNeedLightmapCache () const noexcept override;
   virtual void saveLightmaps (VStream *strm) override;
   virtual bool loadLightmaps (VStream *strm) override;
@@ -907,6 +909,8 @@ public:
   virtual void PreRender () override;
 
   virtual void BuildLightMap (surface_t *) override;
+
+  virtual void ResetLightmaps (bool recalcNow) override;
 
   virtual bool isNeedLightmapCache () const noexcept override;
   virtual void saveLightmaps (VStream *strm) override;

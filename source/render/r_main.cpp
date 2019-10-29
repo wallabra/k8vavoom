@@ -2242,6 +2242,15 @@ surfcache_t *VRenderLevelShared::GetLightChainFirst (vuint32 bnum) {
 
 //==========================================================================
 //
+//  VRenderLevelShared::ResetLightmaps
+//
+//==========================================================================
+void VRenderLevelShared::ResetLightmaps (bool recalcNow) {
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::isNeedLightmapCache
 //
 //==========================================================================
@@ -2552,6 +2561,22 @@ void V_Shutdown () {
 COMMAND(NukeLightmapCache) {
   if (GClLevel && GClLevel->RenderData) {
     GClLevel->RenderData->NukeLightmapCache();
-    GCon->Logf("lightmap cache nuked.");
+    GCon->Log("lightmap cache nuked.");
+  }
+}
+
+
+//==========================================================================
+//
+//  COMMAND LightmapsReset
+//
+//==========================================================================
+COMMAND(LightmapsReset) {
+  if (GClLevel && GClLevel->RenderData) {
+    bool recalcNow = true;
+    if (Args.Num() > 1) recalcNow = false;
+    GCon->Log("resetting lightmaps...");
+    GClLevel->RenderData->ResetLightmaps(recalcNow);
+    GClLevel->RenderData->NukeLightmapCache();
   }
 }

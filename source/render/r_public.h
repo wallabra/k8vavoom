@@ -138,6 +138,7 @@ public:
   virtual LightInfo GetDynamicLight (int idx) const = 0;
 
   virtual void NukeLightmapCache () = 0;
+  virtual void ResetLightmaps (bool recalcNow) = 0;
 
   virtual bool isNeedLightmapCache () const noexcept = 0;
   virtual void saveLightmaps (VStream *strm) = 0;
