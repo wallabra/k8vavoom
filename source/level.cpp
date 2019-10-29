@@ -35,9 +35,6 @@ IMPLEMENT_CLASS(V, Level);
 VLevel *GLevel;
 VLevel *GClLevel;
 
-opening_t *VLevel::openListHead = nullptr;
-opening_t *VLevel::openListFree = nullptr;
-
 
 //==========================================================================
 //
@@ -125,65 +122,6 @@ void VLevel::ResetSZValidCount () {
 //==========================================================================
 void VLevel::IncrementSZValidCount () {
   if (++validcountSZCache == 0x7fffffff) ResetSZValidCount();
-}
-
-
-//==========================================================================
-//
-//  VLevel::AllocOpening
-//
-//  allocate new opening from list
-//
-//==========================================================================
-opening_t *VLevel::AllocOpening () {
-  // get or alloc opening
-  opening_t *res = openListFree;
-  if (res) {
-    openListFree = res->listnext;
-  } else {
-    res = (opening_t *)Z_Malloc(sizeof(opening_t));
-  }
-  // clear it
-  memset((void *)res, 0, sizeof(opening_t));
-  // and include it into allocated list
-  if (openListHead) openListHead->listprev = res;
-  res->listnext = openListHead;
-  openListHead = res;
-  return res;
-}
-
-
-//==========================================================================
-//
-//  VLevel::FreeOpening
-//
-//  free one opening
-//
-//==========================================================================
-void VLevel::FreeOpening (opening_t *op) {
-  if (!op) return;
-  // remove from allocated list
-  if (op->listprev) op->listprev->listnext = op->listnext; else openListHead = op->listnext;
-  if (op->listnext) op->listnext->listprev = op->listprev;
-  op->listprev = nullptr;
-  op->listnext = openListFree;
-  openListFree = op;
-}
-
-
-//==========================================================================
-//
-//  VLevel::FreeOpeningList
-//
-//  free opening list
-//
-//==========================================================================
-void VLevel::FreeOpeningList (opening_t *&op) {
-  while (op) {
-    opening_t *next = op->next;
-    FreeOpening(op);
-    op = next;
-  }
 }
 
 
@@ -542,19 +480,6 @@ void VLevel::Destroy () {
     }
   }
   BodyQueueTrans.Clear();
-
-  // openings
-  while (openListHead) {
-    opening_t *op = openListHead;
-    openListHead = op->listnext;
-    Z_Free(op);
-  }
-
-  while (openListFree) {
-    opening_t *op = openListFree;
-    openListFree = op->listnext;
-    Z_Free(op);
-  }
 
   GTextureManager.ResetMapTextures();
 
