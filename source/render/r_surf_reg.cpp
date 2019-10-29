@@ -44,6 +44,8 @@ extern VCvarF loader_cache_time_limit;
 extern VCvarI loader_cache_max_age_days;
 extern VCvarI loader_cache_compression_level;
 
+static VCvarB dbg_always_cache_lightmaps("dbg_always_cache_lightmaps", true, "Always cache lightmaps?", /*CVAR_Archive*/0);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern int light_mem;
@@ -493,16 +495,48 @@ static int LightSegSurfaces (VRenderLevelLightmap *rdr, segpart_t *sp) {
 //  WriteSurfaceLightmaps
 //
 //==========================================================================
-static void WriteSurfaceLightmaps (VStream *strm, surface_t *s, subsector_t *sub, seg_t *seg) {
+static void WriteSurfaceLightmaps (VLevel *Level, VStream *strm, surface_t *s, subsector_t *sub, seg_t *seg) {
+  vuint32 cnt = 0;
+  for (surface_t *t = s; t; t = t->next) ++cnt;
+  *strm << cnt;
   for (; s; s = s->next) {
+    vuint8 flag = 0;
     // monochrome lightmap is always there when rgb lightmap is there
     if (s->lightmap) {
+      flag |= 1u<<0;
       vassert(s->lmsize > 0);
       if (s->lightmap_rgb) {
         vassert(s->lmrgbsize > 0);
+        flag |= 1u<<1;
+      }
+      *strm << flag;
+      // surface check data
+      *strm << s->plane.normal.x << s->plane.normal.y << s->plane.normal.z << s->plane.dist;
+      vuint32 ssnum = (s->subsector ? (vuint32)(ptrdiff_t)(s->subsector-&Level->Subsectors[0]) : 0xffffffffu);
+      *strm << ssnum;
+      vuint32 segnum = (s->seg ? (vuint32)(ptrdiff_t)(s->seg-&Level->Segs[0]) : 0xffffffffu);
+      *strm << segnum;
+      vuint32 vcount = (vuint32)s->count;
+      *strm << vcount;
+      //??? write vertices too?
+      vint32 t;
+      t = s->texturemins[0]; *strm << t;
+      t = s->texturemins[1]; *strm << t;
+      t = s->extents[0]; *strm << t;
+      t = s->extents[1]; *strm << t;
+      // write lightmaps
+      vuint32 lmsize;
+      lmsize = (vuint32)s->lmsize;
+      *strm << lmsize;
+      strm->Serialise(s->lightmap, s->lmsize);
+      if (s->lightmap_rgb) {
+        lmsize = (vuint32)s->lmrgbsize;
+        *strm << lmsize;
+        strm->Serialise(s->lightmap_rgb, s->lmrgbsize);
       }
     } else {
       vassert(!s->lightmap_rgb);
+      *strm << flag;
     }
   }
 }
@@ -513,8 +547,11 @@ static void WriteSurfaceLightmaps (VStream *strm, surface_t *s, subsector_t *sub
 //  WriteSegLightmaps
 //
 //==========================================================================
-static void WriteSegLightmaps (VStream *strm, segpart_t *sp, seg_t *seg) {
-  for (; sp; sp = sp->next) WriteSurfaceLightmaps(strm, sp->surfs, nullptr, seg);
+static void WriteSegLightmaps (VLevel *Level, VStream *strm, segpart_t *sp, seg_t *seg) {
+  vuint32 cnt = 0;
+  for (segpart_t *t = sp; t; t = t->next) ++cnt;
+  *strm << cnt;
+  for (; sp; sp = sp->next) WriteSurfaceLightmaps(Level, strm, sp->surfs, nullptr, seg);
 }
 
 
@@ -536,6 +573,12 @@ void VRenderLevelLightmap::PreRender () {
   double stt = -Sys_Time();
 
   bool doPrecalc = (r_precalc_static_lights_override >= 0 ? !!r_precalc_static_lights_override : r_precalc_static_lights);
+  VStr ccfname = (Level->cacheFileBase.isEmpty() ? VStr::EmptyString : Level->cacheFileBase+".lmap");
+  if (ccfname.isEmpty()) doCache = false;
+
+  if (doCache) {
+    GCon->Logf(NAME_Debug, "lightmap cache file: '%s.lmap'", *ccfname);
+  }
 
   if (doPrecalc) {
     R_LdrMsgShowSecondary("CREATING LIGHTMAPS...");
@@ -595,28 +638,46 @@ void VRenderLevelLightmap::PreRender () {
     // cache
     if (doCache) {
       stt += Sys_Time();
-      if (stt >= tlim) {
-        GCon->Logf("writing lightmap cache to '%s.lmap.cache'...", *Level->cacheFileBase);
+      if (dbg_always_cache_lightmaps || stt >= tlim) {
+        VStream *lmc = FL_OpenSysFileWrite(ccfname);
+        if (lmc) {
+          GCon->Logf("writing lightmap cache to '%s.lmap'...", *ccfname);
+          vuint32 ver = 0;
+          *lmc << ver;
 
-        for (int i = 0; i < Level->NumSubsectors; ++i) {
-          subsector_t *sub = &Level->Subsectors[i];
-          for (subregion_t *r = sub->regions; r != nullptr; r = r->next) {
-            if (r->realfloor != nullptr) WriteSurfaceLightmaps(nullptr, r->realfloor->surfs, sub, nullptr);
-            if (r->realceil != nullptr) WriteSurfaceLightmaps(nullptr, r->realceil->surfs, sub, nullptr);
-            if (r->fakefloor != nullptr) WriteSurfaceLightmaps(nullptr, r->fakefloor->surfs, sub, nullptr);
-            if (r->fakeceil != nullptr) WriteSurfaceLightmaps(nullptr, r->fakeceil->surfs, sub, nullptr);
-          }
-        }
+          *lmc << Level->NumSectors;
+          *lmc << Level->NumSubsectors;
+          *lmc << Level->NumSegs;
 
-        for (int i = 0; i < Level->NumSegs; ++i) {
-          seg_t *seg = &Level->Segs[i];
-          for (drawseg_t *ds = seg->drawsegs; ds; ds = ds->next) {
-            WriteSegLightmaps(nullptr, ds->top, seg);
-            WriteSegLightmaps(nullptr, ds->mid, seg);
-            WriteSegLightmaps(nullptr, ds->bot, seg);
-            WriteSegLightmaps(nullptr, ds->topsky, seg);
-            WriteSegLightmaps(nullptr, ds->extra, seg);
+          for (int i = 0; i < Level->NumSubsectors; ++i) {
+            vuint32 ssnum = (vuint32)i;
+            *lmc << ssnum;
+            subsector_t *sub = &Level->Subsectors[i];
+            for (subregion_t *r = sub->regions; r != nullptr; r = r->next) {
+              if (r->realfloor != nullptr) WriteSurfaceLightmaps(Level, lmc, r->realfloor->surfs, sub, nullptr);
+              if (r->realceil != nullptr) WriteSurfaceLightmaps(Level, lmc, r->realceil->surfs, sub, nullptr);
+              if (r->fakefloor != nullptr) WriteSurfaceLightmaps(Level, lmc, r->fakefloor->surfs, sub, nullptr);
+              if (r->fakeceil != nullptr) WriteSurfaceLightmaps(Level, lmc, r->fakeceil->surfs, sub, nullptr);
+            }
           }
+
+          for (int i = 0; i < Level->NumSegs; ++i) {
+            vuint32 snum = (vuint32)i;
+            *lmc << snum;
+            seg_t *seg = &Level->Segs[i];
+            for (drawseg_t *ds = seg->drawsegs; ds; ds = ds->next) {
+              WriteSegLightmaps(Level, lmc, ds->top, seg);
+              WriteSegLightmaps(Level, lmc, ds->mid, seg);
+              WriteSegLightmaps(Level, lmc, ds->bot, seg);
+              WriteSegLightmaps(Level, lmc, ds->topsky, seg);
+              WriteSegLightmaps(Level, lmc, ds->extra, seg);
+            }
+          }
+
+          lmc->Close();
+          bool err = lmc->IsError();
+          delete lmc;
+          if (err) Sys_FileDelete(ccfname);
         }
       }
     }

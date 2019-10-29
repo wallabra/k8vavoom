@@ -1913,6 +1913,10 @@ static void SV_SaveGame (int slot, VStr Description, bool checkpoint, bool isAut
 
   // write data to destination slot
   if (BaseSlot.SaveToSlot(slot)) {
+    if (checkpoint) {
+      GLevel->cacheFileBase = saveFileBase;
+      GLevel->cacheFlags &= ~VLevel::CacheFlag_Ignore;
+    }
     SV_SendAfterSaveEvent(isAutosave, checkpoint);
   }
 
@@ -1950,6 +1954,10 @@ void SV_LoadGame (int slot) {
       }
       Player->eventAfterUnarchiveThinkers();
     }
+  } else {
+    // checkpoint
+    GLevel->cacheFileBase = saveFileBase;
+    GLevel->cacheFlags &= ~VLevel::CacheFlag_Ignore;
   }
 
   SV_SendLoadedEvent();
