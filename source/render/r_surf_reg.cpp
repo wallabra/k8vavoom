@@ -142,6 +142,7 @@ void VRenderLevelLightmap::InitSurfs (bool recalcStaticLightmaps, surface_t *ASu
 
       if (!CalcSurfMinMax(surf, mins, maxs, texinfo->saxis, texinfo->soffs)) {
         // bad surface
+        surf->drawflags &= ~surface_t::DF_CALC_LMAP; // just in case
         continue;
       }
       int bmins = (int)floor(mins/16);
@@ -162,6 +163,7 @@ void VRenderLevelLightmap::InitSurfs (bool recalcStaticLightmaps, surface_t *ASu
 
       if (!CalcSurfMinMax(surf, mins, maxs, texinfo->taxis, texinfo->toffs)) {
         // bad surface
+        surf->drawflags &= ~surface_t::DF_CALC_LMAP; // just in case
         continue;
       }
       bmins = (int)floor(mins/16);
@@ -202,8 +204,12 @@ void VRenderLevelLightmap::InitSurfs (bool recalcStaticLightmaps, surface_t *ASu
       if (minMaxChanged) FlushSurfCaches(surf);
 
       if (inWorldCreation && doPrecalc) {
+        /*
         surf->drawflags &= ~surface_t::DF_CALC_LMAP; // just in case
         LightFace(surf, sub);
+        */
+        // we'll do it later
+        surf->drawflags |= surface_t::DF_CALC_LMAP;
       } else {
         // recalculate lightmap when we'll need to
         if (recalcStaticLightmaps || inWorldCreation) surf->drawflags |= surface_t::DF_CALC_LMAP;
@@ -427,6 +433,66 @@ surface_t *VRenderLevelLightmap::SubdivideSeg (surface_t *surf, const TVec &axis
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+
+//==========================================================================
+//
+//  CountSurfaces
+//
+//==========================================================================
+static int CountSurfaces (surface_t *s) {
+  int res = 0;
+  for (; s; s = s->next) ++res;
+  return res;
+}
+
+
+//==========================================================================
+//
+//  CountSegSurfaces
+//
+//==========================================================================
+static int CountSegSurfaces (segpart_t *sp) {
+  int res = 0;
+  for (; sp; sp = sp->next) res += CountSurfaces(sp->surfs);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  LightSurfaces
+//
+//==========================================================================
+static int LightSurfaces (VRenderLevelLightmap *rdr, surface_t *s) {
+  int res = 0;
+  for (; s; s = s->next) {
+    if (s->drawflags&surface_t::DF_CALC_LMAP) {
+      s->drawflags &= ~surface_t::DF_CALC_LMAP;
+      rdr->LightFace(s, s->subsector);
+    }
+    ++res;
+  }
+  return res;
+}
+
+
+//==========================================================================
+//
+//  LightSegSurfaces
+//
+//==========================================================================
+static int LightSegSurfaces (VRenderLevelLightmap *rdr, segpart_t *sp) {
+  int res = 0;
+  for (; sp; sp = sp->next) res += LightSurfaces(rdr, sp->surfs);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  WriteSurfaceLightmaps
+//
+//==========================================================================
 static void WriteSurfaceLightmaps (VStream *strm, surface_t *s, subsector_t *sub, seg_t *seg) {
   for (; s; s = s->next) {
     // monochrome lightmap is always there when rgb lightmap is there
@@ -442,6 +508,11 @@ static void WriteSurfaceLightmaps (VStream *strm, surface_t *s, subsector_t *sub
 }
 
 
+//==========================================================================
+//
+//  WriteSegLightmaps
+//
+//==========================================================================
 static void WriteSegLightmaps (VStream *strm, segpart_t *sp, seg_t *seg) {
   for (; sp; sp = sp->next) WriteSurfaceLightmaps(strm, sp->surfs, nullptr, seg);
 }
@@ -457,45 +528,103 @@ void VRenderLevelLightmap::PreRender () {
   c_seg_div = 0;
   light_mem = 0;
 
-  // lightmap caching
+  CreateWorldSurfaces();
+
+  // lightmapping
   bool doCache = (!Level->cacheFileBase.isEmpty() && loader_cache_data.asBool() && (Level->cacheFlags&VLevel::CacheFlag_Ignore) == 0);
   float tlim = loader_cache_time_limit.asFloat();
   double stt = -Sys_Time();
 
-  CreateWorldSurfaces();
+  bool doPrecalc = (r_precalc_static_lights_override >= 0 ? !!r_precalc_static_lights_override : r_precalc_static_lights);
+
+  if (doPrecalc) {
+    R_LdrMsgShowSecondary("CREATING LIGHTMAPS...");
+    R_PBarReset();
+
+    // calculate total number of surfaces to process
+    int surfCount = 0;
+    for (int i = 0; i < Level->NumSubsectors; ++i) {
+      subsector_t *sub = &Level->Subsectors[i];
+      for (subregion_t *r = sub->regions; r != nullptr; r = r->next) {
+        if (r->realfloor != nullptr) surfCount += CountSurfaces(r->realfloor->surfs);
+        if (r->realceil != nullptr) surfCount += CountSurfaces(r->realceil->surfs);
+        if (r->fakefloor != nullptr) surfCount += CountSurfaces(r->fakefloor->surfs);
+        if (r->fakeceil != nullptr) surfCount += CountSurfaces(r->fakeceil->surfs);
+      }
+    }
+
+    for (int i = 0; i < Level->NumSegs; ++i) {
+      seg_t *seg = &Level->Segs[i];
+      for (drawseg_t *ds = seg->drawsegs; ds; ds = ds->next) {
+        surfCount += CountSegSurfaces(ds->top);
+        surfCount += CountSegSurfaces(ds->mid);
+        surfCount += CountSegSurfaces(ds->bot);
+        surfCount += CountSegSurfaces(ds->topsky);
+        surfCount += CountSegSurfaces(ds->extra);
+      }
+    }
+
+    R_PBarUpdate("Lightmaps", 0, surfCount);
+    int surfProcessed = 0;
+
+    for (int i = 0; i < Level->NumSubsectors; ++i) {
+      subsector_t *sub = &Level->Subsectors[i];
+      for (subregion_t *r = sub->regions; r != nullptr; r = r->next) {
+        if (r->realfloor != nullptr) surfProcessed += LightSurfaces(this, r->realfloor->surfs);
+        if (r->realceil != nullptr) surfProcessed += LightSurfaces(this, r->realceil->surfs);
+        if (r->fakefloor != nullptr) surfProcessed += LightSurfaces(this, r->fakefloor->surfs);
+        if (r->fakeceil != nullptr) surfProcessed += LightSurfaces(this, r->fakeceil->surfs);
+      }
+      R_PBarUpdate("Lightmaps", surfProcessed, surfCount);
+    }
+
+    for (int i = 0; i < Level->NumSegs; ++i) {
+      seg_t *seg = &Level->Segs[i];
+      for (drawseg_t *ds = seg->drawsegs; ds; ds = ds->next) {
+        surfProcessed += LightSegSurfaces(this, ds->top);
+        surfProcessed += LightSegSurfaces(this, ds->mid);
+        surfProcessed += LightSegSurfaces(this, ds->bot);
+        surfProcessed += LightSegSurfaces(this, ds->topsky);
+        surfProcessed += LightSegSurfaces(this, ds->extra);
+      }
+      R_PBarUpdate("Lightmaps", surfProcessed, surfCount);
+    }
+
+    R_PBarUpdate("Lightmaps", surfCount, surfCount, true);
+
+    // cache
+    if (doCache) {
+      stt += Sys_Time();
+      if (stt >= tlim) {
+        GCon->Logf("writing lightmap cache to '%s.lmap.cache'...", *Level->cacheFileBase);
+
+        for (int i = 0; i < Level->NumSubsectors; ++i) {
+          subsector_t *sub = &Level->Subsectors[i];
+          for (subregion_t *r = sub->regions; r != nullptr; r = r->next) {
+            if (r->realfloor != nullptr) WriteSurfaceLightmaps(nullptr, r->realfloor->surfs, sub, nullptr);
+            if (r->realceil != nullptr) WriteSurfaceLightmaps(nullptr, r->realceil->surfs, sub, nullptr);
+            if (r->fakefloor != nullptr) WriteSurfaceLightmaps(nullptr, r->fakefloor->surfs, sub, nullptr);
+            if (r->fakeceil != nullptr) WriteSurfaceLightmaps(nullptr, r->fakeceil->surfs, sub, nullptr);
+          }
+        }
+
+        for (int i = 0; i < Level->NumSegs; ++i) {
+          seg_t *seg = &Level->Segs[i];
+          for (drawseg_t *ds = seg->drawsegs; ds; ds = ds->next) {
+            WriteSegLightmaps(nullptr, ds->top, seg);
+            WriteSegLightmaps(nullptr, ds->mid, seg);
+            WriteSegLightmaps(nullptr, ds->bot, seg);
+            WriteSegLightmaps(nullptr, ds->topsky, seg);
+            WriteSegLightmaps(nullptr, ds->extra, seg);
+          }
+        }
+      }
+    }
+  }
 
   GCon->Logf("%d subdivides", c_subdivides);
   GCon->Logf("%d seg subdivides", c_seg_div);
   GCon->Logf("%dk light mem", light_mem/1024);
-
-  if (doCache) {
-    stt += Sys_Time();
-    if (stt >= tlim) {
-      GCon->Logf("writing lightmap cache to '%s.lmap.cache'...", *Level->cacheFileBase);
-
-      for (int i = 0; i < Level->NumSubsectors; ++i) {
-        subsector_t *sub = &Level->Subsectors[i];
-        for (subregion_t *r = sub->regions; r != nullptr; r = r->next) {
-          if (r->realfloor != nullptr) WriteSurfaceLightmaps(nullptr, r->realfloor->surfs, sub, nullptr);
-          if (r->realceil != nullptr) WriteSurfaceLightmaps(nullptr, r->realceil->surfs, sub, nullptr);
-          if (r->fakefloor != nullptr) WriteSurfaceLightmaps(nullptr, r->fakefloor->surfs, sub, nullptr);
-          if (r->fakeceil != nullptr) WriteSurfaceLightmaps(nullptr, r->fakeceil->surfs, sub, nullptr);
-        }
-      }
-
-      for (int i = 0; i < Level->NumSegs; ++i) {
-        seg_t *seg = &Level->Segs[i];
-        for (drawseg_t *ds = seg->drawsegs; ds; ds = ds->next) {
-          WriteSegLightmaps(nullptr, ds->top, seg);
-          WriteSegLightmaps(nullptr, ds->mid, seg);
-          WriteSegLightmaps(nullptr, ds->bot, seg);
-          WriteSegLightmaps(nullptr, ds->topsky, seg);
-          WriteSegLightmaps(nullptr, ds->extra, seg);
-        }
-      }
-
-    }
-  }
 }
 /*
 extern VCvarB loader_cache_data;

@@ -879,7 +879,6 @@ protected:
   static bool CalcFaceVectors (LMapTraceInfo &lmi, const surface_t *surf);
   void CalcPoints (LMapTraceInfo &lmi, const surface_t *surf, bool lowres); // for dynlights, set `lowres` to `true`
   void SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_t *surf, const vuint8 *facevis);
-  void LightFace (surface_t *surf, subsector_t *leaf);
   void AddDynamicLights (surface_t *surf);
   //virtual void PushDlights () override;
 
@@ -892,6 +891,11 @@ protected:
   // world BSP rendering
   virtual void QueueWorldSurface (surface_t*) override;
   void RenderWorld (const refdef_t*, const VViewClipper*);
+
+public:
+  // this has to be public for now
+  // this method calculates static lightmap for a surface
+  void LightFace (surface_t *surf, subsector_t *leaf);
 
 public:
   VRenderLevelLightmap (VLevel*);

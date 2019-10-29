@@ -1538,11 +1538,7 @@ void VRenderLevelShared::CreateWorldSurfaces () {
   }
 
   if (inWorldCreation) {
-    if (IsShadowVolumeRenderer()) {
-      R_LdrMsgShowSecondary("CREATING WORLD SURFACES...");
-    } else {
-      R_LdrMsgShowSecondary("CALCULATING LIGHTMAPS...");
-    }
+    R_LdrMsgShowSecondary("CREATING WORLD SURFACES...");
     R_PBarReset();
   }
 
@@ -1658,12 +1654,12 @@ void VRenderLevelShared::CreateWorldSurfaces () {
       --sregLeft;
     }
 
-    if (inWorldCreation) R_PBarUpdate("Lighting", Level->NumSubsectors-i, Level->NumSubsectors);
+    if (inWorldCreation) R_PBarUpdate("Surfaces", Level->NumSubsectors-i, Level->NumSubsectors);
   }
 
   InitialWorldUpdate();
 
-  if (inWorldCreation) R_PBarUpdate("Lighting", Level->NumSubsectors, Level->NumSubsectors, true);
+  if (inWorldCreation) R_PBarUpdate("Surfaces", Level->NumSubsectors, Level->NumSubsectors, true);
 
   inWorldCreation = false;
 }
