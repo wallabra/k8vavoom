@@ -39,6 +39,11 @@
 static VCvarB r_precalc_static_lights("r_precalc_static_lights", true, "Precalculate static lights?", CVAR_Archive);
 int r_precalc_static_lights_override = -1; // <0: not set
 
+extern VCvarB loader_cache_data;
+extern VCvarF loader_cache_time_limit;
+extern VCvarI loader_cache_max_age_days;
+extern VCvarI loader_cache_compression_level;
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern int light_mem;
@@ -421,6 +426,27 @@ surface_t *VRenderLevelLightmap::SubdivideSeg (surface_t *surf, const TVec &axis
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+static void WriteSurfaceLightmaps (VStream *strm, surface_t *s, subsector_t *sub, seg_t *seg) {
+  for (; s; s = s->next) {
+    // monochrome lightmap is always there when rgb lightmap is there
+    if (s->lightmap) {
+      vassert(s->lmsize > 0);
+      if (s->lightmap_rgb) {
+        vassert(s->lmrgbsize > 0);
+      }
+    } else {
+      vassert(!s->lightmap_rgb);
+    }
+  }
+}
+
+
+static void WriteSegLightmaps (VStream *strm, segpart_t *sp, seg_t *seg) {
+  for (; sp; sp = sp->next) WriteSurfaceLightmaps(strm, sp->surfs, nullptr, seg);
+}
+
+
 //==========================================================================
 //
 //  VRenderLevelLightmap::PreRender
@@ -431,9 +457,80 @@ void VRenderLevelLightmap::PreRender () {
   c_seg_div = 0;
   light_mem = 0;
 
+  // lightmap caching
+  bool doCache = (!Level->cacheFileBase.isEmpty() && loader_cache_data.asBool() && (Level->cacheFlags&VLevel::CacheFlag_Ignore) == 0);
+  float tlim = loader_cache_time_limit.asFloat();
+  double stt = -Sys_Time();
+
   CreateWorldSurfaces();
 
   GCon->Logf("%d subdivides", c_subdivides);
   GCon->Logf("%d seg subdivides", c_seg_div);
   GCon->Logf("%dk light mem", light_mem/1024);
+
+  if (doCache) {
+    stt += Sys_Time();
+    if (stt >= tlim) {
+      GCon->Logf("writing lightmap cache to '%s.lmap.cache'...", *Level->cacheFileBase);
+
+      for (int i = 0; i < Level->NumSubsectors; ++i) {
+        subsector_t *sub = &Level->Subsectors[i];
+        for (subregion_t *r = sub->regions; r != nullptr; r = r->next) {
+          if (r->realfloor != nullptr) WriteSurfaceLightmaps(nullptr, r->realfloor->surfs, sub, nullptr);
+          if (r->realceil != nullptr) WriteSurfaceLightmaps(nullptr, r->realceil->surfs, sub, nullptr);
+          if (r->fakefloor != nullptr) WriteSurfaceLightmaps(nullptr, r->fakefloor->surfs, sub, nullptr);
+          if (r->fakeceil != nullptr) WriteSurfaceLightmaps(nullptr, r->fakeceil->surfs, sub, nullptr);
+        }
+      }
+
+      for (int i = 0; i < Level->NumSegs; ++i) {
+        seg_t *seg = &Level->Segs[i];
+        for (drawseg_t *ds = seg->drawsegs; ds; ds = ds->next) {
+          WriteSegLightmaps(nullptr, ds->top, seg);
+          WriteSegLightmaps(nullptr, ds->mid, seg);
+          WriteSegLightmaps(nullptr, ds->bot, seg);
+          WriteSegLightmaps(nullptr, ds->topsky, seg);
+          WriteSegLightmaps(nullptr, ds->extra, seg);
+        }
+      }
+
+    }
+  }
 }
+/*
+extern VCvarB loader_cache_data;
+extern VCvarF loader_cache_time_limit;
+extern VCvarI loader_cache_max_age_days;
+extern VCvarI loader_cache_compression_level;
+*/
+
+
+/* surface caching
+  inline vuint32 calcHash (const VLevel *level) const noexcept {
+    vuint32 hash = 0;
+    hash = joaatHashBuf(&plane.normal.x, sizeof(plane.normal.x), hash);
+    hash = joaatHashBuf(&plane.normal.y, sizeof(plane.normal.y), hash);
+    hash = joaatHashBuf(&plane.normal.z, sizeof(plane.normal.z), hash);
+    hash = joaatHashBuf(&plane.dist, sizeof(plane.dist), hash);
+    vuint32 ssnum = (subsector ? (vuint32)(ptrdiff_t)(subsector-&level->Subsectors[0]) : 0xffffffffu);
+    hash = joaatHashBuf(&ssnum, sizeof(ssnum), hash);
+    vuint32 segnum = (seg ? (vuint32)(ptrdiff_t)(seg-&level->Segs[0]) : 0xffffffffu);
+    hash = joaatHashBuf(&segnum, sizeof(segnum), hash);
+    hash = joaatHashBuf(&count, sizeof(count), hash);
+    hash = joaatHashBuf(&texturemins, sizeof(texturemins), hash);
+    hash = joaatHashBuf(&extents, sizeof(extents), hash);
+    return hash;
+  }
+
+  inline bool operator == (const surface_t &b) const noexcept {
+    if (&b == this) return true;
+    return
+      count == b.count &&
+      texturemins[0] == b.texturemins[0] &&
+      texturemins[1] == b.texturemins[1] &&
+      extents[0] == b.extents[0] &&
+      extents[1] == b.extents[1] &&
+      plane.dist == b.plane.dist &&
+      plane.normal == b.plane.normal;
+  }
+*/

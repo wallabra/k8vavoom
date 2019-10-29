@@ -61,9 +61,13 @@ static VCvarB dbg_deep_water("dbg_deep_water", false, "Show debug messages in De
 
 static VCvarB dbg_show_map_hash("dbg_show_map_hash", false, "Show map hash?", CVAR_PreInit|CVAR_Archive);
 
-static VCvarB loader_cache_rebuilt_data("loader_cache_rebuilt_data", true, "Cache rebuilt nodes, pvs, blockmap, and so on?", CVAR_Archive);
-static VCvarF loader_cache_time_limit("loader_cache_time_limit", "3", "Cache data if building took more than this number of seconds.", CVAR_Archive);
-static VCvarI loader_cache_max_age_days("loader_cache_max_age_days", "7", "Remove cached data older than this number of days (<=0: none).", CVAR_Archive);
+static VCvarB loader_cache_ignore_one("loader_cache_ignore_one", false, "Ignore (and remove) cache for next map loading?", CVAR_PreInit);
+static VCvarB loader_cache_rebuild_data("loader_cache_rebuild_data", true, "Cache rebuilt nodes, pvs, blockmap, and so on?", CVAR_Archive);
+
+VCvarB loader_cache_data("loader_cache_data", true, "Cache built level data?", CVAR_Archive);
+VCvarF loader_cache_time_limit("loader_cache_time_limit", "3", "Cache data if building took more than this number of seconds.", CVAR_Archive);
+VCvarI loader_cache_max_age_days("loader_cache_max_age_days", "7", "Remove cached data older than this number of days (<=0: none).", CVAR_Archive);
+VCvarI loader_cache_compression_level("loader_cache_compression_level", "9", "Cache file compression level [0..9]", CVAR_Archive);
 
 //static VCvarB strict_level_errors("strict_level_errors", true, "Strict level errors mode?", 0);
 static VCvarB deepwater_hacks("deepwater_hacks", true, "Apply self-referenced deepwater hacks?", CVAR_Archive);
@@ -78,10 +82,6 @@ static VCvarB build_blockmap("loader_force_blockmap_rebuild", false, "Force bloc
 static VCvarB nodes_allow_compressed("nodes_allow_compressed", false, "Allow loading v1+ compressed GL nodes?", CVAR_Archive);
 
 static VCvarB loader_force_nodes_rebuild("loader_force_nodes_rebuild", true, "Force node rebuilding?", CVAR_Archive);
-
-static VCvarB loader_cache_data("loader_cache_data", false, "Cache built level data?", CVAR_Archive);
-static VCvarB loader_cache_ignore_one("loader_cache_ignore_one", false, "Ignore (and remove) cache for next map loading?", CVAR_PreInit);
-static VCvarI loader_cache_compression_level("loader_cache_compression_level", "9", "Cache file compression level [0..9]", CVAR_Archive);
 
 static VCvarB loader_force_fix_2s("loader_force_fix_2s", false, "Force-fix invalid two-sided flags? (non-persistent)", CVAR_PreInit/*|CVAR_Archive*/);
 
@@ -922,7 +922,7 @@ load_again:
       else if (LName == NAME_reject) RejectLump = lumpnum+i;
       else if (LName == NAME_dialogue) DialogueLump = lumpnum+i;
       else if (LName == NAME_znodes) {
-        if (!loader_cache_rebuilt_data && nodes_allow_compressed) {
+        if (!loader_cache_rebuild_data && nodes_allow_compressed) {
           CompressedGLNodesLump = lumpnum+i;
           UseComprGLNodes = true;
           NeedNodesBuild = false;
