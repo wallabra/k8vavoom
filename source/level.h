@@ -582,7 +582,7 @@ public:
 
   void SaveCachedData (VStream *strm);
   bool LoadCachedData (VStream *strm);
-  void ClearAllLevelData (); // call this if cache is corrupted
+  void ClearAllMapData (); // call this if cache is corrupted
 
   void FixKnownMapErrors ();
 

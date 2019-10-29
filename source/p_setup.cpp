@@ -301,7 +301,8 @@ static void doCacheCleanup () {
   for (;;) {
     VStr fname = Sys_ReadDir(dh);
     if (fname.length() == 0) break;
-    if (!fname.extractFileExtension().strEqu(".cache")) continue;
+    VStr ext = fname.extractFileExtension().toLowerCase();
+    if (ext != ".cache" && ext != ".cache.lmap") continue;
     VStr shortname = fname;
     fname = cpath+"/"+fname;
     int ftime = Sys_FileTime(fname);
@@ -309,7 +310,7 @@ static void doCacheCleanup () {
       GCon->Logf("cache: deleting invalid file '%s'", *shortname);
       dellist.append(fname);
     } else if (ftime < currtime && currtime-ftime > 60*60*24*loader_cache_max_age_days) {
-      GCon->Logf("cache: deleting old file '%s'", *shortname);
+      GCon->Logf("cache: deleting old cache file '%s'", *shortname);
       dellist.append(fname);
     } else {
       //GCon->Logf("cache: age=%d for '%s'", currtime-ftime, *shortname);
@@ -328,8 +329,7 @@ static void doCacheCleanup () {
 //
 //==========================================================================
 static void doPlaneIO (VStream *strm, TPlane *n) {
-  *strm << n->normal.x << n->normal.y << n->normal.z;
-  *strm << n->dist /* << n->type << n->signbits */;
+  *strm << n->normal.x << n->normal.y << n->normal.z << n->dist;
 }
 
 
@@ -337,25 +337,40 @@ static void doPlaneIO (VStream *strm, TPlane *n) {
 //
 //  VLevel::ClearCachedData
 //
+//  this is also used in dtor
+//
 //==========================================================================
-void VLevel::ClearAllLevelData () {
+void VLevel::ClearAllMapData () {
   if (Sectors) {
-    for (int i = 0; i < NumSectors; ++i) {
-      Sectors[i].DeleteAllRegions();
-      Sectors[i].moreTags.clear();
+    for (auto &&sec : allSectors()) {
+      sec.DeleteAllRegions();
+      sec.moreTags.clear();
     }
     // line buffer is shared, so this correctly deletes it
     delete[] Sectors[0].lines;
     Sectors[0].lines = nullptr;
-    delete[] Sectors[1].nbsecs;
+    delete[] Sectors[0].nbsecs;
     Sectors[0].nbsecs = nullptr;
   }
 
-  for (int f = 0; f < NumLines; ++f) {
-    line_t *ld = Lines+f;
-    delete[] ld->v1lines;
-    delete[] ld->v2lines;
-    ld->moreTags.clear();
+  if (Segs) {
+    for (auto &&seg : allSegs()) {
+      decal_t *decal = seg.decals;
+      while (decal) {
+        decal_t *c = decal;
+        decal = c->next;
+        delete c->animator;
+        delete c;
+      }
+    }
+  }
+
+  if (Lines) {
+    for (auto &&line : allLines()) {
+      delete[] line.v1lines;
+      delete[] line.v2lines;
+      line.moreTags.clear();
+    }
   }
 
   delete[] Vertexes;
@@ -404,6 +419,10 @@ void VLevel::ClearAllLevelData () {
   delete[] Things;
   Things = nullptr;
   NumThings = 0;
+
+  delete[] Zones;
+  Zones = nullptr;
+  NumZones = 0;
 
   GTextureManager.ResetMapTextures();
 }
@@ -1141,7 +1160,7 @@ load_again:
       GCon->Logf("cache data is obsolete or in invalid format");
       delete strm;
       Sys_FileDelete(cacheFileName);
-      ClearAllLevelData();
+      ClearAllMapData();
       goto load_again;
       //if (!glNodesFound) NeedNodesBuild = true;
     }
@@ -1409,7 +1428,7 @@ load_again:
 
   RecalcWorldBBoxes();
 
-  cacheFileBase = cacheFileName.stripExtension();
+  cacheFileBase = cacheFileName;
 }
 
 

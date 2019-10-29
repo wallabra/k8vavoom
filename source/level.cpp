@@ -366,76 +366,7 @@ void VLevel::Destroy () {
     PolyAnchorPoints = nullptr;
   }
 
-  if (Sectors) {
-    // delete regions
-    for (int i = 0; i < NumSectors; ++i) {
-      Sectors[i].DeleteAllRegions();
-      Sectors[i].moreTags.clear();
-    }
-    // line buffer is shared, so this correctly deletes it
-    delete[] Sectors[0].lines;
-    Sectors[0].lines = nullptr;
-    delete[] Sectors[0].nbsecs;
-    Sectors[0].nbsecs = nullptr;
-  }
-
-  if (Segs) {
-    for (int f = 0; f < NumSegs; ++f) {
-      decal_t *decal = Segs[f].decals;
-      while (decal) {
-        decal_t *c = decal;
-        decal = c->next;
-        delete c->animator;
-        delete c;
-      }
-    }
-  }
-
-  for (int f = 0; f < NumLines; ++f) {
-    line_t *ld = Lines+f;
-    delete[] ld->v1lines;
-    delete[] ld->v2lines;
-    ld->moreTags.clear();
-  }
-
-  delete[] Vertexes;
-  Vertexes = nullptr;
-  NumVertexes = 0;
-  delete[] Sectors;
-  Sectors = nullptr;
-  NumSectors = 0;
-  delete[] Sides;
-  Sides = nullptr;
-  NumSides = 0;
-  delete[] Lines;
-  Lines = nullptr;
-  NumLines = 0;
-  delete[] Segs;
-  Segs = nullptr;
-  NumSegs = 0;
-  delete[] Subsectors;
-  Subsectors = nullptr;
-  NumSubsectors = 0;
-  delete[] Nodes;
-  Nodes = nullptr;
-  NumNodes = 0;
-  if (VisData) delete[] VisData; else delete[] NoVis;
-  VisData = nullptr;
-  NoVis = nullptr;
-  delete[] BlockMapLump;
-  BlockMapLump = nullptr;
-  BlockMapLumpSize = 0;
-  delete[] BlockLinks;
-  BlockLinks = nullptr;
-  delete[] RejectMatrix;
-  RejectMatrix = nullptr;
-  RejectMatrixSize = 0;
-  delete[] Things;
-  Things = nullptr;
-  NumThings = 0;
-  delete[] Zones;
-  Zones = nullptr;
-  NumZones = 0;
+  ClearAllMapData();
 
   delete[] BaseLines;
   BaseLines = nullptr;
