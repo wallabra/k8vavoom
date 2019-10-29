@@ -266,6 +266,8 @@ bool VRenderLevelLightmap::CalcFaceVectors (LMapTraceInfo &lmi, const surface_t 
 //  to get the world xyz value of the sample point
 //
 //  for dynlights, set `lowres` to `true`
+//  setting `lowres` skips point visibility determination, because it is
+//  done in `AddDynamicLights()`.
 //
 //==========================================================================
 void VRenderLevelLightmap::CalcPoints (LMapTraceInfo &lmi, const surface_t *surf, bool lowres) {
