@@ -2242,6 +2242,25 @@ surfcache_t *VRenderLevelShared::GetLightChainFirst (vuint32 bnum) {
 
 //==========================================================================
 //
+//  VRenderLevelShared::saveLightmaps
+//
+//==========================================================================
+void VRenderLevelShared::saveLightmaps (VStream *strm) {
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::loadLightmaps
+//
+//==========================================================================
+bool VRenderLevelShared::loadLightmaps (VStream *strm) {
+  return false;
+}
+
+
+//==========================================================================
+//
 //  R_SetMenuPlayerTrans
 //
 //==========================================================================

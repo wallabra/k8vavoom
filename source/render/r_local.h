@@ -698,6 +698,9 @@ public:
   virtual void DecayLights (float) override;
   virtual void RemoveOwnedLight (VThinker *Owner) override;
 
+  virtual void saveLightmaps (VStream *strm) override;
+  virtual bool loadLightmaps (VStream *strm) override;
+
 public: // k8: so i don't have to fuck with friends
   struct PPNode {
     vuint8 *mem;
