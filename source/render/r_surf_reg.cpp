@@ -41,6 +41,12 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+static int constexpr cestlen (const char *s) { return (s && *s ? 1+cestlen(s+1) : 0); }
+static constexpr const char *LMAP_CACHE_DATA_SIGNATURE = "VAVOOM CACHED LMAP VERSION 000.\n";
+enum { CDSLEN = cestlen(LMAP_CACHE_DATA_SIGNATURE) };
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 static VCvarB r_precalc_static_lights("r_precalc_static_lights", true, "Precalculate static lights?", CVAR_Archive);
 int r_precalc_static_lights_override = -1; // <0: not set
 
@@ -720,9 +726,6 @@ void VRenderLevelLightmap::saveLightmapsInternal (VStream *strm) {
   if (!strm) return;
   vuint32 surfCount = countAllSurfaces();
 
-  vuint32 ver = 2;
-  *strm << ver;
-
   *strm << Level->NumSectors;
   *strm << Level->NumSubsectors;
   *strm << Level->NumSegs;
@@ -779,6 +782,7 @@ void VRenderLevelLightmap::saveLightmapsInternal (VStream *strm) {
 //==========================================================================
 void VRenderLevelLightmap::saveLightmaps (VStream *strm) {
   if (!strm) return;
+  strm->Serialise(LMAP_CACHE_DATA_SIGNATURE, CDSLEN);
   VZipStreamWriter *zipstrm = new VZipStreamWriter(strm, (int)loader_cache_compression_level_lightmap);
   saveLightmapsInternal(zipstrm);
   zipstrm->Close();
@@ -988,9 +992,9 @@ bool VRenderLevelLightmap::loadLightmapsInternal (VStream *strm) {
   vuint32 surfCount = countAllSurfaces();
 
   // load and check header
-  vuint32 ver = 0xffffffffu, seccount = 0, sscount = 0, sgcount = 0, sfcount = 0;
-  *strm << ver << seccount << sscount << sgcount << sfcount;
-  if (ver != 2 || strm->IsError()) { GCon->Logf(NAME_Warning, "invalid lightmap cache version (%u)", ver); return false; }
+  vuint32 seccount = 0, sscount = 0, sgcount = 0, sfcount = 0;
+  *strm << seccount << sscount << sgcount << sfcount;
+  if (strm->IsError()) { GCon->Log(NAME_Error, "error reading lightmap cache"); return false; }
   if ((int)seccount != Level->NumSectors || strm->IsError()) { GCon->Log(NAME_Warning, "invalid lightmap cache sector count"); return false; }
   if ((int)sscount != Level->NumSubsectors || strm->IsError()) { GCon->Log(NAME_Warning, "invalid lightmap cache subsector count"); return false; }
   if ((int)sgcount != Level->NumSegs || strm->IsError()) { GCon->Log(NAME_Warning, "invalid lightmap cache seg count"); return false; }
@@ -1093,8 +1097,15 @@ bool VRenderLevelLightmap::loadLightmaps (VStream *strm) {
     lmcacheHasUnknownSurface = true;
     return false;
   }
+  char sign[CDSLEN];
+  strm->Serialise(sign, CDSLEN);
+  if (strm->IsError() || memcmp(sign, LMAP_CACHE_DATA_SIGNATURE, CDSLEN) != 0) {
+    GCon->Logf(NAME_Error, "invalid lightmap cache file signature");
+    lmcacheHasUnknownSurface = true;
+    return false;
+  }
   lmcacheHasUnknownSurface = false;
-  VZipStreamReader *zipstrm = new VZipStreamReader(strm, VZipStreamReader::UNKNOWN_SIZE, VZipStreamReader::UNKNOWN_SIZE/*Map->DecompressedSize*/);
+  VZipStreamReader *zipstrm = new VZipStreamReader(true, strm, VZipStreamReader::UNKNOWN_SIZE, VZipStreamReader::UNKNOWN_SIZE/*Map->DecompressedSize*/);
   bool ok = loadLightmapsInternal(zipstrm);
   zipstrm->Close();
   if (!ok) lmcacheHasUnknownSurface = true;

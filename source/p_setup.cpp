@@ -142,7 +142,10 @@ enum {
 #define NF_SUBSECTOR_OLD  (0x8000)
 
 
-static const char *CACHE_DATA_SIGNATURE = "VAVOOM CACHED DATA VERSION 008.\n";
+// ////////////////////////////////////////////////////////////////////////// //
+static int constexpr cestlen (const char *s) { return (s && *s ? 1+cestlen(s+1) : 0); }
+static constexpr const char *CACHE_DATA_SIGNATURE = "VAVOOM CACHED DATA VERSION 008.\n";
+enum { CDSLEN = cestlen(CACHE_DATA_SIGNATURE) };
 static bool cacheCleanupComplete = false;
 static TMap<VStr, bool> mapTextureWarns;
 
@@ -584,11 +587,11 @@ void VLevel::SaveCachedData (VStream *strm) {
 //==========================================================================
 bool VLevel::LoadCachedData (VStream *strm) {
   if (!strm) return false;
-  char sign[32];
+  char sign[CDSLEN];
 
   // signature
-  strm->Serialise(sign, 32);
-  if (strm->IsError() || memcmp(sign, CACHE_DATA_SIGNATURE, 32) != 0) { GCon->Log("invalid cache file signature"); return false; }
+  strm->Serialise(sign, CDSLEN);
+  if (strm->IsError() || memcmp(sign, CACHE_DATA_SIGNATURE, CDSLEN) != 0) { GCon->Log("invalid cache file signature"); return false; }
 
   vuint8 bspbuilder = 255;
   *strm << bspbuilder;
