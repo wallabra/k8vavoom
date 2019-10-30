@@ -1913,26 +1913,30 @@ static void SV_SaveGame (int slot, VStr Description, bool checkpoint, bool isAut
 
   // write data to destination slot
   if (BaseSlot.SaveToSlot(slot)) {
-    if (!saveFileBase.isEmpty()) {
+    // checkpoints using normal map cache
+    if (!checkpoint && !saveFileBase.isEmpty()) {
       VStr ccfname = saveFileBase+".lmap";
-      bool deleteLMCache = true;
-      if (!GLevel->RenderData || !GLevel->RenderData->isNeedLightmapCache()) deleteLMCache = false;
-      if (!checkpoint && GLevel->RenderData && GLevel->RenderData->isNeedLightmapCache()) {
+      if (!GLevel->RenderData || !GLevel->RenderData->isNeedLightmapCache()) {
+        // no rendered usually means that this is some kind of server (the thing that should not be, but...)
+        Sys_FileDelete(ccfname);
+      } else {
         GLevel->cacheFileBase = saveFileBase;
         GLevel->cacheFlags &= ~VLevel::CacheFlag_Ignore;
         VStream *lmc = FL_OpenSysFileWrite(ccfname);
         if (lmc) {
           GCon->Logf("writing lightmap cache to '%s'...", *ccfname);
           GLevel->RenderData->saveLightmaps(lmc);
-          lmc->Close();
           bool err = lmc->IsError();
+          lmc->Close();
+          err = (err || lmc->IsError());
           delete lmc;
-          if (!err) deleteLMCache = false;
+          if (err) {
+            GCon->Logf(NAME_Warning, "removed broken lightmap cache '%s'...", *ccfname);
+            Sys_FileDelete(ccfname);
+          }
+        } else {
+          GCon->Logf(NAME_Warning, "cannot create lightmap cache file '%s'...", *ccfname);
         }
-      }
-      if (deleteLMCache) {
-        vassert(!ccfname.isEmpty());
-        Sys_FileDelete(ccfname);
       }
     }
     SV_SendAfterSaveEvent(isAutosave, checkpoint);

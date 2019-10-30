@@ -995,7 +995,7 @@ bool VRenderLevelLightmap::loadLightmapsInternal (VStream *strm) {
   if ((int)sscount != Level->NumSubsectors || strm->IsError()) { GCon->Log(NAME_Warning, "invalid lightmap cache subsector count"); return false; }
   if ((int)sgcount != Level->NumSegs || strm->IsError()) { GCon->Log(NAME_Warning, "invalid lightmap cache seg count"); return false; }
   if (sfcount != surfCount || strm->IsError()) { GCon->Logf(NAME_Warning, "invalid lightmap cache surface count (%u instead of %u)", sfcount, surfCount); /*return false;*/ }
-  GCon->Log(NAME_Debug, "trying to use lightmap cache...");
+  GCon->Log(NAME_Debug, "lightmap cache validated, trying to load it...");
 
   for (int i = 0; i < Level->NumSubsectors; ++i) {
     subsector_t *sub = &Level->Subsectors[i];
@@ -1250,15 +1250,22 @@ void VRenderLevelLightmap::PreRender () {
       if (doWriteCache) {
         const float tlim = loader_cache_time_limit_lightmap.asFloat();
         stt += Sys_Time();
-        if (dbg_always_cache_lightmaps || stt >= tlim) {
+        // if our lightmap cache is partially valid, rewrite it unconditionally
+        if (dbg_always_cache_lightmaps || lmcacheHasUnknownSurface || stt >= tlim) {
           VStream *lmc = FL_OpenSysFileWrite(ccfname);
           if (lmc) {
             GCon->Logf("writing lightmap cache to '%s'...", *ccfname);
             saveLightmaps(lmc);
-            lmc->Close();
             bool err = lmc->IsError();
+            lmc->Close();
+            err = (err || lmc->IsError());
             delete lmc;
-            if (err) Sys_FileDelete(ccfname);
+            if (err) {
+              GCon->Logf(NAME_Warning, "removed broken lightmap cache '%s'...", *ccfname);
+              Sys_FileDelete(ccfname);
+            }
+          } else {
+            GCon->Logf(NAME_Warning, "cannot create lightmap cache file '%s'...", *ccfname);
           }
         }
       }
