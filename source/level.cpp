@@ -301,7 +301,7 @@ void VLevel::ClearReferences () {
     if (sl.Owner && (sl.Owner->GetFlags()&_OF_CleanupRef)) sl.Owner = nullptr;
   }
   // renderer
-  if (RenderData) RenderData->ClearReferences();
+  if (Renderer) Renderer->ClearReferences();
 }
 
 
@@ -331,9 +331,9 @@ void VLevel::Destroy () {
   }
 
   // free render data
-  if (RenderData) {
-    delete RenderData;
-    RenderData = nullptr;
+  if (Renderer) {
+    delete Renderer;
+    Renderer = nullptr;
   }
 
   for (int i = 0; i < NumPolyObjs; ++i) {
@@ -457,7 +457,7 @@ void VLevel::MoveStaticLightByOwner (VEntity *Ent, const TVec &Origin) {
     }
   }
   */
-  if (RenderData) RenderData->MoveStaticLightByOwner(Ent, Origin);
+  if (Renderer) Renderer->MoveStaticLightByOwner(Ent, Origin);
 }
 
 
@@ -838,7 +838,7 @@ IMPLEMENT_FUNCTION(VLevel, SetHeightSector) {
   P_GET_SELF;
   (void)Flags;
   (void)SrcSector;
-  if (Self->RenderData) Self->RenderData->SetupFakeFloors(Sector);
+  if (Self->Renderer) Self->Renderer->SetupFakeFloors(Sector);
 }
 
 // native final int FindSectorFromTag (out sector_t *Sector, int tag, optional int start);

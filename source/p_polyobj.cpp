@@ -444,7 +444,7 @@ void VLevel::UpdatePolySegs (polyobj_t *po) {
     }
     // recalc seg's normal and dist
     CalcSeg(*segList);
-    if (RenderData) RenderData->SegMoved(*segList);
+    if (Renderer) Renderer->SegMoved(*segList);
   }
 }
 

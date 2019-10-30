@@ -96,7 +96,7 @@ void SB_Drawer () {
   if (!GClLevel) return;
   GClGame->eventStatusBarDrawer(automapactive > 0 && screen_size < 11 ?
       SB_VIEW_AUTOMAP :
-      GClLevel->RenderData->refdef.height == ScreenHeight ? SB_VIEW_FULLSCREEN : SB_VIEW_NORMAL);
+      GClLevel->Renderer->refdef.height == ScreenHeight ? SB_VIEW_FULLSCREEN : SB_VIEW_NORMAL);
 }
 
 

@@ -101,7 +101,7 @@ void VThinker::AddedToLevel () {
 //
 //==========================================================================
 void VThinker::RemovedFromLevel () {
-  if (XLevel && XLevel->RenderData) XLevel->RenderData->RemoveOwnedLight(this);
+  if (XLevel && XLevel->Renderer) XLevel->Renderer->RemoveOwnedLight(this);
 }
 
 
@@ -427,7 +427,7 @@ IMPLEMENT_FUNCTION(VThinker, AllocDlight) {
   P_GET_VEC(lorg);
   P_GET_REF(VThinker, Owner);
   P_GET_SELF;
-  RET_PTR(Self->XLevel->RenderData->AllocDlight(Owner, lorg, radius, lightid));
+  RET_PTR(Self->XLevel->Renderer->AllocDlight(Owner, lorg, radius, lightid));
 }
 
 //native final bool ShiftDlightHeight (int lightid, float zdelta);
@@ -436,7 +436,7 @@ IMPLEMENT_FUNCTION(VThinker, ShiftDlightHeight) {
   float zdelta;
   vobjGetParamSelf(lightid, zdelta);
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VThinker::ShiftDlightOrigin"); }
-  dlight_t *dl = Self->XLevel->RenderData->FindDlightById(lightid);
+  dlight_t *dl = Self->XLevel->Renderer->FindDlightById(lightid);
   if (dl) {
     //GCon->Logf("fixing dlight with id %d, delta=%g", lightid, zdelta);
     dl->origin.z += zdelta;
@@ -452,7 +452,7 @@ IMPLEMENT_FUNCTION(VThinker, NewParticle) {
   if (GGameInfo->IsPaused()) {
     RET_PTR(nullptr);
   } else {
-    RET_PTR(Self->XLevel->RenderData->NewParticle(porg));
+    RET_PTR(Self->XLevel->Renderer->NewParticle(porg));
   }
 }
 

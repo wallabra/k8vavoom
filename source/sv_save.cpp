@@ -1916,7 +1916,7 @@ static void SV_SaveGame (int slot, VStr Description, bool checkpoint, bool isAut
     // checkpoints using normal map cache
     if (!checkpoint && !saveFileBase.isEmpty()) {
       VStr ccfname = saveFileBase+".lmap";
-      if (!GLevel->RenderData || !GLevel->RenderData->isNeedLightmapCache()) {
+      if (!GLevel->Renderer || !GLevel->Renderer->isNeedLightmapCache()) {
         // no rendered usually means that this is some kind of server (the thing that should not be, but...)
         Sys_FileDelete(ccfname);
       } else {
@@ -1925,7 +1925,7 @@ static void SV_SaveGame (int slot, VStr Description, bool checkpoint, bool isAut
         VStream *lmc = FL_OpenSysFileWrite(ccfname);
         if (lmc) {
           GCon->Logf("writing lightmap cache to '%s'...", *ccfname);
-          GLevel->RenderData->saveLightmaps(lmc);
+          GLevel->Renderer->saveLightmaps(lmc);
           bool err = lmc->IsError();
           lmc->Close();
           err = (err || lmc->IsError());

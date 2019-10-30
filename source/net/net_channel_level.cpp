@@ -773,7 +773,7 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
           float Radius;
           vuint32 Color;
           Msg << Origin << Radius << Color;
-          Level->RenderData->AddStaticLightRGB(nullptr, Origin, Radius, Color);
+          Level->Renderer->AddStaticLightRGB(nullptr, Origin, Radius, Color);
         }
         break;
       case CMD_NewLevel:
@@ -829,7 +829,7 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
 #ifdef CLIENT
         if (severInfoCurrPacket != -2) Host_Error("Invalid level handshake sequence");
 #endif
-        Level->RenderData->PreRender();
+        Level->Renderer->PreRender();
 #ifdef CLIENT
         if (cls.signon) Host_Error("Client_Spawn command already sent");
         if (!UserInfoSent) {

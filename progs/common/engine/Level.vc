@@ -135,7 +135,7 @@ native readonly WorldInfo WorldInfo;
 
 native readonly void *Acs;
 
-native readonly private void *RenderData;
+native readonly private void *Renderer;
 native readonly private void *NetContext;
 
 native readonly private void *BaseLines;

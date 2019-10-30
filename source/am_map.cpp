@@ -1933,10 +1933,10 @@ static void AM_drawOneLight (const VRenderLevelPublic::LightInfo &lt) {
 //
 //==========================================================================
 static void AM_drawStaticLights () {
-  if (!GClLevel->RenderData) return;
-  int count = GClLevel->RenderData->GetStaticLightCount();
+  if (!GClLevel->Renderer) return;
+  int count = GClLevel->Renderer->GetStaticLightCount();
   for (int f = 0; f < count; ++f) {
-    auto lt = GClLevel->RenderData->GetStaticLight(f);
+    auto lt = GClLevel->Renderer->GetStaticLight(f);
     AM_drawOneLight(lt);
   }
 }
@@ -1948,10 +1948,10 @@ static void AM_drawStaticLights () {
 //
 //==========================================================================
 static void AM_drawDynamicLights () {
-  if (!GClLevel->RenderData) return;
-  int count = GClLevel->RenderData->GetDynamicLightCount();
+  if (!GClLevel->Renderer) return;
+  int count = GClLevel->Renderer->GetDynamicLightCount();
   for (int f = 0; f < count; ++f) {
-    auto lt = GClLevel->RenderData->GetDynamicLight(f);
+    auto lt = GClLevel->Renderer->GetDynamicLight(f);
     AM_drawOneLight(lt);
   }
 }

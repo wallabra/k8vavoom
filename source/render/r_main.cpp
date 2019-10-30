@@ -407,9 +407,9 @@ void R_Start (VLevel *ALevel) {
   }
   // now create renderer
   if (r_level_renderer <= 1) {
-    ALevel->RenderData = new VRenderLevelLightmap(ALevel);
+    ALevel->Renderer = new VRenderLevelLightmap(ALevel);
   } else {
-    ALevel->RenderData = new VRenderLevelShadowVolume(ALevel);
+    ALevel->Renderer = new VRenderLevelShadowVolume(ALevel);
   }
 }
 
@@ -1583,7 +1583,7 @@ void VRenderLevelShared::InitialWorldUpdate () {
 //
 //==========================================================================
 void R_RenderPlayerView () {
-  GClLevel->RenderData->RenderPlayerView();
+  GClLevel->Renderer->RenderPlayerView();
 }
 
 
@@ -2559,8 +2559,8 @@ void V_Shutdown () {
 //
 //==========================================================================
 COMMAND(NukeLightmapCache) {
-  if (GClLevel && GClLevel->RenderData) {
-    GClLevel->RenderData->NukeLightmapCache();
+  if (GClLevel && GClLevel->Renderer) {
+    GClLevel->Renderer->NukeLightmapCache();
     GCon->Log("lightmap cache nuked.");
   }
 }
@@ -2572,12 +2572,12 @@ COMMAND(NukeLightmapCache) {
 //
 //==========================================================================
 COMMAND_WITH_AC(LightmapsReset) {
-  if (GClLevel && GClLevel->RenderData) {
+  if (GClLevel && GClLevel->Renderer) {
     bool recalcNow = true;
     if (Args.Num() > 1) recalcNow = false;
     GCon->Log("resetting lightmaps...");
-    GClLevel->RenderData->ResetLightmaps(recalcNow);
-    GClLevel->RenderData->NukeLightmapCache();
+    GClLevel->Renderer->ResetLightmaps(recalcNow);
+    GClLevel->Renderer->NukeLightmapCache();
   }
 }
 

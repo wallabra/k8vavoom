@@ -135,7 +135,7 @@ void CL_Shutdown () {
 //
 //==========================================================================
 void CL_DecayLights () {
-  if (GClLevel && GClLevel->RenderData) GClLevel->RenderData->DecayLights(host_frametime);
+  if (GClLevel && GClLevel->Renderer) GClLevel->Renderer->DecayLights(host_frametime);
 }
 
 
@@ -365,9 +365,9 @@ void CL_SetUpStandaloneClient () {
 
   for (int i = 0; i < GClLevel->NumStaticLights; ++i) {
     rep_light_t &L = GClLevel->StaticLights[i];
-    GClLevel->RenderData->AddStaticLightRGB(L.Owner, L.Origin, L.Radius, L.Color);
+    GClLevel->Renderer->AddStaticLightRGB(L.Owner, L.Origin, L.Radius, L.Color);
   }
-  GClLevel->RenderData->PreRender();
+  GClLevel->Renderer->PreRender();
 
   cl->SpawnClient();
   cls.signon = 1;
