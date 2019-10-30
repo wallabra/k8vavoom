@@ -26,6 +26,11 @@
 #include "gamedefs.h"
 #include "r_local.h"
 
+
+// ////////////////////////////////////////////////////////////////////////// //
+//#define VV_DUMP_LMAP_CACHE_COMPARISONS
+#define VV_DUMP_LMAP_CACHE_COMPARISON_FAIL
+
 #define ON_EPSILON      (0.1f)
 #define SUBDIVIDE_SIZE  (240)
 
@@ -43,7 +48,7 @@ extern VCvarB loader_cache_data;
 VCvarF loader_cache_time_limit_lightmap("loader_cache_time_limit_lightmap", "3", "Cache lightmap data if building took more than this number of seconds.", CVAR_Archive);
 VCvarI loader_cache_compression_level_lightmap("loader_cache_compression_level_lightmap", "6", "Lightmap cache file compression level [0..9]", CVAR_Archive);
 
-static VCvarB dbg_always_cache_lightmaps("dbg_always_cache_lightmaps", false, "Always cache lightmaps?", /*CVAR_Archive*/0);
+static VCvarB dbg_always_cache_lightmaps("dbg_always_cache_lightmaps", false, "Always cache lightmaps?", /*CVAR_Archive|*/CVAR_PreInit);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -449,6 +454,233 @@ bool VRenderLevelLightmap::isNeedLightmapCache () const noexcept {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+struct SurfaceInfoBlock {
+  TPlane plane;
+  subsector_t *subsector; // owning subsector
+  seg_t *seg; // owning seg (can be `nullptr` for floor/ceiling)
+  vint32 subidx;
+  vint32 segidx;
+  vuint32 typeFlags; // TF_xxx
+  vuint32 lmsize, lmrgbsize; // to track static lightmap memory
+  vuint8 *lightmap;
+  rgb_t *lightmap_rgb;
+  vint32 count;
+  vint32 texturemins[2];
+  vint32 extents[2];
+  TVec vert0; // dynamic array
+  bool lmowned;
+
+  SurfaceInfoBlock () noexcept
+    : subsector(nullptr)
+    , seg(nullptr)
+    , subidx(-1)
+    , segidx(-1)
+    , typeFlags(0)
+    , lmsize(0)
+    , lmrgbsize(0)
+    , lightmap(nullptr)
+    , lightmap_rgb(nullptr)
+    , count(0)
+    , vert0(0, 0, 0)
+    , lmowned(false)
+  {
+    plane.normal = TVec(0, 0, 0);
+    plane.dist = 0;
+    texturemins[0] = texturemins[1] = 0;
+    extents[0] = extents[1] = 0;
+  }
+
+  ~SurfaceInfoBlock () noexcept { clear(); }
+
+  inline bool isValid () const noexcept { return (count > 0); }
+
+  inline void disownLightmaps () noexcept { lmowned = false; }
+
+  void dump () {
+    GCon->Log(NAME_Debug, "=== SURFACE INFO ===");
+    GCon->Logf(NAME_Debug, "  plane: (%g,%g,%g) : %g", plane.normal.x, plane.normal.y, plane.normal.z, plane.dist);
+    GCon->Logf(NAME_Debug, "  subsector/seg: %d / %d", subidx, segidx);
+    GCon->Logf(NAME_Debug, "  typeFlags: %u", typeFlags);
+    GCon->Logf(NAME_Debug, "  vertices: %d : (%g,%g,%g)", count, vert0.x, vert0.y, vert0.z);
+    GCon->Logf(NAME_Debug, "  tmins/extents: (%d,%d) / (%d,%d)", texturemins[0], texturemins[1], extents[0], extents[1]);
+  }
+
+  void clear () noexcept {
+    if (lmowned) {
+      if (lightmap) Z_Free(lightmap);
+      if (lightmap_rgb) Z_Free(lightmap_rgb);
+    }
+    subsector = nullptr;
+    seg = nullptr;
+    subidx = -1;
+    segidx = -1;
+    typeFlags = 0;
+    lmsize = lmrgbsize = 0;
+    lightmap = nullptr;
+    lightmap_rgb = nullptr;
+    count = 0;
+    vert0 = TVec(0, 0, 0);
+    plane.normal = TVec(0, 0, 0);
+    plane.dist = 0;
+    texturemins[0] = texturemins[1] = 0;
+    extents[0] = extents[1] = 0;
+    lmowned = false;
+  }
+
+  inline bool equalTo (const surface_t *sfc) noexcept {
+    if (!sfc || count < 1 || count != sfc->count) return false;
+    return
+      typeFlags == sfc->typeFlags &&
+      texturemins[0] == sfc->texturemins[0] &&
+      texturemins[1] == sfc->texturemins[1] &&
+      extents[0] == sfc->extents[0] &&
+      extents[1] == sfc->extents[1] &&
+      subsector == sfc->subsector &&
+      seg == sfc->seg &&
+      plane.normal == sfc->plane.normal &&
+      plane.dist == sfc->plane.dist &&
+      vert0 == sfc->verts[0];
+  }
+
+  void initWith (VLevel *Level, const surface_t *sfc) noexcept {
+    vassert(sfc);
+    clear();
+    plane = sfc->plane;
+    subsector = sfc->subsector;
+    subidx = (sfc->subsector ? (vint32)(ptrdiff_t)(sfc->subsector-&Level->Subsectors[0]) : -1);
+    seg = sfc->seg;
+    segidx = (sfc->seg ? (vint32)(ptrdiff_t)(sfc->seg-&Level->Segs[0]) : -1);
+    typeFlags = sfc->typeFlags;
+    if (sfc->lightmap) {
+      lmsize = sfc->lmsize;
+      lightmap = sfc->lightmap;
+      if (sfc->lightmap_rgb) {
+        lmrgbsize = sfc->lmrgbsize;
+        lightmap_rgb = sfc->lightmap_rgb;
+      } else {
+        lmrgbsize = 0;
+        lightmap_rgb = nullptr;
+      }
+    } else {
+      lmsize = 0;
+      lightmap = nullptr;
+      lmrgbsize = 0;
+      lightmap_rgb = nullptr;
+    }
+    count = sfc->count;
+    vert0 = (sfc->count > 0 ? sfc->verts[0] : TVec(0, 0, 0));
+    texturemins[0] = sfc->texturemins[0];
+    texturemins[1] = sfc->texturemins[1];
+    extents[0] = sfc->extents[0];
+    extents[1] = sfc->extents[1];
+    lmowned = false;
+  }
+
+  // must be initialised with `initWith()`
+  void writeTo (VStream *strm, VLevel *Level) {
+    vassert(strm);
+    vassert(!strm->IsLoading());
+    vuint8 flag = 0;
+    // monochrome lightmap is always there when rgb lightmap is there
+    if (!lightmap) {
+      vassert(!lightmap_rgb);
+    } else {
+      flag |= 1u;
+      vassert(lmsize > 0);
+      if (lightmap_rgb) {
+        vassert(lmrgbsize > 0);
+        flag |= 2u;
+      }
+    }
+    *strm << flag;
+    // surface check data
+    // plane
+    *strm << plane.normal.x << plane.normal.y << plane.normal.z << plane.dist;
+    // subsector
+    *strm << subidx;
+    // seg
+    *strm << segidx;
+    // type
+    *strm << typeFlags;
+    // vertices
+    *strm << count;
+    // extents
+    *strm << texturemins[0];
+    *strm << texturemins[1];
+    *strm << extents[0];
+    *strm << extents[1];
+    // first vertex
+    *strm << vert0.x << vert0.y << vert0.z;
+    // write lightmaps
+    if (flag&1u) {
+      *strm << lmsize;
+      strm->Serialise(lightmap, lmsize);
+      if (flag&2u) {
+        *strm << lmrgbsize;
+        strm->Serialise(lightmap_rgb, lmrgbsize);
+      }
+    }
+  }
+
+  // must be initialised with `initWith()`
+  bool readFrom (VStream *strm, VLevel *Level) {
+    vassert(strm);
+    vassert(strm->IsLoading());
+    clear();
+    lmowned = true;
+    vuint8 flag = 0xff;
+    *strm << flag;
+    if ((flag&~3u) != 0 || flag == 2u) { GCon->Log(NAME_Warning, "invalid lightmap cache surface flags"); return false; }
+    //if (!flag) return true; // it is valid, but empty
+    // plane
+    *strm << plane.normal.x << plane.normal.y << plane.normal.z << plane.dist;
+    // subsector
+    *strm << subidx;
+    // seg
+    *strm << segidx;
+    // type
+    *strm << typeFlags;
+    // vertices
+    *strm << count;
+    // extents
+    *strm << texturemins[0];
+    *strm << texturemins[1];
+    *strm << extents[0];
+    *strm << extents[1];
+    // first vertex
+    *strm << vert0.x << vert0.y << vert0.z;
+    // lightmaps
+    if (flag&1u) {
+      *strm << lmsize;
+      if (strm->IsError()) { GCon->Log(NAME_Error, "error reading lightmap cache"); clear(); return false; }
+      if (count < 0) { GCon->Log(NAME_Error, "invalid lightmap cache surface vertex count"); clear(); return false; }
+      if (lmsize == 0 || lmsize > BLOCK_WIDTH*BLOCK_HEIGHT) { GCon->Log(NAME_Warning, "invalid lightmap cache surface lightmap size"); clear(); return false; }
+      lightmap = (vuint8 *)Z_Malloc(lmsize);
+      strm->Serialise(lightmap, lmsize);
+      if (flag&2u) {
+        *strm << lmrgbsize;
+        if (strm->IsError()) { GCon->Log(NAME_Error, "error reading lightmap cache"); clear(); return false; }
+        if (lmrgbsize == 0 || lmrgbsize > BLOCK_WIDTH*BLOCK_HEIGHT*3) { GCon->Log(NAME_Warning, "invalid lightmap cache surface lightmap size"); clear(); return false; }
+        lightmap_rgb = (rgb_t *)Z_Malloc(lmrgbsize);
+        strm->Serialise(lightmap_rgb, lmrgbsize);
+      }
+    }
+    if (strm->IsError()) { GCon->Log(NAME_Error, "error reading lightmap cache"); clear(); return false; }
+    // link to subsector
+         if (subidx == -1) subsector = nullptr;
+    else if (subidx < 0 || subidx >= Level->NumSubsectors) { GCon->Log(NAME_Error, "invalid lightmap cache surface subsector"); clear(); return false; }
+    else subsector = &Level->Subsectors[subidx];
+    // link to seg
+         if (segidx == -1) seg = nullptr;
+    else if (segidx < 0 || segidx >= Level->NumSegs) { GCon->Log(NAME_Error, "invalid lightmap cache surface seg"); clear(); return false; }
+    else seg = &Level->Segs[segidx];
+    // done
+    return true;
+  }
+};
+
+
 //==========================================================================
 //
 //  WriteSurfaceLightmaps
@@ -458,49 +690,10 @@ static void WriteSurfaceLightmaps (VLevel *Level, VStream *strm, surface_t *s) {
   vuint32 cnt = 0;
   for (surface_t *t = s; t; t = t->next) ++cnt;
   *strm << cnt;
+  SurfaceInfoBlock sib;
   for (; s; s = s->next) {
-    vuint8 flag = 0;
-    // monochrome lightmap is always there when rgb lightmap is there
-    if (s->lightmap) {
-      flag |= 1u;
-      vassert(s->lmsize > 0);
-      if (s->lightmap_rgb) {
-        vassert(s->lmrgbsize > 0);
-        flag |= 2u;
-      }
-      *strm << flag;
-      // surface check data
-      // plane
-      *strm << s->plane.normal.x << s->plane.normal.y << s->plane.normal.z << s->plane.dist;
-      // subsector
-      vuint32 ssnum = (s->subsector ? (vuint32)(ptrdiff_t)(s->subsector-&Level->Subsectors[0]) : 0xffffffffu);
-      *strm << ssnum;
-      // seg
-      vuint32 segnum = (s->seg ? (vuint32)(ptrdiff_t)(s->seg-&Level->Segs[0]) : 0xffffffffu);
-      *strm << segnum;
-      // vertices
-      vuint32 vcount = (vuint32)s->count;
-      *strm << vcount;
-      //??? write vertices too?
-      vint32 t;
-      t = s->texturemins[0]; *strm << t;
-      t = s->texturemins[1]; *strm << t;
-      t = s->extents[0]; *strm << t;
-      t = s->extents[1]; *strm << t;
-      // write lightmaps
-      vuint32 lmsize;
-      lmsize = (vuint32)s->lmsize;
-      *strm << lmsize;
-      strm->Serialise(s->lightmap, s->lmsize);
-      if (s->lightmap_rgb) {
-        lmsize = (vuint32)s->lmrgbsize;
-        *strm << lmsize;
-        strm->Serialise(s->lightmap_rgb, s->lmrgbsize);
-      }
-    } else {
-      vassert(!s->lightmap_rgb);
-      *strm << flag;
-    }
+    sib.initWith(Level, s);
+    sib.writeTo(strm, Level);
   }
 }
 
@@ -527,13 +720,13 @@ void VRenderLevelLightmap::saveLightmapsInternal (VStream *strm) {
   if (!strm) return;
   vuint32 surfCount = countAllSurfaces();
 
-  vuint32 ver = 0;
+  vuint32 ver = 1;
   *strm << ver;
 
-  *strm << surfCount;
   *strm << Level->NumSectors;
   *strm << Level->NumSubsectors;
   *strm << Level->NumSegs;
+  *strm << surfCount;
 
   /*
   vuint32 atlasW = BLOCK_WIDTH, atlasH = BLOCK_HEIGHT;
@@ -545,10 +738,10 @@ void VRenderLevelLightmap::saveLightmapsInternal (VStream *strm) {
     *strm << ssnum;
     subsector_t *sub = &Level->Subsectors[i];
     for (subregion_t *r = sub->regions; r != nullptr; r = r->next) {
-      if (r->realfloor != nullptr) WriteSurfaceLightmaps(Level, strm, r->realfloor->surfs);
-      if (r->realceil != nullptr) WriteSurfaceLightmaps(Level, strm, r->realceil->surfs);
-      if (r->fakefloor != nullptr) WriteSurfaceLightmaps(Level, strm, r->fakefloor->surfs);
-      if (r->fakeceil != nullptr) WriteSurfaceLightmaps(Level, strm, r->fakeceil->surfs);
+      WriteSurfaceLightmaps(Level, strm, (r->realfloor ? r->realfloor->surfs : nullptr));
+      WriteSurfaceLightmaps(Level, strm, (r->realceil ? r->realceil->surfs : nullptr));
+      WriteSurfaceLightmaps(Level, strm, (r->fakefloor ? r->fakefloor->surfs : nullptr));
+      WriteSurfaceLightmaps(Level, strm, (r->fakeceil ? r->fakeceil->surfs : nullptr));
     }
   }
 
@@ -592,63 +785,112 @@ void VRenderLevelLightmap::saveLightmaps (VStream *strm) {
 //  LoadLightSurfaces
 //
 //==========================================================================
-static bool LoadLightSurfaces (VRenderLevelLightmap *rdr, VLevel *Level, VStream *strm, surface_t *s) {
+static bool LoadLightSurfaces (VLevel *Level, VStream *strm, surface_t *s, bool &lmcacheHasUnknownSurface) {
   vuint32 cnt = 0, rd = 0;
   for (surface_t *t = s; t; t = t->next) ++cnt;
   *strm << rd;
-  if (rd != cnt) { GCon->Log(NAME_Warning, "invalid lightmap cache surface chain count"); return false; }
-  // load lightmaps
+  if (rd != cnt) {
+    GCon->Logf(NAME_Warning, "invalid lightmap cache surface chain count (%u instead of %u)", rd, cnt);
+    //return false;
+  }
+  if (rd > 1024*1024) { GCon->Logf(NAME_Warning, "invalid lightmap cache surface chain count (%u)", rd); return false; }
+  // just in case
+  if (rd == 0) return true;
+  // load surfaces
+  TArray<SurfaceInfoBlock> sibs;
+  sibs.setLength((int)rd);
+  #ifdef VV_DUMP_LMAP_CACHE_COMPARISONS
+  GCon->Logf(NAME_Debug, "============== ON-DISK (%u) ==============", rd);
+  #endif
+  for (int f = 0; f < (int)rd; ++f) {
+    if (!sibs[f].readFrom(strm, Level)) return false;
+    #ifdef VV_DUMP_LMAP_CACHE_COMPARISONS
+    sibs[f].dump();
+    #endif
+  }
+  #ifdef VV_DUMP_LMAP_CACHE_COMPARISONS
+  GCon->Logf(NAME_Debug, "============== MEMORY (%u) ==============", cnt);
+  for (surface_t *t = s; t; t = t->next) {
+    SurfaceInfoBlock sss;
+    sss.initWith(Level, t);
+    sss.dump();
+  }
+  #endif
+  // setup surfaces
   for (; s; s = s->next) {
-    vuint8 flag = 0xffu;
-    *strm << flag;
-    if ((flag&~3u) != 0 || flag == 2u) { GCon->Log(NAME_Warning, "invalid lightmap cache surface flags"); return false; }
-    if (flag) {
-      // load check data
-      // plane
-      TPlane pl;
-      *strm << pl.normal.x << pl.normal.y << pl.normal.z << pl.dist;
-      if (pl.normal != s->plane.normal || pl.dist != s->plane.dist) { GCon->Log(NAME_Warning, "invalid lightmap cache surface plane"); return false; }
-      // indicies
-      vuint32 ut;
-      // subsector
-      ut = 0; *strm << ut;
-      vuint32 ssnum = (s->subsector ? (vuint32)(ptrdiff_t)(s->subsector-&Level->Subsectors[0]) : 0xffffffffu);
-      if (ssnum != ut) { GCon->Log(NAME_Warning, "invalid lightmap cache surface subsector index"); return false; }
-      // seg
-      ut = 0; *strm << ut;
-      vuint32 segnum = (s->seg ? (vuint32)(ptrdiff_t)(s->seg-&Level->Segs[0]) : 0xffffffffu);
-      if (segnum != ut) { GCon->Log(NAME_Warning, "invalid lightmap cache surface segment index"); return false; }
-      // vertices
-      ut = 0; *strm << ut;
-      if ((vuint32)s->count != ut) { GCon->Logf(NAME_Warning, "invalid lightmap cache surface vertex count (%d instead of %d)", (int)ut, s->count); return false; }
-      //??? check vertices too?
-      vint32 ti32;
-      *strm << ti32; if (ti32 != s->texturemins[0]) { GCon->Log(NAME_Warning, "invalid lightmap cache surface tmins[0]"); return false; }
-      *strm << ti32; if (ti32 != s->texturemins[1]) { GCon->Log(NAME_Warning, "invalid lightmap cache surface tmins[1]"); return false; }
-      *strm << ti32; if (ti32 != s->extents[0]) { GCon->Log(NAME_Warning, "invalid lightmap cache surface extents[0]"); return false; }
-      *strm << ti32; if (ti32 != s->extents[1]) { GCon->Log(NAME_Warning, "invalid lightmap cache surface extents[1]"); return false; }
-      // read lightmaps
-      vuint32 lmsize = 0;
-      *strm << lmsize;
-      if (lmsize == 0 || lmsize > BLOCK_WIDTH*BLOCK_HEIGHT) { GCon->Log(NAME_Warning, "invalid lightmap cache surface lightmap size"); return false; }
-      s->lightmap = (vuint8 *)Z_Malloc(lmsize);
-      light_mem += lmsize;
-      s->lmsize = lmsize;
-      strm->Serialise(s->lightmap, s->lmsize);
-      if (strm->IsError()) return false;
-      if (flag&2u) {
-        lmsize = 0;
-        *strm << lmsize;
-        if (lmsize == 0 || lmsize > BLOCK_WIDTH*BLOCK_HEIGHT*3) { GCon->Log(NAME_Warning, "invalid lightmap cache surface lightmap size"); return false; }
-        s->lightmap_rgb = (rgb_t *)Z_Malloc(lmsize);
-        light_mem += lmsize;
-        s->lmrgbsize = lmsize;
-        strm->Serialise(s->lightmap_rgb, s->lmrgbsize);
-        if (strm->IsError()) return false;
+    SurfaceInfoBlock *sp = nullptr;
+    for (auto &&sb : sibs) {
+      if (sb.isValid() && sb.equalTo(s)) {
+             if (sp) { GCon->Log(NAME_Warning, "invalid lightmap cache surface: duplicate info!"); }
+        else sp = &sb;
+      } else {
+        #ifdef VV_DUMP_LMAP_CACHE_COMPARISONS
+        GCon->Logf(NAME_Debug, "::: compare ::: count=%d; typeFlags=%d; tm0=%d; tm1=%d; ext0=%d; ext1=%d; sub=%d; seg=%d; pnorm=%d; pdist=%d; vert=%d",
+          (int)(s->count == sb.count),
+          (int)(s->typeFlags == sb.typeFlags),
+          (int)(s->texturemins[0] == sb.texturemins[0]),
+          (int)(s->texturemins[1] == sb.texturemins[1]),
+          (int)(s->extents[0] == sb.extents[0]),
+          (int)(s->extents[1] == sb.extents[1]),
+          (int)(s->subsector == sb.subsector),
+          (int)(s->seg == sb.seg),
+          (int)(s->plane.normal == sb.plane.normal),
+          (int)(s->plane.dist == sb.plane.dist),
+          (int)(s->verts[0] == sb.vert0));
+        #endif
       }
-      //GCon->Log(NAME_Debug, "loaded surface lightmap");
     }
-    s->drawflags &= ~surface_t::DF_CALC_LMAP;
+    if (!sp) {
+      GCon->Logf(NAME_Warning, "*** lightmap cache is missing surface info...");
+      lmcacheHasUnknownSurface = true;
+      #ifdef VV_DUMP_LMAP_CACHE_COMPARISONS
+      SurfaceInfoBlock sss;
+      sss.initWith(Level, s);
+      sss.dump();
+      #elif defined(VV_DUMP_LMAP_CACHE_COMPARISON_FAIL)
+      GCon->Logf(NAME_Debug, "============== ON-DISK (%u) ==============", rd);
+      for (auto &&ss : sibs) {
+        if (ss.isValid()) {
+          ss.dump();
+        } else {
+          GCon->Log(NAME_Debug, "*** SKIPPED");
+        }
+      }
+      GCon->Log(NAME_Debug, "============== MEMORY (FAIL) ==============");
+      SurfaceInfoBlock sss;
+      sss.initWith(Level, s);
+      sss.dump();
+      #endif
+    } else {
+      #ifdef VV_DUMP_LMAP_CACHE_COMPARISONS
+      GCon->Log(NAME_Debug, "*** FOUND!");
+      {
+        GCon->Log(NAME_Debug, "--- surface ----");
+        SurfaceInfoBlock sss;
+        sss.initWith(Level, s);
+        sss.dump();
+        GCon->Log(NAME_Debug, "--- on-disk ----");
+        sp->dump();
+      }
+      #endif
+      if (sp->isValid() && sp->lightmap) {
+        vassert(!s->lightmap);
+        vassert(!s->lightmap_rgb);
+        // monochrome
+        s->lmsize = sp->lmsize;
+        s->lightmap = sp->lightmap;
+        light_mem += sp->lmsize;
+        // rgb
+        if (sp->lightmap_rgb) {
+          s->lmrgbsize = sp->lmrgbsize;
+          s->lightmap_rgb = sp->lightmap_rgb;
+          light_mem += sp->lmrgbsize;
+        }
+        sp->disownLightmaps();
+        sp->clear();
+      }
+      s->drawflags &= ~surface_t::DF_CALC_LMAP;
+    }
   }
   // done
   return !strm->IsError();
@@ -660,12 +902,12 @@ static bool LoadLightSurfaces (VRenderLevelLightmap *rdr, VLevel *Level, VStream
 //  LoadLightSegSurfaces
 //
 //==========================================================================
-static bool LoadLightSegSurfaces (VRenderLevelLightmap *rdr, VLevel *Level, VStream *strm, segpart_t *sp) {
+static bool LoadLightSegSurfaces (VLevel *Level, VStream *strm, segpart_t *sp, bool &lmcacheHasUnknownSurface) {
   vuint32 cnt = 0, rd = 0;
   for (segpart_t *s = sp; s; s = s->next) ++cnt;
   *strm << rd;
   if (rd != cnt) { GCon->Log(NAME_Warning, "invalid lightmap cache segment surface count"); return false; }
-  for (; sp; sp = sp->next) if (!LoadLightSurfaces(rdr, Level, strm, sp->surfs)) return false;
+  for (; sp; sp = sp->next) if (!LoadLightSurfaces(Level, strm, sp->surfs, lmcacheHasUnknownSurface)) return false;
   return true;
 }
 
@@ -682,12 +924,12 @@ bool VRenderLevelLightmap::loadLightmapsInternal (VStream *strm) {
 
   // load and check header
   vuint32 ver = 0xffffffffu, seccount = 0, sscount = 0, sgcount = 0, sfcount = 0;
-  *strm << ver << sfcount << seccount << sscount << sgcount;
-  if (ver != 0 || strm->IsError()) { GCon->Logf(NAME_Warning, "invalid lightmap cache version (%u)", ver); return false; }
-  if (sfcount != surfCount || strm->IsError()) { GCon->Log(NAME_Warning, "invalid lightmap cache surface count"); return false; }
+  *strm << ver << seccount << sscount << sgcount << sfcount;
+  if (ver != 1 || strm->IsError()) { GCon->Logf(NAME_Warning, "invalid lightmap cache version (%u)", ver); return false; }
   if ((int)seccount != Level->NumSectors || strm->IsError()) { GCon->Log(NAME_Warning, "invalid lightmap cache sector count"); return false; }
   if ((int)sscount != Level->NumSubsectors || strm->IsError()) { GCon->Log(NAME_Warning, "invalid lightmap cache subsector count"); return false; }
   if ((int)sgcount != Level->NumSegs || strm->IsError()) { GCon->Log(NAME_Warning, "invalid lightmap cache seg count"); return false; }
+  if (sfcount != surfCount || strm->IsError()) { GCon->Logf(NAME_Warning, "invalid lightmap cache surface count (%u instead of %u)", sfcount, surfCount); /*return false;*/ }
   GCon->Log(NAME_Debug, "trying to use lightmap cache...");
 
   for (int i = 0; i < Level->NumSubsectors; ++i) {
@@ -696,10 +938,10 @@ bool VRenderLevelLightmap::loadLightmapsInternal (VStream *strm) {
     if ((int)snum != i) { GCon->Log(NAME_Warning, "invalid lightmap cache subsector number"); return false; }
     subsector_t *sub = &Level->Subsectors[i];
     for (subregion_t *r = sub->regions; r != nullptr; r = r->next) {
-      if (r->realfloor != nullptr) if (!LoadLightSurfaces(this, Level, strm, r->realfloor->surfs)) return false;
-      if (r->realceil != nullptr) if (!LoadLightSurfaces(this, Level, strm, r->realceil->surfs)) return false;
-      if (r->fakefloor != nullptr) if (!LoadLightSurfaces(this, Level, strm, r->fakefloor->surfs)) return false;
-      if (r->fakeceil != nullptr) if (!LoadLightSurfaces(this, Level, strm, r->fakeceil->surfs)) return false;
+      if (!LoadLightSurfaces(Level, strm, (r->realfloor ? r->realfloor->surfs : nullptr), lmcacheHasUnknownSurface)) return false;
+      if (!LoadLightSurfaces(Level, strm, (r->realceil ? r->realceil->surfs : nullptr), lmcacheHasUnknownSurface)) return false;
+      if (!LoadLightSurfaces(Level, strm, (r->fakefloor ? r->fakefloor->surfs : nullptr), lmcacheHasUnknownSurface)) return false;
+      if (!LoadLightSurfaces(Level, strm, (r->fakeceil ? r->fakeceil->surfs : nullptr), lmcacheHasUnknownSurface)) return false;
     }
   }
 
@@ -709,11 +951,11 @@ bool VRenderLevelLightmap::loadLightmapsInternal (VStream *strm) {
     if ((int)snum != i) { GCon->Log(NAME_Warning, "invalid lightmap cache seg number"); return false; }
     seg_t *seg = &Level->Segs[i];
     for (drawseg_t *ds = seg->drawsegs; ds; ds = ds->next) {
-      if (!LoadLightSegSurfaces(this, Level, strm, ds->top)) return false;
-      if (!LoadLightSegSurfaces(this, Level, strm, ds->mid)) return false;
-      if (!LoadLightSegSurfaces(this, Level, strm, ds->bot)) return false;
-      if (!LoadLightSegSurfaces(this, Level, strm, ds->topsky)) return false;
-      if (!LoadLightSegSurfaces(this, Level, strm, ds->extra)) return false;
+      if (!LoadLightSegSurfaces(Level, strm, ds->top, lmcacheHasUnknownSurface)) return false;
+      if (!LoadLightSegSurfaces(Level, strm, ds->mid, lmcacheHasUnknownSurface)) return false;
+      if (!LoadLightSegSurfaces(Level, strm, ds->bot, lmcacheHasUnknownSurface)) return false;
+      if (!LoadLightSegSurfaces(Level, strm, ds->topsky, lmcacheHasUnknownSurface)) return false;
+      if (!LoadLightSegSurfaces(Level, strm, ds->extra, lmcacheHasUnknownSurface)) return false;
     }
   }
 
@@ -727,10 +969,15 @@ bool VRenderLevelLightmap::loadLightmapsInternal (VStream *strm) {
 //
 //==========================================================================
 bool VRenderLevelLightmap::loadLightmaps (VStream *strm) {
-  if (!strm || strm->IsError()) return false;
+  if (!strm || strm->IsError()) {
+    lmcacheHasUnknownSurface = true;
+    return false;
+  }
+  lmcacheHasUnknownSurface = false;
   VZipStreamReader *zipstrm = new VZipStreamReader(strm, VZipStreamReader::UNKNOWN_SIZE, VZipStreamReader::UNKNOWN_SIZE/*Map->DecompressedSize*/);
   bool ok = loadLightmapsInternal(zipstrm);
   zipstrm->Close();
+  if (!ok) lmcacheHasUnknownSurface = true;
   return ok;
 }
 
@@ -746,17 +993,19 @@ bool VRenderLevelLightmap::loadLightmaps (VStream *strm) {
 //  LightSurfaces
 //
 //==========================================================================
-static int LightSurfaces (VRenderLevelLightmap *rdr, surface_t *s, bool recalcNow) {
+static int LightSurfaces (VRenderLevelLightmap *rdr, surface_t *s, bool recalcNow, bool onlyMarked) {
   int res = 0;
   if (recalcNow) {
     for (; s; s = s->next) {
+      ++res;
+      if (onlyMarked && (s->drawflags&surface_t::DF_CALC_LMAP) == 0) continue;
       s->drawflags &= ~surface_t::DF_CALC_LMAP;
       if (s->count >= 3) rdr->LightFace(s, s->subsector);
-      ++res;
     }
   } else {
     for (; s; s = s->next) {
       ++res;
+      if (onlyMarked && (s->drawflags&surface_t::DF_CALC_LMAP) == 0) continue;
       if (s->count >= 3) {
         s->drawflags |= surface_t::DF_CALC_LMAP;
       } else {
@@ -773,19 +1022,19 @@ static int LightSurfaces (VRenderLevelLightmap *rdr, surface_t *s, bool recalcNo
 //  LightSegSurfaces
 //
 //==========================================================================
-static int LightSegSurfaces (VRenderLevelLightmap *rdr, segpart_t *sp, bool recalcNow) {
+static int LightSegSurfaces (VRenderLevelLightmap *rdr, segpart_t *sp, bool recalcNow, bool onlyMarked) {
   int res = 0;
-  for (; sp; sp = sp->next) res += LightSurfaces(rdr, sp->surfs, recalcNow);
+  for (; sp; sp = sp->next) res += LightSurfaces(rdr, sp->surfs, recalcNow, onlyMarked);
   return res;
 }
 
 
 //==========================================================================
 //
-//  VRenderLevelLightmap::ResetLightmaps
+//  VRenderLevelLightmap::RelightMap
 //
 //==========================================================================
-void VRenderLevelLightmap::ResetLightmaps (bool recalcNow) {
+void VRenderLevelLightmap::RelightMap (bool recalcNow, bool onlyMarked) {
   vuint32 surfCount = 0;
 
   if (recalcNow) {
@@ -797,26 +1046,36 @@ void VRenderLevelLightmap::ResetLightmaps (bool recalcNow) {
   int processed = 0;
   for (auto &&sub : Level->allSubsectors()) {
     for (subregion_t *r = sub.regions; r != nullptr; r = r->next) {
-      if (r->realfloor != nullptr) processed += LightSurfaces(this, r->realfloor->surfs, recalcNow);
-      if (r->realceil != nullptr) processed += LightSurfaces(this, r->realceil->surfs, recalcNow);
-      if (r->fakefloor != nullptr) processed += LightSurfaces(this, r->fakefloor->surfs, recalcNow);
-      if (r->fakeceil != nullptr) processed += LightSurfaces(this, r->fakeceil->surfs, recalcNow);
+      if (r->realfloor != nullptr) processed += LightSurfaces(this, r->realfloor->surfs, recalcNow, onlyMarked);
+      if (r->realceil != nullptr) processed += LightSurfaces(this, r->realceil->surfs, recalcNow, onlyMarked);
+      if (r->fakefloor != nullptr) processed += LightSurfaces(this, r->fakefloor->surfs, recalcNow, onlyMarked);
+      if (r->fakeceil != nullptr) processed += LightSurfaces(this, r->fakeceil->surfs, recalcNow, onlyMarked);
     }
     if (recalcNow) R_PBarUpdate("Lightmaps", processed, (int)surfCount);
   }
 
   for (auto &&seg : Level->allSegs()) {
     for (drawseg_t *ds = seg.drawsegs; ds; ds = ds->next) {
-      processed += LightSegSurfaces(this, ds->top, recalcNow);
-      processed += LightSegSurfaces(this, ds->mid, recalcNow);
-      processed += LightSegSurfaces(this, ds->bot, recalcNow);
-      processed += LightSegSurfaces(this, ds->topsky, recalcNow);
-      processed += LightSegSurfaces(this, ds->extra, recalcNow);
+      processed += LightSegSurfaces(this, ds->top, recalcNow, onlyMarked);
+      processed += LightSegSurfaces(this, ds->mid, recalcNow, onlyMarked);
+      processed += LightSegSurfaces(this, ds->bot, recalcNow, onlyMarked);
+      processed += LightSegSurfaces(this, ds->topsky, recalcNow, onlyMarked);
+      processed += LightSegSurfaces(this, ds->extra, recalcNow, onlyMarked);
     }
     if (recalcNow) R_PBarUpdate("Lightmaps", processed, (int)surfCount);
   }
 
   if (recalcNow) R_PBarUpdate("Lightmaps", (int)surfCount, (int)surfCount, true);
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelLightmap::ResetLightmaps
+//
+//==========================================================================
+void VRenderLevelLightmap::ResetLightmaps (bool recalcNow) {
+  RelightMap(recalcNow, false);
 }
 
 
@@ -859,10 +1118,14 @@ void VRenderLevelLightmap::PreRender () {
       }
     }
 
-    if (recalcLight && doPrecalc) {
-      GCon->Log("calculating static lighting...");
+    if (recalcLight || lmcacheHasUnknownSurface) {
+      if (lmcacheHasUnknownSurface) {
+        GCon->Log("calculating static lighting due to lightmap cache inconsistencies...");
+      } else {
+        GCon->Log("calculating static lighting...");
+      }
       double stt = -Sys_Time();
-      ResetLightmaps(true);
+      RelightMap(true, true); // only marked
       // cache
       if (doWriteCache) {
         const float tlim = loader_cache_time_limit_lightmap.asFloat();

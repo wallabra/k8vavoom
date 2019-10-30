@@ -799,6 +799,10 @@ private:
 
   bool invalidateRelight;
 
+  // temporary flag for lightmap cache loader
+  // set if some surface wasn't found
+  bool lmcacheHasUnknownSurface;
+
 private:
   // returns `false` if cannot allocate lightmap block
   bool BuildSurfaceLightmap (surface_t *surface);
@@ -897,6 +901,8 @@ protected:
   // world BSP rendering
   virtual void QueueWorldSurface (surface_t*) override;
   void RenderWorld (const refdef_t*, const VViewClipper*);
+
+  void RelightMap (bool recalcNow, bool onlyMarked);
 
 public:
   // this has to be public for now
