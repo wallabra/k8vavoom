@@ -548,6 +548,7 @@ final bool HeightClip (optional bool skipTriggers, optional bool skipObjects) {
       } else {
         // doesn't fit, stop
         //if (bIsPlayer) printdebug("   DONTFIT (1)!");
+        //if (tmtrace.BlockingLine) printdebug("%C: don't fit! line=%s; fz=%s; cz=%s", self, tmtrace.BlockingLine-&XLevel.Lines[0], FloorZ, CeilingZ);
         return false;
       }
     }

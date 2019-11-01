@@ -1041,6 +1041,7 @@ bool VEntity::CheckRelLine (tmtrace_t &tmtrace, line_t *ld, bool skipSpecials) {
     //k8: oops; it seems that we have to return `false` here
     //    but only if this is not a special line, otherwise monsters cannot open doors
     if (!ld->special) {
+      //GCon->Logf(NAME_Debug, "BLK: %s (hgt=%g); line=%d", GetClass()->GetName(), hgt, (int)(ptrdiff_t)(ld-&XLevel->Lines[0]));
       if (!skipSpecials) BlockedByLine(ld);
       tmtrace.BlockingLine = ld;
       return false;
