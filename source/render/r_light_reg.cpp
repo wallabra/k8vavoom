@@ -178,7 +178,7 @@ float VRenderLevelLightmap::CastRay (sector_t *ssector, const TVec &p1, const TV
 
 //==========================================================================
 //
-// VRenderLevelLightmap::CalcMinMaxs
+//  VRenderLevelLightmap::CalcMinMaxs
 //
 //==========================================================================
 void VRenderLevelLightmap::CalcMinMaxs (LMapTraceInfo &lmi, const surface_t *surf) {
