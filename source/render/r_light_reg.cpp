@@ -164,11 +164,11 @@ float VRenderLevelLightmap::CastRay (sector_t *ssector, const TVec &p1, const TV
   if (t >= squaredist) return 0.0f; // too far away
   if (t <= 2.0f) return 1.0f; // at light point
 
-  if (r_lmap_bsp_trace) {
+  if (!r_lmap_bsp_trace) {
+    if (!Level->CastEx(ssector, p1, p2, SPF_NOBLOCKSIGHT)) return 0.0f; // ray was blocked
+  } else {
     linetrace_t Trace;
     if (!Level->TraceLine(Trace, p1, p2, SPF_NOBLOCKSIGHT)) return 0.0f; // ray was blocked
-  } else {
-    if (!Level->CastEx(ssector, p1, p2, SPF_NOBLOCKSIGHT)) return 0.0f; // ray was blocked
   }
 
   return sqrtf(t);
