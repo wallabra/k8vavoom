@@ -87,6 +87,19 @@ menudef AdvVideoOptions {
       "between speed and quality.";
   }
 
+  option enum {
+    title = "Lightmap Tracing Mode";
+    cvar = r_lmap_bsp_trace;
+    list {
+      "Blockmap",
+      "BSP",
+    }
+    help =
+      "Should lightmap tracer use blockmap, or BSP tree to cast rays?"
+      "Blockmap tracer is about 3.5 times faster, but produces more"
+      "light leaking artifacts.";
+  }
+
   option slider {
     title = "Light Fade Factor";
     cvar = r_fade_factor;
