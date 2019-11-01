@@ -428,8 +428,6 @@ extern VCvarB r_allow_ambient;
 extern VCvarB r_decals_enabled;
 extern VCvarB r_decals_wall_masked;
 extern VCvarB r_decals_wall_alpha;
-extern VCvarB r_adv_masked_wall_vertex_light;
-extern VCvarB r_adv_masked_wall_vertex_light;
 extern VCvarB gl_decal_debug_nostencil;
 extern VCvarB gl_decal_debug_noalpha;
 extern VCvarB gl_decal_dump_max;

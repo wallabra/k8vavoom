@@ -120,90 +120,21 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     }
   }
 
-  if (Alpha == 1.0f && !Additive && (surf->lightmap != nullptr || (!RendLev->IsShadowVolumeRenderer() && surf->dlightframe == RendLev->currDLightFrame))) {
-    RendLev->BuildLightMap(surf);
-    int w = (surf->extents[0]>>4)+1;
-    int h = (surf->extents[1]>>4)+1;
-    int size = w*h;
-    int r = 0;
-    int g = 0;
-    int b = 0;
-    for (int i = 0; i < size; ++i) {
-      r += 255*256-blocklightsr[i];
-      g += 255*256-blocklightsg[i];
-      b += 255*256-blocklightsb[i];
-    }
-    double iscale = 1.0f/(size*255*256);
-    if (doBrightmap) {
-      SurfMaskedBrightmapGlow.SetLight(r*iscale, g*iscale, b*iscale, Alpha);
-    } else {
-      SurfMaskedGlow.SetLight(r*iscale, g*iscale, b*iscale, Alpha);
-    }
-  } else {
-    /* k8: this seems to be stupid
-    if (r_adv_masked_wall_vertex_light) {
-      // collect vertex lighting
-      //FIXME: this should be rendered in ambient pass instead
-      //       also, we can subdivide surfaces for two-sided walls for
-      //       better estimations
-      int w = (surf->extents[0]>>4)+1;
-      int h = (surf->extents[1]>>4)+1;
-      float radius = min2(w, h);
-      if (radius < 0.0f) radius = 0.0f;
-      int r = 0, g = 0, b = 0;
-      // sector light
-      if (r_allow_ambient) {
-        int slins = (surf->Light>>24)&0xff;
-        if (slins < r_ambient_min) slins = clampToByte(r_ambient_min);
-        int lr = (surf->Light>>16)&255;
-        int lg = (surf->Light>>8)&255;
-        int lb = surf->Light&255;
-        lr = lr*slins/255;
-        lg = lg*slins/255;
-        lb = lb*slins/255;
-        if (r < lr) r = lr;
-        if (g < lg) g = lg;
-        if (b < lb) b = lb;
-      }
-      TPlane pl;
-      surf->GetPlane(&pl);
-      for (int i = 0; i < surf->count; ++i) {
-        vuint32 lt0 = RendLev->LightPoint(surf->verts[i], radius, 0, &pl);
-        int lr = (lt0>>16)&255;
-        int lg = (lt0>>8)&255;
-        int lb = lt0&255;
-        if (r < lr) r = lr;
-        if (g < lg) g = lg;
-        if (b < lb) b = lb;
-      }
-      if (doBrightmap) {
-        SurfMaskedBrightmapGlow.SetLight(r/255.0f, g/255.0f, b/255.0f, Alpha);
-      } else {
-        SurfMaskedGlow.SetLight(r/255.0f, g/255.0f, b/255.0f, Alpha);
-      }
-    } else
-    */
-    {
-      const float lev = getSurfLightLevel(surf);
-      //GCon->Logf("Tex: %s; lev=%g", *tex->Tex->Name, getSurfLightLevel(surf));
-      //const float lev = 1.0f;
-      if (doBrightmap) {
-        SurfMaskedBrightmapGlow.SetLight(
-          ((surf->Light>>16)&255)*lev/255.0f,
-          ((surf->Light>>8)&255)*lev/255.0f,
-          (surf->Light&255)*lev/255.0f, Alpha);
-      } else {
-        SurfMaskedGlow.SetLight(
-          ((surf->Light>>16)&255)*lev/255.0f,
-          ((surf->Light>>8)&255)*lev/255.0f,
-          (surf->Light&255)*lev/255.0f, Alpha);
-      }
-    }
-  }
-
+  //k8: non-translucent walls should not end here, so there is no need to recalc/check lightmaps
+  const float lightLevel = getSurfLightLevel(surf);
+  //GCon->Logf("Tex: %s; lightLevel=%g", *tex->Tex->Name, getSurfLightLevel(surf));
+  //const float lightLevel = 1.0f;
   if (doBrightmap) {
+    SurfMaskedBrightmapGlow.SetLight(
+      ((surf->Light>>16)&255)*lightLevel/255.0f,
+      ((surf->Light>>8)&255)*lightLevel/255.0f,
+      (surf->Light&255)*lightLevel/255.0f, Alpha);
     SurfMaskedBrightmapGlow.SetFogFade(surf->Fade, Alpha);
   } else {
+    SurfMaskedGlow.SetLight(
+      ((surf->Light>>16)&255)*lightLevel/255.0f,
+      ((surf->Light>>8)&255)*lightLevel/255.0f,
+      (surf->Light&255)*lightLevel/255.0f, Alpha);
     SurfMaskedGlow.SetFogFade(surf->Fade, Alpha);
   }
 
