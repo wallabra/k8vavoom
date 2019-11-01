@@ -481,6 +481,8 @@ public:
 
   virtual void NukeLightmapCache () override;
 
+  virtual void FullWorldUpdate () override;
+
 public:
   static vuint32 CountSurfacesInChain (const surface_t *s) noexcept;
   static vuint32 CountSegSurfacesInChain (const segpart_t *sp) noexcept;

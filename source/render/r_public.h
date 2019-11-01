@@ -140,6 +140,8 @@ public:
   virtual void NukeLightmapCache () = 0;
   virtual void ResetLightmaps (bool recalcNow) = 0;
 
+  virtual void FullWorldUpdate () = 0;
+
   virtual bool isNeedLightmapCache () const noexcept = 0;
   virtual void saveLightmaps (VStream *strm) = 0;
   virtual bool loadLightmaps (VStream *strm) = 0;

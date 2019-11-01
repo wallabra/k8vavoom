@@ -61,6 +61,10 @@ static VCvarI dbg_save_verbose("dbg_save_verbose", "0", "Slightly more verbose s
 
 static VCvarB dbg_checkpoints("dbg_checkpoints", false, "Checkpoint save/load debug dumps", 0);
 
+extern VCvarB r_precalc_static_lights;
+extern int r_precalc_static_lights_override; // <0: not set
+extern VCvarB loader_cache_data;
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern VCvarI Skill;
@@ -1897,6 +1901,9 @@ static void SV_SaveGame (int slot, VStr Description, bool checkpoint, bool isAut
     }
   }
 
+  // perform full update, so lightmap cache will be valid
+  if (!checkpoint && GLevel->Renderer && GLevel->Renderer->isNeedLightmapCache()) GLevel->Renderer->FullWorldUpdate();
+
   SV_SendBeforeSaveEvent(isAutosave, checkpoint);
 
   if (checkpoint) {
@@ -1916,7 +1923,8 @@ static void SV_SaveGame (int slot, VStr Description, bool checkpoint, bool isAut
     // checkpoints using normal map cache
     if (!checkpoint && !saveFileBase.isEmpty()) {
       VStr ccfname = saveFileBase+".lmap";
-      if (!GLevel->Renderer || !GLevel->Renderer->isNeedLightmapCache()) {
+      bool doPrecalc = (r_precalc_static_lights_override >= 0 ? !!r_precalc_static_lights_override : r_precalc_static_lights);
+      if (!GLevel->Renderer || !GLevel->Renderer->isNeedLightmapCache() || !loader_cache_data || !doPrecalc) {
         // no rendered usually means that this is some kind of server (the thing that should not be, but...)
         Sys_FileDelete(ccfname);
       } else {
@@ -1962,6 +1970,7 @@ void SV_LoadGame (int slot) {
   if (!SV_LoadMap(BaseSlot.CurrentMap, true/*allowCheckpoints*/, false/*hubTeleport*/)) {
     // not a checkpoint
     GLevel->cacheFileBase = saveFileBase;
+    GLevel->cacheFlags &= ~VLevel::CacheFlag_Ignore;
     //GCon->Logf(NAME_Debug, "**********************: <%s>", *GLevel->cacheFileBase);
 #ifdef CLIENT
     if (GGameInfo->NetMode != NM_DedicatedServer) CL_SetUpLocalPlayer();

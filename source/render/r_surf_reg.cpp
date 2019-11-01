@@ -47,7 +47,7 @@ enum { CDSLEN = cestlen(LMAP_CACHE_DATA_SIGNATURE) };
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static VCvarB r_precalc_static_lights("r_precalc_static_lights", true, "Precalculate static lights?", CVAR_Archive);
+VCvarB r_precalc_static_lights("r_precalc_static_lights", true, "Precalculate static lights?", CVAR_Archive);
 int r_precalc_static_lights_override = -1; // <0: not set
 
 extern VCvarB loader_cache_data;
