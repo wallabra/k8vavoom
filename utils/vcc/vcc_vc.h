@@ -29,7 +29,7 @@
 #include "../../libs/core/core.h"
 #include "../../source/common.h"
 
-extern int devprintf (const char *text, ...) __attribute__((format(printf, 1, 2)));
+extern int devprintf (const char *text, ...) noexcept __attribute__((format(printf, 1, 2)));
 
 extern VStream *vc_OpenFile (VStr Name);
 

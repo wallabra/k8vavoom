@@ -93,7 +93,7 @@ extern VCvarB real_time;
 #ifndef CLIENT
 class VDedLog : public VLogListener {
 public:
-  virtual void Serialise (const char *Text, EName) override { printf("%s", Text); }
+  virtual void Serialise (const char *Text, EName) noexcept override { printf("%s", Text); }
 };
 static VDedLog  DedLog;
 #endif

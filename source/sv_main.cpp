@@ -1951,7 +1951,7 @@ VLevel *VServerNetContext::GetLevel () {
 #ifndef CLIENT
 class FConsoleDevice : public FOutputDevice {
 public:
-  virtual void Serialise (const char *V, EName) override {
+  virtual void Serialise (const char *V, EName) noexcept override {
     printf("%s\n", V);
   }
 };

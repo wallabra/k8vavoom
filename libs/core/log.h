@@ -31,7 +31,7 @@
 //==========================================================================
 class VLogListener : VInterface {
 public:
-  virtual void Serialise (const char *Text, EName Event) = 0;
+  virtual void Serialise (const char *Text, EName Event) noexcept = 0;
 };
 
 
@@ -56,29 +56,29 @@ private:
   bool inWrite;
 
 public:
-  void doWriteStr (EName Type, const char *s, bool addEOL);
-  void doWrite (EName Type, const char *fmt, va_list ap, bool addEOL);
+  void doWriteStr (EName Type, const char *s, bool addEOL) noexcept;
+  void doWrite (EName Type, const char *fmt, va_list ap, bool addEOL) noexcept;
 
 public:
-  VLog ();
+  VLog () noexcept;
 
-  static void AddListener (VLogListener *Listener);
-  static void RemoveListener (VLogListener *Listener);
+  static void AddListener (VLogListener *Listener) noexcept;
+  static void RemoveListener (VLogListener *Listener) noexcept;
 
-  void Write (EName Type, const char *fmt, ...) __attribute__((format(printf, 3, 4)));
-  void WriteLine (EName Type, const char *fmt, ...) __attribute__((format(printf, 3, 4)));
+  void Write (EName Type, const char *fmt, ...) noexcept __attribute__((format(printf, 3, 4)));
+  void WriteLine (EName Type, const char *fmt, ...) noexcept __attribute__((format(printf, 3, 4)));
 
-  void Write (const char *fmt, ...) __attribute__((format(printf, 2, 3)));
-  void WriteLine (const char *fmt, ...) __attribute__((format(printf, 2, 3)));
+  void Write (const char *fmt, ...) noexcept __attribute__((format(printf, 2, 3)));
+  void WriteLine (const char *fmt, ...) noexcept __attribute__((format(printf, 2, 3)));
 
-  void DWrite (const char *fmt, ...) __attribute__((format(printf, 2, 3)));
-  void DWriteLine (const char *fmt, ...) __attribute__((format(printf, 2, 3)));
+  void DWrite (const char *fmt, ...) noexcept __attribute__((format(printf, 2, 3)));
+  void DWriteLine (const char *fmt, ...) noexcept __attribute__((format(printf, 2, 3)));
 
-  void Logf (EName Type, const char *fmt, ...) __attribute__((format(printf, 3, 4)));
-  void Logf (const char *fmt, ...) __attribute__((format(printf, 2, 3)));
+  void Logf (EName Type, const char *fmt, ...) noexcept __attribute__((format(printf, 3, 4)));
+  void Logf (const char *fmt, ...) noexcept __attribute__((format(printf, 2, 3)));
 
-  void Log (EName Type, const char *s);
-  void Log (const char *s);
+  void Log (EName Type, const char *s) noexcept;
+  void Log (const char *s) noexcept;
 
 public: // fuck you, shitplusplus!
   static mythread_mutex logLock;

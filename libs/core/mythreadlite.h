@@ -19,6 +19,12 @@
 
 #include <inttypes.h>
 
+#ifdef __cplusplus
+# define VC_MYTHREAD_NOEXCEPT noexcept
+#else
+# define VC_MYTHREAD_NOEXCEPT
+#endif
+
 
 ////////////////////////////////////////
 // Shared between all threading types //
@@ -92,7 +98,7 @@ typedef struct timespec mythread_condtime;
 
 // Use pthread_sigmask() to set the signal mask in multi-threaded programs.
 // Do nothing on OpenVMS since it lacks pthread_sigmask().
-static __attribute__((unused)) inline void mythread_sigmask (int how, const sigset_t * /*restrict*/ set, sigset_t * /*restrict*/ oset) {
+static __attribute__((unused)) inline void mythread_sigmask (int how, const sigset_t * /*restrict*/ set, sigset_t * /*restrict*/ oset) VC_MYTHREAD_NOEXCEPT {
 #ifndef NO_SIGNALS
   /*int ret =*/ pthread_sigmask(how, set, oset);
   /*
@@ -104,7 +110,7 @@ static __attribute__((unused)) inline void mythread_sigmask (int how, const sigs
 
 // Creates a new thread with all signals blocked. Returns zero on success
 // and non-zero on error.
-static __attribute__((unused)) inline int mythread_create (mythread *thread, void *(*func) (void *arg), void *arg) {
+static __attribute__((unused)) inline int mythread_create (mythread *thread, void *(*func) (void *arg), void *arg) VC_MYTHREAD_NOEXCEPT {
   sigset_t old;
   sigset_t all;
   sigfillset(&all);
@@ -115,16 +121,16 @@ static __attribute__((unused)) inline int mythread_create (mythread *thread, voi
 }
 
 // Joins a thread. Returns zero on success and non-zero on error.
-static __attribute__((unused)) inline int mythread_join (mythread thread) {
+static __attribute__((unused)) inline int mythread_join (mythread thread) VC_MYTHREAD_NOEXCEPT {
   return pthread_join(thread, nullptr);
 }
 
 // Initiatlizes a mutex. Returns zero on success and non-zero on error.
-static __attribute__((unused)) inline int mythread_mutex_init (mythread_mutex *mutex) {
+static __attribute__((unused)) inline int mythread_mutex_init (mythread_mutex *mutex) VC_MYTHREAD_NOEXCEPT {
   return pthread_mutex_init(mutex, nullptr);
 }
 
-static __attribute__((unused)) inline void mythread_mutex_destroy (mythread_mutex *mutex) {
+static __attribute__((unused)) inline void mythread_mutex_destroy (mythread_mutex *mutex) VC_MYTHREAD_NOEXCEPT {
   /*int ret =*/ pthread_mutex_destroy(mutex);
   /*
   assert(ret == 0);
@@ -132,7 +138,7 @@ static __attribute__((unused)) inline void mythread_mutex_destroy (mythread_mute
   */
 }
 
-static __attribute__((unused)) inline void mythread_mutex_lock (mythread_mutex *mutex) {
+static __attribute__((unused)) inline void mythread_mutex_lock (mythread_mutex *mutex) VC_MYTHREAD_NOEXCEPT {
   /*int ret =*/ pthread_mutex_lock(mutex);
   /*
   assert(ret == 0);
@@ -140,7 +146,7 @@ static __attribute__((unused)) inline void mythread_mutex_lock (mythread_mutex *
   */
 }
 
-static __attribute__((unused)) inline void mythread_mutex_unlock (mythread_mutex *mutex) {
+static __attribute__((unused)) inline void mythread_mutex_unlock (mythread_mutex *mutex) VC_MYTHREAD_NOEXCEPT {
   /*int ret =*/ pthread_mutex_unlock(mutex);
   /*
   assert(ret == 0);
@@ -158,7 +164,7 @@ static __attribute__((unused)) inline void mythread_mutex_unlock (mythread_mutex
 // used if CLOCK_MONOTONIC isn't available.
 //
 // If clock_gettime() isn't available at all, gettimeofday() will be used.
-static __attribute__((unused)) inline int mythread_cond_init (mythread_cond *mycond) {
+static __attribute__((unused)) inline int mythread_cond_init (mythread_cond *mycond) VC_MYTHREAD_NOEXCEPT {
   struct timespec ts;
   pthread_condattr_t condattr;
 
@@ -182,7 +188,7 @@ static __attribute__((unused)) inline int mythread_cond_init (mythread_cond *myc
   return pthread_cond_init(&mycond->cond, nullptr);
 }
 
-static __attribute__((unused)) inline void mythread_cond_destroy (mythread_cond *cond) {
+static __attribute__((unused)) inline void mythread_cond_destroy (mythread_cond *cond) VC_MYTHREAD_NOEXCEPT {
   /*int ret =*/ pthread_cond_destroy(&cond->cond);
   /*
   assert(ret == 0);
@@ -191,7 +197,7 @@ static __attribute__((unused)) inline void mythread_cond_destroy (mythread_cond 
 }
 
 
-static __attribute__((unused)) inline void mythread_cond_signal (mythread_cond *cond) {
+static __attribute__((unused)) inline void mythread_cond_signal (mythread_cond *cond) VC_MYTHREAD_NOEXCEPT {
   /*int ret =*/ pthread_cond_signal(&cond->cond);
   /*
   assert(ret == 0);
@@ -199,7 +205,7 @@ static __attribute__((unused)) inline void mythread_cond_signal (mythread_cond *
   */
 }
 
-static __attribute__((unused)) inline void mythread_cond_wait (mythread_cond *cond, mythread_mutex *mutex) {
+static __attribute__((unused)) inline void mythread_cond_wait (mythread_cond *cond, mythread_mutex *mutex) VC_MYTHREAD_NOEXCEPT {
   /*int ret =*/ pthread_cond_wait(&cond->cond, mutex);
   /*
   assert(ret == 0);
@@ -209,7 +215,7 @@ static __attribute__((unused)) inline void mythread_cond_wait (mythread_cond *co
 
 // Waits on a condition or until a timeout expires. If the timeout expires,
 // non-zero is returned, otherwise zero is returned.
-static __attribute__((unused)) inline int mythread_cond_timedwait (mythread_cond *cond, mythread_mutex *mutex, const mythread_condtime *condtime) {
+static __attribute__((unused)) inline int mythread_cond_timedwait (mythread_cond *cond, mythread_mutex *mutex, const mythread_condtime *condtime) VC_MYTHREAD_NOEXCEPT {
   /*int ret =*/ return pthread_cond_timedwait(&cond->cond, mutex, condtime);
   /*
   assert(ret == 0 || ret == ETIMEDOUT);
@@ -219,7 +225,7 @@ static __attribute__((unused)) inline int mythread_cond_timedwait (mythread_cond
 
 // Sets condtime to the absolute time that is timeout_ms milliseconds
 // in the future. The type of the clock to use is taken from cond.
-static __attribute__((unused)) inline void mythread_condtime_set (mythread_condtime *condtime, const mythread_cond *cond, uint32_t timeout_ms) {
+static __attribute__((unused)) inline void mythread_condtime_set (mythread_condtime *condtime, const mythread_cond *cond, uint32_t timeout_ms) VC_MYTHREAD_NOEXCEPT {
   condtime->tv_sec = timeout_ms/1000;
   condtime->tv_nsec = (timeout_ms%1000)*1000000;
 
@@ -276,28 +282,28 @@ typedef struct timespec mythread_condtime;
 
 // Use pthread_sigmask() to set the signal mask in multi-threaded programs.
 // Do nothing on OpenVMS or Switch since they lack pthread_sigmask().
-static __attribute__((unused)) inline void mythread_sigmask (int how, const sigset_t * /*restrict*/ set, sigset_t * /*restrict*/ oset) {
+static __attribute__((unused)) inline void mythread_sigmask (int how, const sigset_t * /*restrict*/ set, sigset_t * /*restrict*/ oset) VC_MYTHREAD_NOEXCEPT {
 
 }
 
 // Creates a new thread with all signals blocked. Returns zero on success
 // and non-zero on error.
-static __attribute__((unused)) inline int mythread_create (mythread *thread, int (*func) (void *arg), void *arg) {
+static __attribute__((unused)) inline int mythread_create (mythread *thread, int (*func) (void *arg), void *arg) VC_MYTHREAD_NOEXCEPT {
   const int ret = thrd_create(thread, func, arg) != thrd_success;
   return ret;
 }
 
 // Joins a thread. Returns zero on success and non-zero on error.
-static __attribute__((unused)) inline int mythread_join (mythread thread) {
+static __attribute__((unused)) inline int mythread_join (mythread thread) VC_MYTHREAD_NOEXCEPT {
   return thrd_join(thread, nullptr) != thrd_success;
 }
 
 // Initiatlizes a mutex. Returns zero on success and non-zero on error.
-static __attribute__((unused)) inline int mythread_mutex_init (mythread_mutex *mutex) {
+static __attribute__((unused)) inline int mythread_mutex_init (mythread_mutex *mutex) VC_MYTHREAD_NOEXCEPT {
   return mtx_init(mutex, mtx_plain) != thrd_success;
 }
 
-static __attribute__((unused)) inline void mythread_mutex_destroy (mythread_mutex *mutex) {
+static __attribute__((unused)) inline void mythread_mutex_destroy (mythread_mutex *mutex) VC_MYTHREAD_NOEXCEPT {
   /*int ret =*/ mtx_destroy(mutex);
   /*
   assert(ret == 0);
@@ -305,7 +311,7 @@ static __attribute__((unused)) inline void mythread_mutex_destroy (mythread_mute
   */
 }
 
-static __attribute__((unused)) inline void mythread_mutex_lock (mythread_mutex *mutex) {
+static __attribute__((unused)) inline void mythread_mutex_lock (mythread_mutex *mutex) VC_MYTHREAD_NOEXCEPT {
   /*int ret =*/ mtx_lock(mutex);
   /*
   assert(ret == 0);
@@ -313,7 +319,7 @@ static __attribute__((unused)) inline void mythread_mutex_lock (mythread_mutex *
   */
 }
 
-static __attribute__((unused)) inline void mythread_mutex_unlock (mythread_mutex *mutex) {
+static __attribute__((unused)) inline void mythread_mutex_unlock (mythread_mutex *mutex) VC_MYTHREAD_NOEXCEPT {
   /*int ret =*/ mtx_unlock(mutex);
   /*
   assert(ret == 0);
@@ -331,7 +337,7 @@ static __attribute__((unused)) inline void mythread_mutex_unlock (mythread_mutex
 // used if CLOCK_MONOTONIC isn't available.
 //
 // If clock_gettime() isn't available at all, gettimeofday() will be used.
-static __attribute__((unused)) inline int mythread_cond_init (mythread_cond *mycond) {
+static __attribute__((unused)) inline int mythread_cond_init (mythread_cond *mycond) VC_MYTHREAD_NOEXCEPT {
   // If anything above fails, fall back to the default CLOCK_REALTIME.
   // POSIX requires that all implementations of clock_gettime() must
   // support at least CLOCK_REALTIME.
@@ -339,7 +345,7 @@ static __attribute__((unused)) inline int mythread_cond_init (mythread_cond *myc
   return cnd_init(&mycond->cond) != thrd_success;
 }
 
-static __attribute__((unused)) inline void mythread_cond_destroy (mythread_cond *cond) {
+static __attribute__((unused)) inline void mythread_cond_destroy (mythread_cond *cond) VC_MYTHREAD_NOEXCEPT {
   /*int ret =*/ cnd_destroy(&cond->cond);
   /*
   assert(ret == 0);
@@ -348,7 +354,7 @@ static __attribute__((unused)) inline void mythread_cond_destroy (mythread_cond 
 }
 
 
-static __attribute__((unused)) inline void mythread_cond_signal (mythread_cond *cond) {
+static __attribute__((unused)) inline void mythread_cond_signal (mythread_cond *cond) VC_MYTHREAD_NOEXCEPT {
   /*int ret =*/ cnd_signal(&cond->cond);
   /*
   assert(ret == 0);
@@ -356,7 +362,7 @@ static __attribute__((unused)) inline void mythread_cond_signal (mythread_cond *
   */
 }
 
-static __attribute__((unused)) inline void mythread_cond_wait (mythread_cond *cond, mythread_mutex *mutex) {
+static __attribute__((unused)) inline void mythread_cond_wait (mythread_cond *cond, mythread_mutex *mutex) VC_MYTHREAD_NOEXCEPT {
   /*int ret =*/ cnd_wait(&cond->cond, mutex);
   /*
   assert(ret == 0);
@@ -366,7 +372,7 @@ static __attribute__((unused)) inline void mythread_cond_wait (mythread_cond *co
 
 // Waits on a condition or until a timeout expires. If the timeout expires,
 // non-zero is returned, otherwise zero is returned.
-static __attribute__((unused)) inline int mythread_cond_timedwait (mythread_cond *cond, mythread_mutex *mutex, const mythread_condtime *condtime) {
+static __attribute__((unused)) inline int mythread_cond_timedwait (mythread_cond *cond, mythread_mutex *mutex, const mythread_condtime *condtime) VC_MYTHREAD_NOEXCEPT {
   /*int ret =*/ return cnd_timedwait(&cond->cond, mutex, condtime) != thrd_success;
   /*
   assert(ret == 0 || ret == ETIMEDOUT);
@@ -376,7 +382,7 @@ static __attribute__((unused)) inline int mythread_cond_timedwait (mythread_cond
 
 // Sets condtime to the absolute time that is timeout_ms milliseconds
 // in the future. The type of the clock to use is taken from cond.
-static __attribute__((unused)) inline void mythread_condtime_set (mythread_condtime *condtime, const mythread_cond *cond, uint32_t timeout_ms) {
+static __attribute__((unused)) inline void mythread_condtime_set (mythread_condtime *condtime, const mythread_cond *cond, uint32_t timeout_ms) VC_MYTHREAD_NOEXCEPT {
   condtime->tv_sec = timeout_ms/1000;
   condtime->tv_nsec = (timeout_ms%1000)*1000000;
 
@@ -465,55 +471,55 @@ struct mythread_condtime {
 // make no sense because the other POSIX signal functions are missing anyway.
 
 
-static __attribute__((unused)) inline int mythread_create (mythread *thread, unsigned int (__stdcall *func) (void *arg), void *arg) {
+static __attribute__((unused)) inline int mythread_create (mythread *thread, unsigned int (__stdcall *func) (void *arg), void *arg) VC_MYTHREAD_NOEXCEPT {
   uintptr_t ret = _beginthreadex(nullptr, 0, func, arg, 0, nullptr);
   if (ret == 0) return -1;
   *thread = (HANDLE)ret;
   return 0;
 }
 
-static __attribute__((unused)) inline int mythread_join (mythread thread) {
+static __attribute__((unused)) inline int mythread_join (mythread thread) VC_MYTHREAD_NOEXCEPT {
   int ret = 0;
   if (WaitForSingleObject(thread, INFINITE) != WAIT_OBJECT_0) ret = -1;
   if (!CloseHandle(thread)) ret = -1;
   return ret;
 }
 
-static __attribute__((unused)) inline int mythread_mutex_init (mythread_mutex *mutex) {
+static __attribute__((unused)) inline int mythread_mutex_init (mythread_mutex *mutex) VC_MYTHREAD_NOEXCEPT {
   InitializeCriticalSection(mutex);
   return 0;
 }
 
-static __attribute__((unused)) inline void mythread_mutex_destroy (mythread_mutex *mutex) {
+static __attribute__((unused)) inline void mythread_mutex_destroy (mythread_mutex *mutex) VC_MYTHREAD_NOEXCEPT {
   DeleteCriticalSection(mutex);
 }
 
-static __attribute__((unused)) inline void mythread_mutex_lock (mythread_mutex *mutex) {
+static __attribute__((unused)) inline void mythread_mutex_lock (mythread_mutex *mutex) VC_MYTHREAD_NOEXCEPT {
   EnterCriticalSection(mutex);
 }
 
-static __attribute__((unused)) inline void mythread_mutex_unlock (mythread_mutex *mutex) {
+static __attribute__((unused)) inline void mythread_mutex_unlock (mythread_mutex *mutex) VC_MYTHREAD_NOEXCEPT {
   LeaveCriticalSection(mutex);
 }
 
-static __attribute__((unused)) inline int mythread_cond_init (mythread_cond *cond) {
+static __attribute__((unused)) inline int mythread_cond_init (mythread_cond *cond) VC_MYTHREAD_NOEXCEPT {
   *cond = CreateEvent(nullptr, FALSE, FALSE, nullptr);
   return *cond == nullptr ? -1 : 0;
   //InitializeConditionVariable(cond);
   //return 0;
 }
 
-static __attribute__((unused)) inline void mythread_cond_destroy (mythread_cond *cond) {
+static __attribute__((unused)) inline void mythread_cond_destroy (mythread_cond *cond) VC_MYTHREAD_NOEXCEPT {
   CloseHandle(*cond);
   //(void)cond;
 }
 
-static __attribute__((unused)) inline void mythread_cond_signal (mythread_cond *cond) {
+static __attribute__((unused)) inline void mythread_cond_signal (mythread_cond *cond) VC_MYTHREAD_NOEXCEPT {
   SetEvent(*cond);
   //WakeConditionVariable(cond);
 }
 
-static __attribute__((unused)) inline void mythread_cond_wait (mythread_cond *cond, mythread_mutex *mutex) {
+static __attribute__((unused)) inline void mythread_cond_wait (mythread_cond *cond, mythread_mutex *mutex) VC_MYTHREAD_NOEXCEPT {
   LeaveCriticalSection(mutex);
   WaitForSingleObject(*cond, INFINITE);
   EnterCriticalSection(mutex);
@@ -522,7 +528,7 @@ static __attribute__((unused)) inline void mythread_cond_wait (mythread_cond *co
   //(void)ret;
 }
 
-static __attribute__((unused)) inline int mythread_cond_timedwait (mythread_cond *cond, mythread_mutex *mutex, const mythread_condtime *condtime) {
+static __attribute__((unused)) inline int mythread_cond_timedwait (mythread_cond *cond, mythread_mutex *mutex, const mythread_condtime *condtime) VC_MYTHREAD_NOEXCEPT {
   LeaveCriticalSection(mutex);
   DWORD elapsed = GetTickCount()-condtime->start;
   DWORD timeout = (elapsed >= condtime->timeout ? 0 : condtime->timeout-elapsed);
@@ -535,7 +541,7 @@ static __attribute__((unused)) inline int mythread_cond_timedwait (mythread_cond
   //return !ret;
 }
 
-static __attribute__((unused)) inline void mythread_condtime_set (mythread_condtime *condtime, const mythread_cond *cond, uint32_t timeout) {
+static __attribute__((unused)) inline void mythread_condtime_set (mythread_condtime *condtime, const mythread_cond *cond, uint32_t timeout) VC_MYTHREAD_NOEXCEPT {
   (void)cond;
   condtime->start = GetTickCount();
   condtime->timeout = timeout;
@@ -547,23 +553,24 @@ static __attribute__((unused)) inline void mythread_condtime_set (mythread_condt
 // ////////////////////////////////////////////////////////////////////////// //
 // helper APIs
 // ////////////////////////////////////////////////////////////////////////// //
-
+#ifdef __cplusplus
 class MyThreadLocker {
 public:
   mythread_mutex *mutex;
 
-  MyThreadLocker (mythread_mutex *amutex) : mutex(amutex) { if (mutex) mythread_mutex_lock(mutex); }
-  ~MyThreadLocker () { if (mutex) { mythread_mutex_unlock(mutex); mutex = nullptr; } }
+  inline MyThreadLocker (mythread_mutex *amutex) noexcept : mutex(amutex) { if (mutex) mythread_mutex_lock(mutex); }
+  inline ~MyThreadLocker () noexcept { if (mutex) { mythread_mutex_unlock(mutex); mutex = nullptr; } }
 
   // you can one-time reset a lock
   // WARNING! there is no way to re-aquire the lock after a reset!
   // this is mainly so you can tail-call the function that aquires the lock itself
-  inline void resetLock () { if (mutex) { mythread_mutex_unlock(mutex); mutex = nullptr; } }
+  inline void resetLock () noexcept { if (mutex) { mythread_mutex_unlock(mutex); mutex = nullptr; } }
 
   // no copies!
   MyThreadLocker (const MyThreadLocker &) = delete;
   MyThreadLocker &operator = (const MyThreadLocker &) = delete;
 };
+#endif
 
 
 #endif

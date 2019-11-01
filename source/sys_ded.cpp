@@ -159,17 +159,17 @@ static void signal_handler (int s) {
   //  Exit with error message
 #ifdef __linux__
   switch (s) {
-    case SIGABRT: __Context::ErrToThrow = "Aborted"; break;
-    case SIGFPE: __Context::ErrToThrow = "Floating Point Exception"; break;
-    case SIGILL: __Context::ErrToThrow = "Illegal Instruction"; break;
-    case SIGSEGV: __Context::ErrToThrow = "Segmentation Violation"; break;
-    case SIGTERM: __Context::ErrToThrow = "Terminated"; break;
-    case SIGINT: __Context::ErrToThrow = "Interrupted by User"; break;
-    case SIGKILL: __Context::ErrToThrow = "Killed"; break;
-    case SIGQUIT: __Context::ErrToThrow = "Quited"; break;
-    default: __Context::ErrToThrow = "Terminated by signal";
+    case SIGABRT: VSigContextHack::ErrToThrow = "Aborted"; break;
+    case SIGFPE: VSigContextHack::ErrToThrow = "Floating Point Exception"; break;
+    case SIGILL: VSigContextHack::ErrToThrow = "Illegal Instruction"; break;
+    case SIGSEGV: VSigContextHack::ErrToThrow = "Segmentation Violation"; break;
+    case SIGTERM: VSigContextHack::ErrToThrow = "Terminated"; break;
+    case SIGINT: VSigContextHack::ErrToThrow = "Interrupted by User"; break;
+    case SIGKILL: VSigContextHack::ErrToThrow = "Killed"; break;
+    case SIGQUIT: VSigContextHack::ErrToThrow = "Quited"; break;
+    default: VSigContextHack::ErrToThrow = "Terminated by signal";
   }
-  longjmp(__Context::Env, 1);
+  longjmp(VSigContextHack::Env, 1);
 #else
   switch (s) {
     case SIGABRT: throw VavoomError("Abnormal termination triggered by abort call");

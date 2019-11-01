@@ -32,7 +32,7 @@
 // ////////////////////////////////////////////////////////////////////////// //
 class VVccLog : public VLogListener {
 public:
-  virtual void Serialise (const char* text, EName event) override {
+  virtual void Serialise (const char* text, EName event) noexcept override {
     devprintf("%s", text);
   }
 };
@@ -55,7 +55,7 @@ static VVccLog VccLog;
 //  devprintf
 //
 //==========================================================================
-__attribute__((format(printf, 1, 2))) int devprintf (const char *text, ...) {
+__attribute__((format(printf, 1, 2))) int devprintf (const char *text, ...) noexcept {
   if (!DebugMode) return 0;
 
   va_list argPtr;
@@ -73,7 +73,7 @@ __attribute__((format(printf, 1, 2))) int devprintf (const char *text, ...) {
 //  Malloc
 //
 //==========================================================================
-void* Malloc (size_t size) {
+void* Malloc (size_t size) noexcept {
   if (!size) return nullptr;
   void *ptr = Z_Calloc(size);
   return ptr;
@@ -85,7 +85,7 @@ void* Malloc (size_t size) {
 //  Free
 //
 //==========================================================================
-void Free (void* ptr) {
+void Free (void* ptr) noexcept {
   Z_Free(ptr);
 }
 

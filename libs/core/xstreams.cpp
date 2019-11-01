@@ -738,7 +738,7 @@ VBitStreamWriter::~VBitStreamWriter () {
 //  VBitStreamWriter::WriteBit
 //
 //==========================================================================
-void VBitStreamWriter::WriteBit (bool Bit) {
+void VBitStreamWriter::WriteBit (bool Bit) noexcept {
   if (bError) return;
   if (Pos+1 > Max) {
     if (!bAllowExpand) { bError = true; return; }
@@ -756,7 +756,7 @@ void VBitStreamWriter::WriteBit (bool Bit) {
 //  VBitStreamWriter::Expand
 //
 //==========================================================================
-bool VBitStreamWriter::Expand () {
+bool VBitStreamWriter::Expand () noexcept {
   if (!bAllowExpand) return false;
   auto oldSize = Data.length();
   Data.SetNum(oldSize+1024);
@@ -931,7 +931,7 @@ VBitStreamReader::~VBitStreamReader () {
 //  VBitStreamReader::SetData
 //
 //==========================================================================
-void VBitStreamReader::SetData (VBitStreamReader &Src, int Length) {
+void VBitStreamReader::SetData (VBitStreamReader &Src, int Length) noexcept {
   Data.SetNum((Length+7)>>3);
   Src.SerialiseBits(Data.Ptr(), Length);
   Num = Length;
@@ -1338,7 +1338,7 @@ bool VPartialStreamRO::IsError () const {
 //  VPartialStreamRO::checkValidityCond
 //
 //==========================================================================
-bool VPartialStreamRO::checkValidityCond (bool mustBeTrue) {
+bool VPartialStreamRO::checkValidityCond (bool mustBeTrue) noexcept {
   if (!lockptr) { bError = true; return false; }
   {
     MyThreadLocker locker(lockptr);

@@ -30,10 +30,12 @@
 
 class VDebugLog : public VLogListener {
 public:
-  virtual void Serialise (const char *Text, EName Event) override {
-    devprintf("%s: %s", VName::SafeString(Event), *VStr(Text).RemoveColors());
-  }
+  virtual void Serialise (const char *Text, EName Event) noexcept override;
 };
+
+void VDebugLog::Serialise (const char *Text, EName Event) noexcept {
+  devprintf("%s: %s", VName::SafeString(Event), *VStr(Text).RemoveColors());
+}
 
 
 static FILE *df = nullptr;

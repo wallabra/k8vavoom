@@ -46,7 +46,7 @@ if bit 7 is set, this is encoded number in the following format:
 
 
 // returns number of bytes required to decode full number, in range [1..5]
-int decodeVarIntLength (const vuint8 firstByte) {
+int decodeVarIntLength (const vuint8 firstByte) noexcept {
   if ((firstByte&0x80) == 0) {
     return 1;
   } else {
@@ -69,7 +69,7 @@ int decodeVarIntLength (const vuint8 firstByte) {
 
 
 // returns decoded number; can consume up to 5 bytes
-vuint32 decodeVarInt (const void *data) {
+vuint32 decodeVarInt (const void *data) noexcept {
   const vuint8 *buf = (const vuint8 *)data;
   if ((buf[0]&0x80) == 0) {
     return buf[0];
@@ -93,7 +93,7 @@ vuint32 decodeVarInt (const void *data) {
 
 
 // returns number of used bytes; can consume up to 5 bytes
-int encodeVarInt (void *data, vuint32 n) {
+int encodeVarInt (void *data, vuint32 n) noexcept {
   vuint8 *buf = (vuint8 *)data;
   if (n <= 0x1fffffff) {
     // positive
@@ -471,12 +471,17 @@ void VStream::vawritef (const char *text, va_list ap) {
   if (size >= (int)sizeof(buf)-1) {
     char *dynbuf = (char *)Z_Malloc(size+32);
     if (!dynbuf) { Serialise(errorText, (int)strlen(errorText)); return; }
-    va_copy(apcopy, ap);
-    size = vsnprintf(dynbuf, size+32, text, apcopy);
-    va_end(apcopy);
-    if (size < 0) { Serialise(errorText, (int)strlen(errorText)); return; }
-    Serialise(dynbuf, size);
-    Z_Free(dynbuf);
+    try {
+      va_copy(apcopy, ap);
+      size = vsnprintf(dynbuf, size+32, text, apcopy);
+      va_end(apcopy);
+      if (size < 0) { Serialise(errorText, (int)strlen(errorText)); return; }
+      Serialise(dynbuf, size);
+      Z_Free(dynbuf);
+    } catch (...) {
+      Z_Free(dynbuf);
+      throw;
+    }
   } else {
     Serialise(buf, size);
   }

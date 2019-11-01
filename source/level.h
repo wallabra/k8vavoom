@@ -128,7 +128,7 @@ public:
   VLevelInfo *Level; // level info object
 
 public:
-  VLevelScriptThinker () : destroyed(false), XLevel(nullptr), Level(nullptr) {}
+  inline VLevelScriptThinker () : destroyed(false), XLevel(nullptr), Level(nullptr) {}
   virtual ~VLevelScriptThinker ();
 
   inline void DestroyThinker () { Destroy(); }

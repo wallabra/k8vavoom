@@ -51,14 +51,14 @@ enum cons_state_t {
 
 class FConsoleDevice : public FOutputDevice {
 public:
-  FConsoleDevice ();
-  virtual void Serialise (const char *V, EName Event) override;
+  FConsoleDevice () noexcept;
+  virtual void Serialise (const char *V, EName Event) noexcept override;
 };
 
 
 class FConsoleLog : public VLogListener {
 public:
-  virtual void Serialise (const char *V, EName Event) override;
+  virtual void Serialise (const char *V, EName Event) noexcept override;
 };
 
 
@@ -66,7 +66,7 @@ static mythread_mutex conLogLock;
 FConsoleDevice Console;
 FOutputDevice *GCon = &Console;
 
-FConsoleDevice::FConsoleDevice () {
+FConsoleDevice::FConsoleDevice () noexcept {
   mythread_mutex_init(&conLogLock);
 }
 
@@ -93,34 +93,34 @@ struct HistoryLine {
   char *str;
   int bufsize; // including trailing zero; NOT line length!
 
-  HistoryLine () : str(nullptr), bufsize(0) {}
-  ~HistoryLine () { Z_Free(str); str = nullptr; bufsize = 0; }
+  HistoryLine () noexcept : str(nullptr), bufsize(0) {}
+  ~HistoryLine () noexcept { Z_Free(str); str = nullptr; bufsize = 0; }
 
   HistoryLine &operator = (const HistoryLine &src) = delete;
 
-  inline void swap (HistoryLine &src) {
+  inline void swap (HistoryLine &src) noexcept {
     if (&src == this) return;
     { char *tmp = str; str = src.str; src.str = tmp; }
     { int tmp = bufsize; bufsize = src.bufsize; src.bufsize = tmp; }
   }
 
-  inline const char *getCStr () const { return (str ? str : ""); }
+  inline const char *getCStr () const noexcept { return (str ? str : ""); }
 
-  inline bool strEqu (const char *s, bool doStrip) const {
+  inline bool strEqu (const char *s, bool doStrip) const noexcept {
     if (!str) return false; // not initialized
     if (!s || !s[0]) return (str[0] == 0);
     if (doStrip) return strEqu(VStr(s), true);
     return (VStr::Cmp(str, s) == 0);
   }
 
-  inline bool strEqu (VStr s, bool doStrip) const {
+  inline bool strEqu (VStr s, bool doStrip) const noexcept {
     if (!str) return false; // not initialized
     if (s.isEmpty()) return (str[0] == 0);
     if (!doStrip) return s.strEqu(str);
     return s.xstrip().strEqu(VStr(str).xstrip());
   }
 
-  inline void putStr (const char *s) {
+  inline void putStr (const char *s) noexcept {
     if (!s) s = "";
     int slen = (int)strlen(s)+1;
     int newsz = (slen|0xff)+1;
@@ -563,7 +563,7 @@ COMMAND(Cls) {
 //  Ads a line to console strings
 //
 //==========================================================================
-static void AddLine (const char *Data) {
+static void AddLine (const char *Data) noexcept {
   if (!Data) Data = "";
   //MyThreadLocker lock(&conLogLock);
   if (num_lines >= MAX_LINES) {
@@ -600,7 +600,7 @@ static VStr cpLastColor;
 static bool cpLogFileNeedName = true;
 
 
-static void cpAppendChar (char ch) {
+static void cpAppendChar (char ch) noexcept {
   if (ch == 0) ch = ' ';
   int nlen = cpbuf.len+1;
   if (nlen+1 > cpbuf.alloced) {
@@ -613,12 +613,12 @@ static void cpAppendChar (char ch) {
 }
 
 
-static void cpPrintCurrColor () {
+static void cpPrintCurrColor () noexcept {
   for (const char *s = cpLastColor.getCStr(); *s; ++s) cpAppendChar(*s);
 }
 
 
-static void cpFlushCurrent (bool asNewline) {
+static void cpFlushCurrent (bool asNewline) noexcept {
   AddLine(cpbuf.str);
   cpbuf.len = 0;
   if (cpbuf.str) cpbuf.str[0] = 0;
@@ -632,7 +632,7 @@ static void cpFlushCurrent (bool asNewline) {
 
 
 // *ch should be TEXT_COLOR_ESCAPE
-static const char *cpProcessColorEscape (const char *ch) {
+static const char *cpProcessColorEscape (const char *ch) noexcept {
   vassert(*ch == TEXT_COLOR_ESCAPE);
   cpLastColor.clear();
   ++ch; // skip TEXT_COLOR_ESCAPE
@@ -656,7 +656,7 @@ static const char *cpProcessColorEscape (const char *ch) {
 
 
 // *ch should be TEXT_COLOR_ESCAPE
-static const char *cpSkipColorEscape (const char *ch) {
+static const char *cpSkipColorEscape (const char *ch) noexcept {
   vassert(*ch == TEXT_COLOR_ESCAPE);
   ++ch; // skip TEXT_COLOR_ESCAPE
   if (!ch[0]) return ch;
@@ -668,7 +668,7 @@ static const char *cpSkipColorEscape (const char *ch) {
 }
 
 
-static void DoPrint (const char *buf) {
+static void DoPrint (const char *buf) noexcept {
   const char *ch = buf;
   while (*ch) {
     if (*ch == '\n') {
@@ -746,7 +746,7 @@ static void DoPrint (const char *buf) {
 //  tty output is done by standard logger
 //
 //==========================================================================
-static void ConSerialise (const char *str, EName Event, bool fromGLog) {
+static void ConSerialise (const char *str, EName Event, bool fromGLog) noexcept {
   //devprintf("%s: %s\n", VName::SafeString(Event), *rc);
   if (Event == NAME_Dev && !developer) return;
   if (!fromGLog) { GLog.WriteLine(Event, "%s", str); return; }
@@ -797,7 +797,7 @@ static void ConSerialise (const char *str, EName Event, bool fromGLog) {
 //  FConsoleDevice::Serialise
 //
 //==========================================================================
-void FConsoleDevice::Serialise (const char *V, EName Event) {
+void FConsoleDevice::Serialise (const char *V, EName Event) noexcept {
   ConSerialise(V, Event, false);
 }
 
@@ -807,6 +807,6 @@ void FConsoleDevice::Serialise (const char *V, EName Event) {
 //  FConsoleLog::Serialise
 //
 //==========================================================================
-void FConsoleLog::Serialise (const char *Text, EName Event) {
+void FConsoleLog::Serialise (const char *Text, EName Event) noexcept {
   ConSerialise(Text, Event, true);
 }

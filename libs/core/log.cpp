@@ -55,7 +55,7 @@ volatile bool VLog::logLockInited = false;
 //  InitLogLock
 //
 //==========================================================================
-static inline void InitLogLock () {
+static inline void InitLogLock () noexcept {
   //WARNING! THIS IS NOT THREAD-SAFE!
   if (!VLog::logLockInited) {
     VLog::logLockInited = true;
@@ -69,7 +69,7 @@ static inline void InitLogLock () {
 //  VLog::VLog
 //
 //==========================================================================
-VLog::VLog ()
+VLog::VLog () noexcept
   : logbuf(nullptr)
   , logbufsize(0)
   , inWrite(false)
@@ -86,7 +86,7 @@ VLog::VLog ()
 //  VLog::AddListener
 //
 //==========================================================================
-void VLog::AddListener (VLogListener *lst) {
+void VLog::AddListener (VLogListener *lst) noexcept {
   if (!lst) return;
   InitLogLock();
   MyThreadLocker lock(&logLock);
@@ -110,7 +110,7 @@ void VLog::AddListener (VLogListener *lst) {
 //  VLog::RemoveListener
 //
 //==========================================================================
-void VLog::RemoveListener (VLogListener *lst) {
+void VLog::RemoveListener (VLogListener *lst) noexcept {
   if (!lst || !Listeners) return;
   InitLogLock();
   MyThreadLocker lock(&logLock);
@@ -136,7 +136,7 @@ void VLog::RemoveListener (VLogListener *lst) {
 //  VLog::doWriteStr
 //
 //==========================================================================
-void VLog::doWriteStr (EName Type, const char *s, bool addEOL) {
+void VLog::doWriteStr (EName Type, const char *s, bool addEOL) noexcept {
   static const char *eolstr = "\n";
   if (!s || !s[0]) return;
 
@@ -160,7 +160,7 @@ void VLog::doWriteStr (EName Type, const char *s, bool addEOL) {
 //  VLog::doWrite
 //
 //==========================================================================
-void VLog::doWrite (EName Type, const char *fmt, va_list ap, bool addEOL) {
+void VLog::doWrite (EName Type, const char *fmt, va_list ap, bool addEOL) noexcept {
   MyThreadLocker lock(&logLock);
   if (!Listeners) return;
 
@@ -233,7 +233,7 @@ void VLog::doWrite (EName Type, const char *fmt, va_list ap, bool addEOL) {
 //  VLog::Logf
 //
 //==========================================================================
-__attribute__((format(printf, 3, 4))) void VLog::Logf (EName Type, const char *fmt, ...) {
+__attribute__((format(printf, 3, 4))) void VLog::Logf (EName Type, const char *fmt, ...) noexcept {
   va_list ap;
   va_start(ap, fmt);
   doWrite(Type, fmt, ap, true);
@@ -246,7 +246,7 @@ __attribute__((format(printf, 3, 4))) void VLog::Logf (EName Type, const char *f
 //  VLog::Logf
 //
 //==========================================================================
-__attribute__((format(printf, 2, 3))) void VLog::Logf (const char *fmt, ...) {
+__attribute__((format(printf, 2, 3))) void VLog::Logf (const char *fmt, ...) noexcept {
   va_list ap;
   va_start(ap, fmt);
   doWrite(NAME_Log, fmt, ap, true);
@@ -259,7 +259,7 @@ __attribute__((format(printf, 2, 3))) void VLog::Logf (const char *fmt, ...) {
 //  VLog::Log
 //
 //==========================================================================
-void VLog::Log (EName Type, const char *s) {
+void VLog::Log (EName Type, const char *s) noexcept {
   doWriteStr(Type, s, true);
 }
 
@@ -269,7 +269,7 @@ void VLog::Log (EName Type, const char *s) {
 //  VLog::Log
 //
 //==========================================================================
-void VLog::Log (const char *s) {
+void VLog::Log (const char *s) noexcept {
   doWriteStr(NAME_Log, s, true);
 }
 
@@ -279,7 +279,7 @@ void VLog::Log (const char *s) {
 //  VLog::Write
 //
 //==========================================================================
-__attribute__((format(printf, 3, 4))) void VLog::Write (EName Type, const char *fmt, ...) {
+__attribute__((format(printf, 3, 4))) void VLog::Write (EName Type, const char *fmt, ...) noexcept {
   va_list ap;
   if (!fmt || !fmt[0]) return;
   va_start(ap, fmt);
@@ -293,7 +293,7 @@ __attribute__((format(printf, 3, 4))) void VLog::Write (EName Type, const char *
 //  VLog::WriteLine
 //
 //==========================================================================
-__attribute__((format(printf, 3, 4))) void VLog::WriteLine (EName Type, const char *fmt, ...) {
+__attribute__((format(printf, 3, 4))) void VLog::WriteLine (EName Type, const char *fmt, ...) noexcept {
   va_list ap;
   va_start(ap, fmt);
   doWrite(Type, fmt, ap, true);
@@ -306,7 +306,7 @@ __attribute__((format(printf, 3, 4))) void VLog::WriteLine (EName Type, const ch
 //  VLog::Write
 //
 //==========================================================================
-__attribute__((format(printf, 2, 3))) void VLog::Write (const char *fmt, ...) {
+__attribute__((format(printf, 2, 3))) void VLog::Write (const char *fmt, ...) noexcept {
   va_list ap;
   if (!fmt || !fmt[0]) return;
   va_start(ap, fmt);
@@ -320,7 +320,7 @@ __attribute__((format(printf, 2, 3))) void VLog::Write (const char *fmt, ...) {
 //  VLog::WriteLine
 //
 //==========================================================================
-__attribute__((format(printf, 2, 3))) void VLog::WriteLine (const char *fmt, ...) {
+__attribute__((format(printf, 2, 3))) void VLog::WriteLine (const char *fmt, ...) noexcept {
   va_list ap;
   va_start(ap, fmt);
   doWrite(NAME_Log, fmt, ap, true);
@@ -333,7 +333,7 @@ __attribute__((format(printf, 2, 3))) void VLog::WriteLine (const char *fmt, ...
 //  VLog::DWrite
 //
 //==========================================================================
-__attribute__((format(printf, 2, 3))) void VLog::DWrite (const char *fmt, ...) {
+__attribute__((format(printf, 2, 3))) void VLog::DWrite (const char *fmt, ...) noexcept {
   va_list ap;
   if (!fmt || !fmt[0]) return;
   va_start(ap, fmt);
@@ -347,7 +347,7 @@ __attribute__((format(printf, 2, 3))) void VLog::DWrite (const char *fmt, ...) {
 //  VLog::DWriteLine
 //
 //==========================================================================
-__attribute__((format(printf, 2, 3))) void VLog::DWriteLine (const char *fmt, ...) {
+__attribute__((format(printf, 2, 3))) void VLog::DWriteLine (const char *fmt, ...) noexcept {
   va_list ap;
   va_start(ap, fmt);
   doWrite(NAME_Dev, fmt, ap, true);
@@ -363,19 +363,19 @@ private:
   EName lastEvent;
 
 public:
-  VConLogger () : lastWasNL(true), lastEvent(NAME_None) {
+  VConLogger () noexcept : lastWasNL(true), lastEvent(NAME_None) {
     VName::StaticInit();
     GLog.AddListener(this);
   }
 
-  FILE *outfile () const {
+  FILE *outfile () const noexcept {
     if (!GLogTTYLog) return nullptr;
     if (lastEvent == NAME_Error && GLogErrorToStderr) return stderr;
     if (lastEvent == NAME_Warning && GLogWarningToStderr) return stderr;
     return stdout;
   }
 
-  static void printStr (const char *s, size_t len, FILE *fo) {
+  static void printStr (const char *s, size_t len, FILE *fo) noexcept {
     if (!s || !fo) return;
     while (len) {
       const char *esc = s;
@@ -414,16 +414,16 @@ public:
     }
   }
 
-  static void printStr (const char *s, FILE *fo) {
+  static void printStr (const char *s, FILE *fo) noexcept {
     if (!s || !s[0]) return;
     printStr(s, strlen(s), fo);
   }
 
-  static void xprintStr (const char *s, FILE *fo) {
+  static void xprintStr (const char *s, FILE *fo) noexcept {
     if (fo && s && s[0]) fwrite(s, strlen(s), 1, fo);
   }
 
-  void printEvent (EName event) {
+  void printEvent (EName event) noexcept {
     if (event == NAME_None) event = NAME_Log;
     lastEvent = event;
     FILE *fo = outfile();
@@ -452,7 +452,7 @@ public:
     }
   }
 
-  virtual void Serialise (const char *Text, EName Event) override {
+  virtual void Serialise (const char *Text, EName Event) noexcept override {
     if (Event == NAME_None) Event = NAME_Log;
     if (!GLogTTYLog) { lastEvent = NAME_None; return; }
     //printf("===(%s)\n%s\n===\n", *VName(Event), Text);

@@ -37,16 +37,16 @@
 //  FOutputDevice implementation
 //
 //==========================================================================
-FOutputDevice::~FOutputDevice () {}
-void FOutputDevice:: Log (const char *S) { Serialise(S, NAME_Log); }
-void FOutputDevice::Log (EName Type, const char *S) { Serialise(S, Type); }
-void FOutputDevice::Log (VStr S) { Serialise(*S, NAME_Log); }
-void FOutputDevice::Log (EName Type, VStr S) { Serialise(*S, Type); }
+FOutputDevice::~FOutputDevice () noexcept {}
+void FOutputDevice:: Log (const char *S) noexcept { Serialise(S, NAME_Log); }
+void FOutputDevice::Log (EName Type, const char *S) noexcept { Serialise(S, Type); }
+void FOutputDevice::Log (VStr S) noexcept { Serialise(*S, NAME_Log); }
+void FOutputDevice::Log (EName Type, VStr S) noexcept { Serialise(*S, Type); }
 
 
 static char string[32768];
 
-__attribute__((format(printf, 2, 3))) void FOutputDevice::Logf (const char *Fmt, ...) {
+__attribute__((format(printf, 2, 3))) void FOutputDevice::Logf (const char *Fmt, ...) noexcept {
   va_list argptr;
 
   va_start(argptr, Fmt);
@@ -56,7 +56,7 @@ __attribute__((format(printf, 2, 3))) void FOutputDevice::Logf (const char *Fmt,
   Serialise(string, NAME_Log);
 }
 
-__attribute__((format(printf, 3, 4))) void FOutputDevice::Logf (EName Type, const char *Fmt, ...) {
+__attribute__((format(printf, 3, 4))) void FOutputDevice::Logf (EName Type, const char *Fmt, ...) noexcept {
   va_list argptr;
 
   va_start(argptr, Fmt);
@@ -72,7 +72,7 @@ __attribute__((format(printf, 3, 4))) void FOutputDevice::Logf (EName Type, cons
 //  superatoi
 //
 //==========================================================================
-int superatoi (const char *s) {
+int superatoi (const char *s) noexcept {
   int n = 0, r = 10, x, mul = 1;
   const char *c=s;
 
@@ -304,7 +304,7 @@ vuint32 M_LookupColorName (const char *Name) {
 //  tryHex
 //
 //==========================================================================
-static int tryHexByte (const char *s) {
+static int tryHexByte (const char *s) noexcept {
   if (!s || !s[0]) return -1;
   int res = 0;
   while (*s) {

@@ -35,15 +35,15 @@
 class FOutputDevice : public VLogListener {
 public:
   // FOutputDevice interface
-  virtual ~FOutputDevice();
+  virtual ~FOutputDevice () noexcept;
 
   // simple text printing
-  void Log (const char *S);
-  void Log (EName Type, const char *S);
-  void Log (VStr S);
-  void Log (EName Type, VStr S);
-  void Logf (const char *Fmt, ...) __attribute__((format(printf, 2, 3)));
-  void Logf (EName Type, const char *Fmt, ...) __attribute__((format(printf, 3, 4)));
+  void Log (const char *S) noexcept;
+  void Log (EName Type, const char *S) noexcept;
+  void Log (VStr S) noexcept;
+  void Log (EName Type, VStr S) noexcept;
+  void Logf (const char *Fmt, ...) noexcept __attribute__((format(printf, 2, 3)));
+  void Logf (EName Type, const char *Fmt, ...) noexcept __attribute__((format(printf, 3, 4)));
 };
 
 // error logs
@@ -51,7 +51,7 @@ public:
 //extern FOutputDevice *GLogHostError;
 
 
-__attribute__((warn_unused_result)) int superatoi (const char *s);
+__attribute__((warn_unused_result)) int superatoi (const char *s) noexcept;
 
 //__attribute__((warn_unused_result)) int ParseHex (const char *Str);
 __attribute__((warn_unused_result)) vuint32 M_LookupColorName (const char *Name); // returns 0 if not found (otherwise high bit is set)

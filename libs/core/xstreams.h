@@ -138,6 +138,10 @@ public:
   virtual bool Close () override;
 
   inline void BeginRead () { bLoading = true; pos = 0; curr = first; }
+  inline void BeginWrite () { bLoading = true; pos = 0; curr = first; }
+
+  inline void SwitchToReader () { bLoading = true; }
+  inline void SwitchToWriter () { bLoading = false; }
 
   void CopyTo (VStream *strm);
 
@@ -161,9 +165,9 @@ protected:
   bool bAllowExpand;
 
 protected:
-  bool Expand ();
+  bool Expand () noexcept;
 
-  inline bool ReadBitInternal () {
+  inline bool ReadBitInternal () noexcept {
     if (Pos >= Data.length()*8) {
       bError = true;
       return false;
@@ -181,15 +185,15 @@ public:
   virtual void SerialiseBits (void *Data, int Length) override;
   virtual void SerialiseInt (vuint32 &Value/*, vuint32 Max*/) override;
   void WriteInt (vuint32/*, vuint32*/);
-  inline vuint8 *GetData () { return Data.Ptr(); }
-  inline int GetNumBits () const { return Pos; }
-  inline int GetNumBytes () const { return (Pos+7)>>3; }
+  inline vuint8 *GetData () noexcept { return Data.Ptr(); }
+  inline int GetNumBits () const noexcept { return Pos; }
+  inline int GetNumBytes () const noexcept { return (Pos+7)>>3; }
 
-  inline void Clear () { bError = false; Pos = 0; }
+  inline void Clear () noexcept { bError = false; Pos = 0; }
 
-  inline bool IsExpanded () const { return (Pos > Max); }
+  inline bool IsExpanded () const noexcept { return (Pos > Max); }
 
-  void WriteBit (bool Bit);
+  void WriteBit (bool Bit) noexcept;
   /*
   inline void WriteBit (bool Bit) {
     if (bError) return;
@@ -204,7 +208,7 @@ public:
   }
   */
 
-  static inline int CalcIntBits (vuint32 Val) {
+  static inline int CalcIntBits (vuint32 Val) noexcept {
     int res = 1; // sign bit
     if (Val&0x80000000u) Val ^= 0xffffffffu;
     //vuint32 mask = 0x0f;
@@ -217,8 +221,8 @@ public:
     return res+1; // and stop bit
   }
 
-  inline int GetPos () const { return Pos; }
-  inline int GetNum () const { return Max; }
+  inline int GetPos () const noexcept { return Pos; }
+  inline int GetNum () const noexcept { return Max; }
 };
 
 
@@ -232,18 +236,18 @@ public:
   VBitStreamReader (vuint8* = nullptr, vint32 = 0);
   virtual ~VBitStreamReader () override;
 
-  void SetData (VBitStreamReader&, int);
+  void SetData (VBitStreamReader&, int) noexcept;
   virtual void Serialise (void *Data, int Length) override;
   virtual void SerialiseBits (void *Data, int Length) override;
   virtual void SerialiseInt (vuint32 &Value/*, vuint32 Max*/) override;
   vuint32 ReadInt (/*vuint32*/);
   virtual bool AtEnd () override;
-  inline vuint8 *GetData () { return Data.Ptr(); }
-  inline int GetNumBits () const { return Num; }
-  inline int GetNumBytes () const { return (Num+7)>>3; }
-  inline int GetPosBits () const { return Pos; }
+  inline vuint8 *GetData () noexcept { return Data.Ptr(); }
+  inline int GetNumBits () const noexcept { return Num; }
+  inline int GetNumBytes () const noexcept { return (Num+7)>>3; }
+  inline int GetPosBits () const noexcept { return Pos; }
 
-  inline bool ReadBit () {
+  inline bool ReadBit () noexcept {
     if (Pos+1 > Num) {
       bError = true;
       return false;
@@ -253,10 +257,10 @@ public:
     return Ret;
   }
 
-  static inline int CalcIntBits (vuint32 n) { return VBitStreamWriter::CalcIntBits(n); }
+  static inline int CalcIntBits (vuint32 n) noexcept { return VBitStreamWriter::CalcIntBits(n); }
 
-  inline int GetPos () const { return Pos; }
-  inline int GetNum () const { return Num; }
+  inline int GetPos () const noexcept { return Pos; }
+  inline int GetNum () const noexcept { return Num; }
 };
 
 
@@ -287,13 +291,13 @@ public:
 // owns afl
 class VStdFileStreamRead : public VStdFileStreamBase {
 public:
-  VStdFileStreamRead (FILE *afl, VStr aname=VStr()) : VStdFileStreamBase(afl, aname, false) {}
+  inline VStdFileStreamRead (FILE *afl, VStr aname=VStr()) : VStdFileStreamBase(afl, aname, false) {}
 };
 
 // owns afl
 class VStdFileStreamWrite : public VStdFileStreamBase {
 public:
-  VStdFileStreamWrite (FILE *afl, VStr aname=VStr()) : VStdFileStreamBase(afl, aname, true) {}
+  inline VStdFileStreamWrite (FILE *afl, VStr aname=VStr()) : VStdFileStreamBase(afl, aname, true) {}
 };
 
 
@@ -313,8 +317,8 @@ private:
   VStr myname;
 
 private:
-  bool checkValidityCond (bool mustBeTrue);
-  inline bool checkValidity () { return checkValidityCond(true); }
+  bool checkValidityCond (bool mustBeTrue) noexcept;
+  inline bool checkValidity () noexcept { return checkValidityCond(true); }
 
 public:
   // doesn't own passed stream

@@ -34,7 +34,7 @@
 //==========================================================================
 class VException : VInterface {
 public:
-  virtual const char *What () const = 0;
+  virtual const char *What () const noexcept = 0;
 };
 
 
@@ -44,14 +44,14 @@ class VavoomError : public VException {
 public:
   char message[MAX_ERROR_TEXT_SIZE];
 
-  explicit VavoomError (const char *text);
-  virtual const char *What () const override;
+  explicit VavoomError (const char *text) noexcept;
+  virtual const char *What () const noexcept override;
 };
 
 
 class RecoverableError : public VavoomError {
 public:
-  explicit RecoverableError (const char *text) : VavoomError(text) {}
+  explicit inline RecoverableError (const char *text) noexcept : VavoomError(text) {}
 };
 
 
@@ -77,10 +77,10 @@ public:
 #ifdef USE_GUARD_SIGNAL_CONTEXT
 #include <setjmp.h>
 // stack control
-class __Context {
+class VSigContextHack {
 public:
-  __Context () { memcpy(&Last, &Env, sizeof(jmp_buf)); }
-  ~__Context () { memcpy(&Env, &Last, sizeof(jmp_buf)); }
+  inline VSigContextHack () noexcept { memcpy(&Last, &Env, sizeof(jmp_buf)); }
+  inline ~VSigContextHack () noexcept { memcpy(&Env, &Last, sizeof(jmp_buf)); }
   static jmp_buf Env;
   static const char *ErrToThrow;
 
@@ -90,20 +90,20 @@ protected:
 #endif
 
 
-void Host_CoreDump (const char *fmt, ...) __attribute__((format(printf, 1, 2)));
-void Sys_Error (const char *, ...) __attribute__((noreturn, format(printf, 1, 2)));
+void Host_CoreDump (const char *fmt, ...) noexcept __attribute__((format(printf, 1, 2)));
+void Sys_Error (const char *, ...) noexcept __attribute__((noreturn, format(printf, 1, 2)));
 
 // call `abort()` or `exit()` there to stop standard processing
-extern void (*SysErrorCB) (const char *msg);
+extern void (*SysErrorCB) (const char *msg) noexcept;
 
 //const char *SkipPathPartCStr (const char *s);
-constexpr inline __attribute__((pure)) const char *SkipPathPartCStr (const char *s) {
+constexpr inline __attribute__((pure)) const char *SkipPathPartCStr (const char *s) noexcept {
   const char *lastSlash = nullptr;
   for (const char *t = s; *t; ++t) {
     if (*t == '/') lastSlash = t+1;
-#ifdef _WIN32
+    #ifdef _WIN32
     if (*t == '\\') lastSlash = t+1;
-#endif
+    #endif
   }
   return (lastSlash ? lastSlash : s);
 }

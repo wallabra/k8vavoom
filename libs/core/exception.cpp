@@ -31,14 +31,14 @@
 
 
 #ifdef USE_GUARD_SIGNAL_CONTEXT
-jmp_buf __Context::Env;
-const char *__Context::ErrToThrow;
+jmp_buf VSigContextHack::Env;
+const char *VSigContextHack::ErrToThrow;
 #endif
 
 static char *host_error_string;
 
 // call `abort()` or `exit()` there to stop standard processing
-void (*SysErrorCB) (const char *msg) = nullptr;
+void (*SysErrorCB) (const char *msg) noexcept = nullptr;
 
 
 //==========================================================================
@@ -46,7 +46,7 @@ void (*SysErrorCB) (const char *msg) = nullptr;
 //  VavoomError::VavoomError
 //
 //==========================================================================
-VavoomError::VavoomError (const char *text) {
+VavoomError::VavoomError (const char *text) noexcept {
   VStr::NCpy(message, text, MAX_ERROR_TEXT_SIZE-1);
   message[MAX_ERROR_TEXT_SIZE-1] = 0;
 }
@@ -57,7 +57,7 @@ VavoomError::VavoomError (const char *text) {
 //  VavoomError::What
 //
 //==========================================================================
-const char *VavoomError::What () const {
+const char *VavoomError::What () const noexcept {
   return message;
 }
 
@@ -67,7 +67,7 @@ const char *VavoomError::What () const {
 //  Host_CoreDump
 //
 //==========================================================================
-void Host_CoreDump (const char *fmt, ...) {
+void Host_CoreDump (const char *fmt, ...) noexcept {
   bool first = false;
 
   if (!host_error_string) {
@@ -100,7 +100,7 @@ void Host_CoreDump (const char *fmt, ...) {
 //  Host_GetCoreDump
 //
 //==========================================================================
-const char *Host_GetCoreDump () {
+const char *Host_GetCoreDump () noexcept {
   return (host_error_string ? host_error_string : "");
 }
 
@@ -112,7 +112,7 @@ const char *Host_GetCoreDump () {
 //  Exits game and displays error message.
 //
 //==========================================================================
-void Sys_Error (const char *error, ...) {
+void Sys_Error (const char *error, ...) noexcept {
   va_list argptr;
   static char buf[16384]; //WARNING! not thread-safe!
 

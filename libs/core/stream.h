@@ -37,20 +37,20 @@ class VFieldType;
 // variable-length integer codec
 
 // returns number of bytes required to decode full number, in range [1..5]
-int decodeVarIntLength (const vuint8 firstByte);
+int decodeVarIntLength (const vuint8 firstByte) noexcept;
 
 // returns decoded number; can consume up to 5 bytes
-vuint32 decodeVarInt (const void *data);
+vuint32 decodeVarInt (const void *data) noexcept;
 
 // returns number of used bytes; can consume up to 5 bytes
-int encodeVarInt (void *data, vuint32 n);
+int encodeVarInt (void *data, vuint32 n) noexcept;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 // VObject knows how to serialize itself, others should inherit from this
 class VSerialisable {
 public:
-  VSerialisable () {}
+  inline VSerialisable () {}
   virtual ~VSerialisable ();
 
   virtual void Serialise (VStream &) = 0;
@@ -63,7 +63,7 @@ public:
 // object i/o is using mappers internally, so let's make it explicit
 class VStreamIOMapper {
 public:
-  VStreamIOMapper () {}
+  inline VStreamIOMapper () {}
   virtual ~VStreamIOMapper ();
 
   // interface functions for objects and classes streams
@@ -90,11 +90,11 @@ public:
   vuint16 version; // stream version; usually purely informational
 
 public:
-  VStream () : bLoading(true), bError(false), Mapper(nullptr), version(0) {}
+  inline VStream () : bLoading(true), bError(false), Mapper(nullptr), version(0) {}
   virtual ~VStream ();
 
   // status requests
-  inline bool IsLoading () const { return bLoading;}
+  inline bool IsLoading () const { return bLoading; }
   inline bool IsSaving () const { return !bLoading; }
   //inline bool IsError () const { return bError; }
   virtual bool IsError () const;
