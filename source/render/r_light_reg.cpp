@@ -49,7 +49,7 @@ static VCvarI r_lmap_filtering("r_lmap_filtering", "1", "Static lightmap filteri
 static VCvarB r_lmap_lowfilter("r_lmap_lowfilter", false, "Filter lightmaps without extra samples?", CVAR_Archive);
 static VCvarB r_static_add("r_static_add", true, "Are static lights additive in regular renderer?", CVAR_Archive);
 static VCvarF r_specular("r_specular", "0.1", "Specular light in regular renderer.", CVAR_Archive);
-static VCvarI r_lmap_atlas_limit("r_lmap_atlas_limit", "20", "Nuke lightmap cache if it reached this number of atlases.", CVAR_Archive);
+static VCvarI r_lmap_atlas_limit("r_lmap_atlas_limit", "14", "Nuke lightmap cache if it reached this number of atlases.", CVAR_Archive);
 
 VCvarB r_lmap_bsp_trace("r_lmap_bsp_trace", false, "Trace lightmaps with BSP tree instead of blockmap?", CVAR_Archive);
 
