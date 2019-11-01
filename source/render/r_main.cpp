@@ -1434,6 +1434,9 @@ void VRenderLevelShared::SetupCameraFrame (VEntity *Camera, VTexture *Tex, int F
 //
 //==========================================================================
 void VRenderLevelShared::MarkLeaves () {
+  //k8: dunno, this is not the best place to do it, but...
+  r_viewleaf = Level->PointInSubsector(vieworg);
+
   // we need this for debug automap view
   if (!Level->HasPVS()) {
     (void)IncVisFrameCount();
@@ -1549,10 +1552,10 @@ void VRenderLevelShared::MarkLeaves () {
 //  VRenderLevelShared::UpdateFakeSectors
 //
 //==========================================================================
-void VRenderLevelShared::UpdateFakeSectors () {
+void VRenderLevelShared::UpdateFakeSectors (subsector_t *viewleaf) {
   //TODO: camera renderer can change view origin, and this can change fake floors
   subsector_t *ovl = r_viewleaf;
-  r_viewleaf = Level->PointInSubsector(vieworg);
+  r_viewleaf = (viewleaf ? viewleaf : Level->PointInSubsector(vieworg));
   // update fake sectors
   const vint32 *fksip = Level->FakeFCSectors.ptr();
   for (int i = Level->FakeFCSectors.length(); i--; ++fksip) {
@@ -1612,7 +1615,13 @@ void VRenderLevelShared::RenderPlayerView () {
 
   if (dbg_autoclear_automap) AM_ClearAutomap();
 
-  if (/*!MirrorLevel &&*/ !r_disable_world_update) UpdateFakeSectors();
+  //FIXME: this is wrong, because fake sectors need to be updated for each camera separately
+  r_viewleaf = Level->PointInSubsector(vieworg);
+  // remember it
+  const TVec lastorg = vieworg;
+  subsector_t *playerViewLeaf = r_viewleaf;
+
+  if (/*!MirrorLevel &&*/ !r_disable_world_update) UpdateFakeSectors(playerViewLeaf);
 
   lastDLightView = TVec(-1e9, -1e9, -1e9);
   lastDLightViewSub = nullptr;
@@ -1644,7 +1653,7 @@ void VRenderLevelShared::RenderPlayerView () {
 
   // recalc in case recursive scene renderer moved it
   // we need it for psprite rendering
-  r_viewleaf = Level->PointInSubsector(vieworg);
+  r_viewleaf = (vieworg == lastorg ? playerViewLeaf : Level->PointInSubsector(vieworg));
 
   // draw the psprites on top of everything
   if (/*fov <= 90.0f &&*/ cl->MO == cl->Camera && GGameInfo->NetMode != NM_TitleMap) DrawPlayerSprites();

@@ -91,10 +91,10 @@ static inline int GetMaxPortalDepth () {
 //
 //==========================================================================
 void VRenderLevelShared::PrepareWorldRender (const refdef_t *rd, const VViewClipper *Range) {
-  r_viewleaf = Level->PointInSubsector(vieworg);
   ClearQueues();
-  MarkLeaves();
+  MarkLeaves(); // this sets `r_viewleaf`
   // this is done in `VRenderLevelShared::RenderPlayerView()`
+  //FIXME: but should be done here if `r_viewleaf` was changed
   //if (!MirrorLevel && !r_disable_world_update) UpdateFakeSectors();
 }
 
