@@ -49,6 +49,7 @@ enum { CDSLEN = cestlen(LMAP_CACHE_DATA_SIGNATURE) };
 // ////////////////////////////////////////////////////////////////////////// //
 VCvarB r_precalc_static_lights("r_precalc_static_lights", true, "Precalculate static lights?", CVAR_Archive);
 int r_precalc_static_lights_override = -1; // <0: not set
+extern VCvarB r_lmap_bsp_trace;
 
 extern VCvarB loader_cache_data;
 VCvarF loader_cache_time_limit_lightmap("loader_cache_time_limit_lightmap", "3", "Cache lightmap data if building took more than this number of seconds.", CVAR_Archive);
@@ -1280,10 +1281,11 @@ void VRenderLevelLightmap::PreRender () {
       }
       double stt = -Sys_Time();
       RelightMap(true, true); // only marked
+      stt += Sys_Time();
+      GCon->Logf("static lighting calculated in %d.%d seconds (%s mode)", (int)stt, (int)(stt*1000)%1000, (r_lmap_bsp_trace ? "BSP" : "blockmap"));
       // cache
       if (doWriteCache) {
         const float tlim = loader_cache_time_limit_lightmap.asFloat();
-        stt += Sys_Time();
         // if our lightmap cache is partially valid, rewrite it unconditionally
         if (dbg_cache_lightmap_always || lmcacheUnknownSurfaceCount || stt >= tlim) {
           VStream *lmc = FL_OpenSysFileWrite(ccfname);

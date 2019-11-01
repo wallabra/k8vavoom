@@ -51,6 +51,8 @@ static VCvarB r_static_add("r_static_add", true, "Are static lights additive in 
 static VCvarF r_specular("r_specular", "0.1", "Specular light in regular renderer.", CVAR_Archive);
 static VCvarI r_lmap_atlas_limit("r_lmap_atlas_limit", "20", "Nuke lightmap cache if it reached this number of atlases.", CVAR_Archive);
 
+VCvarB r_lmap_bsp_trace("r_lmap_bsp_trace", false, "Trace lightmaps with BSP tree instead of blockmap?", CVAR_Archive);
+
 extern VCvarB dbg_adv_light_notrace_mark;
 
 
@@ -162,12 +164,12 @@ float VRenderLevelLightmap::CastRay (sector_t *ssector, const TVec &p1, const TV
   if (t >= squaredist) return 0.0f; // too far away
   if (t <= 2.0f) return 1.0f; // at light point
 
-#if 0
-  linetrace_t Trace;
-  if (!Level->TraceLine(Trace, p1, p2, SPF_NOBLOCKSIGHT)) return 0.0f; // ray was blocked
-#else
-  if (!Level->CastEx(ssector, p1, p2, SPF_NOBLOCKSIGHT)) return 0.0f; // ray was blocked
-#endif
+  if (r_lmap_bsp_trace) {
+    linetrace_t Trace;
+    if (!Level->TraceLine(Trace, p1, p2, SPF_NOBLOCKSIGHT)) return 0.0f; // ray was blocked
+  } else {
+    if (!Level->CastEx(ssector, p1, p2, SPF_NOBLOCKSIGHT)) return 0.0f; // ray was blocked
+  }
 
   //if (t == 0) t = 1; // don't blow up...
   return sqrtf(t);
@@ -470,6 +472,11 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
       */
       continue;
     }
+    /*
+    if (CastRay(Level->PointInSubsector(*spt)->sector, *spt, light->origin, squaredist) <= 0.0f) {
+      continue;
+    }
+    */
 
     TVec incoming = light->origin-(*spt);
     if (!incoming.isZero()) {
