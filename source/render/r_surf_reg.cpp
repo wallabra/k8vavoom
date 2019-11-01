@@ -1312,3 +1312,43 @@ void VRenderLevelLightmap::PreRender () {
   GCon->Logf("%d seg subdivides", c_seg_div);
   GCon->Logf("%dk light mem", light_mem/1024);
 }
+
+
+//==========================================================================
+//
+//  COMMAND NukeLightmapCache
+//
+//==========================================================================
+COMMAND(NukeLightmapCache) {
+  if (GClLevel && GClLevel->Renderer) {
+    GClLevel->Renderer->NukeLightmapCache();
+    GCon->Log("lightmap cache nuked.");
+  }
+}
+
+
+//==========================================================================
+//
+//  COMMAND LightmapsReset
+//
+//==========================================================================
+COMMAND_WITH_AC(LightmapsReset) {
+  if (GClLevel && GClLevel->Renderer) {
+    bool recalcNow = true;
+    if (Args.Num() > 1) recalcNow = false;
+    GCon->Log("resetting lightmaps...");
+    double stt = -Sys_Time();
+    GClLevel->Renderer->ResetLightmaps(recalcNow);
+    stt += Sys_Time();
+    GCon->Logf("static lighting calculated in %d.%d seconds (%s mode)", (int)stt, (int)(stt*1000)%1000, (r_lmap_bsp_trace ? "BSP" : "blockmap"));
+    GClLevel->Renderer->NukeLightmapCache();
+  }
+}
+
+COMMAND_AC(LightmapsReset) {
+  if (aidx != 1) return VStr::EmptyString;
+  VStr prefix = (aidx < args.length() ? args[aidx] : VStr());
+  TArray<VStr> list;
+  list.append("defer");
+  return AutoCompleteFromList(prefix, list, true); // return unchanged as empty
+}
