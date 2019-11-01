@@ -29,7 +29,7 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 //#define VV_DUMP_LMAP_CACHE_COMPARISONS
-#define VV_DUMP_LMAP_CACHE_COMPARISON_FAIL
+//#define VV_DUMP_LMAP_CACHE_COMPARISON_FAIL
 
 #define ON_EPSILON      (0.1f)
 #define SUBDIVIDE_SIZE  (240)
@@ -724,7 +724,7 @@ static void WriteSegLightmaps (VLevel *Level, VStream *strm, segpart_t *sp) {
 //==========================================================================
 void VRenderLevelLightmap::saveLightmapsInternal (VStream *strm) {
   if (!strm) return;
-  vuint32 surfCount = countAllSurfaces();
+  vuint32 surfCount = CountAllSurfaces();
 
   *strm << Level->NumSectors;
   *strm << Level->NumSubsectors;
@@ -845,7 +845,7 @@ static bool SkipLightSegSurfaces (VLevel *Level, VStream *strm, vuint32 *number=
 //  LoadLightSurfaces
 //
 //==========================================================================
-static bool LoadLightSurfaces (VLevel *Level, VStream *strm, surface_t *s, bool &lmcacheHasUnknownSurface) {
+static bool LoadLightSurfaces (VLevel *Level, VStream *strm, surface_t *s, unsigned &lmcacheUnknownSurfaceCount) {
   vuint32 cnt = 0, rd = 0;
   for (surface_t *t = s; t; t = t->next) ++cnt;
   *strm << rd;
@@ -856,7 +856,7 @@ static bool LoadLightSurfaces (VLevel *Level, VStream *strm, surface_t *s, bool 
   if (rd > 1024*1024) { GCon->Logf(NAME_Warning, "invalid lightmap cache surface chain count (%u)", rd); return false; }
   // just in case
   if (rd == 0) {
-    if (cnt) lmcacheHasUnknownSurface = true;
+    lmcacheUnknownSurfaceCount += cnt;
     return true;
   }
   if (cnt == 0) return SkipLightSurfaces(Level, strm, &rd);
@@ -905,8 +905,8 @@ static bool LoadLightSurfaces (VLevel *Level, VStream *strm, surface_t *s, bool 
       }
     }
     if (!sp) {
-      GCon->Logf(NAME_Warning, "*** lightmap cache is missing surface info...");
-      lmcacheHasUnknownSurface = true;
+      GCon->Logf(NAME_Warning, "*** lightmap cache is missing some surface info...");
+      ++lmcacheUnknownSurfaceCount;
       #ifdef VV_DUMP_LMAP_CACHE_COMPARISONS
       SurfaceInfoBlock sss;
       sss.initWith(Level, s);
@@ -966,16 +966,16 @@ static bool LoadLightSurfaces (VLevel *Level, VStream *strm, surface_t *s, bool 
 //  LoadLightSegSurfaces
 //
 //==========================================================================
-static bool LoadLightSegSurfaces (VLevel *Level, VStream *strm, segpart_t *sp, bool &lmcacheHasUnknownSurface) {
+static bool LoadLightSegSurfaces (VLevel *Level, VStream *strm, segpart_t *sp, unsigned &lmcacheUnknownSurfaceCount) {
   vuint32 cnt = 0, rd = 0;
   for (segpart_t *s = sp; s; s = s->next) ++cnt;
   *strm << rd;
   if (rd != cnt) {
     GCon->Logf(NAME_Warning, "invalid lightmap cache segment surface count (%u instead of %u)", rd, cnt);
-    if (cnt) lmcacheHasUnknownSurface = true;
+    lmcacheUnknownSurfaceCount += cnt;
     return SkipLightSegSurfaces(Level, strm, &rd);
   } else {
-    for (; sp; sp = sp->next) if (!LoadLightSurfaces(Level, strm, sp->surfs, lmcacheHasUnknownSurface)) return false;
+    for (; sp; sp = sp->next) if (!LoadLightSurfaces(Level, strm, sp->surfs, lmcacheUnknownSurfaceCount)) return false;
     return true;
   }
 }
@@ -989,7 +989,7 @@ static bool LoadLightSegSurfaces (VLevel *Level, VStream *strm, segpart_t *sp, b
 bool VRenderLevelLightmap::loadLightmapsInternal (VStream *strm) {
   if (!strm || strm->IsError()) return false;
 
-  vuint32 surfCount = countAllSurfaces();
+  vuint32 surfCount = CountAllSurfaces();
 
   // load and check header
   vuint32 seccount = 0, sscount = 0, sgcount = 0, sfcount = 0;
@@ -1015,7 +1015,14 @@ bool VRenderLevelLightmap::loadLightmapsInternal (VStream *strm) {
     if (strm->IsError()) { GCon->Log(NAME_Error, "error reading lightmap cache"); return false; }
     if (ccregcount != regcount) {
       GCon->Logf(NAME_Warning, "lightmap cache subsector #%d region count mismatch (%u instead of %u)", i, ccregcount, regcount);
-      if (regcount != 0) lmcacheHasUnknownSurface = true;
+      if (regcount != 0) {
+        for (subregion_t *r = sub->regions; r != nullptr; r = r->next, ++regcount) {
+          if (r->realfloor != nullptr) lmcacheUnknownSurfaceCount += CountSurfacesInChain(r->realfloor->surfs);
+          if (r->realceil != nullptr) lmcacheUnknownSurfaceCount += CountSurfacesInChain(r->realceil->surfs);
+          if (r->fakefloor != nullptr) lmcacheUnknownSurfaceCount += CountSurfacesInChain(r->fakefloor->surfs);
+          if (r->fakeceil != nullptr) lmcacheUnknownSurfaceCount += CountSurfacesInChain(r->fakeceil->surfs);
+        }
+      }
       // skip them
       while (ccregcount--) {
         vuint32 n = 0xffffffffu;
@@ -1033,10 +1040,10 @@ bool VRenderLevelLightmap::loadLightmapsInternal (VStream *strm) {
         *strm << n;
         if (strm->IsError()) { GCon->Log(NAME_Error, "error reading lightmap cache"); return false; }
         if (n != regcount) { GCon->Log(NAME_Warning, "invalid lightmap cache region number"); return false; }
-        if (!LoadLightSurfaces(Level, strm, (r->realfloor ? r->realfloor->surfs : nullptr), lmcacheHasUnknownSurface)) return false;
-        if (!LoadLightSurfaces(Level, strm, (r->realceil ? r->realceil->surfs : nullptr), lmcacheHasUnknownSurface)) return false;
-        if (!LoadLightSurfaces(Level, strm, (r->fakefloor ? r->fakefloor->surfs : nullptr), lmcacheHasUnknownSurface)) return false;
-        if (!LoadLightSurfaces(Level, strm, (r->fakeceil ? r->fakeceil->surfs : nullptr), lmcacheHasUnknownSurface)) return false;
+        if (!LoadLightSurfaces(Level, strm, (r->realfloor ? r->realfloor->surfs : nullptr), lmcacheUnknownSurfaceCount)) return false;
+        if (!LoadLightSurfaces(Level, strm, (r->realceil ? r->realceil->surfs : nullptr), lmcacheUnknownSurfaceCount)) return false;
+        if (!LoadLightSurfaces(Level, strm, (r->fakefloor ? r->fakefloor->surfs : nullptr), lmcacheUnknownSurfaceCount)) return false;
+        if (!LoadLightSurfaces(Level, strm, (r->fakeceil ? r->fakeceil->surfs : nullptr), lmcacheUnknownSurfaceCount)) return false;
       }
     }
   }
@@ -1055,7 +1062,15 @@ bool VRenderLevelLightmap::loadLightmapsInternal (VStream *strm) {
     if (strm->IsError()) { GCon->Log(NAME_Error, "error reading lightmap cache"); return false; }
     if (ccdscount != dscount) {
       GCon->Logf(NAME_Warning, "lightmap cache seg #%d drawseg count mismatch (%u instead of %u)", i, ccdscount, dscount);
-      if (dscount != 0) lmcacheHasUnknownSurface = true;
+      if (dscount != 0) {
+        for (drawseg_t *ds = seg->drawsegs; ds; ds = ds->next, ++dscount) {
+          lmcacheUnknownSurfaceCount += CountSegSurfacesInChain(ds->top);
+          lmcacheUnknownSurfaceCount += CountSegSurfacesInChain(ds->mid);
+          lmcacheUnknownSurfaceCount += CountSegSurfacesInChain(ds->bot);
+          lmcacheUnknownSurfaceCount += CountSegSurfacesInChain(ds->topsky);
+          lmcacheUnknownSurfaceCount += CountSegSurfacesInChain(ds->extra);
+        }
+      }
       // skip them
       while (ccdscount--) {
         vuint32 n = 0xffffffffu;
@@ -1074,11 +1089,11 @@ bool VRenderLevelLightmap::loadLightmapsInternal (VStream *strm) {
         *strm << n;
         if (strm->IsError()) { GCon->Log(NAME_Error, "error reading lightmap cache"); return false; }
         if (n != dscount) { GCon->Log(NAME_Warning, "invalid lightmap cache drawseg number"); return false; }
-        if (!LoadLightSegSurfaces(Level, strm, ds->top, lmcacheHasUnknownSurface)) return false;
-        if (!LoadLightSegSurfaces(Level, strm, ds->mid, lmcacheHasUnknownSurface)) return false;
-        if (!LoadLightSegSurfaces(Level, strm, ds->bot, lmcacheHasUnknownSurface)) return false;
-        if (!LoadLightSegSurfaces(Level, strm, ds->topsky, lmcacheHasUnknownSurface)) return false;
-        if (!LoadLightSegSurfaces(Level, strm, ds->extra, lmcacheHasUnknownSurface)) return false;
+        if (!LoadLightSegSurfaces(Level, strm, ds->top, lmcacheUnknownSurfaceCount)) return false;
+        if (!LoadLightSegSurfaces(Level, strm, ds->mid, lmcacheUnknownSurfaceCount)) return false;
+        if (!LoadLightSegSurfaces(Level, strm, ds->bot, lmcacheUnknownSurfaceCount)) return false;
+        if (!LoadLightSegSurfaces(Level, strm, ds->topsky, lmcacheUnknownSurfaceCount)) return false;
+        if (!LoadLightSegSurfaces(Level, strm, ds->extra, lmcacheUnknownSurfaceCount)) return false;
       }
     }
   }
@@ -1094,21 +1109,21 @@ bool VRenderLevelLightmap::loadLightmapsInternal (VStream *strm) {
 //==========================================================================
 bool VRenderLevelLightmap::loadLightmaps (VStream *strm) {
   if (!strm || strm->IsError()) {
-    lmcacheHasUnknownSurface = true;
+    lmcacheUnknownSurfaceCount = CountAllSurfaces();
     return false;
   }
   char sign[CDSLEN];
   strm->Serialise(sign, CDSLEN);
   if (strm->IsError() || memcmp(sign, LMAP_CACHE_DATA_SIGNATURE, CDSLEN) != 0) {
     GCon->Logf(NAME_Error, "invalid lightmap cache file signature");
-    lmcacheHasUnknownSurface = true;
+    lmcacheUnknownSurfaceCount = CountAllSurfaces();
     return false;
   }
-  lmcacheHasUnknownSurface = false;
+  lmcacheUnknownSurfaceCount = 0;
   VZipStreamReader *zipstrm = new VZipStreamReader(true, strm, VZipStreamReader::UNKNOWN_SIZE, VZipStreamReader::UNKNOWN_SIZE/*Map->DecompressedSize*/);
   bool ok = loadLightmapsInternal(zipstrm);
   zipstrm->Close();
-  if (!ok) lmcacheHasUnknownSurface = true;
+  if (!ok && !lmcacheUnknownSurfaceCount) lmcacheUnknownSurfaceCount = CountAllSurfaces();
   return ok;
 }
 
@@ -1169,7 +1184,7 @@ void VRenderLevelLightmap::RelightMap (bool recalcNow, bool onlyMarked) {
   vuint32 surfCount = 0;
 
   if (recalcNow) {
-    surfCount = countAllSurfaces();
+    surfCount = CountAllSurfaces();
     R_PBarReset();
     R_PBarUpdate("Lightmaps", 0, (int)surfCount);
   }
@@ -1249,9 +1264,9 @@ void VRenderLevelLightmap::PreRender () {
       }
     }
 
-    if (recalcLight || lmcacheHasUnknownSurface) {
-      if (lmcacheHasUnknownSurface) {
-        GCon->Log("calculating static lighting due to lightmap cache inconsistencies...");
+    if (recalcLight || lmcacheUnknownSurfaceCount) {
+      if (lmcacheUnknownSurfaceCount) {
+        GCon->Logf("calculating static lighting due to lightmap cache inconsistencies (%u out of %u surfaces)...", lmcacheUnknownSurfaceCount, CountAllSurfaces());
       } else {
         GCon->Log("calculating static lighting...");
       }
@@ -1262,7 +1277,7 @@ void VRenderLevelLightmap::PreRender () {
         const float tlim = loader_cache_time_limit_lightmap.asFloat();
         stt += Sys_Time();
         // if our lightmap cache is partially valid, rewrite it unconditionally
-        if (dbg_always_cache_lightmaps || lmcacheHasUnknownSurface || stt >= tlim) {
+        if (dbg_always_cache_lightmaps || lmcacheUnknownSurfaceCount || stt >= tlim) {
           VStream *lmc = FL_OpenSysFileWrite(ccfname);
           if (lmc) {
             GCon->Logf("writing lightmap cache to '%s'...", *ccfname);

@@ -482,7 +482,9 @@ public:
   virtual void NukeLightmapCache () override;
 
 public:
-  vuint32 countAllSurfaces () const noexcept;
+  static vuint32 CountSurfacesInChain (const surface_t *s) noexcept;
+  static vuint32 CountSegSurfacesInChain (const segpart_t *sp) noexcept;
+  vuint32 CountAllSurfaces () const noexcept;
 
 protected:
   VRenderLevelShared (VLevel *ALevel);
@@ -801,7 +803,7 @@ private:
 
   // temporary flag for lightmap cache loader
   // set if some surface wasn't found
-  bool lmcacheHasUnknownSurface;
+  unsigned lmcacheUnknownSurfaceCount;
 
 private:
   // returns `false` if cannot allocate lightmap block

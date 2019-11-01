@@ -2280,10 +2280,10 @@ bool VRenderLevelShared::loadLightmaps (VStream *strm) {
 
 //==========================================================================
 //
-//  CountSurfacesInChain
+//  VRenderLevelShared::CountSurfacesInChain
 //
 //==========================================================================
-static vuint32 CountSurfacesInChain (const surface_t *s) {
+vuint32 VRenderLevelShared::CountSurfacesInChain (const surface_t *s) noexcept {
   vuint32 res = 0;
   for (; s; s = s->next) ++res;
   return res;
@@ -2292,10 +2292,10 @@ static vuint32 CountSurfacesInChain (const surface_t *s) {
 
 //==========================================================================
 //
-//  CountSegSurfaces
+//  VRenderLevelShared::CountSegSurfaces
 //
 //==========================================================================
-static vuint32 CountSegSurfacesInChain (const segpart_t *sp) {
+vuint32 VRenderLevelShared::CountSegSurfacesInChain (const segpart_t *sp) noexcept {
   vuint32 res = 0;
   for (; sp; sp = sp->next) res += CountSurfacesInChain(sp->surfs);
   return res;
@@ -2304,12 +2304,12 @@ static vuint32 CountSegSurfacesInChain (const segpart_t *sp) {
 
 //==========================================================================
 //
-//  VRenderLevelShared::countAllSurfaces
+//  VRenderLevelShared::CountAllSurfaces
 //
 //  calculate total number of surfaces
 //
 //==========================================================================
-vuint32 VRenderLevelShared::countAllSurfaces () const noexcept {
+vuint32 VRenderLevelShared::CountAllSurfaces () const noexcept {
   vuint32 surfCount = 0;
   for (auto &&sub : Level->allSubsectors()) {
     for (subregion_t *r = sub.regions; r != nullptr; r = r->next) {
