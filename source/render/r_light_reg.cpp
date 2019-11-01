@@ -171,8 +171,8 @@ float VRenderLevelLightmap::CastRay (sector_t *ssector, const TVec &p1, const TV
     if (!Level->CastEx(ssector, p1, p2, SPF_NOBLOCKSIGHT)) return 0.0f; // ray was blocked
   }
 
-  //if (t == 0) t = 1; // don't blow up...
   return sqrtf(t);
+  //return 1.0f/fastInvSqrtf(t); //k8: not much faster
 }
 
 
