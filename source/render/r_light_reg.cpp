@@ -27,6 +27,7 @@
 #include "r_local.h"
 
 //#define VV_DEBUG_LMAP_ALLOCATOR
+//#define VV_EXPERIMENTAL_LMAP_FILTER
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -64,6 +65,12 @@ vuint32 blocklightsb[GridSize*GridSize];
 static vuint32 blockaddlightsr[GridSize*GridSize];
 static vuint32 blockaddlightsg[GridSize*GridSize];
 static vuint32 blockaddlightsb[GridSize*GridSize];
+
+#ifdef VV_EXPERIMENTAL_LMAP_FILTER
+static vuint32 blocklightsrNew[GridSize*GridSize];
+static vuint32 blocklightsgNew[GridSize*GridSize];
+static vuint32 blocklightsbNew[GridSize*GridSize];
+#endif
 
 // subtractive
 static vuint32 blocklightsrS[GridSize*GridSize];
@@ -1070,8 +1077,14 @@ void VRenderLevelLightmap::InvalidateStaticLightmaps (const TVec &org, float rad
 //
 //==========================================================================
 static inline int xblight (int add, int sub) {
+  /*
   const int minlight = 256;
   const int maxlight = 0xff00;
+  */
+  enum {
+    minlight = 256,
+    maxlight = 0xff00,
+  };
   int t = 255*256-add+sub;
   //if (sub > 0) t = maxlight;
   if (t < minlight) t = minlight; else if (t > maxlight) t = maxlight;
@@ -1208,6 +1221,43 @@ void VRenderLevelLightmap::BuildLightMap (surface_t *surf) {
     blocklightsb[i] = 0xff00;
     */
   }
+
+  #ifdef VV_EXPERIMENTAL_LMAP_FILTER
+  enum {
+    minlight = 256,
+    maxlight = 0xff00,
+  };
+
+  #define DO_ONE_LMFILTER(lmc_)  do { \
+    int v = \
+      lmc_[pos-1]+lmc_[pos]+lmc_[pos+1]+ \
+      lmc_[pos-1-smax]+lmc_[pos-smax]+lmc_[pos+1-smax]+ \
+      lmc_[pos-1+smax]+lmc_[pos+smax]+lmc_[pos+1+smax]; \
+    v /= 9; \
+    if (v < minlight) v = minlight; else if (v > maxlight) v = maxlight; \
+    lmc_ ## New[pos] = v; \
+  } while (0)
+
+  if (smax > 2 && tmax > 2) {
+    for (int j = 1; j < tmax-1; ++j) {
+      unsigned pos = j*smax+1;
+      blocklightsrNew[pos-1] = blocklightsr[pos-1];
+      blocklightsgNew[pos-1] = blocklightsg[pos-1];
+      blocklightsbNew[pos-1] = blocklightsb[pos-1];
+      for (int i = 1; i < smax-1; ++i, ++pos) {
+        DO_ONE_LMFILTER(blocklightsr);
+        DO_ONE_LMFILTER(blocklightsg);
+        DO_ONE_LMFILTER(blocklightsb);
+      }
+      blocklightsrNew[pos] = blocklightsr[pos];
+      blocklightsgNew[pos] = blocklightsg[pos];
+      blocklightsbNew[pos] = blocklightsb[pos];
+    }
+    memcpy(blocklightsr+smax, blocklightsrNew+smax, smax*(tmax-2)*sizeof(blocklightsr[0]));
+    memcpy(blocklightsg+smax, blocklightsgNew+smax, smax*(tmax-2)*sizeof(blocklightsg[0]));
+    memcpy(blocklightsb+smax, blocklightsbNew+smax, smax*(tmax-2)*sizeof(blocklightsb[0]));
+  }
+  #endif
 
   //return is_colored;
 }
