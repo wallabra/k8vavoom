@@ -470,8 +470,8 @@ static bool SightPathTraverse (SightTraceInfo &Trace, VLevel *level, sector_t *E
   //Trace.Intercepts.Clear();
   interUsed = 0;
 
-  if (((FX(x1-level->BlockMapOrgX))&(MAPBLOCKSIZE-1)) == 0) x1 += 1.0f; // don't side exactly on a line
-  if (((FX(y1-level->BlockMapOrgY))&(MAPBLOCKSIZE-1)) == 0) y1 += 1.0f; // don't side exactly on a line
+  if (((FX(x1-level->BlockMapOrgX))&(MAPBLOCKSIZE-1)) == 0) x1 += (x1 <= x2 ? 1.0f : -1.0f); // don't side exactly on a line
+  if (((FX(y1-level->BlockMapOrgY))&(MAPBLOCKSIZE-1)) == 0) y1 += (y1 <= y2 ? 1.0f : -1.0f); // don't side exactly on a line
 
   //k8: check if `Length()` and `SetPointDirXY()` are happy
   if (x1 == x2 && y1 == y2) { x2 += 0.02f; y2 += 0.02f; }
