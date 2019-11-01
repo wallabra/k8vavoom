@@ -65,6 +65,24 @@ override void OnMapSpawn (mthing_t *mthing) {
     return;
   }
 
+  // adjust Z position (why not?)
+  // people loves to put lights into the floor/ceiling, and our tracer is not happy with those
+  if (mthing && Sector) {
+    //float gaph = CeilingZ-FloorZ;
+    float fz = GetPlanePointZ(ref Sector.floor, Origin);
+    float cz = GetPlanePointZ(ref Sector.ceiling, Origin);
+    //printdebug("light thing #%s: fz=%s; cz=%s; z=%s; fdist=%s, cdist=%s", mthing-&XLevel.Things[0], fz, cz, Origin.z, Origin.z-fz, cz-Origin.z);
+    if (cz-fz >= 6) {
+      if (Origin.z >= fz && Origin.z < fz+4) {
+        printdebug("fixed z floor position for light thing #%s", mthing-&XLevel.Things[0]);
+        Origin.z = fz+4;
+      } else if (Origin.z <= cz && Origin.z > cz-4) {
+        printdebug("fixed z ceiling position for light thing #%s", mthing-&XLevel.Things[0]);
+        Origin.z = cz-4;
+      }
+    }
+  }
+
   //printwarn("LIGHT: r=%d; g=%d; b=%d; intensuty=%d", Args[0], Args[1], Args[2], Args[3]);
   // use static light for placed point lights that cannot be deactivated
   if (LightType == DLTYPE_Point && mthing && !TID && !bDormant) {
