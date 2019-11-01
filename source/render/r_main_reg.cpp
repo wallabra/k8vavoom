@@ -300,7 +300,7 @@ surfcache_t *VRenderLevelLightmap::GetLightChainFirst (vuint32 bnum) {
 //
 //==========================================================================
 void VRenderLevelLightmap::RenderScene (const refdef_t *RD, const VViewClipper *Range) {
-  r_viewleaf = Level->PointInSubsector(vieworg);
+  //r_viewleaf = Level->PointInSubsector(vieworg); // moved to `PrepareWorldRender()`
 
   TransformFrustum();
 
@@ -308,7 +308,7 @@ void VRenderLevelLightmap::RenderScene (const refdef_t *RD, const VViewClipper *
 
   //ClearQueues(); // moved to `PrepareWorldRender()`
   //MarkLeaves(); // moved to `PrepareWorldRender()`
-  //if (!MirrorLevel && !r_disable_world_update) UpdateWorld(RD, Range);
+  //if (!MirrorLevel && !r_disable_world_update) UpdateFakeSectors();
 
   RenderWorld(RD, Range);
 

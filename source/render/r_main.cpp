@@ -1546,20 +1546,22 @@ void VRenderLevelShared::MarkLeaves () {
 
 //==========================================================================
 //
-//  VRenderLevelShared::UpdateWorld
+//  VRenderLevelShared::UpdateFakeSectors
 //
 //==========================================================================
-void VRenderLevelShared::UpdateWorld (/*const refdef_t *rd, const VViewClipper *Range*/) {
+void VRenderLevelShared::UpdateFakeSectors () {
+  //TODO: camera renderer can change view origin, and this can change fake floors
+  subsector_t *ovl = r_viewleaf;
+  r_viewleaf = Level->PointInSubsector(vieworg);
   // update fake sectors
-  {
-    const vint32 *fksip = Level->FakeFCSectors.ptr();
-    for (int i = Level->FakeFCSectors.length(); i--; ++fksip) {
-      sector_t *sec = &Level->Sectors[*fksip];
-           if (sec->deepref) UpdateDeepWater(sec);
-      else if (sec->heightsec && !(sec->heightsec->SectorFlags&sector_t::SF_IgnoreHeightSec)) UpdateFakeFlats(sec);
-      else if (sec->othersecFloor || sec->othersecCeiling) UpdateFloodBug(sec);
-    }
+  const vint32 *fksip = Level->FakeFCSectors.ptr();
+  for (int i = Level->FakeFCSectors.length(); i--; ++fksip) {
+    sector_t *sec = &Level->Sectors[*fksip];
+         if (sec->deepref) UpdateDeepWater(sec);
+    else if (sec->heightsec && !(sec->heightsec->SectorFlags&sector_t::SF_IgnoreHeightSec)) UpdateFakeFlats(sec);
+    else if (sec->othersecFloor || sec->othersecCeiling) UpdateFloodBug(sec);
   }
+  r_viewleaf = ovl;
 }
 
 
@@ -1584,7 +1586,7 @@ void VRenderLevelShared::InitialWorldUpdate () {
 //==========================================================================
 void VRenderLevelShared::FullWorldUpdate () {
   InitialWorldUpdate();
-  UpdateWorld();
+  UpdateFakeSectors();
 }
 
 
@@ -1610,12 +1612,7 @@ void VRenderLevelShared::RenderPlayerView () {
 
   if (dbg_autoclear_automap) AM_ClearAutomap();
 
-  if (/*!MirrorLevel &&*/ !r_disable_world_update) {
-    // we need `r_viewleaf` for fake flats updater
-    //TODO: camera renderer can change view origin, and this can change fake floors
-    r_viewleaf = Level->PointInSubsector(vieworg);
-    UpdateWorld(/*rd, Range*/);
-  }
+  if (/*!MirrorLevel &&*/ !r_disable_world_update) UpdateFakeSectors();
 
   lastDLightView = TVec(-1e9, -1e9, -1e9);
   lastDLightViewSub = nullptr;
@@ -1644,6 +1641,10 @@ void VRenderLevelShared::RenderPlayerView () {
   RenderScene(&refdef, nullptr);
 
   if (dbg_clip_dump_added_ranges) ViewClip.Dump();
+
+  // recalc in case recursive scene renderer moved it
+  // we need it for psprite rendering
+  r_viewleaf = Level->PointInSubsector(vieworg);
 
   // draw the psprites on top of everything
   if (/*fov <= 90.0f &&*/ cl->MO == cl->Camera && GGameInfo->NetMode != NM_TitleMap) DrawPlayerSprites();

@@ -123,7 +123,7 @@ void VRenderLevelShadowVolume::RenderTranslucentWallsDecals () {
 void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipper *Range) {
   if (!Drawer->SupportsShadowVolumeRendering()) Host_Error("Shadow volume rendering is not supported by your graphics card");
 
-  r_viewleaf = Level->PointInSubsector(vieworg);
+  //r_viewleaf = Level->PointInSubsector(vieworg); // moved to `PrepareWorldRender()`
 
   TransformFrustum();
 
@@ -172,7 +172,7 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
 
   //ClearQueues(); // moved to `PrepareWorldRender()`
   //MarkLeaves(); // moved to `PrepareWorldRender()`
-  //if (!MirrorLevel && !r_disable_world_update) UpdateWorld(RD, Range);
+  //if (!MirrorLevel && !r_disable_world_update) UpdateFakeSectors();
 
   RenderWorld(RD, Range);
   BuildVisibleObjectsList();

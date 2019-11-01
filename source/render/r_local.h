@@ -496,9 +496,7 @@ protected:
   void UpdateDrawSeg (subsector_t *r_surf_sub, drawseg_t *dseg, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling);
   void UpdateSubRegion (subsector_t *r_surf_sub, subregion_t *region);
 
-  //void UpdateSubsector (int num, float *bbox);
-  //void UpdateBSPNode (int bspnum, float *bbox);
-  void UpdateWorld (/*const refdef_t *rd, const VViewClipper *Range*/);
+  void UpdateFakeSectors ();
   void InitialWorldUpdate ();
 
   void UpdateBBoxWithSurface (TVec bbox[2], const surface_t *surfs, const texinfo_t *texinfo,

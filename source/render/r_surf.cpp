@@ -1808,6 +1808,8 @@ bool VRenderLevelShared::CopyPlaneIfValid (sec_plane_t *dest, const sec_plane_t 
 //
 //==========================================================================
 void VRenderLevelShared::UpdateFakeFlats (sector_t *sector) {
+  if (!r_viewleaf) return; // just in case
+
   // replace sector being drawn with a copy to be hacked
   fakefloor_t *ff = sector->fakefloors;
   if (!ff) return; //k8:just in case

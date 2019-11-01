@@ -1902,7 +1902,10 @@ static void SV_SaveGame (int slot, VStr Description, bool checkpoint, bool isAut
   }
 
   // perform full update, so lightmap cache will be valid
-  if (!checkpoint && GLevel->Renderer && GLevel->Renderer->isNeedLightmapCache()) GLevel->Renderer->FullWorldUpdate();
+  if (!checkpoint && GLevel->Renderer && GLevel->Renderer->isNeedLightmapCache()) {
+    GCon->Log(NAME_Debug, "performing full world update...");
+    GLevel->Renderer->FullWorldUpdate();
+  }
 
   SV_SendBeforeSaveEvent(isAutosave, checkpoint);
 
