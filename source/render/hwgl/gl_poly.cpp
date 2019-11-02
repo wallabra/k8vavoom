@@ -262,20 +262,24 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
       SelectTexture(0);
       SetTexture(textr->Tex, textr->ColorMap);
       SurfSimpleBrightmap.SetTex(textr);
+      /*
       if (gp.isActive()) {
         VV_GLDRAWER_ACTIVATE_GLOW(SurfSimpleBrightmap, gp);
       } else {
         VV_GLDRAWER_DEACTIVATE_GLOW(SurfSimpleBrightmap);
       }
+      */
     } else {
       SetTexture(textr->Tex, textr->ColorMap);
       SurfSimple.Activate();
       SurfSimple.SetTex(textr);
+      /*
       if (gp.isActive()) {
         VV_GLDRAWER_ACTIVATE_GLOW(SurfSimple, gp);
       } else {
         VV_GLDRAWER_DEACTIVATE_GLOW(SurfSimple);
       }
+      */
     }
     ++glWDTextureChangesTotal;
   }
@@ -289,9 +293,19 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
   if (doBrightmap) {
     SurfSimpleBrightmap.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
     SurfSimpleBrightmap.SetFogFade(surf->Fade, 1.0f);
+    if (gp.isActive()) {
+      VV_GLDRAWER_ACTIVATE_GLOW(SurfSimpleBrightmap, gp);
+    } else {
+      VV_GLDRAWER_DEACTIVATE_GLOW(SurfSimpleBrightmap);
+    }
   } else {
     SurfSimple.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
     SurfSimple.SetFogFade(surf->Fade, 1.0f);
+    if (gp.isActive()) {
+      VV_GLDRAWER_ACTIVATE_GLOW(SurfSimple, gp);
+    } else {
+      VV_GLDRAWER_DEACTIVATE_GLOW(SurfSimple);
+    }
   }
 
   bool doDecals = (textr->Tex && !textr->noDecals && surf->seg && surf->seg->decals);
@@ -353,20 +367,24 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
       SelectTexture(0);
       SetTexture(tex->Tex, tex->ColorMap);
       SurfLightmapBrightmap.SetTex(tex);
+      /*
       if (gp.isActive()) {
         VV_GLDRAWER_ACTIVATE_GLOW(SurfLightmapBrightmap, gp);
       } else {
         VV_GLDRAWER_DEACTIVATE_GLOW(SurfLightmapBrightmap);
       }
+      */
     } else {
       SetTexture(tex->Tex, tex->ColorMap);
       SurfLightmap.Activate();
       SurfLightmap.SetTex(tex);
+      /*
       if (gp.isActive()) {
         VV_GLDRAWER_ACTIVATE_GLOW(SurfLightmap, gp);
       } else {
         VV_GLDRAWER_DEACTIVATE_GLOW(SurfLightmap);
       }
+      */
     }
     ++glWDTextureChangesTotal;
   }
@@ -389,11 +407,21 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
     SurfLightmapBrightmap.SetLMap(surf, cache);
     SurfLightmapBrightmap.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
     SurfLightmapBrightmap.SetFogFade(surf->Fade, 1.0f);
+    if (gp.isActive()) {
+      VV_GLDRAWER_ACTIVATE_GLOW(SurfLightmapBrightmap, gp);
+    } else {
+      VV_GLDRAWER_DEACTIVATE_GLOW(SurfLightmapBrightmap);
+    }
   } else {
     SurfLightmap.SetFullBright(fullBright);
     SurfLightmap.SetLMap(surf, cache);
     SurfLightmap.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
     SurfLightmap.SetFogFade(surf->Fade, 1.0f);
+    if (gp.isActive()) {
+      VV_GLDRAWER_ACTIVATE_GLOW(SurfLightmap, gp);
+    } else {
+      VV_GLDRAWER_DEACTIVATE_GLOW(SurfLightmap);
+    }
   }
 
   bool doDecals = (tex->Tex && !tex->noDecals && surf->seg && surf->seg->decals);
