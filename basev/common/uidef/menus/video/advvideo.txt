@@ -10,6 +10,18 @@ menudef AdvVideoOptions {
     cvar = r_decals_enabled;
   }
 
+  option bool {
+    title = "Partial Lightmap Update";
+    cvar = gl_lmap_allow_partial_updates;
+    help =
+      "Allow partial lightmap atlas updates?"
+      "Usually, only some lightmaps need to be updated for each frame."
+      "The engine keep lightmaps cached in big texture atlases,"
+      "and can update only changed parts. But this can be buggy"
+      "with some drivers."
+      "\cJIf unsure, leave it enabled.";
+  }
+
   /* textures are always sorted, because why not?
   option bool {
     title = "Sort textures";
