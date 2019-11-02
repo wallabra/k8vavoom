@@ -10,7 +10,7 @@ menudef AdvRenderOptions {
     cvar = r_allow_horizons;
     help =
       "Allow rendering horizon portals?"
-      "Please note that you have to restart/reload level after changing this,"
+      "Please note that you have to restart/reload the map after changing this,"
       "or visual glitches will occur.";
   }
 
@@ -20,7 +20,7 @@ menudef AdvRenderOptions {
     help =
       "Allow rendering mirror portals?"
       "Note that portal rendering in k8vavoom is somewhat slow."
-      "Please note that you have to restart/reload level after changing this,"
+      "Please note that you have to restart/reload the map after changing this,"
       "or visual glitches will occur.";
   }
 
@@ -31,7 +31,7 @@ menudef AdvRenderOptions {
       "Allow rendering non-mirror portals?"
       "This is mostly for stacked sectors and other such things."
       "Currently this is *VERY* glitchy, so you'd better don't turn this on."
-      "Please note that you have to restart/reload level after changing this,"
+      "Please note that you have to restart/reload map after changing this,"
       "or visual glitches will occur.";
   }
 
@@ -54,9 +54,9 @@ menudef AdvRenderOptions {
     max = 16;
     help =
       "Maximum allowed portal depth."
-      "Usually has huge effect on levels with mirrors."
-      "If you suddenly see FPS below 30 in some level places,"
-      "this is probably due portals. Try to decrease this, or"
+      "Usually has huge effect on maps with mirrors."
+      "If you suddenly see FPS below 30 in some map places,"
+      "this is probably due to portals. Try to decrease this, or"
       "turn mirrors off, or turn this off."
       "-1 means 'infinite portal depth'.";
   }
@@ -119,7 +119,7 @@ menudef AdvRenderOptions {
       "This is what causes most slowdowns. Decrease this to"
       "make rendering faster (but with less proper shadows)."
       "Note that nearby static lights are rendered first,"
-      "so even with low numbers this will look somewhat good.";
+      "so even with low numbers this will look reasonably good.";
   }
 
   option numeric {
@@ -157,7 +157,7 @@ menudef AdvRenderOptions {
     help =
       "Optimise light scissor with actual geometry."
       "If lit geometry bounds is less than the actual light scissor,"
-      "there is no need to render anything more.";
+      "there is no need to render anything outside of it.";
   }
 
   option bool {

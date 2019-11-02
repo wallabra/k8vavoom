@@ -16,7 +16,7 @@ menudef AdvVideoOptions {
     help =
       "Allow partial lightmap atlas updates?"
       "Usually, only some lightmaps need to be updated for each frame."
-      "The engine keep lightmaps cached in big texture atlases,"
+      "The engine keep lightmaps cached in several big texture atlases,"
       "and can update only changed parts. But this can be buggy"
       "with some drivers."
       "\cJIf unsure, leave it enabled.";
@@ -28,7 +28,7 @@ menudef AdvVideoOptions {
     cvar = gl_sort_textures;
     help =
       "Sort textures, so renderer will do less texture switches."
-      "This can win several FPS on huge levels.";
+      "This can win several FPS on huge maps.";
   }
   */
 
@@ -48,7 +48,7 @@ menudef AdvVideoOptions {
     help =
       "Render all things from a visible sector."
       "This can slow down rendering a little, but fixes some cases where"
-      "thing is suddenly disappears when it's subsector is not visible.";
+      "a thing suddenly disappears when it's subsector is not visible.";
   }
 
 
@@ -59,13 +59,13 @@ menudef AdvVideoOptions {
     cvar = r_allow_ambient;
     help =
       "Set to 'OFF' to turn off sector lighting"
-      "(i.e. level will be lighted only by dynamic lights).";
+      "(i.e. the map will be lighted only by dynamic lights).";
   }
 
   option slider {
     title = "Minimum ambient light";
     cvar = r_ambient_min;
-    help = "If level is too dark, you can set minimum light level.";
+    help = "If the map is too dark, you can set minimum light level.";
     step = 16;
     min = 0;
     max = 255;
@@ -171,7 +171,7 @@ menudef AdvVideoOptions {
       "to prevent bonuses shining through secret walls."
       "This may slow down rendering a little, but most of the time"
       "it is OK to have this turned on."
-      "Note that slowdown doesn't depend on level size, only on geometry complexity.";
+      "Note that slowdown doesn't depend on map size, only on geometry complexity.";
   }
 
   option bool {
@@ -183,8 +183,8 @@ menudef AdvVideoOptions {
       "Note that you cannot have more than 32 dynamic lights in one frame,"
       "so the engine has to decide somehow which dynlighs can be dropped."
       "There are some heuristics for this, and visibility check can help."
-      "Another drawback of this feature that checker is using visibility"
-      "info from the previous frame, not from the current one.";
+      "Another drawback of this feature is that the checker is using"
+      "visibility info from the previous frame, not from the current one.";
   }
 
   option bool {
@@ -231,12 +231,12 @@ menudef AdvVideoOptions {
     cvar = r_precalc_static_lights;
     help =
       "Precalculate static lights for lightmapped renderer?"
-      "For most levels this takes a little time, but there can be levels"
+      "For most maps this takes a little time, but there can be maps"
       "with alot of lighting decorations, and preprocessing those can take"
-      "alot of time too. Currently engine cannot cache static lighting, so"
-      "(quick)loading will precalculate lighting each time."
-      "\cJIf in doubt, leave this 'ON'.\c-"
-      "\cGWARNING! THIS IS EXPERIMENTAL OPTION!";
+      "alot of time too. Note that the engine is able to cache calculated"
+      "lightmaps, so most of the time full calculation will be perfromed"
+      "only once per map."
+      "\cJIf in doubt, leave this 'ON'.\c-";
   }
 
 
