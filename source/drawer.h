@@ -54,6 +54,36 @@ struct particle_t {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+//TODO: add profiler, check if several dirty rects are better
+struct VDirtyArea {
+public:
+  int x0, y0;
+  int x1, y1; // exclusive
+
+public:
+  inline VDirtyArea () noexcept : x0(0), y0(0), x1(0), y1(0) {}
+  inline void clear () noexcept { x0 = y0 = x1 = y1 = 0; }
+  inline bool isValid () const noexcept { return (x1-x0 > 0 && y1-y0 > 0); }
+  inline int getWidth () const noexcept { return x1-x0; }
+  inline int getHeight () const noexcept { return y1-y0; }
+  inline void addDirty (int ax0, int ay0, int awdt, int ahgt) noexcept {
+    if (awdt < 1 || ahgt < 1) return;
+    if (isValid()) {
+      x0 = min2(x0, ax0);
+      y0 = min2(y0, ay0);
+      x1 = max2(x1, ax0+awdt);
+      y1 = max2(y1, ay0+ahgt);
+    } else {
+      x0 = ax0;
+      y0 = ay0;
+      x1 = ax0+awdt;
+      y1 = ay0+ahgt;
+    }
+  }
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 class VRenderLevelDrawer : public VRenderLevelPublic {
 protected:
   bool mIsShadowVolumeRenderer;
@@ -81,10 +111,8 @@ public:
   // block number+1 or 0
   virtual vuint32 GetLightChainNext (vuint32 bnum) = 0;
 
-  virtual bool IsLightBlockChanged (vuint32 bnum) = 0;
-  virtual bool IsLightAddBlockChanged (vuint32 bnum) = 0;
-  virtual void SetLightBlockChanged (vuint32 bnum, bool value) = 0;
-  virtual void SetLightAddBlockChanged (vuint32 bnum, bool value) = 0;
+  virtual VDirtyArea &GetLightBlockDirtyArea (vuint32 bnum) = 0;
+  virtual VDirtyArea &GetLightAddBlockDirtyArea (vuint32 bnum) = 0;
   virtual rgba_t *GetLightBlock (vuint32 bnum) = 0;
   virtual rgba_t *GetLightAddBlock (vuint32 bnum) = 0;
   virtual surfcache_t *GetLightChainFirst (vuint32 bnum) = 0;

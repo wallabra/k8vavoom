@@ -752,6 +752,16 @@ void VOpenGLDrawer::InitResolution () {
 
   if (hasBoundsTest) GCon->Logf(NAME_Init, "Found GL_EXT_depth_bounds_test...");
 
+
+  glPixelStorei(GL_PACK_ALIGNMENT, 1);
+  glPixelStorei(GL_PACK_ROW_LENGTH, 0);
+  glPixelStorei(GL_PACK_IMAGE_HEIGHT, 0);
+
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+  glPixelStorei(GL_UNPACK_IMAGE_HEIGHT, 0);
+
+
   glFramebufferTexture2D = (glFramebufferTexture2DFn)GetExtFuncPtr("glFramebufferTexture2D");
   glDeleteFramebuffers = (glDeleteFramebuffersFn)GetExtFuncPtr("glDeleteFramebuffers");
   glGenFramebuffers = (glGenFramebuffersFn)GetExtFuncPtr("glGenFramebuffers");

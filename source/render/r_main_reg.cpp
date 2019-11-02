@@ -135,7 +135,7 @@ void VRenderLevelLightmap::ClearQueues () {
 //
 //==========================================================================
 void VRenderLevelLightmap::advanceCacheFrame () {
-  light_chain_head = /*add_chain_head =*/ 0;
+  light_chain_head = 0;
   if (++lmcache.cacheframecount == 0) {
     lmcache.cacheframecount = 1;
     memset(light_chain_used, 0, sizeof(light_chain_used));
@@ -156,13 +156,13 @@ void VRenderLevelLightmap::initLightChain () {
   memset(light_block, 0, sizeof(light_block));
   memset(light_chain, 0, sizeof(light_chain));
   memset(add_block, 0, sizeof(add_block));
-  //memset(add_chain, 0, sizeof(add_chain));
   memset(light_chain_used, 0, sizeof(light_chain_used));
-  //memset(add_chain_used, 0, sizeof(add_chain_used));
-  light_chain_head = /*add_chain_head =*/ 0;
+  light_chain_head = 0;
   // force updating of all lightmaps
-  //for (unsigned f = 0; f < NUM_BLOCK_SURFS; ++f) block_changed[f] = add_changed[f] = true;
-  for (unsigned f = 0; f < NUM_BLOCK_SURFS; ++f) block_changed[f] = add_changed[f] = false;
+  for (unsigned f = 0; f < NUM_BLOCK_SURFS; ++f) {
+    block_dirty[f].clear();
+    add_block_dirty[f].clear();
+  }
 }
 
 
@@ -219,45 +219,23 @@ vuint32 VRenderLevelLightmap::GetLightChainNext (vuint32 bnum) {
 
 //==========================================================================
 //
-//  VRenderLevelLightmap::IsLightBlockChanged
+//  VRenderLevelLightmap::GetLightBlockDirtyArea
 //
 //==========================================================================
-bool VRenderLevelLightmap::IsLightBlockChanged (vuint32 bnum) {
+VDirtyArea &VRenderLevelLightmap::GetLightBlockDirtyArea (vuint32 bnum) {
   vassert(bnum < NUM_BLOCK_SURFS);
-  return block_changed[bnum];
+  return block_dirty[bnum];
 }
 
 
 //==========================================================================
 //
-//  VRenderLevelLightmap::IsLightAddBlockChanged
+//  VRenderLevelLightmap::GetLightAddBlockDirtyArea
 //
 //==========================================================================
-bool VRenderLevelLightmap::IsLightAddBlockChanged (vuint32 bnum) {
+VDirtyArea &VRenderLevelLightmap::GetLightAddBlockDirtyArea (vuint32 bnum) {
   vassert(bnum < NUM_BLOCK_SURFS);
-  return add_changed[bnum];
-}
-
-
-//==========================================================================
-//
-//  VRenderLevelLightmap::SetLightBlockChanged
-//
-//==========================================================================
-void VRenderLevelLightmap::SetLightBlockChanged (vuint32 bnum, bool value) {
-  vassert(bnum < NUM_BLOCK_SURFS);
-  block_changed[bnum] = value;
-}
-
-
-//==========================================================================
-//
-//  VRenderLevelLightmap::SetLightAddBlockChanged
-//
-//==========================================================================
-void VRenderLevelLightmap::SetLightAddBlockChanged (vuint32 bnum, bool value) {
-  vassert(bnum < NUM_BLOCK_SURFS);
-  add_changed[bnum] = value;
+  return add_block_dirty[bnum];
 }
 
 

@@ -2195,39 +2195,21 @@ vuint32 VRenderLevelShared::GetLightChainNext (vuint32 bnum) {
 
 //==========================================================================
 //
-//  VRenderLevelShared::IsLightBlockChanged
+//  VRenderLevelShared::GetLightBlockDirtyArea
 //
 //==========================================================================
-bool VRenderLevelShared::IsLightBlockChanged (vuint32 bnum) {
-  return false;
+VDirtyArea &VRenderLevelShared::GetLightBlockDirtyArea (vuint32 bnum) {
+  return unusedDirty;
 }
 
 
 //==========================================================================
 //
-//  VRenderLevelShared::IsLightAddBlockChanged
+//  VRenderLevelShared::GetLightAddBlockDirtyArea
 //
 //==========================================================================
-bool VRenderLevelShared::IsLightAddBlockChanged (vuint32 bnum) {
-  return false;
-}
-
-
-//==========================================================================
-//
-//  VRenderLevelShared::SetLightBlockChanged
-//
-//==========================================================================
-void VRenderLevelShared::SetLightBlockChanged (vuint32 bnum, bool value) {
-}
-
-
-//==========================================================================
-//
-//  VRenderLevelShared::SetLightAddBlockChanged
-//
-//==========================================================================
-void VRenderLevelShared::SetLightAddBlockChanged (vuint32 bnum, bool value) {
+VDirtyArea &VRenderLevelShared::GetLightAddBlockDirtyArea (vuint32 bnum) {
+  return unusedDirty;
 }
 
 

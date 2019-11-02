@@ -400,6 +400,9 @@ protected:
   TVec prevChaseCamPos;
 
 private:
+  VDirtyArea unusedDirty; // required to return reference to it
+
+private:
   inline segpart_t *SurfCreatorGetPSPart () {
     if (pspartsLeft == 0) Sys_Error("internal level surface creation bug");
     --pspartsLeft;
@@ -471,10 +474,8 @@ public:
   // block number+1 or 0
   virtual vuint32 GetLightChainNext (vuint32 bnum) override;
 
-  virtual bool IsLightBlockChanged (vuint32 bnum) override;
-  virtual bool IsLightAddBlockChanged (vuint32 bnum) override;
-  virtual void SetLightBlockChanged (vuint32 bnum, bool value) override;
-  virtual void SetLightAddBlockChanged (vuint32 bnum, bool value) override;
+  virtual VDirtyArea &GetLightBlockDirtyArea (vuint32 bnum) override;
+  virtual VDirtyArea &GetLightAddBlockDirtyArea (vuint32 bnum) override;
   virtual rgba_t *GetLightBlock (vuint32 bnum) override;
   virtual rgba_t *GetLightAddBlock (vuint32 bnum) override;
   virtual surfcache_t *GetLightChainFirst (vuint32 bnum) override;
@@ -774,27 +775,16 @@ private:
 
   // lightmaps
   rgba_t light_block[NUM_BLOCK_SURFS][BLOCK_WIDTH*BLOCK_HEIGHT];
-  bool block_changed[NUM_BLOCK_SURFS];
+  VDirtyArea block_dirty[NUM_BLOCK_SURFS];
   surfcache_t *light_chain[NUM_BLOCK_SURFS];
   LCEntry light_chain_used[NUM_BLOCK_SURFS];
   vuint32 light_chain_head; // entry+1 (i.e. 0 means "none")
 
   // specular lightmaps
   rgba_t add_block[NUM_BLOCK_SURFS][BLOCK_WIDTH*BLOCK_HEIGHT];
-  bool add_changed[NUM_BLOCK_SURFS];
-  /*
-  surfcache_t *add_chain[NUM_BLOCK_SURFS];
-  LCEntry add_chain_used[NUM_BLOCK_SURFS];
-  vuint32 add_chain_head; // entry+1 (i.e. 0 means "none")
-  */
+  VDirtyArea add_block_dirty[NUM_BLOCK_SURFS];
 
   // surface (lightmap) cache
-  /*
-  surfcache_t *freeblocks;
-  surfcache_t *cacheblocks[NUM_BLOCK_SURFS];
-  //surfcache_t blockbuf[NUM_CACHE_BLOCKS];
-  VCacheBlockPool blockpool;
-  */
   VLMapCache lmcache;
   TArray<surface_t *> LMSurfList; // list of all surfaces with lightmaps
   bool nukeLightmapsOnNextFrame;
@@ -862,10 +852,8 @@ public:
   // block number+1 or 0
   virtual vuint32 GetLightChainNext (vuint32 bnum) override;
 
-  virtual bool IsLightBlockChanged (vuint32 bnum) override;
-  virtual bool IsLightAddBlockChanged (vuint32 bnum) override;
-  virtual void SetLightBlockChanged (vuint32 bnum, bool value) override;
-  virtual void SetLightAddBlockChanged (vuint32 bnum, bool value) override;
+  virtual VDirtyArea &GetLightBlockDirtyArea (vuint32 bnum) override;
+  virtual VDirtyArea &GetLightAddBlockDirtyArea (vuint32 bnum) override;
   virtual rgba_t *GetLightBlock (vuint32 bnum) override;
   virtual rgba_t *GetLightAddBlock (vuint32 bnum) override;
   virtual surfcache_t *GetLightChainFirst (vuint32 bnum) override;

@@ -1331,7 +1331,6 @@ bool VRenderLevelLightmap::BuildSurfaceLightmap (surface_t *surface) {
       if (!cache->dlight && surface->dlightframe != currDLightFrame && cache->Light == srflight) {
         chainLightmap(cache);
         //GCon->Logf(NAME_Debug, "unchanged lightmap %p for surface %p", cache, surface);
-        //block_changed[cache->blocknum] = true;
         return true;
       }
     }
@@ -1376,32 +1375,52 @@ bool VRenderLevelLightmap::BuildSurfaceLightmap (surface_t *surface) {
 
   const vuint32 bnum = cache->atlasid;
 
-  for (int j = 0; j < tmax; ++j) {
-    for (int i = 0; i < smax; ++i) {
+  rgba_t *lbp = &light_block[bnum][cache->t*BLOCK_WIDTH+cache->s];
+  unsigned blpos = 0;
+  for (int j = 0; j < tmax; ++j, lbp += BLOCK_WIDTH) {
+    rgba_t *dlbp = lbp;
+    for (int i = 0; i < smax; ++i, ++dlbp, ++blpos) {
+      dlbp->r = 255-clampToByte(blocklightsr[blpos]>>8);
+      dlbp->g = 255-clampToByte(blocklightsg[blpos]>>8);
+      dlbp->b = 255-clampToByte(blocklightsb[blpos]>>8);
+      dlbp->a = 255;
+      /*
       rgba_t &lb = light_block[bnum][(j+cache->t)*BLOCK_WIDTH+i+cache->s];
       lb.r = 255-clampToByte(blocklightsr[j*smax+i]>>8);
       lb.g = 255-clampToByte(blocklightsg[j*smax+i]>>8);
       lb.b = 255-clampToByte(blocklightsb[j*smax+i]>>8);
       lb.a = 255;
+      */
     }
   }
   chainLightmap(cache);
-  block_changed[bnum] = true;
+  //GCon->Logf(NAME_Debug, "000: dirty lmap (%u): (%d,%d,%d,%d)", bnum, block_dirty[bnum].x0, block_dirty[bnum].y1, block_dirty[bnum].x1, block_dirty[bnum].y1);
+  block_dirty[bnum].addDirty(cache->s, cache->t, smax, tmax);
+  //GCon->Logf(NAME_Debug, "001: dirty lmap (%u): (%d,%d,%d,%d)", bnum, block_dirty[bnum].x0, block_dirty[bnum].y1, block_dirty[bnum].x1, block_dirty[bnum].y1);
 
   // specular highlights
-  for (int j = 0; j < tmax; ++j) {
-    for (int i = 0; i < smax; ++i) {
+  lbp = &add_block[bnum][cache->t*BLOCK_WIDTH+cache->s];
+  blpos = 0;
+  for (int j = 0; j < tmax; ++j, lbp += BLOCK_WIDTH) {
+    rgba_t *dlbp = lbp;
+    for (int i = 0; i < smax; ++i, ++dlbp, ++blpos) {
+      dlbp->r = clampToByte(blockaddlightsr[blpos]>>8);
+      dlbp->g = clampToByte(blockaddlightsg[blpos]>>8);
+      dlbp->b = clampToByte(blockaddlightsb[blpos]>>8);
+      dlbp->a = 255;
+      /*
       rgba_t &lb = add_block[bnum][(j+cache->t)*BLOCK_WIDTH+i+cache->s];
       lb.r = clampToByte(blockaddlightsr[j*smax+i]>>8);
       lb.g = clampToByte(blockaddlightsg[j*smax+i]>>8);
       lb.b = clampToByte(blockaddlightsb[j*smax+i]>>8);
       lb.a = 255;
+      */
       //lb.r = lb.g = lb.b = 0;
     }
   }
 
   if (has_specular) {
-    add_changed[bnum] = true;
+    add_block_dirty[bnum].addDirty(cache->s, cache->t, smax, tmax);
   }
 
   return true;

@@ -523,10 +523,25 @@ void VOpenGLDrawer::WorldDrawing () {
       forceAtlasUpdate = 0;
       memset(atlases_updated, 0, sizeof(atlases_updated));
     }
+
     //GCon->Logf(NAME_Debug, "GL: ************ (%u)", RendLev->GetLightChainHead());
     for (vuint32 lcbn = RendLev->GetLightChainHead(); lcbn; lcbn = RendLev->GetLightChainNext(lcbn)) {
       const vuint32 lb = lcbn-1;
       vassert(lb < NUM_BLOCK_SURFS);
+      VDirtyArea &blockDirty = RendLev->GetLightBlockDirtyArea(lb);
+      VDirtyArea &addBlockDirty = RendLev->GetLightAddBlockDirtyArea(lb);
+      // is full atlas update required?
+      if ((atlases_updated[lb]&0x01u) == 0) {
+        atlases_updated[lb] |= 0x01u;
+        blockDirty.addDirty(0, 0, BLOCK_WIDTH, BLOCK_HEIGHT);
+        addBlockDirty.addDirty(0, 0, BLOCK_WIDTH, BLOCK_HEIGHT);
+      } else {
+        /*
+        if (blockDirty.isValid()) {
+          GCon->Logf(NAME_Debug, "GL: *** lightmap atlas #%u (%d,%d,%d,%d)", lb, blockDirty.x0, blockDirty.y0, blockDirty.x1, blockDirty.y1);
+        }
+        */
+      }
       //++lmc;
       //GCon->Logf(NAME_Debug, "GL: *** lightmap atlas #%u (%u : %u)", lb, lmap_id[lb], addmap_id[lb]);
 
@@ -540,12 +555,26 @@ void VOpenGLDrawer::WorldDrawing () {
         );
       }
 
-      if ((atlases_updated[lb]&0x01u) == 0 || RendLev->IsLightBlockChanged(lb)) {
+      // check for lightmap update
+      if (blockDirty.isValid()) {
         //GCon->Logf(NAME_Debug, "GL: updated lightmap atlas #%u", lb);
-        atlases_updated[lb] |= 0x01u;
-        RendLev->SetLightBlockChanged(lb, false);
-        glTexImage2D(GL_TEXTURE_2D, 0, 4, BLOCK_WIDTH, BLOCK_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, RendLev->GetLightBlock(lb));
-        RendLev->SetLightAddBlockChanged(lb, true);
+        //RendLev->SetLightBlockChanged(lb, false);
+        //glTexImage2D(GL_TEXTURE_2D, 0, 4, BLOCK_WIDTH, BLOCK_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, RendLev->GetLightBlock(lb));
+        //RendLev->SetLightAddBlockChanged(lb, true);
+        const int x0 = blockDirty.x0;
+        const int y0 = blockDirty.y0;
+        const int wdt = blockDirty.getWidth();
+        const int hgt = blockDirty.getHeight();
+        if (wdt >= BLOCK_WIDTH && hgt >= BLOCK_HEIGHT) {
+          glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, BLOCK_WIDTH, BLOCK_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, RendLev->GetLightBlock(lb));
+        } else {
+          glPixelStorei(GL_UNPACK_ROW_LENGTH, BLOCK_WIDTH);
+          glTexSubImage2D(GL_TEXTURE_2D, 0,
+            x0, y0, wdt, hgt,
+            GL_RGBA, GL_UNSIGNED_BYTE, RendLev->GetLightBlock(lb)+y0*BLOCK_WIDTH+x0);
+          glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+        }
+        blockDirty.clear();
       }
 
       SelectTexture(2);
@@ -558,11 +587,25 @@ void VOpenGLDrawer::WorldDrawing () {
         );
       }
 
-      if ((atlases_updated[lb]&0x02u) == 0 || RendLev->IsLightAddBlockChanged(lb)) {
+      if (addBlockDirty.isValid()) {
         //GCon->Logf(NAME_Debug, "GL: updated lightmap add atlas #%u", lb);
-        atlases_updated[lb] |= 0x02u;
-        RendLev->SetLightAddBlockChanged(lb, false);
-        glTexImage2D(GL_TEXTURE_2D, 0, 4, BLOCK_WIDTH, BLOCK_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, RendLev->GetLightAddBlock(lb));
+        //atlases_updated[lb] |= 0x02u;
+        //RendLev->SetLightAddBlockChanged(lb, false);
+        //glTexImage2D(GL_TEXTURE_2D, 0, 4, BLOCK_WIDTH, BLOCK_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, RendLev->GetLightAddBlock(lb));
+        const int x0 = addBlockDirty.x0;
+        const int y0 = addBlockDirty.y0;
+        const int wdt = addBlockDirty.getWidth();
+        const int hgt = addBlockDirty.getHeight();
+        if (wdt >= BLOCK_WIDTH && hgt >= BLOCK_HEIGHT) {
+          glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, BLOCK_WIDTH, BLOCK_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, RendLev->GetLightAddBlock(lb));
+        } else {
+          glPixelStorei(GL_UNPACK_ROW_LENGTH, BLOCK_WIDTH);
+          glTexSubImage2D(GL_TEXTURE_2D, 0,
+            x0, y0, wdt, hgt,
+            GL_RGBA, GL_UNSIGNED_BYTE, RendLev->GetLightAddBlock(lb)+y0*BLOCK_WIDTH+x0);
+          glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+        }
+        addBlockDirty.clear();
       }
 
       SelectTexture(0);
