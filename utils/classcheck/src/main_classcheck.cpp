@@ -709,6 +709,7 @@ void parseShitppClassStruct (SemParser *par, bool isClass, bool isTypedefStruct=
       for (;;) {
         if (par->eat("override")) continue;
         if (par->eat("const")) continue;
+        if (par->eat("noexcept")) continue;
         break;
       }
       if (par->eat(":")) {
