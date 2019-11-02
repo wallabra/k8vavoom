@@ -2349,8 +2349,8 @@ void Attack (bool newTick) {
     org.z += botmo.Height*0.5-botmo.FloorClip+player.GetAttackZOfs;
 
     TVec hp, norm;
-    // `TraceLine()` returns `false` on hit
-    if (!doFire || !botmo.XLevel.TraceLine(org, eorig, out hp, out norm)) {
+    // `BSPTraceLine()` returns `false` on hit
+    if (!doFire || !botmo.XLevel.BSPTraceLine(org, eorig, out hp, out norm)) {
       // try sidemove
       EntityEx::PathInfo piLeft;
       if (botmo.TracePath(GetAngle()-90, SIDEWALK, out piLeft, allowJump:true)) {

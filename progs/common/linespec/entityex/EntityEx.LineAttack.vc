@@ -305,11 +305,11 @@ final void DebugCheckMidTex () {
 
 //==========================================================================
 //
-// TraceLineEx
+//  TraceLineEx
 //
-// Trace line to the wall or entity.
-// Returns `true` if wall was hit.
-// Returns `false` if floor/ceiling was hit, or nothing was hit.
+//  Trace line to the wall or entity.
+//  Returns `true` if wall was hit.
+//  Returns `false` if floor/ceiling was hit, or nothing was hit.
 //
 //==========================================================================
 final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, optional trsplat_t *tr, optional bool stopat3dmidtex, optional bool nozofs) {

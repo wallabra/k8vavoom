@@ -1047,15 +1047,26 @@ struct intercept_t {
 
 
 struct linetrace_t {
+public:
   TVec Start;
   TVec End;
   TVec Delta;
-  TPlane Plane; // from t1 to t2
   TVec LineStart;
   TVec LineEnd;
   vuint32 PlaneNoBlockFlags;
+  // subsector we ended in (can be arbitrary if trace doesn't end in map boundaries)
+  // valid only for `TraceLine()` call (i.e. BSP trace)
+  subsector_t *EndSubsector;
+  // the following fields are valid only if trace was failed
   TVec HitPlaneNormal;
-  bool SightEarlyOut;
+  TPlane HitPlane;
+  line_t *HitLine; // can be `nullptr` if we hit a floor/ceiling
+  enum {
+    SightEarlyOut = 1u<<0,  // set if line is not two-sided
+  };
+  vuint32 Flags;
+//private:
+  TPlane LinePlane; // vertical plane for (Start,End), used only for line checks; may be undefined
 };
 
 

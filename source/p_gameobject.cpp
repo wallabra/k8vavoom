@@ -723,5 +723,5 @@ IMPLEMENT_FUNCTION(VGameObject, CheckHitPlanes) {
   P_GET_BOOL(checkBounds);
   P_GET_PTR(sector_t, sector);
 
-  RET_BOOL(VLevel::CheckHitPlanes(sector, checkBounds, linestart, lineend, (unsigned)flagmask, outHitPoint, outHitNormal, outIsSky));
+  RET_BOOL(VLevel::CheckHitPlanes(sector, checkBounds, linestart, lineend, (unsigned)flagmask, outHitPoint, outHitNormal, outIsSky, nullptr));
 }

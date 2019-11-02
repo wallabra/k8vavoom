@@ -604,7 +604,7 @@ public:
   static bool CheckPlaneHit (const TSecPlaneRef &plane, const TVec &linestart, const TVec &lineend, TVec &currhit, bool &isSky, const float threshold=0.0f);
   // if `checkSectorBounds` is false, skip checking sector bounds (and the first sector region)
   static bool CheckHitPlanes (sector_t *sector, bool checkSectorBounds, TVec linestart, TVec lineend, unsigned flagmask,
-                              TVec *outHitPoint, TVec *outHitNormal, bool *outIsSky, const float threshold=0.0f);
+                              TVec *outHitPoint, TVec *outHitNormal, bool *outIsSky, TPlane *outHitPlane, const float threshold=0.0f);
 
 public:
   #define VL_ITERATOR(arrname_,itername_,itertype_) \
@@ -808,9 +808,9 @@ private:
   // internal TraceLine methods
   //bool CheckPlane (linetrace_t &, const TSecPlaneRef &Plane) const;
   //bool CheckPlanes (linetrace_t &, sector_t *) const;
-  bool CheckLine (linetrace_t &, seg_t *) const;
-  bool CrossSubsector (linetrace_t &, int) const;
-  bool CrossBSPNode (linetrace_t &, int) const;
+  bool CheckLine (linetrace_t &trace, seg_t *seg) const;
+  bool CrossSubsector (linetrace_t &trace, int num) const;
+  bool CrossBSPNode (linetrace_t &trace, int BspNum) const;
 
   int SetBodyQueueTrans (int, int);
 
@@ -876,7 +876,8 @@ private:
 
   DECLARE_FUNCTION(PointInSector)
   DECLARE_FUNCTION(PointInSubsector)
-  DECLARE_FUNCTION(TraceLine)
+  DECLARE_FUNCTION(BSPTraceLine)
+  DECLARE_FUNCTION(BSPTraceLineEx)
   DECLARE_FUNCTION(ChangeSector)
   DECLARE_FUNCTION(ChangeOneSectorInternal)
   DECLARE_FUNCTION(AddExtraFloor)

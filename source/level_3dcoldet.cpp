@@ -151,6 +151,8 @@ float VLevel::SweepLinedefAABB (const line_t *ld, TVec vstart, TVec vend, TVec b
 //
 //  WARNING: `currhit` should not be the same as `lineend`!
 //
+//  returns `true` if plane wasn't hit
+//
 //==========================================================================
 bool VLevel::CheckPlaneHit (const TSecPlaneRef &plane, const TVec &linestart, const TVec &lineend, TVec &currhit, bool &isSky, const float threshold) {
   const float orgDist = plane.DotPointDist(linestart);
@@ -182,6 +184,7 @@ bool VLevel::CheckPlaneHit (const TSecPlaneRef &plane, const TVec &linestart, co
       bestIsSky = isSky; \
       besthdist = dist; \
       bestNormal = (plane_).GetNormal(); \
+      if (outHitPlane) bestHitPlane = (plane_).GetPlane(); \
     } \
     wasHit = true; \
   } \
@@ -199,9 +202,11 @@ bool VLevel::CheckPlaneHit (const TSecPlaneRef &plane, const TVec &linestart, co
 //
 //  any `outXXX` can be `nullptr`
 //
+//  returns `true` if no hit was detected
+//
 //==========================================================================
 bool VLevel::CheckHitPlanes (sector_t *sector, bool checkSectorBounds, TVec linestart, TVec lineend, unsigned flagmask,
-                             TVec *outHitPoint, TVec *outHitNormal, bool *outIsSky, const float threshold)
+                             TVec *outHitPoint, TVec *outHitNormal, bool *outIsSky, TPlane *outHitPlane, const float threshold)
 {
   if (!sector) return true;
 
@@ -210,8 +215,13 @@ bool VLevel::CheckHitPlanes (sector_t *sector, bool checkSectorBounds, TVec line
   bool bestIsSky = false;
   TVec currhit(0.0f, 0.0f, 0.0f);
   bool wasHit = false;
+  #ifdef INFINITY
+  float besthdist = INFINITY;
+  #else
   float besthdist = 9999999.0f;
+  #endif
   bool isSky = false;
+  TPlane bestHitPlane;
 
   if (checkSectorBounds) {
     // make fake floors and ceilings block view
@@ -241,6 +251,7 @@ bool VLevel::CheckHitPlanes (sector_t *sector, bool checkSectorBounds, TVec line
     if (outHitPoint) *outHitPoint = besthit;
     if (outHitNormal) *outHitNormal = bestNormal;
     if (outIsSky) *outIsSky = bestIsSky;
+    if (outHitPlane) *outHitPlane = bestHitPlane;
     return false;
   } else {
     return true;
