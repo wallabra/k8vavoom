@@ -447,6 +447,7 @@ extern VCvarB r_brightmaps_sprite;
 extern VCvarB r_brightmaps_additive;
 extern VCvarB r_brightmaps_filter;
 extern VCvarB r_glow_flat;
+extern VCvarB gl_lmap_allow_partial_updates;
 
 
 // ////////////////////////////////////////////////////////////////////////// //

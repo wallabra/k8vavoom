@@ -593,7 +593,7 @@ void VOpenGLDrawer::WorldDrawing () {
         const int y0 = blockDirty.y0;
         const int wdt = blockDirty.getWidth();
         const int hgt = blockDirty.getHeight();
-        if (wdt >= BLOCK_WIDTH && hgt >= BLOCK_HEIGHT) {
+        if ((wdt >= BLOCK_WIDTH && hgt >= BLOCK_HEIGHT) || !gl_lmap_allow_partial_updates) {
           glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, BLOCK_WIDTH, BLOCK_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, RendLev->GetLightBlock(lb));
         } else {
           glPixelStorei(GL_UNPACK_ROW_LENGTH, BLOCK_WIDTH);
@@ -624,7 +624,7 @@ void VOpenGLDrawer::WorldDrawing () {
         const int y0 = addBlockDirty.y0;
         const int wdt = addBlockDirty.getWidth();
         const int hgt = addBlockDirty.getHeight();
-        if (wdt >= BLOCK_WIDTH && hgt >= BLOCK_HEIGHT) {
+        if ((wdt >= BLOCK_WIDTH && hgt >= BLOCK_HEIGHT) || !gl_lmap_allow_partial_updates) {
           glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, BLOCK_WIDTH, BLOCK_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, RendLev->GetLightAddBlock(lb));
         } else {
           glPixelStorei(GL_UNPACK_ROW_LENGTH, BLOCK_WIDTH);

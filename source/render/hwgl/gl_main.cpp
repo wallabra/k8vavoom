@@ -110,6 +110,8 @@ VCvarB r_brightmaps_filter("r_brightmaps_filter", true, "Do bilinear filtering o
 
 VCvarB r_glow_flat("r_glow_flat", true, "Allow glowing flats?", CVAR_Archive);
 
+VCvarB gl_lmap_allow_partial_updates("gl_lmap_allow_partial_updates", true, "Allow partial updates of lightmap atlases (this is usually faster than full updates)?", CVAR_Archive);
+
 
 //==========================================================================
 //
