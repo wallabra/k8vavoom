@@ -676,10 +676,12 @@ static void DoCompatFlag (VScriptParser *sc, mapInfo_t *info, int Flag) {
   int Set = 1;
   sc->Check("=");
   if (sc->CheckNumber()) Set = sc->Number;
-  if (Set) {
-    info->Flags2 |= Flag;
-  } else {
-    info->Flags2 &= ~Flag;
+  if (Flag) {
+    if (Set) {
+      info->Flags2 |= Flag;
+    } else {
+      info->Flags2 &= ~Flag;
+    }
   }
 }
 
@@ -929,6 +931,7 @@ MAPINFOCMD(compat_dropoff) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatDropO
 MAPINFOCMD(compat_boomscroll) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatBoomScroll); }
 MAPINFOCMD(additive_scrollers) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatBoomScroll); }
 MAPINFOCMD(compat_invisibility) { DoCompatFlag(sc, info, VLevelInfo::LIF2_CompatInvisibility); }
+MAPINFOCMD(compat_sectorsounds) { DoCompatFlag(sc, info, 0); }
 
 // ////////////////////////////////////////////////////////////////////////// //
 MAPINFOCMD(noinfighting) { info->Infighting = -1; }
