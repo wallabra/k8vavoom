@@ -1587,9 +1587,18 @@ void VRenderLevelShared::InitialWorldUpdate () {
 //  VRenderLevelShared::FullWorldUpdate
 //
 //==========================================================================
-void VRenderLevelShared::FullWorldUpdate () {
+void VRenderLevelShared::FullWorldUpdate (bool forceClientOrigin) {
+  TVec oldVO = vieworg;
+  if (forceClientOrigin && cl) {
+    GCon->Log(NAME_Debug, "performing full world update with client view origin");
+    vieworg = cl->ViewOrg;
+    //GCon->Logf(NAME_Debug, "*** vo=(%g,%g,%g)", vieworg.x, vieworg.y, vieworg.z);
+  } else {
+    GCon->Log(NAME_Debug, "performing full world update...");
+  }
   InitialWorldUpdate();
   UpdateFakeSectors();
+  vieworg = oldVO;
 }
 
 

@@ -482,7 +482,7 @@ public:
 
   virtual void NukeLightmapCache () override;
 
-  virtual void FullWorldUpdate () override;
+  virtual void FullWorldUpdate (bool forceClientOrigin) override;
 
 public:
   static vuint32 CountSurfacesInChain (const surface_t *s) noexcept;

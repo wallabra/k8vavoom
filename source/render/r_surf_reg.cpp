@@ -1246,6 +1246,8 @@ void VRenderLevelLightmap::PreRender () {
 
   CreateWorldSurfaces();
 
+  if (cl) FullWorldUpdate(true);
+
   // lightmapping
   bool doReadCache = (!Level->cacheFileBase.isEmpty() && loader_cache_data.asBool() && (Level->cacheFlags&VLevel::CacheFlag_Ignore) == 0);
   bool doWriteCache = (!Level->cacheFileBase.isEmpty() && loader_cache_data.asBool());
