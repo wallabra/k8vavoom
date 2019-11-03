@@ -210,6 +210,9 @@ override void Init () {
   CreateCvar('k8BerserkSwitch', (IsReleaseMode ? "1" : "0"), "Switch to fist when Berserker Pack taken.", CVAR_ARCHIVE|CVAR_SERVERINFO);
   CreateCvar('k8BerserkTint', "", "Berserk powerup tint color..", CVAR_ARCHIVE);
 
+  CreateCvar('k8StealthFist', "1", "Should fist attack alert monsters only when some monster was injured?.", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvar('k8StealthChainsaw', "1", "Should chainsaw attack alert monsters only when some monster was hit?", CVAR_ARCHIVE|CVAR_SERVERINFO);
+
   CreateCvar('k8BonusFlashMaxTime', "0", "Maximum bonus flash time, in sectonds (<=0 is unlimited; one bonus is 0.2).", CVAR_ARCHIVE);
 
   CreateCvar('k8TraceDebug', "0", "Line trace debug mode", 0);

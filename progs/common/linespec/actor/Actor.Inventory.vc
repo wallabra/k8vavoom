@@ -250,6 +250,8 @@ final void DoTakeInventory (class!Inventory ItemType, int Amount, EntityEx Recei
 //
 //  A_Punch
 //
+//  arguments are ignored
+//
 //===========================================================================
 [decorate] final void A_Punch (optional bool alertIfHit, optional bool noAlertIfKilled) {
   if (bIsPlayer) {
@@ -270,11 +272,16 @@ final void DoTakeInventory (class!Inventory ItemType, int Amount, EntityEx Recei
   EntityEx hitEntity;
   LineAttack(dir, MELEERANGE, damage, BulletPuff, default, default, 'Fist', out hitEntity:hitEntity);
 
-  if (alertIfHit && hitEntity) {
-    //print("FIST HIT: ent=%C (health=%s of %s)", hitEntity, hitEntity.Health, hitEntity.InitialHealth);
-    if (!noAlertIfKilled || hitEntity.Health > 0) {
-      LineSpecialLevelInfo(Level).NoiseAlert(self, self);
+  bool stealth = GetCvarB('k8StealthFist');
+  if (stealth) {
+    if (/*alertIfHit &&*/ hitEntity) {
+      //print("FIST HIT: ent=%C (health=%s of %s)", hitEntity, hitEntity.Health, hitEntity.InitialHealth);
+      if (hitEntity.Health > 0) {
+        LineSpecialLevelInfo(Level).NoiseAlert(self, self);
+      }
     }
+  } else {
+    LineSpecialLevelInfo(Level).NoiseAlert(self, self);
   }
 
   // turn to face target

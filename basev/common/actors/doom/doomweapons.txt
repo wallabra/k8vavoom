@@ -29,8 +29,7 @@ actor Fist : Weapon
     Loop
   Fire:
     PUNG B 4
-    // alert if hit something, but don't alert if killed it
-    PUNG C 4 A_Punch(true, true)
+    PUNG C 4 A_Punch
     PUNG D 5
     PUNG C 4
     PUNG B 5 A_ReFire
@@ -67,8 +66,7 @@ actor Chainsaw : Weapon 2005
     SAWG C 1 A_Raise
     Loop
   Fire:
-    // alert if hit something, alert if killed it
-    SAWG AB 4 A_SawEx8(true)
+    SAWG AB 4 A_Saw
     SAWG B 0 A_ReFire
     Goto Ready
   Spawn:

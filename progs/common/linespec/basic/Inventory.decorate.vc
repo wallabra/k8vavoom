@@ -318,11 +318,11 @@
 
 //===========================================================================
 //
-//  A_Saw
+//  A_SawEx8
 //
 //===========================================================================
-[decorate] final void A_Saw (optional bool alertIfHit, optional bool noAlertIfKilled) {
-  decorate_A_Saw(alertIfHit:alertIfHit!optional, noAlertIfKilled:noAlertIfKilled!optional);
+[decorate] final void A_SawEx8 (optional bool alertIfHit, optional bool noAlertIfKilled) {
+  A_Saw();
 }
 
 
@@ -331,21 +331,11 @@
 //  A_Saw
 //
 //===========================================================================
-[decorate] final void decorate_A_SawEx8 (optional bool alertIfHit, optional bool noAlertIfKilled) {
-  decorate_A_Saw(alertIfHit:alertIfHit!optional, noAlertIfKilled:noAlertIfKilled!optional);
-}
-
-
-//===========================================================================
-//
-//  decorate_A_Saw
-//
-//===========================================================================
-[decorate] final void decorate_A_Saw (optional name FullSound, optional name HitSound,
+[decorate] final void A_Saw (optional name FullSound, optional name HitSound,
   optional int SawDamage, optional class!Actor PuffType,
   optional int flags, optional float range, optional float spread_xy, optional float spread_z,
-  optional float lifesteal, optional float lifestealmax, optional string armorbonustype,
-  optional bool alertIfHit, optional bool noAlertIfKilled) self(Actor)
+  optional float lifesteal, optional float lifestealmax, optional string armorbonustype/*,
+  optional bool alertIfHit, optional bool noAlertIfKilled*/) self(Actor)
 {
   TVec dir;
 
@@ -382,15 +372,22 @@
   TAVec aimAng = Angles;
   aimAng.yaw = AngleMod360(aimAng.yaw+(Random()-Random())*45.0/8.0);
 
+  bool stealth = GetCvarB('k8StealthChainsaw');
   EntityEx AimTarget = AimLineAttack(dir, aimAng, range/*SAWRANGE*/);
   EntityEx hitEntity;
   LineAttack(dir, /*SAWRANGE*/range, damage, PuffType, default, default, 'Chainsaw', out hitEntity:hitEntity);
 
-  if (alertIfHit && hitEntity) {
-    //print("SAW HIT: ent=%C (health=%s of %s)", hitEntity, hitEntity.Health, hitEntity.InitialHealth);
-    if (!noAlertIfKilled || hitEntity.Health > 0) {
-      LineSpecialLevelInfo(Level).NoiseAlert(self, self);
+  if (stealth) {
+    if (/*alertIfHit &&*/ hitEntity) {
+      //print("SAW HIT: ent=%C (health=%s of %s)", hitEntity, hitEntity.Health, hitEntity.InitialHealth);
+      // always
+      //if (!noAlertIfKilled || hitEntity.Health > 0)
+      {
+        LineSpecialLevelInfo(Level).NoiseAlert(self, self);
+      }
     }
+  } else {
+    LineSpecialLevelInfo(Level).NoiseAlert(self, self);
   }
 
   if (!AimTarget) {

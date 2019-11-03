@@ -24,12 +24,13 @@ menudef GameplayOptions {
   option bool {
     title = "Better sight for monsters";
     cvar = compat_better_sight;
-    help = "Do slightly better (and slower) line-of-sight checking for monsters.";
+    help = "Perform slightly better (and slower) line-of-sight checking for monsters.";
   }
 
   option bool {
     title = "Player Death Infighting";
     cvar = gm_death_infighting;
+    help = "Should monsters start total infighting after player death?";
   }
 
 
@@ -77,6 +78,34 @@ menudef GameplayOptions {
   }
 
 
+  header "Pickup/Weapon Behaviour";
+
+  option bool {
+    title = "Berserk autoswitch";
+    cvar = k8BerserkSwitch;
+    help = "\cGWARNING! This may not work for custom weapon packs.";
+  }
+
+  option bool {
+    title = "Stealth Fist";
+    cvar = k8StealthFist;
+    help =
+      "If your fist attack doesn't hit any monster, or monster was"
+      "immediately killed, other monsters will not be alerted."
+      "This can be used for limited 'stealth' gameplay."
+      "\cGWARNING! This may not work for custom weapon packs.";
+  }
+
+  option bool {
+    title = "Stealth Chainsaw";
+    cvar = k8StealthChainsaw;
+    help =
+      "If your chainsaw attack doesn't hit any monster, or monster was"
+      "immediately killed, other monsters will not be alerted."
+      "This can be used for limited 'stealth' gameplay."
+      "\cGWARNING! This may not work for custom weapon packs.";
+  }
+
   //TODO
   //if (GameName == "hexen") CreateOnOffCvar("Alt. Monster Behaviour", 'alternate_monster_attacks');
 
@@ -109,12 +138,6 @@ menudef GameplayOptions {
   option bool {
     title = "Use Slot 11 in Weapon Cycling";
     cvar = wp_cycle_special_slot;
-  }
-
-  option bool {
-    title = "Berserk autoswitch";
-    cvar = k8BerserkSwitch;
-    help = "\cGWARNING! This may not work for custom weapon packs.";
   }
 
   option bool {
