@@ -1596,8 +1596,8 @@ void VRenderLevelShared::FullWorldUpdate (bool forceClientOrigin) {
   } else {
     GCon->Log(NAME_Debug, "performing full world update...");
   }
-  InitialWorldUpdate();
   UpdateFakeSectors();
+  InitialWorldUpdate();
   vieworg = oldVO;
 }
 
