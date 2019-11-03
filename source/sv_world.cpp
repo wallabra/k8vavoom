@@ -414,7 +414,7 @@ static void Insert3DMidtex (TArray<opening_t> &dest, const sector_t *sector, con
 //
 //==========================================================================
 static void BuildSectorOpenings (const line_t *xldef, TArray<opening_t> &dest, sector_t *sector, const TVec point,
-                                 unsigned NoBlockFlags, bool linkList, bool usePoint, bool skipNonSolid=false)
+                                 unsigned NoBlockFlags, bool linkList, bool usePoint, bool skipNonSolid=false, bool forSurface=false)
 {
   dest.reset();
   // if this sector has no 3d floors, we don't need to do any extra work
@@ -446,6 +446,11 @@ static void BuildSectorOpenings (const line_t *xldef, TArray<opening_t> &dest, s
     }
     */
     if (((reg->efloor.splane->flags|reg->eceiling.splane->flags)&NoBlockFlags) != 0) continue; // bad flags
+    // hack: 3d floor with sky texture seems to be transparent in renderer
+    if (forSurface && reg->extraline) {
+      const side_t *sidedef = &GLevel->Sides[reg->extraline->sidenum[0]];
+      if (sidedef->MidTexture == skyflatnum) continue;
+    }
     // border points
     float fz = reg->efloor.splane->minz;
     float cz = reg->eceiling.splane->maxz;
@@ -594,7 +599,7 @@ static void BuildSectorOpenings (const line_t *xldef, TArray<opening_t> &dest, s
 opening_t *SV_SectorOpenings (sector_t *sector, bool skipNonSolid) {
   vassert(sector);
   static TArray<opening_t> oplist;
-  BuildSectorOpenings(nullptr, oplist, sector, TVec::ZeroVector, 0, true/*linkList*/, false/*usePoint*/, skipNonSolid);
+  BuildSectorOpenings(nullptr, oplist, sector, TVec::ZeroVector, 0, true/*linkList*/, false/*usePoint*/, skipNonSolid, true/*forSurface*/);
   vassert(oplist.length() > 0);
   return oplist.ptr();
 }
@@ -625,7 +630,7 @@ opening_t *SV_SectorOpenings2 (sector_t *sector, bool skipNonSolid) {
   */
   vassert(sector);
   static TArray<opening_t> oplist;
-  BuildSectorOpenings(nullptr, oplist, sector, TVec::ZeroVector, 0, true/*linkList*/, false/*usePoint*/, skipNonSolid);
+  BuildSectorOpenings(nullptr, oplist, sector, TVec::ZeroVector, 0, true/*linkList*/, false/*usePoint*/, skipNonSolid, true/*forSurface*/);
   vassert(oplist.length() > 0);
   return oplist.ptr();
 }

@@ -1077,6 +1077,7 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
 
   //bool doDump = false;
   enum { doDump = 0 };
+  //bool doDump = (sidedef->MidTexture.id == 1713);
 
   /*
   if (seg->frontsector-&Level->Sectors[0] == 70) {
@@ -1102,6 +1103,8 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
   }
   */
 
+  if (doDump) GCon->Logf(NAME_Debug, "*** line #%d ***", (int)(ptrdiff_t)(linedef-&Level->Lines[0]));
+
   SetupTextureAxesOffset(seg, &sp->texinfo, MTex, &sidedef->Mid);
 
   const float texh = DivByScale(MTex->GetScaledHeight(), sidedef->Mid.ScaleY);
@@ -1118,7 +1121,8 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
   sp->texinfo.Alpha = (reg->efloor.splane->Alpha < 1.0f ? reg->efloor.splane->Alpha : 1.1f);
   sp->texinfo.Additive = !!(reg->efloor.splane->flags&SPF_ADDITIVE);
 
-  if (MTex->Type != TEXTYPE_Null) {
+  // hack: 3d floor with sky texture seems to be transparent in renderer
+  if (MTex->Type != TEXTYPE_Null && sidedef->MidTexture.id != skyflatnum) {
     TVec wv[4];
 
     //const bool wrapped = !!((linedef->flags&ML_WRAP_MIDTEX)|(sidedef->Flags&SDF_WRAPMIDTEX));
@@ -1180,8 +1184,13 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
       for (surface_t *sf = sp->surfs; sf; sf = sf->next) sf->drawflags |= surface_t::DF_NO_FACE_CULL;
     }
   } else {
-    sp->texinfo.Alpha = 1.1f;
-    sp->texinfo.Additive = false;
+    if (sidedef->MidTexture.id != skyflatnum) {
+      sp->texinfo.Alpha = 1.1f;
+      sp->texinfo.Additive = false;
+    } else {
+      sp->texinfo.Alpha = 0.0f;
+      sp->texinfo.Additive = true;
+    }
   }
 
   sp->frontTopDist = r_ceiling.splane->dist;
@@ -1258,6 +1267,10 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
     bool opsCreated = false;
     for (sec_region_t *reg = seg->backsector->eregions->next; reg; reg = reg->next) {
       if (!reg->extraline) continue; // no need to create extra side
+
+      // hack: 3d floor with sky texture seems to be transparent in renderer
+      const side_t *sidedef = &Level->Sides[reg->extraline->sidenum[0]];
+      if (sidedef->MidTexture == skyflatnum) continue;
 
       sp = SurfCreatorGetPSPart();
       sp->basereg = reg;
@@ -1466,7 +1479,11 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     for (sp = dseg->extra; sp; sp = sp->next) {
       sec_region_t *reg = sp->basereg;
       vassert(reg->extraline);
-      side_t *extraside = &Level->Sides[reg->extraline->sidenum[0]];
+      const side_t *extraside = &Level->Sides[reg->extraline->sidenum[0]];
+
+      // hack: 3d floor with sky texture seems to be transparent in renderer
+      // it should not end here, though, so skip the check
+      //if (extraside->MidTexture == skyflatnum) continue;
 
       VTexture *MTex = GTextureManager(extraside->MidTexture);
       if (!MTex) MTex = GTextureManager[GTextureManager.DefaultTexture];
@@ -1602,11 +1619,21 @@ void VRenderLevelShared::CreateWorldSurfaces () {
       r_floor = reg->efloor;
       r_ceiling = reg->eceiling;
 
+      bool skipFloor = !!(reg->regflags&sec_region_t::RF_SkipFloorSurf);
+      bool skipCeil = !!(reg->regflags&sec_region_t::RF_SkipCeilSurf);
+      if (ridx != 0 && reg->extraline) {
+        // hack: 3d floor with sky texture seems to be transparent in renderer
+        const side_t *extraside = &Level->Sides[reg->extraline->sidenum[0]];
+        if (extraside->MidTexture == skyflatnum) {
+          skipFloor = skipCeil = true;
+        }
+      }
+
       sreg->secregion = reg;
       sreg->floorplane = r_floor;
       sreg->ceilplane = r_ceiling;
-      sreg->realfloor = (reg->regflags&sec_region_t::RF_SkipFloorSurf ? nullptr : CreateSecSurface(nullptr, sub, r_floor));
-      sreg->realceil = (reg->regflags&sec_region_t::RF_SkipCeilSurf ? nullptr : CreateSecSurface(nullptr, sub, r_ceiling));
+      sreg->realfloor = (skipFloor ? nullptr : CreateSecSurface(nullptr, sub, r_floor));
+      sreg->realceil = (skipCeil ? nullptr : CreateSecSurface(nullptr, sub, r_ceiling));
 
       // create fake floor and ceiling
       if (ridx == 0 && sub->sector->fakefloors) {
@@ -1615,8 +1642,11 @@ void VRenderLevelShared::CreateWorldSurfaces () {
         fakeceil.set(&sub->sector->fakefloors->ceilplane, false);
         if (!fakefloor.isFloor()) fakefloor.Flip();
         if (!fakeceil.isCeiling()) fakeceil.Flip();
-        sreg->fakefloor = (reg->regflags&sec_region_t::RF_SkipFloorSurf ? nullptr : CreateSecSurface(nullptr, sub, fakefloor));
-        sreg->fakeceil = (reg->regflags&sec_region_t::RF_SkipCeilSurf ? nullptr : CreateSecSurface(nullptr, sub, fakeceil));
+        sreg->fakefloor = (skipFloor ? nullptr : CreateSecSurface(nullptr, sub, fakefloor));
+        sreg->fakeceil = (skipCeil ? nullptr : CreateSecSurface(nullptr, sub, fakeceil));
+      } else {
+        sreg->fakefloor = nullptr;
+        sreg->fakeceil = nullptr;
       }
 
       sreg->count = sub->numlines;
