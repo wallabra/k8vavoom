@@ -669,6 +669,10 @@ protected:
 protected:
   virtual void RefilterStaticLights ();
 
+  // used to get a floor to sample lightmap
+  // WARNING! can return `nullptr`!
+  sec_surface_t *GetNearestFloor (const subsector_t *sub, const TVec &p);
+
   // this is common code for light point calculation
   // pass light values from ambient pass
   void CalculateDynLightSub (float &l, float &lr, float &lg, float &lb, const subsector_t *sub, const TVec &p, float radius, float height, const TPlane *surfplane);

@@ -662,6 +662,175 @@ void VRenderLevelShared::CalculateSubStatic (float &l, float &lr, float &lg, flo
 
 //==========================================================================
 //
+//  getFPlaneDist
+//
+//==========================================================================
+static inline float getFPlaneDist (const sec_surface_t *floor, const TVec &p) {
+  //const float d = floor->PointDist(p);
+  if (floor) {
+    const float z = floor->esecplane.GetPointZClamped(p);
+    if (floor->esecplane.GetNormalZ() > 0.0f) {
+      // floor
+      if (p.z < z) {
+        GCon->Logf(NAME_Debug, "skip floor: p.z=%g; fz=%g", p.z, z);
+        return -1.0f;
+      }
+      GCon->Logf(NAME_Debug, "floor: p.z=%g; fz=%g; d=%g", p.z, z, p.z-z);
+      return p.z-z;
+    } else {
+      // ceiling
+      if (p.z >= z) {
+        GCon->Logf(NAME_Debug, "skip ceiling: p.z=%g; cz=%g", p.z, z);
+        return -1.0f;
+      }
+      GCon->Logf(NAME_Debug, "floor: p.z=%g; cz=%g; d=%g", p.z, z, z-p.z);
+      return z-p.z;
+    }
+  } else {
+    return -1.0f;
+  }
+}
+
+
+//==========================================================================
+//
+//  SV_DebugFindNearestFloor
+//
+//==========================================================================
+sec_surface_t *SV_DebugFindNearestFloor (subsector_t *sub, const TVec &p) {
+  sec_surface_t *rfloor = nullptr;
+  //reg = sub->regions;
+  float bestdist = 999999.0f;
+  for (subregion_t *r = sub->regions; r; r = r->next) {
+    //const float d = DotProduct(p, reg->floor->secplane->normal)-reg->floor->secplane->dist;
+    // floors
+    {
+      const float d = getFPlaneDist(r->fakefloor, p);
+      if (d >= 0.0f && d < bestdist) {
+        bestdist = d;
+        rfloor = r->fakefloor;
+        GCon->Log(NAME_Debug, "  HIT!");
+      }
+    }
+    {
+      const float d = getFPlaneDist(r->realfloor, p);
+      if (d >= 0.0f && d < bestdist) {
+        bestdist = d;
+        rfloor = r->realfloor;
+        GCon->Log(NAME_Debug, "  HIT!");
+      }
+    }
+    // ceilings
+    {
+      const float d = getFPlaneDist(r->fakeceil, p);
+      if (d >= 0.0f && d < bestdist) {
+        bestdist = d;
+        rfloor = r->fakeceil;
+        GCon->Log(NAME_Debug, "  HIT!");
+      }
+    }
+    {
+      const float d = getFPlaneDist(r->realceil, p);
+      if (d >= 0.0f && d < bestdist) {
+        bestdist = d;
+        rfloor = r->realceil;
+        GCon->Log(NAME_Debug, "  HIT!");
+      }
+    }
+  }
+
+  if (rfloor /*&& !IsShadowVolumeRenderer()*/) {
+    int s = (int)(DotProduct(p, rfloor->texinfo.saxis)+rfloor->texinfo.soffs);
+    int t = (int)(DotProduct(p, rfloor->texinfo.taxis)+rfloor->texinfo.toffs);
+    int ds, dt;
+    for (surface_t *surf = rfloor->surfs; surf; surf = surf->next) {
+      if (surf->lightmap == nullptr) continue;
+      if (surf->count < 3) continue; // wtf?!
+      //if (s < surf->texturemins[0] || t < surf->texturemins[1]) continue;
+
+      ds = s-surf->texturemins[0];
+      dt = t-surf->texturemins[1];
+
+      if (ds < 0 || dt < 0 || ds > surf->extents[0] || dt > surf->extents[1]) continue;
+
+      GCon->Logf(NAME_Debug, "  lightmap hit! (%d,%d)", ds, dt);
+      if (surf->lightmap_rgb) {
+        //l += surf->lightmap[(ds>>4)+(dt>>4)*((surf->extents[0]>>4)+1)];
+        const rgb_t *rgbtmp = &surf->lightmap_rgb[(ds>>4)+(dt>>4)*((surf->extents[0]>>4)+1)];
+        GCon->Logf(NAME_Debug, "    (%d,%d,%d)", rgbtmp->r, rgbtmp->g, rgbtmp->b);
+      } else {
+        int ltmp = surf->lightmap[(ds>>4)+(dt>>4)*((surf->extents[0]>>4)+1)];
+        GCon->Logf(NAME_Debug, "    (%d)", ltmp);
+      }
+      break;
+    }
+  }
+
+  return rfloor;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::GetNearestFloor
+//
+//  used to find a lightmap
+//  slightly wrong (we should process ceilings too, and use nearest lmap)
+//  also note that to process floors/ceilings it is better to use
+//  sprite height center
+//
+//==========================================================================
+sec_surface_t *VRenderLevelShared::GetNearestFloor (const subsector_t *sub, const TVec &p) {
+  if (!sub) return nullptr;
+  sec_surface_t *rfloor = nullptr;
+  float bestdist = 999999.0f;
+  for (subregion_t *r = sub->regions; r; r = r->next) {
+    sec_surface_t *floor;
+    // floors
+    floor = r->fakefloor;
+    if (floor && floor->esecplane.GetNormalZ() > 0.0f) {
+      const float z = floor->esecplane.GetPointZClamped(p);
+      const float d = p.z-z;
+      if (d >= 0.0f && d <= bestdist) {
+        bestdist = d;
+        rfloor = floor;
+      }
+    }
+    floor = r->realfloor;
+    if (floor && floor->esecplane.GetNormalZ() > 0.0f) {
+      const float z = floor->esecplane.GetPointZClamped(p);
+      const float d = p.z-z;
+      if (d >= 0.0f && d <= bestdist) {
+        bestdist = d;
+        rfloor = floor;
+      }
+    }
+    // ceilings
+    floor = r->fakeceil;
+    if (floor && floor->esecplane.GetNormalZ() > 0.0f) {
+      const float z = floor->esecplane.GetPointZClamped(p);
+      const float d = p.z-z;
+      if (d >= 0.0f && d <= bestdist) {
+        bestdist = d;
+        rfloor = floor;
+      }
+    }
+    floor = r->realceil;
+    if (floor && floor->esecplane.GetNormalZ() > 0.0f) {
+      const float z = floor->esecplane.GetPointZClamped(p);
+      const float d = p.z-z;
+      if (d >= 0.0f && d <= bestdist) {
+        bestdist = d;
+        rfloor = floor;
+      }
+    }
+  }
+  return rfloor;
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::CalculateSubAmbient
 //
 //  calculate subsector's ambient light
@@ -674,29 +843,10 @@ void VRenderLevelShared::CalculateSubAmbient (float &l, float &lr, float &lg, fl
 
   //FIXME: this is slightly wrong (and slow)
   if (!skipAmbient && sub->regions) {
-    subregion_t *reg = sub->regions;
-    float bestdist = 999999.0f;
-    for (subregion_t *r = sub->regions; r; r = r->next) {
-      //const float d = DotProduct(p, reg->floor->secplane->normal)-reg->floor->secplane->dist;
-      sec_surface_t *floor = r->fakefloor;
-      if (floor) {
-        const float d = floor->PointDist(p);
-        if (d >= 0.0f && d < bestdist) {
-          bestdist = d;
-          reg = r;
-        }
-      }
-      floor = r->realfloor;
-      if (floor) {
-        const float d = floor->PointDist(p);
-        if (d >= 0.0f && d < bestdist) {
-          bestdist = d;
-          reg = r;
-        }
-      }
-    }
+    subregion_t *reg = SV_PointRegionLightSub((subsector_t *)sub, p);
 
     // allow glow only for bottom regions
+    //FIXME: this is not right, we should calculate glow for translucent/transparent floors too!
     glowAllowed = (reg->secregion == sub->sector->eregions);
 
     // region's base light
@@ -718,23 +868,7 @@ void VRenderLevelShared::CalculateSubAmbient (float &l, float &lr, float &lg, fl
     do {
       if (!IsShadowVolumeRenderer()) {
         // light from floor's lightmap
-        //FIXME: THIS IS WRONG!
-        sec_surface_t *rfloor;
-        if (reg->fakefloor) {
-          if (reg->realfloor) {
-            const float fakez = reg->fakefloor->esecplane.GetPointZClamped(p);
-            const float realz = reg->realfloor->esecplane.GetPointZClamped(p);
-            if (fakez < realz) {
-              rfloor = (p.z < realz ? reg->fakefloor : reg->realfloor);
-            } else {
-              rfloor = (p.z < fakez ? reg->realfloor : reg->fakefloor);
-            }
-          } else {
-            rfloor = reg->fakefloor;
-          }
-        } else {
-          rfloor = reg->realfloor;
-        }
+        sec_surface_t *rfloor = GetNearestFloor(sub, p);
         if (!rfloor) break; // outer `do`
         int s = (int)(DotProduct(p, rfloor->texinfo.saxis)+rfloor->texinfo.soffs);
         int t = (int)(DotProduct(p, rfloor->texinfo.taxis)+rfloor->texinfo.toffs);
@@ -742,12 +876,12 @@ void VRenderLevelShared::CalculateSubAmbient (float &l, float &lr, float &lg, fl
         for (surface_t *surf = rfloor->surfs; surf; surf = surf->next) {
           if (surf->lightmap == nullptr) continue;
           if (surf->count < 3) continue; // wtf?!
-          if (s < surf->texturemins[0] || t < surf->texturemins[1]) continue;
+          //if (s < surf->texturemins[0] || t < surf->texturemins[1]) continue;
 
           ds = s-surf->texturemins[0];
           dt = t-surf->texturemins[1];
 
-          if (ds > surf->extents[0] || dt > surf->extents[1]) continue;
+          if (ds < 0 || dt < 0 || ds > surf->extents[0] || dt > surf->extents[1]) continue;
 
           if (surf->lightmap_rgb) {
             l += surf->lightmap[(ds>>4)+(dt>>4)*((surf->extents[0]>>4)+1)];

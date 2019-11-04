@@ -219,7 +219,7 @@ bool P_GetMidTexturePosition (const line_t *linedef, int sideno, float *ptextop,
 //
 //==========================================================================
 static __attribute__((unused)) void DumpRegion (const sec_region_t *inregion) {
-  GCon->Logf("  %p: floor=(%g,%g,%g:%g); (%g : %g), flags=0x%04x; ceil=(%g,%g,%g:%g); (%g : %g), flags=0x%04x; eline=%d; rflags=0x%02x",
+  GCon->Logf(NAME_Debug, "  %p: floor=(%g,%g,%g:%g); (%g : %g), flags=0x%04x; ceil=(%g,%g,%g:%g); (%g : %g), flags=0x%04x; eline=%d; rflags=0x%02x",
     inregion,
     inregion->efloor.GetNormal().x,
     inregion->efloor.GetNormal().y,
@@ -244,7 +244,7 @@ static __attribute__((unused)) void DumpRegion (const sec_region_t *inregion) {
 //
 //==========================================================================
 static __attribute__((unused)) void DumpOpening (const opening_t *op) {
-  GCon->Logf("  %p: floor=%g (%g,%g,%g:%g); ceil=%g (%g,%g,%g:%g); lowfloor=%g; range=%g",
+  GCon->Logf(NAME_Debug, "  %p: floor=%g (%g,%g,%g:%g); ceil=%g (%g,%g,%g:%g); lowfloor=%g; range=%g",
     op,
     op->bottom, op->efloor.GetNormal().x, op->efloor.GetNormal().y, op->efloor.GetNormal().z, op->efloor.GetDist(),
     op->top, op->eceiling.GetNormal().x, op->eceiling.GetNormal().y, op->eceiling.GetNormal().z, op->eceiling.GetDist(),
@@ -258,7 +258,7 @@ static __attribute__((unused)) void DumpOpening (const opening_t *op) {
 //
 //==========================================================================
 static __attribute__((unused)) void DumpOpPlanes (TArray<opening_t> &list) {
-  GCon->Logf(" ::: count=%d :::", list.length());
+  GCon->Logf(NAME_Debug, " ::: count=%d :::", list.length());
   for (int f = 0; f < list.length(); ++f) DumpOpening(&list[f]);
 }
 
@@ -712,8 +712,8 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
   }
 
 #ifdef VV_DUMP_OPENING_CREATION
-  GCon->Logf("*** line: %p (0x%02x) ***", linedef, NoBlockFlags);
-  GCon->Log("::: before :::"); DumpOpPlanes(op0list); DumpOpPlanes(op1list);
+  GCon->Logf(NAME_Debug, "*** line: %p (0x%02x) ***", linedef, NoBlockFlags);
+  GCon->Log(NAME_Debug, "::: before :::"); DumpOpPlanes(op0list); DumpOpPlanes(op1list);
 #endif
 
   /* build intersections
@@ -732,7 +732,7 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
     // if op0 is below op1, skip op0
     if (op0->top < op1->bottom) {
 #ifdef VV_DUMP_OPENING_CREATION
-      GCon->Log(" +++ SKIP op0 (dump: op0, op1) +++");
+      GCon->Log(NAME_Debug, " +++ SKIP op0 (dump: op0, op1) +++");
       DumpOpening(op0);
       DumpOpening(op1);
 #endif
@@ -742,7 +742,7 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
     // if op1 is below op0, skip op1
     if (op1->top < op0->bottom) {
 #ifdef VV_DUMP_OPENING_CREATION
-      GCon->Log(" +++ SKIP op1 (dump: op0, op1) +++");
+      GCon->Log(NAME_Debug, " +++ SKIP op1 (dump: op0, op1) +++");
       DumpOpening(op0);
       DumpOpening(op1);
 #endif
@@ -779,7 +779,7 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
     }
     dest->range = dest->top-dest->bottom;
 #ifdef VV_DUMP_OPENING_CREATION
-    GCon->Log(" +++ NEW opening (dump: op0, op1, new) +++");
+    GCon->Log(NAME_Debug, " +++ NEW opening (dump: op0, op1, new) +++");
     DumpOpening(op0);
     DumpOpening(op1);
     DumpOpening(dest);
@@ -790,30 +790,30 @@ opening_t *SV_LineOpenings (const line_t *linedef, const TVec point, unsigned No
     // otherwise skip region with lesser top
     if (op0->top == op1->top) {
 #ifdef VV_DUMP_OPENING_CREATION
-      GCon->Log(" +++ SKIP BOTH +++");
+      GCon->Log(NAME_Debug, " +++ SKIP BOTH +++");
 #endif
       ++op0; --op0left;
       ++op1; --op1left;
     } else if (op0->top < op1->top) {
 #ifdef VV_DUMP_OPENING_CREATION
-      GCon->Log(" +++ SKIP OP0 +++");
+      GCon->Log(NAME_Debug, " +++ SKIP OP0 +++");
 #endif
       ++op0; --op0left;
     } else {
 #ifdef VV_DUMP_OPENING_CREATION
-      GCon->Log(" +++ SKIP OP1 +++");
+      GCon->Log(NAME_Debug, " +++ SKIP OP1 +++");
 #endif
       ++op1; --op1left;
     }
   }
 
 #ifdef VV_DUMP_OPENING_CREATION
-  GCon->Logf("::: after (%u) :::", destcount);
+  GCon->Logf(NAME_Debug, "::: after (%u) :::", destcount);
   for (unsigned f = 0; f < destcount; ++f) {
     const opening_t *xop = &openings[f];
     DumpOpening(xop);
   }
-  GCon->Log("-----------------------------");
+  GCon->Log(NAME_Debug, "-----------------------------");
 #endif
 
   // no intersections?
@@ -998,16 +998,16 @@ void SV_FindGapFloorCeiling (sector_t *sector, const TVec point, float height, T
     return;
   }
 
-  if (debugDump) { GCon->Logf("=== ALL OPENINGS (z=%g; height=%g) ===", point.z, height); DumpOpPlanes(oplist); }
+  if (debugDump) { GCon->Logf(NAME_Debug, "=== ALL OPENINGS (z=%g; height=%g) ===", point.z, height); DumpOpPlanes(oplist); }
 
 #if 1
   opening_t *opres = SV_FindRelOpening(oplist.ptr(), point.z, point.z+height);
   if (opres) {
-    if (debugDump) { GCon->Logf(" found result"); DumpOpening(opres); }
+    if (debugDump) { GCon->Logf(NAME_Debug, " found result"); DumpOpening(opres); }
     floor = opres->efloor;
     ceiling = opres->eceiling;
   } else {
-    if (debugDump) GCon->Logf(" NO result");
+    if (debugDump) GCon->Logf(NAME_Debug, " NO result");
     floor = sector->eregions->efloor;
     ceiling = sector->eregions->eceiling;
   }
@@ -1035,32 +1035,32 @@ void SV_FindGapFloorCeiling (sector_t *sector, const TVec point, float height, T
     const float cz = op->top;
     if (point.z >= fz && point.z <= cz) {
       // no need to move vertically
-      if (debugDump) { GCon->Logf(" best fit"); DumpOpening(op); }
+      if (debugDump) { GCon->Logf(NAME_Debug, " best fit"); DumpOpening(op); }
       return op;
     } else {
       const float fdist = fabsf(point.z-fz); // we don't care about sign here
       if (!bestGap || fdist < bestGapDist) {
-        if (debugDump) { GCon->Logf(" gap fit"); DumpOpening(op); }
+        if (debugDump) { GCon->Logf(NAME_Debug, " gap fit"); DumpOpening(op); }
         bestGap = op;
         bestGapDist = fdist;
         //if (fdist == 0.0f) break; // there is no reason to look further
       } else {
-        if (debugDump) { GCon->Logf(" REJECTED gap fit"); DumpOpening(op); }
+        if (debugDump) { GCon->Logf(NAME_Debug, " REJECTED gap fit"); DumpOpening(op); }
       }
     }
   }
 
   if (bestFit) {
-    if (debugDump) { GCon->Logf(" best result"); DumpOpening(bestFit); }
+    if (debugDump) { GCon->Logf(NAME_Debug, " best result"); DumpOpening(bestFit); }
     floor = bestFit->efloor;
     ceiling = bestFit->eceiling;
   } else if (bestGap) {
-    if (debugDump) { GCon->Logf(" gap result"); DumpOpening(bestGap); }
+    if (debugDump) { GCon->Logf(NAME_Debug, " gap result"); DumpOpening(bestGap); }
     floor = bestGap->efloor;
     ceiling = bestGap->eceiling;
   } else {
     // just fit into sector
-    if (debugDump) { GCon->Logf(" no result"); }
+    if (debugDump) { GCon->Logf(NAME_Debug, " no result"); }
     floor = sector->eregions->efloor;
     ceiling = sector->eregions->eceiling;
   }
@@ -1100,52 +1100,125 @@ sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, bool dbgDump
   if (p.z <= secfz) return sector->eregions;
   //const float seccz = sector->ceiling.GetPointZClamped(p);
 
-  sec_region_t *last = nullptr;
+  //sec_region_t *last = nullptr;
   bool wasHit = false;
-  float lastz = 0.0f;
+  //float lastz = 0.0f;
   sec_region_t *best = sector->eregions;
   float bestDist = p.z-secfz; // minimum distance to region floor
 
+  if (dbgDump) { GCon->Logf(NAME_Debug, "SPRL: base region"); DumpRegion(best); }
   // skip base region
   for (sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
     if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
     const float fz = reg->efloor.GetPointZClamped(p);
-    if (!last || fz > lastz) last = reg;
+    const float cz = reg->eceiling.GetPointZClamped(p);
+    if (fz >= cz) continue;
+    //if (!last || fz > lastz) last = reg;
     // non-solid?
     if (reg->regflags&sec_region_t::RF_NonSolid) {
       // for non-solid regions calculate distance to ceiling
-      const float cz = reg->eceiling.GetPointZClamped(p);
-      if (dbgDump) { GCon->Logf("SPRL: non-solid: z=%g; cz=%g; dist=%g; best=%g", p.z, cz, cz-p.z, bestDist); DumpRegion(reg); }
-      if (p.z <= cz) {
+      //const float cz = reg->eceiling.GetPointZClamped(p);
+      if (dbgDump) { GCon->Logf(NAME_Debug, "SPRL: non-solid: z=%g; fz=%g; cz=%g; dist=%g; best=%g", p.z, fz, cz, cz-p.z, bestDist); DumpRegion(reg); }
+      if (p.z < cz) {
         const float fdist = cz-p.z;
         if (fdist < bestDist) {
           wasHit = true;
           bestDist = fdist;
           best = reg;
+          if (dbgDump) { GCon->Log(NAME_Debug, "   HIT!"); }
         }
       }
     } else {
       // for solid regions calculate distance to floor
       //const float fz = reg->efloor.GetPointZClamped(p);
-      if (dbgDump) { GCon->Logf("SPRL: solid: z=%g; fz=%g; dist=%g; best=%g", p.z, fz, fz-p.z, bestDist); DumpRegion(reg); }
+      if (dbgDump) { GCon->Logf(NAME_Debug, "SPRL: solid: z=%g; fz=%g; cz=%g; dist=%g; best=%g", p.z, fz, cz, fz-p.z, bestDist); DumpRegion(reg); }
       if (p.z <= fz) {
         const float fdist = fz-p.z;
         if (fdist < bestDist) {
           wasHit = true;
           bestDist = fdist;
           best = reg;
+          if (dbgDump) { GCon->Log(NAME_Debug, "   HIT!"); }
+        }
+      }
+    }
+  }
+
+  if (!wasHit /*&& last*/) {
+    if (dbgDump) { GCon->Logf(NAME_Debug, "SPRL: USING LAST"); /*DumpRegion(last);*/ }
+    //best = last;
+  }
+
+  if (dbgDump) {
+    if (dbgDump) { GCon->Logf(NAME_Debug, "SPRL: hit region"); DumpRegion(best); }
+    GCon->Logf(NAME_Debug, "params: lightlevel=%d; lightcolor=0x%08x; fade=0x%08x; contents=%d", best->params->lightlevel, (unsigned)best->params->LightColor, best->params->Fade, best->params->contents);
+  }
+
+  return best;
+}
+
+
+//==========================================================================
+//
+//  SV_PointRegionLightSub
+//
+//  this is used to get region lighting
+//  TODO: join this with the previous function
+//
+//==========================================================================
+subregion_t *SV_PointRegionLightSub (subsector_t *sub, const TVec &p, bool dbgDump) {
+  sector_t *sector = sub->sector;
+  if (!sector->Has3DFloors()) return sub->regions;
+  const float secfz = sector->floor.GetPointZClamped(p);
+  if (p.z <= secfz) return sub->regions;
+
+  subregion_t *last = nullptr;
+  bool wasHit = false;
+  float lastz = 0.0f;
+  subregion_t *best = sub->regions;
+  float bestDist = p.z-secfz; // minimum distance to region floor
+
+  // skip base region
+  for (subregion_t *sreg = sub->regions->next; sreg; sreg = sreg->next) {
+    sec_region_t *reg = sreg->secregion;
+    if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
+    const float fz = reg->efloor.GetPointZClamped(p);
+    if (!last || fz > lastz) last = sreg;
+    // non-solid?
+    if (reg->regflags&sec_region_t::RF_NonSolid) {
+      // for non-solid regions calculate distance to ceiling
+      const float cz = reg->eceiling.GetPointZClamped(p);
+      if (dbgDump) { GCon->Logf(NAME_Debug, "SPRL: non-solid: z=%g; cz=%g; dist=%g; best=%g", p.z, cz, cz-p.z, bestDist); DumpRegion(reg); }
+      if (p.z < cz) {
+        const float fdist = cz-p.z;
+        if (fdist < bestDist) {
+          wasHit = true;
+          bestDist = fdist;
+          best = sreg;
+        }
+      }
+    } else {
+      // for solid regions calculate distance to floor
+      //const float fz = reg->efloor.GetPointZClamped(p);
+      if (dbgDump) { GCon->Logf(NAME_Debug, "SPRL: solid: z=%g; fz=%g; dist=%g; best=%g", p.z, fz, fz-p.z, bestDist); DumpRegion(reg); }
+      if (p.z <= fz) {
+        const float fdist = fz-p.z;
+        if (fdist < bestDist) {
+          wasHit = true;
+          bestDist = fdist;
+          best = sreg;
         }
       }
     }
   }
 
   if (!wasHit && last) {
-    if (dbgDump) { GCon->Logf("SPRL: USING LAST"); DumpRegion(last); }
+    //if (dbgDump) { GCon->Logf(NAME_Debug, "SPRL: USING LAST"); DumpRegion(last); }
     best = last;
   }
 
   if (dbgDump) {
-    GCon->Logf("params: lightlevel=%d; lightcolor=0x%08x; fade=0x%08x; contents=%d", best->params->lightlevel, (unsigned)best->params->LightColor, best->params->Fade, best->params->contents);
+    //GCon->Logf(NAME_Debug, "params: lightlevel=%d; lightcolor=0x%08x; fade=0x%08x; contents=%d", best->params->lightlevel, (unsigned)best->params->LightColor, best->params->Fade, best->params->contents);
   }
 
   return best;
@@ -1163,12 +1236,12 @@ int SV_PointContents (sector_t *sector, const TVec &p, bool dbgDump) {
   if (sector->heightsec && (sector->heightsec->SectorFlags&sector_t::SF_UnderWater) &&
       p.z <= sector->heightsec->floor.GetPointZClamped(p))
   {
-    if (dbgDump) GCon->Log("SVP: case 0");
+    if (dbgDump) GCon->Log(NAME_Debug, "SVP: case 0");
     return CONTENTS_BOOMWATER;
   }
 
   if (sector->SectorFlags&sector_t::SF_UnderWater) {
-    if (dbgDump) GCon->Log("SVP: case 1");
+    if (dbgDump) GCon->Log(NAME_Debug, "SVP: case 1");
     return CONTENTS_BOOMWATER;
   }
 
@@ -1178,7 +1251,7 @@ int SV_PointContents (sector_t *sector, const TVec &p, bool dbgDump) {
     const float secfz = sector->floor.GetPointZClamped(p);
     const float seccz = sector->ceiling.GetPointZClamped(p);
     if (p.z < secfz || p.z > seccz) {
-      if (dbgDump) GCon->Log("SVP: case 2");
+      if (dbgDump) GCon->Log(NAME_Debug, "SVP: case 2");
       return best->params->contents;
     }
 
@@ -1192,7 +1265,7 @@ int SV_PointContents (sector_t *sector, const TVec &p, bool dbgDump) {
     */
     for (const sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
       if (reg->regflags&sec_region_t::RF_OnlyVisual) continue;
-      if (dbgDump) { GCon->Logf("SVP: checking region..."); DumpRegion(reg); }
+      if (dbgDump) { GCon->Logf(NAME_Debug, "SVP: checking region..."); DumpRegion(reg); }
       // floor height, we'll need it anyway
       const float fz = max2(secfz, reg->efloor.GetPointZClamped(p));
       //if (!last || fz > lastz) last = reg;
@@ -1203,30 +1276,30 @@ int SV_PointContents (sector_t *sector, const TVec &p, bool dbgDump) {
         // check if point is inside, and for best floor dist
         if (p.z >= fz && p.z <= cz) {
           const float fdist = p.z-fz;
-          if (dbgDump) GCon->Logf("SVP: non-solid check: bestDist=%g; fdist=%g; p.z=%g; fz=%g; cz=%g", bestDist, fdist, p.z, fz, cz);
+          if (dbgDump) GCon->Logf(NAME_Debug, "SVP: non-solid check: bestDist=%g; fdist=%g; p.z=%g; fz=%g; cz=%g", bestDist, fdist, p.z, fz, cz);
           if (fdist < bestDist) {
-            if (dbgDump) GCon->Log("SVP:   NON-SOLID HIT!");
+            if (dbgDump) GCon->Log(NAME_Debug, "SVP:   NON-SOLID HIT!");
             bestDist = fdist;
             best = reg;
             //wasHit = true;
           }
         } else {
-          if (dbgDump) GCon->Logf("SVP: non-solid SKIP: bestDist=%g; fdist=%g; p.z=%g; fz=%g; cz=%g", bestDist, p.z-fz, p.z, fz, cz);
+          if (dbgDump) GCon->Logf(NAME_Debug, "SVP: non-solid SKIP: bestDist=%g; fdist=%g; p.z=%g; fz=%g; cz=%g", bestDist, p.z-fz, p.z, fz, cz);
         }
       } else {
         // solid region, check if we are below it
         // yes, this is just like this -- the region contents is going DOWN, not up
         if (p.z < fz) {
           const float fdist = fz-p.z;
-          if (dbgDump) GCon->Logf("SVP: solid check: bestDist=%g; fdist=%g; p.z=%g; fz=%g; cz=%g", bestDist, fdist, p.z, fz, min2(seccz, reg->eceiling.GetPointZClamped(p)));
+          if (dbgDump) GCon->Logf(NAME_Debug, "SVP: solid check: bestDist=%g; fdist=%g; p.z=%g; fz=%g; cz=%g", bestDist, fdist, p.z, fz, min2(seccz, reg->eceiling.GetPointZClamped(p)));
           if (fdist < bestDist) {
-            if (dbgDump) GCon->Log("SVP:   SOLID HIT!");
+            if (dbgDump) GCon->Log(NAME_Debug, "SVP:   SOLID HIT!");
             bestDist = fdist;
             best = reg;
             //wasHit = true;
           }
         } else {
-          if (dbgDump) GCon->Logf("SVP: solid SKIP: bestDist=%g; fdist=%g; p.z=%g; fz=%g; cz=%g", bestDist, fz-p.z, p.z, fz, min2(seccz, reg->eceiling.GetPointZClamped(p)));
+          if (dbgDump) GCon->Logf(NAME_Debug, "SVP: solid SKIP: bestDist=%g; fdist=%g; p.z=%g; fz=%g; cz=%g", bestDist, fz-p.z, p.z, fz, min2(seccz, reg->eceiling.GetPointZClamped(p)));
         }
       }
     }
@@ -1238,7 +1311,7 @@ int SV_PointContents (sector_t *sector, const TVec &p, bool dbgDump) {
     */
   }
 
-  if (dbgDump) { GCon->Logf("SVP: best region"); DumpRegion(best); }
+  if (dbgDump) { GCon->Logf(NAME_Debug, "SVP: best region"); DumpRegion(best); }
   return best->params->contents;
 }
 
