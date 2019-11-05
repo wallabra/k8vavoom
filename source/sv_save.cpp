@@ -35,9 +35,11 @@
 #include <sys/time.h>
 
 #ifdef _WIN32
+# if __GNUC__ < 6
 static inline struct tm *localtime_r (const time_t *_Time, struct tm *_Tm) {
   return (localtime_s(_Tm, _Time) ? NULL : _Tm);
 }
+# endif
 #endif
 
 
