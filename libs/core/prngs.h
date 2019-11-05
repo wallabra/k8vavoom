@@ -87,13 +87,22 @@ static __attribute__((unused)) inline void splitmix64_seedU32 (vuint64 *state, v
 // *Really* minimal PCG32_64 code / (c) 2014 M.E. O'Neill / pcg-random.org
 // Licensed under Apache License 2.0 (NO WARRANTY, etc. see website)
 //**************************************************************************
-/*
-typedef struct {
+typedef struct __attribute__((packed)) {
+  /*
   vuint64 state; // rng state: all values are possible
   vuint64 inc; // controls which RNG sequence (stream) is selected; must *always* be odd
-} PCG3264_Ctx;
-*/
+  */
+  vint32 lo, hi;
+} PCG3264Ctx_ClassChecker;
+
 typedef vuint64 PCG3264_Ctx;
+
+#if defined(__cplusplus)
+  static_assert(sizeof(PCG3264Ctx_ClassChecker) == sizeof(PCG3264_Ctx), "invalid `PCG3264_Ctx` size");
+#else
+  _Static_assert(sizeof(PCG3264Ctx_ClassChecker) == sizeof(PCG3264_Ctx), "invalid `PCG3264_Ctx` size");
+#endif
+
 
 static __attribute__((unused)) inline void pcg3264_init (PCG3264_Ctx *rng) {
   *rng/*->state*/ = 0x853c49e6748fea9bULL;

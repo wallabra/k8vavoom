@@ -42,7 +42,7 @@
 # endif
 #endif
 
-typedef struct
+typedef struct ChaChaR_Type
 #ifdef CHACHA_C_DISABLE_SSE
 __attribute__((packed))
 #endif
@@ -58,6 +58,16 @@ __attribute__((packed))
   // oops
   uint8_t rounds;
 } ChaChaR;
+
+typedef struct __attribute__((packed)) {
+  vuint8[105] state_;
+} ChaChaCtx_ClassChecker;
+
+#if defined(__cplusplus)
+  static_assert(sizeof(ChaChaCtx_ClassChecker) == sizeof(ChaChaR), "invalid `ChaChaR` VC size");
+#else
+  _Static_assert(sizeof(ChaChaCtx_ClassChecker) == sizeof(ChaChaR), "invalid `ChaChaR` VC size");
+#endif
 
 #ifdef CHACHA_C_DISABLE_SSE
 # if defined(__cplusplus)

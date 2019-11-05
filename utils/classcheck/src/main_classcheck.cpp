@@ -657,9 +657,11 @@ void parseShitppClassStruct (SemParser *par, bool isClass, bool isTypedefStruct=
   if (!isTypedefStruct) {
     name = par->expectId();
     if (par->eat(";")) return;
+    if (name.endsWith("_ClassChecker")) name.chopRight(13);
   } else {
     if (!par->check("{")) par->expectId();
   }
+
 
   if (name == "VMiAStarGraphIntr" || name == "VLanguage" ||
       name == "VLMapCache")
@@ -780,6 +782,8 @@ void parseShitppClassStruct (SemParser *par, bool isClass, bool isTypedefStruct=
   }
   if (isTypedefStruct) {
     name = par->expectId();
+    if (name.endsWith("_ClassChecker")) name.chopRight(13);
+    tp->name = VName(*name, VName::Add);
   }
   par->eat(";");
   // register type
@@ -824,8 +828,12 @@ void parseShitppSource (const VStr &filename) {
     else if (par->token.strEqu("static")) parseShitppSkipTemplateShit(par);
     else if (par->token.strEqu("typedef")) {
       if (par->eat("struct")) {
-        //GLog.Logf("line #%d: <%s>", par->getTokenLine(), *par->token);
-        parseShitppClassStruct(par, false, true);
+        if (par->eat("ChaChaR_Type")) {
+          parseShitppSkipTemplateShit(par);
+        } else {
+          //GLog.Logf("line #%d: <%s>", par->getTokenLine(), *par->token);
+          parseShitppClassStruct(par, false, true);
+        }
       } else {
         parseShitppSkipTemplateShit(par);
       }
@@ -1307,6 +1315,7 @@ int main (int argc, char **argv) {
 
   TArray<VStr> shitpplist;
   shitpplist.append("../../libs/core/prngs.h");
+  shitpplist.append("../../libs/core/chachaprng_c.h");
   scanSources(shitpplist, "../../source", "*.h", "*.cpp");
   scanSources(shitpplist, "../../libs/vavoomc", "*.h", "*.cpp");
   GLog.Logf("%d shitpplist files found", shitpplist.length());
