@@ -451,6 +451,7 @@ void skipParens (SemParser *par) {
   for (;;) {
     par->skipToken();
     if (par->token.isEmpty()) break;
+    //GLog.Logf("X: line #%d: <%s> (level=%d)", par->getTokenLine(), *par->token, level);
     if (par->token.strEqu("(")) {
       ++level;
     } else if (par->token.strEqu(")")) {
@@ -644,16 +645,47 @@ bool ignoreClass (const VStr &name, VName parent) {
 
 //==========================================================================
 //
-//  parseShitppClassStruct
+//  skipAttribute
 //
 //==========================================================================
-void parseShitppClassStruct (SemParser *par, bool isClass, bool isTypedefStruct=false) {
+/*
+void skipAttribute (SemParser *par) {
   while (par->eat("__attribute__")) {
     par->expect("(");
     skipParens(par);
   }
+}
+*/
+
+
+//==========================================================================
+//
+//  skipAttributeOrPreprocessor
+//
+//==========================================================================
+void skipAttributeOrPreprocessor (SemParser *par) {
+  for (;;) {
+    if (par->eat("__attribute__")) {
+      par->expect("(");
+      skipParens(par);
+    } else if (par->eat("#")) {
+      skipPreprocessor(par);
+    } else {
+      break;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  parseShitppClassStruct
+//
+//==========================================================================
+void parseShitppClassStruct (SemParser *par, bool isClass, bool isTypedefStruct=false) {
   VStr name;
 
+  skipAttributeOrPreprocessor(par);
   if (!isTypedefStruct) {
     name = par->expectId();
     if (par->eat(";")) return;
@@ -661,7 +693,6 @@ void parseShitppClassStruct (SemParser *par, bool isClass, bool isTypedefStruct=
   } else {
     if (!par->check("{")) par->expectId();
   }
-
 
   if (name == "VMiAStarGraphIntr" || name == "VLanguage" ||
       name == "VLMapCache")
@@ -828,6 +859,7 @@ void parseShitppSource (const VStr &filename) {
     else if (par->token.strEqu("static")) parseShitppSkipTemplateShit(par);
     else if (par->token.strEqu("typedef")) {
       if (par->eat("struct")) {
+        skipAttributeOrPreprocessor(par);
         if (par->eat("ChaChaR_Type")) {
           parseShitppSkipTemplateShit(par);
         } else {
