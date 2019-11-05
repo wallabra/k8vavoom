@@ -221,7 +221,7 @@ static void RtlGenRandomX (PVOID RandomBuffer, ULONG RandomBufferLength) {
     inited = 1;
     HANDLE libh = LoadLibrary("advapi32.dll");
     if (libh) {
-      RtlGenRandomXX = (RtlGenRandomFn)GetProcAddress(libh, "SystemFunction036");
+      RtlGenRandomXX = (RtlGenRandomFn)(void *)GetProcAddress(libh, "SystemFunction036");
       if (!RtlGenRandomXX) fprintf(stderr, "WARNING: `RtlGenRandom()` is not found!\n");
       //else fprintf(stderr, "MESSAGE: `RtlGenRandom()` found!\n");
     }
