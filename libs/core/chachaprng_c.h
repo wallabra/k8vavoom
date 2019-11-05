@@ -42,10 +42,11 @@
 # endif
 #endif
 
-typedef struct ChaChaR_Type
+typedef struct
 #ifdef CHACHA_C_DISABLE_SSE
 __attribute__((packed))
 #endif
+ChaChaR_Type
 {
 /*private:*/
   uint32_t
@@ -60,7 +61,7 @@ __attribute__((packed))
 } ChaChaR;
 
 typedef struct __attribute__((packed)) {
-  vuint8[105] state_;
+  vuint8 state_[105];
 } ChaChaCtx_ClassChecker;
 
 #if defined(__cplusplus)
