@@ -96,10 +96,10 @@ size_t _mi_os_good_alloc_size(size_t size) {
 #include <winternl.h>
 typedef PVOID    (__stdcall *PVirtualAlloc2)(HANDLE, PVOID, SIZE_T, ULONG, ULONG, /* MEM_EXTENDED_PARAMETER* */ void*, ULONG);
 typedef NTSTATUS (__stdcall *PNtAllocateVirtualMemoryEx)(HANDLE, PVOID*, SIZE_T*, ULONG, ULONG, /* MEM_EXTENDED_PARAMETER* */ PVOID, ULONG);
-static PVirtualAlloc2 pVirtualAlloc2 = NULL;
-static PNtAllocateVirtualMemoryEx pNtAllocateVirtualMemoryEx = NULL;
+static __attribute__((unused)) PVirtualAlloc2 pVirtualAlloc2 = NULL;
+static __attribute__((unused)) PNtAllocateVirtualMemoryEx pNtAllocateVirtualMemoryEx = NULL;
 
-static bool mi_win_enable_large_os_pages() 
+static __attribute__((unused)) bool mi_win_enable_large_os_pages() 
 {
   if (large_os_page_size > 0) return true;
 
