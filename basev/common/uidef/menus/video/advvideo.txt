@@ -209,21 +209,16 @@ menudef AdvVideoOptions {
   header "Other Lightmap Lighting";
 
   option bool {
-    title = "Additive Static Lights";
-    cvar = r_static_add;
-  }
-
-  option bool {
-    title = "Specular Highlights";
-    cvar = gl_specular_highlights;
+    title = "Static Lightmap Overbright";
+    cvar = r_lmap_overbright_static;
   }
 
   option slider {
-    title = "Specular Level";
-    cvar = r_specular;
+    title = "Specular (overbright) Intensity";
+    cvar = r_lmap_specular;
     step = 0.1;
     min = 0;
-    max = 2;
+    max = 4;
   }
 
   option bool {
