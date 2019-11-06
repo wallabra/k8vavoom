@@ -913,7 +913,6 @@ protected:
   static VCvarB clear;
   static VCvarB blend_sprites;
   static VCvarB ext_anisotropy;
-  static VCvarB specular_highlights;
   static VCvarI multisampling_sample;
   static VCvarB gl_smooth_particles;
   static VCvarB gl_dump_vendor;

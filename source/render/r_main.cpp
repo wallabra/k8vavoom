@@ -50,6 +50,7 @@ static const char *videoDrvName = nullptr;
 
 void R_FreeSkyboxData ();
 
+vuint8 light_remap[256];
 
 int screenblocks = 0;
 

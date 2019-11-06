@@ -28,6 +28,7 @@
 
 //#define VV_DEBUG_LMAP_ALLOCATOR
 //#define VV_EXPERIMENTAL_LMAP_FILTER
+//#define VV_USELESS_SUBTRACTIVE_LIGHT_CODE
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -45,20 +46,18 @@ int ldr_extrasamples_override = -1;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static VCvarI r_lmap_filtering("r_lmap_filtering", "1", "Static lightmap filtering (0: none; 1: simple; 2: simple++; 3: extra).", CVAR_Archive);
+static VCvarI r_lmap_filtering("r_lmap_filtering", "3", "Static lightmap filtering (0: none; 1: simple; 2: simple++; 3: extra).", CVAR_Archive);
 static VCvarB r_lmap_lowfilter("r_lmap_lowfilter", false, "Filter lightmaps without extra samples?", CVAR_Archive);
-static VCvarB r_static_add("r_static_add", true, "Are static lights additive in regular renderer?", CVAR_Archive);
-static VCvarF r_specular("r_specular", "0.1", "Specular light in regular renderer.", CVAR_Archive);
+static VCvarB r_lmap_overbright_static("r_lmap_overbright_static", true, "Use Quake-like (but gentlier) overbright for static lights?", CVAR_Archive);
+static VCvarF r_lmap_specular("r_lmap_specular", "0.1", "Specular light in regular renderer.", CVAR_Archive);
 static VCvarI r_lmap_atlas_limit("r_lmap_atlas_limit", "14", "Nuke lightmap cache if it reached this number of atlases.", CVAR_Archive);
 
-VCvarB r_lmap_bsp_trace("r_lmap_bsp_trace", false, "Trace lightmaps with BSP tree instead of blockmap?", CVAR_Archive);
+VCvarB r_lmap_bsp_trace("r_lmap_bsp_trace", true, "Trace lightmaps with BSP tree instead of blockmap?", CVAR_Archive);
 
 extern VCvarB dbg_adv_light_notrace_mark;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static bool has_specular;
-
 enum { GridSize = VRenderLevelLightmap::LMapTraceInfo::GridSize };
 
 vuint32 blocklightsr[GridSize*GridSize];
@@ -74,24 +73,26 @@ static vuint32 blocklightsgNew[GridSize*GridSize];
 static vuint32 blocklightsbNew[GridSize*GridSize];
 #endif
 
+#ifdef VV_USELESS_SUBTRACTIVE_LIGHT_CODE
 // subtractive
 static vuint32 blocklightsrS[GridSize*GridSize];
 static vuint32 blocklightsgS[GridSize*GridSize];
 static vuint32 blocklightsbS[GridSize*GridSize];
+#endif
 
-vuint8 light_remap[256];
 int light_mem = 0;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
- // *4 for extra filtering
+// *4 for extra filtering
 static vuint8 lightmapHit[GridSize*GridSize*4];
 static float lightmap[GridSize*GridSize*4];
 static float lightmapr[GridSize*GridSize*4];
 static float lightmapg[GridSize*GridSize*4];
 static float lightmapb[GridSize*GridSize*4];
-//static bool light_hit;
-static bool is_colored;
+// set in lightmap merge code
+static bool hasOverbright; // has overbright component?
+static bool isColored; // is lightmap colored?
 
 
 //==========================================================================
@@ -484,7 +485,7 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
       if (!incoming.isValid()) {
         lightmap[c] += 255.0f;
         lightmapr[c] += 255.0f;
-        is_colored = true;
+        isColored = true;
         lmi.light_hit = true;
         continue;
       }
@@ -507,7 +508,7 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
     // ignore really tiny lights
     if (lightmap[c] > 1) {
       lmi.light_hit = true;
-      if (light->color != 0xffffffff) is_colored = true;
+      if (light->color != 0xffffffff) isColored = true;
     }
   }
 
@@ -572,7 +573,7 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
           // ignore really tiny lights
           if (lightmap[laddr] > 1) {
             lmi.light_hit = true;
-            if (light->color != 0xffffffff) is_colored = true;
+            if (light->color != 0xffffffff) isColored = true;
           }
           lightmapHit[laddr] = 1;
           if (r_lmap_filtering == 2) goto again;
@@ -598,7 +599,7 @@ void VRenderLevelLightmap::LightFace (surface_t *surf, subsector_t *leaf) {
 
   const vuint8 *facevis = (leaf && Level->HasPVS() ? Level->LeafPVS(leaf) : nullptr);
   lmi.light_hit = false;
-  is_colored = false;
+  isColored = false;
 
   // cast all static lights
   CalcMinMaxs(lmi, surf);
@@ -631,7 +632,7 @@ void VRenderLevelLightmap::LightFace (surface_t *surf, subsector_t *leaf) {
 
   // if the surface already has a static lightmap, we will reuse it,
   // otherwise we must allocate a new one
-  if (is_colored) {
+  if (isColored) {
     // need colored lightmap
     int sz = w*h*(int)sizeof(surf->lightmap_rgb[0]);
     if (surf->lmrgbsize != sz) {
@@ -908,18 +909,20 @@ void VRenderLevelLightmap::AddDynamicLights (surface_t *surf) {
             }
           }
           int i = t*smax+s;
-          if (dl.type == DLTYPE_Subtractive) {
-            //blocklightsS[i] += (rad-dist)*256.0f;
-            blocklightsrS[i] += rmul*add;
-            blocklightsgS[i] += gmul*add;
-            blocklightsbS[i] += bmul*add;
-          } else {
+          if (dl.type != DLTYPE_Subtractive) {
             //blocklights[i] += (rad-dist)*256.0f;
             blocklightsr[i] += rmul*add;
             blocklightsg[i] += gmul*add;
             blocklightsb[i] += bmul*add;
+          } else {
+            #ifdef VV_USELESS_SUBTRACTIVE_LIGHT_CODE
+            //blocklightsS[i] += (rad-dist)*256.0f;
+            blocklightsrS[i] += rmul*add;
+            blocklightsgS[i] += gmul*add;
+            blocklightsbS[i] += bmul*add;
+            #endif
           }
-          if (dlcolor != 0xffffffff) is_colored = true;
+          if (dlcolor != 0xffffffff) isColored = true;
         }
       }
     }
@@ -1083,11 +1086,8 @@ void VRenderLevelLightmap::InvalidateStaticLightmaps (const TVec &org, float rad
 //  xblight
 //
 //==========================================================================
+#ifdef VV_USELESS_SUBTRACTIVE_LIGHT_CODE
 static inline int xblight (int add, int sub) {
-  /*
-  const int minlight = 256;
-  const int maxlight = 0xff00;
-  */
   enum {
     minlight = 256,
     maxlight = 0xff00,
@@ -1097,6 +1097,16 @@ static inline int xblight (int add, int sub) {
   if (t < minlight) t = minlight; else if (t > maxlight) t = maxlight;
   return t;
 }
+#else
+static inline int xblight (int add) {
+  enum {
+    minlight = 256,
+    maxlight = 0xff00,
+  };
+  const int t = 255*256-add;
+  return (t < minlight ? minlight : t > maxlight ? maxlight : t);
+}
+#endif
 
 
 //==========================================================================
@@ -1119,8 +1129,8 @@ void VRenderLevelLightmap::BuildLightMap (surface_t *surf) {
     if (surf->subsector) LightFace(surf, surf->subsector);
   }
 
-  is_colored = false;
-  has_specular = false;
+  isColored = false;
+  hasOverbright = false;
   int smax = (surf->extents[0]>>4)+1;
   int tmax = (surf->extents[1]>>4)+1;
   vassert(smax > 0);
@@ -1137,7 +1147,7 @@ void VRenderLevelLightmap::BuildLightMap (surface_t *surf) {
   int tR = ((surf->Light>>16)&255)*t/255;
   int tG = ((surf->Light>>8)&255)*t/255;
   int tB = (surf->Light&255)*t/255;
-  if (tR != tG || tR != tB) is_colored = true;
+  if (tR != tG || tR != tB) isColored = true;
 
   for (int i = 0; i < size; ++i) {
     //blocklights[i] = t;
@@ -1145,19 +1155,22 @@ void VRenderLevelLightmap::BuildLightMap (surface_t *surf) {
     blocklightsg[i] = tG;
     blocklightsb[i] = tB;
     blockaddlightsr[i] = blockaddlightsg[i] = blockaddlightsb[i] = 0;
+    #ifdef VV_USELESS_SUBTRACTIVE_LIGHT_CODE
     /*blocklightsS[i] =*/ blocklightsrS[i] = blocklightsgS[i] = blocklightsbS[i] = 0;
+    #endif
   }
 
-  // add lightmap
+  // sum lightmaps
+  const bool overbright = r_lmap_overbright_static.asBool();
   if (lightmap_rgb) {
     if (!lightmap) Sys_Error("RGB lightmap without uncolored lightmap");
-    is_colored = true;
+    isColored = true;
     for (int i = 0; i < size; ++i) {
       //blocklights[i] += lightmap[i]<<8;
       blocklightsr[i] += lightmap_rgb[i].r<<8;
       blocklightsg[i] += lightmap_rgb[i].g<<8;
       blocklightsb[i] += lightmap_rgb[i].b<<8;
-      if (!r_static_add) {
+      if (!overbright) {
         if (blocklightsr[i] > 0xffff) blocklightsr[i] = 0xffff;
         if (blocklightsg[i] > 0xffff) blocklightsg[i] = 0xffff;
         if (blocklightsb[i] > 0xffff) blocklightsb[i] = 0xffff;
@@ -1170,7 +1183,7 @@ void VRenderLevelLightmap::BuildLightMap (surface_t *surf) {
       blocklightsr[i] += t;
       blocklightsg[i] += t;
       blocklightsb[i] += t;
-      if (!r_static_add) {
+      if (!overbright) {
         if (blocklightsr[i] > 0xffff) blocklightsr[i] = 0xffff;
         if (blocklightsg[i] > 0xffff) blocklightsg[i] = 0xffff;
         if (blocklightsb[i] > 0xffff) blocklightsb[i] = 0xffff;
@@ -1183,44 +1196,63 @@ void VRenderLevelLightmap::BuildLightMap (surface_t *surf) {
 
   // calc additive light
   // this must be done before lightmap procesing because it will clamp all lights
-  for (int i = 0; i < size; ++i) {
+  const float spcoeff = clampval(r_lmap_specular.asFloat(), 0.0f, 16.0f);
+  for (unsigned i = 0; i < (unsigned)size; ++i) {
+    #ifdef VV_USELESS_SUBTRACTIVE_LIGHT_CODE
     t = blocklightsr[i]-blocklightsrS[i];
+    #else
+    t = blocklightsr[i];
+    #endif
     //if (t < 0) { t = 0; blocklightsr[i] = 0; } // subtractive light fix
     t -= 0x10000;
     if (t > 0) {
-      t = int(r_specular*t);
+      t = int(spcoeff*t);
       if (t > 0xffff) t = 0xffff;
       blockaddlightsr[i] = t;
-      has_specular = true;
+      hasOverbright = true;
     }
 
+    #ifdef VV_USELESS_SUBTRACTIVE_LIGHT_CODE
     t = blocklightsg[i]-blocklightsgS[i];
+    #else
+    t = blocklightsg[i];
+    #endif
     //if (t < 0) { t = 0; blocklightsg[i] = 0; } // subtractive light fix
     t -= 0x10000;
     if (t > 0) {
-      t = int(r_specular*t);
+      t = int(spcoeff*t);
       if (t > 0xffff) t = 0xffff;
       blockaddlightsg[i] = t;
-      has_specular = true;
+      hasOverbright = true;
     }
 
+    #ifdef VV_USELESS_SUBTRACTIVE_LIGHT_CODE
     t = blocklightsb[i]-blocklightsbS[i];
+    #else
+    t = blocklightsb[i];
+    #endif
     //if (t < 0) { t = 0; blocklightsb[i] = 0; } // subtractive light fix
     t -= 0x10000;
     if (t > 0) {
-      t = int(r_specular*t);
+      t = int(spcoeff*t);
       if (t > 0xffff) t = 0xffff;
       blockaddlightsb[i] = t;
-      has_specular = true;
+      hasOverbright = true;
     }
   }
 
   // bound, invert, and shift
-  for (int i = 0; i < size; ++i) {
+  for (unsigned i = 0; i < (unsigned)size; ++i) {
     //if (blocklightsrS[i]|blocklightsgS[i]|blocklightsbS[i]) fprintf(stderr, "*** SBL: (%d,%d,%d)\n", blocklightsrS[i], blocklightsgS[i], blocklightsbS[i]);
+    #ifdef VV_USELESS_SUBTRACTIVE_LIGHT_CODE
     blocklightsr[i] = xblight((int)blocklightsr[i], (int)blocklightsrS[i]);
     blocklightsg[i] = xblight((int)blocklightsg[i], (int)blocklightsgS[i]);
     blocklightsb[i] = xblight((int)blocklightsb[i], (int)blocklightsbS[i]);
+    #else
+    blocklightsr[i] = xblight((int)blocklightsr[i]);
+    blocklightsg[i] = xblight((int)blocklightsg[i]);
+    blocklightsb[i] = xblight((int)blocklightsb[i]);
+    #endif
 
     /*
     blocklightsr[i] = 0xff00;
@@ -1419,7 +1451,7 @@ bool VRenderLevelLightmap::BuildSurfaceLightmap (surface_t *surface) {
     }
   }
 
-  if (has_specular) {
+  if (hasOverbright) {
     add_block_dirty[bnum].addDirty(cache->s, cache->t, smax, tmax);
   }
 
