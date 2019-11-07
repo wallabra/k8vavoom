@@ -1149,7 +1149,14 @@ static void FindString (const char *oldStr, const char *newStr) {
     return;
   }
 
-  Warning("Not found old \"%s\" new \"%s\"", oldStr, newStr);
+  vuint32 hash = XXH32(oldStr, strlen(oldStr), 0x29a);
+  if (hash != 0xde390ed6u && /* startup header line, doom2 */
+      hash != 0x414bc626u && /* "modified" text, doom2 */
+      hash != 0xd254973du && /* "Degreelessness Mode On" */
+      hash != 0x41c08d13u)   /* "Degreelessness Mode Off" */
+  {
+    Warning("Not found old (0x%08x) \"%s\" new \"%s\"", hash, oldStr, newStr);
+  }
 }
 
 
@@ -1564,8 +1571,15 @@ void ProcessDehackedFiles () {
   // parse dehacked patches
   if (LumpNum >= 0) {
     dehFileName = W_FullLumpName(LumpNum);
-    GLog.Logf(NAME_Init, "Processing dehacked patch lump '%s'", *dehFileName);
-    LoadDehackedFile(W_CreateLumpReaderNum(LumpNum));
+    /*
+    if (dehFileName.endsWithCI("D4V.wad:dehacked")) {
+      GLog.Logf(NAME_Warning, "Skipped D4V dehacked patch lump '%s'", *dehFileName);
+    } else
+    */
+    {
+      GLog.Logf(NAME_Init, "Processing dehacked patch lump '%s'", *dehFileName);
+      LoadDehackedFile(W_CreateLumpReaderNum(LumpNum));
+    }
   }
   for (auto &&dhs : cli_DehList) {
     GLog.Logf(NAME_Init, "Processing dehacked patch '%s'", *dhs);
