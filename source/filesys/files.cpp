@@ -1006,15 +1006,17 @@ static VStr FindMainWad (VStr MainWad) {
 #endif
 
   if (hasSep) {
-    if (Sys_FileExists(MainWad)) return MainWad;
+    VStr nwadfname = Sys_FindFileCI(MainWad);
+    if (nwadfname.length() != 0) return nwadfname;
   }
 
   // first check in IWAD directories
   for (auto &&dir : IWadDirs) {
     //GLog.Logf(NAME_Debug, "  looking for iwad '%s/%s'...", *dir, *MainWad);
-    if (Sys_FileExists(dir+"/"+MainWad)) {
+    VStr wadfname = Sys_FindFileCI(dir+"/"+MainWad);
+    if (wadfname.length() != 0) {
       //GLog.Logf(NAME_Debug, "    FOUND iwad '%s/%s'!", *dir, *MainWad);
-      return dir+"/"+MainWad;
+      return wadfname;
     }
   }
 
@@ -1022,10 +1024,12 @@ static VStr FindMainWad (VStr MainWad) {
   //if (fl_savedir.IsNotEmpty() && Sys_FileExists(fl_savedir+"/"+MainWad)) return fl_savedir+"/"+MainWad;
 
   // finally in base directory
-  if (Sys_FileExists(fl_basedir+"/"+MainWad)) return fl_basedir+"/"+MainWad;
+  VStr bdwadfname = Sys_FindFileCI(fl_basedir+"/"+MainWad);
+  if (bdwadfname.length() != 0) return bdwadfname;
 
   // just in case, check it as-is
-  if (Sys_FileExists(MainWad)) return MainWad;
+  bdwadfname = Sys_FindFileCI(MainWad);
+  if (bdwadfname.length() != 0) return bdwadfname;
 
   return VStr();
 }
