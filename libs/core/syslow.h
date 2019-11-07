@@ -29,6 +29,12 @@
 //**************************************************************************
 
 
+// takes case-insensitive path, traverses it, and rewrites it to the case-sensetive one
+// (using real on-disk names). returns fixed path.
+// if some dir or file wasn't found, returns empty string.
+// last name assumed to be a file, not directory (unless `lastIsDir` flag is set).
+VStr Sys_FindFileCI (VStr path, bool lastIsDir=false);
+
 bool Sys_FileExists (VStr filename);
 bool Sys_DirExists (VStr path);
 int Sys_FileTime (VStr path); // returns -1 if not present, or time in unix epoch

@@ -72,6 +72,177 @@ static VStr sys_NormalizeUserName (const char *s) {
 
 
 #ifndef WIN32
+#define CANON_PATH_DELIM  '/'
+static inline bool isPathDelimiter (char ch) noexcept { return (ch == '/'); }
+static inline bool isRootPath (const VStr &s) noexcept { return (s.length() > 0 && s[0] == '/'); }
+static inline int getRootPathLength (const VStr &s) noexcept { return (s.length() > 0 && s[0] == '/' ? 1 : 0); }
+#else
+//#define CANON_PATH_DELIM  '\\'
+#define CANON_PATH_DELIM  '/'
+static inline bool isPathDelimiter (char ch) noexcept { return (ch == '/' || ch == '\\'); }
+static inline bool isRootPath (const VStr &s) noexcept {
+  return
+   (s.length() > 0 && (s[0] == '/' || s[0] == '\\')) ||
+   (s.length() > 2 && s[1] == ':' && (s[2] == '/' || s[2] == '\\'));
+}
+static inline int getRootPathLength (const VStr &s) noexcept {
+  return
+   s.length() > 0 && (s[0] == '/' || s[0] == '\\') ? 1 :
+   s.length() > 2 && s[1] == ':' && (s[2] == '/' || s[2] == '\\') ? 3 : 0;
+}
+#endif
+
+
+//#define SFFCI_FULL_SCAN_DEBUG
+
+#ifdef SFFCI_FULL_SCAN
+# undef SFFCI_FULL_SCAN
+#endif
+#ifdef WIN32
+# define SFFCI_FULL_SCAN
+#endif
+/*
+#ifndef SFFCI_FULL_SCAN
+# define SFFCI_FULL_SCAN
+#endif
+*/
+
+//==========================================================================
+//
+//  Sys_FindFileCI
+//
+//==========================================================================
+VStr Sys_FindFileCI (VStr path, bool lastIsDir) {
+  VStr realpath;
+
+  #ifdef SFFCI_FULL_SCAN_DEBUG
+  GLog.Logf(NAME_Debug, "Sys_FindFileCI: path=<%s> (lastIsDir=%d)", *path, (int)lastIsDir);
+  #endif
+  if (path.length() == 0) return realpath;
+  if (isRootPath(path)) {
+    realpath = path.left(getRootPathLength(path));
+    path.chopLeft(getRootPathLength(path));
+    #ifdef WIN32
+    // hack for UNC
+    if (realpath.length() == 1 && path.length() && isPathDelimiter(path[0])) {
+      realpath += path[0];
+      path.chopLeft(1);
+    } else {
+      for (int f = 0; f < realpath.length(); ++f) if (isPathDelimiter(realpath[f])) realpath.getMutableCStr()[f] = CANON_PATH_DELIM;
+    }
+    #endif
+    while (path.length() && isPathDelimiter(path[0])) path.chopLeft(1);
+  }
+
+  while (path.length() && isPathDelimiter(path[path.length()-1])) path.chopRight(1);
+  if (path.length() == 0) return realpath;
+
+  #ifdef SFFCI_FULL_SCAN_DEBUG
+  GLog.Logf(NAME_Debug, " realpath=<%s>; path=<%s>", *realpath, *path);
+  #endif
+  while (path.length()) {
+    if (isPathDelimiter(path[0])) {
+      //if (realpath.length() && !isPathDelimiter(realpath[0])) realpath += path[0];
+      path.chopLeft(1);
+      continue;
+    }
+    // get path component
+    int pos = 0;
+    while (pos < path.length() && !isPathDelimiter(path[pos])) ++pos;
+    VStr ppart = path.left(pos);
+    path.chopLeft(pos+1);
+    #ifdef SFFCI_FULL_SCAN_DEBUG
+    GLog.Logf(NAME_Debug, "  realpath=<%s>; path=<%s>; ppart=<%s>", *realpath, *path, *ppart);
+    #endif
+    // ignore "current dir"
+    if (ppart == ".") continue;
+    // process "upper dir" in-place
+    if (ppart == "..") {
+      int start = (isRootPath(realpath) ? getRootPathLength(realpath) : 0);
+      int end = realpath.length();
+      while (end > start && !isPathDelimiter(realpath[end])) --end;
+      if (start == 0 && end > 0 && isPathDelimiter(realpath[end-1])) --end;
+      realpath = realpath.left(end);
+      #ifdef SFFCI_FULL_SCAN_DEBUG
+      GLog.Logf(NAME_Debug, "    updir: realpath=<%s>", *realpath);
+      #endif
+      continue;
+    }
+    // add to real path
+    if (realpath.length() && !isPathDelimiter(realpath[realpath.length()-1])) realpath += CANON_PATH_DELIM;
+    //VStr prevpath = realpath;
+    //realpath += ppart;
+    const bool wantDir = (lastIsDir || path.length() != 0);
+    // check "as-is"
+    #ifndef SFFCI_FULL_SCAN
+    VStr newpath = realpath+ppart;
+    //if (Sys_FileTime(newpath) != -1) { realpath = newpath; continue; } // i found her!
+    const bool okname = (wantDir ? Sys_DirExists(newpath) : Sys_FileExists(newpath));
+    if (okname) { realpath = newpath; continue; } // i found her!
+    #endif
+    // scan directory
+    void *dh = Sys_OpenDir((realpath.length() ? realpath : VStr(".")), wantDir);
+    if (!dh) return VStr::EmptyString; // alas
+    #ifdef SFFCI_FULL_SCAN
+    VStr inexactName;
+    vassert(inexactName.length() == 0);
+    #endif
+    for (;;) {
+      VStr fname = Sys_ReadDir(dh);
+      if (fname.length() == 0) {
+        #ifdef SFFCI_FULL_SCAN
+        if (inexactName.length()) break;
+        #endif
+        // alas
+        Sys_CloseDir(dh);
+        return VStr::EmptyString;
+      }
+      #ifdef SFFCI_FULL_SCAN_DEBUG
+      GLog.Logf(NAME_Debug, "   fname=<%s>; ppart=<%s>; wantDir=%d", *fname, *ppart, (int)wantDir);
+      #endif
+      VStr diskName;
+      if (wantDir) {
+        if (!fname.endsWith("/")) continue;
+        diskName = fname.left(fname.length()-1);
+      } else {
+        if (fname.endsWith("/")) continue; // just in case
+        diskName = fname;
+      }
+      #ifdef SFFCI_FULL_SCAN
+      if (ppart == diskName) { inexactName.clear(); break; }
+      if (inexactName.length() == 0 && ppart.strEquCI(diskName)) inexactName = diskName;
+      #else
+      if (ppart.strEquCI(diskName)) { realpath += diskName; break; }
+      #endif
+    }
+    Sys_CloseDir(dh);
+    #ifdef SFFCI_FULL_SCAN
+      #ifdef SFFCI_FULL_SCAN_DEBUG
+      GLog.Logf(NAME_Debug, "   inexactName: <%s>", *inexactName);
+      #endif
+    if (inexactName.length() != 0) realpath += inexactName; else realpath += ppart;
+    #endif
+    #ifdef SFFCI_FULL_SCAN_DEBUG
+    GLog.Logf(NAME_Debug, "  sce: realpath=<%s>; path=<%s>; ppart=<%s>", *realpath, *path, *ppart);
+    #endif
+  }
+  vassert(path.length() == 0);
+  #ifdef SFFCI_FULL_SCAN_DEBUG
+  GLog.Logf(NAME_Debug, " done: realpath=<%s>", *realpath);
+  #endif
+  if (lastIsDir) {
+    if (!Sys_DirExists(realpath)) return VStr::EmptyString; // oops
+  } else {
+    if (!Sys_FileExists(realpath)) return VStr::EmptyString; // oops
+  }
+  #ifdef SFFCI_FULL_SCAN_DEBUG
+  GLog.Logf(NAME_Debug, " exit: realpath=<%s>", *realpath);
+  #endif
+  return realpath;
+}
+
+
+#ifndef WIN32
 // normal OS
 #ifndef _GNU_SOURCE
 # define _GNU_SOURCE
