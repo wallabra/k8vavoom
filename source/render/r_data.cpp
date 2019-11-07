@@ -1306,6 +1306,7 @@ static void ParseGlow (VScriptParser *sc) {
       while (!sc->Check("}")) {
         if (sc->Check(",")) continue;
         sc->ExpectName8Warn();
+        sc->Check("fullbright"); //FIXME! TODO!
 #ifdef CLIENT
         VName img = sc->Name8;
         if (img != NAME_None && !VTextureManager::IsDummyTextureName(img)) {
