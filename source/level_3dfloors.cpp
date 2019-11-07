@@ -73,9 +73,9 @@ void VLevel::AddExtraFloorSane (line_t *line, sector_t *dst) {
   if (doDump) { GCon->Logf("::: VAVOOM 3DF BEFORE"); dumpSectorRegions(dst); }
 
   // append link
+  if (!AppendControlLink(src, dst)) return; // oops, something is wrong, don't create this 3d floor
   src->SectorFlags |= sector_t::SF_ExtrafloorSource;
   dst->SectorFlags |= sector_t::SF_HasExtrafloors;
-  AppendControlLink(src, dst);
 
   // insert into region array
   // control must have negative height, so
@@ -135,9 +135,9 @@ void VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
   if (doDump) { GCon->Logf("::: BEFORE"); dumpSectorRegions(dst); }
 
   // append link
+  if (!AppendControlLink(src, dst)) return; // oops, something is wrong, don't create this 3d floor
   src->SectorFlags |= sector_t::SF_ExtrafloorSource;
   dst->SectorFlags |= sector_t::SF_HasExtrafloors;
-  AppendControlLink(src, dst);
 
   // insert into region array
   sec_region_t *reg = dst->AllocRegion();

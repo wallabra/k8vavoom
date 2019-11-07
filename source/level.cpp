@@ -673,18 +673,19 @@ void VLevel::SectorSetLink (int controltag, int tag, int surface, int movetype) 
 //
 //  VLevel::AppendControlLink
 //
+//  returns `false` for duplicate/invalid link
+//
 //==========================================================================
-void VLevel::AppendControlLink (const sector_t *src, const sector_t *dest) {
-  if (!src || !dest || src == dest) return; // just in case
+bool VLevel::AppendControlLink (const sector_t *src, const sector_t *dest) {
+  if (!src || !dest || src == dest) return false; // just in case
 
   if (ControlLinks.length() == 0) {
     // first time, create empty array
     ControlLinks.setLength(NumSectors);
-    VCtl2DestLink *link = ControlLinks.ptr();
-    for (int f = NumSectors; f--; ++link) {
-      link->src = -1;
-      link->dest = -1;
-      link->next = -1;
+    for (auto &&link : ControlLinks) {
+      link.src = -1;
+      link.dest = -1;
+      link.next = -1;
     }
   }
 
@@ -702,6 +703,8 @@ void VLevel::AppendControlLink (const sector_t *src, const sector_t *dest) {
     // find list tail
     int lastidx = srcidx;
     for (;;) {
+      vassert(ControlLinks[lastidx].src == srcidx);
+      if (ControlLinks[lastidx].dest == destidx) return false;
       int nli = ControlLinks[lastidx].next;
       if (nli < 0) break;
       lastidx = nli;
@@ -717,12 +720,14 @@ void VLevel::AppendControlLink (const sector_t *src, const sector_t *dest) {
     newlnk->next = -1;
   }
 
-  /*
-  GCon->Logf("=== AppendControlLink (src=%d; dst=%d) ===", srcidx, destidx);
+  #if 0
+  GCon->Logf(NAME_Debug, "=== AppendControlLink (src=%d; dst=%d) ===", srcidx, destidx);
   for (auto it = IterControlLinks(src); !it.isEmpty(); it.next()) {
-    GCon->Logf("   dest=%d", it.getDestSectorIndex());
+    GCon->Logf(NAME_Debug, "   dest=%d", it.getDestSectorIndex());
   }
-  */
+  #endif
+
+  return true;
 }
 
 

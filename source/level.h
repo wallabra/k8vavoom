@@ -377,7 +377,8 @@ class VLevel : public VGameObject {
   };
 
 private:
-  void AppendControlLink (const sector_t *src, const sector_t *dest);
+  // returns `false` for duplicate/invalid link
+  bool AppendControlLink (const sector_t *src, const sector_t *dest);
   inline CtlLinkIter IterControlLinks (const sector_t *src) { return CtlLinkIter(this, (src ? (int)(ptrdiff_t)(src-Sectors) : -1)); }
 
   bool ChangeSectorInternal (sector_t *sector, int crunch);
