@@ -31,7 +31,7 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 VLog GLog;
-#if !defined(_WIN32)
+#if !defined(_WIN32) || defined(IN_WADCHECK)
 bool GLogTTYLog = true;
 #else
 bool GLogTTYLog = false;
