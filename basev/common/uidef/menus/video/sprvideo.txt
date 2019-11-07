@@ -29,6 +29,17 @@ menudef SpriteVideoOptions {
   }
 
   option bool {
+    title = "Use Real Height for Offset Fix";
+    cvar = r_use_real_sprite_offset;
+    help =
+      "Some mods uses pictures with transparent bottom part"
+      "instead of cropping it, and this may confuse sprite"
+      "height fixer. This options calculates real sprite"
+      "picture height instead of trusting the mod."
+      "\cGWARNING! This is experimental feature (turned on for testing).";
+  }
+
+  option bool {
     title = "Fix Projectile Sprites Offset";
     cvar = r_fix_sprite_offsets_missiles;
     help =
