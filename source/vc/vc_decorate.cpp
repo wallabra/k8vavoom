@@ -1920,6 +1920,37 @@ static void ScanActorDefForUserVars (VScriptParser *sc, TArray<VDecorateUserVarD
 
 //==========================================================================
 //
+//  CheckReplaceErrorHacks
+//
+//  returns `true` if this error should be ignored
+//
+//==========================================================================
+static bool CheckReplaceErrorHacks (VScriptParser *sc, const VStr &NameStr, const VStr &ParentStr, const VStr &ReplaceStr) {
+  struct Triplets {
+    const char *className;
+    const char *parentName;
+    const char *replaceName;
+    const char *fixName;
+  };
+  static const Triplets trilist[] = {
+    { .className="DH_Cyberdemon",   .parentName="SpiderMastermind", .replaceName="Motherdemon",     .fixName="D4V"},
+    { .className="DH_DoomImp",      .parentName="DoomImp",          .replaceName="NightmareImp",    .fixName="D4V"},
+    { .className="DH_Cyberdemon2",  .parentName="SpiderMastermind", .replaceName="D64D2Cyberdemon", .fixName="D4V"},
+  };
+  for (size_t f = 0; f < sizeof(trilist)/sizeof(trilist[0]); ++f) {
+    const Triplets &t = trilist[f];
+    if (t.className && t.className[0]) { if (!NameStr.strEquCI(t.className)) continue; }
+    if (t.parentName && t.parentName[0]) { if (!ParentStr.strEquCI(t.parentName)) continue; }
+    if (t.replaceName && t.replaceName[0]) { if (!ReplaceStr.strEquCI(t.replaceName)) continue; }
+    sc->Message(va("Replaced class `%s` not found for actor `%s` (%s fix applied)", *ReplaceStr, *NameStr, t.fixName));
+    return true;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
 //  ParseActor
 //
 //==========================================================================
@@ -2056,11 +2087,14 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
         sc->Message(va("Replaced class `%s` from Chex Quest not found for actor `%s`", *sc->String, *NameStr));
       } else
       */
-      if (cli_DecorateLaxParents) {
+      //Actor DH_Cyberdemon : SpiderMastermind replaces Motherdemon
+      // D4V hack
+      bool ignoreReplaceError = CheckReplaceErrorHacks(sc, NameStr, ParentStr, sc->String);
+      if (cli_DecorateLaxParents || ignoreReplaceError) {
         ReplaceeClass = nullptr; // just in case
-        sc->Message(va("Replaced class `%s` not found for actor `%s`", *sc->String, *NameStr));
+        if (!ignoreReplaceError) sc->Message(va("Replaced class `%s` not found for actor `%s` : `%s`", *sc->String, *NameStr, *ParentStr));
       } else {
-        sc->Error(va("Replaced class `%s` not found for actor `%s`", *sc->String, *NameStr));
+        sc->Error(va("Replaced class `%s` not found for actor `%s` : `%s`", *sc->String, *NameStr, *ParentStr));
       }
     }
     if (ReplaceeClass != nullptr && !ReplaceeClass->IsChildOf(ActorClass)) {
