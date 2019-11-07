@@ -51,6 +51,7 @@ extern VCvarB r_brightmaps_sprite;
 static VCvarB r_fix_sprite_offsets("r_fix_sprite_offsets", true, "Fix sprite offsets?", CVAR_Archive);
 static VCvarB r_fix_sprite_offsets_missiles("r_fix_sprite_offsets_missiles", false, "Fix sprite offsets for projectiles?", CVAR_Archive);
 static VCvarI r_sprite_fix_delta("r_sprite_fix_delta", "-7", "Sprite offset amount.", CVAR_Archive); // -6 seems to be ok for vanilla BFG explosion, and for imp fireball
+static VCvarB r_use_real_sprite_offset("r_use_real_sprite_offset", true, "Use real picture height instead of texture height for sprite offset fixes?", CVAR_Archive);
 
 static VCvarB r_sprite_use_pofs("r_sprite_use_pofs", true, "Use PolygonOffset with sprite sorting to reduce sprite flickering?", CVAR_Archive);
 static VCvarF r_sprite_pofs("r_sprite_pofs", "128", "DEBUG");
@@ -462,7 +463,11 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
   //    also, don't bother with projectiles, they're usually flying anyway
   bool doFixSpriteOffset = r_fix_sprite_offsets;
   if (doFixSpriteOffset && !r_fix_sprite_offsets_missiles && thing->IsMissile()) doFixSpriteOffset = false;
-  if (doFixSpriteOffset && TexTOffset < TexHeight && 2*TexTOffset+r_sprite_fix_delta >= TexHeight && scaleY > 0.6f && scaleY < 1.6f) TexTOffset = TexHeight;
+  if (doFixSpriteOffset) {
+    const int sph = (r_use_real_sprite_offset ? Tex->GetRealHeight() : TexHeight);
+    //if (thing) GCon->Logf(NAME_Debug, "THING '%s': sph=%d; height=%d", thing->GetClass()->GetName(), sph, TexHeight);
+    if (TexTOffset < /*TexHeight*/sph && 2*TexTOffset+r_sprite_fix_delta >= /*TexHeight*/sph && scaleY > 0.6f && scaleY < 1.6f) TexTOffset = /*TexHeight*/sph;
+  }
 
   TVec topdelta = TexTOffset*sprup*scaleY;
   TVec botdelta = (TexTOffset-TexHeight)*sprup*scaleY;
