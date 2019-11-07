@@ -1076,7 +1076,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
   glBlendFunc(GL_DST_COLOR, GL_ZERO);
   glEnable(GL_BLEND);
 
-  if (!gl_dbg_adv_render_textures_surface || RendLev->DrawSurfList.length() == 0) return;
+  if (!gl_dbg_adv_render_surface_textures || RendLev->DrawSurfList.length() == 0) return;
 
   bool lastWasMasked = false;
 
@@ -1176,7 +1176,7 @@ void VOpenGLDrawer::DrawWorldFogPass () {
   //ShadowsFog.Activate();
   //ShadowsFog.SetFogType();
 
-  if (RendLev->DrawSurfList.length() == 0) return;
+  if (!gl_dbg_adv_render_surface_fog || RendLev->DrawSurfList.length() == 0) return;
 
   enum {
     ShaderNone = -1,

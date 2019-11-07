@@ -220,7 +220,14 @@ menudef AdvRenderOptions {
   option bool {
     title = "Render Surface Textures";
     textColor = BRICK;
-    cvar = gl_dbg_adv_render_textures_surface;
+    cvar = gl_dbg_adv_render_surface_textures;
     help = "Turn this off to see ambient lighting without textures.";
+  }
+
+  option bool {
+    title = "Render Surface Fog";
+    textColor = BRICK;
+    cvar = gl_dbg_adv_render_surface_fog;
+    help = "Turn this off to disable fog/light darkening.";
   }
 }
