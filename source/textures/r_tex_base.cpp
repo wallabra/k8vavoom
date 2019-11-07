@@ -101,6 +101,7 @@ VTexture::VTexture ()
   , TextureTranslation(0)
   , HashNext(-1)
   , SourceLump(-1)
+  , RealHeight(MIN_VINT32)
   , Brightmap(nullptr)
   , noDecals(false)
   , staticNoDecals(false)
@@ -729,6 +730,22 @@ rgba_t VTexture::getPixel (int x, int y) {
   }
 
   return col;
+}
+
+
+//==========================================================================
+//
+//  VTexture::ConvertPixelsToRGBA
+//
+//==========================================================================
+void VTexture::CalcRealHeight () {
+  RealHeight = Height;
+  while (RealHeight > 0) {
+    bool found = false;
+    for (int x = 0; x < Width; ++x) if (getPixel(x, RealHeight-1).a != 0) { found = true; break; }
+    if (found) break;
+    --RealHeight;
+  }
 }
 
 

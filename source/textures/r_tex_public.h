@@ -186,6 +186,7 @@ public:
   int TextureTranslation; // animation
   int HashNext;
   int SourceLump;
+  int RealHeight; // without bottom transparent part; MIN_VINT32 means "not calculated yet"
 
   VTexture *Brightmap;
 
@@ -271,6 +272,8 @@ protected:
   // will delete old `Pixels` if necessary
   void ConvertPixelsToShaded ();
 
+  void CalcRealHeight ();
+
 public:
   static void FilterFringe (rgba_t *pic, int wdt, int hgt);
   static void PremultiplyImage (rgba_t *pic, int wdt, int hgt);
@@ -283,6 +286,8 @@ public:
   //k8: please note that due to my sloppy coding, real format checking should be preceded by `GetPixels()`
   inline int GetFormat () const { return (shadeColor == -1 ?  mFormat : TEXFMT_RGBA); }
   PropertyRO<int, VTexture> Format {this, &VTexture::GetFormat};
+
+  inline int GetRealHeight () { if (RealHeight == MIN_VINT32) CalcRealHeight(); return RealHeight; }
 
 public:
   VTexture ();
