@@ -107,14 +107,14 @@ static int calcDecalSide (const line_t *li, const sector_t *fsec, const sector_t
   TVec norg = (lvnum == 0 ? *li->v1 : *li->v2);
   norg += xdir*1024;
   int nside = nline->PointOnSide(norg);
-  VDC_DLOG("  (0)nline=%d, detected side %d", (int)(ptrdiff_t)(nline-GLevel->Lines), nside);
+  VDC_DLOG(NAME_Debug, "  (0)nline=%d, detected side %d", (int)(ptrdiff_t)(nline-GLevel->Lines), nside);
   if (li->sidenum[nside] < 0) {
     nside ^= 1;
     if (li->sidenum[nside] < 0) return -1; // wuta?
   }
-  VDC_DLOG("  (0)nline=%d, choosen side %d", (int)(ptrdiff_t)(nline-GLevel->Lines), nside);
+  VDC_DLOG(NAME_Debug, "  (0)nline=%d, choosen side %d", (int)(ptrdiff_t)(nline-GLevel->Lines), nside);
   /*
-  VDC_DLOG("  nline=%d, cannot detect side", (int)(ptrdiff_t)(nline-GLevel->Lines));
+  VDC_DLOG(NAME_Debug, "  nline=%d, cannot detect side", (int)(ptrdiff_t)(nline-GLevel->Lines));
   //nside = origside;
   continue;
   */
@@ -213,7 +213,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
   //HACK!
   if (VStr::startsWithCI(*dec->name, "K8Gore")) dcmaxcount = r_decal_gore_onetype_max;
 
-  VDC_DLOG("Decal '%s' at line #%d (side %d; fs=%d; bs=%d): linelen=%g; o0=%g; o1=%g (ofsorig=%g; txofs=%g; tyofs=%g; tw=%g; th=%g)", *dec->name, (int)(ptrdiff_t)(li-Lines), side, (int)(ptrdiff_t)(fsec-Sectors), (bsec ? (int)(ptrdiff_t)(bsec-Sectors) : -1), linelen, dcx0, dcx1, lineofs, txofs, tyofs, twdt, thgt);
+  VDC_DLOG(NAME_Debug, "Decal '%s' at line #%d (side %d; fs=%d; bs=%d): linelen=%g; o0=%g; o1=%g (ofsorig=%g; txofs=%g; tyofs=%g; tw=%g; th=%g)", *dec->name, (int)(ptrdiff_t)(li-Lines), side, (int)(ptrdiff_t)(fsec-Sectors), (bsec ? (int)(ptrdiff_t)(bsec-Sectors) : -1), linelen, dcx0, dcx1, lineofs, txofs, tyofs, twdt, thgt);
 
   TVec linepos = v1+li->ndir*lineofs;
 
@@ -232,7 +232,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
       if (seg->flags&SF_ZEROLEN) continue; // invalid seg
       vassert(seg->linedef == li);
 
-      VDC_DLOG("  checking seg #%d; offset=%g; length=%g", (int)(ptrdiff_t)(seg-Segs), seg->offset, seg->length);
+      VDC_DLOG(NAME_Debug, "  checking seg #%d; offset=%g; length=%g", (int)(ptrdiff_t)(seg-Segs), seg->offset, seg->length);
 
       // check if decal is in seg bounds
       if (dcx1 <= seg->offset || dcx0 >= seg->offset+seg->length) continue; // out of bounds
@@ -328,7 +328,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
       }
 
       if (fsec && bsec) {
-        VDC_DLOG("  2s: orgz=%g; front=(%g,%g); back=(%g,%g)", orgz, ffloorZ, fceilingZ, bfloorZ, bceilingZ);
+        VDC_DLOG(NAME_Debug, "  2s: orgz=%g; front=(%g,%g); back=(%g,%g)", orgz, ffloorZ, fceilingZ, bfloorZ, bceilingZ);
         if (hasMidTex && orgz >= max2(ffloorZ, bfloorZ) && orgz <= min2(fceilingZ, bceilingZ)) {
           // midtexture
                if (li->flags&ML_DONTPEGBOTTOM) slideWithFloor = true;
@@ -351,7 +351,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
             // only top texture
             if ((li->flags&ML_DONTPEGTOP) == 0) slideWithCeiling = true;
           }
-          VDC_DLOG("  2s: front=(%g,%g); back=(%g,%g); sc=%d; sf=%d", ffloorZ, fceilingZ, bfloorZ, bceilingZ, (int)slideWithFloor, (int)slideWithCeiling);
+          VDC_DLOG(NAME_Debug, "  2s: front=(%g,%g); back=(%g,%g); sc=%d; sf=%d", ffloorZ, fceilingZ, bfloorZ, bceilingZ, (int)slideWithFloor, (int)slideWithCeiling);
         }
 
         // door hack
@@ -366,7 +366,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
         }
         */
       } else {
-        VDC_DLOG("  1s: orgz=%g; front=(%g,%g)", orgz, ffloorZ, fceilingZ);
+        VDC_DLOG(NAME_Debug, "  1s: orgz=%g; front=(%g,%g)", orgz, ffloorZ, fceilingZ);
         // one-sided
         if (hasMidTex && orgz >= ffloorZ && orgz <= fceilingZ) {
           // midtexture
@@ -393,7 +393,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
           }
         }
         if (slideWithFloor || slideWithCeiling) slidesec = fsec;
-        VDC_DLOG("  1s: front=(%g,%g); sc=%d; sf=%d", ffloorZ, fceilingZ, (int)slideWithFloor, (int)slideWithCeiling);
+        VDC_DLOG(NAME_Debug, "  1s: front=(%g,%g); sc=%d; sf=%d", ffloorZ, fceilingZ, (int)slideWithFloor, (int)slideWithCeiling);
       }
 
       // remove old same-typed decals, if necessary
@@ -437,7 +437,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
         }
       }
 
-      VDC_DLOG("  decaling seg #%d; offset=%g; length=%g", (int)(ptrdiff_t)(seg-Segs), seg->offset, seg->length);
+      VDC_DLOG(NAME_Debug, "  decaling seg #%d; offset=%g; length=%g", (int)(ptrdiff_t)(seg-Segs), seg->offset, seg->length);
 
       // create decal
       decal_t *decal = new decal_t;
@@ -473,14 +473,14 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
         if (decal->slidesec) {
           decal->flags |= decal_t::SlideFloor;
           decal->curz -= decal->slidesec->floor.TexZ;
-          VDC_DLOG("  floor slide; sec=%d", (int)(ptrdiff_t)(decal->slidesec-Sectors));
+          VDC_DLOG(NAME_Debug, "  floor slide; sec=%d", (int)(ptrdiff_t)(decal->slidesec-Sectors));
         }
       } else if (slideWithCeiling) {
         decal->slidesec = (slidesec ? slidesec : bsec);
         if (decal->slidesec) {
           decal->flags |= decal_t::SlideCeil;
           decal->curz -= decal->slidesec->ceiling.TexZ;
-          VDC_DLOG("  ceil slide; sec=%d", (int)(ptrdiff_t)(decal->slidesec-Sectors));
+          VDC_DLOG(NAME_Debug, "  ceil slide; sec=%d", (int)(ptrdiff_t)(decal->slidesec-Sectors));
         }
       }
 
@@ -493,7 +493,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
   // if our decal is not completely at linedef, spread it to adjacent linedefs
   if (dcx0 < 0) {
     // to the left
-    VDC_DLOG("Decal '%s' at line #%d: going to the left; ofs=%g; side=%d", *dec->name, (int)(ptrdiff_t)(li-Lines), dcx0, side);
+    VDC_DLOG(NAME_Debug, "Decal '%s' at line #%d: going to the left; ofs=%g; side=%d", *dec->name, (int)(ptrdiff_t)(li-Lines), dcx0, side);
     line_t **ngb = li->v1lines;
     for (int ngbCount = li->v1linesCount; ngbCount--; ++ngb) {
       line_t *nline = *ngb;
@@ -501,10 +501,10 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
       int nside = calcDecalSide(li, fsec, bsec, nline, side, 0);
       if (nside < 0) continue;
       if (li->v1 == nline->v2) {
-        VDC_DLOG("  v1 at nv2 (%d) (ok)", (int)(ptrdiff_t)(nline-Lines));
+        VDC_DLOG(NAME_Debug, "  v1 at nv2 (%d) (ok)", (int)(ptrdiff_t)(nline-Lines));
         PutDecalAtLine(tex, orgz, ((*nline->v2)-(*nline->v1)).length2D()+dstxofs, dec, nside, nline, flips, translation);
       } else if (li->v1 == nline->v1) {
-        VDC_DLOG("  v1 at nv1 (%d) (opp)", (int)(ptrdiff_t)(nline-Lines));
+        VDC_DLOG(NAME_Debug, "  v1 at nv1 (%d) (opp)", (int)(ptrdiff_t)(nline-Lines));
         //PutDecalAtLine(tex, orgz, dstxofs, dec, (nline->frontsector == fsec ? 0 : 1), nline, flips, translation);
       }
     }
@@ -512,7 +512,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
 
   if (dcx1 > linelen) {
     // to the right
-    VDC_DLOG("Decal '%s' at line #%d: going to the right; left=%g; side=%d", *dec->name, (int)(ptrdiff_t)(li-Lines), dcx1-linelen, side);
+    VDC_DLOG(NAME_Debug, "Decal '%s' at line #%d: going to the right; left=%g; side=%d", *dec->name, (int)(ptrdiff_t)(li-Lines), dcx1-linelen, side);
     line_t **ngb = li->v2lines;
     for (int ngbCount = li->v2linesCount; ngbCount--; ++ngb) {
       line_t *nline = *ngb;
@@ -520,10 +520,10 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
       int nside = calcDecalSide(li, fsec, bsec, nline, side, 1);
       if (nside < 0) continue;
       if (li->v2 == nline->v1) {
-        VDC_DLOG("  v2 at nv1 (%d) (ok)", (int)(ptrdiff_t)(nline-Lines));
+        VDC_DLOG(NAME_Debug, "  v2 at nv1 (%d) (ok)", (int)(ptrdiff_t)(nline-Lines));
         PutDecalAtLine(tex, orgz, dstxofs-linelen, dec, nside, nline, flips, translation);
       } else if (li->v2 == nline->v2) {
-        VDC_DLOG("  v2 at nv2 (%d) (opp)", (int)(ptrdiff_t)(nline-Lines));
+        VDC_DLOG(NAME_Debug, "  v2 at nv2 (%d) (opp)", (int)(ptrdiff_t)(nline-Lines));
         //PutDecalAtLine(tex, orgz, ((*nline->v2)-(*nline->v1)).length2D()+(dstxofs-linelen), dec, (nline->frontsector == fsec ? 0 : 1), nline, flips, translation);
       }
     }
@@ -607,7 +607,7 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, int side, line_t 
   else dist = 0;
 
   const float lineofs = dist*(v2-v1).length2D();
-  VDC_DLOG("linelen=%g; dist=%g; lineofs=%g", (v2-v1).length2D(), dist, lineofs);
+  VDC_DLOG(NAME_Debug, "linelen=%g; dist=%g; lineofs=%g", (v2-v1).length2D(), dist, lineofs);
 
   PutDecalAtLine(tex, org.z, lineofs, dec, side, li, flips, translation);
 }
