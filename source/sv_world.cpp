@@ -1173,7 +1173,7 @@ sec_region_t *SV_PointRegionLightSub (subsector_t *sub, const TVec &p, bool dbgD
   if (p.z <= secfz) return sector->eregions;
 
   sec_region_t *last = nullptr;
-  bool wasHit = false;
+  //bool wasHit = false;
   float lastz = 0.0f;
   sec_region_t *best = sector->eregions;
   float bestDist = p.z-secfz; // minimum distance to region floor
@@ -1191,7 +1191,7 @@ sec_region_t *SV_PointRegionLightSub (subsector_t *sub, const TVec &p, bool dbgD
       if (p.z < cz) {
         const float fdist = cz-p.z;
         if (fdist <= bestDist) {
-          wasHit = true;
+          //wasHit = true;
           bestDist = fdist;
           best = reg;
         }
@@ -1204,7 +1204,7 @@ sec_region_t *SV_PointRegionLightSub (subsector_t *sub, const TVec &p, bool dbgD
       if (p.z <= fz) {
         const float fdist = fz-p.z;
         if (fdist <= bestDist) {
-          wasHit = true;
+          //wasHit = true;
           bestDist = fdist;
           best = reg;
         }
