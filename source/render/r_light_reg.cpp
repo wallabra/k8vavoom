@@ -1487,7 +1487,12 @@ void VRenderLevelLightmap::ProcessCachedSurfaces () {
   for (auto &&sfc : LMSurfList) {
     if (!BuildSurfaceLightmap(sfc)) {
       // render this surface as non-lightmapped: it is better than completely loosing it
-      DrawSurfList.append(sfc);
+      //DrawSurfList.append(sfc);
+      if ((sfc->drawflags&surface_t::DF_MASKED) == 0) {
+        SurfCheckAndQueue(DrawSurfListSolid, sfc);
+      } else {
+        SurfCheckAndQueue(DrawSurfListMasked, sfc);
+      }
     }
   }
 }

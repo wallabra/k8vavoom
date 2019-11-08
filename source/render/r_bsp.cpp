@@ -259,7 +259,16 @@ void VRenderLevelShared::SurfCheckAndQueue (TArray<surface_t *> &queue, surface_
 //
 //==========================================================================
 void VRenderLevelShared::QueueSimpleSurf (surface_t *surf) {
-  SurfCheckAndQueue(DrawSurfList, surf);
+  // note that masked surfaces (i.e. textures with binary transparency) are processed by the normal renderers.
+  // i.e. there is no need to pass them to "transparent wall" route.
+  // only alpha-blended and additive surfaces must be rendered in a separate pass.
+  //const bool isCommon = (texinfo->Alpha >= 1.0f && !texinfo->Additive && !texinfo->Tex->isTranslucent());
+  if (!SurfPrepareForRender(surf)) return;
+  if ((surf->drawflags&surface_t::DF_MASKED) == 0) {
+    DrawSurfListSolid.append(surf);
+  } else {
+    DrawSurfListMasked.append(surf);
+  }
 }
 
 
@@ -287,17 +296,19 @@ void VRenderLevelShared::QueueHorizonPortal (surface_t *surf) {
 //
 //  VRenderLevelShared::CommonQueueSurface
 //
+//  main dispatcher (it calls other queue methods)
+//
 //==========================================================================
-void VRenderLevelShared::CommonQueueSurface (surface_t *surf, vuint8 type) {
+void VRenderLevelShared::CommonQueueSurface (surface_t *surf, SFCType type) {
   if (PortalLevel == 0) {
     world_surf_t &S = WorldSurfs.Alloc();
     S.Surf = surf;
     S.Type = type;
   } else {
     switch (type) {
-      case 0: QueueWorldSurface(surf); break;
-      case 1: QueueSkyPortal(surf); break;
-      case 2: QueueHorizonPortal(surf); break;
+      case SFCType::SFCT_World: QueueWorldSurface(surf); break;
+      case SFCType::SFCT_Sky: QueueSkyPortal(surf); break;
+      case SFCType::SFCT_Horizon: QueueHorizonPortal(surf); break;
       default: Sys_Error("internal renderer error: unknown surface type %d", (int)type);
     }
   }
@@ -384,20 +395,15 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
   }
 
   lLev = (FixedLight ? FixedLight : lLev+ExtraLight);
-  /*
-  if (secregion->extraline) {
-    if ((secregion->regflags&(sec_region_t::RF_NonSolid|sec_region_t::RF_OnlyVisual)) == 0) {
-      lLev = 255;
-    }
-  }
-  */
   lLev = midval(0, lLev, 255);
   if (r_darken) lLev = light_remap[lLev];
   vuint32 Fade = GetFade(secregion);
 
   if (SkyBox && (SkyBox->EntityFlags&VEntity::EF_FixedModel)) SkyBox = nullptr;
-  bool IsStack = SkyBox && SkyBox->eventSkyBoxGetAlways();
-  if (texinfo->Tex == GTextureManager[skyflatnum] || (IsStack && CheckSkyBoxAlways)) { //k8: i hope that the parens are right here
+
+  bool IsStack = (SkyBox && SkyBox->eventSkyBoxGetAlways());
+  //k8: i hope that the parens are right here
+  if (texinfo->Tex == GTextureManager[skyflatnum] || (IsStack && CheckSkyBoxAlways)) {
     VSky *Sky = nullptr;
     if (!SkyBox && (sub->sector->Sky&SKY_FROM_SIDE) != 0) {
       //GCon->Logf(NAME_Debug, "SKYSIDE!!!");
@@ -548,7 +554,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
     surfs->glowCeilingColor = glowCeilingColor;
 
     if (isCommon) {
-      CommonQueueSurface(surfs, 0);
+      CommonQueueSurface(surfs, SFCType::SFCT_World);
     } else if (surfs->queueframe != currQueueFrame) {
       //surfs->queueframe = currQueueFrame;
       //surfs->plvisible = surfs->IsVisible(vieworg);
@@ -614,7 +620,7 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
           seg->sidedef->Light, !!(seg->sidedef->Flags&SDF_ABSLIGHT),
           false);
       } else {
-        CommonQueueSurface(Surf, 2);
+        CommonQueueSurface(Surf, SFCType::SFCT_Horizon);
       }
     }
   }
@@ -649,7 +655,7 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
           seg->sidedef->Light, !!(seg->sidedef->Flags&SDF_ABSLIGHT),
           false);
       } else {
-        CommonQueueSurface(Surf, 2);
+        CommonQueueSurface(Surf, SFCType::SFCT_Horizon);
       }
     }
   }
@@ -1208,9 +1214,9 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
     world_surf_t *wsurf = WorldSurfs.ptr();
     for (int i = WorldSurfs.length(); i--; ++wsurf) {
       switch (wsurf->Type) {
-        case 0: QueueWorldSurface(wsurf->Surf); break;
-        case 1: QueueSkyPortal(wsurf->Surf); break;
-        case 2: QueueHorizonPortal(wsurf->Surf); break;
+        case SFCType::SFCT_World: QueueWorldSurface(wsurf->Surf); break;
+        case SFCType::SFCT_Sky: QueueSkyPortal(wsurf->Surf); break;
+        case SFCType::SFCT_Horizon: QueueHorizonPortal(wsurf->Surf); break;
         default: Sys_Error("invalid queued 0-level world surface type %d", (int)wsurf->Type);
       }
     }

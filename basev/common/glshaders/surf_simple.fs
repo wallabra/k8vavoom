@@ -19,7 +19,12 @@ $include "common/glow_vars.fs"
 
 void main () {
   vec4 TexColor = GetStdTexel(Texture, TextureCoordinate);
+#ifdef VV_SIMPLE_MASKED
   if (TexColor.a < ALPHA_MASKED) discard; // only normal and masked walls should go thru this
+#endif
+#ifdef VV_SIMPLE_BRIGHTMAP
+  if (TexColor.a < ALPHA_MASKED) discard; // only normal and masked walls should go thru this
+#endif
 
   vec4 lt = calcGlow(Light);
 #ifdef VV_SIMPLE_BRIGHTMAP

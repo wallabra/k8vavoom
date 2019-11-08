@@ -52,6 +52,12 @@ static double pbarLastUpdateTime = 0;
 TArray<void (*) (int phase)> VDrawer::cbInitDeinit;
 
 
+//**************************************************************************
+//
+// VDrawer methods
+//
+//**************************************************************************
+
 //==========================================================================
 //
 //  VDrawer::RegisterICB
@@ -75,6 +81,33 @@ void VDrawer::callICB (int phase) {
   for (int f = 0; f < cbInitDeinit.length(); ++f) cbInitDeinit[f](phase);
 }
 
+
+//**************************************************************************
+//
+// VRenderLevelDrawer methods
+//
+//**************************************************************************
+
+//==========================================================================
+//
+//  VRenderLevelDrawer::ClearSurfaceLists
+//
+//==========================================================================
+void VRenderLevelDrawer::ClearSurfaceLists () {
+  DrawSurfListSolid.reset();
+  DrawSurfListMasked.reset();
+  //DrawSurfListAlpha.reset();
+  //DrawSurfListAdditive.reset();
+  DrawSkyList.reset();
+  DrawHorizonList.reset();
+}
+
+
+//**************************************************************************
+//
+// loader messages and progress bar
+//
+//**************************************************************************
 
 //==========================================================================
 //

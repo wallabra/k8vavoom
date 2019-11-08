@@ -70,10 +70,6 @@ void VRenderLevelLightmap::QueueWorldSurface (surface_t *surf) {
 //  VRenderLevelLightmap::RenderWorld
 //
 //==========================================================================
-extern vuint32 glWDPolyTotal;
-extern vuint32 glWDVertexTotal;
-extern vuint32 glWDTextureChangesTotal;
-
 extern vuint32 gf_dynlights_processed;
 extern vuint32 gf_dynlights_traced;
 
@@ -86,9 +82,6 @@ void VRenderLevelLightmap::RenderWorld (const refdef_t *rd, const VViewClipper *
   RenderBspWorld(rd, Range);
   ProcessCachedSurfaces();
 
-  glWDPolyTotal = 0;
-  glWDVertexTotal = 0;
-  glWDTextureChangesTotal = 0;
   if (!r_reg_disable_world) {
     //GCon->Logf("vfz: %f", viewforward.z);
     Drawer->WorldDrawing();

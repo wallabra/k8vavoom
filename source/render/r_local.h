@@ -571,7 +571,14 @@ protected:
   void QueueSimpleSurf (surface_t *surf);
   void QueueSkyPortal (surface_t *surf);
   void QueueHorizonPortal (surface_t *surf);
-  void CommonQueueSurface (surface_t *surf, vuint8 type);
+
+  // main dispatcher (it calls other queue methods)
+  enum SFCType {
+    SFCT_World,
+    SFCT_Sky,
+    SFCT_Horizon,
+  };
+  void CommonQueueSurface (surface_t *surf, SFCType type);
 
   void DrawSurfaces (subsector_t *sub, sec_region_t *secregion, seg_t *seg, surface_t *InSurfs,
                      texinfo_t *texinfo, VEntity *SkyBox, int LightSourceSector, int SideLight,

@@ -154,8 +154,11 @@ ShaderList basedir="basev/common/glshaders" {
   Shader SurfAdvDecal both="surf_decal_adv";
 
   Shader SurfSimple both="surf_simple";
-  Shader SurfLightmap both="surf_lightmap";
+  Shader SurfSimpleMasked both="surf_simple" { define "VV_SIMPLE_MASKED"; }
   Shader SurfSimpleBrightmap both="surf_simple" { define "VV_SIMPLE_BRIGHTMAP"; }
+
+  Shader SurfLightmap both="surf_lightmap";
+  Shader SurfLightmapMasked both="surf_lightmap" { define "VV_SIMPLE_MASKED"; }
   Shader SurfLightmapBrightmap both="surf_lightmap" { define "VV_LIGHTMAP_BRIGHTMAP"; }
 
   Shader SurfSky both="surf_sky";

@@ -27,12 +27,6 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-vuint32 glWDPolyTotal = 0;
-vuint32 glWDVertexTotal = 0;
-vuint32 glWDTextureChangesTotal = 0;
-
-
-// ////////////////////////////////////////////////////////////////////////// //
 extern "C" {
   static inline int compareSurfaces (const surface_t *sa, const surface_t *sb) {
     if (sa == sb) return 0;
@@ -262,26 +256,16 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
       SelectTexture(0);
       SetTexture(textr->Tex, textr->ColorMap);
       SurfSimpleBrightmap.SetTex(textr);
-      /*
-      if (gp.isActive()) {
-        VV_GLDRAWER_ACTIVATE_GLOW(SurfSimpleBrightmap, gp);
-      } else {
-        VV_GLDRAWER_DEACTIVATE_GLOW(SurfSimpleBrightmap);
-      }
-      */
     } else {
       SetTexture(textr->Tex, textr->ColorMap);
-      SurfSimple.Activate();
-      SurfSimple.SetTex(textr);
-      /*
-      if (gp.isActive()) {
-        VV_GLDRAWER_ACTIVATE_GLOW(SurfSimple, gp);
+      if ((surf->drawflags&surface_t::DF_MASKED) == 0) {
+        SurfSimple.Activate();
+        SurfSimple.SetTex(textr);
       } else {
-        VV_GLDRAWER_DEACTIVATE_GLOW(SurfSimple);
+        SurfSimpleMasked.Activate();
+        SurfSimpleMasked.SetTex(textr);
       }
-      */
     }
-    ++glWDTextureChangesTotal;
   }
 
   if (surf->count < 3) return false;
@@ -299,12 +283,22 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
       VV_GLDRAWER_DEACTIVATE_GLOW(SurfSimpleBrightmap);
     }
   } else {
-    SurfSimple.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
-    SurfSimple.SetFogFade(surf->Fade, 1.0f);
-    if (gp.isActive()) {
-      VV_GLDRAWER_ACTIVATE_GLOW(SurfSimple, gp);
+    if ((surf->drawflags&surface_t::DF_MASKED) == 0) {
+      SurfSimple.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
+      SurfSimple.SetFogFade(surf->Fade, 1.0f);
+      if (gp.isActive()) {
+        VV_GLDRAWER_ACTIVATE_GLOW(SurfSimple, gp);
+      } else {
+        VV_GLDRAWER_DEACTIVATE_GLOW(SurfSimple);
+      }
     } else {
-      VV_GLDRAWER_DEACTIVATE_GLOW(SurfSimple);
+      SurfSimpleMasked.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
+      SurfSimpleMasked.SetFogFade(surf->Fade, 1.0f);
+      if (gp.isActive()) {
+        VV_GLDRAWER_ACTIVATE_GLOW(SurfSimpleMasked, gp);
+      } else {
+        VV_GLDRAWER_DEACTIVATE_GLOW(SurfSimpleMasked);
+      }
     }
   }
 
@@ -313,15 +307,11 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
   // fill stencil buffer for decals
   if (doDecals) RenderPrepareShaderDecals(surf);
 
-  ++glWDPolyTotal;
   //glBegin(GL_POLYGON);
   currentActiveShader->UploadChangedUniforms();
   if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
   glBegin(GL_TRIANGLE_FAN);
-    for (int i = 0; i < surf->count; ++i) {
-      ++glWDVertexTotal;
-      glVertex(surf->verts[i]);
-    }
+    for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
   glEnd();
   if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
 
@@ -330,7 +320,11 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
     if (RenderFinishShaderDecals(DT_SIMPLE, surf, nullptr, textr->ColorMap)) {
       //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
       //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // decal renderer is using this too
-      if (doBrightmap) SurfSimpleBrightmap.Activate(); else SurfSimple.Activate();
+      if (doBrightmap) {
+        SurfSimpleBrightmap.Activate();
+      } else {
+        if ((surf->drawflags&surface_t::DF_MASKED) == 0) SurfSimple.Activate(); else SurfSimpleMasked.Activate();
+      }
       return true;
     }
   }
@@ -367,26 +361,16 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
       SelectTexture(0);
       SetTexture(tex->Tex, tex->ColorMap);
       SurfLightmapBrightmap.SetTex(tex);
-      /*
-      if (gp.isActive()) {
-        VV_GLDRAWER_ACTIVATE_GLOW(SurfLightmapBrightmap, gp);
-      } else {
-        VV_GLDRAWER_DEACTIVATE_GLOW(SurfLightmapBrightmap);
-      }
-      */
     } else {
       SetTexture(tex->Tex, tex->ColorMap);
-      SurfLightmap.Activate();
-      SurfLightmap.SetTex(tex);
-      /*
-      if (gp.isActive()) {
-        VV_GLDRAWER_ACTIVATE_GLOW(SurfLightmap, gp);
+      if ((surf->drawflags&surface_t::DF_MASKED) == 0) {
+        SurfLightmap.Activate();
+        SurfLightmap.SetTex(tex);
       } else {
-        VV_GLDRAWER_DEACTIVATE_GLOW(SurfLightmap);
+        SurfLightmapMasked.Activate();
+        SurfLightmapMasked.SetTex(tex);
       }
-      */
     }
-    ++glWDTextureChangesTotal;
   }
 
   if (surf->count < 3) return false;
@@ -413,14 +397,26 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
       VV_GLDRAWER_DEACTIVATE_GLOW(SurfLightmapBrightmap);
     }
   } else {
-    SurfLightmap.SetFullBright(fullBright);
-    SurfLightmap.SetLMap(surf, cache);
-    SurfLightmap.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
-    SurfLightmap.SetFogFade(surf->Fade, 1.0f);
-    if (gp.isActive()) {
-      VV_GLDRAWER_ACTIVATE_GLOW(SurfLightmap, gp);
+    if ((surf->drawflags&surface_t::DF_MASKED) == 0) {
+      SurfLightmap.SetFullBright(fullBright);
+      SurfLightmap.SetLMap(surf, cache);
+      SurfLightmap.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
+      SurfLightmap.SetFogFade(surf->Fade, 1.0f);
+      if (gp.isActive()) {
+        VV_GLDRAWER_ACTIVATE_GLOW(SurfLightmap, gp);
+      } else {
+        VV_GLDRAWER_DEACTIVATE_GLOW(SurfLightmap);
+      }
     } else {
-      VV_GLDRAWER_DEACTIVATE_GLOW(SurfLightmap);
+      SurfLightmapMasked.SetFullBright(fullBright);
+      SurfLightmapMasked.SetLMap(surf, cache);
+      SurfLightmapMasked.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
+      SurfLightmapMasked.SetFogFade(surf->Fade, 1.0f);
+      if (gp.isActive()) {
+        VV_GLDRAWER_ACTIVATE_GLOW(SurfLightmapMasked, gp);
+      } else {
+        VV_GLDRAWER_DEACTIVATE_GLOW(SurfLightmapMasked);
+      }
     }
   }
 
@@ -429,15 +425,11 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
   // fill stencil buffer for decals
   if (doDecals) RenderPrepareShaderDecals(surf);
 
-  ++glWDPolyTotal;
   //glBegin(GL_POLYGON);
   currentActiveShader->UploadChangedUniforms();
   if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
   glBegin(GL_TRIANGLE_FAN);
-    for (int i = 0; i < surf->count; ++i) {
-      ++glWDVertexTotal;
-      glVertex(surf->verts[i]);
-    }
+    for (int i = 0; i < surf->count; ++i) glVertex(surf->verts[i]);
   glEnd();
   if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
 
@@ -446,7 +438,11 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
     if (RenderFinishShaderDecals(DT_LIGHTMAP, surf, cache, tex->ColorMap)) {
       //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
       //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // decal renderer is using this too
-      if (doBrightmap) SurfLightmapBrightmap.Activate(); else SurfLightmap.Activate();
+      if (doBrightmap) {
+        SurfLightmapBrightmap.Activate();
+      } else {
+        if ((surf->drawflags&surface_t::DF_MASKED) == 0) SurfLightmap.Activate(); else SurfLightmapMasked.Activate();
+      }
       return true;
     }
   }
@@ -509,14 +505,18 @@ void VOpenGLDrawer::WorldDrawing () {
   }
 
   // draw surfaces without lightmaps
-  if (RendLev->DrawSurfList.length()) {
-    if (gl_prefill_zbuffer) {
-      DrawWorldZBufferPass();
-      //glDepthFunc(GL_EQUAL);
+  if (RendLev->DrawSurfListSolid.length() != 0 || RendLev->DrawSurfListMasked.length() != 0) {
+    // sort by texture, to minimise texture switches
+    if (gl_sort_textures) {
+      timsort_r(RendLev->DrawSurfListSolid.ptr(), RendLev->DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmp, nullptr);
+      timsort_r(RendLev->DrawSurfListMasked.ptr(), RendLev->DrawSurfListMasked.length(), sizeof(surface_t *), &drawListItemCmp, nullptr);
     }
 
-    // sort by texture, to minimise texture switches
-    if (gl_sort_textures) timsort_r(RendLev->DrawSurfList.ptr(), RendLev->DrawSurfList.length(), sizeof(surface_t *), &drawListItemCmp, nullptr);
+    SurfSimpleMasked.Activate();
+    SurfSimpleMasked.SetTexture(0);
+    VV_GLDRAWER_DEACTIVATE_GLOW(SurfSimpleMasked);
+    //SurfSimple_Locs.storeFogType();
+    SurfSimpleMasked.UploadChangedUniforms();
 
     SurfSimple.Activate();
     SurfSimple.SetTexture(0);
@@ -524,11 +524,25 @@ void VOpenGLDrawer::WorldDrawing () {
     //SurfSimple_Locs.storeFogType();
     SurfSimple.UploadChangedUniforms();
 
+    // normal
     lastTexinfo.resetLastUsed();
-    for (auto &&surf : RendLev->DrawSurfList) {
+    for (auto &&surf : RendLev->DrawSurfListSolid) {
       if (!surf->plvisible) continue; // viewer is in back side or on plane
       const texinfo_t *currTexinfo = surf->texinfo;
       if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
+      if (surf->drawflags&surface_t::DF_MASKED) continue; // later
+      const bool textureChanded = lastTexinfo.needChange(*currTexinfo);
+      if (textureChanded) lastTexinfo.updateLastUsed(*currTexinfo);
+      if (RenderSimpleSurface(textureChanded, surf)) lastTexinfo.resetLastUsed();
+    }
+
+    // masked
+    lastTexinfo.resetLastUsed();
+    for (auto &&surf : RendLev->DrawSurfListMasked) {
+      if (!surf->plvisible) continue; // viewer is in back side or on plane
+      const texinfo_t *currTexinfo = surf->texinfo;
+      if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
+      if ((surf->drawflags&surface_t::DF_MASKED) == 0) continue; // not here
       const bool textureChanded = lastTexinfo.needChange(*currTexinfo);
       if (textureChanded) lastTexinfo.updateLastUsed(*currTexinfo);
       if (RenderSimpleSurface(textureChanded, surf)) lastTexinfo.resetLastUsed();
@@ -537,6 +551,15 @@ void VOpenGLDrawer::WorldDrawing () {
 
   // draw surfaces with lightmaps
   {
+    //unsigned lmc = 0;
+    SurfLightmapMasked.Activate();
+    SurfLightmapMasked.SetTexture(0);
+    SurfLightmapMasked.SetLightMap(1);
+    SurfLightmapMasked.SetSpecularMap(2);
+    //SurfLightmap_Locs.storeFogType();
+    VV_GLDRAWER_DEACTIVATE_GLOW(SurfLightmapMasked);
+    SurfLightmapMasked.UploadChangedUniforms();
+
     //unsigned lmc = 0;
     SurfLightmap.Activate();
     SurfLightmap.SetTexture(0);

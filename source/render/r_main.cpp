@@ -686,9 +686,7 @@ void VRenderLevelShared::ResetUpdateWorldFrame () {
 //
 //==========================================================================
 void VRenderLevelShared::ClearQueues () {
-  DrawSurfList.reset();
-  DrawSkyList.reset();
-  DrawHorizonList.reset();
+  ClearSurfaceLists();
   IncQueueFrameCount();
 }
 

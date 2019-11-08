@@ -53,6 +53,11 @@ struct DRect {
 static TArray<DRect> dirtyRects;
 
 
+//==========================================================================
+//
+//  isDirtyRect
+//
+//==========================================================================
 static bool isDirtyRect (const GLint arect[4]) {
   for (auto &&r : dirtyRects) {
     if (arect[VOpenGLDrawer::SCS_MAXX] < r.x0 || arect[VOpenGLDrawer::SCS_MAXY] < r.y0 ||
@@ -66,6 +71,11 @@ static bool isDirtyRect (const GLint arect[4]) {
 }
 
 
+//==========================================================================
+//
+//  appendDirtyRect
+//
+//==========================================================================
 static void appendDirtyRect (const GLint arect[4]) {
   // remove all rects that are inside our new one
   /*
@@ -101,82 +111,27 @@ static void appendDirtyRect (const GLint arect[4]) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern "C" {
-  static inline int compareSurfaces (const surface_t *sa, const surface_t *sb) {
+  static inline int compareSurfacesByTexture (const surface_t *sa, const surface_t *sb) {
     if (sa == sb) return 0;
     const texinfo_t *ta = sa->texinfo;
     const texinfo_t *tb = sb->texinfo;
-    // put steamlined masked textures on bottom (this is useful in fog rendering)
+    // put masked textures on bottom (this is useful in fog rendering)
+    // no need to do this, masked textures now lives in the separate list
+    /*
     if (sa->drawflags&surface_t::DF_MASKED) {
       if (!(sb->drawflags&surface_t::DF_MASKED)) return 1;
     } else if (sb->drawflags&surface_t::DF_MASKED) {
       if (!(sa->drawflags&surface_t::DF_MASKED)) return -1;
     }
+    */
     if ((uintptr_t)ta->Tex < (uintptr_t)ta->Tex) return -1;
     if ((uintptr_t)tb->Tex > (uintptr_t)tb->Tex) return 1;
     return ((int)ta->ColorMap)-((int)tb->ColorMap);
   }
 
-  static int drawListItemCmp (const void *a, const void *b, void *udata) {
-    return compareSurfaces(*(const surface_t **)a, *(const surface_t **)b);
+  static int drawListItemCmpByTexture (const void *a, const void *b, void *udata) {
+    return compareSurfacesByTexture(*(const surface_t **)a, *(const surface_t **)b);
   }
-}
-
-
-//==========================================================================
-//
-//  VOpenGLDrawer::DrawWorldZBufferPass
-//
-//  fill GPU z buffer, so we can limit overdraw later
-//
-//  TODO: walls with masked textures should be rendered with another shader
-//
-//==========================================================================
-void VOpenGLDrawer::DrawWorldZBufferPass () {
-  if (!RendLev->DrawSurfList.length()) return;
-  SurfZBuf.Activate();
-  glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-
-  //zfillMasked.reset();
-  surface_t **surfptr = RendLev->DrawSurfList.ptr();
-  for (int count = RendLev->DrawSurfList.length(); count--; ++surfptr) {
-    const surface_t *surf = *surfptr;
-    if (surf->count < 3) continue;
-    if (surf->drawflags&surface_t::DF_MASKED) continue;
-
-    // don't render translucent surfaces
-    // they should not end up here, but...
-    const texinfo_t *currTexinfo = surf->texinfo;
-    if (!currTexinfo || !currTexinfo->Tex || currTexinfo->Tex->Type == TEXTYPE_Null) continue;
-    if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue;
-
-    if (!surf->plvisible) continue; // viewer is in back side or on plane
-
-    /*
-    if (surf->drawflags&surface_t::DF_MASKED) {
-      zfillMasked.append((surface_t *)surf;
-    } else
-    */
-    {
-      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
-      currentActiveShader->UploadChangedUniforms();
-      glBegin(GL_TRIANGLE_FAN);
-        for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
-      glEnd();
-      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
-    }
-  }
-
-  // render masked walls
-  /*
-  if (zfillMasked.length()) {
-    const surface_t **surfp = zfillMasked.ptr();
-    for (int f = zfillMasked.length(); f--; ++surfp) {
-      const surface_t *surf = *surfp;
-    }
-  }
-  */
-
-  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 }
 
 
@@ -219,19 +174,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
   }
 
   // draw normal surfaces
-  if (RendLev->DrawSurfList.length()) {
-    enum {
-      SOLID = 0,
-      MASKED,
-      BRIGHTMAP,
-    };
-    unsigned currShader = SOLID;
-
-    if (gl_prefill_zbuffer) {
-      DrawWorldZBufferPass();
-      //glDepthFunc(GL_EQUAL);
-    }
-
+  if (RendLev->DrawSurfListSolid.length() != 0 || RendLev->DrawSurfListMasked.length() != 0) {
     // setup samplers for all shaders
     // masked
     ShadowsAmbientMasked.Activate();
@@ -243,51 +186,179 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     ShadowsAmbientBrightmap.SetTexture(0);
     ShadowsAmbientBrightmap.SetTextureBM(1);
     VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientBrightmap);
+    // normal
+    ShadowsAmbient.Activate();
+    VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbient);
 
+    //FIXME!
     if (gl_dbg_wireframe) {
       DrawAutomap.Activate();
       DrawAutomap.UploadChangedUniforms();
       glEnable(GL_BLEND);
       glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-    } else {
-      ShadowsAmbient.Activate();
-      VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbient);
+
+      SelectTexture(1);
+      glBindTexture(GL_TEXTURE_2D, 0);
+      SelectTexture(0);
+      return;
     }
+
+    //ShadowsAmbient.Activate();
+    //VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbient);
 
     // do not sort surfaces by texture here, because
     // textures will be put later, and BSP sorted them by depth for us
     // other passes can skip surface sorting
-    if (gl_sort_textures) timsort_r(RendLev->DrawSurfList.ptr(), RendLev->DrawSurfList.length(), sizeof(surface_t *), &drawListItemCmp, nullptr);
+    if (gl_sort_textures) {
+      // do not sort surfaces with solid textures, as we don't care about textures here
+      // this gives us front-to-back rendering
+      //timsort_r(RendLev->DrawSurfListSolid.ptr(), RendLev->DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByTexture, nullptr);
+      // but sort masked textures, because masked texture configuration can be arbitrary
+      timsort_r(RendLev->DrawSurfListMasked.ptr(), RendLev->DrawSurfListMasked.length(), sizeof(surface_t *), &drawListItemCmpByTexture, nullptr);
+    }
 
     float prevsflight = -666;
     vuint32 prevlight = 0;
     texinfo_t lastTexinfo;
     lastTexinfo.initLastUsed();
 
-    bool prevGlowActive[3] = { false, false, false };
+    //bool prevGlowActive[3] = { false, false, false };
     GlowParams gp;
 
-    for (auto &&surf : RendLev->DrawSurfList) {
-      if (!surf->plvisible) continue; // viewer is in back side or on plane
-      if (surf->count < 3) continue;
+    enum {
+      BMAP_INACTIVE = 1u,
+      BMAP_ACTIVE   = 2u,
+    };
 
-      // don't render translucent surfaces
-      // they should not end up here, but...
-      const texinfo_t *currTexinfo = surf->texinfo;
-      if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
-      if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
+    bool glTextureEnabled = false;
+    glDisable(GL_TEXTURE_2D);
 
-      // update all dunamic textures here
-      UpdateAndUploadSurfaceTexture(surf);
+    //GCon->Logf(NAME_Debug, "::: solid=%d; masked=%d", RendLev->DrawSurfListSolid.length(), RendLev->DrawSurfListMasked.length());
 
-      if (!gl_dbg_wireframe) {
+    // solid textures
+    if (RendLev->DrawSurfListSolid.length() != 0) {
+      // activate non-brightmap shader
+      unsigned char brightmapActiveMask = BMAP_INACTIVE;
+      unsigned char prevGlowActiveMask = 0u;
+      //ShadowsAmbient.Activate();
+      //VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbient);
+      lastTexinfo.resetLastUsed();
+      for (auto &&surf : RendLev->DrawSurfListSolid) {
+        if (!surf->plvisible) continue; // viewer is in back side or on plane
+        if (surf->count < 3) continue;
+        if (surf->drawflags&surface_t::DF_MASKED) continue; // later
+
+        // don't render translucent surfaces
+        // they should not end up here, but...
+        const texinfo_t *currTexinfo = surf->texinfo;
+        if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
+        if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
+
+        // update all dunamic textures here
+        UpdateAndUploadSurfaceTexture(surf);
+
         CalcGlow(gp, surf);
 
         if (r_brightmaps && currTexinfo->Tex->Brightmap) {
           // texture with brightmap
           //GCon->Logf("WALL BMAP: wall texture is '%s', brightmap is '%s'", *currTexinfo->Tex->Name, *currTexinfo->Tex->Brightmap->Name);
-          if (currShader != BRIGHTMAP) {
-            currShader = BRIGHTMAP;
+          if (brightmapActiveMask != BMAP_ACTIVE) {
+            brightmapActiveMask = BMAP_ACTIVE;
+            ShadowsAmbientBrightmap.Activate();
+            prevsflight = -666; // force light setup
+          }
+          if (!glTextureEnabled) { glTextureEnabled = true; glEnable(GL_TEXTURE_2D); }
+          SelectTexture(1);
+          SetBrightmapTexture(currTexinfo->Tex->Brightmap);
+          SelectTexture(0);
+          // set normal texture
+          SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
+          ShadowsAmbientBrightmap.SetTex(currTexinfo);
+          // glow
+          if (gp.isActive()) {
+            prevGlowActiveMask |= brightmapActiveMask;
+            VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbientBrightmap, gp);
+          } else if (prevGlowActiveMask&brightmapActiveMask) {
+            prevGlowActiveMask &= ~brightmapActiveMask;
+            VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientBrightmap);
+          }
+          lastTexinfo.resetLastUsed();
+        } else {
+          // normal wall
+          //GCon->Logf("SOLID WALL: wall texture is '%s' (%p:%p)", *currTexinfo->Tex->Name, currTexinfo->Tex, currTexinfo->Tex->Brightmap);
+          if (brightmapActiveMask != BMAP_INACTIVE) {
+            brightmapActiveMask = BMAP_INACTIVE;
+            ShadowsAmbient.Activate();
+            //VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbient);
+            prevsflight = -666; // force light setup
+          }
+          if (glTextureEnabled) { glTextureEnabled = false; glDisable(GL_TEXTURE_2D); }
+          // glow
+          if (gp.isActive()) {
+            prevGlowActiveMask |= brightmapActiveMask;
+            VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbient, gp);
+          } else if (prevGlowActiveMask&brightmapActiveMask) {
+            prevGlowActiveMask &= ~brightmapActiveMask;
+            VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbient);
+          }
+        }
+
+        float lev = getSurfLightLevel(surf);
+        if (prevlight != surf->Light || FASI(lev) != FASI(prevsflight)) {
+          prevsflight = lev;
+          prevlight = surf->Light;
+          if (brightmapActiveMask == BMAP_INACTIVE) {
+            ShadowsAmbient.SetLight(
+              ((prevlight>>16)&255)*lev/255.0f,
+              ((prevlight>>8)&255)*lev/255.0f,
+              (prevlight&255)*lev/255.0f, 1.0f);
+          } else {
+            ShadowsAmbientBrightmap.SetLight(
+              ((prevlight>>16)&255)*lev/255.0f,
+              ((prevlight>>8)&255)*lev/255.0f,
+              (prevlight&255)*lev/255.0f, 1.0f);
+          }
+        }
+
+        if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
+        currentActiveShader->UploadChangedUniforms();
+        glBegin(GL_TRIANGLE_FAN);
+          for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
+        glEnd();
+        if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
+      }
+    }
+
+    // masked textures
+    if (RendLev->DrawSurfListMasked.length() != 0) {
+      // activate non-brightmap shader
+      unsigned char brightmapActiveMask = BMAP_ACTIVE;
+      unsigned char prevGlowActiveMask = 0u;
+      ShadowsAmbientBrightmap.Activate();
+      VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientBrightmap);
+      lastTexinfo.resetLastUsed();
+      if (!glTextureEnabled) { glTextureEnabled = true; glEnable(GL_TEXTURE_2D); }
+      for (auto &&surf : RendLev->DrawSurfListMasked) {
+        if (!surf->plvisible) continue; // viewer is in back side or on plane
+        if (surf->count < 3) continue;
+        if ((surf->drawflags&surface_t::DF_MASKED) == 0) continue; // not here
+
+        // don't render translucent surfaces
+        // they should not end up here, but...
+        const texinfo_t *currTexinfo = surf->texinfo;
+        if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
+        if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
+
+        // update all dunamic textures here
+        UpdateAndUploadSurfaceTexture(surf);
+
+        CalcGlow(gp, surf);
+
+        if (r_brightmaps && currTexinfo->Tex->Brightmap) {
+          // texture with brightmap
+          //GCon->Logf("WALL BMAP: wall texture is '%s', brightmap is '%s'", *currTexinfo->Tex->Name, *currTexinfo->Tex->Brightmap->Name);
+          if (brightmapActiveMask != BMAP_ACTIVE) {
+            brightmapActiveMask = BMAP_ACTIVE;
             ShadowsAmbientBrightmap.Activate();
             prevsflight = -666; // force light setup
           }
@@ -299,32 +370,23 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
           ShadowsAmbientBrightmap.SetTex(currTexinfo);
           // glow
           if (gp.isActive()) {
-            prevGlowActive[currShader] = true;
+            prevGlowActiveMask |= brightmapActiveMask;
             VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbientBrightmap, gp);
-          } else {
-            if (prevGlowActive[currShader]) {
-              prevGlowActive[currShader] = false;
-              VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientBrightmap);
-            }
+          } else if (prevGlowActiveMask&brightmapActiveMask) {
+            prevGlowActiveMask &= ~brightmapActiveMask;
+            VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientBrightmap);
           }
           lastTexinfo.resetLastUsed();
-        } else if (surf->drawflags&surface_t::DF_MASKED) {
+        } else {
           //GCon->Logf("MASKED WALL: wall texture is '%s'", *currTexinfo->Tex->Name);
-          // masked wall
+          // normal wall
           bool textureChanded = lastTexinfo.needChange(*currTexinfo);
           if (textureChanded) lastTexinfo.updateLastUsed(*currTexinfo);
 
-          if (currShader != MASKED) {
-            /*
-            if (currShader == BRIGHTMAP) {
-              SelectTexture(1);
-              glBindTexture(GL_TEXTURE_2D, 0);
-              SelectTexture(0);
-            }
-            */
-            currShader = MASKED;
+          if (brightmapActiveMask != BMAP_INACTIVE) {
+            brightmapActiveMask = BMAP_INACTIVE;
             ShadowsAmbientMasked.Activate();
-            VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientMasked);
+            //VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientMasked);
             prevsflight = -666; // force light setup
             textureChanded = true;
           }
@@ -336,40 +398,11 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
 
           // glow
           if (gp.isActive()) {
-            prevGlowActive[currShader] = true;
+            prevGlowActiveMask |= brightmapActiveMask;
             VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbientMasked, gp);
-          } else {
-            if (prevGlowActive[currShader]) {
-              prevGlowActive[currShader] = false;
-              VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientMasked);
-            }
-          }
-        } else {
-          // normal wall
-          //GCon->Logf("SOLID WALL: wall texture is '%s' (%p:%p)", *currTexinfo->Tex->Name, currTexinfo->Tex, currTexinfo->Tex->Brightmap);
-          if (currShader != SOLID) {
-            /*
-            if (currShader == BRIGHTMAP) {
-              SelectTexture(1);
-              glBindTexture(GL_TEXTURE_2D, 0);
-              SelectTexture(0);
-            }
-            */
-            currShader = SOLID;
-            ShadowsAmbient.Activate();
-            VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbient);
-            prevsflight = -666; // force light setup
-          }
-
-          // glow
-          if (gp.isActive()) {
-            prevGlowActive[currShader] = true;
-            VV_GLDRAWER_ACTIVATE_GLOW(ShadowsAmbient, gp);
-          } else {
-            if (prevGlowActive[currShader]) {
-              prevGlowActive[currShader] = false;
-              VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbient);
-            }
+          } else if (prevGlowActiveMask&brightmapActiveMask) {
+            prevGlowActiveMask &= ~brightmapActiveMask;
+            VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientMasked);
           }
         }
 
@@ -377,51 +410,29 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
         if (prevlight != surf->Light || FASI(lev) != FASI(prevsflight)) {
           prevsflight = lev;
           prevlight = surf->Light;
-          switch (currShader) {
-            case SOLID:
-              ShadowsAmbient.SetLight(
-                ((prevlight>>16)&255)*lev/255.0f,
-                ((prevlight>>8)&255)*lev/255.0f,
-                (prevlight&255)*lev/255.0f, 1.0f);
-              break;
-            case MASKED:
-              ShadowsAmbientMasked.SetLight(
-                ((prevlight>>16)&255)*lev/255.0f,
-                ((prevlight>>8)&255)*lev/255.0f,
-                (prevlight&255)*lev/255.0f, 1.0f);
-              break;
-            case BRIGHTMAP:
-              ShadowsAmbientBrightmap.SetLight(
-                ((prevlight>>16)&255)*lev/255.0f,
-                ((prevlight>>8)&255)*lev/255.0f,
-                (prevlight&255)*lev/255.0f, 1.0f);
-              break;
+          if (brightmapActiveMask == BMAP_INACTIVE) {
+            ShadowsAmbientMasked.SetLight(
+              ((prevlight>>16)&255)*lev/255.0f,
+              ((prevlight>>8)&255)*lev/255.0f,
+              (prevlight&255)*lev/255.0f, 1.0f);
+          } else {
+            ShadowsAmbientBrightmap.SetLight(
+              ((prevlight>>16)&255)*lev/255.0f,
+              ((prevlight>>8)&255)*lev/255.0f,
+              (prevlight&255)*lev/255.0f, 1.0f);
           }
         }
-      } else {
-        /*
-        float clr = (float)(count+1)/RendLev->DrawSurfList.length();
-        if (clr < 0.1f) clr = 0.1f;
-        glColor4f(clr, clr, clr, 1.0f);
-        */
-      }
 
-      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
-      currentActiveShader->UploadChangedUniforms();
-      if (!gl_dbg_wireframe) {
-        // normal
+        if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
+        currentActiveShader->UploadChangedUniforms();
         glBegin(GL_TRIANGLE_FAN);
           for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
         glEnd();
-      } else {
-        // wireframe
-        //FIXME: this is wrong for "quality mode", where we'll subdivide surface to more triangles
-        glBegin(GL_LINE_LOOP);
-          for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
-        glEnd();
+        if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
       }
-      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
     }
+
+    if (!glTextureEnabled) { glTextureEnabled = true; glEnable(GL_TEXTURE_2D); }
   }
 
   // restore depth function
@@ -1076,9 +1087,8 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
   glBlendFunc(GL_DST_COLOR, GL_ZERO);
   glEnable(GL_BLEND);
 
-  if (!gl_dbg_adv_render_surface_textures || RendLev->DrawSurfList.length() == 0) return;
-
-  bool lastWasMasked = false;
+  if (!gl_dbg_adv_render_surface_textures) return;
+  if (RendLev->DrawSurfListSolid.length() == 0 && RendLev->DrawSurfListMasked.length() == 0) return;
 
   ShadowsTextureMasked.Activate();
   ShadowsTextureMasked.SetTexture(0);
@@ -1088,73 +1098,117 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
 
   //glDisable(GL_BLEND);
 
+  // sort by textures
+  if (gl_sort_textures) {
+    // sort surfaces with solid textures, because here we need them sorted
+    timsort_r(RendLev->DrawSurfListSolid.ptr(), RendLev->DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByTexture, nullptr);
+  }
+
   texinfo_t lastTexinfo;
   lastTexinfo.initLastUsed();
 
-  // no need to sort surfaces there, it is already done in ambient pass
-  lastTexinfo.resetLastUsed();
-  for (auto &&surf : RendLev->DrawSurfList) {
-    if (!surf->plvisible) continue; // viewer is in back side or on plane
-    if (surf->count < 3) continue;
+  // normal
+  if (RendLev->DrawSurfListSolid.length() != 0) {
+    lastTexinfo.resetLastUsed();
+    ShadowsTexture.Activate();
+    for (auto &&surf : RendLev->DrawSurfListSolid) {
+      if (!surf->plvisible) continue; // viewer is in back side or on plane
+      if (surf->count < 3) continue;
+      if (surf->drawflags&surface_t::DF_MASKED) continue; // later
 
-    // don't render translucent surfaces
-    // they should not end up here, but...
-    const texinfo_t *currTexinfo = surf->texinfo;
-    if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
-    if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
+      // don't render translucent surfaces
+      // they should not end up here, but...
+      const texinfo_t *currTexinfo = surf->texinfo;
+      if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
+      if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
 
-    bool textureChanded = lastTexinfo.needChange(*currTexinfo);
-    if (textureChanded) lastTexinfo.updateLastUsed(*currTexinfo);
-
-    if (surf->drawflags&surface_t::DF_MASKED) {
-      // masked wall
-      if (!lastWasMasked) {
-        // switch shader
-        ShadowsTextureMasked.Activate();
-        lastWasMasked = true;
-        textureChanded = true; //FIXME: hold two of those
+      const bool textureChanded = lastTexinfo.needChange(*currTexinfo);
+      if (textureChanded) {
+        lastTexinfo.updateLastUsed(*currTexinfo);
+        SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
+        ShadowsTexture.SetTex(currTexinfo);
       }
-    } else {
-      // normal wall
-      if (lastWasMasked) {
-        // switch shader
-        ShadowsTexture.Activate();
-        lastWasMasked = false;
-        textureChanded = true; //FIXME: hold two of those
+
+      bool doDecals = (currTexinfo->Tex && !currTexinfo->noDecals && surf->seg && surf->seg->decalhead);
+
+      // fill stencil buffer for decals
+      if (doDecals) RenderPrepareShaderDecals(surf);
+
+      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
+      //glBegin(GL_POLYGON);
+      currentActiveShader->UploadChangedUniforms();
+      glBegin(GL_TRIANGLE_FAN);
+        for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
+          /*
+          p_glVertexAttrib2fARB(ShadowsTexture_TexCoordLoc,
+            (DotProduct(surf->verts[i], currTexinfo->saxis)+currTexinfo->soffs)*tex_iw,
+            (DotProduct(surf->verts[i], currTexinfo->taxis)+currTexinfo->toffs)*tex_ih);
+          */
+          glVertex(surf->verts[i]);
+        }
+      glEnd();
+      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
+
+      if (doDecals) {
+        if (RenderFinishShaderDecals(DT_ADVANCED, surf, nullptr, currTexinfo->ColorMap)) {
+          ShadowsTexture.Activate();
+          glBlendFunc(GL_DST_COLOR, GL_ZERO);
+          //glEnable(GL_BLEND);
+          lastTexinfo.resetLastUsed(); // resetup texture
+        }
       }
     }
+  }
 
-    if (textureChanded) {
-      SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
-      if (lastWasMasked) ShadowsTextureMasked.SetTex(currTexinfo); else ShadowsTexture.SetTex(currTexinfo);
-    }
+  // masked
+  if (RendLev->DrawSurfListMasked.length() != 0) {
+    lastTexinfo.resetLastUsed();
+    ShadowsTextureMasked.Activate();
+    for (auto &&surf : RendLev->DrawSurfListMasked) {
+      if (!surf->plvisible) continue; // viewer is in back side or on plane
+      if (surf->count < 3) continue;
+      if ((surf->drawflags&surface_t::DF_MASKED) == 0) continue; // not here
 
-    bool doDecals = (currTexinfo->Tex && !currTexinfo->noDecals && surf->seg && surf->seg->decalhead);
+      // don't render translucent surfaces
+      // they should not end up here, but...
+      const texinfo_t *currTexinfo = surf->texinfo;
+      if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
+      if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
 
-    // fill stencil buffer for decals
-    if (doDecals) RenderPrepareShaderDecals(surf);
-
-    if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
-    //glBegin(GL_POLYGON);
-    currentActiveShader->UploadChangedUniforms();
-    glBegin(GL_TRIANGLE_FAN);
-      for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
-        /*
-        p_glVertexAttrib2fARB(ShadowsTexture_TexCoordLoc,
-          (DotProduct(surf->verts[i], currTexinfo->saxis)+currTexinfo->soffs)*tex_iw,
-          (DotProduct(surf->verts[i], currTexinfo->taxis)+currTexinfo->toffs)*tex_ih);
-        */
-        glVertex(surf->verts[i]);
+      const bool textureChanded = lastTexinfo.needChange(*currTexinfo);
+      if (textureChanded) {
+        lastTexinfo.updateLastUsed(*currTexinfo);
+        SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
+        ShadowsTextureMasked.SetTex(currTexinfo);
       }
-    glEnd();
-    if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
 
-    if (doDecals) {
-      if (RenderFinishShaderDecals(DT_ADVANCED, surf, nullptr, currTexinfo->ColorMap)) {
-        if (lastWasMasked) ShadowsTextureMasked.Activate(); else ShadowsTexture.Activate();
-        glBlendFunc(GL_DST_COLOR, GL_ZERO);
-        //glEnable(GL_BLEND);
-        lastTexinfo.resetLastUsed(); // resetup texture
+      bool doDecals = (currTexinfo->Tex && !currTexinfo->noDecals && surf->seg && surf->seg->decalhead);
+
+      // fill stencil buffer for decals
+      if (doDecals) RenderPrepareShaderDecals(surf);
+
+      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
+      //glBegin(GL_POLYGON);
+      currentActiveShader->UploadChangedUniforms();
+      glBegin(GL_TRIANGLE_FAN);
+        for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
+          /*
+          p_glVertexAttrib2fARB(ShadowsTexture_TexCoordLoc,
+            (DotProduct(surf->verts[i], currTexinfo->saxis)+currTexinfo->soffs)*tex_iw,
+            (DotProduct(surf->verts[i], currTexinfo->taxis)+currTexinfo->toffs)*tex_ih);
+          */
+          glVertex(surf->verts[i]);
+        }
+      glEnd();
+      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
+
+      if (doDecals) {
+        if (RenderFinishShaderDecals(DT_ADVANCED, surf, nullptr, currTexinfo->ColorMap)) {
+          ShadowsTextureMasked.Activate();
+          glBlendFunc(GL_DST_COLOR, GL_ZERO);
+          //glEnable(GL_BLEND);
+          lastTexinfo.resetLastUsed(); // resetup texture
+        }
       }
     }
   }
@@ -1176,19 +1230,8 @@ void VOpenGLDrawer::DrawWorldFogPass () {
   //ShadowsFog.Activate();
   //ShadowsFog.SetFogType();
 
-  if (!gl_dbg_adv_render_surface_fog || RendLev->DrawSurfList.length() == 0) return;
-
-  enum {
-    ShaderNone = -1,
-    ShaderSolid = 0,
-    ShaderMasked = 1,
-    ShaderMax,
-  };
-
-  int activated = ShaderNone;
-  bool fadeSet[ShaderMax] = { false, false };
-  vuint32 lastFade[ShaderMax] = { 0, 0 }; //RendLev->DrawSurfList[0]->Fade;
-  bool firstMasked = true;
+  if (!gl_dbg_adv_render_surface_fog) return;
+  if (RendLev->DrawSurfListSolid.length() == 0 && RendLev->DrawSurfListMasked.length() == 0) return;
 
   /*
   ShadowsFog.SetTexture(0);
@@ -1198,59 +1241,80 @@ void VOpenGLDrawer::DrawWorldFogPass () {
   texinfo_t lastTexinfo;
   lastTexinfo.initLastUsed();
 
-  lastTexinfo.resetLastUsed();
-  for (auto &&surf : RendLev->DrawSurfList) {
-    if (!surf->Fade) continue;
-    if (!surf->plvisible) continue; // viewer is in back side or on plane
-    if (surf->count < 3) continue;
+  // normal
+  if (RendLev->DrawSurfListSolid.length() != 0) {
+    lastTexinfo.resetLastUsed();
+    ShadowsFog.Activate();
+    ShadowsFog.SetFogFade(0, 1.0f);
+    vuint32 lastFade = 0;
+    glDisable(GL_TEXTURE_2D);
+    for (auto &&surf : RendLev->DrawSurfListSolid) {
+      if (!surf->Fade) continue;
+      if (!surf->plvisible) continue; // viewer is in back side or on plane
+      if (surf->count < 3) continue;
+      if (surf->drawflags&surface_t::DF_MASKED) continue; // later
 
-    // don't render translucent surfaces
-    // they should not end up here, but...
-    const texinfo_t *currTexinfo = surf->texinfo;
-    if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
-    if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
+      // don't render translucent surfaces
+      // they should not end up here, but...
+      const texinfo_t *currTexinfo = surf->texinfo;
+      if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
+      if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
 
-    if (surf->drawflags&surface_t::DF_MASKED) {
-      if (activated != ShaderMasked) {
-        activated = ShaderMasked;
-        ShadowsFogMasked.Activate();
-        if (firstMasked) {
-          ShadowsFogMasked.SetTexture(0);
-          firstMasked = false;
-        }
+      if (lastFade != surf->Fade) {
+        lastFade = surf->Fade;
+        ShadowsFog.SetFogFade(surf->Fade, 1.0f);
       }
-      if (!fadeSet[activated] || lastFade[activated] != surf->Fade) {
-        fadeSet[activated] = true;
-        lastFade[activated] = surf->Fade;
+
+      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
+      //glBegin(GL_POLYGON);
+      currentActiveShader->UploadChangedUniforms();
+      glBegin(GL_TRIANGLE_FAN);
+        for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
+      glEnd();
+      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
+    }
+    glEnable(GL_TEXTURE_2D);
+  }
+
+  // masked
+  if (RendLev->DrawSurfListMasked.length() != 0) {
+    lastTexinfo.resetLastUsed();
+    ShadowsFogMasked.Activate();
+    ShadowsFogMasked.SetFogFade(0, 1.0f);
+    ShadowsFogMasked.SetTexture(0);
+    vuint32 lastFade = 0;
+    for (auto &&surf : RendLev->DrawSurfListMasked) {
+      if (!surf->Fade) continue;
+      if (!surf->plvisible) continue; // viewer is in back side or on plane
+      if (surf->count < 3) continue;
+      if ((surf->drawflags&surface_t::DF_MASKED) == 0) continue; // not here
+
+      // don't render translucent surfaces
+      // they should not end up here, but...
+      const texinfo_t *currTexinfo = surf->texinfo;
+      if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
+      if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
+
+      if (lastFade != surf->Fade) {
+        lastFade = surf->Fade;
         ShadowsFogMasked.SetFogFade(surf->Fade, 1.0f);
       }
 
       const bool textureChanded = lastTexinfo.needChange(*currTexinfo);
-      if (textureChanded) lastTexinfo.updateLastUsed(*currTexinfo);
-
       if (textureChanded) {
+        lastTexinfo.updateLastUsed(*currTexinfo);
         SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
         ShadowsFogMasked.SetTex(currTexinfo);
       }
-    } else {
-      if (activated != ShaderSolid) {
-        activated = ShaderSolid;
-        ShadowsFog.Activate();
-      }
-      if (!fadeSet[activated] || lastFade[activated] != surf->Fade) {
-        fadeSet[activated] = true;
-        lastFade[activated] = surf->Fade;
-        ShadowsFog.SetFogFade(surf->Fade, 1.0f);
-      }
-    }
 
-    if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
-    //glBegin(GL_POLYGON);
-    currentActiveShader->UploadChangedUniforms();
-    glBegin(GL_TRIANGLE_FAN);
-      for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
-    glEnd();
-    if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
+      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glDisable(GL_CULL_FACE);
+      //glBegin(GL_POLYGON);
+      currentActiveShader->UploadChangedUniforms();
+      glBegin(GL_TRIANGLE_FAN);
+        for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
+      glEnd();
+      if (surf->drawflags&surface_t::DF_NO_FACE_CULL) glEnable(GL_CULL_FACE);
+    }
   }
 
   //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // for premultiplied

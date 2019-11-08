@@ -96,13 +96,19 @@ public:
   // each surface is marked with `currQueueFrame`
   // note that there is no overflow protection, so don't leave
   // the game running one level for weeks ;-)
-  TArray<surface_t *> DrawSurfList;
+  TArray<surface_t *> DrawSurfListSolid; // solid surfaces
+  TArray<surface_t *> DrawSurfListMasked; // masked surfaces
+  //TArray<surface_t *> DrawSurfListAlpha; // alpha-blended surfaces
+  //TArray<surface_t *> DrawSurfListAdditive; // additive surfaces
   TArray<surface_t *> DrawSkyList;
   TArray<surface_t *> DrawHorizonList;
 
   int PortalDepth;
   vuint32 currDLightFrame;
   vuint32 currQueueFrame;
+
+public:
+  void ClearSurfaceLists ();
 
 public:
   // lightmap chain iterator (used in renderer)
@@ -296,7 +302,6 @@ public:
 
   // advanced drawing
   virtual bool SupportsShadowVolumeRendering () = 0;
-  virtual void DrawWorldZBufferPass () = 0;
   virtual void DrawWorldAmbientPass () = 0;
   virtual void BeginShadowVolumesPass () = 0;
   virtual void BeginLightShadowVolumes (const TVec &LightPos, const float Radius, bool useZPass, bool hasScissor, const int scoords[4], const TVec &aconeDir, const float aconeAngle) = 0;
