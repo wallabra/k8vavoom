@@ -1129,7 +1129,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
       if (lastWasMasked) ShadowsTextureMasked.SetTex(currTexinfo); else ShadowsTexture.SetTex(currTexinfo);
     }
 
-    bool doDecals = (currTexinfo->Tex && !currTexinfo->noDecals && surf->seg && surf->seg->decals);
+    bool doDecals = (currTexinfo->Tex && !currTexinfo->noDecals && surf->seg && surf->seg->decalhead);
 
     // fill stencil buffer for decals
     if (doDecals) RenderPrepareShaderDecals(surf);

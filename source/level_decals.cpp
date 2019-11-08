@@ -162,14 +162,7 @@ decal_t *VLevel::AllocSegDecal (seg_t *seg, VDecalDef *dec) {
   vassert(dec);
   decal_t *decal = new decal_t;
   memset((void *)decal, 0, sizeof(decal_t));
-  decal_t *cdec = seg->decals;
-  if (cdec) {
-    while (cdec->next) cdec = cdec->next;
-    cdec->next = decal;
-  } else {
-    seg->decals = decal;
-  }
-  decal->seg = seg;
+  seg->appendDecal(decal);
   decal->dectype = dec->name;
   //decal->texture = tex;
   //decal->translation = translation;
@@ -196,39 +189,20 @@ decal_t *VLevel::AllocSegDecal (seg_t *seg, VDecalDef *dec) {
   if (dcmaxcount > 0 && dcmaxcount < 10000) { \
     int count = 0; \
     decal_t *prev = nullptr; \
-    decal_t *first = nullptr; \
-    decal_t *cur = seg->decals; \
-    while (cur) { \
-      /* also, check if this decal is touching our one */ \
+    for (decal_t *cur = seg->decaltail; cur; cur = prev) { \
+      prev = cur->prev; /* in case current one will be removed */ \
+      /* check if this decal is touching our one */ \
       if (cur->dectype == dec->name) { \
         /*GCon->Logf(NAME_Debug, "seg #%d: decal '%s'", (int)(ptrdiff_t)(seg-Segs), *cur->dectype);*/ \
         if (isDecalsOverlap(dec, dcx0, dcy0, cur, DTex)) { \
           /*GCon->Log(NAME_Debug, "  overlap!"); */ \
-          if (!first) first = cur; \
-          ++count; \
+          if (++count >= dcmaxcount) { \
+            /* this decal must be removed */ \
+            seg->removeDecal(cur); \
+            RemoveAnimatedDecal(cur); \
+            delete cur; \
+          } \
         } \
-      } \
-      if (!first) prev = cur; \
-      cur = cur->next; \
-    } \
-    if (count >= dcmaxcount) { \
-      /*GCon->Logf(NAME_Debug, "removing %d extra '%s' decals (of %d)", count-dcmaxcount+1, *dec->name, dcmaxcount);*/ \
-      /* do removal */ \
-      decal_t *currd = first; \
-      if (prev) { \
-        if (prev->next != currd) Sys_Error("decal oops(0)"); \
-      } else { \
-        if (seg->decals != currd) Sys_Error("decal oops(1)"); \
-      } \
-      while (currd) { \
-        decal_t *n = currd->next; \
-        if (currd->dectype == dec->name && isDecalsOverlap(dec, dcx0, dcy0, currd, DTex)) { \
-          if (prev) prev->next = n; else seg->decals = n; \
-          RemoveAnimatedDecal(currd); \
-          delete currd; \
-          if (--count < dcmaxcount) break; \
-        } \
-        currd = n; \
       } \
     } \
   } \

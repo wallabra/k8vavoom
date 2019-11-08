@@ -308,7 +308,7 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
     }
   }
 
-  bool doDecals = (textr->Tex && !textr->noDecals && surf->seg && surf->seg->decals);
+  bool doDecals = (textr->Tex && !textr->noDecals && surf->seg && surf->seg->decalhead);
 
   // fill stencil buffer for decals
   if (doDecals) RenderPrepareShaderDecals(surf);
@@ -424,7 +424,7 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
     }
   }
 
-  bool doDecals = (tex->Tex && !tex->noDecals && surf->seg && surf->seg->decals);
+  bool doDecals = (tex->Tex && !tex->noDecals && surf->seg && surf->seg->decalhead);
 
   // fill stencil buffer for decals
   if (doDecals) RenderPrepareShaderDecals(surf);

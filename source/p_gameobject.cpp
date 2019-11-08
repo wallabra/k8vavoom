@@ -287,6 +287,42 @@ sec_region_t *sector_t::AllocRegion () {
 }
 
 
+
+//==========================================================================
+//
+//  seg_t::appendDecal
+//
+//==========================================================================
+void seg_t::appendDecal (decal_t *dc) noexcept {
+  if (!dc) return;
+  vassert(!dc->prev);
+  vassert(!dc->next);
+  vassert(!dc->seg);
+  dc->seg = this;
+  dc->prev = decaltail;
+  if (decaltail) decaltail->next = dc; else decalhead = dc;
+  decaltail = dc;
+}
+
+
+//==========================================================================
+//
+//  seg_t::removeDecal
+//
+//  will not delete it
+//
+//==========================================================================
+void seg_t::removeDecal (decal_t *dc) noexcept {
+  if (!dc) return;
+  vassert(dc->seg == this);
+  if (dc->prev) dc->prev->next = dc->next; else decalhead = dc->next;
+  if (dc->next) dc->next->prev = dc->prev; else decaltail = dc->prev;
+  dc->prev = dc->next = nullptr;
+  dc->seg = nullptr;
+}
+
+
+
 //==========================================================================
 //
 //  getFieldPtr

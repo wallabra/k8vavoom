@@ -861,7 +861,12 @@ struct seg_t : public TPlane {
   vuint32 flags; // SF_xxx
 
   drawseg_t *drawsegs;
-  decal_t *decals;
+  // decal list
+  decal_t *decalhead;
+  decal_t *decaltail;
+
+  void appendDecal (decal_t *dc) noexcept;
+  void removeDecal (decal_t *dc) noexcept; // will not delete it
 };
 
 

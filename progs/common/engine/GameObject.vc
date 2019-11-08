@@ -1055,7 +1055,8 @@ struct seg_t : TPlane {
   bool bZeroLen;
 
   native transient readonly drawseg_t *drawsegs;
-  native transient readonly void/*decal_t*/ *decals;
+  native transient readonly void/*decal_t*/ *decalhead;
+  native transient readonly void/*decal_t*/ *decaltail;
 };
 
 //

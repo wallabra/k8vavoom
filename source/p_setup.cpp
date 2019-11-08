@@ -358,10 +358,9 @@ void VLevel::ClearAllMapData () {
 
   if (Segs) {
     for (auto &&seg : allSegs()) {
-      decal_t *decal = seg.decals;
-      while (decal) {
-        decal_t *c = decal;
-        decal = c->next;
+      while (seg.decalhead) {
+        decal_t *c = seg.decalhead;
+        seg.removeDecal(c);
         delete c->animator;
         delete c;
       }

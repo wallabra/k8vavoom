@@ -169,20 +169,19 @@ void VLevel::SerialiseOther (VStream &Strm) {
       for (int f = 0; f < (int)NumSegs; ++f) {
         vuint32 dcount = 0;
         // remove old decals
-        decal_t *odcl = Segs[f].decals;
-        while (odcl) {
-          decal_t *c = odcl;
-          odcl = c->next;
+        while (Segs[f].decalhead) {
+          decal_t *c = Segs[f].decalhead;
+          Segs[f].removeDecal(c);
           delete c->animator;
           delete c;
         }
-        Segs[f].decals = nullptr;
+        Segs[f].decalhead = Segs[f].decaltail = nullptr;
         // load decal count for this seg
         Strm << dcount;
         // hack to not break old saves
         if (dcount == 0xffffffffu) {
           Strm << dcount;
-          decal_t *decal = nullptr; // previous
+          //decal_t *decal = nullptr; // previous
           while (dcount-- > 0) {
             decal_t *dc = new decal_t;
             memset((void *)dc, 0, sizeof(decal_t));
@@ -193,13 +192,15 @@ void VLevel::SerialiseOther (VStream &Strm) {
               delete dc;
             } else {
               // add to decal list
-              if (decal) decal->next = dc; else Segs[f].decals = dc;
+              dc->seg = nullptr;
+              Segs[f].appendDecal(dc);
+              //if (decal) decal->next = dc; else Segs[f].decals = dc;
               if (dc->animator) {
                 if (decanimlist) decanimlist->prevanimated = dc;
                 dc->nextanimated = decanimlist;
                 decanimlist = dc;
               }
-              decal = dc;
+              //decal = dc;
             }
             ++dctotal;
           }
@@ -218,11 +219,11 @@ void VLevel::SerialiseOther (VStream &Strm) {
       for (int f = 0; f < (int)NumSegs; ++f) {
         // count decals
         vuint32 dcount = 0;
-        for (decal_t *decal = Segs[f].decals; decal; decal = decal->next) ++dcount;
+        for (decal_t *decal = Segs[f].decalhead; decal; decal = decal->next) ++dcount;
         vuint32 newmark = 0xffffffffu;
         Strm << newmark;
         Strm << dcount;
-        for (decal_t *decal = Segs[f].decals; decal; decal = decal->next) {
+        for (decal_t *decal = Segs[f].decalhead; decal; decal = decal->next) {
           DecalIO(Strm, decal, this);
           ++dctotal;
         }

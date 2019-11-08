@@ -35,7 +35,7 @@ void VOpenGLDrawer::RenderPrepareShaderDecals (surface_t *surf) {
   if (!r_decals_enabled) return;
   if (RendLev->PortalDepth) return; //FIXME: not yet
 
-  if (!surf->seg || !surf->seg->decals) return; // nothing to do
+  if (!surf->seg || !surf->seg->decalhead) return; // nothing to do
 
   if (gl_decal_debug_nostencil) return; // debug
 
@@ -65,7 +65,7 @@ void VOpenGLDrawer::RenderPrepareShaderDecals (surface_t *surf) {
 bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, surfcache_t *cache, int cmap) {
   if (!r_decals_enabled) return false;
 
-  if (!surf->seg || !surf->seg->decals) return false; // nothing to do
+  if (!surf->seg || !surf->seg->decalhead) return false; // nothing to do
 
   texinfo_t *tex = surf->texinfo;
 
@@ -118,8 +118,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
   if (gl_decal_debug_noalpha) glDisable(GL_BLEND);
 
   // also, clear dead decals here, 'cause why not?
-  decal_t *prev = nullptr;
-  decal_t *dc = surf->seg->decals;
+  decal_t *dc = surf->seg->decalhead;
 
   int rdcount = 0;
   static int maxrdcount = 0;
@@ -133,13 +132,11 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
   while (dc) {
     // "0" means "no texture found", so remove it too
     if (dc->texture <= 0 || dc->alpha <= 0 || dc->scaleX <= 0 || dc->scaleY <= 0) {
-      // remove it
+      // remove it, if it is not animated
       decal_t *n = dc->next;
       if (!dc->animator) {
-        if (prev) prev->next = n; else surf->seg->decals = n;
+        surf->seg->removeDecal(dc);
         delete dc;
-      } else {
-        prev = dc;
       }
       dc = n;
       continue;
@@ -148,13 +145,11 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
     int dcTexId = dc->texture;
     auto dtex = GTextureManager[dcTexId];
     if (!dtex || dtex->Width < 1 || dtex->Height < 1) {
-      // remove it
+      // remove it, if it is not animated
       decal_t *n = dc->next;
       if (!dc->animator) {
-        if (prev) prev->next = n; else surf->seg->decals = n;
+        surf->seg->removeDecal(dc);
         delete dc;
-      } else {
-        prev = dc;
       }
       dc = n;
       continue;
@@ -187,7 +182,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
       // remove it, if it is not animated
       decal_t *n = dc->next;
       if (!dc->animator) {
-        if (prev) prev->next = n; else surf->seg->decals = n;
+        surf->seg->removeDecal(dc);
         delete dc;
       }
       dc = n;
@@ -265,7 +260,6 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
       glTexCoord2f(texx1, texy0); glVertex3f(v1.x, v1.y, dcz-thgt);
     glEnd();
 
-    prev = dc;
     dc = dc->next;
 
     ++rdcount;

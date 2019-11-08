@@ -71,6 +71,7 @@ struct decal_t {
     NoTopTex = 0x2000U, // don't render on top texture
     NoBotTex = 0x4000U, // don't render on bottom texture
   };
+  decal_t *prev; // in this seg
   decal_t *next; // in this seg
   seg_t *seg;
   sector_t *slidesec; // backsector for SlideXXX
