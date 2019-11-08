@@ -292,8 +292,57 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
 
       VDC_DLOG(NAME_Debug, "  checking seg #%d; offset=%g; length=%g (ldef=%d; segside=%d)", (int)(ptrdiff_t)(seg-Segs), seg->offset, seg->length, (int)(ptrdiff_t)(seg->linedef-&Lines[0]), seg->side);
 
+      bool performDecalCleanup = true;
+
+      sector_t *sec3d = seg->backsector;
+      const bool has3dregs = (sec3d && sec3d->eregions->next);
+
+      // check for 3d floors
+      // for some reason, "oob" segs should still be checked if they has 3d floors, so do this before bounds checking
+      //FIXME: reverse and document this!
+      if (has3dregs) {
+        //if (s3dsnum == 1 && seg->backsector == seg->frontsector) continue;
+        VDC_DLOG(NAME_Debug, "*** this seg has 3d floor regions (secnum=%d)!", (int)(ptrdiff_t)(sec3d-&Sectors[0]));
+        // find solid region to put decal onto
+        for (sec_region_t *reg = sec3d->eregions->next; reg; reg = reg->next) {
+          if (!reg->extraline) continue; // no need to create extra side
+          // hack: 3d floor with sky texture seems to be transparent in renderer
+          if ((reg->regflags&(sec_region_t::RF_NonSolid|sec_region_t::RF_BaseRegion|sec_region_t::RF_OnlyVisual)) != 0) continue;
+          const side_t *extraside = &Sides[reg->extraline->sidenum[0]];
+          if (extraside->MidTexture == skyflatnum) continue;
+          const float fz = reg->efloor.GetPointZClamped(linepos);
+          const float cz = reg->eceiling.GetPointZClamped(linepos);
+          if (dcy0 < cz && dcy1 > fz) {
+            VDC_DLOG(NAME_Debug, " HIT solid region: fz=%g; cz=%g; orgz=%g; dcy0=%g; dcy1=%g", fz, cz, orgz, dcy0, dcy1);
+            // remove old same-typed decals, if necessary
+            CLEANUP_DECALS();
+            // create decal
+            decal_t *decal = AllocSegDecal(seg, dec);
+            decal->texture = tex;
+            decal->translation = translation;
+            decal->orgz = decal->curz = orgz;
+            decal->xdist = lineofs;
+            // setup misc flags
+            decal->flags = flips|(dec->fullbright ? decal_t::Fullbright : 0)|(dec->fuzzy ? decal_t::Fuzzy : 0);
+            decal->flags |= /*disabledTextures*/0;
+            // slide with 3d floor floor
+            decal->slidesec = sec3d;
+            decal->flags |= decal_t::SlideFloor;
+            decal->curz -= decal->slidesec->floor.TexZ;
+            //if (side != seg->side) decal->flags ^= decal_t::FlipX;
+          } else {
+            VDC_DLOG(NAME_Debug, " SKIP solid region: fz=%g; cz=%g; orgz=%g; dcy0=%g; dcy1=%g", fz, cz, orgz, dcy0, dcy1);
+          }
+        }
+      }
+
+
       // check if decal is in seg bounds
-      if (dcx1 <= seg->offset || dcx0 >= seg->offset+seg->length) continue; // out of bounds
+      if (dcx1 <= seg->offset || dcx0 >= seg->offset+seg->length) {
+        // out of bounds
+        VDC_DLOG(NAME_Debug, "   OOB! dcx0=%g; dcx1=%g; sofs0=%g; sofs1=%g", dcx0, dcx1, seg->offset, seg->offset+seg->length);
+        continue;
+      }
 
       side_t *sb = seg->sidedef;
 
@@ -360,49 +409,6 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
         } else {
           // one-sided: see the last coment above
           if (!dec->animator && dcy0 >= ffloorZ) allowBotTex = false;
-        }
-      }
-
-      bool performDecalCleanup = true;
-
-      // check for 3d floors
-      {
-        //sector_t *sec3d = (/*seg->side*/s3dsnum ? seg->backsector : seg->frontsector);
-        sector_t *sec3d = seg->backsector;
-        if (sec3d && sec3d->eregions->next) {
-          //if (s3dsnum == 1 && seg->backsector == seg->frontsector) continue;
-          VDC_DLOG(NAME_Debug, "*** this seg has 3d floor regions (secnum=%d)!", (int)(ptrdiff_t)(sec3d-&Sectors[0]));
-          // find solid region to put decal onto
-          for (sec_region_t *reg = sec3d->eregions->next; reg; reg = reg->next) {
-            if (!reg->extraline) continue; // no need to create extra side
-            // hack: 3d floor with sky texture seems to be transparent in renderer
-            if ((reg->regflags&(sec_region_t::RF_NonSolid|sec_region_t::RF_BaseRegion|sec_region_t::RF_OnlyVisual)) != 0) continue;
-            const side_t *extraside = &Sides[reg->extraline->sidenum[0]];
-            if (extraside->MidTexture == skyflatnum) continue;
-            const float fz = reg->efloor.GetPointZClamped(linepos);
-            const float cz = reg->eceiling.GetPointZClamped(linepos);
-            if (dcy0 < cz && dcy1 > fz) {
-              VDC_DLOG(NAME_Debug, " HIT solid region: fz=%g; cz=%g; orgz=%g; dcy0=%g; dcy1=%g", fz, cz, orgz, dcy0, dcy1);
-              // remove old same-typed decals, if necessary
-              CLEANUP_DECALS();
-              // create decal
-              decal_t *decal = AllocSegDecal(seg, dec);
-              decal->texture = tex;
-              decal->translation = translation;
-              decal->orgz = decal->curz = orgz;
-              decal->xdist = lineofs;
-              // setup misc flags
-              decal->flags = flips|(dec->fullbright ? decal_t::Fullbright : 0)|(dec->fuzzy ? decal_t::Fuzzy : 0);
-              decal->flags |= /*disabledTextures*/0;
-              // slide with 3d floor floor
-              decal->slidesec = sec3d;
-              decal->flags |= decal_t::SlideFloor;
-              decal->curz -= decal->slidesec->floor.TexZ;
-              //if (side != seg->side) decal->flags ^= decal_t::FlipX;
-            } else {
-              VDC_DLOG(NAME_Debug, " SKIP solid region: fz=%g; cz=%g; orgz=%g; dcy0=%g; dcy1=%g", fz, cz, orgz, dcy0, dcy1);
-            }
-          }
         }
       }
 
