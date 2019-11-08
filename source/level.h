@@ -815,6 +815,7 @@ private:
 
   int SetBodyQueueTrans (int, int);
 
+  decal_t *AllocSegDecal (seg_t *seg, VDecalDef *dec);
   void AddDecal (TVec org, VName dectype, int side, line_t *li, int level, int translation);
   void AddDecalById (TVec org, int id, int side, line_t *li, int level, int translation);
   // called by `AddDecal()`

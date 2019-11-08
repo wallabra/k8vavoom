@@ -154,6 +154,89 @@ void VLevel::RemoveAnimatedDecal (decal_t *dc) {
 
 //==========================================================================
 //
+//  VLevel::AllocSegDecal
+//
+//==========================================================================
+decal_t *VLevel::AllocSegDecal (seg_t *seg, VDecalDef *dec) {
+  vassert(seg);
+  vassert(dec);
+  decal_t *decal = new decal_t;
+  memset((void *)decal, 0, sizeof(decal_t));
+  decal_t *cdec = seg->decals;
+  if (cdec) {
+    while (cdec->next) cdec = cdec->next;
+    cdec->next = decal;
+  } else {
+    seg->decals = decal;
+  }
+  decal->seg = seg;
+  decal->dectype = dec->name;
+  //decal->texture = tex;
+  //decal->translation = translation;
+  //decal->orgz = decal->curz = orgz;
+  //decal->xdist = lineofs;
+  decal->ofsX = decal->ofsY = 0;
+  decal->scaleX = decal->origScaleX = dec->scaleX.value;
+  decal->scaleY = decal->origScaleY = dec->scaleY.value;
+  decal->alpha = decal->origAlpha = dec->alpha.value;
+  decal->addAlpha = dec->addAlpha.value;
+  decal->animator = (dec->animator ? dec->animator->clone() : nullptr);
+  if (decal->animator) AddAnimatedDecal(decal);
+  return decal;
+}
+
+
+#ifdef CLEANUP_DECALS
+# error "wtf?!"
+#endif
+
+// sorry for the macro...
+// remove old same-typed decals, if necessary
+#define CLEANUP_DECALS()  do { \
+  if (dcmaxcount > 0 && dcmaxcount < 10000) { \
+    int count = 0; \
+    decal_t *prev = nullptr; \
+    decal_t *first = nullptr; \
+    decal_t *cur = seg->decals; \
+    while (cur) { \
+      /* also, check if this decal is touching our one */ \
+      if (cur->dectype == dec->name) { \
+        /*GCon->Logf(NAME_Debug, "seg #%d: decal '%s'", (int)(ptrdiff_t)(seg-Segs), *cur->dectype);*/ \
+        if (isDecalsOverlap(dec, dcx0, dcy0, cur, DTex)) { \
+          /*GCon->Log(NAME_Debug, "  overlap!"); */ \
+          if (!first) first = cur; \
+          ++count; \
+        } \
+      } \
+      if (!first) prev = cur; \
+      cur = cur->next; \
+    } \
+    if (count >= dcmaxcount) { \
+      /*GCon->Logf(NAME_Debug, "removing %d extra '%s' decals (of %d)", count-dcmaxcount+1, *dec->name, dcmaxcount);*/ \
+      /* do removal */ \
+      decal_t *currd = first; \
+      if (prev) { \
+        if (prev->next != currd) Sys_Error("decal oops(0)"); \
+      } else { \
+        if (seg->decals != currd) Sys_Error("decal oops(1)"); \
+      } \
+      while (currd) { \
+        decal_t *n = currd->next; \
+        if (currd->dectype == dec->name && isDecalsOverlap(dec, dcx0, dcy0, currd, DTex)) { \
+          if (prev) prev->next = n; else seg->decals = n; \
+          RemoveAnimatedDecal(currd); \
+          delete currd; \
+          if (--count < dcmaxcount) break; \
+        } \
+        currd = n; \
+      } \
+    } \
+  } \
+} while (0)
+
+
+//==========================================================================
+//
 //  VLevel::PutDecalAtLine
 //
 //==========================================================================
@@ -306,7 +389,46 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
       }
 
       // if no textures were hit, don't bother
-      if (!hasMidTex && !allowTopTex && !allowBotTex) continue;
+      if (!hasMidTex && !allowTopTex && !allowBotTex) {
+        if (seg->backsector && seg->backsector->eregions->next) {
+          VDC_DLOG(NAME_Debug, "*** this seg has 3d floor regions!");
+          // find solid region to put decal onto
+          bool doCleanup = true;
+          for (sec_region_t *reg = seg->backsector->eregions->next; reg; reg = reg->next) {
+            if (!reg->extraline) continue; // no need to create extra side
+            // hack: 3d floor with sky texture seems to be transparent in renderer
+            if ((reg->regflags&(sec_region_t::RF_NonSolid|sec_region_t::RF_BaseRegion|sec_region_t::RF_OnlyVisual)) != 0) continue;
+            const side_t *extraside = &Sides[reg->extraline->sidenum[0]];
+            if (extraside->MidTexture == skyflatnum) continue;
+            const float fz = reg->efloor.GetPointZClamped(linepos);
+            const float cz = reg->eceiling.GetPointZClamped(linepos);
+            if (dcy0 < cz && dcy1 > fz) {
+              VDC_DLOG(NAME_Debug, " HIT solid region: fz=%g; cz=%g; orgz=%g; dcy0=%g; dcy1=%g", fz, cz, orgz, dcy0, dcy1);
+              if (doCleanup) {
+                doCleanup = false;
+                // remove old same-typed decals, if necessary
+                CLEANUP_DECALS();
+              }
+              // create decal
+              decal_t *decal = AllocSegDecal(seg, dec);
+              decal->texture = tex;
+              decal->translation = translation;
+              decal->orgz = decal->curz = orgz;
+              decal->xdist = lineofs;
+              // setup misc flags
+              decal->flags = flips|(dec->fullbright ? decal_t::Fullbright : 0)|(dec->fuzzy ? decal_t::Fuzzy : 0);
+              decal->flags |= /*disabledTextures*/0;
+              // slide with 3d floor floor
+              decal->slidesec = seg->backsector;
+              decal->flags |= decal_t::SlideFloor;
+              decal->curz -= decal->slidesec->floor.TexZ;
+            } else {
+              VDC_DLOG(NAME_Debug, " SKIP solid region: fz=%g; cz=%g; orgz=%g; dcy0=%g; dcy1=%g", fz, cz, orgz, dcy0, dcy1);
+            }
+          }
+        }
+        continue;
+      }
 
       vuint32 disabledTextures = 0;
       //FIXME: animators are often used to slide blood decals down
@@ -326,6 +448,9 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
           disabledTextures |= decal_t::NoMidTex;
         }
       }
+
+      // remove old same-typed decals, if necessary
+      CLEANUP_DECALS();
 
       if (fsec && bsec) {
         VDC_DLOG(NAME_Debug, "  2s: orgz=%g; front=(%g,%g); back=(%g,%g)", orgz, ffloorZ, fceilingZ, bfloorZ, bceilingZ);
@@ -396,73 +521,14 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
         VDC_DLOG(NAME_Debug, "  1s: front=(%g,%g); sc=%d; sf=%d", ffloorZ, fceilingZ, (int)slideWithFloor, (int)slideWithCeiling);
       }
 
-      // remove old same-typed decals, if necessary
-      if (dcmaxcount > 0 && dcmaxcount < 10000) {
-        int count = 0;
-        decal_t *prev = nullptr;
-        decal_t *first = nullptr;
-        decal_t *cur = seg->decals;
-        while (cur) {
-          // also, check if this decal is touching our one
-          if (cur->dectype == dec->name) {
-            //GCon->Logf(NAME_Debug, "seg #%d: decal '%s'", (int)(ptrdiff_t)(seg-Segs), *cur->dectype);
-            if (isDecalsOverlap(dec, dcx0, dcy0, cur, DTex)) {
-              //GCon->Log(NAME_Debug, "  overlap!");
-              if (!first) first = cur;
-              ++count;
-            }
-          }
-          if (!first) prev = cur;
-          cur = cur->next;
-        }
-        if (count >= dcmaxcount) {
-          //GCon->Logf(NAME_Debug, "removing %d extra '%s' decals (of %d)", count-dcmaxcount+1, *dec->name, dcmaxcount);
-          // do removal
-          decal_t *currd = first;
-          if (prev) {
-            if (prev->next != currd) Sys_Error("decal oops(0)");
-          } else {
-            if (seg->decals != currd) Sys_Error("decal oops(1)");
-          }
-          while (currd) {
-            decal_t *n = currd->next;
-            if (currd->dectype == dec->name && isDecalsOverlap(dec, dcx0, dcy0, currd, DTex)) {
-              if (prev) prev->next = n; else seg->decals = n;
-              RemoveAnimatedDecal(currd);
-              delete currd;
-              if (--count < dcmaxcount) break;
-            }
-            currd = n;
-          }
-        }
-      }
-
       VDC_DLOG(NAME_Debug, "  decaling seg #%d; offset=%g; length=%g", (int)(ptrdiff_t)(seg-Segs), seg->offset, seg->length);
 
       // create decal
-      decal_t *decal = new decal_t;
-      memset((void *)decal, 0, sizeof(decal_t));
-      decal_t *cdec = seg->decals;
-      if (cdec) {
-        while (cdec->next) cdec = cdec->next;
-        cdec->next = decal;
-      } else {
-        seg->decals = decal;
-      }
-      decal->seg = seg;
-      decal->dectype = dec->name;
+      decal_t *decal = AllocSegDecal(seg, dec);
       decal->texture = tex;
       decal->translation = translation;
       decal->orgz = decal->curz = orgz;
       decal->xdist = lineofs;
-      decal->ofsX = decal->ofsY = 0;
-      decal->scaleX = decal->origScaleX = dec->scaleX.value;
-      decal->scaleY = decal->origScaleY = dec->scaleY.value;
-      decal->alpha = decal->origAlpha = dec->alpha.value;
-      decal->addAlpha = dec->addAlpha.value;
-      decal->animator = (dec->animator ? dec->animator->clone() : nullptr);
-      if (decal->animator) AddAnimatedDecal(decal);
-
       // setup misc flags
       decal->flags = flips|(dec->fullbright ? decal_t::Fullbright : 0)|(dec->fuzzy ? decal_t::Fuzzy : 0);
       decal->flags |= disabledTextures;
@@ -530,6 +596,8 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
   }
 }
 
+#undef CLEANUP_DECALS
+
 
 //==========================================================================
 //
@@ -543,6 +611,8 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, int side, line_t 
     GCon->Logf(NAME_Warning, "too many lower decals '%s'", *dec->name);
     return;
   }
+
+  VDC_DLOG(NAME_Debug, "DECAL: line #%d; side #%d", (int)(ptrdiff_t)(li-&Lines[0]), side);
 
   if (dec->lowername != NAME_None) {
     //GCon->Logf(NAME_Debug, "adding lower decal '%s' for decal '%s' (level %d)", *dec->lowername, *dec->name, level);
