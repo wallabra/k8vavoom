@@ -82,8 +82,8 @@ static bool isDecalsOverlap (VDecalDef *dec, float dcx0, float dcy0, decal_t *cu
   const float ity0 = ity1-thgt;
 
   /*
-  GCon->Logf("  my=(%g,%g)-(%g,%g)", myx0, myy0, myx1, myy1);
-  GCon->Logf("  it=(%g,%g)-(%g,%g)", itx0, ity0, itx1, ity1);
+  GCon->Logf(NAME_Debug, "  my=(%g,%g)-(%g,%g)", myx0, myy0, myx1, myy1);
+  GCon->Logf(NAME_Debug, "  it=(%g,%g)-(%g,%g)", itx0, ity0, itx1, ity1);
   */
 
   return !(itx1 <= myx0 || ity1 <= myy0 || itx0 >= myx1 || ity0 >= myy1);
@@ -165,7 +165,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
   VTexture *DTex = GTextureManager[tex];
   if (!DTex || DTex->Type == TEXTYPE_Null) return;
 
-  //GCon->Logf("decal '%s' at linedef %d", *GTextureManager[tex]->Name, (int)(ptrdiff_t)(li-Lines));
+  //GCon->Logf(NAME_Debug, "decal '%s' at linedef %d", *GTextureManager[tex]->Name, (int)(ptrdiff_t)(li-Lines));
 
   float twdt = DTex->GetScaledWidth()*dec->scaleX.value;
   float thgt = DTex->GetScaledHeight()*dec->scaleY.value;
@@ -361,7 +361,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
             slideWithCeiling = (bfloorZ == ffloorZ);
             slideWithFloor = !slideWithCeiling;
             slidesec = (ffloorZ == fceilingZ ? fsec : bsec);
-            //GCon->Logf("DOOR HACK: front=(%g,%g); back=(%g,%g); sc=%d; sf=%d", ffloorZ, fceilingZ, bfloorZ, bceilingZ, (int)slideWithFloor, (int)slideWithCeiling);
+            //GCon->Logf(NAME_Debug, "DOOR HACK: front=(%g,%g); back=(%g,%g); sc=%d; sf=%d", ffloorZ, fceilingZ, bfloorZ, bceilingZ, (int)slideWithFloor, (int)slideWithCeiling);
           }
         }
         */
@@ -373,7 +373,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
                if (li->flags&ML_DONTPEGBOTTOM) slideWithFloor = true;
           else if (li->flags&ML_DONTPEGTOP) slideWithCeiling = true;
           else slideWithCeiling = true;
-          //GCon->Logf("one-sided midtex: pegbot=%d; pegtop=%d; fslide=%d; cslide=%d", (int)(!!(li->flags&ML_DONTPEGBOTTOM)), (int)(!!(li->flags&ML_DONTPEGTOP)), (int)slideWithFloor, (int)slideWithCeiling);
+          //GCon->Logf(NAME_Debug, "one-sided midtex: pegbot=%d; pegtop=%d; fslide=%d; cslide=%d", (int)(!!(li->flags&ML_DONTPEGBOTTOM)), (int)(!!(li->flags&ML_DONTPEGTOP)), (int)slideWithFloor, (int)slideWithCeiling);
         } else {
           if (allowTopTex && allowBotTex) {
             // both top and bottom
@@ -405,9 +405,9 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
         while (cur) {
           // also, check if this decal is touching our one
           if (cur->dectype == dec->name) {
-            //GCon->Logf("seg #%d: decal '%s'", (int)(ptrdiff_t)(seg-Segs), *cur->dectype);
+            //GCon->Logf(NAME_Debug, "seg #%d: decal '%s'", (int)(ptrdiff_t)(seg-Segs), *cur->dectype);
             if (isDecalsOverlap(dec, dcx0, dcy0, cur, DTex)) {
-              //GCon->Log("  overlap!");
+              //GCon->Log(NAME_Debug, "  overlap!");
               if (!first) first = cur;
               ++count;
             }
@@ -416,7 +416,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
           cur = cur->next;
         }
         if (count >= dcmaxcount) {
-          //GCon->Logf("removing %d extra '%s' decals (of %d)", count-dcmaxcount+1, *dec->name, dcmaxcount);
+          //GCon->Logf(NAME_Debug, "removing %d extra '%s' decals (of %d)", count-dcmaxcount+1, *dec->name, dcmaxcount);
           // do removal
           decal_t *currd = first;
           if (prev) {
@@ -545,22 +545,22 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, int side, line_t 
   }
 
   if (dec->lowername != NAME_None) {
-    //GCon->Logf("adding lower decal '%s' for decal '%s' (level %d)", *dec->lowername, *dec->name, level);
+    //GCon->Logf(NAME_Debug, "adding lower decal '%s' for decal '%s' (level %d)", *dec->lowername, *dec->name, level);
     AddDecal(org, dec->lowername, side, li, level+1, translation);
   }
 
   //HACK!
   dec->genValues();
-  //GCon->Logf("decal '%s': scale=(%g:%g)", *dec->name, dec->scaleX.value, dec->scaleY.value);
+  //GCon->Logf(NAME_Debug, "decal '%s': scale=(%g:%g)", *dec->name, dec->scaleX.value, dec->scaleY.value);
 
   if (dec->scaleX.value <= 0 || dec->scaleY.value <= 0) {
-    GCon->Logf("Decal '%s' has zero scale", *dec->name);
+    GCon->Logf(NAME_Warning, "Decal '%s' has zero scale", *dec->name);
     return;
   }
 
   // actually, we should check animator here, but meh...
   if (dec->alpha.value <= 0.004f) {
-    GCon->Logf("Decal '%s' has zero alpha", *dec->name);
+    GCon->Logf(NAME_Warning, "Decal '%s' has zero alpha", *dec->name);
     return;
   }
 
@@ -568,11 +568,11 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, int side, line_t 
   VTexture *DTex = GTextureManager[tex];
   if (!DTex || DTex->Type == TEXTYPE_Null) {
     // no decal gfx, nothing to do
-    GCon->Logf("Decal '%s' has no pic", *dec->name);
+    GCon->Logf(NAME_Warning, "Decal '%s' has no pic", *dec->name);
     return;
   }
 
-  //GCon->Logf("Decal '%s', texture '%s'", *dec->name, *DTex->Name);
+  //GCon->Logf(NAME_Debug, "Decal '%s', texture '%s'", *dec->name, *DTex->Name);
 
   if (++decanimuid == 0x7fffffff) {
     decanimuid = 1;
@@ -622,7 +622,7 @@ void VLevel::AddDecal (TVec org, VName dectype, int side, line_t *li, int level,
   if (!r_decals_enabled) return;
   if (!li || dectype == NAME_None) return; // just in case
 
-  //GCon->Logf("%s: oorg:(%g,%g,%g); org:(%g,%g,%g)", *dectype, org.x, org.y, org.z, li->landAlongNormal(org).x, li->landAlongNormal(org).y, li->landAlongNormal(org).z);
+  //GCon->Logf(NAME_Debug, "%s: oorg:(%g,%g,%g); org:(%g,%g,%g)", *dectype, org.x, org.y, org.z, li->landAlongNormal(org).x, li->landAlongNormal(org).y, li->landAlongNormal(org).z);
 
   org = li->landAlongNormal(org);
 
@@ -633,7 +633,7 @@ void VLevel::AddDecal (TVec org, VName dectype, int side, line_t *li, int level,
 #endif
   VDecalDef *dec = VDecalDef::getDecal(dectype);
   if (dec) {
-    //GCon->Logf("DECAL '%s'; name is '%s', texid is %d; org=(%g,%g,%g)", *dectype, *dec->name, dec->texid, org.x, org.y, org.z);
+    //GCon->Logf(NAME_Debug, "DECAL '%s'; name is '%s', texid is %d; org=(%g,%g,%g)", *dectype, *dec->name, dec->texid, org.x, org.y, org.z);
     AddOneDecal(level, org, dec, side, li, translation);
   } else {
     if (!baddecals.put(dectype, true)) GCon->Logf(NAME_Warning, "NO DECAL: '%s'", *dectype);
