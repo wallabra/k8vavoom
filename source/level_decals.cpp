@@ -186,7 +186,8 @@ decal_t *VLevel::AllocSegDecal (seg_t *seg, VDecalDef *dec) {
 // sorry for the macro...
 // remove old same-typed decals, if necessary
 #define CLEANUP_DECALS()  do { \
-  if (dcmaxcount > 0 && dcmaxcount < 10000) { \
+  if (dcmaxcount > 0 && dcmaxcount < 10000 && performDecalCleanup) { \
+    performDecalCleanup = false; \
     int count = 0; \
     decal_t *prev = nullptr; \
     for (decal_t *cur = seg->decaltail; cur; cur = prev) { \
@@ -289,7 +290,7 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
       if (seg->flags&SF_ZEROLEN) continue; // invalid seg
       vassert(seg->linedef == li);
 
-      VDC_DLOG(NAME_Debug, "  checking seg #%d; offset=%g; length=%g", (int)(ptrdiff_t)(seg-Segs), seg->offset, seg->length);
+      VDC_DLOG(NAME_Debug, "  checking seg #%d; offset=%g; length=%g (ldef=%d; segside=%d)", (int)(ptrdiff_t)(seg-Segs), seg->offset, seg->length, (int)(ptrdiff_t)(seg->linedef-&Lines[0]), seg->side);
 
       // check if decal is in seg bounds
       if (dcx1 <= seg->offset || dcx0 >= seg->offset+seg->length) continue; // out of bounds
@@ -362,13 +363,17 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
         }
       }
 
-      // if no textures were hit, don't bother
-      if (!hasMidTex && !allowTopTex && !allowBotTex) {
-        if (seg->backsector && seg->backsector->eregions->next) {
-          VDC_DLOG(NAME_Debug, "*** this seg has 3d floor regions!");
+      bool performDecalCleanup = true;
+
+      // check for 3d floors
+      {
+        //sector_t *sec3d = (/*seg->side*/s3dsnum ? seg->backsector : seg->frontsector);
+        sector_t *sec3d = seg->backsector;
+        if (sec3d && sec3d->eregions->next) {
+          //if (s3dsnum == 1 && seg->backsector == seg->frontsector) continue;
+          VDC_DLOG(NAME_Debug, "*** this seg has 3d floor regions (secnum=%d)!", (int)(ptrdiff_t)(sec3d-&Sectors[0]));
           // find solid region to put decal onto
-          bool doCleanup = true;
-          for (sec_region_t *reg = seg->backsector->eregions->next; reg; reg = reg->next) {
+          for (sec_region_t *reg = sec3d->eregions->next; reg; reg = reg->next) {
             if (!reg->extraline) continue; // no need to create extra side
             // hack: 3d floor with sky texture seems to be transparent in renderer
             if ((reg->regflags&(sec_region_t::RF_NonSolid|sec_region_t::RF_BaseRegion|sec_region_t::RF_OnlyVisual)) != 0) continue;
@@ -378,11 +383,8 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
             const float cz = reg->eceiling.GetPointZClamped(linepos);
             if (dcy0 < cz && dcy1 > fz) {
               VDC_DLOG(NAME_Debug, " HIT solid region: fz=%g; cz=%g; orgz=%g; dcy0=%g; dcy1=%g", fz, cz, orgz, dcy0, dcy1);
-              if (doCleanup) {
-                doCleanup = false;
-                // remove old same-typed decals, if necessary
-                CLEANUP_DECALS();
-              }
+              // remove old same-typed decals, if necessary
+              CLEANUP_DECALS();
               // create decal
               decal_t *decal = AllocSegDecal(seg, dec);
               decal->texture = tex;
@@ -393,16 +395,19 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
               decal->flags = flips|(dec->fullbright ? decal_t::Fullbright : 0)|(dec->fuzzy ? decal_t::Fuzzy : 0);
               decal->flags |= /*disabledTextures*/0;
               // slide with 3d floor floor
-              decal->slidesec = seg->backsector;
+              decal->slidesec = sec3d;
               decal->flags |= decal_t::SlideFloor;
               decal->curz -= decal->slidesec->floor.TexZ;
+              //if (side != seg->side) decal->flags ^= decal_t::FlipX;
             } else {
               VDC_DLOG(NAME_Debug, " SKIP solid region: fz=%g; cz=%g; orgz=%g; dcy0=%g; dcy1=%g", fz, cz, orgz, dcy0, dcy1);
             }
           }
         }
-        continue;
       }
+
+      // if no textures were hit, don't bother
+      if (!hasMidTex && !allowTopTex && !allowBotTex) continue;
 
       vuint32 disabledTextures = 0;
       //FIXME: animators are often used to slide blood decals down

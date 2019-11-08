@@ -245,7 +245,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
       }
     }
 
-    //GCon->Logf("rendering decal at seg #%d (ofs=%g; len=%g); ofs=%g; zofs=(%g,%g); v0=(%g,%g); v1=(%g,%g); line=(%g,%g)-(%g,%g)", (int)(ptrdiff_t)(dc->seg-GLevel->Segs), dc->seg->offset, dc->seg->length, xstofs, dcz-thgt, dcz, v0.x, v0.y, v1.x, v1.y, dc->seg->linedef->v1->x, dc->seg->linedef->v1->y, dc->seg->linedef->v2->x, dc->seg->linedef->v2->y);
+    //GCon->Logf(NAME_Debug, "rendering decal at seg #%d (ofs=%g; len=%g); ofs=%g; zofs=(%g,%g); v0=(%g,%g); v1=(%g,%g); line=(%g,%g)-(%g,%g)", (int)(ptrdiff_t)(dc->seg-GLevel->Segs), dc->seg->offset, dc->seg->length, xstofs, dcz-thgt, dcz, v0.x, v0.y, v1.x, v1.y, dc->seg->linedef->v1->x, dc->seg->linedef->v1->y, dc->seg->linedef->v2->x, dc->seg->linedef->v2->y);
 
     float texx0 = (dc->flags&decal_t::FlipX ? 1.0f : 0.0f);
     float texx1 = (dc->flags&decal_t::FlipX ? 0.0f : 1.0f);
