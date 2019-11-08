@@ -568,9 +568,9 @@ struct sec_region_t {
   // this is from our floor to our ceiling
   line_t *extraline;
 
-  // flags are here to implement shitty gozzo 3d shit
+  // flags are here to implement various kinds of 3d floors
   enum {
-    RF_SaneRegion    = 1u<<0, // sane k8vavoom-style region; only one, only first
+    RF_BaseRegion    = 1u<<0, // sane k8vavoom-style region; only one, only first
     RF_NonSolid      = 1u<<1,
     // ignore this region in gap/opening processing
     // this flags affects collision detection
@@ -578,6 +578,7 @@ struct sec_region_t {
     // the following flags are only for renderer, collision detection igonres then
     RF_SkipFloorSurf = 1u<<3, // do not create floor surface for this region
     RF_SkipCeilSurf  = 1u<<4, // do not create ceiling surface for this region
+    RF_SaneRegion    = 1u<<5, // k8vavoom-style 3d floor region
   };
   vuint32 regflags;
 };

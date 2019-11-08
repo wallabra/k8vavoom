@@ -843,15 +843,15 @@ void VRenderLevelShared::CalculateSubAmbient (float &l, float &lr, float &lg, fl
 
   //FIXME: this is slightly wrong (and slow)
   if (!skipAmbient && sub->regions) {
-    subregion_t *reg = SV_PointRegionLightSub((subsector_t *)sub, p);
+    sec_region_t *reg = SV_PointRegionLightSub((subsector_t *)sub, p);
 
     // allow glow only for bottom regions
     //FIXME: this is not right, we should calculate glow for translucent/transparent floors too!
-    glowAllowed = (reg->secregion == sub->sector->eregions);
+    glowAllowed = !!(reg->regflags&sec_region_t::RF_BaseRegion);
 
     // region's base light
     if (r_allow_ambient) {
-      l = reg->secregion->params->lightlevel+ExtraLight;
+      l = reg->params->lightlevel+ExtraLight;
       l = midval(0.0f, l, 255.0f);
       if (r_darken) l = light_remap[(int)l];
       if (l < r_ambient_min) l = r_ambient_min;
@@ -860,7 +860,7 @@ void VRenderLevelShared::CalculateSubAmbient (float &l, float &lr, float &lg, fl
       l = midval(0.0f, (float)r_ambient_min.asInt(), 255.0f);
     }
 
-    int SecLightColor = reg->secregion->params->LightColor;
+    int SecLightColor = reg->params->LightColor;
     lr = ((SecLightColor>>16)&255)*l/255.0f;
     lg = ((SecLightColor>>8)&255)*l/255.0f;
     lb = (SecLightColor&255)*l/255.0f;

@@ -371,7 +371,7 @@ int SV_PointContents (sector_t *sector, const TVec &p, bool dbgDump=false);
 
 // this is used to get region lighting
 sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, bool dbgDump=false);
-subregion_t *SV_PointRegionLightSub (subsector_t *sub, const TVec &p, bool dbgDump=false);
+sec_region_t *SV_PointRegionLightSub (subsector_t *sub, const TVec &p, bool dbgDump=false);
 sec_surface_t *SV_DebugFindNearestFloor (subsector_t *sub, const TVec &p);
 
 // find region for thing, and return best floor/ceiling

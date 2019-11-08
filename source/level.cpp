@@ -740,6 +740,7 @@ void VLevel::dumpRegion (const sec_region_t *reg) {
   if (!reg) return;
   char xflags[128];
   xflags[0] = 0;
+  if (reg->regflags&sec_region_t::RF_BaseRegion) strcat(xflags, " [base]");
   if (reg->regflags&sec_region_t::RF_SaneRegion) strcat(xflags, " [sane]");
   if (reg->regflags&sec_region_t::RF_NonSolid) strcat(xflags, " [non-solid]");
   if (reg->regflags&sec_region_t::RF_OnlyVisual) strcat(xflags, " [visual]");

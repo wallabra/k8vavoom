@@ -92,6 +92,7 @@ void VLevel::AddExtraFloorSane (line_t *line, sector_t *dst) {
   }
   reg->params = &src->params;
   reg->extraline = line;
+  reg->regflags |= sec_region_t::RF_SaneRegion;
 
   if (doDump) { GCon->Logf("::: VAVOOM 3DF AFTER"); dumpSectorRegions(dst); }
 }
@@ -171,6 +172,7 @@ void VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
     if ((line->arg2&3) == Swimmable && (line->arg3&2)) reg->extraline = nullptr; //FIXME!
     reg->regflags |= sec_region_t::RF_NonSolid;
   }
+  vassert((reg->regflags&(sec_region_t::RF_SaneRegion|sec_region_t::RF_BaseRegion)) == 0);
 
   if (!isSolid) {
     // non-solid regions has visible floor and ceiling only when camera is inside
@@ -183,6 +185,7 @@ void VLevel::AddExtraFloorShitty (line_t *line, sector_t *dst) {
     reg2->params = reg->params;
     reg2->extraline = nullptr;
     reg2->regflags = sec_region_t::RF_OnlyVisual;
+    vassert((reg2->regflags&(sec_region_t::RF_SaneRegion|sec_region_t::RF_BaseRegion)) == 0);
   }
 }
 

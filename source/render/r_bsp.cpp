@@ -318,7 +318,46 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
 
   if (!texinfo->Tex || texinfo->Tex->Type == TEXTYPE_Null) return;
 
-  sec_params_t *LightParams = (LightSourceSector < 0 || LightSourceSector >= Level->NumSectors ? secregion->params : &Level->Sectors[LightSourceSector].params);
+  enum {
+    SFT_Wall,
+    SFT_Floor,
+    SFT_Ceiling,
+  };
+
+  int surfaceType = SFT_Wall;
+  if (surfs->plane.normal.z != 0.0f) surfaceType = (surfs->plane.normal.z > 0.0f ? SFT_Floor : SFT_Ceiling);
+
+  sec_params_t *LightParams;
+  if (LightSourceSector < 0 || LightSourceSector >= Level->NumSectors) {
+    LightParams = secregion->params;
+    // if this is top flat of insane 3d floor, its light level should be taken from the upper region (or main sector, if this region is the last one)
+    if (surfaceType == SFT_Floor && secregion->extraline &&
+        (secregion->regflags&(sec_region_t::RF_NonSolid|sec_region_t::RF_OnlyVisual|sec_region_t::RF_SaneRegion|sec_region_t::RF_BaseRegion)) == 0)
+    {
+      sec_region_t *nreg = secregion->next;
+      while (nreg && (nreg->regflags&(sec_region_t::RF_NonSolid|sec_region_t::RF_OnlyVisual|sec_region_t::RF_SaneRegion|sec_region_t::RF_BaseRegion)) != 0) nreg = nreg->next;
+      if (nreg) {
+        /*
+        GCon->Logf(NAME_Debug, "sub #%d: has NEXT!", (int)(ptrdiff_t)(sub-&Level->Subsectors[0]));
+        Level->dumpRegion(secregion);
+        Level->dumpRegion(nreg);
+        */
+        if (nreg->params) LightParams = nreg->params;
+        //AbsSideLight = true;
+        //SideLight = 255;
+      } else {
+        /*
+        GCon->Logf(NAME_Debug, "sub #%d: BASE!", (int)(ptrdiff_t)(sub-&Level->Subsectors[0]));
+        Level->dumpRegion(secregion);
+        Level->dumpRegion(sub->sector->eregions);
+        */
+        if (sub->sector->eregions->params) LightParams = sub->sector->eregions->params;
+      }
+    }
+  } else {
+    LightParams = &Level->Sectors[LightSourceSector].params;
+  }
+
   int lLev = (AbsSideLight ? 0 : LightParams->lightlevel)+SideLight;
 
   float glowFloorHeight = 0;
@@ -329,21 +368,29 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
   // floor or ceiling lights
   // this rely on the fact that flat surfaces will never mix with other surfaces
   //TODO: this should also interpolate wall lighting
-  if (surfs->plane.normal.z > 0) {
-    // floor
-    if (LightParams->lightFCFlags&1) lLev = LightParams->lightFloor; else lLev += LightParams->lightFloor;
-  } else if (surfs->plane.normal.z < 0) {
-    // ceiling
-    if (LightParams->lightFCFlags&2) lLev = LightParams->lightCeiling; else lLev += LightParams->lightCeiling;
-  } else {
-    // walls
-    glowFloorHeight = LightParams->glowFloorHeight;
-    glowCeilingHeight = LightParams->glowCeilingHeight;
-    glowFloorColor = LightParams->glowFloor;
-    glowCeilingColor = LightParams->glowCeiling;
+  switch (surfaceType) {
+    case SFT_Wall:
+      glowFloorHeight = LightParams->glowFloorHeight;
+      glowCeilingHeight = LightParams->glowCeilingHeight;
+      glowFloorColor = LightParams->glowFloor;
+      glowCeilingColor = LightParams->glowCeiling;
+      break;
+    case SFT_Floor:
+      if (LightParams->lightFCFlags&1) lLev = LightParams->lightFloor; else lLev += LightParams->lightFloor;
+      break;
+    case SFT_Ceiling:
+      if (LightParams->lightFCFlags&2) lLev = LightParams->lightCeiling; else lLev += LightParams->lightCeiling;
+      break;
   }
 
   lLev = (FixedLight ? FixedLight : lLev+ExtraLight);
+  /*
+  if (secregion->extraline) {
+    if ((secregion->regflags&(sec_region_t::RF_NonSolid|sec_region_t::RF_OnlyVisual)) == 0) {
+      lLev = 255;
+    }
+  }
+  */
   lLev = midval(0, lLev, 255);
   if (r_darken) lLev = light_remap[lLev];
   vuint32 Fade = GetFade(secregion);

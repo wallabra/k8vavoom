@@ -877,12 +877,13 @@ struct sec_region_t {
   // this is from our floor to our ceiling
   line_t *extraline;
 
-  // for gozzo crap
-  bool bSaneRegion;
+  // for 3d floors
+  bool bBaseRegion;
   bool bNonSolid;
   bool bOnlyVisual;
   bool bSkipFloorSurf;
   bool bSkipCeilSurf;
+  bool bSaneRegion;
 };
 
 //

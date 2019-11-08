@@ -250,7 +250,7 @@ void sector_t::CreateBaseRegion () {
   reg->eceiling.set(&ceiling, false);
   reg->params = &params;
   reg->extraline = nullptr;
-  reg->regflags = sec_region_t::RF_SaneRegion|sec_region_t::RF_NonSolid;
+  reg->regflags = sec_region_t::RF_BaseRegion|sec_region_t::RF_NonSolid;
   eregions = reg;
 }
 
