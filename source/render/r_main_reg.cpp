@@ -61,7 +61,8 @@ void VLMapCache::clearCacheInfo () noexcept {
 //  VLMapCache::releaseAtlas
 //
 //==========================================================================
-void VLMapCache::releaseAtlas (vuint32 id) noexcept {
+void VLMapCache::releaseAtlas (vuint32 aid) noexcept {
+  if (aid < NUM_BLOCK_SURFS && renderer) renderer->releaseAtlas(aid);
 }
 
 
@@ -79,6 +80,7 @@ VLMapCache::AtlasInfo VLMapCache::allocAtlas (vuint32 aid, int minwidth, int min
     if (aid < NUM_BLOCK_SURFS) {
       res.width = BLOCK_WIDTH;
       res.height = BLOCK_HEIGHT;
+      if (renderer) renderer->allocAtlas(aid);
     }
   }
   return res;
@@ -108,10 +110,35 @@ VRenderLevelLightmap::VRenderLevelLightmap (VLevel *ALevel)
 {
   NeedsInfiniteFarClip = false;
   mIsShadowVolumeRenderer = false;
+  lmcache.renderer = this;
 
   initLightChain();
 
   FlushCaches();
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelLightmap::releaseAtlas
+//
+//==========================================================================
+void VRenderLevelLightmap::releaseAtlas (vuint32 aid) noexcept {
+  vassert(aid < NUM_BLOCK_SURFS);
+  block_dirty[aid].addDirty(0, 0, BLOCK_WIDTH, BLOCK_HEIGHT);
+  add_block_dirty[aid].addDirty(0, 0, BLOCK_WIDTH, BLOCK_HEIGHT);
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelLightmap::allocAtlas
+//
+//==========================================================================
+void VRenderLevelLightmap::allocAtlas (vuint32 aid) noexcept {
+  vassert(aid < NUM_BLOCK_SURFS);
+  block_dirty[aid].addDirty(0, 0, BLOCK_WIDTH, BLOCK_HEIGHT);
+  add_block_dirty[aid].addDirty(0, 0, BLOCK_WIDTH, BLOCK_HEIGHT);
 }
 
 

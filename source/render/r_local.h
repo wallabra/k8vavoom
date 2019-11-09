@@ -757,9 +757,14 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+class VRenderLevelLightmap;
+
 class VLMapCache : public V2DCache<surfcache_t> {
 public:
-  VLMapCache () noexcept : V2DCache<surfcache_t>() {}
+  VRenderLevelLightmap *renderer;
+
+public:
+  VLMapCache () noexcept : V2DCache<surfcache_t>(), renderer(nullptr) {}
 
   virtual void releaseAtlas (vuint32 id) noexcept override;
   virtual void resetBlock (Item *block) noexcept override;
@@ -806,6 +811,10 @@ private:
   // temporary flag for lightmap cache loader
   // set if some surface wasn't found
   unsigned lmcacheUnknownSurfaceCount;
+
+public:
+  void releaseAtlas (vuint32 id) noexcept;
+  void allocAtlas (vuint32 aid) noexcept;
 
 private:
   // returns `false` if cannot allocate lightmap block

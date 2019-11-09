@@ -1392,11 +1392,7 @@ bool VRenderLevelLightmap::BuildSurfaceLightmap (surface_t *surface) {
     vassert(cache->surf == surface);
   }
 
-  if (surface->dlightframe == currDLightFrame) {
-    cache->dlight = 1;
-  } else {
-    cache->dlight = 0;
-  }
+  cache->dlight = (surface->dlightframe == currDLightFrame);
   cache->Light = srflight;
 
   // calculate the lightings
@@ -1407,51 +1403,35 @@ bool VRenderLevelLightmap::BuildSurfaceLightmap (surface_t *surface) {
 
   const vuint32 bnum = cache->atlasid;
 
+  // normal lightmap
   rgba_t *lbp = &light_block[bnum][cache->t*BLOCK_WIDTH+cache->s];
   unsigned blpos = 0;
-  for (int j = 0; j < tmax; ++j, lbp += BLOCK_WIDTH) {
+  for (int y = 0; y < tmax; ++y, lbp += BLOCK_WIDTH) {
     rgba_t *dlbp = lbp;
-    for (int i = 0; i < smax; ++i, ++dlbp, ++blpos) {
+    for (int x = 0; x < smax; ++x, ++dlbp, ++blpos) {
       dlbp->r = 255-clampToByte(blocklightsr[blpos]>>8);
       dlbp->g = 255-clampToByte(blocklightsg[blpos]>>8);
       dlbp->b = 255-clampToByte(blocklightsb[blpos]>>8);
       dlbp->a = 255;
-      /*
-      rgba_t &lb = light_block[bnum][(j+cache->t)*BLOCK_WIDTH+i+cache->s];
-      lb.r = 255-clampToByte(blocklightsr[j*smax+i]>>8);
-      lb.g = 255-clampToByte(blocklightsg[j*smax+i]>>8);
-      lb.b = 255-clampToByte(blocklightsb[j*smax+i]>>8);
-      lb.a = 255;
-      */
     }
   }
   chainLightmap(cache);
-  //GCon->Logf(NAME_Debug, "000: dirty lmap (%u): (%d,%d,%d,%d)", bnum, block_dirty[bnum].x0, block_dirty[bnum].y1, block_dirty[bnum].x1, block_dirty[bnum].y1);
   block_dirty[bnum].addDirty(cache->s, cache->t, smax, tmax);
-  //GCon->Logf(NAME_Debug, "001: dirty lmap (%u): (%d,%d,%d,%d)", bnum, block_dirty[bnum].x0, block_dirty[bnum].y1, block_dirty[bnum].x1, block_dirty[bnum].y1);
 
-  // specular highlights
+  // overbrights
   lbp = &add_block[bnum][cache->t*BLOCK_WIDTH+cache->s];
   blpos = 0;
-  for (int j = 0; j < tmax; ++j, lbp += BLOCK_WIDTH) {
+  for (int y = 0; y < tmax; ++y, lbp += BLOCK_WIDTH) {
     rgba_t *dlbp = lbp;
-    for (int i = 0; i < smax; ++i, ++dlbp, ++blpos) {
+    for (int x = 0; x < smax; ++x, ++dlbp, ++blpos) {
       dlbp->r = clampToByte(blockaddlightsr[blpos]>>8);
       dlbp->g = clampToByte(blockaddlightsg[blpos]>>8);
       dlbp->b = clampToByte(blockaddlightsb[blpos]>>8);
       dlbp->a = 255;
-      /*
-      rgba_t &lb = add_block[bnum][(j+cache->t)*BLOCK_WIDTH+i+cache->s];
-      lb.r = clampToByte(blockaddlightsr[j*smax+i]>>8);
-      lb.g = clampToByte(blockaddlightsg[j*smax+i]>>8);
-      lb.b = clampToByte(blockaddlightsb[j*smax+i]>>8);
-      lb.a = 255;
-      */
-      //lb.r = lb.g = lb.b = 0;
     }
   }
 
-  if (hasOverbright) {
+  if (/*hasOverbright*/true) {
     add_block_dirty[bnum].addDirty(cache->s, cache->t, smax, tmax);
   }
 
