@@ -527,19 +527,20 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
 VRenderLevelShared::~VRenderLevelShared () {
   UncacheLevel();
 
-  delete[] bspVisRadius;
-  bspVisRadius = nullptr;
-
   // free fake floor data
-  for (int i = 0; i < Level->NumSectors; ++i) {
-    if (Level->Sectors[i].fakefloors) {
-      delete Level->Sectors[i].fakefloors;
-      Level->Sectors[i].fakefloors = nullptr;
+  for (auto &&sector : Level->allSectors()) {
+    if (sector.fakefloors) {
+      sector.eregions->params = sector.fakefloors->origParams;
+      delete sector.fakefloors;
+      sector.fakefloors = nullptr;
     }
   }
 
-  for (int i = 0; i < Level->NumSubsectors; ++i) {
-    for (subregion_t *r = Level->Subsectors[i].regions; r != nullptr; r = r->next) {
+  delete[] bspVisRadius;
+  bspVisRadius = nullptr;
+
+  for (auto &&sub : Level->allSubsectors()) {
+    for (subregion_t *r = sub.regions; r != nullptr; r = r->next) {
       if (r->realfloor != nullptr) {
         FreeSurfaces(r->realfloor->surfs);
         delete r->realfloor;
@@ -561,11 +562,14 @@ VRenderLevelShared::~VRenderLevelShared () {
         r->fakeceil = nullptr;
       }
     }
+    sub.regions = nullptr;
   }
 
   // free seg parts
-  for (int i = 0; i < Level->NumSegs; ++i) {
-    for (drawseg_t *ds = Level->Segs[i].drawsegs; ds; ds = ds->next) {
+  for (auto &&seg : Level->allSegs()) {
+    drawseg_t *n;
+    for (drawseg_t *ds = seg.drawsegs; ds; ds = n) {
+      n = ds->next;
       if (ds->top) FreeSegParts(ds->top);
       if (ds->mid) FreeSegParts(ds->mid);
       if (ds->bot) FreeSegParts(ds->bot);
@@ -573,7 +577,9 @@ VRenderLevelShared::~VRenderLevelShared () {
       if (ds->extra) FreeSegParts(ds->extra);
       if (ds->HorizonTop) Z_Free(ds->HorizonTop);
       if (ds->HorizonBot) Z_Free(ds->HorizonBot);
+      memset((void *)ds, 0, sizeof(drawseg_t));
     }
+    seg.drawsegs = nullptr;
   }
 
   // free allocated wall surface blocks

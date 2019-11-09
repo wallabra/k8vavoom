@@ -348,28 +348,9 @@ static void DrawFPS () {
 }
 
 
-//==========================================================================
-//
-//  DrawCycles
-//
-//==========================================================================
-/*
-static void DrawCycles () {
-  if (draw_cycles) {
-    T_SetFont(ConFont);
-    T_SetAlign(hright, vtop);
-    for (int i = 0; i < 16; ++i) {
-      T_DrawText(VirtualWidth-2, 32+i*8, va("%d %10u", i, host_cycles[i]), CR_UNTRANSLATED);
-      host_cycles[i] = 0;
-    }
-  }
-}
-*/
-
-
 //**************************************************************************
 //
-//  Resolution change
+// Resolution change
 //
 //**************************************************************************
 

@@ -751,3 +751,27 @@ COMMAND(TimeDemo) {
   }
   CL_PlayDemo(Args[1], true);
 }
+
+
+//==========================================================================
+//
+//  COMMAND VidRendererRestart
+//
+//  VidRendererRestart
+//
+//==========================================================================
+COMMAND(VidRendererRestart) {
+  if (Source != SRC_Command) return;
+  if (!GClLevel) return;
+  if (!GClLevel->Renderer) return;
+  delete GClLevel->Renderer;
+  GClLevel->Renderer = nullptr;
+  GClLevel->cacheFileBase.clear(); // so we won't store stale lightmaps
+  R_Start(GClLevel);
+  for (int i = 0; i < GClLevel->NumStaticLights; ++i) {
+    rep_light_t &L = GClLevel->StaticLights[i];
+    GClLevel->Renderer->AddStaticLightRGB(L.Owner, L.Origin, L.Radius, L.Color);
+  }
+  GClLevel->Renderer->PreRender();
+  Host_ResetSkipFrames();
+}
