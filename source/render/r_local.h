@@ -568,6 +568,7 @@ protected:
   void SurfCheckAndQueue (TArray<surface_t *> &queue, surface_t *surf);
 
   // world BSP rendering
+  //void QueueTranslucentSurf (surface_t *surf);
   void QueueSimpleSurf (surface_t *surf);
   void QueueSkyPortal (surface_t *surf);
   void QueueHorizonPortal (surface_t *surf);

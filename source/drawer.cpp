@@ -96,8 +96,8 @@ void VDrawer::callICB (int phase) {
 void VRenderLevelDrawer::ClearSurfaceLists () {
   DrawSurfListSolid.reset();
   DrawSurfListMasked.reset();
-  //DrawSurfListAlpha.reset();
-  //DrawSurfListAdditive.reset();
+  DrawSurfListAlpha.reset();
+  DrawSurfListAdditive.reset();
   DrawSkyList.reset();
   DrawHorizonList.reset();
 }

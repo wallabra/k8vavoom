@@ -79,6 +79,23 @@ static VCvarB r_fake_shadow_additive_missiles("r_fake_shadow_additive_missiles",
 static VCvarB r_fake_shadow_additive_monsters("r_fake_shadow_additive_monsters", true, "Render shadows from additive monsters?", CVAR_Archive);
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+extern "C" {
+  static inline __attribute__((unused)) int compareSurfacesByTexture (const surface_t *sa, const surface_t *sb) {
+    if (sa == sb) return 0;
+    const texinfo_t *ta = sa->texinfo;
+    const texinfo_t *tb = sb->texinfo;
+    if ((uintptr_t)ta->Tex < (uintptr_t)ta->Tex) return -1;
+    if ((uintptr_t)tb->Tex > (uintptr_t)tb->Tex) return 1;
+    return ((int)ta->ColorMap)-((int)tb->ColorMap);
+  }
+
+  static __attribute__((unused)) int drawListItemCmpByTexture (const void *a, const void *b, void *udata) {
+    return compareSurfacesByTexture(*(const surface_t **)a, *(const surface_t **)b);
+  }
+}
+
+
 //==========================================================================
 //
 //  VRenderLevelShared::QueueTranslucentPoly
@@ -669,65 +686,84 @@ extern "C" {
 //
 //==========================================================================
 void VRenderLevelShared::DrawTranslucentPolys () {
-  if (traspUsed <= traspFirst) return; // nothing to do
+  if (traspUsed > traspFirst) {
+    //GCon->Logf("DrawTranslucentPolys: first=%u; used=%u; count=%u", traspFirst, traspUsed, traspUsed-traspFirst);
 
-  //GCon->Logf("DrawTranslucentPolys: first=%u; used=%u; count=%u", traspFirst, traspUsed, traspUsed-traspFirst);
-
-  // sort 'em
-  timsort_r(trans_sprites+traspFirst, traspUsed-traspFirst, sizeof(trans_sprites[0]), &traspCmp, nullptr);
+    // sort 'em
+    timsort_r(trans_sprites+traspFirst, traspUsed-traspFirst, sizeof(trans_sprites[0]), &traspCmp, nullptr);
 
 #define MAX_POFS  (10)
-  bool pofsEnabled = false;
-  int pofs = 0;
-  float lastpdist = -1e12f; // for sprites: use polyofs for the same dist
-  bool firstSprite = true;
+    bool pofsEnabled = false;
+    int pofs = 0;
+    float lastpdist = -1e12f; // for sprites: use polyofs for the same dist
+    bool firstSprite = true;
 
-  // render 'em
-  for (int f = traspFirst; f < traspUsed; ++f) {
-    trans_sprite_t &spr = trans_sprites[f];
-    //GCon->Logf("  #%d: type=%d; alpha=%g; additive=%d; light=0x%08x; fade=0x%08x", f, spr.type, spr.Alpha, (int)spr.Additive, spr.light, spr.Fade);
-    if (spr.type == 2) {
-      // alias model
-      if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); pofsEnabled = false; }
-      DrawEntityModel(spr.Ent, spr.light, spr.Fade, spr.Alpha, spr.Additive, spr.TimeFrac, RPASS_Normal);
-    } else if (spr.type) {
-      // sprite
-      if (r_sort_sprites && r_sprite_use_pofs && (firstSprite || lastpdist == spr.pdist)) {
-        lastpdist = spr.pdist;
-        if (!firstSprite) {
-          if (!pofsEnabled) {
-            // switch to next pofs
-            //if (++pofs == MAX_POFS) pofs = 0;
-            ++pofs;
-            glEnable(GL_POLYGON_OFFSET_FILL);
-            //glPolygonOffset(((float)pofs)/(float)MAX_POFS, -4);
-            glPolygonOffset(r_sprite_pslope, -(pofs*r_sprite_pofs)); // pull forward
-            pofsEnabled = true;
+    // other
+    for (int f = traspFirst; f < traspUsed; ++f) {
+      trans_sprite_t &spr = trans_sprites[f];
+      //GCon->Logf("  #%d: type=%d; alpha=%g; additive=%d; light=0x%08x; fade=0x%08x", f, spr.type, spr.Alpha, (int)spr.Additive, spr.light, spr.Fade);
+      if (spr.type == 2) {
+        // alias model
+        if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); pofsEnabled = false; }
+        DrawEntityModel(spr.Ent, spr.light, spr.Fade, spr.Alpha, spr.Additive, spr.TimeFrac, RPASS_Normal);
+      } else if (spr.type) {
+        // sprite
+        if (r_sort_sprites && r_sprite_use_pofs && (firstSprite || lastpdist == spr.pdist)) {
+          lastpdist = spr.pdist;
+          if (!firstSprite) {
+            if (!pofsEnabled) {
+              // switch to next pofs
+              //if (++pofs == MAX_POFS) pofs = 0;
+              ++pofs;
+              glEnable(GL_POLYGON_OFFSET_FILL);
+              //glPolygonOffset(((float)pofs)/(float)MAX_POFS, -4);
+              glPolygonOffset(r_sprite_pslope, -(pofs*r_sprite_pofs)); // pull forward
+              pofsEnabled = true;
+            }
+          } else {
+            firstSprite = false;
           }
         } else {
-          firstSprite = false;
+          lastpdist = spr.pdist;
+          if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); pofsEnabled = false; }
+          // reset pofs
+          pofs = 0;
         }
+        Drawer->DrawSpritePolygon(spr.Verts, GTextureManager[spr.lump],
+                                  spr.Alpha, spr.Additive, GetTranslation(spr.translation),
+                                  ColorMap, spr.light, spr.Fade, spr.normal, spr.pdist,
+                                  spr.saxis, spr.taxis, spr.texorg, spr.hangup);
       } else {
-        lastpdist = spr.pdist;
+        // masked polygon
+        // non-translucent and non-additive polys should not end up here
+        vassert(spr.surf);
         if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); pofsEnabled = false; }
-        // reset pofs
-        pofs = 0;
+        Drawer->DrawMaskedPolygon(spr.surf, spr.Alpha, spr.Additive);
       }
-      Drawer->DrawSpritePolygon(spr.Verts, GTextureManager[spr.lump],
-                                spr.Alpha, spr.Additive, GetTranslation(spr.translation),
-                                ColorMap, spr.light, spr.Fade, spr.normal, spr.pdist,
-                                spr.saxis, spr.taxis, spr.texorg, spr.hangup);
-    } else {
-      // masked polygon
-      // non-translucent and non-additive polys should not end up here
-      vassert(spr.surf);
-      if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); pofsEnabled = false; }
-      Drawer->DrawMaskedPolygon(spr.surf, spr.Alpha, spr.Additive);
     }
-  }
 #undef MAX_POFS
 
-  if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); }
+    if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); }
+  }
+
+  // additive (order doesn't matter, so sort by texture)
+  if (DrawSurfListAdditive.length() != 0) {
+    //timsort_r(DrawSurfListAdditive.ptr(), DrawSurfListAdditive.length(), sizeof(surface_t *), &drawListItemCmpByTexture, nullptr);
+    // back-to-front
+    for (int f = DrawSurfListAdditive.length()-1; f >= 0; --f) {
+      surface_t *sfc = DrawSurfListAdditive[f];
+      Drawer->DrawMaskedPolygon(sfc, sfc->texinfo->Alpha, sfc->texinfo->Additive);
+    }
+  }
+
+  // translucent (order does matter, no sorting)
+  if (DrawSurfListAlpha.length() != 0) {
+    // back-to-front
+    for (int f = DrawSurfListAlpha.length()-1; f >= 0; --f) {
+      surface_t *sfc = DrawSurfListAlpha[f];
+      Drawer->DrawMaskedPolygon(sfc, sfc->texinfo->Alpha, sfc->texinfo->Additive);
+    }
+  }
 
   // reset list
   traspUsed = traspFirst;

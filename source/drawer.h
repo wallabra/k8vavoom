@@ -98,8 +98,8 @@ public:
   // the game running one level for weeks ;-)
   TArray<surface_t *> DrawSurfListSolid; // solid surfaces
   TArray<surface_t *> DrawSurfListMasked; // masked surfaces
-  //TArray<surface_t *> DrawSurfListAlpha; // alpha-blended surfaces
-  //TArray<surface_t *> DrawSurfListAdditive; // additive surfaces
+  TArray<surface_t *> DrawSurfListAlpha; // alpha-blended surfaces
+  TArray<surface_t *> DrawSurfListAdditive; // additive surfaces
   TArray<surface_t *> DrawSkyList;
   TArray<surface_t *> DrawHorizonList;
 
