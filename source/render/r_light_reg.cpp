@@ -1025,7 +1025,7 @@ void VRenderLevelLightmap::InvalidateBSPNodeLMaps (const TVec &org, float radius
   if (!CheckSphereVsAABBIgnoreZ(bbox, org, radius)) return;
 
   // found a subsector?
-  if (!(bspnum&NF_SUBSECTOR)) {
+  if (BSPIDX_IS_NON_LEAF(bspnum)) {
     node_t *bsp = &Level->Nodes[bspnum];
     // decide which side the light is on
     const float dist = DotProduct(org, bsp->normal)-bsp->dist;
@@ -1045,9 +1045,9 @@ void VRenderLevelLightmap::InvalidateBSPNodeLMaps (const TVec &org, float radius
       return InvalidateBSPNodeLMaps(org, radius, bsp->children[side], bsp->bbox[side]);
     }
   } else {
-    subsector_t *sub = &Level->Subsectors[bspnum&(~NF_SUBSECTOR)];
+    subsector_t *sub = &Level->Subsectors[BSPIDX_LEAF_SUBSECTOR(bspnum)];
     if (!LightClip.ClipLightCheckSubsector(sub, false)) return;
-    InvalidateSubsectorLMaps(org, radius, bspnum&(~NF_SUBSECTOR));
+    InvalidateSubsectorLMaps(org, radius, BSPIDX_LEAF_SUBSECTOR(bspnum));
     LightClip.ClipLightAddSubsectorSegs(sub, false);
   }
 }

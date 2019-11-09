@@ -1041,7 +1041,7 @@ void VRenderLevelShared::BuildLightVis (int bspnum, const float *bbox) {
   }
 
   // found a subsector?
-  if (!(bspnum&NF_SUBSECTOR)) {
+  if (BSPIDX_IS_NON_LEAF(bspnum)) {
     const node_t *bsp = &Level->Nodes[bspnum];
     // decide which side the view point is on
     const float dist = DotProduct(CurrLightPos, bsp->normal)-bsp->dist;
@@ -1061,7 +1061,7 @@ void VRenderLevelShared::BuildLightVis (int bspnum, const float *bbox) {
       return BuildLightVis(bsp->children[side], bsp->bbox[side]);
     }
   } else {
-    const unsigned subidx = (unsigned)(bspnum&(~NF_SUBSECTOR));
+    const unsigned subidx = (unsigned)(BSPIDX_LEAF_SUBSECTOR(bspnum));
     subsector_t *sub = &Level->Subsectors[subidx];
     if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
     if (!LightClip.ClipLightCheckSubsector(sub, false)) {

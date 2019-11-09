@@ -155,8 +155,8 @@ void VRenderLevelShared::ClearReferences () {
 //==========================================================================
 /*
 void VRenderLevelShared::MarkLights (dlight_t *light, vuint32 bit, int bspnum, int lleafnum) {
-  if (bspnum&NF_SUBSECTOR) {
-    const int num = (bspnum != -1 ? bspnum&(~NF_SUBSECTOR) : 0);
+  if (BSPIDX_IS_LEAF(bspnum)) {
+    const int num = (bspnum != -1 ? BSPIDX_LEAF_SUBSECTOR(bspnum) : 0);
     subsector_t *ss = &Level->Subsectors[num];
 
     if (r_dynamic_clip_pvs && Level->HasPVS()) {

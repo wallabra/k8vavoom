@@ -1131,7 +1131,7 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigne
   }
 
   // found a subsector?
-  if ((bspnum&NF_SUBSECTOR) == 0) {
+  if (BSPIDX_IS_NON_LEAF(bspnum)) {
     // nope
     node_t *bsp = &Level->Nodes[bspnum];
     //if (bsp->visframe == currVisFrame) return; // if we're exactly on a splitting plane, this can happen
@@ -1142,7 +1142,7 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigne
     if (!onlyClip) {
       //k8: this is done in `RenderSubsector()`
       //    node visframe flag is used only in debug automap render
-      //!if ((bsp->children[0]|bsp->children[1])&NF_SUBSECTOR) bsp->visframe = currVisFrame;
+      //!if (BSPIDX_LEAF_SUBSECTOR(bsp->children[0]|bsp->children[1])) bsp->visframe = currVisFrame;
       // if we're exactly on a splitting plane, render backward node first (why not?)
       if (fabsf(dist) <= 0.1f) {
         //unsigned osd = side;
@@ -1162,7 +1162,7 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigne
     bbox = bsp->bbox[side];
     goto tailcall;
   } else {
-    return RenderSubsector(bspnum&(~NF_SUBSECTOR), onlyClip);
+    return RenderSubsector(BSPIDX_LEAF_SUBSECTOR(bspnum), onlyClip);
   }
 }
 

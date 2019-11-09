@@ -541,7 +541,7 @@ void VRenderLevelShadowVolume::RenderShadowBSPNode (int bspnum, const float *bbo
   }
 
   // found a subsector?
-  if (!(bspnum&NF_SUBSECTOR)) {
+  if (BSPIDX_IS_NON_LEAF(bspnum)) {
     node_t *bsp = &Level->Nodes[bspnum];
     // decide which side the light is on
     const float dist = DotProduct(CurrLightPos, bsp->normal)-bsp->dist;
@@ -562,7 +562,7 @@ void VRenderLevelShadowVolume::RenderShadowBSPNode (int bspnum, const float *bbo
     }
   } else {
     if (LimitLights) { ++CurrShadowsNumber; ++AllShadowsNumber; }
-    return RenderShadowSubsector(bspnum&(~NF_SUBSECTOR));
+    return RenderShadowSubsector(BSPIDX_LEAF_SUBSECTOR(bspnum));
   }
 }
 
@@ -783,7 +783,7 @@ void VRenderLevelShadowVolume::RenderLightBSPNode (int bspnum, const float *bbox
   }
 
   // found a subsector?
-  if (!(bspnum&NF_SUBSECTOR)) {
+  if (BSPIDX_IS_NON_LEAF(bspnum)) {
     node_t *bsp = &Level->Nodes[bspnum];
     // decide which side the light is on
     const float dist = DotProduct(CurrLightPos, bsp->normal)-bsp->dist;
@@ -804,7 +804,7 @@ void VRenderLevelShadowVolume::RenderLightBSPNode (int bspnum, const float *bbox
     }
   } else {
     if (LimitLights) { ++CurrLightsNumber; ++AllLightsNumber; }
-    return RenderLightSubsector(bspnum&(~NF_SUBSECTOR));
+    return RenderLightSubsector(BSPIDX_LEAF_SUBSECTOR(bspnum));
   }
 }
 
@@ -860,6 +860,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   int hasScissor = 1;
   int scoord[4];
   bool checkModels = false;
+  float dummyBBox[6];
 
   //GCon->Logf("LBB:(%f,%f,%f)-(%f,%f,%f)", LitBBox[0], LitBBox[1], LitBBox[2], LitBBox[3], LitBBox[4], LitBBox[5]);
 
@@ -895,9 +896,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   }
   */
 
-#if 0
-  float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
-#endif
+  if (r_max_light_segs_all < 0 && r_max_light_segs_one < 0) LimitLights = false;
 
   BuildMobjsInCurrLight(allowShadows);
 
@@ -990,20 +989,10 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   Drawer->BeginLightShadowVolumes(CurrLightPos, CurrLightRadius, useZPass, hasScissor, scoord, coneDir, coneAngle);
   LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
   if (allowShadows) {
-      if (r_max_shadow_segs_all) {
-#if 1
-    {
-      float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
-      RenderShadowBSPNode(Level->NumNodes-1, dummy_bbox, LimitLights);
-    }
-#else
-      {
-        const int *subidx = LightSubs.ptr();
-        for (int sscount = LightSubs.length(); sscount--; ++subidx) {
-          RenderShadowSubsector(*subidx);
-        }
-      }
-#endif
+    if (r_max_shadow_segs_all) {
+      dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
+      dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
+      RenderShadowBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
     }
     Drawer->BeginModelsShadowsPass(CurrLightPos, CurrLightRadius);
     RenderMobjsShadow(ent, dlflags);
@@ -1014,27 +1003,16 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   //     of simply render a light circle? shadow volumes should
   //     take care of masking the area, so simply rendering a
   //     circle should do the trick.
+  // k8: answering to the silly younger ketmar: because we cannot
+  //     read depth info, and we need normals to calculate light
+  //     intensity, and so on.
 
   // draw light
   Drawer->BeginLightPass(CurrLightPos, CurrLightRadius, LightMin, Color, allowShadows);
   LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
-#if 1
-  {
-    float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
-    RenderLightBSPNode(Level->NumNodes-1, dummy_bbox, LimitLights);
-  }
-#else
-  {
-# if 0
-    const int *subidx = LightVisSubs.ptr();
-    for (int sscount = LightVisSubs.length(); sscount--; ++subidx) {
-      RenderLightSubsector(*subidx);
-    }
-# else
-    for (int f = 0; f < Level->NumSubsectors; ++f) RenderLightSubsector(f);
-# endif
-  }
-#endif
+  dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
+  dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
+  RenderLightBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
   Drawer->BeginModelsLightPass(CurrLightPos, CurrLightRadius, LightMin, Color, coneDir, coneAngle);
   RenderMobjsLight();
 
