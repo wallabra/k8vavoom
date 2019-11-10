@@ -784,9 +784,12 @@ final float FindShortestTextureAround (sector_t *sec) {
       if (TextureHeight(texnum) < minsize) minsize = TextureHeight(texnum);
     }
 
-    texnum = XLevel.Sides[sec->lines[i]->sidenum[1]].BottomTexture;
-    if (texnum > 0 || (texnum == 0 && CompatShortTex)) {
-      if (TextureHeight(texnum) < minsize) minsize = TextureHeight(texnum);
+    int s2i = sec->lines[i]->sidenum[1];
+    if (s2i >= 0) {
+      texnum = XLevel.Sides[s2i].BottomTexture;
+      if (texnum > 0 || (texnum == 0 && CompatShortTex)) {
+        if (TextureHeight(texnum) < minsize) minsize = TextureHeight(texnum);
+      }
     }
   }
   return (minsize < 99999.0 ? minsize : TextureHeight(0));
@@ -808,16 +811,19 @@ final float FindShortestTextureAround (sector_t *sec) {
 final float FindShortestUpperAround (sector_t *sec) {
   float minsize = 99999.0;
   foreach (int i; 0..sec.lines.length) {
-    if ((sec->lines[i]->flags&ML_TWOSIDED)) continue;
+    if (!(sec->lines[i]->flags&ML_TWOSIDED)) continue;
 
     int texnum = XLevel.Sides[sec->lines[i]->sidenum[0]].TopTexture;
     if (texnum > 0 || (texnum == 0 && CompatShortTex)) {
       if (TextureHeight(texnum) < minsize) minsize = TextureHeight(texnum);
     }
 
-    texnum = XLevel.Sides[sec->lines[i]->sidenum[1]].TopTexture;
-    if (texnum > 0 || (texnum == 0 && CompatShortTex)) {
-      if (TextureHeight(texnum) < minsize) minsize = TextureHeight(texnum);
+    int s2i = sec->lines[i]->sidenum[1];
+    if (s2i >= 0) {
+      texnum = XLevel.Sides[s2i].TopTexture;
+      if (texnum > 0 || (texnum == 0 && CompatShortTex)) {
+        if (TextureHeight(texnum) < minsize) minsize = TextureHeight(texnum);
+      }
     }
   }
   return minsize < 99999.0 ? minsize : TextureHeight(0);
