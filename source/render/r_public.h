@@ -52,7 +52,6 @@ struct fakefloor_t {
   sec_plane_t floorplane;
   sec_plane_t ceilplane;
   sec_params_t params;
-  sec_params_t *origParams;
 };
 
 

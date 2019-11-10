@@ -2137,18 +2137,12 @@ void VRenderLevelShared::SetupFakeFloors (sector_t *sector) {
     if (sector->heightsec->SectorFlags&sector_t::SF_IgnoreHeightSec) return;
   }
 
-  if (!sector->fakefloors) {
-    sector->fakefloors = new fakefloor_t;
-  } else {
-    sector->eregions->params = sector->fakefloors->origParams;
-  }
-
+  if (!sector->fakefloors) sector->fakefloors = new fakefloor_t;
   memset((void *)sector->fakefloors, 0, sizeof(fakefloor_t));
   sector->fakefloors->floorplane = sector->floor;
   sector->fakefloors->ceilplane = sector->ceiling;
   sector->fakefloors->params = sector->params;
 
-  sector->fakefloors->origParams = sector->eregions->params;
   sector->eregions->params = &sector->fakefloors->params;
 }
 

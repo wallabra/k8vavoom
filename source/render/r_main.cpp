@@ -530,7 +530,7 @@ VRenderLevelShared::~VRenderLevelShared () {
   // free fake floor data
   for (auto &&sector : Level->allSectors()) {
     if (sector.fakefloors) {
-      sector.eregions->params = sector.fakefloors->origParams;
+      sector.eregions->params = &sector.params; // because it was changed by fake floor
       delete sector.fakefloors;
       sector.fakefloors = nullptr;
     }
