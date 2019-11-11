@@ -55,6 +55,10 @@ extern VCvarB gl_dbg_wireframe;
 static VCvarB clip_adv_regions_shadow("clip_adv_regions_shadow", false, "Clip (1D) shadow regions?", CVAR_PreInit);
 static VCvarB clip_adv_regions_light("clip_adv_regions_light", false, "Clip (1D) light regions?", CVAR_PreInit);
 
+static VCvarB r_shadowvol_use_pofs("r_shadowvol_use_pofs", true, "Use PolygonOffset for shadow volumes to reduce some flickering (WARNING: BUGGY!)?", CVAR_Archive);
+static VCvarF r_shadowvol_pofs("r_shadowvol_pofs", "20", "DEBUG");
+static VCvarF r_shadowvol_pslope("r_shadowvol_pslope", "-0.2", "DEBUG");
+
 
 /*
   possible shadow volume optimisation:
@@ -315,6 +319,23 @@ void VRenderLevelShadowVolume::RenderShadowLine (subsector_t *sub, sec_region_t 
   //if (fabsf(dist) >= CurrLightRadius) return;
   if (dist <= 0.0f || dist >= CurrLightRadius) return;
 
+  /*
+  {
+    TVec v1 = *seg->v1;
+    TVec v2 = *seg->v2;
+    const TVec r1 = CurrLightPos-v1;
+    const TVec r2 = CurrLightPos-v2;
+    const TVec n1 = Normalise(CrossProduct(r1, r2));
+    const TVec n2 = Normalise(CrossProduct(r2, r1));
+    const float d1 = DotProduct(n1, CurrLightPos);
+    const float d2 = DotProduct(n2, CurrLightPos);
+    if (fabsf(n1.z) < 0.001f || fabsf(n2.z) < 0.001f) {
+      GCon->Logf(NAME_Debug, "LINE #%d: n1=(%g,%g,%g); n2=(%g,%g,%g); d1=%g; d2=%g", (int)(ptrdiff_t)(seg->linedef-&Level->Lines[0]), n1.x, n1.y, n1.z, n2.x, n2.y, n2.z, d1, d2);
+      return;
+    }
+  }
+  */
+
 /*
     k8: i don't know what Janis wanted to accomplish with this, but it actually
         makes clipping WORSE due to limited precision
@@ -437,7 +458,6 @@ void VRenderLevelShadowVolume::RenderShadowPolyObj (subsector_t *sub) {
 //
 //==========================================================================
 void VRenderLevelShadowVolume::RenderShadowSubRegion (subsector_t *sub, subregion_t *region) {
-
   const bool nextFirst = NeedToRenderNextSubFirst(region);
   if (nextFirst) RenderShadowSubRegion(sub, region->next);
 
@@ -989,6 +1009,10 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   Drawer->BeginLightShadowVolumes(CurrLightPos, CurrLightRadius, useZPass, hasScissor, scoord, coneDir, coneAngle);
   LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
   if (allowShadows) {
+    if (r_shadowvol_use_pofs) {
+      glEnable(GL_POLYGON_OFFSET_FILL);
+      glPolygonOffset(r_shadowvol_pslope, -r_shadowvol_pofs); // pull forward
+    }
     if (r_max_shadow_segs_all) {
       dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
       dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
@@ -996,6 +1020,10 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
     }
     Drawer->BeginModelsShadowsPass(CurrLightPos, CurrLightRadius);
     RenderMobjsShadow(ent, dlflags);
+    if (r_shadowvol_use_pofs) {
+      glDisable(GL_POLYGON_OFFSET_FILL);
+      glPolygonOffset(0, 0);
+    }
   }
   Drawer->EndLightShadowVolumes();
 
