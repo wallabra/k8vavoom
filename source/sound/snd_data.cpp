@@ -502,7 +502,21 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc, int fileid) {
 
       FPlayerSound &PlrSnd = GetOrAddPlayerSound(PClass, Gender, RefId);
       PlrSnd.SoundId = AliasTo;
-    /*} else if (sc->Check("$playersound")) {*/
+    } else if (sc->Check("$playercompat")) {
+      // $playercompat <playerclass> <gender> <logical name> <compatibility name>
+      //FIXME: this totally doesn't work (i think); if it works, then i did something wrong
+      int PClass, Gender, RefId;
+
+      ParsePlayerSoundCommon(sc, PClass, Gender, RefId);
+      FPlayerSound *psndp = GetPlayerSound(PClass, Gender, RefId);
+      if (psndp) {
+        //sc->ExpectString(); // already done in `ParsePlayerSoundCommon()`
+        int linkId = FindOrAddSound(*sc->String);
+        S_sfx[linkId].Link = psndp->SoundId;
+        //GCon->Logf(NAME_Debug, "PLAYERCOMPAT: <%s> (%d) linked to <%s> (%d)", *S_sfx[linkId].TagName, linkId, *S_sfx[psndp->SoundId].TagName, psndp->SoundId);
+      } else {
+        sc->Message("trying to define '$playercompat' for unknown player sound");
+      }
     } else if (sc->Check("$singular")) {
       // $singular <logical name>
       sc->ExpectString();
@@ -516,7 +530,7 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc, int fileid) {
 
       sc->ExpectNumber();
       if (sc->Number < 0 || sc->Number >= NUM_AMBIENT_SOUNDS) {
-        GCon->Logf("Bad ambient index (%d)", sc->Number);
+        sc->Message(va("Bad ambient index (%d)", sc->Number));
         ambient = &dummy;
       } else if (AmbientSounds[sc->Number]) {
         ambient = AmbientSounds[sc->Number];
@@ -558,7 +572,7 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc, int fileid) {
         ambient->PeriodMin = sc->Float;
       } else {
         sc->ExpectString();
-        GCon->Logf("Unknown ambient type (%s)", *sc->String);
+        sc->Message(va("Unknown ambient type (%s)", *sc->String));
       }
 
       sc->ExpectFloat();
@@ -594,7 +608,7 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc, int fileid) {
       if (insideIf) {
         insideIf = false;
       } else {
-        GCon->Logf(NAME_Warning, "%s: stray `$endif` in sound script", *loc.toStringNoCol());
+        sc->Message("stray `$endif` in sound script");
       }
     } else if (sc->Check("$ifdoom") || sc->Check("$ifheretic") ||
                sc->Check("$ifhexen") || sc->Check("$ifstrife"))
@@ -662,8 +676,12 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc, int fileid) {
       int lump = W_CheckNumForName(sc->Name, WADNS_Sounds);
       if (lump < 0) lump = W_CheckNumForName(sc->Name, WADNS_Global);
       if (lump < 0) lump = W_CheckNumForFileName(VStr(sc->Name));
-      //GCon->Logf("SND: tag=<%s>; name=<%s>; lump=%d", *TagName, *sc->Name, lump);
+      #if 1
       AddSound(TagName, lump);
+      #else
+      int aid = AddSound(TagName, lump);
+      GCon->Logf(NAME_Debug, "SND: aid=%d; tag=<%s>; name=<%s>; lump=%d", aid, *TagName, *sc->Name, lump);
+      #endif
     }
   }
   delete sc;
@@ -844,6 +862,19 @@ int VSoundManager::FindPlayerSound (int PClass, int Gender, int RefId) {
     }
   }
   return 0;
+}
+
+
+//==========================================================================
+//
+//  VSoundManager::GetPlayerSound
+//
+//==========================================================================
+VSoundManager::FPlayerSound *VSoundManager::GetPlayerSound (int PClass, int Gender, int RefId) {
+  for (auto &&psnd : PlayerSounds) {
+    if (psnd.ClassId == PClass && psnd.GenderId == Gender && psnd.RefId == RefId) return &psnd;
+  }
+  return nullptr;
 }
 
 

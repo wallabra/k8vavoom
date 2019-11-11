@@ -173,6 +173,7 @@ private:
   int FindPlayerGender (VName);
   int FindPlayerSound (int PClass, int Gender, int RefId);
   int LookupPlayerSound (int ClassId, int GenderId, int RefId);
+  FPlayerSound *GetPlayerSound (int PClass, int Gender, int RefId);
   FPlayerSound &GetOrAddPlayerSound (int PClass, int Gender, int RefId);
   int ResolveSound (int ClassID, int GenderID, int InSoundId);
 
