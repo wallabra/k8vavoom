@@ -2751,24 +2751,43 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             if (sc->CheckNumber()) {
               P.Field->SetInt(DefObj, sc->Number);
             } else {
+              // WANING! keep in sync with "EntityEx.Morph.vc"!
+              enum {
+                MORPH_ADDSTAMINA          = 0x00000001, // player has a "power" instead of a "curse" (add stamina instead of limiting to health)
+                MORPH_FULLHEALTH          = 0x00000002, // player uses new health semantics (!POWER => MaxHealth of animal, POWER => Normal health behaviour)
+                MORPH_UNDOBYTOMEOFPOWER   = 0x00000004, // player unmorphs upon activating a Tome of Power
+                MORPH_UNDOBYCHAOSDEVICE   = 0x00000008, // player unmorphs upon activating a Chaos Device
+                MORPH_FAILNOTELEFRAG      = 0x00000010, // player stays morphed if unmorph by Tome of Power fails
+                MORPH_FAILNOLAUGH         = 0x00000020, // player doesn't laugh if unmorph by Chaos Device fails
+                MORPH_WHENINVULNERABLE    = 0x00000040, // player can morph (or scripted unmorph) when invulnerable but ONLY if doing it to themselves
+                MORPH_LOSEACTUALWEAPON    = 0x00000080, // player loses specified morph weapon only (not "whichever they have when unmorphing")
+                MORPH_NEWTIDBEHAVIOUR     = 0x00000100, // actor TID is by default transferred from the old actor to the new actor
+                MORPH_UNDOBYDEATH         = 0x00000200, // actor unmorphs when killed and (unless MORPH_UNDOBYDEATHSAVES) stays dead
+                MORPH_UNDOBYDEATHFORCED   = 0x00000400, // actor (if unmorphed when killed) forces unmorph (not very useful with UNDOBYDEATHSAVES)
+                MORPH_UNDOBYDEATHSAVES    = 0x00000800, // actor (if unmorphed when killed) regains their health and doesn't die
+                MORPH_UNDOALWAYS          = 0x00001000, // ignore unmorph blocking conditions (not implemented)
+                MORPH_TRANSFERTRANSLATION = 0x00002000, // transfers the actor's translation to the morphed actor (applies to players and monsters) (not implemented)
+              };
+
               bool HaveParen = sc->Check("(");
               int Val = 0;
               do {
-                     if (sc->Check("MRF_ADDSTAMINA")) Val |= 1;
-                else if (sc->Check("MRF_FULLHEALTH")) Val |= 2;
-                else if (sc->Check("MRF_UNDOBYTOMEOFPOWER")) Val |= 4;
-                else if (sc->Check("MRF_UNDOBYCHAOSDEVICE")) Val |= 8;
-                else if (sc->Check("MRF_FAILNOTELEFRAG")) Val |= 16;
-                else if (sc->Check("MRF_FAILNOLAUGH")) Val |= 32;
-                else if (sc->Check("MRF_WHENINVULNERABLE")) Val |= 64;
-                else if (sc->Check("MRF_LOSEACTUALWEAPON")) Val |= 128;
-                else if (sc->Check("MRF_NEWTIDBEHAVIOUR")) Val |= 256;
-                else if (sc->Check("MRF_UNDOBYDEATH")) Val |= 512;
-                else if (sc->Check("MRF_UNDOBYDEATHFORCED")) Val |= 1024;
-                else if (sc->Check("MRF_UNDOBYDEATHSAVES")) Val |= 2048;
-                else sc->Error("Bad morph style");
-              }
-              while (sc->Check("|"));
+                     if (sc->Check("MRF_ADDSTAMINA")) Val |= MORPH_ADDSTAMINA;
+                else if (sc->Check("MRF_FULLHEALTH")) Val |= MORPH_FULLHEALTH;
+                else if (sc->Check("MRF_UNDOBYTOMEOFPOWER")) Val |= MORPH_UNDOBYTOMEOFPOWER;
+                else if (sc->Check("MRF_UNDOBYCHAOSDEVICE")) Val |= MORPH_UNDOBYCHAOSDEVICE;
+                else if (sc->Check("MRF_FAILNOTELEFRAG")) Val |= MORPH_FAILNOTELEFRAG;
+                else if (sc->Check("MRF_FAILNOLAUGH")) Val |= MORPH_FAILNOLAUGH;
+                else if (sc->Check("MRF_WHENINVULNERABLE")) Val |= MORPH_WHENINVULNERABLE;
+                else if (sc->Check("MRF_LOSEACTUALWEAPON")) Val |= MORPH_LOSEACTUALWEAPON;
+                else if (sc->Check("MRF_NEWTIDBEHAVIOUR")) Val |= MORPH_NEWTIDBEHAVIOUR;
+                else if (sc->Check("MRF_UNDOBYDEATH")) Val |= MORPH_UNDOBYDEATH;
+                else if (sc->Check("MRF_UNDOBYDEATHFORCED")) Val |= MORPH_UNDOBYDEATHFORCED;
+                else if (sc->Check("MRF_UNDOBYDEATHSAVES")) Val |= MORPH_UNDOBYDEATHSAVES;
+                else if (sc->Check("MRF_UNDOALWAYS")) Val |= MORPH_UNDOALWAYS;
+                else if (sc->Check("MRF_TRANSFERTRANSLATION")) Val |= MORPH_TRANSFERTRANSLATION;
+                else sc->Error(va("Bad morph style (%s)", *sc->String));
+              } while (sc->Check("|"));
               if (HaveParen) sc->Expect(")");
               P.Field->SetInt(DefObj, Val);
             }
