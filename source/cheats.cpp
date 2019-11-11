@@ -286,7 +286,7 @@ COMMAND(my_sector_info) {
     GCon->Log("=== light ===");
     (void)SV_PointRegionLight(sec, Player->MO->Origin, true);
     GCon->Log("=== light sub ===");
-    (void)SV_PointRegionLightSub(Player->MO->SubSector, Player->MO->Origin, true);
+    (void)SV_PointRegionLightSub(Player->MO->SubSector, Player->MO->Origin, nullptr, true);
 
     #ifdef CLIENT
       if (Args.length() > 3) {
