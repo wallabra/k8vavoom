@@ -473,25 +473,9 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc, int fileid) {
       FakeName += S_sfx[RefId].TagName;
 
       id = AddSoundLump(*FakeName, W_CheckNumForName(VName(*sc->String, VName::AddLower), WADNS_Sounds));
-      bool found = false;
-      for (int f = 0; f < PlayerSounds.length(); ++f) {
-        FPlayerSound &PlrSnd = PlayerSounds[f];
-        if (PlrSnd.ClassId == PClass &&
-            PlrSnd.GenderId == Gender &&
-            PlrSnd.RefId == RefId)
-        {
-          PlrSnd.SoundId = id;
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        FPlayerSound &PlrSnd = PlayerSounds.Alloc();
-        PlrSnd.ClassId = PClass;
-        PlrSnd.GenderId = Gender;
-        PlrSnd.RefId = RefId;
-        PlrSnd.SoundId = id;
-      }
+
+      FPlayerSound &PlrSnd = GetOrAddPlayerSound(PClass, Gender, RefId);
+      PlrSnd.SoundId = id;
     } else if (sc->Check("$playersounddup")) {
       // $playersounddup <player class> <gender> <logical name> <target sound name>
       int PClass, Gender, RefId, TargId;
@@ -507,26 +491,8 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc, int fileid) {
       }
       int AliasTo = FindPlayerSound(PClass, Gender, TargId);
 
-      bool found = false;
-      for (int f = 0; f < PlayerSounds.length(); ++f) {
-        FPlayerSound &PlrSnd = PlayerSounds[f];
-        if (PlrSnd.ClassId == PClass &&
-            PlrSnd.GenderId == Gender &&
-            PlrSnd.RefId == RefId)
-        {
-          //GCon->Log("  REPLACED!");
-          PlrSnd.SoundId = AliasTo;
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        FPlayerSound &PlrSnd = PlayerSounds.Alloc();
-        PlrSnd.ClassId = PClass;
-        PlrSnd.GenderId = Gender;
-        PlrSnd.RefId = RefId;
-        PlrSnd.SoundId = AliasTo;
-      }
+      FPlayerSound &PlrSnd = GetOrAddPlayerSound(PClass, Gender, RefId);
+      PlrSnd.SoundId = AliasTo;
     } else if (sc->Check("$playeralias")) {
       // $playeralias <player class> <gender> <logical name> <logical name of existing sound>
       int PClass, Gender, RefId;
@@ -534,26 +500,9 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc, int fileid) {
       ParsePlayerSoundCommon(sc, PClass, Gender, RefId);
       int AliasTo = FindOrAddSound(*sc->String);
 
-      bool found = false;
-      for (int f = 0; f < PlayerSounds.length(); ++f) {
-        FPlayerSound &PlrSnd = PlayerSounds[f];
-        if (PlrSnd.ClassId == PClass &&
-            PlrSnd.GenderId == Gender &&
-            PlrSnd.RefId == RefId)
-        {
-          //GCon->Log("  REPLACED!");
-          PlrSnd.SoundId = AliasTo;
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        FPlayerSound &PlrSnd = PlayerSounds.Alloc();
-        PlrSnd.ClassId = PClass;
-        PlrSnd.GenderId = Gender;
-        PlrSnd.RefId = RefId;
-        PlrSnd.SoundId = AliasTo;
-      }
+      FPlayerSound &PlrSnd = GetOrAddPlayerSound(PClass, Gender, RefId);
+      PlrSnd.SoundId = AliasTo;
+    /*} else if (sc->Check("$playersound")) {*/
     } else if (sc->Check("$singular")) {
       // $singular <logical name>
       sc->ExpectString();
@@ -895,6 +844,25 @@ int VSoundManager::FindPlayerSound (int PClass, int Gender, int RefId) {
     }
   }
   return 0;
+}
+
+
+//==========================================================================
+//
+//  VSoundManager::GetOrAddPlayerSound
+//
+//==========================================================================
+VSoundManager::FPlayerSound &VSoundManager::GetOrAddPlayerSound (int PClass, int Gender, int RefId) {
+  for (auto &&psnd : PlayerSounds) {
+    if (psnd.ClassId == PClass && psnd.GenderId == Gender && psnd.RefId == RefId) return psnd;
+  }
+  // add new one
+  FPlayerSound &res = PlayerSounds.Alloc();
+  res.ClassId = PClass;
+  res.GenderId = Gender;
+  res.RefId = RefId;
+  res.SoundId = 0;
+  return res;
 }
 
 

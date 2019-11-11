@@ -98,9 +98,9 @@ public:
 
   void Init ();
   int GetSoundID (VName Name);
-  int ResolveSound (int);
-  int ResolveEntitySound (VName, VName, VName);
-  bool IsSoundPresent (VName, VName, VName);
+  int ResolveSound (int InSoundId);
+  int ResolveEntitySound (VName ClassName, VName GenderName, VName SoundName);
+  bool IsSoundPresent (VName ClassName, VName GenderName, VName SoundName);
   int LoadSound (int sound_id); // returns LS_XXX
   void DoneWithLump (int);
   float GetMusicVolume (const char *SongName);
@@ -162,18 +162,19 @@ private:
 #endif
 
   void ParseSndinfo (VScriptParser *sc, int fileid);
-  int AddSoundLump(VName, int);
-  int AddSound(VName, int);
-  int FindSound(VName);
-  int FindOrAddSound(VName);
-  void ParsePlayerSoundCommon(VScriptParser*, int&, int&, int&);
-  int AddPlayerClass(VName);
-  int FindPlayerClass(VName);
-  int AddPlayerGender(VName);
-  int FindPlayerGender(VName);
-  int FindPlayerSound(int, int, int);
-  int LookupPlayerSound(int, int, int);
-  int ResolveSound(int, int, int);
+  int AddSoundLump (VName, int);
+  int AddSound (VName, int);
+  int FindSound (VName);
+  int FindOrAddSound (VName);
+  void ParsePlayerSoundCommon (VScriptParser *sc, int &PClass, int &Gender, int &RefId);
+  int AddPlayerClass (VName);
+  int FindPlayerClass (VName);
+  int AddPlayerGender (VName);
+  int FindPlayerGender (VName);
+  int FindPlayerSound (int PClass, int Gender, int RefId);
+  int LookupPlayerSound (int ClassId, int GenderId, int RefId);
+  FPlayerSound &GetOrAddPlayerSound (int PClass, int Gender, int RefId);
+  int ResolveSound (int ClassID, int GenderID, int InSoundId);
 
   void ParseSequenceScript(VScriptParser*);
   void AssignSeqTranslations(VScriptParser*, int, seqtype_t);
