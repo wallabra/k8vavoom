@@ -463,19 +463,16 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc, int fileid) {
     } else if (sc->Check("$playersound")) {
       // $playersound <player class> <gender> <logical name> <lump name>
       int PClass, Gender, RefId;
-      char FakeName[NAME_SIZE];
-      size_t len;
+      VStr FakeName;
       int id;
 
       ParsePlayerSoundCommon(sc, PClass, Gender, RefId);
-      len = VStr::Length(*PlayerClasses[PClass]);
-      memcpy(FakeName, *PlayerClasses[PClass], len);
-      FakeName[len] = '|';
-      FakeName[len+1] = Gender+'0';
-      VStr::Cpy(&FakeName[len+2], *S_sfx[RefId].TagName);
+      FakeName = VStr(PlayerClasses[PClass]);
+      FakeName += '|';
+      FakeName += (char)(Gender+'0');
+      FakeName += S_sfx[RefId].TagName;
 
-      //GCon->Logf("PLRSND<%s>: %d", *sc->String, W_CheckNumForName(VName(*sc->String, VName::AddLower), WADNS_Sounds));
-      id = AddSoundLump(FakeName, W_CheckNumForName(VName(*sc->String, VName::AddLower), WADNS_Sounds));
+      id = AddSoundLump(*FakeName, W_CheckNumForName(VName(*sc->String, VName::AddLower), WADNS_Sounds));
       bool found = false;
       for (int f = 0; f < PlayerSounds.length(); ++f) {
         FPlayerSound &PlrSnd = PlayerSounds[f];
@@ -483,7 +480,6 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc, int fileid) {
             PlrSnd.GenderId == Gender &&
             PlrSnd.RefId == RefId)
         {
-          //GCon->Log("  REPLACED!");
           PlrSnd.SoundId = id;
           found = true;
           break;
