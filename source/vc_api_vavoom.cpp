@@ -206,6 +206,13 @@ IMPLEMENT_FREE_FUNCTION(VObject, GetLangString) {
   RET_STR(GLanguage[*Id]);
 }
 
+//native static final string TranslateString (string Id); // *WITH* leading '$'
+IMPLEMENT_FREE_FUNCTION(VObject, TranslateString) {
+  VStr id;
+  vobjGetParam(id);
+  RET_STR(GLanguage.Translate(id));
+}
+
 IMPLEMENT_FREE_FUNCTION(VObject, RGB) {
   P_GET_BYTE(b);
   P_GET_BYTE(g);

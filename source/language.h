@@ -46,6 +46,10 @@ public:
 
   VStr operator [] (VName) const;
   VStr operator [] (const char *s) const;
+  VStr operator [] (const VStr &s) const;
+
+  // WITH '$'!
+  VStr Translate (const VStr &s) const;
 
   bool HasTranslation (VName s) const;
   bool HasTranslation (const char *s) const;

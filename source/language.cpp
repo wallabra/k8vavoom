@@ -337,6 +337,22 @@ VStr VLanguage::operator [] (const char *s) const {
 
 //==========================================================================
 //
+//  VLanguage::Translate
+//
+// WITH '$'!
+//
+//==========================================================================
+VStr VLanguage::Translate (const VStr &s) const {
+  if (s.length() < 2 || s[0] != '$') return s;
+  bool found = false;
+  VStr res = Find(*s+1, &found);
+  if (!found) res = s;
+  return res;
+}
+
+
+//==========================================================================
+//
 //  VLanguage::HasTranslation
 //
 //==========================================================================

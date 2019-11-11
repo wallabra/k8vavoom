@@ -361,6 +361,7 @@ native static final GameObject::VAnimDoorDef *FindAnimDoor (int BaseTex);
 native static final bool IsAnimatedTexture (int Tex);
 native static final bool HasLangString (string Id); // without leading '$'
 native static final string GetLangString (string Id); // without leading '$'
+native static final string TranslateString (string Id); // *WITH* leading '$'
 native static final GameObject::LockDef *GetLockDef (int Lock);
 // this returns color with high byte set to `0xff` (and black color for unknown names)
 // but when `retZeroIfInvalid` is `true`, it returns `0` for unknown color
