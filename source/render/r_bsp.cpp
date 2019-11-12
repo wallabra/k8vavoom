@@ -59,7 +59,7 @@ VCvarB r_disable_world_update("r_disable_world_update", false, "Disable world up
 static VCvarB r_dbg_always_draw_flats("r_dbg_always_draw_flats", true, "Draw flat surfaces even if region is not visible (this is pobj hack)?", 0/*CVAR_Archive*/);
 static VCvarB r_draw_adjacent_subsector_things("r_draw_adjacent_subsector_things", true, "Draw things subsectors adjacent to visible subsectors (can fix disappearing things)?", CVAR_Archive);
 
-static VCvarB r_separate_translucent_lists("r_separate_translucent_lists", true, "Use separate lists for translucent and additive surfaces?", CVAR_Archive);
+VCvarB r_separate_translucent_lists("r_separate_translucent_lists", true, "Use separate lists for translucent and additive surfaces?", CVAR_Archive);
 
 extern VCvarB r_decals_enabled;
 extern VCvarB clip_frustum;
@@ -563,6 +563,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
       if (SurfPrepareForRender(surfs)) {
         if (surfs->plvisible) {
           if (r_separate_translucent_lists) {
+            //GCon->Logf(NAME_Debug, "***: add=%d(%d); PortalLevel=%d", (int)texinfo->Additive, (int)surfs->texinfo->Additive, PortalLevel);
             if (texinfo->Additive) DrawSurfListAdditive.append(surfs); else DrawSurfListAlpha.append(surfs);
           } else {
             QueueTranslucentPoly(surfs, surfs->verts, surfs->count,

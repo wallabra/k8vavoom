@@ -78,6 +78,8 @@ void VRenderLevelLightmap::RenderWorld (const refdef_t *rd, const VViewClipper *
   gf_dynlights_processed = 0;
   gf_dynlights_traced = 0;
 
+  //GCon->Logf(NAME_Debug, "::: VRenderLevelLightmap::RenderWorld ::: (%d)", currQueueFrame);
+
   PrepareWorldRender(rd, Range);
   RenderBspWorld(rd, Range);
   ProcessCachedSurfaces();

@@ -108,7 +108,7 @@ public:
   vuint32 currQueueFrame;
 
 public:
-  void ClearSurfaceLists ();
+  void ClearSurfaceLists (bool clearTraspLists);
 
 public:
   // lightmap chain iterator (used in renderer)

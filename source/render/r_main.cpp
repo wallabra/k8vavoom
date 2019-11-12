@@ -446,6 +446,7 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   , traspUsed(0)
   , traspSize(0)
   , traspFirst(0)
+  , useSlowerTrasp(false)
   , free_wsurfs(nullptr)
   , AllocatedWSurfBlocks(nullptr)
   , AllocatedSubRegions(nullptr)
@@ -624,6 +625,7 @@ VRenderLevelShared::~VRenderLevelShared () {
   traspUsed = 0;
   traspSize = 0;
   traspFirst = 0;
+  useSlowerTrasp = false;
 }
 
 
@@ -692,7 +694,7 @@ void VRenderLevelShared::ResetUpdateWorldFrame () {
 //
 //==========================================================================
 void VRenderLevelShared::ClearQueues () {
-  ClearSurfaceLists();
+  ClearSurfaceLists(!useSlowerTrasp);
   IncQueueFrameCount();
 }
 
@@ -1661,7 +1663,9 @@ void VRenderLevelShared::RenderPlayerView () {
 
   if (dbg_clip_dump_added_ranges) GCon->Logf("=== RENDER SCENE: (%f,%f,%f); (yaw=%f; pitch=%f)", vieworg.x, vieworg.y, vieworg.x, viewangles.yaw, viewangles.pitch);
 
+  //GCon->Log(NAME_Debug, "*** VRenderLevelShared::RenderPlayerView: ENTER ***");
   RenderScene(&refdef, nullptr);
+  //GCon->Log(NAME_Debug, "*** VRenderLevelShared::RenderPlayerView: EXIT ***");
 
   if (dbg_clip_dump_added_ranges) ViewClip.Dump();
 

@@ -331,6 +331,7 @@ protected:
   int traspUsed;
   int traspSize;
   int traspFirst; // for portals, `DrawTranslucentPolys()` will start from this
+  bool useSlowerTrasp; //FIXME: hack -- portals should not use separate lists (yet)
 
   sec_plane_t sky_plane;
   float skyheight;
@@ -1053,6 +1054,8 @@ extern VCvarB r_static_lights;
 extern VCvarI aspect_ratio;
 extern VCvarB r_interpolate_frames;
 extern VCvarB r_allow_shadows;
+
+extern VCvarB r_separate_translucent_lists;
 
 extern VTextureTranslation **TranslationTables;
 extern int NumTranslationTables;

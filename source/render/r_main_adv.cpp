@@ -104,14 +104,20 @@ VRenderLevelShadowVolume::~VRenderLevelShadowVolume () {
 //
 //==========================================================================
 void VRenderLevelShadowVolume::RenderTranslucentWallsDecals () {
-  if (traspFirst >= traspUsed) return;
-  trans_sprite_t *twi = &trans_sprites[traspFirst];
-  for (int f = traspFirst; f < traspUsed; ++f, ++twi) {
-    if (twi->type) continue; // not a wall
-    if (twi->Alpha >= 1.0f) continue; // not a translucent
-    vassert(twi->surf);
-    Drawer->DrawTranslucentPolygonDecals(twi->surf, twi->Alpha, twi->Additive);
+  // seems to be unnecessary
+  /*
+  if (r_separate_translucent_lists && !useSlowerTrasp) {
+  } else {
+    if (traspFirst >= traspUsed) return;
+    trans_sprite_t *twi = &trans_sprites[traspFirst];
+    for (int f = traspFirst; f < traspUsed; ++f, ++twi) {
+      if (twi->type) continue; // not a wall
+      if (twi->Alpha >= 1.0f) continue; // not a translucent
+      vassert(twi->surf);
+      Drawer->DrawTranslucentPolygonDecals(twi->surf, twi->Alpha, twi->Additive);
+    }
   }
+  */
 }
 
 

@@ -746,22 +746,26 @@ void VRenderLevelShared::DrawTranslucentPolys () {
     if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); }
   }
 
-  // additive (order doesn't matter, so sort by texture)
-  if (DrawSurfListAdditive.length() != 0) {
-    //timsort_r(DrawSurfListAdditive.ptr(), DrawSurfListAdditive.length(), sizeof(surface_t *), &drawListItemCmpByTexture, nullptr);
-    // back-to-front
-    for (int f = DrawSurfListAdditive.length()-1; f >= 0; --f) {
-      surface_t *sfc = DrawSurfListAdditive[f];
-      Drawer->DrawMaskedPolygon(sfc, sfc->texinfo->Alpha, sfc->texinfo->Additive);
-    }
-  }
 
-  // translucent (order does matter, no sorting)
-  if (DrawSurfListAlpha.length() != 0) {
-    // back-to-front
-    for (int f = DrawSurfListAlpha.length()-1; f >= 0; --f) {
-      surface_t *sfc = DrawSurfListAlpha[f];
-      Drawer->DrawMaskedPolygon(sfc, sfc->texinfo->Alpha, sfc->texinfo->Additive);
+  if (!useSlowerTrasp) {
+    //GCon->Logf(NAME_Debug, "add=%d; alp=%d", DrawSurfListAdditive.length(), DrawSurfListAlpha.length());
+    // additive (order doesn't matter, so sort by texture)
+    if (DrawSurfListAdditive.length() != 0) {
+      //timsort_r(DrawSurfListAdditive.ptr(), DrawSurfListAdditive.length(), sizeof(surface_t *), &drawListItemCmpByTexture, nullptr);
+      // back-to-front
+      for (int f = DrawSurfListAdditive.length()-1; f >= 0; --f) {
+        surface_t *sfc = DrawSurfListAdditive[f];
+        Drawer->DrawMaskedPolygon(sfc, sfc->texinfo->Alpha, /*sfc->texinfo->Additive*/true);
+      }
+    }
+
+    // translucent (order does matter, no sorting)
+    if (DrawSurfListAlpha.length() != 0) {
+      // back-to-front
+      for (int f = DrawSurfListAlpha.length()-1; f >= 0; --f) {
+        surface_t *sfc = DrawSurfListAlpha[f];
+        Drawer->DrawMaskedPolygon(sfc, sfc->texinfo->Alpha, /*sfc->texinfo->Additive*/false);
+      }
     }
   }
 
