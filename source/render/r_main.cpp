@@ -1654,9 +1654,15 @@ void VRenderLevelShared::RenderPlayerView () {
 
   PushDlights();
 
-  // update camera textures that were visible in last frame
-  for (int i = 0; i < Level->CameraTextures.Num(); ++i) {
-    UpdateCameraTexture(Level->CameraTextures[i].Camera, Level->CameraTextures[i].TexNum, Level->CameraTextures[i].FOV);
+  // update camera textures that were visible in the last frame
+  // rendering camera texture sets `NextUpdateTime`
+  //GCon->Logf(NAME_Debug, "CAMTEX: %d", Level->CameraTextures.length());
+  for (auto &&camtexinfo : Level->CameraTextures) {
+    // this updates only cameras with proper `NextUpdateTime`
+    if (UpdateCameraTexture(camtexinfo.Camera, camtexinfo.TexNum, camtexinfo.FOV)) {
+      // do not update more than one camera texture per frame
+      break;
+    }
   }
 
   SetupFrame();
@@ -1687,14 +1693,22 @@ void VRenderLevelShared::RenderPlayerView () {
 //
 //  VRenderLevelShared::UpdateCameraTexture
 //
+//  returns `true` if camera texture was updated
+//
 //==========================================================================
-void VRenderLevelShared::UpdateCameraTexture (VEntity *Camera, int TexNum, int FOV) {
-  if (!Camera) return;
+bool VRenderLevelShared::UpdateCameraTexture (VEntity *Camera, int TexNum, int FOV) {
+  if (!Camera) return false;
 
-  if (!GTextureManager[TexNum]->bIsCameraTexture) return;
+  VTexture *BaseTex = GTextureManager[TexNum];
+  if (!BaseTex || !BaseTex->bIsCameraTexture) return false;
 
-  VCameraTexture *Tex = (VCameraTexture *)GTextureManager[TexNum];
-  if (!Tex->bNeedsUpdate) return;
+  VCameraTexture *Tex = (VCameraTexture *)BaseTex;
+  if (!Tex->bUsedInFrame) return false;
+
+  double ctime = Sys_Time();
+  if (Tex->NextUpdateTime > ctime) return false;
+
+  //GCon->Logf(NAME_Debug, "  CAMERA; tex=%d", TexNum);
 
   refdef_t CameraRefDef;
   CameraRefDef.DrawCamera = true;
@@ -1706,6 +1720,8 @@ void VRenderLevelShared::UpdateCameraTexture (VEntity *Camera, int TexNum, int F
   Drawer->EndView();
 
   Tex->CopyImage();
+
+  return true;
 }
 
 

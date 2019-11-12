@@ -204,7 +204,8 @@ VName R_HasNamedSkybox (VStr aname);
 // camera texture
 class VCameraTexture : public VTexture {
 public:
-  bool bNeedsUpdate;
+  bool bUsedInFrame;
+  double NextUpdateTime; // systime
   bool bUpdated;
 
   VCameraTexture (VName, int, int);

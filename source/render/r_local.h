@@ -549,7 +549,7 @@ protected:
   void SetupFrame ();
   void SetupCameraFrame (VEntity*, VTexture*, int, refdef_t*);
   void MarkLeaves ();
-  void UpdateCameraTexture (VEntity*, int, int);
+  bool UpdateCameraTexture (VEntity *Camera, int TexNum, int FOV); // returns `true` if camera texture was updated
   vuint32 GetFade (sec_region_t*);
   int CollectSpriteTextures (TArray<bool> &texturepresent); // this is actually private, but meh... returns number of new textures
   void UncacheLevel ();

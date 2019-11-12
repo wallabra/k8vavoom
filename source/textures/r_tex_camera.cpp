@@ -34,7 +34,8 @@
 //==========================================================================
 VCameraTexture::VCameraTexture (VName AName, int AWidth, int AHeight)
   : VTexture()
-  , bNeedsUpdate(true)
+  , bUsedInFrame(false)
+  , NextUpdateTime(0)
   , bUpdated(false)
 {
   Name = AName;
@@ -81,7 +82,7 @@ bool VCameraTexture::CheckModified () {
 //
 //==========================================================================
 vuint8 *VCameraTexture::GetPixels () {
-  bNeedsUpdate = true;
+  bUsedInFrame = true;
   transparent = false; // anyway
   translucent = false; // anyway
   // if already got pixels, then just return them
@@ -134,10 +135,14 @@ void VCameraTexture::Unload () {
 void VCameraTexture::CopyImage () {
   if (!Pixels) Pixels = new vuint8[Width*Height*4];
   Drawer->ReadBackScreen(Width, Height, (rgba_t *)Pixels);
-  bNeedsUpdate = false;
   bUpdated = true;
   Pixels8BitValid = false;
   Pixels8BitAValid = false;
+
+  bUsedInFrame = false;
+  double ctime = Sys_Time();
+  unsigned rndmsecs = (GenRandomU31()&0x1f);
+  NextUpdateTime = ctime+(1.0/17.5)+((double)rndmsecs/1000.0);
 }
 #endif
 
