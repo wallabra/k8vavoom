@@ -929,7 +929,7 @@ void MakeHeightSec (Level InLevel, line_t *line) {
   if (line->arg2&32) sec.bNoFakeLight = true;
   sector_t *ss2;
   for (int hidx = InLevel.FindSectorFromTag(out ss2, line->arg1); hidx >= 0; hidx = InLevel.FindSectorFromTag(out ss2, line->arg1, hidx)) {
-    ss2.heightsec = sec;
+    //ss2.heightsec = sec; // done in `SetHeightSector`
     InLevel.SetHeightSector(ss2, sec, line->arg2);
   }
 }

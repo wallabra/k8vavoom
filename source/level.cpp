@@ -837,13 +837,26 @@ IMPLEMENT_FUNCTION(VLevel, SetCeilingLightSector) {
   Sector->ceiling.LightSourceSector = SrcSector-Self->Sectors;
 }
 
+// native final void SetHeightSector (sector_t *Sector, sector_t *SrcSector, int Flags);
+// see https://zdoom.org/wiki/Transfer_Heights for flags
 IMPLEMENT_FUNCTION(VLevel, SetHeightSector) {
-  P_GET_INT(Flags);
-  P_GET_PTR(sector_t, SrcSector);
-  P_GET_PTR(sector_t, Sector);
-  P_GET_SELF;
-  (void)Flags;
-  (void)SrcSector;
+  sector_t *Sector, *SrcSector;
+  int Flags;
+  vobjGetParamSelf(Sector, SrcSector, Flags);
+  if (!Sector || !SrcSector) return;
+  if (Sector->heightsec == SrcSector) return; // nothing to do
+  //???if (sec->heightsec && !(sec->heightsec->SectorFlags&sector_t::SF_IgnoreHeightSec)) FakeFCSectors[fcount++] = idx;
+  const int destidx = (int)(ptrdiff_t)(Sector-&Self->Sectors[0]);
+  const int srcidx = (int)(ptrdiff_t)(SrcSector-&Self->Sectors[0]);
+  if (Sector->heightsec) GCon->Logf(NAME_Warning, "tried to set height sector for already set height sector: dest=%d; src=%d", destidx, srcidx);
+  Sector->heightsec = SrcSector;
+  // add to list
+  bool found = false;
+  for (int xidx = 0; xidx < Self->FakeFCSectors.length(); ++xidx) if (Self->FakeFCSectors[xidx] == srcidx) { found = true; break; }
+  if (!found) {
+    vint32 &it = Self->FakeFCSectors.alloc();
+    it = srcidx;
+  }
   if (Self->Renderer) Self->Renderer->SetupFakeFloors(Sector);
 }
 
