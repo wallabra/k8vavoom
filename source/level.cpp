@@ -849,6 +849,7 @@ IMPLEMENT_FUNCTION(VLevel, SetHeightSector) {
   const int destidx = (int)(ptrdiff_t)(Sector-&Self->Sectors[0]);
   const int srcidx = (int)(ptrdiff_t)(SrcSector-&Self->Sectors[0]);
   if (Sector->heightsec) GCon->Logf(NAME_Warning, "tried to set height sector for already set height sector: dest=%d; src=%d", destidx, srcidx);
+  if (Sector->fakefloors) Sector->eregions->params = &Sector->params; // this may be called for already inited sector, so restore params
   Sector->heightsec = SrcSector;
   // add to list
   bool found = false;
