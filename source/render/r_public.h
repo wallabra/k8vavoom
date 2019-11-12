@@ -214,6 +214,7 @@ public:
   virtual vuint8 *GetPixels () override;
   virtual void Unload () override;
   void CopyImage ();
+  bool NeedUpdate ();
   virtual VTexture *GetHighResolutionTexture () override;
 };
 

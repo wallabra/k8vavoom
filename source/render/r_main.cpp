@@ -1703,10 +1703,7 @@ bool VRenderLevelShared::UpdateCameraTexture (VEntity *Camera, int TexNum, int F
   if (!BaseTex || !BaseTex->bIsCameraTexture) return false;
 
   VCameraTexture *Tex = (VCameraTexture *)BaseTex;
-  if (!Tex->bUsedInFrame) return false;
-
-  double ctime = Sys_Time();
-  if (Tex->NextUpdateTime > ctime) return false;
+  if (!Tex->NeedUpdate()) return false;
 
   //GCon->Logf(NAME_Debug, "  CAMERA; tex=%d", TexNum);
 

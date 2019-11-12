@@ -78,6 +78,22 @@ bool VCameraTexture::CheckModified () {
 
 //==========================================================================
 //
+//  VCameraTexture::NeedUpdate
+//
+//==========================================================================
+bool VCameraTexture::NeedUpdate () {
+  if (!bUsedInFrame) return false;
+  // set update time here, why not?
+  double ctime = Sys_Time();
+  if (NextUpdateTime > ctime) return false;
+  unsigned rndmsecs = (GenRandomU31()&0x1f);
+  NextUpdateTime = ctime+(1.0/17.5)+((double)rndmsecs/1000.0);
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VCameraTexture::GetPixels
 //
 //==========================================================================
@@ -138,11 +154,12 @@ void VCameraTexture::CopyImage () {
   bUpdated = true;
   Pixels8BitValid = false;
   Pixels8BitAValid = false;
-
   bUsedInFrame = false;
+  /*
   double ctime = Sys_Time();
   unsigned rndmsecs = (GenRandomU31()&0x1f);
   NextUpdateTime = ctime+(1.0/17.5)+((double)rndmsecs/1000.0);
+  */
 }
 #endif
 
