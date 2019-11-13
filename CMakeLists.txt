@@ -38,6 +38,7 @@ option(WITH_STRTODEX "Use internal strtod implementation to parse floats" ON)
 option(WITH_OLD_CPU "Use pIV CPU instruction set" OFF)
 option(DEBUG_FPU_CHECKS "Use FPU and turn on some checks (GNU/Linux only)" OFF)
 option(UNSTABLE_OPTIMISATIONS "Use -O3 (WARNING! DON'T DO THAT! NEVER!)" OFF)
+option(ARCH_LINUX_SPECIAL "Arch GNU/Linux specific changes (do not turn on if you don't know what it is)" OFF)
 
 if(CMAKE_CROSSCOMPILING AND WIN32)
   #if(MINGW)
@@ -128,7 +129,11 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
+if(ARCH_LINUX_SPECIAL)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14 -lSDL2main -lSDL2")
+else(ARCH_LINUX_SPECIAL)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
+endif(ARCH_LINUX_SPECIAL)
 
 set(UNFUCK_GCC_FLAGS "")
 set(UNFUCK_GXX_FLAGS "")
@@ -174,6 +179,10 @@ endif(WITH_STRTODEX)
 
 # for mi-malloc
 set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wno-invalid-memory-model")
+
+if(ARCH_LINUX_SPECIAL)
+  add_definitions(-DVAVOOM_ARCH_LINUX_SPECIAL_SDL=1)
+endif(ARCH_LINUX_SPECIAL)
 
 
 if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.9)
@@ -781,6 +790,9 @@ if(ENABLE_VCCRUN)
     message(STATUS "  GNUTLS       : ON")
   endif(GNUTLS_FOUND)
 endif(ENABLE_VCCRUN)
+if(ARCH_LINUX_SPECIAL)
+  message(STATUS "Arch Sepcific Build Mode")
+endif(ARCH_LINUX_SPECIAL)
 
 
 add_subdirectory(libs)

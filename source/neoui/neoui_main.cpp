@@ -25,7 +25,11 @@
 #include "../gamedefs.h"
 
 #ifdef CLIENT
-#include <SDL.h>
+#ifdef VAVOOM_ARCH_LINUX_SPECIAL_SDL
+# include <SDL2/SDL.h>
+#else
+# include <SDL.h>
+#endif
 #ifdef USE_GLAD
 # include "glad.h"
 #else

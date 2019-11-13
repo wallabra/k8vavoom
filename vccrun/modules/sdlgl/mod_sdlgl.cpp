@@ -34,7 +34,11 @@
 
 #include <sys/time.h>
 
-#include <SDL.h>
+#ifdef VAVOOM_ARCH_LINUX_SPECIAL_SDL
+# include <SDL2/SDL.h>
+#else
+# include <SDL.h>
+#endif
 #include <GL/gl.h>
 #include <GL/glext.h>
 static SDL_Window *hw_window = nullptr;

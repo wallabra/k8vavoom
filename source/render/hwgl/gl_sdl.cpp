@@ -23,7 +23,11 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-#include <SDL.h>
+#ifdef VAVOOM_ARCH_LINUX_SPECIAL_SDL
+# include <SDL2/SDL.h>
+#else
+# include <SDL.h>
+#endif
 #include "gl_local.h"
 #include "../../icondata/k8vavomicondata.c"
 
