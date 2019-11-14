@@ -405,7 +405,7 @@ void KnownMapBugFixer () {
     if (MapHashMD5 == "42389d0173031f6ffc8df2919d34fe16") {
       // hub map
       bForceNoTexturePrecache = true;
-      bForceNoPrecalcStaticLights = true;
+      //bForceNoPrecalcStaticLights = true;
     }
     //ldr_extrasamples_override = 0;
     printwarn("MAPFIX: SkullDash EE: disabled precalculated static lightmaps and texture precaching");
@@ -415,7 +415,7 @@ void KnownMapBugFixer () {
   // dmp2017 hub map
   if (MapHashMD5 == "1c5f5371b392663e70c8c7b94ceeb82b") {
     bForceNoTexturePrecache = true;
-    bForceNoPrecalcStaticLights = true;
+    //bForceNoPrecalcStaticLights = true;
   }
   //ldr_extrasamples_override = 0;
 
