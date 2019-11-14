@@ -113,6 +113,7 @@ static VCvarI r_max_shadow_segs_one("r_max_shadow_segs_one", "-1", "Maximum shad
 
 VCvarF r_light_filter_static_coeff("r_light_filter_static_coeff", "0.2", "How close static lights should be to be filtered out?\n(0.1-0.3 is usually ok).", CVAR_Archive);
 VCvarB r_allow_static_light_filter("r_allow_static_light_filter", true, "Allow filtering of static lights?", CVAR_Archive);
+VCvarI r_static_light_filter_mode("r_static_light_filter_mode", "0", "Filter only decorations(0), or all lights(1)?", CVAR_Archive);
 
 VCvarB dbg_adv_light_notrace_mark("dbg_adv_light_notrace_mark", false, "Mark notrace lights red?", CVAR_PreInit);
 
@@ -156,14 +157,18 @@ void VRenderLevelShadowVolume::RefilterStaticLights () {
   if (coeff <= 0) return; // no filtering
   if (coeff > 8) coeff = 8;
 
+  const bool onlyDecor = (r_static_light_filter_mode.asInt() == 0);
+
   for (int currlidx = 0; currlidx < llen; ++currlidx) {
     light_t &cl = Lights[currlidx];
     if (!cl.active) continue; // already filtered out
+    if (onlyDecor && !cl.owner) continue;
     // remove nearby lights with radius less than ours (or ourself if we'll hit bigger light)
     float radsq = (cl.radius*cl.radius)*coeff;
     for (int nlidx = currlidx+1; nlidx < llen; ++nlidx) {
       light_t &nl = Lights[nlidx];
       if (!nl.active) continue; // already filtered out
+      if (onlyDecor && !nl.owner) continue;
       const float distsq = length2DSquared(cl.origin-nl.origin);
       if (distsq >= radsq) continue;
 
@@ -174,7 +179,7 @@ void VRenderLevelShadowVolume::RefilterStaticLights () {
       if (!(dyn_facevis[nl.leafnum>>3]&(1<<(nl.leafnum&7)))) continue;
       */
 
-      // if we cannot trace a line between two lights, they are prolly divided by a wall or floor
+      // if we cannot trace a line between two lights, they are prolly divided by a wall or a flat
       linetrace_t Trace;
       if (!Level->TraceLine(Trace, nl.origin, cl.origin, SPF_NOBLOCKSIGHT)) continue;
 
@@ -193,7 +198,11 @@ void VRenderLevelShadowVolume::RefilterStaticLights () {
   actlights = 0;
   for (int currlidx = 0; currlidx < llen; ++currlidx) {
     light_t &cl = Lights[currlidx];
-    if (cl.active) ++actlights;
+    if (cl.active) {
+      ++actlights;
+    } else {
+      //if (cl.owner) GCon->Logf(NAME_Debug, "ADVR: filtered static light from `%s`; org=(%g,%g,%g); radius=%g", cl.owner->GetClass()->GetName(), cl.origin.x, cl.origin.y, cl.origin.z, cl.radius);
+    }
   }
 
   GCon->Logf("ADVRENDERER: filtered %d static lights out of %d (%d left)", llen-actlights, llen, actlights);
