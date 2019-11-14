@@ -85,26 +85,31 @@ final void SetOrigin2 (TVec origin, optional bool properFloorCheck, optional flo
 
   LinkToWorld(properFloorCheck:properFloorCheck);
 
-  // if we are way higher than a floor, check for 3d floors.
-  // this (coincidentally) also checks if a thing fits into a gap for
-  // newly spawned entities. i hope it won't break anything.
-  if (!properFloorCheck && Radius > 4 && // arbitrary limit
-      !bNoInteraction && !bNoBlockmap && !bNoSector &&
-      Origin.z > FloorZ)
+  // don't fix positions for manual lights
+  if ((self !isa 'StaticLightSource') &&
+      (self !isa 'DynamicLight'))
   {
-    GetFloorAndCeilingEx(out tmtrace, Origin, collideWorld:true);
-    if (FloorZ < tmtrace.FloorZ && tmtrace.FloorZ <= Origin.z) {
-      #ifdef K8_DEVELOPER
-      // `moreHeight` specified only for map things
-      if (specified_moreHeight) {
-        print("FIXED z for `%C`: z=%s; floorz=%s; FloorZ=%s; newFloorZ=%s; Radius=%s", self, Origin.z, floorz, FloorZ, tmtrace.FloorZ, Radius);
+    // if we are way higher than a floor, check for 3d floors.
+    // this (coincidentally) also checks if a thing fits into a gap for
+    // newly spawned entities. i hope it won't break anything.
+    if (!properFloorCheck && Radius > 4 && // arbitrary limit
+        !bNoInteraction && !bNoBlockmap && !bNoSector &&
+        Origin.z > FloorZ)
+    {
+      GetFloorAndCeilingEx(out tmtrace, Origin, collideWorld:true);
+      if (FloorZ < tmtrace.FloorZ && tmtrace.FloorZ <= Origin.z) {
+        #ifdef K8_DEVELOPER
+        // `moreHeight` specified only for map things
+        if (specified_moreHeight) {
+          print("FIXED z for `%C`: z=%s; floorz=%s; FloorZ=%s; newFloorZ=%s; Radius=%s", self, Origin.z, floorz, FloorZ, tmtrace.FloorZ, Radius);
+        }
+        #endif
+        EFloor = tmtrace.EFloor;
+        ECeiling = tmtrace.ECeiling;
+        FloorZ = tmtrace.FloorZ;
+        CeilingZ = tmtrace.CeilingZ;
+        DropOffZ = tmtrace.DropOffZ;
       }
-      #endif
-      EFloor = tmtrace.EFloor;
-      ECeiling = tmtrace.ECeiling;
-      FloorZ = tmtrace.FloorZ;
-      CeilingZ = tmtrace.CeilingZ;
-      DropOffZ = tmtrace.DropOffZ;
     }
   }
 
