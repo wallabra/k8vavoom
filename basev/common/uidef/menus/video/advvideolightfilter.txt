@@ -35,6 +35,19 @@ menudef AdvVideoLightFilterOptions {
       "\cGWARNING! You must restart a map or reload a save to use new settings!";
   }
 
+  option enum {
+    title = "Filter Light Filter Mode";
+    cvar = r_static_light_filter_mode;
+    list {
+      "Only Decoration",
+      "All",
+    }
+    help =
+      "Here you can select to filter only automatic lights (from decorations"
+      "like lamps and such), or all lights (including manually put ones)."
+      "\cGWARNING! You must restart a map or reload a save to use new settings!";
+  }
+
   option slider {
     title = "Static Light Filter Coefficient";
     cvar = r_light_filter_static_coeff;
