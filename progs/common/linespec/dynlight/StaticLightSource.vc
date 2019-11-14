@@ -26,11 +26,22 @@
 class StaticLightSource : Actor __mobjinfo__(1502);
 
 
+TVec GetAdjustedPosition (mthing_t *mthing) {
+  TVec pos = vector(mthing->x, mthing->y, mthing->height);
+  sector_t *sec = XLevel.PointInSector(pos);
+  if (sec) pos.z = FixLightFlatPosition(sec, pos.z, mthing-&XLevel.Things[0]);
+  return pos;
+}
+
+
+float CalcRadius (mthing_t *mthing) {
+  return (mthing->arg1 > 0 ? float(mthing->arg1)*8.0 : 200.0);
+}
+
+
 override void OnMapSpawn (mthing_t *mthing) {
   ::OnMapSpawn(mthing);
-  float l;
-  if (!mthing->arg1) l = 200.0; else l = float(mthing->arg1)*8.0;
-  Level.AddStaticLight(none, vector(mthing->x, mthing->y, mthing->height), l);
+  Level.AddStaticLight(none, GetAdjustedPosition(mthing), CalcRadius(mthing));
   Destroy();
 }
 

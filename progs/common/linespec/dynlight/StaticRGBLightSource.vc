@@ -23,15 +23,12 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class StaticRGBLightSource : Actor __mobjinfo__(1503);
+class StaticRGBLightSource : StaticLightSource __mobjinfo__(1503);
 
 
 override void OnMapSpawn (mthing_t *mthing) {
   ::OnMapSpawn(mthing);
-  float l;
-  if (!mthing->arg1) l = 200.0; else l = float(mthing->arg1)*8.0;
-  Level.AddStaticLightRGB(none, vector(mthing->x, mthing->y, mthing->height), l,
-    RGB(mthing->arg2, mthing->arg3, mthing->arg4));
+  Level.AddStaticLightRGB(none, GetAdjustedPosition(mthing), CalcRadius(mthing), RGB(mthing->arg2, mthing->arg3, mthing->arg4));
   Destroy();
 }
 

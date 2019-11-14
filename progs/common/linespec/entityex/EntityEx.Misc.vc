@@ -40,6 +40,36 @@ override void Destroyed () {
 
 //==========================================================================
 //
+//  FixLightFlatPosition
+//
+//  adjusts z, so it won't be too near to floor or ceiling
+//  returns new z
+//
+//==========================================================================
+float FixLightFlatPosition (sector_t *sector, float z, optional int thingidx) {
+  // people loves to put lights into the floor/ceiling, and our tracer is not happy with those
+  if (sector) {
+    //float gaph = CeilingZ-FloorZ;
+    float fz = GetPlanePointZ(ref sector.floor, Origin);
+    float cz = GetPlanePointZ(ref sector.ceiling, Origin);
+    //printdebug("light thing #%s: fz=%s; cz=%s; z=%s; fdist=%s, cdist=%s", mthing-&XLevel.Things[0], fz, cz, Origin.z, Origin.z-fz, cz-Origin.z);
+    if (cz-fz >= 6) {
+      if (z >= fz && z < fz+4) {
+        if (specified_thingidx) printdebug("fixed z floor position for `%C` thing #%s (%s -> %s : %s)", self, thingidx, z, fz+4, fz);
+        return fz+4;
+      }
+      if (z <= cz && z > cz-4) {
+        if (specified_thingidx) printdebug("fixed z ceiling position for `%C` thing #%s (%s -> %s : %s)", self, thingidx, z, cz-4, cz);
+        return cz-4;
+      }
+    }
+  }
+  return z;
+}
+
+
+//==========================================================================
+//
 //  SetOrigin2
 //
 //  this is used in spawners, to fix initial Z
