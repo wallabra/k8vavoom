@@ -23,6 +23,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+#include "gitversion.h"
 #include "gamedefs.h"
 #include "net/network.h"
 #include "cl_local.h"
@@ -182,6 +183,9 @@ void Host_Init () {
   GCon->Log(NAME_Init, "---------------------------------------------------------------");
   GCon->Log(NAME_Init, "REMEMBER: BY USING FOSS SOFTWARE, YOU ARE SUPPORTING COMMUNISM!");
   GCon->Log(NAME_Init, "---------------------------------------------------------------");
+  #if defined(VV_GIT_COMMIT_HASH_STR)
+  GCon->Log(NAME_Init, "git commit hash: " VV_GIT_COMMIT_HASH_STR);
+  #endif
   GCon->Logf(NAME_Init, "Memory allocator: %s", Z_GetAllocatorType());
 
 

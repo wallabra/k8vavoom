@@ -92,6 +92,37 @@ if(UNIX)
   option(ENABLE_WRAPPERS "Enable creation of wrapper scripts" ON)
 endif(UNIX)
 
+
+#  COMMAND git rev-parse --verify -q --short=16 HEAD
+
+execute_process(
+  COMMAND git rev-parse --verify -q HEAD
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE GIT_COMMIT_HASH
+  ERROR_VARIABLE GIT_ERROR
+  RESULT_VARIABLE GET_EXEC_RESULT
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+if(NOT ${GET_EXEC_RESULT} EQUAL 0)
+  set(GIT_COMMIT_HASH "UNKNOWN")
+else()
+  if(NOT ${GIT_ERROR} STREQUAL "")
+    set(GIT_COMMIT_HASH "UNKNOWN")
+  endif()
+
+  if(${GIT_COMMIT_HASH} STREQUAL "")
+    set(GIT_COMMIT_HASH "UNKNOWN")
+  endif()
+endif()
+
+#message(STATUS "hash=" ${GIT_COMMIT_HASH})
+#message(STATUS "error=" ${GIT_ERROR})
+
+#add_definitions("-DVV_GIT_COMMIT_HASH=${GIT_COMMIT_HASH}")
+
+
+
 if(ENABLE_VCCRUN_ONLY)
   #set(WITH_VORBIS OFF)
   #set(WITH_LIBMAD OFF)
