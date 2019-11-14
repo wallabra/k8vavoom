@@ -253,12 +253,6 @@ set(VCCLIB_SOURCES
 # Main executable sources
 #
 #---------------------------------------
-file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/gitversion.h)
-configure_file(
-  gitversion.h.in
-  gitversion.h
-)
-
 #-- Common files --
 set(MAIN_COMMON_SOURCES
   am_map.cpp
@@ -285,8 +279,6 @@ set(MAIN_COMMON_SOURCES
   finale.h
   ${FILESYS_SOURCES}
   gamedefs.h
-  gitversion.h.in
-  ${CMAKE_CURRENT_BINARY_DIR}/gitversion.h
   host.cpp
   host.h
   iline.cpp
@@ -399,7 +391,7 @@ foreach(file ${MAIN_OPENGL_SOURCES})
 endforeach()
 
 source_group("" FILES ${MAIN_OPENGL_SOURCES})
-source_group(generated FILES ${OPENGL_GENERATED_SOURCES} ${CMAKE_CURRENT_BINARY_DIR}/gitversion.h)
+source_group(generated FILES ${OPENGL_GENERATED_SOURCES})
 
 #add_executable(vshadpp ${MAIN_OPENGL_SOURCES} ${OPENGL_GENERATED_SOURCES})
 #sxx_compile(render/hwgl/gl_shaddef.sxx  render/hwgl/gl_main.cpp)

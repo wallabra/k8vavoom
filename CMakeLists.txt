@@ -119,7 +119,7 @@ endif()
 #message(STATUS "hash=" ${GIT_COMMIT_HASH})
 #message(STATUS "error=" ${GIT_ERROR})
 
-#add_definitions("-DVV_GIT_COMMIT_HASH=${GIT_COMMIT_HASH}")
+add_definitions("-DVV_GIT_COMMIT_HASH=\"${GIT_COMMIT_HASH}\"")
 
 
 
