@@ -253,7 +253,7 @@ set(VCCLIB_SOURCES
 # Main executable sources
 #
 #---------------------------------------
-
+file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/gitversion.h)
 configure_file(
   gitversion.h.in
   gitversion.h

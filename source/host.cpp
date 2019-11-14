@@ -23,6 +23,9 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+#define VAVOOM_GIT_VERSION_H
+#include "gitversion.h.in"
+#undef VAVOOM_GIT_VERSION_H
 #include "gitversion.h"
 #include "gamedefs.h"
 #include "net/network.h"
