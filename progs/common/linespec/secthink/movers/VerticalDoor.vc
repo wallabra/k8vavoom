@@ -226,7 +226,7 @@ override void Tick (float deltaTime) {
       break;
     case -1:
       // down
-      res = MovePlane(Sector, Speed*deltaTime, BotDist, crush:false, floorOrCeiling:1, direction:Direction, stopOnCrush:false);
+      res = MovePlane(Sector, Speed*deltaTime, BotDist, crush:false, floorOrCeiling:MOVE_PLANE_CEILING, direction:Direction, stopOnCrush:false);
 
       // killough 10/98: implement gradual lighting effects
       if (LightTag && TopHeight != -Sector->floor.dist) {
@@ -264,7 +264,7 @@ override void Tick (float deltaTime) {
       break;
     case 1:
       // up
-      res = MovePlane(Sector, Speed*deltaTime, TopHeight, crush:false, floorOrCeiling:1, direction:Direction, stopOnCrush:false);
+      res = MovePlane(Sector, Speed*deltaTime, TopHeight, crush:false, floorOrCeiling:MOVE_PLANE_CEILING, direction:Direction, stopOnCrush:false);
 
       // killough 10/98: implement gradual lighting effects
       if (LightTag && TopHeight != -Sector->floor.dist) {

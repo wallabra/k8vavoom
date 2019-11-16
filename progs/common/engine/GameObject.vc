@@ -127,6 +127,11 @@ enum {
   RES_PASTDEST,
 };
 
+enum {
+  MOVE_PLANE_FLOOR,
+  MOVE_PLANE_CEILING,
+};
+
 const float MAXRADIUS = 32.0;
 
 // LineDef attributes
