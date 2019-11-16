@@ -939,8 +939,6 @@ protected:
   virtual void QueueWorldSurface (surface_t*) override;
   void RenderWorld (const refdef_t*, const VViewClipper*);
 
-  void RenderTranslucentWallsDecals ();
-
   void AddPolyObjToLightClipper (VViewClipper &clip, subsector_t *sub, bool asShadow);
 
   void DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *texinfo, VEntity *SkyBox, bool CheckSkyBoxAlways, int LightCanCross);
