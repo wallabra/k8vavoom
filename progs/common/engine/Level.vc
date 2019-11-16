@@ -236,6 +236,7 @@ native final bool BSPTraceLine (const TVec start, const TVec end, out TVec HitPo
 native final bool BSPTraceLineEx (const TVec start, const TVec end, out linetrace_t trace, optional int noBlockFlags/*=SPF_NOBLOCKING*/);
 // call this after sector height changed, to notify things
 // crunch means "crush actors" (otherwise first unfitting actor will stop notifying)
+// `-1` for `crunch` means "ignore stuck mobj"
 // returns `false` if there was any unfitting actor
 native final bool ChangeSector (sector_t *sector, int crunch);
 // resets all caches and such; used to "fake open" doors and move lifts in bot pathfinder

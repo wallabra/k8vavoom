@@ -1401,6 +1401,8 @@ vint32 VLevel::nextVisitedCount () {
 //  sector instead of all in bounding box of the sector. Both more accurate
 //  and faster.
 //
+//  `-1` for `crunch` means "ignore stuck mobj"
+//
 //==========================================================================
 bool VLevel::ChangeSectorInternal (sector_t *sector, int crunch) {
   vassert(sector);
@@ -1467,6 +1469,8 @@ bool VLevel::ChangeSectorInternal (sector_t *sector, int crunch) {
 //==========================================================================
 //
 //  VLevel::ChangeSector
+//
+//  `-1` for `crunch` means "ignore stuck mobj"
 //
 //==========================================================================
 bool VLevel::ChangeSector (sector_t *sector, int crunch) {

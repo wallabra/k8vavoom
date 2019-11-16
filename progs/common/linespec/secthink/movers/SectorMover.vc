@@ -157,6 +157,7 @@ final bool MoveLinkedSectorsPlane (sector_t *sector, int floorOrCeiling, const r
 //
 //  moves floor plane down
 //  returns `RES_XXX`
+//  `-1` for `crush` means "ignore stuck mobj"
 //
 //==========================================================================
 int MoveFloorDown (sector_t *sector, float amount, float dest, int crush, bool stopOnCrush) {
@@ -206,6 +207,7 @@ int MoveFloorDown (sector_t *sector, float amount, float dest, int crush, bool s
 //
 //  moves floor plane up
 //  returns `RES_XXX`
+//  `-1` for `crush` means "ignore stuck mobj"
 //
 //==========================================================================
 int MoveFloorUp (sector_t *sector, float amount, float dest, int crush, bool stopOnCrush) {
@@ -265,6 +267,7 @@ int MoveFloorUp (sector_t *sector, float amount, float dest, int crush, bool sto
 //
 //  moves ceiling plane down
 //  returns `RES_XXX`
+//  `-1` for `crush` means "ignore stuck mobj"
 //
 //==========================================================================
 int MoveCeilingDown (sector_t *sector, float amount, float dest, int crush, bool stopOnCrush) {
@@ -312,6 +315,7 @@ int MoveCeilingDown (sector_t *sector, float amount, float dest, int crush, bool
 //
 //  moves ceiling plane up
 //  returns `RES_XXX`
+//  `-1` for `crush` means "ignore stuck mobj"
 //
 //==========================================================================
 int MoveCeilingUp (sector_t *sector, float amount, float dest, int crush, bool stopOnCrush) {
@@ -350,14 +354,16 @@ int MoveCeilingUp (sector_t *sector, float amount, float dest, int crush, bool s
 //  move a plane (floor or ceiling) and check for crushing
 //  returns `RES_XXX`
 //
+//  `-1` for `crush` means "ignore stuck mobj"
+//  this is used for doors and crushers when they're going up
+//  (they should not stuck)
+//
 //==========================================================================
 int MovePlane (sector_t *sector, float amount, float dest, int crush,
                int floorOrCeiling, int direction, bool stopOnCrush)
 {
   if (direction == 0) return RES_OK;
-
   if (!sector) return RES_OK;
-
   switch (floorOrCeiling) {
     case MOVE_PLANE_FLOOR:
       return

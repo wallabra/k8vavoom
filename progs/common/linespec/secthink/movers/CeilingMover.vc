@@ -350,8 +350,8 @@ override void Tick (float deltaTime) {
   switch (Direction) {
     case 0: // in stasis
       break;
-    case 1: // up
-      res = MovePlane(sector:Sector, amount:Speed*deltaTime, dest:TopDist, crush:false, floorOrCeiling:MOVE_PLANE_CEILING, direction:Direction, stopOnCrush:bStopOnCrush);
+    case 1: // up; `-1` for `crush` means "ignore stuck mobj"
+      res = MovePlane(sector:Sector, amount:Speed*deltaTime, dest:TopDist, crush:-1, floorOrCeiling:MOVE_PLANE_CEILING, direction:Direction, stopOnCrush:bStopOnCrush);
       if (res == RES_PASTDEST) {
         SectorStopSequence(Sector);
         switch (Type) {

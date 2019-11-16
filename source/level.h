@@ -381,6 +381,7 @@ private:
   bool AppendControlLink (const sector_t *src, const sector_t *dest);
   inline CtlLinkIter IterControlLinks (const sector_t *src) { return CtlLinkIter(this, (src ? (int)(ptrdiff_t)(src-Sectors) : -1)); }
 
+  // `-1` for `crunch` means "ignore stuck mobj"
   bool ChangeSectorInternal (sector_t *sector, int crunch);
   void ChangeOneSectorInternal (sector_t *sector);
 
@@ -553,6 +554,7 @@ public:
   bool MovePolyobj (int num, float x, float y, bool forced=false); // tag (GetPolyobj)
   bool RotatePolyobj (int num, float angle); // tag (GetPolyobj)
 
+  // `-1` for `crunch` means "ignore stuck mobj"
   bool ChangeSector (sector_t *sector, int crunch);
 
   // returns `false` on hit

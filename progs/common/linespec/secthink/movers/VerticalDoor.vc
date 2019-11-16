@@ -263,8 +263,8 @@ override void Tick (float deltaTime) {
       }
       break;
     case 1:
-      // up
-      res = MovePlane(Sector, Speed*deltaTime, TopHeight, crush:false, floorOrCeiling:MOVE_PLANE_CEILING, direction:Direction, stopOnCrush:false);
+      // up; `-1` for `crush` means "ignore stuck mobj"
+      res = MovePlane(Sector, Speed*deltaTime, TopHeight, crush:-1, floorOrCeiling:MOVE_PLANE_CEILING, direction:Direction, stopOnCrush:false);
 
       // killough 10/98: implement gradual lighting effects
       if (LightTag && TopHeight != -Sector->floor.dist) {

@@ -1646,6 +1646,9 @@ override void Tick (float deltaTime) {
 //  SectorChanged
 //
 //  CrushChange == -666: loader fix
+//  CrushChange == -1: ignore stuck mobj
+//
+//  returns `false` if doesn't fit
 //
 //==========================================================================
 override bool SectorChanged (int CrushChange) {
@@ -1657,7 +1660,10 @@ override bool SectorChanged (int CrushChange) {
   }
 
   //print("SectorChanged for %C", self);
-  if (HeightClip()) return true;
+  if (HeightClip()) return true; // it fits
+
+  // if it stuck, and we should not ignore it...
+  if (CrushChange == -1) return true; // get out!
 
   // crunch bodies to giblets
   if (bCorpse && !bDontGib && Health <= 0) {
