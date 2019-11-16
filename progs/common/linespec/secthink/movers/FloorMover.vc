@@ -492,7 +492,7 @@ override void Tick (float deltaTime) {
     }
   }
 
-  int res = MovePlane(Sector, Speed*deltaTime, FloorDestDist, Crush, 0, Direction, false);
+  int res = MovePlane(sector:Sector, amount:Speed*deltaTime, dest:FloorDestDist, crush:Crush, floorOrCeiling:MOVE_PLANE_FLOOR, direction:Direction, stopOnCrush:false);
 
   if (res == RES_PASTDEST) {
     SectorStopSequence(Sector);

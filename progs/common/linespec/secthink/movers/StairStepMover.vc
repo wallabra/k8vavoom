@@ -238,7 +238,7 @@ override void Tick (float deltaTime) {
     return;
   }
 
-  int res = MovePlane(Sector, Speed*deltaTime, FloorDestDist, Crush, 0, Direction, true);
+  int res = MovePlane(sector:Sector, amount:Speed*deltaTime, dest:FloorDestDist, crush:Crush, floorOrCeiling:MOVE_PLANE_FLOOR, direction:Direction, stopOnCrush:true);
 
   if ((Direction == 1 && Sector->floor.dist >= StairsDelayDist) ||
       (Direction == -1 && Sector->floor.dist <= StairsDelayDist))
@@ -246,6 +246,7 @@ override void Tick (float deltaTime) {
     DelayTime = DelayTotal;
     StairsDelayDist += StairsDelayDistDelta;
   }
+
   if (res == RES_PASTDEST) {
     SectorStopSequence(Sector);
     if (DelayTotal) DelayTotal = 0.0;

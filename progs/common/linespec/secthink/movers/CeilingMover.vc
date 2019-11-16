@@ -351,7 +351,7 @@ override void Tick (float deltaTime) {
     case 0: // in stasis
       break;
     case 1: // up
-      res = MovePlane(Sector, Speed*deltaTime, TopDist, false, 1, Direction, bStopOnCrush);
+      res = MovePlane(sector:Sector, amount:Speed*deltaTime, dest:TopDist, crush:false, floorOrCeiling:MOVE_PLANE_CEILING, direction:Direction, stopOnCrush:bStopOnCrush);
       if (res == RES_PASTDEST) {
         SectorStopSequence(Sector);
         switch (Type) {
@@ -381,7 +381,7 @@ override void Tick (float deltaTime) {
       }
       break;
     case -1: // down
-      res = MovePlane(Sector, Speed*deltaTime, BottomDist, Crush, 1, Direction, bStopOnCrush);
+      res = MovePlane(sector:Sector, amount:Speed*deltaTime, dest:BottomDist, crush:Crush, floorOrCeiling:MOVE_PLANE_CEILING, direction:Direction, stopOnCrush:bStopOnCrush);
       if (res == RES_PASTDEST) {
         SectorStopSequence(Sector);
         switch (Type) {
