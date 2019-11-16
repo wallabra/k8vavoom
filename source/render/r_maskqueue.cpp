@@ -754,28 +754,23 @@ void VRenderLevelShared::DrawTranslucentPolys () {
   }
 
 
-  if (/*!useSlowerTrasp*/true) {
-    //GCon->Logf(NAME_Debug, "add=%d; alp=%d", DrawSurfListAdditive.length(), DrawSurfListAlpha.length());
-    // additive (order doesn't matter, so sort by texture)
-    if (GetCurrentDLS().DrawSurfListAdditive.length() != 0) {
-      //timsort_r(DrawSurfListAdditive.ptr(), DrawSurfListAdditive.length(), sizeof(surface_t *), &drawListItemCmpByTexture, nullptr);
-      // back-to-front
-      for (int f = GetCurrentDLS().DrawSurfListAdditive.length()-1; f >= 0; --f) {
-        surface_t *sfc = GetCurrentDLS().DrawSurfListAdditive[f];
-        Drawer->DrawMaskedPolygon(sfc, sfc->texinfo->Alpha, /*sfc->texinfo->Additive*/true);
-      }
-    }
-
-    // translucent (order does matter, no sorting)
-    if (GetCurrentDLS().DrawSurfListAlpha.length() != 0) {
-      // back-to-front
-      for (int f = GetCurrentDLS().DrawSurfListAlpha.length()-1; f >= 0; --f) {
-        surface_t *sfc = GetCurrentDLS().DrawSurfListAlpha[f];
-        Drawer->DrawMaskedPolygon(sfc, sfc->texinfo->Alpha, /*sfc->texinfo->Additive*/false);
-      }
+  //GCon->Logf(NAME_Debug, "add=%d; alp=%d", DrawSurfListAdditive.length(), DrawSurfListAlpha.length());
+  // additive (order doesn't matter, so sort by texture)
+  if (GetCurrentDLS().DrawSurfListAdditive.length() != 0) {
+    //timsort_r(DrawSurfListAdditive.ptr(), DrawSurfListAdditive.length(), sizeof(surface_t *), &drawListItemCmpByTexture, nullptr);
+    // back-to-front
+    for (int f = GetCurrentDLS().DrawSurfListAdditive.length()-1; f >= 0; --f) {
+      surface_t *sfc = GetCurrentDLS().DrawSurfListAdditive[f];
+      Drawer->DrawMaskedPolygon(sfc, sfc->texinfo->Alpha, /*sfc->texinfo->Additive*/true);
     }
   }
 
-  // reset lists
-  //traspUsed = traspFirst;
+  // translucent (order does matter, no sorting)
+  if (GetCurrentDLS().DrawSurfListAlpha.length() != 0) {
+    // back-to-front
+    for (int f = GetCurrentDLS().DrawSurfListAlpha.length()-1; f >= 0; --f) {
+      surface_t *sfc = GetCurrentDLS().DrawSurfListAlpha[f];
+      Drawer->DrawMaskedPolygon(sfc, sfc->texinfo->Alpha, /*sfc->texinfo->Additive*/false);
+    }
+  }
 }

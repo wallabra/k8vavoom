@@ -93,16 +93,6 @@ protected:
 public:
   bool NeedsInfiniteFarClip;
 
-  /*
-  // (partially) transparent sprites list
-  // cleared in `DrawTranslucentPolys()`
-  trans_sprite_t *trans_sprites;
-  int traspUsed;
-  int traspSize;
-  int traspFirst; // for portals, `DrawTranslucentPolys()` will start from this
-  bool useSlowerTrasp; //FIXME: hack -- portals should not use separate lists (yet)
-  */
-
   struct trans_sprite_t {
     TVec Verts[4]; // only for sprites
     union {

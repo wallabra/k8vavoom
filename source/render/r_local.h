@@ -298,16 +298,6 @@ protected:
   TArray<VPortal *> Portals;
   TArray<VSky *> SideSkies;
 
-  // (partially) transparent sprites list
-  // cleared in `DrawTranslucentPolys()`
-  /*
-  trans_sprite_t *trans_sprites;
-  int traspUsed;
-  int traspSize;
-  int traspFirst; // for portals, `DrawTranslucentPolys()` will start from this
-  bool useSlowerTrasp; //FIXME: hack -- portals should not use separate lists (yet)
-  */
-
   sec_plane_t sky_plane;
   float skyheight;
   surface_t *free_wsurfs;

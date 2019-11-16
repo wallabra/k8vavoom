@@ -151,10 +151,6 @@ void VPortal::Draw (bool UseStencil) {
   int SavedFixedLight = RLev->FixedLight;
   vuint8 *SavedBspVis = RLev->BspVis;
   vuint8 *SavedBspVisThing = RLev->BspVisThing;
-  //auto savedTraspFirst = RLev->traspFirst;
-  //auto savedTraspUsed = RLev->traspUsed;
-  //auto savedUseSlowerTrasp = RLev->useSlowerTrasp;
-  //RLev->useSlowerTrasp = true;
   bool SavedMirrorClip = MirrorClip;
   const TClipPlane SavedClip = view_frustum.planes[5]; // save far/mirror plane
   const unsigned planeCount = view_frustum.planeCount;
@@ -184,7 +180,6 @@ void VPortal::Draw (bool UseStencil) {
       //fprintf(stderr, "BSPVIS: size=%d\n", RLev->VisSize);
 
       // allocate new transsprites list
-      //RLev->traspFirst = RLev->traspUsed;
       restoreVis = true;
     }
 
@@ -203,10 +198,7 @@ void VPortal::Draw (bool UseStencil) {
   if (restoreVis) {
     RLev->BspVis = SavedBspVis;
     RLev->BspVisThing = SavedBspVisThing;
-    //RLev->traspFirst = savedTraspFirst;
-    //RLev->traspUsed = savedTraspUsed;
   }
-  //RLev->useSlowerTrasp = savedUseSlowerTrasp;
   MirrorClip = SavedMirrorClip;
   RLev->TransformFrustum();
   view_frustum.planes[5] = SavedClip; // restore far/mirror plane
