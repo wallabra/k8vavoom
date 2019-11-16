@@ -129,25 +129,6 @@ void VRenderLevelDrawer::PopDrawLists () {
 }
 
 
-//==========================================================================
-//
-//  VRenderLevelDrawer::ClearSurfaceLists
-//
-//==========================================================================
-/*
-void VRenderLevelDrawer::ClearSurfaceLists (bool clearTraspLists) {
-  DrawSurfListSolid.reset();
-  DrawSurfListMasked.reset();
-  if (clearTraspLists) {
-    DrawSurfListAlpha.reset();
-    DrawSurfListAdditive.reset();
-  }
-  DrawSkyList.reset();
-  DrawHorizonList.reset();
-}
-*/
-
-
 //**************************************************************************
 //
 // loader messages and progress bar

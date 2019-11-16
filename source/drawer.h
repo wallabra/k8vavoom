@@ -168,8 +168,6 @@ public:
   void PushDrawLists ();
   void PopDrawLists ();
 
-  //void ClearSurfaceLists (bool clearTraspLists);
-
   struct DrawListStackMark {
   public:
     VRenderLevelDrawer *owner;
