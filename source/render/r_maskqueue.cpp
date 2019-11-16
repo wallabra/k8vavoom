@@ -116,11 +116,13 @@ void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, TVec *sv,
   if (count == 0 || Alpha < 0.01f) return;
 
   // make room
+  /*
   if (traspUsed == traspSize) {
     if (traspSize >= 0xfffffff) Sys_Error("Too many translucent entities");
     traspSize += 0x10000;
     trans_sprites = (trans_sprite_t *)Z_Realloc(trans_sprites, traspSize*sizeof(trans_sprites[0]));
   }
+  */
 
   float dist;
   if (useSprOrigin) {
@@ -147,7 +149,8 @@ void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, TVec *sv,
   //const float dist = fabsf(DotProduct(mid-vieworg, viewforward));
   //float dist = Length(mid-vieworg);
 
-  trans_sprite_t &spr = trans_sprites[traspUsed++];
+  //trans_sprite_t &spr = trans_sprites[traspUsed++];
+  trans_sprite_t &spr = GetCurrentDLS().DrawSpriteList.alloc();
   if (isSprite) memcpy(spr.Verts, sv, sizeof(TVec)*4);
   spr.dist = dist;
   spr.lump = lump;
@@ -178,16 +181,19 @@ void VRenderLevelShared::QueueTranslucentAliasModel (VEntity *mobj, vuint32 ligh
   if (!mobj) return; // just in case
 
   // make room
+  /*
   if (traspUsed == traspSize) {
     if (traspSize >= 0xfffffff) Sys_Error("Too many translucent entities");
     traspSize += 0x10000;
     trans_sprites = (trans_sprite_t *)Z_Realloc(trans_sprites, traspSize*sizeof(trans_sprites[0]));
   }
+  */
 
   //const float dist = fabsf(DotProduct(mobj->Origin-vieworg, viewforward));
   const float dist = LengthSquared(mobj->Origin-vieworg);
 
-  trans_sprite_t &spr = trans_sprites[traspUsed++];
+  //trans_sprite_t &spr = trans_sprites[traspUsed++];
+  trans_sprite_t &spr = GetCurrentDLS().DrawSpriteList.alloc();
   spr.Ent = mobj;
   spr.light = light;
   spr.Fade = Fade;
@@ -686,11 +692,13 @@ extern "C" {
 //
 //==========================================================================
 void VRenderLevelShared::DrawTranslucentPolys () {
-  if (traspUsed > traspFirst) {
+  VRenderLevelDrawer::DrawLists &dls = GetCurrentDLS();
+
+  if (dls.DrawSpriteList.length() > 0) {
     //GCon->Logf("DrawTranslucentPolys: first=%u; used=%u; count=%u", traspFirst, traspUsed, traspUsed-traspFirst);
 
     // sort 'em
-    timsort_r(trans_sprites+traspFirst, traspUsed-traspFirst, sizeof(trans_sprites[0]), &traspCmp, nullptr);
+    timsort_r(dls.DrawSpriteList.ptr(), dls.DrawSpriteList.length(), sizeof(dls.DrawSpriteList[0]), &traspCmp, nullptr);
 
 #define MAX_POFS  (10)
     bool pofsEnabled = false;
@@ -699,8 +707,7 @@ void VRenderLevelShared::DrawTranslucentPolys () {
     bool firstSprite = true;
 
     // other
-    for (int f = traspFirst; f < traspUsed; ++f) {
-      trans_sprite_t &spr = trans_sprites[f];
+    for (auto &&spr : dls.DrawSpriteList) {
       //GCon->Logf("  #%d: type=%d; alpha=%g; additive=%d; light=0x%08x; fade=0x%08x", f, spr.type, spr.Alpha, (int)spr.Additive, spr.light, spr.Fade);
       if (spr.type == 2) {
         // alias model
@@ -747,28 +754,28 @@ void VRenderLevelShared::DrawTranslucentPolys () {
   }
 
 
-  if (!useSlowerTrasp) {
+  if (/*!useSlowerTrasp*/true) {
     //GCon->Logf(NAME_Debug, "add=%d; alp=%d", DrawSurfListAdditive.length(), DrawSurfListAlpha.length());
     // additive (order doesn't matter, so sort by texture)
-    if (DrawSurfListAdditive.length() != 0) {
+    if (GetCurrentDLS().DrawSurfListAdditive.length() != 0) {
       //timsort_r(DrawSurfListAdditive.ptr(), DrawSurfListAdditive.length(), sizeof(surface_t *), &drawListItemCmpByTexture, nullptr);
       // back-to-front
-      for (int f = DrawSurfListAdditive.length()-1; f >= 0; --f) {
-        surface_t *sfc = DrawSurfListAdditive[f];
+      for (int f = GetCurrentDLS().DrawSurfListAdditive.length()-1; f >= 0; --f) {
+        surface_t *sfc = GetCurrentDLS().DrawSurfListAdditive[f];
         Drawer->DrawMaskedPolygon(sfc, sfc->texinfo->Alpha, /*sfc->texinfo->Additive*/true);
       }
     }
 
     // translucent (order does matter, no sorting)
-    if (DrawSurfListAlpha.length() != 0) {
+    if (GetCurrentDLS().DrawSurfListAlpha.length() != 0) {
       // back-to-front
-      for (int f = DrawSurfListAlpha.length()-1; f >= 0; --f) {
-        surface_t *sfc = DrawSurfListAlpha[f];
+      for (int f = GetCurrentDLS().DrawSurfListAlpha.length()-1; f >= 0; --f) {
+        surface_t *sfc = GetCurrentDLS().DrawSurfListAlpha[f];
         Drawer->DrawMaskedPolygon(sfc, sfc->texinfo->Alpha, /*sfc->texinfo->Additive*/false);
       }
     }
   }
 
-  // reset list
-  traspUsed = traspFirst;
+  // reset lists
+  //traspUsed = traspFirst;
 }

@@ -145,10 +145,12 @@ extern "C" {
 //
 //==========================================================================
 void VOpenGLDrawer::DrawWorldAmbientPass () {
+  VRenderLevelDrawer::DrawLists &dls = RendLev->GetCurrentDLS();
+
   // draw horizons
   if (!gl_dbg_wireframe) {
-    surface_t **surfptr = RendLev->DrawHorizonList.ptr();
-    for (int count = RendLev->DrawHorizonList.length(); count--; ++surfptr) {
+    surface_t **surfptr = dls.DrawHorizonList.ptr();
+    for (int count = dls.DrawHorizonList.length(); count--; ++surfptr) {
       surface_t *surf = *surfptr;
       if (!surf->plvisible) continue; // viewer is in back side or on plane
       DoHorizonPolygon(surf);
@@ -156,12 +158,12 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
   }
 
   // set z-buffer for skies
-  if (RendLev->DrawSkyList.length() && !gl_dbg_wireframe) {
+  if (dls.DrawSkyList.length() && !gl_dbg_wireframe) {
     SurfZBuf.Activate();
     SurfZBuf.UploadChangedUniforms();
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-    surface_t **surfptr = RendLev->DrawSkyList.ptr();
-    for (int count = RendLev->DrawSkyList.length(); count--; ++surfptr) {
+    surface_t **surfptr = dls.DrawSkyList.ptr();
+    for (int count = dls.DrawSkyList.length(); count--; ++surfptr) {
       surface_t *surf = *surfptr;
       if (!surf->plvisible) continue; // viewer is in back side or on plane
       if (surf->count < 3) continue;
@@ -174,7 +176,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
   }
 
   // draw normal surfaces
-  if (RendLev->DrawSurfListSolid.length() != 0 || RendLev->DrawSurfListMasked.length() != 0) {
+  if (dls.DrawSurfListSolid.length() != 0 || dls.DrawSurfListMasked.length() != 0) {
     // setup samplers for all shaders
     // masked
     ShadowsAmbientMasked.Activate();
@@ -212,9 +214,9 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     if (gl_sort_textures) {
       // do not sort surfaces with solid textures, as we don't care about textures here
       // this gives us front-to-back rendering
-      //timsort_r(RendLev->DrawSurfListSolid.ptr(), RendLev->DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByTexture, nullptr);
+      //timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByTexture, nullptr);
       // but sort masked textures, because masked texture configuration can be arbitrary
-      timsort_r(RendLev->DrawSurfListMasked.ptr(), RendLev->DrawSurfListMasked.length(), sizeof(surface_t *), &drawListItemCmpByTexture, nullptr);
+      timsort_r(dls.DrawSurfListMasked.ptr(), dls.DrawSurfListMasked.length(), sizeof(surface_t *), &drawListItemCmpByTexture, nullptr);
     }
 
     float prevsflight = -666;
@@ -233,17 +235,17 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     bool glTextureEnabled = false;
     glDisable(GL_TEXTURE_2D);
 
-    //GCon->Logf(NAME_Debug, "::: solid=%d; masked=%d", RendLev->DrawSurfListSolid.length(), RendLev->DrawSurfListMasked.length());
+    //GCon->Logf(NAME_Debug, "::: solid=%d; masked=%d", dls.DrawSurfListSolid.length(), dls.DrawSurfListMasked.length());
 
     // solid textures
-    if (RendLev->DrawSurfListSolid.length() != 0) {
+    if (dls.DrawSurfListSolid.length() != 0) {
       // activate non-brightmap shader
       unsigned char brightmapActiveMask = BMAP_INACTIVE;
       unsigned char prevGlowActiveMask = 0u;
       //ShadowsAmbient.Activate();
       //VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbient);
       lastTexinfo.resetLastUsed();
-      for (auto &&surf : RendLev->DrawSurfListSolid) {
+      for (auto &&surf : dls.DrawSurfListSolid) {
         if (!surf->plvisible) continue; // viewer is in back side or on plane
         if (surf->count < 3) continue;
         if (surf->drawflags&surface_t::DF_MASKED) continue; // later
@@ -330,7 +332,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     }
 
     // masked textures
-    if (RendLev->DrawSurfListMasked.length() != 0) {
+    if (dls.DrawSurfListMasked.length() != 0) {
       // activate non-brightmap shader
       unsigned char brightmapActiveMask = BMAP_ACTIVE;
       unsigned char prevGlowActiveMask = 0u;
@@ -338,7 +340,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
       VV_GLDRAWER_DEACTIVATE_GLOW(ShadowsAmbientBrightmap);
       lastTexinfo.resetLastUsed();
       if (!glTextureEnabled) { glTextureEnabled = true; glEnable(GL_TEXTURE_2D); }
-      for (auto &&surf : RendLev->DrawSurfListMasked) {
+      for (auto &&surf : dls.DrawSurfListMasked) {
         if (!surf->plvisible) continue; // viewer is in back side or on plane
         if (surf->count < 3) continue;
         if ((surf->drawflags&surface_t::DF_MASKED) == 0) continue; // not here
@@ -1088,7 +1090,9 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
   glEnable(GL_BLEND);
 
   if (!gl_dbg_adv_render_surface_textures) return;
-  if (RendLev->DrawSurfListSolid.length() == 0 && RendLev->DrawSurfListMasked.length() == 0) return;
+
+  VRenderLevelDrawer::DrawLists &dls = RendLev->GetCurrentDLS();
+  if (dls.DrawSurfListSolid.length() == 0 && dls.DrawSurfListMasked.length() == 0) return;
 
   ShadowsTextureMasked.Activate();
   ShadowsTextureMasked.SetTexture(0);
@@ -1101,17 +1105,17 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
   // sort by textures
   if (gl_sort_textures) {
     // sort surfaces with solid textures, because here we need them sorted
-    timsort_r(RendLev->DrawSurfListSolid.ptr(), RendLev->DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByTexture, nullptr);
+    timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmpByTexture, nullptr);
   }
 
   texinfo_t lastTexinfo;
   lastTexinfo.initLastUsed();
 
   // normal
-  if (RendLev->DrawSurfListSolid.length() != 0) {
+  if (dls.DrawSurfListSolid.length() != 0) {
     lastTexinfo.resetLastUsed();
     ShadowsTexture.Activate();
-    for (auto &&surf : RendLev->DrawSurfListSolid) {
+    for (auto &&surf : dls.DrawSurfListSolid) {
       if (!surf->plvisible) continue; // viewer is in back side or on plane
       if (surf->count < 3) continue;
       if (surf->drawflags&surface_t::DF_MASKED) continue; // later
@@ -1161,10 +1165,10 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
   }
 
   // masked
-  if (RendLev->DrawSurfListMasked.length() != 0) {
+  if (dls.DrawSurfListMasked.length() != 0) {
     lastTexinfo.resetLastUsed();
     ShadowsTextureMasked.Activate();
-    for (auto &&surf : RendLev->DrawSurfListMasked) {
+    for (auto &&surf : dls.DrawSurfListMasked) {
       if (!surf->plvisible) continue; // viewer is in back side or on plane
       if (surf->count < 3) continue;
       if ((surf->drawflags&surface_t::DF_MASKED) == 0) continue; // not here
@@ -1231,7 +1235,9 @@ void VOpenGLDrawer::DrawWorldFogPass () {
   //ShadowsFog.SetFogType();
 
   if (!gl_dbg_adv_render_surface_fog) return;
-  if (RendLev->DrawSurfListSolid.length() == 0 && RendLev->DrawSurfListMasked.length() == 0) return;
+
+  VRenderLevelDrawer::DrawLists &dls = RendLev->GetCurrentDLS();
+  if (dls.DrawSurfListSolid.length() == 0 && dls.DrawSurfListMasked.length() == 0) return;
 
   /*
   ShadowsFog.SetTexture(0);
@@ -1242,13 +1248,13 @@ void VOpenGLDrawer::DrawWorldFogPass () {
   lastTexinfo.initLastUsed();
 
   // normal
-  if (RendLev->DrawSurfListSolid.length() != 0) {
+  if (dls.DrawSurfListSolid.length() != 0) {
     lastTexinfo.resetLastUsed();
     ShadowsFog.Activate();
     ShadowsFog.SetFogFade(0, 1.0f);
     vuint32 lastFade = 0;
     glDisable(GL_TEXTURE_2D);
-    for (auto &&surf : RendLev->DrawSurfListSolid) {
+    for (auto &&surf : dls.DrawSurfListSolid) {
       if (!surf->Fade) continue;
       if (!surf->plvisible) continue; // viewer is in back side or on plane
       if (surf->count < 3) continue;
@@ -1277,13 +1283,13 @@ void VOpenGLDrawer::DrawWorldFogPass () {
   }
 
   // masked
-  if (RendLev->DrawSurfListMasked.length() != 0) {
+  if (dls.DrawSurfListMasked.length() != 0) {
     lastTexinfo.resetLastUsed();
     ShadowsFogMasked.Activate();
     ShadowsFogMasked.SetFogFade(0, 1.0f);
     ShadowsFogMasked.SetTexture(0);
     vuint32 lastFade = 0;
-    for (auto &&surf : RendLev->DrawSurfListMasked) {
+    for (auto &&surf : dls.DrawSurfListMasked) {
       if (!surf->Fade) continue;
       if (!surf->plvisible) continue; // viewer is in back side or on plane
       if (surf->count < 3) continue;

@@ -1469,9 +1469,9 @@ void VRenderLevelLightmap::ProcessCachedSurfaces () {
       // render this surface as non-lightmapped: it is better than completely loosing it
       //DrawSurfList.append(sfc);
       if ((sfc->drawflags&surface_t::DF_MASKED) == 0) {
-        SurfCheckAndQueue(DrawSurfListSolid, sfc);
+        SurfCheckAndQueue(GetCurrentDLS().DrawSurfListSolid, sfc);
       } else {
-        SurfCheckAndQueue(DrawSurfListMasked, sfc);
+        SurfCheckAndQueue(GetCurrentDLS().DrawSurfListMasked, sfc);
       }
     }
   }

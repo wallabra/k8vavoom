@@ -442,11 +442,13 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   , CurrentSky2Texture(-1)
   , CurrentDoubleSky(false)
   , CurrentLightning(false)
+  /*
   , trans_sprites(nullptr)
   , traspUsed(0)
   , traspSize(0)
   , traspFirst(0)
   , useSlowerTrasp(false)
+  */
   , free_wsurfs(nullptr)
   , AllocatedWSurfBlocks(nullptr)
   , AllocatedSubRegions(nullptr)
@@ -620,12 +622,14 @@ VRenderLevelShared::~VRenderLevelShared () {
   KillPortalPool();
 
   // free translucent sprite list
+  /*
   if (trans_sprites) Z_Free(trans_sprites);
   trans_sprites = nullptr;
   traspUsed = 0;
   traspSize = 0;
   traspFirst = 0;
   useSlowerTrasp = false;
+  */
 }
 
 
@@ -694,7 +698,8 @@ void VRenderLevelShared::ResetUpdateWorldFrame () {
 //
 //==========================================================================
 void VRenderLevelShared::ClearQueues () {
-  ClearSurfaceLists(!useSlowerTrasp);
+  //ClearSurfaceLists(!useSlowerTrasp);
+  GetCurrentDLS().resetAll();
   IncQueueFrameCount();
 }
 
@@ -1627,6 +1632,7 @@ void R_RenderPlayerView () {
 void VRenderLevelShared::RenderPlayerView () {
   if (!Level->LevelInfo) return;
 
+  ResetDrawStack(); // prepare draw list stack
   IncUpdateWorldFrame();
 
   if (dbg_autoclear_automap) AM_ClearAutomap();

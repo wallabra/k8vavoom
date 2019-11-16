@@ -238,33 +238,6 @@ public:
     MAX_DLIGHTS = 32, // should fit into vuint32, 'cause subsector is using that as bitmask for active lights
   };
 
-  struct trans_sprite_t {
-    TVec Verts[4]; // only for sprites
-    union {
-      surface_t *surf; // for masked polys and sprites
-      VEntity *Ent; // only for alias models
-    };
-    int prio; // for things
-    int lump; // basically, has any sense only for sprites, has no sense for alias models
-    TVec normal; // not set for alias models
-    union {
-      float pdist; // masked polys and sprites
-      float TimeFrac; // alias models
-    };
-    TVec saxis; // masked polys and sprites
-    TVec taxis; // masked polys and sprites
-    TVec texorg; // masked polys and sprites
-    float Alpha;
-    bool Additive;
-    int translation; // masked polys and sprites
-    int type; // 0: masked polygon (wall); 1: sprite; 2: alias model
-    float dist; // for soriting
-    vuint32 objid; // for entities
-    int hangup; // 0: normal; -1: no z-buffer write, slightly offset (used for flat-aligned sprites); 666: fake sprite shadow
-    vuint32 light;
-    vuint32 Fade;
-  };
-
   struct world_surf_t {
     surface_t *Surf;
     vuint8 Type;
@@ -327,11 +300,13 @@ protected:
 
   // (partially) transparent sprites list
   // cleared in `DrawTranslucentPolys()`
+  /*
   trans_sprite_t *trans_sprites;
   int traspUsed;
   int traspSize;
   int traspFirst; // for portals, `DrawTranslucentPolys()` will start from this
   bool useSlowerTrasp; //FIXME: hack -- portals should not use separate lists (yet)
+  */
 
   sec_plane_t sky_plane;
   float skyheight;

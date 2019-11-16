@@ -90,9 +90,51 @@ void VDrawer::callICB (int phase) {
 
 //==========================================================================
 //
+//  VRenderLevelDrawer::ResetDrawStack
+//
+//  should be called before rendering a frame
+//  (i.e. in initial render, `RenderPlayerView()`)
+//  creates 0th element of the stack
+//
+//==========================================================================
+void VRenderLevelDrawer::ResetDrawStack () {
+  DrawListStack.reset();
+  DrawLists &dls = DrawListStack.alloc();
+  dls.resetAll();
+  vassert(DrawListStack.length() > 0);
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelDrawer::PushDrawLists
+//
+//==========================================================================
+void VRenderLevelDrawer::PushDrawLists () {
+  DrawLists &dls = DrawListStack.alloc();
+  dls.resetAll();
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelDrawer::PopDrawLists
+//
+//==========================================================================
+void VRenderLevelDrawer::PopDrawLists () {
+  vensure(DrawListStack.length() != 0);
+  GetCurrentDLS().resetAll();
+  DrawListStack.setLength(DrawListStack.length()-1, false); // don't resize
+  vassert(DrawListStack.length() > 0);
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelDrawer::ClearSurfaceLists
 //
 //==========================================================================
+/*
 void VRenderLevelDrawer::ClearSurfaceLists (bool clearTraspLists) {
   DrawSurfListSolid.reset();
   DrawSurfListMasked.reset();
@@ -103,6 +145,7 @@ void VRenderLevelDrawer::ClearSurfaceLists (bool clearTraspLists) {
   DrawSkyList.reset();
   DrawHorizonList.reset();
 }
+*/
 
 
 //**************************************************************************

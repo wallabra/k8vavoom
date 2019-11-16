@@ -84,6 +84,8 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+struct trans_sprite_t;
+
 class VRenderLevelDrawer : public VRenderLevelPublic {
 protected:
   bool mIsShadowVolumeRenderer;
@@ -91,24 +93,113 @@ protected:
 public:
   bool NeedsInfiniteFarClip;
 
-  // render lists; various queue functions will put surfaces there
-  // those arrays are never cleared, only reset
-  // each surface is marked with `currQueueFrame`
-  // note that there is no overflow protection, so don't leave
-  // the game running one level for weeks ;-)
-  TArray<surface_t *> DrawSurfListSolid; // solid surfaces
-  TArray<surface_t *> DrawSurfListMasked; // masked surfaces
-  TArray<surface_t *> DrawSurfListAlpha; // alpha-blended surfaces
-  TArray<surface_t *> DrawSurfListAdditive; // additive surfaces
-  TArray<surface_t *> DrawSkyList;
-  TArray<surface_t *> DrawHorizonList;
+  /*
+  // (partially) transparent sprites list
+  // cleared in `DrawTranslucentPolys()`
+  trans_sprite_t *trans_sprites;
+  int traspUsed;
+  int traspSize;
+  int traspFirst; // for portals, `DrawTranslucentPolys()` will start from this
+  bool useSlowerTrasp; //FIXME: hack -- portals should not use separate lists (yet)
+  */
+
+  struct trans_sprite_t {
+    TVec Verts[4]; // only for sprites
+    union {
+      surface_t *surf; // for masked polys and sprites
+      VEntity *Ent; // only for alias models
+    };
+    int prio; // for things
+    int lump; // basically, has any sense only for sprites, has no sense for alias models
+    TVec normal; // not set for alias models
+    union {
+      float pdist; // masked polys and sprites
+      float TimeFrac; // alias models
+    };
+    TVec saxis; // masked polys and sprites
+    TVec taxis; // masked polys and sprites
+    TVec texorg; // masked polys and sprites
+    float Alpha;
+    bool Additive;
+    int translation; // masked polys and sprites
+    int type; // 0: masked polygon (wall); 1: sprite; 2: alias model
+    float dist; // for soriting
+    vuint32 objid; // for entities
+    int hangup; // 0: normal; -1: no z-buffer write, slightly offset (used for flat-aligned sprites); 666: fake sprite shadow
+    vuint32 light;
+    vuint32 Fade;
+
+    // no need to setup this
+    inline trans_sprite_t () noexcept {}
+    inline trans_sprite_t (EArrayNew) noexcept {}
+    inline trans_sprite_t (ENoInit) noexcept {}
+    inline ~trans_sprite_t () noexcept {}
+  };
+
+  struct DrawLists {
+    // render lists; various queue functions will put surfaces there
+    // those arrays are never cleared, only reset
+    // each surface is marked with `currQueueFrame`
+    // note that there is no overflow protection, so don't leave
+    // the game running one level for weeks ;-)
+    TArray<surface_t *> DrawSurfListSolid; // solid surfaces
+    TArray<surface_t *> DrawSurfListMasked; // masked surfaces
+    TArray<surface_t *> DrawSurfListAlpha; // alpha-blended surfaces
+    TArray<surface_t *> DrawSurfListAdditive; // additive surfaces
+    TArray<surface_t *> DrawSkyList;
+    TArray<surface_t *> DrawHorizonList;
+    TArray<trans_sprite_t> DrawSpriteList;
+
+    inline void resetAll () {
+      DrawSurfListSolid.reset();
+      DrawSurfListMasked.reset();
+      DrawSurfListAlpha.reset();
+      DrawSurfListAdditive.reset();
+      DrawSkyList.reset();
+      DrawHorizonList.reset();
+      DrawSpriteList.reset();
+    }
+  };
+
+  TArray<DrawLists> DrawListStack;
 
   int PortalDepth;
   vuint32 currDLightFrame;
   vuint32 currQueueFrame;
 
 public:
-  void ClearSurfaceLists (bool clearTraspLists);
+  inline DrawLists &GetCurrentDLS () { return DrawListStack[DrawListStack.length()-1]; }
+
+  // should be called before rendering a frame
+  // (i.e. in initial render, `RenderPlayerView()`)
+  // creates 0th element of the stack
+  void ResetDrawStack ();
+
+  void PushDrawLists ();
+  void PopDrawLists ();
+
+  //void ClearSurfaceLists (bool clearTraspLists);
+
+  struct DrawListStackMark {
+  public:
+    VRenderLevelDrawer *owner;
+    int level;
+  public:
+    inline DrawListStackMark (VRenderLevelDrawer *aowner) noexcept : owner(aowner), level(aowner->DrawListStack.length()) {
+      vassert(owner);
+      vassert(level > 0);
+    }
+    DrawListStackMark (const DrawListStackMark &) = delete;
+    DrawListStackMark &operator = (const DrawListStackMark &) = delete;
+    inline ~DrawListStackMark () {
+      vassert(owner);
+      vassert(level > 0);
+      vassert(owner->DrawListStack.length() >= level);
+      while (owner->DrawListStack.length() > level) owner->PopDrawLists();
+      owner = nullptr;
+      level = 0;
+    }
+  };
 
 public:
   // lightmap chain iterator (used in renderer)

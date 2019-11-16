@@ -267,9 +267,9 @@ void VRenderLevelShared::QueueSimpleSurf (surface_t *surf) {
   //const bool isCommon = (texinfo->Alpha >= 1.0f && !texinfo->Additive && !texinfo->Tex->isTranslucent());
   if (!SurfPrepareForRender(surf)) return;
   if ((surf->drawflags&surface_t::DF_MASKED) == 0) {
-    DrawSurfListSolid.append(surf);
+    GetCurrentDLS().DrawSurfListSolid.append(surf);
   } else {
-    DrawSurfListMasked.append(surf);
+    GetCurrentDLS().DrawSurfListMasked.append(surf);
   }
 }
 
@@ -280,7 +280,7 @@ void VRenderLevelShared::QueueSimpleSurf (surface_t *surf) {
 //
 //==========================================================================
 void VRenderLevelShared::QueueSkyPortal (surface_t *surf) {
-  SurfCheckAndQueue(DrawSkyList, surf);
+  SurfCheckAndQueue(GetCurrentDLS().DrawSkyList, surf);
 }
 
 
@@ -290,7 +290,7 @@ void VRenderLevelShared::QueueSkyPortal (surface_t *surf) {
 //
 //==========================================================================
 void VRenderLevelShared::QueueHorizonPortal (surface_t *surf) {
-  SurfCheckAndQueue(DrawHorizonList, surf);
+  SurfCheckAndQueue(GetCurrentDLS().DrawHorizonList, surf);
 }
 
 
@@ -564,7 +564,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
         if (surfs->plvisible) {
           if (r_separate_translucent_lists) {
             //GCon->Logf(NAME_Debug, "***: add=%d(%d); PortalLevel=%d", (int)texinfo->Additive, (int)surfs->texinfo->Additive, PortalLevel);
-            if (texinfo->Additive) DrawSurfListAdditive.append(surfs); else DrawSurfListAlpha.append(surfs);
+            if (texinfo->Additive) GetCurrentDLS().DrawSurfListAdditive.append(surfs); else GetCurrentDLS().DrawSurfListAlpha.append(surfs);
           } else {
             QueueTranslucentPoly(surfs, surfs->verts, surfs->count,
               0, texinfo->Alpha, texinfo->Additive, 0, false, 0, Fade,

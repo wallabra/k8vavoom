@@ -476,10 +476,12 @@ void VOpenGLDrawer::WorldDrawing () {
   texinfo_t lastTexinfo;
   lastTexinfo.initLastUsed();
 
+  VRenderLevelDrawer::DrawLists &dls = RendLev->GetCurrentDLS();
+
   // first draw horizons
   {
-    surface_t **surfptr = RendLev->DrawHorizonList.ptr();
-    for (int count = RendLev->DrawHorizonList.length(); count--; ++surfptr) {
+    surface_t **surfptr = dls.DrawHorizonList.ptr();
+    for (int count = dls.DrawHorizonList.length(); count--; ++surfptr) {
       surface_t *surf = *surfptr;
       if (!surf->plvisible) continue; // viewer is in back side or on plane
       DoHorizonPolygon(surf);
@@ -490,8 +492,8 @@ void VOpenGLDrawer::WorldDrawing () {
   {
     SurfZBuf.Activate();
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-    surface_t **surfptr = RendLev->DrawSkyList.ptr();
-    for (int count = RendLev->DrawSkyList.length(); count--; ++surfptr) {
+    surface_t **surfptr = dls.DrawSkyList.ptr();
+    for (int count = dls.DrawSkyList.length(); count--; ++surfptr) {
       surface_t *surf = *surfptr;
       if (!surf->plvisible) continue; // viewer is in back side or on plane
       if (surf->count < 3) continue;
@@ -505,11 +507,11 @@ void VOpenGLDrawer::WorldDrawing () {
   }
 
   // draw surfaces without lightmaps
-  if (RendLev->DrawSurfListSolid.length() != 0 || RendLev->DrawSurfListMasked.length() != 0) {
+  if (dls.DrawSurfListSolid.length() != 0 || dls.DrawSurfListMasked.length() != 0) {
     // sort by texture, to minimise texture switches
     if (gl_sort_textures) {
-      timsort_r(RendLev->DrawSurfListSolid.ptr(), RendLev->DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmp, nullptr);
-      timsort_r(RendLev->DrawSurfListMasked.ptr(), RendLev->DrawSurfListMasked.length(), sizeof(surface_t *), &drawListItemCmp, nullptr);
+      timsort_r(dls.DrawSurfListSolid.ptr(), dls.DrawSurfListSolid.length(), sizeof(surface_t *), &drawListItemCmp, nullptr);
+      timsort_r(dls.DrawSurfListMasked.ptr(), dls.DrawSurfListMasked.length(), sizeof(surface_t *), &drawListItemCmp, nullptr);
     }
 
     SurfSimpleMasked.Activate();
@@ -526,7 +528,7 @@ void VOpenGLDrawer::WorldDrawing () {
 
     // normal
     lastTexinfo.resetLastUsed();
-    for (auto &&surf : RendLev->DrawSurfListSolid) {
+    for (auto &&surf : dls.DrawSurfListSolid) {
       if (!surf->plvisible) continue; // viewer is in back side or on plane
       const texinfo_t *currTexinfo = surf->texinfo;
       if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
@@ -538,7 +540,7 @@ void VOpenGLDrawer::WorldDrawing () {
 
     // masked
     lastTexinfo.resetLastUsed();
-    for (auto &&surf : RendLev->DrawSurfListMasked) {
+    for (auto &&surf : dls.DrawSurfListMasked) {
       if (!surf->plvisible) continue; // viewer is in back side or on plane
       const texinfo_t *currTexinfo = surf->texinfo;
       if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
