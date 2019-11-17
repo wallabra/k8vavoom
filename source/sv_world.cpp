@@ -1149,11 +1149,14 @@ sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, bool dbgDump
     //best = last;
   } else if (bestFloor) {
     // floor hit should use lighting from the upper region
+    /*
     for (best = best->next; best; best = best->next) {
       if (best->regflags&(sec_region_t::RF_OnlyVisual|sec_region_t::RF_NonSolid)) continue;
       break;
     }
     if (!best) best = sector->eregions;
+    */
+    best = SV_GetNextRegion(sector, best);
   }
 
   if (dbgDump) {
@@ -1227,11 +1230,22 @@ sec_region_t *SV_PointRegionLightSub (subsector_t *sub, const TVec &p, sec_regio
   if (bestfit) *bestfit = best;
   if (wasHit && bestFloor) {
     // floor hit should use lighting from the upper region
+    /*
     for (best = best->next; best; best = best->next) {
       if (best->regflags&(sec_region_t::RF_OnlyVisual|sec_region_t::RF_NonSolid)) continue;
       break;
     }
     if (!best) best = sector->eregions;
+    */
+    /*
+    if (bestDist == 0 && best->efloor.GetPointZClamped(p) == best->eceiling.GetPointZClamped(p)) {
+    } else
+    */
+    {
+      if (dbgDump) { GCon->Logf(NAME_Debug, " * getting upper region due to floor hit; z=%g; fz=%g", p.z, best->efloor.GetPointZClamped(p)); }
+      best = SV_GetNextRegion(sector, best);
+      if (dbgDump) { GCon->Logf(NAME_Debug, " * got upper region due to floor hit; z=%g; fz=%g", p.z, best->efloor.GetPointZClamped(p)); }
+    }
   }
 
   //if (dbgDump) GCon->Logf(NAME_Debug, "params: lightlevel=%d; lightcolor=0x%08x; fade=0x%08x; contents=%d", best->params->lightlevel, (unsigned)best->params->LightColor, best->params->Fade, best->params->contents);
@@ -1328,6 +1342,74 @@ int SV_PointContents (sector_t *sector, const TVec &p, bool dbgDump) {
 
   if (dbgDump) { GCon->Logf(NAME_Debug, "SVP: best region"); DumpRegion(best); }
   return best->params->contents;
+}
+
+
+//==========================================================================
+//
+//  SV_GetPrevRegion
+//
+//  the one that is lower
+//
+//==========================================================================
+/*
+sec_region_t *SV_GetPrevRegion (sector_t *sector, sec_region_t *srcreg) {
+  vassert(sector);
+  if (!srcreg) return sector->eregions;
+  const float floordist = srcreg->efloor.GetDist();
+  float bestdist = 0.0f;
+  sec_region_t *bestreg = nullptr;
+  float lowestdist = 0.0f;
+  sec_region_t *lowestreg = nullptr;
+  for (sec_region_t *reg = sector->eregions; reg; reg = reg->next) {
+    if (reg == srcreg || (reg->regflags&sec_region_t::RF_OnlyVisual) != 0) continue;
+    const float cd = -reg->eceiling.GetDist(); // for ceiling it is negative
+    if (cd <= floordist) continue; // too low
+    if (!bestreg || floordist-cd < bestdist) {
+      bestdist = floordist-cd;
+      bestreg = reg;
+    }
+  }
+  return (bestreg ? bestreg : sector->eregions);
+}
+*/
+
+
+//==========================================================================
+//
+//  SV_GetNextRegion
+//
+//  the one that is higher
+//  valid only if `srcreg` is solid and insane
+//
+//==========================================================================
+sec_region_t *SV_GetNextRegion (sector_t *sector, sec_region_t *srcreg) {
+  vassert(sector);
+  if (!srcreg || !sector->eregions->next) return sector->eregions;
+  // get distance to ceiling
+  // we want the best sector that is higher
+  const float updist = srcreg->eceiling.GetRealDist();
+  float bestdist = 0.0f;
+  sec_region_t *bestreg = nullptr;
+  for (sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
+    if (reg == srcreg || (reg->regflags&(sec_region_t::RF_NonSolid|sec_region_t::RF_OnlyVisual|sec_region_t::RF_SaneRegion|sec_region_t::RF_BaseRegion)) != 0) continue;
+    // "best" means:
+    //   for touching region: distance to ceiling
+    //   for non-touching region: distance to floor
+    const float cdist = reg->eceiling.GetRealDist();
+    if (cdist <= updist) continue; // too low
+    const float fdist = reg->efloor.GetRealDist();
+    float dist =
+      fdist <= updist ?
+        cdist-updist : // touching
+        fdist-updist; // above
+    if (dist <= 0.0f) continue; // just in case
+    if (!bestreg || dist < bestdist) {
+      bestdist = dist;
+      bestreg = reg;
+    }
+  }
+  return (bestreg ? bestreg : sector->eregions);
 }
 
 

@@ -375,6 +375,11 @@ sec_region_t *SV_PointRegionLight (sector_t *sector, const TVec &p, bool dbgDump
 // returns region to use as light param source, and additionally "best fit" region
 sec_region_t *SV_PointRegionLightSub (subsector_t *sub, const TVec &p, sec_region_t **bestfit, bool dbgDump=false);
 
+// the one that is lower
+//sec_region_t *SV_GetPrevRegion (sector_t *sector, sec_region_t *srcreg);
+// the one that is higher
+sec_region_t *SV_GetNextRegion (sector_t *sector, sec_region_t *srcreg);
+
 sec_surface_t *SV_DebugFindNearestFloor (subsector_t *sub, const TVec &p);
 
 // find region for thing, and return best floor/ceiling

@@ -32,6 +32,7 @@
 
 #include "gamedefs.h"
 #include "r_local.h"
+#include "../sv_local.h"
 
 #define HORIZON_SURF_SIZE  (sizeof(surface_t)+sizeof(TVec)*3)
 
@@ -337,9 +338,12 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
     SFT_Ceiling,
   };
 
-  int surfaceType = SFT_Wall;
-  if (surfs->plane.normal.z != 0.0f) surfaceType = (surfs->plane.normal.z > 0.0f ? SFT_Floor : SFT_Ceiling);
+  const int surfaceType =
+    surfs->plane.normal.z == 0.0f ? SFT_Wall :
+    (surfs->plane.normal.z > 0.0f ? SFT_Floor : SFT_Ceiling);
 
+  // calculate lighting for floors and ceilings
+  //TODO: do this in 3d floor setup
   sec_params_t *LightParams;
   if (LightSourceSector < 0 || LightSourceSector >= Level->NumSectors) {
     LightParams = secregion->params;
@@ -347,8 +351,11 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
     if (surfaceType == SFT_Floor && secregion->extraline &&
         (secregion->regflags&(sec_region_t::RF_NonSolid|sec_region_t::RF_OnlyVisual|sec_region_t::RF_SaneRegion|sec_region_t::RF_BaseRegion)) == 0)
     {
+      /*
       sec_region_t *nreg = secregion->next;
       while (nreg && (nreg->regflags&(sec_region_t::RF_NonSolid|sec_region_t::RF_OnlyVisual|sec_region_t::RF_SaneRegion|sec_region_t::RF_BaseRegion)) != 0) nreg = nreg->next;
+      */
+      sec_region_t *nreg = SV_GetNextRegion(sub->sector, secregion);
       if (nreg) {
         /*
         GCon->Logf(NAME_Debug, "sub #%d: has NEXT!", (int)(ptrdiff_t)(sub-&Level->Subsectors[0]));

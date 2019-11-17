@@ -446,6 +446,9 @@ struct TSecPlaneRef {
   inline float GetDist () const { return (!flipped ? splane->dist : -splane->dist); }
   inline TPlane GetPlane () const { TPlane res; res.normal = (!flipped ? splane->normal : -splane->normal); res.dist = (!flipped ? splane->dist : -splane->dist); return res; }
 
+  // valid only for horizontal planes!
+  inline float GetRealDist () const { return (!flipped ? splane->dist*splane->normal.z : (-splane->dist)*(-splane->normal.z)); }
+
   inline void Flip () { flipped = !flipped; }
 
   // get z of point with given x and y coords

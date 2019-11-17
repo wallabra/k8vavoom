@@ -235,6 +235,7 @@ COMMAND(my_sector_info) {
 
   sector_t *sec;
 
+  /*
   if (Args.length() > 3) {
     int snum;
     if (!VStr::convertInt(*Args[1], &snum)) {
@@ -246,7 +247,9 @@ COMMAND(my_sector_info) {
       return;
     }
     sec = &Player->Level->XLevel->Sectors[snum];
-  } else {
+  } else
+  */
+  {
     sec = Player->MO->Sector;
   }
 
@@ -269,7 +272,11 @@ COMMAND(my_sector_info) {
   int ct = SV_PointContents(sec, Player->MO->Origin, true);
   GCon->Logf("contents: %d", ct);
 
-  if (Args.length() > 1) Player->Level->XLevel->dumpSectorRegions(sec);
+  if (Args.length() > 1) {
+    GCon->Log("*** REGION DUMP START ***");
+    Player->Level->XLevel->dumpSectorRegions(sec);
+    GCon->Log("*** REGION DUMP END ***");
+  }
   if (Args.length() > 2) {
     TSecPlaneRef floor, ceiling;
     SV_FindGapFloorCeiling(sec, Player->MO->Origin, Player->MO->Height, floor, ceiling, true);
