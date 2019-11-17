@@ -494,7 +494,8 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
   glBindTexture(GL_TEXTURE_2D, ambLightFBO.getColorTid());
   SelectTexture(0);
   ShadowsModelTextures.SetAmbLightTexture(1);
-  ShadowsModelTextures.SetScreenSize((float)mainFBO.getWidth(), (float)mainFBO.getHeight());
+  auto mfbo = GetMainFBO();
+  ShadowsModelTextures.SetScreenSize((float)mfbo->getWidth(), (float)mfbo->getHeight());
   //ShadowsModelTextures.UploadChangedUniforms();
 
   //!ShadowsModelTextures.SetNormalToWorldMat(NormalMat[0]);

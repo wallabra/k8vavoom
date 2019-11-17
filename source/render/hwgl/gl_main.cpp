@@ -278,6 +278,10 @@ VOpenGLDrawer::VOpenGLDrawer ()
   , surfList()
   , mainFBO()
   , ambLightFBO()
+  //, cameraFBO[0]()
+  //, cameraFBO[1]()
+  , currCameraFBO(0)
+  , currMainFBO(-1)
 {
   currentActiveShader = nullptr;
   lastgamma = 0;
@@ -430,6 +434,8 @@ void VOpenGLDrawer::DeinitResolution () {
   CreatedShaderObjects.Clear();
   // destroy FBOs
   mainFBO.destroy();
+  cameraFBO[0].destroy();
+  cameraFBO[1].destroy();
   //secondFBO.destroy();
   ambLightFBO.destroy();
   DeleteLightmapAtlases();
@@ -789,6 +795,20 @@ void VOpenGLDrawer::InitResolution () {
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
   stencilBufferDirty = false;
 
+  for (int f = 0; f < 2; ++f) {
+    cameraFBO[f].create(this, ScreenWidth-16, ScreenHeight-36, true); // create depthstencil
+
+    cameraFBO[f].activate();
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Black Background
+    glClearDepth(!useReverseZ ? 1.0f : 0.0f);
+    if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); // actually, this is better even for "normal" cases
+    RestoreDepthFunc();
+    glDepthRange(0.0f, 1.0f);
+
+    glClearStencil(0);
+    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+  }
+
   // allocate ambient FBO object
   ambLightFBO.create(this, ScreenWidth, ScreenHeight); // create depthstencil
 
@@ -901,7 +921,7 @@ void VOpenGLDrawer::StartUpdate (bool allowClear) {
   //glFinish();
   VRenderLevelShared::ResetPortalPool();
 
-  mainFBO.activate();
+  ActivateMainFBO();
 
   if (allowClear && clear) glClear(GL_COLOR_BUFFER_BIT);
 
@@ -926,10 +946,12 @@ void VOpenGLDrawer::StartUpdate (bool allowClear) {
 //
 //==========================================================================
 void VOpenGLDrawer::FinishUpdate () {
-  mainFBO.blitToScreen();
+  //mainFBO.blitToScreen();
+  GetMainFBO()->blitToScreen();
   glOrtho(0, ScreenWidth, ScreenHeight, 0, -666, 666);
   glBindTexture(GL_TEXTURE_2D, 0);
-  mainFBO.activate();
+  SetMainFBO();
+  //ActivateMainFBO();
   //glFlush();
 }
 
@@ -1222,6 +1244,108 @@ bool VOpenGLDrawer::UseFrustumFarClip () {
 
 //==========================================================================
 //
+//  VOpenGLDrawer::SetMainFBO
+//
+//==========================================================================
+void VOpenGLDrawer::SetMainFBO () {
+  if (currMainFBO != -1) {
+    currMainFBO = -1;
+    mainFBO.activate();
+    stencilBufferDirty = true;
+  }
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::SetCameraFBO
+//
+//==========================================================================
+void VOpenGLDrawer::SetCameraFBO (bool active) {
+  int fbonum = currCameraFBO^(int)(!active);
+  if (currMainFBO != fbonum) {
+    currMainFBO = fbonum;
+    cameraFBO[fbonum].activate();
+    stencilBufferDirty = true;
+  }
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::SwitchCameraFBO
+//
+//  do not call while camera FBO is active!
+//
+//==========================================================================
+void VOpenGLDrawer::SwitchCameraFBO () {
+  currCameraFBO ^= 1;
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::SetMaxCameraFBOSize
+//
+//==========================================================================
+void VOpenGLDrawer::SetMaxCameraFBOSize (int wdt, int hgt) {
+  if (wdt < 1 || hgt < 1) {
+    wdt = ScreenWidth;
+    hgt = ScreenHeight;
+  }
+
+  // just in case
+  currCameraFBO = 0;
+  currMainFBO = 0;
+  mainFBO.activate();
+
+  for (int f = 0; f < 2; ++f) {
+    if (cameraFBO[f].getWidth() != wdt || cameraFBO[f].getHeight() != hgt) {
+      cameraFBO[f].destroy();
+      cameraFBO[f].create(this, wdt, hgt, true); // create depthstencil
+
+      cameraFBO[f].activate();
+      glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Black Background
+      glClearDepth(!useReverseZ ? 1.0f : 0.0f);
+      if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); // actually, this is better even for "normal" cases
+      RestoreDepthFunc();
+      glDepthRange(0.0f, 1.0f);
+
+      glClearStencil(0);
+      glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+    }
+  }
+
+  mainFBO.activate();
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::ActivateMainFBO
+//
+//==========================================================================
+void VOpenGLDrawer::ActivateMainFBO () {
+  if (currMainFBO < 0) {
+    mainFBO.activate();
+  } else {
+    cameraFBO[currMainFBO].activate();
+  }
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::GetMainFBO
+//
+//==========================================================================
+VOpenGLDrawer::FBO *VOpenGLDrawer::GetMainFBO () {
+  return (currMainFBO < 0 ? &mainFBO : &cameraFBO[currMainFBO]);
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::SetupView
 //
 //==========================================================================
@@ -1362,9 +1486,9 @@ void VOpenGLDrawer::EndView () {
 //
 //==========================================================================
 void *VOpenGLDrawer::ReadScreen (int *bpp, bool *bot2top) {
-  glBindTexture(GL_TEXTURE_2D, mainFBO.getColorTid());
+  glBindTexture(GL_TEXTURE_2D, GetMainFBO()->getColorTid());
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  void *dst = Z_Malloc(mainFBO.getWidth()*mainFBO.getHeight()*3);
+  void *dst = Z_Malloc(GetMainFBO()->getWidth()*GetMainFBO()->getHeight()*3);
   glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, dst);
   glBindTexture(GL_TEXTURE_2D, 0);
   *bpp = 24;
@@ -1384,32 +1508,34 @@ void VOpenGLDrawer::ReadBackScreen (int Width, int Height, rgba_t *Dest) {
   //vassert(Height > 0);
   vassert(Dest);
 
-  if (ScreenWidth < 1 || ScreenHeight < 1) {
+  auto fbo = GetMainFBO();
+
+  if (fbo->getWidth() < 1 || fbo->getHeight() < 1) {
     memset((void *)Dest, 0, Width*Height*sizeof(rgba_t));
     return;
   }
 
-  if (readBackTempBufSize < ScreenWidth*ScreenHeight*4) {
-    readBackTempBufSize = ScreenWidth*ScreenHeight*4;
+  if (readBackTempBufSize < fbo->getWidth()*fbo->getHeight()*4) {
+    readBackTempBufSize = fbo->getWidth()*fbo->getHeight()*4;
     readBackTempBuf = (vuint8 *)Z_Realloc(readBackTempBuf, readBackTempBufSize);
   }
 
-  glBindTexture(GL_TEXTURE_2D, mainFBO.getColorTid());
+  glBindTexture(GL_TEXTURE_2D, GetMainFBO()->getColorTid());
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   //rgba_t *temp = new rgba_t[ScreenWidth*ScreenHeight];
   rgba_t *temp = (rgba_t *)readBackTempBuf;
   vassert(temp);
   glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp);
   glBindTexture(GL_TEXTURE_2D, 0);
-  if (Width <= ScreenWidth) {
+  if (Width <= fbo->getWidth()) {
     size_t blen = Width*sizeof(rgba_t);
-    for (int y = 0; y < Height; ++y) memcpy(Dest+y*Width, temp+(ScreenHeight-y-1)*ScreenWidth, blen);
+    for (int y = 0; y < Height; ++y) memcpy(Dest+y*Width, temp+(fbo->getHeight()-y-1)*fbo->getWidth(), blen);
   } else {
-    size_t blen = ScreenWidth*sizeof(rgba_t);
+    size_t blen = fbo->getWidth()*sizeof(rgba_t);
     size_t restlen = Width*sizeof(rgba_t)-blen;
     for (int y = 0; y < Height; ++y) {
-      memcpy(Dest+y*Width, temp+(ScreenHeight-y-1)*ScreenWidth, blen);
-      memset((void *)(Dest+y*Width+ScreenWidth), 0, restlen);
+      memcpy(Dest+y*Width, temp+(fbo->getHeight()-y-1)*fbo->getWidth(), blen);
+      memset((void *)(Dest+y*Width+fbo->getWidth()), 0, restlen);
     }
   }
 }

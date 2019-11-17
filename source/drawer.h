@@ -319,6 +319,12 @@ public:
   virtual void WorldDrawing () = 0;
   virtual void EndView () = 0;
 
+  virtual void SetMainFBO () = 0;
+  virtual void SetCameraFBO (bool active) = 0;
+  virtual void SwitchCameraFBO () = 0; // do not call while camera FBO is active!
+  // do not call when camera FBO is active!
+  virtual void SetMaxCameraFBOSize (int wdt, int hgt) = 0;
+
   // texture stuff
   virtual void PrecacheTexture (VTexture *) = 0;
   virtual void FlushOneTexture (VTexture *tex, bool forced=false) = 0; // unload one texture

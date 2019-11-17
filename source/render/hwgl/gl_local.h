@@ -520,6 +520,9 @@ public:
     FBO ();
     ~FBO ();
 
+    FBO (const FBO &) = delete;
+    FBO &operator = (const FBO &) = delete;
+
     inline bool isValid () const { return (mOwner != nullptr); }
     inline int getWidth () const { return mWidth; }
     inline int getHeight () const { return mHeight; }
@@ -882,6 +885,13 @@ protected:
 
   FBO mainFBO;
   FBO ambLightFBO; // we'll copy ambient light texture here, so we can use it in decal renderer to light decals
+  // view (texture) camera updates will use this to render camera views
+  // as reading from rendered texture is very slow, we will flip-flop FBOs,
+  // using `current` to render new camera views, and `current^1` to get previous ones
+  FBO cameraFBO[2];
+  int currCameraFBO;
+  // current "main" fbo: <0: `mainFBO`, otherwise camera FBO
+  int currMainFBO;
 
   GLint maxTexSize;
 
@@ -953,6 +963,16 @@ protected:
   void UnloadModels ();
 
   void SetupTextureFiltering (int level); // level is taken from the appropriate cvar
+
+public:
+  virtual void SetMainFBO () override;
+  virtual void SetCameraFBO (bool active) override;
+  virtual void SwitchCameraFBO () override; // do not call while camera FBO is active!
+  // do not call when camera FBO is active!
+  virtual void SetMaxCameraFBOSize (int wdt, int hgt) override;
+
+  void ActivateMainFBO ();
+  FBO *GetMainFBO ();
 
 public:
 #define VGLAPIPTR(x)  x##_t p_##x

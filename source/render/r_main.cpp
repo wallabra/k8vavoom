@@ -512,6 +512,20 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   HasBackLit = false;
   doShadows = false;
   MirrorClipSegs = false;
+
+  if (Drawer) {
+    int maxw = -1, maxh = -1;
+    for (auto &&camtexinfo : Level->CameraTextures) {
+      VTexture *BaseTex = GTextureManager[camtexinfo.TexNum];
+      if (!BaseTex || !BaseTex->bIsCameraTexture) continue;
+      maxw = max2(maxw, BaseTex->Width);
+      maxh = max2(maxh, BaseTex->Height);
+    }
+    if (maxw > 1 && maxh > 1) {
+      GCon->Logf("Created camera FBO, max size is (%dx%d)", maxw, maxh);
+      //Drawer->SetMaxCameraFBOSize(maxw, maxh);
+    }
+  }
 }
 
 
@@ -1645,10 +1659,18 @@ void VRenderLevelShared::RenderPlayerView () {
   // update camera textures that were visible in the last frame
   // rendering camera texture sets `NextUpdateTime`
   //GCon->Logf(NAME_Debug, "CAMTEX: %d", Level->CameraTextures.length());
+  if (lastCamTexUpdatedNum > 0) {
+    //GCon->Logf(NAME_Debug, "copying camera texture #%d", lastCamTexUpdatedNum);
+    Drawer->SwitchCameraFBO();
+    CopyCameraTexture(lastCamTexUpdatedNum);
+    lastCamTexUpdatedNum = -1;
+  }
   for (auto &&camtexinfo : Level->CameraTextures) {
     // this updates only cameras with proper `NextUpdateTime`
     if (UpdateCameraTexture(camtexinfo.Camera, camtexinfo.TexNum, camtexinfo.FOV)) {
       // do not update more than one camera texture per frame
+      lastCamTexUpdatedNum = camtexinfo.TexNum;
+      //GCon->Logf(NAME_Debug, "updated camera texture #%d", lastCamTexUpdatedNum);
       break;
     }
   }
@@ -1698,15 +1720,32 @@ bool VRenderLevelShared::UpdateCameraTexture (VEntity *Camera, int TexNum, int F
   refdef_t CameraRefDef;
   CameraRefDef.DrawCamera = true;
 
+  Drawer->SetCameraFBO(true); // set active camera FBO
   SetupCameraFrame(Camera, Tex, FOV, &CameraRefDef);
-
   RenderScene(&CameraRefDef, nullptr);
-
   Drawer->EndView();
 
-  Tex->CopyImage();
+  //Tex->CopyImage();
+  Drawer->SetMainFBO(); // restore main FBO
 
   return true;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::CopyCameraTexture
+//
+//==========================================================================
+void VRenderLevelShared::CopyCameraTexture (int TexNum) {
+  VTexture *BaseTex = GTextureManager[TexNum];
+  if (!BaseTex || !BaseTex->bIsCameraTexture) return;
+
+  VCameraTexture *Tex = (VCameraTexture *)BaseTex;
+
+  Drawer->SetCameraFBO(true); // set active camera FBO
+  Tex->CopyImage();
+  Drawer->SetMainFBO(); // restore main FBO
 }
 
 
