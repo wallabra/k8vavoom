@@ -122,11 +122,12 @@ final void SetOrigin2 (TVec origin, optional bool properFloorCheck, optional flo
     // if we are way higher than a floor, check for 3d floors.
     // this (coincidentally) also checks if a thing fits into a gap for
     // newly spawned entities. i hope it won't break anything.
+    // solid non-monsters are decorations (usually); normalize their gap without world checking
     if (!properFloorCheck && Radius > 4 && // arbitrary limit
         !bNoInteraction && !bNoBlockmap && !bNoSector &&
-        Origin.z > FloorZ)
+        Origin.z-FloorZ > 0)
     {
-      GetFloorAndCeilingEx(out tmtrace, Origin, collideWorld:true);
+      GetFloorAndCeilingEx(out tmtrace, Origin, collideWorld:(bMonster || bIsPlayer || !bSolid));
       if (FloorZ < tmtrace.FloorZ && tmtrace.FloorZ <= Origin.z) {
         #ifdef K8_DEVELOPER
         // `moreHeight` specified only for map things
