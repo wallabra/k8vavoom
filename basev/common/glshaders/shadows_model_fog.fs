@@ -14,13 +14,28 @@ void main () {
   //if (Dist <= 0.0) discard; // wtf?!
 
   vec4 TexColor = texture2D(Texture, TextureCoordinate);
+  float newa = TexColor.a*FogColor.a;
   if (!AllowTransparency) {
     if (TexColor.a < ALPHA_MASKED) discard;
+    //if (newa < ALPHA_MASKED) discard;
   } else {
     if (TexColor.a < ALPHA_MIN) discard;
+    if (newa < ALPHA_MIN) discard;
   }
 
-  vec4 FinalColor = TexColor;
+  //vec4 FinalColor = TexColor;
+  //TexColor.a *= FogColor.a;
+  // convert to premultiplied
+  vec4 FinalColor;
+  FinalColor.a = newa;
+  FinalColor.rgb = clamp(TexColor.rgb*FinalColor.a, 0.0, 1.0);
+  /*
+  if (!AllowTransparency) {
+    if (FinalColor.a < ALPHA_MASKED) discard;
+  } else {
+    if (FinalColor.a < ALPHA_MIN) discard;
+  }
+  */
 #ifdef VAVOOM_UNUSED
 #ifdef VAVOOM_REVERSE_Z
   float z = 1.0/gl_FragCoord.w;

@@ -352,6 +352,7 @@ void VRenderLevelShadowVolume::RenderMobjsAmbient () {
 
     if (SetupRenderStyleAndTime(ent, RendStyle, Alpha, Additive, TimeFrac)) {
       //GCon->Logf("  <%s>", *ent->GetClass()->GetFullName());
+      if (Alpha < 1.0f) continue;
 
       // setup lighting
       vuint32 light;
@@ -394,6 +395,7 @@ void VRenderLevelShadowVolume::RenderMobjsTextures () {
     if (doDump) GCon->Logf("  <%s> (%f,%f,%f)", *ent->GetClass()->GetFullName(), ent->Origin.x, ent->Origin.y, ent->Origin.z);
     //RenderThingTextures(ent);
     if (SetupRenderStyleAndTime(ent, RendStyle, Alpha, Additive, TimeFrac)) {
+      if (Alpha < 1.0f) continue;
       DrawEntityModel(ent, 0xffffffff, 0, Alpha, Additive, TimeFrac, RPASS_Textures);
     }
   }
@@ -416,7 +418,7 @@ void VRenderLevelShadowVolume::RenderMobjsFog () {
     //RenderThingFog(ent);
     if (SetupRenderStyleAndTime(ent, RendStyle, Alpha, Additive, TimeFrac)) {
       vuint32 Fade = GetFade(SV_PointRegionLight(ent->Sector, ent->Origin));
-      if (Fade) {
+      if (Fade || Alpha < 1.0f) {
         DrawEntityModel(ent, 0xffffffff, Fade, Alpha, Additive, TimeFrac, RPASS_Fog);
       }
     }
