@@ -254,8 +254,8 @@ void VOpenGLDrawer::DrawConsoleBackground (int h) {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
   glBegin(GL_QUADS);
     glVertex2f(0, 0);
-    glVertex2f(ScreenWidth, 0);
-    glVertex2f(ScreenWidth, h);
+    glVertex2f(getWidth(), 0);
+    glVertex2f(getWidth(), h);
     glVertex2f(0, h);
   glEnd();
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);

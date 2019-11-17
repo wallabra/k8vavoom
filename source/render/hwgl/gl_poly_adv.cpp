@@ -505,14 +505,14 @@ void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float R
       glStencilFunc(GL_ALWAYS, 0x0, 0xff);
       glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO);
 
-      glOrtho(0, ScreenWidth, ScreenHeight, 0, -666, 666);
+      glOrtho(0, Drawer->getWidth(), Drawer->getHeight(), 0, -666, 666);
       //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
       //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       glBegin(GL_QUADS);
         glVertex2i(0, 0);
-        glVertex2i(ScreenWidth, 0);
-        glVertex2i(ScreenWidth, ScreenHeight);
-        glVertex2i(0, ScreenHeight);
+        glVertex2i(Drawer->getWidth(), 0);
+        glVertex2i(Drawer->getWidth(), Drawer->getHeight());
+        glVertex2i(0, Drawer->getHeight());
       glEnd();
       //glBindTexture(GL_TEXTURE_2D, 0);
 

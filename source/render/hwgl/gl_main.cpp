@@ -305,6 +305,9 @@ VOpenGLDrawer::VOpenGLDrawer ()
   isShittyGPU = true; // let's play safe
   shittyGPUCheckDone = false; // just in case
   atlasesGenerated = false;
+  currentActiveFBO = nullptr;
+  //cameraFBO[0].mOwner = nullptr;
+  //cameraFBO[1].mOwner = nullptr;
 }
 
 
@@ -314,6 +317,7 @@ VOpenGLDrawer::VOpenGLDrawer ()
 //
 //==========================================================================
 VOpenGLDrawer::~VOpenGLDrawer () {
+  currentActiveFBO = nullptr;
   surfList.clear();
   if (tmpImgBuf0) { Z_Free(tmpImgBuf0); tmpImgBuf0 = nullptr; }
   if (tmpImgBuf1) { Z_Free(tmpImgBuf1); tmpImgBuf1 = nullptr; }
@@ -421,10 +425,32 @@ void VOpenGLDrawer::SetupTextureFiltering (int level) {
 
 //==========================================================================
 //
+//  VOpenGLDrawer::ReactivateCurrentFBO
+//
+//==========================================================================
+void VOpenGLDrawer::ReactivateCurrentFBO () {
+  if (currentActiveFBO) {
+    glBindFramebuffer(GL_FRAMEBUFFER, currentActiveFBO->getFBOid());
+    ScrWdt = currentActiveFBO->getWidth();
+    ScrHgt = currentActiveFBO->getHeight();
+  } else {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    ScrWdt = ScreenWidth;
+    ScrHgt = ScreenHeight;
+  }
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::DeinitResolution
 //
 //==========================================================================
 void VOpenGLDrawer::DeinitResolution () {
+  if (currentActiveFBO != nullptr) {
+    currentActiveFBO = nullptr;
+    ReactivateCurrentFBO();
+  }
   // unload shaders
   DestroyShaders();
   // delete all created shader objects
@@ -451,6 +477,11 @@ void VOpenGLDrawer::DeinitResolution () {
 //
 //==========================================================================
 void VOpenGLDrawer::InitResolution () {
+  if (currentActiveFBO != nullptr) {
+    currentActiveFBO = nullptr;
+    ReactivateCurrentFBO();
+  }
+
   GCon->Logf(NAME_Init, "Setting up new resolution: %dx%d", ScreenWidth, ScreenHeight);
 
   if (gl_dump_vendor) {
@@ -675,7 +706,6 @@ void VOpenGLDrawer::InitResolution () {
       }
     }
 
-
     GLint tmp;
     GCon->Logf(NAME_Init, "Shading language version: %s", glGetString(GL_SHADING_LANGUAGE_VERSION_ARB));
     glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &tmp);
@@ -796,7 +826,7 @@ void VOpenGLDrawer::InitResolution () {
   stencilBufferDirty = false;
 
   for (int f = 0; f < 2; ++f) {
-    cameraFBO[f].create(this, ScreenWidth-16, ScreenHeight-36, true); // create depthstencil
+    cameraFBO[f].create(this, ScreenWidth, ScreenHeight, true); // create depthstencil
 
     cameraFBO[f].activate();
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Black Background
@@ -812,6 +842,7 @@ void VOpenGLDrawer::InitResolution () {
   // allocate ambient FBO object
   ambLightFBO.create(this, ScreenWidth, ScreenHeight); // create depthstencil
 
+  mainFBO.activate();
 
   // init some defaults
   glBindTexture(GL_TEXTURE_2D, 0);
@@ -855,6 +886,12 @@ void VOpenGLDrawer::InitResolution () {
 
   mInitialized = true;
 
+  currCameraFBO = 0;
+  currMainFBO = -1;
+
+  currentActiveFBO = nullptr;
+  ReactivateCurrentFBO();
+
   callICB(VCB_InitResolution);
 }
 
@@ -892,11 +929,11 @@ bool VOpenGLDrawer::SupportsShadowVolumeRendering () {
 //
 //==========================================================================
 void VOpenGLDrawer::Setup2D () {
-  glViewport(0, 0, ScreenWidth, ScreenHeight);
+  glViewport(0, 0, getWidth(), getHeight());
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glOrtho(0, ScreenWidth, ScreenHeight, 0, -666, 666);
+  glOrtho(0, getWidth(), getHeight(), 0, -666, 666);
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
@@ -948,9 +985,10 @@ void VOpenGLDrawer::StartUpdate (bool allowClear) {
 void VOpenGLDrawer::FinishUpdate () {
   //mainFBO.blitToScreen();
   GetMainFBO()->blitToScreen();
-  glOrtho(0, ScreenWidth, ScreenHeight, 0, -666, 666);
   glBindTexture(GL_TEXTURE_2D, 0);
   SetMainFBO();
+  glBindTexture(GL_TEXTURE_2D, 0);
+  glOrtho(0, getWidth(), getHeight(), 0, -666, 666);
   //ActivateMainFBO();
   //glFlush();
 }
@@ -1222,7 +1260,7 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
 //
 //==========================================================================
 void VOpenGLDrawer::ResetScissor () {
-  glScissor(0, 0, ScreenWidth, ScreenHeight);
+  glScissor(0, 0, getWidth(), getHeight());
   glDisable(GL_SCISSOR_TEST);
   if (hasBoundsTest) glDisable(GL_DEPTH_BOUNDS_TEST_EXT);
   currentSVScissor[SCS_MINX] = currentSVScissor[SCS_MINY] = 0;
@@ -1296,16 +1334,19 @@ void VOpenGLDrawer::SetMaxCameraFBOSize (int wdt, int hgt) {
 
   // just in case
   currCameraFBO = 0;
-  currMainFBO = 0;
-  mainFBO.activate();
+  currMainFBO = -1;
+  currentActiveFBO = nullptr;
+  ReactivateCurrentFBO();
 
   for (int f = 0; f < 2; ++f) {
     if (cameraFBO[f].getWidth() != wdt || cameraFBO[f].getHeight() != hgt) {
+      glBindFramebuffer(GL_FRAMEBUFFER, 0);
       cameraFBO[f].destroy();
       cameraFBO[f].create(this, wdt, hgt, true); // create depthstencil
 
-      cameraFBO[f].activate();
-      glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Black Background
+      //cameraFBO[f].activate();
+      glBindFramebuffer(GL_FRAMEBUFFER, cameraFBO[f].getFBOid());
+      glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // black background
       glClearDepth(!useReverseZ ? 1.0f : 0.0f);
       if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); // actually, this is better even for "normal" cases
       RestoreDepthFunc();
@@ -1316,6 +1357,7 @@ void VOpenGLDrawer::SetMaxCameraFBOSize (int wdt, int hgt) {
     }
   }
 
+  currentActiveFBO = nullptr;
   mainFBO.activate();
 }
 
@@ -1390,7 +1432,7 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
   glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
   stencilBufferDirty = false;
 
-  glViewport(rd->x, ScreenHeight-rd->height-rd->y, rd->width, rd->height);
+  glViewport(rd->x, getHeight()-rd->height-rd->y, rd->width, rd->height);
 
   glMatrixMode(GL_PROJECTION);
   glLoadMatrixf(ProjMat[0]);
@@ -1467,15 +1509,18 @@ void VOpenGLDrawer::EndView () {
       (float)((cl->CShift>>24)&255)/255.0f);
     DrawFixedCol.UploadChangedUniforms();
     //glEnable(GL_BLEND);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glDisable(GL_TEXTURE_2D);
 
     glBegin(GL_QUADS);
-    glVertex2f(0, 0);
-    glVertex2f(ScreenWidth, 0);
-    glVertex2f(ScreenWidth, ScreenHeight);
-    glVertex2f(0, ScreenHeight);
+      glVertex2f(0, 0);
+      glVertex2f(getWidth(), 0);
+      glVertex2f(getWidth(), getHeight());
+      glVertex2f(0, getHeight());
     glEnd();
 
     //glDisable(GL_BLEND);
+    glEnable(GL_TEXTURE_2D);
   }
 }
 
@@ -1522,7 +1567,6 @@ void VOpenGLDrawer::ReadBackScreen (int Width, int Height, rgba_t *Dest) {
 
   glBindTexture(GL_TEXTURE_2D, GetMainFBO()->getColorTid());
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  //rgba_t *temp = new rgba_t[ScreenWidth*ScreenHeight];
   rgba_t *temp = (rgba_t *)readBackTempBuf;
   vassert(temp);
   glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp);
@@ -1613,7 +1657,7 @@ void VOpenGLDrawer::DebugRenderScreenRect (int x0, int y0, int x1, int y1, vuint
     (GLfloat)((color&255)/255.0f), ((color>>24)&0xff)/255.0f);
   DrawFixedCol.UploadChangedUniforms();
 
-  glOrtho(0, ScreenWidth, ScreenHeight, 0, -666, 666);
+  glOrtho(0, getWidth(), getHeight(), 0, -666, 666);
   glBegin(GL_QUADS);
     glVertex2i(x0, y0);
     glVertex2i(x1, y0);
@@ -1924,7 +1968,6 @@ VOpenGLDrawer::FBO::~FBO () {
 //==========================================================================
 void VOpenGLDrawer::FBO::destroy () {
   if (!mOwner) return;
-
   mOwner->glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
   mOwner->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
   if (mHasDepthStencil) mOwner->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
@@ -1938,6 +1981,8 @@ void VOpenGLDrawer::FBO::destroy () {
   mHasDepthStencil = false;
   mWidth = 0;
   mHeight = 0;
+  if (mOwner->currentActiveFBO == this) mOwner->currentActiveFBO = nullptr;
+  mOwner->ReactivateCurrentFBO();
   mOwner = nullptr;
 }
 
@@ -1952,6 +1997,7 @@ void VOpenGLDrawer::FBO::create (VOpenGLDrawer *aowner, int awidth, int aheight,
   vassert(aowner);
   vassert(awidth > 0);
   vassert(aheight > 0);
+  vassert(aowner->currentActiveFBO != this);
 
   // allocate FBO object
   aowner->glGenFramebuffers(1, &mFBO);
@@ -2016,6 +2062,8 @@ void VOpenGLDrawer::FBO::create (VOpenGLDrawer *aowner, int awidth, int aheight,
   mWidth = awidth;
   mHeight = aheight;
   mOwner = aowner;
+
+  mOwner->ReactivateCurrentFBO();
 }
 
 
@@ -2025,7 +2073,10 @@ void VOpenGLDrawer::FBO::create (VOpenGLDrawer *aowner, int awidth, int aheight,
 //
 //==========================================================================
 void VOpenGLDrawer::FBO::activate () {
-  if (mOwner) mOwner->glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
+  if (mOwner && mOwner->currentActiveFBO != this) {
+    mOwner->currentActiveFBO = this;
+    mOwner->ReactivateCurrentFBO();
+  }
 }
 
 
@@ -2035,7 +2086,10 @@ void VOpenGLDrawer::FBO::activate () {
 //
 //==========================================================================
 void VOpenGLDrawer::FBO::deactivate () {
-  if (mOwner) mOwner->glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  if (mOwner && mOwner->currentActiveFBO != nullptr) {
+    mOwner->currentActiveFBO = nullptr;
+    mOwner->ReactivateCurrentFBO();
+  }
 }
 
 
@@ -2044,7 +2098,6 @@ void VOpenGLDrawer::FBO::deactivate () {
 //  VOpenGLDrawer::FBO::blitTo
 //
 //  this blits only color info
-//  restore active FBO manually after calling this
 //
 //==========================================================================
 void VOpenGLDrawer::FBO::blitTo (FBO *dest, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
@@ -2108,6 +2161,7 @@ void VOpenGLDrawer::FBO::blitTo (FBO *dest, GLint srcX0, GLint srcY0, GLint srcX
 
     glPopAttrib();
   }
+  mOwner->ReactivateCurrentFBO();
 }
 
 
@@ -2185,7 +2239,7 @@ void VOpenGLDrawer::FBO::blitToScreen () {
       int y0 = (realh-newHeight)/2;
       int x1 = x0+newWidth;
       int y1 = y0+newHeight;
-      //fprintf(stderr, "scaleX=%f; scaleY=%f; scale=%f; real=(%d,%d); screen=(%d,%d); new=(%d,%d); rect:(%d,%d)-(%d,%d)\n", scaleX, scaleY, scale, realw, realh, ScreenWidth, ScreenHeight, newWidth, newHeight, x0, y0, x1, y1);
+      //fprintf(stderr, "scaleX=%f; scaleY=%f; scale=%f; real=(%d,%d); screen=(%d,%d); new=(%d,%d); rect:(%d,%d)-(%d,%d)\n", scaleX, scaleY, scale, realw, realh, getWidth(), getHeight(), newWidth, newHeight, x0, y0, x1, y1);
       glBegin(GL_QUADS);
         glTexCoord2f(0.0f, 1.0f); glVertex2i(x0, y0);
         glTexCoord2f(1.0f, 1.0f); glVertex2i(x1, y0);
@@ -2196,4 +2250,6 @@ void VOpenGLDrawer::FBO::blitToScreen () {
 
     glPopAttrib();
   }
+
+  mOwner->ReactivateCurrentFBO();
 }

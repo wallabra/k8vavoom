@@ -24,6 +24,7 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
+#include "drawer.h"
 #include "net/network.h"
 #include "cl_local.h"
 #include "ui/ui.h"
@@ -764,6 +765,8 @@ COMMAND(VidRendererRestart) {
   if (Source != SRC_Command) return;
   if (!GClLevel) return;
   if (!GClLevel->Renderer) return;
+  R_LdrMsgReset();
+  Drawer->SetMainFBO(); // just in case
   delete GClLevel->Renderer;
   GClLevel->Renderer = nullptr;
   GClLevel->cacheFileBase.clear(); // so we won't store stale lightmaps

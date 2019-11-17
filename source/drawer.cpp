@@ -60,6 +60,32 @@ TArray<void (*) (int phase)> VDrawer::cbInitDeinit;
 
 //==========================================================================
 //
+//  VDrawer::VDrawer
+//
+//==========================================================================
+VDrawer::VDrawer () noexcept
+  : mInitialized(false)
+  , isShittyGPU(false)
+  , shittyGPUCheckDone(false)
+  , useReverseZ(false)
+  , RendLev(nullptr)
+{
+  ScrWdt = max2(1, ScreenWidth);
+  ScrHgt = max2(1, ScreenHeight);
+}
+
+
+//==========================================================================
+//
+//  VDrawer::~VDrawer
+//
+//==========================================================================
+VDrawer::~VDrawer () {
+}
+
+
+//==========================================================================
+//
 //  VDrawer::RegisterICB
 //
 //==========================================================================
@@ -187,14 +213,14 @@ bool R_PBarUpdate (const char *message, int cur, int max, bool forced) {
 /*
 #ifdef CLIENT
   if (Drawer && Drawer->IsInited()) {
-    int wdt = cur*(ScreenWidth-PBarHPad*2)/max;
+    int wdt = cur*(Drawer->getWidth()-PBarHPad*2)/max;
     if (cur < max && wdt == lastPBarWdt) return;
     lastPBarWdt = wdt;
     Drawer->StartUpdate(false); // don't clear
-    Drawer->FillRect(PBarHPad-2, ScreenHeight-PBarVPad-PBarHeight-2, ScreenWidth-PBarHPad+2, ScreenHeight-PBarVPad+2, 0xffffffff);
-    Drawer->FillRect(PBarHPad-1, ScreenHeight-PBarVPad-PBarHeight-1, ScreenWidth-PBarHPad+1, ScreenHeight-PBarVPad+1, 0xff000000);
-    Drawer->FillRect(PBarHPad, ScreenHeight-PBarVPad-PBarHeight, ScreenWidth-PBarHPad, ScreenHeight-PBarVPad, 0xff8f0f00);
-    if (wdt > 0) Drawer->FillRect(PBarHPad, ScreenHeight-PBarVPad-PBarHeight, PBarHPad+wdt, ScreenHeight-PBarVPad, 0xffff7f00);
+    Drawer->FillRect(PBarHPad-2, Drawer->getHeight()-PBarVPad-PBarHeight-2, Drawer->getWidth()-PBarHPad+2, Drawer->getHeight()-PBarVPad+2, 0xffffffff);
+    Drawer->FillRect(PBarHPad-1, Drawer->getHeight()-PBarVPad-PBarHeight-1, Drawer->getWidth()-PBarHPad+1, Drawer->getHeight()-PBarVPad+1, 0xff000000);
+    Drawer->FillRect(PBarHPad, Drawer->getHeight()-PBarVPad-PBarHeight, Drawer->getWidth()-PBarHPad, Drawer->getHeight()-PBarVPad, 0xff8f0f00);
+    if (wdt > 0) Drawer->FillRect(PBarHPad, Drawer->getHeight()-PBarVPad-PBarHeight, PBarHPad+wdt, Drawer->getHeight()-PBarVPad, 0xffff7f00);
     Drawer->Update();
   } else
 #endif
@@ -226,7 +252,7 @@ bool R_PBarUpdate (const char *message, int cur, int max, bool forced) {
 
 #ifdef CLIENT
   if (Drawer && Drawer->IsInited()) {
-    int wdt = cur*(ScreenWidth-PBarHPad*2)/max;
+    int wdt = cur*(Drawer->getWidth()-PBarHPad*2)/max;
     if (!forced && wdt == lastPBarWdt) return false;
     // delay update if it is too often
     double currt = Sys_Time();
@@ -251,30 +277,30 @@ bool R_PBarUpdate (const char *message, int cur, int max, bool forced) {
       // left end
       tex = GTextureManager(left);
       Drawer->DrawPic(
-        PBarHPad-8, ScreenHeight-PBarVPad-PBarHeight, PBarHPad, ScreenHeight-PBarVPad-PBarHeight+32,
+        PBarHPad-8, Drawer->getHeight()-PBarVPad-PBarHeight, PBarHPad, Drawer->getHeight()-PBarVPad-PBarHeight+32,
         0, 0, tex->GetWidth(), tex->GetHeight(), tex, nullptr, 1.0f);
       // right end
       tex = GTextureManager(right);
       Drawer->DrawPic(
-        ScreenWidth-PBarHPad, ScreenHeight-PBarVPad-PBarHeight, ScreenWidth-PBarHPad+8, ScreenHeight-PBarVPad-PBarHeight+32,
+        Drawer->getWidth()-PBarHPad, Drawer->getHeight()-PBarVPad-PBarHeight, Drawer->getWidth()-PBarHPad+8, Drawer->getHeight()-PBarVPad-PBarHeight+32,
         0, 0, tex->GetWidth(), tex->GetHeight(), tex, nullptr, 1.0f);
       // middle
       tex = GTextureManager(mid);
       Drawer->FillRectWithFlatRepeat(
-        PBarHPad, ScreenHeight-PBarVPad-PBarHeight, ScreenWidth-PBarHPad, ScreenHeight-PBarVPad-PBarHeight+32,
-        0, 0, /*tex->GetWidth()*/(ScreenWidth-PBarHPad)*2, tex->GetHeight(), tex);
+        PBarHPad, Drawer->getHeight()-PBarVPad-PBarHeight, Drawer->getWidth()-PBarHPad, Drawer->getHeight()-PBarVPad-PBarHeight+32,
+        0, 0, /*tex->GetWidth()*/(Drawer->getWidth()-PBarHPad)*2, tex->GetHeight(), tex);
       // fill
       if (wdt > 0) {
         tex = GTextureManager(fill);
         Drawer->FillRectWithFlatRepeat(
-          PBarHPad, ScreenHeight-PBarVPad-PBarHeight, PBarHPad+wdt, ScreenHeight-PBarVPad-PBarHeight+32,
+          PBarHPad, Drawer->getHeight()-PBarVPad-PBarHeight, PBarHPad+wdt, Drawer->getHeight()-PBarVPad-PBarHeight+32,
           0, 0, /*tex->GetWidth()*/wdt, tex->GetHeight(), tex);
       }
     } else {
-      Drawer->FillRect(PBarHPad-2, ScreenHeight-PBarVPad-PBarHeight-2, ScreenWidth-PBarHPad+2, ScreenHeight-PBarVPad+2, 0xffffffff);
-      Drawer->FillRect(PBarHPad-1, ScreenHeight-PBarVPad-PBarHeight-1, ScreenWidth-PBarHPad+1, ScreenHeight-PBarVPad+1, 0xff000000);
-      Drawer->FillRect(PBarHPad, ScreenHeight-PBarVPad-PBarHeight, ScreenWidth-PBarHPad, ScreenHeight-PBarVPad, 0xff8f0f00);
-      if (wdt > 0) Drawer->FillRect(PBarHPad, ScreenHeight-PBarVPad-PBarHeight, PBarHPad+wdt, ScreenHeight-PBarVPad, 0xffff7f00);
+      Drawer->FillRect(PBarHPad-2, Drawer->getHeight()-PBarVPad-PBarHeight-2, Drawer->getWidth()-PBarHPad+2, Drawer->getHeight()-PBarVPad+2, 0xffffffff);
+      Drawer->FillRect(PBarHPad-1, Drawer->getHeight()-PBarVPad-PBarHeight-1, Drawer->getWidth()-PBarHPad+1, Drawer->getHeight()-PBarVPad+1, 0xff000000);
+      Drawer->FillRect(PBarHPad, Drawer->getHeight()-PBarVPad-PBarHeight, Drawer->getWidth()-PBarHPad, Drawer->getHeight()-PBarVPad, 0xff8f0f00);
+      if (wdt > 0) Drawer->FillRect(PBarHPad, Drawer->getHeight()-PBarVPad-PBarHeight, PBarHPad+wdt, Drawer->getHeight()-PBarVPad, 0xffff7f00);
     }
     Drawer->Update();
   } else

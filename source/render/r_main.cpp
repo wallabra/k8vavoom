@@ -514,6 +514,7 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   MirrorClipSegs = false;
 
   if (Drawer) {
+    Drawer->SetMainFBO();
     int maxw = -1, maxh = -1;
     for (auto &&camtexinfo : Level->CameraTextures) {
       VTexture *BaseTex = GTextureManager[camtexinfo.TexNum];
@@ -523,7 +524,7 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
     }
     if (maxw > 1 && maxh > 1) {
       GCon->Logf("Created camera FBO, max size is (%dx%d)", maxw, maxh);
-      //Drawer->SetMaxCameraFBOSize(maxw, maxh);
+      Drawer->SetMaxCameraFBOSize(maxw, maxh);
     }
   }
 }

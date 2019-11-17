@@ -216,7 +216,7 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
           }
           SurfAdvDecal.SetFullBright(dc->flags&decal_t::Fullbright ? 1.0f : 0.0f);
           SurfAdvDecal.SetAmbLightTexture(1);
-          SurfAdvDecal.SetScreenSize((float)ScreenWidth, (float)ScreenHeight);
+          SurfAdvDecal.SetScreenSize((float)Drawer->getWidth(), (float)Drawer->getHeight());
         }
         break;
     }

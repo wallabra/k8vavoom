@@ -2127,8 +2127,8 @@ void R_DrawModelFrame (const TVec &Origin, float Angle, VModel *Model,
 
   rd.x = 0;
   rd.y = 0;
-  rd.width = ScreenWidth;
-  rd.height = ScreenHeight;
+  rd.width = Drawer->getWidth();
+  rd.height = Drawer->getHeight();
   rd.fovx = tan(DEG2RADF(90)/2.0f);
   rd.fovy = rd.fovx*3.0f/4.0f;
   rd.drawworld = false;
@@ -2185,8 +2185,8 @@ bool R_DrawStateModelFrame (VState *State, VState *NextState, float Inter,
 
   rd.x = 0;
   rd.y = 0;
-  rd.width = ScreenWidth;
-  rd.height = ScreenHeight;
+  rd.width = Drawer->getWidth();
+  rd.height = Drawer->getHeight();
   TClipBase::CalcFovXY(&rd.fovx, &rd.fovy, rd.width, rd.height, 90.0f, PixelAspect);
   rd.drawworld = false;
   rd.DrawCamera = false;

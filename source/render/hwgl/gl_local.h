@@ -509,12 +509,13 @@ public:
   class FBO {
     //friend class VOpenGLDrawer;
   private:
-    class VOpenGLDrawer *mOwner;
-    GLuint mFBO;
-    GLuint mColorTid;
-    GLuint mDepthStencilTid;
-    bool mHasDepthStencil;
-    int mWidth, mHeight;
+    class VOpenGLDrawer *mOwner = nullptr;
+    GLuint mFBO = 0;
+    GLuint mColorTid = 0;
+    GLuint mDepthStencilTid = 0;
+    bool mHasDepthStencil = false;
+    int mWidth = 0;
+    int mHeight = 0;
 
   public:
     FBO ();
@@ -523,11 +524,12 @@ public:
     FBO (const FBO &) = delete;
     FBO &operator = (const FBO &) = delete;
 
-    inline bool isValid () const { return (mOwner != nullptr); }
-    inline int getWidth () const { return mWidth; }
-    inline int getHeight () const { return mHeight; }
+    inline bool isValid () const noexcept { return (mOwner != nullptr); }
+    inline int getWidth () const noexcept { return mWidth; }
+    inline int getHeight () const noexcept { return mHeight; }
 
-    inline GLuint getColorTid () const { return mColorTid; }
+    inline GLuint getColorTid () const noexcept { return mColorTid; }
+    inline GLuint getFBOid () const noexcept { return mFBO; }
 
     void create (VOpenGLDrawer *aowner, int awidth, int aheight, bool createDepthStencil=false);
     void destroy ();
@@ -547,6 +549,9 @@ public:
   friend class FBO;
 
   VGLShader *currentActiveShader;
+  FBO *currentActiveFBO;
+
+  void ReactivateCurrentFBO ();
 
 #include "gl_shaddef.hi"
 

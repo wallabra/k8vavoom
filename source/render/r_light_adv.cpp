@@ -903,10 +903,10 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
       checkModels = r_advlight_opt_optimise_scissor;
       hasScissor = 0;
       scoord[0] = scoord[1] = 0;
-      scoord[2] = ScreenWidth;
-      scoord[3] = ScreenHeight;
+      scoord[2] = Drawer->getWidth();
+      scoord[3] = Drawer->getHeight();
     } else {
-      if (scoord[0] == 0 && scoord[1] == 0 && scoord[2] == ScreenWidth && scoord[3] == ScreenHeight) {
+      if (scoord[0] == 0 && scoord[1] == 0 && scoord[2] == Drawer->getWidth() && scoord[3] == Drawer->getHeight()) {
         hasScissor = 0;
       }
     }
@@ -1004,10 +1004,10 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
         if (!hasScissor) return; // empty scissor
         hasScissor = 0;
         scoord[0] = scoord[1] = 0;
-        scoord[2] = ScreenWidth;
-        scoord[3] = ScreenHeight;
+        scoord[2] = Drawer->getWidth();
+        scoord[3] = Drawer->getHeight();
       } else {
-        if (scoord[0] == 0 && scoord[1] == 0 && scoord[2] == ScreenWidth && scoord[3] == ScreenHeight) {
+        if (scoord[0] == 0 && scoord[1] == 0 && scoord[2] == Drawer->getWidth() && scoord[3] == Drawer->getHeight()) {
           hasScissor = 0;
         }
       }

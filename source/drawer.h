@@ -277,6 +277,9 @@ protected:
   bool shittyGPUCheckDone;
   bool useReverseZ;
 
+  // moved here, so we can fix them with FBO change
+  int ScrWdt, ScrHgt;
+
   static TArray<void (*) (int phase)> cbInitDeinit;
 
   static void callICB (int phase);
@@ -290,12 +293,16 @@ public:
 public:
   VRenderLevelDrawer *RendLev;
 
-  VDrawer () : mInitialized(false), isShittyGPU(false), shittyGPUCheckDone(false), useReverseZ(false), RendLev(nullptr) {}
-  virtual ~VDrawer () {}
+public:
+  VDrawer () noexcept;
+  virtual ~VDrawer ();
 
   inline bool CanUseRevZ () const noexcept { return useReverseZ; }
   inline bool IsShittyGPU () const noexcept { return isShittyGPU; }
   inline bool IsInited () const noexcept { return mInitialized; }
+
+  inline int getWidth () const noexcept { return ScrWdt; }
+  inline int getHeight () const noexcept { return ScrHgt; }
 
   virtual void Init () = 0;
   // fsmode: 0: windowed; 1: scaled FS; 2: real FS
