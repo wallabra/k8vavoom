@@ -108,6 +108,19 @@ void VDrawer::callICB (int phase) {
 }
 
 
+//==========================================================================
+//
+//  VDrawer::ResetTextureUpdateFrames
+//
+//==========================================================================
+void VDrawer::ResetTextureUpdateFrames () noexcept {
+  for (int i = 0; i < GTextureManager.GetNumTextures(); ++i) {
+    VTexture *tex = GTextureManager[i];
+    if (tex) tex->lastUpdateFrame = 0;
+  }
+}
+
+
 //**************************************************************************
 //
 // VRenderLevelDrawer methods

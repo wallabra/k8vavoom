@@ -1637,6 +1637,7 @@ void VRenderLevelShared::RenderPlayerView () {
 
   ResetDrawStack(); // prepare draw list stack
   IncUpdateWorldFrame();
+  //Drawer->SetUpdateFrame(updateWorldFrame);
 
   if (dbg_autoclear_automap) AM_ClearAutomap();
 

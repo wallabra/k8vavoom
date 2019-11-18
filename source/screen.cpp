@@ -506,6 +506,8 @@ void SCR_Init () {
 void SCR_Update (bool fullUpdate) {
   CheckResolutionChange();
 
+  if (Drawer) Drawer->IncUpdateFrame();
+
   if (!fullUpdate) return;
 
   bool updateStarted = false;

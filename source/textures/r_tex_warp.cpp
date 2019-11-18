@@ -233,13 +233,13 @@ VWarp2Texture::VWarp2Texture (VTexture *ASrcTex, float aspeed)
 //==========================================================================
 vuint8 *VWarp2Texture::GetPixels () {
   if (Pixels && GenTime == GTextureManager.Time*Speed) return Pixels;
+  Pixels8BitValid = false;
+  Pixels8BitAValid = false;
 
   const vuint8 *SrcPixels = SrcTex->GetPixels();
   mFormat = SrcTex->Format;
 
   GenTime = GTextureManager.Time*Speed;
-  Pixels8BitValid = false;
-  Pixels8BitAValid = false;
 
   if (!XSin1) {
     XSin1 = new float[Height];

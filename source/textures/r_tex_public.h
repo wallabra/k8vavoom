@@ -201,9 +201,7 @@ public:
   vuint32 glowing; // is this a glowing texture? (has any meaning only for floors and ceilings; 0: none)
   bool noHires; // hires texture tried and not found
 
-  GLuint mFBO;
-  GLuint mFBOColorTid;
-  GLuint mFBODepthStencilTid;
+  vuint32 lastUpdateFrame;
 
   // driver data
   struct VTransData {
@@ -392,7 +390,7 @@ public:
 private:
   void rehashTextures ();
 
-  inline VTexture *getTxByIndex (int idx) const {
+  inline VTexture *getTxByIndex (int idx) const noexcept {
     VTexture *res;
     if (idx < FirstMapTextureIndex) {
       res = ((vuint32)idx < (vuint32)Textures.length() ? Textures[idx] : nullptr);
@@ -504,22 +502,22 @@ public:
   // try to force-load texture
   int CheckNumForNameAndForce (VName Name, int Type, bool bOverload, bool silent);
 
-  inline bool IsMapLocalTexture (int TexNum) const { return (TexNum >= FirstMapTextureIndex); }
+  inline bool IsMapLocalTexture (int TexNum) const noexcept { return (TexNum >= FirstMapTextureIndex); }
 
-  inline bool IsEmptyTexture (int TexNum) const {
+  inline bool IsEmptyTexture (int TexNum) const noexcept {
     if (TexNum <= 0) return true;
     VTexture *tx = getIgnoreAnim(TexNum);
     return (!tx || tx->Type == TEXTYPE_Null);
   }
 
   // get unanimated texture
-  inline VTexture *operator [] (int TexNum) const {
+  inline VTexture *operator [] (int TexNum) const noexcept {
     VTexture *res = getTxByIndex(TexNum);
     if (res) res->noDecals = res->staticNoDecals;
     return res;
   }
 
-  inline VTexture *getIgnoreAnim (int TexNum) const {
+  inline VTexture *getIgnoreAnim (int TexNum) const noexcept {
     if (TexNum < FirstMapTextureIndex) {
       return ((vuint32)TexNum < (vuint32)Textures.length() ? Textures[TexNum] : nullptr);
     } else {
@@ -531,7 +529,7 @@ public:
   //inline int TextureAnimation (int InTex) { return Textures[InTex]->TextureTranslation; }
 
   // get animated texture
-  inline VTexture *operator () (int TexNum) {
+  inline VTexture *operator () (int TexNum) noexcept {
     VTexture *origtex;
     if (TexNum < FirstMapTextureIndex) {
       if ((vuint32)TexNum >= (vuint32)Textures.length()) return nullptr;
@@ -554,8 +552,8 @@ public:
     return origtex;
   }
 
-  inline int GetNumTextures () const { return Textures.length(); }
-  inline int GetNumMapTextures () const { return MapTextures.length(); }
+  inline int GetNumTextures () const noexcept { return Textures.length(); }
+  inline int GetNumMapTextures () const noexcept { return MapTextures.length(); }
 
   // to use in `ExportTexture` command
   void FillNameAutocompletion (VStr prefix, TArray<VStr> &list);

@@ -77,7 +77,7 @@ struct texinfo_t {
   inline bool isEmptyTexture () const { return (!Tex || Tex->Type == TEXTYPE_Null); }
 
   // call this to check if we need to change OpenGL texture
-  inline bool needChange (const texinfo_t &other) const {
+  inline bool needChange (const texinfo_t &other, const vuint32 upframe) const {
     if (&other == this) return false;
     return
       Tex != other.Tex ||
@@ -85,7 +85,8 @@ struct texinfo_t {
       FASI(saxis) != FASI(other.saxis) ||
       FASI(soffs) != FASI(other.soffs) ||
       FASI(taxis) != FASI(other.taxis) ||
-      FASI(toffs) != FASI(other.toffs);
+      FASI(toffs) != FASI(other.toffs) ||
+      (Tex && Tex->lastUpdateFrame != upframe);
   }
 
   // call this to cache info for `needChange()`

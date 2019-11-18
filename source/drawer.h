@@ -277,12 +277,16 @@ protected:
   bool shittyGPUCheckDone;
   bool useReverseZ;
 
+  vuint32 updateFrame; // counter
+
   // moved here, so we can fix them with FBO change
   int ScrWdt, ScrHgt;
 
   static TArray<void (*) (int phase)> cbInitDeinit;
 
   static void callICB (int phase);
+
+  void ResetTextureUpdateFrames () noexcept;
 
 public:
   VViewPortMats vpmats;
@@ -303,6 +307,10 @@ public:
 
   inline int getWidth () const noexcept { return ScrWdt; }
   inline int getHeight () const noexcept { return ScrHgt; }
+
+  inline void SetUpdateFrame (vuint32 n) noexcept { updateFrame = n; }
+  inline vuint32 GetUpdateFrame () const noexcept { return updateFrame; }
+  inline void IncUpdateFrame () noexcept { if (++updateFrame == 0) updateFrame = 1; }
 
   virtual void Init () = 0;
   // fsmode: 0: windowed; 1: scaled FS; 2: real FS

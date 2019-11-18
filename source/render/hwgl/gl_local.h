@@ -742,8 +742,6 @@ private:
   void RenderPrepareShaderDecals (surface_t *surf);
   bool RenderFinishShaderDecals (DecalType dtype, surface_t *surf, surfcache_t *cache, int cmap);
 
-  void UpdateAndUploadSurfaceTexture (surface_t *surf);
-
   // regular renderer building parts
   // returns `true` if we need to re-setup texture
   bool RenderSimpleSurface (bool textureChanged, surface_t *surf);
@@ -844,7 +842,6 @@ private:
   inline void surfListClear () { surfList.reset(); }
 
   inline void surfListAppend (surface_t *surf, surfcache_t *cache=nullptr) {
-    //UpdateAndUploadSurfaceTexture(surf); //no, not here
     SurfListItem &si = surfList.alloc();
     si.surf = surf;
     si.cache = cache;
@@ -967,7 +964,7 @@ protected:
   void SetSpriteLump (VTexture *Tex, VTextureTranslation *Translation, int CMap, bool asPicture);
   void SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap);
   void SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int CMap);
-  void GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTranslation *Translation, int CMap, bool asPicture);
+  void GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTranslation *Translation, int CMap, bool asPicture, bool needUpdate);
   void UploadTexture8 (int Width, int Height, const vuint8 *Data, const rgba_t *Pal);
   void UploadTexture8A (int Width, int Height, const pala_t *Data, const rgba_t *Pal);
   void UploadTexture (int width, int height, const rgba_t *data, bool doFringeRemove);

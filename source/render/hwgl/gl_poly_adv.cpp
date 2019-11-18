@@ -256,9 +256,6 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
         if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
         if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
 
-        // update all dunamic textures here
-        UpdateAndUploadSurfaceTexture(surf);
-
         CalcGlow(gp, surf);
 
         if (r_brightmaps && currTexinfo->Tex->Brightmap) {
@@ -351,9 +348,6 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
         if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
         if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
 
-        // update all dunamic textures here
-        UpdateAndUploadSurfaceTexture(surf);
-
         CalcGlow(gp, surf);
 
         if (r_brightmaps && currTexinfo->Tex->Brightmap) {
@@ -382,7 +376,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
         } else {
           //GCon->Logf("MASKED WALL: wall texture is '%s'", *currTexinfo->Tex->Name);
           // normal wall
-          bool textureChanded = lastTexinfo.needChange(*currTexinfo);
+          bool textureChanded = lastTexinfo.needChange(*currTexinfo, updateFrame);
           if (textureChanded) lastTexinfo.updateLastUsed(*currTexinfo);
 
           if (brightmapActiveMask != BMAP_INACTIVE) {
@@ -1127,8 +1121,9 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
       if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
       if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
 
-      const bool textureChanded = lastTexinfo.needChange(*currTexinfo);
+      const bool textureChanded = lastTexinfo.needChange(*currTexinfo, updateFrame);
       if (textureChanded) {
+        // update dynamic texture
         lastTexinfo.updateLastUsed(*currTexinfo);
         SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
         ShadowsTexture.SetTex(currTexinfo);
@@ -1180,7 +1175,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
       if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
       if (currTexinfo->Alpha < 1.0f || currTexinfo->Additive) continue; // just in case
 
-      const bool textureChanded = lastTexinfo.needChange(*currTexinfo);
+      const bool textureChanded = lastTexinfo.needChange(*currTexinfo, updateFrame);
       if (textureChanded) {
         lastTexinfo.updateLastUsed(*currTexinfo);
         SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
@@ -1307,7 +1302,7 @@ void VOpenGLDrawer::DrawWorldFogPass () {
         ShadowsFogMasked.SetFogFade(surf->Fade, 1.0f);
       }
 
-      const bool textureChanded = lastTexinfo.needChange(*currTexinfo);
+      const bool textureChanded = lastTexinfo.needChange(*currTexinfo, updateFrame);
       if (textureChanded) {
         lastTexinfo.updateLastUsed(*currTexinfo);
         SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);

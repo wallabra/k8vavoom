@@ -72,7 +72,11 @@ void VOpenGLDrawer::DeleteLightmapAtlases () {
 //==========================================================================
 void VOpenGLDrawer::FlushTextures (bool forced) {
   for (int i = 0; i < GTextureManager.GetNumTextures(); ++i) {
-    if (forced) DeleteTexture(GTextureManager[i]); else FlushTexture(GTextureManager[i]);
+    VTexture *tex = GTextureManager[i];
+    if (tex) {
+      if (forced) DeleteTexture(tex); else FlushTexture(tex);
+      tex->lastUpdateFrame = 0;
+    }
   }
 }
 
@@ -85,6 +89,7 @@ void VOpenGLDrawer::FlushTextures (bool forced) {
 void VOpenGLDrawer::FlushOneTexture (VTexture *tex, bool forced) {
   if (!tex) return;
   if (forced) DeleteTexture(tex); else FlushTexture(tex);
+  tex->lastUpdateFrame = 0;
 }
 
 
@@ -123,6 +128,7 @@ void VOpenGLDrawer::FlushTexture (VTexture *Tex) {
     glDeleteTextures(1, (GLuint *)&Tex->DriverTranslated[j].Handle);
   }
   Tex->DriverTranslated.resetNoDtor();
+  Tex->lastUpdateFrame = 0;
 }
 
 
@@ -147,6 +153,7 @@ void VOpenGLDrawer::DeleteTexture (VTexture *Tex) {
   }
   Tex->DriverTranslated.Clear();
   if (Tex->Brightmap) DeleteTexture(Tex->Brightmap);
+  Tex->lastUpdateFrame = 0;
 }
 
 
@@ -211,10 +218,17 @@ void VOpenGLDrawer::SetDecalTexture (VTexture *Tex, VTextureTranslation *Transla
 void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translation, int CMap, bool asPicture) {
   vassert(Tex);
   if (mInitialized) {
-    if (Tex->CheckModified()) FlushTexture(Tex);
+    bool needUp = false;
+    if (Tex->lastUpdateFrame != updateFrame && Tex->CheckModified()) {
+      //GCon->Logf(NAME_Debug, "texture '%s' needs update! (%u : %u)", *Tex->Name, Tex->lastUpdateFrame, updateFrame);
+      FlushTexture(Tex);
+      needUp = true;
+    }
+    Tex->lastUpdateFrame = updateFrame;
     if (Translation || CMap) {
       VTexture::VTransData *TData = Tex->FindDriverTrans(Translation, CMap);
       if (TData) {
+        //if (needUp) GCon->Logf(NAME_Error, "TEXTURE '%s' NEED UPDATE, BUT NOT UPDATED!", *Tex->Name);
         glBindTexture(GL_TEXTURE_2D, TData->Handle);
       } else {
         //if (Translation) GCon->Logf("*** NEW TRANSLATION for texture '%s'", *Tex->Name);
@@ -222,7 +236,8 @@ void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translati
         TData->Handle = 0;
         TData->Trans = Translation;
         TData->ColorMap = CMap;
-        GenerateTexture(Tex, (GLuint *)&TData->Handle, Translation, CMap, asPicture);
+        //if (needUp) GCon->Logf(NAME_Debug, "TEXTURE '%s' NEED UPDATE!", *Tex->Name);
+        GenerateTexture(Tex, (GLuint *)&TData->Handle, Translation, CMap, asPicture, needUp);
       }
     } else if (!Tex->DriverHandle) {
       if (Tex->SavedDriverHandle) {
@@ -235,10 +250,29 @@ void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translati
           //fprintf(stderr, "reusing texture %u!\n", Tex->DriverHandle);
         }
       }
-      GenerateTexture(Tex, &Tex->DriverHandle, nullptr, 0, asPicture);
+      GenerateTexture(Tex, &Tex->DriverHandle, nullptr, 0, asPicture, needUp);
     } else {
-      glBindTexture(GL_TEXTURE_2D, Tex->DriverHandle);
+      if (Tex->bIsCameraTexture) {
+        VCameraTexture *CamTex = (VCameraTexture *)Tex;
+        CamTex->bUsedInFrame = true;
+        GLuint tid = GetCameraFBOTextureId(CamTex->camfboidx);
+        glBindTexture(GL_TEXTURE_2D, (tid ? tid : Tex->DriverHandle));
+      } else {
+        glBindTexture(GL_TEXTURE_2D, Tex->DriverHandle);
+      }
     }
+    #if 0
+    if (Tex->bIsCameraTexture) {
+      int ttn = GTextureManager.FindWallByName("comp2");
+      if (ttn > 0) {
+        GLuint oth = Tex->DriverHandle;
+        Tex = GTextureManager[ttn];
+        if (!Tex->DriverHandle) GenerateTexture(Tex, &Tex->DriverHandle, nullptr, 0, asPicture, needUp);
+        //GCon->Logf(NAME_Debug, "ttn=%d; th=%u (oth=%u)", ttn, Tex->DriverHandle, oth);
+        //glBindTexture(GL_TEXTURE_2D, Tex->DriverHandle);
+      }
+    }
+    #endif
   }
   tex_w = Tex->GetWidth();
   tex_h = Tex->GetHeight();
@@ -277,7 +311,7 @@ void VOpenGLDrawer::SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int 
 //  VOpenGLDrawer::GenerateTexture
 //
 //==========================================================================
-void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTranslation *Translation, int CMap, bool asPicture) {
+void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTranslation *Translation, int CMap, bool asPicture, bool needUpdate) {
   // special handling for camera textures
   bool normalTexture = !Tex->bIsCameraTexture;
   if (!normalTexture) {
@@ -344,15 +378,18 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
         const vuint8 *TrTab = Translation->GetTable();
         const rgba_t *CMPal = ColorMaps[CMap].GetPalette();
         for (int i = 0; i < 256; ++i) tmppal[i] = CMPal[TrTab[i]];
+        if (needUpdate) (void)SrcTex->GetPixels(); // this updates warp and other textures
         UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), tmppal);
       } else if (Translation) {
         // only translation
         //GCon->Logf("uploading translated texture '%s' (%dx%d)", *SrcTex->Name, SrcTex->GetWidth(), SrcTex->GetHeight());
         //for (int f = 0; f < 256; ++f) GCon->Logf("  %3d: r:g:b=%02x:%02x:%02x", f, Translation->GetPalette()[f].r, Translation->GetPalette()[f].g, Translation->GetPalette()[f].b);
+        if (needUpdate) (void)SrcTex->GetPixels(); // this updates warp and other textures
         UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), Translation->GetPalette());
       } else if (CMap) {
         // only colormap
         //GCon->Logf(NAME_Dev, "uploading colormapped texture '%s' (%dx%d)", *SrcTex->Name, SrcTex->GetWidth(), SrcTex->GetHeight());
+        if (needUpdate) (void)SrcTex->GetPixels(); // this updates warp and other textures
         UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), ColorMaps[CMap].GetPalette());
       } else {
         // normal uploading
