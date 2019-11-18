@@ -594,6 +594,7 @@ public:
   virtual void Setup2D () override;
   virtual void *ReadScreen (int *, bool *) override;
   virtual void ReadBackScreen (int, int, rgba_t *) override;
+  void ReadFBOPixels (FBO *srcfbo, int Width, int Height, rgba_t *Dest);
 
   void FinishUpdate ();
 
@@ -874,6 +875,20 @@ private:
   static inline void glVertex (const TVec &v) { glVertex3f(v.x, v.y, v.z); }
   static inline void glVertex4 (const TVec &v, const float w) { glVertex4f(v.x, v.y, v.z, w); }
 
+  struct CameraFBOInfo {
+  public:
+    FBO fbo;
+    int texnum; // camera texture number for this FBO
+    int camwidth, camheight; // camera texture dimensions for this FBO
+    int index; // internal index of this FBO
+
+  public:
+    CameraFBOInfo ();
+    ~CameraFBOInfo ();
+    CameraFBOInfo (const CameraFBOInfo &) = delete;
+    CameraFBOInfo& operator = (const CameraFBOInfo &) = delete;
+  };
+
 protected:
   vuint8 *tmpImgBuf0;
   vuint8 *tmpImgBuf1;
@@ -893,8 +908,7 @@ protected:
   // view (texture) camera updates will use this to render camera views
   // as reading from rendered texture is very slow, we will flip-flop FBOs,
   // using `current` to render new camera views, and `current^1` to get previous ones
-  FBO cameraFBO[2];
-  int currCameraFBO;
+  TArray<CameraFBOInfo *> cameraFBOList;
   // current "main" fbo: <0: `mainFBO`, otherwise camera FBO
   int currMainFBO;
 
@@ -971,10 +985,14 @@ protected:
 
 public:
   virtual void SetMainFBO () override;
-  virtual void SetCameraFBO (bool active) override;
-  virtual void SwitchCameraFBO () override; // do not call while camera FBO is active!
-  // do not call when camera FBO is active!
-  virtual void SetMaxCameraFBOSize (int wdt, int hgt) override;
+
+  virtual void ClearCameraFBOs () override;
+  virtual int GetCameraFBO (int texnum, int width, int height) override; // returns index or -1; (re)creates FBO if necessary
+  virtual int FindCameraFBO (int texnum) override; // returns index or -1
+  virtual void SetCameraFBO (int cfboindex) override;
+  virtual bool BindCameraFBOTexture (int cfboindex) override; // returns  `false` if cfboindex is invalid
+
+  void DestroyCameraFBOList ();
 
   void ActivateMainFBO ();
   FBO *GetMainFBO ();

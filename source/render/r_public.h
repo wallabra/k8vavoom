@@ -207,6 +207,8 @@ public:
   bool bUsedInFrame;
   double NextUpdateTime; // systime
   bool bUpdated;
+  int camfboidx;
+  bool bPixelsLoaded;
 
   VCameraTexture (VName, int, int);
   virtual ~VCameraTexture () override;

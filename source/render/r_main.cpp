@@ -515,16 +515,13 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
 
   if (Drawer) {
     Drawer->SetMainFBO();
-    int maxw = -1, maxh = -1;
+    Drawer->ClearCameraFBOs();
     for (auto &&camtexinfo : Level->CameraTextures) {
       VTexture *BaseTex = GTextureManager[camtexinfo.TexNum];
       if (!BaseTex || !BaseTex->bIsCameraTexture) continue;
-      maxw = max2(maxw, BaseTex->Width);
-      maxh = max2(maxh, BaseTex->Height);
-    }
-    if (maxw > 1 && maxh > 1) {
-      GCon->Logf("Created camera FBO, max size is (%dx%d)", maxw, maxh);
-      Drawer->SetMaxCameraFBOSize(maxw, maxh);
+      VCameraTexture *Tex = (VCameraTexture *)BaseTex;
+      Tex->camfboidx = Drawer->GetCameraFBO(camtexinfo.TexNum, max2(1, BaseTex->Width), max2(1, BaseTex->Height));
+      Tex->NextUpdateTime = 0; // force updating
     }
   }
 }
@@ -536,6 +533,15 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
 //
 //==========================================================================
 VRenderLevelShared::~VRenderLevelShared () {
+  if (Drawer) Drawer->ClearCameraFBOs();
+
+  for (auto &&camtexinfo : Level->CameraTextures) {
+    VTexture *BaseTex = GTextureManager[camtexinfo.TexNum];
+    if (!BaseTex || !BaseTex->bIsCameraTexture) continue;
+    VCameraTexture *Tex = (VCameraTexture *)BaseTex;
+    Tex->camfboidx = -1;
+  }
+
   UncacheLevel();
 
   // free fake floor data
@@ -1660,18 +1666,11 @@ void VRenderLevelShared::RenderPlayerView () {
   // update camera textures that were visible in the last frame
   // rendering camera texture sets `NextUpdateTime`
   //GCon->Logf(NAME_Debug, "CAMTEX: %d", Level->CameraTextures.length());
-  if (lastCamTexUpdatedNum > 0) {
-    //GCon->Logf(NAME_Debug, "copying camera texture #%d", lastCamTexUpdatedNum);
-    Drawer->SwitchCameraFBO();
-    CopyCameraTexture(lastCamTexUpdatedNum);
-    lastCamTexUpdatedNum = -1;
-  }
   for (auto &&camtexinfo : Level->CameraTextures) {
     // this updates only cameras with proper `NextUpdateTime`
     if (UpdateCameraTexture(camtexinfo.Camera, camtexinfo.TexNum, camtexinfo.FOV)) {
       // do not update more than one camera texture per frame
-      lastCamTexUpdatedNum = camtexinfo.TexNum;
-      //GCon->Logf(NAME_Debug, "updated camera texture #%d", lastCamTexUpdatedNum);
+      //GCon->Logf(NAME_Debug, "updated camera texture #%d", camtexinfo.TexNum);
       break;
     }
   }
@@ -1714,39 +1713,28 @@ bool VRenderLevelShared::UpdateCameraTexture (VEntity *Camera, int TexNum, int F
   if (!BaseTex || !BaseTex->bIsCameraTexture) return false;
 
   VCameraTexture *Tex = (VCameraTexture *)BaseTex;
+  bool forcedUpdate = (Tex->NextUpdateTime == 0.0f);
   if (!Tex->NeedUpdate()) return false;
-
-  //GCon->Logf(NAME_Debug, "  CAMERA; tex=%d", TexNum);
 
   refdef_t CameraRefDef;
   CameraRefDef.DrawCamera = true;
 
-  Drawer->SetCameraFBO(true); // set active camera FBO
+  int cfidx = Drawer->GetCameraFBO(TexNum, Tex->GetWidth(), Tex->GetHeight());
+  if (cfidx < 0) return false; // alas
+  Tex->camfboidx = cfidx;
+
+  //GCon->Logf(NAME_Debug, "  CAMERA; tex=%d; fboidx=%d; forced=%d", TexNum, cfidx, (int)forcedUpdate);
+
+  Drawer->SetCameraFBO(cfidx);
   SetupCameraFrame(Camera, Tex, FOV, &CameraRefDef);
   RenderScene(&CameraRefDef, nullptr);
   Drawer->EndView();
 
-  //Tex->CopyImage();
+  //glFlush();
+  Tex->CopyImage(); // this sets flags, but doesn't read pixels
   Drawer->SetMainFBO(); // restore main FBO
 
-  return true;
-}
-
-
-//==========================================================================
-//
-//  VRenderLevelShared::CopyCameraTexture
-//
-//==========================================================================
-void VRenderLevelShared::CopyCameraTexture (int TexNum) {
-  VTexture *BaseTex = GTextureManager[TexNum];
-  if (!BaseTex || !BaseTex->bIsCameraTexture) return;
-
-  VCameraTexture *Tex = (VCameraTexture *)BaseTex;
-
-  Drawer->SetCameraFBO(true); // set active camera FBO
-  Tex->CopyImage();
-  Drawer->SetMainFBO(); // restore main FBO
+  return !forcedUpdate;
 }
 
 

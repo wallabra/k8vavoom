@@ -369,8 +369,6 @@ protected:
   double prevChaseCamTime = -1.0;
   TVec prevChaseCamPos;
 
-  int lastCamTexUpdatedNum = -1; //-1: none
-
 private:
   VDirtyArea unusedDirty; // required to return reference to it
 
@@ -517,7 +515,6 @@ protected:
   void SetupCameraFrame (VEntity*, VTexture*, int, refdef_t*);
   void MarkLeaves ();
   bool UpdateCameraTexture (VEntity *Camera, int TexNum, int FOV); // returns `true` if camera texture was updated
-  void CopyCameraTexture (int TexNum);
   vuint32 GetFade (sec_region_t*);
   int CollectSpriteTextures (TArray<bool> &texturepresent); // this is actually private, but meh... returns number of new textures
   void UncacheLevel ();

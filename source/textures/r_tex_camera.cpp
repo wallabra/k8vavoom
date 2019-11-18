@@ -27,6 +27,11 @@
 #include "r_tex.h"
 
 
+#ifdef CLIENT
+//extern VCvarB gl_camera_texture_use_readpixels;
+#endif
+
+
 //==========================================================================
 //
 //  VCameraTexture::VCameraTexture
@@ -37,6 +42,8 @@ VCameraTexture::VCameraTexture (VName AName, int AWidth, int AHeight)
   , bUsedInFrame(false)
   , NextUpdateTime(0)
   , bUpdated(false)
+  , camfboidx(-1)
+  , bPixelsLoaded(false)
 {
   Name = AName;
   Type = TEXTYPE_Wall;
@@ -45,6 +52,10 @@ VCameraTexture::VCameraTexture (VName AName, int AWidth, int AHeight)
   Height = AHeight;
   bIsCameraTexture = true;
   needFBO = true;
+  transparent = false; // anyway
+  translucent = false; // anyway
+  Pixels8BitValid = false;
+  Pixels8BitAValid = false;
   //vassert(!Pixels);
 }
 
@@ -55,6 +66,7 @@ VCameraTexture::VCameraTexture (VName AName, int AWidth, int AHeight)
 //
 //==========================================================================
 VCameraTexture::~VCameraTexture () {
+  camfboidx = -1;
   if (Pixels) {
     delete[] Pixels;
     Pixels = nullptr;
@@ -82,7 +94,7 @@ bool VCameraTexture::CheckModified () {
 //
 //==========================================================================
 bool VCameraTexture::NeedUpdate () {
-  if (!bUsedInFrame) return false;
+  if (!bUsedInFrame && NextUpdateTime != 0.0f) return false;
   // set update time here, why not?
   double ctime = Sys_Time();
   if (NextUpdateTime > ctime) return false;
@@ -139,6 +151,7 @@ void VCameraTexture::Unload () {
     delete[] Pixels;
     Pixels = nullptr;
   }
+  NextUpdateTime = 0;
 }
 
 
@@ -149,8 +162,21 @@ void VCameraTexture::Unload () {
 //
 //==========================================================================
 void VCameraTexture::CopyImage () {
-  if (!Pixels) Pixels = new vuint8[Width*Height*4];
-  Drawer->ReadBackScreen(Width, Height, (rgba_t *)Pixels);
+  if (!Pixels) {
+    //Pixels = new vuint8[Width*Height*4];
+    (void)GetPixels();
+  }
+  transparent = false; // anyway
+  translucent = false; // anyway
+  /*
+  if (gl_camera_texture_use_readpixels) {
+    Drawer->ReadBackScreen(Width, Height, (rgba_t *)Pixels);
+    bPixelsLoaded = true;
+  } else {
+    bPixelsLoaded = false;
+  }
+  */
+  bPixelsLoaded = false;
   bUpdated = true;
   Pixels8BitValid = false;
   Pixels8BitAValid = false;

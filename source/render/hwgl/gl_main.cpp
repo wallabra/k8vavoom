@@ -267,6 +267,44 @@ void VOpenGLDrawer::VGLShader::Unload () {
 #include "gl_shaddef.ci"
 
 
+//**************************************************************************
+//
+//  VOpenGLDrawer::CameraFBOInfo
+//
+//**************************************************************************
+
+//==========================================================================
+//
+//  CameraFBOInfo::CameraFBOInfo
+//
+//==========================================================================
+VOpenGLDrawer::CameraFBOInfo::CameraFBOInfo ()
+  : fbo()
+  , texnum(-1)
+  , camwidth(1)
+  , camheight(1)
+  , index(-1)
+{}
+
+
+//==========================================================================
+//
+//  CameraFBOInfo::~CameraFBOInfo
+//
+//==========================================================================
+VOpenGLDrawer::CameraFBOInfo::~CameraFBOInfo () {
+  texnum = -1;
+  camwidth = camheight = 1;
+  index = -1;
+}
+
+
+//**************************************************************************
+//
+//  VOpenGLDrawer
+//
+//**************************************************************************
+
 //==========================================================================
 //
 //  VOpenGLDrawer::VOpenGLDrawer
@@ -278,9 +316,7 @@ VOpenGLDrawer::VOpenGLDrawer ()
   , surfList()
   , mainFBO()
   , ambLightFBO()
-  //, cameraFBO[0]()
-  //, cameraFBO[1]()
-  , currCameraFBO(0)
+  , cameraFBOList()
   , currMainFBO(-1)
 {
   currentActiveShader = nullptr;
@@ -324,6 +360,17 @@ VOpenGLDrawer::~VOpenGLDrawer () {
   tmpImgBufSize = 0;
   if (readBackTempBuf) { Z_Free(readBackTempBuf); readBackTempBuf = nullptr; }
   readBackTempBufSize = 0;
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::DestroyCameraFBOList
+//
+//==========================================================================
+void VOpenGLDrawer::DestroyCameraFBOList () {
+  for (auto &&cf : cameraFBOList) { delete cf; cf = nullptr; }
+  cameraFBOList.clear();
 }
 
 
@@ -459,9 +506,9 @@ void VOpenGLDrawer::DeinitResolution () {
   }
   CreatedShaderObjects.Clear();
   // destroy FBOs
+  //DestroyCameraFBOList();
+  for (auto &&cf : cameraFBOList) cf->fbo.destroy();
   mainFBO.destroy();
-  cameraFBO[0].destroy();
-  cameraFBO[1].destroy();
   //secondFBO.destroy();
   ambLightFBO.destroy();
   DeleteLightmapAtlases();
@@ -825,11 +872,11 @@ void VOpenGLDrawer::InitResolution () {
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
   stencilBufferDirty = false;
 
-  for (int f = 0; f < 2; ++f) {
-    cameraFBO[f].create(this, ScreenWidth, ScreenHeight, true); // create depthstencil
-
-    cameraFBO[f].activate();
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Black Background
+  // recreate camera FBOs
+  for (auto &&cf : cameraFBOList) {
+    cf->fbo.create(this, cf->camwidth, cf->camheight, true); // create depthstencil
+    cf->fbo.activate();
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // black background
     glClearDepth(!useReverseZ ? 1.0f : 0.0f);
     if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); // actually, this is better even for "normal" cases
     RestoreDepthFunc();
@@ -886,7 +933,6 @@ void VOpenGLDrawer::InitResolution () {
 
   mInitialized = true;
 
-  currCameraFBO = 0;
   currMainFBO = -1;
 
   currentActiveFBO = nullptr;
@@ -1296,14 +1342,99 @@ void VOpenGLDrawer::SetMainFBO () {
 
 //==========================================================================
 //
+//  VOpenGLDrawer::ClearCameraFBOs
+//
+//==========================================================================
+void VOpenGLDrawer::ClearCameraFBOs () {
+  if (cameraFBOList.length()) GCon->Logf(NAME_Debug, "deleting #%d camera FBO%s", cameraFBOList.length(), (cameraFBOList.length() != 1 ? "s" : ""));
+  DestroyCameraFBOList();
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::GetCameraFBO
+//
+//  returns index or -1; (re)creates FBO if necessary
+//
+//==========================================================================
+int VOpenGLDrawer::GetCameraFBO (int texnum, int width, int height) {
+  if (width < 1) width = 1;
+  if (height < 1) height = 1;
+
+  int cfidx = cameraFBOList.length();
+
+  for (auto &&cf : cameraFBOList) {
+    if (cf->texnum == texnum) {
+      if (cf->camwidth == width && cf->camheight == height) return cf->index; // nothing to do
+      // recreate
+      GCon->Logf(NAME_Debug, "recreating camera FBO #%d for textute #%d (old size is %dx%d, new size is %dx%d)", cf->index, texnum, cf->camwidth, cf->camheight, width, height);
+      cfidx = cf->index;
+      break;
+    }
+  }
+
+  if (cfidx < cameraFBOList.length()) {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    cameraFBOList[cfidx]->fbo.destroy();
+  }
+
+  if (cfidx >= cameraFBOList.length()) {
+    cfidx = cameraFBOList.length();
+    GCon->Logf(NAME_Debug, "creating new camera FBO #%d for textute #%d (new size is %dx%d)", cfidx, texnum, width, height);
+    CameraFBOInfo *cin = new CameraFBOInfo();
+    cin->index = cfidx;
+    cameraFBOList.append(cin);
+  }
+
+  CameraFBOInfo *ci = cameraFBOList[cfidx];
+  vassert(ci->index == cfidx);
+  ci->texnum = texnum;
+  ci->camwidth = width;
+  ci->camheight = height;
+  ci->fbo.create(this, width, height, true); // create depthstencil
+  glBindFramebuffer(GL_FRAMEBUFFER, ci->fbo.getFBOid());
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // black background
+  glClearDepth(!useReverseZ ? 1.0f : 0.0f);
+  if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); // actually, this is better even for "normal" cases
+  RestoreDepthFunc();
+  glDepthRange(0.0f, 1.0f);
+
+  glClearStencil(0);
+  glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+
+  ReactivateCurrentFBO();
+
+  //GCon->Logf(NAME_Debug, "  FBO #%d tid=%u", cfidx, ci->fbo.getColorTid());
+
+  return cfidx;
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::FindCameraFBO
+//
+//  returns index or -1
+//
+//==========================================================================
+int VOpenGLDrawer::FindCameraFBO (int texnum) {
+  if (texnum < 0) return -1;
+  for (auto &&cf : cameraFBOList) if (cf->texnum == texnum) return cf->index;
+  return -1;
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::SetCameraFBO
 //
 //==========================================================================
-void VOpenGLDrawer::SetCameraFBO (bool active) {
-  int fbonum = currCameraFBO^(int)(!active);
-  if (currMainFBO != fbonum) {
-    currMainFBO = fbonum;
-    cameraFBO[fbonum].activate();
+void VOpenGLDrawer::SetCameraFBO (int cfboindex) {
+  if (cfboindex < 0 || cfboindex >= cameraFBOList.length()) return;
+  if (currMainFBO != cfboindex) {
+    currMainFBO = cfboindex;
+    cameraFBOList[cfboindex]->fbo.activate();
     stencilBufferDirty = true;
   }
 }
@@ -1311,54 +1442,15 @@ void VOpenGLDrawer::SetCameraFBO (bool active) {
 
 //==========================================================================
 //
-//  VOpenGLDrawer::SwitchCameraFBO
+//  VOpenGLDrawer::BindCameraFBOTexture
 //
-//  do not call while camera FBO is active!
-//
-//==========================================================================
-void VOpenGLDrawer::SwitchCameraFBO () {
-  currCameraFBO ^= 1;
-}
-
-
-//==========================================================================
-//
-//  VOpenGLDrawer::SetMaxCameraFBOSize
+//  returns  `false` if cfboindex is invalid
 //
 //==========================================================================
-void VOpenGLDrawer::SetMaxCameraFBOSize (int wdt, int hgt) {
-  if (wdt < 1 || hgt < 1) {
-    wdt = ScreenWidth;
-    hgt = ScreenHeight;
-  }
-
-  // just in case
-  currCameraFBO = 0;
-  currMainFBO = -1;
-  currentActiveFBO = nullptr;
-  ReactivateCurrentFBO();
-
-  for (int f = 0; f < 2; ++f) {
-    if (cameraFBO[f].getWidth() != wdt || cameraFBO[f].getHeight() != hgt) {
-      glBindFramebuffer(GL_FRAMEBUFFER, 0);
-      cameraFBO[f].destroy();
-      cameraFBO[f].create(this, wdt, hgt, true); // create depthstencil
-
-      //cameraFBO[f].activate();
-      glBindFramebuffer(GL_FRAMEBUFFER, cameraFBO[f].getFBOid());
-      glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // black background
-      glClearDepth(!useReverseZ ? 1.0f : 0.0f);
-      if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); // actually, this is better even for "normal" cases
-      RestoreDepthFunc();
-      glDepthRange(0.0f, 1.0f);
-
-      glClearStencil(0);
-      glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
-    }
-  }
-
-  currentActiveFBO = nullptr;
-  mainFBO.activate();
+bool VOpenGLDrawer::BindCameraFBOTexture (int cfboindex) {
+  if (cfboindex < 0 || cfboindex >= cameraFBOList.length()) return false;
+  glBindTexture(GL_TEXTURE_2D, cameraFBOList[cfboindex]->fbo.getColorTid());
+  return true;
 }
 
 
@@ -1371,7 +1463,7 @@ void VOpenGLDrawer::ActivateMainFBO () {
   if (currMainFBO < 0) {
     mainFBO.activate();
   } else {
-    cameraFBO[currMainFBO].activate();
+    cameraFBOList[currMainFBO]->fbo.activate();
   }
 }
 
@@ -1382,7 +1474,7 @@ void VOpenGLDrawer::ActivateMainFBO () {
 //
 //==========================================================================
 VOpenGLDrawer::FBO *VOpenGLDrawer::GetMainFBO () {
-  return (currMainFBO < 0 ? &mainFBO : &cameraFBO[currMainFBO]);
+  return (currMainFBO < 0 ? &mainFBO : &cameraFBOList[currMainFBO]->fbo);
 }
 
 
@@ -1531,14 +1623,60 @@ void VOpenGLDrawer::EndView () {
 //
 //==========================================================================
 void *VOpenGLDrawer::ReadScreen (int *bpp, bool *bot2top) {
+  GLint oldbindtex = 0;
+  glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldbindtex);
+
   glBindTexture(GL_TEXTURE_2D, GetMainFBO()->getColorTid());
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   void *dst = Z_Malloc(GetMainFBO()->getWidth()*GetMainFBO()->getHeight()*3);
   glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, dst);
-  glBindTexture(GL_TEXTURE_2D, 0);
+  glBindTexture(GL_TEXTURE_2D, oldbindtex);
+
   *bpp = 24;
   *bot2top = true;
   return dst;
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::ReadFBOPixels
+//
+//==========================================================================
+void VOpenGLDrawer::ReadFBOPixels (FBO *srcfbo, int Width, int Height, rgba_t *Dest) {
+  if (!srcfbo || Width < 1 || Height < 1 || !Dest) return;
+
+  if (srcfbo->getWidth() < 1 || srcfbo->getHeight() < 1) {
+    memset((void *)Dest, 0, Width*Height*sizeof(rgba_t));
+    return;
+  }
+
+  if (readBackTempBufSize < srcfbo->getWidth()*srcfbo->getHeight()*4) {
+    readBackTempBufSize = srcfbo->getWidth()*srcfbo->getHeight()*4;
+    readBackTempBuf = (vuint8 *)Z_Realloc(readBackTempBuf, readBackTempBufSize);
+  }
+
+  GLint oldbindtex = 0;
+  glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldbindtex);
+
+  glBindTexture(GL_TEXTURE_2D, srcfbo->getColorTid());
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  rgba_t *temp = (rgba_t *)readBackTempBuf;
+  vassert(temp);
+  glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp);
+  glBindTexture(GL_TEXTURE_2D, oldbindtex);
+
+  if (Width <= srcfbo->getWidth()) {
+    size_t blen = Width*sizeof(rgba_t);
+    for (int y = 0; y < Height; ++y) memcpy(Dest+y*Width, temp+(srcfbo->getHeight()-y-1)*srcfbo->getWidth(), blen);
+  } else {
+    size_t blen = srcfbo->getWidth()*sizeof(rgba_t);
+    size_t restlen = Width*sizeof(rgba_t)-blen;
+    for (int y = 0; y < Height; ++y) {
+      memcpy(Dest+y*Width, temp+(srcfbo->getHeight()-y-1)*srcfbo->getWidth(), blen);
+      memset((void *)(Dest+y*Width+srcfbo->getWidth()), 0, restlen);
+    }
+  }
 }
 
 
@@ -1548,40 +1686,7 @@ void *VOpenGLDrawer::ReadScreen (int *bpp, bool *bot2top) {
 //
 //==========================================================================
 void VOpenGLDrawer::ReadBackScreen (int Width, int Height, rgba_t *Dest) {
-  if (Width < 1 || Height < 1) return;
-  //vassert(Width > 0);
-  //vassert(Height > 0);
-  vassert(Dest);
-
-  auto fbo = GetMainFBO();
-
-  if (fbo->getWidth() < 1 || fbo->getHeight() < 1) {
-    memset((void *)Dest, 0, Width*Height*sizeof(rgba_t));
-    return;
-  }
-
-  if (readBackTempBufSize < fbo->getWidth()*fbo->getHeight()*4) {
-    readBackTempBufSize = fbo->getWidth()*fbo->getHeight()*4;
-    readBackTempBuf = (vuint8 *)Z_Realloc(readBackTempBuf, readBackTempBufSize);
-  }
-
-  glBindTexture(GL_TEXTURE_2D, GetMainFBO()->getColorTid());
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  rgba_t *temp = (rgba_t *)readBackTempBuf;
-  vassert(temp);
-  glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp);
-  glBindTexture(GL_TEXTURE_2D, 0);
-  if (Width <= fbo->getWidth()) {
-    size_t blen = Width*sizeof(rgba_t);
-    for (int y = 0; y < Height; ++y) memcpy(Dest+y*Width, temp+(fbo->getHeight()-y-1)*fbo->getWidth(), blen);
-  } else {
-    size_t blen = fbo->getWidth()*sizeof(rgba_t);
-    size_t restlen = Width*sizeof(rgba_t)-blen;
-    for (int y = 0; y < Height; ++y) {
-      memcpy(Dest+y*Width, temp+(fbo->getHeight()-y-1)*fbo->getWidth(), blen);
-      memset((void *)(Dest+y*Width+fbo->getWidth()), 0, restlen);
-    }
-  }
+  ReadFBOPixels(GetMainFBO(), Width, Height, Dest);
 }
 
 
@@ -1999,6 +2104,9 @@ void VOpenGLDrawer::FBO::create (VOpenGLDrawer *aowner, int awidth, int aheight,
   vassert(aheight > 0);
   vassert(aowner->currentActiveFBO != this);
 
+  GLint oldbindtex = 0;
+  glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldbindtex);
+
   // allocate FBO object
   aowner->glGenFramebuffers(1, &mFBO);
   if (mFBO == 0) Sys_Error("OpenGL: cannot create FBO");
@@ -2063,6 +2171,8 @@ void VOpenGLDrawer::FBO::create (VOpenGLDrawer *aowner, int awidth, int aheight,
   mHeight = aheight;
   mOwner = aowner;
 
+  glBindTexture(GL_TEXTURE_2D, oldbindtex);
+
   mOwner->ReactivateCurrentFBO();
 }
 
@@ -2110,6 +2220,8 @@ void VOpenGLDrawer::FBO::blitTo (FBO *dest, GLint srcX0, GLint srcY0, GLint srcX
     mOwner->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dest->mFBO);
     mOwner->p_glBlitFramebuffer(srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, GL_COLOR_BUFFER_BIT, filter);
   } else {
+    GLint oldbindtex = 0;
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldbindtex);
     glPushAttrib(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_VIEWPORT_BIT|GL_TRANSFORM_BIT);
 
     mOwner->glBindFramebuffer(GL_FRAMEBUFFER, dest->mFBO);
@@ -2160,6 +2272,7 @@ void VOpenGLDrawer::FBO::blitTo (FBO *dest, GLint srcX0, GLint srcY0, GLint srcX
     glPopMatrix();
 
     glPopAttrib();
+    glBindTexture(GL_TEXTURE_2D, oldbindtex);
   }
   mOwner->ReactivateCurrentFBO();
 }
@@ -2187,7 +2300,10 @@ void VOpenGLDrawer::FBO::blitToScreen () {
       mOwner->p_glBlitFramebuffer(0, 0, mWidth, mHeight, 0, 0, realw, realh, GL_COLOR_BUFFER_BIT, GL_LINEAR);
     }
   } else {
+    GLint oldbindtex = 0;
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldbindtex);
     glPushAttrib(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_VIEWPORT_BIT|GL_TRANSFORM_BIT);
+
     glViewport(0, 0, realw, realh);
 
     glBindTexture(GL_TEXTURE_2D, mColorTid);
@@ -2249,6 +2365,7 @@ void VOpenGLDrawer::FBO::blitToScreen () {
     }
 
     glPopAttrib();
+    glBindTexture(GL_TEXTURE_2D, oldbindtex);
   }
 
   mOwner->ReactivateCurrentFBO();

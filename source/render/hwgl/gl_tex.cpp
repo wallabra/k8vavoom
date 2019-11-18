@@ -29,6 +29,8 @@
 extern VCvarB gl_pic_filtering;
 static VCvarB gl_recreate_changed_textures("gl_recreate_changed_textures", false, "Destroy and create new OpenGL textures for changed DooM animated ones?", CVAR_Archive);
 
+VCvarB gl_camera_texture_use_readpixels("gl_camera_texture_use_readpixels", false, "Use ReadPixels to update camera textures?", CVAR_Archive);
+
 
 //==========================================================================
 //
@@ -155,6 +157,7 @@ void VOpenGLDrawer::DeleteTexture (VTexture *Tex) {
 //==========================================================================
 void VOpenGLDrawer::PrecacheTexture (VTexture *Tex) {
   if (!Tex) return;
+  if (Tex->bIsCameraTexture) return;
   SetTexture(Tex, 0);
   if (Tex->Brightmap) SetBrightmapTexture(Tex->Brightmap);
 }
@@ -167,6 +170,7 @@ void VOpenGLDrawer::PrecacheTexture (VTexture *Tex) {
 //==========================================================================
 void VOpenGLDrawer::SetBrightmapTexture (VTexture *Tex) {
   if (!Tex || /*Tex->Type == TEXTYPE_Null ||*/ Tex->Width < 1 || Tex->Height < 1) return;
+  if (Tex->bIsCameraTexture) return;
   SetTexture(Tex, 0); // default colormap
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -181,6 +185,7 @@ void VOpenGLDrawer::SetBrightmapTexture (VTexture *Tex) {
 //==========================================================================
 void VOpenGLDrawer::SetTexture (VTexture *Tex, int CMap) {
   if (!Tex) Sys_Error("cannot set null texture");
+  // camera textures are special
   SetSpriteLump(Tex, nullptr, CMap, false);
   SetupTextureFiltering(texture_filter);
 }
@@ -204,22 +209,72 @@ void VOpenGLDrawer::SetDecalTexture (VTexture *Tex, VTextureTranslation *Transla
 //
 //==========================================================================
 void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translation, int CMap, bool asPicture) {
+  vassert(Tex);
   if (mInitialized) {
-    if (Tex->CheckModified()) FlushTexture(Tex);
-    if (Translation || CMap) {
-      VTexture::VTransData *TData = Tex->FindDriverTrans(Translation, CMap);
-      if (TData) {
-        glBindTexture(GL_TEXTURE_2D, TData->Handle);
+    // special handling for camera textures
+    bool normalTexture = !Tex->bIsCameraTexture;
+    bool doflush = Tex->CheckModified(); // fix flags
+    if (!normalTexture) {
+      VCameraTexture *CamTex = (VCameraTexture *)Tex;
+      if (CamTex->camfboidx < 0) {
+        normalTexture = true;
       } else {
-        //if (Translation) GCon->Logf("*** NEW TRANSLATION for texture '%s'", *Tex->Name);
-        TData = &Tex->DriverTranslated.Alloc();
-        TData->Handle = 0;
-        TData->Trans = Translation;
-        TData->ColorMap = CMap;
-        GenerateTexture(Tex, (GLuint *)&TData->Handle, Translation, CMap, asPicture);
+        // use slower path for translations
+        if (Translation || CMap || currMainFBO == CamTex->camfboidx || gl_camera_texture_use_readpixels.asBool()) {
+          if (!CamTex->bPixelsLoaded) {
+            // read FBO data
+            CamTex->bPixelsLoaded = true;
+            CameraFBOInfo *cfi = cameraFBOList[CamTex->camfboidx];
+            rgba_t *px = (rgba_t *)Tex->GetPixels();
+            ReadFBOPixels(&cfi->fbo, Tex->Width, Tex->Height, px);
+          }
+          normalTexture = true;
+        }
       }
-    } else {
-      if (!Tex->DriverHandle) {
+    }
+    if (!normalTexture) {
+      //FIXME: this ignores translations
+      VCameraTexture *CamTex = (VCameraTexture *)Tex;
+      (void)CamTex->GetPixels();
+      if (!BindCameraFBOTexture(CamTex->camfboidx)) {
+        normalTexture = true;
+      } else {
+        /*
+        GLint oldbindtex = 0;
+        glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldbindtex);
+        GCon->Logf(NAME_Debug, "set camera texture; fboidx=%d; tid=%u (%d)", CamTex->camfboidx, cameraFBOList[CamTex->camfboidx]->fbo.getColorTid(), oldbindtex);
+        */
+        // set up texture wrapping
+        if (asPicture) {
+          glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, ClampToEdge);
+          glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, ClampToEdge);
+        } else {
+          if (Tex->Type == TEXTYPE_Wall || Tex->Type == TEXTYPE_Flat || Tex->Type == TEXTYPE_Overload || Tex->Type == TEXTYPE_WallPatch) {
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+          } else {
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, ClampToEdge);
+            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, ClampToEdge);
+          }
+        }
+      }
+    }
+    // handle non-camera textures
+    if (normalTexture) {
+      if (doflush) FlushTexture(Tex);
+      if (Translation || CMap) {
+        VTexture::VTransData *TData = Tex->FindDriverTrans(Translation, CMap);
+        if (TData) {
+          glBindTexture(GL_TEXTURE_2D, TData->Handle);
+        } else {
+          //if (Translation) GCon->Logf("*** NEW TRANSLATION for texture '%s'", *Tex->Name);
+          TData = &Tex->DriverTranslated.Alloc();
+          TData->Handle = 0;
+          TData->Trans = Translation;
+          TData->ColorMap = CMap;
+          GenerateTexture(Tex, (GLuint *)&TData->Handle, Translation, CMap, asPicture);
+        }
+      } else if (!Tex->DriverHandle) {
         if (Tex->SavedDriverHandle) {
           if (gl_recreate_changed_textures) {
             glDeleteTextures(1, (GLuint *)&Tex->SavedDriverHandle);

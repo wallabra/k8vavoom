@@ -327,10 +327,12 @@ public:
   virtual void EndView () = 0;
 
   virtual void SetMainFBO () = 0;
-  virtual void SetCameraFBO (bool active) = 0;
-  virtual void SwitchCameraFBO () = 0; // do not call while camera FBO is active!
-  // do not call when camera FBO is active!
-  virtual void SetMaxCameraFBOSize (int wdt, int hgt) = 0;
+
+  virtual void ClearCameraFBOs () = 0;
+  virtual int GetCameraFBO (int texnum, int width, int height) = 0; // returns index or -1; (re)creates FBO if necessary
+  virtual int FindCameraFBO (int texnum) = 0; // returns index or -1
+  virtual void SetCameraFBO (int cfboindex) = 0;
+  virtual bool BindCameraFBOTexture (int cfboindex) = 0; // returns  `false` if cfboindex is invalid
 
   // texture stuff
   virtual void PrecacheTexture (VTexture *) = 0;
