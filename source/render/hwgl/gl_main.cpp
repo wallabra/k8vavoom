@@ -1393,6 +1393,7 @@ int VOpenGLDrawer::GetCameraFBO (int texnum, int width, int height) {
   ci->camwidth = width;
   ci->camheight = height;
   ci->fbo.create(this, width, height, true); // create depthstencil
+
   glBindFramebuffer(GL_FRAMEBUFFER, ci->fbo.getFBOid());
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // black background
   glClearDepth(!useReverseZ ? 1.0f : 0.0f);
@@ -1442,15 +1443,16 @@ void VOpenGLDrawer::SetCameraFBO (int cfboindex) {
 
 //==========================================================================
 //
-//  VOpenGLDrawer::BindCameraFBOTexture
+//  VOpenGLDrawer::GetCameraFBOTextureId
 //
-//  returns  `false` if cfboindex is invalid
+//  returns 0 if cfboindex is invalid
 //
 //==========================================================================
-bool VOpenGLDrawer::BindCameraFBOTexture (int cfboindex) {
-  if (cfboindex < 0 || cfboindex >= cameraFBOList.length()) return false;
-  glBindTexture(GL_TEXTURE_2D, cameraFBOList[cfboindex]->fbo.getColorTid());
-  return true;
+GLuint VOpenGLDrawer::GetCameraFBOTextureId (int cfboindex) {
+  if (cfboindex < 0 || cfboindex >= cameraFBOList.length()) return 0;
+  return cameraFBOList[cfboindex]->fbo.getColorTid();
+  //glBindTexture(GL_TEXTURE_2D, cameraFBOList[cfboindex]->fbo.getColorTid());
+  //glBindTexture(GL_TEXTURE_2D, 10);
 }
 
 
@@ -1646,13 +1648,16 @@ void *VOpenGLDrawer::ReadScreen (int *bpp, bool *bot2top) {
 void VOpenGLDrawer::ReadFBOPixels (FBO *srcfbo, int Width, int Height, rgba_t *Dest) {
   if (!srcfbo || Width < 1 || Height < 1 || !Dest) return;
 
-  if (srcfbo->getWidth() < 1 || srcfbo->getHeight() < 1) {
+  const int fbowidth = srcfbo->getWidth();
+  const int fboheight = srcfbo->getHeight();
+
+  if (fbowidth < 1 || fboheight < 1) {
     memset((void *)Dest, 0, Width*Height*sizeof(rgba_t));
     return;
   }
 
-  if (readBackTempBufSize < srcfbo->getWidth()*srcfbo->getHeight()*4) {
-    readBackTempBufSize = srcfbo->getWidth()*srcfbo->getHeight()*4;
+  if (readBackTempBufSize < fbowidth*fboheight*4) {
+    readBackTempBufSize = fbowidth*fboheight*4;
     readBackTempBuf = (vuint8 *)Z_Realloc(readBackTempBuf, readBackTempBufSize);
   }
 
@@ -1666,15 +1671,15 @@ void VOpenGLDrawer::ReadFBOPixels (FBO *srcfbo, int Width, int Height, rgba_t *D
   glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, temp);
   glBindTexture(GL_TEXTURE_2D, oldbindtex);
 
-  if (Width <= srcfbo->getWidth()) {
+  if (Width <= fbowidth) {
     size_t blen = Width*sizeof(rgba_t);
-    for (int y = 0; y < Height; ++y) memcpy(Dest+y*Width, temp+(srcfbo->getHeight()-y-1)*srcfbo->getWidth(), blen);
+    for (int y = 0; y < Height; ++y) memcpy(Dest+y*Width, temp+(fboheight-y-1)*fbowidth, blen);
   } else {
-    size_t blen = srcfbo->getWidth()*sizeof(rgba_t);
+    size_t blen = fbowidth*sizeof(rgba_t);
     size_t restlen = Width*sizeof(rgba_t)-blen;
     for (int y = 0; y < Height; ++y) {
-      memcpy(Dest+y*Width, temp+(srcfbo->getHeight()-y-1)*srcfbo->getWidth(), blen);
-      memset((void *)(Dest+y*Width+srcfbo->getWidth()), 0, restlen);
+      memcpy(Dest+y*Width, temp+(fboheight-y-1)*fbowidth, blen);
+      memset((void *)(Dest+y*Width+fbowidth), 0, restlen);
     }
   }
 }

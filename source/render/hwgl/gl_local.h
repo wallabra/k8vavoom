@@ -970,7 +970,7 @@ protected:
   void GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTranslation *Translation, int CMap, bool asPicture);
   void UploadTexture8 (int Width, int Height, const vuint8 *Data, const rgba_t *Pal);
   void UploadTexture8A (int Width, int Height, const pala_t *Data, const rgba_t *Pal);
-  void UploadTexture (int width, int height, const rgba_t *data);
+  void UploadTexture (int width, int height, const rgba_t *data, bool doFringeRemove);
 
   void DoHorizonPolygon (surface_t *surf);
   void DrawPortalArea (VPortal *Portal);
@@ -990,7 +990,7 @@ public:
   virtual int GetCameraFBO (int texnum, int width, int height) override; // returns index or -1; (re)creates FBO if necessary
   virtual int FindCameraFBO (int texnum) override; // returns index or -1
   virtual void SetCameraFBO (int cfboindex) override;
-  virtual bool BindCameraFBOTexture (int cfboindex) override; // returns  `false` if cfboindex is invalid
+  virtual GLuint GetCameraFBOTextureId (int cfboindex) override; // returns 0 if cfboindex is invalid
 
   void DestroyCameraFBOList ();
 

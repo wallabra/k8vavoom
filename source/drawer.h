@@ -332,7 +332,7 @@ public:
   virtual int GetCameraFBO (int texnum, int width, int height) = 0; // returns index or -1; (re)creates FBO if necessary
   virtual int FindCameraFBO (int texnum) = 0; // returns index or -1
   virtual void SetCameraFBO (int cfboindex) = 0;
-  virtual bool BindCameraFBOTexture (int cfboindex) = 0; // returns  `false` if cfboindex is invalid
+  virtual GLuint GetCameraFBOTextureId (int cfboindex) = 0; // returns 0 if cfboindex is invalid
 
   // texture stuff
   virtual void PrecacheTexture (VTexture *) = 0;

@@ -110,7 +110,7 @@ bool VCameraTexture::NeedUpdate () {
 //
 //==========================================================================
 vuint8 *VCameraTexture::GetPixels () {
-  bUsedInFrame = true;
+  //bUsedInFrame = true;
   transparent = false; // anyway
   translucent = false; // anyway
   // if already got pixels, then just return them
