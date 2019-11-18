@@ -205,20 +205,13 @@ public:
 
   // driver data
   struct VTransData {
-    union {
-      vuint32 Handle;
-      void *Data;
-    };
+    vuint32 Handle;
     VTextureTranslation *Trans;
     int ColorMap;
   };
 
-  union {
-    vuint32 DriverHandle;
-    void *DriverData;
-  };
+  vuint32 DriverHandle;
   TArray<VTransData> DriverTranslated;
-  vuint32 SavedDriverHandle;
 
 protected:
   vuint8 *Pixels; // most textures has some kind of pixel data, so declare it here

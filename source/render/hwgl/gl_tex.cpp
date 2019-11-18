@@ -113,14 +113,9 @@ void VOpenGLDrawer::DeleteTextures () {
 //==========================================================================
 void VOpenGLDrawer::FlushTexture (VTexture *Tex) {
   if (!Tex) return;
+  glBindTexture(GL_TEXTURE_2D, 0);
   if (Tex->DriverHandle) {
-    if (Tex->SavedDriverHandle && Tex->SavedDriverHandle != Tex->DriverHandle) glDeleteTextures(1, (GLuint *)&Tex->SavedDriverHandle);
-    if (gl_recreate_changed_textures) {
-      glDeleteTextures(1, (GLuint *)&Tex->DriverHandle);
-      Tex->SavedDriverHandle = 0;
-    } else {
-      Tex->SavedDriverHandle = Tex->DriverHandle;
-    }
+    glDeleteTextures(1, (GLuint *)&Tex->DriverHandle);
     Tex->DriverHandle = 0;
   }
   for (int j = 0; j < Tex->DriverTranslated.length(); ++j) {
@@ -138,14 +133,10 @@ void VOpenGLDrawer::FlushTexture (VTexture *Tex) {
 //==========================================================================
 void VOpenGLDrawer::DeleteTexture (VTexture *Tex) {
   if (!Tex) return;
+  glBindTexture(GL_TEXTURE_2D, 0);
   if (Tex->DriverHandle) {
-    if (Tex->SavedDriverHandle && Tex->SavedDriverHandle != Tex->DriverHandle) glDeleteTextures(1, (GLuint *)&Tex->SavedDriverHandle);
     glDeleteTextures(1, (GLuint*)&Tex->DriverHandle);
     Tex->DriverHandle = 0;
-    Tex->SavedDriverHandle = 0;
-  } else if (Tex->SavedDriverHandle) {
-    glDeleteTextures(1, (GLuint *)&Tex->SavedDriverHandle);
-    Tex->SavedDriverHandle = 0;
   }
   for (int j = 0; j < Tex->DriverTranslated.length(); ++j) {
     glDeleteTextures(1, (GLuint*)&Tex->DriverTranslated[j].Handle);
@@ -164,6 +155,7 @@ void VOpenGLDrawer::DeleteTexture (VTexture *Tex) {
 void VOpenGLDrawer::PrecacheTexture (VTexture *Tex) {
   if (!Tex) return;
   if (Tex->bIsCameraTexture) return;
+  ResetTextureUpdateFrames();
   SetTexture(Tex, 0);
   if (Tex->Brightmap) SetBrightmapTexture(Tex->Brightmap);
 }
@@ -220,7 +212,7 @@ void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translati
     bool needUp = false;
     if (Tex->lastUpdateFrame != updateFrame && Tex->CheckModified()) {
       //GCon->Logf(NAME_Debug, "texture '%s' needs update! (%u : %u)", *Tex->Name, Tex->lastUpdateFrame, updateFrame);
-      FlushTexture(Tex);
+      if (gl_recreate_changed_textures) FlushTexture(Tex);
       needUp = true;
     }
     Tex->lastUpdateFrame = updateFrame;
@@ -228,7 +220,11 @@ void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translati
       VTexture::VTransData *TData = Tex->FindDriverTrans(Translation, CMap);
       if (TData) {
         //if (needUp) GCon->Logf(NAME_Error, "TEXTURE '%s' NEED UPDATE, BUT NOT UPDATED!", *Tex->Name);
-        glBindTexture(GL_TEXTURE_2D, TData->Handle);
+        if (needUp || !TData->Handle || Tex->bIsCameraTexture) {
+          GenerateTexture(Tex, &TData->Handle, Translation, CMap, asPicture, needUp);
+        } else {
+          glBindTexture(GL_TEXTURE_2D, TData->Handle);
+        }
       } else {
         //if (Translation) GCon->Logf("*** NEW TRANSLATION for texture '%s'", *Tex->Name);
         TData = &Tex->DriverTranslated.Alloc();
@@ -236,29 +232,12 @@ void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translati
         TData->Trans = Translation;
         TData->ColorMap = CMap;
         //if (needUp) GCon->Logf(NAME_Debug, "TEXTURE '%s' NEED UPDATE!", *Tex->Name);
-        GenerateTexture(Tex, (GLuint *)&TData->Handle, Translation, CMap, asPicture, needUp);
+        GenerateTexture(Tex, &TData->Handle, Translation, CMap, asPicture, needUp);
       }
-    } else if (!Tex->DriverHandle) {
-      if (Tex->SavedDriverHandle) {
-        if (gl_recreate_changed_textures) {
-          glDeleteTextures(1, (GLuint *)&Tex->SavedDriverHandle);
-          Tex->SavedDriverHandle = 0;
-        } else {
-          Tex->DriverHandle = Tex->SavedDriverHandle;
-          Tex->SavedDriverHandle = 0;
-          //fprintf(stderr, "reusing texture %u!\n", Tex->DriverHandle);
-        }
-      }
+    } else if (!Tex->DriverHandle || needUp || Tex->bIsCameraTexture) {
       GenerateTexture(Tex, &Tex->DriverHandle, nullptr, 0, asPicture, needUp);
     } else {
-      if (Tex->bIsCameraTexture && !gl_camera_texture_use_readpixels) {
-        VCameraTexture *CamTex = (VCameraTexture *)Tex;
-        CamTex->bUsedInFrame = true;
-        GLuint tid = GetCameraFBOTextureId(CamTex->camfboidx);
-        glBindTexture(GL_TEXTURE_2D, (tid ? tid : Tex->DriverHandle));
-      } else {
-        glBindTexture(GL_TEXTURE_2D, Tex->DriverHandle);
-      }
+      glBindTexture(GL_TEXTURE_2D, Tex->DriverHandle);
     }
     #if 0
     if (Tex->bIsCameraTexture) {
@@ -312,8 +291,9 @@ void VOpenGLDrawer::SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int 
 //==========================================================================
 void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTranslation *Translation, int CMap, bool asPicture, bool needUpdate) {
   // special handling for camera textures
-  bool normalTexture = !Tex->bIsCameraTexture;
-  if (!normalTexture) {
+  bool isCamTexture = Tex->bIsCameraTexture;
+
+  if (isCamTexture) {
     VCameraTexture *CamTex = (VCameraTexture *)Tex;
     CamTex->bUsedInFrame = true;
     GLuint tid = GetCameraFBOTextureId(CamTex->camfboidx);
@@ -326,15 +306,15 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
         rgba_t *px = (rgba_t *)Tex->GetPixels();
         ReadFBOPixels(&cfi->fbo, Tex->Width, Tex->Height, px);
       }
-      normalTexture = true;
+      isCamTexture = false;
     }
   }
 
   // flag can be changed here, so recheck
-  if (!normalTexture) {
+  if (isCamTexture) {
     // handle camera texture
     VCameraTexture *CamTex = (VCameraTexture *)Tex;
-    FlushTexture(Tex); // remove all created textures
+    //FlushTexture(Tex); // remove all created textures
     GLuint tid = GetCameraFBOTextureId(CamTex->camfboidx);
     vassert(tid);
     glBindTexture(GL_TEXTURE_2D, tid);

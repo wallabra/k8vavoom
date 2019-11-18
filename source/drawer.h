@@ -286,8 +286,6 @@ protected:
 
   static void callICB (int phase);
 
-  void ResetTextureUpdateFrames () noexcept;
-
 public:
   VViewPortMats vpmats;
 
@@ -311,6 +309,7 @@ public:
   inline void SetUpdateFrame (vuint32 n) noexcept { updateFrame = n; }
   inline vuint32 GetUpdateFrame () const noexcept { return updateFrame; }
   inline void IncUpdateFrame () noexcept { if (++updateFrame == 0) updateFrame = 1; }
+  void ResetTextureUpdateFrames () noexcept;
 
   virtual void Init () = 0;
   // fsmode: 0: windowed; 1: scaled FS; 2: real FS
