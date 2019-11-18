@@ -71,7 +71,14 @@ void VOpenGLDrawer::DeleteLightmapAtlases () {
 //==========================================================================
 void VOpenGLDrawer::FlushTextures (bool forced) {
   for (int i = 0; i < GTextureManager.GetNumTextures(); ++i) {
-    VTexture *tex = GTextureManager[i];
+    VTexture *tex = GTextureManager.getIgnoreAnim(i);
+    if (tex) {
+      if (forced) DeleteTexture(tex); else FlushTexture(tex);
+      tex->lastUpdateFrame = 0;
+    }
+  }
+  for (int i = 0; i < GTextureManager.GetNumMapTextures(); ++i) {
+    VTexture *tex = GTextureManager.getMapTexIgnoreAnim(i);
     if (tex) {
       if (forced) DeleteTexture(tex); else FlushTexture(tex);
       tex->lastUpdateFrame = 0;
@@ -241,14 +248,25 @@ void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translati
     }
     #if 0
     if (Tex->bIsCameraTexture) {
+      /*
       int ttn = GTextureManager.FindWallByName("comp2");
       if (ttn > 0) {
         GLuint oth = Tex->DriverHandle;
+        GLint oldbindtex = 0;
+        glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldbindtex);
         Tex = GTextureManager[ttn];
         if (!Tex->DriverHandle) GenerateTexture(Tex, &Tex->DriverHandle, nullptr, 0, asPicture, needUp);
-        //GCon->Logf(NAME_Debug, "ttn=%d; th=%u (oth=%u)", ttn, Tex->DriverHandle, oth);
+        GCon->Logf(NAME_Debug, "ttn=%d; th=%u (oth=%u; obind=%u)", ttn, Tex->DriverHandle, oth, oldbindtex);
         //glBindTexture(GL_TEXTURE_2D, Tex->DriverHandle);
       }
+      */
+      GCon->Logf(NAME_Debug, "CAMERATEX '%s': %dx%d; ofs=(%d,%d); scale=(%g,%g)", *Tex->Name, Tex->Width, Tex->Height, Tex->SOffset, Tex->TOffset, Tex->SScale, Tex->TScale);
+      VCameraTexture *CamTex = (VCameraTexture *)Tex;
+      GLuint tid = GetCameraFBOTextureId(CamTex->camfboidx);
+      Tex->DriverHandle = tid;
+      glBindTexture(GL_TEXTURE_2D, Tex->DriverHandle);
+      //Tex->SOffset = Tex->TOffset = 0;
+      //Tex->SScale = Tex->TScale = 4.0f;
     }
     #endif
   }
@@ -318,10 +336,10 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
     GLuint tid = GetCameraFBOTextureId(CamTex->camfboidx);
     vassert(tid);
     glBindTexture(GL_TEXTURE_2D, tid);
-    #if 0
+    #if 1
     GLint oldbindtex = 0;
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldbindtex);
-    GCon->Logf(NAME_Debug, "set camera texture; fboidx=%d; fbotid=%u; tid=%d; curtid=%d", CamTex->camfboidx, cameraFBOList[CamTex->camfboidx]->fbo.getColorTid(), tid, oldbindtex);
+    GCon->Logf(NAME_Debug, "set camera texture; fboidx=%d; fbotid=%u; tid=%d; curtid=%d; size=%dx%d; ofs=(%d,%d); scale=(%g,%g)", CamTex->camfboidx, cameraFBOList[CamTex->camfboidx]->fbo.getColorTid(), tid, oldbindtex, Tex->Width, Tex->Height, Tex->SOffset, Tex->TOffset, Tex->SScale, Tex->TScale);
     #endif
   } else {
     // handle non-camera texture
@@ -330,12 +348,10 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
     //GCon->Logf(NAME_Debug, "texture '%s'; tid=%d", *Tex->Name, *pHandle);
 
     // try to load high resolution version
-    VTexture *SrcTex = Tex->GetHighResolutionTexture();
-    if (!SrcTex) {
-      SrcTex = Tex;
-      //GCon->Logf("VOpenGLDrawer::GenerateTexture(%d): %s", Tex->Type, *Tex->Name);
-    } else {
-      //GCon->Logf("VOpenGLDrawer::GenerateTexture(%d): %s (lo: %s)", Tex->Type, *SrcTex->Name, *Tex->Name);
+    VTexture *SrcTex = Tex;
+    if (!Tex->bIsCameraTexture) {
+      VTexture *hitex = Tex->GetHighResolutionTexture();
+      if (hitex) SrcTex = hitex;
     }
 
     if (SrcTex->Type == TEXTYPE_Null) {

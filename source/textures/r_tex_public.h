@@ -291,14 +291,14 @@ public:
   // DO NOT USE! DEBUG ONLY!
   void WriteToPNG (VStream *strm);
 
-  int GetWidth () const { return Width; }
-  int GetHeight () const { return Height; }
+  int GetWidth () const noexcept { return Width; }
+  int GetHeight () const noexcept { return Height; }
 
-  int GetScaledWidth () const { return (int)(Width/SScale); }
-  int GetScaledHeight () const { return (int)(Height/TScale); }
+  int GetScaledWidth () const noexcept { return (int)(Width/SScale); }
+  int GetScaledHeight () const noexcept { return (int)(Height/TScale); }
 
-  int GetScaledSOffset () const { return (int)(SOffset/SScale); }
-  int GetScaledTOffset () const { return (int)(TOffset/TScale); }
+  int GetScaledSOffset () const noexcept { return (int)(SOffset/SScale); }
+  int GetScaledTOffset () const noexcept { return (int)(TOffset/TScale); }
 
   // get texture pixel; will call `GetPixels()`
   rgba_t getPixel (int x, int y);
@@ -384,16 +384,13 @@ private:
   void rehashTextures ();
 
   inline VTexture *getTxByIndex (int idx) const noexcept {
-    VTexture *res;
     if (idx < FirstMapTextureIndex) {
-      res = ((vuint32)idx < (vuint32)Textures.length() ? Textures[idx] : nullptr);
+      return ((vuint32)idx < (vuint32)Textures.length() ? Textures[idx] : nullptr);
     } else {
       idx -= FirstMapTextureIndex;
-      res = ((vuint32)idx < (vuint32)MapTextures.length() ? MapTextures[idx] : nullptr);
+      return ((vuint32)idx < (vuint32)MapTextures.length() ? MapTextures[idx] : nullptr);
     }
-    return res;
   }
-
 
 public:
   vint32 DefaultTexture;
@@ -510,14 +507,8 @@ public:
     return res;
   }
 
-  inline VTexture *getIgnoreAnim (int TexNum) const noexcept {
-    if (TexNum < FirstMapTextureIndex) {
-      return ((vuint32)TexNum < (vuint32)Textures.length() ? Textures[TexNum] : nullptr);
-    } else {
-      TexNum -= FirstMapTextureIndex;
-      return ((vuint32)TexNum < (vuint32)MapTextures.length() ? MapTextures[TexNum] : nullptr);
-    }
-  }
+  inline VTexture *getIgnoreAnim (int TexNum) const noexcept { return getTxByIndex(TexNum); }
+  inline VTexture *getMapTexIgnoreAnim (int TexNum) const noexcept { return ((vuint32)TexNum < (vuint32)MapTextures.length() ? MapTextures[TexNum] : nullptr); }
 
   //inline int TextureAnimation (int InTex) { return Textures[InTex]->TextureTranslation; }
 

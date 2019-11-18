@@ -115,7 +115,11 @@ void VDrawer::callICB (int phase) {
 //==========================================================================
 void VDrawer::ResetTextureUpdateFrames () noexcept {
   for (int i = 0; i < GTextureManager.GetNumTextures(); ++i) {
-    VTexture *tex = GTextureManager[i];
+    VTexture *tex = GTextureManager.getIgnoreAnim(i);
+    if (tex) tex->lastUpdateFrame = 0;
+  }
+  for (int i = 0; i < GTextureManager.GetNumMapTextures(); ++i) {
+    VTexture *tex = GTextureManager.getMapTexIgnoreAnim(i);
     if (tex) tex->lastUpdateFrame = 0;
   }
 }

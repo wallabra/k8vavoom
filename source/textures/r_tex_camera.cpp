@@ -108,6 +108,8 @@ vuint8 *VCameraTexture::GetPixels () {
   //bUsedInFrame = true;
   transparent = false; // anyway
   translucent = false; // anyway
+  Pixels8BitValid = false;
+  Pixels8BitAValid = false;
   // if already got pixels, then just return them
   if (Pixels) return Pixels;
 

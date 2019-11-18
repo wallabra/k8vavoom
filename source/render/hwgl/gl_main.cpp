@@ -1493,6 +1493,8 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
     R_DrawViewBorder();
   }
 
+  glBindTexture(GL_TEXTURE_2D, 0);
+
   VMatrix4 ProjMat;
   if (!CanUseRevZ()) {
     // normal
@@ -1523,7 +1525,11 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
   }
   //RestoreDepthFunc();
 
-  glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+  if (rd->DrawCamera && rd->drawworld) {
+    glClear(/*GL_COLOR_BUFFER_BIT|*/GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+  } else {
+    glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+  }
   stencilBufferDirty = false;
 
   glViewport(rd->x, getHeight()-rd->height-rd->y, rd->width, rd->height);
@@ -1547,6 +1553,12 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
   //k8: there is no reason to not do it
   //if (HaveDepthClamp) glEnable(GL_DEPTH_CLAMP);
 
+  glEnable(GL_TEXTURE_2D);
+  glDisable(GL_STENCIL_TEST);
+  glDepthMask(GL_TRUE); // allow z-buffer writes
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+  glDisable(GL_SCISSOR_TEST);
   currentSVScissor[SCS_MINX] = currentSVScissor[SCS_MINY] = 0;
   currentSVScissor[SCS_MAXX] = currentSVScissor[SCS_MAXY] = 32000;
 }
@@ -1591,10 +1603,10 @@ void VOpenGLDrawer::SetupViewOrg () {
 //  VOpenGLDrawer::EndView
 //
 //==========================================================================
-void VOpenGLDrawer::EndView () {
+void VOpenGLDrawer::EndView (bool ignoreColorTint) {
   Setup2D();
 
-  if (cl && cl->CShift) {
+  if (!ignoreColorTint && cl && cl->CShift) {
     DrawFixedCol.Activate();
     DrawFixedCol.SetColor(
       (float)((cl->CShift>>16)&255)/255.0f,

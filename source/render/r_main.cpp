@@ -1729,7 +1729,7 @@ bool VRenderLevelShared::UpdateCameraTexture (VEntity *Camera, int TexNum, int F
   Drawer->SetCameraFBO(cfidx);
   SetupCameraFrame(Camera, Tex, FOV, &CameraRefDef);
   RenderScene(&CameraRefDef, nullptr);
-  Drawer->EndView();
+  Drawer->EndView(true); // ignore color tint
 
   //glFlush();
   Tex->CopyImage(); // this sets flags, but doesn't read pixels
@@ -2046,6 +2046,7 @@ void VRenderLevelShared::PrecacheLevel () {
 
   NukeLightmapCache();
 
+  //TODO: cache map textures too
   const int maxtex = GTextureManager.GetNumTextures();
 
   TArray<bool> texturepresent;

@@ -363,6 +363,7 @@ void VTextureManager::ReplaceTexture (int Index, VTexture *NewTex) {
   NewTex->Type = OldTex->Type;
   NewTex->TextureTranslation = OldTex->TextureTranslation;
   NewTex->HashNext = OldTex->HashNext;
+
   //Textures[Index] = NewTex;
   if (Index < FirstMapTextureIndex) {
     Textures[Index] = NewTex;

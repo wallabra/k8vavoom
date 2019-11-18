@@ -1049,7 +1049,8 @@ static void ParseCameraTexture (VScriptParser *sc) {
   if (Name != NAME_None) {
     // check for replacing an existing texture
     Tex = new VCameraTexture(Name, Width, Height);
-    int TexNum = GTextureManager.CheckNumForNameAndForce(Name, TEXTYPE_Flat, true, false);
+    //int TexNum = GTextureManager.CheckNumForNameAndForce(Name, TEXTYPE_Flat, true, false);
+    int TexNum = GTextureManager.CheckNumForNameAndForce(Name, TEXTYPE_Wall, true, false);
     if (TexNum != -1) {
       // by default camera texture will fit in old texture
       VTexture *OldTex = GTextureManager[TexNum];

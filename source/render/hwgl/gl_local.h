@@ -602,7 +602,7 @@ public:
   virtual bool UseFrustumFarClip () override;
   virtual void SetupView (VRenderLevelDrawer *, const refdef_t *) override;
   virtual void SetupViewOrg () override;
-  virtual void EndView () override;
+  virtual void EndView (bool ignoreColorTint=false) override;
 
   // texture stuff
   virtual void PrecacheTexture (VTexture *) override;
