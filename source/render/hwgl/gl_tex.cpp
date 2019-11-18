@@ -28,8 +28,7 @@
 
 extern VCvarB gl_pic_filtering;
 static VCvarB gl_recreate_changed_textures("gl_recreate_changed_textures", false, "Destroy and create new OpenGL textures for changed DooM animated ones?", CVAR_Archive);
-
-VCvarB gl_camera_texture_use_readpixels("gl_camera_texture_use_readpixels", false, "Use ReadPixels to update camera textures?", CVAR_Archive);
+static VCvarB gl_camera_texture_use_readpixels("gl_camera_texture_use_readpixels", true, "Use ReadPixels to update camera textures?", CVAR_Archive);
 
 
 //==========================================================================
@@ -252,7 +251,7 @@ void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translati
       }
       GenerateTexture(Tex, &Tex->DriverHandle, nullptr, 0, asPicture, needUp);
     } else {
-      if (Tex->bIsCameraTexture) {
+      if (Tex->bIsCameraTexture && !gl_camera_texture_use_readpixels) {
         VCameraTexture *CamTex = (VCameraTexture *)Tex;
         CamTex->bUsedInFrame = true;
         GLuint tid = GetCameraFBOTextureId(CamTex->camfboidx);
@@ -318,7 +317,7 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
     VCameraTexture *CamTex = (VCameraTexture *)Tex;
     CamTex->bUsedInFrame = true;
     GLuint tid = GetCameraFBOTextureId(CamTex->camfboidx);
-    if (!tid || Translation || CMap || currMainFBO == CamTex->camfboidx || gl_camera_texture_use_readpixels.asBool()) {
+    if (!tid || Translation || CMap || currMainFBO == CamTex->camfboidx || gl_camera_texture_use_readpixels) {
       // copy texture pixels for translations (or if user requested it)
       if (!CamTex->bPixelsLoaded) {
         // read FBO data

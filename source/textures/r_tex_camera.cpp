@@ -27,11 +27,6 @@
 #include "r_tex.h"
 
 
-#ifdef CLIENT
-//extern VCvarB gl_camera_texture_use_readpixels;
-#endif
-
-
 //==========================================================================
 //
 //  VCameraTexture::VCameraTexture
@@ -168,7 +163,7 @@ void VCameraTexture::CopyImage () {
   }
   transparent = false; // anyway
   translucent = false; // anyway
-  /*
+  /* it will be done in texture selection code
   if (gl_camera_texture_use_readpixels) {
     Drawer->ReadBackScreen(Width, Height, (rgba_t *)Pixels);
     bPixelsLoaded = true;
