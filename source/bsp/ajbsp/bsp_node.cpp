@@ -1080,7 +1080,7 @@ void AddMinisegs(seg_t *part,
 			ajbsp_BugError("Bad order in intersect list: %1.3f > %1.3f\n",
 					cur->along_dist, next->along_dist);
 
-		if (len > /*0.2*/DIST_EPSILON)
+		if (len > /*0.2*/DIST_EPSILON*2) //k8: roughly what new Eureka is doing
 		{
 			cur  = next;
 			next = cur->next;
