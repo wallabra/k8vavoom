@@ -631,8 +631,9 @@ sector_t * VertexCheckOpen(vertex_t *vert, double dx, double dy);
 
 
 // smallest distance between two points before being considered equal
-//#define DIST_EPSILON  (1.0 / 128.0) //k8: old one
-#define DIST_EPSILON  (1.0 / 1024.0) //k8: this is what Andrew did in new Eureka
+#define DIST_EPSILON  (1.0 / 128.0) //k8: old one
+//#define DIST_EPSILON  (1.0 / 1024.0) //k8: this is what Andrew did in new Eureka
+//#define DIST_EPSILON  (1.0 / 384.0) //k8: this is what i am doing
 
 // smallest degrees between two angles before being considered equal
 #define ANG_EPSILON  (1.0 / 1024.0)
