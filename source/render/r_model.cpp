@@ -238,8 +238,6 @@ struct TVertMap {
 struct VTempEdge {
   vuint16 Vert1;
   vuint16 Vert2;
-  //vuint16 OrigVert1;
-  //vuint16 OrigVert2;
   vint16 Tri1;
   vint16 Tri2;
 };
@@ -261,6 +259,7 @@ static TMapNC<VName, VClassModelScript *> ClassModelMap;
 static bool ClassModelMapRebuild = true;
 TArray<int> AllModelTextures;
 static TMapNC<int, bool> AllModelTexturesSeen;
+static TMap<VStr, VModel *> fixedModelMap;
 
 static const float r_avertexnormals[NUMVERTEXNORMALS][3] = {
 #include "anorms.h"
@@ -347,24 +346,25 @@ void R_InitModels () {
 //
 //==========================================================================
 void R_FreeModels () {
-  for (int i = 0; i < mod_known.Num(); ++i) {
-    delete mod_known[i];
-    mod_known[i] = nullptr;
+  for (auto &&it : mod_known) {
+    delete it;
+    it = nullptr;
   }
-  mod_known.Clear();
+  mod_known.clear();
 
-  for (int i = 0; i < GMeshModels.Num(); ++i) {
-    //if (GMeshModels[i]->Data) Z_Free(GMeshModels[i]->Data);
-    delete GMeshModels[i];
-    GMeshModels[i] = nullptr;
+  for (auto &&it : GMeshModels) {
+    delete it;
+    it = nullptr;
   }
-  GMeshModels.Clear();
+  GMeshModels.clear();
 
-  for (int i = 0; i < ClassModels.Num(); ++i) {
-    delete ClassModels[i];
-    ClassModels[i] = nullptr;
+  for (auto &&it : ClassModels) {
+    delete it;
+    it = nullptr;
   }
-  ClassModels.Clear();
+  ClassModels.clear();
+
+  fixedModelMap.clear();
   ClassModelMap.clear();
   ClassModelMapRebuild = true;
 }
@@ -384,14 +384,13 @@ static VMeshModel *Mod_FindMeshModel (VStr filename, VStr name, int meshIndex) {
   }
 
   // search the currently loaded models
-  for (int i = 0; i < GMeshModels.Num(); ++i) {
-    if (GMeshModels[i]->MeshIndex == meshIndex && GMeshModels[i]->Name == name) return GMeshModels[i];
+  for (auto &&it : GMeshModels) {
+    if (it->MeshIndex == meshIndex && it->Name == name) return it;
   }
 
   VMeshModel *mod = new VMeshModel();
   mod->Name = name;
   mod->MeshIndex = meshIndex;
-  //mod->Data = nullptr;
   mod->loaded = false;
   GMeshModels.Append(mod);
 
@@ -715,7 +714,7 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) 
         }
       }
     }
-    if (!Cls->Frames.Num()) Sys_Error("model '%s' class '%s' has no states defined", *Mdl->Name, *Cls->Name);
+    if (Cls->Frames.length() == 0) Sys_Error("model '%s' class '%s' has no states defined", *Mdl->Name, *Cls->Name);
     if (deleteIt) { delete Cls; continue; }
     if (hasOneAll && !hasOthers) {
       Cls->OneForAll = true;
@@ -753,9 +752,7 @@ VModel *Mod_FindName (VStr name) {
   if (name.IsEmpty()) Sys_Error("Mod_ForName: nullptr name");
 
   // search the currently loaded models
-  for (int i = 0; i < mod_known.Num(); ++i) {
-    if (mod_known[i]->Name.ICmp(name) == 0) return mod_known[i];
-  }
+  for (auto &&it : mod_known) if (it->Name.ICmp(name) == 0) return it;
 
   VModel *mod = new VModel();
   mod->Name = name;
@@ -869,20 +866,37 @@ static void ParseGZModelDefs () {
 static void AddEdge (TArray<VTempEdge> &Edges, int Vert1, int Vert2, int Tri) {
   // check for a match
   // compare original vertex indices since texture coordinates are not important here
-  for (int i = 0; i < Edges.Num(); ++i) {
-    VTempEdge &E = Edges[i];
+  for (auto &&E : Edges) {
     if (E.Tri2 == -1 && E.Vert1 == Vert2 && E.Vert2 == Vert1) {
       E.Tri2 = Tri;
       return;
     }
   }
-
   // add new edge
   VTempEdge &e = Edges.Alloc();
   e.Vert1 = Vert1;
   e.Vert2 = Vert2;
   e.Tri1 = Tri;
   e.Tri2 = -1;
+}
+
+
+//==========================================================================
+//
+//  CopyEdgesTo
+//
+//  store edges
+//
+//==========================================================================
+static void CopyEdgesTo (TArray<VMeshEdge> &dest, TArray<VTempEdge> &src) {
+  const int len = src.length();
+  dest.setLength(len);
+  for (int i = 0; i < len; ++i) {
+    dest[i].Vert1 = src[i].Vert1;
+    dest[i].Vert2 = src[i].Vert2;
+    dest[i].Tri1 = src[i].Tri1;
+    dest[i].Tri2 = src[i].Tri2;
+  }
 }
 
 
@@ -962,7 +976,7 @@ static void Mod_BuildFrames (VMeshModel *mod, vuint8 *Data) {
   mtriangle_t *ptri;
   mframe_t *pframe;
 
-  pmodel = (mmdl_t *)/*mod->*/Data;
+  pmodel = (mmdl_t *)Data;
   mod->Uploaded = false;
   mod->VertsBuffer = 0;
   mod->IndexBuffer = 0;
@@ -1009,8 +1023,8 @@ static void Mod_BuildFrames (VMeshModel *mod, vuint8 *Data) {
   }
 
   // calculate remapped ST verts
-  mod->STVerts.SetNum(VertMap.Num());
-  for (int i = 0; i < VertMap.Num(); ++i) {
+  mod->STVerts.SetNum(VertMap.length());
+  for (int i = 0; i < VertMap.length(); ++i) {
     mod->STVerts[i].S = (float)pstverts[VertMap[i].STIndex].s/(float)pmodel->skinwidth;
     mod->STVerts[i].T = (float)pstverts[VertMap[i].STIndex].t/(float)pmodel->skinheight;
   }
@@ -1027,8 +1041,8 @@ static void Mod_BuildFrames (VMeshModel *mod, vuint8 *Data) {
   }
 
   mod->Frames.SetNum(pmodel->numframes);
-  mod->AllVerts.SetNum(pmodel->numframes*VertMap.Num());
-  mod->AllNormals.SetNum(pmodel->numframes*VertMap.Num());
+  mod->AllVerts.SetNum(pmodel->numframes*VertMap.length());
+  mod->AllNormals.SetNum(pmodel->numframes*VertMap.length());
   mod->AllPlanes.SetNum(pmodel->numframes*pmodel->numtris);
   pframe = (mframe_t *)((vuint8 *)pmodel+pmodel->ofsframes);
 
@@ -1045,8 +1059,8 @@ static void Mod_BuildFrames (VMeshModel *mod, vuint8 *Data) {
     Frame.Name = getStrZ(pframe->name, 16);
     Frame.Scale = TVec(pframe->scale[0], pframe->scale[1], pframe->scale[2]);
     Frame.Origin = TVec(pframe->scale_origin[0], pframe->scale_origin[1], pframe->scale_origin[2]);
-    Frame.Verts = &mod->AllVerts[i*VertMap.Num()];
-    Frame.Normals = &mod->AllNormals[i*VertMap.Num()];
+    Frame.Verts = &mod->AllVerts[i*VertMap.length()];
+    Frame.Normals = &mod->AllNormals[i*VertMap.length()];
     Frame.Planes = &mod->AllPlanes[i*pmodel->numtris];
     Frame.VertsOffset = 0;
     Frame.NormalsOffset = 0;
@@ -1054,7 +1068,7 @@ static void Mod_BuildFrames (VMeshModel *mod, vuint8 *Data) {
     //Frame.ValidTris.setLength((int)pmodel->numtris);
 
     trivertx_t *Verts = (trivertx_t *)(pframe+1);
-    for (int j = 0; j < VertMap.Num(); ++j) {
+    for (int j = 0; j < VertMap.length(); ++j) {
       const trivertx_t &Vert = Verts[VertMap[j].VertIndex];
       Frame.Verts[j].x = Vert.v[0]*pframe->scale[0]+pframe->scale_origin[0];
       Frame.Verts[j].y = Vert.v[1]*pframe->scale[1]+pframe->scale_origin[1];
@@ -1143,27 +1157,7 @@ static void Mod_BuildFrames (VMeshModel *mod, vuint8 *Data) {
   mod->HadErrors = hadError;
 
   // store edges
-  mod->Edges.SetNum(Edges.Num());
-  for (int i = 0; i < Edges.Num(); ++i) {
-    mod->Edges[i].Vert1 = Edges[i].Vert1;
-    mod->Edges[i].Vert2 = Edges[i].Vert2;
-    mod->Edges[i].Tri1 = Edges[i].Tri1;
-    mod->Edges[i].Tri2 = Edges[i].Tri2;
-  }
-
-  /*
-  for (int i = 0; i < Edges.Num(); ++i) {
-    //mod->Edges[i].Vert1 = Edges[i].Vert1;
-    //mod->Edges[i].Vert2 = Edges[i].Vert2;
-    mod->Edges[i].Tri2 = -1;
-  }
-  */
-
-  // commands
-  /*
-  vint32 *pcmds = (vint32 *)((vuint8 *)pmodel+pmodel->ofscmds);
-  for (unsigned i = 0; i < pmodel->numcmds; ++i) pcmds[i] = LittleLong(pcmds[i]);
-  */
+  CopyEdgesTo(mod->Edges, Edges);
 
   // skins
   mskin_t *pskindesc = (mskin_t *)((vuint8 *)pmodel+pmodel->ofsskins);
@@ -1425,21 +1419,7 @@ static void Mod_BuildFramesMD3 (VMeshModel *mod, vuint8 *Data) {
   mod->HadErrors = hadError;
 
   // store edges
-  mod->Edges.setLength(Edges.Num());
-  for (int i = 0; i < Edges.Num(); ++i) {
-    mod->Edges[i].Vert1 = Edges[i].Vert1;
-    mod->Edges[i].Vert2 = Edges[i].Vert2;
-    mod->Edges[i].Tri1 = Edges[i].Tri1;
-    mod->Edges[i].Tri2 = Edges[i].Tri2;
-  }
-
-  /*
-  for (int i = 0; i < Edges.Num(); ++i) {
-    //mod->Edges[i].Vert1 = Edges[i].Vert1;
-    //mod->Edges[i].Vert2 = Edges[i].Vert2;
-    mod->Edges[i].Tri2 = -1;
-  }
-  */
+  CopyEdgesTo(mod->Edges, Edges);
 
   mod->loaded = true;
 }
@@ -1485,11 +1465,11 @@ static void Mod_ParseModel (VMeshModel *mod) {
 //
 //==========================================================================
 static void PositionModel (TVec &Origin, TAVec &Angles, VMeshModel *wpmodel, int InFrame) {
-  /*mmdl_t *pmdl = (mmdl_t *)*/Mod_ParseModel(wpmodel);
+  Mod_ParseModel(wpmodel);
   unsigned frame = (unsigned)InFrame;
-  if (frame >= /*pmdl->numframes*/(unsigned)wpmodel->Frames.length()) frame = 0;
+  if (frame >= (unsigned)wpmodel->Frames.length()) frame = 0;
   TVec p[3];
-/*
+  /*k8: dunno
   mtriangle_t *ptris = (mtriangle_t *)((vuint8 *)pmdl+pmdl->ofstris);
   mframe_t *pframe = (mframe_t *)((vuint8 *)pmdl+pmdl->ofsframes+frame*pmdl->framesize);
   trivertx_t *pverts = (trivertx_t *)(pframe+1);
@@ -1498,7 +1478,7 @@ static void PositionModel (TVec &Origin, TAVec &Angles, VMeshModel *wpmodel, int
     p[vi].y = pverts[ptris[0].vertindex[vi]].v[1]*pframe->scale[1]+pframe->scale_origin[1];
     p[vi].z = pverts[ptris[0].vertindex[vi]].v[2]*pframe->scale[2]+pframe->scale_origin[2];
   }
-*/
+  */
   const VMeshFrame &frm = wpmodel->Frames[(int)frame];
   for (int vi = 0; vi < 3; ++vi) {
     p[vi].x = frm.Verts[wpmodel->Tris[0].VertIndex[vi]].x;
@@ -1526,7 +1506,7 @@ static int FindFrame (VClassModelScript &Cls, const VAliasModelFrameInfo &Frame,
   if (Cls.OneForAll) return 0; // guaranteed
 
   if (!Cls.CacheBuilt) {
-    for (int i = 0; i < Cls.Frames.Num(); ++i) {
+    for (int i = 0; i < Cls.Frames.length(); ++i) {
       VScriptedModelFrame &frm = Cls.Frames[i];
       frm.nextSpriteIdx = frm.nextNumberIdx = -1;
       // sprite cache
@@ -1565,7 +1545,7 @@ static int FindFrame (VClassModelScript &Cls, const VAliasModelFrameInfo &Frame,
   int Ret = -1;
   int frameAny = -1;
 
-  for (int i = 0; i < Cls.Frames.Num(); ++i) {
+  for (int i = 0; i < Cls.Frames.length(); ++i) {
     const VScriptedModelFrame &frm = Cls.Frames[i];
     if (frm.Inter <= Inter) {
       if (frm.sprite != NAME_None) {
@@ -1627,7 +1607,7 @@ static int FindFrame (VClassModelScript &Cls, const VAliasModelFrameInfo &Frame,
 static int FindNextFrame (VClassModelScript &Cls, int FIdx, const VAliasModelFrameInfo &Frame, float Inter, float &InterpFrac) {
   if (FIdx < 0) return -1; // just in case
   const VScriptedModelFrame &FDef = Cls.Frames[FIdx];
-  if (FIdx < Cls.Frames.Num()-1) {
+  if (FIdx < Cls.Frames.length()-1) {
     const VScriptedModelFrame &frm = Cls.Frames[FIdx+1];
     if (FDef.sprite != NAME_None) {
       if (frm.sprite == FDef.sprite && frm.frame == FDef.frame) {
@@ -1656,7 +1636,7 @@ static void LoadModelSkins (VModel *mdl) {
     for (auto &&SubMdl : ScMdl.SubModels) {
       //if (SubMdl.Version != -1 && SubMdl.Version != Version) continue;
       // locate the proper data
-      /*mmdl_t *pmdl = (mmdl_t *)*/Mod_ParseModel(SubMdl.Model);
+      Mod_ParseModel(SubMdl.Model);
       //FIXME: this should be done earilier
       if (SubMdl.Model->HadErrors) SubMdl.NoShadow = true;
       // load overriden submodel skins
@@ -1730,25 +1710,24 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
   VScriptedModelFrame &FDef = Cls.Frames[FIdx];
   VScriptedModelFrame &NFDef = Cls.Frames[NFIdx];
   VScriptModel &ScMdl = Cls.Model->Models[FDef.ModelIndex];
-  for (int i = 0; i < ScMdl.SubModels.Num(); ++i) {
-    VScriptSubModel &SubMdl = ScMdl.SubModels[i];
+  for (auto &&SubMdl : ScMdl.SubModels) {
     if (SubMdl.Version != -1 && SubMdl.Version != Version) continue;
-    if (FDef.FrameIndex >= SubMdl.Frames.Num()) {
+    if (FDef.FrameIndex >= SubMdl.Frames.length()) {
       GCon->Logf("Bad sub-model frame index %d", FDef.FrameIndex);
       continue;
     }
-    if (Interpolate && NFDef.FrameIndex >= SubMdl.Frames.Num() && NFDef.ModelIndex != FDef.ModelIndex) {
+    if (Interpolate && NFDef.FrameIndex >= SubMdl.Frames.length() && NFDef.ModelIndex != FDef.ModelIndex) {
       NFDef.FrameIndex = FDef.FrameIndex;
       Interpolate = false;
       continue;
     }
     if (Interpolate && FDef.ModelIndex != NFDef.ModelIndex) Interpolate = false;
-    if (NFDef.FrameIndex >= SubMdl.Frames.Num()) continue;
+    if (NFDef.FrameIndex >= SubMdl.Frames.length()) continue;
     VScriptSubModel::VFrame &F = SubMdl.Frames[FDef.FrameIndex];
     VScriptSubModel::VFrame &NF = SubMdl.Frames[NFDef.FrameIndex];
 
     // locate the proper data
-    /*mmdl_t *pmdl = (mmdl_t *)*/Mod_ParseModel(SubMdl.Model);
+    Mod_ParseModel(SubMdl.Model);
     //FIXME: this should be done earilier
     if (SubMdl.Model->HadErrors) SubMdl.NoShadow = true;
 
@@ -1890,7 +1869,7 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
     float smooth_inter = (Interpolate ? SMOOTHSTEP(Inter) : 0.0f);
 
     AliasModelTrans Transform;
-    if (Interpolate) {
+    if (Interpolate && smooth_inter) {
       // shift
       Transform.Shift.x = ((1-smooth_inter)*F.Transform.Shift.x+smooth_inter*NF.Transform.Shift.x);
       Transform.Shift.y = ((1-smooth_inter)*F.Transform.Shift.y+smooth_inter*NF.Transform.Shift.y);
@@ -2039,6 +2018,29 @@ bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, VName clsName, const TVe
 
 //==========================================================================
 //
+//  FindFixedModelFor
+//
+//==========================================================================
+static VModel *FindFixedModelFor (VEntity *Ent, bool verbose) {
+  vassert(Ent);
+  auto mpp = fixedModelMap.find(Ent->FixedModelName);
+  if (mpp) return *mpp;
+  // first time
+  VStr fname = VStr("models/")+Ent->FixedModelName;
+  if (!FL_FileExists(fname)) {
+    if (verbose) GCon->Logf(NAME_Warning, "Can't find alias model '%s'", *Ent->FixedModelName);
+    fixedModelMap.put(Ent->FixedModelName, nullptr);
+    return nullptr;
+  } else {
+    VModel *mdl = Mod_FindName(fname);
+    fixedModelMap.put(Ent->FixedModelName, mdl);
+    return mdl;
+  }
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::DrawEntityModel
 //
 //==========================================================================
@@ -2054,11 +2056,7 @@ bool VRenderLevelShared::DrawEntityModel (VEntity *Ent, vuint32 Light, vuint32 F
   // check if we want to interpolate model frames
   const bool Interpolate = r_interpolate_frames;
   if (Ent->EntityFlags&VEntity::EF_FixedModel) {
-    if (!FL_FileExists(VStr("models/")+Ent->FixedModelName)) {
-      GCon->Logf("Can't find %s", *Ent->FixedModelName);
-      return false;
-    }
-    VModel *Mdl = Mod_FindName(VStr("models/")+Ent->FixedModelName);
+    VModel *Mdl = FindFixedModelFor(Ent, true); // verbose
     if (!Mdl) return false;
     return DrawAliasModel(Ent, sprorigin,
       Ent->/*Angles*/GetModelDrawAngles(), Ent->ScaleX, Ent->ScaleY, Mdl,
@@ -2084,8 +2082,7 @@ bool VRenderLevelShared::DrawEntityModel (VEntity *Ent, vuint32 Light, vuint32 F
 bool VRenderLevelShared::CheckAliasModelFrame (VEntity *Ent, float Inter) {
   if (!Ent->State) return false;
   if (Ent->EntityFlags&VEntity::EF_FixedModel) {
-    if (!FL_FileExists(VStr("models/")+Ent->FixedModelName)) return false;
-    VModel *Mdl = Mod_FindName(VStr("models/")+Ent->FixedModelName);
+    VModel *Mdl = FindFixedModelFor(Ent, false); // silent
     if (!Mdl) return false;
     return FindFrame(*Mdl->DefaultClass, Ent->getMFI(), Inter) != -1;
   } else {
