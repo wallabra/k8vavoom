@@ -536,7 +536,8 @@ void SCR_Update (bool fullUpdate) {
   }
 
   if (!updateStarted) {
-    Drawer->StartUpdate(allowClear);
+    Drawer->StartUpdate();
+    if (allowClear) Drawer->ClearScreen();
     Drawer->Setup2D(); // setup 2D projection
   }
 
@@ -569,7 +570,7 @@ static void DrawSomeIcon (VName icname) {
   if (info.width < 1 || info.height < 1) return;
   int xpos = (int)((float)ScreenWidth*260.0f/320.0f);
   int ypos = (int)((float)ScreenHeight*68.0f/200.0f);
-  Drawer->StartUpdate(false); // don't clear
+  Drawer->StartUpdate();
   R_DrawPic(xpos, ypos, pt);
   Drawer->Update();
 }

@@ -193,7 +193,7 @@ void R_LdrMsgShow (const char *msg, int clr) {
   if (!msg || !msg[0]) return;
   if (Drawer && Drawer->IsInited()) {
     T_SetFont(SmallFont);
-    Drawer->StartUpdate(false); // don't clear
+    Drawer->StartUpdate();
     T_SetAlign(hcentre, vcentre);
     // slightly off vcenter
     T_DrawText(VirtualWidth/2, VirtualHeight/2+64+10*currMsgNumber, msg, clr/*CR_TAN*/);
@@ -233,7 +233,7 @@ bool R_PBarUpdate (const char *message, int cur, int max, bool forced) {
     int wdt = cur*(Drawer->getWidth()-PBarHPad*2)/max;
     if (cur < max && wdt == lastPBarWdt) return;
     lastPBarWdt = wdt;
-    Drawer->StartUpdate(false); // don't clear
+    Drawer->StartUpdate();
     Drawer->FillRect(PBarHPad-2, Drawer->getHeight()-PBarVPad-PBarHeight-2, Drawer->getWidth()-PBarHPad+2, Drawer->getHeight()-PBarVPad+2, 0xffffffff);
     Drawer->FillRect(PBarHPad-1, Drawer->getHeight()-PBarVPad-PBarHeight-1, Drawer->getWidth()-PBarHPad+1, Drawer->getHeight()-PBarVPad+1, 0xff000000);
     Drawer->FillRect(PBarHPad, Drawer->getHeight()-PBarVPad-PBarHeight, Drawer->getWidth()-PBarHPad, Drawer->getHeight()-PBarVPad, 0xff8f0f00);
@@ -277,7 +277,7 @@ bool R_PBarUpdate (const char *message, int cur, int max, bool forced) {
     CL_KeepaliveMessageEx(currt);
     pbarLastUpdateTime = currt;
     lastPBarWdt = wdt;
-    Drawer->StartUpdate(false); // don't clear
+    Drawer->StartUpdate();
     // load progressbar textures
     static bool texturesLoaded = false;
     static int left = -1, right = -1, mid = -1, fill = -1;

@@ -271,6 +271,13 @@ public:
     VCB_FinishUpdate,
   };
 
+  enum {
+    CLEAR_COLOR = 1u<<0,
+    CLEAR_DEPTH = 1u<<1,
+    CLEAR_STENCIL = 1u<<2,
+    CLEAR_ALL = (CLEAR_COLOR|CLEAR_DEPTH|CLEAR_STENCIL),
+  };
+
 protected:
   bool mInitialized;
   bool isShittyGPU;
@@ -317,7 +324,8 @@ public:
   virtual void InitResolution () = 0;
   virtual void DeinitResolution () = 0;
 
-  virtual void StartUpdate (bool allowClear=true) = 0;
+  virtual void StartUpdate () = 0;
+  virtual void ClearScreen (unsigned clearFlags=CLEAR_COLOR) = 0;
   virtual void Setup2D () = 0;
   virtual void Update () = 0;
   virtual void Shutdown () = 0;

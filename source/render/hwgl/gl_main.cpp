@@ -52,7 +52,7 @@ VCvarI VOpenGLDrawer::texture_filter("gl_texture_filter", "0", "Texture filterin
 VCvarI VOpenGLDrawer::sprite_filter("gl_sprite_filter", "0", "Sprite filtering mode.", CVAR_Archive);
 VCvarI VOpenGLDrawer::model_filter("gl_model_filter", "0", "Model filtering mode.", CVAR_Archive);
 VCvarI VOpenGLDrawer::gl_texture_filter_anisotropic("gl_texture_filter_anisotropic", "1", "Texture anisotropic filtering (<=1 is off).", CVAR_Archive);
-VCvarB VOpenGLDrawer::clear("gl_clear", true, "Clear screen before rendering new frame?", CVAR_Archive);
+VCvarB VOpenGLDrawer::clear("gl_clear", false, "Clear screen before rendering new frame?", CVAR_Archive);
 VCvarB VOpenGLDrawer::blend_sprites("gl_blend_sprites", false, "Alpha-blend sprites?", CVAR_Archive);
 VCvarB VOpenGLDrawer::ext_anisotropy("gl_ext_anisotropy", true, "Use OpenGL anisotropy extension (if present)?", CVAR_Archive|CVAR_PreInit);
 VCvarI VOpenGLDrawer::multisampling_sample("gl_multisampling_sample", "1", "Multisampling mode.", CVAR_Archive);
@@ -1000,13 +1000,11 @@ void VOpenGLDrawer::Setup2D () {
 //  VOpenGLDrawer::StartUpdate
 //
 //==========================================================================
-void VOpenGLDrawer::StartUpdate (bool allowClear) {
+void VOpenGLDrawer::StartUpdate () {
   //glFinish();
   VRenderLevelShared::ResetPortalPool();
 
   ActivateMainFBO();
-
-  if (allowClear && clear) glClear(GL_COLOR_BUFFER_BIT);
 
   glBindTexture(GL_TEXTURE_2D, 0);
   //glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -1020,6 +1018,20 @@ void VOpenGLDrawer::StartUpdate (bool allowClear) {
   }
 
   Setup2D();
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::FinishUpdate
+//
+//==========================================================================
+void VOpenGLDrawer::ClearScreen (unsigned clearFlags) {
+  GLuint flags = 0;
+  if (clearFlags&CLEAR_COLOR) flags |= GL_COLOR_BUFFER_BIT;
+  if (clearFlags&CLEAR_DEPTH) flags |= GL_DEPTH_BUFFER_BIT;
+  if (clearFlags&CLEAR_STENCIL) flags |= GL_STENCIL_BUFFER_BIT;
+  if (flags) glClear(flags);
 }
 
 
@@ -1525,11 +1537,7 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
   }
   //RestoreDepthFunc();
 
-  if (rd->DrawCamera && rd->drawworld) {
-    glClear(/*GL_COLOR_BUFFER_BIT|*/GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
-  } else {
-    glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
-  }
+  glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|(rd->drawworld && !rd->DrawCamera && clear ? GL_COLOR_BUFFER_BIT : 0));
   stencilBufferDirty = false;
 
   glViewport(rd->x, getHeight()-rd->height-rd->y, rd->width, rd->height);

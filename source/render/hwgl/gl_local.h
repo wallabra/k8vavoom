@@ -590,7 +590,8 @@ public:
   virtual ~VOpenGLDrawer () override;
   virtual void InitResolution () override;
   virtual void DeinitResolution () override;
-  virtual void StartUpdate (bool allowClear=true) override;
+  virtual void StartUpdate () override;
+  virtual void ClearScreen (unsigned clearFlags=CLEAR_COLOR) override;
   virtual void Setup2D () override;
   virtual void *ReadScreen (int *, bool *) override;
   virtual void ReadBackScreen (int, int, rgba_t *) override;
