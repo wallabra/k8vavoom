@@ -76,6 +76,7 @@ struct VScriptSubModel {
     int PositionIndex;
     float AlphaStart;
     float AlphaEnd;
+    TVec Shift; // unscaled, done before scaling and offseting
     TVec Offset;
     TVec Scale;
     int SkinIndex;
@@ -85,6 +86,7 @@ struct VScriptSubModel {
       PositionIndex = src.PositionIndex;
       AlphaStart = src.AlphaStart;
       AlphaEnd = src.AlphaEnd;
+      Shift = src.Shift;
       Offset = src.Offset;
       Scale = src.Scale;
       SkinIndex = src.SkinIndex;
@@ -437,6 +439,29 @@ static bool ParseBool (VXmlNode *N, const char *name, bool defval) {
 
 //==========================================================================
 //
+//  ParseVector
+//
+//  `vec` must be initialised
+//
+//==========================================================================
+static void ParseVector (VXmlNode *SN, TVec &vec, const char *basename) {
+  vassert(SN);
+  vassert(basename);
+  if (SN->HasAttribute(basename)) {
+    vec.x = VStr::atof(*SN->GetAttribute("scale"), vec.x);
+    vec.y = vec.x;
+    vec.z = vec.x;
+  } else {
+    VStr xname;
+    xname = VStr(basename)+"_x"; if (SN->HasAttribute(xname)) vec.x = VStr::atof(*SN->GetAttribute(xname), vec.x);
+    xname = VStr(basename)+"_y"; if (SN->HasAttribute(xname)) vec.y = VStr::atof(*SN->GetAttribute(xname), vec.y);
+    xname = VStr(basename)+"_z"; if (SN->HasAttribute(xname)) vec.z = VStr::atof(*SN->GetAttribute(xname), vec.z);
+  }
+}
+
+
+//==========================================================================
+//
 //  ParseModelScript
 //
 //==========================================================================
@@ -483,22 +508,17 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) 
         Md2.SkinAnimRange = VStr::atoi(*SN->GetAttribute("skin_anim_range"));
       }
 
+      // base shift
+      TVec Shift(0.0f, 0.0f, 0.0f);
+      ParseVector(SN, Shift, "shift");
+
       // base offset
       TVec Offset(0.0f, 0.0f, 0.0f);
-      if (SN->HasAttribute("offset_x")) Offset.x = VStr::atof(*SN->GetAttribute("offset_x"));
-      if (SN->HasAttribute("offset_y")) Offset.y = VStr::atof(*SN->GetAttribute("offset_y"));
-      if (SN->HasAttribute("offset_z")) Offset.z = VStr::atof(*SN->GetAttribute("offset_z"));
+      ParseVector(SN, Offset, "offset");
 
       // base scaling
       TVec Scale(1.0f, 1.0f, 1.0f);
-      if (SN->HasAttribute("scale")) {
-        Scale.x = VStr::atof(*SN->GetAttribute("scale"), 1);
-        Scale.y = Scale.x;
-        Scale.z = Scale.x;
-      }
-      if (SN->HasAttribute("scale_x")) Scale.x = VStr::atof(*SN->GetAttribute("scale_x"), 1);
-      if (SN->HasAttribute("scale_y")) Scale.y = VStr::atof(*SN->GetAttribute("scale_y"), 1);
-      if (SN->HasAttribute("scale_z")) Scale.z = VStr::atof(*SN->GetAttribute("scale_z"), 1);
+      ParseVector(SN, Scale, "scale");
 
       // fullbright flag
       Md2.FullBright = ParseBool(SN, "fullbright", false);
@@ -520,22 +540,17 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) 
         F.PositionIndex = 0;
         if (FN->HasAttribute("position_index")) F.PositionIndex = VStr::atoi(*FN->GetAttribute("position_index"));
 
+        // shift
+        F.Shift = Shift;
+        ParseVector(FN, F.Shift, "shift");
+
         // offset
         F.Offset = Offset;
-        if (FN->HasAttribute("offset_x")) F.Offset.x = VStr::atof(*FN->GetAttribute("offset_x"));
-        if (FN->HasAttribute("offset_y")) F.Offset.y = VStr::atof(*FN->GetAttribute("offset_y"));
-        if (FN->HasAttribute("offset_z")) F.Offset.z = VStr::atof(*FN->GetAttribute("offset_z"));
+        ParseVector(FN, F.Offset, "offset");
 
         // scale
         F.Scale = Scale;
-        if (FN->HasAttribute("scale")) {
-          F.Scale.x = VStr::atof(*FN->GetAttribute("scale"), 1);
-          F.Scale.y = F.Scale.x;
-          F.Scale.z = F.Scale.x;
-        }
-        if (FN->HasAttribute("scale_x")) F.Scale.x = VStr::atof(*FN->GetAttribute("scale_x"), 1);
-        if (FN->HasAttribute("scale_y")) F.Scale.y = VStr::atof(*FN->GetAttribute("scale_y"), 1);
-        if (FN->HasAttribute("scale_z")) F.Scale.z = VStr::atof(*FN->GetAttribute("scale_z"), 1);
+        ParseVector(FN, F.Scale, "scale");
 
         // alpha
         F.AlphaStart = 1.0f;
@@ -1881,6 +1896,17 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
 
     float smooth_inter = (Interpolate ? SMOOTHSTEP(Inter) : 0.0f);
 
+    // shift
+    TVec Shift;
+    if (Interpolate) {
+      // interpolate offsets too
+      Shift.x = ((1-smooth_inter)*F.Shift.x+smooth_inter*NF.Shift.x);
+      Shift.y = ((1-smooth_inter)*F.Shift.y+smooth_inter*NF.Shift.y);
+      Shift.z = ((1-smooth_inter)*F.Shift.z+smooth_inter*NF.Shift.z);
+    } else {
+      Shift = F.Shift;
+    }
+
     // scale, in case of models thing's ScaleX scales x and y and ScaleY scales z
     TVec Scale;
     if (Interpolate) {
@@ -1901,9 +1927,7 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
       Offset.y = ((1-smooth_inter)*F.Offset.y+smooth_inter*NF.Offset.y);
       Offset.z = ((1-smooth_inter)*F.Offset.z+smooth_inter*NF.Offset.z);
     } else {
-      Offset.x = F.Offset.x;
-      Offset.y = F.Offset.y;
-      Offset.z = F.Offset.z;
+      Offset = F.Offset;
     }
 
     // light
@@ -1917,7 +1941,7 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
       case RPASS_Normal:
       case RPASS_NonShadow:
         if (true /*IsViewModel || !isShadowVol*/) {
-          Drawer->DrawAliasModel(Md2Org, Md2Angle, Offset, Scale,
+          Drawer->DrawAliasModel(Md2Org, Md2Angle, Shift, Offset, Scale,
             SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
             Trans, ColorMap, Md2Light, Fade, Md2Alpha, Additive,
             IsViewModel, smooth_inter, Interpolate, SubMdl.UseDepth,
@@ -1927,29 +1951,29 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
         break;
       case RPASS_Ambient:
         if (!SubMdl.AllowTransparency)
-          Drawer->DrawAliasModelAmbient(Md2Org, Md2Angle, Offset, Scale,
+          Drawer->DrawAliasModelAmbient(Md2Org, Md2Angle, Shift, Offset, Scale,
             SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
             Md2Light, Md2Alpha, smooth_inter, Interpolate, SubMdl.UseDepth,
             SubMdl.AllowTransparency);
         break;
       case RPASS_ShadowVolumes:
-        Drawer->DrawAliasModelShadow(Md2Org, Md2Angle, Offset, Scale,
+        Drawer->DrawAliasModelShadow(Md2Org, Md2Angle, Shift, Offset, Scale,
           SubMdl.Model, Md2Frame, Md2NextFrame, smooth_inter, Interpolate,
           LightPos, LightRadius);
         break;
       case RPASS_Light:
-        Drawer->DrawAliasModelLight(Md2Org, Md2Angle, Offset, Scale,
+        Drawer->DrawAliasModelLight(Md2Org, Md2Angle, Shift, Offset, Scale,
           SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
           Md2Alpha, smooth_inter, Interpolate, SubMdl.AllowTransparency);
         break;
       case RPASS_Textures:
-        Drawer->DrawAliasModelTextures(Md2Org, Md2Angle, Offset, Scale,
+        Drawer->DrawAliasModelTextures(Md2Org, Md2Angle, Shift, Offset, Scale,
           SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
           Trans, ColorMap, Md2Alpha, smooth_inter, Interpolate, SubMdl.UseDepth,
           SubMdl.AllowTransparency);
         break;
       case RPASS_Fog:
-        Drawer->DrawAliasModelFog(Md2Org, Md2Angle, Offset, Scale,
+        Drawer->DrawAliasModelFog(Md2Org, Md2Angle, Shift, Offset, Scale,
           SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
           Fade, Md2Alpha, smooth_inter, Interpolate, SubMdl.AllowTransparency);
         break;

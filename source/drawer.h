@@ -367,7 +367,7 @@ public:
                                   vuint32 light, vuint32 Fade, const TVec &normal, float pdist, const TVec &saxis,
                                   const TVec &taxis, const TVec &texorg, int hangup) = 0;
   virtual void DrawAliasModel (const TVec &origin, const TAVec &angles, const TVec &Offset,
-                               const TVec &Scale, VMeshModel *Mdl, int frame, int nextframe,
+                               const TVec &Shift, const TVec &Scale, VMeshModel *Mdl, int frame, int nextframe,
                                VTexture *Skin, VTextureTranslation *Trans, int CMap, vuint32 light,
                                vuint32 Fade, float Alpha, bool Additive, bool is_view_model, float Inter,
                                bool Interpolate, bool ForceDepthUse, bool AllowTransparency,
@@ -425,31 +425,31 @@ public:
   virtual void EndFogPass () = 0;
 
   virtual void DrawAliasModelAmbient (const TVec &origin, const TAVec &angles,
-                                      const TVec &Offset, const TVec &Scale,
+                                      const TVec &Shift, const TVec &Offset, const TVec &Scale,
                                       VMeshModel *Mdl, int frame, int nextframe,
                                       VTexture *Skin, vuint32 light, float Alpha,
                                       float Inter, bool Interpolate,
                                       bool ForceDepth, bool AllowTransparency) = 0;
   virtual void DrawAliasModelTextures (const TVec &origin, const TAVec &angles,
-                                       const TVec &Offset, const TVec &Scale,
+                                       const TVec &Shift, const TVec &Offset, const TVec &Scale,
                                        VMeshModel *Mdl, int frame, int nextframe,
                                        VTexture *Skin, VTextureTranslation *Trans,
                                        int CMap, float Alpha, float Inter,
                                        bool Interpolate, bool ForceDepth, bool AllowTransparency) = 0;
   virtual void BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, const TVec &aconeDir, const float aconeAngle) = 0;
   virtual void DrawAliasModelLight (const TVec &origin, const TAVec &angles,
-                                    const TVec &Offset, const TVec &Scale,
+                                    const TVec &Shift, const TVec &Offset, const TVec &Scale,
                                     VMeshModel *Mdl, int frame, int nextframe,
                                     VTexture *Skin, float Alpha, float Inter,
                                     bool Interpolate, bool AllowTransparency) = 0;
   virtual void BeginModelsShadowsPass (TVec &LightPos, float LightRadius) = 0;
   virtual void DrawAliasModelShadow (const TVec &origin, const TAVec &angles,
-                                     const TVec &Offset, const TVec &Scale,
+                                     const TVec &Shift, const TVec &Offset, const TVec &Scale,
                                      VMeshModel *Mdl, int frame, int nextframe,
                                      float Inter, bool Interpolate,
                                      const TVec &LightPos, float LightRadius) = 0;
   virtual void DrawAliasModelFog (const TVec &origin, const TAVec &angles,
-                                  const TVec &Offset, const TVec &Scale,
+                                  const TVec &Shift, const TVec &Offset, const TVec &Scale,
                                   VMeshModel *Mdl, int frame, int nextframe,
                                   VTexture *Skin, vuint32 Fade, float Alpha, float Inter,
                                   bool Interpolate, bool AllowTransparency) = 0;
