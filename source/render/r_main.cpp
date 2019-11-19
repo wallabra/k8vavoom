@@ -42,6 +42,8 @@ static VCvarB r_clip_maxdist("r_clip_maxdist", true, "Clip with max view distanc
 extern VCvarF gl_maxdist;
 extern VCvarB r_disable_world_update;
 
+VCvarB dbg_show_lightmap_cache_messages("dbg_show_lightmap_cache_messages", false, "Show various lightmap debug messages?", CVAR_Archive);
+
 
 static const char *videoDrvName = nullptr;
 /*static*/ bool cliRegister_rmain_args =

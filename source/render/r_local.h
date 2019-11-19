@@ -1020,6 +1020,8 @@ extern VCvarB r_allow_shadows;
 
 extern VCvarB r_separate_translucent_lists;
 
+extern VCvarB dbg_show_lightmap_cache_messages;
+
 extern VTextureTranslation **TranslationTables;
 extern int NumTranslationTables;
 extern VTextureTranslation IceTranslation;

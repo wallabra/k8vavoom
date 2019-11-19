@@ -74,9 +74,9 @@ void VLMapCache::releaseAtlas (vuint32 aid) noexcept {
 VLMapCache::AtlasInfo VLMapCache::allocAtlas (vuint32 aid, int minwidth, int minheight) noexcept {
   AtlasInfo res;
   if (minwidth > BLOCK_WIDTH || minheight > BLOCK_HEIGHT) {
-    GLog.Logf(NAME_Error, "requesting new atlas WITH INVALID SIZE! id=%u; minsize=(%d,%d)", aid, minwidth, minheight);
+    GCon->Logf(NAME_Error, "requesting new atlas WITH INVALID SIZE! id=%u; minsize=(%d,%d)", aid, minwidth, minheight);
   } else {
-    GLog.Logf("requesting new atlas; id=%u; minsize=(%d,%d)", aid, minwidth, minheight);
+    if (dbg_show_lightmap_cache_messages) GCon->Logf(NAME_Debug, "LIGHTMAP: requesting new atlas; id=%u; minsize=(%d,%d)", aid, minwidth, minheight);
     if (aid < NUM_BLOCK_SURFS) {
       res.width = BLOCK_WIDTH;
       res.height = BLOCK_HEIGHT;
