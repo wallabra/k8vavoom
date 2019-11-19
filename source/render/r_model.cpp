@@ -76,9 +76,7 @@ struct VScriptSubModel {
     int PositionIndex;
     float AlphaStart;
     float AlphaEnd;
-    TVec Shift; // unscaled, done before scaling and offseting
-    TVec Offset;
-    TVec Scale;
+    AliasModelTrans Transform;
     int SkinIndex;
 
     void copyFrom (const VFrame &src) {
@@ -86,9 +84,7 @@ struct VScriptSubModel {
       PositionIndex = src.PositionIndex;
       AlphaStart = src.AlphaStart;
       AlphaEnd = src.AlphaEnd;
-      Shift = src.Shift;
-      Offset = src.Offset;
-      Scale = src.Scale;
+      Transform = src.Transform;
       SkinIndex = src.SkinIndex;
     }
   };
@@ -541,16 +537,16 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) 
         if (FN->HasAttribute("position_index")) F.PositionIndex = VStr::atoi(*FN->GetAttribute("position_index"));
 
         // shift
-        F.Shift = Shift;
-        ParseVector(FN, F.Shift, "shift");
+        F.Transform.Shift = Shift;
+        ParseVector(FN, F.Transform.Shift, "shift");
 
         // offset
-        F.Offset = Offset;
-        ParseVector(FN, F.Offset, "offset");
+        F.Transform.Offset = Offset;
+        ParseVector(FN, F.Transform.Offset, "offset");
 
         // scale
-        F.Scale = Scale;
-        ParseVector(FN, F.Scale, "scale");
+        F.Transform.Scale = Scale;
+        ParseVector(FN, F.Transform.Scale, "scale");
 
         // alpha
         F.AlphaStart = 1.0f;
@@ -1896,38 +1892,26 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
 
     float smooth_inter = (Interpolate ? SMOOTHSTEP(Inter) : 0.0f);
 
-    // shift
-    TVec Shift;
+    AliasModelTrans Transform;
     if (Interpolate) {
-      // interpolate offsets too
-      Shift.x = ((1-smooth_inter)*F.Shift.x+smooth_inter*NF.Shift.x);
-      Shift.y = ((1-smooth_inter)*F.Shift.y+smooth_inter*NF.Shift.y);
-      Shift.z = ((1-smooth_inter)*F.Shift.z+smooth_inter*NF.Shift.z);
+      // shift
+      Transform.Shift.x = ((1-smooth_inter)*F.Transform.Shift.x+smooth_inter*NF.Transform.Shift.x);
+      Transform.Shift.y = ((1-smooth_inter)*F.Transform.Shift.y+smooth_inter*NF.Transform.Shift.y);
+      Transform.Shift.z = ((1-smooth_inter)*F.Transform.Shift.z+smooth_inter*NF.Transform.Shift.z);
+      // scale
+      Transform.Scale.x = (F.Transform.Scale.x+smooth_inter*(NF.Transform.Scale.x-F.Transform.Scale.x))*ScaleX;
+      Transform.Scale.y = (F.Transform.Scale.y+smooth_inter*(NF.Transform.Scale.y-F.Transform.Scale.y))*ScaleX;
+      Transform.Scale.z = (F.Transform.Scale.z+smooth_inter*(NF.Transform.Scale.z-F.Transform.Scale.z))*ScaleY;
+      // offset
+      Transform.Offset.x = ((1-smooth_inter)*F.Transform.Offset.x+smooth_inter*NF.Transform.Offset.x);
+      Transform.Offset.y = ((1-smooth_inter)*F.Transform.Offset.y+smooth_inter*NF.Transform.Offset.y);
+      Transform.Offset.z = ((1-smooth_inter)*F.Transform.Offset.z+smooth_inter*NF.Transform.Offset.z);
     } else {
-      Shift = F.Shift;
-    }
-
-    // scale, in case of models thing's ScaleX scales x and y and ScaleY scales z
-    TVec Scale;
-    if (Interpolate) {
-      // interpolate scale
-      Scale.x = (F.Scale.x+smooth_inter*(NF.Scale.x-F.Scale.x))*ScaleX;
-      Scale.y = (F.Scale.y+smooth_inter*(NF.Scale.y-F.Scale.y))*ScaleX;
-      Scale.z = (F.Scale.z+smooth_inter*(NF.Scale.z-F.Scale.z))*ScaleY;
-    } else {
-      Scale.x = F.Scale.x*ScaleX;
-      Scale.y = F.Scale.y*ScaleX;
-      Scale.z = F.Scale.z*ScaleY;
-    }
-
-    TVec Offset;
-    if (Interpolate) {
-      // interpolate offsets too
-      Offset.x = ((1-smooth_inter)*F.Offset.x+smooth_inter*NF.Offset.x);
-      Offset.y = ((1-smooth_inter)*F.Offset.y+smooth_inter*NF.Offset.y);
-      Offset.z = ((1-smooth_inter)*F.Offset.z+smooth_inter*NF.Offset.z);
-    } else {
-      Offset = F.Offset;
+      Transform = F.Transform;
+      // special code for scale
+      Transform.Scale.x = F.Transform.Scale.x*ScaleX;
+      Transform.Scale.y = F.Transform.Scale.y*ScaleX;
+      Transform.Scale.z = F.Transform.Scale.z*ScaleY;
     }
 
     // light
@@ -1941,7 +1925,7 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
       case RPASS_Normal:
       case RPASS_NonShadow:
         if (true /*IsViewModel || !isShadowVol*/) {
-          Drawer->DrawAliasModel(Md2Org, Md2Angle, Shift, Offset, Scale,
+          Drawer->DrawAliasModel(Md2Org, Md2Angle, Transform,
             SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
             Trans, ColorMap, Md2Light, Fade, Md2Alpha, Additive,
             IsViewModel, smooth_inter, Interpolate, SubMdl.UseDepth,
@@ -1951,29 +1935,29 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
         break;
       case RPASS_Ambient:
         if (!SubMdl.AllowTransparency)
-          Drawer->DrawAliasModelAmbient(Md2Org, Md2Angle, Shift, Offset, Scale,
+          Drawer->DrawAliasModelAmbient(Md2Org, Md2Angle, Transform,
             SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
             Md2Light, Md2Alpha, smooth_inter, Interpolate, SubMdl.UseDepth,
             SubMdl.AllowTransparency);
         break;
       case RPASS_ShadowVolumes:
-        Drawer->DrawAliasModelShadow(Md2Org, Md2Angle, Shift, Offset, Scale,
+        Drawer->DrawAliasModelShadow(Md2Org, Md2Angle, Transform,
           SubMdl.Model, Md2Frame, Md2NextFrame, smooth_inter, Interpolate,
           LightPos, LightRadius);
         break;
       case RPASS_Light:
-        Drawer->DrawAliasModelLight(Md2Org, Md2Angle, Shift, Offset, Scale,
+        Drawer->DrawAliasModelLight(Md2Org, Md2Angle, Transform,
           SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
           Md2Alpha, smooth_inter, Interpolate, SubMdl.AllowTransparency);
         break;
       case RPASS_Textures:
-        Drawer->DrawAliasModelTextures(Md2Org, Md2Angle, Shift, Offset, Scale,
+        Drawer->DrawAliasModelTextures(Md2Org, Md2Angle, Transform,
           SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
           Trans, ColorMap, Md2Alpha, smooth_inter, Interpolate, SubMdl.UseDepth,
           SubMdl.AllowTransparency);
         break;
       case RPASS_Fog:
-        Drawer->DrawAliasModelFog(Md2Org, Md2Angle, Shift, Offset, Scale,
+        Drawer->DrawAliasModelFog(Md2Org, Md2Angle, Transform,
           SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
           Fade, Md2Alpha, smooth_inter, Interpolate, SubMdl.AllowTransparency);
         break;

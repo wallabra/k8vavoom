@@ -638,23 +638,23 @@ public:
                                   const TVec &sprnormal, float sprpdist,
                                   const TVec &saxis, const TVec &taxis, const TVec &texorg,
                                   int hangup) override;
-  virtual void DrawAliasModel(const TVec&, const TAVec&, const TVec&, const TVec&, const TVec&,
+  virtual void DrawAliasModel(const TVec&, const TAVec&, const AliasModelTrans &Transform,
     VMeshModel*, int, int, VTexture*, VTextureTranslation*, int, vuint32,
     vuint32, float, bool, bool, float, bool, bool, bool, bool) override;
-  virtual void DrawAliasModelAmbient(const TVec&, const TAVec&, const TVec&, const TVec&,
-    const TVec&, VMeshModel*, int, int, VTexture*, vuint32, float, float, bool,
+  virtual void DrawAliasModelAmbient(const TVec&, const TAVec&, const AliasModelTrans &Transform,
+    VMeshModel*, int, int, VTexture*, vuint32, float, float, bool,
     bool, bool) override;
-  virtual void DrawAliasModelTextures(const TVec&, const TAVec&, const TVec&, const TVec&, const TVec&,
+  virtual void DrawAliasModelTextures(const TVec&, const TAVec&, const AliasModelTrans &Transform,
     VMeshModel*, int, int, VTexture*, VTextureTranslation*, int, float, float, bool,
     bool, bool) override;
   virtual void BeginModelsLightPass(const TVec&, float, float, vuint32, const TVec &aconeDir, const float aconeAngle) override;
-  virtual void DrawAliasModelLight(const TVec&, const TAVec&, const TVec&, const TVec&,
-    const TVec&, VMeshModel*, int, int, VTexture*, float, float, bool, bool) override;
+  virtual void DrawAliasModelLight(const TVec&, const TAVec&, const AliasModelTrans &Transform,
+    VMeshModel*, int, int, VTexture*, float, float, bool, bool) override;
   virtual void BeginModelsShadowsPass(TVec&, float) override;
-  virtual void DrawAliasModelShadow(const TVec&, const TAVec&, const TVec&, const TVec&,
-    const TVec&, VMeshModel*, int, int, float, bool, const TVec&, float) override;
-  virtual void DrawAliasModelFog(const TVec&, const TAVec&, const TVec&, const TVec&,
-    const TVec&, VMeshModel*, int, int, VTexture*, vuint32, float, float, bool, bool) override;
+  virtual void DrawAliasModelShadow(const TVec&, const TAVec&, const AliasModelTrans &Transform,
+    VMeshModel*, int, int, float, bool, const TVec&, float) override;
+  virtual void DrawAliasModelFog(const TVec&, const TAVec&, const AliasModelTrans &Transform,
+    VMeshModel*, int, int, VTexture*, vuint32, float, float, bool, bool) override;
   virtual bool StartPortal(VPortal*, bool) override;
   virtual void EndPortal(VPortal*, bool) override;
 
