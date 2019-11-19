@@ -458,6 +458,20 @@ static void ParseVector (VXmlNode *SN, TVec &vec, const char *basename) {
 
 //==========================================================================
 //
+//  ParseTransform
+//
+//  `trans` must be initialised
+//
+//==========================================================================
+static void ParseTransform (VXmlNode *SN, AliasModelTrans &trans) {
+  ParseVector(SN, trans.Shift, "shift");
+  ParseVector(SN, trans.Offset, "offset");
+  ParseVector(SN, trans.Scale, "scale");
+}
+
+
+//==========================================================================
+//
 //  ParseModelScript
 //
 //==========================================================================
@@ -504,17 +518,8 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) 
         Md2.SkinAnimRange = VStr::atoi(*SN->GetAttribute("skin_anim_range"));
       }
 
-      // base shift
-      TVec Shift(0.0f, 0.0f, 0.0f);
-      ParseVector(SN, Shift, "shift");
-
-      // base offset
-      TVec Offset(0.0f, 0.0f, 0.0f);
-      ParseVector(SN, Offset, "offset");
-
-      // base scaling
-      TVec Scale(1.0f, 1.0f, 1.0f);
-      ParseVector(SN, Scale, "scale");
+      AliasModelTrans BaseTransform;
+      ParseTransform(SN, BaseTransform);
 
       // fullbright flag
       Md2.FullBright = ParseBool(SN, "fullbright", false);
@@ -536,17 +541,9 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) 
         F.PositionIndex = 0;
         if (FN->HasAttribute("position_index")) F.PositionIndex = VStr::atoi(*FN->GetAttribute("position_index"));
 
-        // shift
-        F.Transform.Shift = Shift;
-        ParseVector(FN, F.Transform.Shift, "shift");
-
-        // offset
-        F.Transform.Offset = Offset;
-        ParseVector(FN, F.Transform.Offset, "offset");
-
-        // scale
-        F.Transform.Scale = Scale;
-        ParseVector(FN, F.Transform.Scale, "scale");
+        // frame transformation
+        F.Transform = BaseTransform;
+        ParseTransform(FN, F.Transform);
 
         // alpha
         F.AlphaStart = 1.0f;
