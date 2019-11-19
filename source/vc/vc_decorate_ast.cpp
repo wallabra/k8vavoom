@@ -1114,7 +1114,18 @@ VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
   // non-prefixed constant
   // look only for constants defined in DECORATE scripts (and in the current class)
   {
-    VConstant *Const = (ec.SelfClass ? ec.SelfClass->FindDecorateConstant(Name) : nullptr);
+    VConstant *Const = nullptr;
+    if (ec.SelfClass) {
+      Const = ec.SelfClass->FindDecorateConstant(Name);
+    } else {
+      // try some other classes
+      if (!Const && ActorClass) Const = ActorClass->FindDecorateConstant(Name);
+      if (!Const && FakeInventoryClass) Const = FakeInventoryClass->FindDecorateConstant(Name);
+      if (!Const && InventoryClass) Const = InventoryClass->FindDecorateConstant(Name);
+      if (!Const && AmmoClass) Const = AmmoClass->FindDecorateConstant(Name);
+      if (!Const && WeaponClass) Const = WeaponClass->FindDecorateConstant(Name);
+      if (!Const && PlayerPawnClass) Const = PlayerPawnClass->FindDecorateConstant(Name);
+    }
     if (!Const) {
       VName CheckName = VName(*Name, VName::AddLower);
       Const = (ec.SelfClass ? ec.SelfClass->FindPackageConstant(ec.Package, CheckName) : nullptr);
