@@ -87,7 +87,7 @@ static void AliasSetUpTransform (const TVec &modelorg, const TAVec &angles,
   //RotationMatrix = rotmat*t3matrix;
 
   if (Scale.x != 1.0f || Scale.y != 1.0f || Scale.z != 1.0f) {
-    // create scaling matrix
+    // create scale+offset matrix
     VMatrix4 scalemat = VMatrix4::Identity;
     scalemat[0][0] = Scale.x;
     scalemat[1][1] = Scale.y;
@@ -96,6 +96,14 @@ static void AliasSetUpTransform (const TVec &modelorg, const TAVec &angles,
     scalemat[0][3] = Scale.x*Offset.x;
     scalemat[1][3] = Scale.y*Offset.y;
     scalemat[2][3] = Scale.z*Offset.z;
+
+    RotationMatrix = scalemat*rotmat;
+  } else if (!Offset.isZero()) {
+    // create offset matrix
+    VMatrix4 scalemat = VMatrix4::Identity;
+    scalemat[0][3] = Offset.x;
+    scalemat[1][3] = Offset.y;
+    scalemat[2][3] = Offset.z;
 
     RotationMatrix = scalemat*rotmat;
   } else {
