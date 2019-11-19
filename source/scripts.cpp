@@ -1136,6 +1136,12 @@ void VScriptParser::ExpectFloat () {
       VStr sl = str.ToLower();
       if (sl.StartsWith("0x7f") || sl.StartsWith("0xff")) {
         Float = 99999.0f;
+      } else if (sl.StartsWith("0x")) {
+        int val = 0;
+        // loose
+        if (!VStr::convertInt(*str, &val, true)) Error(va("Bad floating point constant \"%s\".", *String));
+        Float = val;
+        GLog.Logf(NAME_Warning, "%s: hex value '%s' for floating constant", *GetLoc().toStringNoCol(), *String);
       } else {
         float ff = 0;
         if (!str.convertFloat(&ff)) {
@@ -1154,7 +1160,7 @@ void VScriptParser::ExpectFloat () {
           while (*s >= '0' && *s <= '9') ++s;
           while (*s && *(const vuint8 *)s <= ' ') ++s;
           if (*s) Error(va("Bad floating point constant \"%s\".", *String));
-          GLog.WriteLine(NAME_Warning, "%s: DON'T BE IDIOTS, THIS IS TOO MUCH FOR A FLOAT: '%s'", *GetLoc().toStringNoCol(), *String);
+          GLog.Logf(NAME_Warning, "%s: DON'T BE IDIOTS, THIS IS TOO MUCH FOR A FLOAT: '%s'", *GetLoc().toStringNoCol(), *String);
           ff = 1e14;
           if (neg) ff = -ff;
         }
