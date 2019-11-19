@@ -500,6 +500,26 @@ public:
     return (!tx || tx->Type == TEXTYPE_Null);
   }
 
+  inline bool IsSeeThrough (int TexNum) const noexcept {
+    if (TexNum <= 0) return true;
+    VTexture *tx = getIgnoreAnim(TexNum);
+    return (!tx || tx->Type == TEXTYPE_Null || tx->isSeeThrough());
+  }
+
+  inline bool IsSightBlocking (int TexNum) const noexcept { return !IsSeeThrough(TexNum); }
+
+  enum TexCheckType {
+    TCT_EMPTY,
+    TCT_SEE_TRHOUGH,
+    TCT_SOLID,
+  };
+
+  inline TexCheckType GetTextureType (int TexNum) const noexcept {
+    if (TexNum <= 0) return TCT_EMPTY;
+    VTexture *tx = getIgnoreAnim(TexNum);
+    return (!tx || tx->Type == TEXTYPE_Null ? TCT_EMPTY : (tx->isSeeThrough() ? TCT_SEE_TRHOUGH : TCT_SOLID));
+  }
+
   // get unanimated texture
   inline VTexture *operator [] (int TexNum) const noexcept {
     VTexture *res = getTxByIndex(TexNum);

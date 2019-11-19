@@ -623,20 +623,45 @@ static inline void SetupTextureAxesOffset (seg_t *seg, texinfo_t *texinfo, VText
 //  HACK: sector with height of 1, and only middle
 //  masked texture is "transparent door"
 //
+//  actually, 2s "door" wall without top/bottom textures, and with masked
+//  midtex is "transparent door"
+//
 //==========================================================================
-static inline bool IsTransDoorHack (const seg_t *seg) {
+static inline bool IsTransDoorHack (const seg_t *seg, bool fortop) {
   const sector_t *secs[2] = { seg->frontsector, seg->backsector };
   // check for slopes
   if (secs[0]->floor.normal.z != 1.0f || secs[0]->ceiling.normal.z != -1.0f) return false;
   if (secs[1]->floor.normal.z != 1.0f || secs[1]->ceiling.normal.z != -1.0f) return false;
   // check for door
-  if (secs[0]->floor.minz != secs[1]->floor.minz) return false;
+  //if (secs[0]->floor.minz != secs[1]->floor.minz) return false;
+  if (secs[0]->floor.minz >= secs[1]->ceiling.minz) return false; // show midtex
   // check for middle texture
   const side_t *sidedef = seg->sidedef;
-  VTexture *mt = GTextureManager(sidedef->MidTexture);
-  if (!mt || mt->Type == TEXTYPE_Null || !mt->isTransparent()) return false;
+  // if we have midtex, it is door hack
+  return !GTextureManager.IsEmptyTexture(sidedef->MidTexture);
+  //if (!mt || mt->Type == TEXTYPE_Null || !mt->isTransparent()) return false;
   // ok, looks like it
   return true;
+}
+
+
+//==========================================================================
+//
+//  IsTransDoorHackTop
+//
+//==========================================================================
+static inline bool IsTransDoorHackTop (const seg_t *seg) {
+  return IsTransDoorHack(seg, true);
+}
+
+
+//==========================================================================
+//
+//  IsTransDoorHackBot
+//
+//==========================================================================
+static inline __attribute__((unused)) bool IsTransDoorHackBot (const seg_t *seg) {
+  return IsTransDoorHack(seg, false);
 }
 
 
@@ -672,10 +697,13 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
 
   // HACK: sector with height of 1, and only middle masked texture is "transparent door"
   //       also, invert "upper unpegged" flag for this case
+  // actually, 2s "door" wall without top/bottom textures, amd with
   int peghack = 0;
-  if (r_hack_transtop && TTex->Type == TEXTYPE_Null && IsTransDoorHack(seg)) {
+  unsigned hackflag = 0;
+  if (r_hack_transtop && TTex->Type == TEXTYPE_Null && IsTransDoorHackTop(seg)) {
     TTex = GTextureManager(sidedef->MidTexture);
-    peghack = ML_DONTPEGTOP;
+    //peghack = ML_DONTPEGTOP;
+    hackflag = surface_t::TF_TOPHACK;
   }
 
   SetupTextureAxesOffset(seg, &sp->texinfo, TTex, &sidedef->Top);
@@ -721,7 +749,7 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
     wv[2].z = top_topz2;
     wv[3].z = max2(back_topz2, botz2);
 
-    CreateWorldSurfFromWV(sub, seg, sp, wv, surface_t::TF_TOP|(peghack ? surface_t::TF_TOPHACK : 0));
+    CreateWorldSurfFromWV(sub, seg, sp, wv, surface_t::TF_TOP|hackflag);
   }
 
   sp->frontTopDist = r_ceiling.splane->dist;
@@ -1432,6 +1460,8 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
       }
       sp->texinfo.ColorMap = ColorMap;
     }
+
+    //TODO: properly implement 2s transparent door hack (TNT MAP02)
 
     // top wall
     sp = dseg->top;

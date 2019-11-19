@@ -234,12 +234,10 @@ static inline bool IsGoodSegForPoly (const VViewClipper &clip, const seg_t *seg)
     /* preserve a kind of transparent door/lift special effect */ \
     if (seg->frontsector == fsec) { \
       /* we are looking at toptex */ \
-      if (!hasTopTex) return false; \
-      if (GTextureManager[seg->sidedef->TopTexture]->isSeeThrough()) return false; \
+      if (topTexType != VTextureManager::TCT_SOLID) return false; \
     } else { \
       /* we are looking at bottex */ \
-      if (!hasBotTex) return false; \
-      if (GTextureManager[seg->sidedef->BottomTexture]->isSeeThrough()) return false; \
+      if (botTexType != VTextureManager::TCT_SOLID) return false; \
     } \
     return true; \
   } \
@@ -248,15 +246,12 @@ static inline bool IsGoodSegForPoly (const VViewClipper &clip, const seg_t *seg)
     /* preserve a kind of transparent door/lift special effect */ \
     if (seg->frontsector == bsec) { \
       /* we are looking at toptex */ \
-      if (!hasTopTex) return false; \
-      if (GTextureManager[seg->sidedef->TopTexture]->isSeeThrough()) return false; \
+      if (topTexType != VTextureManager::TCT_SOLID) return false; \
     } else { \
       /* we are looking at bottex */ \
-      if (!hasBotTex) return false; \
-      if (GTextureManager[seg->sidedef->BottomTexture]->isSeeThrough()) return false; \
+      if (botTexType != VTextureManager::TCT_SOLID) return false; \
     } \
-    /*if (!hasBotTex) return false;*/ \
-    /*if (GTextureManager[seg->sidedef->BottomTexture]->isSeeThrough()) return false;*/ \
+    /*if (botTexType != VTextureManager::TCT_SOLID) return false;*/ \
     return true; \
   } \
  \
@@ -271,12 +266,10 @@ static inline bool IsGoodSegForPoly (const VViewClipper &clip, const seg_t *seg)
     } \
     /* we are in front sector */ \
     if (backcz1 <= frontcz1 || backcz2 <= frontcz2) { \
-      if (!hasTopTex) return false; \
-      if (GTextureManager[seg->sidedef->TopTexture]->isSeeThrough()) return false; \
+      if (topTexType != VTextureManager::TCT_SOLID) return false; \
     } \
     if (backfz1 >= frontfz1 || backfz2 >= frontfz2) { \
-      if (!hasBotTex) return false; \
-      if (GTextureManager[seg->sidedef->BottomTexture]->isSeeThrough()) return false; \
+      if (botTexType != VTextureManager::TCT_SOLID) return false; \
     } \
     return true; \
   } \
@@ -329,12 +322,16 @@ bool VViewClipper::IsSegAClosedSomethingServer (VLevel *level, rep_sector_t *rep
 
   if (fsec == bsec) return false; // self-referenced sector
 
-  bool hasTopTex = !GTextureManager.IsEmptyTexture(seg->sidedef->TopTexture);
-  bool hasBotTex = !GTextureManager.IsEmptyTexture(seg->sidedef->BottomTexture);
-  bool hasMidTex = !GTextureManager.IsEmptyTexture(seg->sidedef->MidTexture);
-  if (hasTopTex || // a seg without top texture isn't a door
-      hasBotTex || // a seg without bottom texture isn't an elevator/plat
-      hasMidTex) // a seg without mid texture isn't a polyobj door
+  auto topTexType = GTextureManager.GetTextureType(seg->sidedef->TopTexture);
+  auto botTexType = GTextureManager.GetTextureType(seg->sidedef->BottomTexture);
+  auto midTexType = GTextureManager.GetTextureType(seg->sidedef->MidTexture);
+
+  // transparent door hack
+  if (topTexType == VTextureManager::TCT_EMPTY && botTexType == VTextureManager::TCT_EMPTY) return false;
+
+  if (topTexType == VTextureManager::TCT_SOLID || // a seg without top texture isn't a door
+      botTexType == VTextureManager::TCT_SOLID || // a seg without bottom texture isn't an elevator/plat
+      midTexType == VTextureManager::TCT_SOLID) // a seg without mid texture isn't a polyobj door
   {
     int fcpic, ffpic;
     int bcpic, bfpic;
@@ -388,12 +385,16 @@ bool VViewClipper::IsSegAClosedSomething (const TFrustum *Frustum, const seg_t *
   if (fsec == bsec) return false; // self-referenced sector
   if (!fsec || !bsec) return true; // one-sided
 
-  bool hasTopTex = !GTextureManager.IsEmptyTexture(seg->sidedef->TopTexture);
-  bool hasBotTex = !GTextureManager.IsEmptyTexture(seg->sidedef->BottomTexture);
-  bool hasMidTex = !GTextureManager.IsEmptyTexture(seg->sidedef->MidTexture);
-  if (hasTopTex || // a seg without top texture isn't a door
-      hasBotTex || // a seg without bottom texture isn't an elevator/plat
-      hasMidTex) // a seg without mid texture isn't a polyobj door
+  auto topTexType = GTextureManager.GetTextureType(seg->sidedef->TopTexture);
+  auto botTexType = GTextureManager.GetTextureType(seg->sidedef->BottomTexture);
+  auto midTexType = GTextureManager.GetTextureType(seg->sidedef->MidTexture);
+
+  // transparent door hack
+  if (topTexType == VTextureManager::TCT_EMPTY && botTexType == VTextureManager::TCT_EMPTY) return false;
+
+  if (topTexType == VTextureManager::TCT_SOLID || // a seg without top texture isn't a door
+      botTexType == VTextureManager::TCT_SOLID || // a seg without bottom texture isn't an elevator/plat
+      midTexType == VTextureManager::TCT_SOLID) // a seg without mid texture isn't a polyobj door
   {
     int fcpic, ffpic;
     int bcpic, bfpic;
@@ -406,8 +407,8 @@ bool VViewClipper::IsSegAClosedSomething (const TFrustum *Frustum, const seg_t *
 
     CLIPPER_CALC_FCHEIGHTS
 
-    if (clip_midsolid && hasMidTex) {
-      const bool midSolid = (hasMidTex && !GTextureManager[seg->sidedef->MidTexture]->isSeeThrough());
+    if (clip_midsolid && midTexType) {
+      const bool midSolid = (midTexType && !GTextureManager.IsSeeThrough(seg->sidedef->MidTexture));
       if (midSolid) {
         const sector_t *sec = seg->backsector; //(!seg->side ? ldef->backsector : ldef->frontsector);
         VTexture *MTex = GTextureManager(seg->sidedef->MidTexture);
@@ -447,11 +448,11 @@ bool VViewClipper::IsSegAClosedSomething (const TFrustum *Frustum, const seg_t *
 
     CLIPPER_CHECK_CLOSED_SECTOR();
 
-    if (clip_height && (hasTopTex || hasBotTex) &&
+    if (clip_height && (topTexType || botTexType) &&
         (lorg || (Frustum && Frustum->isValid())) &&
         seg->partner && seg->partner != seg &&
         seg->partner->frontsub && seg->partner->frontsub != seg->frontsub &&
-        (!hasMidTex || !GTextureManager[seg->sidedef->MidTexture]->isSeeThrough()))
+        (!midTexType || !GTextureManager.IsSeeThrough(seg->sidedef->MidTexture)))
     {
       // here we can check if midtex is in frustum; if it doesn't,
       // we can add this seg to clipper.
