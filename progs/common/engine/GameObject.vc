@@ -590,7 +590,7 @@ struct texinfo_t {
   native transient TVec taxis;
   native transient float toffs;
   native transient void/*VTexture*/ *Tex;
-  native transient int noDecals;
+  native transient bool noDecals;
   // 1.1 for solid surfaces
   // alpha for masked surfaces
   native transient float Alpha;
