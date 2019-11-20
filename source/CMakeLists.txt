@@ -604,6 +604,7 @@ if(ENABLE_CLIENT)
   #
   # Icon
   #
+  install(FILES ../docs/k8vavoom.txt DESTINATION ${DATADIR})
   install(FILES ../res/k8vavoom.png DESTINATION ${DATADIR})
   # variants
   if(WIN32)
