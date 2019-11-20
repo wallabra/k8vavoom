@@ -130,7 +130,7 @@ void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, TVec *sv,
     //dist = fabsf(DotProduct(mid-vieworg, viewforward));
     dist = LengthSquared(mid-vieworg);
   } else {
-#if 1
+#if 0
     TVec mid(0, 0, 0);
     for (int i = 0; i < count; ++i) mid += sv[i];
     mid /= count;
@@ -604,33 +604,13 @@ extern "C" {
       }
     }
 
-    // non-translucent objects should come first, and
-    // additive ones should come last
+    // non-translucent objects should come first
     bool didDistanceCheck = false;
 
-    // additive
-    if (ta->Additive && tb->Additive) {
-      // both additive, sort by distance to view origin (order doesn't matter, as long as it is consistent)
-      // but additive models should be sorted back-to-front, so use back-to-front, as with translucents
-      const float d0 = ta->dist;
-      const float d1 = tb->dist;
-      if (d0 < d1) return 1;
-      if (d0 > d1) return -1;
-      // same distance, do other checks
-      didDistanceCheck = true;
-    } else if (ta->Additive) {
-      // a is additive, b is not additive, so b should come first (a > b)
-      return 1;
-    } else if (tb->Additive) {
-      // a is not additive, b is additive, so a should come first (a < b)
-      return -1;
-    }
+    // translucent/additive
+    const bool aTrans = (ta->Additive || ta->Alpha < 1.0f);
+    const bool bTrans = (tb->Additive || tb->Alpha < 1.0f);
 
-    // additive still may be set here; assume that additive surface is not transparent
-
-    // translucent
-    const bool aTrans = (!ta->Additive && ta->Alpha < 1.0f);
-    const bool bTrans = (!tb->Additive && tb->Alpha < 1.0f);
     if (aTrans && bTrans) {
       // both translucent, sort by distance to view origin (nearest last)
       const float d0 = ta->dist;
@@ -694,6 +674,10 @@ extern "C" {
 void VRenderLevelShared::DrawTranslucentPolys () {
   VRenderLevelDrawer::DrawLists &dls = GetCurrentDLS();
 
+  //FIXME: we should use proper sort order instead, because with separate lists additive sprites
+  //       are broken by translucent surfaces (additive sprite rendered first even if it is nearer
+  //       than the surface)
+
   if (dls.DrawSpriteList.length() > 0) {
     //GCon->Logf("DrawTranslucentPolys: first=%u; used=%u; count=%u", traspFirst, traspUsed, traspUsed-traspFirst);
 
@@ -752,7 +736,6 @@ void VRenderLevelShared::DrawTranslucentPolys () {
 
     if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); }
   }
-
 
   //GCon->Logf(NAME_Debug, "add=%d; alp=%d", DrawSurfListAdditive.length(), DrawSurfListAlpha.length());
   // additive (order doesn't matter, so sort by texture)
