@@ -935,26 +935,31 @@ final void BrainishExplosion (TVec org) {
 //  A_M_Saw
 //
 //===========================================================================
-[decorate] final void A_M_Saw () {
+[decorate] final void A_M_Saw (optional name fullsound, optional name hitsound, optional int damage, optional class!EntityEx pufftype) {
   TVec dir;
 
   if (!Target) return;
 
+  if (!specified_fullsound) fullsound = 'weapons/sawfull';
+  if (!specified_hitsound) hitsound = 'weapons/sawhit';
+  if (!damage) damage = 2;
+  if (!specified_pufftype) pufftype = BulletPuff;
+
   A_FaceTarget();
   if (CheckMeleeRange()) {
-    int damage = 2*(P_Random()%10+1);
+    damage *= (P_Random()%10+1);
     TAVec aimAng = Angles;
     aimAng.yaw = AngleMod360(aimAng.yaw+(Random()-Random())*45.0/8.0);
 
     // use meleerange + 1 se the puff doesn't skip the flash
     EntityEx AimTarget = AimLineAttack(out dir, aimAng, MELEERANGE+0.00001);
-    LineAttack(dir, MELEERANGE+0.00001, damage, BulletPuff, default, default, 'Chainsaw', false);
+    LineAttack(dir, MELEERANGE+0.00001, damage, pufftype, default, default, 'Chainsaw', false);
 
     if (!AimTarget) {
-      PlaySound('weapons/sawfull', CHAN_WEAPON);
+      PlaySound(fullsound, CHAN_WEAPON);
       return;
     }
-    PlaySound('weapons/sawhit', CHAN_WEAPON);
+    PlaySound(hitsound, CHAN_WEAPON);
 
     // turn to face target
     float angle = atan2(AimTarget.Origin.y-Origin.y, AimTarget.Origin.x-Origin.x);
@@ -973,7 +978,7 @@ final void BrainishExplosion (TVec org) {
     }
     Angles.yaw = AngleMod360(Angles.yaw);
   } else {
-    PlaySound('weapons/sawfull', CHAN_WEAPON);
+    PlaySound(fullsound, CHAN_WEAPON);
   }
 }
 
