@@ -1583,6 +1583,53 @@ __attribute__((warn_unused_result)) VStr VStr::FixFileSlashes () const noexcept 
 }
 
 
+__attribute__((warn_unused_result)) VStr VStr::AppendTrailingSlash () const noexcept {
+  VStr res(*this);
+  const int slen = length();
+  if (slen < 1) return res;
+  const char *data = getData();
+#ifdef _WIN32
+  if (slen == 2 && data[1] == ':') return res; // disk name only, safe
+  if (data[slen-1] == '/' || data[slen-1] == '\\') return res;
+#else
+  if (data[slen-1] == '/') return res;
+#endif
+  res += '/';
+  return res;
+}
+
+
+__attribute__((warn_unused_result)) VStr VStr::RemoveTrailingSlash () const noexcept {
+  VStr path(*this);
+  if (path.isEmpty()) return path;
+#ifdef _WIN32
+  if (path.length() > 2 && path[1] == ':') {
+    // with disk name
+    while (path.length() > 3 && (path.endsWith("/") || path.endsWith("\\"))) path.chopRight(1);
+  } else {
+    while (path.length() > 1 && (path.endsWith("/") || path.endsWith("\\"))) path.chopRight(1);
+  }
+#else
+  while (path.length() > 1 && path.endsWith("/")) path.chopRight(1);
+#endif
+  return path;
+}
+
+
+__attribute__((warn_unused_result)) VStr VStr::AppendPath (const VStr &path) const noexcept {
+  VStr res(*this);
+  if (path.length()) {
+#ifdef _WIN32
+    if (res.length() && path[0] != '/' && path[0] != '\\') res = res.AppendTrailingSlash();
+#else
+    if (res.length() && path[0] != '/') res = res.AppendTrailingSlash();
+#endif
+    res += path;
+  }
+  return res;
+}
+
+
 __attribute__((warn_unused_result)) bool VStr::IsAbsolutePath () const noexcept {
   if (length() < 1) return false;
   const char *data = getData();

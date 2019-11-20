@@ -455,6 +455,9 @@ public:
   __attribute__((warn_unused_result)) VStr DefaultPath (VStr basepath) const noexcept;
   __attribute__((warn_unused_result)) VStr DefaultExtension (VStr extension) const noexcept;
   __attribute__((warn_unused_result)) VStr FixFileSlashes () const noexcept;
+  __attribute__((warn_unused_result)) VStr AppendTrailingSlash () const noexcept;
+  __attribute__((warn_unused_result)) VStr RemoveTrailingSlash () const noexcept;
+  __attribute__((warn_unused_result)) VStr AppendPath (const VStr &path) const noexcept;
 
   __attribute__((warn_unused_result)) inline VStr extractFilePath () const noexcept { return ExtractFilePath(); }
   __attribute__((warn_unused_result)) inline VStr extractFileName () const noexcept { return ExtractFileName(); }
@@ -465,6 +468,9 @@ public:
   __attribute__((warn_unused_result)) inline VStr defaultPath (VStr basepath) const noexcept { return DefaultPath(basepath); }
   __attribute__((warn_unused_result)) inline VStr defaultExtension (VStr extension) const noexcept { return DefaultExtension(extension); }
   __attribute__((warn_unused_result)) inline VStr fixSlashes () const noexcept { return FixFileSlashes(); }
+  __attribute__((warn_unused_result)) inline VStr appendTrailingSlash () const noexcept { return AppendTrailingSlash(); }
+  __attribute__((warn_unused_result)) inline VStr removeTrailingSlash () const noexcept { return RemoveTrailingSlash(); }
+  __attribute__((warn_unused_result)) inline VStr appendPath (const VStr &path) const noexcept { return AppendPath(path); }
 
   // removes all blanks
   __attribute__((warn_unused_result)) VStr trimRight () const noexcept;
@@ -724,6 +730,8 @@ public:
       return (ch == '/');
     #endif
   }
+
+  static __attribute__((warn_unused_result)) inline bool IsPathDelimiter (const char ch) noexcept { return isPathDelimiter(ch); }
 
   static __attribute__((warn_unused_result)) bool isSafeDiskFileName (const VStr &fname) noexcept { return fname.isSafeDiskFileName(); }
 
