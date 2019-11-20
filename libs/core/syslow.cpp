@@ -354,6 +354,7 @@ bool Sys_CreateDirectory (VStr path) {
 //==========================================================================
 void *Sys_OpenDir (VStr path, bool wantDirs) {
   if (path.isEmpty()) return nullptr;
+  path = path.removeTrailingSlash();
   DIR *dh = opendir(*path);
   if (!dh) return nullptr;
   auto res = (DirInfo *)Z_Malloc(sizeof(DirInfo));
@@ -418,6 +419,7 @@ void Sys_CloseDir (void *adir) {
 //==========================================================================
 bool Sys_DirExists (VStr path) {
   if (path.isEmpty()) return false;
+  path = path.removeTrailingSlash();
   struct stat s;
   if (stat(*path, &s) == -1) return false;
   return !!S_ISDIR(s.st_mode);
@@ -741,6 +743,7 @@ void Sys_CloseDir (void *adir) {
 //==========================================================================
 bool Sys_DirExists (VStr path) {
   if (path.isEmpty()) return false;
+  path = path.removeTrailingSlash();
   struct stat s;
   if (stat(*path, &s) == -1) return false;
   return !!(s.st_mode & S_IFDIR);
