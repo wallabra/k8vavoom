@@ -830,6 +830,7 @@ void AddAutoloadRC (VStr aubasedir) {
     }
   }
 
+  GCon->Logf(NAME_Init, "parsing autoload groups from '%s'...", *aurc->GetName());
   VScriptParser *sc = new VScriptParser(aurc->GetName(), aurc);
 
   while (!sc->AtEnd()) {
@@ -875,6 +876,50 @@ void AddAutoloadRC (VStr aubasedir) {
 
 //==========================================================================
 //
+//  AddGameAutoloads
+//
+//==========================================================================
+static void AddGameAutoloads (VStr basedir, bool addAutoload=true) {
+  if (fsys_onlyOneBaseFile) return;
+
+  basedir = basedir.fixSlashes();
+  if (basedir.length() == 0 || basedir == "/") return;
+  if (addAutoload) basedir = basedir.appendPath("autoload");
+  //GCon->Logf(NAME_Debug, "::: <%s> :::", *basedir);
+
+  TArray<VStr> WadFiles;
+  TArray<VStr> ZipFiles;
+
+  // find all .wad/.pk3 files in that directory
+  auto dirit = Sys_OpenDir(basedir);
+  if (dirit) {
+    for (VStr test = Sys_ReadDir(dirit); test.IsNotEmpty(); test = Sys_ReadDir(dirit)) {
+      //fprintf(stderr, "  <%s>\n", *test);
+      if (test[0] == '_' || test[0] == '.') continue; // skip it
+      VStr ext = test.ExtractFileExtension();
+           if (ext.strEquCI(".wad")) WadFiles.Append(test);
+      else if (ext.strEquCI(".pk3")) ZipFiles.Append(test);
+    }
+    Sys_CloseDir(dirit);
+    qsort(WadFiles.Ptr(), WadFiles.length(), sizeof(VStr), cmpfuncCINoExt);
+    qsort(ZipFiles.Ptr(), ZipFiles.length(), sizeof(VStr), cmpfuncCINoExt);
+  }
+
+  basedir = basedir.appendTrailingSlash();
+
+  if (WadFiles.length() || ZipFiles.length()) {
+    GCon->Logf(NAME_Init, "adding game autoloads from '%s'...", *basedir);
+    // now add wads, then pk3s
+    for (auto &&fn : WadFiles) W_AddDiskFile(basedir.appendPath(fn), false);
+    for (auto &&fn : ZipFiles) W_AddDiskFile(basedir.appendPath(fn));
+  }
+
+  AddAutoloadRC(basedir);
+}
+
+
+//==========================================================================
+//
 //  AddGameDir
 //
 //==========================================================================
@@ -883,7 +928,7 @@ static void AddGameDir (VStr basedir, VStr dir) {
 
   VStr bdx = basedir;
   if (bdx.length() == 0) bdx = "./";
-  bdx = bdx+"/"+dir;
+  bdx = bdx.appendPath(dir);
 
   if (!Sys_DirExists(bdx)) return;
 
@@ -911,14 +956,14 @@ static void AddGameDir (VStr basedir, VStr dir) {
   // now add wads, then pk3s
   for (int i = 0; i < WadFiles.length(); ++i) {
     //if (i == 0 && ZipFiles.length() == 0) wpkAppend(dir+"/"+WadFiles[i], true); // system pak
-    W_AddDiskFile(bdx+"/"+WadFiles[i], false);
+    W_AddDiskFile(bdx.appendPath(WadFiles[i]), false);
   }
 
   for (int i = 0; i < ZipFiles.length(); ++i) {
     //if (i == 0) wpkAppend(dir+"/"+ZipFiles[i], true); // system pak
     bool isBPK = ZipFiles[i].extractFileName().strEquCI("basepak.pk3");
     int spl = SearchPaths.length();
-    /*AddDiskZipFile*/W_AddDiskFile(bdx+"/"+ZipFiles[i]);
+    W_AddDiskFile(bdx.appendPath(ZipFiles[i]));
     if (isBPK) {
       // mark "basepak" flags
       for (int cc = spl; cc < SearchPaths.length(); ++cc) {
@@ -931,34 +976,22 @@ static void AddGameDir (VStr basedir, VStr dir) {
   SetupCustomMode(bdx);
   ApplyUserModes(dir);
 
-  // add "autoload/*"
-  if (!fsys_onlyOneBaseFile) {
-    WadFiles.clear();
-    ZipFiles.clear();
-    if (bdx[bdx.length()-1] != '/') bdx += "/";
-    bdx += "autoload";
-    VStr bdxSlash = bdx+"/";
-    // find all .wad/.pk3 files in that directory
-    dirit = Sys_OpenDir(bdx);
-    if (dirit) {
-      for (VStr test = Sys_ReadDir(dirit); test.IsNotEmpty(); test = Sys_ReadDir(dirit)) {
-        //fprintf(stderr, "  <%s>\n", *test);
-        if (test[0] == '_' || test[0] == '.') continue; // skip it
-        VStr ext = test.ExtractFileExtension();
-             if (ext.strEquCI(".wad")) WadFiles.Append(test);
-        else if (ext.strEquCI(".pk3")) ZipFiles.Append(test);
+  AddGameAutoloads(bdx);
+  #ifndef _WIN32
+  {
+    const char *hdir = getenv("HOME");
+    if (hdir && hdir[0] && hdir[1]) {
+      VStr hbd = VStr(hdir);
+      VStr gdn = dir.extractFileName();
+      if (!gdn.isEmpty()) {
+        hbd = hbd.appendPath(".k8vavoom");
+        hbd = hbd.appendPath("autoload");
+        hbd = hbd.appendPath(gdn);
+        AddGameAutoloads(hbd, false);
       }
-      Sys_CloseDir(dirit);
-      qsort(WadFiles.Ptr(), WadFiles.length(), sizeof(VStr), cmpfuncCINoExt);
-      qsort(ZipFiles.Ptr(), ZipFiles.length(), sizeof(VStr), cmpfuncCINoExt);
     }
-
-    // now add wads, then pk3s
-    for (int i = 0; i < WadFiles.length(); ++i) W_AddDiskFile(bdxSlash+WadFiles[i], false);
-    for (int i = 0; i < ZipFiles.length(); ++i) /*AddDiskZipFile*/W_AddDiskFile(bdxSlash+ZipFiles[i]);
-
-    AddAutoloadRC(bdxSlash);
   }
+  #endif
 
   // finally add directory itself
   // k8: nope
