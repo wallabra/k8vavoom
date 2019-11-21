@@ -86,6 +86,8 @@ public:
   enum {
     AT_Callback, // just a nornal arg with a callback, nothing special
     AT_StringOption, // just a string option, latest is used
+    AT_StringArray,
+    AT_StringArrayAllowDup,
     AT_FlagSet, // "set flag" argument
     AT_FlagReset, // "reset flag" argument
     AT_FlagToggle, // "toggle flag" arguments
@@ -98,6 +100,7 @@ protected:
     const char *help; // short help (nullptr to hide)
     int *flagptr; // can be `nullptr`
     const char **strptr; // can be `nullptr`
+    TArray<VStr> *strarrptr; // can be `nullptr`
     char *strarg;
     int type; // AT_xxx
     bool isAlias;
@@ -132,6 +135,7 @@ public:
   static bool RegisterCallback (const char *argname, const char *shorthelp, ArgCB acb);
   // simple string option, later will override
   static bool RegisterStringOption (const char *argname, const char *shorthelp, const char **strptr);
+  static bool RegisterStringArrayOption (const char *argname, const char *shorthelp, TArray<VStr> *arrptr, bool allowDups=false);
   // flags are int, because caller may set them to `-1`, for example, to indicate "no flag arg was seen"
   // the parser itself will only use `0` or `1`
   // toggling negative flag will turn it into `1`

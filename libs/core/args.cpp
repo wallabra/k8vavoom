@@ -578,6 +578,19 @@ bool VParsedArgs::RegisterStringOption (const char *argname, const char *shorthe
 
 //==========================================================================
 //
+//  VParsedArgs::RegisterStringArrayOption
+//
+//==========================================================================
+bool VParsedArgs::RegisterStringArrayOption (const char *argname, const char *shorthelp, TArray<VStr> *arrptr, bool allowDups) {
+  ArgInfo *ai = allocArgInfo(argname, shorthelp);
+  ai->type = (allowDups ? AT_StringArrayAllowDup : AT_StringArray);
+  ai->strarrptr = arrptr;
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VParsedArgs::RegisterFlagSet
 //
 //==========================================================================
@@ -763,6 +776,8 @@ void VParsedArgs::parse (VArgs &args) {
       ++aidx; // skip this arg
       switch (ai->type) {
         case AT_StringOption: // just a string option, latest is used
+        case AT_StringArray:
+        case AT_StringArrayAllowDup:
           if (!avalue) {
             // no '=value' part
             if (aidx >= args.Count()) {
@@ -779,12 +794,22 @@ void VParsedArgs::parse (VArgs &args) {
             }
             ++aidx;
           }
-          {
+          if (ai->type == AT_StringOption) {
             if (ai->strarg) ::free(ai->strarg);
             size_t slen = strlen(avalue);
             ai->strarg = (char *)::malloc(slen+4);
             strcpy(ai->strarg, avalue);
             if (ai->strptr) *ai->strptr = ai->strarg;
+          } else if (ai->type == AT_StringArrayAllowDup) {
+            if (avalue[0]) (*ai->strarrptr).append(VStr(avalue));
+          } else {
+            vassert(ai->type == AT_StringArray);
+            if (avalue[0]) {
+              VStr av(avalue);
+              bool found = false;
+              for (auto &&s : (*ai->strarrptr)) if (s == av) { found = true; break; }
+              if (!found) (*ai->strarrptr).append(av);
+            }
           }
           break;
         case AT_FlagSet: // "set flag" argument
