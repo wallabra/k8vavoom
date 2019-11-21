@@ -3830,6 +3830,7 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
   if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector: checking sector #%d (%d lines)", (int)(ptrdiff_t)(sec-&Sectors[0]), sec->linecount);
   int myside = -1;
   bool hasMissingBottomTexture = false;
+  bool hasMissingTopTexture = false;
   for (int f = 0; f < sec->linecount; ++f) {
     if (!res) {
       if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  skipped sector #%d due to res=0", (int)(ptrdiff_t)(sec-&Sectors[0]));
@@ -3849,6 +3850,7 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
       if (myside == 1) {
         if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  sector #%d: skipped line #%d (%d) due to side conflict (1)", (int)(ptrdiff_t)(sec-&Sectors[0]), (int)(ptrdiff_t)(line-&Lines[0]), f);
         if (!hasMissingBottomTexture && bs->floor.minz > sec->floor.minz && Sides[line->sidenum[0]].BottomTexture <= 0) hasMissingBottomTexture = true;
+        if (!hasMissingTopTexture && bs->ceiling.minz < sec->ceiling.minz && Sides[line->sidenum[0]].TopTexture <= 0) hasMissingTopTexture = true;
         continue;
       }
       myside = 0;
@@ -3858,6 +3860,7 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
       if (myside == 0) {
         if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  sector #%d: skipped line #%d (%d) due to side conflict (0)", (int)(ptrdiff_t)(sec-&Sectors[0]), (int)(ptrdiff_t)(line-&Lines[0]), f);
         if (!hasMissingBottomTexture && bs->floor.minz > sec->floor.minz && Sides[line->sidenum[1]].BottomTexture <= 0) hasMissingBottomTexture = true;
+        if (!hasMissingTopTexture && bs->ceiling.minz < sec->ceiling.minz && Sides[line->sidenum[1]].TopTexture <= 0) hasMissingTopTexture = true;
         continue;
       }
       myside = 1;
@@ -3880,7 +3883,6 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
       if (res&FFBugFloor) {
         // ignore lines with the same height
         if (bs->floor.minz == sec->floor.minz) {
-          //if (!hasMissingBottomTexture && Sides[line->sidenum[myside]].BottomTexture <= 0) hasMissingBottomTexture = true;
           break;
         }
         // line has no bottom texture?
@@ -3889,7 +3891,6 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
           res &= ~FFBugFloor;
           break;
         }
-        hasMissingBottomTexture = true;
         // slope?
         if (bs->floor.normal.z != 1.0f) {
           res &= ~FFBugFloor;
@@ -3897,11 +3898,12 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
           break;
         }
         // height?
-        if (bs->floor.minz <= sec->floor.minz && !bs->othersecFloor) {
+        if (bs->floor.minz < sec->floor.minz && !bs->othersecFloor) {
           if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  sector #%d: reset floorbug flag due to line #%d (%d) -- floor height: bs=%g : sec=%g", (int)(ptrdiff_t)(sec-&Sectors[0]), (int)(ptrdiff_t)(line-&Lines[0]), f, bs->floor.minz, sec->floor.minz);
           res &= ~FFBugFloor;
           break;
         }
+        hasMissingBottomTexture = true;
         //if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "  sector #%d (back #%d): floor fix ok; fs:floor=(%g,%g); bs:floor=(%g,%g)", (int)(ptrdiff_t)(sec-Sectors), (int)(ptrdiff_t)(bs-Sectors), sec->floor.minz, sec->floor.maxz, bs->floor.minz, bs->floor.maxz);
         //if (/*line->special != 0 &&*/ bs->floor.minz == sec->floor.minz) { res &= ~FFBugFloor; continue; }
       }
@@ -3920,19 +3922,28 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
           //if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "ss: %d", ssnum);
         }
         */
+        // ignore lines with the same height
+        if (bs->ceiling.minz == sec->ceiling.minz) {
+          break;
+        }
         // line has no top texture?
-        if (Sides[line->sidenum[myside]].TopTexture != 0) { res &= ~FFBugCeiling; break; }
+        if (Sides[line->sidenum[myside]].TopTexture > 0) { res &= ~FFBugCeiling; break; }
         // slope?
         if (bs->ceiling.normal.z != -1.0f) { res &= ~FFBugCeiling; break; }
         // height?
-        if (bs->ceiling.minz >= sec->ceiling.minz) { res &= ~FFBugCeiling; break; }
+        if (bs->ceiling.minz > sec->ceiling.minz) { res &= ~FFBugCeiling; break; }
         //if (line->special != 0 && bs->ceiling.minz == sec->ceiling.minz) { res &= ~FFBugCeiling; continue; }
+        hasMissingTopTexture = true;
       }
     } while (0);
   }
   if ((res&FFBugFloor) != 0 && !hasMissingBottomTexture) {
     if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  sector #%d: final reset due to no missing bottom textures", (int)(ptrdiff_t)(sec-&Sectors[0]));
     res &= ~FFBugFloor;
+  }
+  if ((res&FFBugCeiling) != 0 && !hasMissingTopTexture) {
+    //if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  sector #%d: final reset due to no missing bottom textures", (int)(ptrdiff_t)(sec-&Sectors[0]));
+    res &= ~FFBugCeiling;
   }
   if (res && dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  sector #%d, result=%d", (int)(ptrdiff_t)(sec-&Sectors[0]), res);
   return res;
