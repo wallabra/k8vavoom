@@ -52,6 +52,7 @@ static bool fsys_onlyOneBaseFile = false;
 
 static VStr cliGameMode;
 static const char *cliGameCStr = nullptr;
+static TArray<VStr> autoloadDirList;
 
 GameOptions game_options;
 
@@ -994,12 +995,13 @@ static void AddGameDir (VStr basedir, VStr dir) {
   ApplyUserModes(dir);
 
   AddGameAutoloads(bdx);
-  #ifndef _WIN32
-  {
+  VStr gdn = dir.extractFileName();
+
+  if (!gdn.isEmpty()) {
+    #ifndef _WIN32
     const char *hdir = getenv("HOME");
     if (hdir && hdir[0] && hdir[1]) {
       VStr hbd = VStr(hdir);
-      VStr gdn = dir.extractFileName();
       if (!gdn.isEmpty()) {
         hbd = hbd.appendPath(".k8vavoom");
         hbd = hbd.appendPath("autoload");
@@ -1007,8 +1009,14 @@ static void AddGameDir (VStr basedir, VStr dir) {
         AddGameAutoloads(hbd, false);
       }
     }
+    #endif
+    for (auto &&audir : autoloadDirList) {
+      VStr hbd = VStr(audir);
+      hbd = hbd.appendPath(gdn);
+      //GCon->Logf(NAME_Debug, "!!! <%s> : <%s> : <%s>", *audir, *gdn, *hbd);
+      AddGameAutoloads(hbd, false);
+    }
   }
-  #endif
 
   // finally add directory itself
   // k8: nope
@@ -1734,6 +1742,8 @@ void FL_InitOptions () {
   });
   GParsedArgs.RegisterAlias("-auto", "-autoload");
   GParsedArgs.RegisterAlias("-auto-load", "-autoload");
+
+  GParsedArgs.RegisterStringArrayOption("-autoloaddir", "add autoload directory to the list of autoload dirs", &autoloadDirList);
 
   GParsedArgs.RegisterCallback("-skip-autoload", "skip game mode from 'autoload.rc'", [] (VArgs &args, int idx) -> int {
     ++idx;
