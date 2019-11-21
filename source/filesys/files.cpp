@@ -381,6 +381,23 @@ struct CustomModeInfo {
     if (src.disableBDW) disableBDW = true;
   }
 
+  void dump () const {
+    GLog.Logf(NAME_Debug, "==== MODE: %s ====", *name);
+    GLog.Logf(NAME_Debug, "basedir: <%s>", *basedir);
+    GLog.Logf(NAME_Debug, "basedirglobs: %d", basedirglob.length());
+    for (auto &&s : basedirglob) GLog.Logf(NAME_Debug, "  <%s>", *s);
+    GLog.Logf(NAME_Debug, "pwads: %d", pwads.length());
+    for (auto &&s : pwads) GLog.Logf(NAME_Debug, "  <%s>", *s);
+    GLog.Logf(NAME_Debug, "postpwads: %d", postpwads.length());
+    for (auto &&s : postpwads) GLog.Logf(NAME_Debug, "  <%s>", *s);
+    GLog.Logf(NAME_Debug, "autoskips: %d", autoskips.length());
+    for (auto &&s : autoskips) GLog.Logf(NAME_Debug, "  <%s> (%d)", *s.mask, (int)s.enabled);
+    GLog.Logf(NAME_Debug, "disableBloodReplacement: %s", (disableBloodReplacement ? "tan" : "ona"));
+    GLog.Logf(NAME_Debug, "disableGoreMod: %s", (disableGoreMod ? "tan" : "ona"));
+    GLog.Logf(NAME_Debug, "disableBDW: %s", (disableBDW ? "tan" : "ona"));
+    GLog.Log(NAME_Debug, "========");
+  }
+
   bool isMyAlias (VStr s) const {
     s = s.xstrip();
     if (s.isEmpty()) return false;
@@ -2099,6 +2116,8 @@ void FL_Init () {
       fsys_warp_n1 = -1;
     }
   }
+
+  //customMode.dump();
 
   if (!customMode.disableGoreMod) {
     #if 0
