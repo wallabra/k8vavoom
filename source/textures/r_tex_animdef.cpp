@@ -1111,6 +1111,7 @@ static void ParseFTAnims (int wadfile, VScriptParser *sc) {
 //==========================================================================
 void R_InitFTAnims () {
   if (cli_DisableAnimdefs > 0) return;
+  GCon->Log(NAME_Init, "building animated textures...");
 
   FillLists();
 

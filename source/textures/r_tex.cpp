@@ -156,18 +156,23 @@ void VTextureManager::Init () {
   AddTexture(new VDummyTexture);
 
   // initialise wall textures
+  GCon->Log(NAME_Init, "initializing wall textures...");
   AddTextures(numberedNames);
 
   // initialise flats
+  GCon->Log(NAME_Init, "initializing flat textures...");
   AddGroup(TEXTYPE_Flat, WADNS_Flats);
 
   // initialise overloaded textures
+  GCon->Log(NAME_Init, "initializing overloaded textures...");
   AddGroup(TEXTYPE_Overload, WADNS_NewTextures);
 
   // initialise sprites
+  GCon->Log(NAME_Init, "initializing sprite textures...");
   AddGroup(TEXTYPE_Sprite, WADNS_Sprites);
 
   // initialise hires textures
+  GCon->Log(NAME_Init, "initializing hires textures...");
   AddTextureTextLumps(false); // only normal for now
 
   // force-load numbered textures
@@ -1426,15 +1431,32 @@ void VTextureManager::AddTexturesLump (TArray<WallPatchInfo> &patchtexlookup, in
 //
 //==========================================================================
 void VTextureManager::AddGroup (int Type, EWadNamespace Namespace) {
+  int counter = 0;
+  for (int Lump = W_IterateNS(-1, Namespace); Lump >= 0; Lump = W_IterateNS(Lump, Namespace)) ++counter;
+  double stt = Sys_Time();
+  int current = 0;
+  int added = 0;
+  bool dumped = false;
   for (int Lump = W_IterateNS(-1, Namespace); Lump >= 0; Lump = W_IterateNS(Lump, Namespace)) {
+    ++current;
     // to avoid duplicates, add only the last one
     if (W_GetNumForName(W_LumpName(Lump), Namespace) != Lump) {
       //GCon->Logf(NAME_Dev, "VTextureManager::AddGroup(%d:%d): skipped lump '%s'", Type, Namespace, *W_FullLumpName(Lump));
       continue;
     }
     //GCon->Logf("VTextureManager::AddGroup(%d:%d): loading lump '%s'", Type, Namespace, *W_FullLumpName(Lump));
+    ++added;
     AddTexture(VTexture::CreateTexture(Type, Lump));
+    if (current%128 == 0) {
+      const double ctt = Sys_Time();
+      if (ctt-stt >= 2.5) {
+        stt = ctt;
+        GCon->Logf(NAME_Init, "  [%d/%d] lumps processed (%d textures added)", current, counter, added);
+        dumped = true;
+      }
+    }
   }
+  if (dumped) GCon->Logf(NAME_Init, "  [%d/%d] lumps processed (%d textures added)", current, counter, added);
 }
 
 
