@@ -9,3 +9,137 @@ Ketmar Dark // Invisible Vector
 ketmar@ketmar.no-ip.org
 
 WARNING!!! WARNING!!! WARNING!!! WARNING!!! WARNING!!! WARNING!!!
+
+k8vavoom is the fork of the excellent DooM sourceport Vavoom. It features
+two unique lightning systems, one based on lightmaps (like Quake), and
+one with DooM3-style lighting. Please note that k8vavoom is not a carbon
+copy of Vavoom, so full backward compatibility should not be expected.
+
+## GNU/LINUX GAMERS SECTION
+
+### INSTALLATION
+
+If you're on an Arch-based Linux distribution, you may use an AUR package.
+
+For all the other flavours of GNU/Linux you have to compile k8vavoom from
+the sources. Make sure you have at least the following libraries in your
+system: SDL2, OpenAL, libopus, libvorbis, libflac. Also, you MUST run
+`make install` command because k8vavoom won't run from an arbitrary
+location.
+
+Please, refer to "docs/k8vavoom.txt" for more info.
+
+
+### CONFIGURATION
+
+k8vavoom stores its user configuration and supplemental files in the
+`~/.k8vavoom` directory.
+
+~/.k8vavoom
+   \
+   |-autoload
+   |   \
+   |   |-doom
+   |   |  \
+   |   |  |-<subdir>
+   |   |  |-cool_models.pk3
+   |   |  |-autorun.rc
+   |   |
+   |   |-<game name>
+   |
+   |-iwads
+   |  \
+   |  |-DOOM.WAD
+   |  |-DOOM2.WAD
+   |  |...
+   |
+   |-sshots
+   |
+   |-saves
+   |
+   |-modes.rc
+
+You'd better create "~/.k8vavoom/iwads" directory and put at least one
+IWAD file there to play a game. You can specify a game name with the
+corresponding command line switch, e.g. -doom, -doom2, -tnt, etc.
+
+
+#### Autoload
+
+If you want some wad or pk3 resource to be loaded automatically on start,
+you can put it into "autoload/<game name>" directory. Sub-directories are
+not scanned at the start, but they can be used within "autorun.rc" config
+file.
+
+The "autorun.rc" file allows you to define groups of resources, e.g.
+
+```
+group "models-weapon" {
+  models/mdl_wpn_bfg.pk3
+  models/mdl_wpn_chaingun.pk3
+  models/mdl_wpn_chainsaw.pk3
+  models/mdl_wpn_launcher.pk3
+  models/mdl_wpn_plasma.pk3
+  models/mdl_wpn_shotgun.pk3
+  models/mdl_wpn_ssg.pk3
+}
+```
+
+So in this example new weapon model will be loaded on start. Command line
+switch `-skip-auto <group name>` can be used to disable some groups.
+
+
+#### Screenshots
+
+Screenshots are saved in the "sshots" directory with the name
+`shotXXXX.png`, where XXXX is a counter starting with 0000.
+
+
+#### Saved games
+
+Games are saved in the "saves" directory under the separate
+sub-directories. The sub-directories names are k8vavoom configuration
+hashes. This means that saves from the different games (or pwads) won't
+be visible under another configurations.
+
+That is, if you've played some WAD without its custom music and decided
+to add its *MUS.WAD now, you will not see your previous saves, cause the
+game config will be different.
+
+
+#### Custom game modes
+
+You can aggregate some customisation setting into groups referred here as
+'modes' with the `modes.rc` file. See example:
+
+```
+/* options:
+  DisableBloodReplacement
+    disable all blood replacements (but Gore Mod still can replace blood)
+    this effectively disables all custom blood from any mod
+
+  DisableGoreMod
+    don't load gore mod, even if it is requested by the user
+
+  DisableBDW
+    don't load bdw mod, even if it is requested by the user
+*/
+
+mode "d4v" {
+  // this is case insensitive, and supports DOS-style globs
+  basedir "doom*"
+  // this will load pwads before "-file"
+  // use `postpwad` command for pwad list to load after "-file"
+  pwad "/mnt/bigfoot/vavoom/D4V/D4V.wad"
+  // skip autoload groups from "autoload.rc"
+  skipauto "brightmap*", "glow", "models-*", "smooth*", "spritefix*", "id0-bm"
+  // options
+  DisableBDW
+  // aliases
+  alias "doom4vanilla"
+}
+
+```
+
+To select a mode use the command line switch `-mode <mode name>`. For the
+given example both `-mode b4v` and `-mode doom4vanilla` will do the trick.
