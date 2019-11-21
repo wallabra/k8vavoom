@@ -1677,6 +1677,9 @@ void FL_InitOptions () {
   GArgs.AddFileOption("!1-logfile"); // don't register log file in saves
   GArgs.AddFileOption("!1-iwad");
   GArgs.AddFileOption("!1-iwaddir");
+  GArgs.AddFileOption("!1-basedir");
+  GArgs.AddFileOption("!1-savedir");
+  GArgs.AddFileOption("!1-autoloaddir");
   GArgs.AddFileOption("!1-deh");
   GArgs.AddFileOption("!1-vc-decorate-ignore-file");
 
