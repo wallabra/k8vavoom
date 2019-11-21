@@ -59,6 +59,8 @@ static inline vuint32 GetTypeHash (const VectorInfo &vi) { return joaatHashBuf(v
 
 static VCvarB dbg_deep_water("dbg_deep_water", false, "Show debug messages in Deep Water processor?", CVAR_PreInit/*|CVAR_Archive*/);
 
+static VCvarB dbg_floodfill_fixer("dbg_floodfill_fixer", false, "Show debug messages from floodfill fixer?", CVAR_PreInit/*|CVAR_Archive*/);
+
 static VCvarB dbg_show_map_hash("dbg_show_map_hash", false, "Show map hash?", CVAR_PreInit|CVAR_Archive);
 
 static VCvarB loader_cache_ignore_one("loader_cache_ignore_one", false, "Ignore (and remove) cache for next map loading?", CVAR_PreInit);
@@ -3802,9 +3804,12 @@ void VLevel::FixSelfRefDeepWater () {
 
 // ////////////////////////////////////////////////////////////////////////// //
 enum {
-  FFBugFloor = 0x01U,
-  FFBugCeiling = 0x02U,
+  FFBugFloor   = 0x01u<<0,
+  FFBugCeiling = 0x01u<<1,
 };
+
+
+//static TMapNC<vuint32, line_t *> checkSkipLines;
 
 
 //==========================================================================
@@ -3821,37 +3826,83 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
   // don't fix alphas
   if (sec->floor.Alpha != 1.0f) res &= ~FFBugFloor;
   if (sec->ceiling.Alpha != 1.0f) res &= ~FFBugCeiling;
+  if (!res) return 0;
+  if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector: checking sector #%d (%d lines)", (int)(ptrdiff_t)(sec-&Sectors[0]), sec->linecount);
   int myside = -1;
+  bool hasMissingBottomTexture = false;
   for (int f = 0; f < sec->linecount; ++f) {
-    if (!res) return 0;
+    if (!res) {
+      if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  skipped sector #%d due to res=0", (int)(ptrdiff_t)(sec-&Sectors[0]));
+      return 0;
+    }
     line_t *line = sec->lines[f];
-    if (!line->frontsector || !line->backsector) continue;
+    //vint32 lineidx = (vint32)(ptrdiff_t)(line-&Lines[0]);
+    //if (checkSkipLines.find(lineidx)) continue; // skip lines we are not interested into
+    if (!line->frontsector || !line->backsector) {
+      if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  sector #%d: skipped line #%d due to missing side sector", (int)(ptrdiff_t)(sec-&Sectors[0]), (int)(ptrdiff_t)(line-&Lines[0]));
+      continue;
+    }
     sector_t *bs;
     if (line->frontsector == sec) {
       // back
       bs = line->backsector;
-      if (myside == 1) continue;
+      if (myside == 1) {
+        if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  sector #%d: skipped line #%d (%d) due to side conflict (1)", (int)(ptrdiff_t)(sec-&Sectors[0]), (int)(ptrdiff_t)(line-&Lines[0]), f);
+        if (!hasMissingBottomTexture && bs->floor.minz > sec->floor.minz && Sides[line->sidenum[0]].BottomTexture <= 0) hasMissingBottomTexture = true;
+        continue;
+      }
       myside = 0;
     } else if (line->backsector == sec) {
       // front
       bs = line->frontsector;
-      if (myside == 0) continue;
+      if (myside == 0) {
+        if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  sector #%d: skipped line #%d (%d) due to side conflict (0)", (int)(ptrdiff_t)(sec-&Sectors[0]), (int)(ptrdiff_t)(line-&Lines[0]), f);
+        if (!hasMissingBottomTexture && bs->floor.minz > sec->floor.minz && Sides[line->sidenum[1]].BottomTexture <= 0) hasMissingBottomTexture = true;
+        continue;
+      }
       myside = 1;
     } else {
+      if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  something's strange in the neighbourhood, sector #%d", (int)(ptrdiff_t)(sec-&Sectors[0]));
       return 0; // something's strange in the neighbourhood
     }
-    if (bs == sec) return 0; // this is self-referenced sector, nothing to see here, come along
-    if (bs->floor.minz >= bs->ceiling.minz) return 0; // this looks like a door, don't "fix" anything
+    // this is self-referenced sector, nothing to see here, come along
+    if (bs == sec) {
+      if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  skipping self-referenced sector #%d", (int)(ptrdiff_t)(sec-&Sectors[0]));
+      return 0;
+    }
+    if (bs->floor.minz >= bs->ceiling.minz) {
+      if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  door-like sector #%d", (int)(ptrdiff_t)(sec-&Sectors[0]));
+      // this looks like a door, don't "fix" anything
+      return 0;
+    }
     // check for possible floor floodbug
     do {
       if (res&FFBugFloor) {
+        // ignore lines with the same height
+        if (bs->floor.minz == sec->floor.minz) {
+          //if (!hasMissingBottomTexture && Sides[line->sidenum[myside]].BottomTexture <= 0) hasMissingBottomTexture = true;
+          break;
+        }
         // line has no bottom texture?
-        if (Sides[line->sidenum[myside]].BottomTexture > 0) { res &= ~FFBugFloor; break; }
+        if (Sides[line->sidenum[myside]].BottomTexture > 0) {
+          if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  sector #%d: reset floorbug flag due to line #%d (%d) -- has bottom texture", (int)(ptrdiff_t)(sec-&Sectors[0]), (int)(ptrdiff_t)(line-&Lines[0]), f);
+          res &= ~FFBugFloor;
+          break;
+        }
+        hasMissingBottomTexture = true;
         // slope?
-        if (bs->floor.normal.z != 1.0f) { res &= ~FFBugFloor; break; }
+        if (bs->floor.normal.z != 1.0f) {
+          res &= ~FFBugFloor;
+          if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  sector #%d: reset floorbug flag due to line #%d (%d) -- floor is a slope", (int)(ptrdiff_t)(sec-&Sectors[0]), (int)(ptrdiff_t)(line-&Lines[0]), f);
+          break;
+        }
         // height?
-        if (bs->floor.minz <= sec->floor.minz) { res &= ~FFBugFloor; break; }
-        //GCon->Logf("  sector #%d (back #%d): floor fix ok; fs:floor=(%g,%g); bs:floor=(%g,%g)", (int)(ptrdiff_t)(sec-Sectors), (int)(ptrdiff_t)(bs-Sectors), sec->floor.minz, sec->floor.maxz, bs->floor.minz, bs->floor.maxz);
+        if (bs->floor.minz <= sec->floor.minz && !bs->othersecFloor) {
+          if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  sector #%d: reset floorbug flag due to line #%d (%d) -- floor height: bs=%g : sec=%g", (int)(ptrdiff_t)(sec-&Sectors[0]), (int)(ptrdiff_t)(line-&Lines[0]), f, bs->floor.minz, sec->floor.minz);
+          res &= ~FFBugFloor;
+          break;
+        }
+        //if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "  sector #%d (back #%d): floor fix ok; fs:floor=(%g,%g); bs:floor=(%g,%g)", (int)(ptrdiff_t)(sec-Sectors), (int)(ptrdiff_t)(bs-Sectors), sec->floor.minz, sec->floor.maxz, bs->floor.minz, bs->floor.maxz);
         //if (/*line->special != 0 &&*/ bs->floor.minz == sec->floor.minz) { res &= ~FFBugFloor; continue; }
       }
     } while (0);
@@ -3864,9 +3915,9 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
         if (ssnum == 314) {
           int fsnum = (int)(ptrdiff_t)(line->frontsector-Sectors);
           int bsnum = (int)(ptrdiff_t)(line->backsector-Sectors);
-          GCon->Logf("fs: %d; bs: %d", fsnum, bsnum);
+          if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "fs: %d; bs: %d", fsnum, bsnum);
         } else {
-          //GCon->Logf("ss: %d", ssnum);
+          //if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "ss: %d", ssnum);
         }
         */
         // line has no top texture?
@@ -3879,7 +3930,11 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
       }
     } while (0);
   }
-  //if (res&FFBugCeiling) GCon->Logf("css: %d", (int)(ptrdiff_t)(sec-Sectors));
+  if ((res&FFBugFloor) != 0 && !hasMissingBottomTexture) {
+    if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  sector #%d: final reset due to no missing bottom textures", (int)(ptrdiff_t)(sec-&Sectors[0]));
+    res &= ~FFBugFloor;
+  }
+  if (res && dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  sector #%d, result=%d", (int)(ptrdiff_t)(sec-&Sectors[0]), res);
   return res;
 }
 
@@ -3895,6 +3950,7 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
 //==========================================================================
 sector_t *VLevel::FindGoodFloodSector (sector_t *sec, bool wantFloor) {
   if (!sec) return nullptr;
+  if (wantFloor && dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "FindGoodFloodSector: looking for source sector for sector #%d", (int)(ptrdiff_t)(sec-&Sectors[0]));
   TArray<sector_t *> good;
   TArray<sector_t *> seen;
   TArray<sector_t *> sameBug;
@@ -3943,6 +3999,7 @@ sector_t *VLevel::FindGoodFloodSector (sector_t *sec, bool wantFloor) {
       if (wantFloor && bs->floor.minz < sec->floor.minz) continue;
       if (!wantFloor && bs->ceiling.minz > sec->ceiling.minz) continue;
       // possible good sector, remember it
+      if (wantFloor && dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "FindGoodFloodSector:  found possible good sector #%d for source sector for sector #%d", (int)(ptrdiff_t)(bs-&Sectors[0]), (int)(ptrdiff_t)(sec-&Sectors[0]));
       good.append(bs);
     }
     // if we have no good sectors, try neighbour sector with the same bug
@@ -4002,6 +4059,7 @@ sector_t *VLevel::FindGoodFloodSector (sector_t *sec, bool wantFloor) {
 //==========================================================================
 void VLevel::FixDeepWaters () {
   if (NumSectors == 0) return;
+  //vassert(checkSkipLines.length() == 0);
 
   for (vint32 sidx = 0; sidx < NumSectors; ++sidx) {
     sector_t *sec = &Sectors[sidx];
@@ -4037,6 +4095,9 @@ void VLevel::FixDeepWaters () {
       if (bugFlags&FFBugCeiling) fsecCeiling = FindGoodFloodSector(sec, false);
       if (fsecFloor == sec) fsecFloor = nullptr;
       if (fsecCeiling == sec) fsecCeiling = nullptr;
+      if (!fsecFloor) {
+        if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "skipping illusiopit fix for sector #%d (no floor)", sidx);
+      }
       if (!fsecFloor && !fsecCeiling) continue;
       GCon->Logf("FLATFIX: found illusiopit at sector #%d (floor:%d; ceiling:%d)", sidx, (fsecFloor ? (int)(ptrdiff_t)(fsecFloor-Sectors) : -1), (fsecCeiling ? (int)(ptrdiff_t)(fsecCeiling-Sectors) : -1));
       sec->othersecFloor = fsecFloor;
