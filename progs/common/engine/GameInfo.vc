@@ -78,6 +78,7 @@ final bool netgame {
 // game may be paused when menu active or something
 // and `bPaused` only says that player pressed "pause" key
 final native bool isPaused { get; }
+final native bool isInWipe { get; }
 
 
 //==========================================================================

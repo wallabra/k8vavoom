@@ -316,6 +316,7 @@ VOpenGLDrawer::VOpenGLDrawer ()
   , surfList()
   , mainFBO()
   , ambLightFBO()
+  , wipeFBO()
   , cameraFBOList()
   , currMainFBO(-1)
 {
@@ -511,6 +512,7 @@ void VOpenGLDrawer::DeinitResolution () {
   mainFBO.destroy();
   //secondFBO.destroy();
   ambLightFBO.destroy();
+  wipeFBO.destroy();
   DeleteLightmapAtlases();
 }
 
@@ -886,8 +888,11 @@ void VOpenGLDrawer::InitResolution () {
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
   }
 
-  // allocate ambient FBO object
-  ambLightFBO.create(this, ScreenWidth, ScreenHeight); // create depthstencil
+  // allocate ambient light FBO object
+  ambLightFBO.create(this, ScreenWidth, ScreenHeight); // don't create depthstencil
+
+  // allocate wipe FBO object
+  wipeFBO.create(this, ScreenWidth, ScreenHeight); // don't create depthstencil
 
   mainFBO.activate();
 
@@ -1805,6 +1810,99 @@ void VOpenGLDrawer::DebugRenderScreenRect (int x0, int y0, int x1, int y1, vuint
   p_glUseProgramObjectARB(0);
   currentActiveShader = nullptr;
 }
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::PrepareWipe
+//
+//  this copies main FBO to wipe FBO, so we can run wipe shader
+//
+//==========================================================================
+void VOpenGLDrawer::PrepareWipe () {
+  mainFBO.blitTo(&wipeFBO, 0, 0, mainFBO.getWidth(), mainFBO.getHeight(), 0, 0, mainFBO.getWidth(), mainFBO.getHeight(), GL_NEAREST);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::RenderWipe
+//
+//  render wipe from wipe to main FBO
+//  should be called after `StartUpdate()`
+//  and (possibly) rendering something to the main FBO
+//  time is in seconds, from zero to...
+//  returns `false` if wipe is complete
+//
+//==========================================================================
+bool VOpenGLDrawer::RenderWipe (float time) {
+  static const float WipeDur = 1.0f;
+
+  //GCon->Logf(NAME_Debug, "WIPE: time=%g", time);
+
+  glPushAttrib(GL_ALL_ATTRIB_BITS);
+
+  glViewport(0, 0, getWidth(), getHeight());
+
+  glMatrixMode(GL_PROJECTION);
+  glPushMatrix();
+  glLoadIdentity();
+  glOrtho(0, getWidth(), getHeight(), 0, -666, 666);
+
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  glLoadIdentity();
+
+  if (HaveDepthClamp) glDisable(GL_DEPTH_CLAMP);
+
+  glDisable(GL_DEPTH_TEST);
+  glDisable(GL_CULL_FACE);
+  //glEnable(GL_BLEND);
+  glDisable(GL_STENCIL_TEST);
+  glDisable(GL_SCISSOR_TEST);
+  glDepthMask(GL_FALSE); // no z-buffer writes
+  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+  glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied
+
+  glEnable(GL_TEXTURE_2D);
+  glBindTexture(GL_TEXTURE_2D, wipeFBO.getColorTid());
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+  DrawWipeType0.Activate();
+  DrawWipeType0.SetTexture(0);
+  DrawWipeType0.SetWipeTime(time);
+  DrawWipeType0.SetWipeDuration(WipeDur);
+  DrawWipeType0.SetScreenSize((float)getWidth(), (float)getHeight());
+  DrawWipeType0.UploadChangedUniforms();
+
+  glBegin(GL_QUADS);
+    glTexCoord2f(0, 1); glVertex2f(0, 0);
+    glTexCoord2f(1, 1); glVertex2f(getWidth(), 0);
+    glTexCoord2f(1, 0); glVertex2f(getWidth(), getHeight());
+    glTexCoord2f(0, 0); glVertex2f(0, getHeight());
+  glEnd();
+
+  //glDisable(GL_BLEND);
+  glBindTexture(GL_TEXTURE_2D, 0);
+
+  glMatrixMode(GL_MODELVIEW);
+  glPopMatrix();
+
+  glMatrixMode(GL_PROJECTION);
+  glPopMatrix();
+
+  glPopAttrib();
+  p_glUseProgramObjectARB(0);
+  currentActiveShader = nullptr;
+
+  //wipeFBO.blitTo(&mainFBO, 0, 0, mainFBO.getWidth(), mainFBO.getHeight(), 0, 0, mainFBO.getWidth(), mainFBO.getHeight(), GL_NEAREST);
+  return (time <= WipeDur);
+}
+
 
 
 //==========================================================================

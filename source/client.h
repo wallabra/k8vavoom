@@ -47,6 +47,7 @@ void CL_ReadFromServer ();
 void CL_SetUpLocalPlayer ();
 void CL_SetUpStandaloneClient ();
 
-
-extern client_static_t  cls;
+extern client_static_t cls;
 extern VBasePlayer *cl;
+
+extern float clWipeTimer;

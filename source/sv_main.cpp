@@ -587,7 +587,7 @@ static void SV_RunClients (bool skipFrame=false) {
     }
   }
 
-  //GCon->Logf("*** IMS: %d (demo=%p : %d)", (int)sv.intermission, GDemoRecordingContext, (int)cls.demorecording);
+  //GCon->Logf(NAME_Debug, "*** IMS: %d (demo=%p : %d)", (int)sv.intermission, GDemoRecordingContext, (int)cls.demorecording);
   if (sv.intermission) {
 #ifdef CLIENT
     if (GDemoRecordingContext) {
@@ -681,6 +681,7 @@ void SV_Ticker () {
 
   if (sv_loading || sv.intermission) {
     GGameInfo->frametime = host_frametime;
+    // do not run intermission while wiping
     SV_RunClients();
   } else {
     double saved_frametime = host_frametime;
@@ -785,6 +786,7 @@ static void G_DoCompleted (bool ignoreNoExit) {
 
 #ifdef CLIENT
   SV_AutoSaveOnLevelExit();
+  SCR_SignalWipeStart();
 #endif
 
   sv.intermission = 1;
@@ -1229,6 +1231,10 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
   SV_LoadLevel(VName(mapname, VName::AddLower8));
   GLevel->NetContext = ServerNetContext;
   GLevel->WorldInfo = GGameInfo->WorldInfo;
+
+#ifdef CLIENT
+  if (GGameInfo->NetMode <= NM_Standalone) SCR_SignalWipeStart();
+#endif
 
   const mapInfo_t &info = P_GetMapInfo(GLevel->MapName);
 

@@ -38,6 +38,7 @@ extern VCvarB dbg_world_think_decal_time;
 extern double worldThinkTimeVM;
 extern double worldThinkTimeDecal;
 
+static double wipeStartedTime = -1.0;
 
 int ScreenWidth = 0;
 int ScreenHeight = 0;
@@ -153,6 +154,9 @@ static int setheight;
 static VCvarF menu_darkening("menu_darkening", "0.6", "Screen darkening for active menus.", CVAR_Archive);
 static VCvarB draw_pause("draw_pause", true, "Draw \"paused\" text?", CVAR_Archive);
 static VCvarB draw_world_timer("draw_world_timer", false, "Draw playing time?", CVAR_Archive);
+
+static VCvarB r_wipe_enabled("r_wipe_enabled", false, "Is screen wipe effect enabled?", CVAR_Archive);
+static VCvarI r_wipe_type("r_wipe_type", "0", "Wipe type?", CVAR_Archive);
 
 static VCvarI screen_width("screen_width", "0", "Custom screen width", CVAR_Archive);
 static VCvarI screen_height("screen_height", "0", "Custom screen height", CVAR_Archive);
@@ -500,6 +504,21 @@ void SCR_Init () {
 
 //==========================================================================
 //
+//  SCR_SignalWipeStart
+//
+//==========================================================================
+void SCR_SignalWipeStart () {
+  if (!r_wipe_enabled || !GGameInfo || !GGameInfo->IsWipeAllowed()) {
+    clWipeTimer = -1.0f;
+  } else {
+    clWipeTimer = 0.0f;
+  }
+  wipeStartedTime = -1.0;
+}
+
+
+//==========================================================================
+//
 //  SCR_Update
 //
 //==========================================================================
@@ -509,6 +528,11 @@ void SCR_Update (bool fullUpdate) {
   if (Drawer) Drawer->IncUpdateFrame();
 
   if (!fullUpdate) return;
+
+  if (clWipeTimer >= 0.0f && wipeStartedTime < 0.0) {
+    Drawer->PrepareWipe();
+    wipeStartedTime = Sys_Time();
+  }
 
   bool updateStarted = false;
   bool allowClear = true;
@@ -549,6 +573,20 @@ void SCR_Update (bool fullUpdate) {
   C_Drawer();
   // various on-screen statistics
   DrawFPS();
+
+  if (clWipeTimer >= 0.0f) {
+    if (wipeStartedTime < 0.0) {
+      Drawer->PrepareWipe();
+      wipeStartedTime = Sys_Time();
+    }
+    // fix wipe timer
+    const double ctt = Sys_Time();
+    clWipeTimer = (float)(ctt-wipeStartedTime);
+    // render wipe
+    if (clWipeTimer >= 0.0f) {
+      if (!Drawer->RenderWipe(clWipeTimer)) clWipeTimer = -1.0f;
+    }
+  }
 
   // page flip or blit buffer
   Drawer->Update();

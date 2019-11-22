@@ -291,8 +291,6 @@ void VLevel::TickWorld (float DeltaTime) {
 
   double stimed = 0, stimet = 0;
 
-  eventBeforeWorldTick(DeltaTime);
-
   if (dbg_world_think_decal_time) stimed = -Sys_Time();
   // run decal thinkers
   if (DeltaTime > 0 && r_decals_enabled) {
@@ -306,6 +304,8 @@ void VLevel::TickWorld (float DeltaTime) {
     }
   }
   worldThinkTimeDecal = (dbg_world_think_decal_time ? Sys_Time()+stimed : -1);
+
+  eventBeforeWorldTick(DeltaTime);
 
   if (dbg_world_think_vm_time) stimet = -Sys_Time();
 

@@ -362,6 +362,15 @@ public:
   virtual void SetCameraFBO (int cfboindex) = 0;
   virtual GLuint GetCameraFBOTextureId (int cfboindex) = 0; // returns 0 if cfboindex is invalid
 
+  // this copies main FBO to wipe FBO, so we can run wipe shader
+  virtual void PrepareWipe () = 0;
+  // render wipe from wipe to main FBO
+  // should be called after `StartUpdate()`
+  // and (possibly) rendering something to the main FBO
+  // time is in seconds, from zero to...
+  // returns `false` if wipe is complete
+  virtual bool RenderWipe (float time) = 0;
+
   // texture stuff
   virtual void PrecacheTexture (VTexture *) = 0;
   virtual void FlushOneTexture (VTexture *tex, bool forced=false) = 0; // unload one texture

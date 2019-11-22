@@ -51,6 +51,41 @@ VGameInfo::VGameInfo ()
 
 //==========================================================================
 //
+//  VGameInfo::IsWipeAllowed
+//
+//==========================================================================
+bool VGameInfo::IsWipeAllowed () {
+#ifdef CLIENT
+  return (NetMode == NM_Standalone);
+#else
+  return false;
+#endif
+}
+
+
+//==========================================================================
+//
+//  VGameInfo::IsInWipe
+//
+//==========================================================================
+bool VGameInfo::IsInWipe () {
+#ifdef CLIENT
+  // in single player pause game if in menu or console
+  return (clWipeTimer >= 0.0f);
+#else
+  return false;
+#endif
+}
+
+
+IMPLEMENT_FUNCTION(VGameInfo, get_isInWipe) {
+  P_GET_SELF;
+  RET_BOOL(Self ? Self->IsInWipe() : false);
+}
+
+
+//==========================================================================
+//
 //  VGameInfo::IsPaused
 //
 //==========================================================================
@@ -58,9 +93,10 @@ bool VGameInfo::IsPaused () {
   if (NetMode <= NM_TitleMap) return false;
 #ifdef CLIENT
   // in single player pause game if in menu or console
-  return (Flags&GIF_Paused) || (NetMode == NM_Standalone && (MN_Active() || C_Active() || NUI_IsPaused()));
-#endif
+  return (Flags&GIF_Paused) || (clWipeTimer >= 0.0f) || (NetMode == NM_Standalone && (MN_Active() || C_Active() || NUI_IsPaused()));
+#else
   return !!(Flags&GIF_Paused);
+#endif
 }
 
 

@@ -193,4 +193,6 @@ ShaderList basedir="basev/common/glshaders" {
   Shader [advanced] ShadowsModelLightSpot both="shadows_model_light" { define "VV_SPOTLIGHT"; }
   Shader [advanced] ShadowsModelShadow both="shadows_model_shadow";
   Shader [advanced] ShadowsModelFog both="shadows_model_fog";
+
+  Shader DrawWipeType0 both="draw_wipe_type0";
 }

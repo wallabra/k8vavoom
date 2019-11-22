@@ -41,12 +41,13 @@ void CL_ReadFromServerInfo ();
 
 
 client_static_t cls;
-VBasePlayer *cl;
-VClientNetContext *ClientNetContext;
+VBasePlayer *cl = nullptr;
+float clWipeTimer = -1.0f;
+VClientNetContext *ClientNetContext = nullptr;
 
-VClientGameBase *GClGame;
+VClientGameBase *GClGame = nullptr;
 
-bool UserInfoSent;
+bool UserInfoSent = false;
 
 VCvarS cl_name("name", "PLAYER", "Player name.", CVAR_Archive|CVAR_UserInfo);
 VCvarS cl_color("color", "00 ff 00", "Player color.", CVAR_Archive|CVAR_UserInfo);

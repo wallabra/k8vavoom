@@ -903,6 +903,7 @@ protected:
 
   FBO mainFBO;
   FBO ambLightFBO; // we'll copy ambient light texture here, so we can use it in decal renderer to light decals
+  FBO wipeFBO; // we'll copy main FBO here to render wipe transitions
   // view (texture) camera updates will use this to render camera views
   // as reading from rendered texture is very slow, we will flip-flop FBOs,
   // using `current` to render new camera views, and `current^1` to get previous ones
@@ -989,6 +990,15 @@ public:
   virtual int FindCameraFBO (int texnum) override; // returns index or -1
   virtual void SetCameraFBO (int cfboindex) override;
   virtual GLuint GetCameraFBOTextureId (int cfboindex) override; // returns 0 if cfboindex is invalid
+
+  // this copies main FBO to wipe FBO, so we can run wipe shader
+  virtual void PrepareWipe () override;
+  // render wipe from wipe to main FBO
+  // should be called after `StartUpdate()`
+  // and (possibly) rendering something to the main FBO
+  // time is in seconds, from zero to...
+  // returns `false` if wipe is complete
+  virtual bool RenderWipe (float time) override;
 
   void DestroyCameraFBOList ();
 

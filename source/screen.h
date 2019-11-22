@@ -27,6 +27,8 @@
 void SCR_Init ();
 void SCR_Update (bool fullUpdate=true);
 
+void SCR_SignalWipeStart ();
+
 
 extern int ScreenWidth;
 extern int ScreenHeight;

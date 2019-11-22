@@ -301,6 +301,7 @@ void FindEpisodeAndMap (name Name, int *epi, int *map) {
 //==========================================================================
 override void Tick (float DeltaTime) {
   FixWidgetSize();
+  if (ClGame.Game && ClGame.Game.isInWipe) return;
   // counter for general background animation
   btime += DeltaTime;
   switch (interstate) {

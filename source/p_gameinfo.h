@@ -122,6 +122,8 @@ public:
   //VGameInfo ();
 
   bool IsPaused ();
+  bool IsInWipe ();
+  bool IsWipeAllowed ();
 
   void eventInit () { static VMethodProxy method("Init"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   void eventPostDecorateInit () { static VMethodProxy method("PostDecorateInit"); vobjPutParamSelf(); VMT_RET_VOID(method); }
@@ -135,6 +137,7 @@ public:
   void eventCmdAddSlotDefault (TArray<VStr> *Args, bool asKeyconf) { static VMethodProxy method("CmdAddSlotDefault"); vobjPutParamSelf((void *)Args, asKeyconf); VMT_RET_VOID(method); }
 
   DECLARE_FUNCTION(get_isPaused)
+  DECLARE_FUNCTION(get_isInWipe)
 };
 
 
