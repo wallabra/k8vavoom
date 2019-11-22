@@ -291,7 +291,8 @@ override void Tick (float deltaTime) {
       }
       break;
     case PLAT_Down:
-      res = MovePlane(sector:Sector, amount:Speed*deltaTime, dest:Low, crush:Crush, floorOrCeiling:MOVE_PLANE_FLOOR, direction:-1, stopOnCrush:false);
+      // don't block lowering floor with stuck monster
+      res = MovePlane(sector:Sector, amount:Speed*deltaTime, dest:Low, crush:Crush, floorOrCeiling:MOVE_PLANE_FLOOR, direction:-1, stopOnCrush:false, smartCrush:true);
       if (res == RES_PASTDEST) {
         if (Type == PLATEV_Toggle) {
           // instant toggles go into stasis awaiting next activation
