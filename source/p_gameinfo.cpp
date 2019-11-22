@@ -71,6 +71,7 @@ bool VGameInfo::IsWipeAllowed () {
 bool VGameInfo::IsInWipe () {
 #ifdef CLIENT
   // in single player pause game if in menu or console
+  if (GLevel && serverStartRenderFramesTic > 0 && GLevel->TicTime < serverStartRenderFramesTic) return false;
   return (clWipeTimer >= 0.0f);
 #else
   return false;
@@ -93,7 +94,7 @@ bool VGameInfo::IsPaused () {
   if (NetMode <= NM_TitleMap) return false;
 #ifdef CLIENT
   // in single player pause game if in menu or console
-  return (Flags&GIF_Paused) || (clWipeTimer >= 0.0f) || (NetMode == NM_Standalone && (MN_Active() || C_Active() || NUI_IsPaused()));
+  return (Flags&GIF_Paused) || IsInWipe() || (NetMode == NM_Standalone && (MN_Active() || C_Active() || NUI_IsPaused()));
 #else
   return !!(Flags&GIF_Paused);
 #endif

@@ -39,6 +39,7 @@ extern double worldThinkTimeVM;
 extern double worldThinkTimeDecal;
 
 static double wipeStartedTime = -1.0;
+static bool wipeStarted = false;
 
 int ScreenWidth = 0;
 int ScreenHeight = 0;
@@ -514,6 +515,7 @@ void SCR_SignalWipeStart () {
     clWipeTimer = 0.0f;
   }
   wipeStartedTime = -1.0;
+  wipeStarted = false;
 }
 
 
@@ -536,6 +538,7 @@ void SCR_Update (bool fullUpdate) {
 
   bool updateStarted = false;
   bool allowClear = true;
+  bool playerViewRendered = false;
 
   // do buffered drawing
   if (cl && cls.signon && cl->MO && !GClGame->InIntermission()) {
@@ -543,7 +546,10 @@ void SCR_Update (bool fullUpdate) {
       //k8: always render level, so automap will be updated in all cases
       updateStarted = true;
       Drawer->StartUpdate();
-      if (automapactive <= 0 || am_always_update) R_RenderPlayerView();
+      if (automapactive <= 0 || am_always_update || clWipeTimer >= 0.0f) {
+        playerViewRendered = true;
+        R_RenderPlayerView();
+      }
       Drawer->Setup2D(); // restore 2D projection
       if (automapactive) AM_Drawer();
       if (GGameInfo->NetMode != NM_TitleMap) {
@@ -556,6 +562,7 @@ void SCR_Update (bool fullUpdate) {
       //return; // skip all rendering
       // k8: nope, we still need to render console
       allowClear = false;
+      playerViewRendered = true;
     }
   }
 
@@ -563,6 +570,7 @@ void SCR_Update (bool fullUpdate) {
     Drawer->StartUpdate();
     if (allowClear) Drawer->ClearScreen();
     Drawer->Setup2D(); // setup 2D projection
+    playerViewRendered = true;
   }
 
   // draw user interface
@@ -575,16 +583,15 @@ void SCR_Update (bool fullUpdate) {
   DrawFPS();
 
   if (clWipeTimer >= 0.0f) {
-    if (wipeStartedTime < 0.0) {
-      Drawer->PrepareWipe();
-      wipeStartedTime = Sys_Time();
-    }
     // fix wipe timer
     const double ctt = Sys_Time();
-    clWipeTimer = (float)(ctt-wipeStartedTime);
-    // render wipe
-    if (clWipeTimer >= 0.0f) {
-      if (!Drawer->RenderWipe(clWipeTimer)) clWipeTimer = -1.0f;
+    if (playerViewRendered) {
+      if (!wipeStarted) { wipeStarted = true; wipeStartedTime = ctt; }
+      clWipeTimer = (float)(ctt-wipeStartedTime);
+      // render wipe
+      if (clWipeTimer >= 0.0f) {
+        if (!Drawer->RenderWipe(clWipeTimer)) clWipeTimer = -1.0f;
+      }
     }
   }
 
