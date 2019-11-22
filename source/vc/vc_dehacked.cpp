@@ -1182,6 +1182,7 @@ static void ReadText (int oldSize) {
   len = 0;
   while (*PatchPtr && len < oldSize) {
     if (*PatchPtr == '\r') { ++PatchPtr; continue; }
+    if (*PatchPtr == '\n') ++dehCurrLine;
     oldStr[len] = *PatchPtr;
     ++PatchPtr;
     ++len;
@@ -1191,6 +1192,7 @@ static void ReadText (int oldSize) {
   len = 0;
   while (*PatchPtr && len < newSize) {
     if (*PatchPtr == '\r') { ++PatchPtr; continue; }
+    if (*PatchPtr == '\n') ++dehCurrLine;
     newStr[len] = *PatchPtr;
     ++PatchPtr;
     ++len;
@@ -1292,6 +1294,7 @@ static void ReadStrings (int) {
         ValueString = PatchPtr;
         while (*PatchPtr && *PatchPtr != '\n') ++PatchPtr;
         if (*PatchPtr == '\n') {
+          ++dehCurrLine;
           *PatchPtr = 0;
           ++PatchPtr;
         }
