@@ -722,6 +722,75 @@ static void tempMount (const PWadFile &pwf) {
 }
 
 
+//**************************************************************************
+//
+// pwad scanner (used to pre-scan pwads to extract various things)
+//
+//**************************************************************************
+
+struct PWadScanInfo {
+  bool processed;
+  VStr iwad; // guessed from gameinfo; no path
+  VStr mapname; // name of the arbitrary map from pwads
+  TArray<VStr> wadlist; // list of wads/pk3s in the archive
+
+  PWadScanInfo () noexcept : processed(false), iwad(), mapname() {}
+  void clear () noexcept { processed = false; iwad.clear(); mapname.clear(); }
+};
+
+
+static PWadScanInfo pwadScanInfo;
+
+
+//==========================================================================
+//
+//  performPWadScan
+//
+//  it is safe to call this several times
+//  results will be put into `pwadScanInfo`
+//
+//==========================================================================
+static void performPWadScan () {
+  if (pwadScanInfo.processed) return;
+  fsys_EnableAuxSearch = true;
+
+  pwadScanInfo.clear();
+  pwadScanInfo.processed = true;
+
+  bool oldReport = fsys_no_dup_reports;
+  fsys_no_dup_reports = true;
+  W_CloseAuxiliary();
+  for (int pwidx = 0; pwidx < pwadList.length(); ++pwidx) tempMount(pwadList[pwidx]);
+
+  //GCon->Log("**********************************");
+  // try "GAMEINFO" first
+  auto gilump = W_CheckNumForName("gameinfo");
+  if (W_IsAuxLump(gilump)) {
+    VScriptParser *gsc = new VScriptParser(W_FullLumpName(gilump), W_CreateLumpReaderNum(gilump));
+    gsc->SetCMode(true);
+    while (gsc->GetString()) {
+      if (gsc->QuotedString) continue; // just in case
+      if (gsc->String.strEquCI("iwad")) {
+        gsc->Check("=");
+        if (gsc->GetString()) pwadScanInfo.iwad = gsc->String;
+        continue;
+      }
+    }
+    pwadScanInfo.iwad = pwadScanInfo.iwad.ExtractFileBaseName();
+    if (!pwadScanInfo.iwad.isEmpty()) {
+      if (!pwadScanInfo.iwad.extractFileExtension().strEquCI(".wad")) pwadScanInfo.iwad += ".wad";
+    }
+  }
+
+  // get name of some map
+  pwadScanInfo.mapname = W_FindMapInAuxuliaries(nullptr);
+
+  W_CloseAuxiliary();
+  fsys_no_dup_reports = oldReport;
+  fsys_EnableAuxSearch = false;
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 static TArray<VStr> wpklist; // everything is lowercased
 
@@ -795,6 +864,7 @@ static void AddAnyFile (VStr fname, bool allowFail, bool fixVoices=false) {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
 enum { CM_PRE_PWADS, CM_POST_PWADS };
 
 //==========================================================================
@@ -1346,50 +1416,26 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
       }
 
       // try to select DooM or DooM II automatically
-      fsys_EnableAuxSearch = true;
       if (!selectedGame) {
-        bool oldReport = fsys_no_dup_reports;
-        fsys_no_dup_reports = true;
-        W_CloseAuxiliary();
-        for (int pwidx = 0; pwidx < pwadList.length(); ++pwidx) tempMount(pwadList[pwidx]);
-        //GCon->Log("**********************************");
-        // try "GAMEINFO" first
-        VStr iwadGI;
-        auto gilump = W_CheckNumForName("gameinfo");
-        if (W_IsAuxLump(gilump)) {
-          VScriptParser *gsc = new VScriptParser(W_FullLumpName(gilump), W_CreateLumpReaderNum(gilump));
-          gsc->SetCMode(true);
-          while (gsc->GetString()) {
-            if (gsc->QuotedString) continue; // just in case
-            if (gsc->String.strEquCI("iwad")) {
-              gsc->Check("=");
-              if (gsc->GetString()) iwadGI = gsc->String;
-              continue;
-            }
-          }
-          iwadGI = iwadGI.ExtractFileBaseName();
-          if (iwadGI.length()) {
-            if (!iwadGI.ExtractFileExtension().strEquCI(".wad")) iwadGI += ".wad";
-            for (auto &&game : games) {
-              for (auto &&mwi : game.mainWads) {
-                VStr gw = mwi.main.extractFileBaseName();
-                if (gw.strEquCI(iwadGI)) {
-                  GCon->Logf(NAME_Init, "Detected game is '%s' (from gameinfo)", *mwi.description);
-                  selectedGame = &game;
-                  W_CloseAuxiliary();
-                  break;
-                }
+        performPWadScan();
+
+        if (!pwadScanInfo.iwad.isEmpty()) {
+          for (auto &&game : games) {
+            for (auto &&mwi : game.mainWads) {
+              VStr gw = mwi.main.extractFileBaseName();
+              if (gw.strEquCI(pwadScanInfo.iwad)) {
+                GCon->Logf(NAME_Init, "Detected game is '%s' (from gameinfo)", *mwi.description);
+                selectedGame = &game;
+                break;
               }
-              if (selectedGame) break;
             }
+            if (selectedGame) break;
           }
         }
 
         // try to guess from map name
         if (!selectedGame) {
-          VStr mname = W_FindMapInAuxuliaries(nullptr);
-          W_CloseAuxiliary();
-          fsys_no_dup_reports = oldReport;
+          VStr mname = pwadScanInfo.mapname;
           if (!mname.isEmpty()) {
             //GCon->Logf("MNAME: <%s>", *mname);
             // found map, find DooM or DooM II game definition
@@ -1412,7 +1458,6 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
           }
         }
       }
-      fsys_EnableAuxSearch = false;
 
       // try to find game iwad
       if (!selectedGame) {
