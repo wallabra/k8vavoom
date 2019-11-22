@@ -1151,15 +1151,35 @@ COMMAND(__k8_run_first_map) {
     return;
   }
 
-  VEpisodeDef *edef = P_GetEpisodeDef(0);
+  VName startMap = NAME_None;
+  int bestmdlump = -1;
 
-  VName startMap = edef->Name;
-  if (edef->TeaserName != NAME_None && !IsMapPresent(startMap)) startMap = edef->TeaserName;
+  for (int ep = 0; ep < P_GetNumEpisodes(); ++ep) {
+    VEpisodeDef *edef = P_GetEpisodeDef(ep);
+    if (!edef) continue; // just in case
+
+    VName map = edef->Name;
+    if (map == NAME_None || !IsMapPresent(map)) {
+      map = edef->TeaserName;
+      if (map == NAME_None || !IsMapPresent(map)) continue;
+    }
+
+    const mapInfo_t &mi = P_GetMapInfo(map);
+    if (mi.LevelNum == 0) continue;
+
+    if (mi.MapinfoSourceLump <= bestmdlump) continue;
+    //GCon->Logf(NAME_Debug, "MapinfoSourceLump=%d; name=<%s>; index=%d", mi.MapinfoSourceLump, *map, mi.LevelNum);
+
+    bestmdlump = mi.MapinfoSourceLump;
+    startMap = map;
+  }
 
   if (startMap == NAME_None) {
-    GCon->Logf("ERROR: Starting map not found!");
+    GCon->Logf(NAME_Error, "Starting map not found!");
     return;
   }
+
+  GCon->Logf(NAME_Init, "autostart map '%s'", *startMap);
 
   GCmdBuf.Insert(va("map \"%s\"\n", *VStr(startMap).quote()));
 }

@@ -63,6 +63,7 @@ struct mapInfo_t {
   VName ExitPic;
   VName EnterPic;
   VName InterMusic;
+  vint32 MapinfoSourceLump;
 
   VStr GetName () const;
   void dump (const char *msg=nullptr) const;
@@ -99,6 +100,7 @@ struct VEpisodeDef {
   VName PicName;
   vuint32 Flags;
   VStr Key;
+  vint32 MapinfoSourceLump;
 };
 
 enum {

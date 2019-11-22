@@ -220,6 +220,7 @@ struct EpisodeDef {
   bool bNoSkillMenu;
   bool bOptional;
   string Key;
+  int MapinfoSourceLump;
 };
 
 struct SkillPlayerClassName {
@@ -418,6 +419,7 @@ struct mapInfo_t {
   name ExitPic;
   name EnterPic;
   name InterMusic;
+  int MapinfoSourceLump;
 };
 
 native static final mapInfo_t *P_GetMapInfo (int map);

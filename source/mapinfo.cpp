@@ -28,8 +28,8 @@
 
 
 static int cli_NoMapinfoPlrClasses = 0;
-static int cli_NoZMapinfo = 0;
 static int cli_MapperIsIdiot = 0;
+int cli_NoZMapinfo = 0; // need to be extern for files.cpp
 
 /*static*/ bool cliRegister_mapinfo_args =
   VParsedArgs::RegisterFlagSet("-nomapinfoplayerclasses", "ignore player classes from MAPINFO", &cli_NoMapinfoPlrClasses) &&
@@ -131,7 +131,7 @@ static bool ExpectBool (const char *optname, VScriptParser *sc) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 VName P_TranslateMap (int map);
-static void ParseMapInfo (VScriptParser *sc);
+static void ParseMapInfo (VScriptParser *sc, int milumpnum);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -476,7 +476,7 @@ static int loadSkyTexture (VScriptParser *sc, VName name, bool silent=false) {
 //==========================================================================
 static void LoadMapInfoLump (int Lump, bool doFixups=true) {
   GCon->Logf(NAME_Init, "mapinfo file: '%s'", *W_FullLumpName(Lump));
-  ParseMapInfo(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)));
+  ParseMapInfo(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), Lump);
   if (doFixups) {
     processNumFixups("DoomEdNum", true, DoomEdNumFixups);
     processNumFixups("SpawnNum", false, SpawnNumFixups);
@@ -490,6 +490,7 @@ static void LoadMapInfoLump (int Lump, bool doFixups=true) {
 //
 //  do this scanning fuckery, because some idiotic tools
 //  loves duplicate lumps
+//
 //==========================================================================
 static void LoadAllMapInfoLumpsInFile (int miLump, int zmiLump) {
   if (miLump < 0 && zmiLump < 0) return;
@@ -1333,7 +1334,7 @@ static void ParseNameOrLookup (VScriptParser *sc, vint32 lookupFlag, VStr *name,
 //  ParseMap
 //
 //==========================================================================
-static void ParseMap (VScriptParser *sc, bool &HexenMode, mapInfo_t &Default) {
+static void ParseMap (VScriptParser *sc, bool &HexenMode, mapInfo_t &Default, int milumpnum) {
   mapInfo_t *info = nullptr;
   VName MapLumpName;
   if (sc->CheckNumber()) {
@@ -1439,6 +1440,8 @@ static void ParseMap (VScriptParser *sc, bool &HexenMode, mapInfo_t &Default) {
   }
 
   ParseMapCommon(sc, info, HexenMode);
+
+  info->MapinfoSourceLump = milumpnum;
 
   // avoid duplicate levelnums, later one takes precedance
   for (int i = 0; i < MapInfo.Num(); ++i) {
@@ -1562,7 +1565,7 @@ static void ParseClusterDef (VScriptParser *sc) {
 //  ParseEpisodeDef
 //
 //==========================================================================
-static void ParseEpisodeDef (VScriptParser *sc) {
+static void ParseEpisodeDef (VScriptParser *sc, int milumpnum) {
   VEpisodeDef *EDef = nullptr;
   int EIdx = 0;
   sc->ExpectName8();
@@ -1593,6 +1596,7 @@ static void ParseEpisodeDef (VScriptParser *sc) {
   EDef->PicName = NAME_None;
   EDef->Flags = 0;
   EDef->Key = VStr();
+  EDef->MapinfoSourceLump = milumpnum;
 
   if (sc->Check("teaser")) {
     sc->ExpectName8();
@@ -2000,7 +2004,7 @@ static void ParseGameInfo (VScriptParser *sc) {
 //  ParseMapInfo
 //
 //==========================================================================
-static void ParseMapInfo (VScriptParser *sc) {
+static void ParseMapInfo (VScriptParser *sc, int milumpnum) {
   const unsigned int MaxStack = 64;
   bool HexenMode = false;
   VScriptParser *scstack[MaxStack];
@@ -2014,7 +2018,7 @@ static void ParseMapInfo (VScriptParser *sc) {
   for (;;) {
     while (!sc->AtEnd()) {
       if (sc->Check("map")) {
-        ParseMap(sc, HexenMode, Default);
+        ParseMap(sc, HexenMode, Default, milumpnum);
       } else if (sc->Check("defaultmap")) {
         SetMapDefaults(Default);
         ParseMapCommon(sc, &Default, HexenMode);
@@ -2025,7 +2029,7 @@ static void ParseMapInfo (VScriptParser *sc) {
       } else if (sc->Check("cluster")) {
         ParseClusterDef(sc);
       } else if (sc->Check("episode")) {
-        ParseEpisodeDef(sc);
+        ParseEpisodeDef(sc, milumpnum);
       } else if (sc->Check("clearepisodes")) {
         EpisodeDefs.Clear();
       } else if (sc->Check("skill")) {

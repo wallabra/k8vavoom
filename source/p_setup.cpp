@@ -939,7 +939,7 @@ load_again:
     for (int i = 2; true; ++i) {
       VName LName = W_LumpName(lumpnum+i);
       if (LName == NAME_endmap) break;
-      if (LName == NAME_None) Host_Error("Map %s is not a valid UDMF map", *MapName);
+      if (LName == NAME_None || LName == NAME_textmap) Host_Error("Map %s is not a valid UDMF map", *MapName);
            if (LName == NAME_behavior) BehaviorLump = lumpnum+i;
       else if (LName == NAME_blockmap) BlockmapLumpNum = lumpnum+i;
       else if (LName == NAME_reject) RejectLump = lumpnum+i;
