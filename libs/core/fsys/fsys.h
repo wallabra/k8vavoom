@@ -161,8 +161,13 @@ int W_IterateNS (int Prev, EWadNamespace NS);
 int W_IterateFile (int Prev, VStr Name);
 
 int W_NextMountFileId ();
-VStr W_FindMapInLastFile (int fileid, int *mapnum);
-VStr W_FindMapInAuxuliaries (int *mapnum);
+
+// return `true` to stop and return the current map name
+// WARNING! do not call VFS methods from callback, because there will be a deadlock!
+typedef bool (*W_FindMapCheckerCB) (int lump, const char *name, VName lumpname, VStr fulllumpname);
+
+VStr W_FindMapInLastFile (int fileid, W_FindMapCheckerCB checker);
+VStr W_FindMapInAuxuliaries (W_FindMapCheckerCB checker);
 
 
 // ////////////////////////////////////////////////////////////////////////// //

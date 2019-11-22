@@ -1046,61 +1046,52 @@ int W_NextMountFileId () {
 //  W_FindMapInLastFile_NoLock
 //
 //==========================================================================
-static VStr W_FindMapInLastFile_NoLock (int fileid, int *mapnum) {
-  if (mapnum) *mapnum = -1;
+static VStr W_FindMapInLastFile_NoLock (int fileid, W_FindMapCheckerCB checker) {
   if (fileid < 0 || fileid >= getSPCount()) return VStr();
-  int found = 0xffff;
-  bool doom1 = false;
-  char doom1ch = 'e';
-  VStr longname;
   for (int lump = SearchPaths[fileid]->IterateNS(0, WADNS_Any, true); lump >= 0; lump = SearchPaths[fileid]->IterateNS(lump+1, WADNS_Any, true)) {
-    const char *name;
     VName ln = SearchPaths[fileid]->LumpName(lump);
-    if (ln != NAME_None) {
-      name = *ln;
-    } else {
-      longname = SearchPaths[fileid]->LumpFileName(lump);
-      if (longname.isEmpty()) continue;
+    if (ln == NAME_None) {
+      // long name
+      VStr longname = SearchPaths[fileid]->LumpFileName(lump);
       if (!longname.startsWithNoCase("maps/")) continue;
       longname = longname.StripExtension().toLowerCase();
-      name = *longname+5;
+      const char *name = *longname+5;
       if (strchr(name, '/')) continue;
-    }
-    //GLog.Logf("*** <%s>", name);
-    // doom1 (or kdizd)
-    if ((name[0] == 'e' || name[0] == 'z') && name[1] && name[2] == 'm' && name[3] && !name[4]) {
-      int e = VStr::digitInBase(name[1], 10);
-      int m = VStr::digitInBase(name[3], 10);
-      if (e < 0 || m < 0) continue;
-      if (e >= 1 && e <= 9 && m >= 1 && m <= 9) {
-        int n = e*10+m;
-        if (!doom1 || n < found) {
-          doom1ch = name[0];
-          doom1 = true;
-          found = n;
-          if (mapnum) *mapnum = n;
+      if (checker(MAKE_HANDLE(fileid, lump), name, ln, SearchPaths[fileid]->GetPrefix()+":"+SearchPaths[fileid]->LumpFileName(lump))) return VStr(name);
+    } else {
+      // short name; check for valid map format
+      bool valid = false;
+      if (SearchPaths[fileid]->LumpName(lump+1) == NAME_textmap) {
+        // check for UDMF map
+        bool wasBeh = false, wasBlock = false, wasRej = false, wasDialog = false, wasZNodes = false;
+        for (int i = 2; true; ++i) {
+          VName lname = SearchPaths[fileid]->LumpName(lump+i);
+          if (lname == NAME_endmap) { valid = true; break; }
+          if (lname == NAME_None || lname == NAME_textmap) break;
+          if (lname == NAME_behavior) { if (wasBeh) break; wasBeh = true; continue; }
+          if (lname == NAME_blockmap) { if (wasBlock) break; wasBlock = true; continue; }
+          if (lname == NAME_reject) { if (wasRej) break; wasRej = true; continue; }
+          if (lname == NAME_dialogue) { if (wasDialog) break; wasDialog = true; continue; }
+          if (lname == NAME_znodes) { if (wasZNodes) break; wasZNodes = true; continue; }
         }
+      } else {
+        int ofs = 1;
+        valid = true;
+        if (valid && SearchPaths[fileid]->LumpName(lump+ofs) == NAME_things) ++ofs; else valid = false;
+        if (valid && SearchPaths[fileid]->LumpName(lump+ofs) == NAME_linedefs) ++ofs; else valid = false;
+        if (valid && SearchPaths[fileid]->LumpName(lump+ofs) == NAME_sidedefs) ++ofs; else valid = false;
+        if (valid && SearchPaths[fileid]->LumpName(lump+ofs) == NAME_vertexes) ++ofs; else valid = false;
+        if (valid && SearchPaths[fileid]->LumpName(lump+ofs) == NAME_segs) ++ofs; else valid = false;
+        if (valid && SearchPaths[fileid]->LumpName(lump+ofs) == NAME_ssectors) ++ofs; else valid = false;
+        if (valid && SearchPaths[fileid]->LumpName(lump+ofs) == NAME_nodes) ++ofs;
+        if (valid && SearchPaths[fileid]->LumpName(lump+ofs) == NAME_sectors) ++ofs; else valid = false;
+        //if (valid && SearchPaths[fileid]->LumpName(lump+ofs) == NAME_reject) ++ofs;
+        //if (valid && SearchPaths[fileid]->LumpName(lump+ofs) == NAME_blockmap) ++ofs;
+        //if (valid && SearchPaths[fileid]->LumpName(lump+ofs) == NAME_behavior) hexen = true;
       }
-      continue;
+      if (!valid) continue;
+      if (checker(MAKE_HANDLE(fileid, lump), *ln, ln, SearchPaths[fileid]->GetPrefix()+":"+SearchPaths[fileid]->LumpFileName(lump))) return VStr(ln);
     }
-    // doom2
-    if (name[0] == 'm' && name[1] == 'a' && name[2] == 'p' && name[3] && name[4] && !name[5]) {
-      int m0 = VStr::digitInBase(name[3], 10);
-      int m1 = VStr::digitInBase(name[4], 10);
-      if (m0 < 0 || m1 < 0) continue;
-      int n = m0*10+m1;
-      if (n < 1 || n > 32) continue;
-      if (doom1 || n < found) {
-        doom1 = false;
-        found = n;
-        if (mapnum) *mapnum = n;
-      }
-      continue;
-    }
-  }
-  if (found < 0xffff) {
-    if (doom1) return VStr(va("%c%dm%d", doom1ch, found/10, found%10));
-    return VStr(va("map%02d", found));
   }
   return VStr();
 }
@@ -1111,9 +1102,9 @@ static VStr W_FindMapInLastFile_NoLock (int fileid, int *mapnum) {
 //  W_FindMapInLastFile
 //
 //==========================================================================
-VStr W_FindMapInLastFile (int fileid, int *mapnum) {
+VStr W_FindMapInLastFile (int fileid, W_FindMapCheckerCB checker) {
   MyThreadLocker glocker(&fsys_glock);
-  return W_FindMapInLastFile_NoLock(fileid, mapnum);
+  return W_FindMapInLastFile_NoLock(fileid, checker);
 }
 
 
@@ -1122,11 +1113,11 @@ VStr W_FindMapInLastFile (int fileid, int *mapnum) {
 //  W_FindMapInAuxuliaries
 //
 //==========================================================================
-VStr W_FindMapInAuxuliaries (int *mapnum) {
+VStr W_FindMapInAuxuliaries (W_FindMapCheckerCB checker) {
   MyThreadLocker glocker(&fsys_glock);
   if (!AuxiliaryIndex) return VStr();
   for (int f = SearchPaths.length()-1; f >= AuxiliaryIndex; --f) {
-    VStr mn = W_FindMapInLastFile_NoLock(f, mapnum);
+    VStr mn = W_FindMapInLastFile_NoLock(f, checker);
     //GLog.Logf(NAME_Init, "W_FindMapInAuxuliaries:<%s>: f=%d; ax=%d; mn=%s", *SearchPaths[f]->GetPrefix(), f, AuxiliaryIndex, *mn);
     if (!mn.isEmpty()) return mn;
   }
