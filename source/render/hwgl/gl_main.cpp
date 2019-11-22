@@ -1833,10 +1833,16 @@ void VOpenGLDrawer::PrepareWipe () {
 //  and (possibly) rendering something to the main FBO
 //  time is in seconds, from zero to...
 //  returns `false` if wipe is complete
+//  -1 means "show saved wipe screen"
 //
 //==========================================================================
 bool VOpenGLDrawer::RenderWipe (float time) {
   static const float WipeDur = 1.0f;
+
+  if (time < 0.0f) {
+    wipeFBO.blitTo(&mainFBO, 0, 0, mainFBO.getWidth(), mainFBO.getHeight(), 0, 0, mainFBO.getWidth(), mainFBO.getHeight(), GL_NEAREST);
+    return true;
+  }
 
   //GCon->Logf(NAME_Debug, "WIPE: time=%g", time);
 

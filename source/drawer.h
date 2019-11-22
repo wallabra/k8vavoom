@@ -369,6 +369,7 @@ public:
   // and (possibly) rendering something to the main FBO
   // time is in seconds, from zero to...
   // returns `false` if wipe is complete
+  // -1 means "show saved wipe screen"
   virtual bool RenderWipe (float time) = 0;
 
   // texture stuff
