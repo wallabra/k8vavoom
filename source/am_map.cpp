@@ -1861,7 +1861,7 @@ static void AM_drawKeys () {
     if (xtm < cbt) return;
   }
 
-  const bool allKeys = am_show_keys_cheat.asBool();
+  const bool allKeys = (am_show_keys_cheat.asBool() || am_cheating.asInt() > 1);
   bool inSpriteMode = false;
   for (TThinkerIterator<VEntity> Ent(GClLevel); Ent; ++Ent) {
     VEntity *mobj = *Ent;
