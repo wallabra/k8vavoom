@@ -27,6 +27,14 @@ menudef VideoOptions {
     max = 1;
   }
 
+  option bool {
+    title = "Screen Wipe";
+    cvar = r_wipe_enabled;
+    help =
+      "Experimental screen wipe implementation."
+      "\cGWARNING: this feature is not complete yet.";
+  }
+
 
   header "Renderer";
 
