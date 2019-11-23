@@ -146,6 +146,9 @@ public:
   inline __attribute__((warn_unused_result)) float Dot (const TVec &v2) const noexcept { return VSUM3(x*v2.x, y*v2.y, z*v2.z); }
   inline __attribute__((warn_unused_result)) float dot (const TVec &v2) const noexcept { return VSUM3(x*v2.x, y*v2.y, z*v2.z); }
 
+  inline __attribute__((warn_unused_result)) float DotV2Neg (const TVec &v2) const noexcept { return VSUM3(x*(-v2.x), y*(-v2.y), z*(-v2.z)); }
+  inline __attribute__((warn_unused_result)) float dotv2neg (const TVec &v2) const noexcept { return VSUM3(x*(-v2.x), y*(-v2.y), z*(-v2.z)); }
+
   inline __attribute__((warn_unused_result)) float Dot2D (const TVec &v2) const noexcept { return VSUM2(x*v2.x, y*v2.y); }
   inline __attribute__((warn_unused_result)) float dot2D (const TVec &v2) const noexcept { return VSUM2(x*v2.x, y*v2.y); }
 
@@ -224,6 +227,9 @@ static __attribute__((unused)) __attribute__((warn_unused_result)) inline TVec n
 
 static __attribute__((unused)) __attribute__((warn_unused_result)) inline float DotProduct (const TVec &v1, const TVec &v2) noexcept { return v1.dot(v2); }
 static __attribute__((unused)) __attribute__((warn_unused_result)) inline float dot (const TVec &v1, const TVec &v2) noexcept { return v1.dot(v2); }
+
+static __attribute__((unused)) __attribute__((warn_unused_result)) inline float DotProductV2Neg (const TVec &v1, const TVec &v2) noexcept { return v1.dotv2neg(v2); }
+static __attribute__((unused)) __attribute__((warn_unused_result)) inline float dotv2neg (const TVec &v1, const TVec &v2) noexcept { return v1.dotv2neg(v2); }
 
 static __attribute__((unused)) __attribute__((warn_unused_result)) inline float DotProduct2D (const TVec &v1, const TVec &v2) noexcept { return v1.dot2D(v2); }
 static __attribute__((unused)) __attribute__((warn_unused_result)) inline float dot2D (const TVec &v1, const TVec &v2) noexcept { return v1.dot2D(v2); }
@@ -527,9 +533,7 @@ public:
 
   // distance from point to plane
   // plane must be normalized
-  inline __attribute__((warn_unused_result)) float Distance (const TVec &p) const noexcept {
-    //return (cast(double)normal.x*p.x+cast(double)normal.y*p.y+cast(double)normal.z*cast(double)p.z)/normal.dbllength;
-    //return VSUM3(normal.x*p.x, normal.y*p.y, normal.z*p.z); // plane normal has length 1
+  inline __attribute__((warn_unused_result)) float CalcDistance (const TVec &p) const noexcept {
     return DotProduct(p, normal)-dist;
   }
 
