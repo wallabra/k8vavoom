@@ -186,6 +186,7 @@ struct surface_t {
   inline float GetNormalZ () const { return plane.normal.z; }
   inline const TVec &GetNormal () const { return plane.normal; }
   inline float GetDist () const { return plane.dist; }
+  inline float CalcDistance (const TVec &p) const { return plane.CalcDistance(p); }
 
   inline void GetPlane (TPlane *p) const { *p = plane; }
 };

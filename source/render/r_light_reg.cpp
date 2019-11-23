@@ -418,13 +418,10 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
     return;
   }
 
-  float dist = DotProduct(light->origin, surf->GetNormal())-surf->GetDist();
-
-  // don't bother with lights behind the surface
-  if (dist <= -0.1f) return;
-
-  // don't bother with light too far away
-  if (dist > light->radius) return;
+  //float orgdist = DotProduct(light->origin, surf->GetNormal())-surf->GetDist();
+  const float orgdist = surf->CalcDistance(light->origin);
+  // don't bother with lights behind the surface, or too far away
+  if (orgdist <= -0.1f || orgdist >= light->radius) return;
 
   // calc points only when surface may be lit by a light
   if (!lmi.pointsCalced) {
@@ -461,25 +458,28 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
 
   bool wasAnyHit = false;
   sector_t *ssector = Level->PointInSubsector(light->origin)->sector;
+  const TVec lnormal = surf->GetNormal();
+  const TVec lorg = light->origin;
+
   for (int c = 0; c < lmi.numsurfpt; ++c, ++spt) {
-    dist = CastRay(ssector, light->origin, *spt, squaredist);
-    if (dist <= 0.0f) {
+    const float raydist = CastRay(ssector, lorg+lnormal, (*spt)+lnormal, squaredist);
+    if (raydist <= 0.0f) {
       // light ray is blocked
       /*
       lightmap[c] += 255.0f;
       lightmapg[c] += 255.0f;
-      is_colored = true;
+      isColored = true;
       lmi.light_hit = true;
       */
       continue;
     }
     /*
-    if (CastRay(Level->PointInSubsector(*spt)->sector, *spt, light->origin, squaredist) <= 0.0f) {
+    if (CastRay(Level->PointInSubsector(*spt)->sector, *spt, lorg, squaredist) <= 0.0f) {
       continue;
     }
     */
 
-    TVec incoming = light->origin-(*spt);
+    TVec incoming = lorg-(*spt);
     if (!incoming.isZero()) {
       incoming.normaliseInPlace();
       if (!incoming.isValid()) {
@@ -491,10 +491,10 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
       }
     }
 
-    float angle = DotProduct(incoming, surf->GetNormal());
+    float angle = DotProduct(incoming, lnormal);
     angle = 0.5f+0.5f*angle;
 
-    float add = (light->radius-dist)*angle;
+    float add = (light->radius-raydist)*angle;
     if (add <= 0.0f) continue;
     // without this, lights with huge radius will overbright everything
     if (add > 255.0f) add = 255.0f;
@@ -538,30 +538,30 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
        done:
         if (doit) {
           TVec pt = lmi.surfpt[laddr];
-          dist = 0.0f;
+          float raydist = 0.0f;
           for (int dy = -1; dy < 2; ++dy) {
             for (int dx = -1; dx < 2; ++dx) {
               for (int dz = -1; dz < 2; ++dz) {
                 if ((dx|dy|dz) == 0) continue;
-                dist = CastRay(ssector, light->origin, pt+TVec(4*dx, 4*dy, 4*dz), squaredist);
-                if (dist > 0.0f) goto donetrace;
+                raydist = CastRay(ssector, lorg+lnormal, pt+TVec(4*dx, 4*dy, 4*dz), squaredist);
+                if (raydist > 0.0f) goto donetrace;
               }
             }
           }
           continue;
          donetrace:
-          //GCon->Logf("x=%d; y=%d; w=%d; h=%d; dist=%g", x, y, w, h, dist);
+          //GCon->Logf("x=%d; y=%d; w=%d; h=%d; raydist=%g", x, y, w, h, raydist);
 
-          TVec incoming = light->origin-pt;
+          TVec incoming = lorg-pt;
           if (!incoming.isZero()) {
             incoming.normaliseInPlace();
             if (!incoming.isValid()) continue;
           }
 
-          float angle = DotProduct(incoming, surf->GetNormal());
+          float angle = DotProduct(incoming, lnormal);
           angle = 0.5f+0.5f*angle;
 
-          float add = (light->radius-dist)*angle*0.75f;
+          float add = (light->radius-raydist)*angle*0.75f;
           if (add <= 0.0f) continue;
           // without this, lights with huge radius will overbright everything
           if (add > 255.0f) add = 255.0f;
@@ -810,8 +810,7 @@ void VRenderLevelLightmap::AddDynamicLights (surface_t *surf) {
   */
 
   const bool hasPVS = Level->HasPVS();
-
-  bool doCheckTrace = (r_dynamic_clip && r_dynamic_clip_more);
+  const bool doCheckTrace = (r_dynamic_clip && r_dynamic_clip_more && r_allow_shadows);
 
   for (unsigned lnum = 0; lnum < MAX_DLIGHTS; ++lnum) {
     if (!(surf->dlightbits&(1U<<lnum))) continue; // not lit by this light
@@ -823,13 +822,14 @@ void VRenderLevelLightmap::AddDynamicLights (surface_t *surf) {
     const int xnfo = dlinfo[lnum].needTrace;
     if (!xnfo) continue;
 
+    const TVec dorg = dl.origin;
     float rad = dl.radius;
-    float dist = DotProduct(dl.origin, surf->GetNormal())-surf->GetDist();
-    if (r_dynamic_clip) {
-      if (dist <= -0.1f) continue;
-    }
+    float dist = surf->CalcDistance(dorg);
+    // don't bother with lights behind the surface, or too far away
+    if (dist <= -0.1f || dist >= rad) continue; // was with `r_dynamic_clip` check; but there is no reason to not check this
+    if (dist < 0.0f) dist = 0.0f; // clamp it
 
-    rad -= fabsf(dist);
+    rad -= dist;
     float minlight = dl.minlight;
     if (rad < minlight) continue;
     minlight = rad-minlight;
@@ -837,19 +837,17 @@ void VRenderLevelLightmap::AddDynamicLights (surface_t *surf) {
     if (hasPVS && r_dynamic_clip_pvs && surf->subsector) {
       const subsector_t *sub = surf->subsector; //Level->PointInSubsector(impact);
       const vuint8 *dyn_facevis = Level->LeafPVS(sub);
-      //int leafnum = Level->PointInSubsector(dl.origin)-Level->Subsectors;
+      //int leafnum = Level->PointInSubsector(dorg)-Level->Subsectors;
       int leafnum = dlinfo[lnum].leafnum;
       if (leafnum < 0) continue;
       // check potential visibility
       if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
     }
 
-    TVec impact = dl.origin-surf->GetNormal()*dist;
+    TVec impact = dorg-surf->GetNormal()*dist;
 
     //TODO: we can use clipper to check if destination subsector is occluded
-    bool needProperTrace = (doCheckTrace && xnfo > 0);
-    if (dl.flags&dlight_t::NoShadow) needProperTrace = false;
-    if (!r_allow_shadows) needProperTrace = false;
+    bool needProperTrace = (doCheckTrace && xnfo > 0 && (dl.flags&dlight_t::NoShadow) == 0);
 
     ++gf_dynlights_processed;
     if (needProperTrace) ++gf_dynlights_traced;
@@ -887,36 +885,38 @@ void VRenderLevelLightmap::AddDynamicLights (surface_t *surf) {
       for (int s = 0; s < smax; ++s, ++spt) {
         int sd = (int)local.x-s*16;
         if (sd < 0) sd = -sd;
-        dist = (sd > td ? sd+(td>>1) : td+(sd>>1));
-        if (dist < minlight) {
+        const float ptdist = (sd > td ? sd+(td>>1) : td+(sd>>1));
+        if (ptdist < minlight) {
           // check spotlight cone
           if (lmi.spotLight) {
             //spt = lmi.calcTexPoint(starts+s*step, startt+t*step);
-            if (length2DSquared((*spt)-dl.origin) > 2*2) {
-              attn = spt->CalcSpotlightAttMult(dl.origin, lmi.coneDir, lmi.coneAngle);
+            if (length2DSquared((*spt)-dorg) > 2*2) {
+              attn = spt->CalcSpotlightAttMult(dorg, lmi.coneDir, lmi.coneAngle);
               if (attn == 0.0f) continue;
+            } else {
+              attn = 1.0f;
             }
           }
-          float add = (rad-dist)*attn;
+          float add = (rad-ptdist)*attn;
           if (add <= 0.0f) continue;
           // without this, lights with huge radius will overbright everything
           if (add > 255.0f) add = 255.0f;
           // do more dynlight clipping
           if (needProperTrace) {
             //if (!lmi.spotLight) spt = lmi.calcTexPoint(starts+s*step, startt+t*step);
-            if (length2DSquared((*spt)-dl.origin) > 2*2) {
-              if (!Level->CastEx(Level->Subsectors[dlinfo[lnum].leafnum].sector, dl.origin, *spt, SPF_NOBLOCKSIGHT, surfsector)) continue;
+            if (length2DSquared((*spt)-dorg) > 2*2) {
+              if (!Level->CastEx(Level->Subsectors[dlinfo[lnum].leafnum].sector, dorg, (*spt), SPF_NOBLOCKSIGHT, surfsector)) continue;
             }
           }
           int i = t*smax+s;
           if (dl.type != DLTYPE_Subtractive) {
-            //blocklights[i] += (rad-dist)*256.0f;
+            //blocklights[i] += (rad-ptdist)*256.0f;
             blocklightsr[i] += rmul*add;
             blocklightsg[i] += gmul*add;
             blocklightsb[i] += bmul*add;
           } else {
             #ifdef VV_USELESS_SUBTRACTIVE_LIGHT_CODE
-            //blocklightsS[i] += (rad-dist)*256.0f;
+            //blocklightsS[i] += (rad-ptdist)*256.0f;
             blocklightsrS[i] += rmul*add;
             blocklightsgS[i] += gmul*add;
             blocklightsbS[i] += bmul*add;

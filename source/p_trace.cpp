@@ -26,6 +26,8 @@
 #include "gamedefs.h"
 #include "sv_local.h"
 
+static VCvarB dbg_bsp_trace_strict_flats("dbg_bsp_trace_strict_flats", false, "use strict checks for flats?", /*CVAR_Archive|*/CVAR_PreInit);
+
 
 //==========================================================================
 //
@@ -75,14 +77,15 @@ bool VLevel::CheckLine (linetrace_t &trace, seg_t *seg) const {
   if (s1 == s2 || (s1 == 2 && s2 == 0)) return true;
 
   // crosses a two sided line
-  sector_t *front = (s1 == 0 || s1 == 2 ? line->frontsector : line->backsector);
+  //sector_t *front = (s1 == 0 || s1 == 2 ? line->frontsector : line->backsector);
+  sector_t *front = (s1 == 1 ? line->backsector : line->frontsector);
 
   // intercept vector
-  // don't need to check if den == 0, because then planes are paralel
+  // no need to check if den == 0, because then planes are parallel
   // (they will never cross) or it's the same plane (also rejected)
-  float den = DotProduct(trace.Delta, line->normal);
-  float num = line->dist-DotProduct(trace.Start, line->normal);
-  float frac = num/den;
+  const float den = DotProduct(trace.Delta, line->normal);
+  const float num = line->dist-DotProduct(trace.Start, line->normal);
+  const float frac = num/den;
   TVec hit_point = trace.Start+frac*trace.Delta;
 
   trace.LineEnd = hit_point;
@@ -95,14 +98,22 @@ bool VLevel::CheckLine (linetrace_t &trace, seg_t *seg) const {
   if (line->flags&ML_TWOSIDED) {
     // crosses a two sided line
     opening_t *open = SV_LineOpenings(line, hit_point, trace.PlaneNoBlockFlags);
-    while (open) {
-      if (open->bottom <= hit_point.z && open->top >= hit_point.z) return true;
-      open = open->next;
+    if (dbg_bsp_trace_strict_flats) {
+      while (open) {
+        if (open->bottom < hit_point.z && open->top > hit_point.z) return true;
+        open = open->next;
+      }
+    } else {
+      while (open) {
+        if (open->bottom <= hit_point.z && open->top >= hit_point.z) return true;
+        open = open->next;
+      }
     }
   }
 
   // hit line
-  trace.HitPlaneNormal = (s1 == 0 || s1 == 2 ? line->normal : -line->normal);
+  //trace.HitPlaneNormal = (s1 == 0 || s1 == 2 ? line->normal : -line->normal);
+  trace.HitPlaneNormal = (s1 == 1 ? -line->normal : line->normal);
   trace.HitPlane = *line;
   trace.HitLine = line;
 

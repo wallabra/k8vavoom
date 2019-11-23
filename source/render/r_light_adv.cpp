@@ -39,8 +39,6 @@
 
 extern VCvarB r_darken;
 extern VCvarB r_allow_subtractive_lights;
-extern VCvarB r_dynamic_clip;
-extern VCvarB r_dynamic_clip_more;
 extern VCvarB r_draw_mobjs;
 extern VCvarB r_models;
 extern VCvarB r_model_shadows;

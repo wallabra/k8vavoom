@@ -191,7 +191,7 @@ subsector_t *VLevel::PointInSubsector (const TVec &point) const {
   int nodenum = NumNodes-1;
   do {
     const node_t *node = Nodes+nodenum;
-    const float dist = node->Distance(point);
+    const float dist = node->CalcDistance(point);
     //k8: hack for back subsector
     if (dist == 0.0f) {
       #if 0
