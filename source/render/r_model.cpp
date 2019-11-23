@@ -760,7 +760,7 @@ VModel *Mod_FindName (VStr name) {
 
   // load the file
   VStream *Strm = FL_OpenFileRead(mod->Name);
-  if (!Strm) Sys_Error("Couldn't load `%s`", *mod->Name);
+  if (!Strm) Sys_Error("Couldn't load `%s` (Mod_FindName)", *mod->Name);
   if (mdl_verbose_loading > 1) GCon->Logf(NAME_Init, "parsing model script '%s'...", *mod->Name);
   ParseModelScript(mod, *Strm);
   delete Strm;
@@ -787,6 +787,7 @@ static void ParseGZModelDefs () {
     GCon->Logf(NAME_Init, "parsing GZDoom ModelDef script \"%s\"...", *W_FullLumpName(Lump));
     // parse modeldef
     auto sc = new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump));
+    sc->SetEscape(false);
     while (sc->GetString()) {
       if (sc->String.strEquCI("model")) {
         auto mdl = new GZModelDefEx();
@@ -1437,7 +1438,7 @@ static void Mod_ParseModel (VMeshModel *mod) {
 
   // load the file
   VStream *Strm = FL_OpenFileRead(mod->Name);
-  if (!Strm) Sys_Error("Couldn't load '%s'", *mod->Name);
+  if (!Strm) Sys_Error("Couldn't load '%s' (Mod_ParseModel)", *mod->Name);
 
   vuint8 *Data = (vuint8 *)Z_Malloc(Strm->TotalSize());
   Strm->Serialise(Data, Strm->TotalSize());

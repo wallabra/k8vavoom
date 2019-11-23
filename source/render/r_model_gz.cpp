@@ -178,7 +178,7 @@ VStr GZModelDef::buildPath (VScriptParser *sc, VStr path) {
   // normalize path
   if (path.length()) {
     TArray<VStr> parr;
-    path.SplitPath(parr);
+    path.fixSlashes().SplitPath(parr);
     if (parr.length() && parr[0] == "/") parr.removeAt(0);
     int pidx = 0;
     while (pidx < parr.length()) {
