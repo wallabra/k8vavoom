@@ -341,11 +341,6 @@ void VCommand::AddToAutoComplete (const char *string) {
   VStr vslow = vs.toLowerCase();
 
   if (AutoCompleteTableBSet.has(vslow)) return;
-  /*
-  for (int i = 0; i < AutoCompleteTable.length(); ++i) {
-    if (AutoCompleteTable[i].ICmp(string) == 0) return; //Sys_Error("C_AddToAutoComplete: %s is allready registered.", string);
-  }
-  */
 
   AutoCompleteTableBSet.put(vslow, true);
   AutoCompleteTable.Append(vs);
@@ -355,6 +350,29 @@ void VCommand::AddToAutoComplete (const char *string) {
     VStr swap = AutoCompleteTable[i];
     AutoCompleteTable[i] = AutoCompleteTable[i-1];
     AutoCompleteTable[i-1] = swap;
+  }
+}
+
+
+//==========================================================================
+//
+//  VCommand::RemoveFromAutoComplete
+//
+//==========================================================================
+void VCommand::RemoveFromAutoComplete (const char *string) {
+  if (!string || !string[0] || string[0] == '_') return;
+
+  VStr vs(string);
+  VStr vslow = vs.toLowerCase();
+
+  if (!AutoCompleteTableBSet.has(vslow)) return; // nothing to do
+
+  AutoCompleteTableBSet.del(vslow);
+  for (int f = 0; f < AutoCompleteTable.length(); ++f) {
+    if (AutoCompleteTable[f].strEquCI(vs)) {
+      AutoCompleteTable.removeAt(f);
+      --f;
+    }
   }
 }
 
@@ -612,6 +630,34 @@ void VCommand::rebuildCommandCache () {
     VStr loname = VStr(cmd->Name).toLowerCase();
     locaseCache.put(loname, cmd);
   }
+}
+
+
+//==========================================================================
+//
+//  VCommand::GetCommandType
+//
+//==========================================================================
+int VCommand::GetCommandType (VStr cmd) {
+  if (cmd.isEmpty()) return CT_UNKNOWN;
+
+  if (rebuildCache) rebuildCommandCache();
+
+  //FIXME: make it better (do not alloc new locased string)
+  VStr loname = cmd.toLowerCase();
+
+  auto cptr = locaseCache.find(loname);
+  if (cptr) return CT_COMMAND;
+
+  VBasePlayer *plr = findPlayer();
+  if (plr && plr->IsConCommand(loname)) return CT_COMMAND;
+
+  if (VCvar::HasVar(*loname)) return CT_CVAR;
+
+  auto idp = AliasMap.find(loname);
+  if (idp) return CT_ALIAS;
+
+  return CT_UNKNOWN;
 }
 
 
@@ -987,6 +1033,7 @@ COMMAND(Alias) {
       } else {
         AliasList.removeAt(*idxp);
         rebuildAliasMap();
+        if (GetCommandType(Args[1]) == CT_UNKNOWN) RemoveFromAutoComplete(*Args[1]);
         GCon->Logf("removed alias '%s'", *Args[1]);
       }
     }
@@ -1017,6 +1064,7 @@ COMMAND(Alias) {
   }
 
   rebuildAliasMap();
+  AddToAutoComplete(*Args[1]);
 }
 
 

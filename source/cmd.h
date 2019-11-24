@@ -100,7 +100,8 @@ public:
   static void Shutdown ();
   static void ProcessKeyConf ();
 
-  static void AddToAutoComplete (const char *);
+  static void AddToAutoComplete (const char *string);
+  static void RemoveFromAutoComplete (const char *string);
   static VStr GetAutoComplete (VStr prefix);
 
   // returns empty string if no matches found, or list is empty
@@ -110,6 +111,14 @@ public:
   // case-insensitive
   // if `unchangedAsEmpty` is `true`, return empty string if result is equal to input prefix
   static VStr AutoCompleteFromList (VStr prefix, const TArray <VStr> &list, bool unchangedAsEmpty=false, bool doSortHint=true);
+
+  enum {
+    CT_UNKNOWN = 0,
+    CT_COMMAND,
+    CT_CVAR,
+    CT_ALIAS,
+  };
+  static int GetCommandType (VStr cmd);
 
   static void ExecuteString (VStr, ECmdSource, VBasePlayer *);
   static void ForwardToServer ();
