@@ -230,6 +230,11 @@ if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7.7)
   set(UNFUCK_GXX_FLAGS "${UNFUCK_GCC_FLAGS} -Wsuggest-override")
 endif()
 
+if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 9.0)
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-diagnostics-show-line-numbers")
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-diagnostics-show-labels")
+endif()
+
 # some math/FPU options
 if(NOT DEBUG_FPU_CHECKS AND NOT SWITCH_LIBNX)
   # use -ffast-math, 'cause why not?
@@ -340,9 +345,6 @@ else(UNSTABLE_OPTIMISATIONS)
 endif(UNSTABLE_OPTIMISATIONS)
 
 # unfuck all build types
-# g-shit-cc9 is completely fuckin' broken: if you'll specify -O3, and then -O2, it actually uses -O0
-# this is fuckin' brilliant, one of the best designs i ever seen! good work.
-# so, here is a workaround for this new g-shit-cc idiocity.
 
 string(REGEX REPLACE "-O[0-9]" " " CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
 string(REGEX REPLACE "-O[0-9]" " " CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
