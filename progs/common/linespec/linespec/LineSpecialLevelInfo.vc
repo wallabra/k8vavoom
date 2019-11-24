@@ -1189,6 +1189,7 @@ final int EV_DoDoor (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Type,
 
     // if the sector has an active thinker, use it
     Sec = XLevel.Sides[Line->sidenum[1]].Sector;
+    if (!Sec->lines.length) return false;
     if (Sec->CeilingData) {
       Door = VerticalDoor(Sec->CeilingData);
       if (Door) return Door.ReUse(Type, Line, Thing);
@@ -1201,7 +1202,7 @@ final int EV_DoDoor (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Type,
     RetCode = true;
   } else {
     for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0; hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx)) {
-      if (Sec->CeilingData) continue;
+      if (Sec->CeilingData || !Sec->lines.length) continue;
       // add new door thinker
       RetCode = true;
       Door = SpawnThinker(VerticalDoor);
@@ -1355,11 +1356,11 @@ final int EV_DoCeiling (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Ty
     }
 
     if (!Line->backsector->CeilingData) {
+      if (!Line->backsector->lines.length) return false;
       // new ceiling thinker
       Rtn = true;
       Ceiling = SpawnThinker(CeilingMover);
-      Ceiling.Init(Line->backsector, Arg1, Arg2, Arg3, Arg4, Arg5,
-        Type, Line);
+      Ceiling.Init(Line->backsector, Arg1, Arg2, Arg3, Arg4, Arg5, Type, Line);
     }
   } else {
     // reactivate in-stasis ceilings... for certain types
@@ -1372,7 +1373,8 @@ final int EV_DoCeiling (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Ty
     }
 
     for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0; hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx)) {
-      if (Sec->CeilingData) continue;
+      if (Sec->CeilingData || !Sec->lines.length) continue;
+      //printdebug("sec=%s; tag=%s", Sec-&XLevel.Sectors[0], Arg1);
       // new ceiling thinker
       Rtn = true;
       Ceiling = SpawnThinker(CeilingMover);
@@ -1410,7 +1412,7 @@ final bool EV_StartCeilingWaggle (int Arg1, int Arg2, int Arg3, int Arg4, int Ar
   CeilingWaggle Waggle;
   bool RetCode = false;
   for (int hidx = XLevel.FindSectorFromTag(out Sector, Arg1); hidx >= 0; hidx = XLevel.FindSectorFromTag(out Sector, Arg1, hidx)) {
-    if (Sector->CeilingData) continue; // already busy with another thinker
+    if (Sector->CeilingData || !Sector->lines.length) continue; // already busy with another thinker
     RetCode = true;
     Waggle = SpawnThinker(CeilingWaggle);
     Waggle.Init(Sector, Arg1, Arg2, Arg3, Arg4, Arg5);
@@ -1448,6 +1450,7 @@ final int EV_DoFloor(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
     if (!Line->backsector->FloorData)
     {
       // new floor thinker
+      if (!Line->backsector->lines.length) return false;
       Rtn = true;
       Floor = SpawnThinker(FloorMover);
       Floor.Init(Line->backsector, Arg1, Arg2, Arg3, Arg4, Arg5, Type,
@@ -1460,7 +1463,7 @@ final int EV_DoFloor(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
          hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
     {
       // ALREADY MOVING?  IF SO, KEEP GOING...
-      if (Sec->FloorData) continue;
+      if (Sec->FloorData || !Sec->lines.length) continue;
 
       // new floor thinker
       Rtn = true;
@@ -1565,7 +1568,7 @@ final bool EV_StartFloorWaggle(int Arg1, int Arg2, int Arg3, int Arg4,
   for (int hidx = XLevel.FindSectorFromTag(out Sector, Arg1); hidx >= 0;
        hidx = XLevel.FindSectorFromTag(out Sector, Arg1, hidx))
   {
-    if (Sector->FloorData)
+    if (Sector->FloorData || !Sector->lines.length)
     {
       // Already busy with another thinker
       continue;
