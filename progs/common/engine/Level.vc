@@ -224,7 +224,7 @@ struct linetrace_t {
   TVec HitPlaneNormal;
   TPlane HitPlane;
   line_t *HitLine; // can be `nullptr` if we hit a floor/ceiling
-  bool SightEarlyOut;  // set if line is not two-sided
+  bool SightEarlyOut; // set if hit line is not two-sided
   private readonly TPlane LinePlane; // vertical plane for (Start,End), used only for line checks; may be undefined
 };
 
