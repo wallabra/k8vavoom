@@ -57,6 +57,22 @@ HelpText helpText;
 
 int WidthThreshold = 380;
 
+#ifdef K8_DEVELOPER
+enum k8Developer = true;
+#else
+enum k8Developer = false;
+#endif
+
+
+//==========================================================================
+//
+//  IsMultiplayerEnabled
+//
+//==========================================================================
+final static bool IsMultiplayerEnabled () {
+  return GetCvarB('dbg_enable_multiplayer');
+}
+
 
 //==========================================================================
 //

@@ -65,7 +65,7 @@ override void CreateTitle () {
 //==========================================================================
 override void CreateChoices () {
   CreateSubMenuBigText("Single Player", MenuScreenSinglePlayer);
-  CreateSubMenuBigText("Multiplayer", MenuScreenMultiplayer);
+  CreateSubMenuBigText("Multiplayer", MenuScreenMultiplayer).Enabled = IsMultiplayerEnabled();
   CreateSubMenuBigTextNamed("Options", 'OptionsMenu');
   CreateSubMenuBigText((!IsAnyDoom2 && !WadLumpPresent('e2m1') ? "Read This!" : "Help"), MenuScreenHelp);
 

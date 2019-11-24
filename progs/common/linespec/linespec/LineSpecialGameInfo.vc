@@ -300,6 +300,7 @@ override void Init () {
 
   CreateCvar('trans_debug_log', "0", "Show translation debug log?", CVAR_ARCHIVE);
 
+  CreateCvar('dbg_enable_multiplayer', "0", "Enable multiplayer menu?", 0/*CVAR_ARCHIVE*/);
 
   foreach (ref auto b; kkWeaponSlotCopy) b = true;
 

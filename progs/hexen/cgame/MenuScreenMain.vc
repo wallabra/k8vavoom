@@ -71,7 +71,7 @@ override void CreateTitle () {
 //==========================================================================
 override void CreateChoices () {
   CreateSubMenuBigText("Single Player", MenuScreenSinglePlayer);
-  CreateSubMenuBigText("Multiplayer", MenuScreenMultiplayer);
+  CreateSubMenuBigText("Multiplayer", MenuScreenMultiplayer).Enabled = IsMultiplayerEnabled();
   CreateSubMenuBigTextNamed("Options", 'OptionsMenu');
   CreateSubMenuBigText("Help", MenuScreenHelp);
 
