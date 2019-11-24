@@ -37,6 +37,7 @@ const int INVERSECOLOR = 0x00123456;
 const int GOLDCOLOR    = 0x00123457;
 const int REDCOLOR     = 0x00123458;
 const int GREENCOLOR   = 0x00123459;
+const int MONOCOLOR    = 0x0012345A;
 
 int /*[checkpoint]*/ Amount; // amount of item this instance has
 int /*[checkpoint]*/ InterHubAmount; // amount of item that can be kept between hubs or levels

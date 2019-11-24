@@ -354,6 +354,19 @@ static void InitColorMaps () {
   T->Palette[0] = r_palette[0];
   for (int i = 1; i < 256; ++i) {
     int Gray = (r_palette[i].r*77+r_palette[i].g*143+r_palette[i].b*37)>>8;
+    T->Palette[i].r = 0;
+    T->Palette[i].g = min2(255, Gray+Gray/2);
+    T->Palette[i].b = 0;
+    T->Palette[i].a = 255;
+    T->Table[i] = R_LookupRGB(T->Palette[i].r, T->Palette[i].g, T->Palette[i].b);
+  }
+
+  // calculate monochrome colormap
+  T = &ColorMaps[CM_Mono];
+  T->Table[0] = 0;
+  T->Palette[0] = r_palette[0];
+  for (int i = 1; i < 256; ++i) {
+    int Gray = (r_palette[i].r*77+r_palette[i].g*143+r_palette[i].b*37)>>8;
     T->Palette[i].r = min2(255, Gray+Gray/2);
     T->Palette[i].g = min2(255, Gray+Gray/2);
     T->Palette[i].b = Gray;

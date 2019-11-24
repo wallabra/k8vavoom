@@ -307,6 +307,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
               else if (sc->Check("gold")) P.Trans = &ColorMaps[CM_Gold];
               else if (sc->Check("red")) P.Trans = &ColorMaps[CM_Red];
               else if (sc->Check("green")) P.Trans = &ColorMaps[CM_Green];
+              else if (sc->Check("mono") || sc->Check("monochrome")) P.Trans = &ColorMaps[CM_Mono];
               else if (sc->Check("ice")) P.Trans = &IceTranslation;
               else if (sc->Check("desaturate")) { sc->Expect(","); sc->ExpectNumber(); }
               else {

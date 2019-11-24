@@ -155,8 +155,9 @@ override void DoEffect () {
       else if (BlendColor == GOLDCOLOR) Owner.Player.FixedColormap = PlayerEx::GOLDCOLORMAP;
       else if (BlendColor == REDCOLOR) Owner.Player.FixedColormap = PlayerEx::REDCOLORMAP;
       else if (BlendColor == GREENCOLOR) Owner.Player.FixedColormap = PlayerEx::GREENCOLORMAP;
+      else if (BlendColor == MONOCOLOR) Owner.Player.FixedColormap = PlayerEx::MONOCOLORMAP;
     } else if ((BlendColor == INVERSECOLOR || BlendColor == GOLDCOLOR ||
-                BlendColor == REDCOLOR || BlendColor == GREENCOLOR) &&
+                BlendColor == REDCOLOR || BlendColor == GREENCOLOR || BlendColor == MONOCOLOR) &&
                Owner.Player.FixedColormap >= PlayerEx::NUMCOLORMAPS)
     {
       Owner.Player.FixedColormap = 0;

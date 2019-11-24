@@ -2663,6 +2663,8 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             else if (sc->Check("GoldMap")) P.Field->SetInt(DefObj, 0x00123457);
             else if (sc->Check("RedMap")) P.Field->SetInt(DefObj, 0x00123458);
             else if (sc->Check("GreenMap")) P.Field->SetInt(DefObj, 0x00123459);
+            else if (sc->Check("MonoMap")) P.Field->SetInt(DefObj, 0x0012345A);
+            else if (sc->Check("MonochromeMap")) P.Field->SetInt(DefObj, 0x0012345A);
             else {
               vuint32 Col = sc->ExpectColor();
               int r = (Col>>16)&255;

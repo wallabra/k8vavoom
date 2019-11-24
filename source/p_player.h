@@ -33,6 +33,7 @@ enum {
   GOLDCOLORMAP    = 33,
   REDCOLORMAP     = 34,
   GREENCOLORMAP   = 35,
+  MONOCOLORMAP    = 36,
 };
 
 

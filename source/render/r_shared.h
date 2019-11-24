@@ -49,6 +49,7 @@ enum {
   CM_Gold,
   CM_Red,
   CM_Green,
+  CM_Mono,
 
   CM_Max,
 };

@@ -35,8 +35,7 @@ override void DoEffect () {
   ::DoEffect();
   if (Owner && Owner.bIsPlayer && Owner.Player.FixedColormap < PlayerEx::NUMCOLORMAPS) {
     if (EffectTime > PlayerEx::BLINKTHRESHOLD || (int(4.0*EffectTime)&1)) {
-      // almost full bright
-      Owner.Player.FixedColormap = 1;
+      Owner.Player.FixedColormap = 1; // almost full bright
     } else {
       Owner.Player.FixedColormap = 0;
     }

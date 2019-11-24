@@ -44,6 +44,8 @@ extern VCvarB r_disable_world_update;
 
 VCvarB dbg_show_lightmap_cache_messages("dbg_show_lightmap_cache_messages", false, "Show various lightmap debug messages?", CVAR_Archive);
 
+static VCvarI k8ColormapInverse("k8ColormapInverse", "0", "Inverse colormap replacement (0: original inverse; 1: black-and-white; 2: gold; 3: green; 4: red).", CVAR_Archive);
+static VCvarI k8ColormapLightAmp("k8ColormapLightAmp", "0", "LightAmp colormap replacement (0: original; 1: black-and-white; 2: gold; 3: green; 4: red).", CVAR_Archive);
 
 static const char *videoDrvName = nullptr;
 /*static*/ bool cliRegister_rmain_args =
@@ -1390,8 +1392,20 @@ void VRenderLevelShared::SetupFrame () {
     else if (cl->FixedColormap == GOLDCOLORMAP) { ColorMap = CM_Gold; FixedLight = 255; }
     else if (cl->FixedColormap == REDCOLORMAP) { ColorMap = CM_Red; FixedLight = 255; }
     else if (cl->FixedColormap == GREENCOLORMAP) { ColorMap = CM_Green; FixedLight = 255; }
+    else if (cl->FixedColormap == MONOCOLORMAP) { ColorMap = CM_Mono; FixedLight = 255; }
     else if (cl->FixedColormap >= NUMCOLORMAPS) { FixedLight = 255; }
-    else if (cl->FixedColormap) { FixedLight = 255-(cl->FixedColormap<<3); }
+    else if (cl->FixedColormap) {
+      // lightamp sets this to 1
+      if (cl->FixedColormap == 1) {
+        switch (k8ColormapLightAmp.asInt()) {
+          case 1: ColorMap = CM_Mono; break;
+          case 2: ColorMap = CM_Gold; break;
+          case 3: ColorMap = CM_Green; break;
+          case 4: ColorMap = CM_Red; break;
+        }
+      }
+      FixedLight = 255-(cl->FixedColormap<<3);
+    }
     else { FixedLight = 0; }
   } else {
     FixedLight = 0;
@@ -1402,6 +1416,16 @@ void VRenderLevelShared::SetupFrame () {
     ExtraLight = 0;
     ColorMap = CM_Inverse;
     FixedLight = 255;
+  }
+
+  // inverse colormap hack
+  if (ColorMap == CM_Inverse) {
+    switch (k8ColormapInverse.asInt()) {
+      case 1: ColorMap = CM_Mono; break;
+      case 2: ColorMap = CM_Gold; break;
+      case 3: ColorMap = CM_Green; break;
+      case 4: ColorMap = CM_Red; break;
+    }
   }
 
   Drawer->SetupView(this, &refdef);

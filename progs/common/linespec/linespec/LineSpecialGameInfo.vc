@@ -208,7 +208,11 @@ override void Init () {
   CreateCvar('k8ElvenPaineless', (IsReleaseMode ? "0" : "1"), "Disable Pain Elemental attacks?", CVAR_ARCHIVE|CVAR_SERVERINFO);
 
   CreateCvar('k8BerserkSwitch', (IsReleaseMode ? "1" : "0"), "Switch to fist when Berserker Pack taken.", CVAR_ARCHIVE|CVAR_SERVERINFO);
-  CreateCvar('k8BerserkTint', "", "Berserk powerup tint color..", CVAR_ARCHIVE);
+  CreateCvar('k8BerserkTint', "", "Berserk powerup tint color.", CVAR_ARCHIVE);
+
+  // moved to the engine code
+  //CreateCvar('k8ColormapInverse', "0", "Inverse colormap replacement (0: original inverse; 1: black-and-white; 2: gold; 3: green; 4: red)", CVAR_ARCHIVE);
+  //CreateCvar('k8ColormapLightAmp', "0", "LightAmp colormap replacement (0: original; 1: black-and-white; 2: gold; 3: green; 4: red)", CVAR_ARCHIVE);
 
   CreateCvar('k8StealthFist', "1", "Should fist attack alert monsters only when some monster was injured?.", CVAR_ARCHIVE|CVAR_SERVERINFO);
   CreateCvar('k8StealthChainsaw', "1", "Should chainsaw attack alert monsters only when some monster was hit?", CVAR_ARCHIVE|CVAR_SERVERINFO);

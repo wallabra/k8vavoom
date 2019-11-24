@@ -36,6 +36,38 @@ menudef VideoOptions {
   }
 
 
+  header "Color Maps";
+
+  option enum {
+    title = "Inverse Colormap";
+    cvar = k8ColormapInverse;
+    list {
+      "Original Inverse",
+      "Monochrome Grayscale",
+      "Gold",
+      "Green",
+      "Red",
+    }
+    help =
+      "You can replace original 'inversed' colormap for invulnerability"
+      "with another one of your choice.";
+  }
+
+  option enum {
+    title = "LightAmp Colormap";
+    cvar = k8ColormapLightAmp;
+    list {
+      "Original",
+      "Monochrome Grayscale",
+      "Gold",
+      "Green",
+      "Red",
+    }
+    help =
+      "You can replace LightAmp colormap with another one of your choice.";
+  }
+
+
   header "Renderer";
 
   option render {
