@@ -194,8 +194,16 @@ bool R_ModelNoSelfShadow (VName clsName);
 void R_InitSkyBoxes ();
 #endif
 
-// WARNING! this can call VM code!
+// checks for sky flat
 bool R_IsSkyFlatPlane (sec_plane_t *SPlane);
+
+// WARNING! those two checks can access VEntity!
+// checks for sky flat or stacked sector
+bool R_IsAnySkyFlatPlane (sec_plane_t *SPlane);
+// checks for stacked sector
+bool R_IsStackedSectorPlane (sec_plane_t *SPlane);
+// should not be a stacked sector
+bool R_IsStrictlySkyFlatPlane (sec_plane_t *SPlane);
 
 VName R_HasNamedSkybox (VStr aname);
 

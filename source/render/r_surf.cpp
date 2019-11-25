@@ -144,6 +144,8 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
   bool recreateSurface = true;
   bool updateZ = false;
 
+  //if (R_IsStackedSectorPlane(InSplane.splane)) isSkyFlat = true;
+
   // fix plane
   TSecPlaneRef spl(InSplane);
   if (isSkyFlat && spl.GetNormalZ() < 0.0f) spl.set(&sky_plane, false);
@@ -701,7 +703,9 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
 
   VTexture *TTex = GTextureManager(sidedef->TopTexture);
   if (!TTex) TTex = GTextureManager[GTextureManager.DefaultTexture];
-  if (R_IsSkyFlatPlane(r_ceiling.splane) && R_IsSkyFlatPlane(back_ceiling) && r_ceiling.splane->SkyBox != back_ceiling->SkyBox) {
+  if (r_ceiling.splane->SkyBox != back_ceiling->SkyBox &&
+      R_IsStrictlySkyFlatPlane(r_ceiling.splane) && R_IsStrictlySkyFlatPlane(back_ceiling))
+  {
     TTex = GTextureManager[skyflatnum];
   }
 
@@ -733,7 +737,9 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
     float top_topz1 = topz1;
     float top_topz2 = topz2;
     float top_TexZ = r_ceiling.splane->TexZ;
-    if (R_IsSkyFlatPlane(r_ceiling.splane) && R_IsSkyFlatPlane(back_ceiling) && r_ceiling.splane->SkyBox == back_ceiling->SkyBox) {
+    if (r_ceiling.splane->SkyBox == back_ceiling->SkyBox &&
+        R_IsStrictlySkyFlatPlane(r_ceiling.splane) && R_IsStrictlySkyFlatPlane(back_ceiling))
+    {
       top_topz1 = back_topz1;
       top_topz2 = back_topz2;
       top_TexZ = back_ceiling->TexZ;
@@ -803,7 +809,7 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
     const float back_botz2 = back_floor->GetPointZ(*seg->v2);
 
     // hack to allow height changes in outdoor areas
-    if (R_IsSkyFlatPlane(r_ceiling.splane) && R_IsSkyFlatPlane(back_ceiling)) {
+    if (R_IsStrictlySkyFlatPlane(r_ceiling.splane) && R_IsStrictlySkyFlatPlane(back_ceiling)) {
       topz1 = back_ceiling->GetPointZ(*seg->v1);
       topz2 = back_ceiling->GetPointZ(*seg->v2);
       top_TexZ = back_ceiling->TexZ;
@@ -1270,7 +1276,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
     dseg->topsky = SurfCreatorGetPSPart();
     sp = dseg->topsky;
     sp->basereg = curreg;
-    if (R_IsSkyFlatPlane(r_ceiling.splane)) SetupOneSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
+    if (R_IsStrictlySkyFlatPlane(r_ceiling.splane)) SetupOneSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
   } else {
     // two sided line
     // top wall
@@ -1282,7 +1288,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
     // sky above top
     dseg->topsky = SurfCreatorGetPSPart();
     dseg->topsky->basereg = curreg;
-    if (R_IsSkyFlatPlane(r_ceiling.splane) && !R_IsSkyFlatPlane(&seg->backsector->ceiling)) {
+    if (R_IsStrictlySkyFlatPlane(r_ceiling.splane) && !R_IsStrictlySkyFlatPlane(&seg->backsector->ceiling)) {
       sp = dseg->topsky;
       SetupTwoSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
     }
@@ -1383,7 +1389,7 @@ static inline bool CheckMidRecreate (seg_t *seg, segpart_t *sp, const TPlane *fl
 static inline bool CheckTopRecreate (seg_t *seg, segpart_t *sp, sec_plane_t *floor, sec_plane_t *ceiling) {
   sec_plane_t *back_ceiling = &seg->backsector->ceiling;
   VTexture *TTex = GTextureManager(seg->sidedef->TopTexture);
-  if (R_IsSkyFlatPlane(ceiling) && R_IsSkyFlatPlane(back_ceiling) && ceiling->SkyBox != back_ceiling->SkyBox) {
+  if (ceiling->SkyBox != back_ceiling->SkyBox && R_IsStrictlySkyFlatPlane(ceiling) && R_IsStrictlySkyFlatPlane(back_ceiling)) {
     TTex = GTextureManager[skyflatnum];
   }
   return CheckCommonRecreate(seg, sp, TTex, floor, ceiling);
@@ -1442,7 +1448,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     // top sky
     segpart_t *sp = dseg->topsky;
     if (sp) {
-      if (R_IsSkyFlatPlane(r_ceiling.splane) && FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist)) {
+      if (FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist) && R_IsStrictlySkyFlatPlane(r_ceiling.splane)) {
         SetupOneSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
       }
       sp->texinfo.ColorMap = ColorMap;
@@ -1465,7 +1471,9 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     // sky above top
     segpart_t *sp = dseg->topsky;
     if (sp) {
-      if (R_IsSkyFlatPlane(r_ceiling.splane) && !R_IsSkyFlatPlane(back_ceiling) && FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist)) {
+      if (FASI(sp->frontTopDist) != FASI(r_ceiling.splane->dist) &&
+          R_IsStrictlySkyFlatPlane(r_ceiling.splane) && !R_IsStrictlySkyFlatPlane(back_ceiling))
+      {
         SetupTwoSidedSkyWSurf(sub, seg, sp, r_floor, r_ceiling);
       }
       sp->texinfo.ColorMap = ColorMap;

@@ -573,9 +573,39 @@ void VRenderLevelShared::AnimateSky(float frametime)
 
 //==========================================================================
 //
+//  R_IsAnySkyFlatPlane
+//
+//==========================================================================
+bool R_IsAnySkyFlatPlane (sec_plane_t *SPlane) {
+  return (SPlane->pic == skyflatnum || (SPlane->SkyBox && SPlane->SkyBox->eventSkyBoxGetAlways()));
+}
+
+
+//==========================================================================
+//
 //  R_IsSkyFlatPlane
 //
 //==========================================================================
 bool R_IsSkyFlatPlane (sec_plane_t *SPlane) {
-  return (SPlane->pic == skyflatnum || (SPlane->SkyBox && SPlane->SkyBox->eventSkyBoxGetAlways()));
+  return (SPlane->pic == skyflatnum);
+}
+
+
+//==========================================================================
+//
+//  R_IsStackedSectorPlane
+//
+//==========================================================================
+bool R_IsStackedSectorPlane (sec_plane_t *SPlane) {
+  return (SPlane->SkyBox && SPlane->SkyBox->eventSkyBoxGetAlways());
+}
+
+
+//==========================================================================
+//
+//  R_IsStrictlySkyFlatPlane
+//
+//==========================================================================
+bool R_IsStrictlySkyFlatPlane (sec_plane_t *SPlane) {
+  return (SPlane->pic == skyflatnum && (!SPlane->SkyBox || !SPlane->SkyBox->eventSkyBoxGetAlways()));
 }
