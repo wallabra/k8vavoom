@@ -1138,6 +1138,7 @@ MAPINFOCMD(outsidefogdensity) { skipUnimplementedCommand(sc, true); }
 MAPINFOCMD(skyfog) { skipUnimplementedCommand(sc, true); }
 MAPINFOCMD(translator) { skipUnimplementedCommand(sc, true); skipUnimplementedCommand(sc, false); }
 MAPINFOCMD(lightmode) { skipUnimplementedCommand(sc, true); }
+MAPINFOCMD(smoothlighting) { skipUnimplementedCommand(sc, false); }
 
 
 //==========================================================================
