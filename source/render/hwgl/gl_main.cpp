@@ -1814,6 +1814,22 @@ void VOpenGLDrawer::DebugRenderScreenRect (int x0, int y0, int x1, int y1, vuint
 
 //==========================================================================
 //
+//  VOpenGLDrawer::ForceClearStencilBuffer
+//
+//==========================================================================
+void VOpenGLDrawer::ForceClearStencilBuffer () {
+  NoteStencilBufferDirty();
+  ClearStencilBuffer();
+}
+
+
+void VOpenGLDrawer::ForceMarkStencilBufferDirty () {
+  NoteStencilBufferDirty();
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::PrepareWipe
 //
 //  this copies main FBO to wipe FBO, so we can run wipe shader

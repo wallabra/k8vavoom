@@ -740,6 +740,9 @@ private:
   inline bool IsStencilBufferDirty () const { return stencilBufferDirty; }
   inline void ClearStencilBuffer () { if (stencilBufferDirty) glClear(GL_STENCIL_BUFFER_BIT); stencilBufferDirty = false; decalUsedStencil = false; }
 
+  virtual void ForceClearStencilBuffer () override;
+  virtual void ForceMarkStencilBufferDirty () override;
+
   void RenderPrepareShaderDecals (surface_t *surf);
   bool RenderFinishShaderDecals (DecalType dtype, surface_t *surf, surfcache_t *cache, int cmap);
 

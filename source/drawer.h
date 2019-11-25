@@ -398,6 +398,9 @@ public:
   virtual bool StartPortal (VPortal *Portal, bool UseStencil) = 0;
   virtual void EndPortal (VPortal *Portal, bool UseStencil) = 0;
 
+  virtual void ForceClearStencilBuffer () = 0;
+  virtual void ForceMarkStencilBufferDirty () = 0;
+
   //  particles
   virtual void StartParticles () = 0;
   virtual void DrawParticle (particle_t *) = 0;

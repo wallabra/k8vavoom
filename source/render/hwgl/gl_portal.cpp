@@ -40,7 +40,7 @@ bool VOpenGLDrawer::StartPortal (VPortal *Portal, bool UseStencil) {
       // doesn't work for now
       // k8: why? because this glitches in kdizd z1m1, for example
       //     stacked sector rendering should be rewritten
-      if (Portal->stackedSector && RendLev->NeedsInfiniteFarClip) return false;
+      //if (Portal->stackedSector && RendLev->IsShadowVolumeRenderer()) return false;
 
       // disable drawing
       SurfZBuf.Activate();

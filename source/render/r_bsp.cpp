@@ -457,7 +457,8 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
       }
       if (!Portal) {
         if (IsStack) {
-          if (r_allow_other_portals) {
+          // advrender cannot into stacked sectors yet
+          if (r_allow_other_portals && !IsShadowVolumeRenderer()) {
             Portal = new VSectorStackPortal(this, SkyBox);
             Portals.Append(Portal);
           }
@@ -484,42 +485,50 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
       }
 #endif
     }
-    if (!Portal) return;
-    //GCon->Log("----");
-    int doRenderSurf = -1;
-    for (; surfs; surfs = surfs->next) {
-      /*k8: ?
-      if (!surfs->IsVisible(vieworg)) {
-        // viewer is in back side or on plane
-        //GCon->Logf("  SURF SKIP!");
-        continue;
+    if (Portal) {
+      //GCon->Log("----");
+      //const bool doRenderSurf = (surfs ? IsStack && CheckSkyBoxAlways && SkyBox->eventSkyBoxGetPlaneAlpha() : false);
+      bool doRenderSurf = (surfs ? IsStack && CheckSkyBoxAlways : false);
+      float alpha = 0.0f;
+      if (doRenderSurf) {
+        alpha = SkyBox->eventSkyBoxGetPlaneAlpha();
+        if (alpha <= 0.0f) doRenderSurf = false;
       }
-      */
-      Portal->Surfs.Append(surfs);
-      if (doRenderSurf < 0) {
-        doRenderSurf = (IsStack && CheckSkyBoxAlways && SkyBox->eventSkyBoxGetPlaneAlpha() ? 1 : 0);
-      }
-      //if (IsStack && CheckSkyBoxAlways && SkyBox->eventSkyBoxGetPlaneAlpha())
-      if (doRenderSurf && surfs->queueframe != currQueueFrame) {
-        //GCon->Logf("  SURF!");
-        surfs->Light = (lLev<<24)|LightParams->LightColor;
-        surfs->Fade = Fade;
-        surfs->dlightframe = sub->dlightframe;
-        surfs->dlightbits = sub->dlightbits;
-        /*
-        surfs->queueframe = currQueueFrame;
-        surfs->plvisible = surfs->IsVisible(vieworg);
+      for (; surfs; surfs = surfs->next) {
+        /*k8: ?
+        if (!surfs->IsVisible(vieworg)) {
+          // viewer is in back side or on plane
+          //GCon->Logf("  SURF SKIP!");
+          continue;
+        }
         */
-        if (SurfPrepareForRender(surfs)) {
-          if (surfs->plvisible) {
-            QueueTranslucentPoly(surfs, surfs->verts, surfs->count,
-              0, SkyBox->eventSkyBoxGetPlaneAlpha(), false, 0,
-              false, 0, Fade, TVec(), 0, TVec(), TVec(), TVec());
+        Portal->Surfs.Append(surfs);
+        if (doRenderSurf && surfs->queueframe != currQueueFrame) {
+          //GCon->Logf("  SURF!");
+          surfs->Light = (lLev<<24)|LightParams->LightColor;
+          surfs->Fade = Fade;
+          surfs->dlightframe = sub->dlightframe;
+          surfs->dlightbits = sub->dlightbits;
+          surfs->glowFloorHeight = glowFloorHeight;
+          surfs->glowCeilingHeight = glowCeilingHeight;
+          surfs->glowFloorColor = glowFloorColor;
+          surfs->glowCeilingColor = glowCeilingColor;
+          if (SurfPrepareForRender(surfs)) {
+            if (surfs->plvisible) {
+              //GCon->Logf(NAME_Debug, "  SURF! norm=(%g,%g,%g); alpha=%g", surfs->plane.normal.x, surfs->plane.normal.y, surfs->plane.normal.z, SkyBox->eventSkyBoxGetPlaneAlpha());
+              //surfs->drawflags |= surface_t::DF_MASKED;
+              QueueTranslucentPoly(surfs, surfs->verts, surfs->count,
+                0, alpha, false,
+                0, false, 0, Fade,
+                TVec(), 0, TVec(), TVec(), TVec());
+            }
           }
         }
       }
+      return;
+    } else {
+      if (!IsStack || !CheckSkyBoxAlways) return;
     }
-    return;
   } // done skybox rendering
 
   vuint32 sflight = (lLev<<24)|LightParams->LightColor;
@@ -1271,7 +1280,7 @@ void VRenderLevelShared::RenderPortals () {
 #if 0
   if (/*dbg_dump_portal_list &&*/ PortalLevel == 1) {
     for (int f = 0; f < Portals.length(); ++f) {
-      if (Portals[f]) GCon->Logf("PORTAL #%d: %s", f, *shitppTypeNameObj(*Portals[f]));
+      if (Portals[f]) GCon->Logf(NAME_Debug, "PORTAL #%d: %s", f, *shitppTypeNameObj(*Portals[f]));
     }
   }
 #endif
@@ -1283,14 +1292,26 @@ void VRenderLevelShared::RenderPortals () {
     //       (or emulate stencil buffer with texture and shaders)
     bool oldDecalsEnabled = r_decals_enabled;
     r_decals_enabled = false;
+    //bool oldShadows = r_allow_shadows;
+    //if (/*Portal->stackedSector &&*/ IsShadowVolumeRenderer()) r_allow_shadows = false;
+    //bool firstPortal = true;
     for (int i = 0; i < Portals.length(); ++i) {
       if (Portals[i] && Portals[i]->Level == PortalLevel) {
         if (r_allow_other_portals || Portals[i]->IsMirror()) {
+          /*
+          if (firstPortal && IsShadowVolumeRenderer()) {
+            firstPortal = false;
+            Drawer->ForceClearStencilBuffer();
+          }
+          */
+          if (Portals[i]->stackedSector && IsShadowVolumeRenderer()) continue;
           Portals[i]->Draw(true);
         }
       }
     }
+    //if (!firstPortal) Drawer->ForceMarkStencilBufferDirty();
     r_decals_enabled = oldDecalsEnabled;
+    //r_allow_shadows = oldShadows;
   } else {
     if (dbg_max_portal_depth_warning) GCon->Logf(NAME_Warning, "portal level too deep (%d)", PortalLevel);
   }
