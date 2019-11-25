@@ -86,9 +86,9 @@ bool VLevel::CheckLine (linetrace_t &trace, seg_t *seg) const {
   const float den = DotProduct(trace.Delta, line->normal);
   const float num = line->dist-DotProduct(trace.Start, line->normal);
   const float frac = num/den;
-  TVec hit_point = trace.Start+frac*trace.Delta;
+  TVec hitpoint = trace.Start+frac*trace.Delta;
 
-  trace.LineEnd = hit_point;
+  trace.LineEnd = hitpoint;
 
   if (front) {
     if (!CheckPlanes(trace, front)) return false;
@@ -97,15 +97,15 @@ bool VLevel::CheckLine (linetrace_t &trace, seg_t *seg) const {
 
   if (line->flags&ML_TWOSIDED) {
     // crosses a two sided line
-    opening_t *open = SV_LineOpenings(line, hit_point, trace.PlaneNoBlockFlags);
+    opening_t *open = SV_LineOpenings(line, hitpoint, trace.PlaneNoBlockFlags);
     if (dbg_bsp_trace_strict_flats) {
       while (open) {
-        if (open->bottom < hit_point.z && open->top > hit_point.z) return true;
+        if (open->bottom < hitpoint.z && open->top > hitpoint.z) return true;
         open = open->next;
       }
     } else {
       while (open) {
-        if (open->bottom <= hit_point.z && open->top >= hit_point.z) return true;
+        if (open->bottom <= hitpoint.z && open->top >= hitpoint.z) return true;
         open = open->next;
       }
     }
@@ -328,16 +328,16 @@ static bool SightTraverse (SightTraceInfo &trace, const intercept_t *in) {
   int s1 = line->PointOnSide2(trace.Start);
   sector_t *front = (s1 == 0 || s1 == 2 ? line->frontsector : line->backsector);
   //sector_t *front = (li->PointOnSideFri(trace.Start) ? li->frontsector : li->backsector);
-  TVec hit_point = trace.Start+in->frac*trace.Delta;
-  trace.LineEnd = hit_point;
+  TVec hitpoint = trace.Start+in->frac*trace.Delta;
+  trace.LineEnd = hitpoint;
   if (!SightCheckPlanes(trace, front)) return false;
   trace.LineStart = trace.LineEnd;
 
   if (line->flags&ML_TWOSIDED) {
     // crosses a two sided line
-    opening_t *open = SV_LineOpenings(line, hit_point, trace.PlaneNoBlockFlags);
+    opening_t *open = SV_LineOpenings(line, hitpoint, trace.PlaneNoBlockFlags);
     while (open) {
-      if (open->bottom <= hit_point.z && open->top >= hit_point.z) return true;
+      if (open->bottom <= hitpoint.z && open->top >= hitpoint.z) return true;
       open = open->next;
     }
   }
