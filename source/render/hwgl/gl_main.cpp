@@ -1823,6 +1823,11 @@ void VOpenGLDrawer::ForceClearStencilBuffer () {
 }
 
 
+//==========================================================================
+//
+//  VOpenGLDrawer::ForceMarkStencilBufferDirty
+//
+//==========================================================================
 void VOpenGLDrawer::ForceMarkStencilBufferDirty () {
   NoteStencilBufferDirty();
 }
