@@ -79,6 +79,7 @@ static inline bool CalculateThingAlpha (const VEntity *ent, int &RendStyle, floa
       break;
     case STYLE_Translucent:
     case STYLE_Dark:
+    case STYLE_Stencil: //???
       alpha = ent->Alpha;
       break;
     case STYLE_Fuzzy:
@@ -94,6 +95,7 @@ static inline bool CalculateThingAlpha (const VEntity *ent, int &RendStyle, floa
       }
       break;
     case STYLE_Add:
+    case STYLE_AddStencil:
       alpha = ent->Alpha;
       if (alpha >= 1.0f) alpha = 1.0f-0.002f;
       break;
