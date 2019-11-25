@@ -25,14 +25,18 @@
 //**************************************************************************
 class SkyViewpoint : Actor __mobjinfo__(9080);
 
+/* moved to Entity
 bool bAlways;
 SkyViewpoint Mate;
 float PlaneAlpha;
+*/
 
+/*
 replication {
   reliable if (Role == ROLE_Authority)
     bAlways, Mate, PlaneAlpha;
 }
+*/
 
 
 //==========================================================================
@@ -83,9 +87,11 @@ override void Destroyed () {
 //  SkyBoxGetAlways
 //
 //==========================================================================
+/*
 override bool SkyBoxGetAlways () {
   return bAlways;
 }
+*/
 
 
 //==========================================================================
@@ -93,9 +99,11 @@ override bool SkyBoxGetAlways () {
 //  SkyBoxGetMate
 //
 //==========================================================================
+/*
 override Entity SkyBoxGetMate () {
   return Mate;
 }
+*/
 
 
 //==========================================================================
@@ -103,9 +111,11 @@ override Entity SkyBoxGetMate () {
 //  SkyBoxGetPlaneAlpha
 //
 //==========================================================================
+/*
 override float SkyBoxGetPlaneAlpha () {
   return PlaneAlpha;
 }
+*/
 
 
 defaultproperties {

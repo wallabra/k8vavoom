@@ -321,6 +321,15 @@ class VEntity : public VThinker {
   // low 16 bits is watchcat
   vuint32 setStateInCount;
 
+  // moved here from `SkyViewpoint`, so i don't have to call any VM methods to get it
+  enum {
+    SF_SkyBoxAlways = 1u<<0,
+  };
+  vuint32 SkyBoxFlags;
+  //bool bAlways;
+  /*SkyViewpoint*/VEntity *Mate;
+  float PlaneAlpha;
+
 protected:
   //VEntity () : SoundClass(E_NoInit), SoundGender(E_NoInit), DecalName(E_NoInit) {}
 
@@ -387,6 +396,15 @@ public:
     return Ret;
   }
 
+  /*
+  bool eventSkyBoxGetAlways () { static VMethodProxy method("SkyBoxGetAlways"); vobjPutParamSelf(); VMT_RET_BOOL(method); }
+  VEntity *eventSkyBoxGetMate () { static VMethodProxy method("SkyBoxGetMate"); vobjPutParamSelf(); VMT_RET_REF(VEntity, method); }
+  float eventSkyBoxGetPlaneAlpha () { static VMethodProxy method("SkyBoxGetPlaneAlpha"); vobjPutParamSelf(); VMT_RET_FLOAT(method); }
+  */
+  inline bool eventSkyBoxGetAlways () const noexcept { return !!(SkyBoxFlags&SF_SkyBoxAlways); }
+  inline VEntity *eventSkyBoxGetMate () const noexcept { return Mate; }
+  inline float eventSkyBoxGetPlaneAlpha () const noexcept { return PlaneAlpha; }
+
   void eventOnMapSpawn (mthing_t *mthing) { static VMethodProxy method("OnMapSpawn"); vobjPutParamSelf(mthing); VMT_RET_VOID(method); }
   void eventBeginPlay () { static VMethodProxy method("BeginPlay"); vobjPutParamSelf(); VMT_RET_VOID(method); }
   void eventDestroyed () { static VMethodProxy method("Destroyed"); vobjPutParamSelf(); VMT_RET_VOID(method); }
@@ -412,9 +430,6 @@ public:
   void eventSetActorProperty (int Prop, int IntVal, VStr StrVal) { static VMethodProxy method("SetActorProperty"); vobjPutParamSelf(Prop, IntVal, StrVal); VMT_RET_VOID(method); }
   int eventGetActorProperty (int Prop) { static VMethodProxy method("GetActorProperty"); vobjPutParamSelf(Prop); VMT_RET_INT(method); }
   void eventCheckForSectorActions (sector_t *OldSec, bool OldAboveFakeFloor, bool OldAboveFakeCeiling) { static VMethodProxy method("CheckForSectorActions"); vobjPutParamSelf(OldSec, OldAboveFakeFloor, OldAboveFakeCeiling); VMT_RET_VOID(method); }
-  bool eventSkyBoxGetAlways () { static VMethodProxy method("SkyBoxGetAlways"); vobjPutParamSelf(); VMT_RET_BOOL(method); }
-  VEntity *eventSkyBoxGetMate () { static VMethodProxy method("SkyBoxGetMate"); vobjPutParamSelf(); VMT_RET_REF(VEntity, method); }
-  float eventSkyBoxGetPlaneAlpha () { static VMethodProxy method("SkyBoxGetPlaneAlpha"); vobjPutParamSelf(); VMT_RET_FLOAT(method); }
   void eventCalcFakeZMovement (TVec &Ret, float DeltaTime) { static VMethodProxy method("CalcFakeZMovement"); vobjPutParamSelf(&Ret, DeltaTime); VMT_RET_VOID(method); }
   int eventClassifyActor () { static VMethodProxy method("ClassifyActor"); vobjPutParamSelf(); VMT_RET_INT(method); }
   int eventMorphActor (VName PlayerClass, VName MonsterClass, float Duration, int Style, VName MorphFlash, VName UnmorphFlash) {
