@@ -147,19 +147,21 @@ float VLevel::SweepLinedefAABB (const line_t *ld, TVec vstart, TVec vend, TVec b
 
 //==========================================================================
 //
-//  checkPlaneHit
+//  CheckPlanePass
 //
 //  WARNING: `currhit` should not be the same as `lineend`!
 //
 //  returns `true` if plane wasn't hit
 //
 //==========================================================================
-bool VLevel::CheckPlaneHit (const TSecPlaneRef &plane, const TVec &linestart, const TVec &lineend, TVec &currhit, bool &isSky, const float threshold) {
-  const float orgDist = plane.DotPointDist(linestart);
-  if (orgDist < threshold) return true; // don't shoot back side
+bool VLevel::CheckPlanePass (const TSecPlaneRef &plane, const TVec &linestart, const TVec &lineend, TVec &currhit, bool &isSky) {
+  const float d1 = plane.DotPointDist(linestart);
+  if (d1 < 0.0f) return true; // don't shoot back side
 
-  const float hitDist = plane.DotPointDist(lineend);
-  if (hitDist >= threshold) return true; // didn't hit plane
+  const float d2 = plane.DotPointDist(lineend);
+  if (d2 >= 0.0f) return true; // didn't hit plane
+
+  //frac = d1/(d1-d2); // [0..1], from start
 
   currhit = lineend;
   // sky?
@@ -168,7 +170,7 @@ bool VLevel::CheckPlaneHit (const TSecPlaneRef &plane, const TVec &linestart, co
     isSky = true;
   } else {
     isSky = false;
-    currhit -= (lineend-linestart)*hitDist/(hitDist-orgDist);
+    currhit -= (lineend-linestart)*d2/(d2-d1);
   }
 
   // don't go any farther
@@ -177,7 +179,7 @@ bool VLevel::CheckPlaneHit (const TSecPlaneRef &plane, const TVec &linestart, co
 
 
 #define UPDATE_PLANE_HIT(plane_)  do { \
-  if (!CheckPlaneHit((plane_), linestart, lineend, currhit, isSky, threshold)) { \
+  if (!CheckPlanePass((plane_), linestart, lineend, currhit, isSky)) { \
     const float dist = (currhit-linestart).lengthSquared(); \
     if (!wasHit || dist < besthdist) { \
       besthit = currhit; \
@@ -193,7 +195,7 @@ bool VLevel::CheckPlaneHit (const TSecPlaneRef &plane, const TVec &linestart, co
 
 //==========================================================================
 //
-//  VLevel::CheckHitPlanes
+//  VLevel::CheckPassPlanes
 //
 //  checks all sector regions, returns `false` if any region plane was hit
 //  sets `outXXX` arguments on hit (and only on hit!)
@@ -205,8 +207,8 @@ bool VLevel::CheckPlaneHit (const TSecPlaneRef &plane, const TVec &linestart, co
 //  returns `true` if no hit was detected
 //
 //==========================================================================
-bool VLevel::CheckHitPlanes (sector_t *sector, bool checkSectorBounds, TVec linestart, TVec lineend, unsigned flagmask,
-                             TVec *outHitPoint, TVec *outHitNormal, bool *outIsSky, TPlane *outHitPlane, const float threshold)
+bool VLevel::CheckPassPlanes (sector_t *sector, bool checkSectorBounds, TVec linestart, TVec lineend, unsigned flagmask,
+                              TVec *outHitPoint, TVec *outHitNormal, bool *outIsSky, TPlane *outHitPlane)
 {
   if (!sector) return true;
 
@@ -241,7 +243,7 @@ bool VLevel::CheckHitPlanes (sector_t *sector, bool checkSectorBounds, TVec line
     if ((reg->efloor.splane->flags&flagmask) == 0) {
       UPDATE_PLANE_HIT(reg->efloor);
     }
-    if ((reg->eceiling.splane->flags&(unsigned)flagmask) == 0) {
+    if ((reg->eceiling.splane->flags&flagmask) == 0) {
       UPDATE_PLANE_HIT(reg->eceiling);
     }
   }

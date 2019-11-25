@@ -604,10 +604,10 @@ public:
   static void dumpRegion (const sec_region_t *reg);
   static void dumpSectorRegions (const sector_t *dst);
 
-  static bool CheckPlaneHit (const TSecPlaneRef &plane, const TVec &linestart, const TVec &lineend, TVec &currhit, bool &isSky, const float threshold=0.0f);
+  static bool CheckPlanePass (const TSecPlaneRef &plane, const TVec &linestart, const TVec &lineend, TVec &currhit, bool &isSky);
   // if `checkSectorBounds` is false, skip checking sector bounds (and the first sector region)
-  static bool CheckHitPlanes (sector_t *sector, bool checkSectorBounds, TVec linestart, TVec lineend, unsigned flagmask,
-                              TVec *outHitPoint, TVec *outHitNormal, bool *outIsSky, TPlane *outHitPlane, const float threshold=0.0f);
+  static bool CheckPassPlanes (sector_t *sector, bool checkSectorBounds, TVec linestart, TVec lineend, unsigned flagmask,
+                               TVec *outHitPoint, TVec *outHitNormal, bool *outIsSky, TPlane *outHitPlane);
 
 public:
   #define VL_ITERATOR(arrname_,itername_,itertype_) \

@@ -1388,18 +1388,18 @@ native static final bool SectorHas3DFloors (const sector_t *sector);
 
 //==========================================================================
 //
-//  CheckPlaneHit
+//  CheckPlanePass
 //
 //  checks for plane hit, returns hit point and `false` if hit
 //  plane flags should be already checked
 //
 //==========================================================================
-native static final bool CheckPlaneHit (const ref TSecPlaneRef plane, const TVec linestart, const TVec lineend,
-                                        optional out TVec currhit, optional out bool isSky);
+native static final bool CheckPlanePass (const ref TSecPlaneRef plane, const TVec linestart, const TVec lineend,
+                                         optional out TVec currhit, optional out bool isSky);
 
 //==========================================================================
 //
-//  CheckHitPlanes
+//  CheckPassPlanes
 //
 //  checks all sector regions, returns `false` if any region plane was hit
 //  sets `outXXX` arguments on hit
@@ -1407,10 +1407,10 @@ native static final bool CheckPlaneHit (const ref TSecPlaneRef plane, const TVec
 //  (and the first sector region)
 //
 //==========================================================================
-native static final bool CheckHitPlanes (const sector_t *sec, bool checkSectorBounds,
-                                         TVec linestart, TVec lineend, int flagmask,
-                                         optional out TVec outHitPoint, optional out TVec outHitNormal,
-                                         optional out bool outIsSky);
+native static final bool CheckPassPlanes (const sector_t *sec, bool checkSectorBounds,
+                                          TVec linestart, TVec lineend, int flagmask,
+                                          optional out TVec outHitPoint, optional out TVec outHitNormal,
+                                          optional out bool outIsSky);
 
 
 #include "GameObject_lspname.vc"

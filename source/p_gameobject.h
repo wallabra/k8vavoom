@@ -1147,6 +1147,6 @@ public:
   DECLARE_FUNCTION(GetSectorFloorPointZ)
   DECLARE_FUNCTION(SectorHas3DFloors)
 
-  DECLARE_FUNCTION(CheckPlaneHit)
-  DECLARE_FUNCTION(CheckHitPlanes)
+  DECLARE_FUNCTION(CheckPlanePass)
+  DECLARE_FUNCTION(CheckPassPlanes)
 };

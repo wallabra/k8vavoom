@@ -37,7 +37,7 @@ static VCvarB dbg_bsp_trace_strict_flats("dbg_bsp_trace_strict_flats", false, "u
 static bool CheckPlanes (linetrace_t &trace, sector_t *sec) {
   TVec outHit(0.0f, 0.0f, 0.0f), outNorm(0.0f, 0.0f, 0.0f);
 
-  if (!VLevel::CheckHitPlanes(sec, true/*sector bounds*/, trace.LineStart, trace.LineEnd, (unsigned)trace.PlaneNoBlockFlags, &outHit, &outNorm, nullptr, &trace.HitPlane/*, -0.1f*/)) {
+  if (!VLevel::CheckPassPlanes(sec, true/*sector bounds*/, trace.LineStart, trace.LineEnd, (unsigned)trace.PlaneNoBlockFlags, &outHit, &outNorm, nullptr, &trace.HitPlane)) {
     // hit floor or ceiling
     trace.LineEnd = outHit;
     trace.HitPlaneNormal = outNorm;
@@ -314,7 +314,7 @@ struct SightTraceInfo {
 //==========================================================================
 static bool SightCheckPlanes (SightTraceInfo &trace, sector_t *sec) {
   //k8: for some reason, real sight checks ignores base sector region
-  return VLevel::CheckHitPlanes(sec, trace.CheckBaseRegion, trace.LineStart, trace.LineEnd, (unsigned)trace.PlaneNoBlockFlags, &trace.LineEnd, &trace.HitPlaneNormal, nullptr, nullptr/*, -0.1f*/);
+  return VLevel::CheckPassPlanes(sec, trace.CheckBaseRegion, trace.LineStart, trace.LineEnd, (unsigned)trace.PlaneNoBlockFlags, &trace.LineEnd, &trace.HitPlaneNormal, nullptr, nullptr);
 }
 
 

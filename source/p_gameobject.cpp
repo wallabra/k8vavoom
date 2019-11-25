@@ -723,15 +723,15 @@ IMPLEMENT_FUNCTION(VGameObject, SectorHas3DFloors) {
 
 //==========================================================================
 //
-//  CheckPlaneHit
+//  CheckPlanePass
 //
 //  checks for plane hit, returns hit point and `false` if hit
 //  plane flags should be already checked
 //
 //==========================================================================
-//static final bool CheckPlaneHit (const ref TSecPlaneRef plane, const TVec linestart, const TVec lineend,
-//                                 optional out TVec currhit, optional out bool isSky);
-IMPLEMENT_FUNCTION(VGameObject, CheckPlaneHit) {
+//static final bool CheckPlanePass (const ref TSecPlaneRef plane, const TVec linestart, const TVec lineend,
+//                                  optional out TVec currhit, optional out bool isSky);
+IMPLEMENT_FUNCTION(VGameObject, CheckPlanePass) {
   TVec ctmp(0.0f, 0.0f, 0.0f);
   bool tmpb = false;
 
@@ -741,15 +741,15 @@ IMPLEMENT_FUNCTION(VGameObject, CheckPlaneHit) {
   P_GET_VEC(linestart);
   P_GET_PTR(TSecPlaneRef, plane);
 
-  RET_BOOL(VLevel::CheckPlaneHit(*plane, linestart, lineend, *currhit, *isSky));
+  RET_BOOL(VLevel::CheckPlanePass(*plane, linestart, lineend, *currhit, *isSky));
 }
 
 
-//static final bool CheckHitPlanes (const sector_t *sector, bool checkSectorBounds,
-//                                  TVec linestart, TVec lineend, int flagmask,
-//                                  optional out TVec outHitPoint, optional out TVec outHitNormal,
-//                                  optional out bool outIsSky);
-IMPLEMENT_FUNCTION(VGameObject, CheckHitPlanes) {
+//static final bool CheckPassPlanes (const sector_t *sector, bool checkSectorBounds,
+//                                   TVec linestart, TVec lineend, int flagmask,
+//                                   optional out TVec outHitPoint, optional out TVec outHitNormal,
+//                                   optional out bool outIsSky);
+IMPLEMENT_FUNCTION(VGameObject, CheckPassPlanes) {
   P_GET_PTR_OPT(bool, outIsSky, nullptr);
   P_GET_PTR_OPT(TVec, outHitNormal, nullptr);
   P_GET_PTR_OPT(TVec, outHitPoint, nullptr);
@@ -759,5 +759,5 @@ IMPLEMENT_FUNCTION(VGameObject, CheckHitPlanes) {
   P_GET_BOOL(checkBounds);
   P_GET_PTR(sector_t, sector);
 
-  RET_BOOL(VLevel::CheckHitPlanes(sector, checkBounds, linestart, lineend, (unsigned)flagmask, outHitPoint, outHitNormal, outIsSky, nullptr));
+  RET_BOOL(VLevel::CheckPassPlanes(sector, checkBounds, linestart, lineend, (unsigned)flagmask, outHitPoint, outHitNormal, outIsSky, nullptr));
 }
