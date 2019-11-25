@@ -102,7 +102,10 @@ static inline bool CalculateThingAlpha (const VEntity *ent, int &RendStyle, floa
       alpha = r_transsouls.asFloat();
       if (alpha >= 1.0f) rs = STYLE_Normal;
       break;
-    default: abort();
+    default:
+      GCon->Logf(NAME_Error, "Entity `%s` has unknown render style %d; ignored", ent->GetClass()->GetName(), rs);
+      rs = STYLE_None;
+      return false;
   }
   if (alpha < 0.01f) return false; // no reason to render it, it is invisible
   if (alpha >= 1.0f) alpha = 1.0f;
