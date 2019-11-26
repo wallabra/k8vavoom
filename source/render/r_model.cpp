@@ -1644,10 +1644,7 @@ static int FindNextFrame (VClassModelScript &Cls, int FIdx, const VAliasModelFra
       nidx = FDef.nextSpriteIdx;
       while (nidx >= 0) {
         const VScriptedModelFrame &nfrm = Cls.Frames[nidx];
-        if (nfrm.sprite == FDef.sprite && nfrm.frame == FDef.frame &&
-            FDef.ModelIndex == nfrm.ModelIndex && FDef.SubModelIndex == nfrm.SubModelIndex &&
-            nfrm.Inter >= FDef.Inter)
-        {
+        if (FDef.ModelIndex == nfrm.ModelIndex && FDef.SubModelIndex == nfrm.SubModelIndex && nfrm.Inter >= FDef.Inter) {
           // i found her!
           break;
         }
@@ -1658,10 +1655,7 @@ static int FindNextFrame (VClassModelScript &Cls, int FIdx, const VAliasModelFra
       nidx = FDef.nextNumberIdx;
       while (nidx >= 0) {
         const VScriptedModelFrame &nfrm = Cls.Frames[nidx];
-        if (nfrm.Number == FDef.Number &&
-            FDef.ModelIndex == nfrm.ModelIndex && FDef.SubModelIndex == nfrm.SubModelIndex &&
-            nfrm.Inter >= FDef.Inter)
-        {
+        if (FDef.ModelIndex == nfrm.ModelIndex && FDef.SubModelIndex == nfrm.SubModelIndex && nfrm.Inter >= FDef.Inter) {
           // i found her!
           break;
         }
@@ -2022,7 +2016,19 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
 
 //==========================================================================
 //
+//  VRenderLevelShared::HasAliasModel
+//
+//==========================================================================
+bool VRenderLevelShared::HasAliasModel (VName clsName) const {
+  return (clsName != NAME_None && FindClassModelByName(clsName));
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::DrawAliasModel
+//
+//  this is used to draw so-called "fixed model"
 //
 //==========================================================================
 bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, const TVec &Org, const TAVec &Angles,
@@ -2050,19 +2056,9 @@ bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, const TVec &Org, const T
 
 //==========================================================================
 //
-//  VRenderLevelShared::HasAliasModel
-//
-//==========================================================================
-bool VRenderLevelShared::HasAliasModel (VName clsName) const {
-  if (clsName == NAME_None) return false;
-  VClassModelScript *Cls = FindClassModelByName(clsName);
-  return !!Cls;
-}
-
-
-//==========================================================================
-//
 //  VRenderLevelShared::DrawAliasModel
+//
+//  this is used to draw entity models
 //
 //==========================================================================
 bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, VName clsName, const TVec &Org, const TAVec &Angles,
@@ -2077,19 +2073,56 @@ bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, VName clsName, const TVe
   VClassModelScript *Cls = FindClassModelByName(clsName);
   if (!Cls) return false;
 
-  int FIdx = FindFrame(*Cls, /*State->getMFI()*/Frame, Inter);
+  int FIdx = FindFrame(*Cls, Frame, Inter);
   if (FIdx == -1) return false;
 
-  float InterpFrac;
-  int NFIdx = FindNextFrame(*Cls, FIdx, /*NextState->getMFI()*/NextFrame, Inter, InterpFrac);
-  if (NFIdx == -1) {
-    NFIdx = FIdx;
-    Interpolate = false;
+  // note that gzdoom-imported modeldef can have more than one model attached to one frame
+  // process all attachments -- they should differ by model or submodel indicies
+
+  const bool origInterp = Interpolate;
+  while (FIdx >= 0) {
+    float InterpFrac;
+    int NFIdx = FindNextFrame(*Cls, FIdx, NextFrame, Inter, InterpFrac);
+    if (NFIdx == -1) {
+      NFIdx = FIdx;
+      Interpolate = false;
+    } else {
+      Interpolate = origInterp;
+    }
+
+    DrawModel(Level, mobj, Org, Angles, ScaleX, ScaleY, *Cls, FIdx, NFIdx, Trans,
+      ColorMap, Version, Light, Fade, Alpha, Additive, IsViewModel,
+      InterpFrac, Interpolate, CurrLightPos, CurrLightRadius, Pass, IsShadowVolumeRenderer());
+
+    // try next one
+    const VScriptedModelFrame &cfrm = Cls->Frames[FIdx];
+    int res = -1;
+    if (cfrm.sprite != NAME_None) {
+      // by sprite name
+      FIdx = cfrm.nextSpriteIdx;
+      while (FIdx >= 0) {
+        const VScriptedModelFrame &nfrm = Cls->Frames[FIdx];
+        if (cfrm.ModelIndex != nfrm.ModelIndex || cfrm.SubModelIndex != nfrm.SubModelIndex) {
+               if (nfrm.Inter <= Inter) res = FIdx;
+          else if (nfrm.Inter > Inter) break; // the author shouldn't write incorrect defs
+        }
+        FIdx = nfrm.nextSpriteIdx;
+      }
+    } else {
+      // by frame index
+      FIdx = cfrm.nextNumberIdx;
+      while (FIdx >= 0) {
+        const VScriptedModelFrame &nfrm = Cls->Frames[FIdx];
+        if (cfrm.ModelIndex != nfrm.ModelIndex || cfrm.SubModelIndex != nfrm.SubModelIndex) {
+               if (nfrm.Inter <= Inter) res = FIdx;
+          else if (nfrm.Inter > Inter) break; // the author shouldn't write incorrect defs
+        }
+        FIdx = nfrm.nextNumberIdx;
+      }
+    }
+    FIdx = res;
   }
 
-  DrawModel(Level, mobj, Org, Angles, ScaleX, ScaleY, *Cls, FIdx, NFIdx, Trans,
-    ColorMap, Version, Light, Fade, Alpha, Additive, IsViewModel,
-    InterpFrac, Interpolate, CurrLightPos, CurrLightRadius, Pass, IsShadowVolumeRenderer());
   return true;
 }
 
