@@ -216,7 +216,7 @@ void Cheat_Gimme_AC (const ref array!string args, bool newArg, out array!string 
   aclist[$] = "Armor2";
   aclist[$] = "Arsenal";
   aclist[$] = "Backpack";
-  aclist[$] = "Bersek";
+  aclist[$] = "Berserk";
   aclist[$] = "Choppers";
   aclist[$] = "ElvenGifts";
   aclist[$] = "Health";
@@ -224,7 +224,7 @@ void Cheat_Gimme_AC (const ref array!string args, bool newArg, out array!string 
   aclist[$] = "Invisibility";
   aclist[$] = "Invulnerability";
   aclist[$] = "Keys";
-  aclist[$] = "LiteAmp";
+  aclist[$] = "LightAmp";
   aclist[$] = "NoKeys";
   aclist[$] = "NoKeys";
   aclist[$] = "Powers";
@@ -273,7 +273,7 @@ void Cheat_Gimme () {
   // powers
   if (Cmd_CheckParm("Powers")) gimmeFlags |= GIMME_POWERS;
   if (Cmd_CheckParm("Invulnerability") || Cmd_CheckParm("Invul")) gimmeFlags |= GIMME_INVULNERABILITY;
-  if (Cmd_CheckParm("Bersek")) gimmeFlags |= GIMME_STRENGTH;
+  if (Cmd_CheckParm("Berserk")) gimmeFlags |= GIMME_STRENGTH;
   if (Cmd_CheckParm("Invisibility") || Cmd_CheckParm("Invis")) gimmeFlags |= GIMME_INVISIBILITY;
   if (Cmd_CheckParm("Suit")) gimmeFlags |= GIMME_IRONFEET;
   if (Cmd_CheckParm("AllMap")) gimmeFlags |= GIMME_ALLMAP;

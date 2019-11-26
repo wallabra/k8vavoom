@@ -482,6 +482,74 @@ bool IsStandardAmmoClass (class a) {
 
 //==========================================================================
 //
+//  DrawPicFit
+//
+//==========================================================================
+final void DrawPicFit (int maxw, int maxh, int x, int y, int handle, optional float alpha) {
+  // scale it to the appropriate size
+  if (handle <= 0 || alpha <= 0) return;
+  picinfo_t pinf;
+  R_GetPicInfo(handle, &pinf);
+  if (pinf.width > 0 && pinf.height > 0) {
+    alpha = fmin(alpha, 1.0);
+    // standard doom image is 31x17
+    if (pinf.width <= maxw && pinf.height <= maxh) {
+      DrawPic(x, y, handle, alpha);
+    } else {
+      // calculate scaling
+      float scaleX = (pinf.width > maxw ? float(maxw)/pinf.width : 1.0);
+      float scaleY = (pinf.height > maxh ? float(maxh)/pinf.height : 1.0);
+      float scaleN = fmin(scaleX, scaleY);
+      DrawPicScaled(x, y, handle, scaleN, scaleN, alpha);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  DrawPicFitCenter
+//
+//  center at (x+maxw/2)
+//
+//==========================================================================
+final void DrawPicFitCenter (int maxw, int maxh, int x, int y, int handle, optional float alpha) {
+  // scale it to the appropriate size
+  if (handle <= 0 || alpha <= 0) return;
+  picinfo_t pinf;
+  R_GetPicInfo(handle, &pinf);
+  if (pinf.width > 0 && pinf.height > 0) {
+    alpha = fmin(alpha, 1.0);
+    // standard doom image is 31x17
+    if (pinf.width <= maxw && pinf.height <= maxh) {
+      DrawPic(x+(maxw-pinf.width)/2, y, handle, alpha);
+    } else {
+      // calculate scaling
+      float scaleX = (pinf.width > maxw ? float(maxw)/pinf.width : 1.0);
+      float scaleY = (pinf.height > maxh ? float(maxh)/pinf.height : 1.0);
+      float scaleN = fmin(scaleX, scaleY);
+      DrawPicScaled(x+int((float(maxw)-pinf.width*scaleN)*0.5), y, handle, scaleN, scaleN, alpha);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  DbgPrintPicSize
+//
+//==========================================================================
+final void DbgPrintPicSize (int handle, string pname) {
+  if (handle > 0) {
+    picinfo_t pinf;
+    R_GetPicInfo(handle, &pinf);
+    printdebug("%s: %dx%d", pname, pinf.width, pinf.height);
+  }
+}
+
+
+//==========================================================================
+//
 //  SB_DrawFullscreenStats
 //
 //==========================================================================
@@ -531,7 +599,8 @@ override void SB_DrawFullscreenStats () {
   // draw berserk pack if player has berserk powerup
   int healthicon = pic_health;
   if (pic_berserk > 0 && EntityEx(cl.MO).FindInventory(PowerStrength)) healthicon = pic_berserk;
-  DrawPic(ST_TDHEALTHX-60, ST_TDHEALTHY+15, healthicon, fsalpha);
+  DrawPicFit(28, 20, ST_TDHEALTHX-60, ST_TDHEALTHY+15, healthicon, fsalpha);
+  //DbgPrintPicSize(healthicon, "health");
 
   // Health Accumulation Device
   if (GetCvarB('k8HealthAccum_Enabled')) {
@@ -543,7 +612,8 @@ override void SB_DrawFullscreenStats () {
   if (Armor && Armor.Amount) {
     int i = Armor.SavePercent > 0.335 ? 1 : 0;
     SB_DrawTallNum(ST_TDARMORX, ST_TDARMORY, Armor.Amount, fsalpha, false);
-    DrawPic(ST_TDARMORX-60, ST_TDARMORY+15, pic_armor[i], fsalpha);
+    // standard doom image is 31x17
+    DrawPicFit(32, 18, ST_TDARMORX-60, ST_TDARMORY+15, pic_armor[i], fsalpha);
   }
 
   // ready weapon ammo with icon
@@ -577,7 +647,7 @@ override void SB_DrawFullscreenStats () {
           if (Pic >= 0) {
             // darken it a little, so a key will be more visible
             /*if (KeyX == ovw/2)*/ ShadeRect(KeyX-5, /*470*/ovh-12, 18, 12, 0.4);
-            DrawPic(KeyX, /*470*/ovh-10, Pic, fmin(fsalpha+0.2, 1.0));
+            DrawPicFit(18, 18, KeyX, /*470*/ovh-10, Pic, fmin(fsalpha+0.2, 1.0));
             KeyX += 20;
           }
         }
@@ -691,8 +761,9 @@ override void SB_DrawFullscreenStats () {
           float alpha = fmin(1.0, fsalpha+(ai.active ? 0.4 : 0.05));
           int ico = R_RegisterPic(ai.ammo.IconName);
           if (ico) {
-            R_GetPicInfo(ico, &pi);
-            DrawPic(xpos+(30-pi.width)/2, ypos, ico, alpha);
+            //R_GetPicInfo(ico, &pi);
+            //DrawPic(xpos+(30-pi.width)/2, ypos, ico, alpha);
+            DrawPicFitCenter(28, 18, xpos+1, ypos, ico, alpha);
           }
           int maxam = ai.ammo.k8GetAmmoKingMax();
           int am = ai.ammo.Amount;
