@@ -1866,9 +1866,15 @@ static void ScanActorDefForUserVars (VScriptParser *sc, TArray<VDecorateUserVarD
   sc->Expect("{");
 
   while (!sc->Check("}")) {
-    if (sc->QuotedString || !sc->Check("var")) {
-      // not a var, skip whole line
-      //sc->SkipLine();
+    if (sc->QuotedString) {
+      // skip this crap
+      sc->GetString();
+      continue;
+    }
+
+    if (!sc->Check("var")) {
+      // not a var, skip until ';'
+      // nope, just skip a keyword
       sc->GetString();
       continue;
     }
