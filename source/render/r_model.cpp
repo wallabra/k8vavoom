@@ -165,7 +165,7 @@ struct VScriptedModelFrame {
   int Number;
   float Inter;
   int ModelIndex;
-  int SubModelIndex; // you can select submodel from any model if you wish to; use -1 to render all submodels
+  int SubModelIndex; // you can select submodel from any model if you wish to; use -1 to render all submodels; -2 to render none
   int FrameIndex;
   float AngleStart;
   float AngleEnd;
@@ -706,6 +706,7 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) 
       F.FrameIndex = ParseIntWithDefault(N, "frame_index", 0);
       F.SubModelIndex = ParseIntWithDefault(N, "submodel_index", -1);
       if (F.SubModelIndex < 0) F.SubModelIndex = -1;
+      if (ParseBool(N, "hidden", false)) F.SubModelIndex = -2; // hidden
 
       F.ModelIndex = -1;
       VStr MdlName = N->GetAttribute("model");
@@ -1739,6 +1740,7 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
   VScriptedModelFrame &NFDef = Cls.Frames[NFIdx];
   VScriptModel &ScMdl = Cls.Model->Models[FDef.ModelIndex];
   const int allowedsubmod = FDef.SubModelIndex;
+  if (allowedsubmod == -2) return; // this frame is hidden
   int submodindex = -1;
   for (auto &&SubMdl : ScMdl.SubModels) {
     ++submodindex;
