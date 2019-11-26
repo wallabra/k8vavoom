@@ -705,6 +705,7 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) 
 
       F.FrameIndex = ParseIntWithDefault(N, "frame_index", 0);
       F.SubModelIndex = ParseIntWithDefault(N, "submodel_index", -1);
+      if (F.SubModelIndex < 0) F.SubModelIndex = -1;
 
       F.ModelIndex = -1;
       VStr MdlName = N->GetAttribute("model");
@@ -1737,21 +1738,30 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
   VScriptedModelFrame &FDef = Cls.Frames[FIdx];
   VScriptedModelFrame &NFDef = Cls.Frames[NFIdx];
   VScriptModel &ScMdl = Cls.Model->Models[FDef.ModelIndex];
+  const int allowedsubmod = FDef.SubModelIndex;
+  int submodindex = -1;
   for (auto &&SubMdl : ScMdl.SubModels) {
+    ++submodindex;
+    if (allowedsubmod >= 0 && submodindex != allowedsubmod) continue; // only one submodel allowed
     if (SubMdl.Version != -1 && SubMdl.Version != Version) continue;
+
     if (FDef.FrameIndex >= SubMdl.Frames.length()) {
       GCon->Logf("Bad sub-model frame index %d", FDef.FrameIndex);
       continue;
     }
-    if (Interpolate && NFDef.FrameIndex >= SubMdl.Frames.length() && NFDef.ModelIndex != FDef.ModelIndex) {
-      NFDef.FrameIndex = FDef.FrameIndex;
-      Interpolate = false;
-      continue;
+
+    // cannot interpolate between different models or submodels
+    if (Interpolate) {
+      if (FDef.ModelIndex != NFDef.ModelIndex ||
+          FDef.SubModelIndex != NFDef.SubModelIndex ||
+          NFDef.FrameIndex >= SubMdl.Frames.length())
+      {
+        Interpolate = false;
+      }
     }
-    if (Interpolate && FDef.ModelIndex != NFDef.ModelIndex) Interpolate = false;
-    if (NFDef.FrameIndex >= SubMdl.Frames.length()) continue;
+
     VScriptSubModel::VFrame &F = SubMdl.Frames[FDef.FrameIndex];
-    VScriptSubModel::VFrame &NF = SubMdl.Frames[NFDef.FrameIndex];
+    VScriptSubModel::VFrame &NF = SubMdl.Frames[Interpolate ? NFDef.FrameIndex : FDef.FrameIndex];
 
     // locate the proper data
     Mod_ParseModel(SubMdl.Model);
@@ -1804,12 +1814,15 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
     }
 
     // get and verify next frame number
-    int Md2NextFrame = NF.Index;
-    if ((unsigned)Md2NextFrame >= (unsigned)SubMdl.Model->Frames.length()) {
-      if (developer) GCon->Logf(NAME_Dev, "no such next frame %d in model '%s'", Md2NextFrame, *SubMdl.Model->Name);
-      Md2NextFrame = (Md2NextFrame <= 0 ? 0 : SubMdl.Model->Frames.length()-1);
-      // stop further warnings
-      NF.Index = Md2NextFrame;
+    int Md2NextFrame = Md2Frame;
+    if (Interpolate) {
+      Md2NextFrame = NF.Index;
+      if ((unsigned)Md2NextFrame >= (unsigned)SubMdl.Model->Frames.length()) {
+        if (developer) GCon->Logf(NAME_Dev, "no such next frame %d in model '%s'", Md2NextFrame, *SubMdl.Model->Name);
+        Md2NextFrame = (Md2NextFrame <= 0 ? 0 : SubMdl.Model->Frames.length()-1);
+        // stop further warnings
+        NF.Index = Md2NextFrame;
+      }
     }
 
     // position
