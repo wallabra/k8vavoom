@@ -262,6 +262,7 @@ static void ParseGZModelDefs ();
 class GZModelDefEx : public GZModelDef {
 public:
   virtual bool ParseMD2Frames (VStr mdpath, TArray<VStr> &names) override;
+  virtual bool IsModelFileExists (VStr mdpath) override;
 };
 
 

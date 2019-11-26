@@ -28,58 +28,6 @@
 
 //==========================================================================
 //
-//  VMeshModel::LoadMD2Frames
-//
-//  return `true` if model was succesfully found and parsed, or
-//  false if model wasn't found or in invalid format
-//  WARNING: don't clear `names` array!
-//
-//==========================================================================
-bool VMeshModel::LoadMD2Frames (VStr mdpath, TArray<VStr> &names) {
-  // load the file
-  VStream *strm = FL_OpenFileRead(mdpath);
-  if (!strm) return false;
-
-  TArray<vuint8> data;
-  data.setLength(strm->TotalSize());
-  if (data.length() < 4) {
-    delete strm;
-    return false;
-  }
-  strm->Serialise(data.ptr(), data.length());
-  bool wasError = strm->IsError();
-  delete strm;
-  if (wasError) return false;
-
-  // is this MD2 model?
-  if (LittleLong(*(vuint32 *)data.ptr()) != IDPOLY2HEADER) return false;
-
-  mmdl_t *pmodel = (mmdl_t *)data.ptr();
-
-  // endian-adjust and swap the data, starting with the alias model header
-  for (unsigned i = 0; i < sizeof(mmdl_t)/4; ++i) ((vint32 *)pmodel)[i] = LittleLong(((vint32 *)pmodel)[i]);
-
-  if (pmodel->version != ALIAS_VERSION) return false;
-  if (pmodel->numverts <= 0 || pmodel->numverts > MAXALIASVERTS) return false;
-  if (pmodel->numstverts <= 0 || pmodel->numstverts > MAXALIASSTVERTS) return false;
-  if (pmodel->numtris <= 0 || pmodel->numtris > 65536) return false;
-  if (pmodel->numskins > 1024) return false;
-  if (pmodel->numframes < 1 || pmodel->numframes > 1024) return false;
-
-  mframe_t *pframe = (mframe_t *)((vuint8 *)pmodel+pmodel->ofsframes);
-
-  for (unsigned i = 0; i < pmodel->numframes; ++i) {
-    VStr frname = getStrZ(pframe->name, 16);
-    names.append(frname);
-    pframe = (mframe_t *)((vuint8 *)pframe+pmodel->framesize);
-  }
-
-  return true;
-}
-
-
-//==========================================================================
-//
 //  GZModelDefEx::ParseMD2Frames
 //
 //  return `true` if model was succesfully found and parsed, or
@@ -89,6 +37,25 @@ bool VMeshModel::LoadMD2Frames (VStr mdpath, TArray<VStr> &names) {
 //==========================================================================
 bool GZModelDefEx::ParseMD2Frames (VStr mdpath, TArray<VStr> &names) {
   return VMeshModel::LoadMD2Frames(mdpath, names);
+}
+
+
+bool IsKnownModelFormat (VStream *strm);
+
+
+//==========================================================================
+//
+//  GZModelDefEx::IsModelFileExists
+//
+//==========================================================================
+bool GZModelDefEx::IsModelFileExists (VStr mdpath) {
+  if (mdpath.length() == 0) return false;
+  VStream *strm = FL_OpenFileRead(mdpath);
+  if (!strm) return false;
+  bool okfmt = VMeshModel::IsKnownModelFormat(strm);
+  strm->Close();
+  delete strm;
+  return okfmt;
 }
 
 
@@ -144,6 +111,58 @@ VStr VMeshModel::getStrZ (const char *s, unsigned maxlen) {
   const char *se = s;
   while (maxlen-- && *se) ++se;
   return VStr(s, (int)(ptrdiff_t)(se-s));
+}
+
+
+//==========================================================================
+//
+//  VMeshModel::LoadMD2Frames
+//
+//  return `true` if model was succesfully found and parsed, or
+//  false if model wasn't found or in invalid format
+//  WARNING: don't clear `names` array!
+//
+//==========================================================================
+bool VMeshModel::LoadMD2Frames (VStr mdpath, TArray<VStr> &names) {
+  // load the file
+  VStream *strm = FL_OpenFileRead(mdpath);
+  if (!strm) return false;
+
+  TArray<vuint8> data;
+  data.setLength(strm->TotalSize());
+  if (data.length() < 4) {
+    delete strm;
+    return false;
+  }
+  strm->Serialise(data.ptr(), data.length());
+  bool wasError = strm->IsError();
+  delete strm;
+  if (wasError) return false;
+
+  // is this MD2 model?
+  if (LittleLong(*(vuint32 *)data.ptr()) != IDPOLY2HEADER) return false;
+
+  mmdl_t *pmodel = (mmdl_t *)data.ptr();
+
+  // endian-adjust and swap the data, starting with the alias model header
+  for (unsigned i = 0; i < sizeof(mmdl_t)/4; ++i) ((vint32 *)pmodel)[i] = LittleLong(((vint32 *)pmodel)[i]);
+
+  if (pmodel->version != ALIAS_VERSION) return false;
+  if (pmodel->numverts <= 0 || pmodel->numverts > MAXALIASVERTS) return false;
+  if (pmodel->numstverts <= 0 || pmodel->numstverts > MAXALIASSTVERTS) return false;
+  if (pmodel->numtris <= 0 || pmodel->numtris > 65536) return false;
+  if (pmodel->numskins > 1024) return false;
+  if (pmodel->numframes < 1 || pmodel->numframes > 1024) return false;
+
+  mframe_t *pframe = (mframe_t *)((vuint8 *)pmodel+pmodel->ofsframes);
+
+  for (unsigned i = 0; i < pmodel->numframes; ++i) {
+    VStr frname = getStrZ(pframe->name, 16);
+    names.append(frname);
+    pframe = (mframe_t *)((vuint8 *)pframe+pmodel->framesize);
+  }
+
+  return true;
 }
 
 
@@ -626,6 +645,27 @@ void VMeshModel::LoadFromData (vuint8 *Data, int DataSize) {
   } else {
     Sys_Error("model '%s' is in unknown format", *Name);
   }
+}
+
+
+//==========================================================================
+//
+//  VMeshModel::IsKnownModelFormat
+//
+//==========================================================================
+bool VMeshModel::IsKnownModelFormat (VStream *strm) {
+  if (!strm || strm->IsError()) return false;
+  strm->Seek(0);
+  if (strm->IsError() || strm->TotalSize() < 4) return false;
+  vuint32 sign = 0;
+  strm->Serialise(&sign, sizeof(sign));
+  if (strm->IsError()) return false;
+  if (LittleLong(*(vuint32 *)&sign) == IDPOLY2HEADER ||
+      LittleLong(*(vuint32 *)&sign) == IDPOLY3HEADER)
+  {
+    return true;
+  }
+  return false;
 }
 
 

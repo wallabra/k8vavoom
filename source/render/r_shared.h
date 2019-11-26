@@ -743,6 +743,7 @@ private:
   static VStr getStrZ (const char *s, unsigned maxlen);
 
 public:
+  static bool IsKnownModelFormat (VStream *strm); // this also does simple check for known model format
   static bool LoadMD2Frames (VStr mdpath, TArray<VStr> &names);
 };
 

@@ -29,8 +29,8 @@
 class GZModelDef {
 public:
   struct Frame {
-    VStr sprbase;
-    int sprframe;
+    VStr sprbase; // always lowercased
+    int sprframe; // sprite frame index (i.e. 'A' is 0)
     int mdindex; // model index in `models`
     int origmdindex; // this is used to find replacements on merge
     int frindex; // frame index in model (will be used to build frame map)
@@ -40,6 +40,8 @@ public:
     TAVec angleOffset;
     float rotationSpeed; // !0: rotating
     int vvindex; // vavoom frame index in the given model (-1: invalid frame)
+    // used only in sanity check method
+    int linkSprBase; // <0: end of list
 
     VStr toString () const {
       VStr res = sprbase.toUpperCase();
@@ -71,6 +73,8 @@ public:
     TArray<MdlFrameInfo> frameMap;
     // used in sanity checks
     bool reported;
+    TArray<VStr> frlist; // frame names for MD2 model
+    bool frlistLoaded;
   };
 
 protected:
@@ -113,6 +117,8 @@ public:
   // false if model wasn't found or in invalid format
   // WARNING: don't clear `names` array!
   virtual bool ParseMD2Frames (VStr mdpath, TArray<VStr> &names);
+
+  virtual bool IsModelFileExists (VStr mdpath);
 };
 
 
@@ -166,6 +172,16 @@ void GZModelDef::clear () {
 //==========================================================================
 bool GZModelDef::ParseMD2Frames (VStr mdpath, TArray<VStr> &names) {
   return false;
+}
+
+
+//==========================================================================
+//
+//  GZModelDef::IsModelFileExists
+//
+//==========================================================================
+bool GZModelDef::IsModelFileExists (VStr mdpath) {
+  return true;
 }
 
 
@@ -305,7 +321,7 @@ void GZModelDef::parse (VScriptParser *sc) {
         mname = path+mname;
       }
       while (models.length() <= mdidx) models.alloc();
-      models[mdidx].modelFile = mname;
+      models[mdidx].modelFile = mname.fixSlashes();
       continue;
     }
     // "scale"
@@ -505,33 +521,46 @@ void GZModelDef::checkModelSanity (VScriptParser *sc) {
   bool hasInvalidFrames = false;
 
   // clear existing frame maps, just in case
+  int validModelCount = 0;
   for (auto &&mdl : models) {
     mdl.frameMap.clear();
     mdl.reported = false;
+    mdl.frlist.clear();
+    mdl.frlistLoaded = false;
+    // remove non-existant model
+    if (mdl.modelFile.isEmpty()) continue;
+    if (!IsModelFileExists(mdl.modelFile)) { mdl.modelFile.clear(); continue; }
+    ++validModelCount;
   }
+
+  TMap<VStr, int> frameMap; // key: frame base; value; first in list
 
   for (auto &&it : frames.itemsIdx()) {
     Frame &frm = it.value();
+    frm.linkSprBase = -1;
     // check for MD2 named frames
     if (frm.frindex == -1) {
       int mdlindex = frm.mdindex;
       if (mdlindex < 0 || mdlindex >= models.length() || models[mdlindex].modelFile.isEmpty() || models[mdlindex].reported) {
         frm.vvindex = -1;
       } else {
-        TArray<VStr> frlist;
-        VStr mfn = models[mdlindex].modelFile;
-        if (!ParseMD2Frames(mfn, frlist)) {
-          GLog.WriteLine(NAME_Warning, "alias model '%s' not found for class '%s'", *mfn, *className);
-          frm.vvindex = -1;
-          models[mdlindex].reported = true;
-        } else {
-          frm.vvindex = -1;
-          for (auto &&nit : frlist.itemsIdx()) {
-            if (nit.value().strEquCI(frm.frname)) {
-              frm.vvindex = nit.index();
-              break;
-            }
+        if (!models[mdlindex].frlistLoaded) {
+          VStr mfn = models[mdlindex].modelFile;
+          if (!ParseMD2Frames(mfn, models[mdlindex].frlist)) {
+            GLog.WriteLine(NAME_Warning, "alias model '%s' not found for class '%s'", *mfn, *className);
+            models[mdlindex].reported = true;
           }
+        }
+        frm.vvindex = -1;
+        for (auto &&nit : models[mdlindex].frlist.itemsIdx()) {
+          if (nit.value().strEquCI(frm.frname)) {
+            frm.vvindex = nit.index();
+            break;
+          }
+        }
+        if (frm.vvindex < 0 && !models[mdlindex].reported) {
+          GLog.WriteLine(NAME_Warning, "alias model '%s' not found for class '%s'", *models[mdlindex].modelFile, *className);
+          models[mdlindex].reported = true;
         }
       }
       if (frm.vvindex >= 0) {
@@ -550,9 +579,17 @@ void GZModelDef::checkModelSanity (VScriptParser *sc) {
       hasInvalidFrames = true;
       continue;
     }
+
     hasValidFrames = true;
     frm.angleOffset = angleOffset; // copy it here
     frm.rotationSpeed = rotationSpeed;
+
+    // add to frame map; order doesn't matter
+    {
+      auto fsp = frameMap.get(frm.sprbase);
+      frm.linkSprBase = (fsp ? *fsp : -1);
+      frameMap.put(frm.sprbase, it.index());
+    }
   }
 
   // is it empty?
@@ -562,6 +599,47 @@ void GZModelDef::checkModelSanity (VScriptParser *sc) {
     GLog.WriteLine(NAME_Warning, "gz alias model '%s' nas no valid frames!", *className);
     clear();
     return;
+  }
+
+  // check if we have several models, but only one model defined for sprite frame
+  // if it is so, attach all models to this frame (it seems that GZDoom does this)
+  // note that invalid frames weren't added to frame map
+  const int origFrLen = frames.length();
+  for (int fridx = 0; fridx < origFrLen; ++fridx) {
+    Frame &frm = frames[fridx];
+    if (frm.vvindex < 0) continue; // ignore invalid frames
+    auto fsp = frameMap.get(frm.sprbase);
+    if (!fsp) continue; // the thing that should not be
+    // remove duplicate frames, count models
+    int mdcount = 0;
+    for (int idx = *fsp; idx >= 0; idx = frames[idx].linkSprBase) {
+      if (idx == fridx) { ++mdcount; continue; }
+      Frame &cfr = frames[idx];
+      if (cfr.sprframe != frm.sprframe) continue; // different sprite animation frame
+      // different model?
+      if (cfr.mdindex != frm.mdindex) { ++mdcount; continue; }
+      // check if it is a duplicate model frame
+      if (cfr.frindex == frm.frindex) cfr.vvindex = -1; // don't render this, it is excessive
+    }
+    vassert(frm.vvindex >= 0);
+    // if only one model used, but we have more, attach all models
+    if (mdcount < 2 && validModelCount > 1) {
+      GCon->Logf(NAME_Warning, "force-attaching all models to gz alias model '%s', frame %s %c", *className, *frm.sprbase.toUpperCase(), 'A'+frm.sprframe);
+      for (int mnum = 0; mnum < models.length(); ++mnum) {
+        if (mnum == frm.mdindex) continue;
+        if (models[mnum].modelFile.isEmpty()) continue;
+        Frame newfrm = frm;
+        newfrm.mdindex = mnum;
+        if (newfrm.frindex == -1) {
+          //md2 named
+          newfrm.vvindex = findModelFrame(newfrm.mdindex, newfrm.vvindex, true); // allow appending
+        } else {
+          //indexed
+          newfrm.vvindex = findModelFrame(newfrm.mdindex, newfrm.frindex, true); // allow appending
+        }
+        frames.append(newfrm);
+      }
+    }
   }
 
   // remove invalid frames
@@ -575,7 +653,7 @@ void GZModelDef::checkModelSanity (VScriptParser *sc) {
         ++fidx;
       }
     }
-    vassert(frames.length() > 0); // invariant
+    if (frames.length() == 0) { hasValidFrames = false; hasInvalidFrames = false; clear(); return; }
   }
 
   // clear unused model names
@@ -664,13 +742,10 @@ void GZModelDef::merge (GZModelDef &other) {
     for (auto &&sit : frames.itemsIdx()) {
       Frame &ff = sit.value();
       if (ff.sprframe == ofrm.sprframe &&
-          /*ff.origmdindex == ofrm.origmdindex &&*/
+          ff.origmdindex == ofrm.origmdindex &&
           ff.sprbase == ofrm.sprbase)
       {
-        if (ff.origmdindex != ofrm.origmdindex) {
-          GLog.WriteLine(NAME_Warning, "class '%s' (%s%c) has several attached alias models; this is not supported in k8vavoom!",
-            *className, *ff.sprbase.toUpperCase(), 'A'+ff.sprframe);
-        }
+        GLog.WriteLine(NAME_Warning, "class '%s' (%s%c) attaches alias models several times!", *className, *ff.sprbase.toUpperCase(), 'A'+ff.sprframe);
         spfindex = sit.index();
         break;
       }
