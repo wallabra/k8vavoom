@@ -16,6 +16,7 @@ menus {
   "menus/video/advvideo.txt",
   "menus/video/advvideolightfilter.txt",
   "menus/video/sprvideo.txt",
+  "menus/video/aliasvideo.txt",
 
   "menus/sound/xmp.txt",
   "menus/sound/fluid.txt",

@@ -210,37 +210,6 @@ menudef VideoOptions {
   }
 
 
-  header "3D Models Options";
-
-  option bool {
-    title = "Render Thing Models";
-    cvar = r_models;
-  }
-
-  option bool {
-    title = "Render Hand Weapon Models";
-    cvar = r_view_models;
-  }
-
-  option bool {
-    title = "Model Autorotation";
-    cvar = r_model_autorotating;
-    help = "You can turn off pickup model rotation here.";
-  }
-
-  option bool {
-    title = "Model Autobobbing";
-    cvar = r_model_autobobbing;
-    help = "You can turn off pickup model bobbing here.";
-  }
-
-  option bool {
-    title = "Model Frame Interpolation";
-    cvar = r_interpolate_frames;
-    help = "Interpolate model animation if it has interstate frames?";
-  }
-
-
   header "Interpolation Options";
 
   option bool {
@@ -273,6 +242,11 @@ menudef VideoOptions {
   option submenu {
     title = "Sprite And Fake Shadow Options";
     submenu = "SpriteVideoOptions";
+  }
+
+  option submenu {
+    title = "3D Models Options";
+    submenu = "AliasModelVideoOptions";
   }
 
   option submenu {

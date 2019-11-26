@@ -1,0 +1,79 @@
+menudef AliasModelVideoOptions {
+  Title = "3D MODELS OPTIONS";
+
+  header "Models Options";
+
+  option bool {
+    title = "Allow 3D Models";
+    cvar = r_models;
+  }
+
+  option bool {
+    title = "Model Autorotation";
+    cvar = r_model_autorotating;
+    help = "You can turn off pickup model rotation here.";
+  }
+
+  option bool {
+    title = "Model Autobobbing";
+    cvar = r_model_autobobbing;
+    help = "You can turn off pickup model bobbing here.";
+  }
+
+  option bool {
+    title = "Model Frame Interpolation";
+    cvar = r_interpolate_frames;
+    help = "Interpolate model animation if it has interstate frames?";
+  }
+
+
+  header "Fine Model Control";
+
+  option bool {
+    title = "Monsters";
+    cvar = r_models_monsters;
+  }
+
+  option bool {
+    title = "Corpses";
+    cvar = r_models_corpses;
+  }
+
+  option bool {
+    title = "Missiles";
+    cvar = r_models_missiles;
+  }
+
+  option bool {
+    title = "Pickups";
+    cvar = r_models_pickups;
+  }
+
+  option bool {
+    title = "Decorations";
+    cvar = r_models_decorations;
+  }
+
+  option bool {
+    title = "Players";
+    cvar = r_models_players;
+  }
+
+  option bool {
+    title = "Other";
+    cvar = r_models_other;
+  }
+
+  option bool {
+    title = "HUD Hand Weapon";
+    cvar = r_models_view;
+  }
+
+
+  header "Misc";
+
+  option bool {
+    title = "Log loaded models";
+    cvar = r_models_verbose_loading;
+  }
+}
