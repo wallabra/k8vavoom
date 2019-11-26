@@ -1547,11 +1547,13 @@ static void UpdateClassFrameCache (VClassModelScript &Cls) {
         if (!Cls.SprFrameMap.has(nfi)) {
           // new one
           Cls.SprFrameMap.put(nfi, i);
+          //GCon->Logf(NAME_Debug, "*NEW sprite frame for '%s': %s %c (%d)", *Cls.Name, *frm.sprite, 'A'+frm.frame, i);
         } else {
           // add to list
           int idx = *Cls.SprFrameMap.get(nfi);
           while (Cls.Frames[idx].nextSpriteIdx != -1) idx = Cls.Frames[idx].nextSpriteIdx;
           Cls.Frames[idx].nextSpriteIdx = i;
+          //GCon->Logf(NAME_Debug, "*  more sprite frames for '%s': %s %c (%d)", *Cls.Name, *frm.sprite, 'A'+frm.frame, i);
         }
       }
       // frame number cache
@@ -1572,9 +1574,19 @@ static void UpdateClassFrameCache (VClassModelScript &Cls) {
 }
 
 
+#define FINDFRAME_CHECK_FRM  \
+  const VScriptedModelFrame &frm = Cls.Frames[idx]; \
+  if (res < 0 || (Cls.Frames[res].ModelIndex == frm.ModelIndex && Cls.Frames[res].SubModelIndex == frm.SubModelIndex)) { \
+    if (frm.Inter <= Inter && frm.Inter > bestInter) { res = idx; bestInter = frm.Inter; } \
+  }
+
+
 //==========================================================================
 //
 //  FindFrame
+//
+//  returns first frame found
+//  note that there can be several frames for one sprite!
 //
 //==========================================================================
 static int FindFrame (VClassModelScript &Cls, const VAliasModelFrameInfo &Frame, float Inter) {
@@ -1587,16 +1599,16 @@ static int FindFrame (VClassModelScript &Cls, const VAliasModelFrameInfo &Frame,
   // i can preprocess this, but meh, i guess that hashtable+chain is fast enough
 
   int res = -1;
+  float bestInter = -9999.9f;
 
+  //FIXME: reduce pasta!
   if (Frame.sprite != NAME_None && Frame.frame >= 0 && Frame.frame < 4096) {
     // by sprite name
     int *idxp = Cls.SprFrameMap.find(SprNameFrameToInt(Frame.sprite, Frame.frame));
     if (idxp) {
       int idx = *idxp;
       while (idx >= 0) {
-        const VScriptedModelFrame &frm = Cls.Frames[idx];
-             if (frm.Inter <= Inter) res = idx;
-        else if (frm.Inter > Inter) break; // the author shouldn't write incorrect defs
+        FINDFRAME_CHECK_FRM
         idx = frm.nextSpriteIdx;
       }
       if (res >= 0) return res;
@@ -1609,9 +1621,7 @@ static int FindFrame (VClassModelScript &Cls, const VAliasModelFrameInfo &Frame,
     if (idxp) {
       int idx = *idxp;
       while (idx >= 0) {
-        const VScriptedModelFrame &frm = Cls.Frames[idx];
-             if (frm.Inter <= Inter) res = idx;
-        else if (frm.Inter > Inter) break; // the author shouldn't write incorrect defs
+        FINDFRAME_CHECK_FRM
         idx = frm.nextNumberIdx;
       }
     }
@@ -1619,6 +1629,16 @@ static int FindFrame (VClassModelScript &Cls, const VAliasModelFrameInfo &Frame,
 
   return res;
 }
+
+
+#define FINDNEXTFRAME_CHECK_FRM  \
+  const VScriptedModelFrame &nfrm = Cls.Frames[nidx]; \
+  if (FDef.ModelIndex == nfrm.ModelIndex && FDef.SubModelIndex == nfrm.SubModelIndex && \
+      nfrm.Inter >= FDef.Inter && nfrm.Inter < bestInter) \
+  { \
+    res = nidx; \
+    bestInter = nfrm.Inter; \
+  }
 
 
 //==========================================================================
@@ -1638,42 +1658,36 @@ static int FindNextFrame (VClassModelScript &Cls, int FIdx, const VAliasModelFra
   // walk the list
   if (FDef.Inter < 1.0f) {
     // doesn't finish time slice
-    int nidx = -1;
+    int res = -1;
+    float bestInter = 9999.9f;
+
     if (FDef.sprite != NAME_None) {
       // by sprite name
-      nidx = FDef.nextSpriteIdx;
+      int nidx = FDef.nextSpriteIdx;
       while (nidx >= 0) {
-        const VScriptedModelFrame &nfrm = Cls.Frames[nidx];
-        if (FDef.ModelIndex == nfrm.ModelIndex && FDef.SubModelIndex == nfrm.SubModelIndex && nfrm.Inter >= FDef.Inter) {
-          // i found her!
-          break;
-        }
+        FINDNEXTFRAME_CHECK_FRM
         nidx = nfrm.nextSpriteIdx;
       }
     } else {
       // by frame index
-      nidx = FDef.nextNumberIdx;
+      int nidx = FDef.nextNumberIdx;
       while (nidx >= 0) {
-        const VScriptedModelFrame &nfrm = Cls.Frames[nidx];
-        if (FDef.ModelIndex == nfrm.ModelIndex && FDef.SubModelIndex == nfrm.SubModelIndex && nfrm.Inter >= FDef.Inter) {
-          // i found her!
-          break;
-        }
+        FINDNEXTFRAME_CHECK_FRM
         nidx = nfrm.nextNumberIdx;
       }
     }
 
     // found interframe?
-    if (nidx >= 0) {
-      const VScriptedModelFrame &nfrm = Cls.Frames[nidx];
+    if (res >= 0) {
+      const VScriptedModelFrame &nfrm = Cls.Frames[res];
       if (nfrm.Inter <= FDef.Inter) {
         InterpFrac = 1.0f;
       } else {
-        float res = (Inter-FDef.Inter)/(nfrm.Inter-FDef.Inter);
-        if (!isFiniteF(res)) res = 1.0f; // just in case
-        InterpFrac = res;
+        float frc = (Inter-FDef.Inter)/(nfrm.Inter-FDef.Inter);
+        if (!isFiniteF(frc)) frc = 1.0f; // just in case
+        InterpFrac = frc;
       }
-      return nidx;
+      return res;
     }
   }
 
@@ -2099,9 +2113,12 @@ bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, VName clsName, const TVe
     int res = -1;
     if (cfrm.sprite != NAME_None) {
       // by sprite name
+      //GCon->Logf(NAME_Debug, "000: %s: sprite=%s %c; midx=%d; smidx=%d; inter=%g (%g); nidx=%d", *Cls->Name, *cfrm.sprite, 'A'+cfrm.frame, cfrm.ModelIndex, cfrm.SubModelIndex, Inter, cfrm.Inter, FIdx);
       FIdx = cfrm.nextSpriteIdx;
+      //GCon->Logf(NAME_Debug, "000: %s: sprite=%s %c; midx=%d; smidx=%d; inter=%g (%g); nidx=%d", *Cls->Name, *cfrm.sprite, 'A'+cfrm.frame, cfrm.ModelIndex, cfrm.SubModelIndex, Inter, cfrm.Inter, FIdx);
       while (FIdx >= 0) {
         const VScriptedModelFrame &nfrm = Cls->Frames[FIdx];
+        //GCon->Logf(NAME_Debug, "  001: %s: sprite=%s %c; midx=%d; smidx=%d; inter=%g (%g)", *Cls->Name, *nfrm.sprite, 'A'+nfrm.frame, nfrm.ModelIndex, nfrm.SubModelIndex, Inter, nfrm.Inter);
         if (cfrm.ModelIndex != nfrm.ModelIndex || cfrm.SubModelIndex != nfrm.SubModelIndex) {
                if (nfrm.Inter <= Inter) res = FIdx;
           else if (nfrm.Inter > Inter) break; // the author shouldn't write incorrect defs
