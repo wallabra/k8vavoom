@@ -712,6 +712,38 @@ struct VMeshModel {
   bool HadErrors;
   vuint32 VertsBuffer;
   vuint32 IndexBuffer;
+
+  // does nothing if `loaded` is `true`
+  // bombs out on invalid model data
+  void LoadFromData (vuint8 *Data, int DataSize);
+
+  // does nothing if `loaded` is `true`
+  // bombs out on invalid model data
+  void LoadFromWad ();
+
+private:
+  void Load_MD2 (vuint8 *Data, int DataSize);
+  void Load_MD3 (vuint8 *Data, int DataSize);
+
+private:
+  struct VTempEdge {
+    vuint16 Vert1;
+    vuint16 Vert2;
+    vint16 Tri1;
+    vint16 Tri2;
+  };
+
+  struct TVertMap {
+    int VertIndex;
+    int STIndex;
+  };
+
+  static void AddEdge (TArray<VTempEdge> &Edges, int Vert1, int Vert2, int Tri);
+  static void CopyEdgesTo (TArray<VMeshEdge> &dest, TArray<VTempEdge> &src);
+  static VStr getStrZ (const char *s, unsigned maxlen);
+
+public:
+  static bool LoadMD2Frames (VStr mdpath, TArray<VStr> &names);
 };
 
 
