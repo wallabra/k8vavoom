@@ -26,6 +26,8 @@
 #include "gamedefs.h"
 #include "r_tex.h"
 
+//#define VV_VERY_VERBOSE_TEXTURE_LOADER
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 typedef VTexture *(*VTexCreateFunc) (VStream &, int);
@@ -58,11 +60,18 @@ VTexture *VTexture::CreateTexture (int Type, int LumpNum, bool setName) {
   VCheckedStream Strm(lumpstream);
   bool doSeek = false;
 
+  #ifdef VV_VERY_VERBOSE_TEXTURE_LOADER
+  GLog.Logf(NAME_Debug, "*** TRYING TO LOAD TEXTURE '%s'", *W_FullLumpName(LumpNum));
+  int ffcount = 0;
+  #endif
   for (size_t i = 0; i < ARRAY_COUNT(TexTable); ++i) {
     if (Type == TEXTYPE_Any || TexTable[i].Type == Type || TexTable[i].Type == TEXTYPE_Any) {
       if (doSeek) Strm.Seek(0); else doSeek = true;
       VTexture *Tex = TexTable[i].Create(Strm, LumpNum);
       if (Tex) {
+        #ifdef VV_VERY_VERBOSE_TEXTURE_LOADER
+        GLog.Logf(NAME_Debug, "***    LOADED TEXTURE '%s'", *W_FullLumpName(LumpNum));
+        #endif
         if (setName) {
           if (Tex->Name == NAME_None) {
             Tex->Name = W_LumpName(LumpNum);
@@ -72,9 +81,17 @@ VTexture *VTexture::CreateTexture (int Type, int LumpNum, bool setName) {
         Tex->Type = Type;
         return Tex;
       }
+      #ifdef VV_VERY_VERBOSE_TEXTURE_LOADER
+      else {
+        ++ffcount;
+      }
+      #endif
     }
   }
 
+  #ifdef VV_VERY_VERBOSE_TEXTURE_LOADER
+  GLog.Logf(NAME_Debug, "*** FAILED TO LOAD TEXTURE '%s' (%d attempts made)", *W_FullLumpName(LumpNum), ffcount);
+  #endif
   return nullptr;
 }
 

@@ -78,7 +78,10 @@ struct pcx_t {
       // invalid number of color planes
       return false;
     }
-    if (palette_type != 1 && palette_type != 2) return false;
+    // teh internet says that most program ignores this value
+    // originally it meant "display as monochrome", but nobody cares anymore
+    // type 0 has no meaning, but some idiotic software writes it nevertheless
+    if (palette_type != 0 && palette_type != 1 && palette_type != 2) return false;
     if (bytes_per_line != (xmax-xmin+1)*(bits_per_pixel/8)) return false; // this is true for both color plane types
     //k8: don't check reserved, other checks should provide enough reliability
     /*k8: filler *might* be zero-filled, but it is not required by any spec
@@ -168,6 +171,8 @@ vuint8 *VPcxTexture::GetPixels () {
   if (Pixels) return Pixels;
   transparent = false;
   translucent = false;
+
+  //GLog.Logf(NAME_Debug, "*** TRYING PCX TEXTURE '%s'", *W_FullLumpName(SourceLump));
 
   // open stream
   VStream *lumpstream = W_CreateLumpReaderNum(SourceLump);

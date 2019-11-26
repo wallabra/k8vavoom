@@ -1016,7 +1016,7 @@ int VTextureManager::AddFileTexture (VName Name, int Type) {
   if (IsDummyTextureName(Name)) return 0;
   int i = AddFileTextureChecked(Name, Type);
   if (i == -1) {
-    GCon->Logf(NAME_Warning, "Couldn\'t create texture \"%s\".", *Name);
+    GCon->Logf(NAME_Warning, "Couldn't create texture \"%s\".", *Name);
     return DefaultTexture;
   }
   return i;
