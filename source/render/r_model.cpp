@@ -165,6 +165,7 @@ struct VScriptedModelFrame {
   int Number;
   float Inter;
   int ModelIndex;
+  int SubModelIndex; // you can select submodel from any model if you wish to; use -1 to render all submodels
   int FrameIndex;
   float AngleStart;
   float AngleEnd;
@@ -187,6 +188,7 @@ struct VScriptedModelFrame {
     Number = src.Number;
     Inter = src.Inter;
     ModelIndex = src.ModelIndex;
+    SubModelIndex = src.SubModelIndex;
     FrameIndex = src.FrameIndex;
     AngleStart = src.AngleStart;
     AngleEnd = src.AngleEnd;
@@ -471,6 +473,36 @@ static void ParseTransform (VXmlNode *SN, AliasModelTrans &trans) {
 
 //==========================================================================
 //
+//  ParseIntWithDefault
+//
+//==========================================================================
+static int ParseIntWithDefault (VXmlNode *SN, const char *fieldname, int defval) {
+  vassert(SN);
+  vassert(fieldname && fieldname[0]);
+  if (!SN->HasAttribute(fieldname)) return defval;
+  int val = defval;
+  if (!SN->GetAttribute(fieldname).trimAll().convertInt(&val)) Sys_Error("model node '%s' should have integer value, but '%s' found", fieldname, *SN->GetAttribute(fieldname));
+  return val;
+}
+
+
+//==========================================================================
+//
+//  ParseFloatWithDefault
+//
+//==========================================================================
+static float ParseFloatWithDefault (VXmlNode *SN, const char *fieldname, float defval) {
+  vassert(SN);
+  vassert(fieldname && fieldname[0]);
+  if (!SN->HasAttribute(fieldname)) return defval;
+  float val = defval;
+  if (!SN->GetAttribute(fieldname).trimAll().convertFloat(&val)) Sys_Error("model node '%s' should have floating value, but '%s' found", fieldname, *SN->GetAttribute(fieldname));
+  return val;
+}
+
+
+//==========================================================================
+//
 //  ParseModelScript
 //
 //==========================================================================
@@ -500,8 +532,7 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) 
       Md2.Model = Mod_FindMeshModel(Mdl->Name, SN->GetAttribute("file").ToLower().FixFileSlashes(), Md2.MeshIndex);
 
       // version
-      Md2.Version = -1;
-      if (SN->HasAttribute("version")) Md2.Version = VStr::atoi(*SN->GetAttribute("version"));
+      Md2.Version = ParseIntWithDefault(SN, "version", -1);
 
       // position model
       Md2.PositionModel = nullptr;
@@ -513,8 +544,9 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) 
       Md2.SkinAnimSpeed = 0;
       Md2.SkinAnimRange = 0;
       if (SN->HasAttribute("skin_anim_speed")) {
-        Md2.SkinAnimSpeed = VStr::atoi(*SN->GetAttribute("skin_anim_speed"));
-        Md2.SkinAnimRange = VStr::atoi(*SN->GetAttribute("skin_anim_range"));
+        if (!SN->HasAttribute("skin_anim_range")) Sys_Error("'skin_anim_speed' requires 'skin_anim_range'");
+        Md2.SkinAnimSpeed = ParseIntWithDefault(SN, "skin_anim_speed", 1);
+        Md2.SkinAnimRange = ParseIntWithDefault(SN, "skin_anim_range", 1);
       }
 
       AliasModelTrans BaseTransform;
@@ -532,27 +564,25 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) 
       Md2.AllowTransparency = ParseBool(SN, "allowtransparency", false);
 
       // process frames
-      for (VXmlNode *FN = SN->FindChild("frame"); FN; FN = FN->FindNext()) {
+      int curframeindex = 0;
+      for (VXmlNode *FN = SN->FindChild("frame"); FN; FN = FN->FindNext(), ++curframeindex) {
         VScriptSubModel::VFrame &F = Md2.Frames.Alloc();
-        F.Index = VStr::atoi(*FN->GetAttribute("index"));
+        //FIXME: require index?
+        F.Index = ParseIntWithDefault(FN, "index", curframeindex);
 
         // position model frame index
-        F.PositionIndex = 0;
-        if (FN->HasAttribute("position_index")) F.PositionIndex = VStr::atoi(*FN->GetAttribute("position_index"));
+        F.PositionIndex = ParseIntWithDefault(FN, "position_index", 0);
 
         // frame transformation
         F.Transform = BaseTransform;
         ParseTransform(FN, F.Transform);
 
         // alpha
-        F.AlphaStart = 1.0f;
-        F.AlphaEnd = 1.0f;
-        if (FN->HasAttribute("alpha_start")) F.AlphaStart = VStr::atof(*FN->GetAttribute("alpha_start"));
-        if (FN->HasAttribute("alpha_end")) F.AlphaEnd = VStr::atof(*FN->GetAttribute("alpha_end"), 1);
+        F.AlphaStart = ParseFloatWithDefault(FN, "alpha_start", 1.0f);
+        F.AlphaEnd = ParseFloatWithDefault(FN, "alpha_end", 1.0f);
 
         // skin index
-        F.SkinIndex = -1;
-        if (FN->HasAttribute("skin_index")) F.SkinIndex = VStr::atoi(*FN->GetAttribute("skin_index"));
+        F.SkinIndex = ParseIntWithDefault(FN, "skin_index", -1);
       }
 
       // process skins
@@ -653,8 +683,8 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) 
 
       int lastIndex = -666;
       if (N->HasAttribute("index")) {
-        F.Number = VStr::atoi(*N->GetAttribute("index"));
-        if (N->HasAttribute("last_index")) lastIndex = VStr::atoi(*N->GetAttribute("last_index"));
+        F.Number = ParseIntWithDefault(N, "index", 0);
+        lastIndex = ParseIntWithDefault(N, "last_index", lastIndex);
         F.sprite = NAME_None;
         F.frame = -1;
       } else if (N->HasAttribute("sprite") && N->HasAttribute("sprite_frame")) {
@@ -673,7 +703,8 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) 
         Sys_Error("Model '%s' has invalid state", *Mdl->Name);
       }
 
-      F.FrameIndex = VStr::atoi(*N->GetAttribute("frame_index"));
+      F.FrameIndex = ParseIntWithDefault(N, "frame_index", 0);
+      F.SubModelIndex = ParseIntWithDefault(N, "submodel_index", -1);
 
       F.ModelIndex = -1;
       VStr MdlName = N->GetAttribute("model");
@@ -685,18 +716,13 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) 
       }
       if (F.ModelIndex == -1) Sys_Error("%s has no model %s", *Mdl->Name, *MdlName);
 
-      F.Inter = 0.0f;
-      if (N->HasAttribute("inter")) F.Inter = VStr::atof(*N->GetAttribute("inter"));
+      F.Inter = ParseFloatWithDefault(N, "inter", 0.0f);
 
-      F.AngleStart = 0.0f;
-      F.AngleEnd = 0.0f;
-      if (N->HasAttribute("angle_start")) F.AngleStart = VStr::atof(*N->GetAttribute("angle_start"));
-      if (N->HasAttribute("angle_end")) F.AngleEnd = VStr::atof(*N->GetAttribute("angle_end"));
+      F.AngleStart = ParseFloatWithDefault(N, "angle_start", 0.0f);
+      F.AngleEnd = ParseFloatWithDefault(N, "angle_end", 0.0f);
 
-      F.AlphaStart = 1.0f;
-      F.AlphaEnd = 1.0f;
-      if (N->HasAttribute("alpha_start")) F.AlphaStart = VStr::atof(*N->GetAttribute("alpha_start"));
-      if (N->HasAttribute("alpha_end")) F.AlphaEnd = VStr::atof(*N->GetAttribute("alpha_end"), 1);
+      F.AlphaStart = ParseFloatWithDefault(N, "alpha_start", 1.0f);
+      F.AlphaEnd = ParseFloatWithDefault(N, "alpha_end", 1.0f);
 
       if (F.Number >= 0 && lastIndex > 0) {
         for (int cfidx = F.Number+1; cfidx <= lastIndex; ++cfidx) {
