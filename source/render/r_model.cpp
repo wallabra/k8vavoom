@@ -45,6 +45,8 @@ static VCvarB r_model_autobobbing("r_model_autobobbing", true, "Allow model auto
 
 static VCvarB r_preload_alias_models("r_preload_alias_models", true, "Preload all alias models and their skins?", CVAR_Archive|CVAR_PreInit);
 
+static VCvarB dbg_dump_gzmodels("dbg_dump_gzmodels", false, "Dump xml files for gz modeldefs?", /*CVAR_Archive|*/CVAR_PreInit);
+
 
 static int cli_DisableModeldef = 0;
 static TMap<VStrCI, bool> cli_IgnoreModelClass;
@@ -871,6 +873,7 @@ static void ParseGZModelDefs () {
     // get xml here, because we're going to modify the model
     auto xml = mdl->createXml();
     // create impossible name, because why not?
+    if (dbg_dump_gzmodels) GCon->Logf(NAME_Debug, "====\n%s\n====", *xml);
     mdl->className = va("/gzmodels/..%s/..gzmodel_%d.xml", xcls->GetName(), cnt++);
     //GCon->Logf("***<%s>", *mdl->className);
     GCon->Logf(NAME_Init, "  found GZDoom model for '%s'", xcls->GetName());

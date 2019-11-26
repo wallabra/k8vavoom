@@ -345,6 +345,7 @@ void GZModelDef::parse (VScriptParser *sc) {
       if (frm.sprframe < 0 || frm.sprframe > 31) sc->Error(va("invalid sprite frame '%s' in model '%s'", *sc->String, *className));
       // model index
       sc->ExpectNumber();
+      // model "-1" means "hidden"
       if (sc->Number < 0 || sc->Number > 1024) sc->Error(va("invalid model index %d in model '%s'", sc->Number, *className));
       frm.mdindex = frm.origmdindex = sc->Number;
       // frame index
@@ -384,6 +385,7 @@ void GZModelDef::parse (VScriptParser *sc) {
       if (frm.sprframe < 0 || frm.sprframe > 31) sc->Error(va("invalid sprite frame '%s' in model '%s'", *sc->String, *className));
       // model index
       sc->ExpectNumber();
+      // model "-1" means "hidden"
       if (sc->Number < 0 || sc->Number > 1024) sc->Error(va("invalid model index %d in model '%s'", sc->Number, *className));
       frm.mdindex = frm.origmdindex = sc->Number;
       // frame name
@@ -750,26 +752,18 @@ static void appendScale (VStr &res, const TVec &scale, const TVec *baseScale) {
   if (baseScale) {
     if (*baseScale == scale) return; // base scale is set
     if (baseScale->x != scale.x && baseScale->y != scale.y && baseScale->z != scale.z) {
-      if (scale.x == scale.y && scale.y == scale.z) {
-        if (scale.x != 1) res += va(" scale=\"%g\"", scale.x);
-      } else {
-        if (scale.x != 1) res += va(" scale_x=\"%g\"", scale.x);
-        if (scale.y != 1) res += va(" scale_y=\"%g\"", scale.y);
-        if (scale.z != 1) res += va(" scale_z=\"%g\"", scale.z);
-      }
+      if (scale.x != 1) res += va(" scale_x=\"%g\"", scale.x);
+      if (scale.y != 1) res += va(" scale_y=\"%g\"", scale.y);
+      if (scale.z != 1) res += va(" scale_z=\"%g\"", scale.z);
     } else {
       if (baseScale->x != scale.x) res += va(" scale_x=\"%g\"", scale.x);
       if (baseScale->y != scale.y) res += va(" scale_y=\"%g\"", scale.y);
       if (baseScale->z != scale.z) res += va(" scale_z=\"%g\"", scale.z);
     }
   } else {
-    if (scale.x == scale.y && scale.y == scale.z) {
-      if (scale.x != 1) res += va(" scale=\"%g\"", scale.x);
-    } else {
-      if (scale.x != 1) res += va(" scale_x=\"%g\"", scale.x);
-      if (scale.y != 1) res += va(" scale_y=\"%g\"", scale.y);
-      if (scale.z != 1) res += va(" scale_z=\"%g\"", scale.z);
-    }
+    if (scale.x != 1) res += va(" scale_x=\"%g\"", scale.x);
+    if (scale.y != 1) res += va(" scale_y=\"%g\"", scale.y);
+    if (scale.z != 1) res += va(" scale_z=\"%g\"", scale.z);
   }
 }
 
@@ -828,9 +822,9 @@ VStr GZModelDef::createXml () {
       *className.toLowerCase().xmlEscape(), frm.mdindex,
       frm.vvindex);
     if (frm.rotationSpeed) res += " rotation=\"true\"";
-    if (frm.angleOffset.yaw) res += va("  rotate_yaw=\"%g\"", frm.angleOffset.yaw);
-    if (frm.angleOffset.pitch) res += va("  rotate_pitch=\"%g\"", frm.angleOffset.pitch);
-    if (frm.angleOffset.roll) res += va("  rotate_roll=\"%g\"", frm.angleOffset.roll);
+    if (frm.angleOffset.yaw) res += va(" rotate_yaw=\"%g\"", frm.angleOffset.yaw);
+    if (frm.angleOffset.pitch) res += va(" rotate_pitch=\"%g\"", frm.angleOffset.pitch);
+    if (frm.angleOffset.roll) res += va(" rotate_roll=\"%g\"", frm.angleOffset.roll);
     res += " />\n";
   }
   res += "  </class>\n";
