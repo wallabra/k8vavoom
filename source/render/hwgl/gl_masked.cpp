@@ -38,7 +38,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   if (surf->count < 3) return;
 
   texinfo_t *tex = surf->texinfo;
-  if (!tex->Tex) return;
+  if (!tex->Tex || tex->Tex->Type == TEXTYPE_Null) return;
 
   GlowParams gp;
   CalcGlow(gp, surf);
@@ -77,7 +77,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
 
   GLint oldDepthMask = 0;
 
-  if (blend_sprites || Additive || Alpha < 1.0f) {
+  if (Additive || Alpha < 1.0f || tex->Tex->isTranslucent()) {
     restoreBlend = true;
     if (doBrightmap) {
       //SurfMaskedBrightmapGlow.SetAlphaRef(Additive ? getAlphaThreshold() : 0.666f);
@@ -206,7 +206,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
                                        const TVec &saxis, const TVec &taxis, const TVec &texorg,
                                        int hangup)
 {
-  if (!Tex) return; // just in case
+  if (!Tex || Tex->Type == TEXTYPE_Null) return; // just in case
 
   TVec texpt(0, 0, 0);
   const bool fakeShadow = (hangup == 666);
@@ -243,7 +243,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
 
   GLint oldDepthMask = 0;
 
-  if (blend_sprites || Additive || hangup || Alpha < 1.0f) {
+  if (Additive || hangup || Alpha < 1.0f || Tex->isTranslucent()) {
     restoreBlend = true;
     if (doBrightmap) {
       //SurfMaskedBrightmap.SetAlphaRef(hangup || Additive ? getAlphaThreshold() : 0.666f);

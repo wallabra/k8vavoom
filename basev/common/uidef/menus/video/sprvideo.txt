@@ -12,14 +12,6 @@ menudef SpriteVideoOptions {
   }
   */
 
-  option bool {
-    title = "Blend sprites";
-    cvar = gl_blend_sprites;
-    help =
-      "May make rendering faster or slower. Who knows?"
-      "\cJIf in doubt, leave this 'OFF'.";
-  }
-
 
   header "Visual Hacks";
 
