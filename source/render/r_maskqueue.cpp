@@ -75,8 +75,8 @@ static VCvarB r_fake_shadows_pickups("r_fake_shadows_pickups", true, "Render fak
 static VCvarB r_fake_shadows_decorations("r_fake_shadows_decorations", true, "Render fake sprite shadows for decorations?", CVAR_Archive);
 static VCvarB r_fake_shadows_players("r_fake_shadows_players", true, "Render fake sprite shadows for players?", CVAR_Archive);
 
-static VCvarB r_fake_shadow_additive_missiles("r_fake_shadow_additive_missiles", true, "Render shadows from additive projectiles?", CVAR_Archive);
-static VCvarB r_fake_shadow_additive_monsters("r_fake_shadow_additive_monsters", true, "Render shadows from additive monsters?", CVAR_Archive);
+static VCvarB r_fake_shadows_additive_missiles("r_fake_shadows_additive_missiles", true, "Render shadows from additive projectiles?", CVAR_Archive);
+static VCvarB r_fake_shadows_additive_monsters("r_fake_shadows_additive_monsters", true, "Render shadows from additive monsters?", CVAR_Archive);
 
 static VCvarB dbg_disable_sprite_sorting("dbg_disable_sprite_sorting", false, "Disable sprite sorting (this WILL glitch renderer)?", /*CVAR_Archive|*/CVAR_PreInit);
 
@@ -432,9 +432,9 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
     }
     if (renderShadow && Additive) {
       if (thing->IsMissile()) {
-        renderShadow = (r_fake_shadows_missiles.asBool() && r_fake_shadow_additive_missiles.asBool());
+        renderShadow = (r_fake_shadows_missiles.asBool() && r_fake_shadows_additive_missiles.asBool());
       } else if (thing->IsMonster()) {
-        renderShadow = (r_fake_shadows_monsters.asBool() && r_fake_shadow_additive_monsters.asBool());
+        renderShadow = (r_fake_shadows_monsters.asBool() && r_fake_shadows_additive_monsters.asBool());
       } else {
         renderShadow = false;
       }

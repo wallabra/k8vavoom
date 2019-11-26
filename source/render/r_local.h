@@ -622,6 +622,8 @@ protected:
   bool DrawEntityModel (VEntity*, vuint32, vuint32, float, bool, float, ERenderPass);
   bool CheckAliasModelFrame (VEntity *Ent, float Inter);
   bool HasAliasModel (VName clsName) const;
+  bool HasEntityAliasModel (VEntity *Ent) const;
+  static bool IsAliasModelAllowedFor (VEntity *Ent);
 
   // things
   void QueueTranslucentPoly (surface_t *surf, TVec *sv, int count, int lump,
@@ -1017,6 +1019,17 @@ extern VCvarB r_static_lights;
 extern VCvarI aspect_ratio;
 extern VCvarB r_interpolate_frames;
 extern VCvarB r_allow_shadows;
+
+extern VCvarB r_models;
+extern VCvarB r_models_view;
+
+extern VCvarB r_models_monsters;
+extern VCvarB r_models_corpses;
+extern VCvarB r_models_missiles;
+extern VCvarB r_models_pickups;
+extern VCvarB r_models_decorations;
+extern VCvarB r_models_other;
+extern VCvarB r_models_players;
 
 extern VCvarB r_separate_translucent_lists;
 

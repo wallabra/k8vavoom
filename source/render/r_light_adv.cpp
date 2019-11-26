@@ -40,7 +40,6 @@
 extern VCvarB r_darken;
 extern VCvarB r_allow_subtractive_lights;
 extern VCvarB r_draw_mobjs;
-extern VCvarB r_models;
 extern VCvarB r_model_shadows;
 extern VCvarB r_draw_pobj;
 extern VCvarB r_chasecam;
@@ -951,7 +950,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
       const int SubIdx = (int)(ptrdiff_t)(ment->SubSector-Level->Subsectors);
       if (!(LightBspVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
       if (ment->Radius < 1) continue;
-      if (!HasAliasModel(ment->GetClass()->Name)) continue;
+      if (!HasEntityAliasModel(ment)) continue;
       // assume that it is not bigger than its radius
       float zup, zdown;
       if (ment->Height < 2) {

@@ -39,7 +39,6 @@
 
 extern VCvarF fov;
 extern VCvarB gl_pic_filtering;
-extern VCvarB r_view_models;
 extern VCvarB r_draw_psprites;
 extern VCvarB r_chasecam;
 extern VCvarB r_drawfuzz;
@@ -181,7 +180,7 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
 bool VRenderLevelShared::RenderViewModel (VViewState *VSt, vuint32 light,
                                           vuint32 Fade, float Alpha, bool Additive)
 {
-  if (!r_view_models) return false;
+  if (!r_models_view) return false;
 
   TVec origin = vieworg+(VSt->SX-1.0f)*viewright/8.0f-(VSt->SY-32.0f)*viewup/6.0f;
 

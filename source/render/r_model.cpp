@@ -1428,6 +1428,41 @@ bool VRenderLevelShared::HasAliasModel (VName clsName) const {
 
 //==========================================================================
 //
+//  VRenderLevelShared::IsAliasModelAllowedFor
+//
+//==========================================================================
+bool VRenderLevelShared::IsAliasModelAllowedFor (VEntity *Ent) {
+  if (!Ent || Ent->IsGoingToDie() || !r_models) return false;
+  if (Ent->IsPlayer()) return r_models_players;
+  if (Ent->IsMissile()) return r_models_missiles;
+  if (Ent->IsCorpse()) return r_models_corpses;
+  if (Ent->IsMonster()) return r_models_monsters;
+  if (Ent->IsSolid()) return r_models_decorations;
+  // check for pickup
+  // inventory class
+  static VClass *invCls = nullptr;
+  static bool invClsInited = false;
+  if (!invClsInited) {
+    invClsInited = true;
+    invCls = VMemberBase::StaticFindClass("Inventory");
+  }
+  if (invCls && Ent->IsA(invCls)) return r_models_pickups;
+  return r_models_other;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::HasEntityAliasModel
+//
+//==========================================================================
+bool VRenderLevelShared::HasEntityAliasModel (VEntity *Ent) const {
+  return (IsAliasModelAllowedFor(Ent) && FindClassModelByName(Ent->GetClass()->Name));
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::DrawAliasModel
 //
 //  this is used to draw so-called "fixed model"
@@ -1440,6 +1475,7 @@ bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, const TVec &Org, const T
   float Alpha, bool Additive, bool IsViewModel, float Inter, bool Interpolate,
   ERenderPass Pass)
 {
+  //if (!IsAliasModelAllowedFor(mobj)) return false;
   int FIdx = FindFrame(*Mdl->DefaultClass, Frame, Inter);
   if (FIdx == -1) return false;
   float InterpFrac;
@@ -1471,6 +1507,7 @@ bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, VName clsName, const TVe
   ERenderPass Pass)
 {
   if (clsName == NAME_None) return false;
+  if (!IsAliasModelAllowedFor(mobj)) return false;
 
   VClassModelScript *Cls = FindClassModelByName(clsName);
   if (!Cls) return false;

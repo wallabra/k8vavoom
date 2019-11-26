@@ -24,6 +24,7 @@
 //**
 //**************************************************************************
 // included from "r_model.cpp"
+static VCvarB r_models_verbose_loading("r_models_verbose_loading", false, "Log loaded 3D models?", CVAR_Archive);
 
 
 //==========================================================================
@@ -636,11 +637,11 @@ void VMeshModel::LoadFromData (vuint8 *Data, int DataSize) {
 
   if (LittleLong(*(vuint32 *)Data) == IDPOLY2HEADER) {
     // MD2
-    GCon->Logf(NAME_Debug, "loading MD2 model '%s'...", *Name);
+    if (r_models_verbose_loading) GCon->Logf(NAME_Debug, "loading MD2 model '%s'...", *Name);
     Load_MD2(Data, DataSize);
   } else if (LittleLong(*(vuint32 *)Data) == IDPOLY3HEADER) {
     // MD3
-    GCon->Logf(NAME_Debug, "loading MD3 model '%s'...", *Name);
+    if (r_models_verbose_loading) GCon->Logf(NAME_Debug, "loading MD3 model '%s'...", *Name);
     Load_MD3(Data, DataSize);
   } else {
     Sys_Error("model '%s' is in unknown format", *Name);

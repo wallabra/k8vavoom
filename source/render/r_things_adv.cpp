@@ -39,7 +39,6 @@
 
 extern VCvarB r_chasecam;
 extern VCvarB r_draw_mobjs;
-extern VCvarB r_models;
 extern VCvarB r_model_shadows;
 extern VCvarB r_model_light;
 extern VCvarB r_drawfuzz;
@@ -168,7 +167,7 @@ void VRenderLevelShared::BuildVisibleObjectsList () {
     if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
     if (!ent->SubSector) continue; // just in case
 
-    const bool hasAliasModel = HasAliasModel(ent->GetClass()->Name);
+    const bool hasAliasModel = HasEntityAliasModel(ent);
 
     if (lightAll) {
       // collect all things with models (we'll need them in advrender)
@@ -262,7 +261,7 @@ void VRenderLevelShadowVolume::BuildMobjsInCurrLight (bool doShadows) {
             const int SubIdx = (int)(ptrdiff_t)(ent->SubSector-Level->Subsectors);
             if (!(LightBspVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
             if (!IsTouchedByCurrLight(ent)) continue;
-            if (!HasAliasModel(ent->GetClass()->Name)) continue;
+            if (!HasEntityAliasModel(ent)) continue;
             if (!CalculateThingAlpha(ent, RendStyle, Alpha)) continue; // invisible
             // ignore translucent things, they cannot cast a shadow
             if (RendStyle == STYLE_Normal && Alpha >= 1.0f) {
