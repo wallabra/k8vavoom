@@ -175,8 +175,10 @@ void VRenderLevelShared::GetFlatSetToRender (subsector_t *sub, subregion_t *regi
     if (sub->sector->ceiling.maxz < hs->ceiling.maxz) realCeilingClipped = true;
   }
 
+  sec_surface_t *realfloor = (region->flags&subregion_t::SRF_ZEROSKY_FLOOR_HACK ? nullptr : region->realfloor);
+
   if (!realFloorClipped) {
-    ChooseFlatSurfaces(surfs[0], surfs[1], region->realfloor, region->fakefloor);
+    ChooseFlatSurfaces(surfs[0], surfs[1], realfloor, region->fakefloor);
   } else {
     surfs[0] = region->fakefloor;
     surfs[1] = nullptr;

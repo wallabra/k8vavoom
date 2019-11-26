@@ -891,6 +891,10 @@ struct subregion_t {
   sec_surface_t *realceil;
   sec_surface_t *fakefloor; // can be `nullptr`
   sec_surface_t *fakeceil; // can be `nullptr`
+  enum {
+    SRF_ZEROSKY_FLOOR_HACK = 1u<<0,
+  };
+  vuint32 flags;
   vint32 count;
   drawseg_t *lines;
 };

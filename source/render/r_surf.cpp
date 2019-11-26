@@ -112,6 +112,22 @@ void VRenderLevelShared::FlushSurfCaches (surface_t *InSurfs) {
 
 //==========================================================================
 //
+//  IsZeroSkyFloorHack
+//
+//==========================================================================
+static inline bool IsZeroSkyFloorHack (const subsector_t *sub, const sec_region_t *reg) {
+  // if current sector has zero height, and its ceiling is sky, and its floor is not sky, skip floor creation
+  return
+    (reg->regflags&sec_region_t::RF_BaseRegion) &&
+    reg->eceiling.splane->pic == skyflatnum &&
+    reg->efloor.splane->pic != skyflatnum &&
+    sub->sector->floor.normal.z == 1.0f && sub->sector->ceiling.normal.z == -1.0f &&
+    sub->sector->floor.minz == sub->sector->ceiling.minz;
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::CreateSecSurface
 //
 //  this is used to create floor and ceiling surfaces
@@ -119,7 +135,7 @@ void VRenderLevelShared::FlushSurfCaches (surface_t *InSurfs) {
 //  `ssurf` can be `nullptr`, and it will be allocated, otherwise changed
 //
 //==========================================================================
-sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subsector_t *sub, TSecPlaneRef InSplane, sec_region_t *reg, bool fake) {
+sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subsector_t *sub, TSecPlaneRef InSplane, subregion_t *sreg, bool fake) {
   int vcount = sub->numlines;
 
   if (vcount < 3) {
@@ -130,13 +146,12 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
   //vassert(vcount >= 3);
 
   // if current sector has zero height, and its ceiling is sky, and its floor is not sky, skip floor creation
-  if (!fake && (reg->regflags&sec_region_t::RF_BaseRegion) &&
-      reg->eceiling.splane->pic == skyflatnum &&
-      reg->efloor.splane->pic != skyflatnum &&
-      sub->sector->floor.normal.z == 1.0f && sub->sector->ceiling.normal.z == -1.0f &&
-      sub->sector->floor.minz == sub->sector->ceiling.minz)
-  {
-    return ssurf;
+  // this is what removes extra floors on Doom II MAP01, for example
+  if (!fake && IsZeroSkyFloorHack(sub, sreg->secregion)) {
+    sreg->flags |= subregion_t::SRF_ZEROSKY_FLOOR_HACK;
+    // we still need to create this floor, because it may be reactivated later
+  } else {
+    sreg->flags &= ~subregion_t::SRF_ZEROSKY_FLOOR_HACK;
   }
 
   // if we're simply changing sky, and already have surface created, do not recreate it, it is pointless
@@ -270,7 +285,7 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
 //  this is used to update floor and ceiling surfaces
 //
 //==========================================================================
-void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef RealPlane, subsector_t *sub, sec_region_t *reg, bool ignoreColorMap, bool fake) {
+void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef RealPlane, subsector_t *sub, subregion_t *sreg, bool ignoreColorMap, bool fake) {
   if (!ssurf->esecplane.splane->pic) return; // no texture? nothing to do
 
   TSecPlaneRef splane(ssurf->esecplane);
@@ -279,7 +294,7 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
     // check for sky changes
     if ((splane.splane->pic == skyflatnum) != (RealPlane.splane->pic == skyflatnum)) {
       // sky <-> non-sky, simply recreate it
-      sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane, reg, fake);
+      sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane, sreg, fake);
       vassert(newsurf == ssurf); // sanity check
       ssurf->texinfo.ColorMap = ColorMap; // just in case
       // nothing more to do
@@ -289,7 +304,7 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
     if (RealPlane.splane->pic == skyflatnum && RealPlane.GetNormalZ() < 0.0f) {
       if (splane.splane != &sky_plane) {
         // recreate it, just in case
-        sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane, reg, fake);
+        sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane, sreg, fake);
         vassert(newsurf == ssurf); // sanity check
         ssurf->texinfo.ColorMap = ColorMap; // just in case
         // nothing more to do
@@ -314,7 +329,7 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
       ssurf->YScale, splane.splane->YScale,
       ssurf->Angle, splane.splane->BaseAngle-splane.splane->Angle);
     */
-    sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane, reg, fake);
+    sec_surface_t *newsurf = CreateSecSurface(ssurf, sub, RealPlane, sreg, fake);
     vassert(newsurf == ssurf); // sanity check
     ssurf->texinfo.ColorMap = (!ignoreColorMap ? ColorMap : 0); // just in case
     // nothing more to do
@@ -1682,8 +1697,8 @@ void VRenderLevelShared::CreateWorldSurfaces () {
       sreg->secregion = reg;
       sreg->floorplane = r_floor;
       sreg->ceilplane = r_ceiling;
-      sreg->realfloor = (skipFloor ? nullptr : CreateSecSurface(nullptr, sub, r_floor, reg));
-      sreg->realceil = (skipCeil ? nullptr : CreateSecSurface(nullptr, sub, r_ceiling, reg));
+      sreg->realfloor = (skipFloor ? nullptr : CreateSecSurface(nullptr, sub, r_floor, sreg));
+      sreg->realceil = (skipCeil ? nullptr : CreateSecSurface(nullptr, sub, r_ceiling, sreg));
 
       // create fake floor and ceiling
       if (ridx == 0 && sub->sector->fakefloors) {
@@ -1692,8 +1707,8 @@ void VRenderLevelShared::CreateWorldSurfaces () {
         fakeceil.set(&sub->sector->fakefloors->ceilplane, false);
         if (!fakefloor.isFloor()) fakefloor.Flip();
         if (!fakeceil.isCeiling()) fakeceil.Flip();
-        sreg->fakefloor = (skipFloor ? nullptr : CreateSecSurface(nullptr, sub, fakefloor, reg, true));
-        sreg->fakeceil = (skipCeil ? nullptr : CreateSecSurface(nullptr, sub, fakeceil, reg, true));
+        sreg->fakefloor = (skipFloor ? nullptr : CreateSecSurface(nullptr, sub, fakefloor, sreg, true));
+        sreg->fakeceil = (skipCeil ? nullptr : CreateSecSurface(nullptr, sub, fakeceil, sreg, true));
       } else {
         sreg->fakefloor = nullptr;
         sreg->fakeceil = nullptr;
@@ -1774,23 +1789,39 @@ void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region)
       UpdateDrawSeg(sub, ds, r_floor, r_ceiling/*, ClipSegs*/);
     }
 
-    if (region->realfloor) UpdateSecSurface(region->realfloor, region->floorplane, sub, region->secregion);
+    if (region->realfloor) {
+      // check if we have to remove zerosky flag
+      // "zerosky" is set when the sector has zero height, and sky ceiling
+      // this is what removes extra floors on Doom II MAP01, for example
+      if (region->flags&subregion_t::SRF_ZEROSKY_FLOOR_HACK) {
+        if (region->secregion->eceiling.splane->pic != skyflatnum ||
+            region->secregion->efloor.splane->pic == skyflatnum ||
+            sub->sector->floor.normal.z != 1.0f || sub->sector->ceiling.normal.z != -1.0f ||
+            sub->sector->floor.minz != sub->sector->ceiling.minz)
+        {
+          // no more zerofloor
+          //GCon->Logf(NAME_Debug, "deactivate ZEROSKY HACK: sub=%d; region=%p", (int)(ptrdiff_t)(sub-&Level->Subsectors[0]), region);
+          region->flags &= ~subregion_t::SRF_ZEROSKY_FLOOR_HACK;
+        }
+      }
+      UpdateSecSurface(region->realfloor, region->floorplane, sub, region);
+    }
     if (region->fakefloor) {
       TSecPlaneRef fakefloor;
       fakefloor.set(&sub->sector->fakefloors->floorplane, false);
       if (!fakefloor.isFloor()) fakefloor.Flip();
       if (!region->fakefloor->esecplane.isFloor()) region->fakefloor->esecplane.Flip();
-      UpdateSecSurface(region->fakefloor, fakefloor, sub, region->secregion, false/*allow cmap*/, true/*fake*/);
+      UpdateSecSurface(region->fakefloor, fakefloor, sub, region, false/*allow cmap*/, true/*fake*/);
       //region->fakefloor->texinfo.Tex = GTextureManager[GTextureManager.DefaultTexture];
     }
 
-    if (region->realceil) UpdateSecSurface(region->realceil, region->ceilplane, sub, region->secregion);
+    if (region->realceil) UpdateSecSurface(region->realceil, region->ceilplane, sub, region);
     if (region->fakeceil) {
       TSecPlaneRef fakeceil;
       fakeceil.set(&sub->sector->fakefloors->ceilplane, false);
       if (!fakeceil.isCeiling()) fakeceil.Flip();
       if (!region->fakeceil->esecplane.isCeiling()) region->fakeceil->esecplane.Flip();
-      UpdateSecSurface(region->fakeceil, fakeceil, sub, region->secregion, false/*allow cmap*/, true/*fake*/);
+      UpdateSecSurface(region->fakeceil, fakeceil, sub, region, false/*allow cmap*/, true/*fake*/);
       //region->fakeceil->texinfo.Tex = GTextureManager[GTextureManager.DefaultTexture];
     }
 
@@ -1821,23 +1852,23 @@ void VRenderLevelShared::UpdateSubsectorFlatSurfaces (subsector_t *sub, bool dof
   if (!forced && sub->updateWorldFrame == updateWorldFrame) return;
   for (subregion_t *region = sub->regions; region; region = region->next) {
     if (dofloors) {
-      if (region->realfloor) UpdateSecSurface(region->realfloor, region->floorplane, sub, region->secregion, true/*no cmap*/); // ignore colormap
+      if (region->realfloor) UpdateSecSurface(region->realfloor, region->floorplane, sub, region, true/*no cmap*/); // ignore colormap
       if (region->fakefloor) {
         TSecPlaneRef fakefloor;
         fakefloor.set(&sub->sector->fakefloors->floorplane, false);
         if (!fakefloor.isFloor()) fakefloor.Flip();
         if (!region->fakefloor->esecplane.isFloor()) region->fakefloor->esecplane.Flip();
-        UpdateSecSurface(region->fakefloor, fakefloor, sub, region->secregion, true/*no cmap*/, true/*fake*/); // ignore colormap
+        UpdateSecSurface(region->fakefloor, fakefloor, sub, region, true/*no cmap*/, true/*fake*/); // ignore colormap
       }
     }
     if (doceils) {
-      if (region->realceil) UpdateSecSurface(region->realceil, region->ceilplane, sub, region->secregion);
+      if (region->realceil) UpdateSecSurface(region->realceil, region->ceilplane, sub, region);
       if (region->fakeceil) {
         TSecPlaneRef fakeceil;
         fakeceil.set(&sub->sector->fakefloors->ceilplane, false);
         if (!fakeceil.isCeiling()) fakeceil.Flip();
         if (!region->fakeceil->esecplane.isCeiling()) region->fakeceil->esecplane.Flip();
-        UpdateSecSurface(region->fakeceil, fakeceil, sub, region->secregion, false/*allow cmap*/, true/*fake*/);
+        UpdateSecSurface(region->fakeceil, fakeceil, sub, region, false/*allow cmap*/, true/*fake*/);
       }
     }
   }

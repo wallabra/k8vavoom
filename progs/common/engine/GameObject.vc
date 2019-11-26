@@ -1092,16 +1092,17 @@ struct polyobj_t {
 //
 
 struct subregion_t {
-  sec_region_t *secregion;
-  subregion_t *next;
-  native transient private TSecPlaneRef floorplane;
-  native transient private TSecPlaneRef ceilplane;
-  native transient private sec_surface_t *realfloor;
-  native transient private sec_surface_t *realceil;
-  native transient private sec_surface_t *fakefloor; // can be `nullptr`
-  native transient private sec_surface_t *fakeceil; // can be `nullptr`
-  int count;
-  native transient drawseg_t *lines;
+  readonly sec_region_t *secregion;
+  readonly subregion_t *next;
+  native transient readonly TSecPlaneRef floorplane;
+  native transient readonly TSecPlaneRef ceilplane;
+  native transient readonly sec_surface_t *realfloor;
+  native transient readonly sec_surface_t *realceil;
+  native transient readonly sec_surface_t *fakefloor; // can be `nullptr`
+  native transient readonly sec_surface_t *fakeceil; // can be `nullptr`
+  native transient readonly bool bZeroSkyFloorHack;
+  readonly int count;
+  native transient readonly drawseg_t *lines;
 };
 
 
