@@ -1530,13 +1530,10 @@ static void PositionModel (TVec &Origin, TAVec &Angles, VMeshModel *wpmodel, int
 
 //==========================================================================
 //
-//  FindFrame
+//  UpdateClassFrameCache
 //
 //==========================================================================
-static int FindFrame (VClassModelScript &Cls, const VAliasModelFrameInfo &Frame, float Inter) {
-  // try cached frames
-  if (Cls.OneForAll) return 0; // guaranteed
-
+static void UpdateClassFrameCache (VClassModelScript &Cls) {
   if (!Cls.CacheBuilt) {
     for (int i = 0; i < Cls.Frames.length(); ++i) {
       VScriptedModelFrame &frm = Cls.Frames[i];
@@ -1572,6 +1569,19 @@ static int FindFrame (VClassModelScript &Cls, const VAliasModelFrameInfo &Frame,
     }
     Cls.CacheBuilt = true;
   }
+}
+
+
+//==========================================================================
+//
+//  FindFrame
+//
+//==========================================================================
+static int FindFrame (VClassModelScript &Cls, const VAliasModelFrameInfo &Frame, float Inter) {
+  UpdateClassFrameCache(Cls);
+
+  // try cached frames
+  if (Cls.OneForAll) return 0; // guaranteed
 
 #if 0
   int Ret = -1;
@@ -1639,20 +1649,63 @@ static int FindFrame (VClassModelScript &Cls, const VAliasModelFrameInfo &Frame,
 static int FindNextFrame (VClassModelScript &Cls, int FIdx, const VAliasModelFrameInfo &Frame, float Inter, float &InterpFrac) {
   if (FIdx < 0) return -1; // just in case
   const VScriptedModelFrame &FDef = Cls.Frames[FIdx];
-  if (FIdx < Cls.Frames.length()-1) {
-    const VScriptedModelFrame &frm = Cls.Frames[FIdx+1];
-    if (FDef.sprite != NAME_None) {
-      if (frm.sprite == FDef.sprite && frm.frame == FDef.frame) {
-        InterpFrac = (Inter-FDef.Inter)/(frm.Inter-FDef.Inter);
-        return FIdx+1;
-      }
-    } else if (frm.Number == FDef.Number) {
-      InterpFrac = (Inter-FDef.Inter)/(Cls.Frames[FIdx+1].Inter-FDef.Inter);
-      return FIdx+1;
+
+  #if 1
+  UpdateClassFrameCache(Cls);
+
+  // walk the list
+  if (FDef.sprite != NAME_None) {
+    // by sprite name
+    for (int nidx = FDef.nextSpriteIdx; nidx >= 0; nidx = Cls.Frames[nidx].nextSpriteIdx) {
+      const VScriptedModelFrame &nfrm = Cls.Frames[nidx];
+      if (nfrm.sprite != FDef.sprite || nfrm.frame != FDef.frame) continue;
+      if (FDef.ModelIndex != nfrm.ModelIndex || FDef.SubModelIndex != nfrm.SubModelIndex) continue;
+      if (nfrm.Inter <= FDef.Inter) continue;
+      // i found her!
+      InterpFrac = (Inter-FDef.Inter)/(nfrm.Inter-FDef.Inter);
+      //GCon->Logf(NAME_Debug, "INTERFRAME MODEL FOR '%s' %c (%g -> %g : %g); class='%s'; model='%s'; Inter=%g", *FDef.sprite, 'A'+FDef.frame, FDef.Inter, nfrm.Inter, InterpFrac, *Cls.Name, *Cls.Model->Name, Inter);
+      return nidx;
+    }
+  } else {
+    // by frame index
+    for (int nidx = FDef.nextNumberIdx; nidx >= 0; nidx = Cls.Frames[nidx].nextNumberIdx) {
+      const VScriptedModelFrame &nfrm = Cls.Frames[nidx];
+      if (nfrm.Number != FDef.Number) continue;
+      if (FDef.ModelIndex != nfrm.ModelIndex || FDef.SubModelIndex != nfrm.SubModelIndex) continue;
+      if (nfrm.Inter <= FDef.Inter) continue;
+      // i found her!
+      InterpFrac = (Inter-FDef.Inter)/(nfrm.Inter-FDef.Inter);
+      //GCon->Logf(NAME_Debug, "INTERFRAME MODEL FOR FRAME #%d (%g -> %g : %g); class='%s'; model='%s'; Inter=%g", FDef.Number, FDef.Inter, nfrm.Inter, InterpFrac, *Cls.Name, *Cls.Model->Name, Inter);
+      return nidx;
     }
   }
+  // no interframe models found, get normal frame
   InterpFrac = (Inter-FDef.Inter)/(1.0f-FDef.Inter);
   return FindFrame(Cls, Frame, 0);
+
+  #else
+  const int len = Cls.Frames.length();
+  const int nidx = FIdx+1;
+  if (nidx < len) {
+    const VScriptedModelFrame &nfrm = Cls.Frames[nidx];
+    do {
+      if (FDef.sprite != NAME_None) {
+        if (nfrm.sprite != FDef.sprite || nfrm.frame != FDef.frame) continue;
+        if (FDef.ModelIndex != nfrm.ModelIndex || FDef.SubModelIndex != nfrm.SubModelIndex) continue;
+      } else {
+        if (nfrm.Number != FDef.Number) continue;
+      }
+      const float diff = nfrm.Inter-FDef.Inter;
+      if (diff <= 0.0f) continue;
+      InterpFrac = (Inter-FDef.Inter)/diff;
+      if (!isFiniteF(InterpFrac)) InterpFrac = Inter;
+      return nidx;
+    } while (0);
+  }
+  // not found
+  InterpFrac = (Inter-FDef.Inter)/(1.0f-FDef.Inter);
+  return FindFrame(Cls, Frame, 0);
+  #endif
 }
 
 
