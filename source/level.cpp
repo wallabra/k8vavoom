@@ -443,7 +443,7 @@ void VLevel::AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, 
 
 //==========================================================================
 //
-//  VLevel::AddStaticLightRGB
+//  VLevel::MoveStaticLightByOwner
 //
 //==========================================================================
 void VLevel::MoveStaticLightByOwner (VEntity *Ent, const TVec &Origin) {
