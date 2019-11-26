@@ -245,6 +245,7 @@ enum {
 #include "particle/ParticleFountain.vc"
 #include "particle/Spark.vc"
 
+#include "dynlight/BaseStaticLightSource.vc"
 #include "dynlight/StaticLightSource.vc"
 #include "dynlight/StaticRGBLightSource.vc"
 #include "dynlight/DynamicLight.vc"

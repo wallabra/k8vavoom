@@ -116,7 +116,7 @@ final void SetOrigin2 (TVec origin, optional bool properFloorCheck, optional flo
   LinkToWorld(properFloorCheck:properFloorCheck);
 
   // don't fix positions for manual lights
-  if ((self !isa 'StaticLightSource') &&
+  if ((self !isa 'BaseStaticLightSource') &&
       (self !isa 'DynamicLight'))
   {
     // if we are way higher than a floor, check for 3d floors.
