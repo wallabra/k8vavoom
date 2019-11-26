@@ -444,7 +444,8 @@ public:
   void operator delete (void *);
   void operator delete (void *, const char *, int);
 
-  inline bool IsRefToCleanup () const { return !!(ObjectFlags&_OF_CleanupRef); }
+  inline bool IsRefToCleanup () const noexcept { return !!(ObjectFlags&_OF_CleanupRef); }
+  inline bool IsGoingToDie () const noexcept { return !!(ObjectFlags&(_OF_DelayedDestroy|_OF_Destroyed)); }
 
   // VObject interface
   virtual void Register ();
