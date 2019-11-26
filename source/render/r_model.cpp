@@ -1643,69 +1643,77 @@ static int FindFrame (VClassModelScript &Cls, const VAliasModelFrameInfo &Frame,
 
 //==========================================================================
 //
+//  CalcIntermodelInterpFrac
+//
+//==========================================================================
+static inline float CalcIntermodelInterpFrac (const float Inter, const VScriptedModelFrame &FDef, const VScriptedModelFrame &nfrm) {
+  // invariant (no need to check it, though): (nfrm.Inter > FDef.Inter)
+  // invariant: (Inter >= 0 && Inter < 1)
+  //const float diff = nfrm.Inter-FDef.Inter;
+  //if (diff <= 0.0f) continue;
+  float res = (Inter-FDef.Inter)/(nfrm.Inter-FDef.Inter);
+  if (!isFiniteF(res)) res = (Inter-FDef.Inter)/(1.0f-FDef.Inter); // just in case
+  return res;
+}
+
+
+//==========================================================================
+//
 //  FindNextFrame
 //
 //==========================================================================
 static int FindNextFrame (VClassModelScript &Cls, int FIdx, const VAliasModelFrameInfo &Frame, float Inter, float &InterpFrac) {
-  if (FIdx < 0) return -1; // just in case
+  if (FIdx < 0) { InterpFrac = 0.0f; return -1; } // just in case
+  UpdateClassFrameCache(Cls);
+  if (Inter < 0.0f) Inter = 0.0f; // just in case
+
   const VScriptedModelFrame &FDef = Cls.Frames[FIdx];
 
-  #if 1
-  UpdateClassFrameCache(Cls);
-
+  // previous code was using `FIdx+1`, and it was wrong
+  // just in case, check for valid `Inter`
   // walk the list
-  if (FDef.sprite != NAME_None) {
-    // by sprite name
-    for (int nidx = FDef.nextSpriteIdx; nidx >= 0; nidx = Cls.Frames[nidx].nextSpriteIdx) {
-      const VScriptedModelFrame &nfrm = Cls.Frames[nidx];
-      if (nfrm.sprite != FDef.sprite || nfrm.frame != FDef.frame) continue;
-      if (FDef.ModelIndex != nfrm.ModelIndex || FDef.SubModelIndex != nfrm.SubModelIndex) continue;
-      if (nfrm.Inter <= FDef.Inter) continue;
-      // i found her!
-      InterpFrac = (Inter-FDef.Inter)/(nfrm.Inter-FDef.Inter);
-      //GCon->Logf(NAME_Debug, "INTERFRAME MODEL FOR '%s' %c (%g -> %g : %g); class='%s'; model='%s'; Inter=%g", *FDef.sprite, 'A'+FDef.frame, FDef.Inter, nfrm.Inter, InterpFrac, *Cls.Name, *Cls.Model->Name, Inter);
-      return nidx;
-    }
-  } else {
-    // by frame index
-    for (int nidx = FDef.nextNumberIdx; nidx >= 0; nidx = Cls.Frames[nidx].nextNumberIdx) {
-      const VScriptedModelFrame &nfrm = Cls.Frames[nidx];
-      if (nfrm.Number != FDef.Number) continue;
-      if (FDef.ModelIndex != nfrm.ModelIndex || FDef.SubModelIndex != nfrm.SubModelIndex) continue;
-      if (nfrm.Inter <= FDef.Inter) continue;
-      // i found her!
-      InterpFrac = (Inter-FDef.Inter)/(nfrm.Inter-FDef.Inter);
-      //GCon->Logf(NAME_Debug, "INTERFRAME MODEL FOR FRAME #%d (%g -> %g : %g); class='%s'; model='%s'; Inter=%g", FDef.Number, FDef.Inter, nfrm.Inter, InterpFrac, *Cls.Name, *Cls.Model->Name, Inter);
-      return nidx;
-    }
-  }
-  // no interframe models found, get normal frame
-  InterpFrac = (Inter-FDef.Inter)/(1.0f-FDef.Inter);
-  return FindFrame(Cls, Frame, 0);
-
-  #else
-  const int len = Cls.Frames.length();
-  const int nidx = FIdx+1;
-  if (nidx < len) {
-    const VScriptedModelFrame &nfrm = Cls.Frames[nidx];
-    do {
-      if (FDef.sprite != NAME_None) {
+  if (FDef.Inter < 1.0f) {
+    // doesn't finish time slice
+    int nidx = -1;
+    if (FDef.sprite != NAME_None) {
+      // by sprite name
+      for (nidx = FDef.nextSpriteIdx; nidx >= 0; nidx = Cls.Frames[nidx].nextSpriteIdx) {
+        const VScriptedModelFrame &nfrm = Cls.Frames[nidx];
         if (nfrm.sprite != FDef.sprite || nfrm.frame != FDef.frame) continue;
         if (FDef.ModelIndex != nfrm.ModelIndex || FDef.SubModelIndex != nfrm.SubModelIndex) continue;
-      } else {
-        if (nfrm.Number != FDef.Number) continue;
+        if (nfrm.Inter < FDef.Inter) continue;
+        // i found her!
+        break;
       }
-      const float diff = nfrm.Inter-FDef.Inter;
-      if (diff <= 0.0f) continue;
-      InterpFrac = (Inter-FDef.Inter)/diff;
-      if (!isFiniteF(InterpFrac)) InterpFrac = Inter;
+    } else {
+      // by frame index
+      for (nidx = FDef.nextNumberIdx; nidx >= 0; nidx = Cls.Frames[nidx].nextNumberIdx) {
+        const VScriptedModelFrame &nfrm = Cls.Frames[nidx];
+        if (nfrm.Number != FDef.Number) continue;
+        if (FDef.ModelIndex != nfrm.ModelIndex || FDef.SubModelIndex != nfrm.SubModelIndex) continue;
+        if (nfrm.Inter < FDef.Inter) continue;
+        // i found her!
+        break;
+      }
+    }
+
+    // found interframe?
+    if (nidx >= 0) {
+      const VScriptedModelFrame &nfrm = Cls.Frames[nidx];
+      if (nfrm.Inter <= FDef.Inter) {
+        InterpFrac = 1.0f;
+      } else {
+        float res = (Inter-FDef.Inter)/(nfrm.Inter-FDef.Inter);
+        if (!isFiniteF(res)) res = 1.0f; // just in case
+        InterpFrac = res;
+      }
       return nidx;
-    } while (0);
+    }
   }
-  // not found
-  InterpFrac = (Inter-FDef.Inter)/(1.0f-FDef.Inter);
+
+  // no interframe models found, get normal frame
+  InterpFrac = (FDef.Inter >= 0.0f && FDef.Inter < 1.0f ? (Inter-FDef.Inter)/(1.0f-FDef.Inter) : 1.0f);
   return FindFrame(Cls, Frame, 0);
-  #endif
 }
 
 
