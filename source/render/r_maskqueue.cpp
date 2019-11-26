@@ -78,6 +78,8 @@ static VCvarB r_fake_shadows_players("r_fake_shadows_players", true, "Render fak
 static VCvarB r_fake_shadow_additive_missiles("r_fake_shadow_additive_missiles", true, "Render shadows from additive projectiles?", CVAR_Archive);
 static VCvarB r_fake_shadow_additive_monsters("r_fake_shadow_additive_monsters", true, "Render shadows from additive monsters?", CVAR_Archive);
 
+static VCvarB dbg_disable_sprite_sorting("dbg_disable_sprite_sorting", false, "Disable sprite sorting (this WILL glitch renderer)?", /*CVAR_Archive|*/CVAR_PreInit);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern "C" {
@@ -682,7 +684,9 @@ void VRenderLevelShared::DrawTranslucentPolys () {
     //GCon->Logf("DrawTranslucentPolys: first=%u; used=%u; count=%u", traspFirst, traspUsed, traspUsed-traspFirst);
 
     // sort 'em
-    timsort_r(dls.DrawSpriteList.ptr(), dls.DrawSpriteList.length(), sizeof(dls.DrawSpriteList[0]), &traspCmp, nullptr);
+    if (!dbg_disable_sprite_sorting) {
+      timsort_r(dls.DrawSpriteList.ptr(), dls.DrawSpriteList.length(), sizeof(dls.DrawSpriteList[0]), &traspCmp, nullptr);
+    }
 
 #define MAX_POFS  (10)
     bool pofsEnabled = false;
