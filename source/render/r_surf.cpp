@@ -29,7 +29,8 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static VCvarB r_hack_transtop("r_hack_transtop", true, "Allow \"Transparent Top Texture\" hack?", CVAR_PreInit|CVAR_Archive);
+static VCvarB r_hack_transparent_doors("r_hack_transparent_doors", true, "Transparent doors hack.", CVAR_Archive);
+static VCvarB r_hack_zero_sky("r_hack_zero_sky", true, "ZeroSky hack (Doom II MAP01 extra floor fix).", CVAR_Archive);
 
 
 //**************************************************************************
@@ -147,7 +148,7 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
 
   // if current sector has zero height, and its ceiling is sky, and its floor is not sky, skip floor creation
   // this is what removes extra floors on Doom II MAP01, for example
-  if (!fake && IsZeroSkyFloorHack(sub, sreg->secregion)) {
+  if (!fake && r_hack_zero_sky && IsZeroSkyFloorHack(sub, sreg->secregion)) {
     sreg->flags |= subregion_t::SRF_ZEROSKY_FLOOR_HACK;
     // we still need to create this floor, because it may be reactivated later
   } else {
@@ -729,7 +730,7 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
   // actually, 2s "door" wall without top/bottom textures, amd with
   int peghack = 0;
   unsigned hackflag = 0;
-  if (r_hack_transtop && TTex->Type == TEXTYPE_Null && IsTransDoorHackTop(seg)) {
+  if (r_hack_transparent_doors && TTex->Type == TEXTYPE_Null && IsTransDoorHackTop(seg)) {
     TTex = GTextureManager(sidedef->MidTexture);
     //peghack = ML_DONTPEGTOP;
     hackflag = surface_t::TF_TOPHACK;
