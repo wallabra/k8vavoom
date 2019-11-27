@@ -724,6 +724,8 @@ struct ShaderInfo {
   char *fssrc;
   // basedir for includes (can be nullptr)
   char *basedir;
+  // inclide dir (build from basedir)
+  char *incdir;
   // defines (nullptr, or array of chars, each define terminates with '\0')
   char *defines;
   size_t defsize;
@@ -743,6 +745,7 @@ void clearShaderList (ShaderInfo **slist) {
     xfree(si->vssrc);
     xfree(si->fssrc);
     xfree(si->basedir);
+    xfree(si->incdir);
     xfree(si->defines);
     clearLocs(&si->locs);
     xfree(si);
@@ -786,11 +789,16 @@ int hasDefine (ShaderInfo *si, const char *defstr) {
 // `ShaderList` eaten
 void parseShaderList (Parser *par, const char *basebase) {
   char *basedir = nullptr;
+  char *incdir = nullptr;
   if (prCheck(par, "basedir")) {
     prExpect(par, "=");
     basedir = va("%s/%s", basebase, prExpectString(par));
   }
   if (!basedir) basedir = xstrdup(basebase);
+  if (prCheck(par, "pakdir")) {
+    prExpect(par, "=");
+    incdir = xstrdupNull(prExpectString(par));
+  }
   prExpect(par, "{");
   while (!prCheck(par, "}")) {
     if (prCheck(par, ";")) continue;
@@ -825,6 +833,7 @@ void parseShaderList (Parser *par, const char *basebase) {
       prError(par, "expected vertex source option");
     }
     si->basedir = xstrdupNull(basedir);
+    si->incdir = xstrdupNull(incdir);
     // parameters
     if (prCheck(par, "{")) {
       // only "defines" for now
@@ -856,6 +865,7 @@ void parseShaderList (Parser *par, const char *basebase) {
       shaderlist = si;
     }
   }
+  xfree(incdir);
 }
 
 
@@ -1298,7 +1308,7 @@ int main (int argc, char **argv) {
     fprintf(foc, "\n");
 
     fprintf(foc, "void VOpenGLDrawer::VShaderDef_%s::Setup (VOpenGLDrawer *aowner) {\n", si->name);
-    fprintf(foc, "  MainSetup(aowner, \"%s\", \"glshaders/%s.vs\", \"glshaders/%s.fs\");\n", si->name, si->vssrc, si->fssrc);
+    fprintf(foc, "  MainSetup(aowner, \"%s\", \"%s\", \"glshaders/%s.vs\", \"glshaders/%s.fs\");\n", si->name, (si->incdir ? si->incdir : ""), si->vssrc, si->fssrc);
     fprintf(foc, "}\n");
     fprintf(foc, "\n");
 
