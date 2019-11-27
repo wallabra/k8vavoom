@@ -257,6 +257,7 @@ VStr Sys_FindFileCI (VStr path, bool lastIsDir) {
 #include <sys/time.h>
 #include <sys/types.h>
 #include <time.h>
+#include <utime.h>
 
 struct DirInfo {
   DIR *dh;
@@ -323,6 +324,19 @@ int Sys_FileTime (VStr path) {
   struct stat buf;
   if (stat(*path, &buf) == -1) return -1;
   return (S_ISREG(buf.st_mode) ? buf.st_mtime : -1);
+}
+
+
+//==========================================================================
+//
+//  Sys_Touch
+//
+//==========================================================================
+bool Sys_Touch (VStr path) {
+  if (path.isEmpty()) return -1;
+  utimbuf tv;
+  tv.actime = tv.modtime = time(NULL);
+  return (utime(*path, &tv) == 0);
 }
 
 
@@ -575,6 +589,7 @@ VStr Sys_GetUserName () {
 #include <sys/timeb.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <utime.h>
 #include <windows.h>
 
 #ifndef R_OK
@@ -650,6 +665,19 @@ int Sys_FileTime (VStr path) {
   struct stat buf;
   if (stat(*path, &buf) == -1) return -1;
   return buf.st_mtime;
+}
+
+
+//==========================================================================
+//
+//  Sys_Touch
+//
+//==========================================================================
+bool Sys_Touch (VStr path) {
+  if (path.isEmpty()) return -1;
+  utimbuf tv;
+  tv.actime = tv.modtime = time(NULL);
+  return (utime(*path, &tv) == 0);
 }
 
 

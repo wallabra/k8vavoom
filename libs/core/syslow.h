@@ -38,6 +38,7 @@ VStr Sys_FindFileCI (VStr path, bool lastIsDir=false);
 bool Sys_FileExists (VStr filename);
 bool Sys_DirExists (VStr path);
 int Sys_FileTime (VStr path); // returns -1 if not present, or time in unix epoch
+bool Sys_Touch (VStr path);
 int Sys_CurrFileTime (); // return current time in unix epoch
 bool Sys_CreateDirectory (VStr path);
 
