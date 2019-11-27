@@ -202,10 +202,11 @@ GLint VOpenGLDrawer::glGetAttrLoc (const char *prog, GLhandleARB pid, const char
 //  VOpenGLDrawer::VGLShader::Setup
 //
 //==========================================================================
-void VOpenGLDrawer::VGLShader::MainSetup (VOpenGLDrawer *aowner, const char *aprogname, const char *avssrcfile, const char *afssrcfile) {
+void VOpenGLDrawer::VGLShader::MainSetup (VOpenGLDrawer *aowner, const char *aprogname, const char *aincdir, const char *avssrcfile, const char *afssrcfile) {
   next = nullptr;
   owner = aowner;
   progname = aprogname;
+  incdir = aincdir;
   vssrcfile = avssrcfile;
   fssrcfile = afssrcfile;
   prog = -1;
@@ -242,8 +243,8 @@ void VOpenGLDrawer::VGLShader::Deactivate () {
 //==========================================================================
 void VOpenGLDrawer::VGLShader::Compile () {
   if (developer) GCon->Logf(NAME_Dev, "compiling shader '%s'...", progname);
-  GLhandleARB VertexShader = owner->LoadShader(progname, GL_VERTEX_SHADER_ARB, vssrcfile, defines);
-  GLhandleARB FragmentShader = owner->LoadShader(progname, GL_FRAGMENT_SHADER_ARB, fssrcfile, defines);
+  GLhandleARB VertexShader = owner->LoadShader(progname, incdir, GL_VERTEX_SHADER_ARB, vssrcfile, defines);
+  GLhandleARB FragmentShader = owner->LoadShader(progname, incdir, GL_FRAGMENT_SHADER_ARB, fssrcfile, defines);
   prog = owner->CreateProgram(progname, VertexShader, FragmentShader);
   LoadUniforms();
 }
@@ -2065,7 +2066,7 @@ static VStr getDirectiveArg (VStr s) {
 //  VOpenGLDrawer::LoadShader
 //
 //==========================================================================
-GLhandleARB VOpenGLDrawer::LoadShader (const char *progname, GLenum Type, VStr FileName, const TArray<VStr> &defines) {
+GLhandleARB VOpenGLDrawer::LoadShader (const char *progname, const char *incdircs, GLenum Type, VStr FileName, const TArray<VStr> &defines) {
   // load source file
   VStr ssrc = readTextFile(FileName);
 
@@ -2079,6 +2080,16 @@ GLhandleARB VOpenGLDrawer::LoadShader (const char *progname, GLenum Type, VStr F
   // build source text
   bool needToAddRevZ = CanUseRevZ();
   bool needToAddDefines = (needToAddRevZ || defines.length() > 0);
+
+  VStr incdir(incdircs);
+  incdir = incdir.fixSlashes();
+  if (!incdir.isEmpty()) {
+    incdir = incdir.appendTrailingSlash();
+  } else {
+    incdir = FileName.extractFilePath();
+  }
+
+  //GCon->Logf(NAME_Debug, "<%s>: incdir: <%s> (%s); file: <%s>", progname, incdircs, *incdir, *FileName);
 
   // process $include, add defines
   //FIXME: nested "$include", and proper directive parsing
@@ -2115,7 +2126,7 @@ GLhandleARB VOpenGLDrawer::LoadShader (const char *progname, GLenum Type, VStr F
     if (cmd != "include") Sys_Error("%s", va("invalid directive \"%s\" in shader '%s'", *cmd, *FileName));
     VStr fname = getDirectiveArg(line);
     if (fname.length() == 0) Sys_Error("%s", va("directive \"%s\" in shader '%s' expects file name", *cmd, *FileName));
-    VStr incf = readTextFile(FileName.extractFilePath()+fname);
+    VStr incf = readTextFile(incdir+fname);
     if (incf.length() && incf[incf.length()-1] != '\n') incf += '\n';
     incf += ssrc;
     ssrc = incf;

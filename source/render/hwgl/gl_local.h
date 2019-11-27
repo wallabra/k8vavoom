@@ -458,6 +458,7 @@ public:
     VGLShader *next;
     VOpenGLDrawer *owner;
     const char *progname;
+    const char *incdir;
     const char *vssrcfile;
     const char *fssrcfile;
     // compiled vertex program
@@ -472,7 +473,7 @@ public:
   public:
     VGLShader() : next(nullptr), owner(nullptr), progname(nullptr), vssrcfile(nullptr), fssrcfile(nullptr), prog(-1) {}
 
-    void MainSetup (VOpenGLDrawer *aowner, const char *aprogname, const char *avssrcfile, const char *afssrcfile);
+    void MainSetup (VOpenGLDrawer *aowner, const char *aprogname, const char *aincdir, const char *avssrcfile, const char *afssrcfile);
 
     virtual void Compile ();
     virtual void Unload ();
@@ -976,7 +977,7 @@ protected:
   void DoHorizonPolygon (surface_t *surf);
   void DrawPortalArea (VPortal *Portal);
 
-  GLhandleARB LoadShader (const char *progname, GLenum Type, VStr FileName, const TArray<VStr> &defines=TArray<VStr>());
+  GLhandleARB LoadShader (const char *progname, const char *incdir, GLenum Type, VStr FileName, const TArray<VStr> &defines=TArray<VStr>());
   GLhandleARB CreateProgram (const char *progname, GLhandleARB VertexShader, GLhandleARB FragmentShader);
 
   void UploadModel (VMeshModel *Mdl);

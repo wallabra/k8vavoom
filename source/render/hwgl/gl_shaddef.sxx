@@ -139,7 +139,7 @@ Set SimpleFogSet {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-ShaderList basedir="basev/common/glshaders" {
+ShaderList basedir="basev/common/glshaders" pakdir="glshaders" {
   Shader DrawFixedCol both="draw_fixed_col";
   Shader DrawSimple both="draw_simple";
   Shader DrawSimpleLight both="draw_simple" { define "LIGHTING"; }
