@@ -2,4 +2,4 @@
 $include "common/common.inc"
 
 #define PARTICLES_SMOOTH
-$include "particle_main.fs"
+$include "particle/particle_main.fs"

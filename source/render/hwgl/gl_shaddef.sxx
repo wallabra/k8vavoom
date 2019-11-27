@@ -140,59 +140,61 @@ Set SimpleFogSet {
 
 // ////////////////////////////////////////////////////////////////////////// //
 ShaderList basedir="basev/common/glshaders" pakdir="glshaders" {
-  Shader DrawFixedCol both="draw_fixed_col";
-  Shader DrawSimple both="draw_simple";
-  Shader DrawSimpleLight both="draw_simple" { define "LIGHTING"; }
-  Shader DrawShadow vertex="draw_simple" fragment="draw_shadow";
-  Shader DrawAutomap both="draw_automap";
+  Shader DrawFixedCol both="draw/draw_fixed_col";
+  Shader DrawSimple both="draw/draw_simple";
+  Shader DrawSimpleLight both="draw/draw_simple" { define "LIGHTING"; }
+  Shader DrawShadow vertex="draw/draw_simple" fragment="draw/draw_shadow";
+  Shader DrawAutomap both="draw/draw_automap";
 
   Shader SurfZBuf both="surf_zbuf";
-  Shader [advanced] SurfShadowVolume vertex="surf_svol" fragment="surf_zbuf";
 
-  Shader SurfDecalNoLMap both="surf_decal_nolmap";
-  Shader SurfDecalLMap both="surf_decal_lmap";
-  Shader SurfAdvDecal both="surf_decal_adv";
+  Shader SurfDecalNoLMap both="decal/surf_decal_nolmap";
+  Shader SurfDecalLMap both="decal/surf_decal_lmap";
+  Shader SurfAdvDecal both="decal/surf_decal_adv";
 
-  Shader SurfSimple both="surf_simple";
-  Shader SurfSimpleMasked both="surf_simple" { define "VV_SIMPLE_MASKED"; }
-  Shader SurfSimpleBrightmap both="surf_simple" { define "VV_SIMPLE_BRIGHTMAP"; }
+  Shader SurfSimple both="lightmap/surf_simple";
+  Shader SurfSimpleMasked both="lightmap/surf_simple" { define "VV_SIMPLE_MASKED"; }
+  Shader SurfSimpleBrightmap both="lightmap/surf_simple" { define "VV_SIMPLE_BRIGHTMAP"; }
 
-  Shader SurfLightmap both="surf_lightmap";
-  Shader SurfLightmapMasked both="surf_lightmap" { define "VV_SIMPLE_MASKED"; }
-  Shader SurfLightmapBrightmap both="surf_lightmap" { define "VV_LIGHTMAP_BRIGHTMAP"; }
+  Shader SurfLightmap both="lightmap/surf_lightmap";
+  Shader SurfLightmapMasked both="lightmap/surf_lightmap" { define "VV_SIMPLE_MASKED"; }
+  Shader SurfLightmapBrightmap both="lightmap/surf_lightmap" { define "VV_LIGHTMAP_BRIGHTMAP"; }
 
-  Shader SurfSky both="surf_sky";
-  Shader SurfDSky both="surf_dsky";
+  Shader SurfSky both="sky/surf_sky";
+  Shader SurfDSky both="sky/surf_dsky";
 
-  Shader SurfMasked both="surf_masked";
-  Shader SurfMaskedBrightmap both="surf_masked" { define "VV_MASKED_BRIGHTMAP"; }
-  Shader SurfMaskedGlow both="surf_masked" { define "VV_MASKED_GLOW"; }
-  Shader SurfMaskedBrightmapGlow both="surf_masked" { defines { "VV_MASKED_BRIGHTMAP", "VV_MASKED_GLOW" } }
-  Shader SurfMaskedFakeShadow vertex="surf_masked" fragment="surf_masked_fakeshadow";
+  Shader SurfMasked both="masked/surf_masked";
+  Shader SurfMaskedBrightmap both="masked/surf_masked" { define "VV_MASKED_BRIGHTMAP"; }
+  Shader SurfMaskedGlow both="masked/surf_masked" { define "VV_MASKED_GLOW"; }
+  Shader SurfMaskedBrightmapGlow both="masked/surf_masked" { defines { "VV_MASKED_BRIGHTMAP", "VV_MASKED_GLOW" } }
+  Shader SurfMaskedFakeShadow vertex="masked/surf_masked" fragment="masked/surf_masked_fakeshadow";
 
-  Shader SurfPartSq vertex="particle" fragment="particle_sq";
-  Shader SurfPartSm vertex="particle" fragment="particle_sm";
+  Shader SurfPartSq vertex="particle/particle" fragment="particle/particle_sq";
+  Shader SurfPartSm vertex="particle/particle" fragment="particle/particle_sm";
 
-  Shader [advanced] ShadowsAmbient both="shadows_surf_ambient";
-  Shader [advanced] ShadowsAmbientMasked both="shadows_surf_ambient" { define "VV_AMBIENT_MASKED_WALL"; }
-  Shader [advanced] ShadowsAmbientBrightmap both="shadows_surf_ambient" { define "VV_AMBIENT_BRIGHTMAP_WALL"; }
-  Shader [advanced] ShadowsSurfTransDecals both="shadows_surf_transdecals";
-  Shader [advanced] ShadowsTexture both="shadows_surf_texture";
-  Shader [advanced] ShadowsTextureMasked both="shadows_surf_texture" { define "VV_TEXTURED_MASKED_WALL"; }
-  Shader [advanced] ShadowsFog both="shadows_surf_fog";
-  Shader [advanced] ShadowsFogMasked both="shadows_surf_fog" { defines { "VV_MASKED_FOG" } }
-  Shader [advanced] ShadowsLight both="shadows_surf_light";
-  Shader [advanced] ShadowsLightSpot both="shadows_surf_light" { define "VV_SPOTLIGHT"; }
-  Shader [advanced] ShadowsLightDbg both="shadows_surf_light" { define "VV_DEBUG_LIGHT"; }
-  Shader [advanced] ShadowsLightSpotDbg both="shadows_surf_light" { defines { "VV_DEBUG_LIGHT", "VV_SPOTLIGHT" } }
+  Shader [advanced] SurfShadowVolume both="shadowvol/surf_svol";
 
-  Shader SurfModel both="surf_model";
-  Shader [advanced] ShadowsModelAmbient both="shadows_model_ambient";
-  Shader [advanced] ShadowsModelTextures both="shadows_model_textures";
-  Shader [advanced] ShadowsModelLight both="shadows_model_light";
-  Shader [advanced] ShadowsModelLightSpot both="shadows_model_light" { define "VV_SPOTLIGHT"; }
-  Shader [advanced] ShadowsModelShadow both="shadows_model_shadow";
-  Shader [advanced] ShadowsModelFog both="shadows_model_fog";
+  Shader [advanced] ShadowsAmbient both="shadowvol/surf/shadows_surf_ambient";
+  Shader [advanced] ShadowsAmbientMasked both="shadowvol/surf/shadows_surf_ambient" { define "VV_AMBIENT_MASKED_WALL"; }
+  Shader [advanced] ShadowsAmbientBrightmap both="shadowvol/surf/shadows_surf_ambient" { define "VV_AMBIENT_BRIGHTMAP_WALL"; }
+  Shader [advanced] ShadowsSurfTransDecals both="shadowvol/surf/shadows_surf_transdecals";
+  Shader [advanced] ShadowsTexture both="shadowvol/surf/shadows_surf_texture";
+  Shader [advanced] ShadowsTextureMasked both="shadowvol/surf/shadows_surf_texture" { define "VV_TEXTURED_MASKED_WALL"; }
+  Shader [advanced] ShadowsFog both="shadowvol/surf/shadows_surf_fog";
+  Shader [advanced] ShadowsFogMasked both="shadowvol/surf/shadows_surf_fog" { defines { "VV_MASKED_FOG" } }
+  Shader [advanced] ShadowsLight both="shadowvol/surf/shadows_surf_light";
+  Shader [advanced] ShadowsLightSpot both="shadowvol/surf/shadows_surf_light" { define "VV_SPOTLIGHT"; }
+  Shader [advanced] ShadowsLightDbg both="shadowvol/surf/shadows_surf_light" { define "VV_DEBUG_LIGHT"; }
+  Shader [advanced] ShadowsLightSpotDbg both="shadowvol/surf/shadows_surf_light" { defines { "VV_DEBUG_LIGHT", "VV_SPOTLIGHT" } }
 
-  Shader DrawWipeType0 both="draw_wipe_type0";
+  Shader SurfModel both="lightmap/surf_model";
+
+  Shader [advanced] ShadowsModelAmbient both="shadowvol/model/shadows_model_ambient";
+  Shader [advanced] ShadowsModelTextures both="shadowvol/model/shadows_model_textures";
+  Shader [advanced] ShadowsModelLight both="shadowvol/model/shadows_model_light";
+  Shader [advanced] ShadowsModelLightSpot both="shadowvol/model/shadows_model_light" { define "VV_SPOTLIGHT"; }
+  Shader [advanced] ShadowsModelShadow both="shadowvol/model/shadows_model_shadow";
+  Shader [advanced] ShadowsModelFog both="shadowvol/model/shadows_model_fog";
+
+  Shader DrawWipeType0 both="wipe/draw_wipe_type0";
 }

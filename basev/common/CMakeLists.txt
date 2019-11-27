@@ -100,6 +100,26 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     glshaders/common/*.fs
     glshaders/common/*.vs
     glshaders/common/*.inc
+    glshaders/decal/*.fs
+    glshaders/decal/*.vs
+    glshaders/draw/*.fs
+    glshaders/draw/*.vs
+    glshaders/lightmap/*.fs
+    glshaders/lightmap/*.vs
+    glshaders/masked/*.fs
+    glshaders/masked/*.vs
+    glshaders/particle/*.fs
+    glshaders/particle/*.vs
+    glshaders/shadowvol/*.fs
+    glshaders/shadowvol/*.vs
+    glshaders/shadowvol/model/*.fs
+    glshaders/shadowvol/model/*.vs
+    glshaders/shadowvol/surf/*.fs
+    glshaders/shadowvol/surf/*.vs
+    glshaders/sky/*.fs
+    glshaders/sky/*.vs
+    glshaders/wipe/*.fs
+    glshaders/wipe/*.vs
   )
 add_custom_target(common_basepak ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3)
 
