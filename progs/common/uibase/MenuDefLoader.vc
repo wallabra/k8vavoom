@@ -235,13 +235,26 @@ void parse (ScriptsParser par) {
 
     if (par.Check("header")) {
       auto hdr = SpawnObject(MenuDefOptionSubHeader);
+      // condition?
+      if (par.Check("[")) {
+        //printdebug("HDR: condition (0)!");
+        hdr.cond = SpawnObject(MenuDefConditionBase);
+        hdr.cond.parse(par);
+      }
       if (par.Check("{")) {
         while (!par.Check("}")) {
           if (!hdr.parseOne(par)) par.ScriptError("invalid menudef command '%s'", par.String);
         }
       } else {
         par.ExpectString();
+        //printdebug("HDR: title=<%s>", par.String);
         string title = par.String;
+        // condition?
+        if (!hdr.cond && par.Check("[")) {
+          //printdebug("HDR: condition (1)!");
+          hdr.cond = SpawnObject(MenuDefConditionBase);
+          hdr.cond.parse(par);
+        }
         par.Expect(";");
         hdr.title = title;
       }
@@ -250,8 +263,13 @@ void parse (ScriptsParser par) {
     }
 
     if (par.Check("modsubmenus")) {
-      par.Expect(";");
       auto subplace = SpawnObject(MenuDefOptionModSubMenus);
+      // condition?
+      if (par.Check("[")) {
+        subplace.cond = SpawnObject(MenuDefConditionBase);
+        subplace.cond.parse(par);
+      }
+      par.Expect(";");
       options[$] = subplace;
       continue;
     }
