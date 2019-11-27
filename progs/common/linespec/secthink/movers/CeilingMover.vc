@@ -302,6 +302,7 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
       bStopOnCrush = Type == CEILEV_GenericCrush2;
       break;
   }
+  if (Crush < 0) Crush = 0;
   StartCeilingSound();
 }
 
@@ -345,13 +346,23 @@ void ActivateInStasis (int InTag) {
 //
 //==========================================================================
 override void Tick (float deltaTime) {
-  int res;
+  int res, crf;
+  bool stoc;
 
   switch (Direction) {
     case 0: // in stasis
       break;
     case 1: // up; `-1` for `crush` means "ignore stuck mobj"
-      res = MovePlane(sector:Sector, amount:Speed*deltaTime, dest:TopDist, crush:-1, floorOrCeiling:MOVE_PLANE_CEILING, direction:Direction, stopOnCrush:false/*bStopOnCrush*/);
+      // if destination is lower, use normal crush flag; also if it is not crushing, stop on crush unconditionally
+      if (Sector.ceiling.dist < TopDist) {
+        crf = Crush;
+        stoc = (crf ? bStopOnCrush : true); // stop on crush
+      } else {
+        crf = -1;
+        stoc = false;
+      }
+      //if (crf >= 0) print("%s: TopDist=%s; dist=%s; Crush=%s; bStopOnCrush=%B; stoc=%B", Sector-&XLevel.Sectors[0], TopDist, Sector.ceiling.dist, Crush, bStopOnCrush, stoc);
+      res = MovePlane(sector:Sector, amount:Speed*deltaTime, dest:TopDist, crush:crf, floorOrCeiling:MOVE_PLANE_CEILING, direction:Direction, stopOnCrush:stoc);
       if (res == RES_PASTDEST) {
         SectorStopSequence(Sector);
         switch (Type) {
