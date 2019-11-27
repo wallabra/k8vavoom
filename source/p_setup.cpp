@@ -1169,7 +1169,11 @@ load_again:
       //if (!glNodesFound) NeedNodesBuild = true;
     }
     delete strm;
-    if (cachedDataLoaded) forceNodeRebuildFromFixer = false; //k8: is this right?
+    if (cachedDataLoaded) {
+      forceNodeRebuildFromFixer = false; //k8: is this right?
+      // touch cache file, so it will survive longer
+      Sys_Touch(cacheFileName);
+    }
   }
 
   double NodesTime = -Sys_Time();

@@ -1133,6 +1133,7 @@ bool VRenderLevelLightmap::loadLightmaps (VStream *strm) {
   bool ok = loadLightmapsInternal(zipstrm);
   zipstrm->Close();
   if (!ok && !lmcacheUnknownSurfaceCount) lmcacheUnknownSurfaceCount = CountAllSurfaces();
+  if (ok && lmcacheUnknownSurfaceCount > 0 && lmcacheUnknownSurfaceCount == CountAllSurfaces()) ok = false; // totally wrong
   return ok;
 }
 
@@ -1271,7 +1272,12 @@ void VRenderLevelLightmap::PreRender () {
         if (lmc->IsError()) recalcLight = true;
         lmc->Close();
         delete lmc;
-        if (recalcLight) Sys_FileDelete(ccfname);
+        if (recalcLight) {
+          Sys_FileDelete(ccfname);
+        } else {
+          // touch cache file, so it will survive longer
+          Sys_Touch(ccfname);
+        }
       }
     }
 
