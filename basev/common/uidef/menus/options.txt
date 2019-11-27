@@ -8,13 +8,6 @@ menudef OptionsMenu {
     submenu = ControlsMain;
   }
 
-  /*
-  option submenu {
-    title = "Controls";
-    smclass = MenuScreenControls;
-  }
-  */
-
   option mod_controls {
     title = "Special Controls";
   }
@@ -52,6 +45,11 @@ menudef OptionsMenu {
   option submenu {
     title = "Gameplay Options";
     submenu = GameplayOptions;
+  }
+
+  option submenu {
+    title = "Map Hacks Options";
+    submenu = MapHacksOptions;
   }
 
   option submenu {

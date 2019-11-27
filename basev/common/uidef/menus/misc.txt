@@ -205,56 +205,6 @@ menudef MiscOptions {
   }
 
 
-  header "Deepwater options";
-
-  option bool {
-    title = "Classic deepwater";
-    cvar = deepwater_hacks;
-    help = "Fix self-referenced Deep Water sectors, so they will be rendered properly.";
-  }
-
-  option bool {
-    title = "Fix floor floodfill bugs";
-    cvar = deepwater_hacks_floor;
-    //textColor = LIGHTBLUE;
-    //textColor = DARKRED;
-    textColor = PURPLE;
-    help =
-      "This tries to fix sectors without low texture."
-      "You may know it as 'flat floodfill bug' in Vanilla."
-      "Currently this fixer is very simple, and can fix only simple cases."
-      "It may cause rendering glitches, but such cases are rare."
-      "\cJIf in doubt, turn this 'ON'. Yes, 'ON'!";
-  }
-
-  option bool {
-    title = "Fix ceiling floodfill bugs";
-    cvar = deepwater_hacks_ceiling;
-    //textColor = LIGHTBLUE;
-    //textColor = DARKRED;
-    textColor = PURPLE;
-    help =
-      "This tries to fix sectors without high texture."
-      "You may know it as 'flat floodfill bug' in Vanilla."
-      "Currently this fixer is very simple, and can fix only simple cases."
-      "It may cause rendering glitches, but such cases are rare."
-      "\cJIf in doubt, turn this 'ON'. Yes, 'ON'!";
-  }
-
-  option bool {
-    title = "Fix Hanging Bridges";
-    cvar = deepwater_hacks_bridges;
-    textColor = PURPLE;
-    help =
-      "This tries to fix 'Hanging Bridges'."
-      "Vanilla floodfill bug sometimes exploited to create bridges"
-      "that looks like hanging over the lower sector floor. Those"
-      "bridges are still 2D, but they are looking 3D."
-      "It may cause rendering glitches, but such cases are rare."
-      "\cJIf in doubt, turn this 'ON'. Yes, 'ON'!";
-  }
-
-
   header "Particle FX options";
 
   option bool {

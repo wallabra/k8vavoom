@@ -1,0 +1,82 @@
+menudef MapHacksOptions {
+  Title = "MAP HACKS OPTIONS";
+
+
+  option bool {
+    title = "ZeroSky Hack";
+    cvar = r_hack_zero_sky;
+    help =
+      "Try to workaround some mapping anomalies like white floor in"
+      "Doom II MAP01 secret outdor area."
+      ""
+      "This turns off floor rendering for sectors with zero height and"
+      "sky ceiling. Usually this works, but if you'll see no floor on"
+      "some lowering sectors, turn this off."
+      ""
+      "\cGWARNING! You must save and reload your game after changing this!";
+  }
+
+  option bool {
+    title = "Transparent Doors Hack";
+    cvar = r_hack_transparent_doors;
+    help =
+      "In Vanilla, there was a glitch that allowed creation of transparent"
+      "doors. It was used in many classic WADs like 'Memento Mori', for example."
+      "Usually this works as intended."
+      ""
+      "\cGWARNING! You must save and reload your game after changing this!";
+  }
+
+
+  header "Deepwater options";
+
+  option bool {
+    title = "Classic deepwater";
+    cvar = deepwater_hacks;
+    help = "Fix self-referenced Deep Water sectors, so they will be rendered properly.";
+  }
+
+  option bool {
+    title = "Fix floor floodfill bugs";
+    cvar = deepwater_hacks_floor;
+    //textColor = LIGHTBLUE;
+    //textColor = DARKRED;
+    textColor = PURPLE;
+    help =
+      "This tries to fix sectors without low texture."
+      "You may know it as 'flat floodfill bug' in Vanilla."
+      "Currently this fixer is very simple, and can fix only simple cases."
+      "It may cause rendering glitches, but such cases are rare."
+      ""
+      "\cGWARNING! You must restart the map after changing this!";
+  }
+
+  option bool {
+    title = "Fix ceiling floodfill bugs";
+    cvar = deepwater_hacks_ceiling;
+    //textColor = LIGHTBLUE;
+    //textColor = DARKRED;
+    textColor = PURPLE;
+    help =
+      "This tries to fix sectors without high texture."
+      "You may know it as 'flat floodfill bug' in Vanilla."
+      "Currently this fixer is very simple, and can fix only simple cases."
+      "It may cause rendering glitches, but such cases are rare."
+      ""
+      "\cGWARNING! You must restart the map after changing this!";
+  }
+
+  option bool {
+    title = "Fix Hanging Bridges";
+    cvar = deepwater_hacks_bridges;
+    textColor = PURPLE;
+    help =
+      "This tries to fix 'Hanging Bridges'."
+      "Vanilla floodfill bug sometimes exploited to create bridges"
+      "that looks like hanging over the lower sector floor. Those"
+      "bridges are still 2D, but they are looking 3D."
+      "It may cause rendering glitches, but such cases are rare."
+      ""
+      "\cGWARNING! You must restart the map after changing this!";
+  }
+}
