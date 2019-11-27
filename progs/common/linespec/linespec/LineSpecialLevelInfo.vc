@@ -1076,9 +1076,17 @@ override int ExecuteActionSpecial (int Special, int Arg1, int Arg2, int Arg3,
     case LNSPEC_FloorDonut:
       buttonSuccess = EV_DoDonut(Arg1, Arg2, Arg3, Arg4, Arg5);
       break;
-    case LNSPEC_FloorAndCeilingLowerRaise:
+    case LNSPEC_FloorAndCeilingLowerRaise: // Arg4=1998: emulate boom bug
+      //if (Arg4 == 1998) printdebug("BOOM: LNSPEC_FloorAndCeilingLowerRaise: tag=%s", Arg1);
       buttonSuccess = EV_DoCeiling(Arg1, Arg3, 0, 0, 0, CeilingMover::CEILEV_RaiseToHighest, Line);
-      buttonSuccess |= EV_DoFloor(Arg1, Arg2, 0, 0, 0, FloorMover::FLOOREV_LowerToLowest, Line);
+      if (Arg4 == 1998) {
+        if (!buttonSuccess) {
+          //print("   XXX: buttonSuccess=%s (FLOOR!)", buttonSuccess);
+          buttonSuccess = EV_DoFloor(Arg1, Arg2, 0, 0, 0, FloorMover::FLOOREV_LowerToLowest, Line);
+        }
+      } else {
+        buttonSuccess |= EV_DoFloor(Arg1, Arg2, 0, 0, 0, FloorMover::FLOOREV_LowerToLowest, Line);
+      }
       break;
     case LNSPEC_CeilingRaiseToNearest:
       buttonSuccess = EV_DoCeiling(Arg1, Arg2, Arg3, Arg4, Arg5, CeilingMover::CEILEV_RaiseToNearest, Line);
@@ -1374,7 +1382,7 @@ final int EV_DoCeiling (int Arg1, int Arg2, int Arg3, int Arg4, int Arg5, int Ty
 
     for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0; hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx)) {
       if (Sec->CeilingData || !Sec->lines.length) continue;
-      //printdebug("sec=%s; tag=%s", Sec-&XLevel.Sectors[0], Arg1);
+      //printdebug("sec=%s; tag=%s; type=%s", Sec-&XLevel.Sectors[0], Arg1, Type);
       // new ceiling thinker
       Rtn = true;
       Ceiling = SpawnThinker(CeilingMover);
