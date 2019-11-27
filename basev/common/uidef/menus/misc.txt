@@ -87,14 +87,6 @@ menudef MiscOptions {
   }
 
   option bool {
-    title = "Force node rebuilding";
-    cvar = loader_force_nodes_rebuild;
-    help =
-      "Always rebuild nodes for a map."
-      "\cJIf in doubt, leave this 'ON'.";
-  }
-
-  option bool {
     title = "Fast mode (suboptimal)";
     cvar = nodes_fast_mode;
     help =
@@ -109,7 +101,18 @@ menudef MiscOptions {
     cvar = nodes_show_warnings;
   }
 
-  option bool {
+
+  header "Prebuilt Nodes (dev)" [__k8vavoom_developer_version > 0];
+
+  option bool [__k8vavoom_developer_version > 0] {
+    title = "Force node rebuilding";
+    cvar = loader_force_nodes_rebuild;
+    help =
+      "Always rebuild nodes for a map."
+      "\cJIf in doubt, leave this 'ON'.";
+  }
+
+  option bool [__k8vavoom_developer_version > 0] {
     title = "Allow PWAD z-nodes";
     cvar = nodes_allow_compressed;
     help =
