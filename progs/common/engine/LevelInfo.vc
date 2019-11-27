@@ -463,8 +463,7 @@ final sector_t *getNextSector (line_t *line, sector_t *sec) {
   if (!(line->flags&ML_TWOSIDED)) return nullptr;
 
   if (line->frontsector == sec) {
-    if (line->backsector == sec) return nullptr;
-    return line->backsector;
+    return (line->backsector == sec ? nullptr : line->backsector);
   }
 
   return line->frontsector;
@@ -512,6 +511,7 @@ final float FindLowestFloorSurrounding (sector_t *sec, TVec *v) {
 //
 //==========================================================================
 final float FindHighestFloorSurrounding (sector_t *sec, TVec *v) {
+  if (sec.lines.length == 0) return sec.floor.maxz;
   TVec spot = *sec->lines[0]->v1;
   float floor = -99999.0;
   foreach (int i; 0..sec.lines.length) {
@@ -548,6 +548,7 @@ final float FindHighestFloorSurrounding (sector_t *sec, TVec *v) {
 //
 //==========================================================================
 final float FindNextHighestFloor (sector_t *sec, TVec *v) {
+  if (sec.lines.length == 0) return sec.floor.maxz;
   TVec spot = *sec->lines[0]->v1;
   float height = GetPlanePointZ(ref sec->floor, spot);
   float heightdiff = 99999.0;
@@ -589,6 +590,7 @@ final float FindNextHighestFloor (sector_t *sec, TVec *v) {
 //
 //==========================================================================
 final float FindNextLowestFloor (sector_t *sec, TVec *v) {
+  if (sec.lines.length == 0) return sec.floor.maxz;
   TVec spot = *sec->lines[0]->v1;
   float height = GetPlanePointZ(ref sec->floor, spot);
   float heightdiff = 99999.0;
@@ -630,6 +632,7 @@ final float FindNextLowestFloor (sector_t *sec, TVec *v) {
 //
 //==========================================================================
 final float FindNextLowestCeiling (sector_t *sec, TVec *v) {
+  if (sec.lines.length == 0) return sec.ceiling.minz; //k8: gozzo uses floor here; why?
   TVec spot = *sec->lines[0]->v1;
   float height = GetPlanePointZ(ref sec->ceiling, spot);
   float heightdiff = 99999.0;
@@ -671,6 +674,7 @@ final float FindNextLowestCeiling (sector_t *sec, TVec *v) {
 //
 //==========================================================================
 final float FindNextHighestCeiling (sector_t *sec, TVec *v) {
+  if (sec.lines.length == 0) return sec.ceiling.minz;
   TVec spot = *sec->lines[0]->v1;
   float height = GetPlanePointZ(ref sec->ceiling, spot);
   float heightdiff = 99999.0;
@@ -708,8 +712,9 @@ final float FindNextHighestCeiling (sector_t *sec, TVec *v) {
 //
 //==========================================================================
 final float FindLowestCeilingSurrounding (sector_t *sec, TVec *v) {
+  if (sec.lines.length == 0) return sec.ceiling.minz;
   TVec spot = *sec->lines[0]->v1;
-  float height = 99999.0;
+  float height = float.max;
   foreach (int i; 0..sec.lines.length) {
     line_t *check = sec->lines[i];
     sector_t *other = getNextSector(check, sec);
@@ -740,8 +745,9 @@ final float FindLowestCeilingSurrounding (sector_t *sec, TVec *v) {
 //
 //==========================================================================
 final float FindHighestCeilingSurrounding (sector_t *sec, TVec *v) {
+  if (sec.lines.length == 0) return sec.ceiling.minz;
   TVec spot = *sec->lines[0]->v1;
-  float height = -99999.0;
+  float height = -float.max;
   foreach (int i; 0..sec.lines.length) {
     line_t *check = sec->lines[i];
     sector_t *other = getNextSector(check, sec);
