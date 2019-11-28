@@ -37,6 +37,7 @@ VCvarF r_bloom_darken("r_bloom_darken", "8", "Bloom darken.", CVAR_Archive);
 VCvarF r_bloom_sample_scaledown("r_bloom_sample_scaledown", "2", "Bloom sample scale down.", CVAR_Archive);
 VCvarB r_bloom_autoexposure("r_bloom_autoexposure", true, "Use bloom autoexposure?", CVAR_Archive);
 VCvarF r_bloom_autoexposure_coeff("r_bloom_autoexposure_coeff", "1.5", "Bloom autoexposure coefficient.", CVAR_Archive);
+VCvarB r_bloom_id0_effect("r_bloom_id0_effect", false, "Special bloom effect for id0. ;-)", CVAR_Archive);
 
 
 //==========================================================================
@@ -149,10 +150,10 @@ void VOpenGLDrawer::BloomInitEffectTexture () {
   // we use mipmapping to calculate a 1-pixel average color for auto-exposure
   bloomMipmapCount = Q_log2(bloomWidth > bloomHeight ? bloomWidth : bloomHeight);
 
-  bloomeffectFBO.setLinearFilter(true);
+  bloomeffectFBO.setLinearFilter(!r_bloom_id0_effect);
   bloomeffectFBO.createTextureOnly(this, bloomWidth, bloomHeight, true);
 
-  bloomcoloraveragingFBO.setLinearFilter(true);
+  bloomcoloraveragingFBO.setLinearFilter(!r_bloom_id0_effect);
   bloomcoloraveragingFBO.createTextureOnly(this, bloomWidth, bloomHeight, true);
   glBindTexture(GL_TEXTURE_2D, bloomcoloraveragingFBO.getColorTid());
   bloomColAvgValid = false;
@@ -172,10 +173,12 @@ void VOpenGLDrawer::BloomInitEffectTexture () {
 //
 //==========================================================================
 void VOpenGLDrawer::BloomInitTextures () {
-  if (bloomWidth) {
-    int bw = bloomScrWdt/max2(1.0f, r_bloom_sample_scaledown.asFloat());
-    int bh = bloomScrHgt/max2(1.0f, r_bloom_sample_scaledown.asFloat());
-    if (bw == bloomWidth && bh == bloomHeight) return;
+  if (r_bloom_id0_effect != bloomeffectFBO.getLinearFilter()) {
+    if (bloomWidth) {
+      int bw = bloomScrWdt/max2(1.0f, r_bloom_sample_scaledown.asFloat());
+      int bh = bloomScrHgt/max2(1.0f, r_bloom_sample_scaledown.asFloat());
+      if (bw == bloomWidth && bh == bloomHeight) return;
+    }
   }
 
   BloomDeinit();
@@ -186,9 +189,9 @@ void VOpenGLDrawer::BloomInitTextures () {
   BloomInitEffectTexture();
 
   // init the "scratch" texture
-  bloomscratchFBO.setLinearFilter(true);
+  bloomscratchFBO.setLinearFilter(!r_bloom_id0_effect);
   bloomscratchFBO.createTextureOnly(this, bloomWidth, bloomHeight, true);
-  bloomscratch2FBO.setLinearFilter(true);
+  bloomscratch2FBO.setLinearFilter(!r_bloom_id0_effect);
   bloomscratch2FBO.createTextureOnly(this, bloomWidth, bloomHeight, true);
 
   // init the screen-size RBO
