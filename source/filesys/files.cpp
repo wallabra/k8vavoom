@@ -1756,6 +1756,7 @@ static int cliFnameCollector (VArgs &args, int idx) {
     pwf.skipDehacked = !!pwflag_SkipDehacked;
     pwf.storeInSave = sts;
     pwf.asDirectory = false;
+    //GCon->Logf(NAME_Debug, "<%s>: sdh=%d", *fname, pwflag_SkipDehacked);
 
     if (Sys_DirExists(fname)) {
       pwf.asDirectory = true;
@@ -2279,6 +2280,7 @@ void FL_Init () {
     PWadFile &pwf = pwadList[pwidx];
     fsys_skipSounds = pwf.skipSounds;
     fsys_skipSprites = pwf.skipSprites;
+    fsys_skipDehacked = pwf.skipDehacked;
     int nextfid = W_NextMountFileId();
 
     if (pwf.asDirectory) {
@@ -2323,6 +2325,7 @@ void FL_Init () {
   }
   fsys_skipSounds = false;
   fsys_skipSprites = false;
+  fsys_skipDehacked = false;
 
   // load custom mode pwads
   CustomModeLoadPwads(CM_POST_PWADS);
