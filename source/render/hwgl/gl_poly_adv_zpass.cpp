@@ -246,7 +246,7 @@ void VOpenGLDrawer::RenderSurfaceShadowVolumeZPassIntr (const surface_t *surf, c
       glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
       p_glUseProgramObjectARB(DrawAutomap_Program);
       //glEnable(GL_LINE_SMOOTH);
-      //glEnable(GL_BLEND);
+      //GLEnableBlend();
       glColor3f(1.0f, 1.0f, 0.0f);
       glBegin(GL_LINES);
         for (unsigned i = 0; i < vcount; ++i) {

@@ -36,6 +36,8 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+extern VCvarB r_bloom;
+
 VCvarB gl_pic_filtering("gl_pic_filtering", false, "Filter interface pictures.", CVAR_Archive);
 VCvarB gl_font_filtering("gl_font_filtering", false, "Filter 2D interface.", CVAR_Archive);
 VCvarF gl_maxdist("gl_maxdist", "8192", "Max view distance (too big values will cause z-buffer issues).", CVAR_Archive);
@@ -343,6 +345,7 @@ VOpenGLDrawer::VOpenGLDrawer ()
   shittyGPUCheckDone = false; // just in case
   atlasesGenerated = false;
   currentActiveFBO = nullptr;
+  blendEnabled = false;
   //cameraFBO[0].mOwner = nullptr;
   //cameraFBO[1].mOwner = nullptr;
 }
@@ -513,12 +516,15 @@ void VOpenGLDrawer::DeinitResolution () {
   //secondFBO.destroy();
   ambLightFBO.destroy();
   wipeFBO.destroy();
+  BloomDeinit();
   DeleteLightmapAtlases();
 }
 
 
 #define gl_(x)   p_##x = x##_t(GetExtFuncPtr(#x)); if (!p_##x) Sys_Error("OpenGL: `%s()` not found!", ""#x);
 #define glc_(x)  ({ p_##x = x##_t(GetExtFuncPtr(#x)); !!p_##x; })
+#define glg_(x)  p_##x = x##_t(GetExtFuncPtr(#x)); glAPISuccessFlag = glAPISuccessFlag && (!!p_##x)
+
 
 //==========================================================================
 //
@@ -526,6 +532,8 @@ void VOpenGLDrawer::DeinitResolution () {
 //
 //==========================================================================
 void VOpenGLDrawer::InitResolution () {
+  bool glAPISuccessFlag;
+
   if (currentActiveFBO != nullptr) {
     currentActiveFBO = nullptr;
     ReactivateCurrentFBO();
@@ -833,6 +841,22 @@ void VOpenGLDrawer::InitResolution () {
     gl_(glDrawRangeElementsEXT);
   }
 
+  // API required for bloom fx
+  glAPISuccessFlag = true;
+  glg_(glDeleteRenderbuffers);
+  glg_(glGenRenderbuffersEXT);
+  glg_(glRenderbufferStorageEXT);
+  glg_(glBindRenderbufferEXT);
+  glg_(glGenFramebuffersEXT);
+  glg_(glBindFramebufferEXT);
+  glg_(glFramebufferRenderbufferEXT);
+  glg_(glGenerateMipmapEXT);
+
+  if (!glAPISuccessFlag || !p_glBlitFramebuffer) {
+    GCon->Logf(NAME_Init, "OpenGL: bloom postprocessing effect disabled due to missing API");
+    r_bloom = false;
+  }
+
   if (hasBoundsTest) GCon->Logf(NAME_Init, "Found GL_EXT_depth_bounds_test...");
 
 
@@ -860,11 +884,11 @@ void VOpenGLDrawer::InitResolution () {
   //GCon->Logf("********* %d : %d *********", ScreenWidth, ScreenHeight);
 
   // allocate main FBO object
-  mainFBO.create(this, ScreenWidth, ScreenHeight, true); // create depthstencil
+  mainFBO.createDepthStencil(this, ScreenWidth, ScreenHeight);
   GCon->Logf(NAME_Init, "OpenGL: reverse z is %s", (useReverseZ ? "enabled" : "disabled"));
 
   mainFBO.activate();
-  glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Black Background
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // black background
   glClearDepth(!useReverseZ ? 1.0f : 0.0f);
   if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); // actually, this is better even for "normal" cases
   RestoreDepthFunc();
@@ -876,7 +900,7 @@ void VOpenGLDrawer::InitResolution () {
 
   // recreate camera FBOs
   for (auto &&cf : cameraFBOList) {
-    cf->fbo.create(this, cf->camwidth, cf->camheight, true); // create depthstencil
+    cf->fbo.createDepthStencil(this, cf->camwidth, cf->camheight); // create depthstencil
     cf->fbo.activate();
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // black background
     glClearDepth(!useReverseZ ? 1.0f : 0.0f);
@@ -889,10 +913,10 @@ void VOpenGLDrawer::InitResolution () {
   }
 
   // allocate ambient light FBO object
-  ambLightFBO.create(this, ScreenWidth, ScreenHeight); // don't create depthstencil
+  ambLightFBO.createTextureOnly(this, ScreenWidth, ScreenHeight);
 
   // allocate wipe FBO object
-  wipeFBO.create(this, ScreenWidth, ScreenHeight); // don't create depthstencil
+  wipeFBO.createTextureOnly(this, ScreenWidth, ScreenHeight);
 
   mainFBO.activate();
 
@@ -935,6 +959,7 @@ void VOpenGLDrawer::InitResolution () {
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+  blendEnabled = true;
 
   mInitialized = true;
 
@@ -948,6 +973,7 @@ void VOpenGLDrawer::InitResolution () {
 
 #undef gl_
 #undef glc_
+#undef glg_
 
 
 //==========================================================================
@@ -993,8 +1019,8 @@ void VOpenGLDrawer::Setup2D () {
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
-  //glDisable(GL_BLEND);
-  glEnable(GL_BLEND);
+  //GLDisableBlend();
+  GLEnableBlend();
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   if (HaveDepthClamp) glDisable(GL_DEPTH_CLAMP);
 }
@@ -1049,7 +1075,7 @@ void VOpenGLDrawer::FinishUpdate () {
   //mainFBO.blitToScreen();
   GetMainFBO()->blitToScreen();
   glBindTexture(GL_TEXTURE_2D, 0);
-  SetMainFBO();
+  SetMainFBO(true); // forced
   glBindTexture(GL_TEXTURE_2D, 0);
   glOrtho(0, getWidth(), getHeight(), 0, -666, 666);
   //ActivateMainFBO();
@@ -1348,9 +1374,10 @@ bool VOpenGLDrawer::UseFrustumFarClip () {
 //  VOpenGLDrawer::SetMainFBO
 //
 //==========================================================================
-void VOpenGLDrawer::SetMainFBO () {
-  if (currMainFBO != -1) {
+void VOpenGLDrawer::SetMainFBO (bool forced) {
+  if (forced || currMainFBO != -1) {
     currMainFBO = -1;
+    if (forced) currentActiveFBO = nullptr;
     mainFBO.activate();
     stencilBufferDirty = true;
   }
@@ -1409,7 +1436,7 @@ int VOpenGLDrawer::GetCameraFBO (int texnum, int width, int height) {
   ci->texnum = texnum;
   ci->camwidth = width;
   ci->camheight = height;
-  ci->fbo.create(this, width, height, true); // create depthstencil
+  ci->fbo.createDepthStencil(this, width, height);
 
   glBindFramebuffer(GL_FRAMEBUFFER, ci->fbo.getFBOid());
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // black background
@@ -1558,8 +1585,8 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
   glCullFace(GL_FRONT);
 
   glEnable(GL_DEPTH_TEST);
-  //glDisable(GL_BLEND);
-  glEnable(GL_BLEND);
+  //GLDisableBlend();
+  GLEnableBlend();
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   glDisable(GL_ALPHA_TEST);
   if (RendLev && RendLev->NeedsInfiniteFarClip && HaveDepthClamp) glEnable(GL_DEPTH_CLAMP);
@@ -1627,7 +1654,7 @@ void VOpenGLDrawer::EndView (bool ignoreColorTint) {
       (float)(cl->CShift&255)/255.0f,
       (float)((cl->CShift>>24)&255)/255.0f);
     DrawFixedCol.UploadChangedUniforms();
-    //glEnable(GL_BLEND);
+    //GLEnableBlend();
     glBindTexture(GL_TEXTURE_2D, 0);
     glDisable(GL_TEXTURE_2D);
 
@@ -1638,7 +1665,7 @@ void VOpenGLDrawer::EndView (bool ignoreColorTint) {
       glVertex2f(0, getHeight());
     glEnd();
 
-    //glDisable(GL_BLEND);
+    //GLDisableBlend();
     glEnable(GL_TEXTURE_2D);
   }
 }
@@ -1765,6 +1792,7 @@ void VOpenGLDrawer::SetFade (vuint32 NewFade) {
 //==========================================================================
 void VOpenGLDrawer::DebugRenderScreenRect (int x0, int y0, int x1, int y1, vuint32 color) {
   glPushAttrib(/*GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_VIEWPORT_BIT|GL_TRANSFORM_BIT*/GL_ALL_ATTRIB_BITS);
+  bool oldBlend = blendEnabled;
 
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
@@ -1777,7 +1805,7 @@ void VOpenGLDrawer::DebugRenderScreenRect (int x0, int y0, int x1, int y1, vuint
   //glColor4f(((color>>16)&0xff)/255.0f, ((color>>8)&0xff)/255.0f, (color&0xff)/255.0f, ((color>>24)&0xff)/255.0f);
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
-  glEnable(GL_BLEND);
+  GLEnableBlend();
   //glDisable(GL_STENCIL_TEST);
   //glDisable(GL_SCISSOR_TEST);
   glDisable(GL_TEXTURE_2D);
@@ -1809,6 +1837,7 @@ void VOpenGLDrawer::DebugRenderScreenRect (int x0, int y0, int x1, int y1, vuint
   glPopAttrib();
   p_glUseProgramObjectARB(0);
   currentActiveShader = nullptr;
+  blendEnabled = oldBlend;
 }
 
 
@@ -1830,6 +1859,47 @@ void VOpenGLDrawer::ForceClearStencilBuffer () {
 //==========================================================================
 void VOpenGLDrawer::ForceMarkStencilBufferDirty () {
   NoteStencilBufferDirty();
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::EnableBlend
+//
+//==========================================================================
+void VOpenGLDrawer::EnableBlend () {
+  GLEnableBlend();
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::DisableBlend
+//
+//==========================================================================
+void VOpenGLDrawer::DisableBlend () {
+  GLDisableBlend();
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::GLSetBlendEnabled
+//
+//==========================================================================
+void VOpenGLDrawer::SetBlendEnabled (const bool v) {
+  GLSetBlendEnabled(v);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::DeactivateShader
+//
+//==========================================================================
+void VOpenGLDrawer::DeactivateShader () {
+  p_glUseProgramObjectARB(0);
+  currentActiveShader = nullptr;
 }
 
 
@@ -1868,6 +1938,7 @@ bool VOpenGLDrawer::RenderWipe (float time) {
   //GCon->Logf(NAME_Debug, "WIPE: time=%g", time);
 
   glPushAttrib(GL_ALL_ATTRIB_BITS);
+  bool oldBlend = blendEnabled;
 
   glViewport(0, 0, getWidth(), getHeight());
 
@@ -1884,14 +1955,14 @@ bool VOpenGLDrawer::RenderWipe (float time) {
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
-  //glEnable(GL_BLEND);
+  //GLEnableBlend();
   glDisable(GL_STENCIL_TEST);
   glDisable(GL_SCISSOR_TEST);
   glDepthMask(GL_FALSE); // no z-buffer writes
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
   glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
-  glEnable(GL_BLEND);
+  GLEnableBlend();
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied
 
   glEnable(GL_TEXTURE_2D);
@@ -1913,7 +1984,7 @@ bool VOpenGLDrawer::RenderWipe (float time) {
     glTexCoord2f(0, 0); glVertex2f(0, getHeight());
   glEnd();
 
-  //glDisable(GL_BLEND);
+  //GLDisableBlend();
   glBindTexture(GL_TEXTURE_2D, 0);
 
   glMatrixMode(GL_MODELVIEW);
@@ -1925,6 +1996,7 @@ bool VOpenGLDrawer::RenderWipe (float time) {
   glPopAttrib();
   p_glUseProgramObjectARB(0);
   currentActiveShader = nullptr;
+  blendEnabled = oldBlend;
 
   //wipeFBO.blitTo(&mainFBO, 0, 0, mainFBO.getWidth(), mainFBO.getHeight(), 0, 0, mainFBO.getWidth(), mainFBO.getHeight(), GL_NEAREST);
   return (time <= WipeDur);
@@ -2254,10 +2326,10 @@ void VOpenGLDrawer::FBO::destroy () {
 
 //==========================================================================
 //
-//  VOpenGLDrawer::FBO::create
+//  VOpenGLDrawer::FBO::createInternal
 //
 //==========================================================================
-void VOpenGLDrawer::FBO::create (VOpenGLDrawer *aowner, int awidth, int aheight, bool createDepthStencil) {
+void VOpenGLDrawer::FBO::createInternal (VOpenGLDrawer *aowner, int awidth, int aheight, bool createDepthStencil, bool mirroredRepeat) {
   destroy();
   vassert(aowner);
   vassert(awidth > 0);
@@ -2277,11 +2349,18 @@ void VOpenGLDrawer::FBO::create (VOpenGLDrawer *aowner, int awidth, int aheight,
   if (mColorTid == 0) Sys_Error("OpenGL: cannot create RGBA texture for FBO");
   glBindTexture(GL_TEXTURE_2D, mColorTid);
 
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, aowner->ClampToEdge);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, aowner->ClampToEdge);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  if (mirroredRepeat) {
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+  } else {
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, aowner->ClampToEdge);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, aowner->ClampToEdge);
+  }
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (mLinearFilter ? GL_LINEAR : GL_NEAREST));
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (mLinearFilter ? GL_LINEAR : GL_NEAREST));
   if (aowner->anisotropyExists) glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 1.0f); // 1 is minimum, i.e. "off"
 
   // empty texture
@@ -2339,6 +2418,26 @@ void VOpenGLDrawer::FBO::create (VOpenGLDrawer *aowner, int awidth, int aheight,
 
 //==========================================================================
 //
+//  VOpenGLDrawer::FBO::createTextureOnly
+//
+//==========================================================================
+void VOpenGLDrawer::FBO::createTextureOnly (VOpenGLDrawer *aowner, int awidth, int aheight, bool mirroredRepeat) {
+  createInternal(aowner, awidth, aheight, false, mirroredRepeat);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::FBO::createDepthStencil
+//
+//==========================================================================
+void VOpenGLDrawer::FBO::createDepthStencil (VOpenGLDrawer *aowner, int awidth, int aheight, bool mirroredRepeat) {
+  createInternal(aowner, awidth, aheight, true, mirroredRepeat);
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::FBO::activate
 //
 //==========================================================================
@@ -2379,10 +2478,13 @@ void VOpenGLDrawer::FBO::blitTo (FBO *dest, GLint srcX0, GLint srcY0, GLint srcX
     mOwner->glBindFramebuffer(GL_READ_FRAMEBUFFER, mFBO);
     mOwner->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dest->mFBO);
     mOwner->p_glBlitFramebuffer(srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, GL_COLOR_BUFFER_BIT, filter);
+    mOwner->glBindFramebuffer(GL_READ_FRAMEBUFFER, mFBO);
+    mOwner->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mFBO);
   } else {
     GLint oldbindtex = 0;
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldbindtex);
     glPushAttrib(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_VIEWPORT_BIT|GL_TRANSFORM_BIT);
+    bool oldBlend = mOwner->blendEnabled;
 
     mOwner->glBindFramebuffer(GL_FRAMEBUFFER, dest->mFBO);
     glBindTexture(GL_TEXTURE_2D, mColorTid);
@@ -2398,7 +2500,7 @@ void VOpenGLDrawer::FBO::blitTo (FBO *dest, GLint srcX0, GLint srcY0, GLint srcX
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
-    glDisable(GL_BLEND);
+    mOwner->GLDisableBlend();
     glDisable(GL_STENCIL_TEST);
     glDisable(GL_SCISSOR_TEST);
     glEnable(GL_TEXTURE_2D);
@@ -2433,6 +2535,7 @@ void VOpenGLDrawer::FBO::blitTo (FBO *dest, GLint srcX0, GLint srcY0, GLint srcX
 
     glPopAttrib();
     glBindTexture(GL_TEXTURE_2D, oldbindtex);
+    mOwner->blendEnabled = oldBlend;
   }
   mOwner->ReactivateCurrentFBO();
 }
@@ -2463,6 +2566,7 @@ void VOpenGLDrawer::FBO::blitToScreen () {
     GLint oldbindtex = 0;
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldbindtex);
     glPushAttrib(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_VIEWPORT_BIT|GL_TRANSFORM_BIT);
+    bool oldBlend = mOwner->blendEnabled;
 
     glViewport(0, 0, realw, realh);
 
@@ -2479,7 +2583,7 @@ void VOpenGLDrawer::FBO::blitToScreen () {
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
-    glDisable(GL_BLEND);
+    mOwner->GLDisableBlend();
     glDisable(GL_STENCIL_TEST);
     glDisable(GL_SCISSOR_TEST);
     glEnable(GL_TEXTURE_2D);
@@ -2526,6 +2630,7 @@ void VOpenGLDrawer::FBO::blitToScreen () {
 
     glPopAttrib();
     glBindTexture(GL_TEXTURE_2D, oldbindtex);
+    mOwner->blendEnabled = oldBlend;
   }
 
   mOwner->ReactivateCurrentFBO();

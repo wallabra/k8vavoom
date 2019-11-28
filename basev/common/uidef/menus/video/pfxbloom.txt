@@ -1,0 +1,62 @@
+// advanced video options menu
+menudef PFXBloomOptions {
+  Title = "BLOOM OPTIONS";
+
+  option bool {
+    title = "Bloom Enabled";
+    cvar = r_bloom;
+  }
+
+  option bool {
+    title = "Bloom Autoexposure";
+    cvar = r_bloom_autoexposure;
+  }
+
+  option slider {
+    title = "Bloom Exposure Coefficient";
+    cvar = r_bloom_autoexposure_coeff;
+    step = 0.02;
+    min = 0.1;
+    max = 8.0;
+  }
+
+  option slider {
+    title = "Bloom Alpha";
+    cvar = r_bloom_alpha;
+    step = 0.02;
+    min = 0;
+    max = 1;
+  }
+
+  option slider {
+    title = "Bloom Diamond Size";
+    cvar = r_bloom_diamond_size;
+    step = 1;
+    min = 1;
+    max = 32;
+  }
+
+  option slider {
+    title = "Bloom Intensity";
+    cvar = r_bloom_intensity;
+    step = 0.01;
+    min = 0;
+    max = 4;
+  }
+
+  option slider {
+    title = "Bloom Darken";
+    cvar = r_bloom_darken;
+    step = 0.02;
+    min = 0;
+    max = 32;
+  }
+
+  option slider {
+    title = "Bloom Sample Scaledown";
+    cvar = r_bloom_sample_scaledown;
+    step = 0.1;
+    min = 1;
+    max = 32;
+  }
+}

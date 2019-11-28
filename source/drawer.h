@@ -337,6 +337,12 @@ public:
   virtual void InitResolution () = 0;
   virtual void DeinitResolution () = 0;
 
+  virtual void EnableBlend () = 0;
+  virtual void DisableBlend () = 0;
+  virtual void SetBlendEnabled (const bool v) = 0;
+
+  virtual void Posteffect_Bloom (int ax, int ay, int awidth, int aheight) = 0;
+
   virtual void StartUpdate () = 0;
   virtual void ClearScreen (unsigned clearFlags=CLEAR_COLOR) = 0;
   virtual void Setup2D () = 0;
@@ -354,7 +360,7 @@ public:
   virtual void WorldDrawing () = 0;
   virtual void EndView (bool ignoreColorTint=false) = 0;
 
-  virtual void SetMainFBO () = 0;
+  virtual void SetMainFBO (bool forced=false) = 0;
 
   virtual void ClearCameraFBOs () = 0;
   virtual int GetCameraFBO (int texnum, int width, int height) = 0; // returns index or -1; (re)creates FBO if necessary

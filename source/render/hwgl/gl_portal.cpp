@@ -121,7 +121,7 @@ void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
 
   if (UseStencil) {
     if (!Portal->stackedSector) {
-      glDisable(GL_BLEND);
+      GLDisableBlend();
       if (gl_dbg_render_stack_portal_bounds && Portal->stackedSector) {
         p_glUseProgramObjectARB(0);
         currentActiveShader = nullptr;
@@ -129,7 +129,7 @@ void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
         glDepthFunc(GL_ALWAYS);
         glDepthMask(GL_FALSE); // no z-buffer writes
         glColor3f(1, 0, 0);
-        //glDisable(GL_BLEND);
+        //GLDisableBlend();
         glDisable(GL_STENCIL_TEST);
         DrawPortalArea(Portal);
 
@@ -163,7 +163,7 @@ void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
       glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
       glStencilFunc(GL_EQUAL, RendLev->PortalDepth, ~0);
       NoteStencilBufferDirty(); // just in case
-      glEnable(GL_BLEND);
+      GLEnableBlend();
     }
 
     --RendLev->PortalDepth;
@@ -178,9 +178,9 @@ void VOpenGLDrawer::EndPortal (VPortal *Portal, bool UseStencil) {
     }
 
     // draw proper z-buffer for the portal area
-    glDisable(GL_BLEND);
+    GLDisableBlend();
     DrawPortalArea(Portal);
-    glEnable(GL_BLEND);
+    GLEnableBlend();
   }
 
   glEnable(GL_TEXTURE_2D);

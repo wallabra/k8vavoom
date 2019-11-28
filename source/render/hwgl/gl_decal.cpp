@@ -96,26 +96,21 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
 
   GLint oldDepthMask;
   glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
-  //GLint oldBlendEnabled;
-  //glGetIntegerv(GL_BLEND, &oldBlendEnabled);
 
   glDepthMask(GL_FALSE); // no z-buffer writes
   glEnable(GL_STENCIL_TEST);
   glStencilFunc(GL_EQUAL, decalStcVal, 0xff);
   glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-  //if (!oldBlendEnabled) glEnable(GL_BLEND);
-  //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
   glDisable(GL_ALPHA_TEST); // just in case
 
-  glEnable(GL_BLEND);
+  GLEnableBlend();
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
   if (gl_decal_debug_nostencil) glDisable(GL_STENCIL_TEST);
-  if (gl_decal_debug_noalpha) glDisable(GL_BLEND);
+  if (gl_decal_debug_noalpha) GLDisableBlend();
 
   // also, clear dead decals here, 'cause why not?
   decal_t *dc = surf->seg->decalhead;
@@ -278,10 +273,9 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
     SelectTexture(0);
   }
 
-  //if (dtype != DT_ADVANCED) glDisable(GL_BLEND);
-  //if (oldBlendEnabled) glEnable(GL_BLEND); else glDisable(GL_BLEND);
-  //if (!oldBlendEnabled) glDisable(GL_BLEND);
-  if (gl_decal_debug_noalpha) glEnable(GL_BLEND);
+  //if (dtype != DT_ADVANCED) GLDisableBlend();
+  //if (oldBlendEnabled) GLEnableBlend(); else GLDisableBlend();
+  if (gl_decal_debug_noalpha) GLEnableBlend();
   glDisable(GL_STENCIL_TEST);
   glDepthMask(oldDepthMask);
 

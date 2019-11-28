@@ -19,6 +19,28 @@ function(sxx_compile output filename)
         ${CMAKE_SOURCE_DIR}/basev/common/glshaders/common/*.vs
         ${CMAKE_SOURCE_DIR}/basev/common/glshaders/common/*.fs
         ${CMAKE_SOURCE_DIR}/basev/common/glshaders/common/*.inc
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/bloom/*.fs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/bloom/*.vs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/decal/*.fs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/decal/*.vs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/draw/*.fs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/draw/*.vs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/lightmap/*.fs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/lightmap/*.vs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/masked/*.fs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/masked/*.vs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/particle/*.fs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/particle/*.vs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/shadowvol/*.fs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/shadowvol/*.vs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/shadowvol/model/*.fs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/shadowvol/model/*.vs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/shadowvol/surf/*.fs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/shadowvol/surf/*.vs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/sky/*.fs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/sky/*.vs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/wipe/*.fs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/wipe/*.vs
       #${CMAKE_CURRENT_SOURCE_DIR}/${mastername}
     )
   else()
@@ -31,6 +53,28 @@ function(sxx_compile output filename)
         ${CMAKE_SOURCE_DIR}/basev/common/glshaders/common/*.vs
         ${CMAKE_SOURCE_DIR}/basev/common/glshaders/common/*.fs
         ${CMAKE_SOURCE_DIR}/basev/common/glshaders/common/*.inc
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/bloom/*.fs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/bloom/*.vs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/decal/*.fs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/decal/*.vs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/draw/*.fs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/draw/*.vs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/lightmap/*.fs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/lightmap/*.vs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/masked/*.fs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/masked/*.vs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/particle/*.fs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/particle/*.vs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/shadowvol/*.fs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/shadowvol/*.vs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/shadowvol/model/*.fs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/shadowvol/model/*.vs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/shadowvol/surf/*.fs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/shadowvol/surf/*.vs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/sky/*.fs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/sky/*.vs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/wipe/*.fs
+        ${CMAKE_SOURCE_DIR}/basev/common/glshaders/wipe/*.vs
       #${CMAKE_CURRENT_SOURCE_DIR}/${mastername}
     )
   endif()
@@ -379,6 +423,7 @@ set(MAIN_COMMON_SOURCES
 #-- Common OpenGL files --
 set(MAIN_OPENGL_SOURCES
   render/hwgl/gl_local.h
+  render/hwgl/gl_bloom.cpp
   render/hwgl/gl_decal.cpp
   render/hwgl/gl_draw.cpp
   render/hwgl/gl_main.cpp

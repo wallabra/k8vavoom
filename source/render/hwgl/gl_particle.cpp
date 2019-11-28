@@ -32,7 +32,7 @@
 //
 //==========================================================================
 void VOpenGLDrawer::StartParticles () {
-  glEnable(GL_BLEND);
+  GLEnableBlend();
   if (gl_smooth_particles) SurfPartSm.Activate(); else SurfPartSq.Activate();
   currentActiveShader->UploadChangedUniforms();
   glBegin(GL_QUADS);
@@ -116,5 +116,5 @@ void VOpenGLDrawer::DrawParticle (particle_t *p) {
 //==========================================================================
 void VOpenGLDrawer::EndParticles () {
   glEnd();
-  //glDisable(GL_BLEND);
+  //GLDisableBlend();
 }

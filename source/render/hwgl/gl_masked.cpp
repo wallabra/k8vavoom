@@ -86,8 +86,8 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
       //SurfMaskedGlow.SetAlphaRef(Additive ? getAlphaThreshold() : 0.666f);
       SurfMaskedGlow.SetAlphaRef(Additive || tex->Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
     }
-    //glEnable(GL_BLEND);
-    //glDisable(GL_BLEND);
+    //GLEnableBlend();
+    //GLDisableBlend();
     if (Additive) {
       glBlendFunc(GL_ONE, GL_ONE); // our source rgb is already premultiplied
       //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -104,8 +104,8 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
       decalsAllowed = true;
     }
   } else {
-    //glDisable(GL_BLEND);
-    //glEnable(GL_BLEND); // our texture will be premultiplied
+    //GLDisableBlend();
+    //GLEnableBlend(); // our texture will be premultiplied
     //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     if (doBrightmap) {
       //SurfMaskedBrightmapGlow.SetAlphaRef(0.666f);
@@ -175,7 +175,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   }
 
   if (restoreBlend) {
-    //glDisable(GL_BLEND);
+    //GLDisableBlend();
     if (zbufferWriteDisabled) glDepthMask(oldDepthMask); // restore z-buffer writes
   }
   if (Additive) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -264,7 +264,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
       glPolygonOffset(updir, updir);
       glEnable(GL_POLYGON_OFFSET_FILL);
     }
-    //glEnable(GL_BLEND);
+    //GLEnableBlend();
     // translucent things should not modify z-buffer
     if (!zbufferWriteDisabled && (Additive || Alpha < 1.0f)) {
       glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
@@ -289,11 +289,11 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
       }
     }
     Alpha = 1.0f;
-    //glDisable(GL_BLEND);
-    //glEnable(GL_BLEND);
+    //GLDisableBlend();
+    //GLEnableBlend();
   }
 
-  //glEnable(GL_BLEND);
+  //GLEnableBlend();
   if (styleDark) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
 
   //GCon->Logf("SPRITE: light=0x%08x; fade=0x%08x", light, Fade);
@@ -368,7 +368,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
       glPolygonOffset(0.0f, 0.0f);
       glDisable(GL_POLYGON_OFFSET_FILL);
     }
-    //glDisable(GL_BLEND);
+    //GLDisableBlend();
     if (zbufferWriteDisabled) glDepthMask(oldDepthMask); // restore z-buffer writes
     if (Additive) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   }
@@ -388,7 +388,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
 //
 //==========================================================================
 void VOpenGLDrawer::BeginTranslucentPolygonDecals () {
-  glEnable(GL_BLEND);
+  GLEnableBlend();
   //glGetIntegerv(GL_DEPTH_WRITEMASK, &savedDepthMask);
   glDepthMask(GL_FALSE); // no z-buffer writes
   glEnable(GL_TEXTURE_2D);
@@ -398,7 +398,7 @@ void VOpenGLDrawer::BeginTranslucentPolygonDecals () {
   glDisable(GL_POLYGON_OFFSET_FILL);
   glEnable(GL_CULL_FACE);
   RestoreDepthFunc();
-  //glDisable(GL_BLEND);
+  //GLDisableBlend();
 }
 
 
@@ -425,7 +425,7 @@ void VOpenGLDrawer::DrawTranslucentPolygonDecals (surface_t *surf, float Alpha, 
 
   ShadowsSurfTransDecals.Activate();
   ShadowsSurfTransDecals.SetTexture(0);
-  glDisable(GL_BLEND);
+  GLDisableBlend();
   glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
   SetTexture(tex->Tex, tex->ColorMap);
@@ -439,6 +439,6 @@ void VOpenGLDrawer::DrawTranslucentPolygonDecals (surface_t *surf, float Alpha, 
 
   // draw decals
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-  glEnable(GL_BLEND);
+  GLEnableBlend();
   (void)RenderFinishShaderDecals(DT_ADVANCED, surf, nullptr, tex->ColorMap);
 }

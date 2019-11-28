@@ -264,4 +264,9 @@ menudef VideoOptions {
     title = "Light Filtering Options";
     submenu = "AdvVideoLightFilterOptions";
   }
+
+  option submenu {
+    title = "Bloom Options";
+    submenu = "PFXBloomOptions";
+  }
 }

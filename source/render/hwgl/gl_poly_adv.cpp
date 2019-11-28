@@ -196,7 +196,7 @@ void VOpenGLDrawer::DrawWorldAmbientPass () {
     if (gl_dbg_wireframe) {
       DrawAutomap.Activate();
       DrawAutomap.UploadChangedUniforms();
-      glEnable(GL_BLEND);
+      GLEnableBlend();
       glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
       SelectTexture(1);
@@ -486,7 +486,7 @@ void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float R
       glEnable(GL_SCISSOR_TEST);
       glDisable(GL_DEPTH_TEST);
       glDisable(GL_CULL_FACE);
-      glDisable(GL_BLEND);
+      GLDisableBlend();
       glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
       glMatrixMode(GL_MODELVIEW); glPushMatrix(); glLoadIdentity();
@@ -547,7 +547,7 @@ void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float R
   glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
   //!glEnable(GL_POLYGON_OFFSET_FILL);
 
-  glDisable(GL_BLEND);
+  GLDisableBlend();
   glDisable(GL_CULL_FACE);
   glStencilFunc(GL_ALWAYS, 0x0, 0xff);
   glEnable(GL_STENCIL_TEST);
@@ -967,7 +967,7 @@ void VOpenGLDrawer::BeginLightPass (const TVec &LightPos, float Radius, float Li
   */
 
   glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-  glEnable(GL_BLEND);
+  GLEnableBlend();
   //glBlendFunc(GL_SRC_COLOR, GL_DST_COLOR);
   //glBlendEquation(GL_MAX_EXT);
 
@@ -1082,7 +1082,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
 
 
   glBlendFunc(GL_DST_COLOR, GL_ZERO);
-  glEnable(GL_BLEND);
+  GLEnableBlend();
 
   if (!gl_dbg_adv_render_surface_textures) return;
 
@@ -1095,7 +1095,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
   ShadowsTexture.Activate();
   ShadowsTexture.SetTexture(0);
 
-  //glDisable(GL_BLEND);
+  //GLDisableBlend();
 
   // sort by textures
   if (gl_sort_textures) {
@@ -1153,7 +1153,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
         if (RenderFinishShaderDecals(DT_ADVANCED, surf, nullptr, currTexinfo->ColorMap)) {
           ShadowsTexture.Activate();
           glBlendFunc(GL_DST_COLOR, GL_ZERO);
-          //glEnable(GL_BLEND);
+          //GLEnableBlend();
           lastTexinfo.resetLastUsed(); // resetup texture
         }
       }
@@ -1206,7 +1206,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
         if (RenderFinishShaderDecals(DT_ADVANCED, surf, nullptr, currTexinfo->ColorMap)) {
           ShadowsTextureMasked.Activate();
           glBlendFunc(GL_DST_COLOR, GL_ZERO);
-          //glEnable(GL_BLEND);
+          //GLEnableBlend();
           lastTexinfo.resetLastUsed(); // resetup texture
         }
       }
@@ -1222,7 +1222,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
 //==========================================================================
 void VOpenGLDrawer::DrawWorldFogPass () {
   if (gl_dbg_wireframe) return;
-  glEnable(GL_BLEND);
+  GLEnableBlend();
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // fog is not premultiplied
   glDepthMask(GL_FALSE); // no z-buffer writes
 
@@ -1329,7 +1329,7 @@ void VOpenGLDrawer::DrawWorldFogPass () {
 //
 //==========================================================================
 void VOpenGLDrawer::EndFogPass () {
-  //glDisable(GL_BLEND);
+  //GLDisableBlend();
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // for premultiplied
   // back to normal z-buffering
   glDepthMask(GL_TRUE); // allow z-buffer writes

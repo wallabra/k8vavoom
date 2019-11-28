@@ -419,6 +419,17 @@ typedef void (APIENTRY *glGetPointerv_t) (GLenum pname,  GLvoid **params);
 
 typedef void (APIENTRY *glBlendFuncSeparate_t) (GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha);
 
+typedef void (APIENTRY *glDeleteRenderbuffers_t) (GLsizei n, const GLuint *renderbuffers);
+typedef void (APIENTRY *glGenRenderbuffersEXT_t) (GLsizei n, GLuint *renderbuffers);
+typedef void (APIENTRY *glRenderbufferStorageEXT_t) (GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
+typedef void (APIENTRY *glBindRenderbufferEXT_t) (GLenum target, GLuint renderbuffer);
+
+typedef void (APIENTRY *glGenFramebuffersEXT_t) (GLsizei n, GLuint *framebuffers);
+typedef void (APIENTRY *glBindFramebufferEXT_t) (GLenum target, GLuint framebuffer);
+typedef void (APIENTRY *glFramebufferRenderbufferEXT_t) (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
+
+typedef void (APIENTRY *glGenerateMipmapEXT_t) (GLenum target);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern VCvarF gl_alpha_threshold;
@@ -517,6 +528,10 @@ public:
     bool mHasDepthStencil = false;
     int mWidth = 0;
     int mHeight = 0;
+    bool mLinearFilter = false;
+
+  private:
+    void createInternal (VOpenGLDrawer *aowner, int awidth, int aheight, bool createDepthStencil, bool mirroredRepeat);
 
   public:
     FBO ();
@@ -529,10 +544,15 @@ public:
     inline int getWidth () const noexcept { return mWidth; }
     inline int getHeight () const noexcept { return mHeight; }
 
+    inline bool getLinearFilter () const noexcept { return mLinearFilter; }
+    // has effect after texture recreation
+    inline void setLinearFilter (bool v) noexcept { mLinearFilter = v; }
+
     inline GLuint getColorTid () const noexcept { return mColorTid; }
     inline GLuint getFBOid () const noexcept { return mFBO; }
 
-    void create (VOpenGLDrawer *aowner, int awidth, int aheight, bool createDepthStencil=false);
+    void createTextureOnly (VOpenGLDrawer *aowner, int awidth, int aheight, bool mirroredRepeat=false);
+    void createDepthStencil (VOpenGLDrawer *aowner, int awidth, int aheight, bool mirroredRepeat=false);
     void destroy ();
 
     void activate ();
@@ -552,6 +572,7 @@ public:
   VGLShader *currentActiveShader;
   FBO *currentActiveFBO;
 
+  void DeactivateShader ();
   void ReactivateCurrentFBO ();
 
 #include "gl_shaddef.hi"
@@ -716,6 +737,7 @@ private:
   vuint8 decalStcVal;
   bool decalUsedStencil;
   bool stencilBufferDirty;
+  bool blendEnabled;
 
   // last used shadow volume scissor
   // if new scissor is inside this one, and stencil buffer is not changed,
@@ -741,8 +763,16 @@ private:
   inline bool IsStencilBufferDirty () const { return stencilBufferDirty; }
   inline void ClearStencilBuffer () { if (stencilBufferDirty) glClear(GL_STENCIL_BUFFER_BIT); stencilBufferDirty = false; decalUsedStencil = false; }
 
+  inline void GLEnableBlend () { if (!blendEnabled) { blendEnabled = true; glEnable(GL_BLEND); } }
+  inline void GLDisableBlend () { if (blendEnabled) { blendEnabled = false; glDisable(GL_BLEND); } }
+  inline void GLSetBlendEnabled (const bool v) { if (blendEnabled != v) { blendEnabled = v; if (v) glEnable(GL_BLEND); else glDisable(GL_BLEND); } }
+
   virtual void ForceClearStencilBuffer () override;
   virtual void ForceMarkStencilBufferDirty () override;
+
+  virtual void EnableBlend () override;
+  virtual void DisableBlend () override;
+  virtual void SetBlendEnabled (const bool v) override;
 
   void RenderPrepareShaderDecals (surface_t *surf);
   bool RenderFinishShaderDecals (DecalType dtype, surface_t *surf, surfcache_t *cache, int cmap);
@@ -908,6 +938,8 @@ protected:
   FBO mainFBO;
   FBO ambLightFBO; // we'll copy ambient light texture here, so we can use it in decal renderer to light decals
   FBO wipeFBO; // we'll copy main FBO here to render wipe transitions
+  // bloom
+  FBO bloomscratchFBO, bloomscratch2FBO, bloomeffectFBO, bloomcoloraveragingFBO;
   // view (texture) camera updates will use this to render camera views
   // as reading from rendered texture is very slow, we will flip-flop FBOs,
   // using `current` to render new camera views, and `current^1` to get previous ones
@@ -985,8 +1017,35 @@ protected:
 
   void SetupTextureFiltering (int level); // level is taken from the appropriate cvar
 
+private: // bloom
+  int bloomWidth = 0, bloomHeight = 0, bloomMipmapCount = 0;
+
+  bool bloomColAvgValid = false;
+  GLuint bloomFullSizeDownsampleFBOid = 0;
+  GLuint bloomFullSizeDownsampleRBOid = 0;
+  GLuint bloomColAvgGetterPBOid = 0;
+  int bloomScrWdt, bloomScrHgt;
+  unsigned bloomCurrentFBO = 0;
+
+  inline void bloomResetFBOs () noexcept { bloomCurrentFBO = 0; }
+  inline void bloomSwapFBOs () noexcept { bloomCurrentFBO ^= 1; }
+  inline FBO *bloomGetActiveFBO () noexcept { return (bloomCurrentFBO ? &bloomscratch2FBO : &bloomscratchFBO); }
+  inline FBO *bloomGetInactiveFBO () noexcept { return (bloomCurrentFBO ? &bloomscratchFBO : &bloomscratch2FBO); }
+
+  void BloomDeinit ();
+  void BloomAllocRBO (int width, int height, GLuint *RBO, GLuint *FBO);
+  void BloomInitEffectTexture ();
+  void BloomInitTextures ();
+  void BloomDownsampleView ();
+  void BloomDarken ();
+  void BloomDoGaussian ();
+  void BloomDrawEffect (int ax, int ay, int awidth, int aheight);
+
 public:
-  virtual void SetMainFBO () override;
+  virtual void Posteffect_Bloom (int ax, int ay, int awidth, int aheight) override;
+
+public:
+  virtual void SetMainFBO (bool forced=false) override;
 
   virtual void ClearCameraFBOs () override;
   virtual int GetCameraFBO (int texnum, int width, int height) override; // returns index or -1; (re)creates FBO if necessary
@@ -1129,6 +1188,15 @@ public:
   //VGLAPIPTR(glGetPointerv);
 
   VGLAPIPTR(glBlendFuncSeparate);
+
+  VGLAPIPTR(glDeleteRenderbuffers);
+  VGLAPIPTR(glGenRenderbuffersEXT);
+  VGLAPIPTR(glRenderbufferStorageEXT);
+  VGLAPIPTR(glBindRenderbufferEXT);
+  VGLAPIPTR(glGenFramebuffersEXT);
+  VGLAPIPTR(glBindFramebufferEXT);
+  VGLAPIPTR(glFramebufferRenderbufferEXT);
+  VGLAPIPTR(glGenerateMipmapEXT);
 
 #undef VGLAPIPTR
 

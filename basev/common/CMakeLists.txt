@@ -100,6 +100,8 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     glshaders/common/*.fs
     glshaders/common/*.vs
     glshaders/common/*.inc
+    glshaders/bloom/*.fs
+    glshaders/bloom/*.vs
     glshaders/decal/*.fs
     glshaders/decal/*.vs
     glshaders/draw/*.fs

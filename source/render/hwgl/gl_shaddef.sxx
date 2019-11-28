@@ -196,5 +196,11 @@ ShaderList basedir="basev/common/glshaders" pakdir="glshaders" {
   Shader [advanced] ShadowsModelShadow both="shadowvol/model/shadows_model_shadow";
   Shader [advanced] ShadowsModelFog both="shadowvol/model/shadows_model_fog";
 
+  // wipe
   Shader DrawWipeType0 both="wipe/draw_wipe_type0";
+
+  // bloom
+  Shader BloomColorExp both="bloom/colorexp";
+  Shader BloomColorScale both="bloom/colorscale";
+  Shader BloomKawase both="bloom/kawase";
 }

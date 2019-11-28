@@ -1712,6 +1712,10 @@ void VRenderLevelShared::RenderPlayerView () {
 
   if (dbg_clip_dump_added_ranges) ViewClip.Dump();
 
+  // perform bloom effect
+  //GCon->Logf(NAME_Debug, "BLOOM: (%d,%d); (%dx%d)", refdef.x, refdef.y, refdef.width, refdef.height);
+  Drawer->Posteffect_Bloom(refdef.x, refdef.y, refdef.width, refdef.height);
+
   // recalc in case recursive scene renderer moved it
   // we need it for psprite rendering
   r_viewleaf = (vieworg == lastorg ? playerViewLeaf : Level->PointInSubsector(vieworg));
