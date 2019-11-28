@@ -1412,7 +1412,7 @@ int VOpenGLDrawer::GetCameraFBO (int texnum, int width, int height) {
     if (cf->texnum == texnum) {
       if (cf->camwidth == width && cf->camheight == height) return cf->index; // nothing to do
       // recreate
-      GCon->Logf(NAME_Debug, "recreating camera FBO #%d for textute #%d (old size is %dx%d, new size is %dx%d)", cf->index, texnum, cf->camwidth, cf->camheight, width, height);
+      GCon->Logf(NAME_Debug, "recreating camera FBO #%d for texture #%d (old size is %dx%d, new size is %dx%d)", cf->index, texnum, cf->camwidth, cf->camheight, width, height);
       cfidx = cf->index;
       break;
     }
@@ -1425,10 +1425,11 @@ int VOpenGLDrawer::GetCameraFBO (int texnum, int width, int height) {
 
   if (cfidx >= cameraFBOList.length()) {
     cfidx = cameraFBOList.length();
-    GCon->Logf(NAME_Debug, "creating new camera FBO #%d for textute #%d (new size is %dx%d)", cfidx, texnum, width, height);
+    GCon->Logf(NAME_Debug, "creating new camera FBO #%d for texture #%d (new size is %dx%d)", cfidx, texnum, width, height);
     CameraFBOInfo *cin = new CameraFBOInfo();
     cin->index = cfidx;
     cameraFBOList.append(cin);
+    vassert(cameraFBOList.length()-1 == cfidx);
   }
 
   CameraFBOInfo *ci = cameraFBOList[cfidx];

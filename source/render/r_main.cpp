@@ -44,6 +44,9 @@ extern VCvarB r_disable_world_update;
 
 VCvarB dbg_show_lightmap_cache_messages("dbg_show_lightmap_cache_messages", false, "Show various lightmap debug messages?", CVAR_Archive);
 
+VCvarB r_allow_cameras("r_allow_cameras", true, "Allow rendering live cameras?", CVAR_Archive);
+
+
 static VCvarI k8ColormapInverse("k8ColormapInverse", "0", "Inverse colormap replacement (0: original inverse; 1: black-and-white; 2: gold; 3: green; 4: red).", CVAR_Archive);
 static VCvarI k8ColormapLightAmp("k8ColormapLightAmp", "0", "LightAmp colormap replacement (0: original; 1: black-and-white; 2: gold; 3: green; 4: red).", CVAR_Archive);
 
@@ -520,13 +523,17 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   if (Drawer) {
     Drawer->SetMainFBO();
     Drawer->ClearCameraFBOs();
+    int bbcount = 0;
     for (auto &&camtexinfo : Level->CameraTextures) {
       VTexture *BaseTex = GTextureManager[camtexinfo.TexNum];
       if (!BaseTex || !BaseTex->bIsCameraTexture) continue;
       VCameraTexture *Tex = (VCameraTexture *)BaseTex;
       Tex->camfboidx = Drawer->GetCameraFBO(camtexinfo.TexNum, max2(1, BaseTex->Width), max2(1, BaseTex->Height));
+      vassert(Tex->camfboidx >= 0);
       Tex->NextUpdateTime = 0; // force updating
+      ++bbcount;
     }
+    if (Level->CameraTextures.length()) GCon->Logf("******* preallocated %d camera FBOs out of %d", bbcount, Level->CameraTextures.length());
   }
 }
 
@@ -539,11 +546,16 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
 VRenderLevelShared::~VRenderLevelShared () {
   if (Drawer) Drawer->ClearCameraFBOs();
 
-  for (auto &&camtexinfo : Level->CameraTextures) {
-    VTexture *BaseTex = GTextureManager[camtexinfo.TexNum];
-    if (!BaseTex || !BaseTex->bIsCameraTexture) continue;
-    VCameraTexture *Tex = (VCameraTexture *)BaseTex;
-    Tex->camfboidx = -1;
+  if (Level->CameraTextures.length()) {
+    int bcnt = 0;
+    for (auto &&camtexinfo : Level->CameraTextures) {
+      VTexture *BaseTex = GTextureManager[camtexinfo.TexNum];
+      if (!BaseTex || !BaseTex->bIsCameraTexture) continue;
+      ++bcnt;
+      VCameraTexture *Tex = (VCameraTexture *)BaseTex;
+      Tex->camfboidx = -1;
+    }
+    GCon->Logf("freeing %d camera FBOs out of %d camera textures...", bcnt, Level->CameraTextures.length());
   }
 
   UncacheLevel();
@@ -1693,12 +1705,25 @@ void VRenderLevelShared::RenderPlayerView () {
   // update camera textures that were visible in the last frame
   // rendering camera texture sets `NextUpdateTime`
   //GCon->Logf(NAME_Debug, "CAMTEX: %d", Level->CameraTextures.length());
+  int updatesLeft = 1;
   for (auto &&camtexinfo : Level->CameraTextures) {
+    // game can append new cameras dynamically...
+    VTexture *BaseTex = GTextureManager[camtexinfo.TexNum];
+    if (!BaseTex || !BaseTex->bIsCameraTexture) continue;
+    VCameraTexture *CamTex = (VCameraTexture *)BaseTex;
+    if (CamTex->camfboidx < 0) {
+      GCon->Logf(NAME_Debug, "new camera texture added, allocating...");
+      CamTex->camfboidx = Drawer->GetCameraFBO(camtexinfo.TexNum, max2(1, BaseTex->Width), max2(1, BaseTex->Height));
+      vassert(CamTex->camfboidx >= 0);
+      CamTex->NextUpdateTime = 0; // force updating
+    }
     // this updates only cameras with proper `NextUpdateTime`
-    if (UpdateCameraTexture(camtexinfo.Camera, camtexinfo.TexNum, camtexinfo.FOV)) {
-      // do not update more than one camera texture per frame
-      //GCon->Logf(NAME_Debug, "updated camera texture #%d", camtexinfo.TexNum);
-      break;
+    if (updatesLeft > 0) {
+      if (UpdateCameraTexture(camtexinfo.Camera, camtexinfo.TexNum, camtexinfo.FOV)) {
+        // do not update more than one camera texture per frame
+        //GCon->Logf(NAME_Debug, "updated camera texture #%d", camtexinfo.TexNum);
+        --updatesLeft;
+      }
     }
   }
 
@@ -1756,13 +1781,15 @@ bool VRenderLevelShared::UpdateCameraTexture (VEntity *Camera, int TexNum, int F
 
   //GCon->Logf(NAME_Debug, "  CAMERA; tex=%d; fboidx=%d; forced=%d", TexNum, cfidx, (int)forcedUpdate);
 
-  Drawer->SetCameraFBO(cfidx);
-  SetupCameraFrame(Camera, Tex, FOV, &CameraRefDef);
-  RenderScene(&CameraRefDef, nullptr);
-  Drawer->EndView(true); // ignore color tint
+  if (r_allow_cameras) {
+    Drawer->SetCameraFBO(cfidx);
+    SetupCameraFrame(Camera, Tex, FOV, &CameraRefDef);
+    RenderScene(&CameraRefDef, nullptr);
+    Drawer->EndView(true); // ignore color tint
 
-  //glFlush();
-  Tex->CopyImage(); // this sets flags, but doesn't read pixels
+    //glFlush();
+    Tex->CopyImage(); // this sets flags, but doesn't read pixels
+  }
   Drawer->SetMainFBO(); // restore main FBO
 
   return !forcedUpdate;

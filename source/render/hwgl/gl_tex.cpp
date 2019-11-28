@@ -26,6 +26,7 @@
 #include "gl_local.h"
 
 
+extern VCvarB r_allow_cameras;
 extern VCvarB gl_pic_filtering;
 static VCvarB gl_recreate_changed_textures("gl_recreate_changed_textures", false, "Destroy and create new OpenGL textures for changed DooM animated ones?", CVAR_Archive);
 static VCvarB gl_camera_texture_use_readpixels("gl_camera_texture_use_readpixels", true, "Use ReadPixels to update camera textures?", CVAR_Archive);
@@ -313,17 +314,31 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
 
   if (isCamTexture) {
     VCameraTexture *CamTex = (VCameraTexture *)Tex;
-    CamTex->bUsedInFrame = true;
-    GLuint tid = GetCameraFBOTextureId(CamTex->camfboidx);
-    if (!tid || Translation || CMap || currMainFBO == CamTex->camfboidx || gl_camera_texture_use_readpixels) {
-      // copy texture pixels for translations (or if user requested it)
-      if (!CamTex->bPixelsLoaded) {
-        // read FBO data
-        CamTex->bPixelsLoaded = true;
-        CameraFBOInfo *cfi = cameraFBOList[CamTex->camfboidx];
-        rgba_t *px = (rgba_t *)Tex->GetPixels();
-        ReadFBOPixels(&cfi->fbo, Tex->Width, Tex->Height, px);
+    if (r_allow_cameras) {
+      CamTex->bUsedInFrame = true;
+      GLuint tid = GetCameraFBOTextureId(CamTex->camfboidx);
+      if (!tid || Translation || CMap || currMainFBO == CamTex->camfboidx || gl_camera_texture_use_readpixels) {
+        // game can append new cameras dynamically, and FBO can be unready yet
+        if (CamTex->camfboidx >= 0) {
+          // copy texture pixels for translations (or if user requested it)
+          if (!CamTex->bPixelsLoaded) {
+            // read FBO data
+            //vassert(CamTex->camfboidx >= 0);
+            if (CamTex->camfboidx < cameraFBOList.length()) {
+              CamTex->bPixelsLoaded = true;
+              CameraFBOInfo *cfi = cameraFBOList[CamTex->camfboidx];
+              rgba_t *px = (rgba_t *)Tex->GetPixels();
+              ReadFBOPixels(&cfi->fbo, Tex->Width, Tex->Height, px);
+            } else {
+              GCon->Logf(NAME_Error, "THE THING THAT SHOULD NOT BE: camera FBO array is too small! (want %d, size is %d)", CamTex->camfboidx+1, cameraFBOList.length());
+            }
+          }
+        } else {
+          //GCon->Logf(NAME_Debug, "trying to select unintialized camera texture (this is harmeless)");
+        }
+        isCamTexture = false;
       }
+    } else {
       isCamTexture = false;
     }
   }
@@ -333,6 +348,7 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
     // handle camera texture
     VCameraTexture *CamTex = (VCameraTexture *)Tex;
     //FlushTexture(Tex); // remove all created textures
+    GCon->Logf(NAME_Debug, "***** camtex; fboindex=%d; len=%d", CamTex->camfboidx, cameraFBOList.length());
     GLuint tid = GetCameraFBOTextureId(CamTex->camfboidx);
     vassert(tid);
     glBindTexture(GL_TEXTURE_2D, tid);

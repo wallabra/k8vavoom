@@ -85,7 +85,7 @@ static void bloomDrawFSQuad () {
 //
 //==========================================================================
 void VOpenGLDrawer::BloomDeinit () {
-  GCon->Logf(NAME_Debug, "deinit bloom...");
+  //GCon->Logf(NAME_Debug, "deinit bloom...");
 
   if (bloomFullSizeDownsampleRBOid) {
     p_glDeleteRenderbuffers(1, &bloomFullSizeDownsampleRBOid);

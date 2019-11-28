@@ -6,6 +6,12 @@ menudef AdvRenderOptions {
   header "Render Portals Options";
 
   option bool {
+    title = "Allow cameras";
+    cvar = r_allow_cameras;
+    help = "Allow rendering live cameras?";
+  }
+
+  option bool {
     title = "Allow horizons";
     cvar = r_allow_horizons;
     help =
