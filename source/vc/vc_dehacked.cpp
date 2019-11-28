@@ -1412,7 +1412,7 @@ void ProcessDehackedFiles () {
   if (cli_DehList.length() == 0 && LumpNum < 0) return;
 
   // open dehinfo script
-  VStream *Strm = FL_OpenFileRead("dehinfo.txt");
+  VStream *Strm = FL_OpenFileReadBaseOnly("dehinfo.txt");
   if (!Strm) Sys_Error("dehinfo.txt is required to parse dehacked patches");
 
   VScriptParser *sc = new VScriptParser("dehinfo.txt", Strm);
@@ -1455,8 +1455,9 @@ void ProcessDehackedFiles () {
     }
     // number of states
     sc->ExpectNumber();
+    //GCon->Logf(NAME_Debug, "STATES: class=`%s`; count=%d", StatesClass->GetName(), sc->Number);
     for (int i = 0; i < sc->Number; ++i) {
-      if (!S) sc->Error("Given class doen't have that many states");
+      if (!S) sc->Error(va("class `%s` doen't have that many states (%d, aborted at %d)", StatesClass->GetName(), sc->Number, i));
       States.Append(S);
       StateActions.Append(S->Function);
       // move net links to actor class
@@ -1491,9 +1492,9 @@ void ProcessDehackedFiles () {
     sc->ExpectString();
     VStr MethodName = sc->String;
     VClass *Class = VClass::FindClass(*ClassName);
-    if (Class == nullptr) sc->Error("No such class");
+    if (Class == nullptr) sc->Error(va("No such class `%s`", *ClassName));
     VMethod *Method = Class->FindMethod(*MethodName);
-    if (Method == nullptr) sc->Error(va("No such method %s", *MethodName));
+    if (Method == nullptr) sc->Error(va("No such method `%s` in class `%s`", *MethodName, *ClassName));
     VCodePtrInfo &P = CodePtrs.Alloc();
     P.Name = Name;
     P.Method = Method;
