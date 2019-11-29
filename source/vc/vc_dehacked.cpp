@@ -1403,12 +1403,46 @@ static void LoadDehackedFile (VStream *Strm) {
 
 //==========================================================================
 //
+//  FindDehackedLump
+//
+//  this is a hack for older wads that comes with "wadname.deh" in
+//  their zip archive. it checks if the wad has built-in dehacked
+//  lump, and if it isn't, looks for "wadname.deh" instead
+//
+//==========================================================================
+static int FindDehackedLump () {
+  int dehlump = W_CheckNumForName("dehacked");
+  if (cli_NoExternalDeh > 0) return dehlump;
+  // look for wads, and then for .deh
+  int ffile = -1;
+  for (int fnum = W_NextMountFileId()-1; fnum >= 0; --fnum) {
+    VStr pkname = W_FullPakNameByFile(fnum);
+    if (!pkname.endsWithCI(".wad")) continue;
+    //GCon->Logf(NAME_Debug, "::: <%s> :::", *pkname);
+    // found wad, look for "basename.deh"
+    auto lpos = pkname.lastIndexOf(':');
+    if (lpos >= 0) pkname.chopLeft(lpos+1);
+    if (pkname.isEmpty()) continue;
+    VStr dhname = pkname.extractFileName().stripExtension()+".deh";
+    //GCon->Logf(NAME_Debug, ":::   <%s> :::", *dhname);
+    int lump = W_CheckNumForFileName(dhname);
+    if (lump >= 0 && lump > dehlump) { dehlump = lump; ffile = fnum; }
+  }
+  if (dehlump >= 0 && ffile >= 0) {
+    GCon->Logf(NAME_Init, "Found external dehacked for '%s': '%s'", *W_FullPakNameByFile(ffile), *W_FullLumpName(dehlump));
+  }
+  return dehlump;
+}
+
+
+//==========================================================================
+//
 //  ProcessDehackedFiles
 //
 //==========================================================================
 void ProcessDehackedFiles () {
   if (cli_NoAnyDehacked) return;
-  int LumpNum = W_CheckNumForName("dehacked");
+  int LumpNum = FindDehackedLump();
   if (cli_DehList.length() == 0 && LumpNum < 0) return;
 
   // open dehinfo script

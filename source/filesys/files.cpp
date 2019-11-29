@@ -30,6 +30,7 @@
 extern VCvarB game_release_mode;
 //extern VCvarI game_override_mode;
 extern int cli_NoZMapinfo; // from mapinfo.cpp
+int cli_NoExternalDeh = 0;
 
 static VCvarB dbg_dump_gameinfo("dbg_dump_gameinfo", false, "Dump parsed game.txt?", CVAR_PreInit);
 static VCvarB gz_skip_menudef("_gz_skip_menudef", false, "Skip gzdoom menudef parsing?", CVAR_PreInit);
@@ -1830,6 +1831,9 @@ void FL_InitOptions () {
   GParsedArgs.RegisterFlagSet("-oldsprites", "!some sprite renaming crap (do not bother)", &cli_oldSprites);
   GParsedArgs.RegisterAlias("-old-sprites", "-oldsprites");
 
+  GParsedArgs.RegisterFlagSet("-no-external-deh", "disable external (out-of-wad) .deh loading", &cli_NoExternalDeh);
+  // aliases
+  GParsedArgs.RegisterAlias("--no-extern-deh", "-no-external-deh");
 
   // filename collector
   GParsedArgs.RegisterCallback(nullptr, nullptr, [] (VArgs &args, int idx) -> int { return cliFnameCollector(args, idx); });

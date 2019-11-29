@@ -93,3 +93,4 @@ extern GameOptions game_options;
 extern int cli_WAll;
 extern int cli_NoMonsters;
 extern int cli_CompileAndExit;
+extern int cli_NoExternalDeh;
