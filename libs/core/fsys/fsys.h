@@ -101,7 +101,9 @@ void W_AddDiskFile (VStr FileName, bool FixVoices=false);
 bool W_AddDiskFileOptional (VStr FileName, bool FixVoices=false);
 // this mounts disk directory as PK3 archive
 void W_MountDiskDir (VStr dirname);
+// this removes all added files
 void W_Shutdown ();
+
 
 enum WAuxFileType {
   VFS_Wad, // caller is 100% sure that this is IWAD/PWAD
@@ -117,10 +119,12 @@ int W_OpenAuxiliary (VStr FileName); // -1: not found
 int W_AddAuxiliaryStream (VStream *strm, WAuxFileType ftype); // -1: error/not found; otherwise handle of the first appended file
 void W_CloseAuxiliary (); // close all aux files
 
-int W_CheckNumForName (VName Name, EWadNamespace NS = WADNS_Global);
-int W_GetNumForName (VName Name, EWadNamespace NS = WADNS_Global);
-int W_CheckNumForNameInFile (VName Name, int File, EWadNamespace NS = WADNS_Global);
-int W_CheckFirstNumForNameInFile (VName Name, int File, EWadNamespace NS = WADNS_Global);
+// all checks/finders returns -1 if nothing was found.
+// well, except "get" kinds -- they're bombing out.
+int W_CheckNumForName (VName Name, EWadNamespace NS=WADNS_Global);
+int W_GetNumForName (VName Name, EWadNamespace NS=WADNS_Global);
+int W_CheckNumForNameInFile (VName Name, int File, EWadNamespace NS=WADNS_Global);
+int W_CheckFirstNumForNameInFile (VName Name, int File, EWadNamespace NS=WADNS_Global);
 int W_FindACSObjectInFile (VStr Name, int File);
 
 int W_CheckNumForFileName (VStr Name);
@@ -137,7 +141,6 @@ VStr W_RealLumpName (int lump); // without pak prefix
 VStr W_FullPakNameForLump (int lump);
 VStr W_FullPakNameByFile (int fidx); // pass result of `W_LumpFile()`
 int W_LumpFile (int lump);
-bool W_IsAuxLump (int lump); // -1 is not aux ;-)
 
 // this is used to resolve animated ranges
 // returns handle or -1
@@ -145,9 +148,11 @@ int W_FindFirstLumpOccurence (VName lmpname, EWadNamespace NS);
 
 bool W_IsIWADFile (int file);
 bool W_IsWADFile (int file); // not pk3, not disk
+bool W_IsAuxFile (int lump); // -1 is not aux ;-)
 
 bool W_IsIWADLump (int lump);
 bool W_IsWADLump (int lump); // not pk3, not disk
+bool W_IsAuxLump (int lump); // -1 is not aux ;-)
 
 void W_ReadFromLump (int lump, void *dest, int pos, int size);
 VStr W_LoadTextLump (VName name);
@@ -160,6 +165,7 @@ int W_StartIterationFromLumpFileNS (int File, EWadNamespace NS); // returns -1 i
 int W_IterateNS (int Prev, EWadNamespace NS);
 int W_IterateFile (int Prev, VStr Name);
 
+// basically, returns number of mounted archives
 int W_NextMountFileId ();
 
 // return `true` to stop and return the current map name
@@ -168,6 +174,53 @@ typedef bool (*W_FindMapCheckerCB) (int lump, const char *name, VName lumpname, 
 
 VStr W_FindMapInLastFile (int fileid, W_FindMapCheckerCB checker);
 VStr W_FindMapInAuxuliaries (W_FindMapCheckerCB checker);
+
+bool W_IsValidMapHeaderLump (int lump);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+struct WadMapIterator {
+public:
+  int lump; // current lump
+
+private:
+  // this doesn't advance `-1`, and does nothing if `lump` is a map header lump
+  void advanceToNextMapLump ();
+
+public:
+  WadMapIterator () : lump(-1) {}
+  WadMapIterator (const WadMapIterator &it) : lump(it.lump) {}
+  WadMapIterator (const WadMapIterator &it, bool asEnd) : lump(-1) {}
+  inline WadMapIterator &operator = (const WadMapIterator &it) { lump = it.lump; return *this; }
+
+  static inline WadMapIterator FromWadFile (int aFile) {
+    WadMapIterator it;
+    it.lump = W_StartIterationFromLumpFileNS(aFile, WADNS_Global);
+    it.advanceToNextMapLump();
+    return it;
+  }
+
+  inline WadMapIterator begin () { return FromWadFile(0); }
+  inline WadMapIterator end () { return WadMapIterator(*this, true); }
+  inline bool operator == (const WadMapIterator &b) const { return (lump == b.lump); }
+  inline bool operator != (const WadMapIterator &b) const { return (lump != b.lump); }
+  inline WadMapIterator operator * () const { return WadMapIterator(*this); } /* required for iterator */
+  inline void operator ++ () { if (lump > 0) { ++lump; advanceToNextMapLump(); } } /* this is enough for iterator */
+
+  inline bool isEmpty () const { return (lump < 0); }
+
+  inline int getFile () const { return (lump >= 0 ? W_LumpFile(lump) : -1); }
+  inline int getLength () const { return (lump >= 0 ? W_LumpLength(lump) : -1); }
+  inline int getSize () const { return (lump >= 0 ? W_LumpLength(lump) : -1); }
+  inline VName getName () const { return (lump >= 0 ? W_LumpName(lump) : NAME_None); }
+  inline VStr getFullName () const { return (lump >= 0 ? W_FullLumpName(lump) : VStr::EmptyString); }
+  inline VStr getRealName () const { return (lump >= 0 ? W_RealLumpName(lump) : VStr::EmptyString); } // without pak prefix
+  inline VStr getFullPakName () const { return (lump >= 0 ? W_FullPakNameForLump(lump) : VStr::EmptyString); } // without pak prefix
+
+  inline bool isAux () const { return (lump >= 0 ? W_IsAuxLump(lump) : false); }
+  inline bool isIWAD () const { return (lump >= 0 ? W_IsIWADLump(lump) : false); }
+  inline bool isIWad () const { return (lump >= 0 ? W_IsIWADLump(lump) : false); }
+};
 
 
 // ////////////////////////////////////////////////////////////////////////// //

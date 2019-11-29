@@ -897,19 +897,29 @@ int W_StartIterationFromLumpFileNS (int File, EWadNamespace NS) {
 
 //==========================================================================
 //
-//  W_IterateNS
+//  W_IterateNS_NoLock
 //
 //==========================================================================
-int W_IterateNS (int Prev, EWadNamespace NS) {
+static int W_IterateNS_NoLock (int Prev, EWadNamespace NS) {
   if (Prev < 0) Prev = -1;
   int wi = FILE_INDEX(Prev+1);
   int li = LUMP_INDEX(Prev+1);
-  MyThreadLocker glocker(&fsys_glock);
   for (; wi < getSPCount(); ++wi, li = 0) {
     li = SearchPaths[wi]->IterateNS(li, NS);
     if (li != -1) return MAKE_HANDLE(wi, li);
   }
   return -1;
+}
+
+
+//==========================================================================
+//
+//  W_IterateNS
+//
+//==========================================================================
+int W_IterateNS (int Prev, EWadNamespace NS) {
+  MyThreadLocker glocker(&fsys_glock);
+  return W_IterateNS_NoLock(Prev, NS);
 }
 
 
@@ -1043,6 +1053,102 @@ int W_NextMountFileId () {
 
 //==========================================================================
 //
+//  W_ValidateUDMFMapLumps_NoLock
+//
+//==========================================================================
+static bool W_ValidateUDMFMapLumps_NoLock (int lump) {
+  if (lump < 0) return false;
+  int fidx = FILE_INDEX(lump);
+  if (fidx < 0 || fidx >= SearchPaths.length()) return false;
+  int lidx = LUMP_INDEX(lump);
+  VSearchPath *sp = SearchPaths[fidx];
+  vassert(sp);
+  if (sp->LumpName(++lidx) != NAME_textmap) return false; // also, skips the header
+  bool wasBeh = false, wasBlock = false, wasRej = false, wasDialog = false, wasZNodes = false;
+  for (;;) {
+    VName lname = sp->LumpName(++lidx); // prefix, to skip the header
+    if (lname == NAME_endmap) break;
+    if (lname == NAME_None || lname == NAME_textmap) return false;
+    if (lname == NAME_behavior) { if (wasBeh) return false; wasBeh = true; continue; }
+    if (lname == NAME_blockmap) { if (wasBlock) return false; wasBlock = true; continue; }
+    if (lname == NAME_reject) { if (wasRej) return false; wasRej = true; continue; }
+    if (lname == NAME_dialogue) { if (wasDialog) return false; wasDialog = true; continue; }
+    if (lname == NAME_znodes) { if (wasZNodes) return false; wasZNodes = true; continue; }
+  }
+  return true;
+}
+
+
+//==========================================================================
+//
+//  W_ValidateNormalMapLumps_NoLock
+//
+//==========================================================================
+static bool W_ValidateNormalMapLumps_NoLock (int lump) {
+  if (lump < 0) return false;
+  int fidx = FILE_INDEX(lump);
+  if (fidx < 0 || fidx >= SearchPaths.length()) return false;
+  int lidx = LUMP_INDEX(lump);
+  VSearchPath *sp = SearchPaths[fidx];
+  vassert(sp);
+  if (sp->LumpName(++lidx) != NAME_things) return false;
+  if (sp->LumpName(++lidx) != NAME_linedefs) return false;
+  if (sp->LumpName(++lidx) != NAME_sidedefs) return false;
+  if (sp->LumpName(++lidx) != NAME_vertexes) return false;
+  // optional lumps
+  if (sp->LumpName(++lidx) != NAME_segs) --lidx;
+  if (sp->LumpName(++lidx) != NAME_ssectors) --lidx;
+  if (sp->LumpName(++lidx) != NAME_nodes) --lidx;
+  // required sectors lump
+  if (sp->LumpName(++lidx) != NAME_sectors) return false;
+  // NAME_reject, NAME_blockmap, NAME_behavior, NAME_scripts are not interesting
+  return true;
+}
+
+
+//==========================================================================
+//
+//  W_IsValidMapHeaderLump_NoLock
+//
+//==========================================================================
+static bool W_IsValidMapHeaderLump_NoLock (int lump) {
+  if (lump < 0) return false;
+  int fidx = FILE_INDEX(lump);
+  if (fidx < 0 || fidx >= SearchPaths.length()) return false;
+  int lidx = LUMP_INDEX(lump);
+  if (SearchPaths[fidx]->LumpName(lidx+1) == NAME_textmap) return W_ValidateUDMFMapLumps_NoLock(lump);
+  return W_ValidateNormalMapLumps_NoLock(lump);
+}
+
+
+//==========================================================================
+//
+//  W_IsValidMapHeaderLump
+//
+//==========================================================================
+bool W_IsValidMapHeaderLump (int lump) {
+  MyThreadLocker glocker(&fsys_glock);
+  return W_IsValidMapHeaderLump_NoLock(lump);
+}
+
+
+//==========================================================================
+//
+//  WadMapIterator::advanceToNextMapLump
+//
+//==========================================================================
+void WadMapIterator::advanceToNextMapLump () {
+  MyThreadLocker glocker(&fsys_glock);
+  while (lump >= 0) {
+    if (W_IsValidMapHeaderLump_NoLock(lump)) return;
+    lump = W_IterateNS_NoLock(lump, WADNS_Global);
+  }
+  lump = -1; // just in case
+}
+
+
+//==========================================================================
+//
 //  W_FindMapInLastFile_NoLock
 //
 //==========================================================================
@@ -1060,36 +1166,7 @@ static VStr W_FindMapInLastFile_NoLock (int fileid, W_FindMapCheckerCB checker) 
       if (checker(MAKE_HANDLE(fileid, lump), name, ln, SearchPaths[fileid]->GetPrefix()+":"+SearchPaths[fileid]->LumpFileName(lump))) return VStr(name);
     } else {
       // short name; check for valid map format
-      bool valid = false;
-      if (SearchPaths[fileid]->LumpName(lump+1) == NAME_textmap) {
-        // check for UDMF map
-        bool wasBeh = false, wasBlock = false, wasRej = false, wasDialog = false, wasZNodes = false;
-        for (int i = 2; true; ++i) {
-          VName lname = SearchPaths[fileid]->LumpName(lump+i);
-          if (lname == NAME_endmap) { valid = true; break; }
-          if (lname == NAME_None || lname == NAME_textmap) break;
-          if (lname == NAME_behavior) { if (wasBeh) break; wasBeh = true; continue; }
-          if (lname == NAME_blockmap) { if (wasBlock) break; wasBlock = true; continue; }
-          if (lname == NAME_reject) { if (wasRej) break; wasRej = true; continue; }
-          if (lname == NAME_dialogue) { if (wasDialog) break; wasDialog = true; continue; }
-          if (lname == NAME_znodes) { if (wasZNodes) break; wasZNodes = true; continue; }
-        }
-      } else {
-        int ofs = 1;
-        valid = true;
-        if (valid && SearchPaths[fileid]->LumpName(lump+ofs) == NAME_things) ++ofs; else valid = false;
-        if (valid && SearchPaths[fileid]->LumpName(lump+ofs) == NAME_linedefs) ++ofs; else valid = false;
-        if (valid && SearchPaths[fileid]->LumpName(lump+ofs) == NAME_sidedefs) ++ofs; else valid = false;
-        if (valid && SearchPaths[fileid]->LumpName(lump+ofs) == NAME_vertexes) ++ofs; else valid = false;
-        if (valid && SearchPaths[fileid]->LumpName(lump+ofs) == NAME_segs) ++ofs; else valid = false;
-        if (valid && SearchPaths[fileid]->LumpName(lump+ofs) == NAME_ssectors) ++ofs; else valid = false;
-        if (valid && SearchPaths[fileid]->LumpName(lump+ofs) == NAME_nodes) ++ofs;
-        if (valid && SearchPaths[fileid]->LumpName(lump+ofs) == NAME_sectors) ++ofs; else valid = false;
-        //if (valid && SearchPaths[fileid]->LumpName(lump+ofs) == NAME_reject) ++ofs;
-        //if (valid && SearchPaths[fileid]->LumpName(lump+ofs) == NAME_blockmap) ++ofs;
-        //if (valid && SearchPaths[fileid]->LumpName(lump+ofs) == NAME_behavior) hexen = true;
-      }
-      if (!valid) continue;
+      if (!W_IsValidMapHeaderLump_NoLock(MAKE_HANDLE(fileid, lump))) continue;
       if (checker(MAKE_HANDLE(fileid, lump), *ln, ln, SearchPaths[fileid]->GetPrefix()+":"+SearchPaths[fileid]->LumpFileName(lump))) return VStr(ln);
     }
   }
@@ -1148,6 +1225,18 @@ bool W_IsWADFile (int fidx) {
   MyThreadLocker glocker(&fsys_glock);
   if (fidx < 0 || fidx >= getSPCount()) return false;
   return SearchPaths[fidx]->normalwad;
+}
+
+
+//==========================================================================
+//
+//  W_IsAuxFile
+//
+//==========================================================================
+bool W_IsAuxFile (int fidx) {
+  MyThreadLocker glocker(&fsys_glock);
+  if (fidx < 0 || fidx >= getSPCount()) return false;
+  return (fidx >= AuxiliaryIndex && fidx < SearchPaths.length());
 }
 
 
