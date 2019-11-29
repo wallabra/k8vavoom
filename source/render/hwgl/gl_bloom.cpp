@@ -93,8 +93,8 @@ void VOpenGLDrawer::BloomDeinit () {
   }
 
   if (bloomFullSizeDownsampleFBOid) {
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glDeleteFramebuffers(1, &bloomFullSizeDownsampleFBOid);
+    p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    p_glDeleteFramebuffers(1, &bloomFullSizeDownsampleFBOid);
     bloomFullSizeDownsampleFBOid = 0;
   }
 
@@ -128,14 +128,14 @@ void VOpenGLDrawer::BloomAllocRBO (int width, int height, GLuint *RBO, GLuint *F
   p_glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, 0);
 
   // create up the FBO
-  p_glGenFramebuffersEXT(1, FBO);
-  p_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, *FBO);
+  p_glGenFramebuffers(1, FBO);
+  p_glBindFramebuffer(GL_FRAMEBUFFER, *FBO);
 
   // bind the RBO to it
-  p_glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, *RBO);
+  p_glFramebufferRenderbufferEXT(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER_EXT, *RBO);
 
   // clean up
-  p_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+  p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 
@@ -214,21 +214,21 @@ void VOpenGLDrawer::BloomDownsampleView () {
   bloomResetFBOs();
 
   // downsample
-  p_glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, bloomeffectFBO.getFBOid());
-  p_glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, mainFBO.getFBOid());
+  p_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, bloomeffectFBO.getFBOid());
+  p_glBindFramebuffer(GL_READ_FRAMEBUFFER, mainFBO.getFBOid());
   p_glBlitFramebuffer(0, 0, bloomScrWdt, bloomScrHgt, 0, 0, bloomWidth, bloomHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
   // blit the finished downsampled texture onto a second FBO
   // we end up with with two copies, which DoGaussian will take advantage of
   // no, darken pass will do this for us
   /*
-  p_glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, bloomGetActiveFBO()->getFBOid());
-  p_glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, bloomeffectFBO.getFBOid());
+  p_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, bloomGetActiveFBO()->getFBOid());
+  p_glBindFramebuffer(GL_READ_FRAMEBUFFER, bloomeffectFBO.getFBOid());
   p_glBlitFramebuffer(0, 0, bloomWidth, bloomHeight, 0, 0, bloomWidth, bloomHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
   */
 
-  p_glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0);
-  p_glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, 0);
+  p_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+  p_glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 }
 
 
@@ -263,8 +263,8 @@ void VOpenGLDrawer::BloomDarken () {
     }
 
     // start computing this frame's color average so we can use it next frame
-    p_glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, bloomeffectFBO.getFBOid());
-    p_glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, bloomcoloraveragingFBO.getFBOid());
+    p_glBindFramebuffer(GL_READ_FRAMEBUFFER, bloomeffectFBO.getFBOid());
+    p_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, bloomcoloraveragingFBO.getFBOid());
     p_glBlitFramebuffer(0, 0, bloomWidth, bloomHeight,
                         0, 0, bloomWidth, bloomHeight,
                         GL_COLOR_BUFFER_BIT, GL_NEAREST);
@@ -289,7 +289,7 @@ void VOpenGLDrawer::BloomDarken () {
 
     // apply the color scaling
     glBindTexture(GL_TEXTURE_2D, bloomeffectFBO.getColorTid());
-    p_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, bloomGetActiveFBO()->getFBOid());
+    p_glBindFramebuffer(GL_FRAMEBUFFER, bloomGetActiveFBO()->getFBOid());
     BloomColorScale.Activate();
     BloomColorScale.SetTextureSource(0);
     BloomColorScale.SetScale(brightness, brightness, brightness);
@@ -306,11 +306,11 @@ void VOpenGLDrawer::BloomDarken () {
     if (!activeFBOInited) {
       // exposure is off, and the thing wasn't copied
       glBindTexture(GL_TEXTURE_2D, bloomeffectFBO.getColorTid());
-      p_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, bloomGetActiveFBO()->getFBOid());
+      p_glBindFramebuffer(GL_FRAMEBUFFER, bloomGetActiveFBO()->getFBOid());
     } else {
       // active FBO is already copied; use inactive FBO, and then simply switch them
       glBindTexture(GL_TEXTURE_2D, bloomGetActiveFBO()->getColorTid());
-      p_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, bloomGetInactiveFBO()->getFBOid());
+      p_glBindFramebuffer(GL_FRAMEBUFFER, bloomGetInactiveFBO()->getFBOid());
       // swap FBOs
       bloomSwapFBOs();
     }
@@ -327,11 +327,11 @@ void VOpenGLDrawer::BloomDarken () {
 
   // if we still didn't copied effect FBO to active FBO, do it now
   if (!activeFBOInited) {
-    p_glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, bloomGetActiveFBO()->getFBOid());
-    p_glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, bloomeffectFBO.getFBOid());
+    p_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, bloomGetActiveFBO()->getFBOid());
+    p_glBindFramebuffer(GL_READ_FRAMEBUFFER, bloomeffectFBO.getFBOid());
     p_glBlitFramebuffer(0, 0, bloomWidth, bloomHeight, 0, 0, bloomWidth, bloomHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-    p_glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, 0);
-    p_glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, 0);
+    p_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    p_glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
   }
 }
 
@@ -371,7 +371,7 @@ void VOpenGLDrawer::BloomDoGaussian () {
     // increasing the repetitions here increases the strength of the blur but hurts performance
     for (int j = 0; j < 2; ++j) {
       glBindTexture(GL_TEXTURE_2D, bloomGetActiveFBO()->getColorTid());
-      p_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, bloomGetInactiveFBO()->getFBOid());
+      p_glBindFramebuffer(GL_FRAMEBUFFER, bloomGetInactiveFBO()->getFBOid());
       BloomKawase.SetScaleU(scale/bloomWidth, scale/bloomHeight);
       BloomKawase.UploadChangedUniforms();
       bloomDrawFSQuad();
@@ -390,10 +390,10 @@ void VOpenGLDrawer::BloomDoGaussian () {
   GLEnableBlend();
 
   glBindTexture(GL_TEXTURE_2D, bloomGetActiveFBO()->getColorTid());
-  p_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, bloomeffectFBO.getFBOid());
+  p_glBindFramebuffer(GL_FRAMEBUFFER, bloomeffectFBO.getFBOid());
   bloomDrawFSQuad();
 
-  //p_glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+  //p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 
@@ -431,10 +431,10 @@ void VOpenGLDrawer::BloomDrawEffect (int ax, int ay, int awidth, int aheight) {
 
   #if 0
   GLDisableBlend();
-  p_glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, mainFBO.getFBOid());
-  //p_glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, /*bloomeffectFBO*//*bloomscratchFBO*/bloomGetActiveFBO()->getFBOid());
-  p_glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, bloomeffectFBO.getFBOid());
-  //p_glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, bloomGetInactiveFBO()->getFBOid());
+  p_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mainFBO.getFBOid());
+  //p_glBindFramebuffer(GL_READ_FRAMEBUFFER, /*bloomeffectFBO*//*bloomscratchFBO*/bloomGetActiveFBO()->getFBOid());
+  p_glBindFramebuffer(GL_READ_FRAMEBUFFER, bloomeffectFBO.getFBOid());
+  //p_glBindFramebuffer(GL_READ_FRAMEBUFFER, bloomGetInactiveFBO()->getFBOid());
   p_glBlitFramebuffer(0, 0, bloomWidth, bloomHeight, 0, 0, mainFBO.getWidth(), mainFBO.getHeight(), GL_COLOR_BUFFER_BIT, GL_LINEAR/*GL_NEAREST*/);
   #endif
 }

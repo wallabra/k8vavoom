@@ -481,11 +481,11 @@ void VOpenGLDrawer::SetupTextureFiltering (int level) {
 //==========================================================================
 void VOpenGLDrawer::ReactivateCurrentFBO () {
   if (currentActiveFBO) {
-    glBindFramebuffer(GL_FRAMEBUFFER, currentActiveFBO->getFBOid());
+    p_glBindFramebuffer(GL_FRAMEBUFFER, currentActiveFBO->getFBOid());
     ScrWdt = currentActiveFBO->getWidth();
     ScrHgt = currentActiveFBO->getHeight();
   } else {
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
     ScrWdt = ScreenWidth;
     ScrHgt = ScreenHeight;
   }
@@ -521,19 +521,12 @@ void VOpenGLDrawer::DeinitResolution () {
 }
 
 
-#define gl_(x)   p_##x = x##_t(GetExtFuncPtr(#x)); if (!p_##x) Sys_Error("OpenGL: `%s()` not found!", ""#x);
-#define glc_(x)  ({ p_##x = x##_t(GetExtFuncPtr(#x)); !!p_##x; })
-#define glg_(x)  p_##x = x##_t(GetExtFuncPtr(#x)); glAPISuccessFlag = glAPISuccessFlag && (!!p_##x)
-
-
 //==========================================================================
 //
 //  VOpenGLDrawer::InitResolution
 //
 //==========================================================================
 void VOpenGLDrawer::InitResolution () {
-  bool glAPISuccessFlag;
-
   if (currentActiveFBO != nullptr) {
     currentActiveFBO = nullptr;
     ReactivateCurrentFBO();
@@ -603,34 +596,40 @@ void VOpenGLDrawer::InitResolution () {
     }
   }
 
-  p_glBlitFramebuffer = glBlitFramebuffer_t(GetExtFuncPtr("glBlitFramebuffer"));
-  if (p_glBlitFramebuffer) GCon->Logf(NAME_Init, "OpenGL: `glBlitFramebuffer()` found");
-
-  if (!isShittyGPU && p_glClipControl) {
-    // normal GPUs
-    useReverseZ = true;
-    if (!gl_enable_reverse_z) {
-      GCon->Logf(NAME_Init, "OpenGL: oops, user disabled reverse z, i shall obey");
-      useReverseZ = false;
-    }
-  } else {
-    GCon->Logf(NAME_Init, "OpenGL: reverse z is turned off for your GPU");
-    useReverseZ = false;
-  }
-
-  // check multi-texture extensions
   if (!CheckExtension("GL_ARB_multitexture")) {
     Sys_Error("OpenGL FATAL: Multitexture extensions not found.");
   } else {
-    //gl_(glMultiTexCoord2fARB);
-    gl_(glActiveTextureARB);
-
     GCon->Log(NAME_Init, "Multitexture extensions found.");
     GLint tmp;
     glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &tmp);
     GCon->Logf(NAME_Init, "Max texture units: %d", tmp);
     if (tmp > 1) MaxTextureUnits = tmp;
   }
+
+  // check for shader extensions
+  if (CheckExtension("GL_ARB_shader_objects") && CheckExtension("GL_ARB_shading_language_100") &&
+      CheckExtension("GL_ARB_vertex_shader") && CheckExtension("GL_ARB_fragment_shader"))
+  {
+    GLint tmp;
+    GCon->Logf(NAME_Init, "Shading language version: %s", glGetString(GL_SHADING_LANGUAGE_VERSION_ARB));
+    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &tmp);
+    GCon->Logf(NAME_Init, "Max texture image units: %d", tmp);
+    if (tmp > 1) MaxTextureUnits = tmp; // this is number of texture *samplers*, but it is ok for our shaders case
+    glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &tmp);
+    GCon->Logf(NAME_Init, "Max vertex uniform components: %d", tmp);
+    glGetIntegerv(GL_MAX_VARYING_FLOATS_ARB, &tmp);
+    GCon->Logf(NAME_Init, "Max varying floats: %d", tmp);
+    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS_ARB, &tmp);
+    GCon->Logf(NAME_Init, "Max vertex attribs: %d", tmp);
+    glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB, &tmp);
+    GCon->Logf(NAME_Init, "Max fragment uniform components: %d", tmp);
+  } else {
+    Sys_Error("OpenGL FATAL: no shader support");
+  }
+
+  if (!CheckExtension("GL_ARB_vertex_buffer_object")) Sys_Error("OpenGL FATAL: VBO not found.");
+  if (!CheckExtension("GL_EXT_draw_range_elements")) Sys_Error("OpenGL FATAL: GL_EXT_draw_range_elements not found");
+
 
   // check main stencil buffer
   // this is purely informative, as we are using FBO to render things anyway
@@ -660,144 +659,52 @@ void VOpenGLDrawer::InitResolution () {
     ClampToEdge = GL_CLAMP;
   }
 
-  // check for shader extensions
-  if (CheckExtension("GL_ARB_shader_objects") && CheckExtension("GL_ARB_shading_language_100") &&
-      CheckExtension("GL_ARB_vertex_shader") && CheckExtension("GL_ARB_fragment_shader"))
-  {
-    gl_(glDeleteObjectARB);
-    gl_(glGetHandleARB);
-    gl_(glDetachObjectARB);
-    gl_(glCreateShaderObjectARB);
-    gl_(glShaderSourceARB);
-    gl_(glCompileShaderARB);
-    gl_(glCreateProgramObjectARB);
-    gl_(glAttachObjectARB);
-    gl_(glLinkProgramARB);
-    gl_(glUseProgramObjectARB);
-    gl_(glValidateProgramARB);
-    gl_(glUniform1fARB);
-    gl_(glUniform2fARB);
-    gl_(glUniform3fARB);
-    gl_(glUniform4fARB);
-    gl_(glUniform1iARB);
-    gl_(glUniform2iARB);
-    gl_(glUniform3iARB);
-    gl_(glUniform4iARB);
-    gl_(glUniform1fvARB);
-    gl_(glUniform2fvARB);
-    gl_(glUniform3fvARB);
-    gl_(glUniform4fvARB);
-    gl_(glUniform1ivARB);
-    gl_(glUniform2ivARB);
-    gl_(glUniform3ivARB);
-    gl_(glUniform4ivARB);
-    gl_(glUniformMatrix2fvARB);
-    gl_(glUniformMatrix3fvARB);
-    gl_(glUniformMatrix4fvARB);
-    gl_(glGetObjectParameterfvARB);
-    gl_(glGetObjectParameterivARB);
-    gl_(glGetInfoLogARB);
-    gl_(glGetAttachedObjectsARB);
-    gl_(glGetUniformLocationARB);
-    gl_(glGetActiveUniformARB);
-    gl_(glGetUniformfvARB);
-    gl_(glGetUniformivARB);
-    gl_(glGetShaderSourceARB);
+  glClipControl_t savedClipControl = p_glClipControl;
+  #define VV_GLIMPORTS
+  #define VGLAPIPTR(x,required)  do { \
+    p_##x = x##_t(GetExtFuncPtr(#x)); \
+    if (required && !p_##x) Sys_Error("OpenGL: `%s()` not found!", ""#x); \
+  } while (0)
+  #include "gl_imports.h"
+  #undef VGLAPIPTR
+  #undef VV_GLIMPORTS
+  p_glClipControl = savedClipControl;
 
-    gl_(glVertexAttrib1dARB);
-    gl_(glVertexAttrib1dvARB);
-    gl_(glVertexAttrib1fARB);
-    gl_(glVertexAttrib1fvARB);
-    gl_(glVertexAttrib1sARB);
-    gl_(glVertexAttrib1svARB);
-    gl_(glVertexAttrib2dARB);
-    gl_(glVertexAttrib2dvARB);
-    gl_(glVertexAttrib2fARB);
-    gl_(glVertexAttrib2fvARB);
-    gl_(glVertexAttrib2sARB);
-    gl_(glVertexAttrib2svARB);
-    gl_(glVertexAttrib3dARB);
-    gl_(glVertexAttrib3dvARB);
-    gl_(glVertexAttrib3fARB);
-    gl_(glVertexAttrib3fvARB);
-    gl_(glVertexAttrib3sARB);
-    gl_(glVertexAttrib3svARB);
-    gl_(glVertexAttrib4NbvARB);
-    gl_(glVertexAttrib4NivARB);
-    gl_(glVertexAttrib4NsvARB);
-    gl_(glVertexAttrib4NubARB);
-    gl_(glVertexAttrib4NubvARB);
-    gl_(glVertexAttrib4NuivARB);
-    gl_(glVertexAttrib4NusvARB);
-    gl_(glVertexAttrib4bvARB);
-    gl_(glVertexAttrib4dARB);
-    gl_(glVertexAttrib4dvARB);
-    gl_(glVertexAttrib4fARB);
-    gl_(glVertexAttrib4fvARB);
-    gl_(glVertexAttrib4ivARB);
-    gl_(glVertexAttrib4sARB);
-    gl_(glVertexAttrib4svARB);
-    gl_(glVertexAttrib4ubvARB);
-    gl_(glVertexAttrib4uivARB);
-    gl_(glVertexAttrib4usvARB);
-    gl_(glVertexAttribPointerARB);
-    gl_(glEnableVertexAttribArrayARB);
-    gl_(glDisableVertexAttribArrayARB);
-    gl_(glBindAttribLocationARB);
-    gl_(glGetActiveAttribARB);
-    gl_(glGetAttribLocationARB);
-    gl_(glGetVertexAttribdvARB);
-    gl_(glGetVertexAttribfvARB);
-    gl_(glGetVertexAttribivARB);
-    gl_(glGetVertexAttribPointervARB);
+  if (p_glBlitFramebuffer) GCon->Logf(NAME_Init, "OpenGL: `glBlitFramebuffer()` found");
 
-    gl_(glGetProgramiv);
-    //gl_(glGetPointerv);
-
-    gl_(glBlendFuncSeparate);
-
-    if (hasBoundsTest) {
-      if (!glc_(glDepthBoundsEXT)) {
-        hasBoundsTest = false;
-        GCon->Logf(NAME_Init, "OpenGL: GL_EXT_depth_bounds_test found, but no `glDepthBoundsEXT()` exported");
-      }
+  if (!isShittyGPU && p_glClipControl) {
+    // normal GPUs
+    useReverseZ = true;
+    if (!gl_enable_reverse_z) {
+      GCon->Logf(NAME_Init, "OpenGL: oops, user disabled reverse z, i shall obey");
+      useReverseZ = false;
     }
-
-    GLint tmp;
-    GCon->Logf(NAME_Init, "Shading language version: %s", glGetString(GL_SHADING_LANGUAGE_VERSION_ARB));
-    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &tmp);
-    GCon->Logf(NAME_Init, "Max texture image units: %d", tmp);
-    if (tmp > 1) MaxTextureUnits = tmp; // this is number of texture *samplers*, but it is ok for our shaders case
-    glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &tmp);
-    GCon->Logf(NAME_Init, "Max vertex uniform components: %d", tmp);
-    glGetIntegerv(GL_MAX_VARYING_FLOATS_ARB, &tmp);
-    GCon->Logf(NAME_Init, "Max varying floats: %d", tmp);
-    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS_ARB, &tmp);
-    GCon->Logf(NAME_Init, "Max vertex attribs: %d", tmp);
-    glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS_ARB, &tmp);
-    GCon->Logf(NAME_Init, "Max fragment uniform components: %d", tmp);
   } else {
-    Sys_Error("OpenGL FATAL: no shader support");
+    GCon->Logf(NAME_Init, "OpenGL: reverse z is turned off for your GPU");
+    useReverseZ = false;
   }
 
-  {
-    if (glc_(glStencilFuncSeparate) && glc_(glStencilOpSeparate)) {
-      GCon->Log(NAME_Init, "Found OpenGL 2.0 separate stencil methods");
-    } else if (CheckExtension("GL_ATI_separate_stencil")) {
+  if (hasBoundsTest && !p_glDepthBoundsEXT) {
+    hasBoundsTest = false;
+    GCon->Logf(NAME_Init, "OpenGL: GL_EXT_depth_bounds_test found, but no `glDepthBoundsEXT()` exported");
+  }
+
+  if (!p_glStencilFuncSeparate && !p_glStencilOpSeparate) {
+    GCon->Log(NAME_Init, "Found OpenGL 2.0 separate stencil methods");
+  } else if (CheckExtension("GL_ATI_separate_stencil")) {
+    p_glStencilFuncSeparate = glStencilFuncSeparate_t(GetExtFuncPtr("glStencilFuncSeparateATI"));
+    p_glStencilOpSeparate = glStencilOpSeparate_t(GetExtFuncPtr("glStencilOpSeparateATI"));
+    if (p_glStencilFuncSeparate && p_glStencilOpSeparate) {
       GCon->Log(NAME_Init, "Found GL_ATI_separate_stencil...");
-      p_glStencilFuncSeparate = glStencilFuncSeparate_t(GetExtFuncPtr("glStencilFuncSeparateATI"));
-      p_glStencilOpSeparate = glStencilOpSeparate_t(GetExtFuncPtr("glStencilOpSeparateATI"));
-      if (p_glStencilFuncSeparate && p_glStencilOpSeparate) {
-        GCon->Log(NAME_Init, "Separate stencil extensions found");
-      } else {
-        p_glStencilFuncSeparate = nullptr;
-        p_glStencilOpSeparate = nullptr;
-      }
     } else {
       GCon->Log(NAME_Init, "No separate stencil methods found");
       p_glStencilFuncSeparate = nullptr;
       p_glStencilOpSeparate = nullptr;
     }
+  } else {
+    GCon->Log(NAME_Init, "No separate stencil methods found");
+    p_glStencilFuncSeparate = nullptr;
+    p_glStencilOpSeparate = nullptr;
   }
 
   if (!gl_dbg_disable_depth_clamp && CheckExtension("GL_ARB_depth_clamp")) {
@@ -819,40 +726,14 @@ void VOpenGLDrawer::InitResolution () {
     HaveStencilWrap = false;
   }
 
-  if (!CheckExtension("GL_ARB_vertex_buffer_object")) {
-    Sys_Error("OpenGL FATAL: VBO not found.");
-  } else {
-    gl_(glBindBufferARB);
-    gl_(glDeleteBuffersARB);
-    gl_(glGenBuffersARB);
-    gl_(glIsBufferARB);
-    gl_(glBufferDataARB);
-    gl_(glBufferSubDataARB);
-    gl_(glGetBufferSubDataARB);
-    gl_(glMapBufferARB);
-    gl_(glUnmapBufferARB);
-    gl_(glGetBufferParameterivARB);
-    gl_(glGetBufferPointervARB);
-  }
-
-  if (!CheckExtension("GL_EXT_draw_range_elements")) {
-    Sys_Error("OpenGL FATAL: GL_EXT_draw_range_elements not found");
-  } else {
-    gl_(glDrawRangeElementsEXT);
-  }
-
-  // API required for bloom fx
-  glAPISuccessFlag = true;
-  glg_(glDeleteRenderbuffers);
-  glg_(glGenRenderbuffersEXT);
-  glg_(glRenderbufferStorageEXT);
-  glg_(glBindRenderbufferEXT);
-  glg_(glGenFramebuffersEXT);
-  glg_(glBindFramebufferEXT);
-  glg_(glFramebufferRenderbufferEXT);
-  glg_(glGenerateMipmapEXT);
-
-  if (!glAPISuccessFlag || !p_glBlitFramebuffer) {
+  if (!p_glDeleteRenderbuffers ||
+      !p_glGenRenderbuffersEXT ||
+      !p_glRenderbufferStorageEXT ||
+      !p_glBindRenderbufferEXT ||
+      !p_glFramebufferRenderbufferEXT ||
+      !p_glGenerateMipmapEXT ||
+      !p_glBlitFramebuffer)
+  {
     GCon->Logf(NAME_Init, "OpenGL: bloom postprocessing effect disabled due to missing API");
     r_bloom = false;
   }
@@ -868,18 +749,6 @@ void VOpenGLDrawer::InitResolution () {
   glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
   glPixelStorei(GL_UNPACK_IMAGE_HEIGHT, 0);
 
-
-  glFramebufferTexture2D = (glFramebufferTexture2DFn)GetExtFuncPtr("glFramebufferTexture2D");
-  glDeleteFramebuffers = (glDeleteFramebuffersFn)GetExtFuncPtr("glDeleteFramebuffers");
-  glGenFramebuffers = (glGenFramebuffersFn)GetExtFuncPtr("glGenFramebuffers");
-  glCheckFramebufferStatus = (glCheckFramebufferStatusFn)GetExtFuncPtr("glCheckFramebufferStatus");
-  glBindFramebuffer = (glBindFramebufferFn)GetExtFuncPtr("glBindFramebuffer");
-
-  if (!glFramebufferTexture2D || !glDeleteFramebuffers || !glGenFramebuffers ||
-      !glCheckFramebufferStatus || !glBindFramebuffer)
-  {
-    Sys_Error("OpenGL FBO API not found");
-  }
 
   //GCon->Logf("********* %d : %d *********", ScreenWidth, ScreenHeight);
 
@@ -922,7 +791,7 @@ void VOpenGLDrawer::InitResolution () {
 
   // init some defaults
   glBindTexture(GL_TEXTURE_2D, 0);
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Black Background
   glClearDepth(!useReverseZ ? 1.0f : 0.0f);
@@ -1419,7 +1288,7 @@ int VOpenGLDrawer::GetCameraFBO (int texnum, int width, int height) {
   }
 
   if (cfidx < cameraFBOList.length()) {
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
     cameraFBOList[cfidx]->fbo.destroy();
   }
 
@@ -1439,7 +1308,7 @@ int VOpenGLDrawer::GetCameraFBO (int texnum, int width, int height) {
   ci->camheight = height;
   ci->fbo.createDepthStencil(this, width, height);
 
-  glBindFramebuffer(GL_FRAMEBUFFER, ci->fbo.getFBOid());
+  p_glBindFramebuffer(GL_FRAMEBUFFER, ci->fbo.getFBOid());
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // black background
   glClearDepth(!useReverseZ ? 1.0f : 0.0f);
   if (p_glClipControl) p_glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE); // actually, this is better even for "normal" cases
@@ -2306,13 +2175,13 @@ VOpenGLDrawer::FBO::~FBO () {
 //==========================================================================
 void VOpenGLDrawer::FBO::destroy () {
   if (!mOwner) return;
-  mOwner->glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
-  mOwner->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
-  if (mHasDepthStencil) mOwner->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
-  mOwner->glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  mOwner->p_glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
+  mOwner->p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
+  if (mHasDepthStencil) mOwner->p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
+  mOwner->p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glDeleteTextures(1, &mColorTid);
   if (mHasDepthStencil) glDeleteTextures(1, &mDepthStencilTid);
-  mOwner->glDeleteFramebuffers(1, &mFBO);
+  mOwner->p_glDeleteFramebuffers(1, &mFBO);
   mFBO = 0;
   mColorTid = 0;
   mDepthStencilTid = 0;
@@ -2341,9 +2210,9 @@ void VOpenGLDrawer::FBO::createInternal (VOpenGLDrawer *aowner, int awidth, int 
   glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldbindtex);
 
   // allocate FBO object
-  aowner->glGenFramebuffers(1, &mFBO);
+  aowner->p_glGenFramebuffers(1, &mFBO);
   if (mFBO == 0) Sys_Error("OpenGL: cannot create FBO");
-  aowner->glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
+  aowner->p_glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
 
   // attach 2D texture to this FBO
   glGenTextures(1, &mColorTid);
@@ -2366,7 +2235,7 @@ void VOpenGLDrawer::FBO::createInternal (VOpenGLDrawer *aowner, int awidth, int 
 
   // empty texture
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, awidth, aheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-  aowner->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mColorTid, 0);
+  aowner->p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mColorTid, 0);
 
   // attach stencil texture to this FBO
   if (createDepthStencil) {
@@ -2398,10 +2267,10 @@ void VOpenGLDrawer::FBO::createInternal (VOpenGLDrawer *aowner, int awidth, int 
         Sys_Error("OpenGL initialization error");
       }
     }
-    aowner->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, mDepthStencilTid, 0);
+    aowner->p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, mDepthStencilTid, 0);
 
     {
-      GLenum status = aowner->glCheckFramebufferStatus(GL_FRAMEBUFFER);
+      GLenum status = aowner->p_glCheckFramebufferStatus(GL_FRAMEBUFFER);
       if (status != GL_FRAMEBUFFER_COMPLETE) Sys_Error("OpenGL: framebuffer creation failed");
     }
   }
@@ -2476,18 +2345,18 @@ void VOpenGLDrawer::FBO::blitTo (FBO *dest, GLint srcX0, GLint srcY0, GLint srcX
   if (!mOwner || !dest || !dest->mOwner) return;
 
   if (mOwner->p_glBlitFramebuffer && !gl_dbg_fbo_blit_with_texture) {
-    mOwner->glBindFramebuffer(GL_READ_FRAMEBUFFER, mFBO);
-    mOwner->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dest->mFBO);
+    mOwner->p_glBindFramebuffer(GL_READ_FRAMEBUFFER, mFBO);
+    mOwner->p_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dest->mFBO);
     mOwner->p_glBlitFramebuffer(srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, GL_COLOR_BUFFER_BIT, filter);
-    mOwner->glBindFramebuffer(GL_READ_FRAMEBUFFER, mFBO);
-    mOwner->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mFBO);
+    mOwner->p_glBindFramebuffer(GL_READ_FRAMEBUFFER, mFBO);
+    mOwner->p_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mFBO);
   } else {
     GLint oldbindtex = 0;
     glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldbindtex);
     glPushAttrib(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_VIEWPORT_BIT|GL_TRANSFORM_BIT);
     bool oldBlend = mOwner->blendEnabled;
 
-    mOwner->glBindFramebuffer(GL_FRAMEBUFFER, dest->mFBO);
+    mOwner->p_glBindFramebuffer(GL_FRAMEBUFFER, dest->mFBO);
     glBindTexture(GL_TEXTURE_2D, mColorTid);
 
     glMatrixMode(GL_MODELVIEW);
@@ -2550,14 +2419,14 @@ void VOpenGLDrawer::FBO::blitTo (FBO *dest, GLint srcX0, GLint srcY0, GLint srcX
 void VOpenGLDrawer::FBO::blitToScreen () {
   if (!mOwner) return;
 
-  mOwner->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // screen FBO
+  mOwner->p_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // screen FBO
 
   int realw, realh;
   mOwner->GetRealWindowSize(&realw, &realh);
 
   if (mOwner->p_glBlitFramebuffer && !gl_dbg_fbo_blit_with_texture) {
     glBindTexture(GL_TEXTURE_2D, 0);
-    mOwner->glBindFramebuffer(GL_READ_FRAMEBUFFER, mFBO);
+    mOwner->p_glBindFramebuffer(GL_READ_FRAMEBUFFER, mFBO);
     if (realw == mWidth && realh == mHeight) {
       mOwner->p_glBlitFramebuffer(0, 0, mWidth, mHeight, 0, 0, mWidth, mHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
     } else {
