@@ -140,7 +140,7 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
   int vcount = sub->numlines;
 
   if (vcount < 3) {
-    GCon->Logf(NAME_Warning, "CreateSecSurface: subsector #%d has only #%d vertices", (int)(ptrdiff_t)(sub-Level->Subsectors), vcount);
+    GCon->Logf(NAME_Warning, "CreateSecSurface: subsector #%d of sector #%d has only #%d vertices", (int)(ptrdiff_t)(sub-Level->Subsectors), (sub->sector ? (int)(ptrdiff_t)(sub->sector-Level->Sectors) : -1), vcount);
     if (vcount < 1) Sys_Error("ONE VERTEX. WTF?!");
     if (ssurf) return ssurf;
   }
