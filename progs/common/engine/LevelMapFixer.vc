@@ -513,6 +513,13 @@ void KnownMapBugFixer () {
     Things[286].angle = 180;
   }
 
+  //k8: No End In Sight (v 1.4), E2M4, lift bug (found by steinkrauz)
+  if (MapHashMD5 == "648f8c13cc7f29abeb012f91641ae5af") {
+    printwarn("MAPFIX: No End In Sight, E2M4");
+    // fix missing bottom texture on back sidedef
+    Sides[Lines[3085].sidenum[1]].BottomTexture = LdrTexNumForName("PLAT1", TEXTYPE_Wall);
+  }
+
   /* i changed door logic back to "tolerant", so it is not needed anymore
   //k8: Maps Of Chaos (Overkill), MAP01 thing 131 (demon) is blocking a closet wall
   if (MapHashMD5 == "920e8c47e172a6a265b6b57039c3f209" && Things.length == 360) {
