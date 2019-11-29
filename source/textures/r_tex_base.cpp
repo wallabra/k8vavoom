@@ -1005,9 +1005,11 @@ void VTexture::Shade (int shade) {
 //==========================================================================
 void VTexture::checkerFill8 (vuint8 *dest, int width, int height) {
   if (!dest || width < 1 || height < 1) return;
+  vuint8 bc = R_LookupRGB(0, 0, 192);
+  vuint8 wc = R_LookupRGB(200, 96, 0);
   for (int y = 0; y < height; ++y) {
     for (int x = 0; x < width; ++x) {
-      *dest++ = (((x/8)^(y/8))&1 ? r_white_color : r_black_color);
+      *dest++ = (((x/8)^(y/8))&1 ? wc : bc);
     }
   }
 }
@@ -1017,34 +1019,23 @@ void VTexture::checkerFill8 (vuint8 *dest, int width, int height) {
 //
 //  VTexture::checkerFillRGB
 //
+//  alpha <0 means 3-byte RGB texture
+//
 //==========================================================================
-void VTexture::checkerFillRGB (vuint8 *dest, int width, int height) {
+void VTexture::checkerFillRGB (vuint8 *dest, int width, int height, int alpha) {
   if (!dest || width < 1 || height < 1) return;
   for (int y = 0; y < height; ++y) {
     for (int x = 0; x < width; ++x) {
-      vuint8 v = (((x/8)^(y/8))&1 ? 255 : 0);
-      *dest++ = v;
-      *dest++ = v;
-      *dest++ = v;
-    }
-  }
-}
-
-
-//==========================================================================
-//
-//  VTexture::checkerFillRGBA
-//
-//==========================================================================
-void VTexture::checkerFillRGBA (vuint8 *dest, int width, int height) {
-  if (!dest || width < 1 || height < 1) return;
-  for (int y = 0; y < height; ++y) {
-    for (int x = 0; x < width; ++x) {
-      vuint8 v = (((x/8)^(y/8))&1 ? 255 : 0);
-      *dest++ = v;
-      *dest++ = v;
-      *dest++ = v;
-      *dest++ = 255;
+      if (((x/8)^(y/8))&1) {
+        *dest++ = 200;
+        *dest++ = 96;
+        *dest++ = 0;
+      } else {
+        *dest++ = 0;
+        *dest++ = 0;
+        *dest++ = 192;
+      }
+      if (alpha >= 0) *dest++ = clampToByte(alpha);
     }
   }
 }

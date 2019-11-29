@@ -224,8 +224,8 @@ protected:
 
 public:
   static void checkerFill8 (vuint8 *dest, int width, int height);
-  static void checkerFillRGB (vuint8 *dest, int width, int height);
-  static void checkerFillRGBA (vuint8 *dest, int width, int height);
+  static void checkerFillRGB (vuint8 *dest, int width, int height, int alpha=-1); // alpha <0 means 3-byte RGB texture
+  static inline void checkerFillRGBA (vuint8 *dest, int width, int height) { checkerFillRGB(dest, width, height, 255); }
 
   // `dest` points at column, `x` is used only to build checker
   static void checkerFillColumn8 (vuint8 *dest, int x, int pitch, int height);

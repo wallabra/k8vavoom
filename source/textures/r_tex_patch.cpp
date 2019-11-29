@@ -27,6 +27,9 @@
 #include "r_tex.h"
 
 
+static VCvarB tex_strict_multipatch("tex_strict_multipatch", true, "Be strict in multipatch texture building?", CVAR_Archive|CVAR_PreInit);
+
+
 //==========================================================================
 //
 //  VPatchTexture::Create
@@ -148,21 +151,23 @@ vuint8 *VPatchTexture::GetPixels () {
     if (Offset < 8+Width*4 || Offset > Strm.TotalSize()-1) {
       GCon->Logf(NAME_Warning, "Bad offset in patch \"%s\"", *Name);
       //checkerFillColumn8(Pixels+x, x, Width, Height);
-      checkerFill8(Pixels, Width, Height);
+      if (tex_strict_multipatch) checkerFill8(Pixels, Width, Height);
       continue;
     }
     Strm.Seek(Offset);
 
     // step through the posts in a column
     int top = -1; // DeepSea tall patches support
+    bool warnTooLong = false;
+    bool dontDraw = false;
     vuint8 TopDelta;
     Strm << TopDelta;
     while (TopDelta != 0xff) {
       // make sure length is there
       if (Strm.TotalSize()-Strm.Tell() < 2) {
-        GCon->Logf(NAME_Warning, "Broken column in patch \"%s\"", *Name);
+        GCon->Logf(NAME_Warning, "Broken column %d in patch \"%s\" (length)", x, *Name);
         //checkerFillColumn8(Pixels+x, x, Width, Height);
-        checkerFill8(Pixels, Width, Height);
+        if (tex_strict_multipatch) checkerFill8(Pixels, Width, Height);
         x = Width;
         break;
       }
@@ -177,36 +182,57 @@ vuint8 *VPatchTexture::GetPixels () {
 
       // make sure column doesn't go out of the bounds of the image
       if (top+Len > Height) {
-        GCon->Logf(NAME_Warning, "Column too long in patch \"%s\"", *Name);
+        if (!warnTooLong) {
+          GCon->Logf(NAME_Warning, "Column %d too long in patch \"%s\"", x, *Name);
+          warnTooLong = true;
+        }
         //checkerFillColumn8(Pixels+x, x, Width, Height);
-        checkerFill8(Pixels, Width, Height);
-        x = Width;
-        break;
+        if (tex_strict_multipatch) {
+          checkerFill8(Pixels, Width, Height);
+          x = Width;
+          break;
+        }
+        dontDraw = true;
       }
 
       // make sure all post data is there
       if (Strm.TotalSize()-Strm.Tell() < Len) {
-        GCon->Logf(NAME_Warning, "Broken column in patch \"%s\"", *Name);
+        GCon->Logf(NAME_Warning, "Broken column %d in patch \"%s\" (missing %d bytes)", x, *Name, Strm.TotalSize()-Strm.Tell()-Len);
         //checkerFillColumn8(Pixels+x, x, Width, Height);
-        checkerFill8(Pixels, Width, Height);
-        x = Width;
-        break;
+        if (tex_strict_multipatch) {
+          checkerFill8(Pixels, Width, Height);
+          x = Width;
+          break;
+        }
+        Len = Strm.TotalSize()-Strm.Tell();
+        if (Len <= 0) {
+          x = Width;
+          break;
+        }
       }
 
       // read post, convert color 0 to black if needed
       int count = Len;
       vuint8 *dest = Pixels+top*Width+x;
+      int currY = top;
       while (count--) {
-        Strm << *dest;
-        if (!dest[0] && !bNoRemap0) *dest = r_black_color;
+        vuint8 b = 0;
+        Strm << b;
+        if (!dontDraw && currY >= 0 && currY < Height) {
+          *dest = b;
+          if (!dest[0] && !bNoRemap0) *dest = r_black_color;
+        }
+        ++currY;
         dest += Width;
       }
 
       // make sure unused byte and next post's top offset is there
       if (Strm.TotalSize()-Strm.Tell() < 2) {
-        GCon->Logf(NAME_Warning, "Broken column in patch \"%s\"", *Name);
-        //checkerFillColumn8(Pixels+x, x, Width, Height);
-        checkerFill8(Pixels, Width, Height);
+        if (tex_strict_multipatch) {
+          GCon->Logf(NAME_Warning, "Broken column %d in patch \"%s\" (missing end marker)", x, *Name);
+          //checkerFillColumn8(Pixels+x, x, Width, Height);
+          checkerFill8(Pixels, Width, Height);
+        }
         x = Width;
         break;
       }
@@ -216,18 +242,6 @@ vuint8 *VPatchTexture::GetPixels () {
       Strm << TopDelta;
     }
   }
-
-  /*
-  if (Name == "ammoa0" || VStr::startsWith(*Name, "clip")) {
-    VStream *strm = nullptr;
-    VStr fname = VStr(va("%s.png", *Name));
-    strm = FL_OpenFileWrite(fname, true); // as full name
-    if (strm) {
-      WriteToPNG(strm);
-      delete strm;
-    }
-  }
-  */
 
   if (Width > 0 && Height > 0) {
     const vuint8 *s = Pixels;
