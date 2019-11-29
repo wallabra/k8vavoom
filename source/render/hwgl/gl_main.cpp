@@ -689,7 +689,7 @@ void VOpenGLDrawer::InitResolution () {
     GCon->Logf(NAME_Init, "OpenGL: GL_EXT_depth_bounds_test found, but no `glDepthBoundsEXT()` exported");
   }
 
-  if (!p_glStencilFuncSeparate && !p_glStencilOpSeparate) {
+  if (p_glStencilFuncSeparate && p_glStencilOpSeparate) {
     GCon->Log(NAME_Init, "Found OpenGL 2.0 separate stencil methods");
   } else if (CheckExtension("GL_ATI_separate_stencil")) {
     p_glStencilFuncSeparate = glStencilFuncSeparate_t(GetExtFuncPtr("glStencilFuncSeparateATI"));
@@ -725,6 +725,10 @@ void VOpenGLDrawer::InitResolution () {
     GCon->Log(NAME_Init, "Symbol not found, stencil wrap extensions disabled.");
     HaveStencilWrap = false;
   }
+
+  if (!HaveStencilWrap) GCon->Log(NAME_Init, "*** no stencil wrap --> no shadow volumes");
+  if (!HaveDepthClamp) GCon->Log(NAME_Init, "*** no depth clamp --> no shadow volumes");
+  if (!p_glStencilFuncSeparate) GCon->Log(NAME_Init, "*** no separate stencil funcs --> no shadow volumes");
 
   if (!p_glDeleteRenderbuffers ||
       !p_glGenRenderbuffersEXT ||
