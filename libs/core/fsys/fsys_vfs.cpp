@@ -437,6 +437,32 @@ int W_OpenAuxiliary (VStr FileName) {
 
 //==========================================================================
 //
+//  W_GetFirstAuxArchive
+//
+//  returns -1 if no aux archives were opened
+//
+//==========================================================================
+int W_GetFirstAuxArchive () {
+  MyThreadLocker glocker(&fsys_glock);
+  return (AuxiliaryIndex > 0 ? AuxiliaryIndex : -1);
+}
+
+
+//==========================================================================
+//
+//  W_GetFirstAuxLump
+//
+//  returns -1 if no aux archives were opened, or lump id
+//
+//==========================================================================
+int W_GetFirstAuxLump () {
+  MyThreadLocker glocker(&fsys_glock);
+  return (AuxiliaryIndex > 0 ? MAKE_HANDLE(AuxiliaryIndex, 0) : -1);
+}
+
+
+//==========================================================================
+//
 //  zipAddWads
 //
 //==========================================================================
@@ -1144,61 +1170,6 @@ void WadMapIterator::advanceToNextMapLump () {
     lump = W_IterateNS_NoLock(lump, WADNS_Global);
   }
   lump = -1; // just in case
-}
-
-
-//==========================================================================
-//
-//  W_FindMapInLastFile_NoLock
-//
-//==========================================================================
-static VStr W_FindMapInLastFile_NoLock (int fileid, W_FindMapCheckerCB checker) {
-  if (fileid < 0 || fileid >= getSPCount()) return VStr();
-  for (int lump = SearchPaths[fileid]->IterateNS(0, WADNS_Any, true); lump >= 0; lump = SearchPaths[fileid]->IterateNS(lump+1, WADNS_Any, true)) {
-    VName ln = SearchPaths[fileid]->LumpName(lump);
-    if (ln == NAME_None) {
-      // long name
-      VStr longname = SearchPaths[fileid]->LumpFileName(lump);
-      if (!longname.startsWithNoCase("maps/")) continue;
-      longname = longname.StripExtension().toLowerCase();
-      const char *name = *longname+5;
-      if (strchr(name, '/')) continue;
-      if (checker(MAKE_HANDLE(fileid, lump), name, ln, SearchPaths[fileid]->GetPrefix()+":"+SearchPaths[fileid]->LumpFileName(lump))) return VStr(name);
-    } else {
-      // short name; check for valid map format
-      if (!W_IsValidMapHeaderLump_NoLock(MAKE_HANDLE(fileid, lump))) continue;
-      if (checker(MAKE_HANDLE(fileid, lump), *ln, ln, SearchPaths[fileid]->GetPrefix()+":"+SearchPaths[fileid]->LumpFileName(lump))) return VStr(ln);
-    }
-  }
-  return VStr();
-}
-
-
-//==========================================================================
-//
-//  W_FindMapInLastFile
-//
-//==========================================================================
-VStr W_FindMapInLastFile (int fileid, W_FindMapCheckerCB checker) {
-  MyThreadLocker glocker(&fsys_glock);
-  return W_FindMapInLastFile_NoLock(fileid, checker);
-}
-
-
-//==========================================================================
-//
-//  W_FindMapInAuxuliaries
-//
-//==========================================================================
-VStr W_FindMapInAuxuliaries (W_FindMapCheckerCB checker) {
-  MyThreadLocker glocker(&fsys_glock);
-  if (!AuxiliaryIndex) return VStr();
-  for (int f = SearchPaths.length()-1; f >= AuxiliaryIndex; --f) {
-    VStr mn = W_FindMapInLastFile_NoLock(f, checker);
-    //GLog.Logf(NAME_Init, "W_FindMapInAuxuliaries:<%s>: f=%d; ax=%d; mn=%s", *SearchPaths[f]->GetPrefix(), f, AuxiliaryIndex, *mn);
-    if (!mn.isEmpty()) return mn;
-  }
-  return VStr();
 }
 
 

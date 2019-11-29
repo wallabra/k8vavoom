@@ -118,6 +118,9 @@ int W_OpenAuxiliary (VStr FileName); // -1: not found
 //int W_AddAuxiliary (VStr FileName); // -1: not found
 int W_AddAuxiliaryStream (VStream *strm, WAuxFileType ftype); // -1: error/not found; otherwise handle of the first appended file
 void W_CloseAuxiliary (); // close all aux files
+int W_GetFirstAuxFile (); // returns -1 if no aux archives were opened, or fileid
+int W_GetFirstAuxLump (); // returns -1 if no aux archives were opened, or lump id
+
 
 // all checks/finders returns -1 if nothing was found.
 // well, except "get" kinds -- they're bombing out.
@@ -168,13 +171,6 @@ int W_IterateFile (int Prev, VStr Name);
 // basically, returns number of mounted archives
 int W_NextMountFileId ();
 
-// return `true` to stop and return the current map name
-// WARNING! do not call VFS methods from callback, because there will be a deadlock!
-typedef bool (*W_FindMapCheckerCB) (int lump, const char *name, VName lumpname, VStr fulllumpname);
-
-VStr W_FindMapInLastFile (int fileid, W_FindMapCheckerCB checker);
-VStr W_FindMapInAuxuliaries (W_FindMapCheckerCB checker);
-
 bool W_IsValidMapHeaderLump (int lump);
 
 
@@ -196,6 +192,13 @@ public:
   static inline WadMapIterator FromWadFile (int aFile) {
     WadMapIterator it;
     it.lump = W_StartIterationFromLumpFileNS(aFile, WADNS_Global);
+    it.advanceToNextMapLump();
+    return it;
+  }
+
+  static inline WadMapIterator FromFirstAuxFile () {
+    WadMapIterator it;
+    it.lump = W_GetFirstAuxLump();
     it.advanceToNextMapLump();
     return it;
   }
