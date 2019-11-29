@@ -420,6 +420,35 @@ void skipUntilSemi (SemParser *par) {
 
 //==========================================================================
 //
+//  skipUntilCommaOrSemi
+//
+//  returns `true` for comma
+//
+//==========================================================================
+bool skipUntilCommaOrSemi (SemParser *par) {
+  int brc = 0;
+  int stline = par->getTokenLine();
+  for (;;) {
+    par->skipToken();
+    if (par->token.isEmpty()) break;
+    if (par->token.strEqu(";")) {
+      if (brc) Sys_Error("%s:%d: unbalanced brackets", *par->srcfile, stline);
+      break;
+    }
+    if (par->token.strEqu("(")) { ++brc; continue; }
+    if (par->token.strEqu(")")) {
+      --brc;
+      if (brc < 0) Sys_Error("%s:%d: unbalanced brackets", *par->srcfile, stline);
+      continue;
+    }
+    if (brc == 0 && par->token.strEqu(",")) return true;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
 //  skipBrackets
 //
 //  "{" is already eaten
@@ -801,15 +830,21 @@ void parseShitppClassStruct (SemParser *par, bool isClass, bool isTypedefStruct=
     }
     // this looks like a legitimate type
     // create fields
+    bool semiEaten = false;
     for (;;) {
       Field *fld = new Field();
       fld->name = VName(*fldname, VName::Add);
       fld->type = fldtype;
       tp->appendField(fld);
-      if (!par->eat(",")) break;
+      //if (!par->eat(",")) break;
+      if (par->eat("=")) {
+        if (!skipUntilCommaOrSemi(par)) { semiEaten = true; break; } // break on semicolon
+      } else {
+        if (!par->eat(",")) break;
+      }
       fldname = par->expectId();
     }
-    par->expect(";");
+    if (!semiEaten) par->expect(";");
   }
   if (isTypedefStruct) {
     name = par->expectId();
@@ -1205,6 +1240,7 @@ void parseVCSource (VStr filename, VStr className=VStr::EmptyString) {
 
     // this looks like a legitimate type
     // create fields
+    bool semiEaten = false;
     for (;;) {
       Field *fld = new Field();
       fld->name = VName(*fldname, VName::Add);
@@ -1214,17 +1250,14 @@ void parseVCSource (VStr filename, VStr className=VStr::EmptyString) {
       tp->appendField(fld);
       //if (tp->name == "Widget") GLog.Logf(NAME_Debug, "WIDGET: %s : %s", *fld->name, *fld->type->toString());
       if (par->eat("=")) {
-        for (;;) {
-          auto pos = par->savePos();
-          if (par->eat(";") || par->eat(",")) { par->restorePos(pos); break; }
-          par->skipToken();
-        }
+        if (!skipUntilCommaOrSemi(par)) { semiEaten = true; break; } // break on semicolon
+      } else {
+        if (!par->eat(",")) break;
       }
-      if (!par->eat(",")) break;
       fldname = par->expectId();
     }
     delete fldtype;
-    par->expect(";");
+    if (!semiEaten) par->expect(";");
   }
   // register type
   //GLog.Logf(NAME_Debug, "vc: %s", *tp->toString());
