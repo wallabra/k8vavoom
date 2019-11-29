@@ -4,6 +4,7 @@ actor TechLamp 85
   Game Doom
   Radius 16
   Height 72
+  VanillaHeight 16
   +Solid
   states
   {
@@ -19,6 +20,7 @@ actor TechLamp2 86
   Game Doom
   Radius 16
   Height 56
+  VanillaHeight 16
   +Solid
   states
   {
@@ -34,6 +36,7 @@ actor Column 2028
   Game Doom
   Radius 16
   Height 48
+  VanillaHeight 16
   +Solid
   states
   {
@@ -49,6 +52,7 @@ actor TallGreenColumn 30
   Game Doom
   Radius 16
   Height 52
+  VanillaHeight 16
   +Solid
   states
   {
@@ -64,6 +68,7 @@ actor ShortGreenColumn 31
   Game Doom
   Radius 16
   Height 40
+  VanillaHeight 16
   +Solid
   states
   {
@@ -79,6 +84,7 @@ actor TallRedColumn 32
   Game Doom
   Radius 16
   Height 52
+  VanillaHeight 16
   +Solid
   states
   {
@@ -94,6 +100,7 @@ actor ShortRedColumn 33
   Game Doom
   Radius 16
   Height 40
+  VanillaHeight 16
   +Solid
   states
   {
@@ -109,6 +116,7 @@ actor SkullColumn 37
   Game Doom
   Radius 16
   Height 40
+  VanillaHeight 16
   +Solid
   states
   {
@@ -124,6 +132,7 @@ actor HeartColumn 36
   Game Doom
   Radius 16
   Height 40
+  VanillaHeight 16
   +Solid
   states
   {
@@ -139,6 +148,7 @@ actor EvilEye 41
   Game Doom
   Radius 16
   Height 54
+  VanillaHeight 16
   +Solid
   states
   {
@@ -154,6 +164,7 @@ actor FloatingSkull 42
   Game Doom
   Radius 16
   Height 48
+  VanillaHeight 16
   +Solid
   states
   {
@@ -169,6 +180,7 @@ actor TorchTree 43
   Game Doom
   Radius 16
   Height 64
+  VanillaHeight 16
   +Solid
   states
   {
@@ -184,6 +196,7 @@ actor BlueTorch 44
   Game Doom
   Radius 16
   Height 64
+  VanillaHeight 16
   +Solid
   states
   {
@@ -199,6 +212,7 @@ actor GreenTorch 45
   Game Doom
   Radius 16
   Height 64
+  VanillaHeight 16
   +Solid
   states
   {
@@ -214,6 +228,7 @@ actor RedTorch 46
   Game Doom
   Radius 16
   Height 64
+  VanillaHeight 16
   +Solid
   states
   {
@@ -229,6 +244,7 @@ actor ShortBlueTorch 55
   Game Doom
   Radius 16
   Height 40
+  VanillaHeight 16
   +Solid
   states
   {
@@ -244,6 +260,7 @@ actor ShortGreenTorch 56
   Game Doom
   Radius 16
   Height 40
+  VanillaHeight 16
   +Solid
   states
   {
@@ -259,6 +276,7 @@ actor ShortRedTorch 57
   Game Doom
   Radius 16
   Height 40
+  VanillaHeight 16
   +Solid
   states
   {
@@ -274,6 +292,7 @@ actor Stalagtite 47
   Game Doom
   Radius 16
   Height 40
+  VanillaHeight 16
   +Solid
   states
   {
@@ -289,6 +308,7 @@ actor TechPillar 48
   Game Doom
   Radius 16
   Height 120
+  VanillaHeight 16
   +Solid
   states
   {
@@ -316,6 +336,7 @@ actor Candelabra 35
   Game Doom
   Radius 16
   Height 56
+  VanillaHeight 16
   +Solid
   states
   {
@@ -460,6 +481,7 @@ actor HeadsOnAStick 28
   Game Doom
   Radius 16
   Height 64
+  VanillaHeight 16
   +Solid
   states
   {
@@ -475,6 +497,7 @@ actor HeadOnAStick 27
   Game Doom
   Radius 16
   Height 56
+  VanillaHeight 16
   +Solid
   states
   {
@@ -490,6 +513,7 @@ actor HeadCandles 29
   Game Doom
   Radius 16
   Height 48
+  VanillaHeight 16
   +Solid
   states
   {
@@ -505,6 +529,7 @@ actor DeadStick 25
   Game Doom
   Radius 16
   Height 64
+  VanillaHeight 16
   +Solid
   states
   {
@@ -520,6 +545,7 @@ actor LiveStick 26
   Game Doom
   Radius 16
   Height 64
+  VanillaHeight 16
   +Solid
   states
   {
@@ -536,6 +562,7 @@ actor BigTree 54
   Game Doom
   Radius 32
   Height 96
+  VanillaHeight 16
   +Solid
   states
   {
@@ -552,6 +579,7 @@ Actor BurningBarrel 70
   SpawnID 149
   Radius 16
   Height 32
+  VanillaHeight 16
   +Solid
   //+Pushable
   states

@@ -871,6 +871,7 @@ override bool Touch (Entity InOther) {
       case 1: return ProcessHitFlags(Other, true);
     }
 
+    //TODO: move this outta here; `Touch` handler should check this, and use `VanillaHeight` if necessary
     if (!GetCvarB('sv_decoration_block_projectiles')) {
       //print("!!! bMonster=%B; bShootable=%B", Other.bMonster, Other.bShootable);
       if (!Other.bMonster && !Other.bShootable) return ProcessHitFlags(Other, true);

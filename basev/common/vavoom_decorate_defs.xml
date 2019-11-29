@@ -25,6 +25,7 @@
     <!-- Collision and physics -->
     <prop_float name="Radius" property="Radius" />
     <prop_float name="Height" property="Height" />
+    <prop_float name="VanillaHeight" property="VanillaHeight" />
     <prop_float name="DeathHeight" property="DeathHeight" />
     <prop_float name="BurnHeight" property="BurnHeight" />
     <prop_float name="CameraHeight" property="CameraHeight" />

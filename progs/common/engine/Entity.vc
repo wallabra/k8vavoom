@@ -315,6 +315,10 @@ float Radius;
 // WARNING: for PlayerPawn, you should use `SetHeight()` method
 //          actually, you'd better use this method for all entities
 float Height;
+// height in the vanilla engine; used in `sv_decoration_block_projectiles 0` mode
+// can be zero or negative
+// there is no need to save it, as it should not be modified in-game
+transient float VanillaHeight;
 
 // additional info record for player avatars only
 // only valid if type == MT_PLAYER

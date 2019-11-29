@@ -1546,9 +1546,19 @@ void ProcessDehackedFiles () {
   while (!sc->Check("}")) {
     if (HIdx >= EntClasses.Num()) sc->Error("Too many heights");
     sc->ExpectNumber();
-    //fprintf(stderr, "HGT FOR '%s' is %d (old is %f)\n", *EntClasses[HIdx]->GetFullName(), sc->Number, ((VEntity *)EntClasses[HIdx]->Defaults)->Height);
     //((VEntity *)EntClasses[HIdx]->Defaults)->Height = sc->Number;
     VanillaThingHeights.append(sc->Number);
+    //if (((VEntity *)EntClasses[HIdx]->Defaults)->Height != sc->Number) GCon->Logf(NAME_Debug, "  VanillaHeight = %d; // %s", sc->Number, EntClasses[HIdx]->GetName());
+    #if 0
+    {
+      VEntity *e = (VEntity *)EntClasses[HIdx]->Defaults;
+      if (!e->VanillaHeight) {
+        if (e->Height != sc->Number) {
+          GCon->Logf(NAME_Debug, "  VanillaHeight = %d; // %s  -- Height is %g", sc->Number, EntClasses[HIdx]->GetName(), e->Height);
+        }
+      }
+    }
+    #endif
     ++HIdx;
   }
 

@@ -140,6 +140,7 @@ actor Backpack : BackpackItem 8
   Game Doom
   SpawnID 144
   Height 26
+  VanillaHeight 16
   Inventory.PickupMessage "$gotbackpack"
   states
   {

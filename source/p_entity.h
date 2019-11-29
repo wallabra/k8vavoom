@@ -275,6 +275,7 @@ class VEntity : public VThinker {
   // for movement checking
   float Radius;
   float Height;
+  float VanillaHeight;
 
   // additional info record for player avatars only
   // only valid if type == MT_PLAYER
