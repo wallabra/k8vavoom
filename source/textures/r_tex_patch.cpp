@@ -131,6 +131,17 @@ vuint8 *VPatchTexture::GetPixels () {
   SOffset = Streamer<vint16>(Strm);
   TOffset = Streamer<vint16>(Strm);
 
+  if (Width < 1 || Height < 1) {
+    GCon->Logf(NAME_Error, "Patch \"%s\" has invalid size: width=%d; height=%d", *Name, Width, Height);
+    Width = 1;
+    Height = 1;
+    checkerFill8(Pixels, Width, Height);
+    ConvertPixelsToShaded();
+    return Pixels;
+  }
+
+  //if (VStr::strEquCI(*Name, "fsky1t")) GCon->Logf(NAME_Debug, "%s: %dx%d; offset: (%d,%d); fofs=0x%08x", *Name, Width, Height, SOffset, TOffset, (unsigned)(8+Width*4));
+
   // allocate image data
   Pixels = new vuint8[Width*Height];
   memset(Pixels, 0, Width*Height);
@@ -149,12 +160,13 @@ vuint8 *VPatchTexture::GetPixels () {
     Strm.Seek(8+x*4);
     vint32 Offset = Streamer<vint32>(Strm);
     if (Offset < 8+Width*4 || Offset > Strm.TotalSize()-1) {
-      GCon->Logf(NAME_Warning, "Bad offset in patch \"%s\"", *Name);
+      GCon->Logf(NAME_Warning, "Bad offset for column %d in patch \"%s\"", x, *Name);
       //checkerFillColumn8(Pixels+x, x, Width, Height);
       if (tex_strict_multipatch) checkerFill8(Pixels, Width, Height);
       continue;
     }
     Strm.Seek(Offset);
+    //if (VStr::strEquCI(*Name, "fsky1t")) GCon->Logf(NAME_Debug, "%s:  x=%d; fofs=0x%08x", *Name, x, (unsigned)Offset);
 
     // step through the posts in a column
     int top = -1; // DeepSea tall patches support
@@ -176,9 +188,11 @@ vuint8 *VPatchTexture::GetPixels () {
       if (TopDelta <= top) top += TopDelta; else top = TopDelta;
 
       // read column length and skip unused byte
-      vuint8 Len;
-      Strm << Len;
-      Streamer<vuint8>(Strm);
+      vuint8 ByteLen;
+      Strm << ByteLen;
+      Streamer<vuint8>(Strm); // garbage byte
+      int Len = (ByteLen ? ByteLen : 256); // Vanilla seems to do it like this
+      //if (VStr::strEquCI(*Name, "fsky1t")) GCon->Logf(NAME_Debug, "%s:   x=%d; Len=%d; top=%d; end=%d", *Name, x, Len, top, top+Len);
 
       // make sure column doesn't go out of the bounds of the image
       if (top+Len > Height) {
