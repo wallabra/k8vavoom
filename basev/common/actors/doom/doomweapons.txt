@@ -8,6 +8,7 @@ actor DoomWeapon : Weapon
 actor Fist : Weapon
 {
   Obituary "$ob_mpfist"
+  Tag "$TAG_FIST"
   Weapon.SelectionOrder 3700
   Weapon.Kickback 100
   Weapon.BotCombatDist 1
@@ -44,6 +45,7 @@ actor Chainsaw : Weapon 2005
   SpawnID 32
   Obituary "$ob_mpchainsaw"
   Inventory.PickupMessage "$gotchainsaw"
+  Tag "$TAG_CHAINSAW"
   Weapon.SelectionOrder 2200
   Weapon.PlayerModelVersion 8
   Weapon.BotCombatDist 1
@@ -80,6 +82,7 @@ actor Pistol : DoomWeapon 5010
 {
   Obituary "$ob_mppistol"
   Inventory.Pickupmessage "$pickup_pistol_dropped"
+  Tag "$TAG_PISTOL"
   Weapon.SelectionOrder 1900
   Weapon.AmmoType1 "Clip"
   Weapon.AmmoUse1 1
@@ -121,6 +124,7 @@ actor Shotgun : DoomWeapon 2001
   SpawnID 27
   Obituary "$ob_mpshotgun"
   Inventory.PickupMessage "$gotshotgun"
+  Tag "$TAG_SHOTGUN"
   Weapon.SelectionOrder 1300
   Weapon.AmmoType1 "Shell"
   Weapon.AmmoUse1 1
@@ -165,6 +169,7 @@ actor SuperShotgun : DoomWeapon 82
   SpawnID 33
   Obituary "$ob_mpsshotgun"
   Inventory.PickupMessage "$gotshotgun2"
+  Tag "$TAG_SUPERSHOTGUN"
   Weapon.SelectionOrder 400
   Weapon.AmmoType1 "Shell"
   Weapon.AmmoUse1 2
@@ -216,6 +221,7 @@ actor Chaingun : DoomWeapon 2002
   SpawnID 28
   Obituary "$ob_mpchaingun"
   Inventory.PickupMessage "$gotchaingun"
+  Tag "$TAG_CHAINGUN"
   Weapon.SelectionOrder 700
   Weapon.AmmoType1 "Clip"
   Weapon.AmmoUse1 1
@@ -256,6 +262,7 @@ actor RocketLauncher : DoomWeapon 2003
   game Doom
   SpawnID 29
   Inventory.PickupMessage "$gotlauncher"
+  Tag "$TAG_ROCKETLAUNCHER"
   Weapon.SelectionOrder 2500
   Weapon.AmmoType1 "RocketAmmo"
   Weapon.AmmoUse1 1
@@ -327,6 +334,7 @@ actor PlasmaRifle : DoomWeapon 2004
   game Doom
   SpawnID 30
   Inventory.PickupMessage "$gotplasma"
+  Tag "$TAG_PLASMARIFLE"
   Weapon.SelectionOrder 100
   Weapon.AmmoType1 "Cell"
   Weapon.AmmoUse1 1
@@ -431,6 +439,7 @@ actor BFG9000 : DoomWeapon 2006
   game Doom
   SpawnID 31
   Inventory.PickupMessage "$gotbfg9000"
+  Tag "$TAG_BFG9000"
   Weapon.SelectionOrder 2800
   Weapon.AmmoType1 "Cell"
   Weapon.AmmoUse1 40

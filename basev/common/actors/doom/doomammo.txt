@@ -7,6 +7,7 @@ actor Clip : Ammo 2007
   Inventory.MaxAmount 200
   Inventory.PickupMessage "$gotclip"
   Inventory.Icon "clipa0"
+  Tag "$AMMO_CLIP"
   Ammo.BackpackAmount 10
   Ammo.BackpackMaxAmount 400
   states
@@ -41,6 +42,7 @@ actor RocketAmmo : Ammo 2010
   Inventory.MaxAmount 50
   Inventory.PickupMessage "$gotrocket"
   Inventory.Icon "rocka0"
+  Tag "$AMMO_ROCKETS"
   Ammo.BackpackAmount 1
   Ammo.BackpackMaxAmount 100
   states
@@ -75,6 +77,7 @@ actor Cell : Ammo 2047
   Inventory.MaxAmount 300
   Inventory.PickupMessage "$gotcell"
   Inventory.Icon "cella0"
+  Tag "$AMMO_CELLS"
   Ammo.BackpackAmount 20
   Ammo.BackpackMaxAmount 600
   states
@@ -109,6 +112,7 @@ actor Shell : Ammo 2008
   Inventory.MaxAmount 50
   Inventory.PickupMessage "$gotshells"
   Inventory.Icon "shela0"
+  Tag "$AMMO_SHELLS"
   Ammo.BackpackAmount 4
   Ammo.BackpackMaxAmount 100
   states

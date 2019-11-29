@@ -1293,6 +1293,24 @@ TAG_ROCKETLAUNCHER = "Rocket Launcher";
 TAG_PLASMARIFLE = "Plasma Rifle";
 TAG_BFG9000 = "BFG 9000";
 
+// Item tags: Ammo
+AMMO_CLIP = "Bullets";
+AMMO_SHELLS = "Shotgun Shells";
+AMMO_ROCKETS = "Rockets";
+AMMO_CELLS = "Energy Cells";
+AMMO_GOLDWAND = "Wand Crystals";
+AMMO_CROSSBOW = "Ethereal Arrows";
+AMMO_BLASTER = "Claw Orbs";
+AMMO_MACE = "Mace Spheres";
+AMMO_SKULLROD = "Hellstaff Runes";
+AMMO_PHOENIXROD = "Flame Orbs";
+AMMO_MANA1 = "Blue Mana";
+AMMO_MANA2 = "Green Mana";
+AMMO_CLIP_CHEX = "Mini Zorch Charge";
+AMMO_SHELLS_CHEX = "Large Zorcher Charge";
+AMMO_ROCKETS_CHEX = "Propulsor Charge";
+AMMO_CELLS_CHEX = "Phasing Zorcher Charge";
+
 // Item tags: Heretic weapons
 TAG_STAFF = "Staff";
 TAG_GAUNTLETS = "Gauntlets of the Necromancer";
