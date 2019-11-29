@@ -752,17 +752,21 @@ static PWadScanInfo pwadScanInfo;
 //  findMapChecker
 //
 //==========================================================================
-static bool findMapChecker (int lump, const char *name, VName lumpname, VStr fulllumpname) {
-  //GCon->Logf(NAME_Debug, "*** checking lump %d: name=<%s>; lumpname=<%s>; fullname=<%s>", lump, name, *lumpname, *fulllumpname);
+static void findMapChecker (int lump) {
+  VName lumpname = W_LumpName(lump);
+  if (lumpname == NAME_None) return;
+  const char *name = *lumpname;
+
+  GCon->Logf(NAME_Debug, "*** checking lump %d: name=<%s> (%s) (aux=%d)", lump, name, *W_FullLumpName(lump), (int)W_IsAuxLump(lump));
 
   // doom1 (or kdizd)
   if (pwadScanInfo.episode != 0) {
     if ((name[0] == 'e' || name[0] == 'z') && name[1] && name[2] == 'm' && name[3] && !name[4]) {
       int e = VStr::digitInBase(name[1], 10);
       int m = VStr::digitInBase(name[3], 10);
-      if (e < 0 || m < 0) return false;
+      if (e < 0 || m < 0) return;
       if (e >= 1 && e <= 9 && m >= 1 && m <= 9) {
-        if (pwadScanInfo.episode == 0) return false; // oops, mixed maps
+        if (pwadScanInfo.episode == 0) return; // oops, mixed maps
         if (pwadScanInfo.episode < 0 || pwadScanInfo.episode > e) {
           pwadScanInfo.episode = e;
           pwadScanInfo.mapnum = m;
@@ -776,7 +780,7 @@ static bool findMapChecker (int lump, const char *name, VName lumpname, VStr ful
           }
         }
       }
-      return false; // continue
+      return; // continue
     }
   }
 
@@ -786,21 +790,19 @@ static bool findMapChecker (int lump, const char *name, VName lumpname, VStr ful
     // try to detect things like "aaa<digit>"
     int dpos = 0;
     while (name[dpos] && VStr::digitInBase(name[dpos], 10) < 0) ++dpos;
-    if (dpos == 0) return false; // must start from a lettter
-    if (VStr::digitInBase(name[dpos], 10) < 0) return false; // nope
-    for (const char *t = name+dpos; *t; ++t) if (VStr::digitInBase(*t, 10) < 0) return false;
-    if (!VStr::convertInt(name+dpos, &n)) return false;
-    if (n < 1) return false;
+    if (dpos == 0) return; // must start from a lettter
+    if (VStr::digitInBase(name[dpos], 10) < 0) return; // nope
+    for (const char *t = name+dpos; *t; ++t) if (VStr::digitInBase(*t, 10) < 0) return;
+    if (!VStr::convertInt(name+dpos, &n)) return;
+    if (n < 1) return;
     pwadScanInfo.episode = 0;
     if (pwadScanInfo.mapnum < 0 || pwadScanInfo.mapnum > n) {
       pwadScanInfo.mapnum = n;
       pwadScanInfo.mapname = VStr(name);
       //GCon->Logf(NAME_Debug, "*** D2 MAP; index=%d", pwadScanInfo.getMapIndex());
     }
-    return false; // continue
+    return; // continue
   }
-
-  return false;
 }
 
 
@@ -822,7 +824,12 @@ static void performPWadScan () {
   bool oldReport = fsys_no_dup_reports;
   fsys_no_dup_reports = true;
   W_CloseAuxiliary();
-  for (int pwidx = 0; pwidx < pwadList.length(); ++pwidx) tempMount(pwadList[pwidx]);
+  //for (int f = 0; f < W_NextMountFileId(); ++f) GCon->Logf(NAME_Debug, "#%d: %s", f, *W_FullPakNameByFile(f));
+  for (int pwidx = 0; pwidx < pwadList.length(); ++pwidx) {
+    //GCon->Logf(NAME_Debug, "  ... <%s>", *pwadList[pwidx].fname);
+    tempMount(pwadList[pwidx]);
+  }
+  //for (int f = 0; f < W_NextMountFileId(); ++f) GCon->Logf(NAME_Debug, "#%d: %s", f, *W_FullPakNameByFile(f));
 
   auto milump = (cli_NoZMapinfo >= 0 ? W_CheckNumForName("zmapinfo") : -1);
   if (milump < 0 || !W_IsAuxLump(milump)) milump = W_CheckNumForName("mapinfo");
@@ -849,9 +856,12 @@ static void performPWadScan () {
   }
 
   // guess the name of the first map
-  W_FindMapInAuxuliaries(&findMapChecker);
+  GCon->Log(NAME_Init, "detecting pwad maps...");
+  for (auto &&it : WadMapIterator::FromFirstAuxFile()) findMapChecker(it.lump);
+  GCon->Log(NAME_Init, "pwad map detection complete.");
 
   W_CloseAuxiliary();
+  //for (int f = 0; f < W_NextMountFileId(); ++f) GCon->Logf(NAME_Debug, "#%d: %s", f, *W_FullPakNameByFile(f));
   fsys_no_dup_reports = oldReport;
   fsys_EnableAuxSearch = false;
 }
@@ -2308,7 +2318,11 @@ void FL_Init () {
             pwadScanInfo.hasMapinfo = true;
             break;
           }
-          W_FindMapInLastFile(nextfid, &findMapChecker);
+          GCon->Logf(NAME_Init, "checking pwad '%s'...", *W_FullPakNameByFile(nextfid));
+          for (auto &&it : WadMapIterator::FromWadFile(nextfid)) {
+            if (it.getFile() != nextfid) break;
+            findMapChecker(it.lump);
+          }
         }
       }
       //GCon->Logf(NAME_Debug, "hasMapinfo: %d; mapname=<%s>; episode=%d; map=%d; index=%d", (int)pwadScanInfo.hasMapinfo, *pwadScanInfo.mapname, pwadScanInfo.episode, pwadScanInfo.mapnum, pwadScanInfo.getMapIndex());
