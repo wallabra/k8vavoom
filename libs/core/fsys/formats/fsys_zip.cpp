@@ -210,18 +210,21 @@ void VZipFile::OpenArchive (VStream *fstream, vuint32 cdofs) {
 
     if (canHasPrefix && file_info.fileName.IndexOf('/') == -1) canHasPrefix = false;
 
-    if (canHasPrefix) {
-      for (const VPK3ResDirInfo *di = PK3ResourceDirs; di->pfx; ++di) {
-        if (file_info.fileName.StartsWith(di->pfx)) { canHasPrefix = false; break; }
-      }
+    // ignore "dehacked.txt" included in some idarchive zips with "dehacked.exe"
+    if (isPK3 || !zfname.strEquCI("dehacked.txt")) {
       if (canHasPrefix) {
-        for (const char **dn = moreresdirs; *dn; ++dn) {
-          if (file_info.fileName.StartsWith(*dn)) { canHasPrefix = false; break; }
+        for (const VPK3ResDirInfo *di = PK3ResourceDirs; di->pfx; ++di) {
+          if (file_info.fileName.StartsWith(di->pfx)) { canHasPrefix = false; break; }
+        }
+        if (canHasPrefix) {
+          for (const char **dn = moreresdirs; *dn; ++dn) {
+            if (file_info.fileName.StartsWith(*dn)) { canHasPrefix = false; break; }
+          }
         }
       }
-    }
 
-    pakdir.append(file_info);
+      pakdir.append(file_info);
+    }
 
     // set the current file of the zipfile to the next file
     pos_in_central_dir += SIZECENTRALDIRITEM+file_info.filenamesize+size_file_extra+size_file_comment;
