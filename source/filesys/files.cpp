@@ -757,7 +757,7 @@ static void findMapChecker (int lump) {
   if (lumpname == NAME_None) return;
   const char *name = *lumpname;
 
-  GCon->Logf(NAME_Debug, "*** checking lump %d: name=<%s> (%s) (aux=%d)", lump, name, *W_FullLumpName(lump), (int)W_IsAuxLump(lump));
+  //GCon->Logf(NAME_Debug, "*** checking lump %d: name=<%s> (%s) (aux=%d)", lump, name, *W_FullLumpName(lump), (int)W_IsAuxLump(lump));
 
   // doom1 (or kdizd)
   if (pwadScanInfo.episode != 0) {
