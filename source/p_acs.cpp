@@ -1252,6 +1252,7 @@ VAcsInfo *VAcsObject::FindScriptByName (int nameidx) const {
     if (nameidx < 0) return nullptr;
   }
   //for (int i = 0; i < NumScripts; i++) fprintf(stderr, "#%d: index=%d; name=<%s>\n", i, Scripts[i].Number, *Scripts[i].Name); abort();
+  //FIXME: make this faster by using hash table
   for (int i = 0; i < NumScripts; ++i) {
     if (Scripts[i].Name.GetIndex() == nameidx) return Scripts+i;
   }
@@ -1718,7 +1719,7 @@ bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3, int
 
   if (!Info) {
     // script not found
-    GCon->Logf(NAME_Dev, "Start ACS ERROR: Unknown script %d", Number);
+    if (developer) GCon->Logf(NAME_Dev, "Start ACS ERROR: Unknown script %d", Number);
     if (realres) *realres = 0;
     return false;
   }
@@ -6940,9 +6941,11 @@ IMPLEMENT_FUNCTION(VLevel, RunNamedACSWithResult) {
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::RunNamedACSWithResult"); }
   if (Name.length() == 0) { RET_INT(0); return; }
   VName Script = VName(*Name, VName::AddLower);
+  //if (Script == NAME_None) { VObject::VMDumpCallStack(); GCon->Logf(NAME_Error, "no named script '%s'", *Name); }
   if (Script == NAME_None) { RET_INT(0); return; }
   int res = 0;
   Self->Acs->Start(-Script.GetIndex(), 0/*Map*/, Arg1, Arg2, Arg3, Arg4, Activator, nullptr/*line*/, 0/*side*/, /*Script < 0*/true/*always*/, true/*wantresult*/, false/*net;k8:notsure*/, &res);
+  //{ VObject::VMDumpCallStack(); GCon->Logf(NAME_Debug, "ACS named script '%s': res=%d", *Name, res); }
   RET_INT(res);
 }
 
