@@ -6,6 +6,7 @@
     <prop_spawn_id name="SpawnID" />
     <prop_conversation_id name="ConversationID" />
     <prop_string name="Tag" property="StrifeName" />
+    <prop_string_unsupported name="PainType" />
     <!-- Behaviour -->
     <prop_int name="Health" property="Health" />
     <prop_int name="GibHealth" property="GibsHealth" />
