@@ -72,6 +72,8 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
     case LIGHTEV_Glow:
       Value1 = Arg2; // upper lightlevel
       Value2 = Arg3; // lower lightlevel
+      // some fuckin' morons sets Arg4 (fade time) to zero; please, goddess, kill them all!
+      Arg4 = max(1, Arg4);
       Delta = float((Arg2-Sector->params.lightlevel)/Arg4)*32.0; // lightlevel delta
       if (Sector->params.lightlevel <= Arg2) {
         Direction = 1; // get brighter
