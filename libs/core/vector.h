@@ -187,6 +187,31 @@ public:
     const float ltangle = macos(surfaceToLight.dot(dir));
     return (ltangle < angle ? sinf(midval(0.0f, (angle-ltangle)/angle, 1.0f)*((float)M_PI/2.0f)) : 0.0f);
   }
+
+  // range must be valid
+  inline void clampScaleInPlace (float fabsmax) noexcept {
+    if (isValid()) {
+      if (fabsmax > 0.0f && (fabs(x) > fabsmax || fabs(y) > fabsmax || fabs(z) > fabsmax)) {
+        // need to rescale
+        // find abs of the longest axis
+        float vv;
+        float absmax = fabs(x);
+        // y
+        vv = fabs(y);
+        if (vv > absmax) absmax = vv;
+        // z
+        vv = fabs(z);
+        if (vv > absmax) absmax = vv;
+        // now rescale to range size
+        const float rngscale = fabsmax/absmax;
+        x *= rngscale;
+        y *= rngscale;
+        z *= rngscale;
+      }
+    } else {
+      x = y = z = 0.0f;
+    }
+  }
 };
 
 static_assert(__builtin_offsetof(TVec, y) == __builtin_offsetof(TVec, x)+sizeof(float), "TVec layout fail (0)");
