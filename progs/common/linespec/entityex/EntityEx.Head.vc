@@ -45,8 +45,8 @@ const float FRICTION_LOW    = 0.95703125;
 const float FRICTION_FLY    = 2.87109375;
 const float FRICTION_WATER  = 3.0;
 
-const float MAXMOVE     = 1050.0;
-const float MAXMOVESTEP = MAXMOVE/(35.0*2.0);
+const float MAXMOVE     = 1050.0*8; //k8: added '*8', why not?
+const float MAXMOVESTEP = /*MAXMOVE*/1050.0/(35.0*2.0);
 const float STOPSPEED   = 2.1875;
 
 const float BOUNCE_VAL  = 1.5;

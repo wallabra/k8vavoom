@@ -88,7 +88,7 @@ bool Physics (float DeltaTime) {
 #endif
     {
       // why not?
-      Velocity = vclamp(Velocity, -MAXMOVE*4, MAXMOVE*4);
+      Velocity = vclampscale(Velocity, MAXMOVE);
     }
     Speed = (Speed.isfinite ? fclamp(Speed, -MAXMOVE, MAXMOVE) : 0.0);
   }
@@ -333,8 +333,9 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
     }
   }
 
-  Velocity.x = fclamp(Velocity.x, -MAXMOVE, MAXMOVE);
-  Velocity.y = fclamp(Velocity.y, -MAXMOVE, MAXMOVE);
+  //if (self isa 'DH_GaussBall') printdebug("%C: 000 (max=%s): %s  %s", self, MAXMOVE, Velocity, Normalise(Velocity));
+  Velocity = vclampscale(Velocity, MAXMOVE);
+  //if (self isa 'DH_GaussBall') printdebug("%C: 001 (max=%s): %s  %s", self, MAXMOVE, Velocity, Normalise(Velocity));
 
   float xmove = Velocity.x*DeltaTime;
   float ymove = Velocity.y*DeltaTime;
