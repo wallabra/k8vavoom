@@ -76,9 +76,11 @@ static char *String;
 static char *ValueString;
 static int value;
 
+
 static TArray<int> VanillaThingHeights;
 static TArray<VName> Sprites;
 static TArray<VClass *> EntClasses;
+static TArray<bool> EntClassTouched; // by some dehacked definition
 static TArray<VClass *> WeaponClasses;
 static TArray<VClass *> AmmoClasses;
 static TArray<VState *> States;
@@ -464,7 +466,7 @@ static int ParseRenderStyle () {
 //
 //==========================================================================
 static void DoThingState (VClass *Ent, const char *StateLabel) {
-  if (value < 0 || value >= States.Num()) {
+  if (value < 0 || value >= States.length()) {
     Warning("Bad state '%d' for thing '%s'", value, (Ent ? Ent->GetName() : "<undefined>"));
   } else {
     Ent->SetStateLabel(StateLabel, States[value]);
@@ -480,7 +482,7 @@ static void DoThingState (VClass *Ent, const char *StateLabel) {
 static void DoThingSound (VClass *Ent, const char *FieldName) {
   //  If it's not a number, treat it like a sound defined in SNDINFO
        if (ValueString[0] < '0' || ValueString[0] > '9') SetClassFieldName(Ent, FieldName, ValueString);
-  else if (value < 0 || value >= Sounds.Num()) Warning("Bad sound index %d for '%s'", value, (Ent ? Ent->GetName() : "<undefined>"));
+  else if (value < 0 || value >= Sounds.length()) Warning("Bad sound index %d for '%s'", value, (Ent ? Ent->GetName() : "<undefined>"));
   else SetClassFieldName(Ent, FieldName, Sounds[value]);
 }
 
@@ -491,19 +493,20 @@ static void DoThingSound (VClass *Ent, const char *FieldName) {
 //
 //==========================================================================
 static void ReadThing (int num) {
-  if (num < 1 || num > EntClasses.Num()) {
+  if (num < 1 || num > EntClasses.length()) {
     Warning("Invalid thing num %d", num);
     while (ParseParam()) {}
     return;
   }
   bool gotHeight = false;
   bool gotSpawnCeiling = false;
+  bool hasSomeDefine = false;
   VClass *Ent = EntClasses[num-1];
   while (ParseParam()) {
     if (VStr::ICmp(String, "ID #") == 0) {
       /*
       int Idx = -1;
-      for (int i = 0; i < VClass::GMobjInfos.Num(); ++i) {
+      for (int i = 0; i < VClass::GMobjInfos.length(); ++i) {
         if (VClass::GMobjInfos[i].Class == Ent) {
           Idx = i;
           break;
@@ -525,46 +528,59 @@ static void ReadThing (int num) {
         VClass::RemoveMObjIdByClass(Ent, GGameInfo->GameFilterFlag);
       }
     } else if (!VStr::ICmp(String, "Hit points")) {
+      hasSomeDefine = true;
       SetClassFieldInt(Ent, "Health", value);
       SetClassFieldInt(Ent, "GibsHealth", -value);
     } else if (!VStr::ICmp(String, "Reaction time")) {
+      hasSomeDefine = true;
       SetClassFieldInt(Ent, "ReactionCount", value);
     } else if (!VStr::ICmp(String, "Missile damage")) {
+      hasSomeDefine = true;
       SetClassFieldInt(Ent, "MissileDamage", value);
     } else if (!VStr::ICmp(String, "Width")) {
+      hasSomeDefine = true;
       SetClassFieldFloat(Ent, "Radius", value/65536.0f);
     } else if (!VStr::ICmp(String, "Height")) {
       gotHeight = true; // height changed
+      hasSomeDefine = true;
       SetClassFieldFloat(Ent, "Height", value/65536.0f);
     } else if (!VStr::ICmp(String, "Mass")) {
+      hasSomeDefine = true;
       SetClassFieldFloat(Ent, "Mass", (value == 0x7fffffff ? 99999.0f : value));
     } else if (!VStr::ICmp(String, "Speed")) {
+      hasSomeDefine = true;
       if (value < 100) {
         SetClassFieldFloat(Ent, "Speed", 35.0f*value);
       } else {
         SetClassFieldFloat(Ent, "Speed", 35.0f*value/65536.0f);
       }
     } else if (!VStr::ICmp(String, "Pain chance")) {
+      hasSomeDefine = true;
       SetClassFieldFloat(Ent, "PainChance", value/256.0f);
     } else if (!VStr::ICmp(String, "Translucency")) {
+      //hasSomeDefine = true;
       SetClassFieldFloat(Ent, "Alpha", value/65536.0f);
       SetClassFieldByte(Ent, "RenderStyle", STYLE_Translucent);
     } else if (!VStr::ICmp(String, "Alpha")) {
+      //hasSomeDefine = true;
       SetClassFieldFloat(Ent, "Alpha", VStr::atof(ValueString, 1));
     } else if (!VStr::ICmp(String, "Render Style")) {
+      //hasSomeDefine = true;
       SetClassFieldByte(Ent, "RenderStyle", ParseRenderStyle());
     } else if (!VStr::ICmp(String, "Scale")) {
+      hasSomeDefine = true;
       float Scale = VStr::atof(ValueString, 1);
       Scale = midval(0.0001f, Scale, 256.0f);
       SetClassFieldFloat(Ent, "ScaleX", Scale);
       SetClassFieldFloat(Ent, "ScaleY", Scale);
     } else if (!VStr::ICmp(String, "Bits")) {
+      hasSomeDefine = true;
       TArray<VStr> Flags;
       VStr Tmp(ValueString);
       Tmp.Split(" ,+|\t\f\r", Flags);
       int Values[2] = { 0, 0 };
       bool Changed[2] = { false, false };
-      for (int i = 0; i < Flags.Num(); ++i) ParseFlag(Flags[i].ToUpper(), Values, Changed);
+      for (int i = 0; i < Flags.length(); ++i) ParseFlag(Flags[i].ToUpper(), Values, Changed);
       if (Changed[0]) {
         gotSpawnCeiling = ((Values[0]&0x00000100) != 0);
         SetClassFieldBool(Ent, "bSpecial", Values[0]&0x00000001);
@@ -656,22 +672,30 @@ static void ReadThing (int num) {
     }
     // States
     else if (!VStr::ICmp(String, "Initial frame")) {
+      hasSomeDefine = true;
       DoThingState(Ent, "Spawn");
     } else if (!VStr::ICmp(String, "First moving frame")) {
+      hasSomeDefine = true;
       DoThingState(Ent, "See");
     } else if (!VStr::ICmp(String, "Close attack frame")) {
       // don't change melee state for players
+      hasSomeDefine = true;
       if (num != 1) DoThingState(Ent, "Melee");
     } else if (!VStr::ICmp(String, "Far attack frame")) {
       // don't change missile state for players
+      hasSomeDefine = true;
       if (num != 1) DoThingState(Ent, "Missile");
     } else if (!VStr::ICmp(String, "Injury frame")) {
+      hasSomeDefine = true;
       DoThingState(Ent, "Pain");
     } else if (!VStr::ICmp(String, "Death frame")) {
+      hasSomeDefine = true;
       DoThingState(Ent, "Death");
     } else if (!VStr::ICmp(String, "Exploding frame")) {
+      hasSomeDefine = true;
       DoThingState(Ent, "XDeath");
     } else if (!VStr::ICmp(String, "Respawn frame")) {
+      hasSomeDefine = true;
       DoThingState(Ent, "Raise");
     }
     // sounds
@@ -696,6 +720,7 @@ static void ReadThing (int num) {
     }
     ((VEntity *)Ent->Defaults)->Height = VanillaThingHeights[num-1];
   }
+  if (hasSomeDefine) EntClassTouched[num-1] = true;
 }
 
 
@@ -727,7 +752,7 @@ static void ReadSound (int) {
 //==========================================================================
 static void ReadState (int num) {
   // check index
-  if (num >= States.Num() || num < 0) {
+  if (num >= States.length() || num < 0) {
     Warning("Invalid state num %d", num);
     while (ParseParam()) {}
     return;
@@ -739,9 +764,10 @@ static void ReadState (int num) {
     return;
   }
 
+  //TODO: do we need to set `EntClassTouched` here?
   while (ParseParam()) {
     if (!VStr::ICmp(String, "Sprite number")) {
-      if (value < 0 || value >= Sprites.Num()) {
+      if (value < 0 || value >= Sprites.length()) {
         Warning("Bad sprite index %d", value);
       } else {
         States[num]->SpriteName = Sprites[value];
@@ -756,7 +782,7 @@ static void ReadState (int num) {
     } else if (!VStr::ICmp(String, "Duration")) {
       States[num]->Time = (value < 0 ? value : value/35.0f);
     } else if (!VStr::ICmp(String, "Next frame")) {
-      if (value >= States.Num() || value < 0) {
+      if (value >= States.length() || value < 0) {
         Warning("Invalid next state %d", value);
       } else {
         States[num]->NextState = States[value];
@@ -794,7 +820,7 @@ static void ReadSpriteName (int) {
 //==========================================================================
 static void ReadAmmo (int num) {
   // check index
-  if (num >= AmmoClasses.Num() || num < 0) {
+  if (num >= AmmoClasses.length() || num < 0) {
     Warning("Invalid ammo num %d", num);
     while (ParseParam()) {}
     return;
@@ -824,7 +850,7 @@ static void ReadAmmo (int num) {
   }
 
   // fix up amounts in weapon classes
-  for (int i = 0; i < WeaponClasses.Num(); ++i) {
+  for (int i = 0; i < WeaponClasses.length(); ++i) {
     VClass *C = WeaponClasses[i];
     if (GetClassFieldClass(C, "AmmoType1") == Ammo) SetClassFieldInt(C, "AmmoGive1", GetClassFieldInt(Ammo, "Amount")*2);
     if (GetClassFieldClass(C, "AmmoType2") == Ammo) SetClassFieldInt(C, "AmmoGive2", GetClassFieldInt(Ammo, "Amount")*2);
@@ -838,7 +864,7 @@ static void ReadAmmo (int num) {
 //
 //==========================================================================
 static void DoWeaponState (VClass *Weapon, const char *StateLabel) {
-  if (value < 0 || value >= States.Num()) {
+  if (value < 0 || value >= States.length()) {
     Warning("Invalid weapon state %d for weapon '%s'", value, (Weapon ? Weapon->GetName() : "<undefined>"));
   } else {
     Weapon->SetStateLabel(StateLabel, States[value]);
@@ -853,7 +879,7 @@ static void DoWeaponState (VClass *Weapon, const char *StateLabel) {
 //==========================================================================
 static void ReadWeapon (int num) {
   // check index
-  if (num < 0 || num >= WeaponClasses.Num()) {
+  if (num < 0 || num >= WeaponClasses.length()) {
     Warning("Invalid weapon num %d", num);
     while (ParseParam()) {}
     return;
@@ -862,7 +888,7 @@ static void ReadWeapon (int num) {
   VClass *Weapon = WeaponClasses[num];
   while (ParseParam()) {
     if (!VStr::ICmp(String, "Ammo type")) {
-      if (value < AmmoClasses.Num()) {
+      if (value < AmmoClasses.length()) {
         SetClassFieldClass(Weapon, "AmmoType1", AmmoClasses[value]);
         SetClassFieldInt(Weapon, "AmmoGive1", GetClassFieldInt(AmmoClasses[value], "Amount")*2);
         if (GetClassFieldInt(Weapon, "AmmoUse1") == 0) SetClassFieldInt(Weapon, "AmmoUse1", 1);
@@ -896,7 +922,7 @@ static void ReadWeapon (int num) {
 //
 //==========================================================================
 static void ReadPointer (int num) {
-  if (num < 0 || num >= CodePtrStates.Num()) {
+  if (num < 0 || num >= CodePtrStates.length()) {
     Warning("Invalid pointer");
     while (ParseParam()) {}
     return;
@@ -904,7 +930,7 @@ static void ReadPointer (int num) {
 
   while (ParseParam()) {
     if (!VStr::ICmp(String, "Codep Frame")) {
-      if (value < 0 || value >= States.Num()) {
+      if (value < 0 || value >= States.length()) {
         Warning("Invalid source state %d", value);
       } else {
         CodePtrStates[num]->Function = StateActions[value];
@@ -925,7 +951,7 @@ static void ReadCodePtr (int) {
   while (ParseParam()) {
     if (!VStr::NICmp(String, "Frame", 5) && (vuint8)String[5] <= ' ') {
       int Index = VStr::atoi(String+5);
-      if (Index < 0 || Index >= States.Num()) {
+      if (Index < 0 || Index >= States.length()) {
         Warning("Bad frame index %d", Index);
         continue;
       }
@@ -934,7 +960,7 @@ static void ReadCodePtr (int) {
       if ((ValueString[0] == 'A' || ValueString[0] == 'a') && ValueString[1] == '_') ValueString += 2;
 
       bool Found = false;
-      for (int i = 0; i < CodePtrs.Num(); ++i) {
+      for (int i = 0; i < CodePtrs.length(); ++i) {
         if (!CodePtrs[i].Name.ICmp(ValueString)) {
           State->Function = CodePtrs[i].Method;
           Found = true;
@@ -997,7 +1023,7 @@ static void ReadMisc (int) {
       SetClassFieldInt(GameInfoClass, "INITIAL_HEALTH", value);
     } else if (!VStr::ICmp(String, "Initial Bullets")) {
       TArray<VDropItemInfo>& List = *(TArray<VDropItemInfo>*)(DoomPlayerClass->Defaults+DoomPlayerClass->FindFieldChecked("DropItemList")->Ofs);
-      for (int i = 0; i < List.Num(); ++i) if (List[i].Type && List[i].Type->Name == "Clip") List[i].Amount = value;
+      for (int i = 0; i < List.length(); ++i) if (List[i].Type && List[i].Type->Name == "Clip") List[i].Amount = value;
     } else if (!VStr::ICmp(String, "Max Health")) {
       SetClassFieldInt(HealthBonusClass, "MaxAmount", 2*value);
     } else if (!VStr::ICmp(String, "Max Armor")) {
@@ -1112,7 +1138,7 @@ static void ReadPars (int) {
 static void FindString (const char *oldStr, const char *newStr) {
   // sounds
   bool SoundFound = false;
-  for (int i = 0; i < SfxNames.Num(); ++i) {
+  for (int i = 0; i < SfxNames.length(); ++i) {
     if (SfxNames[i].Old == oldStr) {
       SfxNames[i].New = newStr;
       SfxNames[i].Replaced = true;
@@ -1124,7 +1150,7 @@ static void FindString (const char *oldStr, const char *newStr) {
 
   // music
   bool SongFound = false;
-  for (int i = 0; i < MusicNames.Num(); ++i) {
+  for (int i = 0; i < MusicNames.length(); ++i) {
     if (MusicNames[i].Old == oldStr) {
       MusicNames[i].New = newStr;
       MusicNames[i].Replaced = true;
@@ -1135,7 +1161,7 @@ static void FindString (const char *oldStr, const char *newStr) {
   if (SongFound) return;
 
   // sprite names
-  for (int i = 0; i < SpriteNames.Num(); ++i) {
+  for (int i = 0; i < SpriteNames.length(); ++i) {
     if (SpriteNames[i].Old == oldStr) {
       SpriteNames[i].New = newStr;
       SpriteNames[i].Replaced = true;
@@ -1403,48 +1429,10 @@ static void LoadDehackedFile (VStream *Strm) {
 
 //==========================================================================
 //
-//  FindDehackedLump
-//
-//  this is a hack for older wads that comes with "wadname.deh" in
-//  their zip archive. it checks if the wad has built-in dehacked
-//  lump, and if it isn't, looks for "wadname.deh" instead
+//  LoadDehackedDefinitions
 //
 //==========================================================================
-static int FindDehackedLump () {
-  int dehlump = W_CheckNumForName("dehacked");
-  if (cli_NoExternalDeh > 0) return dehlump;
-  // look for wads, and then for .deh
-  int ffile = -1;
-  for (int fnum = W_NextMountFileId()-1; fnum >= 0; --fnum) {
-    VStr pkname = W_FullPakNameByFile(fnum);
-    if (!pkname.endsWithCI(".wad")) continue;
-    //GCon->Logf(NAME_Debug, "::: <%s> :::", *pkname);
-    // found wad, look for "basename.deh"
-    auto lpos = pkname.lastIndexOf(':');
-    if (lpos >= 0) pkname.chopLeft(lpos+1);
-    if (pkname.isEmpty()) continue;
-    VStr dhname = pkname.extractFileName().stripExtension()+".deh";
-    //GCon->Logf(NAME_Debug, ":::   <%s> :::", *dhname);
-    int lump = W_CheckNumForFileName(dhname);
-    if (lump >= 0 && lump > dehlump) { dehlump = lump; ffile = fnum; }
-  }
-  if (dehlump >= 0 && ffile >= 0) {
-    GCon->Logf(NAME_Init, "Found external dehacked for '%s': '%s'", *W_FullPakNameByFile(ffile), *W_FullLumpName(dehlump));
-  }
-  return dehlump;
-}
-
-
-//==========================================================================
-//
-//  ProcessDehackedFiles
-//
-//==========================================================================
-void ProcessDehackedFiles () {
-  if (cli_NoAnyDehacked) return;
-  int LumpNum = FindDehackedLump();
-  if (cli_DehList.length() == 0 && LumpNum < 0) return;
-
+static void LoadDehackedDefinitions () {
   // open dehinfo script
   VStream *Strm = FL_OpenFileReadBaseOnly("dehinfo.txt");
   if (!Strm) Sys_Error("dehinfo.txt is required to parse dehacked patches");
@@ -1508,7 +1496,7 @@ void ProcessDehackedFiles () {
   sc->Expect("{");
   while (!sc->Check("}")) {
     sc->ExpectNumber();
-    if (sc->Number < 0 || sc->Number >= States.Num()) sc->Error(va("Bad state index %d", sc->Number));
+    if (sc->Number < 0 || sc->Number >= States.length()) sc->Error(va("Bad state index %d", sc->Number));
     CodePtrStates.Append(States[sc->Number]);
   }
 
@@ -1551,7 +1539,9 @@ void ProcessDehackedFiles () {
     VClass *C = VClass::FindClass(*sc->String);
     if (!C) sc->Error(va("No such class %s", *sc->String));
     EntClasses.Append(C);
+    EntClassTouched.append(false);
   }
+  vassert(EntClasses.length() == EntClassTouched.length());
 
   // create list of weapon classes
   sc->Expect("weapons");
@@ -1578,7 +1568,7 @@ void ProcessDehackedFiles () {
   sc->Expect("{");
   int HIdx = 0;
   while (!sc->Check("}")) {
-    if (HIdx >= EntClasses.Num()) sc->Error("Too many heights");
+    if (HIdx >= EntClasses.length()) sc->Error("Too many heights");
     sc->ExpectNumber();
     //((VEntity *)EntClasses[HIdx]->Defaults)->Height = sc->Number;
     VanillaThingHeights.append(sc->Number);
@@ -1615,20 +1605,138 @@ void ProcessDehackedFiles () {
   VClass::GetSpriteNames(SpriteNames);
   EngStrings = new VLanguage();
   EngStrings->LoadStrings("en");
+}
 
-  // parse dehacked patches
-  if (LumpNum >= 0) {
-    dehFileName = W_FullLumpName(LumpNum);
-    /*
-    if (dehFileName.endsWithCI("D4V.wad:dehacked")) {
-      GLog.Logf(NAME_Warning, "Skipped D4V dehacked patch lump '%s'", *dehFileName);
-    } else
-    */
-    {
-      GLog.Logf(NAME_Init, "Processing dehacked patch lump '%s'", *dehFileName);
-      LoadDehackedFile(W_CreateLumpReaderNum(LumpNum));
+
+//==========================================================================
+//
+//  getFileWadName
+//
+//==========================================================================
+static VStr getFileWadName (int fidx) {
+  VStr pkname = W_FullPakNameByFile(fidx);
+  if (!pkname.endsWithCI(".wad")) return VStr::EmptyString;
+  auto lpos = pkname.lastIndexOf(':');
+  if (lpos >= 0) pkname.chopLeft(lpos+1);
+  return pkname.extractFileName();
+}
+
+
+//==========================================================================
+//
+//  FindDehackedLump
+//
+//  this is a hack for older wads that comes with "wadname.deh" in
+//  their zip archive. it checks if the wad has built-in dehacked
+//  lump, and if it isn't, looks for "wadname.deh" instead
+//
+//==========================================================================
+static void FindDehackedLumps (TArray<int> &lumplist) {
+  // build list of wad files
+  struct WadInfo {
+    VStr wadname;
+    VStr dehname;
+    int wadfidx;
+    int dlump;
+  };
+
+  TArray<WadInfo> wadlist;
+  TMap<VStrCI, int> dehmap; // key: "name.deh"; value: index in wadlist
+
+  if (cli_NoExternalDeh <= 0) {
+    for (int fnum = 0; fnum < W_NextMountFileId(); ++fnum) {
+      VStr pkname = getFileWadName(fnum);
+      if (pkname.isEmpty()) continue;
+      VStr dhname = pkname.stripExtension();
+      if (dhname.isEmpty()) continue;
+      dhname += ".deh";
+      // remove duplicates
+      for (int f = 0; f < wadlist.length(); ++f) {
+        if (wadlist[f].wadname.strEquCI(pkname)) {
+          wadlist.removeAt(f);
+          --f;
+        }
+      }
+      WadInfo &wnfo = wadlist.alloc();
+      wnfo.wadname = pkname;
+      wnfo.dehname = dhname;
+      wnfo.wadfidx = fnum;
+      wnfo.dlump = -1;
+      //GCon->Logf(NAME_Debug, "WAD: name=<%s>; deh=<%s>; fidx=%d", *wnfo.wadname, *wnfo.dehname, wnfo.wadfidx);
+    }
+
+    for (auto &&it : wadlist.itemsIdx()) dehmap.put(it.value().dehname, it.index());
+  }
+
+  // scan all files, put "dehacked" lumps, and "wadname.deh" lumps
+  for (auto &&it : WadNSIterator(WADNS_Global)) {
+    // normal dehacked lump?
+    if (it.getName() == "dehacked") {
+      //GCon->Logf(NAME_Debug, "dehacked lump: <%s>", *it.getFullName());
+      if (cli_NoExternalDeh <= 0) {
+        // remove this wad from the list for "wadname.deh" candidates
+        VStr pkname = getFileWadName(it.getFile());
+        if (pkname.length()) {
+          VStr rname = pkname.stripExtension()+".deh";
+          auto dl = dehmap.find(rname);
+          if (dl) {
+            //GCon->Logf(NAME_Debug, "removed wad <%s> from named deh search list", *wadlist[*dl].wadname);
+            wadlist[*dl].wadfidx = -1;
+            dehmap.remove(rname);
+          }
+        }
+      }
+      lumplist.append(it.lump);
+      continue;
+    }
+    // "wadname.deh"?
+    if (cli_NoExternalDeh <= 0) {
+      VStr rname = it.getRealName();
+      if (rname.endsWithCI(".deh")) {
+        rname = rname.extractFileName();
+        auto dl = dehmap.find(rname);
+        if (dl) {
+          // use the fact that wads from zips/pk3s are mounted after the respective zip/pk3
+          // this way, it is safe to add this dehacked file
+          WadInfo &wi = wadlist[*dl];
+          if (wi.wadfidx > it.getFile() && wi.dlump < it.lump) {
+            //GCon->Logf(NAME_Debug, "found named deh lump <%s> for wad <%s>", *it.getFullName(), *wi.wadname);
+            //GCon->Logf(NAME_Debug, "found named deh lump <%s> for wad <%s> (wi.wadfidx=%d; wi.dlump=%d; fidx=%d; lump=%d)", *it.getFullName(), *wi.wadname, wi.wadfidx, wi.dlump, it.getFile(), it.lump);
+            GCon->Logf(NAME_Init, "Found named deh lump \"%s\" for wad \"%s\".", *it.getFullName(), *wi.wadname);
+            lumplist.append(it.lump);
+          } else {
+            //GCon->Logf(NAME_Debug, "skipped named deh lump <%s> for wad <%s> (wi.wadfidx=%d; wi.dlump=%d; fidx=%d; lump=%d)", *it.getFullName(), *wi.wadname, wi.wadfidx, wi.dlump, it.getFile(), it.lump);
+          }
+        } else {
+          //GCon->Logf(NAME_Debug, "skipped named deh lump <%s>", *it.getFullName());
+        }
+      }
     }
   }
+}
+
+
+//==========================================================================
+//
+//  ProcessDehackedFiles
+//
+//==========================================================================
+void ProcessDehackedFiles () {
+  if (cli_NoAnyDehacked) return;
+
+  TArray<int> dehlumps;
+  FindDehackedLumps(dehlumps);
+  if (cli_DehList.length() == 0 && dehlumps.length() == 0) return;
+
+  LoadDehackedDefinitions();
+
+  // parse dehacked patches
+  for (auto &&dlump : dehlumps) {
+    dehFileName = W_FullLumpName(dlump);
+    GLog.Logf(NAME_Init, "Processing dehacked patch lump '%s'", *dehFileName);
+    LoadDehackedFile(W_CreateLumpReaderNum(dlump));
+  }
+
   for (auto &&dhs : cli_DehList) {
     GLog.Logf(NAME_Init, "Processing dehacked patch '%s'", *dhs);
     VStream *AStrm = FL_OpenSysFileRead(dhs);
@@ -1636,11 +1744,15 @@ void ProcessDehackedFiles () {
     dehFileName = dhs;
     LoadDehackedFile(AStrm);
   }
+
   dehFileName.clear();
 
-  for (int i = 0; i < EntClasses.Num(); ++i) {
-    // set all classes to use old style pickup handling.
-    SetClassFieldBool(EntClasses[i], "bDehackedSpecial", true);
+  for (int i = 0; i < EntClasses.length(); ++i) {
+    // set all classes to use old style pickup handling
+    if (EntClassTouched[i]) {
+      //GCon->Logf(NAME_Debug, "dehacked touched `%s`", EntClasses[i]->GetName());
+      SetClassFieldBool(EntClasses[i], "bDehackedSpecial", true);
+    }
   }
   SetClassFieldBool(GameInfoClass, "bDehacked", true);
 
