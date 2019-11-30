@@ -61,6 +61,22 @@ void VLevel::RemoveScriptThinker (VLevelScriptThinker *sth) {
 
 //==========================================================================
 //
+//  VLevel::PromoteImmediateScriptThinker
+//
+//  WARNING! does no checks!
+//
+//==========================================================================
+void VLevel::PromoteImmediateScriptThinker (VLevelScriptThinker *sth) {
+  if (!sth || sth->destroyed) return;
+  vassert(sth->XLevel == this);
+  vassert(sth->Level == LevelInfo);
+  scriptThinkers.append(sth);
+  if (scriptThinkers.length() > 16384) Host_Error("too many ACS thinkers spawned");
+}
+
+
+//==========================================================================
+//
 //  VLevel::AddScriptThinker
 //
 //==========================================================================
@@ -71,49 +87,7 @@ void VLevel::AddScriptThinker (VLevelScriptThinker *sth, bool ImmediateRun) {
   sth->XLevel = this;
   sth->Level = LevelInfo;
   if (ImmediateRun) return;
-#if 0
-  {
-    // cleanup script thinkers
-    int firstEmpty = -1;
-    const int sclenOrig = scriptThinkers.length();
-    for (int scidx = 0; scidx < sclenOrig; ++scidx) {
-      VLevelScriptThinker *scthr = scriptThinkers[scidx];
-      if (!scthr) {
-        if (firstEmpty < 0) firstEmpty = scidx;
-        continue;
-      }
-      if (scthr->destroyed) {
-        GCon->Logf("(0)DEAD ACS at slot #%d", scidx);
-        if (firstEmpty < 0) firstEmpty = scidx;
-        delete scthr;
-        scriptThinkers[scidx] = nullptr;
-        continue;
-      }
-    }
-    // remove dead thinkers
-    if (firstEmpty >= 0) {
-      const int sclen = scriptThinkers.length();
-      int currIdx = firstEmpty+1;
-      while (currIdx < sclen) {
-        VLevelScriptThinker *scthr = scriptThinkers[currIdx];
-        if (scthr) {
-          // alive
-          vassert(firstEmpty < currIdx);
-          scriptThinkers[firstEmpty] = scthr;
-          scriptThinkers[currIdx] = nullptr;
-          // find next empty slot
-          ++firstEmpty;
-          while (firstEmpty < sclen && scriptThinkers[firstEmpty]) ++firstEmpty;
-        } else {
-          // dead, do nothing
-        }
-        ++currIdx;
-      }
-      GCon->Logf("  SHRINKING ACS from %d to %d", sclen, firstEmpty);
-      scriptThinkers.setLength(firstEmpty, false); // don't resize
-    }
-  }
-#endif
+  // cleanup is done in `RunScriptThinkers()`
   scriptThinkers.append(sth);
   //GCon->Logf("*** ADDED ACS: %s (%d)", *sth->DebugDumpToString(), scriptThinkers.length());
   if (scriptThinkers.length() > 16384) Host_Error("too many ACS thinkers spawned");

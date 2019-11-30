@@ -1682,10 +1682,10 @@ void VAcsLevel::CheckAcsStore () {
 
 //==========================================================================
 //
-//  VAcsLevel::GetScriptName
+//  VAcsLevel::GenScriptName
 //
 //==========================================================================
-VStr VAcsLevel::GetScriptName (int Number) const {
+VStr VAcsLevel::GenScriptName (int Number) {
   if (Number < 0) {
     // named
     int nidx = -Number;
@@ -1737,7 +1737,7 @@ bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3, int
   if (!Info) {
     // script not found
     if (!unknownScripts.put(Number, true)) {
-      GCon->Logf(NAME_Error, "ACS: unknown script %s", *GetScriptName(Number));
+      GCon->Logf(NAME_Error, "ACS: unknown script %s", *GenScriptName(Number));
       //{ VObject::VMDumpCallStack(); GCon->Logf(NAME_Debug, "ACS named script '%s': res=%d", *Name, res); }
     }
     if (realres) *realres = 0;
@@ -1745,12 +1745,12 @@ bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3, int
   }
   #if 0
   else {
-    GCon->Logf(NAME_Debug, "ACS: executing script %s (Always=%d; WantResult=%d)", *GetScriptName(Number), (int)Always, (int)WantResult);
+    GCon->Logf(NAME_Debug, "ACS: executing script %s (Always=%d; WantResult=%d)", *GenScriptName(Number), (int)Always, (int)WantResult);
   }
   #endif
 
   if (Net && (GGameInfo->NetMode >= NM_DedicatedServer) && !(Info->Flags&SCRIPTF_Net)) {
-    GCon->Logf(NAME_Warning, "%s tried to puke script %s", *Activator->Player->PlayerName, *GetScriptName(Number));
+    GCon->Logf(NAME_Warning, "%s tried to puke script %s", *Activator->Player->PlayerName, *GenScriptName(Number));
     if (realres) *realres = 0;
     return false;
   }
@@ -1758,9 +1758,15 @@ bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3, int
   VAcs *script = SpawnScript(Info, Object, Activator, Line, Side, Arg1, Arg2, Arg3, Arg4, Always, false, WantResult);
   if (WantResult) {
     int res = script->RunScript(0/*host_frametime:doesn't matter*/, true);
-    //GCon->Logf(NAME_Debug, "*** CallACS: %s; res=%d", *GetScriptName(Number), res);
-    script->Destroy();
-    delete script;
+    //GCon->Logf(NAME_Debug, "*** CallACS: %s; res=%d; dead=%d", *GenScriptName(Number), res, (int)script->destroyed);
+    if (!script->destroyed && script->XLevel) {
+      //GCon->Logf(NAME_Debug, "***   promoted to continuous script");
+      script->XLevel->PromoteImmediateScriptThinker(script);
+    } else {
+      //GCon->Logf(NAME_Debug, "***   COMPLETE, DESTROYING");
+      script->Destroy();
+      delete script;
+    }
     if (realres) *realres = res;
     return !!res;
   }
@@ -6612,6 +6618,7 @@ LblFuncStop:
     if (info->RunningScript == this) {
       info->RunningScript = nullptr;
     }
+    //GCon->Logf(NAME_Debug, "*** ACS TERMINATED: %s (%d)", *info->Name, info->Number);
     DestroyThinker();
   }
 

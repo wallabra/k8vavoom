@@ -150,7 +150,7 @@ public:
   int PutNewString (VStr str);
 
 public: // debug
-  VStr GetScriptName (int Number) const;
+  static VStr GenScriptName (int Number);
 };
 
 
