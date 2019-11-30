@@ -2890,8 +2890,8 @@ func_loop:
           case OPC_Builtin_NameToIIndex: break; // no, really, it is THAT easy
           case OPC_Builtin_VectorClampF:
             {
-              float vmin = sp[-2].f;
-              float vmax = sp[-1].f;
+              const float vmin = sp[-2].f;
+              const float vmax = sp[-1].f;
               sp -= 2;
               TVec v(sp[-3].f, sp[-2].f, sp[-1].f);
               if (v.isValid()) {
@@ -2909,6 +2909,17 @@ func_loop:
                   v.z = max2(vmax, v.z);
                 }
               }
+              sp[-1].f = v.z;
+              sp[-2].f = v.y;
+              sp[-3].f = v.x;
+              break;
+            }
+          case OPC_Builtin_VectorClampScaleF: // (vval, fabsmax)
+            {
+              const float vabsmax = sp[-1].f;
+              sp -= 1;
+              TVec v(sp[-3].f, sp[-2].f, sp[-1].f);
+              v.clampScaleInPlace(vabsmax);
               sp[-1].f = v.z;
               sp[-2].f = v.y;
               sp[-3].f = v.x;

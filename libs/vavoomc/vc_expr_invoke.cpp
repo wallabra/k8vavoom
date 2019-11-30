@@ -2292,8 +2292,8 @@ VExpression *VInvocation::OptimizeBuiltin (VEmitContext &ec) {
       if (!CheckSimpleConstArgs(3, (const int []){TYPE_Vector, TYPE_Float, TYPE_Float})) return this;
       v0 = ((VVectorExpr *)Args[0])->GetConstValue();
       if (v0.isValid()) {
-        float vmin = Args[1]->GetFloatConst();
-        float vmax = Args[2]->GetFloatConst();
+        const float vmin = Args[1]->GetFloatConst();
+        const float vmax = Args[2]->GetFloatConst();
         if (isFiniteF(vmin) && isFiniteF(vmax)) {
           v0.x = midval(vmin, v0.x, vmax);
           v0.y = midval(vmin, v0.y, vmax);
@@ -2307,6 +2307,17 @@ VExpression *VInvocation::OptimizeBuiltin (VEmitContext &ec) {
           v0.y = max2(vmax, v0.y);
           v0.z = max2(vmax, v0.z);
         }
+        e = new VVectorExpr(v0, Loc);
+      } else {
+        return this;
+      }
+      break;
+    case OPC_Builtin_VectorClampScaleF: // (val, absmax)
+      if (!CheckSimpleConstArgs(2, (const int []){TYPE_Vector, TYPE_Float})) return this;
+      v0 = ((VVectorExpr *)Args[0])->GetConstValue();
+      if (v0.isValid()) {
+        const float vabsmax = Args[1]->GetFloatConst();
+        v0.clampScaleInPlace(vabsmax);
         e = new VVectorExpr(v0, Loc);
       } else {
         return this;

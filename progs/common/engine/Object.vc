@@ -388,6 +388,8 @@ native static final TVec vecmax (const TVec v1, const TVec v2) [builtin VectorMa
 native static final TVec vclamp (const TVec v, const float Min, const float Max) [builtin VectorClampF]; // clamped value
 native static final TVec vfclamp (const TVec v, const float Min, const float Max) [builtin VectorClampF]; // clamped value
 native static final TVec vecclamp (const TVec v, const TVec vmin, const TVec vmax) [builtin VectorClampV]; // clamped value
+native static final TVec vclampscale (const TVec v, const float absmax) [builtin VectorClampScaleF]; // clamps with rescaling
+native static final TVec vfclampscale (const TVec v, const float absmax) [builtin VectorClampScaleF]; // clamps with rescaling
 native static final float sin (float angle) [builtin Sin]; // sine
 native static final float cos (float angle) [builtin Cos]; // cosine
 native static final void sincos (float angle, out float sin, out float cos) [builtin SinCos];

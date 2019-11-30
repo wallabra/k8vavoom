@@ -932,6 +932,9 @@ struct Instr {
           case OPC_Builtin_VectorClampF:
             spdelta = -2;
             return;
+          case OPC_Builtin_VectorClampScaleF:
+            spdelta = -1;
+            return;
           case OPC_Builtin_VectorClampV:
             spdelta = -3*2;
             return;
