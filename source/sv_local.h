@@ -109,6 +109,7 @@ class VAcsLevel {
 private:
   TMap<VStr, int> stringMapByStr;
   TArray<VStr> stringList;
+  TMapNC<int, bool> unknownScripts;
 
 private:
   bool AddToACSStore (int Type, VName Map, int Number, int Arg1, int Arg2, int Arg3, int Arg4, VEntity *Activator);
@@ -147,6 +148,9 @@ public:
   VStr GetNewString (int idx);
   VName GetNewLowerName (int idx);
   int PutNewString (VStr str);
+
+public: // debug
+  VStr GetScriptName (int Number) const;
 };
 
 

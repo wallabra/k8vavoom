@@ -1682,6 +1682,23 @@ void VAcsLevel::CheckAcsStore () {
 
 //==========================================================================
 //
+//  VAcsLevel::GetScriptName
+//
+//==========================================================================
+VStr VAcsLevel::GetScriptName (int Number) const {
+  if (Number < 0) {
+    // named
+    int nidx = -Number;
+    if (nidx < 0 || nidx >= VName::GetNumNames()) return VStr(va("<badnameidx:%d>", Number));
+    return VStr(va("<%s>", *VName::CreateWithIndex(nidx)));
+  } else {
+    return VStr(va("#%d", Number));
+  }
+}
+
+
+//==========================================================================
+//
 //  VAcsLevel::Start
 //
 //==========================================================================
@@ -1719,13 +1736,21 @@ bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3, int
 
   if (!Info) {
     // script not found
-    if (developer) GCon->Logf(NAME_Dev, "Start ACS ERROR: Unknown script %d", Number);
+    if (!unknownScripts.put(Number, true)) {
+      GCon->Logf(NAME_Error, "ACS: unknown script %s", *GetScriptName(Number));
+      //{ VObject::VMDumpCallStack(); GCon->Logf(NAME_Debug, "ACS named script '%s': res=%d", *Name, res); }
+    }
     if (realres) *realres = 0;
     return false;
   }
+  #if 0
+  else {
+    GCon->Logf(NAME_Debug, "ACS: executing script %s (Always=%d; WantResult=%d)", *GetScriptName(Number), (int)Always, (int)WantResult);
+  }
+  #endif
 
   if (Net && (GGameInfo->NetMode >= NM_DedicatedServer) && !(Info->Flags&SCRIPTF_Net)) {
-    GCon->Logf(NAME_Warning, "%s tried to puke script %d", *Activator->Player->PlayerName, Number);
+    GCon->Logf(NAME_Warning, "%s tried to puke script %s", *Activator->Player->PlayerName, *GetScriptName(Number));
     if (realres) *realres = 0;
     return false;
   }
@@ -1733,7 +1758,7 @@ bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3, int
   VAcs *script = SpawnScript(Info, Object, Activator, Line, Side, Arg1, Arg2, Arg3, Arg4, Always, false, WantResult);
   if (WantResult) {
     int res = script->RunScript(0/*host_frametime:doesn't matter*/, true);
-    //GCon->Logf("*** CallACS: %s; res=%d", *script->DebugDumpToString(), res);
+    //GCon->Logf(NAME_Debug, "*** CallACS: %s; res=%d", *GetScriptName(Number), res);
     script->Destroy();
     delete script;
     if (realres) *realres = res;
@@ -6279,6 +6304,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         if (!sp[-3]) {
           VStateLabel *Lbl = (!Activator ? nullptr : Activator->GetClass()->FindStateLabel(Names, !!sp[-1]));
           if (Lbl && Lbl->State) {
+            //GCon->Logf(NAME_Debug, "ACS: SetActorState; name=<%s> (%s)", *GetStr(sp[-2]), (Activator ? Activator->GetClass()->GetName() : "<>"));
             Activator->SetState(Lbl->State);
             sp[-3] = 1;
           } else {
