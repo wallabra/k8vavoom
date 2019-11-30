@@ -1937,6 +1937,7 @@ static bool CheckReplaceErrorHacks (VScriptParser *sc, const VStr &NameStr, cons
     Unknown,
     D4V,
     D4VRequired,
+    Skulltag,
   };
   struct Triplets {
     const char *className;
@@ -1946,12 +1947,17 @@ static bool CheckReplaceErrorHacks (VScriptParser *sc, const VStr &NameStr, cons
     int fixType;
   };
   static const Triplets trilist[] = {
-    { .className="DH_Cyberdemon",          .parentName="SpiderMastermind", .replaceName="Motherdemon",        .fixName="D4V", .fixType=D4V },
-    { .className="DH_DoomImp",             .parentName="DoomImp",          .replaceName="NightmareImp",       .fixName="D4V", .fixType=D4V },
-    { .className="DH_Cyberdemon2",         .parentName="SpiderMastermind", .replaceName="D64D2Cyberdemon",    .fixName="D4V", .fixType=D4V },
-    { .className="NashGoreBloodSpurtNull", .parentName="",                 .replaceName="NashGoreBloodSpurt", .fixName="D4V", .fixType=D4VRequired},
+    // D4V
+    { .className="DH_Cyberdemon",          .parentName="SpiderMastermind", .replaceName="Motherdemon",        .fixName="D4V",      .fixType=D4V },
+    { .className="DH_DoomImp",             .parentName="DoomImp",          .replaceName="NightmareImp",       .fixName="D4V",      .fixType=D4V },
+    { .className="DH_Cyberdemon2",         .parentName="SpiderMastermind", .replaceName="D64D2Cyberdemon",    .fixName="D4V",      .fixType=D4V },
+    { .className="NashGoreBloodSpurtNull", .parentName="",                 .replaceName="NashGoreBloodSpurt", .fixName="D4V",      .fixType=D4VRequired},
+    // Skulltag
+    { .className="",                       .parentName="",                 .replaceName="Minigun",            .fixName="Skulltag", .fixType=Skulltag},
+    { .className="",                       .parentName="",                 .replaceName="GrenadeLauncher",    .fixName="Skulltag", .fixType=Skulltag},
+    { .className="",                       .parentName="",                 .replaceName="Railgun",            .fixName="Skulltag", .fixType=Skulltag},
+    { .className="",                       .parentName="",                 .replaceName="BFG10K",             .fixName="Skulltag", .fixType=Skulltag},
   };
-  //if (NameStr.startsWith("NashGore")) GCon->Logf(NAME_Debug, "{ .className=\"%s\", .parentName=\"%s\", .replaceName=\"%s\", .fixType=D4VRequired },", *NameStr, *ParentStr, *ReplaceStr);
   for (size_t f = 0; f < sizeof(trilist)/sizeof(trilist[0]); ++f) {
     const Triplets &t = trilist[f];
     if (t.fixType == D4VRequired && !wasD4VFixes) continue;
@@ -1962,6 +1968,7 @@ static bool CheckReplaceErrorHacks (VScriptParser *sc, const VStr &NameStr, cons
     sc->Message(va("Replaced class `%s` not found for actor `%s` (%s fix applied)", *ReplaceStr, *NameStr, t.fixName));
     return true;
   }
+  //GCon->Logf(NAME_Debug, "{ .className=\"%s\", .parentName=\"%s\", .replaceName=\"%s\", .fixName=\"unknown\", .fixType=Unknown },", *NameStr, *ParentStr, *ReplaceStr);
   return false;
 }
 
