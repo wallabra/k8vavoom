@@ -37,6 +37,7 @@ VCvarB decorate_fail_on_unknown("decorate_fail_on_unknown", false, "Fail on unkn
 
 static int disableBloodReplaces = 0;
 static int bloodOverrideAllowed = 0;
+static bool wasD4VFixes = false;
 
 
 /*
@@ -1932,22 +1933,32 @@ static void ScanActorDefForUserVars (VScriptParser *sc, TArray<VDecorateUserVarD
 //
 //==========================================================================
 static bool CheckReplaceErrorHacks (VScriptParser *sc, const VStr &NameStr, const VStr &ParentStr, const VStr &ReplaceStr) {
+  enum {
+    Unknown,
+    D4V,
+    D4VRequired,
+  };
   struct Triplets {
     const char *className;
     const char *parentName;
     const char *replaceName;
     const char *fixName;
+    int fixType;
   };
   static const Triplets trilist[] = {
-    { .className="DH_Cyberdemon",   .parentName="SpiderMastermind", .replaceName="Motherdemon",     .fixName="D4V"},
-    { .className="DH_DoomImp",      .parentName="DoomImp",          .replaceName="NightmareImp",    .fixName="D4V"},
-    { .className="DH_Cyberdemon2",  .parentName="SpiderMastermind", .replaceName="D64D2Cyberdemon", .fixName="D4V"},
+    { .className="DH_Cyberdemon",          .parentName="SpiderMastermind", .replaceName="Motherdemon",        .fixName="D4V", .fixType=D4V },
+    { .className="DH_DoomImp",             .parentName="DoomImp",          .replaceName="NightmareImp",       .fixName="D4V", .fixType=D4V },
+    { .className="DH_Cyberdemon2",         .parentName="SpiderMastermind", .replaceName="D64D2Cyberdemon",    .fixName="D4V", .fixType=D4V },
+    { .className="NashGoreBloodSpurtNull", .parentName="",                 .replaceName="NashGoreBloodSpurt", .fixName="D4V", .fixType=D4VRequired},
   };
+  //if (NameStr.startsWith("NashGore")) GCon->Logf(NAME_Debug, "{ .className=\"%s\", .parentName=\"%s\", .replaceName=\"%s\", .fixType=D4VRequired },", *NameStr, *ParentStr, *ReplaceStr);
   for (size_t f = 0; f < sizeof(trilist)/sizeof(trilist[0]); ++f) {
     const Triplets &t = trilist[f];
+    if (t.fixType == D4VRequired && !wasD4VFixes) continue;
     if (t.className && t.className[0]) { if (!NameStr.strEquCI(t.className)) continue; }
     if (t.parentName && t.parentName[0]) { if (!ParentStr.strEquCI(t.parentName)) continue; }
     if (t.replaceName && t.replaceName[0]) { if (!ReplaceStr.strEquCI(t.replaceName)) continue; }
+    if (t.fixType == D4V) wasD4VFixes = true;
     sc->Message(va("Replaced class `%s` not found for actor `%s` (%s fix applied)", *ReplaceStr, *NameStr, t.fixName));
     return true;
   }
