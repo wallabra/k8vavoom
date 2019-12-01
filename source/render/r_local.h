@@ -624,6 +624,7 @@ protected:
   bool HasAliasModel (VName clsName) const;
   bool HasEntityAliasModel (VEntity *Ent) const;
   static bool IsAliasModelAllowedFor (VEntity *Ent);
+  bool IsShadowAllowedFor (VEntity *Ent);
 
   // things
   void QueueTranslucentPoly (surface_t *surf, TVec *sv, int count, int lump,
@@ -1030,6 +1031,16 @@ extern VCvarB r_models_pickups;
 extern VCvarB r_models_decorations;
 extern VCvarB r_models_other;
 extern VCvarB r_models_players;
+
+extern VCvarB r_model_shadows;
+extern VCvarB r_camera_player_shadows;
+extern VCvarB r_shadows_monsters;
+extern VCvarB r_shadows_corpses;
+extern VCvarB r_shadows_missiles;
+extern VCvarB r_shadows_pickups;
+extern VCvarB r_shadows_decorations;
+extern VCvarB r_shadows_other;
+extern VCvarB r_shadows_players;
 
 extern VCvarB r_separate_translucent_lists;
 

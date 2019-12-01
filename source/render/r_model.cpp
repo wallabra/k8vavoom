@@ -1449,6 +1449,28 @@ bool VRenderLevelShared::IsAliasModelAllowedFor (VEntity *Ent) {
 
 //==========================================================================
 //
+//  VRenderLevelShared::IsShadowAllowedFor
+//
+//==========================================================================
+bool VRenderLevelShared::IsShadowAllowedFor (VEntity *Ent) {
+  if (!Ent || Ent->IsGoingToDie() || !r_models || !r_model_shadows) return false;
+  if (cl && Ent == cl->Camera && !r_camera_player_shadows) return false;
+  switch (Ent->Classify()) {
+    case VEntity::EType::ET_Unknown: return r_shadows_other;
+    case VEntity::EType::ET_Player: return r_shadows_players;
+    case VEntity::EType::ET_Missile: return r_shadows_missiles;
+    case VEntity::EType::ET_Corpse: return r_shadows_corpses;
+    case VEntity::EType::ET_Monster: return r_shadows_monsters;
+    case VEntity::EType::ET_Decoration: return r_shadows_decorations;
+    case VEntity::EType::ET_Pickup: return r_shadows_pickups;
+    default: abort();
+  }
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::HasEntityAliasModel
 //
 //==========================================================================

@@ -46,8 +46,6 @@ extern VCvarB r_fake_shadows_alias_models;
 VCvarB r_sort_sprites("r_sort_sprites", true, "Sprite sorting.", CVAR_Archive);
 VCvarB r_draw_mobjs("r_draw_mobjs", true, "Draw mobjs?", /*CVAR_Archive|*/CVAR_PreInit);
 VCvarB r_draw_psprites("r_draw_psprites", true, "Draw psprites?", /*CVAR_Archive|*/CVAR_PreInit);
-VCvarB r_model_shadows("r_model_shadows", true, "Draw model shadows in advanced renderer?", CVAR_Archive);
-VCvarB r_camera_player_shadows("r_camera_player_shadows", false, "Draw camera model shadows in advanced renderer?", CVAR_Archive);
 VCvarB r_model_light("r_model_light", true, "Draw model light in advanced renderer?", CVAR_Archive);
 VCvarB r_drawfuzz("r_drawfuzz", false, "Draw fuzz effect?", CVAR_Archive);
 VCvarF r_transsouls("r_transsouls", "1", "Translucent Lost Souls?", CVAR_Archive);
@@ -62,6 +60,16 @@ VCvarB r_models_pickups("r_models_pickups", true, "Render 3D models for pickups?
 VCvarB r_models_decorations("r_models_decorations", true, "Render 3D models for decorations (any solid things)?", CVAR_Archive);
 VCvarB r_models_other("r_models_other", true, "Render 3D models for things with unidentified types?", CVAR_Archive);
 VCvarB r_models_players("r_models_players", true, "Render 3D models for players?", CVAR_Archive);
+
+VCvarB r_model_shadows("r_model_shadows", true, "Draw model shadows in advanced renderer?", CVAR_Archive);
+VCvarB r_camera_player_shadows("r_camera_player_shadows", false, "Draw camera model shadows in advanced renderer?", CVAR_Archive);
+VCvarB r_shadows_monsters("r_shadows_monsters", true, "Render shadows for monsters?", CVAR_Archive);
+VCvarB r_shadows_corpses("r_shadows_corpses", true, "Render shadows for corpses?", CVAR_Archive);
+VCvarB r_shadows_missiles("r_shadows_missiles", true, "Render shadows for projectiles?", CVAR_Archive);
+VCvarB r_shadows_pickups("r_shadows_pickups", true, "Render shadows for pickups?", CVAR_Archive);
+VCvarB r_shadows_decorations("r_shadows_decorations", true, "Render shadows for decorations (any solid things)?", CVAR_Archive);
+VCvarB r_shadows_other("r_shadows_other", true, "Render shadows for things with unidentified types?", CVAR_Archive);
+VCvarB r_shadows_players("r_shadows_players", true, "Render shadows for players?", CVAR_Archive);
 
 
 //==========================================================================
