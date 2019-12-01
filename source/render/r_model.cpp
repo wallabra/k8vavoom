@@ -1433,21 +1433,17 @@ bool VRenderLevelShared::HasAliasModel (VName clsName) const {
 //==========================================================================
 bool VRenderLevelShared::IsAliasModelAllowedFor (VEntity *Ent) {
   if (!Ent || Ent->IsGoingToDie() || !r_models) return false;
-  if (Ent->IsPlayer()) return r_models_players;
-  if (Ent->IsMissile()) return r_models_missiles;
-  if (Ent->IsCorpse()) return r_models_corpses;
-  if (Ent->IsMonster()) return r_models_monsters;
-  if (Ent->IsSolid()) return r_models_decorations;
-  // check for pickup
-  // inventory class
-  static VClass *invCls = nullptr;
-  static bool invClsInited = false;
-  if (!invClsInited) {
-    invClsInited = true;
-    invCls = VMemberBase::StaticFindClass("Inventory");
+  switch (Ent->Classify()) {
+    case VEntity::EType::ET_Unknown: return r_models_other;
+    case VEntity::EType::ET_Player: return r_models_players;
+    case VEntity::EType::ET_Missile: return r_models_missiles;
+    case VEntity::EType::ET_Corpse: return r_models_corpses;
+    case VEntity::EType::ET_Monster: return r_models_monsters;
+    case VEntity::EType::ET_Decoration: return r_models_decorations;
+    case VEntity::EType::ET_Pickup: return r_models_pickups;
+    default: abort();
   }
-  if (invCls && Ent->IsA(invCls)) return r_models_pickups;
-  return r_models_other;
+  return true;
 }
 
 

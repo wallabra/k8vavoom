@@ -443,35 +443,15 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
 
   // only for monsters
   if (renderShadow) {
-           if (thing->IsPlayer()) { renderShadow = r_fake_shadows_players.asBool();
-    } else if (thing->IsMissile()) { renderShadow = r_fake_shadows_missiles.asBool();
-    } else if (thing->IsCorpse()) { renderShadow = r_fake_shadows_corpses.asBool();
-    } else if (thing->IsMonster()) { renderShadow = r_fake_shadows_monsters.asBool();
-    } else if (thing->IsSolid()) { renderShadow = r_fake_shadows_decorations.asBool();
-    } else if (r_fake_shadows_pickups.asBool()) {
-      // check for pickup
-      // inventory class
-      static VClass *invCls = nullptr;
-      static bool invClsInited = false;
-      if (!invClsInited) {
-        invClsInited = true;
-        invCls = VMemberBase::StaticFindClass("Inventory");
-      }
-      // random spawner class
-      /* no, it should never end up on spawned by itself
-      static VClass *rspCls = nullptr;
-      static bool rspClsInited = false;
-      if (!rspClsInited) {
-        rspClsInited = true;
-        rspCls = VMemberBase::StaticFindClass("RandomSpawner");
-      }
-      renderShadow =
-        (invCls && thing->IsA(invCls)) ||
-        (rspCls && thing->IsA(rspCls));
-      */
-      renderShadow = (invCls && thing->IsA(invCls));
-    } else {
-      renderShadow = false;
+    switch (thing->Classify()) {
+      case VEntity::EType::ET_Unknown: renderShadow = false; break;
+      case VEntity::EType::ET_Player: renderShadow = r_fake_shadows_players.asBool(); break;
+      case VEntity::EType::ET_Missile: renderShadow = r_fake_shadows_missiles.asBool(); break;
+      case VEntity::EType::ET_Corpse: renderShadow = r_fake_shadows_corpses.asBool(); break;
+      case VEntity::EType::ET_Monster: renderShadow = r_fake_shadows_monsters.asBool(); break;
+      case VEntity::EType::ET_Decoration: renderShadow = r_fake_shadows_decorations.asBool(); break;
+      case VEntity::EType::ET_Pickup: renderShadow = r_fake_shadows_pickups.asBool(); break;
+      default: abort();
     }
   }
 

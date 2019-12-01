@@ -511,6 +511,33 @@ public:
   inline bool IsSolid () const { return !!(EntityFlags&EF_Solid); }
   inline bool IsMonster () const { return !!(FlagsEx&EFEX_Monster); }
 
+  enum EType {
+    ET_Unknown,
+    ET_Player,
+    ET_Missile,
+    ET_Corpse,
+    ET_Monster,
+    ET_Decoration, // any solid thing that isn't previous one (except unknown)
+    ET_Pickup, // any non-solid thing that isn't previous one (except unknown)
+  };
+
+  inline EType Classify () const {
+    if (IsPlayer()) return EType::ET_Player;
+    if (IsMissile()) return EType::ET_Missile;
+    if (IsCorpse()) return EType::ET_Corpse;
+    if (IsMonster()) return EType::ET_Monster;
+    if (IsSolid()) return EType::ET_Decoration;
+    // either pickup, or unknown
+    // get inventory class
+    static VClass *invCls = nullptr;
+    static bool invClsInited = false;
+    if (!invClsInited) {
+      invClsInited = true;
+      invCls = VMemberBase::StaticFindClass("Inventory");
+    }
+    return (invCls && IsA(invCls) ? EType::ET_Pickup : EType::ET_Unknown);
+  }
+
   bool SetState (VState *);
   void SetInitialState (VState *);
   bool AdvanceState (float);
