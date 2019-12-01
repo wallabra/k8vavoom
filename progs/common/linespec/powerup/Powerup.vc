@@ -189,6 +189,7 @@ ubyte TranslateColorToCMap (int clr) {
     case REDCOLOR: return PlayerEx::REDCOLORMAP;
     case GREENCOLOR: return PlayerEx::GREENCOLORMAP;
     case MONOCOLOR: return PlayerEx::MONOCOLORMAP;
+    case BEREDCOLOR: return PlayerEx::BEREDCOLORMAP;
   }
   return 0;
 }

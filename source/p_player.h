@@ -34,6 +34,8 @@ enum {
   REDCOLORMAP     = 34,
   GREENCOLORMAP   = 35,
   MONOCOLORMAP    = 36,
+  BEREDCOLORMAP   = 37,
+  COLORMAPS_MAX,
 };
 
 

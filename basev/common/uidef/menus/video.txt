@@ -76,7 +76,7 @@ menudef VideoOptions {
       "Gold",
       "Green",
       "Red",
-      "Inverse",
+      "Berserk Red",
     }
     help =
       "You can replace Berserk tint with a colormap of your choice."
@@ -93,7 +93,6 @@ menudef VideoOptions {
       "Gold",
       "Green",
       "Red",
-      "Inverse",
     }
     help =
       "You can replace EnviroSuit tint with a colormap of your choice.";

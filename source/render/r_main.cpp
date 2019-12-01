@@ -1405,6 +1405,7 @@ void VRenderLevelShared::SetupFrame () {
     else if (cl->FixedColormap == REDCOLORMAP) { ColorMap = CM_Red; FixedLight = 255; }
     else if (cl->FixedColormap == GREENCOLORMAP) { ColorMap = CM_Green; FixedLight = 255; }
     else if (cl->FixedColormap == MONOCOLORMAP) { ColorMap = CM_Mono; FixedLight = 255; }
+    else if (cl->FixedColormap == BEREDCOLORMAP) { ColorMap = CM_BeRed; FixedLight = 255; }
     else if (cl->FixedColormap >= NUMCOLORMAPS) { FixedLight = 255; }
     else if (cl->FixedColormap) {
       // lightamp sets this to 1
@@ -1414,6 +1415,7 @@ void VRenderLevelShared::SetupFrame () {
           case 2: ColorMap = CM_Gold; break;
           case 3: ColorMap = CM_Green; break;
           case 4: ColorMap = CM_Red; break;
+          case 5: ColorMap = CM_BeRed; break;
         }
       }
       FixedLight = 255-(cl->FixedColormap<<3);
@@ -1437,6 +1439,7 @@ void VRenderLevelShared::SetupFrame () {
       case 2: ColorMap = CM_Gold; break;
       case 3: ColorMap = CM_Green; break;
       case 4: ColorMap = CM_Red; break;
+      case 5: ColorMap = CM_BeRed; break;
     }
   }
 
