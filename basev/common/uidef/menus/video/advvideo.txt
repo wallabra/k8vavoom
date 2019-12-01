@@ -199,10 +199,20 @@ menudef AdvVideoOptions {
   }
   */
 
+  header "Shadow Volumes";
+
   option bool {
     title = "Model Shadows";
     cvar = r_model_shadows;
     help = "Let 3D models cast shadows in stenciled lighting mode.";
+  }
+
+  option bool {
+    title = "Player Shadows";
+    cvar = r_camera_player_shadows;
+    help =
+      "Let player 3D model cast shadows in stenciled lighting mode."
+      "This doesn't affect non-camera player models.";
   }
 
 
