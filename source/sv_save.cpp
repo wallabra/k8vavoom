@@ -461,9 +461,8 @@ static vuint32 GetModListHash () {
   VStr modlist;
   // get list of loaded modules
   auto wadlist = FL_GetWadPk3List();
-  //GCon->Logf("====================="); for (int f = 0; f < wadlist.length(); ++f) GCon->Logf("  %d: %s", f, *wadlist[f]);
-  for (int f = 0; f < wadlist.length(); ++f) {
-    modlist += wadlist[f];
+  for (auto &&wadname : wadlist) {
+    modlist += wadname;
     modlist += "\n";
   }
   //GCon->Logf(NAME_Debug, "modlist:\n%s", *modlist);
@@ -504,6 +503,32 @@ static VStr GetSaveSlotCommonDirectoryPrefix () {
 //==========================================================================
 static inline bool isBadSlotIndex (int slot) {
   return (slot != QUICKSAVE_SLOT && (slot < -64 || slot > 63));
+}
+
+
+//==========================================================================
+//
+//  UpdateSaveDirWadList
+//
+//  writes text file with list of active wads.
+//  this file is not used by the engine, and is written solely for user.
+//
+//==========================================================================
+static void UpdateSaveDirWadList () {
+  auto svpfx = SV_GetSavesDir().appendPath(GetSaveSlotCommonDirectoryPrefix());
+  FL_CreatePath(svpfx); // just in case
+  //GCon->Logf(NAME_Debug, "UpdateSaveDirWadList: svpfx=<%s>", *svpfx);
+  svpfx = svpfx.appendPath("wadlist.txt");
+  VStream *res = FL_OpenSysFileWrite(svpfx);
+  if (res) {
+    auto wadlist = FL_GetWadPk3List();
+    for (auto &&wadname : wadlist) {
+      //GCon->Logf(NAME_Debug, "  wad=<%s>", *wadname);
+      res->writef("%s\n", *wadname);
+    }
+    res->Close();
+    delete res;
+  }
 }
 
 
@@ -660,7 +685,10 @@ static VStream *SV_CreateSlotFileWrite (int slot, VStr descr) {
   svpfx += ".vsg";
   saveFileBase = svpfx;
   VStream *res = FL_OpenSysFileWrite(svpfx);
-  if (res) removeSlotSaveFiles(slot, svpfx);
+  if (res) {
+    removeSlotSaveFiles(slot, svpfx);
+    UpdateSaveDirWadList();
+  }
   return res;
 }
 
