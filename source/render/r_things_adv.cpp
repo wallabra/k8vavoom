@@ -40,6 +40,7 @@
 extern VCvarB r_chasecam;
 extern VCvarB r_draw_mobjs;
 extern VCvarB r_model_shadows;
+extern VCvarB r_camera_player_shadows;
 extern VCvarB r_model_light;
 extern VCvarB r_drawfuzz;
 extern VCvarF r_transsouls;
@@ -283,11 +284,13 @@ void VRenderLevelShadowVolume::BuildMobjsInCurrLight (bool doShadows) {
 void VRenderLevelShadowVolume::RenderMobjsShadow (VEntity *owner, vuint32 dlflags) {
   if (!r_draw_mobjs || !r_models || !r_model_shadows) return;
   if (!r_dbg_advthing_draw_shadow) return;
+  const bool noPlrShadow = !r_camera_player_shadows.asBool();
   int RendStyle;
   float Alpha, TimeFrac;
   bool Additive;
   for (auto &&ent : mobjsInCurrLight) {
     if (ent == owner && (dlflags&dlight_t::NoSelfShadow)) continue;
+    if (noPlrShadow && ent == cl->Camera) continue;
     if (ent->NumRenderedShadows > r_max_model_shadows) continue; // limit maximum shadows for this Entity
     //RenderThingShadow(ent);
     if (SetupRenderStyleAndTime(ent, RendStyle, Alpha, Additive, TimeFrac)) {
