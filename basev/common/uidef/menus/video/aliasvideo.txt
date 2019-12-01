@@ -70,6 +70,49 @@ menudef AliasModelVideoOptions {
   }
 
 
+  header "Stencil Shadows";
+
+  option bool {
+    title = "Monsters";
+    cvar = r_shadows_monsters;
+  }
+
+  option bool {
+    title = "Corpses";
+    cvar = r_shadows_corpses;
+  }
+
+  option bool {
+    title = "Missiles";
+    cvar = r_shadows_missiles;
+  }
+
+  option bool {
+    title = "Pickups";
+    cvar = r_shadows_pickups;
+  }
+
+  option bool {
+    title = "Decorations";
+    cvar = r_shadows_decorations;
+  }
+
+  option bool {
+    title = "Players";
+    cvar = r_shadows_players;
+  }
+
+  option bool {
+    title = "Other";
+    cvar = r_shadows_other;
+  }
+
+  option bool {
+    title = "HUD Hand Weapon";
+    cvar = r_shadows_view;
+  }
+
+
   header "Misc";
 
   option bool {
