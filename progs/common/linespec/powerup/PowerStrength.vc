@@ -55,22 +55,58 @@ override void Tick (float DeltaTime) {
 
 //==========================================================================
 //
+//  IsColomapOverrideActive
+//
+//==========================================================================
+override bool IsColomapOverrideActive () {
+  int Amount = 4-int(EffectTime/2.0);
+  //printdebug("ET=%s; A=%s", EffectTime, Amount);
+  return (Amount > 0);
+}
+
+
+//==========================================================================
+//
+//  GetColormapOverride
+//
+//==========================================================================
+override int GetColormapOverride (out bool dontBlink) {
+  switch (GetCvarI('k8ColormapBerserk')) {
+    //case CMapOverride.Original:
+    case CMapOverride.Monochrome: dontBlink = true; return MONOCOLOR;
+    case CMapOverride.Gold: dontBlink = true; return GOLDCOLOR;
+    case CMapOverride.Green: dontBlink = true; return GREENCOLOR;
+    case CMapOverride.Red: dontBlink = true; return REDCOLOR;
+    case CMapOverride.Inverse: dontBlink = true; return INVERSECOLOR;
+  }
+  return 0;
+}
+
+
+//==========================================================================
+//
 //  GetBlend
 //
 //==========================================================================
 override int GetBlend () {
-  string cs = GetCvarS('k8BerserkTint');
-  if (cs != lastBlendColorString) {
-    lastBlendColorString = cs;
-    BlendColor = (cs ? ParseColor(cs) : RGBA(255, 0, 0, 128));
-    BlendColor = (BlendColor&0xff_ff_ff)|0x80_00_00;
-  }
-  // slowly fade the berzerk out
-  int Amount = 12-int(EffectTime/2.0);
-  if (Amount > 0) {
-    Amount = (Amount+7)>>3;
-    int a = (Amount+1)*28;
-    return (BlendColor&0x00ffffff)|(a<<24);
+  // check user override
+  int cm = GetCvarI('k8ColormapBerserk');
+  if (cm <= 0 || cm >= CMapOverride.Max) {
+    string cs = GetCvarS('k8BerserkTint');
+    if (cs != lastBlendColorString) {
+      lastBlendColorString = cs;
+      BlendColor = (cs ? ParseColor(cs) : RGBA(255, 0, 0, 128));
+      BlendColor = (BlendColor&0xff_ff_ff)|0x80_00_00;
+    }
+    if (BlendColor) {
+      // slowly fade the berzerk out
+      int Amount = 12-int(EffectTime/2.0);
+      if (Amount > 0) {
+        Amount = (Amount+7)>>3;
+        int a = (Amount+1)*28;
+        return (BlendColor&0x00ffffff)|(a<<24);
+      }
+    }
   }
   return 0;
 }

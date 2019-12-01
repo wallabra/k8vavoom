@@ -67,6 +67,38 @@ menudef VideoOptions {
       "You can replace LightAmp colormap with another one of your choice.";
   }
 
+  option enum {
+    title = "Berserk Colormap";
+    cvar = k8ColormapBerserk;
+    list {
+      "Original Tint",
+      "Monochrome Grayscale",
+      "Gold",
+      "Green",
+      "Red",
+      "Inverse",
+    }
+    help =
+      "You can replace Berserk tint with a colormap of your choice."
+      "Note that you can override berserk tint color with cvar:"
+      "\cJk8BerserkTint #100";
+  }
+
+  option enum {
+    title = "EnviroSuit Colormap";
+    cvar = k8ColormapEnviSuit;
+    list {
+      "Original Tint",
+      "Monochrome Grayscale",
+      "Gold",
+      "Green",
+      "Red",
+      "Inverse",
+    }
+    help =
+      "You can replace EnviroSuit tint with a colormap of your choice.";
+  }
+
 
   header "Renderer";
 

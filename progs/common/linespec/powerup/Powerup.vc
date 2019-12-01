@@ -29,6 +29,16 @@
 //**************************************************************************
 class Powerup : Inventory abstract;
 
+enum CMapOverride {
+  Original,
+  Monochrome,
+  Gold,
+  Green,
+  Red,
+  Inverse,
+  Max,
+}
+
 float EffectTime;
 int BlendColor;
 name Mode;
@@ -143,24 +153,75 @@ void InitEffect () {
 
 //==========================================================================
 //
+//  IsColomapOverrideActive
+//
+//  called if `GetColormapOverride()` returned 0 or positive
+//  if this method returns false, deactivate colormap
+//
+//==========================================================================
+bool IsColomapOverrideActive () {
+  return true;
+}
+
+
+//==========================================================================
+//
+//  GetColormapOverride
+//
+//  <=0 means "no override"
+//  otherwise should return xxxCOLOR
+//
+//==========================================================================
+int GetColormapOverride (out bool dontBlink) {
+  return 0;
+}
+
+
+//==========================================================================
+//
+//  TranslateColorToCMap
+//
+//==========================================================================
+ubyte TranslateColorToCMap (int clr) {
+  switch (clr) {
+    case INVERSECOLOR: return PlayerEx::INVERSECOLORMAP;
+    case GOLDCOLOR: return PlayerEx::GOLDCOLORMAP;
+    case REDCOLOR: return PlayerEx::REDCOLORMAP;
+    case GREENCOLOR: return PlayerEx::GREENCOLORMAP;
+    case MONOCOLOR: return PlayerEx::MONOCOLORMAP;
+  }
+  return 0;
+}
+
+
+//==========================================================================
+//
 //  DoEffect
 //
 //==========================================================================
 override void DoEffect () {
   if (!Owner) return;
 
-  if (EffectTime > 0.0 && Owner.Player) {
-    if (EffectTime > PlayerEx::BLINKTHRESHOLD || (int(4.0*EffectTime)&1)) {
-           if (BlendColor == INVERSECOLOR) Owner.Player.FixedColormap = PlayerEx::INVERSECOLORMAP;
-      else if (BlendColor == GOLDCOLOR) Owner.Player.FixedColormap = PlayerEx::GOLDCOLORMAP;
-      else if (BlendColor == REDCOLOR) Owner.Player.FixedColormap = PlayerEx::REDCOLORMAP;
-      else if (BlendColor == GREENCOLOR) Owner.Player.FixedColormap = PlayerEx::GREENCOLORMAP;
-      else if (BlendColor == MONOCOLOR) Owner.Player.FixedColormap = PlayerEx::MONOCOLORMAP;
-    } else if ((BlendColor == INVERSECOLOR || BlendColor == GOLDCOLOR ||
-                BlendColor == REDCOLOR || BlendColor == GREENCOLOR || BlendColor == MONOCOLOR) &&
-               Owner.Player.FixedColormap >= PlayerEx::NUMCOLORMAPS)
-    {
-      Owner.Player.FixedColormap = 0;
+  if (EffectTime > 0.0 && Owner && Owner.Player) {
+    bool dontBlink = false;
+    int bc = GetColormapOverride(out dontBlink);
+    if (bc < 0) {
+      bc = BlendColor;
+      dontBlink = false;
+    } else {
+      if (!IsColomapOverrideActive()) {
+        // no colormap change
+        if (Owner.Player.FixedColormap == TranslateColorToCMap(bc)) Owner.Player.FixedColormap = 0;
+        return;
+      }
+    }
+    ubyte cmnum = TranslateColorToCMap(bc);
+    if (cmnum) {
+      if (dontBlink || EffectTime > PlayerEx::BLINKTHRESHOLD || (int(4.0*EffectTime)&1)) {
+        Owner.Player.FixedColormap = cmnum;
+      }
+    } else {
+      if (Owner.Player.FixedColormap == cmnum) Owner.Player.FixedColormap = 0;
     }
   }
 }
@@ -172,6 +233,12 @@ override void DoEffect () {
 //
 //==========================================================================
 void EndEffect () {
+  if (Owner && Owner.Player) {
+    bool dontBlink = false;
+    int bc = GetColormapOverride(out dontBlink);
+    ubyte cmap = TranslateColorToCMap(bc > 0 ? bc : BlendColor);
+    if (Owner.Player.FixedColormap == cmap) Owner.Player.FixedColormap = 0;
+  }
 }
 
 
@@ -182,7 +249,13 @@ void EndEffect () {
 //==========================================================================
 override int GetBlend () {
   if (EffectTime <= PlayerEx::BLINKTHRESHOLD && !(int(4.0*EffectTime)&1)) return 0;
-  if (BlendColor == INVERSECOLOR || BlendColor == GOLDCOLOR) return 0;
+  //if (BlendColor == INVERSECOLOR || BlendColor == GOLDCOLOR) return 0;
+  bool dontBlink = false;
+  int bc = GetColormapOverride(out dontBlink);
+  if (bc > 0) {
+    if (TranslateColorToCMap(bc) > 0) return 0;
+  }
+  if (TranslateColorToCMap(BlendColor) > 0) return 0;
   return BlendColor;
 }
 

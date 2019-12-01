@@ -237,8 +237,7 @@ override void GetViewEntRenderParams (ref float OutAlpha, ref int OutRenderStyle
     if (Owner.RenderStyle == STYLE_Translucent) {
       OutRenderStyle = STYLE_Translucent;
       OutAlpha = Owner.Alpha;
-    }
-    else if (Owner.RenderStyle == STYLE_None) {
+    } else if (Owner.RenderStyle == STYLE_None) {
       // don't fully hide weapon
       OutRenderStyle = STYLE_Translucent;
       OutAlpha = 0.4;

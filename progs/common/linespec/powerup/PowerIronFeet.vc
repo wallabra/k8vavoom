@@ -40,6 +40,24 @@ override void AbsorbDamage (EntityEx inflictor, int damage, name DmgType, ref in
 }
 
 
+//==========================================================================
+//
+//  GetColormapOverride
+//
+//==========================================================================
+override int GetColormapOverride (out bool dontBlink) {
+  switch (GetCvarI('k8ColormapEnviSuit')) {
+    //case CMapOverride.Original:
+    case CMapOverride.Monochrome: dontBlink = true; return MONOCOLOR;
+    case CMapOverride.Gold: dontBlink = true; return GOLDCOLOR;
+    case CMapOverride.Green: dontBlink = true; return GREENCOLOR;
+    case CMapOverride.Red: dontBlink = true; return REDCOLOR;
+    case CMapOverride.Inverse: dontBlink = true; return INVERSECOLOR;
+  }
+  return 0;
+}
+
+
 defaultproperties {
   EffectTime = 60.0;
   BlendColor = RGBA(0, 255, 0, 32);
