@@ -56,4 +56,6 @@ override void GetViewEntRenderParams (ref float OutAlpha, ref int OutRenderStyle
 defaultproperties {
   bGhost = true;
   EffectTime = 60.0;
+  bShowTimer = true;
+  PowerupTimerName = "Ghost";
 }

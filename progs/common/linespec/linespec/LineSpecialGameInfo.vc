@@ -233,6 +233,7 @@ override void Init () {
   CreateCvar('r_hud_draw_fs_ammo', "1", "Draw ammo counts on fullscreen HUD?", CVAR_ARCHIVE);
   CreateCvar('r_hud_draw_fs_face', "1", "Draw Doomguy face on fullscreen HUD?", CVAR_ARCHIVE);
   CreateCvar('r_hud_fs_face_centered', "0", "Draw Doomguy face in FS HUD center?", CVAR_ARCHIVE);
+  CreateCvar('r_hud_draw_fs_powerup_timers', "1", "Draw timers for powerups in FS HUD?", CVAR_ARCHIVE);
 
   CreateCvar('r_hud_draw_weapon_name', "1", "Draw weapon name on fullscreen HUD?", CVAR_ARCHIVE);
   CreateCvar('r_hud_weapon_name_fadeout_time', "1.4", "Weapon name fadeout time on fullscreen HUD.", CVAR_ARCHIVE);

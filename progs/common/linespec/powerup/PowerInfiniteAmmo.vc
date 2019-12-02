@@ -48,4 +48,6 @@ override void EndEffect () {
 
 defaultproperties {
   EffectTime = 30.0;
+  bShowTimer = true;
+  PowerupTimerName = "Infinite Ammo";
 }

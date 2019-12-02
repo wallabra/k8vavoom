@@ -39,4 +39,6 @@ override float GetSpeedFactor () {
 defaultproperties {
   Speed = 1.5;
   EffectTime = 45.0;
+  bShowTimer = true;
+  PowerupTimerName = "Speed";
 }

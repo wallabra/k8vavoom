@@ -43,6 +43,9 @@ float EffectTime;
 int BlendColor;
 name Mode;
 float Strength = float.nan; //k8:FIXME, i need a way to know if it is specified
+// this is used as `default`, no need to save
+transient bool bShowTimer = false;
+transient string PowerupTimerName;
 
 
 replication {

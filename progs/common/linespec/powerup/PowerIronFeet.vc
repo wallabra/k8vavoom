@@ -61,4 +61,6 @@ override int GetColormapOverride (out bool dontBlink) {
 defaultproperties {
   EffectTime = 60.0;
   BlendColor = RGBA(0, 255, 0, 32);
+  bShowTimer = true;
+  PowerupTimerName = "EnviroProtection";
 }

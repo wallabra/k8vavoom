@@ -74,4 +74,6 @@ override void EndEffect () {
 defaultproperties {
   EffectTime = 120.0;
   //TODO: Strength
+  bShowTimer = true;
+  PowerupTimerName = "Regeneration";
 }

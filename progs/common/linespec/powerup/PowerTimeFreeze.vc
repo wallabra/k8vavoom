@@ -113,4 +113,6 @@ defaultproperties {
   BlendColor = GOLDCOLOR;
   EffectTime = 12.0;
   bHubPower = true;
+  bShowTimer = true;
+  PowerupTimerName = "Freeze";
 }

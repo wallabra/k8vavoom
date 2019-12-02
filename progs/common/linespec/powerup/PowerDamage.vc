@@ -70,4 +70,6 @@ override void EndEffect () {
 
 defaultproperties {
   EffectTime = 25.0;
+  bShowTimer = true;
+  PowerupTimerName = "Extra Damage";
 }

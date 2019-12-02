@@ -550,6 +550,19 @@ final void DbgPrintPicSize (int handle, string pname) {
 
 //==========================================================================
 //
+//  Seconds2Str
+//
+//==========================================================================
+static final string Seconds2Str (float secs) {
+  int s = int(secs);
+  int m = s/60;
+  s %= 60;
+  return (m ? va("%s:%02s", m, s) : va("%s", s));
+}
+
+
+//==========================================================================
+//
 //  SB_DrawFullscreenStats
 //
 //==========================================================================
@@ -779,6 +792,17 @@ override void SB_DrawFullscreenStats () {
           xpos += 30;
         }
       }
+    }
+  }
+
+  if (GetCvarB('r_hud_draw_fs_powerup_timers')) {
+    int py = ovh-56;
+    int px = 16;
+    for (Inventory inv = EntityEx(cl.MO).Inventory; inv; inv = inv.Inventory) {
+      auto pup = Powerup(inv);
+      if (!pup || !pup.bShowTimer || !pup.PowerupTimerName || pup.EffectTime <= 0) continue;
+      DrawText(px, py, va("%s: \c+%s\c-", pup.PowerupTimerName, Seconds2Str(pup.EffectTime)), CR_GREEN, CR_WHITE, fsalpha);
+      py -= 8;
     }
   }
 
