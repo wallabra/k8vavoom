@@ -325,16 +325,39 @@ COMMAND(my_clear_automap) {
 
 //==========================================================================
 //
-//  my_vm_profile
+//  vm_profile_start
 //
 //==========================================================================
-COMMAND(my_vm_profile) {
-  /*
-  if (Source == SRC_Command) {
-    ForwardToServer();
-    return;
-  }
-  */
+COMMAND(vm_profile_start) {
+  VObject::ProfilerEnabled = 1;
+}
+
+
+//==========================================================================
+//
+//  vm_profile_end
+//
+//==========================================================================
+COMMAND(vm_profile_stop) {
+  VObject::ProfilerEnabled = 0;
+}
+
+
+//==========================================================================
+//
+//  vm_profile_dump
+//
+//==========================================================================
+COMMAND(vm_profile_dump) {
   VObject::DumpProfile();
-  if (Args.length() > 1) VObject::ClearProfiles();
+}
+
+
+//==========================================================================
+//
+//  vm_profile_clear
+//
+//==========================================================================
+COMMAND(vm_profile_clear) {
+  VObject::ClearProfiles();
 }
