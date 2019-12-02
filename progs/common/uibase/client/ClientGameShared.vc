@@ -175,6 +175,27 @@ void LoadMenuDefs () {
       }
     }
   }
+
+  // find mod option submenu
+  /*
+  MenuDefOptionModSubMenus msub = none;
+  foreach (MenuDefinition mdef; menudefs) {
+    if (mdef.menuName.stricmp("OptionsMenu") == 0) {
+      msub = mdef.findModSubMenuOption();
+      if (msub) break;
+    }
+  }
+
+  // find orphan gz menus
+  if (msub) {
+    foreach (MenuDefinition mdef; menudefs) {
+      if (mdef.menuName.stricmp("OptionsMenu") == 0) {
+        msub = mdef.findModSubMenuOption();
+        if (msub) break;
+      }
+    }
+  }
+  */
 }
 
 
@@ -230,7 +251,7 @@ void ParseGZOptionMenu (ScriptsParser par, bool extend) {
     }
     if (!mdef) {
       //par.ScriptError("cannot extend unknown menu '%s'", mname);
-      print("GZ-MENUDEF ERROR: cannot extend unknown menu '%s'", mname);
+      printwarn("GZ-MENUDEF ERROR: cannot extend unknown menu '%s'", mname);
     } else {
       stidx = mdef.options.length;
       suboption = mdef.findModSubMenuOption();
