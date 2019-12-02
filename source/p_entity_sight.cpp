@@ -86,8 +86,23 @@ bool VEntity::CanSee (VEntity *Other, bool forShooting, bool alwaysBetter) {
 
   if (alwaysBetter) forShooting = false;
 
+  bool cbs = (!forShooting && (alwaysBetter || compat_better_sight));
+
+  if (cbs && !alwaysBetter) {
+    // turn off "better sight" if it is not forced, and neither entity is player/monster
+    cbs = (IsPlayerOrMonster() && Other->IsPlayerOrMonster());
+    //if (!cbs) GCon->Logf(NAME_Debug, "%s: better sight forced to 'OFF', checking sight to '%s' (not a player, not a monster)", GetClass()->GetName(), Other->GetClass()->GetName());
+  }
+
+  // if too far, don't do "better sight" (it doesn't worth it anyway)
+  if (cbs) {
+    const float distSq = (Origin-Other->Origin).length2DSquared();
+    cbs = (distSq < 680.0*680.0); // arbitrary number
+    //if (!cbs) GCon->Logf(NAME_Debug, "%s: better sight forced to 'OFF', checking sight to '%s' (dist=%g)", GetClass()->GetName(), Other->GetClass()->GetName(), sqrtf(distSq));
+  }
+
   TVec dirF, dirR;
-  if (!forShooting && (compat_better_sight || alwaysBetter)) {
+  if (cbs) {
     //YawVectorRight(Angles.yaw, dirR);
     TVec dirU;
     TAVec ang;
@@ -98,6 +113,6 @@ bool VEntity::CanSee (VEntity *Other, bool forShooting, bool alwaysBetter) {
   } else {
     dirR = TVec::ZeroVector;
   }
-  if (forShooting) dirR = TVec::ZeroVector; // just in case, lol
-  return XLevel->CastCanSee(Sector, Origin, Height, dirF, dirR, Other->Origin, Other->Radius, Other->Height, true/*skip base region*/, Other->Sector, alwaysBetter);
+  //if (forShooting) dirR = TVec::ZeroVector; // just in case, lol
+  return XLevel->CastCanSee(Sector, Origin, Height, dirF, dirR, Other->Origin, Other->Radius, Other->Height, true/*skip base region*/, Other->Sector, /*alwaysBetter*/cbs);
 }

@@ -664,11 +664,12 @@ static bool SightPathTraverse2 (SightTraceInfo &trace, sector_t *EndSector) {
 //  VLevel::CastCanSee
 //
 //  doesn't check pvs or reject
+//  if better sight is allowed, `orgdirRight` MUST be valid!
 //
 //==========================================================================
 bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, const TVec &orgdirFwd, const TVec &orgdirRight,
                          const TVec &dest, float radius, float height, bool skipBaseRegion, sector_t *DestSector,
-                         bool alwaysBetter) {
+                         bool allowBetterSight) {
   if (lengthSquared(org-dest) <= 1) return true;
 
   SightTraceInfo trace;
@@ -707,7 +708,7 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
   trace.LineBlockMask = ML_BLOCKEVERYTHING|ML_BLOCKSIGHT;
   trace.CheckBaseRegion = !skipBaseRegion;
 
-  if ((radius < 4.0f && height < 4.0f && myheight < 4.0f) || (!alwaysBetter && orgdirRight.isZero())) {
+  if (!allowBetterSight || radius < 4.0f || height < 4.0f || myheight < 4.0f) {
     trace.Start = org;
     trace.Start.z += myheight*0.75f;
     trace.End = dest;
