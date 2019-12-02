@@ -255,7 +255,7 @@ void VChannel::SendRpc (VMethod *Func, VObject *Owner) {
   Msg.WriteInt(Func->NetIndex/*, Owner->GetClass()->NumNetFields*/);
 
   // serialise arguments
-  VStack *Param = pr_stackPtr-Func->ParamsSize+1; // skip self
+  VStack *Param = VObject::VMGetStackPtr()-Func->ParamsSize+1; // skip self
   for (int i = 0; i < Func->NumParams; ++i) {
     switch (Func->ParamTypes[i].Type) {
       case TYPE_Int:
@@ -316,7 +316,8 @@ bool VChannel::ReadRpc (VMessageIn &Msg, int FldIdx, VObject *Owner) {
   }
   if (!Func) return false;
 
-  memset(pr_stackPtr, 0, Func->ParamsSize*sizeof(VStack));
+  //memset(pr_stackPtr, 0, Func->ParamsSize*sizeof(VStack));
+  VObject::VMCheckAndClearStack(Func->ParamsSize);
   // push self pointer
   PR_PushPtr(Owner);
   // get arguments
@@ -326,24 +327,24 @@ bool VChannel::ReadRpc (VMessageIn &Msg, int FldIdx, VObject *Owner) {
       case TYPE_Byte:
       case TYPE_Bool:
       case TYPE_Name:
-        VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)&pr_stackPtr->i, Func->ParamTypes[i]);
-        ++pr_stackPtr;
+        VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)&VObject::VMGetStackPtr()->i, Func->ParamTypes[i]);
+        VObject::VMIncStackPtr();
         break;
       case TYPE_Float:
-        VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)&pr_stackPtr->f, Func->ParamTypes[i]);
-        ++pr_stackPtr;
+        VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)&VObject::VMGetStackPtr()->f, Func->ParamTypes[i]);
+        VObject::VMIncStackPtr();
         break;
       case TYPE_String:
-        pr_stackPtr->p = nullptr;
-        VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)&pr_stackPtr->p, Func->ParamTypes[i]);
-        ++pr_stackPtr;
+        VObject::VMGetStackPtr()->p = nullptr;
+        VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)&VObject::VMGetStackPtr()->p, Func->ParamTypes[i]);
+        VObject::VMIncStackPtr();
         break;
       case TYPE_Pointer:
       case TYPE_Reference:
       case TYPE_Class:
       case TYPE_State:
-        VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)&pr_stackPtr->p, Func->ParamTypes[i]);
-        ++pr_stackPtr;
+        VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)&VObject::VMGetStackPtr()->p, Func->ParamTypes[i]);
+        VObject::VMIncStackPtr();
         break;
       case TYPE_Vector:
         {
@@ -353,11 +354,11 @@ bool VChannel::ReadRpc (VMessageIn &Msg, int FldIdx, VObject *Owner) {
         }
         break;
       default:
-        Sys_Error("Bad method argument type %d", Func->ParamTypes[i].Type);
+        Sys_Error("Bad method argument type `%s` for RPC method call `%s`", *Func->ParamTypes[i].GetName(), *Func->GetFullName());
     }
     if (Func->ParamFlags[i]&FPARM_Optional) {
-      pr_stackPtr->i = Msg.ReadBit();
-      ++pr_stackPtr;
+      VObject::VMGetStackPtr()->i = Msg.ReadBit();
+      VObject::VMIncStackPtr();
     }
   }
   // execute it
