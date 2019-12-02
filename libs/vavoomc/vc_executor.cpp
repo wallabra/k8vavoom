@@ -3082,6 +3082,14 @@ func_loop:
         --sp;
         PR_VM_BREAK;
 
+      PR_VM_CASE(OPC_GetIsDestroyed)
+        {
+          ++ip;
+          VObject *obj = (VObject *)sp[-1].p;
+          sp[-1].i = (obj ? !!(obj->GetFlags()&(_OF_DelayedDestroy|_OF_Destroyed)) : 1);
+        }
+        PR_VM_BREAK;
+
       PR_VM_DEFAULT
         cstDump(ip);
         Sys_Error("Invalid opcode %d", *ip);

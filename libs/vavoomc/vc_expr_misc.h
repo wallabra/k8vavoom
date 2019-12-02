@@ -335,3 +335,25 @@ protected:
   VDecorateSingleName ();
   virtual void DoSyntaxCopyTo (VExpression *e) override;
 };
+
+
+//==========================================================================
+//
+//  VObjectPropGetIsDestroyed
+//
+//==========================================================================
+class VObjectPropGetIsDestroyed : public VExpression {
+public:
+  VExpression *ObjExpr;
+
+  // `AObjExpr` should NOT be already resolved
+  VObjectPropGetIsDestroyed (VExpression *AObjExpr, const TLocation &ALoc);
+  virtual ~VObjectPropGetIsDestroyed () override;
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+protected:
+  VObjectPropGetIsDestroyed () {}
+  virtual void DoSyntaxCopyTo (VExpression *e) override;
+};

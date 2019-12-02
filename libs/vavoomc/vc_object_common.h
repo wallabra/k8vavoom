@@ -25,7 +25,7 @@
 //**************************************************************************
   DECLARE_FUNCTION(Destroy)
   DECLARE_FUNCTION(IsA)
-  DECLARE_FUNCTION(IsDestroyed)
+  //DECLARE_FUNCTION(IsDestroyed)
   DECLARE_FUNCTION(GC_CollectGarbage)
   DECLARE_FUNCTION(get_GC_AliveObjects)
   DECLARE_FUNCTION(get_GC_LastCollectedObjects)

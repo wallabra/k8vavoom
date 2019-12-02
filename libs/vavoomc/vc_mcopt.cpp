@@ -721,6 +721,7 @@ struct Instr {
         spdelta = -1;
         return;
       case OPC_StrLength:
+      case OPC_GetIsDestroyed:
         return;
       case OPC_StrCat:
         spdelta = -1;

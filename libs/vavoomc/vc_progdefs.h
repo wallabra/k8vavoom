@@ -536,6 +536,8 @@ enum {
   DECLARE_OPC(SwapPOD, None),
   DECLARE_OPC(DropPOD, None),
 
+  DECLARE_OPC(GetIsDestroyed, None),
+
 #undef DECLARE_OPC
 #ifndef OPCODE_INFO
   NUM_OPCODES

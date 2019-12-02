@@ -46,7 +46,7 @@ native readonly transient [internal] class Class;
 
 native void Destroy ();
 native final bool IsA (name CheckName);
-native final bool IsDestroyed (); // checks "delayed destroy" flag
+//native final bool IsDestroyed (); // checks "delayed destroy" flag; converted to built-in property
 native static final void GC_CollectGarbage (optional bool destroyDelayed);
 native static final int GC_AliveObjects { get; }
 native static final int GC_LastCollectedObjects { get; }

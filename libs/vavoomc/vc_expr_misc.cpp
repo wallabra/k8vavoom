@@ -288,6 +288,13 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
       return e->Resolve(ec);
     }
 
+    // built-in object properties
+    if (assType == Normal && (Name == "isDestroyed" || Name == "IsDestroyed")) {
+      VExpression *e = new VObjectPropGetIsDestroyed(new VSelf(Loc), Loc);
+      delete this;
+      return e->Resolve(ec);
+    }
+
     VMethod *M = ec.SelfClass->FindAccessibleMethod(Name, ec.SelfClass, &Loc);
     if (M) {
       if (M->Flags&FUNC_Iterator) {
@@ -1494,3 +1501,84 @@ bool VConstantValue::IsFloatConst () const {
 VStr VConstantValue::toString () const {
   return VStr("const(")+(Const ? Const->toString() : e2s(nullptr))+")";
 }
+
+
+
+//==========================================================================
+//
+//  VObjectPropGetIsDestroyed::VObjectPropGetIsDestroyed
+//
+//==========================================================================
+VObjectPropGetIsDestroyed::VObjectPropGetIsDestroyed(VExpression *AObjExpr, const TLocation &ALoc)
+  : VExpression(ALoc)
+  , ObjExpr(AObjExpr)
+{
+}
+
+
+//==========================================================================
+//
+//  VObjectPropGetIsDestroyed::~VObjectPropGetIsDestroyed
+//
+//==========================================================================
+VObjectPropGetIsDestroyed::~VObjectPropGetIsDestroyed () {
+  if (ObjExpr) {
+    delete ObjExpr;
+    ObjExpr = nullptr;
+  }
+}
+
+
+//==========================================================================
+//
+//  VObjectPropGetIsDestroyed::SyntaxCopy
+//
+//==========================================================================
+VExpression *VObjectPropGetIsDestroyed::SyntaxCopy () {
+  auto res = new VObjectPropGetIsDestroyed();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VObjectPropGetIsDestroyed::DoRestSyntaxCopyTo
+//
+//==========================================================================
+void VObjectPropGetIsDestroyed::DoSyntaxCopyTo (VExpression *e) {
+  VExpression::DoSyntaxCopyTo(e);
+  auto res = (VObjectPropGetIsDestroyed *)e;
+  res->ObjExpr = (ObjExpr ? ObjExpr->SyntaxCopy() : nullptr);
+}
+
+
+//==========================================================================
+//
+//  VObjectPropGetIsDestroyed::DoResolve
+//
+//==========================================================================
+VExpression *VObjectPropGetIsDestroyed::DoResolve (VEmitContext &ec) {
+  if (ObjExpr) ObjExpr = ObjExpr->Resolve(ec);
+  if (!ObjExpr) {
+    delete this;
+    return nullptr;
+  }
+
+  Type = VFieldType(TYPE_Int);
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VObjectPropGetIsDestroyed::Emit
+//
+//==========================================================================
+void VObjectPropGetIsDestroyed::Emit (VEmitContext &ec) {
+  ObjExpr->Emit(ec);
+  ec.AddStatement(OPC_GetIsDestroyed, Loc);
+}
+
+
+

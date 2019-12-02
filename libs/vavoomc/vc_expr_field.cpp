@@ -448,6 +448,18 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
   }
 
   if (op->Type.Type == TYPE_Reference) {
+    // object properties
+    if (FieldName == "isDestroyed" || FieldName == "IsDestroyed") {
+      if (assType == AssType::AssTarget) {
+        ParseError(Loc, "Cannot change `IsDestroyed` property (TODO)");
+        delete this;
+        return nullptr;
+      }
+      VExpression *e = new VObjectPropGetIsDestroyed(opcopy.extract(), Loc);
+      delete this;
+      return e->Resolve(ec);
+    }
+
     if (op->Type.Class) {
       // field first
       VField *field = op->Type.Class->FindField(FieldName, Loc, ec.SelfClass);
