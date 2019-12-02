@@ -262,10 +262,15 @@ bool VEntity::AdvanceState (float deltaTime) {
   if (dbg_disable_state_advance) return true;
   if (State && StateTime != -1.0f) {
     StateTime -= deltaTime;
-    // you can cycle through multiple states in a tic
-    if (StateTime <= 0.0f) {
-      //if (!State->NextState && VStr::ICmp(GetClass()->GetName(), "Doomer") == 0) GCon->Logf("***(669): Doomer %p: EMPTY NEXT on state=%s (%s)", this, (State ? *State->GetFullName() : "<none>"), (State ? *State->Loc.toStringNoCol() : ""));
+    // loop here, just in case some state is *very* short
+    while (StateTime <= 0.0f) {
+      const float tleft = fabsf(StateTime); // "overjump time"
       if (!SetState(State->NextState)) return false; // freed itself
+      if (!State) break; // just in case
+      if (StateTime <= 0.0f) break; // zero should not end up here, but...
+      // this somewhat compensates freestep instability (at least revenant missiles are more stable on a short term)
+      //if (VStr::strEqu(GetClass()->GetName(), "RevenantTracer")) GCon->Logf("%u: %s: tleft=%g; StateTime=%g (%g)", GetUniqueId(), GetClass()->GetName(), tleft, StateTime, StateTime*35.0f);
+      StateTime -= tleft;
     }
   }
   return true;
