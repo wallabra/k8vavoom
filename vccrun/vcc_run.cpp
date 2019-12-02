@@ -541,7 +541,7 @@ int main (int argc, char **argv) {
 
   srand(time(nullptr));
   SysErrorCB = &OnSysError;
-  PR_WriterCB = &vmWriter;
+  VObject::PR_WriterCB = &vmWriter;
 
   try {
     //GLog.AddListener(&VccLog);
@@ -555,7 +555,7 @@ int main (int argc, char **argv) {
 
     ProcessArgs(argc, argv);
 
-    PR_Init();
+    VObject::PR_Init();
 
     VMemberBase::StaticLoadPackage(VName("engine"), TLocation());
     //VMemberBase::StaticLoadPackage(VName("ui"), TLocation());
