@@ -147,6 +147,18 @@ public:
 //
 //==========================================================================
 class VMethod : public VMemberBase {
+public:
+  struct ProfileInfo {
+    unsigned callCount = 0;
+    // times are in seconds
+    // calls to other VC functions doesn't contribute
+    double totalTime = 0;
+    double minTime = 0;
+    double maxTime = 0;
+
+    inline void clear () noexcept { callCount = 0; totalTime = minTime = maxTime = 0; }
+  };
+
 private:
   bool mPostLoaded;
 
@@ -180,8 +192,9 @@ public:
   vint32 builtinOpc; // -1: not a builtin
 
   // run-time fields
-  vuint32 Profile1;
-  vuint32 Profile2;
+  ProfileInfo Profile;
+
+  // run-time fields
   TArray<vuint8> Statements;
   TArray<TLocation> StatLocs; // locations for each code point
   builtin_t NativeFunc;

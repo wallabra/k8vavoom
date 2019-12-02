@@ -393,6 +393,8 @@ public:
 
   static int standaloneExecutor; // default is false
 
+  static int ProfilerEnabled;
+
   static TMap<VStrCI, bool> cliAsmDumpMethods;
 
 public: // for VM; PLEASE, DON'T MODIFY!

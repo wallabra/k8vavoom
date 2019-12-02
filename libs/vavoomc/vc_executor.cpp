@@ -78,6 +78,7 @@ static VStack pr_stack[MAX_PROG_STACK+16384];
 
 enum { BreakCheckLimit = 65536 }; // arbitrary
 static unsigned breakCheckCount = 0;
+int VObject::ProfilerEnabled = 0;
 volatile unsigned VObject::vmAbortBySignal = 0;
 VStack *VObject::pr_stackPtr = &pr_stack[1];
 
@@ -110,40 +111,6 @@ VStack *VObject::VMCheckAndClearStack (int size) noexcept {
   if (size) memset(sp, 0, size*sizeof(VStack));
   return sp;
 }
-
-
-//==========================================================================
-//
-//  PR_Profile1
-//
-//==========================================================================
-/*
-extern "C" void PR_Profile1 () {
-  ++(current_func->Profile1);
-}
-*/
-
-
-//==========================================================================
-//
-//  PR_Profile2
-//
-//==========================================================================
-/*
-extern "C" void PR_Profile2 () {
-  if (current_func && (!(current_func->Flags&FUNC_Native))) ++(current_func->Profile2);
-}
-*/
-
-
-//==========================================================================
-//
-//  PR_Profile2_end
-//
-//==========================================================================
-/*
-extern "C" void PR_Profile2_end () {}
-*/
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -510,6 +477,48 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+// WARNING! NO CHECKS!
+struct ProfileTimer {
+public:
+  double stt;
+  double total;
+
+public:
+  inline ProfileTimer () noexcept : stt(0.0), total(0.0) {}
+
+  inline void start () noexcept { stt = -Sys_Time(); }
+  inline void stop () noexcept { if (stt) total += stt+Sys_Time(); stt = 0.0; }
+  inline bool isRunnint () const noexcept { return !!stt; }
+};
+
+
+// this automatically adds totals on exit
+struct MethodProfiler {
+public:
+  VMethod *func;
+  ProfileTimer timer;
+  bool active;
+
+public:
+  inline MethodProfiler (VMethod *afunc) noexcept : func(afunc), timer(), active(false) {}
+  MethodProfiler (const MethodProfiler &) = delete;
+  MethodProfiler &operator = (const MethodProfiler &) = delete;
+  inline ~MethodProfiler () {
+    if (active) {
+      timer.stop();
+      if (timer.total) {
+        func->Profile.totalTime += timer.total;
+        if (func->Profile.minTime && func->Profile.minTime < timer.total) func->Profile.minTime = timer.total;
+        func->Profile.maxTime = max2(func->Profile.maxTime, timer.total);
+      }
+      active = false; // just in case
+    }
+  }
+  inline void activate () noexcept { if (active) return; active = true; ++func->Profile.callCount; timer.start(); }
+};
+
+
 //==========================================================================
 //
 //  RunFunction
@@ -526,14 +535,15 @@ static void RunFunction (VMethod *func) {
 
   if (!func) { cstDump(nullptr); Sys_Error("Trying to execute null function"); }
 
-  ++(func->Profile1);
-  ++(func->Profile2);
+  const int profEnabled = VObject::ProfilerEnabled;
+
+  MethodProfiler mprof(func);
+  if (profEnabled) mprof.activate();
 
   //fprintf(stderr, "FN(%d): <%s>\n", cstUsed, *func->GetFullName());
 
   if (func->Flags&FUNC_Net) {
     VStack *Params = VObject::pr_stackPtr-func->ParamsSize;
-    //if (!(func->Flags&FUNC_Native)) ++(func->Profile2);
     if (((VObject *)Params[0].p)->ExecuteNetMethod(func)) return;
   }
 
@@ -598,7 +608,9 @@ func_loop:
         VObject::pr_stackPtr = sp;
         cstFixTopIPSP(ip);
         //cstDump(ip);
+        if (profEnabled) mprof.timer.stop();
         RunFunction((VMethod *)ReadPtr(ip+1));
+        if (profEnabled) mprof.timer.start();
         //current_func = func;
         ip += 1+sizeof(void *);
         sp = VObject::pr_stackPtr;
@@ -628,7 +640,9 @@ func_loop:
         VObject::pr_stackPtr = sp;
         if (!sp[-ip[3]].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         cstFixTopIPSP(ip);
+        if (profEnabled) mprof.timer.stop();
         RunFunction(((VObject *)sp[-ip[3]].p)->GetVFunctionIdx(ReadInt16(ip+1)));
+        if (profEnabled) mprof.timer.start();
         ip += 4;
         //current_func = func;
         sp = VObject::pr_stackPtr;
@@ -638,7 +652,9 @@ func_loop:
         VObject::pr_stackPtr = sp;
         if (!sp[-ip[2]].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         cstFixTopIPSP(ip);
+        if (profEnabled) mprof.timer.stop();
         RunFunction(((VObject *)sp[-ip[2]].p)->GetVFunctionIdx(ip[1]));
+        if (profEnabled) mprof.timer.start();
         ip += 3;
         //current_func = func;
         sp = VObject::pr_stackPtr;
@@ -655,7 +671,9 @@ func_loop:
           sp[-ip[5]].p = pDelegate[0];
           VObject::pr_stackPtr = sp;
           cstFixTopIPSP(ip);
+          if (profEnabled) mprof.timer.stop();
           RunFunction((VMethod *)pDelegate[1]);
+          if (profEnabled) mprof.timer.start();
         }
         ip += 6;
         //current_func = func;
@@ -673,7 +691,9 @@ func_loop:
           sp[-ip[3]].p = pDelegate[0];
           VObject::pr_stackPtr = sp;
           cstFixTopIPSP(ip);
+          if (profEnabled) mprof.timer.stop();
           RunFunction((VMethod *)pDelegate[1]);
+          if (profEnabled) mprof.timer.start();
         }
         ip += 4;
         //current_func = func;
@@ -697,7 +717,9 @@ func_loop:
           sp[-sofs].p = pDelegate[0];
           VObject::pr_stackPtr = sp;
           cstFixTopIPSP(ip);
+          if (profEnabled) mprof.timer.stop();
           RunFunction((VMethod *)pDelegate[1]);
+          if (profEnabled) mprof.timer.start();
         }
         //current_func = func;
         sp = VObject::pr_stackPtr;
@@ -3368,6 +3390,22 @@ void VObject::DumpProfile () {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+// sorter
+extern "C" {
+  static int profCmpTimes (const void *a, const void *b, void *udata) {
+    const VMethod::ProfileInfo *f1 = &(*(const VMethod **)a)->Profile;
+    const VMethod::ProfileInfo *f2 = &(*(const VMethod **)b)->Profile;
+    if (f1 == f2) return 0;
+    if (f1->totalTime == f2->totalTime) {
+      if (f1->callCount == f2->callCount) return 0;
+      return (f1->callCount > f2->callCount ? -1 : 1);
+    }
+    return (f1->totalTime > f2->totalTime ? -1 : 1);
+  }
+}
+
+
 //==========================================================================
 //
 //  VObject::DumpProfileInternal
@@ -3376,38 +3414,25 @@ void VObject::DumpProfile () {
 //
 //==========================================================================
 void VObject::DumpProfileInternal (int type) {
-  const int MAX_PROF = 100;
-  int profsort[MAX_PROF+1];
-  int totalcount = 0;
-  memset(profsort, 0, sizeof(profsort));
+  TArray<VMethod *> funclist;
+  // collect
   for (int i = 0; i < VMemberBase::GMembers.Num(); ++i) {
     if (VMemberBase::GMembers[i]->MemberType != MEMBER_Method) continue;
-    VMethod *Func = (VMethod *)VMemberBase::GMembers[i];
-    if (!Func->Profile1) continue; // never called
-    totalcount += Func->Profile2;
-    if (type < 0 && (Func->Flags&FUNC_Native) == 0) continue;
-    if (type > 0 && (Func->Flags&FUNC_Native) != 0) continue;
-    int dpos = 0;
-    while (dpos < MAX_PROF) {
-      if (!profsort[dpos]) break;
-      VMethod *f2 = (VMethod *)VMemberBase::GMembers[profsort[dpos]];
-      if (f2->Profile2 < Func->Profile2) break;
-      ++dpos;
-    }
-    if (dpos < MAX_PROF) {
-      if (profsort[dpos]) memmove(profsort+dpos+1, profsort+dpos, (MAX_PROF-dpos)*sizeof(profsort[0]));
-      profsort[dpos] = i;
-    }
+    VMethod *func = (VMethod *)VMemberBase::GMembers[i];
+    if (!func->Profile.callCount) continue; // never called
+    // check type
+    if (type < 0 && (func->Flags&FUNC_Native) == 0) continue;
+    if (type > 0 && (func->Flags&FUNC_Native) != 0) continue;
+    funclist.append(func);
   }
-  if (!totalcount) return;
+  if (funclist.length() == 0) return;
+  timsort_r(funclist.ptr(), funclist.length(), sizeof(VMethod *), &profCmpTimes, nullptr);
+
   const char *ptypestr = (type < 0 ? "native" : type > 0 ? "script" : "all");
   GLog.Logf("====== PROFILE (%s) ======", ptypestr);
-  for (int i = 0; i < MAX_PROF && profsort[i]; ++i) {
-    VMethod *Func = (VMethod *)VMemberBase::GMembers[profsort[i]];
-    if (!Func) continue;
-    GLog.Logf("%6.2f%% (%9d) %9d %s",
-      (double)Func->Profile2*100.0/(double)totalcount,
-      (int)Func->Profile2, (int)Func->Profile1, *Func->GetFullName());
+  GLog.Log("....calls... .tottime. .mintime. .maxtime. name");
+  for (auto &&func : funclist) {
+    GLog.Logf("%12u %9.3f %9.3f %9.3f %s", func->Profile.callCount, func->Profile.totalTime, func->Profile.minTime, func->Profile.maxTime, *func->GetFullName());
   }
 }
 
@@ -3420,7 +3445,7 @@ void VObject::DumpProfileInternal (int type) {
 void VObject::ClearProfiles () {
   for (int i = 0; i < VMemberBase::GMembers.Num(); ++i) {
     if (VMemberBase::GMembers[i]->MemberType != MEMBER_Method) continue;
-    VMethod *Func = (VMethod *)VMemberBase::GMembers[i];
-    Func->Profile1 = Func->Profile2 = 0;
+    VMethod *func = (VMethod *)VMemberBase::GMembers[i];
+    func->Profile.clear();
   }
 }
