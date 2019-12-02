@@ -319,7 +319,7 @@ bool VChannel::ReadRpc (VMessageIn &Msg, int FldIdx, VObject *Owner) {
   //memset(pr_stackPtr, 0, Func->ParamsSize*sizeof(VStack));
   VObject::VMCheckAndClearStack(Func->ParamsSize);
   // push self pointer
-  PR_PushPtr(Owner);
+  VObject::PR_PushPtr(Owner);
   // get arguments
   for (int i = 0; i < Func->NumParams; ++i) {
     switch (Func->ParamTypes[i].Type) {
@@ -350,7 +350,7 @@ bool VChannel::ReadRpc (VMessageIn &Msg, int FldIdx, VObject *Owner) {
         {
           TVec Vec;
           VField::NetSerialiseValue(Msg, Connection->ObjMap, (vuint8 *)&Vec, Func->ParamTypes[i]);
-          PR_Pushv(Vec);
+          VObject::PR_Pushv(Vec);
         }
         break;
       default:
