@@ -206,7 +206,7 @@ override void DoEffect () {
   if (EffectTime > 0.0 && Owner && Owner.Player) {
     bool dontBlink = false;
     int bc = GetColormapOverride(out dontBlink);
-    if (bc < 0) {
+    if (bc <= 0) {
       bc = BlendColor;
       dontBlink = false;
     } else {
@@ -220,9 +220,11 @@ override void DoEffect () {
     if (cmnum) {
       if (dontBlink || EffectTime > PlayerEx::BLINKTHRESHOLD || (int(4.0*EffectTime)&1)) {
         Owner.Player.FixedColormap = cmnum;
+      } else {
+        if (Owner.Player.FixedColormap >= PlayerEx::NUMCOLORMAPS) Owner.Player.FixedColormap = 0;
       }
     } else {
-      if (Owner.Player.FixedColormap == cmnum) Owner.Player.FixedColormap = 0;
+      if (Owner.Player.FixedColormap >= PlayerEx::NUMCOLORMAPS) Owner.Player.FixedColormap = 0;
     }
   }
 }

@@ -249,4 +249,5 @@ override void GetViewEntRenderParams (ref float OutAlpha, ref int OutRenderStyle
 
 defaultproperties {
   EffectTime = 30.0;
+  BlendColor = INVERSECOLOR;
 }
