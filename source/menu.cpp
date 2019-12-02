@@ -121,19 +121,76 @@ bool MN_Active () {
 
 //==========================================================================
 //
-//  COMMAND SetMenu
+//  DoMenuCompletions
 //
 //==========================================================================
-COMMAND(SetMenu) {
+static VStr DoMenuCompletions (const TArray<VStr> &args, int aidx, int mode) {
+  TArray<VStr> list;
+  VStr prefix = (aidx < args.length() ? args[aidx] : VStr());
+  if (aidx == 1) {
+    GClGame->eventGetAllMenuNames(list, mode);
+    return VCommand::AutoCompleteFromList(prefix, list, true); // return unchanged as empty
+  } else {
+    return VStr::EmptyString;
+  }
+}
+
+
+//==========================================================================
+//
+//  COMMAND_WITH_AC SetMenu
+//
+//==========================================================================
+COMMAND_WITH_AC(SetMenu) {
   GClGame->eventSetMenu(Args.Num() > 1 ? *Args[1] : "");
 }
 
 
 //==========================================================================
 //
-//  COMMAND OpenMenu
+//  COMMAND_AC OpenMenu
 //
 //==========================================================================
-COMMAND(OpenMenu) {
+COMMAND_AC(SetMenu) {
+  return DoMenuCompletions(args, aidx, 0);
+}
+
+
+//==========================================================================
+//
+//  COMMAND_WITH_AC OpenMenu
+//
+//==========================================================================
+COMMAND_WITH_AC(OpenMenu) {
   GClGame->eventSetMenu(Args.Num() > 1 ? *Args[1] : "");
+}
+
+
+//==========================================================================
+//
+//  COMMAND_AC OpenMenu
+//
+//==========================================================================
+COMMAND_AC(OpenMenu) {
+  return DoMenuCompletions(args, aidx, 1);
+}
+
+
+//==========================================================================
+//
+//  COMMAND_WITH_AC OpenGZMenu
+//
+//==========================================================================
+COMMAND_WITH_AC(OpenGZMenu) {
+  GClGame->eventSetMenu(Args.Num() > 1 ? *Args[1] : "");
+}
+
+
+//==========================================================================
+//
+//  COMMAND_AC OpenGZMenu
+//
+//==========================================================================
+COMMAND_AC(OpenGZMenu) {
+  return DoMenuCompletions(args, aidx, -1);
 }

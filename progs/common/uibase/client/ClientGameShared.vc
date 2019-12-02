@@ -419,6 +419,24 @@ void LoadGZMenuDefs () {
 
 //==========================================================================
 //
+//  GetAllMenuNames
+//
+//  mode:
+//    -1: only gz
+//     0: all
+//     1: only non-gz
+//
+//==========================================================================
+void GetAllMenuNames (ref array!string names, int mode) {
+  foreach (MenuDefinition mdef; menudefs) {
+    if ((mode < 0 && !mdef.gzMenu) || (mode > 0 && mdef.gzMenu)) continue;
+    names[$] = mdef.menuName;
+  }
+}
+
+
+//==========================================================================
+//
 //  SetCommonMenu
 //
 //==========================================================================
