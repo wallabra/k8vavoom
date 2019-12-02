@@ -1579,6 +1579,18 @@ mobjinfo_t *VClass::FindMObjIdByClass (const VClass *cls, int GameFilter) {
 
 //==========================================================================
 //
+//  VClass::ReplaceMObjIdByClass
+//
+//==========================================================================
+void VClass::ReplaceMObjIdByClass (VClass *cls, vint32 id, int GameFilter) {
+  if (!cls) return;
+  RemoveMObjIdByClass(cls, GameFilter);
+  AllocMObjId(id, GameFilter, cls);
+}
+
+
+//==========================================================================
+//
 //  VClass::RemoveMObjId
 //
 //==========================================================================

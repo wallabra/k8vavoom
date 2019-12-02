@@ -345,6 +345,8 @@ public:
   static mobjinfo_t *FindMObjIdByClass (const VClass *cls, int GameFilter);
   static mobjinfo_t *FindScriptId (vint32 id, int GameFilter);
 
+  static void ReplaceMObjIdByClass (VClass *cls, vint32 id, int GameFilter);
+
   static void RemoveMObjId (vint32 id, int GameFilter);
   static void RemoveScriptId (vint32 id, int GameFilter);
   static void RemoveMObjIdByClass (VClass *cls, int GameFilter);
