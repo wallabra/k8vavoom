@@ -594,7 +594,7 @@ int main (int argc, char **argv) {
         devprintf(" Found method 'main()' (return type: %u:%s)\n", mmain->ReturnType.Type, *mmain->ReturnType.GetName());
         int atp = checkArg(mmain);
         if (atp < 0) VCFatalError("Main::main() should be either arg-less, or have one `array!string*` argument, and should be either `void`, or return `int`!");
-        auto sss = pr_stackPtr;
+        auto sss = VObject::VMGetStackPtr();
         mainObject = VObject::StaticSpawnWithReplace(mklass);
         if ((mmain->Flags&FUNC_Static) == 0) {
           //auto imain = SpawnWithReplace<VLevel>();
@@ -610,7 +610,7 @@ int main (int argc, char **argv) {
         }
         ret = VObject::ExecuteFunction(mmain);
         if ((atp&0x02) == 0) ret = VFuncRes((int)0);
-        if (sss != pr_stackPtr) VCFatalError("FATAL: stack imbalance!");
+        if (sss != VObject::VMGetStackPtr()) VCFatalError("FATAL: stack imbalance!");
       }
     }
 
