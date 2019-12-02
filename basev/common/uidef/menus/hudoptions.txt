@@ -177,6 +177,11 @@ menudef HUDOptions {
   }
 
   option bool {
+    title = "Powerup timers in Fullscreen";
+    cvar = r_hud_draw_fs_powerup_timers;
+  }
+
+  option bool {
     title = "Ammo in Fullscreen";
     cvar = r_hud_draw_fs_ammo;
   }
