@@ -327,9 +327,11 @@ COMMAND(my_clear_automap) {
 //
 //  vm_profile_start
 //
+//  any arg given: calc time with nested calls
+//
 //==========================================================================
 COMMAND(vm_profile_start) {
-  VObject::ProfilerEnabled = 1;
+  VObject::ProfilerEnabled = (Args.length() > 1 ? -1 : 1);
 }
 
 
