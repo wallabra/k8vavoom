@@ -535,7 +535,8 @@ static void RunFunction (VMethod *func) {
 
   if (!func) { cstDump(nullptr); Sys_Error("Trying to execute null function"); }
 
-  const int profEnabled = VObject::ProfilerEnabled;
+  const bool profEnabled = !!VObject::ProfilerEnabled;
+  const bool profOnlyFunc = (VObject::ProfilerEnabled > 0);
 
   MethodProfiler mprof(func);
   if (profEnabled) mprof.activate();
@@ -608,9 +609,9 @@ func_loop:
         VObject::pr_stackPtr = sp;
         cstFixTopIPSP(ip);
         //cstDump(ip);
-        if (profEnabled) mprof.timer.stop();
+        if (profOnlyFunc) mprof.timer.stop();
         RunFunction((VMethod *)ReadPtr(ip+1));
-        if (profEnabled) mprof.timer.start();
+        if (profOnlyFunc) mprof.timer.start();
         //current_func = func;
         ip += 1+sizeof(void *);
         sp = VObject::pr_stackPtr;
@@ -640,9 +641,9 @@ func_loop:
         VObject::pr_stackPtr = sp;
         if (!sp[-ip[3]].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         cstFixTopIPSP(ip);
-        if (profEnabled) mprof.timer.stop();
+        if (profOnlyFunc) mprof.timer.stop();
         RunFunction(((VObject *)sp[-ip[3]].p)->GetVFunctionIdx(ReadInt16(ip+1)));
-        if (profEnabled) mprof.timer.start();
+        if (profOnlyFunc) mprof.timer.start();
         ip += 4;
         //current_func = func;
         sp = VObject::pr_stackPtr;
@@ -652,9 +653,9 @@ func_loop:
         VObject::pr_stackPtr = sp;
         if (!sp[-ip[2]].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         cstFixTopIPSP(ip);
-        if (profEnabled) mprof.timer.stop();
+        if (profOnlyFunc) mprof.timer.stop();
         RunFunction(((VObject *)sp[-ip[2]].p)->GetVFunctionIdx(ip[1]));
-        if (profEnabled) mprof.timer.start();
+        if (profOnlyFunc) mprof.timer.start();
         ip += 3;
         //current_func = func;
         sp = VObject::pr_stackPtr;
@@ -671,9 +672,9 @@ func_loop:
           sp[-ip[5]].p = pDelegate[0];
           VObject::pr_stackPtr = sp;
           cstFixTopIPSP(ip);
-          if (profEnabled) mprof.timer.stop();
+          if (profOnlyFunc) mprof.timer.stop();
           RunFunction((VMethod *)pDelegate[1]);
-          if (profEnabled) mprof.timer.start();
+          if (profOnlyFunc) mprof.timer.start();
         }
         ip += 6;
         //current_func = func;
@@ -691,9 +692,9 @@ func_loop:
           sp[-ip[3]].p = pDelegate[0];
           VObject::pr_stackPtr = sp;
           cstFixTopIPSP(ip);
-          if (profEnabled) mprof.timer.stop();
+          if (profOnlyFunc) mprof.timer.stop();
           RunFunction((VMethod *)pDelegate[1]);
-          if (profEnabled) mprof.timer.start();
+          if (profOnlyFunc) mprof.timer.start();
         }
         ip += 4;
         //current_func = func;
@@ -717,9 +718,9 @@ func_loop:
           sp[-sofs].p = pDelegate[0];
           VObject::pr_stackPtr = sp;
           cstFixTopIPSP(ip);
-          if (profEnabled) mprof.timer.stop();
+          if (profOnlyFunc) mprof.timer.stop();
           RunFunction((VMethod *)pDelegate[1]);
-          if (profEnabled) mprof.timer.start();
+          if (profOnlyFunc) mprof.timer.start();
         }
         //current_func = func;
         sp = VObject::pr_stackPtr;
