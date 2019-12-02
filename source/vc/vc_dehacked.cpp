@@ -514,15 +514,30 @@ static void ReadThing (int num) {
       }
       */
       if (value) {
+        vint32 oldid = -1;
+        mobjinfo_t *nfo = VClass::FindMObjIdByClass(Ent, GGameInfo->GameFilterFlag);
+        if (nfo) oldid = nfo->DoomEdNum;
+
+        VClass::ReplaceMObjIdByClass(Ent, value, GGameInfo->GameFilterFlag);
+
+        nfo = VClass::FindMObjIdByClass(Ent, GGameInfo->GameFilterFlag);
+        if (nfo) {
+          vassert(nfo->DoomEdNum == value);
+          GCon->Logf(NAME_Init, "DEHACKED: replaced `%s` DoomEdNum #%d with #%d", Ent->GetName(), oldid, value);
+        }
+
+        /*
         mobjinfo_t *nfo = VClass::FindMObjIdByClass(Ent, GGameInfo->GameFilterFlag);
         if (!nfo) {
           nfo = VClass::AllocMObjId(value, GGameInfo->GameFilterFlag, Ent); // gamefilter was zero here for some reason
           //if (nfo) nfo->Class = Ent;
         }
         if (nfo) {
+          GCon->Logf(NAME_Debug, "DEHACKED: replaced `%s` DoomEdNum #%d with #%d", Ent->GetName(), nfo->DoomEdNum, value);
           nfo->DoomEdNum = value;
           nfo->flags = 0;
         }
+        */
       } else {
         //if (Idx) VClass::GMobjInfos.RemoveIndex(Idx);
         VClass::RemoveMObjIdByClass(Ent, GGameInfo->GameFilterFlag);
