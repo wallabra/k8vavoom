@@ -504,42 +504,19 @@ static void ReadThing (int num) {
   VClass *Ent = EntClasses[num-1];
   while (ParseParam()) {
     if (VStr::ICmp(String, "ID #") == 0) {
-      /*
-      int Idx = -1;
-      for (int i = 0; i < VClass::GMobjInfos.length(); ++i) {
-        if (VClass::GMobjInfos[i].Class == Ent) {
-          Idx = i;
-          break;
-        }
-      }
-      */
       if (value) {
+        // for info output
         vint32 oldid = -1;
         mobjinfo_t *nfo = VClass::FindMObjIdByClass(Ent, GGameInfo->GameFilterFlag);
         if (nfo) oldid = nfo->DoomEdNum;
-
+        // actual work
         VClass::ReplaceMObjIdByClass(Ent, value, GGameInfo->GameFilterFlag);
-
+        // info output
         nfo = VClass::FindMObjIdByClass(Ent, GGameInfo->GameFilterFlag);
-        if (nfo) {
-          vassert(nfo->DoomEdNum == value);
+        if (nfo && nfo->DoomEdNum == value) {
           GCon->Logf(NAME_Init, "DEHACKED: replaced `%s` DoomEdNum #%d with #%d", Ent->GetName(), oldid, value);
         }
-
-        /*
-        mobjinfo_t *nfo = VClass::FindMObjIdByClass(Ent, GGameInfo->GameFilterFlag);
-        if (!nfo) {
-          nfo = VClass::AllocMObjId(value, GGameInfo->GameFilterFlag, Ent); // gamefilter was zero here for some reason
-          //if (nfo) nfo->Class = Ent;
-        }
-        if (nfo) {
-          GCon->Logf(NAME_Debug, "DEHACKED: replaced `%s` DoomEdNum #%d with #%d", Ent->GetName(), nfo->DoomEdNum, value);
-          nfo->DoomEdNum = value;
-          nfo->flags = 0;
-        }
-        */
       } else {
-        //if (Idx) VClass::GMobjInfos.RemoveIndex(Idx);
         VClass::RemoveMObjIdByClass(Ent, GGameInfo->GameFilterFlag);
       }
     } else if (!VStr::ICmp(String, "Hit points")) {
