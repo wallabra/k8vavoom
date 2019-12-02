@@ -481,15 +481,15 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
 // WARNING! NO CHECKS!
 struct ProfileTimer {
 public:
-  double stt;
-  double total;
+  vuint64 stt;
+  vuint64 total;
 
 public:
-  inline ProfileTimer () noexcept : stt(0.0), total(0.0) {}
+  inline ProfileTimer () noexcept : stt(0), total(0) {}
 
-  inline void start () noexcept { stt = -Sys_Time(); }
-  inline void stop () noexcept { if (stt) total += stt+Sys_Time(); stt = 0.0; }
-  inline bool isRunnint () const noexcept { return !!stt; }
+  inline void start () noexcept { stt = Sys_GetTimeCPUNano(); }
+  inline void stop () noexcept { if (stt) total += Sys_GetTimeCPUNano()-stt; stt = 0; }
+  inline bool isRunning () const noexcept { return !!stt; }
 };
 
 
@@ -3408,6 +3408,21 @@ extern "C" {
 
 //==========================================================================
 //
+//  nano2sec
+//
+//==========================================================================
+static inline double nano2sec (vuint64 nano) {
+  //return nano/1000000000.0;
+  double res = nano/1000000000ULL;
+  int ns = (int)(nano%1000000000ULL);
+  ns /= 1000000;
+  res += (double)ns/1000.0;
+  return res;
+}
+
+
+//==========================================================================
+//
 //  VObject::DumpProfileInternal
 //
 //  <0: only native; >0: only script; 0: everything
@@ -3432,7 +3447,7 @@ void VObject::DumpProfileInternal (int type) {
   GLog.Logf("====== PROFILE (%s) ======", ptypestr);
   GLog.Log("....calls... .tottime. .mintime. .maxtime. name");
   for (auto &&func : funclist) {
-    GLog.Logf("%12u %9.3f %9.3f %9.3f %s", func->Profile.callCount, func->Profile.totalTime, func->Profile.minTime, func->Profile.maxTime, *func->GetFullName());
+    GLog.Logf("%12u %9.3f %9.3f %9.3f %s", func->Profile.callCount, nano2sec(func->Profile.totalTime), nano2sec(func->Profile.minTime), nano2sec(func->Profile.maxTime), *func->GetFullName());
   }
 }
 

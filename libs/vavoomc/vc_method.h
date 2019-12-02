@@ -150,11 +150,11 @@ class VMethod : public VMemberBase {
 public:
   struct ProfileInfo {
     unsigned callCount = 0;
-    // times are in seconds
+    // times are in nanoseconds (one second has 1000000000 nanoseconds)
     // calls to other VC functions doesn't contribute
-    double totalTime = 0;
-    double minTime = 0;
-    double maxTime = 0;
+    vuint64 totalTime = 0;
+    vuint64 minTime = 0;
+    vuint64 maxTime = 0;
 
     inline void clear () noexcept { callCount = 0; totalTime = minTime = maxTime = 0; }
   };
