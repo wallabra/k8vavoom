@@ -474,6 +474,30 @@ double Sys_Time () {
 
 //==========================================================================
 //
+//  Sys_Time
+//
+// get time (start point is arbitrary) in nanoseconds
+//
+//==========================================================================
+vuint64 Sys_GetTimeNano () {
+#ifdef __linux__
+  static bool initialized = false;
+  static time_t secbase = 0;
+  struct timespec ts;
+  if (clock_gettime(/*CLOCK_MONOTONIC*/CLOCK_MONOTONIC_RAW, &ts) != 0) Sys_Error("clock_gettime failed");
+  if (!initialized) {
+    initialized = true;
+    secbase = ts.tv_sec;
+  }
+  return (ts.tv_sec-secbase+1)*1000000000ULL+ts.tv_nsec;
+#else
+  return (vuint64)(Sys_Time()*1000000000.0);
+#endif
+}
+
+
+//==========================================================================
+//
 //  Sys_Time_CPU
 //
 //  return valud should not be zero
@@ -492,6 +516,28 @@ double Sys_Time_CPU () {
   return (ts.tv_sec-secbase)+ts.tv_nsec/1000000000.0+1.0;
 #else
   return Sys_Time();
+#endif
+}
+
+
+//==========================================================================
+//
+//  Sys_GetTimeCPUNano
+//
+//==========================================================================
+vuint64 Sys_GetTimeCPUNano () {
+#ifdef __linux__
+  static bool initialized = false;
+  static time_t secbase = 0;
+  struct timespec ts;
+  if (clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts) != 0) Sys_Error("clock_gettime failed");
+  if (!initialized) {
+    initialized = true;
+    secbase = ts.tv_sec;
+  }
+  return (ts.tv_sec-secbase+1)*1000000000ULL+ts.tv_nsec;
+#else
+  return Sys_GetTimeNano();
 #endif
 }
 
@@ -804,6 +850,24 @@ double Sys_Time () {
 }
 
 
+//==========================================================================
+//
+//  Sys_GetTimeNano
+//
+//==========================================================================
+vuint64 Sys_GetTimeNano () {
+  if (!shitdozeTimerInited) Sys_Error("shitdoze shits itself");
+  vuint32 currtime = (vuint32)timeGetTime();
+  if (currtime > shitdozeLastTime) {
+    shitdozeCurrTime += currtime-shitdozeLastTime;
+  } else {
+    // meh; do nothing on wraparound, this should only happen once
+  }
+  shitdozeLastTime = currtime;
+  return (vuint64)(shitdozeCurrTime+1000)*1000000ULL; // msecs -> nsecs
+}
+
+
 #else
 //==========================================================================
 //
@@ -891,6 +955,16 @@ double Sys_Time () {
 
   return curtime+1.0;
 }
+
+
+//==========================================================================
+//
+//  Sys_GetTimeNano
+//
+//==========================================================================
+vuint64 Sys_GetTimeNano () {
+  return (vuint64)(Sys_Time()*1000000000.0);
+}
 #endif
 
 
@@ -901,6 +975,16 @@ double Sys_Time () {
 //==========================================================================
 double Sys_Time_CPU () {
   return Sys_Time();
+}
+
+
+//==========================================================================
+//
+//  Sys_GetTimeCPUNano
+//
+//==========================================================================
+vuint64 Sys_GetTimeCPUNano () {
+  return Sys_GetTimeNano();
 }
 
 

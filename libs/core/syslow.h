@@ -51,11 +51,16 @@ void *Sys_OpenDir (VStr path, bool wantDirs=false); // nullptr: error
 VStr Sys_ReadDir (void *adir);
 void Sys_CloseDir (void *adir);
 
-double Sys_Time_CPU (); // this tries to return CPU time used by the process
-double Sys_Time ();
+double Sys_Time_CPU (); // this tries to return CPU time used by the process; never returns 0
+double Sys_Time (); // never returns 0
 void Sys_Yield ();
 
 int Sys_GetCPUCount ();
+
+// get time (start point is arbitrary) in nanoseconds
+// never returns 0
+vuint64 Sys_GetTimeNano ();
+vuint64 Sys_GetTimeCPUNano (); // this tries to return CPU time used by the process; never returns 0
 
 /* not used for now
 #define Sys_EmptyTID  ((vuint32)0xffffffffu)
