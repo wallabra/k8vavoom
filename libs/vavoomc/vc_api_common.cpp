@@ -207,7 +207,7 @@ public:
 
 
 // caller should be tagged with `[printf]` attribute
-VStr PF_FormatString () {
+VStr VObject::PF_FormatString () {
   const int MAX_PARAMS = 256;
 
   //VStr Ret;
@@ -498,12 +498,12 @@ VStr PF_FormatString () {
 
 
 // if `buf` is `nullptr`, it means "flush"
-void (*PR_WriterCB) (const char *buf, bool debugPrint, VName wrname) = nullptr;
+void (*VObject::PR_WriterCB) (const char *buf, bool debugPrint, VName wrname) = nullptr;
 
 static char wrbuffer[16384] = {0};
 
 
-void PR_DoWriteBuf (const char *buf, bool debugPrint, VName wrname) {
+void VObject::PR_DoWriteBuf (const char *buf, bool debugPrint, VName wrname) {
   if (PR_WriterCB) {
     PR_WriterCB(buf, debugPrint, wrname);
     return;
@@ -525,7 +525,7 @@ void PR_DoWriteBuf (const char *buf, bool debugPrint, VName wrname) {
 }
 
 
-void PR_WriteOne (const VFieldType &type) {
+void VObject::PR_WriteOne (const VFieldType &type) {
   char buf[256];
   buf[0] = 0;
   switch (type.Type) {
@@ -644,6 +644,6 @@ void PR_WriteOne (const VFieldType &type) {
 }
 
 
-void PR_WriteFlush () {
+void VObject::PR_WriteFlush () {
   PR_DoWriteBuf(nullptr);
 }

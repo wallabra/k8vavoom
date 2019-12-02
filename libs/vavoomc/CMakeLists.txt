@@ -5,7 +5,6 @@ endif()
 add_library(vavoomc STATIC
   vc_local.h
   vc_public.h
-  vc_progs.h
   vc_progdefs.h
 
   vc_location.h

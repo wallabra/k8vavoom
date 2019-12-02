@@ -78,7 +78,7 @@ static VStack pr_stack[MAX_PROG_STACK+16384];
 
 enum { BreakCheckLimit = 65536 }; // arbitrary
 static unsigned breakCheckCount = 0;
-volatile unsigned vmAbortBySignal = 0;
+volatile unsigned VObject::vmAbortBySignal = 0;
 VStack *VObject::pr_stackPtr = &pr_stack[1];
 
 struct VCSlice {
@@ -228,7 +228,7 @@ static void cstDump (const vuint8 *ip, bool toStdErr=false) {
 //  PR_Init
 //
 //==========================================================================
-void PR_Init () {
+void VObject::PR_Init () {
   // set stack ID for overflow / underflow checks
   pr_stack[0].i = STACK_ID;
   pr_stack[MAX_PROG_STACK-1].i = STACK_ID;
@@ -245,7 +245,7 @@ void PR_Init () {
 //  PR_OnAbort
 //
 //==========================================================================
-void PR_OnAbort () {
+void VObject::PR_OnAbort () {
   //current_func = nullptr;
   VObject::pr_stackPtr = pr_stack+1;
   cstUsed = 0;
@@ -278,7 +278,7 @@ void PR_OnAbort () {
 
 #define VM_CHECK_SIGABORT  do { \
   if ((breakCheckCount--) == 0) { \
-    if (vmAbortBySignal) { cstDump(ip); Host_Error("VC VM execution aborted"); } \
+    if (VObject::vmAbortBySignal) { cstDump(ip); Host_Error("VC VM execution aborted"); } \
     breakCheckCount = BreakCheckLimit; \
   } \
 } while (0)
@@ -2692,7 +2692,7 @@ func_loop:
           ++ip;
           VFieldType Type = VFieldType::ReadTypeMem(ip);
           VObject::pr_stackPtr = sp;
-          PR_WriteOne(Type); // this will pop everything
+          VObject::PR_WriteOne(Type); // this will pop everything
           if (VObject::pr_stackPtr < pr_stack) { VObject::pr_stackPtr = pr_stack; cstDump(ip); Sys_Error("Stack underflow in `write`"); }
           sp = VObject::pr_stackPtr;
         }
@@ -2700,7 +2700,7 @@ func_loop:
 
       PR_VM_CASE(OPC_DoWriteFlush)
         ++ip;
-        PR_WriteFlush();
+        VObject::PR_WriteFlush();
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_DoPushTypePtr)

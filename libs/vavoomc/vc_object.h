@@ -657,6 +657,23 @@ public:
     ((VStr *)&VObject::pr_stackPtr->p)->Clean();
     return Ret;
   }
+
+public: // this API was in global namespace
+  static volatile unsigned vmAbortBySignal;
+
+  static void PR_Init ();
+  static void PR_OnAbort ();
+  static VStr PF_FormatString ();
+
+  static void PR_WriteOne (const VFieldType &type);
+  static void PR_WriteFlush ();
+
+  // if `buf` is `nullptr`, it means "flush"
+  static void (*PR_WriterCB) (const char *buf, bool debugPrint, VName wrname);
+
+  // calls `PR_WriterCB` if it is not empty, or does default printing
+  // if `buf` is `nullptr`, it means "flush"
+  static void PR_DoWriteBuf (const char *buf, bool debugPrint=false, VName wrname=NAME_None);
 };
 
 
@@ -666,8 +683,6 @@ template<class T, class U> T *CastChecked (U *Src) {
   if (!Src || !Src->IsA(T::StaticClass())) Sys_Error("Cast `%s` to `%s` failed", (Src ? Src->GetClass()->GetName() : "none"), T::StaticClass()->GetName());
   return (T *)Src;
 }
-
-
 
 
 //==========================================================================
