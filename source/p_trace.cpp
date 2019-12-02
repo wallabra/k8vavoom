@@ -664,7 +664,7 @@ static bool SightPathTraverse2 (SightTraceInfo &trace, sector_t *EndSector) {
 //  VLevel::CastCanSee
 //
 //  doesn't check pvs or reject
-//  if better sight is allowed, `orgdirRight` MUST be valid!
+//  if better sight is allowed, `orgdirRight` and `orgdirFwd` MUST be valid!
 //
 //==========================================================================
 bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, const TVec &orgdirFwd, const TVec &orgdirRight,

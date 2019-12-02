@@ -89,8 +89,9 @@ bool VEntity::CanSee (VEntity *Other, bool forShooting, bool alwaysBetter) {
   bool cbs = (!forShooting && (alwaysBetter || compat_better_sight));
 
   if (cbs && !alwaysBetter) {
-    // turn off "better sight" if it is not forced, and neither entity is player/monster
-    cbs = (IsPlayerOrMonster() && Other->IsPlayerOrMonster());
+    // turn off "better sight" if it is not forced, and neither entity is monster
+    //cbs = (IsPlayerOrMonster() && Other->IsPlayerOrMonster());
+    cbs = (IsMonster() || Other->IsMonster());
     //if (!cbs) GCon->Logf(NAME_Debug, "%s: better sight forced to 'OFF', checking sight to '%s' (not a player, not a monster)", GetClass()->GetName(), Other->GetClass()->GetName());
   }
 
@@ -111,7 +112,7 @@ bool VEntity::CanSee (VEntity *Other, bool forShooting, bool alwaysBetter) {
     ang.roll = 0.0f;
     AngleVectors(ang, dirF, dirR, dirU);
   } else {
-    dirR = TVec::ZeroVector;
+    dirF = dirR = TVec::ZeroVector;
   }
   //if (forShooting) dirR = TVec::ZeroVector; // just in case, lol
   return XLevel->CastCanSee(Sector, Origin, Height, dirF, dirR, Other->Origin, Other->Radius, Other->Height, true/*skip base region*/, Other->Sector, /*alwaysBetter*/cbs);
