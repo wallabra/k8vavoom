@@ -528,7 +528,7 @@ override void GiveInventory (name ItemName, int Amount, bool allowReplacement) {
 
   if (!Item.TryPickup(self)) {
     Item.Destroy();
-  } else if (!Item.IsDestroyed()) {
+  } else if (!Item.IsDestroyed) {
     // just in case, move it to spawner's origin
     Item.SetOrigin(Origin, properFloorCheck:true);
   }

@@ -433,7 +433,7 @@ final void TestFindPathTo (TVec dest) {
 //
 //==========================================================================
 final void PutItemToIgnoreList (Actor item, optional float timeoutMult) {
-  if (!item || !item.IsDestroyed()) return;
+  if (!item || !item.IsDestroyed) return;
   if (!specified_timeoutMult) timeoutMult = 1;
   float currTime = botmo.XLevel.Time;
   float timeout = ITEM_IGNORE_TIME+(FRandomFull()-0.5)*(ITEM_IGNORE_TIME_DEVIATION*2);
@@ -990,7 +990,7 @@ void SetEnemy () {
 //==========================================================================
 void CheckStuff () {
   if (item) {
-    if (!item.bSpecial || item.bInvisible || item.IsDestroyed() /*|| // somebody picked
+    if (!item.bSpecial || item.bInvisible || item.IsDestroyed /*|| // somebody picked
         !CheckTo(item.Origin)*/) // can't reach
     {
       PutItemToIgnoreList(item, 0.8);
@@ -1000,7 +1000,7 @@ void CheckStuff () {
   }
 
   if (missile) {
-    if (!missile.bMissile || missile.IsDestroyed()) missile = none;
+    if (!missile.bMissile || missile.IsDestroyed) missile = none;
   }
 
   if (node) {
@@ -1029,7 +1029,7 @@ void CheckStuff () {
   */
 
   if (enemy) {
-    if (enemy.IsDestroyed() || enemy.Health <= 0 || !enemy.bShootable) enemy = none;
+    if (enemy.IsDestroyed || enemy.Health <= 0 || !enemy.bShootable) enemy = none;
   }
 }
 
@@ -1960,7 +1960,7 @@ void Roam () {
 //==========================================================================
 bool CheckWantCurrentItem () {
   if (!item) return false;
-  if (!item.bSpecial || item.bInvisible || item.IsDestroyed()) { item = none; return false; } // picked up by someone
+  if (!item.bSpecial || item.bInvisible || item.IsDestroyed) { item = none; return false; } // picked up by someone
   if (bItemIsPowerup) return true; // always collect powerups
   if (!bItemIsWeapon) return false; // don't bother with non-weapons
   Weapon wpn = Weapon(item);

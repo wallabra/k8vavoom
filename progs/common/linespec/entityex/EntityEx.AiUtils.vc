@@ -103,7 +103,7 @@ final bool CheckMeleeRange2 () {
 //
 //==========================================================================
 final bool CheckMissileRange () {
-  if (!Target || Target.IsDestroyed()) return false;
+  if (!Target || Target.IsDestroyed) return false;
   // moved down, to avoid visibility checks if target is too far away
   //if (!CanSee(Target)) return false;
 

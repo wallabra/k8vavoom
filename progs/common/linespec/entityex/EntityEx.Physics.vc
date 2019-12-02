@@ -185,7 +185,7 @@ bool Physics (float DeltaTime) {
   // momentum (velocity) movement
   // handle X and Y momentums
   float oldfloorz = XYMovement(DeltaTime, CummX, CummY);
-  if (IsDestroyed()) return false; // mobj was removed
+  if (IsDestroyed) return false; // mobj was removed
   // apply friction here
   //if (Velocity.x || Velocity.y) ApplyFriction(DeltaTime);
 
@@ -270,11 +270,11 @@ bool Physics (float DeltaTime) {
         ZMovement(DeltaTime, oldfloorz);
         bOnMobj = false;
       }
-      if (IsDestroyed()) return false; // entity was removed
+      if (IsDestroyed) return false; // entity was removed
     } else {
       // handle Z momentum and gravity
       ZMovement(DeltaTime, oldfloorz);
-      if (IsDestroyed()) return false; // entity was removed
+      if (IsDestroyed) return false; // entity was removed
     }
   }
 
