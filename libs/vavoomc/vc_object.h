@@ -564,6 +564,99 @@ public:
 
   // unconditionally clears event queue
   static void ClearEventQueue ();
+
+public:
+  // stack routines
+  static __attribute__((unused)) inline void PR_Push (int value) noexcept {
+    VObject::pr_stackPtr->i = value;
+    ++VObject::pr_stackPtr;
+  }
+
+  static __attribute__((unused)) inline void PR_PushBool (bool value) noexcept {
+    VObject::pr_stackPtr->i = (value ? 1 : 0);
+    ++VObject::pr_stackPtr;
+  }
+
+  static __attribute__((unused)) inline int PR_Pop () noexcept {
+    --VObject::pr_stackPtr;
+    return VObject::pr_stackPtr->i;
+  }
+
+  static __attribute__((unused)) inline void PR_Pushf (float value) noexcept {
+    VObject::pr_stackPtr->f = value;
+    ++VObject::pr_stackPtr;
+  }
+
+  static __attribute__((unused)) inline float PR_Popf () noexcept {
+    --VObject::pr_stackPtr;
+    return VObject::pr_stackPtr->f;
+  }
+
+  static __attribute__((unused)) inline void PR_Pushv (const TVec &v) noexcept {
+    PR_Pushf(v.x);
+    PR_Pushf(v.y);
+    PR_Pushf(v.z);
+  }
+
+  static __attribute__((unused)) inline void PR_Pushav (const TAVec &v) noexcept {
+    PR_Pushf(v.pitch);
+    PR_Pushf(v.yaw);
+    PR_Pushf(v.roll);
+  }
+
+  static __attribute__((unused)) inline TVec PR_Popv () noexcept {
+    TVec v;
+    v.z = PR_Popf();
+    v.y = PR_Popf();
+    v.x = PR_Popf();
+    return v;
+  }
+
+  static __attribute__((unused)) inline TAVec PR_Popav () noexcept {
+    TAVec v;
+    v.roll = PR_Popf();
+    v.yaw = PR_Popf();
+    v.pitch = PR_Popf();
+    return v;
+  }
+
+  static __attribute__((unused)) inline void PR_PushName (VName value) noexcept {
+    VObject::pr_stackPtr->i = value.GetIndex();
+    ++VObject::pr_stackPtr;
+  }
+
+  static __attribute__((unused)) inline VName PR_PopName () noexcept {
+    --VObject::pr_stackPtr;
+    return *(VName *)&VObject::pr_stackPtr->i;
+  }
+
+  static __attribute__((unused)) inline void PR_PushPtr (void *value) noexcept {
+    VObject::pr_stackPtr->p = value;
+    ++VObject::pr_stackPtr;
+  }
+
+  static __attribute__((unused)) inline void *PR_PopPtr () noexcept {
+    --VObject::pr_stackPtr;
+    return VObject::pr_stackPtr->p;
+  }
+
+  static __attribute__((unused)) inline VObject *PR_PopRef () noexcept {
+    --VObject::pr_stackPtr;
+    return (VObject *)(VObject::pr_stackPtr->p);
+  }
+
+  static __attribute__((unused)) inline void PR_PushStr (VStr value) noexcept {
+    VObject::pr_stackPtr->p = nullptr;
+    *(VStr *)&VObject::pr_stackPtr->p = value;
+    ++VObject::pr_stackPtr;
+  }
+
+  static __attribute__((unused)) inline VStr PR_PopStr () noexcept {
+    --VObject::pr_stackPtr;
+    VStr Ret = *(VStr *)&VObject::pr_stackPtr->p;
+    ((VStr *)&VObject::pr_stackPtr->p)->Clean();
+    return Ret;
+  }
 };
 
 
@@ -575,100 +668,6 @@ template<class T, class U> T *CastChecked (U *Src) {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-// stack routines
-static __attribute__((unused)) inline void PR_Push (int value) noexcept {
-  VObject::pr_stackPtr->i = value;
-  ++VObject::pr_stackPtr;
-}
-
-static __attribute__((unused)) inline void PR_PushBool (bool value) noexcept {
-  VObject::pr_stackPtr->i = (value ? 1 : 0);
-  ++VObject::pr_stackPtr;
-}
-
-static __attribute__((unused)) inline int PR_Pop () noexcept {
-  --VObject::pr_stackPtr;
-  return VObject::pr_stackPtr->i;
-}
-
-static __attribute__((unused)) inline void PR_Pushf (float value) noexcept {
-  VObject::pr_stackPtr->f = value;
-  ++VObject::pr_stackPtr;
-}
-
-static __attribute__((unused)) inline float PR_Popf () noexcept {
-  --VObject::pr_stackPtr;
-  return VObject::pr_stackPtr->f;
-}
-
-static __attribute__((unused)) inline void PR_Pushv (const TVec &v) noexcept {
-  PR_Pushf(v.x);
-  PR_Pushf(v.y);
-  PR_Pushf(v.z);
-}
-
-static __attribute__((unused)) inline void PR_Pushav (const TAVec &v) noexcept {
-  PR_Pushf(v.pitch);
-  PR_Pushf(v.yaw);
-  PR_Pushf(v.roll);
-}
-
-static __attribute__((unused)) inline TVec PR_Popv () noexcept {
-  TVec v;
-  v.z = PR_Popf();
-  v.y = PR_Popf();
-  v.x = PR_Popf();
-  return v;
-}
-
-static __attribute__((unused)) inline TAVec PR_Popav () noexcept {
-  TAVec v;
-  v.roll = PR_Popf();
-  v.yaw = PR_Popf();
-  v.pitch = PR_Popf();
-  return v;
-}
-
-static __attribute__((unused)) inline void PR_PushName (VName value) noexcept {
-  VObject::pr_stackPtr->i = value.GetIndex();
-  ++VObject::pr_stackPtr;
-}
-
-
-static __attribute__((unused)) inline VName PR_PopName () noexcept {
-  --VObject::pr_stackPtr;
-  return *(VName *)&VObject::pr_stackPtr->i;
-}
-
-static __attribute__((unused)) inline void PR_PushPtr (void *value) noexcept {
-  VObject::pr_stackPtr->p = value;
-  ++VObject::pr_stackPtr;
-}
-
-static __attribute__((unused)) inline void *PR_PopPtr () noexcept {
-  --VObject::pr_stackPtr;
-  return VObject::pr_stackPtr->p;
-}
-
-
-static __attribute__((unused)) inline VObject *PR_PopRef () noexcept {
-  --VObject::pr_stackPtr;
-  return (VObject *)(VObject::pr_stackPtr->p);
-}
-
-static __attribute__((unused)) inline void PR_PushStr (VStr value) noexcept {
-  VObject::pr_stackPtr->p = nullptr;
-  *(VStr *)&VObject::pr_stackPtr->p = value;
-  ++VObject::pr_stackPtr;
-}
-
-static __attribute__((unused)) inline VStr PR_PopStr () noexcept {
-  --VObject::pr_stackPtr;
-  VStr Ret = *(VStr *)&VObject::pr_stackPtr->p;
-  ((VStr *)&VObject::pr_stackPtr->p)->Clean();
-  return Ret;
-}
 
 
 //==========================================================================
@@ -738,17 +737,17 @@ inline vuint32 GetTypeHash (const VObject *Obj) { return (Obj ? hashU32(Obj->Get
 // this will make it simpler to port it to 64 bit platforms
 
 // macros for passign arguments to VavoomC methods
-#define P_PASS_INT(v)    PR_Push(v)
-#define P_PASS_BYTE(v)   PR_Push(v)
-#define P_PASS_FLOAT(v)  PR_Pushf(v)
-#define P_PASS_BOOL(v)   PR_Push(v)
-#define P_PASS_NAME(v)   PR_PushName(v)
-#define P_PASS_STR(v)    PR_PushStr(v)
-#define P_PASS_VEC(v)    PR_Pushv(v)
-#define P_PASS_AVEC(v)   PR_Pushav(v)
-#define P_PASS_REF(v)    PR_PushPtr(v)
-#define P_PASS_PTR(v)    PR_PushPtr(v)
-#define P_PASS_SELF      PR_PushPtr(this)
+#define P_PASS_INT(v)    VObject::PR_Push(v)
+#define P_PASS_BYTE(v)   VObject::PR_Push(v)
+#define P_PASS_FLOAT(v)  VObject::PR_Pushf(v)
+#define P_PASS_BOOL(v)   VObject::PR_Push(v)
+#define P_PASS_NAME(v)   VObject::PR_PushName(v)
+#define P_PASS_STR(v)    VObject::PR_PushStr(v)
+#define P_PASS_VEC(v)    VObject::PR_Pushv(v)
+#define P_PASS_AVEC(v)   VObject::PR_Pushav(v)
+#define P_PASS_REF(v)    VObject::PR_PushPtr(v)
+#define P_PASS_PTR(v)    VObject::PR_PushPtr(v)
+#define P_PASS_SELF      VObject::PR_PushPtr(this)
 
 // macros for calling VavoomC methods with different return types
 // this is for `VMethodProxy`
@@ -765,44 +764,44 @@ inline vuint32 GetTypeHash (const VObject *Obj) { return (Obj ? hashU32(Obj->Get
 #define VMT_RET_PTR(t, v)  return (t *)(v).Execute(this).getClass()
 
 // parameter get macros; parameters must be retrieved in backwards order
-#define P_GET_INT(v)     vint32 v = PR_Pop()
-#define P_GET_BYTE(v)    vuint8 v = PR_Pop()
-#define P_GET_FLOAT(v)   float v = PR_Popf()
-#define P_GET_BOOL(v)    bool v = !!PR_Pop()
-#define P_GET_NAME(v)    VName v = PR_PopName()
-#define P_GET_STR(v)     VStr v = PR_PopStr()
-#define P_GET_VEC(v)     TVec v = PR_Popv()
-#define P_GET_AVEC(v)    TAVec v = PR_Popav()
-#define P_GET_REF(c, v)  c *v = (c*)PR_PopPtr()
-#define P_GET_PTR(t, v)  t *v = (t*)PR_PopPtr()
-#define P_GET_SELF       ThisClass *Self = (ThisClass *)PR_PopPtr()
+#define P_GET_INT(v)     vint32 v = VObject::PR_Pop()
+#define P_GET_BYTE(v)    vuint8 v = VObject::PR_Pop()
+#define P_GET_FLOAT(v)   float v = VObject::PR_Popf()
+#define P_GET_BOOL(v)    bool v = !!VObject::PR_Pop()
+#define P_GET_NAME(v)    VName v = VObject::PR_PopName()
+#define P_GET_STR(v)     VStr v = VObject::PR_PopStr()
+#define P_GET_VEC(v)     TVec v = VObject::PR_Popv()
+#define P_GET_AVEC(v)    TAVec v = VObject::PR_Popav()
+#define P_GET_REF(c, v)  c *v = (c*)VObject::PR_PopPtr()
+#define P_GET_PTR(t, v)  t *v = (t*)VObject::PR_PopPtr()
+#define P_GET_SELF       ThisClass *Self = (ThisClass *)VObject::PR_PopPtr()
 
-#define P_GET_INT_OPT(v, d)     bool specified_##v = !!PR_Pop(); vint32 v = PR_Pop(); if (!specified_##v) v = d
-#define P_GET_BYTE_OPT(v, d)    bool specified_##v = !!PR_Pop(); vuint8 v = PR_Pop(); if (!specified_##v) v = d
-#define P_GET_FLOAT_OPT(v, d)   bool specified_##v = !!PR_Pop(); float v = PR_Popf(); if (!specified_##v) v = d
-#define P_GET_BOOL_OPT(v, d)    bool specified_##v = !!PR_Pop(); bool v = !!PR_Pop(); if (!specified_##v) v = d
-#define P_GET_NAME_OPT(v, d)    bool specified_##v = !!PR_Pop(); VName v = PR_PopName(); if (!specified_##v) v = d
-#define P_GET_STR_OPT(v, d)     bool specified_##v = !!PR_Pop(); VStr v = PR_PopStr(); if (!specified_##v) v = d
-#define P_GET_VEC_OPT(v, d)     bool specified_##v = !!PR_Pop(); TVec v = PR_Popv(); if (!specified_##v) v = d
-#define P_GET_AVEC_OPT(v, d)    bool specified_##v = !!PR_Pop(); TAVec v = PR_Popav(); if (!specified_##v) v = d
-#define P_GET_REF_OPT(c, v, d)  bool specified_##v = !!PR_Pop(); c *v = (c *)PR_PopPtr(); if (!specified_##v) v = d
-#define P_GET_PTR_OPT(t, v, d)  bool specified_##v = !!PR_Pop(); t *v = (t *)PR_PopPtr(); if (!specified_##v) v = d
-#define P_GET_OUT_OPT(t, v)     bool specified_##v = !!PR_Pop(); t *v = (t *)PR_PopPtr()
+#define P_GET_INT_OPT(v, d)     bool specified_##v = !!VObject::PR_Pop(); vint32 v = VObject::PR_Pop(); if (!specified_##v) v = d
+#define P_GET_BYTE_OPT(v, d)    bool specified_##v = !!VObject::PR_Pop(); vuint8 v = VObject::PR_Pop(); if (!specified_##v) v = d
+#define P_GET_FLOAT_OPT(v, d)   bool specified_##v = !!VObject::PR_Pop(); float v = VObject::PR_Popf(); if (!specified_##v) v = d
+#define P_GET_BOOL_OPT(v, d)    bool specified_##v = !!VObject::PR_Pop(); bool v = !!VObject::PR_Pop(); if (!specified_##v) v = d
+#define P_GET_NAME_OPT(v, d)    bool specified_##v = !!VObject::PR_Pop(); VName v = VObject::PR_PopName(); if (!specified_##v) v = d
+#define P_GET_STR_OPT(v, d)     bool specified_##v = !!VObject::PR_Pop(); VStr v = VObject::PR_PopStr(); if (!specified_##v) v = d
+#define P_GET_VEC_OPT(v, d)     bool specified_##v = !!VObject::PR_Pop(); TVec v = VObject::PR_Popv(); if (!specified_##v) v = d
+#define P_GET_AVEC_OPT(v, d)    bool specified_##v = !!VObject::PR_Pop(); TAVec v = VObject::PR_Popav(); if (!specified_##v) v = d
+#define P_GET_REF_OPT(c, v, d)  bool specified_##v = !!VObject::PR_Pop(); c *v = (c *)VObject::PR_PopPtr(); if (!specified_##v) v = d
+#define P_GET_PTR_OPT(t, v, d)  bool specified_##v = !!VObject::PR_Pop(); t *v = (t *)VObject::PR_PopPtr(); if (!specified_##v) v = d
+#define P_GET_OUT_OPT(t, v)     bool specified_##v = !!VObject::PR_Pop(); t *v = (t *)VObject::PR_PopPtr()
 
-#define P_GET_PTR_OPT_NOSP(t, v)  PR_Pop(); t *v = (t *)PR_PopPtr()
-#define P_GET_OUT_OPT_NOSP(t, v)  PR_Pop(); t *v = (t *)PR_PopPtr()
+#define P_GET_PTR_OPT_NOSP(t, v)  VObject::PR_Pop(); t *v = (t *)VObject::PR_PopPtr()
+#define P_GET_OUT_OPT_NOSP(t, v)  VObject::PR_Pop(); t *v = (t *)VObject::PR_PopPtr()
 
 // method return macros
-#define RET_INT(v)    PR_Push(v)
-#define RET_BYTE(v)   PR_Push(v)
-#define RET_FLOAT(v)  PR_Pushf(v)
-#define RET_BOOL(v)   PR_PushBool(!!(v))
-#define RET_NAME(v)   PR_PushName(v)
-#define RET_STR(v)    PR_PushStr(v)
-#define RET_VEC(v)    PR_Pushv(v)
-#define RET_AVEC(v)   PR_Pushav(v)
-#define RET_REF(v)    PR_PushPtr(v)
-#define RET_PTR(v)    PR_PushPtr(v)
+#define RET_INT(v)    VObject::PR_Push(v)
+#define RET_BYTE(v)   VObject::PR_Push(v)
+#define RET_FLOAT(v)  VObject::PR_Pushf(v)
+#define RET_BOOL(v)   VObject::PR_PushBool(!!(v))
+#define RET_NAME(v)   VObject::PR_PushName(v)
+#define RET_STR(v)    VObject::PR_PushStr(v)
+#define RET_VEC(v)    VObject::PR_Pushv(v)
+#define RET_AVEC(v)   VObject::PR_Pushav(v)
+#define RET_REF(v)    VObject::PR_PushPtr(v)
+#define RET_PTR(v)    VObject::PR_PushPtr(v)
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -815,20 +814,20 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static __attribute__((unused)) inline void vobj_get_param (int &n) noexcept { n = PR_Pop(); }
-static __attribute__((unused)) inline void vobj_get_param (vuint32 &n) noexcept { n = (vuint32)PR_Pop(); }
-static __attribute__((unused)) inline void vobj_get_param (vuint8 &n) noexcept { n = (vuint8)PR_Pop(); }
-static __attribute__((unused)) inline void vobj_get_param (float &n) noexcept { n = PR_Popf(); }
-static __attribute__((unused)) inline void vobj_get_param (double &n) noexcept { n = PR_Popf(); }
-static __attribute__((unused)) inline void vobj_get_param (bool &n) noexcept { n = !!PR_Pop(); }
-static __attribute__((unused)) inline void vobj_get_param (VStr &n) noexcept { n = PR_PopStr(); }
-static __attribute__((unused)) inline void vobj_get_param (VName &n) noexcept { n = PR_PopName(); }
-static __attribute__((unused)) inline void vobj_get_param (int *&n) noexcept { n = (int *)PR_PopPtr(); }
-static __attribute__((unused)) inline void vobj_get_param (vuint32 *&n) noexcept { n = (vuint32 *)PR_PopPtr(); }
-static __attribute__((unused)) inline void vobj_get_param (vuint8 *&n) noexcept { n = (vuint8 *)PR_PopPtr(); }
-static __attribute__((unused)) inline void vobj_get_param (TVec &n) noexcept { n = PR_Popv(); }
-static __attribute__((unused)) inline void vobj_get_param (TAVec &n) noexcept { n = PR_Popav(); }
-template<class C> static __attribute__((unused)) inline void vobj_get_param (C *&n) noexcept { n = (C *)PR_PopPtr(); }
+static __attribute__((unused)) inline void vobj_get_param (int &n) noexcept { n = VObject::PR_Pop(); }
+static __attribute__((unused)) inline void vobj_get_param (vuint32 &n) noexcept { n = (vuint32)VObject::PR_Pop(); }
+static __attribute__((unused)) inline void vobj_get_param (vuint8 &n) noexcept { n = (vuint8)VObject::PR_Pop(); }
+static __attribute__((unused)) inline void vobj_get_param (float &n) noexcept { n = VObject::PR_Popf(); }
+static __attribute__((unused)) inline void vobj_get_param (double &n) noexcept { n = VObject::PR_Popf(); }
+static __attribute__((unused)) inline void vobj_get_param (bool &n) noexcept { n = !!VObject::PR_Pop(); }
+static __attribute__((unused)) inline void vobj_get_param (VStr &n) noexcept { n = VObject::PR_PopStr(); }
+static __attribute__((unused)) inline void vobj_get_param (VName &n) noexcept { n = VObject::PR_PopName(); }
+static __attribute__((unused)) inline void vobj_get_param (int *&n) noexcept { n = (int *)VObject::PR_PopPtr(); }
+static __attribute__((unused)) inline void vobj_get_param (vuint32 *&n) noexcept { n = (vuint32 *)VObject::PR_PopPtr(); }
+static __attribute__((unused)) inline void vobj_get_param (vuint8 *&n) noexcept { n = (vuint8 *)VObject::PR_PopPtr(); }
+static __attribute__((unused)) inline void vobj_get_param (TVec &n) noexcept { n = VObject::PR_Popv(); }
+static __attribute__((unused)) inline void vobj_get_param (TAVec &n) noexcept { n = VObject::PR_Popav(); }
+template<class C> static __attribute__((unused)) inline void vobj_get_param (C *&n) noexcept { n = (C *)VObject::PR_PopPtr(); }
 
 #define VC_DEFINE_OPTPARAM(tname_,type_,defval_,pop_) \
 struct VOptParam##tname_ { \
@@ -838,20 +837,20 @@ struct VOptParam##tname_ { \
   inline operator type_ () noexcept { return value; } \
 }; \
 static __attribute__((unused)) inline void vobj_get_param (VOptParam##tname_ &n) noexcept { \
-  n.specified = !!PR_Pop(); \
+  n.specified = !!VObject::PR_Pop(); \
   if (n.specified) n.value = pop_(); else (void)pop_(); \
 }
 
-VC_DEFINE_OPTPARAM(Int, int, 0, PR_Pop) // VOptParamInt
-VC_DEFINE_OPTPARAM(UInt, vuint32, 0, PR_Pop) // VOptParamUInt
-VC_DEFINE_OPTPARAM(UByte, vuint8, 0, PR_Pop) // VOptParamUByte
-VC_DEFINE_OPTPARAM(Float, float, 0.0f, PR_Popf) // VOptParamFloat
-VC_DEFINE_OPTPARAM(Double, double, 0.0, PR_Popf) // VOptParamDouble
-VC_DEFINE_OPTPARAM(Bool, bool, false, !!PR_Pop) // VOptParamBool
-VC_DEFINE_OPTPARAM(Str, VStr, VStr::EmptyString, PR_PopStr) // VOptParamStr
-VC_DEFINE_OPTPARAM(Name, VName, NAME_None, PR_PopName) // VOptParamName
-VC_DEFINE_OPTPARAM(Vec, TVec, TVec(0.0f, 0.0f, 0.0f), PR_Popv) // VOptParamVec
-VC_DEFINE_OPTPARAM(AVec, TAVec, TAVec(0.0f, 0.0f, 0.0f), PR_Popav) // VOptParamAVec
+VC_DEFINE_OPTPARAM(Int, int, 0, VObject::PR_Pop) // VOptParamInt
+VC_DEFINE_OPTPARAM(UInt, vuint32, 0, VObject::PR_Pop) // VOptParamUInt
+VC_DEFINE_OPTPARAM(UByte, vuint8, 0, VObject::PR_Pop) // VOptParamUByte
+VC_DEFINE_OPTPARAM(Float, float, 0.0f, VObject::PR_Popf) // VOptParamFloat
+VC_DEFINE_OPTPARAM(Double, double, 0.0, VObject::PR_Popf) // VOptParamDouble
+VC_DEFINE_OPTPARAM(Bool, bool, false, !!VObject::PR_Pop) // VOptParamBool
+VC_DEFINE_OPTPARAM(Str, VStr, VStr::EmptyString, VObject::PR_PopStr) // VOptParamStr
+VC_DEFINE_OPTPARAM(Name, VName, NAME_None, VObject::PR_PopName) // VOptParamName
+VC_DEFINE_OPTPARAM(Vec, TVec, TVec(0.0f, 0.0f, 0.0f), VObject::PR_Popv) // VOptParamVec
+VC_DEFINE_OPTPARAM(AVec, TAVec, TAVec(0.0f, 0.0f, 0.0f), VObject::PR_Popav) // VOptParamAVec
 
 template<class C> struct VOptParamPtr {
   bool specified;
@@ -866,10 +865,10 @@ template<class C> struct VOptParamPtr {
   inline bool isNull () const noexcept { return !!value; }
 };
 template<class C> static __attribute__((unused)) inline void vobj_get_param (VOptParamPtr<C> &n) noexcept {
-  n.specified = !!PR_Pop();
+  n.specified = !!VObject::PR_Pop();
   // optional ref pushes pointer to dummy object, so why not?
-  //if (n.specified || !n.value) n.value = (C *)PR_PopPtr(); else (void)PR_PopPtr();
-  if (n.specified || n.popDummy) n.value = (C *)PR_PopPtr(); else (void)PR_PopPtr();
+  //if (n.specified || !n.value) n.value = (C *)VObject::PR_PopPtr(); else (void)VObject::PR_PopPtr();
+  if (n.specified || n.popDummy) n.value = (C *)VObject::PR_PopPtr(); else (void)VObject::PR_PopPtr();
 }
 
 /* usage of optional params:
@@ -893,19 +892,19 @@ template<typename... Args> static __attribute__((unused)) inline void vobjGetPar
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static __attribute__((unused)) inline void vobj_put_param (const int v) noexcept { PR_Push(v); }
-static __attribute__((unused)) inline void vobj_put_param (const vuint32 v) noexcept { PR_Push((vint32)v); }
-static __attribute__((unused)) inline void vobj_put_param (const vuint8 v) noexcept { PR_Push((vint32)v); }
-static __attribute__((unused)) inline void vobj_put_param (const float v) noexcept { PR_Pushf(v); }
-static __attribute__((unused)) inline void vobj_put_param (const double v) noexcept { PR_Pushf(v); }
-static __attribute__((unused)) inline void vobj_put_param (const bool v) noexcept { PR_Push(!!v); }
-static __attribute__((unused)) inline void vobj_put_param (const VStr v) noexcept { PR_PushStr(v); }
-static __attribute__((unused)) inline void vobj_put_param (const VName v) noexcept { PR_PushName(v); }
-static __attribute__((unused)) inline void vobj_put_param (const TVec v) noexcept { PR_Pushv(v); }
-static __attribute__((unused)) inline void vobj_put_param (const TAVec v) noexcept { PR_Pushav(v); }
-//static __attribute__((unused)) inline void vobj_put_param (VObject *v) noexcept { PR_PushPtr((void *)v); }
-//static __attribute__((unused)) inline void vobj_put_param (const VObject *v) noexcept { PR_PushPtr((void *)v); }
-template<class C> static __attribute__((unused)) inline void vobj_put_param (C *v) noexcept { PR_PushPtr((void *)v); }
+static __attribute__((unused)) inline void vobj_put_param (const int v) noexcept { VObject::PR_Push(v); }
+static __attribute__((unused)) inline void vobj_put_param (const vuint32 v) noexcept { VObject::PR_Push((vint32)v); }
+static __attribute__((unused)) inline void vobj_put_param (const vuint8 v) noexcept { VObject::PR_Push((vint32)v); }
+static __attribute__((unused)) inline void vobj_put_param (const float v) noexcept { VObject::PR_Pushf(v); }
+static __attribute__((unused)) inline void vobj_put_param (const double v) noexcept { VObject::PR_Pushf(v); }
+static __attribute__((unused)) inline void vobj_put_param (const bool v) noexcept { VObject::PR_Push(!!v); }
+static __attribute__((unused)) inline void vobj_put_param (const VStr v) noexcept { VObject::PR_PushStr(v); }
+static __attribute__((unused)) inline void vobj_put_param (const VName v) noexcept { VObject::PR_PushName(v); }
+static __attribute__((unused)) inline void vobj_put_param (const TVec v) noexcept { VObject::PR_Pushv(v); }
+static __attribute__((unused)) inline void vobj_put_param (const TAVec v) noexcept { VObject::PR_Pushav(v); }
+//static __attribute__((unused)) inline void vobj_put_param (VObject *v) noexcept { VObject::PR_PushPtr((void *)v); }
+//static __attribute__((unused)) inline void vobj_put_param (const VObject *v) noexcept { VObject::PR_PushPtr((void *)v); }
+template<class C> static __attribute__((unused)) inline void vobj_put_param (C *v) noexcept { VObject::PR_PushPtr((void *)v); }
 
 #define VC_DEFINE_OPTPARAM_PUT(tname_,type_,defval_,push_) \
 struct VOptPutParam##tname_ { \
@@ -918,19 +917,19 @@ struct VOptPutParam##tname_ { \
 }; \
 static __attribute__((unused)) inline void vobj_put_param (VOptPutParam##tname_ &v) noexcept { \
   if (v.specified) push_(v.value); else push_(v.defvalue); \
-  PR_PushBool(v.specified); \
+  VObject::PR_PushBool(v.specified); \
 }
 
-VC_DEFINE_OPTPARAM_PUT(Int, int, 0, PR_Push) // VOptPutParamInt
-VC_DEFINE_OPTPARAM_PUT(UInt, vuint32, 0, PR_Push) // VOptPutParamUInt
-VC_DEFINE_OPTPARAM_PUT(UByte, vuint8, 0, PR_Push) // VOptPutParamUByte
-VC_DEFINE_OPTPARAM_PUT(Float, float, 0.0f, PR_Pushf) // VOptPutParamFloat
-VC_DEFINE_OPTPARAM_PUT(Double, double, 0.0, PR_Pushf) // VOptPutParamDouble
-VC_DEFINE_OPTPARAM_PUT(Bool, bool, false, PR_Push) // VOptPutParamBool
-VC_DEFINE_OPTPARAM_PUT(Str, VStr, VStr::EmptyString, PR_PushStr) // VOptPutParamStr
-VC_DEFINE_OPTPARAM_PUT(Name, VName, NAME_None, PR_PushName) // VOptPutParamName
-VC_DEFINE_OPTPARAM_PUT(Vec, TVec, TVec(0.0f, 0.0f, 0.0f), PR_Pushv) // VOptPutParamVec
-VC_DEFINE_OPTPARAM_PUT(AVec, TAVec, TAVec(0.0f, 0.0f, 0.0f), PR_Pushav) // VOptPutParamAVec
+VC_DEFINE_OPTPARAM_PUT(Int, int, 0, VObject::PR_Push) // VOptPutParamInt
+VC_DEFINE_OPTPARAM_PUT(UInt, vuint32, 0, VObject::PR_Push) // VOptPutParamUInt
+VC_DEFINE_OPTPARAM_PUT(UByte, vuint8, 0, VObject::PR_Push) // VOptPutParamUByte
+VC_DEFINE_OPTPARAM_PUT(Float, float, 0.0f, VObject::PR_Pushf) // VOptPutParamFloat
+VC_DEFINE_OPTPARAM_PUT(Double, double, 0.0, VObject::PR_Pushf) // VOptPutParamDouble
+VC_DEFINE_OPTPARAM_PUT(Bool, bool, false, VObject::PR_Push) // VOptPutParamBool
+VC_DEFINE_OPTPARAM_PUT(Str, VStr, VStr::EmptyString, VObject::PR_PushStr) // VOptPutParamStr
+VC_DEFINE_OPTPARAM_PUT(Name, VName, NAME_None, VObject::PR_PushName) // VOptPutParamName
+VC_DEFINE_OPTPARAM_PUT(Vec, TVec, TVec(0.0f, 0.0f, 0.0f), VObject::PR_Pushv) // VOptPutParamVec
+VC_DEFINE_OPTPARAM_PUT(AVec, TAVec, TAVec(0.0f, 0.0f, 0.0f), VObject::PR_Pushav) // VOptPutParamAVec
 
 //WARNING! you'd better provide a dummy non-nullptr pointer here if this is not a class/object!
 //         most of VC code expects that it can safely use ommited pointer argment, because
@@ -945,8 +944,8 @@ template<class C> struct VOptPutParamPtr {
   inline operator bool () noexcept { return !!value; }
 };
 template<class C> static __attribute__((unused)) inline void vobj_put_param (VOptPutParamPtr<C> v) noexcept {
-  PR_PushPtr((void *)v.value);
-  PR_PushBool(v.specified);
+  VObject::PR_PushPtr((void *)v.value);
+  VObject::PR_PushBool(v.specified);
 }
 
 /* usage of optional arguments:

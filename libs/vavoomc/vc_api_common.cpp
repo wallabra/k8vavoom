@@ -529,13 +529,13 @@ void PR_WriteOne (const VFieldType &type) {
   char buf[256];
   buf[0] = 0;
   switch (type.Type) {
-    case TYPE_Int: case TYPE_Byte: snprintf(buf, sizeof(buf), "%d", PR_Pop()); break;
-    case TYPE_Bool: snprintf(buf, sizeof(buf), "%s", (PR_Pop() ? "true" : "false")); break;
-    case TYPE_Float: /*snprintf(buf, sizeof(buf), "%f", PR_Popf());*/ (void)VStr::float2str(buf, PR_Popf()); break;
+    case TYPE_Int: case TYPE_Byte: snprintf(buf, sizeof(buf), "%d", VObject::PR_Pop()); break;
+    case TYPE_Bool: snprintf(buf, sizeof(buf), "%s", (VObject::PR_Pop() ? "true" : "false")); break;
+    case TYPE_Float: /*snprintf(buf, sizeof(buf), "%f", VObject::PR_Popf());*/ (void)VStr::float2str(buf, VObject::PR_Popf()); break;
     case TYPE_Name:
-      //snprintf(buf, sizeof(buf), "%s", *PR_PopName()); break;
+      //snprintf(buf, sizeof(buf), "%s", *VObject::PR_PopName()); break;
       {
-        VName n = PR_PopName();
+        VName n = VObject::PR_PopName();
         if (n == NAME_None) {
           PR_DoWriteBuf("");
         } else {
@@ -544,9 +544,9 @@ void PR_WriteOne (const VFieldType &type) {
       }
       return;
     case TYPE_String:
-      //snprintf(buf, sizeof(buf), "%s", *PR_PopStr()); break;
+      //snprintf(buf, sizeof(buf), "%s", *VObject::PR_PopStr()); break;
       {
-        VStr s = PR_PopStr();
+        VStr s = VObject::PR_PopStr();
         if (s.length() == 0) {
           PR_DoWriteBuf("");
         } else {
@@ -556,7 +556,7 @@ void PR_WriteOne (const VFieldType &type) {
       return;
     case TYPE_Vector:
       {
-        TVec v = PR_Popv();
+        TVec v = VObject::PR_Popv();
         //snprintf(buf, sizeof(buf), "(%f,%f,%f)", v.x, v.y, v.z);
         buf[0] = '(';
         int bpos = 1;
@@ -572,10 +572,10 @@ void PR_WriteOne (const VFieldType &type) {
         buf[bpos] = 0;
       }
       break;
-    case TYPE_Pointer: snprintf(buf, sizeof(buf), "<%s>(%p)", *type.GetName(), PR_PopPtr()); break;
+    case TYPE_Pointer: snprintf(buf, sizeof(buf), "<%s>(%p)", *type.GetName(), VObject::PR_PopPtr()); break;
     case TYPE_Class:
       {
-        VClass *cls = (VClass *)PR_PopPtr();
+        VClass *cls = (VClass *)VObject::PR_PopPtr();
         if (cls) {
           snprintf(buf, sizeof(buf), "(class!%s)", cls->GetName());
         } else {
@@ -585,7 +585,7 @@ void PR_WriteOne (const VFieldType &type) {
       break;
     case TYPE_State:
       {
-        VState *st = (VState *)PR_PopPtr();
+        VState *st = (VState *)VObject::PR_PopPtr();
         if (st) {
           snprintf(buf, sizeof(buf), "<state:%s %d %f>", (st->SpriteName != NAME_None ? *st->SpriteName : "<####>"), st->Frame, st->Time);
         } else {
@@ -595,7 +595,7 @@ void PR_WriteOne (const VFieldType &type) {
       break;
     case TYPE_Reference:
       {
-        VObject *o = PR_PopRef();
+        VObject *o = VObject::PR_PopRef();
         if (o) {
           snprintf(buf, sizeof(buf), "(%s)", *o->GetClass()->Name);
         } else {
@@ -604,10 +604,10 @@ void PR_WriteOne (const VFieldType &type) {
       }
       break;
     case TYPE_Delegate:
-      //snprintf(buf, sizeof(buf), "<%s:%p:%p>", *type.GetName(), PR_PopPtr(), PR_PopPtr());
+      //snprintf(buf, sizeof(buf), "<%s:%p:%p>", *type.GetName(), VObject::PR_PopPtr(), VObject::PR_PopPtr());
       {
-        VMethod *m = (VMethod *)PR_PopPtr();
-        VObject *o = (VObject *)PR_PopPtr();
+        VMethod *m = (VMethod *)VObject::PR_PopPtr();
+        VObject *o = (VObject *)VObject::PR_PopPtr();
         if (m) {
           if (!o) {
             snprintf(buf, sizeof(buf), "(invalid delegate)");
@@ -619,18 +619,18 @@ void PR_WriteOne (const VFieldType &type) {
         }
       }
       break;
-    case TYPE_Struct: PR_PopPtr(); snprintf(buf, sizeof(buf), "<%s>", *type.Struct->Name); break;
-    case TYPE_Array: PR_PopPtr(); snprintf(buf, sizeof(buf), "<%s>", *type.GetName()); break;
-    case TYPE_SliceArray: snprintf(buf, sizeof(buf), "<%s:%d>", *type.GetName(), PR_Pop()); PR_PopPtr(); break;
+    case TYPE_Struct: VObject::PR_PopPtr(); snprintf(buf, sizeof(buf), "<%s>", *type.Struct->Name); break;
+    case TYPE_Array: VObject::PR_PopPtr(); snprintf(buf, sizeof(buf), "<%s>", *type.GetName()); break;
+    case TYPE_SliceArray: snprintf(buf, sizeof(buf), "<%s:%d>", *type.GetName(), VObject::PR_Pop()); VObject::PR_PopPtr(); break;
     case TYPE_DynamicArray:
       {
-        VScriptArray *a = (VScriptArray *)PR_PopPtr();
+        VScriptArray *a = (VScriptArray *)VObject::PR_PopPtr();
         snprintf(buf, sizeof(buf), "%s(%d)", *type.GetName(), a->Num());
       }
       break;
     case TYPE_Dictionary:
       {
-        VScriptDict *dc = (VScriptDict *)PR_PopPtr();
+        VScriptDict *dc = (VScriptDict *)VObject::PR_PopPtr();
         if (dc && dc->length()) {
           snprintf(buf, sizeof(buf), "dictionary!(%s,%s)", *dc->getKeyType().GetName(), *dc->getValueType().GetName());
         } else {

@@ -917,24 +917,24 @@ void VMethod::CleanupParams () const {
     case TYPE_Byte:
     case TYPE_Bool:
     case TYPE_Name:
-      PR_Push(0);
+      VObject::PR_Push(0);
       break;
     case TYPE_Float:
-      PR_Pushf(0);
+      VObject::PR_Pushf(0);
       break;
     case TYPE_String:
-      PR_PushStr(VStr());
+      VObject::PR_PushStr(VStr());
       break;
     case TYPE_Pointer:
     case TYPE_Reference:
     case TYPE_Class:
     case TYPE_State:
-      PR_PushPtr(nullptr);
+      VObject::PR_PushPtr(nullptr);
       break;
     case TYPE_Vector:
-      PR_Pushf(0);
-      PR_Pushf(0);
-      PR_Pushf(0);
+      VObject::PR_Pushf(0);
+      VObject::PR_Pushf(0);
+      VObject::PR_Pushf(0);
       break;
     default:
       Sys_Error("Bad return value type `%s`", *ReturnType.GetName());
