@@ -395,6 +395,9 @@ public:
 
   static TMap<VStrCI, bool> cliAsmDumpMethods;
 
+public: // for VM; PLEASE, DON'T MODIFY!
+  static VStack *pr_stackPtr;
+
 public:
   struct GCStats {
     int alive; // number of currently alive objects
@@ -480,6 +483,10 @@ public:
 
   static VFuncRes ExecuteFunction (VMethod *func); // all arguments should be on the stack
   static VFuncRes ExecuteFunctionNoArgs (VObject *Self, VMethod *func, bool allowVMTLookups=true);
+  static inline VStack *VMGetStackPtr () noexcept { return pr_stackPtr; }
+  static inline void VMIncStackPtr () noexcept { ++pr_stackPtr; } //FIXME: checks!
+  static VStack *VMCheckStack (int size) noexcept;
+  static VStack *VMCheckAndClearStack (int size) noexcept;
   static void VMDumpCallStack ();
   static void VMDumpCallStackToStdErr ();
   static void ClearProfiles ();
@@ -565,6 +572,102 @@ template<class T> T *Cast (VObject *Src) { return (Src && Src->IsA(T::StaticClas
 template<class T, class U> T *CastChecked (U *Src) {
   if (!Src || !Src->IsA(T::StaticClass())) Sys_Error("Cast `%s` to `%s` failed", (Src ? Src->GetClass()->GetName() : "none"), T::StaticClass()->GetName());
   return (T *)Src;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// stack routines
+static __attribute__((unused)) inline void PR_Push (int value) noexcept {
+  VObject::pr_stackPtr->i = value;
+  ++VObject::pr_stackPtr;
+}
+
+static __attribute__((unused)) inline void PR_PushBool (bool value) noexcept {
+  VObject::pr_stackPtr->i = (value ? 1 : 0);
+  ++VObject::pr_stackPtr;
+}
+
+static __attribute__((unused)) inline int PR_Pop () noexcept {
+  --VObject::pr_stackPtr;
+  return VObject::pr_stackPtr->i;
+}
+
+static __attribute__((unused)) inline void PR_Pushf (float value) noexcept {
+  VObject::pr_stackPtr->f = value;
+  ++VObject::pr_stackPtr;
+}
+
+static __attribute__((unused)) inline float PR_Popf () noexcept {
+  --VObject::pr_stackPtr;
+  return VObject::pr_stackPtr->f;
+}
+
+static __attribute__((unused)) inline void PR_Pushv (const TVec &v) noexcept {
+  PR_Pushf(v.x);
+  PR_Pushf(v.y);
+  PR_Pushf(v.z);
+}
+
+static __attribute__((unused)) inline void PR_Pushav (const TAVec &v) noexcept {
+  PR_Pushf(v.pitch);
+  PR_Pushf(v.yaw);
+  PR_Pushf(v.roll);
+}
+
+static __attribute__((unused)) inline TVec PR_Popv () noexcept {
+  TVec v;
+  v.z = PR_Popf();
+  v.y = PR_Popf();
+  v.x = PR_Popf();
+  return v;
+}
+
+static __attribute__((unused)) inline TAVec PR_Popav () noexcept {
+  TAVec v;
+  v.roll = PR_Popf();
+  v.yaw = PR_Popf();
+  v.pitch = PR_Popf();
+  return v;
+}
+
+static __attribute__((unused)) inline void PR_PushName (VName value) noexcept {
+  VObject::pr_stackPtr->i = value.GetIndex();
+  ++VObject::pr_stackPtr;
+}
+
+
+static __attribute__((unused)) inline VName PR_PopName () noexcept {
+  --VObject::pr_stackPtr;
+  return *(VName *)&VObject::pr_stackPtr->i;
+}
+
+static __attribute__((unused)) inline void PR_PushPtr (void *value) noexcept {
+  VObject::pr_stackPtr->p = value;
+  ++VObject::pr_stackPtr;
+}
+
+static __attribute__((unused)) inline void *PR_PopPtr () noexcept {
+  --VObject::pr_stackPtr;
+  return VObject::pr_stackPtr->p;
+}
+
+
+static __attribute__((unused)) inline VObject *PR_PopRef () noexcept {
+  --VObject::pr_stackPtr;
+  return (VObject *)(VObject::pr_stackPtr->p);
+}
+
+static __attribute__((unused)) inline void PR_PushStr (VStr value) noexcept {
+  VObject::pr_stackPtr->p = nullptr;
+  *(VStr *)&VObject::pr_stackPtr->p = value;
+  ++VObject::pr_stackPtr;
+}
+
+static __attribute__((unused)) inline VStr PR_PopStr () noexcept {
+  --VObject::pr_stackPtr;
+  VStr Ret = *(VStr *)&VObject::pr_stackPtr->p;
+  ((VStr *)&VObject::pr_stackPtr->p)->Clean();
+  return Ret;
 }
 
 

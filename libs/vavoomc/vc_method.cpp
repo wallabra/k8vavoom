@@ -881,7 +881,7 @@ TLocation VMethod::FindPCLocation (const vuint8 *pc) {
 //
 //==========================================================================
 void VMethod::CleanupParams () const {
-  VStack *Param = pr_stackPtr-ParamsSize+(Flags&FUNC_Static ? 0 : 1); // skip self too
+  VStack *Param = VObject::pr_stackPtr-ParamsSize+(Flags&FUNC_Static ? 0 : 1); // skip self too
   for (int i = 0; i < NumParams; ++i) {
     switch (ParamTypes[i].Type) {
       case TYPE_Int:
@@ -907,7 +907,7 @@ void VMethod::CleanupParams () const {
     }
     if (ParamFlags[i]&FPARM_Optional) ++Param;
   }
-  pr_stackPtr -= ParamsSize;
+  VObject::pr_stackPtr -= ParamsSize;
 
   // push null return value
   switch (ReturnType.Type) {

@@ -72,18 +72,44 @@ enum { MaxDynArrayLength = 1024*1024*512 };
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+//static VMethod *current_func = nullptr;
+static VStack pr_stack[MAX_PROG_STACK+16384];
+
+
 enum { BreakCheckLimit = 65536 }; // arbitrary
 static unsigned breakCheckCount = 0;
 volatile unsigned vmAbortBySignal = 0;
-VStack *pr_stackPtr;
-
-//static VMethod *current_func = nullptr;
-static VStack pr_stack[MAX_PROG_STACK+16384];
+VStack *VObject::pr_stackPtr = &pr_stack[1];
 
 struct VCSlice {
   vuint8 *ptr; // it is easier to index this way
   vint32 length;
 };
+
+
+//==========================================================================
+//
+//  VObject::VMCheckStack
+//
+//==========================================================================
+VStack *VObject::VMCheckStack (int size) noexcept {
+  if (size < 0 || size > MAX_PROG_STACK) { VMDumpCallStack(); Sys_Error("requested invald VM stack slot count (%d)", size); }
+  int used = (int)(ptrdiff_t)(pr_stackPtr-&pr_stack[0]);
+  if (used < 1 || used > MAX_PROG_STACK || MAX_PROG_STACK-size < used) { VMDumpCallStack(); Sys_Error("out of VM stack"); }
+  return pr_stackPtr;
+}
+
+
+//==========================================================================
+//
+//  VObject::VMCheckAndClearStack
+//
+//==========================================================================
+VStack *VObject::VMCheckAndClearStack (int size) noexcept {
+  VStack *sp = VMCheckStack(size);
+  if (size) memset(sp, 0, size*sizeof(VStack));
+  return sp;
+}
 
 
 //==========================================================================
@@ -136,7 +162,7 @@ static vuint32 cstUsed = 0, cstSize = 0;
 static inline void cstFixTopIPSP (const vuint8 *ip) {
   if (cstUsed > 0) {
     callStack[cstUsed-1].ip = ip;
-    callStack[cstUsed-1].sp = pr_stackPtr;
+    callStack[cstUsed-1].sp = VObject::pr_stackPtr;
   }
 }
 
@@ -149,7 +175,7 @@ static void cstPush (VMethod *func) {
   }
   callStack[cstUsed].func = func;
   callStack[cstUsed].ip = nullptr;
-  callStack[cstUsed].sp = pr_stackPtr;
+  callStack[cstUsed].sp = VObject::pr_stackPtr;
   ++cstUsed;
 }
 
@@ -206,7 +232,7 @@ void PR_Init () {
   // set stack ID for overflow / underflow checks
   pr_stack[0].i = STACK_ID;
   pr_stack[MAX_PROG_STACK-1].i = STACK_ID;
-  pr_stackPtr = pr_stack+1;
+  VObject::pr_stackPtr = pr_stack+1;
 
   cstSize = 16384;
   callStack = (CallStackItem *)Z_Realloc(callStack, sizeof(callStack[0])*cstSize);
@@ -221,7 +247,7 @@ void PR_Init () {
 //==========================================================================
 void PR_OnAbort () {
   //current_func = nullptr;
-  pr_stackPtr = pr_stack+1;
+  VObject::pr_stackPtr = pr_stack+1;
   cstUsed = 0;
 }
 
@@ -506,7 +532,7 @@ static void RunFunction (VMethod *func) {
   //fprintf(stderr, "FN(%d): <%s>\n", cstUsed, *func->GetFullName());
 
   if (func->Flags&FUNC_Net) {
-    VStack *Params = pr_stackPtr-func->ParamsSize;
+    VStack *Params = VObject::pr_stackPtr-func->ParamsSize;
     //if (!(func->Flags&FUNC_Native)) ++(func->Profile2);
     if (((VObject *)Params[0].p)->ExecuteNetMethod(func)) return;
   }
@@ -522,7 +548,7 @@ static void RunFunction (VMethod *func) {
   cstPush(func);
 
   // cache stack pointer in register
-  sp = pr_stackPtr;
+  sp = VObject::pr_stackPtr;
 
   // setup local vars
   //fprintf(stderr, "FUNC: <%s> (%s) ParamsSize=%d; NumLocals=%d; NumParams=%d\n", *func->GetFullName(), *func->Loc.toStringNoCol(), func->ParamsSize, func->NumLocals, func->NumParams);
@@ -569,13 +595,13 @@ func_loop:
           Sys_Error("ExecuteFunction: Stack overflow in `%s`", *func->GetFullName());
         }
         #endif
-        pr_stackPtr = sp;
+        VObject::pr_stackPtr = sp;
         cstFixTopIPSP(ip);
         //cstDump(ip);
         RunFunction((VMethod *)ReadPtr(ip+1));
         //current_func = func;
         ip += 1+sizeof(void *);
-        sp = pr_stackPtr;
+        sp = VObject::pr_stackPtr;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_PushVFunc)
@@ -599,23 +625,23 @@ func_loop:
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VCall)
-        pr_stackPtr = sp;
+        VObject::pr_stackPtr = sp;
         if (!sp[-ip[3]].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         cstFixTopIPSP(ip);
         RunFunction(((VObject *)sp[-ip[3]].p)->GetVFunctionIdx(ReadInt16(ip+1)));
         ip += 4;
         //current_func = func;
-        sp = pr_stackPtr;
+        sp = VObject::pr_stackPtr;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_VCallB)
-        pr_stackPtr = sp;
+        VObject::pr_stackPtr = sp;
         if (!sp[-ip[2]].p) { cstDump(ip); Sys_Error("Reference not set to an instance of an object"); }
         cstFixTopIPSP(ip);
         RunFunction(((VObject *)sp[-ip[2]].p)->GetVFunctionIdx(ip[1]));
         ip += 3;
         //current_func = func;
-        sp = pr_stackPtr;
+        sp = VObject::pr_stackPtr;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_DelegateCall)
@@ -627,13 +653,13 @@ func_loop:
           if (!pDelegate[1]) { cstDump(ip); Sys_Error("Delegate is not initialised (empty method)"); }
           if ((uintptr_t)pDelegate[1] < 65536) { cstDump(ip); Sys_Error("Delegate is completely fucked"); }
           sp[-ip[5]].p = pDelegate[0];
-          pr_stackPtr = sp;
+          VObject::pr_stackPtr = sp;
           cstFixTopIPSP(ip);
           RunFunction((VMethod *)pDelegate[1]);
         }
         ip += 6;
         //current_func = func;
-        sp = pr_stackPtr;
+        sp = VObject::pr_stackPtr;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_DelegateCallS)
@@ -645,13 +671,13 @@ func_loop:
           if (!pDelegate[1]) { cstDump(ip); Sys_Error("Delegate is not initialised (empty method)"); }
           if ((uintptr_t)pDelegate[1] < 65536) { cstDump(ip); Sys_Error("Delegate is completely fucked"); }
           sp[-ip[3]].p = pDelegate[0];
-          pr_stackPtr = sp;
+          VObject::pr_stackPtr = sp;
           cstFixTopIPSP(ip);
           RunFunction((VMethod *)pDelegate[1]);
         }
         ip += 4;
         //current_func = func;
-        sp = pr_stackPtr;
+        sp = VObject::pr_stackPtr;
         PR_VM_BREAK;
 
       // call delegate by a pushed pointer to it
@@ -669,12 +695,12 @@ func_loop:
           if (!pDelegate[1]) { cstDump(ip); Sys_Error("Delegate is not initialised (empty method)"); }
           if ((uintptr_t)pDelegate[1] < 65536) { cstDump(ip); Sys_Error("Delegate is completely fucked"); }
           sp[-sofs].p = pDelegate[0];
-          pr_stackPtr = sp;
+          VObject::pr_stackPtr = sp;
           cstFixTopIPSP(ip);
           RunFunction((VMethod *)pDelegate[1]);
         }
         //current_func = func;
-        sp = pr_stackPtr;
+        sp = VObject::pr_stackPtr;
         PR_VM_BREAK;
 
       PR_VM_CASE(OPC_Return)
@@ -683,7 +709,7 @@ func_loop:
 #ifdef VMEXEC_RUNDUMP
         printIndent(); fprintf(stderr, "LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
 #endif
-        pr_stackPtr = local_vars;
+        VObject::pr_stackPtr = local_vars;
         cstPop();
         return;
 
@@ -693,7 +719,7 @@ func_loop:
         printIndent(); fprintf(stderr, "LEAVING VC FUNCTION `%s`; sp=%d\n", *func->GetFullName(), (int)(sp-pr_stack)); leaveIndent();
 #endif
         ((VStack *)local_vars)[0] = sp[-1];
-        pr_stackPtr = local_vars+1;
+        VObject::pr_stackPtr = local_vars+1;
         cstPop();
         return;
 
@@ -708,7 +734,7 @@ func_loop:
         ((VStack *)local_vars)[0] = sp[-3];
         ((VStack *)local_vars)[1] = sp[-2];
         ((VStack *)local_vars)[2] = sp[-1];
-        pr_stackPtr = local_vars+3;
+        VObject::pr_stackPtr = local_vars+3;
         cstPop();
         return;
 
@@ -2517,12 +2543,12 @@ func_loop:
                 }
                 if (!dgfunc) { cstDump(origip); Sys_Error("Delegate is not initialised (empty method)"); }
                 // fix stack, so we can call a delegate properly
-                pr_stackPtr = sp;
+                VObject::pr_stackPtr = sp;
                 cstFixTopIPSP(ip);
                 if (!A.Sort(Type, dgself, dgfunc)) { cstDump(origip); Sys_Error("Internal error in array sorter"); }
               }
               //current_func = func;
-              sp = pr_stackPtr;
+              sp = VObject::pr_stackPtr;
               //fprintf(stderr, "sp=%p\n", sp);
               sp -= 3;
               break;
@@ -2665,10 +2691,10 @@ func_loop:
         {
           ++ip;
           VFieldType Type = VFieldType::ReadTypeMem(ip);
-          pr_stackPtr = sp;
+          VObject::pr_stackPtr = sp;
           PR_WriteOne(Type); // this will pop everything
-          if (pr_stackPtr < pr_stack) { pr_stackPtr = pr_stack; cstDump(ip); Sys_Error("Stack underflow in `write`"); }
-          sp = pr_stackPtr;
+          if (VObject::pr_stackPtr < pr_stack) { VObject::pr_stackPtr = pr_stack; cstDump(ip); Sys_Error("Stack underflow in `write`"); }
+          sp = VObject::pr_stackPtr;
         }
         PR_VM_BREAK;
 

@@ -31,7 +31,6 @@
 
 #include "vc_shared.h"
 
-#include "vc_progs.h"
 #include "vc_location.h"
 #include "vc_type.h"
 #include "vc_member.h"
@@ -44,6 +43,7 @@
 #include "vc_class.h"
 #include "vc_package.h"
 #include "vc_object.h"
+#include "vc_progs.h"
 
 #include "vc_error.h"
 

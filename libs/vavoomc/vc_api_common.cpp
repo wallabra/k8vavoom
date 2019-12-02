@@ -221,22 +221,22 @@ VStr PF_FormatString () {
   //fprintf(stderr, "***COUNT=%d\n", count);
   for (int pcnt = 0; pcnt < count; ++pcnt) {
     if (pi < 0) { VObject::VMDumpCallStack(); Sys_Error("Too many arguments to string formatting function (%d)", count); }
-    ptypes[pi] = PR_ReadTypeFromPtr((--pr_stackPtr)->p);
+    ptypes[pi] = PR_ReadTypeFromPtr((--VObject::pr_stackPtr)->p);
     //fprintf(stderr, "  %d: <%s>\n", pcnt, *ptypes[pi].GetName());
-    params[pi] = *(--pr_stackPtr);
+    params[pi] = *(--VObject::pr_stackPtr);
     --pi;
     if (ptypes[pi+1].Type == TYPE_Vector) {
       if (pi < 2) { VObject::VMDumpCallStack(); Sys_Error("Too many arguments to string formatting function (%d)", count); }
       ptypes[pi] = ptypes[pi+1];
-      params[pi] = *(--pr_stackPtr);
+      params[pi] = *(--VObject::pr_stackPtr);
       --pi;
       ptypes[pi] = ptypes[pi+1];
-      params[pi] = *(--pr_stackPtr);
+      params[pi] = *(--VObject::pr_stackPtr);
       --pi;
     } else if (ptypes[pi+1].Type == TYPE_Delegate) {
       if (pi < 1) { VObject::VMDumpCallStack(); Sys_Error("Too many arguments to string formatting function (%d)", count); }
       ptypes[pi] = ptypes[pi+1];
-      params[pi] = *(--pr_stackPtr);
+      params[pi] = *(--VObject::pr_stackPtr);
       --pi;
     }
   }
