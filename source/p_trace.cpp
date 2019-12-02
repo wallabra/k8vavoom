@@ -284,10 +284,17 @@ IMPLEMENT_FUNCTION(VLevel, BSPTraceLineEx) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-#define MAX_ST_INTERCEPTS  (65536)
+static intercept_t *intercepts = nullptr;
+static unsigned interAllocated = 0;
+static unsigned interUsed = 0;
 
-static intercept_t intercepts[MAX_ST_INTERCEPTS];
-static int interUsed;
+static inline void EnsureFreeIntercept () {
+  if (interAllocated <= interUsed) {
+    interAllocated = ((interUsed+4)|0xfffu)+1;
+    intercepts = (intercept_t *)Z_Realloc(intercepts, interAllocated*sizeof(intercept_t));
+    GCon->Logf(NAME_Debug, "more interceptions allocated; interUsed=%u; allocated=%u", interUsed, interAllocated);
+  }
+}
 
 
 struct SightTraceInfo {
@@ -350,6 +357,7 @@ static bool SightTraverse (SightTraceInfo &trace, const intercept_t *in) {
 }
 
 
+/*
 extern "C" {
   static int compareIcept (const void *aa, const void *bb, void *) {
     if (aa == bb) return 0;
@@ -360,6 +368,7 @@ extern "C" {
     return 0;
   }
 }
+*/
 
 
 //==========================================================================
@@ -369,11 +378,12 @@ extern "C" {
 //  Returns true if the traverser function returns true for all lines
 //
 //==========================================================================
-static bool SightTraverseIntercepts (SightTraceInfo &trace, sector_t *EndSector, bool resort) {
-  int count = interUsed;
+static bool SightTraverseIntercepts (SightTraceInfo &trace, sector_t *EndSector) {
+  int count = (int)interUsed;
 
   if (count > 0) {
     intercept_t *scan;
+    /*
     if (resort) {
       // calculate intercept distance
       scan = intercepts;
@@ -385,6 +395,7 @@ static bool SightTraverseIntercepts (SightTraceInfo &trace, sector_t *EndSector,
       // sort intercepts
       timsort_r(intercepts, (size_t)count, sizeof(intercepts[0]), &compareIcept, nullptr);
     }
+    */
 
     // go through in order
     scan = intercepts;
@@ -424,36 +435,35 @@ static bool SightCheckLine (SightTraceInfo &trace, line_t *ld) {
   }
 
   // store the line for later intersection testing
-  if (interUsed < MAX_ST_INTERCEPTS) {
-    // distance
-    const float den = DotProduct(ld->normal, trace.Delta);
-    const float num = ld->dist-DotProduct(trace.Start, ld->normal);
-    const float frac = num/den;
-    intercept_t *icept;
+  // distance
+  const float den = DotProduct(ld->normal, trace.Delta);
+  const float num = ld->dist-DotProduct(trace.Start, ld->normal);
+  const float frac = num/den;
+  intercept_t *icept;
 
-    // find place to put our new record
-    // this is usually faster than sorting records, as we are traversing blockmap
-    // more-or-less in order
-    if (interUsed > 0) {
-      int ipos = interUsed;
-      while (ipos > 0 && frac < intercepts[ipos-1].frac) --ipos;
-      // here we should insert at `ipos` position
-      if (ipos == interUsed) {
-        // as last
-        icept = &intercepts[interUsed++];
-      } else {
-        // make room
-        memmove(intercepts+ipos+1, intercepts+ipos, (interUsed-ipos)*sizeof(intercepts[0]));
-        ++interUsed;
-        icept = &intercepts[ipos];
-      }
-    } else {
+  // find place to put our new record
+  // this is usually faster than sorting records, as we are traversing blockmap
+  // more-or-less in order
+  EnsureFreeIntercept();
+  if (interUsed > 0) {
+    unsigned ipos = interUsed;
+    while (ipos > 0 && frac < intercepts[ipos-1].frac) --ipos;
+    // here we should insert at `ipos` position
+    if (ipos == interUsed) {
+      // as last
       icept = &intercepts[interUsed++];
+    } else {
+      // make room
+      memmove(intercepts+ipos+1, intercepts+ipos, (interUsed-ipos)*sizeof(intercepts[0]));
+      ++interUsed;
+      icept = &intercepts[ipos];
     }
-
-    icept->line = ld;
-    icept->frac = frac;
+  } else {
+    icept = &intercepts[interUsed++];
   }
+
+  icept->line = ld;
+  icept->frac = frac;
 
   return true;
 }
@@ -631,7 +641,7 @@ static bool SightPathTraverse (SightTraceInfo &trace, VLevel *level, sector_t *E
   }
 
   // couldn't early out, so go through the sorted list
-  return SightTraverseIntercepts(trace, EndSector, false);
+  return SightTraverseIntercepts(trace, EndSector);
 }
 
 
@@ -645,7 +655,7 @@ static bool SightPathTraverse (SightTraceInfo &trace, VLevel *level, sector_t *E
 static bool SightPathTraverse2 (SightTraceInfo &trace, sector_t *EndSector) {
   trace.Delta = trace.End-trace.Start;
   trace.LineStart = trace.Start;
-  return SightTraverseIntercepts(trace, EndSector, true);
+  return SightTraverseIntercepts(trace, EndSector);
 }
 
 
