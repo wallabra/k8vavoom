@@ -1749,10 +1749,8 @@ void VEntity::BounceWall (float overbounce, float bouncefactor) {
 //
 //=============================================================================
 VEntity *VEntity::TestMobjZ (const TVec &TryOrg) {
-  // can't hit thing
-  if (!(EntityFlags&EF_ColideWithThings)) return nullptr;
-  // not solid
-  if (!(EntityFlags&EF_Solid)) return nullptr;
+  // can't hit things, or not solid?
+  if ((EntityFlags&(EF_ColideWithThings|EF_Solid)) != (EF_ColideWithThings|EF_Solid)) return nullptr;
 
   // the bounding box is extended by MAXRADIUS because mobj_ts are grouped
   // into mapblocks based on their origin point, and can overlap into adjacent
@@ -1767,12 +1765,11 @@ VEntity *VEntity::TestMobjZ (const TVec &TryOrg) {
     for (int by = yl; by <= yh; ++by) {
       for (VBlockThingsIterator Other(XLevel, bx, by); Other; ++Other) {
         if (*Other == this) continue; // don't clip against self
-        if (!(Other->EntityFlags&EF_ColideWithThings)) continue; // can't hit thing
-        if (!(Other->EntityFlags&EF_Solid)) continue; // not solid
-        if (Other->EntityFlags&EF_Corpse) continue; //k8: can't hit corpse
+        //k8: can't hit corpse
+        if ((Other->EntityFlags&(EF_ColideWithThings|EF_Solid|EF_Corpse)) != (EF_ColideWithThings|EF_Solid)) continue; // can't hit things, or not solid
         if (TryOrg.z > Other->Origin.z+Other->Height) continue; // over thing
         if (TryOrg.z+Height < Other->Origin.z) continue; // under thing
-        float blockdist = Other->Radius+Radius;
+        const float blockdist = Other->Radius+Radius;
         if (fabsf(Other->Origin.x-TryOrg.x) >= blockdist ||
             fabsf(Other->Origin.y-TryOrg.y) >= blockdist)
         {
