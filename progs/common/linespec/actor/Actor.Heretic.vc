@@ -819,8 +819,7 @@
     // always use red missiles in single player games
     A.RainColor = 2;
   }
-  if (AimTarget)
-  {
+  if (AimTarget) {
     A.Tracer = AimTarget;
     A.bSeekerMissile = true;
   }
