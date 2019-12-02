@@ -411,7 +411,7 @@ final void DoSPosAttack () {
 //
 //  A_SkelFist
 //
-//  Ravenant close attack.
+//  Revenant close attack.
 //
 //==========================================================================
 [decorate] final void A_SkelFist () {
@@ -431,7 +431,7 @@ final void DoSPosAttack () {
 //
 //  A_SkelMissile
 //
-//  Ravenant far attack.
+//  Revenant far attack.
 //
 //==========================================================================
 [decorate] final void A_SkelMissile () {

@@ -82,7 +82,7 @@
 //
 //  A_SkelWhosh
 //
-//  Ravenant attack sound.
+//  Revenant attack sound.
 //
 //==========================================================================
 [decorate] final void A_SkelWhoosh () {

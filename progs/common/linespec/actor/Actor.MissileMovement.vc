@@ -72,7 +72,7 @@ const float TRACE2ANGLE = 7.0*45.0/16.0;
 //
 //  A_Tracer
 //
-//  Ravenant missile tracer.
+//  Revenant missile tracer.
 //
 //==========================================================================
 [decorate] final void A_Tracer () {
