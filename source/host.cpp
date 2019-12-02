@@ -205,7 +205,7 @@ void Host_Init () {
 
   FL_Init();
 
-  PR_Init();
+  VObject::PR_Init();
 
   GLanguage.LoadStrings("en");
   strcpy(CurrentLanguage, "en");
@@ -579,7 +579,7 @@ void Host_Frame () {
     GCon->Logf("Host_Error: %s", e.message);
 
     // reset progs virtual machine
-    PR_OnAbort();
+    VObject::PR_OnAbort();
     // make sure, that we use primary wad files
     //k8: no need to, we'll do this in p_setup
     //W_CloseAuxiliary();
@@ -601,7 +601,7 @@ void Host_Frame () {
     GCon->Logf(NAME_Dev, "Host_EndGame: %s", e.message);
 
     // reset progs virtual machine
-    PR_OnAbort();
+    VObject::PR_OnAbort();
     // make sure, that we use primary wad files
     //k8: no need to, we'll do this in p_setup
     //W_CloseAuxiliary();

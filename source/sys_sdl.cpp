@@ -338,7 +338,7 @@ static volatile int sigReceived = 0;
 
 static void signal_handler (int s) {
   sigReceived = 1;
-  vmAbortBySignal += 1;
+  VObject::vmAbortBySignal += 1;
 }
 
 #endif

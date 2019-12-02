@@ -124,7 +124,7 @@ IMPLEMENT_FREE_FUNCTION(VObject, Cmd_GetArgV) {
 }
 
 IMPLEMENT_FREE_FUNCTION(VObject, CmdBuf_AddText) {
-  GCmdBuf << PF_FormatString();
+  GCmdBuf << VObject::PF_FormatString();
 }
 
 
