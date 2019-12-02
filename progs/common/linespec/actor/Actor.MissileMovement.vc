@@ -82,6 +82,7 @@ const float TRACE2ANGLE = 7.0*45.0/16.0;
   TVec delta;
   float adjustlen;
 
+  //printdebug("%s: %C: Time=%s; TicTime=%s; TicTime&3=%s (%s : %s)", UniqueId, self, XLevel.Time, XLevel.TicTime, XLevel.TicTime&3, ffloor(XLevel.Time*35), XLevel.Time*35);
   if (XLevel.TicTime&3) return;
 
   // spawn a puff of smoke behind the rocket
