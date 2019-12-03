@@ -247,8 +247,8 @@ void SV_Init () {
   if (cli_SVDumpDoomEd > 0) VClass::StaticDumpMObjInfo();
   if (cli_SVDumpScriptId > 0) VClass::StaticDumpScriptIds();
 
-  GCon->Logf(NAME_Init, "registering %d sprites...", VClass::GSpriteNames.length());
-  for (int i = 0; i < VClass::GSpriteNames.Num(); ++i) R_InstallSprite(*VClass::GSpriteNames[i], i);
+  GCon->Logf(NAME_Init, "registering %d sprites...", VClass::GetSpriteCount());
+  for (int i = 0; i < VClass::GetSpriteCount(); ++i) R_InstallSprite(*VClass::GetSpriteNameAt(i), i);
   R_InstallSpriteComplete(); // why not?
 
   ServerNetContext = new VServerNetContext();
