@@ -86,6 +86,7 @@ VTextureTranslation ColorMaps[CM_Max];
 enum { MAX_SPR_TEMP = 30 };
 static spriteframe_t sprtemp[MAX_SPR_TEMP];
 static int maxframe;
+static char spritenamebuf[32];
 static const char *spritename;
 
 static TArray<VLightEffectDef> GLightEffectDefs;
@@ -544,8 +545,19 @@ void R_InstallSpriteComplete () {
 //==========================================================================
 void R_InstallSprite (const char *name, int index) {
   if (index < 0) Host_Error("Invalid sprite index %d for sprite %s", index, name);
-  //GCon->Logf("!!INSTALL_SPRITE: <%s> (%d)", name, index);
-  spritename = name;
+  //GCon->Logf(NAME_Debug, "!!INSTALL_SPRITE: <%s> (%d)", name, index);
+  if (!name || !name[0]) {
+    //Host_Error("Trying to install sprite with an empty name");
+    GCon->Logf(NAME_Warning, "Trying to install sprite #%d with an empty name", index);
+    return;
+  }
+  if (strlen(name) > 31) Host_Error("Trying to install sprite #%d with too long name (%s)", index, name);
+  strcpy(spritenamebuf, name);
+  for (char *sc = spritenamebuf; *sc; ++sc) {
+    if (*sc >= 'A' && *sc <= 'Z') *sc = (*sc)-'A'+'a'; // poor man's tolower
+  }
+  spritename = spritenamebuf;
+  //spritename = name;
 #if 1
   memset(sprtemp, -1, sizeof(sprtemp));
 #else
