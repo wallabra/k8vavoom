@@ -376,24 +376,25 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
 //==========================================================================
 void VBasePlayer::AdvanceViewStates (float deltaTime) {
   if (deltaTime <= 0.0f) return;
+  int dfchecked = -1;
   for (unsigned i = 0; i < NUMPSPRITES; ++i) {
     VViewState &St = ViewStates[i];
     // a null state means not active
-    if (St.State) {
-      // drop tic count and possibly change state
-      // a -1 tic count never changes
-      if (St.StateTime != -1.0f) {
-        St.StateTime -= deltaTime;
-        if (eventCheckDoubleFiringSpeed()) {
-          // [BC] Apply double firing speed
-          St.StateTime -= deltaTime;
-        }
-        if (St.StateTime <= 0.0f) {
-          St.StateTime = 0.0f;
-          SetViewState(i, St.State->NextState);
-          //if (i == PS_WEAPON) GCon->Logf("AdvanceViewStates: after weapon=%s; route=%s", (LastViewObject[i] ? *LastViewObject[i]->GetClass()->GetFullName() : "<none>"), (_stateRouteSelf ? *_stateRouteSelf->GetClass()->GetFullName() : "<none>"));
-        }
-      }
+    // a -1 tic count never changes
+    if (!St.State) continue;
+    if (St.StateTime < 0.0f) { St.StateTime = -1.0f; continue; } // force `-1` here just in case
+    if (dfchecked < 0) dfchecked = (eventCheckDoubleFiringSpeed() ? 1 : 0); // call VM only once
+    // drop tic count and possibly change state
+    St.StateTime -= deltaTime*(dfchecked ? 2.0f : 1.0f); // [BC] Apply double firing speed
+    while (St.StateTime <= 0.0f) {
+      // this somewhat compensates freestep instability
+      const float tleft = fabsf(St.StateTime); // "overjump time"
+      St.StateTime = 0.0f;
+      SetViewState(i, St.State->NextState);
+      //if (i == PS_WEAPON) GCon->Logf("AdvanceViewStates: after weapon=%s; route=%s", (LastViewObject[i] ? *LastViewObject[i]->GetClass()->GetFullName() : "<none>"), (_stateRouteSelf ? *_stateRouteSelf->GetClass()->GetFullName() : "<none>"));
+      if (!St.State) break;
+      if (St.StateTime < 0.0f) { St.StateTime = -1.0f; break; } // force `-1` here just in case
+      St.StateTime -= tleft; // freestep compensation
     }
   }
 }

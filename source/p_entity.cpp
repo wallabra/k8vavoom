@@ -260,7 +260,7 @@ void VEntity::SetInitialState (VState *InState) {
 bool VEntity::AdvanceState (float deltaTime) {
   if (deltaTime <= 0.0f) return true;
   if (dbg_disable_state_advance) return true;
-  if (State && StateTime != -1.0f) {
+  if (State && StateTime >= 0.0f) {
     StateTime -= deltaTime;
     // loop here, just in case some state is *very* short
     while (StateTime <= 0.0f) {
