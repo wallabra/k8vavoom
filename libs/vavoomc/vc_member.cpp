@@ -307,11 +307,7 @@ void VMemberBase::StaticInit () {
     C->MemberIndex = GMembers.Append(C);
     PutToNameHash(C);
   }
-
-  // sprite TNT1 is always 0, ---- is always 1
-  VClass::GSpriteNames.Append("tnt1");
-  VClass::GSpriteNames.Append("----");
-
+  VClass::InitSpriteList();
   GObjInitialised = true;
 }
 

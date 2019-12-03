@@ -44,7 +44,8 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-TArray<VName> VClass::GSpriteNames;
+TArray<VName> VClass::GSpriteNames; // should be lowercase!
+TMapNC<VName, int> VClass::GSpriteNamesMap;
 
 static TArray<mobjinfo_t> GMobjInfos;
 static TArray<mobjinfo_t> GScriptIds;
@@ -347,15 +348,64 @@ VClass *VClass::FindClassNoCase (const char *AName) {
 
 //==========================================================================
 //
+//  VClass::RebuildSpriteMap
+//
+//==========================================================================
+void VClass::RebuildSpriteMap () {
+  GSpriteNamesMap.clear();
+  // there can be duplicates after replacement; old logic prefers first name
+  for (auto &&it : GSpriteNames.itemsIdx()) {
+    vassert(it.value() != NAME_None);
+    if (GSpriteNamesMap.has(it.value())) continue;
+    GSpriteNamesMap.put(it.value(), it.index());
+  }
+}
+
+
+//==========================================================================
+//
+//  VClass::InitSpriteList
+//
+//==========================================================================
+void VClass::InitSpriteList () {
+  // sprite TNT1 is always 0, ---- is always 1
+  GSpriteNames.clear();
+  GSpriteNamesMap.clear();
+  GSpriteNames.Append("tnt1");
+  GSpriteNames.Append("----");
+  RebuildSpriteMap();
+  vassert(FindSprite("tnt1", false) == 0);
+  vassert(FindSprite("----", false) == 1);
+}
+
+
+//==========================================================================
+//
 //  VClass::FindSprite
 //
 //==========================================================================
 int VClass::FindSprite (VName Name, bool Append) {
+  /*
   for (int i = 0; i < GSpriteNames.Num(); ++i) {
     if (GSpriteNames[i] == Name) return i;
   }
-  if (!Append) return -1;
-  return GSpriteNames.Append(Name);
+  */
+  if (!Append) {
+    Name = VName(*Name, VName::FindLower);
+    if (Name == NAME_None) return -1;
+    auto ip = GSpriteNamesMap.find(Name);
+    return (ip ? *ip : -1);
+  } else {
+    if (Name == NAME_None) {
+      //Sys_Error("cannot append nameless sprite");
+      return 0; //k8: "tnt1"; maybe "----"?
+    }
+    VName loname = VName(*Name, VName::AddLower);
+    auto ip = GSpriteNamesMap.find(loname);
+    if (ip) return *ip;
+    GSpriteNamesMap.put(loname, GSpriteNames.length());
+    return GSpriteNames.Append(loname);
+  }
 }
 
 
@@ -365,7 +415,7 @@ int VClass::FindSprite (VName Name, bool Append) {
 //
 //==========================================================================
 void VClass::GetSpriteNames (TArray<FReplacedString> &List) {
-  for (int i = 0; i < GSpriteNames.Num(); ++i) {
+  for (int i = 0; i < GSpriteNames.length(); ++i) {
     FReplacedString &R = List.Alloc();
     R.Index = i;
     R.Replaced = false;
@@ -380,10 +430,20 @@ void VClass::GetSpriteNames (TArray<FReplacedString> &List) {
 //
 //==========================================================================
 void VClass::ReplaceSpriteNames (TArray<FReplacedString> &List) {
-  for (int i = 0; i < List.Num(); ++i) {
-    if (!List[i].Replaced) continue;
-    GSpriteNames[List[i].Index] = *List[i].New.ToLower();
+  bool doRebuild = false;
+  for (auto &&it : List) {
+    if (!it.Replaced) continue;
+    VName newname = VName(*it.New, VName::AddLower);
+    if (newname == NAME_None) {
+      GLog.Logf("cannot replace sprite '%s' with nameless one", *GSpriteNames[it.Index]);
+      newname = VName("tnt1", VName::AddLower);
+    }
+    if (GSpriteNames[it.Index] == newname) continue;
+    GSpriteNames[it.Index] = newname;
+    doRebuild = true;
   }
+  if (!doRebuild) return; // nothing to do
+  RebuildSpriteMap();
   // update sprite names in states
   for (int i = 0; i < VMemberBase::GMembers.Num(); ++i) {
     if (GMembers[i] && GMembers[i]->MemberType == MEMBER_State) {

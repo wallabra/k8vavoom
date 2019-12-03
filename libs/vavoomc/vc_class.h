@@ -308,8 +308,6 @@ public:
 
   TArray<VSpriteEffect> SpriteEffects;
 
-  static TArray<VName> GSpriteNames;
-
   struct AliasInfo {
     VName aliasName;
     VName origName;
@@ -323,6 +321,18 @@ public:
   VName ResolveAlias (VName aname, bool nocase=false); // returns `aname` for unknown alias, or `NAME_None` for alias loop
 
   TMap<VName, bool> KnownEnums;
+
+private:
+  static TArray<VName> GSpriteNames;
+  static TMapNC<VName, int> GSpriteNamesMap;
+
+  static void RebuildSpriteMap ();
+
+public:
+  static void InitSpriteList ();
+
+  static inline int GetSpriteCount () noexcept { return GSpriteNames.length(); }
+  static inline VName GetSpriteNameAt (int idx) noexcept { return (idx >= 0 && idx < GSpriteNames.length() ? GSpriteNames[idx] : NAME_None); }
 
 public:
   VClass (VName, VMemberBase *, const TLocation &);
