@@ -363,7 +363,7 @@ public:
   inline bool operator == (const WadFileIterator &b) const { return (lump == b.lump); }
   inline bool operator != (const WadFileIterator &b) const { return (lump != b.lump); }
   inline WadFileIterator operator * () const { return WadFileIterator(*this); } /* required for iterator */
-  inline void operator ++ () { lump = (lump >= 0 ? W_IterateFile(-1, fname) : -1); } /* this is enough for iterator */
+  inline void operator ++ () { lump = (lump >= 0 ? W_IterateFile(lump, fname) : -1); } /* this is enough for iterator */
 
   inline bool isEmpty () const { return (lump < 0); }
 
