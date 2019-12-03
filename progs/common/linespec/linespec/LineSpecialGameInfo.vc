@@ -155,7 +155,7 @@ override void Init () {
   CreateCvar('damage_thrust', "1", "Should big damage do kickbacks?", CVAR_ARCHIVE); // prevrel was 0
   CreateCvar('autoaim', "1", "Should weapons autoaim?", CVAR_ARCHIVE);
   CreateCvar('k8HitscanAutoAim', "0", "Enable autoaim for hitscan weapon?", CVAR_ARCHIVE); // prevrel was 1
-  CreateCvar('monster_dropoff', "1", "Should monsters move away from dropoffs?", CVAR_ARCHIVE); // prevrel was 0
+  CreateCvar('monster_dropoff', "0", "Should monsters sometimes step from dropoffs when angered?", CVAR_ARCHIVE); // prevrel was 0
   // this one is only used in Hexen for now, but it could come in handy for other games if needed
   CreateCvar('alternate_monster_attacks', "0", "Alternate monster attacks in Hexen?", CVAR_ARCHIVE);
   CreateCvar('wpn_autoswitch', (IsReleaseMode ? "1" : "0"), "Should we autoswitch to new weapon?", CVAR_ARCHIVE);

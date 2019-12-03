@@ -2032,32 +2032,25 @@ bool VEntity::FixMapthingPos () {
 //=============================================================================
 void VEntity::CheckDropOff (float &DeltaX, float &DeltaY) {
   float t_bbox[4];
-  int xl;
-  int xh;
-  int yl;
-  int yh;
-  int bx;
-  int by;
 
   // try to move away from a dropoff
-  DeltaX = 0;
-  DeltaY = 0;
+  DeltaX = DeltaY = 0;
 
   t_bbox[BOX2D_TOP] = Origin.y+Radius;
   t_bbox[BOX2D_BOTTOM] = Origin.y-Radius;
   t_bbox[BOX2D_RIGHT] = Origin.x+Radius;
   t_bbox[BOX2D_LEFT] = Origin.x-Radius;
 
-  xl = MapBlock(t_bbox[BOX2D_LEFT]-XLevel->BlockMapOrgX);
-  xh = MapBlock(t_bbox[BOX2D_RIGHT]-XLevel->BlockMapOrgX);
-  yl = MapBlock(t_bbox[BOX2D_BOTTOM]-XLevel->BlockMapOrgY);
-  yh = MapBlock(t_bbox[BOX2D_TOP]-XLevel->BlockMapOrgY);
+  const int xl = MapBlock(t_bbox[BOX2D_LEFT]-XLevel->BlockMapOrgX);
+  const int xh = MapBlock(t_bbox[BOX2D_RIGHT]-XLevel->BlockMapOrgX);
+  const int yl = MapBlock(t_bbox[BOX2D_BOTTOM]-XLevel->BlockMapOrgY);
+  const int yh = MapBlock(t_bbox[BOX2D_TOP]-XLevel->BlockMapOrgY);
 
   // check lines
   //++validcount;
   XLevel->IncrementValidCount();
-  for (bx = xl; bx <= xh; ++bx) {
-    for (by = yl; by <= yh; ++by) {
+  for (int bx = xl; bx <= xh; ++bx) {
+    for (int by = yl; by <= yh; ++by) {
       line_t *line;
       for (VBlockLinesIterator It(XLevel, bx, by, &line); It.GetNext(); ) {
         if (!line->backsector) continue; // ignore one-sided linedefs
