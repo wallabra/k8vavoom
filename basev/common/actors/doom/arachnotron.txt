@@ -47,7 +47,7 @@ actor Arachnotron 68
     Stop
   Raise:
     BSPI PONMLKJ 5
-    Goto See
+    Goto See+1  //k8: `+1` taken from GZDoom
   }
 }
 
