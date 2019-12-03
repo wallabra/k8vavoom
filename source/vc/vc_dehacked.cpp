@@ -760,10 +760,12 @@ static void ReadState (int num) {
   while (ParseParam()) {
     if (!VStr::ICmp(String, "Sprite number")) {
       if (value < 0 || value >= Sprites.length()) {
-        Warning("Bad sprite index %d", value);
+        Warning("Bad sprite index %d for frame #%d", value, num);
       } else {
+        //GCon->Logf(NAME_Debug, "DEHACKED: frame #%d; prev sprite is '%s' (%d)", num, *States[num]->SpriteName, States[num]->SpriteIndex);
         States[num]->SpriteName = Sprites[value];
         States[num]->SpriteIndex = (Sprites[value] != NAME_None ? VClass::FindSprite(Sprites[value]) : 1);
+        //GCon->Logf(NAME_Debug, "DEHACKED: frame #%d; NEW sprite is '%s' (%d)", num, *States[num]->SpriteName, States[num]->SpriteIndex);
       }
     } else if (!VStr::ICmp(String, "Sprite subnumber")) {
       if (value&0x8000) {
@@ -942,7 +944,7 @@ static void ReadPointer (int num) {
 static void ReadCodePtr (int) {
   while (ParseParam()) {
     if (!VStr::NICmp(String, "Frame", 5) && (vuint8)String[5] <= ' ') {
-      int Index = VStr::atoi(String+5);
+      int Index = VStr::atoi(String+6);
       if (Index < 0 || Index >= States.length()) {
         Warning("Bad frame index %d", Index);
         continue;
@@ -1437,7 +1439,7 @@ static void LoadDehackedDefinitions () {
   while (!sc->Check("}")) {
     sc->ExpectString();
     if (sc->String.Length() != 4) sc->Error("Sprite name must be 4 characters long");
-    Sprites.Append(*sc->String.toUpperCase());
+    Sprites.Append(VName(*sc->String, VName::AddLower)); //k8: was upper, why? sprite names are lowercased
   }
 
   // read states
@@ -1489,6 +1491,7 @@ static void LoadDehackedDefinitions () {
   while (!sc->Check("}")) {
     sc->ExpectNumber();
     if (sc->Number < 0 || sc->Number >= States.length()) sc->Error(va("Bad state index %d", sc->Number));
+    //GCon->Logf(NAME_Debug, "DEHACKED: cpsidx=%d; cpnum=%d; state=%s", CodePtrStates.length(), sc->Number, *States[sc->Number]->Loc.toString());
     CodePtrStates.Append(States[sc->Number]);
   }
 
