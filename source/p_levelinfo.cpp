@@ -113,6 +113,10 @@ void VLevelInfo::SetMapInfo (const mapInfo_t &Info) {
   if (Info.Flags&VLevelInfo::LIF_NoAutoSndSeq) {
     for (int i = 0; i < XLevel->NumSectors; ++i) XLevel->Sectors[i].seqType = 0;
   }
+
+  static VMethodProxy method("AfterSetMapInfo");
+  vobjPutParamSelf(GLevel);
+  VMT_RET_VOID(method);
 }
 
 

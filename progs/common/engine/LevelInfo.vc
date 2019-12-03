@@ -249,7 +249,6 @@ void RemoveMapMarker (int markerid) {
   }
 }
 
-
 // ////////////////////////////////////////////////////////////////////////// //
 // static lights
 native final void AddStaticLight (Entity ent, TVec origin, float radius);
@@ -324,6 +323,58 @@ final bool eachTID_opIterNext (out MobjByTIDIteratorInfo it, out EntityEx ent) {
     it.prev = none;
   }
   return true;
+}
+
+
+//==========================================================================
+//
+//  AfterSetMapInfo
+//
+//==========================================================================
+void AfterSetMapInfo (Level level) {
+  if (!level) return;
+  // shorttex (taken from GZDoom)
+  if (level.MapHashMD5 == "0eecbf37b328c9caaf20ded4949a4157") {
+    // Sudtic e2m6
+    printwarn("MAPFIX: Sudtic E2M6 ShortTex fix applied");
+    bCompatShortTex = true;
+  } else if (level.MapHashMD5 == "4ace0644883bda0cba254fa02c9acf83") {
+    // Teutic e3m4
+    printwarn("MAPFIX: Teutic E3M4 ShortTex fix applied");
+    bCompatShortTex = true;
+  } else if (level.MapHashMD5 == "9f2be080a33f775294bd78822456924e") {
+    // Nukemine e1m4
+    printwarn("MAPFIX: Nukemine E1M4 ShortTex fix applied");
+    bCompatShortTex = true;
+  } else if (level.MapHashMD5 == "cd31793d3a4b00231b124c0c23649644") {
+    // Strain map02
+    printwarn("MAPFIX: Strain MAP02 ShortTex fix applied");
+    bCompatShortTex = true;
+  } else if (level.MapHashMD5 == "19094aeb53d12efc8e0568424f659f11") {
+    // Strain map31
+    printwarn("MAPFIX: Strain MAP31 ShortTex fix applied");
+    bCompatShortTex = true;
+  } else if (level.MapHashMD5 == "60733bdd1aa3f4b2262adc79b2e1b5ab") {
+    // Memento Mori map29
+    printwarn("MAPFIX: Memento Mori MAP29 ShortTex fix applied");
+    bCompatShortTex = true;
+  } else if (level.MapHashMD5 == "f84ab4557464a383e93f37cd3a82ac48") {
+    // MM2 map03
+    printwarn("MAPFIX: Memento Mori 2 MAP03 ShortTex fix applied");
+    bCompatShortTex = true;
+  } else if (level.MapHashMD5 == "1497894956b3c8ebe8a240b7fdd99c6a") {
+    // MM2 map25
+    printwarn("MAPFIX: Memento Mori 2 MAP25 ShortTex fix applied");
+    bCompatShortTex = true;
+  } else if (level.MapHashMD5 == "941e4cb56ee4184e0b1ed43486ab0bbf") {
+    // AV map07
+    printwarn("MAPFIX: Alien Vendetta MAP07 ShortTex fix applied");
+    bCompatShortTex = true;
+  } else if (level.MapHashMD5 == "6d4156ee0d12b77ad143a37c4d3dcf98") {
+    // dmonfear.wad map22
+    printwarn("MAPFIX: Alien DemonFear MAP22 ShortTex fix applied");
+    bCompatShortTex = true;
+  }
 }
 
 
