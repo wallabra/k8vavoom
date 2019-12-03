@@ -111,8 +111,10 @@ vuint8 *VPatchTexture::GetPixels () {
   VStream *lumpstream = W_CreateLumpReaderNum(SourceLump);
   VCheckedStream Strm(lumpstream);
 
+  const int stsize = Strm.TotalSize();
+
   // make sure header is present
-  if (Strm.TotalSize() < 8) {
+  if (stsize < 8) {
     GCon->Logf(NAME_Warning, "Patch \"%s\" is too small", *Name);
     Width = 1;
     Height = 1;
@@ -147,7 +149,7 @@ vuint8 *VPatchTexture::GetPixels () {
   memset(Pixels, 0, Width*Height);
 
   // make sure all column offsets are there
-  if (Strm.TotalSize() < 8+Width*4) {
+  if (stsize < 8+Width*4) {
     GCon->Logf(NAME_Warning, "Patch \"%s\" is too small", *Name);
     checkerFill8(Pixels, Width, Height);
     ConvertPixelsToShaded();
@@ -159,7 +161,7 @@ vuint8 *VPatchTexture::GetPixels () {
     // get offset of the column
     Strm.Seek(8+x*4);
     vint32 Offset = Streamer<vint32>(Strm);
-    if (Offset < 8+Width*4 || Offset > Strm.TotalSize()-1) {
+    if (Offset < 8+Width*4 || Offset > stsize-1) {
       GCon->Logf(NAME_Warning, "Bad offset for column %d in patch \"%s\"", x, *Name);
       //checkerFillColumn8(Pixels+x, x, Width, Height);
       if (tex_strict_multipatch) checkerFill8(Pixels, Width, Height);
@@ -176,7 +178,7 @@ vuint8 *VPatchTexture::GetPixels () {
     Strm << TopDelta;
     while (TopDelta != 0xff) {
       // make sure length is there
-      if (Strm.TotalSize()-Strm.Tell() < 2) {
+      if (stsize-Strm.Tell() < 2) {
         GCon->Logf(NAME_Warning, "Broken column %d in patch \"%s\" (length)", x, *Name);
         //checkerFillColumn8(Pixels+x, x, Width, Height);
         if (tex_strict_multipatch) checkerFill8(Pixels, Width, Height);
@@ -191,7 +193,11 @@ vuint8 *VPatchTexture::GetPixels () {
       vuint8 ByteLen;
       Strm << ByteLen;
       Streamer<vuint8>(Strm); // garbage byte
-      int Len = (ByteLen ? ByteLen : 256); // Vanilla seems to do it like this
+      // patch of exactly 256 pixels hight, and with zero offset can have 256 bytes of data
+      // otherwise it is zero bytes of data
+      // shit
+      int Len = ByteLen;
+      if (!ByteLen && Height == 256 && TopDelta == 0) Len = 256;
       //if (VStr::strEquCI(*Name, "fsky1t")) GCon->Logf(NAME_Debug, "%s:   x=%d; Len=%d; top=%d; end=%d", *Name, x, Len, top, top+Len);
 
       // make sure column doesn't go out of the bounds of the image
@@ -210,15 +216,15 @@ vuint8 *VPatchTexture::GetPixels () {
       }
 
       // make sure all post data is there
-      if (Strm.TotalSize()-Strm.Tell() < Len) {
-        GCon->Logf(NAME_Warning, "Broken column %d in patch \"%s\" (missing %d bytes)", x, *Name, Strm.TotalSize()-Strm.Tell()-Len);
+      if (stsize-Strm.Tell() < Len) {
+        GCon->Logf(NAME_Warning, "Broken column %d in patch \"%s\" (missing %d bytes)", x, *Name, stsize-Strm.Tell()-Len);
         //checkerFillColumn8(Pixels+x, x, Width, Height);
         if (tex_strict_multipatch) {
           checkerFill8(Pixels, Width, Height);
           x = Width;
           break;
         }
-        Len = Strm.TotalSize()-Strm.Tell();
+        Len = stsize-Strm.Tell();
         if (Len <= 0) {
           x = Width;
           break;
@@ -241,7 +247,7 @@ vuint8 *VPatchTexture::GetPixels () {
       }
 
       // make sure unused byte and next post's top offset is there
-      if (Strm.TotalSize()-Strm.Tell() < 2) {
+      if (stsize-Strm.Tell() < 2) {
         if (tex_strict_multipatch) {
           GCon->Logf(NAME_Warning, "Broken column %d in patch \"%s\" (missing end marker)", x, *Name);
           //checkerFillColumn8(Pixels+x, x, Width, Height);
