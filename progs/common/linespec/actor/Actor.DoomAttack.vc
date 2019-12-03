@@ -247,6 +247,7 @@ final void DoSPosAttack () {
 
   // fixes https://doomwiki.org/wiki/Baron_attacks_a_monster_behind_him
   // this may interfere with some obscure dehacked crap, but meh...
+  // this may call `Random()` if attacking a spectre, but meh again...
   A_FaceTarget();
   if (CheckMeleeRange()) {
     PlaySound('baron/melee', CHAN_WEAPON);
