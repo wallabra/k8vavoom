@@ -245,6 +245,9 @@ final void DoSPosAttack () {
 [decorate] final void A_BruisAttack () {
   if (!Target) return;
 
+  // fixes https://doomwiki.org/wiki/Baron_attacks_a_monster_behind_him
+  // this may interfere with some obscure dehacked crap, but meh...
+  A_FaceTarget();
   if (CheckMeleeRange()) {
     PlaySound('baron/melee', CHAN_WEAPON);
     int damage = (P_Random()%8+1)*10;
