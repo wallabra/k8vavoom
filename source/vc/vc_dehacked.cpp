@@ -956,6 +956,7 @@ static void ReadCodePtr (int) {
       bool Found = false;
       for (int i = 0; i < CodePtrs.length(); ++i) {
         if (!CodePtrs[i].Name.ICmp(ValueString)) {
+          //GCon->Logf(NAME_Debug, "replacing frame #%d code pointer; old is '%s', new is '%s'", Index, (State->Function ? *State->Function->GetFullName() : "none"), (CodePtrs[i].Method ? *CodePtrs[i].Method->GetFullName() : "none"));
           State->Function = CodePtrs[i].Method;
           Found = true;
           break;
@@ -1357,6 +1358,10 @@ static void LoadDehackedFile (VStream *Strm) {
     while (ParseParam()) {
            if (!VStr::ICmp(String, "Doom version")) DVer = value;
       else if (!VStr::ICmp(String, "Patch format")) PFmt = value;
+      // skip some WhackEd3 stuff
+      else if (VStr::strEquCI(String, "Engine config") ||
+               VStr::strEquCI(String, "Data WAD") ||
+               VStr::strEquCI(String, "IWAD")) continue;
       else Warning("Unknown parameter '%s'", String);
     }
     if (!String || DVer == -1 || PFmt == -1) {
