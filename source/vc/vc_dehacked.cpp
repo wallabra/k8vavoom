@@ -1673,7 +1673,19 @@ static void FindDehackedLumps (TArray<int> &lumplist) {
           auto dl = dehmap.find(rname);
           if (dl) {
             //GCon->Logf(NAME_Debug, "removed wad <%s> from named deh search list", *wadlist[*dl].wadname);
-            wadlist[*dl].wadfidx = -1;
+            WadInfo &wi = wadlist[*dl];
+            // find and remove it from registered lumps list
+            // this is required, because supporting .deh lumps are found first (due to how archive mounting works)
+            if (wi.dlump >= 0) {
+              for (int f = 0; f < lumplist.length(); ++f) {
+                if (lumplist[f] == wi.dlump) {
+                  GCon->Logf(NAME_Init, "Dropping standalone '%s' for '%s' (replaced with '%s')", *W_FullLumpName(wi.dlump), *wi.wadname, *W_FullLumpName(it.lump));
+                  lumplist.removeAt(f);
+                  --f;
+                }
+              }
+            }
+            wi.wadfidx = -1;
             dehmap.remove(rname);
           }
         }
@@ -1696,6 +1708,7 @@ static void FindDehackedLumps (TArray<int> &lumplist) {
             //GCon->Logf(NAME_Debug, "found named deh lump <%s> for wad <%s> (wi.wadfidx=%d; wi.dlump=%d; fidx=%d; lump=%d)", *it.getFullName(), *wi.wadname, wi.wadfidx, wi.dlump, it.getFile(), it.lump);
             GCon->Logf(NAME_Init, "Found named deh lump \"%s\" for wad \"%s\".", *it.getFullName(), *wi.wadname);
             lumplist.append(it.lump);
+            wi.dlump = it.lump;
           } else {
             //GCon->Logf(NAME_Debug, "skipped named deh lump <%s> for wad <%s> (wi.wadfidx=%d; wi.dlump=%d; fidx=%d; lump=%d)", *it.getFullName(), *wi.wadname, wi.wadfidx, wi.dlump, it.getFile(), it.lump);
           }
