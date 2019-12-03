@@ -787,6 +787,23 @@ VModel *Mod_FindName (VStr name) {
 
 //==========================================================================
 //
+//  FindGZModelDefInclude
+//
+//==========================================================================
+static int FindGZModelDefInclude (int baselump, VStr incname) {
+  int bestlump = -1;
+  for (auto &&it : WadFileIterator(incname)) {
+    //GCon->Logf(NAME_Debug, "BASE: %d; lump=%d; <%s>", baselump, it.lump, *it.fname);
+    if (it.getFile() > W_LumpFile(baselump)) break;
+    bestlump = it.lump;
+  }
+  //if (bestlump >= 0) GCon->Logf(NAME_Debug, "BASE: '%s'; INCLUDE: '%s'", *W_FullLumpName(baselump), *W_FullLumpName(bestlump));
+  return bestlump;
+}
+
+
+//==========================================================================
+//
 //  ParseGZModelDefs
 //
 //==========================================================================
@@ -795,6 +812,11 @@ static void ParseGZModelDefs () {
   TArray<GZModelDefEx *> gzmdlist;
   TMap<VStr, int> gzmdmap;
 
+  struct IncStackItem {
+    VScriptParser *sc;
+    int lump;
+  };
+
   VName mdfname = VName("modeldef", VName::FindLower);
   if (mdfname == NAME_None) return; // no such chunk
   // parse all modeldefs
@@ -802,53 +824,80 @@ static void ParseGZModelDefs () {
     if (W_LumpName(Lump) != mdfname) continue;
     GCon->Logf(NAME_Init, "parsing GZDoom ModelDef script \"%s\"...", *W_FullLumpName(Lump));
     // parse modeldef
+    TArray<IncStackItem> includeStack;
     auto sc = new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump));
     sc->SetEscape(false);
-    while (sc->GetString()) {
-      if (sc->String.strEquCI("model")) {
-        auto mdl = new GZModelDefEx();
-        mdl->parse(sc);
-        // find model
-        if (!mdl->isEmpty() && !mdl->className.isEmpty()) {
-          // search the currently loaded models
-          VClass *xcls = VClass::FindClassNoCase(*mdl->className);
-          if (xcls && !xcls->IsChildOf(VEntity::StaticClass())) xcls = nullptr;
-          if (!xcls) {
-            GCon->Logf(NAME_Init, "  found 3d GZDoom model for unknown class `%s`", *mdl->className);
-            delete mdl;
-            continue;
-          }
-          // check if we already have k8vavoom model for this class
-          if (FindClassModelByName(xcls->GetName())) {
-            for (auto &&cm : ClassModels) {
-              if (cm->Name == NAME_None || !cm->Model || cm->Frames.length() == 0) continue;
-              if (!cm->isGZDoom && cm->Name == xcls->GetName()) {
-                GCon->Logf(NAME_Init, "  skipped GZDoom model for '%s' (found native k8vavoom definition)", xcls->GetName());
-                delete mdl;
-                mdl = nullptr;
-                break;
-              }
+    int currentLump = Lump;
+    for (;;) {
+      while (sc->GetString()) {
+        if (sc->String.strEquCI("model")) {
+          auto mdl = new GZModelDefEx();
+          mdl->parse(sc);
+          // find model
+          if (!mdl->isEmpty() && !mdl->className.isEmpty()) {
+            // search the currently loaded models
+            VClass *xcls = VClass::FindClassNoCase(*mdl->className);
+            if (xcls && !xcls->IsChildOf(VEntity::StaticClass())) xcls = nullptr;
+            if (!xcls) {
+              GCon->Logf(NAME_Init, "  found 3d GZDoom model for unknown class `%s`", *mdl->className);
+              delete mdl;
+              continue;
             }
-            if (!mdl) continue;
+            // check if we already have k8vavoom model for this class
+            if (FindClassModelByName(xcls->GetName())) {
+              for (auto &&cm : ClassModels) {
+                if (cm->Name == NAME_None || !cm->Model || cm->Frames.length() == 0) continue;
+                if (!cm->isGZDoom && cm->Name == xcls->GetName()) {
+                  GCon->Logf(NAME_Init, "  skipped GZDoom model for '%s' (found native k8vavoom definition)", xcls->GetName());
+                  delete mdl;
+                  mdl = nullptr;
+                  break;
+                }
+              }
+              if (!mdl) continue;
+            }
+            // merge with already existing model, if there is any
+            VStr locname = mdl->className.toLowerCase();
+            auto omp = gzmdmap.find(locname);
+            if (omp) {
+              gzmdlist[*omp]->merge(*mdl);
+              delete mdl;
+            } else {
+              // new model
+              gzmdmap.put(locname, gzmdlist.length());
+              gzmdlist.append(mdl);
+            }
           }
-          // merge with already existing model, if there is any
-          VStr locname = mdl->className.toLowerCase();
-          auto omp = gzmdmap.find(locname);
-          if (omp) {
-            gzmdlist[*omp]->merge(*mdl);
-            delete mdl;
-          } else {
-            // new model
-            gzmdmap.put(locname, gzmdlist.length());
-            gzmdlist.append(mdl);
-          }
+          continue;
+        } else if (sc->String.strEquCI("#include")) {
+          if (!sc->GetString()) sc->Error("invalid MODELDEF directive 'include' expects argument");
+          int ilmp = FindGZModelDefInclude(Lump, sc->String);
+          if (ilmp < 0) sc->Error(va("invalid MODELDEF include file '%s' not found!", *sc->String));
+          bool err = (ilmp == Lump || ilmp == currentLump);
+          if (!err) for (auto &&it : includeStack) if (it.lump == ilmp) { err = true; break; }
+          if (err) sc->Error(va("MODELDEF file '%s' got into endless include loop with include file '%s'!", *W_FullLumpName(Lump), *W_FullLumpName(ilmp)));
+          IncStackItem si;
+          si.sc = sc;
+          si.lump = ilmp;
+          includeStack.append(si);
+          sc = new VScriptParser(W_FullLumpName(ilmp), W_CreateLumpReaderNum(ilmp));
+          sc->SetEscape(false);
+          currentLump = ilmp;
+          continue;
         }
-        continue;
+        sc->Error(va("invalid MODELDEF directive '%s'", *sc->String));
+        //GLog.WriteLine("%s: <%s>", *sc->GetLoc().toStringNoCol(), *sc->String);
       }
-      sc->Error(va("invalid MODELDEF directive '%s'", *sc->String));
-      //GLog.WriteLine("%s: <%s>", *sc->GetLoc().toStringNoCol(), *sc->String);
+      delete sc;
+      if (includeStack.length() == 0) break;
+      {
+        IncStackItem &si = includeStack[includeStack.length()-1];
+        currentLump = si.lump;
+        sc = si.sc;
+        si.sc = nullptr;
+      }
+      includeStack.removeAt(includeStack.length()-1);
     }
-    delete sc;
   }
 
   // insert GZDoom alias models
