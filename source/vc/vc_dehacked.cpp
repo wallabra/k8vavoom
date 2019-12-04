@@ -1634,10 +1634,10 @@ static VStr getFileWadName (int fidx) {
 static void FindDehackedLumps (TArray<int> &lumplist) {
   // build list of wad files
   struct WadInfo {
-    VStr wadname;
-    VStr dehname;
+    VStr basename;
     int wadfidx;
     int dlump;
+    bool isbex;
   };
 
   TArray<WadInfo> wadlist;
@@ -1647,25 +1647,28 @@ static void FindDehackedLumps (TArray<int> &lumplist) {
     for (int fnum = 0; fnum < W_NextMountFileId(); ++fnum) {
       VStr pkname = getFileWadName(fnum);
       if (pkname.isEmpty()) continue;
-      VStr dhname = pkname.stripExtension();
-      if (dhname.isEmpty()) continue;
-      dhname += ".deh";
+      VStr basename = pkname.stripExtension();
+      if (basename.isEmpty()) continue;
       // remove duplicates
-      for (int f = 0; f < wadlist.length(); ++f) {
-        if (wadlist[f].wadname.strEquCI(pkname)) {
-          wadlist.removeAt(f);
-          --f;
+      int idx = -1;
+      for (auto &&it : wadlist.itemsIdx()) {
+        if (it.value().basename.strEquCI(basename)) {
+          idx = it.index();
+          break;
         }
       }
-      WadInfo &wnfo = wadlist.alloc();
-      wnfo.wadname = pkname;
-      wnfo.dehname = dhname;
+      if (idx < 0) {
+        idx = wadlist.length();
+        wadlist.alloc();
+        dehmap.put(basename, idx);
+      }
+      WadInfo &wnfo = wadlist[idx];
+      wnfo.basename = basename;
       wnfo.wadfidx = fnum;
       wnfo.dlump = -1;
+      wnfo.isbex = false;
       //GCon->Logf(NAME_Debug, "WAD: name=<%s>; deh=<%s>; fidx=%d", *wnfo.wadname, *wnfo.dehname, wnfo.wadfidx);
     }
-
-    for (auto &&it : wadlist.itemsIdx()) dehmap.put(it.value().dehname, it.index());
   }
 
   // scan all files, put "dehacked" lumps, and "wadname.deh" lumps
@@ -1677,7 +1680,7 @@ static void FindDehackedLumps (TArray<int> &lumplist) {
         // remove this wad from the list for "wadname.deh" candidates
         VStr pkname = getFileWadName(it.getFile());
         if (pkname.length()) {
-          VStr rname = pkname.stripExtension()+".deh";
+          VStr rname = pkname.stripExtension();
           auto dl = dehmap.find(rname);
           if (dl) {
             //GCon->Logf(NAME_Debug, "removed wad <%s> from named deh search list", *wadlist[*dl].wadname);
@@ -1687,7 +1690,7 @@ static void FindDehackedLumps (TArray<int> &lumplist) {
             if (wi.dlump >= 0) {
               for (int f = 0; f < lumplist.length(); ++f) {
                 if (lumplist[f] == wi.dlump) {
-                  GCon->Logf(NAME_Init, "Dropping standalone '%s' for '%s' (replaced with '%s')", *W_FullLumpName(wi.dlump), *wi.wadname, *W_FullLumpName(it.lump));
+                  GCon->Logf(NAME_Init, "Dropping standalone '%s' for '%s.wad' (replaced with '%s')", *W_FullLumpName(wi.dlump), *wi.basename, *W_FullLumpName(it.lump));
                   lumplist.removeAt(f);
                   --f;
                 }
@@ -1704,19 +1707,31 @@ static void FindDehackedLumps (TArray<int> &lumplist) {
     // "wadname.deh"?
     if (cli_NoExternalDeh <= 0) {
       VStr rname = it.getRealName();
-      if (rname.endsWithCI(".deh")) {
-        rname = rname.extractFileName();
+      if (rname.endsWithCI(".deh") || rname.endsWithCI(".bex")) {
+        bool isbex = rname.endsWithCI(".bex");
+        rname = rname.extractFileName().stripExtension();
         auto dl = dehmap.find(rname);
         if (dl) {
           // use the fact that wads from zips/pk3s are mounted after the respective zip/pk3
           // this way, it is safe to add this dehacked file
           WadInfo &wi = wadlist[*dl];
+          if (!isbex && wi.isbex) continue; // prefer ".bex" file
           if (wi.wadfidx > it.getFile() && wi.dlump < it.lump) {
             //GCon->Logf(NAME_Debug, "found named deh lump <%s> for wad <%s>", *it.getFullName(), *wi.wadname);
             //GCon->Logf(NAME_Debug, "found named deh lump <%s> for wad <%s> (wi.wadfidx=%d; wi.dlump=%d; fidx=%d; lump=%d)", *it.getFullName(), *wi.wadname, wi.wadfidx, wi.dlump, it.getFile(), it.lump);
-            GCon->Logf(NAME_Init, "Found named deh lump \"%s\" for wad \"%s\".", *it.getFullName(), *wi.wadname);
+            GCon->Logf(NAME_Init, "Found named deh lump \"%s\" for wad \"%s.wad\".", *it.getFullName(), *wi.basename);
+            if (wi.dlump >= 0) {
+              for (auto &&lit : lumplist.itemsIdx()) {
+                if (lit.value() == wi.dlump) {
+                  GCon->Logf(NAME_Init, "  dropped old deh \"%s\"...", *W_FullLumpName(lit.value()));
+                  lumplist.removeAt(lit.index());
+                  break;
+                }
+              }
+            }
             lumplist.append(it.lump);
             wi.dlump = it.lump;
+            wi.isbex = isbex;
           } else {
             //GCon->Logf(NAME_Debug, "skipped named deh lump <%s> for wad <%s> (wi.wadfidx=%d; wi.dlump=%d; fidx=%d; lump=%d)", *it.getFullName(), *wi.wadname, wi.wadfidx, wi.dlump, it.getFile(), it.lump);
           }
