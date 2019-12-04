@@ -727,7 +727,7 @@ final void DoExplode (int damage, float distance, bool damageSelf, optional int 
 //  A_CheckForReload
 //
 //==========================================================================
-[decorate] final void A_CheckForReload (int Count, state Jump, optional bool DoIncrement) {
+[decorate] final void A_CheckForReload (int Count, state Jump, optional bool dontIncrement) {
   if (Count <= 0) return;
 
   if (bIsPlayer) {
@@ -735,13 +735,15 @@ final void DoExplode (int damage, float distance, bool damageSelf, optional int 
     if (!Wpn) return;
 
     int ReloadCounter = Wpn.ReloadCounter;
-    if (!specified_DoIncrement) DoIncrement = false;
-    if (!DoIncrement || ReloadCounter != 0) {
+    if (!specified_dontIncrement) dontIncrement = false;
+
+    if (!dontIncrement || ReloadCounter != 0) {
       ReloadCounter = (Wpn.ReloadCounter+1)%Count;
     } else {
       // 0 % 1 = 1?  So how do we check if the weapon was never fired?  We should only do this when we're not incrementing the counter though.
       ReloadCounter = 1;
     }
+    if (!dontIncrement) Wpn.ReloadCounter = ReloadCounter;
 
     // if we have not made our last shot...
     if (ReloadCounter != 0) {
@@ -752,8 +754,6 @@ final void DoExplode (int damage, float distance, bool damageSelf, optional int 
       // we need to reload; however, don't reload if we're out of ammo
       Wpn.CheckAmmo(Weapon::FIRE_Either, AutoSwitch:false, RequireAmmo:true); //k8: don't require ammo here?
     }
-
-    if (!DoIncrement) Wpn.ReloadCounter = ReloadCounter;
   }
 }
 
