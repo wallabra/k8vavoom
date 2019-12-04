@@ -110,7 +110,7 @@ void VThinkerChannel::SetThinker (VThinker *AThinker) {
 void VThinkerChannel::EvalCondValues (VObject *Obj, VClass *Class, vuint8 *Values) {
   if (Class->GetSuperClass()) EvalCondValues(Obj, Class->GetSuperClass(), Values);
   for (int i = 0; i < Class->RepInfos.Num(); ++i) {
-    bool Val = VObject::ExecuteFunctionNoArgs(Obj, Class->RepInfos[i].Cond, false).getBool(); // no VMT lookups
+    bool Val = VObject::ExecuteFunctionNoArgs(Obj, Class->RepInfos[i].Cond, true).getBool(); // allow VMT lookups
     for (int j = 0; j < Class->RepInfos[i].RepFields.Num(); ++j) {
       if (Class->RepInfos[i].RepFields[j].Member->MemberType != MEMBER_Field) continue;
       Values[((VField *)Class->RepInfos[i].RepFields[j].Member)->NetIndex] = Val;

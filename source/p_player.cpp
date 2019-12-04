@@ -88,7 +88,7 @@ bool VBasePlayer::ExecuteNetMethod (VMethod *Func) {
     vuint32 SavedFlags = PlayerFlags;
     PlayerFlags &= ~VBasePlayer::PF_IsClient;
     bool ShouldSend = false;
-    if (VObject::ExecuteFunctionNoArgs(this, Base->ReplCond, false).getBool()) ShouldSend = true; // no VMT lookups
+    if (VObject::ExecuteFunctionNoArgs(this, Base->ReplCond, true).getBool()) ShouldSend = true; // no VMT lookups
     PlayerFlags = SavedFlags;
 
     if (ShouldSend) {
@@ -111,7 +111,7 @@ bool VBasePlayer::ExecuteNetMethod (VMethod *Func) {
   while (Base->SuperMethod) Base = Base->SuperMethod;
   // execute it's replication condition method
   vassert(Base->ReplCond);
-  if (!VObject::ExecuteFunctionNoArgs(this, Base->ReplCond, false).getBool()) return false; // no VMT lookups
+  if (!VObject::ExecuteFunctionNoArgs(this, Base->ReplCond, true).getBool()) return false; // no VMT lookups
 
   if (Net) {
     // replication condition is true, the method must be replicated
