@@ -76,6 +76,11 @@
 # define VSUM3D(value0,value1,value2)         ((value0)+(value1)+(value2))
 #endif
 
+#define VVA_OKUNUSED     __attribute__((unused))
+#define VVA_CHECKRESULT  __attribute__((warn_unused_result))
+#define VVA_PURE         __attribute__((pure))
+#define VVA_CONST        __attribute__((const))
+
 #include "mimalloc/mimalloc.h"
 
 #include "mythreadlite.h"

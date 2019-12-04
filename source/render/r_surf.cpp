@@ -688,7 +688,7 @@ static inline bool IsTransDoorHackTop (const seg_t *seg) {
 //  IsTransDoorHackBot
 //
 //==========================================================================
-static inline __attribute__((unused)) bool IsTransDoorHackBot (const seg_t *seg) {
+static inline VVA_OKUNUSED bool IsTransDoorHackBot (const seg_t *seg) {
   return IsTransDoorHack(seg, false);
 }
 
@@ -932,7 +932,7 @@ void VRenderLevelShared::SetupOneSidedMidWSurf (subsector_t *sub, seg_t *seg, se
 //  DumpOpening
 //
 //==========================================================================
-static __attribute__((unused)) void DumpOpening (const opening_t *op) {
+static VVA_OKUNUSED void DumpOpening (const opening_t *op) {
   GCon->Logf("  %p: floor=%g (%g,%g,%g:%g); ceil=%g (%g,%g,%g:%g); lowfloor=%g; range=%g",
     op,
     op->bottom, op->efloor.GetNormal().x, op->efloor.GetNormal().y, op->efloor.GetNormal().z, op->efloor.GetDist(),

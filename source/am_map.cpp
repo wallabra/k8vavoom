@@ -420,8 +420,8 @@ static TMapNC<VClass *, int> spawnSprIndex;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static __attribute__((unused)) inline int VScrTransX640 (int x) { return (int)(x*VirtualWidth/640.0f); }
-static __attribute__((unused)) inline int VScrTransY480 (int y) { return (int)(y*VirtualHeight/480.0f); }
+static VVA_OKUNUSED inline int VScrTransX640 (int x) { return (int)(x*VirtualWidth/640.0f); }
+static VVA_OKUNUSED inline int VScrTransY480 (int y) { return (int)(y*VirtualHeight/480.0f); }
 
 
 //==========================================================================
@@ -1505,7 +1505,7 @@ static void amFlatsCheckSubsector (int num) {
 //  amFlatsCheckNode
 //
 //==========================================================================
-static __attribute__((unused)) void amFlatsCheckNode (int bspnum) {
+static VVA_OKUNUSED void amFlatsCheckNode (int bspnum) {
   // found a subsector?
   if (!(bspnum&NF_SUBSECTOR)) {
     // nope, this is a normal node

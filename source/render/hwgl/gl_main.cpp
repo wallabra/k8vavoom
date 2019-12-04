@@ -140,7 +140,7 @@ static __attribute__((sentinel)) TArray<VStr> MSA (const char *first, ...) {
 //  `fuckedName` is what we are looking for
 //
 //==========================================================================
-static __attribute__((unused)) bool CheckVendorString (VStr vs, const char *fuckedName) {
+static VVA_OKUNUSED bool CheckVendorString (VStr vs, const char *fuckedName) {
   if (vs.length() == 0) return false;
   if (!fuckedName || !fuckedName[0]) return false;
   const int fnlen = (int)strlen(fuckedName);

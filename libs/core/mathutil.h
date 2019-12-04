@@ -33,19 +33,19 @@
 # define isNaNF     isnan
 # define isInfF     isinf
 #else
-static __attribute__((unused)) __attribute__((const)) __attribute__((warn_unused_result))
+static VVA_OKUNUSED VVA_CONST VVA_CHECKRESULT
 inline bool isFiniteF (const float v) {
   const union { float f; vuint32 x; } u = {v};
   return ((u.x&0x7f800000u) != 0x7f800000u);
 }
 
-static __attribute__((unused)) __attribute__((const)) __attribute__((warn_unused_result))
+static VVA_OKUNUSED VVA_CONST VVA_CHECKRESULT
 inline bool isNaNF (const float v) {
   const union { float f; vuint32 x; } u = {v};
   return ((u.x<<1) > 0xff000000u);
 }
 
-static __attribute__((unused)) __attribute__((const)) __attribute__((warn_unused_result))
+static VVA_OKUNUSED VVA_CONST VVA_CHECKRESULT
 inline bool isInfF (const float v) {
   const union { float f; vuint32 x; } u = {v};
   return ((u.x<<1) == 0xff000000u);
@@ -53,7 +53,7 @@ inline bool isInfF (const float v) {
 #endif
 
 // this turns all nan/inf values into positive zero
-static __attribute__((unused)) inline void killInfNaNF (float &f) {
+static VVA_OKUNUSED inline void killInfNaNF (float &f) {
   vint32 fi = *(vint32 *)&f;
   fi &= (((fi>>23)&0xff)-0xff)>>31;
 }
@@ -61,7 +61,7 @@ static __attribute__((unused)) inline void killInfNaNF (float &f) {
 
 // `smoothstep` performs smooth Hermite interpolation between 0 and 1 when edge0 < x < edge1
 // results are undefined if edge0 ™ edge1
-static __attribute__((unused)) __attribute__((const)) __attribute__((warn_unused_result))
+static VVA_OKUNUSED VVA_CONST VVA_CHECKRESULT
 inline float smoothstep (const float edge0, const float edge1, float x) {
   // scale, bias and saturate x to 0..1 range
   x = (x-edge0)/(edge1-edge0);
@@ -74,7 +74,7 @@ inline float smoothstep (const float edge0, const float edge1, float x) {
 
 // `smoothstep` performs smooth Hermite interpolation between 0 and 1 when edge0 < x < edge1
 // results are undefined if edge0 ™ edge1
-static __attribute__((unused)) __attribute__((const)) __attribute__((warn_unused_result))
+static VVA_OKUNUSED VVA_CONST VVA_CHECKRESULT
 inline float smoothstepPerlin (const float edge0, const float edge1, float x) {
   // scale, bias and saturate x to 0..1 range
   x = (x-edge0)/(edge1-edge0);
@@ -87,7 +87,7 @@ inline float smoothstepPerlin (const float edge0, const float edge1, float x) {
 
 extern "C" {
 //k8: this is UB in shitplusplus, but i really can't care less
-static __attribute__((unused)) __attribute__((const)) __attribute__((warn_unused_result))
+static VVA_OKUNUSED VVA_CONST VVA_CHECKRESULT
 inline float fastInvSqrtf (const float n) {
   union { float f; vuint32 i; } ufi;
   const float ndiv2 = n*0.5f;
@@ -111,16 +111,16 @@ inline float fastInvSqrtf (const float n) {
 #define max2(x, y)   ((x) >= (y) ? (x) : (y))
 #define midval(min, val, max)  max2(min, min2(val, max))
 */
-template <class T> constexpr __attribute__((const)) __attribute__((warn_unused_result)) inline T min2 (const T a, const T b) { return (a <= b ? a : b); }
-template <class T> constexpr __attribute__((const)) __attribute__((warn_unused_result)) inline T max2 (const T a, const T b) { return (a >= b ? a : b); }
+template <class T> constexpr VVA_CONST VVA_CHECKRESULT inline T min2 (const T a, const T b) { return (a <= b ? a : b); }
+template <class T> constexpr VVA_CONST VVA_CHECKRESULT inline T max2 (const T a, const T b) { return (a >= b ? a : b); }
 //template <class T> constexpr inline T midval (const T min, const T val, const T max) { return max2(min, min2(val, max)); }
-//template <class T> constexpr __attribute__((const)) inline T midval (const T min, const T val, const T max) { return (val < min ? min : val > max ? max : val); }
-//template <class T> constexpr __attribute__((const)) inline T clampval (const T val, const T min, const T max) { return (val < min ? min : val > max ? max : val); }
-template <class T> constexpr __attribute__((const)) __attribute__((warn_unused_result)) inline T midval (const T min, const T val, const T max) { return max2(min, min2(val, max)); }
-template <class T> constexpr __attribute__((const)) __attribute__((warn_unused_result)) inline T clampval (const T val, const T min, const T max) { return max2(min, min2(val, max)); }
+//template <class T> constexpr VVA_CONST inline T midval (const T min, const T val, const T max) { return (val < min ? min : val > max ? max : val); }
+//template <class T> constexpr VVA_CONST inline T clampval (const T val, const T min, const T max) { return (val < min ? min : val > max ? max : val); }
+template <class T> constexpr VVA_CONST VVA_CHECKRESULT inline T midval (const T min, const T val, const T max) { return max2(min, min2(val, max)); }
+template <class T> constexpr VVA_CONST VVA_CHECKRESULT inline T clampval (const T val, const T min, const T max) { return max2(min, min2(val, max)); }
 
-template <class T> constexpr __attribute__((const)) __attribute__((warn_unused_result)) inline T min3 (const T a, const T b, const T c) { return min2(min2(a, b), c); }
-template <class T> constexpr __attribute__((const)) __attribute__((warn_unused_result)) inline T max3 (const T a, const T b, const T c) { return max2(max2(a, b), c); }
+template <class T> constexpr VVA_CONST VVA_CHECKRESULT inline T min3 (const T a, const T b, const T c) { return min2(min2(a, b), c); }
+template <class T> constexpr VVA_CONST VVA_CHECKRESULT inline T max3 (const T a, const T b, const T c) { return max2(max2(a, b), c); }
 
 
 //==========================================================================
@@ -152,9 +152,9 @@ template <class T> constexpr __attribute__((const)) __attribute__((warn_unused_r
 
 //int mlog2 (int val);
 //int mround (float);
-static __attribute__((unused)) __attribute__((warn_unused_result)) inline int mround (const float Val) { return (int)floorf(Val+0.5f); }
+static VVA_OKUNUSED VVA_CHECKRESULT inline int mround (const float Val) { return (int)floorf(Val+0.5f); }
 
-static __attribute__((unused)) __attribute__((const)) __attribute__((warn_unused_result))
+static VVA_OKUNUSED VVA_CONST VVA_CHECKRESULT
 inline int ToPowerOf2 (int val) {
   /*
   int answer = 1;
@@ -176,7 +176,7 @@ inline int ToPowerOf2 (int val) {
 //float AngleMod180 (float angle);
 
 // returns angle normalized to the range [0 <= angle < 360]
-static __attribute__((unused)) __attribute__((pure)) __attribute__((warn_unused_result))
+static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT
 inline float AngleMod (float angle) {
 #if 1
   angle = fmodf(angle, 360.0f);
@@ -189,7 +189,7 @@ inline float AngleMod (float angle) {
 }
 
 // returns angle normalized to the range [-180 < angle <= 180]
-static __attribute__((unused)) __attribute__((pure)) __attribute__((warn_unused_result))
+static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT
 inline float AngleMod180 (float angle) {
 #if 1
   angle = AngleMod(angle);
@@ -201,7 +201,7 @@ inline float AngleMod180 (float angle) {
 }
 
 
-static __attribute__((unused)) __attribute__((pure)) __attribute__((warn_unused_result))
+static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT
 inline double AngleModD (double angle) {
 #if 1
   angle = fmod(angle, 360.0);
@@ -213,7 +213,7 @@ inline double AngleModD (double angle) {
   return angle;
 }
 
-static __attribute__((unused)) __attribute__((pure)) __attribute__((warn_unused_result))
+static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT
 inline double AngleMod180D (double angle) {
 #if 1
   angle = fmod(angle, 360.0);
@@ -227,18 +227,18 @@ inline double AngleMod180D (double angle) {
   return angle;
 }
 
-static __attribute__((unused)) __attribute__((pure)) __attribute__((warn_unused_result))
+static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT
 inline float AngleDiff (float afrom, float ato) { return AngleMod(ato-afrom+180.0f)-180.0f; }
 
 #ifdef NO_SINCOS
 
 // TODO: NEON-based impl?
-static __attribute__((unused)) inline void sincosf_dumb (float x, float *vsin, float *vcos) {
+static VVA_OKUNUSED inline void sincosf_dumb (float x, float *vsin, float *vcos) {
   *vsin = sinf(x);
   *vcos = cosf(x);
 }
 
-static __attribute__((unused)) inline void sincosd_dumb (double x, double *vsin, double *vcos) {
+static VVA_OKUNUSED inline void sincosd_dumb (double x, double *vsin, double *vcos) {
   *vsin = sin(x);
   *vcos = cos(x);
 }
@@ -252,48 +252,48 @@ static __attribute__((unused)) inline void sincosd_dumb (double x, double *vsin,
 
 #endif
 
-static __attribute__((unused)) __attribute__((pure)) __attribute__((warn_unused_result)) inline float msin (const float angle) { return sinf(DEG2RADF(angle)); }
-static __attribute__((unused)) __attribute__((pure)) __attribute__((warn_unused_result)) inline float mcos (const float angle) { return cosf(DEG2RADF(angle)); }
-static __attribute__((unused)) __attribute__((pure)) __attribute__((warn_unused_result)) inline float mtan (const float angle) { return tanf(DEG2RADF(angle)); }
-static __attribute__((unused)) __attribute__((pure)) __attribute__((warn_unused_result)) inline float masin (const float x) { return RAD2DEGF(asinf(x)); }
-static __attribute__((unused)) __attribute__((pure)) __attribute__((warn_unused_result)) inline float macos (const float x) { return RAD2DEGF(acosf(x)); }
-static __attribute__((unused)) __attribute__((pure)) __attribute__((warn_unused_result)) inline float matan (const float y, const float x) { return RAD2DEGF(atan2f(y, x)); }
-static __attribute__((unused)) __attribute__((pure)) __attribute__((warn_unused_result)) inline double matand (const double y, const double x) { return RAD2DEGD(atan2(y, x)); }
-static __attribute__((unused)) inline void msincos (const float angle, float *vsin, float *vcos) { return sincosf(DEG2RADF(angle), vsin, vcos); }
-static __attribute__((unused)) inline void msincosd (const double angle, double *vsin, double *vcos) { return sincosd(DEG2RADD(angle), vsin, vcos); }
+static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT inline float msin (const float angle) { return sinf(DEG2RADF(angle)); }
+static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT inline float mcos (const float angle) { return cosf(DEG2RADF(angle)); }
+static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT inline float mtan (const float angle) { return tanf(DEG2RADF(angle)); }
+static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT inline float masin (const float x) { return RAD2DEGF(asinf(x)); }
+static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT inline float macos (const float x) { return RAD2DEGF(acosf(x)); }
+static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT inline float matan (const float y, const float x) { return RAD2DEGF(atan2f(y, x)); }
+static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT inline double matand (const double y, const double x) { return RAD2DEGD(atan2(y, x)); }
+static VVA_OKUNUSED inline void msincos (const float angle, float *vsin, float *vcos) { return sincosf(DEG2RADF(angle), vsin, vcos); }
+static VVA_OKUNUSED inline void msincosd (const double angle, double *vsin, double *vcos) { return sincosd(DEG2RADD(angle), vsin, vcos); }
 
 
-static __attribute__((unused)) __attribute__((const)) __attribute__((warn_unused_result)) inline float ByteToAngle (vuint8 angle) { return (float)(angle*360.0f/256.0f); }
-static __attribute__((unused)) __attribute__((pure)) __attribute__((warn_unused_result)) inline vuint8 AngleToByte (const float angle) { return (vuint8)(AngleMod(angle)*256.0f/360.0f); }
+static VVA_OKUNUSED VVA_CONST VVA_CHECKRESULT inline float ByteToAngle (vuint8 angle) { return (float)(angle*360.0f/256.0f); }
+static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT inline vuint8 AngleToByte (const float angle) { return (vuint8)(AngleMod(angle)*256.0f/360.0f); }
 
 
-static inline __attribute__((unused)) __attribute__((const)) __attribute__((warn_unused_result))
+static inline VVA_OKUNUSED VVA_CONST VVA_CHECKRESULT
 vint32 scaleInt (vint32 a, vint32 b, vint32 c) {
   return (vint32)(((vint64)a*b)/c);
 }
 
-static inline __attribute__((unused)) __attribute__((const)) __attribute__((warn_unused_result))
+static inline VVA_OKUNUSED VVA_CONST VVA_CHECKRESULT
 vuint32 scaleUInt (vuint32 a, vuint32 b, vuint32 c) {
   return (vuint32)(((vuint64)a*b)/c);
 }
 
 
 // this is actually branch-less for ints on x86, and even for longs on x86_64
-static __attribute__((unused)) __attribute__((const)) __attribute__((warn_unused_result))
+static VVA_OKUNUSED VVA_CONST VVA_CHECKRESULT
 inline vuint8 clampToByte (vint32 n) {
   n &= -(vint32)(n >= 0);
   return (vuint8)(n|((255-(vint32)n)>>31));
   //return (n < 0 ? 0 : n > 255 ? 255 : n);
 }
 
-static __attribute__((unused)) __attribute__((const)) __attribute__((warn_unused_result))
+static VVA_OKUNUSED VVA_CONST VVA_CHECKRESULT
 inline vuint8 clampToByteU (vuint32 n) {
   return (vuint8)((n&0xff)|(255-((-(vint32)(n < 256))>>24)));
 }
 
 
 // Neumaier-Kahan algorithm
-static __attribute__((unused)) __attribute__((pure)) __attribute__((warn_unused_result))
+static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT
 inline float neumsum2 (float v0, const float v1) {
   // one iteration
   const float t = v0+v1;
@@ -301,7 +301,7 @@ inline float neumsum2 (float v0, const float v1) {
 }
 
 // Neumaier-Kahan algorithm
-static __attribute__((unused)) __attribute__((pure)) __attribute__((warn_unused_result))
+static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT
 inline float neumsum3 (float v0, const float v1, const float v2) {
   // first iteration
   const float t = v0+v1;
@@ -312,7 +312,7 @@ inline float neumsum3 (float v0, const float v1, const float v2) {
 }
 
 // Neumaier-Kahan algorithm
-static __attribute__((unused)) __attribute__((pure)) __attribute__((warn_unused_result))
+static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT
 inline float neumsum4 (float v0, const float v1, const float v2, const float v3) {
   // first iteration
   float t = v0+v1;
@@ -330,7 +330,7 @@ inline float neumsum4 (float v0, const float v1, const float v2, const float v3)
 
 
 // Neumaier-Kahan algorithm
-static __attribute__((unused)) __attribute__((pure)) __attribute__((warn_unused_result))
+static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT
 inline double neumsum2D (double v0, const double v1) {
   // one iteration
   const double t = v0+v1;
@@ -338,7 +338,7 @@ inline double neumsum2D (double v0, const double v1) {
 }
 
 // Neumaier-Kahan algorithm
-static __attribute__((unused)) __attribute__((pure)) __attribute__((warn_unused_result))
+static VVA_OKUNUSED VVA_PURE VVA_CHECKRESULT
 inline double neumsum3D (double v0, const double v1, const double v2) {
   // first iteration
   const double t = v0+v1;
@@ -361,12 +361,12 @@ public:
 
   inline void reset () { currValue = 0.0f; }
 
-  __attribute__((warn_unused_result)) inline float getFadeoff () const { return fadeoff; }
+  VVA_CHECKRESULT inline float getFadeoff () const { return fadeoff; }
   inline void setFadeoff (float aFadeoff) { fadeoff = aFadeoff; }
 
   inline void update (float newValue) { currValue = fadeoff*newValue+(1.0f-fadeoff)*currValue; }
 
-  __attribute__((warn_unused_result)) inline float getValue () const { return currValue; }
+  VVA_CHECKRESULT inline float getValue () const { return currValue; }
   inline void setValue (float aValue) { currValue = aValue; }
 };
 
@@ -378,7 +378,7 @@ public:
 //         http://www.stereopsis.com/sree/fpu2006.html
 //
 // xs_CRoundToInt:  Round toward nearest, but ties round toward even (just like FISTP)
-static __attribute__((warn_unused_result)) inline vint32 vxs_CRoundToInt (const double val, const double dmr) {
+static VVA_CHECKRESULT inline vint32 vxs_CRoundToInt (const double val, const double dmr) {
   union vxs_doubleints_ {
     double val;
     vuint32 ival[2];
@@ -393,7 +393,7 @@ static __attribute__((warn_unused_result)) inline vint32 vxs_CRoundToInt (const 
 }
 
 
-static inline __attribute__((warn_unused_result)) vint32 vxs_ToFix16_16 (const double val) {
+static inline VVA_CHECKRESULT vint32 vxs_ToFix16_16 (const double val) {
   static const double vxs_doublemagic_ = double(6755399441055744.0); //2^52*1.5, uses limited precisicion to floor
   return vxs_CRoundToInt(val, vxs_doublemagic_/(1<<16));
 }

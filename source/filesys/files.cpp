@@ -910,11 +910,11 @@ static void wpkAppend (VStr fname, bool asystem) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-__attribute__((unused)) static int cmpfuncCI (const void *v1, const void *v2) {
+VVA_OKUNUSED static int cmpfuncCI (const void *v1, const void *v2) {
   return ((VStr*)v1)->ICmp((*(VStr*)v2));
 }
 
-static int cmpfuncCINoExt (const void *v1, const void *v2) {
+VVA_OKUNUSED static int cmpfuncCINoExt (const void *v1, const void *v2) {
   return ((VStr *)v1)->StripExtension().ICmp(((VStr *)v2)->StripExtension());
 }
 

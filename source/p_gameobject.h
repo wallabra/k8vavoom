@@ -388,20 +388,20 @@ struct sec_plane_t : public TPlane {
   //sector_t *parent; // can be `nullptr`, has meaning only for `SPF_ALLOCATED` planes
   //vuint32 exflags; // SPF_EX_xxx
 
-  inline __attribute__((warn_unused_result)) float GetPointZClamped (float x, float y) const {
+  inline VVA_CHECKRESULT float GetPointZClamped (float x, float y) const {
     return clampval(GetPointZ(x, y), minz, maxz);
   }
 
-  inline __attribute__((warn_unused_result)) float GetPointZRevClamped (float x, float y) const {
+  inline VVA_CHECKRESULT float GetPointZRevClamped (float x, float y) const {
     //FIXME: k8: should min and max be switched here?
     return clampval(GetPointZRev(x, y), minz, maxz);
   }
 
-  inline __attribute__((warn_unused_result)) float GetPointZClamped (const TVec &v) const {
+  inline VVA_CHECKRESULT float GetPointZClamped (const TVec &v) const {
     return GetPointZClamped(v.x, v.y);
   }
 
-  inline __attribute__((warn_unused_result)) float GetPointZRevClamped (const TVec &v) const {
+  inline VVA_CHECKRESULT float GetPointZRevClamped (const TVec &v) const {
     return GetPointZRevClamped(v.x, v.y);
   }
 };
@@ -455,16 +455,16 @@ struct TSecPlaneRef {
 
   // get z of point with given x and y coords
   // don't try to use it on a vertical plane
-  inline __attribute__((warn_unused_result)) float GetPointZ (float x, float y) const {
+  inline VVA_CHECKRESULT float GetPointZ (float x, float y) const {
     return (!flipped ? splane->GetPointZ(x, y) : splane->GetPointZRev(x, y));
   }
 
-  inline __attribute__((warn_unused_result)) float GetPointZClamped (float x, float y) const {
+  inline VVA_CHECKRESULT float GetPointZClamped (float x, float y) const {
     //return clampval((!flipped ? splane->GetPointZ(x, y) : splane->GetPointZRev(x, y)), splane->minz, splane->maxz);
     return (!flipped ? splane->GetPointZClamped(x, y) : splane->GetPointZRevClamped(x, y));
   }
 
-  inline __attribute__((warn_unused_result)) float DotPoint (const TVec &point) const {
+  inline VVA_CHECKRESULT float DotPoint (const TVec &point) const {
     if (!flipped) {
       return DotProduct(point, splane->normal);
     } else {
@@ -473,7 +473,7 @@ struct TSecPlaneRef {
     }
   }
 
-  inline __attribute__((warn_unused_result)) float DotPointDist (const TVec &point) const {
+  inline VVA_CHECKRESULT float DotPointDist (const TVec &point) const {
     if (!flipped) {
       return DotProduct(point, splane->normal)-splane->dist;
     } else {
@@ -482,56 +482,56 @@ struct TSecPlaneRef {
     }
   }
 
-  inline __attribute__((warn_unused_result)) float GetPointZ (const TVec &v) const {
+  inline VVA_CHECKRESULT float GetPointZ (const TVec &v) const {
     return GetPointZ(v.x, v.y);
   }
 
-  inline __attribute__((warn_unused_result)) float GetPointZClamped (const TVec &v) const {
+  inline VVA_CHECKRESULT float GetPointZClamped (const TVec &v) const {
     return GetPointZClamped(v.x, v.y);
   }
 
   // returns side 0 (front) or 1 (back, or on plane)
-  inline __attribute__((warn_unused_result)) int PointOnSide (const TVec &point) const {
+  inline VVA_CHECKRESULT int PointOnSide (const TVec &point) const {
     return (DotPointDist(point) <= 0.0f);
   }
 
   // returns side 0 (front) or 1 (back, or on plane)
-  inline __attribute__((warn_unused_result)) int PointOnSideThreshold (const TVec &point) const {
+  inline VVA_CHECKRESULT int PointOnSideThreshold (const TVec &point) const {
     return (DotPointDist(point) < 0.1f);
   }
 
   // returns side 0 (front, or on plane) or 1 (back)
   // "fri" means "front inclusive"
-  inline __attribute__((warn_unused_result)) int PointOnSideFri (const TVec &point) const {
+  inline VVA_CHECKRESULT int PointOnSideFri (const TVec &point) const {
     return (DotPointDist(point) < 0.0f);
   }
 
   // returns side 0 (front), 1 (back), or 2 (on)
   // used in line tracing (only)
-  inline __attribute__((warn_unused_result)) int PointOnSide2 (const TVec &point) const {
+  inline VVA_CHECKRESULT int PointOnSide2 (const TVec &point) const {
     const float dot = DotPointDist(point);
     return (dot < -0.1f ? 1 : dot > 0.1f ? 0 : 2);
   }
 
   // returns side 0 (front), 1 (back)
   // if at least some part of the sphere is on a front side, it means "front"
-  inline __attribute__((warn_unused_result)) int SphereOnSide (const TVec &center, float radius) const {
+  inline VVA_CHECKRESULT int SphereOnSide (const TVec &center, float radius) const {
     return (DotPointDist(center) <= -radius);
   }
 
-  inline __attribute__((warn_unused_result)) bool SphereTouches (const TVec &center, float radius) const {
+  inline VVA_CHECKRESULT bool SphereTouches (const TVec &center, float radius) const {
     return (fabsf(DotPointDist(center)) < radius);
   }
 
   // returns side 0 (front), 1 (back), or 2 (collides)
-  inline __attribute__((warn_unused_result)) int SphereOnSide2 (const TVec &center, float radius) const {
+  inline VVA_CHECKRESULT int SphereOnSide2 (const TVec &center, float radius) const {
     const float d = DotPointDist(center);
     return (d < -radius ? 1 : d > radius ? 0 : 2);
   }
 
   // distance from point to plane
   // plane must be normalized
-  inline __attribute__((warn_unused_result)) float Distance (const TVec &p) const {
+  inline VVA_CHECKRESULT float Distance (const TVec &p) const {
     //return (cast(double)normal.x*p.x+cast(double)normal.y*p.y+cast(double)normal.z*cast(double)p.z)/normal.dbllength;
     //return VSUM3(normal.x*p.x, normal.y*p.y, normal.z*p.z); // plane normal has length 1
     return DotPointDist(p);

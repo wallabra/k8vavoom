@@ -46,7 +46,7 @@ static VCvarI r_decal_gore_onetype_max("r_decal_gore_onetype_max", "8", "Maximum
 //  lif2str
 //
 //==========================================================================
-static __attribute__((unused)) const char *lif2str (int flags) {
+static VVA_OKUNUSED const char *lif2str (int flags) {
   static char buf[128];
   char *pp = buf;
   *pp++ = '<';

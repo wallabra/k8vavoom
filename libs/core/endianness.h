@@ -67,23 +67,23 @@ float BigFloat (float x);
 
 #ifdef VAVOOM_LITTLE_ENDIAN
 
-static __attribute__((unused)) inline vint16 LittleShort (vint16 x) { return x; }
-static __attribute__((unused)) inline vint32 LittleLong (vint32 x) { return x; }
-static __attribute__((unused)) inline float LittleFloat (float x) { return x; }
+static VVA_OKUNUSED inline vint16 LittleShort (vint16 x) { return x; }
+static VVA_OKUNUSED inline vint32 LittleLong (vint32 x) { return x; }
+static VVA_OKUNUSED inline float LittleFloat (float x) { return x; }
 
-static __attribute__((unused)) inline vint16 BigShort (vint16 x) { return ((vuint16)x>>8)|((vuint16)x<<8); }
-static __attribute__((unused)) inline vint32 BigLong (vint32 x) { return ((vuint32)x>>24)|(((vuint32)x>>8)&0xff00U)|(((vuint32)x<<8)&0xff0000U)|((vuint32)x<<24); }
-static __attribute__((unused)) inline float BigFloat (float x) { union { float f; vint32 l; } a; a.f = x; a.l = BigLong(a.l); return a.f; }
+static VVA_OKUNUSED inline vint16 BigShort (vint16 x) { return ((vuint16)x>>8)|((vuint16)x<<8); }
+static VVA_OKUNUSED inline vint32 BigLong (vint32 x) { return ((vuint32)x>>24)|(((vuint32)x>>8)&0xff00U)|(((vuint32)x<<8)&0xff0000U)|((vuint32)x<<24); }
+static VVA_OKUNUSED inline float BigFloat (float x) { union { float f; vint32 l; } a; a.f = x; a.l = BigLong(a.l); return a.f; }
 
 #else
 
-static __attribute__((unused)) inline vint16 BigShort (vint16 x) { return x; }
-static __attribute__((unused)) inline vint32 BigLong (vint32 x) { return x; }
-static __attribute__((unused)) inline float BigFloat (float x) { return x; }
+static VVA_OKUNUSED inline vint16 BigShort (vint16 x) { return x; }
+static VVA_OKUNUSED inline vint32 BigLong (vint32 x) { return x; }
+static VVA_OKUNUSED inline float BigFloat (float x) { return x; }
 
-static __attribute__((unused)) inline vint16 LittleShort (vint16 x) { return ((vuint16)x>>8)|((vuint16)x<<8); }
-static __attribute__((unused)) inline vint32 LittleLong (vint32 x) { return ((vuint32)x>>24)|(((vuint32)x>>8)&0xff00U)|(((vuint32)x<<8)&0xff0000U)|((vuint32)x<<24); }
-static __attribute__((unused)) inline float LittleFloat (float x) { union { float f; vint32 l; } a; a.f = x; a.l = LittleLong(a.l); return a.f; }
+static VVA_OKUNUSED inline vint16 LittleShort (vint16 x) { return ((vuint16)x>>8)|((vuint16)x<<8); }
+static VVA_OKUNUSED inline vint32 LittleLong (vint32 x) { return ((vuint32)x>>24)|(((vuint32)x>>8)&0xff00U)|(((vuint32)x<<8)&0xff0000U)|((vuint32)x<<24); }
+static VVA_OKUNUSED inline float LittleFloat (float x) { union { float f; vint32 l; } a; a.f = x; a.l = LittleLong(a.l); return a.f; }
 
 #endif
 

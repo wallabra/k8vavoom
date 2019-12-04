@@ -137,7 +137,7 @@ static void ParseMapInfo (VScriptParser *sc, int milumpnum);
 // ////////////////////////////////////////////////////////////////////////// //
 static char miWarningBuf[16384];
 
-__attribute__((unused)) __attribute__((format(printf, 2, 3))) static void miWarning (VScriptParser *sc, const char *fmt, ...) {
+VVA_OKUNUSED __attribute__((format(printf, 2, 3))) static void miWarning (VScriptParser *sc, const char *fmt, ...) {
   va_list argptr;
   static char miWarningBuf[16384];
   va_start(argptr, fmt);
@@ -151,7 +151,7 @@ __attribute__((unused)) __attribute__((format(printf, 2, 3))) static void miWarn
 }
 
 
-__attribute__((unused)) __attribute__((format(printf, 2, 3))) static void miWarning (const TLocation &loc, const char *fmt, ...) {
+VVA_OKUNUSED __attribute__((format(printf, 2, 3))) static void miWarning (const TLocation &loc, const char *fmt, ...) {
   va_list argptr;
   va_start(argptr, fmt);
   vsnprintf(miWarningBuf, sizeof(miWarningBuf), fmt, argptr);

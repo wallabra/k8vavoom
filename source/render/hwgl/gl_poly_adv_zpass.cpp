@@ -3,7 +3,7 @@
 //  R_GlobalPointToLocal
 //
 //==========================================================================
-static __attribute__((unused)) inline TVec R_GlobalPointToLocal (const VMatrix4 &modelMatrix, const TVec &v) {
+static VVA_OKUNUSED inline TVec R_GlobalPointToLocal (const VMatrix4 &modelMatrix, const TVec &v) {
   TVec tmp = v-modelMatrix.GetCol(3);
   return modelMatrix.RotateVector(tmp);
 }
@@ -14,7 +14,7 @@ static __attribute__((unused)) inline TVec R_GlobalPointToLocal (const VMatrix4 
 //  R_LightProjectionMatrix
 //
 //==========================================================================
-static __attribute__((unused)) void R_LightProjectionMatrix (VMatrix4 &mat, const TVec &origin, const TPlane &rearPlane) {
+static VVA_OKUNUSED void R_LightProjectionMatrix (VMatrix4 &mat, const TVec &origin, const TPlane &rearPlane) {
   float lv[4]; // TVec4
 
   // calculate the homogenious light vector
@@ -57,7 +57,7 @@ static __attribute__((unused)) void R_LightProjectionMatrix (VMatrix4 &mat, cons
 //  R_ProjectPointsToPlane
 //
 //==========================================================================
-static __attribute__((unused)) void R_ProjectPointsToPlane (TVec *dest, const TVec *src, unsigned vcount,
+static VVA_OKUNUSED void R_ProjectPointsToPlane (TVec *dest, const TVec *src, unsigned vcount,
                                     VMatrix4 &mmat, const TVec &LightPos, const TPlane &destPlane)
 {
   VMatrix4 mat;

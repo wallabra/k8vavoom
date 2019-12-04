@@ -31,7 +31,7 @@ struct BJPRNGCtx {
 };
 
 #define bjprng_rot(x,k) (((x)<<(k))|((x)>>(32-(k))))
-static inline __attribute__((unused)) __attribute__((warn_unused_result))
+static inline VVA_OKUNUSED VVA_CHECKRESULT
 vuint32 bjprng_ranval (BJPRNGCtx *x) {
   vuint32 e = x->a-bjprng_rot(x->b, 27);
   x->a = x->b^bjprng_rot(x->c, 17);
@@ -41,7 +41,7 @@ vuint32 bjprng_ranval (BJPRNGCtx *x) {
   return x->d;
 }
 
-static inline __attribute__((unused)) void bjprng_raninit (BJPRNGCtx *x, vuint32 seed) {
+static inline VVA_OKUNUSED void bjprng_raninit (BJPRNGCtx *x, vuint32 seed) {
   x->a = 0xf1ea5eed;
   x->b = x->c = x->d = seed;
   for (unsigned i = 0; i < 32; ++i) {
@@ -57,7 +57,7 @@ static inline __attribute__((unused)) void bjprng_raninit (BJPRNGCtx *x, vuint32
 
 // ////////////////////////////////////////////////////////////////////////// //
 // SplitMix; mostly used to generate 64-bit seeds
-static __attribute__((unused)) inline vuint64 splitmix64_next (vuint64 *state) {
+static VVA_OKUNUSED inline vuint64 splitmix64_next (vuint64 *state) {
   vuint64 result = *state;
   *state = result+(vuint64)0x9E3779B97f4A7C15ULL;
   result = (result^(result>>30))*(vuint64)0xBF58476D1CE4E5B9ULL;
@@ -65,7 +65,7 @@ static __attribute__((unused)) inline vuint64 splitmix64_next (vuint64 *state) {
   return result^(result>>31);
 }
 
-static __attribute__((unused)) inline void splitmix64_seedU32 (vuint64 *state, vuint32 seed) {
+static VVA_OKUNUSED inline void splitmix64_seedU32 (vuint64 *state, vuint32 seed) {
   // hashU32
   vuint32 res = seed;
   res -= (res<<6);
@@ -104,19 +104,19 @@ typedef vuint64 PCG3264_Ctx;
 #endif
 
 
-static __attribute__((unused)) inline void pcg3264_init (PCG3264_Ctx *rng) {
+static VVA_OKUNUSED inline void pcg3264_init (PCG3264_Ctx *rng) {
   *rng/*->state*/ = 0x853c49e6748fea9bULL;
   /*rng->inc = 0xda3e39cb94b95bdbULL;*/
 }
 
-static __attribute__((unused)) void pcg3264_seedU32 (PCG3264_Ctx *rng, vuint32 seed) {
+static VVA_OKUNUSED void pcg3264_seedU32 (PCG3264_Ctx *rng, vuint32 seed) {
   vuint64 smx;
   splitmix64_seedU32(&smx, seed);
   *rng/*->state*/ = splitmix64_next(&smx);
   /*rng->inc = splitmix64(&smx)|1u;*/
 }
 
-static __attribute__((unused)) inline vuint32 pcg3264_next (PCG3264_Ctx *rng) {
+static VVA_OKUNUSED inline vuint32 pcg3264_next (PCG3264_Ctx *rng) {
   const vuint64 oldstate = *rng/*->state*/;
   // advance internal state
   *rng/*->state*/ = oldstate*(vuint64)6364136223846793005ULL+(/*rng->inc|1u*/(vuint64)1442695040888963407ULL);
@@ -136,7 +136,7 @@ static __attribute__((unused)) inline vuint32 pcg3264_next (PCG3264_Ctx *rng) {
 //**************************************************************************
 typedef vuint32 PCG32_Ctx;
 
-static __attribute__((unused)) inline void pcg32_seedU32 (PCG32_Ctx *rng, vuint32 seed) {
+static VVA_OKUNUSED inline void pcg32_seedU32 (PCG32_Ctx *rng, vuint32 seed) {
   vuint64 smx;
   splitmix64_seedU32(&smx, seed);
   const vuint32 incr = (vuint32)splitmix64_next(&smx)|1u; // why not?
@@ -144,11 +144,11 @@ static __attribute__((unused)) inline void pcg32_seedU32 (PCG32_Ctx *rng, vuint3
   *rng = (*rng)*747796405U+incr;
 }
 
-static __attribute__((unused)) inline void pcg32_init (PCG32_Ctx *rng) {
+static VVA_OKUNUSED inline void pcg32_init (PCG32_Ctx *rng) {
   pcg32_seedU32(rng, 0x29au);
 }
 
-static __attribute__((unused)) inline vuint32 pcg32_next (PCG32_Ctx *rng) {
+static VVA_OKUNUSED inline vuint32 pcg32_next (PCG32_Ctx *rng) {
   const vuint32 oldstate = *rng;
   *rng = oldstate*747796405U+2891336453U; //pcg_oneseq_32_step_r(rng);
   //return (vuint16)(((oldstate>>11u)^oldstate)>>((oldstate>>30u)+11u)); //pcg_output_xsh_rs_32_16(oldstate);
@@ -202,7 +202,7 @@ typedef struct {
 }
 
 
-static __attribute__((unused)) void ISAAC_nextblock (ISAAC_Ctx *ctx) {
+static VVA_OKUNUSED void ISAAC_nextblock (ISAAC_Ctx *ctx) {
   uint32_t x, y, *m, *m2, *mend;
   uint32_t *mm = ctx->randmem;
   uint32_t *r = ctx->randrsl;
@@ -226,7 +226,7 @@ static __attribute__((unused)) void ISAAC_nextblock (ISAAC_Ctx *ctx) {
 
 
 // if (flag==TRUE), then use the contents of randrsl[0..ISAAC_RAND_SIZE-1] to initialize mm[]
-static __attribute__((unused)) void ISAAC_init (ISAAC_Ctx *ctx, unsigned flag) {
+static VVA_OKUNUSED void ISAAC_init (ISAAC_Ctx *ctx, unsigned flag) {
   uint32_t a, b, c, d, e, f, g, h;
   uint32_t *m;
   uint32_t *r;
@@ -282,7 +282,7 @@ static __attribute__((unused)) void ISAAC_init (ISAAC_Ctx *ctx, unsigned flag) {
 
 
 // call to retrieve a single 32-bit random value
-static __attribute__((unused)) inline uint32_t ISAAC_next (ISAAC_Ctx *ctx) {
+static VVA_OKUNUSED inline uint32_t ISAAC_next (ISAAC_Ctx *ctx) {
   return
    ctx->randcnt-- ?
      (uint32_t)ctx->randrsl[ctx->randcnt] :
@@ -298,15 +298,15 @@ extern PCG3264_Ctx g_pcg3264_ctx;
 void RandomInit (); // call this to seed with random seed
 
 
-static inline __attribute__((unused)) __attribute__((warn_unused_result))
+static inline VVA_OKUNUSED VVA_CHECKRESULT
 //vuint32 GenRandomU31 () { return bjprng_ranval(&g_bjprng_ctx)&0x7fffffffu; }
 vuint32 GenRandomU31 () { return pcg3264_next(&g_pcg3264_ctx)&0x7fffffffu; }
 
 
-__attribute__((warn_unused_result)) float Random (); // [0..1)
-__attribute__((warn_unused_result)) float RandomFull (); // [0..1]
-__attribute__((warn_unused_result)) float RandomBetween (float minv, float maxv); // [minv..maxv]
+VVA_CHECKRESULT float Random (); // [0..1)
+VVA_CHECKRESULT float RandomFull (); // [0..1]
+VVA_CHECKRESULT float RandomBetween (float minv, float maxv); // [minv..maxv]
 // [0..255]
-static inline __attribute__((unused)) __attribute__((warn_unused_result))
+static inline VVA_OKUNUSED VVA_CHECKRESULT
 //vuint8 P_Random () { return bjprng_ranval(&g_bjprng_ctx)&0xff; }
 vuint8 P_Random () { return pcg3264_next(&g_pcg3264_ctx)&0xff; }

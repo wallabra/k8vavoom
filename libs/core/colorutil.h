@@ -40,7 +40,7 @@ void M_HsvToRgb (float h, float s, float v, float &r, float &g, float &b);
 //  see https://www.compuphase.com/cmetric.htm
 //
 //==========================================================================
-static inline __attribute__((unused)) __attribute__((const)) __attribute__((warn_unused_result))
+static inline VVA_OKUNUSED VVA_CONST VVA_CHECKRESULT
 vint32 rgbDistanceSquared (vuint8 r0, vuint8 g0, vuint8 b0, vuint8 r1, vuint8 g1, vuint8 b1) {
   const vint32 rmean = ((vint32)r0+(vint32)r1)/2;
   const vint32 r = (vint32)r0-(vint32)r1;
@@ -57,7 +57,7 @@ vint32 rgbDistanceSquared (vuint8 r0, vuint8 g0, vuint8 b0, vuint8 r1, vuint8 g1
 //  inverse of sRGB "gamma" function. (approx 2.2)
 //
 //==========================================================================
-static inline __attribute__((unused)) __attribute__((warn_unused_result))
+static inline VVA_OKUNUSED VVA_CHECKRESULT
 double sRGBungamma (int ic) {
   const double c = ic/255.0;
   if (c <= 0.04045) return c/12.92;
@@ -72,7 +72,7 @@ double sRGBungamma (int ic) {
 //  sRGB "gamma" function (approx 2.2)
 //
 //==========================================================================
-static inline __attribute__((unused)) __attribute__((warn_unused_result))
+static inline VVA_OKUNUSED VVA_CHECKRESULT
 int sRGBgamma (double v) {
   if (v <= 0.0031308) v *= 12.92; else v = 1.055*pow(v, 1.0/2.4)-0.055;
   return int(v*255+0.5);
@@ -84,7 +84,7 @@ int sRGBgamma (double v) {
 //  colorIntensity
 //
 //==========================================================================
-static inline __attribute__((unused)) __attribute__((warn_unused_result))
+static inline VVA_OKUNUSED VVA_CHECKRESULT
 vuint8 colorIntensity (int r, int g, int b) {
   // sRGB luminance(Y) values
   const double rY = 0.212655;

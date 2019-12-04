@@ -490,14 +490,14 @@ extern bool run_open_scripts;
 //  inlines
 //
 //==========================================================================
-static inline __attribute__((unused)) int SV_GetPlayerNum (VBasePlayer *player) {
+static inline VVA_OKUNUSED int SV_GetPlayerNum (VBasePlayer *player) {
   for (int i = 0; i < MAXPLAYERS; ++i) {
     if (player == GPlayersBase[i]) return i;
   }
   return 0;
 }
 
-static inline __attribute__((unused)) VBasePlayer *SV_GetPlayerByNum (int pidx) {
+static inline VVA_OKUNUSED VBasePlayer *SV_GetPlayerByNum (int pidx) {
   if (pidx < 0 || pidx >= MAXPLAYERS) return nullptr;
   return GPlayersBase[pidx];
 }

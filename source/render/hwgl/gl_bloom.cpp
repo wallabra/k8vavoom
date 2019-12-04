@@ -45,7 +45,7 @@ VCvarB r_bloom_id0_effect("r_bloom_id0_effect", false, "Special bloom effect for
 //  Q_log2
 //
 //==========================================================================
-static __attribute__((unused)) int Q_log2 (int val) {
+static VVA_OKUNUSED int Q_log2 (int val) {
   int answer = 0;
   while (val >>= 1) ++answer;
   return answer;
@@ -57,7 +57,7 @@ static __attribute__((unused)) int Q_log2 (int val) {
 //  bloomDebugClear
 //
 //==========================================================================
-static __attribute__((unused)) void bloomDebugClear () {
+static VVA_OKUNUSED void bloomDebugClear () {
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);

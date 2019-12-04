@@ -265,7 +265,7 @@ void PerpendicularVector (TVec &dst, const TVec &src) noexcept {
 //  RotateVectorAroundVector
 //
 //==========================================================================
-__attribute__((warn_unused_result)) TVec RotateVectorAroundVector (const TVec &Vector, const TVec &Axis, float Angle) noexcept {
+VVA_CHECKRESULT TVec RotateVectorAroundVector (const TVec &Vector, const TVec &Axis, float Angle) noexcept {
   VRotMatrix M(Axis, Angle);
   return Vector*M;
 }

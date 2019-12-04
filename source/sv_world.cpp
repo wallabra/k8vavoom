@@ -218,7 +218,7 @@ bool P_GetMidTexturePosition (const line_t *linedef, int sideno, float *ptextop,
 //  DumpRegion
 //
 //==========================================================================
-static __attribute__((unused)) void DumpRegion (const sec_region_t *inregion) {
+static VVA_OKUNUSED void DumpRegion (const sec_region_t *inregion) {
   GCon->Logf(NAME_Debug, "  %p: floor=(%g,%g,%g:%g); (%g : %g), flags=0x%04x; ceil=(%g,%g,%g:%g); (%g : %g), flags=0x%04x; eline=%d; rflags=0x%02x",
     inregion,
     inregion->efloor.GetNormal().x,
@@ -243,7 +243,7 @@ static __attribute__((unused)) void DumpRegion (const sec_region_t *inregion) {
 //  DumpOpening
 //
 //==========================================================================
-static __attribute__((unused)) void DumpOpening (const opening_t *op) {
+static VVA_OKUNUSED void DumpOpening (const opening_t *op) {
   GCon->Logf(NAME_Debug, "  %p: floor=%g (%g,%g,%g:%g); ceil=%g (%g,%g,%g:%g); lowfloor=%g; range=%g",
     op,
     op->bottom, op->efloor.GetNormal().x, op->efloor.GetNormal().y, op->efloor.GetNormal().z, op->efloor.GetDist(),
@@ -257,7 +257,7 @@ static __attribute__((unused)) void DumpOpening (const opening_t *op) {
 //  DumpOpPlanes
 //
 //==========================================================================
-static __attribute__((unused)) void DumpOpPlanes (TArray<opening_t> &list) {
+static VVA_OKUNUSED void DumpOpPlanes (TArray<opening_t> &list) {
   GCon->Logf(NAME_Debug, " ::: count=%d :::", list.length());
   for (int f = 0; f < list.length(); ++f) DumpOpening(&list[f]);
 }

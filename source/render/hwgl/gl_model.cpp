@@ -39,7 +39,7 @@ static VCvarB gl_dbg_adv_render_fog_models("gl_dbg_adv_render_fog_models", true,
 //  dumpShaderLocs
 //
 //==========================================================================
-static __attribute__((unused)) void dumpShaderLocs (VOpenGLDrawer *drawer, GLuint prog) {
+static VVA_OKUNUSED void dumpShaderLocs (VOpenGLDrawer *drawer, GLuint prog) {
   char name[1024];
   GLint unicount;
   GLint size;

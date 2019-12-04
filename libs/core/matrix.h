@@ -325,14 +325,14 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static inline __attribute__((unused)) TVec operator * (const VMatrix4 &mt, const TVec &v) noexcept {
+static inline VVA_OKUNUSED TVec operator * (const VMatrix4 &mt, const TVec &v) noexcept {
   return TVec(
     VSUM4(mt.m[0][0]*v.x, mt.m[1][0]*v.y, mt.m[2][0]*v.z, mt.m[3][0]),
     VSUM4(mt.m[0][1]*v.x, mt.m[1][1]*v.y, mt.m[2][1]*v.z, mt.m[3][1]),
     VSUM4(mt.m[0][2]*v.x, mt.m[1][2]*v.y, mt.m[2][2]*v.z, mt.m[3][2]));
 }
 
-static inline __attribute__((unused)) TVec operator * (const TVec &v, const VMatrix4 &mt) noexcept {
+static inline VVA_OKUNUSED TVec operator * (const TVec &v, const VMatrix4 &mt) noexcept {
   return TVec(
     VSUM4(mt.m[0][0]*v.x, mt.m[0][1]*v.y, mt.m[0][2]*v.z, mt.m[0][3]),
     VSUM4(mt.m[1][0]*v.x, mt.m[1][1]*v.y, mt.m[1][2]*v.z, mt.m[1][3]),

@@ -51,10 +51,10 @@ public:
 //extern FOutputDevice *GLogHostError;
 
 
-__attribute__((warn_unused_result)) int superatoi (const char *s) noexcept;
+VVA_CHECKRESULT int superatoi (const char *s) noexcept;
 
-//__attribute__((warn_unused_result)) int ParseHex (const char *Str);
-__attribute__((warn_unused_result)) vuint32 M_LookupColorName (const char *Name); // returns 0 if not found (otherwise high bit is set)
+//VVA_CHECKRESULT int ParseHex (const char *Str);
+VVA_CHECKRESULT vuint32 M_LookupColorName (const char *Name); // returns 0 if not found (otherwise high bit is set)
 // this returns color with high byte set to `0xff` (and black color for unknown names)
 // but when `retZeroIfInvalid` is `true`, it returns `0` for unknown color
-__attribute__((warn_unused_result)) vuint32 M_ParseColor (const char *Name, bool retZeroIfInvalid=false);
+VVA_CHECKRESULT vuint32 M_ParseColor (const char *Name, bool retZeroIfInvalid=false);

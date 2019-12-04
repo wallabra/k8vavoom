@@ -153,9 +153,9 @@ struct MD3Surface {
 };
 
 
-static inline __attribute__((unused)) TVec md3vert (const MD3Vertex *v) { return TVec(v->x/64.0f, v->y/64.0f, v->z/64.0f); }
+static inline VVA_OKUNUSED TVec md3vert (const MD3Vertex *v) { return TVec(v->x/64.0f, v->y/64.0f, v->z/64.0f); }
 
-static inline __attribute__((unused)) TVec md3vertNormal (const MD3Vertex *v) {
+static inline VVA_OKUNUSED TVec md3vertNormal (const MD3Vertex *v) {
   const float lat = ((v->normal>>8)&0xff)*(2*M_PI)/255.0f;
   const float lng = (v->normal&0xff)*(2*M_PI)/255.0f;
   return TVec(cosf(lat)*sinf(lng), sinf(lat)*sinf(lng), cosf(lng));

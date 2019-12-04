@@ -48,8 +48,8 @@ public:
 
 static_assert(sizeof(VTextureID) == sizeof(vint32), "invalid VTextureID size");
 
-static inline __attribute__((unused)) VStream &operator << (VStream &strm, const VTextureID &tid) { tid.Serialise(strm); return strm; }
-static inline __attribute__((unused)) VStream &operator << (VStream &strm, VTextureID &tid) { tid.Serialise(strm); return strm; }
+static inline VVA_OKUNUSED VStream &operator << (VStream &strm, const VTextureID &tid) { tid.Serialise(strm); return strm; }
+static inline VVA_OKUNUSED VStream &operator << (VStream &strm, VTextureID &tid) { tid.Serialise(strm); return strm; }
 
 
 #endif

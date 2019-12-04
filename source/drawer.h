@@ -563,8 +563,8 @@ void R_LdrMsgShow (const char *msg, int clr=CR_TAN);
 extern int R_LdrMsgColorMain;
 extern int R_LdrMsgColorSecondary;
 
-static inline __attribute__((unused)) void R_LdrMsgShowMain (const char *msg) { R_LdrMsgShow(msg, R_LdrMsgColorMain); }
-static inline __attribute__((unused)) void R_LdrMsgShowSecondary (const char *msg) { R_LdrMsgShow(msg, R_LdrMsgColorSecondary); }
+static inline VVA_OKUNUSED void R_LdrMsgShowMain (const char *msg) { R_LdrMsgShow(msg, R_LdrMsgColorMain); }
+static inline VVA_OKUNUSED void R_LdrMsgShowSecondary (const char *msg) { R_LdrMsgShow(msg, R_LdrMsgColorSecondary); }
 
 
 #endif

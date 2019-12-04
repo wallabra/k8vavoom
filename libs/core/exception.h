@@ -97,7 +97,7 @@ void Sys_Error (const char *, ...) noexcept __attribute__((noreturn, format(prin
 extern void (*SysErrorCB) (const char *msg) noexcept;
 
 //const char *SkipPathPartCStr (const char *s);
-constexpr inline __attribute__((pure)) const char *SkipPathPartCStr (const char *s) noexcept {
+constexpr inline VVA_PURE const char *SkipPathPartCStr (const char *s) noexcept {
   const char *lastSlash = nullptr;
   for (const char *t = s; *t; ++t) {
     if (*t == '/') lastSlash = t+1;

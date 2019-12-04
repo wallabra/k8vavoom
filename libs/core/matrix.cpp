@@ -62,7 +62,7 @@ static inline bool glhProjectf (const TVec &point, const VMatrix4 &modelview, co
 //  glhProjectfZOld
 //
 //==========================================================================
-static inline __attribute__((unused)) float glhProjectfZOld (const TVec &point, const float zofs, const VMatrix4 &modelview, const VMatrix4 &projection) {
+static inline VVA_OKUNUSED float glhProjectfZOld (const TVec &point, const float zofs, const VMatrix4 &modelview, const VMatrix4 &projection) {
 #if 0
   TVec inworld = point;
   const float iww = modelview.Transform2InPlace(inworld);
@@ -89,7 +89,7 @@ static inline __attribute__((unused)) float glhProjectfZOld (const TVec &point, 
 //  glhProjectfZ
 //
 //==========================================================================
-static inline __attribute__((unused)) float glhProjectfZ (const TVec &point, const float zofs,
+static inline VVA_OKUNUSED float glhProjectfZ (const TVec &point, const float zofs,
                                                           const VMatrix4 &modelview, const VMatrix4 &projection,
                                                           bool hasClip, bool revZ)
 {

@@ -60,10 +60,10 @@ static_assert(__builtin_offsetof(TAVec, yaw) == __builtin_offsetof(TAVec, pitch)
 static_assert(__builtin_offsetof(TAVec, roll) == __builtin_offsetof(TAVec, yaw)+sizeof(float), "TAVec layout fail (1)");
 static_assert(sizeof(TAVec) == sizeof(float)*3, "TAVec layout fail (2)");
 
-static inline __attribute__((unused)) vuint32 GetTypeHash (const TAVec &v) noexcept { return joaatHashBuf(&v, 3*sizeof(float)); }
+static inline VVA_OKUNUSED vuint32 GetTypeHash (const TAVec &v) noexcept { return joaatHashBuf(&v, 3*sizeof(float)); }
 
-static __attribute__((unused)) inline bool operator == (const TAVec &v1, const TAVec &v2) noexcept { return (v1.pitch == v2.pitch && v1.yaw == v2.yaw && v1.roll == v2.roll); }
-static __attribute__((unused)) inline bool operator != (const TAVec &v1, const TAVec &v2) noexcept { return (v1.pitch != v2.pitch || v1.yaw != v2.yaw || v1.roll != v2.roll); }
+static VVA_OKUNUSED inline bool operator == (const TAVec &v1, const TAVec &v2) noexcept { return (v1.pitch == v2.pitch && v1.yaw == v2.yaw && v1.roll == v2.roll); }
+static VVA_OKUNUSED inline bool operator != (const TAVec &v1, const TAVec &v2) noexcept { return (v1.pitch != v2.pitch || v1.yaw != v2.yaw || v1.roll != v2.roll); }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -81,14 +81,14 @@ public:
   inline TVec (float Ax, float Ay, float Az=0.0f) noexcept : x(Ax), y(Ay), z(Az) {}
   inline TVec (const float f[3]) noexcept { x = f[0]; y = f[1]; z = f[2]; }
 
-  static inline __attribute__((warn_unused_result)) TVec Invalid () noexcept { return TVec(NAN, NAN, NAN); }
+  static inline VVA_CHECKRESULT TVec Invalid () noexcept { return TVec(NAN, NAN, NAN); }
 
-  inline __attribute__((warn_unused_result)) const float &operator [] (size_t i) const noexcept { vassert(i < 3); return (&x)[i]; }
-  inline __attribute__((warn_unused_result)) float &operator [] (size_t i) noexcept { vassert(i < 3); return (&x)[i]; }
+  inline VVA_CHECKRESULT const float &operator [] (size_t i) const noexcept { vassert(i < 3); return (&x)[i]; }
+  inline VVA_CHECKRESULT float &operator [] (size_t i) noexcept { vassert(i < 3); return (&x)[i]; }
 
-  inline __attribute__((warn_unused_result)) bool isValid () const noexcept { return (isFiniteF(x) && isFiniteF(y) && isFiniteF(z)); }
-  inline __attribute__((warn_unused_result)) bool isZero () const noexcept { return (x == 0.0f && y == 0.0f && z == 0.0f); }
-  inline __attribute__((warn_unused_result)) bool isZero2D () const noexcept { return (x == 0.0f && y == 0.0f); }
+  inline VVA_CHECKRESULT bool isValid () const noexcept { return (isFiniteF(x) && isFiniteF(y) && isFiniteF(z)); }
+  inline VVA_CHECKRESULT bool isZero () const noexcept { return (x == 0.0f && y == 0.0f && z == 0.0f); }
+  inline VVA_CHECKRESULT bool isZero2D () const noexcept { return (x == 0.0f && y == 0.0f); }
 
   inline TVec &operator += (const TVec &v) noexcept { x += v.x; y += v.y; z += v.z; return *this; }
   inline TVec &operator -= (const TVec &v) noexcept { x -= v.x; y -= v.y; z -= v.z; return *this; }
@@ -109,68 +109,68 @@ public:
   inline TVec operator - (void) const noexcept { return TVec(-x, -y, -z); }
 
 #ifdef USE_FAST_INVSQRT
-  inline __attribute__((warn_unused_result)) float invlength () const noexcept { return fastInvSqrtf(VSUM3(x*x, y*y, z*z)); }
-  inline __attribute__((warn_unused_result)) float invlength2D () const noexcept { return fastInvSqrtf(VSUM2(x*x, y*y)); }
+  inline VVA_CHECKRESULT float invlength () const noexcept { return fastInvSqrtf(VSUM3(x*x, y*y, z*z)); }
+  inline VVA_CHECKRESULT float invlength2D () const noexcept { return fastInvSqrtf(VSUM2(x*x, y*y)); }
 #else
-  inline __attribute__((warn_unused_result)) float invlength () const noexcept { return 1.0f/sqrtf(VSUM3(x*x, y*y, z*z)); }
-  inline __attribute__((warn_unused_result)) float invlength2D () const noexcept { return 1.0f/sqrtf(VSUM2(x*x, y*y)); }
+  inline VVA_CHECKRESULT float invlength () const noexcept { return 1.0f/sqrtf(VSUM3(x*x, y*y, z*z)); }
+  inline VVA_CHECKRESULT float invlength2D () const noexcept { return 1.0f/sqrtf(VSUM2(x*x, y*y)); }
 #endif
 
-  inline __attribute__((warn_unused_result)) float Length () const noexcept { return sqrtf(VSUM3(x*x, y*y, z*z)); }
-  inline __attribute__((warn_unused_result)) float length () const noexcept { return sqrtf(VSUM3(x*x, y*y, z*z)); }
+  inline VVA_CHECKRESULT float Length () const noexcept { return sqrtf(VSUM3(x*x, y*y, z*z)); }
+  inline VVA_CHECKRESULT float length () const noexcept { return sqrtf(VSUM3(x*x, y*y, z*z)); }
 
-  inline __attribute__((warn_unused_result)) float Length2D () const noexcept { return sqrtf(VSUM2(x*x, y*y)); }
-  inline __attribute__((warn_unused_result)) float length2D () const noexcept { return sqrtf(VSUM2(x*x, y*y)); }
+  inline VVA_CHECKRESULT float Length2D () const noexcept { return sqrtf(VSUM2(x*x, y*y)); }
+  inline VVA_CHECKRESULT float length2D () const noexcept { return sqrtf(VSUM2(x*x, y*y)); }
 
-  inline __attribute__((warn_unused_result)) float LengthSquared () const noexcept { return VSUM3(x*x, y*y, z*z); }
-  inline __attribute__((warn_unused_result)) float lengthSquared () const noexcept { return VSUM3(x*x, y*y, z*z); }
+  inline VVA_CHECKRESULT float LengthSquared () const noexcept { return VSUM3(x*x, y*y, z*z); }
+  inline VVA_CHECKRESULT float lengthSquared () const noexcept { return VSUM3(x*x, y*y, z*z); }
 
-  inline __attribute__((warn_unused_result)) float Length2DSquared () const noexcept { return VSUM2(x*x, y*y); }
-  inline __attribute__((warn_unused_result)) float length2DSquared () const noexcept { return VSUM2(x*x, y*y); }
+  inline VVA_CHECKRESULT float Length2DSquared () const noexcept { return VSUM2(x*x, y*y); }
+  inline VVA_CHECKRESULT float length2DSquared () const noexcept { return VSUM2(x*x, y*y); }
 
-  inline __attribute__((warn_unused_result)) float DistanceTo (const TVec &v) const noexcept { return sqrtf(VSUM3((x-v.x)*(x-v.x), (y-v.y)*(y-v.y), (z-v.z)*(z-v.z))); }
-  inline __attribute__((warn_unused_result)) float DistanceTo2D (const TVec &v) const noexcept { return sqrtf(VSUM2((x-v.x)*(x-v.x), (y-v.y)*(y-v.y))); }
+  inline VVA_CHECKRESULT float DistanceTo (const TVec &v) const noexcept { return sqrtf(VSUM3((x-v.x)*(x-v.x), (y-v.y)*(y-v.y), (z-v.z)*(z-v.z))); }
+  inline VVA_CHECKRESULT float DistanceTo2D (const TVec &v) const noexcept { return sqrtf(VSUM2((x-v.x)*(x-v.x), (y-v.y)*(y-v.y))); }
 
-  inline __attribute__((warn_unused_result)) float distanceTo (const TVec &v) const noexcept { return sqrtf(VSUM3((x-v.x)*(x-v.x), (y-v.y)*(y-v.y), (z-v.z)*(z-v.z))); }
-  inline __attribute__((warn_unused_result)) float distanceTo2D (const TVec &v) const noexcept { return sqrtf(VSUM2((x-v.x)*(x-v.x), (y-v.y)*(y-v.y))); }
+  inline VVA_CHECKRESULT float distanceTo (const TVec &v) const noexcept { return sqrtf(VSUM3((x-v.x)*(x-v.x), (y-v.y)*(y-v.y), (z-v.z)*(z-v.z))); }
+  inline VVA_CHECKRESULT float distanceTo2D (const TVec &v) const noexcept { return sqrtf(VSUM2((x-v.x)*(x-v.x), (y-v.y)*(y-v.y))); }
 
   inline void normaliseInPlace () noexcept { const float invlen = invlength(); x *= invlen; y *= invlen; z *= invlen; }
   inline void normalise2DInPlace () noexcept { const float invlen = invlength2D(); x *= invlen; y *= invlen; z = 0.0f; }
 
-  inline __attribute__((warn_unused_result)) TVec Normalised () const noexcept { const float invlen = invlength(); return TVec(x*invlen, y*invlen, z*invlen); }
-  inline __attribute__((warn_unused_result)) TVec normalised () const noexcept { const float invlen = invlength(); return TVec(x*invlen, y*invlen, z*invlen); }
+  inline VVA_CHECKRESULT TVec Normalised () const noexcept { const float invlen = invlength(); return TVec(x*invlen, y*invlen, z*invlen); }
+  inline VVA_CHECKRESULT TVec normalised () const noexcept { const float invlen = invlength(); return TVec(x*invlen, y*invlen, z*invlen); }
 
-  inline __attribute__((warn_unused_result)) TVec Normalised2D () const noexcept { const float invlen = invlength2D(); return TVec(x*invlen, y*invlen, 0.0f); }
-  inline __attribute__((warn_unused_result)) TVec normalised2D () const noexcept { const float invlen = invlength2D(); return TVec(x*invlen, y*invlen, 0.0f); }
+  inline VVA_CHECKRESULT TVec Normalised2D () const noexcept { const float invlen = invlength2D(); return TVec(x*invlen, y*invlen, 0.0f); }
+  inline VVA_CHECKRESULT TVec normalised2D () const noexcept { const float invlen = invlength2D(); return TVec(x*invlen, y*invlen, 0.0f); }
 
-  inline __attribute__((warn_unused_result)) float Dot (const TVec &v2) const noexcept { return VSUM3(x*v2.x, y*v2.y, z*v2.z); }
-  inline __attribute__((warn_unused_result)) float dot (const TVec &v2) const noexcept { return VSUM3(x*v2.x, y*v2.y, z*v2.z); }
+  inline VVA_CHECKRESULT float Dot (const TVec &v2) const noexcept { return VSUM3(x*v2.x, y*v2.y, z*v2.z); }
+  inline VVA_CHECKRESULT float dot (const TVec &v2) const noexcept { return VSUM3(x*v2.x, y*v2.y, z*v2.z); }
 
-  inline __attribute__((warn_unused_result)) float DotV2Neg (const TVec &v2) const noexcept { return VSUM3(x*(-v2.x), y*(-v2.y), z*(-v2.z)); }
-  inline __attribute__((warn_unused_result)) float dotv2neg (const TVec &v2) const noexcept { return VSUM3(x*(-v2.x), y*(-v2.y), z*(-v2.z)); }
+  inline VVA_CHECKRESULT float DotV2Neg (const TVec &v2) const noexcept { return VSUM3(x*(-v2.x), y*(-v2.y), z*(-v2.z)); }
+  inline VVA_CHECKRESULT float dotv2neg (const TVec &v2) const noexcept { return VSUM3(x*(-v2.x), y*(-v2.y), z*(-v2.z)); }
 
-  inline __attribute__((warn_unused_result)) float Dot2D (const TVec &v2) const noexcept { return VSUM2(x*v2.x, y*v2.y); }
-  inline __attribute__((warn_unused_result)) float dot2D (const TVec &v2) const noexcept { return VSUM2(x*v2.x, y*v2.y); }
+  inline VVA_CHECKRESULT float Dot2D (const TVec &v2) const noexcept { return VSUM2(x*v2.x, y*v2.y); }
+  inline VVA_CHECKRESULT float dot2D (const TVec &v2) const noexcept { return VSUM2(x*v2.x, y*v2.y); }
 
-  inline __attribute__((warn_unused_result)) TVec Cross (const TVec &v2) const noexcept { return TVec(VSUM2(y*v2.z, -(z*v2.y)), VSUM2(z*v2.x, -(x*v2.z)), VSUM2(x*v2.y, -(y*v2.x))); }
-  inline __attribute__((warn_unused_result)) TVec cross (const TVec &v2) const noexcept { return TVec(VSUM2(y*v2.z, -(z*v2.y)), VSUM2(z*v2.x, -(x*v2.z)), VSUM2(x*v2.y, -(y*v2.x))); }
+  inline VVA_CHECKRESULT TVec Cross (const TVec &v2) const noexcept { return TVec(VSUM2(y*v2.z, -(z*v2.y)), VSUM2(z*v2.x, -(x*v2.z)), VSUM2(x*v2.y, -(y*v2.x))); }
+  inline VVA_CHECKRESULT TVec cross (const TVec &v2) const noexcept { return TVec(VSUM2(y*v2.z, -(z*v2.y)), VSUM2(z*v2.x, -(x*v2.z)), VSUM2(x*v2.y, -(y*v2.x))); }
 
   // 2d cross product (z, as x and y are effectively zero in 2d)
-  inline __attribute__((warn_unused_result)) float Cross2D (const TVec &v2) const noexcept { return VSUM2(x*v2.y, -(y*v2.x)); }
-  inline __attribute__((warn_unused_result)) float cross2D (const TVec &v2) const noexcept { return VSUM2(x*v2.y, -(y*v2.x)); }
+  inline VVA_CHECKRESULT float Cross2D (const TVec &v2) const noexcept { return VSUM2(x*v2.y, -(y*v2.x)); }
+  inline VVA_CHECKRESULT float cross2D (const TVec &v2) const noexcept { return VSUM2(x*v2.y, -(y*v2.x)); }
 
   // z is zero
-  inline __attribute__((warn_unused_result)) TVec mul2 (const float s) const noexcept { return TVec(x*s, y*s, 0.0f); }
-  inline __attribute__((warn_unused_result)) TVec mul3 (const float s) const noexcept { return TVec(x*s, y*s, z*s); }
+  inline VVA_CHECKRESULT TVec mul2 (const float s) const noexcept { return TVec(x*s, y*s, 0.0f); }
+  inline VVA_CHECKRESULT TVec mul3 (const float s) const noexcept { return TVec(x*s, y*s, z*s); }
 
   // returns projection of this vector onto `v`
-  inline __attribute__((warn_unused_result)) TVec projectTo (const TVec &v) const noexcept { return v.mul3(dot(v)/v.lengthSquared()); }
-  inline __attribute__((warn_unused_result)) TVec projectTo2D (const TVec &v) const noexcept { return v.mul2(dot2D(v)/v.length2DSquared()); }
+  inline VVA_CHECKRESULT TVec projectTo (const TVec &v) const noexcept { return v.mul3(dot(v)/v.lengthSquared()); }
+  inline VVA_CHECKRESULT TVec projectTo2D (const TVec &v) const noexcept { return v.mul2(dot2D(v)/v.length2DSquared()); }
 
-  inline __attribute__((warn_unused_result)) TVec sub2D (const TVec &v) const noexcept { return TVec(x-v.x, y-v.y, 0.0f); }
+  inline VVA_CHECKRESULT TVec sub2D (const TVec &v) const noexcept { return TVec(x-v.x, y-v.y, 0.0f); }
 
   // dir must be normalised, angle must be valid
-  inline __attribute__((warn_unused_result)) bool IsInSpotlight (const TVec &origin, const TVec &dir, const float angle) const noexcept {
+  inline VVA_CHECKRESULT bool IsInSpotlight (const TVec &origin, const TVec &dir, const float angle) const noexcept {
     TVec surfaceToLight = TVec(-(origin.x-x), -(origin.y-y), -(origin.z-z));
     if (surfaceToLight.lengthSquared() <= 8.0f) return true;
     surfaceToLight.normaliseInPlace();
@@ -180,7 +180,7 @@ public:
 
   // dir must be normalised, angle must be valid
   // returns cone light attenuation multiplier in range [0..1]
-  inline __attribute__((warn_unused_result)) float CalcSpotlightAttMult (const TVec &origin, const TVec &dir, const float angle) const noexcept {
+  inline VVA_CHECKRESULT float CalcSpotlightAttMult (const TVec &origin, const TVec &dir, const float angle) const noexcept {
     TVec surfaceToLight = TVec(-(origin.x-x), -(origin.y-y), -(origin.z-z));
     if (surfaceToLight.lengthSquared() <= 8.0f) { return 1.0f; }
     surfaceToLight.normaliseInPlace();
@@ -218,55 +218,55 @@ static_assert(__builtin_offsetof(TVec, y) == __builtin_offsetof(TVec, x)+sizeof(
 static_assert(__builtin_offsetof(TVec, z) == __builtin_offsetof(TVec, y)+sizeof(float), "TVec layout fail (1)");
 static_assert(sizeof(TVec) == sizeof(float)*3, "TVec layout fail (2)");
 
-static inline __attribute__((unused)) vuint32 GetTypeHash (const TVec &v) noexcept { return joaatHashBuf(&v, 3*sizeof(float)); }
+static inline VVA_OKUNUSED vuint32 GetTypeHash (const TVec &v) noexcept { return joaatHashBuf(&v, 3*sizeof(float)); }
 
 
-static __attribute__((unused)) inline TVec operator + (const TVec &v1, const TVec &v2) noexcept { return TVec(VSUM2(v1.x, v2.x), VSUM2(v1.y, v2.y), VSUM2(v1.z, v2.z)); }
-static __attribute__((unused)) inline TVec operator - (const TVec &v1, const TVec &v2) noexcept { return TVec(VSUM2(v1.x, -(v2.x)), VSUM2(v1.y, -(v2.y)), VSUM2(v1.z, -(v2.z))); }
+static VVA_OKUNUSED inline TVec operator + (const TVec &v1, const TVec &v2) noexcept { return TVec(VSUM2(v1.x, v2.x), VSUM2(v1.y, v2.y), VSUM2(v1.z, v2.z)); }
+static VVA_OKUNUSED inline TVec operator - (const TVec &v1, const TVec &v2) noexcept { return TVec(VSUM2(v1.x, -(v2.x)), VSUM2(v1.y, -(v2.y)), VSUM2(v1.z, -(v2.z))); }
 
-static __attribute__((unused)) inline TVec operator * (const TVec &v, float s) noexcept { return TVec(s*v.x, s*v.y, s*v.z); }
-static __attribute__((unused)) inline TVec operator * (float s, const TVec &v) noexcept { return TVec(s*v.x, s*v.y, s*v.z); }
-static __attribute__((unused)) inline TVec operator / (const TVec &v, float s) noexcept { s = 1.0f/s; if (!isFiniteF(s)) s = 0.0f; return TVec(v.x*s, v.y*s, v.z*s); }
+static VVA_OKUNUSED inline TVec operator * (const TVec &v, float s) noexcept { return TVec(s*v.x, s*v.y, s*v.z); }
+static VVA_OKUNUSED inline TVec operator * (float s, const TVec &v) noexcept { return TVec(s*v.x, s*v.y, s*v.z); }
+static VVA_OKUNUSED inline TVec operator / (const TVec &v, float s) noexcept { s = 1.0f/s; if (!isFiniteF(s)) s = 0.0f; return TVec(v.x*s, v.y*s, v.z*s); }
 
-static __attribute__((unused)) inline bool operator == (const TVec &v1, const TVec &v2) noexcept { return (v1.x == v2.x && v1.y == v2.y && v1.z == v2.z); }
-static __attribute__((unused)) inline bool operator != (const TVec &v1, const TVec &v2) noexcept { return (v1.x != v2.x || v1.y != v2.y || v1.z != v2.z); }
+static VVA_OKUNUSED inline bool operator == (const TVec &v1, const TVec &v2) noexcept { return (v1.x == v2.x && v1.y == v2.y && v1.z == v2.z); }
+static VVA_OKUNUSED inline bool operator != (const TVec &v1, const TVec &v2) noexcept { return (v1.x != v2.x || v1.y != v2.y || v1.z != v2.z); }
 
-//static __attribute__((unused)) inline float operator * (const TVec &a, const TVec &b) noexcept { return a.dot(b); }
-//static __attribute__((unused)) inline TVec operator ^ (const TVec &a, const TVec &b) noexcept { return a.cross(b); }
-//static __attribute__((unused)) inline TVec operator % (const TVec &a, const TVec &b) noexcept { return a.cross(b); }
+//static VVA_OKUNUSED inline float operator * (const TVec &a, const TVec &b) noexcept { return a.dot(b); }
+//static VVA_OKUNUSED inline TVec operator ^ (const TVec &a, const TVec &b) noexcept { return a.cross(b); }
+//static VVA_OKUNUSED inline TVec operator % (const TVec &a, const TVec &b) noexcept { return a.cross(b); }
 
-static __attribute__((unused)) __attribute__((warn_unused_result)) inline float Length (const TVec &v) noexcept { return v.length(); }
-static __attribute__((unused)) __attribute__((warn_unused_result)) inline float length (const TVec &v) noexcept { return v.length(); }
-static __attribute__((unused)) __attribute__((warn_unused_result)) inline float Length2D (const TVec &v) noexcept { return v.length2D(); }
-static __attribute__((unused)) __attribute__((warn_unused_result)) inline float length2D (const TVec &v) noexcept { return v.length2D(); }
+static VVA_OKUNUSED VVA_CHECKRESULT inline float Length (const TVec &v) noexcept { return v.length(); }
+static VVA_OKUNUSED VVA_CHECKRESULT inline float length (const TVec &v) noexcept { return v.length(); }
+static VVA_OKUNUSED VVA_CHECKRESULT inline float Length2D (const TVec &v) noexcept { return v.length2D(); }
+static VVA_OKUNUSED VVA_CHECKRESULT inline float length2D (const TVec &v) noexcept { return v.length2D(); }
 
-static __attribute__((unused)) __attribute__((warn_unused_result)) inline float LengthSquared (const TVec &v) noexcept { return v.lengthSquared(); }
-static __attribute__((unused)) __attribute__((warn_unused_result)) inline float lengthSquared (const TVec &v) noexcept { return v.lengthSquared(); }
-static __attribute__((unused)) __attribute__((warn_unused_result)) inline float Length2DSquared (const TVec &v) noexcept { return v.length2DSquared(); }
-static __attribute__((unused)) __attribute__((warn_unused_result)) inline float length2DSquared (const TVec &v) noexcept { return v.length2DSquared(); }
+static VVA_OKUNUSED VVA_CHECKRESULT inline float LengthSquared (const TVec &v) noexcept { return v.lengthSquared(); }
+static VVA_OKUNUSED VVA_CHECKRESULT inline float lengthSquared (const TVec &v) noexcept { return v.lengthSquared(); }
+static VVA_OKUNUSED VVA_CHECKRESULT inline float Length2DSquared (const TVec &v) noexcept { return v.length2DSquared(); }
+static VVA_OKUNUSED VVA_CHECKRESULT inline float length2DSquared (const TVec &v) noexcept { return v.length2DSquared(); }
 
-static __attribute__((unused)) __attribute__((warn_unused_result)) inline TVec Normalise (const TVec &v) noexcept { return v.normalised(); }
-static __attribute__((unused)) __attribute__((warn_unused_result)) inline TVec normalise (const TVec &v) noexcept { return v.normalised(); }
+static VVA_OKUNUSED VVA_CHECKRESULT inline TVec Normalise (const TVec &v) noexcept { return v.normalised(); }
+static VVA_OKUNUSED VVA_CHECKRESULT inline TVec normalise (const TVec &v) noexcept { return v.normalised(); }
 
-static __attribute__((unused)) __attribute__((warn_unused_result)) inline TVec normalise2D (const TVec &v) noexcept { return v.normalised2D(); }
+static VVA_OKUNUSED VVA_CHECKRESULT inline TVec normalise2D (const TVec &v) noexcept { return v.normalised2D(); }
 
-static __attribute__((unused)) __attribute__((warn_unused_result)) inline float DotProduct (const TVec &v1, const TVec &v2) noexcept { return v1.dot(v2); }
-static __attribute__((unused)) __attribute__((warn_unused_result)) inline float dot (const TVec &v1, const TVec &v2) noexcept { return v1.dot(v2); }
+static VVA_OKUNUSED VVA_CHECKRESULT inline float DotProduct (const TVec &v1, const TVec &v2) noexcept { return v1.dot(v2); }
+static VVA_OKUNUSED VVA_CHECKRESULT inline float dot (const TVec &v1, const TVec &v2) noexcept { return v1.dot(v2); }
 
-static __attribute__((unused)) __attribute__((warn_unused_result)) inline float DotProductV2Neg (const TVec &v1, const TVec &v2) noexcept { return v1.dotv2neg(v2); }
-static __attribute__((unused)) __attribute__((warn_unused_result)) inline float dotv2neg (const TVec &v1, const TVec &v2) noexcept { return v1.dotv2neg(v2); }
+static VVA_OKUNUSED VVA_CHECKRESULT inline float DotProductV2Neg (const TVec &v1, const TVec &v2) noexcept { return v1.dotv2neg(v2); }
+static VVA_OKUNUSED VVA_CHECKRESULT inline float dotv2neg (const TVec &v1, const TVec &v2) noexcept { return v1.dotv2neg(v2); }
 
-static __attribute__((unused)) __attribute__((warn_unused_result)) inline float DotProduct2D (const TVec &v1, const TVec &v2) noexcept { return v1.dot2D(v2); }
-static __attribute__((unused)) __attribute__((warn_unused_result)) inline float dot2D (const TVec &v1, const TVec &v2) noexcept { return v1.dot2D(v2); }
+static VVA_OKUNUSED VVA_CHECKRESULT inline float DotProduct2D (const TVec &v1, const TVec &v2) noexcept { return v1.dot2D(v2); }
+static VVA_OKUNUSED VVA_CHECKRESULT inline float dot2D (const TVec &v1, const TVec &v2) noexcept { return v1.dot2D(v2); }
 
-static __attribute__((unused)) __attribute__((warn_unused_result)) inline TVec CrossProduct (const TVec &v1, const TVec &v2) noexcept { return v1.cross(v2); }
-static __attribute__((unused)) __attribute__((warn_unused_result)) inline TVec cross (const TVec &v1, const TVec &v2) noexcept { return v1.cross(v2); }
+static VVA_OKUNUSED VVA_CHECKRESULT inline TVec CrossProduct (const TVec &v1, const TVec &v2) noexcept { return v1.cross(v2); }
+static VVA_OKUNUSED VVA_CHECKRESULT inline TVec cross (const TVec &v1, const TVec &v2) noexcept { return v1.cross(v2); }
 
 // returns signed magnitude of cross-product (z, as x and y are effectively zero in 2d)
-static __attribute__((unused)) __attribute__((warn_unused_result)) inline float CrossProduct2D (const TVec &v1, const TVec &v2) noexcept { return v1.cross2D(v2); }
-static __attribute__((unused)) __attribute__((warn_unused_result)) inline float cross2D (const TVec &v1, const TVec &v2) noexcept { return v1.cross2D(v2); }
+static VVA_OKUNUSED VVA_CHECKRESULT inline float CrossProduct2D (const TVec &v1, const TVec &v2) noexcept { return v1.cross2D(v2); }
+static VVA_OKUNUSED VVA_CHECKRESULT inline float cross2D (const TVec &v1, const TVec &v2) noexcept { return v1.cross2D(v2); }
 
-static __attribute__((unused)) inline VStream &operator << (VStream &Strm, TVec &v) { return Strm << v.x << v.y << v.z; }
+static VVA_OKUNUSED inline VStream &operator << (VStream &Strm, TVec &v) { return Strm << v.x << v.y << v.z; }
 
 
 void AngleVectors (const TAVec &angles, TVec &forward, TVec &right, TVec &up) noexcept;
@@ -276,7 +276,7 @@ void YawVectorRight (float yaw, TVec &right) noexcept;
 void VectorAngles (const TVec &vec, TAVec &angles) noexcept;
 void VectorsAngles (const TVec &forward, const TVec &right, const TVec &up, TAVec &angles) noexcept;
 
-__attribute__((warn_unused_result)) TVec RotateVectorAroundVector (const TVec &Vector, const TVec &Axis, float Angle) noexcept;
+VVA_CHECKRESULT TVec RotateVectorAroundVector (const TVec &Vector, const TVec &Axis, float Angle) noexcept;
 
 void RotatePointAroundVector (TVec &dst, const TVec &dir, const TVec &point, float degrees) noexcept;
 // sets axis[1] and axis[2]
@@ -285,7 +285,7 @@ void RotateAroundDirection (TVec axis[3], float yaw) noexcept;
 // given a normalized forward vector, create two other perpendicular vectors
 void MakeNormalVectors (const TVec &forward, TVec &right, TVec &up) noexcept;
 
-static inline __attribute__((unused)) void AngleVectorPitch (const float pitch, TVec &forward) noexcept {
+static inline VVA_OKUNUSED void AngleVectorPitch (const float pitch, TVec &forward) noexcept {
   msincos(pitch, &forward.z, &forward.x);
   forward.y = 0.0f;
   forward.z = -forward.z;
@@ -296,20 +296,20 @@ static inline __attribute__((unused)) void AngleVectorPitch (const float pitch, 
   */
 }
 
-static inline __attribute__((unused)) TVec AngleVectorYaw (const float yaw) noexcept {
+static inline VVA_OKUNUSED TVec AngleVectorYaw (const float yaw) noexcept {
   float sy, cy;
   msincos(yaw, &sy, &cy);
   return TVec(cy, sy, 0.0f);
 }
 
-static inline __attribute__((unused)) float VectorAngleYaw (const TVec &vec) noexcept {
+static inline VVA_OKUNUSED float VectorAngleYaw (const TVec &vec) noexcept {
   const float fx = vec.x;
   const float fy = vec.y;
   const float len2d = VSUM2(fx*fx, fy*fy);
   return (len2d < 0.0001f ? 0.0f : matan(fy, fx));
 }
 
-static inline __attribute__((unused)) float VectorAnglePitch (const TVec &vec) noexcept {
+static inline VVA_OKUNUSED float VectorAnglePitch (const TVec &vec) noexcept {
   const float fx = vec.x;
   const float fy = vec.y;
   const float len2d = VSUM2(fx*fx, fy*fy);
@@ -328,8 +328,8 @@ public:
   //TPlane () : TVec(1.0f, 0.0f, 0.0f), dist(0.0f) {}
   //TPlane (ENoInit) {}
 
-  inline __attribute__((warn_unused_result)) bool isValid () const noexcept { return (normal.isValid() && !normal.isZero() && isFiniteF(dist)); }
-  inline __attribute__((warn_unused_result)) bool isVertical () const noexcept { return (normal.z == 0.0f); }
+  inline VVA_CHECKRESULT bool isValid () const noexcept { return (normal.isValid() && !normal.isZero() && isFiniteF(dist)); }
+  inline VVA_CHECKRESULT bool isVertical () const noexcept { return (normal.z == 0.0f); }
 
   inline void Set (const TVec &Anormal, float Adist) noexcept {
     normal = Anormal;
@@ -424,31 +424,31 @@ public:
 
   // get z of point with given x and y coords
   // don't try to use it on a vertical plane
-  inline __attribute__((warn_unused_result)) float GetPointZ (float x, float y) const noexcept {
+  inline VVA_CHECKRESULT float GetPointZ (float x, float y) const noexcept {
     return (VSUM3(dist, -(normal.x*x), -(normal.y*y))/normal.z);
   }
 
-  inline __attribute__((warn_unused_result)) float GetPointZRev (float x, float y) const noexcept {
+  inline VVA_CHECKRESULT float GetPointZRev (float x, float y) const noexcept {
     return (VSUM3(-dist, -(-normal.x*x), -(-normal.y*y))/(-normal.z));
   }
 
-  inline __attribute__((warn_unused_result)) float GetPointZ (const TVec &v) const noexcept {
+  inline VVA_CHECKRESULT float GetPointZ (const TVec &v) const noexcept {
     return GetPointZ(v.x, v.y);
   }
 
-  inline __attribute__((warn_unused_result)) float GetPointZRev (const TVec &v) const noexcept {
+  inline VVA_CHECKRESULT float GetPointZRev (const TVec &v) const noexcept {
     return GetPointZRev(v.x, v.y);
   }
 
   // "land" point onto the plane
   // plane must be normalized
-  inline __attribute__((warn_unused_result)) TVec landAlongNormal (const TVec &point) const noexcept {
+  inline VVA_CHECKRESULT TVec landAlongNormal (const TVec &point) const noexcept {
     const float pdist = DotProduct(point, normal)-dist;
     return (fabs(pdist) > 0.0001f ? point-normal*pdist : point);
   }
 
   // plane must be normalized
-  inline __attribute__((warn_unused_result)) TVec Project (const TVec &v) const noexcept {
+  inline VVA_CHECKRESULT TVec Project (const TVec &v) const noexcept {
     return v-(v-normal*dist).dot(normal)*normal;
   }
 
@@ -468,7 +468,7 @@ public:
 
   // intersection of 3 planes, Graphics Gems 1 pg 305
   // not sure if it should be `dist` or `-dist` here for vavoom planes
-  __attribute__((warn_unused_result)) TVec IntersectionPoint (const TPlane &plane2, const TPlane &plane3) const noexcept {
+  VVA_CHECKRESULT TVec IntersectionPoint (const TPlane &plane2, const TPlane &plane3) const noexcept {
     const float det = normal.cross(plane2.normal).dot(plane3.normal);
     // if the determinant is 0, that means parallel planes, no intersection
     if (fabs(det) < 0.001f) return TVec::Invalid();
@@ -505,36 +505,36 @@ public:
 
 
   // returns side 0 (front) or 1 (back, or on plane)
-  inline __attribute__((warn_unused_result)) int PointOnSide (const TVec &point) const noexcept {
+  inline VVA_CHECKRESULT int PointOnSide (const TVec &point) const noexcept {
     return (DotProduct(point, normal)-dist <= 0.0f);
   }
 
   // returns side 0 (front) or 1 (back, or on plane)
-  inline __attribute__((warn_unused_result)) int PointOnSideThreshold (const TVec &point) const noexcept {
+  inline VVA_CHECKRESULT int PointOnSideThreshold (const TVec &point) const noexcept {
     return (DotProduct(point, normal)-dist < 0.1f);
   }
 
   // returns side 0 (front) or 1 (back, or on plane)
-  inline __attribute__((warn_unused_result)) int PointOnSideThreshold (const TVec &point, const float thre) const noexcept {
+  inline VVA_CHECKRESULT int PointOnSideThreshold (const TVec &point, const float thre) const noexcept {
     return (DotProduct(point, normal)-dist < thre);
   }
 
   // returns side 0 (front, or on plane) or 1 (back)
   // "fri" means "front inclusive"
-  inline __attribute__((warn_unused_result)) int PointOnSideFri (const TVec &point) const noexcept {
+  inline VVA_CHECKRESULT int PointOnSideFri (const TVec &point) const noexcept {
     return (DotProduct(point, normal)-dist < 0.0f);
   }
 
   // returns side 0 (front), 1 (back), or 2 (on)
   // used in line tracing (only)
-  inline __attribute__((warn_unused_result)) int PointOnSide2 (const TVec &point) const noexcept {
+  inline VVA_CHECKRESULT int PointOnSide2 (const TVec &point) const noexcept {
     const float dot = DotProduct(point, normal)-dist;
     return (dot < -0.1f ? 1 : dot > 0.1f ? 0 : 2);
   }
 
   // returns side 0 (front), 1 (back)
   // if at least some part of the sphere is on a front side, it means "front"
-  inline __attribute__((warn_unused_result)) int SphereOnSide (const TVec &center, float radius) const noexcept {
+  inline VVA_CHECKRESULT int SphereOnSide (const TVec &center, float radius) const noexcept {
     return (DotProduct(center, normal)-dist <= -radius);
   }
 
@@ -546,25 +546,25 @@ public:
   }
   */
 
-  inline __attribute__((warn_unused_result)) bool SphereTouches (const TVec &center, float radius) const noexcept {
+  inline VVA_CHECKRESULT bool SphereTouches (const TVec &center, float radius) const noexcept {
     return (fabsf(DotProduct(center, normal)-dist) < radius);
   }
 
   // returns side 0 (front), 1 (back), or 2 (collides)
-  inline __attribute__((warn_unused_result)) int SphereOnSide2 (const TVec &center, float radius) const noexcept {
+  inline VVA_CHECKRESULT int SphereOnSide2 (const TVec &center, float radius) const noexcept {
     const float d = DotProduct(center, normal)-dist;
     return (d < -radius ? 1 : d > radius ? 0 : 2);
   }
 
   // distance from point to plane
   // plane must be normalized
-  inline __attribute__((warn_unused_result)) float CalcDistance (const TVec &p) const noexcept {
+  inline VVA_CHECKRESULT float CalcDistance (const TVec &p) const noexcept {
     return DotProduct(p, normal)-dist;
   }
 
   // returns "AABB reject point"
   // i.e. box point that is furthest from the plane
-  inline __attribute__((warn_unused_result)) TVec get3DBBoxRejectPoint (const float bbox[6]) const noexcept {
+  inline VVA_CHECKRESULT TVec get3DBBoxRejectPoint (const float bbox[6]) const noexcept {
     return TVec(
       bbox[0+(normal.x < 0 ? 0 : 3)],
       bbox[1+(normal.y < 0 ? 0 : 3)],
@@ -573,7 +573,7 @@ public:
 
   // returns "AABB accept point"
   // i.e. box point that is closest to the plane
-  inline __attribute__((warn_unused_result)) TVec get3DBBoxAcceptPoint (const float bbox[6]) const noexcept {
+  inline VVA_CHECKRESULT TVec get3DBBoxAcceptPoint (const float bbox[6]) const noexcept {
     return TVec(
       bbox[0+(normal.x < 0 ? 3 : 0)],
       bbox[1+(normal.y < 0 ? 3 : 0)],
@@ -589,14 +589,14 @@ public:
     BOX2D_RIGHT,
   };
 
-  inline __attribute__((warn_unused_result)) TVec get2DBBoxRejectPoint (const float bbox2d[4], const float minz=0.0f, const float maxz=0.0f) const noexcept {
+  inline VVA_CHECKRESULT TVec get2DBBoxRejectPoint (const float bbox2d[4], const float minz=0.0f, const float maxz=0.0f) const noexcept {
     return TVec(
       bbox2d[normal.x < 0 ? BOX2D_LEFT : BOX2D_RIGHT],
       bbox2d[normal.y < 0 ? BOX2D_BOTTOM : BOX2D_TOP],
       (normal.z < 0 ? minz : maxz));
   }
 
-  inline __attribute__((warn_unused_result)) TVec get2DBBoxAcceptPoint (const float bbox2d[4], const float minz=0.0f, const float maxz=0.0f) const noexcept {
+  inline VVA_CHECKRESULT TVec get2DBBoxAcceptPoint (const float bbox2d[4], const float minz=0.0f, const float maxz=0.0f) const noexcept {
     return TVec(
       bbox2d[normal.x < 0 ? BOX2D_RIGHT : BOX2D_LEFT],
       bbox2d[normal.y < 0 ? BOX2D_TOP : BOX2D_BOTTOM],
@@ -604,7 +604,7 @@ public:
   }
 
   // returns `false` if the box fully is on the back side of the plane
-  inline __attribute__((warn_unused_result)) bool checkBox (const float bbox[6]) const noexcept {
+  inline VVA_CHECKRESULT bool checkBox (const float bbox[6]) const noexcept {
     // check reject point
     return (DotProduct(normal, get3DBBoxRejectPoint(bbox))-dist > 0.0f); // at least partially on a front side?
   }
@@ -613,7 +613,7 @@ public:
 
   // returns one of TFrustum::OUTSIDE, TFrustum::INSIDE, TFrustum::PARIALLY
   // if the box is touching the plane from inside, it is still assumed to be inside
-  inline __attribute__((warn_unused_result)) int checkBoxEx (const float bbox[6]) const noexcept {
+  inline VVA_CHECKRESULT int checkBoxEx (const float bbox[6]) const noexcept {
     // check reject point
     float d = DotProduct(normal, get3DBBoxRejectPoint(bbox))-dist;
     if (d <= 0.0f) return /*TFrustum::OUTSIDE*/0; // entire box on a back side
@@ -623,10 +623,10 @@ public:
   }
 
   // returns `false` if the rect is on the back side of the plane
-  __attribute__((warn_unused_result)) bool checkRect (const TVec &v0, const TVec &v1) const noexcept;
+  VVA_CHECKRESULT bool checkRect (const TVec &v0, const TVec &v1) const noexcept;
 
   // returns one of TFrustum::OUTSIDE, TFrustum::INSIDE, TFrustum::PARIALLY
-  __attribute__((warn_unused_result)) int checkRectEx (const TVec &v0, const TVec &v1) const noexcept;
+  VVA_CHECKRESULT int checkRectEx (const TVec &v0, const TVec &v1) const noexcept;
 
   // this is the slow, general version
   int BoxOnPlaneSide (const TVec &emins, const TVec &emaxs) const noexcept;
@@ -635,7 +635,7 @@ public:
 static_assert(__builtin_offsetof(TPlane, dist) == __builtin_offsetof(TPlane, normal.z)+sizeof(float), "TPlane layout fail (0)");
 static_assert(sizeof(TPlane) == sizeof(float)*4, "TPlane layout fail (1)");
 
-static inline __attribute__((unused)) vuint32 GetTypeHash (const TPlane &v) noexcept { return joaatHashBuf(&v, 4*sizeof(float)); }
+static inline VVA_OKUNUSED vuint32 GetTypeHash (const TPlane &v) noexcept { return joaatHashBuf(&v, 4*sizeof(float)); }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -701,13 +701,13 @@ public:
     }
   }
 
-  inline __attribute__((warn_unused_result)) bool isValid () const noexcept {
+  inline VVA_CHECKRESULT bool isValid () const noexcept {
     return
       origin.isValid() && angles.isValid() && vforward.isValid() && vright.isValid() && vup.isValid() &&
       !vforward.isZero() && !vright.isZero() && !vright.isZero();
   }
 
-  inline __attribute__((warn_unused_result)) bool needUpdate (const TVec &aorg, const TAVec &aangles) const noexcept {
+  inline VVA_CHECKRESULT bool needUpdate (const TVec &aorg, const TAVec &aangles) const noexcept {
     if (!isValid()) return true;
     return (aorg != origin || aangles != angles);
   }
@@ -757,11 +757,11 @@ public:
   inline TClipBase (const float afovx, const float afovy) noexcept { setupFromFOVs(afovx, afovy); }
   inline TClipBase (const TClipParam &cp) noexcept { setupViewport(cp); }
 
-  inline __attribute__((warn_unused_result)) bool isValid () const noexcept { return (fovx != 0.0f); }
+  inline VVA_CHECKRESULT bool isValid () const noexcept { return (fovx != 0.0f); }
 
   inline void clear () noexcept { fovx = fovy = 0.0f; }
 
-  inline __attribute__((warn_unused_result)) const TVec &operator [] (size_t idx) const noexcept { vassert(idx < 4); return clipbase[idx]; }
+  inline VVA_CHECKRESULT const TVec &operator [] (size_t idx) const noexcept { vassert(idx < 4); return clipbase[idx]; }
 
   void setupFromFOVs (const float afovx, const float afovy) noexcept;
 
@@ -822,7 +822,7 @@ public:
     setup(clipbase, fp, createbackplane, farplanez);
   }
 
-  inline __attribute__((warn_unused_result)) bool isValid () const noexcept { return (planeCount > 0); }
+  inline VVA_CHECKRESULT bool isValid () const noexcept { return (planeCount > 0); }
 
   inline void clear () noexcept { planeCount = 0; planes[0].clipflag = planes[1].clipflag = planes[2].clipflag = planes[3].clipflag = planes[4].clipflag = planes[5].clipflag = 0; }
 
@@ -836,10 +836,10 @@ public:
 
 
   // returns `false` if the point is out of frustum
-  __attribute__((warn_unused_result)) bool checkPoint (const TVec &point, const unsigned mask=~0u) const noexcept;
+  VVA_CHECKRESULT bool checkPoint (const TVec &point, const unsigned mask=~0u) const noexcept;
 
   // returns `false` if the sphere is out of frustum
-  __attribute__((warn_unused_result)) bool checkSphere (const TVec &center, const float radius, const unsigned mask=~0u) const noexcept;
+  VVA_CHECKRESULT bool checkSphere (const TVec &center, const float radius, const unsigned mask=~0u) const noexcept;
 
   // returns `false` if the box is out of frustum (or frustum is not valid)
   // bbox:
@@ -849,23 +849,23 @@ public:
   //   [3] is maxx
   //   [4] is maxy
   //   [5] is maxz
-  __attribute__((warn_unused_result)) bool checkBox (const float bbox[6], const unsigned mask=~0u) const noexcept;
+  VVA_CHECKRESULT bool checkBox (const float bbox[6], const unsigned mask=~0u) const noexcept;
 
   enum { OUTSIDE = 0, INSIDE = 1, PARTIALLY = -1 };
 
   // 0: completely outside; >0: completely inside; <0: partially inside
-  __attribute__((warn_unused_result)) int checkBoxEx (const float bbox[6], const unsigned mask=~0u) const noexcept;
+  VVA_CHECKRESULT int checkBoxEx (const float bbox[6], const unsigned mask=~0u) const noexcept;
 
-  __attribute__((warn_unused_result)) bool checkVerts (const TVec *verts, const unsigned vcount, const unsigned mask=~0u) const noexcept;
-  __attribute__((warn_unused_result)) int checkVertsEx (const TVec *verts, const unsigned vcount, const unsigned mask=~0u) const noexcept;
+  VVA_CHECKRESULT bool checkVerts (const TVec *verts, const unsigned vcount, const unsigned mask=~0u) const noexcept;
+  VVA_CHECKRESULT int checkVertsEx (const TVec *verts, const unsigned vcount, const unsigned mask=~0u) const noexcept;
 
-  __attribute__((warn_unused_result)) int checkQuadEx (const TVec &v1, const TVec &v2, const TVec &v3, const TVec &v4, const unsigned mask=~0u) const noexcept;
+  VVA_CHECKRESULT int checkQuadEx (const TVec &v1, const TVec &v2, const TVec &v3, const TVec &v4, const unsigned mask=~0u) const noexcept;
 };
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 // returns `false` on error (and zero `dst`)
-static __attribute__((unused)) inline bool ProjectPointOnPlane (TVec &dst, const TVec &p, const TVec &normal) noexcept {
+static VVA_OKUNUSED inline bool ProjectPointOnPlane (TVec &dst, const TVec &p, const TVec &normal) noexcept {
   const float inv_denom = 1.0f/DotProduct(normal, normal);
   if (!isFiniteF(inv_denom)) { dst = TVec(0.0f, 0.0f, 0.0f); return false; } //k8: what to do here?
   const float d = DotProduct(normal, p)*inv_denom;
@@ -878,7 +878,7 @@ void PerpendicularVector (TVec &dst, const TVec &src) noexcept; // assumes "src"
 
 // ////////////////////////////////////////////////////////////////////////// //
 // sometimes subsector bbox has invalid z; this fixes it
-static __attribute__((unused)) inline void FixBBoxZ (float bbox[6]) noexcept {
+static VVA_OKUNUSED inline void FixBBoxZ (float bbox[6]) noexcept {
   vassert(isFiniteF(bbox[2]));
   vassert(isFiniteF(bbox[3+2]));
   if (bbox[2] > bbox[3+2]) {
@@ -891,7 +891,7 @@ static __attribute__((unused)) inline void FixBBoxZ (float bbox[6]) noexcept {
 
 // ////////////////////////////////////////////////////////////////////////// //
 // check to see if the sphere overlaps the AABB
-static __attribute__((unused)) __attribute__((warn_unused_result)) inline bool CheckSphereVsAABB (const float bbox[6], const TVec &lorg, const float radius) noexcept {
+static VVA_OKUNUSED VVA_CHECKRESULT inline bool CheckSphereVsAABB (const float bbox[6], const TVec &lorg, const float radius) noexcept {
   float d = 0.0f;
   // find the square of the distance from the sphere to the box
   /*
@@ -926,7 +926,7 @@ static __attribute__((unused)) __attribute__((warn_unused_result)) inline bool C
 
 
 // check to see if the sphere overlaps the AABB (ignore z coords)
-static __attribute__((unused)) __attribute__((warn_unused_result)) inline bool CheckSphereVsAABBIgnoreZ (const float bbox[6], const TVec &lorg, const float radius) noexcept {
+static VVA_OKUNUSED VVA_CHECKRESULT inline bool CheckSphereVsAABBIgnoreZ (const float bbox[6], const TVec &lorg, const float radius) noexcept {
   float d = 0.0f, s;
   // find the square of the distance from the sphere to the box
   // first check is min, second check is max
@@ -978,7 +978,7 @@ int BoxOnLineSide2D (const float *tmbox, TVec v1, TVec v2) noexcept;
 //  PlaneAngles2D
 //
 //==========================================================================
-static inline __attribute__((unused)) __attribute__((warn_unused_result))
+static inline VVA_OKUNUSED VVA_CHECKRESULT
 float PlaneAngles2D (const TPlane *from, const TPlane *to) noexcept {
   float afrom = VectorAngleYaw(from->normal);
   float ato = VectorAngleYaw(to->normal);
@@ -991,7 +991,7 @@ float PlaneAngles2D (const TPlane *from, const TPlane *to) noexcept {
 //  PlaneAngles2DFlipTo
 //
 //==========================================================================
-static inline __attribute__((unused)) __attribute__((warn_unused_result))
+static inline VVA_OKUNUSED VVA_CHECKRESULT
 float PlaneAngles2DFlipTo (const TPlane *from, const TPlane *to) noexcept {
   float afrom = VectorAngleYaw(from->normal);
   float ato = VectorAngleYaw(-to->normal);
@@ -1004,7 +1004,7 @@ float PlaneAngles2DFlipTo (const TPlane *from, const TPlane *to) noexcept {
 //  IsCircleTouchBox2D
 //
 //==========================================================================
-static inline __attribute__((unused)) __attribute__((warn_unused_result))
+static inline VVA_OKUNUSED VVA_CHECKRESULT
 bool IsCircleTouchBox2D (const float cx, const float cy, float radius, const float bbox2d[4]) noexcept {
   if (radius < 1.0f) return false;
 

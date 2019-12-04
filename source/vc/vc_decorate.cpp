@@ -41,9 +41,9 @@ static bool wasD4VFixes = false;
 
 
 /*
-static inline __attribute__((unused)) vuint32 GetTypeHashCI (const VStr &s) { return fnvHashStrCI(*s); }
-static inline __attribute__((unused)) vuint32 GetTypeHashCI (const char *s) { return fnvHashStrCI(s); }
-static inline __attribute__((unused)) vuint32 GetTypeHashCI (VName s) { return fnvHashStrCI(*s); }
+static inline VVA_OKUNUSED vuint32 GetTypeHashCI (const VStr &s) { return fnvHashStrCI(*s); }
+static inline VVA_OKUNUSED vuint32 GetTypeHashCI (const char *s) { return fnvHashStrCI(s); }
+static inline VVA_OKUNUSED vuint32 GetTypeHashCI (VName s) { return fnvHashStrCI(*s); }
 */
 
 
@@ -845,7 +845,7 @@ static float GetClassFieldFloat (VClass *Class, VName FieldName) {
 //  GetClassFieldVec
 //
 //==========================================================================
-static __attribute__((unused)) TVec GetClassFieldVec (VClass *Class, VName FieldName) {
+static VVA_OKUNUSED TVec GetClassFieldVec (VClass *Class, VName FieldName) {
   VField *F = Class->FindFieldChecked(FieldName);
   return F->GetVec((VObject*)Class->Defaults);
 }
@@ -955,7 +955,7 @@ static void SetClassFieldStr (VClass *Class, VName FieldName, VStr Value) {
 //  SetClassFieldVec
 //
 //==========================================================================
-static __attribute__((unused)) void SetClassFieldVec (VClass *Class, VName FieldName, const TVec &Value) {
+static VVA_OKUNUSED void SetClassFieldVec (VClass *Class, VName FieldName, const TVec &Value) {
   VField *F = Class->FindFieldChecked(FieldName);
   F->SetVec((VObject*)Class->Defaults, Value);
 }
@@ -966,7 +966,7 @@ static __attribute__((unused)) void SetClassFieldVec (VClass *Class, VName Field
 //  SetFieldByte
 //
 //==========================================================================
-static __attribute__((unused)) void SetFieldByte (VObject *Obj, VName FieldName, vuint8 Value) {
+static VVA_OKUNUSED void SetFieldByte (VObject *Obj, VName FieldName, vuint8 Value) {
   VField *F = Obj->GetClass()->FindFieldChecked(FieldName);
   F->SetByte(Obj, Value);
 }
@@ -977,7 +977,7 @@ static __attribute__((unused)) void SetFieldByte (VObject *Obj, VName FieldName,
 //  SetFieldFloat
 //
 //==========================================================================
-static __attribute__((unused)) void SetFieldFloat (VObject *Obj, VName FieldName, float Value, int Idx=0) {
+static VVA_OKUNUSED void SetFieldFloat (VObject *Obj, VName FieldName, float Value, int Idx=0) {
   VField *F = Obj->GetClass()->FindFieldChecked(FieldName);
   F->SetFloat(Obj, Value, Idx);
 }
@@ -988,7 +988,7 @@ static __attribute__((unused)) void SetFieldFloat (VObject *Obj, VName FieldName
 //  SetFieldBool
 //
 //==========================================================================
-static __attribute__((unused)) void SetFieldBool (VObject *Obj, VName FieldName, int Value) {
+static VVA_OKUNUSED void SetFieldBool (VObject *Obj, VName FieldName, int Value) {
   VField *F = Obj->GetClass()->FindFieldChecked(FieldName);
   F->SetBool(Obj, Value);
 }
@@ -999,7 +999,7 @@ static __attribute__((unused)) void SetFieldBool (VObject *Obj, VName FieldName,
 //  SetFieldName
 //
 //==========================================================================
-static __attribute__((unused)) void SetFieldName (VObject *Obj, VName FieldName, VName Value) {
+static VVA_OKUNUSED void SetFieldName (VObject *Obj, VName FieldName, VName Value) {
   VField *F = Obj->GetClass()->FindFieldChecked(FieldName);
   F->SetNameValue(Obj, Value);
 }
@@ -1010,7 +1010,7 @@ static __attribute__((unused)) void SetFieldName (VObject *Obj, VName FieldName,
 //  SetFieldClass
 //
 //==========================================================================
-static __attribute__((unused)) void SetFieldClass (VObject *Obj, VName FieldName, VClass *Value) {
+static VVA_OKUNUSED void SetFieldClass (VObject *Obj, VName FieldName, VClass *Value) {
   VField *F = Obj->GetClass()->FindFieldChecked(FieldName);
   F->SetClassValue(Obj, Value);
 }

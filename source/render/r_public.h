@@ -264,21 +264,21 @@ extern const vuint8 *getGammaTable (int idx);
 # if defined(VAVOOM_RGB_TABLE_6_BITS) || defined(VAVOOM_RGB_TABLE_5_BITS)
 #  error "choose only one RGB table size"
 # endif
-static inline vuint8 __attribute__((unused)) R_LookupRGB (vint32 r, vint32 g, vint32 b) {
+static inline vuint8 VVA_OKUNUSED R_LookupRGB (vint32 r, vint32 g, vint32 b) {
   return r_rgbtable[(((vuint32)clampToByte(r)<<13)&0x1fc000)|(((vuint32)clampToByte(g)<<6)&0x3f80)|((clampToByte(b)>>1)&0x7fU)];
 }
 #elif defined(VAVOOM_RGB_TABLE_6_BITS)
 # if defined(VAVOOM_RGB_TABLE_7_BITS) || defined(VAVOOM_RGB_TABLE_5_BITS)
 #  error "choose only one RGB table size"
 # endif
-static inline vuint8 __attribute__((unused)) R_LookupRGB (vint32 r, vint32 g, vint32 b) {
+static inline vuint8 VVA_OKUNUSED R_LookupRGB (vint32 r, vint32 g, vint32 b) {
   return r_rgbtable[(((vuint32)clampToByte(r)<<10)&0x3f000U)|(((vuint32)clampToByte(g)<<4)&0xfc0U)|((clampToByte(b)>>2)&0x3fU)];
 }
 #elif defined(VAVOOM_RGB_TABLE_5_BITS)
 # if defined(VAVOOM_RGB_TABLE_6_BITS) || defined(VAVOOM_RGB_TABLE_7_BITS)
 #  error "choose only one RGB table size"
 # endif
-static inline vuint8 __attribute__((unused)) R_LookupRGB (vint32 r, vint32 g, vint32 b) {
+static inline vuint8 VVA_OKUNUSED R_LookupRGB (vint32 r, vint32 g, vint32 b) {
   return r_rgbtable[(((vuint32)clampToByte(r)<<7)&0x7c00U)|(((vuint32)clampToByte(g)<<2)&0x3e0U)|((clampToByte(b)>>3)&0x1fU)];
 }
 #else

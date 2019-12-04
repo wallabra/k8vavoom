@@ -83,7 +83,7 @@ static VCvarB dbg_disable_sprite_sorting("dbg_disable_sprite_sorting", false, "D
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern "C" {
-  static inline __attribute__((unused)) int compareSurfacesByTexture (const surface_t *sa, const surface_t *sb) {
+  static inline VVA_OKUNUSED int compareSurfacesByTexture (const surface_t *sa, const surface_t *sb) {
     if (sa == sb) return 0;
     const texinfo_t *ta = sa->texinfo;
     const texinfo_t *tb = sb->texinfo;
@@ -92,7 +92,7 @@ extern "C" {
     return ((int)ta->ColorMap)-((int)tb->ColorMap);
   }
 
-  static __attribute__((unused)) int drawListItemCmpByTexture (const void *a, const void *b, void *udata) {
+  static VVA_OKUNUSED int drawListItemCmpByTexture (const void *a, const void *b, void *udata) {
     return compareSurfacesByTexture(*(const surface_t **)a, *(const surface_t **)b);
   }
 }

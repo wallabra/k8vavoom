@@ -41,7 +41,7 @@ static int cli_WFloors3D = 0;
 //  getTexName
 //
 //==========================================================================
-static __attribute__((unused)) const char *getTexName (int txid) {
+static VVA_OKUNUSED const char *getTexName (int txid) {
   if (txid == 0) return "<->";
   VTexture *tex = GTextureManager[txid];
   return (tex ? *tex->Name : "<none>");

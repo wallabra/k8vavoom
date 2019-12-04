@@ -34,8 +34,8 @@
 #define TEXT_COLOR_ESCAPE_STR  "\034"
 
 
-extern char *va (const char *text, ...) noexcept __attribute__((format(printf, 1, 2))) __attribute__((warn_unused_result));
-extern char *vavarg (const char *text, va_list ap) noexcept __attribute__((warn_unused_result));
+extern char *va (const char *text, ...) noexcept __attribute__((format(printf, 1, 2))) VVA_CHECKRESULT;
+extern char *vavarg (const char *text, va_list ap) noexcept VVA_CHECKRESULT;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -57,18 +57,18 @@ public:
   char *dataptr; // string, 0-terminated (0 is not in length); can be null
 
 protected:
-  __attribute__((warn_unused_result)) inline Store *store () noexcept { return (dataptr ? (Store *)(dataptr-sizeof(Store)) : nullptr); }
-  __attribute__((warn_unused_result)) inline Store *store () const noexcept { return (dataptr ? (Store *)(dataptr-sizeof(Store)) : nullptr); }
+  VVA_CHECKRESULT inline Store *store () noexcept { return (dataptr ? (Store *)(dataptr-sizeof(Store)) : nullptr); }
+  VVA_CHECKRESULT inline Store *store () const noexcept { return (dataptr ? (Store *)(dataptr-sizeof(Store)) : nullptr); }
 
   // should be called only when storage is available
-  __attribute__((warn_unused_result)) inline int atomicGetRC () const noexcept { return __atomic_load_n(&((const Store *)(dataptr-sizeof(Store)))->rc, __ATOMIC_SEQ_CST); }
+  VVA_CHECKRESULT inline int atomicGetRC () const noexcept { return __atomic_load_n(&((const Store *)(dataptr-sizeof(Store)))->rc, __ATOMIC_SEQ_CST); }
   // should be called only when storage is available
   inline void atomicSetRC (int newval) noexcept { __atomic_store_n(&((Store *)(dataptr-sizeof(Store)))->rc, newval, __ATOMIC_SEQ_CST); }
   // should be called only when storage is available
-  __attribute__((warn_unused_result)) inline bool atomicIsImmutable () const noexcept { return (__atomic_load_n(&((const Store *)(dataptr-sizeof(Store)))->rc, __ATOMIC_SEQ_CST) < 0); }
+  VVA_CHECKRESULT inline bool atomicIsImmutable () const noexcept { return (__atomic_load_n(&((const Store *)(dataptr-sizeof(Store)))->rc, __ATOMIC_SEQ_CST) < 0); }
   // should be called only when storage is available
   // immutable strings aren't unique
-  __attribute__((warn_unused_result)) inline bool atomicIsUnique () const noexcept { return (__atomic_load_n(&((const Store *)(dataptr-sizeof(Store)))->rc, __ATOMIC_SEQ_CST) == 1); }
+  VVA_CHECKRESULT inline bool atomicIsUnique () const noexcept { return (__atomic_load_n(&((const Store *)(dataptr-sizeof(Store)))->rc, __ATOMIC_SEQ_CST) == 1); }
   // should be called only when storage is available
   // returns new value
   // WARNING: will happily modify immutable RC!
@@ -78,8 +78,8 @@ protected:
   // WARNING: will happily modify immutable RC!
   inline int atomicDecRC () const noexcept { return __atomic_sub_fetch(&((Store *)(dataptr-sizeof(Store)))->rc, 1, __ATOMIC_SEQ_CST); }
 
-  __attribute__((warn_unused_result)) inline char *getData () noexcept { return dataptr; }
-  __attribute__((warn_unused_result)) inline const char *getData () const noexcept { return dataptr; }
+  VVA_CHECKRESULT inline char *getData () noexcept { return dataptr; }
+  VVA_CHECKRESULT inline const char *getData () const noexcept { return dataptr; }
 
   inline void incref () const noexcept { if (dataptr && !atomicIsImmutable()) atomicIncRC(); }
 
@@ -99,7 +99,7 @@ protected:
     }
   }
 
-  __attribute__((warn_unused_result)) inline bool isMyData (const char *buf, int len) const noexcept { return (dataptr && buf && (uintptr_t)buf < (uintptr_t)dataptr+length() && (uintptr_t)buf+len >= (uintptr_t)dataptr); }
+  VVA_CHECKRESULT inline bool isMyData (const char *buf, int len) const noexcept { return (dataptr && buf && (uintptr_t)buf < (uintptr_t)dataptr+length() && (uintptr_t)buf+len >= (uintptr_t)dataptr); }
 
   inline void assign (const VStr &instr) noexcept {
     if (&instr != this) {
@@ -163,7 +163,7 @@ public:
   ~VStr () noexcept { clear(); }
 
   // this will create an unique copy of the string, which (copy) can be used in other threads
-  __attribute__((warn_unused_result)) inline VStr cloneUnique () const noexcept {
+  VVA_CHECKRESULT inline VStr cloneUnique () const noexcept {
     if (!dataptr) return VStr();
     int len = length();
     vassert(len > 0);
@@ -174,7 +174,7 @@ public:
   }
 
   void makeImmutable () noexcept;
-  __attribute__((warn_unused_result)) VStr &makeImmutableRetSelf () noexcept;
+  VVA_CHECKRESULT VStr &makeImmutableRetSelf () noexcept;
 
   // clears the string
   inline void Clean () noexcept { decref(); }
@@ -182,8 +182,8 @@ public:
   inline void clear () noexcept { decref(); }
 
   // returns length of the string
-  __attribute__((warn_unused_result)) inline int Length () const noexcept { return (dataptr ? store()->length : 0); }
-  __attribute__((warn_unused_result)) inline int length () const noexcept { return (dataptr ? store()->length : 0); }
+  VVA_CHECKRESULT inline int Length () const noexcept { return (dataptr ? store()->length : 0); }
+  VVA_CHECKRESULT inline int length () const noexcept { return (dataptr ? store()->length : 0); }
 
   inline void setLength (int len, char fillChar=' ') noexcept {
     if (len < 0) len = 0;
@@ -192,32 +192,32 @@ public:
   }
   inline void SetLength (int len, char fillChar=' ') noexcept { setLength(len, fillChar); }
 
-  __attribute__((warn_unused_result)) inline int getCapacity () const noexcept { return (dataptr ? store()->alloted : 0); }
+  VVA_CHECKRESULT inline int getCapacity () const noexcept { return (dataptr ? store()->alloted : 0); }
 
   // returns number of characters in a UTF-8 string
-  __attribute__((warn_unused_result)) inline int Utf8Length () const noexcept { return Utf8Length(getCStr(), length()); }
-  __attribute__((warn_unused_result)) inline int utf8Length () const noexcept { return Utf8Length(getCStr(), length()); }
-  __attribute__((warn_unused_result)) inline int utf8length () const noexcept { return Utf8Length(getCStr(), length()); }
+  VVA_CHECKRESULT inline int Utf8Length () const noexcept { return Utf8Length(getCStr(), length()); }
+  VVA_CHECKRESULT inline int utf8Length () const noexcept { return Utf8Length(getCStr(), length()); }
+  VVA_CHECKRESULT inline int utf8length () const noexcept { return Utf8Length(getCStr(), length()); }
 
   // returns C string
   // `*` can be used in some dummied-out macros
-  /*__attribute__((warn_unused_result))*/ inline const char *operator * () const noexcept { return (dataptr ? getData() : ""); }
-  __attribute__((warn_unused_result)) inline const char *getCStr () const noexcept { return (dataptr ? getData() : ""); }
-  __attribute__((warn_unused_result)) inline char *getMutableCStr () noexcept { makeMutable(); return (dataptr ? getData() : nullptr); }
+  /*VVA_CHECKRESULT*/ inline const char *operator * () const noexcept { return (dataptr ? getData() : ""); }
+  VVA_CHECKRESULT inline const char *getCStr () const noexcept { return (dataptr ? getData() : ""); }
+  VVA_CHECKRESULT inline char *getMutableCStr () noexcept { makeMutable(); return (dataptr ? getData() : nullptr); }
 
   // character accessors
-  __attribute__((warn_unused_result)) inline char operator [] (int idx) const noexcept { return (dataptr && idx >= 0 && idx < length() ? getData()[idx] : 0); }
-  __attribute__((warn_unused_result)) inline char *GetMutableCharPointer (int idx) noexcept { makeMutable(); return (dataptr ? &dataptr[idx] : nullptr); }
+  VVA_CHECKRESULT inline char operator [] (int idx) const noexcept { return (dataptr && idx >= 0 && idx < length() ? getData()[idx] : 0); }
+  VVA_CHECKRESULT inline char *GetMutableCharPointer (int idx) noexcept { makeMutable(); return (dataptr ? &dataptr[idx] : nullptr); }
 
   // checks if string is empty
-  __attribute__((warn_unused_result)) inline bool IsEmpty () const noexcept { return (length() == 0); }
-  __attribute__((warn_unused_result)) inline bool isEmpty () const noexcept { return (length() == 0); }
-  __attribute__((warn_unused_result)) inline bool IsNotEmpty () const noexcept { return (length() != 0); }
-  __attribute__((warn_unused_result)) inline bool isNotEmpty () const noexcept { return (length() != 0); }
+  VVA_CHECKRESULT inline bool IsEmpty () const noexcept { return (length() == 0); }
+  VVA_CHECKRESULT inline bool isEmpty () const noexcept { return (length() == 0); }
+  VVA_CHECKRESULT inline bool IsNotEmpty () const noexcept { return (length() != 0); }
+  VVA_CHECKRESULT inline bool isNotEmpty () const noexcept { return (length() != 0); }
 
-  __attribute__((warn_unused_result)) VStr mid (int start, int len) const noexcept;
-  __attribute__((warn_unused_result)) VStr left (int len) const noexcept;
-  __attribute__((warn_unused_result)) VStr right (int len) const noexcept;
+  VVA_CHECKRESULT VStr mid (int start, int len) const noexcept;
+  VVA_CHECKRESULT VStr left (int len) const noexcept;
+  VVA_CHECKRESULT VStr right (int len) const noexcept;
   void chopLeft (int len) noexcept;
   void chopRight (int len) noexcept;
 
@@ -274,103 +274,103 @@ public:
   VStr &operator += (double v) noexcept;
   inline VStr &operator += (const VName &v) noexcept { return operator+=(*v); }
 
-  friend __attribute__((warn_unused_result)) VStr operator + (const VStr &S1, const char *S2) noexcept { VStr res(S1); res += S2; return res; }
-  friend __attribute__((warn_unused_result)) VStr operator + (const VStr &S1, const VStr &S2) noexcept { VStr res(S1); res += S2; return res; }
-  friend __attribute__((warn_unused_result)) VStr operator + (const VStr &S1, char S2) noexcept { VStr res(S1); res += S2; return res; }
-  friend __attribute__((warn_unused_result)) VStr operator + (const VStr &S1, bool v) noexcept { VStr res(S1); res += v; return res; }
-  friend __attribute__((warn_unused_result)) VStr operator + (const VStr &S1, int v) noexcept { VStr res(S1); res += v; return res; }
-  friend __attribute__((warn_unused_result)) VStr operator + (const VStr &S1, unsigned v) noexcept { VStr res(S1); res += v; return res; }
-  friend __attribute__((warn_unused_result)) VStr operator + (const VStr &S1, float v) noexcept { VStr res(S1); res += v; return res; }
-  friend __attribute__((warn_unused_result)) VStr operator + (const VStr &S1, double v) noexcept { VStr res(S1); res += v; return res; }
-  friend __attribute__((warn_unused_result)) VStr operator + (const VStr &S1, const VName &v) noexcept { VStr res(S1); res += v; return res; }
+  friend VVA_CHECKRESULT VStr operator + (const VStr &S1, const char *S2) noexcept { VStr res(S1); res += S2; return res; }
+  friend VVA_CHECKRESULT VStr operator + (const VStr &S1, const VStr &S2) noexcept { VStr res(S1); res += S2; return res; }
+  friend VVA_CHECKRESULT VStr operator + (const VStr &S1, char S2) noexcept { VStr res(S1); res += S2; return res; }
+  friend VVA_CHECKRESULT VStr operator + (const VStr &S1, bool v) noexcept { VStr res(S1); res += v; return res; }
+  friend VVA_CHECKRESULT VStr operator + (const VStr &S1, int v) noexcept { VStr res(S1); res += v; return res; }
+  friend VVA_CHECKRESULT VStr operator + (const VStr &S1, unsigned v) noexcept { VStr res(S1); res += v; return res; }
+  friend VVA_CHECKRESULT VStr operator + (const VStr &S1, float v) noexcept { VStr res(S1); res += v; return res; }
+  friend VVA_CHECKRESULT VStr operator + (const VStr &S1, double v) noexcept { VStr res(S1); res += v; return res; }
+  friend VVA_CHECKRESULT VStr operator + (const VStr &S1, const VName &v) noexcept { VStr res(S1); res += v; return res; }
 
   // comparison operators
-  friend __attribute__((warn_unused_result)) bool operator == (const VStr &S1, const char *S2) noexcept { return (Cmp(*S1, S2) == 0); }
-  friend __attribute__((warn_unused_result)) bool operator == (const VStr &S1, const VStr &S2) noexcept { return (S1.getData() == S2.getData() ? true : (Cmp(*S1, *S2) == 0)); }
-  friend __attribute__((warn_unused_result)) bool operator != (const VStr &S1, const char *S2) noexcept { return (Cmp(*S1, S2) != 0); }
-  friend __attribute__((warn_unused_result)) bool operator != (const VStr &S1, const VStr &S2) noexcept { return (S1.getData() == S2.getData() ? false : (Cmp(*S1, *S2) != 0)); }
-  friend __attribute__((warn_unused_result)) bool operator < (const VStr &S1, const char *S2) noexcept { return (Cmp(*S1, S2) < 0); }
-  friend __attribute__((warn_unused_result)) bool operator < (const VStr &S1, const VStr &S2) noexcept { return (S1.getData() == S2.getData() ? false : (Cmp(*S1, *S2) < 0)); }
-  friend __attribute__((warn_unused_result)) bool operator > (const VStr &S1, const char *S2) noexcept { return (Cmp(*S1, S2) > 0); }
-  friend __attribute__((warn_unused_result)) bool operator > (const VStr &S1, const VStr &S2) noexcept { return (S1.getData() == S2.getData() ? false : (Cmp(*S1, *S2) > 0)); }
-  friend __attribute__((warn_unused_result)) bool operator <= (const VStr &S1, const char *S2) noexcept { return (Cmp(*S1, S2) <= 0); }
-  friend __attribute__((warn_unused_result)) bool operator <= (const VStr &S1, const VStr &S2) noexcept { return (S1.getData() == S2.getData() ? true : (Cmp(*S1, *S2) <= 0)); }
-  friend __attribute__((warn_unused_result)) bool operator >= (const VStr &S1, const char *S2) noexcept { return (Cmp(*S1, S2) >= 0); }
-  friend __attribute__((warn_unused_result)) bool operator >= (const VStr &S1, const VStr &S2) noexcept { return (S1.getData() == S2.getData() ? true : (Cmp(*S1, *S2) >= 0)); }
+  friend VVA_CHECKRESULT bool operator == (const VStr &S1, const char *S2) noexcept { return (Cmp(*S1, S2) == 0); }
+  friend VVA_CHECKRESULT bool operator == (const VStr &S1, const VStr &S2) noexcept { return (S1.getData() == S2.getData() ? true : (Cmp(*S1, *S2) == 0)); }
+  friend VVA_CHECKRESULT bool operator != (const VStr &S1, const char *S2) noexcept { return (Cmp(*S1, S2) != 0); }
+  friend VVA_CHECKRESULT bool operator != (const VStr &S1, const VStr &S2) noexcept { return (S1.getData() == S2.getData() ? false : (Cmp(*S1, *S2) != 0)); }
+  friend VVA_CHECKRESULT bool operator < (const VStr &S1, const char *S2) noexcept { return (Cmp(*S1, S2) < 0); }
+  friend VVA_CHECKRESULT bool operator < (const VStr &S1, const VStr &S2) noexcept { return (S1.getData() == S2.getData() ? false : (Cmp(*S1, *S2) < 0)); }
+  friend VVA_CHECKRESULT bool operator > (const VStr &S1, const char *S2) noexcept { return (Cmp(*S1, S2) > 0); }
+  friend VVA_CHECKRESULT bool operator > (const VStr &S1, const VStr &S2) noexcept { return (S1.getData() == S2.getData() ? false : (Cmp(*S1, *S2) > 0)); }
+  friend VVA_CHECKRESULT bool operator <= (const VStr &S1, const char *S2) noexcept { return (Cmp(*S1, S2) <= 0); }
+  friend VVA_CHECKRESULT bool operator <= (const VStr &S1, const VStr &S2) noexcept { return (S1.getData() == S2.getData() ? true : (Cmp(*S1, *S2) <= 0)); }
+  friend VVA_CHECKRESULT bool operator >= (const VStr &S1, const char *S2) noexcept { return (Cmp(*S1, S2) >= 0); }
+  friend VVA_CHECKRESULT bool operator >= (const VStr &S1, const VStr &S2) noexcept { return (S1.getData() == S2.getData() ? true : (Cmp(*S1, *S2) >= 0)); }
 
   // comparison functions
-  __attribute__((warn_unused_result)) inline int Cmp (const char *S2) const noexcept { return Cmp(getData(), S2); }
-  __attribute__((warn_unused_result)) inline int Cmp (const VStr &S2) const noexcept { return Cmp(getData(), *S2); }
-  __attribute__((warn_unused_result)) inline int ICmp (const char *S2) const noexcept { return ICmp(getData(), S2); }
-  __attribute__((warn_unused_result)) inline int ICmp (const VStr &S2) const noexcept { return ICmp(getData(), *S2); }
+  VVA_CHECKRESULT inline int Cmp (const char *S2) const noexcept { return Cmp(getData(), S2); }
+  VVA_CHECKRESULT inline int Cmp (const VStr &S2) const noexcept { return Cmp(getData(), *S2); }
+  VVA_CHECKRESULT inline int ICmp (const char *S2) const noexcept { return ICmp(getData(), S2); }
+  VVA_CHECKRESULT inline int ICmp (const VStr &S2) const noexcept { return ICmp(getData(), *S2); }
 
-  __attribute__((warn_unused_result)) inline int cmp (const char *S2) const noexcept { return Cmp(getData(), S2); }
-  __attribute__((warn_unused_result)) inline int cmp (const VStr &S2) const noexcept { return Cmp(getData(), *S2); }
-  __attribute__((warn_unused_result)) inline int icmp (const char *S2) const noexcept { return ICmp(getData(), S2); }
-  __attribute__((warn_unused_result)) inline int icmp (const VStr &S2) const noexcept { return ICmp(getData(), *S2); }
+  VVA_CHECKRESULT inline int cmp (const char *S2) const noexcept { return Cmp(getData(), S2); }
+  VVA_CHECKRESULT inline int cmp (const VStr &S2) const noexcept { return Cmp(getData(), *S2); }
+  VVA_CHECKRESULT inline int icmp (const char *S2) const noexcept { return ICmp(getData(), S2); }
+  VVA_CHECKRESULT inline int icmp (const VStr &S2) const noexcept { return ICmp(getData(), *S2); }
 
-  __attribute__((warn_unused_result)) inline bool StrEqu (const char *S2) const noexcept { return (Cmp(getData(), S2) == 0); }
-  __attribute__((warn_unused_result)) inline bool StrEqu (const VStr &S2) const noexcept { return (Cmp(getData(), *S2) == 0); }
-  __attribute__((warn_unused_result)) inline bool StrEquCI (const char *S2) const noexcept { return (ICmp(getData(), S2) == 0); }
-  __attribute__((warn_unused_result)) inline bool StrEquCI (const VStr &S2) const noexcept { return (ICmp(getData(), *S2) == 0); }
+  VVA_CHECKRESULT inline bool StrEqu (const char *S2) const noexcept { return (Cmp(getData(), S2) == 0); }
+  VVA_CHECKRESULT inline bool StrEqu (const VStr &S2) const noexcept { return (Cmp(getData(), *S2) == 0); }
+  VVA_CHECKRESULT inline bool StrEquCI (const char *S2) const noexcept { return (ICmp(getData(), S2) == 0); }
+  VVA_CHECKRESULT inline bool StrEquCI (const VStr &S2) const noexcept { return (ICmp(getData(), *S2) == 0); }
 
-  __attribute__((warn_unused_result)) inline bool strequ (const char *S2) const noexcept { return (Cmp(getData(), S2) == 0); }
-  __attribute__((warn_unused_result)) inline bool strequ (const VStr &S2) const noexcept { return (Cmp(getData(), *S2) == 0); }
-  __attribute__((warn_unused_result)) inline bool strequCI (const char *S2) const noexcept { return (ICmp(getData(), S2) == 0); }
-  __attribute__((warn_unused_result)) inline bool strequCI (const VStr &S2) const noexcept { return (ICmp(getData(), *S2) == 0); }
+  VVA_CHECKRESULT inline bool strequ (const char *S2) const noexcept { return (Cmp(getData(), S2) == 0); }
+  VVA_CHECKRESULT inline bool strequ (const VStr &S2) const noexcept { return (Cmp(getData(), *S2) == 0); }
+  VVA_CHECKRESULT inline bool strequCI (const char *S2) const noexcept { return (ICmp(getData(), S2) == 0); }
+  VVA_CHECKRESULT inline bool strequCI (const VStr &S2) const noexcept { return (ICmp(getData(), *S2) == 0); }
 
-  __attribute__((warn_unused_result)) inline bool strEqu (const char *S2) const noexcept { return (Cmp(getData(), S2) == 0); }
-  __attribute__((warn_unused_result)) inline bool strEqu (const VStr &S2) const noexcept { return (Cmp(getData(), *S2) == 0); }
-  __attribute__((warn_unused_result)) inline bool strEquCI (const char *S2) const noexcept { return (ICmp(getData(), S2) == 0); }
-  __attribute__((warn_unused_result)) inline bool strEquCI (const VStr &S2) const noexcept { return (ICmp(getData(), *S2) == 0); }
+  VVA_CHECKRESULT inline bool strEqu (const char *S2) const noexcept { return (Cmp(getData(), S2) == 0); }
+  VVA_CHECKRESULT inline bool strEqu (const VStr &S2) const noexcept { return (Cmp(getData(), *S2) == 0); }
+  VVA_CHECKRESULT inline bool strEquCI (const char *S2) const noexcept { return (ICmp(getData(), S2) == 0); }
+  VVA_CHECKRESULT inline bool strEquCI (const VStr &S2) const noexcept { return (ICmp(getData(), *S2) == 0); }
 
-  __attribute__((warn_unused_result)) bool StartsWith (const char *) const noexcept;
-  __attribute__((warn_unused_result)) bool StartsWith (const VStr &) const noexcept;
-  __attribute__((warn_unused_result)) bool EndsWith (const char *) const noexcept;
-  __attribute__((warn_unused_result)) bool EndsWith (const VStr &) const noexcept;
+  VVA_CHECKRESULT bool StartsWith (const char *) const noexcept;
+  VVA_CHECKRESULT bool StartsWith (const VStr &) const noexcept;
+  VVA_CHECKRESULT bool EndsWith (const char *) const noexcept;
+  VVA_CHECKRESULT bool EndsWith (const VStr &) const noexcept;
 
-  __attribute__((warn_unused_result)) inline bool startsWith (const char *s) const noexcept { return StartsWith(s); }
-  __attribute__((warn_unused_result)) inline bool startsWith (const VStr &s) const noexcept { return StartsWith(s); }
-  __attribute__((warn_unused_result)) inline bool endsWith (const char *s) const noexcept { return EndsWith(s); }
-  __attribute__((warn_unused_result)) inline bool endsWith (const VStr &s) const noexcept { return EndsWith(s); }
+  VVA_CHECKRESULT inline bool startsWith (const char *s) const noexcept { return StartsWith(s); }
+  VVA_CHECKRESULT inline bool startsWith (const VStr &s) const noexcept { return StartsWith(s); }
+  VVA_CHECKRESULT inline bool endsWith (const char *s) const noexcept { return EndsWith(s); }
+  VVA_CHECKRESULT inline bool endsWith (const VStr &s) const noexcept { return EndsWith(s); }
 
-  __attribute__((warn_unused_result)) bool startsWithNoCase (const char *s) const noexcept;
-  __attribute__((warn_unused_result)) bool startsWithNoCase (const VStr &s) const noexcept;
-  __attribute__((warn_unused_result)) bool endsWithNoCase (const char *s) const noexcept;
-  __attribute__((warn_unused_result)) bool endsWithNoCase (const VStr &s) const noexcept;
+  VVA_CHECKRESULT bool startsWithNoCase (const char *s) const noexcept;
+  VVA_CHECKRESULT bool startsWithNoCase (const VStr &s) const noexcept;
+  VVA_CHECKRESULT bool endsWithNoCase (const char *s) const noexcept;
+  VVA_CHECKRESULT bool endsWithNoCase (const VStr &s) const noexcept;
 
-  __attribute__((warn_unused_result)) inline bool StartsWithNoCase (const char *s) const noexcept { return startsWithNoCase(s); }
-  __attribute__((warn_unused_result)) inline bool StartsWithNoCase (const VStr &s) const noexcept { return startsWithNoCase(s); }
-  __attribute__((warn_unused_result)) inline bool EndsWithNoCase (const char *s) const noexcept { return endsWithNoCase(s); }
-  __attribute__((warn_unused_result)) inline bool EndsWithNoCase (const VStr &s) const noexcept { return endsWithNoCase(s); }
+  VVA_CHECKRESULT inline bool StartsWithNoCase (const char *s) const noexcept { return startsWithNoCase(s); }
+  VVA_CHECKRESULT inline bool StartsWithNoCase (const VStr &s) const noexcept { return startsWithNoCase(s); }
+  VVA_CHECKRESULT inline bool EndsWithNoCase (const char *s) const noexcept { return endsWithNoCase(s); }
+  VVA_CHECKRESULT inline bool EndsWithNoCase (const VStr &s) const noexcept { return endsWithNoCase(s); }
 
-  __attribute__((warn_unused_result)) inline bool StartsWithCI (const char *s) const noexcept { return startsWithNoCase(s); }
-  __attribute__((warn_unused_result)) inline bool StartsWithCI (const VStr &s) const noexcept { return startsWithNoCase(s); }
-  __attribute__((warn_unused_result)) inline bool EndsWithCI (const char *s) const noexcept { return endsWithNoCase(s); }
-  __attribute__((warn_unused_result)) inline bool EndsWithCI (const VStr &s) const noexcept { return endsWithNoCase(s); }
+  VVA_CHECKRESULT inline bool StartsWithCI (const char *s) const noexcept { return startsWithNoCase(s); }
+  VVA_CHECKRESULT inline bool StartsWithCI (const VStr &s) const noexcept { return startsWithNoCase(s); }
+  VVA_CHECKRESULT inline bool EndsWithCI (const char *s) const noexcept { return endsWithNoCase(s); }
+  VVA_CHECKRESULT inline bool EndsWithCI (const VStr &s) const noexcept { return endsWithNoCase(s); }
 
-  __attribute__((warn_unused_result)) inline bool startsWithCI (const char *s) const noexcept { return startsWithNoCase(s); }
-  __attribute__((warn_unused_result)) inline bool startsWithCI (const VStr &s) const noexcept { return startsWithNoCase(s); }
-  __attribute__((warn_unused_result)) inline bool endsWithCI (const char *s) const noexcept { return endsWithNoCase(s); }
-  __attribute__((warn_unused_result)) inline bool endsWithCI (const VStr &s) const noexcept { return endsWithNoCase(s); }
+  VVA_CHECKRESULT inline bool startsWithCI (const char *s) const noexcept { return startsWithNoCase(s); }
+  VVA_CHECKRESULT inline bool startsWithCI (const VStr &s) const noexcept { return startsWithNoCase(s); }
+  VVA_CHECKRESULT inline bool endsWithCI (const char *s) const noexcept { return endsWithNoCase(s); }
+  VVA_CHECKRESULT inline bool endsWithCI (const VStr &s) const noexcept { return endsWithNoCase(s); }
 
-  static __attribute__((warn_unused_result)) bool startsWith (const char *str, const char *part) noexcept;
-  static __attribute__((warn_unused_result)) bool endsWith (const char *str, const char *part) noexcept;
-  static __attribute__((warn_unused_result)) bool startsWithNoCase (const char *str, const char *part) noexcept;
-  static __attribute__((warn_unused_result)) bool endsWithNoCase (const char *str, const char *part) noexcept;
+  static VVA_CHECKRESULT bool startsWith (const char *str, const char *part) noexcept;
+  static VVA_CHECKRESULT bool endsWith (const char *str, const char *part) noexcept;
+  static VVA_CHECKRESULT bool startsWithNoCase (const char *str, const char *part) noexcept;
+  static VVA_CHECKRESULT bool endsWithNoCase (const char *str, const char *part) noexcept;
 
-  static __attribute__((warn_unused_result)) inline bool StartsWith (const char *str, const char *part) noexcept { return startsWith(str, part); }
-  static __attribute__((warn_unused_result)) inline bool SndsWith (const char *str, const char *part) noexcept { return endsWith(str, part); }
-  static __attribute__((warn_unused_result)) inline bool startsWithCI (const char *str, const char *part) noexcept { return startsWithNoCase(str, part); }
-  static __attribute__((warn_unused_result)) inline bool endsWithCI (const char *str, const char *part) noexcept { return endsWithNoCase(str, part); }
+  static VVA_CHECKRESULT inline bool StartsWith (const char *str, const char *part) noexcept { return startsWith(str, part); }
+  static VVA_CHECKRESULT inline bool SndsWith (const char *str, const char *part) noexcept { return endsWith(str, part); }
+  static VVA_CHECKRESULT inline bool startsWithCI (const char *str, const char *part) noexcept { return startsWithNoCase(str, part); }
+  static VVA_CHECKRESULT inline bool endsWithCI (const char *str, const char *part) noexcept { return endsWithNoCase(str, part); }
 
-  __attribute__((warn_unused_result)) VStr ToLower () const noexcept;
-  __attribute__((warn_unused_result)) VStr ToUpper () const noexcept;
+  VVA_CHECKRESULT VStr ToLower () const noexcept;
+  VVA_CHECKRESULT VStr ToUpper () const noexcept;
 
-  __attribute__((warn_unused_result)) inline VStr toLowerCase () const noexcept { return ToLower(); }
-  __attribute__((warn_unused_result)) inline VStr toUpperCase () const noexcept { return ToUpper(); }
+  VVA_CHECKRESULT inline VStr toLowerCase () const noexcept { return ToLower(); }
+  VVA_CHECKRESULT inline VStr toUpperCase () const noexcept { return ToUpper(); }
 
-  __attribute__((warn_unused_result)) inline bool isLowerCase () const noexcept {
+  VVA_CHECKRESULT inline bool isLowerCase () const noexcept {
     const char *dp = getData();
     for (int f = length()-1; f >= 0; --f, ++dp) {
       if (*dp >= 'A' && *dp <= 'Z') return false;
@@ -378,7 +378,7 @@ public:
     return true;
   }
 
-  __attribute__((warn_unused_result)) inline static bool isLowerCase (const char *s) noexcept {
+  VVA_CHECKRESULT inline static bool isLowerCase (const char *s) noexcept {
     if (!s) return true;
     while (*s) {
       if (*s >= 'A' && *s <= 'Z') return false;
@@ -387,29 +387,29 @@ public:
     return true;
   }
 
-  __attribute__((warn_unused_result)) int IndexOf (char pch, int stpos=0) const noexcept;
-  __attribute__((warn_unused_result)) int IndexOf (const char *ps, int stpos=0) const noexcept;
-  __attribute__((warn_unused_result)) int IndexOf (const VStr &ps, int stpos=0) const noexcept;
-  __attribute__((warn_unused_result)) int LastIndexOf (char pch, int stpos=0) const noexcept;
-  __attribute__((warn_unused_result)) int LastIndexOf (const char *ps, int stpos=0) const noexcept;
-  __attribute__((warn_unused_result)) int LastIndexOf (const VStr &ps, int stpos=0) const noexcept;
+  VVA_CHECKRESULT int IndexOf (char pch, int stpos=0) const noexcept;
+  VVA_CHECKRESULT int IndexOf (const char *ps, int stpos=0) const noexcept;
+  VVA_CHECKRESULT int IndexOf (const VStr &ps, int stpos=0) const noexcept;
+  VVA_CHECKRESULT int LastIndexOf (char pch, int stpos=0) const noexcept;
+  VVA_CHECKRESULT int LastIndexOf (const char *ps, int stpos=0) const noexcept;
+  VVA_CHECKRESULT int LastIndexOf (const VStr &ps, int stpos=0) const noexcept;
 
-  __attribute__((warn_unused_result)) inline int indexOf (char v, int stpos=0) const noexcept { return IndexOf(v, stpos); }
-  __attribute__((warn_unused_result)) inline int indexOf (const char *v, int stpos=0) const noexcept { return IndexOf(v, stpos); }
-  __attribute__((warn_unused_result)) inline int indexOf (const VStr &v, int stpos=0) const noexcept { return IndexOf(v, stpos); }
-  __attribute__((warn_unused_result)) inline int lastIndexOf (char v, int stpos=0) const noexcept { return LastIndexOf(v, stpos); }
-  __attribute__((warn_unused_result)) inline int lastIndexOf (const char *v, int stpos=0) const noexcept { return LastIndexOf(v, stpos); }
-  __attribute__((warn_unused_result)) inline int lastIndexOf (const VStr &v, int stpos=0) const noexcept { return LastIndexOf(v, stpos); }
+  VVA_CHECKRESULT inline int indexOf (char v, int stpos=0) const noexcept { return IndexOf(v, stpos); }
+  VVA_CHECKRESULT inline int indexOf (const char *v, int stpos=0) const noexcept { return IndexOf(v, stpos); }
+  VVA_CHECKRESULT inline int indexOf (const VStr &v, int stpos=0) const noexcept { return IndexOf(v, stpos); }
+  VVA_CHECKRESULT inline int lastIndexOf (char v, int stpos=0) const noexcept { return LastIndexOf(v, stpos); }
+  VVA_CHECKRESULT inline int lastIndexOf (const char *v, int stpos=0) const noexcept { return LastIndexOf(v, stpos); }
+  VVA_CHECKRESULT inline int lastIndexOf (const VStr &v, int stpos=0) const noexcept { return LastIndexOf(v, stpos); }
 
-  __attribute__((warn_unused_result)) VStr Replace (const char *, const char *) const noexcept;
-  __attribute__((warn_unused_result)) VStr Replace (VStr, VStr) const noexcept;
+  VVA_CHECKRESULT VStr Replace (const char *, const char *) const noexcept;
+  VVA_CHECKRESULT VStr Replace (VStr, VStr) const noexcept;
 
-  __attribute__((warn_unused_result)) inline VStr replace (const char *s0, const char *s1) const noexcept { return Replace(s0, s1); }
-  __attribute__((warn_unused_result)) inline VStr replace (const VStr &s0, const VStr &s1) const noexcept { return Replace(s0, s1); }
+  VVA_CHECKRESULT inline VStr replace (const char *s0, const char *s1) const noexcept { return Replace(s0, s1); }
+  VVA_CHECKRESULT inline VStr replace (const VStr &s0, const VStr &s1) const noexcept { return Replace(s0, s1); }
 
-  __attribute__((warn_unused_result)) VStr Utf8Substring (int start, int len) const noexcept;
-  __attribute__((warn_unused_result)) inline VStr utf8Substring (int start, int len) const noexcept { return Utf8Substring(start, len); }
-  __attribute__((warn_unused_result)) inline VStr utf8substring (int start, int len) const noexcept { return Utf8Substring(start, len); }
+  VVA_CHECKRESULT VStr Utf8Substring (int start, int len) const noexcept;
+  VVA_CHECKRESULT inline VStr utf8Substring (int start, int len) const noexcept { return Utf8Substring(start, len); }
+  VVA_CHECKRESULT inline VStr utf8substring (int start, int len) const noexcept { return Utf8Substring(start, len); }
 
   void Split (char, TArray<VStr> &) const noexcept;
   void Split (const char *, TArray<VStr> &) const noexcept;
@@ -423,100 +423,100 @@ public:
   void SplitPath (TArray<VStr> &) const noexcept;
   inline void splitPath (TArray<VStr> &a) const noexcept { SplitPath(a); }
 
-  __attribute__((warn_unused_result)) bool IsValidUtf8 () const noexcept;
-  __attribute__((warn_unused_result)) inline bool isValidUtf8 () const noexcept { return IsValidUtf8(); }
-  __attribute__((warn_unused_result)) bool isUtf8Valid () const noexcept;
+  VVA_CHECKRESULT bool IsValidUtf8 () const noexcept;
+  VVA_CHECKRESULT inline bool isValidUtf8 () const noexcept { return IsValidUtf8(); }
+  VVA_CHECKRESULT bool isUtf8Valid () const noexcept;
 
-  __attribute__((warn_unused_result)) VStr Latin1ToUtf8 () const noexcept;
+  VVA_CHECKRESULT VStr Latin1ToUtf8 () const noexcept;
 
   // serialisation operator
   VStream &Serialise (VStream &Strm);
   VStream &Serialise (VStream &Strm) const;
 
   // if `addQCh` is `true`, add '"' if something was quoted
-  __attribute__((warn_unused_result)) VStr quote (bool addQCh=false) const noexcept;
-  __attribute__((warn_unused_result)) bool needQuoting () const noexcept;
+  VVA_CHECKRESULT VStr quote (bool addQCh=false) const noexcept;
+  VVA_CHECKRESULT bool needQuoting () const noexcept;
 
-  __attribute__((warn_unused_result)) VStr xmlEscape () const noexcept;
-  __attribute__((warn_unused_result)) VStr xmlUnescape () const noexcept;
+  VVA_CHECKRESULT VStr xmlEscape () const noexcept;
+  VVA_CHECKRESULT VStr xmlUnescape () const noexcept;
 
-  __attribute__((warn_unused_result)) VStr EvalEscapeSequences () const noexcept;
+  VVA_CHECKRESULT VStr EvalEscapeSequences () const noexcept;
 
-  __attribute__((warn_unused_result)) VStr RemoveColors () const noexcept;
-  __attribute__((warn_unused_result)) bool MustBeSanitized () const noexcept;
-  static __attribute__((warn_unused_result)) bool MustBeSanitized (const char *str) noexcept;
+  VVA_CHECKRESULT VStr RemoveColors () const noexcept;
+  VVA_CHECKRESULT bool MustBeSanitized () const noexcept;
+  static VVA_CHECKRESULT bool MustBeSanitized (const char *str) noexcept;
 
-  __attribute__((warn_unused_result)) VStr ExtractFilePath () const noexcept;
-  __attribute__((warn_unused_result)) VStr ExtractFileName () const noexcept;
-  __attribute__((warn_unused_result)) VStr ExtractFileBase (bool doSysError=true) const noexcept; // this tries to get only name w/o extension, and calls `Sys_Error()` on too long names
-  __attribute__((warn_unused_result)) VStr ExtractFileBaseName () const noexcept;
-  __attribute__((warn_unused_result)) VStr ExtractFileExtension () const noexcept; // with a dot
-  __attribute__((warn_unused_result)) VStr StripExtension () const noexcept;
-  __attribute__((warn_unused_result)) VStr DefaultPath (VStr basepath) const noexcept;
-  __attribute__((warn_unused_result)) VStr DefaultExtension (VStr extension) const noexcept;
-  __attribute__((warn_unused_result)) VStr FixFileSlashes () const noexcept;
-  __attribute__((warn_unused_result)) VStr AppendTrailingSlash () const noexcept;
-  __attribute__((warn_unused_result)) VStr RemoveTrailingSlash () const noexcept;
-  __attribute__((warn_unused_result)) VStr AppendPath (const VStr &path) const noexcept;
+  VVA_CHECKRESULT VStr ExtractFilePath () const noexcept;
+  VVA_CHECKRESULT VStr ExtractFileName () const noexcept;
+  VVA_CHECKRESULT VStr ExtractFileBase (bool doSysError=true) const noexcept; // this tries to get only name w/o extension, and calls `Sys_Error()` on too long names
+  VVA_CHECKRESULT VStr ExtractFileBaseName () const noexcept;
+  VVA_CHECKRESULT VStr ExtractFileExtension () const noexcept; // with a dot
+  VVA_CHECKRESULT VStr StripExtension () const noexcept;
+  VVA_CHECKRESULT VStr DefaultPath (VStr basepath) const noexcept;
+  VVA_CHECKRESULT VStr DefaultExtension (VStr extension) const noexcept;
+  VVA_CHECKRESULT VStr FixFileSlashes () const noexcept;
+  VVA_CHECKRESULT VStr AppendTrailingSlash () const noexcept;
+  VVA_CHECKRESULT VStr RemoveTrailingSlash () const noexcept;
+  VVA_CHECKRESULT VStr AppendPath (const VStr &path) const noexcept;
 
-  __attribute__((warn_unused_result)) inline VStr extractFilePath () const noexcept { return ExtractFilePath(); }
-  __attribute__((warn_unused_result)) inline VStr extractFileName () const noexcept { return ExtractFileName(); }
-  __attribute__((warn_unused_result)) inline VStr extractFileBase (bool doSysError=true) const noexcept { return ExtractFileBase(doSysError); }
-  __attribute__((warn_unused_result)) inline VStr extractFileBaseName () const noexcept { return ExtractFileBaseName(); }
-  __attribute__((warn_unused_result)) inline VStr extractFileExtension () const noexcept { return ExtractFileExtension(); }
-  __attribute__((warn_unused_result)) inline VStr stripExtension () const noexcept { return StripExtension(); }
-  __attribute__((warn_unused_result)) inline VStr defaultPath (VStr basepath) const noexcept { return DefaultPath(basepath); }
-  __attribute__((warn_unused_result)) inline VStr defaultExtension (VStr extension) const noexcept { return DefaultExtension(extension); }
-  __attribute__((warn_unused_result)) inline VStr fixSlashes () const noexcept { return FixFileSlashes(); }
-  __attribute__((warn_unused_result)) inline VStr appendTrailingSlash () const noexcept { return AppendTrailingSlash(); }
-  __attribute__((warn_unused_result)) inline VStr removeTrailingSlash () const noexcept { return RemoveTrailingSlash(); }
-  __attribute__((warn_unused_result)) inline VStr appendPath (const VStr &path) const noexcept { return AppendPath(path); }
+  VVA_CHECKRESULT inline VStr extractFilePath () const noexcept { return ExtractFilePath(); }
+  VVA_CHECKRESULT inline VStr extractFileName () const noexcept { return ExtractFileName(); }
+  VVA_CHECKRESULT inline VStr extractFileBase (bool doSysError=true) const noexcept { return ExtractFileBase(doSysError); }
+  VVA_CHECKRESULT inline VStr extractFileBaseName () const noexcept { return ExtractFileBaseName(); }
+  VVA_CHECKRESULT inline VStr extractFileExtension () const noexcept { return ExtractFileExtension(); }
+  VVA_CHECKRESULT inline VStr stripExtension () const noexcept { return StripExtension(); }
+  VVA_CHECKRESULT inline VStr defaultPath (VStr basepath) const noexcept { return DefaultPath(basepath); }
+  VVA_CHECKRESULT inline VStr defaultExtension (VStr extension) const noexcept { return DefaultExtension(extension); }
+  VVA_CHECKRESULT inline VStr fixSlashes () const noexcept { return FixFileSlashes(); }
+  VVA_CHECKRESULT inline VStr appendTrailingSlash () const noexcept { return AppendTrailingSlash(); }
+  VVA_CHECKRESULT inline VStr removeTrailingSlash () const noexcept { return RemoveTrailingSlash(); }
+  VVA_CHECKRESULT inline VStr appendPath (const VStr &path) const noexcept { return AppendPath(path); }
 
   // removes all blanks
-  __attribute__((warn_unused_result)) VStr trimRight () const noexcept;
-  __attribute__((warn_unused_result)) VStr trimLeft () const noexcept;
-  __attribute__((warn_unused_result)) VStr trimAll () const noexcept;
+  VVA_CHECKRESULT VStr trimRight () const noexcept;
+  VVA_CHECKRESULT VStr trimLeft () const noexcept;
+  VVA_CHECKRESULT VStr trimAll () const noexcept;
 
   // from my iv.strex
-  __attribute__((warn_unused_result)) inline VStr xstrip () const noexcept { return trimAll(); }
-  __attribute__((warn_unused_result)) inline VStr xstripleft () const noexcept { return trimLeft(); }
-  __attribute__((warn_unused_result)) inline VStr xstripright () const noexcept { return trimRight(); }
+  VVA_CHECKRESULT inline VStr xstrip () const noexcept { return trimAll(); }
+  VVA_CHECKRESULT inline VStr xstripleft () const noexcept { return trimLeft(); }
+  VVA_CHECKRESULT inline VStr xstripright () const noexcept { return trimRight(); }
 
-  __attribute__((warn_unused_result)) bool IsAbsolutePath () const noexcept;
-  __attribute__((warn_unused_result)) inline bool isAbsolutePath () const noexcept { return IsAbsolutePath(); }
+  VVA_CHECKRESULT bool IsAbsolutePath () const noexcept;
+  VVA_CHECKRESULT inline bool isAbsolutePath () const noexcept { return IsAbsolutePath(); }
 
   // reject absolute names, names with ".", and names with "..", and names ends with path delimiter
-  __attribute__((warn_unused_result)) bool isSafeDiskFileName () const noexcept;
+  VVA_CHECKRESULT bool isSafeDiskFileName () const noexcept;
 
-  static __attribute__((warn_unused_result)) inline int Length (const char *s) noexcept { return (s ? (int)strlen(s) : 0); }
-  static __attribute__((warn_unused_result)) inline int length (const char *s) noexcept { return (s ? (int)strlen(s) : 0); }
-  static __attribute__((warn_unused_result)) int Utf8Length (const char *s, int len=-1) noexcept;
-  static __attribute__((warn_unused_result)) inline int utf8Length (const char *s, int len=-1) noexcept { return (int)Utf8Length(s, len); }
-  static __attribute__((warn_unused_result)) size_t ByteLengthForUtf8 (const char *, size_t) noexcept;
+  static VVA_CHECKRESULT inline int Length (const char *s) noexcept { return (s ? (int)strlen(s) : 0); }
+  static VVA_CHECKRESULT inline int length (const char *s) noexcept { return (s ? (int)strlen(s) : 0); }
+  static VVA_CHECKRESULT int Utf8Length (const char *s, int len=-1) noexcept;
+  static VVA_CHECKRESULT inline int utf8Length (const char *s, int len=-1) noexcept { return (int)Utf8Length(s, len); }
+  static VVA_CHECKRESULT size_t ByteLengthForUtf8 (const char *, size_t) noexcept;
   // get utf8 char; advances pointer, returns '?' on invalid char
-  static __attribute__((warn_unused_result)) int Utf8GetChar (const char *&s) noexcept;
-  static __attribute__((warn_unused_result)) VStr FromUtf8Char (int) noexcept;
+  static VVA_CHECKRESULT int Utf8GetChar (const char *&s) noexcept;
+  static VVA_CHECKRESULT VStr FromUtf8Char (int) noexcept;
 
-  static __attribute__((warn_unused_result)) inline int Cmp (const char *S1, const char *S2) noexcept { return (S1 == S2 ? 0 : strcmp((S1 ? S1 : ""), (S2 ? S2 : ""))); }
-  static __attribute__((warn_unused_result)) inline int NCmp (const char *S1, const char *S2, size_t N) noexcept { return (S1 == S2 ? 0 : strncmp((S1 ? S1 : ""), (S2 ? S2 : ""), N)); }
+  static VVA_CHECKRESULT inline int Cmp (const char *S1, const char *S2) noexcept { return (S1 == S2 ? 0 : strcmp((S1 ? S1 : ""), (S2 ? S2 : ""))); }
+  static VVA_CHECKRESULT inline int NCmp (const char *S1, const char *S2, size_t N) noexcept { return (S1 == S2 ? 0 : strncmp((S1 ? S1 : ""), (S2 ? S2 : ""), N)); }
 
-  static __attribute__((warn_unused_result)) int ICmp (const char *s0, const char *s1) noexcept;
-  static __attribute__((warn_unused_result)) int NICmp (const char *s0, const char *s1, size_t max) noexcept;
+  static VVA_CHECKRESULT int ICmp (const char *s0, const char *s1) noexcept;
+  static VVA_CHECKRESULT int NICmp (const char *s0, const char *s1, size_t max) noexcept;
 
-  static __attribute__((warn_unused_result)) inline bool strequ (const char *S1, const char *S2) noexcept { return (Cmp(S1, S2) == 0); }
-  static __attribute__((warn_unused_result)) inline bool strequCI (const char *S1, const char *S2) noexcept { return (ICmp(S1, S2) == 0); }
-  static __attribute__((warn_unused_result)) inline bool nstrequ (const char *S1, const char *S2, size_t max) noexcept { return (NCmp(S1, S2, max) == 0); }
-  static __attribute__((warn_unused_result)) inline bool nstrequCI (const char *S1, const char *S2, size_t max) noexcept { return (NICmp(S1, S2, max) == 0); }
+  static VVA_CHECKRESULT inline bool strequ (const char *S1, const char *S2) noexcept { return (Cmp(S1, S2) == 0); }
+  static VVA_CHECKRESULT inline bool strequCI (const char *S1, const char *S2) noexcept { return (ICmp(S1, S2) == 0); }
+  static VVA_CHECKRESULT inline bool nstrequ (const char *S1, const char *S2, size_t max) noexcept { return (NCmp(S1, S2, max) == 0); }
+  static VVA_CHECKRESULT inline bool nstrequCI (const char *S1, const char *S2, size_t max) noexcept { return (NICmp(S1, S2, max) == 0); }
 
-  static __attribute__((warn_unused_result)) inline bool StrEqu (const char *S1, const char *S2) noexcept { return (Cmp(S1, S2) == 0); }
-  static __attribute__((warn_unused_result)) inline bool StrEquCI (const char *S1, const char *S2) noexcept { return (ICmp(S1, S2) == 0); }
-  static __attribute__((warn_unused_result)) inline bool NStrEqu (const char *S1, const char *S2, size_t max) noexcept { return (NCmp(S1, S2, max) == 0); }
-  static __attribute__((warn_unused_result)) inline bool NStrEquCI (const char *S1, const char *S2, size_t max) noexcept { return (NICmp(S1, S2, max) == 0); }
+  static VVA_CHECKRESULT inline bool StrEqu (const char *S1, const char *S2) noexcept { return (Cmp(S1, S2) == 0); }
+  static VVA_CHECKRESULT inline bool StrEquCI (const char *S1, const char *S2) noexcept { return (ICmp(S1, S2) == 0); }
+  static VVA_CHECKRESULT inline bool NStrEqu (const char *S1, const char *S2, size_t max) noexcept { return (NCmp(S1, S2, max) == 0); }
+  static VVA_CHECKRESULT inline bool NStrEquCI (const char *S1, const char *S2, size_t max) noexcept { return (NICmp(S1, S2, max) == 0); }
 
-  static __attribute__((warn_unused_result)) inline bool strEqu (const char *S1, const char *S2) noexcept { return (Cmp(S1, S2) == 0); }
-  static __attribute__((warn_unused_result)) inline bool strEquCI (const char *S1, const char *S2) noexcept { return (ICmp(S1, S2) == 0); }
-  static __attribute__((warn_unused_result)) inline bool nstrEqu (const char *S1, const char *S2, size_t max) noexcept { return (NCmp(S1, S2, max) == 0); }
-  static __attribute__((warn_unused_result)) inline bool nstrEquCI (const char *S1, const char *S2, size_t max) noexcept { return (NICmp(S1, S2, max) == 0); }
+  static VVA_CHECKRESULT inline bool strEqu (const char *S1, const char *S2) noexcept { return (Cmp(S1, S2) == 0); }
+  static VVA_CHECKRESULT inline bool strEquCI (const char *S1, const char *S2) noexcept { return (ICmp(S1, S2) == 0); }
+  static VVA_CHECKRESULT inline bool nstrEqu (const char *S1, const char *S2, size_t max) noexcept { return (NCmp(S1, S2, max) == 0); }
+  static VVA_CHECKRESULT inline bool nstrEquCI (const char *S1, const char *S2, size_t max) noexcept { return (NICmp(S1, S2, max) == 0); }
 
   static inline void Cpy (char *dst, const char *src) noexcept {
     if (dst) { if (src) strcpy(dst, src); else *dst = 0; }
@@ -534,35 +534,35 @@ public:
     }
   }
 
-  static __attribute__((warn_unused_result)) inline char ToUpper (char c) noexcept { return (c >= 'a' && c <= 'z' ? c-32 : c); }
-  static __attribute__((warn_unused_result)) inline char ToLower (char c) noexcept { return (c >= 'A' && c <= 'Z' ? c+32 : c); }
+  static VVA_CHECKRESULT inline char ToUpper (char c) noexcept { return (c >= 'a' && c <= 'z' ? c-32 : c); }
+  static VVA_CHECKRESULT inline char ToLower (char c) noexcept { return (c >= 'A' && c <= 'Z' ? c+32 : c); }
 
-  static __attribute__((warn_unused_result)) inline char toupper (char c) noexcept { return (c >= 'a' && c <= 'z' ? c-32 : c); }
-  static __attribute__((warn_unused_result)) inline char tolower (char c) noexcept { return (c >= 'A' && c <= 'Z' ? c+32 : c); }
+  static VVA_CHECKRESULT inline char toupper (char c) noexcept { return (c >= 'a' && c <= 'z' ? c-32 : c); }
+  static VVA_CHECKRESULT inline char tolower (char c) noexcept { return (c >= 'A' && c <= 'Z' ? c+32 : c); }
 
   // append codepoint to this string, in utf-8
   VStr &utf8Append (vuint32 code) noexcept;
 
-  __attribute__((warn_unused_result)) VStr utf2win () const noexcept;
-  __attribute__((warn_unused_result)) VStr win2utf () const noexcept;
+  VVA_CHECKRESULT VStr utf2win () const noexcept;
+  VVA_CHECKRESULT VStr win2utf () const noexcept;
 
-  __attribute__((warn_unused_result)) VStr utf2koi () const noexcept;
-  __attribute__((warn_unused_result)) VStr koi2utf () const noexcept;
+  VVA_CHECKRESULT VStr utf2koi () const noexcept;
+  VVA_CHECKRESULT VStr koi2utf () const noexcept;
 
-  __attribute__((warn_unused_result)) VStr toLowerCase1251 () const noexcept;
-  __attribute__((warn_unused_result)) VStr toUpperCase1251 () const noexcept;
+  VVA_CHECKRESULT VStr toLowerCase1251 () const noexcept;
+  VVA_CHECKRESULT VStr toUpperCase1251 () const noexcept;
 
-  __attribute__((warn_unused_result)) VStr toLowerCaseKOI () const noexcept;
-  __attribute__((warn_unused_result)) VStr toUpperCaseKOI () const noexcept;
+  VVA_CHECKRESULT VStr toLowerCaseKOI () const noexcept;
+  VVA_CHECKRESULT VStr toUpperCaseKOI () const noexcept;
 
-  __attribute__((warn_unused_result)) inline bool equ1251CI (const VStr &s) const noexcept {
+  VVA_CHECKRESULT inline bool equ1251CI (const VStr &s) const noexcept {
     size_t slen = (size_t)length();
     if (slen != (size_t)s.length()) return false;
     for (size_t f = 0; f < slen; ++f) if (locase1251(getData()[f]) != locase1251(s[f])) return false;
     return true;
   }
 
-  __attribute__((warn_unused_result)) inline bool equ1251CI (const char *s) const noexcept {
+  VVA_CHECKRESULT inline bool equ1251CI (const char *s) const noexcept {
     size_t slen = length();
     if (!s || !s[0]) return (slen == 0);
     if (slen != strlen(s)) return false;
@@ -570,14 +570,14 @@ public:
     return true;
   }
 
-  __attribute__((warn_unused_result)) inline bool equKOICI (const VStr &s) const noexcept {
+  VVA_CHECKRESULT inline bool equKOICI (const VStr &s) const noexcept {
     size_t slen = (size_t)length();
     if (slen != (size_t)s.length()) return false;
     for (size_t f = 0; f < slen; ++f) if (locaseKOI(getData()[f]) != locaseKOI(s[f])) return false;
     return true;
   }
 
-  __attribute__((warn_unused_result)) inline bool equKOICI (const char *s) const noexcept {
+  VVA_CHECKRESULT inline bool equKOICI (const char *s) const noexcept {
     size_t slen = length();
     if (!s || !s[0]) return (slen == 0);
     if (slen != strlen(s)) return false;
@@ -585,32 +585,32 @@ public:
     return true;
   }
 
-  __attribute__((warn_unused_result)) inline bool fnameEqu1251CI (const VStr &s) const noexcept { return fnameEqu1251CI(s.getData()); }
-  __attribute__((warn_unused_result)) bool fnameEqu1251CI (const char *s) const noexcept;
+  VVA_CHECKRESULT inline bool fnameEqu1251CI (const VStr &s) const noexcept { return fnameEqu1251CI(s.getData()); }
+  VVA_CHECKRESULT bool fnameEqu1251CI (const char *s) const noexcept;
 
-  __attribute__((warn_unused_result)) inline bool fnameEquKOICI (const VStr &s) const noexcept { return fnameEquKOICI(s.getData()); }
-  __attribute__((warn_unused_result)) bool fnameEquKOICI (const char *s) const noexcept;
+  VVA_CHECKRESULT inline bool fnameEquKOICI (const VStr &s) const noexcept { return fnameEquKOICI(s.getData()); }
+  VVA_CHECKRESULT bool fnameEquKOICI (const char *s) const noexcept;
 
-  static __attribute__((warn_unused_result)) VStr buf2hex (const void *buf, int buflen) noexcept;
+  static VVA_CHECKRESULT VStr buf2hex (const void *buf, int buflen) noexcept;
 
   inline bool convertInt (int *outv) const noexcept { return convertInt(getCStr(), outv); }
   inline bool convertFloat (float *outv) const noexcept { return convertFloat(getCStr(), outv); }
 
-  static __attribute__((warn_unused_result)) bool globmatch (const char *str, const char *pat, bool caseSensitive=true) noexcept;
-  __attribute__((warn_unused_result)) inline bool globmatch (const char *pat, bool caseSensitive=true) const noexcept { return globmatch(getData(), pat, caseSensitive); }
-  __attribute__((warn_unused_result)) inline bool globmatch (const VStr &pat, bool caseSensitive=true) const noexcept { return globmatch(getData(), *pat, caseSensitive); }
+  static VVA_CHECKRESULT bool globmatch (const char *str, const char *pat, bool caseSensitive=true) noexcept;
+  VVA_CHECKRESULT inline bool globmatch (const char *pat, bool caseSensitive=true) const noexcept { return globmatch(getData(), pat, caseSensitive); }
+  VVA_CHECKRESULT inline bool globmatch (const VStr &pat, bool caseSensitive=true) const noexcept { return globmatch(getData(), *pat, caseSensitive); }
 
-  static __attribute__((warn_unused_result)) inline bool globMatch (const char *str, const char *pat, bool caseSensitive=true) noexcept { return globmatch(str, pat, caseSensitive); }
-  __attribute__((warn_unused_result)) inline bool globMatch (const char *pat, bool caseSensitive=true) const noexcept { return globmatch(getData(), pat, caseSensitive); }
-  __attribute__((warn_unused_result)) inline bool globMatch (const VStr &pat, bool caseSensitive=true) const noexcept { return globmatch(getData(), *pat, caseSensitive); }
+  static VVA_CHECKRESULT inline bool globMatch (const char *str, const char *pat, bool caseSensitive=true) noexcept { return globmatch(str, pat, caseSensitive); }
+  VVA_CHECKRESULT inline bool globMatch (const char *pat, bool caseSensitive=true) const noexcept { return globmatch(getData(), pat, caseSensitive); }
+  VVA_CHECKRESULT inline bool globMatch (const VStr &pat, bool caseSensitive=true) const noexcept { return globmatch(getData(), *pat, caseSensitive); }
 
-  static __attribute__((warn_unused_result)) inline bool globmatchCI (const char *str, const char *pat) noexcept { return globmatch(str, pat, false); }
-  __attribute__((warn_unused_result)) inline bool globmatchCI (const char *pat) const noexcept { return globmatch(getData(), pat, false); }
-  __attribute__((warn_unused_result)) inline bool globmatchCI (const VStr &pat) const noexcept { return globmatch(getData(), *pat, false); }
+  static VVA_CHECKRESULT inline bool globmatchCI (const char *str, const char *pat) noexcept { return globmatch(str, pat, false); }
+  VVA_CHECKRESULT inline bool globmatchCI (const char *pat) const noexcept { return globmatch(getData(), pat, false); }
+  VVA_CHECKRESULT inline bool globmatchCI (const VStr &pat) const noexcept { return globmatch(getData(), *pat, false); }
 
-  static __attribute__((warn_unused_result)) inline bool globMatchCI (const char *str, const char *pat) noexcept { return globmatch(str, pat, false); }
-  __attribute__((warn_unused_result)) inline bool globMatchCI (const char *pat) const noexcept { return globmatch(getData(), pat, false); }
-  __attribute__((warn_unused_result)) inline bool globMatchCI (const VStr &pat) const noexcept { return globmatch(getData(), *pat, false); }
+  static VVA_CHECKRESULT inline bool globMatchCI (const char *str, const char *pat) noexcept { return globmatch(str, pat, false); }
+  VVA_CHECKRESULT inline bool globMatchCI (const char *pat) const noexcept { return globmatch(getData(), pat, false); }
+  VVA_CHECKRESULT inline bool globMatchCI (const VStr &pat) const noexcept { return globmatch(getData(), *pat, false); }
 
   // will not clear `args`
   void Tokenise (TArray <VStr> &args) const noexcept;
@@ -625,10 +625,10 @@ public:
   int findNextCommand (int stpos=0, bool skipLeadingSpaces=true) const noexcept;
 
 public:
-  static __attribute__((warn_unused_result)) inline char wchar2win (vuint32 wc) noexcept { return (wc < 65536 ? wc2shitmap[wc] : '?'); }
-  static __attribute__((warn_unused_result)) inline char wchar2koi (vuint32 wc) noexcept { return (wc < 65536 ? wc2koimap[wc] : '?'); }
+  static VVA_CHECKRESULT inline char wchar2win (vuint32 wc) noexcept { return (wc < 65536 ? wc2shitmap[wc] : '?'); }
+  static VVA_CHECKRESULT inline char wchar2koi (vuint32 wc) noexcept { return (wc < 65536 ? wc2koimap[wc] : '?'); }
 
-  static __attribute__((warn_unused_result)) inline __attribute__((pure)) int digitInBase (char ch, int base=10) noexcept {
+  static VVA_CHECKRESULT inline VVA_PURE int digitInBase (char ch, int base=10) noexcept {
     if (base < 1 || base > 36 || ch < '0') return -1;
     if (base <= 10) return (ch < 48+base ? ch-48 : -1);
     if (ch >= '0' && ch <= '9') return ch-48;
@@ -637,7 +637,7 @@ public:
     return ch-65+10;
   }
 
-  static __attribute__((warn_unused_result)) inline __attribute__((pure)) char upcase1251 (char ch) noexcept {
+  static VVA_CHECKRESULT inline VVA_PURE char upcase1251 (char ch) noexcept {
     if ((vuint8)ch < 128) return ch-(ch >= 'a' && ch <= 'z' ? 32 : 0);
     if ((vuint8)ch >= 224 /*&& (vuint8)ch <= 255*/) return (vuint8)ch-32;
     if ((vuint8)ch == 184 || (vuint8)ch == 186 || (vuint8)ch == 191) return (vuint8)ch-16;
@@ -645,7 +645,7 @@ public:
     return ch;
   }
 
-  static __attribute__((warn_unused_result)) inline __attribute__((pure)) char locase1251 (char ch) noexcept {
+  static VVA_CHECKRESULT inline VVA_PURE char locase1251 (char ch) noexcept {
     if ((vuint8)ch < 128) return ch+(ch >= 'A' && ch <= 'Z' ? 32 : 0);
     if ((vuint8)ch >= 192 && (vuint8)ch <= 223) return (vuint8)ch+32;
     if ((vuint8)ch == 168 || (vuint8)ch == 170 || (vuint8)ch == 175) return (vuint8)ch+16;
@@ -653,7 +653,7 @@ public:
     return ch;
   }
 
-  static __attribute__((warn_unused_result)) inline __attribute__((pure)) bool isAlpha2151 (char ch) noexcept {
+  static VVA_CHECKRESULT inline VVA_PURE bool isAlpha2151 (char ch) noexcept {
     if (ch >= 'A' && ch <= 'Z') return true;
     if (ch >= 'a' && ch <= 'z') return true;
     if ((vuint8)ch >= 191) return true;
@@ -666,7 +666,7 @@ public:
   }
 
   /* koi8-u */
-  static __attribute__((warn_unused_result)) inline __attribute__((pure)) int locaseKOI (char ch) noexcept {
+  static VVA_CHECKRESULT inline VVA_PURE int locaseKOI (char ch) noexcept {
     if ((vuint8)ch < 128) {
       if (ch >= 'A' && ch <= 'Z') ch += 32;
     } else {
@@ -680,7 +680,7 @@ public:
     return ch;
   }
 
-  static __attribute__((warn_unused_result)) inline __attribute__((pure)) int upcaseKOI (char ch) noexcept {
+  static VVA_CHECKRESULT inline VVA_PURE int upcaseKOI (char ch) noexcept {
     if ((vuint8)ch < 128) {
       if (ch >= 'a' && ch <= 'z') ch -= 32;
     } else {
@@ -694,7 +694,7 @@ public:
     return ch;
   }
 
-  static __attribute__((warn_unused_result)) inline __attribute__((pure)) bool isAlphaKOI (char ch) noexcept {
+  static VVA_CHECKRESULT inline VVA_PURE bool isAlphaKOI (char ch) noexcept {
     if (ch >= 'A' && ch <= 'Z') return true;
     if (ch >= 'a' && ch <= 'z') return true;
     if ((vuint8)ch >= 192) return true;
@@ -706,14 +706,14 @@ public:
     return false;
   }
 
-  static __attribute__((warn_unused_result)) inline __attribute__((pure)) bool isAlphaAscii (char ch) noexcept {
+  static VVA_CHECKRESULT inline VVA_PURE bool isAlphaAscii (char ch) noexcept {
     return
       (ch >= 'A' && ch <= 'Z') ||
       (ch >= 'a' && ch <= 'z');
   }
 
   // returns length of the following utf-8 sequence from its first char, or -1 for invalid first char
-  static __attribute__((warn_unused_result)) inline __attribute__((pure)) int utf8CodeLen (char ch) noexcept {
+  static VVA_CHECKRESULT inline VVA_PURE int utf8CodeLen (char ch) noexcept {
     if ((vuint8)ch < 0x80) return 1;
     if ((ch&0xFE) == 0xFC) return 6;
     if ((ch&0xFC) == 0xF8) return 5;
@@ -723,7 +723,7 @@ public:
     return -1; // invalid
   }
 
-  static __attribute__((warn_unused_result)) inline bool isPathDelimiter (const char ch) noexcept {
+  static VVA_CHECKRESULT inline bool isPathDelimiter (const char ch) noexcept {
     #ifdef _WIN32
       return (ch == '/' || ch == '\\' || ch == ':');
     #else
@@ -731,9 +731,9 @@ public:
     #endif
   }
 
-  static __attribute__((warn_unused_result)) inline bool IsPathDelimiter (const char ch) noexcept { return isPathDelimiter(ch); }
+  static VVA_CHECKRESULT inline bool IsPathDelimiter (const char ch) noexcept { return isPathDelimiter(ch); }
 
-  static __attribute__((warn_unused_result)) bool isSafeDiskFileName (const VStr &fname) noexcept { return fname.isSafeDiskFileName(); }
+  static VVA_CHECKRESULT bool isSafeDiskFileName (const VStr &fname) noexcept { return fname.isSafeDiskFileName(); }
 
 public:
   static const vuint16 cp1251[128];
@@ -745,7 +745,7 @@ public:
   static const VStr EmptyString;
 
 public:
-  static inline __attribute__((unused)) __attribute__((warn_unused_result))
+  static inline VVA_OKUNUSED VVA_CHECKRESULT
   VStr size2human (vuint32 size) noexcept {
          if (size < 1024*1024) return va("%u%s KB", size/1024, (size%1024 >= 512 ? ".5" : ""));
     else if (size < 1024*1024*1024) return va("%u%s MB", size/(1024*1024), (size%(1024*1024) >= 1024 ? ".5" : ""));
@@ -758,8 +758,8 @@ public:
 //inline vuint32 GetTypeHash (const VStr &s) { return (s.length() ? fnvHashBuf(*s, s.length()) : 1); }
 
 // results MUST be equal
-static inline __attribute__((unused)) vuint32 GetTypeHash (const char *s) noexcept { return fnvHashStr(s); }
-static inline __attribute__((unused)) vuint32 GetTypeHash (const VStr &s) noexcept { return fnvHashStr(*s); }
+static inline VVA_OKUNUSED vuint32 GetTypeHash (const char *s) noexcept { return fnvHashStr(s); }
+static inline VVA_OKUNUSED vuint32 GetTypeHash (const VStr &s) noexcept { return fnvHashStr(*s); }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -783,11 +783,11 @@ public:
   inline void reset () noexcept { state = Accept; codepoint = 0; }
 
   // is current character valid and complete? take `codepoint` then
-  __attribute__((warn_unused_result)) inline bool complete () const noexcept { return (state == Accept); }
+  VVA_CHECKRESULT inline bool complete () const noexcept { return (state == Accept); }
   // is current character invalid and complete? take `Replacement` then
-  __attribute__((warn_unused_result)) inline bool invalid () const noexcept { return (state == Reject); }
+  VVA_CHECKRESULT inline bool invalid () const noexcept { return (state == Reject); }
   // is current character complete (valid or invaluid)? take `codepoint` then
-  __attribute__((warn_unused_result)) inline bool hasCodePoint () const noexcept { return (state == Accept || state == Reject); }
+  VVA_CHECKRESULT inline bool hasCodePoint () const noexcept { return (state == Accept || state == Reject); }
 
   // process another input byte; returns `true` if codepoint is complete
   inline bool put (vuint8 c) noexcept {

@@ -2299,7 +2299,7 @@ struct PCD_Info {
   int index;
 };
 
-__attribute__((unused)) static const PCD_Info PCD_List[] = {
+VVA_OKUNUSED static const PCD_Info PCD_List[] = {
 #include "p_acs.h"
   { nullptr, -666 }
 };

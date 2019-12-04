@@ -30,6 +30,21 @@
 # define __declspec(whatever)
 #endif
 
+//k8: sorry
+#ifndef VVA_OKUNUSED
+# define VVA_OKUNUSED     __attribute__((unused))
+#endif
+#ifndef VVA_CHECKRESULT
+# define VVA_CHECKRESULT  __attribute__((warn_unused_result))
+#endif
+#ifndef VVA_PURE
+# define VVA_PURE         __attribute__((pure))
+#endif
+#ifndef VVA_CONST
+# define VVA_CONST        __attribute__((const))
+#endif
+
+
 //==========================================================================
 //
 //  Basic types
