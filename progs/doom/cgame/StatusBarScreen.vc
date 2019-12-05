@@ -338,11 +338,14 @@ override void SB_DrawMainBar () {
 
   // draw something in the blank spaces
   // check which version of Doom we are playing
+  /*
   if (checkForDoom2()) {
-    FillRectWithFlat(0, 448, 640, 32, 'grnrock');
+    FillRectWithFlatRepeat(0, 448, 640, 32, 'grnrock');
   } else {
-    FillRectWithFlat(0, 448, 640, 32, 'floor7_2');
+    FillRectWithFlatRepeat(0, 448, 640, 32, 'floor7_2');
   }
+  */
+  FillRectWithFlatRepeat(0, 448, 640, 32, 'ScreenBackPic');
 
   // background
   DrawPic(ST_BGX, ST_BGY, pic_bar);

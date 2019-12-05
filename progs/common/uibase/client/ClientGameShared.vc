@@ -762,7 +762,7 @@ void MessageBoxStartMessage (string text, int type, bool input) {
 override void MessageBoxDrawer () {
   // horiz. & vertically centre string and print it
   if (messageToPrint) {
-    GRoot.FillRectWithFlat(msgBoxX, msgBoxY, msgBoxW, msgBoxH, MsgBoxFlat);
+    GRoot.FillRectWithFlatRepeat(msgBoxX, msgBoxY, msgBoxW, msgBoxH, MsgBoxFlat);
     DrawBorder(msgBoxX, msgBoxY, msgBoxW, msgBoxH);
     GRoot.SetFont('smallfont');
     GRoot.SetTextAlign(hcentre, vcentre);

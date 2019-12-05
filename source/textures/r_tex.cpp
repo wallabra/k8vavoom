@@ -86,6 +86,7 @@ static int cli_DumpTextures = 0;
 // Flats data
 // ////////////////////////////////////////////////////////////////////////// //
 int skyflatnum; // sky mapping
+int screenBackTexNum; // background filler for unused screen parts and status bar
 
 VCvarB r_hirestex("r_hirestex", false, "Allow high-resolution texture replacements?", CVAR_Archive|CVAR_PreInit);
 VCvarB r_showinfo("r_showinfo", false, "Show some info about loaded textures?", CVAR_Archive);
@@ -220,6 +221,8 @@ void VTextureManager::Init () {
   skyflatnum = CheckNumForName(NAME_f_sky, TEXTYPE_Flat, true);
   if (skyflatnum < 0) skyflatnum = CheckNumForName(NAME_f_sky001, TEXTYPE_Flat, true);
   if (skyflatnum < 0) skyflatnum = NumForName(NAME_f_sky1, TEXTYPE_Flat, false);
+
+  screenBackTexNum = GTextureManager.AddFileTextureChecked("graphics/screenback/screenback_base.png", TEXTYPE_Pic);
 }
 
 

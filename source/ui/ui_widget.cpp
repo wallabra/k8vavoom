@@ -757,6 +757,14 @@ void VWidget::DrawShadowedPic (int X, int Y, VTexture *Tex) {
 //==========================================================================
 void VWidget::FillRectWithFlat (int X, int Y, int Width, int Height, VName Name) {
   if (Name == NAME_None) return;
+  VTexture *tex;
+  if (VStr::strEquCI(*Name, "ScreenBackPic")) {
+    if (screenBackTexNum < 1) return;
+    tex = GTextureManager.getIgnoreAnim(screenBackTexNum);
+  } else {
+    tex = GTextureManager.getIgnoreAnim(GTextureManager.NumForName(Name, TEXTYPE_Flat, true));
+  }
+  if (!tex || tex->Type == TEXTYPE_Null) return;
   float X1 = X;
   float Y1 = Y;
   float X2 = X+Width;
@@ -766,8 +774,7 @@ void VWidget::FillRectWithFlat (int X, int Y, int Width, int Height, VName Name)
   float S2 = Width;
   float T2 = Height;
   if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
-    Drawer->FillRectWithFlat(X1, Y1, X2, Y2, S1, T1, S2, T2,
-      GTextureManager(GTextureManager.NumForName(Name, TEXTYPE_Flat, true)));
+    Drawer->FillRectWithFlat(X1, Y1, X2, Y2, S1, T1, S2, T2, tex);
   }
 }
 
@@ -779,6 +786,14 @@ void VWidget::FillRectWithFlat (int X, int Y, int Width, int Height, VName Name)
 //==========================================================================
 void VWidget::FillRectWithFlatRepeat (int X, int Y, int Width, int Height, VName Name) {
   if (Name == NAME_None) return;
+  VTexture *tex;
+  if (VStr::strEquCI(*Name, "ScreenBackPic")) {
+    if (screenBackTexNum < 1) return;
+    tex = GTextureManager.getIgnoreAnim(screenBackTexNum);
+  } else {
+    tex = GTextureManager.getIgnoreAnim(GTextureManager.NumForName(Name, TEXTYPE_Flat, true));
+  }
+  if (!tex || tex->Type == TEXTYPE_Null) return;
   float X1 = X;
   float Y1 = Y;
   float X2 = X+Width;
@@ -788,8 +803,7 @@ void VWidget::FillRectWithFlatRepeat (int X, int Y, int Width, int Height, VName
   float S2 = Width;
   float T2 = Height;
   if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
-    Drawer->FillRectWithFlatRepeat(X1, Y1, X2, Y2, S1, T1, S2, T2,
-      GTextureManager(GTextureManager.NumForName(Name, TEXTYPE_Flat, true)));
+    Drawer->FillRectWithFlatRepeat(X1, Y1, X2, Y2, S1, T1, S2, T2, tex);
   }
 }
 

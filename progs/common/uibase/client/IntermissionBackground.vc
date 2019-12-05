@@ -398,7 +398,7 @@ override void OnDraw () {
       }
     }
   } else if (BackgroundFlat) {
-    FillRectWithFlat(0, 0, Width, Height, BackgroundFlat);
+    FillRectWithFlatRepeat(0, 0, Width, Height, BackgroundFlat);
   }
 }
 

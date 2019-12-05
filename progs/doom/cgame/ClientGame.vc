@@ -366,9 +366,9 @@ override void DrawBorder (int x, int y, int w, int h) {
 //
 //==========================================================================
 override void DrawViewBorder (int x, int y, int w, int h) {
-  name flatname = (checkForDoom2() ? 'grnrock' : 'floor7_2');
-  //GRoot.FillRectWithFlat(0, 0, 640, 480/*-32*/, 'grnrock');
-  GRoot.FillRectWithFlat(0, 0, GetVirtualWidth(), GetVirtualHeight(), flatname);
+  name flatname = 'ScreenBackPic'; //(checkForDoom2() ? 'grnrock' : 'floor7_2');
+  //GRoot.FillRectWithFlatRepeat(0, 0, 640, 480/*-32*/, 'grnrock');
+  GRoot.FillRectWithFlatRepeat(0, 0, GetVirtualWidth(), GetVirtualHeight(), flatname);
   DrawBorder(x, y, w, h);
 }
 

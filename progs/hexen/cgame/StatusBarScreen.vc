@@ -274,7 +274,7 @@ void SB_DrawBackground()
   }
 
   // draw something in the blank spaces
-  FillRectWithFlat(0, 441, 640, 39, 'f_022');
+  FillRectWithFlatRepeat(0, 441, 640, 39, /*'f_022'*/'ScreenBackPic');
 
   DrawPic(BAR_X + 0, BAR_Y - 27, pic_bar);
   DrawPic(BAR_X + 28 + (((sb_health * 196) / 100) % 9), BAR_Y + 32, pic_chain);

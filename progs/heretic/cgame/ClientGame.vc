@@ -333,8 +333,8 @@ override void DrawBorder (int x, int y, int w, int h) {
 //
 //==========================================================================
 override void DrawViewBorder (int x, int y, int w, int h) {
-  name flatname = (!WadLumpPresent('e2m1') ? 'floor04' : 'flat513');
-  GRoot.FillRectWithFlat(0, 0, GetVirtualWidth(), GetVirtualHeight(), flatname);
+  //name flatname = (!WadLumpPresent('e2m1') ? 'floor04' : 'flat513');
+  GRoot.FillRectWithFlatRepeat(0, 0, GetVirtualWidth(), GetVirtualHeight(), /*flatname*/'ScreenBackPic');
   DrawBorder(x, y, w, h);
 }
 

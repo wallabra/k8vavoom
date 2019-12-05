@@ -384,7 +384,7 @@ override void DrawBorder (int x, int y, int w, int h) {
 //
 //==========================================================================
 override void DrawViewBorder (int x, int y, int w, int h) {
-  GRoot.FillRectWithFlat(0, 0, GetVirtualWidth(), GetVirtualHeight(), 'f_pave01');
+  GRoot.FillRectWithFlatRepeat(0, 0, GetVirtualWidth(), GetVirtualHeight(), /*'f_pave01'*/'ScreenBackPic');
   DrawBorder(x, y, w, h);
 }
 

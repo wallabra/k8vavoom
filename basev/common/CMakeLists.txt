@@ -33,6 +33,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     graphics/*.lmp
     graphics/progbar/*.png
     graphics/healthbar/*.png
+    graphics/screenback/*.png
 
     sounds/*
 

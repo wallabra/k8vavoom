@@ -58,7 +58,7 @@ void DrawTextBox (string text) {
   int x = (GetVirtualWidth()-w)/2;
   int y = (GetVirtualHeight()-h)/2;
 
-  FillRectWithFlat(x, y, w, h, GetClGame().MsgBoxFlat);
+  FillRectWithFlatRepeat(x, y, w, h, GetClGame().MsgBoxFlat);
   GetClGame().DrawBorder(x, y, w, h);
 
   DrawText(GetVirtualWidth()/2, GetVirtualHeight(), text);
@@ -76,7 +76,7 @@ void DrawTextBox (string text) {
   int x = (rootw.Width-w)/2;
   int y = (rootw.Height-h)/2;
 
-  rootw.FillRectWithFlat(x, y, w, h, GetClGame().MsgBoxFlat);
+  rootw.FillRectWithFlatRepeat(x, y, w, h, GetClGame().MsgBoxFlat);
   GetClGame().DrawBorder(x, y, w, h);
 
   rootw.DrawText(rootw.Width/2, rootw.Height/2, text);

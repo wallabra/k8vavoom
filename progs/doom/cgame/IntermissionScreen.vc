@@ -1172,7 +1172,7 @@ void IM_DrawText () {
   SetSize(GetVirtualWidth(), GetVirtualHeight());
   // erase the entire screen to a tiled background
        if (TextPic) DrawFullScreenPic(TextPic);
-  else if (TextFlat) FillRectWithFlat(0, 0, GetVirtualWidth(), GetVirtualHeight(), TextFlat);
+  else if (TextFlat) FillRectWithFlatRepeat(0, 0, GetVirtualWidth(), GetVirtualHeight(), TextFlat);
   else R_FillRect(0, 0, GetVirtualWidth(), GetVirtualHeight(), 0);
 
   SetFont('smallfont');

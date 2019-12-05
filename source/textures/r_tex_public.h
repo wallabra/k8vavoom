@@ -595,6 +595,7 @@ bool R_IsAnimatedTexture (int texid);
 // ////////////////////////////////////////////////////////////////////////// //
 extern VTextureManager GTextureManager;
 extern int skyflatnum;
+extern int screenBackTexNum;
 
 // switches
 extern TArray<TSwitch *> Switches;

@@ -190,7 +190,7 @@ override void SB_DrawMainBar () {
   if (!cl || !cl.MO) return;
 
   // draw something in the blank spaces
-  FillRectWithFlat(0, 448, 640, 32, 'f_pave01');
+  FillRectWithFlatRepeat(0, 448, 640, 32, /*'f_pave01'*/'ScreenBackPic');
 
   // background
   DrawPic(BAR_X+0, BAR_Y+168, pic_invback);
