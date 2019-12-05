@@ -207,7 +207,7 @@ void VOpenGLDrawer::BloomInitTextures () {
 //  "scratch" and "effect" textures (identical in both).
 //
 //==========================================================================
-void VOpenGLDrawer::BloomDownsampleView () {
+void VOpenGLDrawer::BloomDownsampleView (int ax, int ay, int awidth, int aheight) {
   GLDisableBlend();
   glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -216,7 +216,12 @@ void VOpenGLDrawer::BloomDownsampleView () {
   // downsample
   p_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, bloomeffectFBO.getFBOid());
   p_glBindFramebuffer(GL_READ_FRAMEBUFFER, mainFBO.getFBOid());
-  p_glBlitFramebuffer(0, 0, bloomScrWdt, bloomScrHgt, 0, 0, bloomWidth, bloomHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+  //p_glBlitFramebuffer(0, 0, bloomScrWdt, bloomScrHgt, 0, 0, bloomWidth, bloomHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+  //GCon->Logf(NAME_Debug, "ax=%d; ay=%d; awidth=%d; aheight=%d", ax, ay, awidth, aheight);
+  //p_glBlitFramebuffer(ax, ay, ax+awidth, ay+aheight, 0, 0, bloomWidth, bloomHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+  // passed coords are top-0 based, but FBO coords are bottom-0, so convert
+  ay = bloomScrHgt-(ay+aheight);
+  p_glBlitFramebuffer(ax, ay, ax+awidth, ay+aheight, 0, 0, bloomWidth, bloomHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
   // blit the finished downsampled texture onto a second FBO
   // we end up with with two copies, which DoGaussian will take advantage of
@@ -416,6 +421,7 @@ void VOpenGLDrawer::BloomDrawEffect (int ax, int ay, int awidth, int aheight) {
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
+  #if 1
   glBindTexture(GL_TEXTURE_2D, bloomeffectFBO.getColorTid());
   GLEnableBlend();
   glBlendFunc(GL_ONE, GL_ONE);
@@ -429,13 +435,15 @@ void VOpenGLDrawer::BloomDrawEffect (int ax, int ay, int awidth, int aheight) {
     glTexCoord2f(1.0f, 1.0f); glVertex2f(ax+awidth, ay);
   glEnd();
 
-  #if 0
+  #else
   GLDisableBlend();
   p_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mainFBO.getFBOid());
   //p_glBindFramebuffer(GL_READ_FRAMEBUFFER, /*bloomeffectFBO*//*bloomscratchFBO*/bloomGetActiveFBO()->getFBOid());
   p_glBindFramebuffer(GL_READ_FRAMEBUFFER, bloomeffectFBO.getFBOid());
   //p_glBindFramebuffer(GL_READ_FRAMEBUFFER, bloomGetInactiveFBO()->getFBOid());
-  p_glBlitFramebuffer(0, 0, bloomWidth, bloomHeight, 0, 0, mainFBO.getWidth(), mainFBO.getHeight(), GL_COLOR_BUFFER_BIT, GL_LINEAR/*GL_NEAREST*/);
+  //p_glBlitFramebuffer(0, 0, bloomWidth, bloomHeight, 0, 0, mainFBO.getWidth(), mainFBO.getHeight(), GL_COLOR_BUFFER_BIT, GL_LINEAR/*GL_NEAREST*/);
+  ay = bloomScrHgt-(ay+aheight);
+  p_glBlitFramebuffer(0, 0, bloomWidth, bloomHeight, ax, ay, ax+awidth, ay+aheight, GL_COLOR_BUFFER_BIT, GL_LINEAR/*GL_NEAREST*/);
   #endif
 }
 
@@ -501,9 +509,10 @@ void VOpenGLDrawer::Posteffect_Bloom (int ax, int ay, int awidth, int aheight) {
 
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
-    BloomDownsampleView();
+    BloomDownsampleView(ax, ay, awidth, aheight);
     BloomDoGaussian();
     BloomDrawEffect(ax, ay, awidth, aheight);
+    //BloomDrawEffect(0, 0, bloomScrWdt, bloomScrHgt);
 
     glColor3f(1.0f, 1.0f, 1.0f);
     GLDisableBlend();

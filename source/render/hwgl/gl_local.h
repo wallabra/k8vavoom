@@ -653,7 +653,7 @@ private: // bloom
   void BloomAllocRBO (int width, int height, GLuint *RBO, GLuint *FBO);
   void BloomInitEffectTexture ();
   void BloomInitTextures ();
-  void BloomDownsampleView ();
+  void BloomDownsampleView (int ax, int ay, int awidth, int aheight);
   void BloomDarken ();
   void BloomDoGaussian ();
   void BloomDrawEffect (int ax, int ay, int awidth, int aheight);
