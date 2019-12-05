@@ -30,7 +30,7 @@
 VCvarB compat_shorttex("compat_shorttex", false, "Compatibility: shorttex", 0);
 VCvarB compat_stairs("compat_stairs", false, "Compatibility: stairs", 0);
 VCvarB compat_limitpain("compat_limitpain", false, "Compatibility: limitpain", 0);
-VCvarB compat_nopassover("compat_nopassover", false, "Compatibility: nopassover", 0);
+VCvarB compat_nopassover("compat_nopassover", false, "Compatibility: infinitely tall monsters?", 0);
 VCvarB compat_notossdrops("compat_notossdrops", false, "Compatibility: notossdrops", 0);
 VCvarB compat_useblocking("compat_useblocking", false, "Compatibility: useblocking", 0);
 VCvarB compat_nodoorlight("compat_nodoorlight", false, "Compatibility: nodoorlight", 0);
