@@ -578,7 +578,7 @@
   TAVec angles = Angles;
   angles.yaw = AngleMod360(angles.yaw+(Random()-Random())*45.0/8.0);
   EntityEx AimTarget = AimLineAttack(out dir, angles, MELEERANGE);
-  LineAttack(dir, MELEERANGE, damage, StaffPuff, true);
+  LineAttack(dir, MELEERANGE, damage, /*StaffPuff*/PuffType, true);
   if (AimTarget) {
     // turn to face target
     Angles.yaw = atan2(AimTarget.Origin.y-Origin.y, AimTarget.Origin.x-Origin.x);
