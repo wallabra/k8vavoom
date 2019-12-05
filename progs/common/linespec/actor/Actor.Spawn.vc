@@ -117,8 +117,8 @@ final void InitSpawnedItem (EntityEx A, bool TransTransl, bool SetMaster,
     if (!NoCheckPos && !A.TestLocation()) {
       if (A.CountsAsKill()) --Level.TotalKills;
       A.Destroy();
-      // set result for state chain calls
-      if (XLevel.StateCall) XLevel.StateCall->Result = false;
+      // do not set "success" for state chain calls
+      KeepChainResult();
       return;
     }
 
@@ -155,13 +155,13 @@ final void InitSpawnedItem (EntityEx A, bool TransTransl, bool SetMaster,
 {
   if (!specified_UseAmmo) UseAmmo = true;
 
-  if (!ItemType) {
-    if (XLevel.StateCall) XLevel.StateCall->Result = false;
-    return;
-  }
+  if (!ItemType) { KeepChainResult(); return; }
 
   // don't spawn monsters if this actor has been massacred
-  if (nameicmp(DamageType, 'Massacre') == 0 && ItemType.default.bMonster) return;
+  if (nameicmp(DamageType, 'Massacre') == 0 && ItemType.default.bMonster) {
+    //k8: should we keep chain result here?
+    return;
+  }
 
   //k8: i absolutely don't know why it was here
   //if (!Distance) Distance = Radius+ItemType.default.Radius;
@@ -181,7 +181,11 @@ final void InitSpawnedItem (EntityEx A, bool TransTransl, bool SetMaster,
   //printdebug("A_SpawnItem: type=%C; Distance=%s; org=%s; Origin=%s; yaw=%s", ItemType, Distance, org, Origin, Angles.yaw);
 
   EntityEx A = Spawn(ItemType, org);
-  InitSpawnedItem(A, TransTransl, UseAmmo, false, false, false, false);
+  if (A) {
+    InitSpawnedItem(A, TransTransl, UseAmmo, false, false, false, false);
+  } else {
+    KeepChainResult();
+  }
 }
 
 
@@ -196,15 +200,15 @@ final void InitSpawnedItem (EntityEx A, bool TransTransl, bool SetMaster,
                           optional float Angle, optional int Flags, optional int Chance,
                           optional int newtid)
 {
-  if (!ItemType) {
-    if (XLevel.StateCall) XLevel.StateCall->Result = false;
-    return false;
-  }
+  if (!ItemType) { KeepChainResult(); return false; }
 
   if (Chance > 0 && P_Random() < Chance) return true; // per wiki
 
   // don't spawn monsters if this actor has been massacred (???)
-  if (nameicmp(DamageType, 'Massacre') == 0 && ItemType.default.bMonster) return false;
+  if (nameicmp(DamageType, 'Massacre') == 0 && ItemType.default.bMonster) {
+    //k8: should we keep chain result here?
+    return false;
+  }
 
   if (!(Flags&SXF_ABSOLUTEANGLE)) Angle += Angles.yaw;
 
@@ -279,5 +283,6 @@ final void InitSpawnedItem (EntityEx A, bool TransTransl, bool SetMaster,
     return true;
   }
 
+  KeepChainResult();
   return false;
 }

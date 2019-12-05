@@ -33,7 +33,7 @@
 //
 //==========================================================================
 final bool DoGiveInventory (class!Inventory ItemType, int Amount, EntityEx Receiver, optional bool disableReplace) {
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  KeepChainResult();
   if (!Receiver) return false;
 
   if (!Amount) Amount = 1;
@@ -71,7 +71,7 @@ final bool DoGiveInventory (class!Inventory ItemType, int Amount, EntityEx Recei
     Ret = false;
   }
 
-  if (XLevel.StateCall) XLevel.StateCall->Result = Ret;
+  if (Ret) SuccessChainResult();
 
   return Ret;
 }
@@ -145,13 +145,12 @@ final bool DoGiveInventory (class!Inventory ItemType, int Amount, EntityEx Recei
 //
 //==========================================================================
 final void DoTakeInventory (class!Inventory ItemType, int Amount, EntityEx Receiver, optional bool disableReplace) {
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
-
+  KeepChainResult();
   if (!Receiver) return;
 
   Inventory Item = Receiver.FindInventory(ItemType, disableReplacement:disableReplace);
   if (Item && !HexenArmor(Item)) {
-    if (Item.Amount > 0 && XLevel.StateCall) XLevel.StateCall->Result = true;
+    if (Item.Amount > 0) SuccessChainResult(); // this sets state chain result to true
     if (!Amount || Item.Amount <= Amount) {
       if (Item.bKeepDepleted) {
         Item.Amount = 0;
@@ -224,8 +223,8 @@ final void DoTakeInventory (class!Inventory ItemType, int Amount, EntityEx Recei
     if (PlayerEx(Player).ReadyWeapon != Wpn) {
       PlayerEx(Player).PendingWeapon = Wpn;
     }
-  } else if (XLevel.StateCall) {
-    XLevel.StateCall->Result = false;
+  } else {
+    KeepChainResult();
   }
 }
 

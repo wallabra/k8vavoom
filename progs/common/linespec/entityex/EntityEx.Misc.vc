@@ -2873,9 +2873,11 @@ final state FindJumpStateOfs (int offset) {
 //  mostly called from decorate actions
 //
 //===========================================================================
-final void DoJump (state State) {
+final void DoJump (state State, optional bool affectStateCallResult) {
   if (XLevel.StateCall) {
     XLevel.StateCall->State = State;
+    // shoult state jump affect state chain results?
+    if (!affectStateCallResult) XLevel.StateCall->Result = 0;
   } else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_WEAPON].State) {
     PlayerEx(Player).SetViewObjectIfNone(PlayerEx(Player).ReadyWeapon);
     Player.SetViewState(PS_WEAPON, State);

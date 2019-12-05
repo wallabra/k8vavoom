@@ -48,10 +48,6 @@
     PlayerEx(Player).SetViewObject(Wpn);
     DoJump(Label);
   }
-
-  // state jumps should not affect state chain results
-  // it is guaranteed to not be in a call chain
-  //if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
 
 

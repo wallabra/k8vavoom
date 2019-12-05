@@ -694,8 +694,8 @@ final void DoExplode (int damage, float distance, bool damageSelf, optional int 
        XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL].State))
   {
     Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-    if (!Wpn) return;
-    if (UseAmmo && !Wpn.DepleteAmmo(Wpn.FireMode)) return;
+    if (!Wpn) { KeepChainResult(); return; }
+    if (UseAmmo && !Wpn.DepleteAmmo(Wpn.FireMode)) { KeepChainResult(); return; }
   }
 
   Actor A = SpawnEntityChecked(class!Actor, ItemType, owo.Origin+vector(0.0, 0.0, SpawnHeight+35.0-owo.FloorClip));
@@ -716,8 +716,8 @@ final void DoExplode (int damage, float distance, bool damageSelf, optional int 
       if (A.StateTime < 1.0/35.0) A.StateTime = 1.0/35.0;
     }
     A.CheckMissileSpawn();
-  } else if (XLevel.StateCall) {
-    XLevel.StateCall->Result = false;
+  } else {
+    KeepChainResult();
   }
 }
 

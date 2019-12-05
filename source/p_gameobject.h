@@ -1088,7 +1088,7 @@ public:
 struct VStateCall {
   VEntity *Item;
   VState *State;
-  vuint8 Result;
+  vuint8 Result; // `0` means "don't change"; non-zero means "succeed"
 };
 
 

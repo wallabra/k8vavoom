@@ -50,7 +50,7 @@ const int
 struct StateCall {
   Entity Item;
   state State;
-  ubyte Result;
+  ubyte Result; // `0` means "don't change"; non-zero means "succeed"
 };
 
 struct SectorLink {

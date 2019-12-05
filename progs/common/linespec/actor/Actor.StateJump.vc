@@ -43,6 +43,7 @@
   optional state Label24, optional state Label25, optional state Label26,
   optional state Label27, optional state Label28, optional state Label29*/)
 {
+  KeepChainResult();
   if (Chance > 0) {
     state[12] List;
     List[0] = Label1;
@@ -82,8 +83,6 @@
       int n = 0;
       if (count > 1) n = P_Random()%count;
       DoJump(List[n]);
-      // state jumps should not affect state chain results
-      if (XLevel.StateCall) XLevel.StateCall->Result = false;
       return;
     }
   }
@@ -97,9 +96,8 @@
 //==========================================================================
 /*[decorate]*/ final void A_JumpIf (bool Expr, state Label) {
   //print("%C: label=%C; expr=%B", self, Label, Expr);
+  KeepChainResult();
   if (Expr) DoJump(Label);
-  // state jumps should not affect state chain results.
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
 
 
@@ -111,15 +109,14 @@
 //
 //==========================================================================
 [decorate] final void decorate_A_JumpIf (float Expr, state Label) {
+  KeepChainResult();
   if (Expr) DoJump(Label);
-  // state jumps should not affect state chain results.
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
 
 
 //==========================================================================
 //
-//  A_JumpIfCloser
+//  CheckIfCloser
 //
 //==========================================================================
 final bool CheckIfCloser (EntityEx targ, float Dist, bool noz) {
@@ -143,6 +140,7 @@ final bool CheckIfCloser (EntityEx targ, float Dist, bool noz) {
 //==========================================================================
 [decorate] final void A_JumpIfCloser (float Dist, state Label, optional bool noz) {
   EntityEx Targ;
+  KeepChainResult();
 
   if (!bIsPlayer) {
     Targ = Target;
@@ -152,8 +150,6 @@ final bool CheckIfCloser (EntityEx targ, float Dist, bool noz) {
   }
 
   if (CheckIfCloser(Targ, Dist, noz)) DoJump(Label);
-  // state jumps should not affect state chain results
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
 
 
@@ -163,9 +159,8 @@ final bool CheckIfCloser (EntityEx targ, float Dist, bool noz) {
 //
 //==========================================================================
 [decorate] final void A_JumpIfTracerCloser (float distance, state label, optional bool noz) {
+  KeepChainResult();
   if (CheckIfCloser(Tracer, distance, noz)) DoJump(label);
-  // state jumps should not affect state chain results
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
 
 
@@ -175,9 +170,8 @@ final bool CheckIfCloser (EntityEx targ, float Dist, bool noz) {
 //
 //==========================================================================
 [decorate] final void A_JumpIfMasterCloser (float distance, state label, optional bool noz) {
+  KeepChainResult();
   if (CheckIfCloser(Master, distance, noz)) DoJump(label);
-  // state jumps should not affect state chain results
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
 
 
@@ -187,9 +181,8 @@ final bool CheckIfCloser (EntityEx targ, float Dist, bool noz) {
 //
 //==========================================================================
 [decorate] final void A_JumpIfTargetInsideMeleeRange (state label) {
+  KeepChainResult();
   if (CheckMeleeRange()) DoJump(label);
-  // state jumps should not affect state chain results
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
 
 
@@ -199,9 +192,8 @@ final bool CheckIfCloser (EntityEx targ, float Dist, bool noz) {
 //
 //==========================================================================
 [decorate] final void A_JumpIfTargetOutsideMeleeRange (state label) {
+  KeepChainResult();
   if (!CheckMeleeRange()) DoJump(label);
-  // state jumps should not affect state chain results
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
 
 
@@ -211,12 +203,9 @@ final bool CheckIfCloser (EntityEx targ, float Dist, bool noz) {
 //
 //==========================================================================
 [decorate] final void A_JumpIfHealthLower (int HealthVal, state Label, optional int aptr) {
+  KeepChainResult();
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_JumpIfHealthLower', aptr!optional));
-  if (tgt) {
-    if (tgt.Health < HealthVal) DoJump(Label);
-  }
-  // state jumps should not affect state chain results
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  if (tgt && tgt.Health < HealthVal) DoJump(Label);
 }
 
 
@@ -226,6 +215,7 @@ final bool CheckIfCloser (EntityEx targ, float Dist, bool noz) {
 //
 //==========================================================================
 final void worker_JumpIfInInventory (EntityEx tgt, class!Actor ItemType, int Amount, state Label) {
+  KeepChainResult();
   class!Inventory itp = class!Inventory(ItemType);
 
   if (itp && tgt) {
@@ -240,9 +230,6 @@ final void worker_JumpIfInInventory (EntityEx tgt, class!Actor ItemType, int Amo
       }
     }
   }
-
-  // state jumps should not affect state chain results
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
 
 
@@ -275,9 +262,8 @@ final void worker_JumpIfInInventory (EntityEx tgt, class!Actor ItemType, int Amo
 //
 //==========================================================================
 [decorate] final void A_JumpIfTargetInLOS (state Label, optional float Fov, optional int flags, optional float distmax, optional float distclose) {
+  KeepChainResult();
   if (checkIfTargetInLOS(Fov!optional, flags!optional, distmax!optional, distclose!optional)) DoJump(Label);
-  // state jumps should not affect state chain results
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
 
 
@@ -290,6 +276,7 @@ final void worker_JumpIfInInventory (EntityEx tgt, class!Actor ItemType, int Amo
 //
 //==========================================================================
 [decorate] final void A_JumpIfInTargetLOS (state Label, optional float Fov, optional int flags, optional float distmax, optional float distclose) {
+  KeepChainResult();
   /*
   EntityEx obj = Target;
   if (!obj) return;
@@ -298,8 +285,6 @@ final void worker_JumpIfInInventory (EntityEx tgt, class!Actor ItemType, int Amo
   // emulate this with flags, because real target is not what you may think, especially for players
   flags |= JLOSF_TARGETLOS|JLOSF_FLIPFOV;
   if (checkIfTargetInLOS(Fov!optional, flags, distmax!optional, distclose!optional)) DoJump(Label);
-  // state jumps should not affect state chain results
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
 
 
@@ -309,12 +294,11 @@ final void worker_JumpIfInInventory (EntityEx tgt, class!Actor ItemType, int Amo
 //
 //==========================================================================
 [decorate] final void A_JumpIfCVarTrue (string cvar, state Label) {
+  KeepChainResult();
   name cvn = name(cvar);
   if (CvarExists(cvn)) {
     if (GetCvarB(cvn)) DoJump(Label);
   }
-  // State jumps should not affect state chain results.
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
 
 
@@ -324,6 +308,7 @@ final void worker_JumpIfInInventory (EntityEx tgt, class!Actor ItemType, int Amo
 //
 //==========================================================================
 [decorate] final void A_JumpIfCVarFalse (string cvar, state Label) {
+  KeepChainResult();
   name cvn = name(cvar);
   if (CvarExists(cvn)) {
     //print("A_JumpIfCVarFalse: cvar is '%s', value is %s", cvar, (GetCvarB(cvn) ? "true" : "false"));
@@ -332,8 +317,6 @@ final void worker_JumpIfInInventory (EntityEx tgt, class!Actor ItemType, int Amo
     //print("A_JumpIfCVarFalse: cvar '%s' NOT FOUND!", cvar);
     DoJump(Label);
   }
-  // State jumps should not affect state chain results.
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
 
 
@@ -343,6 +326,7 @@ final void worker_JumpIfInInventory (EntityEx tgt, class!Actor ItemType, int Amo
 //
 //==========================================================================
 [decorate] final void A_CheckRange (float distance, state label, optional bool check2d) {
+  KeepChainResult();
   distance = fmax(0, distance);
   foreach (auto playnum; 0..MAXPLAYERS) {
     auto plr = PlayerEx(Level.Game.Players[playnum]);
@@ -356,6 +340,4 @@ final void worker_JumpIfInInventory (EntityEx tgt, class!Actor ItemType, int Amo
     }
   }
   DoJump(label);
-  // state jumps should not affect state chain results
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }

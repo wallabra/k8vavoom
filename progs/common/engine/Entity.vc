@@ -456,6 +456,31 @@ native final bool GetDecorateFlag (string Name);
 
 //==========================================================================
 //
+//  KeepChainResult
+//
+//  should be called if state action should not affect state chain results
+//
+//==========================================================================
+final void KeepChainResult () {
+  if (XLevel && XLevel.StateCall) XLevel.StateCall->Result = 0;
+}
+
+
+//==========================================================================
+//
+//  SuccessChainResult
+//
+//  should be called if state action should success state chain results
+//  note that only the last called action can success
+//
+//==========================================================================
+final void SuccessChainResult () {
+  if (XLevel && XLevel.StateCall) XLevel.StateCall->Result = 1;
+}
+
+
+//==========================================================================
+//
 //  CopyTranslations
 //
 //==========================================================================

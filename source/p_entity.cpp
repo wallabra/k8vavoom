@@ -207,7 +207,7 @@ bool VEntity::SetState (VState *InState) {
       {
         SavedVObjectPtr svp(&_stateRouteSelf);
         _stateRouteSelf = nullptr;
-        ExecuteFunctionNoArgs(this, st->Function); // allow VMT lookups
+        ExecuteFunctionNoArgs(this, st->Function); //k8: allow VMT lookups (k8:why?)
         if (GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) {
           /*
           GCon->Logf(NAME_Warning, "   (01):%s: dead (0x%04x) after state action, state is %s (next is %s; State is %s)", *GetClass()->GetFullName(), GetFlags(), *st->Loc.toStringNoCol(),
@@ -368,9 +368,6 @@ bool VEntity::CallStateChain (VEntity *Actor, VState *AState) {
   if (!Actor) return false;
 
   // set up state call structure
-  VStateCall *PrevCall = XLevel->StateCall;
-  bool Ret = false;
-  {
   //GCon->Logf(NAME_Debug, "%s: CHAIN (Actor=%s)", *GetClass()->GetFullName(), *Actor->GetClass()->GetFullName());
   PCSaver saver(&XLevel->StateCall);
   VStateCall Call;
@@ -381,44 +378,43 @@ bool VEntity::CallStateChain (VEntity *Actor, VState *AState) {
 
   int RunAway = 0;
   VState *S = AState;
+  vuint8 res = 0;
   while (S) {
+    // check for infinite loops
+    if (++RunAway > 1024) {
+      GCon->Logf(NAME_Warning, "entity '%s' state chain interrupted by WatchCat!", *Actor->GetClass()->GetFullName());
+      res = false; // watchcat break, oops
+      break;
+    }
+
     Call.State = S;
     // call action function
     if (S->Function) {
-      // assume success by default
       XLevel->CallingState = S;
-      Call.Result = true;
-      ExecuteFunctionNoArgs(Actor, S->Function); // allow VMT lookups
-      // at least one success means overal success
-      if (Call.Result) Ret = true;
-    }
-
-    // check for infinite loops
-    ++RunAway;
-    if (RunAway > 1024) {
-      GCon->Logf(NAME_Warning, "entity '%s' state chain interrupted by WatchCat!", *Actor->GetClass()->GetFullName());
-      break;
+      // assume success by default
+      Call.Result = 1;
+      ExecuteFunctionNoArgs(Actor, S->Function); //k8: allow VMT lookups (k8:why?)
+      // at least one success means overal success (do it later)
+      //res |= Call.Result;
+    } else {
+      Call.Result = 0; // don't modify
     }
 
     if (Call.State == S) {
       // abort immediately if next state loops to itself
       // in this case the overal result is always false
-      if (S->NextState == S) {
-        Ret = false;
-        break;
-      }
+      if (S->NextState == S) { res = 0; break; }
       // advance to the next state
       S = S->NextState;
+      // at least one success means overal success
+      res |= Call.Result;
     } else {
-      // there was a state jump
+      // there was a state jump, result should not be modified
       S = Call.State;
     }
   }
 
-  //XLevel->StateCall = PrevCall;
-  }
-  vassert(XLevel->StateCall == PrevCall);
-  return Ret;
+  return !!res;
 }
 
 

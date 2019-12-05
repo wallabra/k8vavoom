@@ -232,13 +232,12 @@ protected final void do_A_Raise (optional float raisespeed) {
 //
 //==========================================================================
 [decorate] final void decorate_A_RetDoJump (state State) {
+  KeepChainResult(); //k8: this is prolly wrong, because `return` in GZDoom can return `fail` condition too
        if (XLevel.StateCall) XLevel.StateCall->State = State;
   else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_WEAPON].State) Player.SetViewState(PS_WEAPON, State);
   else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_FLASH].State) Player.SetViewState(PS_FLASH, State);
   else if (bIsPlayer && XLevel.CallingState == Player.ViewStates[PS_WEAPON_OVL].State) Player.SetViewState(PS_WEAPON_OVL, State);
   else SetState(State);
-  // state jumps should not affect state chain results
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
 
 
@@ -737,15 +736,12 @@ private final float clampPitch (float newpitch) {
 //
 //==========================================================================
 [decorate] final void decorate_A_CheckFlag (string flagname, state label, optional int aptr) {
-  // state jumps should not affect state chain results
-  //print("A_CheckFlag: name=<%s>; label=<%s>; aptr=%s", flagname, label, aptr);
+  KeepChainResult();
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_CheckFlag', aptr!optional));
   if (!tgt) return;
   //if (!decoDoCheckFlag(flagname, tgt)) return;
   if (!tgt.GetDecorateFlag(flagname)) return;
   DoJump(label);
-  // state jumps should not affect state chain results
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
 
 
@@ -894,6 +890,7 @@ final void doDamageSomething (EntityEx dest, int amount, name damagetype, int fl
 //
 //==========================================================================
 [decorate] final void decorate_A_CheckFloorTextureGlob (string txname, state label, optional int aptr, optional bool dumpTexture) {
+  KeepChainResult();
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_CheckFloorTexture', aptr!optional));
   if (!tgt) return;
   if (!tgt.Sector) return; // just in case
@@ -901,8 +898,6 @@ final void doDamageSomething (EntityEx dest, int amount, name damagetype, int fl
   if (dumpTexture) print("TEXTURE NAME: <%s> gmatch <%s>: res=%B", tname, txname, globmatch(string(tname), txname, caseSensitive:false));
   if (!globmatch(string(tname), txname, caseSensitive:false)) return;
   DoJump(label);
-  // state jumps should not affect state chain results
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
 }
 
 
@@ -1174,7 +1169,7 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
 //
 //==========================================================================
 [decorate] final void A_JumpIfRadiusAmountGreater (float radius, int amount, class!Actor checkClass, state label, optional bool exact) {
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  KeepChainResult();
 
   if (radius < 0) return;
   if (!checkClass) return;
@@ -1198,8 +1193,6 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
           if (!(--amount)) {
             //print("%C: radius %s; check %C; hit it!", self, radius, checkClass);
             DoJump(label);
-            // state jumps should not affect state chain results
-            if (XLevel.StateCall) XLevel.StateCall->Result = false;
             return;
           }
         }
@@ -1258,25 +1251,21 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
                                    optional float offsetlow, optional bool includeHeight,
                                    optional int aptr)
 {
+  KeepChainResult();
   if (!high || !low) return;
   if (!specified_aptr) aptr = AAPTR_TARGET; // per wiki
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_JumpIfHigherOrLower', aptr));
-  if (XLevel.StateCall) XLevel.StateCall->Result = false; //???
   if (!tgt || tgt == self) return; // per wiki
 
   if (!specified_includeHeight) includeHeight = true; // per wiki
 
   if (high && tgt.Origin.z > (includeHeight ? Height : 0)+Origin.z+offsethigh) {
     DoJump(high);
-    // state jumps should not affect state chain results
-    if (XLevel.StateCall) XLevel.StateCall->Result = false;
     return;
   }
 
   if (low && tgt.Origin.z+(includeHeight ? tgt.Height : 0) < Origin.z+offsetlow) {
     DoJump(low);
-    // state jumps should not affect state chain results
-    if (XLevel.StateCall) XLevel.StateCall->Result = false;
     return;
   }
 }
@@ -1291,10 +1280,9 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
                                     optional float pitchlimit, optional int flags,
                                     optional int aptr)
 {
-  EntityEx tgt = EntityEx(DecorDoAAPtr('A_k8JumpIfSkyFloor', aptr!optional));
-  if (XLevel.StateCall) XLevel.StateCall->Result = false; //???
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_FaceMovementDirection', aptr!optional));
 
-  if (!tgt || ((flags&FMDF_NOPITCH) && (flags&FMDF_NOANGLE))) return false;
+  if (!tgt || ((flags&FMDF_NOPITCH) && (flags&FMDF_NOANGLE))) { KeepChainResult(); return false; } //???
 
   // don't bother calculating this if we don't have any horizontal movement
   if (!(flags&FMDF_NOANGLE) && (tgt.Velocity.x || tgt.Velocity.y)) {
@@ -1347,17 +1335,16 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
                     optional float angle, optional int flags, optional state success_state,
                     optional float heightoffset, optional float radiusoffset, optional float pitch)
 {
-  if (success_state) {
-    if (XLevel.StateCall) XLevel.StateCall->Result = false;
-  }
-
   EntityEx tgt;
   if (flags&WARPF_USETID) {
     tgt = (aptr ? EntityEx(Level.FindMobjFromTID(aptr, none)) : EntityEx(self));
   } else {
     tgt = EntityEx(DecorDoAAPtr('A_Warp', aptr));
   }
-  if (!tgt) return false;
+  if (!tgt) {
+    KeepChainResult(); // it should not succeed
+    return false;
+  }
 
   EntityEx tomove = self;
 
@@ -1366,7 +1353,6 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
     //return false;
     tomove = tgt;
   }
-
 
   TVec dest = tgt.Origin;
 
@@ -1419,10 +1405,13 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
   }
 
   if (!(flags&WARPF_NOCHECKPOSITION)) {
-    if (!tomove.CheckPosition(dest)) return false;
+    if (!tomove.CheckPosition(dest)) {
+      KeepChainResult(); // it should not succeed
+      return false;
+    }
   }
 
-  if (flags&WARPF_TESTONLY) return true;
+  if (flags&WARPF_TESTONLY) return true; // chain result is not reset, so it will become `true`
 
   //print("A_Warp: src=%C; tgt=%C; heightoffset=%s; flags=0x%08x; pitch=%s; angles=%s; apitch=%s; newapitch=%s", self, tgt, heightoffset, flags, pitch, tomove.Angles, Angles.pitch, newa.pitch);
 
@@ -1438,11 +1427,7 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
        if (flags&WARPF_STOP) tomove.Velocity = vector(0, 0, 0);
   else if (flags&WARPF_COPYVELOCITY) tomove.Velocity = tgt.Velocity;
 
-  if (success_state) {
-    DoJump(success_state);
-    // state jumps should not affect state chain results
-    if (XLevel.StateCall) XLevel.StateCall->Result = false;
-  }
+  if (success_state) DoJump(success_state, affectStateCallResult:true); // chain result is not reset, so it will become `true`
 
   return true;
 }
@@ -1458,8 +1443,7 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
                         optional float offsetheight, optional float offsetwidth,
                         optional int ptr_target, optional float offsetforward)
 {
-  // state jumps should not affect state chain results.
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  KeepChainResult();
   if (specified_minrange) {
     printwarn("A_CheckLOF is not fully implemented yet!");
     return none;
@@ -1670,8 +1654,7 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
 //
 //==========================================================================
 final bool common_k8JumpIfLiquidFloor (EntityEx tgt, state label) {
-  // state jumps should not affect state chain results
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  KeepChainResult();
   if (!tgt) return false;
   if (!tgt.Sector) return false; // just in case
   if (IsAnimatedTexture(tgt.Sector.floor.pic)) {
@@ -1706,7 +1689,6 @@ final bool common_k8JumpIfLiquidFloor (EntityEx tgt, state label) {
 //
 //==========================================================================
 [decorate] final bool A_k8JumpIfLiquidFloor (state label, optional int aptr) {
-  // state jumps should not affect state chain results
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_k8JumpIfLiquidFloor', aptr!optional));
   return common_k8JumpIfLiquidFloor(tgt, label);
 }
@@ -1718,12 +1700,8 @@ final bool common_k8JumpIfLiquidFloor (EntityEx tgt, state label) {
 //
 //==========================================================================
 [decorate] final bool A_k8JumpIfOnLiquidFloor (state label, optional int aptr) {
-  // state jumps should not affect state chain results
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_k8JumpIfOnLiquidFloor', aptr!optional));
-  if (!tgt) return false;
-  if (!tgt.Sector) return false; // just in case
-  if (tgt.Origin.z > tgt.FloorZ) return false;
+  if (tgt.Origin.z > tgt.FloorZ) { KeepChainResult(); return false; }
   return common_k8JumpIfLiquidFloor(tgt, label);
 }
 
@@ -1735,8 +1713,7 @@ final bool common_k8JumpIfLiquidFloor (EntityEx tgt, state label) {
 //==========================================================================
 [decorate] final bool A_k8JumpIfOnFloorSky (state label, optional int aptr) {
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_k8JumpIfSkyFloor', aptr!optional));
-  // state jumps should not affect state chain results
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  KeepChainResult();
   if (!tgt) return false;
   if (!tgt.Sector) return false; // just in case
   if (tgt.Origin.z > tgt.FloorZ) return false;
@@ -1756,8 +1733,7 @@ final bool common_k8JumpIfLiquidFloor (EntityEx tgt, state label) {
 //==========================================================================
 [decorate] final bool A_k8JumpIfFloorSky (state label, optional int aptr) {
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_k8JumpIfSkyFloor', aptr!optional));
-  // state jumps should not affect state chain results
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  KeepChainResult();
   if (!tgt) return false;
   if (!tgt.Sector) return false; // just in case
   if (tgt.Sector.floor.pic == Level.Game.skyflatnum) {
@@ -1776,8 +1752,7 @@ final bool common_k8JumpIfLiquidFloor (EntityEx tgt, state label) {
 //==========================================================================
 [decorate] final bool A_k8JumpIfCeilingSky (state label, optional int aptr) {
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_k8JumpIfSkyFloor', aptr!optional));
-  // state jumps should not affect state chain results
-  if (XLevel.StateCall) XLevel.StateCall->Result = false;
+  KeepChainResult();
   if (!tgt) return false;
   if (!tgt.Sector) return false; // just in case
   if (tgt.Sector.ceiling.pic == Level.Game.skyflatnum) {
