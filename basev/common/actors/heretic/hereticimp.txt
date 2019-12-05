@@ -23,9 +23,9 @@ actor HereticImp 66
   Obituary "$ob_hereticimp"
   HitObituary "$ob_hereticimphit"
 
-  action native A_ImpDeath();
-  action native A_ImpXDeath1();
-  action native A_ImpExplode();
+  //action native A_ImpDeath();
+  //action native A_ImpXDeath1();
+  //action native A_ImpExplode();
 
   states
   {
@@ -37,12 +37,11 @@ actor HereticImp 66
     Loop
   Melee:
     IMPX DE 6 A_FaceTarget
-    IMPX F 3 A_CustomMeleeAttack(Random(5, 12), "himp/attack", "himp/attack")
+    IMPX F 6 A_CustomMeleeAttack(Random(5, 12), "himp/attack", "himp/attack")
     Goto See
   Missile:
     IMPX A 10 A_FaceTarget
-    // only if Random() > 0.25
-    IMPX B 6 A_SkullAttack(12)
+    IMPX B 6 A_ImpMsAttack
     IMPX CBAB 6
     Goto Missile+2
   Pain:
