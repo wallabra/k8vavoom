@@ -96,6 +96,38 @@ static VCvarB r_reupload_textures("r_reupload_textures", false, "Reupload textur
 // ////////////////////////////////////////////////////////////////////////// //
 static TMapNC<VName, bool> patchesWarned;
 
+// used only once in `VTextureManager::Init()`
+// we have to force-load textures after adding textures lump, so
+// texture numbering for animations won't break
+static TMapNC<VName, bool> numberedNamesMap;
+static TArray<VName> numberedNamesList;
+
+
+//==========================================================================
+//
+//  ClearNumberedNames
+//
+//==========================================================================
+static void ClearNumberedNames () {
+  numberedNamesMap.clear();
+  numberedNamesList.clear();
+}
+
+
+//==========================================================================
+//
+//  CheckAddNumberedName
+//
+//==========================================================================
+static inline void CheckAddNumberedName (VName PatchName) {
+  const char *txname = *PatchName;
+  int namelen = VStr::length(txname);
+  // this is how it is done in `AddMissingNumberedTextures()`
+  if (namelen && namelen <= 8 && txname[namelen-1] == '1') {
+    if (!numberedNamesMap.put(PatchName, true)) numberedNamesList.append(PatchName);
+  }
+}
+
 
 //==========================================================================
 //
@@ -148,16 +180,12 @@ VTextureManager::VTextureManager ()
 void VTextureManager::Init () {
   vassert(inMapTextures == 0);
 
-  // we have to force-load textures after adding textures lump, so
-  // texture numbering for animations won't break
-  TArray<VName> numberedNames;
-
   // add a dummy texture
   AddTexture(new VDummyTexture);
 
   // initialise wall textures
   GCon->Log(NAME_Init, "initializing wall textures...");
-  AddTextures(numberedNames);
+  AddTextures();
 
   // initialise flats
   GCon->Log(NAME_Init, "initializing flat textures...");
@@ -176,7 +204,13 @@ void VTextureManager::Init () {
   AddTextureTextLumps(false); // only normal for now
 
   // force-load numbered textures
-  AddMissingNumberedTextures(numberedNames);
+  if (numberedNamesList.length()) {
+    GCon->Logf(NAME_Init, "making finishing touches (%d)...", numberedNamesList.length());
+    AddMissingNumberedTextures();
+  }
+
+  // we don't need numbered names anymore
+  ClearNumberedNames();
 
   // find default texture
   DefaultTexture = CheckNumForName("-noflat-", TEXTYPE_Overload, false);
@@ -1159,7 +1193,7 @@ int VTextureManager::CheckNumForNameAndForce (VName Name, int Type, bool bOverlo
 //  Initialises the texture list with the textures from the textures lump
 //
 //==========================================================================
-void VTextureManager::AddTextures (TArray<VName> &numberedNames) {
+void VTextureManager::AddTextures () {
   int NamesFile = -1;
   int LumpTex1 = -1;
   int LumpTex2 = -1;
@@ -1173,7 +1207,7 @@ void VTextureManager::AddTextures (TArray<VName> &numberedNames) {
     NamesFile = W_LumpFile(Lump);
     if (lastPNameFile == NamesFile) continue;
     lastPNameFile = NamesFile;
-    LoadPNames(Lump, patchtexlookup, numberedNames);
+    LoadPNames(Lump, patchtexlookup);
     LumpTex1 = W_CheckFirstNumForNameInFile(NAME_texture1, NamesFile);
     LumpTex2 = W_CheckFirstNumForNameInFile(NAME_texture2, NamesFile);
     FirstTex = Textures.length();
@@ -1188,7 +1222,7 @@ void VTextureManager::AddTextures (TArray<VName> &numberedNames) {
   if (LastTex2 >= 0 && (LastTex2 == LumpTex2 || W_LumpFile(LastTex2) <= NamesFile)) LastTex2 = -1;
   FirstTex = Textures.length();
   if (LastTex1 != -1 || LastTex2 != -1) {
-    LoadPNames(W_GetNumForName(NAME_pnames), patchtexlookup, numberedNames);
+    LoadPNames(W_GetNumForName(NAME_pnames), patchtexlookup);
     AddTexturesLump(patchtexlookup, LastTex1, FirstTex, true);
     AddTexturesLump(patchtexlookup, LastTex2, FirstTex, false);
   }
@@ -1202,7 +1236,7 @@ void VTextureManager::AddTextures (TArray<VName> &numberedNames) {
 //  load the patch names from pnames.lmp
 //
 //==========================================================================
-void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtexlookup, TArray<VName> &numberedNames) {
+void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtexlookup) {
   patchtexlookup.clear();
   if (NamesLump < 0) return;
   int pncount = 0;
@@ -1258,12 +1292,7 @@ void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtex
       }
 
       VName PatchName(TmpName, VName::AddLower8);
-
-      {
-        const char *txname = *PatchName;
-        int namelen = VStr::length(txname);
-        if (namelen && VStr::digitInBase(txname[namelen-1], 10) >= 0) numberedNames.append(PatchName);
-      }
+      CheckAddNumberedName(PatchName);
 
       WallPatchInfo &wpi = patchtexlookup.alloc();
       wpi.index = patchtexlookup.length()-1;
@@ -1328,17 +1357,20 @@ void VTextureManager::LoadPNames (int NamesLump, TArray<WallPatchInfo> &patchtex
 //  Initialises the texture list with the textures from the textures lump
 //
 //==========================================================================
-void VTextureManager::AddMissingNumberedTextures (TArray<VName> &numberedNames) {
+void VTextureManager::AddMissingNumberedTextures () {
   //k8: force-load numbered textures
-  for (int f = 0; f < numberedNames.length(); ++f) {
-    const char *txname = *numberedNames[f];
+  for (auto &&it : numberedNamesList) {
+    const char *txname = *it;
     int namelen = VStr::length(txname);
+    if (namelen > 8) continue; // too long
     if (namelen && txname[namelen-1] == '1') {
       char nbuf[130];
-      snprintf(nbuf, sizeof(nbuf), "%s", txname);
+      strcpy(nbuf, txname);
       for (int c = 2; c < 10; ++c) {
         nbuf[namelen-1] = '0'+c;
-        VName PatchName(nbuf, VName::AddLower8);
+        VName PatchName(nbuf, VName::FindLower8);
+        // if the name is empty, it means that we don't have such lump, so there is no reason to check anything
+        if (PatchName == NAME_None) continue;
         if (CheckNumForName(PatchName, TEXTYPE_WallPatch, false) < 0) {
           int tid = CheckNumForNameAndForce(PatchName, TEXTYPE_WallPatch, true, true);
           if (tid > 0) GCon->Logf(NAME_Init, "Textures: force-loaded numbered texture '%s'", nbuf);

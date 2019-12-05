@@ -564,10 +564,10 @@ public:
   VTexture *GetExistingTextureByName (VStr txname, int type=TEXTYPE_Any);
 
 private:
-  void LoadPNames (int Lump, TArray<WallPatchInfo> &patchtexlookup, TArray<VName> &numberedNames);
+  void LoadPNames (int Lump, TArray<WallPatchInfo> &patchtexlookup);
   void AddToHash (int Index);
-  void AddTextures (TArray<VName> &numberedNames);
-  void AddMissingNumberedTextures (TArray<VName> &numberedNames);
+  void AddTextures ();
+  void AddMissingNumberedTextures ();
   void AddTexturesLump (TArray<WallPatchInfo> &, int, int, bool);
   void AddGroup (int, EWadNamespace);
   void AddTextureTextLumps (bool onlyHiRes);
