@@ -126,9 +126,6 @@ public:
 };
 
 
-extern VCvarB compat_nopassover;
-
-
 //**************************************************************************
 //
 //  THING POSITION SETTING
@@ -736,9 +733,7 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups, bo
           }
           if (!CheckRelThing(tmtrace, *It, noPickups)) {
             // continue checking for other things in to see if we hit something
-            if (!tmtrace.BlockingMobj || compat_nopassover ||
-                (Level->LevelInfoFlags2&VLevelInfo::LIF2_CompatNoPassOver))
-            {
+            if (!tmtrace.BlockingMobj || Level->GetNoPassOver()) {
               // slammed into something
               return false;
             } else if (!tmtrace.BlockingMobj->Player &&
@@ -867,8 +862,7 @@ bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other, bool noPickups)
     //tmtrace.BlockingMobj = Other;
 
     // check bridges
-    if (!(Level->LevelInfoFlags2&VLevelInfo::LIF2_CompatNoPassOver) &&
-        !compat_nopassover &&
+    if (/*!(Level->LevelInfoFlags2&VLevelInfo::LIF2_CompatNoPassOver) && !compat_nopassover*/!Level->GetNoPassOver() &&
         !(EntityFlags&(EF_Float|EF_Missile|EF_NoGravity)) &&
         (Other->EntityFlags&(EF_Solid|EF_ActLikeBridge)) == (EF_Solid|EF_ActLikeBridge))
     {
@@ -889,7 +883,7 @@ bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other, bool noPickups)
 
   //if (!(tmtrace.Thing->EntityFlags & VEntity::EF_NoPassMobj) || Actor(Other).bSpecial)
   if ((((EntityFlags&EF_PassMobj) || (Other->EntityFlags&EF_ActLikeBridge)) &&
-       !(Level->LevelInfoFlags2&VLevelInfo::LIF2_CompatNoPassOver) && !compat_nopassover) ||
+       /*!(Level->LevelInfoFlags2&VLevelInfo::LIF2_CompatNoPassOver) && !compat_nopassover*/!Level->GetNoPassOver()) ||
       (EntityFlags&EF_Missile))
   {
     // prevent some objects from overlapping
@@ -1174,9 +1168,7 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
       return false;
     }
 
-    if (!(EntityFlags&EF_PassMobj) || compat_nopassover ||
-        (Level->LevelInfoFlags2&VLevelInfo::LIF2_CompatNoPassOver))
-    {
+    if (!(EntityFlags&EF_PassMobj) || Level->GetNoPassOver()) {
       // can't go over
       return false;
     }

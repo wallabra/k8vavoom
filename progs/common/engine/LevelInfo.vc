@@ -213,20 +213,20 @@ replication {
 }
 
 
-bool CompatShortTex { get { return bCompatShortTex || GetCvar('compat_shorttex'); } }
-bool CompatStairs { get { return bCompatStairs || GetCvar('compat_stairs'); } }
-bool CompatLimitPain { get { return bCompatLimitPain || GetCvar('compat_limitpain'); } }
-bool CompatNoPassOver { get { return bCompatNoPassOver || GetCvar('compat_nopassover'); } }
-bool CompatNoTossDrops { get { return bCompatNoTossDrops || GetCvar('compat_notossdrops'); } }
-bool CompatUseBlocking { get { return bCompatUseBlocking || GetCvar('compat_useblocking'); } }
-bool CompatNoDoorLight { get { return bCompatNoDoorLight || GetCvar('compat_nodoorlight'); } }
-bool CompatRavenScroll { get { return bCompatRavenScroll || GetCvar('compat_ravenscroll'); } }
-bool CompatSoundTarget { get { return bCompatSoundTarget || GetCvar('compat_soundtarget'); } }
-bool CompatDehHealth { get { return bCompatDehHealth || GetCvar('compat_dehhealth'); } }
-bool CompatTrace { get { return bCompatTrace || GetCvar('compat_trace'); } }
-bool CompatDropOff { get { return bCompatDropOff || GetCvar('compat_dropoff'); } }
-bool CompatBoomScroll { get { return bCompatBoomScroll || GetCvar('compat_boomscroll'); } }
-bool CompatInvisibility { get { return bCompatInvisibility || GetCvar('compat_invisibility'); } }
+final bool CompatShortTex { get { return bCompatShortTex || GetCvar('compat_shorttex'); } }
+final bool CompatStairs { get { return bCompatStairs || GetCvar('compat_stairs'); } }
+final bool CompatLimitPain { get { return bCompatLimitPain || GetCvar('compat_limitpain'); } }
+native final bool CompatNoPassOver { get; }
+final bool CompatNoTossDrops { get { return bCompatNoTossDrops || GetCvar('compat_notossdrops'); } }
+final bool CompatUseBlocking { get { return bCompatUseBlocking || GetCvar('compat_useblocking'); } }
+final bool CompatNoDoorLight { get { return bCompatNoDoorLight || GetCvar('compat_nodoorlight'); } }
+final bool CompatRavenScroll { get { return bCompatRavenScroll || GetCvar('compat_ravenscroll'); } }
+final bool CompatSoundTarget { get { return bCompatSoundTarget || GetCvar('compat_soundtarget'); } }
+final bool CompatDehHealth { get { return bCompatDehHealth || GetCvar('compat_dehhealth'); } }
+final bool CompatTrace { get { return bCompatTrace || GetCvar('compat_trace'); } }
+final bool CompatDropOff { get { return bCompatDropOff || GetCvar('compat_dropoff'); } }
+final bool CompatBoomScroll { get { return bCompatBoomScroll || GetCvar('compat_boomscroll'); } }
+final bool CompatInvisibility { get { return bCompatInvisibility || GetCvar('compat_invisibility'); } }
 
 
 // ////////////////////////////////////////////////////////////////////////// //

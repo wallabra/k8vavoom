@@ -30,7 +30,7 @@
 VCvarB compat_shorttex("compat_shorttex", false, "Compatibility: shorttex", 0);
 VCvarB compat_stairs("compat_stairs", false, "Compatibility: stairs", 0);
 VCvarB compat_limitpain("compat_limitpain", false, "Compatibility: limitpain", 0);
-VCvarB compat_nopassover("compat_nopassover", false, "Compatibility: infinitely tall monsters?", 0);
+VCvarI compat_nopassover("compat_nopassover", "0", "Compatibility: infinitely tall monsters? (0:map default; 1:always; 2: never)", CVAR_Archive);
 VCvarB compat_notossdrops("compat_notossdrops", false, "Compatibility: notossdrops", 0);
 VCvarB compat_useblocking("compat_useblocking", false, "Compatibility: useblocking", 0);
 VCvarB compat_nodoorlight("compat_nodoorlight", false, "Compatibility: nodoorlight", 0);
@@ -114,9 +114,7 @@ void VLevelInfo::SetMapInfo (const mapInfo_t &Info) {
     for (int i = 0; i < XLevel->NumSectors; ++i) XLevel->Sectors[i].seqType = 0;
   }
 
-  static VMethodProxy method("AfterSetMapInfo");
-  vobjPutParamSelf(GLevel);
-  VMT_RET_VOID(method);
+  eventAfterSetMapInfo();
 }
 
 
@@ -451,4 +449,9 @@ IMPLEMENT_FUNCTION(VLevelInfo, IsTIDUsed) {
   P_GET_INT(tid);
   P_GET_SELF;
   RET_BOOL(Self->IsTIDUsed(tid));
+}
+
+IMPLEMENT_FUNCTION(VLevelInfo, get_CompatNoPassOver) {
+  P_GET_SELF;
+  RET_BOOL(Self ? Self->GetNoPassOver() : false);
 }

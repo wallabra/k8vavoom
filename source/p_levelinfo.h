@@ -23,6 +23,8 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+extern VCvarI compat_nopassover;
+
 class VLevelInfo : public VThinker {
   DECLARE_CLASS(VLevelInfo, VThinker, 0)
   NO_DEFAULT_CONSTRUCTOR(VLevelInfo)
@@ -192,6 +194,8 @@ public:
   DECLARE_FUNCTION(FindFreeTID)
   DECLARE_FUNCTION(IsTIDUsed)
 
+  DECLARE_FUNCTION(get_CompatNoPassOver)
+
   // EntityEx PickActor (optional TVec Origin, TVec dir, float distance, optional int actorMask, optional int wallMask) {
   // final bool CheckLock (Entity user, int lock, bool door)
   bool eventCheckLock (VEntity *user, int lock, bool door) { static VMethodProxy method("CheckLock"); vobjPutParamSelf(user, lock, door); VMT_RET_BOOL(method); }
@@ -281,5 +285,18 @@ public:
     static VMethodProxy method("AcsRadiusQuake2");
     vobjPutParamSelf(Activator, tid, intensity, duration, damrad, tremrad, sound);
     VMT_RET_VOID(method);
+  }
+
+  void eventAfterSetMapInfo () { static VMethodProxy method("AfterSetMapInfo"); vobjPutParamSelf(GLevel); VMT_RET_VOID(method); }
+
+  VVA_CHECKRESULT inline bool GetNoPassOver () const noexcept {
+    switch (compat_nopassover.asInt()) {
+      case 1: // always on
+        return true;
+      case 2: // always off
+        return false;
+      default: // map default
+        return !!(LevelInfoFlags2&LIF2_CompatNoPassOver);
+    }
   }
 };
