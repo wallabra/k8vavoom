@@ -290,9 +290,10 @@ static unsigned interUsed = 0;
 
 static inline void EnsureFreeIntercept () {
   if (interAllocated <= interUsed) {
+    unsigned oldAlloc = interAllocated;
     interAllocated = ((interUsed+4)|0xfffu)+1;
     intercepts = (intercept_t *)Z_Realloc(intercepts, interAllocated*sizeof(intercept_t));
-    GCon->Logf(NAME_Debug, "more interceptions allocated; interUsed=%u; allocated=%u", interUsed, interAllocated);
+    if (oldAlloc) GCon->Logf(NAME_Debug, "more interceptions allocated; interUsed=%u; allocated=%u (old=%u)", interUsed, interAllocated, oldAlloc);
   }
 }
 
