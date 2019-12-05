@@ -234,7 +234,7 @@ class VEntity : public VThinker {
     EF_FixedModel             = 1u<<4u, // internal renderer flag
     EF_NoGravity              = 1u<<5u, // don't apply gravity every tic
     EF_PassMobj               = 1u<<6u, // enable z block checking; if on, this flag will allow the mobj to pass over/under other mobjs
-    EF_ColideWithThings       = 1u<<8u,
+    EF_ColideWithThings       = 1u<<7u,
     EF_ColideWithWorld        = 1u<<8u,
     EF_CheckLineBlocking      = 1u<<9u,
     EF_CheckLineBlockMonsters = 1u<<10u,
