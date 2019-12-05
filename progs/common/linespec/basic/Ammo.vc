@@ -147,7 +147,7 @@ int k8GetAmmoKingMax () {
 //==========================================================================
 bool DoPickupInternal (Inventory Item) {
   assert(Item);
-  //printdebug("000: %C: HANDLEPICKUP: Item=%C; Class=%C; Item.Class=%C; itpar: %C", self, Item, Class, Item.Class, Ammo(Item).GetParentAmmo());
+  //printdebug("%C: DoPickupInternal: Item=%C; Class=%C; Item.Class=%C; itpar: %C", self, Item, Class, Item.Class, Ammo(Item).GetParentAmmo());
   //printdebug("  Item=%C", Item);
   int amax = k8GetAmmoKingMax();
   int oldammo = Amount;
@@ -176,23 +176,34 @@ bool DoPickupInternal (Inventory Item) {
 //
 //==========================================================================
 override bool HandlePickup (Inventory Item) {
-  // we cannot simply use `(Ammo(Item) && Ammo(Item).GetParentAmmo() == Class)` here
-  // we can have some parent ammo first in inventory list, and ammo pickup will increase invalid amount
-  // so use explicit loop here, and prefer exact match, if there is any
-  if (Class == Item.Class) return DoPickupInternal(Item);
-  // do not loop if we don't have to (i.e. loop only if we're picking some ammo)
-  if (Ammo(Item) && Ammo(Item).GetParentAmmo() == Class) {
-    // look for exact match
+  // one ammo does it all, because of complex handling of replaced crap. sigh.
+  if (Ammo(Item)) {
+    //printdebug("%C: HPP; Item=%C; pa=%C", self, Item, Ammo(Item).GetParentAmmo());
+    // we cannot simply use `(Ammo(Item) && Ammo(Item).GetParentAmmo() == Class)` here
+    // we can have some parent ammo first in inventory list, and ammo pickup will increase invalid amount
+    // so use explicit loop here, and prefer exact match, if there is any
+    if (Class == Item.Class) return DoPickupInternal(Item);
+    // look for exact match in other inventory items, and for best match otherwise
+    Ammo bestParent, best2Parent;
+    auto pammo = Ammo(Item).GetParentAmmo();
     for (Inventory inv = self; inv; inv = inv.Inventory) {
       if (inv.Class == Item.Class) return Ammo(inv).DoPickupInternal(Item);
+      Ammo a2 = Ammo(inv);
+      if (!a2) continue;
+      if (!bestParent) {
+             if (a2.Class == pammo) bestParent = a2;
+        else if (!best2Parent && a2.GetParentAmmo() == pammo) best2Parent = a2;
+      }
     }
-    // no exact match, do what we can here
-    return DoPickupInternal(Item);
+    // found best match?
+    if (bestParent) return bestParent.DoPickupInternal(Item);
+    // not so good, but match?
+    if (best2Parent) return best2Parent.DoPickupInternal(Item);
+    // no matches found, oops
+    return false;
   }
-
-  if (Inventory) return Inventory.HandlePickup(Item);
-
-  return false;
+  // not an ammo
+  return (Inventory ? Inventory.HandlePickup(Item) : false);
 }
 
 
