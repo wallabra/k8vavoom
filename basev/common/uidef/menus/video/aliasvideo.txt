@@ -107,11 +107,6 @@ menudef AliasModelVideoOptions {
     cvar = r_shadows_other;
   }
 
-  option bool {
-    title = "HUD Hand Weapon";
-    cvar = r_shadows_view;
-  }
-
 
   header "Misc";
 
