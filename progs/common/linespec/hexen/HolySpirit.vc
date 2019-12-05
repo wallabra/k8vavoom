@@ -28,118 +28,81 @@ class HolySpirit : Actor;
 int WeaveXY;
 int WeaveZ;
 
+
 //==========================================================================
 //
 //  Touch
 //
 //==========================================================================
-
-override bool Touch(Entity InOther)
-{
+override bool Touch (Entity InOther) {
   int damage;
   EntityEx Other;
 
   Other = EntityEx(InOther);
   if (!Other.bSolid && !Other.bSpecial && (!Other.bShootable || !Other.bTouchy) &&
-    !Other.bBlockedBySolidActors)
+      !Other.bBlockedBySolidActors)
   {
     return true;
   }
 
-  // Check for skulls slamming into things
-  if (bSkullFly)
-  {
-    if (Other.bShootable && Other != Target)
-    {
-      if (Level.Game.netgame && !Level.Game.deathmatch && Other.bIsPlayer)
-      {
+  // check for skulls slamming into things
+  if (bSkullFly) {
+    if (Other.bShootable && Other != Target) {
+      if (Level.Game.netgame && !Level.Game.deathmatch && Other.bIsPlayer) {
         // don't attack other co-op players
         return true;
       }
-      if (Other.bReflective && (Other.bIsPlayer || Other.bBoss))
-      {
+      if (Other.bReflective && (Other.bIsPlayer || Other.bBoss)) {
         Tracer = Target;
         Target = Other;
         return true;
       }
-      if (Other.bMonster || Other.bIsPlayer)
-      {
-        Tracer = Other;
-      }
-      if (P_Random() < 96)
-      {
+      if (Other.bMonster || Other.bIsPlayer) Tracer = Other;
+      if (P_Random() < 96) {
         damage = 12;
-        if (Other.bIsPlayer || Other.bBoss)
-        {
+        if (Other.bIsPlayer || Other.bBoss) {
           damage = 3;
           // ghost burns out faster when attacking players/bosses
           Health -= 6;
         }
         Other.Damage(self, Target, damage, spawnBlood:true);
-        if (P_Random() < 128)
-        {
+        if (P_Random() < 128) {
           Spawn(HolyPuff, Origin);
           PlaySound('SpiritAttack', CHAN_VOICE);
           if (Other.HowlSound && Other.bMonster && P_Random() < 128 &&
-            !GetSoundPlayingInfo(Other, GetSoundID(Other.HowlSound)))
+              !GetSoundPlayingInfo(Other, GetSoundID(Other.HowlSound)))
           {
             Other.PlaySound(Other.HowlSound, CHAN_VOICE);
           }
         }
       }
-      if (Other.Health <= 0)
-      {
-        Tracer = none;
-      }
+      if (Other.Health <= 0) Tracer = none;
     }
     return true;
   }
   return ::Touch(InOther);
 }
 
+
 //============================================================================
 //
 //  CHolyFindTarget
 //
 //============================================================================
-
-void CHolyFindTarget()
-{
-  Entity    Other;
-
-  foreach RoughBlockSearch(Other, 6)
-  {
+void CHolyFindTarget () {
+  Entity Other;
+  foreach RoughBlockSearch(Other, 6) {
     EntityEx link = EntityEx(Other);
-
-    if ((!link.bMonster && !link.bIsPlayer) || link.bDormant)
-    {
-      continue;
+    if ((!link.bMonster && !link.bIsPlayer) || link.bDormant) continue;
+    if (!link.bShootable) continue;
+    if (Level.Game.netgame && !Level.Game.deathmatch && link.bIsPlayer) continue;
+    if (link == Target) continue;
+    if (!CanSee(link)) continue;
+    if (bScreenSeeker) {
+      float angle = AngleMod360(atan2(link.Origin.y-Target.Origin.y, link.Origin.x-Target.Origin.x)-Target.Angles.yaw);
+      if (angle <= 226.0*360.0/256.0 || angle >= 30.0*360.0/256.0) continue;
     }
-    if (!link.bShootable)
-    {
-      continue;
-    }
-    if (Level.Game.netgame && !Level.Game.deathmatch && link.bIsPlayer)
-    {
-      continue;
-    }
-    if (link == Target)
-    {
-      continue;
-    }
-    if (!CanSee(link))
-    {
-      continue;
-    }
-    if (bScreenSeeker)
-    {
-      float angle = AngleMod360(atan2(link.Origin.y - Target.Origin.y,
-        link.Origin.x - Target.Origin.x) - Target.Angles.yaw);
-      if (angle <= 226.0 * 360.0 / 256.0 || angle >= 30.0 * 360.0 / 256.0)
-      {
-        continue;
-      }
-    }
+    //printdebug("%C: found target %C", self, link);
     Tracer = link;
     bColideWithWorld = false;
     bSkullFly = true;
@@ -148,6 +111,7 @@ void CHolyFindTarget()
   }
 }
 
+
 //============================================================================
 //
 //  CHolySeekerMissile
@@ -155,23 +119,20 @@ void CHolyFindTarget()
 //  Similar to SeekerMissile, but seeks to a random Z on the target
 //
 //============================================================================
-
-void CHolySeekerMissile(float thresh, float turnMax)
-{
-  int dir;
+void CHolySeekerMissile (float thresh, float turnMax) {
   float dist;
   float delta;
   float angle;
   float newZ;
   float deltaZ;
 
-  if (!Tracer)
-  {
-    return;
-  }
-  if (!Tracer.bShootable || (!Tracer.bMonster && !Tracer.bIsPlayer))
-  {
-    // Target died/target isn't a player or creature
+  if (!Tracer) return;
+
+  //printdebug("%C: CHolySeekerMissile: target=%C", self, Tracer);
+
+  if (!Tracer.bShootable || (!Tracer.bMonster && !Tracer.bIsPlayer) || Tracer.IsDestroyed) {
+    //printdebug("  bad target");
+    // target died/target isn't a player or creature
     Tracer = none;
     bColideWithWorld = true;
     bSkullFly = false;
@@ -179,123 +140,96 @@ void CHolySeekerMissile(float thresh, float turnMax)
     CHolyFindTarget();
     return;
   }
-  dir = FaceActor(Actor(Tracer), delta);
-  if (delta > thresh)
-  {
+
+  //printdebug("  facing target");
+  int dir = FaceActor(Actor(Tracer), delta);
+  if (delta > thresh) {
     delta /= 2.0;
-    if (delta > turnMax)
-    {
-      delta = turnMax;
-    }
+    if (delta > turnMax) delta = turnMax;
   }
-  if (dir)
-  {
-    // Turn clockwise
+  if (dir) {
+    // turn clockwise
     Angles.yaw += delta;
-  }
-  else
-  {
-    // Turn counter clockwise
+  } else {
+    // turn counter clockwise
     Angles.yaw -= delta;
   }
   Angles.yaw = AngleMod360(Angles.yaw);
   angle = Angles.yaw;
-  Velocity.x = Speed * cos(angle);
-  Velocity.y = Speed * sin(angle);
-  if (!(XLevel.TicTime & 15) || Origin.z > Tracer.Origin.z + Tracer.Height ||
-    Origin.z + Height < Tracer.Origin.z)
+  Velocity.x = Speed*cos(angle);
+  Velocity.y = Speed*sin(angle);
+  if (!(XLevel.TicTime&15) || Origin.z > Tracer.Origin.z+Tracer.Height ||
+      Origin.z+Height < Tracer.Origin.z)
   {
-    newZ = Tracer.Origin.z + Random() * Tracer.Height;
-    deltaZ = newZ - Origin.z;
-    if (fabs(deltaZ) > 15.0)
-    {
-      if (deltaZ > 0.0)
-      {
-        deltaZ = 15.0;
-      }
-      else
-      {
-        deltaZ = -15.0;
-      }
+    newZ = Tracer.Origin.z+Random()*Tracer.Height;
+    deltaZ = newZ-Origin.z;
+    if (fabs(deltaZ) > 15.0) {
+      deltaZ = (deltaZ > 0.0 ? 15.0 : -15.0);
     }
     dist = DistTo2(Tracer);
-    dist = dist / Speed;
+    dist = dist/Speed;
     if (dist < 1.0 || !dist.isfinite) dist = 1.0;
-    Velocity.z = deltaZ / dist;
+    Velocity.z = deltaZ/dist;
   }
-  return;
 }
+
 
 //============================================================================
 //
 //  CHolyWeave
 //
 //============================================================================
-
-void CHolyWeave()
-{
-  float newX, newY;
-  float angle;
-
-  angle = AngleMod360(Angles.yaw + 90.0);
-  newX = Origin.x - cos(angle) * Level.Game.FloatBobOffsets[WeaveXY] * 4.0;
-  newY = Origin.y - sin(angle) * Level.Game.FloatBobOffsets[WeaveXY] * 4.0;
-  WeaveXY = (WeaveXY + (P_Random() % 5)) & 63;
-  newX += cos(angle) * Level.Game.FloatBobOffsets[WeaveXY] * 4.0;
-  newY += sin(angle) * Level.Game.FloatBobOffsets[WeaveXY] * 4.0;
+void CHolyWeave () {
+  float angle = AngleMod360(Angles.yaw+90.0);
+  float newX = Origin.x-cos(angle)*Level.Game.FloatBobOffsets[WeaveXY]*4.0;
+  float newY = Origin.y-sin(angle)*Level.Game.FloatBobOffsets[WeaveXY]*4.0;
+  WeaveXY = (WeaveXY+(P_Random()%5))&63;
+  newX += cos(angle)*Level.Game.FloatBobOffsets[WeaveXY]*4.0;
+  newY += sin(angle)*Level.Game.FloatBobOffsets[WeaveXY]*4.0;
   TryMove(vector(newX, newY, Origin.z), AllowDropOff:false);
-  Origin.z -= Level.Game.FloatBobOffsets[WeaveZ] * 2.0;
-  WeaveZ = (WeaveZ + (P_Random() % 5)) & 63;
-  Origin.z += Level.Game.FloatBobOffsets[WeaveZ] * 2.0;
+  Origin.z -= Level.Game.FloatBobOffsets[WeaveZ]*2.0;
+  WeaveZ = (WeaveZ+(P_Random()%5))&63;
+  Origin.z += Level.Game.FloatBobOffsets[WeaveZ]*2.0;
 }
+
 
 //============================================================================
 //
 //  A_CHolySeek
 //
 //============================================================================
+[decorate] final void A_CHolySeek () {
+  --Health;
 
-[decorate] final void A_CHolySeek()
-{
-  Health--;
-  if (Health <= 0)
-  {
+  if (Health <= 0) {
     Velocity.x /= 4.0;
     Velocity.y /= 4.0;
     Velocity.z = 0.0;
     SetState(FindState('Death'));
-    StateTime -= Random() * 0.1;
+    StateTime -= Random()*0.1;
     return;
   }
-  if (Tracer)
-  {
-    CHolySeekerMissile(float(Args[0]), float(Args[0]) * 2.0);
-    if (!((XLevel.TicTime + 7) & 15))
-    {
-      Args[0] = 5 + (P_Random() / 20);
-    }
+
+  if (Tracer) {
+    CHolySeekerMissile(float(Args[0]), float(Args[0])*2.0);
+    if (!((XLevel.TicTime+7)&15)) Args[0] = 5+(P_Random()/20);
   }
+
   CHolyWeave();
 }
+
 
 //============================================================================
 //
 //  A_CHolyCheckScream
 //
 //============================================================================
-
-[decorate] final void A_CHolyCheckScream()
-{
+[decorate] final void A_CHolyCheckScream () {
   A_CHolySeek();
-  if (P_Random() < 20)
-  {
-    PlaySound('SpiritActive', CHAN_VOICE);
-  }
-  if (!Tracer)
-  {
-    CHolyFindTarget();
-  }
+  if (P_Random() < 20) PlaySound('SpiritActive', CHAN_VOICE);
+  if (!Tracer) CHolyFindTarget();
 }
+
 
 states
 {
@@ -310,8 +244,8 @@ Death:
   Stop
 }
 
-defaultproperties
-{
+
+defaultproperties {
   Health = 105;
   Radius = 10.0;
   Height = 6.0;
