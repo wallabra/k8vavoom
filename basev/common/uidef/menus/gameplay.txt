@@ -36,13 +36,26 @@ menudef GameplayOptions {
 
   header "Other Options";
 
+  option enum {
+    title = "Infinitely tall monsters";
+    cvar = compat_nopassover;
+    list {
+      "Map Default, or 'no'",
+      "Always",
+      "Never",
+    }
+    help =
+      "Emulate vanilla infinitely tall monsters?"
+      "'Map Default' takes this from MAPINFO if set, otherwise defaults to 'NO'.";
+  }
+
   option bool {
     title = "Pushable barrels";
     cvar = sv_pushable_barrels;
     help =
       "Can barrels be pushed?"
       "Don't worry, this option is latched (I should explain this)."
-      "Requires game/map restart.";
+      "\cJRequires game/map restart.";
   }
 
   option bool {
@@ -227,7 +240,7 @@ menudef GameplayOptions {
     list { "Default", "Fast", "Slow" };
     help =
       "Force fast/slow monsters."
-      "You need to restart level for this to take effect.";
+      "\cJYou need to restart level for this to take effect.";
   }
 
   option slider {
@@ -239,7 +252,7 @@ menudef GameplayOptions {
     help =
       "Force monster respawn time, in seconds."
       "Nightmare is 12, 0 is \"don't change\", -1 is \"disabled\"."
-      "You need to restart level for this to take effect.";
+      "\cJYou need to restart level for this to take effect.";
   }
 
   option slider {

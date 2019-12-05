@@ -16,8 +16,8 @@ menudef AdvRenderOptions {
     cvar = r_allow_horizons;
     help =
       "Allow rendering horizon portals?"
-      "Please note that you have to restart/reload the map after changing this,"
-      "or visual glitches will occur.";
+      "\cGPlease note that you have to restart/reload the map after changing this,"
+      "\cGor visual glitches will occur.";
   }
 
   option bool {
@@ -26,8 +26,8 @@ menudef AdvRenderOptions {
     help =
       "Allow rendering mirror portals?"
       "Note that portal rendering in k8vavoom is somewhat slow."
-      "Please note that you have to restart/reload the map after changing this,"
-      "or visual glitches will occur.";
+      "\cGPlease note that you have to restart/reload the map after changing this,"
+      "\cGor visual glitches will occur.";
   }
 
   option bool [__k8vavoom_developer_version > 0] {
@@ -37,8 +37,8 @@ menudef AdvRenderOptions {
       "Allow rendering non-mirror portals?"
       "This is mostly for stacked sectors and other such things."
       "Currently this is *VERY* glitchy, so you'd better don't turn this on."
-      "Please note that you have to restart/reload map after changing this,"
-      "or visual glitches will occur.";
+      "\cGPlease note that you have to restart/reload map after changing this,"
+      "\cGor visual glitches will occur.";
   }
 
   option numeric {

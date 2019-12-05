@@ -48,7 +48,7 @@ menudef MapHacksOptions {
       "Currently this fixer is very simple, and can fix only simple cases."
       "It may cause rendering glitches, but such cases are rare."
       ""
-      "\cGWARNING! You must restart the map after changing this!";
+      "\cJWARNING! You must restart the map after changing this!";
   }
 
   option bool {
@@ -63,7 +63,7 @@ menudef MapHacksOptions {
       "Currently this fixer is very simple, and can fix only simple cases."
       "It may cause rendering glitches, but such cases are rare."
       ""
-      "\cGWARNING! You must restart the map after changing this!";
+      "\cJWARNING! You must restart the map after changing this!";
   }
 
   option bool {
@@ -77,6 +77,6 @@ menudef MapHacksOptions {
       "bridges are still 2D, but they are looking 3D."
       "It may cause rendering glitches, but such cases are rare."
       ""
-      "\cGWARNING! You must restart the map after changing this!";
+      "\cJWARNING! You must restart the map after changing this!";
   }
 }

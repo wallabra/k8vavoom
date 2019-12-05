@@ -107,7 +107,8 @@ menudef VideoOptions {
     help =
       "Lightmapped renderer is faster, and produces nice soft light."
       "Stencil lighting produces DooM3-like sharp volumetric light."
-      "You have to restart level/game (or load save) to activate new renderer.";
+      "\cJYou have to restart level/game (or load save) to activate new renderer."
+      "\cJOr, you can use 'VidRendererRestart' console command.";
   }
 
 
