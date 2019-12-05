@@ -347,10 +347,18 @@ void InitBorder () {
 override void DrawBorder (int x, int y, int w, int h) {
   if (!pic_brdr_b) InitBorder();
 
-  for (int i = 0; i < w; i += 8) GRoot.DrawPic(x+i, y-8, pic_brdr_t);
-  for (int i = 0; i < w; i += 8) GRoot.DrawPic(x+i, y+h, pic_brdr_b);
-  for (int i = 0; i < h; i += 8) GRoot.DrawPic(x-8, y+i, pic_brdr_l);
-  for (int i = 0; i < h; i += 8) GRoot.DrawPic(x+w, y+i, pic_brdr_r);
+  //FIXME: should be scaled according to ratio!
+  if (w <= 8 || h <= 8) return;
+  h -= 8;
+
+  for (int i = 0; i < w; i += 8) {
+    GRoot.DrawPic(x+i, y-8, pic_brdr_t);
+    GRoot.DrawPic(x+i, y+h, pic_brdr_b);
+  }
+  for (int i = 0; i < h; i += 8) {
+    GRoot.DrawPic(x-8, y+i, pic_brdr_l);
+    GRoot.DrawPic(x+w, y+i, pic_brdr_r);
+  }
 
   // draw beveled edge
   GRoot.DrawPic(x-8, y-8, pic_brdr_tl);
