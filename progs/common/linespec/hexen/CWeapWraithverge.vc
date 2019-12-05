@@ -25,67 +25,55 @@
 //**************************************************************************
 class CWeapWraithverge : ClericWeapon;
 
-int       CShift;
+int CShift;
+
 
 //==========================================================================
 //
 //  GetBlend
 //
 //==========================================================================
-
-override int GetBlend()
-{
+override int GetBlend () {
   return CShift;
 }
+
 
 //============================================================================
 //
 //  A_CHolyPalette1
 //
 //============================================================================
-
-[decorate] final void A_CHolyPalette1() self(Actor)
-{
-  if (!bIsPlayer)
-  {
-    return;
-  }
+[decorate] final void A_CHolyPalette1 () self(Actor) {
+  if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (Wpn) CWeapWraithverge(Wpn).CShift = RGBA(255, 255, 255, 51);
 }
+
 
 //============================================================================
 //
 //  A_CHolyPalette2
 //
 //============================================================================
-
-[decorate] final void A_CHolyPalette2() self(Actor)
-{
-  if (!bIsPlayer)
-  {
-    return;
-  }
+[decorate] final void A_CHolyPalette2 () self(Actor) {
+  if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (Wpn) CWeapWraithverge(Wpn).CShift = RGBA(255, 255, 255, 36);
 }
+
 
 //============================================================================
 //
 //  A_CHolyPalette3
 //
 //============================================================================
-
-[decorate] final void A_CHolyPalette3() self(Actor)
-{
-  if (!bIsPlayer)
-  {
-    return;
-  }
+[decorate] final void A_CHolyPalette3 () self(Actor) {
+  if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   // reset back to original playpal
   if (Wpn) CWeapWraithverge(Wpn).CShift = 0;
 }
+
 
 states
 {
@@ -111,8 +99,8 @@ Fire:
   Goto Ready
 }
 
-defaultproperties
-{
+
+defaultproperties {
   SelectionOrder = 3000;
   AmmoType1 = Mana1;
   AmmoType2 = Mana2;
