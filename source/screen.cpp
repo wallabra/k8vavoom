@@ -156,8 +156,8 @@ static VCvarF menu_darkening("menu_darkening", "0.6", "Screen darkening for acti
 static VCvarB draw_pause("draw_pause", true, "Draw \"paused\" text?", CVAR_Archive);
 static VCvarB draw_world_timer("draw_world_timer", false, "Draw playing time?", CVAR_Archive);
 
-static VCvarB r_wipe_enabled("r_wipe_enabled", false, "Is screen wipe effect enabled?", CVAR_Archive);
-static VCvarI r_wipe_type("r_wipe_type", "0", "Wipe type?", CVAR_Archive);
+VCvarB r_wipe_enabled("r_wipe_enabled", false, "Is screen wipe effect enabled?", CVAR_Archive);
+VCvarI r_wipe_type("r_wipe_type", "0", "Wipe type?", CVAR_Archive);
 
 static VCvarI screen_width("screen_width", "0", "Custom screen width", CVAR_Archive);
 static VCvarI screen_height("screen_height", "0", "Custom screen height", CVAR_Archive);

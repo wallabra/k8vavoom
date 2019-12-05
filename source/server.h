@@ -60,3 +60,5 @@ extern server_static_t svs;
 // ACS fadein effects works better
 // this is GLevel->TicTime value at which we should start rendering
 extern int serverStartRenderFramesTic;
+
+extern double SV_GetFrameTimeConstant ();

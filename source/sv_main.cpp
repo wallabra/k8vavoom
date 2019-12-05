@@ -39,7 +39,9 @@ static double FrameTime = 1.0f/35.0f;
 // round a little bit up to prevent "slow motion"
 *(vuint64 *)&FrameTime += 1;
 */
-static const double FrameTime = 0x1.d41d41d41d41ep-6; // same as above
+static constexpr double FrameTime = 0x1.d41d41d41d41ep-6; // same as above
+double SV_GetFrameTimeConstant () { return FrameTime; }
+
 /*
 #include <stdio.h>
 #include <stdlib.h>
@@ -1177,7 +1179,7 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
   if (GSoundManager) GSoundManager->CleanupSounds();
 
   GCon->Log("===============================================");
-  GCon->Logf("Spawning server with \"%s\"", mapname);
+  GCon->Logf("Spawning %sserver with map \"%s\"%s...", (titlemap ? "titlemap " : ""), mapname, (spawn_thinkers ? "" : " (without thinkers)"));
 
   GGameInfo->Flags &= ~VGameInfo::GIF_Paused;
   mapteleport_issued = false;
@@ -1272,36 +1274,36 @@ void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap) {
       if (AcsHasScripts(GLevel->Acs)) GCon->Log("Found some ACS scripts");
       if (GLevel->scriptThinkers.length()) GCon->Logf("ACS thinkers: %d", GLevel->scriptThinkers.length());
     }
-    return;
+  } else {
+    // P_SpawnSpecials
+    // after the map has been loaded, scan for specials that spawn thinkers
+    GLevelInfo->eventSpawnSpecials();
+
+    SV_SendServerInfoToClients();
+
+    // call BeginPlay events
+    for (TThinkerIterator<VEntity> Ent(GLevel); Ent; ++Ent) Ent->eventBeginPlay();
+    GLevelInfo->LevelInfoFlags2 |= VLevelInfo::LIF2_BegunPlay;
+
+    Host_ResetSkipFrames();
+
+    if (GGameInfo->NetMode != NM_TitleMap && GGameInfo->NetMode != NM_Standalone) {
+      GLevel->TickWorld(FrameTime);
+      GLevel->TickWorld(FrameTime);
+      // start open scripts
+      GLevel->Acs->StartTypedACScripts(SCRIPT_Open, 0, 0, 0, nullptr, false, false);
+    }
+
+    // delay rendering if we have ACS scripts
+    if (GLevel->scriptThinkers.length() || AcsHasScripts(GLevel->Acs)) {
+      serverStartRenderFramesTic = GLevel->TicTime+INITIAL_TICK_DELAY;
+      GCon->Log("---");
+      if (AcsHasScripts(GLevel->Acs)) GCon->Log("Found some ACS scripts");
+      if (GLevel->scriptThinkers.length()) GCon->Logf("ACS thinkers: %d", GLevel->scriptThinkers.length());
+    }
   }
 
-  // P_SpawnSpecials
-  // after the map has been loaded, scan for specials that spawn thinkers
-  GLevelInfo->eventSpawnSpecials();
-
-  SV_SendServerInfoToClients();
-
-  // call BeginPlay events
-  for (TThinkerIterator<VEntity> Ent(GLevel); Ent; ++Ent) Ent->eventBeginPlay();
-  GLevelInfo->LevelInfoFlags2 |= VLevelInfo::LIF2_BegunPlay;
-
-  Host_ResetSkipFrames();
-
-  if (GGameInfo->NetMode != NM_TitleMap && GGameInfo->NetMode != NM_Standalone) {
-    GLevel->TickWorld(FrameTime);
-    GLevel->TickWorld(FrameTime);
-    // start open scripts
-    GLevel->Acs->StartTypedACScripts(SCRIPT_Open, 0, 0, 0, nullptr, false, false);
-  }
-  // delay rendering if we have ACS scripts
-  if (GLevel->scriptThinkers.length() || AcsHasScripts(GLevel->Acs)) {
-    serverStartRenderFramesTic = GLevel->TicTime+INITIAL_TICK_DELAY;
-    GCon->Log("---");
-    if (AcsHasScripts(GLevel->Acs)) GCon->Log("Found some ACS scripts");
-    if (GLevel->scriptThinkers.length()) GCon->Logf("ACS thinkers: %d", GLevel->scriptThinkers.length());
-  }
-
-  GCon->Log(NAME_Dev, "Server spawned");
+  GCon->Logf("Spawned server for \"%s\".", mapname);
 }
 
 

@@ -56,6 +56,8 @@ VCvarS cl_model("model", "", "Player model.", CVAR_Archive|CVAR_UserInfo);
 
 static VCvarB d_attraction_mode("d_attraction_mode", false, "Allow demo playback (won't work with non-k8vavoom demos)?", CVAR_Archive);
 
+extern VCvarB r_wipe_enabled;
+
 IMPLEMENT_CLASS(V, ClientGameBase);
 
 static VName CurrentSongLump;
@@ -373,6 +375,12 @@ void CL_SetUpStandaloneClient () {
 
   cl->SpawnClient();
   cls.signon = 1;
+
+  // if wipe is enabled, tick the world once, so spawned things will fix themselves
+  if (r_wipe_enabled) {
+    if (developer) GCon->Log(NAME_Dev, "****** WIPE TICK ******");
+    GLevel->TickWorld(SV_GetFrameTimeConstant());
+  }
 
   GCon->Log(NAME_Dev, "Client level loaded");
   GCmdBuf << "HideConsole\n";
