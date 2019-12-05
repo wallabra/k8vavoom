@@ -1406,11 +1406,13 @@ VOpenGLDrawer::FBO *VOpenGLDrawer::GetMainFBO () {
 void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
   RendLev = ARLev;
 
+  glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|(rd->drawworld && !rd->DrawCamera && clear ? GL_COLOR_BUFFER_BIT : 0));
+  stencilBufferDirty = false;
+
   if (!rd->DrawCamera && rd->drawworld && rd->width != ScreenWidth) {
     // draws the border around the view for different size windows
     R_DrawViewBorder();
   }
-
   glBindTexture(GL_TEXTURE_2D, 0);
 
   VMatrix4 ProjMat;
@@ -1442,9 +1444,6 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
     ProjMat[3][2] = 1.0f; // zNear
   }
   //RestoreDepthFunc();
-
-  glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT|(rd->drawworld && !rd->DrawCamera && clear ? GL_COLOR_BUFFER_BIT : 0));
-  stencilBufferDirty = false;
 
   glViewport(rd->x, getHeight()-rd->height-rd->y, rd->width, rd->height);
 
