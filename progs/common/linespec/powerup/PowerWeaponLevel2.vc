@@ -35,12 +35,10 @@ override void InitEffect () {
   if (!Owner.bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Owner.Player).ReadyWeapon;
-  if (!Wpn) return;
+  if (!Wpn || Wpn.bPoweredUp) return; // already powered up, nothing to do
 
-  Weapon Sist = PlayerEx(Owner.Player).ReadyWeapon.SisterWeapon;
-  if (!Sist) return;
-
-  if (!Sist.bPoweredUp) return;
+  Weapon Sist = Wpn.SisterWeapon;
+  if (!Sist || !Sist.bPoweredUp) return;
 
   PlayerEx(Owner.Player).SetWeapon(Sist);
   if (Sist.GetReadyState() != Wpn.GetReadyState()) {

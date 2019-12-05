@@ -983,7 +983,7 @@
   if (!Wpn) return;
 
   int damage = HITDICE(4);
-  EntityEx AimTarget = AimLineAttack(out dir, Owner.Angles, MELEERANGE);
+  EntityEx AimTarget = AimLineAttack(out dir, (Owner ? Owner.Angles : Angles), MELEERANGE); //k8: why it may have no owner???
   LineAttack(dir, MELEERANGE, damage, BeakPuff);
   if (AimTarget) {
     Angles.yaw = atan2(AimTarget.Origin.y-Origin.y, AimTarget.Origin.x-Origin.x);
