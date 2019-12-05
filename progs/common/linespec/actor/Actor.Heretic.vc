@@ -1079,3 +1079,19 @@
     S2.CopyFriendliness(self, true);
   }
 }
+
+
+//==========================================================================
+//
+//  A_ImpMsAttack
+//
+//  Heretic Imp attack.
+//
+//==========================================================================
+[decorate] final void A_ImpMsAttack () {
+  if (!Target || FRandomFull() > 0.25) {
+    SetState(SeeState);
+  } else {
+    decorate_A_SkullAttack(12);
+  }
+}
