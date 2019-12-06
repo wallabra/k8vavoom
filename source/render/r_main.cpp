@@ -1373,8 +1373,27 @@ void VRenderLevelShared::SetupFrame () {
 
   if (r_chasecam && cl->MO == cl->Camera) {
     //vieworg = cl->MO->Origin+TVec(0.0f, 0.0f, 32.0f)-r_chase_dist*viewforward+r_chase_up*viewup+r_chase_right*viewright;
+    // for demo replay, make camera always looking forward
+    if (cls.demoplayback) {
+      viewangles.pitch = 0;
+      viewangles.roll = 0;
+      AngleVectors(viewangles, viewforward, viewright, viewup);
+    }
     TVec endcpos = cl->MO->Origin+TVec(0.0f, 0.0f, r_chase_raise)-r_chase_dist*viewforward+r_chase_up*viewup+r_chase_right*viewright;
-    TVec cpos = cl->MO->SlideMoveCamera(cl->MO->Origin, endcpos, r_chase_radius);
+    // try to move camera as far as we can
+    TVec cpos = cl->MO->Origin;
+    for (;;) {
+      TVec npos = cl->MO->SlideMoveCamera(cpos, endcpos, r_chase_radius);
+      float zdiff = fabs(cpos.z-npos.z);
+      cpos = npos;
+      if (zdiff < 1.0f) break;
+      // try to move up
+      npos = cl->MO->SlideMoveCamera(cpos, TVec(cpos.x, cpos.y, endcpos.z), r_chase_radius);
+      zdiff = fabs(cpos.z-npos.z);
+      cpos = npos;
+      if (zdiff < 1.0f) break;
+    }
+    // interpolate camera position
     const double cameraITime = r_chase_delay.asFloat();
     if (cameraITime <= 0) {
       prevChaseCamTime = -1;
