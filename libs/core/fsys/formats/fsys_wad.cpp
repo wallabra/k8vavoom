@@ -142,7 +142,7 @@ VWadFile *VWadFile::Create (VStr FileName, bool FixVoices, VStream *InStream) {
 
   if (FixVoices) wad->FixVoiceNamespaces();
 
-  wad->pakdir.buildNameMaps();
+  wad->pakdir.buildNameMaps(false, wad);
 
   if (wad->archStream->IsError()) { delete wad; Sys_Error("error opening archive \"%s\"", *FileName); }
 

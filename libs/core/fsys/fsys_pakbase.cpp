@@ -368,7 +368,7 @@ void VFileDirectory::buildLumpNames () {
 //  call this when all lump names are built
 //
 //==========================================================================
-void VFileDirectory::buildNameMaps (bool rebuilding) {
+void VFileDirectory::buildNameMaps (bool rebuilding, VPakFileBase *pak) {
   bool doReports = (rebuilding ? false : !fsys_no_dup_reports);
   if (doReports) {
     VStr fn = getArchiveName().ExtractFileBaseName().toLowerCase();
@@ -385,6 +385,7 @@ void VFileDirectory::buildNameMaps (bool rebuilding) {
       fn != "voices.wad" &&
       true;
   }
+  int seenZScriptLump = -1; // so we can calculate checksum later
   vuint32 squareChecked = 0u;
   if (fsys_ignoreSquare) squareChecked = ~0u;
   lumpmap.clear();
@@ -392,44 +393,38 @@ void VFileDirectory::buildNameMaps (bool rebuilding) {
   TMap<VStr, bool> dupsReported;
   TMapNC<VName, int> lastSeenLump;
   bool warnZScript = true;
+  bool zscriptAllowed = false;
   for (int f = 0; f < files.length(); ++f) {
     VPakFileInfo &fi = files[f];
     // link lumps
     VName lmp = fi.lumpName;
     fi.nextLump = -1; // just in case
-    if (lmp != NAME_None && fi.lumpNamespace == WADNS_Global && VStr::Cmp(*lmp, "zscript") == 0) {
+    if (/*lmp != NAME_None &&*/ seenZScriptLump < 0 && fi.lumpNamespace == WADNS_Global && VStr::strEquCI(*lmp, "zscript")) {
+      seenZScriptLump = f;
+      // check for "adventures of square"
       if (!fsys_IgnoreZScript && !squareChecked) {
-        for (int cc = 0; cc < files.length(); ++cc) {
-               if (files[cc].fileName.strEquCI("SQU-SWE1.txt")) squareChecked |= 0b0001u;
-          else if (files[cc].fileName.strEquCI("GAMEINFO.sq")) squareChecked |= 0b0010u;
-          else if (files[cc].fileName.strEquCI("acs/sqcommon.o")) squareChecked |= 0b0100u;
-          else if (files[cc].fileName.strEquCI("acs/sq_jump.o")) squareChecked |= 0b1000u;
+        for (auto &&fit : files) {
+               if (fit.fileName.strEquCI("SQU-SWE1.txt")) squareChecked |= 0b0001u;
+          else if (fit.fileName.strEquCI("GAMEINFO.sq")) squareChecked |= 0b0010u;
+          else if (fit.fileName.strEquCI("acs/sqcommon.o")) squareChecked |= 0b0100u;
+          else if (fit.fileName.strEquCI("acs/sq_jump.o")) squareChecked |= 0b1000u;
         }
         if (squareChecked == 0b1111u) {
-          fsys_IgnoreZScript = true;
+          //fsys_IgnoreZScript = true;
+          zscriptAllowed = true;
           fsys_DisableBDW = true;
           warnZScript = false;
-          GLog.Logf(NAME_Init, "Detected 'Adventures of Square'");
+          GLog.Log(NAME_Init, "Detected PWAD: 'Adventures of Square'");
         } else {
           squareChecked = ~0u;
         }
       }
-      if (fsys_IgnoreZScript) {
-        if (warnZScript) { warnZScript = false; GLog.Logf(NAME_Error, "Archive \"%s\" contains zscript!", *getArchiveName()); }
-        fi.lumpName = NAME_None;
-        continue;
-      } else {
-        Sys_Error("Archive \"%s\" contains zscript!", *getArchiveName());
-      }
+      // ignore it for now
+      fi.lumpName = NAME_None;
+      continue;
     }
 
     if (lmp != NAME_None) {
-      if (fsys_IgnoreZScript) {
-        if (fi.fileName.startsWithCI("zscript")) {
-          fi.lumpName = NAME_None;
-          continue;
-        }
-      }
       auto lsidp = lastSeenLump.find(lmp);
       if (!lsidp) {
         // new lump
@@ -477,6 +472,29 @@ void VFileDirectory::buildNameMaps (bool rebuilding) {
       filemap.put(fi.fileName, f);
     }
     //if (fsys_dev_dump_paks) GLog.Logf(NAME_Debug, "%s: %s", *PakFileName, *Files[f].fileName);
+  }
+
+  // seen zscript, and not a square?
+  if (!zscriptAllowed && seenZScriptLump >= 0) {
+    // detect boringternity
+    if (pak) {
+      //GLog.Logf(NAME_Debug, "*** seenZScriptLump=%d (%s); size=%d (%p); rebuilding=%d", seenZScriptLump, *files[seenZScriptLump].fileName, files[seenZScriptLump].filesize, pak, (int)rebuilding);
+      if (files[seenZScriptLump].filesize == 13153 && pak->CalculateMD5(seenZScriptLump) == "9e53e2d46de1d0f6cfc004c74e1660cf") {
+        // this is possibly boringternity, do some more checks?
+        GLog.Log(NAME_Init, "Detected PWAD: boringternity (or something with weather system from 'mapping sadness 5'");
+        zscriptAllowed = true;
+        //fsys_IgnoreZScript = true;
+        warnZScript = false;
+      }
+    }
+    // bomb out
+    if (!zscriptAllowed) {
+      if (fsys_IgnoreZScript) {
+        if (warnZScript) { warnZScript = false; GLog.Logf(NAME_Error, "Archive \"%s\" contains zscript!", *getArchiveName()); }
+      } else {
+        Sys_Error("Archive \"%s\" contains zscript!", *getArchiveName());
+      }
+    }
   }
 
   if (!rebuilding && fsys_dev_dump_paks) {

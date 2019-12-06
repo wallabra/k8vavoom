@@ -251,7 +251,7 @@ void VZipFile::OpenArchive (VStream *fstream, vuint32 cdofs) {
   }
 
   pakdir.buildLumpNames();
-  pakdir.buildNameMaps();
+  pakdir.buildNameMaps(false, this);
 
   // detect SkullDash EE
   if (isPK3) {
