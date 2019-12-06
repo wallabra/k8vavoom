@@ -85,6 +85,26 @@ menudef AdvVideoOptions {
   }
 
   option enum {
+    title = "Fake Wall Contrast";
+    cvar = r_fakecontrast;
+    list {
+      "Disable",
+      "Vanilla Fake Contrast",
+      "Smooth Lighting",
+    }
+    help =
+      "Controls fake contrast/smooth lighting for walls."
+      "Please note that MAPINFO will override this setting."
+      "\cJYou need to restart level for this to take effect.";
+  }
+
+  option bool {
+    title = "Force Fake Contrast";
+    cvar = r_fakecontrast_ignore_mapinfo;
+    help = "Ignore MAPINFO fake contrast setting, and always use the previous setting.";
+  }
+
+  option enum {
     title = "Static Lightmap Filtering";
     cvar = r_lmap_filtering;
     list {
