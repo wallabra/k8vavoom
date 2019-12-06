@@ -976,7 +976,8 @@ static void ParseGZLightDef (VScriptParser *sc, int LightType, float lightsizefa
       sc->Message(va("Subtractive light ('%s') is not supported yet.", *L->Name));
     } else if (sc->Check("chance")) {
       sc->ExpectFloat();
-      L->Chance = sc->Float;
+      // negative means "special processing"
+      L->Chance = -(clampval((float)sc->Float, 0.0f, 1.0f)+1.0f);
     } else if (sc->Check("scale")) {
       sc->ExpectFloat();
       L->Scale = sc->Float;

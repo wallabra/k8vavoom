@@ -1868,8 +1868,16 @@ final void DoStateEffects (float DeltaTime) {
           dl->radius = L->Radius+Frac*L->Radius2-L->Radius;
           break;
         case DynamicLight::DLTYPE_Flicker:
-          dl->decay = XLevel.Time+80.0;
-          dl->radius = Random() >= L->Chance/360.0 ? L->Radius2 : L->Radius;
+          if (L->Chance < 0) {
+            // from gldef
+            printdebug("%C: gldef flicker light; chance=%s (%s)", self, L->Chance, -(L->Chance+1.0));
+            dl->decay = XLevel.Time+4.0;
+            dl->radius = (FRandomFull() <= -(L->Chance+1.0) ? L->Radius2 : L->Radius);
+          } else {
+            // from entity
+            dl->decay = XLevel.Time+80.0;
+            dl->radius = Random() >= L->Chance/360.0 ? L->Radius2 : L->Radius;
+          }
           break;
         case DynamicLight::DLTYPE_FlickerRandom:
           LightTime += DeltaTime;
