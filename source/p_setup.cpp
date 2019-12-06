@@ -63,6 +63,9 @@ static VCvarB dbg_floodfill_fixer("dbg_floodfill_fixer", false, "Show debug mess
 
 static VCvarB dbg_show_map_hash("dbg_show_map_hash", false, "Show map hash?", CVAR_PreInit|CVAR_Archive);
 
+static VCvarI r_fakecontrast("r_fakecontrast", "1", "Controls fake contrast/smooth lighting for walls (0: disable; 1: fake contrast; 2: smooth lighting)?", CVAR_Archive);
+static VCvarB r_fakecontrast_ignore_mapinfo("r_fakecontrast_ignore_mapinfo", false, "Controls fake contrast/smooth lighting for walls (0: disable; 1: fake contrast; 2: smooth lighting)?", CVAR_Archive);
+
 static VCvarB loader_cache_ignore_one("loader_cache_ignore_one", false, "Ignore (and remove) cache for next map loading?", CVAR_PreInit);
 static VCvarB loader_cache_rebuild_data("loader_cache_rebuild_data", true, "Cache rebuilt nodes, pvs, blockmap, and so on?", CVAR_Archive);
 
@@ -1316,13 +1319,14 @@ load_again:
 
   // fake contrast
   double WallShadesTime = -Sys_Time();
-  if (MInfo.HorizWallShade|MInfo.VertWallShade) {
+  const int fctype = (r_fakecontrast_ignore_mapinfo || MInfo.FakeContrast == 0 ? r_fakecontrast.asInt() : (MInfo.FakeContrast+1)%3);
+  if (fctype > 0 && (MInfo.HorizWallShade|MInfo.VertWallShade) != 0) {
     for (auto &&line : allLines()) {
-      int shadeChange =
+      const int shadeChange =
         !line.normal.x ? MInfo.HorizWallShade :
         !line.normal.y ? MInfo.VertWallShade :
         0;
-      int smoothChange =
+      const int smoothChange =
         !line.normal.x ? 0 :
         (int)(MInfo.HorizWallShade+fabs(atanf(line.normal.y/line.normal.x)/1.57079f)*(MInfo.VertWallShade-MInfo.HorizWallShade)); // xs_RoundToInt()
       if (shadeChange || smoothChange) {
@@ -1330,9 +1334,10 @@ load_again:
           const int sidx = line.sidenum[sn];
           if (sidx >= 0) {
             side_t *side = &Sides[sidx];
-            if ((side->Flags&SDF_NOFAKECTX) == 0) {
-              side->Light += ((side->Flags&SDF_SMOOTHLIT) == 0 ? shadeChange : smoothChange);
-            }
+            if (side->Flags&SDF_NOFAKECTX) continue; // UDMF flag
+            if (side->Flags&SDF_SMOOTHLIT) { side->Light += smoothChange; continue; } // UDMF flag
+            // apply mapinfo-defined shading
+            side->Light += (fctype > 1 ? smoothChange : shadeChange);
           }
         }
       }

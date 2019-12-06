@@ -420,6 +420,7 @@ struct mapInfo_t {
   name EnterPic;
   name InterMusic;
   int MapinfoSourceLump;
+  int FakeContrast; // 0: vanilla; <0: disabled; 1: even; 2: smooth
 };
 
 native static final mapInfo_t *P_GetMapInfo (int map);

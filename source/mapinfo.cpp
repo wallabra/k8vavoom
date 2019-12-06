@@ -1023,12 +1023,6 @@ MAPINFOCMD(sucktime) {
 }
 
 // ////////////////////////////////////////////////////////////////////////// //
-MAPINFOCMD(evenlighting) {
-  info->HorizWallShade = 0;
-  info->VertWallShade = 0;
-}
-
-// ////////////////////////////////////////////////////////////////////////// //
 MAPINFOCMD(vertwallshade) {
   if (newFormat) sc->Expect("=");
   sc->ExpectNumber();
@@ -1138,7 +1132,8 @@ MAPINFOCMD(outsidefogdensity) { skipUnimplementedCommand(sc, true); }
 MAPINFOCMD(skyfog) { skipUnimplementedCommand(sc, true); }
 MAPINFOCMD(translator) { skipUnimplementedCommand(sc, true); skipUnimplementedCommand(sc, false); }
 MAPINFOCMD(lightmode) { skipUnimplementedCommand(sc, true); }
-MAPINFOCMD(smoothlighting) { skipUnimplementedCommand(sc, false); }
+MAPINFOCMD(smoothlighting) { info->FakeContrast = 1; }
+MAPINFOCMD(evenlighting) { info->FakeContrast = 2; }
 
 
 //==========================================================================

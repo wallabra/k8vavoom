@@ -64,6 +64,7 @@ struct mapInfo_t {
   VName EnterPic;
   VName InterMusic;
   vint32 MapinfoSourceLump;
+  vint32 FakeContrast; // 0: default; 1: smooth; 2: disabled (even)
 
   VStr GetName () const;
   void dump (const char *msg=nullptr) const;
