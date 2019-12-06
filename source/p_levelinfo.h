@@ -194,7 +194,21 @@ public:
   DECLARE_FUNCTION(FindFreeTID)
   DECLARE_FUNCTION(IsTIDUsed)
 
-  DECLARE_FUNCTION(get_CompatNoPassOver)
+  DECLARE_FUNCTION (get_CompatShortTex)
+  DECLARE_FUNCTION (get_CompatStairs)
+  DECLARE_FUNCTION (get_CompatLimitPain)
+  DECLARE_FUNCTION (get_CompatNoPassOver)
+  DECLARE_FUNCTION (get_CompatNoTossDrops)
+  DECLARE_FUNCTION (get_CompatUseBlocking)
+  DECLARE_FUNCTION (get_CompatNoDoorLight)
+  DECLARE_FUNCTION (get_CompatRavenScroll)
+  DECLARE_FUNCTION (get_CompatSoundTarget)
+  DECLARE_FUNCTION (get_CompatDehHealth)
+  DECLARE_FUNCTION (get_CompatTrace)
+  DECLARE_FUNCTION (get_CompatDropOff)
+  DECLARE_FUNCTION (get_CompatBoomScroll)
+  DECLARE_FUNCTION (get_CompatInvisibility)
+
 
   // EntityEx PickActor (optional TVec Origin, TVec dir, float distance, optional int actorMask, optional int wallMask) {
   // final bool CheckLock (Entity user, int lock, bool door)

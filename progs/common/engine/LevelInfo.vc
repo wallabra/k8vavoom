@@ -213,20 +213,20 @@ replication {
 }
 
 
-final bool CompatShortTex { get { return bCompatShortTex || GetCvar('compat_shorttex'); } }
-final bool CompatStairs { get { return bCompatStairs || GetCvar('compat_stairs'); } }
-final bool CompatLimitPain { get { return bCompatLimitPain || GetCvar('compat_limitpain'); } }
-native final bool CompatNoPassOver { get; }
-final bool CompatNoTossDrops { get { return bCompatNoTossDrops || GetCvar('compat_notossdrops'); } }
-final bool CompatUseBlocking { get { return bCompatUseBlocking || GetCvar('compat_useblocking'); } }
-final bool CompatNoDoorLight { get { return bCompatNoDoorLight || GetCvar('compat_nodoorlight'); } }
-final bool CompatRavenScroll { get { return bCompatRavenScroll || GetCvar('compat_ravenscroll'); } }
-final bool CompatSoundTarget { get { return bCompatSoundTarget || GetCvar('compat_soundtarget'); } }
-final bool CompatDehHealth { get { return bCompatDehHealth || GetCvar('compat_dehhealth'); } }
-final bool CompatTrace { get { return bCompatTrace || GetCvar('compat_trace'); } }
-final bool CompatDropOff { get { return bCompatDropOff || GetCvar('compat_dropoff'); } }
-final bool CompatBoomScroll { get { return bCompatBoomScroll || GetCvar('compat_boomscroll'); } }
-final bool CompatInvisibility { get { return bCompatInvisibility || GetCvar('compat_invisibility'); } }
+native final bool CompatShortTex { get; } // compat_shorttex
+native final bool CompatStairs { get; } // compat_stairs
+native final bool CompatLimitPain { get; } // compat_limitpain
+native final bool CompatNoPassOver { get; } // compat_nopassover
+native final bool CompatNoTossDrops { get; } // compat_notossdrops
+native final bool CompatUseBlocking { get; } // compat_useblocking
+native final bool CompatNoDoorLight { get; } // compat_nodoorlight
+native final bool CompatRavenScroll { get; } // compat_ravenscroll
+native final bool CompatSoundTarget { get; } // compat_soundtarget
+native final bool CompatDehHealth { get; } // compat_dehhealth
+native final bool CompatTrace { get; } // compat_trace
+native final bool CompatDropOff { get; } // compat_dropoff
+native final bool CompatBoomScroll { get; } // compat_boomscroll
+native final bool CompatInvisibility { get; } // compat_invisibility
 
 
 // ////////////////////////////////////////////////////////////////////////// //

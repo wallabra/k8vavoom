@@ -451,7 +451,18 @@ IMPLEMENT_FUNCTION(VLevelInfo, IsTIDUsed) {
   RET_BOOL(Self->IsTIDUsed(tid));
 }
 
-IMPLEMENT_FUNCTION(VLevelInfo, get_CompatNoPassOver) {
-  P_GET_SELF;
-  RET_BOOL(Self ? Self->GetNoPassOver() : false);
-}
+// compat getters
+IMPLEMENT_FUNCTION(VLevelInfo, get_CompatShortTex)     { vobjGetParamSelf(); RET_BOOL(Self ? (!!(Self->LevelInfoFlags2&LIF2_CompatShortTex)     || compat_shorttex.asBool()) : false); }
+IMPLEMENT_FUNCTION(VLevelInfo, get_CompatStairs)       { vobjGetParamSelf(); RET_BOOL(Self ? (!!(Self->LevelInfoFlags2&LIF2_CompatStairs)       || compat_stairs.asBool()) : false); }
+IMPLEMENT_FUNCTION(VLevelInfo, get_CompatLimitPain)    { vobjGetParamSelf(); RET_BOOL(Self ? (!!(Self->LevelInfoFlags2&LIF2_CompatLimitPain)    || compat_limitpain.asBool()) : false); }
+IMPLEMENT_FUNCTION(VLevelInfo, get_CompatNoPassOver)   { vobjGetParamSelf(); RET_BOOL(Self ? Self->GetNoPassOver() : false); }
+IMPLEMENT_FUNCTION(VLevelInfo, get_CompatNoTossDrops)  { vobjGetParamSelf(); RET_BOOL(Self ? (!!(Self->LevelInfoFlags2&LIF2_CompatNoTossDrops)  || compat_notossdrops.asBool()) : false); }
+IMPLEMENT_FUNCTION(VLevelInfo, get_CompatUseBlocking)  { vobjGetParamSelf(); RET_BOOL(Self ? (!!(Self->LevelInfoFlags2&LIF2_CompatUseBlocking)  || compat_useblocking.asBool()) : false); }
+IMPLEMENT_FUNCTION(VLevelInfo, get_CompatNoDoorLight)  { vobjGetParamSelf(); RET_BOOL(Self ? (!!(Self->LevelInfoFlags2&LIF2_CompatNoDoorLight)  || compat_nodoorlight.asBool()) : false); }
+IMPLEMENT_FUNCTION(VLevelInfo, get_CompatRavenScroll)  { vobjGetParamSelf(); RET_BOOL(Self ? (!!(Self->LevelInfoFlags2&LIF2_CompatRavenScroll)  || compat_ravenscroll.asBool()) : false); }
+IMPLEMENT_FUNCTION(VLevelInfo, get_CompatSoundTarget)  { vobjGetParamSelf(); RET_BOOL(Self ? (!!(Self->LevelInfoFlags2&LIF2_CompatSoundTarget)  || compat_soundtarget.asBool()) : false); }
+IMPLEMENT_FUNCTION(VLevelInfo, get_CompatDehHealth)    { vobjGetParamSelf(); RET_BOOL(Self ? (!!(Self->LevelInfoFlags2&LIF2_CompatDehHealth)    || compat_dehhealth.asBool()) : false); }
+IMPLEMENT_FUNCTION(VLevelInfo, get_CompatTrace)        { vobjGetParamSelf(); RET_BOOL(Self ? (!!(Self->LevelInfoFlags2&LIF2_CompatTrace)        || compat_trace.asBool()) : false); }
+IMPLEMENT_FUNCTION(VLevelInfo, get_CompatDropOff)      { vobjGetParamSelf(); RET_BOOL(Self ? (!!(Self->LevelInfoFlags2&LIF2_CompatDropOff)      || compat_dropoff.asBool()) : false); }
+IMPLEMENT_FUNCTION(VLevelInfo, get_CompatBoomScroll)   { vobjGetParamSelf(); RET_BOOL(Self ? (!!(Self->LevelInfoFlags2&LIF2_CompatBoomScroll)   || compat_boomscroll.asBool()) : false); }
+IMPLEMENT_FUNCTION(VLevelInfo, get_CompatInvisibility) { vobjGetParamSelf(); RET_BOOL(Self ? (!!(Self->LevelInfoFlags2&LIF2_CompatInvisibility) || compat_invisibility.asBool()) : false); }
