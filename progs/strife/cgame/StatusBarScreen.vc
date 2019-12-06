@@ -325,50 +325,59 @@ override void SB_DrawFullscreenStats () {
 
   if (!cl || !cl.MO) return;
 
+  auto ovw = GetVirtualWidth();
+  auto ovh = GetVirtualHeight();
+
+  int ST_450 = ovh-30;
+  int ST_452 = ovh-28;
+  int ST_462 = ovh-18;
+  int ST_465 = ovh-15;
+  int ST_418 = ovh-62;
+
   // health
-  SB_DrawTallNum(70, 450, cl.Health, 0.7);
-  DrawPic(20, 465, pic_medpack, 0.7);
+  SB_DrawTallNum(70, ST_450, cl.Health, 0.7);
+  DrawPic(20, ST_465, pic_medpack, 0.7);
 
   // armor
   BasicArmor Armor = BasicArmor(EntityEx(cl.MO).FindInventory(BasicArmor, disableReplacement:true));
   if (Armor && Armor.Amount) {
     // armor type
     int i = (Armor.SavePercent == 0.5 ? 0 : 1);
-    SB_DrawTallNum(164, 450, Armor.Amount, 0.7);
-    DrawPic(110, 465, pic_armor[i], 0.7);
+    SB_DrawTallNum(164, ST_450, Armor.Amount, 0.7);
+    DrawPic(110, ST_465, pic_armor[i], 0.7);
   }
 
   // ready weapon ammo with icon
   if (cl.ReadyWeapon && cl.ReadyWeapon.Ammo1) {
-    SB_DrawTallNum(635, 450, cl.ReadyWeapon.Ammo1.Amount, 0.7);
-    DrawPic(575, 450, R_RegisterPic(cl.ReadyWeapon.Ammo1.IconName), 0.7);
+    SB_DrawTallNum(635, ST_450, cl.ReadyWeapon.Ammo1.Amount, 0.7);
+    DrawPic(575-3, ST_450+6, R_RegisterPic(cl.ReadyWeapon.Ammo1.IconName), 0.7);
   }
   if (cl.ReadyWeapon && cl.ReadyWeapon.Ammo2 && cl.ReadyWeapon.Ammo2 != cl.ReadyWeapon.Ammo1) {
-    SB_DrawTallNum(635, 418, cl.ReadyWeapon.Ammo2.Amount, 0.7);
-    DrawPic(575, 418, R_RegisterPic(cl.ReadyWeapon.Ammo2.IconName), 0.7);
+    SB_DrawTallNum(635, ST_418, cl.ReadyWeapon.Ammo2.Amount, 0.7);
+    DrawPic(575, ST_418+6, R_RegisterPic(cl.ReadyWeapon.Ammo2.IconName), 0.7);
   }
 
   if (!bShowWeapons && !bShowKeys && !bShowObjectives) {
     Item = cl.InvFirst;
     for (int i = 0; i < 6 && Item; ++i) {
-      if (cl.InvPtr == Item) DrawPic(225+35*i, 450, pic_invcurs, 0.3);
-      DrawPic(231+i*35, 452, R_RegisterPic(Item.IconName), 0.9);
-      SB_DrawSmallNum(259+i*35, 462, Item.Amount, 0.9);
+      if (cl.InvPtr == Item) DrawPic(225+35*i, ST_450, pic_invcurs, 0.3);
+      DrawPic(231+i*35, ST_452, R_RegisterPic(Item.IconName), 0.9);
+      SB_DrawSmallNum(259+i*35, ST_462, Item.Amount, 0.9);
       Item = Item.NextInv();
     }
   } else {
     // increase alpha if we are showing extra information
     Item = cl.InvFirst;
     for (int i = 0; i < 6 && Item; ++i) {
-      if (cl.InvPtr == Item) DrawPic(225+35*i, 450, pic_invcurs, 0.1);
-      DrawPic(231+i*35, 452, R_RegisterPic(Item.IconName), 0.1);
-      SB_DrawSmallNum(259+i*35, 462, Item.Amount, 0.1);
+      if (cl.InvPtr == Item) DrawPic(225+35*i, ST_450, pic_invcurs, 0.1);
+      DrawPic(231+i*35, ST_452, R_RegisterPic(Item.IconName), 0.1);
+      SB_DrawSmallNum(259+i*35, ST_462, Item.Amount, 0.1);
       Item = Item.NextInv();
     }
   }
 
   Sigil S = Sigil(EntityEx(cl.MO).FindInventory(Sigil));
-  if (S) DrawPic(530, 450, R_RegisterPic(S.IconName), 0.6);
+  if (S) DrawPic(530, ST_450, R_RegisterPic(S.IconName), 0.6);
 
   if (bShowWeapons) {
     DrawPic(BAR_X+0, BAR_Y+96, pic_invpbak, 0.666);
