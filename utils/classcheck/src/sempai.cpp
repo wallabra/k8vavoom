@@ -323,6 +323,20 @@ bool SemParser::eat (const VStr &s) {
 
 //==========================================================================
 //
+//  SemParser::eatStartsWith
+//
+//==========================================================================
+bool SemParser::eatStartsWith (const VStr &s) {
+  auto pos = savePos();
+  skipToken();
+  if (token.startsWith(s)) return true;
+  restorePos(pos);
+  return false;
+}
+
+
+//==========================================================================
+//
 //  SemParser::check
 //
 //  same as eat, but doesn't eat

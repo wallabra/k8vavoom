@@ -697,6 +697,8 @@ void skipAttributeOrPreprocessor (SemParser *par) {
     if (par->eat("__attribute__")) {
       par->expect("(");
       skipParens(par);
+    } else if (par->eatStartsWith("VVA_")) {
+      // attribute macro
     } else if (par->eat("#")) {
       skipPreprocessor(par);
     } else {
@@ -754,9 +756,11 @@ void parseShitppClassStruct (SemParser *par, bool isClass, bool isTypedefStruct=
     return;
   }
 
-  while (!par->eat("}")) {
+  for (;;) {
+    skipAttributeOrPreprocessor(par);
+    if (par->eat("}")) break;
     if (par->eat(";")) continue;
-    if (par->eat("#")) { skipPreprocessor(par); continue; }
+    //if (par->eat("#")) { skipPreprocessor(par); continue; }
     if (false) {
       auto pos = par->savePos();
       par->skipToken();
