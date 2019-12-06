@@ -1000,6 +1000,9 @@ static void ParseGZLightDef (VScriptParser *sc, int LightType, float lightsizefa
         attenuated = false;
         sc->Message(va("Non-attenuated light ('%s') will be attenuated anyway.", *L->Name));
       }
+    } else if (sc->Check("noselfshadow")) {
+      // k8vavoom extension
+      L->NoSelfShadow = 1;
     } else {
       sc->Error(va("Bad gz light ('%s') parameter (%s)", *L->Name, *sc->String));
     }
@@ -1174,7 +1177,7 @@ static void ParseClassEffects (VScriptParser *sc, TArray<VTempClassEffects> &Cla
 //
 //==========================================================================
 static void ParseEffectDefs (VScriptParser *sc, TArray<VTempClassEffects> &ClassDefs) {
-  if (developer) GCon->Logf(NAME_Dev, "...parsing k8vavoom effect definitions from '%s'...", *sc->GetScriptName());
+  if (developer) GCon->Logf(NAME_Dev, "...parsing k8vavoom effect definitions '%s'...", *sc->GetScriptName());
   while (!sc->AtEnd()) {
     if (sc->Check("#include")) {
       sc->ExpectString();
@@ -1383,7 +1386,7 @@ static void ParseGZDoomEffectDefs (int SrcLump, VScriptParser *sc, TArray<VTempC
   // for old mods (before Apr 2018) it should be `0.667f` (see https://forum.zdoom.org/viewtopic.php?t=60280 )
   // sadly, there is no way to autodetect it, so let's use what GZDoom is using now
   float lightsizefactor = 1.0; // for attenuated lights
-  if (developer) GCon->Logf(NAME_Dev, "...parsing GZDoom light definitions from '%s'...", *sc->GetScriptName());
+  if (developer) GCon->Logf(NAME_Dev, "...parsing GZDoom light definitions '%s'...", *sc->GetScriptName());
   while (!sc->AtEnd()) {
     if (sc->Check("#include")) {
       sc->ExpectString();
@@ -1429,17 +1432,28 @@ void R_ParseEffectDefs () {
 
   TArray<VTempClassEffects> ClassDefs;
 
+  TArray<int> gldefslist;
+
   // parse VFXDEFS, GLDEFS, etc. scripts
+  // parse GLDefs after VFXDEFS
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
-    if (W_LumpName(Lump) == NAME_vfxdefs) {
+    VName lname = W_LumpName(Lump);
+    if (lname == NAME_vfxdefs) {
+      GCon->Logf(NAME_Init, "Parsing k8vavoom effect definitions '%s'...", *W_FullLumpName(Lump));
       ParseEffectDefs(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassDefs);
+      continue;
     }
-    if (W_LumpName(Lump) == NAME_gldefs ||
-        W_LumpName(Lump) == NAME_doomdefs || W_LumpName(Lump) == NAME_hticdefs ||
-        W_LumpName(Lump) == NAME_hexndefs || W_LumpName(Lump) == NAME_strfdefs)
+    if (lname == NAME_gldefs ||
+        lname == NAME_doomdefs || lname == NAME_hticdefs ||
+        lname == NAME_hexndefs || lname == NAME_strfdefs)
     {
-      ParseGZDoomEffectDefs(Lump, new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassDefs);
+      gldefslist.append(Lump);
     }
+  }
+
+  for (auto &&lmpidx : gldefslist) {
+    GCon->Logf(NAME_Init, "Parsing GZDoom light definitions '%s'...", *W_FullLumpName(lmpidx));
+    ParseGZDoomEffectDefs(lmpidx, new VScriptParser(W_FullLumpName(lmpidx), W_CreateLumpReaderNum(lmpidx)), ClassDefs);
   }
 
   // add effects to the classes
