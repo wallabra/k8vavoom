@@ -1870,7 +1870,7 @@ final void DoStateEffects (float DeltaTime) {
         case DynamicLight::DLTYPE_Flicker:
           if (L->Chance < 0) {
             // from gldef
-            printdebug("%C: gldef flicker light; chance=%s (%s)", self, L->Chance, -(L->Chance+1.0));
+            //printdebug("%C: gldef flicker light; chance=%s (%s)", self, L->Chance, -(L->Chance+1.0));
             dl->decay = XLevel.Time+4.0;
             dl->radius = (FRandomFull() <= -(L->Chance+1.0) ? L->Radius2 : L->Radius);
           } else {
