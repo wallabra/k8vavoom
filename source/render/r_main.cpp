@@ -116,6 +116,7 @@ bool MirrorClip = false;
 static FDrawerDesc *DrawerList[DRAWER_MAX];
 
 VCvarI screen_size("screen_size", "11", "Screen size.", CVAR_Archive);
+VCvarB allow_small_screen_size("_allow_small_screen_size", false, "Allow small screen sizes.", /*CVAR_Archive*/CVAR_PreInit);
 bool set_resolutioon_needed = true;
 
 // angles in the SCREENWIDTH wide window
@@ -1239,8 +1240,12 @@ bool VRenderLevelShared::RadiusCastRay (sector_t *sector, const TVec &org, const
 //
 //==========================================================================
 void R_SetViewSize (int blocks) {
-  if (blocks > 2) screen_size = blocks;
-  set_resolutioon_needed = true;
+  if (blocks > 2) {
+    if (screen_size != blocks) {
+      screen_size = blocks;
+      set_resolutioon_needed = true;
+    }
+  }
 }
 
 
@@ -1273,8 +1278,11 @@ COMMAND(SizeUp) {
 //==========================================================================
 void VRenderLevelShared::ExecuteSetViewSize () {
   set_resolutioon_needed = false;
-       if (screen_size < 3) screen_size = 3;
-  else if (screen_size > 11) screen_size = 11;
+  if (allow_small_screen_size) {
+    screen_size = clampval(screen_size.asInt(), 3, 11);
+  } else {
+    screen_size = clampval(screen_size.asInt(), 10, 11);
+  }
   screenblocks = screen_size;
 
        if (fov < 5.0f) fov = 5.0f;
