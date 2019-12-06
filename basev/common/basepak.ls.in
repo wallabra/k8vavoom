@@ -56,6 +56,7 @@ $recursedirext|.txt| actors/  @CMAKE_CURRENT_SOURCE_DIR@/actors/
 // effect scripts
 vfxdefs.txt                   @CMAKE_CURRENT_SOURCE_DIR@/vfxdefs.txt
 $recursedirext|.txt| fxdefs/  @CMAKE_CURRENT_SOURCE_DIR@/fxdefs/
+gldefs.txt                    @CMAKE_CURRENT_SOURCE_DIR@/gldefs.txt
 
 // GLSL shaders
 $recursedirext| .fs| glshaders/  @CMAKE_CURRENT_SOURCE_DIR@/glshaders/
