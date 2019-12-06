@@ -372,8 +372,33 @@ void AfterSetMapInfo (Level level) {
     bCompatShortTex = true;
   } else if (level.MapHashMD5 == "6d4156ee0d12b77ad143a37c4d3dcf98") {
     // dmonfear.wad map22
-    printwarn("MAPFIX: Alien DemonFear MAP22 ShortTex fix applied");
+    printwarn("MAPFIX: DemonFear MAP22 ShortTex fix applied");
     bCompatShortTex = true;
+  } else if (level.MapHashMD5 == "6da6fcba8089161bdec6a1d3f6c8d60f") {
+    printwarn("MAPFIX: Eternal Doom MAP25");
+    bCompatStairs = true;
+  } else if (level.MapHashMD5 == "10e1e2b36302d31ac4ae68c84b5dc457") {
+    printwarn("MAPFIX: Eternal Doom MAP28");
+    bCompatTrace = true;
+    bCompatUseBlocking = true;
+  } else if (level.MapHashMD5 == "2fe901f659a16e58d7bcd7c30021c238") {
+    printwarn("MAPFIX: Alien Vendetta MAP15");
+    bCompatTrace = true;
+  } else if (level.MapHashMD5 == "74af92e96fe10d039d31c1f6526d7d7c") {
+    printwarn("MAPFIX: Real World MAP11");
+    bCompatTrace = true;
+  } else if (level.MapHashMD5 == "71c2e6d9cfa3d8750c6a9599fb2453bd") {
+    printwarn("MAPFIX: Hacx MAP03");
+    bCompatUseBlocking = true;
+  } else if (level.MapHashMD5 == "96368eb950e33af62ea6423434e3cef7") {
+    printwarn("MAPFIX: Hacx MAP17");
+    bCompatUseBlocking = true;
+  } else if (level.MapHashMD5 == "ba530202af0ba0c6cbae6a0c7076fb72") {
+    printwarn("MAPFIX: Requiem MAP04");
+    bCompatUseBlocking = true;
+  } else if (level.MapHashMD5 == "811a0c97777a198bc9b2bb558cb46e6a") {
+    printwarn("MAPFIX: Hell Revealed MAP19");
+    bCompatLimitPain = true;
   }
 }
 
