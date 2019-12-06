@@ -1130,7 +1130,7 @@ MAPINFOCMD(teamdamage) { skipUnimplementedCommand(sc, true); }
 MAPINFOCMD(fogdensity) { skipUnimplementedCommand(sc, true); }
 MAPINFOCMD(outsidefogdensity) { skipUnimplementedCommand(sc, true); }
 MAPINFOCMD(skyfog) { skipUnimplementedCommand(sc, true); }
-MAPINFOCMD(translator) { skipUnimplementedCommand(sc, true); skipUnimplementedCommand(sc, false); }
+MAPINFOCMD(translator) { sc->MessageErr(va("*** map '%s' contains translator lump, it may not work!", *info->LumpName)); skipUnimplementedCommand(sc, true); }
 MAPINFOCMD(lightmode) { skipUnimplementedCommand(sc, true); }
 MAPINFOCMD(smoothlighting) { info->FakeContrast = 1; }
 MAPINFOCMD(evenlighting) { info->FakeContrast = 2; }
@@ -1213,8 +1213,8 @@ static void ParseMapCommon (VScriptParser *sc, mapInfo_t *info, bool &HexenMode)
       sc->UnGet();
       if (!newFormat) break;
       if (sc->Check("}")) break;
-      //sc->Message(va("unknown mapinfo command '%s', skipping...", *sc->String));
       if (!sc->GetString()) break;
+      //sc->Message(va("*** unknown mapinfo command '%s', skipping...", *sc->String));
       skipUnimplementedCommand(sc, false); // don't force args, but skip them
       if (sc->Check("}")) break;
       continue;

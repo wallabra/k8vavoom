@@ -154,6 +154,7 @@ public:
   void SkipBracketed (bool bracketEaten=false);
   void SkipLine ();
   void Message (const char *);
+  void MessageErr (const char *);
   void Error (const char *);
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
   void HostError (const char *);

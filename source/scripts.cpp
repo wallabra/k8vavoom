@@ -1297,6 +1297,21 @@ void VScriptParser::Message (const char *message) {
 
 //==========================================================================
 //
+//  VScriptParser::MessageErr
+//
+//==========================================================================
+void VScriptParser::MessageErr (const char *message) {
+  const char *Msg = (message ? message : "Bad syntax.");
+#if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
+  GCon->Logf(NAME_Error, "%s:%d: %s", *ScriptName, TokLine, Msg);
+#else
+  GLog.WriteLine(NAME_Error, "%s:%d: %s", *ScriptName, TokLine, Msg);
+#endif
+}
+
+
+//==========================================================================
+//
 //  VScriptParser::Error
 //
 //==========================================================================
