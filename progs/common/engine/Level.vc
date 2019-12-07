@@ -205,6 +205,8 @@ native transient private int tsVisitedCount;
 native transient private string cacheFileBase;
 native transient private bool cacheIgnore;
 
+protected array!MapMarkerInfo MapMarkers;
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // natives
@@ -429,6 +431,45 @@ final TVec GetSubsectorCenter (const subsector_t *sub) {
   res.z = GetSectorFloorPointZ(sub.sector, res); // arbitrary
   ssCenters[ssnum] = res;
   return res;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+MapMarkerInfo *MapMarkerWithId (int markerid) {
+  return (markerid > 0 && markerid <= MapMarkers.length ? &MapMarkers[markerid-1] : nullptr);
+}
+
+
+// map markers
+// >0: success, id
+int AddMapMarker () {
+  MapMarkerInfo *nmk = nullptr;
+  foreach (auto idx, ref MapMarkerInfo mk; MapMarkers) {
+    if (mk.id == -1) {
+      nmk = &MapMarkers[idx];
+      nmk.id = idx+1;
+      break;
+    }
+  }
+  if (!nmk) {
+    int idx = MapMarkers.length;
+    nmk = MapMarkers.alloc();
+    nmk.id = idx+1;
+  }
+  nmk.x = 0;
+  nmk.y = 0;
+  nmk.sector = nullptr;
+  nmk.thingTid = 0;
+  nmk.bVisible; // if false, layer didn't seen marker sector
+  nmk.bActive; // if false, the marker is not active
+  return nmk.id;
+}
+
+
+void RemoveMapMarker (int markerid) {
+  if (markerid > 0 && markerid <= MapMarkers.length) {
+    MapMarkers[markerid-1].id = -1; // special flag
+  }
 }
 
 

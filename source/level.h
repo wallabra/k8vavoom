@@ -353,6 +353,8 @@ class VLevel : public VGameObject {
   };
   vuint32 cacheFlags;
 
+  TArray<VMapMarkerInfo> MapMarkers;
+
   // iterator
   struct CtlLinkIter {
     VLevel *level;

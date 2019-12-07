@@ -1096,6 +1096,20 @@ struct VStateCall {
 };
 
 
+struct VMapMarkerInfo {
+  vint32 id; // for convenienience; -1 means "unused"
+  float x, y;
+  sector_t *sector; // marker sector
+  vint32 thingTid; // follow this thing (0: none)
+  enum {
+    F_Visible = 1u<<0,
+    F_Active  = 1u<<1,
+  };
+  vuint32 flags;
+};
+
+
+
 //==========================================================================
 //
 //  VGameObject

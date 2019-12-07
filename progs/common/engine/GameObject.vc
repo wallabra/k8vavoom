@@ -1357,6 +1357,15 @@ struct particle_t {
 };
 
 
+struct MapMarkerInfo {
+  int id; // for convenienience; -1 means "unused"
+  float x, y;
+  sector_t *sector; // marker sector
+  int thingTid; // follow this thing (0: none)
+  bool bVisible; // if false, layer didn't seen marker sector
+  bool bActive; // if false, the marker is not active
+}
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // decorate uservar manipulation

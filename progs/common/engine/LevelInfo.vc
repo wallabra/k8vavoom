@@ -199,7 +199,6 @@ float Gravity; // level gravity
 float AirControl;
 int Infighting;
 array!VMapSpecialAction SpecialActions;
-protected array!TVec MapMarkers;
 
 
 replication {
@@ -227,27 +226,6 @@ native final bool CompatTrace { get; } // compat_trace
 native final bool CompatDropOff { get; } // compat_dropoff
 native final bool CompatBoomScroll { get; } // compat_boomscroll
 native final bool CompatInvisibility { get; } // compat_invisibility
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-// map markers
- // >0: success, id
-int AddMapMarker (const TVec origin) {
-  foreach (auto idx, ref TVec morg; MapMarkers) {
-    if (morg.z.isNaN) {
-      morg = origin;
-      return idx+1;
-    }
-  }
-  MapMarkers[$] = origin;
-  return MapMarkers.length;
-}
-
-void RemoveMapMarker (int markerid) {
-  if (markerid > 0 && markerid <= MapMarkers.length) {
-    MapMarkers[markerid-1].z = float.nan; // special flag
-  }
-}
 
 // ////////////////////////////////////////////////////////////////////////// //
 // static lights
