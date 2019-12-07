@@ -3326,6 +3326,14 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       if (argCount > 0 && args[0] > 0) return (int)(sqrtf((float)args[0]/65536.0f)*65536.0f);
       return 0;
 
+    case ACSF_ScriptCall:
+      if (argCount >= 2) {
+        VStr clsname = GetStr(args[0]).toLowerCase();
+        VStr funcname = GetStr(args[1]).toLowerCase();
+        GCon->Logf(NAME_Error, "ACSF_ScriptCall(%s,%s,%d) -- unimplemented", *clsname, *funcname, argCount);
+      }
+      return 0;
+
     // fixed VectorLength (fixed x, fixed y)
     case ACSF_VectorLength:
       if (argCount >= 2) {
