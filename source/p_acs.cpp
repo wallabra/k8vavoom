@@ -206,6 +206,17 @@ struct VAcsInfo {
   VAcs *RunningScript;
 };
 
+//WARNING! this is what is stored in object file chunk. DO NOT MODIFY!
+struct __attribute__((packed)) VAcsFunctionChunkData {
+  vuint8 ArgCount;
+  vuint8 LocalCount;
+  vuint8 HasReturnValue;
+  vuint8 ImportNum;
+  vuint32 Address;
+};
+
+
+//WARNING! this is what is stored in object file chunk. DO NOT MODIFY!
 struct VAcsFunction {
   vuint8 ArgCount;
   vuint8 LocalCount;
@@ -213,6 +224,15 @@ struct VAcsFunction {
   vuint8 ImportNum;
   vuint32 Address;
   ACSLocalArrays LocalArrays;
+
+  void SetupFrom (const VAcsFunctionChunkData &cd) noexcept {
+    ArgCount = cd.ArgCount;
+    LocalCount = cd.LocalCount;
+    HasReturnValue = cd.HasReturnValue;
+    ImportNum = cd.ImportNum;
+    Address = cd.Address;
+    LocalArrays.Clear();
+  }
 };
 
 
@@ -240,8 +260,8 @@ private:
   vint32 NumScripts;
   VAcsInfo *Scripts;
 
-  VAcsFunction *Functions;
-  vint32 NumFunctions;
+  TArray<VAcsFunction> Functions;
+  //vint32 NumFunctions;
 
   vint32 NumStrings;
   char **Strings;
@@ -315,8 +335,12 @@ struct __attribute__((packed)) VAcsCallReturn {
   vint32 *ReturnLocals;
   ACSLocalArrays *ReturnArrays;
   vuint8 bDiscardResult;
-  vuint8 Pad[3];
+  //vuint8 Pad[3];
 };
+
+static constexpr int GetRetStructStackSize () noexcept {
+  return (int)((sizeof(VAcsCallReturn)+3)/4);
+}
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -550,7 +574,7 @@ void VAcsGrowingArray::Serialise (VStream &Strm) {
 //  VAcsObject::VAcsObject
 //
 //==========================================================================
-VAcsObject::VAcsObject (VAcsLevel *ALevel, int Lump) : Level(ALevel) {
+VAcsObject::VAcsObject (VAcsLevel *ALevel, int Lump) : Functions(), Level(ALevel) {
   Format = ACS_Unknown;
   LumpNum = Lump;
   LibraryID = 0;
@@ -559,8 +583,8 @@ VAcsObject::VAcsObject (VAcsLevel *ALevel, int Lump) : Level(ALevel) {
   Chunks = nullptr;
   NumScripts = 0;
   Scripts = nullptr;
-  NumFunctions = 0;
-  Functions = nullptr;
+  //NumFunctions = 0;
+  //Functions = nullptr;
   NumStrings = 0;
   Strings = nullptr;
   LowerCaseNames = nullptr;
@@ -825,10 +849,13 @@ void VAcsObject::LoadEnhancedObject () {
   // load functions
   buffer = (int*)FindChunk("FUNC");
   if (buffer) {
-    NumFunctions = LittleLong(buffer[1])/8;
-    Functions = (VAcsFunction *)(buffer+2);
-    for (i = 0; i < NumFunctions; ++i) {
-      Functions[i].Address = LittleLong(Functions[i].Address);
+    int NumFunctions = LittleLong(buffer[1])/8;
+    if (NumFunctions < 0 || NumFunctions > 1024*1024) Sys_Error("ACS file '%s' has invalid function count (%d)", *W_FullLumpName(LumpNum), NumFunctions);
+    Functions.setLength(NumFunctions);
+    VAcsFunctionChunkData *funccd = (VAcsFunctionChunkData *)(buffer+2);
+    for (i = 0; i < NumFunctions; ++i, ++funccd) {
+      funccd->Address = LittleLong(funccd->Address);
+      Functions[i].SetupFrom(*funccd);
     }
   }
 
@@ -849,14 +876,15 @@ void VAcsObject::LoadEnhancedObject () {
   }
 
   // load local arrays for functions
-  if (NumFunctions > 0) {
+  if (Functions.length() > 0) {
     for (buffer = (int *)FindChunk("FARY"); buffer; buffer = (int *)NextChunk((vuint8 *)buffer)) {
       int size = LittleLong(buffer[1]);
       if (size >= 6) {
-        int func_num = LittleShort(((vuint16 *)buffer)[4]);
-        if (func_num >= 0 && func_num < NumFunctions) {
-          VAcsFunction *func = &Functions[func_num];
+        int funcnum = LittleShort(((vuint16 *)buffer)[4]);
+        if (funcnum >= 0 && funcnum < Functions.length()) {
+          VAcsFunction *func = &Functions[funcnum];
           // unlike scripts, functions do not include their arg count in their local count
+          GCon->Logf(NAME_Debug, "ACS file '%s', function #%d has local arrays", *W_FullLumpName(LumpNum), funcnum);
           func->LocalCount = ParseLocalArrayChunk(buffer+2, &func->LocalArrays, func->LocalCount+func->ArgCount)-func->ArgCount;
         }
       }
@@ -998,7 +1026,7 @@ void VAcsObject::LoadEnhancedObject () {
 
       // resolve functions
       buffer = (int *)FindChunk("FNAM");
-      for (j = 0; j < NumFunctions; ++j) {
+      for (j = 0; j < Functions.length(); ++j) {
         VAcsFunction *func = &Functions[j];
         if (func->Address != 0 || func->ImportNum != 0) continue;
 
@@ -1124,6 +1152,7 @@ void VAcsObject::LoadEnhancedObject () {
       if (info) {
         GCon->Logf(NAME_Debug, "SARY: found SARY for script #%d", scnum);
         info->VarCount = ParseLocalArrayChunk(buffer+2, &info->LocalArrays, info->VarCount);
+        if (info->VarCount >= VAcs::MAX_LOCAL_VARS-1) Sys_Error("too many locals in script with local arrays #%d", scnum);
       } else {
         GCon->Logf(NAME_Debug, "SARY: unknown SARY for script #%d", scnum);
       }
@@ -1400,8 +1429,10 @@ int VAcsObject::FindScriptNumberByName (VStr aname) const {
 //
 //==========================================================================
 VAcsFunction *VAcsObject::GetFunction (int funcnum, VAcsObject *&Object) {
-  if ((unsigned)funcnum >= (unsigned)NumFunctions) return nullptr;
-  VAcsFunction *Func = Functions+funcnum;
+  if ((unsigned)funcnum >= (unsigned)Functions.length()) return nullptr;
+  //GCon->Logf(NAME_Debug, "%p: GetFunction: funcnum=%d; count=%d", (void *)this, funcnum, Functions.length());
+  VAcsFunction *Func = &Functions[funcnum];
+  //GCon->Logf(NAME_Debug, "%p:   %d: addr=%u; import=%u", (void *)this, funcnum, Func->Address, Func->ImportNum);
   if (Func->ImportNum) return Imports[Func->ImportNum-1]->GetFunction(Func->Address, Object);
   Object = this;
   return Func;
@@ -5237,6 +5268,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
           object = ActiveObject->Level->GetObject((funcnum>>16)&0xffff);
           if (!object) Host_Error("ACS tried to indirectly call a function from inexisting object");
         }
+        //GCon->Logf(NAME_Debug, "%p: ***CALL (%d:%d)", ActiveObject, (funcnum>>16)&0xffff, funcnum&0xffff);
         func = ActiveObject->GetFunction(funcnum&0xffff, object);
         if (!func) {
           GCon->Logf(NAME_Warning, "ACS: Function %d in script %d out of range", funcnum, number);
@@ -5276,7 +5308,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         ((VAcsCallReturn *)sp)->ReturnLocals = oldlocals;
         ((VAcsCallReturn *)sp)->ReturnArrays = oldarrays;
         ((VAcsCallReturn *)sp)->bDiscardResult = (cmd == PCD_CallDiscard);
-        sp += sizeof(VAcsCallReturn)/sizeof(vint32);
+        sp += GetRetStructStackSize();
         ActiveObject = object;
         fmt = ActiveObject->GetFormat();
         ip = ActiveObject->OffsetToPtr(func->Address);
@@ -5309,13 +5341,12 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         }
 
         // get return state
-        sp -= sizeof(VAcsCallReturn)/sizeof(vint32);
+        sp -= GetRetStructStackSize();
         retState = (VAcsCallReturn *)sp;
 
         // remove locals and arguments
         sp -= activeFunction->ArgCount+activeFunction->LocalCount;
-
-        //!auto oldactfunc = activeFunction;
+        vassert(sp == locals);
 
         ActiveObject = retState->ReturnObject;
         activeFunction = retState->ReturnFunction;
@@ -5324,6 +5355,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
         //!auto oldlocals = locals;
         if (!activeFunction) {
+          vassert(retState->ReturnLocals == LocalVars);
           locals = LocalVars;
           //!GCon->Logf("  :RET2MAIN:%d: oldlocals=%p (%p); locals=%p (isretval:%d; retval:%d; discard:%d)", info->Number, oldlocals, retState->ReturnLocals, locals, (int)(cmd == PCD_ReturnVal), value, (int)(retState->bDiscardResult));
         } else {
@@ -5332,6 +5364,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
           // sanity check
           vassert(sp >= retState->ReturnLocals);
           locals = retState->ReturnLocals;
+          localarrays = retState->ReturnArrays;
           //!GCon->Logf("  :RET:%d: oldlocals=%p (%p); locals=%p; (isretval:%d; retval:%d; discard:%d); argc=%d; locc=%d (callee: argc=%d; locc=%d)", info->Number, oldlocals, retState->ReturnLocals, locals, (int)(cmd == PCD_ReturnVal), value, (int)(retState->bDiscardResult), activeFunction->ArgCount, activeFunction->LocalCount, oldactfunc->ArgCount, oldactfunc->LocalCount);
         }
         localarrays = retState->ReturnArrays;
