@@ -803,6 +803,20 @@ VName W_LumpName (int lump) {
 
 //==========================================================================
 //
+//  W_FullLumpName_NoLock
+//
+//==========================================================================
+static VVA_OKUNUSED VStr W_FullLumpName_NoLock (int lump) {
+  if (lump < 0 || FILE_INDEX(lump) >= SearchPaths.length()) return VStr("<invalid>");
+  VSearchPath *w = GET_LUMP_FILE(lump);
+  int lumpindex = LUMP_INDEX(lump);
+  //return w->GetPrefix()+":"+*(w->LumpName(lumpindex));
+  return w->GetPrefix()+":"+(w->LumpFileName(lumpindex));
+}
+
+
+//==========================================================================
+//
 //  W_FullLumpName
 //
 //==========================================================================
@@ -1165,10 +1179,16 @@ bool W_IsValidMapHeaderLump (int lump) {
 //==========================================================================
 void WadMapIterator::advanceToNextMapLump () {
   MyThreadLocker glocker(&fsys_glock);
+  //GLog.Logf(NAME_Debug, "***START: lump=%d***", lump);
   while (lump >= 0) {
-    if (W_IsValidMapHeaderLump_NoLock(lump)) return;
+    if (W_IsValidMapHeaderLump_NoLock(lump)) {
+      //GLog.Logf(NAME_Debug, "MAP LUMP %d (%s)", lump, *W_FullLumpName_NoLock(lump));
+      return;
+    }
+    //GLog.Logf(NAME_Debug, "skip lump %d (%s); fidx=%d; lidx=%d; spcount=%d; pakcount=%d", lump, *W_FullLumpName_NoLock(lump), FILE_INDEX(lump), LUMP_INDEX(lump), getSPCount(), SearchPaths.length());
     lump = W_IterateNS_NoLock(lump, WADNS_Global);
   }
+  //GLog.Log(NAME_Debug, "***DEAD***");
   lump = -1; // just in case
 }
 

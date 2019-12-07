@@ -203,12 +203,12 @@ public:
     return it;
   }
 
-  inline WadMapIterator begin () { return FromWadFile(0); }
+  inline WadMapIterator begin () { return WadMapIterator(*this); }
   inline WadMapIterator end () { return WadMapIterator(*this, true); }
   inline bool operator == (const WadMapIterator &b) const { return (lump == b.lump); }
   inline bool operator != (const WadMapIterator &b) const { return (lump != b.lump); }
   inline WadMapIterator operator * () const { return WadMapIterator(*this); } /* required for iterator */
-  inline void operator ++ () { if (lump > 0) { ++lump; advanceToNextMapLump(); } } /* this is enough for iterator */
+  inline void operator ++ () { if (lump >= 0) { ++lump; advanceToNextMapLump(); } } /* this is enough for iterator */
 
   inline bool isEmpty () const { return (lump < 0); }
 
@@ -246,7 +246,7 @@ public:
     return it;
   }
 
-  inline WadNSIterator begin () { return WadNSIterator(ns); }
+  inline WadNSIterator begin () { return WadNSIterator(*this); }
   inline WadNSIterator end () { return WadNSIterator(*this, true); }
   inline bool operator == (const WadNSIterator &b) const { return (lump == b.lump && ns == b.ns); }
   inline bool operator != (const WadNSIterator &b) const { return (lump != b.lump || ns != b.ns); }
@@ -323,7 +323,7 @@ public:
     return FromWadFile(*aname, aFile, aNS);
   }
 
-  inline WadNSNameIterator begin () { return WadNSNameIterator(lumpname, ns); }
+  inline WadNSNameIterator begin () { return WadNSNameIterator(*this); }
   inline WadNSNameIterator end () { return WadNSNameIterator(*this, true); }
   inline bool operator == (const WadNSNameIterator &b) const { return (lump == b.lump && ns == b.ns && lumpname == b.lumpname); }
   inline bool operator != (const WadNSNameIterator &b) const { return (lump != b.lump || ns != b.ns || lumpname != b.lumpname); }
@@ -353,12 +353,13 @@ public:
   VStr fname;
 
 public:
+  WadFileIterator () : lump(-1), fname() {}
   WadFileIterator (VStr afname) : lump(-1), fname(afname) { lump = W_IterateFile(-1, afname); }
   WadFileIterator (const WadFileIterator &it) : lump(it.lump), fname(it.fname) {}
   WadFileIterator (const WadFileIterator &it, bool asEnd) : lump(-1), fname(it.fname) {}
   inline WadFileIterator &operator = (const WadFileIterator &it) { lump = it.lump; fname = it.fname; return *this; }
 
-  inline WadFileIterator begin () { return WadFileIterator(fname); }
+  inline WadFileIterator begin () { return WadFileIterator(*this); }
   inline WadFileIterator end () { return WadFileIterator(*this, true); }
   inline bool operator == (const WadFileIterator &b) const { return (lump == b.lump); }
   inline bool operator != (const WadFileIterator &b) const { return (lump != b.lump); }
