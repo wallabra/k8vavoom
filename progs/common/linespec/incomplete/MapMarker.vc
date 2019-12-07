@@ -59,7 +59,7 @@ override void OnMapSpawn (mthing_t *mthing) {
   mi.thingTid = (mthing ? mthing->arg1 : 0);
   mi.bVisible = (mthing ? !mthing->arg2 : true);
   mi.bActive = true;
-  printdebug("spawned map marker #%d at (%s,%s); tid=%s", mi.id, mi.x, mi.y, mi.thingTid);
+  //printdebug("spawned map marker #%d at (%s,%s); tid=%s", mi.id, mi.x, mi.y, mi.thingTid);
 }
 
 
@@ -80,7 +80,7 @@ override void Tick (float DeltaTime) {
 //
 //==========================================================================
 override void Destroy () {
-  printdebug("destroying map marker #%d", markerId);
+  //printdebug("destroying map marker #%d", markerId);
   XLevel.RemoveMapMarker(markerId);
   ::Destroy();
 }
