@@ -662,10 +662,8 @@ public:
       inline bool operator != (const arrname_##IndexIterator &b) const { return (idx != b.idx); } \
       inline arrname_##IndexIterator operator * () const { return arrname_##IndexIterator(*this); } /* required for iterator */ \
       inline void operator ++ () { ++idx; } /* this is enough for iterator */ \
-      inline arrname_##IndexIterator begin () { return arrname_##IndexIterator(level); } \
-      inline arrname_##IndexIterator begin () const { return arrname_##IndexIterator(level); } \
+      inline arrname_##IndexIterator begin () { return arrname_##IndexIterator(*this); } \
       inline arrname_##IndexIterator end () { return arrname_##IndexIterator(level, true); } \
-      inline arrname_##IndexIterator end () const { return arrname_##IndexIterator(level, true); } \
       inline itertype_ *value () { return &level->arrname_[idx]; } \
       inline const itertype_ *value () const { return &level->arrname_[idx]; } \
       inline int index () const { return idx; } \
