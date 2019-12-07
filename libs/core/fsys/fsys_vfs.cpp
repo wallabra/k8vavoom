@@ -41,14 +41,14 @@
 // ////////////////////////////////////////////////////////////////////////// //
 extern TArray<VStr> wadfiles;
 
-static int AuxiliaryIndex = 0;
+static int AuxiliaryIndex = -1;
 
 static TMap<VStr, int> fullNameTexLumpChecked;
 
 bool fsys_EnableAuxSearch = false;
 
 // don't search files in auxiliary wads, ever
-static inline int getSPCount () { return (AuxiliaryIndex && !fsys_EnableAuxSearch ? AuxiliaryIndex : SearchPaths.length()); }
+static inline int getSPCount () { return (AuxiliaryIndex >= 0 && !fsys_EnableAuxSearch ? AuxiliaryIndex : SearchPaths.length()); }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -360,7 +360,7 @@ void W_AddFileFromZip (VStr WadName, VStream *WadStrm) {
 //
 //==========================================================================
 static void W_CloseAuxiliary_NoLock () {
-  if (AuxiliaryIndex) {
+  if (AuxiliaryIndex >= 0) {
     // close all additional files
     for (int f = SearchPaths.length()-1; f >= AuxiliaryIndex; --f) SearchPaths[f]->Close();
     for (int f = SearchPaths.length()-1; f >= AuxiliaryIndex; --f) {
@@ -368,7 +368,7 @@ static void W_CloseAuxiliary_NoLock () {
       SearchPaths[f] = nullptr;
     }
     SearchPaths.setLength(AuxiliaryIndex);
-    AuxiliaryIndex = 0;
+    AuxiliaryIndex = -1;
   }
 }
 
@@ -391,7 +391,7 @@ void W_CloseAuxiliary () {
 //==========================================================================
 int W_StartAuxiliary () {
   MyThreadLocker glocker(&fsys_glock);
-  if (!AuxiliaryIndex) AuxiliaryIndex = SearchPaths.length();
+  if (AuxiliaryIndex < 0) AuxiliaryIndex = SearchPaths.length();
   return MAKE_HANDLE(AuxiliaryIndex, 0);
 }
 
@@ -404,9 +404,10 @@ int W_StartAuxiliary () {
 int W_OpenAuxiliary (VStr FileName) {
   MyThreadLocker glocker(&fsys_glock);
   W_CloseAuxiliary_NoLock();
+  vassert(AuxiliaryIndex < 0);
   AuxiliaryIndex = SearchPaths.length();
   VStream *WadStrm = FL_OpenFileRead_NoLock(FileName);
-  if (!WadStrm) { AuxiliaryIndex = 0; return -1; }
+  if (!WadStrm) { AuxiliaryIndex = -1; return -1; }
   //fprintf(stderr, "*** AUX: '%s'\n", *FileName);
   auto olen = wadfiles.length();
 
@@ -444,7 +445,7 @@ int W_OpenAuxiliary (VStr FileName) {
 //==========================================================================
 int W_GetFirstAuxArchive () {
   MyThreadLocker glocker(&fsys_glock);
-  return (AuxiliaryIndex > 0 ? AuxiliaryIndex : -1);
+  return (AuxiliaryIndex >= 0 ? AuxiliaryIndex : -1);
 }
 
 
@@ -457,7 +458,7 @@ int W_GetFirstAuxArchive () {
 //==========================================================================
 int W_GetFirstAuxLump () {
   MyThreadLocker glocker(&fsys_glock);
-  return (AuxiliaryIndex > 0 ? MAKE_HANDLE(AuxiliaryIndex, 0) : -1);
+  return (AuxiliaryIndex >= 0 ? MAKE_HANDLE(AuxiliaryIndex, 0) : -1);
 }
 
 
@@ -499,7 +500,7 @@ int W_AddAuxiliaryStream (VStream *strm, WAuxFileType ftype) {
   MyThreadLocker glocker(&fsys_glock);
 
   //if (strm.TotalSize() < 16) return -1;
-  if (!AuxiliaryIndex) AuxiliaryIndex = SearchPaths.length();
+  if (AuxiliaryIndex < 0) AuxiliaryIndex = SearchPaths.length();
   int residx = SearchPaths.length();
   //GLog.Logf("AUX: %s", *strm->GetName());
 
@@ -1264,7 +1265,7 @@ bool W_IsIWADLump (int lump) {
 //==========================================================================
 bool W_IsAuxLump (int lump) {
   MyThreadLocker glocker(&fsys_glock);
-  if (lump < 0 || !AuxiliaryIndex) return false;
+  if (lump < 0 || AuxiliaryIndex < 0) return false;
   int fidx = FILE_INDEX(lump);
   return (fidx >= AuxiliaryIndex && fidx < SearchPaths.length());
 }
