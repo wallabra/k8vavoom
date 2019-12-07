@@ -712,12 +712,11 @@ static void tempMount (const PWadFile &pwf) {
       W_AddAuxiliaryStream(strm, WAuxFileType::VFS_Wad);
     } else {
       VStr ext = pwf.fname.ExtractFileExtension();
-      if (ext.strEquCI(".pk3")) {
-        //GCon->Logf(NAME_Init, "TEMPMOUNT: PK3: %s", *pwf.fname);
+      if (ext.strEquCI(".pk3") || ext.strEquCI(".zip") || ext.strEquCI(".pak")) {
+        W_AddAuxiliaryStream(strm, WAuxFileType::VFS_Zip); // guess, allow nested
+      } else {
+        // guess, don't allow nested
         W_AddAuxiliaryStream(strm, WAuxFileType::VFS_Archive);
-      } else if (ext.strEquCI(".zip")) {
-        //GCon->Logf(NAME_Init, "TEMPMOUNT: ZIP: %s", *pwf.fname);
-        W_AddAuxiliaryStream(strm, WAuxFileType::VFS_Zip);
       }
     }
   }
