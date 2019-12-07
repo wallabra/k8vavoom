@@ -212,6 +212,7 @@ struct VAcsFunction {
   vuint8 HasReturnValue;
   vuint8 ImportNum;
   vuint32 Address;
+  ACSLocalArrays LocalArrays;
 };
 
 
@@ -825,7 +826,7 @@ void VAcsObject::LoadEnhancedObject () {
   buffer = (int*)FindChunk("FUNC");
   if (buffer) {
     NumFunctions = LittleLong(buffer[1])/8;
-    Functions = (VAcsFunction*)(buffer+2);
+    Functions = (VAcsFunction *)(buffer+2);
     for (i = 0; i < NumFunctions; ++i) {
       Functions[i].Address = LittleLong(Functions[i].Address);
     }
@@ -844,6 +845,21 @@ void VAcsObject::LoadEnhancedObject () {
     for (i = 0; i < NumStrings; ++i) {
       Strings[i] = (char *)buffer+LittleLong(buffer[i+3]);
       LowerCaseNames[i] = NAME_None;
+    }
+  }
+
+  // load local arrays for functions
+  if (NumFunctions > 0) {
+    for (buffer = (int *)FindChunk("FARY"); buffer; buffer = (int *)NextChunk((vuint8 *)buffer)) {
+      int size = LittleLong(buffer[1]);
+      if (size >= 6) {
+        int func_num = LittleShort(((vuint16 *)buffer)[4]);
+        if (func_num >= 0 && func_num < NumFunctions) {
+          VAcsFunction *func = &Functions[func_num];
+          // unlike scripts, functions do not include their arg count in their local count
+          func->LocalCount = ParseLocalArrayChunk(buffer+2, &func->LocalArrays, func->LocalCount+func->ArgCount)-func->ArgCount;
+        }
+      }
     }
   }
 
@@ -5197,6 +5213,8 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         ACSLocalArrays *oldarrays = localarrays;
         // the function's first argument is also its first local variable
         locals = sp-func->ArgCount;
+        localarrays = &func->LocalArrays;
+        if (!localarrays) localarrays = &noarrays;
         //GCon->Logf("  :CALL:%d: oldlocals=%p; locals=%p; argc=%d; locc=%d (mine: argc=%d; locc=%d)", info->Number, oldlocals, locals, func->ArgCount, func->LocalCount, (activeFunction ? activeFunction->LocalCount : -1), (activeFunction ? activeFunction->LocalCount : -1));
         // make space on the stack for any other variables the function uses
         //for (i = 0; i < func->LocalCount; i++) sp[i] = 0;
