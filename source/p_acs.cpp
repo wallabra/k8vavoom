@@ -6786,6 +6786,28 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       }
       ACSVM_BREAK;
 
+    ACSVM_CASE(PCD_PrintScriptChArray)
+    ACSVM_CASE(PCD_PrintScriptChRange)
+      {
+        int Idx = 0, count = 0x7fffffff;
+        if (cmd == PCD_PrintScriptChRange) {
+          count = sp[-1];
+          Idx = sp[-2];
+          sp -= 2;
+        }
+        int ANum = sp[-1]; //k8: is this right?
+        Idx += sp[-2];
+        sp -= 2;
+        if (Idx >= 0 && count > 0) {
+          for (int c = localarrays->Get(locals, ANum, Idx); c; c = localarrays->Get(locals, ANum, Idx)) {
+            PrintStr += (char)c;
+            if (Idx == 0x7fffffff) break;
+            if (--count == 0) break;
+            ++Idx;
+          }
+        }
+      }
+      ACSVM_BREAK;
 
     // these p-codes are not supported; they will terminate script
     ACSVM_CASE(PCD_PlayerBlueSkull)

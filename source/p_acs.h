@@ -417,6 +417,8 @@ enum EPCD
   DECLARE_PCD(OrScriptArray),//375
   DECLARE_PCD(LSScriptArray),//376
   DECLARE_PCD(RSScriptArray),//377
+  DECLARE_PCD(PrintScriptChArray),//378
+  DECLARE_PCD(PrintScriptChRange),//379
 
 #ifdef DECLARING_PCD_ENUM
   PCODE_COMMAND_COUNT
