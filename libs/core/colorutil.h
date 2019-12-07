@@ -31,6 +31,9 @@ void M_RgbToHsv (float r, float g, float b, float &h, float &s, float &v);
 void M_HsvToRgb (vuint8 h, vuint8 s, vuint8 v, vuint8 &r, vuint8 &g, vuint8 &b);
 void M_HsvToRgb (float h, float s, float v, float &r, float &g, float &b);
 
+void M_RgbToHsl (float r, float g, float b, float &h, float &s, float &l);
+void M_HslToRgb (float h, float s, float l, float &r, float &g, float &b);
+
 
 //==========================================================================
 //

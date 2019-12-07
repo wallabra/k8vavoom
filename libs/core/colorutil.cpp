@@ -179,3 +179,99 @@ void M_HsvToRgb (float h, float s, float v, float &r, float &g, float &b) {
       break;
   }
 }
+
+
+/// Assumes the input `u` is already between 0 and 1 fyi.
+/*
+static inline float srgbToLinearRgb (float u) {
+  return (u < 0.4045f ? u/12.92f : powf((u+0.055f)/1.055f, 2.4f));
+}
+*/
+
+
+/// Converts hsl to rgb
+void M_HslToRgb (float h, float s, float l, float &r, float &g, float &b) {
+  h = fmodf(h, 360.0f);
+
+  float C = (1.0f-fabsf(2.0f*l-1.0f))*s;
+
+  float hPrime = h/60.0f;
+
+  float X = C*(1.0f-fabsf(fmodf(hPrime, 2.0f)-1.0f));
+
+  if (!isFiniteF(h)) {
+    r = g = b = 0.0f;
+  } else if (hPrime >= 0.0f && hPrime < 1.0f) {
+    r = C;
+    g = X;
+    b = 0.0f;
+  } else if (hPrime >= 1.0f && hPrime < 2.0f) {
+    r = X;
+    g = C;
+    b = 0.0f;
+  } else if (hPrime >= 2.0f && hPrime < 3.0f) {
+    r = 0.0f;
+    g = C;
+    b = X;
+  } else if (hPrime >= 3.0f && hPrime < 4.0f) {
+    r = 0.0f;
+    g = X;
+    b = C;
+  } else if (hPrime >= 4.0f && hPrime < 5.0f) {
+    r = X;
+    g = 0.0f;
+    b = C;
+  } else if (hPrime >= 5.0f && hPrime < 6.0f) {
+    r = C;
+    g = 0.0f;
+    b = X;
+  }
+
+  float m = l-C/2.0f;
+
+  r += m;
+  g += m;
+  b += m;
+}
+
+
+/// Converts an RGB color into an HSL triplet. useWeightedLightness will try to get a better value for luminosity for the human eye, which is more sensitive to green than red and more to red than blue. If it is false, it just does average of the rgb.
+void M_RgbToHsl (float r, float g, float b, float &h, float &s, float &l/*, bool useWeightedLightness*//*=false*/) {
+  float maxColor = max2(max2(r, g), b);
+  float minColor = min2(min2(r, g), b);
+
+  float L = (maxColor+minColor)/2.0f;
+
+  /*
+  if (useWeightedLightness) {
+    // the colors don't affect the eye equally
+    // this is a little more accurate than plain HSL numbers
+    L = 0.2126f*srgbToLinearRgb(r)+0.7152f*srgbToLinearRgb(g)+0.0722f*srgbToLinearRgb(b);
+    // maybe a better number is 299, 587, 114
+  }
+  */
+  float S = 0.0f;
+  float H = 0.0f;
+  if (maxColor != minColor) {
+    if (L < 0.5f) {
+      S = (maxColor-minColor)/(maxColor+minColor);
+    } else {
+      S = (maxColor-minColor)/(2.0f-maxColor-minColor);
+    }
+    if (r == maxColor) {
+      H = (g-b)/(maxColor-minColor);
+    } else if (g == maxColor) {
+      H = 2.0f+(b-r)/(maxColor-minColor);
+    } else {
+      H = 4.0f+(r-g)/(maxColor-minColor);
+    }
+  }
+
+  H = H*60.0f;
+  if (H < 0.0f) H += 360.0f;
+
+  //return [H, S, L];
+  h = H;
+  s = S;
+  l = L;
+}
