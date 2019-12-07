@@ -1552,7 +1552,7 @@ void R_ParseEffectDefs () {
         if (!SprFx.LightDef) {
           GCon->Logf(NAME_Warning, "Light '%s' not found.", *SprDef.Light);
         }
-        if (VStr::strEquCI(SprName, "bar1")) GCon->Logf(NAME_Debug, "BAR1(%s): light=%s; color=0x%08x; radius=(%g,%g)", Cls->GetName(), *SprDef.Light, SprFx.LightDef->Color, SprFx.LightDef->Radius, SprFx.LightDef->Radius2);
+        //if (VStr::strEquCI(SprName, "bar1")) GCon->Logf(NAME_Debug, "BAR1(%s): light=%s; color=0x%08x; radius=(%g,%g)", Cls->GetName(), *SprDef.Light, SprFx.LightDef->Color, SprFx.LightDef->Radius, SprFx.LightDef->Radius2);
       }
       SprFx.PartDef = nullptr;
       if (SprDef.Part.IsNotEmpty()) {
