@@ -356,6 +356,7 @@ public:
   vint32 *savedsp;
   vint32 *savedlocals;
   ACSLocalArrays *savedarrays;
+  ACSLocalArrays noarrays;
 
 public:
   VAcs ()
@@ -379,6 +380,7 @@ public:
     , savedsp(nullptr)
     , savedlocals(nullptr)
     , savedarrays(nullptr)
+    , noarrays()
   {
     mystack = (vint32 *)Z_Calloc((VAcs::ACS_STACK_DEPTH+256)*sizeof(vint32)); // why not?
   }
@@ -3680,7 +3682,6 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
   vassert(mystack);
   vint32 *optstart = nullptr;
   vint32 *locals = (savedlocals ? savedlocals : LocalVars);
-  ACSLocalArrays noarrays;
   ACSLocalArrays *localarrays = (savedarrays ? savedarrays : &info->LocalArrays);
   if (!localarrays) localarrays = &noarrays;
   VAcsFunction *activeFunction = nullptr;
@@ -6839,8 +6840,6 @@ LblFuncStop:
   InstructionPointer = ip;
   savedsp = (sp < mystack ? nullptr : sp); //k8: this is UB, but idc
   savedlocals = locals;
-  //FIXME: this is wrong!
-  if (localarrays == &noarrays) localarrays = nullptr;
   savedarrays = localarrays;
 
   if (action == SCRIPT_Terminate) {
