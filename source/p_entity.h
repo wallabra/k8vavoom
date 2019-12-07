@@ -623,6 +623,16 @@ public:
 public:
   void LinkToWorld (bool properFloorCheck=false);
   void UnlinkFromWorld ();
+
+  enum {
+    CSE_ForShooting      = 1u<<0,
+    CSE_AlwaysBetter     = 1u<<1,
+    CSE_IgnoreBlockAll   = 1u<<2,
+    CSE_IgnoreFakeFloors = 1u<<3,
+    CSE_CheckBaseRegion  = 1u<<4,
+  };
+  bool CanSeeEx (VEntity *Ent, unsigned flags=0);
+
   bool CanSee (VEntity *Ent, bool forShooting=false, bool alwaysBetter=false);
   inline bool CanShoot (VEntity *Ent) { return CanSee(Ent, true); }
 

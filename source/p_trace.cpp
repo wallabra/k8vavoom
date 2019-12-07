@@ -97,7 +97,7 @@ bool VLevel::CheckLine (linetrace_t &trace, seg_t *seg) const {
 
   if (line->flags&ML_TWOSIDED) {
     // crosses a two sided line
-    opening_t *open = SV_LineOpenings(line, hitpoint, trace.PlaneNoBlockFlags);
+    opening_t *open = SV_LineOpenings(line, hitpoint, trace.PlaneNoBlockFlags&SPF_FLAG_MASK);
     if (dbg_bsp_trace_strict_flats) {
       while (open) {
         if (open->bottom < hitpoint.z && open->top > hitpoint.z) return true;
@@ -343,7 +343,7 @@ static bool SightTraverse (SightTraceInfo &trace, const intercept_t *in) {
 
   if (line->flags&ML_TWOSIDED) {
     // crosses a two sided line
-    opening_t *open = SV_LineOpenings(line, hitpoint, trace.PlaneNoBlockFlags);
+    opening_t *open = SV_LineOpenings(line, hitpoint, trace.PlaneNoBlockFlags&SPF_FLAG_MASK);
     while (open) {
       if (open->bottom <= hitpoint.z && open->top >= hitpoint.z) return true;
       open = open->next;
@@ -670,7 +670,7 @@ static bool SightPathTraverse2 (SightTraceInfo &trace, sector_t *EndSector) {
 //==========================================================================
 bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, const TVec &orgdirFwd, const TVec &orgdirRight,
                          const TVec &dest, float radius, float height, bool skipBaseRegion, sector_t *DestSector,
-                         bool allowBetterSight) {
+                         bool allowBetterSight, bool ignoreBlockAll, bool ignoreFakeFloors) {
   if (lengthSquared(org-dest) <= 1) return true;
 
   SightTraceInfo trace;
@@ -682,7 +682,7 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
   if (myheight < 0.0f) myheight = 0.0f;
 
   // killough 4/19/98: make fake floors and ceilings block view
-  if (Sector->heightsec) {
+  if (!ignoreFakeFloors && Sector->heightsec) {
     const sector_t *hs = Sector->heightsec;
     if ((org.z+myheight <= hs->floor.GetPointZClamped(org) && dest.z >= hs->floor.GetPointZClamped(dest)) ||
         (org.z >= hs->ceiling.GetPointZClamped(org) && dest.z+height <= hs->ceiling.GetPointZClamped(dest)))
@@ -694,7 +694,7 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
   sector_t *OtherSector = DestSector;
   if (!OtherSector) OtherSector = PointInSubsector(dest)->sector;
 
-  if (OtherSector->heightsec) {
+  if (!ignoreFakeFloors && OtherSector->heightsec) {
     const sector_t *hs = OtherSector->heightsec;
     if ((dest.z+height <= hs->floor.GetPointZClamped(dest) && org.z >= hs->floor.GetPointZClamped(org)) ||
         (dest.z >= hs->ceiling.GetPointZClamped(dest) && org.z+myheight <= hs->ceiling.GetPointZClamped(org)))
@@ -705,8 +705,8 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
 
   //if (length2DSquared(org-dest) <= 1) return true;
 
-  trace.PlaneNoBlockFlags = SPF_NOBLOCKSIGHT;
-  trace.LineBlockMask = ML_BLOCKEVERYTHING|ML_BLOCKSIGHT;
+  trace.PlaneNoBlockFlags = SPF_NOBLOCKSIGHT|(ignoreFakeFloors ? SPF_IGNORE_FAKE_FLOORS : 0u);
+  trace.LineBlockMask = (ignoreBlockAll ? 0 : ML_BLOCKEVERYTHING)|ML_BLOCKSIGHT;
   trace.CheckBaseRegion = !skipBaseRegion;
 
   if (!allowBetterSight || radius < 4.0f || height < 4.0f || myheight < 4.0f) {

@@ -95,6 +95,10 @@ enum {
   SPF_ADDITIVE     = 8u, // Additive translucency
 
   SPF_MAX_FLAG     = 16u,
+  SPF_FLAG_MASK    = 15u,
+
+  // used only as tracer flag
+  SPF_IGNORE_FAKE_FLOORS = 64u,
 };
 
 

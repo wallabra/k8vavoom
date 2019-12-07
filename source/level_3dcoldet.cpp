@@ -225,13 +225,35 @@ bool VLevel::CheckPassPlanes (sector_t *sector, bool checkSectorBounds, TVec lin
   bool isSky = false;
   TPlane bestHitPlane;
 
+  const bool checkFakeFloors = !!(flagmask&SPF_IGNORE_FAKE_FLOORS);
+  flagmask &= SPF_FLAG_MASK;
+
   if (checkSectorBounds) {
     // make fake floors and ceilings block view
     TSecPlaneRef bfloor, bceil;
+    /*
     sector_t *hs = sector->heightsec;
     if (!hs) hs = sector;
     bfloor.set(&hs->floor, false);
     bceil.set(&hs->ceiling, false);
+    // check sector floor
+    UPDATE_PLANE_HIT(bfloor);
+    // check sector ceiling
+    UPDATE_PLANE_HIT(bceil);
+    */
+    if (checkFakeFloors) {
+      sector_t *hs = sector->heightsec;
+      if (hs) {
+        bfloor.set(&hs->floor, false);
+        bceil.set(&hs->ceiling, false);
+        // check sector floor
+        UPDATE_PLANE_HIT(bfloor);
+        // check sector ceiling
+        UPDATE_PLANE_HIT(bceil);
+      }
+    }
+    bfloor.set(&sector->floor, false);
+    bceil.set(&sector->ceiling, false);
     // check sector floor
     UPDATE_PLANE_HIT(bfloor);
     // check sector ceiling

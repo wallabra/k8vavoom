@@ -57,7 +57,7 @@
   ACS_EXTFUNC(SoundSequenceOnPolyobj) // ignored
   ACS_EXTFUNC(GetPolyobjX) // implemented
   ACS_EXTFUNC(GetPolyobjY) // implemented
-  ACS_EXTFUNC(CheckSight)
+  ACS_EXTFUNC(CheckSight) // implemented
   ACS_EXTFUNC(SpawnForced) // implemented
   ACS_EXTFUNC(AnnouncerSound) // skulltag, ignored
   ACS_EXTFUNC(SetPointer) // partially implemented

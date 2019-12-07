@@ -3356,6 +3356,36 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
     case ACSF_Round:
       return (argCount > 0 ? (args[0]+32768)&~0xffff : 0);
 
+    case ACSF_CheckSight: //untested!
+      if (argCount >= 2) {
+        unsigned flags = VEntity::CSE_CheckBaseRegion;
+        if (argCount >= 3) {
+          if (args[2]&1) flags |= VEntity::CSE_IgnoreFakeFloors;
+          if (args[2]&2) flags |= VEntity::CSE_IgnoreBlockAll;
+        }
+        //bool CanSeeEx (VEntity *Ent, unsigned flags=0);
+
+        if (args[0] == 0) {
+          if (args[1] == 0) return true;
+          if (Activator) {
+            for (VEntity *mobj = Level->FindMobjFromTID(args[1], nullptr); mobj; mobj = Level->FindMobjFromTID(args[1], mobj)) {
+              if (Activator->CanSeeEx(mobj, flags)) return 1;
+            }
+          }
+        } else {
+          for (VEntity *src = Level->FindMobjFromTID(args[0], nullptr); src; src = Level->FindMobjFromTID(args[0], src)) {
+            if (args[1] != 0) {
+              for (VEntity *dest = Level->FindMobjFromTID(args[1], nullptr); dest; dest = Level->FindMobjFromTID(args[1], dest)) {
+                if (src->CanSeeEx(dest, flags)) return 1;
+              }
+            } else {
+              if (Activator && src->CanSeeEx(Activator, flags)) return 1;
+            }
+          }
+        }
+      }
+      return 0;
+
     case ACSF_ScriptCall:
       if (argCount >= 2) {
         VStr clsname = GetStr(args[0]).toLowerCase();
@@ -6850,6 +6880,11 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       }
       ACSVM_BREAK;
 
+    ACSVM_CASE(PCD_IsOneFlagCTF)
+      *sp = 0;
+      ++sp;
+      ACSVM_BREAK;
+
     // these p-codes are not supported; they will terminate script
     ACSVM_CASE(PCD_PlayerBlueSkull)
     ACSVM_CASE(PCD_PlayerRedSkull)
@@ -6871,7 +6906,6 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_RedTeamCount)
     ACSVM_CASE(PCD_BlueTeamScore)
     ACSVM_CASE(PCD_RedTeamScore)
-    ACSVM_CASE(PCD_IsOneFlagCTF)
     ACSVM_CASE(PCD_LSpec6)
     ACSVM_CASE(PCD_LSpec6Direct)
     ACSVM_CASE(PCD_SetStyle)
