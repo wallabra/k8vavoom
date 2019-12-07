@@ -3344,6 +3344,18 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       if (argCount > 0 && args[0] > 0) return (int)(sqrtf((float)args[0]/65536.0f)*65536.0f);
       return 0;
 
+    //case ACSF_StrArg:
+    //  return -FName(FBehavior::StaticLookupString(args[0]));
+
+    case ACSF_Floor:
+      return (argCount > 0 ? args[0]&~0xffff : 0);
+
+    case ACSF_Ceil:
+      return (argCount > 0 ? (args[0]&~0xffff)+0x10000 : 0);
+
+    case ACSF_Round:
+      return (argCount > 0 ? (args[0]+32768)&~0xffff : 0);
+
     case ACSF_ScriptCall:
       if (argCount >= 2) {
         VStr clsname = GetStr(args[0]).toLowerCase();

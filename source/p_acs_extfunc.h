@@ -173,10 +173,10 @@
   ACS_EXTFUNC(GetActorFloorTexture)
   ACS_EXTFUNC(GetActorFloorTerrain)
   ACS_EXTFUNC(StrArg)
-  ACS_EXTFUNC(Floor)
-  ACS_EXTFUNC(Round)
-  ACS_EXTFUNC(Ceil)
-  ACS_EXTFUNC(ScriptCall)
+  ACS_EXTFUNC(Floor) // implemented
+  ACS_EXTFUNC(Round) // implemented
+  ACS_EXTFUNC(Ceil) // implemented
+  ACS_EXTFUNC(ScriptCall) // ignored
   ACS_EXTFUNC(StartSlideshow)
 
   // Eternity's
