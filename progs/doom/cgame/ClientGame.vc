@@ -344,12 +344,12 @@ void InitBorder () {
 //  Draws border
 //
 //==========================================================================
-override void DrawBorder (int x, int y, int w, int h) {
+override void DrawBorder (int x, int y, int w, int h, optional int ybotofs) {
   if (!pic_brdr_b) InitBorder();
 
   //FIXME: should be scaled according to ratio!
   if (w <= 8 || h <= 8) return;
-  h -= 8;
+  //h -= 8;
 
   for (int i = 0; i < w; i += 8) {
     GRoot.DrawPic(x+i, y-8, pic_brdr_t);
@@ -377,7 +377,7 @@ override void DrawViewBorder (int x, int y, int w, int h) {
   name flatname = 'ScreenBackPic'; //(checkForDoom2() ? 'grnrock' : 'floor7_2');
   //GRoot.FillRectWithFlatRepeat(0, 0, 640, 480/*-32*/, 'grnrock');
   GRoot.FillRectWithFlatRepeat(0, 0, GetVirtualWidth(), GetVirtualHeight(), flatname);
-  DrawBorder(x, y, w, h);
+  DrawBorder(x, y, w, h-8);
 }
 
 

@@ -764,6 +764,7 @@ override void MessageBoxDrawer () {
   if (messageToPrint) {
     GRoot.FillRectWithFlatRepeat(msgBoxX, msgBoxY, msgBoxW, msgBoxH, MsgBoxFlat);
     DrawBorder(msgBoxX, msgBoxY, msgBoxW, msgBoxH);
+    //GRoot.DrawRect(msgBoxX, msgBoxY, msgBoxW, msgBoxH, RGB(255, 0, 0));
     GRoot.SetFont('smallfont');
     GRoot.SetTextAlign(hcentre, vcentre);
     GRoot.DrawText(GetVirtualWidth()/2, GetVirtualHeight()/2, messageString);
@@ -981,7 +982,7 @@ void menu_quit () {
 }
 
 
-void DrawBorder (int x, int y, int w, int h) {
+void DrawBorder (int x, int y, int w, int h, optional int ybotofs) {
 }
 
 

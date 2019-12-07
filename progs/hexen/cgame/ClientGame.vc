@@ -325,13 +325,13 @@ void InitBorder()
 //
 //==========================================================================
 
-override void DrawBorder(int x, int y, int w, int h)
+override void DrawBorder(int x, int y, int w, int h, optional int ybotofs)
 {
   int i;
 
   //FIXME: should be scaled according to ratio!
   if (w <= 8 || h <= 16) return;
-  h -= 16;
+  //h -= 16;
 
   if (!pic_bordb)
   {
@@ -339,15 +339,15 @@ override void DrawBorder(int x, int y, int w, int h)
   }
 
   for (i = 0; i < w; i += 16) GRoot.DrawPic(x + i, y - 4, pic_bordt);
-  for (i = 0; i < w; i += 16) GRoot.DrawPic(x + i, y + h+6, pic_bordb);
+  for (i = 0; i < w; i += 16) GRoot.DrawPic(x + i, y + h+ybotofs, pic_bordb);
   for (i = 0; i < h; i += 16) GRoot.DrawPic(x - 4, y + i, pic_bordl);
   for (i = 0; i < h; i += 16) GRoot.DrawPic(x + w, y + i, pic_bordr);
 
   // Draw beveled edge.
   GRoot.DrawPic(x - 4, y - 4, pic_bordtl);
   GRoot.DrawPic(x + w, y - 4, pic_bordtr);
-  GRoot.DrawPic(x - 4, y + h+6, pic_bordbl);
-  GRoot.DrawPic(x + w, y + h+6, pic_bordbr);
+  GRoot.DrawPic(x - 4, y + h+ybotofs, pic_bordbl);
+  GRoot.DrawPic(x + w, y + h+ybotofs, pic_bordbr);
 }
 
 //==========================================================================
@@ -359,7 +359,7 @@ override void DrawBorder(int x, int y, int w, int h)
 override void DrawViewBorder(int x, int y, int w, int h)
 {
   GRoot.FillRectWithFlatRepeat(0, 0, 640, 480/* - 39*/, /*'f_022'*/'ScreenBackPic');
-  DrawBorder(x, y, w, h);
+  DrawBorder(x, y, w, h-16, 6);
 }
 
 defaultproperties

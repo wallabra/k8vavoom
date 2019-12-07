@@ -311,7 +311,7 @@ void InitBorder () {
 //  Draws border
 //
 //==========================================================================
-override void DrawBorder (int x, int y, int w, int h) {
+override void DrawBorder (int x, int y, int w, int h, optional int ybotofs) {
   if (!pic_bordb) InitBorder();
 
   //FIXME: should be scaled according to ratio!
@@ -319,15 +319,15 @@ override void DrawBorder (int x, int y, int w, int h) {
   h -= 16;
 
   for (int i = 0; i < w; i += 16) GRoot.DrawPic(x+i, y-4, pic_bordt);
-  for (int i = 0; i < w; i += 16) GRoot.DrawPic(x+i, y+h+4, pic_bordb);
+  for (int i = 0; i < w; i += 16) GRoot.DrawPic(x+i, y+h+ybotofs, pic_bordb);
   for (int i = 0; i < h; i += 16) GRoot.DrawPic(x-4, y+i, pic_bordl);
   for (int i = 0; i < h; i += 16) GRoot.DrawPic(x+w, y+i, pic_bordr);
 
   // draw beveled edge
   GRoot.DrawPic(x-4, y-4, pic_bordtl);
   GRoot.DrawPic(x+w, y-4, pic_bordtr);
-  GRoot.DrawPic(x-4, y+h+4, pic_bordbl);
-  GRoot.DrawPic(x+w, y+h+4, pic_bordbr);
+  GRoot.DrawPic(x-4, y+h+ybotofs, pic_bordbl);
+  GRoot.DrawPic(x+w, y+h+ybotofs, pic_bordbr);
 }
 
 
@@ -339,7 +339,7 @@ override void DrawBorder (int x, int y, int w, int h) {
 override void DrawViewBorder (int x, int y, int w, int h) {
   //name flatname = (!WadLumpPresent('e2m1') ? 'floor04' : 'flat513');
   GRoot.FillRectWithFlatRepeat(0, 0, GetVirtualWidth(), GetVirtualHeight(), /*flatname*/'ScreenBackPic');
-  DrawBorder(x, y, w, h);
+  DrawBorder(x, y, w, h-16, 4);
 }
 
 

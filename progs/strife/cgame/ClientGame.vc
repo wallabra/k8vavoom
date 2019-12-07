@@ -362,12 +362,12 @@ void InitBorder () {
 //  Draws border
 //
 //==========================================================================
-override void DrawBorder (int x, int y, int w, int h) {
+override void DrawBorder (int x, int y, int w, int h, optional int ybotofs) {
   if (!pic_brdr_b) InitBorder();
 
   //FIXME: should be scaled according to ratio!
   if (w <= 8 || h <= 8) return;
-  h -= 8;
+  //h -= 8;
 
   for (int i = 0; i < w; i += 8) GRoot.DrawPic(x+i, y-8, pic_brdr_t);
   for (int i = 0; i < w; i += 8) GRoot.DrawPic(x+i, y+h, pic_brdr_b);
@@ -389,7 +389,7 @@ override void DrawBorder (int x, int y, int w, int h) {
 //==========================================================================
 override void DrawViewBorder (int x, int y, int w, int h) {
   GRoot.FillRectWithFlatRepeat(0, 0, GetVirtualWidth(), GetVirtualHeight(), /*'f_pave01'*/'ScreenBackPic');
-  DrawBorder(x, y, w, h);
+  DrawBorder(x, y, w, h-8);
 }
 
 
