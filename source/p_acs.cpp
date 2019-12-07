@@ -6657,6 +6657,17 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     // various gzdoom translations
     ACSVM_CASE(PCD_TranslationRange3)
       GCon->Logf(NAME_Dev, "ACS: unimplemented gzdoom opcode 362 (TranslationRange3)");
+      sp -= 8;
+      ACSVM_BREAK;
+
+    ACSVM_CASE(PCD_TranslationRange4)
+      GCon->Logf(NAME_Dev, "ACS: unimplemented gzdoom opcode 383 (TranslationRange4)");
+      sp -= 5;
+      ACSVM_BREAK;
+
+    ACSVM_CASE(PCD_TranslationRange5)
+      GCon->Logf(NAME_Dev, "ACS: unimplemented gzdoom opcode 384 (TranslationRange5)");
+      sp -= 6;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_GotoStack)
@@ -6809,6 +6820,24 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       }
       ACSVM_BREAK;
 
+    ACSVM_CASE(PCD_LSpec5Ex)
+      {
+        int special = READ_INT32(ip);
+        ip += 4;
+        Level->eventExecuteActionSpecial(special, sp[-5], sp[-4], sp[-3], sp[-2], sp[-1], line, side, Activator);
+        sp -= 5;
+      }
+      ACSVM_BREAK;
+
+    ACSVM_CASE(PCD_LSpec5ExResult)
+      {
+        int special = READ_INT32(ip);
+        ip += 4;
+        sp[-5] = Level->eventExecuteActionSpecial(special, sp[-5], sp[-4], sp[-3], sp[-2], sp[-1], line, side, Activator);
+        sp -= 4;
+      }
+      ACSVM_BREAK;
+
     // these p-codes are not supported; they will terminate script
     ACSVM_CASE(PCD_PlayerBlueSkull)
     ACSVM_CASE(PCD_PlayerRedSkull)
@@ -6843,6 +6872,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_StrCpyToMapChRange)
     ACSVM_CASE(PCD_StrCpyToWorldChRange)
     ACSVM_CASE(PCD_StrCpyToGlobalChRange)
+    ACSVM_CASE(PCD_StrCpyToScriptChRange)
       {
         const PCD_Info *pi;
         for (pi = PCD_List; pi->name; ++pi) if (pi->index == cmd) break;
