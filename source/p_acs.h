@@ -397,9 +397,26 @@ enum EPCD
 
   DECLARE_PCD(CallStack),//360
 
-  DECLARE_PCD(ScriptWaitNamed),//361, UNINMPLEMENTED
+  DECLARE_PCD(ScriptWaitNamed),//361
 
   DECLARE_PCD(TranslationRange3),//362, UNINMPLEMENTED
+
+  DECLARE_PCD(GotoStack),//363
+
+  DECLARE_PCD(AssignScriptArray),//364
+  DECLARE_PCD(PushScriptArray),//365
+  DECLARE_PCD(AddScriptArray),//366
+  DECLARE_PCD(SubScriptArray),//367
+  DECLARE_PCD(MulScriptArray),//368
+  DECLARE_PCD(DivScriptArray),//369
+  DECLARE_PCD(ModScriptArray),//370
+  DECLARE_PCD(IncScriptArray),//371
+  DECLARE_PCD(DecScriptArray),//372
+  DECLARE_PCD(AndScriptArray),//373
+  DECLARE_PCD(EOrScriptArray),//374
+  DECLARE_PCD(OrScriptArray),//375
+  DECLARE_PCD(LSScriptArray),//376
+  DECLARE_PCD(RSScriptArray),//377
 
 #ifdef DECLARING_PCD_ENUM
   PCODE_COMMAND_COUNT

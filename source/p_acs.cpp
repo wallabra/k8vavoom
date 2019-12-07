@@ -148,6 +148,46 @@ enum {
   SCRIPTF_Net = 0x0001, // safe to "puke" in multiplayer
 };
 
+struct ACSLocalArrayInfo {
+  int Size;
+  int Offset;
+};
+
+struct ACSLocalArrays {
+  int Count;
+  ACSLocalArrayInfo *Info;
+
+  inline ACSLocalArrays () noexcept : Count(0), Info(nullptr) {}
+  inline ~ACSLocalArrays () { Clear(); }
+
+  inline void Clear () noexcept { if (Info) { delete[] Info; Info = nullptr; } }
+
+  inline void SetCount (int acount) {
+    if (acount < 0) acount = 0;
+    Clear();
+    Count = acount;
+    if (acount > 0) Info = new ACSLocalArrayInfo[acount];
+  }
+
+  // bounds-checking Set and Get for local arrays
+  inline void Set (vint32 *locals, int arraynum, int arrayentry, int value) {
+    if ((unsigned)arraynum < (unsigned)Count &&
+        (unsigned)arrayentry < (unsigned)Info[arraynum].Size)
+    {
+      locals[Info[arraynum].Offset+arrayentry] = value;
+    }
+  }
+
+  inline int Get (const vint32 *locals, int arraynum, int arrayentry) const {
+    if ((unsigned)arraynum < (unsigned)Count &&
+        (unsigned)arrayentry < (unsigned)Info[arraynum].Size)
+    {
+      return locals[Info[arraynum].Offset+arrayentry];
+    }
+    return 0;
+  }
+};
+
 struct __attribute__((packed)) VAcsHeader {
   char Marker[4];
   vint32 InfoOffset;
@@ -161,6 +201,7 @@ struct VAcsInfo {
   vuint8 *Address;
   vuint16 Flags;
   vuint16 VarCount;
+  ACSLocalArrays LocalArrays;
   VName Name; // NAME_None for unnamed scripts; lowercased
   VAcs *RunningScript;
 };
@@ -266,11 +307,12 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-struct VAcsCallReturn {
+struct __attribute__((packed)) VAcsCallReturn {
   int ReturnAddress;
   VAcsFunction *ReturnFunction;
   VAcsObject *ReturnObject;
-  vint32* ReturnLocals;
+  vint32 *ReturnLocals;
+  ACSLocalArrays *ReturnArrays;
   vuint8 bDiscardResult;
   vuint8 Pad[3];
 };
@@ -313,6 +355,7 @@ public:
   vint32 *mystack;
   vint32 *savedsp;
   vint32 *savedlocals;
+  ACSLocalArrays *savedarrays;
 
 public:
   VAcs ()
@@ -335,6 +378,7 @@ public:
     , mystack(nullptr)
     , savedsp(nullptr)
     , savedlocals(nullptr)
+    , savedarrays(nullptr)
   {
     mystack = (vint32 *)Z_Calloc((VAcs::ACS_STACK_DEPTH+256)*sizeof(vint32)); // why not?
   }
@@ -669,6 +713,31 @@ void VAcsObject::LoadOldObject () {
 
 //==========================================================================
 //
+//  ParseLocalArrayChunk
+//
+//==========================================================================
+static int ParseLocalArrayChunk (void *chunk, ACSLocalArrays *arrays, int offset) {
+  int count = LittleShort(((vuint16 *)chunk)[1]-2)/4;
+  vint32 *sizes = (vint32 *)((vuint8 *)chunk+10);
+  arrays->SetCount(count);
+  GCon->Logf(NAME_Debug, " count=%d (%d)", count, arrays->Count);
+  if (arrays->Count > 0) {
+    ACSLocalArrayInfo *info = arrays->Info;
+    for (int i = 0; i < count; ++i, ++info) {
+      info->Size = LittleLong(sizes[i]);
+      info->Offset = offset;
+      if (info->Size < 0 || info->Offset < 0) Sys_Error("invalid acs array descritption (offset=%d; size=%d)", info->Offset, info->Size);
+      GCon->Logf(NAME_Debug, "  array #%d, offset=%d, size=%d", i, info->Offset, info->Size);
+      offset += info->Size;
+    }
+  }
+  // return the new local variable size, with space for the arrays
+  return offset;
+}
+
+
+//==========================================================================
+//
 //  VAcsObject::LoadEnhancedObject
 //
 //==========================================================================
@@ -687,8 +756,8 @@ void VAcsObject::LoadEnhancedObject () {
       buffer += 2;
 
       for (i = 0, info = Scripts; i < NumScripts; ++i, ++info) {
-        info->Number = LittleShort(*(short*)buffer);
-        info->Type = LittleShort(((short*)buffer)[1]);
+        info->Number = LittleShort(*(vuint16 *)buffer);
+        info->Type = LittleShort(((vuint16 *)buffer)[1]);
         ++buffer;
         info->Address = OffsetToPtr(LittleLong(*buffer++));
         info->ArgCount = LittleLong(*buffer++);
@@ -703,7 +772,7 @@ void VAcsObject::LoadEnhancedObject () {
       buffer += 2;
 
       for (i = 0, info = Scripts; i < NumScripts; ++i, ++info) {
-        info->Number = LittleShort(*(short*)buffer);
+        info->Number = LittleShort(*(vuint16 *)buffer);
         info->Type = ((vuint8*)buffer)[2];
         info->ArgCount = ((vuint8*)buffer)[3];
         ++buffer;
@@ -910,7 +979,7 @@ void VAcsObject::LoadEnhancedObject () {
       if (!lib) continue;
 
       // resolve functions
-      buffer = (int*)FindChunk("FNAM");
+      buffer = (int *)FindChunk("FNAM");
       for (j = 0; j < NumFunctions; ++j) {
         VAcsFunction *func = &Functions[j];
         if (func->Address != 0 || func->ImportNum != 0) continue;
@@ -941,7 +1010,7 @@ void VAcsObject::LoadEnhancedObject () {
       }
 
       // resolve map variables
-      buffer = (int*)FindChunk("MIMP");
+      buffer = (int *)FindChunk("MIMP");
       if (buffer) {
         parse = (char*)&buffer[2];
         for (j = 0; j < LittleLong(buffer[1]); ++j) {
@@ -984,7 +1053,7 @@ void VAcsObject::LoadEnhancedObject () {
   }
 
   // load script names (if any)
-  buffer = (int*)FindChunk("SNAM");
+  buffer = (int *)FindChunk("SNAM");
   if (buffer) {
     int size = LittleLong(buffer[1]);
     buffer += 2; // skip name and size
@@ -1025,6 +1094,21 @@ void VAcsObject::LoadEnhancedObject () {
         GCon->Logf(NAME_Error, "ACS ERROR: invalid `SNAM` chunk!");
       }
       delete [] sbuf;
+    }
+  }
+
+  // load script array sizes (one chunk per script that uses arrays)
+  for (buffer = (int *)FindChunk("SARY"); buffer; buffer = (int *)NextChunk((vuint8 *)buffer)) {
+    int size = LittleLong(buffer[1]);
+    if (size >= 6) {
+      int scnum = LittleShort(((vuint16 *)buffer)[4]);
+      info = FindScript(scnum);
+      if (info) {
+        GCon->Logf(NAME_Debug, "SARY: found SARY for script #%d", scnum);
+        info->VarCount = ParseLocalArrayChunk(buffer+2, &info->LocalArrays, info->VarCount);
+      } else {
+        GCon->Logf(NAME_Debug, "SARY: unknown SARY for script #%d", scnum);
+      }
     }
   }
 }
@@ -3588,6 +3672,9 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
   vassert(mystack);
   vint32 *optstart = nullptr;
   vint32 *locals = (savedlocals ? savedlocals : LocalVars);
+  ACSLocalArrays noarrays;
+  ACSLocalArrays *localarrays = (savedarrays ? savedarrays : &info->LocalArrays);
+  if (!localarrays) localarrays = &noarrays;
   VAcsFunction *activeFunction = nullptr;
   EAcsFormat fmt = ActiveObject->GetFormat();
   int action = SCRIPT_Continue;
@@ -5097,7 +5184,8 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
           Host_Error("ACS: Out of stack space in script %d (%d slots missing)", number, (int)(ptrdiff_t)(sp-mystack)+func->LocalCount+128-ACS_STACK_DEPTH);
         }
         //if (func->ArgCount > func->LocalCount) Host_Error("ACS: script %d has %d locals, but %d args", number, func->LocalCount, func->ArgCount);
-        auto oldlocals = locals;
+        vint32 *oldlocals = locals;
+        ACSLocalArrays *oldarrays = localarrays;
         // the function's first argument is also its first local variable
         locals = sp-func->ArgCount;
         //GCon->Logf("  :CALL:%d: oldlocals=%p; locals=%p; argc=%d; locc=%d (mine: argc=%d; locc=%d)", info->Number, oldlocals, locals, func->ArgCount, func->LocalCount, (activeFunction ? activeFunction->LocalCount : -1), (activeFunction ? activeFunction->LocalCount : -1));
@@ -5117,6 +5205,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         ((VAcsCallReturn *)sp)->ReturnFunction = activeFunction;
         ((VAcsCallReturn *)sp)->ReturnObject = ActiveObject;
         ((VAcsCallReturn *)sp)->ReturnLocals = oldlocals;
+        ((VAcsCallReturn *)sp)->ReturnArrays = oldarrays;
         ((VAcsCallReturn *)sp)->bDiscardResult = (cmd == PCD_CallDiscard);
         sp += sizeof(VAcsCallReturn)/sizeof(vint32);
         ActiveObject = object;
@@ -5176,6 +5265,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
           locals = retState->ReturnLocals;
           //!GCon->Logf("  :RET:%d: oldlocals=%p (%p); locals=%p; (isretval:%d; retval:%d; discard:%d); argc=%d; locc=%d (callee: argc=%d; locc=%d)", info->Number, oldlocals, retState->ReturnLocals, locals, (int)(cmd == PCD_ReturnVal), value, (int)(retState->bDiscardResult), activeFunction->ArgCount, activeFunction->LocalCount, oldactfunc->ArgCount, oldactfunc->LocalCount);
         }
+        localarrays = retState->ReturnArrays;
 
         if (!retState->bDiscardResult) {
           *sp = value;
@@ -6542,6 +6632,134 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       GCon->Logf(NAME_Dev, "ACS: unimplemented gzdoom opcode 362 (TranslationRange3)");
       ACSVM_BREAK;
 
+    ACSVM_CASE(PCD_GotoStack)
+      //GCon->Logf(NAME_Dev, "ACS: unimplemented gzdoom opcode 363 (GotoStack)");
+      ip = ActiveObject->OffsetToPtr(sp[-1]);
+      --sp;
+      ACSVM_BREAK;
+
+    ACSVM_CASE(PCD_AssignScriptArray)
+      localarrays->Set(locals, READ_BYTE_OR_INT32, sp[-2], sp[-1]);
+      INC_BYTE_OR_INT32;
+      sp -= 2;
+      ACSVM_BREAK;
+
+    ACSVM_CASE(PCD_PushScriptArray)
+      sp[-1] = localarrays->Get(locals, READ_BYTE_OR_INT32, sp[-1]);
+      INC_BYTE_OR_INT32;
+      ACSVM_BREAK;
+
+    ACSVM_CASE(PCD_AddScriptArray)
+      {
+        int ANum = READ_BYTE_OR_INT32;
+        localarrays->Set(locals, ANum, sp[-2], localarrays->Get(locals, ANum, sp[-2])+sp[-1]);
+        INC_BYTE_OR_INT32;
+        sp -= 2;
+      }
+      ACSVM_BREAK;
+
+    ACSVM_CASE(PCD_SubScriptArray)
+      {
+        int ANum = READ_BYTE_OR_INT32;
+        localarrays->Set(locals, ANum, sp[-2], localarrays->Get(locals, ANum, sp[-2])-sp[-1]);
+        INC_BYTE_OR_INT32;
+        sp -= 2;
+      }
+      ACSVM_BREAK;
+
+    ACSVM_CASE(PCD_MulScriptArray)
+      {
+        int ANum = READ_BYTE_OR_INT32;
+        localarrays->Set(locals, ANum, sp[-2], localarrays->Get(locals, ANum, sp[-2])*sp[-1]);
+        INC_BYTE_OR_INT32;
+        sp -= 2;
+      }
+      ACSVM_BREAK;
+
+    ACSVM_CASE(PCD_DivScriptArray)
+      {
+        if (sp[-1] == 0) Host_Error("ACS: division by zero!");
+        int ANum = READ_BYTE_OR_INT32;
+        localarrays->Set(locals, ANum, sp[-2], localarrays->Get(locals, ANum, sp[-2])/sp[-1]);
+        INC_BYTE_OR_INT32;
+        sp -= 2;
+      }
+      ACSVM_BREAK;
+
+    ACSVM_CASE(PCD_ModScriptArray)
+      {
+        if (sp[-1] == 0) Host_Error("ACS: division by zero!");
+        int ANum = READ_BYTE_OR_INT32;
+        localarrays->Set(locals, ANum, sp[-2], localarrays->Get(locals, ANum, sp[-2])%sp[-1]);
+        INC_BYTE_OR_INT32;
+        sp -= 2;
+      }
+      ACSVM_BREAK;
+
+    ACSVM_CASE(PCD_IncScriptArray)
+      {
+        int ANum = READ_BYTE_OR_INT32;
+        localarrays->Set(locals, ANum, sp[-1], localarrays->Get(locals, ANum, sp[-1])+1);
+        INC_BYTE_OR_INT32;
+        --sp;
+      }
+      ACSVM_BREAK;
+
+    ACSVM_CASE(PCD_DecScriptArray)
+      {
+        int ANum = READ_BYTE_OR_INT32;
+        localarrays->Set(locals, ANum, sp[-1], localarrays->Get(locals, ANum, sp[-1])-1);
+        INC_BYTE_OR_INT32;
+        --sp;
+      }
+      ACSVM_BREAK;
+
+    ACSVM_CASE(PCD_AndScriptArray)
+      {
+        int ANum = READ_BYTE_OR_INT32;
+        localarrays->Set(locals, ANum, sp[-2], localarrays->Get(locals, ANum, sp[-2])&sp[-1]);
+        INC_BYTE_OR_INT32;
+        sp -= 2;
+      }
+      ACSVM_BREAK;
+
+    ACSVM_CASE(PCD_EOrScriptArray)
+      {
+        int ANum = READ_BYTE_OR_INT32;
+        localarrays->Set(locals, ANum, sp[-2], localarrays->Get(locals, ANum, sp[-2])^sp[-1]);
+        INC_BYTE_OR_INT32;
+        sp -= 2;
+      }
+      ACSVM_BREAK;
+
+    ACSVM_CASE(PCD_OrScriptArray)
+      {
+        int ANum = READ_BYTE_OR_INT32;
+        localarrays->Set(locals, ANum, sp[-2], localarrays->Get(locals, ANum, sp[-2])|sp[-1]);
+        INC_BYTE_OR_INT32;
+        sp -= 2;
+      }
+      ACSVM_BREAK;
+
+    ACSVM_CASE(PCD_LSScriptArray)
+      {
+        int ANum = READ_BYTE_OR_INT32;
+        localarrays->Set(locals, ANum, sp[-2], localarrays->Get(locals, ANum, sp[-2])<<sp[-1]);
+        INC_BYTE_OR_INT32;
+        sp -= 2;
+      }
+      ACSVM_BREAK;
+
+    ACSVM_CASE(PCD_RSScriptArray)
+      {
+        int ANum = READ_BYTE_OR_INT32;
+        localarrays->Set(locals, ANum, sp[-2], localarrays->Get(locals, ANum, sp[-2])>>sp[-1]);
+        INC_BYTE_OR_INT32;
+        sp -= 2;
+      }
+      ACSVM_BREAK;
+
+
     // these p-codes are not supported; they will terminate script
     ACSVM_CASE(PCD_PlayerBlueSkull)
     ACSVM_CASE(PCD_PlayerRedSkull)
@@ -6613,6 +6831,9 @@ LblFuncStop:
   InstructionPointer = ip;
   savedsp = (sp < mystack ? nullptr : sp); //k8: this is UB, but idc
   savedlocals = locals;
+  //FIXME: this is wrong!
+  if (localarrays == &noarrays) localarrays = nullptr;
+  savedarrays = localarrays;
 
   if (action == SCRIPT_Terminate) {
     if (info->RunningScript == this) {
