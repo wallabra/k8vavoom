@@ -332,8 +332,15 @@ void VEntity::GetStateEffects (TArray<VLightEffectDef *> &Lights, TArray<VPartic
   if (!State) return;
   // find all matching effects
   const int len = GetClass()->SpriteEffects.length();
+  /*
+  if (VStr::strEquCI(GetClass()->GetName(), "ExplosiveBarrel")) {
+    //GCon->Logf(NAME_Debug, "BAR1(%s): light=%s; color=0x%08x; radius=(%g,%g)", Cls->GetName(), *SprDef.Light, SprFx.LightDef->Color, SprFx.LightDef->Radius, SprFx.LightDef->Radius2);
+    GCon->Logf("%s: sfxlen=%d", GetClass()->GetName(), len);
+  }
+  */
   for (int i = 0; i < len; ++i) {
     VSpriteEffect &SprFx = GetClass()->SpriteEffects[i];
+    //if (VStr::strEquCI(GetClass()->GetName(), "ExplosiveBarrel")) GCon->Logf("%s:   i=%d; SpriteIndex=%d(%s); Frame=%d; spfx: SpriteIndex=%d; Frame=%d", GetClass()->GetName(), i, State->SpriteIndex, *State->SpriteName, (State->Frame&VState::FF_FRAMEMASK), SprFx.SpriteIndex, SprFx.Frame);
     if (SprFx.SpriteIndex != State->SpriteIndex) continue;
     if (SprFx.Frame != -1 && SprFx.Frame != (State->Frame&VState::FF_FRAMEMASK)) continue;
     if (SprFx.LightDef) Lights.Append(SprFx.LightDef);

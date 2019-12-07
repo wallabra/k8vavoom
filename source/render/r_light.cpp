@@ -426,7 +426,7 @@ dlight_t *VRenderLevelShared::FindDlightById (int lightid) {
 //  VRenderLevelShared::DecayLights
 //
 //==========================================================================
-void VRenderLevelShared::DecayLights (float time) {
+void VRenderLevelShared::DecayLights (float timeDelta) {
   TFrustum frustum;
   int frustumState = 0; // <0: don't check; >1: inited
   if (!cl) frustumState = -1;
@@ -436,7 +436,8 @@ void VRenderLevelShared::DecayLights (float time) {
       RL_CLEAR_DLIGHT(dl);
       continue;
     }
-    dl->radius -= time*dl->decay;
+    //dl->radius -= timeDelta*(dl->decay/1000.0f);
+    dl->radius -= timeDelta*dl->decay;
     // remove small lights too
     if (dl->radius < 2.0f) {
       RL_CLEAR_DLIGHT(dl);

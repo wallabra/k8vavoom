@@ -907,16 +907,17 @@ static void ParseLightDef (VScriptParser *sc, int LightType) {
 //  GZSizeToRadius
 //
 //==========================================================================
-static inline float GZSizeToRadius (float Val) {
-  /*
-  if (Val <= 20.0f) return Val*4.5f;
-  if (Val <= 30.0f) return Val*3.6f;
-  if (Val <= 40.0f) return Val*3.3f;
-  if (Val <= 60.0f) return Val*2.8f;
-  return Val*2.5f;
-  */
-  //k8: 1.04f is just because i feel
-  return Val*1.04f; // size in map units
+static inline float GZSizeToRadius (float Val, bool attenuated) {
+  if (attenuated) {
+    //k8: 1.04f is just because i feel
+    return Val*1.04f; // size in map units
+  } else {
+    if (Val <= 20.0f) return Val*4.5f;
+    if (Val <= 30.0f) return Val*3.6f;
+    if (Val <= 40.0f) return Val*3.3f;
+    if (Val <= 60.0f) return Val*2.8f;
+    return Val*2.5f;
+  }
 }
 
 
@@ -942,7 +943,7 @@ static void ParseGZLightDef (VScriptParser *sc, int LightType, float lightsizefa
   L->Chance = 0.0f;
   L->Interval = 0.0f;
   L->Scale = 0.0f;
-  L->NoSelfShadow = 0;
+  L->NoSelfShadow = 1; // by default
 
   bool attenuated = false;
 
@@ -983,7 +984,7 @@ static void ParseGZLightDef (VScriptParser *sc, int LightType, float lightsizefa
       L->Scale = sc->Float;
     } else if (sc->Check("interval")) {
       sc->ExpectFloat();
-      L->Interval = sc->Float;
+      L->Interval = sc->Float*35.0f;
     } else if (sc->Check("additive")) {
       sc->ExpectNumber();
       sc->Message(va("Additive light ('%s') parameter not supported yet.", *L->Name));
@@ -1004,18 +1005,44 @@ static void ParseGZLightDef (VScriptParser *sc, int LightType, float lightsizefa
     } else if (sc->Check("noselfshadow")) {
       // k8vavoom extension
       L->NoSelfShadow = 1;
+    } else if (sc->Check("selfshadow")) {
+      // k8vavoom extension
+      L->NoSelfShadow = 0;
     } else {
       sc->Error(va("Bad gz light ('%s') parameter (%s)", *L->Name, *sc->String));
     }
   }
 
+  //k8: it seems to work this way...
   if (attenuated) {
     L->Radius *= lightsizefactor;
     L->Radius2 *= lightsizefactor;
+  } else {
+    //k8: i absolutely don't know what i am doing here, and why
+    // bump intensity
+    float r = ((L->Color>>16)&0xff)/255.0f;
+    float g = ((L->Color>>8)&0xff)/255.0f;
+    float b = (L->Color&0xff)/255.0f;
+    #if 0
+    float h, s, l;
+    M_RgbToHsl(r, g, b, h, s, l);
+    l = clampval(l*2.2f, 0.0f, 1.0f);
+    //GCon->Logf("OLD(%s): (%g,%g,%g)", *L->Name, r, g, b);
+    M_HslToRgb(h, s, l, r, g, b);
+    //GCon->Logf("NEW(%s): (%g,%g,%g)", *L->Name, r, g, b);
+    #else
+    float h, s, v;
+    M_RgbToHsv(r, g, b, h, s, v);
+    v = clampval(v*1.5f, 0.0f, 1.0f);
+    //GCon->Logf("OLD(%s): (%g,%g,%g)", *L->Name, r, g, b);
+    M_HsvToRgb(h, s, v, r, g, b);
+    //GCon->Logf("NEW(%s): (%g,%g,%g)", *L->Name, r, g, b);
+    #endif
+    L->Color = ((int)(r*255)<<16)|((int)(g*255)<<8)|(int)(b*255)|0xff000000;
   }
 
-  L->Radius = GZSizeToRadius(L->Radius);
-  L->Radius2 = GZSizeToRadius(L->Radius2);
+  L->Radius = GZSizeToRadius(L->Radius, attenuated);
+  L->Radius2 = GZSizeToRadius(L->Radius2, attenuated);
 }
 
 
@@ -1525,6 +1552,7 @@ void R_ParseEffectDefs () {
         if (!SprFx.LightDef) {
           GCon->Logf(NAME_Warning, "Light '%s' not found.", *SprDef.Light);
         }
+        if (VStr::strEquCI(SprName, "bar1")) GCon->Logf(NAME_Debug, "BAR1(%s): light=%s; color=0x%08x; radius=(%g,%g)", Cls->GetName(), *SprDef.Light, SprFx.LightDef->Color, SprFx.LightDef->Radius, SprFx.LightDef->Radius2);
       }
       SprFx.PartDef = nullptr;
       if (SprDef.Part.IsNotEmpty()) {

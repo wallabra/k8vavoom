@@ -1821,13 +1821,14 @@ final void DoStateEffects (float DeltaTime) {
   TVec Forward;
   TVec Right;
   TVec Up;
-  float LightTime;
-  float max;
 
   AngleVectors(Angles, out Forward, out Right, out Up);
 
   if (!bStaticLightSpawned) {
+    //if (self isa 'ExplosiveBarrel') printdebug("%C: numdynlights=%s (static=%B)", self, Lights.length, bStaticLightSpawned);
     // dynamic lights
+    float LightTime;
+    float max;
     // note that this is wrong, as entity can only have one dynlight attached
     //BeginEntityDlights(self); // this should forget all entity dlights, *AND* allow several dlights attached; noop for now
     //scope(exit) EndEntityDlights(self);
@@ -1840,52 +1841,62 @@ final void DoStateEffects (float DeltaTime) {
       TVec lorg = Origin+Forward*L->Offset.x-Right*L->Offset.y+Up*L->Offset.z;
       dlight_t *dl = AllocDlight(self, lorg, radius:fmax(0, fmax(prev_rad, L->Radius)), lightid:i); // pass "light id" to allow replacing
       if (!dl) continue; // alas
+      //if (self isa 'ExplosiveBarrel') printdebug("%C:  dlight=%s; org=%s; lorg=%s; lrad=%s; type=%s", self, i, Origin, dl->origin, dl->radius, L->Type);
       //print("%C: rad: %s", self, dl->radius);
       //dl->origin = Origin + Forward * L->Offset.x - Right * L->Offset.y + Up * L->Offset.z;
       switch (L->Type) {
         case DynamicLight::DLTYPE_Point:
         case DynamicLight::DLTYPE_Subtractive:
-          dl->decay = XLevel.Time+300.0;
+          //printdebug("%C: point light", self);
+          dl->decay = /*XLevel.Time+*/300.0;
           dl->radius = (prev_rad <= L->Radius ? prev_rad : (prev_rad-L->Radius)*XLevel.Time);
-          dl->radius += XLevel.Time*dl->decay;
+          dl->radius += /*XLevel.Time**/dl->decay;
+          //printdebug("000:%C: point light; radius=%s", self, dl->radius);
           if (dl->radius > L->Radius) dl->radius = L->Radius;
+          //printdebug("001:%C: point light; radius=%s", self, dl->radius);
           dl->type = L->Type;
           break;
         case DynamicLight::DLTYPE_MuzzleFlash:
           max = (L->Radius+Random()*(L->Radius2-L->Radius));
-          dl->decay = XLevel.Time+80.0;
+          dl->decay = /*XLevel.Time+*/80.0;
           dl->radius = (prev_rad <= L->Radius ? prev_rad : (prev_rad-L->Radius)*XLevel.Time);
-          dl->radius += XLevel.Time*dl->decay;
+          dl->radius += /*XLevel.Time**/dl->decay;
           if (dl->radius > max) dl->radius = max;
           break;
         case DynamicLight::DLTYPE_Pulse:
-          dl->decay = XLevel.Time+150.0;
+          //printdebug("%C: pulse light; interval=%s; rad=(%s,%s)", self, L->Interval, L->Radius, L->Radius2);
+          dl->decay = /*XLevel.Time+*/150.0;
           // avoid division by 0
-          float PulseCycle = (L->Interval ? L->Interval/35.0 : 1.0/35.0);
+          float PulseCycle = (L->Interval > 0 ? L->Interval/35.0 : 1.0/35.0);
           LightTime += DeltaTime;
           if (LightTime >= PulseCycle) LightTime = 0.0;
           float Frac = (1.0+sin(360.0*LightTime/PulseCycle))*0.5;
-          dl->radius = L->Radius+Frac*L->Radius2-L->Radius;
+          dl->radius = L->Radius+Frac*(L->Radius2-L->Radius);
+          //dl->radius *= 2.5;
+          //dl->decay = 0;
+          //L->Color = 0xff00ff00;
+          //printdebug("000:%C: pulse light; radius=%s; LightTime=%s; PulseCycle=%s; Frac=%s", self, dl->radius, LightTime, PulseCycle, Frac);
           break;
         case DynamicLight::DLTYPE_Flicker:
           if (L->Chance < 0) {
             // from gldef
             //printdebug("%C: gldef flicker light; chance=%s (%s)", self, L->Chance, -(L->Chance+1.0));
-            dl->decay = XLevel.Time+4.0;
+            dl->decay = /*XLevel.Time+*/80.0;
             dl->radius = (FRandomFull() <= -(L->Chance+1.0) ? L->Radius2 : L->Radius);
+            //printdebug("%C: gldef flicker light; chance=%s (%s); rad=%s", self, L->Chance, -(L->Chance+1.0), dl->radius);
           } else {
             // from entity
-            dl->decay = XLevel.Time+80.0;
-            dl->radius = Random() >= L->Chance/360.0 ? L->Radius2 : L->Radius;
+            dl->decay = /*XLevel.Time+*/80.0;
+            dl->radius = (Random() >= L->Chance/360.0 ? L->Radius2 : L->Radius);
           }
           break;
         case DynamicLight::DLTYPE_FlickerRandom:
           LightTime += DeltaTime;
           if (LightTime > L->Interval/360.0) {
-            max = (L->Radius+Random()*(L->Radius2-L->Radius));
-            dl->decay = XLevel.Time+80.0;
-            dl->radius = prev_rad <= L->Radius ? prev_rad : (prev_rad-L->Radius)*XLevel.Time;
-            dl->radius += XLevel.Time*dl->decay;
+            max = (L->Radius+FRandomFull()*(L->Radius2-L->Radius));
+            dl->decay = /*XLevel.Time+*/80.0;
+            dl->radius = (prev_rad <= L->Radius ? prev_rad : /*(prev_rad-L->Radius)*XLevel.Time*/max);
+            dl->radius += /*XLevel.Time**/dl->decay;
             if (dl->radius > max) dl->radius = max;
             LightTime = 0.0;
           }
