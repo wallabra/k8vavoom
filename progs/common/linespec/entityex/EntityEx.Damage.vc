@@ -561,6 +561,16 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
     return;
   }
 
+  // apply damage multiplier
+  if (source) {
+    damage = int(float(damage)*source.GenericDamageMultiplier);
+    if (damage <= 0) return;
+  } else if (inflictor) {
+    //k8: gozzo doesn't do this, but why not?
+    damage = int(float(damage)*inflictor.GenericDamageMultiplier);
+    if (damage <= 0) return;
+  }
+
   // amplify damage with powerups
   if (source && source.bIsPlayer && damage > 0 && source.Inventory) {
     int NewDmg = damage;
@@ -637,12 +647,16 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
   if (nameicmp(DmgType, 'Fire') == 0 && bFireResist) {
     damage >>= 1;
   } else { // k8: still check damage factors?
-    if (!ignoreDamageFactors && DamageFactors.length) {
-      float dfactor = FindDamageFactor(DmgType, float.nan);
-      if (!dfactor.isnan) {
-        //printdebug("%C: damage type %s reduction factor is %s", self, DmgType, dfactor);
-        damage = int(float(damage)*dfactor);
-        if (damage <= 0) return;
+    if (!ignoreDamageFactors) {
+      damage = int(float(damage)*GenericDamageFactor);
+      if (damage <= 0) return;
+      if (DamageFactors.length) {
+        float dfactor = FindDamageFactor(DmgType, float.nan);
+        if (!dfactor.isnan) {
+          //printdebug("%C: damage type %s reduction factor is %s", self, DmgType, dfactor);
+          damage = int(float(damage)*dfactor);
+          if (damage <= 0) return;
+        }
       }
     }
   }

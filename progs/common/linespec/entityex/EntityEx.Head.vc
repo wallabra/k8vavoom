@@ -81,7 +81,7 @@ enum {
   APROP_Damage        = 2, // implemented
   APROP_Alpha         = 3, // implemented
   APROP_RenderStyle   = 4, // implemented
-  APROP_SeeSound      = 5, // sounds can only be set, not gotten
+  APROP_SeeSound      = 5, // sounds can only be set, not get
   APROP_AttackSound   = 6,
   APROP_PainSound     = 7,
   APROP_DeathSound    = 8,
@@ -96,12 +96,12 @@ enum {
   APROP_SpawnHealth   = 17, // implemented
   // only getters
   APROP_Dropped       = 18, // implemented
-  APROP_Notarget      = 19,
+  APROP_Notarget      = 19, // partially implemented (read-only)
   APROP_Species       = 20, // getter only, implemented in C++ code
   APROP_NameTag       = 21, // getter only, implemented in C++ code
-  APROP_Score         = 22,
-  APROP_Notrigger     = 23,
-  APROP_DamageFactor  = 24,
+  APROP_Score         = 22, // implemented
+  APROP_Notrigger     = 23, // implemented
+  APROP_DamageFactor  = 24, // implemented
   APROP_MasterTID     = 25, // implemented
   APROP_TargetTID     = 26, // implemented
   APROP_TracerTID     = 27, // implemented
@@ -114,14 +114,14 @@ enum {
   APROP_Stamina       = 34,
   APROP_Height        = 35, // implemented
   APROP_Radius        = 36, // implemented
-  APROP_ReactionTime  = 37,
+  APROP_ReactionTime  = 37, // implemented
   APROP_MeleeRange    = 38, // implemented
   APROP_ViewHeight    = 39, // implemented
   APROP_AttackZOffset = 40, // implemented
   APROP_StencilColor  = 41,
   // not implemented yet (and prolly won't be)
   APROP_Friction         = 42,
-  APROP_DamageMultiplier = 43,
+  APROP_DamageMultiplier = 43, // implemented
   APROP_MaxStepHeight    = 44,
   APROP_MaxDropOffHeight = 45,
   APROP_DamageType       = 46,
@@ -513,6 +513,9 @@ bool bUseKillScripts;
 bool bNoKillScripts;
 bool bDontCorpse;
 
+int ScoreValue; // for APROP_Score
+float GenericDamageFactor = 1.0; // for APROP_DamageFactor
+float GenericDamageMultiplier = 1.0; // for APROP_DamageMultiplier
 
 // temporary for physics z change due to stepping
 transient float tmp_phys_z_change;

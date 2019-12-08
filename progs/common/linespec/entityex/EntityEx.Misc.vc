@@ -2308,6 +2308,21 @@ override void SetActorProperty (int Prop, int IntVal, string StrVal) {
       if (bIsPlayer) PlayerPawn(Player.MO).AttackZOffset = float(IntVal)/65536.0;
       break;
     case APROP_Notarget: break; // no, my dear mod author, you cannot do this
+    case APROP_Notrigger: bNoTrigger = !!IntVal; break;
+    case APROP_Score: ScoreValue = IntVal; break;
+    case APROP_DamageFactor:
+      // this fixes my fuckup with invalid `GetCVar()` ACS API
+      //if (IntVal <= 64) IntVal *= 65536;
+      GenericDamageFactor = fclamp(float(IntVal)/65536.0, 0, 100000);
+      //printdebug("%C: dmgfactor=%s (%s)", self, GenericDamageFactor, IntVal);
+      break;
+    case APROP_DamageMultiplier:
+      // this fixes my fuckup with invalid `GetCVar()` ACS API
+      //if (IntVal <= 64) IntVal *= 65536;
+      GenericDamageMultiplier = fclamp(float(IntVal)/65536.0, 0, 100000);
+      //printdebug("%C: dmgmult=%s (%s)", self, GenericDamageMultiplier, IntVal);
+      break;
+    case APROP_ReactionTime: ReactionCount = IntVal; break;
     default: dprint("%C: SetActorProperty: unknown property %d", self, Prop);
   }
 }
@@ -2355,6 +2370,11 @@ override int GetActorProperty (int Prop) {
     case APROP_AttackZOffset:
       return int((bIsPlayer ? PlayerEx(Player).GetAttackZOfs(missile:true) : 8.0)*65536.0);
     case APROP_Notarget: return (bIsPlayer ? PlayerEx(Player).bNoTarget : 0);
+    case APROP_Notrigger: return (bNoTrigger ? 1 : 0);
+    case APROP_Score: return ScoreValue;
+    case APROP_DamageFactor: return int(GenericDamageFactor*65536.0);
+    case APROP_DamageMultiplier: return int(GenericDamageMultiplier*65536.0);
+    case APROP_ReactionTime: return ReactionCount;
   }
   dprint("%C: GetActorProperty: unknown property %d", self, Prop);
   return 0;
