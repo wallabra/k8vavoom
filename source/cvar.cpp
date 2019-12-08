@@ -172,7 +172,7 @@ COMMAND(Toggle) {
 // create temp variable from user mod
 COMMAND(CvarInfoVar) {
   if (Args.Num() < 3) {
-    GCon->Logf("usage: cvarinfovar varname varvalue");
+    GCon->Logf("usage: cvarinfovar [flags-and-type] varname varvalue");
   } else {
     VStr vname = Args[Args.length()-2];
     VStr vvalue = Args[Args.length()-1];
@@ -184,15 +184,30 @@ COMMAND(CvarInfoVar) {
       return;
     }
     int flags = CVAR_FromMod|CVAR_Archive|CVAR_AlwaysArchive;
+    bool isint = false;
+    bool isfloat = false;
+    bool isstr = false;
+    bool isbool = false;
+    const char *cvtname = "int";
     for (int f = 1; f < Args.length()-2; ++f) {
            if (Args[f].ICmp("noarchive") == 0) flags &= ~(CVAR_Archive|CVAR_AlwaysArchive);
       else if (Args[f].ICmp("cheat") == 0) flags |= CVAR_Cheat;
       else if (Args[f].ICmp("latch") == 0) flags |= CVAR_Latch;
       else if (Args[f].ICmp("server") == 0) flags |= CVAR_ServerInfo;
       else if (Args[f].ICmp("user") == 0) {}
+      else if (Args[f].strEquCI("int")) { cvtname = "int"; isint = true; }
+      else if (Args[f].strEquCI("float")) { cvtname = "float"; isfloat = true; }
+      else if (Args[f].strEquCI("bool")) { cvtname = "bool"; isbool = true; }
+      else if (Args[f].strEquCI("string")) { cvtname = "string"; isstr = true; }
       else { GCon->Logf("invalid cvarinfo flag '%s'", *Args[f]); return; }
     }
-    //GCon->Logf("cvarinfo var '%s' (flags=0x%04x) val=\"%s\"", *vname, flags, *(vvalue.quote()));
-    VCvar::CreateNew(*vname, vvalue, "cvarinfo variable", flags);
+    if (!isint && !isfloat && !isstr && !isbool) isint = true;
+    VCvar *cv = VCvar::CreateNew(*vname, vvalue, va("cvarinfo %s variable", cvtname), flags);
+    if (cv) {
+           if (isstr) cv->SetType(VCvar::String);
+      else if (isbool) cv->SetType(VCvar::Bool);
+      else if (isfloat) cv->SetType(VCvar::Float);
+      else if (isint) cv->SetType(VCvar::Int);
+    }
   }
 }
