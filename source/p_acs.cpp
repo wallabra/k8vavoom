@@ -332,7 +332,7 @@ struct __attribute__((packed)) VAcsCallReturn {
   VAcsFunction *ReturnFunction;
   VAcsObject *ReturnObject;
   vint32 *ReturnLocals;
-  VACSLocalArrays *ReturnArrays;
+  //VACSLocalArrays *ReturnArrays; // no need to store this, it is always deterministic
   VAcsCallReturn *PrevFrame;
   vuint8 bDiscardResult;
 };
@@ -377,10 +377,7 @@ public:
   int HudHeight;
   VName Font;
   vint32 *mystack;
-  vint32 *savedsp;
-  vint32 *savedlocals;
-  VACSLocalArrays *savedarrays;
-  VAcsFunction *savedfunc;
+  vint32 savedsp; // index; initial is zero, and it is ok
   // stored here, so we can check for stack consistency (and print stack traces)
   VAcsCallReturn *currRetFrame;
 
@@ -403,20 +400,14 @@ public:
     , HudHeight(0)
     , Font(NAME_None)
     , mystack(nullptr)
-    , savedsp(nullptr)
-    , savedlocals(nullptr)
-    , savedarrays(nullptr)
-    , savedfunc(nullptr)
+    , savedsp(0)
     , currRetFrame(nullptr)
   {
     mystack = (vint32 *)Z_Calloc((VAcs::ACS_STACK_DEPTH+256)*sizeof(vint32)); // why not?
   }
 
   inline void ResetSaveds () noexcept {
-    savedsp = nullptr;
-    savedlocals = nullptr;
-    savedarrays = nullptr;
-    savedfunc = nullptr;
+    savedsp = 0;
     currRetFrame = nullptr;
   }
 
@@ -2115,16 +2106,11 @@ bool AcsHasScripts (VAcsLevel *acslevel) {
 void VAcs::Destroy () {
   if (!destroyed) {
     destroyed = true;
-    /*
-    if (LocalVars) {
-      delete[] LocalVars;
-      LocalVars = nullptr;
-    }
-    */
+    //if (LocalVars) { delete[] LocalVars; LocalVars = nullptr; }
     Level = nullptr;
     XLevel = nullptr;
+    ResetSaveds();
     if (mystack) { Z_Free(mystack); mystack = nullptr; }
-    savedsp = nullptr;
   }
 }
 
@@ -2138,9 +2124,9 @@ void VAcs::Serialise (VStream &Strm) {
   vint32 TmpInt;
 
   //Super::Serialise(Strm);
-  vuint8 xver = 2;
+  vuint8 xver = (savedsp ? 3 : 2);
   Strm << xver;
-  if (xver != 2) Host_Error("invalid ACS script version in save file");
+  if (xver != 2 && xver != 3) Host_Error("invalid ACS script version in save file (%d)", xver);
 
   if (Strm.IsLoading()) {
     vuint8 isDead;
@@ -2189,6 +2175,7 @@ void VAcs::Serialise (VStream &Strm) {
     << STRM_INDEX(WaitValue);
 
   if (Strm.IsLoading()) {
+    // load
     Strm << STRM_INDEX(TmpInt);
     ActiveObject = XLevel->Acs->GetObject(TmpInt);
     Strm << STRM_INDEX(TmpInt);
@@ -2201,11 +2188,32 @@ void VAcs::Serialise (VStream &Strm) {
       Destroy();
       Host_Error("ACS script %s has too many locals (%d)", *sdn, info->VarCount);
     }
+    // v3
+    ResetSaveds();
+    // saved stack pointer
+    if (xver >= 3) {
+      TmpInt = -1;
+      Strm << STRM_INDEX(TmpInt);
+      if (TmpInt < 0 || TmpInt >= VAcs::ACS_STACK_DEPTH) {
+        VStr sdn = DebugDumpToString();
+        Destroy();
+        Host_Error("ACS script %s has invalid saved stack pointer (%d)", *sdn, TmpInt);
+      }
+      savedsp = TmpInt;
+      //GCon->Logf(NAME_Debug, "script %s: savedsp=%d", *DebugDumpToString(), savedsp);
+    }
   } else {
-    TmpInt = ActiveObject->GetLibraryID() >> 16;
+    // save
+    TmpInt = ActiveObject->GetLibraryID()>>16;
     Strm << STRM_INDEX(TmpInt);
     TmpInt = ActiveObject->PtrToOffset(InstructionPointer);
     Strm << STRM_INDEX(TmpInt);
+    // v3
+    if (xver >= 3) {
+      // saved stack pointer
+      TmpInt = savedsp;
+      Strm << STRM_INDEX(TmpInt);
+    }
   }
 
   // local vars
@@ -3782,17 +3790,13 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
   //vassert(stack.stk);
   vassert(mystack);
   vint32 *optstart = nullptr;
-  vint32 *locals = (savedlocals ? savedlocals : LocalVars);
-  VACSLocalArrays *localarrays = (savedarrays ? savedarrays : &info->LocalArrays);
-  vassert(localarrays);
-  VAcsFunction *activeFunction = savedfunc;
+  vint32 *locals = LocalVars;
+  VAcsFunction *activeFunction = nullptr;
+  VACSLocalArrays *localarrays = &info->LocalArrays;
   EAcsFormat fmt = ActiveObject->GetFormat();
   int action = SCRIPT_Continue;
   vuint8 *ip = InstructionPointer;
-  //vint32 *sp = stack.stk;
-  vint32 *sp = (savedsp ? savedsp : mystack);
-  //vint32 *sp = mystack;
-  //memset(mystack, 0, (ACS_STACK_DEPTH+256)*sizeof(vint32)); // just in case
+  vint32 *sp = mystack+savedsp;
   VTextureTranslation *Translation = nullptr;
 #if !USE_COMPUTED_GOTO
   GCon->Logf(NAME_Debug, "ACS: === ENTERING SCRIPT %d(%s) at ip: %p (%d) ===", info->Number, *info->Name, ip, (int)(ptrdiff_t)(ip-info->Address));
@@ -3852,6 +3856,10 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_Suspend)
       State = ASTE_Suspended;
       action = SCRIPT_Stop;
+      if (activeFunction) {
+        GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to suspend inside a function; terminated", info->Number, *info->Name);
+        action = SCRIPT_Terminate;
+      }
       ACSVM_BREAK_STOP;
 
     ACSVM_CASE(PCD_PushNumber)
@@ -4227,32 +4235,26 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       --sp;
       ACSVM_BREAK;
 
-    ACSVM_CASE(PCD_Delay)
-      DelayTime += float(sp[-1])/35.0f;
-      /*
-      if (info->Number == 2603) {
-        GCon->Logf("VAcs::RunScript: self name is '%s' (number is %d)", *info->Name, info->Number);
-        GCon->Logf("  ACS: Delay(%d) (%f)", sp[-1], DelayTime*1000);
+    #define PERFORM_DELAY(tics_) \
+      if (activeFunction) { \
+        GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to `Delay()` inside a function; terminated", info->Number, *info->Name); \
+        action = SCRIPT_Terminate; \
+      } else { \
+        const int tc = (tics_); \
+        DelayTime += float(tc)/35.0f; \
+        DelayActivationTick = XLevel->TicTime+tc; \
+        if (DelayActivationTick <= XLevel->TicTime) DelayActivationTick = XLevel->TicTime+1; \
+        action = SCRIPT_Stop; \
       }
-      */
-      DelayActivationTick = XLevel->TicTime+sp[-1];
-      if (DelayActivationTick <= XLevel->TicTime) DelayActivationTick = XLevel->TicTime+1;
+
+    ACSVM_CASE(PCD_Delay)
+      PERFORM_DELAY(sp[-1])
       --sp;
-      action = SCRIPT_Stop;
       ACSVM_BREAK_STOP;
 
     ACSVM_CASE(PCD_DelayDirect)
-      DelayTime += float(READ_INT32(ip))/35.0f;
-      /*
-      if (info->Number == 2603) {
-        GCon->Logf("VAcs::RunScript: self name is '%s' (number is %d)", *info->Name, info->Number);
-        GCon->Logf("  ACS: Delay(%d) (%f)", sp[-1], DelayTime*1000);
-      }
-      */
-      DelayActivationTick = XLevel->TicTime+READ_INT32(ip);
-      if (DelayActivationTick <= XLevel->TicTime) DelayActivationTick = XLevel->TicTime+1;
+      PERFORM_DELAY(READ_INT32(ip))
       ip += 4;
-      action = SCRIPT_Stop;
       ACSVM_BREAK_STOP;
 
     ACSVM_CASE(PCD_Random)
@@ -4282,6 +4284,10 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       State = ASTE_WaitingForTag;
       --sp;
       action = SCRIPT_Stop;
+      if (activeFunction) {
+        GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to suspend inside a function; terminated", info->Number, *info->Name);
+        action = SCRIPT_Terminate;
+      }
       ACSVM_BREAK_STOP;
 
     ACSVM_CASE(PCD_TagWaitDirect)
@@ -4289,6 +4295,10 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       State = ASTE_WaitingForTag;
       ip += 4;
       action = SCRIPT_Stop;
+      if (activeFunction) {
+        GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to suspend inside a function; terminated", info->Number, *info->Name);
+        action = SCRIPT_Terminate;
+      }
       ACSVM_BREAK_STOP;
 
     ACSVM_CASE(PCD_PolyWait)
@@ -4296,6 +4306,10 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       State = ASTE_WaitingForPoly;
       --sp;
       action = SCRIPT_Stop;
+      if (activeFunction) {
+        GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to suspend inside a function; terminated", info->Number, *info->Name);
+        action = SCRIPT_Terminate;
+      }
       ACSVM_BREAK_STOP;
 
     ACSVM_CASE(PCD_PolyWaitDirect)
@@ -4303,6 +4317,10 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       State = ASTE_WaitingForPoly;
       ip += 4;
       action = SCRIPT_Stop;
+      if (activeFunction) {
+        GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to suspend inside a function; terminated", info->Number, *info->Name);
+        action = SCRIPT_Terminate;
+      }
       ACSVM_BREAK_STOP;
 
     ACSVM_CASE(PCD_ChangeFloor)
@@ -4433,6 +4451,10 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       }
       --sp;
       action = SCRIPT_Stop;
+      if (activeFunction) {
+        GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to suspend inside a function; terminated", info->Number, *info->Name);
+        action = SCRIPT_Terminate;
+      }
       ACSVM_BREAK_STOP;
 
     ACSVM_CASE(PCD_ScriptWaitDirect)
@@ -4446,6 +4468,10 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       }
       ip += 4;
       action = SCRIPT_Stop;
+      if (activeFunction) {
+        GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to suspend inside a function; terminated", info->Number, *info->Name);
+        action = SCRIPT_Terminate;
+      }
       ACSVM_BREAK_STOP;
 
     ACSVM_CASE(PCD_ScriptWaitNamed)
@@ -4466,6 +4492,10 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
           GCon->Logf(NAME_Warning, "ACS: PCD_ScriptWaitNamed wanted to wait for unknown script '%s'", *name);
         }
         action = SCRIPT_Stop;
+        if (activeFunction) {
+          GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to suspend inside a function; terminated", info->Number, *info->Name);
+          action = SCRIPT_Terminate;
+        }
       }
       ACSVM_BREAK_STOP;
 
@@ -5003,17 +5033,8 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_DelayDirectB)
-      DelayTime += float(*ip)/35.0f;
-      /*
-      if (info->Number == 2603) {
-        GCon->Logf("VAcs::RunScript: self name is '%s' (number is %d)", *info->Name, info->Number);
-        GCon->Logf("  ACS: Delay(%d) (%f)", sp[-1], DelayTime*1000);
-      }
-      */
-      DelayActivationTick = XLevel->TicTime+(*ip);
-      if (DelayActivationTick <= XLevel->TicTime) DelayActivationTick = XLevel->TicTime+1;
+      PERFORM_DELAY(*ip)
       ++ip;
-      action = SCRIPT_Stop;
       ACSVM_BREAK_STOP;
 
     ACSVM_CASE(PCD_RandomDirectB)
@@ -5268,7 +5289,6 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_CallStack)
       {
         VAcsObject *object = ActiveObject;
-        VAcsFunction *func;
         int funcnum;
         if (cmd != PCD_CallStack) {
           funcnum = READ_BYTE_OR_INT32;
@@ -5280,7 +5300,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
           object = ActiveObject->Level->GetObject((funcnum>>16)&0xffff);
           if (!object) Host_Error("ACS tried to indirectly call a function from inexisting object");
         }
-        func = ActiveObject->GetFunction(funcnum&0xffff, object);
+        VAcsFunction *func = /*ActiveObject*/object->GetFunction(funcnum&0xffff, object);
         if (!func) {
           GCon->Logf(NAME_Warning, "ACS: Function %d in script %d out of range", funcnum, number);
           action = SCRIPT_Terminate;
@@ -5294,7 +5314,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
           Host_Error("ACS: Out of stack space in script %d (%d slots missing)", number, (int)(ptrdiff_t)(sp-mystack)+func->LocalCount+128-ACS_STACK_DEPTH);
         }
         vint32 *oldlocals = locals;
-        VACSLocalArrays *oldarrays = localarrays;
+        //VACSLocalArrays *oldarrays = localarrays;
         // the function's first argument is also its first local variable
         locals = sp-func->ArgCount;
         localarrays = &func->LocalArrays;
@@ -5310,7 +5330,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         rf->ReturnFunction = activeFunction;
         rf->ReturnObject = ActiveObject;
         rf->ReturnLocals = oldlocals;
-        rf->ReturnArrays = oldarrays;
+        //rf->ReturnArrays = oldarrays;
         rf->bDiscardResult = (cmd == PCD_CallDiscard);
         rf->PrevFrame = currRetFrame;
         sp += GetRetStructStackSize();
@@ -5364,7 +5384,8 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         fmt = ActiveObject->GetFormat();
         vassert((activeFunction ? (sp >= retState->ReturnLocals) : (sp >= mystack)));
         locals = retState->ReturnLocals;
-        localarrays = retState->ReturnArrays;
+        //localarrays = retState->ReturnArrays;
+        localarrays = (activeFunction ? &activeFunction->LocalArrays : &info->LocalArrays);
         currRetFrame = retState->PrevFrame;
 
         if (!retState->bDiscardResult) {
@@ -6985,18 +7006,23 @@ LblFuncStop:
 #endif
   //fprintf(stderr, "VAcs::RunScript:003: self name is '%s' (number is %d)\n", *info->Name, info->Number);
   if (action == SCRIPT_Terminate) {
-    if (info->RunningScript == this) {
-      info->RunningScript = nullptr;
-    }
+    if (info->RunningScript == this) info->RunningScript = nullptr;
     //GCon->Logf(NAME_Debug, "*** ACS TERMINATED: %s (%d)", *info->Name, info->Number);
     ResetSaveds(); // just in case
     DestroyThinker();
   } else {
-    InstructionPointer = ip;
-    savedsp = (sp < mystack ? nullptr : sp); //k8: this is UB, but idc
-    savedlocals = locals;
-    savedarrays = localarrays;
-    savedfunc = activeFunction;
+    vassert(action == SCRIPT_Stop); // always
+    if (activeFunction) {
+      GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to suspend inside a function; terminated", info->Number, *info->Name);
+      action = SCRIPT_Terminate;
+      if (info->RunningScript == this) info->RunningScript = nullptr;
+      ResetSaveds(); // just in case
+      DestroyThinker();
+    } else {
+      InstructionPointer = ip;
+      savedsp = ((uintptr_t)sp < (uintptr_t)mystack ? 0 : (int)(ptrdiff_t)(sp-mystack));
+      vassert(locals == LocalVars);
+    }
   }
   //Z_Free(stack);
   return resultValue;
