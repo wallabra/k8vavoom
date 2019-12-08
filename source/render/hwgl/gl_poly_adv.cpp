@@ -554,24 +554,28 @@ void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float R
 
   if (!CanUseRevZ()) {
     // normal
-    //k8: this seems to be unnecessary
+    //FIXME! k8: this is done in main renderer now
+    /*
     if (!gl_dbg_adv_render_never_offset_shadow_volume) {
       if (gl_dbg_adv_render_offset_shadow_volume || !usingFPZBuffer) {
         glPolygonOffset(1.0f, 10.0f);
         glEnable(GL_POLYGON_OFFSET_FILL);
       }
     }
+    */
     glDepthFunc(GL_LESS);
     //glDepthFunc(GL_LEQUAL);
   } else {
     // reversed
-    //k8: this seems to be unnecessary
+    //FIXME! k8: this is done in main renderer now
+    /*
     if (!gl_dbg_adv_render_never_offset_shadow_volume) {
       if (gl_dbg_adv_render_offset_shadow_volume) {
         glPolygonOffset(-1.0f, -10.0f);
         glEnable(GL_POLYGON_OFFSET_FILL);
       }
     }
+    */
     glDepthFunc(GL_GREATER);
     //glDepthFunc(GL_GEQUAL);
   }
@@ -616,10 +620,13 @@ void VOpenGLDrawer::EndLightShadowVolumes () {
   //GCon->Logf("*** VOpenGLDrawer::EndLightShadowVolumes(): stencil_dirty=%d", (int)IsStencilBufferDirty());
   //RestoreDepthFunc(); // no need to do this, if will be modified anyway
   // meh, just turn if off each time
+  #if 0
+  //FIXME: done in main renderer now
   /*if (gl_dbg_adv_render_offset_shadow_volume || !usingFPZBuffer)*/ {
     glDisable(GL_POLYGON_OFFSET_FILL);
     glPolygonOffset(0.0f, 0.0f);
   }
+  #endif
   //glDisable(GL_SCISSOR_TEST);
   //glEnable(GL_TEXTURE_2D);
 }

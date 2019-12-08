@@ -1017,7 +1017,12 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   if (allowShadows) {
     if (r_shadowvol_use_pofs) {
       glEnable(GL_POLYGON_OFFSET_FILL);
-      glPolygonOffset(r_shadowvol_pslope, -r_shadowvol_pofs); // pull forward
+      // pull forward
+      if (Drawer->CanUseRevZ()) {
+        glPolygonOffset(r_shadowvol_pslope, -r_shadowvol_pofs);
+      } else {
+        glPolygonOffset(-r_shadowvol_pslope, r_shadowvol_pofs);
+      }
     }
     if (r_max_shadow_segs_all) {
       dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
