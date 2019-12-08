@@ -132,8 +132,8 @@ enum { ACSLEVEL_INTERNAL_STRING_STORAGE_INDEX = 0xfffeu };
 
 // internal engine limits
 enum {
-  MAX_ACS_SCRIPT_VARS = 20,
-  MAX_ACS_MAP_VARS  = 128,
+  MAX_ACS_SCRIPT_VARS = 32, // was 20
+  MAX_ACS_MAP_VARS    = 128,
 };
 
 enum EAcsFormat {
@@ -232,6 +232,61 @@ struct VAcsFunction {
     Address = cd.Address;
     LocalArrays.Clear();
   }
+};
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// simple stack pool
+#define ACS_MAX_STACKS  (32)
+static vint32 *acsStackPool[ACS_MAX_STACKS] = {0};
+static int acsStacksUsed = 0;
+static int acsStackNextFree = -1; // acsStackPool[acsStackNextFree][0] is the index of the next free stack
+
+#define  ACS_STACK_DEPTH  (32768)
+
+
+struct ACSStack {
+public:
+  vint32 *stk;
+  int stkPoolIdx; // -1: not in a pool
+
+public:
+  ACSStack () : stk(nullptr), stkPoolIdx(acsStackNextFree) {
+    if (stkPoolIdx >= 0) {
+      // reuse stack
+      stk = acsStackPool[stkPoolIdx];
+      acsStackNextFree = stk[0];
+      //GCon->Logf(NAME_Debug, "reused acs stack %d (next free is %d)", stkPoolIdx, acsStackNextFree);
+    } else if (acsStacksUsed < ACS_MAX_STACKS) {
+      // allocate a new free slot
+      stkPoolIdx = acsStacksUsed++;
+      stk = (vint32 *)Z_Calloc((ACS_STACK_DEPTH+512)*sizeof(vint32)); // why not?
+      acsStackPool[stkPoolIdx] = stk;
+      //GCon->Logf(NAME_Debug, "allocated new acs stack %d (next free is %d)", stkPoolIdx, acsStackNextFree);
+    } else {
+      // just allocate it here
+      stkPoolIdx = -1; // just in case
+      stk = (vint32 *)Z_Calloc((ACS_STACK_DEPTH+512)*sizeof(vint32)); // why not?
+      //GCon->Logf(NAME_Debug, "allocated new TEMP acs stack %d (next free is %d)", stkPoolIdx, acsStackNextFree);
+    }
+  }
+  ~ACSStack () {
+    if (stkPoolIdx < 0) {
+      Z_Free(stk);
+      //GCon->Logf(NAME_Debug, "freed TEMP acs stack %d (prev free is %d)", stkPoolIdx, acsStackNextFree);
+    } else {
+      vassert(stkPoolIdx < ACS_MAX_STACKS);
+      vassert(stk == acsStackPool[stkPoolIdx]);
+      //GCon->Logf(NAME_Debug, "freed acs stack %d (prev free is %d)", stkPoolIdx, acsStackNextFree);
+      stk[0] = acsStackNextFree;
+      acsStackNextFree = stkPoolIdx;
+    }
+    // just in case
+    stk = nullptr;
+    stkPoolIdx = -1;
+  }
+  ACSStack (const ACSStack &) = delete;
+  ACSStack &operator = (const ACSStack &) = delete;
 };
 
 
@@ -346,8 +401,6 @@ static constexpr int GetRetStructStackSize () noexcept {
 class VAcs : public VLevelScriptThinker /*: public VThinker*/ {
   //DECLARE_CLASS(VAcs, VThinker, 0)
   //NO_DEFAULT_CONSTRUCTOR(VAcs)
-public:
-  enum { MAX_LOCAL_VARS = 8192 };
 
 public:
   enum {
@@ -369,15 +422,17 @@ public:
   float DelayTime;
   vint32 DelayActivationTick; // used only when `acs_use_doomtic_granularity` is set
   vint32 WaitValue;
-  //vint32 *LocalVars;
-  vint32 LocalVars[MAX_LOCAL_VARS];
+  vint32 InlineLocalVars[MAX_ACS_SCRIPT_VARS]; // why not?
+  vint32 *LocalVars;
+  int LocalVarsCount;
   vuint8 *InstructionPointer;
   VAcsObject *ActiveObject;
   int HudWidth;
   int HudHeight;
   VName Font;
-  vint32 *mystack;
-  vint32 savedsp; // index; initial is zero, and it is ok
+  // we cannot delay with something on a stack (this is forbidden by the original ACS VM)
+  // so there is no reason to have a separate stack here, and to save a stack pointer
+  // `RunScript()` will take care of stack allocations
   // stored here, so we can check for stack consistency (and print stack traces)
   VAcsCallReturn *currRetFrame;
 
@@ -393,22 +448,42 @@ public:
     , DelayTime(0.0f)
     , DelayActivationTick(0)
     , WaitValue(0)
-    //, LocalVars(nullptr)
+    , LocalVars(nullptr)
+    , LocalVarsCount(0)
     , InstructionPointer(nullptr)
     , ActiveObject(nullptr)
     , HudWidth(0)
     , HudHeight(0)
     , Font(NAME_None)
-    , mystack(nullptr)
-    , savedsp(0)
     , currRetFrame(nullptr)
   {
-    mystack = (vint32 *)Z_Calloc((VAcs::ACS_STACK_DEPTH+256)*sizeof(vint32)); // why not?
   }
 
   inline void ResetSaveds () noexcept {
-    savedsp = 0;
     currRetFrame = nullptr;
+  }
+
+  inline void AllocateLocals (int count) {
+    if (count < 8) count = 8; // why not?
+    vassert(!LocalVars);
+    vassert(LocalVarsCount == 0);
+    LocalVarsCount = count;
+    if (count <= MAX_ACS_SCRIPT_VARS) {
+      LocalVars = InlineLocalVars;
+      memset(InlineLocalVars, 0, sizeof(InlineLocalVars));
+    } else {
+      LocalVars = (vint32 *)Z_Calloc(count*sizeof(LocalVars[0]));
+      //GCon->Logf(NAME_Debug, "%p: SCRIPT #%d allocated %d locals", (void *)this, info->Number, count);
+    }
+  }
+
+  inline void FreeLocals () {
+    if (LocalVars && LocalVars != InlineLocalVars) {
+      //GCon->Logf(NAME_Debug, "%p: SCRIPT #%d freed %d locals", (void *)this, info->Number, LocalVarsCount);
+      Z_Free(LocalVars);
+    }
+    LocalVars = nullptr;
+    LocalVarsCount = 0;
   }
 
   //virtual ~VAcs () override { Destroy(); } // just in case
@@ -439,9 +514,6 @@ public:
     strm.RegisterObject(Activator);
   }
   */
-
-public:
-  enum { ACS_STACK_DEPTH = 4096 };
 
 private:
   enum EScriptAction {
@@ -841,8 +913,8 @@ void VAcsObject::LoadEnhancedObject () {
       info = FindScript(LittleUShort(((vuint16 *)buffer)[0]));
       if (info) {
         info->VarCount = LittleUShort(((vuint16 *)buffer)[1]);
-        // make sure it's at least 4 so in SpawnScript we can safely assign args to first 4 variables
-        if (info->VarCount < 4) info->VarCount = 4;
+        // make sure it's at least 8 so in SpawnScript we can safely assign args to first 8 variables
+        if (info->VarCount < 8) info->VarCount = 8;
       }
     }
   }
@@ -1153,7 +1225,7 @@ void VAcsObject::LoadEnhancedObject () {
       if (info) {
         GCon->Logf(NAME_Debug, "SARY: found SARY for script #%d", scnum);
         info->VarCount = ParseLocalArrayChunk(buffer+2, &info->LocalArrays, info->VarCount);
-        if (info->VarCount >= VAcs::MAX_LOCAL_VARS-1) Sys_Error("too many locals in script with local arrays #%d", scnum);
+        //if (info->VarCount >= VAcs::MAX_LOCAL_VARS-1) Sys_Error("too many locals in script with local arrays #%d", scnum);
       } else {
         GCon->Logf(NAME_Debug, "SARY: unknown SARY for script #%d", scnum);
       }
@@ -2006,12 +2078,15 @@ VAcs *VAcsLevel::SpawnScript (VAcsInfo *Info, VAcsObject *Object,
   script->Activator = Activator;
   script->line = Line;
   script->side = Side;
+  script->AllocateLocals(Info->VarCount);
+  /*
   if (Info->VarCount > VAcs::MAX_LOCAL_VARS) {
     VStr sdn = script->DebugDumpToString();
     script->Destroy();
     delete script;
     Host_Error("ACS script %s has too many locals (%d)", *sdn, Info->VarCount);
   }
+  */
   //script->LocalVars = new vint32[Info->VarCount];
   //script->Font = VName("smallfont");
   if (Info->VarCount > 0) script->LocalVars[0] = Arg1;
@@ -2106,11 +2181,10 @@ bool AcsHasScripts (VAcsLevel *acslevel) {
 void VAcs::Destroy () {
   if (!destroyed) {
     destroyed = true;
-    //if (LocalVars) { delete[] LocalVars; LocalVars = nullptr; }
     Level = nullptr;
     XLevel = nullptr;
+    FreeLocals();
     ResetSaveds();
-    if (mystack) { Z_Free(mystack); mystack = nullptr; }
   }
 }
 
@@ -2124,9 +2198,9 @@ void VAcs::Serialise (VStream &Strm) {
   vint32 TmpInt;
 
   //Super::Serialise(Strm);
-  vuint8 xver = (savedsp ? 3 : 2);
+  vuint8 xver = 2;
   Strm << xver;
-  if (xver != 2 && xver != 3) Host_Error("invalid ACS script version in save file (%d)", xver);
+  if (xver != 2) Host_Error("invalid ACS script version in save file (%d)", xver);
 
   if (Strm.IsLoading()) {
     vuint8 isDead;
@@ -2183,46 +2257,33 @@ void VAcs::Serialise (VStream &Strm) {
     info = ActiveObject->FindScript(number);
     //LocalVars = new vint32[info->VarCount];
     //FIXME: memleak!
+    /*
     if (info->VarCount > VAcs::MAX_LOCAL_VARS) {
       VStr sdn = DebugDumpToString();
       Destroy();
       Host_Error("ACS script %s has too many locals (%d)", *sdn, info->VarCount);
     }
-    // v3
+    */
     ResetSaveds();
-    // saved stack pointer
-    if (xver >= 3) {
-      TmpInt = -1;
-      Strm << STRM_INDEX(TmpInt);
-      if (TmpInt < 0 || TmpInt >= VAcs::ACS_STACK_DEPTH) {
-        VStr sdn = DebugDumpToString();
-        Destroy();
-        Host_Error("ACS script %s has invalid saved stack pointer (%d)", *sdn, TmpInt);
-      }
-      savedsp = TmpInt;
-      //GCon->Logf(NAME_Debug, "script %s: savedsp=%d", *DebugDumpToString(), savedsp);
-    }
   } else {
     // save
     TmpInt = ActiveObject->GetLibraryID()>>16;
     Strm << STRM_INDEX(TmpInt);
     TmpInt = ActiveObject->PtrToOffset(InstructionPointer);
     Strm << STRM_INDEX(TmpInt);
-    // v3
-    if (xver >= 3) {
-      // saved stack pointer
-      TmpInt = savedsp;
-      Strm << STRM_INDEX(TmpInt);
-    }
   }
 
   // local vars
   int varCount = info->VarCount;
   Strm << STRM_INDEX(varCount);
   if (Strm.IsLoading()) {
-    if (varCount != info->VarCount) Host_Error("invalid number of ACS script locals in save file");
+    if (varCount > info->VarCount) Host_Error("invalid number of ACS script locals in save file");
+    FreeLocals();
+    AllocateLocals(varCount);
   }
-  for (int i = 0; i < info->VarCount; ++i) Strm << LocalVars[i];
+  //GCon->Logf(NAME_Debug, "varCount=%d; LocalVarsCount=%d", varCount, LocalVarsCount);
+  vassert(varCount <= LocalVarsCount);
+  for (int i = 0; i < /*info->VarCount*/varCount; ++i) Strm << LocalVars[i];
 
   Strm << HudWidth
     << HudHeight
@@ -3609,61 +3670,6 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
 } while (0) \
 
 
-/*
-#define ACS_MAX_STACKS  (32)
-static vint32 *acsStackPool[ACS_MAX_STACKS] = {0};
-static vuint32 acsStackBitmap = 0;
-static int acsStacksUsed = 0;
-
-
-struct ACSStack {
-public:
-  vint32 *stk;
-  int stkPoolIdx; // -1: not in a pool
-
-public:
-  ACSStack (bool fakeme) : stk(nullptr), stkPoolIdx(-1) {
-    if (acsStackBitmap == 0xffffffffu) {
-      // no free slots
-      //stkPoolIdx = -1;
-      stk = (vint32 *)Z_Calloc((VAcs::ACS_STACK_DEPTH+256)*sizeof(vint32)); // why not?
-    } else if (acsStacksUsed < ACS_MAX_STACKS) {
-      // create new slot
-      stkPoolIdx = acsStacksUsed++;
-      stk = (vint32 *)Z_Calloc((VAcs::ACS_STACK_DEPTH+256)*sizeof(vint32)); // why not?
-      acsStackPool[stkPoolIdx] = stk;
-      acsStackBitmap |= (1U<<(stkPoolIdx&0x1f));
-    } else {
-      // find a free slot
-      //stkPoolIdx = -1;
-      for (int f = 0; f < 32; ++f) {
-        if ((acsStackBitmap&(1U<<(stkPoolIdx&0x1f))) == 0) {
-          // i found her!
-          stkPoolIdx = f;
-          stk = acsStackPool[stkPoolIdx];
-          acsStackBitmap |= (1U<<(stkPoolIdx&0x1f));
-        }
-      }
-      vassert(stkPoolIdx >= 0);
-      vassert(stk);
-    }
-  }
-  ~ACSStack () {
-    if (stkPoolIdx < 0) {
-      Z_Free(stk);
-    } else {
-      acsStackBitmap &= ~(1U<<(stkPoolIdx&0x1f));
-    }
-    // just in case
-    stk = nullptr;
-    stkPoolIdx = -1;
-  }
-  ACSStack (const ACSStack &) = delete;
-  ACSStack &operator = (const ACSStack &) = delete;
-};
-*/
-
-
 //==========================================================================
 //
 //  VAcs::TranslateSpecial
@@ -3785,18 +3791,18 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
   TArray<VStr> PrintStrStack; // string builders must be stacked
   VStr PrintStr;
   vint32 resultValue = 1;
-  //vint32 *stack = (vint32 *)Z_Calloc(ACS_STACK_DEPTH+256); // why not?
-  //ACSStack stack(true);
-  //vassert(stack.stk);
-  vassert(mystack);
   vint32 *optstart = nullptr;
   vint32 *locals = LocalVars;
+  vassert(locals);
   VAcsFunction *activeFunction = nullptr;
   VACSLocalArrays *localarrays = &info->LocalArrays;
   EAcsFormat fmt = ActiveObject->GetFormat();
   int action = SCRIPT_Continue;
   vuint8 *ip = InstructionPointer;
-  vint32 *sp = mystack+savedsp;
+  // get a fresh stack
+  ACSStack vmstack;
+  vint32 *mystack = vmstack.stk;
+  vint32 *sp = mystack;
   VTextureTranslation *Translation = nullptr;
 #if !USE_COMPUTED_GOTO
   GCon->Logf(NAME_Debug, "ACS: === ENTERING SCRIPT %d(%s) at ip: %p (%d) ===", info->Number, *info->Name, ip, (int)(ptrdiff_t)(ip-info->Address));
@@ -7018,13 +7024,17 @@ LblFuncStop:
       if (info->RunningScript == this) info->RunningScript = nullptr;
       ResetSaveds(); // just in case
       DestroyThinker();
+    } else if (sp != mystack) {
+      GCon->Logf(NAME_Error, "ACS script #%d (named '%s') tried to delay/suspend with non-empty stack; terminated", info->Number, *info->Name);
+      action = SCRIPT_Terminate;
+      if (info->RunningScript == this) info->RunningScript = nullptr;
+      ResetSaveds(); // just in case
+      DestroyThinker();
     } else {
       InstructionPointer = ip;
-      savedsp = ((uintptr_t)sp < (uintptr_t)mystack ? 0 : (int)(ptrdiff_t)(sp-mystack));
       vassert(locals == LocalVars);
     }
   }
-  //Z_Free(stack);
   return resultValue;
 }
 
