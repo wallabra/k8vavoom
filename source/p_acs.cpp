@@ -744,7 +744,7 @@ void VAcsObject::LoadOldObject () {
 //
 //==========================================================================
 static int ParseLocalArrayChunk (void *chunk, ACSLocalArrays *arrays, int offset) {
-  int count = LittleShort(((vuint16 *)chunk)[1]-2)/4;
+  int count = LittleUShort(((vuint16 *)chunk)[1]-2)/4;
   vint32 *sizes = (vint32 *)((vuint8 *)chunk+10);
   arrays->SetCount(count);
   GCon->Logf(NAME_Debug, " count=%d (%d)", count, arrays->Count);
@@ -783,8 +783,8 @@ void VAcsObject::LoadEnhancedObject () {
       buffer += 2;
 
       for (i = 0, info = Scripts; i < NumScripts; ++i, ++info) {
-        info->Number = LittleShort(*(vuint16 *)buffer);
-        info->Type = LittleShort(((vuint16 *)buffer)[1]);
+        info->Number = LittleUShort(*(vuint16 *)buffer);
+        info->Type = LittleUShort(((vuint16 *)buffer)[1]);
         ++buffer;
         info->Address = OffsetToPtr(LittleLong(*buffer++));
         info->ArgCount = LittleLong(*buffer++);
@@ -799,7 +799,7 @@ void VAcsObject::LoadEnhancedObject () {
       buffer += 2;
 
       for (i = 0, info = Scripts; i < NumScripts; ++i, ++info) {
-        info->Number = LittleShort(*(vuint16 *)buffer);
+        info->Number = LittleUShort(*(vuint16 *)buffer);
         info->Type = ((vuint8*)buffer)[2];
         info->ArgCount = ((vuint8*)buffer)[3];
         ++buffer;
@@ -824,9 +824,9 @@ void VAcsObject::LoadEnhancedObject () {
     int count = LittleLong(buffer[1])/4;
     buffer += 2;
     for (i = 0; i < count; ++i, ++buffer) {
-      info = FindScript(LittleShort(((vuint16 *)buffer)[0]));
+      info = FindScript(LittleUShort(((vuint16 *)buffer)[0]));
       if (info) {
-        info->Flags = LittleShort(((vuint16 *)buffer)[1]);
+        info->Flags = LittleUShort(((vuint16 *)buffer)[1]);
       }
     }
   }
@@ -837,9 +837,9 @@ void VAcsObject::LoadEnhancedObject () {
     int count = LittleLong(buffer[1])/4;
     buffer += 2;
     for (i = 0; i < count; ++i, ++buffer) {
-      info = FindScript(LittleShort(((vuint16 *)buffer)[0]));
+      info = FindScript(LittleUShort(((vuint16 *)buffer)[0]));
       if (info) {
-        info->VarCount = LittleShort(((vuint16 *)buffer)[1]);
+        info->VarCount = LittleUShort(((vuint16 *)buffer)[1]);
         // make sure it's at least 4 so in SpawnScript we can safely assign args to first 4 variables
         if (info->VarCount < 4) info->VarCount = 4;
       }
@@ -880,7 +880,7 @@ void VAcsObject::LoadEnhancedObject () {
     for (buffer = (int *)FindChunk("FARY"); buffer; buffer = (int *)NextChunk((vuint8 *)buffer)) {
       int size = LittleLong(buffer[1]);
       if (size >= 6) {
-        int funcnum = LittleShort(((vuint16 *)buffer)[4]);
+        int funcnum = LittleUShort(((vuint16 *)buffer)[4]);
         if (funcnum >= 0 && funcnum < Functions.length()) {
           VAcsFunction *func = &Functions[funcnum];
           // unlike scripts, functions do not include their arg count in their local count
@@ -1147,7 +1147,7 @@ void VAcsObject::LoadEnhancedObject () {
   for (buffer = (int *)FindChunk("SARY"); buffer; buffer = (int *)NextChunk((vuint8 *)buffer)) {
     int size = LittleLong(buffer[1]);
     if (size >= 6) {
-      int scnum = LittleShort(((vuint16 *)buffer)[4]);
+      int scnum = LittleUShort(((vuint16 *)buffer)[4]);
       info = FindScript(scnum);
       if (info) {
         GCon->Logf(NAME_Debug, "SARY: found SARY for script #%d", scnum);
