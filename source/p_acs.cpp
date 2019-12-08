@@ -432,7 +432,7 @@ public:
   virtual int GetNumber () override;
 
   void TranslateSpecial (int &spec, int &arg1);
-  int RunScript (float, bool immediate);
+  int RunScript (float DeltaTime, bool immediate);
   virtual void Tick (float) override;
   int CallFunction (int argCount, int funcIndex, vint32 *args);
 
@@ -3763,6 +3763,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
   } else {
     if (!doRunItVT) return 1;
   }
+  //k8: why i decided to limit this?
   if (DelayTime > 0) DelayTime = 0; else if (DelayTime < -1.0f/35.0f) DelayTime = -1.0f/35.0f;
 
   //fprintf(stderr, "VAcs::RunScript:002: self name is '%s' (number is %d)\n", *info->Name, info->Number);
