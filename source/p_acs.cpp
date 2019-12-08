@@ -5803,7 +5803,14 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         else if (cvname.strEquCI("m_yaw")) { val = (int)(m_yaw.asFloat()*65536.0f); }
         else if (cvname.strEquCI("m_pitch")) { val = (int)(m_pitch.asFloat()*65536.0f); }
         else if (cvname.strEquCI("mouse_sensitivity")) { val = (int)(max2(mouse_x_sensitivity.asFloat(), mouse_y_sensitivity.asFloat())*65536.0f); }
-        else { val = VCvar::GetInt(*cvname); }
+        else {
+          VCvar *vc = VCvar::FindVariable(*cvname);
+          if (vc) {
+            val = (vc->GetType() == VCvar::Float ? int(vc->asFloat()*65536.0f) : vc->asInt());
+          } else {
+            val = 0;
+          }
+        }
         //GCon->Logf("GetCvar(%s)=%d", *cvname, val);
         sp[-1] = val;
       }
