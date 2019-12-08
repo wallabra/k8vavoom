@@ -1300,10 +1300,68 @@ VVA_CHECKRESULT VStr VStr::xmlUnescape () const noexcept {
 }
 
 
+// this translates "\\c" to `\c`
 VVA_CHECKRESULT VStr VStr::EvalEscapeSequences () const noexcept {
   VStr res;
   const char *c = getData();
   if (!c || !c[0]) return res;
+  int val;
+  while (*c) {
+    const char *slashp = strchr(c, '\\');
+    if (!slashp) slashp = c+strlen(c);
+    if (slashp != c) {
+      res.appendCStr(c, (int)(ptrdiff_t)(slashp-c));
+      c = slashp;
+      if (!c[0]) break;
+    }
+    vassert(c[0] == '\\');
+    if (!c[1]) { res += '\\'; break; }
+    // interpret escape sequence
+    char ec = c[1];
+    c += 2;
+    switch (ec) {
+      case 't': res += '\t'; break;
+      case 'n': res += '\n'; break;
+      case 'r': res += '\r'; break;
+      case 'e': res += '\x1b'; break;
+      case 'c': res += (char)TEXT_COLOR_ESCAPE; break;
+      case 'x':
+        val = digitInBase(*c, 16);
+        if (val >= 0) {
+          ++c;
+          int d = digitInBase(*c, 16);
+          if (d >= 0) {
+            ++c;
+            val = val*16+d;
+          }
+          if (val == 0) val = ' ';
+          res += (char)val;
+        }
+        break;
+      case '0': case '1': case '2': case '3':
+      case '4': case '5': case '6': case '7':
+        val = 0;
+        for (int i = 0; i < 3; ++i) {
+          int d = digitInBase(*c, 8);
+          if (d < 0) break;
+          val = val*8+d;
+          ++c;
+        }
+        if (val == 0) val = ' ';
+        res += (char)val;
+        break;
+      case '\n':
+        break;
+      case '\r':
+        if (*c == '\n') ++c;
+        break;
+      default:
+        res += '\\';
+        res += ec;
+        break;
+    }
+  }
+  /*
   int val;
   while (*c) {
     if (c[0] == '\\' && c[1]) {
@@ -1352,6 +1410,7 @@ VVA_CHECKRESULT VStr VStr::EvalEscapeSequences () const noexcept {
       res += *c++;
     }
   }
+  */
   return res;
 }
 

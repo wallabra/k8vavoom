@@ -440,6 +440,7 @@ public:
   VVA_CHECKRESULT VStr xmlEscape () const noexcept;
   VVA_CHECKRESULT VStr xmlUnescape () const noexcept;
 
+  // this translates "\\c" to `\c`
   VVA_CHECKRESULT VStr EvalEscapeSequences () const noexcept;
 
   VVA_CHECKRESULT VStr RemoveColors () const noexcept;
