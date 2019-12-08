@@ -375,28 +375,24 @@ public:
     return stdout;
   }
 
+  static inline bool IsPrintBreakChar (const char ch) noexcept {
+    return
+      ch == 127 ||
+      ch == TEXT_COLOR_ESCAPE ||
+      ((vuint8)ch < 32 && ch != '\r' && ch != '\n' && ch != '\t' && ch != 8);
+  }
+
   static void printStr (const char *s, size_t len, FILE *fo) noexcept {
-    if (!s || !fo) return;
+    if (!s || !fo || !len) return;
     while (len) {
       const char *esc = s;
-      size_t left = len;
-      while (left) {
-        vuint8 ch = *(const vuint8 *)esc;
-        if (ch == 127) break;
-        if (ch == TEXT_COLOR_ESCAPE) break;
-        if (ch < ' ') {
-          if (ch != '\r' && ch != '\n' && ch != '\t' && ch != 8) break;
-        }
-        ++esc;
-        --left;
-      }
-      if (!left) {
-        fwrite(s, len, 1, fo);
-        return;
-      }
-      if (left < len) {
-        fwrite(s, len-left, 1, fo);
-        len -= left;
+      size_t pfxlen = 0;
+      while (pfxlen < len && !IsPrintBreakChar(*esc)) { ++esc; ++pfxlen; }
+      if (pfxlen == len) { fwrite(s, len, 1, fo); return; } // done
+      // found some break char
+      if (pfxlen) {
+        fwrite(s, pfxlen, 1, fo);
+        len -= pfxlen;
         s = esc;
       }
       vassert(len > 0);
@@ -453,6 +449,7 @@ public:
   }
 
   virtual void Serialise (const char *Text, EName Event) noexcept override {
+    //if (Text[0]) { FILE *fo = fopen("z.txt", "a"); fwrite(Text, strlen(Text), 1, fo); fputc('|', fo); fclose(fo); }
     if (Event == NAME_None) Event = NAME_Log;
     if (!GLogTTYLog) { lastEvent = NAME_None; return; }
     //printf("===(%s)\n%s\n===\n", *VName(Event), Text);
@@ -474,6 +471,7 @@ public:
         }
         lastWasNL = false;
         printStr(Text, (size_t)(ptrdiff_t)(eol-Text), outfile());
+        //{ FILE *fo = fopen("z1.txt", "a"); fwrite(Text, (size_t)(ptrdiff_t)(eol-Text), 1, fo); fputc('|', fo); fputc('\n', fo); fclose(fo); }
       }
       if (!eol[0]) break; // no more
       // new line
