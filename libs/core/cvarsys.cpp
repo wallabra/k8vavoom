@@ -638,11 +638,11 @@ void VCvar::Unlatch () {
 //  VCvar::CreateNew
 //
 //==========================================================================
-void VCvar::CreateNew (VName var_name, VStr ADefault, VStr AHelp, int AFlags) {
-  if (var_name == NAME_None) return;
+VCvar *VCvar::CreateNew (VName var_name, VStr ADefault, VStr AHelp, int AFlags) {
+  if (var_name == NAME_None) return nullptr;
   VCvar *cvar = FindVariable(*var_name);
   if (!cvar) {
-    new VCvar(*var_name, ADefault, AHelp, AFlags);
+    return new VCvar(*var_name, ADefault, AHelp, AFlags);
   } else {
     // delete old default value if necessary
     if (cvar->defstrOwned) delete[] const_cast<char *>(cvar->DefaultString);
@@ -663,7 +663,56 @@ void VCvar::CreateNew (VName var_name, VStr ADefault, VStr AHelp, int AFlags) {
     }
     // update flags
     cvar->Flags = AFlags;
+    return cvar;
   }
+}
+
+
+//==========================================================================
+//
+//  VCvar::CreateNewInt
+//
+//==========================================================================
+VCvar *VCvar::CreateNewInt (VName var_name, int ADefault, VStr AHelp, int AFlags) {
+  VCvar *cv = CreateNew(var_name, VStr(ADefault), AHelp, AFlags);
+  if (cv) cv->SetType(Int);
+  return cv;
+}
+
+
+//==========================================================================
+//
+//  VCvar::CreateNewFloat
+//
+//==========================================================================
+VCvar *VCvar::CreateNewFloat (VName var_name, float ADefault, VStr AHelp, int AFlags) {
+  VCvar *cv = CreateNew(var_name, VStr(ADefault), AHelp, AFlags);
+  if (cv) cv->SetType(Float);
+  return cv;
+}
+
+
+//==========================================================================
+//
+//  VCvar::CreateNewBool
+//
+//==========================================================================
+VCvar *VCvar::CreateNewBool (VName var_name, bool ADefault, VStr AHelp, int AFlags) {
+  VCvar *cv = CreateNew(var_name, VStr(ADefault ? "1" : "0"), AHelp, AFlags);
+  if (cv) cv->SetType(Bool);
+  return cv;
+}
+
+
+//==========================================================================
+//
+//  VCvar::CreateNewStr
+//
+//==========================================================================
+VCvar *VCvar::CreateNewStr (VName var_name, VStr ADefault, VStr AHelp, int AFlags) {
+  VCvar *cv = CreateNew(var_name, ADefault, AHelp, AFlags);
+  if (cv) cv->SetType(String);
+  return cv;
 }
 
 
@@ -971,6 +1020,12 @@ void VCvar::WriteVariablesToStream (VStream *st, bool saveDefaultValues) {
         if (cvar->Flags&CVAR_ServerInfo) st->writef(" server"); else st->writef(" user");
         if (cvar->Flags&CVAR_Cheat) st->writef(" cheat");
         if (cvar->Flags&CVAR_Latch) st->writef(" latch");
+        switch (cvar->GetType()) {
+          case String: st->writef(" string"); break;
+          case Int: st->writef(" int"); break;
+          case Float: st->writef(" float"); break;
+          case Bool: st->writef(" bool"); break;
+        }
         st->writef(" %s \"%s\"\n", cvar->Name, *cvar->StringValue.quote());
       } else {
         st->writef("%s \"%s\"\n", cvar->Name, *cvar->StringValue.quote());

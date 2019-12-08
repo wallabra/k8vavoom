@@ -127,7 +127,11 @@ public:
 
   static bool CanBeModified (const char *var_name, bool modonly=false, bool noserver=true);
 
-  static void CreateNew (VName var_name, VStr ADefault, VStr AHelp, int AFlags);
+  static VCvar *CreateNew (VName var_name, VStr ADefault, VStr AHelp, int AFlags);
+  static VCvar *CreateNewInt (VName var_name, int ADefault, VStr AHelp, int AFlags);
+  static VCvar *CreateNewFloat (VName var_name, float ADefault, VStr AHelp, int AFlags);
+  static VCvar *CreateNewBool (VName var_name, bool ADefault, VStr AHelp, int AFlags);
+  static VCvar *CreateNewStr (VName var_name, VStr ADefault, VStr AHelp, int AFlags);
 
   static int GetInt (const char *var_name);
   static float GetFloat (const char *var_name);
