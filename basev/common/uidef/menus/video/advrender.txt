@@ -2,6 +2,18 @@
 menudef AdvRenderOptions {
   Title = "ADVANCED RENDER OPTIONS";
 
+  header "Options for broken OpenGL drivers";
+
+  option bool {
+    title = "Z-Fighting Prevention";
+    cvar = r_shadowvol_use_pofs;
+    help =
+      "This option should prevent z-fighting with shadow volumes."
+      "But with some OpenGL drivers it breaks shadow volumes completely."
+      "If you set renderer to Shadow Volumes, and suddenly the lighting"
+      "is glitchy, try to turn this 'OFF'";
+  }
+
 
   header "Render Portals Options";
 
