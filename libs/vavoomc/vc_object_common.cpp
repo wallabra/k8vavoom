@@ -1578,6 +1578,46 @@ IMPLEMENT_FUNCTION(VObject, CreateCvar) {
   VCvar::CreateNew(name, def, help, flags);
 }
 
+// native static final void CreateCvarInt (name Name, int defaultValue, string helpText, optional int flags);
+IMPLEMENT_FUNCTION(VObject, CreateCvarInt) {
+  VName name;
+  int def;
+  VStr help;
+  VOptParamInt flags(0);
+  vobjGetParam(name, def, help, flags);
+  VCvar::CreateNewInt(name, def, help, flags);
+}
+
+// native static final void CreateCvarFloat (name Name, float defaultValue, string helpText, optional int flags);
+IMPLEMENT_FUNCTION(VObject, CreateCvarFloat) {
+  VName name;
+  float def;
+  VStr help;
+  VOptParamInt flags(0);
+  vobjGetParam(name, def, help, flags);
+  VCvar::CreateNewFloat(name, def, help, flags);
+}
+
+// native static final void CreateCvarBool (name Name, bool defaultValue, string helpText, optional int flags);
+IMPLEMENT_FUNCTION(VObject, CreateCvarBool) {
+  VName name;
+  bool def;
+  VStr help;
+  VOptParamInt flags(0);
+  vobjGetParam(name, def, help, flags);
+  VCvar::CreateNewBool(name, def, help, flags);
+}
+
+// native static final void CreateCvarStr (name Name, string defaultValue, string helpText, optional int flags);
+IMPLEMENT_FUNCTION(VObject, CreateCvarStr) {
+  VName name;
+  VStr def;
+  VStr help;
+  VOptParamInt flags(0);
+  vobjGetParam(name, def, help, flags);
+  VCvar::CreateNewStr(name, def, help, flags);
+}
+
 // native static final int GetCvar (name Name);
 IMPLEMENT_FUNCTION(VObject, GetCvar) {
   VName name;
