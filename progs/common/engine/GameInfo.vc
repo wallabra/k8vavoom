@@ -116,23 +116,26 @@ void ParseCVarInfo () {
         // value
         float fval = 0;
         string sval = "";
+        bool isint = false;
         bool isfloat = false;
         bool isstr = false;
         bool isbool = false;
         bool iscolor = false;
         // type
-             if (par.Check("int") || par.Check("float")) isfloat = true;
+             if (par.Check("int")) isint = true;
+        else if (par.Check("float")) isfloat = true;
         else if (par.Check("bool")) isbool = true;
         else if (par.Check("string")) isstr = true;
         else if (par.Check("color")) { iscolor = true; sval = "00 00 00"; }
         else par.ScriptError("CVARINFO ERROR: unknown cvar type '%s'", par.String);
         // name
+        if (!isint && !isfloat && !isstr && !isbool && !iscolor) isint = true;
         par.ExpectIdentifier();
         name vname = name(par.String);
         // default value
         if (par.Check("=")) {
           //writeln("*** <", vname, "> ***");
-          if (isfloat) {
+          if (isfloat || isint) {
             par.ExpectFloat(withSign:true);
             fval = par.Float;
           } else if (isstr || iscolor) {
@@ -152,11 +155,13 @@ void ParseCVarInfo () {
         if (oldcvflags == -1 /*|| (oldcvflags&CVAR_FROMMOD) != 0*/) {
           //print("NEW CVAR: '%s'", vname);
           if (isstr || iscolor) {
-            CreateCvar(vname, sval, "cvarinfo string variable", flags);
+            CreateCvarStr(vname, sval, "cvarinfo string variable", flags);
           } else if (isbool) {
-            CreateCvar(vname, (fval ? "1" : "0"), "cvarinfo bool variable", flags);
+            CreateCvarBool(vname, !!fval, "cvarinfo bool variable", flags);
+          } else if (isfloat) {
+            CreateCvarFloat(vname, fval, "cvarinfo float variable", flags);
           } else {
-            CreateCvar(vname, va("%s", fval), "cvarinfo numeric variable", flags);
+            CreateCvarInt(vname, int(fval), "cvarinfo int variable", flags);
           }
         }
       }
