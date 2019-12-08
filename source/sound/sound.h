@@ -85,10 +85,10 @@ public:
   // the complete set of sound effects
   TArray<sfxinfo_t> S_sfx; // 0 is reserved
   TArray<seq_info_t> SeqInfo;
-  TMap<VStr, int> sfxMap; // name is lowercased
+  TMapNC<VName, int> sfxMap; // name is lowercased
 
 protected:
-  TMap<VStr, bool> sfxMissingReported; // name is lowercased
+  TMap<VStrCI, bool> sfxMissingReported; // name is lowercased
 
   void ProcessLoadedSounds ();
 

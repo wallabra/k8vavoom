@@ -696,7 +696,7 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc, int fileid) {
 int VSoundManager::AddSoundLump (VName TagName, int Lump) {
   sfxinfo_t S;
   memset((void *)&S, 0, sizeof(S));
-  S.TagName = TagName;
+  S.TagName = (TagName != NAME_None ? VName(*TagName, VName::AddLower) : NAME_None);
   S.Data = nullptr;
   S.Priority = 127;
   S.NumChannels = 6; // max instances of this sound; was 2
@@ -708,10 +708,7 @@ int VSoundManager::AddSoundLump (VName TagName, int Lump) {
   S.Link = -1;
   int id = S_sfx.Append(S);
   // put into sound map
-  if (TagName != NAME_None) {
-    VStr s = VStr(TagName).toLowerCase();
-    sfxMap.put(s, id);
-  }
+  if (TagName != NAME_None) sfxMap.put(TagName, id);
   return id;
 }
 
@@ -759,9 +756,9 @@ int VSoundManager::AddSound (VName TagName, int Lump) {
 //==========================================================================
 int VSoundManager::FindSound (VName TagName) {
   if (TagName == NAME_None) return 0;
-  //for (int i = 1; i < S_sfx.length(); ++i) if (!VStr::ICmp(*S_sfx[i].TagName, *TagName)) return i;
-  VStr s = VStr(TagName).toLowerCase();
-  auto ip = sfxMap.find(s);
+  TagName = VName(*TagName, VName::FindLower);
+  if (TagName == NAME_None) return 0;
+  auto ip = sfxMap.find(TagName);
   return (ip ? *ip : 0);
 }
 
@@ -923,7 +920,7 @@ int VSoundManager::GetSoundID (VName Name) {
   if (IsNoneSoundName(*Name)) return 0;
   int res = FindSound(Name);
   if (!res) {
-    VStr s = VStr(Name).toLowerCase();
+    VStr s = VStr(Name);
     if (!sfxMissingReported.has(s)) {
       sfxMissingReported.put(s, true);
       GCon->Logf("WARNING! Can't find sound named '%s'", *Name);
