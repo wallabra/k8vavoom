@@ -327,7 +327,7 @@ menudef AdvVideoOptions {
 
   header "Strange Options";
 
-  option bool [gl_is_shitty_gpu == 0] {
+  option bool [/*gl_is_shitty_gpu == 0 &&*/ __k8vavoom_developer_version > 0] {
     title = "Use floating Point Depth Buffer";
     cvar = gl_enable_fp_zbuffer;
     help =
