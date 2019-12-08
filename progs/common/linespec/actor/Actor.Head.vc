@@ -49,7 +49,7 @@ override void Destroyed () {
 //===========================================================================
 [decorate] final void A_Log (string text) {
   print("<------------------------------->");
-  print("%s", text);
+  print("%s", TranslateString(text));
   print("<------------------------------->");
 }
 

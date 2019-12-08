@@ -191,6 +191,8 @@
        if (bIsPlayer) Plr = Player;
   else if (Target && Target.bIsPlayer) Plr = Target.Player;
   else return;
+  Text = TranslateString(Text);
+  if (!Text) return;
   if (!Time) Time = fclamp(GetCvarF('hud_notify_time'), 1.0, 7.0);
   Plr.ClientHudMessage(Text, FontName, 0, 123456, GetCvar('hud_font_color')/*CR_UNTRANSLATED*/, "", 0.5, 0.2, 0, 0, Time, 0.0, 0.0);
 }
@@ -206,6 +208,8 @@
        if (bIsPlayer) Plr = Player;
   else if (Target && Target.bIsPlayer) Plr = Target.Player;
   else return;
+  Text = TranslateString(Text);
+  if (!Text) return;
   if (!Time) Time = fclamp(GetCvarF('hud_notify_time'), 1.0, 7.0);
   Plr.ClientHudMessage(Text, FontName, 0, 123456, GetCvar('hud_font_color')/*CR_UNTRANSLATED*/, "", 0.5, 0.2, 0, 0, Time, 0.0, 0.0);
 }
