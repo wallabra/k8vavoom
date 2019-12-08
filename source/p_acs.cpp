@@ -148,17 +148,17 @@ enum {
   SCRIPTF_Net = 0x0001, // safe to "puke" in multiplayer
 };
 
-struct ACSLocalArrayInfo {
+struct VACSLocalArrayInfo {
   int Size;
   int Offset;
 };
 
-struct ACSLocalArrays {
+struct VACSLocalArrays {
   int Count;
-  ACSLocalArrayInfo *Info;
+  VACSLocalArrayInfo *Info;
 
-  inline ACSLocalArrays () noexcept : Count(0), Info(nullptr) {}
-  inline ~ACSLocalArrays () { Clear(); }
+  inline VACSLocalArrays () noexcept : Count(0), Info(nullptr) {}
+  inline ~VACSLocalArrays () { Clear(); }
 
   inline void Clear () noexcept { if (Info) { delete[] Info; Info = nullptr; } }
 
@@ -166,7 +166,7 @@ struct ACSLocalArrays {
     if (acount < 0) acount = 0;
     Clear();
     Count = acount;
-    if (acount > 0) Info = new ACSLocalArrayInfo[acount];
+    if (acount > 0) Info = new VACSLocalArrayInfo[acount];
   }
 
   // bounds-checking Set and Get for local arrays
@@ -201,7 +201,7 @@ struct VAcsInfo {
   vuint8 *Address;
   vuint16 Flags;
   vuint16 VarCount;
-  ACSLocalArrays LocalArrays;
+  VACSLocalArrays LocalArrays;
   VName Name; // NAME_None for unnamed scripts; lowercased
   VAcs *RunningScript;
 };
@@ -216,14 +216,13 @@ struct __attribute__((packed)) VAcsFunctionChunkData {
 };
 
 
-//WARNING! this is what is stored in object file chunk. DO NOT MODIFY!
 struct VAcsFunction {
   vuint8 ArgCount;
   vuint8 LocalCount;
   vuint8 HasReturnValue;
   vuint8 ImportNum;
   vuint32 Address;
-  ACSLocalArrays LocalArrays;
+  VACSLocalArrays LocalArrays;
 
   void SetupFrom (const VAcsFunctionChunkData &cd) noexcept {
     ArgCount = cd.ArgCount;
@@ -333,9 +332,9 @@ struct __attribute__((packed)) VAcsCallReturn {
   VAcsFunction *ReturnFunction;
   VAcsObject *ReturnObject;
   vint32 *ReturnLocals;
-  ACSLocalArrays *ReturnArrays;
+  VACSLocalArrays *ReturnArrays;
+  VAcsCallReturn *PrevFrame;
   vuint8 bDiscardResult;
-  //vuint8 Pad[3];
 };
 
 static constexpr int GetRetStructStackSize () noexcept {
@@ -380,8 +379,10 @@ public:
   vint32 *mystack;
   vint32 *savedsp;
   vint32 *savedlocals;
-  ACSLocalArrays *savedarrays;
-  ACSLocalArrays noarrays;
+  VACSLocalArrays *savedarrays;
+  VAcsFunction *savedfunc;
+  // stored here, so we can check for stack consistency (and print stack traces)
+  VAcsCallReturn *currRetFrame;
 
 public:
   VAcs ()
@@ -405,9 +406,18 @@ public:
     , savedsp(nullptr)
     , savedlocals(nullptr)
     , savedarrays(nullptr)
-    , noarrays()
+    , savedfunc(nullptr)
+    , currRetFrame(nullptr)
   {
     mystack = (vint32 *)Z_Calloc((VAcs::ACS_STACK_DEPTH+256)*sizeof(vint32)); // why not?
+  }
+
+  inline void ResetSaveds () noexcept {
+    savedsp = nullptr;
+    savedlocals = nullptr;
+    savedarrays = nullptr;
+    savedfunc = nullptr;
+    currRetFrame = nullptr;
   }
 
   //virtual ~VAcs () override { Destroy(); } // just in case
@@ -743,13 +753,13 @@ void VAcsObject::LoadOldObject () {
 //  ParseLocalArrayChunk
 //
 //==========================================================================
-static int ParseLocalArrayChunk (void *chunk, ACSLocalArrays *arrays, int offset) {
+static int ParseLocalArrayChunk (void *chunk, VACSLocalArrays *arrays, int offset) {
   int count = LittleUShort(((vuint16 *)chunk)[1]-2)/4;
   vint32 *sizes = (vint32 *)((vuint8 *)chunk+10);
   arrays->SetCount(count);
   GCon->Logf(NAME_Debug, " count=%d (%d)", count, arrays->Count);
   if (arrays->Count > 0) {
-    ACSLocalArrayInfo *info = arrays->Info;
+    VACSLocalArrayInfo *info = arrays->Info;
     for (int i = 0; i < count; ++i, ++info) {
       info->Size = LittleLong(sizes[i]);
       info->Offset = offset;
@@ -3698,6 +3708,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
   if (State == ASTE_Terminating) {
     if (info->RunningScript == this) info->RunningScript = nullptr;
+    ResetSaveds(); // just in case
     DestroyThinker();
     return 1;
   }
@@ -3771,9 +3782,9 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
   vassert(mystack);
   vint32 *optstart = nullptr;
   vint32 *locals = (savedlocals ? savedlocals : LocalVars);
-  ACSLocalArrays *localarrays = (savedarrays ? savedarrays : &info->LocalArrays);
-  if (!localarrays) localarrays = &noarrays;
-  VAcsFunction *activeFunction = nullptr;
+  VACSLocalArrays *localarrays = (savedarrays ? savedarrays : &info->LocalArrays);
+  vassert(localarrays);
+  VAcsFunction *activeFunction = savedfunc;
   EAcsFormat fmt = ActiveObject->GetFormat();
   int action = SCRIPT_Continue;
   vuint8 *ip = InstructionPointer;
@@ -5268,7 +5279,6 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
           object = ActiveObject->Level->GetObject((funcnum>>16)&0xffff);
           if (!object) Host_Error("ACS tried to indirectly call a function from inexisting object");
         }
-        //GCon->Logf(NAME_Debug, "%p: ***CALL (%d:%d)", ActiveObject, (funcnum>>16)&0xffff, funcnum&0xffff);
         func = ActiveObject->GetFunction(funcnum&0xffff, object);
         if (!func) {
           GCon->Logf(NAME_Warning, "ACS: Function %d in script %d out of range", funcnum, number);
@@ -5282,33 +5292,28 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
           //ACSVM_BREAK_STOP;
           Host_Error("ACS: Out of stack space in script %d (%d slots missing)", number, (int)(ptrdiff_t)(sp-mystack)+func->LocalCount+128-ACS_STACK_DEPTH);
         }
-        //if (func->ArgCount > func->LocalCount) Host_Error("ACS: script %d has %d locals, but %d args", number, func->LocalCount, func->ArgCount);
         vint32 *oldlocals = locals;
-        ACSLocalArrays *oldarrays = localarrays;
+        VACSLocalArrays *oldarrays = localarrays;
         // the function's first argument is also its first local variable
         locals = sp-func->ArgCount;
         localarrays = &func->LocalArrays;
-        if (!localarrays) localarrays = &noarrays;
-        //GCon->Logf("  :CALL:%d: oldlocals=%p; locals=%p; argc=%d; locc=%d (mine: argc=%d; locc=%d)", info->Number, oldlocals, locals, func->ArgCount, func->LocalCount, (activeFunction ? activeFunction->LocalCount : -1), (activeFunction ? activeFunction->LocalCount : -1));
+        vassert(localarrays);
         // make space on the stack for any other variables the function uses
-        //for (i = 0; i < func->LocalCount; i++) sp[i] = 0;
-        //sp += i;
         if (func->LocalCount > 0) {
           memset((void *)sp, 0, func->LocalCount*sizeof(sp[0]));
           sp += func->LocalCount;
         }
-        /*
-        if (sp+(sizeof(VAcsCallReturn)/sizeof(vint32))-mystack >= ACS_STACK_DEPTH) {
-          Host_Error("ACS: Out of stack space in script %d", number);
-        }
-        */
-        ((VAcsCallReturn *)sp)->ReturnAddress = ActiveObject->PtrToOffset(ip);
-        ((VAcsCallReturn *)sp)->ReturnFunction = activeFunction;
-        ((VAcsCallReturn *)sp)->ReturnObject = ActiveObject;
-        ((VAcsCallReturn *)sp)->ReturnLocals = oldlocals;
-        ((VAcsCallReturn *)sp)->ReturnArrays = oldarrays;
-        ((VAcsCallReturn *)sp)->bDiscardResult = (cmd == PCD_CallDiscard);
+        // create return frame
+        VAcsCallReturn *rf = (VAcsCallReturn *)sp;
+        rf->ReturnAddress = ActiveObject->PtrToOffset(ip);
+        rf->ReturnFunction = activeFunction;
+        rf->ReturnObject = ActiveObject;
+        rf->ReturnLocals = oldlocals;
+        rf->ReturnArrays = oldarrays;
+        rf->bDiscardResult = (cmd == PCD_CallDiscard);
+        rf->PrevFrame = currRetFrame;
         sp += GetRetStructStackSize();
+        currRetFrame = rf;
         ActiveObject = object;
         fmt = ActiveObject->GetFormat();
         ip = ActiveObject->OffsetToPtr(func->Address);
@@ -5330,7 +5335,8 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_ReturnVal)
       {
         int value;
-        VAcsCallReturn *retState;
+
+        vassert(currRetFrame);
 
         // get return value
         if (cmd == PCD_ReturnVal) {
@@ -5341,8 +5347,11 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         }
 
         // get return state
-        sp -= GetRetStructStackSize();
-        retState = (VAcsCallReturn *)sp;
+        //sp -= GetRetStructStackSize();
+        //VAcsCallReturn *retState = (VAcsCallReturn *)sp;
+        vassert((const vuint8 *)sp >= (const vuint8 *)currRetFrame);
+        VAcsCallReturn *retState = currRetFrame;
+        sp = (vint32 *)retState;
 
         // remove locals and arguments
         sp -= activeFunction->ArgCount+activeFunction->LocalCount;
@@ -5352,22 +5361,10 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
         activeFunction = retState->ReturnFunction;
         ip = ActiveObject->OffsetToPtr(retState->ReturnAddress);
         fmt = ActiveObject->GetFormat();
-
-        //!auto oldlocals = locals;
-        if (!activeFunction) {
-          vassert(retState->ReturnLocals == LocalVars);
-          locals = LocalVars;
-          //!GCon->Logf("  :RET2MAIN:%d: oldlocals=%p (%p); locals=%p (isretval:%d; retval:%d; discard:%d)", info->Number, oldlocals, retState->ReturnLocals, locals, (int)(cmd == PCD_ReturnVal), value, (int)(retState->bDiscardResult));
-        } else {
-          //k8: the following is wrong, 'cause caller can has something pushed at its stack
-          //locals = sp-activeFunction->ArgCount-activeFunction->LocalCount-sizeof(VAcsCallReturn)/sizeof(vint32);
-          // sanity check
-          vassert(sp >= retState->ReturnLocals);
-          locals = retState->ReturnLocals;
-          localarrays = retState->ReturnArrays;
-          //!GCon->Logf("  :RET:%d: oldlocals=%p (%p); locals=%p; (isretval:%d; retval:%d; discard:%d); argc=%d; locc=%d (callee: argc=%d; locc=%d)", info->Number, oldlocals, retState->ReturnLocals, locals, (int)(cmd == PCD_ReturnVal), value, (int)(retState->bDiscardResult), activeFunction->ArgCount, activeFunction->LocalCount, oldactfunc->ArgCount, oldactfunc->LocalCount);
-        }
+        vassert((activeFunction ? (sp >= retState->ReturnLocals) : (sp >= mystack)));
+        locals = retState->ReturnLocals;
         localarrays = retState->ReturnArrays;
+        currRetFrame = retState->PrevFrame;
 
         if (!retState->bDiscardResult) {
           *sp = value;
@@ -6986,19 +6983,20 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 LblFuncStop:
 #endif
   //fprintf(stderr, "VAcs::RunScript:003: self name is '%s' (number is %d)\n", *info->Name, info->Number);
-  InstructionPointer = ip;
-  savedsp = (sp < mystack ? nullptr : sp); //k8: this is UB, but idc
-  savedlocals = locals;
-  savedarrays = localarrays;
-
   if (action == SCRIPT_Terminate) {
     if (info->RunningScript == this) {
       info->RunningScript = nullptr;
     }
     //GCon->Logf(NAME_Debug, "*** ACS TERMINATED: %s (%d)", *info->Name, info->Number);
+    ResetSaveds(); // just in case
     DestroyThinker();
+  } else {
+    InstructionPointer = ip;
+    savedsp = (sp < mystack ? nullptr : sp); //k8: this is UB, but idc
+    savedlocals = locals;
+    savedarrays = localarrays;
+    savedfunc = activeFunction;
   }
-
   //Z_Free(stack);
   return resultValue;
 }
