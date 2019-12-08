@@ -5934,7 +5934,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_EndLog)
       PrintStr = PrintStr.EvalEscapeSequences();
-      GCon->Log(PrintStr);
+      GCon->Log(NAME_Debug, PrintStr);
       SB_POP;
       ACSVM_BREAK;
 
