@@ -724,7 +724,9 @@ bool TFrustum::checkBox (const float bbox[6], const unsigned mask) const noexcep
   vassert(bbox[1] <= bbox[3+1]);
   vassert(bbox[2] <= bbox[3+2]);
 #endif
+#ifndef PLANE_BOX_USE_REJECT_ACCEPT
   CONST_BBoxVertexIndex;
+#endif
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
     if (!(cp->clipflag&mask)) continue; // don't need to clip against it
@@ -761,7 +763,9 @@ int TFrustum::checkBoxEx (const float bbox[6], const unsigned mask) const noexce
   vassert(bbox[1] <= bbox[3+1]);
   vassert(bbox[2] <= bbox[3+2]);
 #endif
+#ifndef PLANE_BOX_USE_REJECT_ACCEPT
   CONST_BBoxVertexIndex;
+#endif
   int res = INSIDE; // assume that the aabb will be inside the frustum
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
