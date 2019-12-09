@@ -889,7 +889,7 @@ int VTextureManager::AddPatch (VName Name, int Type, bool Silent) {
   if (isSeenMissingTexture(Name)) return -1; // alas
 
   // load it
-  static const EWadNamespace nslist[] = {
+  /*static*/ const EWadNamespace nslist[] = {
     WADNS_Patches,
     WADNS_Graphics,
     WADNS_Sprites,
@@ -985,7 +985,7 @@ static int tryHardToFindTheImage (const char *filename) {
   if (!filename || !filename[0]) return -1;
   int i = W_CheckNumForFileName(filename);
   if (i >= 0) return i;
-  static const char *exts[] = {
+  /*static*/ const char *exts[] = {
     ".png",
     ".tga",
     ".pcx",
@@ -1116,7 +1116,7 @@ int VTextureManager::AddPatchShaded (VName Name, int Type, int shade, bool Silen
   if (isSeenMissingTexture(Name)) return -1; // alas
 
   // load it
-  static const EWadNamespace nslist[] = {
+  /*static*/ const EWadNamespace nslist[] = {
     WADNS_Patches,
     WADNS_Graphics,
     WADNS_Sprites,
@@ -1152,7 +1152,7 @@ int VTextureManager::CheckNumForNameAndForce (VName Name, int Type, bool bOverlo
   // do not try to load already seen missing texture
   if (isSeenMissingTexture(Name)) return -1; // alas
   // load it
-  static const EWadNamespace nslist[] = {
+  /*static*/ const EWadNamespace nslist[] = {
     WADNS_Patches,
     WADNS_Graphics,
     WADNS_Sprites,

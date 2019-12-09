@@ -1408,6 +1408,7 @@ int VViewClipper::CheckSubsectorLight (subsector_t *sub) const {
 
   const float xradSq = Radius*Radius;
 
+  CONST_BBoxVertexIndex;
   for (unsigned bidx = 0; bidx < 8; ++bidx) {
     TVec bv = TVec(bbox[BBoxVertexIndex[bidx][0]]-Origin.x, BBoxVertexIndex[bidx][1]-Origin.y, BBoxVertexIndex[bidx][2]-Origin.z);
     if (bv.lengthSquared() > xradSq) return -1; // partially inside

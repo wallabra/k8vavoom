@@ -255,7 +255,7 @@ void scanForMidiBanks () {
 
 #ifdef _WIN32
   {
-    static const char *shitdozeShit[] = {
+    /*static*/ const char *shitdozeShit[] = {
       "ct4mgm.sf2",
       "ct2mgm.sf2",
       "drivers\\gm.dls",

@@ -103,7 +103,7 @@ static void PutEndText (const char *text) {
     j = (vuint8)text[1];
     // attribute changed?
     if (j != att) {
-      static const char map[] = "04261537";
+      /*static*/ const char map[] = "04261537";
       // save current attribute
       att = j;
       // set new attribute: bright, foreground, background (we don't have bright background)

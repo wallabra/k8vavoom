@@ -222,15 +222,15 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, int fsmode) {
 
   {
     #if SDL_BYTEORDER == SDL_BIG_ENDIAN
-      static const Uint32 rmask = 0x0000ff00u;
-      static const Uint32 gmask = 0x00ff0000u;
-      static const Uint32 bmask = 0xff000000u;
-      static const Uint32 amask = 0x000000ffu;
+      /*static*/ const Uint32 rmask = 0x0000ff00u;
+      /*static*/ const Uint32 gmask = 0x00ff0000u;
+      /*static*/ const Uint32 bmask = 0xff000000u;
+      /*static*/ const Uint32 amask = 0x000000ffu;
     #else
-      static const Uint32 rmask = 0x00ff0000u;
-      static const Uint32 gmask = 0x0000ff00u;
-      static const Uint32 bmask = 0x000000ffu;
-      static const Uint32 amask = 0xff000000u;
+      /*static*/ const Uint32 rmask = 0x00ff0000u;
+      /*static*/ const Uint32 gmask = 0x0000ff00u;
+      /*static*/ const Uint32 bmask = 0x000000ffu;
+      /*static*/ const Uint32 amask = 0xff000000u;
     #endif
     SDL_Surface *icosfc = SDL_CreateRGBSurfaceFrom(k8vavoomicondata, 32, 32, 32, 32*4, rmask, gmask, bmask, amask);
     if (icosfc) {

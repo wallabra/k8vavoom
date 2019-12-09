@@ -933,7 +933,7 @@ void VAudio::UpdateSounds () {
 //
 //==========================================================================
 static int FindMusicLump (const char *songName) {
-  static const char *Exts[] = {
+  /*static*/ const char *Exts[] = {
     "opus", "ogg", "flac", "mp3", "wav",
     "mid", "mus",
     "mod", "xm", "it", "s3m", "stm",
@@ -962,7 +962,7 @@ static int FindMusicLump (const char *songName) {
 //
 //==========================================================================
 VAudioCodec *VAudio::LoadSongInternal (const char *Song, bool wasPlaying) {
-  static const char *ExtraExts[] = { "opus", "ogg", "flac", "mp3", nullptr };
+  /*static*/ const char *ExtraExts[] = { "opus", "ogg", "flac", "mp3", nullptr };
 
   if (!Song || !Song[0]) return nullptr;
 

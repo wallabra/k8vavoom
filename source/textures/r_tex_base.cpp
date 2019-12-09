@@ -335,7 +335,7 @@ VTexture *VTexture::GetHighResolutionTexture () {
   }
 
   // try to find it
-  static const char *Exts[] = { "png", "jpg", "tga", nullptr };
+  /*static*/ const char *Exts[] = { "png", "jpg", "tga", nullptr };
   int LumpNum = W_FindLumpByFileNameWithExts(VStr("hirestex/")+DirName+"/"+*Name, Exts);
   if (LumpNum >= 0) {
     // create new high-resolution texture

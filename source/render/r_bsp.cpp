@@ -1192,7 +1192,7 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigne
 //
 //==========================================================================
 void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper *Range) {
-  static const float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
+  /*static*/ const float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
 
   //view_frustum.setupBoxIndicies(); // done automatically
   ViewClip.ClearClipNodes(vieworg, Level);

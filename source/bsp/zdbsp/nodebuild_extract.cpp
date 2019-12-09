@@ -261,7 +261,7 @@ int FNodeBuilder::CloseSubsector (TArray<MapSegGLEx> &segs, int subsector)
 
 int FNodeBuilder::OutputDegenerateSubsector (TArray<MapSegGLEx> &segs, int subsector, bool bForward, double lastdot, FPrivSeg *&prev)
 {
-  static const double bestinit[2] = { -DBL_MAX, DBL_MAX };
+  /*static*/ const double bestinit[2] = { -DBL_MAX, DBL_MAX };
   FPrivSeg *seg;
   int i, j, first, max, count;
   double dot, x1, y1, dx, dy, dx2, dy2;

@@ -716,9 +716,9 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
     trace.End.z += height*0.5f;
     return SightPathTraverse(trace, this, OtherSector);
   } else {
-    static const float ithmult[2] = { 0.15f, 0.85f };
-    static const float sidemult[3] = { 0.0f, -0.75f, 0.75f };
-    static const float fwdmult[2] = { 0.75f, 0.0f };
+    /*static*/ const float ithmult[2] = { 0.15f, 0.85f };
+    /*static*/ const float sidemult[3] = { 0.0f, -0.75f, 0.75f };
+    /*static*/ const float fwdmult[2] = { 0.75f, 0.0f };
     //GCon->Logf("=== forward:(%g,%g,%g) ===", orgdirFwd.x, orgdirFwd.y, orgdirFwd.z);
     //GCon->Logf("=== right:(%g,%g,%g) ===", orgdirRight.x, orgdirRight.y, orgdirRight.z);
     for (unsigned myf = 0; myf < 2; ++myf) {

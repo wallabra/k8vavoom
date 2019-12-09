@@ -1083,7 +1083,7 @@ void VSoundManager::ProcessLoadedSounds () {
 //
 //==========================================================================
 bool VSoundManager::LoadSoundInternal (int sound_id) {
-  static const char *Exts[] = { "flac", "opus", "wav", "raw", "ogg", "mp3", nullptr };
+  /*static*/ const char *Exts[] = { "flac", "opus", "wav", "raw", "ogg", "mp3", nullptr };
 
   sfxinfo_t *sfx;
   {

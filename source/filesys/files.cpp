@@ -2067,7 +2067,7 @@ void FL_Init () {
     fl_basedir = p;
     if (fl_basedir.isEmpty()) fl_basedir = ".";
   } else {
-    static const char *defaultBaseDirs[] = {
+    /*static*/ const char *defaultBaseDirs[] = {
 #ifdef __SWITCH__
       "/switch/k8vavoom",
       ".",
@@ -2125,7 +2125,7 @@ void FL_Init () {
   if (p) {
     if (p[0]) IWadDirs.Append(p);
   } else {
-    static const char *defaultIwadDirs[] = {
+    /*static*/ const char *defaultIwadDirs[] = {
       ".",
       "!/.",
 #ifdef __SWITCH__

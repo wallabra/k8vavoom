@@ -122,8 +122,8 @@ struct CharClassifier {
   }
 
   CharClassifier () {
-    static const char *cIdTerm = "`~!#$%^&*(){}[]/=\\?-+|;:<>,\"'"; // was with '@'
-    static const char *ncIdTerm = "{}|=,;\"'";
+    /*static*/ const char *cIdTerm = "`~!#$%^&*(){}[]/=\\?-+|;:<>,\"'"; // was with '@'
+    /*static*/ const char *ncIdTerm = "{}|=,;\"'";
     memset(cidterm, 0, sizeof(cidterm));
     memset(cnumterm, 0, sizeof(cnumterm));
     memset(ncidterm, 0, sizeof(ncidterm));

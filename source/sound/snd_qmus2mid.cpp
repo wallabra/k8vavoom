@@ -324,7 +324,7 @@ bool VQMus2Mid::Convert (VStream &Strm) {
 //==========================================================================
 void VQMus2Mid::WriteMIDIFile (VStream &Strm) {
   // header
-  static const char HdrId[4] = { 'M', 'T', 'h', 'd' };
+  /*static*/ const char HdrId[4] = { 'M', 'T', 'h', 'd' };
   vuint32 HdrSize = 6;
   vuint16 HdrType = 1;
   vuint16 HdrNumTracks = TrackCnt;
@@ -339,7 +339,7 @@ void VQMus2Mid::WriteMIDIFile (VStream &Strm) {
   // tracks
   for (int i = 0; i < (int)TrackCnt; ++i) {
     // identifier
-    static const char TrackId[4] = { 'M', 'T', 'r', 'k' };
+    /*static*/ const char TrackId[4] = { 'M', 'T', 'r', 'k' };
     Strm.Serialise(TrackId, 4);
     // data size
     vuint32 TrackSize = Tracks[i].Data.Num();

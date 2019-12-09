@@ -1292,7 +1292,7 @@ static void ParseBrightmap (int SrcLump, VScriptParser *sc) {
 
     int lmp = W_CheckNumForFileName(bmap);
     if (lmp < 0) {
-      static const EWadNamespace lookns[] = {
+      /*static*/ const EWadNamespace lookns[] = {
         WADNS_Graphics,
         WADNS_Sprites,
         WADNS_Flats,

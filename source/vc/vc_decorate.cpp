@@ -1946,7 +1946,7 @@ static bool CheckReplaceErrorHacks (VScriptParser *sc, const VStr &NameStr, cons
     const char *fixName;
     int fixType;
   };
-  static const Triplets trilist[] = {
+  /*static*/ const Triplets trilist[] = {
     // D4V
     { .className="DH_Cyberdemon",          .parentName="SpiderMastermind", .replaceName="Motherdemon",        .fixName="D4V",      .fixType=D4V },
     { .className="DH_DoomImp",             .parentName="DoomImp",          .replaceName="NightmareImp",       .fixName="D4V",      .fixType=D4V },

@@ -1033,6 +1033,8 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     return 0;
   }
 
+  CONST_BBoxVertexIndex;
+
   // create light bbox
   float bbox[6];
   bbox[0+0] = inworld.x-radius;
@@ -1798,7 +1800,7 @@ void VOpenGLDrawer::PrepareWipe () {
 //
 //==========================================================================
 bool VOpenGLDrawer::RenderWipe (float time) {
-  static const float WipeDur = 1.0f;
+  /*static*/ const float WipeDur = 1.0f;
 
   if (time < 0.0f) {
     wipeFBO.blitTo(&mainFBO, 0, 0, mainFBO.getWidth(), mainFBO.getHeight(), 0, 0, mainFBO.getWidth(), mainFBO.getHeight(), GL_NEAREST);

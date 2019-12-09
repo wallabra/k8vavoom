@@ -338,7 +338,7 @@ void TKButton::KeyUp (const char *c) {
 //
 //==========================================================================
 float TKButton::KeyState () {
-  static const float newVal[8] = {
+  /*static*/ const float newVal[8] = {
     0.0f, // up the entire frame
     1.0f, // held the entire frame
     0.0f, // Sys_Error();

@@ -574,7 +574,7 @@ void VSdlInputDevice::ReadInput () {
 #ifdef __SWITCH__
 //TEMPORARY: maps joystick buttons to keys for fake kb events
 static inline int SwitchJoyToKey(int b) {
-  static const int keymap[] = {
+  /*static*/ const int keymap[] = {
       /* KEY_A      */ K_ENTER,
       /* KEY_B      */ K_BACKSPACE,
       /* KEY_X      */ K_RALT,

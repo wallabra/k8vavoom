@@ -534,7 +534,7 @@ void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy) {
     trace.dx = trace_delta.x;
     trace.dy = trace_delta.y;
     divline_t line;
-    static const int deltas[3] = { 0, -1, 1 };
+    /*static*/ const int deltas[3] = { 0, -1, 1 };
     for (int dy = 0; dy < 3; ++dy) {
       for (int dx = 0; dx < 3; ++dx) {
         for (VBlockThingsIterator It(Self->XLevel, mapx+deltas[dx], mapy+deltas[dy]); It; ++It) {

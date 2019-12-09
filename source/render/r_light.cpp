@@ -553,6 +553,7 @@ float VRenderLevelShared::CheckLightPointCone (const TVec &p, const float radius
   if (!pl.checkBox(bbox)) return 0.0f;
   float res = p.CalcSpotlightAttMult(coneOrigin, coneDir, coneAngle);
   if (res == 1.0f) return res;
+  CONST_BBoxVertexIndex;
   for (unsigned bi = 0; bi < 8; ++bi) {
     const TVec vv(bbox[BBoxVertexIndex[bi][0]], bbox[BBoxVertexIndex[bi][1]], bbox[BBoxVertexIndex[bi][2]]);
     const float attn = vv.CalcSpotlightAttMult(coneOrigin, coneDir, coneAngle);

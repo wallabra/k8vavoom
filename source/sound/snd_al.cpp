@@ -115,7 +115,7 @@ bool VOpenALDevice::Init () {
   }
 
   // create a context and make it current
-  static const ALCint attrs[] = {
+  /*static*/ const ALCint attrs[] = {
     ALC_STEREO_SOURCES, 1, // get at least one stereo source for music
     ALC_MONO_SOURCES, MAX_VOICES, // this should be audio channels in our game engine
     //ALC_FREQUENCY, 48000, // desired frequency; we don't really need this, let OpenAL choose the best

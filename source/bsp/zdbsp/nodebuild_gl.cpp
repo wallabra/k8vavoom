@@ -35,7 +35,7 @@ namespace ZDBSP {
 
 double FNodeBuilder::AddIntersection (const node_t &node, int vertex)
 {
-  static const FEventInfo defaultInfo =
+  /*static*/ const FEventInfo defaultInfo =
   {
     -1, DWORD_MAX
   };
