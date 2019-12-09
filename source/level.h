@@ -355,6 +355,7 @@ class VLevel : public VGameObject {
 
   TArray<VMapMarkerInfo> MapMarkers;
 
+public:
   // iterator
   struct CtlLinkIter {
     VLevel *level;

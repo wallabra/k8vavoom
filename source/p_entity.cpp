@@ -58,6 +58,19 @@ public:
 };
 
 
+/*
+static inline bool isDebugDumpEnt (const VEntity *ent) {
+  if (!ent) return false;
+  if (ent->IsPlayer()) return false;
+  const char *cn = ent->GetClass()->GetName();
+  if (VStr::strEqu(cn, "LDWordsAreMorePowerfulThanAThousandFrames")) return false;
+  if (VStr::strEqu(cn, "LDWeaponDropCounter")) return false;
+  if (VStr::strEqu(cn, "LDLegendaryCommonPickupEffect")) return false;
+  return true;
+}
+*/
+
+
 //==========================================================================
 //
 //  VEntity::SerialiseOther
@@ -244,6 +257,7 @@ void VEntity::SetInitialState (VState *InState) {
   if (InState) {
     UpdateDispFrameFrom(InState);
     StateTime = eventGetStateTime(InState, InState->Time);
+    if (StateTime > 0.0f) StateTime += 0.0002f; // delay it slightly, so spawner may do its business
   } else {
     DispSpriteFrame = 0;
     DispSpriteName = NAME_None;
@@ -258,20 +272,34 @@ void VEntity::SetInitialState (VState *InState) {
 //
 //==========================================================================
 bool VEntity::AdvanceState (float deltaTime) {
-  if (deltaTime <= 0.0f) return true;
   if (dbg_disable_state_advance) return true;
+  if (deltaTime < 0.0f) return true; // allow zero delta time to process zero-duration states
   if (State && StateTime >= 0.0f) {
-    StateTime -= deltaTime;
-    // loop here, just in case some state is *very* short
-    while (StateTime <= 0.0f) {
-      const float tleft = fabsf(StateTime); // "overjump time"
+    //const bool dbg = isDebugDumpEnt(this);
+    //if (dbg) GCon->Logf(NAME_Debug, "%u:%s:%s: StateTime=%g (%g) (nst=%g); delta=%g (%g)", GetUniqueId(), GetClass()->GetName(), *State->Loc.toStringShort(), StateTime, StateTime*35.0f, StateTime-deltaTime, deltaTime, deltaTime*35.0f);
+    // we can came here with zero-duration states; if we'll subtract delta time in such case, we'll overshoot for the whole frame
+    if (StateTime > 0.0f) {
+      // normal states
+      StateTime -= deltaTime;
+      // loop here, just in case current state duration is less than our delta time
+      while (StateTime <= 0.0f) {
+        const float tleft = StateTime; // "overjump time"
+        if (!SetState(State->NextState)) return false; // freed itself
+        if (!State) break; // just in case
+        if (StateTime <= 0.0f) break; // zero should not end up here, but...
+        // this somewhat compensates freestep instability (at least revenant missiles are more stable on a short term)
+        //if (dbg) GCon->Logf(NAME_Debug, "%u:%s:%s:     tleft=%g; StateTime=%g (%g); rest=%g", GetUniqueId(), GetClass()->GetName(), *State->Loc.toStringShort(), tleft, StateTime, StateTime*35.0f, StateTime+tleft);
+        StateTime += tleft;
+      }
+    } else {
+      // zero-duration state; advance, and delay next non-zero state a little
       if (!SetState(State->NextState)) return false; // freed itself
-      if (!State) break; // just in case
-      if (StateTime <= 0.0f) break; // zero should not end up here, but...
-      // this somewhat compensates freestep instability (at least revenant missiles are more stable on a short term)
-      //if (VStr::strEqu(GetClass()->GetName(), "RevenantTracer")) GCon->Logf("%u: %s: tleft=%g; StateTime=%g (%g)", GetUniqueId(), GetClass()->GetName(), tleft, StateTime, StateTime*35.0f);
-      StateTime -= tleft;
+      if (State) {
+        vassert(StateTime != 0.0f); // invariant
+        if (StateTime > 0.0f) StateTime += 0.0002f; // delay it slightly, so spawner may do its business
+      }
     }
+    //if (dbg && State) GCon->Logf(NAME_Debug, "%u:%s:%s:     END; StateTime=%g (%g); delta=%g (%g)", GetUniqueId(), GetClass()->GetName(), *State->Loc.toStringShort(), StateTime, StateTime*35.0f, deltaTime, deltaTime*35.0f);
   }
   return true;
 }
@@ -386,6 +414,8 @@ bool VEntity::CallStateChain (VEntity *Actor, VState *AState) {
   int RunAway = 0;
   VState *S = AState;
   vuint8 res = 0;
+  //const bool dbg = (isDebugDumpEnt(this) || isDebugDumpEnt(Actor));
+  //if (dbg && S) GCon->Logf(NAME_Debug, "*** %u:%s(%s):%s: CallStateChain ENTER", GetUniqueId(), GetClass()->GetName(), Actor->GetClass()->GetName(), *S->Loc.toStringShort());
   while (S) {
     // check for infinite loops
     if (++RunAway > 1024) {
@@ -394,6 +424,7 @@ bool VEntity::CallStateChain (VEntity *Actor, VState *AState) {
       break;
     }
 
+    //if (dbg) GCon->Logf(NAME_Debug, "*** %u:%s(%s):%s:   calling state...", GetUniqueId(), GetClass()->GetName(), Actor->GetClass()->GetName(), *S->Loc.toStringShort());
     Call.State = S;
     // call action function
     if (S->Function) {
@@ -421,6 +452,7 @@ bool VEntity::CallStateChain (VEntity *Actor, VState *AState) {
     }
   }
 
+  //if (dbg) GCon->Logf(NAME_Debug, "*** %u:%s(%s):%s:  CallStateChain EXIT", GetUniqueId(), GetClass()->GetName(), Actor->GetClass()->GetName(), (S ? *S->Loc.toStringShort() : "<none>"));
   return !!res;
 }
 

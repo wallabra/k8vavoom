@@ -407,9 +407,29 @@ VThinker *VLevel::SpawnThinker (VClass *AClass, const TVec &AOrigin,
   vassert(AClass);
   VClass *Class = (AllowReplace ? AClass->GetReplacement() : AClass);
   if (!Class) Class = AClass;
+  if (!Class) {
+    VObject::VMDumpCallStack();
+    GCon->Log(NAME_Error, "cannot spawn object without a class (expect engine crash soon!)");
+    return nullptr;
+  }
+  // check for valid class
+  if (!Class->IsChildOf(VThinker::StaticClass())) {
+    VObject::VMDumpCallStack();
+    GCon->Logf(NAME_Error, "cannot spawn non-thinker object with class `%s` (expect engine crash soon!)", Class->GetName());
+    return nullptr;
+  }
+  // spawn it
   VThinker *Ret = (VThinker *)StaticSpawnNoReplace(Class);
-  if (Ret) Ret->SpawnTime = Time;
+  if (!Ret) {
+    VObject::VMDumpCallStack();
+    GCon->Logf(NAME_Error, "cannot spawn thinker object with class `%s` (expect engine crash soon!)", Class->GetName());
+    return nullptr;
+  }
+
+  // setup spawn time, add thinker
+  Ret->SpawnTime = Time;
   AddThinker(Ret);
+
   VThinker *OverRet = nullptr;
 
   if (IsForServer() && Class->IsChildOf(VEntity::StaticClass())) {

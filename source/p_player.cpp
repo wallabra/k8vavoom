@@ -384,18 +384,23 @@ void VBasePlayer::AdvanceViewStates (float deltaTime) {
     if (!St.State) continue;
     if (St.StateTime < 0.0f) { St.StateTime = -1.0f; continue; } // force `-1` here just in case
     if (dfchecked < 0) dfchecked = (eventCheckDoubleFiringSpeed() ? 1 : 0); // call VM only once
+    const float dtime = deltaTime*(dfchecked ? 2.0f : 1.0f); // [BC] Apply double firing speed
     // drop tic count and possibly change state
-    St.StateTime -= deltaTime*(dfchecked ? 2.0f : 1.0f); // [BC] Apply double firing speed
+    //GCon->Logf(NAME_Debug, "*** %u:%s:%s: i=%d: StateTime=%g (%g) (nst=%g); delta=%g (%g)", GetUniqueId(), GetClass()->GetName(), *St.State->Loc.toStringShort(), i, St.StateTime, St.StateTime*35.0f, St.StateTime-dtime, dtime, dtime*35.0f);
+    if (St.StateTime > 0.0f) St.StateTime -= dtime;
     while (St.StateTime <= 0.0f) {
       // this somewhat compensates freestep instability
-      const float tleft = fabsf(St.StateTime); // "overjump time"
+      const float tleft = St.StateTime; // "overjump time"
       St.StateTime = 0.0f;
       SetViewState(i, St.State->NextState);
       //if (i == PS_WEAPON) GCon->Logf("AdvanceViewStates: after weapon=%s; route=%s", (LastViewObject[i] ? *LastViewObject[i]->GetClass()->GetFullName() : "<none>"), (_stateRouteSelf ? *_stateRouteSelf->GetClass()->GetFullName() : "<none>"));
       if (!St.State) break;
+      vassert(St.StateTime != 0.0f);
       if (St.StateTime < 0.0f) { St.StateTime = -1.0f; break; } // force `-1` here just in case
-      St.StateTime -= tleft; // freestep compensation
+      //GCon->Logf(NAME_Debug, "*** %u:%s:%s: i=%d:     tleft=%g; StateTime=%g (%g); rest=%g", GetUniqueId(), GetClass()->GetName(), *St.State->Loc.toStringShort(), i, tleft, St.StateTime, St.StateTime*35.0f, St.StateTime+tleft);
+      St.StateTime += tleft; // freestep compensation
     }
+    //if (St.State) GCon->Logf(NAME_Debug, "    %u:%s:%s: i=%d:     END; StateTime=%g (%g); delta=%g (%g)", GetUniqueId(), GetClass()->GetName(), *St.State->Loc.toStringShort(), i, St.StateTime, St.StateTime*35.0f, deltaTime, deltaTime*35.0f);
   }
 }
 
