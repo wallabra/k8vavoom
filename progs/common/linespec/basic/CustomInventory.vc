@@ -38,6 +38,7 @@ override bool TryPickup (EntityEx Toucher) {
   if ((IsOk || !S) && FindState('Use')) {
     IsOk = ::TryPickup(Toucher);
   } else if (IsOk || bAlwaysPickup) {
+    if (bTransferInventory) TransferInventoryTo(Toucher);
     GiveQuest(Toucher);
     GoAwayAndDie();
   }

@@ -209,6 +209,24 @@ final void BecomePickup () {
 
 //==========================================================================
 //
+//  TransferInventoryTo
+//
+//  used in custom inventory `TryPickup()`
+//
+//==========================================================================
+void TransferInventoryTo (EntityEx NewOwner) {
+  if (!NewOwner || NewOwner == self) return;
+  for (;;) {
+    Inventory inv = Inventory;
+    if (!inv) break;
+    RemoveInventory(inv);
+    NewOwner.AddInventory(inv);
+  }
+}
+
+
+//==========================================================================
+//
 //  AttachToOwner
 //
 //  `oldInv` is used to transfer inventory
@@ -218,7 +236,7 @@ final void BecomePickup () {
 //==========================================================================
 void AttachToOwner (EntityEx NewOwner, optional Inventory oldInv) {
   BecomeItem();
-  NewOwner.AddInventory(self);
+  if (NewOwner && NewOwner != self) NewOwner.AddInventory(self);
   if (oldInv) {
     if (!oldInv.bTransferInventory) return;
     for (;;) {
