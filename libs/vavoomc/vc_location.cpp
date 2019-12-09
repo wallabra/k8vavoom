@@ -129,6 +129,22 @@ VStr TLocation::toStringLineCol () const {
 
 //==========================================================================
 //
+//  TLocation::toStringShort
+//
+// only file name and line number
+//
+//==========================================================================
+VStr TLocation::toStringShort () const {
+  VStr s = GetSource();
+  int pos = s.length();
+  while (pos > 0 && s[pos-1] != ':' && s[pos-1] != '/' && s[pos-1] != '\\') --pos;
+  s = s.mid(pos, s.length());
+  return s+":"+VStr(GetLine());
+}
+
+
+//==========================================================================
+//
 //  operator << (TLocation)
 //
 //==========================================================================

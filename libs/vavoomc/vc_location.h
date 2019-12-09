@@ -48,6 +48,8 @@ public:
   VStr toString () const;
   VStr toStringNoCol () const;
   VStr toStringLineCol () const;
+  // only file name and line number
+  VStr toStringShort () const;
 
   inline void ConsumeChar (bool doNewline) {
     if (doNewline) { ++Loc; Col = 1; } else ++Col;
