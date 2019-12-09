@@ -39,7 +39,7 @@ int TModifiers::Parse (VLexer &Lex, TArray<VName> *exatts) {
     int flag;
   };
 
-  static const Mod mods[] = {
+  /*static*/ const Mod mods[] = {
     {TK_Native, Native},
     {TK_Static, Static},
     {TK_Abstract, Abstract},
@@ -153,7 +153,7 @@ void TModifiers::ShowBadAttributes (int Modifiers, const TLocation &l) {
 //==========================================================================
 int TModifiers::Check (int Modifers, int Allowed, const TLocation &l) {
   // check for conflicting protection
-  static const int ProtAttrs[] = { Private, Protected, Published, 0 };
+  /*static*/ const int ProtAttrs[] = { Private, Protected, Published, 0 };
   int protcount = 0;
   VStr mods;
   for (int f = 0; ProtAttrs[f]; ++f) {

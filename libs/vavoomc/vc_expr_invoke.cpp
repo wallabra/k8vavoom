@@ -1104,7 +1104,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
     // translate method name for some built-in types
     if (SelfExpr->Type.IsNormalOrPointerType(TYPE_String)) {
       // string
-      static const char *knownStrTrans[] = {
+      /*static*/ const char *knownStrTrans[] = {
         "mid", "strmid",
         "left", "strleft",
         "right", "strright",

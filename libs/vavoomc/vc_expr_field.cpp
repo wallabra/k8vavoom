@@ -675,7 +675,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
       delete this;
       return e->Resolve(ec);
     }
-    static const char *knownTrans[] = {
+    /*static*/ const char *knownTrans[] = {
       "toLowerCase", "strlwr",
       "toUpperCase", "strupr",
       nullptr,
