@@ -751,7 +751,7 @@ void VZipFileReader::cacheAllData () {
   if (!rewind()) return; // error already set
   // cache data
   wholeSize = (vint32)Info.filesize;
-  //GLog.Logf(NAME_Debug, "*** CACHING '%s' (cpos=%d; newpos=%d; size=%d)", *fname, cpos, InPos, wholeSize);
+  //GLog.Logf(NAME_Debug, "*** CACHING '%s' (size=%d)", *fname, wholeSize);
   if (wholeSize < 0) { setError(); return; }
   wholeBuf = (vuint8 *)Z_Realloc(wholeBuf, (wholeSize ? wholeSize : 1));
   readBytes(wholeBuf, wholeSize);
