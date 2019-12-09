@@ -300,3 +300,4 @@ const [decorate] int AAPTR_OWNER = 0x10_0000;
 [decorate] final Object decorate_GetTracer () { return Tracer; }
 [decorate] final Object decorate_GetMaster () { return Master; }
 [decorate] final Object decorate_GetOwner () { return Owner; }
+[decorate] final float decorate_GetStateTime () { return StateTime; }

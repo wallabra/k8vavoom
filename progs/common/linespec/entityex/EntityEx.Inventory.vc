@@ -94,17 +94,80 @@ override Entity QS_SpawnEntityInventory (name className) {
 
 //==========================================================================
 //
+//  DebugDumpInventory
+//
+//==========================================================================
+void DebugDumpInventory () {
+  printdebug("=== %C:%s inventory ===", self, UniqueId);
+  for (Inventory inv = Inventory; inv; inv = inv.Inventory) {
+    if (inv.Owner) {
+      if (inv.Owner != self) {
+        printdebug("  %C:%s (Owner=%C:%s; WTF?!)", inv, inv.UniqueId, inv.Owner, inv.Owner.UniqueId);
+      } else {
+        printdebug("  %C:%s", inv, inv.UniqueId);
+      }
+    } else {
+      printdebug("  %C:%s (NO OWNER! WTF?!)", inv, inv.UniqueId);
+    }
+  }
+  printdebug("-------------------");
+}
+
+
+//==========================================================================
+//
 //  AddInventory
+//
+//  this also process `bTransferInventory` flag
 //
 //==========================================================================
 void AddInventory (Inventory Item) {
   if (!Item) return;
 
+  /*
+  if (Inventory(self)) {
+    bool doDebug = (Item !isa 'LDWeaponNameAlternation');
+    if (doDebug) printdebug("%C(%B): adding inventory item %C (owner=%C; bTransferInventory=%B)", self, Inventory(self).bTransferInventory, Item, Item.Owner, Item.bTransferInventory);
+  }
+  */
+
+  if (Item.Owner == Item) {
+    printerror("%C: AddInventory: Item `%C` owns itself, wtf?!", self, Item);
+    Item.Owner = none;
+    if (Item.Inventory == Item) Item.Inventory = none; // break a loop, just in case
+  }
+
+  if (Item == self) {
+    printerror("%C: AddInventory: Item `%C` tries to became the inventory of itself, wtf?!", self, Item);
+    if (Item.Owner) {
+      assert(Item.Owner != self); // should be fixed above
+      EntityEx(Item.Owner).RemoveInventory(Item);
+      return;
+    }
+  }
+
   if (Item.Owner) {
+    // already has an owner
     if (Item.Owner == self) return; // already in the inventory
     // remove from current owner's inventory
+    //if (doDebug) printdebug("%C:   removing item `%C` from owner `%C`", self, Item, Item.Owner);
     EntityEx(Item.Owner).RemoveInventory(Item);
+    // no need to check for inventory transfer flag, because freshly extracted item has no inventory
+  } else if (Item.bTransferInventory) {
+    // move item's inventory to our own inventory
+    //if (doDebug) printdebug("%C:   transferring item `%C` inventory to self", self, Item);
+    Item.TransferInventoryTo(self);
+  } else {
+    // item's inventory should be destroyed, we don't need it
+    //if (doDebug && Item.Inventory) { printdebug("%C:   destroying item `%C` inventory", self, Item); Item.DebugDumpInventory(); }
+    Item.DestroyInventory();
   }
+
+  // invariants
+  assert(Item.Inventory == none);
+  assert(Item.Owner == none);
+
+  //printdebug("%C:%s: got item `%C:%s`", self, UniqueId, Item, Item.UniqueId);
 
   // add it at the top of the inventory
   Item.Inventory = Inventory;
@@ -112,6 +175,8 @@ void AddInventory (Inventory Item) {
 
   // set item's owner
   Item.Owner = self;
+
+  //DebugDumpInventory();
 }
 
 
@@ -123,24 +188,62 @@ void AddInventory (Inventory Item) {
 void RemoveInventory (Inventory Item) {
   if (!Item) return;
 
-  // find previous item or owner itself, if it's the first item
-  EntityEx Prev = self;
-  while (Prev && Prev.Inventory != Item) Prev = Prev.Inventory;
+  if (Item.Owner == Item) {
+    printerror("%C: RemoveInventory: Item `%C` owns itself, wtf?!", self, Item);
+    Item.Owner = none;
+    if (Item.Inventory == Item) Item.Inventory = none; // break a loop, just in case
+  }
 
-  if (!Prev) {
-    printwarn("Cannot remove '%C' from inventory of '%C': it is not there!", Item, self);
-    if (Item.Owner) {
-      if (Item.Owner != self) printwarn(" OWNER: '%C'", Item.Owner); else printwarn(" OWNER: SELF");
-      Item.DetachedFromOwner();
-      Item.Owner = none;
-    }
+  if (Item == self) {
+    printerror("%C: RemoveInventory: Item `%C` tries to remove itself from it's own inventory, wtf?!", self, Item);
     return;
   }
 
-  // unlink and remove owner
-  Prev.Inventory = Item.Inventory;
-  Item.DetachedFromOwner();
-  Item.Owner = none;
+  if (!Item.Owner) {
+    if (!Item.Inventory) return; // nothing to do
+    printerror("%C: RemoveInventory: Item `%C` tries to remove itself from my inventory, and has inventory itself, wtf?!", self, Item);
+    return;
+  } else if (Item.Owner != self) {
+    printwarn("%C: RemoveInventory: Item `%C` tries to remove itself from my inventory, but it is owned by `%C`; rerouting", self, Item, Item.Owner);
+    EntityEx(Item.Owner).RemoveInventory(Item);
+    return;
+  }
+
+  // find previous item or owner itself, if it's the first item
+  EntityEx Prev = self;
+  while (Prev) {
+    EntityEx n = Prev.Inventory;
+    if (n == Item) break;
+    Prev = n;
+  }
+
+  if (!Prev) {
+    if (Item.Owner) {
+      if (Item.Owner != self) {
+        printwarn("%C:%s: Cannot remove '%C:%s' from inventory of '%C': it is not there!", self, UniqueId, Item, Item.UniqueId, self);
+        printwarn(" OWNER: '%C'", Item.Owner);
+        Item.DetachedFromOwner();
+      } else {
+        if (IsDestroyed) {
+          //printdebug("%C:%s: Cannot remove '%C:%s' from inventory of '%C': it is not there!", self, UniqueId, Item, Item.UniqueId, self);
+          //printdebug(" OWNER: SELF (dead)");
+        } else {
+          printwarn("%C:%s: Cannot remove '%C:%s' from inventory of '%C': it is not there!", self, UniqueId, Item, Item.UniqueId, self);
+          printwarn(" OWNER: SELF");
+        }
+      }
+    }
+    Item.Owner = none;
+    Item.Inventory = none;
+  } else {
+    // unlink and remove owner
+    //printdebug("%C:%s: removed '%C:%s' from my inventory", self, UniqueId, Item, Item.UniqueId);
+    Prev.Inventory = Item.Inventory;
+    Item.Inventory = none;
+    Item.DetachedFromOwner();
+    Item.Owner = none;
+    //DebugDumpInventory();
+  }
 }
 
 

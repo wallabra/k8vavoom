@@ -133,7 +133,7 @@ native readonly private Thinker ThinkerTail;
 native readonly LevelInfo LevelInfo;
 native readonly WorldInfo WorldInfo;
 
-native readonly void *Acs;
+native readonly void *Acs; // VAcsLevel
 
 native readonly private void *Renderer;
 native readonly private void *NetContext;

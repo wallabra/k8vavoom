@@ -66,6 +66,11 @@ final bool DoGiveInventory (class!Inventory ItemType, int Amount, EntityEx Recei
         Item.Destroy();
         Ret = false;
       }
+      /*
+      else {
+        if (self !isa 'LDWordsAreMorePowerfulThanAThousandFrames') printdebug("%C:   given %C to %C", self, Item, Receiver);
+      }
+      */
     }
   } else {
     Ret = false;
@@ -131,11 +136,14 @@ final bool DoGiveInventory (class!Inventory ItemType, int Amount, EntityEx Recei
 //==========================================================================
 [decorate] final void A_GiveToChildren (class!Inventory ItemType, optional int Amount) {
   if (!ItemType) return;
+  //printdebug("%C: A_GiveToChildren: type=%C (%s)", self, ItemType, Amount);
   Actor A;
   foreach AllThinkers(Actor, A) {
+    //if (A.Master) printdebug("%C:  ... (%s) A=%C; A.Master=%C", self, A.UniqueId, A, A.Master);
     if (A.Master != self) continue;
     DoGiveInventory(ItemType, Amount, A, disableReplace:true);
   }
+  //printdebug("%C: A_GiveToChildren: type=%C (%s): DONE", self, ItemType, Amount);
 }
 
 

@@ -51,7 +51,10 @@ override bool ShouldRespawn () {
 override bool TryPickup (EntityEx Toucher) {
   bool Result = Level.ExecuteActionSpecial(Special, Args[0], Args[1],
                         Args[2], Args[3], Args[4], nullptr, 0, Toucher);
-  if (Result) GoAwayAndDie();
+  if (Result) {
+    if (bTransferInventory) TransferInventoryTo(Toucher); //k8: should it be here?
+    GoAwayAndDie();
+  }
   return Result;
 }
 

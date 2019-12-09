@@ -112,6 +112,8 @@ final void InitSpawnedItem (EntityEx A, bool TransTransl, bool SetMaster,
     NoCheckPos = true;
   }
 
+  //if (SetMaster) printdebug("+++ %C: spawned `%C` with SetMaster; (A.bMonster=%B)", self, A, A.bMonster);
+
   if (A.bMonster) {
     // check if thing fits in it's current location
     if (!NoCheckPos && !A.TestLocation()) {
@@ -207,6 +209,7 @@ final void InitSpawnedItem (EntityEx A, bool TransTransl, bool SetMaster,
   // don't spawn monsters if this actor has been massacred (???)
   if (nameicmp(DamageType, 'Massacre') == 0 && ItemType.default.bMonster) {
     //k8: should we keep chain result here?
+    KeepChainResult();
     return false;
   }
 
@@ -266,6 +269,7 @@ final void InitSpawnedItem (EntityEx A, bool TransTransl, bool SetMaster,
         while (Instig && Instig.IsMissile(true)) Instig = Instig.Target;
         if (!Instig) Instig = self;
       }
+      //printdebug("+++ %C: spawned `%C` with SetMaster=%B (Instig=%C)", self, A, !!(Flags&SXF_SETMASTER), Instig);
       if (Flags&SXF_SETTARGET) A.Target = Instig;
       if (Flags&SXF_SETTRACER) A.Tracer = Instig;
       if (Flags&SXF_SETMASTER) A.Master = Instig;
@@ -280,6 +284,7 @@ final void InitSpawnedItem (EntityEx A, bool TransTransl, bool SetMaster,
     if (Flags&SXF_TRANSFERSPECIAL) { A.Special = Special; foreach (auto f; 0..Args.length) A.Args[f] = Args[f]; }
     if (Flags&SXF_CLEARCALLERSPECIAL) { Special = 0; foreach (auto f; 0..Args.length) Args[f] = 0; }
     if (specified_newtid && newtid >= 0) A.SetTID(newtid);
+    //if (Flags&SXF_SETMASTER) printdebug("*** %C: spawned `%C` with SetMaster; A.Master=%C; uid=%s", self, A, A.Master, A.UniqueId);
     return true;
   }
 

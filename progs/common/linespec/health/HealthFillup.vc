@@ -49,6 +49,7 @@ override bool TryPickup (EntityEx Toucher) {
       break;
   }
   if (!Toucher.GiveBody(-Amount)) return false;
+  if (bTransferInventory) TransferInventoryTo(Toucher);
   GoAwayAndDie();
   return true;
 }

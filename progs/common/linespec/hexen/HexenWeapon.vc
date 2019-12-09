@@ -54,8 +54,9 @@ override bool TryPickup(EntityEx Toucher)
     }
     if (gaveMana)
     {
-      GoAwayAndDie();
+      if (bTransferInventory) TransferInventoryTo(Toucher);
       GiveQuest(Toucher);
+      GoAwayAndDie();
       return true;
     }
     return false;

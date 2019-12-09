@@ -3063,6 +3063,7 @@ override void RemoveKeysVerbose (optional bool verbose) {
       again = true;
       if (verbose) print("removed key '%C'", inv);
       PP.RemoveInventory(inv);
+      delete inv;
       ++count;
     }
   }
@@ -3407,6 +3408,7 @@ void RemovePistol () {
         case 'Pistol':
         case 'PerkPistol':
           EntityEx(MO).RemoveInventory(Wpn);
+          delete Wpn;
           break;
       }
     }
@@ -6042,6 +6044,7 @@ void Cheat_VScriptCommand () {
     auto newam = invit.Amount-amount;
     if (newam <= 0) {
       EntityEx(MO).RemoveInventory(invit);
+      delete invit;
       print("you lost '%C'", invit);
     } else {
       invit.Amount = newam;
@@ -6061,6 +6064,7 @@ void Cheat_VScriptCommand () {
       it.Amount = invit.Amount;
       it.MaxAmount = invit.MaxAmount;
       EntityEx(MO).RemoveInventory(invit);
+      //FIXME: delete invit here?
     }
     return;
   }

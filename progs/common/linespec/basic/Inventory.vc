@@ -136,8 +136,12 @@ override void OnMapSpawn (mthing_t *mthing) {
 //==========================================================================
 override void Destroyed () {
   if (Role == ROLE_Authority) {
-    if (Owner) EntityEx(Owner).RemoveInventory(self);
+    if (Owner) {
+      //printdebug("%C:%s: inventory dying...", self, self.UniqueId);
+      EntityEx(Owner).RemoveInventory(self);
+    }
     Inventory = none;
+    //printdebug("%C:%s: inventory dead.", self, self.UniqueId);
   }
   ::Destroyed();
 }
@@ -209,6 +213,21 @@ final void BecomePickup () {
 
 //==========================================================================
 //
+//  DestroyInventory
+//
+//==========================================================================
+void DestroyInventory () {
+  for (;;) {
+    Inventory inv = Inventory;
+    if (!inv) break;
+    RemoveInventory(inv);
+    delete inv;
+  }
+}
+
+
+//==========================================================================
+//
 //  TransferInventoryTo
 //
 //  used in custom inventory `TryPickup()`
@@ -216,12 +235,17 @@ final void BecomePickup () {
 //==========================================================================
 void TransferInventoryTo (EntityEx NewOwner) {
   if (!NewOwner || NewOwner == self) return;
+  if (!Inventory) return;
+  //printdebug("*** COPYING INVENTORY FROM `%C` to `%C`", self, NewOwner);
+  //DebugDumpInventory();
   for (;;) {
     Inventory inv = Inventory;
     if (!inv) break;
-    RemoveInventory(inv);
+    //printdebug("***   COPYING INVENTORY FROM `%C` to `%C` (inv=%C, inv.Owner=%C)", self, NewOwner, inv, inv.Owner);
+    EntityEx(inv.Owner).RemoveInventory(inv);
     NewOwner.AddInventory(inv);
   }
+  //printdebug("*** DONE COPYING INVENTORY FROM `%C` to `%C`", self, NewOwner);
 }
 
 
@@ -236,23 +260,39 @@ void TransferInventoryTo (EntityEx NewOwner) {
 //==========================================================================
 void AttachToOwner (EntityEx NewOwner, optional Inventory oldInv) {
   BecomeItem();
-  if (NewOwner && NewOwner != self) NewOwner.AddInventory(self);
+  //bool doDebug = (self !isa 'LDWeaponNameAlternation');
+  //if (doDebug) printdebug("%C: AttachToOwner(NewOwner=%C, oldInv=%C; transfer=%B (old=%B))", self, NewOwner, oldInv, bTransferInventory, (oldInv ? oldInv.bTransferInventory : false));
+  assert(NewOwner && NewOwner != self);
+  // the case of `oldInv == self` is processed by `AddInventory()`
+  if (oldInv && oldInv.bTransferInventory && oldInv != self) {
+    //if (doDebug) { printdebug("%C:   transferring oldInv inventory...", self); oldInv.DebugDumpInventory(); }
+    // add ourselves first, and then all our inventory
+    NewOwner.AddInventory(self);
+    oldInv.TransferInventoryTo(NewOwner);
+  } else {
+    NewOwner.AddInventory(self);
+  }
+  //if (doDebug) printdebug("%C: AttachToOwner(NewOwner=%C, oldInv=%C): COMPLETE", self, NewOwner, oldInv);
+  /* old code; most of this is now processed in `AddInventory()`
   if (oldInv) {
-    if (!oldInv.bTransferInventory) return;
-    for (;;) {
-      Inventory inv = oldInv.Inventory;
-      if (!inv) break;
-      oldInv.RemoveInventory(inv);
-      NewOwner.AddInventory(inv);
-    }
-  } else if (bTransferInventory) {
-    for (;;) {
-      Inventory inv = Inventory;
-      if (!inv) break;
-      RemoveInventory(inv);
-      NewOwner.AddInventory(inv);
+    assert(NewOwner != oldInv);
+    assert(Inventory == none);
+    NewOwner.AddInventory(self);
+    if (oldInv.bTransferInventory) oldInv.TransferInventoryTo(NewOwner);
+  } else {
+    if (bTransferInventory) {
+      //HACK!
+      Inventory savedinv = Inventory;
+      Inventory = none;
+      NewOwner.AddInventory(self);
+      Inventory = savedinv;
+      TransferInventoryTo(NewOwner);
+    } else {
+      DestroyInventory();
+      NewOwner.AddInventory(self);
     }
   }
+  */
 }
 
 
@@ -301,16 +341,20 @@ override void TouchSpecial (EntityEx Toucher, optional bool noflash) {
 //
 //==========================================================================
 bool TryPickup (EntityEx Toucher) {
+  //bool doDebug = (self !isa 'LDWeaponNameAlternation');
+  //if (doDebug) printwarn("%C: TryPickup: new owner `%C`; bTransferInventory=%B)", self, Toucher, bTransferInventory);
+
   EntityEx NewToucher = Toucher;
   bPickupGood = false;
   if (Toucher.Inventory && Toucher.Inventory.HandlePickup(self)) {
     if (!bPickupGood) return false;
+    if (bTransferInventory) TransferInventoryTo(Toucher);
     GoAwayAndDie();
   } else if (MaxAmount == 0) {
     // a special case: items with max amount of 0 can be picked up if they are autoactivate-able
     if (!bAutoActivate) return false;
 
-    // put it in the inventory long enoung to be used
+    // put it in the inventory long enough to be used
     Toucher.AddInventory(self);
     bool UseGood = Use(true);
     Toucher.RemoveInventory(self);
@@ -343,6 +387,7 @@ bool TryPickup (EntityEx Toucher) {
         Copy.Owner = none;
         Copy.bCreateCopyMoved = false;
       }
+      //if (doDebug) printdebug("%C: TryPickup: attaching copy `%C` to the new owner `%C` (same:%B; bTransferInventory=%B)", self, Copy, NewToucher, (Copy == self), self.bTransferInventory);
       Copy.AttachToOwner(NewToucher, self);
       if (bAutoActivate && Copy.Use(true)) {
         --Copy.Amount;
@@ -396,6 +441,9 @@ Inventory CreateCopy (EntityEx Toucher) {
     assert(Copy);
     Copy.Amount = Amount;
     Copy.MaxAmount = MaxAmount;
+    // copy "transfer inventory" flag, in case the item will be dropped, and
+    // will get some inventory, and then picked up again (some pickups can do this)
+    Copy.bTransferInventory = bTransferInventory;
   } else {
     // use this one
     Copy = self;

@@ -65,6 +65,7 @@ override bool TryPickup (EntityEx Toucher) {
       // already has the piece, check if ammo needed
       if (!GaveAmmo) return false; // didn't need the ammo, so don't pick it up
       GiveQuest(Toucher);
+      if (bTransferInventory) TransferInventoryTo(Toucher);
       GoAwayAndDie();
       return true;
     }
@@ -88,6 +89,7 @@ override bool TryPickup (EntityEx Toucher) {
     }
   }
   GiveQuest(Toucher);
+  if (bTransferInventory) TransferInventoryTo(Toucher);
   GoAwayAndDie();
   return true;
 }

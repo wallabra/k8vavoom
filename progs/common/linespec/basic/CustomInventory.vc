@@ -38,8 +38,10 @@ override bool TryPickup (EntityEx Toucher) {
   if ((IsOk || !S) && FindState('Use')) {
     IsOk = ::TryPickup(Toucher);
   } else if (IsOk || bAlwaysPickup) {
-    if (bTransferInventory) TransferInventoryTo(Toucher);
+    //bool doDebug = (self !isa 'LDWeaponNameAlternation');
+    //if (doDebug && bTransferInventory) printwarn("%C: CustomInventory::TryPickup: new owner `%C`; bTransferInventory=%B)", self, Toucher, bTransferInventory);
     GiveQuest(Toucher);
+    if (bTransferInventory) TransferInventoryTo(Toucher);
     GoAwayAndDie();
   }
   return IsOk;

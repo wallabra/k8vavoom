@@ -54,6 +54,7 @@ override bool TryPickup (EntityEx Toucher) {
       WeaponType.default.AmmoGive1)|PlayerEx(Toucher.Player).GiveAmmo(WeaponType.default.AmmoType2,
       WeaponType.default.AmmoGive2);
     if (!GaveAmmo) return false; // didn't need the mana, so don't pick it up
+    if (bTransferInventory) TransferInventoryTo(Toucher);
     GoAwayAndDie();
     return true;
   }
@@ -96,6 +97,7 @@ override bool TryPickup (EntityEx Toucher) {
       }
     }
   }
+  if (bTransferInventory) TransferInventoryTo(Toucher);
   GoAwayAndDie();
   return true;
 }

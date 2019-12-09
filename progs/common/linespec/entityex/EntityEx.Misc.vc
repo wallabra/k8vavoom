@@ -31,8 +31,14 @@
 //==========================================================================
 override void Destroyed () {
   if (Role == ROLE_Authority) {
-    // remove inventory
-    while (Inventory) Inventory.Destroy();
+    //printdebug("%C:%s: entity dying...", self, self.UniqueId);
+    if (Inventory) {
+      //printdebug("  ...removing inventory...");
+      // remove inventory
+      while (Inventory) Inventory.Destroy();
+      //printdebug("%C:%s: entity dying, inventory removed...", self, self.UniqueId);
+    }
+    //printdebug("%C:%s: entity dead.", self, self.UniqueId);
   }
   ::Destroyed();
 }

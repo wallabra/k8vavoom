@@ -40,6 +40,7 @@ override bool TryPickup (EntityEx Toucher) {
         Wpn.Destroy();
         return false;
       }
+      if (bTransferInventory) TransferInventoryTo(Toucher);
       GoAwayAndDie();
       return true;
     }
