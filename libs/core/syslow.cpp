@@ -549,7 +549,7 @@ vuint64 Sys_GetTimeCPUNano () {
 //==========================================================================
 void Sys_Yield () {
   //usleep(1);
-  static const struct timespec sleepTime = {0, 28500000};
+  /*static*/ const struct timespec sleepTime = {0, 28500000};
   nanosleep(&sleepTime, nullptr);
 }
 

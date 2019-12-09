@@ -209,7 +209,7 @@ typedef struct __attribute__((packed)) {
 
 
 static __attribute__((unused)) inline void chacha_internal_generate_block (ChaChaR *cha) {
-  static const uint32_t constants[4] = {0x61707865u, 0x3320646eu, 0x79622d32u, 0x6b206574u};
+  /*static*/ const uint32_t constants[4] = {0x61707865u, 0x3320646eu, 0x79622d32u, 0x6b206574u};
   uint32_t input[16];
   for (unsigned i = 0u; i < 4u; ++i) input[i] = constants[i];
   for (unsigned i = 0u; i < 8u; ++i) input[4u+i] = cha->keysetup[i];

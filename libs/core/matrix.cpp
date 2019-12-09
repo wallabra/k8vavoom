@@ -1233,7 +1233,7 @@ void VMatrix4::toQuaternion (float quat[4]) const noexcept {
     quat[2] = VSUM2(m[1][0], -m[0][1])*s;
   } else {
     // diagonal is negative
-    static const unsigned nxt[3] = {1, 2, 0};
+    /*static*/ const unsigned nxt[3] = {1, 2, 0};
     unsigned i = 0;
     if (m[1][1] > m[0][0]) i = 1;
     if (m[2][2] > m[i][i]) i = 2;

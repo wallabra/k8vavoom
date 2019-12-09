@@ -394,7 +394,7 @@ static VVA_CHECKRESULT inline vint32 vxs_CRoundToInt (const double val, const do
 
 
 static inline VVA_CHECKRESULT vint32 vxs_ToFix16_16 (const double val) {
-  static const double vxs_doublemagic_ = double(6755399441055744.0); //2^52*1.5, uses limited precisicion to floor
+  /*static*/ const double vxs_doublemagic_ = double(6755399441055744.0); //2^52*1.5, uses limited precisicion to floor
   return vxs_CRoundToInt(val, vxs_doublemagic_/(1<<16));
 }
 

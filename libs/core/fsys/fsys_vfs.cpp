@@ -734,7 +734,7 @@ static int tryWithExtension (VStr name, const char *ext) {
 //
 //==========================================================================
 int W_CheckNumForTextureFileName (VStr Name) {
-  static const char *textureExts[] = { ".png", ".jpg", ".tga", ".imgz", ".lmp", ".jpeg", ".pcx", ".bmp", nullptr };
+  /*static*/ const char *textureExts[] = { ".png", ".jpg", ".tga", ".imgz", ".lmp", ".jpeg", ".pcx", ".bmp", nullptr };
 
   MyThreadLocker glocker(&fsys_glock);
   VStr loname = (Name.isLowerCase() ? Name : Name.toLowerCase());

@@ -1844,7 +1844,7 @@ VVA_CHECKRESULT VStr VStr::quote (bool addQCh) const noexcept {
 //
 //==========================================================================
 VVA_CHECKRESULT VStr VStr::buf2hex (const void *buf, int buflen) noexcept {
-  static const char *hexd = "0123456789abcdef";
+  /*static*/ const char *hexd = "0123456789abcdef";
   VStr res;
   if (buflen < 0 || !buf) return res;
   const vuint8 *b = (const vuint8 *)buf;

@@ -415,6 +415,7 @@ bool TPlane::checkBox (const float bbox[6]) const noexcept {
   // check reject point
   return (DotProduct(normal, get3DBBoxRejectPoint(bbox))-dist > 0.0f); // entire box on a back side?
 #else
+  CONST_BBoxVertexIndex;
   for (unsigned j = 0; j < 8; ++j) {
     if (!PointOnSide(TVec(bbox[BBoxVertexIndex[j][0]], bbox[BBoxVertexIndex[j][1]], bbox[BBoxVertexIndex[j][2]]))) {
       return true;
@@ -446,6 +447,7 @@ int TPlane::checkBoxEx (const float bbox[6]) const noexcept {
   d = DotProduct(normal, get3DBBoxAcceptPoint(bbox))-dist;
   return (d < 0.0f ? TFrustum::PARTIALLY : TFrustum::INSIDE); // if accept point on another side (or on plane), assume intersection
 #else
+  CONST_BBoxVertexIndex;
   unsigned passed = 0;
   for (unsigned j = 0; j < 8; ++j) {
     if (!PointOnSide(TVec(bbox[BBoxVertexIndex[j][0]], bbox[BBoxVertexIndex[j][1]], bbox[BBoxVertexIndex[j][2]]))) {
@@ -722,6 +724,7 @@ bool TFrustum::checkBox (const float bbox[6], const unsigned mask) const noexcep
   vassert(bbox[1] <= bbox[3+1]);
   vassert(bbox[2] <= bbox[3+2]);
 #endif
+  CONST_BBoxVertexIndex;
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {
     if (!(cp->clipflag&mask)) continue; // don't need to clip against it
@@ -758,6 +761,7 @@ int TFrustum::checkBoxEx (const float bbox[6], const unsigned mask) const noexce
   vassert(bbox[1] <= bbox[3+1]);
   vassert(bbox[2] <= bbox[3+2]);
 #endif
+  CONST_BBoxVertexIndex;
   int res = INSIDE; // assume that the aabb will be inside the frustum
   const TClipPlane *cp = &planes[0];
   for (unsigned i = planeCount; i--; ++cp) {

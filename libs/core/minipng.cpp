@@ -254,7 +254,7 @@ bool M_CreatePNG (VStream *file, const vuint8 *buffer, const PalEntry *palette,
 //
 //==========================================================================
 bool M_CreateDummyPNG (VStream *file) {
-  static const vuint8 dummyPNG[] = {
+  /*static*/ const vuint8 dummyPNG[] = {
     137,'P','N','G',13,10,26,10,
     0,0,0,13,'I','H','D','R',
     0,0,0,1,0,0,0,1,8,0,0,0,0,0x3a,0x7e,0x9b,0x55,
@@ -274,7 +274,7 @@ bool M_CreateDummyPNG (VStream *file) {
 //
 //==========================================================================
 bool M_FinishPNG (VStream *file) {
-  static const vuint8 iend[12] = { 0,0,0,0,73,69,78,68,174,66,96,130 };
+  /*static*/ const vuint8 iend[12] = { 0,0,0,0,73,69,78,68,174,66,96,130 };
   file->Serialise((void *)iend, 12);
   return !file->IsError();
 }
@@ -682,10 +682,10 @@ bool M_ReadIDAT (VStream &file, vuint8 *buffer, int width, int height, int pitch
                  vuint8 bitdepth, vuint8 colortype, vuint8 interlace, unsigned int chunklen)
 {
   // uninterlaced images are treated as a conceptual eighth pass by these tables
-  static const vuint8 passwidthshift[8] =  { 3, 3, 2, 2, 1, 1, 0, 0 };
-  static const vuint8 passheightshift[8] = { 3, 3, 3, 2, 2, 1, 1, 0 };
-  static const vuint8 passrowoffset[8] =   { 0, 0, 4, 0, 2, 0, 1, 0 };
-  static const vuint8 passcoloffset[8] =   { 0, 4, 0, 2, 0, 1, 0, 0 };
+  /*static*/ const vuint8 passwidthshift[8] =  { 3, 3, 2, 2, 1, 1, 0, 0 };
+  /*static*/ const vuint8 passheightshift[8] = { 3, 3, 3, 2, 2, 1, 1, 0 };
+  /*static*/ const vuint8 passrowoffset[8] =   { 0, 0, 4, 0, 2, 0, 1, 0 };
+  /*static*/ const vuint8 passcoloffset[8] =   { 0, 4, 0, 2, 0, 1, 0, 0 };
 
   vuint8 *inputLine, *prev, *curr, *adam7buff[3], *bufferend;
   vuint8 chunkbuffer[4096];

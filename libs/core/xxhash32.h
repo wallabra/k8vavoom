@@ -131,14 +131,16 @@ public:
 
 private:
   /// magic constants :-)
-  static const vuint32 Prime1 = 2654435761U;
-  static const vuint32 Prime2 = 2246822519U;
-  static const vuint32 Prime3 = 3266489917U;
-  static const vuint32 Prime4 =  668265263U;
-  static const vuint32 Prime5 =  374761393U;
+  enum {
+    Prime1 = 2654435761U,
+    Prime2 = 2246822519U,
+    Prime3 = 3266489917U,
+    Prime4 =  668265263U,
+    Prime5 =  374761393U,
+  };
 
   /// temporarily store up to 15 bytes between multiple put() calls
-  static const vuint32 MaxBufferSize = 15+1;
+  enum { MaxBufferSize = 15u+1u };
 
   // internal state and temporary buffer
   vuint32 state[4]; // state[2] == seed if totalLength < MaxBufferSize

@@ -456,7 +456,7 @@ VStream &operator << (VStream &Strm, VStreamCompactIndexU &I) {
 //
 //==========================================================================
 void VStream::vawritef (const char *text, va_list ap) {
-  static const char *errorText = "ERROR CREATING STRING!";
+  /*static*/ const char *errorText = "ERROR CREATING STRING!";
   if (bError) return;
 
   char buf[512];
