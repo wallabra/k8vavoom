@@ -705,6 +705,18 @@ static inline float DivByScale (float v, float scale) {
 
 //==========================================================================
 //
+//  GetMinFloorZWithFake
+//
+//  get max floor height for given floor and fake floor
+//
+//==========================================================================
+// i haet shitpp templates!
+#define GetFixedZWithFake(func_,plname_,v_,sec_,r_plane_)  \
+  ((sec_) && (sec_)->heightsec ? func_((r_plane_).GetPointZ(v_), (sec_)->heightsec->plname_.GetPointZ(v_)) : (r_plane_).GetPointZ(v_))
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::SetupTwoSidedTopWSurf
 //
 //==========================================================================
@@ -741,13 +753,19 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
   if (TTex->Type != TEXTYPE_Null) {
     TVec wv[4];
 
-    const float topz1 = r_ceiling.GetPointZ(*seg->v1);
-    const float topz2 = r_ceiling.GetPointZ(*seg->v2);
+    // see `SetupTwoSidedBotWSurf()` for explanation
+    //const float topz1 = r_ceiling.GetPointZ(*seg->v1);
+    //const float topz2 = r_ceiling.GetPointZ(*seg->v2);
+    const float topz1 = GetFixedZWithFake(min2, ceiling, *seg->v1, seg->frontsector, r_ceiling);
+    const float topz2 = GetFixedZWithFake(min2, ceiling, *seg->v2, seg->frontsector, r_ceiling);
     const float botz1 = r_floor.GetPointZ(*seg->v1);
     const float botz2 = r_floor.GetPointZ(*seg->v2);
 
-    const float back_topz1 = back_ceiling->GetPointZ(*seg->v1);
-    const float back_topz2 = back_ceiling->GetPointZ(*seg->v2);
+    // see `SetupTwoSidedBotWSurf()` for explanation
+    //const float back_topz1 = back_ceiling->GetPointZ(*seg->v1);
+    //const float back_topz2 = back_ceiling->GetPointZ(*seg->v2);
+    const float back_topz1 = GetFixedZWithFake(max2, ceiling, *seg->v1, seg->backsector, (*back_ceiling));
+    const float back_topz2 = GetFixedZWithFake(max2, ceiling, *seg->v2, seg->backsector, (*back_ceiling));
 
     // hack to allow height changes in outdoor areas
     float top_topz1 = topz1;
@@ -817,12 +835,23 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
 
     float topz1 = r_ceiling.GetPointZ(*seg->v1);
     float topz2 = r_ceiling.GetPointZ(*seg->v2);
-    float botz1 = r_floor.GetPointZ(*seg->v1);
-    float botz2 = r_floor.GetPointZ(*seg->v2);
+    // some map authors are making floor decorations with height transer
+    // (that is so player won't wobble walking on such floors)
+    // so we should use minimum front height here (sigh)
+    //FIXME: this is totally wrong, because we may have alot of different
+    //       configurations here, and we should check for them all
+    //FIXME: also, moving height sector should trigger surface recreation
+    //float botz1 = r_floor.GetPointZ(*seg->v1);
+    //float botz2 = r_floor.GetPointZ(*seg->v2);
+    const float botz1 = GetFixedZWithFake(min2, floor, *seg->v1, seg->frontsector, r_floor);
+    const float botz2 = GetFixedZWithFake(min2, floor, *seg->v2, seg->frontsector, r_floor);
     float top_TexZ = r_ceiling.splane->TexZ;
 
-    const float back_botz1 = back_floor->GetPointZ(*seg->v1);
-    const float back_botz2 = back_floor->GetPointZ(*seg->v2);
+    // same height fix as above
+    //const float back_botz1 = back_floor->GetPointZ(*seg->v1);
+    //const float back_botz2 = back_floor->GetPointZ(*seg->v2);
+    const float back_botz1 = GetFixedZWithFake(max2, floor, *seg->v1, seg->backsector, (*back_floor));
+    const float back_botz2 = GetFixedZWithFake(max2, floor, *seg->v2, seg->backsector, (*back_floor));
 
     // hack to allow height changes in outdoor areas
     if (R_IsStrictlySkyFlatPlane(r_ceiling.splane) && R_IsStrictlySkyFlatPlane(back_ceiling)) {
