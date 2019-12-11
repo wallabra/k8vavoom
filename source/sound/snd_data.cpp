@@ -696,7 +696,8 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc, int fileid) {
 int VSoundManager::AddSoundLump (VName TagName, int Lump) {
   sfxinfo_t S;
   memset((void *)&S, 0, sizeof(S));
-  S.TagName = (TagName != NAME_None ? VName(*TagName, VName::AddLower) : NAME_None);
+  TagName = (TagName != NAME_None ? VName(*TagName, VName::AddLower) : NAME_None);
+  S.TagName = TagName;
   S.Data = nullptr;
   S.Priority = 127;
   S.NumChannels = 6; // max instances of this sound; was 2
