@@ -4101,6 +4101,7 @@ override int AcsSpawnThing (name Name, TVec Org, int Tid, float Angle, bool forc
     if (!SetNamePutElement('AcsSpawnThing:NotActorClass', Name)) print("AcsSpawnThing: `%s` is not an actor class", Name);
     return false;
   }
+  //k8: should we ignore replacement here?
   auto repl = class!EntityEx(GetClassReplacement(EntClass));
   if (repl) EntClass = repl;
 
@@ -4141,14 +4142,13 @@ override int AcsSpawnSpot (name Name, int SpotTid, int Tid, float Angle, bool fo
   return NumSpawned;
 }
 
+
 //==========================================================================
 //
 //  AcsSpawnSpotFacing
 //
 //==========================================================================
-
-override int AcsSpawnSpotFacing(name Name, int SpotTid, int Tid, bool forced)
-{
+override int AcsSpawnSpotFacing (name Name, int SpotTid, int Tid, bool forced) {
   int NumSpawned = 0;
   Entity A;
   for (A = FindMobjFromTID(SpotTid, none); A; A = FindMobjFromTID(SpotTid, A)) {
@@ -4156,6 +4156,7 @@ override int AcsSpawnSpotFacing(name Name, int SpotTid, int Tid, bool forced)
   }
   return NumSpawned;
 }
+
 
 //==========================================================================
 //

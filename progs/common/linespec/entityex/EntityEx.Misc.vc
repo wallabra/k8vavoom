@@ -180,8 +180,9 @@ final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
   EntityEx Other;
 
   if (!specified_thrustZ) thrustZ = DoDamage; //k8: see below
-
   if (!specified_DoDamage) DoDamage = true;
+
+  EntityEx SpecieSrc = (Source ? Source : self);
 
   foreach RadiusThings(Other, Origin, BombDistance) {
     if (!Other || !Other.bShootable) continue;
@@ -194,12 +195,33 @@ final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
     // option for monsters that fire explosive projectiles not to hurt
     // monsters of the same class with it's projectiles.
     // controlled by the bDontHurtClass and bDontHurtSpecies flags.
-    if (Source && !Other.bIsPlayer &&
-        ((Source.bDontHurtClass && Other.Class == Source.Class) ||
-         (Source.bDontHurtSpecies && Other.GetSpecies() == Source.GetSpecies())))
-    {
-      continue;
+    #if 0
+    old code
+      if (Source && !Other.bIsPlayer &&
+          ((Source.bDontHurtClass && Other.Class == Source.Class) ||
+           (Source.bDontHurtSpecies && Other.GetSpecies() == Source.GetSpecies())))
+      {
+        continue;
+      }
+    #else
+    if (!Other.bIsPlayer) {
+      if (Source &&
+          ((Source.bDontHurtClass && Other.Class == Source.Class) ||
+           (Source.bDontHurtSpecies && Other.GetSpecies() == Source.GetSpecies())))
+      {
+        continue;
+      }
+    } else {
+      // shitfuck for clusterfuck (fuckin' morons!)
+      //if (SpecieSrc) printdebug("%C(%s): Other=%C(%s); SpecieSrc=%C(%s); DmgType=%s", self, GetSpecies(), Other, Other.GetSpecies(), SpecieSrc, SpecieSrc.GetSpecies(), BombDmgType);
+      if (SpecieSrc &&
+          ((SpecieSrc.bDontHurtClass && Other.Class == self.Class) ||
+           (Other.Species && SpecieSrc.bDontHurtSpecies && SpecieSrc.GetSpecies() && Other.GetSpecies() == SpecieSrc.GetSpecies())))
+      {
+        continue;
+      }
     }
+    #endif
 
     float dist =
       !bOldRadiusDamage ?
