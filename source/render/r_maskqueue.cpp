@@ -453,6 +453,10 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
       case VEntity::EType::ET_Pickup: renderShadow = r_fake_shadows_pickups.asBool(); break;
       default: abort();
     }
+    // do not render shadow if floor surface is higher than the camera
+    if (renderShadow && (sprorigin.z < thing->FloorZ || thing->FloorZ >= vieworg.z)) {
+      renderShadow = false;
+    }
   }
 
   if (onlyShadow && !renderShadow) return;
