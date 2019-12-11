@@ -1845,6 +1845,17 @@ final void DoStateEffects (float DeltaTime) {
     foreach (auto i; 0..Lights.length) {
       LightEffectDef *L = Lights[i];
       TVec lorg = Origin+Forward*L->Offset.x-Right*L->Offset.y+Up*L->Offset.z;
+      // fix lights put into the floor or into the ceiling (why not?)
+      if (/*!L->Offset.z &&*/ Sector) {
+        float ffz1 = Sector.floor.GetPointZClamped(lorg);
+        if (lorg.z <= ffz1) {
+          // do not check ceiling here
+          lorg.z = ffz1+4; // why not?
+        } else {
+          float fcz1 = Sector.ceiling.GetPointZClamped(lorg);
+          if (lorg.z >= fcz1) lorg.z = fcz1-4; // why not?
+        }
+      }
       dlight_t *dl = AllocDlight(self, lorg, radius:fmax(0, fmax(prev_rad, L->Radius)), lightid:i); // pass "light id" to allow replacing
       if (!dl) continue; // alas
       //if (self isa 'ExplosiveBarrel') printdebug("%C:  dlight=%s; org=%s; lorg=%s; lrad=%s; type=%s", self, i, Origin, dl->origin, dl->radius, L->Type);
