@@ -209,6 +209,7 @@ VCvarB VAudio::snd_external_music("snd_external_music", false, "Allow external m
 
 static VCvarF snd_random_pitch("snd_random_pitch", "0.27", "Random pitch all sounds (0: none, otherwise max change).", CVAR_Archive);
 static VCvarF snd_random_pitch_boost("snd_random_pitch_boost", "1", "Random pitch will be multiplied by this value.", CVAR_Archive);
+static VCvarI snd_max_same_sounds("snd_max_same_sounds", "6", "Maximum number of simultaneously playing same sounds?", CVAR_Archive);
 
 VCvarI snd_mid_player("snd_mid_player", "1", "MIDI player type (0:Timidity; 1:FluidSynth; -1:none)", CVAR_Archive|CVAR_PreInit);
 VCvarI snd_mod_player("snd_mod_player", "2", "Module player type", CVAR_Archive);
@@ -521,7 +522,9 @@ void VAudio::PlaySound (int InSoundId, const TVec &origin, const TVec &velocity,
 //
 //==========================================================================
 int VAudio::GetChannel (int sound_id, int origin_id, int channel, int priority) {
-  const int numchannels = GSoundManager->S_sfx[sound_id].NumChannels;
+  const int maxcc = min2(snd_max_same_sounds.asInt(), 128);
+  // <0: unlimited; 0: default; >0: hard limit
+  const int numchannels = (maxcc >= 0 ? clampval(GSoundManager->S_sfx[sound_id].NumChannels, 0, (maxcc ? maxcc : 128)) : 0);
 
   // first, look if we want to replace sound on some channel
   if (channel != 0) {

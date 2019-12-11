@@ -700,7 +700,7 @@ int VSoundManager::AddSoundLump (VName TagName, int Lump) {
   S.TagName = TagName;
   S.Data = nullptr;
   S.Priority = 127;
-  S.NumChannels = 6; // max instances of this sound; was 2
+  S.NumChannels = 16; // max instances of this sound; was 2; it will be bound with "snd_max_same_sounds" anyway
   S.ChangePitch = CurrentChangePitch;
   S.VolumeAmp = 1.0f;
   S.Attenuation = 1.0f;
