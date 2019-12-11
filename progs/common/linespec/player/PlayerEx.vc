@@ -3443,8 +3443,9 @@ void AddDefaultInventory () {
     class!EntityEx tp = class!EntityEx(EntityEx(MO).DropItemList[i].Type);
     class!EntityEx tprepl = none;
     if (tp) tprepl = class!Inventory(GetClassReplacement(tp));
-    //print("  i=%d; type=`%C`(%C); name=`%s`; amount=%s; chance=%s", i, tp, tprepl, EntityEx(MO).DropItemList[i].TypeName, EntityEx(MO).DropItemList[i].Amount, EntityEx(MO).DropItemList[i].Chance);
+    //printdebug("  i=%d; type=`%C`(%C); name=`%s`; amount=%s; chance=%s", i, tp, tprepl, EntityEx(MO).DropItemList[i].TypeName, EntityEx(MO).DropItemList[i].Amount, EntityEx(MO).DropItemList[i].Chance);
     if (!tprepl) continue;
+    //printdebug("  i=%d; type=`%C`(%C); name=`%s`; amount=%s; chance=%s", i, tp, tprepl, EntityEx(MO).DropItemList[i].TypeName, EntityEx(MO).DropItemList[i].Amount, EntityEx(MO).DropItemList[i].Chance);
     Inventory Item = Inventory(Level.Spawn(tprepl, default, default, default, AllowReplace:false));
     if (Item) {
       Item.bIgnoreSkill = true;

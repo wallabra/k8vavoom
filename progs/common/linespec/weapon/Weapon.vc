@@ -648,6 +648,7 @@ bool CheckSpecialWeaponAmmo (ubyte Mode) {
 final bool CheckAmmoAmount (ubyte Mode, optional bool RequireAmmo) {
   if (Mode == FIRE_Primary) {
     if (!RequireAmmo && bAmmoOptional) return true; //k8: is this right?
+    //printdebug("%C: AmmoType1=%C; Ammo1=%C", self, AmmoType1, Ammo1);
     int Amount1 = (Ammo1 ? Ammo1.Amount : 0);
     //print("%C; Amount1=%s; AmmoUse1=%s", self, Amount1, AmmoUse1);
     if (Amount1 == 0 && AmmoUse1 == 0) return CheckSpecialWeaponAmmo(Mode);
