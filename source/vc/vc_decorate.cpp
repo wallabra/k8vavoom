@@ -1417,6 +1417,20 @@ static VStr ParseStateString (VScriptParser *sc) {
 
 //==========================================================================
 //
+//  RemapOldLabel
+//
+//==========================================================================
+static VStr RemapOldLabel (VStr name) {
+  if (name.strEquCI("XDeath")) return VStr("Death.Extreme");
+  if (name.strEquCI("Burn")) return VStr("Death.Fire");
+  if (name.strEquCI("Ice")) return VStr("Death.Ice");
+  if (name.strEquCI("Disintegrate")) return VStr("Death.Disintegrate");
+  return name;
+}
+
+
+//==========================================================================
+//
 //  ParseStates
 //
 //==========================================================================
@@ -1425,6 +1439,8 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
   VState *LastState = nullptr; // last defined state (`nullptr` right after new label)
   VState *LoopStart = nullptr; // state with last defined label (used to resolve `loop`)
   int NewLabelsStart = Class->StateLabelDefs.Num(); // first defined, but not assigned label index
+
+  VStr LastDefinedLabel; // to workaround another ZDoom idiocity
 
   sc->Expect("{");
   // disable escape sequences in states
@@ -1575,6 +1591,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       Lbl.Loc = TmpLoc;
       Lbl.Name = TmpName;
       if (!sc->Crossed && sc->Check(";")) {}
+      LastDefinedLabel = TmpName;
       continue;
     }
 
@@ -1799,6 +1816,37 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
   }
   // re-enable escape sequences
   sc->SetEscape(true);
+
+  // idiotic ZDoom allows end labeled code with nothing, and automatically routes
+  // its last state to the next label. sigh.
+  if (LastState && !LastState->NextState && PrevState && !LastDefinedLabel.isEmpty()) {
+    LastDefinedLabel = RemapOldLabel(LastDefinedLabel);
+    // find this label in the parent class, and route the state to the next label there
+    bool found = false;
+    for (VClass *pc = Class->GetSuperClass(); pc; pc = pc->GetSuperClass()) {
+      for (auto &&lbl : pc->StateLabelDefs.itemsIdx()) {
+        //GCon->Logf(NAME_Debug, "  %s: %s (%s)", pc->GetName(), *lbl.value().Name, (lbl.value().State ? *lbl.value().State->Loc.toStringNoCol() : "<none>"));
+        if (RemapOldLabel(lbl.value().Name).strEquCI(LastDefinedLabel)) {
+          found = true;
+          if (lbl.index()+1 >= pc->StateLabelDefs.length()) {
+            //GCon->Log(NAME_Error, "*** cannot fix this shit, sorry.");
+          } else {
+            GCon->Logf(NAME_Error, "%s: found ZDoom idiocity at label %s; modder is a moron.", *LastState->Loc.toStringNoCol(), *LastDefinedLabel);
+            VStateLabelDef &lnext = pc->StateLabelDefs[lbl.index()+1];
+            if (lnext.State) {
+              GCon->Logf(NAME_Debug, "  %s: %s (%s)", pc->GetName(), *lnext.Name, (lnext.State ? *lnext.State->Loc.toStringNoCol() : "<none>"));
+              LastState->NextState = lnext.State;
+            } else {
+              GCon->Logf(NAME_Error, "*** %s: %s -- dead state", pc->GetName(), *lnext.Name);
+            }
+          }
+          break;
+        }
+      }
+      if (found) break;
+    }
+  }
+
   return true;
 }
 
