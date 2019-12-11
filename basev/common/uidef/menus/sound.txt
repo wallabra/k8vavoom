@@ -55,6 +55,21 @@ menudef SoundOptions {
     max = 248;
   }
 
+  option numeric {
+    title = "Max Same Sounds";
+    cvar = snd_max_same_sounds;
+    step = 1;
+    min = -1;
+    max = 128;
+    help =
+      "Maxumum number of same sound, playing simultaneously."
+      "This is used to prevent ear-ripping when alot of monsters of"
+      "the same type are active."
+      ""
+      "Set to 0 to use sounddef default (16 if not specified in SNDDEF),"
+      "and -1 means 'no limits at all'.";
+  }
+
   // this doesn't work yet
   //CreateOnOffCvar("Swap stereo", 'snd_swap_stereo');
 
