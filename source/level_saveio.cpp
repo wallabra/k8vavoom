@@ -136,6 +136,9 @@ void VLevel::SerialiseOther (VStream &Strm) {
   line_t *li;
   side_t *si;
 
+  // do not save stale map marks
+  AM_ClearMarksIfMapChanged(this);
+
   if (Strm.IsLoading()) {
     for (unsigned f = 0; f < (unsigned)NumSubsectors; ++f) {
       // reset subsector update frame
@@ -427,8 +430,10 @@ void VLevel::SerialiseOther (VStream &Strm) {
     #endif
     Strm << STRM_INDEX(number);
     if (number < 0 || number > 1024) Host_Error("invalid automap marks data");
+    //GCon->Logf(NAME_Debug, "marks: %d", number);
     if (Strm.IsLoading()) {
       // load automap marks
+      AM_ClearMarks();
       for (int markidx = 0; markidx < number; ++markidx) {
         VNTValueIOEx vio(&Strm);
         float x = 0, y = 0;
@@ -438,7 +443,9 @@ void VLevel::SerialiseOther (VStream &Strm) {
         vio.io(VName("mark.y"), y);
         // do not replace user marks
         #ifdef CLIENT
+        //GCon->Logf(NAME_Debug, "  idx=%d; pos=(%g,%g); active=%d", markidx, x, y, active);
         if (active && !AM_IsMarkActive(markidx) && isFiniteF(x)) {
+          //GCon->Logf(NAME_Debug, "   set!");
           AM_SetMarkXY(markidx, x, y);
         }
         #endif
@@ -453,7 +460,6 @@ void VLevel::SerialiseOther (VStream &Strm) {
         vio.io(VName("mark.active"), active);
         vio.io(VName("mark.x"), x);
         vio.io(VName("mark.y"), y);
-        // do not replace user marks
       }
       #else
       vassert(number == 0);

@@ -350,6 +350,7 @@ static short mapxstart = 0; //x-value for the bitmap.
 static bool stopped = true;
 
 static VName lastmap;
+static VName lastmakrsmap;
 
 
 //  The vector graphics for the automap.
@@ -491,6 +492,7 @@ static bool AM_clearMarks () {
     res = (res || mp.isActive());
     mp.deactivate();
   }
+  //GCon->Logf(NAME_Debug, "*** marks cleared!");
   return res;
 }
 
@@ -811,6 +813,19 @@ static void AM_loadPics () {
 
 //==========================================================================
 //
+//  AM_ClearMarksIfMapChanged
+//
+//==========================================================================
+void AM_ClearMarksIfMapChanged (VLevel *currmap) {
+  if (!currmap || lastmakrsmap != currmap->MapName) {
+    (void)AM_clearMarks();
+    lastmakrsmap = (currmap ? currmap->MapName : NAME_None);
+  }
+}
+
+
+//==========================================================================
+//
 //  AM_LevelInit
 //
 //  should be called at the start of every level
@@ -825,7 +840,8 @@ static void AM_LevelInit () {
   f_w = ScreenWidth;
   f_h = ScreenHeight-(screen_size < 11 ? SB_RealHeight() : 0);
 
-  (void)AM_clearMarks();
+  //AM_ClearMarksIfMapChanged(GClLevel);
+  //if (clearMarks) (void)AM_clearMarks();
   mapxstart = mapystart = 0;
 
   AM_findMinMaxBoundaries();
@@ -833,6 +849,8 @@ static void AM_LevelInit () {
   if (scale_mtof > max_scale_mtof) scale_mtof = min_scale_mtof;
   scale_ftom = 1.0f/scale_mtof;
   start_scale_mtof = scale_mtof;
+
+  lastmap = GClLevel->MapName;
 }
 
 
@@ -856,10 +874,8 @@ void AM_Stop () {
 static void AM_Start () {
   //if (!stopped) AM_Stop();
   stopped = false;
-  if (lastmap != GClLevel->MapName) {
-    AM_LevelInit();
-    lastmap = GClLevel->MapName;
-  }
+  if (lastmap != GClLevel->MapName) AM_LevelInit();
+  AM_ClearMarksIfMapChanged(GClLevel);
   AM_initVariables(); // this sets `automapactive`
   AM_loadPics();
   if (amWholeScale < 0) {
