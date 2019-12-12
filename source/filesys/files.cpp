@@ -1164,9 +1164,9 @@ static void AddGameDir (VStr basedir, VStr dir) {
         hbd = GParsedArgs.getBinDir()+hbd;
       } else if (hbd[0] == '~') {
         hbd.chopLeft(1);
-        const char *hdir = getenv("HOME");
-        if (hdir && hdir[0]) {
-          hbd = VStr(hdir)+hbd;
+        const char *homdir = getenv("HOME");
+        if (homdir && homdir[0]) {
+          hbd = VStr(homdir)+hbd;
         } else {
           continue;
         }
