@@ -233,6 +233,7 @@ endif()
 if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 9.0)
   set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-diagnostics-show-line-numbers")
   set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -fno-diagnostics-show-labels")
+  set(UNFUCK_GCC_FLAGS "${UNFUCK_GCC_FLAGS} -Wno-address-of-packed-member")
 endif()
 
 # some math/FPU options
