@@ -29,7 +29,7 @@
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-VCvarB r_bloom("r_bloom", false, "Enable Bloom post-processing effect?", CVAR_Archive);
+VCvarB r_bloom("r_bloom", true, "Enable Bloom post-processing effect?", CVAR_Archive);
 VCvarF r_bloom_alpha("r_bloom_alpha", "0.2", "Bloom alpha.", CVAR_Archive);
 VCvarI r_bloom_diamond_size("r_bloom_diamond_size", "8", "Bloom diamond size.", CVAR_Archive);
 VCvarF r_bloom_intensity("r_bloom_intensity", "0.75", "Bloom intensity.", CVAR_Archive);
