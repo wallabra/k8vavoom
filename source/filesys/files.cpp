@@ -1158,6 +1158,19 @@ static void AddGameDir (VStr basedir, VStr dir) {
     #endif
     for (auto &&audir : autoloadDirList) {
       VStr hbd = VStr(audir);
+      if (hbd.isEmpty()) continue;
+      if (hbd[0] == '!') {
+        hbd.chopLeft(1);
+        hbd = GParsedArgs.getBinDir()+hbd;
+      } else if (hbd[0] == '~') {
+        hbd.chopLeft(1);
+        const char *hdir = getenv("HOME");
+        if (hdir && hdir[0]) {
+          hbd = VStr(hdir)+hbd;
+        } else {
+          continue;
+        }
+      }
       hbd = hbd.appendPath(gdn);
       //GCon->Logf(NAME_Debug, "!!! <%s> : <%s> : <%s>", *audir, *gdn, *hbd);
       AddGameAutoloads(hbd, false);
@@ -2016,6 +2029,10 @@ void FL_InitOptions () {
 
   // hidden
   GParsedArgs.RegisterFlagSet("-Wall", "!turn on various useless warnings", &cli_WAll);
+
+  #ifdef _WIN32
+  autoloadDirList.append("!/autoload");
+  #endif
 }
 
 
