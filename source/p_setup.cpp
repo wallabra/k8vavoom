@@ -827,6 +827,8 @@ void VLevel::LoadMap (VName AMapName) {
   decanimuid = 0;
 
   mapTextureWarns.clear();
+  // clear automap marks; save loader will restore them from a save
+  AM_ClearMarks();
 
   if (csTouched) Z_Free(csTouched);
   csTouchCount = 0;
