@@ -226,7 +226,7 @@ static VCvarB am_draw_texture_lines("am_draw_texture_lines", true, "Draw automap
 static VCvarB am_draw_texture_with_bsp("am_draw_texture_with_bsp", true, "Draw textured automap using BSP tree?", CVAR_Archive);
 
 
-static VCvarB am_default_whole("am_default_whole", true, "Default scale is \"show all\"?", CVAR_Archive);
+static VCvarB am_default_whole("am_default_whole", false, "Default scale is \"show all\"?", CVAR_Archive);
 
 static VCvarB am_draw_keys("am_draw_keys", true, "Draw keys on automap?", CVAR_Archive);
 static VCvarF am_keys_blink_time("am_keys_blink_time", "0.4", "Keys blinking time in seconds (set to 0 to disable)", CVAR_Archive);
