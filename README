@@ -106,6 +106,13 @@ That is, if you've played some WAD without its custom music and decided
 to add its *MUS.WAD now, you will not see your previous saves, cause the
 game config will be different.
 
+But if you are *ABSOLUTELY* sure that your new wad contains only cosmetic
+features that *CANNOT* influence the game, you can use "-cosmetic filename"
+CLI argument to avoid savegame invalidation.
+
+To stay on the safe side, use "-cosmetic" only for pwads containing music
+and/or sounds. Everything else may break the save, or even the engine.
+
 
 #### Custom game modes
 
