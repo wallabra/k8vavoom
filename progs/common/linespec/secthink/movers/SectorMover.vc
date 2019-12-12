@@ -379,6 +379,7 @@ int MoveCeilingUp (sector_t *sector, float amount, float dest, int crush, bool s
 //  `-1` for `crush` means "ignore stuck mobj"
 //  this is used for doors and crushers when they're going up
 //  (they should not stuck)
+//  `-667` means "instant move, no smart crush, abort on crush"
 //
 //==========================================================================
 int MovePlane (sector_t *sector, float amount, float dest, int crush,
@@ -388,13 +389,19 @@ int MovePlane (sector_t *sector, float amount, float dest, int crush,
   if (!sector) return RES_OK;
   switch (floorOrCeiling) {
     case MOVE_PLANE_FLOOR:
-      if (smartCrush && crush >= 0) crush = CalcFloorCrush(sector, crush, direction);
+      if (smartCrush) {
+             if (crush >= 0) crush = CalcFloorCrush(sector, crush, direction);
+        else if (crush == -667) { crush = 0; stopOnCrush = true; }
+      }
       return
         direction < 0 ?
           MoveFloorDown(sector, amount, dest, crush, stopOnCrush) :
           MoveFloorUp(sector, amount, dest, crush, stopOnCrush);
     case MOVE_PLANE_CEILING:
-      if (smartCrush && crush >= 0) crush = CalcCeilingCrush(sector, crush, direction);
+      if (smartCrush) {
+             if (crush >= 0) crush = CalcCeilingCrush(sector, crush, direction);
+        else if (crush == -667) { crush = 0; stopOnCrush = true; }
+      }
       return
         direction < 0 ?
           MoveCeilingDown(sector, amount, dest, crush, stopOnCrush) :

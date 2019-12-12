@@ -58,8 +58,8 @@ int Type;
 float BottomDist;
 float TopDist;
 float Speed;
-int Crush;
-int Direction;  // 1 = up, 0 = waiting, -1 = down
+int Crush; // -667: instant, no smart crush
+int Direction; // 1 = up, 0 = waiting, -1 = down
 int Tag;
 int OldDirection;
 float DnSpeed;
@@ -303,7 +303,18 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
       break;
   }
   if (Crush < 0) Crush = 0;
-  StartCeilingSound();
+
+  // instamove?
+  if (!Crush) {
+    if (Direction < 0) {
+      if (Sector->ceiling.dist >= BottomDist) Crush = -667; // instamove
+    } else {
+      if (Sector->ceiling.dist <= BottomDist) Crush = -667; // instamove
+    }
+  }
+
+  // instamove is silent
+  if (Crush != -667) StartCeilingSound();
 }
 
 

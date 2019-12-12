@@ -56,7 +56,7 @@ enum {
 
 int   Type;
 float Speed;
-int   Crush;
+int   Crush; // -667: instant, no smart crush
 int   Direction;  // 1 = up, 0 = waiting, -1 = down
 int   NewSpecial;
 int   Texture;
@@ -108,6 +108,7 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
       DestHeight = Level.FindHighestFloorSurrounding(Sector, &Spot);
       Spot.z = DestHeight;
       FloorDestDist = DotProduct(Sector->floor.normal, Spot);
+      //printdebug("000: spot=%s; dest=%s", Spot.z, FloorDestDist);
       if (FloorDestDist != Sector->floor.dist) {
         Spot.z = DestHeight+float(Arg3)-128.0;
         FloorDestDist = DotProduct(Sector->floor.normal, Spot);
@@ -323,7 +324,18 @@ void Init (sector_t *InSector, int Arg1, int Arg2, int Arg3, int Arg4,
       }
       break;
   }
-  StartFloorSound(SeqName);
+
+  // instamove?
+  if (!Crush) {
+    if (Direction < 0) {
+      if (Sector->floor.dist <= FloorDestDist) Crush = -667; // instamove
+    } else {
+      if (Sector->floor.dist >= FloorDestDist) Crush = -667; // instamove
+    }
+  }
+
+  // instamove is silent
+  if (Crush != -667) StartFloorSound(SeqName);
 }
 
 
@@ -493,7 +505,9 @@ override void Tick (float deltaTime) {
   }
 
   // don't block lowering floor with stuck monster
+  //printdebug("000: XXMODE: dest=%s; Crush=%s", FloorDestDist, Crush);
   int res = MovePlane(sector:Sector, amount:Speed*deltaTime, dest:FloorDestDist, crush:Crush, floorOrCeiling:MOVE_PLANE_FLOOR, direction:Direction, stopOnCrush:false, smartCrush:true);
+  //printdebug("001: XXMODE: dest=%s; Crush=%s; res=%s", FloorDestDist, Crush, res);
 
   if (res == RES_PASTDEST) {
     SectorStopSequence(Sector);
