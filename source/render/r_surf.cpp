@@ -32,6 +32,8 @@
 static VCvarB r_hack_transparent_doors("r_hack_transparent_doors", true, "Transparent doors hack.", CVAR_Archive);
 static VCvarB r_hack_zero_sky("r_hack_zero_sky", true, "ZeroSky hack (Doom II MAP01 extra floor fix).", CVAR_Archive);
 
+static VCvarB r_hack_fake_floor_decorations("r_hack_fake_floor_decorations", true, "Fake floor/ceiling decoration fix.", /*CVAR_Archive|*/CVAR_PreInit);
+
 
 //**************************************************************************
 //
@@ -754,18 +756,14 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
     TVec wv[4];
 
     // see `SetupTwoSidedBotWSurf()` for explanation
-    //const float topz1 = r_ceiling.GetPointZ(*seg->v1);
-    //const float topz2 = r_ceiling.GetPointZ(*seg->v2);
-    const float topz1 = GetFixedZWithFake(min2, ceiling, *seg->v1, seg->frontsector, r_ceiling);
-    const float topz2 = GetFixedZWithFake(min2, ceiling, *seg->v2, seg->frontsector, r_ceiling);
+    const float topz1 = (r_hack_fake_floor_decorations ? GetFixedZWithFake(min2, ceiling, *seg->v1, seg->frontsector, r_ceiling) : r_ceiling.GetPointZ(*seg->v1));
+    const float topz2 = (r_hack_fake_floor_decorations ? GetFixedZWithFake(min2, ceiling, *seg->v2, seg->frontsector, r_ceiling) : r_ceiling.GetPointZ(*seg->v2));
     const float botz1 = r_floor.GetPointZ(*seg->v1);
     const float botz2 = r_floor.GetPointZ(*seg->v2);
 
     // see `SetupTwoSidedBotWSurf()` for explanation
-    //const float back_topz1 = back_ceiling->GetPointZ(*seg->v1);
-    //const float back_topz2 = back_ceiling->GetPointZ(*seg->v2);
-    const float back_topz1 = GetFixedZWithFake(max2, ceiling, *seg->v1, seg->backsector, (*back_ceiling));
-    const float back_topz2 = GetFixedZWithFake(max2, ceiling, *seg->v2, seg->backsector, (*back_ceiling));
+    const float back_topz1 = (r_hack_fake_floor_decorations ? GetFixedZWithFake(max2, ceiling, *seg->v1, seg->backsector, (*back_ceiling)) : back_ceiling->GetPointZ(*seg->v1));
+    const float back_topz2 = (r_hack_fake_floor_decorations ? GetFixedZWithFake(max2, ceiling, *seg->v2, seg->backsector, (*back_ceiling)) : back_ceiling->GetPointZ(*seg->v2));
 
     // hack to allow height changes in outdoor areas
     float top_topz1 = topz1;
@@ -841,17 +839,13 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
     //FIXME: this is totally wrong, because we may have alot of different
     //       configurations here, and we should check for them all
     //FIXME: also, moving height sector should trigger surface recreation
-    //float botz1 = r_floor.GetPointZ(*seg->v1);
-    //float botz2 = r_floor.GetPointZ(*seg->v2);
-    const float botz1 = GetFixedZWithFake(min2, floor, *seg->v1, seg->frontsector, r_floor);
-    const float botz2 = GetFixedZWithFake(min2, floor, *seg->v2, seg->frontsector, r_floor);
+    const float botz1 = (r_hack_fake_floor_decorations ? GetFixedZWithFake(min2, floor, *seg->v1, seg->frontsector, r_floor) : r_floor.GetPointZ(*seg->v1));
+    const float botz2 = (r_hack_fake_floor_decorations ? GetFixedZWithFake(min2, floor, *seg->v2, seg->frontsector, r_floor) : r_floor.GetPointZ(*seg->v2));
     float top_TexZ = r_ceiling.splane->TexZ;
 
     // same height fix as above
-    //const float back_botz1 = back_floor->GetPointZ(*seg->v1);
-    //const float back_botz2 = back_floor->GetPointZ(*seg->v2);
-    const float back_botz1 = GetFixedZWithFake(max2, floor, *seg->v1, seg->backsector, (*back_floor));
-    const float back_botz2 = GetFixedZWithFake(max2, floor, *seg->v2, seg->backsector, (*back_floor));
+    const float back_botz1 = (r_hack_fake_floor_decorations ? GetFixedZWithFake(max2, floor, *seg->v1, seg->backsector, (*back_floor)) : back_floor->GetPointZ(*seg->v1));
+    const float back_botz2 = (r_hack_fake_floor_decorations ? GetFixedZWithFake(max2, floor, *seg->v2, seg->backsector, (*back_floor)) : back_floor->GetPointZ(*seg->v2));
 
     // hack to allow height changes in outdoor areas
     if (R_IsStrictlySkyFlatPlane(r_ceiling.splane) && R_IsStrictlySkyFlatPlane(back_ceiling)) {
