@@ -6,7 +6,10 @@ menudef AutomapOptions {
   option bool {
     title = "Default scale is small";
     cvar = am_default_whole;
-    help = "Choose default automap scale so you can see most of the map?";
+    help =
+      "Choose default automap scale so you can see most of the map?"
+      "If 'ON', you cannot scale automap with '+'/'-'."
+      "Use '0' to toggle this mode while automap is active.";
   }
 
   option bool {
