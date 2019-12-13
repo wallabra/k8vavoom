@@ -259,6 +259,9 @@ static final string LineSpecial2Str (int special) {
 
     case LNSPEC_SectorSetPortal: return "SectorSetPortal";
     case LNSPEC_LineSetPortal: return "LineSetPortal";
+
+    case LNSPEC_SectorSetFloorGlow: return "SectorSetFloorGlow";
+    case LNSPEC_SectorSetCeilingGlow: return "SectorSetCeilingGlow";
   }
   return va("lsp#%d", special);
 }

@@ -1146,6 +1146,11 @@ override int ExecuteActionSpecial (int Special, int Arg1, int Arg2, int Arg3,
       printwarn("this level uses line portals; this is not supported by k8vavoom!");
       break;
 
+    case LNSPEC_SectorSetFloorGlow:
+    case LNSPEC_SectorSetCeilingGlow:
+      buttonSuccess = EV_SectorSetGlow((Special == LNSPEC_SectorSetCeilingGlow), Arg1, Arg2, Arg3, Arg4, Arg5);
+      break;
+
     default:
       // log everything else to know what needs to be implemented
       print("Unknown action special %d(%d, %d, %d, %d, %d)", Special, Arg1, Arg2, Arg3, Arg4, Arg5);
@@ -5812,6 +5817,48 @@ int EV_SectorSetPlaneReflection(int Arg1, int Arg2, int Arg3, int Arg4,
   }
   return 1;
 }
+
+
+//=========================================================================
+//
+//  EV_SectorSetGlow
+//
+//=========================================================================
+final bool EV_SectorSetGlow (bool forCeiling, int tag, int height, int r, int g, int b) {
+  //printdebug("EV_SectorSetGlow: forCeiling=%B; tag=%s; height=%s; r=%s; g=%s; b=%s", forCeiling, tag, height, r, g, b);
+  bool res = false;
+  bool setIt = (r >= 0 && height > 0);
+  int clr = (setIt ? 0xff_00_00_00|(clamp(r, 0, 255)<<16)|(clamp(g, 0, 255)<<8)|clamp(b, 0, 255) : 0);
+  sector_t *sector;
+  for (int hidx = XLevel.FindSectorFromTag(out sector, tag); hidx >= 0; hidx = XLevel.FindSectorFromTag(out sector, tag, hidx)) {
+    res = true;
+    if (setIt) {
+      // set glow
+      if (forCeiling) {
+        sector.params.bCeilingGlow = true;
+        sector.params.glowCeiling = clr;
+        sector.params.glowCeilingHeight = height;
+      } else {
+        sector.params.bFloorGlow = true;
+        sector.params.glowFloor = clr;
+        sector.params.glowFloorHeight = height;
+      }
+    } else {
+      // reset glow
+      if (forCeiling) {
+        sector.params.bCeilingGlow = false;
+        sector.params.glowCeiling = 0;
+        sector.params.glowCeilingHeight = 0;
+      } else {
+        sector.params.bFloorGlow = false;
+        sector.params.glowFloor = 0;
+        sector.params.glowFloorHeight = 0;
+      }
+    }
+  }
+  return res;
+}
+
 
 //==========================================================================
 //

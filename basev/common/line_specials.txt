@@ -187,3 +187,6 @@
 253 Ceiling_LowerToLowest
 254 Ceiling_LowerToFloor
 255 Ceiling_CrushRaiseAndStaySilA
+// gzdoom OpenGL specials
+277 Sector_SetFloorGlow
+278 Sector_SetCeilingGlow

@@ -570,10 +570,13 @@ enum {
   LNSPEC_CeilingLowerToFloor,
   LNSPEC_CeilingCrushRaiseAndStaySilentA,
 
-  LNSPEC_Max,
+  //LNSPEC_Max,
 
   LNSPEC_SectorSetPortal = 57,
   LNSPEC_LineSetPortal = 156,
+
+  LNSPEC_SectorSetFloorGlow = 277,
+  LNSPEC_SectorSetCeilingGlow = 278,
 };
 
 
