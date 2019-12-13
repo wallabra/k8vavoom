@@ -709,7 +709,7 @@ VAcsObject::VAcsObject (VAcsLevel *ALevel, int Lump) : Functions(), Level(ALevel
         (pretag[3] == 'e' || pretag[3] == 'E'))
     {
       Format = (pretag[3] == 'e' ? ACS_LittleEnhanced : ACS_Enhanced);
-      Chunks = Data+LittleLong(*(int *)(Data+dirofs-8));
+      Chunks = Data+LittleLong(*(vint32 *)(Data+dirofs-8));
       // forget about the compatibility cruft at the end of the lump
       DataSize = dirofs-8;
     }
@@ -768,7 +768,7 @@ VAcsObject::~VAcsObject () {
 //==========================================================================
 void VAcsObject::LoadOldObject () {
   int i;
-  int *buffer;
+  vint32 *buffer;
   VAcsInfo *info;
   VAcsHeader *header;
 
@@ -778,7 +778,7 @@ void VAcsObject::LoadOldObject () {
   header = (VAcsHeader *)Data;
 
   // load script info
-  buffer = (int*)(Data+LittleLong(header->InfoOffset));
+  buffer = (vint32 *)(Data+LittleLong(header->InfoOffset));
   NumScripts = LittleLong(*buffer++);
   if (NumScripts == 0) return; // empty behavior lump
   Scripts = new VAcsInfo[NumScripts];
@@ -816,15 +816,15 @@ void VAcsObject::LoadOldObject () {
 //  ParseLocalArrayChunk
 //
 //==========================================================================
-static int ParseLocalArrayChunk (void *chunk, VACSLocalArrays *arrays, int offset) {
-  int count = LittleUShort(((vuint16 *)chunk)[1]-2)/4;
-  vint32 *sizes = (vint32 *)((vuint8 *)chunk+10);
+static int ParseLocalArrayChunk (const void *chunk, VACSLocalArrays *arrays, int offset) {
+  int count = LittleUShort(((const vuint32 *)chunk)[1]-2)/4;
   arrays->SetCount(count);
   GCon->Logf(NAME_Debug, " count=%d (%d)", count, arrays->Count);
   if (arrays->Count > 0) {
+    const vint32 *sizes = (const vint32 *)((const vuint8 *)chunk+10);
     VACSLocalArrayInfo *info = arrays->Info;
-    for (int i = 0; i < count; ++i, ++info) {
-      info->Size = LittleLong(sizes[i]);
+    for (int i = 0; i < count; ++i, ++info, ++sizes) {
+      info->Size = LittleLong(*sizes);
       info->Offset = offset;
       if (info->Size < 0 || info->Offset < 0) Sys_Error("invalid acs array descritption (offset=%d; size=%d)", info->Offset, info->Size);
       GCon->Logf(NAME_Debug, "  array #%d, offset=%d, size=%d", i, info->Offset, info->Size);
@@ -843,11 +843,11 @@ static int ParseLocalArrayChunk (void *chunk, VACSLocalArrays *arrays, int offse
 //==========================================================================
 void VAcsObject::LoadEnhancedObject () {
   int i;
-  int *buffer;
+  vint32 *buffer;
   VAcsInfo *info;
 
   // load scripts
-  buffer = (int *)FindChunk("SPTR");
+  buffer = (vint32 *)FindChunk("SPTR");
   if (buffer) {
     if (Data[3] != 0) {
       NumScripts = LittleLong(buffer[1])/12;
@@ -892,7 +892,7 @@ void VAcsObject::LoadEnhancedObject () {
   }
 
   // load script flags
-  buffer = (int *)FindChunk("SFLG");
+  buffer = (vint32 *)FindChunk("SFLG");
   if (buffer) {
     int count = LittleLong(buffer[1])/4;
     buffer += 2;
@@ -905,7 +905,7 @@ void VAcsObject::LoadEnhancedObject () {
   }
 
   // load script var counts
-  buffer = (int*)FindChunk("SVCT");
+  buffer = (vint32 *)FindChunk("SVCT");
   if (buffer) {
     int count = LittleLong(buffer[1])/4;
     buffer += 2;
@@ -920,7 +920,7 @@ void VAcsObject::LoadEnhancedObject () {
   }
 
   // load functions
-  buffer = (int*)FindChunk("FUNC");
+  buffer = (vint32 *)FindChunk("FUNC");
   if (buffer) {
     int NumFunctions = LittleLong(buffer[1])/8;
     if (NumFunctions < 0 || NumFunctions > 1024*1024) Sys_Error("ACS file '%s' has invalid function count (%d)", *W_FullLumpName(LumpNum), NumFunctions);
@@ -936,7 +936,7 @@ void VAcsObject::LoadEnhancedObject () {
   UnencryptStrings();
 
   // a temporary hack
-  buffer = (int *)FindChunk("STRL");
+  buffer = (vint32 *)FindChunk("STRL");
   if (buffer) {
     buffer += 2;
     NumStrings = LittleLong(buffer[1]);
@@ -950,7 +950,7 @@ void VAcsObject::LoadEnhancedObject () {
 
   // load local arrays for functions
   if (Functions.length() > 0) {
-    for (buffer = (int *)FindChunk("FARY"); buffer; buffer = (int *)NextChunk((vuint8 *)buffer)) {
+    for (buffer = (vint32 *)FindChunk("FARY"); buffer; buffer = (vint32 *)NextChunk((vuint8 *)buffer)) {
       int size = LittleLong(buffer[1]);
       if (size >= 6) {
         int funcnum = LittleUShort(((vuint16 *)buffer)[4]);
@@ -958,7 +958,7 @@ void VAcsObject::LoadEnhancedObject () {
           VAcsFunction *func = &Functions[funcnum];
           // unlike scripts, functions do not include their arg count in their local count
           GCon->Logf(NAME_Debug, "ACS file '%s', function #%d has local arrays", *W_FullLumpName(LumpNum), funcnum);
-          func->LocalCount = ParseLocalArrayChunk(buffer+2, &func->LocalArrays, func->LocalCount+func->ArgCount)-func->ArgCount;
+          func->LocalCount = ParseLocalArrayChunk(buffer, &func->LocalArrays, func->LocalCount+func->ArgCount)-func->ArgCount;
         }
       }
     }
@@ -972,18 +972,18 @@ void VAcsObject::LoadEnhancedObject () {
 
   // initialise this object's map variables
   memset((void *)MapVarStore, 0, sizeof(MapVarStore));
-  buffer = (int *)FindChunk("MINI");
+  buffer = (vint32 *)FindChunk("MINI");
   while (buffer) {
     int numvars = LittleLong(buffer[1])/4-1;
     int firstvar = LittleLong(buffer[2]);
     for (i = 0; i < numvars; ++i) {
       MapVarStore[firstvar+i] = LittleLong(buffer[3+i]);
     }
-    buffer = (int *)NextChunk((vuint8*)buffer);
+    buffer = (vint32 *)NextChunk((vuint8*)buffer);
   }
 
   // create arrays
-  buffer = (int *)FindChunk("ARAY");
+  buffer = (vint32 *)FindChunk("ARAY");
   if (buffer) {
     NumArrays = LittleLong(buffer[1])/8;
     ArrayStore = new VArrayInfo[NumArrays];
@@ -997,13 +997,13 @@ void VAcsObject::LoadEnhancedObject () {
   }
 
   // initialise arrays
-  buffer = (int *)FindChunk("AINI");
+  buffer = (vint32 *)FindChunk("AINI");
   while (buffer) {
     int arraynum = MapVarStore[LittleLong(buffer[2])];
     if ((unsigned)arraynum < (unsigned)NumArrays) {
       int initsize = (LittleLong(buffer[1])-4)/4;
       if (initsize > ArrayStore[arraynum].Size) initsize = ArrayStore[arraynum].Size;
-      int *elems = ArrayStore[arraynum].Data;
+      vint32 *elems = ArrayStore[arraynum].Data;
       /*
       for (i = 0; i < initsize; i++) {
         elems[i] = LittleLong(buffer[3 + i]);
@@ -1018,12 +1018,12 @@ void VAcsObject::LoadEnhancedObject () {
       for (i = 0; i < initsize; ++i) elems[i] = LittleLong(buffer[3+i]);
 #endif
     }
-    buffer = (int*)NextChunk((vuint8*)buffer);
+    buffer = (vint32 *)NextChunk((vuint8*)buffer);
   }
 
   // start setting up array pointers
   NumTotalArrays = NumArrays;
-  buffer = (int*)FindChunk("AIMP");
+  buffer = (vint32 *)FindChunk("AIMP");
   if (buffer) NumTotalArrays += LittleLong(buffer[2]);
   if (NumTotalArrays) {
     Arrays = new VArrayInfo*[NumTotalArrays];
@@ -1042,7 +1042,7 @@ void VAcsObject::LoadEnhancedObject () {
 
   // tag the library ID to any map variables that are initialised with strings
   if (LibraryID) {
-    buffer = (int *)FindChunk("MSTR");
+    buffer = (vint32 *)FindChunk("MSTR");
     if (buffer) {
       for (i = 0; i < LittleLong(buffer[1])/4; ++i) {
         //MapVarStore[LittleLong(buffer[i + 2])] |= LibraryID;
@@ -1052,12 +1052,12 @@ void VAcsObject::LoadEnhancedObject () {
       }
     }
 
-    buffer = (int *)FindChunk("ASTR");
+    buffer = (vint32 *)FindChunk("ASTR");
     if (buffer) {
       for (i = 0; i < LittleLong(buffer[1])/4; ++i) {
         int arraynum = MapVarStore[LittleLong(buffer[i+2])];
         if ((unsigned)arraynum < (unsigned)NumArrays) {
-          int *elems = ArrayStore[arraynum].Data;
+          vint32 *elems = ArrayStore[arraynum].Data;
           for (int j = ArrayStore[arraynum].Size; j > 0; --j, ++elems) {
             //*elems |= LibraryID;
             int sidx = *elems;
@@ -1070,7 +1070,7 @@ void VAcsObject::LoadEnhancedObject () {
   }
 
   // library loading
-  buffer = (int *)FindChunk("LOAD");
+  buffer = (vint32 *)FindChunk("LOAD");
   if (buffer) {
     char *parse = (char *)&buffer[2];
     for (i = 0; i < LittleLong(buffer[1]); ++i) {
@@ -1098,7 +1098,7 @@ void VAcsObject::LoadEnhancedObject () {
       if (!lib) continue;
 
       // resolve functions
-      buffer = (int *)FindChunk("FNAM");
+      buffer = (vint32 *)FindChunk("FNAM");
       for (j = 0; j < Functions.length(); ++j) {
         VAcsFunction *func = &Functions[j];
         if (func->Address != 0 || func->ImportNum != 0) continue;
@@ -1129,11 +1129,11 @@ void VAcsObject::LoadEnhancedObject () {
       }
 
       // resolve map variables
-      buffer = (int *)FindChunk("MIMP");
+      buffer = (vint32 *)FindChunk("MIMP");
       if (buffer) {
         parse = (char*)&buffer[2];
         for (j = 0; j < LittleLong(buffer[1]); ++j) {
-          int varNum = LittleLong(*(int*)&parse[j]);
+          int varNum = LittleLong(*(vint32 *)&parse[j]);
           j += 4;
           int impNum = lib->FindMapVarName(&parse[j]);
           if (impNum >= 0) {
@@ -1145,12 +1145,12 @@ void VAcsObject::LoadEnhancedObject () {
 
       // resolve arrays
       if (NumTotalArrays > NumArrays) {
-        buffer = (int*)FindChunk("AIMP");
+        buffer = (vint32 *)FindChunk("AIMP");
         parse = (char*)&buffer[3];
         for (j = 0; j < LittleLong(buffer[2]); ++j) {
-          int varNum = LittleLong(*(int*)parse);
+          int varNum = LittleLong(*(vint32 *)parse);
           parse += 4;
-          int expectedSize = LittleLong(*(int*)parse);
+          int expectedSize = LittleLong(*(vint32 *)parse);
           parse += 4;
           int impNum = lib->FindMapArray(parse);
           if (impNum >= 0) {
@@ -1172,7 +1172,7 @@ void VAcsObject::LoadEnhancedObject () {
   }
 
   // load script names (if any)
-  buffer = (int *)FindChunk("SNAM");
+  buffer = (vint32 *)FindChunk("SNAM");
   if (buffer) {
     int size = LittleLong(buffer[1]);
     buffer += 2; // skip name and size
@@ -1217,14 +1217,14 @@ void VAcsObject::LoadEnhancedObject () {
   }
 
   // load script array sizes (one chunk per script that uses arrays)
-  for (buffer = (int *)FindChunk("SARY"); buffer; buffer = (int *)NextChunk((vuint8 *)buffer)) {
+  for (buffer = (vint32 *)FindChunk("SARY"); buffer; buffer = (vint32 *)NextChunk((vuint8 *)buffer)) {
     int size = LittleLong(buffer[1]);
     if (size >= 6) {
       int scnum = LittleUShort(((vuint16 *)buffer)[4]);
       info = FindScript(scnum);
       if (info) {
         GCon->Logf(NAME_Debug, "SARY: found SARY for script #%d", scnum);
-        info->VarCount = ParseLocalArrayChunk(buffer+2, &info->LocalArrays, info->VarCount);
+        info->VarCount = ParseLocalArrayChunk(buffer, &info->LocalArrays, info->VarCount);
         //if (info->VarCount >= VAcs::MAX_LOCAL_VARS-1) Sys_Error("too many locals in script with local arrays #%d", scnum);
       } else {
         GCon->Logf(NAME_Debug, "SARY: unknown SARY for script #%d", scnum);
@@ -1301,9 +1301,9 @@ int VAcsObject::FindMapArray (const char *Name) const {
 //==========================================================================
 int VAcsObject::FindStringInChunk (vuint8 *Chunk, const char *Name) const {
   if (Chunk) {
-    int count = LittleLong(((int*)Chunk)[2]);
+    int count = LittleLong(((vint32 *)Chunk)[2]);
     for (int i = 0; i < count; ++i) {
-      if (VStr::strEquCI(Name, (char*)(Chunk+8)+LittleLong(((int*)Chunk)[3+i]))) {
+      if (VStr::strEquCI(Name, (char*)(Chunk+8)+LittleLong(((vint32 *)Chunk)[3+i]))) {
         return i;
       }
     }
@@ -1320,8 +1320,8 @@ int VAcsObject::FindStringInChunk (vuint8 *Chunk, const char *Name) const {
 vuint8 *VAcsObject::FindChunk (const char *id) const {
   vuint8 *chunk = Chunks;
   while (chunk && chunk < Data+DataSize) {
-    if (*(int*)chunk == *(int*)id) return chunk;
-    chunk = chunk+LittleLong(((int*)chunk)[1])+8;
+    if (*(vint32 *)chunk == *(vint32 *)id) return chunk;
+    chunk = chunk+LittleLong(((vint32 *)chunk)[1])+8;
   }
   return nullptr;
 }
@@ -1333,11 +1333,11 @@ vuint8 *VAcsObject::FindChunk (const char *id) const {
 //
 //==========================================================================
 vuint8 *VAcsObject::NextChunk (vuint8 *prev) const {
-  int id = *(int*)prev;
-  vuint8 *chunk = prev+LittleLong(((int*)prev)[1])+8;
+  int id = *(vint32 *)prev;
+  vuint8 *chunk = prev+LittleLong(((vint32 *)prev)[1])+8;
   while (chunk && chunk < Data+DataSize) {
-    if (*(int*)chunk == id) return chunk;
-    chunk = chunk+LittleLong(((int*)chunk)[1])+8;
+    if (*(vint32 *)chunk == id) return chunk;
+    chunk = chunk+LittleLong(((vint32 *)chunk)[1])+8;
   }
   return nullptr;
 }
