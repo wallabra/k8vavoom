@@ -544,13 +544,20 @@ struct TSecPlaneRef {
 
 
 struct sec_params_t {
+  enum {
+    LFC_FloorLight_Abs    = 1u<<0,
+    LFC_CeilingLight_Abs  = 1u<<1,
+    LFC_FloorLight_Glow   = 1u<<2,
+    LFC_CeilingLight_Glow = 1u<<3,
+  };
+
   vint32 lightlevel;
   vint32 LightColor;
   vint32 Fade;
   vint32 contents;
   // bit0: floor light is absolute; bit1: the same for ceiling
   // bit2: has floor glow; bit3: has ceiling glow
-  vint32 lightFCFlags;
+  vuint32 lightFCFlags;
   // light levels
   vint32 lightFloor;
   vint32 lightCeiling;

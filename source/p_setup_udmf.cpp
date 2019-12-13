@@ -588,8 +588,8 @@ void VUdmfParser::ParseSector (VLevel *Level) {
       if (Key.strEquCI("lightfloor")) { S.params.lightFloor = CheckInt(); continue; }
       if (Key.strEquCI("lightceiling")) { S.params.lightFloor = CheckInt(); continue; }
 
-      if (Key.strEquCI("lightfloorabsolute")) { Flag(S.params.lightFCFlags, 0x01); continue; }
-      if (Key.strEquCI("lightceilingabsolute")) { Flag(S.params.lightFCFlags, 0x02); continue; }
+      if (Key.strEquCI("lightfloorabsolute")) { Flag(S.params.lightFCFlags, sec_params_t::LFC_FloorLight_Abs); continue; }
+      if (Key.strEquCI("lightceilingabsolute")) { Flag(S.params.lightFCFlags, sec_params_t::LFC_CeilingLight_Abs); continue; }
 
       if (Key.strEquCI("floorglowcolor")) { S.params.glowFloor = CheckColor(0u, 0xff000000u); continue; }
       if (Key.strEquCI("ceilingglowcolor")) { S.params.glowFloor = CheckColor(0u, 0xff000000u); continue; }
@@ -608,8 +608,8 @@ void VUdmfParser::ParseSector (VLevel *Level) {
     keyWarning(WT_SECTOR);
   }
 
-  if (S.params.glowFloorHeight >= 1) S.params.lightFCFlags |= 0x04; else S.params.glowFloorHeight = 0;
-  if (S.params.glowCeilingHeight >= 1) S.params.lightFCFlags |= 0x08; else S.params.glowCeilingHeight = 0;
+  if (S.params.glowFloorHeight >= 1) S.params.lightFCFlags |= sec_params_t::LFC_FloorLight_Glow; else S.params.glowFloorHeight = 0;
+  if (S.params.glowCeilingHeight >= 1) S.params.lightFCFlags |= sec_params_t::LFC_CeilingLight_Glow; else S.params.glowCeilingHeight = 0;
 
   // setup slopes with floor/ceiling planes
 

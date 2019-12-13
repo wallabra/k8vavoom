@@ -398,10 +398,10 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
       glowCeilingColor = LightParams->glowCeiling;
       break;
     case SFT_Floor:
-      if (LightParams->lightFCFlags&1) lLev = LightParams->lightFloor; else lLev += LightParams->lightFloor;
+      if (LightParams->lightFCFlags&sec_params_t::LFC_FloorLight_Abs) lLev = LightParams->lightFloor; else lLev += LightParams->lightFloor;
       break;
     case SFT_Ceiling:
-      if (LightParams->lightFCFlags&2) lLev = LightParams->lightCeiling; else lLev += LightParams->lightCeiling;
+      if (LightParams->lightFCFlags&sec_params_t::LFC_CeilingLight_Abs) lLev = LightParams->lightCeiling; else lLev += LightParams->lightCeiling;
       break;
   }
 

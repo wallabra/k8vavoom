@@ -3631,9 +3631,47 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
       GCon->Logf(NAME_Warning, "ignored ACSF `SoundSequenceOnPolyobj`");
       return 0;
 
+    // void SetSectorGlow (int tag, bool plane, int red, int green, int blue, int height)
+    // plane: if true, the glow is applied on the ceiling, otherwise (i.e. if false) it is applied on the floor
+    // red: if this is set to -1, the glow effect is removed (the other color compounds are ignored)
     case ACSF_SetSectorGlow:
-      GCon->Logf(NAME_Warning, "ignored ACSF `SetSectorGlow`");
+      //GCon->Logf(NAME_Warning, "ignored ACSF `SetSectorGlow`");
+      if (argCount >= 6) {
+        sector_t *sector;
+        const bool setIt = (args[2] >= 0 && args[5] > 0);
+        const vuint32 clr = (setIt ? 0xff000000u|(clampToByte(args[2])<<16)|(clampToByte(args[3])<<8)|clampToByte(args[4]) : 0u);
+        for (int sidx = FindSectorFromTag(sector, args[0]); sidx >= 0; sidx = FindSectorFromTag(sector, args[0], sidx)) {
+          if (setIt) {
+            // set glow
+            if (args[1]) {
+              // ceiling
+              sector->params.lightFCFlags |= sec_params_t::LFC_CeilingLight_Glow;
+              sector->params.glowCeiling = clr;
+              sector->params.glowCeilingHeight = args[5];
+            } else {
+              // floor
+              sector->params.lightFCFlags |= sec_params_t::LFC_FloorLight_Glow;
+              sector->params.glowFloor = clr;
+              sector->params.glowFloorHeight = args[5];
+            }
+          } else {
+            // reset glow
+            if (args[1]) {
+              // ceiling
+              sector->params.lightFCFlags &= ~sec_params_t::LFC_CeilingLight_Glow;
+              sector->params.glowCeiling = 0; // reset color
+              sector->params.glowCeilingHeight = 0; // reset height
+            } else {
+              // floor
+              sector->params.lightFCFlags &= ~sec_params_t::LFC_FloorLight_Glow;
+              sector->params.glowFloor = 0; // reset color
+              sector->params.glowFloorHeight = 0; // reset height
+            }
+          }
+        }
+      }
       return 0;
+
     case ACSF_SetFogDensity:
       GCon->Logf(NAME_Warning, "ignored ACSF `SetFogDensity`");
       return 0;
