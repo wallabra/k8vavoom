@@ -483,6 +483,10 @@ protected:
   // sets `CurrLightPos` and `CurrLightRadius`, and other lvis fields
   // returns `false` if the light is invisible
   bool CalcLightVis (const TVec &org, const float radius, vuint32 currltbit=0);
+  // does some sanity checks, possibly moves origin a little
+  // returns `false` if this light can be dropped
+  // `sec` should be valid, null sector means "no checks"
+  static bool CheckValidLightPosRough (TVec &lorg, const sector_t *sec);
 
   // yes, non-virtual
   // dlinfo::leafnum must be set (usually this is done in `PushDlights()`)

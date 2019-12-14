@@ -45,11 +45,13 @@ static VCvarI dbg_adv_force_dynamic_lights_radius("dbg_adv_force_dynamic_lights_
 struct StLightInfo {
   VRenderLevelShared::light_t *stlight; // light
   float distSq; // distance
+  float zofs; // origin z offset
 };
 
 struct DynLightInfo {
   dlight_t *l; // light
   float distSq; // distance
+  //float zofs; // origin z offset
 };
 
 
@@ -199,24 +201,32 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
         //if (!Lights[i].radius) continue;
         if (!stlight->active || stlight->radius < 8) continue;
 
+        TVec lorg = stlight->origin;
+
         // don't do lights that are too far away
-        Delta = stlight->origin-vieworg;
+        Delta = lorg-vieworg;
         const float distSq = Delta.lengthSquared();
 
         // if the light is behind a view, drop it if it is further than light radius
         if (distSq >= stlight->radius*stlight->radius) {
-          if (distSq > rlightraduisSq || backPlane.PointOnSide(stlight->origin)) continue; // too far away
+          if (distSq > rlightraduisSq || backPlane.PointOnSide(lorg)) continue; // too far away
           if (fp.needUpdate(vieworg, viewangles)) {
             fp.setup(vieworg, viewangles, viewforward, viewright, viewup);
             frustum.setup(clip_base, fp, false); //true, r_lights_radius);
           }
-          if (!frustum.checkSphere(stlight->origin, stlight->radius)) {
+          if (!frustum.checkSphere(lorg, stlight->radius)) {
             // out of frustum
             continue;
           }
         }
 
-        if (r_advlight_flood_check && !CheckBSPVisibility(stlight->origin, stlight->radius)) {
+        // drop lights inside sectors without height
+        if (stlight->leafnum >= 0 && stlight->leafnum < Level->NumSubsectors) {
+          const sector_t *sec = Level->Subsectors[stlight->leafnum].sector;
+          if (!CheckValidLightPosRough(lorg, sec)) continue;
+        }
+
+        if (r_advlight_flood_check && !CheckBSPVisibility(lorg, stlight->radius)) {
           //GCon->Logf("STATIC DROP: visibility check");
           continue;
         }
@@ -224,6 +234,7 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
         StLightInfo &sli = visstatlights[visstatlightCount++];
         sli.stlight = stlight;
         sli.distSq = distSq;
+        sli.zofs = lorg.z-stlight->origin.z;
       }
 
       // sort lights, so nearby ones will be rendered first
@@ -235,7 +246,9 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
           VEntity *own = (sli->stlight->owner && sli->stlight->owner->IsA(VEntity::StaticClass()) ? sli->stlight->owner : nullptr);
           vuint32 flags = (own && R_ModelNoSelfShadow(own->GetClass()->Name) ? dlight_t::NoSelfShadow : 0);
           //if (own) GCon->Logf("STLOWN: %s", *own->GetClass()->GetFullName());
-          RenderLightShadows(own, flags, RD, Range, sli->stlight->origin, (dbg_adv_force_static_lights_radius > 0 ? dbg_adv_force_static_lights_radius : sli->stlight->radius), 0.0f, sli->stlight->color, true);
+          TVec lorg = sli->stlight->origin;
+          lorg.z += sli->zofs;
+          RenderLightShadows(own, flags, RD, Range, lorg, (dbg_adv_force_static_lights_radius > 0 ? dbg_adv_force_static_lights_radius : sli->stlight->radius), 0.0f, sli->stlight->color, true);
         }
       }
     }
@@ -251,18 +264,30 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
       for (int i = MAX_DLIGHTS; i--; ++l) {
         if (l->radius < l->minlight+8 || l->die < Level->Time) continue;
 
+        TVec lorg = l->origin;
+
+        // drop lights inside sectors without height
+        /* it is not set here yet; why?! we should calc leafnum!
+        const int leafnum = dlinfo[i].leafnum;
+        GCon->Logf(NAME_Debug, "dl #%d: lfn=%d", i, leafnum);
+        if (leafnum >= 0 && leafnum < Level->NumSubsectors) {
+          const sector_t *sec = Level->Subsectors[leafnum].sector;
+          if (!CheckValidLightPosRough(lorg, sec)) continue;
+        }
+        */
+
         // don't do lights that are too far away
-        Delta = l->origin-vieworg;
+        Delta = lorg-vieworg;
         const float distSq = Delta.lengthSquared();
 
         // if the light is behind a view, drop it if it is further than light radius
         if (distSq >= l->radius*l->radius) {
-          if (distSq > rlightraduisSq || backPlane.PointOnSide(l->origin)) continue; // too far away
+          if (distSq > rlightraduisSq || backPlane.PointOnSide(lorg)) continue; // too far away
           if (fp.needUpdate(vieworg, viewangles)) {
             fp.setup(vieworg, viewangles, viewforward, viewright, viewup);
             frustum.setup(clip_base, fp, false); //true, r_lights_radius);
           }
-          if (!frustum.checkSphere(l->origin, l->radius)) {
+          if (!frustum.checkSphere(lorg, l->radius)) {
             // out of frustum
             continue;
           }
@@ -271,6 +296,7 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
         DynLightInfo &dli = visdynlights[visdynlightCount++];
         dli.l = l;
         dli.distSq = distSq;
+        //dli.zofs = lorg.z-l->origin.z;
       }
 
       // sort lights, so nearby ones will be rendered first
@@ -281,7 +307,9 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
         for (const DynLightInfo *dli = visdynlights.ptr(); visdynlightCount--; ++dli) {
           VEntity *own = (dli->l->Owner && dli->l->Owner->IsA(VEntity::StaticClass()) ? (VEntity *)dli->l->Owner : nullptr);
           if (own && R_ModelNoSelfShadow(own->GetClass()->Name)) dli->l->flags |= dlight_t::NoSelfShadow;
-          RenderLightShadows(own, dli->l->flags, RD, Range, dli->l->origin, (dbg_adv_force_dynamic_lights_radius > 0 ? dbg_adv_force_dynamic_lights_radius : dli->l->radius), dli->l->minlight, dli->l->color, true, dli->l->coneDirection, dli->l->coneAngle);
+          //TVec lorg = dli->l->origin;
+          //lorg.z += dli->zofs;
+          RenderLightShadows(own, dli->l->flags, RD, Range, /*lorg*/dli->l->origin, (dbg_adv_force_dynamic_lights_radius > 0 ? dbg_adv_force_dynamic_lights_radius : dli->l->radius), dli->l->minlight, dli->l->color, true, dli->l->coneDirection, dli->l->coneAngle);
         }
       }
     }

@@ -398,6 +398,8 @@ template<typename T> void FilterLightmap (T *lmap, const int wdt, const int hgt)
 //
 //  VRenderLevelLightmap::SingleLightFace
 //
+//  light face with static light
+//
 //==========================================================================
 void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, surface_t *surf, const vuint8 *facevis) {
   if (surf->count < 3) return; // wtf?!
@@ -422,6 +424,14 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
   const float orgdist = surf->CalcDistance(light->origin);
   // don't bother with lights behind the surface, or too far away
   if (orgdist <= -0.1f || orgdist >= light->radius) return;
+
+  TVec lorg = light->origin;
+
+  // drop lights inside sectors without height
+  if (light->leafnum >= 0 && light->leafnum < Level->NumSubsectors) {
+    const sector_t *sec = Level->Subsectors[light->leafnum].sector;
+    if (!CheckValidLightPosRough(lorg, sec)) return;
+  }
 
   // calc points only when surface may be lit by a light
   if (!lmi.pointsCalced) {
@@ -457,9 +467,9 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
   if (doMidFilter) memset(lightmapHit, 0, /*w*h*/lmi.numsurfpt);
 
   bool wasAnyHit = false;
-  sector_t *ssector = Level->PointInSubsector(light->origin)->sector;
+  sector_t *ssector = Level->PointInSubsector(lorg)->sector;
   const TVec lnormal = surf->GetNormal();
-  const TVec lorg = light->origin;
+  //const TVec lorg = light->origin;
 
   for (int c = 0; c < lmi.numsurfpt; ++c, ++spt) {
     const float raydist = CastRay(ssector, lorg+lnormal, (*spt)+lnormal, squaredist);

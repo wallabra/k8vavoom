@@ -81,7 +81,7 @@ void VRenderLevelShared::AddStaticLightRGB (VEntity *Owner, const TVec &origin, 
   L.radius = radius;
   L.color = color;
   L.owner = Owner;
-  L.leafnum = Level->PointInSubsector(origin)-Level->Subsectors;
+  L.leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(origin)-Level->Subsectors);
   L.active = true;
   if (Owner) {
     auto osp = StOwners.find(Owner->GetUniqueId());
@@ -105,6 +105,7 @@ void VRenderLevelShared::MoveStaticLightByOwner (VEntity *Owner, const TVec &ori
   if (sl.origin == origin) return;
   if (sl.active) InvalidateStaticLightmaps(sl.origin, sl.radius, false);
   sl.origin = origin;
+  sl.leafnum = (int)(ptrdiff_t)((Owner->SubSector ? Owner->SubSector : Level->PointInSubsector(sl.origin))-Level->Subsectors);
   if (sl.active) InvalidateStaticLightmaps(sl.origin, sl.radius, true);
 }
 

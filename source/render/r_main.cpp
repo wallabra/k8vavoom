@@ -1147,6 +1147,40 @@ void VRenderLevelShared::BuildLightVis (int bspnum, const float *bbox) {
 
 //==========================================================================
 //
+//  VRenderLevelShared::CheckValidLightPosRough
+//
+//==========================================================================
+bool VRenderLevelShared::CheckValidLightPosRough (TVec &lorg, const sector_t *sec) {
+  if (!sec) return true;
+  if (sec->floor.normal.z == 1.0f && sec->ceiling.normal.z == -1.0f) {
+    // normal sector
+    if (sec->floor.minz >= sec->ceiling.maxz) return false; // oops, it is closed
+    const float lz = lorg.z;
+    float lzdiff = lz-sec->floor.minz;
+    if (lzdiff < 0) return false; // stuck
+    if (lzdiff == 0) lorg.z += 2; // why not?
+    lzdiff = lz-sec->ceiling.minz;
+    if (lzdiff > 0) return false; // stuck
+    if (lzdiff == 0) lorg.z -= 2; // why not?
+  } else {
+    // sloped sector
+    const float lz = lorg.z;
+    const float lfz = sec->floor.GetPointZClamped(lorg);
+    const float lcz = sec->ceiling.GetPointZClamped(lorg);
+    if (lfz >= lcz) return false; // closed
+    float lzdiff = lz-lfz;
+    if (lzdiff < 0) return false; // stuck
+    if (lzdiff == 0) lorg.z += 2; // why not?
+    lzdiff = lz-lcz;
+    if (lzdiff > 0) return false; // stuck
+    if (lzdiff == 0) lorg.z -= 2; // why not?
+  }
+  return true;
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::CalcLightVis
 //
 //  sets `CurrLightPos` and `CurrLightRadius`, and other lvis fields
