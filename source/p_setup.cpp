@@ -4102,6 +4102,107 @@ void VLevel::FixDeepWaters () {
   if (LevelFlags&LF_ForceNoFloorFloodfillFix) deepwater_hacks_floor = false;
   if (LevelFlags&LF_ForceNoCeilingFloodfillFix) deepwater_hacks_ceiling = false;
 
+  if (deepwater_hacks_bridges) {
+    // eh, do another loop, why not?
+    // this should fix "hanging bridges"
+    // such bridges are made with sectors higher than the surrounding sectors,
+    // and lines with missing low texture. the surrounding sectors
+    // should have the same height.
+    for (int sidx = 0; sidx < NumSectors; ++sidx) {
+      sector_t *sec = &Sectors[sidx];
+      // skip special sectors
+      if (sec->linecount == 0 || sec->deepref) continue;
+      if (sec->othersecFloor || sec->othersecCeiling) continue;
+      if (sec->heightsec) continue;
+      if (sec->fakefloors) continue;
+      if (sec->SectorFlags&(sector_t::SF_HasExtrafloors|sector_t::SF_ExtrafloorSource|sector_t::SF_TransferSource|sector_t::SF_UnderWater)) continue;
+      // shoild not be sloped
+      if (sec->floor.normal.z != 1.0f) continue;
+      // check if the surrounding sectors are of the same height
+      bool valid = true;
+      bool foundSomething = false;
+      float surheight = 0;
+      //GCon->Logf(NAME_Debug, "::: checking sector #%d for a bridge...", sidx);
+      sector_t *sursec = nullptr;
+      for (int lcnt = 0; lcnt < sec->linecount; ++lcnt) {
+        line_t *line = sec->lines[lcnt];
+        if (!line->frontsector || !line->backsector) continue;
+        if (line->frontsector == line->backsector) continue; // wtf?!
+        int sidenum = (int)(line->frontsector == sec);
+        if (line->sidenum[sidenum] < 0) continue;
+        if (line->sidenum[sidenum^1] < 0) continue;
+        side_t *fside = &Sides[line->sidenum[sidenum^1]];
+        side_t *bside = &Sides[line->sidenum[sidenum]];
+        sector_t *bsec = bside->Sector;
+        if (bsec == sec) continue;
+        // both sides should not have lowtex
+        if (fside->BottomTexture > 0 || bside->BottomTexture > 0) {
+          //GCon->Logf(NAME_Debug, "  sector #%d: bottex fail", sidx);
+          valid = false;
+          break;
+        }
+        // back sector should be lower
+        const float fz1 = bsec->floor.GetPointZ(*line->v1);
+        const float fz2 = bsec->floor.GetPointZ(*line->v2);
+        // different heights cannot be processed
+        if (fz1 != fz2) {
+          //GCon->Logf(NAME_Debug, "  sector #%d: slope fail (%g : %g); ldef=%d; fsec=%d; bsec=%d", sidx, fz1, fz2, (int)(ptrdiff_t)(line-&Lines[0]), (int)(ptrdiff_t)(fside->Sector-&Sectors[0]), (int)(ptrdiff_t)(bside->Sector-&Sectors[0]));
+          valid = false;
+          break;
+        }
+        // must be lower
+        if (fz1 > sec->floor.minz) {
+          //GCon->Logf(NAME_Debug, "  sector #%d: height fail (fz1=%g; fmz=%g); ldef=%d; fsec=%d; bsec=%d", sidx, fz1, sec->floor.minz, (int)(ptrdiff_t)(line-&Lines[0]), (int)(ptrdiff_t)(fside->Sector-&Sectors[0]), (int)(ptrdiff_t)(bside->Sector-&Sectors[0]));
+          valid = false;
+          break;
+        }
+        // skip same-height sectors
+        if (fz1 == sec->floor.minz) {
+          continue;
+        }
+        if (foundSomething) {
+          // height should be the same
+          if (surheight != fz1) {
+            //GCon->Logf(NAME_Debug, "  sector #%d: surround height fail (fz1=%g; surheight=%g); ldef=%d; fsec=%d; bsec=%d", sidx, fz1, surheight, (int)(ptrdiff_t)(line-&Lines[0]), (int)(ptrdiff_t)(fside->Sector-&Sectors[0]), (int)(ptrdiff_t)(bside->Sector-&Sectors[0]));
+            valid = false;
+            break;
+          }
+        } else {
+          foundSomething = true;
+          surheight = fz1;
+          sursec = bsec; // use first found sector
+        }
+      }
+      if (!valid || !foundSomething) continue;
+      vassert(sursec);
+      // ok, it looks like a bridge; create fake floor and ceiling
+      GCon->Logf("BRIDGEFIX: found bridge at sector #%d", sidx);
+      /*
+      for (int lcnt = 0; lcnt < sec->linecount; ++lcnt) {
+        line_t *line = sec->lines[lcnt];
+        int sidenum = (int)(line->frontsector == sec);
+        if (line->sidenum[sidenum] < 0) continue;
+        if (line->sidenum[sidenum^1] < 0) continue;
+        side_t *fside = &Sides[line->sidenum[sidenum^1]];
+        side_t *bside = &Sides[line->sidenum[sidenum]];
+        GCon->Logf(NAME_Debug, "  sector #%d: ldef=%d; fsec=%d; bsec=%d; fsz=%g; bsz=%g; blc=%d", sidx, (int)(ptrdiff_t)(line-&Lines[0]), (int)(ptrdiff_t)(fside->Sector-&Sectors[0]), (int)(ptrdiff_t)(bside->Sector-&Sectors[0]), fside->Sector->floor.minz, bside->Sector->floor.minz, bside->Sector->linecount);
+      }
+      */
+      sec->othersecFloor = sursec;
+      // allocate fakefloor data (engine require it to complete setup)
+      vassert(!sec->fakefloors);
+      sec->fakefloors = new fakefloor_t;
+      fakefloor_t *ff = sec->fakefloors;
+      memset((void *)ff, 0, sizeof(fakefloor_t));
+      ff->floorplane = sursec->floor;
+      // ceiling must be current sector's floor, flipped
+      ff->ceilplane = sec->floor;
+      ff->ceilplane.flipInPlace();
+      ff->params = sursec->params;
+      sec->SectorFlags |= sector_t::SF_HangingBridge/*|sector_t::SF_ClipFakePlanes*/;
+    }
+  }
+
   if (deepwater_hacks_floor || deepwater_hacks_ceiling) {
     // fix "floor holes"
     for (int sidx = 0; sidx < NumSectors; ++sidx) {
@@ -4136,75 +4237,6 @@ void VLevel::FixDeepWaters () {
       ff->ceilplane = (fsecCeiling ? fsecCeiling : sec)->ceiling;
       ff->params = sec->params;
       //sec->SectorFlags = (fsecFloor ? SF_FakeFloorOnly : 0)|(fsecCeiling ? SF_FakeCeilingOnly : 0);
-    }
-  }
-
-  if (deepwater_hacks_bridges) {
-    // eh, do another loop, why not?
-    // this should fix "hanging bridges"
-    // such bridges are made with sectors higher than the surrounding sectors,
-    // and lines has are missing low texture. the surrounding sectors
-    // should have the same height.
-    for (int sidx = 0; sidx < NumSectors; ++sidx) {
-      sector_t *sec = &Sectors[sidx];
-      // skip special sectors
-      if (sec->linecount == 0 || sec->deepref) continue;
-      if (sec->othersecFloor || sec->othersecCeiling) continue;
-      if (sec->heightsec) continue;
-      if (sec->fakefloors) continue;
-      if (sec->SectorFlags&(sector_t::SF_HasExtrafloors|sector_t::SF_ExtrafloorSource|sector_t::SF_TransferSource|sector_t::SF_UnderWater)) continue;
-      // shoild not be sloped
-      if (sec->floor.normal.z != 1.0f) continue;
-      // check if the surrounding sectors are of the same height
-      bool valid = true;
-      bool foundSomething = false;
-      float surheight = 0;
-      sector_t *sursec = nullptr;
-      for (int lcnt = 0; lcnt < sec->linecount; ++lcnt) {
-        line_t *line = sec->lines[lcnt];
-        if (!line->frontsector || !line->backsector) continue;
-        if (line->frontsector == line->backsector) continue; // wtf?!
-        int sidenum = (int)(line->frontsector == sec);
-        if (line->sidenum[sidenum] < 0) continue;
-        if (line->sidenum[sidenum^1] < 0) continue;
-        side_t *fside = &Sides[line->sidenum[sidenum^1]];
-        side_t *bside = &Sides[line->sidenum[sidenum]];
-        sector_t *bsec = bside->Sector;
-        if (bsec == sec) continue;
-        // both sides should not have lowtex
-        if (fside->BottomTexture > 0 || bside->BottomTexture > 0) { valid = false; break; }
-        // back sector should be lower
-        const float fz1 = bsec->floor.GetPointZ(*line->v1);
-        const float fz2 = bsec->floor.GetPointZ(*line->v2);
-        // different heights cannot be processed
-        if (fz1 != fz2) { valid = false; break; }
-        // must be lower
-        if (fz1 >= sec->floor.minz) { valid = false; break; }
-        if (foundSomething) {
-          // height should be the same
-          if (surheight != fz1) { valid = false; break; }
-        } else {
-          foundSomething = true;
-          surheight = fz1;
-          sursec = bsec; // use first found sector
-        }
-      }
-      if (!valid || !foundSomething) continue;
-      vassert(sursec);
-      // ok, it looks like a bridge; create fake floor and ceiling
-      GCon->Logf("BRIDGEFIX: found bridge at sector #%d", sidx);
-      sec->othersecFloor = sursec;
-      // allocate fakefloor data (engine require it to complete setup)
-      vassert(!sec->fakefloors);
-      sec->fakefloors = new fakefloor_t;
-      fakefloor_t *ff = sec->fakefloors;
-      memset((void *)ff, 0, sizeof(fakefloor_t));
-      ff->floorplane = sursec->floor;
-      // ceiling must be current sector's floor, flipped
-      ff->ceilplane = sec->floor;
-      ff->ceilplane.flipInPlace();
-      ff->params = sursec->params;
-      sec->SectorFlags |= sector_t::SF_HangingBridge/*|sector_t::SF_ClipFakePlanes*/;
     }
   }
 
