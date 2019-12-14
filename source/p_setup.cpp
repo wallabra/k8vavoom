@@ -4102,6 +4102,43 @@ void VLevel::FixDeepWaters () {
   if (LevelFlags&LF_ForceNoFloorFloodfillFix) deepwater_hacks_floor = false;
   if (LevelFlags&LF_ForceNoCeilingFloodfillFix) deepwater_hacks_ceiling = false;
 
+  if (deepwater_hacks_floor || deepwater_hacks_ceiling) {
+    // fix "floor holes"
+    for (int sidx = 0; sidx < NumSectors; ++sidx) {
+      sector_t *sec = &Sectors[sidx];
+      if (sec->linecount == 0 || sec->deepref) continue;
+      if (sec->SectorFlags&sector_t::SF_UnderWater) continue; // this is special sector, skip it
+      if ((sec->SectorFlags&(sector_t::SF_HasExtrafloors|sector_t::SF_ExtrafloorSource|sector_t::SF_TransferSource|sector_t::SF_UnderWater))) {
+        if (!(sec->SectorFlags&sector_t::SF_IgnoreHeightSec)) continue; // this is special sector, skip it
+      }
+      // slopes aren't interesting
+      if (sec->floor.normal.z != 1.0f || sec->ceiling.normal.z != -1.0f) continue;
+      if (sec->floor.minz >= sec->ceiling.minz) continue; // closed something
+      vuint32 bugFlags = IsFloodBugSector(sec);
+      if (bugFlags == 0) continue;
+      sector_t *fsecFloor = nullptr, *fsecCeiling = nullptr;
+      if (bugFlags&FFBugFloor) fsecFloor = FindGoodFloodSector(sec, true);
+      if (bugFlags&FFBugCeiling) fsecCeiling = FindGoodFloodSector(sec, false);
+      if (fsecFloor == sec) fsecFloor = nullptr;
+      if (fsecCeiling == sec) fsecCeiling = nullptr;
+      if (!fsecFloor) {
+        if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "skipping illusiopit fix for sector #%d (no floor)", sidx);
+      }
+      if (!fsecFloor && !fsecCeiling) continue;
+      GCon->Logf("FLATFIX: found illusiopit at sector #%d (floor:%d; ceiling:%d)", sidx, (fsecFloor ? (int)(ptrdiff_t)(fsecFloor-Sectors) : -1), (fsecCeiling ? (int)(ptrdiff_t)(fsecCeiling-Sectors) : -1));
+      sec->othersecFloor = fsecFloor;
+      sec->othersecCeiling = fsecCeiling;
+      // allocate fakefloor data (engine require it to complete setup)
+      if (!sec->fakefloors) sec->fakefloors = new fakefloor_t;
+      fakefloor_t *ff = sec->fakefloors;
+      memset((void *)ff, 0, sizeof(fakefloor_t));
+      ff->floorplane = (fsecFloor ? fsecFloor : sec)->floor;
+      ff->ceilplane = (fsecCeiling ? fsecCeiling : sec)->ceiling;
+      ff->params = sec->params;
+      //sec->SectorFlags = (fsecFloor ? SF_FakeFloorOnly : 0)|(fsecCeiling ? SF_FakeCeilingOnly : 0);
+    }
+  }
+
   if (deepwater_hacks_bridges) {
     // eh, do another loop, why not?
     // this should fix "hanging bridges"
@@ -4200,43 +4237,6 @@ void VLevel::FixDeepWaters () {
       ff->ceilplane.flipInPlace();
       ff->params = sursec->params;
       sec->SectorFlags |= sector_t::SF_HangingBridge/*|sector_t::SF_ClipFakePlanes*/;
-    }
-  }
-
-  if (deepwater_hacks_floor || deepwater_hacks_ceiling) {
-    // fix "floor holes"
-    for (int sidx = 0; sidx < NumSectors; ++sidx) {
-      sector_t *sec = &Sectors[sidx];
-      if (sec->linecount == 0 || sec->deepref) continue;
-      if (sec->SectorFlags&sector_t::SF_UnderWater) continue; // this is special sector, skip it
-      if ((sec->SectorFlags&(sector_t::SF_HasExtrafloors|sector_t::SF_ExtrafloorSource|sector_t::SF_TransferSource|sector_t::SF_UnderWater))) {
-        if (!(sec->SectorFlags&sector_t::SF_IgnoreHeightSec)) continue; // this is special sector, skip it
-      }
-      // slopes aren't interesting
-      if (sec->floor.normal.z != 1.0f || sec->ceiling.normal.z != -1.0f) continue;
-      if (sec->floor.minz >= sec->ceiling.minz) continue; // closed something
-      vuint32 bugFlags = IsFloodBugSector(sec);
-      if (bugFlags == 0) continue;
-      sector_t *fsecFloor = nullptr, *fsecCeiling = nullptr;
-      if (bugFlags&FFBugFloor) fsecFloor = FindGoodFloodSector(sec, true);
-      if (bugFlags&FFBugCeiling) fsecCeiling = FindGoodFloodSector(sec, false);
-      if (fsecFloor == sec) fsecFloor = nullptr;
-      if (fsecCeiling == sec) fsecCeiling = nullptr;
-      if (!fsecFloor) {
-        if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "skipping illusiopit fix for sector #%d (no floor)", sidx);
-      }
-      if (!fsecFloor && !fsecCeiling) continue;
-      GCon->Logf("FLATFIX: found illusiopit at sector #%d (floor:%d; ceiling:%d)", sidx, (fsecFloor ? (int)(ptrdiff_t)(fsecFloor-Sectors) : -1), (fsecCeiling ? (int)(ptrdiff_t)(fsecCeiling-Sectors) : -1));
-      sec->othersecFloor = fsecFloor;
-      sec->othersecCeiling = fsecCeiling;
-      // allocate fakefloor data (engine require it to complete setup)
-      if (!sec->fakefloors) sec->fakefloors = new fakefloor_t;
-      fakefloor_t *ff = sec->fakefloors;
-      memset((void *)ff, 0, sizeof(fakefloor_t));
-      ff->floorplane = (fsecFloor ? fsecFloor : sec)->floor;
-      ff->ceilplane = (fsecCeiling ? fsecCeiling : sec)->ceiling;
-      ff->params = sec->params;
-      //sec->SectorFlags = (fsecFloor ? SF_FakeFloorOnly : 0)|(fsecCeiling ? SF_FakeCeilingOnly : 0);
     }
   }
 
