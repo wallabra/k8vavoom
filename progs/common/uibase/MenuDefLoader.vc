@@ -554,6 +554,7 @@ bool parseOne (ScriptsParser par) {
   if (par.Check("help")) {
     par.Expect("=");
     while (!par.Check(";")) {
+      if (par.Check("}") || par.Check("{") || par.Check("=")) par.ScriptError("you probably forgot semicolon for the `help` above");
       par.ExpectString();
       if (help) help ~= "\n";
       help ~= par.String;
