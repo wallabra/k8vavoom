@@ -320,6 +320,11 @@ enum {
   SDF_NOFAKECTX  = 1u<<3, // no fake contrast
   SDF_SMOOTHLIT  = 1u<<4, // smooth lighting, not implemented yet
   SDF_NODECAL    = 1u<<5,
+  // was the corresponding textures "AASHITTY"?
+  // this is required to fix bridges
+  SDF_AAS_TOP    = 1u<<6,
+  SDF_AAS_BOT    = 1u<<7,
+  SDF_AAS_MID    = 1u<<8,
 };
 
 

@@ -1136,6 +1136,9 @@ void VLevel::LoadTextMap (int Lump, const mapInfo_t &MInfo) {
         sd->BottomTexture = TexNumForName(*Src.BotTexture, TEXTYPE_Wall, false, true);
         break;
     }
+    if (sd->TopTexture == 0 && !Src.TopTexture.isEmpty() && !Src.TopTexture.strEqu("-")) sd->Flags |= SDF_AAS_TOP;
+    if (sd->BottomTexture == 0 && !Src.BotTexture.isEmpty() && !Src.BotTexture.strEqu("-")) sd->Flags |= SDF_AAS_BOT;
+    if (sd->MidTexture == 0 && !Src.MidTexture.isEmpty() && !Src.MidTexture.strEqu("-")) sd->Flags |= SDF_AAS_MID;
   }
 
   // copy things

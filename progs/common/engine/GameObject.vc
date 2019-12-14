@@ -776,6 +776,11 @@ struct side_t {
   bool bNoFakeContrast;
   bool bSmoothLight;
   bool bNoDecal;
+  // was the corresponding textures "AASHITTY"?
+  // this is required to fix bridges
+  bool bAAShittyTop;
+  bool bAAShittyBot;
+  bool bAAShittyMid;
 
   int Light;
 };

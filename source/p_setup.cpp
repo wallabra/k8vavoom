@@ -1872,7 +1872,11 @@ void VLevel::LoadSideDefs (int Lump) {
         sd->TopTexture = TexNumForName(toptexture, TEXTYPE_Wall);
         sd->BottomTexture = TexNumForName(bottomtexture, TEXTYPE_Wall);
         break;
-      }
+    }
+
+    if (sd->TopTexture == 0 && toptexture[0] != '-' && toptexture[1]) sd->Flags |= SDF_AAS_TOP;
+    if (sd->BottomTexture == 0 && bottomtexture[0] != '-' && bottomtexture[1]) sd->Flags |= SDF_AAS_BOT;
+    if (sd->MidTexture == 0 && midtexture[0] != '-' && midtexture[1]) sd->Flags |= SDF_AAS_MID;
   }
 }
 
