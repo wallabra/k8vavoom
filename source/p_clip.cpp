@@ -449,6 +449,7 @@ bool VViewClipper::IsSegAClosedSomething (const TFrustum *Frustum, const seg_t *
     CLIPPER_CHECK_CLOSED_SECTOR();
 
     if (clip_height && (topTexType || botTexType) &&
+        ((fsec->SectorFlags|bsec->SectorFlags)&sector_t::SF_HangingBridge) == 0 &&
         (lorg || (Frustum && Frustum->isValid())) &&
         seg->partner && seg->partner != seg &&
         seg->partner->frontsub && seg->partner->frontsub != seg->frontsub &&
