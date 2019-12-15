@@ -6,7 +6,7 @@ actor PoisonBag
   +NoBlockmap
   +NoGravity
 
-  action native A_PoisonBagInit();
+  //action native A_PoisonBagInit();
 
   states
   {
@@ -29,7 +29,7 @@ actor FireBomb
   +FoilInvul
   DeathSound "FlechetteExplode"
 
-  action native A_TimeBomb();
+  //action native A_TimeBomb();
 
   states
   {
@@ -59,8 +59,8 @@ actor ThrowingBomb
   SeeSound "FlechetteBounce"
   DeathSound "FlechetteExplode"
 
-  action native A_CheckThrowBomb();
-  action native A_CheckThrowBomb2();
+  //action native A_CheckThrowBomb();
+  //action native A_CheckThrowBomb2();
 
   states
   {
@@ -108,7 +108,7 @@ actor ZPoisonShroom : PoisonBag 8104
   PainSound "PoisonShroomPain"
   DeathSound "PoisonShroomDeath"
 
-  action native A_PoisonShroom();
+  //action native A_PoisonShroom();
 
   states
   {

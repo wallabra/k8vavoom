@@ -332,8 +332,8 @@ actor PotteryBit
   +Missile
   +NoTeleport
 
-  action native A_PotteryChooseBit();
-  action native A_PotteryCheck();
+  //action native A_PotteryChooseBit();
+  //action native A_PotteryCheck();
 
   states
   {
@@ -433,7 +433,7 @@ actor ZCorpseSitting 110
   +Shootable
   +NoBlood
 
-  action native A_CorpseExplode();
+  //action native A_CorpseExplode();
 
   states
   {
@@ -453,7 +453,7 @@ actor LeafSpawner 113
   +NoSector
   +NoBlockmap
 
-  action native A_LeafSpawn();
+  //action native A_LeafSpawn();
 
   states
   {
@@ -474,8 +474,8 @@ actor Leaf1
   +NoTeleport
   +DontSplash
 
-  action native A_LeafThrust();
-  action native A_LeafCheck();
+  //action native A_LeafThrust();
+  //action native A_LeafCheck();
 
   states
   {
@@ -528,7 +528,7 @@ actor ZSuitOfArmor 8064
   +NoIceDeath
   DeathSound "SuitofArmorBreak"
 
-  action native A_SoAExplode();
+  //action native A_SoAExplode();
 
   states
   {

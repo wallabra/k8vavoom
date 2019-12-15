@@ -99,9 +99,9 @@ actor PowerCrystal 92
   ActiveSound "misc/reactor"
   DeathSound "misc/explosion"
 
-  action native A_Explose512();
-  action native A_LightGoesOut();
-  action native A_ExtraLightOff();
+  //action native A_Explose512();
+  //action native A_LightGoesOut();
+  //action native A_ExtraLightOff();
 
   states
   {

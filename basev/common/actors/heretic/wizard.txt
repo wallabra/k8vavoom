@@ -22,10 +22,10 @@ actor Wizard 15
   DropItem BlasterAmmo, 84, 10
   DropItem ArtiTomeOfPower, 4
 
-  action native A_WizAtk1();
-  action native A_WizAtk2();
-  action native A_WizAtk3();
-  action native A_GhostOff();
+  //action native A_WizAtk1();
+  //action native A_WizAtk2();
+  //action native A_WizAtk3();
+  //action native A_GhostOff();
 
   states
   {

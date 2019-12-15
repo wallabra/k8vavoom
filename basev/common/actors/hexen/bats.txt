@@ -7,8 +7,8 @@ actor BatSpawner : SwitchableDecoration 10225
   +NoGravity
   RenderStyle None
 
-  action native A_BatSpawnInit();
-  action native A_BatSpawn();
+  //action native A_BatSpawnInit();
+  //action native A_BatSpawn();
 
   states
   {
@@ -36,7 +36,7 @@ actor Bat
   +NoTeleport
   +CanPass
 
-  action native A_BatMove();
+  //action native A_BatMove();
 
   states
   {

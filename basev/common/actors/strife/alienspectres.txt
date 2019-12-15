@@ -29,10 +29,10 @@ actor AlienSpectre1 : SpectralMonster 129
   DeathSound "alienspectre/death"
   Obituary "$ob_alienspecte"
 
-  action native A_SpotLightning();
-  action native A_SpectreChunkSmall();
-  action native A_SpectreChunkLarge();
-  action native A_AlienSpectreDeath();
+  //action native A_SpotLightning();
+  //action native A_SpectreChunkSmall();
+  //action native A_SpectreChunkLarge();
+  //action native A_AlienSpectreDeath();
 
   states
   {
@@ -109,7 +109,7 @@ actor AlienSpectre3 : AlienSpectre1 76
   +LowSpectralResist
   DropItem "Sigil3"
 
-  action native A_Spectre3Attack();
+  //action native A_Spectre3Attack();
 
   states
   {

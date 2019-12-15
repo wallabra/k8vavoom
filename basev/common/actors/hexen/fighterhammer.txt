@@ -14,8 +14,8 @@ actor FWeapHammer : FighterWeapon 123
   +Weapon.Ammo_Optional
   +Weapon.MeleeWeapon
 
-  action native A_FHammerAttack();
-  action native A_FHammerThrow();
+  //action native A_FHammerAttack();
+  //action native A_FHammerThrow();
 
   states
   {

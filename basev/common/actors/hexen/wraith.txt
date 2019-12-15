@@ -24,10 +24,10 @@ actor Wraith 34
   Obituary "$ob_wraith"
   HitObituary "$ob_wraithhit"
 
-  action native A_WraithInit();
-  action native A_WraithChase();
-  action native A_WraithFX3();
-  action native A_WraithMelee();
+  //action native A_WraithInit();
+  //action native A_WraithChase();
+  //action native A_WraithFX3();
+  //action native A_WraithMelee();
 
   states
   {
@@ -94,8 +94,8 @@ actor WraithBuried : Wraith 10011
   +DontBlast
   +StayMorphed
 
-  action native A_WraithRaiseInit();
-  action native A_WraithRaise();
+  //action native A_WraithRaiseInit();
+  //action native A_WraithRaise();
 
   states
   {
@@ -126,7 +126,7 @@ actor WraithFX1
   SeeSound "WraithMissileFire"
   DeathSound "WraithMissileExplode"
 
-  action native A_WraithFX2();
+  //action native A_WraithFX2();
 
   states
   {

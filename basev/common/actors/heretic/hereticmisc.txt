@@ -22,8 +22,8 @@ actor Pod 2035
   +CantAutoAim
   DeathSound "world/podexplode"
 
-  action native A_PodPain();
-  action native A_RemovePod();
+  //action native A_PodPain();
+  //action native A_RemovePod();
 
   states
   {
@@ -76,7 +76,7 @@ actor PodGenerator 43
   +NoBlockmap
   +DontSplash
 
-  action native A_MakePod();
+  //action native A_MakePod();
 
   states
   {
@@ -130,7 +130,7 @@ actor TeleGlitter1
   +NoBlockmap
   +NoGravity
 
-  action native A_AccTeleGlitter();
+  //action native A_AccTeleGlitter();
 
   states
   {
@@ -168,8 +168,8 @@ actor Volcano 87
   Height 20
   +Solid
 
-  action native A_VolcanoSet();
-  action native A_VolcanoBlast();
+  //action native A_VolcanoSet();
+  //action native A_VolcanoBlast();
 
   states
   {
@@ -199,7 +199,7 @@ actor VolcanoBlast
   -ActivateImpact
   DeathSound "world/volcano/blast"
 
-  action native A_VolcBallImpact();
+  //action native A_VolcBallImpact();
 
   states
   {

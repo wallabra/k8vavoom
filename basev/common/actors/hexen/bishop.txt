@@ -23,13 +23,13 @@ actor Bishop 114
   DeathSound "BishopDeath"
   Obituary "$ob_bishop"
 
-  action native A_BishopChase();
-  action native A_BishopDecide();
-  action native A_BishopDoBlur();
-  action native A_BishopSpawnBlur();
-  action native A_BishopAttack();
-  action native A_BishopAttack2();
-  action native A_BishopPainBlur();
+  //action native A_BishopChase();
+  //action native A_BishopDecide();
+  //action native A_BishopDoBlur();
+  //action native A_BishopSpawnBlur();
+  //action native A_BishopAttack();
+  //action native A_BishopAttack2();
+  //action native A_BishopPainBlur();
 
   states
   {

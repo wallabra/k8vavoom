@@ -5,7 +5,7 @@ actor Snout : Weapon
   Weapon.YAdjust 10
   +Weapon.DontBob
 
-  action native A_SnoutAttack();
+  //action native A_SnoutAttack();
 
   states
   {

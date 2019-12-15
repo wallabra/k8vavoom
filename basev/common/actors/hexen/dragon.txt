@@ -23,10 +23,10 @@ actor Dragon 254
   DeathSound "DragonDeath"
   Obituary "$ob_dragon"
 
-  action native A_DragonInitFlight();
-  action native A_DragonFlap();
-  action native A_DragonFlight();
-  action native A_DragonPain();
+  //action native A_DragonInitFlight();
+  //action native A_DragonFlap();
+  //action native A_DragonFlight();
+  //action native A_DragonPain();
 
   states
   {
@@ -72,7 +72,7 @@ actor DragonFireball
   -ActivatePCross
   DeathSound "DragonFireballExplode"
 
-  action native A_DragonFX2();
+  //action native A_DragonFX2();
 
   states
   {

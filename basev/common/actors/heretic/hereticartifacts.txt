@@ -46,7 +46,7 @@ actor ActivatedTimeBomb
   +NoGravity
   DeathSound "misc/timebomb"
 
-  action native A_Timebomb();
+  //action native A_Timebomb();
 
   states
   {

@@ -15,7 +15,7 @@ actor MageBoss 10102
   DeathSound "PlayerMageCrazyDeath"
   Obituary "$ob_mboss"
 
-  action native A_MageAttack();
+  //action native A_MageAttack();
 
   states
   {

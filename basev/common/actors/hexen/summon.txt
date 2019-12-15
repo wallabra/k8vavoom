@@ -7,7 +7,7 @@ actor SummoningDoll
   +DropOff
   +NoTeleport
 
-  action native A_Summon();
+  //action native A_Summon();
 
   states
   {

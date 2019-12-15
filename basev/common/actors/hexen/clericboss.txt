@@ -15,7 +15,7 @@ actor ClericBoss 10101
   DeathSound "PlayerClericCrazyDeath"
   Obituary "$ob_cboss"
 
-  action native A_ClericAttack();
+  //action native A_ClericAttack();
 
   states
   {

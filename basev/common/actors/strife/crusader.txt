@@ -25,11 +25,11 @@ actor Crusader 3005
   Obituary "$ob_crusader"
   DropItem "EnergyPod", 256, 20
 
-  action native A_CrusaderChoose();
-  action native A_CrusaderSweepLeft();
-  action native A_CrusaderSweepRight();
-  action native A_CrusaderRefire();
-  action native A_CrusaderDeath();
+  //action native A_CrusaderChoose();
+  //action native A_CrusaderSweepLeft();
+  //action native A_CrusaderSweepRight();
+  //action native A_CrusaderRefire();
+  //action native A_CrusaderDeath();
 
   states
   {

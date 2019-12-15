@@ -22,13 +22,13 @@ actor Inquisitor 16
   DeathSound "inquisitor/death"
   Obituary "$ob_inquisitor"
 
-  action native A_InquisitorCheckJump();
-  action native A_InquisitorDecide();
-  action native A_InquisitorAttack();
-  action native A_InquisitorJump();
-  action native A_InquisitorCheckLand();
-  action native A_TossArm();
-  action native A_ReaverRanged();
+  //action native A_InquisitorCheckJump();
+  //action native A_InquisitorDecide();
+  //action native A_InquisitorAttack();
+  //action native A_InquisitorJump();
+  //action native A_InquisitorCheckLand();
+  //action native A_TossArm();
+  //action native A_ReaverRanged();
 
   states
   {

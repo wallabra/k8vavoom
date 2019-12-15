@@ -61,7 +61,7 @@ actor FWeapQuietus : FighterWeapon
   +Weapon.Explosive
   +Weapon.Primary_Uses_Both
 
-  action native A_FSwordAttack();
+  //action native A_FSwordAttack();
 
   states
   {

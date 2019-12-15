@@ -19,9 +19,9 @@ actor IceGuy 8020
   AttackSound "IceGuyAttack"
   Obituary "$ob_iceguy"
 
-  action native A_IceGuyLook();
-  action native A_IceGuyChase();
-  action native A_IceGuyAttack();
+  //action native A_IceGuyLook();
+  //action native A_IceGuyChase();
+  //action native A_IceGuyAttack();
 
   states
   {
@@ -63,7 +63,7 @@ actor IceGuyFX
   -ActivatePCross
   DeathSound "IceGuyMissileExplode"
 
-  action native A_IceGuyMissileExplode();
+  //action native A_IceGuyMissileExplode();
 
   states
   {

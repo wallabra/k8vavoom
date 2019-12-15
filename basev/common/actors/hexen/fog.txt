@@ -6,7 +6,7 @@ actor FogSpawner 10000
   +NoBlockmap
   +FloatBob
 
-  action native A_FogSpawn();
+  //action native A_FogSpawn();
 
   states
   {
@@ -29,7 +29,7 @@ actor FogPatchSmall 10001
   +Float
   +NoTeleport
 
-  action native A_FogMove();
+  //action native A_FogMove();
 
   states
   {

@@ -23,11 +23,11 @@ actor Korax 10200
   DeathSound "KoraxDeath"
   Obituary "$ob_korax"
 
-  action native A_KoraxChase();
-  action native A_KoraxDecide();
-  action native A_KoraxMissile();
-  action native A_KoraxCommand();
-  action native A_KoraxBonePop();
+  //action native A_KoraxChase();
+  //action native A_KoraxDecide();
+  //action native A_KoraxMissile();
+  //action native A_KoraxCommand();
+  //action native A_KoraxBonePop();
 
   states
   {
@@ -90,8 +90,8 @@ actor KoraxBolt
   -ActivateImpact
   -ActivatePCross
 
-  action native A_KBoltRaise();
-  action native A_KBolt();
+  //action native A_KBoltRaise();
+  //action native A_KBolt();
 
   states
   {
@@ -114,7 +114,7 @@ actor KoraxSpirit
   -ActivatePCross
   +NoClip
 
-  action native A_KSpiritRoam();
+  //action native A_KSpiritRoam();
 
   states
   {

@@ -24,10 +24,10 @@ actor Stalker 186
   DeathSound "stalker/death"
   Obituary "$ob_stalker"
 
-  action native A_StalkerLookInit();
-  action native A_StalkerChaseDecide();
-  action native A_StalkerAttack();
-  action native A_StalkerDrop();
+  //action native A_StalkerLookInit();
+  //action native A_StalkerChaseDecide();
+  //action native A_StalkerAttack();
+  //action native A_StalkerDrop();
 
   states
   {

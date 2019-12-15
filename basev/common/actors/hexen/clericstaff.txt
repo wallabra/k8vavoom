@@ -12,10 +12,10 @@ actor CWeapStaff : ClericWeapon 10
   Weapon.BotCombatDist 192
   +Weapon.Explosive
 
-  action native A_CStaffInitBlink();
-  action native A_CStaffCheckBlink();
-  action native A_CStaffCheck();
-  action native A_CStaffAttack();
+  //action native A_CStaffInitBlink();
+  //action native A_CStaffCheckBlink();
+  //action native A_CStaffCheck();
+  //action native A_CStaffAttack();
 
   states
   {

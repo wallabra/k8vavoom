@@ -3,7 +3,7 @@ actor TelOtherFX2 : TelOtherFX1
 {
   Speed 16
 
-  action native A_CheckTeleRing();
+  //action native A_CheckTeleRing();
 
   states
   {

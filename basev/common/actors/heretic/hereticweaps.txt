@@ -8,7 +8,7 @@ actor Staff : HereticWeapon
   +Weapon.Wimpy_Weapon
   +Weapon.MeleeWeapon
 
-  action native A_StaffAttack(int damage, class<Actor> PuffType);
+  //action native A_StaffAttack(int damage, class<Actor> PuffType);
 
   states
   {
@@ -107,7 +107,7 @@ actor Gauntlets : HereticWeapon 2005
   +Weapon.MeleeWeapon
   Weapon.UpSound "weapons/gauntletsactivate"
 
-  action native A_GauntletAttack(int power);
+  //action native A_GauntletAttack(int power);
 
   states
   {
@@ -201,7 +201,7 @@ actor GoldWand : HereticWeapon
   Weapon.SisterWeapon "GoldWandPowered"
   Weapon.BotCombatDist 256
 
-  action native A_FireGoldWandPL1();
+  //action native A_FireGoldWandPL1();
 
   states
   {
@@ -230,7 +230,7 @@ actor GoldWandPowered : GoldWand
   Weapon.SisterWeapon "GoldWand"
   +Weapon.Powered_Up
 
-  action native A_FireGoldWandPL2();
+  //action native A_FireGoldWandPL2();
 
   states
   {
@@ -326,7 +326,7 @@ actor Crossbow : HereticWeapon 2001
   Weapon.SisterWeapon "CrossbowPowered"
   Weapon.BotCombatDist 192
 
-  action native A_FireCrossbowPL1();
+  //action native A_FireCrossbowPL1();
 
   states
   {
@@ -358,7 +358,7 @@ actor CrossbowPowered : Crossbow
   Weapon.SisterWeapon "Crossbow"
   +Weapon.Powered_Up
 
-  action native A_FireCrossbowPL2();
+  //action native A_FireCrossbowPL2();
 
   states
   {
@@ -466,7 +466,7 @@ actor Blaster : HereticWeapon 53
   Weapon.SisterWeapon "BlasterPowered"
   Weapon.BotCombatDist 256
 
-  action native A_FireBlasterPL1();
+  //action native A_FireBlasterPL1();
 
   states
   {
@@ -563,7 +563,7 @@ actor SkullRod : HereticWeapon 2004
   Weapon.BotCombatDist 384
   +Weapon.Explosive
 
-  action native A_FireSkullRodPL1();
+  //action native A_FireSkullRodPL1();
 
   states
   {
@@ -594,7 +594,7 @@ actor SkullRodPowered : SkullRod
   Weapon.SisterWeapon "SkullRod"
   +Weapon.Powered_Up
 
-  action native A_FireSkullRodPL2();
+  //action native A_FireSkullRodPL2();
 
   states
   {
@@ -665,7 +665,7 @@ actor MacePowered : Mace
   Weapon.SisterWeapon "Mace"
   +Weapon.Powered_Up
 
-  action native A_FireMacePL2();
+  //action native A_FireMacePL2();
 
   states
   {
@@ -686,7 +686,7 @@ actor MaceSpawner 2002
   +NoSector
   +NoBlockmap
 
-  action native A_SpawnMace();
+  //action native A_SpawnMace();
 
   states
   {
@@ -711,8 +711,8 @@ actor MaceFX1
   +ThruGhost
   SeeSound "weapons/maceshoot"
 
-  action native A_MacePL1Check();
-  action native A_MaceBallImpact();
+  //action native A_MacePL1Check();
+  //action native A_MaceBallImpact();
 
   states
   {
@@ -737,7 +737,7 @@ actor MaceFX2 : MaceFX1
   -NoGravity
   SeeSound ""
 
-  action native A_MaceBallImpact2();
+  //action native A_MaceBallImpact2();
 
   states
   {

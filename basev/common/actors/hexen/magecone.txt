@@ -13,7 +13,7 @@ actor MWeapFrost : MageWeapon 53
   Weapon.BotCombatDist 256
   +Weapon.Explosive
 
-  action native A_FireConePL1();
+  //action native A_FireConePL1();
 
   states
   {

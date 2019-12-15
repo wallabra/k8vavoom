@@ -24,7 +24,7 @@ actor Ironlich 6
   DropItem BlasterAmmo, 84, 10
   DropItem ArtiEgg 51
 
-  action native A_LichAttack();
+  //action native A_LichAttack();
 
   states
   {
@@ -69,7 +69,7 @@ actor HeadFX1
   -ActivateImpact
   +ThruGhost
 
-  action native A_LichIceImpact();
+  //action native A_LichIceImpact();
 
   states
   {
@@ -119,7 +119,7 @@ actor HeadFX3
   -ActivateImpact
   +WindThrust
 
-  action native A_LichFireGrow();
+  //action native A_LichFireGrow();
 
   states
   {

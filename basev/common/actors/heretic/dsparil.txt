@@ -25,10 +25,10 @@ actor Sorcerer1 7
   Obituary "$ob_dsparil1"
   HitObituary "$ob_dsparil1hit"
 
-  action native A_Sor1Chase();
-  action native A_Srcr1Attack();
-  action native A_Sor1Pain();
-  action native A_SorcererRise();
+  //action native A_Sor1Chase();
+  //action native A_Srcr1Attack();
+  //action native A_Sor1Pain();
+  //action native A_SorcererRise();
 
   states
   {
@@ -110,7 +110,7 @@ actor Sorcerer2FX1
   -ActivatePCross
   -ActivateImpact
 
-  action native A_BlueSpark();
+  //action native A_BlueSpark();
 
   states
   {
@@ -138,7 +138,7 @@ actor Sorcerer2FX2
   -ActivatePCross
   -ActivateImpact
 
-  action native A_GenWizard();
+  //action native A_GenWizard();
 
   states
   {

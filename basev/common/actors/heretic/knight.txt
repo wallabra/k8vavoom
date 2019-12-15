@@ -20,7 +20,7 @@ actor Knight 64
   +FloorClip
   DropItem CrossbowAmmo, 84, 5
 
-  action native A_KnightAttack();
+  //action native A_KnightAttack();
 
   states
   {
@@ -103,7 +103,7 @@ actor RedAxe : KnightAxe
   +NoBlockmap
   -WindThrust
 
-  action native A_DripBlood();
+  //action native A_DripBlood();
 
   states
   {

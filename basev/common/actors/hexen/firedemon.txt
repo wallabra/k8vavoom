@@ -23,10 +23,10 @@ actor FireDemon 10060
   DeathSound "FireDemonDeath"
   Obituary "$ob_firedemon"
 
-  action native A_FiredRocks();
-  action native A_FiredChase();
-  action native A_FiredAttack();
-  action native A_FiredSplotch();
+  //action native A_FiredRocks();
+  //action native A_FiredChase();
+  //action native A_FiredAttack();
+  //action native A_FiredSplotch();
 
   states
   {
@@ -137,7 +137,7 @@ actor FireDemonRock1
   +DropOff
   +NoTeleport
 
-  action native A_SmBounce();
+  //action native A_SmBounce();
 
   states
   {

@@ -25,15 +25,15 @@ actor Serpent 121
   Obituary "$ob_serpent"
   HitObituary "$ob_serpenthit"
 
-  action native A_SerpentHumpDecide();
-  action native A_SerpentUnHide();
-  action native A_SerpentRaiseHump();
-  action native A_SerpentLowerHump();
-  action native A_SerpentHide();
-  action native A_SerpentCheckForAttack();
-  action native A_SerpentChooseAttack();
-  action native A_SerpentMeleeAttack();
-  action native A_SerpentSpawnGibs();
+  //action native A_SerpentHumpDecide();
+  //action native A_SerpentUnHide();
+  //action native A_SerpentRaiseHump();
+  //action native A_SerpentLowerHump();
+  //action native A_SerpentHide();
+  //action native A_SerpentCheckForAttack();
+  //action native A_SerpentChooseAttack();
+  //action native A_SerpentMeleeAttack();
+  //action native A_SerpentSpawnGibs();
 
   states
   {
@@ -149,7 +149,7 @@ actor SerpentHead
   Gravity 0.125
   +NoBlockmap
 
-  action native A_SerpentHeadCheck();
+  //action native A_SerpentHeadCheck();
 
   states
   {
@@ -170,9 +170,9 @@ actor SerpentGib1
   +NoBlockmap
   +NoGravity
 
-  action native A_FloatGib();
-  action native A_DelayGib();
-  action native A_SinkGib();
+  //action native A_FloatGib();
+  //action native A_DelayGib();
+  //action native A_SinkGib();
 
   states
   {

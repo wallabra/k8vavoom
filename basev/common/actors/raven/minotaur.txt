@@ -39,7 +39,7 @@ actor MinotaurFX2
   +FloorHugger
   ExplosionDamage 24
 
-  action native A_MntrFloorFire();
+  //action native A_MntrFloorFire();
 
   states
   {

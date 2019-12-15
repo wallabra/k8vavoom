@@ -30,9 +30,9 @@ actor Programmer 71
   Obituary "$ob_programmer"
   DropItem "Sigil1"
 
-  action native A_SpotLightning();
-  action native A_SpawnProgrammerBase();
-  action native A_ProgrammerDeath();
+  //action native A_SpotLightning();
+  //action native A_SpawnProgrammerBase();
+  //action native A_ProgrammerDeath();
 
   states
   {

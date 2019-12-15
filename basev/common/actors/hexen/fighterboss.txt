@@ -15,7 +15,7 @@ actor FighterBoss 10100
   DeathSound "PlayerFighterCrazyDeath"
   Obituary "$ob_fboss"
 
-  action native A_FighterAttack();
+  //action native A_FighterAttack();
 
   states
   {

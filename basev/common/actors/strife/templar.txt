@@ -23,7 +23,7 @@ actor Templar 3003
   Obituary "$ob_templar"
   HitObituary "$ob_templarhit"
 
-  action native A_TemplarAttack();
+  //action native A_TemplarAttack();
 
   states
   {

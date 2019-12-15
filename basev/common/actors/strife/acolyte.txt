@@ -22,9 +22,9 @@ actor Acolyte : StrifeHumanoid
   CrushPainSound "misc/pcrush"
   Obituary "$ob_acolyte"
 
-  action native A_AcolyteBits();
-  action native A_AcolyteDeath();
-  action native A_BeShadowyFoe();
+  //action native A_AcolyteBits();
+  //action native A_AcolyteDeath();
+  //action native A_BeShadowyFoe();
 
   states
   {
@@ -188,7 +188,7 @@ actor AcolyteToBe : Acolyte 201
   -NeverRespawn
   DeathSound "becoming/death"
 
-  action native A_HideDecepticon();
+  //action native A_HideDecepticon();
 
   states
   {

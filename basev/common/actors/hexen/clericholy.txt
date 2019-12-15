@@ -55,7 +55,7 @@ actor HolyMissile
   -ActivatePCross
   +ExtremeDeath
 
-  action native A_CHolyAttack2();
+  //action native A_CHolyAttack2();
 
   states
   {
@@ -114,7 +114,7 @@ actor HolyTail
   +NoClip
   +NoTeleport
 
-  action native A_CHolyTail();
+  //action native A_CHolyTail();
 
   states
   {

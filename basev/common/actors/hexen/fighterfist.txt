@@ -6,7 +6,7 @@ actor FWeapFist : FighterWeapon
   Weapon.BotCombatDist 48
   +Weapon.MeleeWeapon
 
-  action native A_FPunchAttack();
+  //action native A_FPunchAttack();
 
   states
   {

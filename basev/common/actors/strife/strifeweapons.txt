@@ -77,7 +77,7 @@ actor PunchDagger : StrifeWeapon
   +Weapon.NoAlert
   +Weapon.MeleeWeapon
 
-  action native A_JabDagger();
+  //action native A_JabDagger();
 
   states
   {
@@ -116,9 +116,9 @@ actor StrifeCrossbow : StrifeWeapon 2001
   Weapon.AmmoGive1 8
   +Weapon.NoAlert
 
-  action native A_ShowElectricFlash();
-  action native A_ClearFlash();
-  action native A_FireArrow(class<Actor> Proj);
+  //action native A_ShowElectricFlash();
+  //action native A_ClearFlash();
+  //action native A_FireArrow(class<Actor> Proj);
 
   states
   {
@@ -269,7 +269,7 @@ actor MiniMissileLauncher : StrifeWeapon 2003
   Weapon.AmmoGive1 8
   +Weapon.NoAutoFire
 
-  action native A_FireMiniMissile();
+  //action native A_FireMiniMissile();
 
   states
   {
@@ -368,7 +368,7 @@ actor StrifeGrenadeLauncher : StrifeWeapon 154
   Weapon.AmmoUse1 1
   Weapon.AmmoGive1 12
 
-  action native A_FireGrenade(class<Actor> grenadetype, float angleofs, state flash);
+  //action native A_FireGrenade(class<Actor> grenadetype, float angleofs, state flash);
 
   states
   {
@@ -526,7 +526,7 @@ actor FlameThrower : StrifeWeapon 2005
   Weapon.UpSound "weapons/flameidle"
   Weapon.ReadySound "weapons/flameidle"
 
-  action native A_FireFlamer();
+  //action native A_FireFlamer();
 
   states
   {
@@ -565,7 +565,7 @@ actor FlameMissile
   +StrifeDamage
   SeeSound "weapons/flamethrower"
 
-  action native A_FlameDie();
+  //action native A_FlameDie();
 
   states
   {
@@ -595,7 +595,7 @@ actor Mauler : StrifeWeapon 2004
   Weapon.AmmoUse1 20
   Weapon.AmmoGive1 40
 
-  action native A_FireMauler1();
+  //action native A_FireMauler1();
 
   states
   {
@@ -631,8 +631,8 @@ actor Mauler2 : Mauler
   Weapon.AmmoUse1 30
   Weapon.AmmoGive1 0
 
-  action native A_FireMauler2Pre();
-  action native A_FireMauler2();
+  //action native A_FireMauler2Pre();
+  //action native A_FireMauler2();
 
   states
   {
@@ -689,7 +689,7 @@ actor MaulerTorpedo
   SeeSound "weapons/mauler2fire"
   DeathSound "weapons/mauler2hit"
 
-  action native A_MaulerTorpedoWave();
+  //action native A_MaulerTorpedoWave();
 
   states
   {

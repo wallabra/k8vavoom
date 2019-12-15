@@ -16,7 +16,7 @@ actor SorcFX1
   SeeSound "SorcererBallBounce"
   DeathSound "SorcererHeadScream"
 
-  action native A_SorcFX1Seek();
+  //action native A_SorcFX1Seek();
 
   states
   {
@@ -41,8 +41,8 @@ actor SorcFX2
   +NoGravity
   +NoTeleport
 
-  action native A_SorcFX2Split();
-  action native A_SorcFX2Orbit();
+  //action native A_SorcFX2Split();
+  //action native A_SorcFX2Orbit();
 
   states
   {
@@ -86,8 +86,8 @@ actor SorcFX3
   +NoTeleport
   SeeSound "SorcererBishopSpawn"
 
-  action native A_SorcererBishopEntry();
-  action native A_SpawnBishop();
+  //action native A_SorcererBishopEntry();
+  //action native A_SpawnBishop();
 
   states
   {
@@ -132,7 +132,7 @@ actor SorcFX4
   -ActivatePCross
   DeathSound "SorcererBallExplode"
 
-  action native A_SorcFX4Check();
+  //action native A_SorcFX4Check();
 
   states
   {

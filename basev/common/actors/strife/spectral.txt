@@ -91,7 +91,7 @@ actor SpectralLightningSpot : SpectralLightningDeath1
   +NoBlockMonst
   +NoDropOff
 
-  action native A_SpectralLightning();
+  //action native A_SpectralLightning();
 
   states
   {
@@ -114,7 +114,7 @@ actor SpectralLightningH1 : SpectralLightningBase
   Projectile
   +Spectral
 
-  action native A_SpectralLightningTail();
+  //action native A_SpectralLightningTail();
 
   states
   {
@@ -217,7 +217,7 @@ actor SpectralLightningBigBall1 : SpectralLightningDeath2
   Projectile
   +Spectral
 
-  action native A_SpectralBigBallLightning();
+  //action native A_SpectralBigBallLightning();
 
   states
   {

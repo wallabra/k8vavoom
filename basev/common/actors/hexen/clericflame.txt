@@ -12,7 +12,7 @@ actor CWeapFlame : ClericWeapon 8009
   Weapon.BotCombatDist 256
   +Weapon.Explosive
 
-  action native A_CFlameAttack();
+  //action native A_CFlameAttack();
 
   states
   {
@@ -69,7 +69,7 @@ actor CircleFlame
   -ActivatePCross
   DeathSound "ClericFlameCircle"
 
-  action native A_CFlameRotate();
+  //action native A_CFlameRotate();
 
   states
   {

@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------------
 actor StrifePlayer : PlayerPawn
 {
-  action native A_ItBurnsItBurns();
-  action native A_DropFire();
+  //action native A_ItBurnsItBurns();
+  //action native A_DropFire();
 
   Health 100
   Radius 18

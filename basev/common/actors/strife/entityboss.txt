@@ -9,7 +9,7 @@ actor EntityPod 198
   +NotDmatch
   SeeSound "misc/gibbed"
 
-  action native A_SpawnEntity();
+  //action native A_SpawnEntity();
 
   states
   {
@@ -57,10 +57,10 @@ actor EntityBoss : SpectralMonster 128
   DeathSound "entity/death"
   Obituary "$ob_entity"
 
-  action native A_EntityAttack();
-  action native A_SpectreChunkSmall();
-  action native A_SpectreChunkLarge();
-  action native A_EntityDeath();
+  //action native A_EntityAttack();
+  //action native A_SpectreChunkSmall();
+  //action native A_SpectreChunkLarge();
+  //action native A_EntityDeath();
 
   states
   {
@@ -131,7 +131,7 @@ actor EntitySecond : SpectralMonster
   PainSound "alienspectre/pain"
   DeathSound "alienspectre/death"
 
-  action native A_SubEntityDeath();
+  //action native A_SubEntityDeath();
 
   states
   {

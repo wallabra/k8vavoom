@@ -7,7 +7,7 @@ actor CWeapMace : ClericWeapon
   Weapon.BotCombatDist 48
   +Weapon.MeleeWeapon
 
-  action native A_CMaceAttack();
+  //action native A_CMaceAttack();
 
   states
   {

@@ -27,7 +27,7 @@ actor Sentinel 3006
   DeathSound "sentinel/death"
   Obituary "$ob_sentinel"
 
-  action native A_SentinelAttack();
+  //action native A_SentinelAttack();
 
   states
   {

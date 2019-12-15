@@ -12,8 +12,8 @@ actor MWeapLightning : MageWeapon 8040
   Weapon.BotCombatDist 384
   +Weapon.Explosive
 
-  action native A_LightningReady();
-  action native A_MLightningAttack();
+  //action native A_LightningReady();
+  //action native A_MLightningAttack();
 
   states
   {
@@ -60,9 +60,9 @@ actor LightningCeiling : Lightning
   Projectile
   +CeilingHugger
 
-  action native A_LightningZap();
-  action native A_LightningClip();
-  action native A_LightningRemove();
+  //action native A_LightningZap();
+  //action native A_LightningClip();
+  //action native A_LightningRemove();
 
   states
   {
@@ -90,10 +90,10 @@ actor LightningFloor : LightningCeiling
   -CeilingHugger
   +FloorHugger
 
-  action native A_LightningZap();
-  action native A_LightningClip();
-  action native A_LightningRemove();
-  action native A_LastZap();
+  //action native A_LightningZap();
+  //action native A_LightningClip();
+  //action native A_LightningRemove();
+  //action native A_LastZap();
 
   states
   {

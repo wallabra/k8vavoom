@@ -8,8 +8,8 @@ actor Beak : HereticWeapon
   +Weapon.MeleeWeapon
   +Weapon.DontBob
 
-  action native A_BeakRaise();
-  action native A_BeakAttackPL1();
+  //action native A_BeakRaise();
+  //action native A_BeakAttackPL1();
 
   states
   {
@@ -34,7 +34,7 @@ actor BeakPowered : Beak
   Weapon.SisterWeapon "Beak"
   +Weapon.Powered_Up
 
-  action native A_BeakAttackPL2();
+  //action native A_BeakAttackPL2();
 
   states
   {
