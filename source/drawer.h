@@ -91,8 +91,6 @@ protected:
   bool mIsShadowVolumeRenderer;
 
 public:
-  bool NeedsInfiniteFarClip;
-
   struct trans_sprite_t {
     TVec Verts[4]; // only for sprites
     union {
@@ -213,7 +211,7 @@ public:
 
   virtual void UpdateSubsectorFlatSurfaces (subsector_t *sub, bool dofloors, bool doceils, bool forced=false) = 0;
 
-  inline bool IsShadowVolumeRenderer () const { return mIsShadowVolumeRenderer; }
+  inline bool IsShadowVolumeRenderer () const noexcept { return mIsShadowVolumeRenderer; }
 
   virtual bool IsNodeRendered (const node_t *node) const = 0;
   virtual bool IsSubsectorRendered (const subsector_t *sub) const = 0;
@@ -296,6 +294,7 @@ protected:
   bool isShittyGPU;
   bool shittyGPUCheckDone;
   bool useReverseZ;
+  bool HaveDepthClamp;
 
   vuint32 updateFrame; // counter
 
@@ -322,6 +321,7 @@ public:
   inline bool CanUseRevZ () const noexcept { return useReverseZ; }
   inline bool IsShittyGPU () const noexcept { return isShittyGPU; }
   inline bool IsInited () const noexcept { return mInitialized; }
+  inline bool CanUseDepthClamp () const noexcept { return HaveDepthClamp; }
 
   inline int getWidth () const noexcept { return ScrWdt; }
   inline int getHeight () const noexcept { return ScrHgt; }
@@ -488,12 +488,21 @@ public:
 
   virtual void GetProjectionMatrix (VMatrix4 &mat) = 0;
   virtual void GetModelMatrix (VMatrix4 &mat) = 0;
+  virtual void SetProjectionMatrix (const VMatrix4 &mat) = 0;
+  virtual void SetModelMatrix (const VMatrix4 &mat) = 0;
+
+  void CalcProjectionMatrix (VMatrix4 &ProjMat, VRenderLevelDrawer *ARLev, const refdef_t *rd);
+  void CalcModelMatrix (VMatrix4 &ModelMat, const TVec &origin, const TAVec &angles, bool MirrorFlip=false);
 
   // call this before doing light scissor calculations (can be called once per scene)
   // sets `vpmats`
   // scissor setup will use those matrices (but won't modify them)
   // also, `SetupViewOrg()` automatically call this method
-  virtual void LoadVPMatrices () = 0;
+  //virtual void LoadVPMatrices () = 0;
+  // no need to do this:
+  //   projection matrix and viewport set in `SetupView()`
+  //   model matrix set in `SetupViewOrg()`
+
   // returns 0 if scissor has no sense; -1 if scissor is empty, and 1 if scissor is set
   virtual int SetupLightScissor (const TVec &org, float radius, int scoord[4], const TVec *geobbox=nullptr) = 0;
   virtual void ResetScissor () = 0;

@@ -32,6 +32,9 @@
 #include "drawer.h"
 
 
+VCvarF gl_maxdist("gl_maxdist", "8192", "Max view distance (too big values will cause z-buffer issues).", CVAR_Archive);
+
+
 int R_LdrMsgColorMain = CR_FIRE;
 int R_LdrMsgColorSecondary = CR_ORANGE /*CR_PURPLE*/ /*CR_TEAL*/;
 
@@ -68,6 +71,7 @@ VDrawer::VDrawer () noexcept
   , isShittyGPU(false)
   , shittyGPUCheckDone(false)
   , useReverseZ(false)
+  , HaveDepthClamp(false)
   , RendLev(nullptr)
 {
   ScrWdt = max2(1, ScreenWidth);
@@ -122,6 +126,68 @@ void VDrawer::ResetTextureUpdateFrames () noexcept {
     VTexture *tex = GTextureManager.getMapTexIgnoreAnim(i);
     if (tex) tex->lastUpdateFrame = 0;
   }
+}
+
+
+//**************************************************************************
+//
+// calculate matrices
+//
+//**************************************************************************
+
+//==========================================================================
+//
+//  VDrawer::CalcProjectionMatrix
+//
+//==========================================================================
+void VDrawer::CalcProjectionMatrix (VMatrix4 &ProjMat, VRenderLevelDrawer *rlev, const refdef_t *rd) {
+  if (!CanUseRevZ()) {
+    // normal
+    //glClearDepth(1.0f);
+    //glDepthFunc(GL_LEQUAL);
+    ProjMat.SetIdentity();
+    ProjMat[0][0] = 1.0f/rd->fovx;
+    ProjMat[1][1] = 1.0f/rd->fovy;
+    ProjMat[2][3] = -1.0f;
+    ProjMat[3][3] = 0.0f;
+    if (!HaveDepthClamp && rlev && rlev->IsShadowVolumeRenderer()) {
+      ProjMat[2][2] = -1.0f;
+      ProjMat[3][2] = -2.0f;
+    } else {
+      float maxdist = max2(2.0f, gl_maxdist.asFloat());
+      if (!isFiniteF(maxdist)) maxdist = 8192.0f;
+      ProjMat[2][2] = -(maxdist+1.0f)/(maxdist-1.0f);
+      ProjMat[3][2] = -2.0f*maxdist/(maxdist-1.0f);
+    }
+  } else {
+    // reversed
+    // see https://nlguillemot.wordpress.com/2016/12/07/reversed-z-in-opengl/
+    //glClearDepth(0.0f);
+    //glDepthFunc(GL_GEQUAL);
+    ProjMat.SetZero();
+    ProjMat[0][0] = 1.0f/rd->fovx;
+    ProjMat[1][1] = 1.0f/rd->fovy;
+    ProjMat[2][3] = -1.0f;
+    ProjMat[3][2] = 1.0f; // zNear
+  }
+  //RestoreDepthFunc();
+}
+
+
+//==========================================================================
+//
+//  VDrawer::CalcModelMatrix
+//
+//==========================================================================
+void VDrawer::CalcModelMatrix (VMatrix4 &ModelMat, const TVec &origin, const TAVec &angles, bool MirrorFlip) {
+  ModelMat.SetIdentity();
+  ModelMat *= VMatrix4::RotateX(-90); //glRotatef(-90, 1, 0, 0);
+  ModelMat *= VMatrix4::RotateZ(90); //glRotatef(90, 0, 0, 1);
+  if (MirrorFlip) ModelMat *= VMatrix4::Scale(TVec(1, -1, 1)); //glScalef(1, -1, 1);
+  ModelMat *= VMatrix4::RotateX(-angles.roll); //glRotatef(-viewangles.roll, 1, 0, 0);
+  ModelMat *= VMatrix4::RotateY(-angles.pitch); //glRotatef(-viewangles.pitch, 0, 1, 0);
+  ModelMat *= VMatrix4::RotateZ(-angles.yaw); //glRotatef(-viewangles.yaw, 0, 0, 1);
+  ModelMat *= VMatrix4::Translate(-origin); //glTranslatef(-vieworg.x, -vieworg.y, -vieworg.z);
 }
 
 

@@ -223,7 +223,7 @@ void VOpenGLDrawer::RenderSurfaceShadowVolumeZPassIntr (const surface_t *surf, c
     newpmat[1][1] = 1.0f/rd->fovy;
     newpmat[2][3] = -1.0f;
     newpmat[3][3] = 0.0f;
-    if (RendLev && RendLev->NeedsInfiniteFarClip && !HaveDepthClamp) {
+    if (RendLev && RendLev->IsShadowVolumeRenderer() && !HaveDepthClamp) {
       newpmat[2][2] = -1.0f;
       newpmat[3][2] = -2.0f;
     } else {

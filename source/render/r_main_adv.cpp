@@ -86,7 +86,6 @@ extern "C" {
 VRenderLevelShadowVolume::VRenderLevelShadowVolume (VLevel *ALevel)
   : VRenderLevelShared(ALevel)
 {
-  NeedsInfiniteFarClip = true;
   mIsShadowVolumeRenderer = true;
 }
 

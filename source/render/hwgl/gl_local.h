@@ -237,9 +237,14 @@ public:
   void FinishUpdate ();
 
   // rendering stuff
+  // shoud frustum use far clipping plane?
   virtual bool UseFrustumFarClip () override;
-  virtual void SetupView (VRenderLevelDrawer *, const refdef_t *) override;
+  // setup projection matrix and viewport, clear screen, setup various OpenGL context properties
+  // called from `VRenderLevelShared::SetupFrame()`
+  virtual void SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) override;
+  // setup model matrix according to `viewangles` and `vieworg`
   virtual void SetupViewOrg () override;
+  // setup 2D ortho rendering mode
   virtual void EndView (bool ignoreColorTint=false) override;
 
   // texture stuff
@@ -333,11 +338,18 @@ public:
 
   virtual void GetProjectionMatrix (VMatrix4 &mat) override;
   virtual void GetModelMatrix (VMatrix4 &mat) override;
+  virtual void SetProjectionMatrix (const VMatrix4 &mat) override;
+  virtual void SetModelMatrix (const VMatrix4 &mat) override;
 
   // call this before doing light scissor calculations (can be called once per scene)
   // sets `vpmats`
   // scissor setup will use those matrices (but won't modify them)
-  virtual void LoadVPMatrices () override;
+  // called in `SetupViewOrg()`, which setups model transformation matrix
+  //virtual void LoadVPMatrices () override;
+  // no need to do this:
+  //   projection matrix and viewport set in `SetupView()`
+  //   model matrix set in `SetupViewOrg()`
+
   // returns 0 if scissor has no sense; -1 if scissor is empty, and 1 if scissor is set
   virtual int SetupLightScissor (const TVec &org, float radius, int scoord[4], const TVec *geobbox=nullptr) override;
   virtual void ResetScissor () override;
@@ -575,7 +587,7 @@ protected:
 
   bool usingFPZBuffer;
 
-  bool HaveDepthClamp;
+  //bool HaveDepthClamp; // moved to drawer
   bool HaveStencilWrap;
 
   int MaxTextureUnits;

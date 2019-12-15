@@ -40,7 +40,6 @@ extern VCvarB r_bloom;
 
 VCvarB gl_pic_filtering("gl_pic_filtering", false, "Filter interface pictures.", CVAR_Archive);
 VCvarB gl_font_filtering("gl_font_filtering", false, "Filter 2D interface.", CVAR_Archive);
-VCvarF gl_maxdist("gl_maxdist", "8192", "Max view distance (too big values will cause z-buffer issues).", CVAR_Archive);
 
 static VCvarB gl_enable_fp_zbuffer("gl_enable_fp_zbuffer", false, "Enable using of floating-point depth buffer for OpenGL3+?", CVAR_Archive|CVAR_PreInit);
 static VCvarB gl_enable_reverse_z("gl_enable_reverse_z", true, "Allow using \"reverse z\" trick?", CVAR_Archive|CVAR_PreInit);
@@ -975,6 +974,29 @@ void VOpenGLDrawer::GetModelMatrix (VMatrix4 &mat) {
 
 //==========================================================================
 //
+//  VOpenGLDrawer::SetProjectionMatrix
+//
+//==========================================================================
+void VOpenGLDrawer::SetProjectionMatrix (const VMatrix4 &mat) {
+  glMatrixMode(GL_PROJECTION);
+  glLoadMatrixf(mat[0]);
+  glMatrixMode(GL_MODELVIEW);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::SetModelMatrix
+//
+//==========================================================================
+void VOpenGLDrawer::SetModelMatrix (const VMatrix4 &mat) {
+  glMatrixMode(GL_MODELVIEW);
+  glLoadMatrixf(mat[0]);
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::LoadVPMatrices
 //
 //  call this before doing light scissor calculations (can be called once per scene)
@@ -982,6 +1004,7 @@ void VOpenGLDrawer::GetModelMatrix (VMatrix4 &mat) {
 //  scissor setup will use those matrices (but won't modify them)
 //
 //==========================================================================
+/*
 void VOpenGLDrawer::LoadVPMatrices () {
   glGetFloatv(GL_PROJECTION_MATRIX, vpmats.projMat[0]);
   glGetFloatv(GL_MODELVIEW_MATRIX, vpmats.modelMat[0]);
@@ -990,6 +1013,7 @@ void VOpenGLDrawer::LoadVPMatrices () {
   vpmats.vport.setOrigin(vport[0], vport[1]);
   vpmats.vport.setSize(vport[2], vport[3]);
 }
+*/
 
 
 //==========================================================================
@@ -1236,7 +1260,7 @@ void VOpenGLDrawer::ResetScissor () {
 //==========================================================================
 bool VOpenGLDrawer::UseFrustumFarClip () {
   if (CanUseRevZ()) return false;
-  if (RendLev && RendLev->NeedsInfiniteFarClip && !HaveDepthClamp) return false;
+  if (RendLev && RendLev->IsShadowVolumeRenderer() && !HaveDepthClamp) return false;
   return true;
 }
 
@@ -1414,42 +1438,39 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
   }
   glBindTexture(GL_TEXTURE_2D, 0);
 
-  VMatrix4 ProjMat;
   if (!CanUseRevZ()) {
     // normal
     glClearDepth(1.0f);
     glDepthFunc(GL_LEQUAL);
-    ProjMat.SetIdentity();
-    ProjMat[0][0] = 1.0f/rd->fovx;
-    ProjMat[1][1] = 1.0f/rd->fovy;
-    ProjMat[2][3] = -1.0f;
-    ProjMat[3][3] = 0.0f;
-    if (RendLev && RendLev->NeedsInfiniteFarClip && !HaveDepthClamp) {
-      ProjMat[2][2] = -1.0f;
-      ProjMat[3][2] = -2.0f;
-    } else {
-      ProjMat[2][2] = -(gl_maxdist+1.0f)/(gl_maxdist-1.0f);
-      ProjMat[3][2] = -2.0f*gl_maxdist/(gl_maxdist-1.0f);
-    }
   } else {
     // reversed
-    // see https://nlguillemot.wordpress.com/2016/12/07/reversed-z-in-opengl/
     glClearDepth(0.0f);
     glDepthFunc(GL_GEQUAL);
-    ProjMat.SetZero();
-    ProjMat[0][0] = 1.0f/rd->fovx;
-    ProjMat[1][1] = 1.0f/rd->fovy;
-    ProjMat[2][3] = -1.0f;
-    ProjMat[3][2] = 1.0f; // zNear
   }
   //RestoreDepthFunc();
 
   glViewport(rd->x, getHeight()-rd->height-rd->y, rd->width, rd->height);
+  vpmats.vport.setOrigin(rd->x, getHeight()-rd->height-rd->y);
+  vpmats.vport.setSize(rd->width, rd->height);
+  /*
+  {
+    GLint vport[4];
+    glGetIntegerv(GL_VIEWPORT, vport);
+    //vpmats.vport.setOrigin(vport[0], vport[1]);
+    //vpmats.vport.setSize(vport[2], vport[3]);
+    GCon->Logf(NAME_Debug, "VP: (%d,%d);(%d,%d) -- (%d,%d);(%d,%d)", vpmats.vport.x0, vpmats.vport.y0, vpmats.vport.width, vpmats.vport.height, vport[0], vport[1], vport[2], vport[3]);
+  }
+  */
 
+  CalcProjectionMatrix(vpmats.projMat, ARLev, rd);
   glMatrixMode(GL_PROJECTION);
-  glLoadMatrixf(ProjMat[0]);
+  glLoadMatrixf(vpmats.projMat[0]);
+
+  //vpmats.projMat = ProjMat;
+  vpmats.modelMat.SetIdentity();
 
   glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
 
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
@@ -1461,7 +1482,7 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
   GLEnableBlend();
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   glDisable(GL_ALPHA_TEST);
-  if (RendLev && RendLev->NeedsInfiniteFarClip && HaveDepthClamp) glEnable(GL_DEPTH_CLAMP);
+  if (RendLev && RendLev->IsShadowVolumeRenderer() && HaveDepthClamp) glEnable(GL_DEPTH_CLAMP);
   //k8: there is no reason to not do it
   //if (HaveDepthClamp) glEnable(GL_DEPTH_CLAMP);
 
@@ -1482,19 +1503,12 @@ void VOpenGLDrawer::SetupView (VRenderLevelDrawer *ARLev, const refdef_t *rd) {
 //
 //==========================================================================
 void VOpenGLDrawer::SetupViewOrg () {
-  glLoadIdentity();
-  glRotatef(-90, 1, 0, 0);
-  glRotatef(90, 0, 0, 1);
-  if (MirrorFlip) {
-    glScalef(1, -1, 1);
-    glCullFace(GL_BACK);
-  } else {
-    glCullFace(GL_FRONT);
-  }
-  glRotatef(-viewangles.roll, 1, 0, 0);
-  glRotatef(-viewangles.pitch, 0, 1, 0);
-  glRotatef(-viewangles.yaw, 0, 0, 1);
-  glTranslatef(-vieworg.x, -vieworg.y, -vieworg.z);
+  glMatrixMode(GL_MODELVIEW);
+  //glLoadIdentity();
+  CalcModelMatrix(vpmats.modelMat, vieworg, viewangles, MirrorClip);
+  glLoadMatrixf(vpmats.modelMat[0]);
+
+  glCullFace(MirrorClip ? GL_BACK : GL_FRONT);
 
   if (MirrorClip && view_frustum.planes[5].isValid()) {
     glEnable(GL_CLIP_PLANE0);
@@ -1506,7 +1520,8 @@ void VOpenGLDrawer::SetupViewOrg () {
   } else {
     glDisable(GL_CLIP_PLANE0);
   }
-  LoadVPMatrices();
+
+  //LoadVPMatrices();
 }
 
 

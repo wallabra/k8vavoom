@@ -108,7 +108,6 @@ VRenderLevelLightmap::VRenderLevelLightmap (VLevel *ALevel)
   , nukeLightmapsOnNextFrame(false)
   , invalidateRelight(false)
 {
-  NeedsInfiniteFarClip = false;
   mIsShadowVolumeRenderer = false;
   lmcache.renderer = this;
 
