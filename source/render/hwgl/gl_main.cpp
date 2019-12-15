@@ -326,6 +326,7 @@ VOpenGLDrawer::VOpenGLDrawer ()
   useReverseZ = false;
   hasNPOT = false;
   hasBoundsTest = false;
+  canIntoBloomFX = false;
 
   tmpImgBuf0 = nullptr;
   tmpImgBuf1 = nullptr;
@@ -732,10 +733,14 @@ void VOpenGLDrawer::InitResolution () {
       !p_glBindRenderbufferEXT ||
       !p_glFramebufferRenderbufferEXT ||
       !p_glGenerateMipmapEXT ||
-      !p_glBlitFramebuffer)
+      !p_glBlitFramebuffer ||
+      gl_dbg_fbo_blit_with_texture)
   {
     GCon->Logf(NAME_Init, "OpenGL: bloom postprocessing effect disabled due to missing API");
     r_bloom = false;
+    canIntoBloomFX = false;
+  } else {
+    canIntoBloomFX = true;
   }
 
   if (hasBoundsTest) GCon->Logf(NAME_Init, "Found GL_EXT_depth_bounds_test...");

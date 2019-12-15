@@ -27,6 +27,8 @@
 // this implementation is using code from Alien Arena (including shaders)
 #include "gl_local.h"
 
+#define VV_USE_DIRECT_BLIT
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 VCvarB r_bloom("r_bloom", true, "Enable Bloom post-processing effect?", CVAR_Archive);
@@ -214,14 +216,22 @@ void VOpenGLDrawer::BloomDownsampleView (int ax, int ay, int awidth, int aheight
   bloomResetFBOs();
 
   // downsample
-  p_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, bloomeffectFBO.getFBOid());
-  p_glBindFramebuffer(GL_READ_FRAMEBUFFER, mainFBO.getFBOid());
+  //p_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+  //p_glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
   //p_glBlitFramebuffer(0, 0, bloomScrWdt, bloomScrHgt, 0, 0, bloomWidth, bloomHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
   //GCon->Logf(NAME_Debug, "ax=%d; ay=%d; awidth=%d; aheight=%d", ax, ay, awidth, aheight);
   //p_glBlitFramebuffer(ax, ay, ax+awidth, ay+aheight, 0, 0, bloomWidth, bloomHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
   // passed coords are top-0 based, but FBO coords are bottom-0, so convert
   ay = bloomScrHgt-(ay+aheight);
+  #ifdef VV_USE_DIRECT_BLIT
+  p_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, bloomeffectFBO.getFBOid());
+  p_glBindFramebuffer(GL_READ_FRAMEBUFFER, mainFBO.getFBOid());
   p_glBlitFramebuffer(ax, ay, ax+awidth, ay+aheight, 0, 0, bloomWidth, bloomHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+  p_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+  p_glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+  #else
+  mainFBO.blitTo(&bloomeffectFBO, ax, ay, ax+awidth, ay+aheight, 0, 0, bloomWidth, bloomHeight, GL_LINEAR);
+  #endif
 
   // blit the finished downsampled texture onto a second FBO
   // we end up with with two copies, which DoGaussian will take advantage of
@@ -231,9 +241,6 @@ void VOpenGLDrawer::BloomDownsampleView (int ax, int ay, int awidth, int aheight
   p_glBindFramebuffer(GL_READ_FRAMEBUFFER, bloomeffectFBO.getFBOid());
   p_glBlitFramebuffer(0, 0, bloomWidth, bloomHeight, 0, 0, bloomWidth, bloomHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
   */
-
-  p_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-  p_glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 }
 
 
@@ -268,11 +275,13 @@ void VOpenGLDrawer::BloomDarken () {
     }
 
     // start computing this frame's color average so we can use it next frame
+    #ifdef VV_USE_DIRECT_BLIT
     p_glBindFramebuffer(GL_READ_FRAMEBUFFER, bloomeffectFBO.getFBOid());
     p_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, bloomcoloraveragingFBO.getFBOid());
-    p_glBlitFramebuffer(0, 0, bloomWidth, bloomHeight,
-                        0, 0, bloomWidth, bloomHeight,
-                        GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    p_glBlitFramebuffer(0, 0, bloomWidth, bloomHeight, 0, 0, bloomWidth, bloomHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    #else
+    bloomeffectFBO.blitTo(&bloomcoloraveragingFBO, 0, 0, bloomWidth, bloomHeight, 0, 0, bloomWidth, bloomHeight, GL_NEAREST);
+    #endif
     glBindTexture(GL_TEXTURE_2D, bloomcoloraveragingFBO.getColorTid());
     p_glGenerateMipmapEXT(GL_TEXTURE_2D);
     glGetTexImage(GL_TEXTURE_2D, bloomMipmapCount, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
@@ -305,7 +314,6 @@ void VOpenGLDrawer::BloomDarken () {
     activeFBOInited = true;
   }
 
-
   // darkening pass
   if (r_bloom_darken.asFloat() > 0.0f) {
     if (!activeFBOInited) {
@@ -332,11 +340,15 @@ void VOpenGLDrawer::BloomDarken () {
 
   // if we still didn't copied effect FBO to active FBO, do it now
   if (!activeFBOInited) {
+    #ifdef VV_USE_DIRECT_BLIT
     p_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, bloomGetActiveFBO()->getFBOid());
     p_glBindFramebuffer(GL_READ_FRAMEBUFFER, bloomeffectFBO.getFBOid());
     p_glBlitFramebuffer(0, 0, bloomWidth, bloomHeight, 0, 0, bloomWidth, bloomHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
     p_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     p_glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+    #else
+    bloomeffectFBO.blitTo(bloomGetActiveFBO(), 0, 0, bloomWidth, bloomHeight, 0, 0, bloomWidth, bloomHeight, GL_NEAREST);
+    #endif
   }
 }
 
@@ -454,7 +466,7 @@ void VOpenGLDrawer::BloomDrawEffect (int ax, int ay, int awidth, int aheight) {
 //
 //==========================================================================
 void VOpenGLDrawer::Posteffect_Bloom (int ax, int ay, int awidth, int aheight) {
-  if (!r_bloom) return;
+  if (!r_bloom || !canIntoBloomFX) return;
   SetMainFBO(true); // just in case, forced
   if (ScrWdt < 32 || ScrHgt < 32 || ax >= ScrWdt || ay >= ScrHgt) return;
   // normalise coords

@@ -205,6 +205,8 @@ private:
   // list of surfaces with masked textures, for z-prefill
   TArray<surface_t *> zfillMasked;
 
+  bool canIntoBloomFX;
+
 protected:
   VGLShader *shaderHead;
 
