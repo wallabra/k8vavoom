@@ -95,6 +95,21 @@ void VRootWidget::TickWidgets (float DeltaTime) {
 bool VRootWidget::Responder (event_t *Event) {
   if (GetFlags()&_OF_Destroyed) return false;
 
+  {
+    // find the top-most focused widget
+    VWidget *W = CurrentFocusChild;
+    while (W && W->CurrentFocusChild) {
+      if (W->GetFlags()&_OF_Destroyed) return false;
+      W = W->CurrentFocusChild;
+    }
+    // call event handlers
+    while (W) {
+      if (W->GetFlags()&_OF_Destroyed) return false;
+      if (W->OnEvent(Event)) return true;
+      W = W->ParentWidget;
+    }
+  }
+
   if (RootFlags&RWF_MouseEnabled) {
     // handle mouse movement
     if (Event->type == ev_mouse) {

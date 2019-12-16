@@ -379,6 +379,17 @@ void Tick (float DeltaTime) {}
 
 //==========================================================================
 //
+//  OnEvent
+//
+//  this is called before any other specific handler.
+//  return `true` to prevent other handlers from being called.
+//
+//==========================================================================
+bool OnEvent (ref event_t evt) { return false; }
+
+
+//==========================================================================
+//
 //  OnKeyDown
 //
 //  Called for focused widget and it's parents when a key is pressed.
