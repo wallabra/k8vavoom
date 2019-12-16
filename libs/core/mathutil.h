@@ -404,7 +404,7 @@ static inline VVA_OKUNUSED VVA_CHECKRESULT vint32 vxs_ToFix16_16 (const double v
 //  Are3DBBoxesOverlapIn2D
 //
 //==========================================================================
-static VVA_OKUNUSED VVA_CHECKRESULT inline bool Are3DBBoxesOverlapIn2D (const float *bbox0, const float *bbox1) {
+static VVA_OKUNUSED VVA_CHECKRESULT inline bool Are3DBBoxesOverlapIn2D (const float bbox0[6], const float bbox1[6]) {
   return !(
     bbox1[3+0] < bbox0[0+0] || bbox1[3+1] < bbox0[0+1] ||
     bbox1[0+0] > bbox0[3+0] || bbox1[0+1] > bbox0[3+1]
