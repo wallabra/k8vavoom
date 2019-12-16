@@ -830,6 +830,9 @@ public:
   // for speed; direction vectors should correspond to angles
   void setup (const TClipBase &clipbase, const TFrustumParam &fp, bool createbackplane=true, const float farplanez=0.0f) noexcept;
 
+  // if `farplanez` is non finite, or <= 0, remove far plane
+  void setFarPlane (const TFrustumParam &fp, float farplanez) noexcept;
+
   // automatically called by `setup*()`
   void setupBoxIndicies () noexcept;
 

@@ -665,6 +665,24 @@ void TFrustum::setup (const TClipBase &clipbase, const TFrustumParam &fp, bool c
 //
 //  TFrustum::checkPoint
 //
+//==========================================================================
+void TFrustum::setFarPlane (const TFrustumParam &fp, float farplanez) noexcept {
+  // create far plane
+  if (isFiniteF(farplanez) && farplanez > 0) {
+    planes[5].SetPointNormal3D(fp.origin+fp.vforward*farplanez, -fp.vforward);
+    planes[5].clipflag = 1U<<5;
+    planeCount = 6;
+  } else {
+    planes[5].clipflag = 0;
+    if (planeCount >= 6) planeCount = 5;
+  }
+}
+
+
+//==========================================================================
+//
+//  TFrustum::checkPoint
+//
 //  returns `false` is sphere is out of frustum (or frustum is not valid)
 //
 //==========================================================================
