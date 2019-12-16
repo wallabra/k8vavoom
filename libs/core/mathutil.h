@@ -378,7 +378,7 @@ public:
 //         http://www.stereopsis.com/sree/fpu2006.html
 //
 // xs_CRoundToInt:  Round toward nearest, but ties round toward even (just like FISTP)
-static VVA_CHECKRESULT inline vint32 vxs_CRoundToInt (const double val, const double dmr) {
+static VVA_OKUNUSED VVA_CHECKRESULT inline vint32 vxs_CRoundToInt (const double val, const double dmr) {
   union vxs_doubleints_ {
     double val;
     vuint32 ival[2];
@@ -393,9 +393,22 @@ static VVA_CHECKRESULT inline vint32 vxs_CRoundToInt (const double val, const do
 }
 
 
-static inline VVA_CHECKRESULT vint32 vxs_ToFix16_16 (const double val) {
+static inline VVA_OKUNUSED VVA_CHECKRESULT vint32 vxs_ToFix16_16 (const double val) {
   /*static*/ const double vxs_doublemagic_ = double(6755399441055744.0); //2^52*1.5, uses limited precisicion to floor
   return vxs_CRoundToInt(val, vxs_doublemagic_/(1<<16));
+}
+
+
+//==========================================================================
+//
+//  Are3DBBoxesOverlapIn2D
+//
+//==========================================================================
+static VVA_OKUNUSED VVA_CHECKRESULT inline bool Are3DBBoxesOverlapIn2D (const float *bbox0, const float *bbox1) {
+  return !(
+    bbox1[3+0] < bbox0[0+0] || bbox1[3+1] < bbox0[0+1] ||
+    bbox1[0+0] > bbox0[3+0] || bbox1[0+1] > bbox0[3+1]
+  );
 }
 
 
