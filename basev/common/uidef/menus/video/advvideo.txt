@@ -207,6 +207,18 @@ menudef AdvVideoOptions {
       "visibility info from the previous frame, not from the current one.";
   }
 
+  option slider {
+    title = "DynLight VisCheck Radius Tolerance";
+    cvar = r_dynamic_light_vis_check_radius_tolerance;
+    step = 1;
+    min = -1;
+    max = 128;
+    help =
+      "Consider dynamic lights with radius difference less or equal to this"
+      "as equal, and don't reset floodfill visibility info for them."
+      "This can speedup visibility checks alot, but some lights may be missing.";
+  }
+
   option bool {
     title = "Model Dynamic lighting";
     cvar = r_model_light;

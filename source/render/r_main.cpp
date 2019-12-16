@@ -46,9 +46,12 @@ VCvarB dbg_show_lightmap_cache_messages("dbg_show_lightmap_cache_messages", fals
 
 VCvarB r_allow_cameras("r_allow_cameras", true, "Allow rendering live cameras?", CVAR_Archive);
 
+VCvarB dbg_dlight_vis_check_messages("dbg_dlight_vis_check_messages", false, "Show dynlight vischeck debug messages?", 0);
+VCvarF r_dynamic_light_vis_check_radius_tolerance("r_dynamic_light_vis_check_radius_tolerance", "16", "Dynlight vischeck radius tolerance.", CVAR_Archive);
 
 static VCvarI k8ColormapInverse("k8ColormapInverse", "0", "Inverse colormap replacement (0: original inverse; 1: black-and-white; 2: gold; 3: green; 4: red).", CVAR_Archive);
 static VCvarI k8ColormapLightAmp("k8ColormapLightAmp", "0", "LightAmp colormap replacement (0: original; 1: black-and-white; 2: gold; 3: green; 4: red).", CVAR_Archive);
+
 
 static const char *videoDrvName = nullptr;
 /*static*/ bool cliRegister_rmain_args =
@@ -781,13 +784,15 @@ VRenderLevelPublic::LightInfo VRenderLevelShared::GetDynamicLight (int idx) cons
 //==========================================================================
 void VRenderLevelShared::NewBSPVisibilityFrame () {
   if (bspVisRadius) {
-    if (++bspVisRadiusFrame == 0) {
+    // bit 31 is used as "visible" mark
+    if (++bspVisRadiusFrame >= 0x80000000u) {
       bspVisRadiusFrame = 1;
       memset(bspVisRadius, 0, sizeof(bspVisRadius[0])*Level->NumSubsectors);
     }
   } else {
     bspVisRadiusFrame = 0;
   }
+  bspVisLastCheckRadius = -1.0f; // "unknown"
 }
 
 
@@ -827,9 +832,15 @@ static inline bool isCircleTouchingLine (const TVec &corg, const float radiusSq,
 bool VRenderLevelShared::CheckBSPVisibilitySub (const TVec &org, const float radius, const subsector_t *currsub, const seg_t *firsttravel) {
   const unsigned csubidx = (unsigned)(ptrdiff_t)(currsub-Level->Subsectors);
   // rendered means "visible"
-  if (BspVis[csubidx>>3]&(1<<(csubidx&7))) return true;
+  if (BspVis[csubidx>>3]&(1<<(csubidx&7))) {
+    bspVisRadius[csubidx].framecount = bspVisRadiusFrame|0x80000000u; // just in case
+    return true;
+  }
   // if we came into already visited subsector, abort flooding (and return failure)
-  if (bspVisRadius[csubidx].framecount == bspVisRadiusFrame) return false;
+  if ((bspVisRadius[csubidx].framecount&0x7fffffffu) == bspVisRadiusFrame) {
+    //GCon->Logf(NAME_Debug, "   visited! %d (%u)", csubidx, bspVisRadius[csubidx].framecount>>31);
+    return (bspVisRadius[csubidx].framecount >= 0x80000000u);
+  }
   // recurse into neighbour subsectors
   bspVisRadius[csubidx].framecount = bspVisRadiusFrame; // mark as visited
   if (currsub->numlines == 0) return false;
@@ -864,12 +875,14 @@ bool VRenderLevelShared::CheckBSPVisibilitySub (const TVec &org, const float rad
     // precise check
     if (!isCircleTouchingLine(org, radiusSq, *seg->v1, *seg->v2)) continue;
     // check plane angles
-    if (r_lightflood_check_plane_angles && firsttravel) {
+    if (firsttravel && r_lightflood_check_plane_angles) {
       if (PlaneAngles2D(firsttravel, seg) >= 180.0f && PlaneAngles2DFlipTo(firsttravel, seg) >= 180.0f) continue;
     }
     // ok, it is touching, recurse
     if (CheckBSPVisibilitySub(org, radius, seg->partner->frontsub, (firsttravel ? firsttravel : seg))) {
       //GCon->Logf("RECURSE HIT!");
+      //GCon->Logf(NAME_Debug, "   RECURSE TRUE! %d", csubidx);
+      bspVisRadius[csubidx].framecount |= 0x80000000u;
       return true;
     }
   }
@@ -916,12 +929,29 @@ bool VRenderLevelShared::CheckBSPVisibility (const TVec &org, float radius, cons
   if (BspVis[subidx>>3]&(1<<(subidx&7))) return true;
 
   // use floodfill to determine (rough) potential visibility
-  NewBSPVisibilityFrame();
+  // nope, don't do it here, do it in scene renderer
+  // this is so the checks from the same subsector won't do excess work
+  // done in `PrepareWorldRender()`
+  //NewBSPVisibilityFrame();
+
+  //GCon->Logf(NAME_Debug, "CheckBSPVisibility(%u): subsector=%d; org=(%g,%g,%g); radius=%g", bspVisRadiusFrame, subidx, org.x, org.y, org.z, radius);
+
   if (!bspVisRadius) {
     bspVisRadiusFrame = 1;
     bspVisRadius = new BSPVisInfo[Level->NumSubsectors];
     memset(bspVisRadius, 0, sizeof(bspVisRadius[0])*Level->NumSubsectors);
+    bspVisLastCheckRadius = radius;
+  } else if (bspVisLastCheckRadius < 0) {
+    bspVisLastCheckRadius = radius;
+  } else {
+    // if new radius is too different, reset check
+    if (fabsf(bspVisLastCheckRadius-radius) > r_dynamic_light_vis_check_radius_tolerance.asFloat()) {
+      if (dbg_dlight_vis_check_messages) GCon->Logf(NAME_Debug, "*** RESET BPSVISCHECKFRAME! oldradius=%g; newradius=%g", bspVisLastCheckRadius, radius);
+      NewBSPVisibilityFrame();
+      bspVisLastCheckRadius = radius;
+    }
   }
+
   return CheckBSPVisibilitySub(org, radius, sub, nullptr);
 }
 

@@ -342,6 +342,7 @@ protected:
 
   BSPVisInfo *bspVisRadius;
   vuint32 bspVisRadiusFrame;
+  float bspVisLastCheckRadius;
 
   VViewClipper LightClip;
   vuint8 *LightVis;
@@ -1049,6 +1050,9 @@ extern VCvarB r_shadows_players;
 extern VCvarB r_separate_translucent_lists;
 
 extern VCvarB dbg_show_lightmap_cache_messages;
+
+extern VCvarB dbg_dlight_vis_check_messages;
+extern VCvarF r_dynamic_light_vis_check_radius_tolerance;
 
 extern VTextureTranslation **TranslationTables;
 extern int NumTranslationTables;
