@@ -841,9 +841,9 @@ void VRenderLevelShadowVolume::RenderLightBSPNode (int bspnum, const float *bbox
 //
 //==========================================================================
 void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags, const refdef_t *RD,
-                                               const VViewClipper *Range,
-                                               TVec &Pos, float Radius, float LightMin, vuint32 Color,
-                                               bool LimitLights, TVec coneDir, float coneAngle)
+                                                   const VViewClipper *Range,
+                                                   TVec &Pos, float Radius, float LightMin, vuint32 Color,
+                                                   bool LimitLights, TVec coneDir, float coneAngle)
 {
   if ((r_max_lights >= 0 && LightsRendered >= r_max_lights) || Radius <= LightMin || gl_dbg_wireframe) return;
 
