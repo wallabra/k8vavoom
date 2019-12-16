@@ -1064,7 +1064,13 @@ void VRenderLevelShared::UpdateBBoxWithSurface (TVec bbox[2], surface_t *surfs, 
 void VRenderLevelShared::UpdateBBoxWithLine (TVec bbox[2], VEntity *SkyBox, const drawseg_t *dseg) {
   const seg_t *seg = dseg->seg;
   if (!seg->linedef) return; // miniseg
+  // if light sphere is not touching a plane, do nothing
+  const float dist = DotProduct(CurrLightPos, seg->normal)-seg->dist;
+  //if (dist <= -CurrLightRadius || dist > CurrLightRadius) return; // light sphere is not touching a plane
+  if (fabsf(dist) >= CurrLightRadius) return;
+  // check clipper
   if (!LightClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
+  // update bbox with surfaces
   if (!seg->backsector) {
     // single sided line
     if (dseg->mid) UpdateBBoxWithSurface(bbox, dseg->mid->surfs, &dseg->mid->texinfo, SkyBox, false);
