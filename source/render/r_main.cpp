@@ -47,7 +47,7 @@ VCvarB dbg_show_lightmap_cache_messages("dbg_show_lightmap_cache_messages", fals
 VCvarB r_allow_cameras("r_allow_cameras", true, "Allow rendering live cameras?", CVAR_Archive);
 
 VCvarB dbg_dlight_vis_check_messages("dbg_dlight_vis_check_messages", false, "Show dynlight vischeck debug messages?", 0);
-VCvarF r_dynamic_light_vis_check_radius_tolerance("r_dynamic_light_vis_check_radius_tolerance", "16", "Dynlight vischeck radius tolerance.", CVAR_Archive);
+VCvarB r_vis_check_flood("r_vis_check_flood", false, "Use floodfill to perform dynlight visibility checks?", CVAR_Archive);
 
 static VCvarI k8ColormapInverse("k8ColormapInverse", "0", "Inverse colormap replacement (0: original inverse; 1: black-and-white; 2: gold; 3: green; 4: red).", CVAR_Archive);
 static VCvarI k8ColormapLightAmp("k8ColormapLightAmp", "0", "LightAmp colormap replacement (0: original; 1: black-and-white; 2: gold; 3: green; 4: red).", CVAR_Archive);
@@ -779,10 +779,10 @@ VRenderLevelPublic::LightInfo VRenderLevelShared::GetDynamicLight (int idx) cons
 
 //==========================================================================
 //
-//  VRenderLevelShared::NewBSPVisibilityFrame
+//  VRenderLevelShared::NewBSPFloodVisibilityFrame
 //
 //==========================================================================
-void VRenderLevelShared::NewBSPVisibilityFrame () {
+void VRenderLevelShared::NewBSPFloodVisibilityFrame () {
   if (bspVisRadius) {
     // bit 31 is used as "visible" mark
     if (++bspVisRadiusFrame >= 0x80000000u) {
@@ -822,14 +822,14 @@ static inline bool isCircleTouchingLine (const TVec &corg, const float radiusSq,
 
 //==========================================================================
 //
-//  VRenderLevelShared::CheckBSPVisibilitySub
+//  VRenderLevelShared::CheckBSPFloodVisibilitySub
 //
 //  `firsttravel` is used to reject invisible segs
 //  it is set before first recursive call, and all segs whose planes are
 //  angled with 190 or more relative to this first seg are rejected
 //
 //==========================================================================
-bool VRenderLevelShared::CheckBSPVisibilitySub (const TVec &org, const float radius, const subsector_t *currsub, const seg_t *firsttravel) {
+bool VRenderLevelShared::CheckBSPFloodVisibilitySub (const TVec &org, const float radius, const subsector_t *currsub, const seg_t *firsttravel) {
   const unsigned csubidx = (unsigned)(ptrdiff_t)(currsub-Level->Subsectors);
   // rendered means "visible"
   if (BspVis[csubidx>>3]&(1<<(csubidx&7))) {
@@ -879,7 +879,7 @@ bool VRenderLevelShared::CheckBSPVisibilitySub (const TVec &org, const float rad
       if (PlaneAngles2D(firsttravel, seg) >= 180.0f && PlaneAngles2DFlipTo(firsttravel, seg) >= 180.0f) continue;
     }
     // ok, it is touching, recurse
-    if (CheckBSPVisibilitySub(org, radius, seg->partner->frontsub, (firsttravel ? firsttravel : seg))) {
+    if (CheckBSPFloodVisibilitySub(org, radius, seg->partner->frontsub, (firsttravel ? firsttravel : seg))) {
       //GCon->Logf("RECURSE HIT!");
       //GCon->Logf(NAME_Debug, "   RECURSE TRUE! %d", csubidx);
       bspVisRadius[csubidx].framecount |= 0x80000000u;
@@ -892,10 +892,10 @@ bool VRenderLevelShared::CheckBSPVisibilitySub (const TVec &org, const float rad
 
 //==========================================================================
 //
-//  VRenderLevelShared::CheckBSPVisibility
+//  VRenderLevelShared::CheckBSPFloodVisibility
 //
 //==========================================================================
-bool VRenderLevelShared::CheckBSPVisibility (const TVec &org, float radius, const subsector_t *sub) {
+bool VRenderLevelShared::CheckBSPFloodVisibility (const TVec &org, float radius, const subsector_t *sub) {
   if (!Level) return false; // just in case
   if (!sub) {
     sub = Level->PointInSubsector(org);
@@ -932,27 +932,90 @@ bool VRenderLevelShared::CheckBSPVisibility (const TVec &org, float radius, cons
   // nope, don't do it here, do it in scene renderer
   // this is so the checks from the same subsector won't do excess work
   // done in `PrepareWorldRender()`
-  //NewBSPVisibilityFrame();
+  //NewBSPFloodVisibilityFrame();
 
-  //GCon->Logf(NAME_Debug, "CheckBSPVisibility(%u): subsector=%d; org=(%g,%g,%g); radius=%g", bspVisRadiusFrame, subidx, org.x, org.y, org.z, radius);
+  //GCon->Logf(NAME_Debug, "CheckBSPFloodVisibility(%u): subsector=%d; org=(%g,%g,%g); radius=%g", bspVisRadiusFrame, subidx, org.x, org.y, org.z, radius);
 
   if (!bspVisRadius) {
     bspVisRadiusFrame = 1;
     bspVisRadius = new BSPVisInfo[Level->NumSubsectors];
     memset(bspVisRadius, 0, sizeof(bspVisRadius[0])*Level->NumSubsectors);
     bspVisLastCheckRadius = radius;
-  } else if (bspVisLastCheckRadius < 0) {
-    bspVisLastCheckRadius = radius;
   } else {
-    // if new radius is too different, reset check
-    if (fabsf(bspVisLastCheckRadius-radius) > r_dynamic_light_vis_check_radius_tolerance.asFloat()) {
-      if (dbg_dlight_vis_check_messages) GCon->Logf(NAME_Debug, "*** RESET BPSVISCHECKFRAME! oldradius=%g; newradius=%g", bspVisLastCheckRadius, radius);
-      NewBSPVisibilityFrame();
-      bspVisLastCheckRadius = radius;
-    }
+    bspVisLastCheckRadius = radius;
+    NewBSPFloodVisibilityFrame();
   }
 
-  return CheckBSPVisibilitySub(org, radius, sub, nullptr);
+  return CheckBSPFloodVisibilitySub(org, radius, sub, nullptr);
+}
+
+
+//==========================================================================
+//
+//  Is3DBBoxesOverlapsIn2D
+//
+//==========================================================================
+static inline bool Is3DBBoxesOverlapsIn2D (const float *bbox0, const float *bbox1) {
+  return !(
+    bbox1[3+0] < bbox0[0+0] || bbox1[3+1] < bbox0[0+1] ||
+    bbox1[0+0] > bbox0[3+0] || bbox1[0+1] > bbox0[3+1]
+  );
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::CheckBSPVisibilityBoxSub
+//
+//==========================================================================
+bool VRenderLevelShared::CheckBSPVisibilityBoxSub (int bspnum, const float *bbox) {
+  if (bspnum == -1) return true;
+  // found a subsector?
+  if (BSPIDX_IS_NON_LEAF(bspnum)) {
+    // nope
+    const node_t *bsp = &Level->Nodes[bspnum];
+    for (unsigned side = 0; side < 2; ++side) {
+      if (!Is3DBBoxesOverlapsIn2D(bsp->bbox[side], bbox)) continue;
+      if (CheckBSPVisibilityBoxSub(bsp->children[side], bbox)) return true;
+    }
+  } else {
+    // check subsector
+    const unsigned subidx = BSPIDX_LEAF_SUBSECTOR(bspnum);
+    if (BspVis[subidx>>3]&(1<<(subidx&7))) {
+      //if (dbg_dlight_vis_check_messages) GCon->Logf(NAME_Debug, "***HIT VISIBLE SUBSECTOR #%u", subidx);
+      return true;
+    }
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::CheckBSPVisibilityBox
+//
+//==========================================================================
+bool VRenderLevelShared::CheckBSPVisibilityBox (const TVec &org, float radius, const subsector_t *sub) {
+  if (!Level) return false; // just in case
+  if (r_vis_check_flood) return CheckBSPFloodVisibility(org, radius, sub);
+
+  if (sub) {
+    const unsigned subidx = (unsigned)(ptrdiff_t)(sub-Level->Subsectors);
+    // rendered means "visible"
+    if (BspVis[subidx>>3]&(1<<(subidx&7))) return true;
+  }
+
+  // create bounding box
+  float lbbox[6] = {
+    org.x-radius,
+    org.y-radius,
+    0, // doesn't matter
+    org.x+radius,
+    org.y+radius,
+    0, // doesn't matter
+  };
+
+  return CheckBSPVisibilityBoxSub(Level->NumNodes-1, lbbox);
 }
 
 

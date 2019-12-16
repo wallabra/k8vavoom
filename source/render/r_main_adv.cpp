@@ -225,7 +225,7 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
           if (!CheckValidLightPosRough(lorg, sec)) continue;
         }
 
-        if (r_advlight_flood_check && !CheckBSPVisibility(lorg, stlight->radius)) {
+        if (r_advlight_flood_check && !CheckBSPVisibilityBox(lorg, stlight->radius)) {
           //GCon->Logf("STATIC DROP: visibility check");
           continue;
         }

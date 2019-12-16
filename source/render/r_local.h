@@ -381,9 +381,12 @@ private:
   }
 
 protected:
-  void NewBSPVisibilityFrame ();
-  bool CheckBSPVisibilitySub (const TVec &org, const float radius, const subsector_t *currsub, const seg_t *firsttravel);
-  bool CheckBSPVisibility (const TVec &org, float radius, const subsector_t *sub=nullptr);
+  void NewBSPFloodVisibilityFrame ();
+  bool CheckBSPFloodVisibilitySub (const TVec &org, const float radius, const subsector_t *currsub, const seg_t *firsttravel);
+  bool CheckBSPFloodVisibility (const TVec &org, float radius, const subsector_t *sub=nullptr);
+
+  bool CheckBSPVisibilityBoxSub (int bspnum, const float *bbox);
+  bool CheckBSPVisibilityBox (const TVec &org, float radius, const subsector_t *sub=nullptr);
 
   void ResetVisFrameCount ();
   inline vuint32 IncVisFrameCount () {
@@ -1053,6 +1056,7 @@ extern VCvarB dbg_show_lightmap_cache_messages;
 
 extern VCvarB dbg_dlight_vis_check_messages;
 extern VCvarF r_dynamic_light_vis_check_radius_tolerance;
+extern VCvarB r_vis_check_flood;
 
 extern VTextureTranslation **TranslationTables;
 extern int NumTranslationTables;

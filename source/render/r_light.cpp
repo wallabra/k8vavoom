@@ -294,7 +294,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
     // floodfill visibility check
     if (/*!IsShadowVolumeRenderer() &&*/ r_dynamic_light_better_vis_check) {
       if (leafnum < 0) leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(lorg)-Level->Subsectors);
-      if (!CheckBSPVisibility(lorg, (radius > 0 ? radius : 64), &Level->Subsectors[leafnum])) {
+      if (!CheckBSPVisibilityBox(lorg, (radius > 0 ? radius : 64), &Level->Subsectors[leafnum])) {
         //GCon->Logf("DYNAMIC DROP: visibility check");
         return nullptr;
       }
