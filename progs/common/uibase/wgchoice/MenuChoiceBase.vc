@@ -224,6 +224,25 @@ override void OnMouseEnter() {
 
 //==========================================================================
 //
+//  OnEvent
+//
+//==========================================================================
+override bool OnEvent (ref event_t evt) {
+  if (evt.type == ev_keydown) {
+    //printdebug("key=%s (shift=%B)", evt.keycode, evt.bShift);
+    if (evt.keycode == "/" && evt.bShift) {
+      if (CvarExists(cvarSession)) {
+        print("option cvar: %s", cvarSession);
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
 //  OnKeyDown
 //
 //==========================================================================
