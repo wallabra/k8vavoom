@@ -419,8 +419,8 @@ typedef void (APIENTRY *glGenerateMipmapEXT_t) (GLenum target);
   //VGLAPIPTR(glMultiTexCoord2fARB);
   VGLAPIPTR(glActiveTextureARB, true);
 
-  VGLAPIPTR(glPointParameterfEXT, true);
-  VGLAPIPTR(glPointParameterfvEXT, true);
+  //VGLAPIPTR(glPointParameterfEXT, true);
+  //VGLAPIPTR(glPointParameterfvEXT, true);
 
   VGLAPIPTR(glStencilFuncSeparate, false);
   VGLAPIPTR(glStencilOpSeparate, false);
