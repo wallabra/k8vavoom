@@ -207,6 +207,8 @@ void VRenderLevelShared::PushDlights () {
     //dlinfo[i].needTrace = (r_dynamic_clip && r_dynamic_clip_more && Level->NeedProperLightTraceAt(l->origin, l->radius) ? 1 : -1);
     //MarkLights(l, 1U<<i, Level->NumNodes-1, dlinfo[i].leafnum);
     //FIXME: this has one frame latency; meh for now
+    LitCollectSurfaces = false;
+    LitCalcBBox = false; // we don't need any lists
     if (CalcLightVis(l->origin, l->radius, 1U<<i)) {
       dlinfo[i].needTrace = (doShadows ? 1 : -1);
     } else {
@@ -253,13 +255,13 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
   }
 
   if (!isPlr) {
-    // if the light is behind a view, drop it if it is further than light radius
+    // if the light is behind a view, drop it if it is further than the light radius
     if ((radius > 0 && bestdist >= radius*radius) || (!radius && bestdist >= 64*64)) {
       static TFrustum frustum;
       static TFrustumParam fp;
       if (fp.needUpdate(cl->ViewOrg, cl->ViewAngles)) {
         fp.setup(cl->ViewOrg, cl->ViewAngles);
-        frustum.setup(clip_base, fp, true, r_lights_radius);
+        frustum.setup(clip_base, fp, true, r_lights_radius.asFloat());
       }
       if (!frustum.checkSphere(lorg, (radius > 0 ? radius : 64))) {
         //GCon->Logf("  DROPPED; radius=%f; dist=%f", radius, sqrtf(bestdist));
@@ -278,7 +280,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
     // pvs check
     if (r_dynamic_clip_pvs && Level->HasPVS()) {
       subsector_t *sub = lastDLightViewSub;
-      if (!sub || lastDLightView.x != cl->ViewOrg.x || lastDLightView.y != cl->ViewOrg.y || lastDLightView.z != cl->ViewOrg.z) {
+      if (!sub || lastDLightView.x != cl->ViewOrg.x || lastDLightView.y != cl->ViewOrg.y /*|| lastDLightView.z != cl->ViewOrg.z*/) {
         lastDLightView = cl->ViewOrg;
         lastDLightViewSub = sub = Level->PointInSubsector(cl->ViewOrg);
       }

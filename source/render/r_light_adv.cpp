@@ -847,11 +847,15 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
 {
   if ((r_max_lights >= 0 && LightsRendered >= r_max_lights) || Radius <= LightMin || gl_dbg_wireframe) return;
 
+  //TODO: we can reuse collected surfaces in next passes
+  LitCollectSurfaces = false;
+  LitCalcBBox = true;
   if (!CalcLightVis(Pos, Radius-LightMin)) return;
   CurrLightRadius = Radius; // we need full radius, not modified
 
-  if (r_advlight_opt_optimise_scissor && !LitSurfaces && !r_models) return; // no lit surfaces, nothing to do
-  if (LightVisSubs.length() == 0 && !r_models) return; // just in case
+  if (r_advlight_opt_optimise_scissor && !LitSurfaceCount && !r_models) return; // no lit surfaces, nothing to do
+  /*if (LightVisSubs.length() == 0 && !r_models) return;*/ // just in case
+  if (!LitVisSubCount && !r_models) return; // just in case
 
   CurrLightColor = Color;
   // if our light is in frustum, ignore any out-of-frustum polys

@@ -519,7 +519,9 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   AllLightsNumber = 0;
   AllShadowsNumber = 0;
   HasLightIntersection = false;
-  LitSurfaces = 0;
+  LitSurfaceCount = 0;
+  LitCollectSurfaces = false;
+  LitCalcBBox = true;
   HasBackLit = false;
   doShadows = false;
   MirrorClipSegs = false;
@@ -952,19 +954,6 @@ bool VRenderLevelShared::CheckBSPFloodVisibility (const TVec &org, float radius,
 
 //==========================================================================
 //
-//  Is3DBBoxesOverlapsIn2D
-//
-//==========================================================================
-static inline bool Is3DBBoxesOverlapsIn2D (const float *bbox0, const float *bbox1) {
-  return !(
-    bbox1[3+0] < bbox0[0+0] || bbox1[3+1] < bbox0[0+1] ||
-    bbox1[0+0] > bbox0[3+0] || bbox1[0+1] > bbox0[3+1]
-  );
-}
-
-
-//==========================================================================
-//
 //  VRenderLevelShared::CheckBSPVisibilityBoxSub
 //
 //==========================================================================
@@ -975,7 +964,7 @@ bool VRenderLevelShared::CheckBSPVisibilityBoxSub (int bspnum, const float *bbox
     // nope
     const node_t *bsp = &Level->Nodes[bspnum];
     for (unsigned side = 0; side < 2; ++side) {
-      if (!Is3DBBoxesOverlapsIn2D(bsp->bbox[side], bbox)) continue;
+      if (!Are3DBBoxesOverlapIn2D(bsp->bbox[side], bbox)) continue;
       if (CheckBSPVisibilityBoxSub(bsp->children[side], bbox)) return true;
     }
   } else {
@@ -1005,7 +994,7 @@ bool VRenderLevelShared::CheckBSPVisibilityBox (const TVec &org, float radius, c
     if (BspVis[subidx>>3]&(1<<(subidx&7))) return true;
   }
 
-  // create bounding box
+  // create light bounding box
   float lbbox[6] = {
     org.x-radius,
     org.y-radius,
@@ -1024,7 +1013,7 @@ bool VRenderLevelShared::CheckBSPVisibilityBox (const TVec &org, float radius, c
 //  VRenderLevelShared::UpdateBBoxWithSurface
 //
 //==========================================================================
-void VRenderLevelShared::UpdateBBoxWithSurface (TVec bbox[2], const surface_t *surfs, const texinfo_t *texinfo,
+void VRenderLevelShared::UpdateBBoxWithSurface (TVec bbox[2], surface_t *surfs, const texinfo_t *texinfo,
                                                 VEntity *SkyBox, bool CheckSkyBoxAlways)
 {
   if (!surfs) return;
@@ -1040,7 +1029,7 @@ void VRenderLevelShared::UpdateBBoxWithSurface (TVec bbox[2], const surface_t *s
     return;
   }
 
-  for (const surface_t *surf = surfs; surf; surf = surf->next) {
+  for (surface_t *surf = surfs; surf; surf = surf->next) {
     if (surf->count < 3) continue; // just in case
     if (!surf->IsVisible(vieworg)) {
       // viewer is in back side or on plane
@@ -1052,7 +1041,8 @@ void VRenderLevelShared::UpdateBBoxWithSurface (TVec bbox[2], const surface_t *s
     }
     const float dist = DotProduct(CurrLightPos, surf->GetNormal())-surf->GetDist();
     if (dist <= 0.0f || dist >= CurrLightRadius) continue; // light is too far away, or surface is not lit
-    ++LitSurfaces;
+    ++LitSurfaceCount;
+    if (LitCollectSurfaces) LitSurfaces.append(surf);
     const TVec *vert = surf->verts;
     for (int vcount = surf->count; vcount--; ++vert) {
       bbox[0].x = min2(bbox[0].x, vert->x);
@@ -1093,15 +1083,16 @@ void VRenderLevelShared::UpdateBBoxWithLine (TVec bbox[2], VEntity *SkyBox, cons
 
 
 #define UPDATE_LIGHTVIS(ssindex)  do { \
-  LightSubs.append((int)ssindex); \
+  /*if (LitCalcBBox) LightSubs.append((int)ssindex);*/ \
   const vuint8 bvbit = (vuint8)(1u<<((unsigned)(ssindex)&7)); \
   const unsigned sid8 = (unsigned)(ssindex)>>3; \
   LightVis[sid8] |= bvbit; \
   if (BspVis[sid8]&bvbit) { \
     LightBspVis[sid8] |= bvbit; \
     HasLightIntersection = true; \
-    LightVisSubs.append((int)ssindex); \
-    if (r_advlight_opt_optimise_scissor) { \
+    /*if (LitCalcBBox) LightVisSubs.append((int)ssindex);*/ \
+    ++LitVisSubCount; \
+    if (LitCalcBBox || r_advlight_opt_optimise_scissor) { \
       const subsector_t *vsub = &Level->Subsectors[ssindex]; \
       for (const subregion_t *region = vsub->regions; region; region = region->next) { \
         sec_region_t *curreg = region->secregion; \
@@ -1131,7 +1122,7 @@ void VRenderLevelShared::UpdateBBoxWithLine (TVec bbox[2], VEntity *SkyBox, cons
 //  VRenderLevelShared::BuildLightVis
 //
 //==========================================================================
-void VRenderLevelShared::BuildLightVis (int bspnum, const float *bbox) {
+void VRenderLevelShared::BuildLightVis (int bspnum, const float *bbox, const float *lightbbox) {
 #ifdef VV_CLIPPER_FULL_CHECK
   if (LightClip.ClipIsFull()) return;
 #endif
@@ -1167,18 +1158,23 @@ void VRenderLevelShared::BuildLightVis (int bspnum, const float *bbox) {
     const float dist = DotProduct(CurrLightPos, bsp->normal)-bsp->dist;
     if (dist > CurrLightRadius) {
       // light is completely on front side
-      return BuildLightVis(bsp->children[0], bsp->bbox[0]);
+      if (!Are3DBBoxesOverlapIn2D(bsp->bbox[0], lightbbox)) return;
+      return BuildLightVis(bsp->children[0], bsp->bbox[0], lightbbox);
     } else if (dist < -CurrLightRadius) {
       // light is completely on back side
-      return BuildLightVis(bsp->children[1], bsp->bbox[1]);
+      if (!Are3DBBoxesOverlapIn2D(bsp->bbox[1], lightbbox)) return;
+      return BuildLightVis(bsp->children[1], bsp->bbox[1], lightbbox);
     } else {
       //unsigned side = (unsigned)bsp->PointOnSide(CurrLightPos);
       unsigned side = (unsigned)(dist <= 0.0f); //(unsigned)bsp->PointOnSide(CurrLightPos);
       // recursively divide front space
-      BuildLightVis(bsp->children[side], bsp->bbox[side]);
+      if (Are3DBBoxesOverlapIn2D(bsp->bbox[side], lightbbox)) {
+        BuildLightVis(bsp->children[side], bsp->bbox[side], lightbbox);
+      }
       // possibly divide back space
       side ^= 1;
-      return BuildLightVis(bsp->children[side], bsp->bbox[side]);
+      if (!Are3DBBoxesOverlapIn2D(bsp->bbox[side], lightbbox)) return;
+      return BuildLightVis(bsp->children[side], bsp->bbox[side], lightbbox);
     }
   } else {
     const unsigned subidx = (unsigned)(BSPIDX_LEAF_SUBSECTOR(bspnum));
@@ -1293,9 +1289,11 @@ bool VRenderLevelShared::CalcLightVis (const TVec &org, const float radius, vuin
   CurrLightRadius = radius;
   CurrLightBit = currltbit;
 
-  LightSubs.reset(); // all affected subsectors
-  LightVisSubs.reset(); // visible affected subsectors
-  LitSurfaces = 0;
+  /*LightSubs.reset();*/ // all affected subsectors
+  /*LightVisSubs.reset();*/ // visible affected subsectors
+  if (LitCollectSurfaces) LitSurfaces.reset();
+  LitVisSubCount = 0;
+  LitSurfaceCount = 0;
   HasBackLit = false;
 
   LitBBox[0] = TVec(FLT_MAX, FLT_MAX, FLT_MAX);
@@ -1303,12 +1301,22 @@ bool VRenderLevelShared::CalcLightVis (const TVec &org, const float radius, vuin
 
   float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
 
+  // create light bounding box
+  float lightbbox[6] = {
+    org.x-radius,
+    org.y-radius,
+    0, // doesn't matter
+    org.x+radius,
+    org.y+radius,
+    0, // doesn't matter
+  };
+
   // build vis data for light
   LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
   memset(LightVis, 0, VisSize);
   memset(LightBspVis, 0, VisSize);
   HasLightIntersection = false;
-  BuildLightVis(Level->NumNodes-1, dummy_bbox);
+  BuildLightVis(Level->NumNodes-1, dummy_bbox, lightbbox);
   if (!HasLightIntersection) return false;
 
   return true;

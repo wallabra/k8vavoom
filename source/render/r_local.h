@@ -348,11 +348,16 @@ protected:
   vuint8 *LightVis;
   vuint8 *LightBspVis;
   bool HasLightIntersection; // set by `BuildLightVis()`
-  TArray<int> LightSubs; // all affected subsectors
-  TArray<int> LightVisSubs; // visible affected subsectors
+  //TArray<int> LightSubs; // all affected subsectors
+  //TArray<int> LightVisSubs; // visible affected subsectors
+  TArray<surface_t *> LitSurfaces;
   TVec LitBBox[2];
-  int LitSurfaces;
+  int LitSurfaceCount;
+  int LitVisSubCount;
   bool HasBackLit; // if there's no backlit surfaces, use zpass
+  // set to `false` to not collect surfaces
+  bool LitCollectSurfaces;
+  bool LitCalcBBox; // set this to `false` disables `LitSurfaces`/`LitSurfaceCount` calculation, and all other arrays
 
   bool doShadows; // for current light
 
@@ -474,7 +479,7 @@ protected:
   void UpdateFakeSectors (subsector_t *viewleaf=nullptr);
   void InitialWorldUpdate ();
 
-  void UpdateBBoxWithSurface (TVec bbox[2], const surface_t *surfs, const texinfo_t *texinfo,
+  void UpdateBBoxWithSurface (TVec bbox[2], surface_t *surfs, const texinfo_t *texinfo,
                               VEntity *SkyBox, bool CheckSkyBoxAlways);
   void UpdateBBoxWithLine (TVec bbox[2], VEntity *SkyBox, const drawseg_t *dseg);
 
@@ -482,7 +487,7 @@ protected:
   // note that this should be called with filled `BspVis`
   // if we will use this for dynamic lights, they will have one-frame latency
   void CheckLightSubsector (const subsector_t *sub);
-  void BuildLightVis (int bspnum, const float *bbox);
+  void BuildLightVis (int bspnum, const float *bbox, const float *lightbbox);
   // main entry point for lightvis calculation
   // sets `CurrLightPos` and `CurrLightRadius`, and other lvis fields
   // returns `false` if the light is invisible

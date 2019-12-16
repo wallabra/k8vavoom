@@ -179,6 +179,8 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
     const float rlightraduisSq = (r_lights_radius < 1 ? 2048*2048 : r_lights_radius*r_lights_radius);
     //const bool hasPVS = Level->HasPVS();
 
+    const bool checkLightVis = r_advlight_flood_check.asBool();
+
     static TFrustum frustum;
     static TFrustumParam fp;
 
@@ -220,12 +222,14 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
         }
 
         // drop lights inside sectors without height
-        if (stlight->leafnum >= 0 && stlight->leafnum < Level->NumSubsectors) {
-          const sector_t *sec = Level->Subsectors[stlight->leafnum].sector;
-          if (!CheckValidLightPosRough(lorg, sec)) continue;
+        if (stlight->leafnum < 0 || stlight->leafnum >= Level->NumSubsectors) {
+          stlight->leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(stlight->origin)-Level->Subsectors);
         }
 
-        if (r_advlight_flood_check && !CheckBSPVisibilityBox(lorg, stlight->radius)) {
+        const sector_t *sec = Level->Subsectors[stlight->leafnum].sector;
+        if (!CheckValidLightPosRough(lorg, sec)) continue;
+
+        if (checkLightVis && !CheckBSPVisibilityBox(lorg, stlight->radius, &Level->Subsectors[stlight->leafnum])) {
           //GCon->Logf("STATIC DROP: visibility check");
           continue;
         }
