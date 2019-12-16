@@ -56,6 +56,9 @@ static VCvarB r_shadowvol_use_pofs("r_shadowvol_use_pofs", true, "Use PolygonOff
 static VCvarF r_shadowvol_pofs("r_shadowvol_pofs", "20", "DEBUG");
 static VCvarF r_shadowvol_pslope("r_shadowvol_pslope", "-0.2", "DEBUG");
 
+//NOT IMPLEMENTED YET
+static VCvarB r_advlight_prebuild_surflist("r_advlight_prebuild_surflist", false, "Use prebuild surface list in shadow volume lighting?", CVAR_Archive);
+
 
 /*
   possible shadow volume optimisation:
@@ -64,7 +67,7 @@ static VCvarF r_shadowvol_pslope("r_shadowvol_pslope", "-0.2", "DEBUG");
   walls can be replaced with one. this will render much less sides.
   that is, we can effectively turn our pillar into cube.
 
-  we can prolly use sector lines to render this (not segs). i thinkg that it
+  we can prolly use sector lines to render this (not segs). i think that it
   will be better to use sector lines to render shadow volumes in any case,
   'cause we don't really need to render one line in several segments.
   that is, one line split by BSP gives us two surfaces, which adds two
@@ -88,7 +91,7 @@ static VCvarF r_shadowvol_pslope("r_shadowvol_pslope", "-0.2", "DEBUG");
 
   if the camera is outside of shadow volume, we can use faster z-pass method.
 
-  if a light is behing a camera, we can move back frustum plane, so it will
+  if a light is behind a camera, we can move back frustum plane, so it will
   contain light origin, and clip everything behind it. the same can be done
   for all other frustum planes. or we can build full light-vs-frustum clip.
 */
@@ -848,7 +851,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   if ((r_max_lights >= 0 && LightsRendered >= r_max_lights) || Radius <= LightMin || gl_dbg_wireframe) return;
 
   //TODO: we can reuse collected surfaces in next passes
-  LitCollectSurfaces = false;
+  LitCollectSurfaces = r_advlight_prebuild_surflist.asBool();
   LitCalcBBox = true;
   if (!CalcLightVis(Pos, Radius-LightMin)) return;
   CurrLightRadius = Radius; // we need full radius, not modified
@@ -1031,7 +1034,10 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
     if (r_max_shadow_segs_all) {
       dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
       dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
-      RenderShadowBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
+      if (r_advlight_prebuild_surflist) {
+      } else {
+        RenderShadowBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
+      }
     }
     Drawer->BeginModelsShadowsPass(CurrLightPos, CurrLightRadius);
     RenderMobjsShadow(ent, dlflags);
