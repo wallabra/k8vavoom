@@ -104,7 +104,9 @@ static VCvarB r_advlight_prebuild_surflist("r_advlight_prebuild_surflist", false
 //VCvarI r_max_model_lights("r_max_model_lights", "32", "Maximum lights that can affect one model when we aren't using model shadows.", CVAR_Archive);
 VCvarI r_max_model_shadows("r_max_model_shadows", "16", "Maximum number of shadows one model can cast.", CVAR_Archive);
 
-VCvarI r_max_lights("r_max_lights", "64", "Maximum lights.", CVAR_Archive);
+VCvarI r_max_lights("r_max_lights", "64", "Total maximum lights for shadow volume renderer.", CVAR_Archive);
+VCvarI r_dynlight_minimum("r_dynlight_minimum", "6", "Render at least this number of dynamic lights, regardless of total limit.", CVAR_Archive);
+
 static VCvarI r_max_light_segs_all("r_max_light_segs_all", "-1", "Maximum light segments for all lights.", CVAR_Archive);
 static VCvarI r_max_light_segs_one("r_max_light_segs_one", "-1", "Maximum light segments for one light.", CVAR_Archive);
 // was 128, but with scissored light, there is no sense to limit it anymore
@@ -846,9 +848,23 @@ void VRenderLevelShadowVolume::RenderLightBSPNode (int bspnum, const float *bbox
 void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags, const refdef_t *RD,
                                                    const VViewClipper *Range,
                                                    TVec &Pos, float Radius, float LightMin, vuint32 Color,
-                                                   bool LimitLights, TVec coneDir, float coneAngle)
+                                                   bool LimitLights, TVec coneDir, float coneAngle, bool forceRender)
 {
-  if ((r_max_lights >= 0 && LightsRendered >= r_max_lights) || Radius <= LightMin || gl_dbg_wireframe) return;
+  if (Radius <= LightMin || gl_dbg_wireframe) return;
+
+  if (!forceRender) {
+    // check limits
+    if (!DynamicLights) {
+      // static lights
+      if (r_max_lights >= 0 && LightsRendered >= r_max_lights) return;
+    } else {
+      // dynamic lights
+      if (r_max_lights >= 0 && LightsRendered >= r_max_lights) {
+        // enforce dynlight limit
+        if (r_dynlight_minimum >= 0 && DynLightsRendered >= r_dynlight_minimum) return;
+      }
+    }
+  }
 
   //TODO: we can reuse collected surfaces in next passes
   LitCollectSurfaces = r_advlight_prebuild_surflist.asBool();
@@ -883,6 +899,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   }
 
   ++LightsRendered;
+  if (DynamicLights) ++DynLightsRendered;
 
   CurrShadowsNumber = 0;
   CurrLightsNumber = 0;

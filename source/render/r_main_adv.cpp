@@ -188,6 +188,8 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
     backPlane.SetPointNormal3D(vieworg, viewforward);
 
     LightsRendered = 0;
+    DynLightsRendered = 0;
+    DynamicLights = false;
 
     if (!FixedLight && r_static_lights && r_max_lights != 0) {
       if (!staticLightsFiltered) RefilterStaticLights();
@@ -256,7 +258,8 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
       }
     }
 
-    int rlStatic = LightsRendered;
+    //int rlStatic = LightsRendered;
+    DynamicLights = true;
 
     if (!FixedLight && r_dynamic_lights && r_max_lights != 0) {
       static TArray<DynLightInfo> visdynlights;
@@ -312,13 +315,15 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
           if (own && R_ModelNoSelfShadow(own->GetClass()->Name)) dli->l->flags |= dlight_t::NoSelfShadow;
           //TVec lorg = dli->l->origin;
           //lorg.z += dli->zofs;
-          RenderLightShadows(own, dli->l->flags, RD, Range, /*lorg*/dli->l->origin, (dbg_adv_force_dynamic_lights_radius > 0 ? dbg_adv_force_dynamic_lights_radius : dli->l->radius), dli->l->minlight, dli->l->color, true, dli->l->coneDirection, dli->l->coneAngle);
+          // always render player lights
+          const bool forced = (own && own->IsPlayer());
+          RenderLightShadows(own, dli->l->flags, RD, Range, /*lorg*/dli->l->origin, (dbg_adv_force_dynamic_lights_radius > 0 ? dbg_adv_force_dynamic_lights_radius : dli->l->radius), dli->l->minlight, dli->l->color, true, dli->l->coneDirection, dli->l->coneAngle, forced);
         }
       }
     }
 
     if (dbg_adv_show_light_count) {
-      GCon->Logf("total lights per frame: %d (%d static, %d dynamic)", LightsRendered, rlStatic, LightsRendered-rlStatic);
+      GCon->Logf("total lights per frame: %d (%d static, %d dynamic)", LightsRendered, LightsRendered-DynLightsRendered, DynLightsRendered);
     }
 
     if (dbg_adv_show_light_seg_info) {

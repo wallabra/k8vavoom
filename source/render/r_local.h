@@ -933,6 +933,9 @@ private:
   // used in rendering of shadow and light things (only)
   TArray<VEntity *> mobjsInCurrLight;
   int LightsRendered;
+  int DynLightsRendered;
+  // set this to true before calling `RenderLightShadows()` to indicate dynamic light
+  bool DynamicLights;
 
 protected:
   virtual void RefilterStaticLights () override;
@@ -976,7 +979,7 @@ protected:
   void RenderLightShadows (VEntity *ent, vuint32 dlflags, const refdef_t *RD, const VViewClipper *Range,
                            TVec &Pos, float Radius, float LightMin, vuint32 Color,
                            bool LimitLights,
-                           TVec coneDir=TVec(0.0f, 0.0f, 0.0f), float coneAngle=0.0f);
+                           TVec coneDir=TVec(0.0f, 0.0f, 0.0f), float coneAngle=0.0f, bool forceRender=false);
 
   // things
   void BuildMobjsInCurrLight (bool doShadows);
