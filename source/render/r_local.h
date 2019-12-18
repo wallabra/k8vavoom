@@ -390,6 +390,7 @@ protected:
   bool CheckBSPFloodVisibilitySub (const TVec &org, const float radius, const subsector_t *currsub, const seg_t *firsttravel);
   bool CheckBSPFloodVisibility (const TVec &org, float radius, const subsector_t *sub=nullptr);
 
+  // this destroys `CurrListPos` and `CurrLightRadius`
   bool CheckBSPVisibilityBoxSub (int bspnum, const float *bbox);
   bool CheckBSPVisibilityBox (const TVec &org, float radius, const subsector_t *sub=nullptr);
 
@@ -1075,6 +1076,8 @@ extern TArray<VTextureTranslation *> BloodTranslations;
 extern vuint32 blocklightsr[VRenderLevelLightmap::LMapTraceInfo::GridSize*VRenderLevelLightmap::LMapTraceInfo::GridSize];
 extern vuint32 blocklightsg[VRenderLevelLightmap::LMapTraceInfo::GridSize*VRenderLevelLightmap::LMapTraceInfo::GridSize];
 extern vuint32 blocklightsb[VRenderLevelLightmap::LMapTraceInfo::GridSize*VRenderLevelLightmap::LMapTraceInfo::GridSize];
+
+extern double dbgCheckVisTime;
 
 
 #endif

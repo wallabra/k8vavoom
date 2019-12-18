@@ -75,6 +75,8 @@ static bool oldHorizons = true;
 static int oldMaxMirrors = -666;
 static int oldPortalDepth = -666;
 
+double dbgCheckVisTime = 0;
+
 
 //==========================================================================
 //
@@ -94,9 +96,11 @@ static inline int GetMaxPortalDepth () {
 //
 //==========================================================================
 void VRenderLevelShared::PrepareWorldRender (const refdef_t *rd, const VViewClipper *Range) {
+  if (dbgCheckVisTime > 0) GCon->Logf(NAME_Debug, "dbgCheckVisTime: %g", dbgCheckVisTime);
   ClearQueues();
   MarkLeaves(); // this sets `r_viewleaf`
   if (dbg_dlight_vis_check_messages) GCon->Logf(NAME_Debug, "*** PrepareWorldRender ***");
+  dbgCheckVisTime = 0;
   // this is done in `VRenderLevelShared::RenderPlayerView()`
   //FIXME: but should be done here if `r_viewleaf` was changed
   //if (!MirrorLevel && !r_disable_world_update) UpdateFakeSectors();

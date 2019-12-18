@@ -30,6 +30,7 @@
 #include "r_local.h"
 
 //#define VAVOOM_DEBUG_PORTAL_POOL
+#define VAVOOM_USE_SIMPLE_BSP_BBOX_VIS_CHECK
 
 extern VCvarB r_draw_pobj;
 extern VCvarB r_advlight_opt_optimise_scissor;
@@ -37,6 +38,8 @@ extern VCvarB dbg_clip_dump_added_ranges;
 
 static VCvarB dbg_autoclear_automap("dbg_autoclear_automap", false, "Clear automap before rendering?", 0/*CVAR_Archive*/);
 static VCvarB r_lightflood_check_plane_angles("r_lightflood_check_plane_angles", true, "Check seg planes angles in light floodfill?", CVAR_Archive);
+
+static VCvarB dbg_vischeck_time("dbg_vischeck_time", false, "Show frame vischeck time?", 0/*CVAR_Archive*/);
 
 static VCvarB r_clip_maxdist("r_clip_maxdist", true, "Clip with max view distance? This can speedup huge levels, trading details for speed.", CVAR_Archive);
 extern VCvarF gl_maxdist;
@@ -948,9 +951,23 @@ bool VRenderLevelShared::CheckBSPFloodVisibility (const TVec &org, float radius,
     NewBSPFloodVisibilityFrame();
   }
 
-  return CheckBSPFloodVisibilitySub(org, radius, sub, nullptr);
+  if (!dbg_vischeck_time) {
+    return CheckBSPFloodVisibilitySub(org, radius, sub, nullptr);
+  } else {
+    const double stt = -Sys_Time_CPU();
+    bool res = CheckBSPFloodVisibilitySub(org, radius, sub, nullptr);
+    dbgCheckVisTime += stt+Sys_Time_CPU();
+    return res;
+  }
 }
 
+
+static VVA_OKUNUSED VVA_CHECKRESULT inline bool Are3DAnd2DBBoxesOverlap (const float bbox0[6], const float bbox1[4]) {
+  return !(
+    bbox1[2+0] < bbox0[0+0] || bbox1[2+1] < bbox0[0+1] ||
+    bbox1[0+0] > bbox0[3+0] || bbox1[0+1] > bbox0[3+1]
+  );
+}
 
 //==========================================================================
 //
@@ -963,16 +980,46 @@ bool VRenderLevelShared::CheckBSPVisibilityBoxSub (int bspnum, const float *bbox
   if (BSPIDX_IS_NON_LEAF(bspnum)) {
     // nope
     const node_t *bsp = &Level->Nodes[bspnum];
+    #ifndef VAVOOM_USE_SIMPLE_BSP_BBOX_VIS_CHECK
+    // k8: this seems to be marginally slower than simple bbox check
+    // k8: checking bbox before recurse into one node speeds it up
+    // k8: checking bbox in two-node recursion doesn't do anything sensible (obviously)
+    // decide which side the light is on
+    const float dist = DotProduct(CurrLightPos, bsp->normal)-bsp->dist;
+    if (dist >= CurrLightRadius) {
+      // light is completely on front side
+      if (!Are3DBBoxesOverlapIn2D(bsp->bbox[0], bbox)) return false;
+      return CheckBSPVisibilityBoxSub(bsp->children[0], bbox);
+    } else if (dist <= -CurrLightRadius) {
+      // light is completely on back side
+      if (!Are3DBBoxesOverlapIn2D(bsp->bbox[1], bbox)) return false;
+      return CheckBSPVisibilityBoxSub(bsp->children[1], bbox);
+    } else {
+      // it doesn't really matter which subspace we'll check first, but why not?
+      unsigned side = (unsigned)(dist <= 0.0f);
+      // recursively divide front space
+      if (CheckBSPVisibilityBoxSub(bsp->children[side], bbox)) return true;
+      // recursively divide back space
+      side ^= 1;
+      return CheckBSPVisibilityBoxSub(bsp->children[side], bbox);
+    }
+    #else
+    // this is slower
     for (unsigned side = 0; side < 2; ++side) {
       if (!Are3DBBoxesOverlapIn2D(bsp->bbox[side], bbox)) continue;
       if (CheckBSPVisibilityBoxSub(bsp->children[side], bbox)) return true;
     }
+    #endif
   } else {
     // check subsector
     const unsigned subidx = BSPIDX_LEAF_SUBSECTOR(bspnum);
     if (BspVis[subidx>>3]&(1<<(subidx&7))) {
-      //if (dbg_dlight_vis_check_messages) GCon->Logf(NAME_Debug, "***HIT VISIBLE SUBSECTOR #%u", subidx);
-      return true;
+      // no, this check is wrong
+      /*if (Are3DAnd2DBBoxesOverlap(bbox, Level->Subsectors[subidx].bbox2d))*/
+      {
+        if (dbg_dlight_vis_check_messages) GCon->Logf(NAME_Debug, "***HIT VISIBLE SUBSECTOR #%u", subidx);
+        return true;
+      }
     }
   }
   return false;
@@ -1004,7 +1051,19 @@ bool VRenderLevelShared::CheckBSPVisibilityBox (const TVec &org, float radius, c
     0, // doesn't matter
   };
 
-  return CheckBSPVisibilityBoxSub(Level->NumNodes-1, lbbox);
+  #ifndef VAVOOM_USE_SIMPLE_BSP_BBOX_VIS_CHECK
+  CurrLightPos = org;
+  CurrLightRadius = radius;
+  #endif
+
+  if (!dbg_vischeck_time) {
+    return CheckBSPVisibilityBoxSub(Level->NumNodes-1, lbbox);
+  } else {
+    const double stt = -Sys_Time_CPU();
+    bool res = CheckBSPVisibilityBoxSub(Level->NumNodes-1, lbbox);
+    dbgCheckVisTime += stt+Sys_Time_CPU();
+    return res;
+  }
 }
 
 
