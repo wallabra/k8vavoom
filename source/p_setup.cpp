@@ -1910,11 +1910,11 @@ void VLevel::LoadLineDefs1 (int Lump, int NumBaseVerts, const mapInfo_t &MInfo) 
     ld->arg1 = (tag == 0xffff ? -1 : tag);
     ld->v1 = &Vertexes[v1];
     ld->v2 = &Vertexes[v2];
-    ld->sidenum[0] = side0 == 0xffff ? -1 : side0;
-    ld->sidenum[1] = side1 == 0xffff ? -1 : side1;
+    ld->sidenum[0] = (side0 == 0xffff ? -1 : side0);
+    ld->sidenum[1] = (side1 == 0xffff ? -1 : side1);
 
     ld->alpha = 1.0f;
-    ld->lineTag = -1;
+    ld->lineTag = -1; //k8: this should be zero, i think
 
     if (MInfo.Flags&VLevelInfo::LIF_ClipMidTex) ld->flags |= ML_CLIP_MIDTEX;
     if (MInfo.Flags&VLevelInfo::LIF_WrapMidTex) ld->flags |= ML_WRAP_MIDTEX;
