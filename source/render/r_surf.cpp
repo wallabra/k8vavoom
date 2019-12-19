@@ -756,14 +756,14 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
     TVec wv[4];
 
     // see `SetupTwoSidedBotWSurf()` for explanation
-    const float topz1 = (r_hack_fake_floor_decorations ? GetFixedZWithFake(min2, ceiling, *seg->v1, seg->frontsector, r_ceiling) : r_ceiling.GetPointZ(*seg->v1));
-    const float topz2 = (r_hack_fake_floor_decorations ? GetFixedZWithFake(min2, ceiling, *seg->v2, seg->frontsector, r_ceiling) : r_ceiling.GetPointZ(*seg->v2));
+    const float topz1 = (r_hack_fake_floor_decorations ? GetFixedZWithFake(max2, ceiling, *seg->v1, seg->frontsector, r_ceiling) : r_ceiling.GetPointZ(*seg->v1));
+    const float topz2 = (r_hack_fake_floor_decorations ? GetFixedZWithFake(max2, ceiling, *seg->v2, seg->frontsector, r_ceiling) : r_ceiling.GetPointZ(*seg->v2));
     const float botz1 = r_floor.GetPointZ(*seg->v1);
     const float botz2 = r_floor.GetPointZ(*seg->v2);
 
     // see `SetupTwoSidedBotWSurf()` for explanation
-    const float back_topz1 = (r_hack_fake_floor_decorations ? GetFixedZWithFake(max2, ceiling, *seg->v1, seg->backsector, (*back_ceiling)) : back_ceiling->GetPointZ(*seg->v1));
-    const float back_topz2 = (r_hack_fake_floor_decorations ? GetFixedZWithFake(max2, ceiling, *seg->v2, seg->backsector, (*back_ceiling)) : back_ceiling->GetPointZ(*seg->v2));
+    const float back_topz1 = (r_hack_fake_floor_decorations ? GetFixedZWithFake(min2, ceiling, *seg->v1, seg->backsector, (*back_ceiling)) : back_ceiling->GetPointZ(*seg->v1));
+    const float back_topz2 = (r_hack_fake_floor_decorations ? GetFixedZWithFake(min2, ceiling, *seg->v2, seg->backsector, (*back_ceiling)) : back_ceiling->GetPointZ(*seg->v2));
 
     // hack to allow height changes in outdoor areas
     float top_topz1 = topz1;
@@ -797,7 +797,29 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
     wv[2].z = top_topz2;
     wv[3].z = max2(back_topz2, botz2);
 
-    CreateWorldSurfFromWV(sub, seg, sp, wv, surface_t::TF_TOP|hackflag);
+    bool createSurf = true;
+
+    //FIXME: this is totally wrong with slopes!
+    if (seg->backsector->heightsec && r_hack_fake_floor_decorations) {
+      // do not create outer top texture surface if our fake ceiling is higher than the surrounding ceiling
+      // otherwise, make sure that it is not lower than the fake ceiling (simc)
+      const sector_t *bsec = seg->backsector;
+      const sector_t *fsec = seg->frontsector;
+      const sector_t *hsec = bsec->heightsec;
+      if (hsec->ceiling.minz >= fsec->ceiling.minz) {
+        //GCon->Logf(NAME_Debug, "BSH: %d (%d) -- SKIP", (int)(ptrdiff_t)(bsec-&Level->Sectors[0]), (int)(ptrdiff_t)(hsec-&Level->Sectors[0]));
+        createSurf = false;
+      } else if (hsec->ceiling.minz >= bsec->ceiling.minz) {
+        //GCon->Logf(NAME_Debug, "BSH: %d (%d) -- FIX", (int)(ptrdiff_t)(bsec-&Level->Sectors[0]), (int)(ptrdiff_t)(hsec-&Level->Sectors[0]));
+        wv[0].z = max2(wv[0].z, hsec->ceiling.GetPointZ(*seg->v1));
+        wv[3].z = max2(wv[3].z, hsec->ceiling.GetPointZ(*seg->v2));
+        //createSurf = false;
+      }
+    }
+
+    if (createSurf) {
+      CreateWorldSurfFromWV(sub, seg, sp, wv, surface_t::TF_TOP|hackflag);
+    }
   }
 
   sp->frontTopDist = r_ceiling.splane->dist;
@@ -875,7 +897,29 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
     wv[2].z = min2(back_botz2, topz2);
     wv[3].z = botz2;
 
-    CreateWorldSurfFromWV(sub, seg, sp, wv, surface_t::TF_BOTTOM);
+    bool createSurf = true;
+
+    //FIXME: this is totally wrong with slopes!
+    if (seg->backsector->heightsec && r_hack_fake_floor_decorations) {
+      // do not create outer bottom texture surface if our fake floor is lower than the surrounding floor
+      // otherwise, make sure that it is not higher than the fake floor (simc)
+      const sector_t *bsec = seg->backsector;
+      const sector_t *fsec = seg->frontsector;
+      const sector_t *hsec = bsec->heightsec;
+      if (hsec->floor.minz <= fsec->floor.minz) {
+        //GCon->Logf(NAME_Debug, "BSH: %d (%d) -- SKIP", (int)(ptrdiff_t)(bsec-&Level->Sectors[0]), (int)(ptrdiff_t)(hsec-&Level->Sectors[0]));
+        createSurf = false;
+      } else if (hsec->floor.minz <= bsec->floor.minz) {
+        //GCon->Logf(NAME_Debug, "BSH: %d (%d) -- FIX", (int)(ptrdiff_t)(bsec-&Level->Sectors[0]), (int)(ptrdiff_t)(hsec-&Level->Sectors[0]));
+        wv[1].z = min2(wv[1].z, hsec->floor.GetPointZ(*seg->v1));
+        wv[2].z = min2(wv[2].z, hsec->floor.GetPointZ(*seg->v2));
+        //createSurf = false;
+      }
+    }
+
+    if (createSurf) {
+      CreateWorldSurfFromWV(sub, seg, sp, wv, surface_t::TF_BOTTOM);
+    }
   }
 
   sp->frontTopDist = r_ceiling.splane->dist;
