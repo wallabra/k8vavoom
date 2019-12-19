@@ -953,7 +953,7 @@ struct sector_t {
 
   int special;
 
-  native readonly array!int moreTags; // except `lineTag`
+  native readonly array!int moreTags; // except `sectorTag`
   int sectorTag;
 
   float skyheight;
