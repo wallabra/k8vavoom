@@ -3834,7 +3834,7 @@ enum {
 //==========================================================================
 vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
   if (!sec) return 0;
-  if (sec->linecount == 0 || sec->deepref) return 0;
+  if (sec->linecount < 3 || sec->deepref) return 0;
   if (sec->floor.minz >= sec->ceiling.minz) return 0;
   if (sec->floor.normal.z != 1.0f || sec->ceiling.normal.z != -1.0f) return 0;
   int res = (deepwater_hacks_floor ? FFBugFloor : 0)|(deepwater_hacks_ceiling ? FFBugCeiling : 0); // not yet
@@ -3846,6 +3846,9 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
   int myside = -1;
   bool hasMissingBottomTexture = false;
   bool hasMissingTopTexture = false;
+  // if we have only one of 4+ walls with bottex, still consider it as a floodfill bug
+  int floorBotTexCount = 0;
+  int ceilTopTexCount = 0;
   for (int f = 0; f < sec->linecount; ++f) {
     if (!res) {
       if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  skipped sector #%d due to res=0", (int)(ptrdiff_t)(sec-&Sectors[0]));
@@ -3902,9 +3905,12 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
         }
         // line has no bottom texture?
         if (Sides[line->sidenum[myside]].BottomTexture > 0) {
-          if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  sector #%d: reset floorbug flag due to line #%d (%d) -- has bottom texture", (int)(ptrdiff_t)(sec-&Sectors[0]), (int)(ptrdiff_t)(line-&Lines[0]), f);
-          res &= ~FFBugFloor;
-          break;
+          ++floorBotTexCount;
+          if (floorBotTexCount > 1 || sec->linecount == 3) {
+            if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "IsFloodBugSector:  sector #%d: reset floorbug flag due to line #%d (%d) -- has bottom texture", (int)(ptrdiff_t)(sec-&Sectors[0]), (int)(ptrdiff_t)(line-&Lines[0]), f);
+            res &= ~FFBugFloor;
+            break;
+          }
         }
         // slope?
         if (bs->floor.normal.z != 1.0f) {
@@ -3942,7 +3948,13 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
           break;
         }
         // line has no top texture?
-        if (Sides[line->sidenum[myside]].TopTexture > 0) { res &= ~FFBugCeiling; break; }
+        if (Sides[line->sidenum[myside]].TopTexture > 0) {
+          ++ceilTopTexCount;
+          if (ceilTopTexCount > 1 || sec->linecount == 3) {
+            res &= ~FFBugCeiling;
+            break;
+          }
+        }
         // slope?
         if (bs->ceiling.normal.z != -1.0f) { res &= ~FFBugCeiling; break; }
         // height?
