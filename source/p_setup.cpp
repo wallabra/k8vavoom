@@ -3924,7 +3924,7 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
           res &= ~FFBugFloor;
           break;
         }
-        hasMissingBottomTexture = true;
+        if (Sides[line->sidenum[myside]].BottomTexture <= 0) hasMissingBottomTexture = true;
         //if (dbg_floodfill_fixer) GCon->Logf(NAME_Debug, "  sector #%d (back #%d): floor fix ok; fs:floor=(%g,%g); bs:floor=(%g,%g)", (int)(ptrdiff_t)(sec-Sectors), (int)(ptrdiff_t)(bs-Sectors), sec->floor.minz, sec->floor.maxz, bs->floor.minz, bs->floor.maxz);
         //if (/*line->special != 0 &&*/ bs->floor.minz == sec->floor.minz) { res &= ~FFBugFloor; continue; }
       }
@@ -3960,7 +3960,7 @@ vuint32 VLevel::IsFloodBugSector (sector_t *sec) {
         // height?
         if (bs->ceiling.minz > sec->ceiling.minz) { res &= ~FFBugCeiling; break; }
         //if (line->special != 0 && bs->ceiling.minz == sec->ceiling.minz) { res &= ~FFBugCeiling; continue; }
-        hasMissingTopTexture = true;
+        if (Sides[line->sidenum[myside]].TopTexture <= 0) hasMissingTopTexture = true;
       }
     } while (0);
   }
