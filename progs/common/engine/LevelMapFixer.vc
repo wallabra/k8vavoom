@@ -536,4 +536,35 @@ void KnownMapBugFixer () {
     Things[131].x = -221;
   }
   */
+
+  //k8: Retribution Trilogy MAP29
+  if (MapHashMD5 == "0a398978ac5eb714cf452912e5bebfbb") {
+    printwarn("MAPFIX: Retribution Trilogy, MAP29");
+    // move light changer to another tag, and change sector #3686 tag
+    int oldtag = Sectors[3686].sectorTag;
+    dictionary!(int, bool) tags;
+    foreach (auto idx, auto ref sec; Sectors) if (sec.sectorTag) tags.put(sec.sectorTag, true);
+    int newtag = 1;
+    for (;;) {
+      if (!tags.find(newtag)) break;
+      ++newtag;
+    }
+    //printdebug("NEWTAG: %s", newtag);
+    // fix sectors
+    foreach (auto idx, auto ref sec; Sectors) {
+      if (sec.sectorTag == oldtag && idx != 3686) {
+        //printdebug(" sector #%s has tag #%s", &sec-&Sectors[0], sec.sectorTag);
+        sec.sectorTag = newtag;
+      }
+    }
+    // fix lines
+    foreach (auto ref line; Lines) {
+      // for Boom compat, line tag is the same as arg1 (this is how the translation code works)
+      if (line.special == LNSPEC_DoorOpen && line.lineTag == oldtag && line.arg1 == oldtag) {
+        //printdebug("  fixing linedef #%s (spc=%s)", &line-&Lines[0], LineSpecial2Str(line.special));
+        line.lineTag = newtag;
+        line.arg1 = newtag;
+      }
+    }
+  }
 }
