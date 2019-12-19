@@ -16,6 +16,7 @@ actor DoomPlayer : PlayerPawn
   Player.WeaponSlot 5, RocketLauncher
   Player.WeaponSlot 6, PlasmaRifle
   Player.WeaponSlot 7, BFG9000
+  //Player.ViewHeight 49.5  //k8: this is where DoomGuy eyes really are
   states
   {
   Spawn:
