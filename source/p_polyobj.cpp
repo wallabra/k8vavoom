@@ -474,12 +474,23 @@ void VLevel::LinkPolyobj (polyobj_t *po) {
   float topY = (*tempSeg)->v1->y;
   float bottomY = (*tempSeg)->v1->y;
 
+  //k8: also, reling polyobject to the new subsector
+  //k8: this somewhat eases rendering glitches until i'll write the proper BSP splitter for pobjs
+  //k8: it is not the best way, but at least something
+  TVec avg(0, 0, 0); // used to find a polyobj's centre, and hence subsector
   for (int i = 0; i < po->numsegs; ++i, ++tempSeg) {
     if ((*tempSeg)->v1->x > rightX) rightX = (*tempSeg)->v1->x;
     if ((*tempSeg)->v1->x < leftX) leftX = (*tempSeg)->v1->x;
     if ((*tempSeg)->v1->y > topY) topY = (*tempSeg)->v1->y;
     if ((*tempSeg)->v1->y < bottomY) bottomY = (*tempSeg)->v1->y;
+    avg.x += (*tempSeg)->v1->x;
+    avg.y += (*tempSeg)->v1->y;
   }
+  avg.x /= po->numsegs;
+  avg.y /= po->numsegs;
+  subsector_t *sub = PointInSubsector(avg);
+  po->RelinkToSubsector(sub);
+
   po->bbox2d[BOX2D_RIGHT] = MapBlock(rightX-BlockMapOrgX);
   po->bbox2d[BOX2D_LEFT] = MapBlock(leftX-BlockMapOrgX);
   po->bbox2d[BOX2D_TOP] = MapBlock(topY-BlockMapOrgY);
