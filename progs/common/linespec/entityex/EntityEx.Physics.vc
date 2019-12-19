@@ -237,7 +237,7 @@ bool Physics (float DeltaTime) {
             PlayerEx pex = PlayerEx(Player);
             if (pex && pex.MO == self) {
               pex.ViewHeight -= onmo.Origin.z+onmo.Height-Origin.z;
-              if (PlayerPawn(self)) pex.DeltaViewHeight = (PlayerPawn(self).ViewHeight-pex.ViewHeight)*4.0;
+              if (PlayerPawn(self)) pex.DeltaViewHeight = (PlayerPawn(self).GetPawnViewHeight-pex.ViewHeight)*4.0;
             }
           }
           Origin.z = onmo.Origin.z+onmo.Height;
@@ -261,7 +261,7 @@ bool Physics (float DeltaTime) {
             PlayerEx pex = PlayerEx(onmo.Player);
             if (pex && pex.MO == onmo) {
               pex.ViewHeight -= onmo.FloorZ-onmo.Origin.z;
-              if (PlayerPawn(onmo)) pex.DeltaViewHeight = (PlayerPawn(onmo).ViewHeight-pex.ViewHeight)*4.0;
+              if (PlayerPawn(onmo)) pex.DeltaViewHeight = (PlayerPawn(onmo).GetPawnViewHeight-pex.ViewHeight)*4.0;
             }
           }
           onmo.Origin.z = onmo.FloorZ;
@@ -512,7 +512,7 @@ final void ZMovement (float DeltaTime, float OldFloorZ) {
       // arbitrary number
       if (dfz > 0.6 || EFloor.spGetNormalZ == 1.0) {
         pex.ViewHeight -= dfz;
-        pex.DeltaViewHeight = (PlayerPawn(self).ViewHeight-pex.ViewHeight)*4.0;
+        pex.DeltaViewHeight = (PlayerPawn(self).GetPawnViewHeight-pex.ViewHeight)*4.0;
         //if (EFloor.spGetNormalZ != 1.0) print("FUCK1! z=%s; fz=%s; sfz=(%s:%s); dfz=%s", Origin.z, FloorZ, Sector.floor.minz, Sector.floor.maxz, dfz);
       } else {
         //print("FUCK0! z=%s; fz=%s; sfz=(%s:%s); dfz=%s", Origin.z, FloorZ, Sector.floor.minz, Sector.floor.maxz, dfz);

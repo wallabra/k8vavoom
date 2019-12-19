@@ -142,6 +142,7 @@ override void Init () {
   CreateCvar('gm_death_infighting', "1", "Should monsters start infighting when player dies?", CVAR_ARCHIVE);
 
   CreateCvar('gm_fix_attack_offset', "1", "Make shots go into crosshair (gameplay changer)?", CVAR_ARCHIVE);
+  CreateCvar('gm_doomguy_eye_camera', "0", "Move view camera to DoomGuy eyes (this works only for standard DoomGuy height)?", CVAR_ARCHIVE);
 
   CreateCvar('zdoom_blood_hack', "0", "Use ZDoom blood spawn hack (different starting frame depending on damage)?", CVAR_ARCHIVE);
 

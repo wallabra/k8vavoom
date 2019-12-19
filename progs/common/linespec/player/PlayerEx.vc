@@ -560,7 +560,7 @@ float GetAttackZOfs (optional bool missile) {
   if (missile || !GetCvarB('gm_fix_attack_offset')) {
     return plrmo.AttackZOffset*plrmo.crouchfactor;
   } else {
-    float vh = plrmo.ViewHeight*plrmo.crouchfactor;
+    float vh = plrmo.GetPawnViewHeight*plrmo.crouchfactor;
     return plrmo.AttackZOffset+(vh >= 37 ? vh-37 : vh-23);
   }
   /*
@@ -700,7 +700,7 @@ void CalcHeight (float deltaTime) {
   if (PlayerState == PST_LIVE) {
     ViewHeight += DeltaViewHeight*deltaTime;
 
-    float plrVH = PlayerPawn(MO).ViewHeight*PlayerPawn(MO).crouchfactor;
+    float plrVH = PlayerPawn(MO).GetPawnViewHeight*PlayerPawn(MO).crouchfactor;
 
     if (ViewHeight > plrVH) {
       ViewHeight = plrVH;
@@ -753,7 +753,7 @@ void CrouchMove (int direction) {
   float prevVH = PrevViewHeight;
   if (prevVH == -666) prevVH = ViewHeight;
   float vhDelta = ViewHeight-prevVH;
-  ViewHeight = PlayerPawn(plrmo).ViewHeight*newcrf+vhDelta;
+  ViewHeight = PlayerPawn(plrmo).GetPawnViewHeight*newcrf+vhDelta;
   plrmo.crouchfactor = newcrf;
 
   // check for eyes going above/below fake floor due to crouching motion
@@ -3179,7 +3179,7 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
   PP.Health = Health;
   MO = PP;
   Camera = PP;
-  ViewHeight = PP.ViewHeight;
+  ViewHeight = PP.GetPawnViewHeight;
   ViewOrg = MO.Origin;
   ViewOrg.z += ViewHeight;
   SaveViewOrgFixInfo();
@@ -4438,7 +4438,7 @@ bool UndoPlayerMorph (bool Force, PlayerEx Activator) {
   // set color translation
   A.Translation = (Entity::TRANSL_Player<<Entity::TRANSL_TYPE_SHIFT)+GetPlayerNum();
   A.Angles = MO.Angles;
-  ViewHeight = PlayerPawn(A).ViewHeight;
+  ViewHeight = PlayerPawn(A).GetPawnViewHeight;
   DeltaViewHeight = 0.0;
   A.Player = self;
   A.bIsPlayer = true;

@@ -156,7 +156,17 @@ menudef GameplayOptions {
   option bool {
     title = "Shots go through crosshair";
     cvar = gm_fix_attack_offset;
-    help = "Raise shooting point a little, so hitscan shots will go through your crosshair.";
+    help =
+      "Raise shooting point a little, so hitscan shots will go through your crosshair."
+      "WARNING: this changes hitscan attack height!";
+  }
+
+  option bool {
+    title = "Raise Camera to DoomGuy Eyes";
+    cvar = gm_doomguy_eye_camera;
+    help =
+      "Raise camera a little, so you'll see the world from DG eyes, not from his chest."
+      "You may need to crouch and stand up again for this to take effect.";
   }
 
 

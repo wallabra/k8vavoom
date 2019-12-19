@@ -106,6 +106,17 @@ transient protected array!WSlotEntry actualWeaponSlots;
 
 //==========================================================================
 //
+//  GetPawnViewHeight
+//
+//==========================================================================
+float GetPawnViewHeight () {
+  if (Height != 56 || ViewHeight != 41 || !GetCvarB('gm_doomguy_eye_camera')) return ViewHeight;
+  return 49.5;
+}
+
+
+//==========================================================================
+//
 //  GetNumberOfSlots
 //
 //==========================================================================
