@@ -1070,11 +1070,12 @@ static void ParseCameraTexture (VScriptParser *sc) {
     FitWidth = sc->Number;
     sc->ExpectNumber();
     FitHeight = sc->Number;
-    if (sc->Check("worldpanning")) {
-      Tex->bWorldPanning = true;
-    } else {
-      Tex->bWorldPanning = false;
-    }
+  }
+
+  if (sc->Check("worldpanning")) {
+    if (Tex) Tex->bWorldPanning = true;
+  } else {
+    if (Tex) Tex->bWorldPanning = false;
   }
 
   if (Tex) {
