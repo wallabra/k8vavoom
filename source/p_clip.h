@@ -42,6 +42,12 @@
 # define VV_CLIPPER_FULL_CHECK
 #else
 # define PointToClipAngleZeroOrigin  PointToPseudoAngleZeroOrigin
+/*# define ClipperPseudoResolution  (0x4000000u)*/
+/* k8: we don't really need alot of precision here */
+/*     actually, as we're using segs, we can get away with *LESS* precision */
+/*     but i am not sure */
+/*     this will prolly break hard with retinas (or something with 2k+ resolution), but idc */
+# define ClipperPseudoResolution  (0x3000u)
 # ifdef VV_CLIPPER_FULL_CHECK
 #  error "oops"
 # endif
@@ -120,7 +126,7 @@ protected:
     #ifdef VAVOOM_CLIPPER_USE_PSEUDO_INT
       double res = dy/(fabs(dx)+fabs(dy));
       res = (dx < 0 ? 2-res : res)+1;
-      return (FromTo)(res*0x3ffffffu);
+      return (FromTo)(res*(ClipperPseudoResolution-1u));
     #else
       const VFloat res = dy/(fabsf(dx)+fabsf(dy));
       return (dx < 0 ? 2-res : res)+1;

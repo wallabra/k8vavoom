@@ -34,7 +34,7 @@
 #else
 # ifdef VAVOOM_CLIPPER_USE_PSEUDO_INT
 #  define MIN_ANGLE  (0)
-#  define MAX_ANGLE  (0x3ffffffu)
+#  define MAX_ANGLE  (ClipperPseudoResolution-1)
 # else
 #  define MIN_ANGLE  ((VFloat)0)
 #  define MAX_ANGLE  ((VFloat)4)
