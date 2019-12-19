@@ -556,9 +556,18 @@ override Entity eventFindInventoryWeapon (string classname, bool allowReplace) {
 float GetAttackZOfs (optional bool missile) {
   auto plrmo = PlayerPawn(MO);
   if (!plrmo) return 8.0;
+  //k8: i don't know why it is 37, really
+  if (missile || !GetCvarB('gm_fix_attack_offset')) {
+    return plrmo.AttackZOffset*plrmo.crouchfactor;
+  } else {
+    float vh = plrmo.ViewHeight*plrmo.crouchfactor;
+    return plrmo.AttackZOffset+(vh >= 37 ? vh-37 : vh-23);
+  }
+  /*
   float res = plrmo.AttackZOffset*plrmo.crouchfactor+(missile ? 0.0 : (GetCvarB('gm_fix_attack_offset') ? 4.0 : 0.0));
   //if (plrmo.crouchfactor < 1.0) res -= plrmo.RealHeight-plrmo.Height; // crouch fix
   return res;
+  */
 }
 
 
