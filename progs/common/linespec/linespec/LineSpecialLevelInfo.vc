@@ -5247,10 +5247,21 @@ final bool EV_SilentLineTeleport (line_t *line, int side, EntityEx thing,
     if (l == line || !l->backsector) continue;
 
     // get the thing's position along the source linedef
-    TVec SrcXAxis = Normalise((*line->v2)-(*line->v1));
+    TVec SrcXAxis = line.ndir; //Normalise(line.dir);
     TVec SrcYAxis = -line->normal;
     float pos = DotProduct(SrcXAxis, thing.Origin-(*line->v1));
     float oldZ = thing.Origin.z;
+
+    float slen = line.dir.length2DSquared;
+    float dlen = l.dir.length2DSquared;
+    if (dlen < 0.01f || slen < 0.01f) {
+      pos = 0;
+    } else {
+      // rescale position according to the length of the new line
+      slen = sqrt(slen);
+      dlen = sqrt(dlen);
+      pos = pos*dlen/slen;
+    }
 
     // interpolate position across the exit linedef
     TVec DstXAxis;
@@ -5258,7 +5269,7 @@ final bool EV_SilentLineTeleport (line_t *line, int side, EntityEx thing,
     TVec newPos;
     sector_t *lsector;
     if (reverse) {
-      DstXAxis = (*l->v2)-(*l->v1);
+      DstXAxis = l.dir;
       DstYAxis = -l->normal;
       newPos = *l->v1;
       lsector = l->frontsector;
@@ -5270,8 +5281,9 @@ final bool EV_SilentLineTeleport (line_t *line, int side, EntityEx thing,
     }
     DstXAxis = Normalise2D(DstXAxis);
     newPos += pos*DstXAxis;
-    // k8: if we are exactly at new line, move forward a little
+    // k8: if we are exactly at the new line, move forward a little
     //     this is required for Boom endless transporters to work
+    // FIXME: should be unnecessary when i'll fix "only center point can be transported" bug
     if (PointOnPlaneSide2(newPos, ref *l)) {
       // k8: if we cannot move inside a sector with a transporter, try a line normal
       //     this is not quite right, but for now this is the best i can do
