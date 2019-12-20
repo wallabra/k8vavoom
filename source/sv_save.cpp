@@ -1230,7 +1230,7 @@ static int SV_FindAutosaveSlot () {
   int bestslot = 0;
   memset((void *)&tv, 0, sizeof(tv));
   memset((void *)&besttv, 0, sizeof(besttv));
-  for (int slot = 1; slot <= 8; ++slot) {
+  for (int slot = 1; slot <= 10; ++slot) {
     if (!SV_GetSaveDateTVal(-slot, &tv)) {
       //fprintf(stderr, "AUTOSAVE: free slot #%d found!\n", slot);
       bestslot = -slot;
@@ -2353,11 +2353,12 @@ COMMAND(DeleteSavedGame) {
 
   if (!CheckIfLoadIsAllowed()) return;
 
-  VStr numstr = Args[1];
+  VStr numstr = Args[1].xstrip();
+  if (numstr.isEmpty()) return;
 
   //GCon->Logf("DeleteSavedGame: <%s>", *numstr);
 
-  if (numstr.ICmp("quick") == 0) {
+  if (/*numstr.ICmp("quick") == 0*/numstr.startsWithCI("q")) {
     if (SV_DeleteSlotFile(QUICKSAVE_SLOT)) BroadcastSaveText("Quicksave deleted.");
     return;
   }
@@ -2380,7 +2381,7 @@ COMMAND(DeleteSavedGame) {
     slot = slot*10+ch-'0';
   }
   //GCon->Logf("DeleteSavedGame: slot=%d (neg=%d)", slot, (neg ? 1 : 0));
-  if (slot < 0 || slot > 9) return;
+  if (slot < 0 || slot > 99) return;
   if (neg) slot = -slot;
 
   if (SV_DeleteSlotFile(slot)) {

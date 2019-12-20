@@ -25,9 +25,12 @@
 //**************************************************************************
 class MenuScreenLoadSaveGame : MenuScreen;
 
+enum QUICKSAVE_SLOT = -666; // from the C++ source code
+
 bool autosaves;
-int lastSelectedIndex = -666; // to update date string
+int lastSelectedIndex = -669; // to update date string
 string datestr = "";
+string qsdatestr = "";
 
 
 //==========================================================================
@@ -36,7 +39,7 @@ string datestr = "";
 //
 //==========================================================================
 void CreateLoadSaveChoices (class!MenuSaveSlot destClass) {
-  foreach (auto i; 0..8) {
+  foreach (auto i; 0..10) {
     MenuSaveSlot newChoice = destClass(NewChild(destClass));
     newChoice.SetOrigin(ChoicesStartX, ChoicesStartY+i*18);
     newChoice.SlotNum = (autosaves ? -1-i : i);
@@ -54,13 +57,14 @@ void CreateLoadSaveChoices (class!MenuSaveSlot destClass) {
 override void OnDraw () {
   ::OnDraw();
   if (Items.length == 0) return;
+  // refresh `datestr`
   if (lastSelectedIndex != CursorPos) {
     lastSelectedIndex = CursorPos;
     if (CursorPos >= 0 && CursorPos < Items.length) {
       MenuSaveSlot ss = MenuSaveSlot(Items[CursorPos]);
       if (ss) {
         SV_GetSaveDateString(ss.SlotNum, &datestr);
-        datestr = va("DATE: %s", datestr);
+        if (datestr && datestr != "UNKNOWN") datestr = va("DATE: %s", datestr); else datestr = "";
       } else {
         datestr = "";
       }
@@ -68,10 +72,19 @@ override void OnDraw () {
       datestr = "";
     }
   }
+  // refresh `qsdatestr`
+  if (!qsdatestr) {
+    SV_GetSaveDateString(QUICKSAVE_SLOT, &qsdatestr);
+    if (!qsdatestr || qsdatestr == "UNKNOWN") qsdatestr = " "; else qsdatestr = "QUICKSAVE: "~qsdatestr;
+  }
+  // draw it all
   SetFont('smallfont');
   //SetTextAlign(hleft, vtop);
   SetTextAlign(hright, vtop);
   DrawText(Width-16, Items[$-1].Y+21, datestr);
+  if (qsdatestr) {
+    DrawText(Width-16, Items[0].Y-10, qsdatestr);
+  }
 }
 
 
@@ -125,4 +138,5 @@ defaultproperties {
   ChoicesStartY = 40;
   SelectorType = MenuSelector_Big;
   Title = "LOAD OR SAVE GAME";
+  Height = 240;
 }
