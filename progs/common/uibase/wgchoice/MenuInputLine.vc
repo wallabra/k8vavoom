@@ -64,6 +64,23 @@ override void OnDraw () {
 }
 
 
+override bool OnEvent (ref event_t evt) {
+  if (!bEnteringText) return false;
+  if (evt.type != ev_keydown) return false;
+  // ^Y
+  if (evt.keycode == K_y && evt.bCtrl) {
+    EnterText = "";
+    return true;
+  }
+  // ^DEL
+  if (evt.keycode == K_DELETE && evt.bCtrl) {
+    EnterText = "";
+    return true;
+  }
+  return false;
+}
+
+
 override bool OnKeyDown (int key) {
   if (bEnteringText) {
     switch (key) {
