@@ -189,8 +189,9 @@ static VCvarF cl_pitchdriftspeed("cl_pitchdriftspeed", "270", "Pitch drifting sp
 
 static VCvarF cl_anglespeedkey("cl_anglespeedkey", "1.5", "Fast turning multiplier.", CVAR_Archive);
 
-static VCvarF cl_deathroll("cl_deathroll", "75", "Deathroll amount.", CVAR_Archive);
-static VCvarF cl_deathrollspeed("cl_deathrollspeed", "80", "Deathroll speed.", CVAR_Archive);
+static VCvarB cl_deathroll_enabled("cl_deathroll_enabled", true, "Enable death roll?", CVAR_Archive);
+static VCvarF cl_deathroll_amount("cl_deathroll_amount", "75", "Deathroll amount.", CVAR_Archive);
+static VCvarF cl_deathroll_speed("cl_deathroll_speed", "80", "Deathroll speed.", CVAR_Archive);
 
 VCvarF mouse_x_sensitivity("mouse_x_sensitivity", "5.5", "Horizontal mouse sensitivity.", CVAR_Archive);
 VCvarF mouse_y_sensitivity("mouse_y_sensitivity", "5.5", "Vertical mouse sensitivity.", CVAR_Archive);
@@ -505,8 +506,22 @@ void VBasePlayer::AdjustAngles () {
 
   // roll
   if (Health <= 0) {
-    if (ViewAngles.roll >= 0 && ViewAngles.roll < cl_deathroll) ViewAngles.roll += cl_deathrollspeed*host_frametime;
-    if (ViewAngles.roll < 0 && ViewAngles.roll > -cl_deathroll) ViewAngles.roll -= cl_deathrollspeed*host_frametime;
+    if (cl_deathroll_enabled && cl_deathroll_amount.asFloat() > 0) {
+      const float drspeed = cl_deathroll_speed.asFloat();
+      const float dramount = min2(180.0f, cl_deathroll_amount.asFloat());
+      // use random roll direction
+      const float dir =
+        (ViewAngles.roll == 0 ? (RandomFull() < 0.5f ? -1.0f : 1.0f) :
+         ViewAngles.roll < 0 ? -1.0f : 1.0f);
+      if (drspeed <= 0) {
+        ViewAngles.roll = dramount*dir;
+      } else {
+        ViewAngles.roll += drspeed*dir*host_frametime;
+      }
+      ViewAngles.roll = clampval(ViewAngles.roll, -dramount, dramount);
+    } else {
+      ViewAngles.roll = 0.0f;
+    }
   } else {
     ViewAngles.roll = 0.0f;
   }

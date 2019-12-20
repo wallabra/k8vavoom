@@ -231,6 +231,33 @@ menudef MiscOptions {
   }
 
 
+  header "Death Roll Options";
+
+  option bool {
+    title = "Enable Death Roll";
+    cvar = cl_deathroll_enabled;
+    help = "Roll the camera when the player dies?";
+  }
+
+  option slider {
+    title = "Death Roll Amount";
+    cvar = cl_deathroll_amount;
+    step = 2;
+    min = 0;
+    max = 180;
+    help = "Death Roll Angle.";
+  }
+
+  option slider {
+    title = "Death Roll Speed";
+    cvar = cl_deathroll_speed;
+    step = 2;
+    min = 2;
+    max = 200;
+    help = "Death Roll Speed.";
+  }
+
+
   header "GZDoom Emulation Options";
 
   option bool {
