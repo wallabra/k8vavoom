@@ -6,7 +6,7 @@ menudef GameplayOptions {
   header "Monster AI";
 
   option bool {
-    title = "Monsters Backing Off";
+    title = "Monsters Melee Backing";
     cvar = monster_backing;
   }
 
@@ -25,6 +25,16 @@ menudef GameplayOptions {
     title = "Better sight for monsters";
     cvar = compat_better_sight;
     help = "Perform slightly better (and slower) line-of-sight checking for monsters.";
+  }
+
+  option bool {
+    title = "Limit PE soul spawn";
+    cvar = gm_default_pain_limit;
+    help =
+      "Limit Pain Elemental Lost Soul spawn to 20, as in vanilla?"
+      "This can be overriden by MAPINFO."
+      "\cGWARNING: This setting takes effect only after full game restart"
+      "\cG(i.e. close the game, and run it again)!";
   }
 
   option bool {
@@ -158,7 +168,7 @@ menudef GameplayOptions {
     cvar = gm_fix_attack_offset;
     help =
       "Raise shooting point a little, so hitscan shots will go through your crosshair."
-      "WARNING: this changes hitscan attack height!";
+      "\cGWARNING: this changes hitscan attack height!";
   }
 
   option bool {

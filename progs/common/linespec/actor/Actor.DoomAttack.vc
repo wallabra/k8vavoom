@@ -345,27 +345,18 @@ final void DoSPosAttack () {
 //
 //==========================================================================
 [decorate] final void decorate_A_PainAttack (optional class!Actor SpawnType, optional float angle,
-                                  optional int flags, optional int limit)
+                                             optional int flags, optional int limit)
 {
   if (!Target) return;
   if (GetCvarB('k8ElvenPaineless')) return;
 
   if (!SpawnType) SpawnType = LostSoul;
 
-  if (limit > 0) {
-    int count = 0;
-    Thinker th;
-    foreach AllThinkers(SpawnType, out th) {
-      if (th) {
-        ++count;
-        if (count >= limit) return;
-      }
-    }
-  }
+  if (limit <= 0) limit = -1; // disable limit check?
 
   if (!(flags&PAF_AIMFACING)) A_FaceTarget();
   if (!specified_angle) angle = Angles.yaw;
-  PainShootSkull(SpawnType, angle, !!(flags&PAF_NOSKULLATTACK), !!(flags&PAF_NOTARGET));
+  PainShootSkull(SpawnType, angle, noattack:!!(flags&PAF_NOSKULLATTACK), notarget:!!(flags&PAF_NOTARGET), limitCheck:limit);
 }
 
 

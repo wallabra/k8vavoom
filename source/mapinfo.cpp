@@ -37,6 +37,9 @@ int cli_NoZMapinfo = 0; // need to be extern for files.cpp
   VParsedArgs::RegisterFlagSet("-mapper-is-idiot", "!", &cli_MapperIsIdiot);
 
 
+static VCvarB gm_default_pain_limit("gm_default_pain_limit", true, "Limit Pain Elemental skull spawning by default?", CVAR_Archive);
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // switches to C mode
 struct SCParseModeSaver {
@@ -611,7 +614,7 @@ static void SetMapDefaults (mapInfo_t &Info) {
   Info.Gravity = 0;
   Info.AirControl = 0;
   Info.Flags = 0;
-  Info.Flags2 = 0;
+  Info.Flags2 = (gm_default_pain_limit ? VLevelInfo::LIF2_CompatLimitPain : 0);
   Info.TitlePatch = NAME_None;
   Info.ParTime = 0;
   Info.SuckTime = 0;

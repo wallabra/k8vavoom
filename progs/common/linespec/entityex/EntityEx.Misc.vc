@@ -2488,8 +2488,15 @@ bool ShouldDropItems () {
 //
 //  Spawn a lost soul and launch it at the target
 //
+//  limitCheck:
+//    <0: no limit
+//     0: use default compatibility setting
+//    >0: use this as a limit
+//
 //==========================================================================
-final void PainShootSkull (class!Actor SpawnType, float angle, optional bool noattack, optional bool notarget) {
+final void PainShootSkull (class!Actor SpawnType, float angle, optional bool noattack,
+                           optional bool notarget, optional int limitCheck)
+{
   EntityEx mo;
   Actor newSkull;
   float prestep;
@@ -2498,15 +2505,20 @@ final void PainShootSkull (class!Actor SpawnType, float angle, optional bool noa
   if (!SpawnType) SpawnType = LostSoul;
   if (nameicmp(DamageType, 'Massacre') == 0) return;
 
-  if (Level.CompatLimitPain) {
+  // fix limit checker
+  if (!limitCheck) limitCheck = (Level.CompatLimitPain ? 20 : -1);
+
+  if (limitCheck > 0) {
     // count total number of skull currently on the level
     //FIXME: decorate_A_PainAttack can override this
     int count = 0;
     foreach AllThinkers(SpawnType, mo) {
-      ++count;
+      if (mo) {
+        if (++count > limitCheck) return;
+      }
     }
     // if there are allready 20 skulls on the level, don't spit another one
-    if (count > 20) return;
+    //if (count > 20) return;
   }
 
   // okay, there's place for another one
