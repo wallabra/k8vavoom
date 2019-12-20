@@ -35,6 +35,18 @@ string qsdatestr = "";
 
 //==========================================================================
 //
+//  SignalSlotDeletion
+//
+//==========================================================================
+void SignalSlotDeletion () {
+  lastSelectedIndex = default.lastSelectedIndex;
+  datestr = "";
+  qsdatestr = "";
+}
+
+
+//==========================================================================
+//
 //  CreateLoadSaveChoices
 //
 //==========================================================================
@@ -95,12 +107,19 @@ override void OnDraw () {
 //==========================================================================
 void RefreshLoadSaveChoices () {
   datestr = "";
+  qsdatestr = "";
   lastSelectedIndex = default.lastSelectedIndex;
-  foreach (auto i; 0..8) {
+  foreach (auto i; 0..10) {
     if (i >= Items.length) break;
     MenuSaveSlot ss = MenuSaveSlot(Items[i]);
     if (!ss) continue;
     ss.SlotNum = (autosaves ? -1-i : i);
+    ss.Status = SV_GetSaveString(ss.SlotNum, &ss.Text);
+  }
+  if (autosaves && Items.length > 9) {
+    MenuSaveSlot ss = MenuSaveSlot(Items[$-1]);
+    assert(ss);
+    ss.SlotNum = QUICKSAVE_SLOT;
     ss.Status = SV_GetSaveString(ss.SlotNum, &ss.Text);
   }
 }

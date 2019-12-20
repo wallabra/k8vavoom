@@ -151,6 +151,8 @@ override bool OnKeyDown (int key) {
         Text = "*deleted slot*";
         //print("DEL! slot=%d; status=%d", SlotNum, Status);
         CmdBuf_AddText("DeleteSavedGame %d\n", SlotNum);
+        auto pm = MenuScreenLoadSaveGame(Parent);
+        if (pm) pm.SignalSlotDeletion();
       }
     }
     return true;

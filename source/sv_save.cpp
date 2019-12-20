@@ -45,6 +45,8 @@ static inline struct tm *localtime_r (const time_t *_Time, struct tm *_Tm) {
 
 //#define VAVOOM_LOADER_CAN_SKIP_CLASSES
 
+enum { NUM_AUTOSAVES = 9 };
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 static VCvarB r_dbg_save_on_level_exit("r_dbg_save_on_level_exit", false, "Save before exiting a level.\nNote that after loading this save you prolly won't be able to exit again.", CVAR_PreInit/*|CVAR_Archive*/);
@@ -1230,7 +1232,7 @@ static int SV_FindAutosaveSlot () {
   int bestslot = 0;
   memset((void *)&tv, 0, sizeof(tv));
   memset((void *)&besttv, 0, sizeof(besttv));
-  for (int slot = 1; slot <= 10; ++slot) {
+  for (int slot = 1; slot <= NUM_AUTOSAVES; ++slot) {
     if (!SV_GetSaveDateTVal(-slot, &tv)) {
       //fprintf(stderr, "AUTOSAVE: free slot #%d found!\n", slot);
       bestslot = -slot;
@@ -2381,11 +2383,17 @@ COMMAND(DeleteSavedGame) {
     slot = slot*10+ch-'0';
   }
   //GCon->Logf("DeleteSavedGame: slot=%d (neg=%d)", slot, (neg ? 1 : 0));
-  if (slot < 0 || slot > 99) return;
-  if (neg) slot = -slot;
+  if (neg && slot == abs(QUICKSAVE_SLOT)) {
+    slot = QUICKSAVE_SLOT;
+  } else {
+    if (slot < 0 || slot > 99) return;
+    if (neg) slot = -slot;
+  }
 
   if (SV_DeleteSlotFile(slot)) {
-    if (slot < 0) BroadcastSaveText(va("Autosave #%d deleted", -slot)); else BroadcastSaveText(va("Savegame #%d deleted", slot));
+         if (slot == QUICKSAVE_SLOT) BroadcastSaveText("Quicksave deleted.");
+    else if (slot < 0) BroadcastSaveText(va("Autosave #%d deleted", -slot));
+    else BroadcastSaveText(va("Savegame #%d deleted", slot));
   }
 }
 
