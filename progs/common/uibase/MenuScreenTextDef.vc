@@ -51,10 +51,14 @@ final static MenuDefinition LoadMenu (string defFileName) {
 //
 //==========================================================================
 override void CreateMenu () {
-  auto mdef = LoadMenu(defFileName);
-  scope(exit) delete mdef;
-  //mdef.dump();
-  CreateMenuFromDef(mdef);
+  if (defFileName == " <custom> ") {
+    ::CreateMenu();
+  } else {
+    auto mdef = LoadMenu(defFileName);
+    scope(exit) delete mdef;
+    //mdef.dump();
+    CreateMenuFromDef(mdef);
+  }
 }
 
 

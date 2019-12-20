@@ -84,6 +84,11 @@ menudef OptionsMenu {
     title = "Go to console";
   }
 
+  option submenu {
+    title = "Menu Search";
+    smclass = MenuScreenSearchFilter;
+  }
+
   header "";
 
   option concmd {

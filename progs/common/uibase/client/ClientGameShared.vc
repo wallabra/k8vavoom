@@ -98,6 +98,40 @@ array!MenuDefinition menudefs;
 
 //==========================================================================
 //
+//  MenuFilterOptionList
+//
+//==========================================================================
+void MenuFilterOptionList (ref array!MenuDefOptionBase optlist, void delegate (MenuDefOptionBase opt) checker) {
+  //printdebug("  optlist.length=%s", optlist.length);
+  foreach (MenuDefOptionBase opt; optlist) {
+    //printdebug("   %s", opt);
+    if (MenuDefOptionSubHeader(opt)) continue; // ignore subheaders
+    if (MenuDefOptionControls(opt)) continue; // ignore controls
+    if (MenuDefOptionBind(opt)) continue; // ignore bind
+    if (!opt.test()) continue; // condition failed
+    auto mmo = MenuDefOptionModSubMenus(opt);
+    if (mmo) { MenuFilterOptionList(mmo.options, checker); continue; }
+    checker(opt);
+  }
+}
+
+
+//==========================================================================
+//
+//  MenuCollectFilteredOptions
+//
+//==========================================================================
+void MenuCollectFilteredOptions (void delegate (MenuDefOptionBase opt) checker) {
+  assert(checker);
+  foreach (MenuDefinition mdef; menudefs) {
+    //printdebug("::: %s :::", mdef);
+    MenuFilterOptionList(mdef.options, checker);
+  }
+}
+
+
+//==========================================================================
+//
 //  PostSpawn
 //
 //  called after the engine spawned the object
@@ -449,6 +483,13 @@ void LoadGZMenuDefs () {
 //
 //==========================================================================
 void GetAllMenuNames (ref array!string names, int mode) {
+  if (mode >= 0) {
+    // all
+    names[$] = "Save";
+    names[$] = "Load";
+    names[$] = "Resolution";
+    names[$] = "MenuSearch";
+  }
   foreach (MenuDefinition mdef; menudefs) {
     if ((mode < 0 && !mdef.gzMenu) || (mode > 0 && mdef.gzMenu)) continue;
     names[$] = mdef.menuName;
@@ -473,6 +514,7 @@ bool SetCommonMenu (string Name) {
   if (!stricmp(Name, "Resolution")) { PushMenuScreen(SpawnMenu(MenuScreenScreenResolution)); return true; }
   if (!stricmp(Name, "Video")) { PushMenuScreen(SpawnNamedMenu('VideoOptions')); return true; }
   if (!stricmp(Name, "Sound")) { PushMenuScreen(SpawnNamedMenu('SoundOptions')); return true; }
+  if (!stricmp(Name, "MenuSearch")) { PushMenuScreen(SpawnMenu(MenuScreenSearchFilter)); return true; }
 
   // find named menu
   foreach (MenuDefinition mdef; menudefs) {

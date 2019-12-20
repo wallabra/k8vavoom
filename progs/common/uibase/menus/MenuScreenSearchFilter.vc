@@ -1,0 +1,215 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 2018-2019 Ketmar Dark
+//**
+//**  This program is free software: you can redistribute it and/or modify
+//**  it under the terms of the GNU General Public License as published by
+//**  the Free Software Foundation, version 3 of the License ONLY.
+//**
+//**  This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**  You should have received a copy of the GNU General Public License
+//**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//**
+//**************************************************************************
+class MenuScreenSearchFilter : /*MenuScreen*/MenuScreenTextDef;
+
+string filterTitle;
+string filterCVar;
+string filterHelp;
+
+int foptStartIdx;
+int savedCurrentY;
+
+array!MenuDefOptionBase optlist;
+
+
+//==========================================================================
+//
+//  LoadFilters
+//
+//==========================================================================
+void LoadFilters () {
+  filterTitle = GetCvarS('__msearch_filter_title');
+  filterCVar = GetCvarS('__msearch_filter_cvar');
+  filterHelp = GetCvarS('__msearch_filter_help');
+}
+
+
+//==========================================================================
+//
+//  SaveFilters
+//
+//==========================================================================
+void SaveFilters () {
+  if (!CvarExists('__msearch_filter_title')) CreateCvarStr('__msearch_filter_title', "", "");
+  if (!CvarExists('__msearch_filter_cvar')) CreateCvarStr('__msearch_filter_cvar', "", "");
+  if (!CvarExists('__msearch_filter_help')) CreateCvarStr('__msearch_filter_help', "", "");
+  SetCvarS('__msearch_filter_title', filterTitle);
+  SetCvarS('__msearch_filter_cvar', filterCVar);
+  SetCvarS('__msearch_filter_help', filterHelp);
+}
+
+
+//==========================================================================
+//
+//  FilterOptions
+//
+//==========================================================================
+void RemoveOptions () {
+  while (Items.length > foptStartIdx) {
+    delete Items[$-1];
+    Items.length -= 1;
+  }
+  optlist.reset();
+}
+
+
+//==========================================================================
+//
+//  TestMask
+//
+//==========================================================================
+static final bool TestMask (string str, string mask, bool allowEmptyStr) {
+  if (!allowEmptyStr && !str) return false;
+  if (!mask) return true;
+  return str.globmatch(va("*%s*", mask), caseSensitive:false);
+}
+
+
+//==========================================================================
+//
+//  FilterOptions
+//
+//==========================================================================
+void FilterOptions () {
+  RemoveOptions();
+  if (!ClGame) return;
+  //printdebug("================");
+  if (filterTitle || filterCVar || filterHelp) {
+    ClGame.MenuCollectFilteredOptions(delegate void (MenuDefOptionBase opt) {
+      if (!TestMask(opt.title, filterTitle, allowEmptyStr:false)) return;
+      if (filterCVar) {
+        if (!TestMask(string(opt.cvar), filterCVar, allowEmptyStr:false)) return;
+      }
+      if (!TestMask(opt.help, filterHelp, allowEmptyStr:true)) return;
+      optlist[$] = opt;
+      /*
+      printdebug("------");
+      printdebug("  title: <%s>", opt.title);
+      printdebug("  cvar : <%s>", opt.cvar);
+      printdebug("  help : <%s>", opt.help);
+      */
+    });
+  }
+
+  currentY = savedCurrentY;
+  CreateMenuItemsFromList(optlist);
+}
+
+
+//==========================================================================
+//
+//  CreateChoices
+//
+//==========================================================================
+override void CreateChoices () {
+  LoadFilters();
+
+  MenuInputLine il;
+
+  // title filter
+  il = MenuInputLine(NewChild(MenuInputLine));
+  SetChoiceInitialSizePos(il);
+  il.SetOrigin(ChoicesStartX+10, currentY);
+  il.CursorXOffs = -10;
+  il.Text = "Title";
+  il.Value = filterTitle;
+  il.DisableSlotRendering();
+  il.ValueChanged = delegate void (Object sender) {
+    filterTitle = MenuInputLine(sender).Value;
+    SaveFilters();
+    FilterOptions();
+  };
+  currentY += il.Height;
+    SetLastHelp(
+      "Filtering substring for titles.\n"~
+      "Supports DOS-style globs.\n");
+
+  // cvar filter
+  il = MenuInputLine(NewChild(MenuInputLine));
+  SetChoiceInitialSizePos(il);
+  il.SetOrigin(ChoicesStartX+10, currentY);
+  il.CursorXOffs = -10;
+  il.Text = "CVar";
+  il.Value = filterCVar;
+  il.DisableSlotRendering();
+  il.ValueChanged = delegate void (Object sender) {
+    filterCVar = MenuInputLine(sender).Value;
+    SaveFilters();
+    FilterOptions();
+  };
+  currentY += il.Height;
+    SetLastHelp(
+      "Filtering substring for cvar names.\n"~
+      "Supports DOS-style globs.\n");
+
+  // help filter
+  il = MenuInputLine(NewChild(MenuInputLine));
+  SetChoiceInitialSizePos(il);
+  il.SetOrigin(ChoicesStartX+10, currentY);
+  il.CursorXOffs = -10;
+  il.Text = "Help";
+  il.Value = filterHelp;
+  il.DisableSlotRendering();
+  il.ValueChanged = delegate void (Object sender) {
+    filterHelp = MenuInputLine(sender).Value;
+    SaveFilters();
+    FilterOptions();
+  };
+  currentY += il.Height;
+    SetLastHelp(
+      "Filtering substring for help text.\n"~
+      "Supports DOS-style globs.\n");
+
+  currentY += 8;
+
+  foptStartIdx = Items.length;
+  savedCurrentY = currentY;
+
+  FilterOptions();
+}
+
+
+defaultproperties {
+  defFileName = " <custom> ";
+
+  WidthThreshold = 10;
+  ChoicesStartX = 120;
+  ChoicesStartY = 26;
+  SelectorType = MenuSelector_SmallRight;
+  Title = "MENU SEARCH";
+
+  Focusable = true;
+  MenuScrollable = true;
+  AllowVerticalResize = true;
+
+  //Width = 380;
+  Width = 520;
+  Height = 460;
+  ChoicesStartX = 200;
+  ChoicesStartY = 26;
+  TitleX = 180;
+  SelectorType = MenuSelector_SmallRight;
+}

@@ -88,6 +88,8 @@ import 'linespec';
 #include "menus/MenuScreenNewNetGameBase.vc"
 #include "menus/MenuScreenPlayerSetupBase.vc"
 
+#include "menus/MenuScreenSearchFilter.vc"
+
 #include "client/ClientGameShared.vc"
 #include "client/StatusBarShared.vc"
 #include "client/IntermissionBackground.vc"
