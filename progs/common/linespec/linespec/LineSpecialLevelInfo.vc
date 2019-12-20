@@ -7267,23 +7267,21 @@ final void StartFlashFader(float BlendR1, float BlendG1, float BlendB1,
   }
 }
 
+
 //==========================================================================
 //
 //  AcsCancelFade
 //
 //==========================================================================
-
-override void AcsCancelFade(Entity Activator)
-{
+override void AcsCancelFade (Entity Activator) {
   Thinker Th;
-  foreach AllThinkers(FlashFader, Th)
-  {
-    if (!Activator || FlashFader(Th).ForWho == Activator)
-    {
+  foreach AllThinkers(FlashFader, Th) {
+    if (!Activator || FlashFader(Th).ForWho == Activator) {
       FlashFader(Th).Cancel();
     }
   }
 }
+
 
 //==========================================================================
 //
@@ -7292,27 +7290,50 @@ override void AcsCancelFade(Entity Activator)
 //  Kills all monsters.
 //
 //==========================================================================
-
-final int P_Massacre()
-{
-  int count;
+final int P_Massacre () {
+  int count = 0;
   EntityEx mo;
-
-  count = 0;
-  foreach AllThinkers(EntityEx, mo)
-  {
-    if (mo.bMonster && mo.Health > 0)
-    {
+  foreach AllThinkers(EntityEx, mo) {
+    if (mo.bMonster && mo.Health > 0) {
       mo.bNonShootable = false;
       mo.bInvulnerable = false;
       mo.bDormant = false;
       mo.bShootable = true;
       mo.Damage(none, none, 10000, spawnBlood:true);
-      count++;
+      ++count;
     }
   }
   return count;
 }
+
+
+//==========================================================================
+//
+//  P_MassacreEx
+//
+//  Kills all monsters.
+//
+//==========================================================================
+final int P_MassacreEx (string classmask, bool spawnBlood) {
+  int count = 0;
+  EntityEx mo;
+  foreach AllThinkers(EntityEx, mo) {
+    if (mo.bMonster && mo.Health > 0) {
+      if (classmask && !globmatch(string(GetClassName(mo.Class)), classmask, caseSensitive:false)) continue;
+      mo.bNonShootable = false;
+      mo.bInvulnerable = false;
+      mo.bDormant = false;
+      mo.bShootable = true;
+      bool oldBlood = mo.bNoBlood;
+      if (!spawnBlood) mo.bNoBlood = true;
+      mo.Damage(none, none, 10000, spawnBlood:spawnBlood);
+      if (!spawnBlood) mo.bNoBlood = oldBlood;
+      ++count;
+    }
+  }
+  return count;
+}
+
 
 //==========================================================================
 //

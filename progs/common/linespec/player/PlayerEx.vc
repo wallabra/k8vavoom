@@ -5464,11 +5464,70 @@ void Cheat_NoClip () {
 
 //==========================================================================
 //
+//  Cheat_KillAll_AC
+//
+//==========================================================================
+void Cheat_KillAll_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  //printdebug("KAC: args.length=%s; newArg=%B; <%s>", args.length, newArg, args[$-1]);
+
+  //if (args.length == 1 && newArg) { aclist[$] = "-noblood"; return; }
+  if (args.length == 2 && !newArg && StrStartsWith("-noblood", args[$-1], caseSensitive:false)) { aclist[$] = "-noblood"; return; }
+
+  class!Actor cls;
+  foreach AllClasses(Actor, out cls) {
+    class!Actor ac = cls;
+    if (!ac.default.bMonster) continue;
+    if (!newArg && args.length > 1 && args[$-1]) {
+      if (!StrStartsWith(string(GetClassName(ac)), args[$-1], caseSensitive:false)) {
+        //printdebug("SKIP: <%s> (%s)", GetClassName(ac), args[$-1]);
+        continue;
+      }
+    }
+    Actor act;
+    bool found = false;
+    foreach Level.AllThinkers(ac, act) {
+      if (act.bMonster && act.Health > 0) {
+        found = true;
+        break;
+      }
+    }
+    if (found) {
+      //printdebug(" <%s>", GetClassName(ac));
+      aclist[$] = va("%s", GetClassName(ac));
+    }
+  }
+
+  if (aclist.length > 100) {
+    cprint("the list contains %s items; please, be more specific", aclist.length);
+    aclist.clear();
+  }
+}
+
+
+//==========================================================================
+//
 //  Cheat_KillAll
 //
 //==========================================================================
 void Cheat_KillAll () {
-  cprint("%d MONSTERS KILLED", LineSpecialLevelInfo(Level).P_Massacre());
+  if (!Level) return;
+  if (Cmd_GetArgC() < 2) {
+    cprint("%d MONSTERS KILLED", LineSpecialLevelInfo(Level).P_Massacre());
+  } else {
+    int count = 0;
+    bool spawnBlood = true;
+    int idx = 1;
+    if (stricmp(Cmd_GetArgV(1), "-noblood") == 0) { spawnBlood = false; ++idx; }
+    if (idx == Cmd_GetArgC()) {
+      count += LineSpecialLevelInfo(Level).P_MassacreEx("", spawnBlood);
+    } else {
+      for (; idx < Cmd_GetArgC(); ++idx) {
+        //printdebug("<%s>", Cmd_GetArgV(idx));
+        count += LineSpecialLevelInfo(Level).P_MassacreEx(Cmd_GetArgV(idx), spawnBlood);
+      }
+    }
+    cprint("%d MONSTERS KILLED", count);
+  }
 }
 
 
