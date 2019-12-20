@@ -800,6 +800,10 @@ final void WeaponReadyResetAttackState () {
 
   Wpn.bBobDisabled = ((Flags&WRF_NOBOB) || Wpn.bDontBob);
 
+  // force weapon to "ready" position in case it tries to do "instant ready" trick
+  PlayerEx(Player).ViewStates[PS_WEAPON].SX = 0;
+  PlayerEx(Player).ViewStates[PS_WEAPON].SY = Weapon::WEAPONTOP;
+
   if (Player.ViewStates[PS_WEAPON].State == Wpn.GetReadyState() &&
       Wpn.ReadySound && (!Wpn.bReadySndHalf || Random() < 0.5))
   {
@@ -916,7 +920,7 @@ final void WeaponReadyResetAttackState () {
   }
   //Player.bZoomDown = !!(Player.Buttons&BT_ZOOM);
 
-  /* moved out of here, so weapon can bob independently
+  /* moved out of here to `MovePsprites()`, so weapon can bob independently
   if (!(Flags&WRF_NOBOB) || !Wpn.bDontBob) {
     // bob the weapon based on movement speed
     float angle = AngleMod360(180.0*XLevel.Time);

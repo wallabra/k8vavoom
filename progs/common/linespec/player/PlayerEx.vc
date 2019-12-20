@@ -1529,15 +1529,59 @@ void MovePsprites (float deltaTime) {
 
   if (MO && wpn && !wpn.bDontBob && !wpn.bBobDisabled) {
     // bob the weapon based on movement speed
+    float bob = fmin(GetCvarF('weaponbob'), 1.0);
+    if (bob > 0) {
+      // regular movement bobbing (and don't allow too big bobbing too)
+      float wbob = fclamp(MO.Velocity.x*MO.Velocity.x+MO.Velocity.y*MO.Velocity.y, -370492.0/2.5, +370492.0/2.5);
+      //if (wbob) printdebug("wbob=%s", wbob);
+      /*
+      if (wbob < 300) {
+        float dx = ViewStates[PS_WEAPON].BobOfsX;
+        float dy = ViewStates[PS_WEAPON].BobOfsY;
+        float move = 4.0*deltaTime;
+        float mx = (dx < 0 ? fmin(dx+move, 0.0) : fmax(dx-move, 0.0));
+        float my = (dy < 0 ? fmin(dy+move, 0.0) : fmax(dy-move, 0.0));
+        if (dx || dy) printdebug("dx=%s; dy=%s; mx=%s; my=%s", dx, dy, mx, my);
+        dx = (fabs(dx) <= 0.01 ? 0 : mx);
+        dy = (fabs(dy) <= 0.01 ? 0 : my);
+        ViewStates[PS_WEAPON].BobOfsX = dx;
+        ViewStates[PS_WEAPON].BobOfsY = dy;
+      } else
+      */
+      {
+        wbob /= (3.0/bob)*35.0*35.0;
+        if (wbob > MAXBOB) wbob = MAXBOB;
+        float angle = AngleMod360(180.0*MO.XLevel.Time);
+        //ViewStates[PS_WEAPON].SX = 1.0+wbob*cos(angle);
+        ViewStates[PS_WEAPON].BobOfsX = 1.0+wbob*cos(angle);
+        if (angle >= 180.0) angle -= 180.0;
+        //ViewStates[PS_WEAPON].SY = Weapon::WEAPONTOP+wbob*sin(angle);
+        ViewStates[PS_WEAPON].BobOfsY = wbob*sin(angle);
+      }
+    } else {
+      ViewStates[PS_WEAPON].BobOfsX = 0;
+      ViewStates[PS_WEAPON].BobOfsY = 0;
+    }
+    /*
+    float wbob = Bob*fclamp(GetCvarF('weaponbob'), 0.0, 1.0);
     float angle = AngleMod360(180.0*MO.XLevel.Time);
-    ViewStates[PS_WEAPON].SX = 1.0+Bob*cos(angle);
+    ViewStates[PS_WEAPON].SX = 1.0+wbob*cos(angle);
     if (angle >= 180.0) angle -= 180.0;
-    ViewStates[PS_WEAPON].SY = Weapon::WEAPONTOP+Bob*sin(angle);
+    ViewStates[PS_WEAPON].SY = Weapon::WEAPONTOP+wbob*sin(angle);
+    */
   }
 
+  ViewStates[PS_FLASH].BobOfsX = ViewStates[PS_WEAPON].BobOfsX;
+  ViewStates[PS_FLASH].BobOfsY = ViewStates[PS_WEAPON].BobOfsY;
+
+  ViewStates[PS_WEAPON_OVL].BobOfsX = ViewStates[PS_WEAPON].BobOfsX;
+  ViewStates[PS_WEAPON_OVL].BobOfsY = ViewStates[PS_WEAPON].BobOfsY;
+
   AdvanceViewStates(deltaTime);
+
   ViewStates[PS_FLASH].SX = ViewStates[PS_WEAPON].SX;
   ViewStates[PS_FLASH].SY = ViewStates[PS_WEAPON].SY;
+
   ViewStates[PS_WEAPON_OVL].SX = ViewStates[PS_WEAPON].SX;
   ViewStates[PS_WEAPON_OVL].SY = ViewStates[PS_WEAPON].SY;
 

@@ -87,6 +87,7 @@ struct VViewState {
   float StateTime;
   float SX, SY;
   float OfsY;
+  float BobOfsX, BobOfsY;
 };
 
 // extended player object info: player_t

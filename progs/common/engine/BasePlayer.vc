@@ -47,6 +47,7 @@ struct VViewState {
   float StateTime;
   float SX, SY;
   float OfsY;
+  float BobOfsX, BobOfsY;
 };
 
 readonly LevelInfo Level;

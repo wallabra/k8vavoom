@@ -273,7 +273,7 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
 #else
   if (_stateRouteSelf != LastViewObject[position]) {
     LastViewObject[position] = _stateRouteSelf;
-    ViewStates[position].SX = ViewStates[position].OfsY = 0;
+    ViewStates[position].SX = ViewStates[position].OfsY = ViewStates[position].BobOfsX = ViewStates[position].BobOfsY = 0;
     // "display" state
     if (position == PS_WEAPON) {
       LastViewObject[PS_WEAPON_OVL] = _stateRouteSelf;
