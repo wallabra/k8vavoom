@@ -35,6 +35,38 @@
     {3+0, 3+1, 3+2}, \
   }
 
+// this is for 2d line/node bboxes
+// bounding box
+enum {
+  BOX2D_TOP,
+  BOX2D_BOTTOM,
+  BOX2D_LEFT,
+  BOX2D_RIGHT,
+  // or this
+  BOX2D_MAXY = 0,
+  BOX2D_MINY = 1,
+  BOX2D_MINX = 2,
+  BOX2D_MAXX = 3,
+};
+
+// this is for 3d bboxes
+// bounding box
+enum {
+  BOX3D_MINX = 0,
+  BOX3D_MINY = 1,
+  BOX3D_MINZ = 2,
+  BOX3D_MAXX = 3,
+  BOX3D_MAXY = 4,
+  BOX3D_MAXZ = 5,
+  // various constants
+  BOX3D_MINIDX = 0,
+  BOX3D_MAXIDX = 3,
+  // add those to MINIDX/MAXIDX to get the corresponding element
+  BOX3D_X = 0,
+  BOX3D_Y = 1,
+  BOX3D_Z = 2,
+};
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 class /*__attribute__((packed))*/ TAVec {
@@ -326,6 +358,32 @@ public:
   float dist;
 
 public:
+  // put here because i canot find a better place for it yet
+  static VVA_OKUNUSED inline void CreateBBox (float bbox[6], const TVec &v0, const TVec &v1) noexcept {
+    if (v0.x < v1.x) {
+      bbox[BOX3D_MINX] = v0.x;
+      bbox[BOX3D_MAXX] = v1.x;
+    } else {
+      bbox[BOX3D_MINX] = v1.x;
+      bbox[BOX3D_MAXX] = v0.x;
+    }
+    if (v0.y < v1.y) {
+      bbox[BOX3D_MINY] = v0.y;
+      bbox[BOX3D_MAXY] = v1.y;
+    } else {
+      bbox[BOX3D_MINY] = v1.y;
+      bbox[BOX3D_MAXY] = v0.y;
+    }
+    if (v0.z < v1.z) {
+      bbox[BOX3D_MINZ] = v0.z;
+      bbox[BOX3D_MAXZ] = v1.z;
+    } else {
+      bbox[BOX3D_MINZ] = v1.z;
+      bbox[BOX3D_MAXZ] = v0.z;
+    }
+  }
+
+public:
   //TPlane () : TVec(1.0f, 0.0f, 0.0f), dist(0.0f) {}
   //TPlane (ENoInit) {}
 
@@ -567,28 +625,19 @@ public:
   // i.e. box point that is furthest from the plane
   inline VVA_CHECKRESULT TVec get3DBBoxRejectPoint (const float bbox[6]) const noexcept {
     return TVec(
-      bbox[0+(normal.x < 0 ? 0 : 3)],
-      bbox[1+(normal.y < 0 ? 0 : 3)],
-      bbox[2+(normal.z < 0 ? 0 : 3)]);
+      bbox[BOX3D_X+(normal.x < 0 ? BOX3D_MINIDX : BOX3D_MAXIDX)],
+      bbox[BOX3D_Y+(normal.y < 0 ? BOX3D_MINIDX : BOX3D_MAXIDX)],
+      bbox[BOX3D_Z+(normal.z < 0 ? BOX3D_MINIDX : BOX3D_MAXIDX)]);
   }
 
   // returns "AABB accept point"
   // i.e. box point that is closest to the plane
   inline VVA_CHECKRESULT TVec get3DBBoxAcceptPoint (const float bbox[6]) const noexcept {
     return TVec(
-      bbox[0+(normal.x < 0 ? 3 : 0)],
-      bbox[1+(normal.y < 0 ? 3 : 0)],
-      bbox[2+(normal.z < 0 ? 3 : 0)]);
+      bbox[BOX3D_X+(normal.x < 0 ? BOX3D_MAXIDX : BOX3D_MINIDX)],
+      bbox[BOX3D_Y+(normal.y < 0 ? BOX3D_MAXIDX : BOX3D_MINIDX)],
+      bbox[BOX3D_Z+(normal.z < 0 ? BOX3D_MAXIDX : BOX3D_MINIDX)]);
   }
-
-  // this is for 2d line/node bboxes
-  // bounding box
-  enum {
-    BOX2D_TOP,
-    BOX2D_BOTTOM,
-    BOX2D_LEFT,
-    BOX2D_RIGHT,
-  };
 
   inline VVA_CHECKRESULT TVec get2DBBoxRejectPoint (const float bbox2d[4], const float minz=0.0f, const float maxz=0.0f) const noexcept {
     return TVec(
@@ -610,27 +659,88 @@ public:
     return (DotProduct(normal, get3DBBoxRejectPoint(bbox))-dist > 0.0f); // at least partially on a front side?
   }
 
-  // enum { OUTSIDE = 0, INSIDE = 1, PARTIALLY = -1 };
+  // WARNING! make sure that the following constants are in sync with `TFrustum` ones!
+  enum { OUTSIDE = 0, INSIDE = 1, PARTIALLY = -1 };
 
   // returns one of TFrustum::OUTSIDE, TFrustum::INSIDE, TFrustum::PARIALLY
   // if the box is touching the plane from inside, it is still assumed to be inside
   inline VVA_CHECKRESULT int checkBoxEx (const float bbox[6]) const noexcept {
     // check reject point
     float d = DotProduct(normal, get3DBBoxRejectPoint(bbox))-dist;
-    if (d <= 0.0f) return /*TFrustum::OUTSIDE*/0; // entire box on a back side
+    if (d <= 0.0f) return OUTSIDE; // entire box on a back side
     // check accept point
     d = DotProduct(normal, get3DBBoxAcceptPoint(bbox))-dist;
-    return (d < 0.0f ? /*TFrustum::PARTIALLY*/-1 : /*TFrustum::INSIDE*/1); // if accept point on another side (or on plane), assume intersection
+    return (d < 0.0f ? PARTIALLY : INSIDE); // if accept point on another side (or on plane), assume intersection
   }
 
   // returns `false` if the rect is on the back side of the plane
-  VVA_CHECKRESULT bool checkRect (const TVec &v0, const TVec &v1) const noexcept;
+  inline VVA_CHECKRESULT bool checkRect (const TVec &v0, const TVec &v1) const noexcept {
+    //FIXME: this can be faster
+    float bbox[6];
+    CreateBBox(bbox, v0, v1);
+    return checkBox(bbox);
+  }
 
-  // returns one of TFrustum::OUTSIDE, TFrustum::INSIDE, TFrustum::PARIALLY
-  VVA_CHECKRESULT int checkRectEx (const TVec &v0, const TVec &v1) const noexcept;
+  // returns one of OUTSIDE, INSIDE, PARIALLY
+  inline VVA_CHECKRESULT int checkRectEx (const TVec &v0, const TVec &v1) const noexcept {
+    //FIXME: this can be faster
+    float bbox[6];
+    CreateBBox(bbox, v0, v1);
+    return checkBoxEx(bbox);
+  }
 
   // this is the slow, general version
-  int BoxOnPlaneSide (const TVec &emins, const TVec &emaxs) const noexcept;
+  // it does the same accept/reject check, but returns this:
+  //   0: Quake source says that this can't happen
+  //   1: in front
+  //   2: in back
+  //   3: in both
+  // i.e.
+  //   bit 0 is set if some part of the cube is in front, and
+  //   bit 1 is set if some part of the cube is in back
+  unsigned BoxOnPlaneSide (const TVec &emins, const TVec &emaxs) const noexcept;
+
+  // this is used in `ClipPoly`
+  // all data is malloced, so you'd better keep this between calls to avoid excessive allocations
+  struct ClipWorkData {
+  private:
+    enum { INLINE_SIZE = 42 };
+    int inlsides[INLINE_SIZE];
+    float inldots[INLINE_SIZE];
+
+  public:
+    int *sides;
+    float *dots;
+    int tbsize;
+
+    inline ClipWorkData () noexcept : sides(&inlsides[0]), dots(&inldots[0]), tbsize(INLINE_SIZE) {}
+    inline ~ClipWorkData () noexcept { clear(); }
+    // no copies
+    ClipWorkData (const ClipWorkData &) = delete;
+    ClipWorkData & operator = (const ClipWorkData &) = delete;
+
+    inline void clear () noexcept {
+      if (sides && sides != &inlsides[0]) Z_Free(sides);
+      sides = &inlsides[0];
+      if (dots && dots != &inldots[0]) Z_Free(dots);
+      dots = &inldots[0];
+      tbsize = INLINE_SIZE;
+    }
+
+    inline void ensure (int newsize) noexcept {
+      if (tbsize < newsize) {
+        tbsize = (newsize|0x7f)+1;
+        sides = (int *)Z_Realloc(sides, tbsize*sizeof(sides[0]));
+        dots = (float *)Z_Realloc(dots, tbsize*sizeof(dots[0]));
+      }
+    }
+  };
+
+  // clip convex polygon to this plane
+  // returns number of new vertices (it can be 0 if the poly is completely clipped away)
+  // `dest` should have room for at least `vcount+1` vertices, and should not be equal to `src`
+  // precondition: vcount >= 3
+  int ClipPoly (ClipWorkData &wdata, TVec *dest, const TVec *src, int vcount, const float eps=0.1f) const noexcept;
 };
 
 static_assert(__builtin_offsetof(TPlane, dist) == __builtin_offsetof(TPlane, normal.z)+sizeof(float), "TPlane layout fail (0)");
@@ -855,6 +965,7 @@ public:
   //   [5] is maxz
   VVA_CHECKRESULT bool checkBox (const float bbox[6], const unsigned mask=~0u) const noexcept;
 
+  // WARNING! make sure that the following constants are in sync with `TPlane` ones!
   enum { OUTSIDE = 0, INSIDE = 1, PARTIALLY = -1 };
 
   // 0: completely outside; >0: completely inside; <0: partially inside
@@ -889,6 +1000,27 @@ static VVA_OKUNUSED inline void FixBBoxZ (float bbox[6]) noexcept {
     const float tmp = bbox[2];
     bbox[2] = bbox[3+2];
     bbox[3+2] = tmp;
+  }
+}
+
+
+// make sure that bbox min is lesser than bbox max
+// UB if bbox coords are not finite (no checks!)
+static VVA_OKUNUSED inline void SanitizeBBox3D (float bbox[6]) noexcept {
+  if (bbox[BOX3D_MINX] > bbox[BOX3D_MAXX]) {
+    const float tmp = bbox[BOX3D_MINX];
+    bbox[BOX3D_MINX] = bbox[BOX3D_MAXX];
+    bbox[BOX3D_MAXX] = tmp;
+  }
+  if (bbox[BOX3D_MINY] > bbox[BOX3D_MAXY]) {
+    const float tmp = bbox[BOX3D_MINY];
+    bbox[BOX3D_MINY] = bbox[BOX3D_MAXY];
+    bbox[BOX3D_MAXY] = tmp;
+  }
+  if (bbox[BOX3D_MINZ] > bbox[BOX3D_MAXZ]) {
+    const float tmp = bbox[BOX3D_MINZ];
+    bbox[BOX3D_MINZ] = bbox[BOX3D_MAXZ];
+    bbox[BOX3D_MAXZ] = tmp;
   }
 }
 
@@ -947,34 +1079,11 @@ static VVA_OKUNUSED VVA_CHECKRESULT inline bool CheckSphereVsAABBIgnoreZ (const 
 }
 
 
-//==========================================================================
-//
-//  R_ClipSurface
-//
-//  clip convex surface to the given plane
-//  returns number of new vertices
-//  `dest` should have room for at least `vcount+1` vertices
-//  precondition: vcount >= 3
-//
-//  WARNING! not thread-safe, not reentrant!
-//
-//==========================================================================
-int R_ClipSurface (TVec *dest, const TVec *src, int vcount, const TPlane &plane) noexcept;
-
-
-// 2d bounding box
-enum {
-  BOX2D_TOP,
-  BOX2D_BOTTOM,
-  BOX2D_LEFT,
-  BOX2D_RIGHT,
-};
-
 // considers the line to be infinite
 // check the relationship between the given box and the partition
 // line.  Returns -1 if box is on left side, +1 if box is on right
 // size, or 0 if the line intersects the box.
-int BoxOnLineSide2D (const float *tmbox, TVec v1, TVec v2) noexcept;
+int BoxOnLineSide2D (const float tmbox[4], TVec v1, TVec v2) noexcept;
 
 
 //==========================================================================
