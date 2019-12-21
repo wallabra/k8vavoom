@@ -95,6 +95,11 @@ struct segpart_t {
   float backBotDist;
   float TextureOffset;
   float RowOffset;
+  // fake flats
+  float frontFakeFloorDist;
+  float frontFakeCeilDist;
+  float backFakeFloorDist;
+  float backFakeCeilDist;
   //vint32 regidx; // region index (negative means "backsector region")
   sec_region_t *basereg;
 };

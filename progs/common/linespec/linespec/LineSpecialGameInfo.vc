@@ -932,6 +932,7 @@ final void MakeContents (line_t *line) {
 void MakeHeightSec (Level InLevel, line_t *line) {
   sector_t *sec = line->frontsector;
   sec.bTransferSource = true;
+  //if (line->arg2&1) sec.bAlwaysFakeHeights = true;//TODO
   if (line->arg2&2) sec.bFakeFloorOnly = true;
   if (line->arg2&4) sec.bClipFakePlanes = true;
   if (line->arg2&8) sec.bUnderWater = true;

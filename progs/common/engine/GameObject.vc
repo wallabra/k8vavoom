@@ -613,6 +613,11 @@ struct segpart_t {
   float backBotDist;
   float TextureOffset;
   float RowOffset;
+  // fake flats
+  float frontFakeFloorDist;
+  float frontFakeCeilDist;
+  float backFakeFloorDist;
+  float backFakeCeilDist;
   //int regidx; // region index (has no meaning for non-region parts)
   sec_region_t *basereg;
 };

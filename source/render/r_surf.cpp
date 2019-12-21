@@ -579,6 +579,10 @@ void VRenderLevelShared::SetupOneSidedSkyWSurf (subsector_t *sub, seg_t *seg, se
   sp->frontBotDist = r_floor.splane->dist;
   sp->backTopDist = 0.0f;
   sp->backBotDist = 0.0f;
+  sp->frontFakeFloorDist = 0.0f;
+  sp->frontFakeCeilDist = 0.0f;
+  sp->backFakeFloorDist = 0.0f;
+  sp->backFakeCeilDist = 0.0f;
 }
 
 
@@ -618,6 +622,10 @@ void VRenderLevelShared::SetupTwoSidedSkyWSurf (subsector_t *sub, seg_t *seg, se
   sp->frontBotDist = r_floor.splane->dist;
   sp->backTopDist = 0.0f;
   sp->backBotDist = 0.0f;
+  sp->frontFakeFloorDist = 0.0f;
+  sp->frontFakeCeilDist = 0.0f;
+  sp->backFakeFloorDist = 0.0f;
+  sp->backFakeCeilDist = 0.0f;
 }
 
 
@@ -715,6 +723,56 @@ static inline float DivByScale (float v, float scale) {
 // i haet shitpp templates!
 #define GetFixedZWithFake(func_,plname_,v_,sec_,r_plane_)  \
   ((sec_) && (sec_)->heightsec ? func_((r_plane_).GetPointZ(v_), (sec_)->heightsec->plname_.GetPointZ(v_)) : (r_plane_).GetPointZ(v_))
+
+
+//==========================================================================
+//
+//  SetupFakeDistances
+//
+//==========================================================================
+static inline void SetupFakeDistances (const seg_t *seg, segpart_t *sp) {
+  if (seg->frontsector->heightsec) {
+    sp->frontFakeFloorDist = seg->frontsector->heightsec->floor.dist;
+    sp->frontFakeCeilDist = seg->frontsector->heightsec->ceiling.dist;
+  } else {
+    sp->frontFakeFloorDist = 0.0f;
+    sp->frontFakeCeilDist = 0.0f;
+  }
+
+  if (seg->backsector && seg->backsector->heightsec) {
+    sp->backFakeFloorDist = seg->backsector->heightsec->floor.dist;
+    sp->backFakeCeilDist = seg->backsector->heightsec->ceiling.dist;
+  } else {
+    sp->backFakeFloorDist = 0.0f;
+    sp->backFakeCeilDist = 0.0f;
+  }
+}
+
+
+//==========================================================================
+//
+//  CheckFakeDistances
+//
+//  returns `true` if something was changed
+//
+//==========================================================================
+static inline bool CheckFakeDistances (const seg_t *seg, const segpart_t *sp) {
+  if (seg->frontsector->heightsec) {
+    if (FASI(sp->frontFakeFloorDist) != FASI(seg->frontsector->heightsec->floor.dist) ||
+        FASI(sp->frontFakeCeilDist) != FASI(seg->frontsector->heightsec->ceiling.dist))
+    {
+      return true;
+    }
+  }
+
+  if (seg->backsector && seg->backsector->heightsec) {
+    return
+      FASI(sp->backFakeFloorDist) != FASI(seg->backsector->heightsec->floor.dist) ||
+      FASI(sp->backFakeCeilDist) != FASI(seg->backsector->heightsec->ceiling.dist);
+  }
+
+  return false;
+}
 
 
 //==========================================================================
@@ -828,6 +886,7 @@ void VRenderLevelShared::SetupTwoSidedTopWSurf (subsector_t *sub, seg_t *seg, se
   sp->backBotDist = back_floor->dist;
   sp->TextureOffset = sidedef->Top.TextureOffset;
   sp->RowOffset = sidedef->Top.RowOffset;
+  SetupFakeDistances(seg, sp);
 }
 
 
@@ -855,6 +914,7 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
 
     float topz1 = r_ceiling.GetPointZ(*seg->v1);
     float topz2 = r_ceiling.GetPointZ(*seg->v2);
+
     // some map authors are making floor decorations with height transer
     // (that is so player won't wobble walking on such floors)
     // so we should use minimum front height here (sigh)
@@ -897,6 +957,26 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
     wv[2].z = min2(back_botz2, topz2);
     wv[3].z = botz2;
 
+    /* k8: boomedit.wad -- i can't make heads or tails of this crap; when it should be rendered, and when it isn't?
+    if (seg->frontsector->heightsec && r_hack_fake_floor_decorations) {
+      const sector_t *fhsec = seg->frontsector->heightsec;
+      const sector_t *bhsec = (seg->backsector ? seg->backsector->heightsec : nullptr);
+      int lidx = (int)(ptrdiff_t)(linedef-&Level->Lines[0]);
+      if (lidx == 192) {
+        GCon->Logf(NAME_Debug, "seg #%d: bsec=%d; fsec=%d; bhsec=%d; fhsec=%d", (int)(ptrdiff_t)(seg-&Level->Segs[0]), (int)(ptrdiff_t)(seg->backsector-&Level->Sectors[0]), (int)(ptrdiff_t)(seg->frontsector-&Level->Sectors[0]), (bhsec ? (int)(ptrdiff_t)(bhsec-&Level->Sectors[0]) : -1), (int)(ptrdiff_t)(fhsec-&Level->Sectors[0]));
+        GCon->Logf(NAME_Debug, "linedef #%d: botz=(%g : %g); topz=(%g : %g); back_botz=(%g : %g); fhsecbotz=(%g : %g); fhsectopz=(%g : %g); bhsecbotz=(%g : %g); bhsectopz=(%g : %g)",
+          lidx,
+          botz1, botz2, topz1, topz2,
+          back_botz1, back_botz2,
+          fhsec->floor.GetPointZ(*seg->v1), fhsec->floor.GetPointZ(*seg->v2),
+          fhsec->ceiling.GetPointZ(*seg->v1), fhsec->ceiling.GetPointZ(*seg->v2),
+          (bhsec ? bhsec->floor.GetPointZ(*seg->v1) : -666.999f), (bhsec ? bhsec->floor.GetPointZ(*seg->v2) : -666.999f),
+          (bhsec ? bhsec->ceiling.GetPointZ(*seg->v1) : -666.999f), (bhsec ? bhsec->ceiling.GetPointZ(*seg->v2) : -666.999f)
+          );
+      }
+    }
+    */
+
     bool createSurf = true;
 
     //FIXME: this is totally wrong with slopes!
@@ -928,6 +1008,7 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
   sp->backTopDist = back_ceiling->dist;
   sp->TextureOffset = sidedef->Bot.TextureOffset;
   sp->RowOffset = sidedef->Bot.RowOffset;
+  SetupFakeDistances(seg, sp);
 }
 
 
@@ -991,6 +1072,7 @@ void VRenderLevelShared::SetupOneSidedMidWSurf (subsector_t *sub, seg_t *seg, se
   sp->backBotDist = 0.0f;
   sp->TextureOffset = sidedef->Mid.TextureOffset;
   sp->RowOffset = sidedef->Mid.RowOffset;
+  SetupFakeDistances(seg, sp);
 }
 
 
@@ -1045,16 +1127,27 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
 
   SetupTextureAxesOffset(seg, &sp->texinfo, MTex, &sidedef->Mid);
 
-  sec_plane_t *back_floor = &seg->backsector->floor;
-  sec_plane_t *back_ceiling = &seg->backsector->ceiling;
+  const sec_plane_t *back_floor = &seg->backsector->floor;
+  const sec_plane_t *back_ceiling = &seg->backsector->ceiling;
 
   if (MTex->Type != TEXTYPE_Null) {
     TVec wv[4];
 
-    const float back_topz1 = back_ceiling->GetPointZ(*seg->v1);
-    const float back_topz2 = back_ceiling->GetPointZ(*seg->v2);
-    const float back_botz1 = back_floor->GetPointZ(*seg->v1);
-    const float back_botz2 = back_floor->GetPointZ(*seg->v2);
+    const sec_plane_t *bfloor = back_floor;
+    const sec_plane_t *bceiling = back_ceiling;
+
+    if (seg->backsector->heightsec && r_hack_fake_floor_decorations) {
+      const sector_t *bsec = seg->backsector;
+      const sector_t *fsec = seg->frontsector;
+      const sector_t *hsec = bsec->heightsec;
+      if (hsec->floor.minz > fsec->floor.minz) bfloor = &hsec->floor;
+      if (hsec->ceiling.minz < fsec->ceiling.minz) bceiling = &hsec->ceiling;
+    }
+
+    const float back_topz1 = bceiling->GetPointZ(*seg->v1);
+    const float back_topz2 = bceiling->GetPointZ(*seg->v2);
+    const float back_botz1 = bfloor->GetPointZ(*seg->v1);
+    const float back_botz2 = bfloor->GetPointZ(*seg->v2);
 
     const float exbotz = min2(back_botz1, back_botz2);
     const float extopz = max2(back_topz1, back_topz2);
@@ -1178,6 +1271,7 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
   sp->backBotDist = back_floor->dist;
   sp->TextureOffset = sidedef->Mid.TextureOffset;
   sp->RowOffset = sidedef->Mid.RowOffset;
+  SetupFakeDistances(seg, sp);
 }
 
 
@@ -1326,6 +1420,7 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
   sp->backBotDist = reg->efloor.splane->dist;
   sp->TextureOffset = sidedef->Mid.TextureOffset;
   sp->RowOffset = sidedef->Mid.RowOffset;
+  SetupFakeDistances(seg, sp);
 }
 
 
@@ -1447,7 +1542,10 @@ static inline bool CheckCommonRecreateEx (segpart_t *sp, VTexture *NTex, const T
 //==========================================================================
 static inline bool CheckCommonRecreate (seg_t *seg, segpart_t *sp, VTexture *NTex, const TPlane *floor, const TPlane *ceiling) {
   if (seg->backsector) {
-    return CheckCommonRecreateEx(sp, NTex, floor, ceiling, &seg->backsector->floor, &seg->backsector->ceiling);
+    // check for fake floors
+    return
+      CheckFakeDistances(seg, sp) ||
+      CheckCommonRecreateEx(sp, NTex, floor, ceiling, &seg->backsector->floor, &seg->backsector->ceiling);
   } else {
     return CheckCommonRecreateEx(sp, NTex, floor, ceiling, nullptr, nullptr);
   }
@@ -1456,20 +1554,30 @@ static inline bool CheckCommonRecreate (seg_t *seg, segpart_t *sp, VTexture *NTe
 
 //==========================================================================
 //
-//  CheckMidRecreate
+//  CheckMidRecreate1S
 //
 //==========================================================================
-static inline bool CheckMidRecreate (seg_t *seg, segpart_t *sp, const TPlane *floor, const TPlane *ceiling) {
+static inline bool CheckMidRecreate1S (seg_t *seg, segpart_t *sp, const TPlane *floor, const TPlane *ceiling) {
   return CheckCommonRecreate(seg, sp, GTextureManager(seg->sidedef->MidTexture), floor, ceiling);
 }
 
 
 //==========================================================================
 //
-//  CheckTopRecreate
+//  CheckMidRecreate2S
 //
 //==========================================================================
-static inline bool CheckTopRecreate (seg_t *seg, segpart_t *sp, sec_plane_t *floor, sec_plane_t *ceiling) {
+static inline bool CheckMidRecreate2S (seg_t *seg, segpart_t *sp, const TPlane *floor, const TPlane *ceiling) {
+  return CheckCommonRecreate(seg, sp, GTextureManager(seg->sidedef->MidTexture), floor, ceiling);
+}
+
+
+//==========================================================================
+//
+//  CheckTopRecreate2S
+//
+//==========================================================================
+static inline bool CheckTopRecreate2S (seg_t *seg, segpart_t *sp, sec_plane_t *floor, sec_plane_t *ceiling) {
   sec_plane_t *back_ceiling = &seg->backsector->ceiling;
   VTexture *TTex = GTextureManager(seg->sidedef->TopTexture);
   if (ceiling->SkyBox != back_ceiling->SkyBox && R_IsStrictlySkyFlatPlane(ceiling) && R_IsStrictlySkyFlatPlane(back_ceiling)) {
@@ -1481,10 +1589,10 @@ static inline bool CheckTopRecreate (seg_t *seg, segpart_t *sp, sec_plane_t *flo
 
 //==========================================================================
 //
-//  CheckBopRecreate
+//  CheckBopRecreate2S
 //
 //==========================================================================
-static inline bool CheckBopRecreate (seg_t *seg, segpart_t *sp, const TPlane *floor, const TPlane *ceiling) {
+static inline bool CheckBopRecreate2S (seg_t *seg, segpart_t *sp, const TPlane *floor, const TPlane *ceiling) {
   return CheckCommonRecreate(seg, sp, GTextureManager(seg->sidedef->BottomTexture), floor, ceiling);
 }
 
@@ -1540,7 +1648,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     // midtexture
     sp = dseg->mid;
     if (sp) {
-      if (CheckMidRecreate(seg, sp, r_floor.splane, r_ceiling.splane)) {
+      if (CheckMidRecreate1S(seg, sp, r_floor.splane, r_ceiling.splane)) {
         SetupOneSidedMidWSurf(sub, seg, sp, r_floor, r_ceiling);
       } else {
         UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->Mid);
@@ -1567,7 +1675,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     // top wall
     sp = dseg->top;
     if (sp) {
-      if (CheckTopRecreate(seg, sp, r_floor.splane, r_ceiling.splane)) {
+      if (CheckTopRecreate2S(seg, sp, r_floor.splane, r_ceiling.splane)) {
         SetupTwoSidedTopWSurf(sub, seg, sp, r_floor, r_ceiling);
       } else {
         UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->Top);
@@ -1578,7 +1686,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     // bottom wall
     sp = dseg->bot;
     if (sp) {
-      if (CheckBopRecreate(seg, sp, r_floor.splane, r_ceiling.splane)) {
+      if (CheckBopRecreate2S(seg, sp, r_floor.splane, r_ceiling.splane)) {
         SetupTwoSidedBotWSurf(sub, seg, sp, r_floor, r_ceiling);
       } else {
         UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->Bot);
@@ -1589,7 +1697,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     // masked MidTexture
     sp = dseg->mid;
     if (sp) {
-      if (CheckMidRecreate(seg, sp, r_floor.splane, r_ceiling.splane)) {
+      if (CheckMidRecreate2S(seg, sp, r_floor.splane, r_ceiling.splane)) {
         SetupTwoSidedMidWSurf(sub, seg, sp, r_floor, r_ceiling);
       } else {
         UpdateTextureOffsets(sub, seg, sp, &seg->sidedef->Mid);
@@ -1920,7 +2028,23 @@ void VRenderLevelShared::UpdateSubsectorFlatSurfaces (subsector_t *sub, bool dof
   if (!forced && sub->updateWorldFrame == updateWorldFrame) return;
   for (subregion_t *region = sub->regions; region; region = region->next) {
     if (dofloors) {
-      if (region->realfloor) UpdateSecSurface(region->realfloor, region->floorplane, sub, region, true/*no cmap*/); // ignore colormap
+      if (region->realfloor) {
+        // check if we have to remove zerosky flag
+        // "zerosky" is set when the sector has zero height, and sky ceiling
+        // this is what removes extra floors on Doom II MAP01, for example
+        if (region->flags&subregion_t::SRF_ZEROSKY_FLOOR_HACK) {
+          if (region->secregion->eceiling.splane->pic != skyflatnum ||
+              region->secregion->efloor.splane->pic == skyflatnum ||
+              sub->sector->floor.normal.z != 1.0f || sub->sector->ceiling.normal.z != -1.0f ||
+              sub->sector->floor.minz != sub->sector->ceiling.minz)
+          {
+            // no more zerofloor
+            //GCon->Logf(NAME_Debug, "deactivate ZEROSKY HACK: sub=%d; region=%p", (int)(ptrdiff_t)(sub-&Level->Subsectors[0]), region);
+            region->flags &= ~subregion_t::SRF_ZEROSKY_FLOOR_HACK;
+          }
+        }
+        UpdateSecSurface(region->realfloor, region->floorplane, sub, region, true/*no cmap*/); // ignore colormap
+      }
       if (region->fakefloor) {
         TSecPlaneRef fakefloor;
         fakefloor.set(&sub->sector->fakefloors->floorplane, false);
