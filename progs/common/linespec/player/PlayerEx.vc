@@ -863,6 +863,7 @@ void MovePlayer (float deltaTime) {
     }
     if ((Buttons&BT_JUMP) && MO.Velocity.z < 160) MO.Velocity.z += 30;
     if ((Buttons&BT_CROUCH) && MO.Velocity.z > -160) MO.Velocity.z -= 30;
+    // sanitize
     float limit = (Buttons&BT_SPEED ? 400 : 200);
     MO.Velocity.z = fclamp(MO.Velocity.z, -limit, limit);
     //print("VZ=%s; FH=%s; fvwd=%s", MO.Velocity.z, FlyHeight, vforward);
@@ -872,6 +873,7 @@ void MovePlayer (float deltaTime) {
     MO.Velocity.z = (PlayerPawn(MO).JumpVelZ*(Cheats&CF_HIGHJUMP ? 2.0 : 1.0))*1.1;
     EntityEx(MO).bOnMobj = false;
     JumpTime = 0.5;
+    MO.PlaySound('*jump', CHAN_VOICE);
   }
 }
 
@@ -908,6 +910,7 @@ void CheckWaterJump () {
       EntityEx(MO).bWaterJump = true;
       MO.Velocity.z = 350.0;
       EntityEx(MO).ReactionTime = 2.0; // safety net
+      MO.PlaySound('*jump', CHAN_VOICE); //FIXME
     }
   }
 }
