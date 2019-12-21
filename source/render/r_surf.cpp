@@ -921,8 +921,8 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
     //FIXME: this is totally wrong, because we may have alot of different
     //       configurations here, and we should check for them all
     //FIXME: also, moving height sector should trigger surface recreation
-    const float botz1 = (r_hack_fake_floor_decorations ? GetFixedZWithFake(min2, floor, *seg->v1, seg->frontsector, r_floor) : r_floor.GetPointZ(*seg->v1));
-    const float botz2 = (r_hack_fake_floor_decorations ? GetFixedZWithFake(min2, floor, *seg->v2, seg->frontsector, r_floor) : r_floor.GetPointZ(*seg->v2));
+    float botz1 = (r_hack_fake_floor_decorations ? GetFixedZWithFake(min2, floor, *seg->v1, seg->frontsector, r_floor) : r_floor.GetPointZ(*seg->v1));
+    float botz2 = (r_hack_fake_floor_decorations ? GetFixedZWithFake(min2, floor, *seg->v2, seg->frontsector, r_floor) : r_floor.GetPointZ(*seg->v2));
     float top_TexZ = r_ceiling.splane->TexZ;
 
     // same height fix as above
@@ -938,6 +938,16 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
         if (fhsec == bhsec || // same sector (boomedit.wad stairs)
             (fhsec->floor.dist == bhsec->floor.dist && fhsec->floor.normal == bhsec->floor.normal)) // or same floor height (boomedit.wad lift)
         {
+          back_botz1 = seg->backsector->floor.GetPointZ(*seg->v1);
+          back_botz2 = seg->backsector->floor.GetPointZ(*seg->v2);
+        }
+        else if (fhsec->floor.dist < bhsec->floor.dist) {
+          // no, i don't know either, but this fixes sector 96 of boomedit.wad from the top
+          botz1 = fhsec->floor.GetPointZ(*seg->v1);
+          botz2 = fhsec->floor.GetPointZ(*seg->v2);
+        }
+        else if (fhsec->floor.dist > bhsec->floor.dist) {
+          // no, i don't know either, but this fixes sector 96 of boomedit.wad from the bottom after the teleport
           back_botz1 = seg->backsector->floor.GetPointZ(*seg->v1);
           back_botz2 = seg->backsector->floor.GetPointZ(*seg->v2);
         }
@@ -978,7 +988,7 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
       const sector_t *fhsec = seg->frontsector->heightsec;
       const sector_t *bhsec = (seg->backsector ? seg->backsector->heightsec : nullptr);
       int lidx = (int)(ptrdiff_t)(linedef-&Level->Lines[0]);
-      if (lidx == 1890) {
+      if (lidx == 589) {
         GCon->Logf(NAME_Debug, "seg #%d: bsec=%d; fsec=%d; bhsec=%d; fhsec=%d", (int)(ptrdiff_t)(seg-&Level->Segs[0]), (int)(ptrdiff_t)(seg->backsector-&Level->Sectors[0]), (int)(ptrdiff_t)(seg->frontsector-&Level->Sectors[0]), (bhsec ? (int)(ptrdiff_t)(bhsec-&Level->Sectors[0]) : -1), (int)(ptrdiff_t)(fhsec-&Level->Sectors[0]));
         GCon->Logf(NAME_Debug, "linedef #%d: botz=(%g : %g); topz=(%g : %g); back_botz=(%g : %g); fhsecbotz=(%g : %g); fhsectopz=(%g : %g); bhsecbotz=(%g : %g); bhsectopz=(%g : %g)",
           lidx,
