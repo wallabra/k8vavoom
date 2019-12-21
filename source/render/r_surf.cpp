@@ -926,8 +926,23 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
     float top_TexZ = r_ceiling.splane->TexZ;
 
     // same height fix as above
-    const float back_botz1 = (r_hack_fake_floor_decorations ? GetFixedZWithFake(max2, floor, *seg->v1, seg->backsector, (*back_floor)) : back_floor->GetPointZ(*seg->v1));
-    const float back_botz2 = (r_hack_fake_floor_decorations ? GetFixedZWithFake(max2, floor, *seg->v2, seg->backsector, (*back_floor)) : back_floor->GetPointZ(*seg->v2));
+    float back_botz1 = (r_hack_fake_floor_decorations ? GetFixedZWithFake(max2, floor, *seg->v1, seg->backsector, (*back_floor)) : back_floor->GetPointZ(*seg->v1));
+    float back_botz2 = (r_hack_fake_floor_decorations ? GetFixedZWithFake(max2, floor, *seg->v2, seg->backsector, (*back_floor)) : back_floor->GetPointZ(*seg->v2));
+
+    /* k8: boomedit.wad -- i can't make heads or tails of this crap; when it should be rendered, and when it shouldn't? */
+    /*     this is total hack to make boomedit.wad underwater look acceptable; but why it is like this? */
+    {
+      const sector_t *fhsec = seg->frontsector->heightsec;
+      const sector_t *bhsec = seg->backsector->heightsec;
+      if (fhsec && bhsec && ((fhsec->SectorFlags|bhsec->SectorFlags)&(sector_t::SF_TransferSource|sector_t::SF_FakeBoomMask)) == sector_t::SF_TransferSource) {
+        if (fhsec == bhsec || // same sector (boomedit.wad stairs)
+            (fhsec->floor.dist == bhsec->floor.dist && fhsec->floor.normal == bhsec->floor.normal)) // or same floor height (boomedit.wad lift)
+        {
+          back_botz1 = seg->backsector->floor.GetPointZ(*seg->v1);
+          back_botz2 = seg->backsector->floor.GetPointZ(*seg->v2);
+        }
+      }
+    }
 
     // hack to allow height changes in outdoor areas
     if (R_IsStrictlySkyFlatPlane(r_ceiling.splane) && R_IsStrictlySkyFlatPlane(back_ceiling)) {
@@ -957,12 +972,13 @@ void VRenderLevelShared::SetupTwoSidedBotWSurf (subsector_t *sub, seg_t *seg, se
     wv[2].z = min2(back_botz2, topz2);
     wv[3].z = botz2;
 
-    /* k8: boomedit.wad -- i can't make heads or tails of this crap; when it should be rendered, and when it isn't?
+    /* k8: boomedit.wad -- debug crap */
+    /*
     if (seg->frontsector->heightsec && r_hack_fake_floor_decorations) {
       const sector_t *fhsec = seg->frontsector->heightsec;
       const sector_t *bhsec = (seg->backsector ? seg->backsector->heightsec : nullptr);
       int lidx = (int)(ptrdiff_t)(linedef-&Level->Lines[0]);
-      if (lidx == 192) {
+      if (lidx == 1890) {
         GCon->Logf(NAME_Debug, "seg #%d: bsec=%d; fsec=%d; bhsec=%d; fhsec=%d", (int)(ptrdiff_t)(seg-&Level->Segs[0]), (int)(ptrdiff_t)(seg->backsector-&Level->Sectors[0]), (int)(ptrdiff_t)(seg->frontsector-&Level->Sectors[0]), (bhsec ? (int)(ptrdiff_t)(bhsec-&Level->Sectors[0]) : -1), (int)(ptrdiff_t)(fhsec-&Level->Sectors[0]));
         GCon->Logf(NAME_Debug, "linedef #%d: botz=(%g : %g); topz=(%g : %g); back_botz=(%g : %g); fhsecbotz=(%g : %g); fhsectopz=(%g : %g); bhsecbotz=(%g : %g); bhsectopz=(%g : %g)",
           lidx,

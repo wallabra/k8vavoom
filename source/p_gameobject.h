@@ -714,6 +714,8 @@ struct sector_t {
     SF_FakeCeilingOnly  = 0x0400u, // when used as heightsec in R_FakeFlat, only copies ceiling
     SF_HangingBridge    = 0x0800u, // fake hanging bridge
     SF_Has3DMidTex      = 0x1000u, // has any 3dmidtex linedef?
+    // mask with this to check if this is "arg1==0" Boom crap
+    SF_FakeBoomMask     = SF_FakeFloorOnly|SF_ClipFakePlanes|/*SF_UnderWater|*/SF_IgnoreHeightSec/*|SF_NoFakeLight*/,
   };
   vuint32 SectorFlags;
 
