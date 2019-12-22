@@ -65,7 +65,7 @@ override Inventory CreateCopy (EntityEx Toucher) {
 //  You can't drop it, ever.
 //
 //==========================================================================
-override Inventory CreateTossable () {
+override Inventory CreateTossable (optional int DropAmount) {
   return none;
 }
 

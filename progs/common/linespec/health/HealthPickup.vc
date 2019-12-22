@@ -45,8 +45,8 @@ override Inventory CreateCopy (EntityEx Toucher) {
 //  CreateTossable
 //
 //==========================================================================
-override Inventory CreateTossable () {
-  Inventory Copy = ::CreateTossable();
+override Inventory CreateTossable (optional int DropAmount) {
+  Inventory Copy = ::CreateTossable(DropAmount!optional);
   if (Copy) Copy.Health = Health;
   return Copy;
 }

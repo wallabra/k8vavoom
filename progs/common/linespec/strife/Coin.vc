@@ -27,49 +27,36 @@ class Coin : Inventory
   game(GAME_Strife)
   __mobjinfo__(93);
 
+
 //==========================================================================
 //
 //  HandlePickup
 //
 //==========================================================================
-
-override bool HandlePickup(Inventory Item)
-{
-  if (Coin(Item))
-  {
-    if (Amount < MaxAmount)
-    {
+override bool HandlePickup (Inventory Item) {
+  if (Coin(Item)) {
+    if (Amount < MaxAmount) {
       Amount += Item.Amount;
-      if (Amount > MaxAmount)
-      {
-        Amount = MaxAmount;
-      }
+      if (Amount > MaxAmount) Amount = MaxAmount;
       Item.bPickupGood = true;
     }
     return true;
   }
 
-  if (Inventory)
-  {
-    return Inventory.HandlePickup(Item);
-  }
+  if (Inventory) return Inventory.HandlePickup(Item);
   return false;
 }
+
 
 //==========================================================================
 //
 //  CreateCopy
 //
 //==========================================================================
-
-override Inventory CreateCopy(EntityEx Toucher)
-{
-  if (Class == Coin)
-  {
+override Inventory CreateCopy (EntityEx Toucher) {
+  if (Class == Coin) {
     return ::CreateCopy(Toucher);
-  }
-  else
-  {
+  } else {
     Inventory Copy = SpawnEntityChecked(class!Inventory, Coin, default, default, default, AllowReplace:false);
     assert(Copy);
     Copy.Amount = Amount;
@@ -78,56 +65,79 @@ override Inventory CreateCopy(EntityEx Toucher)
   }
 }
 
+
+//==========================================================================
+//
+//  DropCoinInternal
+//
+//==========================================================================
+Inventory DropCoinInternal (class!Inventory ctype) {
+  assert(ctype);
+  Inventory Copy = SpawnEntityChecked(class!Inventory, ctype, default, default, default, AllowReplace:false);
+  if (Copy) {
+    Copy.DropTime = 1.0;
+    Copy.bSpecial = false;
+    Copy.bSolid = false;
+  }
+  return Copy;
+}
+
+
 //==========================================================================
 //
 //  CreateTossable
 //
 //==========================================================================
-
-override Inventory CreateTossable()
-{
+override Inventory CreateTossable (optional int DropAmount) {
   Inventory Copy;
 
-  if (bUndroppable || !Owner || Amount <= 0)
-  {
-    return none;
+  if (bUndroppable || !Owner || Amount <= 0) return none;
+
+  if (!specified_DropAmount || DropAmount < 0) {
+    //k8: this is quite special, i guess
+    //DropAmount = 50+25+10+1; // this is what the old code could drop at max, and i believe that it is a bug
+    DropAmount = Amount;
   }
-  //  Gold is dropped with maximal throwable amount.
-  if (Amount >= 50)
-  {
-    Copy = SpawnEntityChecked(class!Inventory, Gold50, default, default, default, AllowReplace:false);
+  DropAmount = clamp(DropAmount, 1, Amount);
+  assert(DropAmount > 0);
+
+  // gold is dropped with maximal throwable amount
+  while (DropAmount >= 50) {
+    assert(Amount >= 50);
+    DropAmount -= 50;
     Amount -= 50;
+    Copy = DropCoinInternal(Gold50);
   }
-  else if (Amount >= 25)
-  {
-    Copy = SpawnEntityChecked(class!Inventory, Gold25, default, default, default, AllowReplace:false);
+
+  while (DropAmount >= 25) {
+    assert(Amount >= 25);
+    DropAmount -= 25;
     Amount -= 25;
+    Copy = DropCoinInternal(Gold25);
   }
-  else if (Amount >= 10)
-  {
-    Copy = SpawnEntityChecked(class!Inventory, Gold10, default, default, default, AllowReplace:false);
+
+  while (DropAmount >= 10) {
+    assert(Amount >= 10);
+    DropAmount -= 10;
     Amount -= 10;
+    Copy = DropCoinInternal(Gold10);
   }
-  else if (Amount > 1 || bKeepDepleted)
-  {
-    Copy = SpawnEntityChecked(class!Inventory, Coin, default, default, default, AllowReplace:false);
+
+  while (DropAmount >= 1) {
+    assert(Amount >= 1);
+    DropAmount -= 1;
     Amount -= 1;
+    Copy = DropCoinInternal(Coin);
   }
-  else
-  {
-    Copy = self;
-    BecomePickup();
-  }
-  assert(Copy);
-  Copy.DropTime = 1.0;
-  Copy.bSpecial = false;
-  Copy.bSolid = false;
-  if (Copy != self && Amount <= 0 && !bKeepDepleted)
-  {
-    Destroy();
-  }
+
+  assert(Amount >= 0);
+
+  // remove from inventory if everything was dropped out
+  if (!Amount && !bKeepDepleted) Destroy();
+
   return Copy;
 }
+
 
 states
 {
@@ -136,8 +146,8 @@ Spawn:
   Stop
 }
 
-defaultproperties
-{
+
+defaultproperties {
   ConversationID = 168;
   PickupMessage = "$txt_coin";
   //Amount = 0; //k8: default number of coins (this is invalid, though)

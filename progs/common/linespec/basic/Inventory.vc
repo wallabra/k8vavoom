@@ -456,14 +456,17 @@ Inventory CreateCopy (EntityEx Toucher) {
 //
 //  CreateTossable
 //
-//  Create item suitable fro dropping.
+//  Create item suitable for dropping.
 //
 //==========================================================================
-Inventory CreateTossable () {
+Inventory CreateTossable (optional int DropAmount) {
   if (!IdleState) return none; // this item has no spawn state so it cannot be seen
-  if (bUndroppable || !Owner || Amount <= 0) return none;
 
-  if (Amount == 1 && !bKeepDepleted) {
+  if (!specified_DropAmount || DropAmount < 0) DropAmount = 1; // drop one by default
+
+  if (bUndroppable || !Owner || Amount <= 0 || DropAmount == 0) return none;
+
+  if (Amount <= DropAmount && !bKeepDepleted) {
     // drop the current one
     BecomePickup();
     DropTime = 1.0;
@@ -472,14 +475,15 @@ Inventory CreateTossable () {
     return self;
   }
 
+  // create copy to drop
   Inventory Copy = SpawnEntityChecked(class!Inventory, class!Inventory(Class), default, default, default, AllowReplace:false);
   assert(Copy);
-  Copy.Amount = 1;
+  Copy.Amount = clamp(DropAmount, 1, Amount);
   Copy.MaxAmount = MaxAmount;
   Copy.DropTime = 1.0;
   Copy.bSpecial = false;
   Copy.bSolid = false;
-  --Amount;
+  Amount -= Copy.Amount;
   return Copy;
 }
 

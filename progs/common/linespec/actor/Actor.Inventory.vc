@@ -212,9 +212,9 @@ final void DoTakeInventory (class!Inventory ItemType, int Amount, EntityEx Recei
 //  A_DropInventory
 //
 //==========================================================================
-[decorate] final void A_DropInventory (class!Inventory ItemType) {
+[decorate] final void A_DropInventory (class!Inventory ItemType, optional int DropAmount) {
   Inventory Item = FindInventory(ItemType, disableReplacement:true); //k8: i hope so
-  if (Item) DropInventory(Item);
+  if (Item) DropInventory(Item, DropAmount!optional);
 }
 
 

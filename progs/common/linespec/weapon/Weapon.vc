@@ -278,15 +278,15 @@ override Inventory CreateCopy (EntityEx Toucher) {
 //  CreateTossable
 //
 //==========================================================================
-override Inventory CreateTossable () {
+override Inventory CreateTossable (optional int DropAmount) {
   // drop the weapon that is meant to be placed in a level, i.e. that normally gives you ammo
   if (SisterWeapon && !default.AmmoGive1 && !default.AmmoGive2 &&
       (SisterWeapon.default.AmmoGive1 > 0 || SisterWeapon.default.AmmoGive2 > 0))
   {
-    return SisterWeapon.CreateTossable();
+    return SisterWeapon.CreateTossable(DropAmount!optional);
   }
 
-  Weapon Copy = Weapon(::CreateTossable());
+  Weapon Copy = Weapon(::CreateTossable(DropAmount!optional));
   if (Copy) {
     // if weapon has a sister weapon, remove it too
     if (SisterWeapon) {

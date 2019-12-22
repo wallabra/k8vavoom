@@ -178,10 +178,10 @@ override void DetachedFromOwner () {
 //  CreateTossable
 //
 //==========================================================================
-override Inventory CreateTossable () {
+override Inventory CreateTossable (optional int DropAmount) {
   // set depleted flag to prevent cheating
-  Inventory Copy = ::CreateTossable();
-  BackpackItem(Copy).bDepleted = true;
+  Inventory Copy = ::CreateTossable(DropAmount!optional);
+  if (Copy) BackpackItem(Copy).bDepleted = true;
   return Copy;
 }
 

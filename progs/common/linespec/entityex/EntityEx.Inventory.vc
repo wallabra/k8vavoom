@@ -525,14 +525,16 @@ bool UseInventory (Inventory Item) {
 //
 //  DropInventory
 //
+//  -1 means "one"
+//
 //==========================================================================
-EntityEx DropInventory (Inventory SrcItem) {
-  TVec Dir;
-  AngleVector(Angles, out Dir);
-  Dir.z = 0.0;
-  Dir = Normalise(Dir);
-  Inventory Item = SrcItem.CreateTossable();
+EntityEx DropInventory (Inventory SrcItem, optional int DropAmount) {
+  Inventory Item = SrcItem.CreateTossable(DropAmount!optional);
   if (Item) {
+    TVec Dir;
+    AngleVector(Angles, out Dir);
+    Dir.z = 0.0;
+    Dir = Normalise(Dir);
     Item.SetOrigin2(Origin+vector(0.0, 0.0, 32.0)+Dir*(Radius+32.0), properFloorCheck:true);
     Item.Angles.yaw = Angles.yaw;
     Item.Velocity = Dir*128.0;
