@@ -51,9 +51,9 @@ static int constexpr stlen (const char *s) { return (s && *s ? 1+stlen(s+1) : 0)
 */
 
 
-#define REGISTER_NAME(name)   { HashNext:nullptr, Index:NAME_##name, length:0/*stlen(#name)*/, alloted:0/*stlen(#name)+1*/, rc:-0x00ffffff, dummy:0, /*Name:*/ #name },
+#define REGISTER_NAME(name)   { HashNext:nullptr, Index:NAME_##name, Flags:0, length:0/*stlen(#name)*/, alloted:0/*stlen(#name)+1*/, rc:-0x00ffffff, dummy:0, /*Name:*/ #name },
 VName::VNameEntry VName::AutoNames[] = {
-  { HashNext:nullptr, Index:NAME_none, length:0, alloted:1, rc:-0x00ffffff, dummy:0, /*Name:*/"" },
+  { HashNext:nullptr, Index:NAME_none, Flags:0, length:0, alloted:1, rc:-0x00ffffff, dummy:0, /*Name:*/"" },
 #include "names.h"
 };
 
@@ -85,6 +85,13 @@ int VName::AppendNameEntry (VNameEntry *e) noexcept {
   int res = (int)NamesCount;
   Names[NamesCount++] = e;
   e->Index = res;
+  // setup flags
+  vassert(e->Flags == 0);
+  // locase
+  bool allLow = true;
+  for (const char *s = e->Name; *s; ++s) if (s[0] >= 'A' && s[0] <= 'Z') { allLow = false; break; }
+  if (allLow) e->SetLoCase();
+  if (e->length <= 8) e->SetName8();
   //fprintf(stderr, "VName::AppendNameEntry: added <%s> (index=%d)\n", e->Name, res);
   return res;
 }
