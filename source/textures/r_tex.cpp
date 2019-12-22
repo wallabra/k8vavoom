@@ -137,12 +137,10 @@ static inline void CheckAddNumberedName (VName PatchName) {
 //==========================================================================
 static void warnMissingTexture (VName Name, bool silent) {
   if (Name == NAME_None) return; // just in case
-  VName xxn = VName(*Name, VName::AddLower);
-  if (!patchesWarned.has(xxn)) {
-    patchesWarned.put(xxn, true);
-    if (!silent) {
-      GCon->Logf(NAME_Warning,"Texture: texture \"%s\" not found", *Name);
-    }
+  VName xxn = Name.GetLower();
+  if (!patchesWarned.put(xxn, true)) {
+    // new value
+    if (!silent) GCon->Logf(NAME_Warning,"Texture: texture \"%s\" not found", *Name);
   }
 }
 
@@ -154,7 +152,8 @@ static void warnMissingTexture (VName Name, bool silent) {
 //==========================================================================
 static bool isSeenMissingTexture (VName Name) {
   if (Name == NAME_None) return true; // just in case
-  VName xxn = VName(*Name, VName::AddLower);
+  VName xxn = Name.GetLowerNoCreate();
+  if (xxn == NAME_None) return false;
   return patchesWarned.has(xxn);
 }
 
@@ -355,13 +354,14 @@ int VTextureManager::AddTexture (VTexture *Tex) {
 
   // also, replace existing texture with similar name, if we aren't in "map-local" mode
   if (!inMapTextures) {
-    if (Tex->Name != NAME_None && (*Tex->Name)[0] != 0x7f) {
+    VName loTName = Tex->Name.GetLowerNoCreate();
+    if (loTName != NAME_None && Tex->Name != NAME_None && (*Tex->Name)[0] != 0x7f) {
       int repidx = -1;
       // loop, no shrinking allowed
-      for (auto it = firstWithName(Tex->Name, false); !it.empty(); it.next()) {
+      for (auto it = firstWithName(loTName, false); !it.empty(); it.next()) {
         if (it.isMapTexture()) continue; // skip map textures
         VTexture *tx = it.tex();
-        if (tx->Name != Tex->Name) continue;
+        if (tx->Name != loTName) continue;
         if (tx->Type != Tex->Type) continue;
         repidx = it.index();
         break;
@@ -426,7 +426,9 @@ void VTextureManager::AddToHash (int Index) {
   vassert(tx);
   tx->HashNext = -1;
   if (tx->Name == NAME_None || (*tx->Name)[0] == 0x7f) return;
-  int HashIndex = GetTypeHash(tx->Name)&(HASH_SIZE-1);
+  VName tname = tx->Name.GetLower();
+  tx->Name = tname; // force lower-cased name for texture
+  int HashIndex = GetTypeHash(tname)&(HASH_SIZE-1);
   if (Index < FirstMapTextureIndex) {
     Textures[Index]->HashNext = TextureHash[HashIndex];
   } else {
@@ -460,6 +462,7 @@ VTextureManager::Iter VTextureManager::firstWithStr (VStr s) {
 int VTextureManager::CheckNumForName (VName Name, int Type, bool bOverload) {
   if ((unsigned)Type >= (unsigned)TEXTYPE_MAX) return -1; // oops
 
+  Name = Name.GetLowerNoCreate();
   if (Name == NAME_None) return -1;
   if (IsDummyTextureName(Name)) return 0;
 
@@ -585,6 +588,7 @@ int VTextureManager::FindPatchByName (VName Name) {
 //
 //==========================================================================
 int VTextureManager::FindWallByName (VName Name, bool bOverload) {
+  Name = Name.GetLowerNoCreate();
   if (Name == NAME_None) return -1;
   if (IsDummyTextureName(Name)) return 0;
 
@@ -594,7 +598,7 @@ int VTextureManager::FindWallByName (VName Name, bool bOverload) {
   for (int trynum = 0; trynum < 2; ++trynum) {
     if (trynum == 1) {
       if (VStr::length(*Name) < 8) return -1;
-      Name = VName(*Name, VName::FindLower8);
+      Name = Name.GetLower8NoCreate();
       if (Name == NAME_None) return -1;
     }
 
@@ -632,6 +636,7 @@ int VTextureManager::FindWallByName (VName Name, bool bOverload) {
 //
 //==========================================================================
 int VTextureManager::FindFlatByName (VName Name, bool bOverload) {
+  Name = Name.GetLowerNoCreate();
   if (Name == NAME_None) return -1;
   if (IsDummyTextureName(Name)) return 0;
 
@@ -641,7 +646,7 @@ int VTextureManager::FindFlatByName (VName Name, bool bOverload) {
   for (int trynum = 0; trynum < 2; ++trynum) {
     if (trynum == 1) {
       if (VStr::length(*Name) < 8) return -1;
-      Name = VName(*Name, VName::FindLower8);
+      Name = Name.GetLower8NoCreate();
       if (Name == NAME_None) return -1;
     }
 
@@ -688,7 +693,7 @@ int VTextureManager::NumForName (VName Name, int Type, bool bOverload, bool bAll
       if (bAllowLoadAsMapTexture) {
         auto lock = LockMapLocalTextures();
         i = GTextureManager.AddFileTextureChecked(Name, Type);
-        if (i == -1) i = GTextureManager.AddFileTextureChecked(VName(*Name, VName::AddLower), Type);
+        if (i == -1) i = GTextureManager.AddFileTextureChecked(Name.GetLower(), Type);
         if (i != -1) return i;
         numForNameWarned.put(Name, true);
       }
@@ -788,16 +793,25 @@ void VTextureManager::GetTextureInfo (int TexNum, picinfo_t *info) {
 static int findAndLoadTexture (VName Name, int Type, EWadNamespace NS) {
   if (Name == NAME_None) return -1;
   if (VTextureManager::IsDummyTextureName(Name)) return 0;
-  VName PatchName(*Name, VName::AddLower8);
+  VName PatchName = Name.GetLower8();
+
   // need to collect 'em to go in backwards order
   TArray<int> fulllist; // full names
   TArray<int> shortlist; // short names
+  VName fullLoName = Name.GetLower(); // this creates lo-cased name, if necessary
   for (int LNum = W_IterateNS(-1, NS); LNum >= 0; LNum = W_IterateNS(LNum, NS)) {
     //GCon->Logf(NAME_Debug, "FOR '%s': #%d is '%s'", *Name, LNum, *W_LumpName(LNum));
     VName lmpname = W_LumpName(LNum);
-         if (VStr::ICmp(*lmpname, *Name) == 0) fulllist.append(LNum);
-    else if (VStr::ICmp(*lmpname, *PatchName) == 0) shortlist.append(LNum);
+    if (lmpname == NAME_None) continue; // just in case
+    if (lmpname.IsLower()) {
+           if (lmpname == fullLoName) fulllist.append(LNum);
+      else if (lmpname == PatchName) shortlist.append(LNum);
+    } else {
+           if (VStr::ICmp(*lmpname, *Name) == 0) fulllist.append(LNum);
+      else if (VStr::ICmp(*lmpname, *PatchName) == 0) shortlist.append(LNum);
+    }
   }
+
   // now go with first list (full name)
   for (int f = fulllist.length()-1; f >= 0; --f) {
     int LNum = fulllist[f];
@@ -812,6 +826,7 @@ static int findAndLoadTexture (VName Name, int Type, EWadNamespace NS) {
     }
     return res;
   }
+
   // and with second list (short name)
   for (int f = shortlist.length()-1; f >= 0; --f) {
     int LNum = shortlist[f];
@@ -821,11 +836,12 @@ static int findAndLoadTexture (VName Name, int Type, EWadNamespace NS) {
     // if lump name is not identical to long, add with long name too
     if (VStr::ICmp(*W_LumpName(LNum), *Name) != 0) {
       tex = VTexture::CreateTexture(Type, LNum);
-      tex->Name = VName(*Name, VName::AddLower);
+      tex->Name = Name.GetLower();
       GTextureManager.AddTexture(tex);
     }
     return res;
   }
+
   return -1;
 }
 
@@ -840,16 +856,25 @@ static int findAndLoadTexture (VName Name, int Type, EWadNamespace NS) {
 static int findAndLoadTextureShaded (VName Name, VName shName, int Type, EWadNamespace NS, int shade) {
   if (Name == NAME_None) return -1;
   if (VTextureManager::IsDummyTextureName(Name)) return 0;
-  VName PatchName(*Name, VName::AddLower8);
+  VName PatchName = Name.GetLower8();
+
   // need to collect 'em to go in backwards order
   TArray<int> fulllist; // full names
   TArray<int> shortlist; // short names
+  VName fullLoName = Name.GetLower(); // this creates lo-cased name, if necessary
   for (int LNum = W_IterateNS(-1, NS); LNum >= 0; LNum = W_IterateNS(LNum, NS)) {
     //GCon->Logf("FOR '%s': #%d is '%s'", *Name, LNum, *W_LumpName(LNum));
     VName lmpname = W_LumpName(LNum);
-         if (VStr::ICmp(*lmpname, *Name) == 0) fulllist.append(LNum);
-    else if (VStr::ICmp(*lmpname, *PatchName) == 0) shortlist.append(LNum);
+    if (lmpname == NAME_None) continue; // just in case
+    if (lmpname.IsLower()) {
+           if (lmpname == fullLoName) fulllist.append(LNum);
+      else if (lmpname == PatchName) shortlist.append(LNum);
+    } else {
+           if (VStr::ICmp(*lmpname, *Name) == 0) fulllist.append(LNum);
+      else if (VStr::ICmp(*lmpname, *PatchName) == 0) shortlist.append(LNum);
+    }
   }
+
   // now go with first list (full name)
   for (int f = fulllist.length()-1; f >= 0; --f) {
     int LNum = fulllist[f];
@@ -859,6 +884,7 @@ static int findAndLoadTextureShaded (VName Name, VName shName, int Type, EWadNam
     tex->Shade(shade);
     return GTextureManager.AddTexture(tex);
   }
+
   // and with second list (short name)
   for (int f = shortlist.length()-1; f >= 0; --f) {
     int LNum = shortlist[f];
@@ -868,6 +894,7 @@ static int findAndLoadTextureShaded (VName Name, VName shName, int Type, EWadNam
     tex->Shade(shade);
     return GTextureManager.AddTexture(tex);
   }
+
   return -1;
 }
 
@@ -1650,7 +1677,7 @@ void VTextureManager::AddTextureTextLumps (bool onlyHiRes) {
         NewTex->bWorldPanning = true;
         NewTex->SScale = NewTex->GetWidth()/Width;
         NewTex->TScale = NewTex->GetHeight()/Height;
-        NewTex->Name = Name;
+        NewTex->Name = Name.GetLower();
 
         if (OldIdx >= 0) {
           VTexture *OldTex = Textures[OldIdx];

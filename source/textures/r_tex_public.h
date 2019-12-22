@@ -417,6 +417,9 @@ public:
       // has texture manager object?
       if (!tman) { idx = -1; return false; }
       // hashmap search
+      VName loname = name.GetLowerNoCreate();
+      if (loname == NAME_None) { idx = -1; return false; }
+      name = loname;
       int cidx = tman->TextureHash[GetTypeHash(name)&(HASH_SIZE-1)];
       while (cidx >= 0) {
         VTexture *ctex = tman->getTxByIndex(cidx);
@@ -443,7 +446,7 @@ public:
       // here we can restart iteration with shrinked name, if it is longer than 8 chars
       if (allowShrink && VStr::length(*name) > 8) {
         allowShrink = false;
-        name = VName(*name, VName::FindLower8);
+        name = name.GetLower8NoCreate();
         if (name != NAME_None) return restart();
       }
       return false;
