@@ -65,6 +65,8 @@ public:
 
     inline bool IsName8 () const noexcept { return !!(Flags&FLAG_NAME8); }
     inline void SetName8 () noexcept { Flags |= FLAG_NAME8; }
+
+    inline bool IsLoCase8 () const noexcept { return ((Flags&(FLAG_LOCASE|FLAG_NAME8)) == (FLAG_LOCASE|FLAG_NAME8)); }
   };
 
 private:
@@ -136,7 +138,7 @@ public:
   VVA_CHECKRESULT inline VName GetLower8 () const noexcept {
     if (Index == NAME_None) return *this;
     vassert(Initialised);
-    if (Names[Index]->IsLoCase() && Names[Index]->IsName8()) return *this;
+    if (Names[Index]->IsLoCase8()) return *this;
     return VName(Names[Index]->Name, VName::AddLower8);
   }
 
@@ -149,11 +151,13 @@ public:
   }
 
   // returns lower-cased name, or NAME_None; cannot be called before `StaticInit()`
+  // this will shrink long name to name8
   VVA_CHECKRESULT inline VName GetLower8NoCreate () const noexcept {
     if (Index == NAME_None) return *this;
     vassert(Initialised);
-    if (Names[Index]->IsLoCase() && Names[Index]->IsName8()) return *this;
-    return VName(NAME_None);
+    if (Names[Index]->IsLoCase8()) return *this;
+    // if the name is longer than 8 chars, try to find a shortened one
+    return (Names[Index]->IsName8() ? VName(NAME_None) : VName(Names[Index]->Name, VName::FindLower8));
   }
 
   VVA_CHECKRESULT inline bool IsLower () const noexcept {
@@ -169,7 +173,7 @@ public:
   VVA_CHECKRESULT inline bool IsLower8 () const noexcept {
     if (Index == NAME_None) return false;
     if (Initialised) {
-      return (Names[Index]->IsLoCase() && Names[Index]->IsName8());
+      return (Names[Index]->IsLoCase8());
     } else {
       for (const char *s = AutoNames[Index].Name; *s; ++s) if (s[0] >= 'A' && s[0] <= 'Z') return false;
       return (strlen(AutoNames[Index].Name) <= 8);
