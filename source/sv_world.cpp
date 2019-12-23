@@ -600,7 +600,17 @@ opening_t *SV_SectorOpenings (sector_t *sector, bool skipNonSolid) {
   vassert(sector);
   static TArray<opening_t> oplist;
   BuildSectorOpenings(nullptr, oplist, sector, TVec::ZeroVector, 0, true/*linkList*/, false/*usePoint*/, skipNonSolid, true/*forSurface*/);
-  vassert(oplist.length() > 0);
+  //vassert(oplist.length() > 0);
+  if (oplist.length() == 0) {
+    //k8: why, it is ok to have zero openings (it seems)
+    //    i've seen this in Hurt.wad, around (7856 -2146)
+    //    just take the armor, and wait until the pool will start filling with blood
+    //    this seems to be a bug, but meh... at least there is no reason to crash.
+    #ifdef CLIENT
+    //GCon->Logf(NAME_Warning, "SV_SectorOpenings: zero openings for sector #%d", (int)(ptrdiff_t)(sector-&GClLevel->Sectors[0]));
+    #endif
+    return nullptr;
+  }
   return oplist.ptr();
 }
 
