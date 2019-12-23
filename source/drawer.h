@@ -213,8 +213,8 @@ public:
 
   inline bool IsShadowVolumeRenderer () const noexcept { return mIsShadowVolumeRenderer; }
 
-  virtual bool IsNodeRendered (const node_t *node) const = 0;
-  virtual bool IsSubsectorRendered (const subsector_t *sub) const = 0;
+  virtual bool IsNodeRendered (const node_t *node) const noexcept = 0;
+  virtual bool IsSubsectorRendered (const subsector_t *sub) const noexcept = 0;
 
   virtual void PrecacheLevel () = 0;
 

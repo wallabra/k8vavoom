@@ -349,20 +349,19 @@ protected:
   vuint32 bspVisRadiusFrame;
   float bspVisLastCheckRadius;
 
-  VViewClipper LightClip;
-  vuint8 *LightVis;
-  vuint8 *LightBspVis;
-  bool HasLightIntersection; // set by `BuildLightVis()`
-  //TArray<int> LightSubs; // all affected subsectors
-  //TArray<int> LightVisSubs; // visible affected subsectors
-  TArray<surface_t *> LitSurfaces;
-  TVec LitBBox[2];
-  int LitSurfaceCount;
-  int LitVisSubCount;
-  bool HasBackLit; // if there's no backlit surfaces, use zpass
-  // set to `false` to not collect surfaces
-  bool LitCollectSurfaces;
-  bool LitCalcBBox; // set this to `false` disables `LitSurfaces`/`LitSurfaceCount` calculation, and all other arrays
+  // `CalcLightVis()` working variables
+  unsigned LightFrameNum;
+  VViewClipper LightClip; // internal working clipper
+  unsigned *LightVis; // this will be allocated if necessary; set to `LightFrameNum` for subsectors touched in `CalcLightVis()`
+  unsigned *LightBspVis; // this will be allocated if necessary; set to `LightFrameNum` for subsectors touched, and marked in `BspVis`
+  bool HasLightIntersection; // set by `CalcLightVisCheckNode()`: is any touched subsector also marked in `BspVis`?
+  bool LitVisSubHit; // hit any subsector?
+  // set `LitCalcBBox` to true to calculate bbox of all hit surfaces, and all following flags
+  bool LitCalcBBox; // set this to `false` disables `LitSurfaces`/`LitSurfaceHit` calculation, and all other arrays
+  TVec LitBBox[2]; // bounding box for all hit surfaces
+  bool LitSurfaceHit; // hit any surface in visible subsector?
+  // nope, not used for now
+  //bool HasBackLit; // if there's no backlit surfaces, use zpass
 
   bool doShadows; // for current light
 
@@ -391,32 +390,33 @@ private:
   }
 
 protected:
-  void NewBSPFloodVisibilityFrame ();
-  bool CheckBSPFloodVisibilitySub (const TVec &org, const float radius, const subsector_t *currsub, const seg_t *firsttravel);
-  bool CheckBSPFloodVisibility (const TVec &org, float radius, const subsector_t *sub=nullptr);
+  void NewBSPFloodVisibilityFrame () noexcept;
+
+  bool CheckBSPFloodVisibilitySub (const TVec &org, const float radius, const subsector_t *currsub, const seg_t *firsttravel) noexcept;
+  bool CheckBSPFloodVisibility (const TVec &org, float radius, const subsector_t *sub=nullptr) noexcept;
 
   // this destroys `CurrListPos` and `CurrLightRadius`
-  bool CheckBSPVisibilityBoxSub (int bspnum, const float *bbox);
-  bool CheckBSPVisibilityBox (const TVec &org, float radius, const subsector_t *sub=nullptr);
+  bool CheckBSPVisibilityBoxSub (int bspnum, const float *bbox) noexcept;
+  bool CheckBSPVisibilityBox (const TVec &org, float radius, const subsector_t *sub=nullptr) noexcept;
 
-  void ResetVisFrameCount ();
-  inline vuint32 IncVisFrameCount () {
+  void ResetVisFrameCount () noexcept;
+  inline vuint32 IncVisFrameCount () noexcept {
     if ((++currVisFrame) == 0x7fffffff) ResetVisFrameCount();
     return currVisFrame;
   }
 
-  void ResetDLightFrameCount ();
-  inline int IncDLightFrameCount () {
+  void ResetDLightFrameCount () noexcept;
+  inline int IncDLightFrameCount () noexcept {
     if ((++currDLightFrame) == 0xffffffff) ResetDLightFrameCount();
     return currDLightFrame;
   }
 
-  void ResetUpdateWorldFrame ();
-  inline void IncUpdateWorldFrame () {
+  void ResetUpdateWorldFrame () noexcept;
+  inline void IncUpdateWorldFrame () noexcept {
     if ((++updateWorldFrame) == 0xffffffff) ResetUpdateWorldFrame();
   }
 
-  inline void IncQueueFrameCount () {
+  inline void IncQueueFrameCount () noexcept {
     //if ((++currQueueFrame) == 0xffffffff) ResetQueueFrameCount();
     ++currQueueFrame;
     if (currQueueFrame == 0xffffffff) {
@@ -426,6 +426,18 @@ protected:
       Sys_Error("*************** WARNING!!! QUEUE FRAME COUNT OVERFLOW!!! ***************");
     }
   }
+
+  inline void IncLightFrameNum () noexcept {
+    if (++LightFrameNum == 0) {
+      LightFrameNum = 1;
+      memset(LightVis, 0, sizeof(LightVis[0])*Level->NumSubsectors);
+      memset(LightBspVis, 0, sizeof(LightBspVis[0])*Level->NumSubsectors);
+    }
+  }
+
+  // WARNING! NO CHECKS!
+  VVA_CHECKRESULT inline bool IsSubsectorLitVis (int sub) const noexcept { return (LightVis[(unsigned)sub] == LightFrameNum); }
+  VVA_CHECKRESULT inline bool IsSubsectorLitBspVis (int sub) const noexcept { return (LightBspVis[(unsigned)sub] == LightFrameNum); }
 
   // clears render queues
   virtual void ClearQueues ();
@@ -444,8 +456,8 @@ protected:
   }
 
 public:
-  virtual bool IsNodeRendered (const node_t *node) const override;
-  virtual bool IsSubsectorRendered (const subsector_t *sub) const override;
+  virtual bool IsNodeRendered (const node_t *node) const noexcept override;
+  virtual bool IsSubsectorRendered (const subsector_t *sub) const noexcept override;
 
   virtual vuint32 LightPoint (const TVec &p, float radius, float height, const TPlane *surfplane=nullptr, const subsector_t *psub=nullptr) override;
 
@@ -489,15 +501,16 @@ protected:
                               VEntity *SkyBox, bool CheckSkyBoxAlways);
   void UpdateBBoxWithLine (TVec bbox[2], VEntity *SkyBox, const drawseg_t *dseg);
 
-  // this two is using to check if light can cast any shadow (and if it is visible at all)
+  // the following should not be called directly
+  void CalcLightVisCheckNode (int bspnum, const float *bbox, const float *lightbbox);
+
+  // main entry point for lightvis calculation
   // note that this should be called with filled `BspVis`
   // if we will use this for dynamic lights, they will have one-frame latency
-  void CheckLightSubsector (const subsector_t *sub);
-  void BuildLightVis (int bspnum, const float *bbox, const float *lightbbox);
-  // main entry point for lightvis calculation
   // sets `CurrLightPos` and `CurrLightRadius`, and other lvis fields
   // returns `false` if the light is invisible
   bool CalcLightVis (const TVec &org, const float radius, vuint32 currltbit=0);
+
   // does some sanity checks, possibly moves origin a little
   // returns `false` if this light can be dropped
   // `sec` should be valid, null sector means "no checks"
@@ -688,11 +701,11 @@ protected:
 public:
   virtual particle_t *NewParticle (const TVec &porg) override;
 
-  virtual int GetStaticLightCount () const override;
-  virtual LightInfo GetStaticLight (int idx) const override;
+  virtual int GetStaticLightCount () const noexcept override;
+  virtual LightInfo GetStaticLight (int idx) const noexcept override;
 
-  virtual int GetDynamicLightCount () const override;
-  virtual LightInfo GetDynamicLight (int idx) const override;
+  virtual int GetDynamicLightCount () const noexcept override;
+  virtual LightInfo GetDynamicLight (int idx) const noexcept override;
 
   virtual void RenderPlayerView () override;
 

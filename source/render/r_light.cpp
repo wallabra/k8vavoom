@@ -207,7 +207,6 @@ void VRenderLevelShared::PushDlights () {
     //dlinfo[i].needTrace = (r_dynamic_clip && r_dynamic_clip_more && Level->NeedProperLightTraceAt(l->origin, l->radius) ? 1 : -1);
     //MarkLights(l, 1U<<i, Level->NumNodes-1, dlinfo[i].leafnum);
     //FIXME: this has one frame latency; meh for now
-    LitCollectSurfaces = false;
     LitCalcBBox = false; // we don't need any lists
     if (CalcLightVis(l->origin, l->radius, 1U<<i)) {
       dlinfo[i].needTrace = (doShadows ? 1 : -1);

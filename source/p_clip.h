@@ -222,7 +222,7 @@ public:
   bool ClipLightIsBBoxVisible (const float BBox[6]) const;
   bool ClipLightCheckRegion (const subregion_t *region, subsector_t *sub, bool asShadow) const;
   bool ClipLightCheckSubsector (subsector_t *sub, bool asShadow) const;
-  // this doesn't do raduis and subsector checks: this is done in `BuildLightVis()`
+  // this doesn't do raduis and subsector checks: this is done in `CalcLightVisCheckNode()`
   bool ClipLightCheckSeg (const seg_t *seg, bool asShadow) const;
 #endif
 

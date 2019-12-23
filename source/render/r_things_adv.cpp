@@ -237,7 +237,7 @@ void VRenderLevelShadowVolume::BuildMobjsInCurrLight (bool doShadows) {
       for (auto &&ent : allShadowModelObjects) {
         // skip things in subsectors that are not visible by the current light
         const int SubIdx = (int)(ptrdiff_t)(ent->SubSector-Level->Subsectors);
-        if (!(LightVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
+        if (!IsSubsectorLitVis(SubIdx)) continue;
         if (!IsTouchedByCurrLight(ent)) continue;
         //if (r_dbg_advthing_dump_actlist) GCon->Logf("  <%s> (%f,%f,%f)", *ent->GetClass()->GetFullName(), ent->Origin.x, ent->Origin.y, ent->Origin.z);
         mobjsInCurrLight.append(ent);
@@ -260,7 +260,7 @@ void VRenderLevelShadowVolume::BuildMobjsInCurrLight (bool doShadows) {
             if (ent->Radius < 1) continue;
             // skip things in subsectors that are not visible by the current light
             const int SubIdx = (int)(ptrdiff_t)(ent->SubSector-Level->Subsectors);
-            if (!(LightBspVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
+            if (!IsSubsectorLitBspVis(SubIdx)) continue;
             if (!IsTouchedByCurrLight(ent)) continue;
             if (!HasEntityAliasModel(ent)) continue;
             if (!CalculateThingAlpha(ent, RendStyle, Alpha)) continue; // invisible
@@ -326,7 +326,7 @@ void VRenderLevelShadowVolume::RenderMobjsLight () {
       if (ent == ViewEnt && (!r_chasecam || ent != cl->MO)) continue; // don't draw camera actor
       // skip things in subsectors that are not visible by the current light
       const int SubIdx = (int)(ptrdiff_t)(ent->SubSector-Level->Subsectors);
-      if (!(LightBspVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
+      if (!IsSubsectorLitBspVis(SubIdx)) continue;
       if (!IsTouchedByCurrLight(ent)) continue;
       //RenderThingLight(ent);
       if (SetupRenderStyleAndTime(ent, RendStyle, Alpha, Additive, TimeFrac)) {

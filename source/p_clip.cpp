@@ -1478,7 +1478,7 @@ bool VViewClipper::ClipLightCheckRegion (const subregion_t *region, subsector_t 
 //  VViewClipper::ClipLightCheckSeg
 //
 //  this doesn't do raduis and subsector checks: this is done in
-//  `BuildLightVis()`
+//  `CalcLightVisCheckNode()`
 //
 //==========================================================================
 bool VViewClipper::ClipLightCheckSeg (const seg_t *seg, bool asShadow) const {

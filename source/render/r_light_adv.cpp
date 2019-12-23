@@ -56,9 +56,6 @@ static VCvarB r_shadowvol_use_pofs("r_shadowvol_use_pofs", true, "Use PolygonOff
 static VCvarF r_shadowvol_pofs("r_shadowvol_pofs", "20", "DEBUG");
 static VCvarF r_shadowvol_pslope("r_shadowvol_pslope", "-0.2", "DEBUG");
 
-//NOT IMPLEMENTED YET
-static VCvarB r_advlight_prebuild_surflist("r_advlight_prebuild_surflist", false, "Use prebuild surface list in shadow volume lighting?", CVAR_Archive);
-
 
 /*
   possible shadow volume optimisation:
@@ -503,7 +500,7 @@ void VRenderLevelShadowVolume::RenderShadowSubsector (int num) {
   subsector_t *sub = &Level->Subsectors[num];
 
   // don't do this check for shadows
-  //if (!(LightBspVis[num>>3]&(1<<(num&7))) || !(BspVis[num>>3]&(1<<(num&7)))) return;
+  //if (!IsSubsectorLitBspVis(num) || !(BspVis[num>>3]&(1<<(num&7)))) return;
 
   if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
 
@@ -764,9 +761,9 @@ void VRenderLevelShadowVolume::RenderLightSubsector (int num) {
   if (!sub->sector->linecount) return; // skip sectors containing original polyobjs
 
   // `LightBspVis` is already an intersection, no need to check `BspVis` here
-  //if (!(LightBspVis[num>>3]&(1<<(num&7))) || !(BspVis[num>>3]&(1<<(num&7)))) return;
+  //if (!IsSubsectorLitBspVis(num) || !(BspVis[num>>3]&(1<<(num&7)))) return;
 
-  if (LightBspVis[(unsigned)num>>3]&(1u<<((unsigned)num&7))) {
+  if (IsSubsectorLitBspVis(num)) {
     if (LightClip.ClipLightCheckSubsector(sub, false)) {
       // update world
       if (sub->updateWorldFrame != updateWorldFrame) {
@@ -867,14 +864,13 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   }
 
   //TODO: we can reuse collected surfaces in next passes
-  LitCollectSurfaces = r_advlight_prebuild_surflist.asBool();
   LitCalcBBox = true;
   if (!CalcLightVis(Pos, Radius-LightMin)) return;
   CurrLightRadius = Radius; // we need full radius, not modified
 
-  if (r_advlight_opt_optimise_scissor && !LitSurfaceCount && !r_models) return; // no lit surfaces, nothing to do
-  /*if (LightVisSubs.length() == 0 && !r_models) return;*/ // just in case
-  if (!LitVisSubCount && !r_models) return; // just in case
+  if (!LitVisSubHit) return; // something is wrong, light didn't hit any subsector at all
+
+  if (!LitSurfaceHit && !r_models) return; // no lit surfaces/subsectors, and no need to light models, so nothing to do
 
   CurrLightColor = Color;
   // if our light is in frustum, ignore any out-of-frustum polys
@@ -892,6 +888,9 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   if (dlflags&dlight_t::NoShadow) allowShadows = false;
 
   if (!r_allow_shadows) allowShadows = false;
+
+  // if we don't need shadows, and no visible subsectors were hit, we have nothing to do here
+  if (!allowShadows && (!HasLightIntersection || !LitSurfaceHit)) return;
 
   if (!allowShadows && dbg_adv_light_notrace_mark) {
     //Color = 0xffff0000U;
@@ -972,7 +971,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
       if (ment == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) continue; // don't draw camera actor
       // skip things in subsectors that are not visible
       const int SubIdx = (int)(ptrdiff_t)(ment->SubSector-Level->Subsectors);
-      if (!(LightBspVis[SubIdx>>3]&(1<<(SubIdx&7)))) continue;
+      if (!IsSubsectorLitBspVis(SubIdx)) continue;
       if (ment->Radius < 1) continue;
       if (!HasEntityAliasModel(ment)) continue;
       // assume that it is not bigger than its radius
@@ -1051,10 +1050,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
     if (r_max_shadow_segs_all) {
       dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
       dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
-      if (r_advlight_prebuild_surflist) {
-      } else {
-        RenderShadowBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
-      }
+      RenderShadowBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
     }
     Drawer->BeginModelsShadowsPass(CurrLightPos, CurrLightRadius);
     RenderMobjsShadow(ent, dlflags);

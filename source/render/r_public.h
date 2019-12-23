@@ -132,11 +132,11 @@ public:
 
   virtual particle_t *NewParticle (const TVec &porg) = 0;
 
-  virtual int GetStaticLightCount () const = 0;
-  virtual LightInfo GetStaticLight (int idx) const = 0;
+  virtual int GetStaticLightCount () const noexcept = 0;
+  virtual LightInfo GetStaticLight (int idx) const noexcept = 0;
 
-  virtual int GetDynamicLightCount () const = 0;
-  virtual LightInfo GetDynamicLight (int idx) const = 0;
+  virtual int GetDynamicLightCount () const noexcept = 0;
+  virtual LightInfo GetDynamicLight (int idx) const noexcept = 0;
 
   virtual void NukeLightmapCache () = 0;
   virtual void ResetLightmaps (bool recalcNow) = 0;
