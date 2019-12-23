@@ -131,6 +131,25 @@ VCvarB r_advlight_opt_optimise_scissor("r_advlight_opt_optimise_scissor", true, 
 
 //==========================================================================
 //
+//  ClipSegToLight
+//
+//  this (theoretically) should clip segment to light bounds
+//  tbh, i don't think that there is a real reason to do this
+//
+//==========================================================================
+static VVA_OKUNUSED inline void ClipSegToLight (TVec &v1, TVec &v2, const TVec &pos, const float radius) {
+  TVec r1 = pos-v1;
+  TVec r2 = pos-v2;
+  const float d1 = DotProduct(Normalise(CrossProduct(r1, r2)), pos);
+  const float d2 = DotProduct(Normalise(CrossProduct(r2, r1)), pos);
+  // there might be a better method of doing this, but this one works for now...
+       if (d1 > radius && d2 < -radius) v2 += (v2-v1)*d1/(d1-d2);
+  else if (d2 > radius && d1 < -radius) v1 += (v1-v2)*d2/(d2-d1);
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShadowVolume::RefilterStaticLights
 //
 //==========================================================================
@@ -243,7 +262,7 @@ void VRenderLevelShadowVolume::BuildLightMap (surface_t *surf) {
 //
 //==========================================================================
 void VRenderLevelShadowVolume::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t *texinfo,
-                                               VEntity *SkyBox, bool CheckSkyBoxAlways, int LightCanCross)
+                                                   VEntity *SkyBox, bool CheckSkyBoxAlways, int LightCanCross)
 {
   if (!InSurfs) return;
 
@@ -253,26 +272,24 @@ void VRenderLevelShadowVolume::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t
 
   if (SkyBox && (SkyBox->EntityFlags&VEntity::EF_FixedModel)) SkyBox = nullptr;
 
+  // cannot light stacked sectors anyway
+  if (texinfo->Tex == GTextureManager.getIgnoreAnim(skyflatnum) || (CheckSkyBoxAlways && SkyBox)) return;
+  /*
   if (texinfo->Tex == GTextureManager.getIgnoreAnim(skyflatnum) ||
       (CheckSkyBoxAlways && (SkyBox && SkyBox->eventSkyBoxGetAlways())))
   {
     return;
   }
+  */
 
-  // ignore everything that is placed behind player's back
+  // ignore everything that is placed behind camera's back
   // we shouldn't have many of those, so check them in the loop below
-  // but do this only if the light is behind a player
-  bool checkFrustum;
-  if (!r_advlight_opt_frustum_back) {
-    checkFrustum = false;
-  } else {
-    checkFrustum = view_frustum.checkSphere(CurrLightPos, CurrLightRadius, TFrustum::NearBit);
-  }
+  // but do this only if the light is in front of a camera
+  //const bool checkFrustum = (r_advlight_opt_frustum_back && view_frustum.checkSphere(CurrLightPos, CurrLightRadius, TFrustum::NearBit));
 
   // TODO: if light is behing a camera, we can move back frustum plane, so it will
   //       contain light origin, and clip everything behind it. the same can be done
   //       for all other frustum planes.
-
   for (surface_t *surf = InSurfs; surf; surf = surf->next) {
     if (surf->count < 3) continue; // just in case
 
@@ -280,7 +297,7 @@ void VRenderLevelShadowVolume::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t
     // also, don't bother with it at all if texture has holes
     if (LightCanCross < 0) {
       // horizon
-      // k8: can horizont surfaces block light? i think they shouldn't
+      // k8: can horizon surfaces block light? i think they shouldn't
       //if (!surf->IsVisible(vieworg)) return; // viewer is in back side or on plane
       continue;
     }
@@ -299,9 +316,11 @@ void VRenderLevelShadowVolume::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t
     //     light completely fades away at that distance
     if (dist <= 0.0f || dist >= CurrLightRadius) return; // light is too far away
 
+    /*
     if (checkFrustum) {
       if (!view_frustum.checkVerts(surf->verts, (unsigned)surf->count, TFrustum::NearBit)) continue;
     }
+    */
 
     Drawer->RenderSurfaceShadowVolume(surf, CurrLightPos, CurrLightRadius);
   }
@@ -327,40 +346,19 @@ void VRenderLevelShadowVolume::RenderShadowLine (subsector_t *sub, sec_region_t 
   //if (fabsf(dist) >= CurrLightRadius) return;
   if (dist <= 0.0f || dist >= CurrLightRadius) return;
 
-  /*
-  {
-    TVec v1 = *seg->v1;
-    TVec v2 = *seg->v2;
-    const TVec r1 = CurrLightPos-v1;
-    const TVec r2 = CurrLightPos-v2;
-    const TVec n1 = Normalise(CrossProduct(r1, r2));
-    const TVec n2 = Normalise(CrossProduct(r2, r1));
-    const float d1 = DotProduct(n1, CurrLightPos);
-    const float d2 = DotProduct(n2, CurrLightPos);
-    if (fabsf(n1.z) < 0.001f || fabsf(n2.z) < 0.001f) {
-      GCon->Logf(NAME_Debug, "LINE #%d: n1=(%g,%g,%g); n2=(%g,%g,%g); d1=%g; d2=%g", (int)(ptrdiff_t)(seg->linedef-&Level->Lines[0]), n1.x, n1.y, n1.z, n2.x, n2.y, n2.z, d1, d2);
+  //k8: here we can call `ClipSegToLight()`, but i see no reasons to do so
+
+  // ignore everything that is placed behind camera's back
+  // we shouldn't have many of those, so check them in the loop below
+  // but do this only if the light is in front of a camera
+  if (CurrLightInFront) {
+    if (!view_frustum.checkPoint(*seg->v1, TFrustum::NearBit) &&
+        !view_frustum.checkPoint(*seg->v2, TFrustum::NearBit))
+    {
       return;
     }
   }
-  */
 
-/*
-    k8: i don't know what Janis wanted to accomplish with this, but it actually
-        makes clipping WORSE due to limited precision
-  // clip sectors that are behind rendered segs
-  TVec v1 = *seg->v1;
-  TVec v2 = *seg->v2;
-  const TVec r1 = CurrLightPos-v1;
-  const TVec r2 = CurrLightPos-v2;
-  const float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), CurrLightPos);
-  const float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), CurrLightPos);
-
-  // there might be a better method of doing this, but this one works for now...
-       if (D1 > CurrLightRadius && D2 < -CurrLightRadius) v2 += (v2-v1)*D1/(D1-D2);
-  else if (D2 > CurrLightRadius && D1 < -CurrLightRadius) v1 += (v1-v2)*D2/(D2-D1);
-
-  if (!LightClip.IsRangeVisible(v2, v1)) return;
-*/
   if (!LightClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
 
 #if 1
@@ -369,9 +367,6 @@ void VRenderLevelShadowVolume::RenderShadowLine (subsector_t *sub, sec_region_t 
   // k8: yet leave it there in the hope that it will reduce GPU overdrawing
   if (!LightClip.CheckSegFrustum(sub, seg)) return;
 #endif
-
-  //line_t *linedef = seg->linedef;
-  //side_t *sidedef = seg->sidedef;
 
   VEntity *skybox = secregion->eceiling.splane->SkyBox;
   if (dseg->mid) DrawShadowSurfaces(dseg->mid->surfs, &dseg->mid->texinfo, skybox, false, (seg->backsector ? 1 : 0));
@@ -407,6 +402,8 @@ void VRenderLevelShadowVolume::RenderShadowSecSurface (sec_surface_t *ssurf, VEn
   //if (dist < -CurrLightRadius || dist > CurrLightRadius) return; // light is too far away
   //if (fabsf(dist) >= CurrLightRadius) return;
   if (dist <= 0.0f || dist >= CurrLightRadius) return;
+
+  // we can do "CurrLightInFront check" here, but meh...
 
   DrawShadowSurfaces(ssurf->surfs, &ssurf->texinfo, SkyBox, true, 0);
 }
@@ -610,11 +607,15 @@ void VRenderLevelShadowVolume::DrawLightSurfaces (surface_t *InSurfs, texinfo_t 
 
   if (SkyBox && (SkyBox->EntityFlags&VEntity::EF_FixedModel)) SkyBox = nullptr;
 
+  // cannot light stacked sectors anyway
+  if (texinfo->Tex == GTextureManager.getIgnoreAnim(skyflatnum) || (CheckSkyBoxAlways && SkyBox)) return;
+  /*
   if (texinfo->Tex == GTextureManager.getIgnoreAnim(skyflatnum) ||
       (CheckSkyBoxAlways && (SkyBox && SkyBox->eventSkyBoxGetAlways())))
   {
     return;
   }
+  */
 
   for (surface_t *surf = InSurfs; surf; surf = surf->next) {
     if (surf->count < 3) continue; // just in case
@@ -642,23 +643,7 @@ void VRenderLevelShadowVolume::RenderLightLine (sec_region_t *secregion, drawseg
   //if (dist <= -CurrLightRadius || dist > CurrLightRadius) return; // light sphere is not touching a plane
   if (fabsf(dist) >= CurrLightRadius) return;
 
-/*
-    k8: i don't know what Janis wanted to accomplish with this, but it actually
-        makes clipping WORSE due to limited precision
-  // clip sectors that are behind rendered segs
-  TVec v1 = *seg->v1;
-  TVec v2 = *seg->v2;
-  TVec r1 = CurrLightPos-v1;
-  TVec r2 = CurrLightPos-v2;
-  float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), CurrLightPos);
-  float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), CurrLightPos);
-
-  // there might be a better method of doing this, but this one works for now...
-       if (D1 > CurrLightRadius && D2 < -CurrLightRadius) v2 += (v2-v1)*D1/(D1-D2);
-  else if (D2 > CurrLightRadius && D1 < -CurrLightRadius) v1 += (v1-v2)*D2/(D2-D1);
-
-  if (!LightClip.IsRangeVisible(v2, v1)) return;
-*/
+  //k8: here we can call `ClipSegToLight()`, but i see no reasons to do so
   if (!LightClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
 
   VEntity *skybox = secregion->eceiling.splane->SkyBox;
@@ -866,19 +851,14 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   //TODO: we can reuse collected surfaces in next passes
   LitCalcBBox = true;
   if (!CalcLightVis(Pos, Radius-LightMin)) return;
-  CurrLightRadius = Radius; // we need full radius, not modified
 
   if (!LitVisSubHit) return; // something is wrong, light didn't hit any subsector at all
 
-  if (!LitSurfaceHit && !r_models) return; // no lit surfaces/subsectors, and no need to light models, so nothing to do
+  if (!LitSurfaceHit /*&& !r_models*/) return; // no lit surfaces/subsectors, and no need to light models, so nothing to do
 
-  CurrLightColor = Color;
   // if our light is in frustum, ignore any out-of-frustum polys
-  if (r_advlight_opt_frustum_full) {
-    CurrLightInFrustum = view_frustum.checkSphere(Pos, Radius-LightMin+4.0f);
-  } else {
-    CurrLightInFrustum = false; // don't do frustum optimisations
-  }
+  CurrLightInFrustum = (r_advlight_opt_frustum_full && view_frustum.checkSphere(Pos, Radius /*-LightMin+4.0f*/));
+  CurrLightInFront = (r_advlight_opt_frustum_back && view_frustum.checkSphere(Pos, Radius, TFrustum::NearBit));
 
   bool allowShadows = doShadows;
 
@@ -902,6 +882,8 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
 
   CurrShadowsNumber = 0;
   CurrLightsNumber = 0;
+  CurrLightRadius = Radius; // we need full radius, not modified
+  CurrLightColor = Color;
 
   //  0 if scissor is empty
   // -1 if scissor has no sense (should not be used)

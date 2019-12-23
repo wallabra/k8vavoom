@@ -33,7 +33,9 @@ extern VCvarI r_max_lights;
 
 static VCvarB r_advlight_sort_static("r_advlight_sort_static", true, "Sort visible static lights, so nearby lights will be rendered first?", CVAR_Archive|CVAR_PreInit);
 static VCvarB r_advlight_sort_dynamic("r_advlight_sort_dynamic", true, "Sort visible dynamic lights, so nearby lights will be rendered first?", CVAR_Archive|CVAR_PreInit);
-static VCvarB r_advlight_flood_check("r_advlight_flood_check", true, "Check light visibility with floodfill before trying to render it?", CVAR_Archive|CVAR_PreInit);
+// no need to do this, because light rendering will do it again anyway
+// yet it seems to be slightly faster for complex maps with alot of static lights
+static VCvarB r_advlight_flood_check("r_advlight_flood_check", true, "Check static light visibility with floodfill before trying to render it?", CVAR_Archive|CVAR_PreInit);
 
 static VCvarB dbg_adv_show_light_count("dbg_adv_show_light_count", false, "Show number of rendered lights?", CVAR_PreInit);
 static VCvarB dbg_adv_show_light_seg_info("dbg_adv_show_light_seg_info", false, "Show totals of rendered light/shadow segments?", CVAR_PreInit);
@@ -179,6 +181,7 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
     const float rlightraduisSq = (r_lights_radius < 1 ? 2048*2048 : r_lights_radius*r_lights_radius);
     //const bool hasPVS = Level->HasPVS();
 
+    // no need to do this, because light rendering will do it again anyway
     const bool checkLightVis = r_advlight_flood_check.asBool();
 
     static TFrustum frustum;
@@ -230,11 +233,7 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
 
         const sector_t *sec = Level->Subsectors[stlight->leafnum].sector;
         if (!CheckValidLightPosRough(lorg, sec)) continue;
-
-        if (checkLightVis && !CheckBSPVisibilityBox(lorg, stlight->radius, &Level->Subsectors[stlight->leafnum])) {
-          //GCon->Logf("STATIC DROP: visibility check");
-          continue;
-        }
+        if (checkLightVis && !CheckBSPVisibilityBox(lorg, stlight->radius, &Level->Subsectors[stlight->leafnum])) continue;
 
         StLightInfo &sli = visstatlights[visstatlightCount++];
         sli.stlight = stlight;
