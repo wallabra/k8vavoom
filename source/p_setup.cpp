@@ -3741,6 +3741,8 @@ void VLevel::FixSelfRefDeepWater () {
 
     for (int j = 0; j < NumSubsectors; ++j) {
       subsector_t *sub = &Subsectors[j];
+      if (sub->numlines < 3) continue; // incomplete subsector
+
       seg_t *seg;
 
       if (self_subs[j] != 1) continue;
@@ -3783,6 +3785,7 @@ void VLevel::FixSelfRefDeepWater () {
 
   for (int i = 0; i < NumSubsectors; ++i) {
     subsector_t *sub = &Subsectors[i];
+    if (sub->numlines < 3) continue; // incomplete subsector
     sector_t *hs = sub->deepref;
     if (!hs) continue;
     sector_t *ss = sub->sector;
@@ -4118,7 +4121,7 @@ void VLevel::FixDeepWaters () {
     // fix "floor holes"
     for (int sidx = 0; sidx < NumSectors; ++sidx) {
       sector_t *sec = &Sectors[sidx];
-      if (sec->linecount == 0 || sec->deepref) continue;
+      if (sec->linecount < 3 || sec->deepref) continue;
       if (sec->SectorFlags&sector_t::SF_UnderWater) continue; // this is special sector, skip it
       if ((sec->SectorFlags&(sector_t::SF_HasExtrafloors|sector_t::SF_ExtrafloorSource|sector_t::SF_TransferSource|sector_t::SF_UnderWater))) {
         if (!(sec->SectorFlags&sector_t::SF_IgnoreHeightSec)) continue; // this is special sector, skip it
@@ -4160,7 +4163,7 @@ void VLevel::FixDeepWaters () {
     for (int sidx = 0; sidx < NumSectors; ++sidx) {
       sector_t *sec = &Sectors[sidx];
       // skip special sectors
-      if (sec->linecount == 0 || sec->deepref) continue;
+      if (sec->linecount < 3 || sec->deepref) continue;
       if (sec->othersecFloor || sec->othersecCeiling) continue;
       if (sec->heightsec) continue;
       if (sec->fakefloors) continue;
