@@ -137,6 +137,8 @@ bool Physics (float DeltaTime) {
 
   //if (bOnScroll) printdebug("%C: ON SCROLLER!", self);
 
+  #if 0
+  // old code
   if (Sector && Sector->AffectorData && bColideWithWorld && !bNoSector) {
     // killough 3/7/98: Carry things on floor
     // killough 3/20/98: use new sector list which reflects true members
@@ -177,6 +179,57 @@ bool Physics (float DeltaTime) {
     }
     //if (CummX || CummY) print("%C: CALCULATED SCROLL=(%s,%s); vel=%s", self, CummX, CummY, Velocity);
   }
+  #else
+  // new code
+  if (Sector && bColideWithWorld && !bNoSector) {
+    // killough 3/7/98: Carry things on floor
+    // killough 3/20/98: use new sector list which reflects true members
+    // killough 3/27/98: fix carrier bug
+    // killough 4/4/98: Underwater, carry things even w/o gravity
+    // k8: check all sectors we are touching, because this is how it should work
+    int vismark = 0; // don't create it until necessary
+    // k8: this should work with 3d floors, but now it doesn't
+    int CountX = 0;
+    int CountY = 0;
+    for (msecnode_t *mnode = TouchingSectorList; mnode; mnode = mnode.TNext) {
+      sector_t *sec = mnode.Sector;
+      if (!sec || !sec->AffectorData) continue;
+      // move objects only if on floor or underwater, non-floating, and clipped
+      SectorThinker SecThink;
+      for (SecThink = SectorThinker(sec->AffectorData); SecThink; SecThink = SecThink.NextAffector) {
+        auto sth = Scroller(SecThink);
+        if (!sth) continue;
+        float scrollx = sth.CarryScrollX;
+        float scrolly = sth.CarryScrollY;
+        if (!scrollx && !scrolly) continue;
+        if (bNoGravity && (!sec->heightsec || sec->heightsec->bIgnoreHeightSec)) continue;
+        float height = GetPointZClamped(ref sec->floor, Origin);
+        if (Origin.z > height) {
+          if (!sec->heightsec || sec->heightsec->bIgnoreHeightSec) continue;
+          float waterheight = GetPointZClamped(ref sec->heightsec->floor, Origin);
+          if (waterheight > height && Origin.z >= waterheight) continue;
+        }
+        // don't process sectors twice
+        if (!vismark) vismark = XLevel.GetNextVisitedCount();
+        if (mnode.Visited == vismark) continue;
+        mnode.Visited = vismark;
+        CummX += scrollx;
+        CummY += scrolly;
+        if (scrollx) ++CountX;
+        if (scrolly) ++CountY;
+      }
+    }
+
+    // Some levels designed with Boom in mind actually want things to accelerate
+    // at neighboring scrolling sector boundaries. But it is only important for
+    // non-player objects.
+    if (bIsPlayer || !Level.CompatBoomScroll) {
+      if (CountX > 1) CummX /= float(CountX);
+      if (CountY > 1) CummY /= float(CountY);
+    }
+    //if (CummX || CummY) print("%C: CALCULATED SCROLL=(%s,%s); vel=%s", self, CummX, CummY, Velocity);
+  }
+  #endif
 
   CheckWater();
   if (!bFloatBob || !bSpecial) UpdateVelocity(DeltaTime);
