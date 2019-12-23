@@ -30,6 +30,8 @@
 #include "gamedefs.h"
 #include "sv_local.h"
 
+//#define VV_DO_ONSCROLL_FLAG
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 static VCvarB gm_smart_z("gm_smart_z", true, "Fix Z position for some things, so they won't fall thru ledge edges?", /*CVAR_Archive|*/CVAR_PreInit);
@@ -147,6 +149,64 @@ void VEntity::Destroy () {
 
 //=============================================================================
 //
+//  VEntity::CollectTouchingSectors
+//
+//  collect all sectors this entity is touching
+//  the entity should be linked to the world (i.e. has valid world position)
+//  will append to the list (i.e. will not clear the list)
+//  WARNING! may contain duplicate sectors!
+//
+//=============================================================================
+void VEntity::CollectTouchingSectors (TArray<sector_t *> &list) {
+  float tmbbox[4];
+  tmbbox[BOX2D_TOP] = Origin.y+Radius;
+  tmbbox[BOX2D_BOTTOM] = Origin.y-Radius;
+  tmbbox[BOX2D_RIGHT] = Origin.x+Radius;
+  tmbbox[BOX2D_LEFT] = Origin.x-Radius;
+
+  //++validcount; // used to make sure we only process a line once
+  XLevel->IncrementValidCount();
+
+  int xl = MapBlock(tmbbox[BOX2D_LEFT]-XLevel->BlockMapOrgX);
+  int xh = MapBlock(tmbbox[BOX2D_RIGHT]-XLevel->BlockMapOrgX);
+  int yl = MapBlock(tmbbox[BOX2D_BOTTOM]-XLevel->BlockMapOrgY);
+  int yh = MapBlock(tmbbox[BOX2D_TOP]-XLevel->BlockMapOrgY);
+
+  for (int bx = xl; bx <= xh; ++bx) {
+    for (int by = yl; by <= yh; ++by) {
+      line_t *ld;
+      for (VBlockLinesIterator It(XLevel, bx, by, &ld); It.GetNext(); ) {
+        // locates all the sectors the object is in by looking at the lines that cross through it.
+        // you have already decided that the object is allowed at this location, so don't
+        // bother with checking impassable or blocking lines.
+        if (tmbbox[BOX2D_RIGHT] <= ld->bbox2d[BOX2D_LEFT] ||
+            tmbbox[BOX2D_LEFT] >= ld->bbox2d[BOX2D_RIGHT] ||
+            tmbbox[BOX2D_TOP] <= ld->bbox2d[BOX2D_BOTTOM] ||
+            tmbbox[BOX2D_BOTTOM] >= ld->bbox2d[BOX2D_TOP])
+        {
+          continue;
+        }
+
+        if (P_BoxOnLineSide(tmbbox, ld) != -1) continue;
+
+        // this line crosses through the object
+        list.append(ld->frontsector);
+
+        // don't assume all lines are 2-sided, since some Things like
+        // MT_TFOG are allowed regardless of whether their radius
+        // takes them beyond an impassable linedef.
+
+        // killough 3/27/98, 4/4/98:
+        // use sidedefs instead of 2s flag to determine two-sidedness
+        if (ld->backsector && ld->backsector != ld->frontsector) list.append(ld->backsector);
+      }
+    }
+  }
+}
+
+
+//=============================================================================
+//
 //  VEntity::CreateSecNodeList
 //
 //  phares 3/14/98
@@ -156,18 +216,31 @@ void VEntity::Destroy () {
 //
 //=============================================================================
 void VEntity::CreateSecNodeList () {
+  #ifdef VV_DO_ONSCROLL_FLAG
+  // get `Scroller` class, so we can fix `EFEX_OnScroll` flag
+  static VClass *ScrollerClass = nullptr;
+  if (!ScrollerClass) {
+    ScrollerClass = VClass::FindClass("Scroller");
+    if (!ScrollerClass) Sys_Error("VM class 'Scroller' not found!");
+  }
+  #endif
+
   msecnode_t *Node;
 
   // first, clear out the existing Thing fields. as each node is
   // added or verified as needed, Thing will be set properly.
   // when finished, delete all nodes where Thing is still nullptr.
   // these represent the sectors the Thing has vacated.
-
   Node = XLevel->SectorList;
   while (Node) {
     Node->Thing = nullptr;
     Node = Node->TNext;
   }
+
+  #ifdef VV_DO_ONSCROLL_FLAG
+  // reset `EFEX_OnScroll`, it will be set later
+  FlagsEx &= ~EFEX_OnScroll;
+  #endif
 
   float tmbbox[4];
   tmbbox[BOX2D_TOP] = Origin.y+Radius;
@@ -207,6 +280,17 @@ void VEntity::CreateSecNodeList () {
         // be attached to the Thing's VEntity at TouchingSectorList.
 
         XLevel->SectorList = XLevel->AddSecnode(ld->frontsector, this, XLevel->SectorList);
+        #ifdef VV_DO_ONSCROLL_FLAG
+        // check sector thinkers
+        if (!(FlagsEx&EFEX_OnScroll)) {
+          for (VThinker *ssth = ld->frontsector->AffectorData; ssth; ssth = ssth->eventGetNextAffector()) {
+            if (ssth->GetClass() == ScrollerClass) {
+              FlagsEx |= EFEX_OnScroll;
+              break;
+            }
+          }
+        }
+        #endif
 
         // don't assume all lines are 2-sided, since some Things like
         // MT_TFOG are allowed regardless of whether their radius
@@ -217,6 +301,17 @@ void VEntity::CreateSecNodeList () {
 
         if (ld->backsector && ld->backsector != ld->frontsector) {
           XLevel->SectorList = XLevel->AddSecnode(ld->backsector, this, XLevel->SectorList);
+          #ifdef VV_DO_ONSCROLL_FLAG
+          // check sector thinkers
+          if (!(FlagsEx&EFEX_OnScroll)) {
+            for (VThinker *ssth = ld->backsector->AffectorData; ssth; ssth = ssth->eventGetNextAffector()) {
+              if (ssth->GetClass() == ScrollerClass) {
+                FlagsEx |= EFEX_OnScroll;
+                break;
+              }
+            }
+          }
+          #endif
         }
       }
     }
@@ -227,7 +322,6 @@ void VEntity::CreateSecNodeList () {
 
   // now delete any nodes that won't be used
   // these are the ones where Thing is still nullptr
-
   Node = XLevel->SectorList;
   while (Node) {
     if (Node->Thing == nullptr) {
@@ -251,6 +345,11 @@ void VEntity::CreateSecNodeList () {
 //==========================================================================
 void VEntity::UnlinkFromWorld () {
   //!MoveFlags &= ~MVF_JustMoved;
+
+  #ifdef VV_DO_ONSCROLL_FLAG
+  // reset `EFEX_OnScroll`, because why not?
+  FlagsEx &= ~EFEX_OnScroll;
+  #endif
 
   if (!SubSector) return;
 
@@ -403,6 +502,9 @@ void VEntity::LinkToWorld (bool properFloorCheck) {
     TouchingSectorList = XLevel->SectorList; // attach to thing
     XLevel->SectorList = nullptr; // clear for next time
   } else {
+    #ifdef VV_DO_ONSCROLL_FLAG
+    FlagsEx &= ~EFEX_OnScroll;
+    #endif
     XLevel->DelSectorList();
   }
 
@@ -2330,4 +2432,11 @@ IMPLEMENT_FUNCTION(VEntity, RoughBlockSearch) {
   P_GET_PTR(VEntity*, EntPtr);
   P_GET_SELF;
   RET_PTR(new VRoughBlockSearchIterator(Self, Distance, EntPtr));
+}
+
+// native final void CollectTouchingSectors (ref array!(sector_t *) list);
+IMPLEMENT_FUNCTION(VEntity, CollectTouchingSectors) {
+  TArray<sector_t *> *list;
+  vobjGetParamSelf(list);
+  if (Self && list) Self->CollectTouchingSectors(*list);
 }

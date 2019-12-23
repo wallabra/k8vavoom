@@ -135,6 +135,8 @@ bool Physics (float DeltaTime) {
   float CummX = 0.0;
   float CummY = 0.0;
 
+  //if (bOnScroll) printdebug("%C: ON SCROLLER!", self);
+
   if (Sector && Sector->AffectorData && bColideWithWorld && !bNoSector) {
     // killough 3/7/98: Carry things on floor
     // killough 3/20/98: use new sector list which reflects true members
@@ -143,7 +145,6 @@ bool Physics (float DeltaTime) {
 
     // move objects only if on floor or underwater, non-floating, and clipped
     // k8: this should work with 3d floors, but now it doesn't
-
     int CountX = 0;
     int CountY = 0;
     SectorThinker SecThink;

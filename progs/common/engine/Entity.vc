@@ -306,9 +306,10 @@ bool bStepMissile; // missile can "walk" up steps
 int Health;
 int InitialHealth;
 
-// extrla flags
+// extra flags
 bool bMonster; // moved from `EntityEx`
 bool bWasRendered; // used in automap
+bool bOnScroll_Unused; // set/reset by `CreateSecNodeList()`
 
 // for movement checking
 float Radius;
@@ -452,6 +453,12 @@ native final iterator RoughBlockSearch (out Entity EntPtr, int Distance);
 
 native final void SetDecorateFlag (string Name, bool Value);
 native final bool GetDecorateFlag (string Name);
+
+// collect all sectors this entity is touching
+// the entity should be linked to the world (i.e. has valid world position)
+// will append to the list (i.e. will not clear the list)
+// WARNING! may contain duplicate sectors!
+native final void CollectTouchingSectors (ref array!(sector_t *) list);
 
 
 //==========================================================================

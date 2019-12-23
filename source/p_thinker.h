@@ -116,6 +116,8 @@ public:
     vobjPutParamSelf(DeltaTime);
     VMT_RET_VOID(method);
   }
+
+  VThinker *eventGetNextAffector () { static VMethodProxy method("GetNextAffector"); vobjPutParamSelf(); VMT_RET_REF(VThinker, method); }
 };
 
 

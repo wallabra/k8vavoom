@@ -260,6 +260,9 @@ native final line_t *FindLine (int lineTag, int *searchPosition);
 // support for linked sectors
 native final void SectorSetLink (int controltag, int tag, int surface, int movetype);
 
+// used to mark `msecnode_t`
+native final int GetNextVisitedCount ();
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // exposed here in case i'll need it later

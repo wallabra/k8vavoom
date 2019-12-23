@@ -1484,6 +1484,11 @@ vint32 VLevel::nextVisitedCount () {
   return tsVisitedCount;
 }
 
+IMPLEMENT_FUNCTION(VLevel, GetNextVisitedCount) {
+  vobjGetParamSelf();
+  RET_INT(Self->nextVisitedCount());
+}
+
 
 //==========================================================================
 //

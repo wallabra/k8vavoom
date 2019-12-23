@@ -936,6 +936,8 @@ private:
   DECLARE_FUNCTION(LdrTexNumForName)
 
   DECLARE_FUNCTION(CD_SweepLinedefAABB)
+
+  DECLARE_FUNCTION(GetNextVisitedCount)
 };
 
 
