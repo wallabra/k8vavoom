@@ -599,12 +599,6 @@ public:
     return res;
   }
 
-  // collect all sectors this entity is touching
-  // the entity should be linked to the world (i.e. has valid world position)
-  // will append to the list (i.e. will not clear the list)
-  // WARNING! may contain duplicate sectors!
-  void CollectTouchingSectors (TArray<sector_t *> &list);
-
 private:
   // world iterator callbacks
   bool CheckThing (tmtrace_t &, VEntity *);
@@ -691,8 +685,6 @@ public:
   DECLARE_FUNCTION(RoughBlockSearch)
   DECLARE_FUNCTION(SetDecorateFlag)
   DECLARE_FUNCTION(GetDecorateFlag)
-
-  DECLARE_FUNCTION(CollectTouchingSectors)
 
   DECLARE_FUNCTION(QS_PutInt);
   DECLARE_FUNCTION(QS_PutName);

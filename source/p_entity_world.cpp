@@ -149,64 +149,6 @@ void VEntity::Destroy () {
 
 //=============================================================================
 //
-//  VEntity::CollectTouchingSectors
-//
-//  collect all sectors this entity is touching
-//  the entity should be linked to the world (i.e. has valid world position)
-//  will append to the list (i.e. will not clear the list)
-//  WARNING! may contain duplicate sectors!
-//
-//=============================================================================
-void VEntity::CollectTouchingSectors (TArray<sector_t *> &list) {
-  float tmbbox[4];
-  tmbbox[BOX2D_TOP] = Origin.y+Radius;
-  tmbbox[BOX2D_BOTTOM] = Origin.y-Radius;
-  tmbbox[BOX2D_RIGHT] = Origin.x+Radius;
-  tmbbox[BOX2D_LEFT] = Origin.x-Radius;
-
-  //++validcount; // used to make sure we only process a line once
-  XLevel->IncrementValidCount();
-
-  int xl = MapBlock(tmbbox[BOX2D_LEFT]-XLevel->BlockMapOrgX);
-  int xh = MapBlock(tmbbox[BOX2D_RIGHT]-XLevel->BlockMapOrgX);
-  int yl = MapBlock(tmbbox[BOX2D_BOTTOM]-XLevel->BlockMapOrgY);
-  int yh = MapBlock(tmbbox[BOX2D_TOP]-XLevel->BlockMapOrgY);
-
-  for (int bx = xl; bx <= xh; ++bx) {
-    for (int by = yl; by <= yh; ++by) {
-      line_t *ld;
-      for (VBlockLinesIterator It(XLevel, bx, by, &ld); It.GetNext(); ) {
-        // locates all the sectors the object is in by looking at the lines that cross through it.
-        // you have already decided that the object is allowed at this location, so don't
-        // bother with checking impassable or blocking lines.
-        if (tmbbox[BOX2D_RIGHT] <= ld->bbox2d[BOX2D_LEFT] ||
-            tmbbox[BOX2D_LEFT] >= ld->bbox2d[BOX2D_RIGHT] ||
-            tmbbox[BOX2D_TOP] <= ld->bbox2d[BOX2D_BOTTOM] ||
-            tmbbox[BOX2D_BOTTOM] >= ld->bbox2d[BOX2D_TOP])
-        {
-          continue;
-        }
-
-        if (P_BoxOnLineSide(tmbbox, ld) != -1) continue;
-
-        // this line crosses through the object
-        list.append(ld->frontsector);
-
-        // don't assume all lines are 2-sided, since some Things like
-        // MT_TFOG are allowed regardless of whether their radius
-        // takes them beyond an impassable linedef.
-
-        // killough 3/27/98, 4/4/98:
-        // use sidedefs instead of 2s flag to determine two-sidedness
-        if (ld->backsector && ld->backsector != ld->frontsector) list.append(ld->backsector);
-      }
-    }
-  }
-}
-
-
-//=============================================================================
-//
 //  VEntity::CreateSecNodeList
 //
 //  phares 3/14/98
@@ -2432,11 +2374,4 @@ IMPLEMENT_FUNCTION(VEntity, RoughBlockSearch) {
   P_GET_PTR(VEntity*, EntPtr);
   P_GET_SELF;
   RET_PTR(new VRoughBlockSearchIterator(Self, Distance, EntPtr));
-}
-
-// native final void CollectTouchingSectors (ref array!(sector_t *) list);
-IMPLEMENT_FUNCTION(VEntity, CollectTouchingSectors) {
-  TArray<sector_t *> *list;
-  vobjGetParamSelf(list);
-  if (Self && list) Self->CollectTouchingSectors(*list);
 }
