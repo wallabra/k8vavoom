@@ -150,7 +150,6 @@ void VPortal::Draw (bool UseStencil) {
   int SavedExtraLight = RLev->ExtraLight;
   int SavedFixedLight = RLev->FixedLight;
   vuint8 *SavedBspVis = RLev->BspVis;
-  //vuint8 *SavedBspVisThing = RLev->BspVisThing;
   vuint8 *SavedBspVisSector = RLev->BspVisSector;
   bool SavedMirrorClip = Drawer->MirrorClip;
   const TClipPlane SavedClip = Drawer->view_frustum.planes[5]; // save far/mirror plane
@@ -170,16 +169,12 @@ void VPortal::Draw (bool UseStencil) {
       // this has to be done only for portals that do rendering of view
 
       // notify allocator about minimal node size
-      //VRenderLevelShared::SetMinPoolNodeSize(RLev->VisSize*2);
       VRenderLevelShared::SetMinPoolNodeSize(RLev->VisSize+RLev->SecVisSize+128);
       // allocate new bsp vis
-      //RLev->BspVis = VRenderLevelShared::AllocPortalPool(RLev->VisSize*2);
       RLev->BspVis = VRenderLevelShared::AllocPortalPool(RLev->VisSize+RLev->SecVisSize+128);
-      //RLev->BspVisThing = RLev->BspVis+RLev->VisSize;
       RLev->BspVisSector = RLev->BspVis+RLev->VisSize;
       if (RLev->VisSize) {
         memset(RLev->BspVis, 0, RLev->VisSize);
-        //memset(RLev->BspVisThing, 0, RLev->VisSize);
       }
       if (RLev->SecVisSize) {
         memset(RLev->BspVisSector, 0, RLev->SecVisSize);
@@ -204,7 +199,6 @@ void VPortal::Draw (bool UseStencil) {
   RLev->FixedLight = SavedFixedLight;
   if (restoreVis) {
     RLev->BspVis = SavedBspVis;
-    //RLev->BspVisThing = SavedBspVisThing;
     RLev->BspVisSector = SavedBspVisSector;
   }
   Drawer->MirrorClip = SavedMirrorClip;

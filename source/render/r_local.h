@@ -274,7 +274,6 @@ protected:
   int VisSize;
   int SecVisSize;
   vuint8 *BspVis;
-  //vuint8 *BspVisThing; // for things, why not
   vuint8 *BspVisSector; // for whole sectors
 
   subsector_t *r_viewleaf;
@@ -597,7 +596,6 @@ protected:
   void AddPolyObjToClipper (VViewClipper &clip, subsector_t *sub);
   void RenderPolyObj (subsector_t *sub);
   void RenderSubRegion (subsector_t *sub, subregion_t *region);
-  //void RenderMarkAdjSubsectorsThings (int num); // used for "better things rendering"
   void RenderSubsector (int num, bool onlyClip);
   void RenderBSPNode (int bspnum, const float *bbox, unsigned AClipflags, bool onlyClip=false);
   void RenderBspWorld (const refdef_t*, const VViewClipper*);

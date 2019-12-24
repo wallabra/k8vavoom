@@ -105,16 +105,6 @@ bool VRenderLevelShared::IsThingVisible (VEntity *ent) noexcept {
     }
   }
   return false;
-  #if 0
-  old code
-  return !!(BspVisThing[SubIdx>>3]&(1u<<(SubIdx&7)));
-  #endif
-  /*
-  if (!(BspVisThing[SubIdx>>3]&(1u<<(SubIdx&7)))) return false;
-  // if it is not in a visible level part, check render radius
-  if (BspVis[SubIdx>>3]&(1u<<(SubIdx&7))) return true;
-  return IsCircleTouchBox2D(ent->Origin.x, ent->Origin.y, ent->GetRenderRadius(), ent->SubSector->bbox2d);
-  */
 }
 
 
@@ -167,13 +157,6 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
     // this is called only in regular renderer, and only once
     // so we can skip building visible things list, and perform a direct check here
     // skip things in subsectors that are not visible
-    /*
-    const unsigned SubIdx = (unsigned)(ptrdiff_t)(mobj->SubSector-Level->Subsectors);
-    if (!(BspVisThing[SubIdx>>3]&(1<<(SubIdx&7)))) return;
-    // mark as visible, why not?
-    // use bsp visibility, to not mark "adjacent" things
-    //if (BspVis[SubIdx>>3]&(1<<(SubIdx&7))) mobj->FlagsEx |= VEntity::EFEX_Rendered;
-    */
     if (!IsThingVisible(mobj)) return;
   }
 

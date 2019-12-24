@@ -448,7 +448,6 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   , VisSize(0)
   , SecVisSize(0)
   , BspVis(nullptr)
-  //, BspVisThing(nullptr)
   , BspVisSector(nullptr)
   , r_viewleaf(nullptr)
   , r_oldviewleaf(nullptr)
@@ -487,8 +486,6 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
 
   BspVis = new vuint8[VisSize];
   memset(BspVis, 0, VisSize);
-  //BspVisThing = new vuint8[VisSize];
-  //memset(BspVisThing, 0, VisSize);
   BspVisSector = new vuint8[SecVisSize];
   memset(BspVisSector, 0, SecVisSize);
 
@@ -656,8 +653,6 @@ VRenderLevelShared::~VRenderLevelShared () {
 
   delete[] BspVis;
   BspVis = nullptr;
-  //delete[] BspVisThing;
-  //BspVisThing = nullptr;
   delete[] BspVisSector;
   BspVisSector = nullptr;
 

@@ -1017,38 +1017,6 @@ void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region)
 
 //==========================================================================
 //
-//  VRenderLevelShared::RenderMarkAdjSubsectorsThings
-//
-//  used for "better things rendering"
-//
-//  TODO: this should be replaced with "touching subsectors" list instead
-//
-//==========================================================================
-#if 0
-void VRenderLevelShared::RenderMarkAdjSubsectorsThings (int num) {
-  BspVisThing[((unsigned)num)>>3] |= 1U<<(num&7);
-  /*
-  if (r_draw_adjacent_subsector_things) {
-    subsector_t *sub = &Level->Subsectors[num];
-    int sgcount = sub->numlines;
-    if (sgcount) {
-      const seg_t *seg = &Level->Segs[sub->firstline];
-      for (; sgcount--; ++seg) {
-        if (seg->linedef && !(seg->linedef->flags&ML_TWOSIDED)) continue; // don't go through solid walls
-        const seg_t *pseg = seg->partner;
-        if (!pseg || !pseg->frontsub) continue;
-        const unsigned psidx = (unsigned)(ptrdiff_t)(pseg->frontsub-Level->Subsectors);
-        BspVisThing[psidx>>3] |= 1U<<(psidx&7);
-      }
-    }
-  }
-  */
-}
-#endif
-
-
-//==========================================================================
-//
 //  VRenderLevelShared::RenderSubsector
 //
 //==========================================================================
@@ -1061,14 +1029,6 @@ void VRenderLevelShared::RenderSubsector (int num, bool onlyClip) {
     // if we have PVS, `MarkLeaves()` marks potentially visible subsectors
     if (Level->HasPVS()) {
       if (sub->VisFrame != currVisFrame) {
-        /*
-        if (r_draw_adjacent_subsector_things) {
-          if (!clip_use_1d_clipper || ViewClip.ClipCheckSubsector(sub)) {
-            RenderMarkAdjSubsectorsThings(num);
-            if (clip_use_1d_clipper) ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && Drawer->view_frustum.planes[5].isValid() ? &Drawer->view_frustum.planes[5] : nullptr));
-          }
-        } else
-        */
         if (clip_use_1d_clipper) {
           ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && Drawer->view_frustum.planes[5].isValid() ? &Drawer->view_frustum.planes[5] : nullptr));
         }
@@ -1087,12 +1047,9 @@ void VRenderLevelShared::RenderSubsector (int num, bool onlyClip) {
       // mark this subsector as rendered
       BspVis[((unsigned)num)>>3] |= 1U<<(num&7);
 
-      // mark this sector as rendered
+      // mark this sector as rendered (thing visibility check needs this info)
       const unsigned secnum = (unsigned)(ptrdiff_t)(sub->sector-&Level->Sectors[0]);
       BspVisSector[secnum>>3] |= 1U<<(secnum&7);
-
-      // mark thing subsectors
-      //RenderMarkAdjSubsectorsThings(num);
 
       // update world
       if (sub->updateWorldFrame != updateWorldFrame) {
@@ -1214,7 +1171,6 @@ void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper 
   ViewClip.ClipInitFrustumRange(Drawer->viewangles, Drawer->viewforward, Drawer->viewright, Drawer->viewup, rd->fovx, rd->fovy);
   if (Range) ViewClip.ClipToRanges(*Range); // range contains a valid range, so we must clip away holes in it
   memset(BspVis, 0, VisSize);
-  //memset(BspVisThing, 0, VisSize);
   memset(BspVisSector, 0, SecVisSize);
   if (PortalLevel == 0) {
     if (WorldSurfs.NumAllocated() < 4096) WorldSurfs.Resize(4096);
