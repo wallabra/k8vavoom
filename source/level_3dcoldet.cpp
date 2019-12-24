@@ -342,13 +342,11 @@ void VLevel::CalcLineCDPlanes (line_t *line) {
 //                                               optional out TPlane hitPlane, optional out TVec contactPoint,
 //                                               optional out CD_HitType hitType);
 IMPLEMENT_FUNCTION(VLevel, CD_SweepLinedefAABB) {
-  P_GET_PTR_OPT(CD_HitType, hitType, nullptr);
-  P_GET_PTR_OPT(TVec, contactPoint, nullptr);
-  P_GET_PTR_OPT(TPlane, hitPlane, nullptr);
-  P_GET_VEC(bmax);
-  P_GET_VEC(bmin);
-  P_GET_VEC(vend);
-  P_GET_VEC(vstart);
-  P_GET_PTR(const line_t, ld);
+  line_t *ld;
+  TVec vstart, vend, bmin, bmax;
+  VOptParamPtr<TPlane> hitPlane;
+  VOptParamPtr<TVec> contactPoint;
+  VOptParamPtr<CD_HitType> hitType;
+  vobjGetParamSelf(ld, vstart, vend, bmin, bmax, hitPlane, contactPoint, hitType);
   RET_FLOAT(SweepLinedefAABB(ld, vstart, vend, bmin, bmax, hitPlane, contactPoint, hitType));
 }
