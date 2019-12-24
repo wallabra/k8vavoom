@@ -7282,17 +7282,12 @@ void VAcsGlobal::Serialise (VStream &Strm) {
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VLevel, StartACS) {
-  P_GET_BOOL(WantResult);
-  P_GET_BOOL(Always);
-  P_GET_INT(side);
-  P_GET_PTR(line_t, line);
-  P_GET_REF(VEntity, activator);
-  P_GET_INT(arg3);
-  P_GET_INT(arg2);
-  P_GET_INT(arg1);
-  P_GET_INT(map);
-  P_GET_INT(num);
-  P_GET_SELF;
+  int num, map, arg1, arg2, arg3;
+  VEntity *activator;
+  line_t *line;
+  int side;
+  bool Always, WantResult;
+  vobjGetParamSelf(num, map, arg1, arg2, arg3, activator, line, side, Always, WantResult);
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::StartACS"); }
   int res = 0;
   //fprintf(stderr, "000: activator=<%s>; line=%p; side=%d\n", (activator ? activator->GetClass()->GetName() : "???"), line, side);
@@ -7302,76 +7297,53 @@ IMPLEMENT_FUNCTION(VLevel, StartACS) {
 }
 
 IMPLEMENT_FUNCTION(VLevel, SuspendACS) {
-  P_GET_INT(map);
-  P_GET_INT(number);
-  P_GET_SELF;
+  int number, map;
+  vobjGetParamSelf(number, map);
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::SuspendACS"); }
   RET_BOOL(Self->Acs->Suspend(number, map));
 }
 
 IMPLEMENT_FUNCTION(VLevel, TerminateACS) {
-  P_GET_INT(map);
-  P_GET_INT(number);
-  P_GET_SELF;
+  int number, map;
+  vobjGetParamSelf(number, map);
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::TerminateACS"); }
   RET_BOOL(Self->Acs->Terminate(number, map));
 }
 
 IMPLEMENT_FUNCTION(VLevel, StartTypedACScripts) {
-  P_GET_BOOL(RunNow);
-  P_GET_BOOL(Always);
-  P_GET_REF(VEntity, Activator);
-  P_GET_INT(Arg3);
-  P_GET_INT(Arg2);
-  P_GET_INT(Arg1);
-  P_GET_INT(Type);
-  P_GET_SELF;
+  int Type, Arg1, Arg2, Arg3;
+  VEntity *Activator;
+  bool Always, RunNow;
+  vobjGetParamSelf(Type, Arg1, Arg2, Arg3, Activator, Always, RunNow);
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::StartTypedACScripts"); }
   Self->Acs->StartTypedACScripts(Type, Arg1, Arg2, Arg3, Activator, Always, RunNow);
 }
 
-
 // bool RunACS (VEntity activator, int script, int map, int s_arg1, int s_arg2, int s_arg3, int s_arg4)
 IMPLEMENT_FUNCTION(VLevel, RunACS) {
-  P_GET_INT(Arg4);
-  P_GET_INT(Arg3);
-  P_GET_INT(Arg2);
-  P_GET_INT(Arg1);
-  P_GET_INT(Map);
-  P_GET_INT(Script);
-  P_GET_PTR(VEntity, Activator);
-  P_GET_SELF;
+  VEntity *Activator;
+  int Script, Map, Arg1, Arg2, Arg3, Arg4;
+  vobjGetParamSelf(Activator, Script, Map, Arg1, Arg2, Arg3, Arg4);
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::RunACS"); }
   if (Script < 0) { RET_BOOL(false); return; }
   RET_BOOL(Self->Acs->Start(Script, Map, Arg1, Arg2, Arg3, Arg4, Activator, nullptr/*line*/, 0/*side*/, false/*always*/, false/*wantresult*/, false/*net;k8:notsure*/));
 }
 
-
 // bool RunACSAlways (VEntity activator, int script, int map, int s_arg1, int s_arg2, int s_arg3, int s_arg4)
 IMPLEMENT_FUNCTION(VLevel, RunACSAlways) {
-  P_GET_INT(Arg4);
-  P_GET_INT(Arg3);
-  P_GET_INT(Arg2);
-  P_GET_INT(Arg1);
-  P_GET_INT(Map);
-  P_GET_INT(Script);
-  P_GET_PTR(VEntity, Activator);
-  P_GET_SELF;
+  VEntity *Activator;
+  int Script, Map, Arg1, Arg2, Arg3, Arg4;
+  vobjGetParamSelf(Activator, Script, Map, Arg1, Arg2, Arg3, Arg4);
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::RunACSAlways"); }
   if (Script < 0) { RET_BOOL(false); return; }
   RET_BOOL(Self->Acs->Start(Script, Map, Arg1, Arg2, Arg3, Arg4, Activator, nullptr/*line*/, 0/*side*/, true/*always*/, false/*wantresult*/, false/*net;k8:notsure*/));
 }
 
-
 // int RunACSWithResult (VEntity activator, int script, int s_arg1, int s_arg2, int s_arg3, int s_arg4)
 IMPLEMENT_FUNCTION(VLevel, RunACSWithResult) {
-  P_GET_INT(Arg4);
-  P_GET_INT(Arg3);
-  P_GET_INT(Arg2);
-  P_GET_INT(Arg1);
-  P_GET_INT(Script);
-  P_GET_PTR(VEntity, Activator);
-  P_GET_SELF;
+  VEntity *Activator;
+  int Script, Arg1, Arg2, Arg3, Arg4;
+  vobjGetParamSelf(Activator, Script, Arg1, Arg2, Arg3, Arg4);
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::RunACSWithResult"); }
   if (Script < 0) { RET_INT(0); return; }
   //fprintf(stderr, "001: activator=<%s>\n", (Activator ? Activator->GetClass()->GetName() : "???"));
@@ -7380,17 +7352,12 @@ IMPLEMENT_FUNCTION(VLevel, RunACSWithResult) {
   RET_INT(res);
 }
 
-
 // bool RunNamedACS (VEntity activator, string script, int map, int s_arg1, int s_arg2, int s_arg3, int s_arg4)
 IMPLEMENT_FUNCTION(VLevel, RunNamedACS) {
-  P_GET_INT(Arg4);
-  P_GET_INT(Arg3);
-  P_GET_INT(Arg2);
-  P_GET_INT(Arg1);
-  P_GET_INT(Map);
-  P_GET_STR(Name);
-  P_GET_PTR(VEntity, Activator);
-  P_GET_SELF;
+  VEntity *Activator;
+  VStr Name;
+  int Map, Arg1, Arg2, Arg3, Arg4;
+  vobjGetParamSelf(Activator, Name, Map, Arg1, Arg2, Arg3, Arg4);
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::RunNamedACS"); }
   //GCon->Logf("ACS: RunNamedACS000: script=<%s>; map=%d", *Name, Map);
   if (Name.length() == 0) { RET_BOOL(false); return; }
@@ -7400,17 +7367,12 @@ IMPLEMENT_FUNCTION(VLevel, RunNamedACS) {
   RET_BOOL(Self->Acs->Start(-Script.GetIndex(), Map, Arg1, Arg2, Arg3, Arg4, Activator, nullptr/*line*/, 0/*side*/, /*Script < 0*/false/*always:wtf?*/, false/*wantresult*/, false/*net*/));
 }
 
-
 // bool RunNamedACSAlways (VEntity activator, string script, int map, int s_arg1, int s_arg2, int s_arg3, int s_arg4)
 IMPLEMENT_FUNCTION(VLevel, RunNamedACSAlways) {
-  P_GET_INT(Arg4);
-  P_GET_INT(Arg3);
-  P_GET_INT(Arg2);
-  P_GET_INT(Arg1);
-  P_GET_INT(Map);
-  P_GET_STR(Name);
-  P_GET_PTR(VEntity, Activator);
-  P_GET_SELF;
+  VEntity *Activator;
+  VStr Name;
+  int Map, Arg1, Arg2, Arg3, Arg4;
+  vobjGetParamSelf(Activator, Name, Map, Arg1, Arg2, Arg3, Arg4);
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::RunNamedACSAlways"); }
   if (Name.length() == 0) { RET_BOOL(false); return; }
   VName Script = VName(*Name, VName::AddLower);
@@ -7418,16 +7380,12 @@ IMPLEMENT_FUNCTION(VLevel, RunNamedACSAlways) {
   RET_BOOL(Self->Acs->Start(-Script.GetIndex(), Map, Arg1, Arg2, Arg3, Arg4, Activator, nullptr/*line*/, 0/*side*/, true/*always:wtf?*/, false/*wantresult*/, false/*net*/));
 }
 
-
 // int RunNamedACSWithResult (VEntity activator, string script, int s_arg1, int s_arg2, int s_arg3, int s_arg4)
 IMPLEMENT_FUNCTION(VLevel, RunNamedACSWithResult) {
-  P_GET_INT(Arg4);
-  P_GET_INT(Arg3);
-  P_GET_INT(Arg2);
-  P_GET_INT(Arg1);
-  P_GET_STR(Name);
-  P_GET_PTR(VEntity, Activator);
-  P_GET_SELF;
+  VEntity *Activator;
+  VStr Name;
+  int Arg1, Arg2, Arg3, Arg4;
+  vobjGetParamSelf(Activator, Name, Arg1, Arg2, Arg3, Arg4);
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("null self in VLevel::RunNamedACSWithResult"); }
   if (Name.length() == 0) { RET_INT(0); return; }
   VName Script = VName(*Name, VName::AddLower);
