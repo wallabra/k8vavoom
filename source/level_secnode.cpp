@@ -39,11 +39,9 @@
 //
 //=============================================================================
 msecnode_t *VLevel::AddSecnode (sector_t *Sec, VEntity *Thing, msecnode_t *NextNode) {
-  msecnode_t *Node;
-
   if (!Sec) Sys_Error("AddSecnode of 0 for %s\n", Thing->GetClass()->GetName());
 
-  Node = NextNode;
+  msecnode_t *Node = NextNode;
   while (Node) {
     // already have a node for this sector?
     if (Node->Sector == Sec) {
@@ -66,16 +64,17 @@ msecnode_t *VLevel::AddSecnode (sector_t *Sec, VEntity *Thing, msecnode_t *NextN
 
   // killough 4/4/98, 4/7/98: mark new nodes unvisited
   Node->Visited = 0;
+
   Node->Sector = Sec; // sector
   Node->Thing = Thing; // mobj
-  Node->TPrev = (NextNode ? Node : nullptr); // prev node on Thing thread
+  Node->TPrev = nullptr; // prev node on Thing thread
   Node->TNext = NextNode; // next node on Thing thread
-  //if (NextNode) NextNode->TPrev = Node; // set back link on Thing
+  if (NextNode) NextNode->TPrev = Node; // set back link on Thing
 
   // add new node at head of sector thread starting at Sec->TouchingThingList
-  Node->SPrev = (Sec->TouchingThingList ? Node : nullptr); // prev node on sector thread
+  Node->SPrev = nullptr; // prev node on sector thread
   Node->SNext = Sec->TouchingThingList; // next node on sector thread
-  //if (Sec->TouchingThingList) Node->SNext->SPrev = Node;
+  if (Sec->TouchingThingList) Node->SNext->SPrev = Node;
   Sec->TouchingThingList = Node;
   return Node;
 }
