@@ -1383,8 +1383,8 @@ void VScriptsParser::CheckInterface () {
 
 #if !defined(VCC_STANDALONE_EXECUTOR)
 IMPLEMENT_FUNCTION(VScriptsParser, OpenLumpName) {
-  P_GET_NAME(Name);
-  P_GET_SELF;
+  VName Name;
+  vobjGetParamSelf(Name);
 #if !defined(IN_VCC)
   if (Self->Int) {
     delete Self->Int;
@@ -1395,8 +1395,8 @@ IMPLEMENT_FUNCTION(VScriptsParser, OpenLumpName) {
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, OpenLumpIndex) {
-  P_GET_INT(lump);
-  P_GET_SELF;
+  int lump;
+  vobjGetParamSelf(lump);
 #if !defined(IN_VCC)
   if (Self->Int) {
     delete Self->Int;
@@ -1409,8 +1409,8 @@ IMPLEMENT_FUNCTION(VScriptsParser, OpenLumpIndex) {
 #endif
 
 IMPLEMENT_FUNCTION(VScriptsParser, OpenLumpFullName) {
-  P_GET_STR(Name);
-  P_GET_SELF;
+  VStr Name;
+  vobjGetParamSelf(Name);
 #if !defined(IN_VCC) && !defined(VCC_STANDALONE_EXECUTOR)
   if (Self->Int) {
     delete Self->Int;
@@ -1467,9 +1467,9 @@ IMPLEMENT_FUNCTION(VScriptsParser, OpenLumpFullName) {
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, OpenString) {
-  P_GET_STR(s);
-  P_GET_NAME(Name);
-  P_GET_SELF;
+  VName Name;
+  VStr s;
+  vobjGetParamSelf(Name, s);
   if (Self->Int) {
     delete Self->Int;
     Self->Int = nullptr;
@@ -1478,218 +1478,218 @@ IMPLEMENT_FUNCTION(VScriptsParser, OpenString) {
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, get_String) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->CheckInterface();
   RET_STR(Self->Int->String);
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, get_Number) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->CheckInterface();
   RET_INT(Self->Int->Number);
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, get_Float) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->CheckInterface();
   RET_FLOAT(Self->Int->Float);
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, get_Crossed) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->CheckInterface();
   RET_BOOL(Self->Int->Crossed);
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, get_Quoted) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->CheckInterface();
   RET_BOOL(Self->Int->QuotedString);
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, IsText) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->CheckInterface();
   RET_BOOL(Self->Int->IsText());
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, IsAtEol) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->CheckInterface();
   RET_BOOL(Self->Int->IsAtEol());
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, IsCMode) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->CheckInterface();
   RET_BOOL(Self->Int->IsCMode());
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, SetCMode) {
-  P_GET_BOOL(On);
-  P_GET_SELF;
+  bool On;
+  vobjGetParamSelf(On);
   Self->CheckInterface();
   Self->Int->SetCMode(On);
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, IsAllowNumSign) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->CheckInterface();
   RET_BOOL(Self->Int->IsAllowNumSign());
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, SetAllowNumSign) {
-  P_GET_BOOL(On);
-  P_GET_SELF;
+  bool On;
+  vobjGetParamSelf(On);
   Self->CheckInterface();
   Self->Int->SetAllowNumSign(On);
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, IsEscape) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->CheckInterface();
   RET_BOOL(Self->Int->IsEscape());
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, SetEscape) {
-  P_GET_BOOL(On);
-  P_GET_SELF;
+  bool On;
+  vobjGetParamSelf(On);
   Self->CheckInterface();
   Self->Int->SetEscape(On);
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, AtEnd) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->CheckInterface();
   RET_BOOL(Self->Int->AtEnd());
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, GetString) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->CheckInterface();
   RET_BOOL(Self->Int->GetString());
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, ExpectLoneChar) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->CheckInterface();
   Self->Int->ExpectLoneChar();
 }
 
 #if !defined(VCC_STANDALONE_EXECUTOR)
 IMPLEMENT_FUNCTION(VScriptsParser, ExpectColor) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->CheckInterface();
   RET_INT(Self->Int->ExpectColor());
 }
 #endif
 
 IMPLEMENT_FUNCTION(VScriptsParser, ExpectString) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->CheckInterface();
   Self->Int->ExpectString();
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, Check) {
-  P_GET_STR(Text);
-  P_GET_SELF;
+  VStr Text;
+  vobjGetParamSelf(Text);
   Self->CheckInterface();
   RET_BOOL(Self->Int->Check(*Text));
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, CheckStartsWith) {
-  P_GET_STR(Text);
-  P_GET_SELF;
+  VStr Text;
+  vobjGetParamSelf(Text);
   Self->CheckInterface();
   RET_BOOL(Self->Int->CheckStartsWith(*Text));
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, Expect) {
-  P_GET_STR(Text);
-  P_GET_SELF;
+  VStr Text;
+  vobjGetParamSelf(Text);
   Self->CheckInterface();
   Self->Int->Expect(*Text);
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, CheckIdentifier) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->CheckInterface();
   RET_BOOL(Self->Int->CheckIdentifier());
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, ExpectIdentifier) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->CheckInterface();
   Self->Int->ExpectIdentifier();
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, CheckNumber) {
-  P_GET_BOOL_OPT(withSign, false);
-  P_GET_SELF;
+  VOptParamBool withSign(false);
+  vobjGetParamSelf(withSign);
   Self->CheckInterface();
   RET_BOOL(withSign ? Self->Int->CheckNumberWithSign() : Self->Int->CheckNumber());
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, ExpectNumber) {
-  P_GET_BOOL_OPT(withSign, false);
-  P_GET_SELF;
+  VOptParamBool withSign(false);
+  vobjGetParamSelf(withSign);
   Self->CheckInterface();
   if (withSign) Self->Int->ExpectNumberWithSign(); else Self->Int->ExpectNumber();
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, CheckFloat) {
-  P_GET_BOOL_OPT(withSign, false);
-  P_GET_SELF;
+  VOptParamBool withSign(false);
+  vobjGetParamSelf(withSign);
   Self->CheckInterface();
   RET_BOOL(withSign ? Self->Int->CheckFloatWithSign() : Self->Int->CheckFloat());
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, ExpectFloat) {
-  P_GET_BOOL_OPT(withSign, false);
-  P_GET_SELF;
+  VOptParamBool withSign(false);
+  vobjGetParamSelf(withSign);
   Self->CheckInterface();
   if (withSign) Self->Int->ExpectFloatWithSign(); else Self->Int->ExpectFloat();
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, ResetQuoted) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->CheckInterface();
   Self->Int->ResetQuoted();
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, ResetCrossed) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->CheckInterface();
   Self->Int->ResetCrossed();
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, SkipBracketed) {
-  P_GET_BOOL_OPT(bracketEaten, false);
-  P_GET_SELF;
+  VOptParamBool bracketEaten(false);
+  vobjGetParamSelf(bracketEaten);
   Self->CheckInterface();
   Self->Int->SkipBracketed(bracketEaten);
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, SkipLine) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->CheckInterface();
   Self->Int->SkipLine();
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, UnGet) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->CheckInterface();
   Self->Int->UnGet();
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, FileName) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->CheckInterface();
   RET_STR(Self->Int->GetScriptName());
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, CurrLine) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->CheckInterface();
   RET_INT(Self->Int->TokLine);
 }
@@ -1709,15 +1709,15 @@ IMPLEMENT_FUNCTION(VScriptsParser, ScriptMessage) {
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, SavePos) {
-  P_GET_PTR(VScriptSavedPos, pos);
-  P_GET_SELF;
+  VScriptSavedPos *pos;
+  vobjGetParamSelf(pos);
   Self->CheckInterface();
   if (pos) *pos = Self->Int->SavePos();
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, RestorePos) {
-  P_GET_PTR(VScriptSavedPos, pos);
-  P_GET_SELF;
+  VScriptSavedPos *pos;
+  vobjGetParamSelf(pos);
   Self->CheckInterface();
   if (pos) Self->Int->RestorePos(*pos);
 }
