@@ -311,21 +311,23 @@ void SetSpeed (int Arg2, int Arg3) {
 //
 //==========================================================================
 override void Tick (float DeltaTime) {
-  float Height;
-  float Delta;
-
-  float XDelta = XSpeed*DeltaTime;
-  float YDelta = YSpeed*DeltaTime;
+  float XDelta, YDelta;
 
   if (Control != -1) {
     // compute scroll amounts based on a sector's height changes
-    Height = GetPlanePointZ(ref XLevel.Sectors[Control].floor,
+    float Height = GetPlanePointZ(ref XLevel.Sectors[Control].floor,
       XLevel.Sectors[Control].soundorg)+GetPlanePointZ(ref XLevel.Sectors[Control].ceiling,
       XLevel.Sectors[Control].soundorg);
-    Delta = Height-LastHeight;
+    float Delta = Height-LastHeight;
     LastHeight = Height;
-    XDelta = XSpeed/35.0*Delta;
-    YDelta = YSpeed/35.0*Delta;
+    //if (Delta) printdebug("sector #%s (control=%s; accel=%B): Delta=%s; xydelta=(%s,%s)", Sector-&XLevel.Sectors[0], Control, bAccel, Delta, XDelta, YDelta);
+    //XDelta = XSpeed/35.0*Delta; //k8: this was wrong
+    //YDelta = YSpeed/35.0*Delta; //k8: this was wrong
+    XDelta = XSpeed*Delta*DeltaTime;
+    YDelta = YSpeed*Delta*DeltaTime;
+  } else {
+    XDelta = XSpeed*DeltaTime;
+    YDelta = YSpeed*DeltaTime;
   }
 
   // add acceleration
@@ -338,6 +340,9 @@ override void Tick (float DeltaTime) {
 
   CarryScrollX = 0.0;
   CarryScrollY = 0.0;
+
+  //if (fabs(XDelta) < 0.00001) XDelta = 0;
+  //if (fabs(YDelta) < 0.00001) YDelta = 0;
 
   if (!XDelta && !YDelta) return; // no-op if both (x,y) offsets are 0
 
