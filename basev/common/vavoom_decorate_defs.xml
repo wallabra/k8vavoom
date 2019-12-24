@@ -23,6 +23,8 @@
     <prop_speed name="FloatSpeed" property="FloatSpeed" />
     <prop_speed name="JumpVelZ" property="JumpVelZ" />
     <prop_string name="Species" property="Species" />
+    <!-- Rendering -->
+    <prop_float name="RenderRadius" property="RenderRadius" />
     <!-- Collision and physics -->
     <prop_float name="Radius" property="Radius" />
     <prop_float name="Height" property="Height" />

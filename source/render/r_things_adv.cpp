@@ -257,7 +257,7 @@ void VRenderLevelShadowVolume::BuildMobjsInCurrLight (bool doShadows) {
             if (!ent->State || (ent->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) continue;
             if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
             if (!ent->SubSector) continue; // just in case
-            if (ent->Radius < 1) continue;
+            if (ent->GetRenderRadius() < 1) continue;
             // skip things in subsectors that are not visible by the current light
             const int SubIdx = (int)(ptrdiff_t)(ent->SubSector-Level->Subsectors);
             if (!IsSubsectorLitBspVis(SubIdx)) continue;
@@ -371,9 +371,9 @@ void VRenderLevelShadowVolume::RenderMobjsAmbient () {
       } else {
         if (oldLight) {
           // use old way of lighting
-          light = LightPoint(ent->Origin, ent->Radius, ent->Height, nullptr, ent->SubSector);
+          light = LightPoint(ent->Origin, ent->GetRenderRadius(), ent->Height, nullptr, ent->SubSector);
         } else {
-          light = LightPointAmbient(ent->Origin, ent->Radius, ent->SubSector);
+          light = LightPointAmbient(ent->Origin, ent->GetRenderRadius(), ent->SubSector);
         }
       }
 

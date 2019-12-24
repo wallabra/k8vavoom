@@ -3137,6 +3137,8 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
     else if (sc->Check("Radius")) {
       sc->ExpectFloat();
       SetClassFieldFloat(Class, "Radius", sc->Float);
+      // also, reset render radius
+      SetClassFieldFloat(Class, "RenderRadius", 0);
     } else if (sc->Check("Height")) {
       sc->ExpectFloat();
       SetClassFieldFloat(Class, "Height", sc->Float);

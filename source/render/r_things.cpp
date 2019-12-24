@@ -92,11 +92,11 @@ bool VRenderLevelShared::IsThingVisible (VEntity *ent) noexcept {
   // check if it is in visible sector
   if (BspVisSector[SecIdx>>3]&(1u<<(SecIdx&7))) {
     // in visible sector; check frustum, because sector shapes can be quite bizarre
-    return Drawer->view_frustum.checkSphere(ent->Origin, ent->Radius);
+    return Drawer->view_frustum.checkSphere(ent->Origin, ent->GetRenderRadius());
   } else if (r_draw_adjacent_sector_things) {
     // in invisible sector, and we have to perform adjacency check
     // do frustum check first
-    if (Drawer->view_frustum.checkSphere(ent->Origin, ent->Radius)) {
+    if (Drawer->view_frustum.checkSphere(ent->Origin, ent->GetRenderRadius())) {
       // check if this thing is touching any visible sector
       for (msecnode_t *mnode = ent->TouchingSectorList; mnode; mnode = mnode->TNext) {
         const unsigned snum = (unsigned)(ptrdiff_t)(mnode->Sector-Level->Sectors);
@@ -113,7 +113,7 @@ bool VRenderLevelShared::IsThingVisible (VEntity *ent) noexcept {
   if (!(BspVisThing[SubIdx>>3]&(1u<<(SubIdx&7)))) return false;
   // if it is not in a visible level part, check render radius
   if (BspVis[SubIdx>>3]&(1u<<(SubIdx&7))) return true;
-  return IsCircleTouchBox2D(ent->Origin.x, ent->Origin.y, ent->Radius, ent->SubSector->bbox2d);
+  return IsCircleTouchBox2D(ent->Origin.x, ent->Origin.y, ent->GetRenderRadius(), ent->SubSector->bbox2d);
   */
 }
 
@@ -204,9 +204,9 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
   } else if ((mobj->State->Frame&VState::FF_FULLBRIGHT) ||
              (mobj->EntityFlags&(VEntity::EF_FullBright|VEntity::EF_Bright))) {
     light = 0xffffffff;
-    seclight = (r_brightmaps && r_brightmaps_sprite ? LightPoint(mobj->Origin, mobj->Radius, mobj->Height, nullptr, mobj->SubSector) : light);
+    seclight = (r_brightmaps && r_brightmaps_sprite ? LightPoint(mobj->Origin, mobj->GetRenderRadius(), mobj->Height, nullptr, mobj->SubSector) : light);
   } else {
-    light = seclight = LightPoint(mobj->Origin, mobj->Radius, mobj->Height, nullptr, mobj->SubSector);
+    light = seclight = LightPoint(mobj->Origin, mobj->GetRenderRadius(), mobj->Height, nullptr, mobj->SubSector);
     //GCon->Logf("%s: radius=%f; height=%f", *mobj->GetClass()->GetFullName(), mobj->Radius, mobj->Height);
   }
 

@@ -954,32 +954,33 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
       // skip things in subsectors that are not visible
       const int SubIdx = (int)(ptrdiff_t)(ment->SubSector-Level->Subsectors);
       if (!IsSubsectorLitBspVis(SubIdx)) continue;
-      if (ment->Radius < 1) continue;
+      const float eradius = ment->GetRenderRadius();
+      if (eradius < 1) continue;
       if (!HasEntityAliasModel(ment)) continue;
       // assume that it is not bigger than its radius
       float zup, zdown;
       if (ment->Height < 2) {
         //GCon->Logf("  <%s>: height=%f; radius=%f", *ment->GetClass()->GetFullName(), ment->Height, ment->Radius);
-        zup = ment->Radius;
-        zdown = ment->Radius;
+        zup = eradius;
+        zdown = eradius;
       } else {
         zup = ment->Height;
         zdown = 0;
       }
       if (wasHit) {
-        xbbox[0+0] = min2(xbbox[0+0], ment->Origin.x-ment->Radius);
-        xbbox[0+1] = min2(xbbox[0+1], ment->Origin.y-ment->Radius);
+        xbbox[0+0] = min2(xbbox[0+0], ment->Origin.x-eradius);
+        xbbox[0+1] = min2(xbbox[0+1], ment->Origin.y-eradius);
         xbbox[0+2] = min2(xbbox[0+2], ment->Origin.z-zup);
-        xbbox[3+0] = max2(xbbox[3+0], ment->Origin.x+ment->Radius);
-        xbbox[3+1] = max2(xbbox[3+1], ment->Origin.y+ment->Radius);
+        xbbox[3+0] = max2(xbbox[3+0], ment->Origin.x+eradius);
+        xbbox[3+1] = max2(xbbox[3+1], ment->Origin.y+eradius);
         xbbox[3+2] = max2(xbbox[3+2], ment->Origin.z+zdown);
       } else {
         wasHit = true;
-        xbbox[0+0] = ment->Origin.x-ment->Radius;
-        xbbox[0+1] = ment->Origin.y-ment->Radius;
+        xbbox[0+0] = ment->Origin.x-eradius;
+        xbbox[0+1] = ment->Origin.y-eradius;
         xbbox[0+2] = ment->Origin.z-zup;
-        xbbox[3+0] = ment->Origin.x+ment->Radius;
-        xbbox[3+1] = ment->Origin.y+ment->Radius;
+        xbbox[3+0] = ment->Origin.x+eradius;
+        xbbox[3+1] = ment->Origin.y+eradius;
         xbbox[3+2] = ment->Origin.z+zdown;
       }
     }

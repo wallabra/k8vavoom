@@ -332,6 +332,9 @@ class VEntity : public VThinker {
   /*SkyViewpoint*/VEntity *Mate;
   float PlaneAlpha;
 
+  // for renderer; if <= 0, use `Radius` instead
+  float RenderRadius;
+
 protected:
   //VEntity () : SoundClass(E_NoInit), SoundGender(E_NoInit), DecalName(E_NoInit) {}
 
@@ -356,8 +359,10 @@ protected:
   friend struct SetStateGuard;
 
 public:
-  inline float GetFloorNormalZ () const { return EFloor.GetNormalZ(); }
-  inline float GetCeilingNormalZ () const { return ECeiling.GetNormalZ(); }
+  VVA_CHECKRESULT inline float GetFloorNormalZ () const noexcept { return EFloor.GetNormalZ(); }
+  VVA_CHECKRESULT inline float GetCeilingNormalZ () const noexcept { return ECeiling.GetNormalZ(); }
+
+  VVA_CHECKRESULT inline float GetRenderRadius () const noexcept { return max2(Height, (RenderRadius > 0.0f ? RenderRadius : Radius)); }
 
   // VObject interface
   virtual void Destroy () override;

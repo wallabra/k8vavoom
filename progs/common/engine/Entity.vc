@@ -370,6 +370,9 @@ bool bAlways;
 /*SkyViewpoint*/Entity Mate;
 float PlaneAlpha;
 
+// for renderer; if <= 0, use `Radius` instead
+float RenderRadius;
+
 
 replication {
   reliable if (Role == ROLE_Authority)

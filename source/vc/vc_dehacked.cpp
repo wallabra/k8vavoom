@@ -532,6 +532,8 @@ static void ReadThing (int num) {
     } else if (!VStr::ICmp(String, "Width")) {
       hasSomeDefine = true;
       SetClassFieldFloat(Ent, "Radius", value/65536.0f);
+      // also, reset render radius
+      SetClassFieldFloat(Ent, "RenderRadius", 0);
     } else if (!VStr::ICmp(String, "Height")) {
       gotHeight = true; // height changed
       hasSomeDefine = true;
