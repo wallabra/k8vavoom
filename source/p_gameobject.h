@@ -788,8 +788,8 @@ struct polyobj_t {
   vint32 bbox2d[4];
   vint32 validcount;
   enum {
-    PF_Crush        = 0x01, // should the polyobj attempt to crush mobjs?
-    PF_HurtOnTouch  = 0x02,
+    PF_Crush       = 0x01u, // should the polyobj attempt to crush mobjs?
+    PF_HurtOnTouch = 0x02u,
   };
   vuint32 PolyFlags;
   vint32 seqType;
