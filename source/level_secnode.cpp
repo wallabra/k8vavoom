@@ -66,17 +66,16 @@ msecnode_t *VLevel::AddSecnode (sector_t *Sec, VEntity *Thing, msecnode_t *NextN
 
   // killough 4/4/98, 4/7/98: mark new nodes unvisited
   Node->Visited = 0;
-
   Node->Sector = Sec; // sector
   Node->Thing = Thing; // mobj
-  Node->TPrev = nullptr; // prev node on Thing thread
+  Node->TPrev = (NextNode ? Node : nullptr); // prev node on Thing thread
   Node->TNext = NextNode; // next node on Thing thread
-  if (NextNode) NextNode->TPrev = Node; // set back link on Thing
+  //if (NextNode) NextNode->TPrev = Node; // set back link on Thing
 
   // add new node at head of sector thread starting at Sec->TouchingThingList
-  Node->SPrev = nullptr; // prev node on sector thread
+  Node->SPrev = (Sec->TouchingThingList ? Node : nullptr); // prev node on sector thread
   Node->SNext = Sec->TouchingThingList; // next node on sector thread
-  if (Sec->TouchingThingList) Node->SNext->SPrev = Node;
+  //if (Sec->TouchingThingList) Node->SNext->SPrev = Node;
   Sec->TouchingThingList = Node;
   return Node;
 }

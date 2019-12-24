@@ -921,13 +921,16 @@ struct sec_region_t {
 //
 // For the links, nullptr means top or end of list.
 //
+// k8: note that sector cannot appear in a list twice, so it is safe to
+//     rely on this in various effectors.
+//
 struct msecnode_t {
   sector_t *Sector; // a sector containing this object
   Entity Thing;  // this object
-  msecnode_t *TPrev;  // prev msecnode_t for this thing
   msecnode_t *TNext;  // next msecnode_t for this thing
+  msecnode_t *TPrev;  // prev msecnode_t for this thing
+  msecnode_t *SNext;  // next msecnode_t for this sector (also, link for `HeadSecNode` aka "free nodes list")
   msecnode_t *SPrev;  // prev msecnode_t for this sector
-  msecnode_t *SNext;  // next msecnode_t for this sector
   int Visited; // killough 4/4/98, 4/7/98: used in search algorithms
 };
 

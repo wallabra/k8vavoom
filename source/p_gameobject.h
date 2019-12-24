@@ -620,15 +620,18 @@ struct sec_region_t {
 // As an mobj moves through the world, these nodes are created and
 // destroyed, with the links changed appropriately.
 //
+// k8: note that sector cannot appear in a list twice, so it is safe to
+//     rely on this in various effectors.
+//
 // For the links, nullptr means top or end of list.
 //
 struct msecnode_t {
   sector_t *Sector; // a sector containing this object
   VEntity *Thing; // this object
-  msecnode_t *TPrev; // prev msecnode_t for this thing
   msecnode_t *TNext; // next msecnode_t for this thing
+  msecnode_t *TPrev; // prev msecnode_t for this thing
+  msecnode_t *SNext; // next msecnode_t for this sector (also, link for `HeadSecNode` aka "free nodes list")
   msecnode_t *SPrev; // prev msecnode_t for this sector
-  msecnode_t *SNext; // next msecnode_t for this sector
   vint32 Visited; // killough 4/4/98, 4/7/98: used in search algorithms
 };
 

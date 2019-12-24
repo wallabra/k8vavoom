@@ -187,7 +187,8 @@ bool Physics (float DeltaTime) {
     // killough 3/27/98: fix carrier bug
     // killough 4/4/98: Underwater, carry things even w/o gravity
     // k8: check all sectors we are touching, because this is how it should work
-    int vismark = 0; // don't create it until necessary
+    // k8: sector cannot appear twice in list, so there is no reason to protect iteration with a counter
+    //int vismark = 0; // don't create it until necessary
     // k8: this should work with 3d floors, but now it doesn't
     int CountX = 0;
     int CountY = 0;
@@ -195,8 +196,7 @@ bool Physics (float DeltaTime) {
       sector_t *sec = mnode.Sector;
       if (!sec || !sec->AffectorData) continue;
       // move objects only if on floor or underwater, non-floating, and clipped
-      SectorThinker SecThink;
-      for (SecThink = SectorThinker(sec->AffectorData); SecThink; SecThink = SecThink.NextAffector) {
+      for (SectorThinker SecThink = SectorThinker(sec->AffectorData); SecThink; SecThink = SecThink.NextAffector) {
         auto sth = Scroller(SecThink);
         if (!sth) continue;
         float scrollx = sth.CarryScrollX;
@@ -209,10 +209,10 @@ bool Physics (float DeltaTime) {
           float waterheight = GetPointZClamped(ref sec->heightsec->floor, Origin);
           if (waterheight > height && Origin.z >= waterheight) continue;
         }
-        // don't process sectors twice
-        if (!vismark) vismark = XLevel.GetNextVisitedCount();
-        if (mnode.Visited == vismark) continue;
-        mnode.Visited = vismark;
+        // don't process sectors twice (eh, it is guaranteed by the list builder)
+        //if (!vismark) vismark = XLevel.GetNextVisitedCount();
+        //if (mnode.Visited == vismark) continue;
+        //mnode.Visited = vismark;
         CummX += scrollx;
         CummY += scrolly;
         if (scrollx) ++CountX;
