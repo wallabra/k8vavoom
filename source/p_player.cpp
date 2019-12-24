@@ -887,12 +887,12 @@ IMPLEMENT_FUNCTION(VBasePlayer, centreprint) {
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, GetPlayerNum) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   RET_INT(SV_GetPlayerNum(Self));
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, ClearPlayer) {
-  P_GET_SELF;
+  vobjGetParamSelf();
 
   Self->PClass = 0;
   Self->ForwardMove = 0;
@@ -928,243 +928,228 @@ IMPLEMENT_FUNCTION(VBasePlayer, ClearPlayer) {
   memset((void *)Self->LastViewObject, 0, sizeof(Self->LastViewObject));
 
   vuint8 *Def = Self->GetClass()->Defaults;
-  for (VField *F = Self->GetClass()->Fields; F; F = F->Next)
-  {
-    VField::CopyFieldValue(Def + F->Ofs, (vuint8*)Self + F->Ofs, F->Type);
+  for (VField *F = Self->GetClass()->Fields; F; F = F->Next) {
+    VField::CopyFieldValue(Def+F->Ofs, (vuint8 *)Self+F->Ofs, F->Type);
   }
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, SetViewObject) {
-  P_GET_PTR(VObject, vobj);
-  P_GET_SELF;
+  VObject *vobj;
+  vobjGetParamSelf(vobj);
   //if (!vobj) GCon->Logf("RESET VIEW OBJECT; WTF?!");
   //GCon->Logf(NAME_Warning, "*** SetViewObject: %s (old: %s)", (vobj ? *vobj->GetClass()->GetFullName() : "<none>"), (Self->_stateRouteSelf ? *Self->_stateRouteSelf->GetClass()->GetFullName() : "<none>"));
   if (Self) Self->_stateRouteSelf = vobj;
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, SetViewObjectIfNone) {
-  P_GET_PTR(VObject, vobj);
-  P_GET_SELF;
+  VObject *vobj;
+  vobjGetParamSelf(vobj);
   //GCon->Logf(NAME_Warning, "*** SetViewObjectIfNone: %s (old: %s)", (vobj ? *vobj->GetClass()->GetFullName() : "<none>"), (Self->_stateRouteSelf ? *Self->_stateRouteSelf->GetClass()->GetFullName() : "<none>"));
   if (Self && !Self->_stateRouteSelf) Self->_stateRouteSelf = vobj;
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, SetViewState) {
   //fprintf(stderr, "*** SVS ***\n");
-  P_GET_PTR(VState, stnum);
-  P_GET_INT(position);
-  P_GET_SELF;
+  VState *stnum;
+  int position;
+  vobjGetParamSelf(position, stnum);
   Self->SetViewState(position, stnum);
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, AdvanceViewStates) {
-  P_GET_FLOAT(deltaTime);
-  P_GET_SELF;
+  float deltaTime;
+  vobjGetParamSelf(deltaTime);
   Self->AdvanceViewStates(deltaTime);
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, DisconnectBot) {
-  P_GET_SELF;
-  vassert(Self->PlayerFlags & PF_IsBot);
+  vobjGetParamSelf();
+  vassert(Self->PlayerFlags&PF_IsBot);
   SV_DropClient(Self, false);
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, ClientStartSound) {
-  P_GET_BOOL(Loop);
-  P_GET_FLOAT(Attenuation);
-  P_GET_FLOAT(Volume);
-  P_GET_INT(Channel);
-  P_GET_INT(OriginId);
-  P_GET_VEC(Org);
-  P_GET_INT(SoundId);
-  P_GET_SELF;
-  Self->DoClientStartSound(SoundId, Org, OriginId, Channel, Volume,
-    Attenuation, Loop);
+  int SoundId;
+  TVec Org;
+  int OriginId, Channel;
+  float Volume, Attenuation;
+  bool Loop;
+  vobjGetParamSelf(SoundId, Org, OriginId, Channel, Volume, Attenuation, Loop);
+  Self->DoClientStartSound(SoundId, Org, OriginId, Channel, Volume, Attenuation, Loop);
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, ClientStopSound) {
-  P_GET_INT(Channel);
-  P_GET_INT(OriginId);
-  P_GET_SELF;
+  int OriginId, Channel;
+  vobjGetParamSelf(OriginId, Channel);
   Self->DoClientStopSound(OriginId, Channel);
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, ClientStartSequence) {
-  P_GET_INT(ModeNum);
-  P_GET_NAME(Name);
-  P_GET_INT(OriginId);
-  P_GET_VEC(Origin);
-  P_GET_SELF;
+  TVec Origin;
+  int OriginId;
+  VName Name;
+  int ModeNum;
+  vobjGetParamSelf(Origin, OriginId, Name, ModeNum);
   Self->DoClientStartSequence(Origin, OriginId, Name, ModeNum);
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, ClientAddSequenceChoice) {
-  P_GET_NAME(Choice);
-  P_GET_INT(OriginId);
-  P_GET_SELF;
+  int OriginId;
+  VName Choice;
+  vobjGetParamSelf(OriginId, Choice);
   Self->DoClientAddSequenceChoice(OriginId, Choice);
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, ClientStopSequence) {
-  P_GET_INT(OriginId);
-  P_GET_SELF;
+  int OriginId;
+  vobjGetParamSelf(OriginId);
   Self->DoClientStopSequence(OriginId);
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, ClientPrint) {
-  P_GET_STR(Str);
-  P_GET_SELF;
+  VStr Str;
+  vobjGetParamSelf(Str);
   Self->DoClientPrint(Str);
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, ClientCentrePrint) {
-  P_GET_STR(Str);
-  P_GET_SELF;
+  VStr Str;
+  vobjGetParamSelf(Str);
   Self->DoClientCentrePrint(Str);
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, ClientSetAngles) {
-  P_GET_AVEC(Angles);
-  P_GET_SELF;
+  TAVec Angles;
+  vobjGetParamSelf(Angles);
   Self->DoClientSetAngles(Angles);
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, ClientIntermission) {
-  P_GET_NAME(NextMap);
-  P_GET_SELF;
+  VName NextMap;
+  vobjGetParamSelf(NextMap);
   Self->DoClientIntermission(NextMap);
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, ClientPause) {
-  P_GET_BOOL(Paused);
-  P_GET_SELF;
+  bool Paused;
+  vobjGetParamSelf(Paused);
   Self->DoClientPause(Paused);
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, ClientSkipIntermission) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->DoClientSkipIntermission();
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, ClientFinale) {
-  P_GET_STR(Type);
-  P_GET_SELF;
+  VStr Type;
+  vobjGetParamSelf(Type);
   Self->DoClientFinale(Type);
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, ClientChangeMusic) {
-  P_GET_NAME(Song);
-  P_GET_SELF;
+  VName Song;
+  vobjGetParamSelf(Song);
   Self->DoClientChangeMusic(Song);
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, ClientSetServerInfo) {
-  P_GET_STR(Value);
-  P_GET_STR(Key);
-  P_GET_SELF;
+  VStr Key, Value;
+  vobjGetParamSelf(Key, Value);
   Self->DoClientSetServerInfo(Key, Value);
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, ClientHudMessage) {
-  P_GET_FLOAT(Time2);
-  P_GET_FLOAT(Time1);
-  P_GET_FLOAT(HoldTime);
-  P_GET_INT(HudHeight);
-  P_GET_INT(HudWidth);
-  P_GET_FLOAT(y);
-  P_GET_FLOAT(x);
-  P_GET_STR(ColorName);
-  P_GET_INT(Color);
-  P_GET_INT(Id);
-  P_GET_INT(Type);
-  P_GET_NAME(Font);
-  P_GET_STR(Message);
-  P_GET_SELF;
-  Self->DoClientHudMessage(Message, Font, Type, Id, Color, ColorName,
-    x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
+  VStr Message;
+  VName Font;
+  int Type, Id, Color;
+  VStr ColorName;
+  float x, y;
+  int HudWidth, HudHeight;
+  float HoldTime, Time1, Time2;
+  vobjGetParamSelf(Message, Font, Type, Id, Color, ColorName, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
+  Self->DoClientHudMessage(Message, Font, Type, Id, Color, ColorName, x, y, HudWidth, HudHeight, HoldTime, Time1, Time2);
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, ServerSetUserInfo) {
-  P_GET_STR(Info);
-  P_GET_SELF;
+  VStr Info;
+  vobjGetParamSelf(Info);
   Self->SetUserInfo(Info);
 }
 
-
-// native final void QS_PutInt (name fieldname, int value);
+// native final void QS_PutInt (string fieldname, int value);
 IMPLEMENT_FUNCTION(VBasePlayer, QS_PutInt) {
-  P_GET_INT(value);
-  P_GET_STR(name);
-  P_GET_SELF;
+  VStr name;
+  int value;
+  vobjGetParamSelf(name, value);
   (void)Self;
   QS_PutValue(QSValue::CreateInt(nullptr, name, value));
 }
 
-// native final void QS_PutName (name fieldname, name value);
+// native final void QS_PutName (string fieldname, name value);
 IMPLEMENT_FUNCTION(VBasePlayer, QS_PutName) {
-  P_GET_NAME(value);
-  P_GET_STR(name);
-  P_GET_SELF;
+  VStr name;
+  VName value;
+  vobjGetParamSelf(name, value);
   (void)Self;
   QS_PutValue(QSValue::CreateName(nullptr, name, value));
 }
 
-// native final void QS_PutStr (name fieldname, string value);
+// native final void QS_PutStr (string fieldname, string value);
 IMPLEMENT_FUNCTION(VBasePlayer, QS_PutStr) {
-  P_GET_STR(value);
-  P_GET_STR(name);
-  P_GET_SELF;
+  VStr name;
+  VStr value;
+  vobjGetParamSelf(name, value);
   (void)Self;
   QS_PutValue(QSValue::CreateStr(nullptr, name, value));
 }
 
-// native final void QS_PutFloat (name fieldname, float value);
+// native final void QS_PutFloat (string fieldname, float value);
 IMPLEMENT_FUNCTION(VBasePlayer, QS_PutFloat) {
-  P_GET_FLOAT(value);
-  P_GET_STR(name);
-  P_GET_SELF;
+  VStr name;
+  float value;
+  vobjGetParamSelf(name, value);
   (void)Self;
   QS_PutValue(QSValue::CreateFloat(nullptr, name, value));
 }
 
-
-// native final int QS_GetInt (name fieldname, optional int defvalue);
+// native final int QS_GetInt (string fieldname, optional int defvalue);
 IMPLEMENT_FUNCTION(VBasePlayer, QS_GetInt) {
-  P_GET_INT_OPT(value, 0);
-  P_GET_STR(name);
-  P_GET_SELF;
+  VStr name;
+  VOptParamInt value(0);
+  vobjGetParamSelf(name, value);
   (void)Self;
   QSValue ret = QS_GetValue(nullptr, name);
   if (ret.type != QSType::QST_Int) {
-    if (!specified_value) Host_Error("value '%s' not found for player", *name);
+    if (!value.specified) Host_Error("value '%s' not found for player", *name);
     ret.ival = value;
   }
   RET_INT(ret.ival);
 }
 
-// native final name QS_GetName (name fieldname, optional name defvalue);
+// native final name QS_GetName (string fieldname, optional name defvalue);
 IMPLEMENT_FUNCTION(VBasePlayer, QS_GetName) {
-  P_GET_NAME_OPT(value, NAME_None);
-  P_GET_STR(name);
-  P_GET_SELF;
+  VStr name;
+  VOptParamName value(NAME_None);
+  vobjGetParamSelf(name, value);
   (void)Self;
   QSValue ret = QS_GetValue(nullptr, name);
   if (ret.type != QSType::QST_Name) {
-    if (!specified_value) Host_Error("value '%s' not found for player", *name);
+    if (!value.specified) Host_Error("value '%s' not found for player", *name);
     ret.nval = value;
   }
   RET_NAME(ret.nval);
 }
 
-// native final string QS_GetStr (name fieldname, optional string defvalue);
+// native final string QS_GetStr (string fieldname, optional string defvalue);
 IMPLEMENT_FUNCTION(VBasePlayer, QS_GetStr) {
-  P_GET_STR_OPT(value, VStr::EmptyString);
-  P_GET_STR(name);
-  P_GET_SELF;
+  VStr name;
+  VOptParamStr value(VStr::EmptyString);
+  vobjGetParamSelf(name, value);
   (void)Self;
   QSValue ret = QS_GetValue(nullptr, name);
   if (ret.type != QSType::QST_Str) {
-    if (!specified_value) Host_Error("value '%s' not found for player", *name);
+    if (!value.specified) Host_Error("value '%s' not found for player", *name);
     ret.sval = value;
   }
   RET_STR(ret.sval);
@@ -1172,13 +1157,13 @@ IMPLEMENT_FUNCTION(VBasePlayer, QS_GetStr) {
 
 // native final float QS_GetFloat (name fieldname, optional float defvalue);
 IMPLEMENT_FUNCTION(VBasePlayer, QS_GetFloat) {
-  P_GET_FLOAT_OPT(value, 0.0f);
-  P_GET_STR(name);
-  P_GET_SELF;
+  VStr name;
+  VOptParamFloat value(0.0f);
+  vobjGetParamSelf(name, value);
   (void)Self;
   QSValue ret = QS_GetValue(nullptr, name);
   if (ret.type != QSType::QST_Float) {
-    if (!specified_value) Host_Error("value '%s' not found for player", *name);
+    if (!value.specified) Host_Error("value '%s' not found for player", *name);
     ret.fval = value;
   }
   RET_FLOAT(ret.fval);
