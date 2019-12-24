@@ -304,7 +304,7 @@ surfcache_t *VRenderLevelLightmap::GetLightChainFirst (vuint32 bnum) {
 //
 //==========================================================================
 void VRenderLevelLightmap::RenderScene (const refdef_t *RD, const VViewClipper *Range) {
-  //r_viewleaf = Level->PointInSubsector(vieworg); // moved to `PrepareWorldRender()`
+  //r_viewleaf = Level->PointInSubsector(Drawer->vieworg); // moved to `PrepareWorldRender()`
 
   TransformFrustum();
 

@@ -71,6 +71,52 @@ VCvarB r_shadows_decorations("r_shadows_decorations", true, "Render shadows for 
 VCvarB r_shadows_other("r_shadows_other", true, "Render shadows for things with unidentified types?", CVAR_Archive);
 VCvarB r_shadows_players("r_shadows_players", true, "Render shadows for players?", CVAR_Archive);
 
+static VCvarB r_draw_adjacent_sector_things("r_draw_adjacent_sector_things", true, "Draw things in sectors adjacent to visible sectors (can fix disappearing things, but somewhat slow)?", CVAR_Archive);
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::IsThingVisible
+//
+//  entity must not be `nullptr`, and must have `SubSector` set
+//  also, `view_frustum` should be valid here
+//  this is usually called once for each entity, but try to keep it
+//  reasonably fast anyway
+//
+//==========================================================================
+bool VRenderLevelShared::IsThingVisible (VEntity *ent) noexcept {
+  const unsigned SubIdx = (unsigned)(ptrdiff_t)(ent->SubSector-Level->Subsectors);
+  if (BspVis[SubIdx>>3]&(1u<<(SubIdx&7))) return true;
+  // check if the sector is visible
+  const unsigned SecIdx = (unsigned)(ptrdiff_t)(ent->Sector-Level->Sectors);
+  // check if it is in visible sector
+  if (BspVisSector[SecIdx>>3]&(1u<<(SecIdx&7))) {
+    // in visible sector; check frustum, because sector shapes can be quite bizarre
+    return Drawer->view_frustum.checkSphere(ent->Origin, ent->Radius);
+  } else if (r_draw_adjacent_sector_things) {
+    // in invisible sector, and we have to perform adjacency check
+    // do frustum check first
+    if (Drawer->view_frustum.checkSphere(ent->Origin, ent->Radius)) {
+      // check if this thing is touching any visible sector
+      for (msecnode_t *mnode = ent->TouchingSectorList; mnode; mnode = mnode->TNext) {
+        const unsigned snum = (unsigned)(ptrdiff_t)(mnode->Sector-Level->Sectors);
+        if (BspVisSector[snum>>3]&(1u<<(snum&7))) return true;
+      }
+    }
+  }
+  return false;
+  #if 0
+  old code
+  return !!(BspVisThing[SubIdx>>3]&(1u<<(SubIdx&7)));
+  #endif
+  /*
+  if (!(BspVisThing[SubIdx>>3]&(1u<<(SubIdx&7)))) return false;
+  // if it is not in a visible level part, check render radius
+  if (BspVis[SubIdx>>3]&(1u<<(SubIdx&7))) return true;
+  return IsCircleTouchBox2D(ent->Origin.x, ent->Origin.y, ent->Radius, ent->SubSector->bbox2d);
+  */
+}
+
 
 //==========================================================================
 //
@@ -118,6 +164,8 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
   if (RendStyle == STYLE_None) return;
 
   if (Pass == RPASS_Normal) {
+    // this is called only in regular renderer, and only once
+    // so we can skip building visible things list, and perform a direct check here
     // skip things in subsectors that are not visible
     /*
     const unsigned SubIdx = (unsigned)(ptrdiff_t)(mobj->SubSector-Level->Subsectors);

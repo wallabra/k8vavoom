@@ -44,11 +44,11 @@ menudef AdvVideoOptions {
 
   option bool {
     title = "Better Thing Rendering";
-    cvar = r_draw_adjacent_subsector_things;
+    cvar = r_draw_adjacent_sector_things;
     help =
-      "Render all things from a visible sector."
-      "This can slow down rendering a little, but fixes some cases where"
-      "a thing suddenly disappears when it's subsector is not visible.";
+      "Render all things that touches a visible sector."
+      "This can slow down rendering a little, but fixes some cases where a"
+      "thing suddenly pops into view when camera moves a little.";
   }
 
 

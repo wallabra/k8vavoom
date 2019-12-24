@@ -285,7 +285,7 @@ void VRenderLevelShadowVolume::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t
   // ignore everything that is placed behind camera's back
   // we shouldn't have many of those, so check them in the loop below
   // but do this only if the light is in front of a camera
-  //const bool checkFrustum = (r_advlight_opt_frustum_back && view_frustum.checkSphere(CurrLightPos, CurrLightRadius, TFrustum::NearBit));
+  //const bool checkFrustum = (r_advlight_opt_frustum_back && Drawer->view_frustum.checkSphere(CurrLightPos, CurrLightRadius, TFrustum::NearBit));
 
   // TODO: if light is behing a camera, we can move back frustum plane, so it will
   //       contain light origin, and clip everything behind it. the same can be done
@@ -298,7 +298,7 @@ void VRenderLevelShadowVolume::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t
     if (LightCanCross < 0) {
       // horizon
       // k8: can horizon surfaces block light? i think they shouldn't
-      //if (!surf->IsVisible(vieworg)) return; // viewer is in back side or on plane
+      //if (!surf->IsVisible(Drawer->vieworg)) return; // viewer is in back side or on plane
       continue;
     }
 
@@ -318,7 +318,7 @@ void VRenderLevelShadowVolume::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t
 
     /*
     if (checkFrustum) {
-      if (!view_frustum.checkVerts(surf->verts, (unsigned)surf->count, TFrustum::NearBit)) continue;
+      if (!Drawer->view_frustum.checkVerts(surf->verts, (unsigned)surf->count, TFrustum::NearBit)) continue;
     }
     */
 
@@ -352,8 +352,8 @@ void VRenderLevelShadowVolume::RenderShadowLine (subsector_t *sub, sec_region_t 
   // we shouldn't have many of those, so check them in the loop below
   // but do this only if the light is in front of a camera
   if (CurrLightInFront) {
-    if (!view_frustum.checkPoint(*seg->v1, TFrustum::NearBit) &&
-        !view_frustum.checkPoint(*seg->v2, TFrustum::NearBit))
+    if (!Drawer->view_frustum.checkPoint(*seg->v1, TFrustum::NearBit) &&
+        !Drawer->view_frustum.checkPoint(*seg->v2, TFrustum::NearBit))
     {
       return;
     }
@@ -517,7 +517,7 @@ void VRenderLevelShadowVolume::RenderShadowSubsector (int num) {
       bbox[4] = sub->bbox2d[BOX2D_TOP];
       bbox[5] = sub->sector->ceiling.maxz;
       FixBBoxZ(bbox);
-      needToRender = view_frustum.checkBox(bbox);
+      needToRender = Drawer->view_frustum.checkBox(bbox);
     }
 
     if (needToRender) {
@@ -857,8 +857,8 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   if (!LitSurfaceHit /*&& !r_models*/) return; // no lit surfaces/subsectors, and no need to light models, so nothing to do
 
   // if our light is in frustum, ignore any out-of-frustum polys
-  CurrLightInFrustum = (r_advlight_opt_frustum_full && view_frustum.checkSphere(Pos, Radius /*-LightMin+4.0f*/));
-  CurrLightInFront = (r_advlight_opt_frustum_back && view_frustum.checkSphere(Pos, Radius, TFrustum::NearBit));
+  CurrLightInFrustum = (r_advlight_opt_frustum_full && Drawer->view_frustum.checkSphere(Pos, Radius /*-LightMin+4.0f*/));
+  CurrLightInFront = (r_advlight_opt_frustum_back && Drawer->view_frustum.checkSphere(Pos, Radius, TFrustum::NearBit));
 
   bool allowShadows = doShadows;
 
@@ -922,7 +922,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   bool useZPass = false;
 
   /* nope
-  if ((CurrLightPos-vieworg).lengthSquared() > CurrLightRadius*CurrLightRadius) {
+  if ((CurrLightPos-Drawer->vieworg).lengthSquared() > CurrLightRadius*CurrLightRadius) {
     useZPass = true;
   }
   */

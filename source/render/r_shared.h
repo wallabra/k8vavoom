@@ -767,6 +767,7 @@ void R_ParseMapDefSkyBoxesScript (VScriptParser *sc);
 // queued only once. this is not a hard limitation, though, as queue manager is
 // using arrays to keep surface pointers, but it is handy for various render
 // checks. we prolly need to increment queue frame counter when view changes.
+/*
 extern TVec vieworg;
 extern TVec viewforward;
 extern TVec viewright;
@@ -776,6 +777,7 @@ extern TFrustum view_frustum;
 
 extern bool MirrorFlip;
 extern bool MirrorClip;
+*/
 
 
 // ////////////////////////////////////////////////////////////////////////// //

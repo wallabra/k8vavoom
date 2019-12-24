@@ -122,7 +122,7 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   TVec dv[4];
 
   float PSP_DISTI = 1.0f/PSP_DIST;
-  TVec sprorigin = vieworg+PSP_DIST*viewforward;
+  TVec sprorigin = Drawer->vieworg+PSP_DIST*Drawer->viewforward;
 
   float sprx = 160.0f-VSt->SX+TexSOffset;
   float spry = 100.0f-VSt->SY*R_GetAspectRatio()+TexTOffset;
@@ -132,13 +132,13 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   if (fov > 90) spry -= (refdef.fovx-1.0f)*(aspect_ratio != 0 ? 100.0f : 110.0f);
 
   //  1 / 160 = 0.00625f
-  TVec start = sprorigin-(sprx*PSP_DIST*0.00625f)*viewright;
-  TVec end = start+(TexWidth*PSP_DIST*0.00625f)*viewright;
+  TVec start = sprorigin-(sprx*PSP_DIST*0.00625f)*Drawer->viewright;
+  TVec end = start+(TexWidth*PSP_DIST*0.00625f)*Drawer->viewright;
 
   //  1 / 160.0f * 120 / 100 = 0.0075f
   const float symul = 1.0f/160.0f*120.0f/100.0f;
-  TVec topdelta = (spry*PSP_DIST*symul)*viewup;
-  TVec botdelta = topdelta-(TexHeight*PSP_DIST*symul)*viewup;
+  TVec topdelta = (spry*PSP_DIST*symul)*Drawer->viewup;
+  TVec botdelta = topdelta-(TexHeight*PSP_DIST*symul)*Drawer->viewup;
   if (aspect_ratio != 1) {
     topdelta *= 100.0f/120.0f;
     botdelta *= 100.0f/120.0f;
@@ -153,20 +153,20 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   TVec taxis(0, 0, 0);
   TVec texorg(0, 0, 0);
   if (flip) {
-    saxis = -(viewright*160*PSP_DISTI);
+    saxis = -(Drawer->viewright*160*PSP_DISTI);
     texorg = dv[2];
   } else {
-    saxis = viewright*160*PSP_DISTI;
+    saxis = Drawer->viewright*160*PSP_DISTI;
     texorg = dv[1];
   }
-       if (aspect_ratio == 0) taxis = -(viewup*160*PSP_DISTI);
-  else if (aspect_ratio == 1) taxis = -(viewup*100*4/3*PSP_DISTI);
-  else if (aspect_ratio == 2) taxis = -(viewup*100*16/9*PSP_DISTI);
-  else if (aspect_ratio > 2) taxis = -(viewup*100*16/10*PSP_DISTI);
+       if (aspect_ratio == 0) taxis = -(Drawer->viewup*160*PSP_DISTI);
+  else if (aspect_ratio == 1) taxis = -(Drawer->viewup*100*4/3*PSP_DISTI);
+  else if (aspect_ratio == 2) taxis = -(Drawer->viewup*100*16/9*PSP_DISTI);
+  else if (aspect_ratio > 2) taxis = -(Drawer->viewup*100*16/10*PSP_DISTI);
 
   Drawer->DrawSpritePolygon(dv, GTextureManager[lump], Alpha, Additive,
-    nullptr, ColorMap, light, Fade, -viewforward,
-    DotProduct(dv[0], -viewforward), saxis, taxis, texorg, false);
+    nullptr, ColorMap, light, Fade, -Drawer->viewforward,
+    DotProduct(dv[0], -Drawer->viewforward), saxis, taxis, texorg, false);
 }
 
 
@@ -182,7 +182,7 @@ bool VRenderLevelShared::RenderViewModel (VViewState *VSt, vuint32 light,
 {
   if (!r_models_view) return false;
 
-  TVec origin = vieworg+(VSt->SX-1.0f)*viewright/8.0f-(VSt->SY-32.0f)*viewup/6.0f;
+  TVec origin = Drawer->vieworg+(VSt->SX-1.0f)*Drawer->viewright/8.0f-(VSt->SY-32.0f)*Drawer->viewup/6.0f;
 
   float TimeFrac = 0;
   if (VSt->State->Time > 0) {
@@ -260,7 +260,7 @@ void VRenderLevelShared::DrawPlayerSprites () {
       light = 0xffffffff;
     } else {
       /*
-      light = LightPoint(vieworg, cl->MO->Radius, -1);
+      light = LightPoint(Drawer->vieworg, cl->MO->Radius, -1);
       if (ltxr|ltxg|ltxb) {
         //GCon->Logf("ltx=(%d,%d,%d)", ltxr, ltxg, ltxb);
         int r = max2(ltxr, (int)((light>>16)&0xff));
@@ -272,7 +272,7 @@ void VRenderLevelShared::DrawPlayerSprites () {
       if (ltxr|ltxg|ltxb) {
         light = (0xff000000u)|(((vuint32)clampToByte(ltxr))<<16)|(((vuint32)clampToByte(ltxg))<<8)|((vuint32)clampToByte(ltxb));
       } else {
-        light = LightPoint(vieworg, cl->MO->Radius, -1);
+        light = LightPoint(Drawer->vieworg, cl->MO->Radius, -1);
       }
       //GCon->Logf("ltx=(%d,%d,%d)", ltxr, ltxg, ltxb);
       //light = (0xff000000u)|(((vuint32)clampToByte(ltxr))<<16)|(((vuint32)clampToByte(ltxg))<<8)|((vuint32)clampToByte(ltxb));

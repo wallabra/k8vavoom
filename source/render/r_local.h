@@ -272,8 +272,10 @@ protected:
   int MirrorLevel;
   int PortalLevel;
   int VisSize;
+  int SecVisSize;
   vuint8 *BspVis;
-  vuint8 *BspVisThing; // for things, why not
+  //vuint8 *BspVisThing; // for things, why not
+  vuint8 *BspVisSector; // for whole sectors
 
   subsector_t *r_viewleaf;
   subsector_t *r_oldviewleaf;
@@ -445,16 +447,9 @@ protected:
 
 protected:
   // entity must not be `nullptr`, and must have `SubSector` set
-  inline bool IsThingVisible (VEntity *ent) const {
-    const unsigned SubIdx = (unsigned)(ptrdiff_t)(ent->SubSector-Level->Subsectors);
-    return !!(BspVisThing[SubIdx>>3]&(1u<<(SubIdx&7)));
-    /*
-    if (!(BspVisThing[SubIdx>>3]&(1u<<(SubIdx&7)))) return false;
-    // if it is not in a visible level part, check render radius
-    if (BspVis[SubIdx>>3]&(1u<<(SubIdx&7))) return true;
-    return IsCircleTouchBox2D(ent->Origin.x, ent->Origin.y, ent->Radius, ent->SubSector->bbox2d);
-    */
-  }
+  // also, `view_frustum` should be valid here
+  // this is usually called once for each entity, but try to keep it reasonably fast anyway
+  bool IsThingVisible (VEntity *ent) noexcept;
 
 public:
   virtual bool IsNodeRendered (const node_t *node) const noexcept override;
@@ -592,7 +587,7 @@ protected:
   void ChooseFlatSurfaces (sec_surface_t *&f0, sec_surface_t *&f1, sec_surface_t *flat0, sec_surface_t *flat1);
 
   // used in `RenderSubRegion()` and other similar methods
-  static bool NeedToRenderNextSubFirst (const subregion_t *region);
+  bool NeedToRenderNextSubFirst (const subregion_t *region) noexcept;
 
   void RenderHorizon (subsector_t *sub, sec_region_t *secregion, subregion_t *subregion, drawseg_t *dseg);
   void RenderMirror (subsector_t *sub, sec_region_t *secregion, drawseg_t *dseg);
@@ -602,7 +597,7 @@ protected:
   void AddPolyObjToClipper (VViewClipper &clip, subsector_t *sub);
   void RenderPolyObj (subsector_t *sub);
   void RenderSubRegion (subsector_t *sub, subregion_t *region);
-  void RenderMarkAdjSubsectorsThings (int num); // used for "better things rendering"
+  //void RenderMarkAdjSubsectorsThings (int num); // used for "better things rendering"
   void RenderSubsector (int num, bool onlyClip);
   void RenderBSPNode (int bspnum, const float *bbox, unsigned AClipflags, bool onlyClip=false);
   void RenderBspWorld (const refdef_t*, const VViewClipper*);

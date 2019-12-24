@@ -114,7 +114,7 @@ public:
   };
 
 public:
-  VRenderLevelPublic () : staticLightsFiltered(false) {}
+  VRenderLevelPublic () noexcept;
 
   virtual void PreRender () = 0;
   virtual void SegMoved (seg_t *) = 0;

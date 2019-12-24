@@ -129,27 +129,27 @@ void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, TVec *sv,
   float dist;
   if (useSprOrigin) {
     TVec mid = sprOrigin;
-    //dist = fabsf(DotProduct(mid-vieworg, viewforward));
-    dist = LengthSquared(mid-vieworg);
+    //dist = fabsf(DotProduct(mid-Drawer->vieworg, Drawer->viewforward));
+    dist = LengthSquared(mid-Drawer->vieworg);
   } else {
 #if 0
     TVec mid(0, 0, 0);
     for (int i = 0; i < count; ++i) mid += sv[i];
     mid /= count;
-    //dist = fabsf(DotProduct(mid-vieworg, viewforward));
-    dist = LengthSquared(mid-vieworg);
+    //dist = fabsf(DotProduct(mid-Drawer->vieworg, Drawer->viewforward));
+    dist = LengthSquared(mid-Drawer->vieworg);
 #else
     // select nearest vertex
-    dist = LengthSquared(sv[0]-vieworg);
+    dist = LengthSquared(sv[0]-Drawer->vieworg);
     for (int i = 1; i < count; ++i) {
-      const float nd = LengthSquared(sv[i]-vieworg);
+      const float nd = LengthSquared(sv[i]-Drawer->vieworg);
       if (dist > nd) dist = nd;
     }
 #endif
   }
 
-  //const float dist = fabsf(DotProduct(mid-vieworg, viewforward));
-  //float dist = Length(mid-vieworg);
+  //const float dist = fabsf(DotProduct(mid-Drawer->vieworg, Drawer->viewforward));
+  //float dist = Length(mid-Drawer->vieworg);
 
   //trans_sprite_t &spr = trans_sprites[traspUsed++];
   trans_sprite_t &spr = GetCurrentDLS().DrawSpriteList.alloc();
@@ -191,8 +191,8 @@ void VRenderLevelShared::QueueTranslucentAliasModel (VEntity *mobj, vuint32 ligh
   }
   */
 
-  //const float dist = fabsf(DotProduct(mobj->Origin-vieworg, viewforward));
-  const float dist = LengthSquared(mobj->Origin-vieworg);
+  //const float dist = fabsf(DotProduct(mobj->Origin-Drawer->vieworg, Drawer->viewforward));
+  const float dist = LengthSquared(mobj->Origin-Drawer->vieworg);
 
   //trans_sprite_t &spr = trans_sprites[traspUsed++];
   trans_sprite_t &spr = GetCurrentDLS().DrawSpriteList.alloc();
@@ -228,7 +228,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
   // HACK: if sprite is additive, move is slightly closer to view
   // this is mostly for things like light flares
   if (Additive) {
-    sprorigin -= viewforward*0.2f;
+    sprorigin -= Drawer->viewforward*0.2f;
   }
 
   float dot;
@@ -253,11 +253,11 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
       // cross product will be between two nearly parallel vectors and
       // starts to approach an undefined state, so we don't draw if the two
       // vectors are less than 1 degree apart
-      dot = viewforward.z; // same as DotProduct(viewforward, sprup), because sprup is 0, 0, 1
+      dot = Drawer->viewforward.z; // same as DotProduct(Drawer->viewforward, sprup), because sprup is 0, 0, 1
       if (dot > 0.999848f || dot < -0.999848f) return; // cos(1 degree) = 0.999848f
       sprup = TVec(0, 0, 1);
-      // CrossProduct(sprup, viewforward)
-      sprright = Normalise(TVec(viewforward.y, -viewforward.x, 0));
+      // CrossProduct(sprup, Drawer->viewforward)
+      sprright = Normalise(TVec(Drawer->viewforward.y, -Drawer->viewforward.x, 0));
       // CrossProduct(sprright, sprup)
       sprforward = TVec(-sprright.y, sprright.x, 0);
       break;
@@ -269,7 +269,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
       // cross product will be between two nearly parallel vectors and
       // starts to approach an undefined state, so we don't draw if the two
       // vectors are less than 1 degree apart
-      tvec = Normalise(sprorigin-vieworg);
+      tvec = Normalise(sprorigin-Drawer->vieworg);
       dot = tvec.z; // same as DotProduct (tvec, sprup), because sprup is 0, 0, 1
       if (dot > 0.999848f || dot < -0.999848f) return; // cos(1 degree) = 0.999848f
       sprup = TVec(0, 0, 1);
@@ -283,9 +283,9 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
       // Generate the sprite's axes, completely parallel to the viewplane.
       // There are no problem situations, because the sprite is always in
       // the same position relative to the viewer
-      sprup = viewup;
-      sprright = viewright;
-      sprforward = viewforward;
+      sprup = Drawer->viewup;
+      sprright = Drawer->viewright;
+      sprforward = Drawer->viewforward;
       break;
 
     case SPR_ORIENTED:
@@ -305,9 +305,9 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
       sr = msin(thing->Angles.roll);
       cr = mcos(thing->Angles.roll);
 
-      sprforward = viewforward;
-      sprright = TVec(viewright.x*cr+viewup.x*sr, viewright.y*cr+viewup.y*sr, viewright.z*cr+viewup.z*sr);
-      sprup = TVec(viewright.x*(-sr)+viewup.x*cr, viewright.y*(-sr)+viewup.y*cr, viewright.z*(-sr)+viewup.z*cr);
+      sprforward = Drawer->viewforward;
+      sprright = TVec(Drawer->viewright.x*cr+Drawer->viewup.x*sr, Drawer->viewright.y*cr+Drawer->viewup.y*sr, Drawer->viewright.z*cr+Drawer->viewup.z*sr);
+      sprup = TVec(Drawer->viewright.x*(-sr)+Drawer->viewup.x*cr, Drawer->viewright.y*(-sr)+Drawer->viewup.y*cr, Drawer->viewright.z*(-sr)+Drawer->viewup.z*cr);
       break;
 
     case SPR_VP_PARALLEL_UPRIGHT_ORIENTED:
@@ -319,15 +319,15 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
       // up or down, because the cross product will be between two nearly
       // parallel vectors and starts to approach an undefined state, so we
       // don't draw if the two vectors are less than 1 degree apart
-      dot = viewforward.z;  //  same as DotProduct(viewforward, sprup), because sprup is 0, 0, 1
+      dot = Drawer->viewforward.z;  //  same as DotProduct(viewforward, sprup), because sprup is 0, 0, 1
       if ((dot > 0.999848f) || (dot < -0.999848f))  // cos(1 degree) = 0.999848f
         return;
 
       sr = msin(thing->Angles.roll);
       cr = mcos(thing->Angles.roll);
 
-      //  CrossProduct(TVec(0, 0, 1), viewforward)
-      tvec = Normalise(TVec(viewforward.y, -viewforward.x, 0));
+      //  CrossProduct(TVec(0, 0, 1), Drawer->viewforward)
+      tvec = Normalise(TVec(Drawer->viewforward.y, -Drawer->viewforward.x, 0));
       //  CrossProduct(tvec, TVec(0, 0, 1))
       sprforward = TVec(-tvec.y, tvec.x, 0);
       //  Rotate
@@ -379,16 +379,16 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
       else useCameraPlane = r_thing_other_use_camera_plane;
     }
     float ang = (useCameraPlane ?
-      matan(sprorigin.y-vieworg.y, sprorigin.x-vieworg.x) :
-      matan(sprforward.y+viewforward.y, sprforward.x+viewforward.x));
+      matan(sprorigin.y-Drawer->vieworg.y, sprorigin.x-Drawer->vieworg.x) :
+      matan(sprforward.y+Drawer->viewforward.y, sprforward.x+Drawer->viewforward.x));
     const float angadd = (sprframe->lump[0] == sprframe->lump[1] ? 45.0f/2.0f : 45.0f/4.0f); //k8: is this right?
     //const float angadd = (useCameraPlane ? 45.0f/2.0f : 45.0f/4.0f);
     /*
     if (sprframe->lump[0] == sprframe->lump[1]) {
-      ang = matan(sprorigin.y-vieworg.y, sprorigin.x-vieworg.x);
+      ang = matan(sprorigin.y-Drawer->vieworg.y, sprorigin.x-Drawer->vieworg.x);
       ang = AngleMod(ang-thing->GetSpriteDrawAngles().yaw+180.0f+45.0f/2.0f);
     } else {
-      ang = matan(sprforward.y+viewforward.y, sprforward.x+viewforward.x);
+      ang = matan(sprforward.y+Drawer->viewforward.y, sprforward.x+Drawer->viewforward.x);
       ang = AngleMod(ang-thing->GetSpriteDrawAngles().yaw+180.0f+45.0f/4.0f);
     }
     */
@@ -454,7 +454,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
       default: abort();
     }
     // do not render shadow if floor surface is higher than the camera
-    if (renderShadow && (sprorigin.z < thing->FloorZ || thing->FloorZ >= vieworg.z)) {
+    if (renderShadow && (sprorigin.z < thing->FloorZ || thing->FloorZ >= Drawer->vieworg.z)) {
       renderShadow = false;
     }
   }

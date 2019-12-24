@@ -109,7 +109,7 @@ VRenderLevelShadowVolume::~VRenderLevelShadowVolume () {
 void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipper *Range) {
   if (!Drawer->SupportsShadowVolumeRendering()) Host_Error("Shadow volume rendering is not supported by your graphics card");
 
-  //r_viewleaf = Level->PointInSubsector(vieworg); // moved to `PrepareWorldRender()`
+  //r_viewleaf = Level->PointInSubsector(Drawer->vieworg); // moved to `PrepareWorldRender()`
 
   TransformFrustum();
 
@@ -136,23 +136,23 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
       planes[f].dist /= len;
       //planes[f].Normalise();
       GCon->Logf("  GL plane #%u: (%9f,%9f,%9f) : %f", f, planes[f].normal.x, planes[f].normal.y, planes[f].normal.z, planes[f].dist);
-      GCon->Logf("  MY plane #%u: (%9f,%9f,%9f) : %f", f, view_frustum.planes[f].normal.x, view_frustum.planes[f].normal.y, view_frustum.planes[f].normal.z, view_frustum.planes[f].dist);
+      GCon->Logf("  MY plane #%u: (%9f,%9f,%9f) : %f", f, Drawer->view_frustum.planes[f].normal.x, Drawer->view_frustum.planes[f].normal.y, Drawer->view_frustum.planes[f].normal.z, Drawer->view_frustum.planes[f].dist);
     }
 
     // we aren't interested in far plane
     for (unsigned f = 0; f < 4; ++f) {
-      view_frustum.planes[f] = planes[f];
-      view_frustum.planes[f].clipflag = 1U<<f;
+      Drawer->view_frustum.planes[f] = planes[f];
+      Drawer->view_frustum.planes[f].clipflag = 1U<<f;
     }
     // near plane for reverse z is "far"
     if (Drawer->CanUseRevZ()) {
-      view_frustum.planes[TFrustum::Back] = planes[5];
+      Drawer->view_frustum.planes[TFrustum::Back] = planes[5];
     } else {
-      view_frustum.planes[TFrustum::Back] = planes[4];
+      Drawer->view_frustum.planes[TFrustum::Back] = planes[4];
     }
-    view_frustum.planes[TFrustum::Back].clipflag = TFrustum::BackBit;
-    view_frustum.planeCount = 5;
-    //vassert(view_frustum.planes[4].PointOnSide(vieworg));
+    Drawer->view_frustum.planes[TFrustum::Back].clipflag = TFrustum::BackBit;
+    Drawer->view_frustum.planeCount = 5;
+    //vassert(Drawer->view_frustum.planes[4].PointOnSide(Drawer->vieworg));
   }
 #endif
 
@@ -188,7 +188,7 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
     static TFrustumParam fp;
 
     TPlane backPlane;
-    backPlane.SetPointNormal3D(vieworg, viewforward);
+    backPlane.SetPointNormal3D(Drawer->vieworg, Drawer->viewforward);
 
     LightsRendered = 0;
     DynLightsRendered = 0;
@@ -210,14 +210,14 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
         TVec lorg = stlight->origin;
 
         // don't do lights that are too far away
-        Delta = lorg-vieworg;
+        Delta = lorg-Drawer->vieworg;
         const float distSq = Delta.lengthSquared();
 
         // if the light is behind a view, drop it if it is further than light radius
         if (distSq >= stlight->radius*stlight->radius) {
           if (distSq > rlightraduisSq || backPlane.PointOnSide(lorg)) continue; // too far away
-          if (fp.needUpdate(vieworg, viewangles)) {
-            fp.setup(vieworg, viewangles, viewforward, viewright, viewup);
+          if (fp.needUpdate(Drawer->vieworg, Drawer->viewangles)) {
+            fp.setup(Drawer->vieworg, Drawer->viewangles, Drawer->viewforward, Drawer->viewright, Drawer->viewup);
             frustum.setup(clip_base, fp, false); //true, r_lights_radius);
           }
           if (!frustum.checkSphere(lorg, stlight->radius)) {
@@ -282,14 +282,14 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
         */
 
         // don't do lights that are too far away
-        Delta = lorg-vieworg;
+        Delta = lorg-Drawer->vieworg;
         const float distSq = Delta.lengthSquared();
 
         // if the light is behind a view, drop it if it is further than light radius
         if (distSq >= l->radius*l->radius) {
           if (distSq > rlightraduisSq || backPlane.PointOnSide(lorg)) continue; // too far away
-          if (fp.needUpdate(vieworg, viewangles)) {
-            fp.setup(vieworg, viewangles, viewforward, viewright, viewup);
+          if (fp.needUpdate(Drawer->vieworg, Drawer->viewangles)) {
+            fp.setup(Drawer->vieworg, Drawer->viewangles, Drawer->viewforward, Drawer->viewright, Drawer->viewup);
             frustum.setup(clip_base, fp, false); //true, r_lights_radius);
           }
           if (!frustum.checkSphere(lorg, l->radius)) {

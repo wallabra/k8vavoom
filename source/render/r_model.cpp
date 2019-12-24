@@ -1739,11 +1739,11 @@ void R_DrawModelFrame (const TVec &Origin, float Angle, VModel *Model,
     Interpolate = false;
   }
 
-  viewangles.yaw = 180;
-  viewangles.pitch = 0;
-  viewangles.roll = 0;
-  AngleVectors(viewangles, viewforward, viewright, viewup);
-  vieworg = TVec(0, 0, 0);
+  Drawer->viewangles.yaw = 180;
+  Drawer->viewangles.pitch = 0;
+  Drawer->viewangles.roll = 0;
+  AngleVectors(Drawer->viewangles, Drawer->viewforward, Drawer->viewright, Drawer->viewup);
+  Drawer->vieworg = TVec(0, 0, 0);
 
   refdef_t rd;
 
@@ -1797,11 +1797,11 @@ bool R_DrawStateModelFrame (VState *State, VState *NextState, float Inter,
     Interpolate = false;
   }
 
-  viewangles.yaw = 180;
-  viewangles.pitch = 0;
-  viewangles.roll = 0;
-  AngleVectors(viewangles, viewforward, viewright, viewup);
-  vieworg = TVec(0, 0, 0);
+  Drawer->viewangles.yaw = 180;
+  Drawer->viewangles.pitch = 0;
+  Drawer->viewangles.roll = 0;
+  AngleVectors(Drawer->viewangles, Drawer->viewforward, Drawer->viewright, Drawer->viewup);
+  Drawer->vieworg = TVec(0, 0, 0);
 
   refdef_t rd;
 

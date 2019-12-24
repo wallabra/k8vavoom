@@ -58,7 +58,7 @@ static VCvarB r_ordered_subregions("r_ordered_subregions", true, "Order subregio
 VCvarB r_disable_world_update("r_disable_world_update", false, "Disable world updates.", 0/*CVAR_Archive*/);
 
 static VCvarB r_dbg_always_draw_flats("r_dbg_always_draw_flats", true, "Draw flat surfaces even if region is not visible (this is pobj hack)?", 0/*CVAR_Archive*/);
-static VCvarB r_draw_adjacent_subsector_things("r_draw_adjacent_subsector_things", true, "Draw things subsectors adjacent to visible subsectors (can fix disappearing things)?", CVAR_Archive);
+//static VCvarB r_draw_adjacent_subsector_things("r_draw_adjacent_subsector_things", true, "Draw things subsectors adjacent to visible subsectors (can fix disappearing things)?", CVAR_Archive);
 
 VCvarB r_separate_translucent_lists("r_separate_translucent_lists", false, "Use separate lists for translucent and additive surfaces?", CVAR_Archive);
 
@@ -226,7 +226,7 @@ bool VRenderLevelShared::SurfPrepareForRender (surface_t *surf) {
   }
 
   surf->queueframe = currQueueFrame;
-  surf->plvisible = surf->IsVisible(vieworg);
+  surf->plvisible = surf->IsVisible(Drawer->vieworg);
 
   // alpha: 1.0 is masked wall, 1.1 is solid wall
   if (surf->texinfo->Alpha < 1.0f || surf->texinfo->Additive ||
@@ -503,7 +503,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
       }
       for (; surfs; surfs = surfs->next) {
         /*k8: ?
-        if (!surfs->IsVisible(vieworg)) {
+        if (!surfs->IsVisible(Drawer->vieworg)) {
           // viewer is in back side or on plane
           //GCon->Logf("  SURF SKIP!");
           continue;
@@ -564,7 +564,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
   const bool isCommon = (texinfo->Alpha >= 1.0f && !texinfo->Additive && !texinfo->Tex->isTranslucent());
 
   for (; surfs; surfs = surfs->next) {
-    //if (!surfs->IsVisible(vieworg)) continue;
+    //if (!surfs->IsVisible(Drawer->vieworg)) continue;
 
     surfs->Light = sflight;
     surfs->Fade = Fade;
@@ -582,7 +582,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
       CommonQueueSurface(surfs, SFCType::SFCT_World);
     } else if (surfs->queueframe != currQueueFrame) {
       //surfs->queueframe = currQueueFrame;
-      //surfs->plvisible = surfs->IsVisible(vieworg);
+      //surfs->plvisible = surfs->IsVisible(Drawer->vieworg);
       if (SurfPrepareForRender(surfs)) {
         if (surfs->plvisible) {
           if (r_separate_translucent_lists) {
@@ -618,7 +618,7 @@ void VRenderLevelShared::RenderHorizon (subsector_t *sub, sec_region_t *secregio
   // horizon is not supported in sectors with slopes, so just use TexZ
   float TopZ = secregion->eceiling.splane->TexZ;
   float BotZ = secregion->efloor.splane->TexZ;
-  float HorizonZ = vieworg.z;
+  float HorizonZ = Drawer->vieworg.z;
 
   // handle top part
   if (TopZ > HorizonZ) {
@@ -738,7 +738,7 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
 
   if (!linedef) return; // miniseg
 
-  if (seg->PointOnSide(vieworg)) {
+  if (seg->PointOnSide(Drawer->vieworg)) {
     // viewer is in back side or on plane
     // gozzo 3d floors should be rendered regardless of orientation
     segpart_t *sp = dseg->extra;
@@ -757,9 +757,9 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
     return;
   }
 
-  if (MirrorClipSegs && clip_frustum && clip_frustum_mirror && /*clip_frustum_bsp &&*/ view_frustum.planes[5].isValid()) {
+  if (MirrorClipSegs && clip_frustum && clip_frustum_mirror && /*clip_frustum_bsp &&*/ Drawer->view_frustum.planes[5].isValid()) {
     // clip away segs that are behind mirror
-    if (view_frustum.planes[5].PointOnSide(*seg->v1) && view_frustum.planes[5].PointOnSide(*seg->v2)) return; // behind mirror
+    if (Drawer->view_frustum.planes[5].PointOnSide(*seg->v1) && Drawer->view_frustum.planes[5].PointOnSide(*seg->v2)) return; // behind mirror
   }
 
 /*
@@ -773,10 +773,10 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
       // clip sectors that are behind rendered segs
       TVec v1 = *seg->v1;
       TVec v2 = *seg->v2;
-      TVec r1 = vieworg-v1;
-      TVec r2 = vieworg-v2;
-      float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), vieworg);
-      float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), vieworg);
+      TVec r1 = Drawer->vieworg-v1;
+      TVec r2 = Drawer->vieworg-v2;
+      float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Drawer->vieworg);
+      float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Drawer->vieworg);
 
       // there might be a better method of doing this, but this one works for now...
            if (D1 > 0.0f && D2 < 0.0f) v2 += ((v2-v1)*D1)/(D1-D2);
@@ -788,10 +788,10 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
     // clip sectors that are behind rendered segs
     TVec v1 = *seg->v1;
     TVec v2 = *seg->v2;
-    TVec r1 = vieworg-v1;
-    TVec r2 = vieworg-v2;
-    float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), vieworg);
-    float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), vieworg);
+    TVec r1 = Drawer->vieworg-v1;
+    TVec r2 = Drawer->vieworg-v2;
+    float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Drawer->vieworg);
+    float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Drawer->vieworg);
 
     // there might be a better method of doing this, but this one works for now...
          if (D1 > 0.0f && D2 < 0.0f) v2 += ((v2-v1)*D1)/(D1-D2);
@@ -858,7 +858,7 @@ void VRenderLevelShared::RenderSecSurface (subsector_t *sub, sec_region_t *secre
   if (!plane.splane->pic) return;
 
   //k8: this seems to be unnecessary
-  //if (plane.PointOnSide(vieworg)) return; // viewer is in back side or on plane
+  //if (plane.PointOnSide(Drawer->vieworg)) return; // viewer is in back side or on plane
 
   if (r_allow_mirrors && MirrorLevel < r_maxmirrors && plane.splane->MirrorAlpha < 1.0f) {
     VPortal *Portal = nullptr;
@@ -909,16 +909,16 @@ void VRenderLevelShared::RenderSecSurface (subsector_t *sub, sec_region_t *secre
 //  k8: i don't know what Janis wanted to with this
 //
 //==========================================================================
-bool VRenderLevelShared::NeedToRenderNextSubFirst (const subregion_t *region) {
+bool VRenderLevelShared::NeedToRenderNextSubFirst (const subregion_t *region) noexcept {
   if (!region->next || !r_ordered_subregions) return false;
   const sec_surface_t *floor = region->fakefloor;
   if (floor) {
-    const float d = floor->PointDist(vieworg);
+    const float d = floor->PointDist(Drawer->vieworg);
     if (d <= 0.0f) return true;
   }
   floor = region->realfloor;
   if (floor) {
-    const float d = floor->PointDist(vieworg);
+    const float d = floor->PointDist(Drawer->vieworg);
     if (d <= 0.0f) return true;
   }
   return false;
@@ -942,7 +942,7 @@ void VRenderLevelShared::AddPolyObjToClipper (VViewClipper &clip, subsector_t *s
       for (int polyCount = pobj->numsegs; polyCount--; ++polySeg) {
         seg_t *seg = (*polySeg)->drawsegs->seg;
         if (seg->linedef) {
-          clip.CheckAddClipSeg(seg, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
+          clip.CheckAddClipSeg(seg, (MirrorClipSegs && Drawer->view_frustum.planes[5].isValid() ? &Drawer->view_frustum.planes[5] : nullptr));
         }
       }
     }
@@ -1024,8 +1024,10 @@ void VRenderLevelShared::RenderSubRegion (subsector_t *sub, subregion_t *region)
 //  TODO: this should be replaced with "touching subsectors" list instead
 //
 //==========================================================================
+#if 0
 void VRenderLevelShared::RenderMarkAdjSubsectorsThings (int num) {
   BspVisThing[((unsigned)num)>>3] |= 1U<<(num&7);
+  /*
   if (r_draw_adjacent_subsector_things) {
     subsector_t *sub = &Level->Subsectors[num];
     int sgcount = sub->numlines;
@@ -1040,7 +1042,9 @@ void VRenderLevelShared::RenderMarkAdjSubsectorsThings (int num) {
       }
     }
   }
+  */
 }
+#endif
 
 
 //==========================================================================
@@ -1057,13 +1061,16 @@ void VRenderLevelShared::RenderSubsector (int num, bool onlyClip) {
     // if we have PVS, `MarkLeaves()` marks potentially visible subsectors
     if (Level->HasPVS()) {
       if (sub->VisFrame != currVisFrame) {
+        /*
         if (r_draw_adjacent_subsector_things) {
           if (!clip_use_1d_clipper || ViewClip.ClipCheckSubsector(sub)) {
             RenderMarkAdjSubsectorsThings(num);
-            if (clip_use_1d_clipper) ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
+            if (clip_use_1d_clipper) ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && Drawer->view_frustum.planes[5].isValid() ? &Drawer->view_frustum.planes[5] : nullptr));
           }
-        } else if (clip_use_1d_clipper) {
-          ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
+        } else
+        */
+        if (clip_use_1d_clipper) {
+          ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && Drawer->view_frustum.planes[5].isValid() ? &Drawer->view_frustum.planes[5] : nullptr));
         }
         return;
       }
@@ -1080,8 +1087,12 @@ void VRenderLevelShared::RenderSubsector (int num, bool onlyClip) {
       // mark this subsector as rendered
       BspVis[((unsigned)num)>>3] |= 1U<<(num&7);
 
+      // mark this sector as rendered
+      const unsigned secnum = (unsigned)(ptrdiff_t)(sub->sector-&Level->Sectors[0]);
+      BspVisSector[secnum>>3] |= 1U<<(secnum&7);
+
       // mark thing subsectors
-      RenderMarkAdjSubsectorsThings(num);
+      //RenderMarkAdjSubsectorsThings(num);
 
       // update world
       if (sub->updateWorldFrame != updateWorldFrame) {
@@ -1099,7 +1110,7 @@ void VRenderLevelShared::RenderSubsector (int num, bool onlyClip) {
   // add subsector's segs to the clipper
   // clipping against mirror is done only for vertical mirror planes
   if (clip_use_1d_clipper) {
-    ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && view_frustum.planes[5].isValid() ? &view_frustum.planes[5] : nullptr));
+    ViewClip.ClipAddSubsectorSegs(sub, (MirrorClipSegs && Drawer->view_frustum.planes[5].isValid() ? &Drawer->view_frustum.planes[5] : nullptr));
   }
 }
 
@@ -1132,11 +1143,11 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigne
       //memcpy(newbbox, bbox, sizeof(float)*6);
       //newbbox[2] = -32767.0f;
       //newbbox[5] = +32767.0f;
-      const TClipPlane *cp = &view_frustum.planes[0];
-      for (unsigned i = view_frustum.planeCount; i--; ++cp) {
+      const TClipPlane *cp = &Drawer->view_frustum.planes[0];
+      for (unsigned i = Drawer->view_frustum.planeCount; i--; ++cp) {
         if (!(clipflags&cp->clipflag)) continue; // don't need to clip against it
         //k8: this check is always true, because view origin is outside of frustum (oops)
-        //if (cp->PointOnSide(vieworg)) continue; // viewer is in back side or on plane (k8: why check this?)
+        //if (cp->PointOnSide(Drawer->vieworg)) continue; // viewer is in back side or on plane (k8: why check this?)
         auto crs = cp->checkBoxEx(bbox);
         if (crs == 1) clipflags ^= cp->clipflag; // if it is on a front side of this plane, don't bother checking with it anymore
         else if (crs == 0) {
@@ -1160,7 +1171,7 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigne
     node_t *bsp = &Level->Nodes[bspnum];
     //if (bsp->visframe == currVisFrame) return; // if we're exactly on a splitting plane, this can happen
     // decide which side the view point is on
-    float dist = DotProduct(vieworg, bsp->normal)-bsp->dist;
+    float dist = DotProduct(Drawer->vieworg, bsp->normal)-bsp->dist;
     unsigned side = (unsigned)(dist <= 0.0f);
     // mark this node as rendered (if we're going to render it)
     if (!onlyClip) {
@@ -1171,8 +1182,8 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigne
       if (fabsf(dist) <= 0.1f) {
         //unsigned osd = side;
         //float odist = dist;
-        TVec fwd = AngleVectorYaw(viewangles.yaw);
-        dist = DotProduct(vieworg-fwd*16, bsp->normal)-bsp->dist;
+        TVec fwd = AngleVectorYaw(Drawer->viewangles.yaw);
+        dist = DotProduct(Drawer->vieworg-fwd*16, bsp->normal)-bsp->dist;
         side = (unsigned)(dist <= 0.0f);
         //GCon->Logf("osd=%u; side=%u; odist=%g; dist=%g", osd, side, odist, dist);
       }
@@ -1199,27 +1210,27 @@ void VRenderLevelShared::RenderBSPNode (int bspnum, const float bbox[6], unsigne
 void VRenderLevelShared::RenderBspWorld (const refdef_t *rd, const VViewClipper *Range) {
   /*static*/ const float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
 
-  //view_frustum.setupBoxIndicies(); // done automatically
-  ViewClip.ClearClipNodes(vieworg, Level);
-  ViewClip.ClipInitFrustumRange(viewangles, viewforward, viewright, viewup, rd->fovx, rd->fovy);
+  ViewClip.ClearClipNodes(Drawer->vieworg, Level);
+  ViewClip.ClipInitFrustumRange(Drawer->viewangles, Drawer->viewforward, Drawer->viewright, Drawer->viewup, rd->fovx, rd->fovy);
   if (Range) ViewClip.ClipToRanges(*Range); // range contains a valid range, so we must clip away holes in it
   memset(BspVis, 0, VisSize);
-  memset(BspVisThing, 0, VisSize);
+  //memset(BspVisThing, 0, VisSize);
+  memset(BspVisSector, 0, SecVisSize);
   if (PortalLevel == 0) {
     if (WorldSurfs.NumAllocated() < 4096) WorldSurfs.Resize(4096);
   }
-  MirrorClipSegs = (MirrorClip && !view_frustum.planes[5].normal.z);
+  MirrorClipSegs = (Drawer->MirrorClip && !Drawer->view_frustum.planes[5].normal.z);
   if (!clip_frustum_mirror) {
     MirrorClipSegs = false;
-    view_frustum.planes[5].clipflag = 0;
+    Drawer->view_frustum.planes[5].clipflag = 0;
   }
 
   // head node is the last node output
   {
     unsigned clipflags = 0;
-    const TClipPlane *cp = &view_frustum.planes[0];
-    for (unsigned i = view_frustum.planeCount; i--; ++cp) clipflags |= cp->clipflag;
-    RenderBSPNode(Level->NumNodes-1, dummy_bbox, clipflags /*(MirrorClip ? 0x3f : 0x1f)*/);
+    const TClipPlane *cp = &Drawer->view_frustum.planes[0];
+    for (unsigned i = Drawer->view_frustum.planeCount; i--; ++cp) clipflags |= cp->clipflag;
+    RenderBSPNode(Level->NumNodes-1, dummy_bbox, clipflags /*(Drawer->MirrorClip ? 0x3f : 0x1f)*/);
   }
 
   if (PortalLevel == 0) {

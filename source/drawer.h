@@ -307,6 +307,18 @@ protected:
 
 public:
   VViewPortMats vpmats;
+  // the following is here because alot of code can access it
+  // current rendering position and angles
+  TVec vieworg;
+  TAVec viewangles;
+  // calculated from `viewangles`, normalised
+  TVec viewforward;
+  TVec viewright;
+  TVec viewup;
+  // calculated from `vieworg` and `viewangles`
+  TFrustum view_frustum;
+  bool MirrorFlip;
+  bool MirrorClip;
 
 public:
   static void RegisterICB (void (*cb) (int phase));

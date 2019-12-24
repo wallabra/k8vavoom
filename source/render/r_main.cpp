@@ -67,13 +67,6 @@ vuint8 light_remap[256];
 
 int screenblocks = 0;
 
-TVec vieworg(0, 0, 0);
-TVec viewforward(0, 0, 0);
-TVec viewright(0, 0, 0);
-TVec viewup(0, 0, 0);
-TAVec viewangles(0, 0, 0);
-
-TFrustum view_frustum;
 
 VCvarB r_chasecam("r_chasecam", false, "Chasecam mode.", /*CVAR_Archive*/0);
 VCvarB r_chase_front("r_chase_front", false, "Position chasecam in the front of the player (can be used to view weapons/player sprite, for example).", /*CVAR_Archive*/0); // debug setting
@@ -111,13 +104,10 @@ static VCvarF r_hud_fullscreen_alpha("r_hud_fullscreen_alpha", "0.44", "Alpha fo
 
 extern VCvarB r_light_opt_shadow;
 
+
 VDrawer *Drawer;
 
 float PixelAspect;
-
-bool MirrorFlip = false;
-bool MirrorClip = false;
-
 
 static FDrawerDesc *DrawerList[DRAWER_MAX];
 
@@ -180,6 +170,21 @@ static float CalcAspect (int aspectRatio, int scrwdt, int scrhgt) {
 //==========================================================================
 float R_GetAspectRatio () {
   return CalcAspect(aspect_ratio, ScreenWidth, ScreenHeight);
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelPublic::VRenderLevelPublic
+//
+//==========================================================================
+VRenderLevelPublic::VRenderLevelPublic () noexcept
+  : staticLightsFiltered(false)
+  //, clip_base()
+  //, refdef()
+{
+  Drawer->MirrorFlip = false;
+  Drawer->MirrorClip = false;
 }
 
 
@@ -441,8 +446,10 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   , MirrorLevel(0)
   , PortalLevel(0)
   , VisSize(0)
+  , SecVisSize(0)
   , BspVis(nullptr)
-  , BspVisThing(nullptr)
+  //, BspVisThing(nullptr)
+  , BspVisSector(nullptr)
   , r_viewleaf(nullptr)
   , r_oldviewleaf(nullptr)
   , old_fov(90.0f)
@@ -476,11 +483,14 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   //VPortal::ResetFrame();
 
   VisSize = (Level->NumSubsectors+7)>>3;
+  SecVisSize = (Level->NumSectors+7)>>3;
 
   BspVis = new vuint8[VisSize];
-  BspVisThing = new vuint8[VisSize];
   memset(BspVis, 0, VisSize);
-  memset(BspVisThing, 0, VisSize);
+  //BspVisThing = new vuint8[VisSize];
+  //memset(BspVisThing, 0, VisSize);
+  BspVisSector = new vuint8[SecVisSize];
+  memset(BspVisSector, 0, SecVisSize);
 
   LightFrameNum = 1; // just to play safe
   LightVis = new unsigned[Level->NumSubsectors];
@@ -646,8 +656,10 @@ VRenderLevelShared::~VRenderLevelShared () {
 
   delete[] BspVis;
   BspVis = nullptr;
-  delete[] BspVisThing;
-  BspVisThing = nullptr;
+  //delete[] BspVisThing;
+  //BspVisThing = nullptr;
+  delete[] BspVisSector;
+  BspVisSector = nullptr;
 
   delete[] LightVis;
   LightVis = nullptr;
@@ -1097,7 +1109,7 @@ void VRenderLevelShared::UpdateBBoxWithSurface (TVec bbox[2], surface_t *surfs, 
 
   for (surface_t *surf = surfs; surf; surf = surf->next) {
     if (surf->count < 3) continue; // just in case
-    if (!surf->IsVisible(vieworg)) {
+    if (!surf->IsVisible(Drawer->vieworg)) {
       // viewer is in back side or on plane
       /*
       if (!HasBackLit) {
@@ -1543,11 +1555,11 @@ void R_DrawViewBorder () {
 //==========================================================================
 void VRenderLevelShared::TransformFrustum () {
   //view_frustum.setup(clip_base, vieworg, viewangles, false/*no back plane*/, -1.0f/*no forward plane*/);
-  bool useFrustumFar = (gl_maxdist >= 1.0f);
+  bool useFrustumFar = (gl_maxdist > 1.0f);
   if (useFrustumFar && !r_clip_maxdist) {
     useFrustumFar = (Drawer ? Drawer->UseFrustumFarClip() : false);
   }
-  view_frustum.setup(clip_base, TFrustumParam(vieworg, viewangles, viewforward, viewright, viewup), true/*create back plane*/,
+  Drawer->view_frustum.setup(clip_base, TFrustumParam(Drawer->vieworg, Drawer->viewangles, Drawer->viewforward, Drawer->viewright, Drawer->viewup), true/*create back plane*/,
     (useFrustumFar ? gl_maxdist : -1.0f/*no forward plane*/));
 }
 
@@ -1567,25 +1579,25 @@ void VRenderLevelShared::SetupFrame () {
   }
 
   ViewEnt = cl->Camera;
-  viewangles = cl->ViewAngles;
+  Drawer->viewangles = cl->ViewAngles;
   if (r_chasecam && r_chase_front) {
     // this is used to see how weapon looks in player's hands
-    viewangles.yaw = AngleMod(viewangles.yaw+180);
-    viewangles.pitch = -viewangles.pitch;
+    Drawer->viewangles.yaw = AngleMod(Drawer->viewangles.yaw+180);
+    Drawer->viewangles.pitch = -Drawer->viewangles.pitch;
   }
-  AngleVectors(viewangles, viewforward, viewright, viewup);
+  AngleVectors(Drawer->viewangles, Drawer->viewforward, Drawer->viewright, Drawer->viewup);
 
-  view_frustum.clear(); // why not?
+  Drawer->view_frustum.clear(); // why not?
 
   if (r_chasecam && cl->MO == cl->Camera) {
-    //vieworg = cl->MO->Origin+TVec(0.0f, 0.0f, 32.0f)-r_chase_dist*viewforward+r_chase_up*viewup+r_chase_right*viewright;
+    //Drawer->vieworg = cl->MO->Origin+TVec(0.0f, 0.0f, 32.0f)-r_chase_dist*viewforward+r_chase_up*viewup+r_chase_right*viewright;
     // for demo replay, make camera always looking forward
     if (cls.demoplayback) {
-      viewangles.pitch = 0;
-      viewangles.roll = 0;
-      AngleVectors(viewangles, viewforward, viewright, viewup);
+      Drawer->viewangles.pitch = 0;
+      Drawer->viewangles.roll = 0;
+      AngleVectors(Drawer->viewangles, Drawer->viewforward, Drawer->viewright, Drawer->viewup);
     }
-    TVec endcpos = cl->MO->Origin+TVec(0.0f, 0.0f, r_chase_raise)-r_chase_dist*viewforward+r_chase_up*viewup+r_chase_right*viewright;
+    TVec endcpos = cl->MO->Origin+TVec(0.0f, 0.0f, r_chase_raise)-r_chase_dist*Drawer->viewforward+r_chase_up*Drawer->viewup+r_chase_right*Drawer->viewright;
     // try to move camera as far as we can
     TVec cpos = cl->MO->Origin;
     for (;;) {
@@ -1623,11 +1635,11 @@ void VRenderLevelShared::SetupFrame () {
         }
       }
     }
-    vieworg = prevChaseCamPos;
-    //vieworg = cpos;
+    Drawer->vieworg = prevChaseCamPos;
+    //Drawer->vieworg = cpos;
   } else {
     prevChaseCamTime = -1;
-    vieworg = cl->ViewOrg;
+    Drawer->vieworg = cl->ViewOrg;
   }
 
   ExtraLight = (ViewEnt && ViewEnt->Player ? ViewEnt->Player->ExtraLight*8 : 0);
@@ -1701,10 +1713,10 @@ void VRenderLevelShared::SetupCameraFrame (VEntity *Camera, VTexture *Tex, int F
   rd->drawworld = true;
 
   ViewEnt = Camera;
-  viewangles = Camera->Angles;
-  AngleVectors(viewangles, viewforward, viewright, viewup);
+  Drawer->viewangles = Camera->Angles;
+  AngleVectors(Drawer->viewangles, Drawer->viewforward, Drawer->viewright, Drawer->viewup);
 
-  vieworg = Camera->Origin;
+  Drawer->vieworg = Camera->Origin;
 
   ExtraLight = 0;
   FixedLight = 0;
@@ -1724,7 +1736,7 @@ void VRenderLevelShared::SetupCameraFrame (VEntity *Camera, VTexture *Tex, int F
 //==========================================================================
 void VRenderLevelShared::MarkLeaves () {
   //k8: dunno, this is not the best place to do it, but...
-  r_viewleaf = Level->PointInSubsector(vieworg);
+  r_viewleaf = Level->PointInSubsector(Drawer->vieworg);
 
   // we need this for debug automap view
   if (!Level->HasPVS()) {
@@ -1844,7 +1856,7 @@ void VRenderLevelShared::MarkLeaves () {
 void VRenderLevelShared::UpdateFakeSectors (subsector_t *viewleaf) {
   //TODO: camera renderer can change view origin, and this can change fake floors
   subsector_t *ovl = r_viewleaf;
-  r_viewleaf = (viewleaf ? viewleaf : Level->PointInSubsector(vieworg));
+  r_viewleaf = (viewleaf ? viewleaf : Level->PointInSubsector(Drawer->vieworg));
   // update fake sectors
   const vint32 *fksip = Level->FakeFCSectors.ptr();
   for (int i = Level->FakeFCSectors.length(); i--; ++fksip) {
@@ -1877,17 +1889,17 @@ void VRenderLevelShared::InitialWorldUpdate () {
 //
 //==========================================================================
 void VRenderLevelShared::FullWorldUpdate (bool forceClientOrigin) {
-  TVec oldVO = vieworg;
+  TVec oldVO = Drawer->vieworg;
   if (forceClientOrigin && cl) {
     GCon->Log(NAME_Debug, "performing full world update with client view origin");
-    vieworg = cl->ViewOrg;
-    //GCon->Logf(NAME_Debug, "*** vo=(%g,%g,%g)", vieworg.x, vieworg.y, vieworg.z);
+    Drawer->vieworg = cl->ViewOrg;
+    //GCon->Logf(NAME_Debug, "*** vo=(%g,%g,%g)", Drawer->vieworg.x, Drawer->vieworg.y, Drawer->vieworg.z);
   } else {
     GCon->Log(NAME_Debug, "performing full world update...");
   }
   UpdateFakeSectors();
   InitialWorldUpdate();
-  vieworg = oldVO;
+  Drawer->vieworg = oldVO;
 }
 
 
@@ -1909,6 +1921,9 @@ void R_RenderPlayerView () {
 void VRenderLevelShared::RenderPlayerView () {
   if (!Level->LevelInfo) return;
 
+  Drawer->MirrorFlip = false;
+  Drawer->MirrorClip = false;
+
   ResetDrawStack(); // prepare draw list stack
   IncUpdateWorldFrame();
   //Drawer->SetUpdateFrame(updateWorldFrame);
@@ -1916,9 +1931,9 @@ void VRenderLevelShared::RenderPlayerView () {
   if (dbg_autoclear_automap) AM_ClearAutomap();
 
   //FIXME: this is wrong, because fake sectors need to be updated for each camera separately
-  r_viewleaf = Level->PointInSubsector(vieworg);
+  r_viewleaf = Level->PointInSubsector(Drawer->vieworg);
   // remember it
-  const TVec lastorg = vieworg;
+  const TVec lastorg = Drawer->vieworg;
   subsector_t *playerViewLeaf = r_viewleaf;
 
   if (/*!MirrorLevel &&*/ !r_disable_world_update) UpdateFakeSectors(playerViewLeaf);
@@ -1965,7 +1980,7 @@ void VRenderLevelShared::RenderPlayerView () {
 
   SetupFrame();
 
-  if (dbg_clip_dump_added_ranges) GCon->Logf("=== RENDER SCENE: (%f,%f,%f); (yaw=%f; pitch=%f)", vieworg.x, vieworg.y, vieworg.x, viewangles.yaw, viewangles.pitch);
+  if (dbg_clip_dump_added_ranges) GCon->Logf("=== RENDER SCENE: (%f,%f,%f); (yaw=%f; pitch=%f)", Drawer->vieworg.x, Drawer->vieworg.y, Drawer->vieworg.x, Drawer->viewangles.yaw, Drawer->viewangles.pitch);
 
   //GCon->Log(NAME_Debug, "*** VRenderLevelShared::RenderPlayerView: ENTER ***");
   RenderScene(&refdef, nullptr);
@@ -1979,7 +1994,7 @@ void VRenderLevelShared::RenderPlayerView () {
 
   // recalc in case recursive scene renderer moved it
   // we need it for psprite rendering
-  r_viewleaf = (vieworg == lastorg ? playerViewLeaf : Level->PointInSubsector(vieworg));
+  r_viewleaf = (Drawer->vieworg == lastorg ? playerViewLeaf : Level->PointInSubsector(Drawer->vieworg));
 
   // draw the psprites on top of everything
   if (/*fov <= 90.0f &&*/ cl->MO == cl->Camera && GGameInfo->NetMode != NM_TitleMap) DrawPlayerSprites();

@@ -141,19 +141,20 @@ void VPortal::Draw (bool UseStencil) {
   //GCon->Logf("doing portal (stencil:%d)", (int)UseStencil);
 
   // save renderer settings
-  TVec SavedViewOrg = vieworg;
-  TAVec SavedViewAngles = viewangles;
-  TVec SavedViewForward = viewforward;
-  TVec SavedViewRight = viewright;
-  TVec SavedViewUp = viewup;
+  TVec SavedViewOrg = Drawer->vieworg;
+  TAVec SavedViewAngles = Drawer->viewangles;
+  TVec SavedViewForward = Drawer->viewforward;
+  TVec SavedViewRight = Drawer->viewright;
+  TVec SavedViewUp = Drawer->viewup;
   VEntity *SavedViewEnt = RLev->ViewEnt;
   int SavedExtraLight = RLev->ExtraLight;
   int SavedFixedLight = RLev->FixedLight;
   vuint8 *SavedBspVis = RLev->BspVis;
-  vuint8 *SavedBspVisThing = RLev->BspVisThing;
-  bool SavedMirrorClip = MirrorClip;
-  const TClipPlane SavedClip = view_frustum.planes[5]; // save far/mirror plane
-  const unsigned planeCount = view_frustum.planeCount;
+  //vuint8 *SavedBspVisThing = RLev->BspVisThing;
+  vuint8 *SavedBspVisSector = RLev->BspVisSector;
+  bool SavedMirrorClip = Drawer->MirrorClip;
+  const TClipPlane SavedClip = Drawer->view_frustum.planes[5]; // save far/mirror plane
+  const unsigned planeCount = Drawer->view_frustum.planeCount;
 
   VRenderLevelShared::PPMark pmark;
   VRenderLevelShared::MarkPortalPool(&pmark);
@@ -169,13 +170,19 @@ void VPortal::Draw (bool UseStencil) {
       // this has to be done only for portals that do rendering of view
 
       // notify allocator about minimal node size
-      VRenderLevelShared::SetMinPoolNodeSize(RLev->VisSize*2);
+      //VRenderLevelShared::SetMinPoolNodeSize(RLev->VisSize*2);
+      VRenderLevelShared::SetMinPoolNodeSize(RLev->VisSize+RLev->SecVisSize+128);
       // allocate new bsp vis
-      RLev->BspVis = VRenderLevelShared::AllocPortalPool(RLev->VisSize*2);
-      RLev->BspVisThing = RLev->BspVis+RLev->VisSize;
+      //RLev->BspVis = VRenderLevelShared::AllocPortalPool(RLev->VisSize*2);
+      RLev->BspVis = VRenderLevelShared::AllocPortalPool(RLev->VisSize+RLev->SecVisSize+128);
+      //RLev->BspVisThing = RLev->BspVis+RLev->VisSize;
+      RLev->BspVisSector = RLev->BspVis+RLev->VisSize;
       if (RLev->VisSize) {
         memset(RLev->BspVis, 0, RLev->VisSize);
-        memset(RLev->BspVisThing, 0, RLev->VisSize);
+        //memset(RLev->BspVisThing, 0, RLev->VisSize);
+      }
+      if (RLev->SecVisSize) {
+        memset(RLev->BspVisSector, 0, RLev->SecVisSize);
       }
       //fprintf(stderr, "BSPVIS: size=%d\n", RLev->VisSize);
 
@@ -187,22 +194,24 @@ void VPortal::Draw (bool UseStencil) {
   }
 
   // restore render settings
-  vieworg = SavedViewOrg;
-  viewangles = SavedViewAngles;
-  viewforward = SavedViewForward;
-  viewright = SavedViewRight;
-  viewup = SavedViewUp;
+  Drawer->vieworg = SavedViewOrg;
+  Drawer->viewangles = SavedViewAngles;
+  Drawer->viewforward = SavedViewForward;
+  Drawer->viewright = SavedViewRight;
+  Drawer->viewup = SavedViewUp;
   RLev->ViewEnt = SavedViewEnt;
   RLev->ExtraLight = SavedExtraLight;
   RLev->FixedLight = SavedFixedLight;
   if (restoreVis) {
     RLev->BspVis = SavedBspVis;
-    RLev->BspVisThing = SavedBspVisThing;
+    //RLev->BspVisThing = SavedBspVisThing;
+    RLev->BspVisSector = SavedBspVisSector;
   }
-  MirrorClip = SavedMirrorClip;
+  Drawer->MirrorClip = SavedMirrorClip;
+  // restore original frustum
   RLev->TransformFrustum();
-  view_frustum.planes[5] = SavedClip; // restore far/mirror plane
-  view_frustum.planeCount = planeCount;
+  Drawer->view_frustum.planes[5] = SavedClip; // restore far/mirror plane
+  Drawer->view_frustum.planeCount = planeCount;
   Drawer->SetupViewOrg();
 
   Drawer->EndPortal(this, UseStencil);
@@ -218,9 +227,9 @@ void VPortal::Draw (bool UseStencil) {
 //
 //==========================================================================
 void VPortal::SetUpRanges (const refdef_t &refdef, VViewClipper &Range, bool Revert, bool SetFrustum) {
-  Range.ClearClipNodes(vieworg, RLev->Level);
+  Range.ClearClipNodes(Drawer->vieworg, RLev->Level);
   if (SetFrustum) {
-    Range.ClipInitFrustumRange(viewangles, viewforward, viewright, viewup, refdef.fovx, refdef.fovy);
+    Range.ClipInitFrustumRange(Drawer->viewangles, Drawer->viewforward, Drawer->viewright, Drawer->viewup, refdef.fovx, refdef.fovy);
     //GCon->Logf("SURFS: %d", Surfs.Num());
     //return;
   }
@@ -253,7 +262,7 @@ void VPortal::SetUpRanges (const refdef_t &refdef, VViewClipper &Range, bool Rev
         if (Dir.x > -0.01f && Dir.x < 0.01f && Dir.y > -0.01f && Dir.y < 0.01f) continue; // too short
         TPlane P;
         P.SetPointDirXY(v1, Dir);
-        if ((DotProduct(vieworg, P.normal)-P.dist < 0.01f) != Revert) continue; // view origin is on the back side
+        if ((DotProduct(Drawer->vieworg, P.normal)-P.dist < 0.01f) != Revert) continue; // view origin is on the back side
         Range.AddClipRange(v2, v1);
       }
     }
@@ -297,7 +306,7 @@ bool VSkyPortal::MatchSky (VSky *ASky) const {
 //
 //==========================================================================
 void VSkyPortal::DrawContents () {
-  vieworg = TVec(0, 0, 0);
+  Drawer->vieworg = TVec(0, 0, 0);
   RLev->TransformFrustum();
   Drawer->SetupViewOrg();
 
@@ -337,9 +346,9 @@ void VSkyBoxPortal::DrawContents () {
 
   // set view origin to be sky view origin
   RLev->ViewEnt = Viewport;
-  vieworg = Viewport->Origin;
-  viewangles.yaw += Viewport->Angles.yaw;
-  AngleVectors(viewangles, viewforward, viewright, viewup);
+  Drawer->vieworg = Viewport->Origin;
+  Drawer->viewangles.yaw += Viewport->Angles.yaw;
+  AngleVectors(Drawer->viewangles, Drawer->viewforward, Drawer->viewright, Drawer->viewup);
 
   // no light flashes in the sky
   RLev->ExtraLight = 0;
@@ -391,8 +400,8 @@ void VSectorStackPortal::DrawContents () {
 
   //GCon->Logf("rendering portal contents; offset=(%f,%f)", Viewport->Origin.x-Mate->Origin.x, Viewport->Origin.y-Mate->Origin.y);
 
-  vieworg.x = vieworg.x+Viewport->Origin.x-Mate->Origin.x;
-  vieworg.y = vieworg.y+Viewport->Origin.y-Mate->Origin.y;
+  Drawer->vieworg.x = Drawer->vieworg.x+Viewport->Origin.x-Mate->Origin.x;
+  Drawer->vieworg.y = Drawer->vieworg.y+Viewport->Origin.y-Mate->Origin.y;
 
   //VPortal::SetUpRanges(Range, false, true); //k8: after moving viewport?
 
@@ -440,43 +449,42 @@ void VMirrorPortal::DrawContents () {
   RLev->ViewEnt = nullptr;
 
   ++RLev->MirrorLevel;
-  MirrorFlip = RLev->MirrorLevel&1;
-  MirrorClip = true;
+  Drawer->MirrorFlip = RLev->MirrorLevel&1;
+  Drawer->MirrorClip = true;
 
-  float Dist = DotProduct(vieworg, Plane->normal)-Plane->dist;
-  vieworg -= 2*Dist*Plane->normal;
+  float Dist = DotProduct(Drawer->vieworg, Plane->normal)-Plane->dist;
+  Drawer->vieworg -= 2*Dist*Plane->normal;
 
-  Dist = DotProduct(viewforward, Plane->normal);
-  viewforward -= 2*Dist*Plane->normal;
-  Dist = DotProduct(viewright, Plane->normal);
-  viewright -= 2*Dist*Plane->normal;
-  Dist = DotProduct(viewup, Plane->normal);
-  viewup -= 2*Dist*Plane->normal;
+  Dist = DotProduct(Drawer->viewforward, Plane->normal);
+  Drawer->viewforward -= 2*Dist*Plane->normal;
+  Dist = DotProduct(Drawer->viewright, Plane->normal);
+  Drawer->viewright -= 2*Dist*Plane->normal;
+  Dist = DotProduct(Drawer->viewup, Plane->normal);
+  Drawer->viewup -= 2*Dist*Plane->normal;
 
   // k8: i added this, but i don't know if it is required
-  viewforward.normaliseInPlace();
-  viewright.normaliseInPlace();
-  viewup.normaliseInPlace();
+  Drawer->viewforward.normaliseInPlace();
+  Drawer->viewright.normaliseInPlace();
+  Drawer->viewup.normaliseInPlace();
 
-  VectorsAngles(viewforward, (MirrorFlip ? -viewright : viewright), viewup, viewangles);
+  VectorsAngles(Drawer->viewforward, (Drawer->MirrorFlip ? -Drawer->viewright : Drawer->viewright), Drawer->viewup, Drawer->viewangles);
 
   refdef_t rd = RLev->refdef;
   VViewClipper Range;
   SetUpRanges(rd, Range, true, false);
 
   // use "far plane" (it is unused by default)
-  const TClipPlane SavedClip = view_frustum.planes[5]; // save far/mirror plane
-  const unsigned planeCount = view_frustum.planeCount;
-  view_frustum.planes[5] = *Plane;
-  view_frustum.planes[5].clipflag = TFrustum::ForwardBit; //0x20U;
-  //view_frustum.setupBoxIndiciesForPlane(5);
-  view_frustum.planeCount = 6;
+  const TClipPlane SavedClip = Drawer->view_frustum.planes[5]; // save far/mirror plane
+  const unsigned planeCount = Drawer->view_frustum.planeCount;
+  Drawer->view_frustum.planes[5] = *Plane;
+  Drawer->view_frustum.planes[5].clipflag = TFrustum::ForwardBit; //0x20U;
+  Drawer->view_frustum.planeCount = 6;
 
   RLev->RenderScene(&rd, &Range);
 
-  view_frustum.planes[5] = SavedClip;
-  view_frustum.planeCount = planeCount;
+  Drawer->view_frustum.planes[5] = SavedClip;
+  Drawer->view_frustum.planeCount = planeCount;
 
   --RLev->MirrorLevel;
-  MirrorFlip = RLev->MirrorLevel&1;
+  Drawer->MirrorFlip = RLev->MirrorLevel&1;
 }
