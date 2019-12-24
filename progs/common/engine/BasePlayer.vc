@@ -205,6 +205,7 @@ native void ClientAddSequenceChoice (int OriginId, name Choice);
 native void ClientStopSequence (int OriginId);
 native void ClientPrint (string Str);
 native void ClientCentrePrint (string Str);
+alias ClientCenterPrint = ClientCentrePrint;
 native void ClientSetAngles (TAVec Angles);
 native void ClientIntermission (name NextMap);
 native void ClientPause (bool Paused);
