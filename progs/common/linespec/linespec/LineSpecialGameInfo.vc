@@ -1551,11 +1551,11 @@ defaultproperties {
   contents_alpha[CONTENTS_HAZARD] = 0.7;
 
 
-  windTab[0] = 5.0/32.0;
+  windTab[0] =  5.0/32.0;
   windTab[1] = 10.0/32.0;
   windTab[2] = 25.0/32.0;
 
-  pushTab[0] = 5.0*35.0*35.0/32.0;
+  pushTab[0] =  5.0*35.0*35.0/32.0;
   pushTab[1] = 10.0*35.0*35.0/32.0;
   pushTab[2] = 25.0*35.0*35.0/32.0;
   pushTab[3] = 30.0*35.0*35.0/32.0;
