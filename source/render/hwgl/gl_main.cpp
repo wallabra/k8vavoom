@@ -2183,6 +2183,7 @@ VOpenGLDrawer::FBO::FBO ()
   , mFBO(0)
   , mColorTid(0)
   , mDepthStencilTid(0)
+  , mDepthStencilRBO(0)
   , mHasDepthStencil(false)
   , mWidth(0)
   , mHeight(0)
@@ -2209,14 +2210,27 @@ void VOpenGLDrawer::FBO::destroy () {
   if (!mOwner) return;
   mOwner->p_glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
   mOwner->p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
-  if (mHasDepthStencil) mOwner->p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
+  if (mHasDepthStencil) {
+    if (mDepthStencilTid) {
+      mOwner->p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
+    } else if (mDepthStencilRBO) {
+      mOwner->p_glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, 0);
+    }
+  }
   mOwner->p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glDeleteTextures(1, &mColorTid);
-  if (mHasDepthStencil) glDeleteTextures(1, &mDepthStencilTid);
+  if (mHasDepthStencil) {
+    if (mDepthStencilTid) {
+      glDeleteTextures(1, &mDepthStencilTid);
+    } else if (mDepthStencilRBO) {
+      mOwner->p_glDeleteFramebuffers(1, &mDepthStencilRBO);
+    }
+  }
   mOwner->p_glDeleteFramebuffers(1, &mFBO);
   mFBO = 0;
   mColorTid = 0;
   mDepthStencilTid = 0;
+  mDepthStencilRBO = 0;
   mHasDepthStencil = false;
   mWidth = 0;
   mHeight = 0;
@@ -2273,15 +2287,6 @@ void VOpenGLDrawer::FBO::createInternal (VOpenGLDrawer *aowner, int awidth, int 
 
   // attach stencil texture to this FBO
   if (createDepthStencil) {
-    glGenTextures(1, &mDepthStencilTid);
-    if (mDepthStencilTid == 0) Sys_Error("OpenGL: cannot create stencil texture for main FBO");
-    glBindTexture(GL_TEXTURE_2D, mDepthStencilTid);
-
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, aowner->ClampToEdge);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, aowner->ClampToEdge);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
     GLint major, minor;
     glGetIntegerv(GL_MAJOR_VERSION, &major);
     glGetIntegerv(GL_MINOR_VERSION, &minor);
@@ -2306,42 +2311,74 @@ void VOpenGLDrawer::FBO::createInternal (VOpenGLDrawer *aowner, int awidth, int 
     vassert(GL_UNSIGNED_INT_24_8 == 0x84FA);
     vassert(GL_DEPTH24_STENCIL8 == 0x88F0);
 
-    //glFlush();
-    //glFinish();
-    (void)glGetError();
-    vassert(glGetError() == 0); // invariant
+    if (!aowner->CheckExtension("GL_EXT_packed_depth_stencil")) Sys_Error("OpenGL error: GL_EXT_packed_depth_stencil is not supported!");
 
-    // ok, shitty intel, let's try this
-    vuint8 *tmpdata = nullptr; //(vuint8 *)Z_Calloc(awidth*aheight*8);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, depthStencilFormat, awidth, aheight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, /*nullptr*/tmpdata);
-    //glTexImage2D(GL_TEXTURE_2D, 0, depthStencilFormat, awidth, aheight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT, /*nullptr*/tmpdata);
-    GLenum glerr = glGetError();
-    if (glerr != 0) {
-      GCon->Logf(NAME_Init, "OpenGL: glTexImage2D, first error is 0x%04x", (unsigned)glerr);
-      if (depthStencilFormat == GL_DEPTH32F_STENCIL8) {
-        GCon->Log(NAME_Init, "OpenGL: cannot create fp depth buffer, trying 24-bit one");
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, awidth, aheight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, /*nullptr*/tmpdata);
-        glerr = glGetError();
-        if (glerr != 0) Sys_Error("OpenGL initialization error (second glTexImage2D; err=0x%04x)", (unsigned)glerr);
-      } else {
-        //vassert(depthStencilFormat == GL_DEPTH24_STENCIL8);
-        // try some weird things
-        GCon->Logf(NAME_Init, "OpenGL: glTexImage2D, first error is 0x%04x", (unsigned)glerr);
-        Sys_Error("OpenGL initialization error (first glTexImage2D; err=0x%04x)", (unsigned)glerr);
-      }
-    }
-    //glFlush();
-    //glFinish();
-    aowner->p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, mDepthStencilTid, 0);
-    //glFlush();
-    //glFinish();
-    if (tmpdata) Z_Free(tmpdata);
-
+    if (aowner->p_glGenRenderbuffers &&
+        aowner->p_glBindRenderbuffer &&
+        aowner->p_glRenderbufferStorage &&
+        aowner->p_glBindRenderbuffer)
     {
-      GLenum status = aowner->p_glCheckFramebufferStatus(GL_FRAMEBUFFER);
-      if (status != GL_FRAMEBUFFER_COMPLETE) Sys_Error("OpenGL: framebuffer creation failed");
+      GCon->Log(NAME_Init, "OpenGL: using combined depth/stencil renderbuffer for FBO");
+      // create a render buffer object for the depth buffer
+      aowner->p_glGenRenderbuffers(1, &mDepthStencilRBO);
+      if (mDepthStencilRBO == 0) Sys_Error("OpenGL: cannot create depth/stencil render buffer for FBO");
+      // bind the texture
+      aowner->p_glBindRenderbuffer(GL_RENDERBUFFER, mDepthStencilRBO);
+      // create the render buffer in the GPU
+      (void)glGetError();
+      aowner->p_glRenderbufferStorage(GL_RENDERBUFFER, depthStencilFormat, awidth, aheight);
+      GLenum glerr = glGetError();
+      if (glerr != 0) Sys_Error("OpenGL: cannot create depth/stencil renderbuffer storage, error is 0x%04x", (unsigned)glerr);
+      // unbind the render buffer
+      aowner->p_glBindRenderbuffer(GL_RENDERBUFFER, 0);
+      // bind it
+      aowner->p_glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, mDepthStencilRBO);
+      glerr = glGetError();
+      if (glerr != 0) Sys_Error("OpenGL: cannot bind depth/stencil renderbuffer storage, error is 0x%04x", (unsigned)glerr);
+    } else {
+      GCon->Log(NAME_Init, "OpenGL: using combined depth/stencil texture for FBO");
+      // use texture
+      glGenTextures(1, &mDepthStencilTid);
+      if (mDepthStencilTid == 0) Sys_Error("OpenGL: cannot create stencil texture for FBO");
+      glBindTexture(GL_TEXTURE_2D, mDepthStencilTid);
+
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, aowner->ClampToEdge);
+      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, aowner->ClampToEdge);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+      //glFlush();
+      //glFinish();
+      (void)glGetError();
+      vassert(glGetError() == 0); // invariant
+
+      glTexImage2D(GL_TEXTURE_2D, 0, depthStencilFormat, awidth, aheight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
+      GLenum glerr = glGetError();
+      if (glerr != 0) {
+        GCon->Logf(NAME_Init, "OpenGL: glTexImage2D, first error is 0x%04x", (unsigned)glerr);
+        if (depthStencilFormat == GL_DEPTH32F_STENCIL8) {
+          GCon->Log(NAME_Init, "OpenGL: cannot create fp depth buffer, trying 24-bit one");
+          glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, awidth, aheight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
+          glerr = glGetError();
+          if (glerr != 0) Sys_Error("OpenGL initialization error (second glTexImage2D; err=0x%04x)", (unsigned)glerr);
+        } else {
+          //vassert(depthStencilFormat == GL_DEPTH24_STENCIL8);
+          // try some weird things
+          GCon->Logf(NAME_Init, "OpenGL: glTexImage2D, first error is 0x%04x", (unsigned)glerr);
+          Sys_Error("OpenGL initialization error (first glTexImage2D; err=0x%04x)", (unsigned)glerr);
+        }
+      }
+      //glFlush();
+      //glFinish();
+      aowner->p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, mDepthStencilTid, 0);
+      //glFlush();
+      //glFinish();
     }
+  }
+
+  {
+    GLenum status = aowner->p_glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE) Sys_Error("OpenGL: framebuffer creation failed (status=0x%04x)", (unsigned)status);
   }
 
   mHasDepthStencil = createDepthStencil;

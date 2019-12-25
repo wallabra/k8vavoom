@@ -140,6 +140,7 @@ public:
     GLuint mFBO = 0;
     GLuint mColorTid = 0;
     GLuint mDepthStencilTid = 0;
+    GLuint mDepthStencilRBO = 0; // prefer RenderBuffer for depth/stencil
     bool mHasDepthStencil = false;
     int mWidth = 0;
     int mHeight = 0;
