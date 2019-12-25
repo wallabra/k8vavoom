@@ -66,7 +66,7 @@ VCvarF gl_alpha_threshold("gl_alpha_threshold", "0.01", "Alpha threshold (less t
 
 static VCvarI gl_max_anisotropy("gl_max_anisotropy", "1", "Maximum anisotropy level (r/o).", CVAR_Rom);
 static VCvarB gl_is_shitty_gpu("gl_is_shitty_gpu", true, "Is shitty GPU detected (r/o)?", CVAR_Rom);
-static VCvarB gl_downgrade_depth_stencil("gl_downgrade_depth_stencil", false, "Downgrade depth/stencil FBO texture (debug feature)?", CVAR_PreInit);
+//static VCvarB gl_downgrade_depth_stencil("gl_downgrade_depth_stencil", false, "Downgrade depth/stencil FBO texture (debug feature)?", CVAR_PreInit);
 
 VCvarB gl_enable_depth_bounds("gl_enable_depth_bounds", true, "Use depth bounds extension if found?", CVAR_Archive);
 
@@ -2287,16 +2287,24 @@ void VOpenGLDrawer::FBO::createInternal (VOpenGLDrawer *aowner, int awidth, int 
     glGetIntegerv(GL_MINOR_VERSION, &minor);
 
     GLint depthStencilFormat = GL_DEPTH24_STENCIL8;
+    if (!aowner->CheckExtension("GL_EXT_packed_depth_stencil")) Sys_Error("OpenGL error: GL_EXT_packed_depth_stencil is not supported!");
     // there is (almost) no reason to use fp depth buffer without reverse z
     // also, reverse z is perfectly working with int24 depth buffer, see http://www.reedbeta.com/blog/depth-precision-visualized/
     if (major >= 3 && gl_enable_fp_zbuffer) {
       depthStencilFormat = GL_DEPTH32F_STENCIL8;
       GCon->Log(NAME_Init, "OpenGL: using floating-point depth buffer");
-    } else if (gl_is_shitty_gpu || gl_downgrade_depth_stencil) {
+    }
+    /*
+    else if (gl_is_shitty_gpu || gl_downgrade_depth_stencil) {
       if (!aowner->CheckExtension("GL_EXT_packed_depth_stencil")) Sys_Error("OpenGL error: GL_EXT_packed_depth_stencil is not supported!");
       GCon->Log(NAME_Init, "OpenGL: downgrading DEPTH/STENCIL...");
       depthStencilFormat = GL_DEPTH_STENCIL_EXT;
     }
+    */
+    vassert(GL_DEPTH_STENCIL_EXT == GL_DEPTH_STENCIL);
+    vassert(GL_DEPTH_STENCIL_EXT == 0x84F9);
+    vassert(GL_UNSIGNED_INT_24_8 == 0x84FA);
+    vassert(GL_DEPTH24_STENCIL8 == 0x88F0);
 
     //glFlush();
     //glFinish();
