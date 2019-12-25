@@ -194,7 +194,7 @@ bool Physics (float DeltaTime) {
     int CountY = 0;
     for (msecnode_t *mnode = TouchingSectorList; mnode; mnode = mnode.TNext) {
       sector_t *sec = mnode.Sector;
-      if (!sec || !sec->AffectorData) continue;
+      if (!sec->AffectorData) continue;
       // move objects only if on floor or underwater, non-floating, and clipped
       for (SectorThinker SecThink = SectorThinker(sec->AffectorData); SecThink; SecThink = SecThink.NextAffector) {
         auto sth = Scroller(SecThink);
@@ -353,6 +353,43 @@ bool Physics (float DeltaTime) {
 
 //==========================================================================
 //
+//  PerformSectorWindThrust
+//
+//==========================================================================
+final bool PerformSectorWindThrust (float DeltaTime, sector_t *sector) {
+  int special = sector->special&SECSPEC_BASE_MASK;
+  switch (special) {
+    case SECSPEC_WindEastSlow:
+    case SECSPEC_WindEastMedium:
+    case SECSPEC_WindEastFast:
+      //printdebug("    EAST");
+      Thrust(0.0, LineSpecialGameInfo(Level.Game).windTab[special-SECSPEC_WindEastSlow]*DeltaTime*35.0);
+      return true;
+    case SECSPEC_WindNorthSlow:
+    case SECSPEC_WindNorthMedium:
+    case SECSPEC_WindNorthFast:
+      //printdebug("    NORTH");
+      Thrust(90.0, LineSpecialGameInfo(Level.Game).windTab[special-SECSPEC_WindNorthSlow]*DeltaTime*35.0);
+      return true;
+    case SECSPEC_WindSouthSlow:
+    case SECSPEC_WindSouthMedium:
+    case SECSPEC_WindSouthFast:
+      //printdebug("    SOUTH");
+      Thrust(270.0, LineSpecialGameInfo(Level.Game).windTab[special-SECSPEC_WindSouthSlow]*DeltaTime*35.0);
+      return true;
+    case SECSPEC_WindWestSlow:
+    case SECSPEC_WindWestMedium:
+    case SECSPEC_WindWestFast:
+      //printdebug("    WEST");
+      Thrust(180.0, LineSpecialGameInfo(Level.Game).windTab[special-SECSPEC_WindWestSlow]*DeltaTime*35.0);
+      return true;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
 //  XYMovement
 //
 //  returns old floor z
@@ -361,30 +398,18 @@ bool Physics (float DeltaTime) {
 final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
   float oldfloorz = FloorZ;
 
-  if (bWindThrust && Sector) {
-    int special = Sector->special&SECSPEC_BASE_MASK;
-    switch (special) {
-      case SECSPEC_WindEastSlow:
-      case SECSPEC_WindEastMedium:
-      case SECSPEC_WindEastFast:
-        Thrust(0.0, LineSpecialGameInfo(Level.Game).windTab[special-SECSPEC_WindEastSlow]*DeltaTime*35.0);
-        break;
-      case SECSPEC_WindNorthSlow:
-      case SECSPEC_WindNorthMedium:
-      case SECSPEC_WindNorthFast:
-        Thrust(90.0, LineSpecialGameInfo(Level.Game).windTab[special-SECSPEC_WindNorthSlow]*DeltaTime*35.0);
-        break;
-      case SECSPEC_WindSouthSlow:
-      case SECSPEC_WindSouthMedium:
-      case SECSPEC_WindSouthFast:
-        Thrust(270.0, LineSpecialGameInfo(Level.Game).windTab[special-SECSPEC_WindSouthSlow]*DeltaTime*35.0);
-        break;
-      case SECSPEC_WindWestSlow:
-      case SECSPEC_WindWestMedium:
-      case SECSPEC_WindWestFast:
-        Thrust(180.0, LineSpecialGameInfo(Level.Game).windTab[special-SECSPEC_WindWestSlow]*DeltaTime*35.0);
-        break;
+  if (bWindThrust && Sector && false) {
+    #if 0
+    // check winds for all touching sectors?
+    for (msecnode_t *mnode = TouchingSectorList; mnode; mnode = mnode.TNext) {
+      sector_t *sec = mnode.Sector;
+      if (sec->special&SECSPEC_BASE_MASK) {
+        PerformSectorWindThrust(DeltaTime, sec);
+      }
     }
+    #else
+    if (Sector->special&SECSPEC_BASE_MASK) PerformSectorWindThrust(DeltaTime, Sector);
+    #endif
   }
 
   //if (self isa 'DH_GaussBall') printdebug("%C: 000 (max=%s): %s  %s", self, MAXMOVE, Velocity, Normalise(Velocity));
