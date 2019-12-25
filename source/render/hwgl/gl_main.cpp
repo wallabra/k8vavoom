@@ -66,6 +66,7 @@ VCvarF gl_alpha_threshold("gl_alpha_threshold", "0.01", "Alpha threshold (less t
 
 static VCvarI gl_max_anisotropy("gl_max_anisotropy", "1", "Maximum anisotropy level (r/o).", CVAR_Rom);
 static VCvarB gl_is_shitty_gpu("gl_is_shitty_gpu", true, "Is shitty GPU detected (r/o)?", CVAR_Rom);
+static VCvarB gl_downgrade_depth_stencil("gl_downgrade_depth_stencil", false, "Downgrade depth/stencil FBO texture (debug feature)?", CVAR_PreInit);
 
 VCvarB gl_enable_depth_bounds("gl_enable_depth_bounds", true, "Use depth bounds extension if found?", CVAR_Archive);
 
@@ -2291,13 +2292,11 @@ void VOpenGLDrawer::FBO::createInternal (VOpenGLDrawer *aowner, int awidth, int 
     if (major >= 3 && gl_enable_fp_zbuffer) {
       depthStencilFormat = GL_DEPTH32F_STENCIL8;
       GCon->Log(NAME_Init, "OpenGL: using floating-point depth buffer");
+    } else if (gl_is_shitty_gpu || gl_downgrade_depth_stencil) {
+      if (!aowner->CheckExtension("GL_EXT_packed_depth_stencil")) Sys_Error("OpenGL error: GL_EXT_packed_depth_stencil is not supported!");
+      GCon->Log(NAME_Init, "OpenGL: downgrading DEPTH/STENCIL...");
+      depthStencilFormat = GL_DEPTH_STENCIL_EXT;
     }
-    /*
-    else if (gl_is_shitty_gpu || true) {
-      GCon->Log(NAME_Init, "OpenGL: downgrading GDS...");
-      depthStencilFormat = GL_DEPTH_STENCIL;
-    }
-    */
 
     //glFlush();
     //glFinish();
@@ -2320,30 +2319,8 @@ void VOpenGLDrawer::FBO::createInternal (VOpenGLDrawer *aowner, int awidth, int 
       } else {
         //vassert(depthStencilFormat == GL_DEPTH24_STENCIL8);
         // try some weird things
-        #if 0
-        GCon->Logf(NAME_Init, "OpenGL: intel workaround 000...");
-        glTexImage2D(GL_TEXTURE_2D, 0, depthStencilFormat, awidth, aheight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_BYTE, /*nullptr*/tmpdata);
-        glerr = glGetError();
-        if (glerr != 0) {
-          GCon->Logf(NAME_Init, "OpenGL: intel workaround 000 failed with 0x%04x...", (unsigned)glerr);
-          GCon->Logf(NAME_Init, "OpenGL: intel workaround 001...");
-          glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_STENCIL, awidth, aheight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, /*nullptr*/tmpdata);
-          glerr = glGetError();
-          if (glerr != 0) {
-            GCon->Logf(NAME_Init, "OpenGL: intel workaround 001 failed with 0x%04x...", (unsigned)glerr);
-            GCon->Logf(NAME_Init, "OpenGL: intel workaround 002...");
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_STENCIL, awidth, aheight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_BYTE, /*nullptr*/tmpdata);
-            glerr = glGetError();
-            if (glerr != 0) {
-              GCon->Logf(NAME_Init, "OpenGL: intel workaround 002 failed with 0x%04x...", (unsigned)glerr);
-              Sys_Error("OpenGL initialization error (first glTexImage2D; err=0x%04x)", (unsigned)glerr);
-            }
-          }
-        }
-        #else
         GCon->Logf(NAME_Init, "OpenGL: glTexImage2D, first error is 0x%04x", (unsigned)glerr);
         Sys_Error("OpenGL initialization error (first glTexImage2D; err=0x%04x)", (unsigned)glerr);
-        #endif
       }
     }
     //glFlush();
