@@ -660,6 +660,15 @@ void VOpenGLDrawer::InitResolution () {
   #define VV_GLIMPORTS
   #define VGLAPIPTR(x,required)  do { \
     p_##x = x##_t(GetExtFuncPtr(#x)); \
+    if (!p_##x /*|| strstr(#x, "Framebuffer")*/) { \
+      p_##x = nullptr; \
+      VStr extfn(#x); \
+      extfn += "EXT"; \
+      /*extfn += "ARB";*/ \
+      GCon->Logf(NAME_Init, "OpenGL: trying `%s` instead of `%s`...", *extfn, #x); \
+      p_##x = x##_t(GetExtFuncPtr(*extfn)); \
+      if (p_##x) GCon->Logf(NAME_Init, "OpenGL: ...found `%s`.", *extfn); \
+    } \
     if (required && !p_##x) Sys_Error("OpenGL: `%s()` not found!", ""#x); \
   } while (0)
   #include "gl_imports.h"
@@ -681,9 +690,9 @@ void VOpenGLDrawer::InitResolution () {
     useReverseZ = false;
   }
 
-  if (hasBoundsTest && !p_glDepthBoundsEXT) {
+  if (hasBoundsTest && !p_glDepthBounds) {
     hasBoundsTest = false;
-    GCon->Logf(NAME_Init, "OpenGL: GL_EXT_depth_bounds_test found, but no `glDepthBoundsEXT()` exported");
+    GCon->Logf(NAME_Init, "OpenGL: GL_EXT_depth_bounds_test found, but no `glDepthBounds()` exported");
   }
 
   if (p_glStencilFuncSeparate && p_glStencilOpSeparate) {
@@ -728,11 +737,11 @@ void VOpenGLDrawer::InitResolution () {
   if (!p_glStencilFuncSeparate) GCon->Log(NAME_Init, "*** no separate stencil funcs --> no shadow volumes");
 
   if (!p_glDeleteRenderbuffers ||
-      !p_glGenRenderbuffersEXT ||
-      !p_glRenderbufferStorageEXT ||
-      !p_glBindRenderbufferEXT ||
-      !p_glFramebufferRenderbufferEXT ||
-      !p_glGenerateMipmapEXT ||
+      !p_glGenRenderbuffers ||
+      !p_glRenderbufferStorage ||
+      !p_glBindRenderbuffer ||
+      !p_glFramebufferRenderbuffer ||
+      !p_glGenerateMipmap ||
       !p_glBlitFramebuffer ||
       gl_dbg_fbo_blit_with_texture)
   {
@@ -829,7 +838,7 @@ void VOpenGLDrawer::InitResolution () {
   LoadAllShaders();
   CompileShaders();
 
-  if (glGetError() != 0) Sys_Error("OpenGL initialization error");
+  if (glGetError() != 0) Sys_Error("OpenGL initialization error (after shaders)");
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -1177,9 +1186,9 @@ int VOpenGLDrawer::SetupLightScissor (const TVec &org, float radius, int scoord[
     }
 
     if (revZ) {
-      p_glDepthBoundsEXT(pjwz1, pjwz0);
+      p_glDepthBounds(pjwz1, pjwz0);
     } else {
-      p_glDepthBoundsEXT(pjwz0, pjwz1);
+      p_glDepthBounds(pjwz0, pjwz1);
     }
     glEnable(GL_DEPTH_BOUNDS_TEST_EXT);
   }
@@ -2230,10 +2239,12 @@ void VOpenGLDrawer::FBO::createInternal (VOpenGLDrawer *aowner, int awidth, int 
 
   GLint oldbindtex = 0;
   glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldbindtex);
+  glBindTexture(GL_TEXTURE_2D, 0);
 
   // allocate FBO object
+  (void)glGetError();
   aowner->p_glGenFramebuffers(1, &mFBO);
-  if (mFBO == 0) Sys_Error("OpenGL: cannot create FBO");
+  if (mFBO == 0) Sys_Error("OpenGL: cannot create FBO: 0x%04x", (unsigned)glGetError());
   aowner->p_glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
 
   // attach 2D texture to this FBO
@@ -2265,6 +2276,11 @@ void VOpenGLDrawer::FBO::createInternal (VOpenGLDrawer *aowner, int awidth, int 
     if (mDepthStencilTid == 0) Sys_Error("OpenGL: cannot create stencil texture for main FBO");
     glBindTexture(GL_TEXTURE_2D, mDepthStencilTid);
 
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, aowner->ClampToEdge);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, aowner->ClampToEdge);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
     GLint major, minor;
     glGetIntegerv(GL_MAJOR_VERSION, &major);
     glGetIntegerv(GL_MINOR_VERSION, &minor);
@@ -2274,22 +2290,68 @@ void VOpenGLDrawer::FBO::createInternal (VOpenGLDrawer *aowner, int awidth, int 
     // also, reverse z is perfectly working with int24 depth buffer, see http://www.reedbeta.com/blog/depth-precision-visualized/
     if (major >= 3 && gl_enable_fp_zbuffer) {
       depthStencilFormat = GL_DEPTH32F_STENCIL8;
-      GCon->Logf(NAME_Init, "OpenGL: using floating-point depth buffer");
+      GCon->Log(NAME_Init, "OpenGL: using floating-point depth buffer");
     }
+    /*
+    else if (gl_is_shitty_gpu || true) {
+      GCon->Log(NAME_Init, "OpenGL: downgrading GDS...");
+      depthStencilFormat = GL_DEPTH_STENCIL;
+    }
+    */
 
+    //glFlush();
+    //glFinish();
     (void)glGetError();
+    vassert(glGetError() == 0); // invariant
 
-    glTexImage2D(GL_TEXTURE_2D, 0, depthStencilFormat, awidth, aheight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
-    if (glGetError() != 0) {
+    // ok, shitty intel, let's try this
+    vuint8 *tmpdata = nullptr; //(vuint8 *)Z_Calloc(awidth*aheight*8);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, depthStencilFormat, awidth, aheight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, /*nullptr*/tmpdata);
+    //glTexImage2D(GL_TEXTURE_2D, 0, depthStencilFormat, awidth, aheight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT, /*nullptr*/tmpdata);
+    GLenum glerr = glGetError();
+    if (glerr != 0) {
+      GCon->Logf(NAME_Init, "OpenGL: glTexImage2D, first error is 0x%04x", (unsigned)glerr);
       if (depthStencilFormat == GL_DEPTH32F_STENCIL8) {
         GCon->Log(NAME_Init, "OpenGL: cannot create fp depth buffer, trying 24-bit one");
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, awidth, aheight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
-        if (glGetError() != 0) Sys_Error("OpenGL initialization error");
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, awidth, aheight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, /*nullptr*/tmpdata);
+        glerr = glGetError();
+        if (glerr != 0) Sys_Error("OpenGL initialization error (second glTexImage2D; err=0x%04x)", (unsigned)glerr);
       } else {
-        Sys_Error("OpenGL initialization error");
+        //vassert(depthStencilFormat == GL_DEPTH24_STENCIL8);
+        // try some weird things
+        #if 0
+        GCon->Logf(NAME_Init, "OpenGL: intel workaround 000...");
+        glTexImage2D(GL_TEXTURE_2D, 0, depthStencilFormat, awidth, aheight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_BYTE, /*nullptr*/tmpdata);
+        glerr = glGetError();
+        if (glerr != 0) {
+          GCon->Logf(NAME_Init, "OpenGL: intel workaround 000 failed with 0x%04x...", (unsigned)glerr);
+          GCon->Logf(NAME_Init, "OpenGL: intel workaround 001...");
+          glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_STENCIL, awidth, aheight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, /*nullptr*/tmpdata);
+          glerr = glGetError();
+          if (glerr != 0) {
+            GCon->Logf(NAME_Init, "OpenGL: intel workaround 001 failed with 0x%04x...", (unsigned)glerr);
+            GCon->Logf(NAME_Init, "OpenGL: intel workaround 002...");
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_STENCIL, awidth, aheight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_BYTE, /*nullptr*/tmpdata);
+            glerr = glGetError();
+            if (glerr != 0) {
+              GCon->Logf(NAME_Init, "OpenGL: intel workaround 002 failed with 0x%04x...", (unsigned)glerr);
+              Sys_Error("OpenGL initialization error (first glTexImage2D; err=0x%04x)", (unsigned)glerr);
+            }
+          }
+        }
+        #else
+        GCon->Logf(NAME_Init, "OpenGL: glTexImage2D, first error is 0x%04x", (unsigned)glerr);
+        Sys_Error("OpenGL initialization error (first glTexImage2D; err=0x%04x)", (unsigned)glerr);
+        #endif
       }
     }
+    //glFlush();
+    //glFinish();
     aowner->p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, mDepthStencilTid, 0);
+    //glFlush();
+    //glFinish();
+    if (tmpdata) Z_Free(tmpdata);
 
     {
       GLenum status = aowner->p_glCheckFramebufferStatus(GL_FRAMEBUFFER);

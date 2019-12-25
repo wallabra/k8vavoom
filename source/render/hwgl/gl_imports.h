@@ -182,7 +182,7 @@ typedef void (APIENTRY*glGetActiveAttribARB_t)(GLhandleARB, GLuint, GLsizei, GLs
 typedef void (APIENTRY*glGetUniformfvARB_t)(GLhandleARB, GLint, GLfloat *);
 typedef void (APIENTRY*glGetUniformivARB_t)(GLhandleARB, GLint, GLint *);
 typedef void (APIENTRY*glGetShaderSourceARB_t)(GLhandleARB, GLsizei, GLsizei *, GLcharARB *);
-typedef void (APIENTRY*glDepthBoundsEXT_t)(GLclampd zmin, GLclampd zmax);
+typedef void (APIENTRY*glDepthBounds_t)(GLclampd zmin, GLclampd zmax);
 
 #ifndef GL_ARB_vertex_shader
 #define GL_VERTEX_SHADER_ARB        0x8B31
@@ -330,7 +330,7 @@ typedef void (APIENTRY*glGetBufferPointervARB_t)(GLenum, GLenum, GLvoid **);
 # define GL_DEPTH_BOUNDS_EXT  0x8891
 #endif
 
-typedef void (APIENTRY*glDrawRangeElementsEXT_t)(GLenum, GLuint, GLuint, GLsizei, GLenum, const GLvoid *);
+typedef void (APIENTRY*glDrawRangeElements_t)(GLenum, GLuint, GLuint, GLsizei, GLenum, const GLvoid *);
 
 #ifndef GL_FRAMEBUFFER
 # define GL_FRAMEBUFFER  0x8D40
@@ -401,13 +401,13 @@ typedef void (APIENTRY *glGetPointerv_t) (GLenum pname,  GLvoid **params);
 typedef void (APIENTRY *glBlendFuncSeparate_t) (GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha);
 
 typedef void (APIENTRY *glDeleteRenderbuffers_t) (GLsizei n, const GLuint *renderbuffers);
-typedef void (APIENTRY *glGenRenderbuffersEXT_t) (GLsizei n, GLuint *renderbuffers);
-typedef void (APIENTRY *glRenderbufferStorageEXT_t) (GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
-typedef void (APIENTRY *glBindRenderbufferEXT_t) (GLenum target, GLuint renderbuffer);
+typedef void (APIENTRY *glGenRenderbuffers_t) (GLsizei n, GLuint *renderbuffers);
+typedef void (APIENTRY *glRenderbufferStorage_t) (GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
+typedef void (APIENTRY *glBindRenderbuffer_t) (GLenum target, GLuint renderbuffer);
 
-typedef void (APIENTRY *glFramebufferRenderbufferEXT_t) (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
+typedef void (APIENTRY *glFramebufferRenderbuffer_t) (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
 
-typedef void (APIENTRY *glGenerateMipmapEXT_t) (GLenum target);
+typedef void (APIENTRY *glGenerateMipmap_t) (GLenum target);
 
 #elif defined(VV_GLIMPORTS)
 // here, `VGLAPIPTR(name,required)` should be defined
@@ -524,10 +524,12 @@ typedef void (APIENTRY *glGenerateMipmapEXT_t) (GLenum target);
   VGLAPIPTR(glGetBufferParameterivARB, true);
   VGLAPIPTR(glGetBufferPointervARB, true);
 
-  VGLAPIPTR(glDrawRangeElementsEXT, true);
+  //VGLAPIPTR(glDrawRangeElementsEXT, true);
+  VGLAPIPTR(glDrawRangeElements, true);
 
   VGLAPIPTR(glClipControl, false);
-  VGLAPIPTR(glDepthBoundsEXT, false);
+  //VGLAPIPTR(glDepthBoundsEXT, false);
+  VGLAPIPTR(glDepthBounds, false);
   VGLAPIPTR(glBlitFramebuffer, false);
 
   VGLAPIPTR(glGetProgramiv, true);
@@ -537,11 +539,12 @@ typedef void (APIENTRY *glGenerateMipmapEXT_t) (GLenum target);
 
   // bloom, optional
   VGLAPIPTR(glDeleteRenderbuffers, false);
-  VGLAPIPTR(glGenRenderbuffersEXT, false);
-  VGLAPIPTR(glRenderbufferStorageEXT, false);
-  VGLAPIPTR(glBindRenderbufferEXT, false);
-  VGLAPIPTR(glFramebufferRenderbufferEXT, false);
-  VGLAPIPTR(glGenerateMipmapEXT, false);
+  // 't was all EXT
+  VGLAPIPTR(glGenRenderbuffers, false);
+  VGLAPIPTR(glRenderbufferStorage, false);
+  VGLAPIPTR(glBindRenderbuffer, false);
+  VGLAPIPTR(glFramebufferRenderbuffer, false);
+  VGLAPIPTR(glGenerateMipmap, false);
 
   VGLAPIPTR(glFramebufferTexture2D, true);
   VGLAPIPTR(glDeleteFramebuffers, true);

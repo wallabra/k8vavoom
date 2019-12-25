@@ -124,17 +124,17 @@ void VOpenGLDrawer::BloomDeinit () {
 //==========================================================================
 void VOpenGLDrawer::BloomAllocRBO (int width, int height, GLuint *RBO, GLuint *FBO) {
   // create the RBO
-  p_glGenRenderbuffersEXT(1, RBO);
-  p_glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, *RBO);
-  p_glRenderbufferStorageEXT(GL_RENDERBUFFER_EXT, GL_RGB, width, height);
-  p_glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, 0);
+  p_glGenRenderbuffers(1, RBO);
+  p_glBindRenderbuffer(GL_RENDERBUFFER_EXT, *RBO);
+  p_glRenderbufferStorage(GL_RENDERBUFFER_EXT, GL_RGB, width, height);
+  p_glBindRenderbuffer(GL_RENDERBUFFER_EXT, 0);
 
   // create up the FBO
   p_glGenFramebuffers(1, FBO);
   p_glBindFramebuffer(GL_FRAMEBUFFER, *FBO);
 
   // bind the RBO to it
-  p_glFramebufferRenderbufferEXT(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER_EXT, *RBO);
+  p_glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER_EXT, *RBO);
 
   // clean up
   p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -283,7 +283,7 @@ void VOpenGLDrawer::BloomDarken () {
     bloomeffectFBO.blitTo(&bloomcoloraveragingFBO, 0, 0, bloomWidth, bloomHeight, 0, 0, bloomWidth, bloomHeight, GL_NEAREST);
     #endif
     glBindTexture(GL_TEXTURE_2D, bloomcoloraveragingFBO.getColorTid());
-    p_glGenerateMipmapEXT(GL_TEXTURE_2D);
+    p_glGenerateMipmap(GL_TEXTURE_2D);
     glGetTexImage(GL_TEXTURE_2D, bloomMipmapCount, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
     bloomColAvgValid = true; // any time after this, we could read from the rbo
     p_glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0);
