@@ -3019,36 +3019,28 @@ final bool EV_ScrollCeiling(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
   return true;
 }
 
+
 //==========================================================================
 //
 //  SetScroller
 //
 //==========================================================================
-
-final void SetScroller(int Type, int Arg1, int Arg2, int Arg3)
-{
-  //  Adjust existing scrollers. If there is any, it means that all
+final void SetScroller (int Type, int Arg1, int Arg2, int Arg3) {
+  // adjust existing scrollers. If there is any, it means that all
   // tagged sectors have them and there's no need to spawn new ones.
   Scroller Sc;
   bool Found = false;
-  foreach AllThinkers(Scroller, Sc)
-  {
-    if (Sc.Type == Type && IsSectorTagEqual(Sc.Sector, Arg1))
-    {
+  foreach AllThinkers(Scroller, Sc) {
+    if (Sc.Type == Type && IsSectorTagEqual(Sc.Sector, Arg1)) {
       Sc.SetSpeed(Arg2, Arg3);
       Found = true;
     }
   }
 
-  if (Found)
-  {
-    return;
-  }
-  //  Don't spawn scrollers if both speeds are 0.
-  if (!Arg2 && !Arg3)
-  {
-    return;
-  }
+  if (Found) return;
+
+  // don't spawn scrollers if both speeds are 0
+  if (!Arg2 && !Arg3) return;
 
   sector_t *sec;
   for (int hidx = XLevel.FindSectorFromTag(out sec, Arg1); hidx >= 0;
@@ -3059,6 +3051,7 @@ final void SetScroller(int Type, int Arg1, int Arg2, int Arg3)
     Sc.InitScripted(Type, Arg2, Arg3, secnum);
   }
 }
+
 
 //**************************************************************************
 //
