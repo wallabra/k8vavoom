@@ -5267,35 +5267,28 @@ final bool EV_SilentLineTeleport (line_t *line, int side, EntityEx thing,
     TVec DstXAxis;
     TVec DstYAxis;
     TVec newPos;
-    sector_t *lsector;
     if (reverse) {
       DstXAxis = l.dir;
       DstYAxis = -l->normal;
       newPos = *l->v1;
-      lsector = l->frontsector;
     } else {
       DstXAxis = (*l->v1)-(*l->v2);
       DstYAxis = l->normal;
       newPos = *l->v2;
-      lsector = l->backsector;
     }
     DstXAxis = Normalise2D(DstXAxis);
     newPos += pos*DstXAxis;
-    // k8: if we are exactly at the new line, move forward a little
-    //     this is required for Boom endless transporters to work
-    // FIXME: should be unnecessary when i'll fix "only center point can be transported" bug
-    if (PointOnPlaneSide2(newPos, ref *l)) {
-      // k8: if we cannot move inside a sector with a transporter, try a line normal
-      //     this is not quite right, but for now this is the best i can do
-      TVec move = DstYAxis*0.125;
-      while (PointOnPlaneSide2(newPos, ref *l) == 2) {
-        newPos += move;
-      }
-    }
-    newPos.z = thing.Origin.z-GetSectorFloorPointZ(line->frontsector, thing.Origin)+GetSectorFloorPointZ(lsector, newPos);
+
+    // height of thing above ground
+    float tfh = thing.Origin.z-thing.FloorZ;
+    // adjust z position to be same height above ground as before
+    // ground level at the exit is measured as the higher of the two floor heights at the exit linedef
+    float newgh = fmax(GetSectorFloorPointZ(l->frontsector, newPos), GetSectorFloorPointZ(l->backsector, newPos));
+    newPos.z = tfh+newgh;
 
     // attempt to teleport, aborting if blocked
-    if (!thing.TeleportMove(newPos)) return false;
+    if (!thing.TeleportMove(newPos/*, ForceProperFloorCheck:true*/)) return false;
+    if (thing.Origin.z < thing.FloorZ) thing.Origin.z = thing.FloorZ; //k8: just in case
 
     // rotate thing's orientation according to difference in linedef angles
     TVec TempV = vector(DotProduct(DstXAxis, SrcXAxis), DotProduct(DstYAxis, SrcXAxis));
