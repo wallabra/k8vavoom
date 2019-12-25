@@ -347,9 +347,10 @@ void VEntity::UnlinkFromWorld () {
 //
 //  Links a thing into both a block and a subsector based on it's x y.
 //  Sets thing->subsector properly
+//  pass -666 to force proper check (sorry for this hack)
 //
 //==========================================================================
-void VEntity::LinkToWorld (bool properFloorCheck) {
+void VEntity::LinkToWorld (int properFloorCheck) {
   if (SubSector) UnlinkFromWorld();
 
   // link into subsector
@@ -357,17 +358,19 @@ void VEntity::LinkToWorld (bool properFloorCheck) {
   SubSector = ss;
   Sector = ss->sector;
 
-  if (!(EntityFlags&EF_IsPlayer)) {
-    if (properFloorCheck) {
-      if (Radius < 4 || (EntityFlags&(EF_ColideWithWorld|EF_NoSector|EF_NoBlockmap|EF_Invisible|EF_Missile|EF_ActLikeBridge)) != EF_ColideWithWorld) {
-        properFloorCheck = false;
+  if (properFloorCheck != -666) {
+    if (!(EntityFlags&EF_IsPlayer)) {
+      if (properFloorCheck) {
+        if (Radius < 4 || (EntityFlags&(EF_ColideWithWorld|EF_NoSector|EF_NoBlockmap|EF_Invisible|EF_Missile|EF_ActLikeBridge)) != EF_ColideWithWorld) {
+          properFloorCheck = false;
+        }
       }
+    } else {
+      properFloorCheck = true;
     }
-  } else {
-    properFloorCheck = true;
-  }
 
-  if (!gm_smart_z) properFloorCheck = false;
+    if (!gm_smart_z) properFloorCheck = false;
+  }
 
   if (properFloorCheck) {
     //FIXME: this is copypasta from `CheckRelPos()`; factor it out
@@ -2337,7 +2340,7 @@ IMPLEMENT_FUNCTION(VEntity, CheckOnmobj) {
 }
 
 IMPLEMENT_FUNCTION(VEntity, LinkToWorld) {
-  P_GET_BOOL_OPT(properFloorCheck, false);
+  P_GET_INT_OPT(properFloorCheck, 0);
   P_GET_SELF;
   Self->LinkToWorld(properFloorCheck);
 }

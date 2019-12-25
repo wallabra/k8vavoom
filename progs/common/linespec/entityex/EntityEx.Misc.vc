@@ -79,20 +79,23 @@ float FixLightFlatPosition (sector_t *sector, float z, optional int thingidx) {
 //  SetOrigin2
 //
 //  this is used in spawners, to fix initial Z
+//  pass -666 to force proper check (sorry for this hack)
 //
 //==========================================================================
-final void SetOrigin2 (TVec origin, optional bool properFloorCheck, optional float moreHeight) {
+final void SetOrigin2 (TVec origin, optional int properFloorCheck, optional float moreHeight) {
   UnlinkFromWorld();
   bIntrJustMoved = false; // disable movement interpolation
 
   Origin = origin;
 
-       if (bIsPlayer) properFloorCheck = true;
-  else if (!specified_properFloorCheck && bMonster) properFloorCheck = true;
+  if (properFloorCheck != -666) {
+         if (bIsPlayer) properFloorCheck = true;
+    else if (!specified_properFloorCheck && bMonster) properFloorCheck = true;
 
-  if (properFloorCheck) {
-    if (origin.z == ONFLOORZ || origin.z == ONCEILINGZ) {
-      properFloorCheck = false;
+    if (properFloorCheck) {
+      if (origin.z == ONFLOORZ || origin.z == ONCEILINGZ) {
+        properFloorCheck = false;
+      }
     }
   }
 
@@ -291,7 +294,7 @@ final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
 //  TeleportMove
 //
 //==========================================================================
-final bool TeleportMove (TVec org, optional bool ForceTelestomp) {
+final bool TeleportMove (TVec org, optional bool ForceTelestomp, optional bool ForceProperFloorCheck) {
   EntityEx Other;
   float blockdist;
 
@@ -344,7 +347,7 @@ final bool TeleportMove (TVec org, optional bool ForceTelestomp) {
 
   // the move is ok,
   // so link the thing into its new position
-  SetOrigin(org, properFloorCheck:true);
+  SetOrigin(org, properFloorCheck:(ForceProperFloorCheck ? -666 : 1));
   if (org.z == ONFLOORZ) Origin.z = FloorZ;
 
   return true;

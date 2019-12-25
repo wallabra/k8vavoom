@@ -444,7 +444,8 @@ native final Entity CheckOnmobj ();
 // i.e. first unlink, then change coords, then link again
 // by default, `LinkToWorld` checks only entity Origin.
 // if you want to do a proper check, call it with `properFloorCheck:true`.
-native final void LinkToWorld (optional bool properFloorCheck);
+// pass -666 to force proper check (sorry for this hack)
+native final void LinkToWorld (optional int properFloorCheck);
 native final void UnlinkFromWorld ();
 
 native final bool CanSee (Entity Other, optional bool disableBetterSight/*=false*/);
@@ -885,8 +886,10 @@ void CalcFakeZMovement (out TVec Ret, float DeltaTime) {
 //
 //  SetOrigin
 //
+//  pass -666 to force proper check (sorry for this hack)
+//
 //==========================================================================
-final void SetOrigin (TVec NewOrigin, optional bool properFloorCheck) {
+final void SetOrigin (TVec NewOrigin, optional int properFloorCheck) {
   UnlinkFromWorld();
   Origin = NewOrigin;
   LastMoveOrigin = NewOrigin;

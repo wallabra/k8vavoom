@@ -627,7 +627,8 @@ public:
   bool GetDecorateFlag (VStr);
 
 public:
-  void LinkToWorld (bool properFloorCheck=false);
+  // pass -666 to force proper check (sorry for this hack)
+  void LinkToWorld (int properFloorCheck=0);
   void UnlinkFromWorld ();
 
   enum {
