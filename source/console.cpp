@@ -164,6 +164,20 @@ static void onShowCompletionMatchCB (bool isheader, VStr s) {
 
 //==========================================================================
 //
+//  C_SysErrorCallback
+//
+//==========================================================================
+static void C_SysErrorCallback (const char *msg) noexcept {
+  if (logfout) {
+    fprintf(logfout, "%s\n", (msg ? msg : ""));
+    fclose(logfout);
+    logfout = nullptr;
+  }
+}
+
+
+//==========================================================================
+//
 //  C_Init
 //
 //  Console initialization
@@ -181,6 +195,8 @@ void C_Init () {
 #elif defined(__SWITCH__) && !defined(SWITCH_NXLINK)
   if (!logfout) logfout = fopen("/switch/k8vavoom/conlog.log", "w");
 #endif
+
+  SysErrorCB = &C_SysErrorCallback;
 
   memset((void *)&clines[0], 0, sizeof(clines));
   c_history_size = 0;
