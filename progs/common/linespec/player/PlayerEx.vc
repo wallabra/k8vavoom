@@ -170,6 +170,17 @@ transient subsector_t *lastViewOrgZSub;
 transient int LastRegenTicTime = 0;
 
 
+// used in `SetupSectorDamage()` and friends
+struct SectorDamageInfo {
+  Inventory IronFeet;
+  name flatDamageType;
+  int flatDamage;
+  int flatDamageTimeout;
+  bool flatDamageExit;
+  bool flatDamageHitFloor;
+}
+
+
 //==========================================================================
 //
 //  ClearSubSeenInfo
@@ -1044,15 +1055,286 @@ void WaterJump () {
 
 //==========================================================================
 //
+//  InitSectorDamageInfo
+//
+//==========================================================================
+void InitSectorDamageInfo (ref SectorDamageInfo pdi) {
+  pdi.flatDamageType = '';
+  pdi.flatDamage = 0;
+  pdi.flatDamageTimeout = 0;
+  pdi.flatDamageExit = false;
+  pdi.flatDamageHitFloor = false;
+
+  // search for iron feet power: any subclass will do
+  pdi.IronFeet = EntityEx(MO).Inventory;
+  while (pdi.IronFeet) {
+    if (PowerIronFeet(pdi.IronFeet)) break;
+    pdi.IronFeet = pdi.IronFeet.Inventory;
+  }
+}
+
+
+//==========================================================================
+//
+//  SetupSectorDamage
+//
+//==========================================================================
+void SetupSectorDamage (float deltaTime, EntityEx ent, sector_t *sec, ref SectorDamageInfo pdi) {
+  if (sec->special >= SECSPEC_LightFlicker && sec->special <= 255) {
+    switch (sec->special) {
+      case SECSPEC_DamageHellslime:
+        if (!pdi.IronFeet) {
+          pdi.flatDamageType = 'Slime';
+          pdi.flatDamage = 10;
+          pdi.flatDamageTimeout = 32;
+        }
+        break;
+      case SECSPEC_DamageSludge:
+        if (!pdi.IronFeet) {
+          pdi.flatDamageType = 'Slime';
+          pdi.flatDamage = 4;
+          pdi.flatDamageTimeout = 32;
+        }
+        break;
+      case SECSPEC_DamageNukage:
+        if (!pdi.IronFeet) {
+          pdi.flatDamageType = 'Slime'; //FIXME
+          pdi.flatDamage = 5;
+          pdi.flatDamageTimeout = 32;
+        }
+        break;
+      case SECSPEC_LightStrobeFastDamage:
+      case SECSPEC_DamageSuperHellslime:
+        //k8: it was `(P_Random() < 5 && P_Random() < 5)`
+        if (!pdi.IronFeet || P_Random() < 5) {
+          pdi.flatDamageType = 'Slime'; //FIXME
+          pdi.flatDamage = 20;
+          pdi.flatDamageTimeout = 32;
+        }
+        break;
+      case SECSPEC_DamageSuperHellslimeExit:
+        // EXIT SUPER DAMAGE! (for E1M8 finale)
+        pdi.flatDamageType = ''; //FIXME
+        pdi.flatDamage = 20;
+        pdi.flatDamageTimeout = 32;
+        pdi.flatDamageExit = true;
+        break;
+      case SECSPEC_DamageLavaWimpy:
+        pdi.flatDamageType = 'Fire';
+        pdi.flatDamage = 5;
+        pdi.flatDamageTimeout = 16;
+        pdi.flatDamageHitFloor = true;
+        break;
+      case SECSPEC_DamageLavaHefty:
+        pdi.flatDamageType = 'Fire';
+        pdi.flatDamage = 8;
+        pdi.flatDamageTimeout = 16;
+        pdi.flatDamageHitFloor = true;
+        break;
+      case SECSPEC_ScrollEastLavaDamage:
+        ThrustPlayer(0.0, 1024.0, deltaTime);
+        pdi.flatDamageType = 'Fire';
+        pdi.flatDamage = 5;
+        pdi.flatDamageTimeout = 16;
+        pdi.flatDamageHitFloor = true;
+        break;
+      case SECSPEC_DamageHazard:
+        if (!pdi.IronFeet) HazardTime += 2.0*deltaTime;
+        break;
+      case SECSPEC_DamageInstantDeath:
+        ent.Damage(none, none, 999, 'InstantDeath', spawnBlood:true);
+        break;
+      case SECSPEC_DamageSuperHazard:
+        if (!pdi.IronFeet) HazardTime += 4.0*deltaTime;
+        break;
+    }
+  } else {
+    // extended sector damage type
+    switch (sec->special&SECSPEC_DAMAGE_MASK) {
+      case 0x0100:
+        if (!pdi.IronFeet) {
+          pdi.flatDamageType = 'Fire';
+          pdi.flatDamage = 5;
+          pdi.flatDamageTimeout = 32;
+        }
+        break;
+      case 0x0200:
+        if (!pdi.IronFeet) {
+          pdi.flatDamageType = 'Slime';
+          pdi.flatDamage = 10;
+          pdi.flatDamageTimeout = 32;
+        }
+        break;
+      case 0x0300:
+        if (!pdi.IronFeet || (P_Random() < 5 && P_Random() < 5)) {
+          pdi.flatDamageType = 'Slime';
+          pdi.flatDamage = 20;
+          pdi.flatDamageTimeout = 32;
+        }
+        break;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  ApplySectorDamageInfo
+//
+//==========================================================================
+void ApplySectorDamageInfo (float deltaTime, EntityEx ent, sector_t *sec, ref SectorDamageInfo pdi, ref bool updateDamageTic) {
+  // apply flat damage
+  if (pdi.flatDamage && LastSectorDamageTic < Level.XLevel.TicTime) {
+    if (!(Level.XLevel.TicTime%pdi.flatDamageTimeout)) {
+      auto oldCheats = Cheats;
+      scope(exit) Cheats = oldCheats;
+      updateDamageTic = true;
+      if (pdi.flatDamageExit) Cheats &= ~CF_GODMODE;
+      if (pdi.flatDamageType) {
+        ent.Damage(none, none, pdi.flatDamage, pdi.flatDamageType);
+      } else {
+        ent.Damage(none, none, pdi.flatDamage);
+      }
+      if (pdi.flatDamageHitFloor) ent.HitFloorType();
+      if (pdi.flatDamageExit && Health <= 10) Level.ExitLevel(0);
+    }
+  }
+
+  // apply any customizable damage
+  if (sec->Damage && LastSectorDamageTic < Level.XLevel.TicTime) {
+    pdi.flatDamage = sec->Damage;
+    pdi.flatDamageTimeout = 0;
+    if (sec->Damage < 20) {
+      if (!pdi.IronFeet) pdi.flatDamageTimeout = 32;
+    } else if (sec->Damage < 50) {
+      if (!pdi.IronFeet || (P_Random() < 5 && P_Random() < 5)) pdi.flatDamageTimeout = 32;
+    } else {
+      pdi.flatDamageTimeout = 1;
+    }
+    if (pdi.flatDamageTimeout && !(Level.XLevel.TicTime%pdi.flatDamageTimeout)) {
+      updateDamageTic = true;
+      ent.Damage(none, none, pdi.flatDamage);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  ProcessSectorScroll
+//
+//==========================================================================
+void ProcessSectorScroll (float deltaTime, EntityEx ent, sector_t *sec) {
+  float speed;
+  float finean;
+
+  switch (sec->special&SECSPEC_BASE_MASK) {
+    case SECSPEC_ScrollCurrent:
+      speed = float((sec->sectorTag-100)%10)/16.0*35.0;
+      finean = float((sec->sectorTag-100)/10)*45.0;
+      ent.Velocity.x += speed*cos(finean);
+      ent.Velocity.y += speed*sin(finean);
+      break;
+    case SECSPEC_ScrollNorthSlow:
+    case SECSPEC_ScrollNorthMedium:
+    case SECSPEC_ScrollNorthFast:
+      ThrustPlayer(90.0, LineSpecialGameInfo(Level.Game).pushTab[(sec->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollNorthSlow], deltaTime);
+      break;
+    case SECSPEC_ScrollEastSlow:
+    case SECSPEC_ScrollEastMedium:
+    case SECSPEC_ScrollEastFast:
+      ThrustPlayer(0.0, LineSpecialGameInfo(Level.Game).pushTab[(sec->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollEastSlow], deltaTime);
+      break;
+    case SECSPEC_ScrollSouthSlow:
+    case SECSPEC_ScrollSouthMedium:
+    case SECSPEC_ScrollSouthFast:
+      ThrustPlayer(270.0, LineSpecialGameInfo(Level.Game).pushTab[(sec->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollSouthSlow], deltaTime);
+      break;
+    case SECSPEC_ScrollWestSlow:
+    case SECSPEC_ScrollWestMedium:
+    case SECSPEC_ScrollWestFast:
+      ThrustPlayer(180.0, LineSpecialGameInfo(Level.Game).pushTab[(sec->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollWestSlow], deltaTime);
+      break;
+    case SECSPEC_ScrollNorthWestSlow:
+    case SECSPEC_ScrollNorthWestMedium:
+    case SECSPEC_ScrollNorthWestFast:
+      ThrustPlayer(135.0, LineSpecialGameInfo(Level.Game).pushTab[(sec->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollNorthWestSlow], deltaTime);
+      break;
+    case SECSPEC_ScrollNorthEastSlow:
+    case SECSPEC_ScrollNorthEastMedium:
+    case SECSPEC_ScrollNorthEastFast:
+      ThrustPlayer(45.0, LineSpecialGameInfo(Level.Game).pushTab[(sec->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollNorthEastSlow], deltaTime);
+      break;
+    case SECSPEC_ScrollSouthEastSlow:
+    case SECSPEC_ScrollSouthEastMedium:
+    case SECSPEC_ScrollSouthEastFast:
+      ThrustPlayer(315.0, LineSpecialGameInfo(Level.Game).pushTab[(sec->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollSouthEastSlow], deltaTime);
+      break;
+    case SECSPEC_ScrollSouthWestSlow:
+    case SECSPEC_ScrollSouthWestMedium:
+    case SECSPEC_ScrollSouthWestFast:
+      ThrustPlayer(225.0, LineSpecialGameInfo(Level.Game).pushTab[(sec->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollSouthWestSlow], deltaTime);
+      break;
+    case SECSPEC_ScrollEast5:
+    case SECSPEC_ScrollEast10:
+    case SECSPEC_ScrollEast25:
+    case SECSPEC_ScrollEast30:
+    case SECSPEC_ScrollEast35:
+      ThrustPlayer(0.0, LineSpecialGameInfo(Level.Game).pushTab[(sec->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollEast5], deltaTime);
+      break;
+    case SECSPEC_ScrollNorth5:
+    case SECSPEC_ScrollNorth10:
+    case SECSPEC_ScrollNorth25:
+    case SECSPEC_ScrollNorth30:
+    case SECSPEC_ScrollNorth35:
+      ThrustPlayer(90.0, LineSpecialGameInfo(Level.Game).pushTab[(sec->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollNorth5], deltaTime);
+      break;
+    case SECSPEC_ScrollSouth5:
+    case SECSPEC_ScrollSouth10:
+    case SECSPEC_ScrollSouth25:
+    case SECSPEC_ScrollSouth30:
+    case SECSPEC_ScrollSouth35:
+      ThrustPlayer(270.0, LineSpecialGameInfo(Level.Game).pushTab[(sec->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollSouth5], deltaTime);
+      break;
+    case SECSPEC_ScrollWest5:
+    case SECSPEC_ScrollWest10:
+    case SECSPEC_ScrollWest25:
+    case SECSPEC_ScrollWest30:
+    case SECSPEC_ScrollWest35:
+      ThrustPlayer(180.0, LineSpecialGameInfo(Level.Game).pushTab[(sec->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollWest5], deltaTime);
+      break;
+  }
+}
+
+
+//==========================================================================
+//
+//  PlayerProcessScrollSectors
+//
+//  Called every tic frame
+//
+//==========================================================================
+void PlayerProcessScrollSectors (float deltaTime) {
+  // process scroll sectors anyway (because we may slightly touch one of them)
+  for (msecnode_t *mnode = EntityEx(MO).TouchingSectorList; mnode; mnode = mnode.TNext) {
+    sector_t *sec = mnode.Sector;
+    if (sec->special&SECSPEC_BASE_MASK) {
+      if (MO.Origin.z == GetPointZClamped(ref sec->floor, MO.Origin)) {
+        ProcessSectorScroll(deltaTime, EntityEx(MO), sec);
+      }
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  PlayerInSpecialSector
 //
 //  Called every tic frame that the player origin is in a special sector.
 //
 //==========================================================================
 void PlayerInSpecialSector (float deltaTime) {
-  float speed;
-  float finean;
-
   if (MO.Origin.z != GetPointZClamped(ref MO.Sector->floor, MO.Origin) && !MO.WaterLevel) {
     // player is not touching the floor
     return;
@@ -1067,229 +1349,14 @@ void PlayerInSpecialSector (float deltaTime) {
     MO.PlaySound('misc/secret', /*CHAN_VOICE*/CHAN_AUTO);
   }
 
-  // search for iron feet power: any subclass will do
-  Inventory IronFeet = EntityEx(MO).Inventory;
-  while (IronFeet) {
-    if (PowerIronFeet(IronFeet)) break;
-    IronFeet = IronFeet.Inventory;
-  }
-
   //FIXME: implement leaky suits
-  name flatDamageType = '';
-  int flatDamage = 0;
-  int flatDamageTimeout;
-  bool flatDamageExit = false;
-  bool flatDamageHitFloor = false;
-
-  if (MO.Sector->special >= SECSPEC_LightFlicker && MO.Sector->special <= 255) {
-    switch (MO.Sector->special) {
-      case SECSPEC_DamageHellslime:
-        if (!IronFeet) {
-          flatDamageType = 'Slime';
-          flatDamage = 10;
-          flatDamageTimeout = 32;
-        }
-        break;
-      case SECSPEC_DamageSludge:
-        if (!IronFeet) {
-          flatDamageType = 'Slime';
-          flatDamage = 4;
-          flatDamageTimeout = 32;
-        }
-        break;
-      case SECSPEC_DamageNukage:
-        if (!IronFeet) {
-          flatDamageType = 'Slime'; //FIXME
-          flatDamage = 5;
-          flatDamageTimeout = 32;
-        }
-        break;
-      case SECSPEC_LightStrobeFastDamage:
-      case SECSPEC_DamageSuperHellslime:
-        //k8: it was `(P_Random() < 5 && P_Random() < 5)`
-        if (!IronFeet || P_Random() < 5) {
-          flatDamageType = 'Slime'; //FIXME
-          flatDamage = 20;
-          flatDamageTimeout = 32;
-        }
-        break;
-      case SECSPEC_DamageSuperHellslimeExit:
-        // EXIT SUPER DAMAGE! (for E1M8 finale)
-        flatDamageType = ''; //FIXME
-        flatDamage = 20;
-        flatDamageTimeout = 32;
-        flatDamageExit = true;
-        break;
-      case SECSPEC_DamageLavaWimpy:
-        flatDamageType = 'Fire';
-        flatDamage = 5;
-        flatDamageTimeout = 16;
-        flatDamageHitFloor = true;
-        break;
-      case SECSPEC_DamageLavaHefty:
-        flatDamageType = 'Fire';
-        flatDamage = 8;
-        flatDamageTimeout = 16;
-        flatDamageHitFloor = true;
-        break;
-      case SECSPEC_ScrollEastLavaDamage:
-        ThrustPlayer(0.0, 1024.0, deltaTime);
-        flatDamageType = 'Fire';
-        flatDamage = 5;
-        flatDamageTimeout = 16;
-        flatDamageHitFloor = true;
-        break;
-      case SECSPEC_DamageHazard:
-        if (!IronFeet) HazardTime += 2.0*deltaTime;
-        break;
-      case SECSPEC_DamageInstantDeath:
-        EntityEx(MO).Damage(none, none, 999, 'InstantDeath', spawnBlood:true);
-        break;
-      case SECSPEC_DamageSuperHazard:
-        if (!IronFeet) HazardTime += 4.0*deltaTime;
-        break;
-    }
-  } else {
-    // extended sector damage type
-    switch (MO.Sector->special&SECSPEC_DAMAGE_MASK) {
-      case 0x0100:
-        if (!IronFeet) {
-          flatDamageType = 'Fire';
-          flatDamage = 5;
-          flatDamageTimeout = 32;
-        }
-        break;
-      case 0x0200:
-        if (!IronFeet) {
-          flatDamageType = 'Slime';
-          flatDamage = 10;
-          flatDamageTimeout = 32;
-        }
-        break;
-      case 0x0300:
-        if (!IronFeet || (P_Random() < 5 && P_Random() < 5)) {
-          flatDamageType = 'Slime';
-          flatDamage = 20;
-          flatDamageTimeout = 32;
-        }
-        break;
-    }
-  }
+  SectorDamageInfo pdi;
+  InitSectorDamageInfo(ref pdi);
 
   bool updateDamageTic = false;
-
-  // apply flat damage
-  if (flatDamage && LastSectorDamageTic < Level.XLevel.TicTime) {
-    if (!(Level.XLevel.TicTime%flatDamageTimeout)) {
-      auto oldCheats = Cheats;
-      scope(exit) Cheats = oldCheats;
-      updateDamageTic = true;
-      if (flatDamageExit) Cheats &= ~CF_GODMODE;
-      if (flatDamageType) {
-        EntityEx(MO).Damage(none, none, flatDamage, flatDamageType);
-      } else {
-        EntityEx(MO).Damage(none, none, flatDamage);
-      }
-      if (flatDamageHitFloor) EntityEx(MO).HitFloorType();
-      if (flatDamageExit && Health <= 10) Level.ExitLevel(0);
-    }
-  }
-
-  // apply any customizable damage
-  if (MO.Sector->Damage && LastSectorDamageTic < Level.XLevel.TicTime) {
-    flatDamage = MO.Sector->Damage;
-    flatDamageTimeout = 0;
-    if (MO.Sector->Damage < 20) {
-      if (!IronFeet) flatDamageTimeout = 32;
-    } else if (MO.Sector->Damage < 50) {
-      if (!IronFeet || (P_Random() < 5 && P_Random() < 5)) flatDamageTimeout = 32;
-    } else {
-      flatDamageTimeout = 1;
-    }
-    if (flatDamageTimeout && !(Level.XLevel.TicTime%flatDamageTimeout)) {
-      updateDamageTic = true;
-      EntityEx(MO).Damage(none, none, flatDamage);
-    }
-  }
-
+  SetupSectorDamage(deltaTime, EntityEx(MO), MO.Sector, ref pdi);
+  ApplySectorDamageInfo(deltaTime, EntityEx(MO), MO.Sector, ref pdi, ref updateDamageTic);
   if (updateDamageTic) LastSectorDamageTic = Level.XLevel.TicTime;
-
-  switch (MO.Sector->special&SECSPEC_BASE_MASK) {
-    case SECSPEC_ScrollCurrent:
-      speed = float((MO.Sector->sectorTag-100)%10)/16.0*35.0;
-      finean = float((MO.Sector->sectorTag-100)/10)*45.0;
-      MO.Velocity.x += speed*cos(finean);
-      MO.Velocity.y += speed*sin(finean);
-      break;
-    case SECSPEC_ScrollNorthSlow:
-    case SECSPEC_ScrollNorthMedium:
-    case SECSPEC_ScrollNorthFast:
-      ThrustPlayer(90.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollNorthSlow], deltaTime);
-      break;
-    case SECSPEC_ScrollEastSlow:
-    case SECSPEC_ScrollEastMedium:
-    case SECSPEC_ScrollEastFast:
-      ThrustPlayer(0.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollEastSlow], deltaTime);
-      break;
-    case SECSPEC_ScrollSouthSlow:
-    case SECSPEC_ScrollSouthMedium:
-    case SECSPEC_ScrollSouthFast:
-      ThrustPlayer(270.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollSouthSlow], deltaTime);
-      break;
-    case SECSPEC_ScrollWestSlow:
-    case SECSPEC_ScrollWestMedium:
-    case SECSPEC_ScrollWestFast:
-      ThrustPlayer(180.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollWestSlow], deltaTime);
-      break;
-    case SECSPEC_ScrollNorthWestSlow:
-    case SECSPEC_ScrollNorthWestMedium:
-    case SECSPEC_ScrollNorthWestFast:
-      ThrustPlayer(135.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollNorthWestSlow], deltaTime);
-      break;
-    case SECSPEC_ScrollNorthEastSlow:
-    case SECSPEC_ScrollNorthEastMedium:
-    case SECSPEC_ScrollNorthEastFast:
-      ThrustPlayer(45.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollNorthEastSlow], deltaTime);
-      break;
-    case SECSPEC_ScrollSouthEastSlow:
-    case SECSPEC_ScrollSouthEastMedium:
-    case SECSPEC_ScrollSouthEastFast:
-      ThrustPlayer(315.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollSouthEastSlow], deltaTime);
-      break;
-    case SECSPEC_ScrollSouthWestSlow:
-    case SECSPEC_ScrollSouthWestMedium:
-    case SECSPEC_ScrollSouthWestFast:
-      ThrustPlayer(225.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollSouthWestSlow], deltaTime);
-      break;
-    case SECSPEC_ScrollEast5:
-    case SECSPEC_ScrollEast10:
-    case SECSPEC_ScrollEast25:
-    case SECSPEC_ScrollEast30:
-    case SECSPEC_ScrollEast35:
-      ThrustPlayer(0.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollEast5], deltaTime);
-      break;
-    case SECSPEC_ScrollNorth5:
-    case SECSPEC_ScrollNorth10:
-    case SECSPEC_ScrollNorth25:
-    case SECSPEC_ScrollNorth30:
-    case SECSPEC_ScrollNorth35:
-      ThrustPlayer(90.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollNorth5], deltaTime);
-      break;
-    case SECSPEC_ScrollSouth5:
-    case SECSPEC_ScrollSouth10:
-    case SECSPEC_ScrollSouth25:
-    case SECSPEC_ScrollSouth30:
-    case SECSPEC_ScrollSouth35:
-      ThrustPlayer(270.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollSouth5], deltaTime);
-      break;
-    case SECSPEC_ScrollWest5:
-    case SECSPEC_ScrollWest10:
-    case SECSPEC_ScrollWest25:
-    case SECSPEC_ScrollWest30:
-    case SECSPEC_ScrollWest35:
-      ThrustPlayer(180.0, LineSpecialGameInfo(Level.Game).pushTab[(MO.Sector->special&SECSPEC_BASE_MASK)-SECSPEC_ScrollWest5], deltaTime);
-      break;
-  }
 }
 
 
@@ -4174,7 +4241,10 @@ override void PlayerTick (float deltaTime) {
 
   CalcHeight(deltaTime);
 
-  if (MO.Sector && (MO.Sector->special || MO.Sector->Damage)) PlayerInSpecialSector(deltaTime);
+  if (MO.Sector) {
+    PlayerProcessScrollSectors(deltaTime);
+    if (MO.Sector->special || MO.Sector->Damage) PlayerInSpecialSector(deltaTime);
+  }
 
   PlayerOnSpecialFlat(Actor(MO).GetFloorType());
   PlayerInContents(deltaTime);
