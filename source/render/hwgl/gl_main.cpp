@@ -292,6 +292,11 @@ VOpenGLDrawer::CameraFBOInfo::CameraFBOInfo ()
 //
 //==========================================================================
 VOpenGLDrawer::CameraFBOInfo::~CameraFBOInfo () {
+  //GCon->Logf(NAME_Debug, "*** destroying FBO for camera fbo, texnum=%d; index=%d; fboid=%u", texnum, index, fbo.getFBOid());
+  fbo.destroy();
+  vassert(!fbo.isValid());
+  vassert(fbo.getFBOid() == 0);
+  vassert(fbo.getDSRBTid() == 0);
   texnum = -1;
   camwidth = camheight = 1;
   index = -1;
@@ -355,6 +360,7 @@ VOpenGLDrawer::VOpenGLDrawer ()
 //
 //==========================================================================
 VOpenGLDrawer::~VOpenGLDrawer () {
+  if (mInitialized) DeinitResolution();
   currentActiveFBO = nullptr;
   surfList.clear();
   if (tmpImgBuf0) { Z_Free(tmpImgBuf0); tmpImgBuf0 = nullptr; }
@@ -508,8 +514,7 @@ void VOpenGLDrawer::DeinitResolution () {
   }
   CreatedShaderObjects.Clear();
   // destroy FBOs
-  //DestroyCameraFBOList();
-  for (auto &&cf : cameraFBOList) cf->fbo.destroy();
+  DestroyCameraFBOList();
   mainFBO.destroy();
   //secondFBO.destroy();
   ambLightFBO.destroy();
@@ -844,6 +849,12 @@ void VOpenGLDrawer::InitResolution () {
   ReactivateCurrentFBO();
 
   callICB(VCB_InitResolution);
+
+  /*
+  if (canIntoBloomFX && r_bloom) Posteffect_Bloom(0, 0, ScreenWidth, ScreenHeight);
+  currentActiveFBO = nullptr;
+  ReactivateCurrentFBO();
+  */
 }
 
 #undef gl_
@@ -1340,6 +1351,7 @@ int VOpenGLDrawer::GetCameraFBO (int texnum, int width, int height) {
   ci->camwidth = width;
   ci->camheight = height;
   ci->fbo.createDepthStencil(this, width, height);
+  //GCon->Logf(NAME_Debug, "*** FBO for camera fbo, texnum=%d; index=%d; fboid=%u", ci->texnum, ci->index, ci->fbo.getFBOid());
 
   p_glBindFramebuffer(GL_FRAMEBUFFER, ci->fbo.getFBOid());
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // black background
@@ -2198,13 +2210,14 @@ VOpenGLDrawer::FBO::~FBO () {
 //==========================================================================
 void VOpenGLDrawer::FBO::destroy () {
   if (!mOwner) return;
+  //GCon->Logf(NAME_Debug, "*** destroying FBO with id #%u (mColorTid=%u; mDepthStencilRBO=%u)", mFBO, mColorTid, mDepthStencilRBO);
   // detach everything from FBO, and destroy it
   mOwner->p_glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
   mOwner->p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
   glDeleteTextures(1, &mColorTid);
   if (mDepthStencilRBO) {
     mOwner->p_glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, 0);
-    mOwner->p_glDeleteFramebuffers(1, &mDepthStencilRBO);
+    mOwner->p_glDeleteRenderbuffers(1, &mDepthStencilRBO);
   }
   mOwner->p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
   mOwner->p_glDeleteFramebuffers(1, &mFBO);
@@ -2323,6 +2336,8 @@ void VOpenGLDrawer::FBO::createInternal (VOpenGLDrawer *aowner, int awidth, int 
   mOwner = aowner;
 
   glBindTexture(GL_TEXTURE_2D, oldbindtex);
+
+  //GCon->Logf(NAME_Debug, "*** created FBO with id #%u (ds=%d; mColorTid=%u; mDepthStencilRBO=%u)", mFBO, (int)createDepthStencil, mColorTid, mDepthStencilRBO);
 
   mOwner->ReactivateCurrentFBO();
 }

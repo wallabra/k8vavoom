@@ -164,6 +164,7 @@ public:
 
     inline GLuint getColorTid () const noexcept { return mColorTid; }
     inline GLuint getFBOid () const noexcept { return mFBO; }
+    inline GLuint getDSRBTid () const noexcept { return mDepthStencilRBO; }
 
     void createTextureOnly (VOpenGLDrawer *aowner, int awidth, int aheight, bool mirroredRepeat=false);
     void createDepthStencil (VOpenGLDrawer *aowner, int awidth, int aheight, bool mirroredRepeat=false);

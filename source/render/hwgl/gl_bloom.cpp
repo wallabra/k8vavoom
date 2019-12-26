@@ -87,20 +87,23 @@ static void bloomDrawFSQuad () {
 //
 //==========================================================================
 void VOpenGLDrawer::BloomDeinit () {
-  GCon->Logf(NAME_Debug, "OpenGL: deinit bloom...");
+  //GCon->Logf(NAME_Debug, "OpenGL: deinit bloom...");
 
   if (bloomFullSizeDownsampleRBOid) {
+    //GCon->Logf(NAME_Debug, "*** deleting bloom RBO: id=%u", bloomFullSizeDownsampleRBOid);
     p_glDeleteRenderbuffers(1, &bloomFullSizeDownsampleRBOid);
     bloomFullSizeDownsampleRBOid = 0;
   }
 
   if (bloomFullSizeDownsampleFBOid) {
+    //GCon->Logf(NAME_Debug, "*** deleting bloom FBO: id=%u", bloomFullSizeDownsampleFBOid);
     p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
     p_glDeleteFramebuffers(1, &bloomFullSizeDownsampleFBOid);
     bloomFullSizeDownsampleFBOid = 0;
   }
 
   if (bloomColAvgGetterPBOid) {
+    //GCon->Logf(NAME_Debug, "*** deleting bloom PBO: id=%u", bloomColAvgGetterPBOid);
     p_glDeleteBuffersARB(1, &bloomColAvgGetterPBOid);
     bloomColAvgGetterPBOid = 0;
   }
@@ -148,6 +151,8 @@ void VOpenGLDrawer::BloomAllocRBO (int width, int height, GLuint *RBO, GLuint *F
 
   // clean up
   p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+  //GCon->Logf(NAME_Debug, "*** created bloom FBO/RBO: fboid=%u; rboid=%u", *FBO, *RBO);
 }
 
 
@@ -197,7 +202,7 @@ void VOpenGLDrawer::BloomInitTextures () {
 
   (void)glGetError();
 
-  GCon->Logf(NAME_Debug, "OpenGL: initalize bloom...");
+  //GCon->Logf(NAME_Debug, "OpenGL: initalize bloom...");
 
   // validate bloom size and init the bloom effect texture
   BloomInitEffectTexture();
