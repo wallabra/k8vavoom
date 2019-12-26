@@ -193,19 +193,22 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, int fsmode) {
        if (fsmode == 1) flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
   else if (fsmode == 2) flags |= SDL_WINDOW_FULLSCREEN;
 
+  SDL_GL_ResetAttributes(); // just in case
   //k8: require OpenGL 2.1, sorry; non-shader renderer was removed anyway
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-#ifdef __SWITCH__
+  SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+  //#ifdef __SWITCH__
   //fgsfds: libdrm_nouveau requires this, or else shit will be trying to use GLES
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
-#endif
+  //#endif
 
   // as we are doing rendering to FBO, there is no need to create depth and stencil buffers for FB
-  //SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-  //SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-  SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
-  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
+  // but shitty intel may require this, so...
+  SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+  //SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
+  //SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
   SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
