@@ -77,6 +77,31 @@ extern VCvarB gl_lmap_allow_partial_updates;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+static inline const char *VGetGLErrorStr (const GLenum glerr) {
+  switch (glerr) {
+    case GL_NO_ERROR: return "no error";
+    case GL_INVALID_ENUM: return "invalid enum";
+    case GL_INVALID_VALUE: return "invalid value";
+    case GL_INVALID_OPERATION: return "invalid operation";
+    case GL_STACK_OVERFLOW: return "stack overflow";
+    case GL_STACK_UNDERFLOW: return "stack underflow";
+    case GL_OUT_OF_MEMORY: return "out of memory";
+    default: break;
+  }
+  static char errstr[32];
+  snprintf(errstr, sizeof(errstr), "0x%04x", (unsigned)glerr);
+  return errstr;
+}
+
+#define GLDRW_RESET_ERROR()  (void)glGetError()
+
+#define GLDRW_CHECK_ERROR(actionmsg_)  do { \
+  GLenum glerr_ = glGetError(); \
+  if (glerr_ != 0) Sys_Error("OpenGL: cannot %s, error: %s", actionmsg_, VGetGLErrorStr(glerr_)); \
+} while (0)
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 class VOpenGLDrawer : public VDrawer {
 public:
   class VGLShader {

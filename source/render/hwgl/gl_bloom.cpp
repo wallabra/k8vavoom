@@ -127,7 +127,7 @@ void VOpenGLDrawer::BloomDeinit () {
 //==========================================================================
 void VOpenGLDrawer::BloomAllocRBO (int width, int height, GLuint *RBO, GLuint *FBO) {
   // create the RBO
-  (unsigned)glGetError();
+  GLDRW_RESET_ERROR();
   *RBO = 0;
   p_glGenRenderbuffers(1, RBO);
   if (*RBO == 0) Sys_Error("OpenGL: cannot create bloom renderbuffer storage, error is 0x%04x", (unsigned)glGetError());
@@ -136,7 +136,7 @@ void VOpenGLDrawer::BloomAllocRBO (int width, int height, GLuint *RBO, GLuint *F
   p_glBindRenderbuffer(GL_RENDERBUFFER_EXT, 0);
 
   // create up the FBO
-  (unsigned)glGetError();
+  GLDRW_RESET_ERROR();
   *FBO = 0;
   p_glGenFramebuffers(1, FBO);
   if (*FBO == 0) Sys_Error("OpenGL: cannot create bloom FBO, error is 0x%04x", (unsigned)glGetError());
@@ -200,7 +200,7 @@ void VOpenGLDrawer::BloomInitTextures () {
 
   BloomDeinit();
 
-  (void)glGetError();
+  GLDRW_RESET_ERROR();
 
   //GCon->Logf(NAME_Debug, "OpenGL: initalize bloom...");
 

@@ -163,13 +163,14 @@ static VVA_OKUNUSED bool CheckVendorString (VStr vs, const char *fuckedName) {
 GLint VOpenGLDrawer::glGetUniLoc (const char *prog, GLhandleARB pid, const char *name, bool optional) {
   vassert(name);
   if (!pid) Sys_Error("shader program '%s' not loaded", prog);
-  (void)glGetError(); // reset error flag
+  GLDRW_RESET_ERROR();
   GLint res = p_glGetUniformLocationARB(pid, name);
   //if (glGetError() != 0 || res == -1) Sys_Error("shader program '%s' has no uniform '%s'", prog, name);
+  const GLenum glerr = glGetError();
   if (optional) {
-    if (glGetError() != 0 || res == -1) res = -1;
+    if (glerr != 0 || res == -1) res = -1;
   } else {
-    if (glGetError() != 0 || res == -1) GCon->Logf(NAME_Error, "shader program '%s' has no uniform '%s'", prog, name);
+    if (glerr != 0 || res == -1) GCon->Logf(NAME_Error, "shader program '%s' has no uniform '%s'", prog, name);
   }
   return res;
 }
@@ -183,13 +184,14 @@ GLint VOpenGLDrawer::glGetUniLoc (const char *prog, GLhandleARB pid, const char 
 GLint VOpenGLDrawer::glGetAttrLoc (const char *prog, GLhandleARB pid, const char *name, bool optional) {
   vassert(name);
   if (!pid) Sys_Error("shader program '%s' not loaded", prog);
-  (void)glGetError(); // reset error flag
+  GLDRW_RESET_ERROR();
   GLint res = p_glGetAttribLocationARB(pid, name);
   //if (glGetError() != 0 || res == -1) Sys_Error("shader program '%s' has no attribute '%s'", prog, name);
+  const GLenum glerr = glGetError();
   if (optional) {
-    if (glGetError() != 0 || res == -1) res = -1;
+    if (glerr != 0 || res == -1) res = -1;
   } else {
-    if (glGetError() != 0 || res == -1) GCon->Logf(NAME_Error, "shader program '%s' has no attribute '%s'", prog, name);
+    if (glerr != 0 || res == -1) GCon->Logf(NAME_Error, "shader program '%s' has no attribute '%s'", prog, name);
   }
   return res;
 }
@@ -835,7 +837,7 @@ void VOpenGLDrawer::InitResolution () {
   LoadAllShaders();
   CompileShaders();
 
-  if (glGetError() != 0) Sys_Error("OpenGL initialization error (after shaders)");
+  GLDRW_CHECK_ERROR("finish OpenGL initialization");
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -2145,7 +2147,7 @@ GLhandleARB VOpenGLDrawer::LoadShader (const char *progname, const char *incdirc
 //==========================================================================
 GLhandleARB VOpenGLDrawer::CreateProgram (const char *progname, GLhandleARB VertexShader, GLhandleARB FragmentShader) {
   // create program object
-  (void)glGetError();
+  GLDRW_RESET_ERROR();
   GLhandleARB Program = p_glCreateProgramObjectARB();
   if (!Program) Sys_Error("Failed to create program object");
   CreatedShaderObjects.Append(Program);
@@ -2155,7 +2157,7 @@ GLhandleARB VOpenGLDrawer::CreateProgram (const char *progname, GLhandleARB Vert
   p_glAttachObjectARB(Program, FragmentShader);
 
   // link program
-  (void)glGetError();
+  GLDRW_RESET_ERROR();
   p_glLinkProgramARB(Program);
 
   // check if it was linked successfully
@@ -2169,7 +2171,8 @@ GLhandleARB VOpenGLDrawer::CreateProgram (const char *progname, GLhandleARB Vert
     Sys_Error("Failed to link program '%s'", LogText);
   }
 
-  if (glGetError() != 0) Sys_Error("Failed to link program '%s' for unknown reason", progname);
+  GLenum glerr = glGetError();
+  if (glerr != 0) Sys_Error("Failed to link program '%s' for unknown reason (error is %s)", progname, VGetGLErrorStr(glerr));
 
   return Program;
 }
@@ -2251,15 +2254,17 @@ void VOpenGLDrawer::FBO::createInternal (VOpenGLDrawer *aowner, int awidth, int 
   glBindTexture(GL_TEXTURE_2D, 0);
 
   // allocate FBO object
-  (void)glGetError();
+  GLDRW_RESET_ERROR();
   aowner->p_glGenFramebuffers(1, &mFBO);
-  if (mFBO == 0) Sys_Error("OpenGL: cannot create FBO: 0x%04x", (unsigned)glGetError());
+  if (mFBO == 0) Sys_Error("OpenGL: cannot create FBO: error is %s", VGetGLErrorStr(glGetError()));
   aowner->p_glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
+  GLDRW_CHECK_ERROR("FBO: glBindFramebuffer");
 
   // attach 2D texture to this FBO
   glGenTextures(1, &mColorTid);
-  if (mColorTid == 0) Sys_Error("OpenGL: cannot create RGBA texture for FBO");
+  if (mColorTid == 0) Sys_Error("OpenGL: cannot create RGBA texture for FBO: error is %s", VGetGLErrorStr(glGetError()));
   glBindTexture(GL_TEXTURE_2D, mColorTid);
+  GLDRW_CHECK_ERROR("FBO: glBindTexture");
 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 
@@ -2276,8 +2281,11 @@ void VOpenGLDrawer::FBO::createInternal (VOpenGLDrawer *aowner, int awidth, int 
   if (aowner->anisotropyExists) glTexParameterf(GL_TEXTURE_2D, GLenum(GL_TEXTURE_MAX_ANISOTROPY_EXT), 1.0f); // 1 is minimum, i.e. "off"
 
   // empty texture
+  GLDRW_RESET_ERROR();
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, awidth, aheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+  GLDRW_CHECK_ERROR("FBO: glTexImage2D");
   aowner->p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mColorTid, 0);
+  GLDRW_CHECK_ERROR("FBO: glFramebufferTexture2D");
 
   // attach stencil texture to this FBO
   if (createDepthStencil) {
@@ -2306,24 +2314,24 @@ void VOpenGLDrawer::FBO::createInternal (VOpenGLDrawer *aowner, int awidth, int 
 
     // create a render buffer object for the depth/stencil buffer
     aowner->p_glGenRenderbuffers(1, &mDepthStencilRBO);
-    if (mDepthStencilRBO == 0) Sys_Error("OpenGL: cannot create depth/stencil render buffer for FBO");
+    if (mDepthStencilRBO == 0) Sys_Error("OpenGL: cannot create depth/stencil render buffer for FBO: error is %s", VGetGLErrorStr(glGetError()));
 
     // bind the texture
+    GLDRW_RESET_ERROR();
     aowner->p_glBindRenderbuffer(GL_RENDERBUFFER, mDepthStencilRBO);
+    GLDRW_CHECK_ERROR("FBO: glBindRenderbuffer (0)");
 
     // create the render buffer in the GPU
-    (void)glGetError();
     aowner->p_glRenderbufferStorage(GL_RENDERBUFFER, depthStencilFormat, awidth, aheight);
-    GLenum glerr = glGetError();
-    if (glerr != 0) Sys_Error("OpenGL: cannot create depth/stencil renderbuffer storage, error is 0x%04x", (unsigned)glerr);
+    GLDRW_CHECK_ERROR("create depth/stencil renderbuffer storage");
 
     // unbind the render buffer
     aowner->p_glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    GLDRW_CHECK_ERROR("FBO: glBindRenderbuffer (1)");
 
     // bind it to FBO
     aowner->p_glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, mDepthStencilRBO);
-    glerr = glGetError();
-    if (glerr != 0) Sys_Error("OpenGL: cannot bind depth/stencil renderbuffer storage, error is 0x%04x", (unsigned)glerr);
+    GLDRW_CHECK_ERROR("bind depth/stencil renderbuffer storage");
   }
 
   {
@@ -2340,6 +2348,7 @@ void VOpenGLDrawer::FBO::createInternal (VOpenGLDrawer *aowner, int awidth, int 
   //GCon->Logf(NAME_Debug, "*** created FBO with id #%u (ds=%d; mColorTid=%u; mDepthStencilRBO=%u)", mFBO, (int)createDepthStencil, mColorTid, mDepthStencilRBO);
 
   mOwner->ReactivateCurrentFBO();
+  GLDRW_RESET_ERROR();
 }
 
 
