@@ -330,7 +330,6 @@ VOpenGLDrawer::VOpenGLDrawer ()
   lastgamma = 0;
   CurrentFade = 0;
 
-  MaxTextureUnits = 1;
   useReverseZ = false;
   hasNPOT = false;
   hasBoundsTest = false;
@@ -601,15 +600,15 @@ void VOpenGLDrawer::InitResolution () {
     }
   }
 
+  /*
   if (!CheckExtension("GL_ARB_multitexture")) {
     Sys_Error("OpenGL FATAL: Multitexture extensions not found.");
   } else {
-    GCon->Log(NAME_Init, "Multitexture extensions found.");
-    GLint tmp;
-    glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &tmp);
-    GCon->Logf(NAME_Init, "Max texture units: %d", tmp);
-    if (tmp > 1) MaxTextureUnits = tmp;
+    GLint tmp = 0;
+    glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &tmp);
+    GCon->Logf(NAME_Init, "Max texture samplers: %d", tmp);
   }
+  */
 
   // check for shader extensions
   if (CheckExtension("GL_ARB_shader_objects") && CheckExtension("GL_ARB_shading_language_100") &&
@@ -619,7 +618,7 @@ void VOpenGLDrawer::InitResolution () {
     GCon->Logf(NAME_Init, "Shading language version: %s", glGetString(GL_SHADING_LANGUAGE_VERSION_ARB));
     glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &tmp);
     GCon->Logf(NAME_Init, "Max texture image units: %d", tmp);
-    if (tmp > 1) MaxTextureUnits = tmp; // this is number of texture *samplers*, but it is ok for our shaders case
+    if (tmp < 4) Sys_Error("OpenGL: your GPU must support at least 4 texture samplers, but it has only %d", tmp);
     glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS_ARB, &tmp);
     GCon->Logf(NAME_Init, "Max vertex uniform components: %d", tmp);
     glGetIntegerv(GL_MAX_VARYING_FLOATS_ARB, &tmp);

@@ -617,8 +617,6 @@ protected:
   //bool HaveDepthClamp; // moved to drawer
   bool HaveStencilWrap;
 
-  int MaxTextureUnits;
-
   TArray<GLhandleARB> CreatedShaderObjects;
   TArray<VMeshModel *> UploadedModels;
 

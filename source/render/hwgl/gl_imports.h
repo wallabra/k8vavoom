@@ -69,7 +69,6 @@
 #define GL_MAX_TEXTURE_UNITS_ARB      0x84E2
 #endif
 
-//typedef void (APIENTRY*glMultiTexCoord2fARB_t)(GLenum, GLfloat, GLfloat);
 typedef void (APIENTRY*glActiveTextureARB_t)(GLenum);
 
 // EXT_point_parameters
@@ -416,11 +415,7 @@ typedef void (APIENTRY *glGenerateMipmap_t) (GLenum target);
 # endif
 //#define VGLAPIPTR(x)  x##_t p_##x
 
-  //VGLAPIPTR(glMultiTexCoord2fARB);
   VGLAPIPTR(glActiveTextureARB, true);
-
-  //VGLAPIPTR(glPointParameterfEXT, true);
-  //VGLAPIPTR(glPointParameterfvEXT, true);
 
   VGLAPIPTR(glStencilFuncSeparate, false);
   VGLAPIPTR(glStencilOpSeparate, false);
