@@ -819,7 +819,7 @@ void VAcsObject::LoadOldObject () {
 static int ParseLocalArrayChunk (const void *chunk, VACSLocalArrays *arrays, int offset) {
   int count = LittleUShort(((const vuint32 *)chunk)[1]-2)/4;
   arrays->SetCount(count);
-  GCon->Logf(NAME_Debug, " count=%d (%d)", count, arrays->Count);
+  //GCon->Logf(NAME_Debug, " count=%d (%d)", count, arrays->Count);
   if (arrays->Count > 0) {
     const vint32 *sizes = (const vint32 *)((const vuint8 *)chunk+10);
     VACSLocalArrayInfo *info = arrays->Info;
@@ -827,7 +827,7 @@ static int ParseLocalArrayChunk (const void *chunk, VACSLocalArrays *arrays, int
       info->Size = LittleLong(*sizes);
       info->Offset = offset;
       if (info->Size < 0 || info->Offset < 0) Sys_Error("invalid acs array descritption (offset=%d; size=%d)", info->Offset, info->Size);
-      GCon->Logf(NAME_Debug, "  array #%d, offset=%d, size=%d", i, info->Offset, info->Size);
+      //GCon->Logf(NAME_Debug, "  array #%d, offset=%d, size=%d", i, info->Offset, info->Size);
       offset += info->Size;
     }
   }
