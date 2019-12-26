@@ -390,7 +390,7 @@ void VSectorStackPortal::DrawContents () {
   VPortal::SetUpRanges(rd, Range, false, true); //k8: after moving viewport?
 
   RLev->ViewEnt = Viewport;
-  VEntity *Mate = Viewport->eventSkyBoxGetMate();
+  VEntity *Mate = Viewport->GetSkyBoxMate();
 
   //GCon->Logf("rendering portal contents; offset=(%f,%f)", Viewport->Origin.x-Mate->Origin.x, Viewport->Origin.y-Mate->Origin.y);
 

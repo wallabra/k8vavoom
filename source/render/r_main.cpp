@@ -1094,15 +1094,11 @@ void VRenderLevelShared::UpdateBBoxWithSurface (TVec bbox[2], surface_t *surfs, 
 
   if (SkyBox && (SkyBox->EntityFlags&VEntity::EF_FixedModel)) SkyBox = nullptr;
 
-  // "skyboxalways" is stacked sector, it cannot be lit for now
-  if (texinfo->Tex == GTextureManager.getIgnoreAnim(skyflatnum) || (CheckSkyBoxAlways && SkyBox)) return;
-  /*
   if (texinfo->Tex == GTextureManager.getIgnoreAnim(skyflatnum) ||
-      (CheckSkyBoxAlways && SkyBox && SkyBox->eventSkyBoxGetAlways()))
+      (CheckSkyBoxAlways && SkyBox && SkyBox->GetSkyBoxAlways()))
   {
     return;
   }
-  */
 
   for (surface_t *surf = surfs; surf; surf = surf->next) {
     if (surf->count < 3) continue; // just in case

@@ -408,9 +408,9 @@ public:
   VEntity *eventSkyBoxGetMate () { static VMethodProxy method("SkyBoxGetMate"); vobjPutParamSelf(); VMT_RET_REF(VEntity, method); }
   float eventSkyBoxGetPlaneAlpha () { static VMethodProxy method("SkyBoxGetPlaneAlpha"); vobjPutParamSelf(); VMT_RET_FLOAT(method); }
   */
-  inline bool eventSkyBoxGetAlways () const noexcept { return !!(SkyBoxFlags&SF_SkyBoxAlways); }
-  inline VEntity *eventSkyBoxGetMate () const noexcept { return Mate; }
-  inline float eventSkyBoxGetPlaneAlpha () const noexcept { return PlaneAlpha; }
+  inline bool GetSkyBoxAlways () const noexcept { return !!(SkyBoxFlags&SF_SkyBoxAlways); }
+  inline VEntity *GetSkyBoxMate () const noexcept { return Mate; }
+  inline float GetSkyBoxPlaneAlpha () const noexcept { return PlaneAlpha; }
 
   void eventOnMapSpawn (mthing_t *mthing) { static VMethodProxy method("OnMapSpawn"); vobjPutParamSelf(mthing); VMT_RET_VOID(method); }
   void eventBeginPlay () { static VMethodProxy method("BeginPlay"); vobjPutParamSelf(); VMT_RET_VOID(method); }

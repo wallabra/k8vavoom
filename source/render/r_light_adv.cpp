@@ -272,22 +272,18 @@ void VRenderLevelShadowVolume::DrawShadowSurfaces (surface_t *InSurfs, texinfo_t
 
   if (SkyBox && (SkyBox->EntityFlags&VEntity::EF_FixedModel)) SkyBox = nullptr;
 
-  // cannot light stacked sectors anyway
-  if (texinfo->Tex == GTextureManager.getIgnoreAnim(skyflatnum) || (CheckSkyBoxAlways && SkyBox)) return;
-  /*
   if (texinfo->Tex == GTextureManager.getIgnoreAnim(skyflatnum) ||
-      (CheckSkyBoxAlways && (SkyBox && SkyBox->eventSkyBoxGetAlways())))
+      (CheckSkyBoxAlways && (SkyBox && SkyBox->GetSkyBoxAlways())))
   {
     return;
   }
-  */
 
   // ignore everything that is placed behind camera's back
   // we shouldn't have many of those, so check them in the loop below
   // but do this only if the light is in front of a camera
   //const bool checkFrustum = (r_advlight_opt_frustum_back && Drawer->view_frustum.checkSphere(CurrLightPos, CurrLightRadius, TFrustum::NearBit));
 
-  // TODO: if light is behing a camera, we can move back frustum plane, so it will
+  // TODO: if light is behind a camera, we can move back frustum plane, so it will
   //       contain light origin, and clip everything behind it. the same can be done
   //       for all other frustum planes.
   for (surface_t *surf = InSurfs; surf; surf = surf->next) {
@@ -598,7 +594,7 @@ void VRenderLevelShadowVolume::RenderShadowBSPNode (int bspnum, const float *bbo
 //
 //==========================================================================
 void VRenderLevelShadowVolume::DrawLightSurfaces (surface_t *InSurfs, texinfo_t *texinfo,
-                                              VEntity *SkyBox, bool CheckSkyBoxAlways, int LightCanCross)
+                                                  VEntity *SkyBox, bool CheckSkyBoxAlways, int LightCanCross)
 {
   if (!InSurfs) return;
 
@@ -607,15 +603,11 @@ void VRenderLevelShadowVolume::DrawLightSurfaces (surface_t *InSurfs, texinfo_t 
 
   if (SkyBox && (SkyBox->EntityFlags&VEntity::EF_FixedModel)) SkyBox = nullptr;
 
-  // cannot light stacked sectors anyway
-  if (texinfo->Tex == GTextureManager.getIgnoreAnim(skyflatnum) || (CheckSkyBoxAlways && SkyBox)) return;
-  /*
   if (texinfo->Tex == GTextureManager.getIgnoreAnim(skyflatnum) ||
-      (CheckSkyBoxAlways && (SkyBox && SkyBox->eventSkyBoxGetAlways())))
+      (CheckSkyBoxAlways && (SkyBox && SkyBox->GetSkyBoxAlways())))
   {
     return;
   }
-  */
 
   for (surface_t *surf = InSurfs; surf; surf = surf->next) {
     if (surf->count < 3) continue; // just in case

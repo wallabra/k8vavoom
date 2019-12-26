@@ -417,7 +417,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
 
   if (SkyBox && (SkyBox->EntityFlags&VEntity::EF_FixedModel)) SkyBox = nullptr;
 
-  bool IsStack = (SkyBox && SkyBox->eventSkyBoxGetAlways());
+  bool IsStack = (SkyBox && SkyBox->GetSkyBoxAlways());
   //k8: i hope that the parens are right here
   if (texinfo->Tex == GTextureManager[skyflatnum] || (IsStack && CheckSkyBoxAlways)) {
     VSky *Sky = nullptr;
@@ -494,11 +494,11 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
     }
     if (Portal) {
       //GCon->Log("----");
-      //const bool doRenderSurf = (surfs ? IsStack && CheckSkyBoxAlways && SkyBox->eventSkyBoxGetPlaneAlpha() : false);
+      //const bool doRenderSurf = (surfs ? IsStack && CheckSkyBoxAlways && SkyBox->GetSkyBoxPlaneAlpha() : false);
       bool doRenderSurf = (surfs ? IsStack && CheckSkyBoxAlways : false);
       float alpha = 0.0f;
       if (doRenderSurf) {
-        alpha = SkyBox->eventSkyBoxGetPlaneAlpha();
+        alpha = SkyBox->GetSkyBoxPlaneAlpha();
         if (alpha <= 0.0f) doRenderSurf = false;
       }
       for (; surfs; surfs = surfs->next) {
@@ -522,7 +522,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
           surfs->glowCeilingColor = glowCeilingColor;
           if (SurfPrepareForRender(surfs)) {
             if (surfs->plvisible) {
-              //GCon->Logf(NAME_Debug, "  SURF! norm=(%g,%g,%g); alpha=%g", surfs->plane.normal.x, surfs->plane.normal.y, surfs->plane.normal.z, SkyBox->eventSkyBoxGetPlaneAlpha());
+              //GCon->Logf(NAME_Debug, "  SURF! norm=(%g,%g,%g); alpha=%g", surfs->plane.normal.x, surfs->plane.normal.y, surfs->plane.normal.z, SkyBox->GetSkyBoxPlaneAlpha());
               //surfs->drawflags |= surface_t::DF_MASKED;
               QueueTranslucentPoly(surfs, surfs->verts, surfs->count,
                 0, alpha, false,
