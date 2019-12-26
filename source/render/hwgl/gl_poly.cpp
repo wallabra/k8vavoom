@@ -49,6 +49,30 @@ extern "C" {
 
 //==========================================================================
 //
+//  VOpenGLDrawer::StartSkyPolygons
+//
+//  used in r_sky
+//
+//==========================================================================
+void VOpenGLDrawer::StartSkyPolygons () {
+  SetFade(0);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::EndSkyPolygons
+//
+//  used in r_sky
+//
+//==========================================================================
+void VOpenGLDrawer::EndSkyPolygons () {
+  SetFade(0); // disable fog
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::DrawSkyPolygon
 //
 //  used in r_sky

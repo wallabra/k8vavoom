@@ -109,6 +109,7 @@ VRenderLevelLightmap::VRenderLevelLightmap (VLevel *ALevel)
   , invalidateRelight(false)
 {
   mIsShadowVolumeRenderer = false;
+  VDrawer::LightFadeMult = 1.0f; // empiric
   lmcache.renderer = this;
 
   initLightChain();

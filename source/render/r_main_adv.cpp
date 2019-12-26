@@ -89,6 +89,7 @@ VRenderLevelShadowVolume::VRenderLevelShadowVolume (VLevel *ALevel)
   : VRenderLevelShared(ALevel)
 {
   mIsShadowVolumeRenderer = true;
+  VDrawer::LightFadeMult = 0.6f; // empiric
 }
 
 

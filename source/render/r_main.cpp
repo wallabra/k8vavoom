@@ -90,8 +90,8 @@ VCvarI aspect_ratio("r_aspect_ratio", "0", "Aspect ratio correction mode ([0..3]
 VCvarB r_interpolate_frames("r_interpolate_frames", true, "Use frame interpolation for smoother rendering?", CVAR_Archive);
 VCvarB r_vsync("r_vsync", true, "VSync mode.", CVAR_Archive);
 VCvarB r_vsync_adaptive("r_vsync_adaptive", true, "Use adaptive VSync mode.", CVAR_Archive);
-VCvarB r_fade_light("r_fade_light", "0", "Fade lights?", CVAR_Archive);
-VCvarF r_fade_factor("r_fade_factor", "7", "Fade actor lights?", CVAR_Archive);
+VCvarB r_fade_light("r_fade_light", "0", "Fade light with distance?", CVAR_Archive);
+VCvarF r_fade_factor("r_fade_factor", "7", "Fading light coefficient.", CVAR_Archive);
 VCvarF r_sky_bright_factor("r_sky_bright_factor", "1", "Skybright actor factor.", CVAR_Archive);
 
 VCvarF r_lights_radius("r_lights_radius", "3072", "Lights out of this radius (from camera) will be dropped.", CVAR_Archive);
@@ -537,6 +537,7 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   doShadows = false;
   MirrorClipSegs = false;
 
+  VDrawer::LightFadeMult = 1.0f; // for now
   if (Drawer) {
     Drawer->SetMainFBO();
     Drawer->ClearCameraFBOs();
@@ -561,6 +562,7 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
 //
 //==========================================================================
 VRenderLevelShared::~VRenderLevelShared () {
+  VDrawer::LightFadeMult = 1.0f; // restore it
   if (Drawer) Drawer->ClearCameraFBOs();
 
   if (Level->CameraTextures.length()) {

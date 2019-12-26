@@ -54,6 +54,8 @@ static double pbarLastUpdateTime = 0;
 
 TArray<void (*) (int phase)> VDrawer::cbInitDeinit;
 
+float VDrawer::LightFadeMult = 1.0f;
+
 
 //**************************************************************************
 //
@@ -76,6 +78,7 @@ VDrawer::VDrawer () noexcept
 {
   ScrWdt = max2(1, ScreenWidth);
   ScrHgt = max2(1, ScreenHeight);
+  LightFadeMult = 1.0f;
 }
 
 

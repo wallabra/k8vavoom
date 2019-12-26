@@ -319,6 +319,7 @@ public:
   TFrustum view_frustum;
   bool MirrorFlip;
   bool MirrorClip;
+  static float LightFadeMult;
 
 public:
   static void RegisterICB (void (*cb) (int phase));
@@ -396,8 +397,11 @@ public:
   virtual void FlushTextures (bool forced=false) = 0; // unload all textures
 
   // polygon drawing
+  virtual void StartSkyPolygons () = 0;
+  virtual void EndSkyPolygons () = 0;
   virtual void DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *Texture1,
                                float offs1, VTexture *Texture2, float offs2, int CMap) = 0;
+
   virtual void DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additive) = 0;
 
   virtual void BeginTranslucentPolygonDecals () = 0;

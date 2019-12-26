@@ -818,6 +818,7 @@ void VOpenGLDrawer::InitResolution () {
 
   glEnable(GL_TEXTURE_2D);
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+  glHint(GL_GENERATE_MIPMAP_HINT, GL_FASTEST); // this seems to affect only `glGenerateMipmap()`
 
   vassert(!atlasesGenerated);
   GenerateLightmapAtlasTextures();
@@ -1659,7 +1660,6 @@ void VOpenGLDrawer::ReadBackScreen (int Width, int Height, rgba_t *Dest) {
 //==========================================================================
 void VOpenGLDrawer::SetFade (vuint32 NewFade) {
   if ((vuint32)CurrentFade == NewFade) return;
-
   if (NewFade) {
     //static GLenum fogMode[4] = { GL_LINEAR, GL_LINEAR, GL_EXP, GL_EXP2 };
     float fogColor[4];
@@ -1681,7 +1681,8 @@ void VOpenGLDrawer::SetFade (vuint32 NewFade) {
       glFogf(GL_FOG_END, r_fog_end);
     }
     //glHint(GL_FOG_HINT, r_fog < 4 ? GL_DONT_CARE : GL_NICEST);
-    glHint(GL_FOG_HINT, GL_DONT_CARE);
+    //glHint(GL_FOG_HINT, GL_DONT_CARE);
+    glHint(GL_FOG_HINT, GL_NICEST);
     glEnable(GL_FOG);
   } else {
     glDisable(GL_FOG);

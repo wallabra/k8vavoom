@@ -109,7 +109,7 @@ Set FogSet {
         curr_FogColor[2] = (Fade&255)/255.0f;
         curr_FogColor[3] = Alpha;
         curr_FogStart = (Fade == FADE_LIGHT ? 1.0f : r_fog_start);
-        curr_FogEnd = (Fade == FADE_LIGHT ? 1024.0f*r_fade_factor : r_fog_end);
+        curr_FogEnd = (Fade == FADE_LIGHT ? 1024.0f*r_fade_factor*VDrawer::LightFadeMult : r_fog_end);
       } else {
         curr_FogEnabled = false;
       }
@@ -132,7 +132,7 @@ Set SimpleFogSet {
       curr_FogColor[2] = (Fade&255)/255.0f;
       curr_FogColor[3] = Alpha;
       curr_FogStart = (Fade == FADE_LIGHT ? 1.0f : r_fog_start);
-      curr_FogEnd = (Fade == FADE_LIGHT ? 1024.0f*r_fade_factor : r_fog_end);
+      curr_FogEnd = (Fade == FADE_LIGHT ? 1024.0f*r_fade_factor*VDrawer::LightFadeMult : r_fog_end);
     }
   ]]
 }

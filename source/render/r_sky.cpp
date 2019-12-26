@@ -498,20 +498,22 @@ void VSky::Init(int Sky1Texture, int Sky2Texture, float Sky1ScrollDelta,
   SideFlip = Flip;
 }
 
+
 //==========================================================================
 //
 //  VSky::Draw
 //
 //==========================================================================
-
-void VSky::Draw(int ColorMap)
-{
-  for (int i = 0; i < NumSkySurfs; i++)
-  {
-    Drawer->DrawSkyPolygon(&sky[i].surf, bIsSkyBox,
-      GTextureManager(sky[i].texture1), sky[i].columnOffset1,
-      GTextureManager(sky[i].texture2), sky[i].columnOffset2,
-      ColorMap);
+void VSky::Draw (int ColorMap) {
+  if (NumSkySurfs > 0) {
+    Drawer->StartSkyPolygons();
+    for (int i = 0; i < NumSkySurfs; ++i) {
+      Drawer->DrawSkyPolygon(&sky[i].surf, bIsSkyBox,
+        GTextureManager(sky[i].texture1), sky[i].columnOffset1,
+        GTextureManager(sky[i].texture2), sky[i].columnOffset2,
+        ColorMap);
+    }
+    Drawer->EndSkyPolygons();
   }
 }
 
