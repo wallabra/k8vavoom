@@ -87,7 +87,7 @@ static void bloomDrawFSQuad () {
 //
 //==========================================================================
 void VOpenGLDrawer::BloomDeinit () {
-  //GCon->Logf(NAME_Debug, "deinit bloom...");
+  GCon->Logf(NAME_Debug, "OpenGL: deinit bloom...");
 
   if (bloomFullSizeDownsampleRBOid) {
     p_glDeleteRenderbuffers(1, &bloomFullSizeDownsampleRBOid);
@@ -124,17 +124,27 @@ void VOpenGLDrawer::BloomDeinit () {
 //==========================================================================
 void VOpenGLDrawer::BloomAllocRBO (int width, int height, GLuint *RBO, GLuint *FBO) {
   // create the RBO
+  (unsigned)glGetError();
+  *RBO = 0;
   p_glGenRenderbuffers(1, RBO);
+  if (*RBO == 0) Sys_Error("OpenGL: cannot create bloom renderbuffer storage, error is 0x%04x", (unsigned)glGetError());
   p_glBindRenderbuffer(GL_RENDERBUFFER_EXT, *RBO);
   p_glRenderbufferStorage(GL_RENDERBUFFER_EXT, GL_RGB, width, height);
   p_glBindRenderbuffer(GL_RENDERBUFFER_EXT, 0);
 
   // create up the FBO
+  (unsigned)glGetError();
+  *FBO = 0;
   p_glGenFramebuffers(1, FBO);
+  if (*FBO == 0) Sys_Error("OpenGL: cannot create bloom FBO, error is 0x%04x", (unsigned)glGetError());
   p_glBindFramebuffer(GL_FRAMEBUFFER, *FBO);
 
   // bind the RBO to it
   p_glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER_EXT, *RBO);
+
+  // check for validity
+  GLenum status = p_glCheckFramebufferStatus(GL_FRAMEBUFFER);
+  if (status != GL_FRAMEBUFFER_COMPLETE) Sys_Error("OpenGL: bloom framebuffer creation failed (status=0x%04x)", (unsigned)status);
 
   // clean up
   p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -185,7 +195,9 @@ void VOpenGLDrawer::BloomInitTextures () {
 
   BloomDeinit();
 
-  glGetError();
+  (void)glGetError();
+
+  GCon->Logf(NAME_Debug, "OpenGL: initalize bloom...");
 
   // validate bloom size and init the bloom effect texture
   BloomInitEffectTexture();
@@ -193,6 +205,7 @@ void VOpenGLDrawer::BloomInitTextures () {
   // init the "scratch" texture
   bloomscratchFBO.setLinearFilter(!r_bloom_id0_effect);
   bloomscratchFBO.createTextureOnly(this, bloomWidth, bloomHeight, true);
+
   bloomscratch2FBO.setLinearFilter(!r_bloom_id0_effect);
   bloomscratch2FBO.createTextureOnly(this, bloomWidth, bloomHeight, true);
 

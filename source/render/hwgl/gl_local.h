@@ -136,15 +136,13 @@ public:
   class FBO {
     //friend class VOpenGLDrawer;
   private:
-    class VOpenGLDrawer *mOwner = nullptr;
-    GLuint mFBO = 0;
-    GLuint mColorTid = 0;
-    GLuint mDepthStencilTid = 0;
-    GLuint mDepthStencilRBO = 0; // prefer RenderBuffer for depth/stencil
-    bool mHasDepthStencil = false;
-    int mWidth = 0;
-    int mHeight = 0;
-    bool mLinearFilter = false;
+    class VOpenGLDrawer *mOwner;
+    GLuint mFBO;
+    GLuint mColorTid;
+    GLuint mDepthStencilRBO; // use renderbuffer for depth/stencil (we don't need to read this info yet); 0 if none
+    int mWidth;
+    int mHeight;
+    bool mLinearFilter;
 
   private:
     void createInternal (VOpenGLDrawer *aowner, int awidth, int aheight, bool createDepthStencil, bool mirroredRepeat);

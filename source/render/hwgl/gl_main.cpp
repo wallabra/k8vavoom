@@ -628,7 +628,6 @@ void VOpenGLDrawer::InitResolution () {
   if (!CheckExtension("GL_ARB_vertex_buffer_object")) Sys_Error("OpenGL FATAL: VBO not found.");
   if (!CheckExtension("GL_EXT_draw_range_elements")) Sys_Error("OpenGL FATAL: GL_EXT_draw_range_elements not found");
 
-
   // check main stencil buffer
   // this is purely informative, as we are using FBO to render things anyway
   /*
@@ -737,15 +736,7 @@ void VOpenGLDrawer::InitResolution () {
   if (!HaveDepthClamp) GCon->Log(NAME_Init, "*** no depth clamp --> no shadow volumes");
   if (!p_glStencilFuncSeparate) GCon->Log(NAME_Init, "*** no separate stencil funcs --> no shadow volumes");
 
-  if (!p_glDeleteRenderbuffers ||
-      !p_glGenRenderbuffers ||
-      !p_glRenderbufferStorage ||
-      !p_glBindRenderbuffer ||
-      !p_glFramebufferRenderbuffer ||
-      !p_glGenerateMipmap ||
-      !p_glBlitFramebuffer ||
-      gl_dbg_fbo_blit_with_texture)
-  {
+  if (!p_glGenerateMipmap || gl_dbg_fbo_blit_with_texture) {
     GCon->Logf(NAME_Init, "OpenGL: bloom postprocessing effect disabled due to missing API");
     r_bloom = false;
     canIntoBloomFX = false;
@@ -2182,11 +2173,10 @@ VOpenGLDrawer::FBO::FBO ()
   : mOwner(nullptr)
   , mFBO(0)
   , mColorTid(0)
-  , mDepthStencilTid(0)
   , mDepthStencilRBO(0)
-  , mHasDepthStencil(false)
   , mWidth(0)
   , mHeight(0)
+  , mLinearFilter(false)
 {
 }
 
@@ -2208,32 +2198,23 @@ VOpenGLDrawer::FBO::~FBO () {
 //==========================================================================
 void VOpenGLDrawer::FBO::destroy () {
   if (!mOwner) return;
+  // detach everything from FBO, and destroy it
   mOwner->p_glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
   mOwner->p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
-  if (mHasDepthStencil) {
-    if (mDepthStencilTid) {
-      mOwner->p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
-    } else if (mDepthStencilRBO) {
-      mOwner->p_glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, 0);
-    }
+  glDeleteTextures(1, &mColorTid);
+  if (mDepthStencilRBO) {
+    mOwner->p_glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, 0);
+    mOwner->p_glDeleteFramebuffers(1, &mDepthStencilRBO);
   }
   mOwner->p_glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glDeleteTextures(1, &mColorTid);
-  if (mHasDepthStencil) {
-    if (mDepthStencilTid) {
-      glDeleteTextures(1, &mDepthStencilTid);
-    } else if (mDepthStencilRBO) {
-      mOwner->p_glDeleteFramebuffers(1, &mDepthStencilRBO);
-    }
-  }
   mOwner->p_glDeleteFramebuffers(1, &mFBO);
+  // clear object
   mFBO = 0;
   mColorTid = 0;
-  mDepthStencilTid = 0;
   mDepthStencilRBO = 0;
-  mHasDepthStencil = false;
   mWidth = 0;
   mHeight = 0;
+  mLinearFilter = false;
   if (mOwner->currentActiveFBO == this) mOwner->currentActiveFBO = nullptr;
   mOwner->ReactivateCurrentFBO();
   mOwner = nullptr;
@@ -2287,25 +2268,6 @@ void VOpenGLDrawer::FBO::createInternal (VOpenGLDrawer *aowner, int awidth, int 
 
   // attach stencil texture to this FBO
   if (createDepthStencil) {
-    GLint major, minor;
-    glGetIntegerv(GL_MAJOR_VERSION, &major);
-    glGetIntegerv(GL_MINOR_VERSION, &minor);
-
-    GLint depthStencilFormat = GL_DEPTH24_STENCIL8;
-    if (!aowner->CheckExtension("GL_EXT_packed_depth_stencil")) Sys_Error("OpenGL error: GL_EXT_packed_depth_stencil is not supported!");
-    // there is (almost) no reason to use fp depth buffer without reverse z
-    // also, reverse z is perfectly working with int24 depth buffer, see http://www.reedbeta.com/blog/depth-precision-visualized/
-    if (major >= 3 && gl_enable_fp_zbuffer) {
-      depthStencilFormat = GL_DEPTH32F_STENCIL8;
-      GCon->Log(NAME_Init, "OpenGL: using floating-point depth buffer");
-    }
-    /*
-    else if (gl_is_shitty_gpu || gl_downgrade_depth_stencil) {
-      if (!aowner->CheckExtension("GL_EXT_packed_depth_stencil")) Sys_Error("OpenGL error: GL_EXT_packed_depth_stencil is not supported!");
-      GCon->Log(NAME_Init, "OpenGL: downgrading DEPTH/STENCIL...");
-      depthStencilFormat = GL_DEPTH_STENCIL_EXT;
-    }
-    */
     vassert(GL_DEPTH_STENCIL_EXT == GL_DEPTH_STENCIL);
     vassert(GL_DEPTH_STENCIL_EXT == 0x84F9);
     vassert(GL_UNSIGNED_INT_24_8 == 0x84FA);
@@ -2313,67 +2275,42 @@ void VOpenGLDrawer::FBO::createInternal (VOpenGLDrawer *aowner, int awidth, int 
 
     if (!aowner->CheckExtension("GL_EXT_packed_depth_stencil")) Sys_Error("OpenGL error: GL_EXT_packed_depth_stencil is not supported!");
 
-    if (aowner->p_glGenRenderbuffers &&
-        aowner->p_glBindRenderbuffer &&
-        aowner->p_glRenderbufferStorage &&
-        aowner->p_glBindRenderbuffer)
-    {
-      GCon->Log(NAME_Init, "OpenGL: using combined depth/stencil renderbuffer for FBO");
-      // create a render buffer object for the depth buffer
-      aowner->p_glGenRenderbuffers(1, &mDepthStencilRBO);
-      if (mDepthStencilRBO == 0) Sys_Error("OpenGL: cannot create depth/stencil render buffer for FBO");
-      // bind the texture
-      aowner->p_glBindRenderbuffer(GL_RENDERBUFFER, mDepthStencilRBO);
-      // create the render buffer in the GPU
-      (void)glGetError();
-      aowner->p_glRenderbufferStorage(GL_RENDERBUFFER, depthStencilFormat, awidth, aheight);
-      GLenum glerr = glGetError();
-      if (glerr != 0) Sys_Error("OpenGL: cannot create depth/stencil renderbuffer storage, error is 0x%04x", (unsigned)glerr);
-      // unbind the render buffer
-      aowner->p_glBindRenderbuffer(GL_RENDERBUFFER, 0);
-      // bind it
-      aowner->p_glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, mDepthStencilRBO);
-      glerr = glGetError();
-      if (glerr != 0) Sys_Error("OpenGL: cannot bind depth/stencil renderbuffer storage, error is 0x%04x", (unsigned)glerr);
-    } else {
-      GCon->Log(NAME_Init, "OpenGL: using combined depth/stencil texture for FBO");
-      // use texture
-      glGenTextures(1, &mDepthStencilTid);
-      if (mDepthStencilTid == 0) Sys_Error("OpenGL: cannot create stencil texture for FBO");
-      glBindTexture(GL_TEXTURE_2D, mDepthStencilTid);
+    GLint depthStencilFormat = GL_DEPTH24_STENCIL8;
 
-      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, aowner->ClampToEdge);
-      glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, aowner->ClampToEdge);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-      //glFlush();
-      //glFinish();
-      (void)glGetError();
-      vassert(glGetError() == 0); // invariant
-
-      glTexImage2D(GL_TEXTURE_2D, 0, depthStencilFormat, awidth, aheight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
-      GLenum glerr = glGetError();
-      if (glerr != 0) {
-        GCon->Logf(NAME_Init, "OpenGL: glTexImage2D, first error is 0x%04x", (unsigned)glerr);
-        if (depthStencilFormat == GL_DEPTH32F_STENCIL8) {
-          GCon->Log(NAME_Init, "OpenGL: cannot create fp depth buffer, trying 24-bit one");
-          glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, awidth, aheight, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, nullptr);
-          glerr = glGetError();
-          if (glerr != 0) Sys_Error("OpenGL initialization error (second glTexImage2D; err=0x%04x)", (unsigned)glerr);
-        } else {
-          //vassert(depthStencilFormat == GL_DEPTH24_STENCIL8);
-          // try some weird things
-          GCon->Logf(NAME_Init, "OpenGL: glTexImage2D, first error is 0x%04x", (unsigned)glerr);
-          Sys_Error("OpenGL initialization error (first glTexImage2D; err=0x%04x)", (unsigned)glerr);
-        }
+    // there is (almost) no reason to use fp depth buffer without reverse z
+    // also, reverse z is perfectly working with int24 depth buffer, see http://www.reedbeta.com/blog/depth-precision-visualized/
+    if (gl_enable_fp_zbuffer) {
+      GLint major, minor;
+      glGetIntegerv(GL_MAJOR_VERSION, &major);
+      glGetIntegerv(GL_MINOR_VERSION, &minor);
+      if (major >= 3) {
+        depthStencilFormat = GL_DEPTH32F_STENCIL8;
+        GCon->Log(NAME_Init, "OpenGL: using floating-point depth buffer");
       }
-      //glFlush();
-      //glFinish();
-      aowner->p_glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, mDepthStencilTid, 0);
-      //glFlush();
-      //glFinish();
     }
+
+    //GCon->Log(NAME_Init, "OpenGL: using combined depth/stencil renderbuffer for FBO");
+
+    // create a render buffer object for the depth/stencil buffer
+    aowner->p_glGenRenderbuffers(1, &mDepthStencilRBO);
+    if (mDepthStencilRBO == 0) Sys_Error("OpenGL: cannot create depth/stencil render buffer for FBO");
+
+    // bind the texture
+    aowner->p_glBindRenderbuffer(GL_RENDERBUFFER, mDepthStencilRBO);
+
+    // create the render buffer in the GPU
+    (void)glGetError();
+    aowner->p_glRenderbufferStorage(GL_RENDERBUFFER, depthStencilFormat, awidth, aheight);
+    GLenum glerr = glGetError();
+    if (glerr != 0) Sys_Error("OpenGL: cannot create depth/stencil renderbuffer storage, error is 0x%04x", (unsigned)glerr);
+
+    // unbind the render buffer
+    aowner->p_glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+    // bind it to FBO
+    aowner->p_glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, mDepthStencilRBO);
+    glerr = glGetError();
+    if (glerr != 0) Sys_Error("OpenGL: cannot bind depth/stencil renderbuffer storage, error is 0x%04x", (unsigned)glerr);
   }
 
   {
@@ -2381,7 +2318,6 @@ void VOpenGLDrawer::FBO::createInternal (VOpenGLDrawer *aowner, int awidth, int 
     if (status != GL_FRAMEBUFFER_COMPLETE) Sys_Error("OpenGL: framebuffer creation failed (status=0x%04x)", (unsigned)status);
   }
 
-  mHasDepthStencil = createDepthStencil;
   mWidth = awidth;
   mHeight = aheight;
   mOwner = aowner;

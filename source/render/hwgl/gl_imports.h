@@ -537,13 +537,11 @@ typedef void (APIENTRY *glGenerateMipmap_t) (GLenum target);
 
   VGLAPIPTR(glBlendFuncSeparate, false);
 
-  // bloom, optional
-  VGLAPIPTR(glDeleteRenderbuffers, false);
-  // 't was all EXT
-  VGLAPIPTR(glGenRenderbuffers, false);
-  VGLAPIPTR(glRenderbufferStorage, false);
-  VGLAPIPTR(glBindRenderbuffer, false);
-  VGLAPIPTR(glFramebufferRenderbuffer, false);
+  VGLAPIPTR(glDeleteRenderbuffers, true);
+  VGLAPIPTR(glGenRenderbuffers, true);
+  VGLAPIPTR(glRenderbufferStorage, true);
+  VGLAPIPTR(glBindRenderbuffer, true);
+  VGLAPIPTR(glFramebufferRenderbuffer, true);
   VGLAPIPTR(glGenerateMipmap, false);
 
   VGLAPIPTR(glFramebufferTexture2D, true);
