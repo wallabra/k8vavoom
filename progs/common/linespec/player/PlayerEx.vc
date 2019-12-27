@@ -896,18 +896,20 @@ void MovePlayer (float deltaTime) {
 //  check for a jump-out-of-water
 //
 //==========================================================================
-void CheckWaterJump () {
+void CheckWaterJump (optional bool asStep) {
   TVec start;
   TVec end;
   TVec vforward, vright, vup;
   TVec HitPoint;
   TVec HitNormal;
 
+  if (EntityEx(MO).bWaterJump && EntityEx(MO).ReactionTime > 0) return;
+
   AngleVectors(MO.Angles, out vforward, out vright, out vup);
   vforward = (vforward*ForwardMove+vright*SideMove).Normalise;
 
   start = MO.Origin;
-  start.z += MO.Height*0.5+8.0;
+  start.z += (!asStep ? MO.Height*0.5+8.0 : MO.MaxStepHeight);
   vforward.z = 0.0;
   vforward = Normalise(vforward);
   end = start+vforward*24.0;
@@ -4231,6 +4233,8 @@ override void PlayerTick (float deltaTime) {
     } else {
       LastWaterLevel = 0; // yes, zero
       MovePlayer(deltaTime);
+      // allow to jump out of the water if we aren't submerged too deep
+      if (MO.WaterLevel) CheckWaterJump(asStep:true);
     }
     if (EntityEx(MO).FindInventory(PowerSpeed) &&
         !(Level.XLevel.TicTime&1) && Length(MO.Velocity) > 12.0*35.0)
