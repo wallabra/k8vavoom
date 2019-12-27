@@ -665,4 +665,14 @@ public:
 };
 
 
+extern VCvarB snd_sf2_autoload;
+extern VCvarS snd_sf2_file;
+
+extern TArray<VStr> midiSynthAllBanks;
+
+bool SF2_NeedDiskScan ();
+void SF2_SetDiskScanned (bool v);
+void SF2_ScanDiskBanks (); // this fills `midiSynthAllBanks`
+
+
 #endif

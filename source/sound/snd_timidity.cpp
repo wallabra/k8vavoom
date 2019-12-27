@@ -32,71 +32,6 @@
 #include "timidity/timidity.h"
 
 
-static const char *SF2SearchPathes[] = {
-  "!",
-#if !defined(__SWITCH__)
-  "!/sf2",
-  "!/dls",
-  "!/soundfonts",
-#endif
-#if defined(_WIN32)
-  "!/share",
-  "!/share/sf2",
-  "!/share/dls",
-  "!/share/soundfonts",
-#endif
-#if !defined(_WIN32) && !defined(__SWITCH__)
-  "~/.k8vavoom",
-  "~/.k8vavoom/sf2",
-  "~/.k8vavoom/dls",
-  "~/.k8vavoom/soundfonts",
-
-  "/opt/vavoom/sf2",
-  "/opt/vavoom/dls",
-  "/opt/vavoom/soundfonts",
-
-  "/opt/vavoom/share",
-  "/opt/vavoom/share/sf2",
-  "/opt/vavoom/share/dls",
-  "/opt/vavoom/share/soundfonts",
-
-  "/opt/vavoom/share/k8vavoom",
-  "/opt/vavoom/share/k8vavoom/sf2",
-  "/opt/vavoom/share/k8vavoom/dls",
-  "/opt/vavoom/share/k8vavoom/soundfonts",
-
-  "/usr/local/share/k8vavoom",
-  "/usr/local/share/k8vavoom/sf2",
-  "/usr/local/share/k8vavoom/dls",
-  "/usr/local/share/k8vavoom/soundfonts",
-
-  "/usr/share/k8vavoom",
-  "/usr/share/k8vavoom/sf2",
-  "/usr/share/k8vavoom/dls",
-  "/usr/share/k8vavoom/soundfonts",
-
-  "!/../share",
-  "!/../share/sf2",
-  "!/../share/dls",
-  "!/../share/soundfonts",
-
-  "!/../share/k8vavoom",
-  "!/../share/k8vavoom/sf2",
-  "!/../share/k8vavoom/dls",
-  "!/../share/k8vavoom/soundfonts",
-#endif
-#if defined(__SWITCH__)
-  "/switch/k8vavoom",
-  "/switch/k8vavoom/sf2",
-  "/switch/k8vavoom/dls",
-  "/switch/k8vavoom/soundfonts",
-#endif
-  nullptr,
-};
-
-TArray<VStr> midiSynthAllBanks;
-
-
 using namespace LibTimidity;
 
 
@@ -131,7 +66,6 @@ public:
   static VStr sf2Path;
   static bool autoloadSF2;
   static bool needRestart;
-  static bool diskScanned;
 
 protected:
   static bool NeedRestart ();
@@ -165,13 +99,6 @@ static VCvarS snd_timidity_patches("snd_timidity_patches", "\\TIMIDITY", "Path t
 #else
 static VCvarS snd_timidity_patches("snd_timidity_patches", "/usr/share/timidity", "Path to timidity patches.", CVAR_Archive|CVAR_PreInit);
 #endif
-#if defined(_WIN32)
-# define CVAR_AUTOSF2  true
-#else
-# define CVAR_AUTOSF2  true
-#endif
-VCvarB snd_timidity_autoload_sf2("snd_timidity_autoload_sf2", CVAR_AUTOSF2, "Automatically load SF2 from binary directory.", CVAR_Archive|CVAR_PreInit);
-VCvarS snd_timidity_sf2_file("snd_timidity_sf2_file", "", "Timidity SF2 soundfont file.", CVAR_Archive|CVAR_PreInit);
 static VCvarI snd_timidity_verbosity("snd_timidity_verbosity", "0", "Some timidity crap.", CVAR_Archive);
 
 Sf2Data *TimidityManager::sf2_data = nullptr;
@@ -182,111 +109,6 @@ VStr TimidityManager::patchesPath = VStr::EmptyString;
 VStr TimidityManager::sf2Path = VStr::EmptyString;
 bool TimidityManager::autoloadSF2 = false;
 bool TimidityManager::needRestart = false;
-bool TimidityManager::diskScanned = false;
-
-
-//==========================================================================
-//
-//  forceMidiBanksScan
-//
-//==========================================================================
-void forceMidiBanksScan () {
-  TimidityManager::diskScanned = false;
-}
-
-
-//==========================================================================
-//
-//  scanForMidiBanks
-//
-//==========================================================================
-void scanForMidiBanks () {
-  if (midiSynthAllBanks.length() == 0 || midiSynthAllBanks[0] != snd_timidity_sf2_file.asStr()) {
-    TimidityManager::diskScanned = false;
-  }
-
-  if (TimidityManager::diskScanned) return;
-
-  // try to find sf2 in binary dir
-  TimidityManager::diskScanned = true;
-
-  // collect banks
-  midiSynthAllBanks.reset();
-  midiSynthAllBanks.append(snd_timidity_sf2_file.asStr());
-
-  if (snd_timidity_autoload_sf2) {
-    for (const char **sfdir = SF2SearchPathes; *sfdir; ++sfdir) {
-      VStr dirname = VStr(*sfdir);
-      if (dirname.isEmpty()) continue;
-      if (dirname[0] == '!') { dirname.chopLeft(1); dirname = GParsedArgs.getBinDir()+dirname; }
-      #if !defined(_WIN32) && !defined(__SWITCH__)
-      else if (dirname[0] == '~') {
-        const char *home = getenv("HOME");
-        if (!home || !home[0]) continue;
-        dirname.chopLeft(1);
-        dirname = VStr(home)+dirname;
-      }
-      #endif
-      //GCon->Logf("Timidity: scanning '%s'...", *dirname);
-      auto dir = Sys_OpenDir(dirname);
-      for (;;) {
-        auto fname = Sys_ReadDir(dir);
-        if (fname.isEmpty()) break;
-        VStr ext = fname.extractFileExtension();
-        if (ext.strEquCI(".sf2") || ext.strEquCI(".dls")) midiSynthAllBanks.append(dirname+"/"+fname);
-      }
-      Sys_CloseDir(dir);
-    }
-  }
-
-#if defined(__SWITCH__)
-  // try "/switch/k8vavoom/gzdoom.sf2"
-  if (Sys_FileExists("/switch/k8vavoom/gzdoom.sf2")) {
-    bool found = false;
-    for (auto &&fn : midiSynthAllBanks) {
-      if (fn.strEquCI("/switch/k8vavoom/gzdoom.sf2")) {
-        found = true;
-        break;
-      }
-    }
-    if (!found) midiSynthAllBanks.append("/switch/k8vavoom/gzdoom.sf2");
-  }
-#endif
-
-#ifdef _WIN32
-  {
-    /*static*/ const char *shitdozeShit[] = {
-      "ct4mgm.sf2",
-      "ct2mgm.sf2",
-      "drivers\\gm.dls",
-      nullptr,
-    };
-    bool delimeterPut = false;
-    for (const char **ssp = shitdozeShit; *ssp; ++ssp) {
-      static char sysdir[65536];
-      memset(sysdir, 0, sizeof(sysdir));
-      if (!GetSystemDirectoryA(sysdir, sizeof(sysdir)-1)) break;
-      //VStr gmpath = VStr(getenv("WINDIR"))+"/system32/drivers/gm.dls";
-      VStr gmpath = VStr(sysdir)+"\\"+(*ssp);
-      //GCon->Logf("::: trying <%s> :::", *gmpath);
-      if (Sys_FileExists(*gmpath)) {
-        bool found = false;
-        for (auto &&fn : midiSynthAllBanks) {
-          if (fn.strEquCI(gmpath)) {
-            found = true;
-            break;
-          }
-        }
-        if (!found) {
-          if (!delimeterPut) midiSynthAllBanks.append(""); // delimiter
-          delimeterPut = true;
-          midiSynthAllBanks.append(gmpath);
-        }
-      }
-    }
-  }
-#endif
-}
 
 
 //==========================================================================
@@ -321,8 +143,8 @@ bool TimidityManager::NeedRestart () {
   return
     needRestart ||
     patchesPath != snd_timidity_patches.asStr() ||
-    sf2Path != snd_timidity_sf2_file.asStr() ||
-    autoloadSF2 != snd_timidity_autoload_sf2.asBool();
+    sf2Path != snd_sf2_file.asStr() ||
+    autoloadSF2 != snd_sf2_autoload.asBool();
 }
 
 
@@ -333,8 +155,8 @@ bool TimidityManager::NeedRestart () {
 //==========================================================================
 void TimidityManager::UpdateCvarCache () {
   patchesPath = snd_timidity_patches.asStr();
-  sf2Path = snd_timidity_sf2_file.asStr();
-  autoloadSF2 = snd_timidity_autoload_sf2.asBool();
+  sf2Path = snd_sf2_file.asStr();
+  autoloadSF2 = snd_sf2_autoload.asBool();
   needRestart = false;
 }
 
@@ -369,7 +191,7 @@ bool TimidityManager::InitTimidity () {
   vassert(!patches);
   vassert(!sf2_data);
 
-  if (autoloadSF2 != snd_timidity_autoload_sf2.asBool()) diskScanned = false;
+  if (autoloadSF2 != snd_sf2_autoload.asBool()) SF2_SetDiskScanned(false);
 
   UpdateCvarCache();
 
@@ -381,7 +203,7 @@ bool TimidityManager::InitTimidity () {
   Timidity_Init();
 
   // load sf2
-  VStr sf2name = snd_timidity_sf2_file.asStr();
+  VStr sf2name = snd_sf2_file.asStr();
   if (sf2name.length()) {
     sf2_data = Timidity_LoadSF2(*sf2name);
     if (sf2_data) {
@@ -391,10 +213,10 @@ bool TimidityManager::InitTimidity () {
     }
   }
 
-  scanForMidiBanks();
+  SF2_ScanDiskBanks();
 
   // try to find sf2 in binary dir
-  if (!sf2_data && snd_timidity_autoload_sf2) {
+  if (!sf2_data && snd_sf2_autoload) {
     TArray<VStr> failedBanks;
     // try to load a bank
     for (auto &&bfn : midiSynthAllBanks) {

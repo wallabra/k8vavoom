@@ -40,16 +40,6 @@
 #endif
 
 
-extern TArray<VStr> midiSynthAllBanks;
-
-extern void forceMidiBanksScan ();
-extern void scanForMidiBanks ();
-
-
-extern VCvarB snd_timidity_autoload_sf2;
-extern VCvarS snd_timidity_sf2_file;
-
-
 // Values are: 0 = FLUID_INTERP_NONE
 //             1 = FLUID_INTERP_LINEAR
 //             4 = FLUID_INTERP_4THORDER (the FluidSynth default)
@@ -253,8 +243,8 @@ extern "C" {
 bool FluidManager::NeedRestart () {
   return
     needRestart ||
-    sf2Path != snd_timidity_sf2_file.asStr() ||
-    autoloadSF2 != snd_timidity_autoload_sf2.asBool();
+    sf2Path != snd_sf2_file.asStr() ||
+    autoloadSF2 != snd_sf2_autoload.asBool();
 }
 
 
@@ -264,8 +254,8 @@ bool FluidManager::NeedRestart () {
 //
 //==========================================================================
 void FluidManager::UpdateCvarCache () {
-  sf2Path = snd_timidity_sf2_file.asStr();
-  autoloadSF2 = snd_timidity_autoload_sf2.asBool();
+  sf2Path = snd_sf2_file.asStr();
+  autoloadSF2 = snd_sf2_autoload.asBool();
   needRestart = false;
 }
 
@@ -334,7 +324,7 @@ bool FluidManager::InitFluid () {
 
   vassert(sf2id < 0);
 
-  if (autoloadSF2 != snd_timidity_autoload_sf2.asBool()) forceMidiBanksScan();
+  if (autoloadSF2 != snd_sf2_autoload.asBool()) SF2_SetDiskScanned(false);
 
   UpdateCvarCache();
 
@@ -378,9 +368,9 @@ bool FluidManager::InitFluid () {
                          snd_fluid_chorus_speed.asFloat(), snd_fluid_chorus_depth.asFloat(), snd_fluid_chorus_type.asInt());
 
 
-  scanForMidiBanks();
+  SF2_ScanDiskBanks();
 
-  if (snd_timidity_autoload_sf2) {
+  if (snd_sf2_autoload) {
     TArray<VStr> failedBanks;
     // try to load a bank
     for (auto &&bfn : midiSynthAllBanks) {

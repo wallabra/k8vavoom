@@ -188,6 +188,7 @@ set(SOUNDSYS_SOURCES
   #k8:not used, 'cause there is no EAX/EFX support: sound/snd_reverbs.cpp
   sound/snd_streamplayer.cpp
   sound/snd_midisong.cpp
+  sound/snd_sf2scan.cpp
   sound/snd_timidity.cpp
   sound/snd_wav.cpp
   # xmplite is always here
