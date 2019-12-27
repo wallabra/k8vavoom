@@ -910,7 +910,7 @@ COMMAND_WITH_AC(TeleportNewMap) {
   }
 
   if (!deathmatch) {
-    if (VStr(GLevelInfo->NextMap).StartsWith("EndGame")) {
+    if (VStr(GLevelInfo->NextMap).StartsWithCI("EndGame")) {
       for (int i = 0; i < svs.max_clients; ++i) {
         if (GGameInfo->Players[i]) {
           GGameInfo->Players[i]->eventClientFinale(*GLevelInfo->NextMap);
