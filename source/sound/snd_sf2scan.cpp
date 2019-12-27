@@ -31,7 +31,7 @@ VCvarB snd_sf2_autoload("snd_sf2_autoload", true, "Automatically load SF2 from a
 VCvarS snd_sf2_file("snd_sf2_file", "", "Use this soundfont file.", CVAR_Archive|CVAR_PreInit);
 
 
-TArray<VStr> midiSynthAllBanks;
+TArray<VStr> sf2FileList;
 static bool diskScanned = false;
 
 
@@ -122,11 +122,11 @@ void SF2_SetDiskScanned (bool v) {
 //
 //  SF2_ScanDiskBanks
 //
-//  this fills `midiSynthAllBanks`
+//  this fills `sf2FileList`
 //
 //==========================================================================
 void SF2_ScanDiskBanks () {
-  if (midiSynthAllBanks.length() == 0 || midiSynthAllBanks[0] != snd_sf2_file.asStr()) {
+  if (sf2FileList.length() == 0 || sf2FileList[0] != snd_sf2_file.asStr()) {
     diskScanned = false;
   }
 
@@ -136,8 +136,8 @@ void SF2_ScanDiskBanks () {
   diskScanned = true;
 
   // collect banks
-  midiSynthAllBanks.reset();
-  midiSynthAllBanks.append(snd_sf2_file.asStr());
+  sf2FileList.reset();
+  sf2FileList.append(snd_sf2_file.asStr());
 
   if (snd_sf2_autoload) {
     for (const char **sfdir = SF2SearchPathes; *sfdir; ++sfdir) {
@@ -158,7 +158,7 @@ void SF2_ScanDiskBanks () {
         auto fname = Sys_ReadDir(dir);
         if (fname.isEmpty()) break;
         VStr ext = fname.extractFileExtension();
-        if (ext.strEquCI(".sf2") || ext.strEquCI(".dls")) midiSynthAllBanks.append(dirname+"/"+fname);
+        if (ext.strEquCI(".sf2") || ext.strEquCI(".dls")) sf2FileList.append(dirname+"/"+fname);
       }
       Sys_CloseDir(dir);
     }
@@ -168,13 +168,13 @@ void SF2_ScanDiskBanks () {
   // try "/switch/k8vavoom/gzdoom.sf2"
   if (Sys_FileExists("/switch/k8vavoom/gzdoom.sf2")) {
     bool found = false;
-    for (auto &&fn : midiSynthAllBanks) {
+    for (auto &&fn : sf2FileList) {
       if (fn.strEquCI("/switch/k8vavoom/gzdoom.sf2")) {
         found = true;
         break;
       }
     }
-    if (!found) midiSynthAllBanks.append("/switch/k8vavoom/gzdoom.sf2");
+    if (!found) sf2FileList.append("/switch/k8vavoom/gzdoom.sf2");
   }
 #endif
 
@@ -196,16 +196,16 @@ void SF2_ScanDiskBanks () {
       //GCon->Logf("::: trying <%s> :::", *gmpath);
       if (Sys_FileExists(*gmpath)) {
         bool found = false;
-        for (auto &&fn : midiSynthAllBanks) {
+        for (auto &&fn : sf2FileList) {
           if (fn.strEquCI(gmpath)) {
             found = true;
             break;
           }
         }
         if (!found) {
-          if (!delimeterPut) midiSynthAllBanks.append(""); // delimiter
+          if (!delimeterPut) sf2FileList.append(""); // delimiter
           delimeterPut = true;
-          midiSynthAllBanks.append(gmpath);
+          sf2FileList.append(gmpath);
         }
       }
     }

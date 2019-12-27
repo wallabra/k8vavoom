@@ -219,7 +219,7 @@ bool TimidityManager::InitTimidity () {
   if (!sf2_data && snd_sf2_autoload) {
     TArray<VStr> failedBanks;
     // try to load a bank
-    for (auto &&bfn : midiSynthAllBanks) {
+    for (auto &&bfn : sf2FileList) {
       sf2name = bfn;
       if (sf2name.isEmpty()) break;
       if (sf2name.extractFileExtension().strEquCI(".sf2")) {
@@ -255,7 +255,7 @@ bool TimidityManager::InitTimidity () {
   if (!sf2_data && !patches) {
     if (Timidity_ReadConfig() != 0) {
       bool doLoading = false;
-      for (auto &&gmpath : midiSynthAllBanks) {
+      for (auto &&gmpath : sf2FileList) {
         if (!doLoading) {
           if (gmpath.isEmpty()) doLoading = true;
         }

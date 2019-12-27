@@ -668,11 +668,11 @@ public:
 extern VCvarB snd_sf2_autoload;
 extern VCvarS snd_sf2_file;
 
-extern TArray<VStr> midiSynthAllBanks;
+extern TArray<VStr> sf2FileList;
 
 bool SF2_NeedDiskScan ();
 void SF2_SetDiskScanned (bool v);
-void SF2_ScanDiskBanks (); // this fills `midiSynthAllBanks`
+void SF2_ScanDiskBanks (); // this fills `sf2FileList`
 
 
 #endif

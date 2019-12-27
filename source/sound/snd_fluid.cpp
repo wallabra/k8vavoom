@@ -373,7 +373,7 @@ bool FluidManager::InitFluid () {
   if (snd_sf2_autoload) {
     TArray<VStr> failedBanks;
     // try to load a bank
-    for (auto &&bfn : midiSynthAllBanks) {
+    for (auto &&bfn : sf2FileList) {
       VStr sf2name = bfn;
       if (sf2name.isEmpty()) continue;
       if (!sf2name.extractFileExtension().strEquCI(".sf2")) continue;
