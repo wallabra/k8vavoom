@@ -82,6 +82,7 @@ struct version_t {
 };
 
 
+VStr fl_configdir;
 VStr fl_basedir;
 VStr fl_savedir;
 VStr fl_gamedir;
@@ -1723,6 +1724,7 @@ static const char *cli_BaseDir = nullptr;
 static const char *cli_IWadName = nullptr;
 static const char *cli_IWadDir = nullptr;
 static const char *cli_SaveDir = nullptr;
+static const char *cli_ConfigDir = nullptr;
 
 static int reportIWads = 0;
 static int reportPWads = 1;
@@ -1990,7 +1992,8 @@ void FL_InitOptions () {
   GParsedArgs.RegisterStringOption("-iwad", "override iwad file name", &cli_IWadName);
   GParsedArgs.RegisterStringOption("-iwaddir", "set directory to look for iwads", &cli_IWadDir);
   GParsedArgs.RegisterStringOption("-basedir", "set directory to look for base k8vavoom pk3s", &cli_BaseDir);
-  GParsedArgs.RegisterStringOption("-savedir", "set directory to store saves and config files", &cli_SaveDir);
+  GParsedArgs.RegisterStringOption("-savedir", "set directory to store save files", &cli_SaveDir);
+  GParsedArgs.RegisterStringOption("-configdir", "set directory to store config file (and save files)", &cli_ConfigDir);
 
   // "-warp"
   GParsedArgs.RegisterCallback("-warp", "warp to map number", [] (VArgs &args, int idx) -> int {
@@ -2124,18 +2127,27 @@ void FL_Init () {
     if (fl_basedir.isEmpty()) Sys_Error("cannot find basedir; use \"-basedir dir\" to set it");
   }
 
+  // set up config directory (files written by engine)
+  if (cli_ConfigDir && cli_ConfigDir[0]) {
+    fl_configdir = VStr(cli_ConfigDir).fixSlashes();
+  } else {
+    #if !defined(_WIN32)
+    const char *HomeDir = getenv("HOME");
+    if (HomeDir && HomeDir[0]) fl_configdir = VStr(HomeDir)+"/.k8vavoom";
+    #else
+    fl_configdir = ".";
+    #endif
+  }
+  fl_configdir = fl_configdir.removeTrailingSlash();
+
   // set up save directory (files written by engine)
   p = cli_SaveDir;
   if (p && p[0]) {
     fl_savedir = p;
   } else {
-#if !defined(_WIN32)
-    const char *HomeDir = getenv("HOME");
-    if (HomeDir && HomeDir[0]) fl_savedir = VStr(HomeDir)+"/.k8vavoom";
-#else
-    fl_savedir = ".";
-#endif
+    fl_savedir = fl_configdir.appendPath("saves");
   }
+  fl_savedir = fl_savedir.removeTrailingSlash();
 
   // set up additional directories where to look for IWAD files
   p = cli_IWadDir;
@@ -2402,6 +2414,7 @@ void FL_Shutdown () {
   fl_basedir.Clean();
   fl_savedir.Clean();
   fl_gamedir.Clean();
+  fl_configdir.Clean();
   IWadDirs.Clear();
   FSYS_Shutdown();
 }
@@ -2457,20 +2470,16 @@ VStream *FL_OpenFileWriteInCfgDir (VStr Name) {
 //
 //==========================================================================
 VStr FL_GetConfigDir () {
-  VStr res;
-#if !defined(_WIN32)
-  const char *HomeDir = getenv("HOME");
-  if (HomeDir && HomeDir[0]) {
-    res = VStr(HomeDir)+"/.k8vavoom";
-    Sys_CreateDirectory(res);
-  } else {
-    //res = (fl_savedir.IsNotEmpty() ? fl_savedir : fl_basedir);
-    res = (fl_savedir.IsNotEmpty() ? fl_savedir : ".");
+  VStr res = fl_configdir;
+  if (res.isEmpty()) res = fl_savedir;
+  if (res.isEmpty()) {
+    #if !defined(_WIN32)
+    const char *HomeDir = getenv("HOME");
+    res = (HomeDir && HomeDir[0] ? VStr(HomeDir)+"/.k8vavoom" : VStr("."));
+    #else
+    res = ".";
+    #endif
   }
-#else
-  //res = (fl_savedir.IsNotEmpty() ? fl_savedir : fl_basedir);
-  res = (fl_savedir.IsNotEmpty() ? fl_savedir : ".");
-#endif
   Sys_CreateDirectory(res);
   return res;
 }
@@ -2496,9 +2505,15 @@ VStr FL_GetCacheDir () {
 //
 //==========================================================================
 VStr FL_GetSavesDir () {
-  VStr res = FL_GetConfigDir();
-  if (res.isEmpty()) return res;
-  res += "/saves";
+  VStr res = fl_savedir;
+  if (res.isEmpty()) {
+    #if !defined(_WIN32)
+    const char *HomeDir = getenv("HOME");
+    res = (HomeDir && HomeDir[0] ? VStr(HomeDir)+"/.k8vavoom/saves" : VStr("./saves"));
+    #else
+    res = "./saves";
+    #endif
+  }
   Sys_CreateDirectory(res);
   return res;
 }
