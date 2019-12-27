@@ -92,6 +92,8 @@ VCvarB r_vsync("r_vsync", true, "VSync mode.", CVAR_Archive);
 VCvarB r_vsync_adaptive("r_vsync_adaptive", true, "Use adaptive VSync mode.", CVAR_Archive);
 VCvarB r_fade_light("r_fade_light", "0", "Fade light with distance?", CVAR_Archive);
 VCvarF r_fade_factor("r_fade_factor", "7", "Fading light coefficient.", CVAR_Archive);
+VCvarF r_fade_mult_regular("r_fade_mult_regular", "1", "Light fade multiplier for regular renderer.", CVAR_Archive);
+VCvarF r_fade_mult_advanced("r_fade_mult_advanced", "0.8", "Light fade multiplier for advanced renderer.", CVAR_Archive);
 VCvarF r_sky_bright_factor("r_sky_bright_factor", "1", "Skybright actor factor.", CVAR_Archive);
 
 VCvarF r_lights_radius("r_lights_radius", "3072", "Lights out of this radius (from camera) will be dropped.", CVAR_Archive);

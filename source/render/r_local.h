@@ -1078,6 +1078,8 @@ extern VCvarB dbg_show_lightmap_cache_messages;
 extern VCvarB dbg_dlight_vis_check_messages;
 extern VCvarF r_dynamic_light_vis_check_radius_tolerance;
 extern VCvarB r_vis_check_flood;
+extern VCvarF r_fade_mult_regular;
+extern VCvarF r_fade_mult_advanced;
 
 extern VTextureTranslation **TranslationTables;
 extern int NumTranslationTables;
