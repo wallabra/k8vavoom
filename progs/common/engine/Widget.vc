@@ -532,7 +532,7 @@ static final void DrawEmptyScreen () {
   //R_FillRect(0, 0, 320, 200, 0xff_303030);
   auto ovw = GetVirtualWidth();
   auto ovh = GetVirtualHeight();
-  R_FillRect(0, 0, GetVirtualWidth(), GetVirtualHeight(), 0xff_303030);
+  R_FillRect(0, 0, GetVirtualWidth(), GetVirtualHeight(), 0xff_202020);
 }
 
 
