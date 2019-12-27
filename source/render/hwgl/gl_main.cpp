@@ -550,6 +550,26 @@ void VOpenGLDrawer::InitResolution () {
     for (int i = 0; i < Exts.Num(); ++i) GCon->Log(NAME_Init, VStr("- ")+Exts[i]);
   }
 
+  GLint major = 30000, minor = 30000;
+  glGetIntegerv(GL_MAJOR_VERSION, &major);
+  glGetIntegerv(GL_MINOR_VERSION, &minor);
+  if (major > 8 || minor > 16 || major < 1 || minor < 0) {
+    GCon->Log(NAME_Error, "OpenGL: your GPU drivers are absolutely broken.");
+    GCon->Logf(NAME_Error, "OpenGL: reported OpenGL version is v%d.%d, which is nonsence.", major, minor);
+    GCon->Log(NAME_Error, "OpenGL: expect crashes and visual glitches (if the engine will run at all).");
+    major = minor = 0;
+    if (!isShittyGPU) {
+      isShittyGPU = true;
+      shittyGPUCheckDone = true;
+      if (gl_dbg_ignore_gpu_blacklist) {
+        GCon->Log(NAME_Init, "User command is to ignore blacklist; I shall obey!");
+        isShittyGPU = false;
+      }
+    }
+  } else {
+    GCon->Logf(NAME_Init, "OpenGL v%d.%d found", major, minor);
+  }
+
   if (!shittyGPUCheckDone) {
     shittyGPUCheckDone = true;
     const char *vcstr = (const char *)glGetString(GL_VENDOR);
@@ -581,11 +601,6 @@ void VOpenGLDrawer::InitResolution () {
   hasBoundsTest = CheckExtension("GL_EXT_depth_bounds_test");
 
   useReverseZ = false;
-  GLint major, minor;
-  glGetIntegerv(GL_MAJOR_VERSION, &major);
-  glGetIntegerv(GL_MINOR_VERSION, &minor);
-  GCon->Logf(NAME_Init, "OpenGL v%d.%d found", major, minor);
-
   p_glClipControl = nullptr;
   if ((major > 4 || (major == 4 && minor >= 5)) || CheckExtension("GL_ARB_clip_control")) {
     p_glClipControl = glClipControl_t(GetExtFuncPtr("glClipControl"));
