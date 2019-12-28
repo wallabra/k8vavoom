@@ -27,6 +27,7 @@
 #include "sv_local.h"
 
 static VCvarB dbg_bsp_trace_strict_flats("dbg_bsp_trace_strict_flats", false, "use strict checks for flats?", /*CVAR_Archive|*/CVAR_PreInit);
+static VCvarB dbg_sight_trace_bsp("dbg_sight_trace_bsp", false, "use simple BSP raycast for sight (debug)?", /*CVAR_Archive|*/CVAR_PreInit);
 
 
 //==========================================================================
@@ -270,20 +271,6 @@ IMPLEMENT_FUNCTION(VLevel, BSPTraceLineEx) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-#define FRACBITS  (16)
-#define FRACUNIT  (1<<FRACBITS)
-
-#define FL(x) ((float)(x)/(float)FRACUNIT)
-#define FX(x) ((/*fixed_t*/int)((x)*FRACUNIT))
-
-// mapblocks are used to check movement against lines and things
-#define MAPBLOCKUNITS  (128)
-#define MAPBLOCKSIZE   (MAPBLOCKUNITS*FRACUNIT)
-#define MAPBLOCKSHIFT  (FRACBITS+7)
-#define MAPBTOFRAC     (MAPBLOCKSHIFT-FRACBITS)
-
-
-// ////////////////////////////////////////////////////////////////////////// //
 static intercept_t *intercepts = nullptr;
 static unsigned interAllocated = 0;
 static unsigned interUsed = 0;
@@ -511,138 +498,41 @@ static bool SightBlockLinesIterator (SightTraceInfo &trace, const VLevel *level,
 //
 //==========================================================================
 static bool SightPathTraverse (SightTraceInfo &trace, VLevel *level, sector_t *EndSector) {
-  float x1 = trace.Start.x;
-  float y1 = trace.Start.y;
-  float x2 = trace.End.x;
-  float y2 = trace.End.y;
-  float xstep, ystep;
-  float partialx, partialy;
-  float xintercept, yintercept;
-  int mapx, mapy, mapxstep, mapystep;
+  VBlockMapWalker walker;
 
-  //++validcount;
-  level->IncrementValidCount();
-  //trace.Intercepts.Clear();
   interUsed = 0;
+  //trace.Intercepts.Clear();
 
-  if (((FX(x1-level->BlockMapOrgX))&(MAPBLOCKSIZE-1)) == 0) x1 += (x1 <= x2 ? 1.0f : -1.0f); // don't side exactly on a line
-  if (((FX(y1-level->BlockMapOrgY))&(MAPBLOCKSIZE-1)) == 0) y1 += (y1 <= y2 ? 1.0f : -1.0f); // don't side exactly on a line
-
-  //k8: check if `Length()` and `SetPointDirXY()` are happy
-  if (x1 == x2 && y1 == y2) { x2 += 0.02f; y2 += 0.02f; }
-
-  trace.Delta = trace.End-trace.Start;
-  trace.Plane.SetPointDirXY(trace.Start, trace.Delta);
-  trace.EarlyOut = false;
-  trace.LineStart = trace.Start;
-
-  x1 -= level->BlockMapOrgX;
-  y1 -= level->BlockMapOrgY;
-  int xt1 = MapBlock(x1);
-  int yt1 = MapBlock(y1);
-
-  x2 -= level->BlockMapOrgX;
-  y2 -= level->BlockMapOrgY;
-  int xt2 = MapBlock(x2);
-  int yt2 = MapBlock(y2);
-
-  // points should never be out of bounds, but check once instead of each block
-  // FIXME:TODO: k8: allow traces outside of blockmap (do line clipping)
-  if (xt1 < 0 || yt1 < 0 || xt1 >= level->BlockMapWidth || yt1 >= level->BlockMapHeight ||
-      xt2 < 0 || yt2 < 0 || xt2 >= level->BlockMapWidth || yt2 >= level->BlockMapHeight)
   {
-    trace.EarlyOut = true;
-    return false;
+    float x1 = trace.Start.x;
+    float y1 = trace.Start.y;
+    float x2 = trace.End.x;
+    float y2 = trace.End.y;
+    //k8: check if `Length()` and `SetPointDirXY()` are happy
+    if (x1 == x2 && y1 == y2) { x2 += 0.02f; y2 += 0.02f; }
+
+    trace.Delta = trace.End-trace.Start;
+    trace.Plane.SetPointDirXY(trace.Start, trace.Delta);
+    trace.EarlyOut = false;
+    trace.LineStart = trace.Start;
   }
 
-  if (xt2 > xt1) {
-    mapxstep = 1;
-    partialx = 1.0f-FL((FX(x1)>>MAPBTOFRAC)&(FRACUNIT-1));
-    ystep = (y2-y1)/fabsf(x2-x1);
-  } else if (xt2 < xt1) {
-    mapxstep = -1;
-    partialx = FL((FX(x1)>>MAPBTOFRAC)&(FRACUNIT-1));
-    ystep = (y2-y1)/fabsf(x2-x1);
-  } else {
-    mapxstep = 0;
-    partialx = 1.0f;
-    ystep = 256.0f;
-  }
-  yintercept = FL(FX(y1)>>MAPBTOFRAC)+partialx*ystep;
-
-  if (yt2 > yt1) {
-    mapystep = 1;
-    partialy = 1.0f-FL((FX(y1)>>MAPBTOFRAC)&(FRACUNIT-1));
-    xstep = (x2-x1)/fabsf(y2-y1);
-  } else if (yt2 < yt1) {
-    mapystep = -1;
-    partialy = FL((FX(y1)>>MAPBTOFRAC)&(FRACUNIT-1));
-    xstep = (x2-x1)/fabsf(y2-y1);
-  } else {
-    mapystep = 0;
-    partialy = 1.0f;
-    xstep = 256.0f;
-  }
-  xintercept = FL(FX(x1)>>MAPBTOFRAC)+partialy*xstep;
-
-  // [RH] fix for traces that pass only through blockmap corners. in that case,
-  // xintercept and yintercept can both be set ahead of mapx and mapy, so the
-  // for loop would never advance anywhere.
-  if (fabsf(xstep) == 1.0f && fabsf(ystep) == 1.0f) {
-    if (ystep < 0.0f) partialx = 1.0f-partialx;
-    if (xstep < 0.0f) partialy = 1.0f-partialy;
-    if (partialx == partialy) { xintercept = xt1; yintercept = yt1; }
-  }
-
-  // step through map blocks
-  // count is present to prevent a round off error from skipping the break
-  mapx = xt1;
-  mapy = yt1;
-
-  //k8: zdoom is using 1000 here; why?
-  for (int count = 0; count < /*64*/1000; ++count) {
-    if (!SightBlockLinesIterator(trace, level, mapx, mapy)) {
-      trace.EarlyOut = true;
-      return false; // early out
-    }
-
-    if (mapx == xt2 && mapy == yt2) break;
-
-    // [RH] Handle corner cases properly instead of pretending they don't exist
-    if ((int)yintercept == mapy) {
-      yintercept += ystep;
-      mapx += mapxstep;
-      if (mapx == xt2) mapxstep = 0;
-    } else if ((int)xintercept == mapx) {
-      xintercept += xstep;
-      mapy += mapystep;
-      if (mapy == yt2) mapystep = 0;
-    } else if ((int)yintercept == mapy && (int)xintercept == mapx) {
-      // the trace is exiting a block through its corner. not only does the block
-      // being entered need to be checked (which will happen when this loop
-      // continues), but the other two blocks adjacent to the corner also need to
-      // be checked.
-      if (!SightBlockLinesIterator(trace, level, mapx+mapxstep, mapy) ||
-          !SightBlockLinesIterator(trace, level, mapx, mapy+mapystep))
-      {
+  if (walker.start(level, trace.Start.x, trace.Start.y, trace.End.x, trace.End.y)) {
+    //++validcount;
+    level->IncrementValidCount();
+    int mapx, mapy;
+    while (walker.next(mapx, mapy)) {
+      if (!SightBlockLinesIterator(trace, level, mapx, mapy)) {
         trace.EarlyOut = true;
-        return false;
+        return false; // early out
       }
-      xintercept += xstep;
-      yintercept += ystep;
-      mapx += mapxstep;
-      mapy += mapystep;
-      if (mapx == xt2) mapxstep = 0;
-      if (mapy == yt2) mapystep = 0;
-    } else {
-      // stop traversing, because somebody screwed up
-      //count = 64; //k8: does `break` forbidden by some religious taboo?
-      break;
     }
+    // couldn't early out, so go through the sorted list
+    return SightTraverseIntercepts(trace, EndSector);
   }
 
-  // couldn't early out, so go through the sorted list
-  return SightTraverseIntercepts(trace, EndSector);
+  // out of map, see nothing
+  return false;
 }
 
 
@@ -709,12 +599,15 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
   trace.LineBlockMask = (ignoreBlockAll ? 0 : ML_BLOCKEVERYTHING)|ML_BLOCKSIGHT;
   trace.CheckBaseRegion = !skipBaseRegion;
 
-  if (!allowBetterSight || radius < 4.0f || height < 4.0f || myheight < 4.0f) {
+  if (!allowBetterSight || radius < 4.0f || height < 4.0f || myheight < 4.0f || dbg_sight_trace_bsp) {
     trace.Start = org;
     trace.Start.z += myheight*0.75f;
     trace.End = dest;
     trace.End.z += height*0.5f;
-    return SightPathTraverse(trace, this, OtherSector);
+    //GCon->Log(NAME_Debug, "==================");
+    if (!dbg_sight_trace_bsp) return SightPathTraverse(trace, this, OtherSector);
+    linetrace_t ltr;
+    return TraceLine(ltr,  trace.Start, trace.End, trace.PlaneNoBlockFlags);
   } else {
     /*static*/ const float ithmult[2] = { 0.15f, 0.85f };
     /*static*/ const float sidemult[3] = { 0.0f, -0.75f, 0.75f };

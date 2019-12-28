@@ -35,21 +35,6 @@ static VCvarB dbg_use_buggy_thing_traverser("dbg_use_buggy_thing_traverser", fal
 static VCvarB dbg_use_vavoom_thing_coldet("dbg_use_vavoom_thing_coldet", false, "Use original Vavoom buggy thing coldet (for debug)?", 0);
 
 
-#define FRACBITS  (16)
-#define FRACUNIT  (1<<FRACBITS)
-
-typedef int fixed_t;
-
-#define FL(x)  ((float)(x)/(float)FRACUNIT)
-#define FX(x)  (fixed_t)((x)*FRACUNIT)
-
-// mapblocks are used to check movement against lines and things
-#define MAPBLOCKUNITS  (128)
-#define MAPBLOCKSIZE   (MAPBLOCKUNITS*FRACUNIT)
-#define MAPBLOCKSHIFT  (FRACBITS+7)
-#define MAPBTOFRAC     (MAPBLOCKSHIFT-FRACBITS)
-
-
 // ////////////////////////////////////////////////////////////////////////// //
 #define EQUAL_EPSILON (1.0f/65536.0f)
 
@@ -244,146 +229,56 @@ VPathTraverse::VPathTraverse (VThinker *Self, intercept_t **AInPtr, float InX1,
 //
 //==========================================================================
 void VPathTraverse::Init (VThinker *Self, float InX1, float InY1, float x2, float y2, int flags) {
-  float x1 = InX1;
-  float y1 = InY1;
-  int xt1;
-  int yt1;
-  int xt2;
-  int yt2;
+  VBlockMapWalker walker;
 
-  float xstep;
-  float ystep;
-
-  float partialx;
-  float partialy;
-
-  float xintercept;
-  float yintercept;
-
-  int mapx;
-  int mapy;
-
-  int mapxstep;
-  int mapystep;
-
-  //++validcount;
-  Self->XLevel->IncrementValidCount();
-
-  if (((FX(x1-Self->XLevel->BlockMapOrgX))&(MAPBLOCKSIZE-1)) == 0) x1 += 1.0f;  // don't side exactly on a line
-  if (((FX(y1-Self->XLevel->BlockMapOrgY))&(MAPBLOCKSIZE-1)) == 0) y1 += 1.0f;  // don't side exactly on a line
-
-  // check if `Length()` and `SetPointDirXY()` are happy
-  if (x1 == x2 && y1 == y2) { x2 += 0.002f; y2 += 0.002f; }
-
-  vptSeenThings.reset(); // don't shrink buckets
-
-  trace_org = TVec(x1, y1, 0);
-  trace_dest = TVec(x2, y2, 0);
-  trace_delta = trace_dest-trace_org;
-  trace_dir = Normalise(trace_delta);
-  trace_len = Length(trace_delta);
-
-  trace_plane.SetPointDirXY(trace_org, trace_delta);
-
-  x1 -= Self->XLevel->BlockMapOrgX;
-  y1 -= Self->XLevel->BlockMapOrgY;
-  xt1 = MapBlock(x1);
-  yt1 = MapBlock(y1);
-
-  x2 -= Self->XLevel->BlockMapOrgX;
-  y2 -= Self->XLevel->BlockMapOrgY;
-  xt2 = MapBlock(x2);
-  yt2 = MapBlock(y2);
-
-  if (xt2 > xt1) {
-    mapxstep = 1;
-    partialx = 1.0f-FL((FX(x1)>>MAPBTOFRAC)&(FRACUNIT-1));
-    ystep = (y2-y1)/fabsf(x2-x1);
-  } else if (xt2 < xt1) {
-    mapxstep = -1;
-    partialx = FL((FX(x1)>>MAPBTOFRAC)&(FRACUNIT-1));
-    ystep = (y2-y1)/fabsf(x2-x1);
-  } else {
-    mapxstep = 0;
-    partialx = 1.0f;
-    ystep = 256.0f;
-  }
-  yintercept = FL(FX(y1)>>MAPBTOFRAC)+partialx*ystep;
-
-  if (yt2 > yt1) {
-    mapystep = 1;
-    partialy = 1.0f-FL((FX(y1)>>MAPBTOFRAC)&(FRACUNIT-1));
-    xstep = (x2-x1)/fabsf(y2-y1);
-  } else if (yt2 < yt1) {
-    mapystep = -1;
-    partialy = FL((FX(y1)>>MAPBTOFRAC)&(FRACUNIT-1));
-    xstep = (x2-x1)/fabsf(y2-y1);
-  } else {
-    mapystep = 0;
-    partialy = 1.0f;
-    xstep = 256.0f;
-  }
-  xintercept = FL(FX(x1)>>MAPBTOFRAC)+partialy*xstep;
-
-  // [RH] fix for traces that pass only through blockmap corners. in that case,
-  // xintercept and yintercept can both be set ahead of mapx and mapy, so the
-  // for loop would never advance anywhere.
-  if (fabsf(xstep) == 1.0f && fabsf(ystep) == 1.0f) {
-    if (ystep < 0.0f) partialx = 1.0f-partialx;
-    if (xstep < 0.0f) partialy = 1.0f-partialy;
-    if (partialx == partialy) { xintercept = xt1; yintercept = yt1; }
+  if ((flags&(PT_ADDTHINGS|PT_ADDLINES)) == 0) {
+    GCon->Logf(NAME_Warning, "%s: requested traverse without any checks", Self->GetClass()->GetName());
   }
 
-  // step through map blocks
-  // count is present to prevent a round off error from skipping the break
-  mapx = xt1;
-  mapy = yt1;
+  //GCon->Logf(NAME_Debug, "000: %s: requested traverse (0x%04x); start=(%g,%g); end=(%g,%g)", Self->GetClass()->GetName(), (unsigned)flags, InX1, InY1, x2, y2);
+  if (walker.start(Self->XLevel, InX1, InY1, x2, y2)) {
+    float x1 = InX1, y1 = InY1;
 
-  //k8: zdoom is using 1000 here; why?
-  for (int count = 0 ; count < 100; ++count) {
-    if (flags&PT_ADDTHINGS) AddThingIntercepts(Self, mapx, mapy);
+    //++validcount;
+    Self->XLevel->IncrementValidCount();
 
-    if (flags&PT_ADDLINES) {
-      if (!AddLineIntercepts(Self, mapx, mapy, !!(flags&PT_EARLYOUT))) break; // early out
-    }
+    // check if `Length()` and `SetPointDirXY()` are happy
+    if (x1 == x2 && y1 == y2) { x2 += 0.002f; y2 += 0.002f; }
 
-    if (mapx == xt2 && mapy == yt2) break;
+    //GCon->Logf(NAME_Debug, "001: %s: requested traverse (0x%04x); start=(%g,%g); end=(%g,%g)", Self->GetClass()->GetName(), (unsigned)flags, x1, y1, x2, y2);
 
-    // [RH] handle corner cases properly instead of pretending they don't exist
-    if (int(yintercept) == mapy) {
-      yintercept += ystep;
-      mapx += mapxstep;
-    } else if (int(xintercept) == mapx) {
-      xintercept += xstep;
-      mapy += mapystep;
-    } else if (int(fabsf(yintercept)) == mapy && int(fabsf(xintercept)) == mapx) {
-      // the trace is exiting a block through its corner. not only does the block
-      // being entered need to be checked (which will happen when this loop
-      // continues), but the other two blocks adjacent to the corner also need to
-      // be checked.
-      if (flags&PT_ADDTHINGS) {
-        AddThingIntercepts(Self, mapx+mapxstep, mapy);
-        AddThingIntercepts(Self, mapx, mapy+mapystep);
-      }
+    trace_org = TVec(x1, y1, 0);
+    trace_dest = TVec(x2, y2, 0);
+    trace_delta = trace_dest-trace_org;
+    trace_dir = Normalise(trace_delta);
+    trace_len = Length(trace_delta);
+    trace_plane.SetPointDirXY(trace_org, trace_delta);
 
+    vptSeenThings.reset(); // don't shrink buckets
+
+    int mapx, mapy;
+    while (walker.next(mapx, mapy)) {
+      if (flags&PT_ADDTHINGS) AddThingIntercepts(Self, mapx, mapy);
       if (flags&PT_ADDLINES) {
-        if (!AddLineIntercepts(Self, mapx+mapxstep, mapy, !!(flags&PT_EARLYOUT)) ||
-            !AddLineIntercepts(Self, mapx, mapy+mapystep, !!(flags&PT_EARLYOUT)))
-        {
-          break; // early out
-        }
+        if (!AddLineIntercepts(Self, mapx, mapy, !!(flags&PT_EARLYOUT))) break; // early out
       }
-
-      xintercept += xstep;
-      yintercept += ystep;
-      mapx += mapxstep;
-      mapy += mapystep;
-    } else {
-      // stop traversing, because somebody screwed up
-      //count = 100; //k8: does `break` forbidden by some religious taboo?
-      break;
     }
   }
+  /*
+  else {
+    const float bx1 = InX1-Self->XLevel->BlockMapOrgX;
+    const float by1 = InY1-Self->XLevel->BlockMapOrgY;
+    const int xt1 = MapBlock(bx1);
+    const int yt1 = MapBlock(by1);
+
+    const float bx2 = x2-Self->XLevel->BlockMapOrgX;
+    const float by2 = y2-Self->XLevel->BlockMapOrgY;
+    const int xt2 = MapBlock(bx2);
+    const int yt2 = MapBlock(by2);
+
+    GCon->Logf(NAME_Debug, "002: %s:  b=(%g,%g); e=(%g,%g); mb=(%d,%d); me=(%d,%d); bsize=(%d,%d)", Self->GetClass()->GetName(), bx1, by1, bx2, by2, xt1, yt1, xt2, yt2, Self->XLevel->BlockMapWidth, Self->XLevel->BlockMapHeight);
+  }
+  */
 
   Count = Intercepts.Num();
   In = Intercepts.Ptr();
@@ -538,6 +433,7 @@ void VPathTraverse::AddThingIntercepts (VThinker *Self, int mapx, int mapy) {
     for (int dy = 0; dy < 3; ++dy) {
       for (int dx = 0; dx < 3; ++dx) {
         for (VBlockThingsIterator It(Self->XLevel, mapx+deltas[dx], mapy+deltas[dy]); It; ++It) {
+          if (It->Radius <= 0.0f || It->Height <= 0.0f) continue;
           if (vptSeenThings.has(*It)) continue;
           // [RH] don't check a corner to corner crossection for hit
           // instead, check against the actual bounding box
