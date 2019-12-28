@@ -521,11 +521,26 @@ static bool SightPathTraverse (SightTraceInfo &trace, VLevel *level, sector_t *E
     //++validcount;
     level->IncrementValidCount();
     int mapx, mapy;
+    //int guard = 1000;
     while (walker.next(mapx, mapy)) {
       if (!SightBlockLinesIterator(trace, level, mapx, mapy)) {
         trace.EarlyOut = true;
         return false; // early out
       }
+      /*
+      for (int dy = -44; dy <= 44; ++dy) {
+        for (int dx = -44; dx <= 44; ++dx) {
+          if (!(dx|dy)) continue;
+          int mx = mapx+dx, my = mapy+dy;
+          if (mx < 0 || my < 0 || mx >= level->BlockMapWidth || my >= level->BlockMapHeight) continue;
+          if (!SightBlockLinesIterator(trace, level, mx, my)) {
+            trace.EarlyOut = true;
+            return false; // early out
+          }
+        }
+      }
+      */
+      //if (--guard == 0) Sys_Error("DDA walker fuckup!");
     }
     // couldn't early out, so go through the sorted list
     return SightTraverseIntercepts(trace, EndSector);

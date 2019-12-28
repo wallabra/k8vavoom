@@ -1063,7 +1063,7 @@ public:
       }
       xintercept = FL(FX(x1)>>MAPBTOFRAC)+partialy*xstep;
 
-      GLog.Logf(NAME_Debug, "000: xt1=%d; yt1=%d; xt2=%d; yt2=%d; mxstep=%d; mystep=%d; xstep=%g; ystep=%g; partialx=%g; partialy=%g; xitc=%g; yitc=%g", xt1, yt1, xt2, yt2, mapxstep, mapystep, xstep, ystep, partialx, partialy, xintercept, yintercept);
+      //GLog.Logf(NAME_Debug, "000: xt1=%d; yt1=%d; xt2=%d; yt2=%d; mxstep=%d; mystep=%d; xstep=%g; ystep=%g; partialx=%g; partialy=%g; xitc=%g; yitc=%g", xt1, yt1, xt2, yt2, mapxstep, mapystep, xstep, ystep, partialx, partialy, xintercept, yintercept);
 
       // [RH] fix for traces that pass only through blockmap corners. in that case,
       // xintercept and yintercept can both be set ahead of mapx and mapy, so the
@@ -1074,7 +1074,7 @@ public:
         if (partialx == partialy) { xintercept = xt1; yintercept = yt1; }
       }
 
-      GLog.Logf(NAME_Debug, "001: xt1=%d; yt1=%d; xt2=%d; yt2=%d; mxstep=%d; mystep=%d; xstep=%g; ystep=%g; partialx=%g; partialy=%g; xitc=%g; yitc=%g", xt1, yt1, xt2, yt2, mapxstep, mapystep, xstep, ystep, partialx, partialy, xintercept, yintercept);
+      //GLog.Logf(NAME_Debug, "001: xt1=%d; yt1=%d; xt2=%d; yt2=%d; mxstep=%d; mystep=%d; xstep=%g; ystep=%g; partialx=%g; partialy=%g; xitc=%g; yitc=%g", xt1, yt1, xt2, yt2, mapxstep, mapystep, xstep, ystep, partialx, partialy, xintercept, yintercept);
 
       // step through map blocks
       // count is present to prevent a round off error from skipping the break
@@ -1087,10 +1087,12 @@ public:
       x2 -= level->BlockMapOrgX;
       y2 -= level->BlockMapOrgY;
 
+      //GLog.Logf("WKLINE000: x1=%g; y1=%g; x2=%g; y2=%g; w=%d; h=%d", x1, y1, x2, y2, level->BlockMapWidth*MAPBLOCKUNITS, level->BlockMapHeight*MAPBLOCKUNITS);
       if (!ClipLineToRect0(&x1, &y1, &x2, &y2, level->BlockMapWidth*MAPBLOCKUNITS, level->BlockMapHeight*MAPBLOCKUNITS)) {
         //GLog.Logf(NAME_Debug, "***CLIPPED!");
         return false;
       }
+      //GLog.Logf("WKLINE001: x1=%g; y1=%g; x2=%g; y2=%g; w=%d; h=%d", x1, y1, x2, y2, level->BlockMapWidth*MAPBLOCKUNITS, level->BlockMapHeight*MAPBLOCKUNITS);
 
       //k8: this shouldn't be the case after clipping, but check it anyway
       #if 0
@@ -1160,25 +1162,25 @@ public:
       const int cind = (((int)((int)yintercept == mapy))<<1)|((int)((int)xintercept == mapx));
       switch (cind) {
         case 0: // neither xintercept nor yintercept match
-          GLog.Logf(NAME_Debug, "*** SCREWED! map=(%d,%d); intercept=(%g,%g); step=(%g,%g); mapstep=(%d,%d)", mapx, mapy, xintercept, yintercept, xstep, ystep, mapxstep, mapystep);
+          //GLog.Logf(NAME_Debug, "*** SCREWED! map=(%d,%d); intercept=(%g,%g); step=(%g,%g); mapstep=(%d,%d)", mapx, mapy, xintercept, yintercept, xstep, ystep, mapxstep, mapystep);
           // stop traversing, because somebody screwed up
           cornerHit = 4; // aborted
           break;
           //return false;
         case 1: // xintercept matches
-          GLog.Logf(NAME_Debug, "*** cind=%d! map=(%d,%d); intercept=(%g,%g); step=(%g,%g); mapstep=(%d,%d)", cind, mapx, mapy, xintercept, yintercept, xstep, ystep, mapxstep, mapystep);
+          //GLog.Logf(NAME_Debug, "*** cind=%d! map=(%d,%d); intercept=(%g,%g); step=(%g,%g); mapstep=(%d,%d)", cind, mapx, mapy, xintercept, yintercept, xstep, ystep, mapxstep, mapystep);
           xintercept += xstep;
           mapy += mapystep;
           if (mapy == yt2) mapystep = 0;
           break;
         case 2: // yintercept matches
-          GLog.Logf(NAME_Debug, "*** cind=%d! map=(%d,%d); intercept=(%g,%g); step=(%g,%g); mapstep=(%d,%d)", cind, mapx, mapy, xintercept, yintercept, xstep, ystep, mapxstep, mapystep);
+          //GLog.Logf(NAME_Debug, "*** cind=%d! map=(%d,%d); intercept=(%g,%g); step=(%g,%g); mapstep=(%d,%d)", cind, mapx, mapy, xintercept, yintercept, xstep, ystep, mapxstep, mapystep);
           yintercept += ystep;
           mapx += mapxstep;
           if (mapx == xt2) mapxstep = 0;
           break;
         case 3:
-          GLog.Logf(NAME_Debug, "*** cind=%d! map=(%d,%d); intercept=(%g,%g); step=(%g,%g); mapstep=(%d,%d)", cind, mapx, mapy, xintercept, yintercept, xstep, ystep, mapxstep, mapystep);
+          //GLog.Logf(NAME_Debug, "*** cind=%d! map=(%d,%d); intercept=(%g,%g); step=(%g,%g); mapstep=(%d,%d)", cind, mapx, mapy, xintercept, yintercept, xstep, ystep, mapxstep, mapystep);
           // the trace is exiting a block through its corner. not only does the block
           // being entered need to be checked (which will happen when this loop
           // continues), but the other two blocks adjacent to the corner also need to
@@ -1197,12 +1199,14 @@ public:
           if (mapy == yt2) mapystep = 0;
           break;
       }
-      GLog.Logf(NAME_Debug, "*** EXIT: map=(%d,%d); intercept=(%g,%g); step=(%g,%g); mapstep=(%d,%d)", mapx, mapy, xintercept, yintercept, xstep, ystep, mapxstep, mapystep);
+      //GLog.Logf(NAME_Debug, "*** EXIT: map=(%d,%d); intercept=(%g,%g); step=(%g,%g); mapstep=(%d,%d)", mapx, mapy, xintercept, yintercept, xstep, ystep, mapxstep, mapystep);
       return true;
 
     #else
+      //int guard = 1000;
       while (dda.next(tileX, tileY)) {
         if (tileX >= 0 && tileX < dda.maxTileX && tileY >= 0 && tileY < dda.maxTileY) return true;
+        //if (--guard == 0) Sys_Error("DDA walker fuckup! (1)");
       }
       return false;
     #endif
