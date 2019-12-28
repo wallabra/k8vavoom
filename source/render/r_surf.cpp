@@ -1202,7 +1202,18 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
     //k8: HACK! HACK! HACK!
     //    move middle wall backwards a little, so it will be hidden behind up/down surfaces
     //    this is required for sectors with 3d floors, until i wrote a proper texture clipping math
-    bool doOffset = seg->backsector->Has3DFloors();
+    const bool doOffset = seg->backsector->Has3DFloors();
+
+    // another hack (Doom II MAP31)
+    // if we have no 3d floors here, and the front sector can be covered with midtex, cover it
+    bool bottomCheck = false;
+    if (!doOffset && !seg->frontsector->Has3DFloors() && sidedef->BottomTexture < 1 &&
+        seg->frontsector->floor.normal.z == 1.0f && seg->backsector->floor.normal.z == 1.0f &&
+        seg->frontsector->floor.minz < seg->backsector->floor.minz)
+    {
+      //GCon->Logf(NAME_Debug, "BOO!");
+      bottomCheck = true;
+    }
 
     for (opening_t *cop = SV_SectorOpenings(seg->frontsector, true); cop; cop = cop->next) {
       if (extopz <= cop->bottom || exbotz >= cop->top) {
@@ -1271,6 +1282,11 @@ void VRenderLevelShared::SetupTwoSidedMidWSurf (subsector_t *sub, seg_t *seg, se
         hgts[1] = min2(midtopz1, z_org);
         hgts[2] = min2(midtopz2, z_org);
         hgts[3] = max2(midbotz2, z_org-texh);
+        // cover bottom texture with this too (because why not?)
+        if (bottomCheck && hgts[0] > z_org-texh) {
+          //GCon->Logf(NAME_Debug, "BOO! hgts=%g, %g, %g, %g (fz=%g); texh=%g", hgts[0], hgts[1], hgts[2], hgts[3], seg->frontsector->floor.minz, texh);
+          hgts[0] = hgts[3] = min2(hgts[0], max2(seg->frontsector->floor.minz, z_org-texh));
+        }
       }
 
       wv[0].z = hgts[0];
