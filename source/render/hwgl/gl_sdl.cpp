@@ -205,10 +205,10 @@ bool VSdlOpenGLDrawer::SetResolution (int AWidth, int AHeight, int fsmode) {
 
   // as we are doing rendering to FBO, there is no need to create depth and stencil buffers for FB
   // but shitty intel may require this, so...
-  SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-  //SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
-  //SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
+  //SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+  //SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+  SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 0);
+  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 0);
   SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
