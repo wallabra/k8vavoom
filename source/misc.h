@@ -203,25 +203,29 @@ public:
     currTileX = tileSX;
     currTileY = tileSY;
 
-    //print("*** start=(%d,%d)", tileSX, tileSY);
-    //print("*** end  =(%d,%d)", endTileX, endTileY);
+    //GLog.Logf(NAME_Debug, "*** start=(%d,%d)", tileSX, tileSY);
+    //GLog.Logf(NAME_Debug, "*** end  =(%d,%d)", endTileX, endTileY);
 
     // it is ok to waste some time here
     if (tileSX == endTileX || tileSY == endTileY) {
       if (tileSX == endTileX && tileSY == endTileY) {
         // nowhere to go (but still return the starting tile)
-        stepX = stepY = 0; // this is used as a "stop signal"
+        //GLog.Logf(NAME_Debug, "  POINT!");
+        stepX = stepY = 0; // this can be used as a "stop signal"
       } else if (tileSX == endTileX) {
         // vertical
         vassert(tileSY != endTileY);
         stepX = 0;
         stepY = (y0 < y1 ? 1 : -1);
+        //GLog.Logf(NAME_Debug, "  VERTICAL!");
       } else {
         // horizontal
         vassert(tileSY == endTileY);
         stepX = (x0 < x1 ? 1 : -1);
         stepY = 0;
+        //GLog.Logf(NAME_Debug, "  HORIZONTAL!");
       }
+      //GLog.Logf(NAME_Debug, "  step=(%d,%d)!", stepX, stepY);
       // init variables to shut up the compiler
       deltaDistX = deltaDistY = sideDistX = sideDistY = 0;
       return;
@@ -255,7 +259,7 @@ public:
   inline bool next (int &tilex, int &tiley) noexcept {
     // check for a special condition
     if (cornerHit) {
-      //print("CORNER: %d", cornerHit);
+      //GLog.Logf(NAME_Debug, "CORNER: %d", cornerHit);
       switch (cornerHit++) {
         case 1: // check adjacent horizontal tile
           if (!stepX) { ++cornerHit; goto doadjy; } // this shouldn't happen, but better play safe
@@ -292,9 +296,9 @@ public:
     tilex = currTileX;
     tiley = currTileY;
 
-    // check if we're done (sorry for this bitop mess)
-    // the following code will zero step variables, so this check works
-    if (!(stepX|stepY)) {
+    //GLog.Logf(NAME_Debug, "  000: res=(%d,%d); step=(%d,%d); sideDist=(%g,%g); delta=(%g,%g)", tilex, tiley, stepX, stepY, sideDistX, sideDistY, deltaDistX, deltaDistY);
+    // check if we're done (sorry for this bitop mess); checks step vars just to be sure
+    if (!((currTileX^endTileX)|(currTileY^endTileY)) || !(stepX|stepY)) {
       cornerHit = 4; // no more
     } else if (stepX && stepY) {
       // jump to next map square, either in x-direction, or in y-direction
@@ -306,23 +310,21 @@ public:
         // horizontal step
         sideDistX += deltaDistX;
         currTileX += stepX;
-        // don't overshoot (sadly, this may happen with long traces); also, works as a "stop sign"
+        // don't overshoot (sadly, this may happen with long traces)
         if (currTileX == endTileX) stepX = 0;
       } else {
         // vertical step
         sideDistY += deltaDistY;
         currTileY += stepY;
-        // don't overshoot (sadly, this may happen with long traces); also, works as a "stop sign"
+        // don't overshoot (sadly, this may happen with long traces)
         if (currTileY == endTileY) stepY = 0;
       }
     } else {
       // horizontal or vertical
       currTileX += stepX;
       currTileY += stepY;
-      // setup "stop signs"
-      if (currTileX == endTileX) stepX = 0;
-      if (currTileY == endTileY) stepY = 0;
     }
+    //GLog.Logf(NAME_Debug, "  001: res=(%d,%d); step=(%d,%d); sideDist=(%g,%g); delta=(%g,%g); cc=%d", tilex, tiley, stepX, stepY, sideDistX, sideDistY, deltaDistX, deltaDistY, cornerHit);
 
     return true;
   }
