@@ -708,26 +708,41 @@ void VFont::MarkUsedColors (VTexture *Tex, bool *Used) {
 //  VFont::ParseColorEscape
 //
 //  assumes that pColor points to the character right after the color
-//  escape character
+//  escape character.
+//
+//  if `escstr` is not `nullptr`, put escate into it (including escape char)
 //
 //==========================================================================
-int VFont::ParseColorEscape (const char *&pColor, int NormalColor, int BoldColor) {
+int VFont::ParseColorEscape (const char *&pColor, int NormalColor, int BoldColor, VStr *escstr) {
+  if (escstr) (*escstr) = VStr((char)TEXT_COLOR_ESCAPE);
+
   const char *Chr = pColor;
   int Col = *Chr++;
 
-       if (Col >= 'A' && Col < 'A'+NUM_TEXT_COLORS) Col -= 'A'; // standard colors, upper case
-  else if (Col >= 'a' && Col < 'a'+NUM_TEXT_COLORS) Col -= 'a'; // standard colors, lower case
-  else if (Col == '-') Col = NormalColor; // normal color
-  else if (Col == '+') Col = BoldColor; // bold color
-  else if (Col == '[') {
+  if (Col >= 'A' && Col <= 'Z') Col = Col-'A'+'a';
+
+  if (Col >= 'a' && Col < 'a'+NUM_TEXT_COLORS) {
+    if (escstr) (*escstr) += (char)Col;
+    Col -= 'a'; // standard colors, lower case
+  } else if (Col == '-') {
+    if (escstr) (*escstr) += '-';
+    Col = NormalColor; // normal color
+  } else if (Col == '+') {
+    if (escstr) (*escstr) += '+';
+    Col = BoldColor; // bold color
+  } else if (Col == '[') {
     // named colors
+    if (escstr) (*escstr) += '[';
     VStr CName;
     while (*Chr && *Chr != ']') CName += *Chr++;
-    if (*Chr == ']') Chr++;
+    if (escstr) (*escstr) += CName;
+    if (*Chr == ']') ++Chr;
+    if (escstr) (*escstr) += ']';
     Col = FindTextColor(*CName.ToLower());
   } else {
     /*if (!Col)*/ --Chr;
     Col = CR_UNDEFINED;
+    if (escstr) escstr->clear();
   }
 
   // set pointer after the color definition
@@ -818,21 +833,26 @@ int VFont::SplitText (VStr Text, TArray<VSplitLine> &Lines, int MaxWidth, bool t
   const char *Start = *Text;
   bool WordStart = true;
   int CurW = 0;
+  VStr lineCEsc;
+  VStr lastCEsc;
   for (const char *SPtr = *Text; *SPtr; ) {
     const char *PChar = SPtr;
     int c = VStr::Utf8GetChar(SPtr);
 
     // check for color escape
     if (c == TEXT_COLOR_ESCAPE) {
-      ParseColorEscape(SPtr, CR_UNDEFINED, CR_UNDEFINED);
+      ParseColorEscape(SPtr, CR_UNDEFINED, CR_UNDEFINED, &lastCEsc);
       //fprintf(stderr, "!!!!! <%s>\n", *VStr(SPtr).quote());
     } else if (c == '\n') {
       VSplitLine &L = Lines.Alloc();
-      L.Text = VStr(Text, (int)(ptrdiff_t)(Start-(*Text)), (int)(ptrdiff_t)(PChar-Start));
+      L.Text = lineCEsc+VStr(Text, (int)(ptrdiff_t)(Start-(*Text)), (int)(ptrdiff_t)(PChar-Start));
       L.Width = CurW;
       Start = SPtr;
       WordStart = true;
       CurW = 0;
+      // newline clears all color sequences
+      lineCEsc.clear();
+      lastCEsc.clear();
     } else if (WordStart && c > ' ') {
       const char *SPtr2 = SPtr;
       int c2 = c;
@@ -841,14 +861,15 @@ int VFont::SplitText (VStr Text, TArray<VSplitLine> &Lines, int MaxWidth, bool t
         if (c2 != TEXT_COLOR_ESCAPE) NewW += GetCharWidth(c2);
         c2 = VStr::Utf8GetChar(SPtr2);
         // check for color escape
-        if (c2 == TEXT_COLOR_ESCAPE) ParseColorEscape(SPtr2, CR_UNDEFINED, CR_UNDEFINED);
+        if (c2 == TEXT_COLOR_ESCAPE) ParseColorEscape(SPtr2, CR_UNDEFINED, CR_UNDEFINED, &lastCEsc);
       }
       if (NewW > MaxWidth && PChar != Start) {
         VSplitLine &L = Lines.Alloc();
-        L.Text = VStr(Text, (int)(ptrdiff_t)(Start-(*Text)), (int)(ptrdiff_t)(PChar-Start));
+        L.Text = lineCEsc+VStr(Text, (int)(ptrdiff_t)(Start-(*Text)), (int)(ptrdiff_t)(PChar-Start));
         L.Width = CurW;
         Start = PChar;
         CurW = 0;
+        lineCEsc = lastCEsc;
       }
       WordStart = false;
       CurW += GetCharWidth(c);
@@ -861,8 +882,9 @@ int VFont::SplitText (VStr Text, TArray<VSplitLine> &Lines, int MaxWidth, bool t
 
     if (!*SPtr && Start != SPtr) {
       VSplitLine &L = Lines.Alloc();
-      L.Text = Start;
+      L.Text = lineCEsc+Start;
       L.Width = CurW;
+      lineCEsc = lastCEsc;
     }
   }
 
