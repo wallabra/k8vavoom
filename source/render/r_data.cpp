@@ -1407,6 +1407,69 @@ static void ParseGlow (VScriptParser *sc) {
 
 //==========================================================================
 //
+//  ParseIncludeCondition
+//
+//==========================================================================
+static bool ParseIncludeCondition (VScriptParser *sc) {
+  enum {
+    IFANYWAD,
+    IFNOTWADS,
+  };
+
+  if (!sc->Check(":")) return true;
+
+  bool oldCMode = sc->IsCMode();
+  sc->SetCMode(true);
+
+  int cond = -1;
+       if (sc->Check("ifanywad")) cond = IFANYWAD;
+  else if (sc->Check("ifanywads")) cond = IFANYWAD; // common typo
+  else if (sc->Check("ifnotwads")) cond = IFNOTWADS;
+  else if (sc->Check("ifnotwad")) cond = IFNOTWADS; // common typo
+  else sc->Error("include condition expected");
+
+  //GCon->Logf(NAME_Debug, ": cond=%d", cond);
+
+  int count = 0, foundcount = 0;
+  sc->Expect("(");
+  while (!sc->Check(")")) {
+    sc->ExpectString();
+    VStr wadname = sc->String;
+    if (!wadname.isEmpty()) {
+      // find wad
+      wadname = wadname.extractFileBaseName().stripExtension();
+      bool found = false;
+      for (int f = 0; f < W_NextMountFileId(); ++f) {
+        VStr pak = W_FullPakNameByFile(f);
+        int cpos = pak.lastIndexOf(':');
+        if (cpos > 0) pak.chopLeft(cpos+1);
+        pak = pak.extractFileBaseName().stripExtension();
+        //GCon->Logf(NAME_Debug, "<%s> : <%s> (%d)", *pak, *wadname, (int)pak.strEquCI(wadname));
+        if (pak.strEquCI(wadname)) { found = true; break; }
+      }
+      ++count;
+      if (found) ++foundcount;
+    }
+    if (!sc->Check(",")) { sc->Expect(")"); break; }
+  }
+  sc->SetCMode(oldCMode);
+  //GCon->Logf(NAME_Debug, "::: count=%d; foundcount=%d", count, foundcount);
+  if (count == 0) return true;
+
+  switch (cond) {
+    case IFANYWAD:
+      return (foundcount > 0);
+    case IFNOTWADS:
+      return (foundcount == 0);
+    default: Sys_Error("oops!");
+  }
+
+  return false;
+}
+
+
+//==========================================================================
+//
 //  ParseGZDoomEffectDefs
 //
 //==========================================================================
@@ -1418,13 +1481,22 @@ static void ParseGZDoomEffectDefs (int SrcLump, VScriptParser *sc, TArray<VTempC
   while (!sc->AtEnd()) {
     if (sc->Check("#include")) {
       sc->ExpectString();
-      int Lump = W_CheckNumForFileName(sc->String);
-      // check WAD lump only if it's no longer than 8 characters and has no path separator
-      if (Lump < 0 && sc->String.Length() <= 8 && sc->String.IndexOf('/') < 0) {
-        Lump = W_CheckNumForName(VName(*sc->String, VName::AddLower8));
+      VStr incfile = sc->String.fixSlashes();
+      // parse optional condition
+      bool doit = ParseIncludeCondition(sc);
+      if (doit) {
+        int Lump = W_CheckNumForFileName(incfile);
+        // check WAD lump only if it's no longer than 8 characters and has no path separator
+        if (Lump < 0 && incfile.Length() <= 8 && incfile.IndexOf('/') < 0) {
+          VName nn = VName(*incfile, VName::FindLower8);
+          if (nn != NAME_None) Lump = W_CheckNumForName(nn);
+        }
+        if (Lump < 0) sc->Error(va("Lump '%s' not found", *incfile));
+        //GCon->Logf(NAME_Debug, "...including '%s' (%s)", *incfile, *W_FullLumpName(Lump));
+        ParseGZDoomEffectDefs(Lump, new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassDefs);
+      } else {
+        GCon->Logf(NAME_Init, "gldefs include file '%s' skipped due to condition", *incfile);
       }
-      if (Lump < 0) sc->Error(va("Lump '%s' not found", *sc->String));
-      ParseGZDoomEffectDefs(Lump, new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)), ClassDefs);
       continue;
     }
     else if (sc->Check("pointlight")) ParseGZLightDef(sc, DLTYPE_Point, lightsizefactor);
