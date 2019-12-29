@@ -95,6 +95,7 @@ void ParseCVarInfo () {
       par.OpenLumpIndex(lump);
       par.SetCMode(true);
       par.SetEscape(true);
+      string help;
       for (;;) {
         int flags = CVAR_FROMMOD|CVAR_ARCHIVE;
         if (par.Check("server")) {
@@ -106,7 +107,8 @@ void ParseCVarInfo () {
           if (!par.GetString()) break;
           par.ScriptError("CVARINFO ERROR: unknown command '%s'", par.String);
         }
-        // flags
+        // flags and options
+        help = "";
         for (;;) {
                if (par.Check("noarchive")) flags &= ~CVAR_ARCHIVE;
           else if (par.Check("cheat")) flags |= CVAR_CHEAT;
@@ -149,19 +151,27 @@ void ParseCVarInfo () {
             par.ScriptError("CVARINFO ERROR: cvar type?");
           }
         }
+        if (par.Check(":")) {
+          // help
+          if (par.Check("k8_helptext")) {
+            par.Expect("=");
+            par.ExpectString();
+            help = par.String;
+          }
+        }
         par.Expect(";");
         //print("CVAR: '%s'; fval=%s; sval=%s", vname, fval, sval);
         int oldcvflags = CvarGetFlags(vname);
         if (oldcvflags == -1 /*|| (oldcvflags&CVAR_FROMMOD) != 0*/) {
           //print("NEW CVAR: '%s'", vname);
           if (isstr || iscolor) {
-            CreateCvarStr(vname, sval, "cvarinfo string variable", flags);
+            CreateCvarStr(vname, sval, (help ? help : "cvarinfo string variable"), flags);
           } else if (isbool) {
-            CreateCvarBool(vname, !!fval, "cvarinfo bool variable", flags);
+            CreateCvarBool(vname, !!fval, (help ? help : "cvarinfo bool variable"), flags);
           } else if (isfloat) {
-            CreateCvarFloat(vname, fval, "cvarinfo float variable", flags);
+            CreateCvarFloat(vname, fval, (help ? help : "cvarinfo float variable"), flags);
           } else {
-            CreateCvarInt(vname, int(fval), "cvarinfo int variable", flags);
+            CreateCvarInt(vname, int(fval), (help ? help : "cvarinfo int variable"), flags);
           }
         }
       }
