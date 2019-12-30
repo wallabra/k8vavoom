@@ -567,6 +567,25 @@ static bool SightPathTraverse2 (SightTraceInfo &trace, sector_t *EndSector) {
 
 //==========================================================================
 //
+//  isNotInsideBM
+//
+//  right edge is not included
+//
+//==========================================================================
+static VVA_CHECKRESULT inline bool isNotInsideBM (const TVec &pos, const VLevel *level) {
+  // horizontal check
+  const int intx = (int)pos.x;
+  const int intbx0 = (int)level->BlockMapOrgX;
+  if (intx < intbx0 || intx >= intbx0+level->BlockMapWidth*MAPBLOCKUNITS) return true;
+  // vertical checl
+  const int inty = (int)pos.y;
+  const int intby0 = (int)level->BlockMapOrgY;
+  return (inty < intby0 || inty >= intby0+level->BlockMapHeight*MAPBLOCKUNITS);
+}
+
+
+//==========================================================================
+//
 //  VLevel::CastCanSee
 //
 //  doesn't check pvs or reject
@@ -577,6 +596,11 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
                          const TVec &dest, float radius, float height, bool skipBaseRegion, sector_t *DestSector,
                          bool allowBetterSight, bool ignoreBlockAll, bool ignoreFakeFloors) {
   if (lengthSquared(org-dest) <= 1) return true;
+
+  // if starting or ending point is out of blockmap bounds, don't bother tracing
+  // we can get away with this, because nothing can see anything beyound the map extents
+  if (isNotInsideBM(org, this)) return false;
+  if (isNotInsideBM(dest, this)) return false;
 
   SightTraceInfo trace;
 
@@ -670,6 +694,11 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
 //==========================================================================
 bool VLevel::CastEx (sector_t *Sector, const TVec &org, const TVec &dest, unsigned blockflags, sector_t *DestSector) {
   if (lengthSquared(org-dest) <= 1) return true;
+
+  // if starting or ending point is out of blockmap bounds, don't bother tracing
+  // we can get away with this, because nothing can see anything beyound the map extents
+  if (isNotInsideBM(org, this)) return false;
+  if (isNotInsideBM(dest, this)) return false;
 
   SightTraceInfo trace;
 
