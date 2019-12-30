@@ -481,7 +481,7 @@ public:
     dist = -dist;
   }
 
-  // distance from point to plane
+  // *signed* distance from point to plane
   // plane must be normalized
   inline VVA_CHECKRESULT float PointDistance (const TVec &p) const noexcept {
     return DotProduct(p, normal)-dist;
@@ -531,6 +531,22 @@ public:
     const TVec dif = p1-p0;
     const float t = (dist-normal.dot(p0))/normal.dot(dif);
     return p0+(dif*t);
+  }
+
+  // returns the point where the line p0-p1 intersects this plane
+  // `p0` and `p1` must not be the same
+  inline VVA_CHECKRESULT bool LineIntersectEx (TVec &res, const TVec &p0, const TVec &p1) const noexcept {
+    const TVec dif = p1-p0;
+    if (dif.isZero()) {
+      res = p0;
+      return false;
+    } else {
+      const float t = (dist-normal.dot(p0))/normal.dot(dif);
+      if (t < 0.0f) { res = p0; return false; }
+      if (t > 1.0f) { res = p1; return false; }
+      res = p0+(dif*t);
+      return true;
+    }
   }
 
 
