@@ -351,7 +351,8 @@ static inline VVA_OKUNUSED float VectorAnglePitch (const TVec &vec) noexcept {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-// Ax+By+Cz=D (ABC is normal, D is distance); i.e. "general form" (with negative D)
+// Ax+By+Cz=D (ABC is normal, D is distance)
+// this the same as in Quake engine, so i can... borrow code from it ;-)
 class /*__attribute__((packed))*/ TPlane {
 public:
   TVec normal;
@@ -521,31 +522,34 @@ public:
 
   // returns the point where the line p0-p1 intersects this plane
   // `p0` and `p1` must not be the same
-  inline VVA_CHECKRESULT float LineIntersectTime (const TVec &p0, const TVec &p1) const noexcept {
-    return (dist-normal.dot(p0))/normal.dot(p1-p0);
+  inline VVA_CHECKRESULT float LineIntersectTime (const TVec &p0, const TVec &p1, const float eps=0.0001f) const noexcept {
+    const float dv = normal.dot(p1-p0);
+    return (fabsf(dv) > eps ? (dist-normal.dot(p0))/dv : -666.0f);
   }
 
   // returns the point where the line p0-p1 intersects this plane
   // `p0` and `p1` must not be the same
-  inline VVA_CHECKRESULT TVec LineIntersect (const TVec &p0, const TVec &p1) const noexcept {
+  inline VVA_CHECKRESULT TVec LineIntersect (const TVec &p0, const TVec &p1, const float eps=0.0001f) const noexcept {
     const TVec dif = p1-p0;
-    const float t = (dist-normal.dot(p0))/normal.dot(dif);
+    const float dv = normal.dot(dif);
+    const float t = (fabsf(dv) > eps ? (dist-normal.dot(p0))/dv : 0.0f);
     return p0+(dif*t);
   }
 
   // returns the point where the line p0-p1 intersects this plane
   // `p0` and `p1` must not be the same
-  inline VVA_CHECKRESULT bool LineIntersectEx (TVec &res, const TVec &p0, const TVec &p1) const noexcept {
+  inline VVA_CHECKRESULT bool LineIntersectEx (TVec &res, const TVec &p0, const TVec &p1, const float eps=0.0001f) const noexcept {
     const TVec dif = p1-p0;
-    if (dif.isZero()) {
-      res = p0;
-      return false;
-    } else {
+    const float dv = normal.dot(dif);
+    if (fabsf(dv) > eps) {
       const float t = (dist-normal.dot(p0))/normal.dot(dif);
       if (t < 0.0f) { res = p0; return false; }
       if (t > 1.0f) { res = p1; return false; }
       res = p0+(dif*t);
       return true;
+    } else {
+      res = p0;
+      return false;
     }
   }
 
