@@ -363,7 +363,37 @@ IMPLEMENT_FUNCTION(VObject, PlaneProjectPoint) {
   TPlane *plane;
   TVec v;
   vobjGetParam(plane, v);
-  RET_VEC(v-(v-plane->normal*plane->dist).dot(plane->normal)*plane->normal);
+  //RET_VEC(v-(v-plane->normal*plane->dist).dot(plane->normal)*plane->normal);
+  RET_VEC(plane->Project(v));
+}
+
+//native static final float PlanePointDistance (const ref TPlane plane, TVec v);
+IMPLEMENT_FUNCTION(VObject, PlanePointDistance) {
+  TPlane *plane;
+  TVec v;
+  vobjGetParam(plane, v);
+  RET_FLOAT(plane->PointDistance(v));
+}
+
+//native static final float PlaneLineIntersectTime (const ref TPlane plane, TVec v0, TVec v1);
+IMPLEMENT_FUNCTION(VObject, PlaneLineIntersectTime) {
+  TPlane *plane;
+  TVec v0, v1;
+  vobjGetParam(plane, v0, v1);
+  if (v0 == v1) {
+    RET_FLOAT(-1.0f);
+  } else {
+    RET_FLOAT(plane->LineIntersectTime(v0, v1));
+  }
+}
+
+//native static final bool PlaneLineIntersect (const ref TPlane plane, TVec v0, TVec v1, out TVec vint);
+IMPLEMENT_FUNCTION(VObject, PlaneLineIntersect) {
+  TPlane *plane;
+  TVec v0, v1;
+  TVec *res;
+  vobjGetParam(plane, v0, v1, res);
+  RET_BOOL(plane->LineIntersectEx(*res, v0, v1));
 }
 
 // initialises vertical plane from point and direction

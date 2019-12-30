@@ -64,6 +64,10 @@
   DECLARE_FUNCTION(IsVerticalPlane)
 
   DECLARE_FUNCTION(PlaneProjectPoint)
+  DECLARE_FUNCTION(PlanePointDistance)
+
+  DECLARE_FUNCTION(PlaneLineIntersectTime)
+  DECLARE_FUNCTION(PlaneLineIntersect)
 
   DECLARE_FUNCTION(PlaneForPointDir)
   DECLARE_FUNCTION(PlaneForPointNormal)

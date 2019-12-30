@@ -532,6 +532,12 @@ native static final void PlaneForLine (out TPlane plane, TVec pointA, TVec point
 
 native static final TVec PlaneProjectPoint (const ref TPlane plane, TVec v);
 
+// *signed* point distance
+native static final float PlanePointDistance (const ref TPlane plane, TVec v);
+
+native static final float PlaneLineIntersectTime (const ref TPlane plane, TVec v0, TVec v1);
+native static final bool PlaneLineIntersect (const ref TPlane plane, TVec v0, TVec v1, out TVec vint);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // returns number of planes created (0 for point)
