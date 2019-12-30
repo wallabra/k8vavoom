@@ -106,17 +106,17 @@ void VOpenGLDrawer::RenderSurfaceShadowVolumeZPassIntr (const surface_t *surf, c
   comb.ExtractFrustumNear(znear);
 
   bool doProject = false;
-  const float ldist = znear.CalcDistance(LightPos); // from light to znear
+  const float ldist = znear.PointDistance(LightPos); // from light to znear
   if (ldist <= 0.0f) {
     // on the back, project only if some surface vertices are on the back too
     for (unsigned f = 0; f < vcount; ++f) {
-      const float sdist = znear.CalcDistance(sverts[f]);
+      const float sdist = znear.PointDistance(sverts[f]);
       if (sdist >= ldist && sdist <= 0.0f) { doProject = true; break; }
     }
   } else {
     // before camera, project only if some surface vertices are nearer (but not on the back)
     for (unsigned f = 0; f < vcount; ++f) {
-      const float sdist = znear.CalcDistance(sverts[f]);
+      const float sdist = znear.PointDistance(sverts[f]);
       if (sdist <= ldist && sdist >= 0.0f) { doProject = true; break; }
     }
   }

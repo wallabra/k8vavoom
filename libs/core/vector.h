@@ -481,6 +481,12 @@ public:
     dist = -dist;
   }
 
+  // distance from point to plane
+  // plane must be normalized
+  inline VVA_CHECKRESULT float PointDistance (const TVec &p) const noexcept {
+    return DotProduct(p, normal)-dist;
+  }
+
   // get z of point with given x and y coords
   // don't try to use it on a vertical plane
   inline VVA_CHECKRESULT float GetPointZ (float x, float y) const noexcept {
@@ -499,6 +505,7 @@ public:
     return GetPointZRev(v.x, v.y);
   }
 
+
   // "land" point onto the plane
   // plane must be normalized
   inline VVA_CHECKRESULT TVec landAlongNormal (const TVec &point) const noexcept {
@@ -511,23 +518,25 @@ public:
     return v-(v-normal*dist).dot(normal)*normal;
   }
 
+
   // returns the point where the line p0-p1 intersects this plane
   // `p0` and `p1` must not be the same
-  inline float LineIntersectTime (const TVec &p0, const TVec &p1) const noexcept {
+  inline VVA_CHECKRESULT float LineIntersectTime (const TVec &p0, const TVec &p1) const noexcept {
     return (dist-normal.dot(p0))/normal.dot(p1-p0);
   }
 
   // returns the point where the line p0-p1 intersects this plane
   // `p0` and `p1` must not be the same
-  inline TVec LineIntersect (const TVec &p0, const TVec &p1) const noexcept {
+  inline VVA_CHECKRESULT TVec LineIntersect (const TVec &p0, const TVec &p1) const noexcept {
     const TVec dif = p1-p0;
     const float t = (dist-normal.dot(p0))/normal.dot(dif);
     return p0+(dif*t);
   }
 
+
   // intersection of 3 planes, Graphics Gems 1 pg 305
   // not sure if it should be `dist` or `-dist` here for vavoom planes
-  VVA_CHECKRESULT TVec IntersectionPoint (const TPlane &plane2, const TPlane &plane3) const noexcept {
+  inline VVA_CHECKRESULT TVec IntersectionPoint (const TPlane &plane2, const TPlane &plane3) const noexcept {
     const float det = normal.cross(plane2.normal).dot(plane3.normal);
     // if the determinant is 0, that means parallel planes, no intersection
     if (fabs(det) < 0.001f) return TVec::Invalid();
@@ -536,6 +545,7 @@ public:
        plane3.normal.cross(normal)*(-plane2.dist)+
        normal.cross(plane2.normal)*(-plane3.dist))/det;
   }
+
 
   // sphere sweep test; if `true` (hit), `hitpos` will be sphere position when it hits this plane, and `u` will be normalized collision time
   // not sure if it should be `dist` or `-dist` here for vavoom planes
@@ -615,12 +625,6 @@ public:
     return (d < -radius ? 1 : d > radius ? 0 : 2);
   }
 
-  // distance from point to plane
-  // plane must be normalized
-  inline VVA_CHECKRESULT float CalcDistance (const TVec &p) const noexcept {
-    return DotProduct(p, normal)-dist;
-  }
-
   // returns "AABB reject point"
   // i.e. box point that is furthest from the plane
   inline VVA_CHECKRESULT TVec get3DBBoxRejectPoint (const float bbox[6]) const noexcept {
@@ -666,11 +670,10 @@ public:
   // if the box is touching the plane from inside, it is still assumed to be inside
   inline VVA_CHECKRESULT int checkBoxEx (const float bbox[6]) const noexcept {
     // check reject point
-    float d = DotProduct(normal, get3DBBoxRejectPoint(bbox))-dist;
-    if (d <= 0.0f) return OUTSIDE; // entire box on a back side
+    if (DotProduct(normal, get3DBBoxRejectPoint(bbox))-dist <= 0.0f) return OUTSIDE; // entire box on a back side
     // check accept point
-    d = DotProduct(normal, get3DBBoxAcceptPoint(bbox))-dist;
-    return (d < 0.0f ? PARTIALLY : INSIDE); // if accept point on another side (or on plane), assume intersection
+    // if accept point on another side (or on plane), assume intersection
+    return (DotProduct(normal, get3DBBoxAcceptPoint(bbox))-dist < 0.0f ? PARTIALLY : INSIDE);
   }
 
   // returns `false` if the rect is on the back side of the plane
@@ -698,7 +701,7 @@ public:
   // i.e.
   //   bit 0 is set if some part of the cube is in front, and
   //   bit 1 is set if some part of the cube is in back
-  unsigned BoxOnPlaneSide (const TVec &emins, const TVec &emaxs) const noexcept;
+  VVA_CHECKRESULT unsigned BoxOnPlaneSide (const TVec &emins, const TVec &emaxs) const noexcept;
 
   // this is used in `ClipPoly`
   // all data is malloced, so you'd better keep this between calls to avoid excessive allocations

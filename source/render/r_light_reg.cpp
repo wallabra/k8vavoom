@@ -421,7 +421,7 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
   }
 
   //float orgdist = DotProduct(light->origin, surf->GetNormal())-surf->GetDist();
-  const float orgdist = surf->CalcDistance(light->origin);
+  const float orgdist = surf->PointDistance(light->origin);
   // don't bother with lights behind the surface, or too far away
   if (orgdist <= -0.1f || orgdist >= light->radius) return;
 
@@ -834,7 +834,7 @@ void VRenderLevelLightmap::AddDynamicLights (surface_t *surf) {
 
     const TVec dorg = dl.origin;
     float rad = dl.radius;
-    float dist = surf->CalcDistance(dorg);
+    float dist = surf->PointDistance(dorg);
     // don't bother with lights behind the surface, or too far away
     if (dist <= -0.1f || dist >= rad) continue; // was with `r_dynamic_clip` check; but there is no reason to not check this
     if (dist < 0.0f) dist = 0.0f; // clamp it
