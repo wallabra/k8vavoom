@@ -175,6 +175,7 @@ static bool sweepAABB (int mex0, int mey0, int mew, int meh, // my box
 
 // ////////////////////////////////////////////////////////////////////////// //
 // this is using float numbers, so try to keep coordinates inside 16 signed bits
+/*
 struct DDALineWalker {
 private:
   int x0, y0, x1, y1;
@@ -345,6 +346,7 @@ bool DDALineWalker::next (int *tilex, int *tiley) {
   if (tiley) *tiley = currTileY;
   return true;
 }
+*/
 
 
 
