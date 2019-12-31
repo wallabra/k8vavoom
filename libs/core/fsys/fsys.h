@@ -149,9 +149,11 @@ int W_LumpFile (int lump);
 // returns handle or -1
 int W_FindFirstLumpOccurence (VName lmpname, EWadNamespace NS);
 
+bool W_IsWadPK3File (int file);
+
 bool W_IsIWADFile (int file);
 bool W_IsWADFile (int file); // not pk3, not disk
-bool W_IsAuxFile (int lump); // -1 is not aux ;-)
+bool W_IsAuxFile (int file); // -1 is not aux ;-)
 
 bool W_IsIWADLump (int lump);
 bool W_IsWADLump (int lump); // not pk3, not disk

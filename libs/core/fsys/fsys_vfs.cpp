@@ -1196,6 +1196,23 @@ void WadMapIterator::advanceToNextMapLump () {
 
 //==========================================================================
 //
+//  W_IsWadPK3File
+//
+//==========================================================================
+bool W_IsWadPK3File (int fidx) {
+  VStr pfx;
+  {
+    MyThreadLocker glocker(&fsys_glock);
+    if (fidx < 0 || fidx >= getSPCount()) return false;
+    VSearchPath *w = SearchPaths[fidx];
+    pfx = w->GetPrefix();
+  } // unlock here
+  return (pfx.endsWithCI(".wad") || pfx.endsWithCI(".pk3"));
+}
+
+
+//==========================================================================
+//
 //  W_IsIWADFile
 //
 //==========================================================================
