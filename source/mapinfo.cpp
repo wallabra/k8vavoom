@@ -535,15 +535,23 @@ void InitMapInfo () {
   int lastMapinfoFile = -1; // not seen yet
   int lastMapinfoLump = -1; // not seen yet
   int lastZMapinfoLump = -1; // not seen yet
+  bool doSkipFile = false;
   VName nameZMI = VName("zmapinfo", VName::Add);
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     int currFile = W_LumpFile(Lump);
+    if (doSkipFile) {
+      if (currFile == lastMapinfoFile) continue;
+      doSkipFile = false; // just in case
+    }
     // if we hit another file, load last seen [z]mapinfo lump
     if (currFile != lastMapinfoFile) {
       LoadAllMapInfoLumpsInFile(lastMapinfoLump, lastZMapinfoLump);
       // reset/update remembered lump indicies
       lastMapinfoFile = currFile;
       lastMapinfoLump = lastZMapinfoLump = -1; // not seen yet
+      // skip zip files
+      doSkipFile = !W_IsWadPK3File(currFile);
+      if (doSkipFile) continue;
     }
     // remember last seen [z]mapinfo lump
     if (lastMapinfoLump < 0 && W_LumpName(Lump) == NAME_mapinfo) lastMapinfoLump = Lump;
@@ -2185,11 +2193,11 @@ static void ParseMapInfo (VScriptParser *sc, int milumpnum) {
 
 //==========================================================================
 //
-// QualifyMap
+//  QualifyMap
 //
 //==========================================================================
 static int QualifyMap (int map) {
-  return (map < 0 || map >= MapInfo.Num()) ? 0 : map;
+  return (map < 0 || map >= MapInfo.Num() ? 0 : map);
 }
 
 
