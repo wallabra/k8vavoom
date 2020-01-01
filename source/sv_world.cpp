@@ -154,7 +154,10 @@ bool P_GetMidTexturePosition (const line_t *linedef, int sideno, float *ptextop,
     return false;
   }
 
-  const side_t *sidedef = &GLevel->Sides[linedef->sidenum[sideno]];
+  // have to do this, because this function can be called both in server and in client
+  VLevel *level = (GClLevel ? GClLevel : GLevel);
+
+  const side_t *sidedef = &level->Sides[linedef->sidenum[sideno]];
   if (sidedef->MidTexture <= 0) {
     if (ptextop) *ptextop = 0;
     if (ptexbot) *ptexbot = 0;
@@ -435,6 +438,8 @@ static void BuildSectorOpenings (const line_t *xldef, TArray<opening_t> &dest, s
   cop.lowfloor = 0.0f; // for now
   cop.highceiling = 0.0f; // for now
   //bool hadNonSolid;
+  // have to do this, because this function can be called both in server and in client
+  VLevel *level = (GClLevel ? GClLevel : GLevel);
   // skip base region for now
   for (const sec_region_t *reg = sector->eregions->next; reg; reg = reg->next) {
     if (reg->regflags&sec_region_t::RF_OnlyVisual) continue; // pure visual region, ignore it
@@ -448,7 +453,7 @@ static void BuildSectorOpenings (const line_t *xldef, TArray<opening_t> &dest, s
     if (((reg->efloor.splane->flags|reg->eceiling.splane->flags)&NoBlockFlags) != 0) continue; // bad flags
     // hack: 3d floor with sky texture seems to be transparent in renderer
     if (forSurface && reg->extraline) {
-      const side_t *sidedef = &GLevel->Sides[reg->extraline->sidenum[0]];
+      const side_t *sidedef = &level->Sides[reg->extraline->sidenum[0]];
       if (sidedef->MidTexture == skyflatnum) continue;
     }
     // border points
