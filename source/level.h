@@ -945,8 +945,13 @@ void SV_LoadLevel (VName MapName);
 void CL_LoadLevel (VName MapName);
 void SwapPlanes (sector_t *);
 
-extern VLevel *GLevel;
-extern VLevel *GClLevel;
+// WARNING! sometimes `GClLevel` set go `GLevel`, and sometimes only one of those is not `nullptr`
+// the basic rule is that if there is full-featured playsim, then `GLevel` is set
+// and if we need to render something, then `GClLevel` is set
+// for standalone game, `GClLevel` is equal to `GLevel` (this is one weird special case)
+//FIXME: need to check if those vars are properly managed everywhere
+extern VLevel *GLevel; // server/standalone level
+extern VLevel *GClLevel; // level for client-only games
 
 
 // ////////////////////////////////////////////////////////////////////////// //
