@@ -176,10 +176,11 @@ void Host_Init () {
   VObject::compilerDisablePostloading = false; // just in case
 
   GCon->Log(NAME_Init, "---------------------------------------------------------------");
-  GCon->Logf(NAME_Init, "k8vavoom Game Engine, started by Janis Legzdinsh | %s", __DATE__);
+  GCon->Log(NAME_Init, "k8vavoom Game Engine, (c) 1999-2020 Vavoom and k8vavoom devs");
+  GCon->Logf(NAME_Init, "project started by Janis Legzdinsh                | %s", __DATE__);
   GCon->Log(NAME_Init, "also starring Francisco Ortega, and others (k8:drop me a note!)");
   GCon->Log(NAME_Init, "Ketmar Dark: improvements, bugfixes, new bugs, segfaults, etc.");
-  GCon->Log(NAME_Init, "alot of invaluable help and testing (esp. x86_64): id0");
+  GCon->Log(NAME_Init, "alot of invaluable help, testing, and support: id0");
   GCon->Log(NAME_Init, "---------------------------------------------------------------");
   GCon->Log(NAME_Init, "REMEMBER: BY USING FOSS SOFTWARE, YOU ARE SUPPORTING COMMUNISM!");
   GCon->Log(NAME_Init, "---------------------------------------------------------------");
