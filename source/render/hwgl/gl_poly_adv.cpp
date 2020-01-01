@@ -545,7 +545,6 @@ void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float R
     ClearStencilBuffer();
   }
   glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-  //!glEnable(GL_POLYGON_OFFSET_FILL);
 
   GLDisableBlend();
   glDisable(GL_CULL_FACE);
@@ -554,28 +553,12 @@ void VOpenGLDrawer::BeginLightShadowVolumes (const TVec &LightPos, const float R
 
   if (!CanUseRevZ()) {
     // normal
-    //FIXME! k8: this is done in main renderer now
-    /*
-    if (!gl_dbg_adv_render_never_offset_shadow_volume) {
-      if (gl_dbg_adv_render_offset_shadow_volume || !usingFPZBuffer) {
-        glPolygonOffset(1.0f, 10.0f);
-        glEnable(GL_POLYGON_OFFSET_FILL);
-      }
-    }
-    */
+    // shadow volume offseting is done in the main renderer
     glDepthFunc(GL_LESS);
     //glDepthFunc(GL_LEQUAL);
   } else {
     // reversed
-    //FIXME! k8: this is done in main renderer now
-    /*
-    if (!gl_dbg_adv_render_never_offset_shadow_volume) {
-      if (gl_dbg_adv_render_offset_shadow_volume) {
-        glPolygonOffset(-1.0f, -10.0f);
-        glEnable(GL_POLYGON_OFFSET_FILL);
-      }
-    }
-    */
+    // shadow volume offseting is done in the main renderer
     glDepthFunc(GL_GREATER);
     //glDepthFunc(GL_GEQUAL);
   }
@@ -623,8 +606,7 @@ void VOpenGLDrawer::EndLightShadowVolumes () {
   #if 0
   //FIXME: done in main renderer now
   /*if (gl_dbg_adv_render_offset_shadow_volume || !usingFPZBuffer)*/ {
-    glDisable(GL_POLYGON_OFFSET_FILL);
-    glPolygonOffset(0.0f, 0.0f);
+    GLDisableOffset();
   }
   #endif
   //glDisable(GL_SCISSOR_TEST);
@@ -1083,7 +1065,7 @@ void VOpenGLDrawer::DrawWorldTexturesPass () {
   glDisable(GL_STENCIL_TEST);
   glDisable(GL_SCISSOR_TEST);
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-  glDisable(GL_POLYGON_OFFSET_FILL);
+  GLDisableOffset();
   glEnable(GL_CULL_FACE);
   RestoreDepthFunc();
 

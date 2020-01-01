@@ -261,8 +261,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
       glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
       glDepthMask(GL_FALSE); // no z-buffer writes
       const float updir = (!CanUseRevZ() ? -1.0f : 1.0f);//*hangup;
-      glPolygonOffset(updir, updir);
-      glEnable(GL_POLYGON_OFFSET_FILL);
+      GLPolygonOffset(updir, updir);
     }
     //GLEnableBlend();
     // translucent things should not modify z-buffer
@@ -364,10 +363,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
   #undef SPRVTX
 
   if (restoreBlend) {
-    if (hangup) {
-      glPolygonOffset(0.0f, 0.0f);
-      glDisable(GL_POLYGON_OFFSET_FILL);
-    }
+    if (hangup) GLDisableOffset();
     //GLDisableBlend();
     if (zbufferWriteDisabled) glDepthMask(oldDepthMask); // restore z-buffer writes
     if (Additive) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -395,7 +391,7 @@ void VOpenGLDrawer::BeginTranslucentPolygonDecals () {
   glDisable(GL_STENCIL_TEST);
   glDisable(GL_SCISSOR_TEST);
   glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-  glDisable(GL_POLYGON_OFFSET_FILL);
+  GLDisableOffset();
   glEnable(GL_CULL_FACE);
   RestoreDepthFunc();
   //GLDisableBlend();

@@ -348,7 +348,12 @@ VOpenGLDrawer::VOpenGLDrawer ()
   shittyGPUCheckDone = false; // just in case
   atlasesGenerated = false;
   currentActiveFBO = nullptr;
+
   blendEnabled = false;
+
+  offsetEnabled = false;
+  offsetFactor = offsetUnits = 0;
+
   //cameraFBO[0].mOwner = nullptr;
   //cameraFBO[1].mOwner = nullptr;
 }
@@ -856,6 +861,11 @@ void VOpenGLDrawer::InitResolution () {
   glEnable(GL_BLEND);
   glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   blendEnabled = true;
+
+  glDisable(GL_POLYGON_OFFSET_FILL);
+  glPolygonOffset(0, 0);
+  offsetEnabled = false;
+  offsetFactor = offsetUnits = 0;
 
   mInitialized = true;
 
@@ -1921,6 +1931,52 @@ bool VOpenGLDrawer::RenderWipe (float time) {
 
   //wipeFBO.blitTo(&mainFBO, 0, 0, mainFBO.getWidth(), mainFBO.getHeight(), 0, 0, mainFBO.getWidth(), mainFBO.getHeight(), GL_NEAREST);
   return (time <= WipeDur);
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::GLEnableOffset
+//
+//==========================================================================
+void VOpenGLDrawer::GLEnableOffset () {
+  if (!offsetEnabled) {
+    offsetEnabled = true;
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    //glPolygonOffset(afactor, aunits); // just in case
+  }
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::GLDisableOffset
+//
+//==========================================================================
+void VOpenGLDrawer::GLDisableOffset () {
+  if (offsetEnabled) {
+    offsetEnabled = false;
+    glDisable(GL_POLYGON_OFFSET_FILL);
+    //glPolygonOffset(0, 0); // just in case
+  }
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::GLPolygonOffset
+//
+//==========================================================================
+void VOpenGLDrawer::GLPolygonOffset (const float afactor, const float aunits) {
+  if (afactor != offsetFactor || aunits != offsetUnits || !offsetEnabled) {
+    offsetFactor = afactor;
+    offsetUnits = aunits;
+    glPolygonOffset(afactor, aunits);
+    if (!offsetEnabled) {
+      offsetEnabled = true;
+      glEnable(GL_POLYGON_OFFSET_FILL);
+    }
+  }
 }
 
 

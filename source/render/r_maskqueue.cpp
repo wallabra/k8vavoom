@@ -683,7 +683,7 @@ void VRenderLevelShared::DrawTranslucentPolys () {
       //GCon->Logf("  #%d: type=%d; alpha=%g; additive=%d; light=0x%08x; fade=0x%08x", f, spr.type, spr.Alpha, (int)spr.Additive, spr.light, spr.Fade);
       if (spr.type == 2) {
         // alias model
-        if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); pofsEnabled = false; }
+        if (pofsEnabled) { Drawer->GLDisableOffset(); pofsEnabled = false; }
         DrawEntityModel(spr.Ent, spr.light, spr.Fade, spr.Alpha, spr.Additive, spr.TimeFrac, RPASS_Normal);
       } else if (spr.type) {
         // sprite
@@ -694,12 +694,10 @@ void VRenderLevelShared::DrawTranslucentPolys () {
               // switch to next pofs
               //if (++pofs == MAX_POFS) pofs = 0;
               ++pofs;
-              glEnable(GL_POLYGON_OFFSET_FILL);
-              //glPolygonOffset(((float)pofs)/(float)MAX_POFS, -4);
               if (Drawer->CanUseRevZ()) {
-                glPolygonOffset(r_sprite_pslope, -(pofs*r_sprite_pofs)); // pull forward
+                Drawer->GLPolygonOffset(r_sprite_pslope, -(pofs*r_sprite_pofs)); // pull forward
               } else {
-                glPolygonOffset(-r_sprite_pslope, (pofs*r_sprite_pofs)); // pull forward
+                Drawer->GLPolygonOffset(-r_sprite_pslope, (pofs*r_sprite_pofs)); // pull forward
               }
               pofsEnabled = true;
             }
@@ -708,7 +706,7 @@ void VRenderLevelShared::DrawTranslucentPolys () {
           }
         } else {
           lastpdist = spr.pdist;
-          if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); pofsEnabled = false; }
+          if (pofsEnabled) { Drawer->GLDisableOffset(); pofsEnabled = false; }
           // reset pofs
           pofs = 0;
         }
@@ -720,13 +718,13 @@ void VRenderLevelShared::DrawTranslucentPolys () {
         // masked polygon
         // non-translucent and non-additive polys should not end up here
         vassert(spr.surf);
-        if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); pofsEnabled = false; }
+        if (pofsEnabled) { Drawer->GLDisableOffset(); pofsEnabled = false; }
         Drawer->DrawMaskedPolygon(spr.surf, spr.Alpha, spr.Additive);
       }
     }
 #undef MAX_POFS
 
-    if (pofsEnabled) { glDisable(GL_POLYGON_OFFSET_FILL); glPolygonOffset(0, 0); }
+    if (pofsEnabled) { Drawer->GLDisableOffset(); }
   }
 
   //GCon->Logf(NAME_Debug, "add=%d; alp=%d", DrawSurfListAdditive.length(), DrawSurfListAlpha.length());

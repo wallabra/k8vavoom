@@ -1014,12 +1014,11 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   LightClip.ClearClipNodes(CurrLightPos, Level, CurrLightRadius);
   if (allowShadows) {
     if (r_shadowvol_use_pofs) {
-      glEnable(GL_POLYGON_OFFSET_FILL);
       // pull forward
       if (Drawer->CanUseRevZ()) {
-        glPolygonOffset(r_shadowvol_pslope, -r_shadowvol_pofs);
+        Drawer->GLPolygonOffset(r_shadowvol_pslope, -r_shadowvol_pofs);
       } else {
-        glPolygonOffset(-r_shadowvol_pslope, r_shadowvol_pofs);
+        Drawer->GLPolygonOffset(-r_shadowvol_pslope, r_shadowvol_pofs);
       }
     }
     if (r_max_shadow_segs_all) {
@@ -1030,8 +1029,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
     Drawer->BeginModelsShadowsPass(CurrLightPos, CurrLightRadius);
     RenderMobjsShadow(ent, dlflags);
     if (r_shadowvol_use_pofs) {
-      glDisable(GL_POLYGON_OFFSET_FILL);
-      glPolygonOffset(0, 0);
+      Drawer->GLDisableOffset();
     }
   }
   Drawer->EndLightShadowVolumes();

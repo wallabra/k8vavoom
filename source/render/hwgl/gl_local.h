@@ -394,6 +394,8 @@ private:
   bool decalUsedStencil;
   bool stencilBufferDirty;
   bool blendEnabled;
+  bool offsetEnabled;
+  float offsetFactor, offsetUnits;
 
   // last used shadow volume scissor
   // if new scissor is inside this one, and stencil buffer is not changed,
@@ -422,6 +424,11 @@ private:
   inline void GLEnableBlend () { if (!blendEnabled) { blendEnabled = true; glEnable(GL_BLEND); } }
   inline void GLDisableBlend () { if (blendEnabled) { blendEnabled = false; glDisable(GL_BLEND); } }
   inline void GLSetBlendEnabled (const bool v) { if (blendEnabled != v) { blendEnabled = v; if (v) glEnable(GL_BLEND); else glDisable(GL_BLEND); } }
+
+  virtual void GLEnableOffset () override;
+  virtual void GLDisableOffset () override;
+  // this also enables it if it was disabled
+  virtual void GLPolygonOffset (const float afactor, const float aunits) override;
 
   virtual void ForceClearStencilBuffer () override;
   virtual void ForceMarkStencilBufferDirty () override;

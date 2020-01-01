@@ -391,6 +391,12 @@ public:
   // -1 means "show saved wipe screen"
   virtual bool RenderWipe (float time) = 0;
 
+  // renderer require this
+  virtual void GLEnableOffset () = 0;
+  virtual void GLDisableOffset () = 0;
+  // this also enables it if it was disabled
+  virtual void GLPolygonOffset (const float afactor, const float aunits) = 0;
+
   // texture stuff
   virtual void PrecacheTexture (VTexture *) = 0;
   virtual void FlushOneTexture (VTexture *tex, bool forced=false) = 0; // unload one texture
