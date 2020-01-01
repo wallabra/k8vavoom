@@ -691,7 +691,7 @@ static bool CanSurfaceSegCastShadow (const surface_t *surf, const TVec LightPos,
   }
 
   // if this is not a two-sided line, only first and last segs can cast shadows
-  //!!!if ((int)(ptrdiff_t)(ldef-GLevel->Lines) == 42) GCon->Log("********* 42 ************");
+  //!!!if ((int)(ptrdiff_t)(ldef-GClLevel->Lines) == 42) GCon->Log("********* 42 ************");
   if (*seg->v1 != *ldef->v1 && *seg->v2 != *ldef->v2 &&
       *seg->v2 != *ldef->v1 && *seg->v1 != *ldef->v2)
   {
@@ -708,10 +708,10 @@ static bool CanSurfaceSegCastShadow (const surface_t *surf, const TVec LightPos,
     if (!l2->SphereTouches(LightPos, Radius)) continue;
     if (l2->flags&ML_TWOSIDED) return true;
     if (PlaneAngles2D(ldef, l2) <= 180.0f && PlaneAngles2DFlipTo(ldef, l2) <= 180.0f) {
-      //!!!GCon->Logf("::: %d vs %d: %g : %g", (int)(ptrdiff_t)(ldef-GLevel->Lines), (int)(ptrdiff_t)(l2-GLevel->Lines), PlaneAngles2D(ldef, l2), PlaneAngles2DFlipTo(ldef, l2));
+      //!!!GCon->Logf("::: %d vs %d: %g : %g", (int)(ptrdiff_t)(ldef-GClLevel->Lines), (int)(ptrdiff_t)(l2-GClLevel->Lines), PlaneAngles2D(ldef, l2), PlaneAngles2DFlipTo(ldef, l2));
       continue;
     } else {
-      //!!!GCon->Logf("::: %d vs %d: %g : %g", (int)(ptrdiff_t)(ldef-GLevel->Lines), (int)(ptrdiff_t)(l2-GLevel->Lines), PlaneAngles2D(ldef, l2), PlaneAngles2DFlipTo(ldef, l2));
+      //!!!GCon->Logf("::: %d vs %d: %g : %g", (int)(ptrdiff_t)(ldef-GClLevel->Lines), (int)(ptrdiff_t)(l2-GClLevel->Lines), PlaneAngles2D(ldef, l2), PlaneAngles2DFlipTo(ldef, l2));
     }
     return true;
   }
@@ -723,10 +723,10 @@ static bool CanSurfaceSegCastShadow (const surface_t *surf, const TVec LightPos,
     if (!l2->SphereTouches(LightPos, Radius)) continue;
     if (l2->flags&ML_TWOSIDED) return true;
     if (PlaneAngles2D(ldef, l2) <= 180.0f && PlaneAngles2DFlipTo(ldef, l2) <= 180.0f) {
-      //!!!GCon->Logf("::: %d vs %d: %g : %g", (int)(ptrdiff_t)(ldef-GLevel->Lines), (int)(ptrdiff_t)(l2-GLevel->Lines), PlaneAngles2D(ldef, l2), PlaneAngles2DFlipTo(ldef, l2));
+      //!!!GCon->Logf("::: %d vs %d: %g : %g", (int)(ptrdiff_t)(ldef-GClLevel->Lines), (int)(ptrdiff_t)(l2-GClLevel->Lines), PlaneAngles2D(ldef, l2), PlaneAngles2DFlipTo(ldef, l2));
       continue;
     } else {
-      //!!!GCon->Logf("::: %d vs %d: %g : %g", (int)(ptrdiff_t)(ldef-GLevel->Lines), (int)(ptrdiff_t)(l2-GLevel->Lines), PlaneAngles2D(ldef, l2), PlaneAngles2DFlipTo(ldef, l2));
+      //!!!GCon->Logf("::: %d vs %d: %g : %g", (int)(ptrdiff_t)(ldef-GClLevel->Lines), (int)(ptrdiff_t)(l2-GClLevel->Lines), PlaneAngles2D(ldef, l2), PlaneAngles2DFlipTo(ldef, l2));
     }
     return true;
   }
