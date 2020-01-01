@@ -214,7 +214,8 @@ static VCvarI snd_max_same_sounds("snd_max_same_sounds", "6", "Maximum number of
 VCvarI snd_mid_player("snd_mid_player", "1", "MIDI player type (0:Timidity; 1:FluidSynth; -1:none)", CVAR_Archive|CVAR_PreInit);
 VCvarI snd_mod_player("snd_mod_player", "2", "Module player type", CVAR_Archive);
 
-extern VCvarB snd_music_background_load;
+//k8: it seems to be weirdly unstable (at least under windoze). sigh.
+static VCvarB snd_bgloading_music("snd_bgloading_music", false, "Load music in the background thread?", CVAR_Archive|CVAR_PreInit);
 
 
 //==========================================================================
@@ -1105,7 +1106,7 @@ VAudioCodec *VAudio::LoadSongInternal (const char *Song, bool wasPlaying) {
 void VAudio::PlaySong (const char *Song, bool Loop) {
   if (!Song || !Song[0] || !StreamMusicPlayer) return;
 
-  if (snd_music_background_load) {
+  if (snd_bgloading_music) {
     StreamMusicPlayer->LoadAndPlay(Song, Loop);
   } else {
     bool wasPlaying = StreamMusicPlayer->IsPlaying();

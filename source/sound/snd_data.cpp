@@ -30,15 +30,8 @@
 
 static VCvarB snd_verbose_truncate("snd_verbose_truncate", false, "Show silence-truncated sounds?", CVAR_Archive);
 
-#ifdef _WIN32
-# define VV_SND_BACKLOAD  false
-#else
-//k8: it seems to be weirdly unstable. sigh.
-//# define VV_SND_BACKLOAD  true
-# define VV_SND_BACKLOAD  false
-#endif
-VCvarB snd_background_loading("snd_background_loading", VV_SND_BACKLOAD, "Load sounds in background thread?", CVAR_Archive|CVAR_PreInit);
-VCvarB snd_music_background_load("snd_music_background_load", VV_SND_BACKLOAD, "Load music in the background thread?", CVAR_Archive|CVAR_PreInit);
+//k8: it seems to be weirdly unstable (at least under windoze). sigh.
+static VCvarB snd_bgloading_sfx("snd_bgloading_sfx", false, "Load sounds in background thread?", CVAR_Archive|CVAR_PreInit);
 
 
 #ifdef CLIENT
@@ -363,7 +356,7 @@ void VSoundManager::Init () {
   queuedSoundsMap.clear();
   readySounds.clear();
   // create stream player thread
-  if (snd_background_loading) {
+  if (snd_bgloading_sfx) {
     if (mythread_create(&loaderThread, &soundStreamThread, this)) {
       GCon->Logf(NAME_Warning, "cannot create sound streaming thread (this is harmless)");
       sndThreadDebug = false;
