@@ -8,7 +8,7 @@
 //**       #    ##    ##    #      ####     ####   ##       ##
 //**
 //**  Copyright (C) 2009, 2010 Brendon Duncan
-//**  Copyright (C) 2020 Ketmar Dark
+//**  Copyright (C) 2019-2020 Ketmar Dark
 //**  Based on https://github.com/CO2/UDMF-Convert
 //**
 //**  This program is free software: you can redistribute it and/or modify
