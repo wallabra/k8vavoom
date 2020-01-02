@@ -2423,7 +2423,7 @@ override int GetActorProperty (int Prop) {
       //return int(ViewHeight*65536.0);
       return int(Height/2.0*65536.0);
     case APROP_AttackZOffset:
-      return int((bIsPlayer ? PlayerEx(Player).GetAttackZOfs(missile:true) : 8.0)*65536.0);
+      return int((bIsPlayer ? PlayerEx(Player).GetAttackZOfs : 8.0)*65536.0);
     case APROP_Notarget: return (bIsPlayer ? PlayerEx(Player).bNoTarget : 0);
     case APROP_Notrigger: return (bNoTrigger ? 1 : 0);
     case APROP_Score: return ScoreValue;

@@ -662,6 +662,7 @@ final float AngleTo (TVec dest) {
 //==========================================================================
 final float PitchTo (TVec dest, optional bool useRealHeight) {
   TVec org = botmo.Origin;
+  //FIXME: use `CalculateLineAttackZOfs()` here
   if (useRealHeight) org.z += botmo.Height*0.5-botmo.FloorClip+player.GetAttackZOfs;
 
   TAVec ang;
@@ -679,9 +680,12 @@ final float PitchTo (TVec dest, optional bool useRealHeight) {
 //==========================================================================
 final float PitchToEntity (EntityEx ent, optional bool useRealHeight) {
   if (!ent) return 0;
+
+  //FIXME: use `CalculateLineAttackZOfs()` here
   TVec eorig = ent.Origin;
   if (useRealHeight) eorig.z += ent.Height*0.95-ent.FloorClip;
 
+  //FIXME: use `CalculateLineAttackZOfs()` here
   TVec org = botmo.Origin;
   if (useRealHeight) org.z += botmo.Height*0.5-botmo.FloorClip+player.GetAttackZOfs;
 
@@ -2342,9 +2346,11 @@ void Attack (bool newTick) {
   }
 
   {
+    //FIXME: use `CalculateLineAttackZOfs()` here
     TVec eorig = enemy.Origin;
     eorig.z += enemy.Height*0.95-enemy.FloorClip;
 
+    //FIXME: use `CalculateLineAttackZOfs()` here
     TVec org = botmo.Origin;
     org.z += botmo.Height*0.5-botmo.FloorClip+player.GetAttackZOfs;
 

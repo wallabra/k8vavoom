@@ -89,8 +89,29 @@ static final bool CalcProperThingHit (ref TVec hit_point, Entity th, const TVec 
 //  calculate z offset for line attack (will be added to origin)
 //
 //==========================================================================
-float CalculateLineAttackZOfs (optional bool asMissile) {
-  return Height*0.5-FloorClip+(bIsPlayer ? PlayerEx(Player).GetAttackZOfs(missile:asMissile) : 8.0);
+float CalculateLineAttackZOfs () {
+  // to make the shot go through the crosshair, we should return `ViewHeight`
+  float res = Height*0.5-FloorClip;
+  if (bIsPlayer) {
+    if (!GetCvarB('gm_fix_attack_offset')) return res+PlayerEx(Player).GetAttackZOfs;
+    return PlayerEx(Player).ViewHeight;
+  } else {
+    return res+8.0;
+  }
+}
+
+
+//==========================================================================
+//
+//  CalculateMissileAttackZOfs
+//
+//  calculate z offset for missile attack (will be added to origin)
+//
+//==========================================================================
+float CalculateMissileAttackZOfs () {
+  // missiles are spawned 4 units lower than hitscan attacks
+  // add an extra unit to simulate Doom's original behaviour
+  return Height*0.5-FloorClip+(bIsPlayer ? PlayerEx(Player).GetAttackZOfs : 8.0)-3.0;
 }
 
 
@@ -494,7 +515,7 @@ final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance,
   AngleVector(angles, out aim_dir);
   x2 = Origin.x+distance*aim_dir.x;
   y2 = Origin.y+distance*aim_dir.y;
-  aim_z = Origin.z+CalculateLineAttackZOfs(asMissile:isRocket);
+  aim_z = Origin.z+(isRocket ? CalculateMissileAttackZOfs() : CalculateLineAttackZOfs());
   aim_range2d = Length2D(vector(distance*aim_dir.x, distance*aim_dir.y));
 
   // can't shoot outside view angles

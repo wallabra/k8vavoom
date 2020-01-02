@@ -543,14 +543,17 @@ final EntityEx SpawnPlayerMissileEx (class!EntityEx type, bool RetExploded,
     dir.z = 0.0;
     dir = Normalise(dir);
   } else {
+    org.z += CalculateMissileAttackZOfs();
+    /* done in `CalculateMissileAttackZOfs()`
     // missiles are spawned 4 units lower than hitscan attacks
     // add an extra unit to simulate Doom's original behaviour
     org.z += Height*0.5-FloorClip;
     if (bIsPlayer) {
-      org.z += PlayerEx(Player).GetAttackZOfs(missile:true)-3.0;
+      org.z += PlayerEx(Player).GetAttackZOfs-3.0;
     } else {
       org.z += 5.0;
     }
+    */
   }
 
   EntityEx A = Spawn(type, org);

@@ -544,8 +544,7 @@ final EntityEx CheckLineAttackWithCB (TVec dir, float distance, bool delegate (E
   //TVec outHitPoint;
 
   shootOrigin = Origin;
-  shootOrigin.z += Height*0.5-FloorClip;
-  shootOrigin.z += (bIsPlayer ? PlayerEx(Player).GetAttackZOfs : 8.0);
+  shootOrigin.z += CalculateLineAttackZOfs();
 
   dst = shootOrigin+distance*dir;
   lineStart = shootOrigin;
