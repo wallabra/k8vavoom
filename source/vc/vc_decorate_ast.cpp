@@ -140,7 +140,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
           delete this;
           return enew;
         }
-        // doomrl arsenal author is a moron
+        // doomrl arsenal author is a... well, you know it
         if (argnum == 3 && VStr::strEqu(funcName, "decorate_A_CheckFlag") && str.strEquCI("Nope")) {
           ParseWarningAsError((aloc ? *aloc : Loc), "`%s` argument #%d should be an aptr (replaced with AAPTR_DEFAULT, mod author is a mo...dder)!", funcName, argnum);
           VExpression *enew = new VIntLiteral(0, Loc);
@@ -159,7 +159,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
           return enew;
         }
 #endif
-        // ok, try to convert string to a number... please, Invisible Pink Unicorn, why did you created so many morons?!
+        // ok, try to convert the string to a number... please, Invisible Pink Unicorn, why did you created so many morons?!
         if (destType.Type == TYPE_Float) {
           float resf = 0.0f;
           if (tryStringAsFloat(resf, *str)) {
@@ -209,7 +209,7 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
       if (IsDecorateSingleName()) {
         VDecorateSingleName *e = (VDecorateSingleName *)this;
         VStr str = VStr(e->Name);
-        // ok, try to convert string to a number... please, Invisible Pink Unicorn, why did you created so many morons?!
+        // ok, try to convert the string to a number... please, Invisible Pink Unicorn, why did you created so many morons?!
         if (destType.Type == TYPE_Float) {
           float resf = 0.0f;
           if (tryStringAsFloat(resf, *str)) {

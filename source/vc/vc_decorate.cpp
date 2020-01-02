@@ -247,81 +247,6 @@ static inline bool getIgnoreMoronicStateCommands () { return !!cli_DecorateMoron
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-//k8: sorry!
-/*
-static inline bool isChexActor (VStr cname) {
-  static const char *namelist[] = {
-    "ArmoredFlemoidusBipedicus",
-    "Bootspoon",
-    "BowlOfFruit",
-    "BowlOfVegetables",
-    "ChexAppleTree",
-    "ChexArmor",
-    "ChexBananaTree",
-    "ChexBlueCard",
-    "ChexCavernColumn",
-    "ChexCavernStalagmite",
-    "ChexChemicalBurner",
-    "ChexChemicalFlask",
-    "ChexCivilian1",
-    "ChexCivilian2",
-    "ChexCivilian3",
-    "ChexFlagOnPole",
-    "ChexGasTank",
-    "ChexLandingLight",
-    "ChexLightColumn",
-    "ChexMineCart",
-    "ChexOrangeTree",
-    "ChexPlayer",
-    "ChexRedCard",
-    "ChexSlimeFountain",
-    "ChexSoul",
-    "ChexSpaceship",
-    "ChexSubmergedPlant",
-    "ChexTallFlower",
-    "ChexTallFlower2",
-    "ChexYellowCard",
-    "ComputerAreaMap",
-    "Flembrane",
-    "FlemoidusBipedicus",
-    "FlemoidusCommonus",
-    "FlemoidusCycloptisCommonus",
-    "GlassOfWater",
-    "LAZBall",
-    "LAZDevice",
-    "LargeZorchPack",
-    "LargeZorchRecharge",
-    "LargeZorcher",
-    "MiniZorchPack",
-    "MiniZorchRecharge",
-    "MiniZorcher",
-    "PhaseZorchMissile",
-    "PhasingZorch",
-    "PhasingZorchPack",
-    "PhasingZorcher",
-    "PropulsorMissile",
-    "PropulsorZorch",
-    "PropulsorZorchPack",
-    "RapidZorcher",
-    "SlimeProofSuit",
-    "SlimeRepellent",
-    "SuperBootspork",
-    "SuperChexArmor",
-    "SuperLargeZorcher",
-    "SuperchargeBreakfast",
-    "ZorchPropulsor",
-    "Zorchpack",
-    nullptr
-  };
-  for (const char *const *nptr = namelist; *nptr; ++nptr) {
-    if (cname.strEquCI(*nptr)) return true;
-  }
-  return false;
-}
-*/
-
-
-// ////////////////////////////////////////////////////////////////////////// //
 // this is workaround for mo...dders overriding the same class several times in
 // the same mod (yes, smoothdoom, i am talking about you).
 // we will cut off old override if we'll find a new one
@@ -1831,7 +1756,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
           if (lbl.index()+1 >= pc->StateLabelDefs.length()) {
             //GCon->Log(NAME_Error, "*** cannot fix this shit, sorry.");
           } else {
-            GCon->Logf(NAME_Error, "%s: found ZDoom idiocity at label %s; modder is a moron.", *LastState->Loc.toStringNoCol(), *LastDefinedLabel);
+            GCon->Logf(NAME_Error, "%s: found ZDoom incomplete state at label %s; workarounded.", *LastState->Loc.toStringNoCol(), *LastDefinedLabel);
             VStateLabelDef &lnext = pc->StateLabelDefs[lbl.index()+1];
             if (lnext.State) {
               GCon->Logf(NAME_Debug, "  %s: %s (%s)", pc->GetName(), *lnext.Name, (lnext.State ? *lnext.State->Loc.toStringNoCol() : "<none>"));
@@ -2085,11 +2010,6 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
       if (optionalActor) {
         sc->Message(va("Skipping optional actor `%s`", *NameStr));
         ParentClass = nullptr; // just in case
-      /*
-      } else if (isChexActor(ParentStr)) {
-        sc->Message(va("Parent class `%s` from Chex Quest not found for actor `%s`, ignoring actor", *ParentStr, *NameStr));
-        ParentClass = nullptr; // just in case
-      */
       } else if (cli_DecorateLaxParents) {
         sc->Message(va("Parent class `%s` not found for actor `%s`, ignoring actor", *ParentStr, *NameStr));
         ParentClass = nullptr; // just in case
@@ -2153,14 +2073,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
     sc->ExpectString();
     ReplaceeClass = VClass::FindClassNoCase(*sc->String);
     if (ReplaceeClass == nullptr || ReplaceeClass->MemberType != MEMBER_Class) {
-      /*
-      if (isChexActor(sc->String)) {
-        ReplaceeClass = nullptr; // just in case
-        sc->Message(va("Replaced class `%s` from Chex Quest not found for actor `%s`", *sc->String, *NameStr));
-      } else
-      */
-      //Actor DH_Cyberdemon : SpiderMastermind replaces Motherdemon
-      // D4V hack
+      // D4V (and other mods) hacks
       bool ignoreReplaceError = CheckReplaceErrorHacks(sc, NameStr, ParentStr, sc->String);
       if (cli_DecorateLaxParents || ignoreReplaceError) {
         ReplaceeClass = nullptr; // just in case

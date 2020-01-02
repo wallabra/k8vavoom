@@ -1145,7 +1145,7 @@ void VScriptParser::ExpectFloat () {
       } else {
         float ff = 0;
         if (!str.convertFloat(&ff)) {
-          // fuckin' morons from LCA loves numbers like "90000000000000000000000000000000000000000000000000"
+          // mo...dders from LCA loves numbers like "90000000000000000000000000000000000000000000000000"
           const char *s = *str;
           while (*s && *(const vuint8 *)s <= ' ') ++s;
           bool neg = false;
