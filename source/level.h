@@ -528,12 +528,26 @@ public:
     return NoVis;
   }
 
-  inline const vuint8 IsLeafVisible (const subsector_t *from, const subsector_t *dest) const {
-    if (VisData && from != dest && from && dest) {
-      const int sub = (int)(ptrdiff_t)(from-Subsectors);
+  // checks PVS data
+  inline const vuint8 IsLeafVisible (const subsector_t *from, const subsector_t *dest) const noexcept {
+    if (!from || !dest) return 0x00;
+    if (VisData && from != dest) {
+      const unsigned sub = (unsigned)(ptrdiff_t)(from-Subsectors);
       const vuint8 *vd = VisData+(((NumSubsectors+7)>>3)*sub);
-      const int ss2 = (int)(ptrdiff_t)(dest-Subsectors);
-      return vd[ss2>>3]&(1<<(ss2&7));
+      const unsigned ss2 = (unsigned)(ptrdiff_t)(dest-Subsectors);
+      return vd[ss2>>3]&(1u<<(ss2&7));
+    }
+    return 0xff;
+  }
+
+  inline const vuint8 IsRejectVisible (const sector_t *from, const sector_t *dest) const noexcept {
+    if (!from || !dest) return 0x00;
+    if (RejectMatrix) {
+      const unsigned s1 = (unsigned)(ptrdiff_t)(from-Sectors);
+      const unsigned s2 = (unsigned)(ptrdiff_t)(dest-Sectors);
+      const unsigned pnum = s1*(unsigned)NumSectors+s2;
+      // check in REJECT table
+      return RejectMatrix[pnum>>3]&(1u<<(pnum&7));
     }
     return 0xff;
   }

@@ -79,22 +79,8 @@ bool VEntity::CanSeeEx (VEntity *Other, unsigned flags) {
 
   // determine subsector entries in GL_PVS table
   // first check for trivial rejection
-  /*
-  const vuint8 *vis = XLevel->LeafPVS(SubSector);
-  int ss2 = (int)(ptrdiff_t)(Other->SubSector-XLevel->Subsectors);
-  if (!(vis[ss2>>3]&(1<<(ss2&7)))) return false; // can't possibly be connected
-  */
   if (!XLevel->IsLeafVisible(SubSector, Other->SubSector)) return false; // can't possibly be connected
-
-  if (XLevel->RejectMatrix) {
-    // determine subsector entries in REJECT table
-    // we must do this because REJECT can have some special effects like "safe sectors"
-    int s1 = Sector-XLevel->Sectors;
-    int s2 = Other->Sector-XLevel->Sectors;
-    int pnum = s1*XLevel->NumSectors+s2;
-    // check in REJECT table
-    if (XLevel->RejectMatrix[pnum>>3]&(1<<(pnum&7))) return false; // can't possibly be connected
-  }
+  if (!XLevel->IsRejectVisible(Sector, Other->Sector)) return false; // can't possibly be connected
 
   // killough 11/98: shortcut for melee situations
   // same subsector? obviously visible
