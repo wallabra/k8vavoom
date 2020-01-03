@@ -3877,6 +3877,10 @@ void PlayerNextArtifact () {
 void DeathPlayerTick (float deltaTime) {
   scope(exit) LastWaterLevel = (MO ? MO.WaterLevel : 0);
 
+  // just in case
+  k8HealthAccum_LastRegenTime = 0;
+  k8HealthAccum_LastBoostTime = 0;
+
   ClearSubSeenInfo();
   MovePsprites(deltaTime);
 
@@ -3966,7 +3970,7 @@ bool CheckForRespawn (float deltaTime) {
 //
 //==========================================================================
 bool checkDoHealthAccumBoost () {
-  if (k8HealthAccum_Amount < 1) return false;
+  if (k8HealthAccum_Amount < 1 || Health < 1) return false;
   // can boost?
   int boostPoints = GetCvarI('k8HealthAccum_BoostPoints');
   if (!boostPoints) return false;
@@ -4002,7 +4006,7 @@ bool checkDoHealthAccumBoost () {
 //
 //==========================================================================
 bool checkDoHealthAccumRegen () {
-  if (k8HealthAccum_Amount < 1) return false;
+  if (k8HealthAccum_Amount < 1 || Health < 1) return false;
   // can regen?
   int regenPoints = GetCvarI('k8HealthAccum_RegenPoints');
   if (regenPoints < 1) return false;
@@ -4115,26 +4119,6 @@ override void PlayerTick (float deltaTime) {
 
   //print("***000: BUTTONS: 0x%08x; old=0x%08x", Buttons, OldButtons);
 
-  // Health Accumulator
-  if (GetCvarB('k8HealthAccum_Enabled')) {
-    // do not reset accumulator when player is dead
-    if (PlayerState == PST_LIVE) {
-      int accMax = GetCvarI('k8HealthAccum_Max');
-      int accAmount = 0;
-      if (accMax > 0) {
-        //k8HealthAccum_LastRegenTime = 0;
-        //k8HealthAccum_LastBoostTime = 0;
-        k8HealthAccum_Amount = max(0, min(k8HealthAccum_Amount, accMax)); // sanitize
-        //print("k8HealthAccum_Amount=%s; bt=%s; rt=%s; lt=%s; tb=%s; tr=%s", k8HealthAccum_Amount, MO.XLevel.Time-k8HealthAccum_LastBoostTime, MO.XLevel.Time-k8HealthAccum_LastRegenTime, MO.XLevel.Time, k8HealthAccum_LastBoostTime, k8HealthAccum_LastRegenTime);
-        if (!checkDoHealthAccumBoost()) checkDoHealthAccumRegen();
-      } else {
-        k8HealthAccum_Amount = 0;
-      }
-    }
-  } else {
-    k8HealthAccum_Amount = 0;
-  }
-
   if (!isBot && Level.Game.netgame && !Level.Game.deathmatch) {
     if (lastSubSector != MO.SubSector) AddSeenSubsector();
   }
@@ -4180,6 +4164,26 @@ override void PlayerTick (float deltaTime) {
     ResetWeaponReloadRefire(); // no reload
     DeathPlayerTick(deltaTime);
     return;
+  }
+
+  // Health Accumulator
+  if (GetCvarB('k8HealthAccum_Enabled')) {
+    // do not reset accumulator when player is dead
+    if (PlayerState == PST_LIVE) {
+      int accMax = GetCvarI('k8HealthAccum_Max');
+      int accAmount = 0;
+      if (accMax > 0) {
+        //k8HealthAccum_LastRegenTime = 0;
+        //k8HealthAccum_LastBoostTime = 0;
+        k8HealthAccum_Amount = max(0, min(k8HealthAccum_Amount, accMax)); // sanitize
+        //print("k8HealthAccum_Amount=%s; bt=%s; rt=%s; lt=%s; tb=%s; tr=%s", k8HealthAccum_Amount, MO.XLevel.Time-k8HealthAccum_LastBoostTime, MO.XLevel.Time-k8HealthAccum_LastRegenTime, MO.XLevel.Time, k8HealthAccum_LastBoostTime, k8HealthAccum_LastRegenTime);
+        if (!checkDoHealthAccumBoost()) checkDoHealthAccumRegen();
+      } else {
+        k8HealthAccum_Amount = 0;
+      }
+    }
+  } else {
+    k8HealthAccum_Amount = 0;
   }
 
   if (k8ElvenGiftMessageTime <= 0) {
