@@ -1690,6 +1690,7 @@ void VRenderLevelShared::UpdateDrawSeg (subsector_t *sub, drawseg_t *dseg, TSecP
     // midtexture
     sp = dseg->mid;
     if (sp) {
+      //if (seg->pobj) GCon->Logf(NAME_Debug, "pobj #%d seg; UPDATING", seg->pobj->index);
       if (CheckMidRecreate1S(seg, sp, r_floor.splane, r_ceiling.splane)) {
         SetupOneSidedMidWSurf(sub, seg, sp, r_floor, r_ceiling);
       } else {
@@ -1813,6 +1814,7 @@ void VRenderLevelShared::SegMoved (seg_t *seg) {
                                       sidedef->Mid.TextureOffset*TextureOffsetSScale(MTex);
 
   // force update
+  //if (seg->pobj) GCon->Logf(NAME_Debug, "pobj #%d seg; backsector=%p", seg->pobj->index, seg->backsector);
   seg->drawsegs->mid->frontTopDist += 0.346f;
 }
 
@@ -1992,8 +1994,18 @@ void VRenderLevelShared::UpdateSubRegion (subsector_t *sub, subregion_t *region)
     for (auto &&it : sub->PObjFirst()) {
       polyobj_t *pobj = it.value();
       seg_t **polySeg = pobj->segs;
+      TSecPlaneRef po_floor = region->floorplane;
+      TSecPlaneRef po_ceiling = region->ceilplane;
+      sector_t *posec = pobj->originalSector;
+      if (posec) {
+        po_floor.set(&posec->floor, false);
+        po_ceiling.set(&posec->ceiling, false);
+      } else {
+        po_floor = region->floorplane;
+        po_ceiling = region->ceilplane;
+      }
       for (int polyCount = pobj->numsegs; polyCount--; ++polySeg) {
-        UpdateDrawSeg(sub, (*polySeg)->drawsegs, region->floorplane, region->ceilplane);
+        UpdateDrawSeg(sub, (*polySeg)->drawsegs, po_floor, po_ceiling);
       }
     }
   }
