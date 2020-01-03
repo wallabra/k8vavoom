@@ -519,6 +519,10 @@ float GenericDamageMultiplier = 1.0; // for APROP_DamageMultiplier
 
 // temporary for physics z change due to stepping
 transient float tmp_phys_z_change;
+// this is used to check sector change, to avoid excessive splashes
+transient sector_t *tmp_phys_last_sector;
+transient int tmp_phys_last_floor_pic;
+transient float tmp_phys_last_splash_time; // `XLevel.Time`
 
 // so we can check it in various spawners
 // there is no need to save it

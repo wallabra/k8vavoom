@@ -91,6 +91,8 @@ bool Physics (float DeltaTime) {
       Velocity = vclampscale(Velocity, MAXMOVE);
     }
     Speed = (Speed.isfinite ? fclamp(Speed, -MAXMOVE, MAXMOVE) : 0.0);
+    tmp_phys_last_sector = Sector;
+    if (Sector) tmp_phys_last_floor_pic = (Sector ? EFloor.splane->pic : 0);
   }
   //if (bIsPlayer) { printdebug("%C: bSlide=%B", self, bSlide); /*bSlide = true;*/ }
 
@@ -638,12 +640,12 @@ final void ZMovement (float DeltaTime, float OldFloorZ) {
   if (!bNoInteraction) {
     if (Origin.z <= FloorZ+0.1) {
       // hit the floor
-      if (!HitFloor()) return;
+      if (!HitFloor(OldZ)) return;
     }
 
     if (Origin.z+Height > CeilingZ) {
       // hit the ceiling
-      if (!HitCeiling()) return;
+      if (!HitCeiling(OldZ)) return;
     }
 
     CheckFakeFloorTriggers(OldZ);
@@ -864,7 +866,7 @@ final void HitMobj (Entity Other, float ptryx, float ptryy) {
 //  HitFloor
 //
 //==========================================================================
-final bool HitFloor () {
+final bool HitFloor (float prevz) {
   // trigger hit floor sector actions
   if (Sector && Sector->ActionList && GetPointZClamped(ref Sector->floor, Origin) == FloorZ) {
     SectorAction(Sector->ActionList).TriggerAction(self, SectorAction::SECSPAC_HitFloor);
@@ -878,10 +880,12 @@ final bool HitFloor () {
     return true;
   }
 
+  bool justLanded = (prevz > FloorZ);
+
   if (bMissile && (bColideWithWorld || !LineSpecialGameInfo(Level.Game).bNoClipIgnoreFloor)) {
     // physics caller will setup interpolation with `tmp_phys_z_change`
     // if we have no velocity, don't bother interpolating
-    if (Velocity.xy) tmp_phys_z_change += FloorZ-Origin.z;
+    if (Velocity.xy && Origin.z > FloorZ) tmp_phys_z_change += FloorZ-Origin.z;
     Origin.z = FloorZ;
     if (bBounceFloors || BounceType != BOUNCE_None) {
       FloorBounceMissile();
@@ -890,14 +894,14 @@ final bool HitFloor () {
     if (bNoExplodeFloor) {
       // the spirit struck the ground
       Velocity.z = 0.0;
-      HitFloorType();
+      HitFloorType(justLanded);
       return false;
     }
     if (bIgnoreFloorStep) {
       // minotaur floor fire can go up steps
       return false;
     }
-    HitFloorType();
+    HitFloorType(justLanded);
     ExplodeMissile(none);
     return false;
   }
@@ -911,12 +915,14 @@ final bool HitFloor () {
   // physics caller will setup interpolation with `tmp_phys_z_change`
   //if ((self isa 'LifeEssence') || (self isa 'ZombieMan')) print("%C: myz=%s; floorz=%s; fz-mz=%s (tzc=%s)", self, Origin.z, FloorZ, FloorZ-Origin.z, tmp_phys_z_change);
   // if we have no velocity, don't bother interpolating
-  if (Velocity.xy) tmp_phys_z_change += FloorZ-Origin.z;
+  if (Velocity.xy && Origin.z > FloorZ) tmp_phys_z_change += FloorZ-Origin.z;
   Origin.z = FloorZ;
 
   if (vdot < -0.1) {
     // spawn splashes, etc
-    HitFloorType();
+    //if (bIsPlayer) printdebug("000: %C: Velocity=%s; vdot=%s", self, Velocity, vdot);
+    // do not spawn excessive splashes if not moving
+    HitFloorType(justLanded);
     if (!Inventory(self) && nameicmp(DamageType, 'Ice') == 0 && vdot < -DEFAULT_GRAVITY*0.25) {
       StateTime = 0.1;
       //Velocity = vector(0.0, 0.0, 0.0);
@@ -936,7 +942,13 @@ final bool HitFloor () {
     }
     TVec Vel = vdot*EFloor.spGetNormal();
     Velocity.z -= Vel.z;
+    //if (bIsPlayer) printdebug("001: %C: Velocity=%s; vdot=%s", self, Velocity, vdot);
   }
+  /*
+  else {
+    if (bIsPlayer) printdebug("***: %C: Velocity=%s; vdot=%s", self, Velocity, vdot);
+  }
+  */
 
   if (bSkullFly) {
     // the skull slammed into something
@@ -953,7 +965,7 @@ final bool HitFloor () {
 //  HitCeiling
 //
 //==========================================================================
-final bool HitCeiling () {
+final bool HitCeiling (float prevz) {
   // trigger hit ceiling sector actions
   if (Sector && Sector->ActionList && GetPointZClamped(ref Sector->ceiling, Origin) == CeilingZ) {
     SectorAction(Sector->ActionList).TriggerAction(self, SectorAction::SECSPAC_HitCeiling);
@@ -1319,12 +1331,10 @@ void CheckSplash (float distance) {
 //  HitFloorType
 //
 //==========================================================================
-final bool HitFloorType () {
+final bool HitFloorType (optional bool justLanded) {
   EntityEx A;
   TVec org;
   bool smallsplash = false;
-  VTerrainInfo *TInfo;
-  VSplashInfo *SInfo;
 
   if (!Sector || FloorZ != GetPointZClamped(ref Sector->floor, Origin)) {
     // don't splash if landing on the edge above water/lava/etc....
@@ -1334,7 +1344,7 @@ final bool HitFloorType () {
   // things that don't splash go here
   if (bFloatBob || bNoSplash) return false;
 
-  TInfo = GetFloorType();
+  VTerrainInfo *TInfo = GetFloorType();
 
   // small splash for small masses
   if (Mass < 10.0 || bSmallSplash) smallsplash = true;
@@ -1343,9 +1353,34 @@ final bool HitFloorType () {
     Damage(none, none, TInfo->DamageAmount, TInfo->DamageType/*, spawnBlood:true*/);
   }
 
-  SInfo = GetSplashInfo(TInfo->Splash);
+  VSplashInfo *SInfo = GetSplashInfo(TInfo->Splash);
   if (!SInfo) return TInfo->bLiquid;
 
+  // called from Z movement, perform some checks
+  if (specified_justLanded) {
+    if (!justLanded) {
+      // stayed on the floor; check if it is the same floor
+      if (tmp_phys_last_floor_pic == EFloor.splane->pic) {
+        // check splash time
+        if (tmp_phys_last_splash_time+0.6 > XLevel.Time) {
+          // don't splash
+          //printdebug("%C: splash time=%s; time=%s", self, tmp_phys_last_splash_time, XLevel.Time);
+          return TInfo->bLiquid;
+        }
+        // check velocity
+        if (Velocity.length2DSquared < 6) {
+          // don't splash
+          return TInfo->bLiquid;
+        }
+        //printdebug("%C: Velocity=%s (%s)", self, Velocity, Velocity.length2DSquared);
+      }
+    }
+  }
+
+  // remember splash time
+  tmp_phys_last_splash_time = XLevel.Time;
+
+  // spawn splash
   org = Origin;
   org.z = FloorZ;
 
@@ -1353,12 +1388,12 @@ final bool HitFloorType () {
     if (SInfo->SmallClass) {
       A = Spawn(class!EntityEx(SInfo->SmallClass), org);
       A.FloorClip += SInfo->SmallClip;
-      if (SInfo->SmallSound) A.PlaySound(SInfo->SmallSound, CHAN_VOICE);
+      if (SInfo->SmallSound) A.PlaySound(SInfo->SmallSound, CHAN_SPLASH);
     }
   } else {
     if (SInfo->BaseClass) {
       A = Spawn(class!EntityEx(SInfo->BaseClass), org);
-      if (SInfo->Sound && !SInfo->ChunkClass) A.PlaySound(SInfo->Sound, CHAN_VOICE);
+      if (SInfo->Sound && !SInfo->ChunkClass) A.PlaySound(SInfo->Sound, CHAN_SPLASH);
     }
     if (SInfo->ChunkClass) {
       A = Spawn(class!EntityEx(SInfo->ChunkClass), org);
@@ -1366,9 +1401,9 @@ final bool HitFloorType () {
       A.Velocity.x = (Random()-Random())*SInfo->ChunkXVelMul*35.0;
       A.Velocity.y = (Random()-Random())*SInfo->ChunkYVelMul*35.0;
       A.Velocity.z = (SInfo->ChunkBaseZVel+Random()*SInfo->ChunkZVelMul)*35.0;
-      if (SInfo->Sound) A.PlaySound(SInfo->Sound, CHAN_VOICE);
+      if (SInfo->Sound) A.PlaySound(SInfo->Sound, CHAN_SPLASH);
     }
-    if (SInfo->Sound && !SInfo->BaseClass && !SInfo->ChunkClass) PlaySound(SInfo->Sound, CHAN_BODY);
+    if (SInfo->Sound && !SInfo->BaseClass && !SInfo->ChunkClass) PlaySound(SInfo->Sound, CHAN_SPLASH);
     if (!SInfo->bNoAlert && bIsPlayer) LineSpecialLevelInfo(Level).NoiseAlert(self, self, true);
   }
   return TInfo->bLiquid;

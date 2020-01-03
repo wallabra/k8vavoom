@@ -33,6 +33,8 @@ enum {
   CHAN_BODY,
   // special channel for sight sound, so it won't be muted by attack and other sounds
   CHAN_SIGHT = 42,
+  // channel for splashes
+  CHAN_SPLASH,
 };
 
 enum {
