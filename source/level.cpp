@@ -90,7 +90,7 @@ void VLevel::ResetValidCount () {
   validcount = 1;
   for (auto &&it : allLines()) it.validcount = 0;
   for (auto &&it : allSectors()) it.validcount = 0;
-  for (auto &&it : allPolyObjs()) it.validcount = 0;
+  for (auto &&it : allPolyObjs()) it->validcount = 0;
 }
 
 
@@ -284,8 +284,8 @@ void VLevel::ClearReferences () {
   }
   // polyobjects
   for (int i = 0; i < NumPolyObjs; ++i) {
-    if (PolyObjs[i].SpecialData && (PolyObjs[i].SpecialData->GetFlags()&_OF_CleanupRef)) {
-      PolyObjs[i].SpecialData = nullptr;
+    if (PolyObjs[i]->SpecialData && (PolyObjs[i]->SpecialData->GetFlags()&_OF_CleanupRef)) {
+      PolyObjs[i]->SpecialData = nullptr;
     }
   }
   // cameras
@@ -337,15 +337,16 @@ void VLevel::Destroy () {
   }
 
   for (int i = 0; i < NumPolyObjs; ++i) {
-    delete[] PolyObjs[i].segs;
-    PolyObjs[i].segs = nullptr;
-    delete[] PolyObjs[i].originalPts;
-    PolyObjs[i].originalPts = nullptr;
-    if (PolyObjs[i].prevPts) {
-      delete[] PolyObjs[i].prevPts;
-      PolyObjs[i].prevPts = nullptr;
+    delete[] PolyObjs[i]->segs;
+    PolyObjs[i]->segs = nullptr;
+    delete[] PolyObjs[i]->originalPts;
+    PolyObjs[i]->originalPts = nullptr;
+    if (PolyObjs[i]->prevPts) {
+      delete[] PolyObjs[i]->prevPts;
+      PolyObjs[i]->prevPts = nullptr;
     }
   }
+
   if (PolyBlockMap) {
     for (int i = 0; i < BlockMapWidth*BlockMapHeight; ++i) {
       for (polyblock_t *pb = PolyBlockMap[i]; pb; ) {
@@ -357,10 +358,13 @@ void VLevel::Destroy () {
     delete[] PolyBlockMap;
     PolyBlockMap = nullptr;
   }
+
   if (PolyObjs) {
+    for (int i = 0; i < NumPolyObjs; ++i) delete PolyObjs[i];
     delete[] PolyObjs;
     PolyObjs = nullptr;
   }
+
   if (PolyAnchorPoints) {
     delete[] PolyAnchorPoints;
     PolyAnchorPoints = nullptr;

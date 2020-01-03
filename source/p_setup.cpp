@@ -3534,10 +3534,10 @@ void VLevel::CreateRepBase () {
 
   BasePolyObjs = new rep_polyobj_t[NumPolyObjs];
   for (int i = 0; i < NumPolyObjs; ++i) {
-    polyobj_t &P = PolyObjs[i];
+    polyobj_t *P = PolyObjs[i];
     rep_polyobj_t &B = BasePolyObjs[i];
-    B.startSpot = P.startSpot;
-    B.angle = P.angle;
+    B.startSpot = P->startSpot;
+    B.angle = P->angle;
   }
 }
 

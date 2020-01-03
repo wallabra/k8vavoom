@@ -122,7 +122,7 @@ native FRogueConSpeech[] LevelSpeeches;
 
 // list of all poly-objects on the level
 native readonly private /*int*/void *[] PolyObjs;
-native readonly private /*int*/void *[] PolyAnchorPoints;
+native readonly private /*int*/void *[] PolyAnchorPoints; // this is not `void *`, but meh...
 
 // sound environments for sector zones
 native int[] Zones;

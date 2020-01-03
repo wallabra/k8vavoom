@@ -532,7 +532,7 @@ void VLevelChannel::Update () {
 
   //GCon->Log(NAME_DevNet, "VLevelChannel::Update -- Polys");
   for (int i = 0; i < Level->NumPolyObjs; ++i) {
-    polyobj_t *Po = &Level->PolyObjs[i];
+    polyobj_t *Po = Level->PolyObjs[i];
     if (!Connection->CheckFatPVS(Po->GetSubsector())) continue;
 
     rep_polyobj_t *RepPo = &PolyObjs[i];
@@ -754,7 +754,7 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
         break;
       case CMD_PolyObj:
         {
-          polyobj_t *Po = &Level->PolyObjs[Msg.ReadInt(/*Level->NumPolyObjs*/)];
+          polyobj_t *Po = Level->PolyObjs[Msg.ReadInt(/*Level->NumPolyObjs*/)];
           TVec Pos = Po->startSpot;
           if (Msg.ReadBit()) Msg << Pos.x;
           if (Msg.ReadBit()) Msg << Pos.y;

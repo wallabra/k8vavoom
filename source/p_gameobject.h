@@ -783,6 +783,7 @@ struct polyobj_t {
   TVec startSpot;
   TVec *originalPts; // used as the base for the rotations
   TVec *prevPts; // use to restore the old point values
+  sector_t *originalSector; // used to get height
   float angle;
   vint32 tag; // reference tag assigned in HereticEd
   vint32 bbox2d[4];
@@ -794,6 +795,7 @@ struct polyobj_t {
   vuint32 PolyFlags;
   vint32 seqType;
   VThinker *SpecialData; // pointer a thinker, if the poly is moving
+  vint32 index; // required for LevelInfo sound sequences
 
 private:
   subsector_t *sub;
@@ -887,6 +889,10 @@ struct seg_t : public TPlane {
   vuint32 flags; // SF_xxx
 
   drawseg_t *drawsegs;
+
+  // original polyobject, or `nullptr` for world seg
+  polyobj_t *pobj;
+
   // decal list
   decal_t *decalhead;
   decal_t *decaltail;

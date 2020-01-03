@@ -45,6 +45,7 @@ void polyobj_t::RelinkToSubsector (subsector_t *asub) {
   if (sub) UnlinkFromSubsector();
   vassert(!sub);
   if (!asub) return;
+  if (!originalSector) originalSector = asub->sector;
   // just prepend, the order doesn't really matter
   vassert(!subprev);
   vassert(!subnext);
@@ -72,132 +73,6 @@ void polyobj_t::UnlinkFromSubsector () {
   sub = nullptr;
   subprev = subnext = nullptr;
 }
-
-
-//==========================================================================
-//
-//  VLevel::SpawnPolyobj
-//
-//==========================================================================
-void VLevel::SpawnPolyobj (float x, float y, int tag, bool crush, bool hurt) {
-  int index = NumPolyObjs++;
-  polyobj_t *Temp = PolyObjs;
-  PolyObjs = new polyobj_t[NumPolyObjs];
-  if (Temp) {
-    for (int i = 0; i < NumPolyObjs-1; ++i) PolyObjs[i] = Temp[i];
-    delete[] Temp;
-    Temp = nullptr;
-  }
-  memset((void *)(&PolyObjs[index]), 0, sizeof(polyobj_t));
-
-  PolyObjs[index].startSpot.x = x;
-  PolyObjs[index].startSpot.y = y;
-  for (int i = 0; i < NumSegs; ++i) {
-    if (!Segs[i].linedef) continue;
-    if (Segs[i].linedef->special == PO_LINE_START && Segs[i].linedef->arg1 == tag) {
-      Segs[i].linedef->special = 0;
-      Segs[i].linedef->arg1 = 0;
-      int PolySegCount = 1;
-      TVec PolyStart = *Segs[i].v1;
-      IterFindPolySegs(*Segs[i].v2, nullptr, PolySegCount, PolyStart);
-
-      PolyObjs[index].numsegs = PolySegCount;
-      PolyObjs[index].segs = new seg_t*[PolySegCount];
-      *(PolyObjs[index].segs) = &Segs[i]; // insert the first seg
-      // set sector's line count to 0 to force it not to be
-      // rendered even if we do a no-clip into it
-      // -- FB -- I'm disabling this behavior
-      // k8: and i am enabling it again
-      Segs[i].frontsector->linecount = 0;
-      IterFindPolySegs(*Segs[i].v2, PolyObjs[index].segs+1, PolySegCount, PolyStart);
-      if (crush) {
-        PolyObjs[index].PolyFlags |= polyobj_t::PF_Crush;
-      } else {
-        PolyObjs[index].PolyFlags &= ~polyobj_t::PF_Crush;
-      }
-      if (hurt) {
-        PolyObjs[index].PolyFlags |= polyobj_t::PF_HurtOnTouch;
-      } else {
-        PolyObjs[index].PolyFlags &= ~polyobj_t::PF_HurtOnTouch;
-      }
-      PolyObjs[index].tag = tag;
-      PolyObjs[index].seqType = Segs[i].linedef->arg3;
-      //if (PolyObjs[index].seqType < 0 || PolyObjs[index].seqType >= SEQTYPE_NUMSEQ) PolyObjs[index].seqType = 0;
-      break;
-    }
-  }
-  if (!PolyObjs[index].segs) {
-    // didn't find a polyobj through PO_LINE_START
-    int psIndex = 0;
-    seg_t *polySegList[PO_MAXPOLYSEGS];
-    PolyObjs[index].numsegs = 0;
-    for (int j = 1; j < PO_MAXPOLYSEGS; ++j) {
-      int psIndexOld = psIndex;
-      for (int i = 0; i < NumSegs; ++i) {
-        if (!Segs[i].linedef) continue;
-        if (Segs[i].linedef->special == PO_LINE_EXPLICIT && Segs[i].linedef->arg1 == tag) {
-          if (!Segs[i].linedef->arg2) Sys_Error("Explicit line missing order number (probably %d) in poly %d.", j+1, tag);
-          if (Segs[i].linedef->arg2 == j) {
-            polySegList[psIndex] = &Segs[i];
-            // set sector's line count to 0 to force it not to be
-            // rendered even if we do a no-clip into it
-            // -- FB -- I'm disabling this behavior
-            // k8: and i am enabling it again
-            Segs[i].frontsector->linecount = 0;
-            PolyObjs[index].numsegs++;
-            ++psIndex;
-            vassert(psIndex <= PO_MAXPOLYSEGS);
-          }
-        }
-      }
-      // clear out any specials for these segs
-      // we cannot clear them out in the above loop,
-      // since we aren't guaranteed one seg per linedef
-      for (int i = 0; i < NumSegs; ++i) {
-        if (!Segs[i].linedef) continue;
-        if (Segs[i].linedef->special == PO_LINE_EXPLICIT &&
-            Segs[i].linedef->arg1 == tag &&
-            Segs[i].linedef->arg2 == j)
-        {
-          Segs[i].linedef->special = 0;
-          Segs[i].linedef->arg1 = 0;
-        }
-      }
-      if (psIndex == psIndexOld) {
-        // check if an explicit line order has been skipped
-        // a line has been skipped if there are any more explicit
-        // lines with the current tag value
-        for (int i = 0; i < NumSegs; ++i) {
-          if (!Segs[i].linedef) continue;
-          if (Segs[i].linedef->special == PO_LINE_EXPLICIT && Segs[i].linedef->arg1 == tag) {
-            Sys_Error("Missing explicit line %d for poly %d\n", j, tag);
-          }
-        }
-      }
-    }
-    if (PolyObjs[index].numsegs) {
-      if (crush) {
-        PolyObjs[index].PolyFlags |= polyobj_t::PF_Crush;
-      } else {
-        PolyObjs[index].PolyFlags &= ~polyobj_t::PF_Crush;
-      }
-      PolyObjs[index].tag = tag;
-      PolyObjs[index].segs = new seg_t*[PolyObjs[index].numsegs];
-      for (int i = 0; i < PolyObjs[index].numsegs; ++i) {
-        PolyObjs[index].segs[i] = polySegList[i];
-      }
-      PolyObjs[index].seqType = (*PolyObjs[index].segs)->linedef->arg4;
-    }
-    // next, change the polyobjs first line to point to a mirror if it exists
-    (*PolyObjs[index].segs)->linedef->arg2 = (*PolyObjs[index].segs)->linedef->arg3;
-  }
-}
-
-
-struct SegV1Info {
-  seg_t *seg;
-  SegV1Info *next;
-};
 
 
 //==========================================================================
@@ -275,6 +150,11 @@ void VLevel::IterFindPolySegs (const TVec &From, seg_t **segList,
     if (!found) Host_Error("Non-closed Polyobj located.");
   }
 #else
+  struct SegV1Info {
+    seg_t *seg;
+    SegV1Info *next;
+  };
+
   // first, build map with all segs, keyed by v1
   TMapNC<TVec, SegV1Info *> smap;
   TArray<SegV1Info> sinfo;
@@ -340,6 +220,156 @@ void VLevel::IterFindPolySegs (const TVec &From, seg_t **segList,
 
 //==========================================================================
 //
+//  VLevel::SpawnPolyobj
+//
+//==========================================================================
+void VLevel::SpawnPolyobj (float x, float y, int tag, bool crush, bool hurt) {
+  int index = NumPolyObjs++;
+
+  polyobj_t *po = new polyobj_t;
+  memset((void *)po, 0, sizeof(polyobj_t));
+  po->index = index;
+
+  // realloc polyobj array
+  //FIXME: do this better; but don't use `TArray`, because `ClearReferences()` will walk it
+  {
+    polyobj_t **Temp = PolyObjs;
+    PolyObjs = new polyobj_t*[NumPolyObjs];
+    if (Temp) {
+      for (int i = 0; i < NumPolyObjs-1; ++i) PolyObjs[i] = Temp[i];
+      delete[] Temp;
+      Temp = nullptr;
+    }
+    //memset((void *)(&PolyObjs[index]), 0, sizeof(polyobj_t));
+    PolyObjs[index] = po;
+  }
+
+  po->startSpot.x = x;
+  po->startSpot.y = y;
+  for (int i = 0; i < NumSegs; ++i) {
+    if (!Segs[i].linedef) continue;
+    if (Segs[i].linedef->special == PO_LINE_START && Segs[i].linedef->arg1 == tag) {
+      Segs[i].linedef->special = 0;
+      Segs[i].linedef->arg1 = 0;
+      int PolySegCount = 1;
+      TVec PolyStart = *Segs[i].v1;
+      IterFindPolySegs(*Segs[i].v2, nullptr, PolySegCount, PolyStart);
+
+      po->numsegs = PolySegCount;
+      po->segs = new seg_t*[PolySegCount];
+      *(po->segs) = &Segs[i]; // insert the first seg
+      // set sector's line count to 0 to force it not to be
+      // rendered even if we do a no-clip into it
+      // -- FB -- I'm disabling this behavior
+      // k8: and i am enabling it again
+      Segs[i].frontsector->linecount = 0;
+      IterFindPolySegs(*Segs[i].v2, po->segs+1, PolySegCount, PolyStart);
+      if (crush) {
+        po->PolyFlags |= polyobj_t::PF_Crush;
+      } else {
+        po->PolyFlags &= ~polyobj_t::PF_Crush;
+      }
+      if (hurt) {
+        po->PolyFlags |= polyobj_t::PF_HurtOnTouch;
+      } else {
+        po->PolyFlags &= ~polyobj_t::PF_HurtOnTouch;
+      }
+      po->tag = tag;
+      po->seqType = Segs[i].linedef->arg3;
+      //if (po->seqType < 0 || po->seqType >= SEQTYPE_NUMSEQ) po->seqType = 0;
+      break;
+    }
+  }
+
+  if (!po->segs) {
+    // didn't found a polyobj through PO_LINE_START
+    int psIndex = 0;
+    seg_t *polySegList[PO_MAXPOLYSEGS];
+    po->numsegs = 0;
+    for (int j = 1; j < PO_MAXPOLYSEGS; ++j) {
+      int psIndexOld = psIndex;
+      for (int i = 0; i < NumSegs; ++i) {
+        if (!Segs[i].linedef) continue;
+        if (Segs[i].linedef->special == PO_LINE_EXPLICIT && Segs[i].linedef->arg1 == tag) {
+          if (!Segs[i].linedef->arg2) Sys_Error("Explicit line missing order number (probably %d) in poly %d.", j+1, tag);
+          if (Segs[i].linedef->arg2 == j) {
+            polySegList[psIndex] = &Segs[i];
+            // set sector's line count to 0 to force it not to be
+            // rendered even if we do a no-clip into it
+            // -- FB -- I'm disabling this behavior
+            // k8: and i am enabling it again
+            Segs[i].frontsector->linecount = 0;
+            po->numsegs++;
+            ++psIndex;
+            vassert(psIndex <= PO_MAXPOLYSEGS);
+          }
+        }
+      }
+      // clear out any specials for these segs
+      // we cannot clear them out in the above loop,
+      // since we aren't guaranteed one seg per linedef
+      for (int i = 0; i < NumSegs; ++i) {
+        if (!Segs[i].linedef) continue;
+        if (Segs[i].linedef->special == PO_LINE_EXPLICIT &&
+            Segs[i].linedef->arg1 == tag &&
+            Segs[i].linedef->arg2 == j)
+        {
+          Segs[i].linedef->special = 0;
+          Segs[i].linedef->arg1 = 0;
+        }
+      }
+      if (psIndex == psIndexOld) {
+        // check if an explicit line order has been skipped
+        // a line has been skipped if there are any more explicit
+        // lines with the current tag value
+        for (int i = 0; i < NumSegs; ++i) {
+          if (!Segs[i].linedef) continue;
+          if (Segs[i].linedef->special == PO_LINE_EXPLICIT && Segs[i].linedef->arg1 == tag) {
+            Sys_Error("Missing explicit line %d for poly %d\n", j, tag);
+          }
+        }
+      }
+    }
+    if (po->numsegs) {
+      if (crush) {
+        po->PolyFlags |= polyobj_t::PF_Crush;
+      } else {
+        po->PolyFlags &= ~polyobj_t::PF_Crush;
+      }
+      po->tag = tag;
+      po->segs = new seg_t*[po->numsegs];
+      for (int i = 0; i < po->numsegs; ++i) {
+        po->segs[i] = polySegList[i];
+      }
+      po->seqType = (*po->segs)->linedef->arg4;
+    }
+    // next, change the polyobjs first line to point to a mirror if it exists
+    (*po->segs)->linedef->arg2 = (*po->segs)->linedef->arg3;
+  }
+
+  // set seg pobj owner
+  for (int c = 0; c < po->numsegs; ++c) {
+    po->segs[c]->pobj = po;
+  }
+}
+
+
+//==========================================================================
+//
+//  VLevel::GetPolyobj
+//
+//==========================================================================
+polyobj_t *VLevel::GetPolyobj (int polyNum) noexcept {
+  //FIXME: make this faster!
+  for (int i = 0; i < NumPolyObjs; ++i) {
+    if (PolyObjs[i]->tag == polyNum) return PolyObjs[i];
+  }
+  return nullptr;
+}
+
+
+//==========================================================================
+//
 //  VLevel::AddPolyAnchorPoint
 //
 //==========================================================================
@@ -372,8 +402,8 @@ void VLevel::InitPolyobjs () {
 
   // check for a startspot without an anchor point
   for (int i = 0; i < NumPolyObjs; ++i) {
-    if (!PolyObjs[i].originalPts) {
-      Sys_Error("StartSpot located without an Anchor point: %d", PolyObjs[i].tag);
+    if (!PolyObjs[i]->originalPts) {
+      Sys_Error("StartSpot located without an Anchor point: %d", PolyObjs[i]->tag);
     }
   }
 
@@ -387,13 +417,7 @@ void VLevel::InitPolyobjs () {
 //
 //==========================================================================
 void VLevel::TranslatePolyobjToStartSpot (float originX, float originY, int tag) {
-  polyobj_t *po = nullptr;
-  for (int i = 0; i < NumPolyObjs; ++i) {
-    if (PolyObjs[i].tag == tag) {
-      po = &PolyObjs[i];
-      break;
-    }
-  }
+  polyobj_t *po = GetPolyobj(tag);
   if (!po) Host_Error("Unable to match polyobj tag: %d", tag); // didn't match the tag with a polyobj tag
   if (po->segs == nullptr) Host_Error("Anchor point located without a StartSpot point: %d", tag);
   po->originalPts = new TVec[po->numsegs];
@@ -457,7 +481,7 @@ void VLevel::UpdatePolySegs (polyobj_t *po) {
 void VLevel::InitPolyBlockMap () {
   PolyBlockMap = new polyblock_t*[BlockMapWidth*BlockMapHeight];
   memset((void *)PolyBlockMap, 0, sizeof(polyblock_t *)*BlockMapWidth*BlockMapHeight);
-  for (int i = 0; i < NumPolyObjs; ++i) LinkPolyobj(&PolyObjs[i]);
+  for (int i = 0; i < NumPolyObjs; ++i) LinkPolyobj(PolyObjs[i]);
 }
 
 
@@ -474,9 +498,21 @@ void VLevel::LinkPolyobj (polyobj_t *po) {
   float topY = (*tempSeg)->v1->y;
   float bottomY = (*tempSeg)->v1->y;
 
-  //k8: also, reling polyobject to the new subsector
-  //k8: this somewhat eases rendering glitches until i'll write the proper BSP splitter for pobjs
-  //k8: it is not the best way, but at least something
+  /* k8 notes
+     relink polyobject to the new subsector.
+     this somewhat eases rendering glitches until i'll write the proper BSP splitter for pobjs.
+     it is not the best way, but at least something.
+
+     note that if it moves to the sector with a different height, the renderer
+     adjusts it to the height of the new sector.
+
+     to avoid this, i have to introduce new field to segs, which links back to the
+     pobj. and i have to store the initial floor and ceiling planes in the pobj, so
+     renderer can use them instead of the corresponding sector planes.
+
+     actually, not the original. on relinking, we have to scan all touching sectors,
+     and get min floor and max ceiling.
+  */
   TVec avg(0, 0, 0); // used to find a polyobj's centre, and hence subsector
   for (int i = 0; i < po->numsegs; ++i, ++tempSeg) {
     if ((*tempSeg)->v1->x > rightX) rightX = (*tempSeg)->v1->x;
@@ -557,29 +593,13 @@ void VLevel::UnLinkPolyobj (polyobj_t *po) {
 
 //==========================================================================
 //
-//  VLevel::GetPolyobj
-//
-//==========================================================================
-polyobj_t *VLevel::GetPolyobj (int polyNum) {
-  //FIXME: make this faster!
-  for (int i = 0; i < NumPolyObjs; ++i) {
-    if (PolyObjs[i].tag == polyNum) return &PolyObjs[i];
-  }
-  return nullptr;
-}
-
-
-//==========================================================================
-//
 //  VLevel::GetPolyobjMirror
 //
 //==========================================================================
 int VLevel::GetPolyobjMirror (int poly) {
   //FIXME: make this faster!
-  for (int i = 0; i < NumPolyObjs; ++i) {
-    if (PolyObjs[i].tag == poly) return ((*PolyObjs[i].segs)->linedef->arg2);
-  }
-  return 0;
+  polyobj_t *po = GetPolyobj(poly);
+  return (po ? po->segs[0]->linedef->arg2 : 0);
 }
 
 

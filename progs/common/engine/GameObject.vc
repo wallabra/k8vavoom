@@ -1076,6 +1076,10 @@ struct seg_t : TPlane {
   bool bZeroLen;
 
   native transient readonly drawseg_t *drawsegs;
+
+  // original polyobject, or `nullptr` for world seg
+  native polyobj_t *pobj;
+
   native transient readonly void/*decal_t*/ *decalhead;
   native transient readonly void/*decal_t*/ *decaltail;
 };
@@ -1084,11 +1088,11 @@ struct seg_t : TPlane {
 //  Polyobj data
 //
 struct polyobj_t {
-  seg_t **segs;
-  int numsegs;
+  seg_t*[] segs;
   TVec startSpot;
   TVec *originalPts; // used as the base for the rotations
   TVec *prevPts; // use to restore the old point values
+  sector_t *originalSector; // used to get height
   float angle;
   int tag; // reference tag assigned in HereticEd
   int[4] bbox2d;
@@ -1097,6 +1101,7 @@ struct polyobj_t {
   bool bHurtOnTouch;
   int seqType;
   Thinker SpecialData;  // pointer a thinker, if the poly is moving
+  int index; // required for LevelInfo sound sequences
   readonly subsector_t *sub;
   // we can have more than one pobj in a subsector, and they form a doubly-linked list
   readonly polyobj_t *subprev;

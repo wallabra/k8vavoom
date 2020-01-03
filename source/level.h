@@ -264,7 +264,7 @@ class VLevel : public VGameObject {
   vint32 NumLevelSpeeches;
 
   // list of all poly-objects on the level
-  polyobj_t *PolyObjs;
+  polyobj_t **PolyObjs;
   vint32 NumPolyObjs;
 
   // anchor points of poly-objects
@@ -566,7 +566,7 @@ public:
   void SpawnPolyobj (float x, float y, int tag, bool crush, bool hurt);
   void AddPolyAnchorPoint (float x, float y, int tag);
   void InitPolyobjs ();
-  polyobj_t *GetPolyobj (int polyNum); // actually, tag
+  polyobj_t *GetPolyobj (int polyNum) noexcept; // actually, tag
   int GetPolyobjMirror (int poly); // tag again
   bool MovePolyobj (int num, float x, float y, bool forced=false); // tag (GetPolyobj)
   bool RotatePolyobj (int num, float angle); // tag (GetPolyobj)
@@ -635,10 +635,10 @@ public:
     public: \
       arrname_##Iterator (const VLevel *alevel) : level(alevel) {} \
     public: \
-      inline itertype_ *begin () { return &level->arrname_[0]; } \
-      inline const itertype_ *begin () const { return &level->arrname_[0]; } \
-      inline itertype_ *end () { return &level->arrname_[level->Num##arrname_]; } \
-      inline const itertype_ *end () const { return &level->arrname_[level->Num##arrname_]; } \
+      inline itertype_ *begin () const { return &level->arrname_[0]; } \
+      /*inline const itertype_ *begin () const { return &level->arrname_[0]; }*/ \
+      inline itertype_ *end () const { return &level->arrname_[level->Num##arrname_]; } \
+      /*inline const itertype_ *end () const { return &level->arrname_[level->Num##arrname_]; }*/ \
     }; \
     inline arrname_##Iterator itername_ () { return arrname_##Iterator(this); } \
     inline const arrname_##Iterator itername_ () const { return arrname_##Iterator(this); }
@@ -653,7 +653,7 @@ public:
   VL_ITERATOR(Nodes, allNodes, node_t)
   VL_ITERATOR(Things, allThings, mthing_t)
   VL_ITERATOR(Zones, allZones, vint32)
-  VL_ITERATOR(PolyObjs, allPolyObjs, polyobj_t)
+  VL_ITERATOR(PolyObjs, allPolyObjs, polyobj_t*)
   VL_ITERATOR(PolyAnchorPoints, allPolyAnchorPoints, PolyAnchorPoint_t)
   VL_ITERATOR(GenericSpeeches, allGenericSpeeches, FRogueConSpeech)
   VL_ITERATOR(LevelSpeeches, allLevelSpeeches, FRogueConSpeech)
@@ -680,8 +680,8 @@ public:
       inline void operator ++ () { ++idx; } /* this is enough for iterator */ \
       inline arrname_##IndexIterator begin () { return arrname_##IndexIterator(*this); } \
       inline arrname_##IndexIterator end () { return arrname_##IndexIterator(level, true); } \
-      inline itertype_ *value () { return &level->arrname_[idx]; } \
-      inline const itertype_ *value () const { return &level->arrname_[idx]; } \
+      inline itertype_ *value () const { return &level->arrname_[idx]; } \
+      /*inline const itertype_ *value () const { return &level->arrname_[idx]; }*/ \
       inline int index () const { return idx; } \
     }; \
     inline arrname_##IndexIterator itername_ () { return arrname_##IndexIterator(this); } \
@@ -696,7 +696,7 @@ public:
   VL_ITERATOR_INDEX(Nodes, allNodesIdx, node_t)
   VL_ITERATOR_INDEX(Things, allThingsIdx, mthing_t)
   VL_ITERATOR_INDEX(Zones, allZonesIdx, vint32)
-  VL_ITERATOR_INDEX(PolyObjs, allPolyObjsIdx, polyobj_t)
+  VL_ITERATOR_INDEX(PolyObjs, allPolyObjsIdx, polyobj_t*)
   VL_ITERATOR_INDEX(PolyAnchorPoints, allPolyAnchorPointsIdx, PolyAnchorPoint_t)
   VL_ITERATOR_INDEX(GenericSpeeches, allGenericSpeechesIdx, FRogueConSpeech)
   VL_ITERATOR_INDEX(LevelSpeeches, allLevelSpeechesIdx, FRogueConSpeech)

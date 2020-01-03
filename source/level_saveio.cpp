@@ -597,19 +597,19 @@ void VLevel::SerialiseOther (VStream &Strm) {
 
     for (i = 0; i < NumPolyObjs; ++i) {
       VNTValueIOEx vio(&Strm);
-      float angle = PolyObjs[i].angle;
-      float polyX = PolyObjs[i].startSpot.x;
-      float polyY = PolyObjs[i].startSpot.y;
+      float angle = PolyObjs[i]->angle;
+      float polyX = PolyObjs[i]->startSpot.x;
+      float polyY = PolyObjs[i]->startSpot.y;
       vio.io(VName("angle"), angle);
       vio.io(VName("startSpot.x"), polyX);
       vio.io(VName("startSpot.y"), polyY);
       if (Strm.IsLoading()) {
-        RotatePolyobj(PolyObjs[i].tag, angle);
-        //GCon->Logf("poly #%d: oldpos=(%f,%f)", i, PolyObjs[i].startSpot.x, PolyObjs[i].startSpot.y);
-        MovePolyobj(PolyObjs[i].tag, polyX-PolyObjs[i].startSpot.x, polyY-PolyObjs[i].startSpot.y);
+        RotatePolyobj(PolyObjs[i]->tag, angle);
+        //GCon->Logf("poly #%d: oldpos=(%f,%f)", i, PolyObjs[i]->startSpot.x, PolyObjs[i]->startSpot.y);
+        MovePolyobj(PolyObjs[i]->tag, polyX-PolyObjs[i]->startSpot.x, polyY-PolyObjs[i]->startSpot.y);
         //GCon->Logf("poly #%d: newpos=(%f,%f) (%f,%f)", i, PolyObjs[i].startSpot.x, PolyObjs[i].startSpot.y, polyX, polyY);
       }
-      vio.io(VName("SpecialData"), PolyObjs[i].SpecialData);
+      vio.io(VName("SpecialData"), PolyObjs[i]->SpecialData);
     }
   }
 
