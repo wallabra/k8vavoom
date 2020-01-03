@@ -540,16 +540,15 @@ public:
     return 0xff;
   }
 
-  inline const vuint8 IsRejectVisible (const sector_t *from, const sector_t *dest) const noexcept {
-    if (!from || !dest) return 0x00;
+  inline const vuint8 IsRejectedVis (const sector_t *from, const sector_t *dest) const noexcept {
+    if (!from || !dest) return 0xff; // this is REJECT matrix, not ACCEPT
     if (RejectMatrix) {
       const unsigned s1 = (unsigned)(ptrdiff_t)(from-Sectors);
       const unsigned s2 = (unsigned)(ptrdiff_t)(dest-Sectors);
       const unsigned pnum = s1*(unsigned)NumSectors+s2;
-      // check in REJECT table
       return RejectMatrix[pnum>>3]&(1u<<(pnum&7));
     }
-    return 0xff;
+    return 0x00; // this is REJECT matrix, not ACCEPT
   }
 
   void AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, vuint32 Color);
