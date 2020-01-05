@@ -299,6 +299,7 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
     if (--watchcatCount <= 0) {
       //k8: FIXME!
       GCon->Logf(NAME_Error, "WatchCat interrupted `VBasePlayer::SetViewState`!");
+      VSt.StateTime = -1;
       break;
     }
 
