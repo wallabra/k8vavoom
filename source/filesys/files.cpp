@@ -1614,7 +1614,16 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
   }
 
   // process filters and warp template
-  fsys_game_filters = game.filters;
+  FL_ClearGameFilters();
+  for (auto &&flt : game.filters) {
+    int res = FL_AddGameFilter(flt);
+    switch (res) {
+      case FL_ADDFILTER_OK: break;
+      case FL_ADDFILTER_INVALID: GCon->Logf(NAME_Error, "Invalid game filter '%s', ignored", *flt); break;
+      case FL_ADDFILTER_DUPLICATE: GCon->Logf(NAME_Warning, "Duplicate game filter '%s', ignored", *flt); break;
+      default: GCon->Logf(NAME_Error, "Unknown game filter error %d for filter '%s', ignored", res, *flt); break;
+    }
+  }
   warpTpl = game.warp;
 
   // append iwad
