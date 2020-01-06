@@ -14,11 +14,14 @@ game "doom2" {
   warp = "MAP##"; // template for "-warp"
   filter = {
     "doom",
+    "doom.id",
     "game-doom",
     "game-doomstrifechex",
     "game-doomchex",
     "doom.doom2",
+    "doom.id.doom2",
     "doom.doom2.commercial",
+    "doom.id.doom2.commercial",
   }
 }
 
@@ -35,12 +38,16 @@ game "doom" {
   warp = "E#M#";
   filter = {
     "doom",
+    "doom.id",
     "game-doom",
     "game-doomstrifechex",
     "game-doomchex",
     "doom.doom1",
+    "doom.id.doom1",
     "doom.doom1.registered",
+    "doom.id.doom1.registered",
     "doom.doom1.ultimate",
+    "doom.id.doom1.ultimate",
   }
 }
 
@@ -90,11 +97,14 @@ game "tnt" {
   warp = "MAP##";
   filter = {
     "doom",
+    "doom.id",
     "game-doom",
     "game-doomstrifechex",
     "game-doomchex",
     "doom.doom2",
+    "doom.id.doom2",
     "doom.doom2.tnt",
+    "doom.id.doom2.tnt",
   }
 }
 
@@ -108,11 +118,14 @@ game "plutonia" {
   warp = "MAP##";
   filter = {
     "doom",
+    "doom.id",
     "game-doom",
     "game-doomstrifechex",
     "game-doomchex",
     "doom.doom2",
+    "doom.id.doom2",
     "doom.doom2.plutonia",
+    "doom.id.doom2.plutonia",
   }
 }
 
@@ -185,6 +198,7 @@ game "strife" {
   filter = {
     "strife",
     "game-strife",
+    "strife.strife",
   }
 }
 
@@ -198,13 +212,18 @@ game "nerve" {
   warp = "MAP##";
   filter = {
     "doom",
+    "doom.id",
     "game-doom",
     "game-doomstrifechex",
     "game-doomchex",
     "doom.doom2",
+    "doom.id.doom2",
     "doom.doom2.commercial",
-    "doom.doom2.nerve",
+    "doom.id.doom2.commercial",
     "doom.doom2.bfg",
+    "doom.id.doom2.bfg",
+    "doom.doom2.nerve",
+    "doom.id.doom2.nerve",
   }
 }
 
@@ -216,6 +235,19 @@ game "doom2" {
   base = "basev/doom";
   iwad = "complete.pk3";
   iwad = "doom_complete.pk3";
+  filter = {
+    "doom",
+    "doom.id",
+    "game-doom",
+    "game-doomstrifechex",
+    "game-doomchex",
+    "doom.doom2",
+    "doom.id.doom2",
+    "doom.doom2.commercial",
+    "doom.id.doom2.commercial",
+    "doom.doom2.wadsmoosh",
+    "doom.id.doom2.wadsmoosh",
+  }
 }
 
 
@@ -233,6 +265,7 @@ game "chex" {
     "chex",
     "game-doomstrifechex",
     "game-doomchex",
+    "chex.chex1",
   }
 }
 
@@ -249,6 +282,8 @@ game "chex2" {
     "chex",
     "game-doomstrifechex",
     "game-doomchex",
+    "chex.chex1",
+    "chex.chex2",
   }
 }
 
@@ -265,5 +300,6 @@ game "chex2" {
     "chex",
     "game-doomstrifechex",
     "game-doomchex",
+    "chex.chex3",
   }
 }
