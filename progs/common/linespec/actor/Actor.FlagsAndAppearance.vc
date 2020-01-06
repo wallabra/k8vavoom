@@ -257,7 +257,8 @@
 //
 //==========================================================================
 [decorate] final void A_Fall () {
-  A_NoBlocking();
+  // called for Keen and PE, and they should not drop items
+  decorate_A_NoBlocking(false);
 }
 
 
