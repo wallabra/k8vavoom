@@ -258,12 +258,13 @@ void VFileDirectory::buildLumpNames () {
       // filtering
       if (fi.fileName.startsWith("filter/")) {
         VStr fn = fi.fileName;
-        fidx = FL_CheckFilterName(fn);
-        //if (fidx >= 0) GLog.Logf("FILTER CHECK: fidx=%d; oname=<%s>; name=<%s>", fidx, *origName, *fn);
-        if (fidx < 0) {
+        if (!FL_CheckFilterName(fn)) {
+          //GLog.Logf(NAME_Init, "FILTER CHECK: dropped '%s'", *fi.fileName);
           // hide this file
           fi.fileName.clear(); // hide this file
           continue;
+        } else {
+          //GLog.Logf(NAME_Init, "FILTER CHECK: '%s' -> '%s'", *fi.fileName, *fn);
         }
         fi.fileName = fn;
       }

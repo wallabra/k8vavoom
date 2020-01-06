@@ -252,8 +252,9 @@ void W_AddFileFromZip (VStr WadName, VStream *WadStrm);
 
 bool VFS_ShouldIgnoreExt (VStr fname);
 
-// removes prefix, returns filter index (or -1, and does nothing)
-int FL_CheckFilterName (VStr &fname);
+// returns `false` if file was filtered out (and clears name)
+// returns `true` if file should be kept (and modifies name if necessary)
+bool FL_CheckFilterName (VStr &fname);
 
 VStream *FL_OpenFileRead_NoLock (VStr Name);
 VStream *FL_OpenFileReadBaseOnly_NoLock (VStr Name);

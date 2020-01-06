@@ -69,7 +69,20 @@ extern bool fsys_skipDehacked;
 // more cli args
 extern int fsys_ignoreSquare; // do not check for "Adventures of Square" (default is true)
 
-extern TArray<VStr> fsys_game_filters;
+// this is internal now, use the api to set it
+//extern TArray<VStr> fsys_game_filters;
+
+void FL_ClearGameFilters ();
+
+// add new filter; it should start with "filter/"
+// duplicate filters will be ignored
+// returns 0 for "no error"
+enum {
+  FL_ADDFILTER_OK = 0,
+  FL_ADDFILTER_INVALID = -1,
+  FL_ADDFILTER_DUPLICATE = -2,
+};
+int FL_AddGameFilter (VStr path);
 
 
 // boom namespaces

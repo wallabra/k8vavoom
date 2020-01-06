@@ -92,29 +92,78 @@ void FSYS_Shutdown () {
 
 //==========================================================================
 //
-//  FL_CheckFilterName
-//
-//  removes prefix, returns filter index (or -1, and does nothing)
+//  FL_ClearGameFilters
 //
 //==========================================================================
-int FL_CheckFilterName (VStr &fname) {
-  if (fname.isEmpty() || fsys_game_filters.length() == 0) return -1;
-  if (!fname.startsWithNoCase("filter/")) return -1;
-  //GLog.Logf("!!! %d", fsys_game_filters.length());
-  int bestIdx = -1;
-  for (int f = 0; f < fsys_game_filters.length(); ++f) {
+void FL_ClearGameFilters () {
+  fsys_game_filters.clear();
+}
+
+
+extern "C" {
+  int cmpGameFilter (const void *aa, const void *bb, void *) {
+    if (aa == bb) return 0;
+    const VStr *a = (const VStr *)aa;
+    const VStr *b = (const VStr *)bb;
+    if (a->length() < b->length()) return -1;
+    if (a->length() > b->length()) return 1;
+    return a->ICmp(*b);
+  }
+}
+
+
+//==========================================================================
+//
+//  FL_AddGameFilter
+//
+//  add new filter; it should start with "filter/"
+//  duplicate filters will be ignored
+//  returns 0 for "no error"
+//
+//==========================================================================
+int FL_AddGameFilter (VStr path) {
+  path = path.fixSlashes();
+  while (path.length() && path[0] == '/') path.chopLeft(1);
+  while (path.length() && path.endsWith("/")) path.chopRight(1);
+  if (path.isEmpty()) return FL_ADDFILTER_INVALID;
+  if (!path.startsWithCI("filter/")) return FL_ADDFILTER_INVALID;
+  if (path.length() < 8) return FL_ADDFILTER_INVALID; // just in case
+  // look for duplicates
+  for (auto &&flt : fsys_game_filters) if (flt.strEquCI(path)) return FL_ADDFILTER_DUPLICATE;
+  fsys_game_filters.append(path);
+  // sort them, because why not?
+  //GLog.Log(NAME_Debug, ":::: B: ===="); for (auto &&s : fsys_game_filters) GLog.Logf(NAME_Debug, "  <%s>", *s);
+  timsort_r(fsys_game_filters.ptr(), fsys_game_filters.length(), sizeof(VStr), &cmpGameFilter, nullptr);
+  //GLog.Log(NAME_Debug, ":::: A: ===="); for (auto &&s : fsys_game_filters) GLog.Logf(NAME_Debug, "  <%s>", *s);
+  return FL_ADDFILTER_OK;
+}
+
+
+//==========================================================================
+//
+//  FL_CheckFilterName
+//
+//  returns `false` if file was filtered out (and clears name)
+//  returns `true` if file should be kept (and modifies name if necessary)
+//
+//==========================================================================
+bool FL_CheckFilterName (VStr &fname) {
+  if (fname.isEmpty()) return false; // empty names should not be kept ;-)
+  if (fsys_game_filters.length() == 0) return true; // keep it
+  if (!fname.startsWithNoCase("filter/")) return true; // keep it
+  if (fname.endsWith("/")) { fname.clear(); return false; } // drop it (it is a directory)
+  // latest filter is always the best one
+  for (int f = fsys_game_filters.length()-1; f >= 0; --f) {
     VStr fs = fsys_game_filters[f];
-    //GLog.Logf("f=%d; fs=<%s>; fname=<%s>", f, *fs, *fname);
-    if (fname.length() > fs.length()+1 && fname[fs.length()] == '/' && fname.startsWith(fs)) {
-      bestIdx = f;
+    if (fname.length() > fs.length()+1 && fname[fs.length()] == '/' && fname.startsWithNoCase(fs)) {
+      fname.chopLeft(fs.length()+1);
+      while (fname.length() && fname[0] == '/') fname.chopLeft(1);
+      return !fname.isEmpty(); // just in case
     }
   }
-  if (bestIdx >= 0) {
-    VStr fs = fsys_game_filters[bestIdx];
-    fname.chopLeft(fs.length()+1);
-    while (fname.length() && fname[0] == '/') fname.chopLeft(1);
-  }
-  return bestIdx;
+  // drop it
+  fname.clear();
+  return false;
 }
 
 
