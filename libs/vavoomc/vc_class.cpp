@@ -130,6 +130,8 @@ VClass::VClass (VName AName, VMemberBase *AOuter, const TLocation &ALoc)
   , AliasList()
   , AliasFrameNum(0)
   , KnownEnums()
+  , InstanceCount(0)
+  , InstanceCountWithSub(0)
 {
   LinkNext = GClasses;
   GClasses = this;
@@ -176,6 +178,8 @@ VClass::VClass (ENativeConstructor, size_t ASize, vuint32 AClassFlags, VClass *A
   , AliasList()
   , AliasFrameNum(0)
   , KnownEnums()
+  , InstanceCount(0)
+  , InstanceCountWithSub(0)
 {
   LinkNext = GClasses;
   GClasses = this;

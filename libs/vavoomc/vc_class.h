@@ -322,6 +322,9 @@ public:
 
   TMap<VName, bool> KnownEnums;
 
+  int InstanceCount; // number of alive instances of this class
+  int InstanceCountWithSub; // number of alive instances of this class and its subclasses (includes `InstanceCount`)
+
 private:
   static TArray<VName> GSpriteNames;
   static TMapNC<VName, int> GSpriteNamesMap;

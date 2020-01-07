@@ -407,6 +407,14 @@ VObject::~VObject () {
   ConditionalDestroy();
   GObjObjects[Index] = nullptr;
 
+  // decrement counters
+  --GetClass()->InstanceCount;
+  //GLog.Logf(NAME_Debug, "DTOR %s: InstanceCount=%d", GetClass()->GetName(), GetClass()->InstanceCount);
+  for (VClass *cc = GetClass(); cc; cc = cc->GetSuperClass()) {
+    --cc->InstanceCountWithSub;
+    //GLog.Logf(NAME_Debug, "  %s: InstanceCountWithSub=%d", cc->GetName(), cc->InstanceCountWithSub);
+  }
+
   if (!GInGarbageCollection) {
     vassert(GNumDeleted > 0);
     vassert(ObjectFlags&_OF_Destroyed);
@@ -587,6 +595,14 @@ VObject *VObject::StaticSpawnObject (VClass *AClass, bool skipReplacement) {
 
     // postinit
     Obj->PostCtor();
+
+    // increment counters
+    ++AClass->InstanceCount;
+    //GLog.Logf(NAME_Debug, "CTOR %s: InstanceCount=%d", AClass->GetName(), AClass->InstanceCount);
+    for (VClass *cc = AClass; cc; cc = cc->GetSuperClass()) {
+      ++cc->InstanceCountWithSub;
+      //GLog.Logf(NAME_Debug, "  %s: InstanceCountWithSub=%d", cc->GetName(), cc->InstanceCountWithSub);
+    }
   } catch (...) {
     Z_Free(Obj);
     GNewObject = nullptr;
@@ -758,7 +774,7 @@ void VObject::CollectGarbage (bool destroyDelayed) {
   // there is no reason to use old non-compacting collector, so i removed it
   //if (gc_use_compacting_collector)
   {
-    // move finger to first alive object
+    // move finger to the first alive object
     int finger = /*gObjFirstFree*/ilen-1;
     while (finger >= 0) {
       VObject *fgobj = goptr[finger];
@@ -829,7 +845,7 @@ void VObject::CollectGarbage (bool destroyDelayed) {
 #endif
       // we have alive object, clear references
       obj->ClearReferences();
-      ++itpos; // move to next object
+      ++itpos; // move to the next object
     }
 
 #ifdef VC_GARBAGE_COLLECTOR_COMPACTING_DEBUG
