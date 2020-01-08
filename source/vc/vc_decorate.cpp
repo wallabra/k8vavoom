@@ -208,7 +208,7 @@ static TMap<VStrCI, bool> IgnoredDecorateActions;
   VParsedArgs::RegisterFlagSet("-vc-decorate-removestate-warnings", "show \"use RemoveState\" decorate warnings", &cli_ShowRemoveStateWarning) &&
   VParsedArgs::RegisterFlagReset("-vc-no-decorate-removestate-warnings", "hide \"use RemoveState\" decorate warnings", &cli_ShowRemoveStateWarning) &&
 
-  VParsedArgs::RegisterFlagSet("-disable-blood-replaces", "!do not use", &disableBloodReplaces) &&
+  VParsedArgs::RegisterFlagSet("-disable-blood-replaces", "do not replace blood actors with mod-provided blood", &disableBloodReplaces) &&
   VParsedArgs::RegisterAlias("-disable-blood-replacement", "-disable-blood-replaces") &&
   VParsedArgs::RegisterAlias("-no-blood-replaces", "-disable-blood-replaces") &&
   VParsedArgs::RegisterAlias("-no-blood-replacement", "-disable-blood-replaces") &&
