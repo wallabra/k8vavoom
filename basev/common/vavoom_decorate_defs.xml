@@ -350,6 +350,9 @@
     <flag name="UseKillScripts" property="bUseKillScripts" />
     <flag name="NoKillScripts" property="bNoKillScripts" />
     <flag name="DontCorpse" property="bDontCorpse" />
+    <!-- limiters -->
+    <limitsub_cvar />
+    <limitsub_int />
   </class>
 
   <class name="Inventory">
