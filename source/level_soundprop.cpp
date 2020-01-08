@@ -91,12 +91,14 @@ void VLevel::processSoundSector (int validcount, TArray<VEntity *> &elist, secto
     // early out for intra-sector lines
     if (check->frontsector == check->backsector) continue;
 
+    /*
     if (!SV_LineOpenings(check, *check->v1, 0xffffffff)) {
       if (!SV_LineOpenings(check, *check->v2, 0xffffffff)) {
         // closed door
         continue;
       }
     }
+    */
 
     sector_t *other = (check->frontsector == sec ? check->backsector : check->frontsector);
     if (!other) continue; // just in case
@@ -123,6 +125,13 @@ void VLevel::processSoundSector (int validcount, TArray<VEntity *> &elist, secto
       other->validcount = validcount;
       other->soundtraversed = sblock+1;
       other->SoundTarget = soundtarget;
+      // moved door check here, because why not?
+      if (!SV_LineOpenings(check, *check->v1, 0xffffffff)) {
+        if (!SV_LineOpenings(check, *check->v2, 0xffffffff)) {
+          // closed door
+          continue;
+        }
+      }
       // add to processing list
       SoundSectorListItem &sl = recSoundSectorList.alloc();
       sl.sec = other;
