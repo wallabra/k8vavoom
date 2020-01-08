@@ -34,6 +34,8 @@ VCvarB dbg_vm_disable_thinkers("dbg_vm_disable_thinkers", false, "Disable VM thi
 VCvarB dbg_vm_enable_secthink("dbg_vm_enable_secthink", true, "Enable sector thinkers when VM thinkers are disabled (for debug)?", CVAR_PreInit);
 VCvarB dbg_vm_disable_specials("dbg_vm_disable_specials", false, "Disable updating specials (for debug)?", CVAR_PreInit);
 
+static VCvarB dbg_limiter_counters("dbg_limiter_counters", false, "Show limiter counters?", CVAR_PreInit);
+
 double worldThinkTimeVM = -1;
 double worldThinkTimeDecal = -1;
 
@@ -253,6 +255,17 @@ void VLevel::RunScriptThinkers (float DeltaTime) {
 }
 
 
+extern "C" {
+  static int cmpLimInstance (const void *aa, const void *bb, void *) {
+    if (aa == bb) return 0;
+    const VThinker *a = (const VThinker *)aa;
+    const VThinker *b = (const VThinker *)bb;
+    const float sts = a->SpawnTime-b->SpawnTime;
+    return (sts < 0 ? -1 : sts > 0 ? 1 : 0);
+  }
+}
+
+
 //==========================================================================
 //
 //  VLevel::TickWorld
@@ -282,6 +295,19 @@ void VLevel::TickWorld (float DeltaTime) {
   eventBeforeWorldTick(DeltaTime);
 
   if (dbg_world_think_vm_time) stimet = -Sys_Time();
+
+  // setup limiter info
+  for (auto &&cls : NumberLimitedClasses) {
+    if (!cls->InstanceLimitWithSubCvar.isEmpty()) {
+      VCvar *cv = VCvar::FindVariable(*cls->InstanceLimitWithSubCvar);
+      if (cv) {
+        cls->InstanceLimitWithSub = max2(0, cv->asInt());
+      } else {
+        cls->InstanceLimitWithSub = 0;
+      }
+    }
+    cls->InstanceLimitList.reset();
+  }
 
   // run thinkers
 #ifdef CLIENT
@@ -327,6 +353,17 @@ void VLevel::TickWorld (float DeltaTime) {
         // if it is just destroyed, call level notifier
         if (!(c->GetFlags()&_OF_Destroyed) && c->GetClass()->IsChildOf(VEntity::StaticClass())) eventEntityDying((VEntity *)c);
         c->ConditionalDestroy();
+      } else {
+        // collect instances for limiters
+        VClass *lcls = c->GetClass();
+        if (lcls->GetLimitInstancesWithSub() && !(c->GetFlags()&_OF_Destroyed)) {
+          lcls = (lcls->InstanceLimitBaseClass ?: lcls);
+          vassert(lcls);
+          if (lcls->InstanceLimitWithSub > 0 && lcls->InstanceCountWithSub >= lcls->InstanceLimitWithSub) {
+            lcls->InstanceLimitList.append(c);
+            //GCon->Logf(NAME_Debug, ":ADDING:%s: count=%d; limit=%d (lcls=%s)", c->GetClass()->GetName(), lcls->InstanceCountWithSub, lcls->InstanceLimitWithSub, lcls->GetName());
+          }
+        }
       }
     }
   } else {
@@ -372,27 +409,44 @@ void VLevel::TickWorld (float DeltaTime) {
     }
   }
 
+  // process limiters
+  const bool limdbg = dbg_limiter_counters.asBool();
+  for (auto &&cls : NumberLimitedClasses) {
+    if (cls->InstanceLimitWithSub < 1) continue;
+    int maxCount = cls->InstanceLimitWithSub-(cls->InstanceLimitWithSub/3);
+    if (maxCount >= cls->InstanceLimitWithSub) maxCount -= 10;
+    if (maxCount < 1) maxCount = 1;
+    if (cls->InstanceLimitList.length() <= maxCount) continue;
+    // limit hit, remove furthest
+    if (limdbg) GCon->Logf(NAME_Debug, "%s: limit is %d, current is %d, reducing to %d", cls->GetName(), cls->InstanceLimitWithSub, cls->InstanceLimitList.length(), maxCount);
+    //FIXME: remove by proximity to the camera?
+    // sort by spawn time
+    // note that it is guaranteed that all objects are `VEntity` instances here (see decorate parsing code)
+    timsort_r(cls->InstanceLimitList.ptr(), cls->InstanceLimitList.length(), sizeof(VObject *), &cmpLimInstance, nullptr);
+    const int tokill = cls->InstanceLimitList.length()-maxCount;
+    vassert(tokill > 0);
+    for (int f = 0; f < tokill; ++f) {
+      VThinker *c = (VThinker *)cls->InstanceLimitList.ptr()[f]; // no need to perform range checking
+      if (c->GetFlags()&_OF_Destroyed) {
+        if (limdbg) GCon->Logf(NAME_Debug, "  %s(%u): destroyed", c->GetClass()->GetName(), c->GetUniqueId());
+        continue;
+      }
+      if (!(c->GetFlags()&_OF_DelayedDestroy)) {
+        if (limdbg) GCon->Logf(NAME_Debug, "  %s(%u): removing", c->GetClass()->GetName(), c->GetUniqueId());
+        RemoveThinker(c);
+        // if it is just destroyed, call level notifier
+        if (!(c->GetFlags()&_OF_Destroyed) && c->GetClass()->IsChildOf(VEntity::StaticClass())) eventEntityDying((VEntity *)c);
+        c->ConditionalDestroy();
+      }
+    }
+  }
+
   //GCon->Logf("VLevel::TickWorld: time=%f; tictime=%f; dt=%f : %f", (double)Time, (double)TicTime, DeltaTime, DeltaTime*1000.0);
   Time += DeltaTime;
   //++TicTime;
   TicTime = (int)(Time*35.0f);
 
   eventAfterWorldTick(DeltaTime);
-
-  /*
-  {
-    static int mtindex = -666;
-    if (mtindex < 0) mtindex = StaticClass()->GetMethodIndex(VName("AfterWorldTick"));
-    P_PASS_SELF;
-    P_PASS_FLOAT(DeltaTime);
-    //VStr s = ExecuteFunction(GetVFunctionIdx(mtindex)).getStr();
-    //GCon->Logf("STR: %s", *s.quote(true));
-    //VName n = ExecuteFunction(GetVFunctionIdx(mtindex)).getName();
-    //GCon->Logf("NAME: <%s>", *n);
-    TVec v = ExecuteFunction(GetVFunctionIdx(mtindex)).getVector();
-    GCon->Logf("VECTOR: (%f,%f,%f)", v.x, v.y, v.z);
-  }
-  */
 }
 
 

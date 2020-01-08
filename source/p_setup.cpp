@@ -1444,6 +1444,8 @@ load_again:
   RecalcWorldBBoxes();
 
   cacheFileBase = cacheFileName;
+
+  eventAfterLevelLoaded();
 }
 
 
