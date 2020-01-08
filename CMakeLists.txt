@@ -11,8 +11,8 @@ project(k8vavoom)
 option(WITH_SDL2 "Use SDL2 library" ON)
 option(WITH_OPENGL "Use OpenGL library" ON)
 option(WITH_MIMALLOC "Use mi-malloc memory allocator" ON)
+option(WITH_OPUS "Enable Opus support (required for built-in BDW mod)" ON)
 option(WITH_VORBIS "Enable Vorbis support" ON)
-option(WITH_OPUS "Enable Opus support" ON)
 option(WITH_LIBMAD "Enable MP3 support" ON)
 option(WITH_FLAC "Enable FLAC support" ON)
 option(WITH_FLUID "Enable FluidSynth support" ON)
@@ -21,23 +21,29 @@ option(WITH_SYS_FLUID "Use system FluidSynth library" OFF)
 else(WIN32)
 option(WITH_SYS_FLUID "Use system FluidSynth library" ON)
 endif(WIN32)
+
 option(WITH_STB_JPEG "Use stb_image to load jpegs" ON)
 option(WITH_SYS_LIBJPG "Use system libjpg (if stb_image is off)" ON)
-#option(WITH_SYS_ZLIB "Use system zlib" ON)
-#option(WITH_SYS_LZMA "Use system liblzma" ON)
-option(WITH_SSE3 "Use SSE3 instruction set" OFF)
-option(WITH_SSE4 "Use SSE4 instruction set" OFF)
-option(WITH_SSE41 "Use SSE4.1 instruction set" OFF)
-option(WITH_SSE42 "Use SSE4.2 instruction set" OFF)
-option(WITH_GLAD "Use supplied GLAD for GL bindings" OFF)
+
+option(WITH_OLD_CPU "Use pIV CPU instruction set" OFF)
+
+# default is SSE2
+option(WITH_SSE3 "Use SSE3 instruction set (may not compile)" OFF)
+option(WITH_SSE4 "Use SSE4 instruction set (may not compile)" OFF)
+option(WITH_SSE41 "Use SSE4.1 instruction set (may not compile)" OFF)
+option(WITH_SSE42 "Use SSE4.2 instruction set (may not compile)" OFF)
 option(NO_SSE "Disable all SSE instructions" OFF)
+option(INSANE_AVX "Use AVX2 instruction set (don't do this, it won't give you any noticeable speedup and may be broken)" OFF)
+
+option(WITH_GLAD "Use supplied GLAD for GL bindings" OFF)
 option(NO_PTHREAD "Disable pthreads, use C11 threads instead" OFF)
 option(NO_MEMRCHR "Disable usage of memrchr()" OFF)
-option(INSANE_AVX "Use AVX2 instruction set (don't do this, it won't give you any noticeable speedup)" OFF)
+
 option(WITH_STRTODEX "Use internal strtod implementation to parse floats" ON)
-option(WITH_OLD_CPU "Use pIV CPU instruction set" OFF)
+
 option(DEBUG_FPU_CHECKS "Use FPU and turn on some checks (GNU/Linux only)" OFF)
 option(UNSTABLE_OPTIMISATIONS "Use -O3 (WARNING! DON'T DO THAT! NEVER!)" OFF)
+
 option(ARCH_LINUX_SPECIAL "Arch GNU/Linux specific changes (do not turn on if you don't know what it is)" OFF)
 
 if(CMAKE_CROSSCOMPILING AND WIN32)
