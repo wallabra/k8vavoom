@@ -435,6 +435,27 @@ public:
   static bool (*onExecuteNetMethodCB) (VObject *obj, VMethod *func); // return `false` to do normal execution
   static bool DumpBacktraceToStdErr;
 
+protected:
+  inline void IncrementInstanceCounters () const noexcept {
+    VClass *cc = Class;
+    ++cc->InstanceCount;
+    //GLog.Logf(NAME_Debug, "CTOR %s: InstanceCount=%d", cc->GetName(), cc->InstanceCount);
+    for (; cc; cc = cc->GetSuperClass()) {
+      ++cc->InstanceCountWithSub;
+      //GLog.Logf(NAME_Debug, "  %s: InstanceCountWithSub=%d", cc->GetName(), cc->InstanceCountWithSub);
+    }
+  }
+
+  inline void DecrementInstanceCounters () const noexcept {
+    VClass *cc = Class;
+    --cc->InstanceCount;
+    //GLog.Logf(NAME_Debug, "DTOR %s: InstanceCount=%d", cc->GetName(), cc->InstanceCount);
+    for (; cc; cc = cc->GetSuperClass()) {
+      --cc->InstanceCountWithSub;
+      //GLog.Logf(NAME_Debug, "  %s: InstanceCountWithSub=%d", cc->GetName(), cc->InstanceCountWithSub);
+    }
+  }
+
 public:
   // constructors
   VObject ();
@@ -498,28 +519,28 @@ public:
   // functions
   void ConditionalDestroy ();
 
-  inline bool IsA (VClass *SomeBaseClass) const {
+  inline bool IsA (VClass *SomeBaseClass) const noexcept {
     for (const VClass *c = Class; c; c = c->GetSuperClass()) if (SomeBaseClass == c) return true;
     return false;
   }
 
   // accessors
-  inline VClass *GetClass () const { return Class; }
-  inline vuint32 GetFlags () const { return ObjectFlags; }
+  inline VClass *GetClass () const noexcept { return Class; }
+  inline vuint32 GetFlags () const noexcept { return ObjectFlags; }
   //inline void SetFlags (vuint32 NewFlags) { ObjectFlags |= NewFlags; }
   void SetFlags (vuint32 NewFlags);
-  inline void ClearFlags (vuint32 NewFlags) { ObjectFlags &= ~NewFlags; }
-  //inline vuint32 GetObjectIndex () const { return Index; }
-  inline vuint32 GetUniqueId () const { return UniqueId; } // never 0
+  inline void ClearFlags (vuint32 NewFlags) noexcept { ObjectFlags &= ~NewFlags; }
+  //inline vuint32 GetObjectIndex () const noexcept { return Index; }
+  inline vuint32 GetUniqueId () const noexcept { return UniqueId; } // never 0
 
-  inline VMethod *GetVFunctionIdx (int InIndex) const { return vtable[InIndex]; }
-  inline VMethod *GetVFunction (VName FuncName) const { return vtable[Class->GetMethodIndex(FuncName)]; }
+  inline VMethod *GetVFunctionIdx (int InIndex) const noexcept { return vtable[InIndex]; }
+  inline VMethod *GetVFunction (VName FuncName) const noexcept { return vtable[Class->GetMethodIndex(FuncName)]; }
 
   static VStr NameFromVKey (int vkey);
   static int VKeyFromName (VStr kn);
 
-  inline static const GCStats &GetGCStats () { return gcLastStats; }
-  inline static void ResetGCStatsLastCollected () { gcLastStats.lastCollected = 0; }
+  inline static const GCStats &GetGCStats () noexcept { return gcLastStats; }
+  inline static void ResetGCStatsLastCollected () noexcept { gcLastStats.lastCollected = 0; }
 
   #include "vc_object_common.h"
 

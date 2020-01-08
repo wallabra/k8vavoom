@@ -407,14 +407,6 @@ VObject::~VObject () {
   ConditionalDestroy();
   GObjObjects[Index] = nullptr;
 
-  // decrement counters
-  --GetClass()->InstanceCount;
-  //GLog.Logf(NAME_Debug, "DTOR %s: InstanceCount=%d", GetClass()->GetName(), GetClass()->InstanceCount);
-  for (VClass *cc = GetClass(); cc; cc = cc->GetSuperClass()) {
-    --cc->InstanceCountWithSub;
-    //GLog.Logf(NAME_Debug, "  %s: InstanceCountWithSub=%d", cc->GetName(), cc->InstanceCountWithSub);
-  }
-
   if (!GInGarbageCollection) {
     vassert(GNumDeleted > 0);
     vassert(ObjectFlags&_OF_Destroyed);
@@ -595,14 +587,6 @@ VObject *VObject::StaticSpawnObject (VClass *AClass, bool skipReplacement) {
 
     // postinit
     Obj->PostCtor();
-
-    // increment counters
-    ++AClass->InstanceCount;
-    //GLog.Logf(NAME_Debug, "CTOR %s: InstanceCount=%d", AClass->GetName(), AClass->InstanceCount);
-    for (VClass *cc = AClass; cc; cc = cc->GetSuperClass()) {
-      ++cc->InstanceCountWithSub;
-      //GLog.Logf(NAME_Debug, "  %s: InstanceCountWithSub=%d", cc->GetName(), cc->InstanceCountWithSub);
-    }
   } catch (...) {
     Z_Free(Obj);
     GNewObject = nullptr;
@@ -647,6 +631,7 @@ void VObject::Register () {
   }
   vdgclogf("created object(%u) #%d: %p (%s)", UniqueId, Index, this, GetClass()->GetName());
   ++gcLastStats.alive;
+  IncrementInstanceCounters();
 }
 
 
@@ -683,6 +668,7 @@ void VObject::SetFlags (vuint32 NewFlags) {
 void VObject::ConditionalDestroy () {
   if (!(ObjectFlags&_OF_Destroyed)) {
     SetFlags(_OF_Destroyed);
+    DecrementInstanceCounters();
     Destroy();
   }
 }
@@ -695,7 +681,10 @@ void VObject::ConditionalDestroy () {
 //==========================================================================
 void VObject::Destroy () {
   Class->DestructObject(this);
-  if (!(ObjectFlags&_OF_Destroyed)) SetFlags(_OF_Destroyed);
+  if (!(ObjectFlags&_OF_Destroyed)) {
+    DecrementInstanceCounters();
+    SetFlags(_OF_Destroyed);
+  }
   vdgclogf("destroyed object(%u) #%d: %p (%s)", UniqueId, Index, this, GetClass()->GetName());
 }
 

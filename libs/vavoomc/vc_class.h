@@ -30,17 +30,20 @@ enum ENativeConstructor { EC_NativeConstructor };
 // flags describing a class
 enum EClassFlags {
   // base flags
-  CLASS_Native               = 0x0001,
-  CLASS_Abstract             = 0x0002, // class is abstract and can't be instantiated directly
-  CLASS_SkipSuperStateLabels = 0x0004, // don't copy state labels
-  CLASS_DecorateVisible      = 0x1000, // this class, and all its children are visible to decorate code
-  CLASS_Transient            = 0x8000,
+  CLASS_Native                = 0x0001u,
+  CLASS_Abstract              = 0x0002u, // class is abstract and can't be instantiated directly
+  CLASS_SkipSuperStateLabels  = 0x0004u, // don't copy state labels
+  CLASS_DecorateVisible       = 0x1000u, // this class, and all its children are visible to decorate code
+  CLASS_Transient             = 0x8000u,
+  // note that limiting is done by the main engine, VC does nothing with those flags
+  CLASS_LimitInstances        = 0x10000u, // limit number of instances of this class
+  CLASS_LimitInstancesWithSub = 0x20000u, // limit number of instances of this class and all its subclasses
 };
 
 // flags describing a class instance
 enum EClassObjectFlags {
-  CLASSOF_Native     = 0x00000001, // native
-  CLASSOF_PostLoaded = 0x00000002, // `PostLoad()` has been called
+  CLASSOF_Native     = 0x00000001u, // native
+  CLASSOF_PostLoaded = 0x00000002u, // `PostLoad()` has been called
 };
 
 
@@ -322,8 +325,20 @@ public:
 
   TMap<VName, bool> KnownEnums;
 
+  // increments in `VObject::StaticSpawn()`
+  // decrements in `VObject::Destroy()`
   int InstanceCount; // number of alive instances of this class
   int InstanceCountWithSub; // number of alive instances of this class and its subclasses (includes `InstanceCount`)
+
+  // used by the main engine only
+  int InstanceLimit;
+  int InstanceLimitWithSub;
+  VStr InstanceLimitCvar;
+  VStr InstanceLimitWithSubCvar;
+  // this is used to reroute limit counters from this class to base class
+  VClass *InstanceLimitBaseClass;
+  // in the main engine thinker this list will be filled with all alive instances
+  TArray<VObject *> InstanceLimitList;
 
 private:
   static TArray<VName> GSpriteNames;
@@ -336,6 +351,13 @@ public:
 
   static inline int GetSpriteCount () noexcept { return GSpriteNames.length(); }
   static inline VName GetSpriteNameAt (int idx) noexcept { return (idx >= 0 && idx < GSpriteNames.length() ? GSpriteNames[idx] : NAME_None); }
+
+public:
+  inline bool GetLimitInstances () const noexcept { return (ClassFlags&CLASS_LimitInstances); }
+  inline bool GetLimitInstancesWithSub () const noexcept { return (ClassFlags&CLASS_LimitInstancesWithSub); }
+
+  inline void SetLimitInstances (bool v) noexcept { if (v) ClassFlags |= CLASS_LimitInstances; else ClassFlags &= ~CLASS_LimitInstances; }
+  inline void SetLimitInstancesWithSub (bool v) noexcept { if (v) ClassFlags |= CLASS_LimitInstancesWithSub; else ClassFlags &= ~CLASS_LimitInstancesWithSub; }
 
 public:
   VClass (VName, VMemberBase *, const TLocation &);

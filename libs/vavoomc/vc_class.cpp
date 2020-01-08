@@ -132,6 +132,12 @@ VClass::VClass (VName AName, VMemberBase *AOuter, const TLocation &ALoc)
   , KnownEnums()
   , InstanceCount(0)
   , InstanceCountWithSub(0)
+  , InstanceLimit(0)
+  , InstanceLimitWithSub(0)
+  , InstanceLimitCvar()
+  , InstanceLimitWithSubCvar()
+  , InstanceLimitBaseClass(nullptr)
+  , InstanceLimitList()
 {
   LinkNext = GClasses;
   GClasses = this;
@@ -180,6 +186,12 @@ VClass::VClass (ENativeConstructor, size_t ASize, vuint32 AClassFlags, VClass *A
   , KnownEnums()
   , InstanceCount(0)
   , InstanceCountWithSub(0)
+  , InstanceLimit(0)
+  , InstanceLimitWithSub(0)
+  , InstanceLimitCvar()
+  , InstanceLimitWithSubCvar()
+  , InstanceLimitBaseClass(nullptr)
+  , InstanceLimitList()
 {
   LinkNext = GClasses;
   GClasses = this;
