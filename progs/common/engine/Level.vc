@@ -326,6 +326,9 @@ final int calcSecIdx (sector_t *sec) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// called after level was loaded (no entities spawned yet)
+void AfterLevelLoaded () {}
+
 void BeforeWorldTick (float DeltaTime) { /*print("BEFORE: %s", DeltaTime);*/ }
 void AfterWorldTick (float DeltaTime) { /*print("AFTER: %s", DeltaTime);*/ }
 
