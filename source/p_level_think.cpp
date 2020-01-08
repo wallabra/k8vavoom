@@ -35,6 +35,7 @@ VCvarB dbg_vm_enable_secthink("dbg_vm_enable_secthink", true, "Enable sector thi
 VCvarB dbg_vm_disable_specials("dbg_vm_disable_specials", false, "Disable updating specials (for debug)?", CVAR_PreInit);
 
 static VCvarB dbg_limiter_counters("dbg_limiter_counters", false, "Show limiter counters?", CVAR_PreInit);
+static VCvarB dbg_limiter_remove_messages("dbg_limiter_remove_messages", false, "Show limiter remove messages?", CVAR_PreInit);
 
 double worldThinkTimeVM = -1;
 double worldThinkTimeDecal = -1;
@@ -411,6 +412,7 @@ void VLevel::TickWorld (float DeltaTime) {
 
   // process limiters
   const bool limdbg = dbg_limiter_counters.asBool();
+  const bool limdbgmsg = dbg_limiter_remove_messages.asBool();
   for (auto &&cls : NumberLimitedClasses) {
     if (cls->InstanceLimitWithSub < 1) continue;
     int maxCount = cls->InstanceLimitWithSub-(cls->InstanceLimitWithSub/3);
@@ -428,14 +430,13 @@ void VLevel::TickWorld (float DeltaTime) {
     for (int f = 0; f < tokill; ++f) {
       VThinker *c = (VThinker *)cls->InstanceLimitList.ptr()[f]; // no need to perform range checking
       if (c->GetFlags()&_OF_Destroyed) {
-        if (limdbg) GCon->Logf(NAME_Debug, "  %s(%u): destroyed", c->GetClass()->GetName(), c->GetUniqueId());
+        if (limdbgmsg) GCon->Logf(NAME_Debug, "  %s(%u): destroyed", c->GetClass()->GetName(), c->GetUniqueId());
         continue;
       }
       if (!(c->GetFlags()&_OF_DelayedDestroy)) {
-        if (limdbg) GCon->Logf(NAME_Debug, "  %s(%u): removing", c->GetClass()->GetName(), c->GetUniqueId());
+        if (limdbgmsg) GCon->Logf(NAME_Debug, "  %s(%u): removing", c->GetClass()->GetName(), c->GetUniqueId());
         RemoveThinker(c);
-        // if it is just destroyed, call level notifier
-        if (!(c->GetFlags()&_OF_Destroyed) && c->GetClass()->IsChildOf(VEntity::StaticClass())) eventEntityDying((VEntity *)c);
+        //WARNING! death notifier will not be called for this entity!
         c->ConditionalDestroy();
       }
     }
