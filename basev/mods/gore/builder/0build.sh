@@ -34,6 +34,7 @@ fi
 
 rm $DECORATE_DEST $DECAL_DEST 2>/dev/null
 
+# WARNING! level death notifier will not be called for overlimit entity!
 echo 'Actor K8Gore_BloodBase { LimitWithSubCvar "k8GoreOpt_MaxBloodEntities" }' >>$DECORATE_DEST
 echo 'Actor K8Gore_BloodBaseTransient : K8Gore_BloodBase { LimitWithSubCvar "k8GoreOpt_MaxTransientBloodEntities" }' >>$DECORATE_DEST
 echo "k8VaVoom { AllowBloodReplacement = true }" >>$DECORATE_DEST

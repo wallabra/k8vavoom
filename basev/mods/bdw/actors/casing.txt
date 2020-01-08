@@ -1,4 +1,5 @@
 Actor BDW_CasingBase {
+  // WARNING! level death notifier will not be called for overlimit entity!
   LimitWithSubCvar "K8BDWOpt_MaxCasingEntities"
 }
 
