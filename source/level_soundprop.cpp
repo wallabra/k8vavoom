@@ -30,6 +30,7 @@
 static VCvarB gm_compat_corpses_can_hear("gm_compat_corpses_can_hear", false, "Can corpses hear sound propagation?", CVAR_Archive);
 static VCvarB gm_compat_everything_can_hear("gm_compat_everything_can_hear", false, "Can everything hear sound propagation?", CVAR_Archive);
 static VCvarF gm_compat_max_hearing_distance("gm_compat_max_hearing_distance", "0", "Maximum hearing distance (0 means unlimited)?", CVAR_Archive);
+static VCvarB dbg_disable_sound_alert("dbg_disable_sound_alert", false, "Disable sound alerting?", CVAR_PreInit);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -60,29 +61,31 @@ void VLevel::processSoundSector (int validcount, TArray<VEntity *> &elist, secto
 
   // `validcount` and other things were already checked in caller
   // also, caller already set `soundtraversed` and `SoundTarget`
+  if (maxdist <= 0) maxdist = 0; else maxdist *= maxdist; // squared
 
-  int hmask = 0;
+  unsigned hmask = 0/*, exmask = VEntity::EFEX_NoInteraction*/;
   if (!gm_compat_everything_can_hear) {
     hmask = VEntity::EF_NoSector|VEntity::EF_NoBlockmap;
     if (!gm_compat_corpses_can_hear) hmask |= VEntity::EF_Corpse;
   }
 
   for (VEntity *Ent = sec->ThingList; Ent; Ent = Ent->SNext) {
-    if (recSoundSectorSeenEnts.has(Ent)) continue;
-    recSoundSectorSeenEnts.put(Ent, true);
-    if (Ent == soundtarget) continue; // skip target
     //FIXME: skip some entities that cannot (possibly) react
     //       this can break some code, but... meh
     //       maybe don't omit corpses?
-    if (Ent->EntityFlags&hmask) continue;
+    if ((Ent->EntityFlags&hmask)|(Ent->FlagsEx&VEntity::EFEX_NoInteraction)) continue;
+    if (Ent == soundtarget) continue; // skip target
     // check max distance
-    if (maxdist > 0 && length2D(sndorigin-Ent->Origin) > maxdist) continue;
-    // register for processing
-    elist.append(Ent);
+    if (maxdist > 0 && length2DSquared(sndorigin-Ent->Origin) > maxdist) continue;
+    if (!recSoundSectorSeenEnts.put(Ent, true)) {
+      // register for processing
+      elist.append(Ent);
+    }
   }
 
-  for (int i = 0; i < sec->linecount; ++i) {
-    line_t *check = sec->lines[i];
+  line_t **slinesptr = sec->lines;
+  for (int i = sec->linecount; i--; ++slinesptr) {
+    const line_t *check = *slinesptr;
     if (check->sidenum[1] == -1 || !(check->flags&ML_TWOSIDED)) continue;
 
     // early out for intra-sector lines
@@ -145,7 +148,7 @@ void VLevel::doRecursiveSound (int validcount, TArray<VEntity *> &elist, sector_
   sec->soundtraversed = soundblocks+1;
   sec->SoundTarget = soundtarget;
 
-  recSoundSectorList.clear();
+  recSoundSectorList.reset();
   recSoundSectorSeenEnts.reset();
   processSoundSector(validcount, elist, sec, soundblocks, soundtarget, maxdist, sndorigin);
 
@@ -155,12 +158,13 @@ void VLevel::doRecursiveSound (int validcount, TArray<VEntity *> &elist, sector_
   // don't use `foreach` here!
   int rspos = 0;
   while (rspos < recSoundSectorList.length()) {
-    processSoundSector(validcount, elist, recSoundSectorList[rspos].sec, recSoundSectorList[rspos].sblock, soundtarget, maxdist, sndorigin);
+    const SoundSectorListItem *sli = recSoundSectorList.ptr()+rspos;
+    processSoundSector(validcount, elist, sli->sec, sli->sblock, soundtarget, maxdist, sndorigin);
     ++rspos;
   }
 
   //if (recSoundSectorList.length > 1) print("RECSOUND: len=%d", recSoundSectorList.length);
-  recSoundSectorList.clear();
+  recSoundSectorList.reset();
   recSoundSectorSeenEnts.reset();
 }
 
@@ -175,5 +179,7 @@ IMPLEMENT_FUNCTION(VLevel, doRecursiveSound) {
   P_GET_PTR(TArray<VEntity *>, elist);
   P_GET_INT(validcount);
   P_GET_SELF;
-  Self->doRecursiveSound(validcount, *elist, sec, soundblocks, soundtarget, maxdist, sndorigin);
+  if (!dbg_disable_sound_alert) {
+    Self->doRecursiveSound(validcount, *elist, sec, soundblocks, soundtarget, maxdist, sndorigin);
+  }
 }

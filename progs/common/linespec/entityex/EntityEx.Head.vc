@@ -314,7 +314,7 @@ bool bNoVerticalMeleeRange; // Does not check vertical distance for melee range
 bool bSummonedMonster; // flag MinotaurFriend and other summoned monsters (i.e. by powerups, etc.)
 bool bSeesDaggers; // actor is able to hear dagger attacks
 bool bPuffGetsOwner; // [BB] sets the owner of the puff to the player who fired it
-bool bNoInteraction; // thing is completely excluded from any gameplay related checks
+//bool bNoInteraction; // thing is completely excluded from any gameplay related checks (moved to Entity)
 bool bFrightened; // monster runs away from player
 bool bNoFear; // not scared of frightening players
 bool bTouchy; // killough 11/98: dies when solids touch it

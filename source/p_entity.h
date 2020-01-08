@@ -267,9 +267,10 @@ class VEntity : public VThinker {
 
   // extra flags
   enum {
-    EFEX_Monster  = 1u<<0u, // is this a monster?
-    EFEX_Rendered = 1u<<1u, // was this thing rendered? (unused, not set ever)
-    //EFEX_OnScroll = 1u<<2u, // set/reset by `CreateSecNodeList()`
+    EFEX_Monster       = 1u<<0u, // is this a monster?
+    EFEX_Rendered      = 1u<<1u, // was this thing rendered? (unused, not set ever)
+    //EFEX_OnScroll    = 1u<<2u, // set/reset by `CreateSecNodeList()`
+    EFEX_NoInteraction = 1u<<3u, // moved from EntityEx
   };
   vuint32 FlagsEx;
 
@@ -516,6 +517,7 @@ public:
   inline bool IsCorpse () const noexcept { return !!(EntityFlags&EF_Corpse); }
   inline bool IsSolid () const noexcept { return !!(EntityFlags&EF_Solid); }
   inline bool IsMonster () const noexcept { return !!(FlagsEx&EFEX_Monster); }
+  inline bool IsNoInteraction () const noexcept { return !!(FlagsEx&EFEX_NoInteraction); }
   inline bool IsPlayerOrMonster () const noexcept { return !!(EntityFlags&(EF_IsPlayer|EFEX_Monster)); }
 
   enum EType {
