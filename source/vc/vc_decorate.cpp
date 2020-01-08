@@ -493,6 +493,7 @@ TArray<VLineSpecInfo> LineSpecialInfos;
 // ////////////////////////////////////////////////////////////////////////// //
 static VPackage *DecPkg;
 
+static VClass *EntityClass;
 static VClass *ActorClass;
 static VClass *FakeInventoryClass;
 static VClass *InventoryClass;
@@ -523,6 +524,80 @@ static bool inCodeBlock = false;
 
 static int mainDecorateLump = -1;
 static bool thisIsBasePak = false;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+struct PropLimitSub {
+  VClass *baseClass;
+  bool isInt;
+  int amount;
+  VStr cvar;
+};
+
+static TArray<PropLimitSub> limitSubs;
+// list of all classes that need to be limited in some way
+TArray<VClass *> NumberLimitedClasses;
+
+
+//==========================================================================
+//
+//  FindPropLimitSub
+//
+//==========================================================================
+static int FindPropLimitSub (VClass *aclass) {
+  for (int f = 0; f < limitSubs.length(); ++f) {
+    if (limitSubs[f].baseClass == aclass) return f;
+  }
+  return -1;
+}
+
+
+//==========================================================================
+//
+//  NewPropLimitSubInt
+//
+//==========================================================================
+static void NewPropLimitSubInt (VClass *abaseClass, int amount) {
+  vassert(abaseClass);
+  if (amount > 0) {
+    int idx = FindPropLimitSub(abaseClass);
+    if (idx >= 0) {
+      limitSubs[idx].isInt = true;
+      limitSubs[idx].amount = amount;
+      limitSubs[idx].cvar.clear();
+    } else {
+      PropLimitSub &ls = limitSubs.alloc();
+      ls.baseClass = abaseClass;
+      ls.isInt = true;
+      ls.amount = amount;
+      ls.cvar.clear();
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  NewPropLimitSubCvar
+//
+//==========================================================================
+static void NewPropLimitSubCvar (VClass *abaseClass, VStr cvar) {
+  vassert(abaseClass);
+  if (!cvar.isEmpty()) {
+    int idx = FindPropLimitSub(abaseClass);
+    if (idx >= 0) {
+      limitSubs[idx].isInt = false;
+      limitSubs[idx].amount = 0;
+      limitSubs[idx].cvar = cvar;
+    } else {
+      PropLimitSub &ls = limitSubs.alloc();
+      ls.baseClass = abaseClass;
+      ls.isInt = false;
+      ls.amount = 0;
+      ls.cvar = cvar;
+    }
+  }
+}
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -746,6 +821,9 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
         VFlagDef &F = Lst.NewFlag(FLAG_NoClip, PN);
         F.SetField(Lst.Class, "bColideWithThings");
         F.SetField2(Lst.Class, "bColideWithWorld");
+      } else if (PN->Name == "limitsub_cvar") {
+        //NewPropLimitSubCvar(*PN->GetAttribute("")
+      } else if (PN->Name == "limitsub_int") {
       } else {
         Sys_Error("Unknown XML node %s", *PN->Name);
       }
@@ -2838,6 +2916,18 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
     //while (sc->Check(";")) {}
     if (FoundProp) continue;
 
+    //k8: sorry for this
+    if (PropName == "limitwithsubcvar") {
+      sc->ExpectString();
+      NewPropLimitSubCvar(Class, sc->String);
+      continue;
+    }
+    if (PropName == "limitwithsubint") {
+      sc->ExpectNumber();
+      NewPropLimitSubInt(Class, sc->Number);
+      continue;
+    }
+
     if (decorate_fail_on_unknown) {
       sc->Error(va("Unknown property \"%s\"", *Prop));
     } else {
@@ -3421,6 +3511,56 @@ static void dumpFieldDefs (VClass *cls) {
 
 //==========================================================================
 //
+//  SetupLimiters
+//
+//  setups all instance limit flags and such
+//  should be called after parsing all decorate code
+//
+//==========================================================================
+static void SetupLimiters () {
+  NumberLimitedClasses.clear();
+
+  if (limitSubs.length() == 0) return;
+
+  // setup base limits
+  for (auto &&lsb : limitSubs) {
+    vassert(lsb.baseClass);
+    if (!lsb.baseClass->IsChildOf(EntityClass)) continue;
+    if (lsb.isInt) {
+      vassert(lsb.amount > 0);
+      lsb.baseClass->InstanceLimitWithSub = lsb.amount;
+    } else {
+      vassert(!lsb.cvar.isEmpty());
+      lsb.baseClass->InstanceLimitWithSubCvar = lsb.cvar;
+    }
+    lsb.baseClass->SetLimitInstancesWithSub(true);
+    NumberLimitedClasses.append(lsb.baseClass);
+  }
+
+  // now link all classes to base limits
+  VClass::ForEachClass([](VClass *cls) -> FERes {
+    VClass *bc = cls;
+    while (bc) {
+      if (!bc->InstanceLimitBaseClass && bc->GetLimitInstancesWithSub()) break;
+      bc = bc->GetSuperClass();
+    }
+    if (bc) {
+      // yay, i found good base class!
+      for (VClass *cc = cls; cc != bc; cc = cc->GetSuperClass()) {
+        cc->SetLimitInstancesWithSub(true);
+        cc->InstanceLimitBaseClass = bc;
+      }
+    }
+    return FERes::FOREACH_NEXT;
+  });
+
+  // free memory
+  limitSubs.clear();
+}
+
+
+//==========================================================================
+//
 //  ProcessDecorateScripts
 //
 //==========================================================================
@@ -3479,6 +3619,7 @@ void ProcessDecorateScripts () {
   DecPkg = new VPackage(NAME_decorate);
 
   // find classes
+  EntityClass = VClass::FindClass("Entity");
   ActorClass = VClass::FindClass("Actor");
   FakeInventoryClass = VClass::FindClass("FakeInventory");
   InventoryClass = VClass::FindClass("Inventory");
@@ -3681,6 +3822,8 @@ void ProcessDecorateScripts () {
   //VMemberBase::StaticDumpMObjInfo();
 
   VClass::StaticReinitStatesLookup();
+
+  SetupLimiters();
 
   //!TLocation::ClearSourceFiles();
 }

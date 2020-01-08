@@ -48,3 +48,6 @@ void ShutdownDecorate ();
 void CompilerReportMemory ();
 
 extern TArray<VLineSpecInfo> LineSpecialInfos;
+
+// list of all classes that need to be limited in some way
+extern TArray<VClass *> NumberLimitedClasses;
