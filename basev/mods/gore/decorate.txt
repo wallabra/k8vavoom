@@ -1,5 +1,5 @@
-Actor K8Gore_BloodBase {}
-Actor K8Gore_BloodBaseTransient : K8Gore_BloodBase {}
+Actor K8Gore_BloodBase { LimitWithSubCvar "k8GoreOpt_MaxBloodEntities" }
+Actor K8Gore_BloodBaseTransient : K8Gore_BloodBase { LimitWithSubCvar "k8GoreOpt_MaxTransientBloodEntities" }
 k8VaVoom { AllowBloodReplacement = true }
 ////////////////////////////////////////////////////////////////////////////////
 // RED BLOOD

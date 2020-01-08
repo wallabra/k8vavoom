@@ -30,22 +30,32 @@ const int DefaultMaxAllowedBloodEntities = 1500;
 int bloodEntCounter;
 int bloodSkipDeathCounter;
 
+/*
 #ifdef K8GORE_DEBUG
 bool cvBloodDebugDump;
 #endif
 bool cvBloodLimiterDebugDump;
-bool cvBloodColoredBlood;
 int cvBloodMaxEntities = -1;
+*/
+bool cvBloodColoredBlood;
 
 
 final void goreBloodUpdateCvarCache () {
+/*
 #ifdef K8GORE_DEBUG
   cvBloodDebugDump = GetCvarB('k8GoreOpt_DbgReportNumber');
 #endif
   cvBloodLimiterDebugDump = GetCvarB('K8BDWOpt_LimiterDebug');
-  cvBloodColoredBlood = GetCvarB('k8GoreOpt_ForceColoredBlood');
   cvBloodMaxEntities = GetCvar('k8GoreOpt_MaxBloodEntities');
   if (cvBloodMaxEntities < 0) cvBloodMaxEntities = DefaultMaxAllowedBloodEntities;
+*/
+  cvBloodColoredBlood = GetCvarB('k8GoreOpt_ForceColoredBlood');
+}
+
+
+override void AfterLevelLoaded () {
+  goreBloodUpdateCvarCache();
+  ::AfterLevelLoaded();
 }
 
 
@@ -61,14 +71,15 @@ override void BeforeWorldTick (float DeltaTime) {
 override void AfterUnarchiveThinkers () {
   goreBloodUpdateCvarCache();
   ::AfterUnarchiveThinkers();
-  k8LimiterUnarchiveThinkers(K8Gore_BloodBase, cvBloodMaxEntities, ref bloodEntCounter, ref bloodSkipDeathCounter, cvBloodLimiterDebugDump);
+  //!k8LimiterUnarchiveThinkers(K8Gore_BloodBase, cvBloodMaxEntities, ref bloodEntCounter, ref bloodSkipDeathCounter, cvBloodLimiterDebugDump);
 }
 
 
 override void OnEntitySpawned (Entity ent) {
-  if (cvBloodMaxEntities < 0) goreBloodUpdateCvarCache();
+  //if (cvBloodMaxEntities < 0) goreBloodUpdateCvarCache();
   ::OnEntitySpawned(ent);
   //print("SPAWNED: %C", ent);
+/*
   if (ent isa K8Gore_BloodBase) {
 #ifdef K8GORE_DEBUG
     if (cvBloodDebugDump) print("SPAWNED: %C (%d current)", ent, bloodEntCounter);
@@ -79,6 +90,7 @@ override void OnEntitySpawned (Entity ent) {
       k8LimiterCleanup(K8Gore_BloodBase, allowed, ref bloodEntCounter, ref bloodSkipDeathCounter, cvBloodLimiterDebugDump);
     }
   }
+*/
   if (cvBloodColoredBlood) {
     EntityEx ee = EntityEx(ent);
     if (ee isa Cacodemon) {
@@ -100,6 +112,7 @@ override void OnEntitySpawned (Entity ent) {
 }
 
 
+/*
 override void OnEntityDying (Entity ent) {
   ::OnEntityDying(ent);
   //print("DYING: %C", ent);
@@ -120,3 +133,4 @@ override void OnEntityDying (Entity ent) {
     }
   }
 }
+*/
