@@ -7,8 +7,6 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/bdw.pk3
     *.txt
     actors/*.txt
     actors/gl/*.gl
-    loadvcs.txt
-    progs/k8bdw/*
     models/*
     models/tracer/*
     sounds/weapons/*

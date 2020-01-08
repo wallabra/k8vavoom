@@ -4,7 +4,6 @@ $recursedir sprites/  @CMAKE_CURRENT_SOURCE_DIR@/sprites/
 $recursedir sounds/   @CMAKE_CURRENT_SOURCE_DIR@/sounds/
 $recursedir actors/   @CMAKE_CURRENT_SOURCE_DIR@/actors/
 $recursedir models/   @CMAKE_CURRENT_SOURCE_DIR@/models/
-$recursedir progs/    @CMAKE_CURRENT_SOURCE_DIR@/progs/
 
 
 // scripts
@@ -14,5 +13,4 @@ gldefs.txt    @CMAKE_CURRENT_SOURCE_DIR@/gldefs.txt
 sndinfo.txt   @CMAKE_CURRENT_SOURCE_DIR@/sndinfo.txt
 cvarinfo.txt  @CMAKE_CURRENT_SOURCE_DIR@/cvarinfo.txt
 modmenu.txt   @CMAKE_CURRENT_SOURCE_DIR@/modmenu.txt
-loadvcs.txt   @CMAKE_CURRENT_SOURCE_DIR@/loadvcs.txt
 credits.txt   @CMAKE_CURRENT_SOURCE_DIR@/credits.txt
