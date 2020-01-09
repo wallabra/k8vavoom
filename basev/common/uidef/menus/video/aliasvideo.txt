@@ -9,6 +9,15 @@ menudef AliasModelVideoOptions {
   }
 
   option bool {
+    title = "Strict 3D Models";
+    cvar = r_models_strict;
+    help =
+      "Use strict search for class 3D models?",
+      "Non-strict search will take class name from the state owner.",
+      "Strict search will use entity class name.";
+  }
+
+  option bool {
     title = "Model Autorotation";
     cvar = r_model_autorotating;
     help = "You can turn off pickup model rotation here.";

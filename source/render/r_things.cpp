@@ -52,6 +52,7 @@ VCvarF r_transsouls("r_transsouls", "1", "Translucent Lost Souls?", CVAR_Archive
 
 VCvarB r_models("r_models", true, "Allow 3d models?", CVAR_Archive);
 VCvarB r_models_view("r_models_view", false, "Allow player-view weapon models?", CVAR_Archive);
+VCvarB r_models_strict("r_models_strict", true, "Strict 3D model->class search?", CVAR_Archive);
 
 VCvarB r_models_monsters("r_models_monsters", true, "Render 3D models for monsters?", CVAR_Archive);
 VCvarB r_models_corpses("r_models_corpses", true, "Render 3D models for corpses?", CVAR_Archive);

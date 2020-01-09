@@ -251,7 +251,7 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
         }
         for (const StLightInfo *sli = visstatlights.ptr(); visstatlightCount--; ++sli) {
           VEntity *own = (sli->stlight->owner && sli->stlight->owner->IsA(VEntity::StaticClass()) ? sli->stlight->owner : nullptr);
-          vuint32 flags = (own && R_ModelNoSelfShadow(own->GetClass()->Name) ? dlight_t::NoSelfShadow : 0);
+          vuint32 flags = (own && R_EntModelNoSelfShadow(own) ? dlight_t::NoSelfShadow : 0);
           //if (own) GCon->Logf("STLOWN: %s", *own->GetClass()->GetFullName());
           TVec lorg = sli->stlight->origin;
           lorg.z += sli->zofs;
@@ -314,7 +314,7 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
         }
         for (const DynLightInfo *dli = visdynlights.ptr(); visdynlightCount--; ++dli) {
           VEntity *own = (dli->l->Owner && dli->l->Owner->IsA(VEntity::StaticClass()) ? (VEntity *)dli->l->Owner : nullptr);
-          if (own && R_ModelNoSelfShadow(own->GetClass()->Name)) dli->l->flags |= dlight_t::NoSelfShadow;
+          if (own && R_EntModelNoSelfShadow(own)) dli->l->flags |= dlight_t::NoSelfShadow;
           //TVec lorg = dli->l->origin;
           //lorg.z += dli->zofs;
           // always render player lights

@@ -42,6 +42,9 @@
 #define BSPIDX_LEAF_SUBSECTOR(bidx_)  ((bidx_)&(~(NF_SUBSECTOR)))
 
 
+extern VCvarB r_models_strict;
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // dynamic light types
 enum DLType {
@@ -481,6 +484,13 @@ public:
   static vuint32 CountSegSurfacesInChain (const segpart_t *sp) noexcept;
   vuint32 CountAllSurfaces () const noexcept;
 
+  static inline VName GetClassNameForModel (VEntity *mobj) noexcept {
+    return
+      mobj && mobj->State ?
+        (r_models_strict ? mobj->GetClass()->Name : mobj->State->Outer->Name) :
+        NAME_None;
+  }
+
 protected:
   VRenderLevelShared (VLevel *ALevel);
   ~VRenderLevelShared ();
@@ -647,7 +657,6 @@ protected:
     bool, float, bool, ERenderPass);
   bool DrawEntityModel (VEntity*, vuint32, vuint32, float, bool, float, ERenderPass);
   bool CheckAliasModelFrame (VEntity *Ent, float Inter);
-  bool HasAliasModel (VName clsName) const;
   bool HasEntityAliasModel (VEntity *Ent) const;
   static bool IsAliasModelAllowedFor (VEntity *Ent);
   bool IsShadowAllowedFor (VEntity *Ent);
@@ -1052,6 +1061,7 @@ extern VCvarB r_allow_shadows;
 
 extern VCvarB r_models;
 extern VCvarB r_models_view;
+//extern VCvarB r_models_strict;
 
 extern VCvarB r_models_monsters;
 extern VCvarB r_models_corpses;

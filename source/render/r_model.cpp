@@ -298,12 +298,12 @@ static VClassModelScript *FindClassModelByName (VName clsName) {
 
 //==========================================================================
 //
-//  R_ModelNoSelfShadow
+//  R_EntModelNoSelfShadow
 //
 //==========================================================================
-bool R_ModelNoSelfShadow (VName clsName) {
-  VClassModelScript *cs = FindClassModelByName(clsName);
-  return (cs && cs->NoSelfShadow);
+bool R_EntModelNoSelfShadow (VEntity *mobj) {
+  VClassModelScript *cs = FindClassModelByName(VRenderLevelShared::GetClassNameForModel(mobj));
+  return (cs ? cs->NoSelfShadow : true);
 }
 
 
@@ -313,6 +313,7 @@ bool R_ModelNoSelfShadow (VName clsName) {
 //
 //==========================================================================
 void R_InitModels () {
+  GCon->Log(NAME_Init, "loading model scripts...");
   for (int Lump = W_IterateFile(-1, "models/models.xml"); Lump != -1; Lump = W_IterateFile(Lump, "models/models.xml")) {
     VStream *lumpstream = W_CreateLumpReaderNum(Lump);
     VCheckedStream Strm(lumpstream);
@@ -1467,21 +1468,11 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
 
 //==========================================================================
 //
-//  VRenderLevelShared::HasAliasModel
-//
-//==========================================================================
-bool VRenderLevelShared::HasAliasModel (VName clsName) const {
-  return (clsName != NAME_None && FindClassModelByName(clsName));
-}
-
-
-//==========================================================================
-//
 //  VRenderLevelShared::IsAliasModelAllowedFor
 //
 //==========================================================================
 bool VRenderLevelShared::IsAliasModelAllowedFor (VEntity *Ent) {
-  if (!Ent || Ent->IsGoingToDie() || !r_models) return false;
+  if (!Ent || !Ent->State || Ent->IsGoingToDie() || !r_models) return false;
   switch (Ent->Classify()) {
     case VEntity::EType::ET_Unknown: return r_models_other;
     case VEntity::EType::ET_Player: return r_models_players;
@@ -1502,7 +1493,7 @@ bool VRenderLevelShared::IsAliasModelAllowedFor (VEntity *Ent) {
 //
 //==========================================================================
 bool VRenderLevelShared::IsShadowAllowedFor (VEntity *Ent) {
-  if (!Ent || Ent->IsGoingToDie() || !r_models || !r_model_shadows) return false;
+  if (!Ent || !Ent->State || Ent->IsGoingToDie() || !r_models || !r_model_shadows) return false;
   if (cl && Ent == cl->Camera && !r_camera_player_shadows) return false;
   switch (Ent->Classify()) {
     case VEntity::EType::ET_Unknown: return r_shadows_other;
@@ -1524,7 +1515,7 @@ bool VRenderLevelShared::IsShadowAllowedFor (VEntity *Ent) {
 //
 //==========================================================================
 bool VRenderLevelShared::HasEntityAliasModel (VEntity *Ent) const {
-  return (IsAliasModelAllowedFor(Ent) && FindClassModelByName(Ent->GetClass()->Name));
+  return (IsAliasModelAllowedFor(Ent) && FindClassModelByName(GetClassNameForModel(Ent)));
 }
 
 
@@ -1685,7 +1676,7 @@ bool VRenderLevelShared::DrawEntityModel (VEntity *Ent, vuint32 Light, vuint32 F
       Ent->ModelVersion, Light, Fade, Alpha, Additive, false, Inter,
       Interpolate, Pass);
   } else {
-    return DrawAliasModel(Ent, Ent->GetClass()->Name, sprorigin,
+    return DrawAliasModel(Ent, GetClassNameForModel(Ent), sprorigin,
       Ent->/*Angles*/GetModelDrawAngles(), Ent->ScaleX, Ent->ScaleY,
       Ent->getMFI(), Ent->getNextMFI(),
       GetTranslation(Ent->Translation), Ent->ModelVersion, Light, Fade,
@@ -1706,7 +1697,8 @@ bool VRenderLevelShared::CheckAliasModelFrame (VEntity *Ent, float Inter) {
     if (!Mdl) return false;
     return FindFrame(*Mdl->DefaultClass, Ent->getMFI(), Inter) != -1;
   } else {
-    VClassModelScript *Cls = FindClassModelByName(Ent->State->Outer->Name);
+    //VClassModelScript *Cls = FindClassModelByName(Ent->State->Outer->Name);
+    VClassModelScript *Cls = FindClassModelByName(GetClassNameForModel(Ent));
     if (!Cls) return false;
     return (FindFrame(*Cls, Ent->getMFI(), Inter) != -1);
   }
