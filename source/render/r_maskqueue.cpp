@@ -694,11 +694,7 @@ void VRenderLevelShared::DrawTranslucentPolys () {
               // switch to next pofs
               //if (++pofs == MAX_POFS) pofs = 0;
               ++pofs;
-              if (Drawer->CanUseRevZ()) {
-                Drawer->GLPolygonOffset(r_sprite_pslope, -(pofs*r_sprite_pofs)); // pull forward
-              } else {
-                Drawer->GLPolygonOffset(-r_sprite_pslope, (pofs*r_sprite_pofs)); // pull forward
-              }
+              Drawer->GLPolygonOffsetEx(r_sprite_pslope, -(pofs*r_sprite_pofs)); // pull forward
               pofsEnabled = true;
             }
           } else {

@@ -397,6 +397,11 @@ public:
   // this also enables it if it was disabled
   virtual void GLPolygonOffset (const float afactor, const float aunits) = 0;
 
+  // this takes into account `CanUseRevZ()`
+  inline void GLPolygonOffsetEx (const float afactor, const float aunits) {
+    if (CanUseRevZ()) GLPolygonOffset(afactor, aunits); else GLPolygonOffset(-afactor, -aunits);
+  }
+
   // texture stuff
   virtual void PrecacheTexture (VTexture *) = 0;
   virtual void FlushOneTexture (VTexture *tex, bool forced=false) = 0; // unload one texture
