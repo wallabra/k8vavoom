@@ -341,6 +341,10 @@ void OnEntityDying (Entity ent) {}
 // this is called after LevelInfo handler when game is loaded (hub or savegame)
 void AfterUnarchiveThinkers () {}
 
+// return `false` to prevent spawning
+// you can set `spw.Chooser` here too
+bool OnRandomSpawner (RandomSpawner spw) { return true; }
+
 
 native int LdrTexNumForName (string texname, int Type, optional bool CMap, optional bool fromUDMF);
 

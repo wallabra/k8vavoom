@@ -25,6 +25,9 @@
 //**************************************************************************
 class RandomSpawner : Actor abstract;
 
+// you can set this in `Level.OnRandomSpawner()`
+transient int delegate (const ref array!DropItemInfo list) Chooser;
+
 
 //==========================================================================
 //
@@ -35,18 +38,23 @@ override void BeginPlay () {
   int n = 0, i = 0;
   bool IsBoss = false;
 
+  if (!XLevel.OnRandomSpawner(self)) {
+    Destroy();
+    return;
+  }
+
   ::BeginPlay();
 
   if (DropItemList.length) {
     bool error;
 
-    class!EntityEx spwcls = ChooseFromDropItemList(/*Actor, */class!EntityEx(self.Class), AllowReplace:true, out error:error);
+    class!EntityEx spwcls = ChooseFromDropItemList(/*Actor, */class!EntityEx(self.Class), AllowReplace:true, out error:error, Chooser);
     // skip unknowns (this is done in `ChooseFromDropItemList()` now)
     /+
     foreach (; 0..32) {
       if (!spwcls) break;
       if (GetClassName(spwcls) != 'Unknown') break;
-      spwcls = ChooseFromDropItemList(/*Actor, */class!EntityEx(self.Class), AllowReplace:true, out error:error);
+      spwcls = ChooseFromDropItemList(/*Actor, */class!EntityEx(self.Class), AllowReplace:true, out error:error, Chooser);
     }
     +/
 
