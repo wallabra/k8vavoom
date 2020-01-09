@@ -49,6 +49,7 @@ int VObject::compilerDisablePostloading = 0;
 int VObject::engineAllowNotImplementedBuiltins = 0;
 int VObject::standaloneExecutor = 0;
 TMap<VStrCI, bool> VObject::cliAsmDumpMethods;
+TArray<VObject::CanSkipReadingClassFn> VObject::CanSkipReadingClassCBList;
 
 
 //==========================================================================
@@ -1021,7 +1022,22 @@ void VObject::Serialise (VStream &strm) {
     if (strm.IsError()) VC_IO_ERROR("error reading object of class `%s`", GetClass()->GetName());
     if (clsname == NAME_None) VC_IO_ERROR("cannot load object of `none` class");
     VClass *cls = VClass::FindClass(*clsname);
-    if (!cls) VC_IO_ERROR("cannot load object of unknown `%s` class", *clsname);
+    if (!cls) {
+      // can we skip it?
+      bool skipit = false;
+      for (auto &&cb : CanSkipReadingClassCBList) if (cb(this, clsname)) { skipit = true; break; }
+      if (skipit) {
+        // get data size
+        GLog.Logf(NAME_Warning, "I/O: skipping '%s' in '%s' (this may, or may not work)", *clsname, GetClass()->GetName());
+        vint32 size;
+        strm << size;
+        if (size < 1) VC_IO_ERROR("error reading object of class `%s` (invalid size: %d)", *clsname, size);
+        auto endpos = strm.Tell()+size;
+        strm.Seek(endpos);
+        return;
+      }
+      VC_IO_ERROR("cannot load object of unknown `%s` class (%s)", *clsname, GetClass()->GetName());
+    }
     //if (!GetClass()->IsChildOf(cls)) VC_IO_ERROR("cannot load object of class `%s` class (not a subclass of `%s`)", GetClass()->GetName(), *clsname);
     if (GetClass() != cls) VC_IO_ERROR("cannot load object of class `%s` (expected class `%s`)", GetClass()->GetName(), *clsname);
     // skip data size

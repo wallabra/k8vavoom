@@ -457,6 +457,11 @@ protected:
   }
 
 public:
+  // temporary hack
+  typedef bool (*CanSkipReadingClassFn) (VObject *self, VName clsname);
+  static TArray<CanSkipReadingClassFn> CanSkipReadingClassCBList;
+
+public:
   // constructors
   VObject ();
   static void InternalConstructor () { new VObject(); }
@@ -476,9 +481,11 @@ public:
   // VObject interface
   virtual void Register ();
   virtual void Destroy ();
+
   virtual void SerialiseFields (VStream &); // this serialises object fields
   virtual void SerialiseOther (VStream &); // this serialises other object internal data
   void Serialise (VStream &); // this calls field serialisation, then other serialisation (and writes metadata)
+
   virtual void ClearReferences ();
   virtual bool ExecuteNetMethod (VMethod *);
 
