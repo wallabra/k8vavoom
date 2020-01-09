@@ -1068,7 +1068,10 @@ final float FindPainChance (name DmgType, float defaultChance) {
 //  can return `none`
 //
 //==========================================================================
-static final class!EntityEx ChooseFromDropItemList (class!EntityEx origSpc, optional bool AllowReplace/*=true*/, optional out bool error) {
+static final class!EntityEx ChooseFromDropItemList (class!EntityEx origSpc, optional bool AllowReplace/*=true*/,
+                                                    optional out bool error,
+                                                    optional int delegate (const ref array!DropItemInfo list) Chooser)
+{
   if (!origSpc) { error = true; return none; }
   if (!specified_AllowReplace) AllowReplace = true;
   //if (!class!EntityEx(allowedClass)) { error = true; return none; }
@@ -1088,48 +1091,40 @@ static final class!EntityEx ChooseFromDropItemList (class!EntityEx origSpc, opti
     int len = spc.default.DropItemList.length;
     if (!len) return none;
 
-    int n = 0;
-    foreach (const ref DropItemInfo di; spc.default.DropItemList) {
-      //if (!di.Type) continue;
-      int amn = di.Amount;
-      if (amn <= 0) amn = 1;
-      // this is how we can weight the list
-      n += amn;
-    }
-    assert(n > 0);
+    int i;
+    if (specified_Chooser && Chooser) {
+      i = Chooser(spc.default.DropItemList);
+    } else {
+      // default chooser
 
-    // then we reset the iterator to the start position...
-    int i = 0;
-    // take a random number...
-    //n = P_Random()%n;
-    n = GenRandomU31()%n;
-    // and iterate in the array up to the random number chosen
-    while (n > -1 && i < len) {
-      int amn = spc.default.DropItemList[i].Amount;
-      if (amn <= 0) amn = 1;
-      n -= amn;
-      if (i+1 < len && n > -1) {
-        ++i;
-      } else {
-        n = -1;
+      int n = 0;
+      foreach (const ref DropItemInfo di; spc.default.DropItemList) {
+        //if (!di.Type) continue;
+        int amn = di.Amount;
+        if (amn <= 0) amn = 1;
+        // this is how we can weight the list
+        n += amn;
       }
-      /*
-      if (spc.default.DropItemList[i].Type) {
+      assert(n > 0);
+
+      // then we reset the iterator to the start position...
+      i = 0;
+      // take a random number...
+      n = GenRandomU31()%n;
+      // ...and iterate in the array up to the random number chosen
+      while (n > -1 && i < len) {
         int amn = spc.default.DropItemList[i].Amount;
         if (amn <= 0) amn = 1;
         n -= amn;
-        if (i+1 < spc.default.DropItemList.length && n > -1) {
+        if (i+1 < len && n > -1) {
           ++i;
         } else {
           n = -1;
         }
-      } else {
-        ++i;
       }
-      */
     }
 
-    if (i >= len) {
+    if (i < 0 || i >= len) {
       printwarn("RandomSpawn in class `%C` got invalid random index", origSpc);
       error = true;
       return none;
