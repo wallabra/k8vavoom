@@ -444,6 +444,37 @@ public:
 };
 
 
+static bool skipCallbackInited = false;
+
+
+//==========================================================================
+//
+//  checkSkipClassCB
+//
+//==========================================================================
+static bool checkSkipClassCB (VObject *self, VName clsname) {
+  if (clsname == "Level_K8BDW" || clsname == "Level_K8Gore") {
+    // allow any level descendant
+    for (VClass *cls = self->GetClass(); cls; cls = cls->GetSuperClass()) {
+      if (VStr::strEqu(cls->GetName(), "Level")) return true;
+    }
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
+//  SV_SetupSkipCallback
+//
+//==========================================================================
+static void SV_SetupSkipCallback () {
+  if (skipCallbackInited) return;
+  skipCallbackInited = true;
+  VObject::CanSkipReadingClassCBList.append(&checkSkipClassCB);
+}
+
+
 //==========================================================================
 //
 //  SV_GetSavesDir
@@ -1993,8 +2024,11 @@ static void SV_SaveGame (int slot, VStr Description, bool checkpoint, bool isAut
 //  SV_LoadGame
 //
 //==========================================================================
-void SV_LoadGame (int slot) {
+static void SV_LoadGame (int slot) {
   SV_ShutdownGame();
+
+  // temp hack
+  SV_SetupSkipCallback();
 
   if (!BaseSlot.LoadSlot(slot)) return;
 
