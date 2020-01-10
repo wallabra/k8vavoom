@@ -1200,26 +1200,46 @@ COMMAND(__k8_run_first_map) {
   }
 
   VName startMap = NAME_None;
-  int bestmdlump = -1;
+  //int bestmdlump = -1;
 
   for (int ep = 0; ep < P_GetNumEpisodes(); ++ep) {
     VEpisodeDef *edef = P_GetEpisodeDef(ep);
     if (!edef) continue; // just in case
 
+    //GCon->Logf(NAME_Debug, "ep=%d: Name=<%s>; TeaserName=<%s>; Text=%s; MapinfoSourceLump=%d (%d) <%s>", ep, *edef->Name, *edef->TeaserName, *edef->Text.quote(true), edef->MapinfoSourceLump, W_IsUserWadLump(edef->MapinfoSourceLump), *W_FullLumpName(edef->MapinfoSourceLump));
+
     VName map = edef->Name;
     if (map == NAME_None || !IsMapPresent(map)) {
+      //GCon->Logf(NAME_Debug, "  ep=%d; map '%s' is not here!", ep, *edef->Name);
       map = edef->TeaserName;
       if (map == NAME_None || !IsMapPresent(map)) continue;
     }
+    /*
+    else {
+      GCon->Logf(NAME_Debug, "  ep=%d; map '%s' is here!", ep, *edef->Name);
+    }
+    */
 
     const mapInfo_t &mi = P_GetMapInfo(map);
-    if (mi.LevelNum == 0) continue;
+    //GCon->Logf(NAME_Debug, "  ep=%d; map '%s': LumpName=<%s> (%s); LevelNum=%d", ep, *map, *mi.LumpName, *mi.Name, mi.LevelNum); mi.dump("!!!");
 
-    if (mi.MapinfoSourceLump <= bestmdlump) continue;
+    //k8: i don't care about levelnum here
+    /*
+    if (mi.LevelNum == 0) {
+      //GCon->Logf(NAME_Debug, "  ep=%d; map '%s' has zero levelnum!", ep, *map);
+      continue;
+    }
+    */
+
+    if (!W_IsUserWadLump(mi.MapinfoSourceLump)) continue; // ignore non-user maps
+
+    // don't trust wad file order, use episode order instead
+    //if (mi.MapinfoSourceLump <= bestmdlump) continue;
     //GCon->Logf(NAME_Debug, "MapinfoSourceLump=%d; name=<%s>; index=%d", mi.MapinfoSourceLump, *map, mi.LevelNum);
 
-    bestmdlump = mi.MapinfoSourceLump;
+    //bestmdlump = mi.MapinfoSourceLump;
     startMap = map;
+    break;
   }
 
   if (startMap == NAME_None) {
