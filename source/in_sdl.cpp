@@ -73,6 +73,10 @@ private:
 
   vuint32 curmodflags;
 
+  double timeKbdAllow;
+  bool kbdSuspended; // if set to `true`, wait until `timeKbdAllow` to resume keyboard processing
+  bool hyperDown;
+
   SDL_Joystick *joystick;
   bool joystick_started;
   int joy_num_buttons;
@@ -101,6 +105,16 @@ static VCvarB ui_active("__ui_active", false, "Is UI active (used to stop mouse 
 static VCvarB ui_control_waiting("__ui_control_waiting", false, "Waiting for new control key (pass mouse buttons)?", 0);
 static VCvarB m_nograb("m_nograb", false, "Do not grab mouse?", CVAR_Archive);
 static VCvarB m_dbg_cursor("m_dbg_cursor", false, "Do not hide (true) mouse cursor on startup?", CVAR_PreInit);
+
+#ifdef VAVOOM_K8_DEVELOPER
+# define IN_HYPER_BLOCK_DEFAULT      true
+# define IN_FOCUSGAIN_DELAY_DEFAULT  "0.05"
+#else
+# define IN_HYPER_BLOCK_DEFAULT      false
+# define IN_FOCUSGAIN_DELAY_DEFAULT  "0"
+#endif
+static VCvarF in_focusgain_delay("in_focusgain_delay", IN_FOCUSGAIN_DELAY_DEFAULT, "Delay before resume keyboard processing after focus gain (seconds).", CVAR_Archive);
+static VCvarB in_hyper_block("in_hyper_block", IN_HYPER_BLOCK_DEFAULT, "Block keyboard input when `Hyper` is pressed.", CVAR_Archive);
 
 //extern VCvarB screen_fsmode;
 extern VCvarB gl_current_screen_fsmode;
@@ -215,6 +229,9 @@ VSdlInputDevice::VSdlInputDevice ()
   , mouse_oldx(0)
   , mouse_oldy(0)
   , curmodflags(0)
+  , timeKbdAllow(0)
+  , kbdSuspended(false)
+  , hyperDown(false)
   , joystick(nullptr)
   , joystick_started(false)
   , joy_num_buttons(0)
@@ -378,7 +395,22 @@ void VSdlInputDevice::ReadInput () {
     switch (ev.type) {
       case SDL_KEYDOWN:
       case SDL_KEYUP:
-        {
+        // "hyper down" flag
+        switch (ev.key.keysym.scancode) {
+          case SDL_SCANCODE_LGUI:
+          case SDL_SCANCODE_RGUI:
+            hyperDown = (ev.key.state == SDL_PRESSED);
+            break;
+          default: break;
+        }
+        // "kbd suspended" check
+        if (kbdSuspended) {
+          if (timeKbdAllow > Sys_Time()) break;
+          kbdSuspended = false;
+          if (ev.key.state != SDL_PRESSED) break; // just in case
+        }
+        // translate key, and post keyboard event
+        if (!hyperDown || !in_hyper_block) {
           int kk = sdl2TranslateKey(ev.key.keysym.scancode);
           if (kk > 0) {
             //GCon->Logf(NAME_Debug, "***KEY%s; kk=%d", (ev.key.state == SDL_PRESSED ? "DOWN" : "UP"), kk);
@@ -466,6 +498,12 @@ void VSdlInputDevice::ReadInput () {
             winactive = true;
             if (!m_nograb) SDL_CaptureMouse(SDL_TRUE);
             if (cl) cl->ClearInput();
+            if (in_focusgain_delay.asFloat() > 0) {
+              kbdSuspended = true;
+              timeKbdAllow = Sys_Time()+in_focusgain_delay.asFloat();
+              //GCon->Log(NAME_Debug, "***FOCUS GAIN: KBDSUSPEND!");
+            }
+            hyperDown = false;
             vev.type = ev_winfocus;
             vev.data1 = 1;
             VObject::PostEvent(vev);
@@ -479,6 +517,8 @@ void VSdlInputDevice::ReadInput () {
             firsttime = true;
             SDL_CaptureMouse(SDL_FALSE);
             if (cl) cl->ClearInput();
+            kbdSuspended = false;
+            hyperDown = false;
             vev.type = ev_winfocus;
             vev.data1 = 0;
             VObject::PostEvent(vev);
