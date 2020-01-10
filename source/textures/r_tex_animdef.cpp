@@ -485,7 +485,10 @@ void P_InitAnimated () {
     }
     if (ids.length() < 2) continue; // nothing to do
 
-    if (developer) GCon->Logf(NAME_Dev, "BOOMANIM: found animtex sequence ('%s' -- '%s'): %d (tics=%d)", TmpName2, TmpName1, ids.length(), BaseTime);
+    if (developer) {
+      GCon->Logf(NAME_Dev, "BOOMANIM: found animtex sequence ('%s' -- '%s'): %d (tics=%d)", TmpName2, TmpName1, ids.length(), BaseTime);
+      for (auto &&v : ids) GCon->Logf(NAME_Dev, "  %d (%s)", v, (v >= 0 ? *GTextureManager.GetTextureName(v) : "<shit>"));
+    }
 
     memset(&ad, 0, sizeof(ad));
     //memset(&fd, 0, sizeof(fd));
