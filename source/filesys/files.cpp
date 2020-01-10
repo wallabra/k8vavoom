@@ -1725,7 +1725,7 @@ int cli_CompileAndExit = 0;
 static int cli_FastMonsters = -1; // not specified
 static int cli_Respawn = -1; // not specified
 static int cli_NoMenuDef = -1; // not specified
-static int cli_GoreMod = -1; // not specified
+/*static*/ int cli_GoreMod = -1; // not specified
 static int cli_BDWMod = -1; // not specified
 static int cli_SkeeHUD = -1; // not specified
 

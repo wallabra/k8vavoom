@@ -37,6 +37,7 @@ VCvarB decorate_fail_on_unknown("decorate_fail_on_unknown", false, "Fail on unkn
 
 static int disableBloodReplaces = 0;
 static int bloodOverrideAllowed = 0;
+static int enableKnownBlood = 0;
 static bool wasD4VFixes = false;
 
 
@@ -213,6 +214,8 @@ static TMap<VStrCI, bool> IgnoredDecorateActions;
   VParsedArgs::RegisterAlias("-no-blood-replaces", "-disable-blood-replaces") &&
   VParsedArgs::RegisterAlias("-no-blood-replacement", "-disable-blood-replaces") &&
 
+  VParsedArgs::RegisterFlagSet("-enable-known-blood", "enable some well-known blood replacements (NashGore, for example)", &enableKnownBlood) &&
+
   VParsedArgs::RegisterFlagSet("-decorate-allow-unsafe", "allow loops in decorate anonymous functions", &cli_DecorateAllowUnsafe) &&
   VParsedArgs::RegisterAlias("--decorate-allow-unsafe", "-decorate-allow-unsafe") &&
 
@@ -252,21 +255,45 @@ static inline bool getIgnoreMoronicStateCommands () { return !!cli_DecorateMoron
 // we will cut off old override if we'll find a new one
 static TMapNC<VClass *, bool> currFileRepls; // set; key is old class
 
+
+//==========================================================================
+//
+//  ClearReplacementBase
+//
+//==========================================================================
 static void ClearReplacementBase () {
   currFileRepls.clear();
 }
 
 
+//==========================================================================
+//
+//  ResetReplacementBase
+//
+//==========================================================================
 static void ResetReplacementBase () {
   currFileRepls.reset();
 }
 
 
+//==========================================================================
+//
+//  IsAnyBloodClass
+//
+//==========================================================================
 static bool IsAnyBloodClass (VClass *c) {
   for (; c; c = c->GetSuperClass()) {
     if (c->Name == "Blood" || c->Name == "BloodSplatter" ||
+        c->Name == "BloodSmear" || c->Name == "BloodSmearRadius" ||
+        c->Name == "BloodSplatRadius" || c->Name == "BloodSplat" ||
+
         c->Name == "BloodGreen" || c->Name == "BloodSplatterGreen" ||
-        c->Name == "BloodBlue" || c->Name == "BloodSplatterBlue")
+        c->Name == "BloodSmearGreen" || c->Name == "BloodSmearRadiusGreen" ||
+        c->Name == "BloodSplatRadiusGreen" || c->Name == "BloodSplatGreen" ||
+
+        c->Name == "BloodBlue" || c->Name == "BloodSplatterBlue" ||
+        c->Name == "BloodSmearBlue" || c->Name == "BloodSmearRadiusBlue" ||
+        c->Name == "BloodSplatRadiusBlue" || c->Name == "BloodSplatBlue")
     {
       return true;
     }
@@ -275,8 +302,39 @@ static bool IsAnyBloodClass (VClass *c) {
 }
 
 
+//==========================================================================
+//
+//  DetectKnownBloodClass
+//
+//==========================================================================
+static const char *DetectKnownBloodClass (VClass *c) {
+  for (; c; c = c->GetSuperClass()) {
+    if (VStr::startsWithCI(*c->Name, "NashGore") || VStr::startsWithCI(*c->Name, "Nash_Gore")) return "NashGore";
+    if (VStr::strEquCI(*c->Name, "Brutal_Blood")) return "Ketchup";
+    if (VStr::strEquCI(*c->Name, "Bolognese_Blood")) return "Bolognese";
+    if (VStr::strEquCI(*c->Name, "BloodSPlatterReplacer")) return "Ketchup/Bolognese";
+    if (VStr::strEquCI(*c->Name, "IRBlood") || VStr::strEquCI(*c->Name, "IRBloodSplatter")) return "SanReq"; // Sanity's Requiem
+  }
+  return nullptr;
+}
+
+
+//==========================================================================
+//
+//  DoClassReplacement
+//
+//==========================================================================
 static void DoClassReplacement (VClass *oldcls, VClass *newcls) {
   if (!oldcls) return;
+
+  // check for know blood classes if gore mod is active
+  if (cli_GoreMod && !enableKnownBlood && IsAnyBloodClass(oldcls)) {
+    const char *kbc = DetectKnownBloodClass(newcls);
+    if (kbc && kbc[0]) {
+      GLog.Logf(NAME_Debug, "%s: skipped KNOWN blood replacement class '%s' (%s)", *newcls->Loc.toStringNoCol(), newcls->GetName(), kbc);
+      return;
+    }
+  }
 
   const bool doOldRepl = (cli_DecorateOldReplacement > 0);
   const bool dumpReplaces = (cli_DecorateDumpReplaces > 0);
