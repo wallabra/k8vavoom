@@ -739,9 +739,11 @@ struct PWadScanInfo {
   bool hasMapinfo;
 
   PWadScanInfo () noexcept : processed(false), iwad(), mapname(), episode(-1), mapnum(-1), hasMapinfo(false) {}
-  void clear () noexcept { processed = false; iwad.clear(); mapname.clear(); episode = -1; mapnum = -1; hasMapinfo = false; }
+  inline void clear () noexcept { processed = false; iwad.clear(); mapname.clear(); episode = -1; mapnum = -1; hasMapinfo = false; }
 
-  int getMapIndex () const noexcept { return (episode > 0 ? episode*10+mapnum : episode == 0 ? mapnum : 0); }
+  inline int getMapIndex () const noexcept { return (episode > 0 ? episode*10+mapnum : episode == 0 ? mapnum : 0); }
+
+  static inline int exmxToIndex (int e, int m) noexcept { return (e*10+m); }
 };
 
 
@@ -768,17 +770,12 @@ static void findMapChecker (int lump) {
       if (e < 0 || m < 0) return;
       if (e >= 1 && e <= 9 && m >= 1 && m <= 9) {
         if (pwadScanInfo.episode == 0) return; // oops, mixed maps
-        if (pwadScanInfo.episode < 0 || pwadScanInfo.episode > e) {
+        const int newidx = PWadScanInfo::exmxToIndex(e, m);
+        if (pwadScanInfo.episode < 0 || pwadScanInfo.getMapIndex() > newidx) {
           pwadScanInfo.episode = e;
           pwadScanInfo.mapnum = m;
           pwadScanInfo.mapname = VStr(name);
           //GCon->Logf(NAME_Debug, "*** D1 MAP; episode=%d; map=%d; index=%d", e, m, pwadScanInfo.getMapIndex());
-        } else {
-          if (pwadScanInfo.mapnum < 0 || pwadScanInfo.mapnum > m) {
-            pwadScanInfo.mapnum = m;
-            pwadScanInfo.mapname = VStr(name);
-            //GCon->Logf(NAME_Debug, "*** D1 MAP; episode=%d; map=%d; index=%d", e, m, pwadScanInfo.getMapIndex());
-          }
         }
       }
       return; // continue
