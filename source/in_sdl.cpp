@@ -380,7 +380,10 @@ void VSdlInputDevice::ReadInput () {
       case SDL_KEYUP:
         {
           int kk = sdl2TranslateKey(ev.key.keysym.scancode);
-          if (kk > 0) GInput->PostKeyEvent(kk, (ev.key.state == SDL_PRESSED ? 1 : 0), vev.modflags);
+          if (kk > 0) {
+            //GCon->Logf(NAME_Debug, "***KEY%s; kk=%d", (ev.key.state == SDL_PRESSED ? "DOWN" : "UP"), kk);
+            GInput->PostKeyEvent(kk, (ev.key.state == SDL_PRESSED ? 1 : 0), vev.modflags);
+          }
         }
         // now fix flags
         switch (ev.key.keysym.sym) {
@@ -449,7 +452,7 @@ void VSdlInputDevice::ReadInput () {
       case SDL_WINDOWEVENT:
         switch (ev.window.event) {
           case SDL_WINDOWEVENT_FOCUS_GAINED:
-            //fprintf(stderr, "***FOCUS GAIN; wa=%d; first=%d; drawer=%p\n", (int)winactive, (int)firsttime, Drawer);
+            //GCon->Logf(NAME_Debug, "***FOCUS GAIN; wa=%d; first=%d", (int)winactive, (int)firsttime);
             VInputPublic::UnpressAll();
             curmodflags = 0; // just in case
             vev.modflags = 0;
