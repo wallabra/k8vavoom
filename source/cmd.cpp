@@ -1249,5 +1249,6 @@ COMMAND(__k8_run_first_map) {
 
   GCon->Logf(NAME_Init, "autostart map '%s'", *startMap);
 
+  Host_CLIMapStartFound();
   GCmdBuf.Insert(va("map \"%s\"\n", *VStr(startMap).quote()));
 }

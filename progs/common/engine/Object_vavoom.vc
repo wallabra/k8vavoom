@@ -371,10 +371,6 @@ native static final string TextColorString (int Color);
 native static final bool StartTitleMap ();
 native static final bool IsAutoloadingMapFromCLI ();
 native static final void LoadBinaryLump (name LumpName, out array!ubyte Array);
-native static final bool IsMapPresent (name MapName);
-
-native static final int P_GetMapIndexByLevelNum (int map);
-native static final int P_GetNumMaps ();
 
 native static final bool HasDecal (name aname);
 
@@ -423,6 +419,14 @@ struct mapInfo_t {
   int FakeContrast; // 0: vanilla; <0: disabled; 1: even; 2: smooth
 };
 
+// by lump name; checks for the actual lump presence, ignoring known map list
+native static final bool IsMapPresent (name MapName);
+
+// by `LevelNum`
+native static final int P_GetMapIndexByLevelNum (int map);
+
+native static final int P_GetNumMaps ();
+// by index; [0..P_GetNumMaps)
 native static final mapInfo_t *P_GetMapInfo (int map);
 
 
