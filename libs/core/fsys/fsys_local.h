@@ -56,6 +56,7 @@ public:
   bool iwad;
   bool basepak;
   bool normalwad;
+  bool userwad;
 
 public:
   VSearchPath ();

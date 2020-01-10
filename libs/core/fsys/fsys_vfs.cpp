@@ -1286,3 +1286,27 @@ bool W_IsAuxLump (int lump) {
   int fidx = FILE_INDEX(lump);
   return (fidx >= AuxiliaryIndex && fidx < SearchPaths.length());
 }
+
+
+//==========================================================================
+//
+//  W_IsUserWadFile
+//
+//==========================================================================
+bool W_IsUserWadFile (int fidx) {
+  MyThreadLocker glocker(&fsys_glock);
+  if (fidx < 0 || fidx >= getSPCount()) return false;
+  return SearchPaths[fidx]->userwad;
+}
+
+
+//==========================================================================
+//
+//  W_IsUserWadLump
+//
+//==========================================================================
+bool W_IsUserWadLump (int lump) {
+  if (lump < 0) return false;
+  int fidx = FILE_INDEX(lump);
+  return W_IsUserWadFile(fidx);
+}

@@ -33,6 +33,15 @@ bool fsys_no_dup_reports = false;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+static bool fsys_mark_as_user = false;
+
+// all appended wads will be marked as "user wads" from this point on
+void FL_StartUserWads () { fsys_mark_as_user = true; }
+// stop marking user wads
+void FL_EndUserWads () { fsys_mark_as_user = false; }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 const VPK3ResDirInfo PK3ResourceDirs[] = {
   { "sprites/", WADNS_Sprites },
   { "flats/", WADNS_Flats },
@@ -95,7 +104,13 @@ bool VFS_ShouldIgnoreExt (VStr fname) {
 //  VSearchPath::VSearchPath
 //
 //==========================================================================
-VSearchPath::VSearchPath () : iwad(false), basepak(false), normalwad(false) {
+VSearchPath::VSearchPath ()
+  : iwad(false)
+  , basepak(false)
+  , normalwad(false)
+  , userwad(false)
+{
+  if (fsys_mark_as_user) userwad = true;
 }
 
 

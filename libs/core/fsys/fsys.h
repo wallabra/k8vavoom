@@ -85,6 +85,12 @@ enum {
 int FL_AddGameFilter (VStr path);
 
 
+// all appended wads will be marked as "user wads" from this point on
+void FL_StartUserWads ();
+// stop marking user wads
+void FL_EndUserWads ();
+
+
 // boom namespaces
 enum EWadNamespace {
   WADNS_Global,
@@ -171,6 +177,9 @@ bool W_IsAuxFile (int file); // -1 is not aux ;-)
 bool W_IsIWADLump (int lump);
 bool W_IsWADLump (int lump); // not pk3, not disk
 bool W_IsAuxLump (int lump); // -1 is not aux ;-)
+
+bool W_IsUserWadFile (int file);
+bool W_IsUserWadLump (int lump);
 
 void W_ReadFromLump (int lump, void *dest, int pos, int size);
 VStr W_LoadTextLump (VName name);
