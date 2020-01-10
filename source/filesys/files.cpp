@@ -2327,6 +2327,7 @@ void FL_Init () {
 
   // mount pwads
   fsys_report_added_paks = reportPWads;
+  FL_StartUserWads(); // start marking
   for (int pwidx = 0; pwidx < pwadList.length(); ++pwidx) {
     PWadFile &pwf = pwadList[pwidx];
     fsys_skipSounds = pwf.skipSounds;
@@ -2378,6 +2379,7 @@ void FL_Init () {
       }
     }
   }
+  FL_EndUserWads(); // stop marking
   fsys_skipSounds = false;
   fsys_skipSprites = false;
   fsys_skipDehacked = false;
