@@ -196,7 +196,7 @@ VStr mapInfo_t::GetName () const {
 //  mapInfo_t::dump
 //
 //==========================================================================
-void mapInfo_t::dump (const char *msg) const{
+void mapInfo_t::dump (const char *msg) const {
   if (msg && msg[0]) GCon->Logf("==== mapinfo: %s ===", msg); else GCon->Log("==== mapinfo ===");
   GCon->Logf("  LumpName: \"%s\"", *VStr(LumpName).quote());
   GCon->Logf("  Name: \"%s\"", *Name.quote());
@@ -1451,9 +1451,24 @@ static void ParseMap (VScriptParser *sc, bool &HexenMode, mapInfo_t &Default, in
   info->MapinfoSourceLump = milumpnum;
 
   // avoid duplicate levelnums, later one takes precedance
-  for (int i = 0; i < MapInfo.Num(); ++i) {
-    if (MapInfo[i].LevelNum == info->LevelNum && &MapInfo[i] != info) {
-      MapInfo[i].LevelNum = 0;
+  if (info->LevelNum) {
+    for (int i = 0; i < MapInfo.Num(); ++i) {
+      if (MapInfo[i].LevelNum == info->LevelNum && &MapInfo[i] != info) {
+        if (W_IsUserWadLump(MapInfo[i].MapinfoSourceLump)) {
+          if (MapInfo[i].MapinfoSourceLump != info->MapinfoSourceLump) {
+            GCon->Logf(NAME_Warning, "duplicate levelnum %d for maps '%s' and '%s' ('%s' zeroed)", info->LevelNum, *MapInfo[i].LumpName, *info->LumpName, *MapInfo[i].LumpName);
+            GCon->Logf(NAME_Warning, "  first map is defined in '%s'", *W_FullLumpName(MapInfo[i].MapinfoSourceLump));
+            GCon->Logf(NAME_Warning, "  second map is defined in '%s'", *W_FullLumpName(info->MapinfoSourceLump));
+          } else {
+            GCon->Logf(NAME_Warning, "duplicate levelnum %d for maps '%s' and '%s' ('%s' zeroed)", info->LevelNum, *MapInfo[i].LumpName, *info->LumpName, *info->LumpName);
+            GCon->Logf(NAME_Warning, "  both maps are defined in '%s'", *W_FullLumpName(info->MapinfoSourceLump));
+            // this means that latter episode is fucked -- so fuck it for real
+            info->LevelNum = 0;
+            break;
+          }
+        }
+        MapInfo[i].LevelNum = 0;
+      }
     }
   }
 }
