@@ -391,6 +391,20 @@ VName VLanguage::GetStringId (VStr Str) {
 
 //==========================================================================
 //
+//  VLanguage::GetStringIdCI
+//
+//==========================================================================
+VName VLanguage::GetStringIdCI (VStr Str) {
+  if (!table) return NAME_None;
+  for (auto it = table->first(); it; ++it) {
+    if (it.getValue().Value.strEquCI(Str)) return it.GetKey();
+  }
+  return NAME_None;
+}
+
+
+//==========================================================================
+//
 //  VLanguage::ReplaceString
 //
 //==========================================================================

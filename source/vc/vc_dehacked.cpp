@@ -1166,24 +1166,13 @@ static void FindString (const char *oldStr, const char *newStr) {
     }
   }
 
-  vuint32 hash = XXH32(oldStr, strlen(oldStr), 0x29a);
-
-  VStr ostr; // need to keep it
-       if (hash == 0xc43d123e) ostr = EngStrings->Translate("$hustr_e4m3"); // "E4M3: Sever The Wicked"
-  else if (hash == 0x672d7e67) ostr = EngStrings->Translate("$hustr_e4m6"); // "E4M6: Against Thee Wickedly"
-  else if (hash == 0x5e0aaf2b) ostr = EngStrings->Translate("$hustr_e4m8"); // "E4M8: Unto The Cruel"
-
-  if (!ostr.isEmpty()) {
-    oldStr = *ostr;
-    hash = XXH32(oldStr, strlen(oldStr), 0x29a);
-  }
-
-  VName Id = EngStrings->GetStringId(oldStr);
+  VName Id = EngStrings->GetStringIdCI(oldStr);
   if (Id != NAME_None) {
     GLanguage.ReplaceString(Id, newStr);
     return;
   }
 
+  vuint32 hash = XXH32(oldStr, strlen(oldStr), 0x29a);
   if (hash != 0xde390ed6u && /* startup header line, doom2 */
       hash != 0x414bc626u && /* "modified" text, doom2 */
       hash != 0xd254973du && /* "Degreelessness Mode On" */

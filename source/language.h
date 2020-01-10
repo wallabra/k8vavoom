@@ -55,6 +55,7 @@ public:
   bool HasTranslation (const char *s) const;
 
   VName GetStringId (VStr);
+  VName GetStringIdCI (VStr);
   void ReplaceString (VName, VStr);
 };
 
