@@ -25,6 +25,8 @@
 //**************************************************************************
 #include "fsys_local.h"
 
+#define VV_ABSOLUTELY_NO_ZSCRIPT
+
 
 extern bool fsys_skipSounds;
 extern bool fsys_skipSprites;
@@ -401,15 +403,21 @@ void VFileDirectory::buildNameMaps (bool rebuilding, VPakFileBase *pak) {
       fn != "voices.wad" &&
       true;
   }
-  int seenZScriptLump = -1; // so we can calculate checksum later
-  vuint32 squareChecked = 0u;
-  if (fsys_ignoreSquare) squareChecked = ~0u;
   lumpmap.clear();
   filemap.clear();
   TMap<VStr, bool> dupsReported;
   TMapNC<VName, int> lastSeenLump;
+
+  int seenZScriptLump = -1; // so we can calculate checksum later
   bool warnZScript = true;
+  #ifndef VV_ABSOLUTELY_NO_ZSCRIPT
+  vuint32 squareChecked = 0u;
+  if (fsys_ignoreSquare) squareChecked = ~0u;
   bool zscriptAllowed = false;
+  #else
+  enum { zscriptAllowed = false };
+  #endif
+
   for (int f = 0; f < files.length(); ++f) {
     VPakFileInfo &fi = files[f];
     // link lumps
@@ -417,6 +425,7 @@ void VFileDirectory::buildNameMaps (bool rebuilding, VPakFileBase *pak) {
     fi.nextLump = -1; // just in case
     if (/*lmp != NAME_None &&*/ seenZScriptLump < 0 && fi.lumpNamespace == WADNS_Global && VStr::strEquCI(*lmp, "zscript")) {
       seenZScriptLump = f;
+      #ifndef VV_ABSOLUTELY_NO_ZSCRIPT
       // check for "adventures of square"
       if (!fsys_IgnoreZScript && !squareChecked) {
         for (auto &&fit : files) {
@@ -435,6 +444,7 @@ void VFileDirectory::buildNameMaps (bool rebuilding, VPakFileBase *pak) {
           squareChecked = ~0u;
         }
       }
+      #endif
       // ignore it for now
       fi.lumpName = NAME_None;
       continue;
@@ -492,6 +502,7 @@ void VFileDirectory::buildNameMaps (bool rebuilding, VPakFileBase *pak) {
 
   // seen zscript, and not a square?
   if (!zscriptAllowed && seenZScriptLump >= 0) {
+    #ifndef VV_ABSOLUTELY_NO_ZSCRIPT
     // detect boringternity
     if (pak) {
       //GLog.Logf(NAME_Debug, "*** seenZScriptLump=%d (%s); size=%d (%p); rebuilding=%d", seenZScriptLump, *files[seenZScriptLump].fileName, files[seenZScriptLump].filesize, pak, (int)rebuilding);
@@ -503,6 +514,7 @@ void VFileDirectory::buildNameMaps (bool rebuilding, VPakFileBase *pak) {
         warnZScript = false;
       }
     }
+    #endif
     // bomb out
     if (!zscriptAllowed) {
       if (fsys_IgnoreZScript) {
