@@ -1801,19 +1801,17 @@ override bool SectorChanged (int CrushChange) {
 //
 //==========================================================================
 override void ClientTick (float DeltaTime) {
-  dlight_t *dl;
-  TVec fv;
-  int i, c;
-  float r = 0.0;
-  bool alt = false;
-
   if (bInvisible || bNoSector) return;
 
+  // if we're in closed door or something, skip effects
+  if (CeilingZ <= FloorZ) return;
+
+  // do state effects, dynlight, and various particle trails
   DoStateEffects(DeltaTime);
 
   if (bDynamicLight) {
     // update dynamic lights
-    dl = AllocDlight(self, Origin, radius:fmax(0, fmax(prev_rad, DLightRadius)));
+    dlight_t *dl = AllocDlight(self, Origin, radius:fmax(0, fmax(prev_rad, DLightRadius)));
     if (dl) {
       //dl->origin = Origin;
       dl->radius = (prev_rad <= DLightRadius ? prev_rad : (prev_rad-DLightRadius)*XLevel.Time);
@@ -1826,20 +1824,21 @@ override void ClientTick (float DeltaTime) {
     }
   }
 
-  if (bLeaveTrail) {
-    c = P_Random()>>1;
-    if (P_Random() > 180) {
-      r = Random()*8.0;
-      alt = true;
-    }
-    if (GetCvarB('r_particle_trails')) {
+  if ((bLeaveTrail || bLeaveTrail2) && GetCvarB('r_particle_trails')) {
+    if (bLeaveTrail) {
+      bool alt = false;
+      float r = 0.0;
+      int c = P_Random()>>1;
+      if (P_Random() > 180) {
+        r = Random()*8.0;
+        alt = true;
+      }
       LineSpecialLevelInfo(Level).ParticleEffect(int(DeltaTime*256.0), alt ? LineSpecialLevelInfo::pt_explode : LineSpecialLevelInfo::pt_static, 0, Origin,
-          0.0, vector(16.0, 16.0, 64.0), 0.5, 2.5, 0.0, alt ? RGB(255, 140, 0) : RGB(c, c, c), 0.5,  r);
+          0.0, vector(16.0, 16.0, 64.0), 0.5, 2.5, 0.0, alt ? RGB(255, 140, 0) : RGB(c, c, c), 0.5, r);
     }
-  }
-  if (bLeaveTrail2) {
-    c = P_Random()>>1;
-    if (GetCvarB('r_particle_trails')) {
+
+    if (bLeaveTrail2) {
+      int c = P_Random()>>1;
       LineSpecialLevelInfo(Level).ParticleEffect(6,
           LineSpecialLevelInfo::pt_static, 0, vector(Origin.x-(cos(Angles.yaw)*Radius*2.0),
           Origin.y-(sin(Angles.yaw)*Radius*2.0),
