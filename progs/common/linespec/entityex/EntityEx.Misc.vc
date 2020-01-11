@@ -1860,7 +1860,7 @@ final void DoStateEffects (float DeltaTime) {
   array!(ParticleEffectDef *) Particles;
 
   GetStateEffects(Lights, Particles);
-  if (!Lights.Num && !Particles.Num) return;
+  if (!Lights.length && !Particles.length) return;
 
   TVec Forward;
   TVec Right;
@@ -1978,7 +1978,7 @@ final void DoStateEffects (float DeltaTime) {
 
   if (State != PrevEffectState) {
     // particle effects
-    if (Particles.Num > 0 && GetCvarB('r_particle_effects')) {
+    if (Particles.length > 0 && GetCvarB('r_particle_effects')) {
       foreach (auto i; 0..Particles.length) {
         ParticleEffectDef *P = Particles[i];
         if (!P) continue;
@@ -2580,26 +2580,32 @@ final void AutoUseHealth (int saveHealth) {
     if (inv.Amount > 0 && ClassIsChildOf(inv.Class, HealthPickup)) {
       int mode = HealthPickup(inv).AutoUseMode;
       if (mode == 1) {
+        /*
         normal[normal.Num] = inv;
         normal.Num = normal.Num+1;
+        */
+        normal[$] = inv;
       } else if (mode == 2) {
+        /*
         super[super.Num] = inv;
         super.Num = super.Num+1;
+        */
+        super[$] = inv;
       }
     }
   }
 
-  foreach (auto i; 0..normal.Num-1) normalhealth += normal[i].Amount*normal[i].Health;
-  foreach (auto i; 0..super.Num-1) superhealth += super[i].Amount*super[i].Health;
+  foreach (auto i; 0..normal.length-1) normalhealth += normal[i].Amount*normal[i].Health;
+  foreach (auto i; 0..super.length-1) superhealth += super[i].Amount*super[i].Health;
 
   if (Level.World.bSkillAutoUseHealth && normalhealth >= saveHealth) {
     // use quartz flasks
-    while (normal.Num > 0 && saveHealth > 0) {
+    while (normal.length > 0 && saveHealth > 0) {
       int maxhealth = 0;
       int index = -1;
 
       // find the largest item in the list
-      foreach (auto i; 0..normal.Num-1) {
+      foreach (auto i; 0..normal.length-1) {
         if (normal[i].Health > maxhealth) {
           index = i;
           maxhealth = normal[i].Health;
@@ -2621,12 +2627,12 @@ final void AutoUseHealth (int saveHealth) {
     Health += saved;
   } else if (superhealth >= saveHealth) {
     // Use mystic urns
-    while (super.Num > 0 && saveHealth > 0) {
+    while (super.length > 0 && saveHealth > 0) {
       int maxhealth = 0;
       int index = -1;
 
       // find the largest item in the list
-      foreach (auto i; 0..super.Num-1) {
+      foreach (auto i; 0..super.length-1) {
         if (super[i].Health > maxhealth) {
           index = i;
           maxhealth = super[i].Health;
@@ -2648,12 +2654,12 @@ final void AutoUseHealth (int saveHealth) {
     Health += saved;
   } else if (Level.World.bSkillAutoUseHealth && normalhealth+superhealth >= saveHealth) {
     // use mystic urns and quartz flasks
-    while (normal.Num > 0 && saveHealth > 0) {
+    while (normal.length > 0 && saveHealth > 0) {
       int maxhealth = 0;
       int index = -1;
 
       // find the largest item in the list
-      foreach (auto i; 0..normal.Num-1) {
+      foreach (auto i; 0..normal.length-1) {
         if (normal[i].Health > maxhealth) {
           index = i;
           maxhealth = normal[i].Health;
@@ -2674,12 +2680,12 @@ final void AutoUseHealth (int saveHealth) {
 
     Health += saved;
     if (saveHealth > 0) {
-      while (super.Num > 0 && saveHealth > 0) {
+      while (super.length > 0 && saveHealth > 0) {
         int maxhealth = 0;
         int index = -1;
 
         // find the largest item in the list
-        foreach (auto i; 0..super.Num-1) {
+        foreach (auto i; 0..super.length-1) {
           if (super[i].Health > maxhealth) {
             index = i;
             maxhealth = super[i].Health;
@@ -2718,20 +2724,23 @@ final void AutoUseStrifeHealth (int saveHealth) {
     if (inv && inv.Amount > 0 && ClassIsChildOf(inv.Class, HealthPickup)) {
       int mode = HealthPickup(inv).AutoUseMode;
       if (mode == 3) {
+        /*
         Items.Num = Items.Num+1;
         Items[Items.Num-1] = inv;
+        */
+        Items[$] = inv;
       }
     }
   }
 
-  foreach (auto i; 0..Items.Num) itemshealth += Items[i].Amount*Items[i].Health;
+  foreach (auto i; 0..Items.length) itemshealth += Items[i].Amount*Items[i].Health;
 
-  while (Items.Num > 0) {
+  while (Items.length > 0) {
     int maxhealth = 0;
     int index = -1;
 
     // find the largest item in the list
-    foreach (auto i; 0..Items.Num) {
+    foreach (auto i; 0..Items.length) {
       if (Items[i].Health > maxhealth) {
         index = i;
         maxhealth = Items[i].Amount;
@@ -2748,10 +2757,10 @@ final void AutoUseStrifeHealth (int saveHealth) {
 
     // using all of this item was not enough so delete it and restart with the next best one
     Items[index] = none;
-    if (index < Items.Num) {
-      for (int i = Items.Num-index; i < Items.Num-1; ++i) Items[i] = Items[i+1];
+    if (index < Items.length) {
+      for (int i = Items.length-index; i < Items.length-1; ++i) Items[i] = Items[i+1];
     }
-    Items.Num -= 1;
+    Items.length -= 1;
   }
 
   Player.Health = Health;
