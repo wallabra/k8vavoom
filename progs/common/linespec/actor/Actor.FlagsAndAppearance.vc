@@ -190,6 +190,8 @@
 //
 //  Unset blocking.
 //
+//  for VavoomC actor states
+//
 //==========================================================================
 [decorate] final void A_NoBlocking () {
   decorate_A_NoBlocking(true);
@@ -258,7 +260,7 @@
 //==========================================================================
 [decorate] final void A_Fall () {
   // called for Keen and PE, and they should not drop items
-  decorate_A_NoBlocking(false);
+  decorate_A_NoBlocking(GetCvarB('__gz_afall_drops'));
 }
 
 
