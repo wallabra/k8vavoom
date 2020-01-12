@@ -621,9 +621,9 @@ static void ReadThing (int num) {
         SetClassFieldInt(Ent, "Translation", Values[0]&0x0c000000 ? (TRANSL_Standard<<TRANSL_TYPE_SHIFT)+((Values[0]&0x0c000000)>>26)-1 : 0);
 
         // alpha and render style
-        SetClassFieldFloat(Ent, "Alpha", (Values[0]&0x00040000) ? 0.1f :
-          (Values[0]&0x80000000) ? 0.5f :
-          (Values[0]&0x10000000) ? 0.25f :
+        SetClassFieldFloat(Ent, "Alpha", (Values[0]&0x00040000) ? /*0.1f*/0.35f :
+          (Values[0]&0x80000000) ? /*0.5f*/0.55f :
+          (Values[0]&0x10000000) ? /*0.25f*/0.35f :
           (Values[0]&0x20000000) ? 0.75f : 1.0f);
         SetClassFieldByte(Ent, "RenderStyle", (Values[0]&0x00040000) ?
           STYLE_OptFuzzy : (Values[0]&0xb0000000) ? STYLE_Translucent : STYLE_Normal);
