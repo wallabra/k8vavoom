@@ -119,6 +119,8 @@ override void BeginPlay () {
         if (RenderStyle == STYLE_None) NewEntity.RenderStyle = STYLE_None;
 
         // copy translations too, why not?
+        // because spawned entities have their own translations, you know
+        // ketmar is a moron
         //NewEntity.CopyTranslations(self);
 
         // this handles things such as projectiles with the MF4_SPECTRAL flag that have
