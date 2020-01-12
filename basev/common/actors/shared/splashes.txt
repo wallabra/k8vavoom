@@ -27,6 +27,7 @@ actor WaterSplash
 actor WaterSplashBase
 {
   +NoBlockmap
+  +NoInteraction
   +NoGravity
   +NoClip
   +DontSplash
@@ -43,6 +44,7 @@ actor WaterSplashBase
 actor LavaSplash
 {
   +NoBlockmap
+  +NoInteraction
   +NoGravity
   +NoClip
   +DontSplash
@@ -60,6 +62,7 @@ actor LavaSmoke
   RenderStyle Translucent
   Alpha 0.666 //0.333 in Hexen
   +NoBlockmap
+  +NoInteraction
   +NoGravity
   +NoClip
   +DontSplash
@@ -98,6 +101,7 @@ actor SludgeChunk
 actor SludgeSplash
 {
   +NoBlockmap
+  +NoInteraction
   +NoGravity
   +NoClip
   +DontSplash
@@ -138,6 +142,7 @@ actor BloodSplash
 actor BloodSplashBase
 {
   +NoBlockmap
+  +NoInteraction
   +NoGravity
   +NoClip
   +DontSplash
@@ -178,6 +183,7 @@ actor SlimeChunk
 actor SlimeSplash
 {
   +NoBlockmap
+  +NoInteraction
   +NoGravity
   +NoClip
   +DontSplash

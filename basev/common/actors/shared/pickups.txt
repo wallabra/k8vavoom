@@ -4,6 +4,7 @@ actor ItemFog
   RenderStyle Translucent
   Alpha 0.666
   +NoBlockmap
+  +NoInteraction
   +NoGravity
   states
   {

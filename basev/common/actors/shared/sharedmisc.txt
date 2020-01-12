@@ -5,6 +5,7 @@ actor Unknown
   Height 56
   +NoGravity
   +NoBlockmap
+  +NoInteraction
   +DontSplash
   states
   {
@@ -23,6 +24,7 @@ actor PatrolPoint 9024
   RenderStyle None
   +NoGravity
   +NoBlockmap
+  +NoInteraction
   +DontSplash
 }
 
@@ -36,6 +38,7 @@ actor PatrolSpecial 9047
   RenderStyle None
   +NoGravity
   +NoBlockmap
+  +NoInteraction
   +DontSplash
 }
 
@@ -44,6 +47,7 @@ actor MapSpot 9001
 {
   +NoSector
   +NoBlockmap
+  +NoInteraction
   +NoGravity
   +DontSplash
   states
@@ -60,6 +64,7 @@ actor FS_MapSpot : MapSpot 5004
 {
   +NoSector
   +NoBlockmap
+  +NoInteraction
   +NoGravity
   +DontSplash
   states
@@ -108,6 +113,7 @@ actor RocketSmokeTrail
   Alpha 0.4
   VSpeed 1
   +NOBLOCKMAP
+  +NoInteraction
   +NOCLIP
   +NOGRAVITY
   +DONTSPLASH
