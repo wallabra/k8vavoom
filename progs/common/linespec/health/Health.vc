@@ -41,7 +41,9 @@ override bool TryPickup (EntityEx Toucher) {
     PrevHealth = Toucher.Health;
     if (pex) {
       // `doHealthAccumHealthPickup()` does all health math
-      if (!pex.doHealthAccumHealthPickup(self, Toucher)) return false;
+      if (!pex.doHealthAccumHealthPickup(self, Toucher)) {
+        if (!bAlwaysPickup) return false;
+      }
       if (bTransferInventory) TransferInventoryTo(Toucher);
       GoAwayAndDie();
       return true;
