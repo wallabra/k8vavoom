@@ -183,7 +183,7 @@ bool Physics (float DeltaTime) {
   }
   #else
   // new code
-  if (Sector && bColideWithWorld && !bNoSector) {
+  if (GetClassInstanceCountWithSub(Scroller) && Sector && bColideWithWorld && !bNoSector) {
     // killough 3/7/98: Carry things on floor
     // killough 3/20/98: use new sector list which reflects true members
     // killough 3/27/98: fix carrier bug
