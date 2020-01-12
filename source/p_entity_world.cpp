@@ -1849,6 +1849,8 @@ TVec VEntity::FakeZMovement () {
 //
 //=============================================================================
 VEntity *VEntity::CheckOnmobj () {
+  // can't hit things, or not solid? (check it here to save one VM invocation)
+  if ((EntityFlags&(EF_ColideWithThings|EF_Solid)) != (EF_ColideWithThings|EF_Solid)) return nullptr;
   return TestMobjZ(FakeZMovement());
 }
 
