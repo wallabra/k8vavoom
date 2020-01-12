@@ -8,7 +8,7 @@ terms of the MIT license. A copy of the license can be found in the file
 #ifndef MIMALLOC_H
 #define MIMALLOC_H
 
-#define MI_MALLOC_VERSION 110   // major + 2 digits minor
+#define MI_MALLOC_VERSION 120   // major + 2 digits minor
 
 #if defined(_MSC_VER)
 # error "k8: m$vc support in mi-malloc is intentionally broken."
@@ -24,6 +24,11 @@ terms of the MIT license. A copy of the license can be found in the file
 #if defined(MI_SECURE) || (MI_SECURE != 0)
 # error "don't do this!"
 #endif
+
+#ifdef MI_DEBUG
+# undef MI_DEBUG
+#endif
+#define MI_DEBUG 0
 
 // ------------------------------------------------------
 // Compiler specific attributes
@@ -286,6 +291,7 @@ typedef enum mi_option_e {
   mi_option_eager_commit_delay,
   mi_option_segment_reset,
   mi_option_os_tag,
+  mi_option_max_errors,
   _mi_option_last
 } mi_option_t;
 

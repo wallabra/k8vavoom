@@ -96,10 +96,11 @@ size_t _mi_os_good_alloc_size(size_t size) {
 #include <winternl.h>
 typedef PVOID    (__stdcall *PVirtualAlloc2)(HANDLE, PVOID, SIZE_T, ULONG, ULONG, /* MEM_EXTENDED_PARAMETER* */ void*, ULONG);
 typedef NTSTATUS (__stdcall *PNtAllocateVirtualMemoryEx)(HANDLE, PVOID*, SIZE_T*, ULONG, ULONG, /* MEM_EXTENDED_PARAMETER* */ PVOID, ULONG);
-static __attribute__((unused)) PVirtualAlloc2 pVirtualAlloc2 = NULL;
-static __attribute__((unused)) PNtAllocateVirtualMemoryEx pNtAllocateVirtualMemoryEx = NULL;
+/*k8:fuck you, shitdoze!
+static PVirtualAlloc2 pVirtualAlloc2 = NULL;
+static PNtAllocateVirtualMemoryEx pNtAllocateVirtualMemoryEx = NULL;
 
-static __attribute__((unused)) bool mi_win_enable_large_os_pages() 
+static bool mi_win_enable_large_os_pages() 
 {
   if (large_os_page_size > 0) return true;
 
@@ -133,6 +134,7 @@ static __attribute__((unused)) bool mi_win_enable_large_os_pages()
   }
   return (ok!=0);
 }
+*/
 
 void _mi_os_init(void) {
   // get the page size
@@ -141,18 +143,18 @@ void _mi_os_init(void) {
   if (si.dwPageSize > 0) os_page_size = si.dwPageSize;
   if (si.dwAllocationGranularity > 0) os_alloc_granularity = si.dwAllocationGranularity;
   // get the VirtualAlloc2 function
-  /*k8:fuck you, m$vc:
+  /*k8:fuck you, shitdoze:
   HINSTANCE  hDll;
   hDll = LoadLibrary(TEXT("kernelbase.dll"));
   if (hDll != NULL) {
     // use VirtualAlloc2FromApp if possible as it is available to Windows store apps
-    pVirtualAlloc2 = (PVirtualAlloc2)GetProcAddress(hDll, "VirtualAlloc2FromApp");
-    if (pVirtualAlloc2==NULL) pVirtualAlloc2 = (PVirtualAlloc2)GetProcAddress(hDll, "VirtualAlloc2");
+    pVirtualAlloc2 = (PVirtualAlloc2)(void (*)(void))GetProcAddress(hDll, "VirtualAlloc2FromApp");
+    if (pVirtualAlloc2==NULL) pVirtualAlloc2 = (PVirtualAlloc2)(void (*)(void))GetProcAddress(hDll, "VirtualAlloc2");
     FreeLibrary(hDll);
   }
   hDll = LoadLibrary(TEXT("ntdll.dll"));
   if (hDll != NULL) {    
-    pNtAllocateVirtualMemoryEx = (PNtAllocateVirtualMemoryEx)GetProcAddress(hDll, "NtAllocateVirtualMemoryEx");
+    pNtAllocateVirtualMemoryEx = (PNtAllocateVirtualMemoryEx)(void (*)(void))GetProcAddress(hDll, "NtAllocateVirtualMemoryEx");
     FreeLibrary(hDll);
   }  
   if (mi_option_is_enabled(mi_option_large_os_pages) || mi_option_is_enabled(mi_option_reserve_huge_os_pages)) {
@@ -173,9 +175,7 @@ void _mi_os_init() {
     os_page_size = (size_t)result;
     os_alloc_granularity = os_page_size;
   }
-  if (mi_option_is_enabled(mi_option_large_os_pages)) {
-    large_os_page_size = (1UL << 21); // 2MiB
-  }
+  large_os_page_size = 2*MiB; // TODO: can we query the OS for this?
 }
 #endif
 
@@ -207,7 +207,7 @@ static bool mi_os_mem_free(void* addr, size_t size, bool was_committed, mi_stats
   }
 }
 
-static void* mi_os_get_aligned_hint(size_t try_alignment, size_t size);
+static __attribute__((unused)) void* mi_os_get_aligned_hint(size_t try_alignment, size_t size);
 
 #ifdef _WIN32
 static void* mi_win_virtual_allocx(void* addr, size_t size, size_t try_alignment, DWORD flags) {
@@ -285,7 +285,7 @@ static void* mi_win_virtual_alloc(void* addr, size_t size, size_t try_alignment,
     p = mi_win_virtual_allocx(addr, size, try_alignment, flags);
   }
   if (p == NULL) {
-    _mi_warning_message("unable to alloc mem error: err: %i size: 0x%x \n", GetLastError(), size);
+    _mi_warning_message("unable to allocate memory: error code: %i, addr: %p, size: 0x%x, large only: %d, allow_large: %d\n", GetLastError(), addr, size, large_only, allow_large);
   }
   return p;
 }
@@ -426,7 +426,7 @@ static void* mi_unix_mmap(void* addr, size_t size, size_t try_alignment, int pro
 static volatile _Atomic(intptr_t) aligned_base;
 
 // Return a 4MiB aligned address that is probably available
-static void* mi_os_get_aligned_hint(size_t try_alignment, size_t size) {
+static __attribute__((unused)) void* mi_os_get_aligned_hint(size_t try_alignment, size_t size) {
   if (try_alignment == 0 || try_alignment > MI_SEGMENT_SIZE) return NULL;
   if ((size%MI_SEGMENT_SIZE) != 0) return NULL;
   intptr_t hint = mi_atomic_add(&aligned_base, size);
@@ -443,7 +443,7 @@ static void* mi_os_get_aligned_hint(size_t try_alignment, size_t size) {
   return (void*)hint;
 }
 #else
-static __attribute__((unused)) void* mi_os_get_aligned_hint(size_t try_alignment, size_t size) {
+static void* mi_os_get_aligned_hint(size_t try_alignment, size_t size) {
   UNUSED(try_alignment); UNUSED(size);
   return NULL;
 }
@@ -458,6 +458,7 @@ static void* mi_os_mem_alloc(size_t size, size_t try_alignment, bool commit, boo
   if (!commit) allow_large = false;
 
   void* p = NULL;
+  /*
   if (commit && allow_large) {
     p = _mi_os_try_alloc_from_huge_reserved(size, try_alignment);
     if (p != NULL) {
@@ -465,6 +466,7 @@ static void* mi_os_mem_alloc(size_t size, size_t try_alignment, bool commit, boo
       return p;
     }
   }
+  */
 
   #if defined(_WIN32)
     int flags = MEM_RESERVE;
@@ -477,7 +479,7 @@ static void* mi_os_mem_alloc(size_t size, size_t try_alignment, bool commit, boo
     int protect_flags = (commit ? (PROT_WRITE | PROT_READ) : PROT_NONE);
     p = mi_unix_mmap(NULL, size, try_alignment, protect_flags, false, allow_large, is_large);
   #endif
-  _mi_stat_increase(&stats->mmap_calls, 1);
+  mi_stat_counter_increase(stats->mmap_calls, 1);
   if (p != NULL) {
     _mi_stat_increase(&stats->reserved, size);
     if (commit) { _mi_stat_increase(&stats->committed, size); }
@@ -632,7 +634,7 @@ static bool mi_os_commitx(void* addr, size_t size, bool commit, bool conservativ
   int err = 0;
   if (commit) {
     _mi_stat_increase(&stats->committed, csize);
-    _mi_stat_increase(&stats->commit_calls, 1);
+    _mi_stat_counter_increase(&stats->commit_calls, 1);
   }
   else {
     _mi_stat_decrease(&stats->committed, csize);
@@ -700,7 +702,7 @@ static bool mi_os_resetx(void* addr, size_t size, bool reset, mi_stats_t* stats)
   void* p = VirtualAlloc(start, csize, MEM_RESET, PAGE_READWRITE);
   mi_assert_internal(p == start);
   #if 1
-  if (p == start) {
+  if (p == start && start != NULL) {
     VirtualUnlock(start,csize); // VirtualUnlock after MEM_RESET removes the memory from the working set
   }
   #endif
@@ -886,7 +888,7 @@ int mi_reserve_huge_os_pages( size_t pages, double max_secs, size_t* pages_reser
   uint8_t* start = (uint8_t*)((uintptr_t)32 << 40); // 32TiB virtual start address
   #if (MI_SECURE>0 || MI_DEBUG==0)     // security: randomize start of huge pages unless in debug mode
   uintptr_t r = _mi_random_init((uintptr_t)&mi_reserve_huge_os_pages);
-  start = start + ((uintptr_t)MI_SEGMENT_SIZE * ((r>>17) & 0xFFFF));  // (randomly 0-64k)*4MiB == 0 to 256GiB
+  start = start + ((uintptr_t)MI_HUGE_OS_PAGE_SIZE * ((r>>17) & 0x3FF));  // (randomly 0-1024)*1GiB == 0 to 1TiB
   #endif
 
   // Allocate one page at the time but try to place them contiguously

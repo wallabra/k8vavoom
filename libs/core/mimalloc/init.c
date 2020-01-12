@@ -13,16 +13,16 @@ terms of the MIT license. A copy of the license can be found in the file
 // Empty page used to initialize the small free pages array
 const mi_page_t _mi_page_empty = {
   0, false, false, false, false, 0, 0,
-  { 0 },
+  { 0 }, false,
   NULL,    // free
-  #if MI_SECURE
+  #if MI_ENCODE_FREELIST
   0,
   #endif
   0,       // used
   NULL, 
   ATOMIC_VAR_INIT(0), ATOMIC_VAR_INIT(0),
   0, NULL, NULL, NULL
-  #if (MI_INTPTR_SIZE==8 && MI_SECURE>0) || (MI_INTPTR_SIZE==4 && MI_SECURE==0)
+  #if (MI_INTPTR_SIZE==8 && defined(MI_ENCODE_FREELIST)) || (MI_INTPTR_SIZE==4 && !defined(MI_ENCODE_FREELIST))
   , { NULL } // padding
   #endif
 };
@@ -64,8 +64,8 @@ const mi_page_t _mi_page_empty = {
   MI_STAT_COUNT_NULL(), MI_STAT_COUNT_NULL(), \
   MI_STAT_COUNT_NULL(), MI_STAT_COUNT_NULL(), \
   MI_STAT_COUNT_NULL(), MI_STAT_COUNT_NULL(), \
-  MI_STAT_COUNT_NULL(), MI_STAT_COUNT_NULL(), \
-  MI_STAT_COUNT_NULL(), MI_STAT_COUNT_NULL(), \
+  MI_STAT_COUNT_NULL(), \
+  { 0, 0 }, { 0, 0 }, { 0, 0 },  \
   { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 } \
   MI_STAT_COUNT_END_NULL()
 
@@ -90,6 +90,7 @@ const mi_heap_t _mi_heap_empty = {
   false
 };
 
+// the thread-local default heap for allocation
 mi_decl_thread mi_heap_t* _mi_heap_default = (mi_heap_t*)&_mi_heap_empty;
 
 
@@ -184,10 +185,6 @@ uintptr_t _mi_random_init(uintptr_t seed /* can be zero */) {
   return x;
 }
 
-uintptr_t _mi_ptr_cookie(const void* p) {
-  return ((uintptr_t)p ^ _mi_heap_main.cookie);
-}
-
 /* -----------------------------------------------------------
   Initialization and freeing of the thread local heaps
 ----------------------------------------------------------- */
@@ -202,8 +199,8 @@ static bool _mi_heap_init(void) {
   if (mi_heap_is_initialized(_mi_heap_default)) return true;
   if (_mi_is_main_thread()) {
     // the main heap is statically allocated
-    _mi_heap_default = &_mi_heap_main;
-    mi_assert_internal(_mi_heap_default->tld->heap_backing == _mi_heap_default);
+    _mi_heap_set_default_direct(&_mi_heap_main);
+    mi_assert_internal(_mi_heap_default->tld->heap_backing == mi_get_default_heap());
   }
   else {
     // use `_mi_os_alloc` to allocate directly from the OS
@@ -223,18 +220,17 @@ static bool _mi_heap_init(void) {
     tld->heap_backing = heap;
     tld->segments.stats = &tld->stats;
     tld->os.stats = &tld->stats;
-    _mi_heap_default = heap;
+    _mi_heap_set_default_direct(heap);
   }
   return false;
 }
 
 // Free the thread local default heap (called from `mi_thread_done`)
-static bool _mi_heap_done(void) {
-  mi_heap_t* heap = _mi_heap_default;
+static bool _mi_heap_done(mi_heap_t* heap) {
   if (!mi_heap_is_initialized(heap)) return true;
 
   // reset default heap
-  _mi_heap_default = (_mi_is_main_thread() ? &_mi_heap_main : (mi_heap_t*)&_mi_heap_empty);
+  _mi_heap_set_default_direct(_mi_is_main_thread() ? &_mi_heap_main : (mi_heap_t*)&_mi_heap_empty);
 
   // todo: delete all non-backing heaps?
 
@@ -281,6 +277,8 @@ static bool _mi_heap_done(void) {
 // to set up the thread local keys.
 // --------------------------------------------------------
 
+static void _mi_thread_done(mi_heap_t* default_heap);
+
 #ifdef __wasi__
 // no pthreads in the WebAssembly Standard Interface
 #elif !defined(_WIN32)
@@ -293,23 +291,29 @@ static bool _mi_heap_done(void) {
   // use thread local storage keys to detect thread ending
   #include <windows.h>
   #include <fibersapi.h>
-  #if defined(MI_USE_FLS) && (MI_USE_FLS != 0)
   static DWORD mi_fls_key;
   static void NTAPI mi_fls_done(PVOID value) {
-    if (value!=NULL) mi_thread_done();
+    if (value!=NULL) _mi_thread_done((mi_heap_t*)value);
   }
-  #endif
 #elif defined(MI_USE_PTHREADS)
   // use pthread locol storage keys to detect thread ending
   #include <pthread.h>
   static pthread_key_t mi_pthread_key;
   static void mi_pthread_done(void* value) {
-    if (value!=NULL) mi_thread_done();
+    if (value!=NULL) _mi_thread_done((mi_heap_t*)value);
   }
 #elif defined(__wasi__)
 // no pthreads in the WebAssembly Standard Interface
 #else
   #pragma message("define a way to call mi_thread_done when a thread is done")
+#endif
+
+//k8:mingw fix
+#if defined(_WIN32) && !defined(MI_SHARED_LIB)
+__declspec(dllimport) DWORD WINAPI FlsAlloc (PFLS_CALLBACK_FUNCTION lpCallback);
+//__declspec(dllimport) PVOID WINAPI FlsGetValue (DWORD dwFlsIndex);
+__declspec(dllimport) WINBOOL WINAPI FlsSetValue (DWORD dwFlsIndex, PVOID lpFlsData);
+//__declspec(dllimport) WINBOOL WINAPI FlsFree (DWORD dwFlsIndex);
 #endif
 
 // Set up handlers so `mi_thread_done` is called automatically
@@ -320,9 +324,7 @@ static void mi_process_setup_auto_thread_done(void) {
   #if defined(_WIN32) && defined(MI_SHARED_LIB)
     // nothing to do as it is done in DllMain
   #elif defined(_WIN32) && !defined(MI_SHARED_LIB)
-    #if defined(MI_USE_FLS) && (MI_USE_FLS != 0)
     mi_fls_key = FlsAlloc(&mi_fls_done);
-    #endif
   #elif defined(MI_USE_PTHREADS)
     pthread_key_create(&mi_pthread_key, &mi_pthread_done);
   #endif
@@ -340,6 +342,8 @@ void mi_thread_init(void) mi_attr_noexcept
   mi_process_init();
 
   // initialize the thread local default heap
+  // (this will call `_mi_heap_set_default_direct` and thus set the 
+  //  fiber/pthread key to a non-zero value, ensuring `_mi_thread_done` is called)
   if (_mi_heap_init()) return;  // returns true if already initialized
 
   // don't further initialize for the main thread
@@ -347,34 +351,37 @@ void mi_thread_init(void) mi_attr_noexcept
 
   _mi_stat_increase(&mi_get_default_heap()->tld->stats.threads, 1);
 
-  // set hooks so our mi_thread_done() will be called
-  #if defined(_WIN32) && defined(MI_SHARED_LIB)
-    // nothing to do as it is done in DllMain
-  #elif defined(_WIN32) && !defined(MI_SHARED_LIB)
-    #if defined(MI_USE_FLS) && (MI_USE_FLS != 0)
-    FlsSetValue(mi_fls_key, (void*)(_mi_thread_id()|1)); // set to a dummy value so that `mi_fls_done` is called
-    #endif
-  #elif defined(MI_USE_PTHREADS)
-    pthread_setspecific(mi_pthread_key, (void*)(_mi_thread_id()|1)); // set to a dummy value so that `mi_pthread_done` is called
-  #endif
-
   //_mi_verbose_message("thread init: 0x%zx\n", _mi_thread_id());
 }
 
 void mi_thread_done(void) mi_attr_noexcept {
+  _mi_thread_done(mi_get_default_heap());
+}
+
+static void _mi_thread_done(mi_heap_t* heap) {
   // stats
-  mi_heap_t* heap = mi_get_default_heap();
   if (!_mi_is_main_thread() && mi_heap_is_initialized(heap))  {
     _mi_stat_decrease(&heap->tld->stats.threads, 1);
   }
-
   // abandon the thread local heap
-  if (_mi_heap_done()) return; // returns true if already ran
-
-  //if (!_mi_is_main_thread()) {
-  //  _mi_verbose_message("thread done: 0x%zx\n", _mi_thread_id());
-  //}
+  if (_mi_heap_done(heap)) return; // returns true if already ran
 }
+
+void _mi_heap_set_default_direct(mi_heap_t* heap)  {
+  mi_assert_internal(heap != NULL);
+  _mi_heap_default = heap;
+
+  // ensure the default heap is passed to `_mi_thread_done`
+  // setting to a non-NULL value also ensures `mi_thread_done` is called.
+  #if defined(_WIN32) && defined(MI_SHARED_LIB)
+    // nothing to do as it is done in DllMain
+  #elif defined(_WIN32) && !defined(MI_SHARED_LIB)
+    FlsSetValue(mi_fls_key, heap); 
+  #elif defined(MI_USE_PTHREADS)
+    pthread_setspecific(mi_pthread_key, heap); 
+  #endif
+}
+
 
 
 // --------------------------------------------------------
@@ -456,7 +463,7 @@ void mi_process_init(void) mi_attr_noexcept {
   // access _mi_heap_default before setting _mi_process_is_initialized to ensure
   // that the TLS slot is allocated without getting into recursion on macOS
   // when using dynamic linking with interpose.
-  mi_heap_t* h = _mi_heap_default;
+  mi_heap_t* h = mi_get_default_heap();
   _mi_process_is_initialized = true;
 
   _mi_heap_main.thread_id = _mi_thread_id();
@@ -471,6 +478,7 @@ void mi_process_init(void) mi_attr_noexcept {
   #if (MI_DEBUG)
   _mi_verbose_message("debug level : %d\n", MI_DEBUG);
   #endif
+  _mi_verbose_message("secure level: %d\n", MI_SECURE);
   mi_thread_init();
   mi_stats_reset();  // only call stat reset *after* thread init (or the heap tld == NULL)
 }
