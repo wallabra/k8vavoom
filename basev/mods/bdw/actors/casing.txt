@@ -1,7 +1,7 @@
 Actor BDW_CasingBase {
   // WARNING! level death notifier will not be called for overlimit entity!
   +ClientSideOnly
-  +DontThrust
+  //+DontThrust
   +DoomBounce
   +ForceXYBillboard
   +Ghost
@@ -26,7 +26,7 @@ Actor BDW_CasingBase {
 Actor BDW_CasingSpawnerBase {
   +ClientSideOnly
   +DontSplash
-  +DontThrust
+  //+DontThrust
   +NoBlockmap
   +NoClip
   +NoTeleport
@@ -46,7 +46,7 @@ Actor BDW_Bubbles {
   Scale 0.5
   Speed 2
   +ClientSideOnly
-  +DontThrust
+  //+DontThrust
   +DontSplash
   +DoomBounce
   +ForceXYBillboard
@@ -85,7 +85,7 @@ Actor BDW_EmptyClipSpawn /*: BDW_CasingSpawnerBase*/ {
   Speed 20
   +ClientSideOnly
   +DontSplash
-  +DontThrust
+  //+DontThrust
   +NoBlockmap
   +NoClip
   +NoTeleport
@@ -156,7 +156,7 @@ Actor BDW_RifleCaseSpawn /*: BDW_CasingSpawnerBase*/ {
   Speed 20
   +ClientSideOnly
   +DontSplash
-  +DontThrust
+  //+DontThrust
   +NoBlockmap
   +NoClip
   +NoTeleport

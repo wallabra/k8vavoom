@@ -1,26 +1,25 @@
 Actor BDW_HitPuff Replaces BulletPuff {
-  RenderStyle Translucent
+  //RenderStyle Translucent
   Alpha 0.4
-  Scale 1.5
-  Radius 0
-  Height 0
   Gravity 0.01
-  +NOBLOCKMAP
-  +NOGRAVITY
-  +NOEXTREMEDEATH
-  +FORCEXYBILLBOARD
+  Height 0
+  Radius 0
+  RenderStyle None
+  Scale 1.5
+  +AllowParticles
+  +DontSplash
+  +Invisible // anyway
+  +NoBlockmap
+  +NoExtremeDeath
+  +NoGravity
+  -ExplodeOnWater
+  -Randomize
   DamageType Bullet
   Decal "BDW_BulletDecal"
-  +DONTSPLASH
-  -EXPLODEONWATER
-  +AllowParticles
-  //+Randomize
   states {
     Spawn:
       TNT1 A 0
-      TNT1 A 0 //A_SpawnItemEx("BDW_RicoChet", 0, 0, -5, 0, 0, 0, 0, SXF_NOCHECKPOSITION, 0)
-      TNT1 AAAA 0
-      //Intentional fall-through
+      //intentional fall-through
     Melee:
       TNT1 A 1
       Stop
