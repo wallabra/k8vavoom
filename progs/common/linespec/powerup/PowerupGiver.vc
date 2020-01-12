@@ -43,12 +43,24 @@ float Strength = float.nan; //k8:FIXME, i need a way to know if it is specified
 //
 //==========================================================================
 override bool Use (bool Pickup) {
-  if (!PowerupType) {
-    printwarn("tried to use empty powerup (user is '%C')!", self);
-    return false;
+  class!Powerup pwtype = PowerupType;
+
+  if (!pwtype) {
+    for (class!PowerupGiver cc = class!PowerupGiver(Class); cc; cc = class!PowerupGiver(GetClassParent(cc))) {
+      //printdebug("  %C: %C", cc, cc.default.PowerupType);
+      if (cc.default.PowerupType) {
+        pwtype = cc.default.PowerupType;
+        printdebug("powerup giver `%C` got powerup type `%C` from powerup giver `%C`", self, pwtype, cc);
+        break;
+      }
+    }
+    if (!pwtype) {
+      printwarn("tried to use empty powerup `%C`!", self);
+      return false;
+    }
   }
 
-  Powerup Pw = SpawnEntityChecked(class!Powerup, PowerupType, default, default, default/*, false*/);
+  Powerup Pw = SpawnEntityChecked(class!Powerup, pwtype, default, default, default/*, false*/);
   if (!Pw) return false;
 
   if (!Strength.isnan) Pw.Strength = Strength;
