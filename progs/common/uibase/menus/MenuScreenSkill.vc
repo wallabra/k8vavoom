@@ -112,4 +112,6 @@ defaultproperties {
   ChoicesStartY = 40;
   SelectorType = MenuSelector_Big;
   Title = "CHOOSE SKILL LEVEL:";
+  MenuScrollable = true;
+  AllowVerticalResize = true;
 }
