@@ -246,9 +246,14 @@ bool Physics (float DeltaTime) {
 
   // this is only marginally faster
   /*if (bMonster || bMissile || bIsPlayer)*/ CheckWater();
-  if (!bFloatBob || !bSpecial) UpdateVelocity(DeltaTime);
-  // apply friction here
-  if (Velocity.x || Velocity.y) ApplyFriction(DeltaTime);
+  if (Sector) {
+    // `UpdateVelocity()` does nothing if "no gravity" set
+    //FIXME: make a separate flag for this?
+    //if (!bNoGravity && (!bFloatBob || !bSpecial)) UpdateVelocity(DeltaTime);
+    if (!bFloatBob || !bSpecial) UpdateVelocity(DeltaTime);
+    // apply friction here
+    if (Velocity.xy) ApplyFriction(DeltaTime);
+  }
 
   // momentum (velocity) movement
   // handle X and Y momentums
@@ -1492,7 +1497,7 @@ override void ApplyFriction (float DeltaTime) {
   }
 
   // vanilla hack: floor with height -32768 teleports entity to ceiling
-  if (bIsPlayer && Sector && Sector.floor.maxz <= -32768) {
+  if (bIsPlayer && /*Sector &&*/ Sector.floor.maxz <= -32768) {
     if (Origin.z <= -32768) {
       //print("!!!! z=%s; fz=%s %C : %s", Origin.z, FloorZ, self, self.UniqueId);
       bIntrJustMoved = false; // don't interpolate
@@ -1547,7 +1552,7 @@ override void ApplyFriction (float DeltaTime) {
     if (vx > 0.25*35.0 || vx < -0.25*35.0 ||
         vy > 0.25*35.0 || vy < -0.25*35.0)
     {
-      if ((Sector && FloorZ > GetPointZClamped(ref Sector->floor, Origin)) || DropOffZ != FloorZ) {
+      if ((/*Sector &&*/ FloorZ > GetPointZClamped(ref Sector->floor, Origin)) || DropOffZ != FloorZ) {
         return;
       }
     }
