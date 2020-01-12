@@ -1,0 +1,29 @@
+known_blood {
+  name = "NashGore";
+  match = ["NashGore*", "Nash_Gore*"];
+}
+
+known_blood {
+  name = "Ketchup/Brutal";
+  match = "Brutal_Blood";
+}
+
+known_blood {
+  name = "Bolognese";
+  match = "Bolognese_Blood";
+}
+
+known_blood {
+  name = "Ketchup/Brutal/Bolognese";
+  match = "BloodSPlatterReplacer";
+}
+
+known_blood {
+  name = "Sanity's Requiem";
+  match = "IRBlood*";
+}
+
+known_blood {
+  name = "D4V";
+  match = "DH_Blood";
+}

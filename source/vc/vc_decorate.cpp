@@ -276,6 +276,10 @@ static void ResetReplacementBase () {
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+#include "vc_bloodinfo.cpp"
+
+
 //==========================================================================
 //
 //  IsAnyBloodClass
@@ -304,23 +308,6 @@ static bool IsAnyBloodClass (VClass *c) {
 
 //==========================================================================
 //
-//  DetectKnownBloodClass
-//
-//==========================================================================
-static const char *DetectKnownBloodClass (VClass *c) {
-  for (; c; c = c->GetSuperClass()) {
-    if (VStr::startsWithCI(*c->Name, "NashGore") || VStr::startsWithCI(*c->Name, "Nash_Gore")) return "NashGore";
-    if (VStr::strEquCI(*c->Name, "Brutal_Blood")) return "Ketchup";
-    if (VStr::strEquCI(*c->Name, "Bolognese_Blood")) return "Bolognese";
-    if (VStr::strEquCI(*c->Name, "BloodSPlatterReplacer")) return "Ketchup/Bolognese";
-    if (VStr::strEquCI(*c->Name, "IRBlood") || VStr::strEquCI(*c->Name, "IRBloodSplatter")) return "SanReq"; // Sanity's Requiem
-  }
-  return nullptr;
-}
-
-
-//==========================================================================
-//
 //  DoClassReplacement
 //
 //==========================================================================
@@ -329,9 +316,9 @@ static void DoClassReplacement (VClass *oldcls, VClass *newcls) {
 
   // check for know blood classes if gore mod is active
   if (cli_GoreMod && !enableKnownBlood && IsAnyBloodClass(oldcls)) {
-    const char *kbc = DetectKnownBloodClass(newcls);
-    if (kbc && kbc[0]) {
-      GLog.Logf(NAME_Debug, "%s: skipped KNOWN blood replacement class '%s' (%s)", *newcls->Loc.toStringNoCol(), newcls->GetName(), kbc);
+    VStr kbc = DetectKnownBloodClass(newcls);
+    if (!kbc.isEmpty()) {
+      GLog.Logf(NAME_Warning, "%s: skipped known blood replacement class '%s' (%s)", *newcls->Loc.toStringNoCol(), newcls->GetName(), *kbc);
       return;
     }
   }
@@ -3660,7 +3647,7 @@ void ProcessDecorateScripts () {
     }
   }
 
-  GLog.Logf(NAME_Init, "Parsing DECORATE definition files");
+  GLog.Log(NAME_Init, "Parsing DECORATE definition files...");
   for (int Lump = W_IterateFile(-1, "vavoom_decorate_defs.xml"); Lump != -1; Lump = W_IterateFile(Lump, "vavoom_decorate_defs.xml")) {
     //GLog.Logf(NAME_Init, "  %s", *W_FullLumpName(Lump));
     VStream *Strm = W_CreateLumpReaderNum(Lump);
@@ -3672,7 +3659,10 @@ void ProcessDecorateScripts () {
     delete Doc;
   }
 
-  GLog.Logf(NAME_Init, "Processing DECORATE scripts");
+  GLog.Log(NAME_Init, "Parsing known blood definition files...");
+  LoadKnownBlood();
+
+  GLog.Log(NAME_Init, "Processing DECORATE scripts...");
 
   DecPkg = new VPackage(NAME_decorate);
 
@@ -3883,6 +3873,8 @@ void ProcessDecorateScripts () {
 
   SetupLimiters();
 
+  // clear memory
+  ShutdownKnowBlood();
   //!TLocation::ClearSourceFiles();
 }
 

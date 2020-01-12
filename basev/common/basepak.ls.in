@@ -46,6 +46,9 @@ line_specials.txt   @CMAKE_CURRENT_SOURCE_DIR@/line_specials.txt
 // decorate definition file
 vavoom_decorate_defs.xml  @CMAKE_CURRENT_SOURCE_DIR@/vavoom_decorate_defs.xml
 
+// known blood classes
+vavoom_known_blood.rc  @CMAKE_CURRENT_SOURCE_DIR@/vavoom_known_blood.rc
+
 // decals
 decaldef.txt  @CMAKE_CURRENT_SOURCE_DIR@/decaldef.txt
 

@@ -10,6 +10,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     language.en
     startup.vs
     vavoom_decorate_defs.xml
+    vavoom_known_blood.rc
 
     credits/*.txt
 
