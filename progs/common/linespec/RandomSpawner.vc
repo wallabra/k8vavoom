@@ -119,7 +119,7 @@ override void BeginPlay () {
         if (RenderStyle == STYLE_None) NewEntity.RenderStyle = STYLE_None;
 
         // copy translations too, why not?
-        NewEntity.CopyTranslations(self);
+        //NewEntity.CopyTranslations(self);
 
         // this handles things such as projectiles with the MF4_SPECTRAL flag that have
         // a health set to -2 after spawning, for internal reasons
