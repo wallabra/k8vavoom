@@ -1112,6 +1112,20 @@ IMPLEMENT_FUNCTION(VObject, GetClassGameObjName) {
   RET_NAME(SomeClass ? SomeClass->ClassGameObjName : NAME_None);
 }
 
+// native static final int GetClassInstanceCount (class C);
+IMPLEMENT_FUNCTION(VObject, GetClassInstanceCount) {
+  VClass *SomeClass;
+  vobjGetParam(SomeClass);
+  RET_INT(SomeClass ? SomeClass->InstanceCount : 0);
+}
+
+// native static final int GetClassInstanceCountWithSub (class C);
+IMPLEMENT_FUNCTION(VObject, GetClassInstanceCountWithSub) {
+  VClass *SomeClass;
+  vobjGetParam(SomeClass);
+  RET_INT(SomeClass ? SomeClass->InstanceCountWithSub : 0);
+}
+
 
 //native final static class FindMObjId (int id, optional int GameFilter);
 IMPLEMENT_FUNCTION(VObject, FindMObjId) {

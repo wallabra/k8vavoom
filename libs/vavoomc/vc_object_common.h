@@ -162,6 +162,9 @@
   DECLARE_FUNCTION(GetClassFirstState)
   DECLARE_FUNCTION(GetClassGameObjName)
 
+  DECLARE_FUNCTION(GetClassInstanceCount)
+  DECLARE_FUNCTION(GetClassInstanceCountWithSub)
+
   // state methods
   DECLARE_FUNCTION(GetStateLocationStr)
   DECLARE_FUNCTION(GetFullStateName)
