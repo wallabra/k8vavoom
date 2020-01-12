@@ -1,0 +1,62 @@
+// ////////////////////////////////////////////////////////////////////////// //
+// D4V
+// ////////////////////////////////////////////////////////////////////////// //
+class_ignore "D4V" {
+  class = "DH_Cyberdemon";
+  parent = "SpiderMastermind";
+  replace = "Motherdemon";
+  type = D4V;
+}
+
+class_ignore "D4V" {
+  class = "DH_DoomImp";
+  parent = "DoomImp";
+  replace = "NightmareImp";
+  type = D4V;
+}
+
+class_ignore "D4V" {
+  class = "DH_Cyberdemon2";
+  parent = "SpiderMastermind";
+  replace = "D64D2Cyberdemon";
+  type = D4V;
+}
+
+class_ignore "D4V" {
+  class = "NashGoreBloodSpurtNull";
+  //parent = "";
+  replace = "NashGoreBloodSpurt";
+  type = D4VRequired;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// Skulltag
+// ////////////////////////////////////////////////////////////////////////// //
+class_ignore "Skulltag" {
+  //class = "";
+  //parent = "";
+  replace = "Minigun";
+  type = Skulltag;
+}
+
+class_ignore "Skulltag" {
+  //class = "";
+  //parent = "";
+  replace = "GrenadeLauncher";
+  type = Skulltag;
+}
+
+class_ignore "Skulltag" {
+  //class = "";
+  //parent = "";
+  replace = "Railgun";
+  type = Skulltag;
+}
+
+class_ignore "Skulltag" {
+  //class = "";
+  //parent = "";
+  replace = "BFG10K";
+  type = Skulltag;
+}

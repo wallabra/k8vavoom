@@ -38,7 +38,6 @@ VCvarB decorate_fail_on_unknown("decorate_fail_on_unknown", false, "Fail on unkn
 static int disableBloodReplaces = 0;
 static int bloodOverrideAllowed = 0;
 static int enableKnownBlood = 0;
-static bool wasD4VFixes = false;
 
 
 /*
@@ -278,32 +277,7 @@ static void ResetReplacementBase () {
 
 // ////////////////////////////////////////////////////////////////////////// //
 #include "vc_bloodinfo.cpp"
-
-
-//==========================================================================
-//
-//  IsAnyBloodClass
-//
-//==========================================================================
-static bool IsAnyBloodClass (VClass *c) {
-  for (; c; c = c->GetSuperClass()) {
-    if (c->Name == "Blood" || c->Name == "BloodSplatter" ||
-        c->Name == "BloodSmear" || c->Name == "BloodSmearRadius" ||
-        c->Name == "BloodSplatRadius" || c->Name == "BloodSplat" ||
-
-        c->Name == "BloodGreen" || c->Name == "BloodSplatterGreen" ||
-        c->Name == "BloodSmearGreen" || c->Name == "BloodSmearRadiusGreen" ||
-        c->Name == "BloodSplatRadiusGreen" || c->Name == "BloodSplatGreen" ||
-
-        c->Name == "BloodBlue" || c->Name == "BloodSplatterBlue" ||
-        c->Name == "BloodSmearBlue" || c->Name == "BloodSmearRadiusBlue" ||
-        c->Name == "BloodSplatRadiusBlue" || c->Name == "BloodSplatBlue")
-    {
-      return true;
-    }
-  }
-  return false;
-}
+#include "vc_classignore.cpp"
 
 
 //==========================================================================
@@ -2023,54 +1997,6 @@ static void ScanActorDefForUserVars (VScriptParser *sc, TArray<VDecorateUserVarD
 
 //==========================================================================
 //
-//  CheckReplaceErrorHacks
-//
-//  returns `true` if this error should be ignored
-//
-//==========================================================================
-static bool CheckReplaceErrorHacks (VScriptParser *sc, const VStr &NameStr, const VStr &ParentStr, const VStr &ReplaceStr) {
-  enum {
-    Unknown,
-    D4V,
-    D4VRequired,
-    Skulltag,
-  };
-  struct Triplets {
-    const char *className;
-    const char *parentName;
-    const char *replaceName;
-    const char *fixName;
-    int fixType;
-  };
-  /*static*/ const Triplets trilist[] = {
-    // D4V
-    { .className="DH_Cyberdemon",          .parentName="SpiderMastermind", .replaceName="Motherdemon",        .fixName="D4V",      .fixType=D4V },
-    { .className="DH_DoomImp",             .parentName="DoomImp",          .replaceName="NightmareImp",       .fixName="D4V",      .fixType=D4V },
-    { .className="DH_Cyberdemon2",         .parentName="SpiderMastermind", .replaceName="D64D2Cyberdemon",    .fixName="D4V",      .fixType=D4V },
-    { .className="NashGoreBloodSpurtNull", .parentName="",                 .replaceName="NashGoreBloodSpurt", .fixName="D4V",      .fixType=D4VRequired},
-    // Skulltag
-    { .className="",                       .parentName="",                 .replaceName="Minigun",            .fixName="Skulltag", .fixType=Skulltag},
-    { .className="",                       .parentName="",                 .replaceName="GrenadeLauncher",    .fixName="Skulltag", .fixType=Skulltag},
-    { .className="",                       .parentName="",                 .replaceName="Railgun",            .fixName="Skulltag", .fixType=Skulltag},
-    { .className="",                       .parentName="",                 .replaceName="BFG10K",             .fixName="Skulltag", .fixType=Skulltag},
-  };
-  for (size_t f = 0; f < sizeof(trilist)/sizeof(trilist[0]); ++f) {
-    const Triplets &t = trilist[f];
-    if (t.fixType == D4VRequired && !wasD4VFixes) continue;
-    if (t.className && t.className[0]) { if (!NameStr.strEquCI(t.className)) continue; }
-    if (t.parentName && t.parentName[0]) { if (!ParentStr.strEquCI(t.parentName)) continue; }
-    if (t.replaceName && t.replaceName[0]) { if (!ReplaceStr.strEquCI(t.replaceName)) continue; }
-    if (t.fixType == D4V) wasD4VFixes = true;
-    sc->Message(va("Replaced class `%s` not found for actor `%s` (%s fix applied)", *ReplaceStr, *NameStr, t.fixName));
-    return true;
-  }
-  //GCon->Logf(NAME_Debug, "{ .className=\"%s\", .parentName=\"%s\", .replaceName=\"%s\", .fixName=\"unknown\", .fixType=Unknown },", *NameStr, *ParentStr, *ReplaceStr);
-  return false;
-}
-
-
-//==========================================================================
-//
 //  ParseActor
 //
 //==========================================================================
@@ -3662,6 +3588,9 @@ void ProcessDecorateScripts () {
   GLog.Log(NAME_Init, "Parsing known blood definition files...");
   LoadKnownBlood();
 
+  GLog.Log(NAME_Init, "Parsing known class ignores definition files...");
+  LoadKnownClassIgnores();
+
   GLog.Log(NAME_Init, "Processing DECORATE scripts...");
 
   DecPkg = new VPackage(NAME_decorate);
@@ -3874,7 +3803,8 @@ void ProcessDecorateScripts () {
   SetupLimiters();
 
   // clear memory
-  ShutdownKnowBlood();
+  ShutdownKnownBlood();
+  ShutdownKnownClassIgnores();
   //!TLocation::ClearSourceFiles();
 }
 

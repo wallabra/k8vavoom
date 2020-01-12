@@ -55,6 +55,32 @@ static TArray<DCKnownBlood> knownBlood;
 
 //==========================================================================
 //
+//  IsAnyBloodClass
+//
+//==========================================================================
+static bool IsAnyBloodClass (VClass *c) {
+  for (; c; c = c->GetSuperClass()) {
+    if (c->Name == "Blood" || c->Name == "BloodSplatter" ||
+        c->Name == "BloodSmear" || c->Name == "BloodSmearRadius" ||
+        c->Name == "BloodSplatRadius" || c->Name == "BloodSplat" ||
+
+        c->Name == "BloodGreen" || c->Name == "BloodSplatterGreen" ||
+        c->Name == "BloodSmearGreen" || c->Name == "BloodSmearRadiusGreen" ||
+        c->Name == "BloodSplatRadiusGreen" || c->Name == "BloodSplatGreen" ||
+
+        c->Name == "BloodBlue" || c->Name == "BloodSplatterBlue" ||
+        c->Name == "BloodSmearBlue" || c->Name == "BloodSmearRadiusBlue" ||
+        c->Name == "BloodSplatRadiusBlue" || c->Name == "BloodSplatBlue")
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
 //  DetectKnownBloodClass
 //
 //==========================================================================
@@ -145,9 +171,9 @@ static void LoadKnownBlood () {
 
 //==========================================================================
 //
-//  ShutdownKnowBlood
+//  ShutdownKnownBlood
 //
 //==========================================================================
-static void ShutdownKnowBlood () {
+static void ShutdownKnownBlood () {
   knownBlood.clear();
 }
