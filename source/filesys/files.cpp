@@ -762,6 +762,8 @@ static void findMapChecker (int lump) {
 
   //GCon->Logf(NAME_Debug, "*** checking lump %d: name=<%s> (%s) (aux=%d)", lump, name, *W_FullLumpName(lump), (int)W_IsAuxLump(lump));
 
+  // if we have maps for both D1 and D2 (Maps Of Chaos, for example), use D2 maps
+
   // doom1 (or kdizd)
   if (pwadScanInfo.episode != 0) {
     if ((name[0] == 'e' || name[0] == 'z') && name[1] && name[2] == 'm' && name[3] && !name[4]) {
@@ -769,7 +771,7 @@ static void findMapChecker (int lump) {
       int m = VStr::digitInBase(name[3], 10);
       if (e < 0 || m < 0) return;
       if (e >= 1 && e <= 9 && m >= 1 && m <= 9) {
-        if (pwadScanInfo.episode == 0) return; // oops, mixed maps
+        //if (pwadScanInfo.episode == 0) return; // oops, mixed maps
         const int newidx = PWadScanInfo::exmxToIndex(e, m);
         if (pwadScanInfo.episode < 0 || pwadScanInfo.getMapIndex() > newidx) {
           pwadScanInfo.episode = e;
@@ -783,7 +785,7 @@ static void findMapChecker (int lump) {
   }
 
   // doom2
-  if (pwadScanInfo.episode <= 0) {
+  /*if (pwadScanInfo.episode <= 0)*/ {
     int n = -1;
     // try to detect things like "aaa<digit>"
     int dpos = 0;
@@ -793,6 +795,16 @@ static void findMapChecker (int lump) {
     for (const char *t = name+dpos; *t; ++t) if (VStr::digitInBase(*t, 10) < 0) return;
     if (!VStr::convertInt(name+dpos, &n)) return;
     if (n < 1) return;
+    //GCon->Logf(NAME_Debug, "  n=%d", n);
+    // if D1 map were found, perform some hackery
+    // only "MAPxx" is allowed to override it
+    if (pwadScanInfo.episode > 0) {
+      VStr pfx(name);
+      pfx = pfx.left(dpos);
+      //GCon->Logf(NAME_Debug, "  pfx=<%s>; len=%d", *pfx, VStr::Length(name));
+      if (!pfx.startsWithCI("MAP") || VStr::Length(name) != 5) return;
+      pwadScanInfo.clear();
+    }
     pwadScanInfo.episode = 0;
     if (pwadScanInfo.mapnum < 0 || pwadScanInfo.mapnum > n) {
       pwadScanInfo.mapnum = n;
