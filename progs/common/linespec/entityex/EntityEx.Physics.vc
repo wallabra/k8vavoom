@@ -244,7 +244,8 @@ bool Physics (float DeltaTime) {
   */
   #endif
 
-  CheckWater();
+  // this is only marginally faster
+  /*if (bMonster || bMissile || bIsPlayer)*/ CheckWater();
   if (!bFloatBob || !bSpecial) UpdateVelocity(DeltaTime);
   // apply friction here
   if (Velocity.x || Velocity.y) ApplyFriction(DeltaTime);
@@ -411,7 +412,7 @@ final bool PerformSectorWindThrust (float DeltaTime, sector_t *sector) {
 final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
   float oldfloorz = FloorZ;
 
-  if (bWindThrust && Sector && false) {
+  if (bWindThrust && Sector) {
     #if 0
     // check winds for all touching sectors?
     for (msecnode_t *mnode = TouchingSectorList; mnode; mnode = mnode.TNext) {
