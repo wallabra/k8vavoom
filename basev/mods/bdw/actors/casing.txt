@@ -10,12 +10,12 @@ Actor BDW_Bubbles {
   Radius 0
   Mass 0
   +Missile
-  +NoBlockMap
+  +NoBlockmap
   +NoGravity
   +DontSplash
-  +FORCEXYBILLBOARD
-  +CLIENTSIDEONLY
-  +DOOMBOUNCE
+  +ForceXYBillboard
+  +ClientSideOnly
+  +DoomBounce
   RenderStyle Add
   Scale 0.5
   Speed 2
@@ -44,9 +44,9 @@ Actor BDW_Bubbles {
 ////////////////////////////////////////////////////////////////////////////////
 Actor BDW_EmptyClipSpawn {
   Speed 20
-  PROJECTILE
-  +NOCLIP
-  +NOBLOCKMAP
+  Projectile
+  +NoClip
+  +NoBlockmap
   States {
     Spawn:
       TNT1 A 0
@@ -61,19 +61,20 @@ Actor BDW_EmptyClip : BDW_CasingBase {
   Radius 9
   Speed 4
   Scale 1.01
-  +DOOMBOUNCE
-  -NOGRAVITY
-  +WINDTHRUST
-  +CLIENTSIDEONLY
-  +MOVEWITHSECTOR
-  +MISSILE
-  -DROPOFF
-  +NOTELEPORT
-  +FORCEXYBILLBOARD
-  +NOTDMATCH
-  +GHOST
+  +DoomBounce
+  -NoGravity
+  //+WindThrust
+  +ClientSideOnly
+  +MoveWithSector
+  +Missile
+  -Dropoff
+  +NoTeleport
+  +ForceXYBillboard
+  //+NotDMatch
+  +Ghost
   -NoLiftDrop
-  +NOBLOCKMAP
+  +NoBlockmap
+  +ThruActors
   Mass 1
   //k8: not yet:SeeSound "weapons/largemagdrop"
   SeeSound "weapons/largemagdrop1"
@@ -93,7 +94,7 @@ Actor BDW_EmptyClip : BDW_CasingBase {
       Stop
 
     Death:
-      TNT1 A 0 A_ChangeFlag("DOOMBOUNCE", false)
+      TNT1 A 0 A_ChangeFlag("DoomBounce", false)
       ECLI G 180
       "####" "#" 0 A_ChangeFlag("NoInteraction", true)
       "####" "#" 0
@@ -121,10 +122,10 @@ Actor BDW_EmptyClip : BDW_CasingBase {
 ////////////////////////////////////////////////////////////////////////////////
 Actor BDW_RifleCaseSpawn {
   Speed 20
-  PROJECTILE
-  +NOCLIP
-  +CLIENTSIDEONLY
-  +NOBLOCKMAP
+  Projectile
+  +NoClip
+  +ClientSideOnly
+  +NoBlockmap
   States {
   Spawn:
     TNT1 A 0
@@ -139,23 +140,23 @@ Actor BDW_EmptyBrass : BDW_CasingBase {
   Radius 2
   Speed 8
   Scale 0.15
-  +DOOMBOUNCE
-  -NOGRAVITY
-  +WINDTHRUST
-  +CLIENTSIDEONLY
-  +MOVEWITHSECTOR
-  +MISSILE
-  -DROPOFF
-  +NOTELEPORT
-  +FORCEXYBILLBOARD
-  +NOTDMATCH
-  +GHOST
-  //+DONTSPLASH
-  //+CANBOUNCEWATER
-  +FLOORCLIP
-  +THRUACTORS
+  +DoomBounce
+  -NoGravity
+  //+WindThrust
+  +ClientSideOnly
+  +MoveWithSector
+  +Missile
+  -Dropoff
+  +NoTeleport
+  +ForceXYBillboard
+  //+NotDMatch
+  +Ghost
+  //+DontSplash
+  //+CanBounceWater
+  +FloorClip
+  +ThruActors
   -NoLiftDrop
-  +NOBLOCKMAP
+  +NoBlockmap
   Mass 4
   BounceFactor 0.3
   //k8: not yet:SeeSound "weapons/casing"
@@ -176,7 +177,7 @@ Actor BDW_EmptyBrass : BDW_CasingBase {
       Stop
 
     Death:
-      TNT1 A 0 A_ChangeFlag("DOOMBOUNCE", false)
+      TNT1 A 0 A_ChangeFlag("DoomBounce", false)
       //CAS3 I 0
       TNT1 A 0 A_Jump(256, "Rest1", "Rest2", "Rest3", "Rest4", "Rest5", "Rest6", "Rest7", "Rest8")
       Goto Rest1
@@ -245,7 +246,7 @@ Actor BDW_EmptyBrass : BDW_CasingBase {
 
 Actor BDW_UnderwaterEmptyBrass : BDW_EmptyBrass {
   Speed 0
-  -DOOMBOUNCE
+  -DoomBounce
   Mass 1
   SeeSound "none"
   States {
@@ -281,21 +282,22 @@ Actor BDW_ShotgunCasing : BDW_CasingBase {
   Radius 9
   Speed 6
   Scale 0.15
-  +DOOMBOUNCE
-  -NOGRAVITY
-  +WINDTHRUST
-  +CLIENTSIDEONLY
-  +MOVEWITHSECTOR
-  +MISSILE
-  -DROPOFF
-  +NOTELEPORT
-  +FORCEXYBILLBOARD
-  +NOTDMATCH
-  +GHOST
-  //+CANBOUNCEWATER
-  //+DONTSPLASH
+  +DoomBounce
+  -NoGravity
+  //+WindThrust
+  +ClientSideOnly
+  +MoveWithSector
+  +Missile
+  -Dropoff
+  +NoTeleport
+  +ForceXYBillboard
+  //+NotDMatch
+  +Ghost
+  //+CanBounceWater
+  //+DontSplash
   -NoLiftDrop
-  +NOBLOCKMAP
+  +NoBlockmap
+  +ThruActors
   Mass 1
   BounceFactor 0.3
   SeeSound "weapons/shell"
@@ -314,7 +316,7 @@ Actor BDW_ShotgunCasing : BDW_CasingBase {
       Stop
 
     Death:
-      TNT1 A 0 A_ChangeFlag("DOOMBOUNCE", false)
+      TNT1 A 0 A_ChangeFlag("DoomBounce", false)
       TNT1 A 0 A_Jump(256, "Rest1", "Rest2", "Rest3", "Rest4", "Rest5", "Rest6", "Rest7", "Rest8")
       Goto Rest1
 
