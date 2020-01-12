@@ -296,13 +296,6 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
   VState *state = stnum;
   int watchcatCount = 1024;
   do {
-    if (--watchcatCount <= 0) {
-      //k8: FIXME!
-      GCon->Logf(NAME_Error, "WatchCat interrupted `VBasePlayer::SetViewState`!");
-      VSt.StateTime = -1;
-      break;
-    }
-
     if (!state) {
       if (position == PS_WEAPON && developer) GCon->Logf(NAME_Dev, "*** WEAPON removed itself!");
       // object removed itself
@@ -310,6 +303,13 @@ void VBasePlayer::SetViewState (int position, VState *stnum) {
       DispSpriteFrame[position] = 0;
       DispSpriteName[position] = NAME_None;
       VSt.State = nullptr;
+      VSt.StateTime = -1;
+      break;
+    }
+
+    if (--watchcatCount <= 0) {
+      //k8: FIXME!
+      GCon->Logf(NAME_Error, "WatchCat interrupted `VBasePlayer::SetViewState()` in '%s'!", *state->Loc.toStringNoCol());
       VSt.StateTime = -1;
       break;
     }

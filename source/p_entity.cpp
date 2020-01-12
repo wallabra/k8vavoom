@@ -201,7 +201,7 @@ bool VEntity::SetState (VState *InState) {
 
     if (incSetStateWatchCat() > 512) {
       //k8: FIXME!
-      GCon->Logf(NAME_Error, "WatchCat interrupted `VEntity::SetState()` in '%s'!", *GetClass()->GetFullName());
+      GCon->Logf(NAME_Error, "WatchCat interrupted `VEntity::SetState()` in '%s' (%s)!", *GetClass()->GetFullName(), *st->Loc.toStringNoCol());
       break;
     }
 
