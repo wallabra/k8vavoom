@@ -102,6 +102,7 @@ defaultproperties {
   bSolid = false;
   bShootable = false;
   bNoBlood = true;
+  bNoInteraction = true; //k8
 
   Health = 0;
   Radius = 0;
