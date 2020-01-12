@@ -183,7 +183,9 @@ bool Physics (float DeltaTime) {
   }
   #else
   // new code
-  if (GetClassInstanceCountWithSub(Scroller) && Sector && bColideWithWorld && !bNoSector) {
+  if (GetClassInstanceCountWithSub(Scroller) && Sector && bColideWithWorld && !bNoSector && Origin != lastScrollCheckOrigin) {
+    //printdebug("%C(%s): SCROLLER CHECK!", self, UniqueId);
+    lastScrollCheckOrigin = Origin;
     // killough 3/7/98: Carry things on floor
     // killough 3/20/98: use new sector list which reflects true members
     // killough 3/27/98: fix carrier bug
@@ -194,6 +196,7 @@ bool Physics (float DeltaTime) {
     // k8: this should work with 3d floors, but now it doesn't
     int CountX = 0;
     int CountY = 0;
+    bool resetCheck = false;
     for (msecnode_t *mnode = TouchingSectorList; mnode; mnode = mnode.TNext) {
       sector_t *sec = mnode.Sector;
       if (!sec->AffectorData) continue;
@@ -201,6 +204,7 @@ bool Physics (float DeltaTime) {
       for (SectorThinker SecThink = SectorThinker(sec->AffectorData); SecThink; SecThink = SecThink.NextAffector) {
         auto sth = Scroller(SecThink);
         if (!sth) continue;
+        resetCheck = true;
         float scrollx = sth.CarryScrollX;
         float scrolly = sth.CarryScrollY;
         if (!scrollx && !scrolly) continue;
@@ -221,6 +225,8 @@ bool Physics (float DeltaTime) {
         if (scrolly) ++CountY;
       }
     }
+    // reset check, so scroller will work next time
+    if (resetCheck) lastScrollCheckOrigin = vector(-90000, -90000, -90000);
 
     // Some levels designed with Boom in mind actually want things to accelerate
     // at neighboring scrolling sector boundaries. But it is only important for
@@ -231,6 +237,11 @@ bool Physics (float DeltaTime) {
     }
     //if (CummX || CummY) print("%C: CALCULATED SCROLL=(%s,%s); vel=%s", self, CummX, CummY, Velocity);
   }
+  /*
+  else {
+    printdebug("%C(%s): SCROLLER CHECK SKIP! Origin=%s; last=%s", self, UniqueId, Origin, lastScrollCheckOrigin);
+  }
+  */
   #endif
 
   CheckWater();

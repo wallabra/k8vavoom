@@ -523,6 +523,8 @@ transient float tmp_phys_z_change;
 transient sector_t *tmp_phys_last_sector;
 transient int tmp_phys_last_floor_pic;
 transient float tmp_phys_last_splash_time; // `XLevel.Time`
+// this is used to skip checking for scrollers for non-moving objects
+transient TVec lastScrollCheckOrigin = vector(-90000, -90000, -90000);
 
 // so we can check it in various spawners
 // there is no need to save it
