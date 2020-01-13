@@ -679,7 +679,7 @@ final void DoExplode (int damage, float distance, bool damageSelf, optional int 
 //
 //==========================================================================
 [decorate] final void A_ThrowGrenade (class!Actor ItemType, optional float SpawnHeight,
-                           optional float XYVel, optional float ZVel, optional bool UseAmmo)
+                                      optional float XYVel, optional float ZVel, optional bool UseAmmo)
 {
   if (!specified_UseAmmo) UseAmmo = true;
 
@@ -711,10 +711,7 @@ final void DoExplode (int damage, float distance, bool damageSelf, optional int 
     A.Velocity.x += Velocity.x/2.0;
     A.Velocity.y += Velocity.y/2.0;
     A.Target = self;
-    if (A.bRandomise) {
-      A.StateTime -= Random()*0.1;
-      if (A.StateTime < 1.0/35.0) A.StateTime = 1.0/35.0;
-    }
+    if (A.bRandomise) A.StateTime = fmax(1.0/35.0, A.StateTime-Random()*0.1);
     A.CheckMissileSpawn();
   } else {
     KeepChainResult();

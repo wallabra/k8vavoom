@@ -46,10 +46,7 @@ final void PlayMissileSpawnSound (EntityEx Source) {
 //
 //==========================================================================
 final bool CheckMissileSpawn () {
-  if (bRandomise && StateTime > 0.0) {
-    StateTime -= Random()*0.1;
-    StateTime = fmax(1.0/35.0, StateTime);
-  }
+  if (bRandomise && StateTime > 0.0) StateTime = fmax(1.0/35.0, StateTime-Random()*0.1);
 
   // move a little forward so an angle can be computed if it immediately explodes
   UnlinkFromWorld();
@@ -173,10 +170,7 @@ final bool ExplodeMissile (EntityEx Victim, optional line_t *line) {
     }
   }
 
-  if (bRandomise) {
-    StateTime -= Random()*0.1;
-    if (StateTime < 1.0/35.0) StateTime = 1.0/35.0;
-  }
+  if (bRandomise) StateTime = fmax(1.0/35.0, StateTime-Random()*0.1);
 
   bMissile = false;
 
