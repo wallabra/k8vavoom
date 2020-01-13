@@ -3,7 +3,6 @@ Actor BDW_CasingBase {
   +ClientSideOnly
   +DoomBounce
   +ForceXYBillboard
-  +Ghost
   +Missile
   +MoveWithSector
   +NoBlockmap
@@ -290,9 +289,9 @@ Actor BDW_ShotCaseSpawn : BDW_RifleCaseSpawn {
 
 Actor BDW_ShotgunCasing : BDW_CasingBase {
   BounceFactor 0.3
-  Height 12
-  Mass 1
-  Radius 9
+  Height 2
+  Mass 2
+  Radius 2
   Scale 0.15
   Speed 6
   SeeSound "weapons/shell"
