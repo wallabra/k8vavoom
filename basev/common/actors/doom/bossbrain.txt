@@ -39,6 +39,7 @@ actor BossEye 89
   Height 32
   +NoSector
   +NoBlockmap
+  +NoInteraction
   states
   {
   Spawn:
@@ -58,6 +59,7 @@ actor BossTarget : SpecialSpot 87
   Height 32
   +NoSector
   +NoBlockmap
+  +NoInteraction
 }
 
 //------------------------------------------------------------------------------
@@ -90,6 +92,7 @@ actor SpawnFire
   RenderStyle Add
   +NoBlockmap
   +NoGravity
+  +NoInteraction
   states
   {
   Spawn:

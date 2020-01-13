@@ -7,6 +7,7 @@ actor Unknown
   +NoBlockmap
   +NoInteraction
   +DontSplash
+  +MoveWithSector
   states
   {
   Spawn:
@@ -90,6 +91,7 @@ actor RealGibs
   +Corpse
   +NoTeleport
   +DontGib
+  +MoveWithSector
   states
   {
   Spawn:

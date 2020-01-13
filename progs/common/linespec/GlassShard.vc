@@ -48,4 +48,5 @@ override void FloorBounceMissile () {
 
 
 defaultproperties {
+  bMoveWithSector = true;
 }

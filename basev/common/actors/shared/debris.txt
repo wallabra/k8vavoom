@@ -420,6 +420,8 @@ actor GlassJunk
   Alpha 0.4
   +NoBlockmap
   +NoClip
+  +NoInteraction
+  +MoveWithSector
   states
   {
     SHAR A 128

@@ -62,6 +62,7 @@ actor ArchvileFire
   Alpha 1
   +NoBlockmap
   +NoGravity
+  +NoInteraction
   states
   {
   Spawn:

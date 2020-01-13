@@ -92,6 +92,7 @@ actor RevenantTracerSmoke
   +NoBlockmap
   +NoGravity
   +NoTeleport
+  +NoInteraction
   states
   {
   Spawn:

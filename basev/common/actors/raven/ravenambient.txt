@@ -6,6 +6,8 @@ actor SoundWind 42
   +NoSector
   +NoBlockmap
   +DontSplash
+  +NoInteraction
+  //+MoveWithSector //k8:???
   states
   {
   Spawn:
@@ -29,6 +31,8 @@ actor SoundWaterfall 41
   +NoSector
   +NoBlockmap
   +DontSplash
+  +NoInteraction
+  //+MoveWithSector //k8:???
   states
   {
   Spawn:

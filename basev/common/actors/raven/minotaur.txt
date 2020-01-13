@@ -79,6 +79,7 @@ actor MinotaurSmokeExit
   +NoBlockmap
   +NoGravity
   +NoTeleport
+  +NoInteraction
   states
   {
   Spawn:
