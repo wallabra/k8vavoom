@@ -1,0 +1,54 @@
+class Main : Object;
+
+
+void sreftest (const ref string s, bool val, string pfx) {
+  if (val) {
+    if (s) print("%s: OK", pfx); else print("%s: FAIL", pfx);
+  } else {
+    if (!s) print("%s: OK", pfx); else print("%s: FAIL", pfx);
+  }
+}
+
+
+void areftest (const ref array!int a, bool val, string pfx) {
+  if (val) {
+    if (a) print("%s: OK", pfx); else print("%s: FAIL", pfx);
+  } else {
+    if (!a) print("%s: OK", pfx); else print("%s: FAIL", pfx);
+  }
+}
+
+
+void dreftest (const ref dictionary!(string, string) d, bool val, string pfx) {
+  if (val) {
+    if (d) print("%s: OK", pfx); else print("%s: FAIL", pfx);
+  } else {
+    if (!d) print("%s: OK", pfx); else print("%s: FAIL", pfx);
+  }
+}
+
+
+void main () {
+  string s = "abc";
+  if (s) print("00: OK"); else print("00: FAIL");
+  sreftest(s, true, "01");
+  s = "";
+  if (!s) print("02: OK"); else print("02: FAIL");
+  sreftest(s, false, "03");
+
+  array!int n;
+  if (!n) print("10: OK"); else print("10: FAIL");
+  areftest(n, false, "11");
+  n[$] = 666;
+  if (n) print("12: OK"); else print("12: FAIL");
+  areftest(n, true, "13");
+
+  dictionary!(string, string) d;
+  if (!d) print("20: OK"); else print("20: FAIL");
+  dreftest(d, false, "21");
+  d.put("Alice", "Miriel");
+  if (d) print("22: OK"); else print("22: FAIL");
+  dreftest(d, true, "23");
+
+  //FIXME: there is no way to create a slice for now
+}
