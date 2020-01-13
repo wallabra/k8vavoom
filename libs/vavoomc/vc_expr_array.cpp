@@ -3052,3 +3052,27 @@ void VStructZero::Emit (VEmitContext &ec) {
     ec.AddStatement(OPC_ZeroByPtr, sexpr->Type.GetSize(), Loc);
   }
 }
+
+
+
+//==========================================================================
+//
+//  VDynArrayToBool::Emit
+//
+//==========================================================================
+void VDynArrayToBool::Emit (VEmitContext &ec) {
+  op->Emit(ec);
+  ec.AddStatement(OPC_DynArrayDispatch, op->Type.GetArrayInnerType(), OPC_DynArrDispatch_DynArrayToBool, Loc);
+}
+
+
+
+//==========================================================================
+//
+//  VDictToBool::Emit
+//
+//==========================================================================
+void VDictToBool::Emit (VEmitContext &ec) {
+  op->Emit(ec);
+  ec.AddStatement(OPC_DictDispatch, op->Type.GetDictKeyType(), op->Type.GetDictValueType(), OPC_DictDispatch_DictToBool, Loc);
+}

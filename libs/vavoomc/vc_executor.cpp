@@ -471,6 +471,11 @@ static void ExecDictOperator (vuint8 *origip, vuint8 *&ip, VStack *&sp, VFieldTy
       if (ht->map) ht->map->rehash();
       --sp;
       return;
+    // [-1]: VScriptDict
+    case OPC_DictDispatch_DictToBool:
+      ht = (VScriptDict *)sp[-1].p;
+      sp[-1].i = !!(ht && ht->map && ht->map->length());
+      return;
   }
   cstDump(origip);
   Sys_Error("Dictionary opcode %d is not implemented", dcopcode);
@@ -1299,6 +1304,16 @@ func_loop:
         }
         ip += 5;
         --sp;
+        PR_VM_BREAK;
+
+      // [-1]: ptr to VCSlice
+      PR_VM_CASE(OPC_SliceToBool)
+        if (sp[-1].p) {
+          VCSlice vs = *(VCSlice *)sp[-1].p;
+          sp[-1].i = !!(vs.ptr && vs.length);
+        } else {
+          sp[-1].i = 0;
+        }
         PR_VM_BREAK;
 
       /*
@@ -2623,6 +2638,13 @@ func_loop:
               {
                 VScriptArray &A = *(VScriptArray *)sp[-1].p;
                 sp[-1].p = A.Alloc(Type);
+              }
+              break;
+            // [-1]: *dynarray
+            case OPC_DynArrDispatch_DynArrayToBool:
+              {
+                VScriptArray &A = *(VScriptArray *)sp[-1].p;
+                sp[-1].i = !!(A.length());
               }
               break;
             default:

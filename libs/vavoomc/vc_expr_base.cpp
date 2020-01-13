@@ -187,6 +187,13 @@ VExpression *VExpression::CoerceToBool (VEmitContext &ec) {
       break;
     case TYPE_Vector:
       return (new VVectorToBool(this, true))->Resolve(ec);
+    case TYPE_DynamicArray:
+      return (new VDynArrayToBool(this, true))->Resolve(ec);
+    case TYPE_Dictionary:
+      return (new VDictToBool(this, true))->Resolve(ec);
+    case TYPE_SliceArray:
+      ParseWarning(Loc, "Coercing slice to boolean is not tested yet");
+      return (new VSliceToBool(this, true))->Resolve(ec);
     default:
       ParseError(Loc, "Expression type mismatch, boolean expression expected, got `%s`", *Type.GetName());
       delete this;

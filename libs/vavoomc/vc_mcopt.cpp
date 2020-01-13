@@ -529,6 +529,8 @@ struct Instr {
       case OPC_SliceElement:
         spdelta = -1;
         return;
+      case OPC_SliceToBool:
+        return;
       /*
       case OPC_OffsetPtr:
         spdelta = 0;
@@ -837,6 +839,8 @@ struct Instr {
             return;
           case OPC_DynArrDispatch_DynArrayAlloc:
             return;
+          case OPC_DynArrDispatch_DynArrayToBool:
+            return;
           default: VCFatalError("Unknown dynarr opcode");
         }
         break;
@@ -1039,6 +1043,8 @@ struct Instr {
           case OPC_DictDispatch_Compact:
           case OPC_DictDispatch_Rehash:
             spdelta -= 1;
+            return;
+          case OPC_DictDispatch_DictToBool:
             return;
           default: VCFatalError("Unknown dictionary opcode");
         }

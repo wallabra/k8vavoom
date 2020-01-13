@@ -1088,3 +1088,175 @@ void VStructPtrCast::Emit (VEmitContext &ec) {
 VStr VStructPtrCast::toString () const {
   return VStr("cast(")+e2s(dest)+"("+e2s(op)+")";
 }
+
+
+
+//==========================================================================
+//
+//  VDynArrayToBool::VDynArrayToBool
+//
+//==========================================================================
+VDynArrayToBool::VDynArrayToBool (VExpression *AOp, bool aOpResolved)
+  : VCastExpressionBase(AOp, aOpResolved)
+{
+  Type = TYPE_Int;
+}
+
+
+//==========================================================================
+//
+//  VDynArrayToBool::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDynArrayToBool::SyntaxCopy () {
+  auto res = new VDynArrayToBool();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDynArrayToBool::DoResolve
+//
+//==========================================================================
+VExpression *VDynArrayToBool::DoResolve (VEmitContext &ec) {
+  if (!opResolved) { opResolved = true; if (op) op = op->Resolve(ec); }
+  if (!op) { delete this; return nullptr; }
+  if (op->Type.Type != TYPE_DynamicArray) {
+    ParseError(Loc, "cannot convert type `%s` to `bool`", *op->Type.GetName());
+    delete this;
+    return nullptr;
+  }
+  op->RequestAddressOf();
+  Type = TYPE_Int;
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDynArrayToBool::toString
+//
+//==========================================================================
+VStr VDynArrayToBool::toString () const {
+  return VStr("bool(")+e2s(op)+")";
+}
+
+
+
+//==========================================================================
+//
+//  VDictToBool::VDictToBool
+//
+//==========================================================================
+VDictToBool::VDictToBool (VExpression *AOp, bool aOpResolved)
+  : VCastExpressionBase(AOp, aOpResolved)
+{
+  Type = TYPE_Int;
+}
+
+
+//==========================================================================
+//
+//  VDictToBool::SyntaxCopy
+//
+//==========================================================================
+VExpression *VDictToBool::SyntaxCopy () {
+  auto res = new VDictToBool();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VDictToBool::DoResolve
+//
+//==========================================================================
+VExpression *VDictToBool::DoResolve (VEmitContext &ec) {
+  if (!opResolved) { opResolved = true; if (op) op = op->Resolve(ec); }
+  if (!op) { delete this; return nullptr; }
+  if (op->Type.Type != TYPE_Dictionary) {
+    ParseError(Loc, "cannot convert type `%s` to `bool`", *op->Type.GetName());
+    delete this;
+    return nullptr;
+  }
+  op->RequestAddressOf();
+  Type = TYPE_Int;
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VDictToBool::toString
+//
+//==========================================================================
+VStr VDictToBool::toString () const {
+  return VStr("bool(")+e2s(op)+")";
+}
+
+
+//==========================================================================
+//
+//  VSliceToBool::VSliceToBool
+//
+//==========================================================================
+VSliceToBool::VSliceToBool (VExpression *AOp, bool aOpResolved)
+  : VCastExpressionBase(AOp, aOpResolved)
+{
+  Type = TYPE_Int;
+}
+
+
+//==========================================================================
+//
+//  VSliceToBool::SyntaxCopy
+//
+//==========================================================================
+VExpression *VSliceToBool::SyntaxCopy () {
+  auto res = new VSliceToBool();
+  DoSyntaxCopyTo(res);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VSliceToBool::DoResolve
+//
+//==========================================================================
+VExpression *VSliceToBool::DoResolve (VEmitContext &ec) {
+  if (!opResolved) { opResolved = true; if (op) op = op->Resolve(ec); }
+  if (!op) { delete this; return nullptr; }
+  if (op->Type.Type != TYPE_SliceArray) {
+    ParseError(Loc, "cannot convert type `%s` to `bool`", *op->Type.GetName());
+    delete this;
+    return nullptr;
+  }
+  op->RequestAddressOf();
+  Type = TYPE_Int;
+  return this;
+}
+
+
+//==========================================================================
+//
+//  VSliceToBool::Emit
+//
+//==========================================================================
+void VSliceToBool::Emit (VEmitContext &ec) {
+  op->Emit(ec);
+  ec.AddStatement(OPC_SliceToBool, Loc);
+}
+
+
+//==========================================================================
+//
+//  VSliceToBool::toString
+//
+//==========================================================================
+VStr VSliceToBool::toString () const {
+  return VStr("bool(")+e2s(op)+")";
+}

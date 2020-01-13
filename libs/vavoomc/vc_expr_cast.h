@@ -161,6 +161,63 @@ protected:
 
 //==========================================================================
 //
+//  VDynArrayToBool
+//
+//==========================================================================
+class VDynArrayToBool : public VCastExpressionBase {
+public:
+  VDynArrayToBool (VExpression *AOp, bool aOpResolved);
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override; // implementation is in `vc_expr_array.cpp`
+
+  virtual VStr toString () const override;
+
+protected:
+  VDynArrayToBool () {}
+};
+
+
+//==========================================================================
+//
+//  VDictToBool
+//
+//==========================================================================
+class VDictToBool : public VCastExpressionBase {
+public:
+  VDictToBool (VExpression *AOp, bool aOpResolved);
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override; // implementation is in `vc_expr_array.cpp`
+
+  virtual VStr toString () const override;
+
+protected:
+  VDictToBool () {}
+};
+
+
+//==========================================================================
+//
+//  VSliceToBool
+//
+//==========================================================================
+class VSliceToBool : public VCastExpressionBase {
+public:
+  VSliceToBool (VExpression *AOp, bool aOpResolved);
+  virtual VExpression *SyntaxCopy () override;
+  virtual VExpression *DoResolve (VEmitContext &) override;
+  virtual void Emit (VEmitContext &) override;
+
+  virtual VStr toString () const override;
+
+protected:
+  VSliceToBool () {}
+};
+
+
+//==========================================================================
+//
 //  VScalarToFloat
 //
 //==========================================================================
