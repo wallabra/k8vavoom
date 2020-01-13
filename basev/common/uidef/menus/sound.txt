@@ -66,7 +66,7 @@ menudef SoundOptions {
       "This is used to prevent ear-ripping when alot of monsters of"
       "the same type are active."
       ""
-      "Set to 0 to use sounddef default (16 if not specified in SNDDEF),"
+      "Set to 0 to use sounddef default (4 if not specified in SNDDEF),"
       "and -1 means 'no limits at all'.";
   }
 
