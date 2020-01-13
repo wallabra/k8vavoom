@@ -1,8 +1,17 @@
 ACTOR BDW_PlayerMuzzle {
   Speed 0
-  PROJECTILE
-  +NOCLIP
-  +NOGRAVITY
+  //+Missile
+  +NoBlockmap
+  +NoClip
+  +NoGravity
+  +NoInteraction
+  +NoLiftDrop
+  +NoTeleport
+  +NoTrigger
+  +ThruActors
+  +ThruGhost
+  -MoveWithSector
+  //+Ghost
   States {
     Spawn:
       PLMZ A 2 BRIGHT

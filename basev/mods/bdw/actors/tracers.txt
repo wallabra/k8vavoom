@@ -1,19 +1,28 @@
 Actor BDW_Tracer : FastProjectile {
-  Projectile
-  +RANDOMIZE
-  +FORCEXYBILLBOARD
-  +DONTSPLASH
-  //+BLOODSPLATTER
-  +NOEXTREMEDEATH
-  +NoBlockmap
+  Alpha 0.9
   Damage 0
-  Radius 2
   Height 2
+  Radius 2
+  RenderStyle Add
+  Scale .15
   //Speed 60
   Speed 40
-  RenderStyle Add
-  Alpha 0.9
-  Scale .15
+
+  +DontSplash
+  +Missile
+  +NoBlockmap
+  +NoExtremeDeath
+  +NoGravity
+  +NoLiftDrop
+  +NoTeleport
+  +NoTrigger
+  -ActivateImpact
+  -ActivatePCross
+  -DropOff
+  -MoveWithSector
+  //+Randomize //k8:???
+  //+ThruActors
+  //+ThruGhost
 
   States {
     Spawn:
