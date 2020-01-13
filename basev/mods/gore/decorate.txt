@@ -121,6 +121,8 @@ Actor K8Gore_FlyingBlood /*: K8Gore_BloodBase*/ {
   -NOGRAVITY
   +CopyBloodTranslation
   //+KillOnUnarchive
+  +NoTeleport
+  +NoTrigger
   Mass 1
 
   States {
@@ -204,6 +206,8 @@ Actor K8Gore_FlyingBloodTrail : K8Gore_BloodBase {
   -NOGRAVITY
   +KillOnUnarchive
   +CopyBloodTranslation
+  +NoTeleport
+  +NoTrigger
   Speed 2
 
   States {
@@ -260,6 +264,8 @@ Actor K8Gore_FlyingBloodFake : K8Gore_BloodBase {
   -NOGRAVITY
   +KillOnUnarchive
   +CopyBloodTranslation
+  +NoTeleport
+  +NoTrigger
   Mass 1
 
   States {
@@ -309,6 +315,8 @@ Actor K8Gore_BloodmistSmall : K8Gore_FlyingBlood {
   -NOGRAVITY
   +KillOnUnarchive
   +CopyBloodTranslation
+  +NoTeleport
+  +NoTrigger
   Scale 0.8
   Radius 2
   Height 2
@@ -491,6 +499,11 @@ Actor K8Gore_DetectCeilBloodSimpler : K8Gore_BloodBase {
   -DONTSPLASH
   +NOGRAVITY
   +CopyBloodTranslation
+  +NoTeleport
+  +NoTrigger
+  +NoExtremeDeath
+  +NoLiftDrop
+  +MOVEWITHSECTOR
 
   States {
     Spawn:
@@ -540,6 +553,11 @@ Actor K8Gore_CeilBloodChecker : K8Gore_FlyingBlood {
   Decal None
   -Decals2SPass
   +CopyBloodTranslation
+  +NoTeleport
+  +NoTrigger
+  +NoExtremeDeath
+  +NoLiftDrop
+  +MOVEWITHSECTOR
 
   States {
     Spawn:
@@ -568,7 +586,7 @@ Actor K8Gore_CeilBloodChecker : K8Gore_FlyingBlood {
 // ceiling blood spot
 Actor K8Gore_CeilBloodSpot : K8Gore_BloodSpot {
   
-  Projectile
+  //Projectile
   +SPAWNCEILING
   +StickToCeiling
   +CEILINGHUGGER
@@ -580,6 +598,13 @@ Actor K8Gore_CeilBloodSpot : K8Gore_BloodSpot {
   +NoInteraction
   +OrientedOfs
   +CopyBloodTranslation
+  // projectile
+  +Missile
+  +DropOff //k8:???
+  +NoExtremeDeath
+  +NoLiftDrop
+  +NoTeleport
+  +NoTrigger
   Renderstyle Dark
   //!Alpha 0.99
 
@@ -797,6 +822,10 @@ Actor K8Gore_MinuscleBloodSpot : K8Gore_BloodSpot {
   Decal K8GoreBloodSplat
   +Decals2SPass
   +CopyBloodTranslation
+  +NoExtremeDeath
+  -NoLiftDrop
+  +NoTeleport
+  +NoTrigger
   DamageFactor "TeleportRemover", 100.0
   Renderstyle Dark
   //!Alpha 0.99
@@ -874,6 +903,10 @@ Actor K8Gore_GrowingBloodPool : K8Gore_BloodSpot {
   +OrientedOfs
   //+NoInteraction
   +CopyBloodTranslation
+  +NoExtremeDeath
+  -NoLiftDrop
+  +NoTeleport
+  +NoTrigger
   Scale 1.0
   Decal None
   -Decals2SPass
@@ -1064,6 +1097,8 @@ Actor K8Gore_FlyingBloodTransient /*: K8Gore_BloodBaseTransient*/ {
   -NOGRAVITY
   +CopyBloodTranslation
   //+KillOnUnarchive
+  +NoTeleport
+  +NoTrigger
   Mass 1
 
   States {
@@ -1147,6 +1182,8 @@ Actor K8Gore_FlyingBloodTrailTransient : K8Gore_BloodBaseTransient {
   -NOGRAVITY
   +KillOnUnarchive
   +CopyBloodTranslation
+  +NoTeleport
+  +NoTrigger
   Speed 2
 
   States {
@@ -1203,6 +1240,8 @@ Actor K8Gore_FlyingBloodFakeTransient : K8Gore_BloodBaseTransient {
   -NOGRAVITY
   +KillOnUnarchive
   +CopyBloodTranslation
+  +NoTeleport
+  +NoTrigger
   Mass 1
 
   States {
@@ -1252,6 +1291,8 @@ Actor K8Gore_BloodmistSmallTransient : K8Gore_FlyingBloodTransient {
   -NOGRAVITY
   +KillOnUnarchive
   +CopyBloodTranslation
+  +NoTeleport
+  +NoTrigger
   Scale 0.8
   Radius 2
   Height 2
@@ -1431,6 +1472,11 @@ Actor K8Gore_DetectCeilBloodSimplerTransient : K8Gore_BloodBaseTransient {
   -DONTSPLASH
   +NOGRAVITY
   +CopyBloodTranslation
+  +NoTeleport
+  +NoTrigger
+  +NoExtremeDeath
+  +NoLiftDrop
+  +MOVEWITHSECTOR
 
   States {
     Spawn:
@@ -1480,6 +1526,11 @@ Actor K8Gore_CeilBloodCheckerTransient : K8Gore_FlyingBloodTransient {
   Decal None
   -Decals2SPass
   +CopyBloodTranslation
+  +NoTeleport
+  +NoTrigger
+  +NoExtremeDeath
+  +NoLiftDrop
+  +MOVEWITHSECTOR
 
   States {
     Spawn:
@@ -1508,7 +1559,7 @@ Actor K8Gore_CeilBloodCheckerTransient : K8Gore_FlyingBloodTransient {
 // ceiling blood spot
 Actor K8Gore_CeilBloodSpotTransient : K8Gore_BloodSpotTransient {
   
-  Projectile
+  //Projectile
   +SPAWNCEILING
   +StickToCeiling
   +CEILINGHUGGER
@@ -1520,6 +1571,13 @@ Actor K8Gore_CeilBloodSpotTransient : K8Gore_BloodSpotTransient {
   +NoInteraction
   +OrientedOfs
   +CopyBloodTranslation
+  // projectile
+  +Missile
+  +DropOff //k8:???
+  +NoExtremeDeath
+  +NoLiftDrop
+  +NoTeleport
+  +NoTrigger
   Renderstyle Dark
   //!Alpha 0.99
 
@@ -1738,6 +1796,10 @@ Actor K8Gore_MinuscleBloodSpotTransient : K8Gore_BloodSpotTransient {
   Decal K8GoreBloodSplatTransient
   +Decals2SPass
   +CopyBloodTranslation
+  +NoExtremeDeath
+  -NoLiftDrop
+  +NoTeleport
+  +NoTrigger
   DamageFactor "TeleportRemover", 100.0
   Renderstyle Dark
   //!Alpha 0.99
@@ -1815,6 +1877,10 @@ Actor K8Gore_GrowingBloodPoolTransient : K8Gore_BloodSpotTransient {
   +OrientedOfs
   //+NoInteraction
   +CopyBloodTranslation
+  +NoExtremeDeath
+  -NoLiftDrop
+  +NoTeleport
+  +NoTrigger
   Scale 1.0
   Decal None
   -Decals2SPass
