@@ -75,6 +75,10 @@ VCvarB developer("developer", false, "Developer (debug) mode?", CVAR_PreInit/*|C
 #else
 # define CVAR_K8_DEV_VALUE  false
 #endif
+#if defined(_WIN32) || defined(__SWITCH__)
+# undef CVAR_K8_DEV_VALUE
+# define CVAR_K8_DEV_VALUE  false
+#endif
 VCvarB k8vavoom_developer_version("__k8vavoom_developer_version", CVAR_K8_DEV_VALUE, "Don't even think about this.", CVAR_Rom);
 
 
@@ -101,10 +105,12 @@ static VDedLog  DedLog;
 
 
 #if defined(_WIN32) || defined(__SWITCH__)
-VCvarB game_release_mode("_release_mode", true, "Affects some default settings.", CVAR_Rom);
+# define VV_CVAR_RELEASE_MODE  true
 #else
-VCvarB game_release_mode("_release_mode", false, "Affects some default settings.", CVAR_Rom);
+# define VV_CVAR_RELEASE_MODE  false
 #endif
+VCvarB game_release_mode("_release_mode", VV_CVAR_RELEASE_MODE, "Affects some default settings.", CVAR_Rom);
+
 
 // for chex quest support
 //VCvarI game_override_mode("_game_override", 0, "Override game type for DooM game.", CVAR_Rom);
