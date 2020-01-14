@@ -526,6 +526,10 @@ transient float tmp_phys_last_splash_time; // `XLevel.Time`
 // this is used to skip checking for scrollers for non-moving objects
 transient TVec lastScrollCheckOrigin = vector(-90000, -90000, -90000);
 
+// ripper projectiles can spawn enormous blood entities, so block it for some time
+// don't save this field, it doesn't matter
+transient float lastRipBloodTime = -666; // XLevel.Time
+
 // so we can check it in various spawners
 // there is no need to save it
 // set in decorate parser

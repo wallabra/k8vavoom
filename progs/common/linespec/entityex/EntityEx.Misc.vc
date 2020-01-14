@@ -961,8 +961,8 @@ override bool Touch (Entity InOther) {
           // ok to spawn some blood
           Other.SpawnRipperBlood(damage, self);
         }
-        //Other.SpawnExploBloodAtHead(damage, self);
-        Other.Damage(self, Target, damage, DamageType);
+        //printdebug("%C: ripper, other is %C", self, Other);
+        Other.Damage(self, Target, damage, DamageType, spawnBlood:false); // we already spawned ripper blood
         if (Other.bPushable && !bCannotPush) {
           // push thing
           Other.Velocity.x += Velocity.x/4.0;

@@ -145,6 +145,7 @@ override void Init () {
   CreateCvar('gm_doomguy_eye_camera', "0", "Move view camera to DoomGuy eyes (this works only for standard DoomGuy height)?", CVAR_ARCHIVE);
 
   CreateCvar('zdoom_blood_hack', "0", "Use ZDoom blood spawn hack (different starting frame depending on damage)?", CVAR_ARCHIVE);
+  CreateCvarFloat('blood_ripper_delay', 0.5, "Ripper projectile blood spawn timeout, in seconds.", CVAR_ARCHIVE);
 
   CreateCvar('movebob', "0.1", "Player camera bobbing.", CVAR_ARCHIVE); // doom default is "0.25"
   CreateCvar('weaponbob', "0.24", "Player weapon bobbing (relative to camera).", CVAR_ARCHIVE);
