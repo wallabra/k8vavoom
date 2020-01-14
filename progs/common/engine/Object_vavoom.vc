@@ -271,7 +271,7 @@ struct SkillDef {
 // "doom", "doom2", "tnt", "plutonia" -- you got the idea
 static final string GameName { get { return GetCvarS('game_name'); } }
 
-final bool IsDoom {
+static final bool IsDoom {
   get {
     string gn = GetCvarS('game_name');
     return
@@ -282,7 +282,7 @@ final bool IsDoom {
   }
 }
 
-final bool IsDoom2 {
+static final bool IsDoom2 {
   get {
     string gn = GetCvarS('game_name');
     return
@@ -291,7 +291,7 @@ final bool IsDoom2 {
   }
 }
 
-final bool IsAnyDoom2 {
+static final bool IsAnyDoom2 {
   get {
     string gn = GetCvarS('game_name');
     return
@@ -307,12 +307,13 @@ final bool IsAnyDoom2 {
   }
 }
 
-final bool IsPlutonia { get { return (stricmp(GetCvarS('game_name'), "plutonia") == 0); } }
-final bool IsTnt { get { return (stricmp(GetCvarS('game_name'), "tnt") == 0); } }
-final bool IsNerve { get { return (stricmp(GetCvarS('game_name'), "nerve") == 0); } }
-final bool IsStrife { get { return (stricmp(GetCvarS('game_name'), "strife") == 0); } }
+static final bool IsPlutonia { get { return (stricmp(GetCvarS('game_name'), "plutonia") == 0); } }
+static final bool IsTnt { get { return (stricmp(GetCvarS('game_name'), "tnt") == 0); } }
+static final bool IsNerve { get { return (stricmp(GetCvarS('game_name'), "nerve") == 0); } }
+static final bool IsStrife { get { return (stricmp(GetCvarS('game_name'), "strife") == 0); } }
 
-final bool IsReleaseMode { get { return GetCvarB('_release_mode'); } }
+static final bool IsReleaseMode { get { return GetCvarB('_release_mode'); } }
+static final bool IsDeveloperVersion { get { return GetCvarB('__k8vavoom_developer_version'); } }
 
 
 // ////////////////////////////////////////////////////////////////////////// //

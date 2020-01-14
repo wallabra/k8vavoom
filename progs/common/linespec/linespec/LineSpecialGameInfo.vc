@@ -137,176 +137,175 @@ transient int kkWeaponSlotCopy[MaxWeaponSlots]; // if set to false, this slot wa
 //
 //==========================================================================
 override void Init () {
-  CreateCvar('player_default_gender', "male", "Default player gender?", CVAR_ARCHIVE|CVAR_PREINIT); // preinit, so we can change it from command line
+  CreateCvarStr('player_default_gender', "male", "Default player gender?", CVAR_ARCHIVE|CVAR_PREINIT); // preinit, so we can change it from command line
 
-  CreateCvar('gm_death_infighting', "1", "Should monsters start infighting when player dies?", CVAR_ARCHIVE);
+  CreateCvarBool('gm_death_infighting', true, "Should monsters start infighting when player dies?", CVAR_ARCHIVE);
 
-  CreateCvar('gm_fix_attack_offset', "1", "Make shots go into crosshair (gameplay changer)?", CVAR_ARCHIVE);
-  CreateCvar('gm_doomguy_eye_camera', "0", "Move view camera to DoomGuy eyes (this works only for standard DoomGuy height)?", CVAR_ARCHIVE);
+  CreateCvarBool('gm_fix_attack_offset', true, "Make shots go into crosshair (gameplay changer)?", CVAR_ARCHIVE);
+  CreateCvarBool('gm_doomguy_eye_camera', false, "Move view camera to DoomGuy eyes (this works only for standard DoomGuy height)?", CVAR_ARCHIVE);
 
-  CreateCvar('zdoom_blood_hack', "0", "Use ZDoom blood spawn hack (different starting frame depending on damage)?", CVAR_ARCHIVE);
+  CreateCvarBool('zdoom_blood_hack', false, "Use ZDoom blood spawn hack (different starting frame depending on damage)?", CVAR_ARCHIVE);
   CreateCvarFloat('blood_ripper_delay', 0.5, "Ripper projectile blood spawn timeout, in seconds.", CVAR_ARCHIVE);
 
-  CreateCvar('movebob', "0.1", "Player camera bobbing.", CVAR_ARCHIVE); // doom default is "0.25"
-  CreateCvar('weaponbob', "0.24", "Player weapon bobbing (relative to camera).", CVAR_ARCHIVE);
+  CreateCvarFloat('movebob', 0.1, "Player camera bobbing.", CVAR_ARCHIVE); // doom default is "0.25"
+  CreateCvarFloat('weaponbob', 0.24, "Player weapon bobbing (relative to camera).", CVAR_ARCHIVE);
 
-  CreateCvar('menu_quit_prompt', "1", "Show quit prompt on menu quit?", CVAR_ARCHIVE);
+  CreateCvarBool('menu_quit_prompt', true, "Show quit prompt on menu quit?", CVAR_ARCHIVE);
 
-  CreateCvar('monster_backing', "0", "Should monsters back away from melee attacker?", CVAR_ARCHIVE);
-  CreateCvar('addrocketexplosion', "0", "Use additive visuals for explosions?", CVAR_ARCHIVE);
-  //CreateCvar('damage_thrust', (IsReleaseMode ? "0" : "1"), "Should big damage do kickbacks?", CVAR_ARCHIVE);
-  CreateCvar('damage_thrust', "1", "Should big damage do kickbacks?", CVAR_ARCHIVE); // prevrel was 0
-  CreateCvar('autoaim', "1", "Should weapons autoaim?", CVAR_ARCHIVE);
-  CreateCvar('k8HitscanAutoAim', "0", "Enable autoaim for hitscan weapon?", CVAR_ARCHIVE); // prevrel was 1
-  CreateCvar('monster_dropoff', "0", "Should monsters sometimes step from dropoffs when angered?", CVAR_ARCHIVE); // prevrel was 0
+  CreateCvarBool('monster_backing', false, "Should monsters back away from melee attacker?", CVAR_ARCHIVE);
+  CreateCvarBool('addrocketexplosion', false, "Use additive visuals for explosions?", CVAR_ARCHIVE);
+  CreateCvarBool('damage_thrust', true, "Should big damage do kickbacks?", CVAR_ARCHIVE); // prevrel was 0
+  CreateCvarBool('autoaim', true, "Should weapons autoaim?", CVAR_ARCHIVE);
+  CreateCvarBool('k8HitscanAutoAim', false, "Enable autoaim for hitscan weapon?", CVAR_ARCHIVE); // prevrel was 1
+  CreateCvarBool('monster_dropoff', false, "Should monsters sometimes step from dropoffs when angered?", CVAR_ARCHIVE); // prevrel was 0
   // this one is only used in Hexen for now, but it could come in handy for other games if needed
-  CreateCvar('alternate_monster_attacks', "0", "Alternate monster attacks in Hexen?", CVAR_ARCHIVE);
-  CreateCvar('wpn_autoswitch', (IsReleaseMode ? "1" : "0"), "Should we autoswitch to new weapon?", CVAR_ARCHIVE);
+  CreateCvarBool('alternate_monster_attacks', false, "Alternate monster attacks in Hexen?", CVAR_ARCHIVE);
+  CreateCvarBool('wpn_autoswitch', IsReleaseMode, "Should we autoswitch to new weapon?", CVAR_ARCHIVE);
 
   // debug headshots?
-  CreateCvar('k8HSDebug', "0", "Show headshots debug messages?", 0);
-  CreateCvar('k8HSDebug_ShowFailedDamageType', "0", "Show skipped damage types?", 0);
+  CreateCvarBool('k8HSDebug', false, "Show headshots debug messages?", 0);
+  CreateCvarBool('k8HSDebug_ShowFailedDamageType', false, "Show skipped damage types?", 0);
 
   // show headshots calculation? (doesn't matter if debug is off)
-  CreateCvar('k8HSShowHeadshots', "1", "Show headshots calculation debug?", 0);
+  CreateCvarBool('k8HSShowHeadshots', true, "Show headshots calculation debug?", 0);
 
   // show criticals calculation? (doesn't matter if debug is off)
-  CreateCvar('k8HSDebug_Crits', "1", "Show headshows criticals debug?", 0);
+  CreateCvarBool('k8HSDebug_Crits', true, "Show headshots criticals debug?", 0);
 
   // enable headshots?
-  CreateCvar('k8HSEnabled', "1", "Is headshots enabled?", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarBool('k8HSEnabled', true, "Is headshots enabled?", CVAR_ARCHIVE|CVAR_SERVERINFO);
   // distance multiplier (the more -- the less headshot chance on big distances)
-  CreateCvar('k8HSDistMult', "1.1", "Headshots distance multiplier (the more -- the less headshot chance on big distances)", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarFloat('k8HSDistMult', 1.1, "Headshots distance multiplier (the more -- the less headshot chance on big distances)", CVAR_ARCHIVE|CVAR_SERVERINFO);
   // announce critical messages
-  CreateCvar('k8HSShowCriticals', "1", "Announce critical shots?", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarBool('k8HSShowCriticals', true, "Announce critical shots?", CVAR_ARCHIVE|CVAR_SERVERINFO);
   // disable criticals?
-  CreateCvar('k8HSCriticals', "1", "Enable critical shots?", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarBool('k8HSCriticals', true, "Enable critical shots?", CVAR_ARCHIVE|CVAR_SERVERINFO);
 
   // fastkill/instakill some annoying monsters?
-  CreateCvar('k8HSFastKillAnnoyingMonsters', (IsReleaseMode ? "0" : "1"), "Fastkill some annoying monsters?", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarBool('k8HSFastKillAnnoyingMonsters', IsDeveloperVersion, "Fastkill some annoying monsters?", CVAR_ARCHIVE|CVAR_SERVERINFO);
   // instakill Pain Elementals?
-  CreateCvar('k8HSInstaKillPainElementals', (IsReleaseMode ? "0" : "1"), "Instakill Pain Elementals?", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarBool('k8HSInstaKillPainElementals', IsDeveloperVersion, "Instakill Pain Elementals?", CVAR_ARCHIVE|CVAR_SERVERINFO);
   // instakill Lost Souls?
-  CreateCvar('k8HSInstaKillLostSouls', (IsReleaseMode ? "0" : "1"), "Instakill Lost Souls?", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarBool('k8HSInstaKillLostSouls', IsDeveloperVersion, "Instakill Lost Souls?", CVAR_ARCHIVE|CVAR_SERVERINFO);
   // how mush damage should be inflicted to Arch-Vile?
-  CreateCvar('k8HSFastKillArchVileDamage', "120", "Amount of damage dealt for fast-killing ArchViles.", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarInt('k8HSFastKillArchVileDamage', /*120*/230, "Amount of damage dealt for fast-killing ArchViles.", CVAR_ARCHIVE|CVAR_SERVERINFO);
 
-  CreateCvar('k8HSHeadKillBloodSpray', "1", "Do bloodspray on instakill/headshot?", CVAR_ARCHIVE);
-  CreateCvar('k8HSHeadKillBloodCount', "5", "How much blood to spray on instakill/headshot?", CVAR_ARCHIVE);
-  CreateCvar('k8HSHeadKillBloodPool', "1", "Spawn blood pool on instakill/headkill?", CVAR_ARCHIVE);
+  CreateCvarBool('k8HSHeadKillBloodSpray', true, "Do bloodspray on instakill/headshot?", CVAR_ARCHIVE);
+  CreateCvarInt('k8HSHeadKillBloodCount', 5, "How much blood to spray on instakill/headshot?", CVAR_ARCHIVE);
+  CreateCvarBool('k8HSHeadKillBloodPool', false, "Spawn blood pool on instakill/headkill?", CVAR_ARCHIVE);
 
-  CreateCvar('k8AmmoKing', (IsReleaseMode ? "0" : "1"), "Enable Ammo King mode?", CVAR_ARCHIVE|CVAR_SERVERINFO);
-  CreateCvar('k8AmmoKing_AllowBackpack', "0", "Enable backpack effect in Ammo King mode?", CVAR_ARCHIVE|CVAR_SERVERINFO);
-  CreateCvar('k8AmmoKing_MaxShells_Normal', "200", "Maximum shells in ammo king, no headshots.", CVAR_ARCHIVE|CVAR_SERVERINFO);
-  CreateCvar('k8AmmoKing_MaxShells_HS', "100", "Maximum shells in ammo king, with headshots.", CVAR_ARCHIVE|CVAR_SERVERINFO);
-  CreateCvar('k8AmmoKing_MaxBullets_Normal', "666", "Maximum bullets in ammo king mode, no headshots.", CVAR_ARCHIVE|CVAR_SERVERINFO);
-  CreateCvar('k8AmmoKing_MaxBullets_HS', "200", "Maximum bullets in ammo king mode, with headshots.", CVAR_ARCHIVE|CVAR_SERVERINFO);
-  CreateCvar('k8AmmoKing_MaxRockets', "150", "Maximum rockets in ammo king mode.", CVAR_ARCHIVE|CVAR_SERVERINFO);
-  CreateCvar('k8AmmoKing_MaxCells', "666", "Maximum rockets in ammo king mode.", CVAR_ARCHIVE|CVAR_SERVERINFO);
-  CreateCvar('k8AmmoKing_MaxOther', "400", "Maximum rockets in ammo king mode.", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarBool('k8AmmoKing', IsDeveloperVersion, "Enable Ammo King mode?", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarBool('k8AmmoKing_AllowBackpack', false, "Enable backpack effect in Ammo King mode?", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarInt('k8AmmoKing_MaxShells_Normal', 200, "Maximum shells in ammo king, no headshots.", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarInt('k8AmmoKing_MaxShells_HS', 100, "Maximum shells in ammo king, with headshots.", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarInt('k8AmmoKing_MaxBullets_Normal', 666, "Maximum bullets in ammo king mode, no headshots.", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarInt('k8AmmoKing_MaxBullets_HS', 200, "Maximum bullets in ammo king mode, with headshots.", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarInt('k8AmmoKing_MaxRockets', 150, "Maximum rockets in ammo king mode.", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarInt('k8AmmoKing_MaxCells', 666, "Maximum rockets in ammo king mode.", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarInt('k8AmmoKing_MaxOther', 400, "Maximum rockets in ammo king mode.", CVAR_ARCHIVE|CVAR_SERVERINFO);
 
-  CreateCvar('k8ElvenGift', (IsReleaseMode ? "0" : "1"), "Start game with some Elven Gifts?", CVAR_ARCHIVE|CVAR_SERVERINFO);
-  CreateCvar('k8ElvenDetect', (IsReleaseMode ? "0" : "1"), "Perform Elven Senses Detection?", CVAR_ARCHIVE);
+  CreateCvarBool('k8ElvenGift', IsDeveloperVersion, "Start game with some Elven Gifts?", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarBool('k8ElvenDetect', IsDeveloperVersion, "Perform Elven Senses Detection?", CVAR_ARCHIVE);
 
-  CreateCvar('k8ElvenPaineless', (IsReleaseMode ? "0" : "1"), "Disable Pain Elemental attacks?", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarBool('k8ElvenPaineless', IsDeveloperVersion, "Disable Pain Elemental attacks?", CVAR_ARCHIVE|CVAR_SERVERINFO);
 
-  CreateCvar('k8BerserkSwitch', (IsReleaseMode ? "1" : "0"), "Switch to fist when Berserker Pack taken.", CVAR_ARCHIVE|CVAR_SERVERINFO);
-  CreateCvar('k8BerserkTint', "", "Berserk powerup tint color.", CVAR_ARCHIVE);
+  CreateCvarBool('k8BerserkSwitch', IsReleaseMode, "Switch to fist when Berserker Pack taken.", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarStr('k8BerserkTint', (IsReleaseMode ? "" : "#100"), "Berserk powerup tint color.", CVAR_ARCHIVE);
 
   // moved to the engine code
   //CreateCvar('k8ColormapInverse', "0", "Inverse colormap replacement (0: original inverse; 1: black-and-white; 2: gold; 3: green; 4: red)", CVAR_ARCHIVE);
   //CreateCvar('k8ColormapLightAmp', "0", "LightAmp colormap replacement (0: original; 1: black-and-white; 2: gold; 3: green; 4: red)", CVAR_ARCHIVE);
-  CreateCvar('k8ColormapBerserk', "0", "Berserk replacement colormap (0: original; 1: black-and-white; 2: gold; 3: green; 4: red; 5: inverse).", CVAR_ARCHIVE);
-  CreateCvar('k8ColormapEnviSuit', "0", "EnviroSuit replacement colormap (0: original; 1: black-and-white; 2: gold; 3: green; 4: red; 5: inverse).", CVAR_ARCHIVE);
+  CreateCvarInt('k8ColormapBerserk', (IsReleaseMode ? 0 : 5), "Berserk replacement colormap (0: original; 1: black-and-white; 2: gold; 3: green; 4: red; 5: inverse).", CVAR_ARCHIVE);
+  CreateCvarInt('k8ColormapEnviSuit', 0, "EnviroSuit replacement colormap (0: original; 1: black-and-white; 2: gold; 3: green; 4: red; 5: inverse).", CVAR_ARCHIVE);
 
-  CreateCvar('k8StealthFist', "1", "Should fist attack alert monsters only when some monster was injured?.", CVAR_ARCHIVE|CVAR_SERVERINFO);
-  CreateCvar('k8StealthChainsaw', "1", "Should chainsaw attack alert monsters only when some monster was hit?", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarBool('k8StealthFist', true, "Should fist attack alert monsters only when some monster was injured?.", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarBool('k8StealthChainsaw', true, "Should chainsaw attack alert monsters only when some monster was hit?", CVAR_ARCHIVE|CVAR_SERVERINFO);
 
-  CreateCvar('k8BonusFlashMaxTime', "0", "Maximum bonus flash time, in sectonds (<=0 is unlimited; one bonus is 0.2).", CVAR_ARCHIVE);
+  CreateCvarFloat('k8BonusFlashMaxTime', 0.4, "Maximum bonus flash time, in sectonds (<=0 is unlimited; one bonus is 0.2).", CVAR_ARCHIVE);
 
-  CreateCvar('k8TraceDebug', "0", "Line trace debug mode", 0);
+  CreateCvarBool('k8TraceDebug', false, "Line trace debug mode", 0);
 
-  CreateCvar('r_particle_effects', "1", "Enable particle effects?", CVAR_ARCHIVE);
-  CreateCvar('r_particle_puffs', "1", "Enable particle sparks?", CVAR_ARCHIVE);
-  CreateCvar('r_particle_blood', "0", "Enable particle blood?", CVAR_ARCHIVE);
-  CreateCvar('r_particle_trails', "1", "Enable particle trails?", CVAR_ARCHIVE);
+  CreateCvarBool('r_particle_effects', true, "Enable particle effects?", CVAR_ARCHIVE);
+  CreateCvarBool('r_particle_puffs', true, "Enable particle sparks?", CVAR_ARCHIVE);
+  CreateCvarBool('r_particle_blood', false, "Enable particle blood?", CVAR_ARCHIVE);
+  CreateCvarBool('r_particle_trails', true, "Enable particle trails?", CVAR_ARCHIVE);
 
-  CreateCvar('r_statusbar_draw', "1", "Draw statusbar?", CVAR_ARCHIVE);
+  CreateCvarBool('r_statusbar_draw', true, "Draw statusbar?", CVAR_ARCHIVE);
 
-  CreateCvar('r_hud_draw_fs_ammo', "1", "Draw ammo counts on fullscreen HUD?", CVAR_ARCHIVE);
-  CreateCvar('r_hud_draw_fs_face', "1", "Draw Doomguy face on fullscreen HUD?", CVAR_ARCHIVE);
-  CreateCvar('r_hud_fs_face_centered', "0", "Draw Doomguy face in FS HUD center?", CVAR_ARCHIVE);
-  CreateCvar('r_hud_draw_fs_powerup_timers', "1", "Draw timers for powerups in FS HUD?", CVAR_ARCHIVE);
+  CreateCvarBool('r_hud_draw_fs_ammo', true, "Draw ammo counts on fullscreen HUD?", CVAR_ARCHIVE);
+  CreateCvarBool('r_hud_draw_fs_face', true, "Draw Doomguy face on fullscreen HUD?", CVAR_ARCHIVE);
+  CreateCvarBool('r_hud_fs_face_centered', false, "Draw Doomguy face in FS HUD center?", CVAR_ARCHIVE);
+  CreateCvarBool('r_hud_draw_fs_powerup_timers', true, "Draw timers for powerups in FS HUD?", CVAR_ARCHIVE);
 
-  CreateCvar('r_hud_draw_weapon_name', "1", "Draw weapon name on fullscreen HUD?", CVAR_ARCHIVE);
-  CreateCvar('r_hud_weapon_name_fadeout_time', "1.4", "Weapon name fadeout time on fullscreen HUD.", CVAR_ARCHIVE);
-  CreateCvar('r_hud_weapon_name_color', "5", "Weapon name color on fullscreen HUD.", CVAR_ARCHIVE);
+  CreateCvarBool('r_hud_draw_weapon_name', true, "Draw weapon name on fullscreen HUD?", CVAR_ARCHIVE);
+  CreateCvarFloat('r_hud_weapon_name_fadeout_time', 1.4, "Weapon name fadeout time on fullscreen HUD.", CVAR_ARCHIVE);
+  CreateCvarInt('r_hud_weapon_name_color', 5, "Weapon name color on fullscreen HUD.", CVAR_ARCHIVE);
 
-  CreateCvar('fuck_stealth_monsters', "0", "Turn all fuckin' stealth monsters to normal ones?", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarBool('fuck_stealth_monsters', false, "Turn all fuckin' stealth monsters to normal ones?", CVAR_ARCHIVE|CVAR_SERVERINFO);
 
-  CreateCvar('vid_renderer', "1", "Tell some idiotic mod authors that we're GZDoom in OpenGL mode (1).", 0);
+  CreateCvarInt('vid_renderer', 1, "Tell some idiotic mod authors that we're GZDoom in OpenGL mode (1).", 0);
 
-  CreateCvar('k8HealthAccum_Enabled', "0", "Enable Health Accumulation?", CVAR_ARCHIVE|CVAR_SERVERINFO);
-  CreateCvar('k8HealthAccum_Reset', "1", "Reset accumulated health on level transition?", CVAR_ARCHIVE|CVAR_SERVERINFO);
-  CreateCvar('k8HealthAccum_NewMapHeal', "1", "Heal with accumulated health on level transition?", CVAR_ARCHIVE|CVAR_SERVERINFO);
-  CreateCvar('k8HealthAccum_Max', "666", "How much health Accumulator can hold?", CVAR_ARCHIVE|CVAR_SERVERINFO);
-  CreateCvar('k8HealthAccum_RegenLow', "70", "When health goes below this, Accummulator will start regenerating your health (0 means always).", CVAR_ARCHIVE|CVAR_SERVERINFO);
-  CreateCvar('k8HealthAccum_RegenRate', "2", "Seconds between regenerating health.", CVAR_ARCHIVE|CVAR_SERVERINFO);
-  CreateCvar('k8HealthAccum_RegenPoints', "1", "How much health points should be regenerated in one step?", CVAR_ARCHIVE|CVAR_SERVERINFO);
-  CreateCvar('k8HealthAccum_BoostLow', "10", "When health goes below this, Accummulator will boost your health.", CVAR_ARCHIVE|CVAR_SERVERINFO);
-  CreateCvar('k8HealthAccum_BoostPoints', "-80", "Boost by this number of health points (positive), or up to the given health (negative).", CVAR_ARCHIVE|CVAR_SERVERINFO);
-  CreateCvar('k8HealthAccum_BoostCooldown', "30", "Health boost cooldown, in seconds.", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarBool('k8HealthAccum_Enabled', IsDeveloperVersion, "Enable Health Accumulation?", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarBool('k8HealthAccum_Reset', true, "Reset accumulated health on level transition?", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarBool('k8HealthAccum_NewMapHeal', true, "Heal with accumulated health on level transition?", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarInt('k8HealthAccum_Max', 666, "How much health Accumulator can hold?", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarInt('k8HealthAccum_RegenLow', 70, "When health goes below this, Accummulator will start regenerating your health (0 means always).", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarInt('k8HealthAccum_RegenRate', 2, "Seconds between regenerating health.", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarInt('k8HealthAccum_RegenPoints', 1, "How much health points should be regenerated in one step?", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarInt('k8HealthAccum_BoostLow', 25, "When health goes below this, Accummulator will boost your health.", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarInt('k8HealthAccum_BoostPoints', -90, "Boost by this number of health points (positive), or up to the given health (negative).", CVAR_ARCHIVE|CVAR_SERVERINFO);
+  CreateCvarInt('k8HealthAccum_BoostCooldown', 30, "Health boost cooldown, in seconds.", CVAR_ARCHIVE|CVAR_SERVERINFO);
   //TODO: make this network-aware
-  CreateCvar('k8HealthAccum_MessagesRegen', "0", "Report health regeneration.", CVAR_ARCHIVE);
-  CreateCvar('k8HealthAccum_MessagesBoost', "1", "Report health boost.", CVAR_ARCHIVE);
-  CreateCvar('k8HealthAccum_MessagesAccumed', "0", "Report health accumulation.", CVAR_ARCHIVE);
+  CreateCvarBool('k8HealthAccum_MessagesRegen', false, "Report health regeneration.", CVAR_ARCHIVE);
+  CreateCvarBool('k8HealthAccum_MessagesBoost', true, "Report health boost.", CVAR_ARCHIVE);
+  CreateCvarBool('k8HealthAccum_MessagesAccumed', false, "Report health accumulation.", CVAR_ARCHIVE);
 
-  CreateCvar('hud_scale_messages', "1", "Rescale HUD messages, so message font is less distorted?", CVAR_ARCHIVE);
+  CreateCvarBool('hud_scale_messages', true, "Rescale HUD messages, so message font is less distorted?", CVAR_ARCHIVE);
 
-  CreateCvar('ldr_fix_slope_cracks', "1", "Try to fix empty cracks near sloped floors?", CVAR_ARCHIVE);
+  CreateCvarBool('ldr_fix_slope_cracks', true, "Try to fix empty cracks near sloped floors?", CVAR_ARCHIVE);
 
-  CreateCvar('k8HealthBar', "0", "Allow healthbar?", CVAR_ARCHIVE);
-  CreateCvar('k8HealthBarAlpha', "0.6", "Healthbar opacity.", CVAR_ARCHIVE);
-  CreateCvar('k8HealthBarOnlyMonsters', "1", "Ignore non-monsters?", CVAR_ARCHIVE);
-  CreateCvar('k8HealthBarShowAll', "0", "Show any object (useful for debugging)?", CVAR_ARCHIVE);
-  CreateCvar('k8HealthBarShowClassName', "0", "Show class name instead of tag (useful for debugging)?", CVAR_ARCHIVE);
+  CreateCvarBool('k8HealthBar', false, "Allow healthbar?", CVAR_ARCHIVE);
+  CreateCvarFloat('k8HealthBarAlpha', 0.6, "Healthbar opacity.", CVAR_ARCHIVE);
+  CreateCvarBool('k8HealthBarOnlyMonsters', true, "Ignore non-monsters?", CVAR_ARCHIVE);
+  CreateCvarBool('k8HealthBarShowAll', false, "Show any object (useful for debugging)?", CVAR_ARCHIVE);
+  CreateCvarBool('k8HealthBarShowClassName', false, "Show class name instead of tag (useful for debugging)?", CVAR_ARCHIVE);
 
-  CreateCvar('blood_widespread', "0", "Throw blood splats on full 360 degrees circle?", CVAR_ARCHIVE);
+  CreateCvarBool('blood_widespread', false, "Throw blood splats on full 360 degrees circle?", CVAR_ARCHIVE);
 
-  CreateCvar('k8_flashlight_shadows', "0", "Do shadow casting from player flashlight?", CVAR_ARCHIVE);
-  CreateCvar('k8_flashlight_distance', "768", "Flashlight distance.", CVAR_ARCHIVE);
-  CreateCvar('k8_flashlight_color', "0xcfcf50", "Flashlight color.", CVAR_ARCHIVE);
-  CreateCvar('k8_flashlight_angle', "20", "Flashlight cone angle.", CVAR_ARCHIVE);
+  CreateCvarBool('k8_flashlight_shadows', false, "Do shadow casting from player flashlight?", CVAR_ARCHIVE);
+  CreateCvarFloat('k8_flashlight_distance', 768, "Flashlight distance.", CVAR_ARCHIVE);
+  CreateCvarStr('k8_flashlight_color', "0xcfcf50", "Flashlight color.", CVAR_ARCHIVE);
+  CreateCvarFloat('k8_flashlight_angle', 20, "Flashlight cone angle.", CVAR_ARCHIVE);
 
-  CreateCvar('k8SuperBulletCooldown', "0.15", "SuperBullet cooldown time, in seconds.", CVAR_ARCHIVE);
-
-
-  CreateCvar('dbg_blood_disable_entities', "0", "Disable spawning of blood entities?", 0/*CVAR_ARCHIVE*/);
-
-  CreateCvar('wp_cycle_special_slot', "0", "Should weapon cycling use slot 11 too?", CVAR_ARCHIVE);
+  CreateCvarFloat('k8SuperBulletCooldown', 0.15, "SuperBullet cooldown time, in seconds.", CVAR_ARCHIVE);
 
 
-  CreateCvar('bot_disable_ai', "0", "Disable bot AI (for debugging)?", 0/*CVAR_ARCHIVE*/);
+  CreateCvarBool('dbg_blood_disable_entities', false, "Disable spawning of blood entities?", 0/*CVAR_ARCHIVE*/);
 
-  CreateCvar('bot_ignore_humans', "0", "Should bots ignore human players?", 0/*CVAR_ARCHIVE*/);
-  CreateCvar('bot_developer_messages_roam', "0", "Show some bot developer messages?", 0/*CVAR_ARCHIVE*/);
-  CreateCvar('bot_developer_messages_checkpos', "0", "Show some bot developer messages?", 0/*CVAR_ARCHIVE*/);
-  CreateCvar('bot_developer_messages_items', "0", "Show some bot developer messages?", 0/*CVAR_ARCHIVE*/);
-  CreateCvar('bot_developer_messages_attack', "0", "Show some bot developer messages?", 0/*CVAR_ARCHIVE*/);
-  CreateCvar('bot_developer_messages_path', "0", "Show some bot developer messages?", 0/*CVAR_ARCHIVE*/);
-  CreateCvar('bot_developer_messages_crumbs', "0", "Show some bot developer messages?", 0/*CVAR_ARCHIVE*/);
-  CreateCvar('bot_developer_messages_planpath', "0", "Show some bot developer messages?", 0/*CVAR_ARCHIVE*/);
-
-  CreateCvar('bot_run_to_subsector_center', "1", "Show some bot developer messages?", 0/*CVAR_ARCHIVE*/);
-
-  CreateCvar('bot_no_run', "0", "Disable bot running?", 0/*CVAR_ARCHIVE*/);
-  CreateCvar('bot_no_jump', "0", "Disable bot jumping?", 0/*CVAR_ARCHIVE*/);
-  CreateCvar('bot_always_headshots', "0", "Should bot always try do to a headshot?", 0/*CVAR_ARCHIVE*/);
+  CreateCvarBool('wp_cycle_special_slot', false, "Should weapon cycling use slot 11 too?", CVAR_ARCHIVE);
 
 
-  CreateCvar('trans_debug_log', "0", "Show translation debug log?", CVAR_ARCHIVE);
+  CreateCvarBool('bot_disable_ai', false, "Disable bot AI (for debugging)?", 0/*CVAR_ARCHIVE*/);
 
-  CreateCvar('dbg_enable_multiplayer', "0", "Enable multiplayer menu?", 0/*CVAR_ARCHIVE*/);
+  CreateCvarBool('bot_ignore_humans', false, "Should bots ignore human players?", 0/*CVAR_ARCHIVE*/);
+  CreateCvarBool('bot_developer_messages_roam', false, "Show some bot developer messages?", 0/*CVAR_ARCHIVE*/);
+  CreateCvarBool('bot_developer_messages_checkpos', false, "Show some bot developer messages?", 0/*CVAR_ARCHIVE*/);
+  CreateCvarBool('bot_developer_messages_items', false, "Show some bot developer messages?", 0/*CVAR_ARCHIVE*/);
+  CreateCvarBool('bot_developer_messages_attack', false, "Show some bot developer messages?", 0/*CVAR_ARCHIVE*/);
+  CreateCvarBool('bot_developer_messages_path', false, "Show some bot developer messages?", 0/*CVAR_ARCHIVE*/);
+  CreateCvarBool('bot_developer_messages_crumbs', false, "Show some bot developer messages?", 0/*CVAR_ARCHIVE*/);
+  CreateCvarBool('bot_developer_messages_planpath', false, "Show some bot developer messages?", 0/*CVAR_ARCHIVE*/);
+
+  CreateCvarBool('bot_run_to_subsector_center', true, "Should bots run to subsector center?", 0/*CVAR_ARCHIVE*/);
+
+  CreateCvarBool('bot_no_run', false, "Disable bot running?", 0/*CVAR_ARCHIVE*/);
+  CreateCvarBool('bot_no_jump', false, "Disable bot jumping?", 0/*CVAR_ARCHIVE*/);
+  CreateCvarBool('bot_always_headshots', false, "Should bot always try do to a headshot?", 0/*CVAR_ARCHIVE*/);
+
+
+  CreateCvarBool('trans_debug_log', false, "Show translation debug log?", CVAR_ARCHIVE);
+
+  CreateCvarBool('dbg_enable_multiplayer', false, "Enable multiplayer menu?", 0/*CVAR_ARCHIVE*/);
 
   // gozzo bug workaround
   CreateCvarBool('__gz_afall_drops', false, "Should `A_Fall()` drop items?", CVAR_ARCHIVE);
