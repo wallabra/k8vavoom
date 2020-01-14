@@ -142,6 +142,8 @@ int corpseQueueSlot;
 //
 //==========================================================================
 override void SpawnSpecials () {
+  ::SpawnSpecials();
+
   sector_t *sector;
   int i;
 

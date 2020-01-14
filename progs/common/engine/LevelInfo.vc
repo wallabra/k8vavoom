@@ -387,6 +387,19 @@ void AfterSetMapInfo (Level level) {
 //
 //==========================================================================
 void SpawnSpecials () {
+  // Vela Pax MAP01: remove barrels
+  if (XLevel.MapHashMD5 == "dae64fe4b2a4c17f4b4682bf7b63f12f") {
+    array!EntityEx elist;
+    EntityEx ent;
+    auto moClass = class!EntityEx(FindClassNoCase('ExplosiveBarrel'));
+    foreach AllThinkers(moClass, out ent) {
+      if (ent.Owner) continue;
+      if (ent.bIsPlayer) continue;
+      elist[$] = ent;
+    }
+    foreach (EntityEx e; elist) delete e;
+    printwarn("MAPFIX: Vela Pax, MAP01: removed %s useless barrels", elist.length);
+  }
 }
 
 
