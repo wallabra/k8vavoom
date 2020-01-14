@@ -438,12 +438,12 @@ int W_OpenAuxiliary (VStr FileName) {
 
 //==========================================================================
 //
-//  W_GetFirstAuxArchive
+//  W_GetFirstAuxFile
 //
 //  returns -1 if no aux archives were opened
 //
 //==========================================================================
-int W_GetFirstAuxArchive () {
+int W_GetFirstAuxFile () {
   MyThreadLocker glocker(&fsys_glock);
   return (AuxiliaryIndex >= 0 ? AuxiliaryIndex : -1);
 }

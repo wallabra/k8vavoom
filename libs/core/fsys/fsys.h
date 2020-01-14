@@ -110,7 +110,8 @@ enum EWadNamespace {
   WADNS_Music,
 
   // all
-  WADNS_Any,
+  WADNS_Any, // only 8-char names, no empty lump names allowed
+  WADNS_AllFiles, // even empty lump names are allowed
 };
 
 
@@ -382,6 +383,12 @@ public:
   WadFileIterator (const WadFileIterator &it) : lump(it.lump), fname(it.fname) {}
   WadFileIterator (const WadFileIterator &it, bool asEnd) : lump(-1), fname(it.fname) {}
   inline WadFileIterator &operator = (const WadFileIterator &it) { lump = it.lump; fname = it.fname; return *this; }
+
+  static inline WadFileIterator FromFirstAuxFile () {
+    WadFileIterator it;
+    it.lump = W_GetFirstAuxLump();
+    return it;
+  }
 
   inline WadFileIterator begin () { return WadFileIterator(*this); }
   inline WadFileIterator end () { return WadFileIterator(*this, true); }
