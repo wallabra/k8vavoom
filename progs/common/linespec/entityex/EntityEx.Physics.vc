@@ -1322,9 +1322,9 @@ void OnHitFloor () {
 
 //==========================================================================
 //
-// CheckSplash
+//  CheckSplash
 //
-// Checks for splashes caused by explosions
+//  Checks for splashes caused by explosions
 //
 //==========================================================================
 void CheckSplash (float distance) {
