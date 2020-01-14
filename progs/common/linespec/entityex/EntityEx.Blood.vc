@@ -743,8 +743,7 @@ final void SpawnBloodSplatter2 (TVec org, TVec shootOrg) {
 //
 //==========================================================================
 final void SpawnBloodRipper (int damage, optional EntityEx src) {
-  if (damage < 0 || !IsBloodAllowed()) return;
-  //if (!BloodType || damage < 0) return;
+  if (damage <= 0 || !IsBloodAllowed() || !BloodType) return;
   if (GetCvarB('dbg_blood_disable_entities')) return;
 
   float ltm = XLevel.Time;
