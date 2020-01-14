@@ -741,6 +741,8 @@ struct PWadScanInfo {
   PWadScanInfo () noexcept : processed(false), iwad(), mapname(), episode(-1), mapnum(-1), hasMapinfo(false) {}
   inline void clear () noexcept { processed = false; iwad.clear(); mapname.clear(); episode = -1; mapnum = -1; hasMapinfo = false; }
 
+  inline bool isMapIndexValid () const noexcept { return (episode >= 0 && mapnum >= 0); }
+
   inline int getMapIndex () const noexcept { return (episode > 0 ? episode*10+mapnum : episode == 0 ? mapnum : 0); }
 
   static inline int exmxToIndex (int e, int m) noexcept { return (e*10+m); }
@@ -752,15 +754,12 @@ static PWadScanInfo pwadScanInfo;
 
 //==========================================================================
 //
-//  findMapChecker
+//  processMapName
 //
 //==========================================================================
-static void findMapChecker (int lump) {
-  VName lumpname = W_LumpName(lump);
-  if (lumpname == NAME_None) return;
-  const char *name = *lumpname;
-
-  //GCon->Logf(NAME_Debug, "*** checking lump %d: name=<%s> (%s) (aux=%d)", lump, name, *W_FullLumpName(lump), (int)W_IsAuxLump(lump));
+static void processMapName (const char *name) {
+  if (!name || !name[0]) return;
+  //GCon->Logf(NAME_Debug, "*** checking map: name=<%s>", name);
 
   // if we have maps for both D1 and D2 (Maps Of Chaos, for example), use D2 maps
 
@@ -818,6 +817,18 @@ static void findMapChecker (int lump) {
 
 //==========================================================================
 //
+//  findMapChecker
+//
+//==========================================================================
+static void findMapChecker (int lump) {
+  VName lumpname = W_LumpName(lump);
+  if (lumpname == NAME_None) return;
+  processMapName(*lumpname);
+}
+
+
+//==========================================================================
+//
 //  performPWadScan
 //
 //  it is safe to call this several times
@@ -868,7 +879,24 @@ static void performPWadScan () {
   // guess the name of the first map
   GCon->Log(NAME_Init, "detecting pwad maps...");
   for (auto &&it : WadMapIterator::FromFirstAuxFile()) findMapChecker(it.lump);
+  // if no ordinary maps, try to find "maps/xxx.wad" files
+  if (!pwadScanInfo.isMapIndexValid()) {
+    //for (auto &&it : WadFileIterator::FromFirstAuxFile()) {
+    for (auto &&it : WadNSIterator::FromWadFile(W_GetFirstAuxFile(), WADNS_AllFiles)) {
+      VStr fname = it.getRealName();
+      // check for "maps/xxx.wad"
+      //GCon->Logf(NAME_Debug, ":: <%s>", *fname);
+      if (!fname.startsWithCI("maps/") || !fname.endsWithCI(".wad")) continue;
+      bool fucked = false;
+      for (const char *s = *fname+5; *s; ++s) if (*s == '/') { fucked = true; break; }
+      if (fucked) continue;
+      fname.chopLeft(5);
+      fname.chopRight(4);
+      processMapName(*fname);
+    }
+  }
   GCon->Log(NAME_Init, "pwad map detection complete.");
+
 
   W_CloseAuxiliary();
   //for (int f = 0; f < W_NextMountFileId(); ++f) GCon->Logf(NAME_Debug, "#%d: %s", f, *W_FullPakNameByFile(f));
