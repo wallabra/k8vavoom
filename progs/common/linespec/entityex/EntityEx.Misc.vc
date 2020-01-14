@@ -253,7 +253,7 @@ final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
       //if (damage <= 0) continue;
 
       if (damage > 0) {
-        if (damage > 1) Other.SpawnExploBloodAtHead(damage, Source);
+        if (damage > 1) Other.SpawnBloodAtHeadExplosion(damage, Source);
         if (DoDamage) {
           Other.Damage(self, Source, damage, BombDmgType);
         } else {
@@ -340,7 +340,7 @@ final bool TeleportMove (TVec org, optional bool ForceTelestomp, optional bool F
       }
     }
 
-    Other.SpawnExploBloodAtHead(max(Other.Health, 10000), self);
+    Other.SpawnBloodAtHeadExplosion(max(Other.Health, 10000), self);
     // telefrags kills even invincible things
     Other.Damage(self, self, max(Other.Health, 10000), 'Telefrag', forced:true/*, spawnBlood:true*/);
   }
@@ -831,7 +831,7 @@ override bool Touch (Entity InOther) {
   // but different classes trigger the touchiness, but that seems less straightforwards
   {
     bArmed = false; // Disarm
-    Other.SpawnExploBloodAtHead(Other.Health, self);
+    Other.SpawnBloodAtHeadExplosion(Other.Health, self);
     Other.Damage(none, none, Other.Health); // kill object
     return ProcessHitFlags(Other, true);
   }
@@ -848,10 +848,10 @@ override bool Touch (Entity InOther) {
       Other.Velocity.y += Velocity.y;
       if ((Other.Velocity.x+Other.Velocity.y) > 3.0*35.0) {
         damage = (int(fmax(0, Mass))/100)+1;
-        Other.SpawnExploBloodAtHead(damage, self);
+        Other.SpawnBloodAtHeadExplosion(damage, self);
         Other.Damage(self, self, damage);
         damage = (int(fmax(0, Other.Mass))/100)+1;
-        SpawnExploBloodAtHead(damage>>2, Other);
+        SpawnBloodAtHeadExplosion(damage>>2, Other);
         Damage(Other, Other, damage>>2);
       }
       return ProcessHitFlags(Other, false);
@@ -959,7 +959,7 @@ override bool Touch (Entity InOther) {
         damage = GetMissileDamage(3, 2);
         if (!Other.bNoBlood && !Other.bReflective && !Other.bInvulnerable) {
           // ok to spawn some blood
-          Other.SpawnRipperBlood(damage, self);
+          Other.SpawnBloodRipper(damage, self);
         }
         //printdebug("%C: ripper, other is %C", self, Other);
         Other.Damage(self, Target, damage, DamageType, spawnBlood:false); // we already spawned ripper blood
@@ -983,7 +983,7 @@ override bool Touch (Entity InOther) {
         if (self.Radius > 0) org.z += self.Radius/2.0;
         Other.SpawnBloodSplatter(Origin, damage, org);
       }
-      Other.SpawnExploBloodAtHead(damage, self);
+      Other.SpawnBloodAtHeadExplosion(damage, self);
       Other.Damage(self, Target, damage, DamageType);
     }
     // don't traverse any more
@@ -1128,7 +1128,7 @@ override void CheckForPushSpecial (line_t *line, int side) {
 //==========================================================================
 override void BlastedHitLine () {
   int damage = int(fmax(0, Mass))>>5;
-  if (damage > 0) SpawnExploBloodAtHead(damage);
+  if (damage > 0) SpawnBloodAtHeadExplosion(damage);
   Damage(none, none, damage);
 }
 
@@ -1763,7 +1763,7 @@ override bool SectorChanged (int CrushChange) {
   // killough 11/98: kill touchy things immediately
   if (bTouchy && (bArmed || IsSentient())) {
     bArmed = false; // disarm
-    SpawnExploBloodAtHead(InitialHealth, none);
+    SpawnBloodAtHeadExplosion(InitialHealth, none);
     Damage(none, none, InitialHealth); // kill object
     return true;
   }

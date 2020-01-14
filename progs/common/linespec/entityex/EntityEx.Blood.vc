@@ -168,12 +168,12 @@ final void BloodAddZClamped (ref TVec spos, float delta, float height) {
 
 //==========================================================================
 //
-//  SpawnHeadBloodSpray
+//  SpawnBloodSprayHead
 //
 //  this will be called on XDeath
 //
 //==========================================================================
-void SpawnHeadBloodSpray (int damage, optional bool notDead, optional bool spawnBloodPool) {
+void SpawnBloodSprayHead (int damage, optional bool notDead, optional bool spawnBloodPool) {
   bool doSpray = IsBloodAllowed() && GetCvarB('k8HSHeadKillBloodSpray');
   if (!doSpray) return;
 
@@ -619,10 +619,10 @@ final void SpawnBloodAtHead (int damage, optional TVec shootOrg) {
 
 //==========================================================================
 //
-//  SpawnExploBloodAtHead
+//  SpawnBloodAtHeadExplosion
 //
 //==========================================================================
-final void SpawnExploBloodAtHead (int damage, optional EntityEx src) {
+final void SpawnBloodAtHeadExplosion (int damage, optional EntityEx src) {
   if (bNoBlood || damage < 1 || !IsBloodAllowed()) return;
 
   if (src && BloodCanSplat(BloodType)) {
@@ -739,11 +739,12 @@ final void SpawnBloodSplatter2 (TVec org, TVec shootOrg) {
 
 //==========================================================================
 //
-//  SpawnRipperBlood
+//  SpawnBloodRipper
 //
 //==========================================================================
-final void SpawnRipperBlood (int damage, optional EntityEx src) {
-  if (!BloodType || damage < 0) return;
+final void SpawnBloodRipper (int damage, optional EntityEx src) {
+  if (damage < 0 || !IsBloodAllowed()) return;
+  //if (!BloodType || damage < 0) return;
   if (GetCvarB('dbg_blood_disable_entities')) return;
 
   float ltm = XLevel.Time;
@@ -766,5 +767,5 @@ final void SpawnRipperBlood (int damage, optional EntityEx src) {
     th.CopyBloodTranslations(self, copyNormalTranslation:true);
   }
 
-  if (damage > 0) SpawnExploBloodAtHead(damage, src!optional);
+  //if (damage > 0) SpawnBloodAtHeadExplosion(damage, src!optional);
 }
