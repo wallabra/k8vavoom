@@ -223,7 +223,7 @@ void VRenderLevelShadowVolume::RefilterStaticLights () {
     }
   }
 
-  GCon->Logf("ADVRENDERER: filtered %d static lights out of %d (%d left)", llen-actlights, llen, actlights);
+  if (actlights < llen) GCon->Logf("filtered %d static lights out of %d (%d left)", llen-actlights, llen, actlights);
 }
 
 
