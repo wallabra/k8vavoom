@@ -27,7 +27,6 @@
 #include "r_local.h"
 
 
-extern VCvarF r_lights_radius;
 extern VCvarI r_max_lights;
 //extern VCvarB r_disable_world_update;
 
@@ -181,7 +180,9 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
     AllLightsNumber = 0;
     AllShadowsNumber = 0;
 
-    const float rlightraduisSq = (r_lights_radius < 1 ? 2048*2048 : r_lights_radius*r_lights_radius);
+    // do not render lights further than `gl_maxdist`
+    const float maxLightDist = GetLightMaxDistDef(2048);
+    const float rlightraduisSq = maxLightDist*maxLightDist;
     //const bool hasPVS = Level->HasPVS();
 
     // no need to do this, because light rendering will do it again anyway
@@ -221,7 +222,7 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
           if (distSq > rlightraduisSq || backPlane.PointOnSide(lorg)) continue; // too far away
           if (fp.needUpdate(Drawer->vieworg, Drawer->viewangles)) {
             fp.setup(Drawer->vieworg, Drawer->viewangles, Drawer->viewforward, Drawer->viewright, Drawer->viewup);
-            frustum.setup(clip_base, fp, false); //true, r_lights_radius);
+            frustum.setup(clip_base, fp, false); //true, maxLightDist);
           }
           if (!frustum.checkSphere(lorg, stlight->radius)) {
             // out of frustum
@@ -293,7 +294,7 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
           if (distSq > rlightraduisSq || backPlane.PointOnSide(lorg)) continue; // too far away
           if (fp.needUpdate(Drawer->vieworg, Drawer->viewangles)) {
             fp.setup(Drawer->vieworg, Drawer->viewangles, Drawer->viewforward, Drawer->viewright, Drawer->viewup);
-            frustum.setup(clip_base, fp, false); //true, r_lights_radius);
+            frustum.setup(clip_base, fp, false); //true, maxLightDist);
           }
           if (!frustum.checkSphere(lorg, l->radius)) {
             // out of frustum

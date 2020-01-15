@@ -68,6 +68,36 @@ IMPLEMENT_FREE_FUNCTION(VObject, CvarUnlatchAll) {
 }
 
 
+// native static final float GetLightMaxDist ();
+IMPLEMENT_FREE_FUNCTION(VObject, GetLightMaxDist) {
+  #ifdef CLIENT
+  RET_FLOAT(VRenderLevelDrawer::GetLightMaxDist());
+  #else
+  RET_FLOAT(2048); // arbitrary
+  #endif
+}
+
+// native static final float GetDynLightMaxDist ();
+IMPLEMENT_FREE_FUNCTION(VObject, GetDynLightMaxDist) {
+  #ifdef CLIENT
+  RET_FLOAT(VRenderLevelDrawer::GetLightMaxDistDef(1024));
+  #else
+  RET_FLOAT(1024); // arbitrary
+  #endif
+}
+
+// native static final float GetLightMaxDistDef (float defval);
+IMPLEMENT_FREE_FUNCTION(VObject, GetLightMaxDistDef) {
+  float defval;
+  vobjGetParam(defval);
+  #ifdef CLIENT
+  RET_FLOAT(VRenderLevelDrawer::GetLightMaxDistDef(defval));
+  #else
+  RET_FLOAT(defval);
+  #endif
+}
+
+
 //**************************************************************************
 //
 //  Texture utils

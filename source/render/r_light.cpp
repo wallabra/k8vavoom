@@ -46,7 +46,6 @@ VCvarB r_allow_subtractive_lights("r_allow_subtractive_lights", false, "Are subt
 
 static VCvarB r_dynamic_light_better_vis_check("r_dynamic_light_better_vis_check", true, "Do better (but slower) dynlight visibility checking on spawn?", CVAR_Archive);
 
-extern VCvarF r_lights_radius;
 extern VCvarB r_glow_flat;
 
 
@@ -260,7 +259,7 @@ dlight_t *VRenderLevelShared::AllocDlight (VThinker *Owner, const TVec &lorg, fl
       static TFrustumParam fp;
       if (fp.needUpdate(cl->ViewOrg, cl->ViewAngles)) {
         fp.setup(cl->ViewOrg, cl->ViewAngles);
-        frustum.setup(clip_base, fp, true, r_lights_radius.asFloat());
+        frustum.setup(clip_base, fp, true, GetLightMaxDistDef(1024));
       }
       if (!frustum.checkSphere(lorg, (radius > 0 ? radius : 64))) {
         //GCon->Logf("  DROPPED; radius=%f; dist=%f", radius, sqrtf(bestdist));
@@ -448,7 +447,7 @@ void VRenderLevelShared::DecayLights (float timeDelta) {
       if (frustumState == 0) {
         TClipBase cb(refdef.fovx, refdef.fovy);
         if (cb.isValid()) {
-          frustum.setup(cb, TFrustumParam(cl->ViewOrg, cl->ViewAngles), true, r_lights_radius);
+          frustum.setup(cb, TFrustumParam(cl->ViewOrg, cl->ViewAngles), true, GetLightMaxDistDef(1024));
           frustumState = (frustum.isValid() ? 1 : -1);
         } else {
           frustumState = -1;

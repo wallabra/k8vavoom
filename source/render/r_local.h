@@ -42,6 +42,8 @@
 #define BSPIDX_LEAF_SUBSECTOR(bidx_)  ((bidx_)&(~(NF_SUBSECTOR)))
 
 
+extern VCvarF gl_maxdist;
+extern VCvarF r_lights_radius;
 extern VCvarB r_models_strict;
 
 

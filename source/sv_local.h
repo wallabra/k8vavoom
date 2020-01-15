@@ -502,4 +502,5 @@ static inline VVA_OKUNUSED VBasePlayer *SV_GetPlayerByNum (int pidx) {
   return GPlayersBase[pidx];
 }
 
+
 #endif

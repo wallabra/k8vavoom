@@ -328,6 +328,12 @@ native static final name GetTextureName (int Handle);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+native static final float GetLightMaxDist ();
+native static final float GetDynLightMaxDist ();
+native static final float GetLightMaxDistDef (float defval);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // console command functions
 
 native static final int Cmd_CheckParm (string str);

@@ -34,6 +34,9 @@ struct mmdl_t;
 struct VMeshModel;
 class VPortal;
 
+extern VCvarF gl_maxdist;
+extern VCvarF r_lights_radius;
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct particle_t {
@@ -252,6 +255,16 @@ public:
       default: break;
     }
     return STYLE_Normal;
+  }
+
+  // limit light distance with both `r_lights_radius` and `gl_maxdist`
+  static inline float GetLightMaxDist () noexcept {
+    return fmax(0.0f, (gl_maxdist > 0 ? fmin(gl_maxdist.asFloat(), r_lights_radius.asFloat()) : r_lights_radius.asFloat()));
+  }
+
+  static inline float GetLightMaxDistDef (const float defval) noexcept {
+    const float maxLightDist = (gl_maxdist > 0 ? fmin(gl_maxdist.asFloat(), r_lights_radius.asFloat()) : r_lights_radius.asFloat());
+    return (maxLightDist < 1 ? defval : maxLightDist);
   }
 };
 
