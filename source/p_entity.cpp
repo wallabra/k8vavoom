@@ -45,6 +45,17 @@ struct SavedVObjectPtr {
 };
 
 
+struct PCSaver {
+  VStateCall **ptr;
+  VStateCall *PrevCall;
+
+  inline PCSaver (VStateCall **aptr) : ptr(aptr), PrevCall(nullptr) { if (ptr) PrevCall = *ptr; }
+  PCSaver (const PCSaver &) = delete;
+  inline ~PCSaver () { if (ptr) *ptr = PrevCall; ptr = nullptr; }
+  PCSaver &operator = (const PCSaver &) = delete;
+};
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 struct SetStateGuard {
 public:
@@ -356,42 +367,27 @@ bool VEntity::HasSpecialStates (VName StateName) {
 void VEntity::GetStateEffects (TArray<VLightEffectDef *> &Lights, TArray<VParticleEffectDef *> &Part) const {
   // clear arrays
   Lights.reset();
+  Part.reset();
+
   // check for valid state
   if (!State) return;
-  // find all matching effects
-  const int len = GetClass()->SpriteEffects.length();
-  /*
-  if (VStr::strEquCI(GetClass()->GetName(), "ExplosiveBarrel")) {
-    //GCon->Logf(NAME_Debug, "BAR1(%s): light=%s; color=0x%08x; radius=(%g,%g)", Cls->GetName(), *SprDef.Light, SprFx.LightDef->Color, SprFx.LightDef->Radius, SprFx.LightDef->Radius2);
-    GCon->Logf("%s: sfxlen=%d", GetClass()->GetName(), len);
-  }
-  */
-  for (int i = 0; i < len; ++i) {
-    VSpriteEffect &SprFx = GetClass()->SpriteEffects[i];
-    //if (VStr::strEquCI(GetClass()->GetName(), "ExplosiveBarrel")) GCon->Logf("%s:   i=%d; SpriteIndex=%d(%s); Frame=%d; spfx: SpriteIndex=%d; Frame=%d", GetClass()->GetName(), i, State->SpriteIndex, *State->SpriteName, (State->Frame&VState::FF_FRAMEMASK), SprFx.SpriteIndex, SprFx.Frame);
-    if (SprFx.SpriteIndex != State->SpriteIndex) continue;
-    if (SprFx.Frame != -1 && SprFx.Frame != (State->Frame&VState::FF_FRAMEMASK)) continue;
-    if (SprFx.LightDef) Lights.Append(SprFx.LightDef);
-    if (SprFx.PartDef) Part.Append(SprFx.PartDef);
-  }
+
+  // init state light effect
   if (!State->LightInited) {
     State->LightInited = true;
     State->LightDef = nullptr;
     if (State->LightName.length()) State->LightDef = R_FindLightEffect(State->LightName);
   }
   if (State->LightDef) Lights.Append(State->LightDef);
+
+  // add class sprite effects
+  for (auto &&it : GetClass()->SpriteEffects) {
+    if (it.SpriteIndex != State->SpriteIndex) continue;
+    if (it.Frame != -1 && it.Frame != (State->Frame&VState::FF_FRAMEMASK)) continue;
+    if (it.LightDef) Lights.Append(it.LightDef);
+    if (it.PartDef) Part.Append(it.PartDef);
+  }
 }
-
-
-struct PCSaver {
-  VStateCall **ptr;
-  VStateCall *PrevCall;
-
-  inline PCSaver (VStateCall **aptr) : ptr(aptr), PrevCall(nullptr) { if (ptr) PrevCall = *ptr; }
-  PCSaver (const PCSaver &) = delete;
-  inline ~PCSaver () { if (ptr) *ptr = PrevCall; ptr = nullptr; }
-  PCSaver &operator = (const PCSaver &) = delete;
-};
 
 
 //==========================================================================
