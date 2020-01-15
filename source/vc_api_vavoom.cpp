@@ -98,6 +98,43 @@ IMPLEMENT_FREE_FUNCTION(VObject, GetLightMaxDistDef) {
 }
 
 
+// native static final bool CheckViewOrgDistance (const TVec org, const float dist);
+IMPLEMENT_FREE_FUNCTION(VObject, CheckViewOrgDistance) {
+  TVec org;
+  float dist;
+  vobjGetParam(org, dist);
+  #ifdef CLIENT
+  if (cl) {
+    RET_BOOL((cl->ViewOrg-org).lengthSquared() < dist*dist);
+  } else {
+    // no camera
+    RET_BOOL(false);
+  }
+  #else
+  // for server, always failed (there is no camera)
+  RET_BOOL(false);
+  #endif
+}
+
+// native static final bool CheckViewOrgDistance2D (const TVec org, const float dist);
+IMPLEMENT_FREE_FUNCTION(VObject, CheckViewOrgDistance2D) {
+  TVec org;
+  float dist;
+  vobjGetParam(org, dist);
+  #ifdef CLIENT
+  if (cl) {
+    RET_BOOL((cl->ViewOrg-org).length2DSquared() < dist*dist);
+  } else {
+    // no camera
+    RET_BOOL(false);
+  }
+  #else
+  // for server, always failed (there is no camera)
+  RET_BOOL(false);
+  #endif
+}
+
+
 //**************************************************************************
 //
 //  Texture utils

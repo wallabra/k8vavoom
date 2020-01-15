@@ -332,6 +332,9 @@ native static final float GetLightMaxDist ();
 native static final float GetDynLightMaxDist ();
 native static final float GetLightMaxDistDef (float defval);
 
+native static final bool CheckViewOrgDistance (const TVec org, const float dist);
+native static final bool CheckViewOrgDistance2D (const TVec org, const float dist);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // console command functions
