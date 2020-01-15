@@ -152,6 +152,8 @@ static bool setresolutionneeded = false;
 static int setwidth;
 static int setheight;
 
+static VCvarB dbg_disable_world_render("dbg_disable_world_render", false, "Disable world rendering?", 0);
+
 static VCvarF menu_darkening("menu_darkening", "0.6", "Screen darkening for active menus.", CVAR_Archive);
 static VCvarB draw_pause("draw_pause", true, "Draw \"paused\" text?", CVAR_Archive);
 static VCvarB draw_world_timer("draw_world_timer", false, "Draw playing time?", CVAR_Archive);
@@ -546,7 +548,15 @@ void SCR_Update (bool fullUpdate) {
       //k8: always render level, so automap will be updated in all cases
       updateStarted = true;
       Drawer->StartUpdate();
-      if (automapactive <= 0 || am_always_update || clWipeTimer >= 0.0f) R_RenderPlayerView();
+      if (automapactive <= 0 || am_always_update || clWipeTimer >= 0.0f) {
+        if (dbg_disable_world_render) {
+          Drawer->ClearScreen(VDrawer::CLEAR_ALL);
+        } else {
+          R_RenderPlayerView();
+        }
+      } else {
+        Drawer->ClearScreen(VDrawer::CLEAR_ALL);
+      }
       Drawer->Setup2D(); // restore 2D projection
       if (automapactive) AM_Drawer();
       if (GGameInfo->NetMode != NM_TitleMap) {
