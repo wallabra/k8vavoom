@@ -1505,8 +1505,9 @@ static void amFlatsCheckSubsector (int num) {
   if (!flatsurf || !flatsurf->texinfo.Tex || flatsurf->texinfo.Tex->Type == TEXTYPE_Null) return; // just in case
   // if this is a sky, and we're rendering ceiling, render floor instead
   if (/*!amDoFloors &&*/ flatsurf->texinfo.Tex == amSkyTex) {
-    flatsurf = AM_getFlatSurface(reg, true);
-    if (!flatsurf || !flatsurf->texinfo.Tex || flatsurf->texinfo.Tex->Type == TEXTYPE_Null) return; // just in case
+    //if (amDoFloors) return;
+    flatsurf = AM_getFlatSurface(reg, !amDoFloors);
+    if (!flatsurf || !flatsurf->texinfo.Tex || flatsurf->texinfo.Tex->Type == TEXTYPE_Null || flatsurf->texinfo.Tex == amSkyTex) return; // just in case
   }
   if (!flatsurf->surfs) return;
   //vassert(flatsurf->surfs->subsector == sub);
