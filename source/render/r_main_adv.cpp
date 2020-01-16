@@ -256,7 +256,7 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
           //if (own) GCon->Logf("STLOWN: %s", *own->GetClass()->GetFullName());
           TVec lorg = sli->stlight->origin;
           lorg.z += sli->zofs;
-          RenderLightShadows(own, flags, RD, Range, lorg, (dbg_adv_force_static_lights_radius > 0 ? dbg_adv_force_static_lights_radius : sli->stlight->radius), 0.0f, sli->stlight->color, true);
+          RenderLightShadows(own, flags, RD, Range, lorg, (dbg_adv_force_static_lights_radius > 0 ? dbg_adv_force_static_lights_radius : sli->stlight->radius), 0.0f, sli->stlight->color, true, sli->stlight->coneDirection, sli->stlight->coneAngle);
         }
       }
     }

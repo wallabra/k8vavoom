@@ -369,7 +369,7 @@ void CL_SetUpStandaloneClient () {
 
   for (int i = 0; i < GClLevel->NumStaticLights; ++i) {
     rep_light_t &L = GClLevel->StaticLights[i];
-    GClLevel->Renderer->AddStaticLightRGB(L.Owner, L.Origin, L.Radius, L.Color);
+    GClLevel->Renderer->AddStaticLightRGB(L.Owner, L.Origin, L.Radius, L.Color, L.ConeDir, L.ConeAngle);
   }
   GClLevel->Renderer->PreRender();
 
@@ -782,7 +782,7 @@ COMMAND(VidRendererRestart) {
   R_Start(GClLevel);
   for (int i = 0; i < GClLevel->NumStaticLights; ++i) {
     rep_light_t &L = GClLevel->StaticLights[i];
-    GClLevel->Renderer->AddStaticLightRGB(L.Owner, L.Origin, L.Radius, L.Color);
+    GClLevel->Renderer->AddStaticLightRGB(L.Owner, L.Origin, L.Radius, L.Color, L.ConeDir, L.ConeAngle);
   }
   GClLevel->Renderer->PreRender();
   Host_ResetSkipFrames();

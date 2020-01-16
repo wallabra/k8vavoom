@@ -428,7 +428,7 @@ void VLevel::Destroy () {
 //  VLevel::AddStaticLightRGB
 //
 //==========================================================================
-void VLevel::AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, vuint32 Color) {
+void VLevel::AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, vuint32 Color, TVec coneDirection, float coneAngle) {
   //FIXME: use proper data structure instead of reallocating it again and again
   rep_light_t *OldLights = StaticLights;
   ++NumStaticLights;
@@ -442,6 +442,8 @@ void VLevel::AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, 
   L.Origin = Origin;
   L.Radius = Radius;
   L.Color = Color;
+  L.ConeDir = coneDirection;
+  L.ConeAngle = coneAngle;
 }
 
 

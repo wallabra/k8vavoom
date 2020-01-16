@@ -667,7 +667,7 @@ void VLevelChannel::SendStaticLights () {
     VMessageOut Msg(this);
     Msg.bReliable = true;
     Msg.WriteInt(CMD_StaticLight/*, CMD_MAX*/);
-    Msg << L.Origin << L.Radius << L.Color;
+    Msg << L.Origin << L.Radius << L.Color << L.ConeDir << L.ConeAngle;
     SendMessage(&Msg);
   }
 }

@@ -471,7 +471,20 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
   const TVec lnormal = surf->GetNormal();
   //const TVec lorg = light->origin;
 
+  float attn = 1.0f;
   for (int c = 0; c < lmi.numsurfpt; ++c, ++spt) {
+    // check spotlight cone
+    if (lmi.spotLight) {
+      //spt = lmi.calcTexPoint(starts+s*step, startt+t*step);
+      if (length2DSquared((*spt)-lorg) > 2*2) {
+        attn = spt->CalcSpotlightAttMult(dorg, lmi.coneDir, lmi.coneAngle);
+        if (attn == 0.0f) continue;
+      } else {
+        attn = 1.0f;
+      }
+    }
+    float add = (rad-ptdist)*attn;
+
     const float raydist = CastRay(ssector, lorg+lnormal, (*spt)+lnormal, squaredist);
     if (raydist <= 0.0f) {
       // light ray is blocked
@@ -504,7 +517,7 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
     float angle = DotProduct(incoming, lnormal);
     angle = 0.5f+0.5f*angle;
 
-    float add = (light->radius-raydist)*angle;
+    float add = (light->radius-raydist)*(angle*attn);
     if (add <= 0.0f) continue;
     // without this, lights with huge radius will overbright everything
     if (add > 255.0f) add = 255.0f;

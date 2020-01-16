@@ -229,8 +229,8 @@ native final bool CompatInvisibility { get; } // compat_invisibility
 
 // ////////////////////////////////////////////////////////////////////////// //
 // static lights
-native final void AddStaticLight (Entity ent, TVec origin, float radius);
-native final void AddStaticLightRGB (Entity ent, TVec origin, float radius, int color);
+native final void AddStaticLight (Entity ent, TVec origin, float radius, optional TVec coneDirection, optional float coneAngle);
+native final void AddStaticLightRGB (Entity ent, TVec origin, float radius, int color, optional TVec coneDirection, optional float coneAngle);
 native final void MoveStaticLightByOwner (Entity ent, TVec origin);
 
 // ////////////////////////////////////////////////////////////////////////// //

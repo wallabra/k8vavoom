@@ -261,6 +261,8 @@ public:
     VEntity *owner;
     int leafnum;
     bool active; // for filtering
+    TVec coneDirection;
+    float coneAngle;
   };
 
 protected:
@@ -718,7 +720,7 @@ public:
   virtual void SegMoved (seg_t *) override;
   virtual void SetupFakeFloors (sector_t *) override;
 
-  virtual void AddStaticLightRGB (VEntity *Owner, const TVec &origin, float radius, vuint32 color) override;
+  virtual void AddStaticLightRGB (VEntity *Owner, const TVec &origin, float radius, vuint32 color, TVec coneDirection=TVec(0,0,0), float coneAngle=0.0f) override;
   virtual void MoveStaticLightByOwner (VEntity *Owner, const TVec &origin) override;
   virtual void ClearReferences () override;
 

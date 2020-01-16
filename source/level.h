@@ -98,6 +98,8 @@ struct rep_light_t {
   float Radius;
   vuint32 Color;
   VEntity *Owner;
+  TVec coneDirection;
+  float coneAngle;
 };
 
 
@@ -551,7 +553,7 @@ public:
     return 0x00; // this is REJECT matrix, not ACCEPT
   }
 
-  void AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, vuint32 Color);
+  void AddStaticLightRGB (VEntity *Ent, const TVec &Origin, float Radius, vuint32 Color, TVec coneDirection=TVec(0,0,0), float coneAngle=0.0f);
   void MoveStaticLightByOwner (VEntity *Ent, const TVec &Origin);
 
   VThinker *SpawnThinker (VClass *AClass, const TVec &AOrigin=TVec(0, 0, 0),

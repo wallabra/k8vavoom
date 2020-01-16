@@ -73,7 +73,7 @@ void VRenderLevelShared::RefilterStaticLights () {
 //  VRenderLevelShared::AddStaticLightRGB
 //
 //==========================================================================
-void VRenderLevelShared::AddStaticLightRGB (VEntity *Owner, const TVec &origin, float radius, vuint32 color) {
+void VRenderLevelShared::AddStaticLightRGB (VEntity *Owner, const TVec &origin, float radius, vuint32 color, TVec coneDirection, float coneAngle) {
   staticLightsFiltered = false;
   light_t &L = Lights.Alloc();
   L.origin = origin;
@@ -82,6 +82,8 @@ void VRenderLevelShared::AddStaticLightRGB (VEntity *Owner, const TVec &origin, 
   L.owner = Owner;
   L.leafnum = (int)(ptrdiff_t)(Level->PointInSubsector(origin)-Level->Subsectors);
   L.active = true;
+  L.coneDirection = coneDirection;
+  L.coneAngle = coneAngle;
   if (Owner) {
     auto osp = StOwners.find(Owner->GetUniqueId());
     if (osp) Lights[*osp].owner = nullptr;

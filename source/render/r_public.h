@@ -121,7 +121,7 @@ public:
   virtual void SetupFakeFloors (sector_t *) = 0;
   virtual void RenderPlayerView () = 0;
 
-  virtual void AddStaticLightRGB (VEntity *Owner, const TVec&, float, vuint32) = 0;
+  virtual void AddStaticLightRGB (VEntity *Owner, const TVec&, float, vuint32, TVec coneDirection=TVec(0,0,0), float coneAngle=0.0f) = 0;
   virtual void MoveStaticLightByOwner (VEntity *Owner, const TVec &origin) = 0;
   virtual void ClearReferences () = 0;
 
