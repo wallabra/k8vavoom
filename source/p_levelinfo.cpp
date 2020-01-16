@@ -344,21 +344,27 @@ bool VLevelInfo::IsTIDUsed (int tid) const {
 //  VLevelInfo natives
 //
 //==========================================================================
+// native final void AddStaticLight (Entity ent, TVec origin, float radius, optional TVec coneDirection, optional float coneAngle);
 IMPLEMENT_FUNCTION(VLevelInfo, AddStaticLight) {
-  P_GET_FLOAT(Radius);
-  P_GET_VEC(Origin);
-  P_GET_REF(VEntity, Ent);
-  P_GET_SELF;
-  Self->XLevel->AddStaticLightRGB(Ent, Origin, Radius, 0xffffffffu);
+  VEntity *Ent;
+  TVec Origin;
+  float Radius;
+  VOptParamVec ConeDir(TVec(0, 0, 0));
+  VOptParamFloat ConeAngle(0);
+  vobjGetParamSelf(Ent, Origin, Radius, ConeDir, ConeAngle);
+  Self->XLevel->AddStaticLightRGB(Ent, Origin, Radius, 0xffffffffu, ConeDir, ConeAngle);
 }
 
+// native final void AddStaticLightRGB (Entity ent, TVec origin, float radius, int color, optional TVec coneDirection, optional float coneAngle);
 IMPLEMENT_FUNCTION(VLevelInfo, AddStaticLightRGB) {
-  P_GET_INT(Color);
-  P_GET_FLOAT(Radius);
-  P_GET_VEC(Origin);
-  P_GET_REF(VEntity, Ent);
-  P_GET_SELF;
-  Self->XLevel->AddStaticLightRGB(Ent, Origin, Radius, (vuint32)Color);
+  VEntity *Ent;
+  TVec Origin;
+  float Radius;
+  vint32 Color;
+  VOptParamVec ConeDir(TVec(0, 0, 0));
+  VOptParamFloat ConeAngle(0);
+  vobjGetParamSelf(Ent, Origin, Radius, Color, ConeDir, ConeAngle);
+  Self->XLevel->AddStaticLightRGB(Ent, Origin, Radius, (vuint32)Color, ConeDir, ConeAngle);
 }
 
 IMPLEMENT_FUNCTION(VLevelInfo, MoveStaticLightByOwner) {

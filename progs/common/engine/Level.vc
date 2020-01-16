@@ -64,8 +64,8 @@ struct rep_light_t {
   float Radius;
   int Color;
   Entity Owner;
-  TVec coneDirection;
-  float coneAngle;
+  TVec ConeDir;
+  float ConeAngle;
 };
 
 native readonly name MapName;

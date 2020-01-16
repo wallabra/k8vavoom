@@ -98,8 +98,8 @@ struct rep_light_t {
   float Radius;
   vuint32 Color;
   VEntity *Owner;
-  TVec coneDirection;
-  float coneAngle;
+  TVec ConeDir;
+  float ConeAngle;
 };
 
 

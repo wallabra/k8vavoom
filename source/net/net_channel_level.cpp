@@ -46,6 +46,8 @@ enum {
 
   CMD_ResetLevel,
 
+  CMD_StaticLightSpot,
+
   CMD_MAX
 };
 
@@ -666,8 +668,13 @@ void VLevelChannel::SendStaticLights () {
     rep_light_t &L = Level->StaticLights[i];
     VMessageOut Msg(this);
     Msg.bReliable = true;
-    Msg.WriteInt(CMD_StaticLight/*, CMD_MAX*/);
-    Msg << L.Origin << L.Radius << L.Color << L.ConeDir << L.ConeAngle;
+    if (L.ConeAngle) {
+      Msg.WriteInt(CMD_StaticLightSpot/*, CMD_MAX*/);
+      Msg << L.Origin << L.Radius << L.Color << L.ConeDir << L.ConeAngle;
+    } else {
+      Msg.WriteInt(CMD_StaticLight/*, CMD_MAX*/);
+      Msg << L.Origin << L.Radius << L.Color;
+    }
     SendMessage(&Msg);
   }
 }
@@ -774,6 +781,18 @@ void VLevelChannel::ParsePacket (VMessageIn &Msg) {
           vuint32 Color;
           Msg << Origin << Radius << Color;
           Level->Renderer->AddStaticLightRGB(nullptr, Origin, Radius, Color);
+        }
+        break;
+      case CMD_StaticLightSpot:
+        {
+          //FIXME: owner!
+          TVec Origin;
+          float Radius;
+          vuint32 Color;
+          TVec ConeDir;
+          float ConeAngle;
+          Msg << Origin << Radius << Color << ConeDir << ConeAngle;
+          Level->Renderer->AddStaticLightRGB(nullptr, Origin, Radius, Color, ConeDir, ConeAngle);
         }
         break;
       case CMD_NewLevel:

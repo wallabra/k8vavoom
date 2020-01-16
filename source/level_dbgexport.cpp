@@ -424,7 +424,9 @@ void VLevel::DebugSaveLevel (VStream &strm) {
       writef(strm, "  player = %d;\n", idx);
       writef(strm, "  x = %g;\n", Things[idx].x);
       writef(strm, "  y = %g;\n", Things[idx].y);
-      writef(strm, "  angle = %d;\n", Things[idx].angle);
+      writef(strm, "  angle = %d;\n", (int)Things[idx].angle);
+      if (Things[idx].pitch) writef(strm, "  pitch = %g;\n", Things[idx].pitch);
+      if (Things[idx].roll) writef(strm, "  roll = %g;\n", Things[idx].roll);
       writef(strm, "}\n");
     }
   }
