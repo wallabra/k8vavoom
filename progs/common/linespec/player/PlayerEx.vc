@@ -1911,6 +1911,7 @@ Weapon CycleWeaponWithDir (Weapon Current, bool forward) {
   }
 
   //printdebug("st(fwd=%B): s=%s; i=%s", forward, currSlot, currIndex);
+  //if (Current) printdebug("  CW=%C; Wpn.SelectionOrder=%s", Current, Current.SelectionOrder);
   // now cycle
   int smax = pawn.GetNumberOfSlots();
   bool allowExtraSlot = (currSlot >= PlayerPawn::NUM_WEAPON_SLOTS || (smax > PlayerPawn::NUM_WEAPON_SLOTS && GetCvarB('wp_cycle_special_slot')));
@@ -1919,13 +1920,17 @@ Weapon CycleWeaponWithDir (Weapon Current, bool forward) {
     foreach (auto widx; 0..pawn.GetSlotSize(sidx)) {
       // move to the next weapon in slot
       if (forward) pawn.IncrementWeaponIndex(ref currSlot, ref currIndex, allowExtraSlot); else pawn.DecrementWeaponIndex(ref currSlot, ref currIndex, allowExtraSlot);
-      //printdebug("  st(fwd=%B): s=%s; i=%s", forward, currSlot, currIndex);
       class!Weapon swc = pawn.GetWeaponInSlot(currSlot, currIndex);
+      //printdebug("  000: st(fwd=%B): s=%s; i=%s; sidx=%s; widx=%s; wpn=%C", forward, currSlot, currIndex, sidx, widx, swc);
       if (!swc) continue;
       if (Current && Current.Class == swc) continue;
       Weapon Wpn = Weapon(EntityEx(MO).FindInventory(swc, disableReplacement:true));
       if (!Wpn) continue;
-      if (Wpn.CheckAmmo(Weapon::FIRE_Either, AutoSwitch:false)) return ChoosePowered(Wpn);
+      //printdebug("  001: st(fwd=%B): s=%s; i=%s; sidx=%s; widx=%s; wpn=%C", forward, currSlot, currIndex, sidx, widx, Wpn);
+      if (Wpn.CheckAmmo(Weapon::FIRE_Either, AutoSwitch:false)) {
+        //printdebug("  002: st(fwd=%B): s=%s; i=%s; sidx=%s; widx=%s; wpn=%C (%C)", forward, currSlot, currIndex, sidx, widx, Wpn, ChoosePowered(Wpn));
+        return ChoosePowered(Wpn);
+      }
     }
   }
 
