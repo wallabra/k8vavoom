@@ -321,6 +321,26 @@ final void SetSprite (class!EntityEx SrcClass) {
 
 //===========================================================================
 //
+//  decorate_A_M_FirePistol
+//
+//===========================================================================
+[decorate] final void decorate_A_M_FirePistol (optional bool accurate) {
+  TVec dir;
+
+  if (!Target) return;
+
+  if (!specified_accurate) accurate = true;
+
+  A_FaceTarget();
+  PlaySound('weapons/pistol', CHAN_WEAPON);
+
+  Aim(dir, 16.0*64.0);
+  GunShot(accurate, dir, 'Bullet', false);
+}
+
+
+//===========================================================================
+//
 //  A_M_FirePistolInaccurate
 //
 //===========================================================================
@@ -430,6 +450,24 @@ final void SetSprite (class!EntityEx SrcClass) {
 
   Aim(dir, 16.0*64.0);
   GunShot(false, dir, 'Bullet', false);
+}
+
+
+//===========================================================================
+//
+//  decorate_A_M_FireCGun
+//
+//===========================================================================
+[decorate] final void decorate_A_M_FireCGun (optional bool accurate) {
+  TVec dir;
+
+  if (!Target) return;
+
+  A_FaceTarget();
+  PlaySound('weapons/chngun', CHAN_WEAPON);
+
+  Aim(dir, 16.0*64.0);
+  GunShot(accurate, dir, 'Bullet', false);
 }
 
 
