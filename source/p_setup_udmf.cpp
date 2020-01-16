@@ -881,7 +881,10 @@ void VUdmfParser::ParseThing () {
     if (Key.strEquCI("x")) { hasXY |= 1u; T.x = CheckFloat(); continue; }
     if (Key.strEquCI("y")) { hasXY |= 2u; T.y = CheckFloat(); continue; }
     if (Key.strEquCI("height")) { T.height = CheckFloat(); continue; }
-    if (Key.strEquCI("angle")) { T.angle = CheckInt(); continue; }
+    if (Key.strEquCI("angle")) { T.angle = CheckFloat(); continue; }
+    if (Key.strEquCI("pitch")) { T.pitch = CheckFloat(); continue; }
+    if (Key.strEquCI("roll")) { T.roll = CheckFloat(); continue; }
+    if (Key.strEquCI("yaw")) { T.angle = CheckFloat(); continue; }
     if (Key.strEquCI("type")) { hasType = true; T.type = CheckInt(); continue; }
     if (Key.strEquCI("ambush")) { Flag(T.options, MTF_AMBUSH); continue; }
     if (Key.strEquCI("single")) { Flag(T.options, MTF_GSINGLE); continue; }

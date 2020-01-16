@@ -58,7 +58,8 @@ enum DLType {
   DLTYPE_Sector,
   DLTYPE_Subtractive, // partially supported
   DLTYPE_SectorSubtractive, // not supported
-  DLTYPE_Spot,
+  // flag (so point light can actually be spotlight; sigh)
+  DLTYPE_Spot = 0x80u,
 };
 
 

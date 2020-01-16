@@ -1322,7 +1322,7 @@ override void SpawnWorld (Level InLevel) {
       case PO_SPAWNCRUSH_TYPE:
       case PO_SPAWNHURT_TYPE:
         // Polyobj StartSpot Pt.
-        InLevel.SpawnPolyobj(mthing->x, mthing->y, mthing->angle,
+        InLevel.SpawnPolyobj(mthing->x, mthing->y, int(mthing->angle),
           mthing->type == PO_SPAWNCRUSH_TYPE_HEXEN ||
           mthing->type == PO_SPAWNCRUSH_TYPE ||
           mthing->type == PO_SPAWNHURT_TYPE,
@@ -1334,7 +1334,7 @@ override void SpawnWorld (Level InLevel) {
         goto case; //k8: is it right???
       case PO_ANCHOR_TYPE:
         // Polyobj Anchor Pt.
-        InLevel.AddPolyAnchorPoint(mthing->x, mthing->y, mthing->angle);
+        InLevel.AddPolyAnchorPoint(mthing->x, mthing->y, int(mthing->angle));
         mthing->type = 0;
         break;
     }

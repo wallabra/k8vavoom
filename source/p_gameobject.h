@@ -1012,7 +1012,8 @@ struct mthing_t {
   float x;
   float y;
   float height;
-  vint32 angle;
+  /*vint32 angle;*/
+  float angle, pitch, roll;
   vint32 type;
   vint32 options;
   vint32 SkillClassFilter;

@@ -249,6 +249,7 @@ enum {
 #include "dynlight/PointLightFlicker.vc"
 #include "dynlight/PointLightFlickerRandom.vc"
 #include "dynlight/SectorPointLight.vc"
+#include "dynlight/SpotLight.vc"
 
 #include "GlassShard.vc"
 #include "FastProjectile.vc"

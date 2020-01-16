@@ -1201,7 +1201,8 @@ struct mthing_t {
   float x;
   float y;
   float height;
-  int angle;
+  /*int angle;*/
+  float angle, pitch, roll;
   int type;
   int options;
   int SkillClassFilter;

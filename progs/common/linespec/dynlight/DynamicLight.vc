@@ -34,7 +34,8 @@ enum {
   DLTYPE_Sector,
   DLTYPE_Subtractive, // not supported yet
   DLTYPE_SectorSubtractive, // not supported yet
-  DLTYPE_Spot,
+  // flag (so point light can actually be spotlight; sigh)
+  DLTYPE_Spot = 0x80,
 };
 
 ubyte LightType;
@@ -51,8 +52,10 @@ override void OnMapSpawn (mthing_t *mthing) {
   //print("*** dynamic light for class '%C' (lt=%s; TID=%s; dormant=%B, mthing is %shere)", Class, LightType, TID, bDormant, (mthing ? "" : "not "));
   ::OnMapSpawn(mthing);
 
+  int ltype = LightType&~DLTYPE_Spot;
+
   //TODO: replace with statics
-  if (LightType == DLTYPE_Subtractive || LightType == DLTYPE_SectorSubtractive) {
+  if (ltype == DLTYPE_Subtractive || ltype == DLTYPE_SectorSubtractive) {
     //bDormant = true;
     printwarn("REMOVED SUBTRACTIVE LIGHT: r=%d; g=%d; b=%d; intensuty=%d", Args[0], Args[1], Args[2], Args[3]);
     /*
@@ -71,9 +74,15 @@ override void OnMapSpawn (mthing_t *mthing) {
     Origin.z = FixLightFlatPosition(Sector, Origin.z, mthing-&XLevel.Things[0]);
   }
 
+  //FIXME: change this when we'll get static spotlights
+  if (LightType&DLTYPE_Spot) {
+    printdebug("%C: Angles=%s; [1]=%s; [2]=%s", self, Angles, Args[1], Args[2]);
+    return;
+  }
+
   //printwarn("LIGHT: r=%d; g=%d; b=%d; intensuty=%d", Args[0], Args[1], Args[2], Args[3]);
   // use static light for placed point lights that cannot be deactivated
-  if (LightType == DLTYPE_Point && mthing && !TID && !bDormant) {
+  if (ltype == DLTYPE_Point && mthing && !TID && !bDormant) {
     if (mthing->arg4 > 0) {
       //printwarn("*** adding static light for class '%n' (%d, %d, %d, %d)", GetClassName(Class), mthing->arg1, mthing->arg2, mthing->arg3, mthing->arg4);
       if (mthing->arg1 == 255 && mthing->arg2 == 255 && mthing->arg3 == 255) {
@@ -85,14 +94,14 @@ override void OnMapSpawn (mthing_t *mthing) {
       }
     }
     Destroy();
-  } else if (LightType == DLTYPE_Sector && mthing && !TID && Level.XLevel.bConvertSectorLightsToStatic && Sector) {
+  } else if (ltype == DLTYPE_Sector && mthing && !TID && Level.XLevel.bConvertSectorLightsToStatic && Sector) {
     // hack for Discharge map set
     float Scale = float(Args[3])*0.125;
     if (!Scale) Scale = 1.0;
     Intensity = float(Sector->params.lightlevel)*Scale;
     if (Intensity < 0.0) Intensity = 0.0;
     if (Intensity > 255.0) Intensity = 255.0;
-    //printwarn("*** FORCED static light for class '%C' (lt=%s; TID=%s; dormant=%B, mthing is %shere); RGB=(%s,%s,%s); scale=%s; intensity=%s", Class, LightType, TID, bDormant, (mthing ? "" : "not "), Args[0], Args[1], Args[2], Scale, Intensity);
+    //printwarn("*** FORCED static light for class '%C' (lt=%s; TID=%s; dormant=%B, mthing is %shere); RGB=(%s,%s,%s); scale=%s; intensity=%s", Class, ltype, TID, bDormant, (mthing ? "" : "not "), Args[0], Args[1], Args[2], Scale, Intensity);
     Level.AddStaticLightRGB(none, Origin, IntensityToRadius(Intensity), RGB(Args[0], Args[1], Args[2]));
     /*
     if (Args[0] == 255 && Args[1] == 255 && Args[2]) {
@@ -105,7 +114,7 @@ override void OnMapSpawn (mthing_t *mthing) {
     */
     Destroy();
   } else {
-    //dprint("*** CANNOT add static light for class '%C' (lt=%s; TID=%s; dormant=%B, mthing is %shere)", Class, LightType, TID, bDormant, (mthing ? "" : "not "));
+    //dprint("*** CANNOT add static light for class '%C' (lt=%s; TID=%s; dormant=%B, mthing is %shere)", Class, ltype, TID, bDormant, (mthing ? "" : "not "));
   }
 }
 
@@ -155,9 +164,9 @@ override void ClientTick (float DeltaTime) {
 
   if (bDormant) return;
 
-  int realLightType = LightType;
+  int realLightType = LightType&~DLTYPE_Spot;
 
-  switch (LightType) {
+  switch (realLightType) {
     case DLTYPE_Point:
       Intensity = float(Args[3]);
       break;
@@ -210,10 +219,18 @@ override void ClientTick (float DeltaTime) {
   dlight_t *dl = AllocDlight(self, Origin, IntensityToRadius(Intensity));
   if (dl) {
     //dl->origin = Origin;
-    dl->color = RGB(Args[0], Args[1], Args[2]);
     //dl->radius = IntensityToRadius(Intensity);
     dl->die = XLevel.Time+0.01;
     dl->type = /*LightType*/realLightType;
+    if (LightType&DLTYPE_Spot) {
+      dl.type |= DLTYPE_Spot;
+      AngleVector(Angles, out dl.coneDirection);
+      //dl.coneAngle = (Args[1]+Args[2])/2.0f; // this is NOT right!
+      dl.coneAngle = AngleMod360(max(Args[1], Args[2])); // this is NOT right!
+      dl->color = Args[0]|0xff_00_00_00;
+    } else {
+      dl->color = RGB(Args[0], Args[1], Args[2]);
+    }
   }
 }
 
