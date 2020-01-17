@@ -1008,8 +1008,8 @@ int VTextureManager::AddRawWithPal (VName Name, VName PalName) {
 //  tryHardToFindTheImage
 //
 //==========================================================================
-static int tryHardToFindTheImage (const char *filename) {
-  if (!filename || !filename[0]) return -1;
+static int tryHardToFindTheImage (VStr filename) {
+  if (filename.isEmpty()) return -1;
   int i = W_CheckNumForFileName(filename);
   if (i >= 0) return i;
   /*static*/ const char *exts[] = {
@@ -1020,12 +1020,12 @@ static int tryHardToFindTheImage (const char *filename) {
     ".jpeg",
     nullptr,
   };
-  VStr base = VStr(filename).stripExtension();
+  VStr base = filename.stripExtension();
   for (const char **eptr = exts; *eptr; ++eptr) {
     VStr nn = base+(*eptr);
-    i = W_CheckNumForFileName(*nn);
+    i = W_CheckNumForFileName(nn);
     if (i >= 0) {
-      GCon->Logf(NAME_Warning, "found image '%s' instead of requested '%s'", *nn, filename);
+      GCon->Logf(NAME_Warning, "found image '%s' instead of requested '%s'", *nn, *filename);
       return i;
     }
   }
@@ -1049,10 +1049,17 @@ int VTextureManager::AddFileTextureChecked (VName Name, int Type) {
 
   VStr fname = VStr(Name);
 
-  for (int trynum = 0; trynum < 2; ++trynum) {
-    if (trynum == 1) {
-      if (Type != TEXTYPE_SkyMap) break;
-      fname = "textures/skyboxes/"+fname;
+  for (int trynum = 0; trynum < 4; ++trynum) {
+    if (Type == TEXTYPE_SkyMap) {
+      switch (trynum) {
+        case 0: fname = "textures/skybox/"+VStr(Name); break;
+        case 1: fname = "textures/skyboxes/"+VStr(Name); break;
+        case 2: fname = "textures/"+VStr(Name); break;
+        case 3: fname = VStr(Name); break;
+        default: abort(); // just in case
+      }
+    } else {
+      if (trynum) break;
     }
 
     i = tryHardToFindTheImage(*fname);
