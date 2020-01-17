@@ -750,6 +750,78 @@ struct PWadScanInfo {
 
 
 static PWadScanInfo pwadScanInfo;
+TArray<PWadMapLump> fsys_PWadMaps; // sorted
+
+extern "C" {
+  static int cmpPWadMapLump (const void *aa, const void *bb, void *) {
+    if (aa == bb) return 0;
+    const PWadMapLump *a = (const PWadMapLump *)aa;
+    const PWadMapLump *b = (const PWadMapLump *)bb;
+    if (a->episode && b->episode) return a->getMapIndex()-b->getMapIndex();
+    if (!a->episode && !b->episode) return a->getMapIndex()-b->getMapIndex();
+    if (a->episode) return -1; // b is D2 map
+    if (b->episode) return 1; // a is D2 map
+    // just in case
+    return a->getMapIndex()-b->getMapIndex();
+  }
+}
+
+
+//==========================================================================
+//
+//  appendPWadMapLump
+//
+//==========================================================================
+static void appendPWadMapLump (const PWadMapLump &wlmp) {
+  if (!wlmp.isValid()) return;
+  for (auto &&l : fsys_PWadMaps) {
+    if (l.isEqual(wlmp)) {
+      l = wlmp;
+      return;
+    }
+  }
+  fsys_PWadMaps.append(wlmp);
+}
+
+
+//==========================================================================
+//
+//  PWadMapLump::parseMapName
+//
+//==========================================================================
+bool PWadMapLump::parseMapName (const char *name) noexcept {
+  clear();
+  if (!name || !name[0]) return false;
+
+  // doom1, kdizd
+  if ((name[0] == 'e' || name[0] == 'z') && name[1] && name[2] == 'm' && name[3] && !name[4]) {
+    int e = VStr::digitInBase(name[1], 10);
+    int m = VStr::digitInBase(name[3], 10);
+    if (e < 0 || m < 0) return false;
+    if (e >= 1 && e <= 9 && m >= 1 && m <= 9) {
+      mapname = VStr(name);
+      episode = e;
+      mapnum = m;
+      return true;
+    }
+  }
+
+  // doom2
+  int n = -1;
+  // try to detect things like "aaa<digit>"
+  int dpos = 0;
+  while (name[dpos] && VStr::digitInBase(name[dpos], 10) < 0) ++dpos;
+  if (dpos == 0) return false; // must start from a lettter
+  if (VStr::digitInBase(name[dpos], 10) < 0) return false; // nope
+  for (const char *t = name+dpos; *t; ++t) if (VStr::digitInBase(*t, 10) < 0) return false;
+  if (!VStr::convertInt(name+dpos, &n)) return false;
+  if (n < 1 || n > 99) return false;
+  // i found her!
+  mapname = VStr(name);
+  episode = 0;
+  mapnum = n;
+  return true;
+}
 
 
 //==========================================================================
@@ -757,9 +829,16 @@ static PWadScanInfo pwadScanInfo;
 //  processMapName
 //
 //==========================================================================
-static void processMapName (const char *name) {
+static void processMapName (const char *name, int lump) {
   if (!name || !name[0]) return;
   //GCon->Logf(NAME_Debug, "*** checking map: name=<%s>", name);
+
+  //TODO: use `PWadMapLump::parseMapName()` here, and remove pasta
+  PWadMapLump wlmp;
+  if (wlmp.parseMapName(name)) {
+    wlmp.lump = lump;
+    appendPWadMapLump(wlmp);
+  }
 
   // if we have maps for both D1 and D2 (Maps Of Chaos, for example), use D2 maps
 
@@ -823,7 +902,7 @@ static void processMapName (const char *name) {
 static void findMapChecker (int lump) {
   VName lumpname = W_LumpName(lump);
   if (lumpname == NAME_None) return;
-  processMapName(*lumpname);
+  processMapName(*lumpname, lump);
 }
 
 
@@ -892,11 +971,12 @@ static void performPWadScan () {
       if (fucked) continue;
       fname.chopLeft(5);
       fname.chopRight(4);
-      processMapName(*fname);
+      processMapName(*fname, it.lump);
     }
   }
+  // sort collected maps
+  timsort_r(fsys_PWadMaps.ptr(), fsys_PWadMaps.length(), sizeof(PWadMapLump), &cmpPWadMapLump, nullptr);
   GCon->Log(NAME_Init, "pwad map detection complete.");
-
 
   W_CloseAuxiliary();
   //for (int f = 0; f < W_NextMountFileId(); ++f) GCon->Logf(NAME_Debug, "#%d: %s", f, *W_FullPakNameByFile(f));

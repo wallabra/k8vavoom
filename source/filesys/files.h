@@ -86,6 +86,26 @@ extern bool fsys_DisableBloodReplacement;
 //extern bool fsys_IgnoreZScript;
 //extern bool fsys_DisableBDW;
 
+struct PWadMapLump {
+  int lump;
+  VStr mapname;
+  int episode; // 0: doom2
+  int mapnum;
+
+  PWadMapLump () noexcept : lump(-1), mapname(), episode(-1), mapnum(-1) {}
+  inline void clear () noexcept { lump = -1; mapname.clear(); episode = -1; mapnum = -1; }
+  inline bool isValid () const noexcept { return (lump >= 0); }
+  inline int getMapIndex () const noexcept { return (episode > 0 ? episode*10+mapnum : episode == 0 ? mapnum : 0); }
+
+  inline bool isEqual (const PWadMapLump &n) const noexcept { return (episode == n.episode && mapnum == n.mapnum && mapname == n.mapname); }
+
+  // name must be lowercased
+  bool parseMapName (const char *name) noexcept;
+};
+
+extern TArray<PWadMapLump> fsys_PWadMaps; // sorted
+
+
 extern VCvarS game_name;
 
 extern GameOptions game_options;

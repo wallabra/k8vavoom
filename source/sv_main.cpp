@@ -1698,12 +1698,18 @@ COMMAND_WITH_AC(Map) {
 COMMAND_AC(Map) {
   VStr prefix = (aidx < args.length() ? args[aidx] : VStr());
   if (aidx == 1) {
-    int mapcount = P_GetNumMaps();
     TArray<VStr> list;
-    list.resize(mapcount);
-    for (int f = 0; f < mapcount; ++f) {
-      VName mlump = P_GetMapLumpName(f);
-      if (mlump != NAME_None) list.append(*mlump);
+    // prefer pwad maps
+    if (fsys_PWadMaps.length()) {
+      list.resize(fsys_PWadMaps.length());
+      for (auto &&lmp : fsys_PWadMaps) list.append(lmp.mapname);
+    } else {
+      int mapcount = P_GetNumMaps();
+      list.resize(mapcount);
+      for (int f = 0; f < mapcount; ++f) {
+        VName mlump = P_GetMapLumpName(f);
+        if (mlump != NAME_None) list.append(VStr(mlump));
+      }
     }
     if (list.length()) return AutoCompleteFromList(prefix, list, true); // return unchanged as empty
   }
