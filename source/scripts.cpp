@@ -733,9 +733,18 @@ void VScriptParser::ExpectLoneChar () {
   UnGet();
   char ch = PeekOrSkipChar(true); // skip
   if (ch && ScriptPtr < ScriptEndPtr) {
-    vuint8 nch = *(const vuint8 *)ScriptPtr;
-    if (nch > ' ' && nch == '/' && ScriptEndPtr-ScriptPtr > 1) {
-      if (ScriptPtr[1] != '/' && ScriptPtr[1] != '*' && ScriptPtr[1] != '+') ch = 0;
+    if (ch == '"' && ScriptPtr[0] == '\\' && ScriptPtr[1] && ScriptPtr[2] == '"') {
+      ch = ScriptPtr[1];
+      ScriptPtr += 3;
+    } else if (ch == '"' && ScriptPtr[0] && ScriptPtr[1] == '"') {
+      ch = ScriptPtr[0];
+      ScriptPtr += 2;
+    } else {
+      // check for delimiter (space or comment)
+      vuint8 nch = *(const vuint8 *)ScriptPtr;
+      if (nch > ' ' && nch == '/' && ScriptEndPtr-ScriptPtr > 1) {
+        if (ScriptPtr[1] != '/' && ScriptPtr[1] != '*' && ScriptPtr[1] != '+') ch = 0;
+      }
     }
   }
   if (!ch) Error("Missing char.");
