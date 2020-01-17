@@ -80,6 +80,24 @@ double dbgCheckVisTime = 0;
 
 //==========================================================================
 //
+//  ClipSegToSomething
+//
+//  k8: i don't know what is this, and it is unused anyway ;-)
+//
+//==========================================================================
+static VVA_OKUNUSED inline void ClipSegToSomething (TVec &v1, TVec &v2, const TVec vieworg) {
+  const TVec r1 = vieworg-v1;
+  const TVec r2 = vieworg-v2;
+  const float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), vieworg);
+  const float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), vieworg);
+  // there might be a better method of doing this, but this one works for now...
+       if (D1 > 0.0f && D2 < 0.0f) v2 += ((v2-v1)*D1)/(D1-D2);
+  else if (D2 > 0.0f && D1 < 0.0f) v1 += ((v2-v1)*D1)/(D2-D1);
+}
+
+
+//==========================================================================
+//
 //  GetMaxPortalDepth
 //
 //==========================================================================
@@ -762,44 +780,29 @@ void VRenderLevelShared::RenderLine (subsector_t *sub, sec_region_t *secregion, 
     if (Drawer->view_frustum.planes[5].PointOnSide(*seg->v1) && Drawer->view_frustum.planes[5].PointOnSide(*seg->v2)) return; // behind mirror
   }
 
-/*
+  /*
     k8: i don't know what Janis wanted to accomplish with this, but it actually
         makes clipping WORSE due to limited precision
+
+        clip sectors that are behind rendered segs
   if (seg->backsector) {
     // just apply this to sectors without slopes
     if (seg->frontsector->floor.normal.z == 1.0f && seg->backsector->floor.normal.z == 1.0f &&
         seg->frontsector->ceiling.normal.z == -1.0f && seg->backsector->ceiling.normal.z == -1.0f)
     {
-      // clip sectors that are behind rendered segs
       TVec v1 = *seg->v1;
       TVec v2 = *seg->v2;
-      TVec r1 = Drawer->vieworg-v1;
-      TVec r2 = Drawer->vieworg-v2;
-      float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Drawer->vieworg);
-      float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Drawer->vieworg);
-
-      // there might be a better method of doing this, but this one works for now...
-           if (D1 > 0.0f && D2 < 0.0f) v2 += ((v2-v1)*D1)/(D1-D2);
-      else if (D2 > 0.0f && D1 < 0.0f) v1 += ((v2-v1)*D1)/(D2-D1);
-
+      ClipSegToSomething(v1, v2, Drawer->vieworg);
       if (!ViewClip.IsRangeVisible(v2, v1)) return;
     }
   } else {
-    // clip sectors that are behind rendered segs
     TVec v1 = *seg->v1;
     TVec v2 = *seg->v2;
-    TVec r1 = Drawer->vieworg-v1;
-    TVec r2 = Drawer->vieworg-v2;
-    float D1 = DotProduct(Normalise(CrossProduct(r1, r2)), Drawer->vieworg);
-    float D2 = DotProduct(Normalise(CrossProduct(r2, r1)), Drawer->vieworg);
-
-    // there might be a better method of doing this, but this one works for now...
-         if (D1 > 0.0f && D2 < 0.0f) v2 += ((v2-v1)*D1)/(D1-D2);
-    else if (D2 > 0.0f && D1 < 0.0f) v1 += ((v2-v1)*D1)/(D2-D1);
-
+    ClipSegToSomething(v1, v2, Drawer->vieworg);
     if (!ViewClip.IsRangeVisible(v2, v1)) return;
   }
-*/
+  */
+
   if (!ViewClip.IsRangeVisible(*seg->v2, *seg->v1)) return;
 
   // k8: this drops some segs that may leak without proper frustum culling

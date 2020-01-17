@@ -138,8 +138,8 @@ VCvarB r_advlight_opt_optimise_scissor("r_advlight_opt_optimise_scissor", true, 
 //
 //==========================================================================
 static VVA_OKUNUSED inline void ClipSegToLight (TVec &v1, TVec &v2, const TVec &pos, const float radius) {
-  TVec r1 = pos-v1;
-  TVec r2 = pos-v2;
+  const TVec r1 = pos-v1;
+  const TVec r2 = pos-v2;
   const float d1 = DotProduct(Normalise(CrossProduct(r1, r2)), pos);
   const float d2 = DotProduct(Normalise(CrossProduct(r2, r1)), pos);
   // there might be a better method of doing this, but this one works for now...
