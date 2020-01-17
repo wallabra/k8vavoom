@@ -401,3 +401,36 @@ bool R_PBarUpdate (const char *message, int cur, int max, bool forced) {
   }
   return true;
 }
+
+
+// code that tells windows we're High DPI aware so it doesn't scale our windows
+// taken from Yamagi Quake II
+
+typedef enum D3_PROCESS_DPI_AWARENESS {
+  D3_PROCESS_DPI_UNAWARE = 0,
+  D3_PROCESS_SYSTEM_DPI_AWARE = 1,
+  D3_PROCESS_PER_MONITOR_DPI_AWARE = 2
+} YQ2_PROCESS_DPI_AWARENESS;
+
+
+void R_FuckOffShitdoze () {
+#ifdef _WIN32
+  /* for Vista, Win7 and Win8 */
+  BOOL(WINAPI *SetProcessDPIAware)(void) = nullptr;
+  HINSTANCE userDLL = LoadLibrary("USER32.DLL");
+  if (userDLL) SetProcessDPIAware = (BOOL(WINAPI *)(void))(void *)GetProcAddress(userDLL, "SetProcessDPIAware");
+
+  /* Win8.1 and later */
+  HRESULT(WINAPI *SetProcessDpiAwareness)(D3_PROCESS_DPI_AWARENESS dpiAwareness) = nullptr;
+  HINSTANCE shcoreDLL = LoadLibrary("SHCORE.DLL");
+  if (shcoreDLL) SetProcessDpiAwareness = (HRESULT(WINAPI *)(D3_PROCESS_DPI_AWARENESS))(void *)GetProcAddress(shcoreDLL, "SetProcessDpiAwareness");
+
+  if (SetProcessDpiAwareness) {
+    GCon->Log(NAME_Init, "DPI GTFO 8.1+");
+    SetProcessDpiAwareness(D3_PROCESS_PER_MONITOR_DPI_AWARE);
+  } else if (SetProcessDPIAware) {
+    GCon->Log(NAME_Init, "DPI GTFO 8");
+    SetProcessDPIAware();
+  }
+#endif
+}

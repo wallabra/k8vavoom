@@ -616,4 +616,9 @@ static inline VVA_OKUNUSED void R_LdrMsgShowMain (const char *msg) { R_LdrMsgSho
 static inline VVA_OKUNUSED void R_LdrMsgShowSecondary (const char *msg) { R_LdrMsgShow(msg, R_LdrMsgColorSecondary); }
 
 
+// call this before initializing video, to tell shitdoze to GTFO
+// does nothing on normal OSes
+void R_FuckOffShitdoze ();
+
+
 #endif

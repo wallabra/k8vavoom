@@ -195,7 +195,6 @@ void Host_Init () {
   #endif
   GCon->Logf(NAME_Init, "Memory allocator: %s", Z_GetAllocatorType());
 
-
   //{ GCon->Logf(NAME_Init, "HOST:::ARGC=%d", GArgs.Count()); for (int f = 0; f < GArgs.Count(); ++f) GCon->Logf(NAME_Init, "  #%d: <%s>", f, GArgs[f]); }
   if (cli_SetDeveloperDefine < 0) {
     #ifdef VAVOOM_K8_DEVELOPER

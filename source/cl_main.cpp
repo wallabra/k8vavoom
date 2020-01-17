@@ -89,6 +89,7 @@ void CL_Init () {
     int handle = GTextureManager.AddPatch(VName(va("croshai%x", cnum), VName::AddLower8), TEXTYPE_Pic, true/*silent*/);
     if (handle > 0 && developer) GCon->Logf(NAME_Debug, "found crosshair #%d", cnum);
   }
+  R_FuckOffShitdoze();
 }
 
 
