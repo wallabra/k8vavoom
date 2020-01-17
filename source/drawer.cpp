@@ -157,8 +157,8 @@ void VDrawer::CalcProjectionMatrix (VMatrix4 &ProjMat, VRenderLevelDrawer *rlev,
       ProjMat[2][2] = -1.0f;
       ProjMat[3][2] = -2.0f;
     } else {
-      float maxdist = max2(2.0f, gl_maxdist.asFloat());
-      if (!isFiniteF(maxdist)) maxdist = 8192.0f;
+      float maxdist = gl_maxdist.asFloat();
+      if (maxdist < 1.0f || !isFiniteF(maxdist)) maxdist = 32767.0f;
       ProjMat[2][2] = -(maxdist+1.0f)/(maxdist-1.0f);
       ProjMat[3][2] = -2.0f*maxdist/(maxdist-1.0f);
     }
