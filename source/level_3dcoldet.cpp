@@ -46,22 +46,23 @@ float VLevel::SweepLinedefAABB (const line_t *ld, TVec vstart, TVec vend, TVec b
   if (hitType) *hitType = CD_HT_None;
 
   float ifrac = -1.0f;
-  float ofrac = 1.0f;
+  float ofrac = +1.0f;
 
   bool startsOut = false;
   //bool endsOut = false;
   int phit = -1;
   bool lastContactWasPoint = false;
+  const unsigned pcount = (unsigned)ld->cdPlanesCount;
 
-  for (int pidx = 0; pidx < ld->cdPlanesCount; ++pidx) {
+  for (unsigned pidx = 0; pidx < pcount; ++pidx) {
     const TPlane *plane = &ld->cdPlanesArray[pidx];
     // box
     // line plane normal z is always zero, so don't bother checking it
-    TVec offset = TVec((plane->normal.x < 0 ? bmax.x : bmin.x), (plane->normal.y < 0 ? bmax.y : bmin.y), /*(plane->normal.z < 0 ? bmax.z : bmin.z)*/bmin.z);
+    const TVec offset = TVec((plane->normal.x < 0 ? bmax.x : bmin.x), (plane->normal.y < 0 ? bmax.y : bmin.y), /*(plane->normal.z < 0 ? bmax.z : bmin.z)*/bmin.z);
     // adjust the plane distance apropriately for mins/maxs
-    float dist = plane->dist-DotProduct(offset, plane->normal);
-    float idist = DotProduct(vstart, plane->normal)-dist;
-    float odist = DotProduct(vend, plane->normal)-dist;
+    const float dist = plane->dist-DotProduct(offset, plane->normal);
+    const float idist = DotProduct(vstart, plane->normal)-dist;
+    const float odist = DotProduct(vend, plane->normal)-dist;
 
     if (idist <= 0 && odist <= 0) continue; // doesn't cross this plane, don't bother
 
@@ -75,19 +76,19 @@ float VLevel::SweepLinedefAABB (const line_t *ld, TVec vstart, TVec vend, TVec b
     // crosses plane
     if (idist > odist) {
       // line is entering into the brush
-      float fr = fmax(0.0f, (idist-CD_CLIP_EPSILON)/(idist-odist));
+      const float fr = fmax(0.0f, (idist-CD_CLIP_EPSILON)/(idist-odist));
       if (fr > ifrac) {
         ifrac = fr;
-        phit = pidx;
+        phit = (int)pidx;
         lastContactWasPoint = (plane->normal.x && plane->normal.y);
       } else if (!lastContactWasPoint && fr == ifrac && plane->normal.x && plane->normal.y) {
         // prefer point contacts (rare case, but why not?)
         lastContactWasPoint = true;
-        phit = pidx;
+        phit = (int)pidx;
       }
     } else {
       // line is leaving the brush
-      float fr = fmin(1.0f, (idist+CD_CLIP_EPSILON)/(idist-odist));
+      const float fr = fmin(1.0f, (idist+CD_CLIP_EPSILON)/(idist-odist));
       if (fr < ofrac) ofrac = fr;
     }
   }
@@ -98,47 +99,46 @@ float VLevel::SweepLinedefAABB (const line_t *ld, TVec vstart, TVec vend, TVec b
     return -1.0f;
   }
 
-  if (ifrac < ofrac) {
-    if (ifrac > -1.0f) {
-      ifrac = Clamp(ifrac, 0.0f, 1.0f);
-      if (/*ifrac == 0 ||*/ ifrac == 1.0f) return ifrac; // just in case
-      if (hitPlane || contactPoint || hitType) {
-        const TPlane *hpl = &ld->cdPlanesArray[phit];
-        if (hitPlane) *hitPlane = *hpl;
-        if (contactPoint || hitType) {
-          CD_HitType httmp = CD_HT_None;
-          if (!hitType) hitType = &httmp;
-          // check what kind of hit this is
-          if (!hpl->normal.y) {
-            // left or right side of the box
-            *hitType = (hpl->normal.x < 0 ? CD_HT_Right : CD_HT_Left);
-            if (contactPoint) {
-              *contactPoint =
-                ld->v1->x < ld->v2->x ?
-                  (*hitType == CD_HT_Right ? *ld->v1 : *ld->v2) :
-                  (*hitType == CD_HT_Right ? *ld->v2 : *ld->v1);
-            }
-          } else if (!hpl->normal.x) {
-            // top or down side of the box
-            *hitType = (hpl->normal.y < 0 ? CD_HT_Bottom : CD_HT_Top);
-            if (contactPoint) {
-              *contactPoint =
-                ld->v1->y < ld->v2->y ?
-                  (*hitType == CD_HT_Bottom ? *ld->v1 : *ld->v2) :
-                  (*hitType == CD_HT_Bottom ? *ld->v2 : *ld->v1);
-            }
-          } else {
-            // point hit
-            *hitType = CD_HT_Point;
-            if (contactPoint) {
-              *contactPoint = TVec((hpl->normal.x < 0 ? bmax.x : bmin.x), (hpl->normal.y < 0 ? bmax.y : bmin.y), bmin.z);
-              *contactPoint += vstart+(vend-vstart)*ifrac;
-            }
+  if (ifrac > -1.0f && ifrac < ofrac) {
+    ifrac = clampval(ifrac, 0.0f, 1.0f); // just in case
+    if (/*ifrac == 0 ||*/ ifrac == 1.0f) return ifrac; // just in case
+    if (hitPlane || contactPoint || hitType) {
+      vassert(phit >= 0);
+      const TPlane *hpl = &ld->cdPlanesArray[(unsigned)phit];
+      if (hitPlane) *hitPlane = *hpl;
+      if (contactPoint || hitType) {
+        CD_HitType httmp = CD_HT_None;
+        if (!hitType) hitType = &httmp;
+        // check what kind of hit this is
+        if (!hpl->normal.y) {
+          // left or right side of the box
+          *hitType = (hpl->normal.x < 0 ? CD_HT_Right : CD_HT_Left);
+          if (contactPoint) {
+            *contactPoint =
+              ld->v1->x < ld->v2->x ?
+                (*hitType == CD_HT_Right ? *ld->v1 : *ld->v2) :
+                (*hitType == CD_HT_Right ? *ld->v2 : *ld->v1);
+          }
+        } else if (!hpl->normal.x) {
+          // top or down side of the box
+          *hitType = (hpl->normal.y < 0 ? CD_HT_Bottom : CD_HT_Top);
+          if (contactPoint) {
+            *contactPoint =
+              ld->v1->y < ld->v2->y ?
+                (*hitType == CD_HT_Bottom ? *ld->v1 : *ld->v2) :
+                (*hitType == CD_HT_Bottom ? *ld->v2 : *ld->v1);
+          }
+        } else {
+          // point hit
+          *hitType = CD_HT_Point;
+          if (contactPoint) {
+            *contactPoint = TVec((hpl->normal.x < 0 ? bmax.x : bmin.x), (hpl->normal.y < 0 ? bmax.y : bmin.y), bmin.z);
+            *contactPoint += vstart+(vend-vstart)*ifrac;
           }
         }
       }
-      return ifrac;
     }
+    return ifrac;
   }
 
   return 1.0f;

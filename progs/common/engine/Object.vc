@@ -647,7 +647,7 @@ static final float CD_SweepLineAABBlpl (const ref CD_LinePlanes linePlanes, TVec
   side = -1;
 
   float ifrac = -1.0f;
-  float ofrac = 1.0f;
+  float ofrac = +1.0f;
 
   bool startsOut = false;
   //bool endsOut = false;
@@ -698,38 +698,36 @@ static final float CD_SweepLineAABBlpl (const ref CD_LinePlanes linePlanes, TVec
     return -1.0f;
   }
 
-  if (ifrac < ofrac) {
-    if (ifrac > -1) {
-      side = phit;
-      //if (ifrac >= 1.0f) return ifrac;
-      // might be exact hit
-      ifrac = fclamp(ifrac, 0.0f, 1.0f);
-      //if (/*ifrac == 0 ||*/ ifrac == 1) return ifrac; // just in case
-      hitPlane = linePlanes.planes[phit];
-      //print("ifrac=%s; hp(%s): %s:%s", ifrac, phit, hitPlane.normal, hitPlane.dist);
-      // check what kind of hit this is
-      if (!hitPlane.normal.y) {
-        // left or right side of the box
-        hitType = (hitPlane.normal.x < 0 ? CD_HitType.CD_HT_Right : CD_HitType.CD_HT_Left);
-        contactPoint =
-          linePlanes.lineA.x < linePlanes.lineB.x ?
-            (hitType == CD_HitType.CD_HT_Right ? linePlanes.lineA : linePlanes.lineB) :
-            (hitType == CD_HitType.CD_HT_Right ? linePlanes.lineB : linePlanes.lineA);
-      } else if (!hitPlane.normal.x) {
-        // top or down side of the box
-        hitType = (hitPlane.normal.y < 0 ? CD_HitType.CD_HT_Bottom : CD_HitType.CD_HT_Top);
-        contactPoint =
-          linePlanes.lineA.y < linePlanes.lineB.y ?
-            (hitType == CD_HitType.CD_HT_Bottom ? linePlanes.lineA : linePlanes.lineB) :
-            (hitType == CD_HitType.CD_HT_Bottom ? linePlanes.lineB : linePlanes.lineA);
-      } else {
-        // point hit
-        hitType = CD_HitType.CD_HT_Point;
-        contactPoint = vector((hitPlane.normal.x < 0 ? bmax.x : bmin.x), (hitPlane.normal.y < 0 ? bmax.y : bmin.y), bmin.z);
-        contactPoint += vstart+(vend-vstart)*ifrac;
-      }
-      return ifrac;
+  if (ifrac > -1 && ifrac < ofrac) {
+    side = phit;
+    //if (ifrac >= 1.0f) return ifrac;
+    // might be exact hit
+    ifrac = fclamp(ifrac, 0.0f, 1.0f);
+    //if (/*ifrac == 0 ||*/ ifrac == 1) return ifrac; // just in case
+    hitPlane = linePlanes.planes[phit];
+    //print("ifrac=%s; hp(%s): %s:%s", ifrac, phit, hitPlane.normal, hitPlane.dist);
+    // check what kind of hit this is
+    if (!hitPlane.normal.y) {
+      // left or right side of the box
+      hitType = (hitPlane.normal.x < 0 ? CD_HitType.CD_HT_Right : CD_HitType.CD_HT_Left);
+      contactPoint =
+        linePlanes.lineA.x < linePlanes.lineB.x ?
+          (hitType == CD_HitType.CD_HT_Right ? linePlanes.lineA : linePlanes.lineB) :
+          (hitType == CD_HitType.CD_HT_Right ? linePlanes.lineB : linePlanes.lineA);
+    } else if (!hitPlane.normal.x) {
+      // top or down side of the box
+      hitType = (hitPlane.normal.y < 0 ? CD_HitType.CD_HT_Bottom : CD_HitType.CD_HT_Top);
+      contactPoint =
+        linePlanes.lineA.y < linePlanes.lineB.y ?
+          (hitType == CD_HitType.CD_HT_Bottom ? linePlanes.lineA : linePlanes.lineB) :
+          (hitType == CD_HitType.CD_HT_Bottom ? linePlanes.lineB : linePlanes.lineA);
+    } else {
+      // point hit
+      hitType = CD_HitType.CD_HT_Point;
+      contactPoint = vector((hitPlane.normal.x < 0 ? bmax.x : bmin.x), (hitPlane.normal.y < 0 ? bmax.y : bmin.y), bmin.z);
+      contactPoint += vstart+(vend-vstart)*ifrac;
     }
+    return ifrac;
   }
 
   return 1.0;
