@@ -95,6 +95,8 @@ override void Destroyed () {
     // add new velocity to old velocity
     tgt.Velocity += nv;
   }
+
+  tgt.Velocity = vclampscale(tgt.Velocity, MAXMOVE);
 }
 
 
@@ -109,6 +111,7 @@ override void Destroyed () {
   tgt.Velocity.x *= scale;
   tgt.Velocity.y *= scale;
   tgt.Velocity.z *= scale;
+  tgt.Velocity = vclampscale(tgt.Velocity, MAXMOVE);
 }
 
 
