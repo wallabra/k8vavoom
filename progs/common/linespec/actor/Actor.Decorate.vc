@@ -291,6 +291,7 @@ protected final void do_A_Raise (optional float raisespeed) {
 [decorate] final void A_SetSpeed (float speed, optional int aptr) {
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_SetSpeed', aptr!optional));
   if (!tgt) return;
+  if (!speed.isfinite) speed = 0;
   tgt.Speed = fmax(0, speed)*35.0;
 }
 
@@ -303,6 +304,7 @@ protected final void do_A_Raise (optional float raisespeed) {
 [decorate] final void A_SetFloatSpeed (float speed, optional int aptr) {
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_SetFloatSpeed', aptr!optional));
   if (!tgt) return;
+  if (!speed.isfinite) speed = 0;
   tgt.FloatSpeed = fmax(0, speed)*35.0;
 }
 
@@ -324,7 +326,7 @@ protected final void do_A_Raise (optional float raisespeed) {
 //
 //==========================================================================
 [decorate] final void A_SetMass (float newmass) {
-  if (newmass.isfinite) Mass = newmass;
+  Mass = (newmass.isfinite ? fclamp(newmass, 0, 10000) : 10000);
 }
 
 

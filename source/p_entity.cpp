@@ -135,6 +135,20 @@ void VEntity::AddedToLevel () {
 
 //==========================================================================
 //
+//  VEntity::Tick
+//
+//==========================================================================
+void VEntity::Tick (float deltaTime) {
+  // `Mass` is clamped in `OnMapSpawn()`, and we should take care of it in VC code
+  // clamp velocity (just in case)
+  Velocity.clampScaleInPlace(PHYS_MAXMOVE);
+  // call normal ticker
+  VThinker::Tick(deltaTime);
+}
+
+
+//==========================================================================
+//
 //  VEntity::SetTID
 //
 //==========================================================================

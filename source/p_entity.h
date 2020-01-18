@@ -142,6 +142,9 @@ struct VPainChanceInfo {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+//WARNING: sync this with VC code!
+#define PHYS_MAXMOVE  (1050.0f*10.0f)
+
 class VEntity : public VThinker {
   DECLARE_CLASS(VEntity, VThinker, 0)
   NO_DEFAULT_CONSTRUCTOR(VEntity)
@@ -372,6 +375,7 @@ public:
   // VThinker interface
   virtual void DestroyThinker () override;
   virtual void AddedToLevel () override;
+  virtual void Tick (float deltaTime) override;
 
   void SetTID (int);
   void InsertIntoTIDList (int);

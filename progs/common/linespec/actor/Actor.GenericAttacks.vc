@@ -698,7 +698,7 @@ final void DoExplode (int damage, float distance, bool damageSelf, optional int 
   if (A) {
     A.CarryBloodTranslations(self);
     A.PlayMissileSpawnSound(self);
-    if (XYVel) A.Speed = XYVel*35.0;
+    if (XYVel) A.Speed = fabs(XYVel*35.0); //k8:???
     A.Angles.yaw = AngleMod360(owo.Angles.yaw+(Random()*2.0-1.0)*45.0/8.0);
     A.Velocity.z = (ZVel+2.0*sin(owo.Angles.pitch))*35.0;
     A.Origin.z += 2.0*sin(owo.Angles.pitch);

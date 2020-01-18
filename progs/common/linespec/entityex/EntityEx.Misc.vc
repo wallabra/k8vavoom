@@ -278,10 +278,13 @@ final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
           Dir = vector(1.0, 0.0, 0.0);
         }
         float othermass = fmax(1, Other.Mass);
-        TVec Vel = Normalise(Dir)*Thrust;
-        Other.Velocity.x += (Vel.x/othermass)*35.0;
-        Other.Velocity.y += (Vel.y/othermass)*35.0;
-        if (thrustZ) Other.Velocity.z += (VelZ/othermass)*35.0;
+        if (othermass < 10000) {
+          TVec Vel = Normalise(Dir)*Thrust;
+          Other.Velocity.x += (Vel.x/othermass)*35.0;
+          Other.Velocity.y += (Vel.y/othermass)*35.0;
+          if (thrustZ) Other.Velocity.z += (VelZ/othermass)*35.0;
+          Other.Velocity = vclampscale(Other.Velocity, MAXMOVE); // just in case
+        }
         //old:if (DoDamage) Other.Velocity.z += (VelZ / Other.Mass) * 35.0;
       }
     }
@@ -478,6 +481,8 @@ final void Thrust (float angle, float move) {
   sincos(angle, out s, out c);
   Velocity.x += move*c*35.0;
   Velocity.y += move*s*35.0;
+  // just in case
+  Velocity = vclampscale(Velocity, MAXMOVE);
 }
 
 
@@ -1248,10 +1253,16 @@ override void OnMapSpawn (mthing_t *mthing) {
   if (!MeleeState) MeleeState = FindState('Melee');
   if (!MissileState) MissileState = FindState('Missile');
 
-  if (Level.Game.fastparm == 1 && FastSpeed) Speed = FastSpeed;
+  if (Level.Game.fastparm == 1 && FastSpeed > 0) Speed = FastSpeed;
 
   if (CountsAsKill()) ++Level.TotalKills;
   if (bCountItem) ++Level.TotalItems;
+
+  // clamp some properties
+  Mass = (Mass.isinf ? 10000 : fclamp(Mass, 0, 10000));
+  Velocity = vclampscale(Velocity, MAXMOVE);
+  Speed = (Speed.isfinite ? fclamp(Speed, -MAXMOVE, MAXMOVE) : 0.0);
+  FloatSpeed = (FloatSpeed.isfinite ? fclamp(FloatSpeed, -MAXMOVE, MAXMOVE) : 0.0);
 
   // set the state, but do not use SetState, because action routines can't be called yet
   // if the spawnstate has an action routine, it will not be called
@@ -2330,7 +2341,7 @@ final EntityEx TossUpObject (class!EntityEx type) {
 override void SetActorProperty (int Prop, int IntVal, string StrVal) {
   switch (Prop) {
     case APROP_Health: Health = IntVal; if (bIsPlayer) Player.Health = IntVal; break;
-    case APROP_Speed: Speed = float(IntVal)/65536.0*35.0; break;
+    case APROP_Speed: Speed = float(IntVal)/65536.0*35.0; if (Speed < 0) Speed = 0; break;
     case APROP_Damage: MissileDamage = IntVal; break;
     case APROP_Alpha: Alpha = float(IntVal)/65536.0; break;
     case APROP_RenderStyle: RenderStyle = IntVal; break;
@@ -2357,7 +2368,7 @@ override void SetActorProperty (int Prop, int IntVal, string StrVal) {
     case APROP_ScaleX: ScaleX = float(IntVal)/65536.0; break;
     case APROP_ScaleY: ScaleY = float(IntVal)/65536.0; break;
     case APROP_Dormant: bDormant = !!IntVal; break; //k8: change state for monster?
-    case APROP_Mass: Mass = max(0, IntVal); break; //k8: float?
+    case APROP_Mass: Mass = clamp(IntVal, 0, 10000); break; //k8: float?
     case APROP_Height: Height = fmax(0, float(IntVal)/65536.0); break;
     case APROP_Radius: Radius = fmax(0, float(IntVal)/65536.0); break;
     case APROP_ViewHeight:

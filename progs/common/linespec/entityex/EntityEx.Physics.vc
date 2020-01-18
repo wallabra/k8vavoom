@@ -79,21 +79,6 @@ final void GetFloorAndCeilingEx (out tmtrace_t tmtrace, TVec org, optional bool 
 //
 //==========================================================================
 bool Physics (float DeltaTime) {
-  scope(exit) {
-#ifdef PHYSICS_VELOCITY_CHECKS
-    if (!(Velocity.x.isfinite && Velocity.y.isfinite && Velocity.z.isfinite)) {
-      printwarn("*** FUCKED VELOCITY FOR '%C': %s; Speed=%s; Mass=%s; Gravity=%s; Radius=%s; Height=%s", self, Velocity, Speed, Mass, Gravity, Radius, Height);
-      Velocity = vector(0, 0, 0);
-    } else
-#endif
-    {
-      // why not?
-      Velocity = vclampscale(Velocity, MAXMOVE);
-    }
-    Speed = (Speed.isfinite ? fclamp(Speed, -MAXMOVE, MAXMOVE) : 0.0);
-    //tmp_phys_last_sector = Sector; no, not here
-    if (Sector) tmp_phys_last_floor_pic = (Sector ? EFloor.splane->pic : 0);
-  }
   //if (bIsPlayer) { printdebug("%C: bSlide=%B", self, bSlide); /*bSlide = true;*/ }
 
   // GZDoom does it like this, so we should do it this way too
@@ -245,6 +230,7 @@ bool Physics (float DeltaTime) {
       CheckWater();
       tmp_phys_last_water_sector = Sector;
       tmp_phys_last_water_z = Origin.z;
+      tmp_phys_last_floor_pic = EFloor.splane->pic;
     }
     // `UpdateVelocity()` does nothing if "no gravity" set
     //FIXME: make a separate flag for this?
@@ -431,7 +417,8 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
   }
 
   //if (self isa 'DH_GaussBall') printdebug("%C: 000 (max=%s): %s  %s", self, MAXMOVE, Velocity, Normalise(Velocity));
-  Velocity = vclampscale(Velocity, MAXMOVE);
+  //k8: no need to do this (i hope)
+  //Velocity = vclampscale(Velocity, MAXMOVE);
   //if (self isa 'DH_GaussBall') printdebug("%C: 001 (max=%s): %s  %s", self, MAXMOVE, Velocity, Normalise(Velocity));
 
   float xmove = Velocity.x*DeltaTime;
@@ -566,27 +553,21 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
 //
 //==========================================================================
 final void ZMovement (float DeltaTime, float OldFloorZ) {
-  float dist;
-  float delta;
-  float OldZ = Origin.z;
+  float oldz = Origin.z;
 
-  if (Mass.isinf) Mass = 10000;
-  //else if (Mass < 0) Mass = 0;
-  Mass = fclamp(Mass, 0, 10000);
-
-  bool hasGravity = (!bNoGravity && Sector);
+  //Mass = (Mass.isinf ? 10000 : fclamp(Mass, 0, 10000)); // done in C++ code
 
   // [RH] Double gravity only if running off a ledge. Coming down from
   // an upward thrust (e.g. a jump) should not double it.
   // Make objects fall to their own weight.
-  if (hasGravity && Origin.z > FloorZ) {
+  if (oldz > FloorZ && !bNoGravity && Sector) {
     float grav = (Gravity*Level.Gravity*(WaterLevel < 2 ? Sector->Gravity : Sector->Gravity/10.0))/1.220703125; // 9.8 (1053.52)
     if (grav.isinf) grav = 1000;
     //float xmass = (Mass.isinf ? 10000.0 : fmax(1, Mass));
     float xmass = fmax(1, Mass);
     //print("WL=%s; grav=%s; Gravity=%s, LGravity=%s; SGravity=%s; mass=%s; vz=%s", WaterLevel, grav, Gravity, Level.Gravity, Sector->Gravity, xmass, Velocity.z);
 
-    if (Velocity.z == 0.0 && OldFloorZ > FloorZ && Origin.z == OldFloorZ) {
+    if (Velocity.z == 0.0 && OldFloorZ > FloorZ && oldz == OldFloorZ) {
       if (WaterLevel < 2) {
         Velocity.z -= ((grav+grav)/xmass)*DeltaTime;
       } else {
@@ -602,29 +583,30 @@ final void ZMovement (float DeltaTime, float OldFloorZ) {
   }
 
   // check for smooth step up
-  if (bIsPlayer && Origin.z < FloorZ) {
+  if (bIsPlayer && oldz < FloorZ) {
     PlayerEx pex = PlayerEx(Player);
     if (pex && pex.MO == self) {
-      float dfz = FloorZ-Origin.z;
+      float dfz = FloorZ-oldz;
       // arbitrary number
       if (dfz > 0.6 || EFloor.spGetNormalZ == 1.0) {
         pex.ViewHeight -= dfz;
         pex.DeltaViewHeight = (PlayerPawn(self).GetPawnViewHeight-pex.ViewHeight)*4.0;
-        //if (EFloor.spGetNormalZ != 1.0) print("FUCK1! z=%s; fz=%s; sfz=(%s:%s); dfz=%s", Origin.z, FloorZ, Sector.floor.minz, Sector.floor.maxz, dfz);
+        //if (EFloor.spGetNormalZ != 1.0) print("FUCK1! z=%s; fz=%s; sfz=(%s:%s); dfz=%s", oldz, FloorZ, Sector.floor.minz, Sector.floor.maxz, dfz);
       } else {
-        //print("FUCK0! z=%s; fz=%s; sfz=(%s:%s); dfz=%s", Origin.z, FloorZ, Sector.floor.minz, Sector.floor.maxz, dfz);
+        //print("FUCK0! z=%s; fz=%s; sfz=(%s:%s); dfz=%s", oldz, FloorZ, Sector.floor.minz, Sector.floor.maxz, dfz);
       }
     }
   }
 
   // adjust height
   if (!bFloatBob) Origin.z += Velocity.z*DeltaTime;
+  float origz = Origin.z;
 
   if (bFloat && !bDormant && Target) {
     // float down towards enemy if too close
     if (!bSkullFly && !bInFloat) {
-      dist = DistTo2(Target);
-      delta = Target.Origin.z+Height/2.0-Origin.z;
+      float dist = DistTo2(Target);
+      float delta = Target.Origin.z+Height/2.0-origz;
       if (delta < 0.0 && dist < -(delta*3.0)) {
         Velocity.z = 0.0;
         EntityEx onmo = EntityEx(CheckOnmobj());
@@ -642,29 +624,33 @@ final void ZMovement (float DeltaTime, float OldFloorZ) {
           return;
         }
       }
+      origz = Origin.z;
     }
   }
 
-  if (bIsPlayer && bFly && Origin.z > FloorZ /*&& (XLevel.TicTime&2)*/) {
+  if (bIsPlayer && bFly && origz > FloorZ /*&& (XLevel.TicTime&2)*/) {
     //FIXME: this is time-dependent, rewrite!
     //Origin.z += sin(90.0*35.0/20.0*AngleMod360(int(XLevel.Time)))/2.0;
     auto plx = PlayerEx(Player);
-    if (plx && !(plx.Cheats&PlayerEx::CF_NOCLIP)) Origin.z = plx.CalcFlyZ(Origin.z);
+    if (plx && !(plx.Cheats&PlayerEx::CF_NOCLIP)) {
+      Origin.z = plx.CalcFlyZ(Origin.z);
+      origz = Origin.z;
+    }
   }
 
   // clip movement
   if (!bNoInteraction) {
-    if (Origin.z <= FloorZ+0.1) {
+    if (origz <= FloorZ+0.1) {
       // hit the floor
-      if (!HitFloor(OldZ)) return;
+      if (!HitFloor(oldz)) return;
     }
 
-    if (Origin.z+Height > CeilingZ) {
+    if (origz+Height > CeilingZ) {
       // hit the ceiling
-      if (!HitCeiling(OldZ)) return;
+      if (!HitCeiling(oldz)) return;
     }
 
-    CheckFakeFloorTriggers(OldZ);
+    CheckFakeFloorTriggers(oldz);
   }
 }
 

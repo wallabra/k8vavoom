@@ -37,9 +37,11 @@ override void Tick (float DeltaTime) {
   int Count = 8;
 
   //print("%C: velocity=%s", self, Velocity);
-  // clamp some values
+  // clamp some values (done by C++ code)
+  /*
   Velocity = vclamp(Velocity, -8191*2, 8191*2);
   Origin = vclamp(Origin, -100000, 100000);
+  */
   //Speed = fclamp(Speed, -4095, 4095);
 
   float velxDT = Velocity.x*DeltaTime;
