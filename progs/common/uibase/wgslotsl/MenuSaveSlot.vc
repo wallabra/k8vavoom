@@ -56,7 +56,7 @@ override void OnDraw () {
   if (bEnteringText && IsFocus()) {
     DrawSlot(0, EnterText, true);
   } else {
-    DrawSlot(0, Text, false);
+    DrawSlot(0, Text, false, (Status ? CR_UNTRANSLATED : CR_DARKBROWN));
   }
   DrawStrikeLine = false;
 }

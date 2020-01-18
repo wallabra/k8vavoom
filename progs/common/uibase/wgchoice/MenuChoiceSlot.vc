@@ -62,7 +62,7 @@ void InitSlot () {
 //  DrawSlot
 //
 //==========================================================================
-int DrawSlot (int y, string text, bool entering) {
+int DrawSlot (int y, string text, bool entering, optional int color) {
   int xx;
   int j;
 
@@ -82,7 +82,7 @@ int DrawSlot (int y, string text, bool entering) {
 
   SetFont('smallfont');
   SetTextAlign(hleft, vtop);
-  DrawText(5, y+5, text);
+  DrawText(5, y+5, text, color!optional);
   if (entering) DrawCursor();
 
   if (DrawStrikeLine) {

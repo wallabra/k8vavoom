@@ -84,7 +84,7 @@ static VStr saveFileBase;
 // ////////////////////////////////////////////////////////////////////////// //
 #define QUICKSAVE_SLOT  (-666)
 
-#define EMPTYSTRING  "empty slot"
+#define EMPTYSTRING  "Empty Slot"
 #define MOBJ_NULL    (-1)
 
 #define SAVE_DESCRIPTION_LENGTH    (24)
@@ -1188,7 +1188,7 @@ bool SV_GetSaveString (int Slot, VStr &Desc) {
     }
     if (!goodSave) Desc = "*"+Desc;
     delete Strm;
-    return true;
+    return /*true*/goodSave;
   } else {
     Desc = EMPTYSTRING;
     return false;
