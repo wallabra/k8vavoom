@@ -556,7 +556,7 @@ public:
   void GetStateEffects (TArray<VLightEffectDef *> &, TArray<VParticleEffectDef *> &) const;
   bool CallStateChain (VEntity *, VState *);
 
-  bool CheckWater ();
+  void CheckWater (); // this sets `WaterLevel` and `WaterType`
   bool CheckPosition (TVec);
   bool CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups=false, bool ignoreMonsters=false, bool ignorePlayers=false);
   bool TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool checkOnly=false, bool noPickups=false);

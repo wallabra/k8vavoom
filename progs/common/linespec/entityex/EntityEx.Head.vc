@@ -519,9 +519,9 @@ float GenericDamageMultiplier = 1.0; // for APROP_DamageMultiplier
 
 // temporary for physics z change due to stepping
 transient float tmp_phys_z_change;
-// this is used to check sector change, to avoid excessive splashes
-transient sector_t *tmp_phys_last_sector;
-transient int tmp_phys_last_floor_pic;
+transient float tmp_phys_last_water_z; // used to trigger water checks
+transient sector_t *tmp_phys_last_water_sector; // used to trigger water checks
+transient int tmp_phys_last_floor_pic; // used to avoid excessive splashes
 transient float tmp_phys_last_splash_time; // `XLevel.Time`
 // this is used to skip checking for scrollers for non-moving objects
 transient TVec lastScrollCheckOrigin = vector(-90000, -90000, -90000);

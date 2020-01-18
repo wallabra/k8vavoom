@@ -482,8 +482,10 @@ void VEntity::LinkToWorld (int properFloorCheck) {
 //
 //  VEntity::CheckWater
 //
+//  this sets `WaterLevel` and `WaterType`
+//
 //==========================================================================
-bool VEntity::CheckWater () {
+void VEntity::CheckWater () {
   TVec point;
   int cont;
 
@@ -511,7 +513,7 @@ bool VEntity::CheckWater () {
       }
     }
   }
-  return (WaterLevel > 1);
+  //return (WaterLevel > 1);
 }
 
 
@@ -2261,7 +2263,7 @@ bool VRoughBlockSearchIterator::GetNext () {
 //==========================================================================
 IMPLEMENT_FUNCTION(VEntity, CheckWater) {
   P_GET_SELF;
-  RET_INT(Self->CheckWater());
+  Self->CheckWater();
 }
 
 IMPLEMENT_FUNCTION(VEntity, CheckDropOff) {

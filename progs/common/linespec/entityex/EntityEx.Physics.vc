@@ -91,7 +91,7 @@ bool Physics (float DeltaTime) {
       Velocity = vclampscale(Velocity, MAXMOVE);
     }
     Speed = (Speed.isfinite ? fclamp(Speed, -MAXMOVE, MAXMOVE) : 0.0);
-    tmp_phys_last_sector = Sector;
+    //tmp_phys_last_sector = Sector; no, not here
     if (Sector) tmp_phys_last_floor_pic = (Sector ? EFloor.splane->pic : 0);
   }
   //if (bIsPlayer) { printdebug("%C: bSlide=%B", self, bSlide); /*bSlide = true;*/ }
@@ -133,114 +133,123 @@ bool Physics (float DeltaTime) {
 
   //if (bOnScroll) printdebug("%C: ON SCROLLER!", self);
 
-  #if 0
-  // old code
-  if (Sector && Sector->AffectorData && bColideWithWorld && !bNoSector) {
-    // killough 3/7/98: Carry things on floor
-    // killough 3/20/98: use new sector list which reflects true members
-    // killough 3/27/98: fix carrier bug
-    // killough 4/4/98: Underwater, carry things even w/o gravity
+  //k8: do we even need to process entity without sector set here?
+  if (Sector) {
+    #if 0
+    // old code
+    if (Sector->AffectorData && bColideWithWorld && !bNoSector) {
+      // killough 3/7/98: Carry things on floor
+      // killough 3/20/98: use new sector list which reflects true members
+      // killough 3/27/98: fix carrier bug
+      // killough 4/4/98: Underwater, carry things even w/o gravity
 
-    // move objects only if on floor or underwater, non-floating, and clipped
-    // k8: this should work with 3d floors, but now it doesn't
-    int CountX = 0;
-    int CountY = 0;
-    SectorThinker SecThink;
-    for (SecThink = SectorThinker(Sector->AffectorData); SecThink; SecThink = SecThink.NextAffector) {
-      auto sth = Scroller(SecThink);
-      if (!sth) continue;
-      float scrollx = sth.CarryScrollX;
-      float scrolly = sth.CarryScrollY;
-      if (!scrollx && !scrolly) continue;
-      if (bNoGravity && (!Sector->heightsec || Sector->heightsec->bIgnoreHeightSec)) continue;
-      float height = GetPointZClamped(ref Sector->floor, Origin);
-      if (Origin.z > height) {
-        if (!Sector->heightsec || Sector->heightsec->bIgnoreHeightSec) continue;
-        float waterheight = GetPointZClamped(ref Sector->heightsec->floor, Origin);
-        if (waterheight > height && Origin.z >= waterheight) continue;
-      }
-
-      CummX += scrollx;
-      CummY += scrolly;
-      if (scrollx) ++CountX;
-      if (scrolly) ++CountY;
-    }
-
-    // Some levels designed with Boom in mind actually want things to accelerate
-    // at neighboring scrolling sector boundaries. But it is only important for
-    // non-player objects.
-    if (bIsPlayer || !Level.CompatBoomScroll) {
-      if (CountX > 1) CummX /= float(CountX);
-      if (CountY > 1) CummY /= float(CountY);
-    }
-    //if (CummX || CummY) print("%C: CALCULATED SCROLL=(%s,%s); vel=%s", self, CummX, CummY, Velocity);
-  }
-  #else
-  // new code
-  if (GetClassInstanceCountWithSub(Scroller) && Sector && bColideWithWorld && !bNoSector && Origin != lastScrollCheckOrigin) {
-    //printdebug("%C(%s): SCROLLER CHECK!", self, UniqueId);
-    lastScrollCheckOrigin = Origin;
-    // killough 3/7/98: Carry things on floor
-    // killough 3/20/98: use new sector list which reflects true members
-    // killough 3/27/98: fix carrier bug
-    // killough 4/4/98: Underwater, carry things even w/o gravity
-    // k8: check all sectors we are touching, because this is how it should work
-    // k8: sector cannot appear twice in list, so there is no reason to protect iteration with a counter
-    //int vismark = 0; // don't create it until necessary
-    // k8: this should work with 3d floors, but now it doesn't
-    int CountX = 0;
-    int CountY = 0;
-    bool resetCheck = false;
-    for (msecnode_t *mnode = TouchingSectorList; mnode; mnode = mnode.TNext) {
-      sector_t *sec = mnode.Sector;
-      if (!sec->AffectorData) continue;
       // move objects only if on floor or underwater, non-floating, and clipped
-      for (SectorThinker SecThink = SectorThinker(sec->AffectorData); SecThink; SecThink = SecThink.NextAffector) {
+      // k8: this should work with 3d floors, but now it doesn't
+      int CountX = 0;
+      int CountY = 0;
+      SectorThinker SecThink;
+      for (SecThink = SectorThinker(Sector->AffectorData); SecThink; SecThink = SecThink.NextAffector) {
         auto sth = Scroller(SecThink);
         if (!sth) continue;
-        resetCheck = true;
         float scrollx = sth.CarryScrollX;
         float scrolly = sth.CarryScrollY;
         if (!scrollx && !scrolly) continue;
-        if (bNoGravity && (!sec->heightsec || sec->heightsec->bIgnoreHeightSec)) continue;
-        float height = GetPointZClamped(ref sec->floor, Origin);
+        if (bNoGravity && (!Sector->heightsec || Sector->heightsec->bIgnoreHeightSec)) continue;
+        float height = GetPointZClamped(ref Sector->floor, Origin);
         if (Origin.z > height) {
-          if (!sec->heightsec || sec->heightsec->bIgnoreHeightSec) continue;
-          float waterheight = GetPointZClamped(ref sec->heightsec->floor, Origin);
+          if (!Sector->heightsec || Sector->heightsec->bIgnoreHeightSec) continue;
+          float waterheight = GetPointZClamped(ref Sector->heightsec->floor, Origin);
           if (waterheight > height && Origin.z >= waterheight) continue;
         }
-        // don't process sectors twice (eh, it is guaranteed by the list builder)
-        //if (!vismark) vismark = XLevel.GetNextVisitedCount();
-        //if (mnode.Visited == vismark) continue;
-        //mnode.Visited = vismark;
+
         CummX += scrollx;
         CummY += scrolly;
         if (scrollx) ++CountX;
         if (scrolly) ++CountY;
       }
-    }
-    // reset check, so scroller will work next time
-    if (resetCheck) lastScrollCheckOrigin = vector(-90000, -90000, -90000);
 
-    // Some levels designed with Boom in mind actually want things to accelerate
-    // at neighboring scrolling sector boundaries. But it is only important for
-    // non-player objects.
-    if (bIsPlayer || !Level.CompatBoomScroll) {
-      if (CountX > 1) CummX /= float(CountX);
-      if (CountY > 1) CummY /= float(CountY);
+      // Some levels designed with Boom in mind actually want things to accelerate
+      // at neighboring scrolling sector boundaries. But it is only important for
+      // non-player objects.
+      if (bIsPlayer || !Level.CompatBoomScroll) {
+        if (CountX > 1) CummX /= float(CountX);
+        if (CountY > 1) CummY /= float(CountY);
+      }
+      //if (CummX || CummY) print("%C: CALCULATED SCROLL=(%s,%s); vel=%s", self, CummX, CummY, Velocity);
     }
-    //if (CummX || CummY) print("%C: CALCULATED SCROLL=(%s,%s); vel=%s", self, CummX, CummY, Velocity);
-  }
-  /*
-  else {
-    printdebug("%C(%s): SCROLLER CHECK SKIP! Origin=%s; last=%s", self, UniqueId, Origin, lastScrollCheckOrigin);
-  }
-  */
-  #endif
+    #else
+    // new code
+    if (GetClassInstanceCountWithSub(Scroller) && bColideWithWorld && !bNoSector && Origin != lastScrollCheckOrigin) {
+      //printdebug("%C(%s): SCROLLER CHECK!", self, UniqueId);
+      lastScrollCheckOrigin = Origin;
+      // killough 3/7/98: Carry things on floor
+      // killough 3/20/98: use new sector list which reflects true members
+      // killough 3/27/98: fix carrier bug
+      // killough 4/4/98: Underwater, carry things even w/o gravity
+      // k8: check all sectors we are touching, because this is how it should work
+      // k8: sector cannot appear twice in list, so there is no reason to protect iteration with a counter
+      //int vismark = 0; // don't create it until necessary
+      // k8: this should work with 3d floors, but now it doesn't
+      int CountX = 0;
+      int CountY = 0;
+      bool resetCheck = false;
+      for (msecnode_t *mnode = TouchingSectorList; mnode; mnode = mnode.TNext) {
+        sector_t *sec = mnode.Sector;
+        if (!sec->AffectorData) continue;
+        // move objects only if on floor or underwater, non-floating, and clipped
+        for (SectorThinker SecThink = SectorThinker(sec->AffectorData); SecThink; SecThink = SecThink.NextAffector) {
+          auto sth = Scroller(SecThink);
+          if (!sth) continue;
+          resetCheck = true;
+          float scrollx = sth.CarryScrollX;
+          float scrolly = sth.CarryScrollY;
+          if (!scrollx && !scrolly) continue;
+          if (bNoGravity && (!sec->heightsec || sec->heightsec->bIgnoreHeightSec)) continue;
+          float height = GetPointZClamped(ref sec->floor, Origin);
+          if (Origin.z > height) {
+            if (!sec->heightsec || sec->heightsec->bIgnoreHeightSec) continue;
+            float waterheight = GetPointZClamped(ref sec->heightsec->floor, Origin);
+            if (waterheight > height && Origin.z >= waterheight) continue;
+          }
+          // don't process sectors twice (eh, it is guaranteed by the list builder)
+          //if (!vismark) vismark = XLevel.GetNextVisitedCount();
+          //if (mnode.Visited == vismark) continue;
+          //mnode.Visited = vismark;
+          CummX += scrollx;
+          CummY += scrolly;
+          if (scrollx) ++CountX;
+          if (scrolly) ++CountY;
+        }
+      }
+      // reset check, so scroller will work next time
+      if (resetCheck) lastScrollCheckOrigin = vector(-90000, -90000, -90000);
 
-  // this is only marginally faster
-  /*if (bMonster || bMissile || bIsPlayer)*/ CheckWater();
-  if (Sector) {
+      // Some levels designed with Boom in mind actually want things to accelerate
+      // at neighboring scrolling sector boundaries. But it is only important for
+      // non-player objects.
+      if (bIsPlayer || !Level.CompatBoomScroll) {
+        if (CountX > 1) CummX /= float(CountX);
+        if (CountY > 1) CummY /= float(CountY);
+      }
+      //if (CummX || CummY) print("%C: CALCULATED SCROLL=(%s,%s); vel=%s", self, CummX, CummY, Velocity);
+    }
+    /*
+    else {
+      printdebug("%C(%s): SCROLLER CHECK SKIP! Origin=%s; last=%s", self, UniqueId, Origin, lastScrollCheckOrigin);
+    }
+    */
+    #endif
+
+    //k8: re-check it only when z position or sector was changed
+    #if 0
+    CheckWater();
+    #else
+    if (tmp_phys_last_water_sector != Sector || Origin.z != tmp_phys_last_water_z) {
+      CheckWater();
+      tmp_phys_last_water_z = Origin.z;
+      tmp_phys_last_water_sector = Sector;
+    }
+    #endif
     // `UpdateVelocity()` does nothing if "no gravity" set
     //FIXME: make a separate flag for this?
     //if (!bNoGravity && (!bFloatBob || !bSpecial)) UpdateVelocity(DeltaTime);

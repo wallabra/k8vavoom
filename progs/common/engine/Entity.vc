@@ -434,7 +434,8 @@ native final bool TestMobjZ ();
 native final void SlideMove (float StepVelScale, optional bool noPickups/*=false*/);
 native final void BounceWall (float overbounce, float bouncefactor);
 
-native final bool CheckWater ();
+// this sets `WaterLevel` and `WaterType`
+native final void CheckWater ();
 
 // moved from native to VC code
 //native final void UpdateVelocity ();
