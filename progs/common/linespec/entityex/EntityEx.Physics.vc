@@ -241,15 +241,11 @@ bool Physics (float DeltaTime) {
     #endif
 
     //k8: re-check it only when z position or sector was changed
-    #if 0
-    CheckWater();
-    #else
     if (tmp_phys_last_water_sector != Sector || Origin.z != tmp_phys_last_water_z) {
       CheckWater();
-      tmp_phys_last_water_z = Origin.z;
       tmp_phys_last_water_sector = Sector;
+      tmp_phys_last_water_z = Origin.z;
     }
-    #endif
     // `UpdateVelocity()` does nothing if "no gravity" set
     //FIXME: make a separate flag for this?
     //if (!bNoGravity && (!bFloatBob || !bSpecial)) UpdateVelocity(DeltaTime);

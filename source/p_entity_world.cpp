@@ -486,30 +486,24 @@ void VEntity::LinkToWorld (int properFloorCheck) {
 //
 //==========================================================================
 void VEntity::CheckWater () {
-  TVec point;
-  int cont;
-
-  point = Origin;
-  point.z += 1.0f;
-
   WaterLevel = 0;
   WaterType = 0;
-  cont = SV_PointContents(Sector, point);
-  if (cont > 0) {
-    WaterType = cont;
+
+  TVec point = Origin;
+  point.z += 1.0f;
+  const int contents = SV_PointContents(Sector, point);
+  if (contents > 0) {
+    WaterType = contents;
     WaterLevel = 1;
     point.z = Origin.z+Height*0.5f;
-    cont = SV_PointContents(Sector, point);
-    if (cont > 0) {
+    if (SV_PointContents(Sector, point) > 0) {
       WaterLevel = 2;
       if (EntityFlags&EF_IsPlayer) {
         point = Player->ViewOrg;
-        cont = SV_PointContents(Sector, point);
-        if (cont > 0) WaterLevel = 3;
+        if (SV_PointContents(Sector, point) > 0) WaterLevel = 3;
       } else {
         point.z = Origin.z+Height*0.75f;
-        cont = SV_PointContents(Sector, point);
-        if (cont > 0) WaterLevel = 3;
+        if (SV_PointContents(Sector, point) > 0) WaterLevel = 3;
       }
     }
   }
