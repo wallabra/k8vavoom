@@ -377,6 +377,13 @@ public:
   virtual void AddedToLevel () override;
   virtual void Tick (float deltaTime) override;
 
+  inline bool IsRenderable () const noexcept {
+    return
+      State && !(GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) &&
+      !(EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) &&
+      SubSector; // just in case
+  }
+
   void SetTID (int);
   void InsertIntoTIDList (int);
   void RemoveFromTIDList ();

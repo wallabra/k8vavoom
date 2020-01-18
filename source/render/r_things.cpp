@@ -85,7 +85,7 @@ static VCvarB r_draw_adjacent_sector_things("r_draw_adjacent_sector_things", tru
 //  reasonably fast anyway
 //
 //==========================================================================
-bool VRenderLevelShared::IsThingVisible (VEntity *ent) noexcept {
+bool VRenderLevelShared::IsThingVisible (VEntity *ent) const noexcept {
   const unsigned SubIdx = (unsigned)(ptrdiff_t)(ent->SubSector-Level->Subsectors);
   if (BspVis[SubIdx>>3]&(1u<<(SubIdx&7))) return true;
   // check if the sector is visible
@@ -146,9 +146,9 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
   if (mobj == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) return; // don't draw camera actor
 
   if (Pass == RPASS_Normal) {
-    //if ((mobj->EntityFlags&VEntity::EF_NoSector) || (mobj->EntityFlags&VEntity::EF_Invisible)) return;
-    if (!mobj->State || (mobj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) return;
-    if (mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) return;
+    // this is called only in regular renderer, and only once
+    // so we can skip building visible things list, and perform a direct check here
+    if (!mobj->IsRenderable()) return;
   }
 
   int RendStyle = CoerceRenderStyle(mobj->RenderStyle);

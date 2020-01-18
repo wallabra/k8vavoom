@@ -166,9 +166,7 @@ void VRenderLevelShared::BuildVisibleObjectsList () {
   for (TThinkerIterator<VEntity> it(Level); it; ++it) {
     VEntity *ent = *it;
 
-    if (!ent->State || (ent->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) continue;
-    if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
-    if (!ent->SubSector) continue; // just in case
+    if (!ent->IsRenderable()) continue;
 
     const bool hasAliasModel = HasEntityAliasModel(ent);
 
@@ -252,9 +250,7 @@ void VRenderLevelShadowVolume::BuildMobjsInCurrLight (bool doShadows) {
         for (int by = yl; by <= yh; ++by) {
           for (VBlockThingsIterator It(Level, bx, by); It; ++It) {
             VEntity *ent = *It;
-            if (!ent->State || (ent->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) continue;
-            if (ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) continue;
-            if (!ent->SubSector) continue; // just in case
+            if (!ent->IsRenderable()) continue;
             if (ent->GetRenderRadius() < 1) continue;
             // skip things in subsectors that are not visible by the current light
             const int SubIdx = (int)(ptrdiff_t)(ent->SubSector-Level->Subsectors);

@@ -456,7 +456,16 @@ protected:
   // entity must not be `nullptr`, and must have `SubSector` set
   // also, `view_frustum` should be valid here
   // this is usually called once for each entity, but try to keep it reasonably fast anyway
-  bool IsThingVisible (VEntity *ent) noexcept;
+  bool IsThingVisible (VEntity *ent) const noexcept;
+
+  /*
+  static inline bool IsThingRenderable (VEntity *ent) noexcept {
+    return
+      ent && ent->State && !(ent->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy)) &&
+      !(ent->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible)) &&
+      ent->SubSector;
+  }
+  */
 
 public:
   virtual bool IsNodeRendered (const node_t *node) const noexcept override;
