@@ -191,7 +191,7 @@ override void Init () {
   CreateCvarInt('k8HSFastKillArchVileDamage', /*120*/230, "Amount of damage dealt for fast-killing ArchViles.", CVAR_ARCHIVE|CVAR_SERVERINFO);
 
   CreateCvarBool('k8HSHeadKillBloodSpray', true, "Do bloodspray on instakill/headshot?", CVAR_ARCHIVE);
-  CreateCvarInt('k8HSHeadKillBloodCount', 5, "How much blood to spray on instakill/headshot?", CVAR_ARCHIVE);
+  CreateCvarInt('k8HSHeadKillBloodCount', 3, "How much blood to spray on instakill/headshot?", CVAR_ARCHIVE);
   CreateCvarBool('k8HSHeadKillBloodPool', false, "Spawn blood pool on instakill/headkill?", CVAR_ARCHIVE);
 
   CreateCvarBool('k8AmmoKing', IsDeveloperVersion, "Enable Ammo King mode?", CVAR_ARCHIVE|CVAR_SERVERINFO);
