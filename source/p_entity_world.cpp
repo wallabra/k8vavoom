@@ -2134,6 +2134,42 @@ void VEntity::CheckDropOff (float &DeltaX, float &DeltaY) {
 }
 
 
+//=============================================================================
+//
+//  VEntity::UpdateVelocity
+//
+//  called from entity `Physics()`
+//
+//=============================================================================
+void VEntity::UpdateVelocity (float DeltaTime) {
+  if (!Sector) return; // just in case
+
+  /*
+  if (Origin.z <= FloorZ && !Velocity && !bCountKill && !bIsPlayer) {
+    // no gravity for non-moving things on ground to prevent static objects from sliding on slopes
+    return;
+  }
+  */
+
+  // don't add gravity if standing on slope with normal.z > 0.7 (aprox 45 degrees)
+  if (!(EntityFlags&EF_NoGravity) && (Origin.z > FloorZ || EFloor.GetNormalZ() <= 0.7f)) {
+    if (WaterLevel < 2) {
+      Velocity.z -= Gravity*Level->Gravity*Sector->Gravity*DeltaTime;
+    } else if (!IsPlayer() || Health <= 0) {
+      // water gravity
+      Velocity.z -= Gravity*Level->Gravity*Sector->Gravity/10.0f*DeltaTime;
+      float startvelz = Velocity.z;
+      float sinkspeed = -WaterSinkSpeed/(IsCorpse() ? 3.0f : 1.0f);
+      if (Velocity.z < sinkspeed) {
+        Velocity.z = (startvelz < sinkspeed ? startvelz : sinkspeed);
+      } else {
+        Velocity.z = startvelz+(Velocity.z-startvelz)*WaterSinkFactor;
+      }
+    }
+  }
+}
+
+
 //==========================================================================
 //
 //  VRoughBlockSearchIterator
@@ -2375,4 +2411,12 @@ IMPLEMENT_FUNCTION(VEntity, RoughBlockSearch) {
   P_GET_PTR(VEntity*, EntPtr);
   P_GET_SELF;
   RET_PTR(new VRoughBlockSearchIterator(Self, Distance, EntPtr));
+}
+
+
+// native void UpdateVelocity (float DeltaTime);
+IMPLEMENT_FUNCTION(VEntity, UpdateVelocity) {
+  float DeltaTime;
+  vobjGetParamSelf(DeltaTime);
+  Self->UpdateVelocity(DeltaTime);
 }

@@ -563,7 +563,7 @@ public:
   VEntity *TestMobjZ (const TVec &);
   void SlideMove (float StepVelScale, bool noPickups=false);
   void BounceWall (float, float);
-  //void UpdateVelocity (); // moved to VC
+  void UpdateVelocity (float DeltaTime);
   TVec FakeZMovement ();
   VEntity *CheckOnmobj ();
   bool CheckSides (TVec);
@@ -698,4 +698,6 @@ public:
   DECLARE_FUNCTION(QS_GetName);
   DECLARE_FUNCTION(QS_GetStr);
   DECLARE_FUNCTION(QS_GetFloat);
+
+  DECLARE_FUNCTION(UpdateVelocity);
 };
