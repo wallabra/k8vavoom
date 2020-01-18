@@ -1811,7 +1811,10 @@ static void AM_drawThings () {
     VEntity *mobj = *Ent;
     if (!mobj->State || (mobj->GetFlags()&(_OF_Destroyed|_OF_DelayedDestroy))) continue;
     invisible = ((mobj->EntityFlags&(VEntity::EF_NoSector|VEntity::EF_Invisible|VEntity::EF_NoBlockmap)) || mobj->RenderStyle == STYLE_None);
-    if (invisible && am_cheating <= 2) continue;
+    if (invisible && am_cheating != 3) {
+      if (!mobj->IsMissile()) continue;
+      if (am_cheating < 3) continue;
+    }
     //if (!(mobj->FlagsEx&VEntity::EFEX_Rendered)) continue;
 
     vuint32 color;
@@ -1846,7 +1849,7 @@ static void AM_drawThings () {
       AM_drawLineCharacter(thintriangle_guy, NUMTHINTRIANGLEGUYLINES, 16.0f, angle, color, x, y);
     }
     // draw object box
-    if (am_cheating > 2) {
+    if (am_cheating == 3 || am_cheating == 5) {
       if (inSpriteMode) { inSpriteMode = false; Drawer->StartAutomap(am_overlay); }
       //AM_DrawBox(mobj->Origin.x-mobj->Radius, mobj->Origin.y-mobj->Radius, mobj->Origin.x+mobj->Radius, mobj->Origin.y+mobj->Radius, color);
       AM_DrawBox(morg.x-mobj->Radius, morg.y-mobj->Radius, morg.x+mobj->Radius, morg.y+mobj->Radius, color);
@@ -2228,7 +2231,7 @@ bool AM_Responder (event_t *ev) {
     return false;
   }
 
-  if (am_cheating > 2) {
+  if (am_cheating == 3) {
     ui_freemouse = true;
     if (ev->type == ev_keydown && ev->keycode == K_MOUSE1) {
       //float x = FTOM(MTOF(morg.x));
