@@ -4,7 +4,13 @@ menudef GoreModMenu {
   option bool {
     title = "Ceiling blood";
     cvar = k8GoreOpt_CeilBlood;
-    help = "Spawn blood drops on ceiling?";
+    help = "Spawn blood splats on ceiling?";
+  }
+
+  option bool {
+    title = "Floor blood";
+    cvar = k8GoreOpt_FloorBlood;
+    help = "Spawn blood splats on floor?";
   }
 
   option enum {

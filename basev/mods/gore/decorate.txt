@@ -158,16 +158,25 @@ Actor K8Gore_FlyingBlood /*: K8Gore_BloodBase*/ {
     // hits something
     Death:
       TNT1 A 0
-      TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound("k8gore/blooddrop2"); }
-      "####" "#" 0 A_JumpIf(waterlevel > 1, "DeathDone")
-      TNT1 A 0 A_SpawnItem("K8Gore_BloodSpot", 0, 1, false, true)
+      //k8: don't make any sound, it is not noticeable anyway
+      //TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound("k8gore/blooddrop2"); }
+      //"####" "#" 0 A_JumpIf(waterlevel > 1, "DeathDone")
+      //TNT1 A 0 A_SpawnItem("K8Gore_BloodSpot", 0, 1, false, true)
       //TNT1 A 0 A_CustomMissile("K8Gore_CeilBloodChecker", -15, 0, 90, CMF_AIMDIRECTION, 90)
       TNT1 A 0
         {
-          if (!GetCVar("k8GoreOpt_CeilBlood")) return state("Null"); // die
-          if (GetCVar("k8GoreOpt_BloodAmount") < 2) return state("Null"); // die
-          A_SpawnItemEx("K8Gore_DetectCeilBloodSimpler",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION|SXF_TRANSFERTRANSLATION,0);
+          if (waterlevel == 0) {
+            // spawn floor blood spot
+            if (GetCVar("k8GoreOpt_FloorBlood")) {
+              A_SpawnItem("K8Gore_BloodSpot", 0, 1, false, true);
+            }
+            // spawn ceiling blood spot
+            if (GetCVar("k8GoreOpt_CeilBlood") && GetCVar("k8GoreOpt_BloodAmount") >= 2) {
+              A_SpawnItemEx("K8Gore_DetectCeilBloodSimpler",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION|SXF_TRANSFERTRANSLATION,0);
+            }
+          }
         }
+      Stop
     DeathDone:
       TNT1 A 1
       Stop
@@ -387,12 +396,17 @@ Actor K8Gore_BloodSpot : K8Gore_BloodBase {
   States {
     Spawn:
       TNT1 A 0
-      //TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
+      /*
       TNT1 A 0 A_LayToFloorWithYawSprite(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
       //TNT1 A 0 A_SetYawExt(Random(0, 360))
       //TNT1 A 0 A_SetPitchExt(0)
       TNT1 A 0 A_SetScaleXExt(Random(3, 9)/10.0)
+      */
+      TNT1 A 0 {
+        A_LayToFloorWithYawSprite(Random(0, 360));
+        A_SetScaleXExt(Random(3, 9)/10.0);
+      }
       TNT1 A 0 A_JumpIf(waterlevel > 1, "SplashWater")
 
     SpawnNormally:
@@ -509,11 +523,14 @@ Actor K8Gore_DetectCeilBloodSimpler : K8Gore_BloodBase {
     Spawn:
       TNT1 A 0
       //TNT1 A 0 A_JumpIfCVarFalse("k8GoreOpt_CeilBlood", "DeathExit");
+      // no need to check anything here, it is already done in `K8Gore_FlyingBlood`
+      /*
       TNT1 A 0 {
         if (!GetCVar("k8GoreOpt_CeilBlood")) return state("Null"); // die
         if (GetCVar("k8GoreOpt_BloodAmount") < 2) return state("Null"); // die
         //A_k8ConLog(va("CB0: k8GoreOpt_BloodAmount=%s", GetCVar("k8GoreOpt_BloodAmount")));
       }
+      */
       //TNT1 A 0 A_k8ConLog("K8Gore_DetectCeilBloodSimpler: spawn");
       TNT1 A 0 ThrustThingZ(0, 35*4, 0, 1)
       //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
@@ -525,11 +542,14 @@ Actor K8Gore_DetectCeilBloodSimpler : K8Gore_BloodBase {
       //TNT1 A 0 A_k8ConLog("K8Gore_DetectCeilBloodSimpler: death");
       TNT1 A 0
       //TNT1 A 0 A_JumpIfCVarFalse("k8GoreOpt_CeilBlood", "DeathExit");
+      // no need to check anything here, it is already done in `K8Gore_FlyingBlood`
+      /*
       TNT1 A 0 {
         if (!GetCVar("k8GoreOpt_CeilBlood")) return state("Null"); // die
         if (GetCVar("k8GoreOpt_BloodAmount") < 2) return state("Null"); // die
         //A_k8ConLog(va("CB1: k8GoreOpt_BloodAmount=%s", GetCVar("k8GoreOpt_BloodAmount")));
       }
+      */
       TNT1 A 0 A_CustomMissile("K8Gore_CeilBloodChecker", -15, 0, 90, CMF_AIMDIRECTION, 90)
       Stop
   }
@@ -1134,16 +1154,25 @@ Actor K8Gore_FlyingBloodTransient /*: K8Gore_BloodBaseTransient*/ {
     // hits something
     Death:
       TNT1 A 0
-      TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound("k8gore/blooddrop2"); }
-      "####" "#" 0 A_JumpIf(waterlevel > 1, "DeathDone")
-      TNT1 A 0 A_SpawnItem("K8Gore_BloodSpotTransient", 0, 1, false, true)
+      //k8: don't make any sound, it is not noticeable anyway
+      //TNT1 A 0 { if (GetCVar("k8GoreOpt_BloodDripSound") > 0) A_PlaySound("k8gore/blooddrop2"); }
+      //"####" "#" 0 A_JumpIf(waterlevel > 1, "DeathDone")
+      //TNT1 A 0 A_SpawnItem("K8Gore_BloodSpotTransient", 0, 1, false, true)
       //TNT1 A 0 A_CustomMissile("K8Gore_CeilBloodCheckerTransient", -15, 0, 90, CMF_AIMDIRECTION, 90)
       TNT1 A 0
         {
-          if (!GetCVar("k8GoreOpt_CeilBlood")) return state("Null"); // die
-          if (GetCVar("k8GoreOpt_BloodAmount") < 2) return state("Null"); // die
-          A_SpawnItemEx("K8Gore_DetectCeilBloodSimplerTransient",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION|SXF_TRANSFERTRANSLATION,0);
+          if (waterlevel == 0) {
+            // spawn floor blood spot
+            if (GetCVar("k8GoreOpt_FloorBlood")) {
+              A_SpawnItem("K8Gore_BloodSpotTransient", 0, 1, false, true);
+            }
+            // spawn ceiling blood spot
+            if (GetCVar("k8GoreOpt_CeilBlood") && GetCVar("k8GoreOpt_BloodAmount") >= 2) {
+              A_SpawnItemEx("K8Gore_DetectCeilBloodSimplerTransient",0,0,0,0,0,0,0,SXF_NOCHECKPOSITION|SXF_TRANSFERTRANSLATION,0);
+            }
+          }
         }
+      Stop
     DeathDone:
       TNT1 A 1
       Stop
@@ -1364,12 +1393,17 @@ Actor K8Gore_BloodSpotTransient : K8Gore_BloodBaseTransient {
   States {
     Spawn:
       TNT1 A 0
-      //TNT1 A 0 A_JumpIfCVarFalse("r_models", "Death") // no models -- die immediately
+      /*
       TNT1 A 0 A_LayToFloorWithYawSprite(Random(0, 360))
       //TNT1 A 0 A_SetRollExt(0)
       //TNT1 A 0 A_SetYawExt(Random(0, 360))
       //TNT1 A 0 A_SetPitchExt(0)
       TNT1 A 0 A_SetScaleXExt(Random(3, 9)/10.0)
+      */
+      TNT1 A 0 {
+        A_LayToFloorWithYawSprite(Random(0, 360));
+        A_SetScaleXExt(Random(3, 9)/10.0);
+      }
       TNT1 A 0 A_JumpIf(waterlevel > 1, "SplashWater")
 
     SpawnNormally:
@@ -1482,11 +1516,14 @@ Actor K8Gore_DetectCeilBloodSimplerTransient : K8Gore_BloodBaseTransient {
     Spawn:
       TNT1 A 0
       //TNT1 A 0 A_JumpIfCVarFalse("k8GoreOpt_CeilBlood", "DeathExit");
+      // no need to check anything here, it is already done in `K8Gore_FlyingBlood`
+      /*
       TNT1 A 0 {
         if (!GetCVar("k8GoreOpt_CeilBlood")) return state("Null"); // die
         if (GetCVar("k8GoreOpt_BloodAmount") < 2) return state("Null"); // die
         //A_k8ConLog(va("CB0: k8GoreOpt_BloodAmount=%s", GetCVar("k8GoreOpt_BloodAmount")));
       }
+      */
       //TNT1 A 0 A_k8ConLog("K8Gore_DetectCeilBloodSimpler: spawn");
       TNT1 A 0 ThrustThingZ(0, 35*4, 0, 1)
       //TNT1 A 0 ThrustThing(angle*256.0/360.0, random(0, 2), 1)
@@ -1498,11 +1535,14 @@ Actor K8Gore_DetectCeilBloodSimplerTransient : K8Gore_BloodBaseTransient {
       //TNT1 A 0 A_k8ConLog("K8Gore_DetectCeilBloodSimpler: death");
       TNT1 A 0
       //TNT1 A 0 A_JumpIfCVarFalse("k8GoreOpt_CeilBlood", "DeathExit");
+      // no need to check anything here, it is already done in `K8Gore_FlyingBlood`
+      /*
       TNT1 A 0 {
         if (!GetCVar("k8GoreOpt_CeilBlood")) return state("Null"); // die
         if (GetCVar("k8GoreOpt_BloodAmount") < 2) return state("Null"); // die
         //A_k8ConLog(va("CB1: k8GoreOpt_BloodAmount=%s", GetCVar("k8GoreOpt_BloodAmount")));
       }
+      */
       TNT1 A 0 A_CustomMissile("K8Gore_CeilBloodCheckerTransient", -15, 0, 90, CMF_AIMDIRECTION, 90)
       Stop
   }

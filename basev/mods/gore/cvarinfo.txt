@@ -1,4 +1,5 @@
 user int k8GoreOpt_CeilBlood = 1;
+user int k8GoreOpt_FloorBlood = 1;
 user int k8GoreOpt_BloodAmount = 3;
 user int k8GoreOpt_MaxBloodEntities = 2000;
 user int k8GoreOpt_MaxTransientBloodEntities = 420;
