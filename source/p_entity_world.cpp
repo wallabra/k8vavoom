@@ -184,69 +184,55 @@ void VEntity::CreateSecNodeList () {
   FlagsEx &= ~EFEX_OnScroll;
   #endif
 
-  float tmbbox[4];
-  tmbbox[BOX2D_TOP] = Origin.y+Radius;
-  tmbbox[BOX2D_BOTTOM] = Origin.y-Radius;
-  tmbbox[BOX2D_RIGHT] = Origin.x+Radius;
-  tmbbox[BOX2D_LEFT] = Origin.x-Radius;
+  // use RenderRadius here, so we can check sectors in renderer instead of going through all objects
+  // no, we cannot do this, because touching sector list is used to move objects too
+  // we need another list here, if we want to avoid loop in renderer
+  //const float rad = max2(RenderRadius, Radius);
+  const float rad = Radius;
 
   //++validcount; // used to make sure we only process a line once
   XLevel->IncrementValidCount();
 
-  int xl = MapBlock(tmbbox[BOX2D_LEFT]-XLevel->BlockMapOrgX);
-  int xh = MapBlock(tmbbox[BOX2D_RIGHT]-XLevel->BlockMapOrgX);
-  int yl = MapBlock(tmbbox[BOX2D_BOTTOM]-XLevel->BlockMapOrgY);
-  int yh = MapBlock(tmbbox[BOX2D_TOP]-XLevel->BlockMapOrgY);
+  if (rad > 1.0f) {
+    float tmbbox[4];
+    tmbbox[BOX2D_TOP] = Origin.y+rad;
+    tmbbox[BOX2D_BOTTOM] = Origin.y-rad;
+    tmbbox[BOX2D_RIGHT] = Origin.x+rad;
+    tmbbox[BOX2D_LEFT] = Origin.x-rad;
 
-  for (int bx = xl; bx <= xh; ++bx) {
-    for (int by = yl; by <= yh; ++by) {
-      line_t *ld;
-      for (VBlockLinesIterator It(XLevel, bx, by, &ld); It.GetNext(); ) {
-        // locates all the sectors the object is in by looking at the lines that cross through it.
-        // you have already decided that the object is allowed at this location, so don't
-        // bother with checking impassable or blocking lines.
-        if (tmbbox[BOX2D_RIGHT] <= ld->bbox2d[BOX2D_LEFT] ||
-            tmbbox[BOX2D_LEFT] >= ld->bbox2d[BOX2D_RIGHT] ||
-            tmbbox[BOX2D_TOP] <= ld->bbox2d[BOX2D_BOTTOM] ||
-            tmbbox[BOX2D_BOTTOM] >= ld->bbox2d[BOX2D_TOP])
-        {
-          continue;
-        }
+    const int xl = MapBlock(tmbbox[BOX2D_LEFT]-XLevel->BlockMapOrgX);
+    const int xh = MapBlock(tmbbox[BOX2D_RIGHT]-XLevel->BlockMapOrgX);
+    const int yl = MapBlock(tmbbox[BOX2D_BOTTOM]-XLevel->BlockMapOrgY);
+    const int yh = MapBlock(tmbbox[BOX2D_TOP]-XLevel->BlockMapOrgY);
 
-        if (P_BoxOnLineSide(tmbbox, ld) != -1) continue;
-
-        // this line crosses through the object
-
-        // collect the sector(s) from the line and add to the SectorList you're examining.
-        // if the Thing ends up being allowed to move to this position, then the sector_list will
-        // be attached to the Thing's VEntity at TouchingSectorList.
-
-        XLevel->SectorList = XLevel->AddSecnode(ld->frontsector, this, XLevel->SectorList);
-        #ifdef VV_DO_ONSCROLL_FLAG
-        // check sector thinkers
-        if (!(FlagsEx&EFEX_OnScroll)) {
-          for (VThinker *ssth = ld->frontsector->AffectorData; ssth; ssth = ssth->eventGetNextAffector()) {
-            if (ssth->GetClass() == ScrollerClass) {
-              FlagsEx |= EFEX_OnScroll;
-              break;
-            }
+    for (int bx = xl; bx <= xh; ++bx) {
+      for (int by = yl; by <= yh; ++by) {
+        line_t *ld;
+        for (VBlockLinesIterator It(XLevel, bx, by, &ld); It.GetNext(); ) {
+          // locates all the sectors the object is in by looking at the lines that cross through it.
+          // you have already decided that the object is allowed at this location, so don't
+          // bother with checking impassable or blocking lines.
+          if (tmbbox[BOX2D_RIGHT] <= ld->bbox2d[BOX2D_LEFT] ||
+              tmbbox[BOX2D_LEFT] >= ld->bbox2d[BOX2D_RIGHT] ||
+              tmbbox[BOX2D_TOP] <= ld->bbox2d[BOX2D_BOTTOM] ||
+              tmbbox[BOX2D_BOTTOM] >= ld->bbox2d[BOX2D_TOP])
+          {
+            continue;
           }
-        }
-        #endif
 
-        // don't assume all lines are 2-sided, since some Things like
-        // MT_TFOG are allowed regardless of whether their radius
-        // takes them beyond an impassable linedef.
+          if (P_BoxOnLineSide(tmbbox, ld) != -1) continue;
 
-        // killough 3/27/98, 4/4/98:
-        // use sidedefs instead of 2s flag to determine two-sidedness
+          // this line crosses through the object
 
-        if (ld->backsector && ld->backsector != ld->frontsector) {
-          XLevel->SectorList = XLevel->AddSecnode(ld->backsector, this, XLevel->SectorList);
+          // collect the sector(s) from the line and add to the SectorList you're examining.
+          // if the Thing ends up being allowed to move to this position, then the sector_list will
+          // be attached to the Thing's VEntity at TouchingSectorList.
+
+          XLevel->SectorList = XLevel->AddSecnode(ld->frontsector, this, XLevel->SectorList);
           #ifdef VV_DO_ONSCROLL_FLAG
           // check sector thinkers
           if (!(FlagsEx&EFEX_OnScroll)) {
-            for (VThinker *ssth = ld->backsector->AffectorData; ssth; ssth = ssth->eventGetNextAffector()) {
+            for (VThinker *ssth = ld->frontsector->AffectorData; ssth; ssth = ssth->eventGetNextAffector()) {
               if (ssth->GetClass() == ScrollerClass) {
                 FlagsEx |= EFEX_OnScroll;
                 break;
@@ -254,6 +240,28 @@ void VEntity::CreateSecNodeList () {
             }
           }
           #endif
+
+          // don't assume all lines are 2-sided, since some Things like
+          // MT_TFOG are allowed regardless of whether their radius
+          // takes them beyond an impassable linedef.
+
+          // killough 3/27/98, 4/4/98:
+          // use sidedefs instead of 2s flag to determine two-sidedness
+
+          if (ld->backsector && ld->backsector != ld->frontsector) {
+            XLevel->SectorList = XLevel->AddSecnode(ld->backsector, this, XLevel->SectorList);
+            #ifdef VV_DO_ONSCROLL_FLAG
+            // check sector thinkers
+            if (!(FlagsEx&EFEX_OnScroll)) {
+              for (VThinker *ssth = ld->backsector->AffectorData; ssth; ssth = ssth->eventGetNextAffector()) {
+                if (ssth->GetClass() == ScrollerClass) {
+                  FlagsEx |= EFEX_OnScroll;
+                  break;
+                }
+              }
+            }
+            #endif
+          }
         }
       }
     }

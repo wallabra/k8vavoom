@@ -153,6 +153,8 @@ void VRenderLevelShared::BuildVisibleObjectsList () {
   visibleAliasModels.reset();
   allShadowModelObjects.reset();
 
+  if (!r_draw_mobjs) return;
+
   int RendStyle;
   float Alpha;
 
