@@ -91,15 +91,12 @@ private:
   VThinker *Self;
   VEntity **EntPtr;
   VEntity *Ent;
-  int x;
-  int y;
-  int xl;
-  int xh;
-  int yl;
-  int yh;
+  int x, y;
+  int xl, xh;
+  int yl, yh;
 
 public:
-  VRadiusThingsIterator (VThinker *, VEntity **, TVec, float);
+  VRadiusThingsIterator (VThinker *ASelf, VEntity **AEntPtr, TVec Org, float Radius);
   virtual bool GetNext () override;
 };
 
