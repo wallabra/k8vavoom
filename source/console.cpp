@@ -410,7 +410,12 @@ bool C_Responder (event_t *ev) {
       /* fallthrough */
     case '`':
     case K_BACKQUOTE:
-      if (consolestate == cons_closing) C_Start(); else C_Stop();
+      //GCon->Logf("::: %d", (int)(ev->data1 == K_BACKQUOTE));
+      if (ev->isShiftDown()) {
+        c_iline.AddChar('~');
+      } else {
+        if (consolestate == cons_closing) C_Start(); else C_Stop();
+      }
       return true;
 
     // execute entered command
