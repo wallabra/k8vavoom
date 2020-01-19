@@ -1358,5 +1358,5 @@ COMMAND_AC(LightmapsReset) {
   VStr prefix = (aidx < args.length() ? args[aidx] : VStr());
   TArray<VStr> list;
   list.append("defer");
-  return AutoCompleteFromList(prefix, list, true); // return unchanged as empty
+  return AutoCompleteFromListCmd(prefix, list);
 }

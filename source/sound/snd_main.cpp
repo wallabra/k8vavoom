@@ -1491,7 +1491,7 @@ COMMAND_AC(Music) {
     list.append("play");
     list.append("resume");
     list.append("stop");
-    return AutoCompleteFromList(prefix, list, true); // return unchanged as empty
+    return AutoCompleteFromListCmd(prefix, list);
   } else {
     return VStr::EmptyString;
   }

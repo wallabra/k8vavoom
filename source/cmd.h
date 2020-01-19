@@ -112,6 +112,9 @@ public:
   // if `unchangedAsEmpty` is `true`, return empty string if result is equal to input prefix
   static VStr AutoCompleteFromList (VStr prefix, const TArray <VStr> &list, bool unchangedAsEmpty=false, bool doSortHint=true);
 
+  // this provides correct arguments for in-command autocompletion
+  static inline VStr AutoCompleteFromListCmd (VStr prefix, const TArray <VStr> &list) { return AutoCompleteFromList(prefix, list, true, true); }
+
   enum {
     CT_UNKNOWN = 0,
     CT_COMMAND,
@@ -167,7 +170,7 @@ VStr TCmd ## name::AutoCompleteArg (const TArray<VStr> &args, int aidx) { \
     /*static*/ const char *acstrings[] = { __VA_ARGS__ , nullptr }; \
     TArray<VStr> list; \
     for (const char **ssp = acstrings; *ssp; ++ssp) list.append(VStr(*ssp)); \
-    return AutoCompleteFromList(prefix, list, true); /* return unchanged as empty */ \
+    return AutoCompleteFromListCmd(prefix, list); \
   } else { \
     return VStr::EmptyString; \
   } \

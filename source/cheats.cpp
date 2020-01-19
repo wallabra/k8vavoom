@@ -126,7 +126,7 @@ COMMAND_AC(Summon) {
     if (!R_AreSpritesPresent(lbl->State->SpriteIndex)) continue; // no sprite
     newlist.append(list[f]);
   }
-  return AutoCompleteFromList(prefix, newlist, true); // return unchanged as empty
+  return AutoCompleteFromListCmd(prefix, newlist);
 }
 #endif
 

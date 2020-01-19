@@ -877,7 +877,7 @@ COMMAND_AC(TestFinale) {
   VStr prefix = (aidx < args.length() ? args[aidx] : VStr());
   if (aidx == 1) {
     for (const char **fin = knownFinalesList; *fin; ++fin) list.append(VStr(*fin));
-    return AutoCompleteFromList(prefix, list, true); // return unchanged as empty
+    return AutoCompleteFromListCmd(prefix, list);
   } else {
     return VStr::EmptyString;
   }
@@ -1048,7 +1048,7 @@ COMMAND_AC(TeleportNewMapEx) {
       VName mlump = P_GetMapLumpName(f);
       if (mlump != NAME_None) list.append(*mlump);
     }
-    if (list.length()) return AutoCompleteFromList(prefix, list, true); // return unchanged as empty
+    if (list.length()) return AutoCompleteFromListCmd(prefix, list);
   } else if (aidx >= 3) {
     // flags
     TArray<VStr> list;
@@ -1058,7 +1058,7 @@ COMMAND_AC(TeleportNewMapEx) {
       for (int f = 1; f < args.length(); ++f) if (args[f].strEquCI(tff->name)) { found = true; break; }
       if (!found) list.append(tff->name);
     }
-    if (list.length()) return AutoCompleteFromList(prefix, list, true); // return unchanged as empty
+    if (list.length()) return AutoCompleteFromListCmd(prefix, list);
   }
   return VStr::EmptyString;
 }
@@ -1711,7 +1711,7 @@ COMMAND_AC(Map) {
         if (mlump != NAME_None) list.append(VStr(mlump));
       }
     }
-    if (list.length()) return AutoCompleteFromList(prefix, list, true); // return unchanged as empty
+    if (list.length()) return AutoCompleteFromListCmd(prefix, list);
   }
   return VStr::EmptyString;
 }

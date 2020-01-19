@@ -603,6 +603,7 @@ void CL_PlayDemo (VStr DemoName, bool IsTimeDemo) {
 //==========================================================================
 void CL_StopRecording () {
   // finish up
+  if (cls.demofile) cls.demofile->Close();
   delete cls.demofile;
   cls.demofile = nullptr;
   cls.demorecording = false;
@@ -654,12 +655,12 @@ COMMAND(StopDemo) {
 
 //==========================================================================
 //
-//  COMMAND RecordDemo
+//  COMMAND_WITH_AC RecordDemo
 //
 //  RecordDemo <demoname> <map>
 //
 //==========================================================================
-COMMAND(RecordDemo) {
+COMMAND_WITH_AC(RecordDemo) {
   if (Source != SRC_Command) return;
 
   int c = Args.Num();
@@ -732,12 +733,41 @@ COMMAND(RecordDemo) {
 
 //==========================================================================
 //
-//  COMMAND PlayDemo
+//  COMMAND_AC RecordDemo
+//
+//==========================================================================
+COMMAND_AC(RecordDemo) {
+  VStr prefix = (aidx < args.length() ? args[aidx] : VStr());
+  if (aidx == 2) {
+    TArray<VStr> list;
+    // prefer pwad maps
+    if (fsys_PWadMaps.length()) {
+      list.resize(fsys_PWadMaps.length());
+      for (auto &&lmp : fsys_PWadMaps) list.append(lmp.mapname);
+    } else {
+      int mapcount = P_GetNumMaps();
+      list.resize(mapcount);
+      for (int f = 0; f < mapcount; ++f) {
+        VName mlump = P_GetMapLumpName(f);
+        if (mlump != NAME_None) list.append(VStr(mlump));
+      }
+    }
+    if (list.length()) return AutoCompleteFromListCmd(prefix, list);
+  } else if (aidx < 2) {
+    GCon->Log("RecordDemo <demoname> [<map>]");
+  }
+  return VStr::EmptyString;
+}
+
+
+//==========================================================================
+//
+//  COMMAND_WITH_AC PlayDemo
 //
 //  play [demoname]
 //
 //==========================================================================
-COMMAND(PlayDemo) {
+COMMAND_WITH_AC(PlayDemo) {
   if (Source != SRC_Command) return;
   if (Args.Num() != 2) {
     GCon->Log("play <demoname> : plays a demo");
@@ -749,18 +779,62 @@ COMMAND(PlayDemo) {
 
 //==========================================================================
 //
-//  COMMAND TimeDemo
+//  DoDemoCompletions
+//
+//==========================================================================
+static VStr DoDemoCompletions (const TArray<VStr> &args, int aidx) {
+  TArray<VStr> list;
+  VStr prefix = (aidx < args.length() ? args[aidx] : VStr());
+  if (aidx == 1) {
+    void *dir = Sys_OpenDir(FL_GetConfigDir().appendPath("demos"));
+    if (!dir) return VStr::EmptyString;
+    for (;;) {
+      VStr fname = Sys_ReadDir(dir);
+      if (fname.isEmpty()) break;
+      if (fname.endsWithCI(".dem")) list.append(fname);
+    }
+    Sys_CloseDir(dir);
+    return VCommand::AutoCompleteFromListCmd(prefix, list);
+  } else {
+    return VStr::EmptyString;
+  }
+}
+
+
+//==========================================================================
+//
+//  COMMAND_AC PlayDemo
+//
+//==========================================================================
+COMMAND_AC(PlayDemo) {
+  return DoDemoCompletions(args, aidx);
+}
+
+
+//==========================================================================
+//
+//  COMMAND_WITH_AC TimeDemo
 //
 //  timedemo [demoname]
 //
 //==========================================================================
-COMMAND(TimeDemo) {
+COMMAND_WITH_AC(TimeDemo) {
   if (Source != SRC_Command) return;
   if (Args.Num() != 2) {
     GCon->Log("timedemo <demoname> : gets demo speeds");
     return;
   }
   CL_PlayDemo(Args[1], true);
+}
+
+
+//==========================================================================
+//
+//  COMMAND_AC TimeDemo
+//
+//==========================================================================
+COMMAND_AC(TimeDemo) {
+  return DoDemoCompletions(args, aidx);
 }
 
 

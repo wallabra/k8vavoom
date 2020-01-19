@@ -129,7 +129,7 @@ static VStr DoMenuCompletions (const TArray<VStr> &args, int aidx, int mode) {
   VStr prefix = (aidx < args.length() ? args[aidx] : VStr());
   if (aidx == 1) {
     GClGame->eventGetAllMenuNames(list, mode);
-    return VCommand::AutoCompleteFromList(prefix, list, true); // return unchanged as empty
+    return VCommand::AutoCompleteFromListCmd(prefix, list);
   } else {
     return VStr::EmptyString;
   }
@@ -148,7 +148,7 @@ COMMAND_WITH_AC(SetMenu) {
 
 //==========================================================================
 //
-//  COMMAND_AC OpenMenu
+//  COMMAND_AC SetMenu
 //
 //==========================================================================
 COMMAND_AC(SetMenu) {

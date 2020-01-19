@@ -1927,7 +1927,7 @@ COMMAND_AC(ExportTexture) {
         ++pos;
       }
     }
-    return AutoCompleteFromList(prefix, list, true); // return unchanged as empty
+    return AutoCompleteFromListCmd(prefix, list);
   } else if (aidx == 2) {
     // type
     list.append(VStr("any"));
@@ -1940,7 +1940,7 @@ COMMAND_AC(ExportTexture) {
     list.append(VStr("sky"));
     list.append(VStr("sprite"));
     list.append(VStr("wall"));
-    return AutoCompleteFromList(prefix, list, true); // return unchanged as empty
+    return AutoCompleteFromListCmd(prefix, list);
   } else {
     return VStr::EmptyString;
   }
