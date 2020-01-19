@@ -255,6 +255,7 @@ enum {
 #include "FastProjectile.vc"
 
 #include "bridge/BridgeBall.vc"
+#include "bridge/CustomBridge.vc"
 #include "bridge/Bridge.vc"
 #include "bridge/ZBridge.vc"
 #include "bridge/InvisibleBridge.vc"

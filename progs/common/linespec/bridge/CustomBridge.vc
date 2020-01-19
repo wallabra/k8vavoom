@@ -23,42 +23,65 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class Bridge : /*Actor*/CustomBridge game(GAME_Raven) __mobjinfo__(118) __scriptid__(21);
+class CustomBridge : Actor __mobjinfo__(9991);
 
+/*
+Arg 1: Bridge radius, in mapunits
+Arg 2: Bridge height, in mapunits
+Arg 3: Number of bridge balls to display.
+Arg 4: Rotation speed and direction of bridge balls.
+       0 uses Hexen's default. Values from 1-128 rotate counterclockwise,
+       while values from 129-255 go clockwise. For example:
+    0: Hexen default
+   11: 15 / second
+   21: 30 / second
+   32: 45 / second
+   64: 90 / second
+  128: 180 / second
+  192: -90 / second
+  223: -45 / second
+  233: -30 / second
+  244: -15 / second
+
+Arg 5: Rotation radius of bridge balls, in bridge radius %. 0 is Hexen-default (15 units regardless of bridge radius)
+*/
 
 //==========================================================================
 //
 //  A_BridgeInit
 //
 //==========================================================================
-/*
-[decorate] final void A_BridgeInit () {
-  float StartAngle;
-  BridgeBall ball1;
-  BridgeBall ball2;
-  BridgeBall ball3;
+[decorate] final void A_BridgeInit (optional class!Actor balltype) {
+  if (Args[0] || Args[1]) {
+    UnlinkFromWorld();
+    if (Args[0] > 0) Radius = max(0, Args[0]);
+    if (Args[1] > 0) Height = max(0, Args[1]);
+    LinkToWorld();
+  }
 
-  StartAngle = Random()*360.0;
   Special1 = 0;
 
-  // Spawn triad into world
-  ball1 = BridgeBall(Spawn(BridgeBall, Origin));
-  ball1.OrbitAngle = StartAngle;
-  ball1.Target = self;
+  if (!specified_balltype) balltype = BridgeBall;
 
-  ball2 = BridgeBall(Spawn(BridgeBall, Origin));
-  ball2.OrbitAngle = AngleMod360(StartAngle+120.0);
-  ball2.Target = self;
+  if (!Args[2]) Args[2] = 3;
 
-  ball3 = BridgeBall(Spawn(BridgeBall, Origin));
-  ball3.OrbitAngle = AngleMod360(StartAngle+240.0);
-  ball3.Target = self;
-
-  ball1.A_BridgeOrbit();
-  ball2.A_BridgeOrbit();
-  ball3.A_BridgeOrbit();
+  if (balltype && Args[2] > 0) {
+    float StartAngle = Random()*360.0;
+    foreach (int bnum; 0..Args[2]) {
+      auto xball = balltype(Spawn(balltype, Origin));
+      if (!xball) continue;
+      xball.Target = self;
+      auto ball = BridgeBall(xball);
+      if (ball) {
+        ball.OrbitAngle = StartAngle+360.0*bnum/Args[2];
+        if (Args[4] > 0 && Radius > 0) ball.RotationRadius = Radius*Args[4]/100.0;
+             if (Args[3] > 128) ball.RotationSpeed = -(180.0*(255-Args[3])/128.0)*5.0/35.0;
+        else if (Args[3] > 0) ball.RotationSpeed = (180.0*Args[3]/128.0)*5.0/35.0;
+        ball.A_BridgeOrbit();
+      }
+    }
+  }
 }
-*/
 
 
 //==========================================================================
@@ -66,15 +89,13 @@ class Bridge : /*Actor*/CustomBridge game(GAME_Raven) __mobjinfo__(118) __script
 //  RemoveThing
 //
 //==========================================================================
-/*
 override void RemoveThing () {
   Special1 = true; // removing the bridge
   bSolid = false;
   SetState(GetStatePlus(IdleState, 3, IgnoreJump:true));
 }
-*/
 
-/*
+
 states {
 Spawn:
   TLGL A 2
@@ -85,18 +106,15 @@ Spawn:
   TLGL A 300
   Stop
 }
-*/
 
 
 defaultproperties {
-  //Radius = 32.0;
-  //Height = 2.0;
-  RenderStyle = STYLE_Translucent;
+  Radius = 32.0;
+  Height = 2.0;
+  RenderStyle = STYLE_None;
   Alpha = 0.0;
-  /*
   bSolid = true;
   bNoGravity = true;
   bNoLiftDrop = true;
   bActLikeBridge = true;
-  */
 }

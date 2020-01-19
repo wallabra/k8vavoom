@@ -37,28 +37,34 @@
 //**************************************************************************
 class BridgeBall : Actor;
 
-float OrbitAngle; // Angle of ball
+float OrbitAngle; // angle of ball
+float RotationSpeed = 3.0*360.0/256.0; // every five tics, Hexen moved the ball 3/256th of a revolution
+float RotationRadius = 15.0;
 
 
 //==========================================================================
 //
 //  A_BridgeOrbit
 //
+//  FIXME: interpolate this!
+//
 //==========================================================================
 [decorate] final void A_BridgeOrbit () {
   if (Actor(Target).Special1) SetState(none);
-  // 3.0 * 360.0 / 256.0 = 4.21875
-  OrbitAngle = AngleMod360(OrbitAngle+4.21875);
-  Origin.x = Target.Origin.x+15.0*cos(OrbitAngle);
-  Origin.y = Target.Origin.y+15.0*sin(OrbitAngle);
+  OrbitAngle = AngleMod360(OrbitAngle+RotationSpeed/5.0);
+  float s, c;
+  sincos(OrbitAngle, out s, out c);
+  Origin.x = Target.Origin.x+RotationRadius*c;
+  Origin.y = Target.Origin.y+RotationRadius*s;
   Origin.z = Target.Origin.z;
 }
 
 
 states {
 Spawn:
-  TLGL A 2
-  TLGL A 5 A_BridgeOrbit
+  //TLGL A 2 Bright
+  //TLGL A 5 Bright A_BridgeOrbit
+  TLGL A 1 Bright A_BridgeOrbit
   Wait
 }
 
