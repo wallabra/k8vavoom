@@ -350,6 +350,8 @@
     <flag name="UseKillScripts" property="bUseKillScripts" />
     <flag name="NoKillScripts" property="bNoKillScripts" />
     <flag name="DontCorpse" property="bDontCorpse" />
+    <!-- internal k8vavoom flags -->
+    <flag name="k8vavoomInternalNoTickGrav" property="bNoTickGrav" />
     <!-- limiters -->
     <limitsub_cvar />
     <limitsub_int />

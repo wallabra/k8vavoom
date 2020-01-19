@@ -24,6 +24,7 @@
 //**
 //**************************************************************************
 #include "gamedefs.h"
+#include "sv_local.h"
 
 
 IMPLEMENT_CLASS(V, Entity);
@@ -139,6 +140,14 @@ void VEntity::AddedToLevel () {
 //
 //==========================================================================
 void VEntity::Tick (float deltaTime) {
+  // skip ticker?
+  if (FlagsEx&EFEX_NoTickGrav) {
+    if (!(EntityFlags&EF_NoGravity) && SubSector) {
+      // it is always at floor level
+      Origin.z = SV_GetLowestSolidPointZ(SubSector->sector, Origin);
+    }
+    return;
+  }
   // `Mass` is clamped in `OnMapSpawn()`, and we should take care of it in VC code
   // clamp velocity (just in case)
   Velocity.clampScaleInPlace(PHYS_MAXMOVE);

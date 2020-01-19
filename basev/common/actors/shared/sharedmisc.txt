@@ -51,6 +51,9 @@ actor MapSpot 9001
   +NoInteraction
   +NoGravity
   +DontSplash
+  //HACK: MapSpot does nothing, so there's no need to process it
+  //      some maps can have literally thousands of those
+  +k8vavoomInternalNoTickGrav
   states
   {
   Spawn:
@@ -79,8 +82,9 @@ actor FS_MapSpot : MapSpot 5004
 //------------------------------------------------------------------------------
 actor MapSpotGravity : MapSpot 9013
 {
-  -NoSector
-  -NoBlockmap
+  //k8: it doesn't need sector/blockmap, C++ code will take care of "gravity" here
+  //-NoSector
+  //-NoBlockmap
   -NoGravity
 }
 

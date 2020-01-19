@@ -310,6 +310,9 @@ void VLevel::TickWorld (float DeltaTime) {
     cls->InstanceLimitList.reset();
   }
 
+  //HACK: MapSpot does nothing, so there's no need to process it
+  //      some maps can have literally thousands of those
+
   // run thinkers
 #ifdef CLIENT
   // first run player mobile thinker, so we'll get camera position

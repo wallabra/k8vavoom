@@ -274,6 +274,7 @@ class VEntity : public VThinker {
     EFEX_Rendered      = 1u<<1u, // was this thing rendered? (unused, not set ever)
     //EFEX_OnScroll    = 1u<<2u, // set/reset by `CreateSecNodeList()`
     EFEX_NoInteraction = 1u<<3u, // moved from EntityEx
+    EFEX_NoTickGrav    = 1u<<4u, // do not call `Tick()` (but process gravity)
   };
   vuint32 FlagsEx;
 
