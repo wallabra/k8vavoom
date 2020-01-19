@@ -1273,8 +1273,13 @@ COMMAND(__k8_run_first_map) {
     break;
   }
 
+  if (startMap == NAME_None && fsys_PWadMaps.length()) {
+    GCon->Log(NAME_Init, "cannot find starting map from mapinfo, taking from pwad map list...");
+    startMap = VName(*fsys_PWadMaps[0].mapname);
+  }
+
   if (startMap == NAME_None) {
-    GCon->Logf(NAME_Error, "Starting map not found!");
+    GCon->Log(NAME_Error, "Starting map not found!");
     return;
   }
 
