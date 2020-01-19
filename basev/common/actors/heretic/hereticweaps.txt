@@ -685,6 +685,8 @@ actor MaceSpawner 2002
   Game Heretic
   +NoSector
   +NoBlockmap
+  +NoInteraction
+  +Invisible
 
   //action native A_SpawnMace();
 

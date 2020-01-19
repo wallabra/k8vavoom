@@ -5,6 +5,8 @@ actor BatSpawner : SwitchableDecoration 10225
   +NoSector
   +NoBlockmap
   +NoGravity
+  +NoInteraction
+  +Invisible
   RenderStyle None
 
   //action native A_BatSpawnInit();

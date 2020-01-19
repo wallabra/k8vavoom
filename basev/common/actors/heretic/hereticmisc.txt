@@ -75,6 +75,8 @@ actor PodGenerator 43
   +NoSector
   +NoBlockmap
   +DontSplash
+  +NoInteraction
+  +Invisible
 
   //action native A_MakePod();
 
@@ -95,11 +97,12 @@ actor TeleGlitterGenerator1 74
   +NoBlockmap
   +NoGravity
   +DontSplash
+  +NoInteraction
+  +Invisible
   states
   {
   Spawn:
-    TGLT A 8 A_SpawnItemEx("TeleGlitter1", Random(0, 31) - 16,
-      Random(0, 31) - 16, 0, 0, 0, 0.25)
+    TGLT A 8 A_SpawnItemEx("TeleGlitter1", Random(0, 31) - 16, Random(0, 31) - 16, 0, 0, 0, 0.25)
     Loop
   }
 }
@@ -113,11 +116,12 @@ actor TeleGlitterGenerator2 52
   +NoBlockmap
   +NoGravity
   +DontSplash
+  +NoInteraction
+  +Invisible
   states
   {
   Spawn:
-    TGLT A 8 A_SpawnItemEx("TeleGlitter2", Random(0, 31) - 16,
-      Random(0, 31) - 16, 0, 0, 0, 0.25)
+    TGLT A 8 A_SpawnItemEx("TeleGlitter2", Random(0, 31) - 16, Random(0, 31) - 16, 0, 0, 0, 0.25)
     Loop
   }
 }

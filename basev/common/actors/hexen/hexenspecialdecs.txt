@@ -452,6 +452,7 @@ actor LeafSpawner 113
   Game Hexen
   +NoSector
   +NoBlockmap
+  +NoInteraction
 
   //action native A_LeafSpawn();
 

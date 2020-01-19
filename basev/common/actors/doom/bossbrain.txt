@@ -40,6 +40,7 @@ actor BossEye 89
   +NoSector
   +NoBlockmap
   +NoInteraction
+  +Invisible
   states
   {
   Spawn:
@@ -60,6 +61,8 @@ actor BossTarget : SpecialSpot 87
   +NoSector
   +NoBlockmap
   +NoInteraction
+  +Invisible
+  +k8vavoomInternalNoTickGrav
 }
 
 //------------------------------------------------------------------------------

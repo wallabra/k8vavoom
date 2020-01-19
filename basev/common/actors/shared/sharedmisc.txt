@@ -25,9 +25,12 @@ actor PatrolPoint 9024
   Mass 10
   RenderStyle None
   +NoGravity
+  +NoSector
   +NoBlockmap
   +NoInteraction
   +DontSplash
+  +Invisible
+  +k8vavoomInternalNoTickGrav
 }
 
 //------------------------------------------------------------------------------
@@ -39,9 +42,12 @@ actor PatrolSpecial 9047
   Mass 10
   RenderStyle None
   +NoGravity
+  +NoSector
   +NoBlockmap
   +NoInteraction
   +DontSplash
+  +Invisible
+  +k8vavoomInternalNoTickGrav
 }
 
 //------------------------------------------------------------------------------
@@ -52,6 +58,7 @@ actor MapSpot 9001
   +NoInteraction
   +NoGravity
   +DontSplash
+  +Invisible
   //HACK: MapSpot does nothing, so there's no need to process it
   //      some maps can have literally thousands of those
   +k8vavoomInternalNoTickGrav
@@ -71,7 +78,9 @@ actor FS_MapSpot : MapSpot 5004
   +NoBlockmap
   +NoInteraction
   +NoGravity
+  +Invisible
   +DontSplash
+  +k8vavoomInternalNoTickGrav
   states
   {
   Spawn:

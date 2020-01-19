@@ -5,6 +5,7 @@ actor FogSpawner 10000
   +NoSector
   +NoBlockmap
   +FloatBob
+  +Invisible
 
   //action native A_FogSpawn();
 

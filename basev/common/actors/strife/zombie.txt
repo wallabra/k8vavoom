@@ -43,6 +43,7 @@ actor ZombieSpawner 170
   RenderStyle None
   +Shootable
   +NoSector
+  +Invisible
   ActiveSound "zombie/spawner"
   states
   {

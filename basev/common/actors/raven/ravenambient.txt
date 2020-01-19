@@ -7,6 +7,7 @@ actor SoundWind 42
   +NoBlockmap
   +DontSplash
   +NoInteraction
+  +Invisible
   //+MoveWithSector //k8:???
   states
   {
@@ -32,6 +33,7 @@ actor SoundWaterfall 41
   +NoBlockmap
   +DontSplash
   +NoInteraction
+  +Invisible
   //+MoveWithSector //k8:???
   states
   {
