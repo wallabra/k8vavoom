@@ -3,3 +3,4 @@ $dest basepak.pk3
 // various definitions
 mapinfo.txt  @CMAKE_CURRENT_SOURCE_DIR@/mapinfo.txt
 sndinfo.txt  @CMAKE_CURRENT_SOURCE_DIR@/sndinfo.txt
+sprofs.txt   @CMAKE_CURRENT_SOURCE_DIR@/sprofs.txt

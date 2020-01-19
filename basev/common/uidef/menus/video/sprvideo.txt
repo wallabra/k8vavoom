@@ -21,6 +21,15 @@ menudef SpriteVideoOptions {
   }
 
   option bool {
+    title = "Use some hardcoded offsets";
+    cvar = r_use_sprofs_lump;
+    help =
+      "Use 'SPROFS' lump to shift some known sprites.",
+      "\cGWARNING! This is experimental feature (turned on for testing)."
+      "\cGIt may or may not work as expected.";
+  }
+
+  option bool {
     title = "Use Real Height for Offset Fix";
     cvar = r_use_real_sprite_offset;
     help =

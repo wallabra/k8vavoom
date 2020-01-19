@@ -1,7 +1,5 @@
 $dest basepak.pk3
 
-// progs
 progs/cgame/classes.vc  @CMAKE_SOURCE_DIR@/progs/doom2/cgame.vc
-
-// various definitions
-mapinfo.txt  @CMAKE_CURRENT_SOURCE_DIR@/mapinfo.txt
+mapinfo.txt             @CMAKE_CURRENT_SOURCE_DIR@/mapinfo.txt
+sprofs.txt              @CMAKE_CURRENT_SOURCE_DIR@/sprofs.txt
