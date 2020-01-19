@@ -180,6 +180,9 @@ public:
   bool bNoRemap0;
   bool bWorldPanning;
   bool bIsCameraTexture;
+  bool bForcedSpriteOffset; // do not try to guess sprite offset, if this is set
+  int SOffsetFix; // set only if `bForcedSpriteOffset` is true
+  int TOffsetFix; // set only if `bForcedSpriteOffset` is true
   vuint8 WarpType;
   float SScale; // scaling
   float TScale;
@@ -574,6 +577,8 @@ private:
   void AddTexturesLump (TArray<WallPatchInfo> &, int, int, bool);
   void AddGroup (int, EWadNamespace);
   void AddTextureTextLumps (bool onlyHiRes);
+
+  void LoadSpriteOffsets ();
 
   void WipeWallPatches ();
 

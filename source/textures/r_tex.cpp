@@ -74,12 +74,14 @@ static int cli_WipeWallPatches = 0;
 static int cli_AddTextureDump = 0;
 static int cli_WarnDuplicateTextures = 0;
 static int cli_DumpTextures = 0;
+static int cli_SkipSprOfs = 0;
 
 /*static*/ bool cliRegister_txloader_args =
   VParsedArgs::RegisterFlagSet("-wipe-wall-patches", "!do not use", &cli_WipeWallPatches) &&
   VParsedArgs::RegisterFlagSet("-dev-add-texture-dump", "!do not use", &cli_AddTextureDump) &&
   VParsedArgs::RegisterFlagSet("-Wduplicate-textures", "!warn about dumplicate textures", &cli_WarnDuplicateTextures) &&
-  VParsedArgs::RegisterFlagSet("-dbg-dump-textures", "!do not use", &cli_DumpTextures);
+  VParsedArgs::RegisterFlagSet("-dbg-dump-textures", "!do not use", &cli_DumpTextures) &&
+  VParsedArgs::RegisterFlagSet("-ignore-sprofs", "ignore 'sprofs' sprite offset lumps", &cli_SkipSprOfs);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -222,6 +224,8 @@ void VTextureManager::Init () {
   if (skyflatnum < 0) skyflatnum = NumForName(NAME_f_sky1, TEXTYPE_Flat, false);
 
   screenBackTexNum = GTextureManager.AddFileTextureChecked("graphics/screenback/screenback_base.png", TEXTYPE_Pic);
+
+  LoadSpriteOffsets();
 }
 
 
@@ -1830,6 +1834,90 @@ VTexture *VTextureManager::GetExistingTextureByName (VStr txname, int type) {
   int idx = CheckNumForName(nn, type, true/*overloads*/);
   if (idx >= 0) return this->operator()(idx);
   return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VTextureManager::LoadSpriteOffsets
+//
+//  based on GZDoom code
+//
+//==========================================================================
+void VTextureManager::LoadSpriteOffsets () {
+  TMapNC<vuint32, bool> donotprocess;
+
+  if (cli_SkipSprOfs > 0) return;
+
+  // check for replaced sprites
+  for (auto &&tex : Textures) {
+    if (tex->SourceLump < 0) continue;
+    if (W_IsIWADLump(tex->SourceLump)) continue;
+    const char *n = *tex->Name;
+    if (VStr::length(n) < 4) continue; // just in case
+    vuint32 sprid;
+    memcpy(&sprid, n, 4);
+    donotprocess.put(sprid, true);
+  }
+
+  for (auto &&it : WadNSNameIterator(VName("sprofs"), WADNS_Global)) {
+    int fixed = 0, skipped = 0;
+    auto sc = new VScriptParser(W_FullLumpName(it.lump), W_CreateLumpReaderNum(it.lump));
+    GCon->Logf(NAME_Init, "loading SPROFS lump (%s)", *W_FullLumpName(it.lump));
+    sc->SetEscape(false);
+    sc->SetCMode(true);
+    while (sc->GetString()) {
+      int x, y;
+      bool iwadonly = false;
+      bool forced = false;
+      int tid = -1;
+      VStr textureName = sc->String.toLowerCase();
+      if (!textureName.isEmpty() && textureName.length() <= 8) {
+        tid = CheckNumForName(VName(*textureName), TEXTYPE_Sprite, false);
+      }
+      sc->Expect(",");
+      sc->ExpectNumberWithSign();
+      x = sc->Number;
+      sc->Expect(",");
+      sc->ExpectNumberWithSign();
+      y = sc->Number;
+      if (sc->Check(",")) {
+             if (sc->Check("iwad")) iwadonly = true;
+        else if (sc->Check("iwadforced")) forced = iwadonly = true;
+        else { sc->ExpectString(); sc->Error(va("unexpected flag '%s'", *sc->String)); }
+      }
+      //GCon->Logf(NAME_Debug, " tid=%d (%d,%d) <%s>", tid, x, y, *textureName);
+      if (tid > 0) {
+        VTexture *tex = getIgnoreAnim(tid);
+        if (!tex) { ++skipped; continue; }
+        // we only want to change texture offsets for sprites in the IWAD or the file this lump originated from
+        if (tex->SourceLump < 0) { ++skipped; continue; }
+        // check for the same wad file
+        if (it.getFile() != W_LumpFile(tex->SourceLump)) {
+          if (!iwadonly) { ++skipped; continue; }
+          // reject non-iwad textures
+          if (!W_IsIWADLump(tex->SourceLump)) { ++skipped; continue; }
+        }
+        if (!forced) {
+          const char *txname = *tex->Name;
+          if (VStr::length(txname) >= 4) {
+            vuint32 sprid;
+            memcpy(&sprid, txname, 4);
+            if (donotprocess.has(sprid)) { ++skipped; continue; } // do not alter sprites that only get partially replaced
+          }
+        }
+        //GCon->Logf(NAME_Debug, "  fixed sprite '%s': old is (%d,%d); new is (%d,%d)", txname, tex->SOffset, tex->TOffset, x, y);
+        tex->SOffsetFix = x;
+        tex->TOffsetFix = y;
+        tex->bForcedSpriteOffset = true;
+        ++fixed;
+      } else {
+        ++skipped;
+      }
+    }
+    delete sc;
+    if (fixed || skipped) GCon->Logf(NAME_Init, "  fixed: %d; skipped: %d", fixed, skipped);
+  }
 }
 
 
