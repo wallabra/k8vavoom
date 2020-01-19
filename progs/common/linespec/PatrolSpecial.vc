@@ -27,6 +27,7 @@
 //**  A special to execute when a monster reaches a matching patrol point.
 //**
 //**************************************************************************
+/* moved to decorate code
 class PatrolSpecial : Actor __mobjinfo__(9047);
 
 
@@ -39,3 +40,4 @@ defaultproperties {
   bNoSplash = true;
   RenderStyle = STYLE_None;
 }
+*/
