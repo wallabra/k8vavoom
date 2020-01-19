@@ -1790,7 +1790,7 @@ VVA_CHECKRESULT bool VStr::needQuoting () const noexcept {
   const char *data = getData();
   for (int f = 0; f < len; ++f) {
     vuint8 ch = (vuint8)data[f];
-    if (ch < ' ' || ch == '\\' || ch == '"' || ch >= 127) return true;
+    if (ch <= ' ' || ch == '\\' || ch == '"' || ch >= 127) return true;
   }
   return false;
 }
@@ -1802,7 +1802,7 @@ VVA_CHECKRESULT VStr VStr::quote (bool addQCh) const noexcept {
   const char *data = getData();
   for (int f = 0; f < len; ++f) {
     vuint8 ch = (vuint8)data[f];
-    if (ch < ' ' || ch == '\\' || ch == '"' || ch >= 127) {
+    if (ch <= ' ' || ch == '\\' || ch == '"' || ch >= 127) {
       // need to quote it
       VStr res;
       if (addQCh) res += '"';
