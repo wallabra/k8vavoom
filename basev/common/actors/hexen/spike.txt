@@ -12,6 +12,7 @@ actor DirtClump
 }
 
 //------------------------------------------------------------------------------
+/* defined in VC code
 actor ThrustFloorUp : ThrustFloorDown 10091
 {
   Game Hexen
@@ -24,3 +25,4 @@ actor ThrustFloorUp : ThrustFloorDown 10091
     Goto Super::Up
   }
 }
+*/

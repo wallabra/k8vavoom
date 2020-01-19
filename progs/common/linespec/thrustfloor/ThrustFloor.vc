@@ -23,50 +23,43 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class ThrustFloorDown : Actor
-  game(GAME_Hexen)
-  __mobjinfo__(10090)
-  __scriptid__(105);
+class ThrustFloor : Actor;
 
-//
-// Thrust Spike Variables
-//
+// thrust spike variables
+Actor SpawnedDirt; // pointer to dirt clump mobj
+float RaiseSpeed; // speed of raise
+bool bRaised; // lowered or raised state
+bool bBloody; // bloody spike
 
-Actor SpawnedDirt;  //  pointer to dirt clump mobj
-float RaiseSpeed; //  speed of raise
-bool bRaised;   //  Lowered or raised state
-bool bBloody;   //  Bloody spike.
 
 //==========================================================================
 //
 //  A_ThrustInitUp
 //
 //==========================================================================
-
-[decorate] final void A_ThrustInitUp()
-{
-  RaiseSpeed = 5.0; // Raise speed
-  bRaised = true;   // Mark as up
+[decorate] final void A_ThrustInitUp () {
+  RaiseSpeed = 5.0; // raise speed
+  bRaised = true; // mark as up
   FloorClip = 0.0;
   bSolid = true;
   SpawnedDirt = none;
 }
+
 
 //==========================================================================
 //
 //  A_ThrustInitDn
 //
 //==========================================================================
-
-[decorate] final void A_ThrustInitDn()
-{
-  RaiseSpeed = 5.0; // Raise speed
-  bRaised = false;  // Mark as down
+[decorate] final void A_ThrustInitDn () {
+  RaiseSpeed = 5.0; // raise speed
+  bRaised = false; // mark as down
   FloorClip = Height;
   bSolid = false;
   bInvisible = true;
   SpawnedDirt = SpawnEntityChecked(class!Actor, DirtClump, Origin);
 }
+
 
 //==========================================================================
 //
@@ -75,34 +68,33 @@ bool bBloody;   //  Bloody spike.
 //  Raise incrementally from the floor
 //
 //==========================================================================
-
-[decorate] final void A_ThrustRaise()
-{
-  // Raise spike from the ground
+[decorate] final void A_ThrustRaise () {
+  // raise spike from the ground
   FloorClip -= RaiseSpeed;
-  if (FloorClip <= 0.0)
-  {
-    // Reached it's target height
+  if (FloorClip <= 0.0) {
+    // reached it's target height
     FloorClip = 0.0;
     bRaised = true;
     if (bBloody) {
-      SetState(FindState('BloodyUp'));
+      //SetState(FindState('BloodyUp'));
+      SetState(FindState('BloodThrustInit2'));
     } else {
-      SetState(FindState('Up'));
+      //SetState(FindState('Up'));
+      SetState(FindState('ThrustInit2'));
     }
   }
 
-  // Lose the dirt clump
-  if ((FloorClip < Height) && SpawnedDirt)
-  {
+  // lose the dirt clump
+  if ((FloorClip < Height) && SpawnedDirt) {
     SpawnedDirt.Destroy();
     SpawnedDirt = none;
   }
 
-  // Spawn some dirt
+  // spawn some dirt
   if (P_Random() < 40) SpawnDirt(Radius);
-  RaiseSpeed += 1.0;  // Increase raise speed
+  RaiseSpeed += 1.0; // increase raise speed
 }
+
 
 //==========================================================================
 //
@@ -111,161 +103,154 @@ bool bBloody;   //  Bloody spike.
 //  Sink incrementally into the floor
 //
 //==========================================================================
-
-[decorate] final void A_ThrustLower()
-{
-  if (FloorClip < Height)
-  {
+[decorate] final void A_ThrustLower () {
+  if (FloorClip < Height) {
     FloorClip += 6.0;
-  }
-  else
-  {
+  } else {
     bRaised = false;
     if (bBloody) {
-      SetState(FindState('BloodyDown'));
+      //SetState(FindState('BloodyDown'));
+      SetState(FindState('BloodThrustInit1'));
     } else {
-      SetState(FindState('Down'));
+      //SetState(FindState('Down'));
+      SetState(FindState('ThrustInit1'));
     }
   }
 }
+
 
 //==========================================================================
 //
 //  A_ThrustBlock
 //
 //==========================================================================
-
-[decorate] final void A_ThrustBlock()
-{
+[decorate] final void A_ThrustBlock () {
   bSolid = true;
 }
+
 
 //==========================================================================
 //
 //  A_ThrustImpale
 //
 //==========================================================================
-
-[decorate] final void A_ThrustImpale()
-{
+[decorate] final void A_ThrustImpale () {
   Entity Other;
 
-  // Impale all shootables in radius
+  // impale all shootables in radius
   // stomp on any things contacted
-  foreach RadiusThings(Other, Origin, Radius)
-  {
-    float blockdist;
-
+  foreach RadiusThings(Other, Origin, Radius) {
     if (!EntityEx(Other).bShootable) continue;
+    if (Other == self) continue; // don't clip against self
 
-    blockdist = Other.Radius + Radius;
-    if (fabs(Other.Origin.x - Origin.x) >= blockdist ||
-      fabs(Other.Origin.y - Origin.y) >= blockdist ||
-      (Other.Origin.z > Origin.z + Height))
+    float blockdist = Other.Radius+Radius;
+    if (fabs(Other.Origin.x-Origin.x) >= blockdist ||
+        fabs(Other.Origin.y-Origin.y) >= blockdist ||
+        Other.Origin.z > Origin.z+Height)
     {
       continue; // didn't hit it
     }
 
-    if (Other == self) continue; // don't clip against self
-
     EntityEx(Other).Damage(self, self, 10001, forced:true, spawnBlood:true);
-    bBloody = true; // Mark thrust thing as bloody
+    bBloody = true; // mark thrust thing as bloody
   }
 }
 
-states
-{
-Up:
-  TSPK A 3
-  TSPK A 4 A_ThrustInitUp
-  TSPK A 10
-  Wait
-BloodyUp:
-  TSPK B 3
-  TSPK B 4 A_ThrustInitUp
-  TSPK B 10
-  Wait
-Spawn:
-Down:
-  TSPK A 3
-  TSPK A 4 A_ThrustInitDn
-  TSPK A -1
-  Wait
-BloodyDown:
-  TSPK B 3
-  TSPK B 4 A_ThrustInitDn
-  TSPK B -1
-  Wait
-Raise:
-  TSPK A 8 A_ThrustRaise
-  TSPK A 6 A_ThrustRaise
-  TSPK A 4 A_ThrustRaise
-  TSPK A 3 A_ThrustBlock
-  TSPK A 2 A_ThrustImpale
-  TSPK A 2 A_ThrustRaise
-  Wait
-BloodyRaise:
-  TSPK B 8 A_ThrustRaise
-  TSPK B 6 A_ThrustRaise
-  TSPK B 4 A_ThrustRaise
-  TSPK B 3 A_ThrustBlock
-  TSPK B 2 A_ThrustImpale
-  TSPK B 2 A_ThrustRaise
-  Wait
-Lower:
-  TSPK A 2 A_ThrustLower
-  Loop
-BloodyLower:
-  TSPK B 2 A_ThrustLower
-  Loop
-}
 
 //==========================================================================
 //
 //  Activate
 //
 //==========================================================================
-
-override bool Activate(EntityEx Activator)
-{
-  if (!bRaised)
-  {
+override bool Activate (EntityEx Activator) {
+  if (!bRaised) {
     PlaySound('ThrustSpikeLower', CHAN_VOICE);
     bInvisible = false;
     if (bBloody) {
-      SetState(FindState('BloodyRaise'));
+      SetState(FindState('BloodThrustRaise'));
     } else {
-      SetState(FindState('Raise'));
+      SetState(FindState('ThrustRaise'));
     }
   }
   return true;
 }
+
 
 //==========================================================================
 //
 //  Deactivate
 //
 //==========================================================================
-
-override bool Deactivate(EntityEx Activator)
-{
-  if (bRaised)
-  {
+override bool Deactivate (EntityEx Activator) {
+  if (bRaised) {
     PlaySound('ThrustSpikeRaise', CHAN_VOICE);
     if (bBloody) {
-      SetState(FindState('BloodyLower'));
+      SetState(FindState('BloodThrustLower'));
     } else {
-      SetState(FindState('Lower'));
+      SetState(FindState('ThrustLower'));
     }
   }
   return true;
 }
 
-defaultproperties
-{
+
+states {
+  Spawn:
+  //Down:
+  ThrustInit1:
+    TSPK A 3
+    TSPK A 4 A_ThrustInitDn
+    TSPK A -1
+    Wait
+  //Up:
+  ThrustInit2:
+    TSPK A 3
+    TSPK A 4 A_ThrustInitUp
+    TSPK A 10
+    Wait
+  //BloodyUp:
+  BloodThrustInit2:
+    TSPK B 3
+    TSPK B 4 A_ThrustInitUp
+    TSPK B 10
+    Wait
+  //BloodyDown:
+  BloodThrustInit1:
+    TSPK B 3
+    TSPK B 4 A_ThrustInitDn
+    TSPK B -1
+    Wait
+  ThrustRaise:
+    TSPK A 8 A_ThrustRaise
+    TSPK A 6 A_ThrustRaise
+    TSPK A 4 A_ThrustRaise
+    TSPK A 3 A_ThrustBlock
+    TSPK A 2 A_ThrustImpale
+    //TSPK A 2 A_ThrustRaise
+    Wait
+  BloodThrustRaise:
+    TSPK B 8 A_ThrustRaise
+    TSPK B 6 A_ThrustRaise
+    TSPK B 4 A_ThrustRaise
+    TSPK B 3 A_ThrustBlock
+    TSPK B 2 A_ThrustImpale
+    //TSPK B 2 A_ThrustRaise
+    Wait
+  ThrustLower:
+    TSPK A 2 A_ThrustLower
+    Loop
+  BloodThrustLower:
+    TSPK B 2 A_ThrustLower
+    Loop
+}
+
+
+defaultproperties {
   Radius = 20.0;
   Height = 128.0;
+  /*
   bFloorClip = true;
   bNoTeleport = true;
   bInvisible = true;
+  */
 }

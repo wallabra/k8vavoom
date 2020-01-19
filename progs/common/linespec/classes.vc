@@ -277,6 +277,10 @@ enum {
 #include "BrainState.vc"
 #include "ScriptedMarine.vc"
 
+#include "thrustfloor/ThrustFloor.vc"
+#include "thrustfloor/ThrustFloorDown.vc"
+#include "thrustfloor/ThrustFloorUp.vc"
+
 #include "raven/ArtiTeleport.vc"
 
 #include "heretic/Whirlwind.vc"
@@ -329,7 +333,6 @@ enum {
 #include "hexen/ZCorpseLynchedNoHeart.vc"
 #include "hexen/Pottery1.vc"
 #include "hexen/ZBell.vc"
-#include "hexen/ThrustFloorDown.vc"
 #include "hexen/Heresiarch.vc"
 #include "hexen/SorcBall.vc"
 #include "hexen/SorcBall1.vc"
