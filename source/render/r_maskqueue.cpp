@@ -454,9 +454,15 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
       case VEntity::EType::ET_Pickup: renderShadow = r_fake_shadows_pickups.asBool(); break;
       default: abort();
     }
-    // do not render shadow if floor surface is higher than the camera
-    if (renderShadow && (sprorigin.z < thing->FloorZ || thing->FloorZ >= Drawer->vieworg.z)) {
-      renderShadow = false;
+    // do not render shadow if floor surface is higher than the camera, or if the sprite is under the floor
+    if (renderShadow) {
+      if (thing->FloorZ >= Drawer->vieworg.z) {
+        // the floor is higher
+        renderShadow = false;
+      } else if (sprorigin.z+8 < thing->FloorZ || sprorigin.z+thing->Height <= thing->FloorZ) {
+        // check origin (+8 for "floatbob")
+        renderShadow = false;
+      }
     }
   }
 
@@ -516,8 +522,8 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
     if (renderShadow) {
       Alpha *= r_fake_shadow_translucency.asFloat();
       if (Alpha >= 0.012f) {
-        // check origin
-        if (sprorigin.z >= thing->FloorZ) {
+        // check origin (+12 for "floatbob")
+        /*if (sprorigin.z+12 >= thing->FloorZ)*/ {
           sprorigin.z = thing->FloorZ;
 
           Alpha = min2(1.0f, Alpha);
