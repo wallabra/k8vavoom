@@ -110,10 +110,10 @@ public:
   // if longest prefix is the same as input prefix, show all matches
   // case-insensitive
   // if `unchangedAsEmpty` is `true`, return empty string if result is equal to input prefix
-  static VStr AutoCompleteFromList (VStr prefix, const TArray <VStr> &list, bool unchangedAsEmpty=false, bool doSortHint=true);
+  static VStr AutoCompleteFromList (VStr prefix, const TArray <VStr> &list, bool unchangedAsEmpty=false, bool doSortHint=true, bool doQuoting=false);
 
   // this provides correct arguments for in-command autocompletion
-  static inline VStr AutoCompleteFromListCmd (VStr prefix, const TArray <VStr> &list) { return AutoCompleteFromList(prefix, list, true, true); }
+  static inline VStr AutoCompleteFromListCmd (VStr prefix, const TArray <VStr> &list) { return AutoCompleteFromList(prefix, list, true, true, true); }
 
   enum {
     CT_UNKNOWN = 0,

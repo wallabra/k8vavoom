@@ -528,6 +528,10 @@ bool C_Responder (event_t *ev) {
         VStr clineRest = c_iline.getCStr();
         VStr cline = clineRest.left(c_iline.getCurPos());
         clineRest.chopLeft(c_iline.getCurPos());
+        if (cline.length() && clineRest.length() && clineRest[0] == '"') {
+          cline += clineRest[0];
+          clineRest.chopLeft(1);
+        }
         // find last command
         int cmdstart = cline.findNextCommand();
         for (;;) {

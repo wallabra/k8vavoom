@@ -379,33 +379,48 @@ void VCommand::RemoveFromAutoComplete (const char *string) {
 
 //==========================================================================
 //
+//  acPartialQuote
+//
+//==========================================================================
+static VStr acPartialQuote (VStr s, bool doQuoting, bool hasSpacedMatch=false) {
+  if (!doQuoting) return s;
+  if (!hasSpacedMatch && !s.needQuoting()) return s;
+  //return VStr("\"")+s.quote();
+  // close quote, autocompleter can cope with that
+  if (hasSpacedMatch && !s.needQuoting()) return VStr("\"")+s+"\"";
+  return s.quote(true);
+}
+
+
+//==========================================================================
+//
 //  VCommand::AutoCompleteFromList
 //
 //==========================================================================
-VStr VCommand::AutoCompleteFromList (VStr prefix, const TArray <VStr> &list, bool unchangedAsEmpty, bool doSortHint) {
-  if (list.length() == 0) return (unchangedAsEmpty ? VStr::EmptyString : prefix);
+VStr VCommand::AutoCompleteFromList (VStr prefix, const TArray <VStr> &list, bool unchangedAsEmpty, bool doSortHint, bool doQuoting) {
+  if (list.length() == 0) return (unchangedAsEmpty ? VStr::EmptyString : acPartialQuote(prefix, doQuoting));
 
   VStr bestmatch;
   int matchcount = 0;
 
   // first, get longest match
-  for (int f = 0; f < list.length(); ++f) {
-    VStr mt = list[f];
+  for (auto &&mt : list) {
     if (mt.length() < prefix.length()) continue;
     if (VStr::NICmp(*prefix, *mt, prefix.length()) != 0) continue;
     ++matchcount;
     if (bestmatch.length() < mt.length()) bestmatch = mt;
   }
 
-  if (matchcount == 0) return (unchangedAsEmpty ? VStr::EmptyString : prefix); // alas
-  if (matchcount == 1) { bestmatch += " "; return bestmatch; } // done
+  if (matchcount == 0) return (unchangedAsEmpty ? VStr::EmptyString : acPartialQuote(prefix, doQuoting)); // alas
+  if (matchcount == 1) { if (doQuoting) bestmatch = bestmatch.quote(true); bestmatch += " "; return bestmatch; } // done
 
-  // trim match
-  for (int f = 0; f < list.length(); ++f) {
-    VStr mt = list[f];
+  // trim match; check for spaces too
+  bool hasSpacedMatch = false;
+  for (auto &&mt : list) {
     if (mt.length() < prefix.length()) continue;
     if (VStr::NICmp(*prefix, *mt, prefix.Length()) != 0) continue;
     // cannot be longer than this
+    if (!hasSpacedMatch && (mt.indexOf(' ') >= 0 || mt.indexOf('\t') >= 0)) hasSpacedMatch = true;
     if (bestmatch.length() > mt.length()) bestmatch = bestmatch.left(mt.length());
     int mlpos = 0;
     while (mlpos < bestmatch.length()) {
@@ -416,6 +431,12 @@ VStr VCommand::AutoCompleteFromList (VStr prefix, const TArray <VStr> &list, boo
       ++mlpos;
     }
   }
+
+  /*
+  GCon->Logf("prefix: <%s>", *prefix);
+  GCon->Logf("bestmatch: <%s>", *bestmatch);
+  GCon->Logf("hasSpacedMatch: %d", (int)hasSpacedMatch);
+  */
 
   // if match equals to prefix, this is second tab tap, so show all possible matches
   if (bestmatch == prefix) {
@@ -449,11 +470,11 @@ VStr VCommand::AutoCompleteFromList (VStr prefix, const TArray <VStr> &list, boo
         }
       }
     }
-    return (unchangedAsEmpty ? VStr::EmptyString : prefix);
+    return (unchangedAsEmpty ? VStr::EmptyString : acPartialQuote(prefix, doQuoting, hasSpacedMatch));
   }
 
   // found extended match
-  return bestmatch;
+  return acPartialQuote(bestmatch, doQuoting, hasSpacedMatch);
 }
 
 
@@ -491,10 +512,14 @@ static VBasePlayer *findPlayer () {
 VStr VCommand::GetAutoComplete (VStr prefix) {
   if (prefix.length() == 0) return prefix; // oops
 
+  //GCon->Logf("000: PFX=<%s>", *prefix);
+
   TArray<VStr> args;
   prefix.tokenize(args);
   int aidx = args.length();
   if (aidx == 0) return prefix; // wtf?!
+
+  //GCon->Logf("001: len=%d; [$-1]=<%s>", args.length(), *args[args.length()-1]);
 
   bool endsWithBlank = ((vuint8)prefix[prefix.length()-1] <= ' ');
 
@@ -530,19 +555,22 @@ VStr VCommand::GetAutoComplete (VStr prefix) {
     if (ac.length()) {
       // autocompleted, rebuild string
       //if (aidx < args.length()) args[aidx] = ac; else args.append(ac);
-      bool addSpace = ((vuint8)ac[ac.length()-1] <= ' ');
-      if (addSpace) ac.chopRight(1);
+      //!bool addSpace = ((vuint8)ac[ac.length()-1] <= ' ');
+      //!if (addSpace) ac.chopRight(1);
       VStr res;
       for (int f = 0; f < aidx; ++f) {
         res += args[f].quote(true); // add quote chars if necessary
         res += ' ';
       }
+      /*!
       if (ac.length()) {
         ac = ac.quote(true);
         if (!addSpace && ac[ac.length()-1] == '"') ac.chopRight(1);
       }
       res += ac;
       if (addSpace) res += ' ';
+      !*/
+      res += ac;
       return res;
     }
     // cannot complete, nothing's changed
@@ -566,7 +594,8 @@ VStr VCommand::GetAutoComplete (VStr prefix) {
         // sort
         timsort_r(aclist.ptr(), aclist.length(), sizeof(VStr), &sortCmpVStrCI, nullptr);
         //for (int f = 0; f < aclist.length(); ++f) GCon->Logf(" %d:<%s>", f, *aclist[f]);
-        VStr ac = AutoCompleteFromList((endsWithBlank ? VStr() : args[args.length()-1]), aclist);
+        VStr ac = AutoCompleteFromList((endsWithBlank ? VStr() : args[args.length()-1]), aclist, false, true, true);
+        /*!
         bool addSpace = ((vuint8)ac[ac.length()-1] <= ' ');
         if (addSpace) ac.chopRight(1);
         if (ac.length()) {
@@ -577,6 +606,8 @@ VStr VCommand::GetAutoComplete (VStr prefix) {
           res += ac;
           if (addSpace) res += ' ';
         }
+        !*/
+        res += ac;
         return res;
       }
     }
