@@ -99,7 +99,7 @@ class VFlatTexture : public VTexture {
 public:
   static VTexture *Create (VStream &Strm, int LumpNum);
 
-  VFlatTexture (int);
+  VFlatTexture (int InLumpNum);
   virtual ~VFlatTexture () override;
   virtual vuint8 *GetPixels () override;
   virtual void Unload () override;

@@ -42,17 +42,19 @@ VTexture *VTexture::CreateTexture (int Type, int LumpNum, bool setName) {
   static const struct {
     VTexCreateFunc Create;
     int Type;
+    const char *fmtname;
   } TexTable[] = {
-    { VImgzTexture::Create,     TEXTYPE_Any },
-    { VPngTexture::Create,      TEXTYPE_Any },
-    { VJpegTexture::Create,     TEXTYPE_Any },
-    //{ VSTBTexture::Create,      TEXTYPE_Any }, // this loads jpegs and bmps
-    { VPcxTexture::Create,      TEXTYPE_Any },
-    { VTgaTexture::Create,      TEXTYPE_Any },
-    { VFlatTexture::Create,     TEXTYPE_Flat },
-    { VRawPicTexture::Create,   TEXTYPE_Pic },
-    { VPatchTexture::Create,    TEXTYPE_Any },
-    { VAutopageTexture::Create, TEXTYPE_Autopage },
+    { VImgzTexture::Create,     TEXTYPE_Any, "imgz" },
+    { VPngTexture::Create,      TEXTYPE_Any, "png" },
+    { VJpegTexture::Create,     TEXTYPE_Any, "jpg" },
+    //{ VSTBTexture::Create,      TEXTYPE_Any, "STB" }, // this loads jpegs and bmps
+    { VPcxTexture::Create,      TEXTYPE_Any, "pcx" },
+    { VTgaTexture::Create,      TEXTYPE_Any, "tga" },
+    //{ VFlat64Texture::Create,     TEXTYPE_Flat, "flat" },
+    { VRawPicTexture::Create,   TEXTYPE_Pic, "rawpic" },
+    { VPatchTexture::Create,    TEXTYPE_Any, "patch" },
+    { VFlatTexture::Create,     TEXTYPE_Flat, "flat" },
+    { VAutopageTexture::Create, TEXTYPE_Autopage, "autopage" },
   };
 
   if (LumpNum < 0) return nullptr;
@@ -70,7 +72,7 @@ VTexture *VTexture::CreateTexture (int Type, int LumpNum, bool setName) {
       VTexture *Tex = TexTable[i].Create(Strm, LumpNum);
       if (Tex) {
         #ifdef VV_VERY_VERBOSE_TEXTURE_LOADER
-        GLog.Logf(NAME_Debug, "***    LOADED TEXTURE '%s'", *W_FullLumpName(LumpNum));
+        GLog.Logf(NAME_Debug, "***    LOADED TEXTURE '%s' (%s)", *W_FullLumpName(LumpNum), TexTable[i].fmtname);
         #endif
         if (setName) {
           if (Tex->Name == NAME_None) {
