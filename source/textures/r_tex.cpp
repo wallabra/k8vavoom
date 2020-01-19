@@ -1243,14 +1243,59 @@ void VTextureManager::AddTextures () {
   TArray<WallPatchInfo> patchtexlookup;
   // for each PNAMES lump load TEXTURE1 and TEXTURE2 from the same wad
   int lastPNameFile = -1; // fuck you, slade!
+  /*
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) != NAME_pnames) continue;
     NamesFile = W_LumpFile(Lump);
     if (lastPNameFile == NamesFile) continue;
     lastPNameFile = NamesFile;
     LoadPNames(Lump, patchtexlookup);
-    LumpTex1 = W_CheckFirstNumForNameInFile(NAME_texture1, NamesFile);
-    LumpTex2 = W_CheckFirstNumForNameInFile(NAME_texture2, NamesFile);
+    LumpTex1 = W_CheckLastNumForNameInFile(NAME_texture1, NamesFile);
+    LumpTex2 = W_CheckLastNumForNameInFile(NAME_texture2, NamesFile);
+    FirstTex = Textures.length();
+    AddTexturesLump(patchtexlookup, LumpTex1, FirstTex, true);
+    AddTexturesLump(patchtexlookup, LumpTex2, FirstTex, false);
+  }
+  */
+  int lastPNameLump = -1;
+  int pnFileReported = -1;
+  for (auto &&it : WadNSNameIterator(NAME_pnames, WADNS_Global)) {
+    if (it.getFile() == lastPNameFile) {
+      vassert(lastPNameLump != -1);
+      if (pnFileReported != lastPNameFile) {
+        pnFileReported = lastPNameFile;
+        GCon->Logf(NAME_Warning, "duplicate file \"PNAMES\" in archive \"%s\".", *W_FullPakNameForLump(lastPNameLump));
+        GCon->Log(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE PK3/WAD FILES!");
+      }
+      continue;
+    }
+    lastPNameLump = it.lump;
+    lastPNameFile = it.getFile();
+    NamesFile = lastPNameFile;
+    int plump = W_CheckLastNumForNameInFile(NAME_pnames, NamesFile);
+    vassert(plump >= 0);
+    LoadPNames(plump, patchtexlookup);
+    // find "texture1"
+    LumpTex1 = W_CheckLastNumForNameInFile(NAME_texture1, NamesFile);
+    if (LumpTex1 >= 0) {
+      int LT1First = W_CheckFirstNumForNameInFile(NAME_texture1, NamesFile);
+      if (LT1First >= 0 && LumpTex1 != LT1First) {
+        GCon->Logf(NAME_Warning, "duplicate file \"TEXTURE1\" in archive \"%s\".", *W_FullPakNameForLump(it.lump));
+        GCon->Log(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE PK3/WAD FILES!");
+        //LumpTex1 = LT1First;
+      }
+    }
+    // find "texture2"
+    LumpTex2 = W_CheckLastNumForNameInFile(NAME_texture2, NamesFile);
+    if (LumpTex2 >= 0) {
+      int LT2First = W_CheckFirstNumForNameInFile(NAME_texture2, NamesFile);
+      if (LT2First >= 0 && LumpTex2 != LT2First) {
+        GCon->Logf(NAME_Warning, "duplicate file \"TEXTURE2\" in archive \"%s\".", *W_FullPakNameForLump(it.lump));
+        GCon->Log(NAME_Warning, "THIS IS FUCKIN' WRONG. DO NOT USE BROKEN TOOLS TO CREATE PK3/WAD FILES!");
+        //LumpTex2 = LT2First;
+      }
+    }
+    // load textures
     FirstTex = Textures.length();
     AddTexturesLump(patchtexlookup, LumpTex1, FirstTex, true);
     AddTexturesLump(patchtexlookup, LumpTex2, FirstTex, false);
@@ -1261,8 +1306,8 @@ void VTextureManager::AddTextures () {
   int LastTex2 = W_CheckNumForName(NAME_texture2);
   if (LastTex1 >= 0 && (LastTex1 == LumpTex1 || W_LumpFile(LastTex1) <= NamesFile)) LastTex1 = -1;
   if (LastTex2 >= 0 && (LastTex2 == LumpTex2 || W_LumpFile(LastTex2) <= NamesFile)) LastTex2 = -1;
-  FirstTex = Textures.length();
   if (LastTex1 != -1 || LastTex2 != -1) {
+    FirstTex = Textures.length();
     LoadPNames(W_GetNumForName(NAME_pnames), patchtexlookup);
     AddTexturesLump(patchtexlookup, LastTex1, FirstTex, true);
     AddTexturesLump(patchtexlookup, LastTex2, FirstTex, false);
