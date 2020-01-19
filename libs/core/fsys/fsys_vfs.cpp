@@ -631,6 +631,23 @@ int W_CheckFirstNumForNameInFile (VName Name, int File, EWadNamespace NS) {
 
 //==========================================================================
 //
+//  W_CheckLastNumForNameInFile
+//
+//  Returns -1 if name not found.
+//
+//==========================================================================
+int W_CheckLastNumForNameInFile (VName Name, int File, EWadNamespace NS) {
+  MyThreadLocker glocker(&fsys_glock);
+  if (File < 0 || File >= getSPCount()) return -1;
+  int i = SearchPaths[File]->CheckNumForName(Name, NS, false); // want last
+  if (i >= 0) return MAKE_HANDLE(File, i);
+  // not found
+  return -1;
+}
+
+
+//==========================================================================
+//
 //  W_CheckNumForFileName
 //
 //  Returns -1 if name not found.

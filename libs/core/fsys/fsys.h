@@ -148,6 +148,7 @@ int W_CheckNumForName (VName Name, EWadNamespace NS=WADNS_Global);
 int W_GetNumForName (VName Name, EWadNamespace NS=WADNS_Global);
 int W_CheckNumForNameInFile (VName Name, int File, EWadNamespace NS=WADNS_Global);
 int W_CheckFirstNumForNameInFile (VName Name, int File, EWadNamespace NS=WADNS_Global);
+int W_CheckLastNumForNameInFile (VName Name, int File, EWadNamespace NS=WADNS_Global);
 int W_FindACSObjectInFile (VStr Name, int File);
 
 int W_CheckNumForFileName (VStr Name);
