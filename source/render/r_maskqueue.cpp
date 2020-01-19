@@ -69,14 +69,14 @@ static VCvarF r_fake_shadow_scale("r_fake_shadow_scale", "0.1", "Fake sprite sha
 static VCvarB r_fake_shadow_ignore_offset_fix("r_fake_shadow_ignore_offset_fix", false, "Should fake sprite shadows ignore sprite offset fix?", CVAR_Archive);
 
 static VCvarB r_fake_shadows_monsters("r_fake_shadows_monsters", true, "Render fake sprite shadows for monsters?", CVAR_Archive);
-static VCvarB r_fake_shadows_corpses("r_fake_shadows_corpses", true, "Render fake sprite shadows for corpses?", CVAR_Archive);
+static VCvarB r_fake_shadows_corpses("r_fake_shadows_corpses", false, "Render fake sprite shadows for corpses?", CVAR_Archive);
 static VCvarB r_fake_shadows_missiles("r_fake_shadows_missiles", true, "Render fake sprite shadows for projectiles?", CVAR_Archive);
 static VCvarB r_fake_shadows_pickups("r_fake_shadows_pickups", true, "Render fake sprite shadows for pickups?", CVAR_Archive);
 static VCvarB r_fake_shadows_decorations("r_fake_shadows_decorations", true, "Render fake sprite shadows for decorations?", CVAR_Archive);
 static VCvarB r_fake_shadows_players("r_fake_shadows_players", true, "Render fake sprite shadows for players?", CVAR_Archive);
 
-static VCvarB r_fake_shadows_additive_missiles("r_fake_shadows_additive_missiles", true, "Render shadows from additive projectiles?", CVAR_Archive);
-static VCvarB r_fake_shadows_additive_monsters("r_fake_shadows_additive_monsters", true, "Render shadows from additive monsters?", CVAR_Archive);
+static VCvarB r_fake_shadows_additive_missiles("r_fake_shadows_additive_missiles", false, "Render shadows from additive projectiles?", CVAR_Archive);
+static VCvarB r_fake_shadows_additive_monsters("r_fake_shadows_additive_monsters", false, "Render shadows from additive monsters?", CVAR_Archive);
 
 static VCvarB dbg_disable_sprite_sorting("dbg_disable_sprite_sorting", false, "Disable sprite sorting (this WILL glitch renderer)?", /*CVAR_Archive|*/CVAR_PreInit);
 
