@@ -76,7 +76,7 @@ protected final void DoFireRailgun (float Offset) {
 //===========================================================================
 protected final void doFireMissileProjectile (class!Actor MissileType, optional float Angle,
   optional bool UseAmmo, optional int SpawnXY, optional float SpawnZ,
-  optional int Flags, optional float Pitch)
+  optional int Flags, optional float Pitch, optional float SpawnFwd)
 {
   if (!MissileType || !bIsPlayer) return;
 
@@ -96,6 +96,12 @@ protected final void doFireMissileProjectile (class!Actor MissileType, optional 
     sincos(Angles.yaw-90.0, out s, out c);
     ShootOrg.x += float(SpawnXY)*c;
     ShootOrg.y += float(SpawnXY)*s;
+  }
+  if (SpawnFwd) {
+    float s, c;
+    sincos(Angles.yaw, out s, out c);
+    ShootOrg.x += float(SpawnFwd)*c;
+    ShootOrg.y += float(SpawnFwd)*s;
   }
   ShootOrg.z += SpawnZ;
 

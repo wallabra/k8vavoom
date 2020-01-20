@@ -635,6 +635,20 @@
 
 //===========================================================================
 //
+//  A_FireCustomMissileEx
+//
+//===========================================================================
+[decorate] final void A_FireCustomMissileEx (class!Actor MissileType, optional float Angle,
+  optional bool UseAmmo, optional int SpawnLeft, optional float SpawnFwd, optional float SpawnUp,
+  optional int Flags, optional float Pitch) self(Actor)
+{
+  Pitch = -Pitch; // this does it this way
+  doFireMissileProjectile(MissileType, Angle!optional, UseAmmo!optional, SpawnLeft!optional, SpawnUp!optional, Flags!optional, Pitch!optional, SpawnFwd!optional);
+}
+
+
+//===========================================================================
+//
 //  A_FireSTGrenade
 //
 //===========================================================================
