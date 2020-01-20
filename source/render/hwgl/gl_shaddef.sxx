@@ -147,6 +147,7 @@ ShaderList basedir="basev/common/glshaders" pakdir="glshaders" {
   Shader DrawAutomap both="draw/draw_automap";
 
   Shader SurfZBuf both="surf_zbuf";
+  Shader SurfZBufMasked both="surf_zbuf_masked";
 
   Shader SurfDecalNoLMap both="decal/surf_decal_nolmap";
   Shader SurfDecalLMap both="decal/surf_decal_lmap";

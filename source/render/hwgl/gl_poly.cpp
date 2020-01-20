@@ -500,57 +500,86 @@ void VOpenGLDrawer::WorldDrawing () {
   }
 
   const bool useDepthPreFill = gl_regular_prefill_depth.asBool();
-  bool lastWasMasked = false; // for depth prefill
 
   // render surfaces to depth buffer to avoid overdraw later
   if (useDepthPreFill) {
+    #if 1
     SurfZBuf.Activate();
     currentActiveShader->UploadChangedUniforms();
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    //glBindTexture(GL_TEXTURE_2D, 0);
+    glDisable(GL_TEXTURE_2D);
     // solid
     for (auto &&surf : dls.DrawSurfListSolid) {
       if (!surf->plvisible) continue; // viewer is in back side or on plane
+      if (surf->drawflags&surface_t::DF_MASKED) continue; // later
       const texinfo_t *currTexinfo = surf->texinfo;
       if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
-      if (surf->drawflags&surface_t::DF_MASKED) continue; // later
       glBegin(GL_TRIANGLE_FAN);
         for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
       glEnd();
     }
-    // masked (nope)
-    /*
+    // collect masked
+    surfListClear();
     for (auto &&surf : dls.DrawSurfListMasked) {
       if (!surf->plvisible) continue; // viewer is in back side or on plane
+      if (!(surf->drawflags&surface_t::DF_MASKED)) continue; // not here
       const texinfo_t *currTexinfo = surf->texinfo;
       if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
-      if ((surf->drawflags&surface_t::DF_MASKED) != 0) continue; // not here
+      surfListAppend(surf);
+      /*
       glBegin(GL_TRIANGLE_FAN);
         for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
       glEnd();
+      */
     }
-    */
-    // lightmapped
+    // lightmapped (and collect masked)
     for (vuint32 lcbn = RendLev->GetLightChainHead(); lcbn; lcbn = RendLev->GetLightChainNext(lcbn)) {
       const vuint32 lb = lcbn-1;
       vassert(lb < NUM_BLOCK_SURFS);
       for (surfcache_t *cache = RendLev->GetLightChainFirst(lb); cache; cache = cache->chain) {
         surface_t *surf = cache->surf;
         if (!surf->plvisible) continue; // viewer is in back side or on plane
-        if (surf->drawflags&surface_t::DF_MASKED) continue; // later
         const texinfo_t *currTexinfo = surf->texinfo;
         if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
+        if (surf->drawflags&surface_t::DF_MASKED) {
+          surfListAppend(surf);
+        } else {
+          glBegin(GL_TRIANGLE_FAN);
+            for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
+          glEnd();
+        }
+      }
+    }
+    glEnable(GL_TEXTURE_2D);
+    // render masked textures
+    if (surfList.length() > 0) {
+      SurfZBufMasked.Activate();
+      SurfZBufMasked.SetTexture(0);
+      currentActiveShader->UploadChangedUniforms();
+      timsort_r(surfList.ptr(), surfList.length(), sizeof(SurfListItem), &surfListItemCmp, nullptr);
+      lastTexinfo.resetLastUsed();
+      for (auto &&sli : surfList) {
+        surface_t *surf = sli.surf;
+        const texinfo_t *currTexinfo = surf->texinfo;
+        if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
+        const bool textureChanded = lastTexinfo.needChange(*currTexinfo, updateFrame);
+        if (textureChanded) {
+          //glBindTexture(GL_TEXTURE_2D, 0);
+          SetTexture(currTexinfo->Tex, currTexinfo->ColorMap);
+          SurfZBufMasked.SetTex(currTexinfo);
+          currentActiveShader->UploadChangedUniforms();
+          lastTexinfo.updateLastUsed(*currTexinfo);
+        }
         glBegin(GL_TRIANGLE_FAN);
           for (unsigned i = 0; i < (unsigned)surf->count; ++i) glVertex(surf->verts[i]);
         glEnd();
       }
     }
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    //GLint oldDepthMask;
-    //glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
+    #endif
     glDepthMask(GL_FALSE); // no z-buffer writes
-    glDepthFunc(GL_GEQUAL);
-    //glDepthMask(GL_TRUE); // allow z-buffer writes
-    //glDepthMask(oldDepthMask);
+    glDepthFunc(GL_EQUAL);
   }
 
 
@@ -589,18 +618,11 @@ void VOpenGLDrawer::WorldDrawing () {
     // masked
     lastTexinfo.resetLastUsed();
     if (dls.DrawSurfListMasked.length()) {
-      // normal z-buffer
-      if (useDepthPreFill) {
-        //glDepthMask(oldDepthMask);
-        glDepthMask(GL_TRUE); // allow z-buffer writes
-        RestoreDepthFunc();
-      }
-      lastWasMasked = true;
       for (auto &&surf : dls.DrawSurfListMasked) {
         if (!surf->plvisible) continue; // viewer is in back side or on plane
         const texinfo_t *currTexinfo = surf->texinfo;
         if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
-        if ((surf->drawflags&surface_t::DF_MASKED) == 0) continue; // not here
+        if (!(surf->drawflags&surface_t::DF_MASKED)) continue; // not here
         const bool textureChanded = lastTexinfo.needChange(*currTexinfo, updateFrame);
         if (textureChanded) lastTexinfo.updateLastUsed(*currTexinfo);
         if (RenderSimpleSurface(textureChanded, surf)) lastTexinfo.resetLastUsed();
@@ -728,19 +750,6 @@ void VOpenGLDrawer::WorldDrawing () {
           if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
           const bool textureChanded = lastTexinfo.needChange(*currTexinfo, updateFrame);
           if (textureChanded) lastTexinfo.updateLastUsed(*currTexinfo);
-          if (useDepthPreFill) {
-            if (lastWasMasked != !!(surf->drawflags&surface_t::DF_MASKED)) {
-              lastWasMasked = !!(surf->drawflags&surface_t::DF_MASKED);
-              if (lastWasMasked) {
-                //glDepthMask(oldDepthMask);
-                glDepthMask(GL_TRUE); // allow z-buffer writes
-                RestoreDepthFunc();
-              } else {
-                glDepthMask(GL_FALSE); // no z-buffer writes
-                glDepthFunc(GL_GEQUAL);
-              }
-            }
-          }
           if (RenderLMapSurface(textureChanded, surf, cache)) lastTexinfo.resetLastUsed();
         }
       } else {
@@ -758,19 +767,6 @@ void VOpenGLDrawer::WorldDrawing () {
             if (!currTexinfo || currTexinfo->isEmptyTexture()) continue; // just in case
             const bool textureChanded = lastTexinfo.needChange(*currTexinfo, updateFrame);
             if (textureChanded) lastTexinfo.updateLastUsed(*currTexinfo);
-            if (useDepthPreFill) {
-              if (lastWasMasked != !!(surf->drawflags&surface_t::DF_MASKED)) {
-                lastWasMasked = !!(surf->drawflags&surface_t::DF_MASKED);
-                if (lastWasMasked) {
-                  //glDepthMask(oldDepthMask);
-                  glDepthMask(GL_TRUE); // allow z-buffer writes
-                  RestoreDepthFunc();
-                } else {
-                  glDepthMask(GL_FALSE); // no z-buffer writes
-                  glDepthFunc(GL_GEQUAL);
-                }
-              }
-            }
             if (RenderLMapSurface(textureChanded, surf, sli.cache)) lastTexinfo.resetLastUsed();
             //if (RenderSimpleSurface(textureChanded, surf)) lastTexinfo.resetLastUsed();
           }
@@ -780,8 +776,7 @@ void VOpenGLDrawer::WorldDrawing () {
     //if (lmc) GCon->Logf(NAME_Debug, "rendered %u lightmap chains out of %u lightmap block surfs", lmc, (unsigned)NUM_BLOCK_SURFS);
   }
 
-  if (!lastWasMasked && useDepthPreFill) {
-    //glDepthMask(oldDepthMask);
+  if (useDepthPreFill) {
     glDepthMask(GL_TRUE); // allow z-buffer writes
     RestoreDepthFunc();
   }
