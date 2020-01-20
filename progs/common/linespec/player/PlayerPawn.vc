@@ -301,6 +301,27 @@ protected final class!Weapon GetBDWOverride (class!Weapon wcls) {
 
 //==========================================================================
 //
+//  IsHHPoweredWeapon
+//
+//  check if this is "powered" weapon from heretic/hexen
+//  ...or morphed weapon
+//
+//==========================================================================
+bool IsHHPoweredWeapon (class!Weapon wpn) {
+  assert(wpn);
+  // check for hexen morphed weapon (it is subclass of `Weapon`, so do it here)
+  if (wpn isa 'Snout') return true;
+  auto hw = class!HereticWeapon(wpn);
+  if (!hw) return false;
+  if (hw.default.SisterWeaponType && hw.default.bPoweredUp) return true;
+  // check well-known morphed weapons
+  if (hw isa 'Beak') return true;
+  return false;
+}
+
+
+//==========================================================================
+//
 //  InitializeWeaponSlots
 //
 //==========================================================================
@@ -396,6 +417,11 @@ void InitializeWeaponSlots () {
       if (!EntityEx.CheckSpawnGameFilter(wcls, Level.Game)) continue;
       if (!Weapon.IsUsableWeaponClass(wcls)) {
         if (debugDump) printdebug("*** %C: this weapon is unusable, skipping it", wcls);
+        continue;
+      }
+      // skip powered sister weapons
+      if (IsHHPoweredWeapon(wcls)) {
+        if (debugDump) printdebug("*** %C: this weapon is powered sister weapon, skipping it", wcls);
         continue;
       }
       // try to find a slot number
