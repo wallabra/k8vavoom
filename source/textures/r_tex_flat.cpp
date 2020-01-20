@@ -34,6 +34,7 @@
 //==========================================================================
 VTexture *VFlatTexture::Create (VStream &, int LumpNum) {
   int lmpsize = W_LumpLength(LumpNum);
+  if (lmpsize == 8192) return new VFlatTexture(LumpNum); // 64x128 (some idiots does this)
   for (int Width = 8; Width <= 256; Width <<= 1) {
     if (lmpsize < Width*Width) return nullptr;
     if (lmpsize == Width*Width) return new VFlatTexture(LumpNum); // Doom flat
@@ -58,11 +59,17 @@ VFlatTexture::VFlatTexture (int InLumpNum)
   // check for larger flats
   //while (W_LumpLength(SourceLump) >= Width*Width*4) Width *= 2;
   int lmpsize = W_LumpLength(SourceLump);
-  for (int Width = 8; Width <= 256; Width <<= 1) {
-    if (lmpsize < Width*Width) Sys_Error("invalid doom flat texture '%s' (curWidth=%d; lmpsize=%d; reqsize=%d)", *W_FullLumpName(SourceLump), Width, lmpsize, Width*Width);
-    if (lmpsize == Width*Width) break;
+  if (lmpsize == 8192) {
+    // 64x128 (some idiots does this)
+    Width = 64;
+    Height = 128;
+  } else {
+    for (int Width = 8; Width <= 256; Width <<= 1) {
+      if (lmpsize < Width*Width) Sys_Error("invalid doom flat texture '%s' (curWidth=%d; lmpsize=%d; reqsize=%d)", *W_FullLumpName(SourceLump), Width, lmpsize, Width*Width);
+      if (lmpsize == Width*Width) break;
+    }
+    Height = Width;
   }
-  Height = Width;
   // scale large flats to 64x64
   if (Width > 64) {
     SScale = Width/64;
