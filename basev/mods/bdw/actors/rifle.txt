@@ -211,7 +211,8 @@ Actor BDW_Rifle : Weapon Replaces Chaingun {
       "####" C 1 Offset(0, 33)
         {
           if (GetCVar("K8BDWOpt_DropEmptyCasing")) {
-            A_FireCustomMissile("BDW_RifleCaseSpawn", 5, 0, 6, -6);
+            //A_FireCustomMissile("BDW_RifleCaseSpawn", 5, 0, 6, -6);
+            A_FireCustomMissileEx("BDW_RifleCaseSpawn", 5, false, 4+randompick(0, 1, 2, 3), -6, -6, FPF_NOAUTOAIM);
           }
         }
         //"####" C 1 Offset(0, 33) A_SpawnItemEx("BDW_RifleCaseSpawn", 17, 3, 35, 0, random(3,6), random(3,7))
@@ -245,7 +246,8 @@ Actor BDW_Rifle : Weapon Replaces Chaingun {
       RIFR F 1
         {
           if (GetCVar("K8BDWOpt_DropEmptyMagazine")) {
-            A_FireCustomMissile("BDW_EmptyClipSpawn", -5, 0, 8, -4);
+            //A_FireCustomMissile("BDW_EmptyClipSpawn", -5, 0, 8, -4);
+            A_FireCustomMissileEx("BDW_EmptyClipSpawn", -5, false, -6-randompick(0, 1, 2, 3), -7, -4, FPF_NOAUTOAIM);
           }
         }
       //RIFR F 1 A_SpawnItemEx("BDW_EmptyClipSpawn", 17, 2, 35, random(6,6), random(3,3), 4)

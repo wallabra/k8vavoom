@@ -140,7 +140,8 @@ ACTOR BDW_Shotgun : Shotgun Replaces Shotgun {
       TNT1 A 0
         {
           if (GetCVar("K8BDWOpt_DropEmptyShells")) {
-            A_FireCustomMissile("BDW_ShotCaseSpawn", 0, 0, -4, -4);
+            //A_FireCustomMissile("BDW_ShotCaseSpawn", 0, 0, -4, -4);
+            A_FireCustomMissileEx("BDW_ShotCaseSpawn", 0, false, -3-randompick(0, 1, 2), -5, -4, FPF_NOAUTOAIM);
           }
         }
       Goto PumpCommon
