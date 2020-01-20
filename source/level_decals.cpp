@@ -336,15 +336,27 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
         }
       }
 
-
       // check if decal is in seg bounds
-      if (dcx1 <= seg->offset || dcx0 >= seg->offset+seg->length) {
-        // out of bounds
-        VDC_DLOG(NAME_Debug, "   OOB! dcx0=%g; dcx1=%g; sofs0=%g; sofs1=%g", dcx0, dcx1, seg->offset, seg->offset+seg->length);
-        continue;
+      if (seg->side == 0) {
+        // seg running forward
+        if (dcx1 <= seg->offset || dcx0 >= seg->offset+seg->length) {
+          // out of bounds
+          VDC_DLOG(NAME_Debug, "   OOB(side0)! dcx0=%g; dcx1=%g; sofs0=%g; sofs1=%g", dcx0, dcx1, seg->offset, seg->offset+seg->length);
+          continue;
+        }
+        VDC_DLOG(NAME_Debug, "   HIT(side0)! dcx0=%g; dcx1=%g; sofs0=%g; sofs1=%g", dcx0, dcx1, seg->offset, seg->offset+seg->length);
+      } else {
+        // seg running backward
+        const float sofs = linelen-seg->offset-seg->length;
+        if (dcx1 <= sofs || dcx0 >= sofs+seg->length) {
+          // out of bounds
+          VDC_DLOG(NAME_Debug, "   OOB(side1)! dcx0=%g; dcx1=%g; sofs0=%g; sofs1=%g", dcx0, dcx1, sofs, sofs+seg->length);
+          continue;
+        }
+        VDC_DLOG(NAME_Debug, "   HIT(side1)! dcx0=%g; dcx1=%g; sofs0=%g; sofs1=%g", dcx0, dcx1, sofs, sofs+seg->length);
       }
 
-      side_t *sb = seg->sidedef;
+      const side_t *sb = seg->sidedef;
 
       // check if decal is allowed on this side
       if (sb->MidTexture == skyflatnum) continue; // never on the sky
