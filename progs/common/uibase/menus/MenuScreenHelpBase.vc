@@ -81,6 +81,7 @@ override void OnDraw () {
     currPic = R_RegisterPic(pages[currPage]);
     if (currPic < 0) return;
   }
+
   picinfo_t pnfo;
   R_GetPicInfo(currPic, &pnfo);
   if (pnfo.width < 1 || pnfo.height < 1) {
@@ -88,26 +89,15 @@ override void OnDraw () {
   } else {
     DrawFullScreenPic(currPic);
   }
-}
 
-
-//==========================================================================
-//
-//  CreateChoices
-//
-//==========================================================================
-/*
-override void CreateChoices () {
-  if (!IsAnyDoom2) {
-    NumPages = (WadLumpPresent('e4m1') ? 1 : 2);
-  } else {
-    NumPages = 1;
+  if (currPage >= 0 && currPage < pages.length) {
+    GetRootWidget.SetFont('smallfont');
+    GetRootWidget.SetTextAlign(hright, vbottom);
+    GetRootWidget.DrawText(GetRootWidget.Width, GetRootWidget.Height, va("[%d/%d]", currPage+1, pages.length), CR_DARKGRAY);
+    // restore text align
+    GetRootWidget.SetTextAlign(hleft, vtop);
   }
-  currPage = 0;
-
-  if (IsAnyDoom2) SetPic('help'); else SetPic('help1');
 }
-*/
 
 
 //==========================================================================
