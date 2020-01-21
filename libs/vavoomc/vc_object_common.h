@@ -100,6 +100,7 @@
   DECLARE_FUNCTION(globmatch)
   DECLARE_FUNCTION(strIndexOf)
   DECLARE_FUNCTION(strLastIndexOf)
+  DECLARE_FUNCTION(findExistingName)
 
   // random numbers
   DECLARE_FUNCTION(Random)

@@ -658,6 +658,17 @@ IMPLEMENT_FUNCTION(VObject, strLastIndexOf) {
   RET_INT(str.lastIndexOf(pat, startpos));
 }
 
+// returns existing name, or ''
+//native static final name findExistingName (string s, optional bool locase);
+IMPLEMENT_FUNCTION(VObject, findExistingName) {
+  VStr str;
+  VOptParamBool locase(false);
+  vobjGetParam(str, locase);
+  VName res;
+  if (!str.isEmpty()) res = VName(*str, (locase ? VName::FindLower : VName::Find));
+  RET_NAME(res);
+}
+
 
 //**************************************************************************
 //

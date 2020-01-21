@@ -862,6 +862,9 @@ native static final int strLastIndexOf (const string str, const string pat, opti
 // does varargs print into a temporary buffer
 native static final string va (string format, ...) [printf,1];
 
+// returns existing name, or ''
+native static final name findExistingName (string s, optional bool locase);
+
 // converts string to integer
 native static final int atoi (string str, optional out bool err);
 // converts string to float
