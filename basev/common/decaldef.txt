@@ -882,6 +882,16 @@ decal CrossbowScorch
   randomflipy
 }
 
+decal k8TestDecal001
+{
+  pic CBOWMARK
+  shade "ff 7f 00"
+  x-scale 0.6
+  y-scale 0.6
+  //randomflipx
+  //randomflipy
+}
+
 /***** Heretic Imp Scorches ************************************************/
 
 decal HImpScorch1

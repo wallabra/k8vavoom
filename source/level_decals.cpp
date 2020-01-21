@@ -26,7 +26,7 @@
 #include "gamedefs.h"
 
 //#define VAVOOM_DECALS_DEBUG_REPLACE_PICTURE
-#define VAVOOM_DECALS_DEBUG
+//#define VAVOOM_DECALS_DEBUG
 
 #ifdef VAVOOM_DECALS_DEBUG
 # define VDC_DLOG  GCon->Logf
@@ -262,7 +262,10 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
   const float dcx1 = dcx0+twdt;
 
   // check if decal is in line bounds
-  if (dcx1 <= 0 || dcx0 >= linelen) return; // out of bounds
+  if (dcx1 <= 0 || dcx0 >= linelen) {
+    // out of bounds
+    VDC_DLOG(NAME_Debug, "*** OOB: Decal '%s' at line #%d (side %d; fs=%d; bs=%d): linelen=%g; dcx0=%g; dcx1=%g", *dec->name, (int)(ptrdiff_t)(li-Lines), side, (int)(ptrdiff_t)(fsec-Sectors), (bsec ? (int)(ptrdiff_t)(bsec-Sectors) : -1), linelen, dcx0, dcx1);
+  }
 
   const float tyofs = DTex->GetScaledTOffset()*dec->scaleY.value;
   const float dcy1 = orgz+dec->scaleY.value+tyofs;
@@ -630,11 +633,16 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
       if (!dlc->isbackside) {
         PutDecalAtLine(tex, orgz, ((*dlc->nline->v2)-(*dlc->nline->v1)).length2D()+dstxofs, dec, dlc->nside, dlc->nline, flips, translation, true); // skip mark check
       } else {
-        GCon->Logf("::: %d (nside=%d; argside=%d)", (int)(ptrdiff_t)(dlc->nline-&Lines[0]), dlc->nside, (dlc->nline->frontsector == fsec ? 0 : 1));
-        PutDecalAtLine(tex, orgz, dstxofs, dec, /*(dlc->nline->frontsector == fsec ? 0 : 1)*/dlc->nside, dlc->nline, flips^decal_t::FlipX, translation, true); // skip mark check
+        VDC_DLOG(NAME_Debug, ":::v1b: %d (nside=%d; argside=%d; dstxofs=%g; dcx=(%g : %g); twdt=%g)", (int)(ptrdiff_t)(dlc->nline-&Lines[0]), dlc->nside, (dlc->nline->frontsector == fsec ? 0 : 1), dstxofs, dcx0, dcx1, twdt);
+        PutDecalAtLine(tex, orgz, -dcx0-twdt+txofs, dec, dlc->nside, dlc->nline, flips^decal_t::FlipX, translation, true); // skip mark check
       }
     } else {
-      PutDecalAtLine(tex, orgz, dstxofs-linelen, dec, dlc->nside, dlc->nline, flips, translation, true); // skip mark check
+      if (!dlc->isbackside) {
+        PutDecalAtLine(tex, orgz, dstxofs-linelen, dec, dlc->nside, dlc->nline, flips, translation, true); // skip mark check
+      } else {
+        VDC_DLOG(NAME_Debug, ":::v2b: %d (nside=%d; argside=%d; dstxofs=%g; dcx=(%g : %g); twdt=%g)", (int)(ptrdiff_t)(dlc->nline-&Lines[0]), dlc->nside, (dlc->nline->frontsector == fsec ? 0 : 1), dstxofs, dcx0, dcx1, twdt);
+        PutDecalAtLine(tex, orgz, ((*dlc->nline->v2)-(*dlc->nline->v1)).length2D()-(dcx1-linelen)+txofs, dec, dlc->nside, dlc->nline, flips^decal_t::FlipX, translation, true); // skip mark check
+      }
     }
   }
 
@@ -745,7 +753,8 @@ void VLevel::AddDecal (TVec org, VName dectype, int side, line_t *li, int level,
   static TMapNC<VName, bool> baddecals;
 
 #ifdef VAVOOM_DECALS_DEBUG_REPLACE_PICTURE
-  dectype = VName("k8TestDecal");
+  //dectype = VName("k8TestDecal");
+  dectype = VName("k8TestDecal001");
 #endif
   VDecalDef *dec = VDecalDef::getDecal(dectype);
   if (dec) {
