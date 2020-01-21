@@ -26,7 +26,7 @@
 #include "gamedefs.h"
 
 //#define VAVOOM_DECALS_DEBUG_REPLACE_PICTURE
-//#define VAVOOM_DECALS_DEBUG
+#define VAVOOM_DECALS_DEBUG
 
 #ifdef VAVOOM_DECALS_DEBUG
 # define VDC_DLOG  GCon->Logf
@@ -210,15 +210,19 @@ decal_t *VLevel::AllocSegDecal (seg_t *seg, VDecalDef *dec) {
 } while (0)
 
 
+TArray<VLevel::DecalLineInfo> VLevel::connectedLines;
+
 //==========================================================================
 //
 //  VLevel::PutDecalAtLine
 //
 //==========================================================================
-void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec, int side, line_t *li, vuint32 flips, int translation) {
+void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec, int side, line_t *li, vuint32 flips, int translation, bool skipMarkCheck) {
   // don't process linedef twice
-  if (li->decalMark == decanimuid) return;
-  li->decalMark = decanimuid;
+  if (!skipMarkCheck) {
+    if (li->decalMark == decanimuid) return;
+    li->decalMark = decanimuid;
+  }
 
   VTexture *DTex = GTextureManager[tex];
   if (!DTex || DTex->Type == TEXTYPE_Null) return;
@@ -554,21 +558,35 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
   const float dstxofs = dcx0+txofs;
 
   // if our decal is not completely at linedef, spread it to adjacent linedefs
+  const int clnum = connectedLines.length();
+
   if (dcx0 < 0) {
     // to the left
     VDC_DLOG(NAME_Debug, "Decal '%s' at line #%d: going to the left; ofs=%g; side=%d", *dec->name, (int)(ptrdiff_t)(li-Lines), dcx0, side);
     line_t **ngb = li->v1lines;
     for (int ngbCount = li->v1linesCount; ngbCount--; ++ngb) {
       line_t *nline = *ngb;
+      if (nline->decalMark == decanimuid) continue;
+      nline->decalMark = decanimuid;
       // find out correct side
       int nside = calcDecalSide(li, fsec, bsec, nline, side, 0);
       if (nside < 0) continue;
       if (li->v1 == nline->v2) {
         VDC_DLOG(NAME_Debug, "  v1 at nv2 (%d) (ok)", (int)(ptrdiff_t)(nline-Lines));
-        PutDecalAtLine(tex, orgz, ((*nline->v2)-(*nline->v1)).length2D()+dstxofs, dec, nside, nline, flips, translation);
+        //!later:PutDecalAtLine(tex, orgz, ((*nline->v2)-(*nline->v1)).length2D()+dstxofs, dec, nside, nline, flips, translation);
+        DecalLineInfo &dlc = connectedLines.alloc();
+        dlc.nline = nline;
+        dlc.nside = nside;
+        dlc.isv1 = true;
+        dlc.isbackside = false;
       } else if (li->v1 == nline->v1) {
         VDC_DLOG(NAME_Debug, "  v1 at nv1 (%d) (opp)", (int)(ptrdiff_t)(nline-Lines));
         //PutDecalAtLine(tex, orgz, dstxofs, dec, (nline->frontsector == fsec ? 0 : 1), nline, flips, translation);
+        DecalLineInfo &dlc = connectedLines.alloc();
+        dlc.nline = nline;
+        dlc.nside = nside;
+        dlc.isv1 = true;
+        dlc.isbackside = true;
       }
     }
   }
@@ -579,18 +597,48 @@ void VLevel::PutDecalAtLine (int tex, float orgz, float lineofs, VDecalDef *dec,
     line_t **ngb = li->v2lines;
     for (int ngbCount = li->v2linesCount; ngbCount--; ++ngb) {
       line_t *nline = *ngb;
+      if (nline->decalMark == decanimuid) continue;
+      nline->decalMark = decanimuid;
       // find out correct side
       int nside = calcDecalSide(li, fsec, bsec, nline, side, 1);
       if (nside < 0) continue;
       if (li->v2 == nline->v1) {
         VDC_DLOG(NAME_Debug, "  v2 at nv1 (%d) (ok)", (int)(ptrdiff_t)(nline-Lines));
-        PutDecalAtLine(tex, orgz, dstxofs-linelen, dec, nside, nline, flips, translation);
+        //!later:PutDecalAtLine(tex, orgz, dstxofs-linelen, dec, nside, nline, flips, translation);
+        DecalLineInfo &dlc = connectedLines.alloc();
+        dlc.nline = nline;
+        dlc.nside = nside;
+        dlc.isv1 = false;
+        dlc.isbackside = false;
       } else if (li->v2 == nline->v2) {
         VDC_DLOG(NAME_Debug, "  v2 at nv2 (%d) (opp)", (int)(ptrdiff_t)(nline-Lines));
         //PutDecalAtLine(tex, orgz, ((*nline->v2)-(*nline->v1)).length2D()+(dstxofs-linelen), dec, (nline->frontsector == fsec ? 0 : 1), nline, flips, translation);
+        DecalLineInfo &dlc = connectedLines.alloc();
+        dlc.nline = nline;
+        dlc.nside = nside;
+        dlc.isv1 = false;
+        dlc.isbackside = true;
       }
     }
   }
+
+  // put decals
+  const int clend = connectedLines.length();
+  for (int cc = clnum; cc < clend; ++cc) {
+    DecalLineInfo *dlc = connectedLines.ptr()+cc;
+    if (dlc->isv1) {
+      if (!dlc->isbackside) {
+        PutDecalAtLine(tex, orgz, ((*dlc->nline->v2)-(*dlc->nline->v1)).length2D()+dstxofs, dec, dlc->nside, dlc->nline, flips, translation, true); // skip mark check
+      } else {
+        GCon->Logf("::: %d (nside=%d; argside=%d)", (int)(ptrdiff_t)(dlc->nline-&Lines[0]), dlc->nside, (dlc->nline->frontsector == fsec ? 0 : 1));
+        PutDecalAtLine(tex, orgz, dstxofs, dec, /*(dlc->nline->frontsector == fsec ? 0 : 1)*/dlc->nside, dlc->nline, flips^decal_t::FlipX, translation, true); // skip mark check
+      }
+    } else {
+      PutDecalAtLine(tex, orgz, dstxofs-linelen, dec, dlc->nside, dlc->nline, flips, translation, true); // skip mark check
+    }
+  }
+
+  connectedLines.setLength(clnum, false); // don't realloc
 }
 
 #undef CLEANUP_DECALS
@@ -676,7 +724,8 @@ void VLevel::AddOneDecal (int level, TVec org, VDecalDef *dec, int side, line_t 
   const float lineofs = dist*(v2-v1).length2D();
   VDC_DLOG(NAME_Debug, "linelen=%g; dist=%g; lineofs=%g", (v2-v1).length2D(), dist, lineofs);
 
-  PutDecalAtLine(tex, org.z, lineofs, dec, side, li, flips, translation);
+  connectedLines.reset();
+  PutDecalAtLine(tex, org.z, lineofs, dec, side, li, flips, translation, false); // don't skip mark check
 }
 
 
