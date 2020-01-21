@@ -26,8 +26,23 @@
 class MenuScreenHelp : MenuScreenHelpBase;
 
 
+private void AppendHelpPage (name Name, optional bool nonIWAD) {
+  if (!Name) return;
+  int lump = W_CheckNumForName(Name);
+  if (lump < 0) return;
+  if (nonIWAD && W_IsIWADLump(lump)) return;
+  pages[$] = Name;
+}
+
+
 override void CreateChoices () {
-  pages[$] = 'titlepic'; // so i can view titlepic
-  pages[$] = (IsAnyDoom2 ? 'help' : 'help1');
-  if (!IsAnyDoom2 && !WadLumpPresent('e4m1')) pages[$] = 'help2';
+  AppendHelpPage('titlepic'); // so i can view titlepic
+  // add help screens only if they are not from IWAD
+  AppendHelpPage((IsAnyDoom2 ? 'help' : 'help1'), nonIWAD:true);
+  if (!IsAnyDoom2 && !WadLumpPresent('e4m1')) AppendHelpPage('help2', nonIWAD:true);
+  // add additionan Boom help screens
+  foreach (int idx; 0..100) {
+    name hn = findExistingName(va("help%02d", idx));
+    AppendHelpPage(hn);
+  }
 }
