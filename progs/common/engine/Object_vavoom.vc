@@ -638,6 +638,17 @@ native static final name W_LumpName (int lump);
 native static final string W_FullLumpName (int lump);
 native static final int W_LumpFile (int lump);
 
+native static final bool W_IsIWADLump (int lump);
+native static final bool W_IsIWADFile (int file);
+
+// not pk3, not disk
+native static final bool W_IsWADLump (int lump);
+native static final bool W_IsWADFile (int file);
+
+// added with "-file"?
+native static final bool W_IsPWADLump (int lump);
+native static final bool W_IsPWADFile (int file);
+
 native static final int W_CheckNumForName (name Name, optional EWadNamespace NS /*= WADNS_Global*/);
 native static final int W_GetNumForName (name Name, optional EWadNamespace NS /*= WADNS_Global*/);
 

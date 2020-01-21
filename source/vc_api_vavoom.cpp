@@ -378,6 +378,23 @@ IMPLEMENT_FREE_FUNCTION(VObject, W_LumpFile) {
   RET_INT(W_LumpFile(lump));
 }
 
+
+// native static final bool W_IsIWADLump (int lump);
+IMPLEMENT_FREE_FUNCTION(VObject, W_IsIWADLump) { int lump; vobjGetParam(lump); RET_BOOL(W_IsIWADLump(lump)); }
+// native static final bool W_IsIWADFile (int file);
+IMPLEMENT_FREE_FUNCTION(VObject, W_IsIWADFile) { int file; vobjGetParam(file); RET_BOOL(W_IsIWADFile(file)); }
+
+// native static final bool W_IsWADLump (int lump);
+IMPLEMENT_FREE_FUNCTION(VObject, W_IsWADLump) { int lump; vobjGetParam(lump); RET_BOOL(W_IsWADLump(lump)); }
+// native static final bool W_IsWADFile (int file);
+IMPLEMENT_FREE_FUNCTION(VObject, W_IsWADFile) { int file; vobjGetParam(file); RET_BOOL(W_IsWADFile(file)); }
+
+// native static final bool W_IsPWADLump (int lump);
+IMPLEMENT_FREE_FUNCTION(VObject, W_IsPWADLump) { int lump; vobjGetParam(lump); RET_BOOL(W_IsUserWadLump(lump)); }
+// native static final bool W_IsPWADFile (int file);
+IMPLEMENT_FREE_FUNCTION(VObject, W_IsPWADFile) { int file; vobjGetParam(file); RET_BOOL(W_IsUserWadFile(file)); }
+
+
 // native static final int W_CheckNumForName (name Name, optional EWadNamespace NS /*= WADNS_Global*/);
 IMPLEMENT_FREE_FUNCTION(VObject, W_CheckNumForName) {
   P_GET_INT_OPT(ns, WADNS_Global);
