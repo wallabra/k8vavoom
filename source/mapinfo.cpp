@@ -912,6 +912,7 @@ MAPINFOCMD(deathslideshow) { info->Flags |= VLevelInfo::LIF_DeathSlideShow; }
 MAPINFOCMD(allowfreelook) { info->Flags &= ~VLevelInfo::LIF_NoFreelook; }
 MAPINFOCMD(nofreelook) { info->Flags |= VLevelInfo::LIF_NoFreelook; }
 MAPINFOCMD(allowjump) { info->Flags &= ~VLevelInfo::LIF_NoJump; }
+MAPINFOCMD(allowcrouch) { info->Flags2 &= ~VLevelInfo::LIF2_NoCrouch; }
 MAPINFOCMD(nojump) { info->Flags |= VLevelInfo::LIF_NoJump; }
 MAPINFOCMD(nocrouch) { info->Flags2 |= VLevelInfo::LIF2_NoCrouch; }
 MAPINFOCMD(resethealth) { info->Flags2 |= VLevelInfo::LIF2_ResetHealth; }
