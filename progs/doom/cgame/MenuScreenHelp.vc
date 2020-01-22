@@ -26,15 +26,6 @@
 class MenuScreenHelp : MenuScreenHelpBase;
 
 
-private void AppendHelpPage (name Name, optional bool nonIWAD) {
-  if (!Name) return;
-  int lump = W_CheckNumForName(Name);
-  if (lump < 0) return;
-  if (nonIWAD && W_IsIWADLump(lump)) return;
-  pages[$] = Name;
-}
-
-
 override void CreateChoices () {
   AppendHelpPage('titlepic'); // so i can view titlepic
   // add help screens only if they are not from IWAD
@@ -45,4 +36,6 @@ override void CreateChoices () {
     name hn = findExistingName(va("help%02d", idx));
     AppendHelpPage(hn);
   }
+  // process pages
+  ::CreateChoices();
 }

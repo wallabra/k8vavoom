@@ -25,39 +25,61 @@
 //**************************************************************************
 class MenuScreenHelpBase : MenuScreen;
 
-array!name pages;
+struct PageInfo {
+  name picname;
+  int pichandle;
+  int width, height;
+}
 
-int currPic = -1; // current page
+array!PageInfo pages;
 int currPage;
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-/*
-void SetPic (name picname) {
-  if (!picname) { currPic = -1; return; }
-  currPic = R_RegisterPic(picname);
+//==========================================================================
+//
+//  AppendHelpPage
+//
+//==========================================================================
+protected void AppendHelpPage (name Name, optional bool nonIWAD) {
+  if (!Name) return;
+  int lump = W_CheckNumForName(Name);
+  if (lump < 0) return;
+  if (nonIWAD && W_IsIWADLump(lump)) return;
+  // load picture
+  int pich = R_RegisterPic(Name);
+  if (pich < 0) return;
+  // get picture dimensions
+  picinfo_t pnfo;
+  R_GetPicInfo(pich, &pnfo);
+  if (pnfo.width < 1 || pnfo.height < 1) return;
+  auto pg = pages.alloc();
+  pg.picname = Name;
+  pg.pichandle = pich;
+  pg.width = pnfo.width;
+  pg.height = pnfo.height;
 }
-*/
 
 
-// ////////////////////////////////////////////////////////////////////////// //
-bool prevPage () {
-  if (currPage > 0) {
-    --currPage;
-    currPic = -1;
-    return true;
-  }
+//==========================================================================
+//
+//  prevPage
+//
+//==========================================================================
+protected bool prevPage () {
+  if (--currPage >= 0) return true;
+  currPage = 0;
   return false;
 }
 
 
-bool nextPage () {
-  if (currPage+1 < pages.length) {
-    ++currPage;
-    currPic = -1;
-    return true;
-  }
-  return false;
+//==========================================================================
+//
+//  nextPage
+//
+//==========================================================================
+protected bool nextPage () {
+  if (++currPage >= pages.length) { currPage = max(0, pages.length-1); return false; }
+  return true;
 }
 
 
@@ -76,21 +98,12 @@ override void CreateBackButton () {
 //
 //==========================================================================
 override void OnDraw () {
-  if (currPic < 0) {
-    if (currPage < 0 || currPage >= pages.length) return;
-    currPic = R_RegisterPic(pages[currPage]);
-    if (currPic < 0) return;
-  }
-
-  picinfo_t pnfo;
-  R_GetPicInfo(currPic, &pnfo);
-  if (pnfo.width < 1 || pnfo.height < 1) {
+  if (currPage < 0 || currPage >= pages.length) {
+    // bad page
     ShadeRect(0, 0, Width, Height, GetCvarF('menu_darkening'));
   } else {
-    DrawFullScreenPic(currPic);
-  }
-
-  if (currPage >= 0 && currPage < pages.length) {
+    DrawFullScreenPic(pages[currPage].pichandle);
+    // draw page number
     GetRootWidget.SetFont('smallfont');
     GetRootWidget.SetTextAlign(hright, vbottom);
     GetRootWidget.DrawText(GetRootWidget.Width, GetRootWidget.Height, va("[%d/%d]", currPage+1, pages.length), CR_DARKGRAY);
