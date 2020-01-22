@@ -235,6 +235,18 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
           }
         }
       }
+
+      // convert string literal to identifier
+      if (IsStrConst()) {
+        VStr str = GetStrConst(ec.Package);
+        if (!str.isEmpty()) {
+          ParseWarningAsError((aloc ? *aloc : Loc), "`%s` argument #%d should be `%s`! (trying constant `%s`)", funcName, argnum, *destType.GetName(), *str);
+          VDecorateSingleName *enew = new VDecorateSingleName(str, Loc);
+          delete this;
+          return enew;
+        }
+      }
+
       break;
 
     case TYPE_Name:
@@ -782,7 +794,7 @@ VExpression *VDecorateInvocation::DoResolve (VEmitContext &ec) {
   }
 
   if (ec.SelfClass) {
-    if (VStr::strEquCI(*Name, "A_WeaponOffset")) {
+    if (VStr::strEquCI(*Name, "A_WeaponOffset") || VStr::strEquCI(*Name, "A_Overlay")) {
       ParseWarning(Loc, "Unknown decorate action `%s` in class `%s`", *Name, *ec.SelfClass->GetFullName());
       VExpression *e = new VIntLiteral(0, Loc);
       delete this;
