@@ -99,6 +99,8 @@ static bool tryStringAsFloat2Int (int &resi, const char *str, const VFieldType &
 //
 //  this will try to coerce some decorate argument to something sensible
 //
+//  `argnum` starts with `1`
+//
 //==========================================================================
 VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerState, const char *funcName,
                                               int argnum, const VFieldType &destType, const TLocation *aloc,
@@ -392,7 +394,15 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
       // some very bright persons does this: `A_JumpIfTargetInLOS("1")` -- brilliant!
       // string?
       if (IsStrConst()) {
-        VStr str = GetStrConst(ec.Package);
+        VStr str = GetStrConst(ec.Package).xstrip();
+        if (str.isEmpty() || str.strEquCI("none") || str.strEquCI("null") || str.strEquCI("nil") || str.strEquCI("false")) {
+          if ((argnum == 1 || argnum == 2) && VStr::strEqu(funcName, "decorate_A_Chase")) {
+            // this is perfectly legal
+            VExpression *enew = new VNoneLiteral(Loc);
+            delete this;
+            return enew;
+          }
+        }
         int lbl = -1;
         if (str.convertInt(&lbl)) {
           //TLocation ALoc = Args[i]->Loc;
@@ -417,20 +427,21 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
           return nullptr;
         }
         if (Offs == 0) {
-          // 0 means "mod author is a clueless retard"
-          ParseWarningAsError((aloc ? *aloc : Loc), "zero jump offset in `%s`. mod author is a mo...dder.", funcName);
-          /*
-          VExpression *enew = new VNoneLiteral(Loc);
-          delete this;
-          return enew;
-          */
+          if ((argnum == 1 || argnum == 2) && VStr::strEqu(funcName, "decorate_A_Chase")) {
+            // this is perfectly legal
+            VExpression *enew = new VNoneLiteral(Loc);
+            delete this;
+            return enew;
+          }
+          // 0 *usually* means "mod author is a clueless retard"
+          ParseWarningAsError((aloc ? *aloc : Loc), "zero jump offset in `%s` (argument #%d). wtf?!", funcName, argnum);
           Offs = 1;
         }
         // positive jump
         vassert(CallerState);
         VState *S = CallerState->GetPlus(Offs, true);
         if (!S) {
-          ParseError((aloc ? *aloc : Loc), "Bad state jump offset");
+          ParseError((aloc ? *aloc : Loc), "Bad state jump offset in `%s` (argument #%d)", funcName, argnum);
           delete this;
           return nullptr;
         }
