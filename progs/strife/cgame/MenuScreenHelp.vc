@@ -27,7 +27,7 @@ class MenuScreenHelp : MenuScreenHelpBase;
 
 
 override void CreateChoices () {
-  AppendHelpPage('titlepic'); // so i can view titlepic
+  AppendHelpPage('titlepic', title:true); // so i can view titlepic
   AppendHelpPage('help1', nonIWAD:true);
   AppendHelpPage('help2', nonIWAD:true);
   AppendHelpPage('help3', nonIWAD:true);

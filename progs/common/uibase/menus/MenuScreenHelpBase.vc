@@ -40,7 +40,8 @@ int currPage;
 //  AppendHelpPage
 //
 //==========================================================================
-protected void AppendHelpPage (name Name, optional bool nonIWAD) {
+protected void AppendHelpPage (name Name, optional bool nonIWAD, optional bool title) {
+  //if (title && ClGame && ClGame.MenuActive()) return; // don't register title for main menu help
   if (!Name) return;
   int lump = W_CheckNumForName(Name);
   if (lump < 0) return;

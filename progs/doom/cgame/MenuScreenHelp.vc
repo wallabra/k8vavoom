@@ -27,7 +27,7 @@ class MenuScreenHelp : MenuScreenHelpBase;
 
 
 override void CreateChoices () {
-  AppendHelpPage('titlepic'); // so i can view titlepic
+  AppendHelpPage('titlepic', title:true); // so i can view titlepic
   // add help screens only if they are not from IWAD
   AppendHelpPage((IsAnyDoom2 ? 'help' : 'help1'), nonIWAD:true);
   if (!IsAnyDoom2 && !WadLumpPresent('e4m1')) AppendHelpPage('help2', nonIWAD:true);
