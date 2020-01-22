@@ -31,11 +31,5 @@ override void CreateChoices () {
   // add help screens only if they are not from IWAD
   AppendHelpPage((IsAnyDoom2 ? 'help' : 'help1'), nonIWAD:true);
   if (!IsAnyDoom2 && !WadLumpPresent('e4m1')) AppendHelpPage('help2', nonIWAD:true);
-  // add additionan Boom help screens
-  foreach (int idx; 0..100) {
-    name hn = findExistingName(va("help%02d", idx));
-    AppendHelpPage(hn);
-  }
-  // process pages
-  ::CreateChoices();
+  AppendBoomHelpScreens();
 }

@@ -62,6 +62,21 @@ protected void AppendHelpPage (name Name, optional bool nonIWAD) {
 
 //==========================================================================
 //
+//  AppendBoomHelpScreens
+//
+//  add additionan Boom help screens
+//
+//==========================================================================
+void AppendBoomHelpScreens () {
+  foreach (int idx; 0..100) {
+    name hn = findExistingName(va("help%02d", idx));
+    AppendHelpPage(hn);
+  }
+}
+
+
+//==========================================================================
+//
 //  prevPage
 //
 //==========================================================================
@@ -106,7 +121,7 @@ override void OnDraw () {
     // draw page number
     GetRootWidget.SetFont('smallfont');
     GetRootWidget.SetTextAlign(hright, vbottom);
-    GetRootWidget.DrawText(GetRootWidget.Width, GetRootWidget.Height, va("[%d/%d]", currPage+1, pages.length), CR_DARKGRAY);
+    GetRootWidget.DrawText(GetRootWidget.Width, GetRootWidget.Height, va("%d/%d", currPage+1, pages.length), CR_DARKGRAY);
     // restore text align
     GetRootWidget.SetTextAlign(hleft, vtop);
   }

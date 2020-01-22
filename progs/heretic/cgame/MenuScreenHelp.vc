@@ -27,8 +27,10 @@ class MenuScreenHelp : MenuScreenHelpBase;
 
 
 override void CreateChoices () {
-  pages[$] = 'help1';
-  pages[$] = 'help2';
-  pages[$] = 'credit';
-  if (!WadLumpPresent('e2m1')) pages[$] = 'order';
+  AppendHelpPage('title'); // so i can view titlepic
+  AppendHelpPage('help1', nonIWAD:true);
+  AppendHelpPage('help2', nonIWAD:true);
+  AppendHelpPage('credit');
+  if (!WadLumpPresent('e2m1')) AppendHelpPage('order');
+  AppendBoomHelpScreens();
 }
