@@ -26,11 +26,16 @@
 #include "gamedefs.h"
 #include "snd_local.h"
 
+//#define VCCRUN_SOUND_THREAD_DEBUG
+
 #ifdef VCCRUN_SOUND_THREAD_DEBUG
 # define SDLOG(...)  GLog.WriteLine(__VA_ARGS__)
 #else
 # define SDLOG(...)  do {} while (0)
 #endif
+
+
+extern VCvarF snd_master_volume;
 
 
 //==========================================================================
@@ -236,6 +241,7 @@ static MYTHREAD_RET_TYPE streamPlayerThread (void *adevobj) {
           break;
         case VStreamMusicPlayer::STP_PlaySongLooped:
         case VStreamMusicPlayer::STP_PlaySong:
+          SDLOG("STP:   play song X");
           doLoadNewSong = true;
           doLoop = (strm->stpcmd == VStreamMusicPlayer::STP_PlaySongLooped);
           newSongName = VStr(strm->namebuf);
@@ -274,7 +280,7 @@ static MYTHREAD_RET_TYPE streamPlayerThread (void *adevobj) {
         //mythread_mutex_unlock(&stpPingLock);
         //mythread_mutex_lock(&stpPingLock);
         //GLog.Logf("STRM: loading song '%s'...", *newSongName);
-        VAudioCodec *codec = GAudio->LoadSongInternal(*newSongName, wasPlaying);
+        VAudioCodec *codec = GAudio->LoadSongInternal(*newSongName, wasPlaying, true); // called from streaming thread
         if (codec) {
           bool xopened = strm->SoundDevice->OpenStream(codec->SampleRate, codec->SampleBits, codec->NumChannels);
           if (!xopened) {
@@ -476,9 +482,12 @@ void VStreamMusicPlayer::SetPitch (float pitch) {
 //  VStreamMusicPlayer::SetVolume
 //
 //==========================================================================
-void VStreamMusicPlayer::SetVolume (float volume) {
+void VStreamMusicPlayer::SetVolume (float volume, bool fromStreamThread) {
+  volume = clampval(volume*snd_master_volume.asFloat(), 0.0f, 1.0f);
   if (volume == lastVolume) return;
   lastVolume = volume;
   stpNewVolume = volume;
-  if (threadInited) stpThreadSendCommand(STP_SetVolume);
+  if (!fromStreamThread) {
+    if (threadInited) stpThreadSendCommand(STP_SetVolume);
+  }
 }

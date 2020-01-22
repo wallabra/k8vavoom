@@ -32,6 +32,14 @@ menudef SoundOptions {
   header ""; // empty line
 
   option slider {
+    title = "Master Volume";
+    cvar = snd_master_volume;
+    step = 0.1;
+    min = 0;
+    max = 1;
+  }
+
+  option slider {
     title = "Music Volume";
     cvar = snd_music_volume;
     step = 0.1;

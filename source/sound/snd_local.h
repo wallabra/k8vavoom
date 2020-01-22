@@ -386,7 +386,7 @@ public:
   void Stop ();
   bool IsPlaying ();
   void SetPitch (float pitch);
-  void SetVolume (float volume);
+  void SetVolume (float volume, bool fromStreamThread=false);
 
   void LoadAndPlay (const char *InName, bool InLoop);
 

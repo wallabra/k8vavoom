@@ -218,7 +218,7 @@ public:
   virtual void SerialiseSounds (VStream &) = 0;
 
   // returns codec or nullptr
-  virtual VAudioCodec *LoadSongInternal (const char *Song, bool wasPlaying) = 0;
+  virtual VAudioCodec *LoadSongInternal (const char *Song, bool wasPlaying, bool fromStreamThread) = 0;
 
   // WARNING! this must be called from the main thread, i.e.
   //          from the thread that calls `PlaySound*()` API!

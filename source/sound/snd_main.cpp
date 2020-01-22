@@ -106,7 +106,15 @@ public:
   virtual void SerialiseSounds (VStream &Strm) override;
 
   // returns codec or nullptr
-  virtual VAudioCodec *LoadSongInternal (const char *Song, bool wasPlaying) override;
+  virtual VAudioCodec *LoadSongInternal (const char *Song, bool wasPlaying, bool fromStreamThread) override;
+
+public:
+  // console variables
+  static VCvarF snd_sfx_volume;
+  static VCvarF snd_music_volume;
+  //static VCvarB snd_swap_stereo;
+  static VCvarI snd_channels;
+  static VCvarB snd_external_music;
 
 private:
   enum { MAX_CHANNELS = 256 };
@@ -157,13 +165,6 @@ private:
   // hardware devices
   VOpenALDevice *SoundDevice;
 
-  // console variables
-  static VCvarF snd_sfx_volume;
-  static VCvarF snd_music_volume;
-  //static VCvarB snd_swap_stereo;
-  static VCvarI snd_channels;
-  static VCvarB snd_external_music;
-
   // friends
   friend class TCmdMusic;
 
@@ -200,6 +201,8 @@ private:
 // ////////////////////////////////////////////////////////////////////////// //
 FAudioCodecDesc *FAudioCodecDesc::List = nullptr;
 VAudioPublic *GAudio = nullptr;
+
+VCvarF snd_master_volume("snd_master_volume", "1", "Master volume", CVAR_Archive);
 
 VCvarF VAudio::snd_sfx_volume("snd_sfx_volume", "0.5", "Sound effects volume.", CVAR_Archive);
 VCvarF VAudio::snd_music_volume("snd_music_volume", "0.5", "Music volume", CVAR_Archive);
@@ -773,12 +776,13 @@ void VAudio::SerialiseSounds (VStream &Strm) {
 void VAudio::UpdateSfx () {
   if (!SoundDevice || NumChannels <= 0) return;
 
-  if (snd_sfx_volume != MaxVolume) {
-    MaxVolume = snd_sfx_volume;
-    if (!MaxVolume) StopAllSound();
+  const float currVolume = clampval(snd_sfx_volume.asFloat()*snd_master_volume.asFloat(), 0.0f, 1.0f);
+  if (currVolume != MaxVolume) {
+    MaxVolume = currVolume;
+    if (MaxVolume <= 0.0f) StopAllSound();
   }
 
-  if (!MaxVolume) return; // silence
+  if (MaxVolume <= 0.0f) return; // silence
 
   if (cl) AngleVectors(cl->ViewAngles, ListenerForward, ListenerRight, ListenerUp);
 
@@ -920,14 +924,15 @@ void VAudio::UpdateSounds () {
   if (snd_music_volume < 0.0f) snd_music_volume = 0.0f;
   if (snd_music_volume > 1.0f) snd_music_volume = 1.0f;
 
+  if (snd_master_volume < 0.0f) snd_master_volume = 0.0f;
+  if (snd_master_volume > 1.0f) snd_master_volume = 1.0f;
+
   // update any Sequences
   UpdateActiveSequences(host_frametime);
 
   UpdateSfx();
-  if (StreamMusicPlayer) {
-    SoundDevice->SetStreamVolume(snd_music_volume*MusicVolumeFactor);
-    //StreamMusicPlayer->Tick(host_frametime);
-  }
+
+  if (StreamMusicPlayer) StreamMusicPlayer->SetVolume(snd_music_volume*MusicVolumeFactor);
 }
 
 
@@ -965,7 +970,7 @@ static int FindMusicLump (const char *songName) {
 //  VAudio::LoadSongInternal
 //
 //==========================================================================
-VAudioCodec *VAudio::LoadSongInternal (const char *Song, bool wasPlaying) {
+VAudioCodec *VAudio::LoadSongInternal (const char *Song, bool wasPlaying, bool fromStreamThread) {
   /*static*/ const char *ExtraExts[] = { "opus", "ogg", "flac", "mp3", nullptr };
 
   if (!Song || !Song[0]) return nullptr;
@@ -1047,7 +1052,11 @@ VAudioCodec *VAudio::LoadSongInternal (const char *Song, bool wasPlaying) {
 
   // get music volume for this song
   MusicVolumeFactor = GSoundManager->GetMusicVolume(Song);
-  if (StreamMusicPlayer) SoundDevice->SetStreamVolume(snd_music_volume*MusicVolumeFactor);
+  if (StreamMusicPlayer) {
+    StreamMusicPlayer->SetVolume(snd_music_volume*MusicVolumeFactor, fromStreamThread);
+    //if (fromStreamThread) SoundDevice->SetStreamVolume(snd_music_volume*MusicVolumeFactor*snd_master_volume);
+    if (fromStreamThread) SoundDevice->SetStreamVolume(StreamMusicPlayer->stpNewVolume);
+  }
 
   VStream *Strm = W_CreateLumpReaderNum(Lump);
   if (Strm->TotalSize() < 4) {
@@ -1112,7 +1121,7 @@ void VAudio::PlaySong (const char *Song, bool Loop) {
     bool wasPlaying = StreamMusicPlayer->IsPlaying();
     if (wasPlaying) StreamMusicPlayer->Stop();
 
-    VAudioCodec *Codec = LoadSongInternal(Song, wasPlaying);
+    VAudioCodec *Codec = LoadSongInternal(Song, wasPlaying, false); // not from a stream thread
 
     if (Codec && StreamMusicPlayer) {
       StreamMusicPlayer->Play(Codec, Song, Loop);
