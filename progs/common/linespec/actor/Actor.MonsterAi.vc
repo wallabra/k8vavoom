@@ -714,14 +714,26 @@ final bool CheckForResurrect (bool UseVileStates) {
 //
 //==========================================================================
 [decorate] final void decorate_A_Chase (optional state AMeleeState, optional state AMissileState, optional int Flags) {
+  if (!specified_AMeleeState) AMeleeState = MeleeState;
+  if (!specified_AMissileState) AMissileState = MissileState;
+  if (!specified_Flags) {
+    DoChase(FastChase:false, MeleeState, MissileState, NightmareFast:LineSpecialGameInfo(Level.Game).bNightmareFastChase, PlayActive:true, DontMove:false);
+  } else {
+    if ((Flags&8) && CheckForResurrect(false)) return;
+    DoChase(FastChase:!!(Flags&1), AMeleeState, AMissileState,
+            NightmareFast:!!(Flags&4), PlayActive:!(Flags&2), DontMove:!!(Flags&16),
+            noRandomTurn:!!(Flags&32), noDirectionTurn:!!(Flags&64), noPostAttackTurn:!!(Flags&128), stopIfBlocked:!!(Flags&256));
+  }
+  /*
   if (specified_AMeleeState) {
     if ((Flags&8) && CheckForResurrect(false)) return;
-    DoChase(!!(Flags&1), AMeleeState, AMissileState,
-            !!(Flags&4), !(Flags&2), !!(Flags&16),
-            !!(Flags&32), !!(Flags&64), !!(Flags&128), !!(Flags&256));
+    DoChase(FastChase:!!(Flags&1), AMeleeState, AMissileState,
+            NightmareFast:!!(Flags&4), PlayActive:!(Flags&2), DontMove:!!(Flags&16),
+            noRandomTurn:!!(Flags&32), noDirectionTurn:!!(Flags&64), noPostAttackTurn:!!(Flags&128), stopIfBlocked:!!(Flags&256));
   } else {
-    DoChase(false, MeleeState, MissileState, LineSpecialGameInfo(Level.Game).bNightmareFastChase, true, false);
+    DoChase(FastChase:false, MeleeState, MissileState, LineSpecialGameInfo(Level.Game).bNightmareFastChase, PlayActive:true, DontMove:false);
   }
+  */
 }
 
 
