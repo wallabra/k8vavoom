@@ -662,8 +662,8 @@ final void AdjustSpeed (ref float forward, ref float side) {
     //if (forward) print("old: f=%s; s=%s; nf=%s; ns=%s", forward, side, forward*crouchfactor, side*crouchfactor);
     forward = fclamp(forward, -WALKING_SPEED, WALKING_SPEED);
     side = fclamp(side, -WALKING_SPEED, WALKING_SPEED);
-    forward *= crouchfactor;
-    side *= crouchfactor;
+    forward *= /*crouchfactor*/CROUCHSLOWDOWN;
+    side *= /*crouchfactor*/CROUCHSLOWDOWN;
   }
 }
 
