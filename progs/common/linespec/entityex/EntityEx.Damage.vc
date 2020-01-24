@@ -481,7 +481,7 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
 
       // ketchup spawn
       if (instakill || headshot) {
-        SpawnBloodSprayHead(damage:(instakill ? Health : dodmg), spawnBloodPool:(instakill || dodmg >= Health));
+        if (!secondary || instakill || dodmg >= Health) SpawnBloodSprayHead(damage:(instakill ? Health : dodmg), spawnBloodPool:(instakill || dodmg >= Health));
 
         if (instakill) {
           // so they won't gib
@@ -513,7 +513,14 @@ void DamageEx (EntityEx inflictor, EntityEx source, int damage, name DmgType, bo
   int newdmg = K8onBeforeLineDamage(inflictor, hitp, damage, DmgType, secondary);
   //print("THP(%s):(%f,%f,%f); dmg=%d; new=%d; type='%s'", (secondary ? "2" : "1"), hitp.x, hitp.y, hitp.z, damage, newdmg, DmgType);
   //print("THP:(%f,%f,%f); dmg=%d; type='%s'", hitp.x, hitp.y, hitp.z, damage, "FUCK!");
-  Damage(inflictor, source, /*damage*/newdmg, DmgType, NoArmor, spawnBlood:spawnBlood!optional);
+  if (!secondary) {
+    //printdebug("%C: first shot; spawnBlood=%B", self, spawnBlood);
+    Damage(inflictor, source, /*damage*/newdmg, DmgType, NoArmor, spawnBlood:spawnBlood!optional);
+  } else {
+    // secondary shots won't spawn blood
+    //printdebug("%C: secondary shot; spawnBlood=%B", self, spawnBlood);
+    Damage(inflictor, source, /*damage*/newdmg, DmgType, NoArmor, spawnBlood:false);
+  }
 }
 
 
