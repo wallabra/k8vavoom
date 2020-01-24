@@ -2871,7 +2871,7 @@ final void GunShot (bool accurate, TVec dir, name DmgType, bool secondary, optio
   }
 
   int damage = 5*(P_Random()%3+1);
-  LineAttack(dir, range, damage, BulletPuff, default, default, DmgType, secondary, DecalName!optional);
+  LineAttack(dir, range, damage, BulletPuff, DmgType:DmgType, secondary:secondary, decalType:DecalName!optional);
 }
 
 

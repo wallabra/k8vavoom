@@ -50,7 +50,7 @@ const float FatsoSpreadAngle = 90.0/8.0;
 
   int damage = ((P_Random()%5)+1)*3;
 
-  LineAttack(dir, MISSILERANGE, damage, BulletPuff, default, default, 'Bullet', false);
+  LineAttack(dir, MISSILERANGE, damage, BulletPuff, DmgType:'Bullet');
 }
 
 
@@ -107,7 +107,7 @@ final void DoSPosAttack () {
     TVec dir = aimDir;
     VectorRotateAroundZ(ref dir, (Random()-Random())*45.0/2.0);
     int damage = ((P_Random()%5)+1)*3;
-    LineAttack(dir, MISSILERANGE, damage, BulletPuff, default, default, atype, (i != 0));
+    LineAttack(dir, MISSILERANGE, damage, BulletPuff, DmgType:atype, secondary:(i != 0));
   }
 }
 
@@ -134,7 +134,7 @@ final void DoSPosAttack () {
   AimLineAttack(dir, Angles, MISSILERANGE);
   VectorRotateAroundZ(ref dir, (Random()-Random())*45.0/2.0);
   damage = ((P_Random()%5)+1)*3;
-  LineAttack(dir, MISSILERANGE, damage, BulletPuff, default, default, 'Bullet', false);
+  LineAttack(dir, MISSILERANGE, damage, BulletPuff, DmgType:'Bullet');
 }
 
 
@@ -948,7 +948,7 @@ final void BrainishExplosion (TVec org) {
 
     // use meleerange + 1 se the puff doesn't skip the flash
     EntityEx AimTarget = AimLineAttack(out dir, aimAng, MELEERANGE+0.00001);
-    LineAttack(dir, MELEERANGE+0.00001, damage, pufftype, default, default, 'Chainsaw', false);
+    LineAttack(dir, MELEERANGE+0.00001, damage, pufftype, DmgType:'Chainsaw');
 
     if (!AimTarget) {
       PlaySound(fullsound, CHAN_WEAPON);

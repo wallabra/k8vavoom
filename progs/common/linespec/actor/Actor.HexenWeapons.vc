@@ -53,12 +53,14 @@ const float HammerRange = MELEERANGE+MELEERANGE/2.0;
       power = 6.0;
       PuffType = HammerPuff;
     }
+    //FIXME: damage type?
     if (LineAttack(vforward, 2.0*MELEERANGE, damage, PuffType)) PlaySound(PuffType.default.ActiveSound, CHAN_WEAPON);
     if (AimTarget.bMonster || AimTarget.bIsPlayer) AimTarget.Thrust(angles.yaw, power);
     PlayerEx(Player).AdjustPlayerAngle(AimTarget);
   } else {
     // didn't find any creatures, so try to strike any walls
     Special1 = 0;
+    //FIXME: damage type?
     if (LineAttack(vforward, Actor::MELEERANGE, damage, PuffType)) PlaySound(PuffType.default.ActiveSound, CHAN_WEAPON);
   }
 
@@ -102,12 +104,14 @@ const float HammerRange = MELEERANGE+MELEERANGE/2.0;
   EntityEx AimTarget = AimEx(out vforward, AxeRange, 45.0/16.0, 16, MELEERANGE);
   if (AimTarget) {
     VectorAngles(vforward, out angles);
+    //FIXME: damage type?
     if (LineAttack(vforward, AxeRange, damage, PuffType)) PlaySound(PuffType.default.ActiveSound, CHAN_WEAPON);
     if (AimTarget.bMonster || AimTarget.bIsPlayer) AimTarget.Thrust(angles.yaw, power);
     PlayerEx(Player).AdjustPlayerAngle(AimTarget);
     ++useMana;
   } else {
     // didn't find any creatures, so try to strike any walls
+    //FIXME: damage type?
     if (LineAttack(vforward, MELEERANGE, damage, PuffType)) PlaySound(PuffType.default.ActiveSound, CHAN_WEAPON);
   }
 
@@ -140,6 +144,7 @@ const float HammerRange = MELEERANGE+MELEERANGE/2.0;
   EntityEx AimTarget = AimEx(out vforward, HammerRange, 45.0/32.0, 16, HammerRange);
   if (AimTarget) {
     VectorAngles(vforward, out angles);
+    //FIXME: damage type?
     if (LineAttack(vforward, HammerRange, damage, HammerPuff)) PlaySound('FighterHammerMiss', CHAN_WEAPON);
     PlayerEx(Player).AdjustPlayerAngle(AimTarget);
     if (AimTarget.bMonster || AimTarget.bIsPlayer) AimTarget.Thrust(angles.yaw, power);
@@ -147,6 +152,7 @@ const float HammerRange = MELEERANGE+MELEERANGE/2.0;
   } else {
     // didn't find any targets in meleerange, so set to throw out a hammer
     LineSpecialLevelInfo(Level).bPuffSpawned = false;
+    //FIXME: damage type?
     if (LineAttack(vforward, HammerRange, damage, HammerPuff)) PlaySound('FighterHammerMiss', CHAN_WEAPON);
     if (LineSpecialLevelInfo(Level).bPuffSpawned) {
       Special1 = false;
@@ -217,10 +223,12 @@ const float HammerRange = MELEERANGE+MELEERANGE/2.0;
   int damage = 25+(P_Random()&15);
   EntityEx AimTarget = AimEx(out vforward, 2.0*MELEERANGE, 45.0/16.0, 16, MELEERANGE);
   if (AimTarget) {
+    //FIXME: damage type?
     if (LineAttack(vforward, 2.0*MELEERANGE, damage, HammerPuff)) PlaySound('FighterHammerMiss', CHAN_WEAPON);
     PlayerEx(Player).AdjustPlayerAngle(AimTarget);
   } else {
     // didn't find any creatures, so try to strike any walls
+    //FIXME: damage type?
     if (LineAttack(vforward, MELEERANGE, damage, HammerPuff)) PlaySound('FighterHammerMiss', CHAN_WEAPON);
   }
 }
@@ -275,6 +283,7 @@ const float HammerRange = MELEERANGE+MELEERANGE/2.0;
   EntityEx AimTarget = AimEx(out vforward, 3.0*MELEERANGE/2.0, 45.0/16.0, 3);
   if (AimTarget) {
     VectorAngles(vforward, out angles);
+    //FIXME: damage type?
     LineAttack(vforward, 1.5*MELEERANGE, damage, CStaffPuff);
     Angles.yaw = atan2(AimTarget.Origin.y-Origin.y,
       AimTarget.Origin.x-Origin.x);
@@ -499,6 +508,7 @@ final void MStaffSpawn (float angle) {
   TAVec angles = Angles;
   EntityEx AimTarget = AimLineAttack(out vforward, angles, MELEERANGE);
   LineSpecialLevelInfo(Level).bPuffSpawned = false;
+  //FIXME: damage type?
   LineAttack(vforward, MELEERANGE, damage, SnoutPuff);
   PlaySound((P_Random()&1 ? 'PigActive2' : 'PigActive1'), CHAN_VOICE);
   if (AimTarget) {

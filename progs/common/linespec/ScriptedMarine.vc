@@ -225,7 +225,7 @@ final void SetSprite (class!EntityEx SrcClass) {
   TAVec aimAngles = Angles;
   aimAngles.yaw = AngleMod360(aimAngles.yaw+(Random()-Random())*45.0/8.0);
   EntityEx AimTarget = AimLineAttack(dir, aimAngles, MELEERANGE);
-  LineAttack(dir, MELEERANGE, damage, BulletPuff, default, default, 'Fist');
+  LineAttack(dir, MELEERANGE, damage, BulletPuff, DmgType:'Fist');
 
   // turn to face target
   if (AimTarget) {
@@ -252,7 +252,7 @@ final void SetSprite (class!EntityEx SrcClass) {
   TAVec aimAngles = Angles;
   aimAngles.yaw = AngleMod360(aimAngles.yaw+(Random()-Random())*45.0/8.0);
   EntityEx AimTarget = AimLineAttack(dir, aimAngles, MELEERANGE);
-  LineAttack(dir, MELEERANGE, damage, BulletPuff, default, default, 'BerserkFist');
+  LineAttack(dir, MELEERANGE, damage, BulletPuff, DmgType:'BerserkFist');
 
   // turn to face target
   if (AimTarget) {
@@ -315,7 +315,7 @@ final void SetSprite (class!EntityEx SrcClass) {
   PlaySound('weapons/pistol', CHAN_WEAPON);
 
   Aim(dir, 16.0*64.0);
-  GunShot(true, dir, 'Bullet', false);
+  GunShot(accurate:true, dir, 'Bullet', secondary:false);
 }
 
 
@@ -335,7 +335,7 @@ final void SetSprite (class!EntityEx SrcClass) {
   PlaySound('weapons/pistol', CHAN_WEAPON);
 
   Aim(dir, 16.0*64.0);
-  GunShot(accurate, dir, 'Bullet', false);
+  GunShot(accurate, dir, 'Bullet', secondary:false);
 }
 
 
@@ -353,7 +353,7 @@ final void SetSprite (class!EntityEx SrcClass) {
   PlaySound('weapons/pistol', CHAN_WEAPON);
 
   Aim(dir, 16.0*64.0);
-  GunShot(false, dir, 'Bullet', false);
+  GunShot(accurate:false, dir, 'Bullet', secondary:false);
 }
 
 
@@ -371,7 +371,7 @@ final void SetSprite (class!EntityEx SrcClass) {
   PlaySound('weapons/shotgf', CHAN_WEAPON);
 
   Aim(dir, 16.0*64.0);
-  foreach (auto i; 0..7) GunShot(false, dir, 'Shell', (i != 0));
+  foreach (auto i; 0..7) GunShot(accurate:false, dir, 'Shell', secondary:(i != 0));
   Special1f = XLevel.Time+27.0/35.0;
 }
 
@@ -411,7 +411,7 @@ final void SetSprite (class!EntityEx SrcClass) {
     rot.roll = 0.0;
     TVec dir = RotateDirectionVector(aimDir, rot);
     int damage = 5*(P_Random()%3+1);
-    LineAttack(dir, Actor::MISSILERANGE, damage, BulletPuff, default, default, 'Shell', (i != 0));
+    LineAttack(dir, Actor::MISSILERANGE, damage, BulletPuff, DmgType:'Shell', secondary:(i != 0));
   }
   Special1f = XLevel.Time;
 }
@@ -431,7 +431,7 @@ final void SetSprite (class!EntityEx SrcClass) {
   PlaySound('weapons/chngun', CHAN_WEAPON);
 
   Aim(dir, 16.0*64.0);
-  GunShot(true, dir, 'Bullet', false);
+  GunShot(accurate:true, dir, 'Bullet', secondary:false);
 }
 
 
@@ -449,7 +449,7 @@ final void SetSprite (class!EntityEx SrcClass) {
   PlaySound('weapons/chngun', CHAN_WEAPON);
 
   Aim(dir, 16.0*64.0);
-  GunShot(false, dir, 'Bullet', false);
+  GunShot(accurate:false, dir, 'Bullet', secondary:false);
 }
 
 
@@ -467,7 +467,7 @@ final void SetSprite (class!EntityEx SrcClass) {
   PlaySound('weapons/chngun', CHAN_WEAPON);
 
   Aim(dir, 16.0*64.0);
-  GunShot(accurate, dir, 'Bullet', false);
+  GunShot(accurate:accurate, dir, 'Bullet', secondary:false);
 }
 
 

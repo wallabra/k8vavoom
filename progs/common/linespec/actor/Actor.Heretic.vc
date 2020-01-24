@@ -578,7 +578,8 @@
   TAVec angles = Angles;
   angles.yaw = AngleMod360(angles.yaw+(Random()-Random())*45.0/8.0);
   EntityEx AimTarget = AimLineAttack(out dir, angles, MELEERANGE);
-  LineAttack(dir, MELEERANGE, damage, /*StaffPuff*/PuffType, true);
+  //FIXME: damage type?
+  LineAttack(dir, MELEERANGE, damage, /*StaffPuff*/PuffType, NoAttackGhosts:true);
   if (AimTarget) {
     // turn to face target
     Angles.yaw = atan2(AimTarget.Origin.y-Origin.y, AimTarget.Origin.x-Origin.x);
@@ -622,6 +623,7 @@
   }
 
   EntityEx AimTarget = AimLineAttack(dir, angles, dist);
+  //FIXME: damage type?
   LineAttack(dir, dist, damage, PuffType);
   if (!AimTarget) {
     if (P_Random() > 64) Player.ExtraLight = !Player.ExtraLight;
@@ -677,6 +679,7 @@
   int damage = 7+(P_Random()&7);
   Aim(out dir, 16.0*64.0);
   if (PlayerEx(Player).Refire) VectorRotateAroundZ(ref dir, (Random()-Random())*45.0/8.0);
+  //FIXME: damage type?
   LineAttack(dir, MISSILERANGE, damage, GoldWandPuff1);
   PlaySound('weapons/wandhit', CHAN_WEAPON);
 }
@@ -704,6 +707,7 @@
   VectorRotateAroundZ(ref dir, -45.0/8.0);
   foreach (auto i; 0..5) {
     int damage = 1+(P_Random()&7);
+    //FIXME: damage type?
     LineAttack(dir, MISSILERANGE, damage, GoldWandPuff2);
     VectorRotateAroundZ(ref dir, (45.0/8.0)/2.0);
   }
@@ -766,6 +770,7 @@
   Aim(out dir, 16.0*64.0);
   int damage = HITDICE(4);
   if (PlayerEx(Player).Refire) VectorRotateAroundZ(ref dir, (Random()-Random())*45.0/8.0);
+  //FIXME: damage type?
   LineAttack(dir, MISSILERANGE, damage, BlasterPuff);
   PlaySound('weapons/blastershoot', CHAN_WEAPON);
 }
@@ -958,6 +963,7 @@
 
   int damage = 1+(P_Random()&3);
   EntityEx AimTarget = AimLineAttack(out dir, Angles, MELEERANGE);
+  //FIXME: damage type?
   LineAttack(dir, MELEERANGE, damage, BeakPuff);
   if (AimTarget) {
     Angles.yaw = atan2(AimTarget.Origin.y-Origin.y, AimTarget.Origin.x-Origin.x);
@@ -984,6 +990,7 @@
 
   int damage = HITDICE(4);
   EntityEx AimTarget = AimLineAttack(out dir, (Owner ? Owner.Angles : Angles), MELEERANGE); //k8: why it may have no owner???
+  //FIXME: damage type?
   LineAttack(dir, MELEERANGE, damage, BeakPuff);
   if (AimTarget) {
     Angles.yaw = atan2(AimTarget.Origin.y-Origin.y, AimTarget.Origin.x-Origin.x);

@@ -371,7 +371,7 @@
   bool stealth = GetCvarB('k8StealthChainsaw');
   EntityEx AimTarget = AimLineAttack(dir, aimAng, range/*SAWRANGE*/);
   EntityEx hitEntity;
-  LineAttack(dir, /*SAWRANGE*/range, damage, PuffType, default, default, 'Chainsaw', out hitEntity:hitEntity);
+  LineAttack(dir, /*SAWRANGE*/range, damage, PuffType, DmgType:'Chainsaw', out hitEntity:hitEntity);
 
   if (stealth) {
     if (/*alertIfHit &&*/ hitEntity) {
@@ -474,7 +474,7 @@
 
   if (!NoRandom) PunchDamage *= (P_Random()%8+1);
 
-  LineAttack(dir, Range, PunchDamage, PuffType, default, default, PuffType.default.DamageType);
+  LineAttack(dir, Range, PunchDamage, PuffType, DmgType:PuffType.default.DamageType);
 
   // turn to face target
   if (AimTarget) {
@@ -750,7 +750,7 @@
   PlaySound('weapons/pistol', CHAN_WEAPON);
 
   Aim(dir, 16.0*64.0, default, noAAim);
-  GunShot(Accurate, dir, 'Bullet', false, decal, (bIsPlayer ? 8192.0 : MISSILERANGE));
+  GunShot(Accurate, dir, 'Bullet', secondary:false, decal, (bIsPlayer ? 8192.0 : MISSILERANGE));
 }
 
 
@@ -784,7 +784,7 @@
   float spinc = (tgt ? 0.1 : 0.15);
   float spread = 0;
   foreach (auto i; 0..7) {
-    GunShot(false, dir, 'Shell', (i != 0), decal, (bIsPlayer ? 8192.0 : MISSILERANGE), spreadPitch:spread);
+    GunShot(accurate:false, dir, 'Shell', secondary:(i != 0), decal, (bIsPlayer ? 8192.0 : MISSILERANGE), spreadPitch:spread);
     spread += spinc;
   }
 }
@@ -824,7 +824,7 @@
     rot.roll = 0.0;
     TVec dir = RotateDirectionVector(aimDir, rot);
     int damage = 5*(P_Random()%3+1);
-    LineAttack(dir, (bIsPlayer ? 8192.0 : MISSILERANGE), damage, BulletPuff, default, default, 'Shell', (i != 0), decal);
+    LineAttack(dir, (bIsPlayer ? 8192.0 : MISSILERANGE), damage, BulletPuff, DmgType:'Shell', secondary:(i != 0), decalType:decal);
   }
 }
 
@@ -892,7 +892,7 @@
 
   TVec dir;
   Aim(dir, 16.0*64.0, default, noAAim);
-  GunShot(!PlayerEx(Player).Refire, dir, 'Bullet', false, decal, (bIsPlayer ? 8192.0 : MISSILERANGE));
+  GunShot(accurate:!PlayerEx(Player).Refire, dir, 'Bullet', secondary:false, decal, (bIsPlayer ? 8192.0 : MISSILERANGE));
 }
 
 

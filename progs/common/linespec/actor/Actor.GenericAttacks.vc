@@ -159,9 +159,8 @@ final void FireSuperBullet () {
   TVec aimDir;
 
   Aim(aimDir, 16.0*64.0, default, noAAim);
-  LineAttack(aimDir, /*Range*/10000, /*damage*/10000,
-    BulletPuff, default, default,
-    BulletPuff.default.DamageType, false, decal);
+  LineAttack(aimDir, distance:10000, LADamage:10000, PuffType:BulletPuff,
+             DmgType:BulletPuff.default.DamageType, secondary:false, decalType:decal);
 }
 
 
@@ -437,7 +436,7 @@ final void DoAttack (bool DoMelee, bool DoMissile, int MeleeDamage,
     TVec dir = aimDir;
     VectorRotateAroundZ(ref dir, (Random()-Random())*45.0/2.0);
     int damage = ((P_Random()%5)+1)*3;
-    LineAttack(dir, MISSILERANGE, damage, BulletPuff, default, default, 'Bullet', (i != 0));
+    LineAttack(dir, MISSILERANGE, damage, BulletPuff, DmgType:'Bullet', secondary:(i != 0));
   }
 }
 
@@ -619,7 +618,7 @@ final void DoExplode (int damage, float distance, bool damageSelf, optional int 
       //LineAttack(Ang, MISSILERANGE, 0, naildamage, default, default,'Nail');
       //LineAttack(Ang, MISSILERANGE, 0, naildamage, 'None', BulletPuff);
       AngleVector(Ang, out adir);
-      LineAttack(/*Ang*/adir, MISSILERANGE, naildamage, PuffType, default, default, NailDamageType, false);
+      LineAttack(/*Ang*/adir, MISSILERANGE, naildamage, PuffType, DmgType:NailDamageType, secondary:false);
     }
   }
 

@@ -257,7 +257,7 @@ final void DoTakeInventory (class!Inventory ItemType, int Amount, EntityEx Recei
 //
 //  A_Punch
 //
-//  arguments are ignored
+//  arguments are ignored (leftover from previous k8vavoom hack)
 //
 //===========================================================================
 [decorate] final void A_Punch (optional bool alertIfHit, optional bool noAlertIfKilled) {
@@ -277,7 +277,7 @@ final void DoTakeInventory (class!Inventory ItemType, int Amount, EntityEx Recei
   aimAngles.yaw = AngleMod360(aimAngles.yaw+(Random()-Random())*45.0/8.0);
   EntityEx AimTarget = AimLineAttack(dir, aimAngles, MELEERANGE);
   EntityEx hitEntity;
-  LineAttack(dir, MELEERANGE, damage, BulletPuff, default, default, 'Fist', out hitEntity:hitEntity);
+  LineAttack(dir, MELEERANGE, damage, BulletPuff, DmgType:'Fist', out hitEntity:hitEntity);
 
   bool stealth = GetCvarB('k8StealthFist');
   if (stealth) {
@@ -333,5 +333,5 @@ final void DoTakeInventory (class!Inventory ItemType, int Amount, EntityEx Recei
   }
 
   int damage = 4*(P_Random()%3+1);
-  LineAttack(dir, (bIsPlayer ? 8192.0 : MISSILERANGE), damage, StrifePuff, default, default, 'Bullet');
+  LineAttack(dir, (bIsPlayer ? 8192.0 : MISSILERANGE), damage, StrifePuff, DmgType:'Bullet');
 }
