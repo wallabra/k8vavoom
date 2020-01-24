@@ -634,13 +634,34 @@ override bool UseInventory (Inventory Item) {
 
 //==========================================================================
 //
+//  AdjustCrouchSpeed
+//
+//  moved to separate method, do mods can override it
+//
+//==========================================================================
+void AdjustCrouchSpeed (ref float forward, ref float side) {
+  // when crouching, speed have to be reduced, and player is not allowed to run
+  // normal speed is |1000|, running speed is |2000|
+  if (crouchfactor != 1) {
+    //if (forward) print("old: f=%s; s=%s; nf=%s; ns=%s", forward, side, forward*crouchfactor, side*crouchfactor);
+    forward = fclamp(forward, -WALKING_SPEED, WALKING_SPEED);
+    side = fclamp(side, -WALKING_SPEED, WALKING_SPEED);
+    forward *= /*crouchfactor*/CROUCHSLOWDOWN;
+    side *= /*crouchfactor*/CROUCHSLOWDOWN;
+  }
+}
+
+
+//==========================================================================
+//
 //  AdjustSpeed
 //
 //  this clamps player speed, and applies some boosts/restrictions
 //
 //==========================================================================
-final void AdjustSpeed (ref float forward, ref float side) {
+void AdjustSpeed (ref float forward, ref float side) {
   // when the player has less than 25 health points, he's unable to run
+  // used only in Strife
   if (Health < RunHealth) {
     forward = fclamp(forward, -WALKING_SPEED, WALKING_SPEED);
     side = fclamp(side, -WALKING_SPEED, WALKING_SPEED);
@@ -656,15 +677,7 @@ final void AdjustSpeed (ref float forward, ref float side) {
     side *= SpeedFactor;
   }
 
-  // when crouching, speed have to be reduced, and player is not allowed to run
-  // normal speed is |1000|, running speed is |2000|
-  if (crouchfactor != 1) {
-    //if (forward) print("old: f=%s; s=%s; nf=%s; ns=%s", forward, side, forward*crouchfactor, side*crouchfactor);
-    forward = fclamp(forward, -WALKING_SPEED, WALKING_SPEED);
-    side = fclamp(side, -WALKING_SPEED, WALKING_SPEED);
-    forward *= /*crouchfactor*/CROUCHSLOWDOWN;
-    side *= /*crouchfactor*/CROUCHSLOWDOWN;
-  }
+  AdjustCrouchSpeed(ref forward, ref side);
 }
 
 
