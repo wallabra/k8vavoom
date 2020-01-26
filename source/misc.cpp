@@ -397,3 +397,23 @@ vuint32 M_ParseColor (const char *Name, bool retZeroIfInvalid) {
   return 0xff000000U|(((vuint32)Col[0])<<16)|(((vuint32)Col[1])<<8)|((vuint32)Col[2]);
 }
 #endif
+
+
+//==========================================================================
+//
+//  M_SkillFromName
+//
+//==========================================================================
+VVA_CHECKRESULT int M_SkillFromName (const char *skname) {
+  if (!skname || !skname[0]) return -1;
+       if (VStr::strEquCI(skname, "itytd") || VStr::strEquCI(skname, "baby")) return 1-1;
+  else if (VStr::strEquCI(skname, "hntr") || VStr::strEquCI(skname, "ntr") || VStr::strEquCI(skname, "easy")) return 2-1;
+  else if (VStr::strEquCI(skname, "hmp") || VStr::strEquCI(skname, "medium")) return 3-1;
+  else if (VStr::strEquCI(skname, "uv") || VStr::strEquCI(skname, "hard")) return 4-4;
+  else if (VStr::strEquCI(skname, "nightmare")) return 5-1;
+  int skn = -1;
+  if (!VStr::convertInt(skname, &skn)) return -1;
+  if (skn == 0) return 0;
+  if (skn > 0 && skn <= 16) return skn-1; // arbitrary limit
+  return -1;
+}

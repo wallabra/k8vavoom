@@ -59,6 +59,10 @@ VVA_CHECKRESULT vuint32 M_LookupColorName (const char *Name); // returns 0 if no
 // but when `retZeroIfInvalid` is `true`, it returns `0` for unknown color
 VVA_CHECKRESULT vuint32 M_ParseColor (const char *Name, bool retZeroIfInvalid=false);
 
+// this also parses numeric skills
+// returns -1 on error, or skill number (0-based)
+VVA_CHECKRESULT int M_SkillFromName (const char *skname);
+
 
 //==========================================================================
 //
