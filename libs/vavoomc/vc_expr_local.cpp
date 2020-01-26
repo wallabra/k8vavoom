@@ -335,7 +335,7 @@ VExpression *VLocalVar::DoResolve (VEmitContext &ec) {
   RealType = loc.Type;
   if (Type.Type == TYPE_Byte || Type.Type == TYPE_Bool) Type = VFieldType(TYPE_Int);
   PushOutParam = !!(locSavedFlags&(FPARM_Out|FPARM_Ref));
-  if (locSavedFlags&FPARM_Const) Flags |= FIELD_ReadOnly;
+  if (locSavedFlags&FPARM_Const) SetReadOnly();
   return this;
 }
 

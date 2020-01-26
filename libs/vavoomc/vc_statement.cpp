@@ -1588,7 +1588,7 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
   delete limit;
 
   loopLoad = new VArrayElement(arr->SyntaxCopy(), index->SyntaxCopy(), Loc, true); // we can skip bounds checking here
-  loopLoad->Flags &= ~FIELD_ReadOnly;
+  loopLoad->ResetReadOnly();
   // refvar code will be completed in our codegen
   if (isRef) {
     vassert(indLocalVal >= 0);
@@ -1603,14 +1603,14 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
     loopLoad = loopLoad->Resolve(ec);
     if (loopLoad) {
       loopLoad->RequestAddressOf();
-      if (isConst || (arr->Flags&FIELD_ReadOnly)) {
-        loopLoad->Flags |= FIELD_ReadOnly;
-        if (varaddr) varaddr->Flags |= FIELD_ReadOnly;
+      if (isConst || arr->IsReadOnly()) {
+        loopLoad->SetReadOnly();
+        if (varaddr) varaddr->SetReadOnly();
       }
     }
   } else {
     auto oldvflags = var->Flags;
-    var->Flags &= ~FIELD_ReadOnly;
+    var->ResetReadOnly();
     loopLoad = new VAssignment(VAssignment::Assign, var->SyntaxCopy(), loopLoad, loopLoad->Loc);
     if (loopLoad) {
       loopLoad = new VDropResult(loopLoad);
@@ -1618,7 +1618,7 @@ bool VForeachArray::Resolve (VEmitContext &ec) {
     }
     if (var) var->Flags = oldvflags;
   }
-  if (isConst && loopLoad) loopLoad->Flags |= FIELD_ReadOnly;
+  if (isConst && loopLoad) loopLoad->SetReadOnly();
 
   // we don't need index anymore
   delete index;

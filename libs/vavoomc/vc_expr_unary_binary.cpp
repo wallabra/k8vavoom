@@ -450,13 +450,13 @@ VExpression *VUnaryMutator::DoResolve (VEmitContext &ec) {
     return nullptr;
   }
 
-  if (op->Flags&FIELD_ReadOnly) {
+  if (op->IsReadOnly()) {
     ParseError(Loc, "Cannot modify read-only destination (0)");
     delete this;
     return nullptr;
   }
 
-  if (Flags&FIELD_ReadOnly) {
+  if (IsReadOnly()) {
     ParseError(Loc, "Cannot modify read-only destination (1)");
     delete this;
     return nullptr;

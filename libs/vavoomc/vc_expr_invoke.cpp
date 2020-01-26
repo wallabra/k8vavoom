@@ -877,7 +877,7 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
         }
       }
       // ok
-      if (SelfExpr->Flags&FIELD_ReadOnly) {
+      if (SelfExpr->IsReadOnly()) {
         ParseError(Loc, "Cannot set length of read-only array");
         delete this;
         return nullptr;
@@ -2758,7 +2758,7 @@ void VInvocation::CheckParams (VEmitContext &ec) {
             }
           }
           // now check r/o flags
-          if ((Args[i]->Flags&FIELD_ReadOnly) != 0 && (Func->ParamFlags[i]&FPARM_Const) == 0) {
+          if (Args[i]->IsReadOnly() && (Func->ParamFlags[i]&FPARM_Const) == 0) {
             ParseError(Args[i]->Loc, "Cannot pass const argument #%d as non-const", i+1);
           }
           Args[i]->RequestAddressOf();

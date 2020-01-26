@@ -435,8 +435,8 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
       delete op;
       op = nullptr;
       op = (new VPushPointed(opcopy.SyntaxCopy(), loc))->Resolve(ec);
-      op->Flags |= oldflags&FIELD_ReadOnly;
       if (!op) { delete this; return nullptr; }
+      op->Flags |= oldflags&FIELD_ReadOnly;
     } else {
       delete op;
       op = nullptr;
@@ -464,17 +464,9 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
       // field first
       VField *field = op->Type.Class->FindField(FieldName, Loc, ec.SelfClass);
       if (field) {
-        VExpression *e;
-        // "normal" access: call delegate (if it is operand-less)
-        /*if (assType == AssType::Normal && field->Type.Type == TYPE_Delegate && field->Func && field->Func->NumParams == 0) {
-          fprintf(stderr, "*** FLD! %s\n", *field->Name);
-          e = new VInvocation(nullptr, field->Func, field, false, false, Loc, 0, nullptr);
-        } else*/ {
-          // generate field access
-          e = new VFieldAccess(op, field, Loc, op->IsDefaultObject() ? FIELD_ReadOnly : 0);
-          //!!!e->Flags |= op->Flags&FIELD_ReadOnly;
-          op = nullptr;
-        }
+        // generate field access
+        VExpression *e = new VFieldAccess(op, field, Loc, (op->IsDefaultObject() ? FIELD_ReadOnly : 0));
+        op = nullptr;
         delete this;
         return e->Resolve(ec);
       }
@@ -566,10 +558,9 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
         // vector swizzling
         if (assType != AssType::AssTarget) {
           //int opflags = op->Flags;
-          op->Flags &= ~FIELD_ReadOnly;
+          op->ResetReadOnly(); // required for taking address
           op->RequestAddressOf();
           VExpression *e = new VVectorSwizzleExpr(op, swidx, false, Loc);
-          //e->Flags |= opflags&FIELD_ReadOnly;
           op = nullptr;
           delete this;
           return e->Resolve(ec);
@@ -618,7 +609,7 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
         delete this;
         return nullptr;
       }
-      if (op->Flags&FIELD_ReadOnly) {
+      if (op->IsReadOnly()) {
         ParseError(Loc, "Cannot change length of read-only array");
         delete this;
         return nullptr;
@@ -870,7 +861,7 @@ VExpression *VDotField::DoResolve (VEmitContext &ec) {
 //
 //==========================================================================
 VExpression *VDotField::ResolveAssignmentTarget (VEmitContext &ec) {
-  if (Flags&FIELD_ReadOnly) {
+  if (IsReadOnly()) {
     ParseError(Loc, "Cannot assign to read-only destination");
     delete this;
     return nullptr;

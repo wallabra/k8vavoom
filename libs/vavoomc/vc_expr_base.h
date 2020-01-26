@@ -77,7 +77,7 @@ public:
 public:
   VFieldType Type;
   VFieldType RealType;
-  int Flags;
+  unsigned Flags;
   TLocation Loc;
 
 public:
@@ -89,6 +89,11 @@ public:
 
 protected:
   VExpression () {} // used in SyntaxCopy
+
+public:
+  inline bool IsReadOnly () const noexcept { return !!(Flags&FIELD_ReadOnly); }
+  inline void SetReadOnly () noexcept { Flags |= FIELD_ReadOnly; }
+  inline void ResetReadOnly () noexcept { Flags &= ~FIELD_ReadOnly; }
 
 public:
   VExpression (const TLocation &ALoc);

@@ -118,7 +118,7 @@ VExpression *VAssignment::DoResolve (VEmitContext &ec) {
 
   if (!op1 || !op2) { delete this; return nullptr; }
 
-  if (op1->Flags&FIELD_ReadOnly) {
+  if (op1->IsReadOnly()) {
     ParseError(Loc, "Cannot assign to read-only destination");
     delete this;
     return nullptr;

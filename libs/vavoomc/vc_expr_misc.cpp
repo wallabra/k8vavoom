@@ -777,7 +777,7 @@ VPushPointed::VPushPointed (VExpression *AOp, const TLocation &ALoc)
     ParseError(Loc, "Expression expected");
     return;
   }
-  Flags |= op->Flags&FIELD_ReadOnly;
+  if (op->IsReadOnly()) SetReadOnly();
 }
 
 
@@ -1218,7 +1218,7 @@ VExpression *VDropResult::DoResolve (VEmitContext &ec) {
   }
 
   Type = TYPE_Void;
-  Flags |= op->Flags&FIELD_ReadOnly;
+  if (op->IsReadOnly()) SetReadOnly();
   return this;
 }
 
