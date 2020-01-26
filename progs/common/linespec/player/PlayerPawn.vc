@@ -103,6 +103,11 @@ struct WSlotEntry {
 }
 transient protected array!WSlotEntry actualWeaponSlots;
 
+// used in `AllowSecondaryBloodSpawn()`
+// 0: do nothing, return false
+// >0: if 1, allow blood; decrement
+transient int secondaryBloodCount;
+
 
 //==========================================================================
 //
@@ -749,6 +754,38 @@ override void SetHeight (float newvalue) {
 }
 
 
+//==========================================================================
+//
+//  IsPrimaryBloodSpawnAllowed
+//
+//  called from `EntityEx::DamageEx()` to give a chance for spawning
+//  additional blood for primary bullet attacks
+//
+//==========================================================================
+bool IsPrimaryBloodSpawnAllowed (EntityEx victim, int damage, name DmgType) {
+  secondaryBloodCount = (GetCvarI('k8GoreOpt_BloodAmount') >= 3 ? 3+P_Random()%4 : 0);
+  //printdebug("%C: IsPrimaryBloodSpawnAllowed; victim=%C; cnt=%s", self, victim, secondaryBloodCount);
+  return true;
+}
+
+
+//==========================================================================
+//
+//  IsSecondaryBloodSpawnAllowed
+//
+//  called from `EntityEx::DamageEx()` to give a chance for spawning
+//  additional blood for secondary bullet attacks
+//
+//==========================================================================
+bool IsSecondaryBloodSpawnAllowed (EntityEx victim, int damage, name DmgType) {
+  // 0: do nothing, return false
+  // >0: if 1, allow blood; decrement
+  //printdebug("%C: IsSecondaryBloodSpawnAllowed; victim=%C; cnt=%s", self, victim, secondaryBloodCount);
+  if (secondaryBloodCount <= 0) return false;
+  return (secondaryBloodCount-- == 1);
+}
+
+
 defaultproperties {
   Health = 100;
   Radius = 16.0;
@@ -762,7 +799,7 @@ defaultproperties {
   ForwardMove2 = 1.0;
   SideMove1 = 1.0;
   SideMove2 = 1.0;
-  JumpVelZ = 8.0 * 35.0;
+  JumpVelZ = 8.0*35.0;
   AttackZOffset = 8.0;
   DamageScreenColor = 0xffff0000;
   bSolid = true;
@@ -779,6 +816,5 @@ defaultproperties {
   bTelestomp = true;
   bNoBlockMonst = true;
   k8hsCount = 0;
+  secondaryBloodCount = 0;
 }
-
-

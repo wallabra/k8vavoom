@@ -924,8 +924,7 @@ final bool LineAttack (TVec dir, float distance, int LADamage,
       // allow bPierceArmor on weapons as well
       if (bIsPlayer && PlayerEx(Player).ReadyWeapon && PlayerEx(Player).ReadyWeapon.bPierceArmor) NoArmor = true;
       if (bIsPlayer) {
-        TVec thp;
-        thp = hit_point-th.Origin;
+        TVec thp = hit_point-th.Origin;
         th.DamageEx(self, self, LADamage, DmgType, NoArmor, thp, secondary);
       } else {
         th.Damage(self, self, LADamage, DmgType, NoArmor);

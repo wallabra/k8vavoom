@@ -508,6 +508,8 @@ int K8onBeforeLineDamage (EntityEx inflictor, TVec hitpos, int damage, name dama
 //
 //  DamageEx
 //
+//  called by PlayerPawn from `LineAttack()`
+//
 //==========================================================================
 void DamageEx (EntityEx inflictor, EntityEx source, int damage, name DmgType, bool NoArmor, TVec hitp, bool secondary, optional bool spawnBlood) {
   int newdmg = K8onBeforeLineDamage(inflictor, hitp, damage, DmgType, secondary);
@@ -515,11 +517,26 @@ void DamageEx (EntityEx inflictor, EntityEx source, int damage, name DmgType, bo
   //print("THP:(%f,%f,%f); dmg=%d; type='%s'", hitp.x, hitp.y, hitp.z, damage, "FUCK!");
   if (!secondary) {
     //printdebug("%C: first shot; spawnBlood=%B", self, spawnBlood);
+    if (!specified_spawnBlood && inflictor && inflictor.bIsPlayer) {
+      auto pp = PlayerPawn(inflictor);
+      if (pp) {
+        spawnBlood = pp.IsPrimaryBloodSpawnAllowed(self, newdmg, DmgType);
+        Damage(inflictor, source, /*damage*/newdmg, DmgType, NoArmor, spawnBlood:spawnBlood);
+        return;
+      }
+    }
     Damage(inflictor, source, /*damage*/newdmg, DmgType, NoArmor, spawnBlood:spawnBlood!optional);
   } else {
     // secondary shots won't spawn blood
-    //printdebug("%C: secondary shot; spawnBlood=%B", self, spawnBlood);
-    Damage(inflictor, source, /*damage*/newdmg, DmgType, NoArmor, spawnBlood:false);
+    //printdebug("%C: secondary shot; spawnBlood=%B (%B); inflictor=%C; source=%C", self, spawnBlood, specified_spawnBlood, inflictor, source);
+    if (!specified_spawnBlood && inflictor && inflictor.bIsPlayer) {
+      auto pp = PlayerPawn(inflictor);
+      if (pp) {
+        spawnBlood = pp.IsSecondaryBloodSpawnAllowed(self, newdmg, DmgType);
+        //if (spawnBlood) printdebug("%C: SECONDARY BLOOD!", self);
+      }
+    }
+    Damage(inflictor, source, /*damage*/newdmg, DmgType, NoArmor, spawnBlood:spawnBlood);
   }
 }
 
