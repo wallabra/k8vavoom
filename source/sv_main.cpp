@@ -910,11 +910,9 @@ COMMAND_WITH_AC(TeleportNewMap) {
   }
 
   if (!deathmatch) {
-    if (VStr(GLevelInfo->NextMap).StartsWithCI("EndGame")) {
+    if (VStr(GLevelInfo->NextMap).startsWithCI("EndGame")) {
       for (int i = 0; i < svs.max_clients; ++i) {
-        if (GGameInfo->Players[i]) {
-          GGameInfo->Players[i]->eventClientFinale(*GLevelInfo->NextMap);
-        }
+        if (GGameInfo->Players[i]) GGameInfo->Players[i]->eventClientFinale(*GLevelInfo->NextMap);
       }
       sv.intermission = 2;
       return;
@@ -965,7 +963,7 @@ static TeleportMapExFlag TMEFlags[] = {
 //==========================================================================
 COMMAND_WITH_AC(TeleportNewMapEx) {
   if (Args.length() < 2) {
-    GCon->Logf("TeleportNewMapEx mapname [posidx [flags [skill]]]");
+    GCon->Logf("TeleportNewMapEx mapname|+ [posidx [flags [skill]]]");
     return;
   }
 
@@ -996,8 +994,11 @@ COMMAND_WITH_AC(TeleportNewMapEx) {
     }
     // if not found, try numeric conversion for skill
     if (found) continue;
-    if (Args[f].convertInt(&skill)) {
-      if (skill >= 0) flags |= CHANGELEVEL_CHANGESKILL;
+    // try skill names too
+    int skn = M_SkillFromName(*Args[f]);
+    if (skn >= 0) {
+      skill = skn;
+      flags |= CHANGELEVEL_CHANGESKILL;
       continue;
     }
     GCon->Logf(NAME_Warning, "TeleportNewMapEx: invalid flag '%s'", *Args[f]);
@@ -1006,14 +1007,21 @@ COMMAND_WITH_AC(TeleportNewMapEx) {
 
   //GCon->Logf("TeleportNewMapEx: name=<%s>; posidx=%d; flags=0x%04x; skill=%d", *Args[1], posidx, flags, skill);
 
-  GLevelInfo->NextMap = VName(*Args[1], VName::AddLower8);
+  if (Args[1] == "+" || Args[1] == "*") {
+    // use default next map; i.e. do nothing
+  } else {
+    VName mname = VName(*Args[1], VName::FindLower8);
+    if (mname == NAME_None) {
+      GCon->Logf(NAME_Warning, "TeleportNewMapEx: unknown map name '%s'", *Args[1]);
+      return;
+    }
+    GLevelInfo->NextMap = mname;
+  }
 
   if (!deathmatch) {
-    if (VStr(GLevelInfo->NextMap).StartsWith("EndGame")) {
+    if (VStr(GLevelInfo->NextMap).startsWithCI("EndGame")) {
       for (int i = 0; i < svs.max_clients; ++i) {
-        if (GGameInfo->Players[i]) {
-          GGameInfo->Players[i]->eventClientFinale(*GLevelInfo->NextMap);
-        }
+        if (GGameInfo->Players[i]) GGameInfo->Players[i]->eventClientFinale(*GLevelInfo->NextMap);
       }
       sv.intermission = 2;
       return;
