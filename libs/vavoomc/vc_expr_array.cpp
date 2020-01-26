@@ -357,8 +357,22 @@ VExpression *VArrayElement::ResolveAssignmentTarget (VEmitContext &ec) {
 //  VArrayElement::ResolveCompleteAssign
 //
 //  this will be called before actual assign resolving
-//  return `nullptr` to indicate error, or consume `val` and set `resolved` to `true` if resolved
+//  return `nullptr` to indicate error, or consume `val` and set `resolved`
+//  to `true` if resolved
 //  if `nullptr` is returned, both `this` and `val` should be destroyed
+//
+//  this is called for `op1 = op2` cases, like this
+//  (from `VAssignment::DoResolve()`):
+//    res = op1->ResolveCompleteAssign(ec, op2, resolved);
+//    if (resolved) {
+//      VExpression *e = op1;
+//      op1 = nullptr;
+//      op2 = nullptr;
+//      delete this;
+//      return e;
+//    }
+//
+//  note that you cannot process `op=` in this way (for now)
 //
 //==========================================================================
 VExpression *VArrayElement::ResolveCompleteAssign (VEmitContext &ec, VExpression *val, bool &resolved) {

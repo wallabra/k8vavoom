@@ -90,6 +90,16 @@ some interesting methods:
     this will be called before the actual assign resolving.
     return `nullptr` to indicate some error, or consume `val` and set `resolved` to `true` if resolved.
     if `nullptr` is returned, both `this` and `val` should be destroyed.
+    this is called for `op1 = op2` cases, like this (from `VAssignment::DoResolve()`):
+      res = op1->ResolveCompleteAssign(ec, op2, resolved);
+      if (resolved) {
+        VExpression *e = op1;
+        op1 = nullptr;
+        op2 = nullptr;
+        delete this;
+        return e;
+      }
+    note that you cannot process `op=` in this way (for now).
 
   virtual void RequestAddressOf ();
     this is used to set "address requested" flag, which in turn is used in the codegen.
@@ -110,8 +120,8 @@ some interesting methods:
   VExpression *CoerceToFloat (VEmitContext &ec);
     call this on an already resolved node to coerce it to a float.
 
-  static void CoerceTypes (VEmitContext &ec, VExpression *&op1, VExpression *&op2, bool coerceNoneDelegate); // expression *MUST* be already resolved
-    this coerces ints to floats, and fixes `none`\`nullptr` type.
+  static void CoerceTypes (VEmitContext &ec, VExpression *&op1, VExpression *&op2, bool coerceNoneDelegate); // expressions *MUST* be already resolved
+    this coerces ints to floats, and fixes `none`/`nullptr` type.
 
 
   virtual VExpression *AddDropResult ();
