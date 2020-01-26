@@ -2097,17 +2097,9 @@ void FL_InitOptions () {
   GParsedArgs.RegisterCallback("-skill", "select starting skill (3 is HMP; default is UV aka 4)", [] (VArgs &args, int idx) -> int {
     ++idx;
     if (!VParsedArgs::IsArgBreaker(args, idx)) {
-      int skn = -1;
-      if (!VStr::convertInt(args[idx], &skn)) {
-             if (VStr::strEquCI(args[idx], "itytd") || VStr::strEquCI(args[idx], "baby")) skn = 1;
-        else if (VStr::strEquCI(args[idx], "hntr") || VStr::strEquCI(args[idx], "easy")) skn = 2;
-        else if (VStr::strEquCI(args[idx], "hmp") || VStr::strEquCI(args[idx], "medium")) skn = 3;
-        else if (VStr::strEquCI(args[idx], "uv") || VStr::strEquCI(args[idx], "hard")) skn = 4;
-        else if (VStr::strEquCI(args[idx], "nightmare")) skn = 5;
-        else { GCon->Logf(NAME_Warning, "unknown skill name '%s'!", args[idx]); skn = 3; }
-      }
-      if (skn < 1) skn = 1; //else if (skn > 5) skn = 5;
-      Skill = skn-1;
+      int skn = M_SkillFromName(args[idx]);
+      if (skn < 0) skn = 4-1; // default is UV
+      Skill = skn;
       ++idx;
     } else {
       GCon->Log(NAME_Warning, "skill name expected!");
