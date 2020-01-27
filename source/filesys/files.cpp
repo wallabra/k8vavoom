@@ -1602,7 +1602,6 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
 
   if (selectedGame) {
     VStr gn = selectedGame->gamename;
-    game_name = *gn;
     if (dbg_dump_gameinfo) GCon->Logf(NAME_Init, "SELECTED GAME: \"%s\"", *gn);
   } else {
     if (games.length() > 1) {
@@ -1693,6 +1692,8 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
     }
     if (!selectedGame) Sys_Error("Looks like I cannot find any IWADs. Did you forgot to specify -iwaddir?");
   }
+  // set game name variable
+  game_name = *selectedGame->gamename;
 
   vassert(selectedGame);
   version_t &game = *selectedGame;
