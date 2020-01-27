@@ -172,16 +172,22 @@ VRadiusThingsIterator::VRadiusThingsIterator (VThinker *ASelf, VEntity **AEntPtr
   xh = MapBlock(Org.x+Radius-bmOrgX+MAXRADIUS);
   yl = MapBlock(Org.y-Radius-bmOrgY-MAXRADIUS);
   yh = MapBlock(Org.y+Radius-bmOrgY+MAXRADIUS);
-  if (xh < 0 || yh < 0 || xl >= bmWidth || yl >= bmHeight) return; // nothing to do
-  // clip rect
-  if (xl < 0) xl = 0;
-  if (yl < 0) yl = 0;
-  if (xh >= bmWidth) { xh = bmWidth-1; vassert(xh >= 0); }
-  if (yh >= bmHeight) { yh = bmHeight-1; vassert(yh >= 0); }
-  // prepare iteration
-  x = xl;
-  y = yl;
-  Ent = Self->XLevel->BlockLinks[y*bmWidth+x];
+  if (xh < 0 || yh < 0 || xl >= bmWidth || yl >= bmHeight) {
+    // nothing to do
+    // set the vars so `GetNext()` will return `false`
+    xl = xh = yl = yh = x = y = 0;
+    Ent = nullptr;
+  } else {
+    // clip rect
+    if (xl < 0) xl = 0;
+    if (yl < 0) yl = 0;
+    if (xh >= bmWidth) { xh = bmWidth-1; vassert(xh >= 0); }
+    if (yh >= bmHeight) { yh = bmHeight-1; vassert(yh >= 0); }
+    // prepare iteration
+    x = xl;
+    y = yl;
+    Ent = Self->XLevel->BlockLinks[y*bmWidth+x];
+  }
 }
 
 
@@ -202,7 +208,11 @@ bool VRadiusThingsIterator::GetNext () {
     if (y > yh) {
       ++x;
       y = yl;
-      if (x > xh) return false;
+      if (x > xh) {
+        // clear it, why not
+        *EntPtr = nullptr;
+        return false;
+      }
     }
 
     // it cannot get out of bounds, no need to perform any checks here
