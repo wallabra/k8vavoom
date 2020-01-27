@@ -1471,8 +1471,21 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     TLocation TmpLoc = sc->GetLoc();
     VStr TmpName = ParseStateString(sc);
 
+    // check for label
+    if (sc->Check(":")) {
+      LastState = nullptr;
+      // allocate new label (it will be resolved later)
+      VStateLabelDef &Lbl = Class->StateLabelDefs.Alloc();
+      Lbl.Loc = TmpLoc;
+      Lbl.Name = TmpName;
+      if (!sc->Crossed && sc->Check(";")) {}
+      LastDefinedLabel = TmpName;
+      continue;
+    }
+
     // goto command
     if (TmpName.ICmp("Goto") == 0) {
+      if (sc->IsAtEol()) sc->Error(va("`%s` without argument!", *TmpName));
       VName GotoLabel = *ParseStateString(sc);
       int GotoOffset = 0;
       if (sc->Check("+")) {
@@ -1532,6 +1545,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
 
     // stop command
     if (TmpName.ICmp("Stop") == 0) {
+      if (!sc->IsAtEol()) sc->Error(va("`%s` sprite name is not allowed!", *TmpName));
       if (!LastState && NewLabelsStart == Class->StateLabelDefs.Num()) {
         if (!getIgnoreMoronicStateCommands()) sc->Error("'Stop' before first state frame");
         sc->Message("'Stop' before first state frame");
@@ -1581,6 +1595,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
 
     // wait command
     if (TmpName.ICmp("Wait") == 0 || TmpName.ICmp("Fail") == 0) {
+      if (!sc->IsAtEol()) sc->Error(va("`%s` sprite name is not allowed!", *TmpName));
       if (!LastState) {
         if (!getIgnoreMoronicStateCommands()) sc->Error(va("'%s' before first state frame", *TmpName));
         sc->Message(va("'%s' before first state frame", *TmpName));
@@ -1594,6 +1609,7 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
 
     // loop command
     if (TmpName.ICmp("Loop") == 0) {
+      if (!sc->IsAtEol()) sc->Error(va("`%s` sprite name is not allowed!", *TmpName));
       if (!LastState) {
         if (!getIgnoreMoronicStateCommands()) sc->Error("'Loop' before first state frame");
         sc->Message("'Loop' before first state frame");
@@ -1602,18 +1618,6 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
       }
       PrevState = nullptr; // new execution chain
       if (!sc->Crossed && sc->Check(";")) {}
-      continue;
-    }
-
-    // check for label
-    if (sc->Check(":")) {
-      LastState = nullptr;
-      // allocate new label (it will be resolved later)
-      VStateLabelDef &Lbl = Class->StateLabelDefs.Alloc();
-      Lbl.Loc = TmpLoc;
-      Lbl.Name = TmpName;
-      if (!sc->Crossed && sc->Check(";")) {}
-      LastDefinedLabel = TmpName;
       continue;
     }
 
@@ -3009,11 +3013,14 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
 
   // create class
   TArray<VDecorateUserVarDef> uvars;
+
   VClass *Class = Type == OLDDEC_Pickup ?
     FakeInventoryClass->CreateDerivedClass(ClassName, DecPkg, uvars, sc->GetLoc()) :
     ActorClass->CreateDerivedClass(ClassName, DecPkg, uvars, sc->GetLoc());
   DecPkg->ParsedClasses.Append(Class);
+
   if (Type == OLDDEC_Breakable) SetClassFieldBool(Class, "bShootable", true);
+
   if (Type == OLDDEC_Projectile) {
     SetClassFieldBool(Class, "bMissile", true);
     SetClassFieldBool(Class, "bDropOff", true);
@@ -3298,15 +3305,21 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
     for (int i = DeathStart; i < DeathEnd-1; ++i) States[i]->NextState = States[i+1];
     if (!DiesAway && Type != OLDDEC_Projectile) States[DeathEnd-1]->Time = -1.0f;
     if (Type == OLDDEC_Projectile) {
-      if (Explosive) States[DeathStart]->Function = FuncA_ExplodeParms;
+      if (Explosive) {
+        //States[DeathStart]->Function = FuncA_ExplodeParms;
+        SetupOldStyleFunction(sc, Class, States[DeathStart], FuncA_ExplodeParms);
+      }
     } else {
       // first death state plays death sound, second makes it non-blocking unless it should stay solid
-      States[DeathStart]->Function = FuncA_Scream;
+      //States[DeathStart]->Function = FuncA_Scream;
+      SetupOldStyleFunction(sc, Class, States[DeathStart], FuncA_Scream);
       if (!SolidOnDeath) {
         if (DeathEnd-DeathStart > 1) {
-          States[DeathStart+1]->Function = FuncA_NoBlocking;
+          //States[DeathStart+1]->Function = FuncA_NoBlocking;
+          SetupOldStyleFunction(sc, Class, States[DeathStart+1], FuncA_NoBlocking);
         } else {
-          States[DeathStart]->Function = FuncA_ScreamAndUnblock;
+          //States[DeathStart]->Function = FuncA_ScreamAndUnblock;
+          SetupOldStyleFunction(sc, Class, States[DeathStart], FuncA_ScreamAndUnblock);
         }
       }
       if (!DeathHeight) DeathHeight = GetClassFieldFloat(Class, "Height");
@@ -3320,12 +3333,15 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
     for (int i = BurnStart; i < BurnEnd-1; ++i) States[i]->NextState = States[i+1];
     if (!BurnsAway) States[BurnEnd-1]->Time = -1.0f;
     // First death state plays active sound, second makes it non-blocking unless it should stay solid
-    States[BurnStart]->Function = FuncA_ActiveSound;
+    //States[BurnStart]->Function = FuncA_ActiveSound;
+    SetupOldStyleFunction(sc, Class, States[BurnStart], FuncA_ActiveSound);
     if (!SolidOnBurn) {
       if (BurnEnd-BurnStart > 1) {
-        States[BurnStart+1]->Function = FuncA_NoBlocking;
+        //States[BurnStart+1]->Function = FuncA_NoBlocking;
+        SetupOldStyleFunction(sc, Class, States[BurnStart+1], FuncA_NoBlocking);
       } else {
-        States[BurnStart]->Function = FuncA_ActiveAndUnblock;
+        //States[BurnStart]->Function = FuncA_ActiveAndUnblock;
+        SetupOldStyleFunction(sc, Class, States[BurnStart], FuncA_ActiveAndUnblock);
       }
     }
 
@@ -3343,11 +3359,13 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
     for (int i = IceStart; i < IceEnd-1; ++i) States[i]->NextState = States[i+1];
 
     States[IceEnd-2]->Time = 5.0f/35.0f;
-    States[IceEnd-2]->Function = FuncA_FreezeDeath;
+    //States[IceEnd-2]->Function = FuncA_FreezeDeath;
+    SetupOldStyleFunction(sc, Class, States[IceEnd-2], FuncA_FreezeDeath);
 
     States[IceEnd-1]->NextState = States[IceEnd-1];
     States[IceEnd-1]->Time = 1.0f/35.0f;
-    States[IceEnd-1]->Function = FuncA_FreezeDeathChunks;
+    //States[IceEnd-1]->Function = FuncA_FreezeDeathChunks;
+    SetupOldStyleFunction(sc, Class, States[IceEnd-1], FuncA_FreezeDeathChunks);
 
     TArray<VName> Names;
     Names.Append("Death");
@@ -3359,6 +3377,17 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
     Names.Append("Death");
     Names.Append("Ice");
     Class->SetStateLabel(Names, Lbl ? Lbl->State : nullptr);
+  }
+
+  // postprocess states
+  Class->EmitStateLabels();
+  for (auto &&sts : States) {
+    #if defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
+    sts->Define(); // this defines state functions
+    #endif
+    if (sts->GotoLabel != NAME_None) {
+      sts->NextState = Class->ResolveStateLabel(sts->Loc, sts->GotoLabel, sts->GotoOffset);
+    }
   }
 }
 
