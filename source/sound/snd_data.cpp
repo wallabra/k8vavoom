@@ -617,7 +617,7 @@ void VSoundManager::ParseSndinfo (VScriptParser *sc, int fileid) {
         GCon->Logf(NAME_Init, "%s: processing conditional section '%s' in sound script", *loc.toStringNoCol(), *gmname);
       } else {
         // skip lines until we hit `endif`
-        GCon->Logf(NAME_Init, "%s: skipping conditional section '%s' in sound script", *loc.toStringNoCol(), *gmname);
+        GCon->Logf(NAME_Init, "%s: skipping conditional section '%s' in sound script (%s)", *loc.toStringNoCol(), *gmname, *game_name.asStr());
         while (sc->GetString()) {
           if (sc->Crossed) {
             if (sc->String.strEqu("endif")) {
@@ -917,7 +917,7 @@ int VSoundManager::GetSoundID (VName Name) {
     VStr s = VStr(Name);
     if (!sfxMissingReported.has(s)) {
       sfxMissingReported.put(s, true);
-      GCon->Logf("WARNING! Can't find sound named '%s'", *Name);
+      GCon->Logf(NAME_Warning, "Can't find sound named '%s'", *Name);
     }
   }
   return res;
