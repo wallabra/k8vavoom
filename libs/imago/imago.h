@@ -143,6 +143,8 @@ public:
   // load image from stream; return `nullptr` on error
   static VImage *loadFrom (VStream *strm, const VStr &name=VStr());
 
+  bool saveAsPNG (VStream *strm);
+
   void checkerFill ();
 
   void setPalette (const RGBA *pal, int colnum);

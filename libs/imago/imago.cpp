@@ -271,6 +271,36 @@ VImage *VImage::loadFrom (VStream *strm, const VStr &name) {
 }
 
 
+bool VImage::saveAsPNG (VStream *strm) {
+  if (!strm) return false;
+  TArray<vuint8> tmprgb;
+  const vuint8 *picdata;
+  if (isTrueColor) {
+    picdata = mPixels;
+  } else {
+    tmprgb.setLength(width*height*4);
+    vuint8 *dest = (vuint8 *)tmprgb.ptr();
+    picdata = (const vuint8 *)dest;
+    for (int y = 0; y < height; ++y) {
+      for (int x = 0; x < height; ++x) {
+        auto clr = getPixel(x, y);
+        *dest++ = clr.r;
+        *dest++ = clr.g;
+        *dest++ = clr.b;
+        *dest++ = clr.a;
+      }
+    }
+  }
+
+  ESSType ptp = SS_RGBA;
+
+  PalEntry pal[256];
+  memset((void *)pal, 0, sizeof(pal));
+
+  return M_CreatePNG(strm, picdata, pal, ptp, width, height, width*4, 1.0f);
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 class VLoaderReg {
 public:
