@@ -1679,6 +1679,23 @@ IMPLEMENT_FUNCTION(VGLTexture, smoothEdges) {
 }
 
 
+bool VGLTexture::savingAllowed = false;
+
+// should be explicitly enabled
+// native final void saveAsPNG (string fname);
+IMPLEMENT_FUNCTION(VGLTexture, saveAsPNG) {
+  VStr fname;
+  vobjGetParamSelf(fname);
+  if (savingAllowed && Self && Self->tex && Self->tex->img && !fname.isEmpty()) {
+    VStream *st = fsysOpenDiskFileWrite(fname);
+    if (!st) return;
+    Self->tex->img->saveAsPNG(st);
+    st->Close();
+    delete st;
+  }
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 IMPLEMENT_CLASS(V, GLVideo);
 
@@ -2566,8 +2583,9 @@ void VGLVideo::drawTextAt (int x, int y, const VStr &text) {
   if (!currFont /*|| isFullyTransparent()*/ || text.isEmpty()) return;
   if (!mInited) return;
 
-  const VOpenGLTexture *tex = currFont->getTexture();
+  const VOpenGLTexture *tex = nullptr;
   if (currFont->singleTexture) {
+    tex = currFont->getTexture();
     if (!tex || !tex->tid) return; // oops
   }
 
@@ -2606,6 +2624,56 @@ void VGLVideo::drawTextAt (int x, int y, const VStr &text) {
     x += fc->leftbear+fc->rightbear;
   }
   if (currFont->singleTexture) glEnd();
+}
+
+
+void VGLVideo::drawTextAtTexture (VOpenGLTexture *tx, int x, int y, const VStr &text, const vuint32 color) {
+  if (!currFont /*|| isFullyTransparent()*/ || text.isEmpty() || !tx || tx->width < 1 || tx->height < 1) return;
+  //if (!mInited) return;
+
+  const VOpenGLTexture *tex = nullptr;
+  if (currFont->singleTexture) {
+    tex = currFont->getTexture();
+    if (!tex /*|| !tex->tid*/) return; // oops
+  }
+
+  //GLog.Logf(NAME_Debug, "!!!!");
+  int sx = x;
+  for (int f = 0; f < text.length(); ++f) {
+    int ch = (vuint8)text[f];
+    //if (ch == '\r') { x = sx; continue; }
+    if (ch == '\n') { x = sx; y += currFont->getHeight(); continue; }
+    auto fc = currFont->getChar(ch);
+    if (!fc) {
+      //fprintf(stderr, "NO CHAR #%d\n", ch);
+      continue;
+    }
+    // draw char
+    if (!currFont->singleTexture) {
+      tex = fc->tex;
+      if (!tex) continue;
+    }
+    int xofs = fc->leftbear;
+    int cx0 = (int)(fc->tx0*tex->width);
+    int cy0 = (int)(fc->ty0*tex->height);
+    int cx1 = (int)(fc->tx1*tex->width);
+    int cy1 = (int)(fc->ty1*tex->height);
+    //GLog.Logf(NAME_Debug, "  f=%d; ch=%c; (%d,%d)-(%d,%d) (%dx%d); (%g,%g)-(%g,%g)", f, (char)ch, cx0, cy0, cx1, cy1, (int)tex->width, (int)tex->height, fc->tx0, fc->ty0, fc->tx1, fc->ty1);
+    for (int dy = cy0; dy < cy1; ++dy) {
+      for (int dx = cx0; dx < cx1; ++dx) {
+        auto clr = tex->img->getPixel(dx, dy);
+        if (color && clr.a) {
+          clr.r = clampToByte((int)(clr.r/255.0f*(((color>>16)&0xff)/255.0f)*255.0f));
+          clr.g = clampToByte((int)(clr.g/255.0f*(((color>>8)&0xff)/255.0f)*255.0f));
+          clr.b = clampToByte((int)(clr.b/255.0f*((color&0xff)/255.0f)*255.0f));
+        }
+        tx->img->setPixel(x+xofs+dx-cx0, y+fc->topofs+dy-cy0, clr);
+      }
+    }
+    // advance
+    //x += fc->advance;
+    x += fc->leftbear+fc->rightbear;
+  }
 }
 
 
@@ -3487,12 +3555,23 @@ IMPLEMENT_FUNCTION(VGLVideo, textHeight) {
   RET_INT(currFont ? currFont->textHeight(text) : 0);
 }
 
-//native final static void drawText (int x, int y, string text);
+//native final static void drawTextAt (int x, int y, string text);
 IMPLEMENT_FUNCTION(VGLVideo, drawTextAt) {
   int x, y;
   VStr text;
   vobjGetParam(x, y, text);
   drawTextAt(x, y, text);
+}
+
+
+//native final static void drawTextAtTexture (GLTexture tx, int x, int y, string text, optional int color);
+IMPLEMENT_FUNCTION(VGLVideo, drawTextAtTexture) {
+  VGLTexture *tx;
+  int x, y;
+  VStr text;
+  VOptParamInt color(0);
+  vobjGetParam(tx, x, y, text, color);
+  if (tx && tx->tex) drawTextAtTexture(tx->tex, x, y, text, color);
 }
 
 

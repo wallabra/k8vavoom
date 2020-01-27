@@ -201,6 +201,7 @@ native final static int charWidth (int ch);
 native final static int textWidth (string text); // max width, knows about '\n'
 native final static int textHeight (string text); // this knows about '\n'
 native final static void drawTextAt (int x, int y, string text);
+native final static void drawTextAtTexture (GLTexture tx, int x, int y, string text, optional int color);
 
 native final static void drawLine (int x0, int y0, int x1, int y1);
 native final static void drawRect (int x0, int y0, int w, int h);

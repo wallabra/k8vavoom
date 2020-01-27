@@ -46,6 +46,7 @@
 // ////////////////////////////////////////////////////////////////////////// //
 struct event_t;
 class VFont;
+class VOpenGLTexture;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -291,6 +292,8 @@ public:
   static inline bool isFullyTransparent () { return ((colorARGB&0xff000000) == 0xff000000); }
 
   static void drawTextAt (int x, int y, const VStr &text);
+  // if clr high byte is ignored; 0 means "default color"
+  static void drawTextAtTexture (VOpenGLTexture *tx, int x, int y, const VStr &text, const vuint32 clr=0);
 
   // returns timer id or 0
   // if id <= 0, creates new unique timer id
@@ -466,6 +469,7 @@ public:
   DECLARE_FUNCTION(textWidth)
   DECLARE_FUNCTION(textHeight)
   DECLARE_FUNCTION(drawTextAt)
+  DECLARE_FUNCTION(drawTextAtTexture)
 
   DECLARE_FUNCTION(drawLine)
   DECLARE_FUNCTION(drawRect)
@@ -558,6 +562,9 @@ class VGLTexture : public VObject {
 
   friend class VGLVideo;
 
+public:
+  static bool savingAllowed;
+
 private:
   VOpenGLTexture *tex;
   int id;
@@ -585,6 +592,8 @@ public:
   DECLARE_FUNCTION(getPixel) // native final static int getPixel (int x, int y); // aarrggbb; a==0 is completely opaque
   DECLARE_FUNCTION(upload) // native final static void upload ();
   DECLARE_FUNCTION(smoothEdges) // native final void smoothEdges (); // call after manual texture building
+
+  DECLARE_FUNCTION(saveAsPNG)
 
   friend class VFont;
 };

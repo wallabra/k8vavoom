@@ -35,6 +35,8 @@
 # include "filesys/halib/libha.h"
 #endif
 
+#include "modules/sdlgl/mod_sdlgl.h"
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 //#define DEBUG_OBJECT_LOADER
@@ -320,6 +322,10 @@ static void ProcessArgs (int ArgCount, char **ArgVector) {
       if (text[0] == '-' && text[1] == 0) { nomore = true; continue; }
       if (strcmp(text, "gdb") == 0 || strcmp(text, "-gdb") == 0) {
         isGDB = true;
+        continue;
+      }
+      if (strcmp(text, "allow-save") == 0 || strcmp(text, "-allow-save") == 0) {
+        VGLTexture::savingAllowed = true;
         continue;
       }
       const char option = *text++;
