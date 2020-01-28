@@ -228,6 +228,7 @@ bool VRenderLevelShared::SurfPrepareForRender (surface_t *surf) {
   if (!surf || !surf->subsector || surf->count < 3) return false;
 
   VTexture *tex = surf->texinfo->Tex;
+  /*k8: usually there is no need to do this
   if (tex && !tex->bIsCameraTexture) {
     VTexture *hitex = tex->GetHighResolutionTexture();
     if (hitex) {
@@ -235,6 +236,7 @@ bool VRenderLevelShared::SurfPrepareForRender (surface_t *surf) {
       tex = hitex;
     }
   }
+  */
   if (!tex || tex->Type == TEXTYPE_Null) return false;
 
   if (surf->queueframe == currQueueFrame) {
