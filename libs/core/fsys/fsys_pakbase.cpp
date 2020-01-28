@@ -525,6 +525,19 @@ void VFileDirectory::buildNameMaps (bool rebuilding, VPakFileBase *pak) {
     }
   }
 
+  if (pak) {
+    VName titn = VName("dehacked", VName::Find);
+    if (titn != NAME_None) {
+      auto npp = lumpmap.find(titn);
+      if (npp) {
+        if ((files[*npp].filesize == 1066 && pak->CalculateMD5(*npp) == "6bf56571d1f34d7cd7378b95556d67f8") ||
+            (files[*npp].filesize == 1072 && pak->CalculateMD5(*npp) == "b93dbb8163e0a512e7b76d60d885b41c")) {
+          Sys_Error("CzechBox is not supported. sorry. not interested.");
+        }
+      }
+    }
+  }
+
   if (!rebuilding && fsys_dev_dump_paks) {
     GLog.Logf("======== PAK: %s ========", *getArchiveName());
     for (int f = 0; f < files.length(); ++f) {
