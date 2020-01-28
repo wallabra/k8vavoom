@@ -5,7 +5,9 @@ $include "common/common.inc"
 
 uniform sampler2D Texture;
 uniform sampler2D LightMap;
+#ifdef VV_USE_OVERBRIGHT
 uniform sampler2D SpecularMap;
+#endif
 #ifdef VV_LIGHTMAP_BRIGHTMAP
 $include "common/brightmap_vars.fs"
 #endif
@@ -41,7 +43,9 @@ void main () {
 #endif
   //TexColor *= lt;
   TexColor.rgb *= lt.rgb;
+#ifdef VV_USE_OVERBRIGHT
   TexColor.rgb += texture2D(SpecularMap, LightmapCoordinate).rgb;
+#endif
 
   // convert to premultiplied
   vec4 FinalColor;

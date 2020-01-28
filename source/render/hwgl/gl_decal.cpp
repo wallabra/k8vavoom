@@ -78,13 +78,21 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
       SurfDecalNoLMap.SetFogFade(surf->Fade, 1.0f);
       break;
     case DT_LIGHTMAP:
-      SurfDecalLMap.Activate();
-      SurfDecalLMap.SetTexture(0);
-      //SurfDecalLMap_Locs.storeFogType();
-      SurfDecalLMap.SetFogFade(surf->Fade, 1.0f);
-      SurfDecalLMap.SetLightMap(1);
-      SurfDecalLMap.SetSpecularMap(2);
-      SurfDecalLMap.SetLMapOnly(tex, surf, cache);
+      if (gl_regular_disable_overbright) {
+        SurfDecalLMapNoOverbright.Activate();
+        SurfDecalLMapNoOverbright.SetTexture(0);
+        SurfDecalLMapNoOverbright.SetFogFade(surf->Fade, 1.0f);
+        SurfDecalLMapNoOverbright.SetLightMap(1);
+        SurfDecalLMapNoOverbright.SetLMapOnly(tex, surf, cache);
+      } else {
+        SurfDecalLMapOverbright.Activate();
+        SurfDecalLMapOverbright.SetTexture(0);
+        //SurfDecalLMapOverbright_Locs.storeFogType();
+        SurfDecalLMapOverbright.SetFogFade(surf->Fade, 1.0f);
+        SurfDecalLMapOverbright.SetLightMap(1);
+        SurfDecalLMapOverbright.SetSpecularMap(2);
+        SurfDecalLMapOverbright.SetLMapOnly(tex, surf, cache);
+      }
       break;
     case DT_ADVANCED:
       SurfAdvDecal.Activate();
@@ -197,7 +205,11 @@ bool VOpenGLDrawer::RenderFinishShaderDecals (DecalType dtype, surface_t *surf, 
         {
           //!const float lev = (dc->flags&decal_t::Fullbright ? 1.0f : getSurfLightLevel(surf));
           //!p_glUniform4fARB(SurfDecalLMap_LightLoc, ((surf->Light>>16)&255)/255.0f, ((surf->Light>>8)&255)/255.0f, (surf->Light&255)/255.0f, lev);
-          SurfDecalLMap.SetSplatAlpha(dc->alpha);
+          if (gl_regular_disable_overbright) {
+            SurfDecalLMapNoOverbright.SetSplatAlpha(dc->alpha);
+          } else {
+            SurfDecalLMapOverbright.SetSplatAlpha(dc->alpha);
+          }
         }
         break;
       case DT_ADVANCED:

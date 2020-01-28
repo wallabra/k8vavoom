@@ -4,7 +4,9 @@ uniform sampler2D Texture;
 $include "common/texshade.inc"
 #ifdef REG_LIGHTMAP
 uniform sampler2D LightMap;
+#ifdef VV_USE_OVERBRIGHT
 uniform sampler2D SpecularMap;
+#endif
 #endif
 #ifndef REG_LIGHTMAP
 uniform vec4 Light;
@@ -34,9 +36,13 @@ void main () {
 #ifdef REG_LIGHTMAP
   // lightmapped
   vec3 lmc = texture2D(LightMap, LightmapCoordinate).rgb;
+#ifdef VV_USE_OVERBRIGHT
   vec3 spc = texture2D(SpecularMap, LightmapCoordinate).rgb;
+#endif
   FinalColor.rgb *= lmc.rgb;
+#ifdef VV_USE_OVERBRIGHT
   FinalColor.rgb += spc.rgb;
+#endif
 #else
   // normal
   FinalColor.rgb *= Light.rgb;

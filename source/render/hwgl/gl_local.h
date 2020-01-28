@@ -75,6 +75,9 @@ extern VCvarB r_brightmaps_filter;
 extern VCvarB r_glow_flat;
 extern VCvarB gl_lmap_allow_partial_updates;
 
+extern VCvarB gl_regular_prefill_depth;
+extern VCvarB gl_regular_disable_overbright;
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 static inline const char *VGetGLErrorStr (const GLenum glerr) {
@@ -231,6 +234,8 @@ private:
   TArray<surface_t *> zfillMasked;
 
   bool canIntoBloomFX;
+
+  bool lastOverbrightEnable;
 
 protected:
   VGLShader *shaderHead;

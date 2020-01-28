@@ -22,6 +22,18 @@ menudef AdvVideoOptions {
       "\cJIf unsure, leave it enabled.";
   }
 
+  option bool {
+    title = "Disable Overbright Rendering";
+    cvar = gl_regular_disable_overbright;
+    help =
+      "*Disable* overbright lightmaps?"
+      "Setting this to 'ON' (i.e. disabling) may be useful for complex",
+      "maps with alot of visible geometry and lighting. Overbrighting",
+      "requires one more texture sampler, and this can cause some",
+      "slowdowns.",
+      "\cJIf unsure, leave it as 'OFF'.";
+  }
+
   /* textures are always sorted, because why not?
   option bool {
     title = "Sort textures";

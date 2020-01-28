@@ -354,6 +354,8 @@ VOpenGLDrawer::VOpenGLDrawer ()
   offsetEnabled = false;
   offsetFactor = offsetUnits = 0;
 
+  lastOverbrightEnable = !gl_regular_disable_overbright;
+
   //cameraFBO[0].mOwner = nullptr;
   //cameraFBO[1].mOwner = nullptr;
 }
