@@ -104,10 +104,15 @@ static bool CalcSurfMinMax (surface_t *surf, float &outmins, float &outmaxs, con
       outmins = outmaxs = 0.0f;
       return false;
     }
-    const float dot = DotProduct(*vt, axis)+offs;
+    // ignore offset, we don't need it anymore
+    //const float dot = DotProduct(*vt, axis)+offs;
+    const float dot = DotProduct(*vt, axis);
     if (dot < mins) mins = dot;
     if (dot > maxs) maxs = dot;
   }
+  // always zero-based (why?)
+  //maxs -= mins;
+  //mins = 0;
   outmins = mins;
   outmaxs = maxs;
   return true;
@@ -154,7 +159,7 @@ void VRenderLevelLightmap::InitSurfs (bool recalcStaticLightmaps, surface_t *ASu
 
       float mins, maxs;
 
-      if (!CalcSurfMinMax(surf, mins, maxs, texinfo->saxis, texinfo->soffs)) {
+      if (!CalcSurfMinMax(surf, mins, maxs, texinfo->saxisLM, texinfo->soffs)) {
         // bad surface
         surf->drawflags &= ~surface_t::DF_CALC_LMAP; // just in case
         continue;
@@ -175,7 +180,7 @@ void VRenderLevelLightmap::InitSurfs (bool recalcStaticLightmaps, surface_t *ASu
         surf->extents[0] = (bmaxs-bmins)*16;
       }
 
-      if (!CalcSurfMinMax(surf, mins, maxs, texinfo->taxis, texinfo->toffs)) {
+      if (!CalcSurfMinMax(surf, mins, maxs, texinfo->taxisLM, texinfo->toffs)) {
         // bad surface
         surf->drawflags &= ~surface_t::DF_CALC_LMAP; // just in case
         continue;

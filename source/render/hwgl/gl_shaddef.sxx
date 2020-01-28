@@ -7,11 +7,13 @@
 Set PureLightmapSTSet {
   forbidden uniform float TexIW;
   forbidden uniform float TexIH;
+  forbidden uniform vec3 SAxis;
+  forbidden uniform vec3 TAxis;
+  forbidden uniform float SOffs;
+  forbidden uniform float TOffs;
 
-  uniform vec3 SAxis;
-  uniform vec3 TAxis;
-  uniform float SOffs;
-  uniform float TOffs;
+  uniform vec3 SAxisLM;
+  uniform vec3 TAxisLM;
   uniform float TexMinS;
   uniform float TexMinT;
   uniform float CacheS;
@@ -19,10 +21,12 @@ Set PureLightmapSTSet {
 
   code [[
     inline void SetLMapOnly (const texinfo_t *textr, const surface_t *surf, const surfcache_t *cache) {
-      curr_SAxis = textr->saxis;
-      curr_SOffs = textr->soffs;
-      curr_TAxis = textr->taxis;
-      curr_TOffs = textr->toffs;
+      //curr_SAxis = textr->saxis;
+      //curr_SOffs = textr->soffs;
+      //curr_TAxis = textr->taxis;
+      //curr_TOffs = textr->toffs;
+      curr_SAxisLM = textr->saxisLM;
+      curr_TAxisLM = textr->taxisLM;
       curr_TexMinS = surf->texturemins[0];
       curr_TexMinT = surf->texturemins[1];
       curr_CacheS = cache->s;
@@ -80,15 +84,23 @@ Set LightmapSTSet {
 
   uniform float TexMinS;
   uniform float TexMinT;
+  uniform vec3 SAxisLM;
+  uniform vec3 TAxisLM;
   uniform float CacheS;
   uniform float CacheT;
 
   code [[
-    inline void SetLMap (const surface_t *surf, const surfcache_t *cache) {
+    inline void SetLMap (const surface_t *surf, const texinfo_t *tex, const surfcache_t *cache) {
       curr_TexMinS = surf->texturemins[0];
       curr_TexMinT = surf->texturemins[1];
       curr_CacheS = cache->s;
       curr_CacheT = cache->t;
+      if (tex) {
+        curr_SAxisLM = tex->saxisLM;
+        curr_TAxisLM = tex->taxisLM;
+      } else {
+        curr_SAxisLM = curr_TAxisLM = TVec(1, 0, 0);
+      }
     }
   ]]
 }

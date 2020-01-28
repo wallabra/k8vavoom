@@ -205,10 +205,14 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
   if (fabsf(spl.splane->normal.z) > 0.1f) {
     float s, c;
     msincos(spl.splane->BaseAngle-spl.splane->Angle, &s, &c);
+    ssurf->texinfo.saxisLM = TVec(c,  s, 0);
     ssurf->texinfo.saxis = TVec(c,  s, 0)*(TextureSScale(Tex)*spl.splane->XScale);
+    ssurf->texinfo.taxisLM = TVec(s, -c, 0);
     ssurf->texinfo.taxis = TVec(s, -c, 0)*(TextureTScale(Tex)*spl.splane->YScale);
   } else {
+    ssurf->texinfo.taxisLM = TVec(0, 0, -1);
     ssurf->texinfo.taxis = TVec(0, 0, -1)*(TextureTScale(Tex)*spl.splane->YScale);
+    ssurf->texinfo.saxisLM = Normalise(CrossProduct(spl.GetNormal(), ssurf->texinfo.taxisLM));
     ssurf->texinfo.saxis = Normalise(CrossProduct(spl.GetNormal(), ssurf->texinfo.taxis))*(TextureSScale(Tex)*spl.splane->XScale);
   }
 
@@ -257,7 +261,8 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
       ssurf->surfs = surf;
       surf->texinfo = &ssurf->texinfo;
     } else {
-      ssurf->surfs = SubdivideFace(surf, ssurf->texinfo.saxis, &ssurf->texinfo.taxis);
+      //!GCon->Logf(NAME_Debug, "sfcF:%p: saxis=(%g,%g,%g); taxis=(%g,%g,%g); saxisLM=(%g,%g,%g); taxisLM=(%g,%g,%g)", ssurf, ssurf->texinfo.saxis.x, ssurf->texinfo.saxis.y, ssurf->texinfo.saxis.z, ssurf->texinfo.taxis.x, ssurf->texinfo.taxis.y, ssurf->texinfo.taxis.z, ssurf->texinfo.saxisLM.x, ssurf->texinfo.saxisLM.y, ssurf->texinfo.saxisLM.z, ssurf->texinfo.taxisLM.x, ssurf->texinfo.taxisLM.y, ssurf->texinfo.taxisLM.z);
+      ssurf->surfs = SubdivideFace(surf, ssurf->texinfo.saxisLM, &ssurf->texinfo.taxisLM);
       InitSurfs(true, ssurf->surfs, &ssurf->texinfo, &plane, sub);
     }
   } else if (updateZ) {
@@ -480,7 +485,8 @@ surface_t *VRenderLevelShared::CreateWSurf (TVec *wv, texinfo_t *texinfo, seg_t 
     return surf;
   }
 
-  surf = SubdivideSeg(surf, texinfo->saxis, &texinfo->taxis, seg);
+  //!GCon->Logf(NAME_Debug, "sfcS:%p: saxis=(%g,%g,%g); taxis=(%g,%g,%g); saxisLM=(%g,%g,%g); taxisLM=(%g,%g,%g)", surf, texinfo->saxis.x, texinfo->saxis.y, texinfo->saxis.z, texinfo->taxis.x, texinfo->taxis.y, texinfo->taxis.z, texinfo->saxisLM.x, texinfo->saxisLM.y, texinfo->saxisLM.z, texinfo->taxisLM.x, texinfo->taxisLM.y, texinfo->taxisLM.z);
+  surf = SubdivideSeg(surf, texinfo->saxisLM, &texinfo->taxisLM, seg);
   InitSurfs(true, surf, texinfo, seg, sub);
   return surf;
 }
@@ -642,7 +648,9 @@ static inline void SetupTextureAxesOffset (seg_t *seg, texinfo_t *texinfo, VText
   texinfo->Additive = false;
   texinfo->ColorMap = 0;
 
+  texinfo->saxisLM = seg->dir;
   texinfo->saxis = seg->dir*(TextureSScale(tex)*tparam->ScaleX);
+  texinfo->taxisLM = TVec(0, 0, -1);
   texinfo->taxis = TVec(0, 0, -1)*(TextureTScale(tex)*tparam->ScaleY);
 
   texinfo->soffs = -DotProduct(*seg->v1, texinfo->saxis)+
@@ -1808,6 +1816,7 @@ void VRenderLevelShared::SegMoved (seg_t *seg) {
   const side_t *sidedef = seg->sidedef;
 
   VTexture *MTex = seg->drawsegs->mid->texinfo.Tex;
+  seg->drawsegs->mid->texinfo.saxisLM = seg->dir;
   seg->drawsegs->mid->texinfo.saxis = seg->dir*(TextureSScale(MTex)*sidedef->Mid.ScaleX);
   seg->drawsegs->mid->texinfo.soffs = -DotProduct(*seg->v1, seg->drawsegs->mid->texinfo.saxis)+
                                       seg->offset*(TextureSScale(MTex)*sidedef->Mid.ScaleX)+

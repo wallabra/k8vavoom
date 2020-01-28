@@ -745,8 +745,10 @@ sec_surface_t *SV_DebugFindNearestFloor (subsector_t *sub, const TVec &p) {
   }
 
   if (rfloor /*&& !IsShadowVolumeRenderer()*/) {
-    int s = (int)(DotProduct(p, rfloor->texinfo.saxis)+rfloor->texinfo.soffs);
-    int t = (int)(DotProduct(p, rfloor->texinfo.taxis)+rfloor->texinfo.toffs);
+    //int s = (int)(DotProduct(p, rfloor->texinfo.saxis)+rfloor->texinfo.soffs);
+    //int t = (int)(DotProduct(p, rfloor->texinfo.taxis)+rfloor->texinfo.toffs);
+    int s = (int)(DotProduct(p, rfloor->texinfo.saxisLM));
+    int t = (int)(DotProduct(p, rfloor->texinfo.taxisLM));
     int ds, dt;
     for (surface_t *surf = rfloor->surfs; surf; surf = surf->next) {
       if (surf->lightmap == nullptr) continue;
@@ -876,8 +878,10 @@ void VRenderLevelShared::CalculateSubAmbient (float &l, float &lr, float &lg, fl
         // light from floor's lightmap
         sec_surface_t *rfloor = GetNearestFloor(sub, p);
         if (!rfloor) break; // outer `do`
-        int s = (int)(DotProduct(p, rfloor->texinfo.saxis)+rfloor->texinfo.soffs);
-        int t = (int)(DotProduct(p, rfloor->texinfo.taxis)+rfloor->texinfo.toffs);
+        //int s = (int)(DotProduct(p, rfloor->texinfo.saxis)+rfloor->texinfo.soffs);
+        //int t = (int)(DotProduct(p, rfloor->texinfo.taxis)+rfloor->texinfo.toffs);
+        int s = (int)(DotProduct(p, rfloor->texinfo.saxisLM));
+        int t = (int)(DotProduct(p, rfloor->texinfo.taxisLM));
         int ds, dt;
         for (surface_t *surf = rfloor->surfs; surf; surf = surf->next) {
           if (surf->lightmap == nullptr) continue;

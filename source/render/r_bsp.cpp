@@ -228,6 +228,13 @@ bool VRenderLevelShared::SurfPrepareForRender (surface_t *surf) {
   if (!surf || !surf->subsector || surf->count < 3) return false;
 
   VTexture *tex = surf->texinfo->Tex;
+  if (tex && !tex->bIsCameraTexture) {
+    VTexture *hitex = tex->GetHighResolutionTexture();
+    if (hitex) {
+      //GCon->Logf(NAME_Debug, "tex '%s' -> hi '%s'", *tex->Name, *hitex->Name);
+      tex = hitex;
+    }
+  }
   if (!tex || tex->Type == TEXTYPE_Null) return false;
 
   if (surf->queueframe == currQueueFrame) {

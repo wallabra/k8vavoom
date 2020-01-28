@@ -1627,6 +1627,16 @@ void VTextureManager::AddHiResTextures () {
         NewTex->TextureTranslation = OldTex->TextureTranslation;
         NewTex->HashNext = OldTex->HashNext;
         Textures[OldIdx] = NewTex;
+        // force non-translucency for lightmapping
+        if (NewTex->isTranslucent() && !OldTex->isTranslucent()) {
+          NewTex->translucent = false;
+        }
+        /*
+        if (OldTex->Name == "brnbigc") {
+          //GCon->Logf(NAME_Debug, "!!!!!!!!!!!!! transparent=%d (%d); translucent=%d (%d)", (int)NewTex->isTransparent(), (int)OldTex->isTransparent(), (int)NewTex->isTranslucent(), (int)OldTex->isTranslucent());
+          if (!OldTex->isTranslucent()) NewTex->translucent = false;
+        }
+        */
         // k8: don't delete old texture, it can be referenced out there
         //delete OldTex;
         //OldTex = nullptr;

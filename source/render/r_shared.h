@@ -67,6 +67,8 @@ struct texinfo_t {
   float soffs;
   TVec taxis;
   float toffs;
+  TVec saxisLM; // for lightmaps
+  TVec taxisLM; // for lightmaps
   VTexture *Tex;
   vint32 noDecals;
   // 1.1f for solid surfaces
@@ -100,6 +102,8 @@ struct texinfo_t {
     soffs = other.soffs;
     taxis = other.taxis;
     toffs = other.toffs;
+    saxisLM = other.saxisLM;
+    taxisLM = other.taxisLM;
     // other fields doesn't matter
   }
 
@@ -109,7 +113,7 @@ struct texinfo_t {
   }
 
   inline void initLastUsed () {
-    saxis = taxis = TVec(-99999, -99999, -99999);
+    saxis = taxis = saxisLM = taxisLM = TVec(-99999, -99999, -99999);
     soffs = toffs = -99999;
     Tex = nullptr;
     noDecals = false;

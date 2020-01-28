@@ -209,15 +209,15 @@ void VRenderLevelLightmap::CalcMinMaxs (LMapTraceInfo &lmi, const surface_t *sur
 bool VRenderLevelLightmap::CalcFaceVectors (LMapTraceInfo &lmi, const surface_t *surf) {
   const texinfo_t *tex = surf->texinfo;
 
-  lmi.worldtotex[0] = tex->saxis;
-  lmi.worldtotex[1] = tex->taxis;
+  lmi.worldtotex[0] = tex->saxisLM;
+  lmi.worldtotex[1] = tex->taxisLM;
 
   // calculate a normal to the texture axis
   // points can be moved along this without changing their S/T
   TVec texnormal(
-    tex->taxis.y*tex->saxis.z-tex->taxis.z*tex->saxis.y,
-    tex->taxis.z*tex->saxis.x-tex->taxis.x*tex->saxis.z,
-    tex->taxis.x*tex->saxis.y-tex->taxis.y*tex->saxis.x);
+    tex->taxisLM.y*tex->saxisLM.z-tex->taxisLM.z*tex->saxisLM.y,
+    tex->taxisLM.z*tex->saxisLM.x-tex->taxisLM.x*tex->saxisLM.z,
+    tex->taxisLM.x*tex->saxisLM.y-tex->taxisLM.y*tex->saxisLM.x);
   texnormal.normaliseInPlace();
   if (!isFiniteF(texnormal.x)) return false; // no need to check other coords
 
@@ -245,7 +245,10 @@ bool VRenderLevelLightmap::CalcFaceVectors (LMapTraceInfo &lmi, const surface_t 
   }
 
   // calculate texorg on the texture plane
-  for (int i = 0; i < 3; ++i) lmi.texorg[i] = -tex->soffs*lmi.textoworld[0][i]-tex->toffs*lmi.textoworld[1][i];
+  for (int i = 0; i < 3; ++i) {
+    //lmi.texorg[i] = -tex->soffs*lmi.textoworld[0][i]-tex->toffs*lmi.textoworld[1][i];
+    lmi.texorg[i] = 0;
+  }
 
   // project back to the face plane
   {
@@ -883,8 +886,8 @@ void VRenderLevelLightmap::AddDynamicLights (surface_t *surf) {
     const float bmul = dlcolor&255;
 
     TVec local;
-    local.x = DotProduct(impact, tex->saxis)+tex->soffs;
-    local.y = DotProduct(impact, tex->taxis)+tex->toffs;
+    local.x = DotProduct(impact, tex->saxisLM)/*+tex->soffs*/;
+    local.y = DotProduct(impact, tex->taxisLM)/*+tex->toffs*/;
     local.z = 0;
 
     local.x -= /*starts*/surf->texturemins[0];

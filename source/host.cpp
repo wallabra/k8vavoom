@@ -309,8 +309,10 @@ void Host_Init () {
 
   GCmdBuf.Exec();
 
+#ifdef CLIENT
   //FIXME
   R_InitHiResTextures(); // init only hires replacements
+#endif
 
 #ifndef CLIENT
   if (GGameInfo->NetMode == NM_None && !wasWarp) {

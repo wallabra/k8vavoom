@@ -239,12 +239,18 @@ void VOpenGLDrawer::DoHorizonPolygon (surface_t *surf) {
 //
 //==========================================================================
 bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
-  texinfo_t *textr = surf->texinfo;
+  const texinfo_t *tex = surf->texinfo;
 
-  bool doBrightmap = (r_brightmaps && textr->Tex->Brightmap);
+  bool doBrightmap = (r_brightmaps && tex->Tex->Brightmap);
 
   GlowParams gp;
   CalcGlow(gp, surf);
+
+  /*
+  if ((surf->drawflags&surface_t::DF_MASKED) != 0) {
+    GCon->Logf(NAME_Debug, "tex:%p:%s: saxis=(%g,%g,%g); taxis=(%g,%g,%g); saxisLM=(%g,%g,%g); taxisLM=(%g,%g,%g); min=(%d,%d); ext=(%d,%d)", tex, *tex->Tex->Name, tex->saxis.x, tex->saxis.y, tex->saxis.z, tex->taxis.x, tex->taxis.y, tex->taxis.z, tex->saxisLM.x, tex->saxisLM.y, tex->saxisLM.z, tex->taxisLM.x, tex->taxisLM.y, tex->taxisLM.z, surf->texturemins[0], surf->texturemins[1], surf->extents[0], surf->extents[1]);
+  }
+  */
 
   if (textureChanged) {
     if (doBrightmap) {
@@ -253,18 +259,18 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
       SurfSimpleBrightmap.SetTexture(0);
       SurfSimpleBrightmap.SetTextureBM(1);
       SelectTexture(1);
-      SetBrightmapTexture(textr->Tex->Brightmap);
+      SetBrightmapTexture(tex->Tex->Brightmap);
       SelectTexture(0);
-      SetTexture(textr->Tex, textr->ColorMap);
-      SurfSimpleBrightmap.SetTex(textr);
+      SetTexture(tex->Tex, tex->ColorMap);
+      SurfSimpleBrightmap.SetTex(tex);
     } else {
-      SetTexture(textr->Tex, textr->ColorMap);
+      SetTexture(tex->Tex, tex->ColorMap);
       if ((surf->drawflags&surface_t::DF_MASKED) == 0) {
         SurfSimple.Activate();
-        SurfSimple.SetTex(textr);
+        SurfSimple.SetTex(tex);
       } else {
         SurfSimpleMasked.Activate();
-        SurfSimpleMasked.SetTex(textr);
+        SurfSimpleMasked.SetTex(tex);
       }
     }
   }
@@ -300,7 +306,7 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
     }
   }
 
-  bool doDecals = (textr->Tex && !textr->noDecals && surf->seg && surf->seg->decalhead);
+  bool doDecals = (tex->Tex && !tex->noDecals && surf->seg && surf->seg->decalhead);
 
   // fill stencil buffer for decals
   if (doDecals) RenderPrepareShaderDecals(surf);
@@ -315,7 +321,7 @@ bool VOpenGLDrawer::RenderSimpleSurface (bool textureChanged, surface_t *surf) {
 
   // draw decals
   if (doDecals) {
-    if (RenderFinishShaderDecals(DT_SIMPLE, surf, nullptr, textr->ColorMap)) {
+    if (RenderFinishShaderDecals(DT_SIMPLE, surf, nullptr, tex->ColorMap)) {
       //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
       //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // decal renderer is using this too
       if (doBrightmap) {
@@ -404,10 +410,17 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
       fullBright = 1.0f;
     }
   }
+
+  /*
+  if ((surf->drawflags&surface_t::DF_MASKED) != 0) {
+    GCon->Logf(NAME_Debug, "LMtex:%p:%s: saxis=(%g,%g,%g); taxis=(%g,%g,%g); saxisLM=(%g,%g,%g); taxisLM=(%g,%g,%g); min=(%d,%d); ext=(%d,%d)", tex, *tex->Tex->Name, tex->saxis.x, tex->saxis.y, tex->saxis.z, tex->taxis.x, tex->taxis.y, tex->taxis.z, tex->saxisLM.x, tex->saxisLM.y, tex->saxisLM.z, tex->taxisLM.x, tex->taxisLM.y, tex->taxisLM.z, surf->texturemins[0], surf->texturemins[1], surf->extents[0], surf->extents[1]);
+  }
+  */
+
   if (doBrightmap) {
     if (gl_regular_disable_overbright) {
       SurfLightmapBrightmapNoOverbright.SetFullBright(fullBright);
-      SurfLightmapBrightmapNoOverbright.SetLMap(surf, cache);
+      SurfLightmapBrightmapNoOverbright.SetLMap(surf, tex, cache);
       SurfLightmapBrightmapNoOverbright.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
       SurfLightmapBrightmapNoOverbright.SetFogFade(surf->Fade, 1.0f);
       if (gp.isActive()) {
@@ -417,7 +430,7 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
       }
     } else {
       SurfLightmapBrightmapOverbright.SetFullBright(fullBright);
-      SurfLightmapBrightmapOverbright.SetLMap(surf, cache);
+      SurfLightmapBrightmapOverbright.SetLMap(surf, tex, cache);
       SurfLightmapBrightmapOverbright.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
       SurfLightmapBrightmapOverbright.SetFogFade(surf->Fade, 1.0f);
       if (gp.isActive()) {
@@ -430,7 +443,7 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
     if ((surf->drawflags&surface_t::DF_MASKED) == 0) {
       if (gl_regular_disable_overbright) {
         SurfLightmapNoOverbright.SetFullBright(fullBright);
-        SurfLightmapNoOverbright.SetLMap(surf, cache);
+        SurfLightmapNoOverbright.SetLMap(surf, tex, cache);
         SurfLightmapNoOverbright.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
         SurfLightmapNoOverbright.SetFogFade(surf->Fade, 1.0f);
         if (gp.isActive()) {
@@ -440,7 +453,7 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
         }
       } else {
         SurfLightmapOverbright.SetFullBright(fullBright);
-        SurfLightmapOverbright.SetLMap(surf, cache);
+        SurfLightmapOverbright.SetLMap(surf, tex, cache);
         SurfLightmapOverbright.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
         SurfLightmapOverbright.SetFogFade(surf->Fade, 1.0f);
         if (gp.isActive()) {
@@ -452,7 +465,7 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
     } else {
       if (gl_regular_disable_overbright) {
         SurfLightmapMaskedNoOverbright.SetFullBright(fullBright);
-        SurfLightmapMaskedNoOverbright.SetLMap(surf, cache);
+        SurfLightmapMaskedNoOverbright.SetLMap(surf, tex, cache);
         SurfLightmapMaskedNoOverbright.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
         SurfLightmapMaskedNoOverbright.SetFogFade(surf->Fade, 1.0f);
         if (gp.isActive()) {
@@ -462,7 +475,7 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
         }
       } else {
         SurfLightmapMaskedOverbright.SetFullBright(fullBright);
-        SurfLightmapMaskedOverbright.SetLMap(surf, cache);
+        SurfLightmapMaskedOverbright.SetLMap(surf, tex, cache);
         SurfLightmapMaskedOverbright.SetLight(((surf->Light>>16)&255)*lev/255.0f, ((surf->Light>>8)&255)*lev/255.0f, (surf->Light&255)*lev/255.0f, 1.0f);
         SurfLightmapMaskedOverbright.SetFogFade(surf->Fade, 1.0f);
         if (gp.isActive()) {

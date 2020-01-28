@@ -2,6 +2,8 @@
 
 uniform vec3 SAxis;
 uniform vec3 TAxis;
+uniform vec3 SAxisLM;
+uniform vec3 TAxisLM;
 uniform float SOffs;
 uniform float TOffs;
 uniform float TexIW;

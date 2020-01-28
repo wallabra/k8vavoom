@@ -592,6 +592,8 @@ struct texinfo_t {
   native transient float soffs;
   native transient TVec taxis;
   native transient float toffs;
+  native transient TVec saxisLM; // for lightmaps
+  native transient TVec taxisLM; // for lightmaps
   native transient void/*VTexture*/ *Tex;
   native transient bool noDecals;
   // 1.1 for solid surfaces

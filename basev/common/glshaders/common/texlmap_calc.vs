@@ -6,6 +6,14 @@
   TextureCoordinate = vec2(s*TexIW, t*TexIH);
 
   // calculate lightmap coordinates
+  /*
+  LightmapCoordinate = vec2(
+    (s-TexMinS+CacheS*16.0+8.0)/2048.0,
+    (t-TexMinT+CacheT*16.0+8.0)/2048.0
+  );
+  */
+  s = dot(gl_Vertex.xyz, SAxisLM);
+  t = dot(gl_Vertex.xyz, TAxisLM);
   LightmapCoordinate = vec2(
     (s-TexMinS+CacheS*16.0+8.0)/2048.0,
     (t-TexMinT+CacheT*16.0+8.0)/2048.0
