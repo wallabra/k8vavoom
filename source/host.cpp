@@ -226,8 +226,6 @@ void Host_Init () {
 
   ReadLineSpecialInfos();
 
-  //R_InitHiResTextures(false); // init multipatch textures, but no hires replacement
-
 #ifdef SERVER
   SV_Init();
 #endif
@@ -312,7 +310,7 @@ void Host_Init () {
   GCmdBuf.Exec();
 
   //FIXME
-  R_InitHiResTextures(true); // init only hires replacements
+  R_InitHiResTextures(); // init only hires replacements
 
 #ifndef CLIENT
   if (GGameInfo->NetMode == NM_None && !wasWarp) {

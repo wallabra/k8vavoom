@@ -576,7 +576,12 @@ private:
   void AddMissingNumberedTextures ();
   void AddTexturesLump (TArray<WallPatchInfo> &, int, int, bool);
   void AddGroup (int, EWadNamespace);
-  void AddTextureTextLumps (bool onlyHiRes);
+
+  void ParseTextureTextLump (int Lump, bool asHiRes);
+
+  void AddTextureTextLumps ();
+  void AddHiResTextureTextLumps ();
+  void AddHiResTextures (); // hires namespace
 
   void LoadSpriteOffsets ();
 
@@ -585,14 +590,14 @@ private:
   friend void R_InitTexture ();
   friend void R_DumpTextures ();
 
-  friend void R_InitHiResTextures (bool onlyHiRes);
+  friend void R_InitHiResTextures ();
 };
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 // r_tex
 void R_InitTexture ();
-void R_InitHiResTextures (bool onlyHiRes);
+void R_InitHiResTextures ();
 void R_DumpTextures ();
 void R_ShutdownTexture ();
 VAnimDoorDef *R_FindAnimDoor (vint32);

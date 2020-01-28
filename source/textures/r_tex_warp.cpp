@@ -182,7 +182,7 @@ rgba_t *VWarpTexture::GetPalette () {
 //
 //==========================================================================
 VTexture *VWarpTexture::GetHighResolutionTexture () {
-  if (!r_hirestex) return nullptr;
+  //if (!r_hirestex) return nullptr;
   // if high resolution texture is already created, then just return it
   if (HiResTexture) return HiResTexture;
 

@@ -315,18 +315,19 @@ rgba_t *VTexture::GetPalette () {
 //
 //  VTexture::GetHighResolutionTexture
 //
-// Return high-resolution version of this texture, or self if it doesn't
-// exist.
+//  Return high-resolution version of this texture, or self if it doesn't
+//  exist.
 //
 //==========================================================================
 VTexture *VTexture::GetHighResolutionTexture () {
 #ifdef CLIENT
-  if (!r_hirestex) return nullptr;
   // if high resolution texture is already created, then just return it
   if (HiResTexture) return HiResTexture;
 
   if (noHires) return nullptr;
   noHires = true;
+
+  if (!r_hirestex) return nullptr;
 
   // determine directory name depending on type
   const char *DirName;

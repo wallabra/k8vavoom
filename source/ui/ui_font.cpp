@@ -1299,13 +1299,13 @@ void VFontChar::Unload () {
 //
 //==========================================================================
 VTexture *VFontChar::GetHighResolutionTexture () {
-  if (!r_hirestex) return nullptr;
   if (!HiResTexture) {
     /*
     GCon->Logf("getting hires texture for basetex %p", BaseTex);
     GCon->Logf(" basetex name: %s", *BaseTex->Name);
     GCon->Logf(" basetex hires: %p", BaseTex->GetHighResolutionTexture());
     */
+    if (!r_hirestex) return nullptr;
     VTexture *Tex = BaseTex->GetHighResolutionTexture();
     if (Tex) HiResTexture = new VFontChar(Tex, Palette);
   }
