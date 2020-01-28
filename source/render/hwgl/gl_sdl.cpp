@@ -32,7 +32,7 @@
 #include "../../icondata/k8vavomicondata.c"
 
 
-extern VCvarB want_mouse_at_zero;
+extern VCvarB ui_want_mouse_at_zero;
 
 
 class VSdlOpenGLDrawer : public VOpenGLDrawer {
@@ -317,5 +317,5 @@ void VSdlOpenGLDrawer::Shutdown () {
     hw_window = nullptr;
   }
   mInitialized = false;
-  if (want_mouse_at_zero) SDL_WarpMouseGlobal(0, 0);
+  if (ui_want_mouse_at_zero) SDL_WarpMouseGlobal(0, 0);
 }

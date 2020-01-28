@@ -97,9 +97,8 @@ private:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-VCvarB ui_freemouse("__ui_freemouse", false, "Used in various debug modes?", 0);
-VCvarB want_mouse_at_zero("ui_want_mouse_at_zero", false, "Move real mouse cursor to (0,0) when UI activated?", CVAR_Archive);
-static VCvarB m_filter("m_filter", true, "Filter input?", CVAR_Archive);
+VCvarB ui_freemouse("__ui_freemouse", false, "Don't pass mouse movement to the camera. Used in various debug modes.", 0);
+VCvarB ui_want_mouse_at_zero("ui_want_mouse_at_zero", false, "Move real mouse cursor to (0,0) when UI activated?", CVAR_Archive);
 static VCvarB ui_mouse("ui_mouse", false, "Allow using mouse in UI?", CVAR_Archive);
 static VCvarB ui_active("__ui_active", false, "Is UI active (used to stop mouse warping if \"ui_mouse\" is false)?", 0);
 static VCvarB ui_control_waiting("__ui_control_waiting", false, "Waiting for new control key (pass mouse buttons)?", 0);
@@ -560,7 +559,7 @@ void VSdlInputDevice::ReadInput () {
         // ui activted
         SDL_CaptureMouse(SDL_FALSE);
         if (!uimouselast) {
-          if (curHidden && want_mouse_at_zero) SDL_WarpMouseGlobal(0, 0);
+          if (curHidden && ui_want_mouse_at_zero) SDL_WarpMouseGlobal(0, 0);
           ShowRealMouse();
         }
       }
