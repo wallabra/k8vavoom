@@ -899,6 +899,7 @@ MAPINFOCMD(specialaction_killmonsters) { info->Flags |= VLevelInfo::LIF_SpecialA
 MAPINFOCMD(intermission) { info->Flags &= ~VLevelInfo::LIF_NoIntermission; }
 MAPINFOCMD(nointermission) { info->Flags |= VLevelInfo::LIF_NoIntermission; }
 MAPINFOCMD(nosoundclipping) { /* ignored */ }
+MAPINFOCMD(noinventorybar) { /* ignored */ }
 MAPINFOCMD(allowmonstertelefrags) { info->Flags |= VLevelInfo::LIF_AllowMonsterTelefrags; }
 MAPINFOCMD(noallies) { info->Flags |= VLevelInfo::LIF_NoAllies; }
 MAPINFOCMD(fallingdamage) { info->Flags &= ~(VLevelInfo::LIF_OldFallingDamage|VLevelInfo::LIF_StrifeFallingDamage); info->Flags |= VLevelInfo::LIF_FallingDamage; }
