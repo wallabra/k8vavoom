@@ -845,11 +845,12 @@ private:
 public:
   struct LMapTraceInfo {
     enum { GridSize = 18 };
+    enum { MaxSurfPoints = GridSize*GridSize*4/*16*/ }; // *4 for extra filtering
     TVec smins, smaxs;
     TVec worldtotex[2];
     TVec textoworld[2];
     TVec texorg;
-    TVec surfpt[GridSize*GridSize*4]; // *4 for extra filtering
+    TVec surfpt[MaxSurfPoints];
     int numsurfpt;
     bool pointsCalced;
     bool light_hit;

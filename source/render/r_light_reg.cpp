@@ -44,6 +44,7 @@ vuint32 gf_dynlights_processed = 0;
 vuint32 gf_dynlights_traced = 0;
 int ldr_extrasamples_override = -1;
 
+enum { Filter4X = false };
 
 // ////////////////////////////////////////////////////////////////////////// //
 static VCvarI r_lmap_filtering("r_lmap_filtering", "3", "Static lightmap filtering (0: none; 1: simple; 2: simple++; 3: extra).", CVAR_Archive);
@@ -59,6 +60,9 @@ extern VCvarB dbg_adv_light_notrace_mark;
 
 // ////////////////////////////////////////////////////////////////////////// //
 enum { GridSize = VRenderLevelLightmap::LMapTraceInfo::GridSize };
+enum { MaxSurfPoints = VRenderLevelLightmap::LMapTraceInfo::MaxSurfPoints };
+
+static_assert((Filter4X ? (MaxSurfPoints >= GridSize*GridSize*16) : (MaxSurfPoints >= GridSize*GridSize*4)), "invalid grid size");
 
 vuint32 blocklightsr[GridSize*GridSize];
 vuint32 blocklightsg[GridSize*GridSize];
@@ -85,11 +89,11 @@ int light_mem = 0;
 
 // ////////////////////////////////////////////////////////////////////////// //
 // *4 for extra filtering
-static vuint8 lightmapHit[GridSize*GridSize*4];
-static float lightmap[GridSize*GridSize*4];
-static float lightmapr[GridSize*GridSize*4];
-static float lightmapg[GridSize*GridSize*4];
-static float lightmapb[GridSize*GridSize*4];
+static vuint8 lightmapHit[MaxSurfPoints];
+static float lightmap[MaxSurfPoints];
+static float lightmapr[MaxSurfPoints];
+static float lightmapg[MaxSurfPoints];
+static float lightmapb[MaxSurfPoints];
 // set in lightmap merge code
 static bool hasOverbright; // has overbright component?
 static bool isColored; // is lightmap colored?
@@ -293,11 +297,19 @@ void VRenderLevelLightmap::CalcPoints (LMapTraceInfo &lmi, const surface_t *surf
   if (ldr_extrasamples_override >= 0) doExtra = (ldr_extrasamples_override > 0);
   if (!lowres && doExtra) {
     // extra filtering
-    w = ((surf->extents[0]>>4)+1)*2;
-    h = ((surf->extents[1]>>4)+1)*2;
-    starts = surf->texturemins[0]-8;
-    startt = surf->texturemins[1]-8;
-    step = 8;
+    if (Filter4X) {
+      w = ((surf->extents[0]>>4)+1)*4;
+      h = ((surf->extents[1]>>4)+1)*4;
+      starts = surf->texturemins[0]-16;
+      startt = surf->texturemins[1]-16;
+      step = 4;
+    } else {
+      w = ((surf->extents[0]>>4)+1)*2;
+      h = ((surf->extents[1]>>4)+1)*2;
+      starts = surf->texturemins[0]-8;
+      startt = surf->texturemins[1]-8;
+      step = 8;
+    }
   } else {
     w = (surf->extents[0]>>4)+1;
     h = (surf->extents[1]>>4)+1;
@@ -317,16 +329,16 @@ void VRenderLevelLightmap::CalcPoints (LMapTraceInfo &lmi, const surface_t *surf
   lmi.numsurfpt = w*h;
   bool doPointCheck = false;
   // *4 for extra filtering
-  if (lmi.numsurfpt > LMapTraceInfo::GridSize*LMapTraceInfo::GridSize*4) {
+  if (lmi.numsurfpt > MaxSurfPoints) {
     GCon->Logf(NAME_Warning, "too many points in lightmap tracer");
-    lmi.numsurfpt = LMapTraceInfo::GridSize*LMapTraceInfo::GridSize*4;
+    lmi.numsurfpt = MaxSurfPoints;
     doPointCheck = true;
   }
 
   TVec *spt = lmi.surfpt;
   for (int t = 0; t < h; ++t) {
     for (int s = 0; s < w; ++s, ++spt) {
-      if (doPointCheck && (int)(ptrdiff_t)(spt-lmi.surfpt) >= LMapTraceInfo::GridSize*LMapTraceInfo::GridSize*4) return;
+      if (doPointCheck && (int)(ptrdiff_t)(spt-lmi.surfpt) >= MaxSurfPoints) return;
       float us = starts+s*step;
       float ut = startt+t*step;
 
@@ -612,6 +624,26 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
 }
 
 
+// ////////////////////////////////////////////////////////////////////////// //
+#define FILTER_LMAP_EXTRA(lmv_)  do { \
+  if (Filter4X) { \
+    total = 0; \
+    for (int dy = 0; dy < 4; ++dy) { \
+      for (int dx = 0; dx < 4; ++dx) { \
+        total += lmv_[(t*4+dy)*w*4+s*4+dx]; \
+      } \
+    } \
+    total *= 1.0f/16.0f; \
+  } else { \
+    total = lmv_[t*w*4+s*2]+ \
+            lmv_[t*2*w*2+s*2+1]+ \
+            lmv_[(t*2+1)*w*2+s*2]+ \
+            lmv_[(t*2+1)*w*2+s*2+1]; \
+    total *= 0.25f; \
+  } \
+} while (0)
+
+
 //==========================================================================
 //
 //  VRenderLevelLightmap::LightFace
@@ -670,7 +702,7 @@ void VRenderLevelLightmap::LightFace (surface_t *surf, subsector_t *leaf) {
     }
 
     if (!lmi.didExtra) {
-      if (w*h <= GridSize*GridSize*4) {
+      if (w*h <= MaxSurfPoints) {
         FilterLightmap(lightmapr, w, h);
         FilterLightmap(lightmapg, w, h);
         FilterLightmap(lightmapb, w, h);
@@ -680,20 +712,16 @@ void VRenderLevelLightmap::LightFace (surface_t *surf, subsector_t *leaf) {
     }
 
     //HACK!
-    if (w*h > GridSize*GridSize*4) lmi.didExtra = false;
+    if (w*h > MaxSurfPoints) lmi.didExtra = false;
 
     int i = 0;
     for (int t = 0; t < h; ++t) {
       for (int s = 0; s < w; ++s, ++i) {
-        if (i > GridSize*GridSize*4) i = GridSize*GridSize*4-1;
+        if (i > MaxSurfPoints) i = MaxSurfPoints-1;
         float total;
         if (lmi.didExtra) {
           // filtered sample
-          total = lightmapr[t*w*4+s*2]+
-                  lightmapr[t*2*w*2+s*2+1]+
-                  lightmapr[(t*2+1)*w*2+s*2]+
-                  lightmapr[(t*2+1)*w*2+s*2+1];
-          total *= 0.25f;
+          FILTER_LMAP_EXTRA(lightmapr);
         } else {
           total = lightmapr[i];
         }
@@ -701,11 +729,7 @@ void VRenderLevelLightmap::LightFace (surface_t *surf, subsector_t *leaf) {
 
         if (lmi.didExtra) {
           // filtered sample
-          total = lightmapg[t*w*4+s*2]+
-                  lightmapg[t*2*w*2+s*2+1]+
-                  lightmapg[(t*2+1)*w*2+s*2]+
-                  lightmapg[(t*2+1)*w*2+s*2+1];
-          total *= 0.25f;
+          FILTER_LMAP_EXTRA(lightmapg);
         } else {
           total = lightmapg[i];
         }
@@ -713,11 +737,7 @@ void VRenderLevelLightmap::LightFace (surface_t *surf, subsector_t *leaf) {
 
         if (lmi.didExtra) {
           // filtered sample
-          total = lightmapb[t*w*4+s*2]+
-                  lightmapb[t*2*w*2+s*2+1]+
-                  lightmapb[(t*2+1)*w*2+s*2]+
-                  lightmapb[(t*2+1)*w*2+s*2+1];
-          total *= 0.25f;
+          FILTER_LMAP_EXTRA(lightmapb);
         } else {
           total = lightmapb[i];
         }
@@ -745,7 +765,7 @@ void VRenderLevelLightmap::LightFace (surface_t *surf, subsector_t *leaf) {
     }
 
     if (!lmi.didExtra) {
-      if (w*h <= GridSize*GridSize*4) {
+      if (w*h <= MaxSurfPoints) {
         FilterLightmap(lightmap, w, h);
       } else {
         GCon->Logf(NAME_Warning, "skipped filter for lightmap of size %dx%d", w, h);
@@ -753,20 +773,16 @@ void VRenderLevelLightmap::LightFace (surface_t *surf, subsector_t *leaf) {
     }
 
     //HACK!
-    if (w*h > GridSize*GridSize*4) lmi.didExtra = false;
+    if (w*h > MaxSurfPoints) lmi.didExtra = false;
 
     int i = 0;
     for (int t = 0; t < h; ++t) {
       for (int s = 0; s < w; ++s, ++i) {
-        if (i > GridSize*GridSize*4) i = GridSize*GridSize*4-1;
+        if (i > MaxSurfPoints) i = MaxSurfPoints-1;
         float total;
         if (lmi.didExtra) {
           // filtered sample
-          total = lightmap[t*w*4+s*2]+
-                  lightmap[t*2*w*2+s*2+1]+
-                  lightmap[(t*2+1)*w*2+s*2]+
-                  lightmap[(t*2+1)*w*2+s*2+1];
-          total *= 0.25f;
+          FILTER_LMAP_EXTRA(lightmap);
         } else {
           total = lightmap[i];
         }
@@ -825,8 +841,8 @@ void VRenderLevelLightmap::AddDynamicLights (surface_t *surf) {
 
   int smax = (surf->extents[0]>>4)+1;
   int tmax = (surf->extents[1]>>4)+1;
-  if (smax > LMapTraceInfo::GridSize) smax = LMapTraceInfo::GridSize;
-  if (tmax > LMapTraceInfo::GridSize) tmax = LMapTraceInfo::GridSize;
+  if (smax > GridSize) smax = GridSize;
+  if (tmax > GridSize) tmax = GridSize;
 
   const texinfo_t *tex = surf->texinfo;
 
@@ -1162,8 +1178,8 @@ void VRenderLevelLightmap::BuildLightMap (surface_t *surf) {
   int tmax = (surf->extents[1]>>4)+1;
   vassert(smax > 0);
   vassert(tmax > 0);
-  if (smax > LMapTraceInfo::GridSize) smax = LMapTraceInfo::GridSize;
-  if (tmax > LMapTraceInfo::GridSize) tmax = LMapTraceInfo::GridSize;
+  if (smax > GridSize) smax = GridSize;
+  if (tmax > GridSize) tmax = GridSize;
   int size = smax*tmax;
   const vuint8 *lightmap = surf->lightmap;
   const rgb_t *lightmap_rgb = surf->lightmap_rgb;
@@ -1400,8 +1416,8 @@ bool VRenderLevelLightmap::BuildSurfaceLightmap (surface_t *surface) {
   int tmax = (surface->extents[1]>>4)+1;
   vassert(smax > 0);
   vassert(tmax > 0);
-  if (smax > LMapTraceInfo::GridSize) smax = LMapTraceInfo::GridSize;
-  if (tmax > LMapTraceInfo::GridSize) tmax = LMapTraceInfo::GridSize;
+  if (smax > GridSize) smax = GridSize;
+  if (tmax > GridSize) tmax = GridSize;
 
   // allocate memory if needed
   // if a texture just animated, don't reallocate it
