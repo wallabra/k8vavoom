@@ -1535,6 +1535,8 @@ void VEntity::SlideMove (float StepVelScale, bool noPickups) {
 
   float XMove = Velocity.x*StepVelScale;
   float YMove = Velocity.y*StepVelScale;
+  if (XMove == 0.0f && YMove == 0.0f) return; // just in case
+
   do {
     if (++hitcount == 3) {
       // don't loop forever
