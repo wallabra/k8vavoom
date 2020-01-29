@@ -42,7 +42,7 @@
 
 // ////////////////////////////////////////////////////////////////////////// //
 static int constexpr cestlen (const char *s) { return (s && *s ? 1+cestlen(s+1) : 0); }
-static constexpr const char *LMAP_CACHE_DATA_SIGNATURE = "VAVOOM CACHED LMAP VERSION 000.\n";
+static constexpr const char *LMAP_CACHE_DATA_SIGNATURE = "VAVOOM CACHED LMAP VERSION 001.\n";
 enum { CDSLEN = cestlen(LMAP_CACHE_DATA_SIGNATURE) };
 
 
