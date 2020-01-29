@@ -423,8 +423,12 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
 
   float xmove = Velocity.x*DeltaTime;
   float ymove = Velocity.y*DeltaTime;
+  bool forceSlide = false;
+  bool absoluteSlide = true;
 
   if (ScrollX || ScrollY) {
+    forceSlide = true;
+    //if (bIsPlayer) printdebug("%C: 00: scroll=%s : %s ; vel=%s", self, ScrollX, ScrollY, Velocity);
     // scroll is already deltatime-corrected
     /*
     print("%C: scroll=(%s,%s); cst=%s; newscroll=(%s,%s); deltav=(%s,%s); v=%s; ss=%s", self, ScrollX, ScrollY, CARRYSTOPSPEED*DeltaTime,
@@ -437,6 +441,7 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
     // friction. If the speed is too low, then its movement will get
     // cancelled, and it won't accumulate to the desired speed.
     if (!GetCvarB('sv_transporters_absolute')) {
+      absoluteSlide = false;
       float CarryStopSpeed = CARRYSTOPSPEED*DeltaTime;
       if (fabs(ScrollX) > CarryStopSpeed) {
         ScrollX *= CARRYFACTOR*DeltaTime;
@@ -449,6 +454,7 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
       //print("   nv=%s", Velocity);
     }
 
+    //if (bIsPlayer) printdebug("%C: 01: scroll=%s : %s ; vel=%s", self, ScrollX, ScrollY, Velocity);
     xmove += ScrollX;
     ymove += ScrollY;
   }
@@ -530,7 +536,32 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
           }
         }
         */
-        HitLine(&tmtrace, DeltaTime/float(Steps), (ScrollX || ScrollY ? true : false));
+        if (forceSlide) {
+          if (absoluteSlide) {
+            //k8: this is absolutely wrong! but without this, idiotic Boom transporters won't make objects slide
+            /*
+            TVec oldvel = Velocity;
+            TVec scvel = vector(ScrollX/DeltaTime, ScrollY/DeltaTime);
+            Velocity += scvel;
+            //if (bIsPlayer) printdebug("%C: 00: scvel=%s; oldvel=%s; newVelocity=%s", self, scvel, oldvel, Velocity);
+            HitLine(&tmtrace, DeltaTime/float(Steps), true);
+            //if (bIsPlayer) printdebug("%C: 01: scvel=%s; oldvel=%s; newVelocity=%s", self, scvel, oldvel, Velocity);
+            Velocity -= scvel;
+            //if (bIsPlayer) printdebug("%C: 02: scvel=%s; oldvel=%s; newVelocity=%s", self, scvel, oldvel, Velocity);
+            // don't thrust back
+            if (fsign(Velocity.x) != fsign(oldvel.x)) Velocity.x = 0;
+            if (fsign(Velocity.y) != fsign(oldvel.y)) Velocity.y = 0;
+            //if (bIsPlayer) printdebug("%C: 03: scvel=%s; oldvel=%s; newVelocity=%s", self, scvel, oldvel, Velocity);
+            */
+            tmp_transporter_velocity = vector(ScrollX/DeltaTime, ScrollY/DeltaTime);
+            HitLine(&tmtrace, DeltaTime/float(Steps), true);
+          } else {
+            tmp_transporter_velocity = vector(0, 0, 0);
+            HitLine(&tmtrace, DeltaTime/float(Steps), true);
+          }
+        } else {
+          HitLine(&tmtrace, DeltaTime/float(Steps), false);
+        }
       }
       return oldfloorz;
     }
@@ -775,7 +806,16 @@ final void HitLine (tmtrace_t *tmtrace, float StepVelScale, bool forceSlide) {
 
     ExplodeMissile(none, hitline);
   } else if (bSlide || forceSlide) {
-    // try to slide along it
+    // try to slide for transporter
+    if (forceSlide) {
+      if (tmp_transporter_velocity) {
+        TVec oldvel = Velocity;
+        Velocity = tmp_transporter_velocity;
+        SlideMove(StepVelScale);
+        Velocity = oldvel;
+      }
+    }
+    // try to slide with the original velocity
     SlideMove(StepVelScale);
   } else {
     Velocity.x = 0.0;

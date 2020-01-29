@@ -527,6 +527,8 @@ transient int tmp_phys_last_floor_pic; // used to avoid excessive splashes
 transient float tmp_phys_last_splash_time; // `XLevel.Time`
 // this is used to skip checking for scrollers for non-moving objects
 transient TVec lastScrollCheckOrigin = vector(-90000, -90000, -90000);
+// for transporter slides
+transient TVec tmp_transporter_velocity;
 
 // ripper projectiles can spawn enormous blood entities, so block it for some time
 // don't save this field, it doesn't matter
