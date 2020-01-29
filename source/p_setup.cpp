@@ -151,7 +151,7 @@ enum {
 static int constexpr cestlen (const char *s) { return (s && *s ? 1+cestlen(s+1) : 0); }
 static constexpr const char *CACHE_DATA_SIGNATURE = "VAVOOM CACHED DATA VERSION 008.\n";
 enum { CDSLEN = cestlen(CACHE_DATA_SIGNATURE) };
-static bool cacheCleanupComplete = false;
+static bool cacheCleanupComplete = false; // do it only once, not on each map loading
 static TMap<VStr, bool> mapTextureWarns;
 
 
@@ -309,16 +309,17 @@ static void doCacheCleanup () {
   for (;;) {
     VStr fname = Sys_ReadDir(dh);
     if (fname.length() == 0) break;
-    VStr ext = fname.extractFileExtension().toLowerCase();
-    if (ext != ".cache" && ext != ".cache.lmap") continue;
+    if (!fname.endsWithCI(".cache") && !fname.endsWithCI(".cache.lmap")) continue;
+    //GCon->Logf(NAME_Debug, "*** FILE: '%s' (%s)", *fname, *cpath);
     VStr shortname = fname;
     fname = cpath+"/"+fname;
     int ftime = Sys_FileTime(fname);
+    //GCon->Logf(NAME_Debug, "cache: age=%d for '%s' (%s); days=%d; tm=%d; cmp=%d; age=%d", currtime-ftime, *shortname, *fname, loader_cache_max_age_days.asInt(), 60*60*24*loader_cache_max_age_days, (int)(currtime-ftime > 60*60*24*loader_cache_max_age_days), (currtime-ftime)/(60*60*24));
     if (ftime <= 0) {
-      GCon->Logf("cache: deleting invalid file '%s'", *shortname);
+      GCon->Logf(NAME_Debug, "cache: deleting invalid file '%s'", *shortname);
       dellist.append(fname);
     } else if (ftime < currtime && currtime-ftime > 60*60*24*loader_cache_max_age_days) {
-      GCon->Logf("cache: deleting old cache file '%s'", *shortname);
+      GCon->Logf(NAME_Debug, "cache: deleting old cache file '%s'", *shortname);
       dellist.append(fname);
     } else {
       //GCon->Logf("cache: age=%d for '%s'", currtime-ftime, *shortname);
