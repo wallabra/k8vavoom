@@ -580,6 +580,10 @@ private:
   void ParseTextureTextLump (int Lump, bool asHiRes);
 
   void AddTextureTextLumps ();
+
+  // this can also append a new texture if `OldIndex` is < 0
+  // it can do `delete NewTex` too
+  void ReplaceTextureWithHiRes (int OldIndex, VTexture *NewTex, int oldWidth=-1, int oldHeight=-1);
   void AddHiResTextureTextLumps ();
   void AddHiResTextures (); // hires namespace
 

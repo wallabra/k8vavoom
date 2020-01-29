@@ -1583,6 +1583,62 @@ void VTextureManager::AddGroup (int Type, EWadNamespace Namespace) {
 
 //==========================================================================
 //
+//  VTextureManager::ReplaceTextureWithHiRes
+//
+//  this can also append a new texture if `OldIndex` is < 0
+//  it can do `delete NewTex` too
+//
+//==========================================================================
+void VTextureManager::ReplaceTextureWithHiRes (int OldIndex, VTexture *NewTex, int oldWidth, int oldHeight) {
+  vassert(inMapTextures == 0);
+  if (!NewTex) return; // just in case
+  if (NewTex->GetWidth() < 1 || NewTex->GetHeight() < 1 || NewTex->GetWidth() > 8192 || NewTex->GetHeight() > 8192) {
+    // oops
+    GCon->Logf(NAME_Error, "hires texture '%s' has invalid dimensions (%dx%d)", *NewTex->Name, NewTex->GetWidth(), NewTex->GetHeight());
+    delete NewTex;
+    return;
+  }
+  if (OldIndex < 0) {
+    // add it as a new texture
+    //NewTex->Type = TEXTYPE_Overload; //k8: nope, it is new
+    AddTexture(NewTex);
+    ++hitexNewCount;
+    //GCon->Logf(NAME_Debug, "*** new hires texture '%s' (%s)", *Name, *W_FullLumpName(Lump));
+  } else {
+    // replace existing texture by adjusting scale and offsets
+    VTexture *OldTex = Textures[OldIndex];
+    bool doSOffset = false, doTOffset = false;
+    if (oldWidth < 0) { oldWidth = OldTex->GetWidth(); doSOffset = true; }
+    if (oldHeight < 0) { oldHeight = OldTex->GetHeight(); doTOffset = true; }
+    //NewTex->Type = OldTex->Type;
+    //k8: it is overriden by the original texture type
+    //    i don't even know what `overload` meant to do, and it seems to work this way
+    //    FIXME: investigate this later
+    NewTex->Type = TEXTYPE_Overload;
+    //GCon->Logf("REPLACE0 <%s> (%d)", *OldTex->Name, OldIndex);
+    NewTex->Name = OldTex->Name;
+    NewTex->TextureTranslation = OldTex->TextureTranslation; //k8: do we need this at all?
+    NewTex->bWorldPanning = true;
+    NewTex->SScale = NewTex->GetWidth()/max2(1, oldWidth);
+    NewTex->TScale = NewTex->GetHeight()/max2(1, oldHeight);
+    if (doSOffset) NewTex->SOffset = (int)floorf(OldTex->SOffset*NewTex->SScale);
+    if (doTOffset) NewTex->TOffset = (int)floorf(OldTex->TOffset*NewTex->TScale);
+    NewTex->Type = OldTex->Type; // oops, type is forced here
+    NewTex->TextureTranslation = OldTex->TextureTranslation;
+    NewTex->HashNext = OldTex->HashNext;
+    Textures[OldIndex] = NewTex;
+    // force non-translucency for lightmapping
+    if (NewTex->isTranslucent() && !OldTex->isTranslucent()) NewTex->translucent = false;
+    // k8: don't delete old texture, it can be referenced out there
+    //delete OldTex;
+    //OldTex = nullptr;
+    ++hitexReplaceCount;
+  }
+}
+
+
+//==========================================================================
+//
 //  VTextureManager::AddHiResTextures
 //
 //==========================================================================
@@ -1606,35 +1662,7 @@ void VTextureManager::AddHiResTextures () {
     if (!NewTex) continue;
     if (NewTex->Type == TEXTYPE_Any) NewTex->Type = TEXTYPE_Wall;
 
-    if (OldIdx < 0) {
-      // add it as a new texture
-      //NewTex->Type = TEXTYPE_Overload;
-      AddTexture(NewTex);
-      ++hitexNewCount;
-      //GCon->Logf(NAME_Debug, "*** new hires texture '%s' (%s)", *Name, *W_FullLumpName(Lump));
-    } else {
-      // repalce existing texture by adjusting scale and offsets
-      VTexture *OldTex = Textures[OldIdx];
-      //NewTex->Type = OldTex->Type;
-      NewTex->Type = TEXTYPE_Overload;
-      //GCon->Logf("REPLACE0 <%s> (%d)", *OldTex->Name, OldIdx);
-      NewTex->Name = OldTex->Name;
-      NewTex->bWorldPanning = true;
-      NewTex->SScale = NewTex->GetWidth()/OldTex->GetWidth();
-      NewTex->TScale = NewTex->GetHeight()/OldTex->GetHeight();
-      NewTex->SOffset = (int)floor(OldTex->SOffset*NewTex->SScale);
-      NewTex->TOffset = (int)floor(OldTex->TOffset*NewTex->TScale);
-      NewTex->Type = OldTex->Type;
-      NewTex->TextureTranslation = OldTex->TextureTranslation;
-      NewTex->HashNext = OldTex->HashNext;
-      Textures[OldIdx] = NewTex;
-      // force non-translucency for lightmapping
-      if (NewTex->isTranslucent() && !OldTex->isTranslucent()) NewTex->translucent = false;
-      // k8: don't delete old texture, it can be referenced out there
-      //delete OldTex;
-      //OldTex = nullptr;
-      ++hitexReplaceCount;
-    }
+    ReplaceTextureWithHiRes(OldIdx, NewTex);
   }
 }
 
@@ -1689,27 +1717,8 @@ void VTextureManager::ParseTextureTextLump (int Lump, bool asHiRes) {
       // create new texture
       VTexture *NewTex = VTexture::CreateTexture(TEXTYPE_Any, LumpIdx);
       if (!NewTex) continue;
-      //if (NewTex->Type == TEXTYPE_Any) NewTex->Type = (Type == TEXTYPE_Any ? TEXTYPE_Wall : Type);
-      // repalce existing texture by adjusting scale and offsets
-      VTexture *OldTex = Textures[OldIdx];
-      NewTex->Type = OldTex->Type;
-      //fprintf(stderr, "REPLACE1 <%s> (%d)\n", *OldTex->Name, OldIdx);
-      NewTex->bWorldPanning = true;
-      NewTex->SScale = NewTex->GetWidth()/OldTex->GetWidth();
-      NewTex->TScale = NewTex->GetHeight()/OldTex->GetHeight();
-      NewTex->SOffset = (int)floor(OldTex->SOffset*NewTex->SScale);
-      NewTex->TOffset = (int)floor(OldTex->TOffset*NewTex->TScale);
-      NewTex->Name = OldTex->Name;
-      NewTex->Type = OldTex->Type;
-      NewTex->TextureTranslation = OldTex->TextureTranslation;
-      NewTex->HashNext = OldTex->HashNext;
-      Textures[OldIdx] = NewTex;
-      // force non-translucency for lightmapping
-      if (NewTex->isTranslucent() && !OldTex->isTranslucent()) NewTex->translucent = false;
-      // k8: don't delete old texture, it can be referenced out there
-      //delete OldTex;
-      //OldTex = nullptr;
-      ++hitexReplaceCount;
+
+      ReplaceTextureWithHiRes(OldIdx, NewTex);
       continue;
     }
 
@@ -1743,6 +1752,7 @@ void VTextureManager::ParseTextureTextLump (int Lump, bool asHiRes) {
       int OldIdx = CheckNumForName(Name, TEXTYPE_Overload, false);
       if (OldIdx >= 0) {
         // replacing old texture (this is wrong, but...)
+        if (OldIdx == 0) continue; // there is no reason to replace "AASHITTY" and such
         // don't do it if hires textures are disabled, or we're loading normal textures
         if (!asHiRes) continue; // loading normal textures
         if (!r_hirestex) continue; // hires texture replacements are disabled
@@ -1752,29 +1762,9 @@ void VTextureManager::ParseTextureTextLump (int Lump, bool asHiRes) {
       // create new texture
       VTexture *NewTex = VTexture::CreateTexture(TEXTYPE_Overload, LumpIdx);
       if (!NewTex) continue;
-
-      // repalce existing texture by adjusting scale and offsets
-      NewTex->bWorldPanning = true;
-      NewTex->SScale = NewTex->GetWidth()/Width;
-      NewTex->TScale = NewTex->GetHeight()/Height;
       NewTex->Name = Name.GetLower();
 
-      if (OldIdx <= 0) {
-        AddTexture(NewTex);
-        ++hitexNewCount;
-      } else {
-        VTexture *OldTex = Textures[OldIdx];
-        //fprintf(stderr, "REPLACE2 <%s> (%d)\n", *OldTex->Name, OldIdx);
-        NewTex->TextureTranslation = OldTex->TextureTranslation;
-        NewTex->HashNext = OldTex->HashNext;
-        Textures[OldIdx] = NewTex;
-        // force non-translucency for lightmapping
-        if (NewTex->isTranslucent() && !OldTex->isTranslucent()) NewTex->translucent = false;
-        // k8: don't delete old texture, it can be referenced out there
-        //delete OldTex;
-        //OldTex = nullptr;
-        ++hitexReplaceCount;
-      }
+      ReplaceTextureWithHiRes(OldIdx, NewTex, Width, Height);
       continue;
     }
 
