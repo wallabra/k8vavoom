@@ -72,8 +72,8 @@ VFlatTexture::VFlatTexture (int InLumpNum)
   }
   // scale large flats to 64x64
   if (Width > 64) {
-    SScale = Width/64;
-    TScale = Width/64;
+    SScale = Width/64.0f;
+    TScale = Width/64.0f;
   }
 }
 

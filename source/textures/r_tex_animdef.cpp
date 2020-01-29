@@ -1048,25 +1048,6 @@ static void ParseCameraTexture (VScriptParser *sc) {
   int FitWidth = Width;
   int FitHeight = Height;
 
-  VCameraTexture *Tex = nullptr;
-  if (Name != NAME_None) {
-    // check for replacing an existing texture
-    Tex = new VCameraTexture(Name, Width, Height);
-    //int TexNum = GTextureManager.CheckNumForNameAndForce(Name, TEXTYPE_Flat, true, false);
-    int TexNum = GTextureManager.CheckNumForNameAndForce(Name, TEXTYPE_Wall, true, false);
-    if (TexNum != -1) {
-      // by default camera texture will fit in old texture
-      VTexture *OldTex = GTextureManager[TexNum];
-      FitWidth = OldTex->GetScaledWidth();
-      FitHeight = OldTex->GetScaledHeight();
-      GTextureManager.ReplaceTexture(TexNum, Tex);
-      delete OldTex;
-      OldTex = nullptr;
-    } else {
-      GTextureManager.AddTexture(Tex);
-    }
-  }
-
   // optionally specify desired scaled size
   if (sc->Check("fit")) {
     sc->ExpectNumber();
@@ -1075,16 +1056,41 @@ static void ParseCameraTexture (VScriptParser *sc) {
     FitHeight = sc->Number;
   }
 
-  if (sc->Check("worldpanning")) {
-    if (Tex) Tex->bWorldPanning = true;
-  } else {
-    if (Tex) Tex->bWorldPanning = false;
+  bool worldPan = false;
+  if (sc->Check("worldpanning")) worldPan = true;
+
+  if (Width < 1 || FitWidth < 1 || Height < 1 || FitHeight < 1 ||
+      Width > 512 || FitWidth > 512 || Height > 512 || FitHeight > 512)
+  {
+    GCon->Logf(NAME_Error, "invalid camera texture '%s' dimensions: (%dx%d); fit is (%dx%d)", *Name, Width, Height, FitWidth, FitHeight);
+    Width = clampval(Width, 1, 512);
+    Height = clampval(Height, 1, 512);
+    FitWidth = clampval(FitWidth, 1, 512);
+    FitHeight = clampval(FitHeight, 1, 512);
   }
 
-  if (Tex) {
-    Tex->SScale = (float)Width/(float)FitWidth;
-    Tex->TScale = (float)Height/(float)FitHeight;
+  if (Name == NAME_None) return;
+  // check for replacing an existing texture
+  VCameraTexture *Tex = new VCameraTexture(Name, Width, Height);
+  if (!Tex) return;
+  //int TexNum = GTextureManager.CheckNumForNameAndForce(Name, TEXTYPE_Flat, true, false);
+  int TexNum = GTextureManager.CheckNumForNameAndForce(Name, TEXTYPE_Wall, true, false);
+  if (TexNum != -1) {
+    // by default camera texture will fit in old texture
+    VTexture *OldTex = GTextureManager[TexNum];
+    FitWidth = clampval(OldTex->GetScaledWidth(), 1, 512);
+    FitHeight = clampval(OldTex->GetScaledHeight(), 1, 512);
+    GTextureManager.ReplaceTexture(TexNum, Tex);
+    //k8: just in case
+    //delete OldTex;
+    //OldTex = nullptr;
+  } else {
+    GTextureManager.AddTexture(Tex);
   }
+
+  Tex->bWorldPanning = worldPan;
+  Tex->SScale = (float)Width/(float)FitWidth;
+  Tex->TScale = (float)Height/(float)FitHeight;
 }
 
 

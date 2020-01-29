@@ -297,8 +297,8 @@ public:
   int GetWidth () const noexcept { return Width; }
   int GetHeight () const noexcept { return Height; }
 
-  int GetScaledWidth () const noexcept { return (int)(Width/SScale); }
-  int GetScaledHeight () const noexcept { return (int)(Height/TScale); }
+  int GetScaledWidth () const noexcept { return max2(1, (int)(Width/SScale)); }
+  int GetScaledHeight () const noexcept { return max2(1, (int)(Height/TScale)); }
 
   int GetScaledSOffset () const noexcept { return (int)(SOffset/SScale); }
   int GetScaledTOffset () const noexcept { return (int)(TOffset/TScale); }
