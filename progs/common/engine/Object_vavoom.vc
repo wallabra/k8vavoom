@@ -209,6 +209,10 @@ struct picinfo_t {
   int height;
   int xoffset;
   int yoffset;
+  float xscale;
+  float yscale;
+  int widthScaled;
+  int heightScaled;
 };
 
 struct EpisodeDef {
