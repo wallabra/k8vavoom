@@ -330,7 +330,7 @@ void VFont::ParseFontDefs () {
     while (!sc.AtEnd()) {
       // name of the font
       sc.ExpectString();
-      VName FontName = *sc.String.ToLower();
+      VName FontName(*sc.String, VName::AddLower);
       sc.Expect("{");
 
       int FontType = 0;
@@ -380,18 +380,23 @@ void VFont::ParseFontDefs () {
           if (W_CheckNumForName(LumpName, WADNS_Graphics) >= 0) {
             CharIndexes.Append(CharIdx);
             CharLumps.Append(LumpName);
+          } else {
+            GCon->Logf(NAME_Error, "font '%s': char #%d not found (%s)", *FontName, CharIdx, *LumpName);
           }
           FontType = 2;
         }
       }
-      if (FontType == 1) {
-        new VFont(FontName, Template, First, Count, Start);
-      } else if (FontType == 2) {
-        if (CharIndexes.Num()) {
-          new VSpecialFont(FontName, CharIndexes, CharLumps, NoTranslate);
+
+      if (FontName != NAME_None) {
+        if (FontType == 1) {
+          new VFont(FontName, Template, First, Count, Start);
+        } else if (FontType == 2) {
+          if (CharIndexes.Num()) {
+            new VSpecialFont(FontName, CharIndexes, CharLumps, NoTranslate);
+          }
+        } else {
+          sc.Error("Font has no attributes");
         }
-      } else {
-        sc.Error("Font has no attributes");
       }
     }
   }
@@ -505,8 +510,8 @@ VFont::VFont (VName AName, VStr FormatStr, int First, int Count, int StartIndex)
         if (FontHeight < Height) FontHeight = Height;
 
         // update first and last characters
-        if (FirstChar == -1) FirstChar = Char;
-        LastChar = Char;
+        if (FirstChar == -1 || FirstChar > Char) FirstChar = Char;
+        if (LastChar == -1 || LastChar < Char) LastChar = Char;
 
         // mark colors that are used by this texture
         MarkUsedColors(Tex, ColorsUsed);
@@ -592,6 +597,7 @@ void VFont::BuildTranslations (const bool *ColorsUsed, rgba_t *Pal, bool Console
       if (MaxLum < Luminosity[i]) MaxLum = Luminosity[i];
     }
   }
+
   // create gradual luminosity values
   float Scale = 1.0f/(Rescale ? MaxLum-MinLum : 255.0f);
   for (int i = 1; i < 256; ++i) {
@@ -602,10 +608,8 @@ void VFont::BuildTranslations (const bool *ColorsUsed, rgba_t *Pal, bool Console
   Translation = new rgba_t[256*TextColors.Num()];
   for (int ColIdx = 0; ColIdx < TextColors.Num(); ++ColIdx) {
     rgba_t *pOut = Translation+ColIdx*256;
-    const TArray<VColTranslationDef>& TList = ConsoleTrans ?
-      TextColors[ColIdx].ConsoleTranslations :
-      TextColors[ColIdx].Translations;
-    if (ColIdx == CR_UNTRANSLATED || !TList.Num()) {
+    const TArray<VColTranslationDef> &TList = (ConsoleTrans ? TextColors[ColIdx].ConsoleTranslations : TextColors[ColIdx].Translations);
+    if (ColIdx == CR_UNTRANSLATED || !TList.length()) {
       memcpy(pOut, Pal, 4*256);
       continue;
     }
@@ -927,7 +931,7 @@ VStr VFont::SplitTextWithNewlines (VStr Text, int MaxWidth, bool trimRight) cons
 //  VSpecialFont::VSpecialFont
 //
 //==========================================================================
-VSpecialFont::VSpecialFont (VName AName, const TArray<int>& CharIndexes, const TArray<VName>& CharLumps, const bool *NoTranslate) {
+VSpecialFont::VSpecialFont (VName AName, const TArray<int> &CharIndexes, const TArray<VName> &CharLumps, const bool *NoTranslate) {
   Name = AName;
   Next = Fonts;
   Fonts = this;
@@ -944,15 +948,23 @@ VSpecialFont::VSpecialFont (VName AName, const TArray<int>& CharIndexes, const T
   vassert(CharIndexes.Num() == CharLumps.Num());
   for (int i = 0; i < CharIndexes.Num(); ++i) {
     int Char = CharIndexes[i];
+    if (Char < 0) Char = (vuint8)(Char&0xff); // just in case
     VName LumpName = CharLumps[i];
 
-    VTexture *Tex = GTextureManager[GTextureManager.AddPatch(LumpName, TEXTYPE_Pic)];
+    int texid = GTextureManager.AddPatch(LumpName, TEXTYPE_Pic);
+    if (texid <= 0) {
+      GCon->Logf(NAME_Error, "font '%s': missing patch '%s' for char #%d", *AName, *LumpName, Char);
+      texid = -1;
+    }
+    VTexture *Tex = GTextureManager[texid];
     if (Tex) {
       FFontChar &FChar = Chars.Alloc();
       FChar.Char = Char;
       FChar.TexNum = -1;
       FChar.BaseTex = Tex;
       if (Char < 128) AsciiChars[Char] = Chars.Num()-1;
+
+      //GCon->Logf(NAME_Debug, "font '%s': char #%d (%c): patch '%s', texture size:%dx%d; ofs:%d,%d; scale:%g,%g", *AName, Char, (Char > 32 && Char < 127 ? (char)Char : '?'), *LumpName, Tex->GetWidth(), Tex->GetHeight(), Tex->SOffset, Tex->TOffset, Tex->SScale, Tex->TScale);
 
       // calculate height of font character and adjust font height as needed
       int Height = Tex->GetScaledHeight();
@@ -961,8 +973,8 @@ VSpecialFont::VSpecialFont (VName AName, const TArray<int>& CharIndexes, const T
       if (FontHeight < Height) FontHeight = Height;
 
       // update first and last characters
-      if (FirstChar == -1) FirstChar = Char;
-      LastChar = Char;
+      if (FirstChar == -1 || FirstChar > Char) FirstChar = Char;
+      if (LastChar == -1 || LastChar < Char) LastChar = Char;
 
       // mark colors that are used by this texture
       MarkUsedColors(Tex, ColorsUsed);
@@ -976,7 +988,7 @@ VSpecialFont::VSpecialFont (VName AName, const TArray<int>& CharIndexes, const T
   // or 4 if character N has no graphic for it
   int NIdx = FindChar('N');
   if (NIdx >= 0) {
-    SpaceWidth = (Chars[NIdx].BaseTex->GetScaledWidth() + 1) / 2;
+    SpaceWidth = (Chars[NIdx].BaseTex->GetScaledWidth()+1)/2;
     if (SpaceWidth < 1) SpaceWidth = 1; //k8: just in case
   } else {
     SpaceWidth = 4;

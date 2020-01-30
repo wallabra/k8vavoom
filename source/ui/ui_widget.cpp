@@ -973,7 +973,6 @@ void VWidget::DrawString (int x, int y, VStr String, int NormalColor, int BoldCo
     int w;
     VTexture *Tex = Font->GetChar(c, &w, Color);
     if (Tex) {
-      //fprintf(stderr, "*CHAR: %c\n", (c >= 32 && c < 127 ? (char)c : '?'));
       if (WidgetFlags&WF_TextShadowed) DrawShadowedPic(cx, cy, Tex); else DrawPic(cx, cy, Tex, Alpha);
     }
     cx += w+Kerning;

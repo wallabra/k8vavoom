@@ -74,6 +74,8 @@ public:
   VFont (VName, VStr, int, int, int);
   ~VFont ();
 
+  inline VName GetFontName () const noexcept { return Name; }
+
   VTexture *GetChar (int, int*, int) const;
   int GetCharWidth (int) const;
   int StringWidth (VStr) const;
