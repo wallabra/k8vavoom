@@ -93,7 +93,7 @@ static int hitexReplaceCount = 0;
 int skyflatnum; // sky mapping
 int screenBackTexNum; // background filler for unused screen parts and status bar
 
-VCvarB r_hirestex("r_hirestex", false, "Allow high-resolution texture replacements?", CVAR_Archive|CVAR_PreInit);
+VCvarB r_hirestex("r_hirestex", true, "Allow high-resolution texture replacements?", CVAR_Archive|CVAR_PreInit);
 VCvarB r_showinfo("r_showinfo", false, "Show some info about loaded textures?", CVAR_Archive);
 
 static VCvarB r_reupload_textures("r_reupload_textures", false, "Reupload textures to GPU when new map is loaded?", CVAR_Archive);
