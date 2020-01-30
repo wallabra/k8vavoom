@@ -183,6 +183,8 @@ VRadiusThingsIterator::VRadiusThingsIterator (VThinker *ASelf, VEntity **AEntPtr
     if (yl < 0) yl = 0;
     if (xh >= bmWidth) { xh = bmWidth-1; vassert(xh >= 0); }
     if (yh >= bmHeight) { yh = bmHeight-1; vassert(yh >= 0); }
+    vassert(xl <= xh);
+    vassert(yl <= yh);
     // prepare iteration
     x = xl;
     y = yl;

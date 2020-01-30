@@ -2699,10 +2699,10 @@ void VLevel::CreateBlockMap () {
   }
 
   // they should be integers, but just in case round them
-  MinX = floor(MinX);
-  MinY = floor(MinY);
-  MaxX = ceil(MaxX);
-  MaxY = ceil(MaxY);
+  MinX = floorf(MinX);
+  MinY = floorf(MinY);
+  MaxX = ceilf(MaxX);
+  MaxY = ceilf(MaxY);
 
   int Width = MapBlock(MaxX-MinX)+1;
   int Height = MapBlock(MaxY-MinY)+1;

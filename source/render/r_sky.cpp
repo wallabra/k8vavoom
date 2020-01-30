@@ -296,15 +296,15 @@ void VSky::InitOldSky(int Sky1Texture, int Sky2Texture, float Sky1ScrollDelta,
           s.texinfo.saxis)+s.texinfo.soffs;
       }
 
-      int bmins = (int)floor(mins/16);
-      int bmaxs = (int)ceil(maxs/16);
+      int bmins = (int)floorf(mins/16.0f);
+      int bmaxs = (int)ceilf(maxs/16.0f);
       s.surf.texturemins[0] = bmins*16;
       s.surf.extents[0] = (bmaxs-bmins)*16;
       //s.surf.extents[0] = 256;
       mins = DotProduct(surfverts[1], s.texinfo.taxis)+s.texinfo.toffs;
       maxs = DotProduct(surfverts[0], s.texinfo.taxis)+s.texinfo.toffs;
-      bmins = (int)floor(mins/16);
-      bmaxs = (int)ceil(maxs/16);
+      bmins = (int)floorf(mins/16.0f);
+      bmaxs = (int)ceilf(maxs/16.0f);
       s.surf.texturemins[1] = bmins*16;
       s.surf.extents[1] = (bmaxs-bmins)*16;
       //s.surf.extents[1] = skyh;

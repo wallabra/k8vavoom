@@ -164,8 +164,8 @@ void VRenderLevelLightmap::InitSurfs (bool recalcStaticLightmaps, surface_t *ASu
         surf->drawflags &= ~surface_t::DF_CALC_LMAP; // just in case
         continue;
       }
-      int bmins = (int)floor(mins/16);
-      int bmaxs = (int)ceil(maxs/16);
+      int bmins = (int)floorf(mins/16.0f);
+      int bmaxs = (int)ceilf(maxs/16.0f);
 
       if (bmins < -EXTMAX/16 || bmins > EXTMAX/16 ||
           bmaxs < -EXTMAX/16 || bmaxs > EXTMAX/16 ||
@@ -185,8 +185,8 @@ void VRenderLevelLightmap::InitSurfs (bool recalcStaticLightmaps, surface_t *ASu
         surf->drawflags &= ~surface_t::DF_CALC_LMAP; // just in case
         continue;
       }
-      bmins = (int)floor(mins/16);
-      bmaxs = (int)ceil(maxs/16);
+      bmins = (int)floorf(mins/16.0f);
+      bmaxs = (int)ceilf(maxs/16.0f);
 
       if (bmins < -EXTMAX/16 || bmins > EXTMAX/16 ||
           bmaxs < -EXTMAX/16 || bmaxs > EXTMAX/16 ||

@@ -31,7 +31,7 @@
 #define MAXRADIUS  (32.0f)
 
 // mapblocks are used to check movement against lines and things
-#define MapBlock(x)  ((int)floor(x)>>7)
+#define MapBlock(x_)  (((int)floorf(x_))>>7)
 
 class VDecalDef;
 struct opening_t;
@@ -1149,7 +1149,7 @@ public:
       }
       #endif
 
-      //dda.start((int)(floor(x1)), (int)(floor(y1)), (int)(floor(x2)), (int)(floor(y2)));
+      //dda.start((int)(floorf(x1)), (int)(floorf(y1)), (int)(floorf(x2)), (int)(floorf(y2)));
       dda.start((int)x1, (int)y1, (int)x2, (int)y2, level->BlockMapWidth, level->BlockMapHeight);
     #endif
 
