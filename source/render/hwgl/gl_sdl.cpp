@@ -83,20 +83,19 @@ void VSdlOpenGLDrawer::Init () {
 //
 //  VSdlOpenGLDrawer::WarpMouseToWindowCenter
 //
-//  k8: somebody should fix this; i don't care
-//
 //==========================================================================
 void VSdlOpenGLDrawer::WarpMouseToWindowCenter () {
   if (!hw_window) return;
-  /*
-  if (SDL_GetMouseFocus() == hw_window) {
-    SDL_WarpMouseInWindow(hw_window, ScreenWidth/2, ScreenHeight/2);
-  }
-  */
-  //int wx, wy;
-  //SDL_GetWindowPosition(hw_window, &wx, &wy);
-  //SDL_WarpMouseGlobal(wx+ScreenWidth/2, wy+ScreenHeight/2);
-  SDL_WarpMouseInWindow(hw_window, ScreenWidth/2, ScreenHeight/2);
+  int realw = ScreenWidth, realh = ScreenHeight;
+  SDL_GL_GetDrawableSize(hw_window, &realw, &realh);
+  #if 1
+  // k8: better stick with global mouse positioning here
+  int wx, wy;
+  SDL_GetWindowPosition(hw_window, &wx, &wy);
+  SDL_WarpMouseGlobal(wx+realw/2, wy+realh/2);
+  #else
+  SDL_WarpMouseInWindow(hw_window, realw/2, realh/2);
+  #endif
 }
 
 
@@ -104,8 +103,12 @@ void VSdlOpenGLDrawer::WarpMouseToWindowCenter () {
 //
 //  VSdlOpenGLDrawer::GetMousePosition
 //
+//  we have to use `SDL_GetGlobalMouseState()` here, because
+//  `SDL_GetMouseState()` is updated in event loop, not immediately
+//
 //==========================================================================
 void VSdlOpenGLDrawer::GetMousePosition (int *mx, int *my) {
+  if (!mx && !my) return;
   int xp = 0, yp = 0;
   if (hw_window) {
     SDL_GetGlobalMouseState(&xp, &yp);

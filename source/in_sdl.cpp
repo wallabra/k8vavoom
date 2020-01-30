@@ -250,7 +250,10 @@ VSdlInputDevice::VSdlInputDevice ()
     // ignore mouse motion events in any case...
     SDL_EventState(SDL_MOUSEMOTION, SDL_IGNORE);
     SDL_GetMouseState(&mouse_oldx, &mouse_oldy);
-    if (Drawer) Drawer->WarpMouseToWindowCenter();
+    if (Drawer) {
+      Drawer->WarpMouseToWindowCenter();
+      Drawer->GetMousePosition(&mouse_oldx, &mouse_oldy);
+    }
   }
 
   // always off
@@ -318,8 +321,12 @@ void VSdlInputDevice::RegrabMouse () {
   //FIXME: ignore winactive here, 'cause when mouse is off-window, it may be `false`
   if (mouse) {
     firsttime = true;
-    if (Drawer) Drawer->WarpMouseToWindowCenter();
-    SDL_GetMouseState(&mouse_oldx, &mouse_oldy);
+    if (Drawer) {
+      Drawer->WarpMouseToWindowCenter();
+      Drawer->GetMousePosition(&mouse_oldx, &mouse_oldy);
+    } else {
+      SDL_GetMouseState(&mouse_oldx, &mouse_oldy);
+    }
   }
 }
 
@@ -490,7 +497,8 @@ void VSdlInputDevice::ReadInput () {
             if (!winactive && mouse) {
               if (Drawer) {
                 if (!ui_freemouse && (!ui_active || ui_mouse)) Drawer->WarpMouseToWindowCenter();
-                SDL_GetMouseState(&mouse_oldx, &mouse_oldy);
+                //SDL_GetMouseState(&mouse_oldx, &mouse_oldy);
+                Drawer->GetMousePosition(&mouse_oldx, &mouse_oldy);
               }
             }
             firsttime = true;
@@ -544,7 +552,8 @@ void VSdlInputDevice::ReadInput () {
   if (mouse && winactive && Drawer) {
     bool currMouseInUI = (ui_active.asBool() || ui_freemouse.asBool());
     bool currMouseGrabbed = (ui_freemouse.asBool() ? false : ui_mouse.asBool());
-    SDL_GetMouseState(&mouse_x, &mouse_y);
+    //SDL_GetMouseState(&mouse_x, &mouse_y);
+    Drawer->GetMousePosition(&mouse_x, &mouse_y);
     // check for UI activity changes
     if (currMouseInUI != uiwasactive) {
       // UI activity changed
@@ -582,7 +591,7 @@ void VSdlInputDevice::ReadInput () {
     if (gl_current_screen_fsmode == 0 && curHidden && currMouseInUI && !currMouseGrabbed) ShowRealMouse();
     // generate events
     if (!currMouseInUI || currMouseGrabbed) {
-      if (Drawer) Drawer->WarpMouseToWindowCenter();
+      Drawer->WarpMouseToWindowCenter();
       int dx = mouse_x-mouse_oldx;
       int dy = mouse_oldy-mouse_y;
       if (dx || dy) {
@@ -601,9 +610,19 @@ void VSdlInputDevice::ReadInput () {
           VObject::PostEvent(vev);
         }
         firsttime = false;
+        Drawer->GetMousePosition(&mouse_oldx, &mouse_oldy);
+        /*
         mouse_oldx = ScreenWidth/2;
         mouse_oldy = ScreenHeight/2;
+        */
       }
+      /*
+      else if (firsttime) {
+        Drawer->GetMousePosition(&mouse_oldx, &mouse_oldy);
+        mouse_x = mouse_oldx;
+        mouse_y = mouse_oldy;
+      }
+      */
     } else {
       mouse_oldx = mouse_x;
       mouse_oldy = mouse_y;
