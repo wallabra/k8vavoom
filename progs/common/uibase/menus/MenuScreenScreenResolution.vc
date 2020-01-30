@@ -97,6 +97,13 @@ override void CreateChoices () {
     SetLastHelp(
       "Use letterbox mode for scaled fullscreen?");
 
+  CreateEnumCvar("FS Scale Filter", 'gl_letterboxing_filter',
+    "Nearest",
+    "Linear (smooth)"
+  );
+    SetLastHelp(
+      "Which texture filter the engine should use to scale image in Scaled FS?");
+
   VSync = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   SetChoiceInitialSizePos(VSync);
   //VSync.SetOrigin(ChoicesStartX, currentY);
