@@ -517,7 +517,7 @@ doitagain:
         case TEXTYPE_Wall: repl = (seenType < 0 || seenType == TEXTYPE_Sprite || seenType == TEXTYPE_Flat); break;
         case TEXTYPE_Flat: repl = (seenType < 0 || seenType == TEXTYPE_Sprite); break;
         case TEXTYPE_Sprite: repl = (seenType < 0); break;
-        case TEXTYPE_Pic: repl =(seenType < 0 || seenType == TEXTYPE_Sprite || seenType == TEXTYPE_Flat || seenType == TEXTYPE_Wall); break;
+        case TEXTYPE_Pic: repl = (seenType < 0 || seenType == TEXTYPE_Sprite || seenType == TEXTYPE_Flat || seenType == TEXTYPE_Wall); break;
       }
       if (repl) {
         //GCon->Logf("  (005) %d", it.index());
@@ -619,7 +619,7 @@ int VTextureManager::FindWallByName (VName Name, bool bOverload) {
         switch (ctex->Type) {
           case TEXTYPE_Flat: repl = (seenType < 0 || seenType == TEXTYPE_Sprite); break;
           case TEXTYPE_Sprite: repl = (seenType < 0); break;
-          case TEXTYPE_Pic: repl =(seenType < 0 || seenType == TEXTYPE_Sprite || seenType == TEXTYPE_Flat); break;
+          case TEXTYPE_Pic: repl = (seenType < 0 || seenType == TEXTYPE_Sprite || seenType == TEXTYPE_Flat); break;
         }
         if (repl) {
           seenOther = it.index();
@@ -667,7 +667,7 @@ int VTextureManager::FindFlatByName (VName Name, bool bOverload) {
         switch (ctex->Type) {
           case TEXTYPE_Wall: repl = (seenType < 0 || seenType == TEXTYPE_Sprite); break;
           case TEXTYPE_Sprite: repl = (seenType < 0); break;
-          case TEXTYPE_Pic: repl =(seenType < 0 || seenType == TEXTYPE_Sprite || seenType == TEXTYPE_Wall); break;
+          case TEXTYPE_Pic: repl = (seenType < 0 || seenType == TEXTYPE_Sprite || seenType == TEXTYPE_Wall); break;
         }
         if (repl) {
           seenOther = it.index();
@@ -1583,6 +1583,27 @@ void VTextureManager::AddGroup (int Type, EWadNamespace Namespace) {
 
 //==========================================================================
 //
+//  VTextureManager::FindHiResToReplace
+//
+//  this tries to add `TEXTYPE_Pic` patch if `Type` not found
+//  returns -1 on error; never returns 0 (0 is "not found")
+//
+//==========================================================================
+int VTextureManager::FindHiResToReplace (VName Name, int Type, bool bOverload) {
+  if (Name == NAME_None) return -1;
+  // find texture to replace
+  int OldIdx = CheckNumForName(Name, Type, bOverload);
+  if (OldIdx > 0) return OldIdx;
+  OldIdx = CheckNumForName(Name, TEXTYPE_Pic, bOverload);
+  if (OldIdx > 0) return OldIdx;
+  // try to load picture patch
+  OldIdx = GTextureManager.AddPatch(Name, TEXTYPE_Pic, true/*silent*/);
+  return (OldIdx <= 0 ? -1 : OldIdx);
+}
+
+
+//==========================================================================
+//
 //  VTextureManager::ReplaceTextureWithHiRes
 //
 //  this can also append a new texture if `OldIndex` is < 0
@@ -1651,8 +1672,7 @@ void VTextureManager::AddHiResTextures () {
     if (W_GetNumForName(Name, WADNS_HiResTextures) != Lump) continue;
 
     // find texture to replace
-    int OldIdx = CheckNumForName(Name, TEXTYPE_Wall, true);
-    if (OldIdx == 0) continue; // nothing to replace
+    int OldIdx = FindHiResToReplace(Name, TEXTYPE_Wall);
     if (OldIdx > 0 && !r_hirestex) continue; // replacement is disabled
 
     if (!messaged) { messaged = true; GCon->Log(NAME_Init, "adding hires texture replacements"); }
@@ -1699,11 +1719,13 @@ void VTextureManager::ParseTextureTextLump (int Lump, bool asHiRes) {
         continue;
       }
 
-      int OldIdx = CheckNumForName(sc->Name8, Type, Overload);
-      if (OldIdx <= 0) {
+      int OldIdx = FindHiResToReplace(sc->Name8, Type, Overload);
+      if (OldIdx < 0) {
         // nothing to remap (no old texture)
+        VName oldname = sc->Name8;
         // skip new texture name
         sc->ExpectName8Warn();
+        GCon->Logf(NAME_Warning, "cannot remap old texture '%s' to new texture '%s' (old texture not found)", *oldname, *sc->Name8);
         continue;
       }
 
@@ -1749,10 +1771,10 @@ void VTextureManager::ParseTextureTextLump (int Lump, bool asHiRes) {
         continue;
       }
 
-      int OldIdx = CheckNumForName(Name, TEXTYPE_Overload, false);
+      int OldIdx = FindHiResToReplace(Name, TEXTYPE_Overload, false);
       if (OldIdx >= 0) {
         // replacing old texture (this is wrong, but...)
-        if (OldIdx == 0) continue; // there is no reason to replace "AASHITTY" and such
+        //if (OldIdx == 0) continue; // there is no reason to replace "AASHITTY" and such
         // don't do it if hires textures are disabled, or we're loading normal textures
         if (!asHiRes) continue; // loading normal textures
         if (!r_hirestex) continue; // hires texture replacements are disabled

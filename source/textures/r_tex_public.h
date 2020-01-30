@@ -581,6 +581,10 @@ private:
 
   void AddTextureTextLumps ();
 
+  // this tries to add `TEXTYPE_Pic` patch if `Type` not found
+  // returns -1 on error; never returns 0 (0 is "not found")
+  int FindHiResToReplace (VName name, int Type, bool bOverload=true);
+
   // this can also append a new texture if `OldIndex` is < 0
   // it can do `delete NewTex` too
   void ReplaceTextureWithHiRes (int OldIndex, VTexture *NewTex, int oldWidth=-1, int oldHeight=-1);
