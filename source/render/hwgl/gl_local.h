@@ -234,7 +234,6 @@ private:
   TArray<surface_t *> zfillMasked;
 
   bool canIntoBloomFX;
-
   bool lastOverbrightEnable;
 
 protected:

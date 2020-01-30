@@ -90,6 +90,13 @@ override void CreateChoices () {
       "Real Fullscreen mode will change your desktop resolution.\n"~
       "WARNING: The engine trusts you, and will not check if videomode is valid.");
 
+  CreateEnumCvar("FS Letterbox", 'gl_letterboxing',
+    "No",
+    "Yes"
+  );
+    SetLastHelp(
+      "Use letterbox mode for scaled fullscreen?");
+
   VSync = MenuChoiceEnum(NewChild(MenuChoice_OnOff));
   SetChoiceInitialSizePos(VSync);
   //VSync.SetOrigin(ChoicesStartX, currentY);

@@ -49,6 +49,8 @@ static VCvarB gl_dbg_ignore_gpu_blacklist("gl_dbg_ignore_gpu_blacklist", false, 
 static VCvarB gl_dbg_force_gpu_blacklisting("gl_dbg_force_gpu_blacklisting", false, "Force GPU to be blacklisted.", CVAR_PreInit);
 static VCvarB gl_dbg_disable_depth_clamp("gl_dbg_disable_depth_clamp", false, "Disable depth clamping.", CVAR_PreInit);
 
+static VCvarB gl_letterboxing("gl_letterboxing", true, "Use letterbox for scaled FS mode?", CVAR_Archive);
+
 VCvarI VOpenGLDrawer::texture_filter("gl_texture_filter", "0", "Texture filtering mode.", CVAR_Archive);
 VCvarI VOpenGLDrawer::sprite_filter("gl_sprite_filter", "0", "Sprite filtering mode.", CVAR_Archive);
 VCvarI VOpenGLDrawer::model_filter("gl_model_filter", "0", "Model filtering mode.", CVAR_Archive);
@@ -355,7 +357,6 @@ VOpenGLDrawer::VOpenGLDrawer ()
   offsetFactor = offsetUnits = 0;
 
   lastOverbrightEnable = !gl_regular_disable_overbright;
-
   //cameraFBO[0].mOwner = nullptr;
   //cameraFBO[1].mOwner = nullptr;
 }
@@ -835,7 +836,7 @@ void VOpenGLDrawer::InitResolution () {
   glClearStencil(0);
 
   glClear(GL_COLOR_BUFFER_BIT);
-  Update();
+  Update(false); // only swap
   glClear(GL_COLOR_BUFFER_BIT);
 
   glEnable(GL_TEXTURE_2D);
@@ -968,7 +969,7 @@ void VOpenGLDrawer::StartUpdate () {
 
 //==========================================================================
 //
-//  VOpenGLDrawer::FinishUpdate
+//  VOpenGLDrawer::ClearScreen
 //
 //==========================================================================
 void VOpenGLDrawer::ClearScreen (unsigned clearFlags) {
@@ -2559,16 +2560,81 @@ void VOpenGLDrawer::FBO::blitToScreen () {
 
   mOwner->p_glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0); // screen FBO
 
+  // do letterboxing if necessary
   int realw, realh;
   mOwner->GetRealWindowSize(&realw, &realh);
+  int scaledWidth = realw, scaledHeight = realh;
+  int blitOfsX = 0, blitOfsY = 0;
+  if (gl_letterboxing && (realw != mWidth || realh != mHeight)) {
+    //const float aspect = R_GetAspectRatio();
+    const float aspect = 1.0f;
+    const float scaleX = float(realw)/float(mWidth);
+    const float scaleY = float(realh*aspect)/float(mHeight);
+    const float scale = (scaleX <= scaleY ? scaleX : scaleY);
+    scaledWidth = int(mWidth*scale);
+    scaledHeight = int(mHeight/aspect*scale);
+    blitOfsX = (realw-scaledWidth)/2;
+    blitOfsY = (realh-scaledHeight)/2;
+    //GCon->Logf(NAME_Debug, "letterbox: size=(%d,%d); real=(%d,%d); scaled=(%d,%d); offset=(%d,%d); scale=(%g,%g)", mWidth, mHeight, realw, realh, scaledWidth, scaledHeight, blitOfsX, blitOfsY, scaleX, scaleY);
+    // clear stripes
+    //glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // black background
+    //glClear(GL_COLOR_BUFFER_BIT);
+    glPushAttrib(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_ENABLE_BIT|GL_VIEWPORT_BIT|GL_TRANSFORM_BIT);
+    bool oldBlend = mOwner->blendEnabled;
+    glViewport(0, 0, realw, realh);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0, realw, realh, 0, -666, 666);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
+    mOwner->GLDisableBlend();
+    mOwner->DrawFixedCol.Activate();
+    mOwner->DrawFixedCol.SetColor(1, 0, 0, 1);
+    mOwner->DrawFixedCol.UploadChangedUniforms();
+    glBegin(GL_QUADS);
+    if (blitOfsX > 0) {
+      // left
+      glVertex2f(0, 0);
+      glVertex2f(0, realh);
+      glVertex2f(blitOfsX, realh);
+      glVertex2f(blitOfsX, 0);
+      // right
+      int rx = realw-blitOfsX;
+      glVertex2f(rx, 0);
+      glVertex2f(rx, realh);
+      glVertex2f(realw, realh);
+      glVertex2f(realw, 0);
+    }
+    if (blitOfsY > 0) {
+      int rx = realw-blitOfsX;
+      // top
+      glVertex2f(blitOfsX, 0);
+      glVertex2f(blitOfsX, blitOfsY);
+      glVertex2f(rx, blitOfsY);
+      glVertex2f(rx, 0);
+      // bottom
+      int ry = realh-blitOfsY;
+      glVertex2f(blitOfsX, ry);
+      glVertex2f(blitOfsX, realh);
+      glVertex2f(rx, realh);
+      glVertex2f(rx, ry);
+    }
+    glEnd();
+    glPopAttrib();
+    mOwner->blendEnabled = oldBlend;
+  }
 
   if (mOwner->p_glBlitFramebuffer && !gl_dbg_fbo_blit_with_texture) {
     glBindTexture(GL_TEXTURE_2D, 0);
     mOwner->p_glBindFramebuffer(GL_READ_FRAMEBUFFER, mFBO);
-    if (realw == mWidth && realh == mHeight) {
+    if (scaledWidth == mWidth && scaledHeight == mHeight) {
       mOwner->p_glBlitFramebuffer(0, 0, mWidth, mHeight, 0, 0, mWidth, mHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
     } else {
-      mOwner->p_glBlitFramebuffer(0, 0, mWidth, mHeight, 0, 0, realw, realh, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+      //mOwner->p_glBlitFramebuffer(0, 0, mWidth, mHeight, 0, 0, realw, realh, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+      mOwner->p_glBlitFramebuffer(0, 0, mWidth, mHeight, blitOfsX, blitOfsY, blitOfsX+scaledWidth, blitOfsY+scaledHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
     }
   } else {
     GLint oldbindtex = 0;
@@ -2599,7 +2665,7 @@ void VOpenGLDrawer::FBO::blitToScreen () {
     mOwner->p_glUseProgramObjectARB(0);
     mOwner->currentActiveShader = nullptr;
 
-    if (realw == mWidth && realh == mHeight) {
+    if (scaledWidth == mWidth && scaledHeight == mHeight) {
       // copy texture by drawing full quad
       //glOrtho(0, mWidth, mHeight, 0, -666, 666);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -2613,26 +2679,13 @@ void VOpenGLDrawer::FBO::blitToScreen () {
     } else {
       //glOrtho(0, realw, realh, 0, -99999, 99999);
       //glClear(GL_COLOR_BUFFER_BIT); // just in case
-
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-      // scale it properly
-      float scaleX = float(realw)/float(mWidth);
-      float scaleY = float(realh)/float(mHeight);
-      float scale = (scaleX <= scaleY ? scaleX : scaleY);
-      int newWidth = (int)(mWidth*scale);
-      int newHeight = (int)(mHeight*scale);
-      int x0 = (realw-newWidth)/2;
-      int y0 = (realh-newHeight)/2;
-      int x1 = x0+newWidth;
-      int y1 = y0+newHeight;
-      //fprintf(stderr, "scaleX=%f; scaleY=%f; scale=%f; real=(%d,%d); screen=(%d,%d); new=(%d,%d); rect:(%d,%d)-(%d,%d)\n", scaleX, scaleY, scale, realw, realh, getWidth(), getHeight(), newWidth, newHeight, x0, y0, x1, y1);
       glBegin(GL_QUADS);
-        glTexCoord2f(0.0f, 1.0f); glVertex2i(x0, y0);
-        glTexCoord2f(1.0f, 1.0f); glVertex2i(x1, y0);
-        glTexCoord2f(1.0f, 0.0f); glVertex2i(x1, y1);
-        glTexCoord2f(0.0f, 0.0f); glVertex2i(x0, y1);
+        glTexCoord2f(0.0f, 1.0f); glVertex2i(blitOfsX, blitOfsY);
+        glTexCoord2f(1.0f, 1.0f); glVertex2i(blitOfsX+scaledWidth, blitOfsY);
+        glTexCoord2f(1.0f, 0.0f); glVertex2i(blitOfsX+scaledWidth, blitOfsY+scaledHeight);
+        glTexCoord2f(0.0f, 0.0f); glVertex2i(blitOfsX, blitOfsY+scaledHeight);
       glEnd();
     }
 

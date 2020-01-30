@@ -372,7 +372,7 @@ public:
   virtual void StartUpdate () = 0;
   virtual void ClearScreen (unsigned clearFlags=CLEAR_COLOR) = 0;
   virtual void Setup2D () = 0;
-  virtual void Update () = 0;
+  virtual void Update (bool fullUpdate=true) = 0;
   virtual void Shutdown () = 0;
   virtual void *ReadScreen (int *bpp, bool *bot2top) = 0;
   virtual void ReadBackScreen (int Width, int Height, rgba_t *Dest) = 0;

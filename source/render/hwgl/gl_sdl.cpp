@@ -46,7 +46,7 @@ public:
   virtual void Init () override;
   virtual bool SetResolution (int, int, int) override;
   virtual void *GetExtFuncPtr (const char *name) override;
-  virtual void Update () override;
+  virtual void Update (bool fullUpdate=true) override;
   virtual void Shutdown () override;
 
   virtual void WarpMouseToWindowCenter () override;
@@ -293,9 +293,11 @@ void *VSdlOpenGLDrawer::GetExtFuncPtr (const char *name) {
 //  Blit to the screen / Flip surfaces
 //
 //==========================================================================
-void VSdlOpenGLDrawer::Update () {
-  if (mInitialized && hw_window && hw_glctx) callICB(VCB_FinishUpdate);
-  FinishUpdate();
+void VSdlOpenGLDrawer::Update (bool fullUpdate) {
+  if (fullUpdate) {
+    if (mInitialized && hw_window && hw_glctx) callICB(VCB_FinishUpdate);
+    FinishUpdate();
+  }
   if (hw_window) SDL_GL_SwapWindow(hw_window);
 }
 
