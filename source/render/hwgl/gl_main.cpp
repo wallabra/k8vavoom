@@ -50,6 +50,7 @@ static VCvarB gl_dbg_force_gpu_blacklisting("gl_dbg_force_gpu_blacklisting", fal
 static VCvarB gl_dbg_disable_depth_clamp("gl_dbg_disable_depth_clamp", false, "Disable depth clamping.", CVAR_PreInit);
 
 static VCvarB gl_letterboxing("gl_letterboxing", true, "Use letterbox for scaled FS mode?", CVAR_Archive);
+static VCvarI gl_letterboxing_filter("gl_letterboxing_filter", "1", "Image filtering for letterbox mode (0:nearest; 1:linear).", CVAR_Archive);
 
 VCvarI VOpenGLDrawer::texture_filter("gl_texture_filter", "0", "Texture filtering mode.", CVAR_Archive);
 VCvarI VOpenGLDrawer::sprite_filter("gl_sprite_filter", "0", "Sprite filtering mode.", CVAR_Archive);
@@ -2634,7 +2635,7 @@ void VOpenGLDrawer::FBO::blitToScreen () {
       mOwner->p_glBlitFramebuffer(0, 0, mWidth, mHeight, 0, 0, mWidth, mHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
     } else {
       //mOwner->p_glBlitFramebuffer(0, 0, mWidth, mHeight, 0, 0, realw, realh, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-      mOwner->p_glBlitFramebuffer(0, 0, mWidth, mHeight, blitOfsX, blitOfsY, blitOfsX+scaledWidth, blitOfsY+scaledHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+      mOwner->p_glBlitFramebuffer(0, 0, mWidth, mHeight, blitOfsX, blitOfsY, blitOfsX+scaledWidth, blitOfsY+scaledHeight, GL_COLOR_BUFFER_BIT, (gl_letterboxing_filter.asInt() ? GL_LINEAR : GL_NEAREST));
     }
   } else {
     GLint oldbindtex = 0;
@@ -2679,8 +2680,13 @@ void VOpenGLDrawer::FBO::blitToScreen () {
     } else {
       //glOrtho(0, realw, realh, 0, -99999, 99999);
       //glClear(GL_COLOR_BUFFER_BIT); // just in case
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      if (gl_letterboxing_filter.asInt()) {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+      } else {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+      }
       glBegin(GL_QUADS);
         glTexCoord2f(0.0f, 1.0f); glVertex2i(blitOfsX, blitOfsY);
         glTexCoord2f(1.0f, 1.0f); glVertex2i(blitOfsX+scaledWidth, blitOfsY);
