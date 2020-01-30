@@ -423,8 +423,14 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
   int TexSOffset = Tex->SOffset;
   int TexTOffset = Tex->TOffset;
 
-  float scaleX = max2(0.001f, thing->ScaleX);
-  float scaleY = max2(0.001f, thing->ScaleY);
+  /*
+  if (Tex->SScale != 1.0f || Tex->TScale != 1.0f) {
+    GCon->Logf(NAME_Debug, "%s: scale=(%g,%g); size=(%d,%d); scaledsize=(%d,%d)", *Tex->Name, Tex->SScale, Tex->TScale, Tex->GetWidth(), Tex->GetHeight(), Tex->GetScaledWidth(), Tex->GetScaledHeight());
+  }
+  */
+
+  float scaleX = max2(0.001f, thing->ScaleX/Tex->SScale);
+  float scaleY = max2(0.001f, thing->ScaleY/Tex->TScale);
 
   if (renderShadow) {
     if (thing == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) {
