@@ -782,12 +782,14 @@ void VTextureManager::GetTextureInfo (int TexNum, picinfo_t *info) {
   if (Tex) {
     info->width = Tex->GetScaledWidth();
     info->height = Tex->GetScaledHeight();
-    info->xoffset = Tex->SOffset;
-    info->yoffset = Tex->TOffset;
+    info->xoffset = Tex->GetScaledSOffset();
+    info->yoffset = Tex->GetScaledTOffset();
     info->xscale = Tex->SScale;
     info->yscale = Tex->TScale;
     info->widthNonScaled = Tex->GetWidth();
     info->heightNonScaled = Tex->GetHeight();
+    info->xoffsetNonScaled = Tex->SOffset;
+    info->yoffsetNonScaled = Tex->TOffset;
   } else {
     memset((void *)info, 0, sizeof(*info));
     info->xscale = info->yscale = 1.0f;

@@ -47,6 +47,7 @@ override void OnCreate () {
     AddFrame(bff);
   }
   Speed = GetClGame().BigSelectorAnimSpeed;
+  //ResizeToPicDimensions();
 }
 
 
@@ -61,4 +62,5 @@ override void SetOrigin (int X, int Y) {
 
 
 defaultproperties {
+  bAutoSize = true;
 }

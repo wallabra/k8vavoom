@@ -213,6 +213,8 @@ struct picinfo_t {
   float yscale;
   int widthNonScaled;
   int heightNonScaled;
+  int xoffsetNonScaled;
+  int yoffsetNonScaled;
 };
 
 struct EpisodeDef {

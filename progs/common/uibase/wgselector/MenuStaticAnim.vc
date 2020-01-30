@@ -53,6 +53,27 @@ override void SetOrigin (int OrgX, int OrgY) {
 
 //==========================================================================
 //
+//  ResizeToPicDimensions
+//
+//==========================================================================
+void ResizeToPicDimensions () {
+  int width = Width;
+  int height = Height;
+  foreach (int handle; Frames) {
+    picinfo_t pinf;
+    R_GetPicInfo(handle, &pinf);
+    width = max(width, pinf.width);
+    height = max(height, pinf.height);
+  }
+  //printdebug("size=(%d,%d); newsize=(%d,%d)", Width, Height, width, height);
+  if (width > Width || height > Height) {
+    SetSize(width, height+8);
+  }
+}
+
+
+//==========================================================================
+//
 //  AddFrame
 //
 //==========================================================================
@@ -65,6 +86,7 @@ void AddFrame (name Name) {
   Frames[Frames.length-1] = Handle;
   if (bAutoSize) {
     R_GetPicInfo(Handle, &Info);
+    //printdebug("%s: size=(%d,%d); scale=(%s,%s); ofs=(%s,%s)", Name, Info.width, Info.height, Info.xscale, Info.yscale, Info.xoffset, Info.yoffset);
     if (Frames.length == 1) {
       // set up offsets and size for initial frame
       OffsetX = Info.xoffset;
