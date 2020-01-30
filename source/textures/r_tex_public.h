@@ -81,8 +81,8 @@ struct picinfo_t {
   vint32 yoffset;
   float xscale;
   float yscale;
-  vint32 widthScaled;
-  vint32 heightScaled;
+  vint32 widthNonScaled;
+  vint32 heightNonScaled;
 };
 
 

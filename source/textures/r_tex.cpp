@@ -780,14 +780,14 @@ void VTextureManager::SetFrontSkyLayer (int tex) {
 void VTextureManager::GetTextureInfo (int TexNum, picinfo_t *info) {
   VTexture *Tex = getTxByIndex(TexNum);
   if (Tex) {
-    info->width = Tex->GetWidth();
-    info->height = Tex->GetHeight();
+    info->width = Tex->GetScaledWidth();
+    info->height = Tex->GetScaledHeight();
     info->xoffset = Tex->SOffset;
     info->yoffset = Tex->TOffset;
     info->xscale = Tex->SScale;
     info->yscale = Tex->TScale;
-    info->widthScaled = Tex->GetScaledWidth();
-    info->heightScaled = Tex->GetScaledHeight();
+    info->widthNonScaled = Tex->GetWidth();
+    info->heightNonScaled = Tex->GetHeight();
   } else {
     memset((void *)info, 0, sizeof(*info));
     info->xscale = info->yscale = 1.0f;
