@@ -151,22 +151,33 @@ void TModifiers::ShowBadAttributes (int Modifiers, const TLocation &l) {
 //  Verify that modifiers are valid in current context.
 //
 //==========================================================================
-int TModifiers::Check (int Modifers, int Allowed, const TLocation &l) {
+int TModifiers::Check (int Modifiers, int Allowed, const TLocation &l) {
   // check for conflicting protection
   /*static*/ const int ProtAttrs[] = { Private, Protected, Published, 0 };
   int protcount = 0;
   VStr mods;
   for (int f = 0; ProtAttrs[f]; ++f) {
-    if (Modifers&ProtAttrs[f]) {
+    if (Modifiers&ProtAttrs[f]) {
       ++protcount;
       if (!mods.isEmpty()) mods += ", ";
       mods += va("`%s`", Name(ProtAttrs[f]));
     }
   }
-  if (protcount > 1) ParseError(l, "conflicting protection modifiers: %s", *mods);
-  if (protcount > 0 && (Modifers&DecVisible) != 0) ParseError(l, "`[decorate]` must be simply public");
-  ShowBadAttributes(Modifers&~Allowed, l);
-  return Modifers&Allowed;
+  bool wasError = false;
+  if (protcount > 1) { wasError = true; ParseError(l, "conflicting protection modifiers: %s", *mods); }
+  if (Modifiers&DecVisible) {
+    if (protcount > 0) { wasError = true; ParseError(l, "`[decorate]` must be simply public"); }
+    if (!VObject::cliVirtualiseDecorateMethods) {
+      if ((Modifiers&(Static|Final|Spawner|Override)) != Final) {
+        wasError = true;
+        if (Modifiers&Static) ParseError(l, "`[decorate]` cannot be static");
+        if (Modifiers&Spawner) ParseError(l, "`[decorate]` cannot be spawner");
+        if (Modifiers&Override) ParseError(l, "`[decorate]` cannot be overriden");
+      }
+    }
+  }
+  if (!wasError) ShowBadAttributes(Modifiers&~Allowed, l);
+  return Modifiers&Allowed;
 }
 
 
