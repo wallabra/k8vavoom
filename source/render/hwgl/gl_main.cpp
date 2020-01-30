@@ -2592,7 +2592,7 @@ void VOpenGLDrawer::FBO::blitToScreen () {
     glDisable(GL_CULL_FACE);
     mOwner->GLDisableBlend();
     mOwner->DrawFixedCol.Activate();
-    mOwner->DrawFixedCol.SetColor(1, 0, 0, 1);
+    mOwner->DrawFixedCol.SetColor(0, 0, 0, 1);
     mOwner->DrawFixedCol.UploadChangedUniforms();
     glBegin(GL_QUADS);
     if (blitOfsX > 0) {
