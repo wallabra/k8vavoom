@@ -52,7 +52,7 @@ static VCvarB r_fix_sprite_offsets("r_fix_sprite_offsets", true, "Fix sprite off
 static VCvarB r_fix_sprite_offsets_missiles("r_fix_sprite_offsets_missiles", false, "Fix sprite offsets for projectiles?", CVAR_Archive);
 static VCvarI r_sprite_fix_delta("r_sprite_fix_delta", "-7", "Sprite offset amount.", CVAR_Archive); // -6 seems to be ok for vanilla BFG explosion, and for imp fireball
 static VCvarB r_use_real_sprite_offset("r_use_real_sprite_offset", true, "Use real picture height instead of texture height for sprite offset fixes?", CVAR_Archive);
-static VCvarB r_use_sprofs_lump("r_use_sprofs_lump", true, "Use 'sprofs' lump for some hard-coded sprite offsets?", CVAR_Archive);
+static VCvarB r_use_sprofs_lump("r_use_sprofs_lump", false, "Use 'sprofs' lump for some hard-coded sprite offsets?", CVAR_Archive);
 
 static VCvarB r_sprite_use_pofs("r_sprite_use_pofs", true, "Use PolygonOffset with sprite sorting to reduce sprite flickering?", CVAR_Archive);
 static VCvarF r_sprite_pofs("r_sprite_pofs", "128", "DEBUG");
