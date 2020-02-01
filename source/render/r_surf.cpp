@@ -131,6 +131,26 @@ static inline bool IsZeroSkyFloorHack (const subsector_t *sub, const sec_region_
 
 //==========================================================================
 //
+//  SurfRecalcFlatOffset
+//
+//  returns `true` if any offset was changed
+//
+//==========================================================================
+static inline void SurfRecalcFlatOffset (sec_surface_t *surf, const TSecPlaneRef &spl, VTexture *Tex) {
+  const float newsoffs = spl.splane->xoffs*(TextureSScale(Tex)*spl.splane->XScale);
+  const float newtoffs = (spl.splane->yoffs+spl.splane->BaseYOffs)*(TextureTScale(Tex)*spl.splane->YScale);
+  /*
+  const bool offsChanged = (FASI(surf->texinfo.soffs) != FASI(newsoffs) ||
+                           FASI(surf->texinfo.toffs) != FASI(newtoffs));
+  */
+  surf->texinfo.soffs = newsoffs;
+  surf->texinfo.toffs = newtoffs;
+  //return offsChanged;
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::CreateSecSurface
 //
 //  this is used to create floor and ceiling surfaces
@@ -216,14 +236,7 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
     ssurf->texinfo.saxis = Normalise(CrossProduct(spl.GetNormal(), ssurf->texinfo.taxis))*(TextureSScale(Tex)*spl.splane->XScale);
   }
 
-  const float newsoffs = spl.splane->xoffs;
-  const float newtoffs = spl.splane->yoffs+spl.splane->BaseYOffs;
-  bool offsChanged = (FASI(ssurf->texinfo.soffs) != FASI(newsoffs) ||
-                      FASI(ssurf->texinfo.toffs) != FASI(newtoffs));
-  ssurf->texinfo.soffs = newsoffs;
-  ssurf->texinfo.toffs = newtoffs;
-  //ssurf->texinfo.soffs = spl.splane->xoffs;
-  //ssurf->texinfo.toffs = spl.splane->yoffs+spl.splane->BaseYOffs;
+  /*bool offsChanged = */SurfRecalcFlatOffset(ssurf, spl, Tex);
 
   ssurf->texinfo.Tex = Tex;
   ssurf->texinfo.noDecals = (Tex ? Tex->noDecals : true);
@@ -277,10 +290,13 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
       }
       if (changed) InitSurfs(true, ssurf->surfs, &ssurf->texinfo, &plane, sub);
     }
-  } else if (offsChanged) {
+  }
+  /*k8: no, lightmap doesn't depend of texture axes anymore
+  else if (offsChanged) {
     // still have to force it, because texture is scrolled, and lightmap s/t are invalid
     InitSurfs(true, ssurf->surfs, &ssurf->texinfo, &plane, sub);
   }
+  */
 
   return ssurf;
 }
@@ -345,17 +361,11 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
   }
 
   if (!ignoreColorMap) ssurf->texinfo.ColorMap = ColorMap; // just in case
-  const float newsoffs = splane.splane->xoffs;
-  const float newtoffs = splane.splane->yoffs+splane.splane->BaseYOffs;
-  bool offsChanged = (FASI(ssurf->texinfo.soffs) != FASI(newsoffs) ||
-                      FASI(ssurf->texinfo.toffs) != FASI(newtoffs));
-  ssurf->texinfo.soffs = newsoffs;
-  ssurf->texinfo.toffs = newtoffs;
-
   // ok, we still may need to update texture or z coords
   // update texture?
   VTexture *Tex = GTextureManager(splane.splane->pic);
   if (!Tex) Tex = GTextureManager[GTextureManager.DefaultTexture];
+  /*bool offsChanged = */SurfRecalcFlatOffset(ssurf, splane, Tex);
   ssurf->texinfo.Tex = Tex;
   ssurf->texinfo.noDecals = Tex->noDecals;
 
@@ -378,12 +388,15 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
     if (changed || splane.splane->pic != skyflatnum) {
       InitSurfs(true, ssurf->surfs, &ssurf->texinfo, &plane, sub);
     }
-  } else if (offsChanged && splane.splane->pic != skyflatnum) {
+  }
+  /*k8: no, lightmap doesn't depend of texture axes anymore
+  else if (offsChanged && splane.splane->pic != skyflatnum) {
     // still have to force it, because texture is scrolled, and lightmap s/t are invalid
     TPlane plane = *(TPlane *)splane.splane;
     if (splane.flipped) plane.flipInPlace();
     InitSurfs(true, ssurf->surfs, &ssurf->texinfo, &plane, sub);
   }
+  */
 }
 
 
