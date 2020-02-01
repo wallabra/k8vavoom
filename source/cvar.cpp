@@ -128,14 +128,31 @@ COMMAND(CvarList) {
 }
 
 
+//==========================================================================
+//
+//  DoCvarCompletions
+//
+//==========================================================================
+static VStr DoCvarCompletions (const TArray<VStr> &args, int aidx) {
+  TArray<VStr> list;
+  VStr prefix = (aidx < args.length() ? args[aidx] : VStr());
+  if (aidx == 1) {
+    VCvar::GetPrefixedList(list, prefix);
+    return VCommand::AutoCompleteFromListCmd(prefix, list);
+  } else {
+    return VStr::EmptyString;
+  }
+}
+
+
 // ////////////////////////////////////////////////////////////////////////// //
-// COMMAND whatis
+// COMMAND cvar_whatis
 //
 // Show short description for a cvar.
-COMMAND(WhatIs) {
+COMMAND_WITH_AC(cvar_whatis) {
   if (Args.Num() != 2) {
     GCon->Logf("Show short cvar description.");
-    GCon->Logf("usage: whatis varname");
+    GCon->Logf("usage: cvar_whatis varname");
   } else {
     VCvar *cvar = VCvar::FindVariable(*(Args[1]));
     if (cvar) {
@@ -145,25 +162,67 @@ COMMAND(WhatIs) {
     }
   }
 }
+COMMAND_AC(cvar_whatis) { return DoCvarCompletions(args, aidx); }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
 // COMMAND toggle
 //
 // Toggles boolean cvar
-COMMAND(Toggle) {
+COMMAND_WITH_AC(toggle) {
   if (Args.Num() != 2) {
     GCon->Logf("Toggles boolean cvar.");
     GCon->Logf("usage: toggle varname");
   } else {
-    VCvar *cvar = VCvar::FindVariable(*(Args[1]));
+    VCvar *cvar = VCvar::FindVariable(*Args[1]);
     if (cvar) {
       cvar->Set(cvar->asBool() ? 0 : 1);
     } else {
-      GCon->Logf("Unknown cvar: '%s'", *(Args[1]));
+      GCon->Logf("Unknown cvar: '%s'", *Args[1]);
     }
   }
 }
+COMMAND_AC(toggle) { return DoCvarCompletions(args, aidx); }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// COMMAND cvar_reset
+//
+// Resets cvar to default value
+COMMAND_WITH_AC(cvar_reset) {
+  if (Args.Num() != 2) {
+    GCon->Logf("Resets cvar to default value.");
+    GCon->Logf("usage: cvar_reset varname");
+  } else {
+    VCvar *cvar = VCvar::FindVariable(*(Args[1]));
+    if (cvar) {
+      cvar->Set(cvar->GetDefault());
+    } else {
+      GCon->Logf("Unknown cvar: '%s'", *Args[1]);
+    }
+  }
+}
+COMMAND_AC(cvar_reset) { return DoCvarCompletions(args, aidx); }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// COMMAND cvar_show_default
+//
+// Show default cvar value
+COMMAND_WITH_AC(cvar_show_default) {
+  if (Args.Num() != 2) {
+    GCon->Logf("Show default cvar value.");
+    GCon->Logf("usage: cvar_show_default varname");
+  } else {
+    VCvar *cvar = VCvar::FindVariable(*Args[1]);
+    if (cvar) {
+      GCon->Logf("  %s \"%s\"", *(VStr(cvar->GetName()).quote(true)), *(VStr(cvar->GetDefault()).quote()));
+    } else {
+      GCon->Logf("Unknown cvar: '%s'", *Args[1]);
+    }
+  }
+}
+COMMAND_AC(cvar_show_default) { return DoCvarCompletions(args, aidx); }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
