@@ -402,7 +402,7 @@ final bool Teleport (TVec Dst, float angle, bool DstFog, bool SrcFog, bool KeepD
   if (!KeepDir) {
     if (bIsPlayer && !FindInventory(PowerWeaponLevel2) && !FindInventory(PowerSpeed)) {
       // don't move for a bit, freeze player for about .5 sec
-      ReactionTime = 0.5;
+      ReactionTime = 0.5; // this is 18 ticks in vanilla, roughly 0.51428571428571 seconds
     }
     Angles.yaw = angle;
     if (bIsPlayer) Player.bFixAngle = true;
