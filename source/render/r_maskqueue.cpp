@@ -48,11 +48,12 @@ extern VCvarB r_sort_sprites;
 extern VCvarB r_brightmaps;
 extern VCvarB r_brightmaps_sprite;
 
-static VCvarB r_fix_sprite_offsets("r_fix_sprite_offsets", true, "Fix sprite offsets?", CVAR_Archive);
+static VCvarI r_fix_sprite_offsets("r_fix_sprite_offsets", "2", "Sprite offset fixing algorithm (0:don't fix; 1:old; 2:new).", CVAR_Archive);
 static VCvarB r_fix_sprite_offsets_missiles("r_fix_sprite_offsets_missiles", false, "Fix sprite offsets for projectiles?", CVAR_Archive);
+static VCvarB r_fix_sprite_offsets_smart_corpses("r_fix_sprite_offsets_smart_corpses", true, "Let corpses sink a little?", CVAR_Archive);
 static VCvarI r_sprite_fix_delta("r_sprite_fix_delta", "-7", "Sprite offset amount.", CVAR_Archive); // -6 seems to be ok for vanilla BFG explosion, and for imp fireball
-static VCvarB r_use_real_sprite_offset("r_use_real_sprite_offset", true, "Use real picture height instead of texture height for sprite offset fixes?", CVAR_Archive);
-static VCvarB r_use_sprofs_lump("r_use_sprofs_lump", false, "Use 'sprofs' lump for some hard-coded sprite offsets?", CVAR_Archive);
+static VCvarB r_use_real_sprite_offset("r_use_real_sprite_offset", true, "Use real picture height instead of texture height for sprite offset fixes (only for old aglorithm)?", CVAR_Archive);
+static VCvarB r_use_sprofs_lump("r_use_sprofs_lump", true, "Use 'sprofs' lump for some hard-coded sprite offsets (only for the new algorithm)?", CVAR_Archive);
 
 static VCvarB r_sprite_use_pofs("r_sprite_use_pofs", true, "Use PolygonOffset with sprite sorting to reduce sprite flickering?", CVAR_Archive);
 static VCvarF r_sprite_pofs("r_sprite_pofs", "128", "DEBUG");
@@ -218,33 +219,72 @@ void VRenderLevelShared::QueueTranslucentAliasModel (VEntity *mobj, vuint32 ligh
 //
 //==========================================================================
 void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fade, float Alpha, bool Additive,
-                                      vuint32 seclight, bool onlyShadow) {
-  int spr_type = thing->SpriteType;
-
+                                      vuint32 seclight, bool onlyShadow)
+{
+  const int spr_type = thing->SpriteType;
   TVec sprorigin = thing->GetDrawOrigin();
+
+  bool renderShadow =
+    spr_type == SPR_VP_PARALLEL_UPRIGHT &&
+    r_fake_sprite_shadows.asBool() &&
+    r_sort_sprites.asBool() &&
+    (r_fake_shadow_scale.asFloat() > 0.0f);
+
+  if (renderShadow) {
+    if (thing == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) {
+      // don't draw camera actor shadow (just in case, it should not come here anyway)
+      renderShadow = false;
+    }
+    if (renderShadow && Additive) {
+      if (thing->IsMissile()) {
+        renderShadow = (r_fake_shadows_missiles.asBool() && r_fake_shadows_additive_missiles.asBool());
+      } else if (thing->IsMonster()) {
+        renderShadow = (r_fake_shadows_monsters.asBool() && r_fake_shadows_additive_monsters.asBool());
+      } else {
+        renderShadow = false;
+      }
+    }
+  }
+
+  // only for monsters
+  if (renderShadow) {
+    switch (thing->Classify()) {
+      case VEntity::EType::ET_Unknown: renderShadow = false; break;
+      case VEntity::EType::ET_Player: renderShadow = r_fake_shadows_players.asBool(); break;
+      case VEntity::EType::ET_Missile: renderShadow = r_fake_shadows_missiles.asBool(); break;
+      case VEntity::EType::ET_Corpse: renderShadow = r_fake_shadows_corpses.asBool(); break;
+      case VEntity::EType::ET_Monster: renderShadow = r_fake_shadows_monsters.asBool(); break;
+      case VEntity::EType::ET_Decoration: renderShadow = r_fake_shadows_decorations.asBool(); break;
+      case VEntity::EType::ET_Pickup: renderShadow = r_fake_shadows_pickups.asBool(); break;
+      default: abort();
+    }
+    // do not render shadow if floor surface is higher than the camera, or if the sprite is under the floor
+    if (renderShadow) {
+      if (thing->FloorZ >= Drawer->vieworg.z) {
+        // the floor is higher
+        renderShadow = false;
+      } else if (sprorigin.z+8 < thing->FloorZ || sprorigin.z+thing->Height <= thing->FloorZ) {
+        // check origin (+8 for "floatbob")
+        renderShadow = false;
+      }
+    }
+  }
+
+  if (onlyShadow && !renderShadow) return;
+
   TVec sprforward(0, 0, 0);
   TVec sprright(0, 0, 0);
   TVec sprup(0, 0, 0);
 
   // HACK: if sprite is additive, move is slightly closer to view
   // this is mostly for things like light flares
-  if (Additive) {
-    sprorigin -= Drawer->viewforward*0.2f;
-  }
+  if (Additive) sprorigin -= Drawer->viewforward*0.2f;
 
   float dot;
   TVec tvec(0, 0, 0);
   float sr;
   float cr;
   int hangup = 0;
-  bool renderShadow =
-    /*!Additive &&*/ thing && spr_type == SPR_VP_PARALLEL_UPRIGHT &&
-    r_fake_sprite_shadows.asBool() &&
-    r_sort_sprites.asBool() &&
-    (r_fake_shadow_scale.asFloat() > 0.0f);
-
-  if (onlyShadow && !renderShadow) return;
-
   //spr_type = SPR_ORIENTED;
   switch (spr_type) {
     case SPR_VP_PARALLEL_UPRIGHT:
@@ -412,16 +452,25 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
   }
 
   VTexture *Tex = GTextureManager[lump];
-
   if (!Tex || Tex->Type == TEXTYPE_Null) return; // just in case
 
   //if (r_brightmaps && r_brightmaps_sprite && Tex->Brightmap && Tex->Brightmap->nofullbright) light = seclight; // disable fullbright
   if (r_brightmaps && r_brightmaps_sprite && Tex->nofullbright) light = seclight; // disable fullbright
 
+  int fixAlgo = r_fix_sprite_offsets.asInt();
+  if (fixAlgo < 0) fixAlgo = 0; // just in case
+
   int TexWidth = Tex->GetWidth();
   int TexHeight = Tex->GetHeight();
-  int TexSOffset = Tex->SOffset;
-  int TexTOffset = Tex->TOffset;
+  int TexSOffset, TexTOffset;
+
+  if (fixAlgo > 1 && Tex->bForcedSpriteOffset && r_use_sprofs_lump) {
+    TexSOffset = Tex->SOffsetFix;
+    TexTOffset = Tex->TOffsetFix;
+  } else {
+    TexSOffset = Tex->SOffset;
+    TexTOffset = Tex->TOffset;
+  }
 
   /*
   if (Tex->SScale != 1.0f || Tex->TScale != 1.0f) {
@@ -432,48 +481,6 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
   float scaleX = max2(0.001f, thing->ScaleX/Tex->SScale);
   float scaleY = max2(0.001f, thing->ScaleY/Tex->TScale);
 
-  if (renderShadow) {
-    if (thing == ViewEnt && (!r_chasecam || ViewEnt != cl->MO)) {
-      // don't draw camera actor shadow (just in case, it should not come here anyway)
-      renderShadow = false;
-    }
-    if (renderShadow && Additive) {
-      if (thing->IsMissile()) {
-        renderShadow = (r_fake_shadows_missiles.asBool() && r_fake_shadows_additive_missiles.asBool());
-      } else if (thing->IsMonster()) {
-        renderShadow = (r_fake_shadows_monsters.asBool() && r_fake_shadows_additive_monsters.asBool());
-      } else {
-        renderShadow = false;
-      }
-    }
-  }
-
-  // only for monsters
-  if (renderShadow) {
-    switch (thing->Classify()) {
-      case VEntity::EType::ET_Unknown: renderShadow = false; break;
-      case VEntity::EType::ET_Player: renderShadow = r_fake_shadows_players.asBool(); break;
-      case VEntity::EType::ET_Missile: renderShadow = r_fake_shadows_missiles.asBool(); break;
-      case VEntity::EType::ET_Corpse: renderShadow = r_fake_shadows_corpses.asBool(); break;
-      case VEntity::EType::ET_Monster: renderShadow = r_fake_shadows_monsters.asBool(); break;
-      case VEntity::EType::ET_Decoration: renderShadow = r_fake_shadows_decorations.asBool(); break;
-      case VEntity::EType::ET_Pickup: renderShadow = r_fake_shadows_pickups.asBool(); break;
-      default: abort();
-    }
-    // do not render shadow if floor surface is higher than the camera, or if the sprite is under the floor
-    if (renderShadow) {
-      if (thing->FloorZ >= Drawer->vieworg.z) {
-        // the floor is higher
-        renderShadow = false;
-      } else if (sprorigin.z+8 < thing->FloorZ || sprorigin.z+thing->Height <= thing->FloorZ) {
-        // check origin (+8 for "floatbob")
-        renderShadow = false;
-      }
-    }
-  }
-
-  if (onlyShadow && !renderShadow) return;
-
   TVec sv[4];
 
   TVec start = -TexSOffset*sprright*scaleX;
@@ -481,17 +488,45 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
 
   const int origTOffset = TexTOffset;
   //if (thing) GCon->Logf(NAME_Debug, "*** CLASS '%s': scaleY=%g; TOfs=%d; hgt=%d; dofix=%d", thing->GetClass()->GetName(), scaleY, TexTOffset, TexHeight, (TexTOffset < TexHeight && 2*TexTOffset+r_sprite_fix_delta >= TexHeight ? 1 : 0));
-  //k8: scale is arbitrary here
-  //    also, don't bother with projectiles, they're usually flying anyway
-  bool doFixSpriteOffset = r_fix_sprite_offsets;
-  if (doFixSpriteOffset && !r_fix_sprite_offsets_missiles && thing->IsMissile()) doFixSpriteOffset = false;
-  if (doFixSpriteOffset) {
-    const int sph = (r_use_real_sprite_offset ? Tex->GetRealHeight() : TexHeight);
-    //if (thing) GCon->Logf(NAME_Debug, "THING '%s': sph=%d; height=%d", thing->GetClass()->GetName(), sph, TexHeight);
-    if (TexTOffset < /*TexHeight*/sph && 2*TexTOffset+r_sprite_fix_delta >= /*TexHeight*/sph && scaleY > 0.6f && scaleY < 1.6f) TexTOffset = /*TexHeight*/sph;
-    if (Tex->bForcedSpriteOffset && r_use_sprofs_lump) {
-      TexSOffset += Tex->SOffset-Tex->SOffsetFix;
-      TexTOffset += Tex->TOffset-Tex->TOffsetFix;
+  // don't bother with projectiles, they're usually flying anyway
+  if (fixAlgo && !r_fix_sprite_offsets_missiles && thing->IsMissile()) fixAlgo = 0;
+  // do not fix offset for flying monsters (but fix flying corpses, just in case)
+  if (fixAlgo && !thing->IsCorpse()) {
+    if (thing->EntityFlags&(VEntity::EF_Float|VEntity::EF_Fly)) fixAlgo = 0;
+  }
+  if (fixAlgo) {
+    if (fixAlgo > 1) {
+      // new algo
+      const int allowedDelta = -r_sprite_fix_delta.asInt();
+      if (allowedDelta > 0) {
+        const int sph = Tex->GetRealHeight();
+        const int spyofs = TexTOffset-(TexHeight-sph);
+        int botofs = (int)((Tex->GetRealHeight()-spyofs)*scaleY);
+        if (botofs > 0 && botofs <= allowedDelta) {
+          //GCon->Logf(NAME_Debug, "%s: height=%d; realheight=%d; ofs=%d; botofs=%d", thing->GetClass()->GetName(), TexHeight, Tex->GetRealHeight(), TexTOffset, botofs);
+          // sink corpses a little
+          if (thing->IsCorpse() && r_fix_sprite_offsets_smart_corpses) {
+            const float clipFactor = 1.8f;
+            const float ratio = clampval((float)botofs*clipFactor/(float)Tex->GetRealHeight(), 0.5f, 1.0f);
+            botofs = (int)((float)botofs*ratio);
+            if (botofs < 0 || botofs > allowedDelta) botofs = 0;
+          }
+          TexTOffset += botofs/scaleY;
+        }
+      }
+    } else {
+      // old algo
+      const int sph = (r_use_real_sprite_offset ? Tex->GetRealHeight() : TexHeight);
+      //if (thing) GCon->Logf(NAME_Debug, "THING '%s': sph=%d; height=%d", thing->GetClass()->GetName(), sph, TexHeight);
+      if (TexTOffset < /*TexHeight*/sph && 2*TexTOffset+r_sprite_fix_delta >= /*TexHeight*/sph && scaleY > 0.6f && scaleY < 1.6f) {
+        TexTOffset = /*TexHeight*/sph;
+      }
+      /*
+      if (Tex->bForcedSpriteOffset && r_use_sprofs_lump) {
+        TexSOffset += Tex->SOffset-Tex->SOffsetFix;
+        TexTOffset += Tex->TOffset-Tex->TOffsetFix;
+      }
+      */
     }
   }
 

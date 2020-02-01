@@ -15,9 +15,14 @@ menudef SpriteVideoOptions {
 
   header "Visual Hacks";
 
-  option bool {
+  option enum {
     title = "Fix Sprites Offset";
     cvar = r_fix_sprite_offsets;
+    list {
+      "No",
+      "Simple",
+      "Smart"
+    }
   }
 
   option bool {
@@ -51,12 +56,20 @@ menudef SpriteVideoOptions {
       "\cJIf in doubt, leave this 'OFF'.";
   }
 
+  option bool {
+    title = "Smart Fix For Corpses";
+    cvar = r_fix_sprite_offsets_smart_corpses;
+    help =
+      "Let corpses sink a little, they usually looks better this way."
+      "\cJIf in doubt, leave this 'ON'.";
+  }
+
   option slider {
     title = "Sprites Delta";
     cvar = r_sprite_fix_delta;
     step = 1;
     min = -255;
-    max = 255;
+    max = 0;
   }
 
 
