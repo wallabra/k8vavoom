@@ -185,8 +185,9 @@ public:
 
   // this will try to coerce some decorate argument to something sensible
   // used inly in the k8vavoom engine; define as fatal error for other users
+  // `CallerState` can be `nullptr`
   VExpression *MassageDecorateArg (VEmitContext &ec, VState *CallerState, const char *funcName,
-                                   int argnum, const VFieldType &destType, const TLocation *aloc=nullptr,
+                                   int argnum, const VFieldType &destType, bool isOptional, const TLocation *aloc=nullptr,
                                    bool *massaged=nullptr);
 
   // checks if expression consists of only numeric literals

@@ -2878,7 +2878,7 @@ void VInvocation::CheckDecorateParams (VEmitContext &ec) {
       ParseError(Args[i]->Loc, "invalid argument #%d flag `[%s]`", i+1, *FlagName);
     }
 
-    Args[i] = Args[i]->MassageDecorateArg(ec, CallerState, Func->GetName(), i+1, Func->ParamTypes[i]);
+    Args[i] = Args[i]->MassageDecorateArg(ec, CallerState, Func->GetName(), i+1, Func->ParamTypes[i], !!(Func->ParamFlags[i]&FPARM_Optional));
   }
 
   // some warnings

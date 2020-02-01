@@ -1677,7 +1677,7 @@ void FireWeapon (optional state firestate) {
   ReadyWeapon.FireMode = Weapon::FIRE_Primary;
   if (EntityEx(MO).MissileState) MO.SetState(EntityEx(MO).MissileState);
   SetViewObject(ReadyWeapon);
-  SetViewState(PS_WEAPON, (specified_firestate && firestate ? firestate : ReadyWeapon.GetAttackState(Refire)));
+  SetViewState(PS_WEAPON, (/*specified_firestate &&*/ firestate ? firestate : ReadyWeapon.GetAttackState(Refire)));
   if (ReadyWeapon && !ReadyWeapon.bNoAlert) {
     LineSpecialLevelInfo(Level).NoiseAlert(EntityEx(MO), EntityEx(MO));
   }
@@ -1700,7 +1700,7 @@ void AltFireWeapon (optional state firestate) {
   ReadyWeapon.FireMode = Weapon::FIRE_Secondary;
   if (EntityEx(MO).MissileState) MO.SetState(EntityEx(MO).MissileState);
   SetViewObject(ReadyWeapon);
-  SetViewState(PS_WEAPON, (specified_firestate && firestate ? firestate : ReadyWeapon.GetAltAttackState(Refire)));
+  SetViewState(PS_WEAPON, (/*specified_firestate &&*/ firestate ? firestate : ReadyWeapon.GetAltAttackState(Refire)));
   if (ReadyWeapon && !ReadyWeapon.bNoAlert) {
     LineSpecialLevelInfo(Level).NoiseAlert(EntityEx(MO), EntityEx(MO));
   }

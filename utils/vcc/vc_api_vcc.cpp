@@ -78,8 +78,8 @@ void VObject::VMDumpCallStack () {
 //
 //==========================================================================
 VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerState, const char *funcName,
-                                              int argnum, const VFieldType &destType, const TLocation *aloc,
-                                              bool *massaged)
+                                              int argnum, const VFieldType &destType, bool isOptional,
+                                              const TLocation *aloc, bool *massaged)
 {
   Sys_Error("VExpression::MassageDecorateArg: the thing that should not be!");
 }
