@@ -456,7 +456,8 @@ void InitializeWeaponSlots () {
       }
       // check found slot number
       if (snum < 0 || snum >= actualWeaponSlots.length) {
-        if (!HasWeaponInAnySlot(wcls)) {
+        // skip Strife Sigils
+        if (!HasWeaponInAnySlot(wcls) && (wcls !isa 'Sigil')) {
           // skip known  weapons
           name cname = GetClassName(wcls);
           bool doreport = GetCvarB('dbg_report_orphan_weapons');
