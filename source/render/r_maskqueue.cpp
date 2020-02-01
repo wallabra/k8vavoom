@@ -500,18 +500,20 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
       const int allowedDelta = -r_sprite_fix_delta.asInt();
       if (allowedDelta > 0) {
         const int sph = Tex->GetRealHeight();
-        const int spyofs = TexTOffset-(TexHeight-sph);
-        int botofs = (int)((Tex->GetRealHeight()-spyofs)*scaleY);
-        if (botofs > 0 && botofs <= allowedDelta) {
-          //GCon->Logf(NAME_Debug, "%s: height=%d; realheight=%d; ofs=%d; botofs=%d", thing->GetClass()->GetName(), TexHeight, Tex->GetRealHeight(), TexTOffset, botofs);
-          // sink corpses a little
-          if (thing->IsCorpse() && r_fix_sprite_offsets_smart_corpses) {
-            const float clipFactor = 1.8f;
-            const float ratio = clampval((float)botofs*clipFactor/(float)Tex->GetRealHeight(), 0.5f, 1.0f);
-            botofs = (int)((float)botofs*ratio);
-            if (botofs < 0 || botofs > allowedDelta) botofs = 0;
+        if (sph > 0 && TexHeight > 0) {
+          const int spyofs = TexTOffset-(TexHeight-sph);
+          int botofs = (int)((sph-spyofs)*scaleY);
+          //GCon->Logf(NAME_Debug, "%s: height=%d; realheight=%d; ofs=%d; spyofs=%d; botofs=%d", thing->GetClass()->GetName(), TexHeight, sph, TexTOffset, spyofs, botofs);
+          if (botofs > 0 && botofs <= allowedDelta) {
+            // sink corpses a little
+            if (thing->IsCorpse() && r_fix_sprite_offsets_smart_corpses) {
+              const float clipFactor = 1.8f;
+              const float ratio = clampval((float)botofs*clipFactor/(float)sph, 0.5f, 1.0f);
+              botofs = (int)((float)botofs*ratio);
+              if (botofs < 0 || botofs > allowedDelta) botofs = 0;
+            }
+            TexTOffset += botofs/scaleY;
           }
-          TexTOffset += botofs/scaleY;
         }
       }
     } else {
