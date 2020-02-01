@@ -118,7 +118,7 @@ COMMAND(CvarList) {
   for (vuint32 n = 0; n < count; ++n) {
     VCvar *cvar = list[n];
     if (showValues) {
-      GCon->Logf("%s = \"%s\"", cvar->GetName(), *VStr(cvar->asStr()).quote());
+      GCon->Logf("  %s \"%s\"", cvar->GetName(), *VStr(cvar->asStr()).quote());
     } else {
       GCon->Logf("%s: %s", cvar->GetName(), cvar->GetHelp());
     }
