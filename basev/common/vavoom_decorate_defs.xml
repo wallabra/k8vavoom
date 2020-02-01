@@ -352,6 +352,8 @@
     <flag name="DontCorpse" property="bDontCorpse" />
     <!-- internal k8vavoom flags -->
     <flag name="k8vavoomInternalNoTickGrav" property="bNoTickGrav" />
+    <!-- used for sprite offset fixing -->
+    <flag name="PseudoCorpse" property="bPseudoCorpse" relinktoworld="true" />
     <!-- limiters -->
     <limitsub_cvar />
     <limitsub_int />

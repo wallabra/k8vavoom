@@ -491,7 +491,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
   // don't bother with projectiles, they're usually flying anyway
   if (fixAlgo && !r_fix_sprite_offsets_missiles && thing->IsMissile()) fixAlgo = 0;
   // do not fix offset for flying monsters (but fix flying corpses, just in case)
-  if (fixAlgo && !thing->IsCorpse()) {
+  if (fixAlgo && !thing->IsAnyCorpse()) {
     if (thing->EntityFlags&(VEntity::EF_Float|VEntity::EF_Fly)) fixAlgo = 0;
   }
   if (fixAlgo) {
@@ -506,7 +506,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
           //GCon->Logf(NAME_Debug, "%s: height=%d; realheight=%d; ofs=%d; spyofs=%d; botofs=%d", thing->GetClass()->GetName(), TexHeight, sph, TexTOffset, spyofs, botofs);
           if (botofs > 0 && botofs <= allowedDelta) {
             // sink corpses a little
-            if (thing->IsCorpse() && r_fix_sprite_offsets_smart_corpses) {
+            if (thing->IsAnyCorpse() && r_fix_sprite_offsets_smart_corpses) {
               const float clipFactor = 1.8f;
               const float ratio = clampval((float)botofs*clipFactor/(float)sph, 0.5f, 1.0f);
               botofs = (int)((float)botofs*ratio);

@@ -312,6 +312,7 @@ bool bWasRendered; // used in automap
 transient bool bOnScroll_Unused; // set/reset by `CreateSecNodeList()`
 bool bNoInteraction; // thing is completely excluded from any gameplay related checks (moved from EntityEx)
 bool bNoTickGrav; // do not call `Tick()` (but process gravity) (processed in C++ code)
+bool bPseudoCorpse; // set in DECORATE for corpse decorations, so sprite offset fixer can recongize them
 
 // for movement checking
 float Radius;

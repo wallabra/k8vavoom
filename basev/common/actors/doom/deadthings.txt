@@ -2,6 +2,7 @@
 actor DeadMarine 15
 {
   Game Doom
+  +PseudoCorpse
   states
   {
   Spawn:
@@ -15,6 +16,7 @@ actor GibbedMarine 10
 {
   Game Doom
   SpawnID 145
+  +PseudoCorpse
   states
   {
   Spawn:
@@ -27,7 +29,13 @@ actor GibbedMarine 10
 actor GibbedMarineExtra : GibbedMarine 12
 {
   Game Doom
+  +PseudoCorpse
 }
+
+/* If it wasn't for Dehacked compatibility, the rest of these would be
+ * better defined as single frame states. But since Doom reused the
+ * dead state from the original monsters, we need to do the same.
+ */
 
 //------------------------------------------------------------------------------
 actor DeadZombieMan : ZombieMan 18
@@ -35,6 +43,7 @@ actor DeadZombieMan : ZombieMan 18
   Skip_Super
   Game Doom
   DropItem None
+  +PseudoCorpse
   states
   {
   Spawn:
@@ -48,6 +57,7 @@ actor DeadShotgunGuy : ShotgunGuy 19
   Skip_Super
   Game Doom
   DropItem None
+  +PseudoCorpse
   states
   {
   Spawn:
@@ -60,6 +70,7 @@ actor DeadDoomImp : DoomImp 20
 {
   Skip_Super
   Game Doom
+  +PseudoCorpse
   states
   {
   Spawn:
@@ -72,6 +83,7 @@ actor DeadDemon : Demon 21
 {
   Skip_Super
   Game Doom
+  +PseudoCorpse
   states
   {
   Spawn:
@@ -84,6 +96,7 @@ actor DeadCacodemon : Cacodemon 22
 {
   Skip_Super
   Game Doom
+  +PseudoCorpse
   states
   {
   Spawn:
@@ -96,6 +109,7 @@ actor DeadLostSoul : LostSoul 23
 {
   Skip_Super
   Game Doom
+  +PseudoCorpse
   states
   {
   Spawn:

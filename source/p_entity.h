@@ -275,6 +275,7 @@ class VEntity : public VThinker {
     //EFEX_OnScroll    = 1u<<2u, // set/reset by `CreateSecNodeList()`
     EFEX_NoInteraction = 1u<<3u, // moved from EntityEx
     EFEX_NoTickGrav    = 1u<<4u, // do not call `Tick()` (but process gravity)
+    EFEX_PseudoCorpse  = 1u<<5u, // for sprite fixer
   };
   vuint32 FlagsEx;
 
@@ -526,7 +527,8 @@ public:
   //bool IsMonster () { static VMethodProxy method("IsMonster"); vobjPutParamSelf(); VMT_RET_BOOL(method); }
   inline bool IsPlayer () const noexcept { return !!(EntityFlags&EF_IsPlayer); }
   inline bool IsMissile () const noexcept { return !!(EntityFlags&EF_Missile); }
-  inline bool IsCorpse () const noexcept { return !!(EntityFlags&EF_Corpse); }
+  inline bool IsAnyCorpse () const noexcept { return !!((EntityFlags&EF_Corpse)|(FlagsEx&EFEX_PseudoCorpse)); }
+  inline bool IsRealCorpse () const noexcept { return !!(EntityFlags&EF_Corpse); }
   inline bool IsSolid () const noexcept { return !!(EntityFlags&EF_Solid); }
   inline bool IsMonster () const noexcept { return !!(FlagsEx&EFEX_Monster); }
   inline bool IsNoInteraction () const noexcept { return !!(FlagsEx&EFEX_NoInteraction); }
@@ -542,10 +544,11 @@ public:
     ET_Pickup, // any non-solid thing that isn't previous one (except unknown)
   };
 
+  // used in renderer
   inline EType Classify () const {
     if (IsPlayer()) return EType::ET_Player;
     if (IsMissile()) return EType::ET_Missile;
-    if (IsCorpse()) return EType::ET_Corpse;
+    if (IsAnyCorpse()) return EType::ET_Corpse;
     if (IsMonster()) return EType::ET_Monster;
     if (IsSolid()) return EType::ET_Decoration;
     // either pickup, or unknown

@@ -2169,7 +2169,7 @@ void VEntity::UpdateVelocity (float DeltaTime) {
       // water gravity
       Velocity.z -= Gravity*Level->Gravity*Sector->Gravity/10.0f*DeltaTime;
       float startvelz = Velocity.z;
-      float sinkspeed = -WaterSinkSpeed/(IsCorpse() ? 3.0f : 1.0f);
+      float sinkspeed = -WaterSinkSpeed/(IsRealCorpse() ? 3.0f : 1.0f);
       if (Velocity.z < sinkspeed) {
         Velocity.z = (startvelz < sinkspeed ? startvelz : sinkspeed);
       } else {

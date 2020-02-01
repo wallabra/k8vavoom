@@ -736,6 +736,7 @@ actor DeadStrifePlayer 15
 {
   Game Strife
   ConversationID 231, -1, -1
+  +PseudoCorpse
   states
   {
   Spawn:
@@ -750,6 +751,7 @@ actor DeadPeasant 18
 {
   Game Strife
   ConversationID 232, -1, -1
+  +PseudoCorpse
   states
   {
   Spawn:
@@ -763,6 +765,7 @@ actor DeadAcolyte 21
 {
   Game Strife
   ConversationID 233, -1, -1
+  +PseudoCorpse
   states
   {
   Spawn:
@@ -776,6 +779,7 @@ actor DeadReaver 20
 {
   Game Strife
   ConversationID 234, -1, -1
+  +PseudoCorpse
   states
   {
   Spawn:
@@ -789,6 +793,7 @@ actor DeadRebel 19
 {
   Game Strife
   ConversationID 235, -1, -1
+  +PseudoCorpse
   states
   {
   Spawn:
@@ -802,6 +807,7 @@ actor SacrificedGuy 212
 {
   Game Strife
   ConversationID 236, -1, -1
+  +PseudoCorpse
   states
   {
   Spawn:
