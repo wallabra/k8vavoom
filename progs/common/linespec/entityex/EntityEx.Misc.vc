@@ -1311,6 +1311,9 @@ override void OnMapSpawn (mthing_t *mthing) {
     Angles.pitch = AngleMod360(mthing->pitch);
     Angles.roll = AngleMod360(mthing->roll);
 
+    if (mthing->scaleX > 0) ScaleX *= mthing->scaleX;
+    if (mthing->scaleY > 0) ScaleY *= mthing->scaleY;
+
     if (mthing->options&LineSpecialLevelInfo::MTF_AMBUSH) bAmbush = true;
     if (mthing->options&LineSpecialLevelInfo::MTF_STANDSTILL) bStanding = true;
     if (mthing->options&LineSpecialLevelInfo::MTF_DORMANT) Deactivate(none);

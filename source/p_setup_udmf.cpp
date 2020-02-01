@@ -890,6 +890,9 @@ void VUdmfParser::ParseThing () {
     if (Key.strEquCI("single")) { Flag(T.options, MTF_GSINGLE); continue; }
     if (Key.strEquCI("dm")) { Flag(T.options, MTF_GDEATHMATCH); continue; }
     if (Key.strEquCI("coop")) { Flag(T.options, MTF_GCOOP); continue; }
+    if (Key.strEquCI("scalex")) { T.scaleX = CheckFloat(); continue; }
+    if (Key.strEquCI("scaley")) { T.scaleY = CheckFloat(); continue; }
+    if (Key.strEquCI("scale")) { T.scaleX = T.scaleY = CheckFloat(); continue; }
 
     // skills (up to, and including 16)
     if (Key.startsWithCI("skill")) {
@@ -957,11 +960,6 @@ void VUdmfParser::ParseThing () {
       }
 
       // ignored properties
-      if (Key.startsWithCI("pitch")) continue;
-      if (Key.startsWithCI("roll")) continue;
-      if (Key.startsWithCI("scalex")) continue;
-      if (Key.startsWithCI("scaley")) continue;
-      if (Key.startsWithCI("scale")) continue;
       if (Key.startsWithCI("score")) { if (CheckInt() == 0) continue; }
     }
 
