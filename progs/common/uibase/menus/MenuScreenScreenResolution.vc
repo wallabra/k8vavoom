@@ -90,14 +90,14 @@ override void CreateChoices () {
       "Real Fullscreen mode will change your desktop resolution.\n"~
       "WARNING: The engine trusts you, and will not check if videomode is valid.");
 
-  CreateEnumCvar("FS Letterbox", 'gl_letterboxing',
+  CreateEnumCvar("FS Letterbox", 'gl_letterbox',
     "No",
     "Yes"
   );
     SetLastHelp(
       "Use letterbox mode for scaled fullscreen?");
 
-  CreateEnumCvar("FS Scale Filter", 'gl_letterboxing_filter',
+  CreateEnumCvar("FS Scale Filter", 'gl_letterbox_filter',
     "Nearest",
     "Linear (smooth)"
   );

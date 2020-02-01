@@ -49,8 +49,11 @@ static VCvarB gl_dbg_ignore_gpu_blacklist("gl_dbg_ignore_gpu_blacklist", false, 
 static VCvarB gl_dbg_force_gpu_blacklisting("gl_dbg_force_gpu_blacklisting", false, "Force GPU to be blacklisted.", CVAR_PreInit);
 static VCvarB gl_dbg_disable_depth_clamp("gl_dbg_disable_depth_clamp", false, "Disable depth clamping.", CVAR_PreInit);
 
-static VCvarB gl_letterboxing("gl_letterboxing", true, "Use letterbox for scaled FS mode?", CVAR_Archive);
-static VCvarI gl_letterboxing_filter("gl_letterboxing_filter", "1", "Image filtering for letterbox mode (0:nearest; 1:linear).", CVAR_Archive);
+static VCvarB gl_letterbox("gl_letterbox", true, "Use letterbox for scaled FS mode?", CVAR_Archive);
+static VCvarI gl_letterbox_filter("gl_letterbox_filter", "0", "Image filtering for letterbox mode (0:nearest; 1:linear).", CVAR_Archive);
+VCvarS gl_letterbox_color("gl_letterbox_color", "00 00 00", "Letterbox color", CVAR_Archive);
+static ColorCV letterboxColor(&gl_letterbox_color);
+static VCvarF gl_letterbox_scale("gl_letterbox_scale", "1", "Letterbox scaling factor in range (0..1].", CVAR_Archive);
 
 VCvarI VOpenGLDrawer::texture_filter("gl_texture_filter", "0", "Texture filtering mode.", CVAR_Archive);
 VCvarI VOpenGLDrawer::sprite_filter("gl_sprite_filter", "0", "Sprite filtering mode.", CVAR_Archive);
@@ -2566,12 +2569,13 @@ void VOpenGLDrawer::FBO::blitToScreen () {
   mOwner->GetRealWindowSize(&realw, &realh);
   int scaledWidth = realw, scaledHeight = realh;
   int blitOfsX = 0, blitOfsY = 0;
-  if (gl_letterboxing && (realw != mWidth || realh != mHeight)) {
+  if (gl_letterbox && (realw != mWidth || realh != mHeight)) {
     //const float aspect = R_GetAspectRatio();
+    const float llscale = clampval(gl_letterbox_scale.asFloat(), 0.0f, 1.0f);
     const float aspect = 1.0f;
     const float scaleX = float(realw)/float(mWidth);
     const float scaleY = float(realh*aspect)/float(mHeight);
-    const float scale = (scaleX <= scaleY ? scaleX : scaleY);
+    const float scale = (scaleX <= scaleY ? scaleX : scaleY)*(llscale ? llscale : 1.0f);
     scaledWidth = int(mWidth*scale);
     scaledHeight = int(mHeight/aspect*scale);
     blitOfsX = (realw-scaledWidth)/2;
@@ -2593,7 +2597,7 @@ void VOpenGLDrawer::FBO::blitToScreen () {
     glDisable(GL_CULL_FACE);
     mOwner->GLDisableBlend();
     mOwner->DrawFixedCol.Activate();
-    mOwner->DrawFixedCol.SetColor(0, 0, 0, 1);
+    mOwner->DrawFixedCol.SetColor(letterboxColor.getFloatR(), letterboxColor.getFloatG(), letterboxColor.getFloatB(), 1);
     mOwner->DrawFixedCol.UploadChangedUniforms();
     glBegin(GL_QUADS);
     if (blitOfsX > 0) {
@@ -2635,7 +2639,7 @@ void VOpenGLDrawer::FBO::blitToScreen () {
       mOwner->p_glBlitFramebuffer(0, 0, mWidth, mHeight, 0, 0, mWidth, mHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
     } else {
       //mOwner->p_glBlitFramebuffer(0, 0, mWidth, mHeight, 0, 0, realw, realh, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-      mOwner->p_glBlitFramebuffer(0, 0, mWidth, mHeight, blitOfsX, blitOfsY, blitOfsX+scaledWidth, blitOfsY+scaledHeight, GL_COLOR_BUFFER_BIT, (gl_letterboxing_filter.asInt() ? GL_LINEAR : GL_NEAREST));
+      mOwner->p_glBlitFramebuffer(0, 0, mWidth, mHeight, blitOfsX, blitOfsY, blitOfsX+scaledWidth, blitOfsY+scaledHeight, GL_COLOR_BUFFER_BIT, (gl_letterbox_filter.asInt() ? GL_LINEAR : GL_NEAREST));
     }
   } else {
     GLint oldbindtex = 0;
@@ -2680,7 +2684,7 @@ void VOpenGLDrawer::FBO::blitToScreen () {
     } else {
       //glOrtho(0, realw, realh, 0, -99999, 99999);
       //glClear(GL_COLOR_BUFFER_BIT); // just in case
-      if (gl_letterboxing_filter.asInt()) {
+      if (gl_letterbox_filter.asInt()) {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
       } else {
