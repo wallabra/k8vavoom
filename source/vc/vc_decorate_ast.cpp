@@ -395,44 +395,50 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
       // string?
       if (IsStrConst()) {
         VStr str = GetStrConst(ec.Package).xstrip();
-        if (isOptional && (str.isEmpty() || str.strEquCI("false"))) {
-          // "not specified"
-          delete this;
-          return nullptr;
-        }
         if (str.isEmpty() || str.strEquCI("none") || str.strEquCI("null") || str.strEquCI("nil") || str.strEquCI("false")) {
-          if ((argnum == 1 || argnum == 2) && VStr::strEqu(funcName, "decorate_A_Chase")) {
+          if (isOptional) {
             // this is perfectly legal
+            //!ParseWarningAsError((aloc ? *aloc : Loc), "`%s` argument #%d EMPTY STATE!", funcName, argnum);
             VExpression *enew = new VNoneLiteral(Loc);
             delete this;
             return enew;
           }
         }
+        // try to convert a string to a number
         int lbl = -1;
         if (str.convertInt(&lbl)) {
-          //TLocation ALoc = Args[i]->Loc;
-          if (lbl < 0) {
-            ParseError((aloc ? *aloc : Loc), "`%s` argument #%d is something fucked: '%s'", funcName, argnum, *str);
-            delete this;
-            return nullptr;
+          // try to find the corresponding label
+          bool useNumber = true;
+          if (ec.SelfClass) {
+            VStateLabel *StLbl = ec.SelfClass->FindStateLabel(VName(*str), NAME_None, true);
+            if (StLbl) {
+              ParseWarningAsError((aloc ? *aloc : Loc), "do not use numeric labels in `%s` (argument #%d, label '%s')", funcName, argnum, *str);
+              useNumber = false;
+            }
           }
-          if (lbl == 0) {
-            if (isOptional) {
-              // "not specified"
+          if (useNumber) {
+            //TLocation ALoc = Args[i]->Loc;
+            if (lbl < 0) {
+              ParseError((aloc ? *aloc : Loc), "Negative state jumps are not allowed (function `%s`, argument #%d)", funcName, argnum);
               delete this;
               return nullptr;
             }
-            if ((argnum == 1 || argnum == 2) && VStr::strEqu(funcName, "decorate_A_Chase")) {
-              // this is perfectly legal
-              VExpression *enew = new VNoneLiteral(Loc);
-              delete this;
-              return enew;
+            if (lbl == 0) {
+              if (isOptional) {
+                // this is perfectly legal
+                //!ParseWarningAsError((aloc ? *aloc : Loc), "`%s` argument #%d EMPTY STATE!", funcName, argnum);
+                VExpression *enew = new VNoneLiteral(Loc);
+                delete this;
+                return enew;
+              }
+              ParseWarningAsError((aloc ? *aloc : Loc), "zero string jump offset in `%s` (argument #%d). wtf?!", funcName, argnum);
+              lbl = 1;
             }
+            ParseWarningAsError((aloc ? *aloc : Loc), "`%s` argument #%d should be number %d instead of string \"%s\"; PLEASE, FIX THE CODE!", funcName, argnum, lbl, *str.quote());
+            VExpression *enew = new VIntLiteral(lbl, Loc);
+            delete this;
+            return enew->MassageDecorateArg(ec, CallerState, funcName, argnum, destType, isOptional, aloc, massaged);
           }
-          ParseWarningAsError((aloc ? *aloc : Loc), "`%s` argument #%d should be number %d; PLEASE, FIX THE CODE!", funcName, argnum, lbl);
-          VExpression *enew = new VIntLiteral(lbl, Loc);
-          delete this;
-          return enew->MassageDecorateArg(ec, CallerState, funcName, argnum, destType, isOptional, aloc, massaged);
         }
       }
       // integer?
@@ -440,18 +446,14 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
         int Offs = GetIntConst();
         //TLocation ALoc = Args[i]->Loc;
         if (Offs < 0) {
-          ParseError((aloc ? *aloc : Loc), "Negative state jumps are not allowed");
+          ParseError((aloc ? *aloc : Loc), "Negative state jumps are not allowed (function `%s`, argument #%d)", funcName, argnum);
           delete this;
           return nullptr;
         }
         if (Offs == 0) {
           if (isOptional) {
-            // "not specified"
-            delete this;
-            return nullptr;
-          }
-          if ((argnum == 1 || argnum == 2) && VStr::strEqu(funcName, "decorate_A_Chase")) {
             // this is perfectly legal
+            //!ParseWarningAsError((aloc ? *aloc : Loc), "`%s` argument #%d EMPTY STATE!", funcName, argnum);
             VExpression *enew = new VNoneLiteral(Loc);
             delete this;
             return enew;
