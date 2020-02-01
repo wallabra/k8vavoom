@@ -117,6 +117,9 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   int TexSOffset = Tex->SOffset;
   int TexTOffset = Tex->TOffset;
 
+  const float scaleX = max2(0.001f, 1.0f/Tex->SScale);
+  const float scaleY = max2(0.001f, 1.0f/Tex->TScale);
+
   //GCon->Logf("PSPRITE: '%s'; size=(%d,%d); ofs=(%d,%d)", *Tex->Name, TexWidth, TexHeight, TexSOffset, TexTOffset);
 
   TVec dv[4];
@@ -124,8 +127,8 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   float PSP_DISTI = 1.0f/PSP_DIST;
   TVec sprorigin = Drawer->vieworg+PSP_DIST*Drawer->viewforward;
 
-  float sprx = 160.0f-VSt->SX+TexSOffset;
-  float spry = 100.0f-VSt->SY*R_GetAspectRatio()+TexTOffset;
+  float sprx = 160.0f-VSt->SX+TexSOffset*scaleX;
+  float spry = 100.0f-VSt->SY*R_GetAspectRatio()+TexTOffset*scaleY;
 
   spry -= cl->PSpriteSY;
   //k8: this is not right, but meh...
