@@ -276,7 +276,7 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
     } else {
       //!GCon->Logf(NAME_Debug, "sfcF:%p: saxis=(%g,%g,%g); taxis=(%g,%g,%g); saxisLM=(%g,%g,%g); taxisLM=(%g,%g,%g)", ssurf, ssurf->texinfo.saxis.x, ssurf->texinfo.saxis.y, ssurf->texinfo.saxis.z, ssurf->texinfo.taxis.x, ssurf->texinfo.taxis.y, ssurf->texinfo.taxis.z, ssurf->texinfo.saxisLM.x, ssurf->texinfo.saxisLM.y, ssurf->texinfo.saxisLM.z, ssurf->texinfo.taxisLM.x, ssurf->texinfo.taxisLM.y, ssurf->texinfo.taxisLM.z);
       ssurf->surfs = SubdivideFace(surf, ssurf->texinfo.saxisLM, &ssurf->texinfo.taxisLM);
-      InitSurfs(true, ssurf->surfs, &ssurf->texinfo, &plane, sub);
+      InitSurfs(true, ssurf->surfs, &ssurf->texinfo, &plane, sub); // recalc static lightmaps
     }
   } else if (updateZ) {
     // update z coords
@@ -288,7 +288,7 @@ sec_surface_t *VRenderLevelShared::CreateSecSurface (sec_surface_t *ssurf, subse
         svert->z = spl.GetPointZ(svert->x, svert->y);
         if (!changed && FASI(oldZ) != FASI(svert->z)) changed = true;
       }
-      if (changed) InitSurfs(true, ssurf->surfs, &ssurf->texinfo, &plane, sub);
+      if (changed) InitSurfs(true, ssurf->surfs, &ssurf->texinfo, &plane, sub); // recalc static lightmaps
     }
   }
   /*k8: no, lightmap doesn't depend of texture axes anymore
@@ -386,7 +386,7 @@ void VRenderLevelShared::UpdateSecSurface (sec_surface_t *ssurf, TSecPlaneRef Re
     }
     // force lightmap recalculation
     if (changed || splane.splane->pic != skyflatnum) {
-      InitSurfs(true, ssurf->surfs, &ssurf->texinfo, &plane, sub);
+      InitSurfs(true, ssurf->surfs, &ssurf->texinfo, &plane, sub); // recalc static lightmaps
     }
   }
   /*k8: no, lightmap doesn't depend of texture axes anymore
@@ -500,7 +500,7 @@ surface_t *VRenderLevelShared::CreateWSurf (TVec *wv, texinfo_t *texinfo, seg_t 
 
   //!GCon->Logf(NAME_Debug, "sfcS:%p: saxis=(%g,%g,%g); taxis=(%g,%g,%g); saxisLM=(%g,%g,%g); taxisLM=(%g,%g,%g)", surf, texinfo->saxis.x, texinfo->saxis.y, texinfo->saxis.z, texinfo->taxis.x, texinfo->taxis.y, texinfo->taxis.z, texinfo->saxisLM.x, texinfo->saxisLM.y, texinfo->saxisLM.z, texinfo->taxisLM.x, texinfo->taxisLM.y, texinfo->taxisLM.z);
   surf = SubdivideSeg(surf, texinfo->saxisLM, &texinfo->taxisLM, seg);
-  InitSurfs(true, surf, texinfo, seg, sub);
+  InitSurfs(true, surf, texinfo, seg, sub); // recalc static lightmaps
   return surf;
 }
 

@@ -102,6 +102,7 @@ struct texinfo_t {
     soffs = other.soffs;
     taxis = other.taxis;
     toffs = other.toffs;
+    // just in case
     saxisLM = other.saxisLM;
     taxisLM = other.taxisLM;
     // other fields doesn't matter

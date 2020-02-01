@@ -93,7 +93,7 @@ static inline void spvReserve (int size) {
 //  surface must be valid
 //
 //==========================================================================
-static bool CalcSurfMinMax (surface_t *surf, float &outmins, float &outmaxs, const TVec axis, const float offs=0.0f) {
+static bool CalcSurfMinMax (surface_t *surf, float &outmins, float &outmaxs, const TVec axis/*, const float offs=0.0f*/) {
   float mins = +99999.0f;
   float maxs = -99999.0f;
   const TVec *vt = surf->verts;
@@ -159,7 +159,7 @@ void VRenderLevelLightmap::InitSurfs (bool recalcStaticLightmaps, surface_t *ASu
 
       float mins, maxs;
 
-      if (!CalcSurfMinMax(surf, mins, maxs, texinfo->saxisLM, texinfo->soffs)) {
+      if (!CalcSurfMinMax(surf, mins, maxs, texinfo->saxisLM/*, texinfo->soffs*/)) {
         // bad surface
         surf->drawflags &= ~surface_t::DF_CALC_LMAP; // just in case
         continue;
@@ -180,7 +180,7 @@ void VRenderLevelLightmap::InitSurfs (bool recalcStaticLightmaps, surface_t *ASu
         surf->extents[0] = (bmaxs-bmins)*16;
       }
 
-      if (!CalcSurfMinMax(surf, mins, maxs, texinfo->taxisLM, texinfo->toffs)) {
+      if (!CalcSurfMinMax(surf, mins, maxs, texinfo->taxisLM/*, texinfo->toffs*/)) {
         // bad surface
         surf->drawflags &= ~surface_t::DF_CALC_LMAP; // just in case
         continue;
