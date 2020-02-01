@@ -937,6 +937,23 @@ bool VCvar::Command (const TArray<VStr> &Args) {
 
 //==========================================================================
 //
+//  VCvar::GetPrefixedList
+//
+//  unsorted; prefix is case-insensitive; doesn't clear list
+//
+//==========================================================================
+void VCvar::GetPrefixedList (TArray<VStr> &list, VStr pfx) {
+  for (vuint32 bkn = 0; bkn < CVAR_HASH_SIZE; ++bkn) {
+    for (VCvar *cvar = cvhBuckets[bkn]; cvar; cvar = cvar->nextInBucket) {
+      if (!pfx.isEmpty() && !VStr::startsWithCI(cvar->Name, *pfx)) continue;
+      list.append(VStr(cvar->Name));
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  VCvar::countCVars
 //
 //==========================================================================

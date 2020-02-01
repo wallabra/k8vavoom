@@ -83,7 +83,7 @@ public:
 
   static void AddAllVarsToAutocomplete (void (*addfn) (const char *name));
 
-  inline CVType GetType () const { return Type; }
+  inline CVType GetType () const noexcept { return Type; }
   // this will coerce values, if necessary
   void SetType (CVType atype);
 
@@ -93,27 +93,27 @@ public:
   void SetDefault (VStr value);
 
   // this clears modified flag on call
-  inline bool IsModified () {
+  inline bool IsModified () noexcept {
     bool ret = !!(Flags&CVAR_Modified);
     // clear modified flag
     Flags &= ~CVAR_Modified;
     return ret;
   }
 
-  inline bool IsModifiedNoClear () const { return !!(Flags&CVAR_Modified); }
+  inline bool IsModifiedNoClear () const noexcept { return !!(Flags&CVAR_Modified); }
 
-  inline bool IsPreInit () const { return !!(Flags&CVAR_PreInit); }
-  inline bool IsModVar () const { return ((Flags&CVAR_FromMod) != 0); }
+  inline bool IsPreInit () const noexcept { return !!(Flags&CVAR_PreInit); }
+  inline bool IsModVar () const noexcept { return ((Flags&CVAR_FromMod) != 0); }
 
-  inline bool asBool () const { return BoolValue; }
-  inline int asInt () const { return IntValue; }
-  inline float asFloat () const { return FloatValue; }
-  inline VStr asStr () const { return StringValue; }
+  inline bool asBool () const noexcept { return BoolValue; }
+  inline int asInt () const noexcept { return IntValue; }
+  inline float asFloat () const noexcept { return FloatValue; }
+  inline VStr asStr () const noexcept { return StringValue; }
 
-  inline int GetFlags () const { return Flags; }
-  inline const char *GetName () const { return Name; }
-  inline const char *GetHelp () const { return (HelpString ? HelpString : "no help yet: FIXME!!!"); }
-  inline const char *GetDefault () const { return DefaultString; }
+  inline int GetFlags () const noexcept { return Flags; }
+  inline const char *GetName () const noexcept { return Name; }
+  inline const char *GetHelp () const noexcept { return (HelpString ? HelpString : "no help yet: FIXME!!!"); }
+  inline const char *GetDefault () const noexcept { return DefaultString; }
 
   static void Init ();
   static void Shutdown ();
@@ -151,7 +151,7 @@ public:
   static void Unlatch ();
 
   static inline void SetCheating (bool newState) { Cheating = newState; }
-  static inline bool GetCheating () { return Cheating; }
+  static inline bool GetCheating () noexcept { return Cheating; }
 
   static VCvar *FindVariable (const char *name);
 
@@ -159,6 +159,9 @@ public:
 
   // call this to disable setting `CVAR_Init` cvars
   static void HostInitComplete ();
+
+  // unsorted; prefix is case-insensitive; doesn't clear list
+  static void GetPrefixedList (TArray<VStr> &list, VStr pfx);
 
 public:
   // required for various console commands
