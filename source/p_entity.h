@@ -276,6 +276,7 @@ class VEntity : public VThinker {
     EFEX_NoInteraction = 1u<<3u, // moved from EntityEx
     EFEX_NoTickGrav    = 1u<<4u, // do not call `Tick()` (but process gravity)
     EFEX_PseudoCorpse  = 1u<<5u, // for sprite fixer
+    EFEX_FloatBob      = 1u<<6u, // use float bobbing z movement
   };
   vuint32 FlagsEx;
 
@@ -533,6 +534,9 @@ public:
   inline bool IsMonster () const noexcept { return !!(FlagsEx&EFEX_Monster); }
   inline bool IsNoInteraction () const noexcept { return !!(FlagsEx&EFEX_NoInteraction); }
   inline bool IsPlayerOrMonster () const noexcept { return !!(EntityFlags&(EF_IsPlayer|EFEX_Monster)); }
+  // floating, flying, floatbob; used in renderer to disable sprite offset fix
+  inline bool IsAnyAerial () const noexcept { return !!((EntityFlags&(EF_Float|EF_Fly))|(FlagsEx&EFEX_FloatBob)); }
+  inline bool IsFloatBob () const noexcept { return !!(FlagsEx&EFEX_FloatBob); }
 
   enum EType {
     ET_Unknown,

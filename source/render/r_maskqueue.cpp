@@ -458,7 +458,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
   if (r_brightmaps && r_brightmaps_sprite && Tex->nofullbright) light = seclight; // disable fullbright
 
   int fixAlgo = r_fix_sprite_offsets.asInt();
-  if (fixAlgo < 0) fixAlgo = 0; // just in case
+  if (fixAlgo < 0 || thing->IsFloatBob()) fixAlgo = 0; // just in case
 
   int TexWidth = Tex->GetWidth();
   int TexHeight = Tex->GetHeight();
@@ -491,8 +491,13 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
   // don't bother with projectiles, they're usually flying anyway
   if (fixAlgo && !r_fix_sprite_offsets_missiles && thing->IsMissile()) fixAlgo = 0;
   // do not fix offset for flying monsters (but fix flying corpses, just in case)
-  if (fixAlgo && !thing->IsAnyCorpse()) {
-    if (thing->EntityFlags&(VEntity::EF_Float|VEntity::EF_Fly)) fixAlgo = 0;
+  if (fixAlgo && thing->IsAnyAerial()) {
+    if (thing->IsAnyCorpse()) {
+      // don't fix if it is not on a floor
+      if (thing->Origin.z != thing->FloorZ) fixAlgo = 0;
+    } else {
+      fixAlgo = 0;
+    }
   }
   if (fixAlgo) {
     if (fixAlgo > 1) {

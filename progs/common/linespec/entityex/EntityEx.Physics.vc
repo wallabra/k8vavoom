@@ -248,12 +248,14 @@ bool Physics (float DeltaTime) {
   //if (Velocity.x || Velocity.y) ApplyFriction(DeltaTime);
 
   if (bFloatBob) {
+    float oldFloatZ = Origin.z;
     if (bSpecial) {
       // floating item bobbing motion (special1 is height)
       if (Sector && Sector->bHasExtrafloors) {
         // make sure FloorZ is from bottom region
         Origin.z = ONFLOORZ;
         LinkToWorld();
+        if (fabs(oldFloatZ-Origin.z) >= 10) oldFloatZ = Origin.z;
       }
       FloatBobPhase += DeltaTime;
       if (Sector) Origin.z = GetPointZClamped(ref Sector->floor, Origin)+Special1f+Level.Game.FloatBobOffsets[int(FloatBobPhase*35.0)&63];
@@ -269,6 +271,10 @@ bool Physics (float DeltaTime) {
       Origin.z += Level.Game.FloatBobOffsets[int(FloatBobPhase*35.0)&63];
       if (!TestMobjZ()) Origin.z = savedz;
     }
+
+    // interpolation
+    float diffz = oldFloatZ-Origin.z;
+    if (diffz < 10) tmp_phys_z_change += diffz;
   }
 
   // k8: thingy bridges should be checked even if we have zero vertical velocity.

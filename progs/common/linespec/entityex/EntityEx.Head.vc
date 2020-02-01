@@ -193,7 +193,7 @@ bool bDynamicLight; // dynamic light source
 bool bLeaveTrail; // leave particles trail type 1 (Rocket)
 bool bLeaveTrail2; // leave particles trail type 2 (Grenade)
 bool bTriggerHappy;
-bool bFloatBob; // use float bobbing z movement
+//bool bFloatBob; // use float bobbing z movement (moved to `Entity`)
 bool bOnmobjCopyVel;
 bool bNoBounceSound; // don't make sound when bouncing
 bool bNoWallBounceSnd; // don't make sound when bouncing off a wall
