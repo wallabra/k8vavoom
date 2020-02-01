@@ -138,7 +138,12 @@ static VStr DoCvarCompletions (const TArray<VStr> &args, int aidx) {
   VStr prefix = (aidx < args.length() ? args[aidx] : VStr());
   if (aidx == 1) {
     VCvar::GetPrefixedList(list, prefix);
-    return VCommand::AutoCompleteFromListCmd(prefix, list);
+    if (list.length() > 127) {
+      GCon->Logf("\034[Gold]There are %d matches; please, be more specific.", list.length());
+      return VStr::EmptyString;
+    } else {
+      return VCommand::AutoCompleteFromListCmd(prefix, list);
+    }
   } else {
     return VStr::EmptyString;
   }
@@ -156,7 +161,7 @@ COMMAND_WITH_AC(cvar_whatis) {
   } else {
     VCvar *cvar = VCvar::FindVariable(*(Args[1]));
     if (cvar) {
-      GCon->Logf("%s: %s", cvar->GetName(), cvar->GetHelp());
+      GCon->Logf("\034[Green]%s: \034[Gold]%s", cvar->GetName(), cvar->GetHelp());
     } else {
       GCon->Logf("Unknown cvar: '%s'", *(Args[1]));
     }
