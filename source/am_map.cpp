@@ -232,50 +232,24 @@ static VCvarB am_draw_keys("am_draw_keys", true, "Draw keys on automap?", CVAR_A
 static VCvarF am_keys_blink_time("am_keys_blink_time", "0.4", "Keys blinking time in seconds (set to 0 to disable)", CVAR_Archive);
 
 
-// cached color from cvar
-struct ColorCV {
-protected:
-  VCvarS *cvar;
-  vuint32 color;
-  VStr oldval; // as `VStr` are COWs, comparing the same string to itself is cheap
-  float oldAlpha;
-
-public:
-  ColorCV (VCvarS *acvar) : cvar(acvar), color(0), oldval(VStr::EmptyString), oldAlpha(-666.0f) {}
-
-  inline vuint32 getColor () {
-    VStr nval = cvar->asStr();
-    if (nval != oldval || am_overlay_alpha != oldAlpha) {
-      oldval = nval;
-      oldAlpha = am_overlay_alpha;
-      color = M_ParseColor(*nval)&0xffffffu;
-      color |= ((vuint32)((oldAlpha < 0.0f ? 0.1f : oldAlpha > 1.0f ? 1.0f : oldAlpha)*255))<<24u;
-      //GCon->Logf("updated automap color from '%s'", cvar->GetName());
-    }
-    return color;
-  }
-
-  inline operator vuint32 () { return getColor(); }
-};
-
 // cached colors
-static ColorCV WallColor(&am_color_wall);
-static ColorCV TSWallColor(&am_color_tswall);
-static ColorCV FDWallColor(&am_color_fdwall);
-static ColorCV CDWallColor(&am_color_cdwall);
-static ColorCV EXWallColor(&am_color_exwall);
-static ColorCV SecretWallColor(&am_color_secretwall);
-static ColorCV PowerWallColor(&am_color_power);
-static ColorCV GridColor(&am_color_grid);
-static ColorCV ThingColor(&am_color_thing);
-static ColorCV InvisibleThingColor(&am_color_invisible);
-static ColorCV SolidThingColor(&am_color_solid);
-static ColorCV MonsterColor(&am_color_monster);
-static ColorCV MissileColor(&am_color_missile);
-static ColorCV DeadColor(&am_color_dead);
-static ColorCV PlayerColor(&am_color_player);
-static ColorCV MinisegColor(&am_color_miniseg);
-static ColorCV CurrMarkColor(&am_color_current_mark);
+static ColorCV WallColor(&am_color_wall, &am_overlay_alpha);
+static ColorCV TSWallColor(&am_color_tswall, &am_overlay_alpha);
+static ColorCV FDWallColor(&am_color_fdwall, &am_overlay_alpha);
+static ColorCV CDWallColor(&am_color_cdwall, &am_overlay_alpha);
+static ColorCV EXWallColor(&am_color_exwall, &am_overlay_alpha);
+static ColorCV SecretWallColor(&am_color_secretwall, &am_overlay_alpha);
+static ColorCV PowerWallColor(&am_color_power, &am_overlay_alpha);
+static ColorCV GridColor(&am_color_grid, &am_overlay_alpha);
+static ColorCV ThingColor(&am_color_thing, &am_overlay_alpha);
+static ColorCV InvisibleThingColor(&am_color_invisible, &am_overlay_alpha);
+static ColorCV SolidThingColor(&am_color_solid, &am_overlay_alpha);
+static ColorCV MonsterColor(&am_color_monster, &am_overlay_alpha);
+static ColorCV MissileColor(&am_color_missile, &am_overlay_alpha);
+static ColorCV DeadColor(&am_color_dead, &am_overlay_alpha);
+static ColorCV PlayerColor(&am_color_player, &am_overlay_alpha);
+static ColorCV MinisegColor(&am_color_miniseg, &am_overlay_alpha);
+static ColorCV CurrMarkColor(&am_color_current_mark, &am_overlay_alpha);
 
 
 static int leveljuststarted = 1; // kluge until AM_LevelInit() is called

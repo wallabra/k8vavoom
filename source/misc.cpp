@@ -72,6 +72,7 @@ __attribute__((format(printf, 3, 4))) void FOutputDevice::Logf (EName Type, cons
 //  superatoi
 //
 //==========================================================================
+/*
 int superatoi (const char *s) noexcept {
   int n = 0, r = 10, x, mul = 1;
   const char *c=s;
@@ -92,6 +93,7 @@ int superatoi (const char *s) noexcept {
   }
   return mul*n;
 }
+*/
 
 
 //==========================================================================

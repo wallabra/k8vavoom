@@ -51,17 +51,75 @@ public:
 //extern FOutputDevice *GLogHostError;
 
 
-VVA_CHECKRESULT int superatoi (const char *s) noexcept;
-
 //VVA_CHECKRESULT int ParseHex (const char *Str);
 VVA_CHECKRESULT vuint32 M_LookupColorName (const char *Name); // returns 0 if not found (otherwise high bit is set)
 // this returns color with high byte set to `0xff` (and black color for unknown names)
 // but when `retZeroIfInvalid` is `true`, it returns `0` for unknown color
+// format: ff_RR_GG_BB
 VVA_CHECKRESULT vuint32 M_ParseColor (const char *Name, bool retZeroIfInvalid=false);
 
 // this also parses numeric skills
 // returns -1 on error, or skill number (0-based)
 VVA_CHECKRESULT int M_SkillFromName (const char *skname);
+
+static VVA_CHECKRESULT VVA_OKUNUSED inline vuint8 M_GetColorA (vuint32 clr) noexcept { return (clr>>24)&0xff; }
+static VVA_CHECKRESULT VVA_OKUNUSED inline vuint8 M_GetColorR (vuint32 clr) noexcept { return (clr>>16)&0xff; }
+static VVA_CHECKRESULT VVA_OKUNUSED inline vuint8 M_GetColorG (vuint32 clr) noexcept { return (clr>>8)&0xff; }
+static VVA_CHECKRESULT VVA_OKUNUSED inline vuint8 M_GetColorB (vuint32 clr) noexcept { return clr&0xff; }
+
+static VVA_CHECKRESULT VVA_OKUNUSED inline vuint32 M_RGBA (int r, int g, int b, int a=255) noexcept {
+  return
+    ((vuint32)clampToByte(a)<<24)|
+    ((vuint32)clampToByte(r)<<16)|
+    ((vuint32)clampToByte(g)<<8)|
+    ((vuint32)clampToByte(b));
+}
+
+
+// cached color from cvar
+struct ColorCV {
+private:
+  VCvarS *cvar;
+  VCvarF *cvarAlpha;
+  vuint32 color;
+  VStr oldval; // as `VStr` are COWs, comparing the same string to itself is cheap
+  float fltR, fltG, fltB, fltA;
+
+private:
+  inline void updateCache () {
+    VStr nval = cvar->asStr();
+    if (nval == oldval && (!cvarAlpha || cvarAlpha->asFloat() == fltA)) return;
+    if (cvarAlpha) fltA = clampval(cvarAlpha->asFloat(), 0.0f, 1.0f);
+    oldval = nval;
+    color = M_ParseColor(*nval)&0xffffffu;
+    color |= ((vuint32)(fltA*255))<<24u;
+    fltR = M_GetColorR(color)/255.0f;
+    fltG = M_GetColorG(color)/255.0f;
+    fltB = M_GetColorB(color)/255.0f;
+  }
+
+public:
+  inline ColorCV (VCvarS *acvar, VCvarF *acvarAlpha=nullptr)
+    : cvar(acvar)
+    , cvarAlpha(acvarAlpha)
+    , color(0)
+    , oldval(VStr::EmptyString)
+    , fltR(0)
+    , fltG(0)
+    , fltB(0)
+    , fltA((acvarAlpha ? -666.0f : 1.0f))
+  {
+  }
+
+  inline vuint32 getColor () { updateCache(); return color; }
+
+  inline float getFloatA () { updateCache(); return fltA; }
+  inline float getFloatR () { updateCache(); return fltR; }
+  inline float getFloatG () { updateCache(); return fltG; }
+  inline float getFloatB () { updateCache(); return fltB; }
+
+  inline operator vuint32 () { return getColor(); }
+};
 
 
 //==========================================================================

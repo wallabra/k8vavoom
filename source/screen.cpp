@@ -469,9 +469,15 @@ static void CheckResolutionChange () {
 //==========================================================================
 COMMAND(SetResolution) {
   if (Args.Num() == 3) {
-    setwidth = superatoi(*Args[1]);
-    setheight = superatoi(*Args[2]);
-    setresolutionneeded = true;
+    int w = VStr::atoi(*Args[1]);
+    int h = VStr::atoi(*Args[2]);
+    if (w >= 160 && h >= 100 && w <= 8192 && h <= 8192) {
+      setwidth = w;
+      setheight = h;
+      setresolutionneeded = true;
+    } else {
+      GCon->Logf(NAME_Error, "SetResolution: invalid resolution (%sx%s)", *Args[1], *Args[2]);
+    }
   } else {
     GCon->Log("SetResolution <width> <height> -- change resolution");
   }
