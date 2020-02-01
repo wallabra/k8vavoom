@@ -25,30 +25,25 @@
 //**************************************************************************
 class AmmoFillup : DummyStrifeItem;
 
+
 //==========================================================================
 //
 //  TryPickup
 //
 //==========================================================================
-
-override bool TryPickup(EntityEx Toucher)
-{
+override bool TryPickup (EntityEx Toucher) {
   PlayerEx(Toucher.Player).GiveAmmo(ClipOfBullets, 0);
   Inventory AmmoItem = Toucher.FindInventory(ClipOfBullets);
-  if (AmmoItem.Amount < 50)
-  {
+  if (AmmoItem.Amount < 50) {
     AmmoItem.Amount = 50;
     GoAwayAndDie();
     return true;
   }
-  else
-  {
-    return false;
-  }
+  return false;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   ConversationID = 298;
   StrifeName = "Ammo";
 }

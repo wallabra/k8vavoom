@@ -25,43 +25,39 @@
 //**************************************************************************
 class PrisonPass : Inventory;
 
+
 //==========================================================================
 //
 //  TryPickup
 //
 //==========================================================================
-
-override bool TryPickup(EntityEx Toucher)
-{
+override bool TryPickup (EntityEx Toucher) {
   ::TryPickup(Toucher);
-  Level.ExecuteActionSpecial(LNSPEC_DoorOpen, 223, 16, 0, 0, 0, nullptr, 0,
-    Toucher);
+  Level.ExecuteActionSpecial(LNSPEC_DoorOpen, 223, 16, 0, 0, 0, nullptr, 0, Toucher);
   return true;
 }
+
 
 //==========================================================================
 //
 //  SpecialDropAction
 //
 //==========================================================================
-
-override bool SpecialDropAction(EntityEx Source)
-{
-  Level.ExecuteActionSpecial(LNSPEC_DoorOpen, 223, 16, 0, 0, 0, nullptr, 0,
-    Source);
+override bool SpecialDropAction (EntityEx Source) {
+  Level.ExecuteActionSpecial(LNSPEC_DoorOpen, 223, 16, 0, 0, 0, nullptr, 0, Source);
   Destroy();
   return true;
 }
 
-states
-{
+
+states {
 Spawn:
   TOKN A -1
   Stop
 }
 
-defaultproperties
-{
+
+defaultproperties {
   ConversationID = 304;
   PickupMessage = "$txt_prisonpass";
   MaxAmount = 1;

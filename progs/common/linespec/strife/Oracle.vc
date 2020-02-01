@@ -23,24 +23,18 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class Oracle : Actor
-  game(GAME_Strife)
-  __mobjinfo__(199);
+class Oracle : Actor game(GAME_Strife) __mobjinfo__(199);
+
 
 //==========================================================================
 //
 //  A_OracleDeath
 //
 //==========================================================================
-
-[decorate] final void A_OracleDeath()
-{
+[decorate] final void A_OracleDeath () {
   Actor A;
-
-  foreach AllThinkers(AlienSpectre3, A)
-  {
-    if (A && A.bMonster && A.Health > 0)
-    {
+  foreach AllThinkers(AlienSpectre3, A) {
+    if (A && A.bMonster && A.Health > 0) {
       A.Sector->SoundTarget = LastHeard;
       A.LastHeard = LastHeard;
       A.Target = Target;
@@ -49,8 +43,8 @@ class Oracle : Actor
   }
 }
 
-states
-{
+
+states {
 Spawn:
   ORCL A -1
   Stop
@@ -64,8 +58,8 @@ Death:
   Stop
 }
 
-defaultproperties
-{
+
+defaultproperties {
   ConversationID = 65;
   StrifeName = "ORACLE";
   Health = 1;

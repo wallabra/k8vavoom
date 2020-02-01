@@ -25,25 +25,21 @@
 //**************************************************************************
 class UpgradeAccuracy : DummyStrifeItem;
 
+
 //==========================================================================
 //
 //  TryPickup
 //
 //==========================================================================
-
-override bool TryPickup(EntityEx Toucher)
-{
-  if (!Toucher.Player || PlayerEx(Toucher.Player).Accuracy >= MaxAmount)
-  {
-    return false;
-  }
+override bool TryPickup (EntityEx Toucher) {
+  if (!Toucher.Player || PlayerEx(Toucher.Player).Accuracy >= MaxAmount) return false;
   PlayerEx(Toucher.Player).Accuracy += Amount;
   GoAwayAndDie();
   return true;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   ConversationID = 307;
   Amount = 10;
   MaxAmount = 100;

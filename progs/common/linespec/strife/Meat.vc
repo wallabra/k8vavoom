@@ -25,20 +25,19 @@
 //**************************************************************************
 class Meat : Actor;
 
+
 //==========================================================================
 //
 //  OnMapSpawn
 //
 //==========================================================================
-
-override void OnMapSpawn(mthing_t *mthing)
-{
+override void OnMapSpawn (mthing_t *mthing) {
   ::OnMapSpawn(mthing);
-  SetState(GetStatePlus(IdleState, P_Random() % 20, IgnoreJump:true));
+  SetState(GetStatePlus(IdleState, P_Random()%20, IgnoreJump:true));
 }
 
-states
-{
+
+states {
 Spawn:
   MEAT A 700
   Stop
@@ -82,8 +81,8 @@ Spawn:
   Stop
 }
 
-defaultproperties
-{
+
+defaultproperties {
   bNoBlockmap = true;
   bColideWithThings = false;
   bColideWithWorld = false;

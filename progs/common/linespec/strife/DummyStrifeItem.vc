@@ -28,17 +28,14 @@
 //**  to perform some action.
 //**
 //**************************************************************************
+class DummyStrifeItem : Inventory abstract;
 
-class DummyStrifeItem : Inventory
-  abstract;
-
-states
-{
+states {
 Spawn:
   TOKN A -1
   Stop
 }
 
-defaultproperties
-{
+
+defaultproperties {
 }

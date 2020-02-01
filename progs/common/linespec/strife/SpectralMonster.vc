@@ -23,255 +23,196 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class SpectralMonster : Actor
-  abstract;
+class SpectralMonster : Actor abstract;
+
 
 //==========================================================================
 //
 //  Touch
 //
 //==========================================================================
-
-override bool Touch(Entity InOther)
-{
+override bool Touch (Entity InOther) {
   EntityEx(InOther).Damage(self, self, 5, 'Melee', spawnBlood:true);
-
   return ::Touch(InOther);
 }
+
 
 //==========================================================================
 //
 //  A_Spectre2Attack
 //
 //==========================================================================
-
-[decorate] final void A_Spectre2Attack()
-{
-  EntityEx A;
-
+[decorate] final void A_Spectre2Attack () {
   if (!Target) return;
-
   A_FaceTarget();
-
-  A = SpawnMissile(Target, SpectralLightningH2);
+  EntityEx A = SpawnMissile(Target, SpectralLightningH2);
 }
+
 
 //==========================================================================
 //
 //  A_Spectre3Attack
 //
 //==========================================================================
-
-[decorate] final void A_Spectre3Attack()
-{
-  EntityEx spread;
-  int i;
-
+[decorate] final void A_Spectre3Attack () {
   if (!Target) return;
 
   A_FaceTarget();
 
-  for (i = 0; i < 20; i++)
-  {
-    spread = SpawnMissile(Target, SpectralLightningBall2);
-    if (spread)
-    {
+  foreach (int i; 0..20) {
+    EntityEx spread = SpawnMissile(Target, SpectralLightningBall2);
+    if (spread) {
       spread.bSpectral = false;
-      spread.Angles.yaw = AngleMod360(spread.Angles.yaw - 90.0 + float(i) * (45.0 / 4.0));
-      spread.Velocity.x = spread.Speed * cos(spread.Angles.yaw);
-      spread.Velocity.y = spread.Speed * sin(spread.Angles.yaw);
+      spread.Angles.yaw = AngleMod360(spread.Angles.yaw-90.0+float(i)*(45.0/4.0));
+      spread.Velocity.x = spread.Speed*cos(spread.Angles.yaw);
+      spread.Velocity.y = spread.Speed*sin(spread.Angles.yaw);
     }
   }
 
-  spread = Spawn(SpectralLightningV1, Origin + vector(0.0, 0.0, -Height));
-  spread.bNoGravity = false;
-  spread.bSpectral = false;
-  spread.Target = self;
-  spread.Velocity.x = 0.001;
-  spread.Velocity.y = 0.001;
-  spread.CheckMissileSpawn();
+  EntityEx spread = Spawn(SpectralLightningV1, Origin+vector(0.0, 0.0, -Height));
+  if (spread) {
+    spread.bNoGravity = false;
+    spread.bSpectral = false;
+    spread.Target = self;
+    spread.Velocity.x = 0.001;
+    spread.Velocity.y = 0.001;
+    spread.CheckMissileSpawn();
+  }
 }
+
 
 //==========================================================================
 //
 //  A_Spectre4Attack
 //
 //==========================================================================
-
-[decorate] final void A_Spectre4Attack()
-{
-  EntityEx A;
-
+[decorate] final void A_Spectre4Attack () {
   if (!Target) return;
-
   A_FaceTarget();
-
-  A = SpawnMissile(Target, SpectralLightningBigV2);
+  EntityEx A = SpawnMissile(Target, SpectralLightningBigV2);
 }
+
 
 //==========================================================================
 //
 //  A_Spectre5Attack
 //
 //==========================================================================
-
-[decorate] final void A_Spectre5Attack()
-{
-  EntityEx A;
-
+[decorate] final void A_Spectre5Attack () {
   if (!Target) return;
-
   A_FaceTarget();
-
-  A = SpawnMissile(Target, SpectralLightningBigBall2);
+  EntityEx A = SpawnMissile(Target, SpectralLightningBigBall2);
 }
+
 
 //==========================================================================
 //
 //  A_SpectreChunkSmall
 //
 //==========================================================================
-
-[decorate] final void A_SpectreChunkSmall()
-{
+[decorate] final void A_SpectreChunkSmall () {
   TossUpObject(AlienChunkSmall);
 }
+
 
 //==========================================================================
 //
 //  A_SpectreChunkLarge
 //
 //==========================================================================
-
-[decorate] final void A_SpectreChunkLarge()
-{
+[decorate] final void A_SpectreChunkLarge () {
   TossUpObject(AlienChunkLarge);
 }
+
 
 //==========================================================================
 //
 //  A_AlienSpectreDeath
 //
 //==========================================================================
-
-[decorate] final void A_AlienSpectreDeath()
-{
-  //  We need this so that Sigil is dropped.
+[decorate] final void A_AlienSpectreDeath () {
+  // we need this so that Sigil is dropped
   A_NoBlocking();
 
-  if (!CheckBossDeath())
-  {
-    return;
-  }
+  if (!CheckBossDeath()) return;
 
   // victory!
-  if (Class == AlienSpectre1)
-  {
-    //  Specter in ruined temple.
-    LineSpecialLevelInfo(Level).EV_DoFloor(999, 8, 0, 0, 0,
-      FloorMover::FLOOREV_LowerToLowest, nullptr);
+  if (Class == AlienSpectre1) {
+    // specter in ruined temple
+    LineSpecialLevelInfo(Level).EV_DoFloor(999, 8, 0, 0, 0, FloorMover::FLOOREV_LowerToLowest, nullptr);
     PlayerEx(Target.Player).SetObjectives(95);
     PlayerEx(Target.Player).ClientVoice(95);
-  }
-  else if (Class == AlienSpectre2)
-  {
-    //  Bishop's specter
+  } else if (Class == AlienSpectre2) {
+    // bishop's specter
     if (!Target) return;
-
     Target.Player.cprint("$txt_killed_bishop");
     Target.GiveInventoryType(QuestItem21);
     PlayerEx(Target.Player).SetObjectives(74);
     PlayerEx(Target.Player).ClientVoice(74);
-  }
-  else if (Class == AlienSpectre3)
-  {
-    //  Oracle's specter
+  } else if (Class == AlienSpectre3) {
+    // oracle's specter
     if (!Target) return;
-
     Actor A;
-
-    foreach AllThinkers(Oracle, A)
-    {
-      if (A && A.bMonster && A.Health > 0)
-      {
-        // Kill the oracle if his specter dies...
+    foreach AllThinkers(Oracle, A) {
+      if (A && A.bMonster && A.Health > 0) {
+        // kill the oracle if his specter dies...
         EntityEx(A).Damage(none, none, 10000, spawnBlood:true);
       }
     }
-
     Target.Player.cprint("$txt_killed_oracle");
     Target.GiveInventoryType(QuestItem23);
-    if (Target.FindInventory(QuestItem21))
-    {
-      //  If the Bishop is dead, set quest item 22
+    if (Target.FindInventory(QuestItem21)) {
+      // if the Bishop is dead, set quest item 22
       Target.GiveInventoryType(QuestItem22);
     }
-    if (Target.FindInventory(QuestItem24))
-    {
+    if (Target.FindInventory(QuestItem24)) {
       PlayerEx(Target.Player).SetObjectives(85);
       PlayerEx(Target.Player).ClientVoice(85);
-    }
-    else
-    {
+    } else {
       PlayerEx(Target.Player).SetObjectives(87);
       PlayerEx(Target.Player).ClientVoice(87);
     }
     Level.ExecuteActionSpecial(LNSPEC_DoorOpen, 222, 256, 0, 0, 0, nullptr, 0, none);
   }
-  else if (Class == AlienSpectre4)
-  {
-    //  Macil's specter
+  else if (Class == AlienSpectre4) {
+    // macil's specter
     if (!Target) return;
-
     Target.Player.cprint("$txt_killed_macil");
     Target.GiveInventoryType(QuestItem24);
-    if (Target.FindInventory(QuestItem25))
-    {
+    if (Target.FindInventory(QuestItem25)) {
       PlayerEx(Target.Player).SetObjectives(106);
       PlayerEx(Target.Player).ClientVoice(106);
-    }
-    else
-    {
+    } else {
       PlayerEx(Target.Player).SetObjectives(79);
       PlayerEx(Target.Player).ClientVoice(79);
     }
-  }
-  else if (Class == AlienSpectre5)
-  {
-    //  Loremaster's specter
+  } else if (Class == AlienSpectre5) {
+    // loremaster's specter
     if (!Target) return;
-
     Target.Player.cprint("$txt_killed_loremaster");
     Target.GiveInventoryType(QuestItem26);
     Target.GiveInventoryType(UpgradeAccuracy);
     Target.GiveInventoryType(UpgradeStamina);
-    if (GetSigilPieces() == 5)
-    {
+    if (GetSigilPieces() == 5) {
       PlayerEx(Target.Player).SetObjectives(85);
       PlayerEx(Target.Player).ClientVoice(85);
-    }
-    else
-    {
+    } else {
       PlayerEx(Target.Player).SetObjectives(83);
       PlayerEx(Target.Player).ClientVoice(83);
     }
-    LineSpecialLevelInfo(Level).EV_DoFloor(666, 8, 0, 0, 0,
-      FloorMover::FLOOREV_LowerToLowest, nullptr);
+    LineSpecialLevelInfo(Level).EV_DoFloor(666, 8, 0, 0, 0, FloorMover::FLOOREV_LowerToLowest, nullptr);
   }
 }
+
 
 //==========================================================================
 //
 //  A_EntityAttack
 //
 //==========================================================================
-
-[decorate] final void A_EntityAttack()
-{
+[decorate] final void A_EntityAttack () {
   if (!Target) return;
-
   A_FaceTarget();
-
   float r = Random();
        if (r < 0.25) A_Spectre3Attack();
   else if (r < 0.375) A_SpotLightning();
@@ -280,63 +221,49 @@ override bool Touch(Entity InOther)
   else A_Spectre2Attack();
 }
 
+
 //==========================================================================
 //
 //  A_EntityDeath
 //
 //==========================================================================
-
-[decorate] final void A_EntityDeath()
-{
+[decorate] final void A_EntityDeath () {
   EntityEx Spot = Tracer;
-  if (!Spot)
-  {
-    Spot = self;
-  }
+  if (!Spot) Spot = self;
   TVec BossSpawnPos = Spot.Origin;
-  if (Tracer)
-  {
-    BossSpawnPos.z += 70.0;
-  }
+  if (Tracer) BossSpawnPos.z += 70.0;
 
-  //  Of course this isn't 100% accurate, but it does its job   -kaiser
-  EntityEx Sub = Spawn(EntitySecond, BossSpawnPos + vector(-240.0, -float(P_Random() & 192), 0.0));
+  // of course this isn't 100% accurate, but it does its job   -kaiser
+  EntityEx Sub = Spawn(EntitySecond, BossSpawnPos+vector(-240.0, -float(P_Random()&192), 0.0));
   Sub.CopyFriendliness(self, true);
-  Sub = Spawn(EntitySecond, BossSpawnPos + vector(-float(P_Random() & 192), 240.0, 0.0));
+  Sub = Spawn(EntitySecond, BossSpawnPos+vector(-float(P_Random()&192), 240.0, 0.0));
   Sub.CopyFriendliness(self, true);
-  Sub = Spawn(EntitySecond, BossSpawnPos + vector(float(P_Random() & 192), -240.0, 0.0));
+  Sub = Spawn(EntitySecond, BossSpawnPos+vector(float(P_Random()&192), -240.0, 0.0));
   Sub.CopyFriendliness(self, true);
 }
+
 
 //==========================================================================
 //
 //  A_SubEntityDeath
 //
 //==========================================================================
-
-[decorate] final void A_SubEntityDeath()
-{
-  if (!CheckBossDeath())
-  {
-    return;
-  }
+[decorate] final void A_SubEntityDeath () {
+  if (!CheckBossDeath()) return;
 
   // victory!
   if (!Target) return;
 
-  if (Target.FindInventory(QuestItem25))
-  {
+  if (Target.FindInventory(QuestItem25)) {
     PlayerEx(Target.Player).ClientFinaleType(0);
-  }
-  else
-  {
+  } else {
     PlayerEx(Target.Player).ClientFinaleType(2);
   }
   Level.Completed(-1, -1, 0);
 }
 
-defaultproperties
-{
+
+defaultproperties {
   bSolid = true;
   bShootable = true;
   bCountKill = true;

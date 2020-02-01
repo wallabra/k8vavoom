@@ -23,27 +23,21 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class ForceFieldGuard : Actor
-  game(GAME_Strife)
-  __mobjinfo__(25);
+class ForceFieldGuard : Actor game(GAME_Strife) __mobjinfo__(25);
+
 
 //==========================================================================
 //
 //  TakeSpecialDamage
 //
 //==========================================================================
-
-override int TakeSpecialDamage(EntityEx inflictor, EntityEx source, int damage, name DmgType, optional bool forced)
-{
-  if (!DegninOre(inflictor))
-  {
-    return -1;
-  }
+override int TakeSpecialDamage (EntityEx inflictor, EntityEx source, int damage, name DmgType, optional bool forced) {
+  if (!DegninOre(inflictor)) return -1; // prevent any damage
   return Health;
 }
 
-states
-{
+
+states {
 Spawn:
   TOKN A -1
   Stop
@@ -52,8 +46,8 @@ Death:
   Stop
 }
 
-defaultproperties
-{
+
+defaultproperties {
   Health = 10;
   Radius = 2.0;
   Height = 1.0;

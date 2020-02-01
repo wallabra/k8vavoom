@@ -23,39 +23,32 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class Scanner : PowerupGiver
-  game(GAME_Strife)
-  __mobjinfo__(2027);
+class Scanner : PowerupGiver game(GAME_Strife) __mobjinfo__(2027);
+
 
 //==========================================================================
 //
 //  Use
 //
 //==========================================================================
-
-override bool Use(bool Pickup)
-{
-  if (!Owner.bIsPlayer)
-  {
-    return false;
-  }
-  if (!Owner.Player.bAutomapRevealed)
-  {
+override bool Use (bool Pickup) {
+  if (!Owner.bIsPlayer) return false;
+  if (!Owner.Player.bAutomapRevealed) {
     Owner.Player.cprint("$txt_needmap");
     return false;
   }
   return ::Use(Pickup);
 }
 
-states
-{
+
+states {
 Spawn:
   PMUP AB 6 Bright
   Loop
 }
 
-defaultproperties
-{
+
+defaultproperties {
   ConversationID = 165;
   PowerupType = PowerScanner;
   PickupMessage = "$txt_scanner";

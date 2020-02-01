@@ -25,36 +25,33 @@
 //**************************************************************************
 class CloseDoor222 : DummyStrifeItem;
 
+
 //==========================================================================
 //
 //  TryPickup
 //
 //==========================================================================
-
-override bool TryPickup(EntityEx Toucher)
-{
-  Level.ExecuteActionSpecial(LNSPEC_DoorClose, 222, 16, 0, 0, 0, nullptr, 0,
-    Toucher);
+override bool TryPickup (EntityEx Toucher) {
+  Level.ExecuteActionSpecial(LNSPEC_DoorClose, 222, 16, 0, 0, 0, nullptr, 0, Toucher);
   GoAwayAndDie();
   return true;
 }
+
 
 //==========================================================================
 //
 //  SpecialDropAction
 //
 //==========================================================================
-
-override bool SpecialDropAction(EntityEx Dropper)
-{
+override bool SpecialDropAction (EntityEx Dropper) {
   Level.ExecuteActionSpecial(LNSPEC_DoorClose, 222, 16, 0, 0, 0, nullptr, 0, Dropper.Target);
-  if (Dropper.Target.bIsPlayer) Dropper.Target.Player.cprint("You\'re dead!  You set off the alarm.");
+  if (Dropper.Target.bIsPlayer) Dropper.Target.Player.cprint("You're dead!  You set off the alarm.");
   LineSpecialLevelInfo(Level).NoiseAlert(Dropper.Target, Dropper.Target);
   Destroy();
   return true;
 }
 
-defaultproperties
-{
+
+defaultproperties {
   ConversationID = 303;
 }

@@ -25,29 +25,21 @@
 //**************************************************************************
 class PoisonBolt : Actor;
 
+
 //==========================================================================
 //
 //  TakeSpecialDamage
 //
 //==========================================================================
-
-override int DoSpecialDamage(EntityEx victim, EntityEx source, int damage)
-{
+override int DoSpecialDamage (EntityEx victim, EntityEx source, int damage) {
   A_AttackAlert(source, victim);
-  if (victim.bNoBlood)
-  {
-    // Don't damage actors that don't take poison damage
-    return -1;
-  }
-  if (victim.Health < 100000)
-  {
-    return victim.Health + 10;
-  }
+  if (victim.bNoBlood) return -1; // don't damage actors that don't take poison damage
+  if (victim.Health < 100000) return victim.Health+10;
   return 1;
 }
 
-states
-{
+
+states {
 Spawn:
   ARWP A 10 A_ActiveSound
   Loop
@@ -56,8 +48,8 @@ Death:
   Stop
 }
 
-defaultproperties
-{
+
+defaultproperties {
   Radius = 10.0;
   Height = 10.0;
   Speed = 1050.0;

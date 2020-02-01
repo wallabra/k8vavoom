@@ -24,72 +24,59 @@
 //**
 //**************************************************************************
 // 289 287
+class PowerCoupling : Actor game(GAME_Strife) __mobjinfo__(220);
 
-class PowerCoupling : Actor
-  game(GAME_Strife)
-  __mobjinfo__(220);
 
 //==========================================================================
 //
 //  Died
 //
 //==========================================================================
-
-override void Died(EntityEx source, EntityEx inflictor)
-{
-  int i;
-
+override void Died (EntityEx source, EntityEx inflictor) {
   ::Died(source, inflictor);
 
-  for (i = 0; i < MAXPLAYERS; ++i)
-  {
-    if (Level.Game.Players[i] && Level.Game.Players[i].bSpawned &&
-      Level.Game.Players[i].Health > 0)
-    {
+  int plridx = -1;
+  foreach (int i; 0..MAXPLAYERS) {
+    if (Level.Game.Players[i] && Level.Game.Players[i].bSpawned && Level.Game.Players[i].Health > 0) {
+      plridx = i;
       break;
     }
   }
 
-  if (i == MAXPLAYERS)
-  {
-    return;
-  }
+  if (plridx < 0) return;
 
-  //  If player destroyed it with dagger, alert guards now.
-  if (LastHeard != source)
-  {
-    //  Temporarely link it to the world, since we need sector
+  // if player destroyed it with dagger, alert guards now
+  if (LastHeard != source) {
+    // temporarely link it to the world, since we need sector
     LinkToWorld(properFloorCheck:false);
     LineSpecialLevelInfo(Level).NoiseAlert(source, self);
     UnlinkFromWorld();
   }
-  LineSpecialLevelInfo(Level).EV_DoDoor(225, 16, 0, 0, 0,
-    VerticalDoor::DOOREV_Close, nullptr, Actor(Level.Game.Players[i].MO));
-  LineSpecialLevelInfo(Level).EV_DoFloor(44, 8, 128, 0, 0,
-    FloorMover::FLOOREV_LowerToHighest, nullptr);
-  EntityEx(Level.Game.Players[i].MO).GiveInventoryType(QuestItem6);
-  PlayerEx(Level.Game.Players[i]).ClientVoice(13);
-  PlayerEx(Level.Game.Players[i]).SetObjectives(13);
+  LineSpecialLevelInfo(Level).EV_DoDoor(225, 16, 0, 0, 0, VerticalDoor::DOOREV_Close, nullptr, Actor(Level.Game.Players[plridx].MO));
+  LineSpecialLevelInfo(Level).EV_DoFloor(44, 8, 128, 0, 0, FloorMover::FLOOREV_LowerToHighest, nullptr);
+  EntityEx(Level.Game.Players[plridx].MO).GiveInventoryType(QuestItem6);
+  PlayerEx(Level.Game.Players[plridx]).ClientVoice(13);
+  PlayerEx(Level.Game.Players[plridx]).SetObjectives(13);
   Spawn(BrokenPowerCoupling, Origin);
 }
 
-states
-{
+
+states {
 Spawn:
   COUP AB 5
   Loop
 }
 
-defaultproperties
-{
+
+defaultproperties {
   Health = 40;
   Radius = 17.0;
   Height = 64.0;
   Mass = 999999.0;
-  Speed = 6.0 * 35.0;
+  Speed = 6.0*35.0;
   bSolid = true;
   bShootable = true;
-//  bUnknown5 = true;
+  //bUnknown5 = true;
   bInCombat = true;
   bDropped = true;
   bNoBlood = true;

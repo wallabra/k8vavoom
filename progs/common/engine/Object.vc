@@ -739,6 +739,7 @@ static final float CD_SweepLineAABBlpl (const ref CD_LinePlanes linePlanes, TVec
 
 // floating random number 0.0 ... 0.999999
 native static final float Random ();
+alias FRandom = Random;
 // floating random number 0.0 ... 1.0
 native static final float FRandomFull ();
 // floating random number [minv..maxv] (inclusive)

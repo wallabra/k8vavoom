@@ -190,7 +190,7 @@
 //
 //  Unset blocking.
 //
-//  for VavoomC actor states
+//  for VavoomC actor states, and in some Strife actions
 //
 //==========================================================================
 [decorate] final void A_NoBlocking () {

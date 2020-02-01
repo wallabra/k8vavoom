@@ -23,9 +23,7 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class Coin : Inventory
-  game(GAME_Strife)
-  __mobjinfo__(93);
+class Coin : Inventory game(GAME_Strife) __mobjinfo__(93);
 
 
 //==========================================================================
@@ -139,8 +137,7 @@ override Inventory CreateTossable (optional int DropAmount) {
 }
 
 
-states
-{
+states {
 Spawn:
   COIN A -1
   Stop

@@ -25,40 +25,35 @@
 //**************************************************************************
 class Sigil : Weapon;
 
-int       NumPieces;
-int       DownPieces;
+int NumPieces;
+int DownPieces;
+
 
 //==========================================================================
 //
 //  BeginPlay
 //
 //==========================================================================
-
-override void BeginPlay()
-{
+override void BeginPlay () {
   NumPieces = Health;
   ::BeginPlay();
 }
+
 
 //==========================================================================
 //
 //  HandlePickup
 //
 //==========================================================================
-
-override bool HandlePickup(Inventory Item)
-{
-  if (Sigil(Item))
-  {
+override bool HandlePickup (Inventory Item) {
+  if (Sigil(Item)) {
     int OtherPieces = Sigil(Item).NumPieces;
-    if (OtherPieces > NumPieces)
-    {
+    if (OtherPieces > NumPieces) {
       Item.bPickupGood = true;
       IconName = Item.IconName;
-      //  If the player is holding the Sigil right now, drop it and
-      // bring it back with the new piece(s) in view.
-      if (Owner.bIsPlayer && PlayerEx(Owner.Player).ReadyWeapon == self)
-      {
+      // if the player is holding the Sigil right now, drop it and
+      // bring it back with the new piece(s) in view
+      if (Owner.bIsPlayer && PlayerEx(Owner.Player).ReadyWeapon == self) {
         DownPieces = NumPieces;
         PlayerEx(Owner.Player).PendingWeapon = self;
       }
@@ -67,21 +62,17 @@ override bool HandlePickup(Inventory Item)
     return true;
   }
 
-  if (Inventory)
-  {
-    return Inventory.HandlePickup(Item);
-  }
+  if (Inventory) return Inventory.HandlePickup(Item);
   return false;
 }
+
 
 //==========================================================================
 //
 //  CreateCopy
 //
 //==========================================================================
-
-override Inventory CreateCopy(EntityEx Toucher)
-{
+override Inventory CreateCopy (EntityEx Toucher) {
   Sigil Copy = SpawnEntityChecked(class!Sigil, class!Sigil(Class), default, default, default, AllowReplace:false);
   assert(Copy);
   Copy.Amount = Amount;
@@ -92,20 +83,15 @@ override Inventory CreateCopy(EntityEx Toucher)
   return Copy;
 }
 
+
 //==========================================================================
 //
 //  SpecialDropAction
 //
 //==========================================================================
-
-override bool SpecialDropAction(EntityEx Source)
-{
-  int     i;
-
-  for (i = 0; i < MAXPLAYERS; i++)
-  {
-    if (Level.Game.Players[i] && Level.Game.Players[i].bSpawned)
-    {
+override bool SpecialDropAction (EntityEx Source) {
+  foreach (int i; 0..MAXPLAYERS) {
+    if (Level.Game.Players[i] && Level.Game.Players[i].bSpawned) {
       GiveSigilPiece(EntityEx(Level.Game.Players[i].MO));
     }
   }
@@ -113,383 +99,311 @@ override bool SpecialDropAction(EntityEx Source)
   return true;
 }
 
+
 //==========================================================================
 //
 //  GiveSigilPiece
 //
 //==========================================================================
-
-void GiveSigilPiece(EntityEx Receiver)
-{
+void GiveSigilPiece (EntityEx Receiver) {
   Sigil Wpn = Sigil(Receiver.FindInventory(Sigil));
-  if (!Wpn)
-  {
+  if (!Wpn) {
     Wpn = Level.SpawnEntityChecked(class!Sigil, Sigil1, default, default, default/*, false*/);
-    if (Wpn && !Wpn.TryPickup(Receiver))
-    {
-      Wpn.Destroy();
-    }
+    if (Wpn && !Wpn.TryPickup(Receiver)) Wpn.Destroy();
     return;
   }
-  else if (Wpn.NumPieces < 5)
-  {
-    Wpn.NumPieces++;
-    switch (Wpn.NumPieces)
-    {
-    case 1:
-      Wpn.IconName = Sigil1.default.IconName;
-      break;
-    case 2:
-      Wpn.IconName = Sigil2.default.IconName;
-      break;
-    case 3:
-      Wpn.IconName = Sigil3.default.IconName;
-      break;
-    case 4:
-      Wpn.IconName = Sigil4.default.IconName;
-      break;
-    case 5:
-      Wpn.IconName = Sigil5.default.IconName;
-      break;
+
+  if (Wpn.NumPieces < 5) {
+    ++Wpn.NumPieces;
+    switch (Wpn.NumPieces) {
+      case 1: Wpn.IconName = Sigil1.default.IconName; break;
+      case 2: Wpn.IconName = Sigil2.default.IconName; break;
+      case 3: Wpn.IconName = Sigil3.default.IconName; break;
+      case 4: Wpn.IconName = Sigil4.default.IconName; break;
+      case 5: Wpn.IconName = Sigil5.default.IconName; break;
     }
-    if (Receiver.bIsPlayer &&
-      PlayerEx(Receiver.Player).ReadyWeapon == Wpn)
-    {
-      Wpn.DownPieces = Wpn.NumPieces - 1;
+    if (Receiver.bIsPlayer && PlayerEx(Receiver.Player).ReadyWeapon == Wpn) {
+      Wpn.DownPieces = Wpn.NumPieces-1;
       PlayerEx(Receiver.Player).PendingWeapon = Wpn;
     }
   }
 }
+
 
 //==========================================================================
 //
 //  A_SelectPiece
 //
 //==========================================================================
-
-[decorate] final void A_SelectPiece()
-{
-  if (NumPieces > 1)
-  {
+[decorate] final void A_SelectPiece () {
+  if (NumPieces > 1) {
     SetState(GetStatePlus(IdleState, NumPieces, IgnoreJump:true));
   }
 }
+
 
 //==========================================================================
 //
 //  A_SelectSigilReady
 //
 //==========================================================================
+[decorate] final void A_SelectSigilReady () self(Actor) {
+  if (!bIsPlayer) return;
 
-[decorate] final void A_SelectSigilReady() self(Actor)
-{
-  if (!bIsPlayer)
-  {
-    return;
-  }
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (!Wpn || !Sigil(Wpn)) return;
 
-  switch (Sigil(Wpn).NumPieces)
-  {
-  case 1:
-    Player.SetViewObject(Wpn);
-    Player.SetViewState(PS_WEAPON, Wpn.FindState('Ready1'));
-    break;
-  case 2:
-    Player.SetViewObject(Wpn);
-    Player.SetViewState(PS_WEAPON, Wpn.FindState('Ready2'));
-    break;
-  case 3:
-    Player.SetViewObject(Wpn);
-    Player.SetViewState(PS_WEAPON, Wpn.FindState('Ready3'));
-    break;
-  case 4:
-    Player.SetViewObject(Wpn);
-    Player.SetViewState(PS_WEAPON, Wpn.FindState('Ready4'));
-    break;
-  case 5:
-    Player.SetViewObject(Wpn);
-    Player.SetViewState(PS_WEAPON, Wpn.FindState('Ready5'));
-    break;
+  switch (Sigil(Wpn).NumPieces) {
+    case 1:
+      Player.SetViewObject(Wpn);
+      Player.SetViewState(PS_WEAPON, Wpn.FindState('Ready1'));
+      break;
+    case 2:
+      Player.SetViewObject(Wpn);
+      Player.SetViewState(PS_WEAPON, Wpn.FindState('Ready2'));
+      break;
+    case 3:
+      Player.SetViewObject(Wpn);
+      Player.SetViewState(PS_WEAPON, Wpn.FindState('Ready3'));
+      break;
+    case 4:
+      Player.SetViewObject(Wpn);
+      Player.SetViewState(PS_WEAPON, Wpn.FindState('Ready4'));
+      break;
+    case 5:
+      Player.SetViewObject(Wpn);
+      Player.SetViewState(PS_WEAPON, Wpn.FindState('Ready5'));
+      break;
   }
 }
+
 
 //==========================================================================
 //
 //  A_SelectSigilDown
 //
 //==========================================================================
+[decorate] final void A_SelectSigilDown () self(Actor) {
+  if (!bIsPlayer) return;
 
-[decorate] final void A_SelectSigilDown() self(Actor)
-{
-  if (!bIsPlayer)
-  {
-    return;
-  }
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (!Wpn || !Sigil(Wpn)) return;
 
   int Pieces = Sigil(Wpn).DownPieces;
   Sigil(Wpn).DownPieces = 0;
-  if (!Pieces)
-  {
-    Pieces = Sigil(Wpn).NumPieces;
-  }
-  switch (Pieces)
-  {
-  case 1:
-    Player.SetViewObject(Wpn);
-    Player.SetViewState(PS_WEAPON, Wpn.FindState('Deselect1'));
-    break;
-  case 2:
-    Player.SetViewObject(Wpn);
-    Player.SetViewState(PS_WEAPON, Wpn.FindState('Deselect2'));
-    break;
-  case 3:
-    Player.SetViewObject(Wpn);
-    Player.SetViewState(PS_WEAPON, Wpn.FindState('Deselect3'));
-    break;
-  case 4:
-    Player.SetViewObject(Wpn);
-    Player.SetViewState(PS_WEAPON, Wpn.FindState('Deselect4'));
-    break;
-  case 5:
-    Player.SetViewObject(Wpn);
-    Player.SetViewState(PS_WEAPON, Wpn.FindState('Deselect5'));
-    break;
+  if (!Pieces) Pieces = Sigil(Wpn).NumPieces;
+
+  switch (Pieces) {
+    case 1:
+      Player.SetViewObject(Wpn);
+      Player.SetViewState(PS_WEAPON, Wpn.FindState('Deselect1'));
+      break;
+    case 2:
+      Player.SetViewObject(Wpn);
+      Player.SetViewState(PS_WEAPON, Wpn.FindState('Deselect2'));
+      break;
+    case 3:
+      Player.SetViewObject(Wpn);
+      Player.SetViewState(PS_WEAPON, Wpn.FindState('Deselect3'));
+      break;
+    case 4:
+      Player.SetViewObject(Wpn);
+      Player.SetViewState(PS_WEAPON, Wpn.FindState('Deselect4'));
+      break;
+    case 5:
+      Player.SetViewObject(Wpn);
+      Player.SetViewState(PS_WEAPON, Wpn.FindState('Deselect5'));
+      break;
   }
 }
+
 
 //==========================================================================
 //
 //  A_SelectSigilUp
 //
 //==========================================================================
+[decorate] final void A_SelectSigilUp () self(Actor) {
+  if (!bIsPlayer) return;
 
-[decorate] final void A_SelectSigilUp() self(Actor)
-{
-  if (!bIsPlayer)
-  {
-    return;
-  }
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (!Wpn || !Sigil(Wpn)) return;
 
-  switch (Sigil(Wpn).NumPieces)
-  {
-  case 1:
-    Player.SetViewObject(Wpn);
-    Player.SetViewState(PS_WEAPON, Wpn.FindState('Select1'));
-    break;
-  case 2:
-    Player.SetViewObject(Wpn);
-    Player.SetViewState(PS_WEAPON, Wpn.FindState('Select2'));
-    break;
-  case 3:
-    Player.SetViewObject(Wpn);
-    Player.SetViewState(PS_WEAPON, Wpn.FindState('Select3'));
-    break;
-  case 4:
-    Player.SetViewObject(Wpn);
-    Player.SetViewState(PS_WEAPON, Wpn.FindState('Select4'));
-    break;
-  case 5:
-    Player.SetViewObject(Wpn);
-    Player.SetViewState(PS_WEAPON, Wpn.FindState('Select5'));
-    break;
+  switch (Sigil(Wpn).NumPieces) {
+    case 1:
+      Player.SetViewObject(Wpn);
+      Player.SetViewState(PS_WEAPON, Wpn.FindState('Select1'));
+      break;
+    case 2:
+      Player.SetViewObject(Wpn);
+      Player.SetViewState(PS_WEAPON, Wpn.FindState('Select2'));
+      break;
+    case 3:
+      Player.SetViewObject(Wpn);
+      Player.SetViewState(PS_WEAPON, Wpn.FindState('Select3'));
+      break;
+    case 4:
+      Player.SetViewObject(Wpn);
+      Player.SetViewState(PS_WEAPON, Wpn.FindState('Select4'));
+      break;
+    case 5:
+      Player.SetViewObject(Wpn);
+      Player.SetViewState(PS_WEAPON, Wpn.FindState('Select5'));
+      break;
   }
 }
+
 
 //==========================================================================
 //
 //  A_SelectSigilAttack
 //
 //==========================================================================
+[decorate] final void A_SelectSigilAttack () self(Actor) {
+  if (!bIsPlayer) return;
 
-[decorate] final void A_SelectSigilAttack() self(Actor)
-{
-  if (!bIsPlayer)
-  {
-    return;
-  }
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
   if (!Wpn || !Sigil(Wpn)) return;
 
-  switch (Sigil(Wpn).NumPieces)
-  {
-  case 1:
-    Player.SetViewObject(Wpn);
-    Player.SetViewState(PS_WEAPON, Wpn.FindState('Fire1'));
-    break;
-  case 2:
-    Player.SetViewObject(Wpn);
-    Player.SetViewState(PS_WEAPON, Wpn.FindState('Fire2'));
-    break;
-  case 3:
-    Player.SetViewObject(Wpn);
-    Player.SetViewState(PS_WEAPON, Wpn.FindState('Fire3'));
-    break;
-  case 4:
-    Player.SetViewObject(Wpn);
-    Player.SetViewState(PS_WEAPON, Wpn.FindState('Fire4'));
-    break;
-  case 5:
-    Player.SetViewObject(Wpn);
-    Player.SetViewState(PS_WEAPON, Wpn.FindState('Fire5'));
-    break;
+  switch (Sigil(Wpn).NumPieces) {
+    case 1:
+      Player.SetViewObject(Wpn);
+      Player.SetViewState(PS_WEAPON, Wpn.FindState('Fire1'));
+      break;
+    case 2:
+      Player.SetViewObject(Wpn);
+      Player.SetViewState(PS_WEAPON, Wpn.FindState('Fire2'));
+      break;
+    case 3:
+      Player.SetViewObject(Wpn);
+      Player.SetViewState(PS_WEAPON, Wpn.FindState('Fire3'));
+      break;
+    case 4:
+      Player.SetViewObject(Wpn);
+      Player.SetViewState(PS_WEAPON, Wpn.FindState('Fire4'));
+      break;
+    case 5:
+      Player.SetViewObject(Wpn);
+      Player.SetViewState(PS_WEAPON, Wpn.FindState('Fire5'));
+      break;
   }
 }
+
 
 //==========================================================================
 //
 //  A_SigilCharge
 //
 //==========================================================================
-
-[decorate] final void A_SigilCharge() self(Actor)
-{
+[decorate] final void A_SigilCharge () self(Actor) {
   PlaySound('weapons/sigilcharge', CHAN_WEAPON);
-  if (bIsPlayer)
-  {
-    Player.ExtraLight = 2;
-  }
+  if (bIsPlayer) Player.ExtraLight = 2;
 }
+
 
 //==========================================================================
 //
 //  A_FireSigil1
 //
 //==========================================================================
+[decorate] final void A_FireSigil1 () self(Actor) {
+  if (!bIsPlayer) return;
 
-[decorate] final void A_FireSigil1() self(Actor)
-{
-  EntityEx  sigil;
-  EntityEx  AimTarget;
-  TVec    dir;
+  Damage(none, self, 1*4, default, NoArmor:true, spawnBlood:true);
+  PlaySound('weapons/sigilcharge', CHAN_WEAPON);
 
-  if (!bIsPlayer)
-  {
+  EntityEx sigil = Spawn(SpectralLightningSpot, Origin+vector(0.0, 0.0, 32.0));
+  if (!sigil) {
+    printdebug("%C: cannot spawn `SpectralLightningSpot`", self);
     return;
   }
 
-  Damage(none, self, 1 * 4, default, NoArmor:true, spawnBlood:true);
-  PlaySound('weapons/sigilcharge', CHAN_WEAPON);
-
-  sigil = Spawn(SpectralLightningSpot, Origin + vector(0.0, 0.0, 32.0));
-
-  if (sigil.SightSound)
-  {
-    sigil.PlaySound(sigil.SightSound, CHAN_VOICE);
-  }
+  if (sigil.SightSound) sigil.PlaySound(sigil.SightSound, CHAN_VOICE);
 
   sigil.Target = self;
   sigil.Origin.z = sigil.FloorZ;
-  AimTarget = Aim(dir, 16.0 * 64.0);
-  if (!AimTarget)
-  {
+
+  TVec dir;
+  EntityEx AimTarget = Aim(dir, 16.0*64.0);
+  if (!AimTarget) {
     sigil.Origin.x = Origin.x;
     sigil.Origin.y = Origin.y;
-  }
-  else
-  {
+  } else {
     sigil.Origin.x = AimTarget.Origin.x;
     sigil.Origin.y = AimTarget.Origin.y;
   }
 }
+
 
 //==========================================================================
 //
 //  A_FireSigil2
 //
 //==========================================================================
+[decorate] final void A_FireSigil2 () self(Actor) {
+  if (!bIsPlayer) return;
 
-[decorate] final void A_FireSigil2() self(Actor)
-{
-  if (!bIsPlayer)
-  {
-    return;
-  }
-
-  Damage(none, self, 2 * 4, default, NoArmor:true, spawnBlood:true);
+  Damage(none, self, 2*4, default, NoArmor:true, spawnBlood:true);
   PlaySound('weapons/sigilcharge', CHAN_WEAPON);
 
   SpawnPlayerMissile(SpectralLightningH1);
 }
+
 
 //==========================================================================
 //
 //  A_FireSigil3
 //
 //==========================================================================
+[decorate] final void A_FireSigil3 () self(Actor) {
 
-[decorate] final void A_FireSigil3() self(Actor)
-{
-  float   angle;
-  EntityEx  sigilspread;
-  int     i;
+  if (!bIsPlayer) return;
 
-  if (!bIsPlayer)
-  {
-    return;
-  }
-
-  Damage(none, self, 3 * 4, default, NoArmor:true, spawnBlood:true);
+  Damage(none, self, 3*4, default, NoArmor:true, spawnBlood:true);
   PlaySound('weapons/sigilcharge', CHAN_WEAPON);
 
-  for (i = 0; i < 20; i++)
-  {
-    sigilspread = SpawnPlayerMissileAngle(SpectralLightningBall1,
-      Angles.yaw - 90.0 + float(i) * (45.0 / 4.0));
-    if (sigilspread)
-    {
-      angle = sigilspread.Angles.yaw;
-      sigilspread.Velocity.x = sigilspread.Speed * cos(angle);
-      sigilspread.Velocity.y = sigilspread.Speed * sin(angle);
+  foreach (int i; 0..20) {
+    EntityEx sigilspread = SpawnPlayerMissileAngle(SpectralLightningBall1, Angles.yaw-90.0+float(i)*(45.0/4.0));
+    if (sigilspread) {
+      float angle = sigilspread.Angles.yaw;
+      sigilspread.Velocity.x = sigilspread.Speed*cos(angle);
+      sigilspread.Velocity.y = sigilspread.Speed*sin(angle);
     }
   }
 }
+
 
 //==========================================================================
 //
 //  A_FireSigil4
 //
 //==========================================================================
+[decorate] final void A_FireSigil4 () self(Actor) {
+  if (!bIsPlayer) return;
 
-[decorate] final void A_FireSigil4() self(Actor)
-{
-  if (!bIsPlayer)
-  {
-    return;
-  }
-
-  Damage(none, self, 4 * 4, default, NoArmor:true, spawnBlood:true);
+  Damage(none, self, 4*4, default, NoArmor:true, spawnBlood:true);
   PlaySound('weapons/sigilcharge', CHAN_WEAPON);
 
   SpawnPlayerMissile(SpectralLightningBigV1);
 }
+
 
 //==========================================================================
 //
 //  A_FireSigil5
 //
 //==========================================================================
+[decorate] final void A_FireSigil5 () self(Actor) {
+  if (!bIsPlayer) return;
 
-[decorate] final void A_FireSigil5() self(Actor)
-{
-  if (!bIsPlayer)
-  {
-    return;
-  }
-
-  Damage(none, self, 5 * 4, default, NoArmor:true, spawnBlood:true);
+  Damage(none, self, 5*4, default, NoArmor:true, spawnBlood:true);
   PlaySound('weapons/sigilcharge', CHAN_WEAPON);
 
   SpawnPlayerMissile(SpectralLightningBigBall1);
 }
 
-states
-{
+
+states {
 Spawn:
   SIGL A 1
   SIGL A -1 A_SelectPiece
@@ -607,8 +521,8 @@ Flash:
   Stop
 }
 
-defaultproperties
-{
+
+defaultproperties {
   StrifeName = "SIGIL";
   Health = 1;
   Kickback = 100.0;

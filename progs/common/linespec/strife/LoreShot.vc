@@ -25,41 +25,35 @@
 //**************************************************************************
 class LoreShot : Actor;
 
+
 //==========================================================================
 //
 //  DoSpecialDamage
 //
 //==========================================================================
-
-override int DoSpecialDamage(EntityEx Victim, EntityEx Source, int damage)
-{
-  Victim.Velocity += Normalise(Target.Origin - Victim.Origin) *
-    ((255.0 * 50.0 * 35.0) / fmax(1, Victim.Mass));
+override int DoSpecialDamage (EntityEx Victim, EntityEx Source, int damage) {
+  Victim.Velocity += Normalise(Target.Origin-Victim.Origin)*((255.0*50.0*35.0)/fmax(1, Victim.Mass));
   return damage;
 }
+
 
 //==========================================================================
 //
 //  A_ChainTend
 //
 //==========================================================================
-
-[decorate] final void A_ChainTend()
-{
-  int i;
-
-  for (i = 4; i > 1; i--)
-  {
+[decorate] final void A_ChainTend () {
+  for (int i = 4; i > 1; --i) {
     Spawn(LoreShot2, vector(
-      Origin.x - Radius * float(i) * cos(Angles.yaw),
-      Origin.y - Radius * float(i) * sin(Angles.yaw),
-      Origin.z - (Velocity.z / (4.0 * 35.0) * float(i))));
+      Origin.x-Radius*float(i)*cos(Angles.yaw),
+      Origin.y-Radius*float(i)*sin(Angles.yaw),
+      Origin.z-(Velocity.z/(4.0*35.0)*float(i))));
   }
   PlaySound(ActiveSound, CHAN_BODY);
 }
 
-states
-{
+
+states {
 Spawn:
   OCLW A 2 A_ChainTend
   Loop
@@ -68,8 +62,8 @@ Death:
   Stop
 }
 
-defaultproperties
-{
+
+defaultproperties {
   Radius = 10.0;
   Height = 14.0;
   Speed = 700.0;

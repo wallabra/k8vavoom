@@ -686,7 +686,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
   }
 
   damage = TakeSpecialDamage(inflictor, source, damage, DmgType, forced:forced!optional);
-  if (damage == -1) return;
+  if (damage < 0) return; // was `-1`
 
   //printdebug("DAMAGE: self=`%C`; damage=%d; health=%s; forced=%B; dmgtype=<%s>", self, damage, Health, forced, DmgType);
   // push the target unless using a weapon that should not inflict thrust

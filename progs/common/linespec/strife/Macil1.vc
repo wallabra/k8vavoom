@@ -23,29 +23,23 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class Macil1 : Actor
-  game(GAME_Strife)
-  __mobjinfo__(64);
+class Macil1 : Actor game(GAME_Strife) __mobjinfo__(64);
+
 
 //============================================================================
 //
 //  TakeSpecialDamage
 //
-//  Macil is invulnerable to the first stage Sigil.
+//  macil is invulnerable to the first stage Sigil
 //
 //============================================================================
-
-override int TakeSpecialDamage(EntityEx inflictor, EntityEx source, int damage, name DmgType, optional bool forced)
-{
-  if (!forced && inflictor.IsA('SpectralLightningV1'))
-  {
-    return -1;
-  }
+override int TakeSpecialDamage (EntityEx inflictor, EntityEx source, int damage, name DmgType, optional bool forced) {
+  if (!forced && inflictor.IsA('SpectralLightningV1')) return -1;
   return ::TakeSpecialDamage(inflictor, source, damage, DmgType, forced!optional);
 }
 
-states
-{
+
+states {
 Spawn:
   LEDR C 5 A_Look2
   Loop
@@ -70,15 +64,15 @@ Pain:
   Goto See
 }
 
-defaultproperties
-{
+
+defaultproperties {
   ConversationID = 49;
   StrifeName = "MACIL";
   Health = 95;
   Radius = 20.0;
   Height = 56.0;
   Mass = 100.0;
-  Speed = 8.0 * 35.0;
+  Speed = 8.0*35.0;
   PainChance = 0.9765625;
   bSolid = true;
   bShootable = true;

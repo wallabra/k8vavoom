@@ -23,49 +23,40 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class DegninOre : Inventory
-  game(GAME_Strife)
-  __mobjinfo__(59);
+class DegninOre : Inventory game(GAME_Strife) __mobjinfo__(59);
+
 
 //==========================================================================
 //
 //  GetExplodeParms
 //
 //==========================================================================
-
-override void GetExplodeParms(ref int damage, ref float distance, ref ubyte damageSelf)
-{
+override void GetExplodeParms (ref int damage, ref float distance, ref ubyte damageSelf) {
   damage = 192;
   distance = 192.0;
-
   PlaySound(DeathSound, CHAN_VOICE);
 }
+
 
 //==========================================================================
 //
 //  Use
 //
 //==========================================================================
-
-override bool Use(bool Pickup)
-{
-  if (Pickup)
-  {
-    return false;
-  }
-  //  Increase item count because ItemThrow also decreases it.
-  Amount++;
+override bool Use (bool Pickup) {
+  if (Pickup) return false;
+  // increase item count because ItemThrow also decreases it
+  ++Amount;
   EntityEx A = EntityEx(Owner).DropInventory(self);
-  if (!A)
-  {
-    Amount--;
+  if (!A) {
+    --Amount;
     return false;
   }
   return true;
 }
 
-states
-{
+
+states {
 Spawn:
   XPRK A -1
   Stop
@@ -76,8 +67,8 @@ Death:
   Stop
 }
 
-defaultproperties
-{
+
+defaultproperties {
   ConversationID = 128;
   PickupMessage = "$txt_degninore";
   Health = 10;
