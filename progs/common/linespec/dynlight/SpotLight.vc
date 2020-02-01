@@ -23,8 +23,29 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class SpotLight : DynamicLight  __mobjinfo__(9840);
+class SpotLightBase : DynamicLight;
 
+class SpotLight : SpotLightBase __mobjinfo__(9840);
 defaultproperties {
   LightType = DLTYPE_Spot;
+}
+
+class SpotLightPulse : SpotLightBase __mobjinfo__(9841);
+defaultproperties {
+  LightType = DLTYPE_Pulse|DLTYPE_Spot;
+}
+
+class SpotLightFlicker : SpotLightBase __mobjinfo__(9842);
+defaultproperties {
+  LightType = DLTYPE_Flicker|DLTYPE_Spot;
+}
+
+class SectorSpotLight : SpotLightBase __mobjinfo__(9843);
+defaultproperties {
+  LightType = DLTYPE_Sector|DLTYPE_Spot;
+}
+
+class SpotLightFlickerRandom : SpotLightBase __mobjinfo__(9844);
+defaultproperties {
+  LightType = DLTYPE_FlickerRandom|DLTYPE_Spot;
 }

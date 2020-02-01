@@ -23,19 +23,58 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
-class PointLight : DynamicLight  __mobjinfo__(9800);
+//TODO: additive and subtractive lights
+// attenuated lights illuminate surfaces depending on surface angle -- surfaces that are not facing the light will get progressively less illuminated
 
+class PointLight : DynamicLight __mobjinfo__(9800);
 defaultproperties {
   LightType = DLTYPE_Point;
 }
+class PointLightAdditive : PointLight __mobjinfo__(9810);
+class PointLightAttenuated : PointLight __mobjinfo__(9830);
 
 
-class PointLightAttenuated : PointLight  __mobjinfo__(9830);
-class PointLightAdditive : PointLight  __mobjinfo__(9810);
-
-
-class PointLightSubtractive : DynamicLight   __mobjinfo__(9820);
-
+// ////////////////////////////////////////////////////////////////////////// //
+class PointLightSubtractive : DynamicLight __mobjinfo__(9820);
 defaultproperties {
   LightType = DLTYPE_Subtractive;
 }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class PointLightPulse : DynamicLight __mobjinfo__(9801);
+defaultproperties {
+  LightType = DLTYPE_Pulse;
+}
+class PointLightPulseAdditive : PointLightPulse __mobjinfo__(9811);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class PointLightFlicker : DynamicLight __mobjinfo__(9802);
+defaultproperties {
+  LightType = DLTYPE_Flicker;
+}
+class PointLightFlickerAdditive : PointLightFlickerRandom __mobjinfo__(9812);
+class PointLightFlickerAttenuated : PointLightFlicker __mobjinfo__(9832);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class PointLightFlickerRandom : DynamicLight __mobjinfo__(9804);
+defaultproperties {
+  LightType = DLTYPE_FlickerRandom;
+}
+class PointLightFlickerRandomAttenuated : PointLightFlickerRandom __mobjinfo__(9834);
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+class SectorPointLight : DynamicLight __mobjinfo__(9803);
+defaultproperties {
+  LightType = DLTYPE_Sector;
+}
+
+class SectorPointLightSubtractive : DynamicLight __mobjinfo__(9823);
+defaultproperties {
+  LightType = DLTYPE_SectorSubtractive;
+}
+
+class SectorPointLightAttenuated : DynamicLight __mobjinfo__(9833);
