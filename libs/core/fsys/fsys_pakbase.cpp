@@ -52,6 +52,8 @@ const VPK3ResDirInfo PK3ResourceDirs[] = {
   { "textures/", WADNS_NewTextures },
   { "voices/", WADNS_Voices },
   { "hires/", WADNS_HiResTextures },
+  { "data/jdoom/textures/", WADNS_HiResTexturesDDay },
+  { "data/jdoom/flats/", WADNS_HiResFlatsDDay },
   { "patches/", WADNS_Patches },
   { "graphics/", WADNS_Graphics },
   { "sounds/", WADNS_Sounds },

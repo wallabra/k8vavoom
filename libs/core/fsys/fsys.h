@@ -101,6 +101,9 @@ enum EWadNamespace {
   WADNS_NewTextures,
   WADNS_Voices,
   WADNS_HiResTextures,
+  // jdoom/doomsday hires textures
+  WADNS_HiResTexturesDDay,
+  WADNS_HiResFlatsDDay,
 
   // special namespaces for zip files, in wad file they will be searched in global namespace
   WADNS_ZipSpecial,
