@@ -453,6 +453,7 @@ static void CheckResolutionChange () {
 
   if (res_changed) {
     Drawer->InitResolution();
+    R_LdrMsgReset();
     if (Drawer->RendLev) Drawer->RendLev->PrecacheLevel();
     if (GRoot) GRoot->RefreshScale();
     // recalculate view size and other data
