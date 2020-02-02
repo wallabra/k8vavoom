@@ -302,11 +302,17 @@ struct GroupMask {
 };
 
 
+struct GroupPwadInfo {
+  VStr filename; // with path, maybe
+  bool cosmetic; // is this pwad a cosmetic one (i.e. doesn't affect saves?)
+};
+
+
 struct CustomModeInfo {
   VStr name;
   TArray<VStr> aliases;
-  TArray<VStr> pwads;
-  TArray<VStr> postpwads;
+  TArray<GroupPwadInfo> pwads;
+  TArray<GroupPwadInfo> postpwads;
   TArray<GroupMask> autoskips;
   bool disableBloodReplacement;
   bool disableGoreMod;
@@ -335,16 +341,20 @@ struct CustomModeInfo {
     reported = false;
   }
 
-  void appendPWad (VStr str) {
+  void appendPWad (VStr str, bool asCosmetic) {
     if (str.isEmpty()) return;
-    for (auto &&s : pwads) if (s.strEqu(str)) return;
-    pwads.append(str);
+    for (auto &&s : pwads) if (s.filename.strEqu(str)) return;
+    GroupPwadInfo &pi = pwads.alloc();
+    pi.filename = str;
+    pi.cosmetic = asCosmetic;
   }
 
-  void appendPostPWad (VStr str) {
+  void appendPostPWad (VStr str, bool asCosmetic) {
     if (str.isEmpty()) return;
-    for (auto &&s : postpwads) if (s.strEqu(str)) return;
-    postpwads.append(str);
+    for (auto &&s : postpwads) if (s.filename.strEqu(str)) return;
+    GroupPwadInfo &pi = postpwads.alloc();
+    pi.filename = str;
+    pi.cosmetic = asCosmetic;
   }
 
   void copyFrom (const CustomModeInfo &src) {
@@ -377,8 +387,8 @@ struct CustomModeInfo {
   // used to build final mode definition
   void merge (const CustomModeInfo &src) {
     if (&src == this) return;
-    for (auto &&s : src.pwads) appendPWad(s);
-    for (auto &&s : src.postpwads) appendPostPWad(s);
+    for (auto &&s : src.pwads) appendPWad(s.filename, s.cosmetic);
+    for (auto &&s : src.postpwads) appendPostPWad(s.filename, s.cosmetic);
     for (auto &&s : src.autoskips) autoskips.append(s);
     if (src.disableBloodReplacement) disableBloodReplacement = true;
     if (src.disableGoreMod) disableGoreMod = true;
@@ -391,9 +401,9 @@ struct CustomModeInfo {
     GLog.Logf(NAME_Debug, "basedirglobs: %d", basedirglob.length());
     for (auto &&s : basedirglob) GLog.Logf(NAME_Debug, "  <%s>", *s);
     GLog.Logf(NAME_Debug, "pwads: %d", pwads.length());
-    for (auto &&s : pwads) GLog.Logf(NAME_Debug, "  <%s>", *s);
+    for (auto &&s : pwads) GLog.Logf(NAME_Debug, "  <%s>%s", *s.filename, (s.cosmetic ? " (cosmetic)" : ""));
     GLog.Logf(NAME_Debug, "postpwads: %d", postpwads.length());
-    for (auto &&s : postpwads) GLog.Logf(NAME_Debug, "  <%s>", *s);
+    for (auto &&s : postpwads) GLog.Logf(NAME_Debug, "  <%s>%s", *s.filename, (s.cosmetic ? " (cosmetic)" : ""));
     GLog.Logf(NAME_Debug, "autoskips: %d", autoskips.length());
     for (auto &&s : autoskips) GLog.Logf(NAME_Debug, "  <%s> (%d)", *s.mask, (int)s.enabled);
     GLog.Logf(NAME_Debug, "disableBloodReplacement: %s", (disableBloodReplacement ? "tan" : "ona"));
@@ -433,15 +443,31 @@ struct CustomModeInfo {
     sc->Expect("{");
     while (!sc->Check("}")) {
       if (sc->Check("pwad")) {
+        bool cosmetic = true;
         for (;;) {
           sc->ExpectString();
-          appendPWad(sc->String);
+          if (sc->String.isEmpty()) continue;
+          if (sc->String[0] == '!') {
+            sc->String.chopLeft(1);
+            if (sc->String.isEmpty()) continue;
+            cosmetic = false;
+          }
+          appendPWad(sc->String, cosmetic);
+          cosmetic = true;
           if (!sc->Check(",")) break;
         }
       } else if (sc->Check("postpwad")) {
+        bool cosmetic = true;
         for (;;) {
           sc->ExpectString();
-          appendPostPWad(sc->String);
+          if (sc->String.isEmpty()) continue;
+          if (sc->String[0] == '!') {
+            sc->String.chopLeft(1);
+            if (sc->String.isEmpty()) continue;
+            cosmetic = false;
+          }
+          appendPostPWad(sc->String, cosmetic);
+          cosmetic = true;
           if (!sc->Check(",")) break;
         }
       } else if (sc->Check("skipauto")) {
@@ -487,7 +513,7 @@ struct CustomModeInfo {
 
 static CustomModeInfo customMode;
 static TArray<CustomModeInfo> userModes; // from "~/.k8vavoom/modes.rc"
-static TArray<VStr> postPWads; // from autoload
+static TArray<GroupPwadInfo> postPWads; // from autoload
 
 
 //==========================================================================
@@ -1042,20 +1068,33 @@ VVA_OKUNUSED static int cmpfuncCINoExt (const void *v1, const void *v2) {
 //  AddAnyFile
 //
 //==========================================================================
-static void AddAnyFile (VStr fname, bool allowFail, bool fixVoices=false) {
+static bool AddAnyFile (VStr fname, bool allowFail, bool fixVoices=false) {
   if (fname.length() == 0) {
     if (!allowFail) Sys_Error("cannot add empty file");
-    return;
+    return false;
   }
   if (!Sys_FileExists(fname)) {
     if (!allowFail) Sys_Error("cannot add file \"%s\"", *fname);
     GCon->Logf(NAME_Warning, "cannot add file \"%s\"", *fname);
-    return;
+    return false;
   }
   if (!W_AddDiskFileOptional(fname, (allowFail ? false : fixVoices))) {
     if (!allowFail) Sys_Error("cannot add file \"%s\"", *fname);
     GCon->Logf(NAME_Warning, "cannot add file \"%s\"", *fname);
+    return false;
   }
+  return true;
+}
+
+
+//==========================================================================
+//
+//  AddAnyUserFile
+//
+//==========================================================================
+static void AddAnyUserFile (VStr fname, bool cosmetic) {
+  if (!AddAnyFile(fname, true/*allowFail*/)) return;
+  if (!cosmetic) wpkAppend(fname, false);
 }
 
 
@@ -1068,23 +1107,24 @@ enum { CM_PRE_PWADS, CM_POST_PWADS };
 //
 //==========================================================================
 static void CustomModeLoadPwads (int type) {
-  TArray<VStr> &list = (type == CM_PRE_PWADS ? customMode.pwads : customMode.postpwads);
+  TArray<GroupPwadInfo> &list = (type == CM_PRE_PWADS ? customMode.pwads : customMode.postpwads);
   //GCon->Logf(NAME_Init, "CustomModeLoadPwads: type=%d; len=%d", type, list.length());
 
   // load post-file pwads from autoload here too
   if (type == CM_POST_PWADS && postPWads.length() > 0) {
     GCon->Logf(NAME_Init, "loading autoload post-pwads");
     for (auto &&wn : postPWads) {
-      GCon->Logf(NAME_Init, "autoload post-pwad: %s...", *wn);
-      AddAnyFile(wn, true); // allow fail
+      GCon->Logf(NAME_Init, "autoload %spost-pwad: %s...", (wn.cosmetic ? "cosmetic " : ""), *wn.filename);
+      AddAnyUserFile(wn.filename, wn.cosmetic); // allow fail
     }
   }
 
-  for (auto &&fname : list) {
-    if (fname.isEmpty()) continue;
+  for (auto &&ww : list) {
+    if (ww.filename.isEmpty()) continue;
+    VStr fname = ww.filename;
     if (!fname.startsWith("/")) fname = customMode.basedir+fname;
-    GCon->Logf(NAME_Init, "mode pwad: %s...", *fname);
-    AddAnyFile(fname, true); // allow fail
+    GCon->Logf(NAME_Init, "%smode pwad: %s...", (ww.cosmetic ? "cosmetic " : ""), *fname);
+    AddAnyUserFile(fname, ww.cosmetic); // allow fail
   }
 }
 
@@ -1145,11 +1185,23 @@ void AddAutoloadRC (VStr aubasedir) {
     while (!sc->Check("}")) {
       if (sc->Check(",")) continue;
       bool postPWad = false;
+      bool cosmetic = true;
       if (sc->Check("postpwad")) postPWad = true;
       if (!sc->GetString()) sc->Error("wad/pk3 path expected");
       if (sc->String.isEmpty()) continue;
+      if (sc->String[0] == '!') {
+        sc->String.chopLeft(1);
+        if (sc->String.isEmpty()) continue;
+        cosmetic = false;
+      }
       VStr fname = ((*sc->String)[0] == '/' ? sc->String : aubasedir+sc->String);
-      if (postPWad) postPWads.append(fname); else AddAnyFile(fname, true); // allow fail
+      if (postPWad) {
+        GroupPwadInfo &wi = postPWads.alloc();
+        wi.filename = fname;
+        wi.cosmetic = cosmetic;
+      } else {
+        AddAnyUserFile(fname, cosmetic);
+      }
     }
   }
 
