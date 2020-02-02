@@ -118,10 +118,13 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   int TexSOffset = Tex->SOffset;
   int TexTOffset = Tex->TOffset;
 
-  const float scaleX = max2(0.001f, 1.0f/Tex->SScale);
-  const float scaleY = max2(0.001f, 1.0f/Tex->TScale);
+  //GCon->Logf(NAME_Debug, "PSPRITE: '%s'; size=(%d,%d); ofs=(%d,%d); scale=(%g,%g)", *Tex->Name, TexWidth, TexHeight, TexSOffset, TexTOffset, Tex->SScale, Tex->TScale);
 
-  //GCon->Logf("PSPRITE: '%s'; size=(%d,%d); ofs=(%d,%d)", *Tex->Name, TexWidth, TexHeight, TexSOffset, TexTOffset);
+  const float scaleX = max2(0.001f, Tex->SScale);
+  const float scaleY = max2(0.001f, Tex->TScale);
+
+  const float invScaleX = 1.0f/scaleX;
+  const float invScaleY = 1.0f/scaleY;
 
   TVec dv[4];
 
@@ -129,8 +132,10 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   TVec sprorigin = Drawer->vieworg+PSP_DIST*Drawer->viewforward;
 
 #if 1
-  float sprx = 160.0f-VSt->SX+TexSOffset*scaleX;
-  float spry = 100.0f-VSt->SY*R_GetAspectRatio()+TexTOffset*scaleY;
+  float sprx = 160.0f-VSt->SX+TexSOffset*invScaleX;
+  float spry = 100.0f-VSt->SY*R_GetAspectRatio()+TexTOffset*invScaleY;
+
+  //GCon->Logf(NAME_Debug, "PSPRITE: '%s';  sofs=(%g,%g); ssize=(%g,%g); sprpos=(%g,%g)", *Tex->Name, TexSOffset*invScaleX, TexTOffset*invScaleY, TexWidth*invScaleX, TexHeight*invScaleY, sprx, spry);
 
   spry -= cl->PSpriteSY;
   //k8: this is not right, but meh...
@@ -138,12 +143,12 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
 
   //  1 / 160 = 0.00625f
   TVec start = sprorigin-(sprx*PSP_DIST*0.00625f)*Drawer->viewright;
-  TVec end = start+(TexWidth*PSP_DIST*0.00625f)*Drawer->viewright;
+  TVec end = start+(TexWidth*invScaleX*PSP_DIST*0.00625f)*Drawer->viewright;
 
   //  1 / 160 * 120 / 100 = 0.0075f
   const float symul = 1.0f/160.0f*120.0f/100.0f;
   TVec topdelta = (spry*PSP_DIST*symul)*Drawer->viewup;
-  TVec botdelta = topdelta-(TexHeight*PSP_DIST*symul)*Drawer->viewup;
+  TVec botdelta = topdelta-(TexHeight*invScaleY*PSP_DIST*symul)*Drawer->viewup;
   /*
   if (r_aspect_ratio != 1) {
     topdelta *= 100.0f/120.0f;
@@ -159,20 +164,20 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
     botdelta *= 100.0f/120.0f;
   }
 #else
-  float sprx = 160.0f-VSt->SX+TexSOffset*scaleX;
-  float spry = 100.0f-VSt->SY+TexTOffset*scaleY-cl->PSpriteSY;
+  float sprx = 160.0f-VSt->SX+TexSOffset*invScaleX;
+  float spry = 100.0f-VSt->SY+TexTOffset*invScaleY-cl->PSpriteSY;
 
   //k8: this is not right, but meh...
   //if (fov > 90) spry -= (refdef.fovx-1.0f)*(r_aspect_ratio != 0 ? 100.0f : 110.0f);
 
   //  1 / 160 = 0.00625f
   TVec start = sprorigin-(sprx*PSP_DIST*0.00625f)*Drawer->viewright;
-  TVec end = start+(TexWidth*PSP_DIST*0.00625f)*Drawer->viewright;
+  TVec end = start+(TexWidth*invScaleX*PSP_DIST*0.00625f)*Drawer->viewright;
 
   //  1 / 160 * 120 / 100 = 0.0075f
   const float symul = 1.0f/160.0f*120.0f/100.0f;//*R_GetAspectRatioMul();
   TVec topdelta = (spry*PSP_DIST*symul)*Drawer->viewup;
-  TVec botdelta = topdelta-(TexHeight*PSP_DIST*symul)*Drawer->viewup;
+  TVec botdelta = topdelta-(TexHeight*invScaleY*PSP_DIST*symul)*Drawer->viewup;
   /*
   if (r_aspect_ratio != 1) {
     topdelta *= 100.0f/120.0f;
@@ -205,6 +210,9 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   //taxis = -(Drawer->viewup*(100+(r_aspect_ratio.asInt() == 0 ? 60 : 0))*PSP_DISTI);
   if (r_aspect_ratio == 0) taxis = -(Drawer->viewup*160*PSP_DISTI);
   else taxis = -(Drawer->viewup*100*R_GetAspectRatioMul()*PSP_DISTI);
+
+  saxis *= scaleX;
+  taxis *= scaleY;
 
   Drawer->DrawSpritePolygon(dv, GTextureManager[lump], Alpha, Additive,
     nullptr, ColorMap, light, Fade, -Drawer->viewforward,
