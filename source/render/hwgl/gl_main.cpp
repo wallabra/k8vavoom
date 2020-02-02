@@ -2635,7 +2635,7 @@ void VOpenGLDrawer::FBO::blitToScreen () {
   if (mOwner->p_glBlitFramebuffer && !gl_dbg_fbo_blit_with_texture) {
     glBindTexture(GL_TEXTURE_2D, 0);
     mOwner->p_glBindFramebuffer(GL_READ_FRAMEBUFFER, mFBO);
-    if (scaledWidth == mWidth && scaledHeight == mHeight) {
+    if (scaledWidth == realw && scaledHeight == realh) {
       mOwner->p_glBlitFramebuffer(0, 0, mWidth, mHeight, 0, 0, mWidth, mHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
     } else {
       //mOwner->p_glBlitFramebuffer(0, 0, mWidth, mHeight, 0, 0, realw, realh, GL_COLOR_BUFFER_BIT, GL_LINEAR);
@@ -2670,7 +2670,7 @@ void VOpenGLDrawer::FBO::blitToScreen () {
     mOwner->p_glUseProgramObjectARB(0);
     mOwner->currentActiveShader = nullptr;
 
-    if (scaledWidth == mWidth && scaledHeight == mHeight) {
+    if (scaledWidth == realw && scaledHeight == realh) {
       // copy texture by drawing full quad
       //glOrtho(0, mWidth, mHeight, 0, -666, 666);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
