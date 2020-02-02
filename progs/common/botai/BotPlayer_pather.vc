@@ -173,7 +173,7 @@ final bool IsGoodMapPosition (ref TVec pos) {
   auto oldRad = botmo.Radius;
   scope(exit) botmo.Radius = oldRad;
   botmo.Radius += 3;
-  if (botmo.CheckRelPosition(&tmtrace, pos, noPickups:true, ignoreMonsters:true, ignorePlayers:true)) {
+  if (botmo.CheckRelPosition(out tmtrace, pos, noPickups:true, ignoreMonsters:true, ignorePlayers:true)) {
     pos = tmtrace.End;
     return true;
   }

@@ -229,13 +229,13 @@ private final bool TracePathTrySideMove (ref TVec org, TVec dirxy, float dist, b
   while (sideMove < sideMax) {
     sideMove = fmin(sideMove+1, sideMax);
     TVec dd = d2+dirLeft*sideMove;
-    if (CheckRelPosition(&tmtrace, dd, noPickups:true, ignoreMonsters:ignoreMonsters, ignorePlayers:ignoreMonsters)) {
+    if (CheckRelPosition(out tmtrace, dd, noPickups:true, ignoreMonsters:ignoreMonsters, ignorePlayers:ignoreMonsters)) {
       // i found her!
       org += dirLeft*sideMove;
       return true;
     }
     dd = d2+dirRight*sideMove;
-    if (CheckRelPosition(&tmtrace, dd, noPickups:true, ignoreMonsters:ignoreMonsters, ignorePlayers:ignoreMonsters)) {
+    if (CheckRelPosition(out tmtrace, dd, noPickups:true, ignoreMonsters:ignoreMonsters, ignorePlayers:ignoreMonsters)) {
       // i found her!
       org += dirRight*sideMove;
       return true;
@@ -265,7 +265,7 @@ final void CalcBestDist (TVec org, TVec dirxy, ref float lastdist, float newdist
   while (newdist > lastdist) {
     float delta = fmin(newdist-lastdist, 8);
     TVec d2 = org+dirxy*(lastdist+delta);
-    if (!CheckRelPosition(&tmtrace, d2, noPickups:true, ignoreMonsters:ignoreMonsters, ignorePlayers:ignoreMonsters)) {
+    if (!CheckRelPosition(out tmtrace, d2, noPickups:true, ignoreMonsters:ignoreMonsters, ignorePlayers:ignoreMonsters)) {
       if (!TracePathTrySideMove(ref org, dirxy, lastdist+delta, ignoreMonsters)) return;
     }
     //print("*** step; lastdist=%s; newdist=%s; currDist=%s", lastdist, newdist, lastdist+delta);
@@ -295,7 +295,7 @@ final void CalcBestDistBack (TVec org, TVec dirxy, ref float lastdist, float new
     float delta = fmin(8, dist);
     dist -= delta;
     TVec d2 = org+dirxy*dist;
-    if (CheckRelPosition(&tmtrace, d2, noPickups:true, ignoreMonsters:ignoreMonsters, ignorePlayers:ignoreMonsters)) {
+    if (CheckRelPosition(out tmtrace, d2, noPickups:true, ignoreMonsters:ignoreMonsters, ignorePlayers:ignoreMonsters)) {
       //print("*** GOOD step; dist=%s; newdist=%s", dist, newdist);
       lastdist = dist;
       return;
@@ -348,7 +348,7 @@ bool TracePath (float ang, float dist, out PathInfo pi, optional Entity distEnt,
   if (dist < 1) {
     // oops
     Entity::tmtrace_t tmtrace;
-    pi.success = CheckRelPosition(&tmtrace, srcOrigin, noPickups:true, ignoreMonsters:ignoreMonsters, ignorePlayers:ignoreMonsters);
+    pi.success = CheckRelPosition(out tmtrace, srcOrigin, noPickups:true, ignoreMonsters:ignoreMonsters, ignorePlayers:ignoreMonsters);
     return pi.success;
   }
 

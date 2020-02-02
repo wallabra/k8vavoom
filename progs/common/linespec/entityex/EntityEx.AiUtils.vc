@@ -598,7 +598,7 @@ final bool StepMove () {
     {
       dropoff = true;
     }
-    try_ok = TryMoveEx(&tmtrace, vector(origx+(deltax/float(steps*i)), origy+(deltay/float(steps*i)), Origin.z), AllowDropOff:dropoff);
+    try_ok = TryMoveEx(out tmtrace, vector(origx+(deltax/float(steps*i)), origy+(deltay/float(steps*i)), Origin.z), AllowDropOff:dropoff);
     if (!try_ok) break;
   }
   //Radius = oldRadius;
@@ -615,7 +615,7 @@ final bool StepMove () {
     {
       dropoff = true;
     }
-    try_ok = TryMoveEx(&tmtrace, vector(tryx, tryy, Origin.z), AllowDropOff:dropoff);
+    try_ok = TryMoveEx(out tmtrace, vector(tryx, tryy, Origin.z), AllowDropOff:dropoff);
   }
 
   if (!try_ok) {

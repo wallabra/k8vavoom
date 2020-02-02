@@ -451,7 +451,7 @@ final void PutItemToIgnoreList (Actor item, optional float timeoutMult) {
 //==========================================================================
 final bool IsGoodMapPosition (ref TVec pos) {
   Entity::tmtrace_t tmtrace;
-  if (botmo.CheckRelPosition(&tmtrace, pos, noPickups:true, ignoreMonsters:true, ignorePlayers:true)) {
+  if (botmo.CheckRelPosition(out tmtrace, pos, noPickups:true, ignoreMonsters:true, ignorePlayers:true)) {
     pos = tmtrace.End;
     return true;
   } else {

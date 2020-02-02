@@ -572,7 +572,7 @@ final bool HeightClip (optional bool skipTriggers, optional bool skipObjects) {
 
   //if (bIsPlayer) printdebug("old: Floor=%s; Ceiling=%s; FloorZ=%s; CeilingZ=%s", EFloor.splane, ECeiling.splane, FloorZ, CeilingZ);
 
-  bool isok = CheckRelPosition(&tmtrace, Origin);//, debugDump:bIsPlayer);
+  bool isok = CheckRelPosition(out tmtrace, Origin);//, debugDump:bIsPlayer);
   // what about stranding a monster partially off an edge?
 
   EFloor = tmtrace.EFloor;

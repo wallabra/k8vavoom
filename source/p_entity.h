@@ -577,7 +577,9 @@ public:
 
   void CheckWater (); // this sets `WaterLevel` and `WaterType`
   bool CheckPosition (TVec);
+  // `tmtrace` is output
   bool CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups=false, bool ignoreMonsters=false, bool ignorePlayers=false);
+  // `tmtrace` is output
   bool TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool checkOnly=false, bool noPickups=false);
   VEntity *TestMobjZ (const TVec &);
   void SlideMove (float StepVelScale, bool noPickups=false);

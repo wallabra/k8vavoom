@@ -46,7 +46,7 @@ final void GetFloorAndCeiling (out tmtrace_t tmtrace) {
   bColideWithThings = false;
   bColideWithWorld = false;
   // find new position
-  CheckRelPosition(&tmtrace, Origin, noPickups:true, ignoreMonsters:true, ignorePlayers:true);
+  CheckRelPosition(out tmtrace, Origin, noPickups:true, ignoreMonsters:true, ignorePlayers:true);
 }
 
 
@@ -65,7 +65,7 @@ final void GetFloorAndCeilingEx (out tmtrace_t tmtrace, TVec org, optional bool 
   bColideWithThings = collideThings;
   bColideWithWorld = collideWorld;
   // find new position
-  CheckRelPosition(&tmtrace, org, noPickups:true, ignoreMonsters:true, ignorePlayers:true);
+  CheckRelPosition(out tmtrace, org, noPickups:true, ignoreMonsters:true, ignorePlayers:true);
 }
 
 
@@ -508,7 +508,7 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
     float ptryy = Origin.y+StepYMove;
 
     tmtrace_t tmtrace;
-    if (!bNoInteraction && !TryMoveEx(&tmtrace, vector(ptryx, ptryy, Origin.z), AllowDropOff:true)) {
+    if (!bNoInteraction && !TryMoveEx(out tmtrace, vector(ptryx, ptryy, Origin.z), AllowDropOff:true)) {
       // blocked move
       if (DecalName && (bDecals2SPass || bDecalsOnly2S)) {
         //print("tracing decal '%s' (hit)", DecalName);
@@ -535,7 +535,7 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
         /*
         if (!tmtrace.BlockingLine && !tmtrace.AnyBlockingLine) {
           tmtrace_t tr2;
-          if (CheckRelPosition(&tr2, vector(ptryx, ptryy, Origin.z))) {
+          if (CheckRelPosition(out tr2, vector(ptryx, ptryy, Origin.z))) {
             print("second trace returned TRUE!: l:%s; al:%s", (tr2.BlockingLine ? "tan" : "ona"), (tr2.AnyBlockingLine ? "tan" : "ona"));
           } else {
             print("second trace returned FALSE!: l:%s; al:%s", (tr2.BlockingLine ? "tan" : "ona"), (tr2.AnyBlockingLine ? "tan" : "ona"));

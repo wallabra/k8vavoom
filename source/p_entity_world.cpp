@@ -2319,13 +2319,15 @@ IMPLEMENT_FUNCTION(VEntity, CheckPosition) {
   RET_BOOL(Self->CheckPosition(Pos));
 }
 
-// native final bool CheckRelPosition (tmtrace_t *tmtrace, TVec Pos, optional bool noPickups/*=false*/, optional bool ignoreMonsters, optional bool ignorePlayers);
+// native final bool CheckRelPosition (out tmtrace_t tmtrace, TVec Pos, optional bool noPickups/*=false*/, optional bool ignoreMonsters, optional bool ignorePlayers);
 IMPLEMENT_FUNCTION(VEntity, CheckRelPosition) {
+  tmtrace_t tmp;
   P_GET_BOOL_OPT(ignorePlayers, false);
   P_GET_BOOL_OPT(ignoreMonsters, false);
   P_GET_BOOL_OPT(noPickups, false);
   P_GET_VEC(Pos);
   P_GET_PTR(tmtrace_t, tmtrace);
+  if (!tmtrace) tmtrace = &tmp;
   P_GET_SELF;
   RET_BOOL(Self->CheckRelPosition(*tmtrace, Pos, noPickups, ignoreMonsters, ignorePlayers));
 }
@@ -2351,10 +2353,12 @@ IMPLEMENT_FUNCTION(VEntity, TryMove) {
 }
 
 IMPLEMENT_FUNCTION(VEntity, TryMoveEx) {
+  tmtrace_t tmp;
   P_GET_BOOL_OPT(checkOnly, false);
   P_GET_BOOL(AllowDropOff);
   P_GET_VEC(Pos);
   P_GET_PTR(tmtrace_t, tmtrace);
+  if (!tmtrace) tmtrace = &tmp;
   P_GET_SELF;
   RET_BOOL(Self->TryMove(*tmtrace, Pos, AllowDropOff, checkOnly));
 }

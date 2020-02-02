@@ -428,9 +428,9 @@ native final bool CheckSides (TVec lsPos);
 native final bool FixMapthingPos ();
 native final void CheckDropOff (out float DeltaX, out float DeltaY);
 native final bool CheckPosition (TVec Pos);
-native final bool CheckRelPosition (tmtrace_t *tmtrace, TVec Pos, optional bool noPickups/*=false*/, optional bool ignoreMonsters, optional bool ignorePlayers);
+native final bool CheckRelPosition (out tmtrace_t tmtrace, TVec Pos, optional bool noPickups/*=false*/, optional bool ignoreMonsters, optional bool ignorePlayers);
 native final bool TryMove (TVec newPos, bool AllowDropOff, optional bool checkOnly);
-native final bool TryMoveEx (tmtrace_t *tmtrace, TVec newPos, bool AllowDropOff, optional bool checkOnly);
+native final bool TryMoveEx (out tmtrace_t tmtrace, TVec newPos, bool AllowDropOff, optional bool checkOnly);
 native final bool TestMobjZ ();
 
 // `noPickups` means "don't activate specials" too
