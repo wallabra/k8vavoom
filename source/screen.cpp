@@ -473,7 +473,7 @@ COMMAND(SetResolution) {
   if (Args.Num() == 3) {
     int w = VStr::atoi(*Args[1]);
     int h = VStr::atoi(*Args[2]);
-    if (w >= 160 && h >= 100 && w <= 8192 && h <= 8192) {
+    if (w >= 320 && h >= 200 && w <= 8192 && h <= 8192) {
       setwidth = w;
       setheight = h;
       setresolutionneeded = true;
