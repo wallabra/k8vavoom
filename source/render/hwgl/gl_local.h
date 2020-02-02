@@ -78,6 +78,8 @@ extern VCvarB gl_lmap_allow_partial_updates;
 extern VCvarB gl_regular_prefill_depth;
 extern VCvarB gl_regular_disable_overbright;
 
+extern VCvarI gl_release_ram_textures_mode;
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 static inline const char *VGetGLErrorStr (const GLenum glerr) {

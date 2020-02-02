@@ -412,6 +412,8 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
         }
       }
     }
+
+    if (SrcTex && gl_release_ram_textures_mode.asInt() >= 2) SrcTex->ReleasePixels();
   }
 
   // set up texture wrapping

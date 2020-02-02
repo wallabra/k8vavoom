@@ -223,6 +223,7 @@ public:
   VCameraTexture (VName, int, int);
   virtual ~VCameraTexture () override;
   virtual bool CheckModified () override;
+  virtual void ReleasePixels () override;
   virtual vuint8 *GetPixels () override;
   virtual void Unload () override;
   void CopyImage ();

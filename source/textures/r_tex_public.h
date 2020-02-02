@@ -330,6 +330,12 @@ public:
   virtual void SetFrontSkyLayer ();
   virtual bool CheckModified ();
   virtual void Shade (int shade); // should be called before any `GetPixels()` call!
+
+  // this can be called to release texture memory
+  // the texture will be re-read on next `GetPixels()`
+  // can be used to release hires texture memory
+  virtual void ReleasePixels ();
+
   virtual vuint8 *GetPixels () = 0;
   vuint8 *GetPixels8 ();
   pala_t *GetPixels8A ();

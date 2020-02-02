@@ -35,6 +35,7 @@
 extern VCvarB r_draw_pobj;
 extern VCvarB r_advlight_opt_optimise_scissor;
 extern VCvarB dbg_clip_dump_added_ranges;
+extern VCvarI gl_release_ram_textures_mode;
 
 static VCvarB dbg_autoclear_automap("dbg_autoclear_automap", false, "Clear automap before rendering?", 0/*CVAR_Archive*/);
 static VCvarB r_lightflood_check_plane_angles("r_lightflood_check_plane_angles", true, "Check seg planes angles in light floodfill?", CVAR_Archive);
@@ -2485,34 +2486,41 @@ void VRenderLevelShared::PrecacheLevel () {
 //
 //==========================================================================
 void VRenderLevelShared::UncacheLevel () {
-  if (!r_reupload_level_textures) return;
+  if (r_reupload_level_textures || gl_release_ram_textures_mode.asInt() >= 1) {
+    const int maxtex = GTextureManager.GetNumTextures();
 
-  const int maxtex = GTextureManager.GetNumTextures();
+    TArray<bool> texturepresent;
+    texturepresent.setLength(maxtex);
+    for (auto &&b : texturepresent) b = false;
 
-  TArray<bool> texturepresent;
-  texturepresent.setLength(maxtex);
-  for (auto &&b : texturepresent) b = false;
+    for (int f = 0; f < Level->NumSectors; ++f) {
+      if (Level->Sectors[f].floor.pic > 0 && Level->Sectors[f].floor.pic < maxtex) texturepresent[Level->Sectors[f].floor.pic] = true;
+      if (Level->Sectors[f].ceiling.pic > 0 && Level->Sectors[f].ceiling.pic < maxtex) texturepresent[Level->Sectors[f].ceiling.pic] = true;
+    }
 
-  for (int f = 0; f < Level->NumSectors; ++f) {
-    if (Level->Sectors[f].floor.pic > 0 && Level->Sectors[f].floor.pic < maxtex) texturepresent[Level->Sectors[f].floor.pic] = true;
-    if (Level->Sectors[f].ceiling.pic > 0 && Level->Sectors[f].ceiling.pic < maxtex) texturepresent[Level->Sectors[f].ceiling.pic] = true;
-  }
+    for (int f = 0; f < Level->NumSides; ++f) {
+      if (Level->Sides[f].TopTexture > 0 && Level->Sides[f].TopTexture < maxtex) texturepresent[Level->Sides[f].TopTexture] = true;
+      if (Level->Sides[f].MidTexture > 0 && Level->Sides[f].MidTexture < maxtex) texturepresent[Level->Sides[f].MidTexture] = true;
+      if (Level->Sides[f].BottomTexture > 0 && Level->Sides[f].BottomTexture < maxtex) texturepresent[Level->Sides[f].BottomTexture] = true;
+    }
 
-  for (int f = 0; f < Level->NumSides; ++f) {
-    if (Level->Sides[f].TopTexture > 0 && Level->Sides[f].TopTexture < maxtex) texturepresent[Level->Sides[f].TopTexture] = true;
-    if (Level->Sides[f].MidTexture > 0 && Level->Sides[f].MidTexture < maxtex) texturepresent[Level->Sides[f].MidTexture] = true;
-    if (Level->Sides[f].BottomTexture > 0 && Level->Sides[f].BottomTexture < maxtex) texturepresent[Level->Sides[f].BottomTexture] = true;
-  }
+    int lvltexcount = 0;
+    texturepresent[0] = false;
+    for (auto &&b : texturepresent) { if (b) ++lvltexcount; }
+    if (!lvltexcount) return;
 
-  int lvltexcount = 0;
-  texturepresent[0] = false;
-  for (auto &&b : texturepresent) { if (b) ++lvltexcount; }
-  if (!lvltexcount) return;
-
-  GCon->Logf("unloading %d level textures...", lvltexcount);
-  for (int f = 1; f < texturepresent.length(); ++f) {
-    if (!texturepresent[f]) continue;
-    Drawer->FlushOneTexture(GTextureManager[f]);
+    if (r_reupload_level_textures) {
+      GCon->Logf("unloading%s %d level textures...", (gl_release_ram_textures_mode.asInt() >= 1 ? " and releasing" : ""), lvltexcount);
+    } else {
+      GCon->Logf("releasing %d level textures...", lvltexcount);
+    }
+    for (int f = 1; f < texturepresent.length(); ++f) {
+      if (!texturepresent[f]) continue;
+      VTexture *tex = GTextureManager[f];
+      if (!tex) continue;
+      if (r_reupload_level_textures) Drawer->FlushOneTexture(tex);
+      if (gl_release_ram_textures_mode.asInt() >= 1) tex->ReleasePixels();
+    }
   }
 }
 

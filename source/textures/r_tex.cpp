@@ -85,6 +85,7 @@ static int cli_SkipSprOfs = 0;
 
 static int hitexNewCount = 0;
 static int hitexReplaceCount = 0;
+static double hitexLastMessageTime = -1;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -1648,6 +1649,7 @@ int VTextureManager::FindHiResToReplace (VName Name, int Type, bool bOverload) {
 void VTextureManager::ReplaceTextureWithHiRes (int OldIndex, VTexture *NewTex, int oldWidth, int oldHeight) {
   vassert(inMapTextures == 0);
   if (!NewTex) return; // just in case
+
   if (NewTex->GetWidth() < 1 || NewTex->GetHeight() < 1 || NewTex->GetWidth() > 8192 || NewTex->GetHeight() > 8192) {
     // oops
     GCon->Logf(NAME_Error, "hires texture '%s' has invalid dimensions (%dx%d)", *NewTex->Name, NewTex->GetWidth(), NewTex->GetHeight());
@@ -1685,10 +1687,24 @@ void VTextureManager::ReplaceTextureWithHiRes (int OldIndex, VTexture *NewTex, i
     Textures[OldIndex] = NewTex;
     // force non-translucency for lightmapping
     if (NewTex->isTranslucent() && !OldTex->isTranslucent()) NewTex->translucent = false;
+    // we may not need it for a long time
+    OldTex->ReleasePixels();
     // k8: don't delete old texture, it can be referenced out there
     //delete OldTex;
     //OldTex = nullptr;
     ++hitexReplaceCount;
+  }
+  // we may not need it for a long time
+  NewTex->ReleasePixels();
+
+  const double ctt = Sys_Time();
+  if (hitexLastMessageTime < 0 || ctt-hitexLastMessageTime >= 1.5) {
+    if (hitexLastMessageTime < 0) {
+      GCon->Log(NAME_Init, "loading hires textures...");
+    } else {
+      GCon->Logf(NAME_Init, "   %d hires textures processed...", hitexNewCount+hitexReplaceCount);
+    }
+    hitexLastMessageTime = ctt;
   }
 }
 
@@ -1709,7 +1725,7 @@ void VTextureManager::AddHiResTexturesFromNS (EWadNamespace NS, int ttype, bool 
     int OldIdx = FindHiResToReplace(Name, ttype);
     if (OldIdx > 0 && !r_hirestex) continue; // replacement is disabled
 
-    if (!messaged) { messaged = true; GCon->Log(NAME_Init, "adding hires texture replacements"); }
+    //if (!messaged) { messaged = true; GCon->Log(NAME_Init, "adding hires texture replacements"); }
 
     // create new texture
     VTexture *NewTex = VTexture::CreateTexture(TEXTYPE_Any, lump);

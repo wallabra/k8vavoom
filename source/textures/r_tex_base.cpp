@@ -186,6 +186,20 @@ bool VTexture::CheckModified () {
 
 //==========================================================================
 //
+//  VTexture::ReleasePixels
+//
+//==========================================================================
+void VTexture::ReleasePixels () {
+  if (shadeColor != -1) return; // cannot release shaded texture
+  if (Pixels) { delete[] Pixels; Pixels = nullptr; }
+  if (Pixels8Bit) { delete[] Pixels8Bit; Pixels8Bit = nullptr; }
+  if (Pixels8BitA) { delete[] Pixels8BitA; Pixels8BitA = nullptr; }
+  Pixels8BitValid = Pixels8BitAValid = false;
+}
+
+
+//==========================================================================
+//
 //  VTexture::GetPixels8
 //
 //==========================================================================
