@@ -66,8 +66,6 @@ EntityEx Attacker;
 float JumpTime;
 TVec LocalQuakeHappening; // for each axis
 
-TVec MoveDir;
-
 // for damaging flats
 int LastSectorDamageTic;
 
@@ -895,6 +893,7 @@ void CheckWaterJump (optional bool asStep) {
   if (EntityEx(MO).bWaterJump && EntityEx(MO).ReactionTime > 0) return;
 
   AngleVectors(MO.Angles, out vforward, out vright, out vup);
+  TVec fwdvel = vforward.xy;
   vforward = (vforward*ForwardMove+vright*SideMove).Normalise;
 
   start = MO.Origin;
@@ -906,11 +905,12 @@ void CheckWaterJump (optional bool asStep) {
     // solid at waist
     start.z = MO.Origin.z+MO.Height;
     end = start+vforward*24.0;
-    MoveDir = HitNormal*(-50.0);
+    //MoveDir = HitNormal*(-50.0);
     if (Level.XLevel.BSPTraceLine(start, end, HitPoint, HitNormal)) {
       // open at eye level
       EntityEx(MO).bWaterJump = true;
       MO.Velocity.z = 350.0;
+      //MoveDir = fwdvel*ForwardMove;
       EntityEx(MO).ReactionTime = 2.0; // safety net
       MO.PlaySound('*jump', CHAN_VOICE); //FIXME
     }
@@ -1039,8 +1039,20 @@ void WaterJump () {
     EntityEx(MO).bWaterJump = false;
     EntityEx(MO).ReactionTime = 0.0;
   }
-  MO.Velocity.x = MoveDir.x;
-  MO.Velocity.y = MoveDir.y;
+  /*
+  TVec xdir = MoveDir;
+  /+k8 added
+  if (!xdir) return;
+  printdebug("WATERJUMP: 000: vel=%s; dir=%s; xdir=%s; vl2d=%s; xdl2d=%s (%s)", MO.Velocity, MoveDir, xdir, MO.Velocity.length2D, xdir.length2D, xdir.length2D/8);
+  if (MO.Velocity.length2D >= xdir.length2D/8) {
+    MoveDir = vector(0, 0, 0);
+    return;
+  }
+  printdebug("WATERJUMP: 001: vel=%s; dir=%s; xdir=%s", MO.Velocity, MoveDir, xdir);
+  +/
+  MO.Velocity.x = xdir.x;
+  MO.Velocity.y = xdir.y;
+  */
 }
 
 
@@ -3079,7 +3091,7 @@ void ResetPlayerOnSpawn (optional bool keepPlayerState) {
 
   JumpTime = 0;
   LocalQuakeHappening = vector(0, 0, 0);
-  MoveDir = vector(0, 0, 0);
+  //MoveDir = vector(0, 0, 0);
   HazardTime = 0;
   //Weapon ReadyWeapon;
   //Weapon PendingWeapon;  // Is none if not changing.
@@ -4225,7 +4237,7 @@ override void PlayerTick (float deltaTime) {
   if (MorphTime) PlayerPawn(MO).MorphPlayerThink();
 
   // move around
-  // ReactionTime is used to prevent movement for a bit after a teleport
+  // ReactionTime is used to prevent movement for a bit after a teleport (or water jump)
   if (Actor(MO).ReactionTime) {
     Actor(MO).ReactionTime -= deltaTime;
     if (Actor(MO).ReactionTime <= 0.0) Actor(MO).ReactionTime = 0.0;
