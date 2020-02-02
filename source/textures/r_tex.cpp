@@ -94,7 +94,7 @@ static double hitexLastMessageTime = -1;
 int skyflatnum; // sky mapping
 int screenBackTexNum; // background filler for unused screen parts and status bar
 
-VCvarB r_hirestex("r_hirestex", true, "Allow high-resolution texture replacements?", CVAR_Archive|CVAR_PreInit);
+VCvarB r_hirestex("r_hirestex", true, "Allow high-resolution texture replacements?", /*CVAR_Archive|*/CVAR_PreInit);
 VCvarB r_showinfo("r_showinfo", false, "Show some info about loaded textures?", CVAR_Archive);
 
 static VCvarB r_reupload_textures("r_reupload_textures", false, "Reupload textures to GPU when new map is loaded?", CVAR_Archive);
@@ -234,7 +234,7 @@ void VTextureManager::Init () {
   AddGroup(TEXTYPE_Sprite, WADNS_Sprites);
 
   // initialise hires textures
-  GCon->Log(NAME_Init, "initializing hires textures...");
+  GCon->Log(NAME_Init, "initializing advanced textures...");
   AddTextureTextLumps(); // only normal for now
 
   // force-load numbered textures
@@ -243,8 +243,12 @@ void VTextureManager::Init () {
     AddMissingNumberedTextures();
   }
 
+  //GCon->Log(NAME_Init, "initializing hires textures...");
+  R_InitHiResTextures();
+
   // we don't need numbered names anymore
   ClearNumberedNames();
+  ClearTextureDefLumps();
 
   // find default texture
   DefaultTexture = CheckNumForName("-noflat-", TEXTYPE_Overload, false);
@@ -1656,6 +1660,12 @@ void VTextureManager::ReplaceTextureWithHiRes (int OldIndex, VTexture *NewTex, i
     delete NewTex;
     return;
   }
+
+  if (OldIndex == NewTex->SourceLump) {
+    delete NewTex;
+    return;
+  }
+
   if (OldIndex < 0) {
     // add it as a new texture
     //NewTex->Type = TEXTYPE_Overload; //k8: nope, it is new
@@ -1957,7 +1967,6 @@ void R_InitHiResTextures () {
   GTextureManager.AddHiResTextureTextLumps();
   if (hitexReplaceCount) GCon->Logf(NAME_Init, "replaced %d texture%s with hires one%s", hitexReplaceCount, (hitexReplaceCount == 1 ? "" : "s"), (hitexReplaceCount == 1 ? "" : "s"));
   if (hitexNewCount) GCon->Logf(NAME_Init, "added %d new hires texture%s", hitexNewCount, (hitexNewCount == 1 ? "" : "s"));
-  ClearTextureDefLumps();
 }
 
 

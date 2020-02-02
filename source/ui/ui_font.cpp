@@ -349,6 +349,7 @@ void VFont::ParseFontDefs () {
           sc.ExpectString();
           Template = sc.String;
           FontType = 1;
+          //GCon->Logf(NAME_Debug, "*** TPL: <%s>", *Template);
         } else if (sc.Check("first")) {
           CHECK_TYPE(2);
           sc.ExpectNumber();
@@ -474,15 +475,23 @@ VFont::VFont (VName AName, VStr FormatStr, int First, int Count, int StartIndex)
 
   bool wasAnyChar = false;
 
-  //GCon->Logf(NAME_Init, "creating font of type 1; Template=<%s>; First=%d; Count=%d; Start=%d", *FormatStr, First, Count, StartIndex);
+  //GCon->Logf(NAME_Debug, "creating font of type 1; Template=<%s>; First=%d; Count=%d; Start=%d", *FormatStr, First, Count, StartIndex);
   for (int i = 0; i < Count; ++i) {
     int Char = i+First;
     char Buffer[10];
+    //FIXME: replace this with safe variant
     snprintf(Buffer, sizeof(Buffer), *FormatStr, i+StartIndex);
+    if (!Buffer[0]) continue;
     VName LumpName(Buffer, VName::AddLower8);
+
     int Lump = W_CheckNumForName(LumpName, WADNS_Graphics);
     // our UI cannot support hires fonts without lores templates, and i will not implement that
-    //if (Lump < 0) Lump = W_CheckNumForName(LumpName, WADNS_HiResTextures);
+    /*
+    if (Lump < 0) Lump = W_CheckNumForName(LumpName, WADNS_NewTextures);
+    if (Lump < 0) Lump = W_CheckNumForName(LumpName, WADNS_HiResTextures);
+    if (Lump < 0) Lump = W_CheckNumForName(LumpName, WADNS_HiResTexturesDDay);
+    */
+    //if (Lump < 0) = W_CheckNumForName(LumpName, WADNS_HiResFlatsDDay);
     //GCon->Logf(NAME_Init, "  char %d: lump=%d (%s)", Char, Lump, (Lump >= 0 ? *W_FullLumpName(Lump) : "<oops>"));
 
     // in Doom, stcfn121 is actually a '|' and not 'y' and many wad

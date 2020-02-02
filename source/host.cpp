@@ -220,6 +220,9 @@ void Host_Init () {
   GSoundManager->Init();
   R_InitData();
   R_InitTexture();
+  //TODO: only for clients?
+  //done in `R_InitTexture`
+  //R_InitHiResTextures();
 
   GNet = VNetworkPublic::Create();
   GNet->Init();
@@ -311,7 +314,7 @@ void Host_Init () {
 
 #ifdef CLIENT
   //FIXME
-  R_InitHiResTextures(); // init only hires replacements
+  //R_InitHiResTextures(); // init only hires replacements
 #endif
 
 #ifndef CLIENT

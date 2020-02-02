@@ -250,6 +250,7 @@ menudef VideoOptions {
       "You still should have proper GLDEFS loaded.";
   }
 
+  /*
   option bool {
     title = "High Resolution Textures";
     cvar = r_hirestex;
@@ -259,6 +260,7 @@ menudef VideoOptions {
       "\cGUse with caution, and please, don't report any bugs with this turned on.",
       "\cJRequires full engine restart after change.";
   }
+  */
 
 
   header "Interpolation Options";
