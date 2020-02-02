@@ -1298,6 +1298,8 @@ static void ParseBrightmap (int SrcLump, VScriptParser *sc) {
         WADNS_Flats,
         WADNS_NewTextures,
         WADNS_HiResTextures,
+        WADNS_HiResTexturesDDay,
+        WADNS_HiResFlatsDDay,
         WADNS_Patches,
         WADNS_Global,
         // end marker

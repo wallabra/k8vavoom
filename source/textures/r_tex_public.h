@@ -595,6 +595,8 @@ private:
   // it can do `delete NewTex` too
   void ReplaceTextureWithHiRes (int OldIndex, VTexture *NewTex, int oldWidth=-1, int oldHeight=-1);
   void AddHiResTextureTextLumps ();
+
+  void AddHiResTexturesFromNS (EWadNamespace NS, int ttype, bool &messaged);
   void AddHiResTextures (); // hires namespace
 
   void LoadSpriteOffsets ();

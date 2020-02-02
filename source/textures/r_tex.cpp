@@ -1695,21 +1695,18 @@ void VTextureManager::ReplaceTextureWithHiRes (int OldIndex, VTexture *NewTex, i
 
 //==========================================================================
 //
-//  VTextureManager::AddHiResTextures
+//  VTextureManager::AddHiResTexturesFromNS
 //
 //==========================================================================
-void VTextureManager::AddHiResTextures () {
-  vassert(inMapTextures == 0);
-  bool messaged = false;
-  // GZDoom
-  for (auto &&it : WadNSIterator(WADNS_HiResTextures)) {
+void VTextureManager::AddHiResTexturesFromNS (EWadNamespace NS, int ttype, bool &messaged) {
+  for (auto &&it : WadNSIterator(NS)) {
     int lump = it.lump;
     VName Name = W_LumpName(lump);
     // to avoid duplicates, add only the last one
-    if (W_GetNumForName(Name, WADNS_HiResTextures) != lump) continue;
+    if (W_GetNumForName(Name, NS) != lump) continue;
 
     // find texture to replace
-    int OldIdx = FindHiResToReplace(Name, TEXTYPE_Wall);
+    int OldIdx = FindHiResToReplace(Name, ttype);
     if (OldIdx > 0 && !r_hirestex) continue; // replacement is disabled
 
     if (!messaged) { messaged = true; GCon->Log(NAME_Init, "adding hires texture replacements"); }
@@ -1717,11 +1714,27 @@ void VTextureManager::AddHiResTextures () {
     // create new texture
     VTexture *NewTex = VTexture::CreateTexture(TEXTYPE_Any, lump);
     if (!NewTex) continue;
-    if (NewTex->Type == TEXTYPE_Any) NewTex->Type = TEXTYPE_Wall;
+    if (NewTex->Type == TEXTYPE_Any) NewTex->Type = ttype;
 
     ReplaceTextureWithHiRes(OldIdx, NewTex);
   }
-  // jdoom/doomsday
+}
+
+
+//==========================================================================
+//
+//  VTextureManager::AddHiResTextures
+//
+//==========================================================================
+void VTextureManager::AddHiResTextures () {
+  vassert(inMapTextures == 0);
+  bool messaged = false;
+  // GZDoom
+  AddHiResTexturesFromNS(WADNS_HiResTextures, TEXTYPE_Wall, messaged);
+  // jdoom/doomsday textures
+  AddHiResTexturesFromNS(WADNS_HiResTexturesDDay, TEXTYPE_Wall, messaged);
+  // jdoom/doomsday flats
+  AddHiResTexturesFromNS(WADNS_HiResFlatsDDay, TEXTYPE_Flat, messaged);
 }
 
 
