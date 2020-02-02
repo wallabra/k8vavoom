@@ -664,7 +664,7 @@ static int doStartMap = 0;
 static int pwflag_SkipSounds = 0;
 static int pwflag_SkipSprites = 0;
 static int pwflag_SkipDehacked = 0;
-static int pwflag_StoreInSave = 1;
+static int pwflag_SkipSaveList = 0;
 
 
 static void tempMount (const PWadFile &pwf) {
@@ -1011,6 +1011,7 @@ static void wpkAppend (VStr fname, bool asystem) {
     fn = fn.extractFileName();
     if (fn.length() == 0) fn = fname.toLowerCase();
   }
+  //GCon->Logf(NAME_Debug, "WPK: %s", *fn);
   // check for duplicates
   for (int f = wpklist.length()-1; f >= 0; --f) {
     if (wpklist[f] != fn) continue;
@@ -1884,21 +1885,21 @@ static int countFmtHash (VStr str) {
 //  cliFnameCollector
 //
 //==========================================================================
-static int cliFnameCollector (VArgs &args, int idx) {
-  pwflag_StoreInSave = 1;
-  bool first = true;
-  //++idx; // done by the called
+static int cliFnameCollector (VArgs &args, int idx, bool first) {
+  //pwflag_SkipSaveList = 0;
+  //bool first = true;
+  //++idx; // done by the caller
   while (idx < args.Count()) {
     if (VStr::strEqu(args[idx], "-cosmetic")) {
-      pwflag_StoreInSave = 0;
+      pwflag_SkipSaveList = 1;
       ++idx;
       continue;
     }
     if (VParsedArgs::IsArgBreaker(args, idx)) break;
     VStr fname = args[idx++];
-    bool sts = !!pwflag_StoreInSave;
-    pwflag_StoreInSave = 1; // autoreset
-    //GCon->Logf(NAME_Debug, "idx=%d; fname=<%s>", idx-1, *fname);
+    const bool sts = !pwflag_SkipSaveList;
+    pwflag_SkipSaveList = 0; // autoreset
+    //GCon->Logf(NAME_Debug, "idx=%d; fname=<%s>; sts=%d", idx-1, *fname, (int)sts);
     if (fname.isEmpty()) { first = false; continue; }
 
     PWadFile pwf;
@@ -1913,14 +1914,14 @@ static int cliFnameCollector (VArgs &args, int idx) {
     if (Sys_DirExists(fname)) {
       pwf.asDirectory = true;
       if (!first) {
-        GCon->Logf(NAME_Init, "To mount directory '%s' as emulated PK3 file, you should use \"-file\".", *fname);
+        GCon->Logf(NAME_Warning, "To mount directory '%s' as emulated PK3 file, you should use \"-file\".", *fname);
       } else {
         pwadList.append(pwf);
       }
     } else if (Sys_FileExists(fname)) {
       pwadList.append(pwf);
     } else {
-      GCon->Logf(NAME_Init, "WARNING: File \"%s\" doesn't exist.", *fname);
+      GCon->Logf(NAME_Warning, "File \"%s\" doesn't exist.", *fname);
     }
     first = false;
   }
@@ -1951,6 +1952,8 @@ void FL_InitOptions () {
 
   GParsedArgs.RegisterFlagSet("-c", "compile VavoomC/decorate code and immediately exit", &cli_CompileAndExit);
 
+  GParsedArgs.RegisterFlagSet("-cosmetic", "!do not store next pwad in save list", &pwflag_SkipSaveList);
+
   GParsedArgs.RegisterFlagSet("-skip-sounds", "skip sounds in the following pwads", &pwflag_SkipSounds);
   GParsedArgs.RegisterFlagReset("-allow-sounds", "allow sounds in the following pwads", &pwflag_SkipSounds);
   // aliases
@@ -1977,8 +1980,8 @@ void FL_InitOptions () {
   GParsedArgs.RegisterAlias("--no-extern-deh", "-no-external-deh");
 
   // filename collector
-  GParsedArgs.RegisterCallback(nullptr, nullptr, [] (VArgs &args, int idx) -> int { return cliFnameCollector(args, idx); });
-  GParsedArgs.RegisterCallback("-file", "add the following arguments as pwads", [] (VArgs &args, int idx) -> int { return cliFnameCollector(args, ++idx); });
+  GParsedArgs.RegisterCallback(nullptr, nullptr, [] (VArgs &args, int idx) -> int { return cliFnameCollector(args, idx, false); });
+  GParsedArgs.RegisterCallback("-file", "add the following arguments as pwads", [] (VArgs &args, int idx) -> int { return cliFnameCollector(args, ++idx, true); });
 
 
   // modes collector
