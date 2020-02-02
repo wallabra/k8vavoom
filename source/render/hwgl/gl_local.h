@@ -743,6 +743,18 @@ public:
   FBO *GetMainFBO ();
 
 public:
+  // calculate sky texture U/V (S/T)
+  // texture must be selected
+  inline float CalcSkyTexCoordS (const TVec vert, const texinfo_t *tex, const float offs) const noexcept {
+    //return (DotProduct(vert, tex->saxis)+(tex->soffs-offs)*tex_scale_x)*tex_iw_sc;
+    return (DotProduct(vert, tex->saxis)+(tex->soffs*tex_scale_x-offs))*tex_iw_sc;
+  }
+
+  inline float CalcSkyTexCoordT (const TVec vert, const texinfo_t *tex) const noexcept {
+    return (DotProduct(vert, tex->taxis)+tex->toffs*tex_scale_y)*tex_ih_sc;
+  }
+
+public:
   #define VV_GLIMPORTS
   #define VGLAPIPTR(x,optional)  x##_t p_##x
   #include "gl_imports.h"

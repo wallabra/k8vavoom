@@ -103,6 +103,7 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
       sidx[3] = 2;
     }
   }
+
   const texinfo_t *tex = surf->texinfo;
 
   if (Texture2->Type != TEXTYPE_Null) {
@@ -142,8 +143,11 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
     glBegin(GL_TRIANGLE_FAN);
     for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
       SurfSky.SetTexCoordAttr(
-        (DotProduct(surf->verts[sidx[i]], tex->saxis)+tex->soffs-offs1)*tex_iw,
-        (DotProduct(surf->verts[i], tex->taxis)+tex->toffs)*tex_ih);
+        //!(DotProduct(surf->verts[sidx[i]], tex->saxis)+(tex->soffs-offs1)*/*tex_scale_x*/1)*tex_iw_sc,
+        //(DotProduct(surf->verts[sidx[i]], tex->saxis)+(tex->soffs*tex_scale_x-offs1))*tex_iw_sc,
+        //(DotProduct(surf->verts[i], tex->taxis)+tex->toffs*tex_scale_y)*tex_ih_sc);
+        CalcSkyTexCoordS(surf->verts[sidx[i]], tex, offs1),
+        CalcSkyTexCoordT(surf->verts[i], tex));
       //SurfSky.UploadChangedAttrs();
       glVertex(surf->verts[i]);
     }
