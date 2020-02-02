@@ -595,8 +595,15 @@ protected:
   vuint8 *tmpImgBuf1;
   int tmpImgBufSize;
 
+  // set by `SetTexture()` and company
+  // non-scaled
   float tex_iw, tex_ih;
   int tex_w, tex_h;
+  // scaled
+  float tex_iw_sc, tex_ih_sc;
+  int tex_w_sc, tex_h_sc;
+  // scale
+  float tex_scale_x, tex_scale_y;
 
   int lastgamma;
   int CurrentFade;

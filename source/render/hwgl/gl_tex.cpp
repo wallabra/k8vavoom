@@ -275,6 +275,14 @@ void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translati
   tex_h = Tex->GetHeight();
   tex_iw = 1.0f/tex_w;
   tex_ih = 1.0f/tex_h;
+
+  tex_w_sc = Tex->GetScaledWidth();
+  tex_h_sc = Tex->GetScaledHeight();
+  tex_iw_sc = 1.0f/tex_w_sc;
+  tex_ih_sc = 1.0f/tex_h_sc;
+
+  tex_scale_x = Tex->SScale;
+  tex_scale_y = Tex->TScale;
 }
 
 
