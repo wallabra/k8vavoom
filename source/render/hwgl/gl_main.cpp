@@ -2580,7 +2580,7 @@ void VOpenGLDrawer::FBO::blitToScreen () {
     scaledHeight = int(mHeight/aspect*scale);
     blitOfsX = (realw-scaledWidth)/2;
     blitOfsY = (realh-scaledHeight)/2;
-    //GCon->Logf(NAME_Debug, "letterbox: size=(%d,%d); real=(%d,%d); scaled=(%d,%d); offset=(%d,%d); scale=(%g,%g)", mWidth, mHeight, realw, realh, scaledWidth, scaledHeight, blitOfsX, blitOfsY, scaleX, scaleY);
+    GCon->Logf(NAME_Debug, "letterbox: size=(%d,%d); real=(%d,%d); scaled=(%d,%d); offset=(%d,%d); scale=(%g,%g)", mWidth, mHeight, realw, realh, scaledWidth, scaledHeight, blitOfsX, blitOfsY, scaleX, scaleY);
     // clear stripes
     //glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // black background
     //glClear(GL_COLOR_BUFFER_BIT);
@@ -2635,7 +2635,7 @@ void VOpenGLDrawer::FBO::blitToScreen () {
   if (mOwner->p_glBlitFramebuffer && !gl_dbg_fbo_blit_with_texture) {
     glBindTexture(GL_TEXTURE_2D, 0);
     mOwner->p_glBindFramebuffer(GL_READ_FRAMEBUFFER, mFBO);
-    if (scaledWidth == realw && scaledHeight == realh) {
+    if (mWidth == realw && mHeight == realh) {
       mOwner->p_glBlitFramebuffer(0, 0, mWidth, mHeight, 0, 0, mWidth, mHeight, GL_COLOR_BUFFER_BIT, GL_NEAREST);
     } else {
       //mOwner->p_glBlitFramebuffer(0, 0, mWidth, mHeight, 0, 0, realw, realh, GL_COLOR_BUFFER_BIT, GL_LINEAR);
@@ -2670,7 +2670,7 @@ void VOpenGLDrawer::FBO::blitToScreen () {
     mOwner->p_glUseProgramObjectARB(0);
     mOwner->currentActiveShader = nullptr;
 
-    if (scaledWidth == realw && scaledHeight == realh) {
+    if (mWidth == realw && mHeight == realh) {
       // copy texture by drawing full quad
       //glOrtho(0, mWidth, mHeight, 0, -666, 666);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
