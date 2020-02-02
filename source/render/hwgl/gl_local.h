@@ -746,12 +746,17 @@ public:
   // calculate sky texture U/V (S/T)
   // texture must be selected
   inline float CalcSkyTexCoordS (const TVec vert, const texinfo_t *tex, const float offs) const noexcept {
-    //return (DotProduct(vert, tex->saxis)+(tex->soffs-offs)*tex_scale_x)*tex_iw_sc;
-    return (DotProduct(vert, tex->saxis)+(tex->soffs*tex_scale_x-offs))*tex_iw_sc;
+    return (DotProduct(vert, tex->saxis*tex_scale_x)+(tex->soffs-offs)*tex_scale_x)*tex_iw;
+  }
+
+  inline void CalcSkyTexCoordS2 (float *outs1, float *outs2, const TVec vert, const texinfo_t *tex, const float offs1, const float offs2) const noexcept {
+    const float dp = DotProduct(vert, tex->saxis*tex_scale_x);
+    *outs1 = (dp+(tex->soffs-offs1)*tex_scale_x)*tex_iw;
+    *outs2 = (dp+(tex->soffs-offs2)*tex_scale_x)*tex_iw;
   }
 
   inline float CalcSkyTexCoordT (const TVec vert, const texinfo_t *tex) const noexcept {
-    return (DotProduct(vert, tex->taxis)+tex->toffs*tex_scale_y)*tex_ih_sc;
+    return (DotProduct(vert, tex->taxis*tex_scale_y)+tex->toffs*tex_scale_y)*tex_ih;
   }
 
 public:

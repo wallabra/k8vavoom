@@ -4,6 +4,47 @@
 //   there is no "best fit", preprocessor will use first matched set.
 // ////////////////////////////////////////////////////////////////////////// //
 
+/* unused
+Set TextureSTSetSky {
+  forbidden set TextureSTSet;
+
+  uniform vec3 SAxis;
+  uniform vec3 TAxis;
+  uniform float SOffs;
+  uniform float TOffs;
+  uniform float TexIW;
+  uniform float TexIH;
+  uniform float TexScaleX;
+  uniform float TexScaleY;
+  uniform float TexOfsScaleX;
+  uniform float TexOfsScaleY;
+  uniform float TexOfsX;
+  uniform float TexOfsY;
+
+  code [[
+    inline void SetTexSky (const texinfo_t *textr, const float ofsx, const float ofsy, bool worldPan) {
+      curr_SAxis = textr->saxis;
+      curr_SOffs = textr->soffs;
+      curr_TexIW = owner->tex_iw;
+      curr_TAxis = textr->taxis;
+      curr_TOffs = textr->toffs;
+      curr_TexIH = owner->tex_ih;
+      curr_TexScaleX = owner->tex_scale_x;
+      curr_TexScaleY = owner->tex_scale_y;
+      curr_TexOfsX = ofsx;
+      curr_TexOfsY = ofsy;
+      if (worldPan) {
+        curr_TexScaleX = owner->tex_scale_x;
+        curr_TexScaleY = owner->tex_scale_y;
+      } else {
+        curr_TexScaleX = curr_TexScaleY = 1.0f;
+      }
+    }
+  ]]
+}
+*/
+
+
 Set PureLightmapSTSet {
   forbidden uniform float TexIW;
   forbidden uniform float TexIH;
@@ -37,6 +78,8 @@ Set PureLightmapSTSet {
 
 
 Set TextureSTSet {
+  //forbidden set TextureSTSetSky;
+
   uniform vec3 SAxis;
   uniform vec3 TAxis;
   uniform float SOffs;

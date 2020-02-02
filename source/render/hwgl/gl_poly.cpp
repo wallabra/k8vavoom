@@ -121,12 +121,19 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
     //glBegin(GL_POLYGON);
     glBegin(GL_TRIANGLE_FAN);
     for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
-      SurfDSky.SetTexCoordAttr(
+      float s1, s2;
+      CalcSkyTexCoordS2(&s1, &s2, surf->verts[sidx[i]], tex, offs1, offs2);
+      const float t = CalcSkyTexCoordT(surf->verts[i], tex);
+      SurfDSky.SetTexCoordAttr(s1, t);
+        /*
         (DotProduct(surf->verts[sidx[i]], tex->saxis)+tex->soffs-offs1)*tex_iw,
         (DotProduct(surf->verts[i], tex->taxis)+tex->toffs)*tex_ih);
-      SurfDSky.SetTexCoord2Attr(
+        */
+      SurfDSky.SetTexCoord2Attr(s2, t);
+        /*
         (DotProduct(surf->verts[sidx[i]], tex->saxis)+tex->soffs-offs2)*tex_iw,
         (DotProduct(surf->verts[i], tex->taxis)+tex->toffs)*tex_ih);
+        */
       //SurfDSky.UploadChangedAttrs();
       glVertex(surf->verts[i]);
     }
@@ -137,17 +144,27 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
     SurfSky.Activate();
     SurfSky.SetTexture(0);
     SurfSky.SetBrightness(r_sky_bright_factor);
+    //SurfSky.SetTexSky(tex, offs1, 0, false);
     SurfSky.UploadChangedUniforms();
+
+    /*
+    if (false) {
+      GCon->Logf(NAME_Debug, "SKY: %s; saxis=(%g,%g,%g); taxis=(%g,%g,%g); offs1=%g; soffs=%g; toffs=%g; texscale=(%g,%g); texsize=(%d,%d)", *Texture1->Name,
+        tex->saxis.x, tex->saxis.y, tex->saxis.z,
+        tex->taxis.x, tex->taxis.y, tex->taxis.z,
+        offs1, tex->soffs, tex->toffs,
+        tex_scale_x, tex_scale_y, tex_w, tex_h);
+    }
+    */
 
     //glBegin(GL_POLYGON);
     glBegin(GL_TRIANGLE_FAN);
     for (unsigned i = 0; i < (unsigned)surf->count; ++i) {
-      SurfSky.SetTexCoordAttr(
-        //!(DotProduct(surf->verts[sidx[i]], tex->saxis)+(tex->soffs-offs1)*/*tex_scale_x*/1)*tex_iw_sc,
-        //(DotProduct(surf->verts[sidx[i]], tex->saxis)+(tex->soffs*tex_scale_x-offs1))*tex_iw_sc,
-        //(DotProduct(surf->verts[i], tex->taxis)+tex->toffs*tex_scale_y)*tex_ih_sc);
-        CalcSkyTexCoordS(surf->verts[sidx[i]], tex, offs1),
-        CalcSkyTexCoordT(surf->verts[i], tex));
+      SurfSky.SetTexCoordAttr(CalcSkyTexCoordS(surf->verts[sidx[i]], tex, offs1), CalcSkyTexCoordT(surf->verts[i], tex));
+        /*
+        (DotProduct(surf->verts[sidx[i]], tex->saxis*tex_scale_x)+(tex->soffs-offs1)*tex_scale_x)*tex_iw,
+        (DotProduct(surf->verts[i], tex->taxis*tex_scale_y)+tex->toffs*tex_scale_y)*tex_ih);
+        */
       //SurfSky.UploadChangedAttrs();
       glVertex(surf->verts[i]);
     }

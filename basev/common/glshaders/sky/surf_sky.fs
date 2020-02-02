@@ -8,11 +8,6 @@ varying vec2 TextureCoordinate;
 
 
 void main () {
-  vec4 BrightFactor;
-  BrightFactor.a = 1.0;
-  BrightFactor.r = Brightness;
-  BrightFactor.g = Brightness;
-  BrightFactor.b = Brightness;
-
+  vec4 BrightFactor = vec4(Brightness, Brightness, Brightness, 1.0);
   gl_FragColor = texture2D(Texture, TextureCoordinate)*BrightFactor;
 }

@@ -190,8 +190,9 @@ void VSky::InitOldSky (int Sky1Texture, int Sky2Texture,
   memset((void *)sky, 0, sizeof(sky));
   bIsSkyBox = false;
 
-  int skyheight = GTextureManager[Sky1Texture]->GetHeight();
+  int skyheight = GTextureManager[Sky1Texture]->GetScaledHeight();
   if (ForceNoSkyStretch) skyheight = 256;
+  //GCon->Logf(NAME_Debug, "VSky::InitOldSky: tex=%d; height=%d; scaledheight=%d; stretch=%d", Sky1Texture, GTextureManager[Sky1Texture]->GetHeight(), GTextureManager[Sky1Texture]->GetScaledHeight(), (int)ForceNoSkyStretch);
 
   const float skytop = (skyheight <= 128 ? 95.0f : 190.0f);
   //const float skybot = skytop-skyheight;
