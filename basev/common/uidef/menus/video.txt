@@ -180,6 +180,24 @@ menudef VideoOptions {
       "precaching, to release GPU memory.";
   }
 
+  option enum {
+    title = "RAM Texture Image Releasing";
+    cvar = gl_release_ram_textures_mode;
+    list {
+      "Never",
+      "Map Unload",
+      "Immediate",
+    }
+    help =
+      "All loaded and decoded texture images are kept in RAM, to allow",
+      "faster uploading to GPU.",
+      "If you're playing some PWADs with alot of textures, or using some",
+      "hires texture pack, or just want to have more free RAM, you can",
+      "tell the engine when it should release RAM images.",
+      "\cGWARNING! This may *DRAMATICALLY* slow down level loading.",
+      "\cGAlso, this can cause stuttering (randomly freezing a game for a moment).";
+  }
+
 
   header "Brightmap Options";
 
