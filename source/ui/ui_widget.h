@@ -136,6 +136,10 @@ private:
 
   friend class VRootWidget;
 
+protected:
+  void DrawCharPic (int X, int Y, VTexture *Tex, float Alpha=1.0f, bool shadowed=false);
+  inline void DrawCharPicShadowed (int X, int Y, VTexture *Tex) { DrawCharPic(X, Y, Tex, 1.0f, true); }
+
 public:
   // destroys all child widgets
   virtual void Init (VWidget *);

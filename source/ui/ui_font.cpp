@@ -490,9 +490,18 @@ VFont::VFont (VName AName, VStr FormatStr, int First, int Count, int StartIndex)
     if (Lump < 0) Lump = W_CheckNumForName(LumpName, WADNS_NewTextures);
     if (Lump < 0) Lump = W_CheckNumForName(LumpName, WADNS_HiResTextures);
     if (Lump < 0) Lump = W_CheckNumForName(LumpName, WADNS_HiResTexturesDDay);
-    */
     //if (Lump < 0) = W_CheckNumForName(LumpName, WADNS_HiResFlatsDDay);
-    //GCon->Logf(NAME_Init, "  char %d: lump=%d (%s)", Char, Lump, (Lump >= 0 ? *W_FullLumpName(Lump) : "<oops>"));
+    */
+    VTexture *knownTexture = nullptr;
+    {
+      int tid = GTextureManager.CheckNumForName(LumpName, TEXTYPE_Pic, true);
+      if (tid > 0) {
+        knownTexture = GTextureManager[tid];
+        //GCon->Logf(NAME_Debug, "*** CHAR %d: lump is <%s>; texture id is %d (%s)", Char, *LumpName, tid, *W_FullLumpName(knownTexture->SourceLump));
+      }
+    }
+
+    //GCon->Logf(NAME_Debug, "  char %d: lump=%d (%s)", Char, Lump, (Lump >= 0 ? *W_FullLumpName(Lump) : "<oops>"));
 
     // in Doom, stcfn121 is actually a '|' and not 'y' and many wad
     // authors provide it as such, so put it in correct location
@@ -503,8 +512,8 @@ VFont::VFont (VName AName, VStr FormatStr, int First, int Count, int StartIndex)
       Char = '|';
     }
 
-    if (Lump >= 0) {
-      VTexture *Tex = GTextureManager[GTextureManager.AddPatchLump(Lump, LumpName, TEXTYPE_Pic)];
+    if (Lump >= 0 || knownTexture) {
+      VTexture *Tex = (knownTexture ? knownTexture : GTextureManager[GTextureManager.AddPatchLump(Lump, LumpName, TEXTYPE_Pic)]);
       if (Tex) {
         FFontChar &FChar = Chars.Alloc();
         FChar.Char = Char;

@@ -697,7 +697,7 @@ void VWidget::DrawPicScaled (int X, int Y, VTexture *Tex, float scaleX, float sc
 //
 //==========================================================================
 void VWidget::DrawPic (int X, int Y, VTexture *Tex, float Alpha, int Trans) {
-  if (!Tex) return;
+  if (!Tex || Alpha <= 0.0f) return;
 
   X -= Tex->GetScaledSOffset();
   Y -= Tex->GetScaledTOffset();
@@ -712,6 +712,34 @@ void VWidget::DrawPic (int X, int Y, VTexture *Tex, float Alpha, int Trans) {
   if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
     //fprintf(stderr, "X=%d; Y=%d; X1=%f; Y1=%f; X2=%f; Y2=%f; w1=%f; tw=%d; S1=%f; T1=%f; S2=%f; T2=%f\n", X, Y, X1, Y1, X2, Y2, X2-X1, Tex->GetWidth(), S1, T1, S2, T2);
     Drawer->DrawPic(X1, Y1, X2, Y2, S1, T1, S2, T2, Tex, R_GetCachedTranslation(Trans, nullptr), Alpha);
+  }
+}
+
+
+//==========================================================================
+//
+//  VWidget::DrawCharPic
+//
+//==========================================================================
+void VWidget::DrawCharPic (int X, int Y, VTexture *Tex, float Alpha, bool shadowed) {
+  if (!Tex || Alpha <= 0.0f) return;
+
+  //GCon->Logf(NAME_Debug, "%s: pos=(%d,%d); size=(%d,%d); scale=(%g,%g); ssize=(%d,%d)", *Tex->Name, X, Y, Tex->GetWidth(), Tex->GetHeight(), Tex->SScale, Tex->TScale, Tex->GetScaledWidth(), Tex->GetScaledHeight());
+
+  X -= Tex->GetScaledSOffset();
+  Y -= Tex->GetScaledTOffset();
+  float X1 = X;
+  float Y1 = Y;
+  float X2 = X+Tex->GetScaledWidth();
+  float Y2 = Y+Tex->GetScaledHeight();
+  float S1 = 0;
+  float T1 = 0;
+  float S2 = Tex->GetWidth();
+  float T2 = Tex->GetHeight();
+  if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
+    //fprintf(stderr, "X=%d; Y=%d; X1=%f; Y1=%f; X2=%f; Y2=%f; w1=%f; tw=%d; S1=%f; T1=%f; S2=%f; T2=%f\n", X, Y, X1, Y1, X2, Y2, X2-X1, Tex->GetWidth(), S1, T1, S2, T2);
+    if (shadowed) Drawer->DrawPicShadow(X1, Y1, X2, Y2, S1, T1, S2, T2, Tex, 0.625f*Alpha);
+    Drawer->DrawPic(X1, Y1, X2, Y2, S1, T1, S2, T2, Tex, nullptr, Alpha);
   }
 }
 
@@ -973,7 +1001,7 @@ void VWidget::DrawString (int x, int y, VStr String, int NormalColor, int BoldCo
     int w;
     VTexture *Tex = Font->GetChar(c, &w, Color);
     if (Tex) {
-      if (WidgetFlags&WF_TextShadowed) DrawShadowedPic(cx, cy, Tex); else DrawPic(cx, cy, Tex, Alpha);
+      if (WidgetFlags&WF_TextShadowed) DrawCharPicShadowed(cx, cy, Tex); else DrawCharPic(cx, cy, Tex, Alpha);
     }
     cx += w+Kerning;
   }
