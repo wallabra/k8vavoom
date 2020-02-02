@@ -108,6 +108,34 @@ static TMapNC<VName, bool> patchesWarned;
 static TMapNC<VName, bool> numberedNamesMap;
 static TArray<VName> numberedNamesList;
 
+static TArray<int> textureDefLumps;
+static bool textureDefLumpsCollected = false;
+
+
+//==========================================================================
+//
+//  CollectTextureDefLumps
+//
+//==========================================================================
+static void CollectTextureDefLumps () {
+  if (textureDefLumpsCollected) return;
+  textureDefLumpsCollected = true;
+  for (auto &&it : WadNSIterator(WADNS_Global)) {
+    if (it.getName() == NAME_hirestex || it.getName() == NAME_textures) textureDefLumps.append(it.lump);
+  }
+}
+
+
+//==========================================================================
+//
+//  ClearTextureDefLumps
+//
+//==========================================================================
+static void ClearTextureDefLumps () {
+  textureDefLumpsCollected = false;
+  textureDefLumps.clear();
+}
+
 
 //==========================================================================
 //
@@ -1673,10 +1701,12 @@ void VTextureManager::ReplaceTextureWithHiRes (int OldIndex, VTexture *NewTex, i
 void VTextureManager::AddHiResTextures () {
   vassert(inMapTextures == 0);
   bool messaged = false;
-  for (int Lump = W_IterateNS(-1, WADNS_HiResTextures); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_HiResTextures)) {
-    VName Name = W_LumpName(Lump);
+  // GZDoom
+  for (auto &&it : WadNSIterator(WADNS_HiResTextures)) {
+    int lump = it.lump;
+    VName Name = W_LumpName(lump);
     // to avoid duplicates, add only the last one
-    if (W_GetNumForName(Name, WADNS_HiResTextures) != Lump) continue;
+    if (W_GetNumForName(Name, WADNS_HiResTextures) != lump) continue;
 
     // find texture to replace
     int OldIdx = FindHiResToReplace(Name, TEXTYPE_Wall);
@@ -1685,12 +1715,13 @@ void VTextureManager::AddHiResTextures () {
     if (!messaged) { messaged = true; GCon->Log(NAME_Init, "adding hires texture replacements"); }
 
     // create new texture
-    VTexture *NewTex = VTexture::CreateTexture(TEXTYPE_Any, Lump);
+    VTexture *NewTex = VTexture::CreateTexture(TEXTYPE_Any, lump);
     if (!NewTex) continue;
     if (NewTex->Type == TEXTYPE_Any) NewTex->Type = TEXTYPE_Wall;
 
     ReplaceTextureWithHiRes(OldIdx, NewTex);
   }
+  // jdoom/doomsday
 }
 
 
@@ -1699,9 +1730,9 @@ void VTextureManager::AddHiResTextures () {
 //  VTextureManager::ParseTextureTextLump
 //
 //==========================================================================
-void VTextureManager::ParseTextureTextLump (int Lump, bool asHiRes) {
-  GCon->Logf(NAME_Init, "parsing %stextures script \"%s\"...", (asHiRes ? "hires " : ""), *W_FullLumpName(Lump));
-  VScriptParser *sc = new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump));
+void VTextureManager::ParseTextureTextLump (int lump, bool asHiRes) {
+  GCon->Logf(NAME_Init, "parsing %stextures script \"%s\"...", (asHiRes ? "hires " : ""), *W_FullLumpName(lump));
+  VScriptParser *sc = new VScriptParser(W_FullLumpName(lump), W_CreateLumpReaderNum(lump));
   while (!sc->AtEnd()) {
     if (sc->Check("remap")) {
       // new (possibly hires) texture
@@ -1816,9 +1847,8 @@ void VTextureManager::ParseTextureTextLump (int Lump, bool asHiRes) {
 //==========================================================================
 void VTextureManager::AddTextureTextLumps () {
   vassert(inMapTextures == 0);
-  for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
-    if (W_LumpName(Lump) == NAME_hirestex || W_LumpName(Lump) == NAME_textures) ParseTextureTextLump(Lump, false);
-  }
+  CollectTextureDefLumps();
+  for (auto &&lump : textureDefLumps) ParseTextureTextLump(lump, false);
 }
 
 
@@ -1829,9 +1859,8 @@ void VTextureManager::AddTextureTextLumps () {
 //==========================================================================
 void VTextureManager::AddHiResTextureTextLumps () {
   vassert(inMapTextures == 0);
-  for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
-    if (W_LumpName(Lump) == NAME_hirestex || W_LumpName(Lump) == NAME_textures) ParseTextureTextLump(Lump, true); // (re)parse for hires
-  }
+  CollectTextureDefLumps();
+  for (auto &&lump : textureDefLumps) ParseTextureTextLump(lump, true); // (re)parse for hires
 }
 
 
@@ -1899,6 +1928,7 @@ void R_InitHiResTextures () {
   GTextureManager.AddHiResTextureTextLumps();
   if (hitexReplaceCount) GCon->Logf(NAME_Init, "replaced %d texture%s with hires one%s", hitexReplaceCount, (hitexReplaceCount == 1 ? "" : "s"), (hitexReplaceCount == 1 ? "" : "s"));
   if (hitexNewCount) GCon->Logf(NAME_Init, "added %d new hires texture%s", hitexNewCount, (hitexNewCount == 1 ? "" : "s"));
+  ClearTextureDefLumps();
 }
 
 
