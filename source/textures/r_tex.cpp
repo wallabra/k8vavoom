@@ -1676,12 +1676,13 @@ void VTextureManager::ReplaceTextureWithHiRes (int OldIndex, VTexture *NewTex, i
     // replace existing texture by adjusting scale and offsets
     VTexture *OldTex = Textures[OldIndex];
     bool doSOffset = false, doTOffset = false;
-    if (oldWidth < 0) { oldWidth = OldTex->GetWidth(); doSOffset = true; }
-    if (oldHeight < 0) { oldHeight = OldTex->GetHeight(); doTOffset = true; }
+    if (oldWidth < 0) { oldWidth = OldTex->GetScaledWidth(); doSOffset = true; }
+    if (oldHeight < 0) { oldHeight = OldTex->GetScaledHeight(); doTOffset = true; }
     //NewTex->Type = OldTex->Type;
     //k8: it is overriden by the original texture type
     //    i don't even know what `overload` meant to do, and it seems to work this way
     //    FIXME: investigate this later
+    //if (OldTex->SScale != 1.0f || OldTex->TScale != 1.0f) GCon->Logf(NAME_Debug, "OLD: %s: oldsize=(%d,%d); oldscale=(%g,%g); newsize=(%d,%d); newscale=(%g,%g)", *OldTex->Name, OldTex->GetWidth(), OldTex->GetHeight(), OldTex->SScale, OldTex->TScale, NewTex->GetWidth(), NewTex->GetHeight(), NewTex->SScale, NewTex->TScale);
     NewTex->Type = TEXTYPE_Overload;
     //GCon->Logf("REPLACE0 <%s> (%d)", *OldTex->Name, OldIndex);
     NewTex->Name = OldTex->Name;
@@ -1689,8 +1690,9 @@ void VTextureManager::ReplaceTextureWithHiRes (int OldIndex, VTexture *NewTex, i
     NewTex->bWorldPanning = true;
     NewTex->SScale = NewTex->GetWidth()/max2(1, oldWidth);
     NewTex->TScale = NewTex->GetHeight()/max2(1, oldHeight);
-    if (doSOffset) NewTex->SOffset = (int)floorf(OldTex->SOffset*NewTex->SScale);
-    if (doTOffset) NewTex->TOffset = (int)floorf(OldTex->TOffset*NewTex->TScale);
+    if (doSOffset) NewTex->SOffset = (int)floorf(OldTex->GetScaledSOffset()*NewTex->SScale);
+    if (doTOffset) NewTex->TOffset = (int)floorf(OldTex->GetScaledTOffset()*NewTex->TScale);
+    //if (OldTex->SScale != 1.0f || OldTex->TScale != 1.0f) GCon->Logf(NAME_Debug, "NEW: %s: oldsize=(%d,%d); oldscale=(%g,%g); newsize=(%d,%d); newscale=(%g,%g)", *OldTex->Name, OldTex->GetWidth(), OldTex->GetHeight(), OldTex->SScale, OldTex->TScale, NewTex->GetWidth(), NewTex->GetHeight(), NewTex->SScale, NewTex->TScale);
     NewTex->Type = OldTex->Type; // oops, type is forced here
     NewTex->TextureTranslation = OldTex->TextureTranslation;
     NewTex->HashNext = OldTex->HashNext;

@@ -393,13 +393,17 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
     }
 
     PatchCount = Parts.Num();
-    Patches = new VTexPatch[PatchCount];
-    memcpy(Patches, Parts.Ptr(), sizeof(VTexPatch)*PatchCount);
+    if (PatchCount) {
+      Patches = new VTexPatch[PatchCount];
+      memcpy(Patches, Parts.Ptr(), sizeof(VTexPatch)*PatchCount);
 
-    for (int f = 0; f < PatchCount; ++f) {
-      VTexture *tex = Patches[f].Tex;
-      if (!tex) continue;
-      if (SourceLump < tex->SourceLump) SourceLump = tex->SourceLump;
+      for (int f = 0; f < PatchCount; ++f) {
+        VTexture *tex = Patches[f].Tex;
+        if (!tex) continue;
+        if (SourceLump < tex->SourceLump) SourceLump = tex->SourceLump;
+      }
+    } else {
+      //GCon->Logf(NAME_Debug, "texture '%s' has no patches!", *Name);
     }
   }
 
