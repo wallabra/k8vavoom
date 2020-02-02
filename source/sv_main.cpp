@@ -27,6 +27,9 @@
 #include "net/network.h"
 #include "sv_local.h"
 #include "cl_local.h"
+#ifdef CLIENT
+# include "drawer.h"
+#endif
 
 // arbitrary number
 #define INITIAL_TICK_DELAY  (2)
@@ -398,6 +401,8 @@ void SV_Clear () {
   }
   memset(&sv, 0, sizeof(sv));
 #ifdef CLIENT
+  // clear drawer level
+  if (Drawer) Drawer->RendLev = nullptr;
   // make sure all sounds are stopped
   GAudio->StopAllSound();
 #endif
@@ -1398,6 +1403,9 @@ void SV_ShutdownGame () {
   GAudio->StopAllSound();
 
   if (cls.demorecording) CL_StopRecording();
+
+  // clear drawer level
+  if (Drawer) Drawer->RendLev = nullptr;
 #endif
 
   if (GGameInfo->NetMode == NM_Client) {

@@ -165,6 +165,7 @@ VLightEffectDef *R_FindLightEffect (VStr Name);
 void R_Init (); // Called by startup code.
 void R_Start (VLevel *);
 void R_SetViewSize (int blocks);
+void R_ForceViewSizeUpdate ();
 void R_RenderPlayerView ();
 VTextureTranslation *R_GetCachedTranslation (int, VLevel *);
 
