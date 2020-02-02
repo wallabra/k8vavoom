@@ -86,7 +86,7 @@ VCvarF r_fog_start("r_fog_start", "1", "Fog start distance.");
 VCvarF r_fog_end("r_fog_end", "2048", "Fog end distance.");
 VCvarF r_fog_density("r_fog_density", "0.5", "Fog density.");
 
-VCvarI aspect_ratio("r_aspect_ratio", "0", "Aspect ratio correction mode ([0..3]: normal/4:3/16:9/16:10).", CVAR_Archive);
+VCvarI r_aspect_ratio("r_aspect_ratio", "0", "Aspect ratio correction mode ([0..3]: vanilla/4:3/16:9/16:10).", CVAR_Archive);
 VCvarB r_interpolate_frames("r_interpolate_frames", true, "Use frame interpolation for smoother rendering?", CVAR_Archive);
 VCvarB r_vsync("r_vsync", true, "VSync mode.", CVAR_Archive);
 VCvarB r_vsync_adaptive("r_vsync_adaptive", true, "Use adaptive VSync mode.", CVAR_Archive);
@@ -171,7 +171,29 @@ static float CalcAspect (int aspectRatio, int scrwdt, int scrhgt) {
 //
 //==========================================================================
 float R_GetAspectRatio () {
-  return CalcAspect(aspect_ratio, ScreenWidth, ScreenHeight);
+  return CalcAspect(r_aspect_ratio, ScreenWidth, ScreenHeight);
+}
+
+
+//==========================================================================
+//
+//  R_GetAspectRatioMul
+//
+//  multiplier, i.e. 4.0f/3.0f for 4/3
+//
+//==========================================================================
+float R_GetAspectRatioMul () {
+  switch (r_aspect_ratio.asInt()) {
+    default:
+    case 0: // original aspect ratio
+      return 1.2f; // original vanilla pixels are 20% taller than wide
+    case 1: // 4:3 aspect ratio
+      return 4.0f/3.0f;
+    case 2: // 16:9 aspect ratio
+      return 16.0f/9.0f;
+    case 3: // 16:9 aspect ratio
+      return 16.0f/10.0f;
+  }
 }
 
 
@@ -1529,8 +1551,8 @@ void VRenderLevelShared::ExecuteSetViewSize () {
   }
   refdef.x = (ScreenWidth-refdef.width)>>1;
 
-  PixelAspect = CalcAspect(aspect_ratio, ScreenWidth, ScreenHeight);
-  prev_aspect_ratio = aspect_ratio;
+  PixelAspect = CalcAspect(r_aspect_ratio, ScreenWidth, ScreenHeight);
+  prev_aspect_ratio = r_aspect_ratio;
 
   clip_base.setupViewport(refdef.width, refdef.height, fov, PixelAspect);
   refdef.fovx = clip_base.fovx;
@@ -1578,7 +1600,7 @@ void VRenderLevelShared::SetupFrame () {
   // change the view size if needed
   if (screen_size != screenblocks || !screenblocks ||
       set_resolutioon_needed || old_fov != fov ||
-      aspect_ratio != prev_aspect_ratio)
+      r_aspect_ratio != prev_aspect_ratio)
   {
     ExecuteSetViewSize();
   }
@@ -1710,7 +1732,7 @@ void VRenderLevelShared::SetupCameraFrame (VEntity *Camera, VTexture *Tex, int F
   rd->y = 0;
   rd->x = 0;
 
-  PixelAspect = CalcAspect(aspect_ratio, rd->width, rd->height);
+  PixelAspect = CalcAspect(r_aspect_ratio, rd->width, rd->height);
 
   clip_base.setupViewport(rd->width, rd->height, FOV, PixelAspect);
   rd->fovx = clip_base.fovx;

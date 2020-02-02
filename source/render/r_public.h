@@ -187,6 +187,7 @@ void R_DrawPicPartEx (int x, int y, float tx0, float ty0, float tx1, float ty1, 
 void R_DrawPicFloatPartEx (float x, float y, float tx0, float ty0, float tx1, float ty1, int handle, float Alpha=1.0f);
 
 float R_GetAspectRatio ();
+float R_GetAspectRatioMul (); // multiplier, i.e. 4.0f/3.0f for 4/3
 
 bool R_EntModelNoSelfShadow (VEntity *mobj);
 

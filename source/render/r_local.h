@@ -1070,7 +1070,7 @@ extern VCvarB r_darken;
 extern VCvarB r_dynamic_lights;
 extern VCvarB r_static_lights;
 
-extern VCvarI aspect_ratio;
+extern VCvarI r_aspect_ratio;
 extern VCvarB r_interpolate_frames;
 extern VCvarB r_allow_shadows;
 
