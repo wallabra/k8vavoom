@@ -479,20 +479,22 @@ static void BuildSectorOpenings (const line_t *xldef, TArray<opening_t> &dest, s
     InsertOpening(solids, cop);
   }
   // add 3dmidtex, if there are any
-  if (xldef && (xldef->flags&ML_3DMIDTEX)) {
-    Insert3DMidtex(solids, sector, xldef);
-  } else if (usePoint && sector->SectorFlags&sector_t::SF_Has3DMidTex) {
-    //FIXME: we need to know a radius here
-    /*
-    GCon->Logf("!!!!!");
-    line_t *const *lparr = sector->lines;
-    for (int lct = sector->linecount; lct--; ++lparr) {
-      const line_t *ldf = *lparr;
-      Insert3DMidtex(solids, sector, ldf);
+  if (!forSurface) {
+    if (xldef && (xldef->flags&ML_3DMIDTEX)) {
+      Insert3DMidtex(solids, sector, xldef);
+    } else if (usePoint && sector->SectorFlags&sector_t::SF_Has3DMidTex) {
+      //FIXME: we need to know a radius here
+      /*
+      GCon->Logf("!!!!!");
+      line_t *const *lparr = sector->lines;
+      for (int lct = sector->linecount; lct--; ++lparr) {
+        const line_t *ldf = *lparr;
+        Insert3DMidtex(solids, sector, ldf);
+      }
+      */
     }
-    */
+    //if (thisIs3DMidTex) Insert3DMidtex(op1list, linedef->backsector, linedef);
   }
-  //if (thisIs3DMidTex) Insert3DMidtex(op1list, linedef->backsector, linedef);
 
   // if we have no openings, or openings are out of bounds, just use base sector region
   float secfz, seccz;
@@ -604,7 +606,7 @@ static void BuildSectorOpenings (const line_t *xldef, TArray<opening_t> &dest, s
 opening_t *SV_SectorOpenings (sector_t *sector, bool skipNonSolid) {
   vassert(sector);
   static TArray<opening_t> oplist;
-  BuildSectorOpenings(nullptr, oplist, sector, TVec::ZeroVector, 0, true/*linkList*/, false/*usePoint*/, skipNonSolid, true/*forSurface*/);
+  BuildSectorOpenings(nullptr, oplist, sector, TVec::ZeroVector, 0/*nbflags*/, true/*linkList*/, false/*usePoint*/, skipNonSolid, true/*forSurface*/);
   //vassert(oplist.length() > 0);
   if (oplist.length() == 0) {
     //k8: why, it is ok to have zero openings (it seems)

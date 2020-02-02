@@ -1362,6 +1362,8 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
   //bool doDump = false;
   enum { doDump = 0 };
   //bool doDump = (sidedef->MidTexture.id == 1713);
+  //const bool doDump = (seg->linedef-&Level->Lines[0] == 33);
+  //const bool doDump = true;
 
   /*
   if (seg->frontsector-&Level->Sectors[0] == 70) {
@@ -1387,7 +1389,18 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
   }
   */
 
-  if (doDump) GCon->Logf(NAME_Debug, "*** line #%d ***", (int)(ptrdiff_t)(linedef-&Level->Lines[0]));
+  if (doDump) GCon->Logf(NAME_Debug, "*** line #%d (extra line #%d); seg side #%d ***", (int)(ptrdiff_t)(seg->linedef-&Level->Lines[0]), (int)(ptrdiff_t)(linedef-&Level->Lines[0]), seg->side);
+  if (doDump) {
+    GCon->Log(NAME_Debug, "=== REGIONS:FRONT ===");
+    VLevel::dumpSectorRegions(seg->frontsector);
+    GCon->Log(NAME_Debug, "=== REGIONS:BACK ===");
+    VLevel::dumpSectorRegions(seg->backsector);
+    GCon->Log(NAME_Debug, "=== OPENINGS:FRONT ===");
+    for (opening_t *bop = ops; bop; bop = bop->next) DumpOpening(bop);
+    GCon->Log(NAME_Debug, "=== OPENINGS:BACK ===");
+    for (opening_t *bop = SV_SectorOpenings(seg->backsector); bop; bop = bop->next) DumpOpening(bop);
+    ops = SV_SectorOpenings(seg->frontsector);
+  }
 
   SetupTextureAxesOffset(seg, &sp->texinfo, MTex, &sidedef->Mid);
 
@@ -1435,6 +1448,11 @@ void VRenderLevelShared::SetupTwoSidedMidExtraWSurf (sec_region_t *reg, subsecto
       float botz2 = cop->efloor.GetPointZ(*seg->v2);
 
       if (doDump) GCon->Logf("  (%g,%g): HIT opening (%g,%g) (%g:%g,%g:%g); ex=(%g:%g,%g:%g)", exbotz, extopz, cop->bottom, cop->top, botz1, botz2, topz1, topz2, extrabotz1, extrabotz2, extratopz1, extratopz2);
+
+      /*
+      botz1 = extrabotz1;
+      botz2 = extrabotz2;
+      */
 
       // check texture limits
       if (!wrapped) {
@@ -1564,7 +1582,7 @@ void VRenderLevelShared::CreateSegParts (subsector_t *sub, drawseg_t *dseg, seg_
 
       if (!opsCreated) {
         opsCreated = true;
-        ops = SV_SectorOpenings(seg->frontsector);
+        ops = SV_SectorOpenings(seg->frontsector); // skip non-solid
       }
       SetupTwoSidedMidExtraWSurf(reg, sub, seg, sp, r_floor, r_ceiling, ops);
     }
