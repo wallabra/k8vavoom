@@ -100,10 +100,10 @@ void VOpenGLDrawer::FillRectWithFlat (float x1, float y1, float x2, float y2,
   //GLEnableBlend();
   //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // premultiplied
   glBegin(GL_QUADS);
-    glTexCoord2f(s1*tex_iw, t1*tex_ih_sc); glVertex2f(x1, y1);
-    glTexCoord2f(s2*tex_iw, t1*tex_ih_sc); glVertex2f(x2, y1);
-    glTexCoord2f(s2*tex_iw, t2*tex_ih_sc); glVertex2f(x2, y2);
-    glTexCoord2f(s1*tex_iw, t2*tex_ih_sc); glVertex2f(x1, y2);
+    glTexCoord2f(s1*tex_iw_sc, t1*tex_ih_sc); glVertex2f(x1, y1);
+    glTexCoord2f(s2*tex_iw_sc, t1*tex_ih_sc); glVertex2f(x2, y1);
+    glTexCoord2f(s2*tex_iw_sc, t2*tex_ih_sc); glVertex2f(x2, y2);
+    glTexCoord2f(s1*tex_iw_sc, t2*tex_ih_sc); glVertex2f(x1, y2);
   glEnd();
   //GLDisableBlend();
 }
