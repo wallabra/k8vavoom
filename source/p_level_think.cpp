@@ -37,8 +37,12 @@ VCvarB dbg_vm_disable_specials("dbg_vm_disable_specials", false, "Disable updati
 static VCvarB dbg_limiter_counters("dbg_limiter_counters", false, "Show limiter counters?", CVAR_PreInit);
 static VCvarB dbg_limiter_remove_messages("dbg_limiter_remove_messages", false, "Show limiter remove messages?", CVAR_PreInit);
 
+static VCvarI gm_corpse_limit("gm_corpse_limit", "-1", "Limit number of corpses per map (-1: no limit)?", CVAR_Archive);
+
 double worldThinkTimeVM = -1;
 double worldThinkTimeDecal = -1;
+
+static TArray<VEntity *> corpseQueue;
 
 
 //==========================================================================
@@ -310,8 +314,8 @@ void VLevel::TickWorld (float DeltaTime) {
     cls->InstanceLimitList.reset();
   }
 
-  //HACK: MapSpot does nothing, so there's no need to process it
-  //      some maps can have literally thousands of those
+  const int corpseLimit = gm_corpse_limit.asInt();
+  corpseQueue.reset();
 
   // run thinkers
 #ifdef CLIENT
@@ -366,6 +370,22 @@ void VLevel::TickWorld (float DeltaTime) {
           if (lcls->InstanceLimitWithSub > 0 && lcls->InstanceCountWithSub >= lcls->InstanceLimitWithSub) {
             lcls->InstanceLimitList.append(c);
             //GCon->Logf(NAME_Debug, ":ADDING:%s: count=%d; limit=%d (lcls=%s)", c->GetClass()->GetName(), lcls->InstanceCountWithSub, lcls->InstanceLimitWithSub, lcls->GetName());
+          }
+        }
+        // collect corpses
+        if (corpseLimit >= 0) {
+          if (c->IsA(VEntity::StaticClass())) {
+            VEntity *e = (VEntity *)c;
+            // check if it is really dead, and not moving
+            if (e->IsRealCorpse() && e->StateTime < 0 && fabsf(e->Velocity.x) < 0.01f && fabsf(e->Velocity.y) < 0.01f) {
+              // if the corpse is on a floor, it is safe to remove it
+              if (e->Origin.z <= e->FloorZ) {
+                // notick corpses are fading out
+                if ((e->FlagsEx&(VEntity::EFEX_NoTickGrav|VEntity::EFEX_NoTickGravLT)) != (VEntity::EFEX_NoTickGrav|VEntity::EFEX_NoTickGravLT)) {
+                  corpseQueue.append(e);
+                }
+              }
+            }
           }
         }
       }
@@ -441,6 +461,34 @@ void VLevel::TickWorld (float DeltaTime) {
         RemoveThinker(c);
         //WARNING! death notifier will not be called for this entity!
         c->ConditionalDestroy();
+      }
+    }
+  }
+
+  // process corpse limit
+  if (corpseLimit >= 0 && corpseQueue.length() > corpseLimit) {
+    const int end = corpseQueue.length();
+    GCon->Logf(NAME_Debug, "removing %d corpses out of %d...", end-corpseLimit, end);
+    // shuffle corpse queue, so we'll remove random corpses
+    for (int f = 0; f < end; ++f) {
+      // swap current and another random corpse
+      int n = (int)(GenRandomU31()%end);
+      VEntity *e0 = corpseQueue.ptr()[f];
+      VEntity *e1 = corpseQueue.ptr()[n];
+      corpseQueue.ptr()[f] = e1;
+      corpseQueue.ptr()[n] = e0;
+    }
+    for (int f = corpseLimit; f < end; ++f) {
+      VEntity *e = corpseQueue.ptr()[f];
+      if (e->GetFlags()&_OF_Destroyed) continue;
+      if (!(e->GetFlags()&_OF_DelayedDestroy)) {
+        //RemoveThinker(e);
+        //WARNING! death notifier will not be called for this entity!
+        //e->ConditionalDestroy();
+        // make the corpse notick, and fade it away
+        e->FlagsEx |= VEntity::EFEX_NoTickGrav|VEntity::EFEX_NoTickGravLT;
+        e->LastMoveTime = 0; // fade immediately
+        e->PlaneAlpha = 0.04f; // fade step time
       }
     }
   }
