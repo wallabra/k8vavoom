@@ -261,6 +261,8 @@ void Host_Init () {
 #endif
 
 #ifdef SERVER
+  // normally, this is done in `R_Init()`, but server has no video
+  // still, we need skybox info for server too (scripts and such)
   R_InitSkyBoxes();
 #endif
 

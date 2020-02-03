@@ -42,6 +42,14 @@ struct skyboxinfo_t {
 
   VName Name;
   skyboxsurf_t surfs[6];
+  bool isgozzo;
+  bool fliptop;
+
+  // convert gozzo index to proper Vavoom index
+  static inline int GozzoToVavoom (int idx) noexcept {
+    if (idx >= 0 && idx <= 3) return (idx+3)&3;
+    return idx;
+  }
 };
 
 
@@ -77,19 +85,24 @@ static void ParseSkyBoxesScript (VScriptParser *sc) {
 
 //==========================================================================
 //
-//  ParseMapDefSkyBoxesScript
+//  R_ParseGozzoSkyBoxesScript
 //
-//  TODO: https://zdoom.org/wiki/GLDEFS#Skybox_definitions
-//  TODO: "fliptop"
+//  https://zdoom.org/wiki/GLDEFS#Skybox_definitions
+//  TODO: fliptop
 //
 //==========================================================================
-void R_ParseMapDefSkyBoxesScript (VScriptParser *sc) {
+void R_ParseGozzoSkyBoxesScript (VScriptParser *sc) {
   skyboxinfo_t &info = skyboxinfo.Alloc();
   memset((void *)&info, 0, sizeof(info));
+  info.isgozzo = true;
+  info.fliptop = false;
   sc->ExpectString();
   info.Name = *sc->String;
   //GCon->Logf("MSG: found gz skybox '%s'", *info.Name);
-  if (sc->Check("fliptop")) GCon->Logf(NAME_Warning, "gz skybox '%s' requires fliptop, which is not supported by k8vavoom yet", *info.Name);
+  if (sc->Check("fliptop")) {
+    //GCon->Logf(NAME_Warning, "gz skybox '%s' requires fliptop, which is not supported by k8vavoom yet", *info.Name);
+    info.fliptop = true;
+  }
   VStr txnames[6];
   int txcount = 0;
   bool gotSq = false;
@@ -102,12 +115,16 @@ void R_ParseMapDefSkyBoxesScript (VScriptParser *sc) {
   if (!gotSq) sc->Expect("}");
   if (txcount != 3 && txcount != 6) sc->Error(va("Invalid skybox '%s' (%d textures found)", *info.Name, txcount));
   if (txcount == 3) {
-    for (int i = 0; i < 4; ++i) info.surfs[i].texture = GTextureManager.AddFileTexture(VName(*txnames[0]), TEXTYPE_SkyMap);
-    info.surfs[4].texture = GTextureManager.AddFileTexture(VName(*txnames[1]), TEXTYPE_SkyMap);
-    info.surfs[5].texture = GTextureManager.AddFileTexture(VName(*txnames[2]), TEXTYPE_SkyMap);
-  } else {
-    // full
-    for (int i = 0; i < 6; ++i) info.surfs[i].texture = GTextureManager.AddFileTexture(VName(*txnames[i]), TEXTYPE_SkyMap);
+    // short; copy top and bottom
+    txnames[4] = txnames[1];
+    txnames[5] = txnames[2];
+    // fill other
+    for (int f = 1; f < 4; ++f) txnames[f] = txnames[0];
+  }
+  // create skybox textures
+  for (int f = 0; f < 6; ++f) {
+    const int tidx = skyboxinfo_t::GozzoToVavoom(f);
+    info.surfs[tidx].texture = GTextureManager.AddFileTexture(VName(*txnames[f]), TEXTYPE_SkyMap);
   }
 }
 
@@ -144,7 +161,7 @@ void R_InitSkyBoxes () {
         if (!sc->GetString()) break;
         sc->UnGet();
         sc->Expect("skybox");
-        R_ParseMapDefSkyBoxesScript(sc);
+        R_ParseGozzoSkyBoxesScript(sc); // as gozzo
       }
       delete sc;
     }
@@ -308,6 +325,7 @@ void VSky::InitSkyBox (VName Name1, VName Name2) {
   int num = CheckSkyboxNumForName(Name1);
   if (num == -1) Host_Error("No skybox '%s'", *Name1);
   skyboxinfo_t &s1info = skyboxinfo[num];
+
   if (Name2 != NAME_None) {
     num = CheckSkyboxNumForName(Name2);
     if (num == -1) Host_Error("No skybox '%s'", *Name2);
@@ -316,41 +334,16 @@ void VSky::InitSkyBox (VName Name1, VName Name2) {
 
   memset((void *)sky, 0, sizeof(sky));
 
-  sky[0].surf.verts[0] = TVec(128, 128, -128);
-  sky[0].surf.verts[1] = TVec(128, 128, 128);
-  sky[0].surf.verts[2] = TVec(128, -128, 128);
-  sky[0].surf.verts[3] = TVec(128, -128, -128);
-
-  sky[1].surf.verts[0] = TVec(128, -128, -128);
-  sky[1].surf.verts[1] = TVec(128, -128, 128);
-  sky[1].surf.verts[2] = TVec(-128, -128, 128);
-  sky[1].surf.verts[3] = TVec(-128, -128, -128);
-
-  sky[2].surf.verts[0] = TVec(-128, -128, -128);
-  sky[2].surf.verts[1] = TVec(-128, -128, 128);
-  sky[2].surf.verts[2] = TVec(-128, 128, 128);
-  sky[2].surf.verts[3] = TVec(-128, 128, -128);
-
-  sky[3].surf.verts[0] = TVec(-128, 128, -128);
-  sky[3].surf.verts[1] = TVec(-128, 128, 128);
-  sky[3].surf.verts[2] = TVec(128, 128, 128);
-  sky[3].surf.verts[3] = TVec(128, 128, -128);
-
-  sky[4].surf.verts[0] = TVec(128.0f, 128.0f, 128);
-  sky[4].surf.verts[1] = TVec(-128.0f, 128.0f, 128);
-  sky[4].surf.verts[2] = TVec(-128.0f, -128.0f, 128);
-  sky[4].surf.verts[3] = TVec(128.0f, -128.0f, 128);
-
-  sky[5].surf.verts[0] = TVec(128, 128, -128);
-  sky[5].surf.verts[1] = TVec(128, -128, -128);
-  sky[5].surf.verts[2] = TVec(-128, -128, -128);
-  sky[5].surf.verts[3] = TVec(-128, 128, -128);
-
   sky[0].plane.Set(TVec(-1, 0, 0), -128);
   sky[0].texinfo.saxis = TVec(0, -1.0f, 0);
   sky[0].texinfo.taxis = TVec(0, 0, -1.0f);
   sky[0].texinfo.soffs = 128;
   sky[0].texinfo.toffs = 128;
+
+  sky[0].surf.verts[0] = TVec(128, 128, -128);
+  sky[0].surf.verts[1] = TVec(128, 128, 128);
+  sky[0].surf.verts[2] = TVec(128, -128, 128);
+  sky[0].surf.verts[3] = TVec(128, -128, -128);
 
   sky[1].plane.Set(TVec(0, 1, 0), -128);
   sky[1].texinfo.saxis = TVec(-1.0f, 0, 0);
@@ -358,11 +351,21 @@ void VSky::InitSkyBox (VName Name1, VName Name2) {
   sky[1].texinfo.soffs = 128;
   sky[1].texinfo.toffs = 128;
 
+  sky[1].surf.verts[0] = TVec(128, -128, -128);
+  sky[1].surf.verts[1] = TVec(128, -128, 128);
+  sky[1].surf.verts[2] = TVec(-128, -128, 128);
+  sky[1].surf.verts[3] = TVec(-128, -128, -128);
+
   sky[2].plane.Set(TVec(1, 0, 0), -128);
   sky[2].texinfo.saxis = TVec(0, 1.0f, 0);
   sky[2].texinfo.taxis = TVec(0, 0, -1.0f);
   sky[2].texinfo.soffs = 128;
   sky[2].texinfo.toffs = 128;
+
+  sky[2].surf.verts[0] = TVec(-128, -128, -128);
+  sky[2].surf.verts[1] = TVec(-128, -128, 128);
+  sky[2].surf.verts[2] = TVec(-128, 128, 128);
+  sky[2].surf.verts[3] = TVec(-128, 128, -128);
 
   sky[3].plane.Set(TVec(0, -1, 0), -128);
   sky[3].texinfo.saxis = TVec(1.0f, 0, 0);
@@ -370,17 +373,43 @@ void VSky::InitSkyBox (VName Name1, VName Name2) {
   sky[3].texinfo.soffs = 128;
   sky[3].texinfo.toffs = 128;
 
+  sky[3].surf.verts[0] = TVec(-128, 128, -128);
+  sky[3].surf.verts[1] = TVec(-128, 128, 128);
+  sky[3].surf.verts[2] = TVec(128, 128, 128);
+  sky[3].surf.verts[3] = TVec(128, 128, -128);
+
   sky[4].plane.Set(TVec(0, 0, -1), -128);
   sky[4].texinfo.saxis = TVec(0, -1.0f, 0);
   sky[4].texinfo.taxis = TVec(1.0f, 0, 0);
   sky[4].texinfo.soffs = 128;
   sky[4].texinfo.toffs = 128;
 
+  if (s1info.isgozzo && !s1info.fliptop) {
+    //FIXME: fliptop is wrong here!
+    sky[4].texinfo.taxis = TVec(0, -1.0f, 0);
+    sky[4].texinfo.saxis = TVec(1.0f, 0, 0);
+  }
+
+  sky[4].surf.verts[0] = TVec(+128.0f, +128.0f, 128);
+  sky[4].surf.verts[1] = TVec(-128.0f, +128.0f, 128);
+  sky[4].surf.verts[2] = TVec(-128.0f, -128.0f, 128);
+  sky[4].surf.verts[3] = TVec(+128.0f, -128.0f, 128);
+
   sky[5].plane.Set(TVec(0, 0, 1), -128);
   sky[5].texinfo.saxis = TVec(0, -1.0f, 0);
   sky[5].texinfo.taxis = TVec(-1.0f, 0, 0);
   sky[5].texinfo.soffs = 128;
   sky[5].texinfo.toffs = 128;
+
+  if (s1info.isgozzo) {
+    sky[5].texinfo.taxis = TVec(0, -1.0f, 0);
+    sky[5].texinfo.saxis = -TVec(-1.0f, 0, 0);
+  }
+
+  sky[5].surf.verts[0] = TVec(128, 128, -128);
+  sky[5].surf.verts[1] = TVec(128, -128, -128);
+  sky[5].surf.verts[2] = TVec(-128, -128, -128);
+  sky[5].surf.verts[3] = TVec(-128, 128, -128);
 
   NumSkySurfs = 6;
   for (int j = 0; j < 6; ++j) {

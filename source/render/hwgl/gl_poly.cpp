@@ -60,6 +60,7 @@ extern "C" {
 //==========================================================================
 void VOpenGLDrawer::StartSkyPolygons () {
   SetFade(0);
+  //glDisable(GL_CULL_FACE);
 }
 
 
@@ -72,6 +73,7 @@ void VOpenGLDrawer::StartSkyPolygons () {
 //==========================================================================
 void VOpenGLDrawer::EndSkyPolygons () {
   SetFade(0); // disable fog
+  //glEnable(GL_CULL_FACE);
 }
 
 
@@ -94,6 +96,7 @@ void VOpenGLDrawer::DrawSkyPolygon (surface_t *surf, bool bIsSkyBox, VTexture *T
   sidx[1] = 1;
   sidx[2] = 2;
   sidx[3] = 3;
+
   if (!bIsSkyBox) {
     if (surf->verts[1].z > 0) {
       sidx[1] = 0;
