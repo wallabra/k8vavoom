@@ -100,6 +100,20 @@ menudef GameplayOptions {
       "If your pwad is not working right, try to toggle this.";
   }
 
+  option slider {
+    title = "Monster Corpse Limit";
+    cvar = gm_corpse_limit;
+    min = -1;
+    max = 8192;
+    step = 10;
+    help =
+      "You can limit number of corpses on the map.",
+      "If there will be more than the given number of monsters,",
+      "some corpses will disappear.",
+      "Note that Arch-Vile cannot resurrect disappeared corpses (obviously).",
+      "'-1' means 'no limit'.";
+  }
+
 
   header "Pickup/Weapon Behaviour";
 
