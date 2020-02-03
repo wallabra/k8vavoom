@@ -1062,11 +1062,11 @@ static void ParseCameraTexture (VScriptParser *sc) {
   if (Width < 1 || FitWidth < 1 || Height < 1 || FitHeight < 1 ||
       Width > 512 || FitWidth > 512 || Height > 512 || FitHeight > 512)
   {
-    GCon->Logf(NAME_Error, "invalid camera texture '%s' dimensions: (%dx%d); fit is (%dx%d)", *Name, Width, Height, FitWidth, FitHeight);
-    Width = clampval(Width, 1, 512);
-    Height = clampval(Height, 1, 512);
-    FitWidth = clampval(FitWidth, 1, 512);
-    FitHeight = clampval(FitHeight, 1, 512);
+    GCon->Logf(NAME_Error, "bad (too big or too small) camera texture '%s' dimensions: (%dx%d); fit is (%dx%d)", *Name, Width, Height, FitWidth, FitHeight);
+    Width = clampval(Width, 1, 2048);
+    Height = clampval(Height, 1, 2048);
+    FitWidth = clampval(FitWidth, 1, 2048);
+    FitHeight = clampval(FitHeight, 1, 2048);
   }
 
   if (Name == NAME_None) return;
@@ -1074,17 +1074,19 @@ static void ParseCameraTexture (VScriptParser *sc) {
   VCameraTexture *Tex = new VCameraTexture(Name, Width, Height);
   if (!Tex) return;
   //int TexNum = GTextureManager.CheckNumForNameAndForce(Name, TEXTYPE_Flat, true, false);
-  int TexNum = GTextureManager.CheckNumForNameAndForce(Name, TEXTYPE_Wall, true, false);
+  int TexNum = GTextureManager.CheckNumForNameAndForce(Name, TEXTYPE_Wall, true, true/*silent*/);
   if (TexNum != -1) {
     // by default camera texture will fit in old texture
     VTexture *OldTex = GTextureManager[TexNum];
-    FitWidth = clampval(OldTex->GetScaledWidth(), 1, 512);
-    FitHeight = clampval(OldTex->GetScaledHeight(), 1, 512);
+    //GCon->Logf(NAME_Debug, "*** replacing camera texture '%s'", *OldTex->Name);
+    FitWidth = clampval(OldTex->GetScaledWidth(), 1, 2048);
+    FitHeight = clampval(OldTex->GetScaledHeight(), 1, 2048);
     GTextureManager.ReplaceTexture(TexNum, Tex);
     //k8: just in case
     //delete OldTex;
     //OldTex = nullptr;
   } else {
+    //GCon->Logf(NAME_Debug, "*** adding new camera texture '%s'", *Tex->Name);
     GTextureManager.AddTexture(Tex);
   }
 
