@@ -336,6 +336,7 @@ void SB_DrawSmallNum (int x, int y, int num) {
 //
 //==========================================================================
 override void SB_FillMainBar (bool inAutomap) {
+  if (!cl || !cl.MO) return;
   // draw something in the blank spaces
   // check which version of Doom we are playing
   /*
@@ -581,6 +582,11 @@ static final string Seconds2Str (float secs) {
 //==========================================================================
 override void SB_DrawFullscreenStats () {
   if (!cl || !cl.MO) return;
+
+  if (R_GetScreenBlocks() == R_SCREEN_BLOCKS_FS_STATUSBAR) {
+    SB_DrawMainBarCorrected(inAutomap:false, doFill:false);
+    return;
+  }
 
   auto ovw = GetVirtualWidth();
   auto ovh = GetVirtualHeight();

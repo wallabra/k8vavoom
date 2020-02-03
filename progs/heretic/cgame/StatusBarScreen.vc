@@ -250,6 +250,7 @@ void SB_DrawINumber(int x, int y, int num)
 //
 //==========================================================================
 override void SB_FillMainBar (bool inAutomap) {
+  if (!cl || !cl.MO) return;
   // draw something in the blank spaces
   //FillRectWithFlat(0, 438, 640, 42, !WadLumpPresent('e2m1') ? 'floor04' : 'flat513');
   FillRectWithFlatRepeat(0, 438, 640, 42, 'ScreenBackPic');
@@ -403,6 +404,11 @@ private final int yfix (int y) { return (y == 480/2 ? GetVirtualHeight()/2 : y <
 //==========================================================================
 override void SB_DrawFullscreenStats () {
   if (!cl || !cl.MO) return;
+
+  if (R_GetScreenBlocks() == R_SCREEN_BLOCKS_FS_STATUSBAR) {
+    SB_DrawMainBarCorrected(inAutomap:false, doFill:false);
+    return;
+  }
 
   // health
   SB_DrawNumber9(50, yfix(456), cl.Health);

@@ -66,7 +66,7 @@ void R_FreeSkyboxData ();
 
 vuint8 light_remap[256];
 
-int screenblocks = 0;
+int screenblocks = 0; // viewport size
 
 
 VCvarB r_chasecam("r_chasecam", false, "Chasecam mode.", /*CVAR_Archive*/0);
@@ -114,9 +114,9 @@ float PixelAspect;
 
 static FDrawerDesc *DrawerList[DRAWER_MAX];
 
-VCvarI screen_size("screen_size", "11", "Screen size.", CVAR_Archive);
+VCvarI screen_size("screen_size", "12", "Screen size.", CVAR_Archive); // default is "fullscreen with stats"
 VCvarB allow_small_screen_size("_allow_small_screen_size", false, "Allow small screen sizes.", /*CVAR_Archive*/CVAR_PreInit);
-bool set_resolutioon_needed = true;
+bool set_resolution_needed = true;
 
 // angles in the SCREENWIDTH wide window
 VCvarF fov("fov", "90", "Field of vision.");
@@ -1479,7 +1479,7 @@ void R_SetViewSize (int blocks) {
   if (blocks > 2) {
     if (screen_size != blocks) {
       screen_size = blocks;
-      set_resolutioon_needed = true;
+      set_resolution_needed = true;
     }
   }
 }
@@ -1491,7 +1491,7 @@ void R_SetViewSize (int blocks) {
 //
 //==========================================================================
 void R_ForceViewSizeUpdate () {
-  set_resolutioon_needed = true;
+  set_resolution_needed = true;
 }
 
 
@@ -1523,11 +1523,11 @@ COMMAND(SizeUp) {
 //
 //==========================================================================
 void VRenderLevelShared::ExecuteSetViewSize () {
-  set_resolutioon_needed = false;
+  set_resolution_needed = false;
   if (allow_small_screen_size) {
-    screen_size = clampval(screen_size.asInt(), 3, 11);
+    screen_size = clampval(screen_size.asInt(), 3, 13);
   } else {
-    screen_size = clampval(screen_size.asInt(), 10, 11);
+    screen_size = clampval(screen_size.asInt(), 10, 13);
   }
   screenblocks = screen_size;
 
@@ -1600,7 +1600,7 @@ void VRenderLevelShared::TransformFrustum () {
 void VRenderLevelShared::SetupFrame () {
   // change the view size if needed
   if (screen_size != screenblocks || !screenblocks ||
-      set_resolutioon_needed || old_fov != fov ||
+      set_resolution_needed || old_fov != fov ||
       r_aspect_ratio != prev_aspect_ratio)
   {
     ExecuteSetViewSize();
@@ -1753,7 +1753,7 @@ void VRenderLevelShared::SetupCameraFrame (VEntity *Camera, VTexture *Tex, int F
   Drawer->SetupView(this, rd);
   //advanceCacheFrame();
   PortalDepth = 0;
-  set_resolutioon_needed = true;
+  set_resolution_needed = true;
 }
 
 

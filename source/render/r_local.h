@@ -1063,7 +1063,7 @@ int R_SetMenuPlayerTrans (int, int, int);
 extern TArray<spritedef_t> sprites; //[MAX_SPRITE_MODELS];
 
 // r_main
-extern int screenblocks;
+extern int screenblocks; // viewport size
 
 extern vuint8 light_remap[256];
 extern VCvarB r_darken;

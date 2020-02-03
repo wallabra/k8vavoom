@@ -398,23 +398,28 @@ final void SB_RestoreVScreen (const ref SB_SavedVScreenState sss) {
 }
 
 
+void SB_DrawMainBarCorrected (bool inAutomap, bool doFill) {
+  SB_SavedVScreenState sss;
+  SB_SetCorrected640x480(out sss);
+  scope(exit) SB_RestoreVScreen(ref sss);
+  if (doFill) SB_FillMainBar(inAutomap);
+  SB_DrawMainBar(inAutomap);
+}
+
+
 // this is common code for all games
 void SB_DrawMainPart (int sb_view) {
+  int sblocks = R_GetScreenBlocks();
+  if (sblocks >= R_SCREEN_BLOCKS_NO_STATUSBAR) return;
   auto ovw = GetVirtualWidth();
   auto ovh = GetVirtualHeight();
   if (Width != ovw || Height != ovh) SetSize(ovw, ovh);
-  if (sb_view == SB_VIEW_FULLSCREEN) {
+  if (sb_view == SB_VIEW_FULLSCREEN || sblocks >= R_SCREEN_BLOCKS_FS_STATUSBAR) {
     SB_DrawFullscreenStats();
   } else {
     bool inAutomap = (sb_view == SB_VIEW_AUTOMAP);
     SB_DrawMainBarPre(inAutomap);
-    {
-      SB_SavedVScreenState sss;
-      SB_SetCorrected640x480(out sss);
-      scope(exit) SB_RestoreVScreen(ref sss);
-      SB_FillMainBar(inAutomap);
-      SB_DrawMainBar(inAutomap);
-    }
+    SB_DrawMainBarCorrected(inAutomap, doFill:true);
     SB_DrawMainBarPost(inAutomap);
   }
 }

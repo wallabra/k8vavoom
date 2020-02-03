@@ -255,27 +255,15 @@ override void StartMap()
   pic_armor2[3] = R_RegisterPic('ar_4a0');
 }
 
+
 //==========================================================================
 //
 //  SB_DrawBackground
 //
 //==========================================================================
-
-void SB_DrawBackground()
-{
+void SB_DrawBackground () {
   sb_health = HealthMarker;
-  if (sb_health < 0)
-  {
-    sb_health = 0;
-  }
-  else if (sb_health > 100)
-  {
-    sb_health = 100;
-  }
-
-  // draw something in the blank spaces
-  FillRectWithFlatRepeat(0, 441, 640, 39, /*'f_022'*/'ScreenBackPic');
-
+  sb_health = clamp(sb_health, 0, 100);
   DrawPic(BAR_X + 0, BAR_Y - 27, pic_bar);
   DrawPic(BAR_X + 28 + (((sb_health * 196) / 100) % 9), BAR_Y + 32, pic_chain);
   DrawPic(BAR_X + 7 + ((sb_health * 11) / 5), BAR_Y + 32, pic_lifegem);
@@ -375,7 +363,9 @@ void SB_DrawMNumber(int x, int y, int num)
 //
 //==========================================================================
 override void SB_FillMainBar (bool inAutomap) {
-  SB_DrawBackground();
+  if (!cl || !cl.MO) return;
+  // draw something in the blank spaces
+  FillRectWithFlatRepeat(0, 441, 640, 39, /*'f_022'*/'ScreenBackPic');
 }
 
 
@@ -396,6 +386,8 @@ override void SB_DrawMainBar(bool inAutomap)
   {
     return;
   }
+
+  SB_DrawBackground();
 
   DrawPic(BAR_X + 38, BAR_Y + 1, pic_statbar);
 
@@ -625,6 +617,11 @@ override void SB_DrawFullscreenStats () {
   int readyweapon;
 
   if (!cl || !cl.MO) return;
+
+  if (R_GetScreenBlocks() == R_SCREEN_BLOCKS_FS_STATUSBAR) {
+    SB_DrawMainBarCorrected(inAutomap:false, doFill:false);
+    return;
+  }
 
   // health
   SB_DrawNumber9(50, yfix(450), cl.Health, (cl.Health >= 25 ? 0 : 1));

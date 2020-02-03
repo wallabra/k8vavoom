@@ -458,3 +458,19 @@ IMPLEMENT_FREE_FUNCTION(VObject, FS_WriteFileContents) {
   delete st;
   RET_BOOL(ok);
 }
+
+
+#ifdef CLIENT
+//k8: sorry!
+extern int screenblocks;
+#endif
+
+// native static final int R_GetScreenBlocks ();
+IMPLEMENT_FREE_FUNCTION(VObject, R_GetScreenBlocks) {
+#ifdef CLIENT
+  RET_INT(screenblocks);
+#else
+  // `13` is "fullscreen, no status bar"
+  RET_INT(13);
+#endif
+}

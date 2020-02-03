@@ -186,6 +186,7 @@ void SB_DrawTallNum (int x, int y, int num, float alpha) {
 //
 //==========================================================================
 override void SB_FillMainBar (bool inAutomap) {
+  if (!cl || !cl.MO) return;
   // draw something in the blank spaces
   FillRectWithFlatRepeat(0, 448, 640, 32, /*'f_pave01'*/'ScreenBackPic');
 }
@@ -334,6 +335,11 @@ override void SB_DrawFullscreenStats () {
   Inventory Item;
 
   if (!cl || !cl.MO) return;
+
+  if (R_GetScreenBlocks() == R_SCREEN_BLOCKS_FS_STATUSBAR) {
+    SB_DrawMainBarCorrected(inAutomap:false, doFill:false);
+    return;
+  }
 
   auto ovw = GetVirtualWidth();
   auto ovh = GetVirtualHeight();

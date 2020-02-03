@@ -461,6 +461,19 @@ native static final int GetVirtualHeight ();
 native static final int GetRealScreenWidth ();
 native static final int GetRealScreenHeight ();
 
+// returns screen size in "blocks"
+// [3..12] (or [10..12])
+// 10 is "vanilla size with statusbar"
+// 11 is "fullscreen with vanilla statusbar, but without rocky fill"
+// 12 is "fullscreen with fullscreen stats"
+// 13 is "no statusbar/stats at all"
+enum {
+  R_SCREEN_BLOCKS_FS_STATUSBAR = 11,
+  R_SCREEN_BLOCKS_FS_STATS = 12,
+  R_SCREEN_BLOCKS_NO_STATUSBAR = 13,
+}
+native static final int R_GetScreenBlocks ();
+
 // registers a graphic, returns handle
 native static final int R_RegisterPic (name Name);
 // registers a graphic with custom palette, returns handle
