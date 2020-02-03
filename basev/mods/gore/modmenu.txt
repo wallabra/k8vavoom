@@ -75,7 +75,7 @@ menudef GoreModMenu {
   header "Blood Limiter";
 
   option numeric {
-    title = "Maximum Allowed Blood Actors";
+    title = "Maximum Blood Actors";
     cvar = k8GoreOpt_MaxBloodEntities;
     step = 100;
     min = 0;
@@ -86,7 +86,7 @@ menudef GoreModMenu {
   }
 
   option numeric {
-    title = "Maximum Allowed Temporary Actors";
+    title = "Maximum Fast Blood Actors";
     cvar = k8GoreOpt_MaxTransientBloodEntities;
     step = 100;
     min = 0;
@@ -95,6 +95,28 @@ menudef GoreModMenu {
       "Limit number of spawned temporary blood actors.",
       "Temporary blood will disappear much faster than the ordinary blood.",
       "It is recommended to keep this under 1000.";
+  }
+
+  option numeric {
+    title = "Maximum Floor Blood Splat Actors";
+    cvar = k8GoreOpt_MaxBloodSplatEntities;
+    step = 100;
+    min = 0;
+    max = 16000;
+    help =
+      "Limit number of spawned floor blood splats.",
+      "Note that differently colored splats are different actors.";
+  }
+
+  option numeric {
+    title = "Maximum Ceiling Blood Splat Actors";
+    cvar = k8GoreOpt_MaxCeilBloodSplatEntities;
+    step = 100;
+    min = 0;
+    max = 16000;
+    help =
+      "Limit number of spawned ceiling blood splats.",
+      "Note that differently colored splats are different actors.";
   }
 }
 

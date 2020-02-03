@@ -360,6 +360,7 @@ Actor K8Gore_BloodmistSmall : K8Gore_FlyingBlood {
 ////////////////////////////////////////////////////////////////////////////////
 // this is floor blood spot (it may be spawned in the air, though)
 Actor K8Gore_BloodSpot : K8Gore_BloodBase {
+  LimitWithSubCvar "k8GoreOpt_MaxBloodSplatEntities"
   
   game Doom
   radius 0
@@ -437,9 +438,13 @@ Actor K8Gore_BloodSpot : K8Gore_BloodBase {
           }
         }
     EndlessLoop:
+      // become non-scripted; from 22 secs to 17 minutes
+      "####" "#" -1 A_BecomeK8VavoomInternalNoTickGrav(frandom(800, 12600)/35.0, frandom(64, 90)/35.0/10.0)
+      /*
       "####" "#" 800
       // it still may disappear after some time
       "####" "#" 0 A_Jump(16, "NormalFadeOut")
+      */
       Loop
     NormalFadeOut:
       "####" "#" random(64, 90)
@@ -605,6 +610,7 @@ Actor K8Gore_CeilBloodChecker : K8Gore_FlyingBlood {
 
 // ceiling blood spot
 Actor K8Gore_CeilBloodSpot : K8Gore_BloodSpot {
+  LimitWithSubCvar "k8GoreOpt_MaxCeilBloodSplatEntities"
   
   //Projectile
   +SPAWNCEILING
@@ -1356,6 +1362,7 @@ Actor K8Gore_BloodmistSmallTransient : K8Gore_FlyingBloodTransient {
 ////////////////////////////////////////////////////////////////////////////////
 // this is floor blood spot (it may be spawned in the air, though)
 Actor K8Gore_BloodSpotTransient : K8Gore_BloodBaseTransient {
+  LimitWithSubCvar "k8GoreOpt_MaxBloodSplatEntities"
   
   game Doom
   radius 0
@@ -1433,7 +1440,9 @@ Actor K8Gore_BloodSpotTransient : K8Gore_BloodBaseTransient {
             A_k8JumpIfLiquidFloor("ItLandedOnWater");
           }
         }
-      "####" "#" random(100, 450)
+      //"####" "#" random(100, 450)
+      // become non-scripted
+      "####" "#" -1 A_BecomeK8VavoomInternalNoTickGrav(frandom(100, 450)/35.0, frandom(64, 90)/35.0/10.0)
     FadeOutLoop:
       "####" "#" random(64, 90)
       "####" "#" 0 A_FadeOut(0.01)
@@ -1598,6 +1607,7 @@ Actor K8Gore_CeilBloodCheckerTransient : K8Gore_FlyingBloodTransient {
 
 // ceiling blood spot
 Actor K8Gore_CeilBloodSpotTransient : K8Gore_BloodSpotTransient {
+  LimitWithSubCvar "k8GoreOpt_MaxCeilBloodSplatEntities"
   
   //Projectile
   +SPAWNCEILING

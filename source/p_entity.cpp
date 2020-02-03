@@ -142,9 +142,37 @@ void VEntity::AddedToLevel () {
 void VEntity::Tick (float deltaTime) {
   // skip ticker?
   if (FlagsEx&EFEX_NoTickGrav) {
-    if (!(EntityFlags&EF_NoGravity) && SubSector) {
+    const unsigned ef = EntityFlags;
+    if (!(ef&EF_NoGravity) && SubSector) {
       // it is always at floor level
       Origin.z = SV_GetLowestSolidPointZ(SubSector->sector, Origin);
+    }
+    if (ef&EFEX_NoTickGravLT) {
+      // perform lifetime logic
+      // LastMoveTime is time before the next step
+      // PlaneAlpha is fadeout after the time expires:
+      // if PlaneAlpha is:
+      //   <=0: die immediately
+      //    >0: fadeout step time
+      // it fades out by 0.016 per step
+      LastMoveTime -= deltaTime;
+      while (LastMoveTime <= 0) {
+        // die now
+        if (PlaneAlpha <= 0) {
+          //GCon->Logf(NAME_Debug, "%s: DIED!", GetClass()->GetName());
+          DestroyThinker();
+          return;
+        }
+        LastMoveTime += PlaneAlpha;
+        Alpha -= 0.016;
+        // did it faded out completely?
+        if (Alpha <= 0.002f) {
+          //GCon->Logf(NAME_Debug, "%s: FADED!", GetClass()->GetName());
+          DestroyThinker();
+          return;
+        }
+        if (RenderStyle == STYLE_Normal) RenderStyle = STYLE_Translucent;
+      }
     }
     return;
   }

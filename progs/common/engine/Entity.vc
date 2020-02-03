@@ -314,6 +314,7 @@ bool bNoInteraction; // thing is completely excluded from any gameplay related c
 bool bNoTickGrav; // do not call `Tick()` (but process gravity) (processed in C++ code)
 bool bPseudoCorpse; // set in DECORATE for corpse decorations, so sprite offset fixer can recongize them
 bool bFloatBob; // use float bobbing z movement (moved from `EntityEx`)
+bool bNoTickGravLifeTime; // if `bNoTickGrav` set, perform lifetime logic
 
 // for movement checking
 float Radius;

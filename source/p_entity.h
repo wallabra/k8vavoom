@@ -155,7 +155,7 @@ class VEntity : public VThinker {
   // for smooth movement
   TVec LastMoveOrigin;
   TAVec LastMoveAngles;
-  float LastMoveTime;
+  float LastMoveTime; // lifetime, or fadeout time for `EFEX_NoTickGrav`; if >0: lifetime
   float LastMoveDuration;
   enum {
     MVF_JustMoved = 1u<<0,
@@ -277,6 +277,7 @@ class VEntity : public VThinker {
     EFEX_NoTickGrav    = 1u<<4u, // do not call `Tick()` (but process gravity)
     EFEX_PseudoCorpse  = 1u<<5u, // for sprite fixer
     EFEX_FloatBob      = 1u<<6u, // use float bobbing z movement
+    EFEX_NoTickGravLT  = 1u<<7u, // if `EFEX_NoTickGrav` set, perform lifetime logic
   };
   vuint32 FlagsEx;
 
@@ -337,6 +338,9 @@ class VEntity : public VThinker {
   vuint32 SkyBoxFlags;
   //bool bAlways;
   /*SkyViewpoint*/VEntity *Mate;
+  // also used in `EFEX_NoTickGrav`:
+  //   <=0: die immediately
+  //    >0: fadeout step time
   float PlaneAlpha;
 
   // for renderer; if <= 0, use `Radius` instead

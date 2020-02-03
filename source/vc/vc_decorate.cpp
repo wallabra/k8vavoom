@@ -3882,6 +3882,12 @@ bool VEntity::SetDecorateFlag (VStr Flag, bool Value) {
             case FLAG_Bool:
               if (doRelink) doRelink = (F.Field->GetBool(this) != Value);
               F.Field->SetBool(this, Value);
+              // worker fields for notickers
+              if (Value && FlagName == "k8vavoominternalnotickgrav") {
+                StateTime = -1;
+                LastMoveTime = 0;
+                PlaneAlpha = 0;
+              }
               break;
             case FLAG_BoolInverted:
               if (doRelink) doRelink = (F.Field->GetBool(this) == Value);

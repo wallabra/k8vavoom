@@ -1,8 +1,10 @@
 user int k8GoreOpt_CeilBlood = 1;
 user int k8GoreOpt_FloorBlood = 1;
 user int k8GoreOpt_BloodAmount = 3;
-user int k8GoreOpt_MaxBloodEntities = 2000;
-user int k8GoreOpt_MaxTransientBloodEntities = 420;
+user int k8GoreOpt_MaxBloodEntities = 3500;
+user int k8GoreOpt_MaxBloodSplatEntities = 2200; // floor
+user int k8GoreOpt_MaxCeilBloodSplatEntities = 250;
+user int k8GoreOpt_MaxTransientBloodEntities = 620;
 user int k8GoreOpt_BloodDripSound = 1;
 user int k8GoreOpt_HeadshotSound = 0;
 user int k8GoreOpt_LimiterDebug = 0;

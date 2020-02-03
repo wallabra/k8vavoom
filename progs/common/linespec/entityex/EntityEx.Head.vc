@@ -1181,3 +1181,24 @@ static final bool IsSpawnableClass (class cls) {
   if (!AreStateSpritesPresent(st)) return false; // no sprites
   return true;
 }
+
+
+//===========================================================================
+//
+//  A_BecomeK8VavoomInternalNoTickGrav
+//
+//  sets `bNoTickGrav` flag, uses current state frame as sprite
+//  can optionally set lifetime and fadetime (after lifetime)
+//  it fades out by 0.016 per step
+//
+//===========================================================================
+[decorate] final void A_BecomeK8VavoomInternalNoTickGrav (optional float lifetime, optional float fadetime) {
+  bNoTickGrav = true;
+  StateTime = -1;
+  LastMoveTime = (lifetime > 0 ? lifetime : -1);
+  PlaneAlpha = (fadetime > 0 ? fadetime : -1);
+  //printdebug("%C: becomes notick; lifetime=%s; fadetime=%s", self, lifetime, fadetime);
+  bNoTickGravLifeTime = (LastMoveTime > 0 || PlaneAlpha > 0);
+  // debug
+  //if (bNoTickGravLifeTime) { LastMoveTime = 3; /*PlaneAlpha = 0.2;*/ }
+}
