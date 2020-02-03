@@ -141,13 +141,14 @@ void VEntity::AddedToLevel () {
 //==========================================================================
 void VEntity::Tick (float deltaTime) {
   // skip ticker?
-  if (FlagsEx&EFEX_NoTickGrav) {
-    const unsigned ef = EntityFlags;
-    if (!(ef&EF_NoGravity) && SubSector) {
+  const unsigned eflags = FlagsEx;
+  if (eflags&EFEX_NoTickGrav) {
+    if (!(EntityFlags&EF_NoGravity) && SubSector) {
       // it is always at floor level
       Origin.z = SV_GetLowestSolidPointZ(SubSector->sector, Origin);
     }
-    if (ef&EFEX_NoTickGravLT) {
+    if (eflags&EFEX_NoTickGravLT) {
+      //GCon->Logf(NAME_Debug, "*** %s ***", GetClass()->GetName());
       // perform lifetime logic
       // LastMoveTime is time before the next step
       // PlaneAlpha is fadeout after the time expires:
