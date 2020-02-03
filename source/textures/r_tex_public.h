@@ -473,6 +473,8 @@ public:
   inline Iter firstWithName (VName n, bool allowShrink=true) { return Iter(this, n, allowShrink); }
   Iter firstWithStr (VStr s);
 
+  static VVA_CHECKRESULT bool IsSkyTextureName (VName n) noexcept;
+
 public:
   VTextureManager ();
 
@@ -626,6 +628,7 @@ VAnimDoorDef *R_FindAnimDoor (vint32);
 void R_AnimateSurfaces ();
 bool R_IsAnimatedTexture (int texid);
 
+void R_UpdateSkyFlatNum (bool force=false);
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern VTextureManager GTextureManager;

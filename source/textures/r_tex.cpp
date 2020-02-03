@@ -91,7 +91,7 @@ static double hitexLastMessageTime = -1;
 // ////////////////////////////////////////////////////////////////////////// //
 // Flats data
 // ////////////////////////////////////////////////////////////////////////// //
-int skyflatnum; // sky mapping
+int skyflatnum = -2; // sky mapping
 int screenBackTexNum; // background filler for unused screen parts and status bar
 
 VCvarB r_hirestex("r_hirestex", true, "Allow high-resolution texture replacements?", /*CVAR_Archive|*/CVAR_PreInit);
@@ -255,9 +255,7 @@ void VTextureManager::Init () {
   if (DefaultTexture == -1) Sys_Error("Default texture -noflat- not found");
 
   // find sky flat number
-  skyflatnum = CheckNumForName(NAME_f_sky, TEXTYPE_Flat, true);
-  if (skyflatnum < 0) skyflatnum = CheckNumForName(NAME_f_sky001, TEXTYPE_Flat, true);
-  if (skyflatnum < 0) skyflatnum = NumForName(NAME_f_sky1, TEXTYPE_Flat, false);
+  R_UpdateSkyFlatNum(true); // forced
 
   screenBackTexNum = GTextureManager.AddFileTextureChecked("graphics/screenback/screenback_base.png", TEXTYPE_Pic);
 
@@ -331,6 +329,7 @@ void VTextureManager::WipeWallPatches () {
     if (count) {
       rehashTextures();
       GCon->Logf("WipeWallPatches: %d textures wiped", count);
+      R_UpdateSkyFlatNum(); // just in case
     }
   }
 }
@@ -372,6 +371,7 @@ void VTextureManager::ResetMapTextures () {
   GCon->Logf("TextureManager: %d map textures removed", MapTextures.length());
   MapTextures.setLength(0, false); // don't resize
   rehashTextures();
+  R_UpdateSkyFlatNum(); // just in case
 }
 
 
@@ -451,6 +451,7 @@ void VTextureManager::ReplaceTexture (int Index, VTexture *NewTex) {
     Textures[Index] = NewTex;
   } else {
     MapTextures[Index-FirstMapTextureIndex] = NewTex;
+    if (skyflatnum > -2 && IsSkyTextureName(NewTex->Name)) R_UpdateSkyFlatNum();
   }
   //FIXME: delete OldTex?
 }
@@ -475,6 +476,8 @@ void VTextureManager::AddToHash (int Index) {
     MapTextures[Index-FirstMapTextureIndex]->HashNext = TextureHash[HashIndex];
   }
   TextureHash[HashIndex] = Index;
+
+  if (skyflatnum > -2 && IsSkyTextureName(tx->Name)) R_UpdateSkyFlatNum();
 }
 
 
@@ -2104,6 +2107,43 @@ void VTextureManager::LoadSpriteOffsets () {
     }
     delete sc;
     if (fixed || skipped) GCon->Logf(NAME_Init, "  fixed: %d; skipped: %d", fixed, skipped);
+  }
+}
+
+
+//==========================================================================
+//
+//  VTextureManager::IsSkyTextureName
+//
+//==========================================================================
+VVA_CHECKRESULT bool VTextureManager::IsSkyTextureName (VName n) noexcept {
+  return
+    n == NAME_f_sky ||
+    n == NAME_f_sky001 ||
+    n == NAME_f_sky1;
+}
+
+
+//==========================================================================
+//
+//  R_UpdateSkyFlatNum
+//
+//  update sky flat number
+//
+//==========================================================================
+void R_UpdateSkyFlatNum (bool force) {
+  const int oldskf = skyflatnum;
+  if (force || oldskf >= -1) {
+    skyflatnum = GTextureManager.CheckNumForName(NAME_f_sky, TEXTYPE_Flat, true);
+    if (skyflatnum < 0) skyflatnum = GTextureManager.CheckNumForName(NAME_f_sky001, TEXTYPE_Flat, true);
+    if (skyflatnum < 0) skyflatnum = GTextureManager.CheckNumForName(NAME_f_sky1, TEXTYPE_Flat, true);
+
+    if (skyflatnum < 0) {
+      if (oldskf >= 0) GCon->Logf(NAME_Warning, "OOPS! i lost the sky!");
+      skyflatnum = -1; // wtf?!
+    } else if (oldskf != skyflatnum) {
+      GCon->Logf(NAME_Debug, "*** NEW SKY FLAT: %d <%s>", skyflatnum, *W_FullLumpName(GTextureManager[skyflatnum]->SourceLump));
+    }
   }
 }
 

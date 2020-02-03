@@ -220,6 +220,17 @@ COMMAND(MyPos) {
 
 //==========================================================================
 //
+//  GetTexLumpName
+//
+//==========================================================================
+static VStr GetTexLumpName (int tid) {
+  VTexture *tex = GTextureManager[tid];
+  return (tex ? W_FullLumpName(tex->SourceLump) : VStr("[none]"));
+}
+
+
+//==========================================================================
+//
 //  my_sector_info
 //
 //==========================================================================
@@ -258,8 +269,8 @@ COMMAND(my_sector_info) {
     (int)(intptr_t)(Player->MO->SubSector-Player->Level->XLevel->Subsectors),
     sec->sectorTag, sec->special, sec->seqType, sec->soundtraversed, sec->Damage, sec->Sky
   );
-  GCon->Logf("  floor texture  : %s", *GTextureManager.GetTextureName(sec->floor.pic));
-  GCon->Logf("  ceiling texture: %s", *GTextureManager.GetTextureName(sec->ceiling.pic));
+  GCon->Logf("  floor texture  : %s (%d) <%s>", *GTextureManager.GetTextureName(sec->floor.pic), sec->floor.pic.id, *GetTexLumpName(sec->floor.pic));
+  GCon->Logf("  ceiling texture: %s (%d) <%s>", *GTextureManager.GetTextureName(sec->ceiling.pic), sec->ceiling.pic.id, *GetTexLumpName(sec->ceiling.pic));
   GCon->Logf("  ceil : %f %f", sec->ceiling.minz, sec->ceiling.maxz);
   GCon->Logf("  floor: %f %f", sec->floor.minz, sec->floor.maxz);
 
