@@ -182,15 +182,25 @@ void SB_DrawTallNum (int x, int y, int num, float alpha) {
 //
 //  SB_DrawMainBar
 //
+//  this fills the sides with the rock texture
+//
 //==========================================================================
-override void SB_DrawMainBar () {
+override void SB_FillMainBar (bool inAutomap) {
+  // draw something in the blank spaces
+  FillRectWithFlatRepeat(0, 448, 640, 32, /*'f_pave01'*/'ScreenBackPic');
+}
+
+
+//==========================================================================
+//
+//  SB_DrawMainBar
+//
+//==========================================================================
+override void SB_DrawMainBar (bool inAutomap) {
   int NumKeys;
   Inventory Item;
 
   if (!cl || !cl.MO) return;
-
-  // draw something in the blank spaces
-  FillRectWithFlatRepeat(0, 448, 640, 32, /*'f_pave01'*/'ScreenBackPic');
 
   // background
   DrawPic(BAR_X+0, BAR_Y+168, pic_invback);

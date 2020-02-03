@@ -366,13 +366,25 @@ void SB_DrawMNumber(int x, int y, int num)
   }
 }
 
+
+//==========================================================================
+//
+//  SB_DrawMainBar
+//
+//  this fills the sides with the rock texture
+//
+//==========================================================================
+override void SB_FillMainBar (bool inAutomap) {
+  SB_DrawBackground();
+}
+
+
 //==========================================================================
 //
 //  SB_DrawMainBar
 //
 //==========================================================================
-
-override void SB_DrawMainBar()
+override void SB_DrawMainBar(bool inAutomap)
 {
   int sb_mana1;
   int sb_mana2;
@@ -385,7 +397,6 @@ override void SB_DrawMainBar()
     return;
   }
 
-  SB_DrawBackground();
   DrawPic(BAR_X + 38, BAR_Y + 1, pic_statbar);
 
   // Frags / health
@@ -736,14 +747,6 @@ void SB_DrawPause () {
     DrawPic(GetVirtualWidth()/2, (ClGame.maxclients > 1 ? 140 : 40), pic_paused);
   }
 }
-
-
-//==========================================================================
-//
-//  SB_Drawer
-//
-//==========================================================================
-override void SB_DrawMainBarInAutomap () {}
 
 
 //==========================================================================

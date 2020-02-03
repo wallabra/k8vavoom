@@ -241,13 +241,27 @@ void SB_DrawINumber(int x, int y, int num)
   }
 }
 
+
+//==========================================================================
+//
+//  SB_DrawMainBar
+//
+//  this fills the sides with the rock texture
+//
+//==========================================================================
+override void SB_FillMainBar (bool inAutomap) {
+  // draw something in the blank spaces
+  //FillRectWithFlat(0, 438, 640, 42, !WadLumpPresent('e2m1') ? 'floor04' : 'flat513');
+  FillRectWithFlatRepeat(0, 438, 640, 42, 'ScreenBackPic');
+}
+
+
 //==========================================================================
 //
 //  SB_DrawMainBar
 //
 //==========================================================================
-
-override void SB_DrawMainBar()
+override void SB_DrawMainBar(bool inAutomap)
 {
   int chainY;
   int healthPos;
@@ -258,10 +272,6 @@ override void SB_DrawMainBar()
   {
     return;
   }
-
-  // draw something in the blank spaces
-  //FillRectWithFlat(0, 438, 640, 42, !WadLumpPresent('e2m1') ? 'floor04' : 'flat513');
-  FillRectWithFlatRepeat(0, 438, 640, 42, 'ScreenBackPic');
 
   //  Background
   DrawPic(BAR_X, BAR_Y, pic_barback);

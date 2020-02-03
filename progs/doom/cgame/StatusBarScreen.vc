@@ -332,10 +332,10 @@ void SB_DrawSmallNum (int x, int y, int num) {
 //
 //  SB_DrawMainBar
 //
+//  this fills the sides with the rock texture
+//
 //==========================================================================
-override void SB_DrawMainBar () {
-  if (!cl || !cl.MO) return;
-
+override void SB_FillMainBar (bool inAutomap) {
   // draw something in the blank spaces
   // check which version of Doom we are playing
   /*
@@ -346,6 +346,16 @@ override void SB_DrawMainBar () {
   }
   */
   FillRectWithFlatRepeat(0, 448, 640, 32, 'ScreenBackPic');
+}
+
+
+//==========================================================================
+//
+//  SB_DrawMainBar
+//
+//==========================================================================
+override void SB_DrawMainBar (bool inAutomap) {
+  if (!cl || !cl.MO) return;
 
   // background
   DrawPic(ST_BGX, ST_BGY, pic_bar);

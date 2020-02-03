@@ -362,12 +362,15 @@ void AddHudMessage (string Message, name Font, int Type, int Id, int Color,
 }
 
 
+// fullscreen statusbar
+ // the screen is not 640x480
 void SB_DrawFullscreenStats () {}
 
-void SB_DrawMainBarPre (bool inAutomap) {}
-void SB_DrawMainBar () {}
-void SB_DrawMainBarInAutomap () { SB_DrawMainBar(); }
-void SB_DrawMainBarPost (bool inAutomap) {}
+// normal statusbar, called in order
+void SB_DrawMainBarPre (bool inAutomap) {} // the screen is not 640x480
+void SB_FillMainBar (bool inAutomap) {} // this fills the sides with the rock texture; the screen is 640x480
+void SB_DrawMainBar (bool inAutomap) {} // the screen is 640x480
+void SB_DrawMainBarPost (bool inAutomap) {} // the screen is not 640x480
 
 
 struct SB_SavedVScreenState {
@@ -409,7 +412,8 @@ void SB_DrawMainPart (int sb_view) {
       SB_SavedVScreenState sss;
       SB_SetCorrected640x480(out sss);
       scope(exit) SB_RestoreVScreen(ref sss);
-      if (inAutomap) SB_DrawMainBarInAutomap(); else SB_DrawMainBar();
+      SB_FillMainBar(inAutomap);
+      SB_DrawMainBar(inAutomap);
     }
     SB_DrawMainBarPost(inAutomap);
   }
