@@ -28,6 +28,20 @@
 //**
 //**************************************************************************
 
+//**************************************************************************
+//  Debug log
+//**************************************************************************
+
+//==========================================================================
+//
+//  A_k8ConLog
+//
+//==========================================================================
+[decorate] final void decorate_A_k8ConLog (string msg) {
+  if (msg) printdebug("DECORATE LOG: %s", msg);
+}
+
+
 //==========================================================================
 //
 //  DoRespawn
@@ -124,6 +138,43 @@ protected final void doFireMissileProjectile (class!Actor MissileType, optional 
 }
 
 
+//**************************************************************************
+//  Weapon functions
+//**************************************************************************
+
+//===========================================================================
+//
+//  do_A_GunFlash
+//
+//  GFF_NOEXTCHANGE is 1
+//
+//===========================================================================
+protected final void do_A_GunFlash (optional name newstate, optional int flags) self(Actor) {
+  if (!bIsPlayer) return;
+
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (!Wpn) return; // just in case
+  Player.SetViewObject(Wpn);
+
+  if (!specified_newstate) newstate = 'Flash';
+
+  if (MeleeState) SetState(MeleeState);
+  if (newstate && !(flags&1)) Player.SetViewState(PS_FLASH, Wpn.FindState(newstate));
+}
+
+
+//===========================================================================
+//
+//  do_A_CheckReload
+//
+//===========================================================================
+protected final void do_A_CheckReload () self(Actor) {
+  if (!bIsPlayer) return;
+  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
+  if (Wpn) Wpn.CheckAmmo(Wpn.FireMode, AutoSwitch:true);
+}
+
+
 //===========================================================================
 //
 //  do_A_ReFire
@@ -131,7 +182,7 @@ protected final void doFireMissileProjectile (class!Actor MissileType, optional 
 //  The player can re-fire the weapon without lowering it entirely.
 //
 //===========================================================================
-protected final void do_A_ReFire (optional state refirestate) {
+protected final void do_A_ReFire (optional state refirestate) self(Actor) {
   if (!bIsPlayer) return;
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
 
@@ -169,7 +220,7 @@ protected final void do_A_ReFire (optional state refirestate) {
 //  do_A_Raise
 //
 //==========================================================================
-protected final void do_A_Raise (optional float raisespeed) {
+protected final void do_A_Raise (optional float raisespeed) self(Actor) {
   if (!bIsPlayer) return;
 
   Weapon Wpn = PlayerEx(Player).ReadyWeapon;
@@ -221,16 +272,105 @@ protected final void do_A_Raise (optional float raisespeed) {
 }
 
 
+//==========================================================================
+//
+//  do_A_Lower
+//
+//  Lowers current weapon, and changes weapon at bottom.
+//
+//==========================================================================
+protected final void do_A_Lower (optional float lowerspeed) self(Actor) {
+  if (!bIsPlayer) return;
 
-//==========================================================================
-//
-//  A_k8ConLog
-//
-//==========================================================================
-[decorate] final void decorate_A_k8ConLog (string msg) {
-  if (msg) printdebug("DECORATE LOG: %s", msg);
+  Weapon ready = PlayerEx(Player).ReadyWeapon;
+  Weapon pending = PlayerEx(Player).PendingWeapon;
+
+  if (ready) ready.bBobDisabled = true;
+  if (pending) pending.bBobDisabled = true;
+
+  /*
+  if (ready && ready == pending) {
+    if (Player.PlayerState != PST_DEAD &&
+        Player.MO == self && // voodoo doll
+        !Player.bIsBot)
+    {
+      print("%C: LOWERING UNRAISED WEAPON! (3)", self);
+    }
+  }
+  */
+
+  if (!specified_lowerspeed) lowerspeed = Weapon::LOWERSPEED;
+  if (lowerspeed <= 0) lowerspeed = Weapon::LOWERSPEED; //k8: sanity guard
+
+  float prevsy = Player.ViewStates[PS_WEAPON].SY;
+
+  Player.PSpriteWeaponLoweringStartTime = 0;
+  Player.PSpriteWeaponLoweringDuration = 0;
+  Player.PSpriteWeaponLowerPrev = prevsy;
+
+  if (PlayerEx(Player).MorphTime || PlayerEx(Player).bInstantWeaponSwitch) {
+    Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONBOTTOM;
+    prevsy = Weapon::WEAPONBOTTOM;
+  } else {
+    // FIXME!!
+    /*
+    if (Level.Game.frametime < 1.0/35.0) {
+      Player.ViewStates[PS_WEAPON].SY += lowerspeed;
+    } else {
+      Player.ViewStates[PS_WEAPON].SY += lowerspeed*35.0*Level.Game.frametime;
+    }
+    */
+    Player.ViewStates[PS_WEAPON].SY += lowerspeed;
+  }
+
+  float sy = Player.ViewStates[PS_WEAPON].SY;
+
+  if (sy < Weapon::WEAPONBOTTOM) {
+    // not lowered all the way yet
+    Player.PSpriteWeaponLoweringStartTime = XLevel.Time;
+    Player.PSpriteWeaponLoweringDuration = Player.ViewStates[PS_WEAPON].StateTime;
+    return;
+  }
+
+  if (Player.PlayerState == PST_DEAD) {
+    // player is dead, so don't bring up a pending weapon
+    Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONBOTTOM;
+    return;
+  }
+
+  if (Player.MO.Health <= 0) {
+    // player is dead, so keep the weapon off screen
+    Player.SetViewObject(none);
+    Player.SetViewState(PS_WEAPON, none);
+    return;
+  }
+
+  if (prevsy < Weapon::WEAPONTOP) {
+    // lower last time
+    Player.PSpriteWeaponLoweringStartTime = XLevel.Time;
+    Player.PSpriteWeaponLoweringDuration = Player.ViewStates[PS_WEAPON].StateTime;
+  }
+
+  // clear flash state, needed for Strife
+  Player.SetViewState(PS_FLASH, none);
+
+  if (!pending) {
+    PlayerEx(Player).SetWeapon(none);
+    if (Player.PlayerState == PST_DEAD) return;
+    if (Player.MO != self) return; // voodoo doll
+    if (Player.bIsBot) return;
+    print("%C: LOWERING UNRAISED WEAPON! (2)", self);
+    return;
+  }
+
+  PlayerEx(Player).SetWeapon(pending/*PlayerEx(Player).PendingWeapon*/);
+  PlayerEx(Player).BringUpWeapon();
 }
 
+
+//**************************************************************************
+//  State jumps
+//**************************************************************************
 
 //==========================================================================
 //
@@ -246,6 +386,10 @@ protected final void do_A_Raise (optional float raisespeed) {
   else SetState(State);
 }
 
+
+//**************************************************************************
+//  Args
+//**************************************************************************
 
 //==========================================================================
 //
@@ -266,6 +410,10 @@ protected final void do_A_Raise (optional float raisespeed) {
   if (n >= 0 && n < 5) Args[n] = v;
 }
 
+
+//**************************************************************************
+//  Various getters and setters
+//**************************************************************************
 
 //==========================================================================
 //
@@ -387,6 +535,10 @@ private final float clampPitch (float newpitch) {
 }
 
 
+//**************************************************************************
+//  ACS
+//**************************************************************************
+
 //==========================================================================
 //
 //  ACS_Execute
@@ -457,6 +609,10 @@ private final float clampPitch (float newpitch) {
   return XLevel.RunNamedACSWithResult(self, script, s_arg1, s_arg2, s_arg3, s_arg4);
 }
 
+
+//**************************************************************************
+//  Misc
+//**************************************************************************
 
 //==========================================================================
 //
@@ -617,7 +773,7 @@ private final float clampPitch (float newpitch) {
 //
 //==========================================================================
 [decorate] final void A_SpawnProjectile (name MissileTypeName, optional float SpawnHeight, optional float SpawnXYOffset,
-                              optional float Angle, optional int AimMode, optional float Pitch, optional int aptr)
+                                         optional float Angle, optional int AimMode, optional float Pitch, optional int aptr)
 {
   if (!MissileTypeName) return;
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_SpawnProjectile', aptr!optional));
@@ -708,9 +864,11 @@ private final float clampPitch (float newpitch) {
 //  radii are in map units
 //
 //===========================================================================
-[decorate] final bool A_QuakeEx (float intensityX, float intensityY, float intensityZ, float ticduration, float damrad, float tremrad,
-                      optional name soundname, optional int flags, optional float mulwavex, optional float mulwavey, optional float mulwavez,
-                      optional int falloff, optional int highpoint, optional float rollIntensity, optional float rollWave)
+[decorate] final bool A_QuakeEx (float intensityX, float intensityY, float intensityZ, float ticduration,
+                                 float damrad, float tremrad, optional name soundname, optional int flags,
+                                 optional float mulwavex, optional float mulwavey, optional float mulwavez,
+                                 optional int falloff, optional int highpoint, optional float rollIntensity,
+                                 optional float rollWave)
 {
   if (ticduration < 1) return false;
   if (damrad < 1 && tremrad < 1) return false;
@@ -815,7 +973,10 @@ final void doDamageSomething (EntityEx dest, int amount, name damagetype, int fl
 //  decorate_A_DamageSelf
 //
 //==========================================================================
-[decorate] final void decorate_A_DamageSelf (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
+[decorate] final void decorate_A_DamageSelf (int amount, optional name damagetype, optional int flags,
+                                             optional name filter, optional name species, optional int src,
+                                             optional int inflict)
+{
   doDamageSomething(self, amount, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
 }
 
@@ -825,7 +986,10 @@ final void doDamageSomething (EntityEx dest, int amount, name damagetype, int fl
 //  decorate_A_DamageTarget
 //
 //==========================================================================
-[decorate] final void decorate_A_DamageTarget (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
+[decorate] final void decorate_A_DamageTarget (int amount, optional name damagetype, optional int flags,
+                                               optional name filter, optional name species, optional int src,
+                                               optional int inflict)
+{
   doDamageSomething(Target, amount, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
 }
 
@@ -835,7 +999,10 @@ final void doDamageSomething (EntityEx dest, int amount, name damagetype, int fl
 //  decorate_A_DamageMaster
 //
 //==========================================================================
-[decorate] final void decorate_A_DamageMaster (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
+[decorate] final void decorate_A_DamageMaster (int amount, optional name damagetype, optional int flags,
+                                               optional name filter, optional name species, optional int src,
+                                               optional int inflict)
+{
   doDamageSomething(Master, amount, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
 }
 
@@ -845,7 +1012,10 @@ final void doDamageSomething (EntityEx dest, int amount, name damagetype, int fl
 //  decorate_A_DamageTracer
 //
 //==========================================================================
-[decorate] final void decorate_A_DamageTracer (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
+[decorate] final void decorate_A_DamageTracer (int amount, optional name damagetype, optional int flags,
+                                               optional name filter, optional name species, optional int src,
+                                               optional int inflict)
+{
   doDamageSomething(Tracer, amount, damagetype, flags, filter!optional, species!optional, src!optional, inflict!optional);
 }
 
@@ -855,7 +1025,10 @@ final void doDamageSomething (EntityEx dest, int amount, name damagetype, int fl
 //  decorate_A_DamageChildren
 //
 //==========================================================================
-[decorate] final void decorate_A_DamageChildren (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
+[decorate] final void decorate_A_DamageChildren (int amount, optional name damagetype, optional int flags,
+                                                 optional name filter, optional name species, optional int src,
+                                                 optional int inflict)
+{
   Actor A;
   foreach AllThinkers(Actor, A) {
     if (A.Master != self) continue;
@@ -869,7 +1042,10 @@ final void doDamageSomething (EntityEx dest, int amount, name damagetype, int fl
 //  decorate_A_DamageSiblings
 //
 //==========================================================================
-[decorate] final void decorate_A_DamageSiblings (int amount, optional name damagetype, optional int flags, optional name filter, optional name species, optional int src, optional int inflict) {
+[decorate] final void decorate_A_DamageSiblings (int amount, optional name damagetype, optional int flags,
+                                                 optional name filter, optional name species, optional int src,
+                                                 optional int inflict)
+{
   EntityEx mainMaster = Master;
   if (!mainMaster) return;
   Actor A;
@@ -1048,7 +1224,10 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
 //  A_RadiusGive
 //
 //==========================================================================
-[decorate] final int A_RadiusGive (name itemname, float distance, int flags, optional int amount, optional name filter, optional name species, optional float mindist, optional int limit) {
+[decorate] final int A_RadiusGive (name itemname, float distance, int flags, optional int amount,
+                                   optional name filter, optional name species, optional float mindist,
+                                   optional int limit)
+{
   if (!specified_limit) limit = int.max;
   if (limit < 1) return 0;
 
@@ -1256,8 +1435,8 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
 //
 //==========================================================================
 [decorate] final void A_JumpIfHigherOrLower (state high, state low, optional float offsethigh,
-                                   optional float offsetlow, optional bool includeHeight,
-                                   optional int aptr)
+                                             optional float offsetlow, optional bool includeHeight,
+                                             optional int aptr)
 {
   KeepChainResult();
   if (!high || !low) return;
@@ -1285,8 +1464,8 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
 //
 //==========================================================================
 [decorate] final bool A_FaceMovementDirection (optional float offset, optional float anglelimit,
-                                    optional float pitchlimit, optional int flags,
-                                    optional int aptr)
+                                               optional float pitchlimit, optional int flags,
+                                               optional int aptr)
 {
   EntityEx tgt = EntityEx(DecorDoAAPtr('A_FaceMovementDirection', aptr!optional));
 
@@ -1340,8 +1519,8 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
 //
 //==========================================================================
 [decorate] final bool A_Warp (int aptr, optional float xofs, optional float yofs, optional float zofs,
-                    optional float angle, optional int flags, optional state success_state,
-                    optional float heightoffset, optional float radiusoffset, optional float pitch)
+                              optional float angle, optional int flags, optional state success_state,
+                              optional float heightoffset, optional float radiusoffset, optional float pitch)
 {
   EntityEx tgt;
   if (flags&WARPF_USETID) {
@@ -1447,9 +1626,9 @@ final bool doRemoveSomethingCheck (EntityEx dest, int flags, optional name filte
 //
 //==========================================================================
 [decorate] final state A_CheckLOF (optional state jump, optional int flags, optional float range,
-                        optional float minrange, optional float angle, optional float pitch,
-                        optional float offsetheight, optional float offsetwidth,
-                        optional int ptr_target, optional float offsetforward)
+                                   optional float minrange, optional float angle, optional float pitch,
+                                   optional float offsetheight, optional float offsetwidth,
+                                   optional int ptr_target, optional float offsetforward)
 {
   KeepChainResult();
   if (specified_minrange) {

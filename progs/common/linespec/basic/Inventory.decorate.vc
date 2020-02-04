@@ -63,7 +63,7 @@
 //
 //==========================================================================
 [decorate] final void A_Lower () {
-  decorate_A_Lower();
+  do_A_Lower();
 }
 
 
@@ -75,91 +75,7 @@
 //
 //==========================================================================
 [decorate] final void decorate_A_Lower (optional float lowerspeed) self(Actor) {
-  if (!bIsPlayer) return;
-
-  Weapon ready = PlayerEx(Player).ReadyWeapon;
-  Weapon pending = PlayerEx(Player).PendingWeapon;
-
-  if (ready) ready.bBobDisabled = true;
-  if (pending) pending.bBobDisabled = true;
-
-  /*
-  if (ready && ready == pending) {
-    if (Player.PlayerState != PST_DEAD &&
-        Player.MO == self && // voodoo doll
-        !Player.bIsBot)
-    {
-      print("%C: LOWERING UNRAISED WEAPON! (3)", self);
-    }
-  }
-  */
-
-  if (!specified_lowerspeed) lowerspeed = Weapon::LOWERSPEED;
-  if (lowerspeed <= 0) lowerspeed = Weapon::LOWERSPEED; //k8: sanity guard
-
-  float prevsy = Player.ViewStates[PS_WEAPON].SY;
-
-  Player.PSpriteWeaponLoweringStartTime = 0;
-  Player.PSpriteWeaponLoweringDuration = 0;
-  Player.PSpriteWeaponLowerPrev = prevsy;
-
-  if (PlayerEx(Player).MorphTime || PlayerEx(Player).bInstantWeaponSwitch) {
-    Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONBOTTOM;
-    prevsy = Weapon::WEAPONBOTTOM;
-  } else {
-    // FIXME!!
-    /*
-    if (Level.Game.frametime < 1.0/35.0) {
-      Player.ViewStates[PS_WEAPON].SY += lowerspeed;
-    } else {
-      Player.ViewStates[PS_WEAPON].SY += lowerspeed*35.0*Level.Game.frametime;
-    }
-    */
-    Player.ViewStates[PS_WEAPON].SY += lowerspeed;
-  }
-
-  float sy = Player.ViewStates[PS_WEAPON].SY;
-
-  if (sy < Weapon::WEAPONBOTTOM) {
-    // not lowered all the way yet
-    Player.PSpriteWeaponLoweringStartTime = XLevel.Time;
-    Player.PSpriteWeaponLoweringDuration = Player.ViewStates[PS_WEAPON].StateTime;
-    return;
-  }
-
-  if (Player.PlayerState == PST_DEAD) {
-    // player is dead, so don't bring up a pending weapon
-    Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONBOTTOM;
-    return;
-  }
-
-  if (Player.MO.Health <= 0) {
-    // player is dead, so keep the weapon off screen
-    Player.SetViewObject(none);
-    Player.SetViewState(PS_WEAPON, none);
-    return;
-  }
-
-  if (prevsy < Weapon::WEAPONTOP) {
-    // lower last time
-    Player.PSpriteWeaponLoweringStartTime = XLevel.Time;
-    Player.PSpriteWeaponLoweringDuration = Player.ViewStates[PS_WEAPON].StateTime;
-  }
-
-  // clear flash state, needed for Strife
-  Player.SetViewState(PS_FLASH, none);
-
-  if (!pending) {
-    PlayerEx(Player).SetWeapon(none);
-    if (Player.PlayerState == PST_DEAD) return;
-    if (Player.MO != self) return; // voodoo doll
-    if (Player.bIsBot) return;
-    print("%C: LOWERING UNRAISED WEAPON! (2)", self);
-    return;
-  }
-
-  PlayerEx(Player).SetWeapon(pending/*PlayerEx(Player).PendingWeapon*/);
-  PlayerEx(Player).BringUpWeapon();
+  do_A_Lower(lowerspeed!optional);
 }
 
 
@@ -221,7 +137,7 @@
 //
 //===========================================================================
 [decorate] final void A_GunFlash () {
-  decorate_A_GunFlash();
+  do_A_GunFlash();
 }
 
 
@@ -233,16 +149,7 @@
 //
 //===========================================================================
 [decorate] final void decorate_A_GunFlash (optional name newstate, optional int flags) self(Actor) {
-  if (!bIsPlayer) return;
-
-  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-  if (!Wpn) return; // just in case
-  Player.SetViewObject(Wpn);
-
-  if (!specified_newstate) newstate = 'Flash';
-
-  if (MeleeState) SetState(MeleeState);
-  if (newstate && !(flags&1)) Player.SetViewState(PS_FLASH, Wpn.FindState(newstate));
+  do_A_GunFlash(newstate!optional, flags!optional);
 }
 
 
@@ -252,9 +159,7 @@
 //
 //===========================================================================
 [decorate] final void A_CheckReload () self(Actor) {
-  if (!bIsPlayer) return;
-  Weapon Wpn = PlayerEx(Player).ReadyWeapon;
-  if (Wpn) Wpn.CheckAmmo(Wpn.FireMode, AutoSwitch:true);
+  do_A_CheckReload();
 }
 
 
