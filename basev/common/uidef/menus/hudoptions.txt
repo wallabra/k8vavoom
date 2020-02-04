@@ -3,6 +3,16 @@ menudef HUDOptions {
   //selector = MenuSelector_SmallRight;
   Title = "HUD OPTIONS";
 
+  option enum {
+    title = "HUD Type";
+    cvar = screen_size;
+    list {
+      "Vanilla Statusbar" = 10,
+      "FS Statusbar" = 11,
+      "FS Stats" = 12,
+      "No HUD" = 13,
+    }
+  }
 
   header "HUD Messages";
 

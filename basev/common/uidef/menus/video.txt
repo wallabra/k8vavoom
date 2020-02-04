@@ -4,14 +4,6 @@ menudef VideoOptions {
   Title = "VIDEO OPTIONS";
 
   option slider {
-    title = "Screen size";
-    cvar = screen_size;
-    step = 1;
-    min = 1;
-    max = 13;
-  }
-
-  option slider {
     title = "Brightness";
     cvar = brightness;
     step = 1;
