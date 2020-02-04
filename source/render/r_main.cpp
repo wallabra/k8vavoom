@@ -69,6 +69,10 @@ vuint8 light_remap[256];
 int screenblocks = 0; // viewport size
 
 
+static VCvarF r_pixel_aspect("r_aspect_pixel", "1", "Pixel aspect ratio.", CVAR_Rom);
+static VCvarI r_aspect_horiz("r_aspect_horiz", "4", "Horizontal aspect multiplier.", CVAR_Rom);
+static VCvarI r_aspect_vert("r_aspect_vert", "3", "Vertical aspect multiplier.", CVAR_Rom);
+
 VCvarB r_chasecam("r_chasecam", false, "Chasecam mode.", /*CVAR_Archive*/0);
 VCvarB r_chase_front("r_chase_front", false, "Position chasecam in the front of the player (can be used to view weapons/player sprite, for example).", /*CVAR_Archive*/0); // debug setting
 VCvarF r_chase_delay("r_chase_delay", "0.1", "Chasecam interpolation delay.", CVAR_Archive);
@@ -145,24 +149,55 @@ VRenderLevelShared::PPNode *VRenderLevelShared::ppcurr = nullptr;
 int VRenderLevelShared::ppMinNodeSize = 0;
 
 
+struct AspectInfo {
+  const int horiz;
+  const int vert;
+  const char *dsc;
+};
+
+static const AspectInfo AspectList[] = {
+  { .horiz =  1, .vert =  1, .dsc = "Vanilla" },
+  { .horiz =  4, .vert =  3, .dsc = "Standard 4:3" },
+  { .horiz = 16, .vert =  9, .dsc = "Widescreen 16:9" },
+  { .horiz = 16, .vert = 10, .dsc = "Widescreen 16:10" },
+  { .horiz = 17, .vert = 10, .dsc = "Widescreen 17:10" },
+  { .horiz = 21, .vert =  9, .dsc = "Widescreen 21:9" },
+  { .horiz =  5, .vert =  4, .dsc = "Normal 5:4" },
+};
+
+#define ASPECT_COUNT  ((unsigned)(sizeof(AspectList)/sizeof(AspectList[0])))
+//static_assert(ASPECT_COUNT == 4, "wtf?!");
+
+int R_GetAspectRatioCount () noexcept { return (int)ASPECT_COUNT; }
+int R_GetAspectRatioHoriz (int idx) noexcept { if (idx < 0 || idx >= (int)ASPECT_COUNT) idx = 0; return AspectList[idx].horiz; }
+int R_GetAspectRatioVert (int idx) noexcept { if (idx < 0 || idx >= (int)ASPECT_COUNT) idx = 0; return AspectList[idx].vert; }
+const char *R_GetAspectRatioDsc (int idx) noexcept { if (idx < 0 || idx >= (int)ASPECT_COUNT) idx = 0; return AspectList[idx].dsc; }
+
+
 //==========================================================================
 //
 //  CalcAspect
 //
 //==========================================================================
-static float CalcAspect (int aspectRatio, int scrwdt, int scrhgt) {
-  switch (aspectRatio) {
-    default:
-    case 0: // original aspect ratio
-      //return ((float)scrhgt*320.0f)/((float)scrwdt*200.0f);
-      return 1.2f; // original vanilla pixels are 20% taller than wide
-    case 1: // 4:3 aspect ratio
-      return ((float)scrhgt*4.0f)/((float)scrwdt*3.0f);
-    case 2: // 16:9 aspect ratio
-      return ((float)scrhgt*16.0f)/((float)scrwdt*9.0f);
-    case 3: // 16:9 aspect ratio
-      return ((float)scrhgt*16.0f)/((float)scrwdt*10.0f);
-  }
+static float CalcAspect (int aspectRatio, int scrwdt, int scrhgt, int *aspHoriz=nullptr, int *aspVert=nullptr) {
+  // multiply with 1.2, because this is vanilla graphics scale
+  if (aspectRatio < 0 || aspectRatio >= (int)ASPECT_COUNT) aspectRatio = 0;
+  if (aspHoriz) *aspHoriz = AspectList[aspectRatio].horiz;
+  if (aspVert) *aspVert = AspectList[aspectRatio].vert;
+  return ((float)scrhgt*(float)AspectList[aspectRatio].horiz)/((float)scrwdt*(float)AspectList[aspectRatio].vert)*1.2f;
+}
+
+
+//==========================================================================
+//
+//  SetAspectRatioCVars
+//
+//==========================================================================
+static void SetAspectRatioCVars (int aspectRatio, int scrwdt, int scrhgt) {
+  int h = 1, v = 1;
+  r_pixel_aspect = CalcAspect(aspectRatio, scrwdt, scrhgt, &h, &v);
+  r_aspect_horiz = h;
+  r_aspect_vert = v;
 }
 
 
@@ -173,28 +208,6 @@ static float CalcAspect (int aspectRatio, int scrwdt, int scrhgt) {
 //==========================================================================
 float R_GetAspectRatio () {
   return CalcAspect(r_aspect_ratio, ScreenWidth, ScreenHeight);
-}
-
-
-//==========================================================================
-//
-//  R_GetAspectRatioMul
-//
-//  multiplier, i.e. 4.0f/3.0f for 4/3
-//
-//==========================================================================
-float R_GetAspectRatioMul () {
-  switch (r_aspect_ratio.asInt()) {
-    default:
-    case 0: // original aspect ratio
-      return 1.2f; // original vanilla pixels are 20% taller than wide
-    case 1: // 4:3 aspect ratio
-      return 4.0f/3.0f;
-    case 2: // 16:9 aspect ratio
-      return 16.0f/9.0f;
-    case 3: // 16:9 aspect ratio
-      return 16.0f/10.0f;
-  }
 }
 
 
@@ -1553,6 +1566,7 @@ void VRenderLevelShared::ExecuteSetViewSize () {
   refdef.x = (ScreenWidth-refdef.width)>>1;
 
   PixelAspect = CalcAspect(r_aspect_ratio, ScreenWidth, ScreenHeight);
+  SetAspectRatioCVars(r_aspect_ratio, ScreenWidth, ScreenHeight);
   prev_aspect_ratio = r_aspect_ratio;
 
   clip_base.setupViewport(refdef.width, refdef.height, fov, PixelAspect);

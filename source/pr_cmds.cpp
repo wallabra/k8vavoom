@@ -689,6 +689,32 @@ IMPLEMENT_FREE_FUNCTION(VObject, R_GetAspectRatio) {
   RET_FLOAT(R_GetAspectRatio());
 }
 
+// native static final int R_GetAspectRatioCount ();
+IMPLEMENT_FREE_FUNCTION(VObject, R_GetAspectRatioCount) {
+  RET_INT(R_GetAspectRatioCount());
+}
+
+// native static final int R_GetAspectRatioHoriz (int idx);
+IMPLEMENT_FREE_FUNCTION(VObject, R_GetAspectRatioHoriz) {
+  int idx;
+  vobjGetParam(idx);
+  RET_INT(R_GetAspectRatioHoriz(idx));
+}
+
+// native static final int R_GetAspectRatioVert (int idx);
+IMPLEMENT_FREE_FUNCTION(VObject, R_GetAspectRatioVert) {
+  int idx;
+  vobjGetParam(idx);
+  RET_INT(R_GetAspectRatioVert(idx));
+}
+
+// native static final string R_GetAspectRatioDsc (int idx);
+IMPLEMENT_FREE_FUNCTION(VObject, R_GetAspectRatioDsc) {
+  int idx;
+  vobjGetParam(idx);
+  RET_STR(VStr(R_GetAspectRatioDsc(idx)));
+}
+
 
 //==========================================================================
 //

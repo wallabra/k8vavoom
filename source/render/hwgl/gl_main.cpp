@@ -2582,7 +2582,7 @@ void VOpenGLDrawer::FBO::blitToScreen () {
     scaledHeight = int(mHeight/aspect*scale);
     blitOfsX = (realw-scaledWidth)/2;
     blitOfsY = (realh-scaledHeight)/2;
-    GCon->Logf(NAME_Debug, "letterbox: size=(%d,%d); real=(%d,%d); scaled=(%d,%d); offset=(%d,%d); scale=(%g,%g)", mWidth, mHeight, realw, realh, scaledWidth, scaledHeight, blitOfsX, blitOfsY, scaleX, scaleY);
+    //GCon->Logf(NAME_Debug, "letterbox: size=(%d,%d); real=(%d,%d); scaled=(%d,%d); offset=(%d,%d); scale=(%g,%g)", mWidth, mHeight, realw, realh, scaledWidth, scaledHeight, blitOfsX, blitOfsY, scaleX, scaleY);
     // clear stripes
     //glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // black background
     //glClear(GL_COLOR_BUFFER_BIT);

@@ -187,7 +187,12 @@ void R_DrawPicPartEx (int x, int y, float tx0, float ty0, float tx1, float ty1, 
 void R_DrawPicFloatPartEx (float x, float y, float tx0, float ty0, float tx1, float ty1, int handle, float Alpha=1.0f);
 
 float R_GetAspectRatio ();
-float R_GetAspectRatioMul (); // multiplier, i.e. 4.0f/3.0f for 4/3
+
+// known aspect ratios list
+int R_GetAspectRatioCount () noexcept;
+int R_GetAspectRatioHoriz (int idx) noexcept;
+int R_GetAspectRatioVert (int idx) noexcept;
+const char *R_GetAspectRatioDsc (int idx) noexcept;
 
 bool R_EntModelNoSelfShadow (VEntity *mobj);
 
