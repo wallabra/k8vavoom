@@ -93,7 +93,7 @@ VTgaTexture::VTgaTexture (int ALumpNum, TGAHeader_t &hdr)
   Name = W_LumpName(SourceLump);
   Width = hdr.width;
   Height = hdr.height;
-  //mFormat = TEXFMT_RGBA; // most TGA images are truecolor, so this is a good guess
+  //mFormat = mOrigFormat = TEXFMT_RGBA; // most TGA images are truecolor, so this is a good guess
   // set real internal image format
   /* Image type:
   *    0 = no image data
@@ -105,9 +105,9 @@ VTgaTexture::VTgaTexture (int ALumpNum, TGAHeader_t &hdr)
   *   11 = RLE grayscale
   */
   if (hdr.img_type == 1 || hdr.img_type == 3 || hdr.img_type == 9 || hdr.img_type == 11) {
-    mFormat = TEXFMT_8Pal;
+    mFormat = mOrigFormat = TEXFMT_8Pal;
   } else {
-    mFormat = TEXFMT_RGBA;
+    mFormat = mOrigFormat = TEXFMT_RGBA;
   }
 }
 
@@ -189,10 +189,10 @@ vuint8 *VTgaTexture::GetPixels () {
   *   11 = RLE grayscale
   */
   if (hdr.img_type == 1 || hdr.img_type == 3 || hdr.img_type == 9 || hdr.img_type == 11) {
-    mFormat = TEXFMT_8Pal;
+    mFormat = mOrigFormat = TEXFMT_8Pal;
     Pixels = new vuint8[Width*Height];
   } else {
-    mFormat = TEXFMT_RGBA;
+    mFormat = mOrigFormat = TEXFMT_RGBA;
     Pixels = new vuint8[Width*Height*4];
   }
 

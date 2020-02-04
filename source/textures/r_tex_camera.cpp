@@ -42,7 +42,7 @@ VCameraTexture::VCameraTexture (VName AName, int AWidth, int AHeight)
 {
   Name = AName;
   Type = TEXTYPE_Wall;
-  mFormat = TEXFMT_RGBA;
+  mFormat = mOrigFormat = TEXFMT_RGBA;
   Width = AWidth;
   Height = AHeight;
   bIsCameraTexture = true;

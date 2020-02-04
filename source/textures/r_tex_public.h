@@ -176,6 +176,9 @@ public:
 
 protected:
   int mFormat; // never use this directly!
+  // original format; `mFormat` can be changed by `ConvertPixelsToRGBA()`, and
+  // we need to restore it in `ReleasePixels()`
+  int mOrigFormat;
 
 public:
   VName Name;

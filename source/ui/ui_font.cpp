@@ -1267,7 +1267,7 @@ VFontChar::VFontChar (VTexture *ATex, rgba_t *APalette)
   , Palette(APalette)
 {
   Type = TEXTYPE_FontChar;
-  mFormat = TEXFMT_8Pal;
+  mFormat = mOrigFormat = TEXFMT_8Pal;
 #ifdef VAVOOM_NAME_FONT_TEXTURES
   Name = VName(va("\x7f_fontchar_%d ", vfontcharTxCount++));
 #else
@@ -1358,7 +1358,7 @@ VFontChar2::VFontChar2 (int ALumpNum, int AFilePos, int CharW, int CharH, rgba_t
   , MaxCol(AMaxCol)
 {
   Type = TEXTYPE_FontChar;
-  mFormat = TEXFMT_8Pal;
+  mFormat = mOrigFormat = TEXFMT_8Pal;
 #ifdef VAVOOM_NAME_FONT_TEXTURES
   Name = VName(va("\x7f_fontchar2_%d ", vfontcharTxCount++));
 #else

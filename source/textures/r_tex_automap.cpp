@@ -50,7 +50,7 @@ VAutopageTexture::VAutopageTexture (int ALumpNum)
   Name = W_LumpName(SourceLump);
   Width = 320;
   Height = W_LumpLength(SourceLump)/320;
-  mFormat = TEXFMT_8;
+  mFormat = mOrigFormat = TEXFMT_8;
 }
 
 

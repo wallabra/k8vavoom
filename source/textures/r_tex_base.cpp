@@ -98,6 +98,7 @@ VTexture *VTexture::CreateTexture (int Type, int LumpNum, bool setName) {
 VTexture::VTexture ()
   : Type(TEXTYPE_Any)
   , mFormat(TEXFMT_8)
+  , mOrigFormat(TEXFMT_8)
   , Name(NAME_None)
   , Width(0)
   , Height(0)
@@ -182,11 +183,15 @@ bool VTexture::CheckModified () {
 //
 //==========================================================================
 void VTexture::ReleasePixels () {
-  if (shadeColor != -1) return; // cannot release shaded texture
+  //if (shadeColor != -1) return; // cannot release shaded texture
+  if (SourceLump < 0) return; // this texture cannot be reloaded
+  //GCon->Logf(NAME_Debug, "VTexture::ReleasePixels: '%s' (%d: %s)", *Name, SourceLump, *W_FullLumpName(SourceLump));
   if (Pixels) { delete[] Pixels; Pixels = nullptr; }
   if (Pixels8Bit) { delete[] Pixels8Bit; Pixels8Bit = nullptr; }
   if (Pixels8BitA) { delete[] Pixels8BitA; Pixels8BitA = nullptr; }
   Pixels8BitValid = Pixels8BitAValid = false;
+  mFormat = mOrigFormat; // undo `ConvertPixelsToRGBA()`
+  if (Brightmap) Brightmap->ReleasePixels();
 }
 
 
@@ -761,7 +766,7 @@ rgba_t VTexture::getPixel (int x, int y) {
 
 //==========================================================================
 //
-//  VTexture::ConvertPixelsToRGBA
+//  VTexture::CalcRealHeight
 //
 //==========================================================================
 void VTexture::CalcRealHeight () {
@@ -1094,7 +1099,7 @@ void VTexture::WriteToPNG (VStream *strm) {
 //==========================================================================
 VDummyTexture::VDummyTexture () {
   Type = TEXTYPE_Null;
-  mFormat = TEXFMT_8;
+  mFormat = mOrigFormat = TEXFMT_8;
 }
 
 

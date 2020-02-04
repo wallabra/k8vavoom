@@ -44,7 +44,7 @@ VMultiPatchTexture::VMultiPatchTexture (VStream &Strm, int DirectoryIndex,
   : VTexture()
 {
   Type = TEXTYPE_Wall;
-  mFormat = TEXFMT_8;
+  mFormat = mOrigFormat = TEXFMT_8;
 
   // read offset and seek to the starting position
   Strm.Seek(4+DirectoryIndex*4);
@@ -166,7 +166,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
   , Patches(nullptr)
 {
   Type = AType;
-  mFormat = TEXFMT_8;
+  mFormat = mOrigFormat = TEXFMT_8;
 
   sc->SetCMode(true);
 
@@ -291,7 +291,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
               if (Rot != 0 && Rot != 90 && Rot != 180 && Rot != -90) sc->Error("Rotation must be a multiple of 90 degrees.");
               P.Rot = (Rot/90)&3;
             } else if (sc->Check("translation")) {
-              mFormat = TEXFMT_RGBA;
+              mFormat = mOrigFormat = TEXFMT_RGBA;
               if (P.bOwnTrans) {
                 delete P.Trans;
                 P.Trans = nullptr;
@@ -319,7 +319,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
                 } while (sc->Check(","));
               }
             } else if (sc->Check("blend")) {
-              mFormat = TEXFMT_RGBA;
+              mFormat = mOrigFormat = TEXFMT_RGBA;
               if (P.bOwnTrans) {
                 delete P.Trans;
                 P.Trans = nullptr;
@@ -375,7 +375,7 @@ VMultiPatchTexture::VMultiPatchTexture (VScriptParser *sc, int AType)
                   sc->Error(va("Bad texture patch command '%s'", *sc->String));
                 }
               }
-              if (P.Style != STYLE_Copy) mFormat = TEXFMT_RGBA;
+              if (P.Style != STYLE_Copy) mFormat = mOrigFormat = TEXFMT_RGBA;
             }
           }
         }
@@ -525,7 +525,7 @@ vuint8 *VMultiPatchTexture::GetPixels () {
   for (int i = 0; i < PatchCount; ++i) {
     if (!Patches[i].Tex) continue;
     Patches[i].Tex->GetPixels();
-    if (Patches[i].Tex->Format != TEXFMT_8) mFormat = TEXFMT_RGBA;
+    if (Patches[i].Tex->Format != TEXFMT_8) mFormat = mOrigFormat = TEXFMT_RGBA;
   }
 
   if (Format == TEXFMT_8) {

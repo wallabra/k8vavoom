@@ -53,7 +53,7 @@ VFlatTexture::VFlatTexture (int InLumpNum)
 {
   SourceLump = InLumpNum;
   Type = TEXTYPE_Flat;
-  mFormat = TEXFMT_8;
+  mFormat = mOrigFormat = TEXFMT_8;
   Name = W_LumpName(SourceLump);
   Width = 64;
   // check for larger flats

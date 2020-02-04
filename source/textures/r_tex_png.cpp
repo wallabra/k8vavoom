@@ -116,7 +116,7 @@ VPngTexture::VPngTexture (int ALumpNum, int AWidth, int AHeight, int ASOffset, i
   Height = AHeight;
   SOffset = ASOffset;
   TOffset = ATOffset;
-  mFormat = TEXFMT_RGBA; // always
+  mFormat = mOrigFormat = TEXFMT_RGBA; // always
 }
 
 
@@ -160,7 +160,7 @@ vuint8 *VPngTexture::GetPixels () {
 
   Width = png->width;
   Height = png->height;
-  mFormat = TEXFMT_RGBA;
+  mFormat = mOrigFormat = TEXFMT_RGBA;
   Pixels = new vuint8[Width*Height*4];
 
   vuint8 *dest = Pixels;

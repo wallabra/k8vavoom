@@ -76,7 +76,7 @@ VPatchTexture::VPatchTexture (int ALumpNum, int AWidth, int AHeight, int ASOffse
 {
   SourceLump = ALumpNum;
   Name = W_LumpName(SourceLump);
-  mFormat = TEXFMT_8;
+  mFormat = mOrigFormat = TEXFMT_8;
   Width = AWidth;
   Height = AHeight;
   SOffset = ASOffset;

@@ -85,7 +85,7 @@ VRawPicTexture::VRawPicTexture (int ALumpNum, int APalLumpNum)
   Name = W_LumpName(SourceLump);
   Width = 320;
   Height = 200;
-  mFormat = (PalLumpNum >= 0 ? TEXFMT_8Pal : TEXFMT_8);
+  mFormat = mOrigFormat = (PalLumpNum >= 0 ? TEXFMT_8Pal : TEXFMT_8);
 }
 
 

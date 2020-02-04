@@ -52,7 +52,7 @@ VWarpTexture::VWarpTexture (VTexture *ASrcTex, float aspeed)
   TScale = SrcTex->TScale;
   WarpType = 1;
   if (Speed < 1) Speed = 1; else if (Speed > 16) Speed = 16;
-  mFormat = (SrcTex ? SrcTex->Format : TEXFMT_RGBA);
+  mFormat = mOrigFormat = (SrcTex ? SrcTex->Format : TEXFMT_RGBA);
 }
 
 
@@ -120,7 +120,7 @@ vuint8 *VWarpTexture::GetPixels () {
   translucent = false;
 
   const vuint8 *SrcPixels = SrcTex->GetPixels();
-  mFormat = SrcTex->Format;
+  mFormat = mOrigFormat = SrcTex->Format;
 
   GenTime = GTextureManager.Time*Speed;
   Pixels8BitValid = false;
@@ -237,7 +237,7 @@ vuint8 *VWarp2Texture::GetPixels () {
   Pixels8BitAValid = false;
 
   const vuint8 *SrcPixels = SrcTex->GetPixels();
-  mFormat = SrcTex->Format;
+  mFormat = mOrigFormat = SrcTex->Format;
 
   GenTime = GTextureManager.Time*Speed;
 

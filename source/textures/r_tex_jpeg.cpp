@@ -130,7 +130,7 @@ VJpegTexture::VJpegTexture (int ALumpNum, int AWidth, int AHeight)
   Name = W_LumpName(SourceLump);
   Width = AWidth;
   Height = AHeight;
-  mFormat = TEXFMT_RGBA;
+  mFormat = mOrigFormat = TEXFMT_RGBA;
 }
 
 
@@ -249,7 +249,7 @@ vuint8 *VJpegTexture::GetPixels () {
   transparent = false;
   translucent = false;
 
-  mFormat = TEXFMT_RGBA;
+  mFormat = mOrigFormat = TEXFMT_RGBA;
   Pixels = new vuint8[Width*Height*4];
   memset(Pixels, 0, Width*Height*4);
 
@@ -409,7 +409,7 @@ vuint8 *VJpegTexture::GetPixels () {
   transparent = false;
   translucent = false;
 
-  mFormat = TEXFMT_RGBA;
+  mFormat = mOrigFormat = TEXFMT_RGBA;
   Pixels = new vuint8[Width*Height*4];
   memset(Pixels, 0, Width*Height*4);
 

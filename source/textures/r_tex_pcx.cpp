@@ -133,11 +133,11 @@ VPcxTexture::VPcxTexture (int ALumpNum, pcx_t &Hdr)
   Name = W_LumpName(SourceLump);
   Width = Hdr.xmax-Hdr.xmin+1;
   Height = Hdr.ymax-Hdr.ymin+1;
-  //mFormat = TEXFMT_8Pal;
+  //mFormat = mOrigFormat = TEXFMT_8Pal;
   if (Hdr.color_planes == 1) {
-    mFormat = (Hdr.bits_per_pixel >= 24 ? TEXFMT_RGBA : TEXFMT_8Pal);
+    mFormat = mOrigFormat = (Hdr.bits_per_pixel >= 24 ? TEXFMT_RGBA : TEXFMT_8Pal);
   } else if (Hdr.color_planes == 3 || Hdr.color_planes == 4) {
-    mFormat = TEXFMT_RGBA;
+    mFormat = mOrigFormat = TEXFMT_RGBA;
   } else {
     Sys_Error("PCX '%s' wtf?!", *W_FullLumpName(SourceLump));
   }
@@ -192,10 +192,10 @@ vuint8 *VPcxTexture::GetPixels () {
 
   bool hasAlpha = false;
   if (pcx.color_planes == 1) {
-    mFormat = (pcx.bits_per_pixel >= 24 ? TEXFMT_RGBA : TEXFMT_8Pal);
+    mFormat = mOrigFormat = (pcx.bits_per_pixel >= 24 ? TEXFMT_RGBA : TEXFMT_8Pal);
     hasAlpha = (pcx.bits_per_pixel == 32);
   } else if (pcx.color_planes == 3 || pcx.color_planes == 4) {
-    mFormat = TEXFMT_RGBA;
+    mFormat = mOrigFormat = TEXFMT_RGBA;
     hasAlpha = (pcx.color_planes == 4);
   } else {
     Sys_Error("PCX '%s' wtf?!", *W_FullLumpName(SourceLump));
