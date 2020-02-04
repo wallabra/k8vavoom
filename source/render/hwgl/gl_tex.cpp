@@ -127,10 +127,13 @@ void VOpenGLDrawer::FlushTexture (VTexture *Tex) {
     Tex->DriverHandle = 0;
   }
   for (int j = 0; j < Tex->DriverTranslated.length(); ++j) {
-    glDeleteTextures(1, (GLuint *)&Tex->DriverTranslated[j].Handle);
+    if (Tex->DriverTranslated[j].Handle) {
+      glDeleteTextures(1, (GLuint *)&Tex->DriverTranslated[j].Handle);
+    }
   }
   Tex->DriverTranslated.resetNoDtor();
   Tex->lastUpdateFrame = 0;
+  if (Tex->Brightmap) FlushTexture(Tex->Brightmap);
 }
 
 
@@ -147,11 +150,13 @@ void VOpenGLDrawer::DeleteTexture (VTexture *Tex) {
     Tex->DriverHandle = 0;
   }
   for (int j = 0; j < Tex->DriverTranslated.length(); ++j) {
-    glDeleteTextures(1, (GLuint*)&Tex->DriverTranslated[j].Handle);
+    if (Tex->DriverTranslated[j].Handle) {
+      glDeleteTextures(1, (GLuint*)&Tex->DriverTranslated[j].Handle);
+    }
   }
   Tex->DriverTranslated.Clear();
-  if (Tex->Brightmap) DeleteTexture(Tex->Brightmap);
   Tex->lastUpdateFrame = 0;
+  if (Tex->Brightmap) DeleteTexture(Tex->Brightmap);
 }
 
 
@@ -413,6 +418,7 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
       } else {
         // normal uploading
         vuint8 *block = SrcTex->GetPixels();
+        //if (SrcTex->SourceLump >= 0) GCon->Logf(NAME_Debug, "uploading normal texture '%s' (%dx%d)", *SrcTex->Name, SrcTex->GetWidth(), SrcTex->GetHeight());
         if (SrcTex->Format == TEXFMT_8 || SrcTex->Format == TEXFMT_8Pal) {
           UploadTexture8(SrcTex->GetWidth(), SrcTex->GetHeight(), block, SrcTex->GetPalette());
         } else {
