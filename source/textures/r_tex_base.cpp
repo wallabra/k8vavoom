@@ -186,6 +186,8 @@ void VTexture::ReleasePixels () {
   //if (shadeColor != -1) return; // cannot release shaded texture
   if (SourceLump < 0) return; // this texture cannot be reloaded
   //GCon->Logf(NAME_Debug, "VTexture::ReleasePixels: '%s' (%d: %s)", *Name, SourceLump, *W_FullLumpName(SourceLump));
+  if (InReleasingPixels()) return; // already released
+  ReleasePixelsLock rlock(this);
   if (Pixels) { delete[] Pixels; Pixels = nullptr; }
   if (Pixels8Bit) { delete[] Pixels8Bit; Pixels8Bit = nullptr; }
   if (Pixels8BitA) { delete[] Pixels8BitA; Pixels8BitA = nullptr; }
@@ -1112,13 +1114,4 @@ vuint8 *VDummyTexture::GetPixels () {
   transparent = false;
   translucent = false;
   return nullptr;
-}
-
-
-//==========================================================================
-//
-//  VDummyTexture::Unload
-//
-//==========================================================================
-void VDummyTexture::Unload () {
 }

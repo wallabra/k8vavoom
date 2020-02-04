@@ -202,20 +202,6 @@ VTexture *VWarpTexture::GetHighResolutionTexture () {
 
 //==========================================================================
 //
-//  VWarpTexture::Unload
-//
-//==========================================================================
-void VWarpTexture::Unload () {
-  if (Pixels) {
-    delete[] Pixels;
-    Pixels = nullptr;
-  }
-  SrcTex->Unload();
-}
-
-
-//==========================================================================
-//
 //  VWarp2Texture::VWarp2Texture
 //
 //==========================================================================
@@ -278,4 +264,17 @@ vuint8 *VWarp2Texture::GetPixels () {
   }
 
   return Pixels;
+}
+
+
+//==========================================================================
+//
+//  VWarpTexture::ReleasePixels
+//
+//==========================================================================
+void VWarpTexture::ReleasePixels () {
+  if (InReleasingPixels()) return; // already released
+  VTexture::ReleasePixels();
+  ReleasePixelsLock rlock(this);
+  if (SrcTex) SrcTex->ReleasePixels();
 }

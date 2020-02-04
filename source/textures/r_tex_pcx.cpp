@@ -364,23 +364,6 @@ rgba_t *VPcxTexture::GetPalette () {
 }
 
 
-//==========================================================================
-//
-//  VPcxTexture::Unload
-//
-//==========================================================================
-void VPcxTexture::Unload () {
-  if (Pixels) {
-    delete[] Pixels;
-    Pixels = nullptr;
-  }
-  if (Palette) {
-    delete[] Palette;
-    Palette = nullptr;
-  }
-}
-
-
 #ifdef CLIENT
 //==========================================================================
 //
@@ -450,3 +433,14 @@ void WritePCX (VStr FileName, void *data, int width, int height, int bpp, bool b
   delete Strm;
 }
 #endif
+
+
+//==========================================================================
+//
+//  VPcxTexture::ReleasePixels
+//
+//==========================================================================
+void VPcxTexture::ReleasePixels () {
+  VTexture::ReleasePixels();
+  if (Palette) { delete[] Palette; Palette = nullptr; }
+}

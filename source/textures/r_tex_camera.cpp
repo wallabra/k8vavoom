@@ -101,17 +101,6 @@ bool VCameraTexture::NeedUpdate () {
 
 //==========================================================================
 //
-//  VCameraTexture::ReleasePixels
-//
-//==========================================================================
-void VCameraTexture::ReleasePixels () {
-  // do nothing here
-  return;
-}
-
-
-//==========================================================================
-//
 //  VCameraTexture::GetPixels
 //
 //==========================================================================
@@ -146,20 +135,6 @@ vuint8 *VCameraTexture::GetPixels () {
   }
 
   return Pixels;
-}
-
-
-//==========================================================================
-//
-//  VCameraTexture::Unload
-//
-//==========================================================================
-void VCameraTexture::Unload () {
-  if (Pixels) {
-    delete[] Pixels;
-    Pixels = nullptr;
-  }
-  NextUpdateTime = 0;
 }
 
 
@@ -205,4 +180,16 @@ void VCameraTexture::CopyImage () {
 //==========================================================================
 VTexture *VCameraTexture::GetHighResolutionTexture () {
   return nullptr;
+}
+
+
+//==========================================================================
+//
+//  VCameraTexture::ReleasePixels
+//
+//==========================================================================
+void VCameraTexture::ReleasePixels () {
+  //VTexture::ReleasePixels();
+  //NextUpdateTime = 0;
+  // do nothing here
 }

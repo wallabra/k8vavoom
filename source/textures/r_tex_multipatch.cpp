@@ -712,12 +712,19 @@ vuint8 *VMultiPatchTexture::GetPixels () {
 
 //==========================================================================
 //
-//  VMultiPatchTexture::Unload
+//  VMultiPatchTexture::ReleasePixels
 //
 //==========================================================================
-void VMultiPatchTexture::Unload () {
-  if (Pixels) {
-    delete[] Pixels;
-    Pixels = nullptr;
+void VMultiPatchTexture::ReleasePixels () {
+  if (InReleasingPixels()) return; // already released
+  VTexture::ReleasePixels();
+  // release patch textures
+  ReleasePixelsLock rlock(this);
+  VTexPatch *patch = Patches;
+  for (int i = 0; i < PatchCount; ++i, ++patch) {
+    VTexture *PatchTex = patch->Tex;
+    if (!PatchTex || PatchTex->Type == TEXTYPE_Null) continue;
+    if (PatchTex == this) continue; // just in case
+    PatchTex->ReleasePixels();
   }
 }

@@ -91,16 +91,3 @@ vuint8 *VAutopageTexture::GetPixels () {
 
   return Pixels;
 }
-
-
-//==========================================================================
-//
-//  VAutopageTexture::Unload
-//
-//==========================================================================
-void VAutopageTexture::Unload () {
-  if (Pixels) {
-    delete[] Pixels;
-    Pixels = nullptr;
-  }
-}

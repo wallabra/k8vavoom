@@ -85,7 +85,6 @@ public:
   virtual ~VFontChar () override;
   virtual vuint8 *GetPixels () override;
   virtual rgba_t *GetPalette () override;
-  virtual void Unload () override;
   virtual VTexture *GetHighResolutionTexture () override;
 };
 
@@ -103,7 +102,6 @@ public:
   virtual ~VFontChar2 () override;
   virtual vuint8 *GetPixels () override;
   virtual rgba_t *GetPalette () override;
-  virtual void Unload () override;
 };
 
 
@@ -1315,16 +1313,6 @@ rgba_t *VFontChar::GetPalette () {
 
 //==========================================================================
 //
-//  VFontChar::Unload
-//
-//==========================================================================
-void VFontChar::Unload () {
-  BaseTex->Unload();
-}
-
-
-//==========================================================================
-//
 //  VFontChar::GetHighResolutionTexture
 //
 //==========================================================================
@@ -1429,17 +1417,4 @@ vuint8 *VFontChar2::GetPixels () {
 //==========================================================================
 rgba_t *VFontChar2::GetPalette () {
   return Palette;
-}
-
-
-//==========================================================================
-//
-//  VFontChar2::Unload
-//
-//==========================================================================
-void VFontChar2::Unload () {
-  if (Pixels) {
-    delete[] Pixels;
-    Pixels = nullptr;
-  }
 }

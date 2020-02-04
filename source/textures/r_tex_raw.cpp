@@ -171,16 +171,10 @@ rgba_t *VRawPicTexture::GetPalette () {
 
 //==========================================================================
 //
-//  VRawPicTexture::Unload
+//  VRawPicTexture::ReleasePixels
 //
 //==========================================================================
-void VRawPicTexture::Unload () {
-  if (Pixels) {
-    delete[] Pixels;
-    Pixels = nullptr;
-  }
-  if (Palette) {
-    delete[] Palette;
-    Palette = nullptr;
-  }
+void VRawPicTexture::ReleasePixels () {
+  VTexture::ReleasePixels();
+  if (Palette) { delete[] Palette; Palette = nullptr; }
 }

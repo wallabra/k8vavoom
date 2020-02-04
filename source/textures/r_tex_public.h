@@ -172,7 +172,19 @@ public:
 // ////////////////////////////////////////////////////////////////////////// //
 class VTexture {
 public:
-  int Type;
+  int Type; // -1: in `ReleasePixels()`; used to avoid circular loops
+
+protected:
+  inline bool InReleasingPixels () const noexcept { return (Type == -1); }
+
+  struct ReleasePixelsLock {
+    VTexture *tex;
+    int oldType;
+    inline ReleasePixelsLock (VTexture *atex) noexcept : tex(atex), oldType(atex->Type) { atex->Type = -1; }
+    inline ~ReleasePixelsLock () noexcept { if (tex) tex->Type = oldType; tex = nullptr; }
+    ReleasePixelsLock (const ReleasePixelsLock &) = delete;
+    ReleasePixelsLock & operator = (const ReleasePixelsLock &) = delete;
+  };
 
 protected:
   int mFormat; // never use this directly!
@@ -343,7 +355,6 @@ public:
   vuint8 *GetPixels8 ();
   pala_t *GetPixels8A ();
   virtual rgba_t *GetPalette ();
-  virtual void Unload () = 0;
   virtual VTexture *GetHighResolutionTexture ();
   VTransData *FindDriverTrans (VTextureTranslation *, int);
 

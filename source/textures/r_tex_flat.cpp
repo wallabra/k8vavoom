@@ -122,16 +122,3 @@ vuint8 *VFlatTexture::GetPixels () {
   ConvertPixelsToShaded();
   return Pixels;
 }
-
-
-//==========================================================================
-//
-//  VFlatTexture::Unload
-//
-//==========================================================================
-void VFlatTexture::Unload () {
-  if (Pixels) {
-    delete[] Pixels;
-    Pixels = nullptr;
-  }
-}

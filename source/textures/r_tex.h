@@ -34,7 +34,6 @@ class VDummyTexture : public VTexture {
 public:
   VDummyTexture ();
   virtual vuint8 *GetPixels () override;
-  virtual void Unload () override;
 };
 
 
@@ -46,7 +45,6 @@ public:
   VPatchTexture (int, int, int, int, int);
   virtual ~VPatchTexture () override;
   virtual vuint8 *GetPixels () override;
-  virtual void Unload () override;
 };
 
 
@@ -89,8 +87,8 @@ public:
   VMultiPatchTexture (VScriptParser *, int);
   virtual ~VMultiPatchTexture () override;
   virtual void SetFrontSkyLayer () override;
+  virtual void ReleasePixels () override;
   virtual vuint8 *GetPixels () override;
-  virtual void Unload () override;
 };
 
 
@@ -102,7 +100,6 @@ public:
   VFlatTexture (int InLumpNum);
   virtual ~VFlatTexture () override;
   virtual vuint8 *GetPixels () override;
-  virtual void Unload () override;
 };
 
 
@@ -117,9 +114,9 @@ public:
 
   VRawPicTexture (int, int);
   virtual ~VRawPicTexture () override;
+  virtual void ReleasePixels () override;
   virtual vuint8 *GetPixels () override;
   virtual rgba_t *GetPalette () override;
-  virtual void Unload () override;
 };
 
 
@@ -131,7 +128,6 @@ public:
   VAutopageTexture (int ALumpNum);
   virtual ~VAutopageTexture () override;
   virtual vuint8 *GetPixels () override;
-  virtual void Unload () override;
 };
 
 
@@ -145,7 +141,6 @@ public:
   VImgzTexture (int, int, int, int, int);
   virtual ~VImgzTexture () override;
   virtual vuint8 *GetPixels () override;
-  virtual void Unload () override;
 };
 
 
@@ -159,9 +154,9 @@ public:
 
   VPcxTexture (int, struct pcx_t &);
   virtual ~VPcxTexture () override;
+  virtual void ReleasePixels () override;
   virtual vuint8 *GetPixels () override;
   virtual rgba_t *GetPalette () override;
-  virtual void Unload () override;
 };
 
 
@@ -175,9 +170,9 @@ public:
 
   VTgaTexture (int, struct TGAHeader_t &);
   virtual ~VTgaTexture () override;
+  virtual void ReleasePixels () override;
   virtual vuint8 *GetPixels () override;
   virtual rgba_t *GetPalette () override;
-  virtual void Unload () override;
 };
 
 
@@ -189,7 +184,6 @@ public:
   VPngTexture (int, int, int, int, int);
   virtual ~VPngTexture () override;
   virtual vuint8 *GetPixels () override;
-  virtual void Unload () override;
 };
 
 
@@ -201,7 +195,6 @@ public:
   VJpegTexture(int, int, int);
   virtual ~VJpegTexture () override;
   virtual vuint8 *GetPixels () override;
-  virtual void Unload () override;
 };
 
 
@@ -223,10 +216,10 @@ public:
   virtual ~VWarpTexture () override;
   virtual void SetFrontSkyLayer () override;
   virtual bool CheckModified () override;
+  virtual void ReleasePixels () override;
   virtual vuint8 *GetPixels () override;
   virtual rgba_t *GetPalette () override;
   virtual VTexture *GetHighResolutionTexture () override;
-  virtual void Unload () override;
 };
 
 

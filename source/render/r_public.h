@@ -225,7 +225,6 @@ public:
   virtual bool CheckModified () override;
   virtual void ReleasePixels () override;
   virtual vuint8 *GetPixels () override;
-  virtual void Unload () override;
   void CopyImage ();
   bool NeedUpdate ();
   virtual VTexture *GetHighResolutionTexture () override;

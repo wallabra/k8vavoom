@@ -427,23 +427,6 @@ rgba_t *VTgaTexture::GetPalette () {
 }
 
 
-//==========================================================================
-//
-//  VTgaTexture::Unload
-//
-//==========================================================================
-void VTgaTexture::Unload () {
-  if (Pixels) {
-    delete[] Pixels;
-    Pixels = nullptr;
-  }
-  if (Palette) {
-    delete[] Palette;
-    Palette = nullptr;
-  }
-}
-
-
 #ifdef CLIENT
 //==========================================================================
 //
@@ -492,3 +475,14 @@ void WriteTGA (VStr FileName, void *data, int width, int height, int bpp, bool b
   delete Strm;
 }
 #endif
+
+
+//==========================================================================
+//
+//  VTgaTexture::ReleasePixels
+//
+//==========================================================================
+void VTgaTexture::ReleasePixels () {
+  VTexture::ReleasePixels();
+  if (Palette) { delete[] Palette; Palette = nullptr; }
+}

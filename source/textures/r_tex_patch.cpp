@@ -273,16 +273,3 @@ vuint8 *VPatchTexture::GetPixels () {
   ConvertPixelsToShaded();
   return Pixels;
 }
-
-
-//==========================================================================
-//
-//  VPatchTexture::Unload
-//
-//==========================================================================
-void VPatchTexture::Unload () {
-  if (Pixels) {
-    delete[] Pixels;
-    Pixels = nullptr;
-  }
-}

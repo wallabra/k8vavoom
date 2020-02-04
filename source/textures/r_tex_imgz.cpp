@@ -151,16 +151,3 @@ vuint8 *VImgzTexture::GetPixels () {
   ConvertPixelsToShaded();
   return Pixels;
 }
-
-
-//==========================================================================
-//
-//  VImgzTexture::Unload
-//
-//==========================================================================
-void VImgzTexture::Unload () {
-  if (Pixels) {
-    delete[] Pixels;
-    Pixels = nullptr;
-  }
-}

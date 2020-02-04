@@ -466,19 +466,6 @@ vuint8 *VJpegTexture::GetPixels () {
 #endif
 
 
-//==========================================================================
-//
-//  VJpegTexture::Unload
-//
-//==========================================================================
-void VJpegTexture::Unload () {
-  if (Pixels) {
-    delete[] Pixels;
-    Pixels = nullptr;
-  }
-}
-
-
 #ifdef CLIENT
 
 #ifdef VAVOOM_DISABLE_STB_IMAGE_JPEG
