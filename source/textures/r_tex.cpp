@@ -213,6 +213,7 @@ VTextureManager::VTextureManager ()
 //==========================================================================
 void VTextureManager::Init () {
   vassert(inMapTextures == 0);
+  r_hirestex.SetReadOnly(true); // it cannot be changed in-game
 
   // add a dummy texture
   AddTexture(new VDummyTexture);
