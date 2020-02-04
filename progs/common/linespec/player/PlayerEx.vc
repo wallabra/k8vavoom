@@ -1626,7 +1626,7 @@ void MovePsprites (float deltaTime) {
         if (wbob > MAXBOB) wbob = MAXBOB;
         float angle = AngleMod360(180.0*MO.XLevel.Time);
         //ViewStates[PS_WEAPON].SX = 1.0+wbob*cos(angle);
-        ViewStates[PS_WEAPON].BobOfsX = 1.0+wbob*cos(angle);
+        ViewStates[PS_WEAPON].BobOfsX = /*1.0+*/wbob*cos(angle); //k8: why it did `1.0+` here?
         if (angle >= 180.0) angle -= 180.0;
         //ViewStates[PS_WEAPON].SY = Weapon::WEAPONTOP+wbob*sin(angle);
         ViewStates[PS_WEAPON].BobOfsY = wbob*sin(angle);
