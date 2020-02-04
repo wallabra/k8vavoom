@@ -28,6 +28,8 @@ class TeleportDest : Actor __mobjinfo__(14);
 defaultproperties {
   bNoSector = true;
   bNoBlockmap = true;
+  // this needs no thinker
+  bNoTickGrav = true;
 }
 
 
@@ -40,6 +42,8 @@ class TeleportDest2 : TeleportDest __mobjinfo__(9044);
 
 defaultproperties {
   bNoGravity = true;
+  // this needs no thinker
+  bNoTickGrav = true;
 }
 
 
@@ -52,4 +56,6 @@ class TeleportDest3 : TeleportDest2 __mobjinfo__(9043);
 
 defaultproperties {
   bNoGravity = false;
+  // this needs no thinker
+  bNoTickGrav = true;
 }

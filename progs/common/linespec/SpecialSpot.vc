@@ -27,4 +27,6 @@ class SpecialSpot : Actor;
 
 
 defaultproperties {
+  // this needs no thinker
+  bNoTickGrav = true;
 }
