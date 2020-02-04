@@ -512,6 +512,11 @@ private:
             gp.floorGlowHeight = 128;
             gp.glowCF = gtex->glowing;
             gp.floorZ = sec->floor.GetPointZClamped(*surf->seg->v1);
+            if (!gtex->IsGlowFullbright()) {
+              // fix light level
+              const unsigned slins = (r_allow_ambient ? (surf->Light>>24)&0xff : clampToByte(r_ambient_min));
+              gp.glowCF = (gp.glowCF&0x00ffffffu)|(slins<<24);
+            }
           }
         }
         if (checkCeilingFlat && sec->ceiling.pic) {
@@ -520,6 +525,11 @@ private:
             gp.ceilingGlowHeight = 128;
             gp.glowCC = gtex->glowing;
             gp.ceilingZ = sec->ceiling.GetPointZClamped(*surf->seg->v1);
+            if (!gtex->IsGlowFullbright()) {
+              // fix light level
+              const unsigned slins = (r_allow_ambient ? (surf->Light>>24)&0xff : clampToByte(r_ambient_min));
+              gp.glowCC = (gp.glowCF&0x00ffffffu)|(slins<<24);
+            }
           }
         }
       }
