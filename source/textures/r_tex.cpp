@@ -2142,7 +2142,7 @@ void R_UpdateSkyFlatNum (bool force) {
     if (skyflatnum < 0) {
       if (oldskf >= 0) GCon->Logf(NAME_Warning, "OOPS! i lost the sky!");
       skyflatnum = -1; // wtf?!
-    } else if (oldskf != skyflatnum) {
+    } else if (oldskf != skyflatnum && oldskf != -2) {
       GCon->Logf(NAME_Debug, "*** NEW SKY FLAT: %d <%s>", skyflatnum, *W_FullLumpName(GTextureManager[skyflatnum]->SourceLump));
     }
   }

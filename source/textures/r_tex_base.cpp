@@ -27,6 +27,7 @@
 #include "r_tex.h"
 
 //#define VV_VERY_VERBOSE_TEXTURE_LOADER
+static VCvarB dbg_verbose_texture_loader("dbg_verbose_texture_loader", false, "WERY verbose texture loader?", CVAR_PreInit);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -62,18 +63,14 @@ VTexture *VTexture::CreateTexture (int Type, int LumpNum, bool setName) {
   VCheckedStream Strm(lumpstream);
   bool doSeek = false;
 
-  #ifdef VV_VERY_VERBOSE_TEXTURE_LOADER
-  GLog.Logf(NAME_Debug, "*** TRYING TO LOAD TEXTURE '%s'", *W_FullLumpName(LumpNum));
   int ffcount = 0;
-  #endif
+  if (dbg_verbose_texture_loader) GLog.Logf(NAME_Debug, "*** TRYING TO LOAD TEXTURE '%s'", *W_FullLumpName(LumpNum));
   for (size_t i = 0; i < ARRAY_COUNT(TexTable); ++i) {
     if (Type == TEXTYPE_Any || TexTable[i].Type == Type || TexTable[i].Type == TEXTYPE_Any) {
       if (doSeek) Strm.Seek(0); else doSeek = true;
       VTexture *Tex = TexTable[i].Create(Strm, LumpNum);
       if (Tex) {
-        #ifdef VV_VERY_VERBOSE_TEXTURE_LOADER
-        GLog.Logf(NAME_Debug, "***    LOADED TEXTURE '%s' (%s)", *W_FullLumpName(LumpNum), TexTable[i].fmtname);
-        #endif
+        if (dbg_verbose_texture_loader) GLog.Logf(NAME_Debug, "***    LOADED TEXTURE '%s' (%s)", *W_FullLumpName(LumpNum), TexTable[i].fmtname);
         if (setName) {
           if (Tex->Name == NAME_None) {
             Tex->Name = W_LumpName(LumpNum);
@@ -82,18 +79,13 @@ VTexture *VTexture::CreateTexture (int Type, int LumpNum, bool setName) {
         }
         Tex->Type = Type;
         return Tex;
-      }
-      #ifdef VV_VERY_VERBOSE_TEXTURE_LOADER
-      else {
+      } else {
         ++ffcount;
       }
-      #endif
     }
   }
 
-  #ifdef VV_VERY_VERBOSE_TEXTURE_LOADER
-  GLog.Logf(NAME_Debug, "*** FAILED TO LOAD TEXTURE '%s' (%d attempts made)", *W_FullLumpName(LumpNum), ffcount);
-  #endif
+  if (dbg_verbose_texture_loader) GLog.Logf(NAME_Debug, "*** FAILED TO LOAD TEXTURE '%s' (%d attempts made)", *W_FullLumpName(LumpNum), ffcount);
   return nullptr;
 }
 
