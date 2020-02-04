@@ -148,10 +148,18 @@ VTexture::VTexture ()
 //
 //==========================================================================
 VTexture::~VTexture () {
+  ReleasePixels();
+  // in case it is not from a pak
   if (Pixels) { delete[] Pixels; Pixels = nullptr; }
   if (Pixels8Bit) { delete[] Pixels8Bit; Pixels8Bit = nullptr; }
   if (Pixels8BitA) { delete[] Pixels8BitA; Pixels8BitA = nullptr; }
-  if (HiResTexture) { delete HiResTexture; HiResTexture = nullptr; }
+  {
+    ReleasePixelsLock rlock(this);
+    if (HiResTexture) HiResTexture->ReleasePixels();
+    if (Brightmap) Brightmap->ReleasePixels();
+  }
+  delete HiResTexture;
+  HiResTexture = nullptr;
   delete Brightmap;
   Brightmap = nullptr;
 }
