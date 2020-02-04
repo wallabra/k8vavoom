@@ -92,6 +92,8 @@ public:
   void Set (VStr value);
   void SetDefault (VStr value);
 
+  inline void SetReadOnly (bool v) noexcept { if (v) Flags |= CVAR_Rom; else Flags &= ~CVAR_Rom; }
+
   // this clears modified flag on call
   inline bool IsModified () noexcept {
     bool ret = !!(Flags&CVAR_Modified);
