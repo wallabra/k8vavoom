@@ -92,7 +92,7 @@ bool SB_Responder (event_t *) {
 //==========================================================================
 void SB_Drawer () {
   // update widget visibility
-  if (automapactive > 0 && screen_size == 11) return;
+  if (automapactive > 0 && screen_size >= 11) return;
   if (!GClLevel) return;
   GClGame->eventStatusBarDrawer(automapactive > 0 && screen_size < 11 ?
       SB_VIEW_AUTOMAP :
