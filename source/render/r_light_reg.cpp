@@ -111,11 +111,11 @@ static inline int getSurfLightLevelInt (const surface_t *surf) {
     if (sec && !sec->heightsec) {
       if (sec->floor.pic && surf->GetNormalZ() > 0.0f) {
         VTexture *gtex = GTextureManager(sec->floor.pic);
-        if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return 255;
+        if (gtex && gtex->Type != TEXTYPE_Null && gtex->IsGlowFullbright()) return 255;
       }
       if (sec->ceiling.pic && surf->GetNormalZ() < 0.0f) {
         VTexture *gtex = GTextureManager(sec->ceiling.pic);
-        if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return 255;
+        if (gtex && gtex->Type != TEXTYPE_Null && gtex->IsGlowFullbright()) return 255;
       }
     }
   }
@@ -140,11 +140,11 @@ static inline vuint32 fixSurfLightLevel (const surface_t *surf) {
     if (sec && !sec->heightsec) {
       if (sec->floor.pic && surf->GetNormalZ() > 0.0f) {
         VTexture *gtex = GTextureManager(sec->floor.pic);
-        if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return (surf->Light&0xffffffu)|0xff000000u;
+        if (gtex && gtex->Type != TEXTYPE_Null && gtex->IsGlowFullbright()) return (surf->Light&0xffffffu)|0xff000000u;
       }
       if (sec->ceiling.pic && surf->GetNormalZ() < 0.0f) {
         VTexture *gtex = GTextureManager(sec->ceiling.pic);
-        if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return (surf->Light&0xffffffu)|0xff000000u;
+        if (gtex && gtex->Type != TEXTYPE_Null && gtex->IsGlowFullbright()) return (surf->Light&0xffffffu)|0xff000000u;
       }
     }
   }

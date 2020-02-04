@@ -1360,10 +1360,19 @@ static void ParseBrightmap (int SrcLump, VScriptParser *sc) {
 //
 //==========================================================================
 static void ParseGlow (VScriptParser *sc) {
+#ifdef CLIENT
+  bool allFullBright = true;
+       if (sc->Check("fullbright")) allFullBright = true;
+  else if (sc->Check("nofullbright")) {} // just for completeness
+#else
+       if (sc->Check("fullbright")) {}
+  else if (sc->Check("nofullbright")) {} // just for completeness
+#endif
   sc->Expect("{");
   while (!sc->Check("}")) {
     // not implemented gozzo feature (in gozzo too)
     if (sc->Check("Texture")) {
+      // Texture "flat name", color[, glow height] [, fullbright]
       sc->GetString();
       while (sc->Check(",")) sc->ExpectString();
       continue;
@@ -1373,11 +1382,18 @@ static void ParseGlow (VScriptParser *sc) {
          if (sc->Check("flats")) ttype = TEXTYPE_Flat;
     else if (sc->Check("walls")) ttype = TEXTYPE_Wall;
     if (ttype > 0) {
+#ifdef CLIENT
+      bool fullbright = allFullBright;
+           if (sc->Check("fullbright")) fullbright = true;
+      else if (sc->Check("nofullbright")) fullbright = false;
+#else
+           if (sc->Check("fullbright")) {}
+      else if (sc->Check("nofullbright")) {} // just for completeness
+#endif
       sc->Expect("{");
       while (!sc->Check("}")) {
         if (sc->Check(",")) continue;
         sc->ExpectName8Warn();
-        sc->Check("fullbright"); //FIXME! TODO!
 #ifdef CLIENT
         VName img = sc->Name8;
         if (img != NAME_None && !VTextureManager::IsDummyTextureName(img)) {
@@ -1386,7 +1402,7 @@ static void ParseGlow (VScriptParser *sc) {
             //GCon->Logf("GLOW: <%s>", *img);
             rgb_t gclr = basetex->GetAverageColor(153);
             if (gclr.r || gclr.g || gclr.b) {
-              basetex->glowing = 0xff000000u|(gclr.r<<16)|(gclr.g<<8)|gclr.b;
+              basetex->glowing = (fullbright ? 0xff000000u : 0xfe000000u)|(gclr.r<<16)|(gclr.g<<8)|gclr.b;
             } else {
               basetex->glowing = 0;
             }

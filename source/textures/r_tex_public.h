@@ -221,8 +221,8 @@ public:
   bool needFBO;
   bool transparent; // `true` if texture has any non-solid pixels; set in `GetPixels()`
   bool translucent; // `true` if texture has some non-integral alpha pixels; set in `GetPixels()`
-  bool nofullbright; // valid for all textures; forces "no fullbright"
-  vuint32 glowing; // is this a glowing texture? (has any meaning only for floors and ceilings; 0: none)
+  bool nofullbright; // valid for all textures; forces "no fullbright" for sprite brightmaps (ONLY!)
+  vuint32 glowing; // is this a glowing texture? (has any meaning only for floors and ceilings; 0: none; if high byte is 0xff, it is fullbright)
   bool noHires; // hires texture tried and not found
 
   vuint32 lastUpdateFrame;
@@ -236,6 +236,8 @@ public:
 
   vuint32 DriverHandle;
   TArray<VTransData> DriverTranslated;
+
+  inline bool IsGlowFullbright () const noexcept { return ((glowing&0xff000000u) == 0xff000000u); }
 
 protected:
   vuint8 *Pixels; // most textures has some kind of pixel data, so declare it here

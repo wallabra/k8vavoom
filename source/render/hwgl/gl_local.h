@@ -559,11 +559,11 @@ private:
       if (sec && !sec->heightsec) {
         if (sec->floor.pic && surf->GetNormalZ() > 0.0f) {
           VTexture *gtex = GTextureManager(sec->floor.pic);
-          if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return 1.0f;
+          if (gtex && gtex->Type != TEXTYPE_Null && gtex->IsGlowFullbright()) return 1.0f;
         }
         if (sec->ceiling.pic && surf->GetNormalZ() < 0.0f) {
           VTexture *gtex = GTextureManager(sec->ceiling.pic);
-          if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) return 1.0f;
+          if (gtex && gtex->Type != TEXTYPE_Null && gtex->IsGlowFullbright()) return 1.0f;
         }
       }
     }

@@ -428,7 +428,7 @@ bool VOpenGLDrawer::RenderLMapSurface (bool textureChanged, surface_t *surf, sur
 
   float lev = getSurfLightLevel(surf);
   float fullBright = 0.0f;
-  if (r_glow_flat && !surf->seg && tex->Tex->glowing) {
+  if (r_glow_flat && !surf->seg && tex->Tex->IsGlowFullbright()) {
     if (surf->subsector && surf->subsector->sector && !surf->subsector->sector->heightsec) {
       lev = 1.0f;
       fullBright = 1.0f;
