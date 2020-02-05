@@ -108,7 +108,7 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   VTexture *Tex = GTextureManager[lump];
   if (!Tex) {
     if (showPSpriteWarnings()) {
-      GCon->Logf(NAME_Warning, "R_ProjectSprite: invalid sprite texture id %d in frame %d : %d (the thing that should not be)", lump, mfi.spriteIndex, mfi.frame);
+      GCon->Logf(NAME_Warning, "RenderPSprite: invalid sprite texture id %d in frame %d : %d (the thing that should not be)", lump, mfi.spriteIndex, mfi.frame);
     }
     return;
   }
@@ -123,6 +123,8 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   const float scaleX = max2(0.001f, Tex->SScale);
   const float scaleY = max2(0.001f, Tex->TScale);
 
+  //TODO: FOV correction should scale the sprite
+
   const float invScaleX = 1.0f/scaleX;
   const float invScaleY = 1.0f/scaleY;
 
@@ -130,28 +132,29 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   TVec sprorigin = Drawer->vieworg+PSP_DIST*Drawer->viewforward;
 
   float sprx = 160.0f-VSt->SX+TexSOffset*invScaleX;
-
-  //GCon->Logf(NAME_Debug, "PSPRITE: '%s'; SX=%g; SY=%g", *Tex->Name, VSt->SX, VSt->SY);
-
-  // top should always stay at the same position for 320x200 sprite without offset
-  //float spry = 100.0f-VSt->SY*R_GetAspectRatio()+TexTOffset*invScaleY;
-  //float spry = 100.0f-VSt->SY*PixelAspect+TexTOffset*invScaleY;
   float spry = 100.0f-VSt->SY+TexTOffset*invScaleY;
-
-  //GCon->Logf(NAME_Debug, "PSPRITE: '%s';  sofs=(%g,%g); ssize=(%g,%g); sprpos=(%g,%g)", *Tex->Name, TexSOffset*invScaleX, TexTOffset*invScaleY, TexWidth*invScaleX, TexHeight*invScaleY, sprx, spry);
 
   spry -= cl->PSpriteSY;
   spry -= PSpriteOfsAspect;
 
   //k8: this is not right, but meh...
-  //!if (fov > 90) spry -= (refdef.fovx-1.0f)*(r_aspect_ratio != 0 ? 100.0f : 110.0f);
+  if (fov > 90) {
+    spry -= (refdef.fovx-1.2f)*100.0f;
+    // this moves sprx to the left screen edge
+    //!sprx += (refdef.fovx-1.0f)*160.0f;
+    //GCon->Logf(NAME_Debug, "fovx=%g; fovy=%g", refdef.fovx, refdef.fovy);
+  } else {
+    //GCon->Logf(NAME_Debug, "fovx=%g; fovy=%g", refdef.fovx, refdef.fovy);
+  }
 
-  TVec start = sprorigin-(sprx*PSP_DIST*0.00625f)*Drawer->viewright;
-  TVec end = start+(TexWidth*invScaleX*PSP_DIST*(1.0f/160.0f))*Drawer->viewright;
+  const float sxymul = 1.0f/160.0f;
 
-  const float symul = 1.0f/160.0f*100.0f/100.0f;
-  TVec topdelta = (spry*PSP_DIST*symul)*Drawer->viewup;
-  TVec botdelta = topdelta-(TexHeight*invScaleY*PSP_DIST*symul)*Drawer->viewup;
+  // horizontal
+  TVec start = sprorigin-(sprx*PSP_DIST*sxymul)*Drawer->viewright;
+  TVec end = start+(TexWidth*invScaleX*PSP_DIST*sxymul)*Drawer->viewright;
+
+  TVec topdelta = (spry*PSP_DIST*sxymul)*Drawer->viewup;
+  TVec botdelta = topdelta-(TexHeight*invScaleY*PSP_DIST*sxymul)*Drawer->viewup;
 
   // this puts psprite at the fixed screen position (only for horizontal FOV)
   if (!r_vertical_fov) {
