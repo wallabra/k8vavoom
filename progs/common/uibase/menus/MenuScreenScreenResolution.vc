@@ -129,13 +129,16 @@ override void CreateChoices () {
   itemRatio.Text = "Aspect Ratio";
   // add all known aspect ratios
   foreach (int ridx; 0..R_GetAspectRatioCount()) {
-    itemRatio.AddItem(R_GetAspectRatioDsc(ridx));
+    if (R_GetAspectRatioHoriz(ridx) == 1 && R_GetAspectRatioVert(ridx) == 1) {
+      if (!IsDeveloperVersion) continue;
+    }
+    itemRatio.AddItem(R_GetAspectRatioDsc(ridx), ridx);
   }
   itemRatio.SetSessionCvar('r_aspect_ratio');
   currentY += itemRatio.Height;
     SetLastHelp(
-      "Screen aspect ratio.\n"~
-      "'Vanilla' is for square pixels, regardless of screen resolution.\n");
+      "Screen aspect ratio."/*~
+      "\n'Vanilla' is for square pixels, regardless of screen resolution.\n"*/);
 
   MenuTextButton Btn = MenuTextButton(NewChild(MenuSmallTextButton));
   //SetTextButtonInitialSizePos(Btn);

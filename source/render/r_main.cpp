@@ -91,7 +91,7 @@ VCvarF r_fog_start("r_fog_start", "1", "Fog start distance.");
 VCvarF r_fog_end("r_fog_end", "2048", "Fog end distance.");
 VCvarF r_fog_density("r_fog_density", "0.5", "Fog density.");
 
-VCvarI r_aspect_ratio("r_aspect_ratio", "0", "Aspect ratio correction mode ([0..3]: vanilla/4:3/16:9/16:10).", CVAR_Archive);
+VCvarI r_aspect_ratio("r_aspect_ratio", "1", "Aspect ratio correction mode.", CVAR_Archive);
 VCvarB r_interpolate_frames("r_interpolate_frames", true, "Use frame interpolation for smoother rendering?", CVAR_Archive);
 VCvarB r_vsync("r_vsync", true, "VSync mode.", CVAR_Archive);
 VCvarB r_vsync_adaptive("r_vsync_adaptive", true, "Use adaptive VSync mode.", CVAR_Archive);
@@ -164,8 +164,8 @@ static const AspectInfo AspectList[] = {
   { .horiz = 16, .vert =  9, .dsc = "Widescreen 16:9" }, // 1920x1200: 1.3333335f
   { .horiz = 16, .vert = 10, .dsc = "Widescreen 16:10" }, // 1920x1200: 1.2f
   { .horiz = 17, .vert = 10, .dsc = "Widescreen 17:10" }, // 1920x1200: 1.275f
-  { .horiz = 21, .vert =  9, .dsc = "Widescreen 21:9" }, // 1920x1200: 1.75f
-  { .horiz =  5, .vert =  4, .dsc = "Normal 5:4" }, // 1920x1200: 0.93750006f
+  //{ .horiz = 21, .vert =  9, .dsc = "Widescreen 21:9" }, // 1920x1200: 1.75f
+  //{ .horiz =  5, .vert =  4, .dsc = "Normal 5:4" }, // 1920x1200: 0.93750006f
 };
 
 #define ASPECT_COUNT  ((unsigned)(sizeof(AspectList)/sizeof(AspectList[0])))
