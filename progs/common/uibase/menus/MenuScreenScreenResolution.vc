@@ -30,7 +30,7 @@ struct mode_t {
   int height;
 };
 
-mode_t modes[6];
+mode_t modes[7];
 
 MenuChoiceEnum Mode;
 MenuInputLine EdWidth;
@@ -186,4 +186,5 @@ defaultproperties {
   modes[3].width = 1152; modes[3].height = 864;
   modes[4].width = 1280; modes[4].height = 1024;
   modes[5].width = 1600; modes[5].height = 1200;
+  modes[6].width = 1920; modes[6].height = 1200;
 }
