@@ -69,7 +69,7 @@ vuint8 light_remap[256];
 int screenblocks = 0; // viewport size
 
 
-static VCvarF r_pixel_aspect("r_aspect_pixel", "1", "Pixel aspect ratio.", CVAR_Rom);
+static VCvarF r_aspect_pixel("r_aspect_pixel", "1", "Pixel aspect ratio.", CVAR_Rom);
 static VCvarI r_aspect_horiz("r_aspect_horiz", "4", "Horizontal aspect multiplier.", CVAR_Rom);
 static VCvarI r_aspect_vert("r_aspect_vert", "3", "Vertical aspect multiplier.", CVAR_Rom);
 
@@ -115,6 +115,8 @@ extern VCvarB r_light_opt_shadow;
 VDrawer *Drawer;
 
 float PixelAspect;
+float BaseAspect;
+float PSpriteOfsAspect;
 
 static FDrawerDesc *DrawerList[DRAWER_MAX];
 
@@ -124,6 +126,7 @@ bool set_resolution_needed = true;
 
 // angles in the SCREENWIDTH wide window
 VCvarF fov("fov", "90", "Field of vision.");
+VCvarB r_vertical_fov("r_vertical_fov", true, "Maintain vertical FOV for widescreen modes (i.e. keep vertical view area, and widen horizontal)?");
 
 // translation tables
 VTextureTranslation *PlayerTranslations[MAXPLAYERS+1];
@@ -156,13 +159,13 @@ struct AspectInfo {
 };
 
 static const AspectInfo AspectList[] = {
-  { .horiz =  1, .vert =  1, .dsc = "Vanilla" },
-  { .horiz =  4, .vert =  3, .dsc = "Standard 4:3" },
-  { .horiz = 16, .vert =  9, .dsc = "Widescreen 16:9" },
-  { .horiz = 16, .vert = 10, .dsc = "Widescreen 16:10" },
-  { .horiz = 17, .vert = 10, .dsc = "Widescreen 17:10" },
-  { .horiz = 21, .vert =  9, .dsc = "Widescreen 21:9" },
-  { .horiz =  5, .vert =  4, .dsc = "Normal 5:4" },
+  { .horiz =  1, .vert =  1, .dsc = "Vanilla" }, // 1920x1200: 1.2f
+  { .horiz =  4, .vert =  3, .dsc = "Standard 4:3" }, // 1920x1200: 1.0f
+  { .horiz = 16, .vert =  9, .dsc = "Widescreen 16:9" }, // 1920x1200: 1.3333335f
+  { .horiz = 16, .vert = 10, .dsc = "Widescreen 16:10" }, // 1920x1200: 1.2f
+  { .horiz = 17, .vert = 10, .dsc = "Widescreen 17:10" }, // 1920x1200: 1.275f
+  { .horiz = 21, .vert =  9, .dsc = "Widescreen 21:9" }, // 1920x1200: 1.75f
+  { .horiz =  5, .vert =  4, .dsc = "Normal 5:4" }, // 1920x1200: 0.93750006f
 };
 
 #define ASPECT_COUNT  ((unsigned)(sizeof(AspectList)/sizeof(AspectList[0])))
@@ -184,7 +187,20 @@ static float CalcAspect (int aspectRatio, int scrwdt, int scrhgt, int *aspHoriz=
   if (aspectRatio < 0 || aspectRatio >= (int)ASPECT_COUNT) aspectRatio = 0;
   if (aspHoriz) *aspHoriz = AspectList[aspectRatio].horiz;
   if (aspVert) *aspVert = AspectList[aspectRatio].vert;
+  if (aspectRatio == 0) return 1.2f;
   return ((float)scrhgt*(float)AspectList[aspectRatio].horiz)/((float)scrwdt*(float)AspectList[aspectRatio].vert)*1.2f;
+}
+
+
+//==========================================================================
+//
+//  CalcBaseAspectRatio
+//
+//==========================================================================
+static float CalcBaseAspectRatio (int aspectRatio) {
+  // multiply with 1.2, because this is vanilla graphics scale
+  if (aspectRatio < 0 || aspectRatio >= (int)ASPECT_COUNT) aspectRatio = 0;
+  return (float)AspectList[aspectRatio].horiz/(float)AspectList[aspectRatio].vert;
 }
 
 
@@ -195,9 +211,58 @@ static float CalcAspect (int aspectRatio, int scrwdt, int scrhgt, int *aspHoriz=
 //==========================================================================
 static void SetAspectRatioCVars (int aspectRatio, int scrwdt, int scrhgt) {
   int h = 1, v = 1;
-  r_pixel_aspect = CalcAspect(aspectRatio, scrwdt, scrhgt, &h, &v);
+  r_aspect_pixel = CalcAspect(aspectRatio, scrwdt, scrhgt, &h, &v);
   r_aspect_horiz = h;
   r_aspect_vert = v;
+}
+
+
+//==========================================================================
+//
+//  IsAspectTallerThanWide
+//
+//==========================================================================
+static VVA_OKUNUSED inline bool IsAspectTallerThanWide (const float baseAspect) noexcept {
+  return (baseAspect < 1.333f);
+
+}
+
+
+//==========================================================================
+//
+//  GetAspectBaseWidth
+//
+//==========================================================================
+static VVA_OKUNUSED int GetAspectBaseWidth (float baseAspect) noexcept {
+  return (int)roundf(240.0f*baseAspect*3.0f);
+}
+
+
+//==========================================================================
+//
+//  GetAspectBaseHeight
+//
+//==========================================================================
+static VVA_OKUNUSED int GetAspectBaseHeight (float baseAspect) {
+  if (!IsAspectTallerThanWide(baseAspect)) {
+    return (int)roundf(200.0f*(320.0f/(GetAspectBaseWidth(baseAspect)/3.0f))*3.0f);
+  } else {
+    return (int)roundf((200.0f*(4.0f/3.0f))/baseAspect*3.0f);
+  }
+}
+
+
+//==========================================================================
+//
+//  GetAspectMultiplier
+//
+//==========================================================================
+static VVA_OKUNUSED int GetAspectMultiplier (float baseAspect) {
+  if (!IsAspectTallerThanWide(baseAspect)) {
+    return (int)roundf(320.0f/(GetAspectBaseWidth(baseAspect)/3.0f)*48.0f);
+  } else {
+    return (int)roundf(200.0f/(GetAspectBaseHeight(baseAspect)/3.0f)*48.0f);
+  }
 }
 
 
@@ -491,6 +556,7 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   , r_oldviewleaf(nullptr)
   , old_fov(90.0f)
   , prev_aspect_ratio(0)
+  , prev_vertical_fov_flag(false)
   , ExtraLight(0)
   , FixedLight(0)
   , Particles(0)
@@ -1545,7 +1611,7 @@ void VRenderLevelShared::ExecuteSetViewSize () {
   screenblocks = screen_size;
 
        if (fov < 5.0f) fov = 5.0f;
-  else if (fov > 175.0f) fov = 175.0f;
+  else if (fov > 170.0f) fov = 170.0f;
   old_fov = fov;
 
   if (screenblocks > 10) {
@@ -1569,7 +1635,33 @@ void VRenderLevelShared::ExecuteSetViewSize () {
   SetAspectRatioCVars(r_aspect_ratio, ScreenWidth, ScreenHeight);
   prev_aspect_ratio = r_aspect_ratio;
 
-  clip_base.setupViewport(refdef.width, refdef.height, fov, PixelAspect);
+  BaseAspect = CalcBaseAspectRatio(r_aspect_ratio);
+
+  float effectiveFOV = fov;
+
+  prev_vertical_fov_flag = r_vertical_fov;
+  if (r_vertical_fov) {
+    // convert to vertical aspect ratio
+    const float centerx = refdef.width*0.5f;
+
+    // for widescreen displays, increase the FOV so that the middle part of the
+    // screen that would be visible on a 4:3 display has the requested FOV
+    // taken from GZDoom
+    const float baseAspect = CalcBaseAspectRatio(r_aspect_ratio); // PixelAspect
+    const float centerxwide = centerx*(IsAspectTallerThanWide(baseAspect) ? 1.0f : GetAspectMultiplier(baseAspect)/48.0f);
+    if (centerxwide != centerx) {
+      // centerxwide is what centerx would be if the display was not widescreen
+      effectiveFOV = RAD2DEGF(2.0f*atanf(centerx*tanf(DEG2RADF(effectiveFOV)*0.5f)/centerxwide));
+      if (effectiveFOV > 170.0f) effectiveFOV = 170.0f;
+    }
+
+    // GZDoom does this too; i don't know why yet
+    PSpriteOfsAspect = (!IsAspectTallerThanWide(baseAspect) ? 0.0f : ((4.0f/3.0f)/baseAspect-1.0f)*97.5f);
+  } else {
+    PSpriteOfsAspect = 0.0f;
+  }
+
+  clip_base.setupViewport(refdef.width, refdef.height, /*fov*/effectiveFOV, PixelAspect);
   refdef.fovx = clip_base.fovx;
   refdef.fovy = clip_base.fovy;
   refdef.drawworld = true;
@@ -1615,7 +1707,8 @@ void VRenderLevelShared::SetupFrame () {
   // change the view size if needed
   if (screen_size != screenblocks || !screenblocks ||
       set_resolution_needed || old_fov != fov ||
-      r_aspect_ratio != prev_aspect_ratio)
+      r_aspect_ratio != prev_aspect_ratio ||
+      r_vertical_fov != prev_vertical_fov_flag)
   {
     ExecuteSetViewSize();
   }

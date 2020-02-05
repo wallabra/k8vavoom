@@ -288,6 +288,7 @@ protected:
   subsector_t *r_oldviewleaf;
   float old_fov;
   int prev_aspect_ratio;
+  bool prev_vertical_fov_flag;
 
   // bumped light from gun blasts
   int ExtraLight;
@@ -1073,6 +1074,8 @@ extern VCvarB r_static_lights;
 extern VCvarI r_aspect_ratio;
 extern VCvarB r_interpolate_frames;
 extern VCvarB r_allow_shadows;
+
+extern VCvarB r_vertical_fov;
 
 extern VCvarB r_models;
 extern VCvarB r_models_view;

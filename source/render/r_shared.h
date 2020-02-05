@@ -803,6 +803,8 @@ extern VCvarF r_fade_factor;
 extern VCvarF r_sky_bright_factor;
 
 extern float PixelAspect;
+extern float BaseAspect;
+extern float PSpriteOfsAspect;
 
 extern VTextureTranslation ColorMaps[CM_Max];
 
