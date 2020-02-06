@@ -29,6 +29,7 @@
 //**************************************************************************
 // define this to check velocity before clamping
 //#define PHYSICS_VELOCITY_CHECKS
+//#define ENABLE_LINGUORTALS
 
 
 //==========================================================================
@@ -1527,6 +1528,7 @@ override void ApplyFriction (float DeltaTime) {
     }
   }
 
+  #ifdef ENABLE_LINGUORTALS
   // vanilla hack: floor with height -32768 teleports entity to ceiling
   if (bIsPlayer && /*Sector &&*/ Sector.floor.maxz <= -32768) {
     if (Origin.z <= -32768) {
@@ -1540,6 +1542,7 @@ override void ApplyFriction (float DeltaTime) {
     }
     return; // assume airborne
   }
+  #endif
 
   // clip velocity on sloped floors
   // TODO: don't clip on small slopes
