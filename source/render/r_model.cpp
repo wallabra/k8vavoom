@@ -1568,10 +1568,18 @@ bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, VName clsName, const TVe
   if (!IsViewModel && !IsAliasModelAllowedFor(mobj)) return false;
 
   VClassModelScript *Cls = FindClassModelByName(clsName);
-  if (!Cls) return false;
+  if (!Cls) {
+    //if (IsViewModel) GCon->Logf(NAME_Debug, "NO VIEW MODEL for class `%s`", *clsName);
+    return false;
+  }
 
   int FIdx = FindFrame(*Cls, Frame, Inter);
-  if (FIdx == -1) return false;
+  if (FIdx == -1) {
+    //if (IsViewModel) GCon->Logf(NAME_Debug, "NO VIEW MODEL for class `%s`: %s", *clsName, *Frame.toString());
+    return false;
+  }
+
+  //if (IsViewModel) GCon->Logf(NAME_Debug, "***FOUND view model for class `%s` (fidx=%d): %s", *clsName, FIdx, *Frame.toString());
 
   // note that gzdoom-imported modeldef can have more than one model attached to one frame
   // process all attachments -- they should differ by model or submodel indicies
@@ -1596,7 +1604,7 @@ bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, VName clsName, const TVe
     int res = -1;
     if (cfrm.sprite != NAME_None) {
       // by sprite name
-      //GCon->Logf(NAME_Debug, "000: %s: sprite=%s %c; midx=%d; smidx=%d; inter=%g (%g); nidx=%d", *Cls->Name, *cfrm.sprite, 'A'+cfrm.frame, cfrm.ModelIndex, cfrm.SubModelIndex, Inter, cfrm.Inter, FIdx);
+      //if (IsViewModel) GCon->Logf(NAME_Debug, "000: %s: sprite=%s %c; midx=%d; smidx=%d; inter=%g (%g); nidx=%d", *Cls->Name, *cfrm.sprite, 'A'+cfrm.frame, cfrm.ModelIndex, cfrm.SubModelIndex, Inter, cfrm.Inter, FIdx);
       FIdx = cfrm.nextSpriteIdx;
       //GCon->Logf(NAME_Debug, "000: %s: sprite=%s %c; midx=%d; smidx=%d; inter=%g (%g); nidx=%d", *Cls->Name, *cfrm.sprite, 'A'+cfrm.frame, cfrm.ModelIndex, cfrm.SubModelIndex, Inter, cfrm.Inter, FIdx);
       while (FIdx >= 0) {

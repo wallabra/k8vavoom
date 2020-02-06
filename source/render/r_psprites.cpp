@@ -68,7 +68,7 @@ static bool showPSpriteWarnings () { return (cli_WAll > 0 || cli_WarnSprites > 0
 //  VRenderLevelShared::RenderPSprite
 //
 //==========================================================================
-void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameInfo mfi,
+void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameInfo &mfi,
   float PSP_DIST, vuint32 light, vuint32 Fade, float Alpha, bool Additive)
 {
   spritedef_t *sprdef;
