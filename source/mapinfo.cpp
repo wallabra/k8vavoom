@@ -1894,16 +1894,19 @@ static void ParseSkillDef (VScriptParser *sc) {
       if (sdefClearReplacements) { sdef->Replacements.clear(); sdefClearReplacements = false; }
       if (eexCls && !oldCN.isEmpty()) {
         VClass *oldCls = VClass::FindClassNoCase(*oldCN);
-        if (!oldCls->IsChildOf(eexCls)) {
-          GCon->Logf(NAME_Warning, "MAPINFO:%s: source class `%s` in 'ReplaceActor' is invalid.", *oldCN, *sc->GetLoc().toStringNoCol());
+        if (!oldCls) oldCls = VClass::FindClassNoCase(*oldCN.xstrip());
+        if (!oldCls || !oldCls->IsChildOf(eexCls)) {
+          GCon->Logf(NAME_Warning, "MAPINFO:%s: source class `%s` in 'ReplaceActor' is invalid.", *sc->GetLoc().toStringNoCol(), *oldCN);
         } else {
           // source is ok, check destination
           VClass *newCls = nullptr;
           bool newIsValid = true;
-          if (!newCN.isEmpty() && !newCN.strEquCI("none") && !newCN.strEquCI("null")) {
+          if (!newCN.isEmpty() && newCN.xstrip().isEmpty()) newCN.clear(); // some morons are using a space as "nothing"
+          if (!newCN.isEmpty() && !newCN.xstrip().strEquCI("none") && !newCN.xstrip().strEquCI("null")) {
             newCls = VClass::FindClassNoCase(*newCN);
+            if (!newCls) newCls = VClass::FindClassNoCase(*newCN.xstrip());
             if (!newCls || !newCls->IsChildOf(eexCls)) {
-              GCon->Logf(NAME_Warning, "MAPINFO:%s: destination class `%s` in 'ReplaceActor' is invalid.", *newCN, *sc->GetLoc().toStringNoCol());
+              GCon->Logf(NAME_Warning, "MAPINFO:%s: destination class `%s` for source class `%s` in 'ReplaceActor' is invalid.", *sc->GetLoc().toStringNoCol(), *newCN, *oldCN);
               newIsValid = false;
             }
           }
