@@ -1453,6 +1453,35 @@ static VStr RemapOldLabel (VStr name) {
 
 //==========================================================================
 //
+//  CanBeSpriteName
+//
+//  called after the base sprite or command read
+//
+//==========================================================================
+static bool CanBeSpriteName (VScriptParser *sc, bool asGoto=false) {
+  if (sc->IsAtEol()) return false; // no way
+  // if next token ends with ':', it is a label, so this is not a sprite name
+  if (asGoto) {
+    //TODO: write something here
+    return false;
+  }
+  auto sp = sc->SavePos();
+  if (sc->Check(":") || sc->Check("::")) { sc->RestorePos(sp); return false; }
+  if (!sc->GetString()) { sc->RestorePos(sp); return false; }
+  // check for valid frame names
+  for (int f = 0; f < sc->String.length(); ++f) {
+    char FChar = VStr::ToUpper(sc->String[f]);
+    if (FChar == '#') continue;
+    if (FChar < 'A' || FChar > '^') { sc->RestorePos(sp); return false; }
+  }
+  if (sc->Check(":") || sc->Check("::")) { sc->RestorePos(sp); return false; }
+  sc->RestorePos(sp);
+  return true;
+}
+
+
+//==========================================================================
+//
 //  ParseStates
 //
 //==========================================================================
@@ -1486,95 +1515,103 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
     // goto command
     if (TmpName.ICmp("Goto") == 0) {
       if (sc->IsAtEol()) sc->Error(va("`%s` without argument!", *TmpName));
-      VName GotoLabel = *ParseStateString(sc);
-      int GotoOffset = 0;
-      if (sc->Check("+")) {
-        sc->ExpectNumber();
-        GotoOffset = sc->Number;
-      }
-      // some degenerative mod authors do this
-      if (LastState && GotoOffset == 0 && VStr::strEquCI(*GotoLabel, "Fail")) {
-        if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "%s: fixed `Goto Fail`, mod author is a mo...dder.", *TmpLoc.toStringNoCol());
-        vassert(LastState);
-        LastState->NextState = LastState;
-        PrevState = nullptr; // new execution chain
-      } else {
-        if (!LastState && NewLabelsStart == Class->StateLabelDefs.Num()) {
-          if (!getIgnoreMoronicStateCommands()) sc->Error("'Goto' before first state frame");
-          sc->Message("'Goto' before first state frame");
-          NewLabelsStart = Class->StateLabelDefs.Num();
+      // check as "goto"
+      if (!CanBeSpriteName(sc, true)) {
+        VName GotoLabel = *ParseStateString(sc);
+        int GotoOffset = 0;
+        if (sc->Check("+")) {
+          sc->ExpectNumber();
+          GotoOffset = sc->Number;
+        }
+        // some degenerative mod authors do this
+        if (LastState && GotoOffset == 0 && VStr::strEquCI(*GotoLabel, "Fail")) {
+          if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "%s: fixed `Goto Fail`, mod author is a mo...dder.", *TmpLoc.toStringNoCol());
+          vassert(LastState);
+          LastState->NextState = LastState;
+          PrevState = nullptr; // new execution chain
         } else {
-          // if we have no defined states for latest labels, create dummy state to attach gotos to it
-          // simple redirection won't work, because this label can be used as `A_JumpXXX()` destination, for example
-          // sigh... k8
-          if (!LastState) {
-            // yet if we are in spawn label, demand at least one defined state
-            // ah, screw it, just define TNT1
-            VState *dummyState = new VState(va("S_%d", States.Num()), Class, TmpLoc);
-            States.Append(dummyState);
-            dummyState->SpriteName = "tnt1";
-            dummyState->Frame = 0|VState::FF_SKIPOFFS|VState::FF_SKIPMODEL|VState::FF_DONTCHANGE|VState::FF_KEEPSPRITE;
-            dummyState->Time = 0;
-            // link previous state
-            if (PrevState) PrevState->NextState = dummyState;
-            // assign state to the labels
+          if (!LastState && NewLabelsStart == Class->StateLabelDefs.Num()) {
+            if (!getIgnoreMoronicStateCommands()) sc->Error("'Goto' before first state frame");
+            sc->Message("'Goto' before first state frame");
+            NewLabelsStart = Class->StateLabelDefs.Num();
+          } else {
+            // if we have no defined states for latest labels, create dummy state to attach gotos to it
+            // simple redirection won't work, because this label can be used as `A_JumpXXX()` destination, for example
+            // sigh... k8
+            if (!LastState) {
+              // yet if we are in spawn label, demand at least one defined state
+              // ah, screw it, just define TNT1
+              VState *dummyState = new VState(va("S_%d", States.Num()), Class, TmpLoc);
+              States.Append(dummyState);
+              dummyState->SpriteName = "tnt1";
+              dummyState->Frame = 0|VState::FF_SKIPOFFS|VState::FF_SKIPMODEL|VState::FF_DONTCHANGE|VState::FF_KEEPSPRITE;
+              dummyState->Time = 0;
+              // link previous state
+              if (PrevState) PrevState->NextState = dummyState;
+              // assign state to the labels
+              for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) {
+                Class->StateLabelDefs[i].State = dummyState;
+                LoopStart = dummyState; // this will replace loop start only if we have any labels
+              }
+              NewLabelsStart = Class->StateLabelDefs.Num(); // no current label
+              PrevState = dummyState;
+              LastState = dummyState;
+            }
+            LastState->GotoLabel = GotoLabel;
+            LastState->GotoOffset = GotoOffset;
+            vassert(NewLabelsStart == Class->StateLabelDefs.Num());
+            /*k8: this doesn't work, see above
             for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) {
-              Class->StateLabelDefs[i].State = dummyState;
-              LoopStart = dummyState; // this will replace loop start only if we have any labels
+              Class->StateLabelDefs[i].GotoLabel = GotoLabel;
+              Class->StateLabelDefs[i].GotoOffset = GotoOffset;
             }
             NewLabelsStart = Class->StateLabelDefs.Num(); // no current label
-            PrevState = dummyState;
-            LastState = dummyState;
+            */
           }
-          LastState->GotoLabel = GotoLabel;
-          LastState->GotoOffset = GotoOffset;
-          vassert(NewLabelsStart == Class->StateLabelDefs.Num());
-          /*k8: this doesn't work, see above
-          for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) {
-            Class->StateLabelDefs[i].GotoLabel = GotoLabel;
-            Class->StateLabelDefs[i].GotoOffset = GotoOffset;
-          }
-          NewLabelsStart = Class->StateLabelDefs.Num(); // no current label
-          */
+          PrevState = nullptr; // new execution chain
         }
-        PrevState = nullptr; // new execution chain
+        if (!sc->Crossed && sc->Check(";")) {}
+        continue;
+      } else {
+        sc->Message(va("`%s` sprite name is not recommended!", *TmpName));
       }
-      if (!sc->Crossed && sc->Check(";")) {}
-      continue;
     }
 
     // stop command
     if (TmpName.ICmp("Stop") == 0) {
-      if (!sc->IsAtEol()) sc->Error(va("`%s` sprite name is not allowed!", *TmpName));
-      if (!LastState && NewLabelsStart == Class->StateLabelDefs.Num()) {
-        if (!getIgnoreMoronicStateCommands()) sc->Error("'Stop' before first state frame");
-        sc->Message("'Stop' before first state frame");
+      if (CanBeSpriteName(sc)) {
+        sc->Message(va("`%s` sprite name is not recommended!", *TmpName));
       } else {
-        // see above for the reason to introduce this dummy state
-        // nope, zdoom wiki says that this should make state "invisible"
-        //FIXME: for now, this is not working right (it seems; need to be checked!)
-        if (!LastState) {
-          if (!vcWarningsSilenced && cli_ShowRemoveStateWarning > 0) {
-            GLog.Logf(NAME_Warning, "%s: Empty state detected; this may not work as you expect!", *TmpLoc.toStringNoCol());
-            GLog.Logf(NAME_Warning, "%s:   this will remove a state, not an actor!", *TmpLoc.toStringNoCol());
-            GLog.Logf(NAME_Warning, "%s:   you can use k8vavoom-specific `RemoveState` command to get rid of this warning.", *TmpLoc.toStringNoCol());
+        if (!LastState && NewLabelsStart == Class->StateLabelDefs.Num()) {
+          if (!getIgnoreMoronicStateCommands()) sc->Error("'Stop' before first state frame");
+          sc->Message("'Stop' before first state frame");
+        } else {
+          // see above for the reason to introduce this dummy state
+          // nope, zdoom wiki says that this should make state "invisible"
+          //FIXME: for now, this is not working right (it seems; need to be checked!)
+          if (!LastState) {
+            if (!vcWarningsSilenced && cli_ShowRemoveStateWarning > 0) {
+              GLog.Logf(NAME_Warning, "%s: Empty state detected; this may not work as you expect!", *TmpLoc.toStringNoCol());
+              GLog.Logf(NAME_Warning, "%s:   this will remove a state, not an actor!", *TmpLoc.toStringNoCol());
+              GLog.Logf(NAME_Warning, "%s:   you can use k8vavoom-specific `RemoveState` command to get rid of this warning.", *TmpLoc.toStringNoCol());
+            }
+          }
+          if (LastState) LastState->NextState = nullptr;
+
+          // if we have no defined states for latest labels, simply redirect labels to nowhere
+          // this will make `FindStateLabel()` to return `nullptr`, effectively removing the state
+          for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) {
+            if (!vcWarningsSilenced && cli_ShowRemoveStateWarning > 0) GLog.Logf(NAME_Warning, "%s: removed state '%s'!", *TmpLoc.toStringNoCol(), *Class->StateLabelDefs[i].Name);
+            Class->StateLabelDefs[i].State = nullptr;
           }
         }
-        if (LastState) LastState->NextState = nullptr;
+        NewLabelsStart = Class->StateLabelDefs.Num(); // no current label
 
-        // if we have no defined states for latest labels, simply redirect labels to nowhere
-        // this will make `FindStateLabel()` to return `nullptr`, effectively removing the state
-        for (int i = NewLabelsStart; i < Class->StateLabelDefs.Num(); ++i) {
-          if (!vcWarningsSilenced && cli_ShowRemoveStateWarning > 0) GLog.Logf(NAME_Warning, "%s: removed state '%s'!", *TmpLoc.toStringNoCol(), *Class->StateLabelDefs[i].Name);
-          Class->StateLabelDefs[i].State = nullptr;
-        }
+        vassert(NewLabelsStart == Class->StateLabelDefs.Num());
+        PrevState = nullptr; // new execution chain
+        if (!sc->Crossed && sc->Check(";")) {}
+        continue;
       }
-      NewLabelsStart = Class->StateLabelDefs.Num(); // no current label
-
-      vassert(NewLabelsStart == Class->StateLabelDefs.Num());
-      PrevState = nullptr; // new execution chain
-      if (!sc->Crossed && sc->Check(";")) {}
-      continue;
     }
 
     // special "removestate" command (k8vavoom specific)
@@ -1595,30 +1632,36 @@ static bool ParseStates (VScriptParser *sc, VClass *Class, TArray<VState*> &Stat
 
     // wait command
     if (TmpName.ICmp("Wait") == 0 || TmpName.ICmp("Fail") == 0) {
-      if (!sc->IsAtEol()) sc->Error(va("`%s` sprite name is not allowed!", *TmpName));
-      if (!LastState) {
-        if (!getIgnoreMoronicStateCommands()) sc->Error(va("'%s' before first state frame", *TmpName));
-        sc->Message(va("'%s' before first state frame", *TmpName));
+      if (CanBeSpriteName(sc)) {
+        sc->Message(va("`%s` sprite name is not recommended!", *TmpName));
       } else {
-        LastState->NextState = LastState;
+        if (!LastState) {
+          if (!getIgnoreMoronicStateCommands()) sc->Error(va("'%s' before first state frame", *TmpName));
+          sc->Message(va("'%s' before first state frame", *TmpName));
+        } else {
+          LastState->NextState = LastState;
+        }
+        PrevState = nullptr; // new execution chain
+        if (!sc->Crossed && sc->Check(";")) {}
+        continue;
       }
-      PrevState = nullptr; // new execution chain
-      if (!sc->Crossed && sc->Check(";")) {}
-      continue;
     }
 
     // loop command
     if (TmpName.ICmp("Loop") == 0) {
-      if (!sc->IsAtEol()) sc->Error(va("`%s` sprite name is not allowed!", *TmpName));
-      if (!LastState) {
-        if (!getIgnoreMoronicStateCommands()) sc->Error("'Loop' before first state frame");
-        sc->Message("'Loop' before first state frame");
+      if (CanBeSpriteName(sc)) {
+        sc->Message(va("`%s` sprite name is not recommended!", *TmpName));
       } else {
-        LastState->NextState = LoopStart;
+        if (!LastState) {
+          if (!getIgnoreMoronicStateCommands()) sc->Error("'Loop' before first state frame");
+          sc->Message("'Loop' before first state frame");
+        } else {
+          LastState->NextState = LoopStart;
+        }
+        PrevState = nullptr; // new execution chain
+        if (!sc->Crossed && sc->Check(";")) {}
+        continue;
       }
-      PrevState = nullptr; // new execution chain
-      if (!sc->Crossed && sc->Check(";")) {}
-      continue;
     }
 
     // create new state
