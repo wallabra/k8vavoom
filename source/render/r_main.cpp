@@ -122,7 +122,7 @@ static FDrawerDesc *DrawerList[DRAWER_MAX];
 
 VCvarI screen_size("screen_size", "12", "Screen size.", CVAR_Archive); // default is "fullscreen with stats"
 VCvarB allow_small_screen_size("_allow_small_screen_size", false, "Allow small screen sizes.", /*CVAR_Archive*/CVAR_PreInit);
-bool set_resolution_needed = true;
+static bool set_resolution_needed = true; // should we update screen size, FOV, and other such things?
 
 // angles in the SCREENWIDTH wide window
 VCvarF fov("fov", "90", "Field of vision.");
@@ -555,7 +555,7 @@ VRenderLevelShared::VRenderLevelShared (VLevel *ALevel)
   , r_viewleaf(nullptr)
   , r_oldviewleaf(nullptr)
   , old_fov(90.0f)
-  , prev_aspect_ratio(0)
+  , prev_aspect_ratio(666)
   , prev_vertical_fov_flag(false)
   , ExtraLight(0)
   , FixedLight(0)
@@ -1603,6 +1603,8 @@ COMMAND(SizeUp) {
 //==========================================================================
 void VRenderLevelShared::ExecuteSetViewSize () {
   set_resolution_needed = false;
+
+  // sanitise screen size
   if (allow_small_screen_size) {
     screen_size = clampval(screen_size.asInt(), 3, 13);
   } else {
@@ -1610,6 +1612,16 @@ void VRenderLevelShared::ExecuteSetViewSize () {
   }
   screenblocks = screen_size;
 
+  // sanitise aspect ratio
+  #ifdef VAVOOM_K8_DEVELOPER
+  if (r_aspect_ratio < 0) r_aspect_ratio = 0;
+  if (r_aspect_ratio >= (int)ASPECT_COUNT) r_aspect_ratio = 0;
+  #else
+  if (r_aspect_ratio < 1) r_aspect_ratio = 1;
+  if (r_aspect_ratio >= (int)ASPECT_COUNT) r_aspect_ratio = 1;
+  #endif
+
+  // sanitise FOV
        if (fov < 5.0f) fov = 5.0f;
   else if (fov > 170.0f) fov = 170.0f;
   old_fov = fov;
