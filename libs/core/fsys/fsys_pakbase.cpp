@@ -25,7 +25,7 @@
 //**************************************************************************
 #include "fsys_local.h"
 
-#define VV_ABSOLUTELY_NO_ZSCRIPT
+//#define VV_ABSOLUTELY_NO_ZSCRIPT
 
 
 extern bool fsys_skipSounds;
@@ -510,7 +510,7 @@ void VFileDirectory::buildNameMaps (bool rebuilding, VPakFileBase *pak) {
       //GLog.Logf(NAME_Debug, "*** seenZScriptLump=%d (%s); size=%d (%p); rebuilding=%d", seenZScriptLump, *files[seenZScriptLump].fileName, files[seenZScriptLump].filesize, pak, (int)rebuilding);
       if (files[seenZScriptLump].filesize == 13153 && pak->CalculateMD5(seenZScriptLump) == "9e53e2d46de1d0f6cfc004c74e1660cf") {
         // this is possibly boringternity, do some more checks?
-        GLog.Log(NAME_Init, "Detected PWAD: boringternity (or something with weather system from 'mapping sadness 5'");
+        GLog.Log(NAME_Init, "Detected PWAD: boringternity");
         zscriptAllowed = true;
         //fsys_IgnoreZScript = true;
         warnZScript = false;
