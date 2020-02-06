@@ -915,7 +915,6 @@ static void ParseGZModelDefs () {
   // insert GZDoom alias models
   int cnt = 0;
   for (auto &&mdl : gzmdlist) {
-    //mdl->addMissingModels(); // we should do it after all models are merged
     VClass *xcls = VClass::FindClassNoCase(*mdl->className);
     vassert(xcls);
     // get xml here, because we're going to modify the model
