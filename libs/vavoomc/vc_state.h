@@ -31,6 +31,10 @@ struct VAliasModelFrameInfo {
   int spriteIndex;
 
   VAliasModelFrameInfo () : sprite(NAME_None), frame(0), index(0), spriteIndex(0) {}
+
+  VStr toString () const {
+    return VStr(va("SPR:%s; frame=%d; index=%d; sprindex=%d", *sprite, frame, index, spriteIndex));
+  }
 };
 
 
