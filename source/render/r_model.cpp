@@ -1533,7 +1533,7 @@ bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, const TVec &Org, const T
   float Alpha, bool Additive, bool IsViewModel, float Inter, bool Interpolate,
   ERenderPass Pass)
 {
-  //if (!IsAliasModelAllowedFor(mobj)) return false;
+  //if (!IsViewModel && !IsAliasModelAllowedFor(mobj)) return false;
   int FIdx = FindFrame(*Mdl->DefaultClass, Frame, Inter);
   if (FIdx == -1) return false;
   float InterpFrac;
@@ -1565,7 +1565,7 @@ bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, VName clsName, const TVe
   ERenderPass Pass)
 {
   if (clsName == NAME_None) return false;
-  if (!IsAliasModelAllowedFor(mobj)) return false;
+  if (!IsViewModel && !IsAliasModelAllowedFor(mobj)) return false;
 
   VClassModelScript *Cls = FindClassModelByName(clsName);
   if (!Cls) return false;

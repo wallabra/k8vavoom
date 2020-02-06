@@ -202,6 +202,7 @@ bool VRenderLevelShared::RenderViewModel (VViewState *VSt, vuint32 light,
 {
   if (!r_models_view) return false;
 
+  //TODO: fix for aspect ratio and non-default FOV
   TVec origin = Drawer->vieworg+(VSt->SX-1.0f)*Drawer->viewright/8.0f-(VSt->SY-32.0f)*Drawer->viewup/6.0f;
 
   float TimeFrac = 0;
