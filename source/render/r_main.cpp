@@ -1625,7 +1625,7 @@ void VRenderLevelShared::ExecuteSetViewSize () {
   #endif
 
   // sanitise FOV
-       if (fov < 5.0f) fov = 5.0f;
+       if (fov < 1.0f) fov = 1.0f;
   else if (fov > 170.0f) fov = 170.0f;
   old_fov = fov;
 
@@ -1653,6 +1653,7 @@ void VRenderLevelShared::ExecuteSetViewSize () {
   BaseAspect = CalcBaseAspectRatio(r_aspect_ratio);
 
   float effectiveFOV = fov;
+  float currentFOV = effectiveFOV;
 
   prev_vertical_fov_flag = r_vertical_fov;
   if (r_vertical_fov) {
@@ -1667,23 +1668,24 @@ void VRenderLevelShared::ExecuteSetViewSize () {
     if (centerxwide != centerx) {
       // centerxwide is what centerx would be if the display was not widescreen
       effectiveFOV = RAD2DEGF(2.0f*atanf(centerx*tanf(DEG2RADF(effectiveFOV)*0.5f)/centerxwide));
-      if (effectiveFOV > 170.0f) effectiveFOV = 170.0f;
+      // just in case
+      if (effectiveFOV >= 180.0f) effectiveFOV = 179.5f;
     }
 
-    // GZDoom does this too; i don't know why yet
+    // GZDoom does this; i don't know why yet
     PSpriteOfsAspect = (!IsAspectTallerThanWide(baseAspect) ? 0.0f : ((4.0f/3.0f)/baseAspect-1.0f)*97.5f);
   } else {
     PSpriteOfsAspect = 0.0f;
   }
   EffectiveFOV = effectiveFOV;
 
-  clip_base.setupViewport(refdef.width, refdef.height, /*fov*/effectiveFOV, PixelAspect);
+  clip_base.setupViewport(refdef.width, refdef.height, effectiveFOV, PixelAspect);
   refdef.fovx = clip_base.fovx;
   refdef.fovy = clip_base.fovy;
   refdef.drawworld = true;
 
   AspectFOVX = refdef.fovx;
-  AspectEffectiveFOVX = tanf(DEG2RADF(fov)/2.0f);
+  AspectEffectiveFOVX = tanf(DEG2RADF(currentFOV)/2.0f);
 }
 
 

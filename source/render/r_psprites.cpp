@@ -141,7 +141,8 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
     //sprx += (AspectEffectiveFOVX-1.0f)*160.0f;
   }
 
-  const float sxymul = (1.0f+(fov > 90 ? (AspectEffectiveFOVX-1.0f) : 0.0f))/160.0f;
+  //k8: don't even ask me!
+  const float sxymul = (1.0f+(fov != 90 ? AspectEffectiveFOVX-1.0f : 0.0f))/160.0f;
 
   // horizontal
   TVec start = sprorigin-(sprx*PSP_DIST*sxymul)*Drawer->viewright;
@@ -166,7 +167,10 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   TVec taxis(0, 0, 0);
   TVec texorg(0, 0, 0);
 
-  const float saxmul = 160.0f*(1.0f/160.0f/sxymul);
+  // texture scale
+  const float axismul = 1.0f/160.0f/sxymul;
+
+  const float saxmul = 160.0f*axismul;
   if (flip) {
     saxis = -(Drawer->viewright*saxmul*PSP_DISTI);
     texorg = dv[2];
@@ -175,7 +179,7 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
     texorg = dv[1];
   }
 
-  taxis = -(Drawer->viewup*100.0f*(1.0f/160.0f/sxymul)*(320.0f/200.0f)*PSP_DISTI);
+  taxis = -(Drawer->viewup*100.0f*axismul*(320.0f/200.0f)*PSP_DISTI);
 
   saxis *= scaleX;
   taxis *= scaleY;
