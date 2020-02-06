@@ -861,8 +861,19 @@ static void ParseGZModelDefs () {
             VStr locname = mdl->className.toLowerCase();
             auto omp = gzmdmap.find(locname);
             if (omp) {
+              if (dbg_dump_gzmodels) {
+                GCon->Log(NAME_Debug, "*** MERGE ***");
+                auto xml = mdl->createXml();
+                GCon->Logf(NAME_Debug, "==== NEW: \n%s\n====", *xml);
+                xml = gzmdlist[*omp]->createXml();
+                GCon->Logf(NAME_Debug, "==== OLD: \n%s\n====", *xml);
+              }
               gzmdlist[*omp]->merge(*mdl);
               delete mdl;
+              if (dbg_dump_gzmodels) {
+                auto xml = gzmdlist[*omp]->createXml();
+                GCon->Logf(NAME_Debug, "==== MERGED: \n%s\n====", *xml);
+              }
             } else {
               // new model
               gzmdmap.put(locname, gzmdlist.length());
@@ -904,6 +915,7 @@ static void ParseGZModelDefs () {
   // insert GZDoom alias models
   int cnt = 0;
   for (auto &&mdl : gzmdlist) {
+    //mdl->addMissingModels(); // we should do it after all models are merged
     VClass *xcls = VClass::FindClassNoCase(*mdl->className);
     vassert(xcls);
     // get xml here, because we're going to modify the model
@@ -1569,17 +1581,27 @@ bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, VName clsName, const TVe
 
   VClassModelScript *Cls = FindClassModelByName(clsName);
   if (!Cls) {
-    //if (IsViewModel) GCon->Logf(NAME_Debug, "NO VIEW MODEL for class `%s`", *clsName);
+    //GCon->Logf(NAME_Debug, "NO VIEW MODEL for class `%s`", *clsName);
     return false;
   }
 
   int FIdx = FindFrame(*Cls, Frame, Inter);
   if (FIdx == -1) {
-    //if (IsViewModel) GCon->Logf(NAME_Debug, "NO VIEW MODEL for class `%s`: %s", *clsName, *Frame.toString());
+    /*
+    GCon->Logf(NAME_Debug, "NO VIEW MODEL for class `%s`: %s", *clsName, *Frame.toString());
+    GCon->Logf(NAME_Debug, "  MFI: %s", *mobj->getMFI().toString());
+    GCon->Logf(NAME_Debug, "  NEXT MFI: %s", *mobj->getNextMFI().toString());
+    */
+    //abort();
     return false;
   }
 
-  //if (IsViewModel) GCon->Logf(NAME_Debug, "***FOUND view model for class `%s` (fidx=%d): %s", *clsName, FIdx, *Frame.toString());
+  /*
+  GCon->Logf(NAME_Debug, "***FOUND view model for class `%s` (fidx=%d): %s", *clsName, FIdx, *Frame.toString());
+  GCon->Logf(NAME_Debug, "  State: %s", *mobj->State->Loc.toStringNoCol());
+  GCon->Logf(NAME_Debug, "  MFI: %s", *mobj->getMFI().toString());
+  GCon->Logf(NAME_Debug, "  NEXT MFI: %s", *mobj->getNextMFI().toString());
+  */
 
   // note that gzdoom-imported modeldef can have more than one model attached to one frame
   // process all attachments -- they should differ by model or submodel indicies

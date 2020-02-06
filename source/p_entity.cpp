@@ -321,6 +321,11 @@ void VEntity::SetInitialState (VState *InState) {
     UpdateDispFrameFrom(InState);
     StateTime = eventGetStateTime(InState, InState->Time);
     if (StateTime > 0.0f) StateTime += 0.0002f; // delay it slightly, so spawner may do its business
+    // first state can be a goto; follow it
+    if (DispSpriteName == NAME_None && InState->NextState && StateTime <= 0.0f) {
+      UpdateDispFrameFrom(InState->NextState);
+      //GCon->Logf(NAME_Debug, "SetInitialState: jumpfix for `%s`", GetClass()->GetName());
+    }
   } else {
     DispSpriteFrame = 0;
     DispSpriteName = NAME_None;
@@ -337,6 +342,9 @@ void VEntity::SetInitialState (VState *InState) {
 bool VEntity::AdvanceState (float deltaTime) {
   if (dbg_disable_state_advance) return true;
   if (deltaTime < 0.0f) return true; // allow zero delta time to process zero-duration states
+
+  //if (VStr::strEquCI(GetClass()->GetName(), "DeadDoomImp")) GCon->Logf(NAME_Debug, "%s: ADVANCE(000): state=%s", GetClass()->GetName(), (State ? *State->Loc.toStringNoCol() : "<none>"));
+
   if (State && StateTime >= 0.0f) {
     //const bool dbg = isDebugDumpEnt(this);
     //if (dbg) GCon->Logf(NAME_Debug, "%u:%s:%s: StateTime=%g (%g) (nst=%g); delta=%g (%g)", GetUniqueId(), GetClass()->GetName(), *State->Loc.toStringShort(), StateTime, StateTime*35.0f, StateTime-deltaTime, deltaTime, deltaTime*35.0f);
@@ -364,6 +372,12 @@ bool VEntity::AdvanceState (float deltaTime) {
     }
     //if (dbg && State) GCon->Logf(NAME_Debug, "%u:%s:%s:     END; StateTime=%g (%g); delta=%g (%g)", GetUniqueId(), GetClass()->GetName(), *State->Loc.toStringShort(), StateTime, StateTime*35.0f, deltaTime, deltaTime*35.0f);
   }
+  /*
+  if (State) {
+    if (VStr::strEquCI(GetClass()->GetName(), "DeadDoomImp")) GCon->Logf(NAME_Debug, "%s: state=%s", GetClass()->GetName(), *State->Loc.toStringNoCol());
+    UpdateDispFrameFrom(State);
+  }
+  */
   return true;
 }
 

@@ -33,6 +33,7 @@ public:
     int sprframe; // sprite frame index (i.e. 'A' is 0)
     int mdindex; // model index in `models`
     int origmdindex; // this is used to find replacements on merge
+    int origmdlframe; // this is used to find replacements on merge
     int frindex; // frame index in model (will be used to build frame map)
     VStr frname; // for MD2 named frames
     // in k8vavoom, this is set per-frame
@@ -42,6 +43,9 @@ public:
     int vvindex; // vavoom frame index in the given model (-1: invalid frame)
     // used only in sanity check method
     int linkSprBase; // <0: end of list
+    // this flag is set when sanitizer adds missing models
+    // if merger adds the same model, this frame should be replaced
+    bool autoadded;
 
     VStr toString () const {
       VStr res = sprbase.toUpperCase();
@@ -63,6 +67,11 @@ public:
     TVec offset;
     // temporary working data
     bool used;
+    bool autoadded;
+
+    VStr toString () const {
+      return VStr(va("mdl(%d); frm(%d); vvfrm(%d); scale=(%g,%g,%g); ofs=(%g,%g,%g)", mdlindex, mdlframe, vvframe, scale.x, scale.y, scale.z, offset.x, offset.y, offset.z));
+    }
   };
 
   // model and skin definition
@@ -78,10 +87,10 @@ public:
   };
 
 protected:
-  void checkModelSanity (VScriptParser *sc);
+  void checkModelSanity (bool addMissingModels=false);
 
   // -1: not found
-  int findModelFrame (int mdlindex, int mdlframe, bool allowAppend=true);
+  int findModelFrame (int mdlindex, int mdlframe, bool allowAppend=true, bool autoadded=false);
 
   VStr buildPath (VScriptParser *sc, VStr path);
 
@@ -93,7 +102,6 @@ public:
   float rotationSpeed; // !0: rotating
   TAVec angleOffset;
   TArray<Frame> frames;
-  // set in `checkModelSanity()`
 
 public:
   GZModelDef ();
@@ -109,6 +117,8 @@ public:
   // merge this model frames with another model frames
   // GZDoom seems to do this, so we have too
   void merge (GZModelDef &other);
+
+  //void addMissingModels () { checkModelSanity(true); }
 
   VStr createXml ();
 
@@ -344,6 +354,7 @@ void GZModelDef::parse (VScriptParser *sc) {
     if (sc->Check("frameindex")) {
       // FrameIndex sprbase sprframe modelindex frameindex
       Frame frm;
+      frm.autoadded = false;
       // sprite name
       sc->ExpectString();
       frm.sprbase = sc->String.toLowerCase();
@@ -367,7 +378,7 @@ void GZModelDef::parse (VScriptParser *sc) {
       // frame index
       sc->ExpectNumber();
       if (sc->Number < 0 || sc->Number > 1024) sc->Error(va("invalid model frame %d in model '%s'", sc->Number, *className));
-      frm.frindex = sc->Number;
+      frm.frindex = frm.origmdlframe = sc->Number;
       // check if we already have equal frame, there is no need to keep duplicates
       bool replaced = false;
       for (auto &&ofr : frames) {
@@ -377,6 +388,7 @@ void GZModelDef::parse (VScriptParser *sc) {
         {
           // i found her!
           ofr.frindex = frm.frindex;
+          ofr.autoadded = false; // just in case
           replaced = true;
         }
       }
@@ -388,6 +400,7 @@ void GZModelDef::parse (VScriptParser *sc) {
     if (sc->Check("frame")) {
       // Frame sprbase sprframe modelindex framename
       Frame frm;
+      frm.autoadded = false;
       // sprite name
       sc->ExpectString();
       frm.sprbase = sc->String.toLowerCase();
@@ -407,7 +420,7 @@ void GZModelDef::parse (VScriptParser *sc) {
       // frame name
       sc->ExpectString();
       //if (sc->String.isEmpty()) sc->Error(va("empty model frame name model '%s'", *className));
-      frm.frindex = -1;
+      frm.frindex = frm.origmdlframe = -1;
       frm.frname = sc->String;
       // check if we already have equal frame, there is no need to keep duplicates
       bool replaced = false;
@@ -419,6 +432,7 @@ void GZModelDef::parse (VScriptParser *sc) {
           // i found her!
           ofr.frindex = -1;
           ofr.frname = frm.frname;
+          ofr.autoadded = false; // just in case
           replaced = true;
         }
       }
@@ -476,7 +490,7 @@ void GZModelDef::parse (VScriptParser *sc) {
   if (!rotating) rotationSpeed = 0; // reset rotation flag
   if (fixZOffset && scale.z) { offset.z /= scale.z; offset.z += 4; } // `+4` is temprorary hack for QStuff Ultra
 
-  checkModelSanity(sc);
+  checkModelSanity();
 }
 
 
@@ -487,7 +501,7 @@ void GZModelDef::parse (VScriptParser *sc) {
 //  -1: not found
 //
 //==========================================================================
-int GZModelDef::findModelFrame (int mdlindex, int mdlframe, bool allowAppend) {
+int GZModelDef::findModelFrame (int mdlindex, int mdlframe, bool allowAppend, bool autoadded) {
   if (mdlindex < 0 || mdlindex >= models.length() || models[mdlindex].modelFile.isEmpty()) return -1;
   //k8: dunno if i have to check it here
   VStr mn = models[mdlindex].modelFile.extractFileExtension().toLowerCase();
@@ -506,6 +520,7 @@ int GZModelDef::findModelFrame (int mdlindex, int mdlframe, bool allowAppend) {
   fi.scale = scale;
   fi.offset = offset;
   fi.used = true; // why not?
+  fi.autoadded = autoadded; // why not?
   return fi.vvframe;
 }
 
@@ -515,7 +530,7 @@ int GZModelDef::findModelFrame (int mdlindex, int mdlframe, bool allowAppend) {
 //  GZModelDef::checkModelSanity
 //
 //==========================================================================
-void GZModelDef::checkModelSanity (VScriptParser *sc) {
+void GZModelDef::checkModelSanity (bool addMissingModels) {
   // build frame map
   bool hasValidFrames = false;
   bool hasInvalidFrames = false;
@@ -601,43 +616,46 @@ void GZModelDef::checkModelSanity (VScriptParser *sc) {
     return;
   }
 
-  // check if we have several models, but only one model defined for sprite frame
-  // if it is so, attach all models to this frame (it seems that GZDoom does this)
-  // note that invalid frames weren't added to frame map
-  const int origFrLen = frames.length();
-  for (int fridx = 0; fridx < origFrLen; ++fridx) {
-    Frame &frm = frames[fridx];
-    if (frm.vvindex < 0) continue; // ignore invalid frames
-    auto fsp = frameMap.get(frm.sprbase);
-    if (!fsp) continue; // the thing that should not be
-    // remove duplicate frames, count models
-    int mdcount = 0;
-    for (int idx = *fsp; idx >= 0; idx = frames[idx].linkSprBase) {
-      if (idx == fridx) { ++mdcount; continue; }
-      Frame &cfr = frames[idx];
-      if (cfr.sprframe != frm.sprframe) continue; // different sprite animation frame
-      // different model?
-      if (cfr.mdindex != frm.mdindex) { ++mdcount; continue; }
-      // check if it is a duplicate model frame
-      if (cfr.frindex == frm.frindex) cfr.vvindex = -1; // don't render this, it is excessive
-    }
-    vassert(frm.vvindex >= 0);
-    // if only one model used, but we have more, attach all models
-    if (mdcount < 2 && validModelCount > 1) {
-      GCon->Logf(NAME_Warning, "force-attaching all models to gz alias model '%s', frame %s %c", *className, *frm.sprbase.toUpperCase(), 'A'+frm.sprframe);
-      for (int mnum = 0; mnum < models.length(); ++mnum) {
-        if (mnum == frm.mdindex) continue;
-        if (models[mnum].modelFile.isEmpty()) continue;
-        Frame newfrm = frm;
-        newfrm.mdindex = mnum;
-        if (newfrm.frindex == -1) {
-          //md2 named
-          newfrm.vvindex = findModelFrame(newfrm.mdindex, newfrm.vvindex, true); // allow appending
-        } else {
-          //indexed
-          newfrm.vvindex = findModelFrame(newfrm.mdindex, newfrm.frindex, true); // allow appending
+  if (addMissingModels || true) {
+    // check if we have several models, but only one model defined for sprite frame
+    // if it is so, attach all models to this frame (it seems that GZDoom does this)
+    // note that invalid frames weren't added to frame map
+    const int origFrLen = frames.length();
+    for (int fridx = 0; fridx < origFrLen; ++fridx) {
+      Frame &frm = frames[fridx];
+      if (frm.vvindex < 0) continue; // ignore invalid frames
+      auto fsp = frameMap.get(frm.sprbase);
+      if (!fsp) continue; // the thing that should not be
+      // remove duplicate frames, count models
+      int mdcount = 0;
+      for (int idx = *fsp; idx >= 0; idx = frames[idx].linkSprBase) {
+        if (idx == fridx) { ++mdcount; continue; }
+        Frame &cfr = frames[idx];
+        if (cfr.sprframe != frm.sprframe) continue; // different sprite animation frame
+        // different model?
+        if (cfr.mdindex != frm.mdindex) { ++mdcount; continue; }
+        // check if it is a duplicate model frame
+        if (cfr.frindex == frm.frindex) cfr.vvindex = -1; // don't render this, it is excessive
+      }
+      vassert(frm.vvindex >= 0);
+      // if only one model used, but we have more, attach all models
+      if (mdcount < 2 && validModelCount > 1) {
+        GCon->Logf(NAME_Warning, "force-attaching all models to gz alias model '%s', frame %s %c", *className, *frm.sprbase.toUpperCase(), 'A'+frm.sprframe);
+        for (int mnum = 0; mnum < models.length(); ++mnum) {
+          if (mnum == frm.mdindex) continue;
+          if (models[mnum].modelFile.isEmpty()) continue;
+          Frame newfrm = frm;
+          newfrm.mdindex = mnum;
+          if (newfrm.frindex == -1) {
+            //md2 named
+            newfrm.vvindex = findModelFrame(newfrm.mdindex, newfrm.vvindex, true, true); // allow appending, mark as autoadded
+          } else {
+            //indexed
+            newfrm.vvindex = findModelFrame(newfrm.mdindex, newfrm.frindex, true, true); // allow appending, mark as autoadded
+          }
+          newfrm.autoadded = true;
+          frames.append(newfrm);
         }
-        frames.append(newfrm);
       }
     }
   }
@@ -678,6 +696,8 @@ void GZModelDef::merge (GZModelDef &other) {
   if (&other == this) return; // nothing to do
   if (other.isEmpty()) return; // nothing to do
 
+  //GCon->Logf(NAME_Debug, "MERGE: <%s> and <%s>", *className, *other.className);
+
   // this is brute-force approach, which can be made faster, but meh...
   // just go through other model def frames, and try to find the correspondence
   // in this model, or append new data.
@@ -696,6 +716,7 @@ void GZModelDef::merge (GZModelDef &other) {
       }
       if (mdlEmpty < 0 && mdlit.value().frameMap.length() == 0) mdlEmpty = mdlit.index();
     }
+
     // if we didn't found a suitable model, append a new one
     bool newModel = false;
     if (mdlindex < 0) {
@@ -708,26 +729,49 @@ void GZModelDef::merge (GZModelDef &other) {
       MSDef &nmdl = models[mdlindex];
       nmdl.modelFile = omdf;
       nmdl.skinFile = osdf;
+      //GCon->Logf(NAME_Debug, "  new model: <%s> <%s>", *omdf, *osdf);
     }
+
     // try to find a model frame to reuse
     MSDef &rmdl = models[mdlindex];
     const MdlFrameInfo &omfrm = other.models[ofrm.mdindex].frameMap[ofrm.vvindex];
     int frmapindex = -1;
     if (!newModel) {
+      // try to find autoadded frame, and replace it
+      /*
       for (auto &&mfrm : rmdl.frameMap) {
-        if (mfrm.mdlframe == mdlindex &&
-            mfrm.scale == omfrm.scale &&
-            mfrm.offset == omfrm.offset)
-        {
-          // yay, i found her!
-          // reuse this frame
+        if (mfrm.mdlindex == mdlindex && mfrm.autoadded) {
           frmapindex = mfrm.vvframe;
-          break;
+          GCon->Logf(NAME_Debug, "  merger: replacing autoadded frame: %d -> %d (frmapindex=%d)", ofrm.vvindex, mfrm.vvframe, frmapindex);
+          GCon->Logf(NAME_Debug, "    mfrm=%s", *mfrm.toString());
+          GCon->Logf(NAME_Debug, "    ofrm=%s", *ofrm.toString());
+        }
+      }
+      */
+      if (frmapindex < 0) {
+        for (auto &&mfrm : rmdl.frameMap) {
+          if (mfrm.mdlindex == mdlindex &&
+              mfrm.mdlframe == omfrm.mdlframe &&
+              mfrm.scale == omfrm.scale &&
+              mfrm.offset == omfrm.offset)
+          {
+            // yay, i found her!
+            // reuse this frame
+            frmapindex = mfrm.vvframe;
+            /*
+            GCon->Logf(NAME_Debug, "  merge frames: %d -> %d (frmapindex=%d)", ofrm.vvindex, mfrm.vvframe, frmapindex);
+            GCon->Logf(NAME_Debug, "    mfrm=%s", *mfrm.toString());
+            GCon->Logf(NAME_Debug, "    ofrm=%s", *ofrm.toString());
+            */
+            break;
+          }
         }
       }
     }
+
     if (frmapindex < 0) {
       // ok, we have no suitable model frame, append a new one
+      //GCon->Logf(NAME_Debug, "  new frame (mdlindex=%d; frindex=%d); ofrm=%s", mdlindex, ofrm.frindex, *ofrm.toString());
       frmapindex = rmdl.frameMap.length();
       MdlFrameInfo &nfi = rmdl.frameMap.alloc();
       nfi.mdlindex = mdlindex;
@@ -736,6 +780,7 @@ void GZModelDef::merge (GZModelDef &other) {
       nfi.scale = omfrm.scale;
       nfi.offset = omfrm.offset;
     }
+
     // find sprite frame to replace
     // HACK: same model indicies will be replaced; this is how GZDoom does it
     int spfindex = -1;
@@ -750,6 +795,7 @@ void GZModelDef::merge (GZModelDef &other) {
         break;
       }
     }
+
     if (spfindex < 0) {
       // append new sprite frame
       spfindex = frames.length();
@@ -757,6 +803,7 @@ void GZModelDef::merge (GZModelDef &other) {
     } else {
       if (!compactFrameMaps && frames[spfindex].vvindex != frmapindex) compactFrameMaps = true;
     }
+
     // replace sprite frame
     Frame &newfrm = frames[spfindex];
     newfrm.sprbase = ofrm.sprbase;
