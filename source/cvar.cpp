@@ -155,7 +155,7 @@ static VStr DoCvarCompletions (const TArray<VStr> &args, int aidx) {
 //
 // Show short description for a cvar.
 COMMAND_WITH_AC(cvar_whatis) {
-  if (Args.Num() != 2) {
+  if (Args.length() != 2) {
     GCon->Logf("Show short cvar description.");
     GCon->Logf("usage: cvar_whatis varname");
   } else {
@@ -175,7 +175,7 @@ COMMAND_AC(cvar_whatis) { return DoCvarCompletions(args, aidx); }
 //
 // Toggles boolean cvar
 COMMAND_WITH_AC(toggle) {
-  if (Args.Num() != 2) {
+  if (Args.length() != 2) {
     GCon->Logf("Toggles boolean cvar.");
     GCon->Logf("usage: toggle varname");
   } else {
@@ -195,7 +195,7 @@ COMMAND_AC(toggle) { return DoCvarCompletions(args, aidx); }
 //
 // Resets cvar to default value
 COMMAND_WITH_AC(cvar_reset) {
-  if (Args.Num() != 2) {
+  if (Args.length() != 2) {
     GCon->Logf("Resets cvar to default value.");
     GCon->Logf("usage: cvar_reset varname");
   } else {
@@ -215,7 +215,7 @@ COMMAND_AC(cvar_reset) { return DoCvarCompletions(args, aidx); }
 //
 // Show default cvar value
 COMMAND_WITH_AC(cvar_show_default) {
-  if (Args.Num() != 2) {
+  if (Args.length() != 2) {
     GCon->Logf("Show default cvar value.");
     GCon->Logf("usage: cvar_show_default varname");
   } else {
@@ -231,11 +231,59 @@ COMMAND_AC(cvar_show_default) { return DoCvarCompletions(args, aidx); }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// COMMAND cvar_increment
+//
+// increment cvar
+COMMAND_WITH_AC(cvar_increment) {
+  if (Args.length() < 2 || Args.length() > 3) {
+    GCon->Logf("Increment cvar.");
+    GCon->Logf("usage: cvar_increment varname [value]");
+  } else {
+    float vv = 1.0f;
+    if (Args.length() > 2) {
+      if (!Args[2].convertFloat(&vv)) { GCon->Logf(NAME_Error, "invalid number: %s", *Args[2]); return; }
+    }
+    VCvar *cvar = VCvar::FindVariable(*Args[1]);
+    if (cvar) {
+      cvar->Set(cvar->asFloat()+vv);
+    } else {
+      GCon->Logf("Unknown cvar: '%s'", *Args[1]);
+    }
+  }
+}
+COMMAND_AC(cvar_increment) { return DoCvarCompletions(args, aidx); }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// COMMAND cvar_decrement
+//
+// increment cvar
+COMMAND_WITH_AC(cvar_decrement) {
+  if (Args.length() < 2 || Args.length() > 3) {
+    GCon->Logf("decrement cvar.");
+    GCon->Logf("usage: cvar_decrement varname [value]");
+  } else {
+    float vv = 1.0f;
+    if (Args.length() > 2) {
+      if (!Args[2].convertFloat(&vv)) { GCon->Logf(NAME_Error, "invalid number: %s", *Args[2]); return; }
+    }
+    VCvar *cvar = VCvar::FindVariable(*Args[1]);
+    if (cvar) {
+      cvar->Set(cvar->asFloat()-vv);
+    } else {
+      GCon->Logf("Unknown cvar: '%s'", *Args[1]);
+    }
+  }
+}
+COMMAND_AC(cvar_decrement) { return DoCvarCompletions(args, aidx); }
+
+
+// ////////////////////////////////////////////////////////////////////////// //
 // COMMAND cvarinfovar
 //
 // create temp variable from user mod
 COMMAND(CvarInfoVar) {
-  if (Args.Num() < 3) {
+  if (Args.length() < 3) {
     GCon->Logf("usage: cvarinfovar [flags-and-type] varname varvalue");
   } else {
     VStr vname = Args[Args.length()-2];
