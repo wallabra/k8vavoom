@@ -113,17 +113,15 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
     return;
   }
 
-  int TexWidth = Tex->GetWidth();
-  int TexHeight = Tex->GetHeight();
-  int TexSOffset = Tex->SOffset;
-  int TexTOffset = Tex->TOffset;
+  const int TexWidth = Tex->GetWidth();
+  const int TexHeight = Tex->GetHeight();
+  const int TexSOffset = Tex->SOffset;
+  const int TexTOffset = Tex->TOffset;
 
   //GCon->Logf(NAME_Debug, "PSPRITE: '%s'; size=(%d,%d); ofs=(%d,%d); scale=(%g,%g)", *Tex->Name, TexWidth, TexHeight, TexSOffset, TexTOffset, Tex->SScale, Tex->TScale);
 
   const float scaleX = max2(0.001f, Tex->SScale);
   const float scaleY = max2(0.001f, Tex->TScale);
-
-  //TODO: FOV correction should scale the sprite
 
   const float invScaleX = 1.0f/scaleX;
   const float invScaleY = 1.0f/scaleY;
@@ -139,15 +137,11 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
 
   //k8: this is not right, but meh...
   if (fov > 90) {
-    spry -= (refdef.fovx-1.2f)*100.0f;
     // this moves sprx to the left screen edge
-    //!sprx += (refdef.fovx-1.0f)*160.0f;
-    //GCon->Logf(NAME_Debug, "fovx=%g; fovy=%g", refdef.fovx, refdef.fovy);
-  } else {
-    //GCon->Logf(NAME_Debug, "fovx=%g; fovy=%g", refdef.fovx, refdef.fovy);
+    //sprx += (AspectEffectiveFOVX-1.0f)*160.0f;
   }
 
-  const float sxymul = 1.0f/160.0f;
+  const float sxymul = (1.0f+(fov > 90 ? (AspectEffectiveFOVX-1.0f) : 0.0f))/160.0f;
 
   // horizontal
   TVec start = sprorigin-(sprx*PSP_DIST*sxymul)*Drawer->viewright;
@@ -172,15 +166,16 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   TVec taxis(0, 0, 0);
   TVec texorg(0, 0, 0);
 
+  const float saxmul = 160.0f*(1.0f/160.0f/sxymul);
   if (flip) {
-    saxis = -(Drawer->viewright*160*PSP_DISTI);
+    saxis = -(Drawer->viewright*saxmul*PSP_DISTI);
     texorg = dv[2];
   } else {
-    saxis = Drawer->viewright*160*PSP_DISTI;
+    saxis = Drawer->viewright*saxmul*PSP_DISTI;
     texorg = dv[1];
   }
 
-  taxis = -(Drawer->viewup*100.0f*(320.0f/200.0f)*PSP_DISTI);
+  taxis = -(Drawer->viewup*100.0f*(1.0f/160.0f/sxymul)*(320.0f/200.0f)*PSP_DISTI);
 
   saxis *= scaleX;
   taxis *= scaleY;

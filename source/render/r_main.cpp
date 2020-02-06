@@ -117,6 +117,9 @@ VDrawer *Drawer;
 float PixelAspect;
 float BaseAspect;
 float PSpriteOfsAspect;
+float EffectiveFOV;
+float AspectFOVX;
+float AspectEffectiveFOVX;
 
 static FDrawerDesc *DrawerList[DRAWER_MAX];
 
@@ -1672,11 +1675,15 @@ void VRenderLevelShared::ExecuteSetViewSize () {
   } else {
     PSpriteOfsAspect = 0.0f;
   }
+  EffectiveFOV = effectiveFOV;
 
   clip_base.setupViewport(refdef.width, refdef.height, /*fov*/effectiveFOV, PixelAspect);
   refdef.fovx = clip_base.fovx;
   refdef.fovy = clip_base.fovy;
   refdef.drawworld = true;
+
+  AspectFOVX = refdef.fovx;
+  AspectEffectiveFOVX = tanf(DEG2RADF(fov)/2.0f);
 }
 
 
