@@ -2511,6 +2511,25 @@ VClass *VClass::CreateDerivedClass (VName AName, VMemberBase *AOuter, TArray<VDe
   NewClass->ParentClass = this;
 
   if (uvlist.length()) {
+    TArray<bool> ignores;
+    ignores.setLength(uvlist.length());
+    for (int f = 0; f < uvlist.length(); ++f) ignores[f] = false;
+
+    // scan for duplicate user fields
+    for (int f = 0; f < uvlist.length(); ++f) {
+      VField *prev = FindField(uvlist[f].name);
+      if (!prev) continue;
+      // check types, and show warning
+      if (prev->Type.Equals(uvlist[f].type)) {
+        ParseWarning(uvlist[f].loc, "ignored duplicate user field `%s` in class `%s` (prev at %s)", *uvlist[f].name, GetName(), *prev->Loc.toStringNoCol());
+        ignores[f] = true;
+      } else {
+        ParseWarning(uvlist[f].loc, "duplicate user field `%s` in class `%s` (prev at %s)", *uvlist[f].name, GetName(), *prev->Loc.toStringNoCol());
+        ParseWarning(uvlist[f].loc, "  new type: %s", *uvlist[f].type.GetName());
+        ParseWarning(uvlist[f].loc, "  old type: %s", *prev->Type.GetName());
+      }
+    }
+
     // create replication:
     //   replication {
     //     reliable if (Role == ROLE_Authority && bNetOwner)
@@ -2537,6 +2556,7 @@ VClass *VClass::CreateDerivedClass (VName AName, VMemberBase *AOuter, TArray<VDe
 
     // replication fields
     for (int f = 0; f < uvlist.length(); ++f) {
+      if (ignores[f]) continue;
       VRepField &F = RI.RepFields.Alloc();
       F.Name = uvlist[f].name;
       F.Loc = ALoc;
@@ -2546,6 +2566,7 @@ VClass *VClass::CreateDerivedClass (VName AName, VMemberBase *AOuter, TArray<VDe
     // define user fields
     VField *PrevBool = nullptr;
     for (int f = 0; f < uvlist.length(); ++f) {
+      if (ignores[f]) continue;
       VField *fi = new VField(uvlist[f].name, NewClass, uvlist[f].loc);
       VTypeExpr *te = VTypeExpr::NewTypeExpr(uvlist[f].type, uvlist[f].loc);
       fi->TypeExpr = te;
