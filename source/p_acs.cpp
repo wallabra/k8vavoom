@@ -74,6 +74,8 @@ static VCvarB acs_warning_console_commands("acs_warning_console_commands", true,
 static VCvarB acs_dump_uservar_access("acs_dump_uservar_access", false, "Dump ACS uservar access?", CVAR_Archive);
 static VCvarB acs_use_doomtic_granularity("acs_use_doomtic_granularity", false, "Should ACS use DooM tic granularity for delays?", CVAR_Archive);
 static VCvarB acs_enabled("acs_enabled", true, "DEBUG: are ACS scripts enabled?", CVAR_PreInit);
+static VCvarB acs_show_started_scripts("acs_show_started_scripts", false, "DEBUG: are ACS scripts enabled?", CVAR_PreInit);
+static VCvarB acs_show_stopped_scripts("acs_show_stopped_scripts", false, "DEBUG: are ACS scripts enabled?", CVAR_PreInit);
 
 extern VCvarF mouse_x_sensitivity;
 extern VCvarF mouse_y_sensitivity;
@@ -204,6 +206,11 @@ struct VAcsInfo {
   VACSLocalArrays LocalArrays;
   VName Name; // NAME_None for unnamed scripts; lowercased
   VAcs *RunningScript;
+
+  VStr toString () const {
+    return VStr(va("name:<%s>; number:%u; type:%u; argc:%u; flags:%u; varcount:%u; locarrays:%d",
+      *Name, Number, Type, ArgCount, Flags, VarCount, LocalArrays.Count));
+  }
 };
 
 //WARNING! this is what is stored in object file chunk. DO NOT MODIFY!
@@ -378,6 +385,9 @@ public:
   VAcsFunction *GetFunction (int funcnum, VAcsObject *&Object);
   int GetArrayVal (int ArrayIdx, int Index);
   void SetArrayVal (int ArrayIdx, int Index, int Value);
+
+  inline int GetStringCount () const noexcept { return NumStrings; }
+  inline const char *GetCString (int idx) const noexcept { return (idx >= 0 && idx < NumStrings ? Strings[idx] : "<invalid!>"); }
 };
 
 
@@ -729,6 +739,15 @@ VAcsObject::VAcsObject (VAcsLevel *ALevel, int Lump) : Functions(), Level(ALevel
   } else {
     LoadEnhancedObject();
   }
+
+  // dump all objects
+  /*
+  for (int i = 0; i < Level->LoadedObjects.length(); ++i) {
+    VAcsObject *obj = Level->LoadedObjects[i];
+    GCon->Logf(NAME_Debug, "== ACS OBJECT #%d (%s); libid:%d; scripts:%d; strings:%d ===", i, *W_FullLumpName(obj->LumpNum), obj->LibraryID, obj->NumScripts, obj->NumStrings);
+    for (int sidx = 0; sidx < obj->NumStrings; ++sidx) GCon->Logf(NAME_Debug, "  string #%d: \"%s\"", sidx, *VStr(obj->Strings[sidx]).quote());
+  }
+  */
 }
 
 
@@ -845,6 +864,19 @@ void VAcsObject::LoadEnhancedObject () {
   int i;
   vint32 *buffer;
   VAcsInfo *info;
+
+  /*
+  { // dump all chunks
+    const vuint8 *chunk = Chunks;
+    while (chunk && chunk < Data+DataSize) {
+      char tmp[5];
+      memcpy(tmp, chunk, 4);
+      tmp[4] = 0;
+      GCon->Logf("   CHUNK: <%s> at 0x%08x", tmp, (unsigned)(ptrdiff_t)(chunk-Chunks));
+      chunk = chunk+LittleLong(((vint32 *)chunk)[1])+8;
+    }
+  }
+  */
 
   // load scripts
   buffer = (vint32 *)FindChunk("SPTR");
@@ -1066,6 +1098,36 @@ void VAcsObject::LoadEnhancedObject () {
           }
         }
       }
+    }
+
+    // [BL] Newer version of ASTR for structure aware compilers although we only have one array per chunk
+    vuint32 *chunk = (vuint32 *)FindChunk("ATAG");
+    while (chunk != nullptr) {
+      const uint8_t* chunkData = (const uint8_t*)(chunk+2);
+      // first byte is version, it should be 0
+      if (*chunkData++ == 0) {
+        int arraynum = MapVarStore[LittleLong(*(vint32 *)(chunkData))];
+        chunkData += 4;
+        if ((unsigned)arraynum < (unsigned)NumArrays) {
+          vint32 *elems = ArrayStore[arraynum].Data;
+          // ending zeros may be left out
+          for (int j = min2(LittleLong(chunk[1])-5, ArrayStore[arraynum].Size); j > 0; --j, ++elems, ++chunkData) {
+            // For ATAG, a value of 0 = Integer, 1 = String, 2 = FunctionPtr
+            // Our implementation uses the same tags for both String and FunctionPtr
+            if (*chunkData == 2) {
+              //k8:FIXME: this is prolly wrong
+              *elems |= LibraryID;
+            } else if (*chunkData == 1) {
+              //const char *str = LookupString(*elems);
+              int sidx = *elems;
+              const char *str = (sidx < 0 || sidx >= NumStrings ? "" : Strings[sidx]);
+              *elems = Level->PutNewString(str);
+            }
+          }
+        }
+      }
+      // next tag chunk
+      chunk = (uint32_t *)NextChunk ((uint8_t *)chunk);
     }
   }
 
@@ -1518,8 +1580,15 @@ VAcsFunction *VAcsObject::GetFunction (int funcnum, VAcsObject *&Object) {
 //
 //==========================================================================
 int VAcsObject::GetArrayVal (int ArrayIdx, int Index) {
-  if ((unsigned)ArrayIdx >= (unsigned)NumTotalArrays) return 0;
-  if ((unsigned)Index >= (unsigned)Arrays[ArrayIdx]->Size) return 0;
+  if ((unsigned)ArrayIdx >= (unsigned)NumTotalArrays) {
+    //GCon->Logf(NAME_Debug, "ACS: VAcsObject::GetArrayVal: invalid array index %d (max is %d)", ArrayIdx, NumTotalArrays-1);
+    return 0;
+  }
+  if ((unsigned)Index >= (unsigned)Arrays[ArrayIdx]->Size) {
+    //GCon->Logf(NAME_Debug, "ACS: VAcsObject::GetArrayVal: invalid array %d element index %d (max is %d)", ArrayIdx, Index, Arrays[ArrayIdx]->Size-1);
+    return 0;
+  }
+  //GCon->Logf(NAME_Debug, "ACS: VAcsObject::GetArrayVal: array %d element index %d: value=%d", ArrayIdx, Index, Arrays[ArrayIdx]->Data[Index]);
   return Arrays[ArrayIdx]->Data[Index];
 }
 
@@ -1737,14 +1806,14 @@ VStr VAcsLevel::GetString (int Index) {
 //
 //==========================================================================
 VName VAcsLevel::GetNameLowerCase (int Index) {
-  //GCon->Logf("VAcsLevel::GetNameLowerCase: index=0x%08x", (vuint32)Index);
+  //GCon->Logf(NAME_Debug, "VAcsLevel::GetNameLowerCase: index=0x%08x", (vuint32)Index);
   int ObjIdx = (vuint32)Index>>16;
   if (ObjIdx == ACSLEVEL_INTERNAL_STRING_STORAGE_INDEX) {
-    //GCon->Logf("VAcsLevel::GetNameLowerCase: INTERNAL: '%s'", *GetNewLowerName(Index&0xffff));
+    //GCon->Logf(NAME_Debug, "VAcsLevel::GetNameLowerCase: INTERNAL: '%s'", *GetNewLowerName(Index&0xffff));
     return GetNewLowerName(Index&0xffff);
   }
   if (ObjIdx >= LoadedObjects.Num()) return NAME_None;
-  //GCon->Logf("VAcsLevel::GetNameLowerCase: object #%d: '%s'", ObjIdx, *LoadedObjects[ObjIdx]->GetNameLowerCase(Index&0xffff));
+  //GCon->Logf(NAME_Debug, "VAcsLevel::GetNameLowerCase: object #%d: '%s'", ObjIdx, *LoadedObjects[ObjIdx]->GetNameLowerCase(Index&0xffff));
   return LoadedObjects[ObjIdx]->GetNameLowerCase(Index&0xffff);
 }
 
@@ -1962,6 +2031,7 @@ bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3, int
   }
 
   VAcs *script = SpawnScript(Info, Object, Activator, Line, Side, Arg1, Arg2, Arg3, Arg4, Always, false, WantResult);
+
   if (WantResult) {
     int res = script->RunScript(0/*host_frametime:doesn't matter*/, true);
     //GCon->Logf(NAME_Debug, "*** CallACS: %s; res=%d; dead=%d", *GenScriptName(Number), res, (int)script->destroyed);
@@ -1970,6 +2040,7 @@ bool VAcsLevel::Start (int Number, int MapNum, int Arg1, int Arg2, int Arg3, int
       script->XLevel->PromoteImmediateScriptThinker(script);
     } else {
       //GCon->Logf(NAME_Debug, "***   COMPLETE, DESTROYING");
+      if (acs_show_stopped_scripts) GCon->Logf(NAME_Debug, "ACS: wantresult complete: %s", *Info->toString());
       script->Destroy();
       delete script;
     }
@@ -2062,6 +2133,7 @@ VAcs *VAcsLevel::SpawnScript (VAcsInfo *Info, VAcsObject *Object,
     Info->RunningScript->Level = XLevel->LevelInfo;
     Info->RunningScript->XLevel = XLevel;
     // script is already executing
+    if (acs_show_started_scripts) GCon->Logf(NAME_Debug, "ACS: resumed: %s; activator:%s", *Info->toString(), (Activator ? Activator->GetClass()->GetName() : "<none>"));
     return Info->RunningScript;
   }
 
@@ -2108,6 +2180,7 @@ VAcs *VAcsLevel::SpawnScript (VAcsInfo *Info, VAcsObject *Object,
     Info->RunningScript = script;
   }
   XLevel->AddScriptThinker(script, ImmediateRun);
+  if (acs_show_started_scripts) GCon->Logf(NAME_Debug, "ACS: started: %s; activator:%s", *Info->toString(), (Activator ? Activator->GetClass()->GetName() : "<none>"));
   return script;
 }
 
@@ -2573,6 +2646,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
     // int SpawnForced (str classname, fixed x, fixed y, fixed z [, int tid [, int angle]])
     case ACSF_SpawnForced:
       if (argCount >= 4) {
+        //GCon->Logf(NAME_Debug, "ACSF_SpawnForced: name=%s; pos=(%g,%g,%g); tid=%d; angle=%g", *GetNameLowerCase(args[0]), float(args[1])/65536.0f, float(args[2])/65536.0f, float(args[3])/65536.0f, (argCount >= 4 ? args[4] : 0), (argCount >= 5 ? float(args[5])*45.0f/32.0f : 0));
         return Level->eventAcsSpawnThing(GetNameLowerCase(args[0]),
                         TVec(float(args[1])/65536.0f, float(args[2])/65536.0f, float(args[3])/65536.0f), // x, y, z
                         (argCount >= 4 ? args[4] : 0), // tid
@@ -3061,6 +3135,7 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
     case ACSF_GetCVarString:
       if (argCount >= 1) {
         VName name = GetName(args[0]);
+        //GCon->Logf(NAME_Debug, "GetCVARString: %s", *name);
         if (name == NAME_None) return 0; //ActiveObject->Level->PutNewString("");
         if (!VCvar::HasVar(*name)) return 0;
         //GCon->Logf("ACSF_GetCVarString: var=<%s>; value=<%s>", *name, *VCvar::GetString(*name));
@@ -5849,7 +5924,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
             val = 0;
           }
         }
-        //GCon->Logf("GetCvar(%s)=%d", *cvname, val);
+        //GCon->Logf(NAME_Debug, "ACS: GetCvar(%s)=%d", *cvname, val);
         sp[-1] = val;
       }
       ACSVM_BREAK;
