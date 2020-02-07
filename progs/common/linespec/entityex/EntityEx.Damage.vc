@@ -668,20 +668,20 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
 
   if (nameicmp(DmgType, 'SpectralLow') == 0 && bLowSpectralResist) damage = 0;
 
-  if (nameicmp(DmgType, 'Fire') == 0 && bFireResist) {
-    damage >>= 1;
-  } else { // k8: still check damage factors?
-    if (!ignoreDamageFactors) {
-      damage = int(float(damage)*GenericDamageFactor);
-      if (damage <= 0) return;
-      if (DamageFactors.length) {
-        float dfactor = FindDamageFactor(DmgType, float.nan);
-        if (!dfactor.isnan) {
-          //printdebug("%C: damage type %s reduction factor is %s", self, DmgType, dfactor);
-          damage = int(float(damage)*dfactor);
-          if (damage <= 0) return;
-        }
+  //k8: ignore this for `ignoreDamageFactors`?
+  if (bFireResist && nameicmp(DmgType, 'Fire')) damage >>= 1;
+
+  if (!ignoreDamageFactors) {
+    float realdmgfactor = GenericDamageFactor;
+    if (DamageFactors.length) {
+      bool replacefact = false;
+      float dfactor = FindDamageFactor(DmgType, float.nan, out replacefact);
+      if (!dfactor.isnan) {
+        if (!replacefact) realdmgfactor *= dfactor; else realdmgfactor = dfactor;
       }
+      //printdebug("%C: damage type %s reduction factor is %s", self, DmgType, dfactor);
+      damage = int(float(damage)*dfactor);
+      if (damage <= 0) return;
     }
   }
 

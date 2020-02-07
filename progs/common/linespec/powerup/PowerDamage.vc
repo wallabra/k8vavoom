@@ -33,8 +33,9 @@ class PowerDamage : Powerup;
 //==========================================================================
 override void AmplifyDamage (EntityEx target, int damage, name DmgType, ref int NewDamage) {
   if (damage > 0) {
+    bool dummy;
     float dmgFactor = 2.0; // default is twice
-    if (DamageFactors.length) dmgFactor = FindDamageFactor(DmgType, 1.0);
+    if (DamageFactors.length) dmgFactor = FindDamageFactor(DmgType, 1.0, out dummy);
 
     NewDamage = max(0, int(float(damage)*dmgFactor));
 

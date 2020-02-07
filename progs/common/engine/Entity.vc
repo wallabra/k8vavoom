@@ -156,12 +156,6 @@ struct DropItemInfo {
 };
 
 
-struct DamageFactor {
-  name DamageType;
-  float Factor;
-};
-
-
 struct PainChanceInfo {
   name DamageType;
   float Chance;

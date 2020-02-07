@@ -1021,10 +1021,11 @@ bool IsNormalLikeDamage (name DmgType) {
 //  returns `defaultFactor` if no damage type found
 //
 //==========================================================================
-final float FindDamageFactor (name DmgType, float defaultFactor) {
+final float FindDamageFactor (name DmgType, float defaultFactor, out bool replaceFactor) {
   //printdebug("%C: FindDamageFactor; type=%s", self, DmgType);
   if (DmgType && nameicmp(DmgType, 'Normal') == 0) DmgType = 'None';
   float dmgNormal = float.nan;
+  replaceFactor = false;
   foreach (const ref auto df; DamageFactors) {
     //printdebug("  %C: dtype=%s; factor=%s", self, df.DamageType, df.Factor);
     if (nameicmp(df.DamageType, DmgType) == 0 ||
@@ -1034,6 +1035,7 @@ final float FindDamageFactor (name DmgType, float defaultFactor) {
       //printdebug("    FOUND!");
       float dmgFactor = df.Factor;
       if (dmgFactor < 0) dmgFactor = 1; // this is what GZDoom does
+      replaceFactor = df.replaceFactor;
       return dmgFactor;
     }
     if (dmgNormal.isnan && nameicmp(df.DamageType, 'None') == 0) dmgNormal = df.Factor;
