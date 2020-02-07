@@ -370,6 +370,7 @@ int GibsHealth;
 array!DamageFactor DamageFactors;
 float PainChance;
 array!PainChanceInfo PainChances;
+int PainThreshold;
 
 float MissileChance;
 float MissileMinRange;

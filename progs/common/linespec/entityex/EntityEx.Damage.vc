@@ -817,7 +817,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
 
   float PChance = FindPainChance(DmgType, PainChance);
 
-  if (!bNoPain && ((Random() < PChance) && !bSkullFly)) {
+  if (!bNoPain && !bSkullFly && damage >= PainThreshold && Random() < PChance) {
     if (inflictor && inflictor.bLightning) {
       if ((P_Random() < 96 && !inflictor.bPainless) || inflictor.bForcePain) {
         bJustHit = true; // fight back!

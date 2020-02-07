@@ -13,6 +13,7 @@
     <prop_int name="WoundHealth" property="WoundHealth" />
     <prop_int name="ReactionTime" property="ReactionCount" />
     <prop_pain_chance name="PainChance" />
+    <prop_int name="PainThreshold" property="PainThreshold" />
     <prop_damage_factor name="DamageFactor" />
     <prop_missile_damage name="Damage" />
     <prop_poison_damage name="PoisonDamage" property="MissilePoisonDamage" />
