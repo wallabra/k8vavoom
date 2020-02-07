@@ -943,9 +943,27 @@ void VObject::SerialiseFields (VStream &Strm) {
       for (VField *fld = cls->Fields; fld; fld = fld->Next) {
         if (fld->Flags&(FIELD_Native|FIELD_Transient)) continue;
         if (fld->Name == NAME_None) continue;
-        if (fldmap.put(fld->Name, fld)) {
+        if (fldmap.has(fld->Name)) {
           //VC_IO_ERROR("duplicate field `%s` in class `%s`", *fld->Name, GetClass()->GetName());
-          GLog.WriteLine(NAME_Warning, "duplicate field `%s` in class `%s`", *fld->Name, GetClass()->GetName());
+          VClass *prevfld = nullptr;
+          for (VClass *xcls = GetClass(); xcls && xcls != cls && !prevfld; xcls = xcls->GetSuperClass()) {
+            for (VField *xfld = xcls->Fields; xfld; xfld = xfld->Next) {
+              if (xfld->Name == fld->Name) {
+                prevfld = xcls;
+                break;
+              }
+            }
+          }
+          if (prevfld) {
+            GLog.WriteLine(NAME_Warning, "duplicate field `%s` in class `%s`", *fld->Name, GetClass()->GetName());
+            GLog.Logf(NAME_Warning, "  previous field at %s", *prevfld->Loc.toStringNoCol());
+          } else {
+            GLog.WriteLine(NAME_Warning, "duplicate field `%s` in class `%s`", *fld->Name, GetClass()->GetName());
+          }
+          GLog.Logf(NAME_Warning, "  field at %s", *fld->Loc.toStringNoCol());
+          // do not load duplicate
+        } else {
+          fldmap.put(fld->Name, fld);
         }
       }
     }
@@ -977,18 +995,32 @@ void VObject::SerialiseFields (VStream &Strm) {
     // writing
     // count fields, collect them into array
     // serialise fields
-    TMapNC<VName, int> fldseen;
+    TMapNC<VName, bool> fldseen;
     TArray<VField *> fldlist;
     for (VClass *cls = GetClass(); cls; cls = cls->GetSuperClass()) {
       for (VField *fld = cls->Fields; fld; fld = fld->Next) {
         if (fld->Flags&(FIELD_Native|FIELD_Transient)) continue;
         if (fld->Name == NAME_None) continue;
-        int *oidx = fldseen.find(fld->Name);
-        if (oidx) {
-          GLog.WriteLine(NAME_Warning, "duplicate field `%s` in class `%s`", *fld->Name, GetClass()->GetName());
-          fldlist[*oidx] = fld;
+        if (fldseen.put(fld->Name, true)) {
+          //GLog.WriteLine(NAME_Warning, "duplicate field `%s` in class `%s`", *fld->Name, GetClass()->GetName());
+          VField *prevfld = nullptr;
+          for (VClass *xcls = GetClass(); xcls && xcls != cls && !prevfld; xcls = xcls->GetSuperClass()) {
+            for (VField *xfld = xcls->Fields; xfld; xfld = xfld->Next) {
+              if (xfld->Name == fld->Name) {
+                prevfld = xfld;
+                break;
+              }
+            }
+          }
+          if (prevfld) {
+            GLog.WriteLine(NAME_Warning, "duplicate field `%s` in class `%s`", *fld->Name, GetClass()->GetName());
+            GLog.Logf(NAME_Warning, "  previous field at %s", *prevfld->Loc.toStringNoCol());
+          } else {
+            GLog.WriteLine(NAME_Warning, "duplicate field `%s` in class `%s`", *fld->Name, GetClass()->GetName());
+          }
+          GLog.Logf(NAME_Warning, "  field at %s", *fld->Loc.toStringNoCol());
+          // do not save duplicate
         } else {
-          fldseen.put(fld->Name, fldlist.length());
           fldlist.append(fld);
         }
       }
