@@ -1053,6 +1053,7 @@ Type *parseVCType (SemParser *par, bool basic=false) {
   else if (tp->name == "SkillMonsterReplacement") tp->name = "VSkillMonsterReplacement";
   else if (tp->name == "LockGroup") tp->name = "VLockGroup";
   else if (tp->name == "MapMarkerInfo") tp->name = "VMapMarkerInfo";
+  else if (tp->name == "DamageFactor") tp->name = "VDamageFactor";
   else if (tp->name == "IM_Phase") tp->name = "vint32";
   //GLog.Logf(NAME_Debug, "%d: <%s>", par->getTokenLine(), *tp->toString());
   return tp;
