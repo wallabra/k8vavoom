@@ -452,6 +452,8 @@ void SV_DropClient (VBasePlayer *Player, bool crash);
 void SV_SpawnServer (const char *mapname, bool spawn_thinkers, bool titlemap=false);
 void SV_SendServerInfoToClients ();
 
+// call after texture manager updated a flat
+void SV_UpdateSkyFlat ();
 
 extern int LeavePosition;
 extern bool completed;

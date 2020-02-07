@@ -26,6 +26,7 @@ optional
 
 //------------------------------------------------------
 //  Skill definitions
+GameSkyFlatName "f_sky1" // k8vavoom extension
 
 skill baby
 AmmoFactor 1.5

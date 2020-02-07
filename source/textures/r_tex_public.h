@@ -489,7 +489,10 @@ public:
   inline Iter firstWithName (VName n, bool allowShrink=true) { return Iter(this, n, allowShrink); }
   Iter firstWithStr (VStr s);
 
-  static VVA_CHECKRESULT bool IsSkyTextureName (VName n) noexcept;
+public:
+  VName SkyFlatName;
+  VVA_CHECKRESULT bool IsSkyTextureName (VName n) noexcept;
+  void SetSkyFlatName (VStr flatname) noexcept;
 
 public:
   VTextureManager ();
@@ -524,7 +527,7 @@ public:
   int AddRawWithPal (VName Name, VName PalName);
   int AddFileTexture (VName Name, int Type);
   int AddFileTextureShaded (VName Name, int Type, int shade); // shade==-1: don't shade
-  int AddFileTextureChecked (VName Name, int Type); // returns -1 if no texture found
+  int AddFileTextureChecked (VName Name, int Type, VName forceName=NAME_None); // returns -1 if no texture found
   // try to force-load texture
   int CheckNumForNameAndForce (VName Name, int Type, bool bOverload, bool silent);
 

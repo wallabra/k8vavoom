@@ -10,6 +10,7 @@ name "Hexen"
 
 //------------------------------------------------------
 //  Skill definitions
+GameSkyFlatName "f_sky" // k8vavoom extension
 
 skill baby
 AmmoFactor 1.5

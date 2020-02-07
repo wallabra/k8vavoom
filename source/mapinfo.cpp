@@ -2012,6 +2012,15 @@ static void ParseGameInfo (VScriptParser *sc) {
       bool bval = ExpectBool("ForceKillScripts", sc);
       //mapInfoGameInfoInitial.bForceKillScripts = bval;
       if (bval) GGameInfo->Flags |= VGameInfo::GIF_ForceKillScripts; else GGameInfo->Flags &= ~VGameInfo::GIF_ForceKillScripts;
+    } else if (sc->Check("GameSkyFlatName")) {
+      sc->Expect("=");
+      sc->ExpectString();
+      if (sc->String.length() == 0 || sc->String.length() > 8) {
+        miWarning(sc, "invalid sky flat name: '%s'", *sc->String);
+      } else {
+        GTextureManager.SetSkyFlatName(sc->String);
+        SV_UpdateSkyFlat();
+      }
     } else {
       sc->ExpectString();
       sc->Message(va("skipped gameinfo command '%s'", *sc->String));
@@ -2092,6 +2101,15 @@ static void ParseMapInfo (VScriptParser *sc, int milumpnum) {
           sc->SkipBracketed();
         } else {
           sc->SkipBracketed(true); // bracket eaten
+        }
+      } else if (sc->Check("GameSkyFlatName")) {
+        if (sc->Check("=")) {} // just in case
+        sc->ExpectString();
+        if (sc->String.length() == 0 || sc->String.length() > 8) {
+          miWarning(sc, "invalid sky flat name: '%s'", *sc->String);
+        } else {
+          GTextureManager.SetSkyFlatName(sc->String);
+          SV_UpdateSkyFlat();
         }
       } else if (sc->Check("intermission")) {
         sc->Message("Unimplemented MAPINFO command `Intermission`");

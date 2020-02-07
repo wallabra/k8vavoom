@@ -265,7 +265,7 @@ void SV_Init () {
   }
 
   GGameInfo->validcount = &validcount;
-  GGameInfo->skyflatnum = skyflatnum;
+  GGameInfo->skyflatnum = skyflatnum; // this should be fixed after mapinfo parsing
 
   P_InitSwitchList();
   P_InitTerrainTypes();
@@ -273,6 +273,18 @@ void SV_Init () {
 
   VMemberBase::StaticCompilerShutdown();
   CompilerReportMemory();
+}
+
+
+//==========================================================================
+//
+//  SV_ResetPlayers
+//
+//  call after texture manager updated a flat
+//
+//==========================================================================
+void SV_UpdateSkyFlat () {
+  if (GGameInfo) GGameInfo->skyflatnum = skyflatnum;
 }
 
 

@@ -88,6 +88,10 @@ static int hitexReplaceCount = 0;
 static double hitexLastMessageTime = -1;
 
 
+// sorry for this hack!
+extern void SV_UpdateSkyFlat ();
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 // Flats data
 // ////////////////////////////////////////////////////////////////////////// //
@@ -203,6 +207,7 @@ VTextureManager::VTextureManager ()
   , Time(0)
 {
   for (int i = 0; i < HASH_SIZE; ++i) TextureHash[i] = -1;
+  SkyFlatName = NAME_None;
 }
 
 
@@ -1091,7 +1096,7 @@ static int tryHardToFindTheImage (VStr filename) {
 //  returns -1 if no file texture found
 //
 //==========================================================================
-int VTextureManager::AddFileTextureChecked (VName Name, int Type) {
+int VTextureManager::AddFileTextureChecked (VName Name, int Type, VName forceName) {
   if (Name == NAME_None) return 0;
   if (IsDummyTextureName(Name)) return 0;
 
@@ -1118,7 +1123,7 @@ int VTextureManager::AddFileTextureChecked (VName Name, int Type) {
       VTexture *Tex = VTexture::CreateTexture(Type, i);
       if (Tex) {
         if (developer) GCon->Logf(NAME_Dev, "******************** %s : %s ********************", *fname, *Tex->Name);
-        Tex->Name = Name;
+        Tex->Name = (forceName != NAME_None ? forceName : Name);
         return AddTexture(Tex);
       }
     }
@@ -2118,11 +2123,37 @@ void VTextureManager::LoadSpriteOffsets () {
 //
 //==========================================================================
 VVA_CHECKRESULT bool VTextureManager::IsSkyTextureName (VName n) noexcept {
+  if (SkyFlatName != NAME_None) return (n == SkyFlatName);
   return
     n == NAME_f_sky ||
     n == NAME_f_sky001 ||
     n == NAME_f_sky1;
 }
+
+
+//==========================================================================
+//
+//  VTextureManager::SetSkyFlatName
+//
+//==========================================================================
+void VTextureManager::SetSkyFlatName (VStr flatname) noexcept {
+  if (flatname.isEmpty()) {
+    SkyFlatName = NAME_None;
+  } else {
+    SkyFlatName = VName(*flatname, VName::AddLower8);
+  }
+  R_UpdateSkyFlatNum(true); // force update
+  if (skyflatnum < 0) {
+    // create dummy texture to use as a sky (for invalid sky textures)
+    VName skyname = (SkyFlatName != NAME_None ? SkyFlatName : VName("f_sky1"));
+    GCon->Logf(NAME_Warning, "cannot load sky texture '%s', creating a dummy one", *skyname);
+    skyflatnum = GTextureManager.AddFileTextureChecked("graphics/k8vavoom_special/k8vavoom_dummysky.png", TEXTYPE_Flat, skyname);
+    if (skyflatnum < 0) Sys_Error("cannot load 'graphics/k8vavoom_special/k8vavoom_dummysky.png'");
+    R_UpdateSkyFlatNum(true); // force update
+    vassert(skyflatnum >= 0);
+  }
+}
+
 
 
 //==========================================================================
@@ -2135,16 +2166,22 @@ VVA_CHECKRESULT bool VTextureManager::IsSkyTextureName (VName n) noexcept {
 void R_UpdateSkyFlatNum (bool force) {
   const int oldskf = skyflatnum;
   if (force || oldskf >= -1) {
-    skyflatnum = GTextureManager.CheckNumForName(NAME_f_sky, TEXTYPE_Flat, true);
-    if (skyflatnum < 0) skyflatnum = GTextureManager.CheckNumForName(NAME_f_sky001, TEXTYPE_Flat, true);
-    if (skyflatnum < 0) skyflatnum = GTextureManager.CheckNumForName(NAME_f_sky1, TEXTYPE_Flat, true);
+    if (GTextureManager.SkyFlatName != NAME_None) {
+      skyflatnum = GTextureManager.CheckNumForName(GTextureManager.SkyFlatName, TEXTYPE_Flat, true);
+    } else {
+      skyflatnum = GTextureManager.CheckNumForName(NAME_f_sky, TEXTYPE_Flat, true);
+      if (skyflatnum < 0) skyflatnum = GTextureManager.CheckNumForName(NAME_f_sky001, TEXTYPE_Flat, true);
+      if (skyflatnum < 0) skyflatnum = GTextureManager.CheckNumForName(NAME_f_sky1, TEXTYPE_Flat, true);
+    }
 
     if (skyflatnum < 0) {
       if (oldskf >= 0) GCon->Logf(NAME_Warning, "OOPS! i lost the sky!");
       skyflatnum = -1; // wtf?!
     } else if (oldskf != skyflatnum && oldskf != -2) {
-      GCon->Logf(NAME_Debug, "*** NEW SKY FLAT: %d <%s>", skyflatnum, *W_FullLumpName(GTextureManager[skyflatnum]->SourceLump));
+      //GCon->Logf(NAME_Debug, "*** NEW SKY FLAT: %d <%s>", skyflatnum, *W_FullLumpName(GTextureManager[skyflatnum]->SourceLump));
     }
+    // sorry for this hack!
+    SV_UpdateSkyFlat();
   }
 }
 

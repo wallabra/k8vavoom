@@ -31,7 +31,7 @@
 
 IMPLEMENT_CLASS(V, GameInfo)
 
-VGameInfo *GGameInfo;
+VGameInfo *GGameInfo = nullptr;
 
 
 //==========================================================================

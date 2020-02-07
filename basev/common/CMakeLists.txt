@@ -36,6 +36,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     graphics/progbar/*.png
     graphics/healthbar/*.png
     graphics/screenback/*.png
+    graphics/k8vavoom_special/*.png
 
     sounds/*
 
