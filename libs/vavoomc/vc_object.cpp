@@ -943,7 +943,10 @@ void VObject::SerialiseFields (VStream &Strm) {
       for (VField *fld = cls->Fields; fld; fld = fld->Next) {
         if (fld->Flags&(FIELD_Native|FIELD_Transient)) continue;
         if (fld->Name == NAME_None) continue;
-        if (fldmap.put(fld->Name, fld)) VC_IO_ERROR("duplicate field `%s` in class `%s`", *fld->Name, GetClass()->GetName());
+        if (fldmap.put(fld->Name, fld)) {
+          //VC_IO_ERROR("duplicate field `%s` in class `%s`", *fld->Name, GetClass()->GetName());
+          GLog.WriteLine(NAME_Warning, "duplicate field `%s` in class `%s`", *fld->Name, GetClass()->GetName());
+        }
       }
     }
     // now load fields
@@ -974,14 +977,20 @@ void VObject::SerialiseFields (VStream &Strm) {
     // writing
     // count fields, collect them into array
     // serialise fields
-    TMapNC<VName, bool> fldseen;
+    TMapNC<VName, int> fldseen;
     TArray<VField *> fldlist;
     for (VClass *cls = GetClass(); cls; cls = cls->GetSuperClass()) {
       for (VField *fld = cls->Fields; fld; fld = fld->Next) {
         if (fld->Flags&(FIELD_Native|FIELD_Transient)) continue;
         if (fld->Name == NAME_None) continue;
-        if (fldseen.put(fld->Name, true)) VC_IO_ERROR("duplicate field `%s` in class `%s`", *fld->Name, GetClass()->GetName());
-        fldlist.append(fld);
+        int *oidx = fldseen.find(fld->Name);
+        if (oidx) {
+          GLog.WriteLine(NAME_Warning, "duplicate field `%s` in class `%s`", *fld->Name, GetClass()->GetName());
+          fldlist[*oidx] = fld;
+        } else {
+          fldseen.put(fld->Name, fldlist.length());
+          fldlist.append(fld);
+        }
       }
     }
     // now write all fields in backwards order, so they'll appear in natural order in stream
