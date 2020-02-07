@@ -671,19 +671,21 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
   //k8: ignore this for `ignoreDamageFactors`?
   if (bFireResist && nameicmp(DmgType, 'Fire')) damage >>= 1;
 
-  if (!ignoreDamageFactors) {
+  if (damage > 0 && !ignoreDamageFactors) {
     float realdmgfactor = GenericDamageFactor;
-    if (DamageFactors.length) {
+    if (DamageFactors || Level.Game.CustomDamageFactors) {
       bool replacefact = false;
-      float dfactor = FindDamageFactor(DmgType, float.nan, out replacefact);
+      bool skiparmor = false;
+      float dfactor = FindDamageFactor(DmgType, float.nan, out replacefact, out skiparmor);
       if (!dfactor.isnan) {
         if (!replacefact) realdmgfactor *= dfactor; else realdmgfactor = dfactor;
+        if (skiparmor) NoArmor = true;
       }
-      //printdebug("%C: damage type %s reduction factor is %s", self, DmgType, dfactor);
-      damage = int(float(damage)*dfactor);
-      if (damage <= 0) return;
     }
+    //printdebug("%C: damage type %s reduction factor is %s", self, DmgType, dfactor);
+    damage = int(float(damage)*realdmgfactor);
   }
+  if (damage <= 0) return;
 
   damage = TakeSpecialDamage(inflictor, source, damage, DmgType, forced:forced!optional);
   if (damage < 0) return; // was `-1`

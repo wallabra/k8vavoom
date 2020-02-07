@@ -267,6 +267,18 @@ void SV_Init () {
   GGameInfo->validcount = &validcount;
   GGameInfo->skyflatnum = skyflatnum; // this should be fixed after mapinfo parsing
 
+  // put custom damage factors into gameinfo object
+  if (CustomDamageFactors.length()) {
+    VField *F = GGameInfo->GetClass()->FindFieldChecked("CustomDamageFactors");
+    TArray<VDamageFactor> &dflist = *(TArray<VDamageFactor> *)F->GetFieldPtr(GGameInfo);
+    dflist.resize(CustomDamageFactors.length()); // do not overallocate
+    for (auto &&it : CustomDamageFactors) {
+      VDamageFactor &newdf = dflist.alloc();
+      newdf = it;
+    }
+    CustomDamageFactors.clear(); // we don't need them anymore
+  }
+
   P_InitSwitchList();
   P_InitTerrainTypes();
   InitLockDefs();

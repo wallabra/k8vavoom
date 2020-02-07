@@ -70,6 +70,9 @@ bool bDefaultBloodSplatter;
 readonly bool bPaused;
 bool bForceKillScripts;
 
+// from decorate
+array!DamageFactor CustomDamageFactors;
+
 final bool netgame {
   get { return NetMode > NM_Standalone; }
 }

@@ -77,6 +77,8 @@ class VGameInfo : public VGameObject {
   };
   vuint32 Flags;
 
+  TArray<VDamageFactor> CustomDamageFactors;
+
 public:
   enum { PlrAll = 0, PlrOnlySpawned = 1 };
 

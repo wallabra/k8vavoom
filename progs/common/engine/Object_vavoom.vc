@@ -271,7 +271,8 @@ struct SkillDef {
 struct DamageFactor {
   name DamageType;
   float Factor;
-  int replaceFactor; // bool, actually
+  bool replaceFactor;
+  bool skipArmor;
 };
 
 

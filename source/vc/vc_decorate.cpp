@@ -24,8 +24,8 @@
 //**
 //**************************************************************************
 #include "../libs/vavoomc/vc_local.h"
-#include "gamedefs.h"
-#include "sv_local.h"
+#include "../gamedefs.h"
+#include "../sv_local.h"
 
 #define VC_DECORATE_ACTION_BELONGS_TO_STATE
 
@@ -45,6 +45,9 @@ static inline VVA_OKUNUSED vuint32 GetTypeHashCI (const VStr &s) { return fnvHas
 static inline VVA_OKUNUSED vuint32 GetTypeHashCI (const char *s) { return fnvHashStrCI(s); }
 static inline VVA_OKUNUSED vuint32 GetTypeHashCI (VName s) { return fnvHashStrCI(*s); }
 */
+
+// GameInfo is not spawned yet, so keep them here
+TArray<VDamageFactor> CustomDamageFactors;
 
 
 enum {
@@ -3441,8 +3444,48 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
 //
 //==========================================================================
 static void ParseDamageType (VScriptParser *sc) {
-  if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "%s: 'DamageType' in decorate is not implemented yet!", *sc->GetLoc().toStringNoCol());
-  sc->SkipBracketed();
+  //if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "%s: 'DamageType' in decorate is not implemented yet!", *sc->GetLoc().toStringNoCol());
+  //sc->SkipBracketed();
+  sc->ExpectString(); // name
+  if (sc->String.strEquCI("Normal")) sc->String = "None";
+  VStr dfname = sc->String;
+  sc->Expect("{");
+  float factor = 1.0f;
+  bool noarmor = false;
+  bool replace = false;
+  while (!sc->Check("}")) {
+    if (sc->Check("NoArmor")) {
+      noarmor = true;
+      continue;
+    }
+    if (sc->Check("ReplaceFactor")) {
+      replace = true;
+      continue;
+    }
+    if (sc->Check("Factor")) {
+      sc->ExpectFloat();
+      factor = sc->Float;
+      continue;
+    }
+    sc->Error(va("unknown DamageType field '%s'", *sc->String));
+  }
+
+  // add or replace damage type
+  VDamageFactor *fc = nullptr;
+  for (auto &&df : CustomDamageFactors) {
+    if (dfname.strEquCI(*df.DamageType)) {
+      fc = &df;
+      break;
+    }
+  }
+  if (!fc) {
+    fc = &CustomDamageFactors.alloc();
+    memset((void *)fc, 0, sizeof(VDamageFactor));
+    fc->DamageType = VName(*dfname);
+  }
+  fc->Factor = factor;
+  if (replace) fc->Flags |= VDamageFactor::DF_REPLACE;
+  if (noarmor) fc->Flags |= VDamageFactor::DF_NOARMOR;
 }
 
 

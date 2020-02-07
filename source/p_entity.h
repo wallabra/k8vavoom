@@ -133,7 +133,11 @@ struct VDropItemInfo {
 struct VDamageFactor {
   VName DamageType;
   float Factor;
-  vuint32 replaceFactor; // bool actually
+  enum {
+    DF_REPLACE = 1u<<0,
+    DF_NOARMOR = 1u<<1,
+  };
+  vuint32 Flags;
 };
 
 struct VPainChanceInfo {
