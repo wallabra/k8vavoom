@@ -379,6 +379,33 @@ static VExpression *ParsePostfixIncDec (VScriptParser *sc, VClass *Class, VExpre
 }
 
 
+enum {
+  LHS_NONLOGICAL,
+  LHS_LOGICAL,
+  LHS_COMPARISON,
+};
+
+//==========================================================================
+//
+//  ClassifyLogicalExpression
+//
+//==========================================================================
+static int ClassifyLogicalExpression (VExpression *lhs) {
+  if (!lhs) return LHS_NONLOGICAL; // just in case
+  // (...)?
+  if (lhs->IsParens()) {
+    VExprParens *ep = (VExprParens *)lhs;
+    return ClassifyLogicalExpression(ep->op);
+  }
+  // logical op?
+  if (lhs->IsBinaryLogical()) return LHS_LOGICAL;
+  // comparison?
+  if (lhs->IsBinaryMath() && ((VBinary *)lhs)->IsComparison()) return LHS_COMPARISON;
+  // oops
+  return LHS_NONLOGICAL;
+}
+
+
 //==========================================================================
 //
 //  VParser::ParseExpressionGeneral
@@ -553,11 +580,38 @@ static VExpression *ParseExpressionGeneral (VScriptParser *sc, VClass *Class, in
     // get token, this is slightly faster
     if (!sc->GetString()) break; // no more code
     VStr token = sc->String;
+    //const TLocation tokloc = sc->GetLoc();
+    //VStr origToken = token;
     // hacks for some dumbfucks
     if (!inCodeBlock) {
       if (token.strEqu("||")) {
-        if (prio == 10 && !vcWarningsSilenced) GCon->Logf(NAME_Error, "%s: Spanish Inquisition says: in decorate, you shall use `|` to combine constants, or you will be executed!", *sc->GetLoc().toStringNoCol());
-        token = "|";
+        int lcls = ClassifyLogicalExpression(lhs);
+        switch (lcls) {
+          case LHS_LOGICAL:
+            if (prio == 10 && !vcWarningsSilenced) GCon->Logf(NAME_Error, "%s: Spanish Inquisition says: `||` is suspicious (but lhs is logical)!", *sc->GetLoc().toStringNoCol());
+            break;
+          case LHS_COMPARISON:
+            if (prio == 10 && !vcWarningsSilenced) GCon->Logf(NAME_Error, "%s: Spanish Inquisition says: `||` is suspicious (but lhs is comparison)!", *sc->GetLoc().toStringNoCol());
+            break;
+          default:
+            if (prio == 10 && !vcWarningsSilenced) GCon->Logf(NAME_Error, "%s: Spanish Inquisition says: in decorate, you shall use `|` to combine constants, or you will be executed!", *sc->GetLoc().toStringNoCol());
+            token = "|";
+            break;
+        }
+      } else if (token.strEqu("&&")) {
+        int lcls = ClassifyLogicalExpression(lhs);
+        switch (lcls) {
+          case LHS_LOGICAL:
+            if (prio == 8 && !vcWarningsSilenced) GCon->Logf(NAME_Error, "%s: Spanish Inquisition says: `&&` is suspicious (but lhs is logical)!", *sc->GetLoc().toStringNoCol());
+            break;
+          case LHS_COMPARISON:
+            if (prio == 8 && !vcWarningsSilenced) GCon->Logf(NAME_Error, "%s: Spanish Inquisition says: `&&` is suspicious (but lhs is comparison)!", *sc->GetLoc().toStringNoCol());
+            break;
+          default:
+            if (prio == 8 && !vcWarningsSilenced) GCon->Logf(NAME_Error, "%s: Spanish Inquisition says: in decorate, you shall use `&` to mask constants, or you will be executed!", *sc->GetLoc().toStringNoCol());
+            token = "&";
+            break;
+        }
       } else if (token.strEqu("=")) {
         if (prio == 7 && !vcWarningsSilenced) GLog.Logf(NAME_Error, "%s: Spanish Inquisition says: in decorate, you shall use `==` for comparisons, or you will be executed!", *sc->GetLoc().toStringNoCol());
         token = "==";
