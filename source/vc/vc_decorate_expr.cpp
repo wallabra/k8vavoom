@@ -218,7 +218,7 @@ static VMethod *ParseFunCallWithName (VScriptParser *sc, VStr FuncName, VClass *
   if (!Func) {
     //GCon->Logf(NAME_Debug, "***8:<%s> %s", *FuncName, *sc->GetLoc().toStringNoCol());
   } else {
-    if (Func && NumArgs > Func->NumParams &&
+    if (NumArgs > Func->NumParams &&
         (VStr::strEquCI(*FuncName, "A_Jump") ||
          VStr::strEquCI(*FuncName, "randompick") ||
          VStr::strEquCI(*FuncName, "decorate_randompick") ||
@@ -783,7 +783,8 @@ static VStatement *ParseFunCallAsStmt (VScriptParser *sc, VClass *Class, VState 
       //return nullptr;
       callExpr = new VDecorateInvocation(VName(*FuncName/*, VName::AddLower*/), stloc, NumArgs, Args);
     } else {
-      VInvocation *Expr = new VInvocation(nullptr, Func, nullptr, false, false, stloc, NumArgs, Args);
+      //VInvocation *Expr = new VInvocation(nullptr, Func, nullptr, false, false, stloc, NumArgs, Args);
+      VDecorateInvocation *Expr = new VDecorateInvocation(Func, VName(*FuncName), stloc, NumArgs, Args);
       Expr->CallerState = State;
       callExpr = Expr;
     }
@@ -1152,7 +1153,8 @@ static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State) {
           }
         } else if (NumArgs || Func->Name == NAME_None || !Func->IsGoodStateMethod()) {
           // need to create invocation
-          VInvocation *Expr = new VInvocation(nullptr, Func, nullptr, false, false, sc->GetLoc(), NumArgs, Args);
+          //VInvocation *Expr = new VInvocation(nullptr, Func, nullptr, false, false, sc->GetLoc(), NumArgs, Args);
+          VDecorateInvocation *Expr = new VDecorateInvocation(Func, *FuncName, sc->GetLoc(), NumArgs, Args);
           Expr->CallerState = State;
           VExpressionStatement *Stmt = new VExpressionStatement(ParseCreateDropResult(Expr));
           #if defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
@@ -1205,7 +1207,8 @@ static void SetupOldStyleFunction (VScriptParser *sc, VClass *Class, VState *Sta
   //FIXME: remove pasta (see function above)
   if (Func->Name == NAME_None || !Func->IsGoodStateMethod()) {
     // need to create invocation
-    VInvocation *Expr = new VInvocation(nullptr, Func, nullptr, false, false, sc->GetLoc(), /*NumArgs*/0, /*Args*/nullptr);
+    //VInvocation *Expr = new VInvocation(nullptr, Func, nullptr, false, false, sc->GetLoc(), /*NumArgs*/0, /*Args*/nullptr);
+    VDecorateInvocation *Expr = new VDecorateInvocation(Func, Func->Name, sc->GetLoc(), 0, nullptr);
     Expr->CallerState = State;
     VExpressionStatement *Stmt = new VExpressionStatement(ParseCreateDropResult(Expr));
     #if defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)

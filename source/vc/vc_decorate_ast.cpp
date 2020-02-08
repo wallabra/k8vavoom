@@ -579,16 +579,21 @@ VExpression *VExpression::MassageDecorateArg (VEmitContext &ec, VState *CallerSt
 class VDecorateInvocation : public VExpression {
 public:
   VName Name;
+  VMethod *Func; // if this is not null, use it instead of searching by `Name` (yet `Name` still be valid!)
   int NumArgs;
+  VState *CallerState; // used for `Func`
   VExpression *Args[VMethod::MAX_PARAMS+1];
 
-  VDecorateInvocation (VName, const TLocation &, int, VExpression **);
+  VDecorateInvocation (VName AName, const TLocation &ALoc, int ANumArgs, VExpression *AArgs[]);
+  VDecorateInvocation (VMethod *AFunc, VName AName, const TLocation &ALoc, int ANumArgs, VExpression *AArgs[]);
   virtual ~VDecorateInvocation () override;
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual void Emit (VEmitContext &) override;
 
   virtual VStr toString () const override;
+
+  void FixKnownShit (VEmitContext &ec, const char *FuncName);
 
 protected:
   VDecorateInvocation () {}
@@ -701,7 +706,26 @@ protected:
 VDecorateInvocation::VDecorateInvocation (VName AName, const TLocation &ALoc, int ANumArgs, VExpression **AArgs)
   : VExpression(ALoc)
   , Name(AName)
+  , Func(nullptr)
   , NumArgs(ANumArgs)
+  , CallerState(nullptr)
+{
+  memset(Args, 0, sizeof(Args));
+  for (int i = 0; i < NumArgs; ++i) Args[i] = AArgs[i];
+}
+
+
+//==========================================================================
+//
+//  VDecorateInvocation::VDecorateInvocation
+//
+//==========================================================================
+VDecorateInvocation::VDecorateInvocation (VMethod *AFunc, VName AName, const TLocation &ALoc, int ANumArgs, VExpression *AArgs[])
+  : VExpression(ALoc)
+  , Name(AName)
+  , Func(AFunc)
+  , NumArgs(ANumArgs)
+  , CallerState(nullptr)
 {
   memset(Args, 0, sizeof(Args));
   for (int i = 0; i < NumArgs; ++i) Args[i] = AArgs[i];
@@ -793,36 +817,74 @@ bool VDecorateInvocation::HasFloatArg (VEmitContext &ec) {
 //  VDecorateInvocation::DoResolve
 //
 //==========================================================================
+void VDecorateInvocation::FixKnownShit (VEmitContext &ec, const char *FuncName) {
+  // alot of dumbfucks cannot into wiki
+  if (NumArgs == 4 && Args[3] && VStr::strEquCI(FuncName, "A_CustomMeleeAttack")) {
+    VExpression *e;
+    {
+      VGagErrors gag;
+      e = Args[3]->SyntaxCopy()->Resolve(ec);
+    }
+    bool doit = (e && e->Type.CheckMatch(false/*asRef*/, e->Loc, VFieldType(TYPE_Bool), false/*raiseError*/));
+    delete e;
+    if (doit) {
+      // missing argument; morons!
+      ParseWarningAsError(Loc, "`%s` is missing argument `missound`; who cares about stupid wikis?!", FuncName);
+      // insert dummy empty string argument
+      for (int f = 3; f >= 2; --f) Args[f+1] = Args[f];
+      VStr ns = VStr("");
+      int val = ec.Package->FindString(*ns);
+      Args[2] = new VStringLiteral(ns, val, Args[2]->Loc);
+      ++NumArgs;
+      //GCon->Logf(NAME_Debug, "*** %s", *this->toString());
+    }
+    return;
+  }
+}
+
+
+//==========================================================================
+//
+//  VDecorateInvocation::DoResolve
+//
+//==========================================================================
 VExpression *VDecorateInvocation::DoResolve (VEmitContext &ec) {
   if (ec.SelfClass) {
     //FIXME: sanitize this!
-    VMethod *M;
-    if (VStr::strEquCI(*Name, "va") ||
-        VStr::strEquCI(*Name, "fmin") || VStr::strEquCI(*Name, "fmax") ||
-        VStr::strEquCI(*Name, "fclamp"))
-    {
-      M = ec.SelfClass->FindMethod(Name);
-    } else if (VStr::strEquCI(*Name, "min") || VStr::strEquCI(*Name, "max") ||
-               VStr::strEquCI(*Name, "clamp") || VStr::strEquCI(*Name, "abs"))
-    {
-      // determine if we want an integer one
-      if (HasFloatArg(ec)) {
-        VStr fname = VStr("f")+(*Name);
-        VName nn = VName(*fname, VName::AddLower);
-        M = ec.SelfClass->FindMethod(nn);
-      } else {
+    VMethod *M = Func;
+    if (!M) {
+      if (VStr::strEquCI(*Name, "va") ||
+          VStr::strEquCI(*Name, "fmin") || VStr::strEquCI(*Name, "fmax") ||
+          VStr::strEquCI(*Name, "fclamp"))
+      {
         M = ec.SelfClass->FindMethod(Name);
+      } else if (VStr::strEquCI(*Name, "min") || VStr::strEquCI(*Name, "max") ||
+                 VStr::strEquCI(*Name, "clamp") || VStr::strEquCI(*Name, "abs"))
+      {
+        // determine if we want an integer one
+        if (HasFloatArg(ec)) {
+          VStr fname = VStr("f")+(*Name);
+          VName nn = VName(*fname, VName::AddLower);
+          M = ec.SelfClass->FindMethod(nn);
+        } else {
+          M = ec.SelfClass->FindMethod(Name);
+        }
+      } else {
+        M = ec.SelfClass->FindDecorateStateAction(*Name);
       }
-    } else {
-      M = ec.SelfClass->FindDecorateStateAction(*Name);
     }
+
     if (M) {
       if (M->Flags&FUNC_Iterator) {
         ParseError(Loc, "Iterator methods can only be used in foreach statements (method '%s', class '%s')", *Name, *ec.SelfClass->GetFullName());
         delete this;
         return nullptr;
       }
+
+      FixKnownShit(ec, *Name);
+
       VExpression *e = new VInvocation(nullptr, M, nullptr, false, false, Loc, NumArgs, Args);
+      if (Func && CallerState) ((VInvocation *)e)->CallerState = CallerState;
       NumArgs = 0;
       delete this;
       return e->Resolve(ec);
