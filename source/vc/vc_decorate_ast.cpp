@@ -801,12 +801,9 @@ bool VDecorateInvocation::HasFloatArg (VEmitContext &ec) {
     if (!Args[i] || Args[i]->IsDefaultArg()) continue;
     VGagErrors gag;
     VExpression *e = Args[i]->SyntaxCopy()->Resolve(ec);
-    if (!e) continue;
-    if (e->Type.Type == TYPE_Float) {
-      delete e;
-      return true;
-    }
+    const bool isFloat = (e && e->Type.Type == TYPE_Float);
     delete e;
+    if (isFloat) return true;
   }
   return false;
 }
@@ -882,6 +879,27 @@ VExpression *VDecorateInvocation::DoResolve (VEmitContext &ec) {
       }
 
       FixKnownShit(ec, *Name);
+
+      // rebuild min/max with more than two arguments into recursive expression (for now)
+      //FIXME: generate better VM code for this
+      if (NumArgs > 2 && (VStr::strEquCI(*Name, "fmin") || VStr::strEquCI(*Name, "fmax") ||
+                          VStr::strEquCI(*Name, "min") || VStr::strEquCI(*Name, "max")))
+      {
+        VExpression *e = new VInvocation(nullptr, M, nullptr, false, false, Loc, 2, Args+NumArgs-2);
+        if (Func && CallerState) ((VInvocation *)e)->CallerState = CallerState;
+        int currlhs = NumArgs-3;
+        for (; currlhs >= 0; --currlhs) {
+          VExpression *newargs[2];
+          newargs[0] = Args[currlhs];
+          newargs[1] = e;
+          e = new VInvocation(nullptr, M, nullptr, false, false, Loc, 2, newargs);
+          if (Func && CallerState) ((VInvocation *)e)->CallerState = CallerState;
+        }
+        //GCon->Logf(NAME_Debug, "::: %s", *e->toString()); abort();
+        NumArgs = 0;
+        delete this;
+        return e->Resolve(ec);
+      }
 
       VExpression *e = new VInvocation(nullptr, M, nullptr, false, false, Loc, NumArgs, Args);
       if (Func && CallerState) ((VInvocation *)e)->CallerState = CallerState;
