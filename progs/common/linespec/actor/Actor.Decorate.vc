@@ -465,6 +465,18 @@ protected final void do_A_Lower (optional float lowerspeed) self(Actor) {
 
 //==========================================================================
 //
+//  A_SetPainThreshold
+//
+//==========================================================================
+[decorate] final void A_SetPainThreshold (int threshold, optional int aptr) {
+  EntityEx tgt = EntityEx(DecorDoAAPtr('A_SetPainThreshold', aptr!optional));
+  if (!tgt) return;
+  tgt.PainThreshold = threshold;
+}
+
+
+//==========================================================================
+//
 //  A_SetRenderStyle
 //
 //==========================================================================
