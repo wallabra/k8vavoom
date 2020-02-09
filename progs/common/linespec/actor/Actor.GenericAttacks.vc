@@ -623,7 +623,8 @@ final void DoExplode (int damage, float distance, bool damageSelf, optional int 
 
   EntityEx dmgsource = Target;
   if (flags&XF_NOTMISSILE) dmgsource = self;
-  else if (!dmgsource) dmgsource = self; //k8: missile without `Target` set is the source of the damage
+  //k8: zdoom wiki doesn't demand this; i consider wiki as The Specs
+  //else if (!dmgsource) dmgsource = self; //k8: missile without `Target` set is the source of the damage
 
   if (specified_dmgdistance && dmgdistance > 0) {
     DoExplode(damage, distance, damageSelf, dmgdistance, dmgsource:dmgsource, dmgtype:dmgType);
