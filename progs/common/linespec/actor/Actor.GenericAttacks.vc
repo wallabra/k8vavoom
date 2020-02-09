@@ -584,31 +584,30 @@ final void DoExplode (int damage, float distance, bool damageSelf, optional int 
     XF_NOSPLASH -- No splash: if set, the explosion does not create any terrain splashes.
   */
   bool damageSelf = (specified_flags ? !!(flags&XF_HURTSOURCE) : true);
-  if (!specified_PuffType) PuffType = BulletPuff;
   name NailDamageType = 'Nail';
+
   if (!specified_dmgType) {
     //k8: dunno if this is right
     if (!(flags&XF_EXPLICITDAMAGETYPE)) dmgType = DamageType;
   } else {
     NailDamageType = dmgType; //k8: dunno
   }
-  if (specified_damage) {
-    if (!damage) damage = 128;
-    if (!distance) distance = 128;
-    //if (!specified_flags) damageSelf = true;
-  } else {
+
+  if (!specified_damage) {
     damage = ExplosionDamage;
     distance = ExplosionRadius;
     damageSelf = !bExplosionDontHurtSelf;
     if (!damageSelf && specified_flags && (flags&XF_HURTSOURCE)) damageSelf = true; //k8:dunno
-    if (!damage) damage = 128;
-    if (!distance) distance = damage;
   }
+
+  if (!damage) damage = 128;
+  if (!distance) distance = (specified_damage ? damage : 128);
 
   // NailBomb effect, from SMMU but not from its source code: instead it was
   // implemented and generalized from the documentation at
   // http://www.doomworld.com/eternity/engine/codeptrs.html
   if (specified_nails && nails > 0) {
+    if (!specified_PuffType) PuffType = BulletPuff; //k8: why?
     TAVec Ang;
     TVec adir;
     foreach (auto i; 0..nails) {
@@ -624,11 +623,12 @@ final void DoExplode (int damage, float distance, bool damageSelf, optional int 
 
   EntityEx dmgsource = Target;
   if (flags&XF_NOTMISSILE) dmgsource = self;
+  else if (!dmgsource) dmgsource = self; //k8: missile without `Target` set is the source of the damage
 
   if (specified_dmgdistance && dmgdistance > 0) {
-    DoExplode(damage, float(distance), damageSelf, dmgdistance, dmgsource:dmgsource, dmgtype:dmgType);
+    DoExplode(damage, distance, damageSelf, dmgdistance, dmgsource:dmgsource, dmgtype:dmgType);
   } else {
-    DoExplode(damage, float(distance), damageSelf, dmgsource:dmgsource, dmgtype:dmgType);
+    DoExplode(damage, distance, damageSelf, dmgsource:dmgsource, dmgtype:dmgType);
   }
   if (!(flags&XF_NOSPLASH)) CheckSplash(float(distance));
 
