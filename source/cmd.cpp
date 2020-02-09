@@ -766,13 +766,18 @@ void VCommand::ExecuteString (VStr Acmd, ECmdSource src, VBasePlayer *APlayer) {
   // this hack allows to set cheating variables from command line or autoexec
   {
     bool oldCheating = VCvar::GetCheating();
+    bool cheatingChanged = false;
     VBasePlayer *plr = findPlayer();
-    if (!plr) VCvar::SetCheating(VCvar::GetBool("sv_cheats"));
+    if (!plr || !cl || !cl->Net) {
+      cheatingChanged = true;
+      VCvar::SetCheating(/*VCvar::GetBool("sv_cheats")*/true);
+      //GCon->Log(NAME_Debug, "forced: cheating and unlatching");
+    }
     //GCon->Logf("sv_cheats: %d; plr is %shere", (int)VCvar::GetBool("sv_cheats"), (plr ? "" : "not "));
     bool doneCvar = VCvar::Command(Args);
-    if (!plr) VCvar::SetCheating(oldCheating);
+    if (cheatingChanged) VCvar::SetCheating(oldCheating);
     if (doneCvar) {
-      if (!plr) VCvar::Unlatch();
+      if (cheatingChanged) VCvar::Unlatch();
       return;
     }
   }
