@@ -53,7 +53,7 @@ bool castdeath;
 // casting by id Software. in order of appearance
 class!EntityEx[CastCount] castorder;
 // character cast strings
-name[CastCount] caststrings;
+string[CastCount] caststrings;
 
 
 //==========================================================================
@@ -378,8 +378,8 @@ bool CastResponder (event_t *ev) {
 void CastPostDraw () {
   SetFont('smallfont');
   SetTextAlign(hcentre, vtop);
-  //DrawText(320, 440, GetLangString(string(caststrings[castnum])));
-  DrawText(GetVirtualWidth()/2, int(GetVirtualHeight()*0.917), GetLangString(string(caststrings[castnum])));
+  //DrawText(320, 440, TranslateString(caststrings[castnum]));
+  DrawText(GetVirtualWidth()/2, int(GetVirtualHeight()*0.917), TranslateString(caststrings[castnum]));
 }
 
 
@@ -604,21 +604,21 @@ defaultproperties {
   castorder[15] = Cyberdemon;
   castorder[16] = DoomPlayer;
 
-  caststrings[0] = 'cc_zombie';
-  caststrings[1] = 'cc_shotgun';
-  caststrings[2] = 'cc_heavy';
-  caststrings[3] = 'cc_imp';
-  caststrings[4] = 'cc_demon';
-  caststrings[5] = 'cc_lost';
-  caststrings[6] = 'cc_caco';
-  caststrings[7] = 'cc_hell';
-  caststrings[8] = 'cc_baron';
-  caststrings[9] = 'cc_arach';
-  caststrings[10] = 'cc_pain';
-  caststrings[11] = 'cc_reven';
-  caststrings[12] = 'cc_mancu';
-  caststrings[13] = 'cc_arch';
-  caststrings[14] = 'cc_spider';
-  caststrings[15] = 'cc_cyber';
-  caststrings[16] = 'cc_hero';
+  caststrings[0] = "$cc_zombie";
+  caststrings[1] = "$cc_shotgun";
+  caststrings[2] = "$cc_heavy";
+  caststrings[3] = "$cc_imp";
+  caststrings[4] = "$cc_demon";
+  caststrings[5] = "$cc_lost";
+  caststrings[6] = "$cc_caco";
+  caststrings[7] = "$cc_hell";
+  caststrings[8] = "$cc_baron";
+  caststrings[9] = "$cc_arach";
+  caststrings[10] = "$cc_pain";
+  caststrings[11] = "$cc_reven";
+  caststrings[12] = "$cc_mancu";
+  caststrings[13] = "$cc_arch";
+  caststrings[14] = "$cc_spider";
+  caststrings[15] = "$cc_cyber";
+  caststrings[16] = "$cc_hero";
 }

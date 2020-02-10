@@ -2560,16 +2560,9 @@ void DisplayObituary (EntityEx inflictor, EntityEx source, name DmgType) {
   if (!Msg) Msg = "$ob_default"; // generic death
 
   // look up string in language lump if necesary
-  if (StrStartsWith(Msg, "$")) Msg = GetLangString(Msg[1..$]);
+  Msg = TranslateString(Msg);
 
   // do replacements
-  /*
-  Msg = StrReplace(Msg, "%g", "he");
-  Msg = StrReplace(Msg, "%h", "him");
-  Msg = StrReplace(Msg, "%p", "his");
-  Msg = StrReplace(Msg, "%o", PlayerName);
-  Msg = StrReplace(Msg, "%k", source.Player.PlayerName);
-  */
   Msg = StrReplaceSubstitutes(Msg, source);
 
   Level.bprint("%s", Msg);

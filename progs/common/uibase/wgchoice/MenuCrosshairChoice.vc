@@ -46,11 +46,7 @@ final int value {
 //
 //==========================================================================
 void SetText (string AText) {
-  if (StrStartsWith(AText, "$")) {
-    Text = GetLangString(AText[1..$]);
-  } else {
-    Text = AText;
-  }
+  Text = TranslateString(AText);
 }
 
 

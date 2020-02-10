@@ -51,7 +51,8 @@ override void CreateChoices () {
       wdt = pinf.width;
       if (Epi.Height < pinf.height) Epi.Height = pinf.height+8;
     } else if (EDef->bLookupText) {
-      Epi.Text = GetLangString(EDef->Text);
+      if (EDef->Text.StrStartsWith("$")) Epi.Text = TranslateString(EDef->Text);
+      else Epi.Text = GetLangString(EDef->Text);
     } else {
       Epi.Text = EDef->Text;
     }
