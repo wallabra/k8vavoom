@@ -1,0 +1,487 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 2018-2020 Ketmar Dark
+//**
+//**  This program is free software: you can redistribute it and/or modify
+//**  it under the terms of the GNU General Public License as published by
+//**  the Free Software Foundation, version 3 of the License ONLY.
+//**
+//**  This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**  You should have received a copy of the GNU General Public License
+//**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//**
+//**************************************************************************
+//
+// message box API
+//
+//**************************************************************************
+
+enum MsgBoxInputType {
+  None,
+  YesNo,
+  Keybind,
+}
+
+enum MessageBoxType {
+  None,
+  Quit,
+  ControlAll,
+  ControlStrife,
+  ControlNonStrife,
+  Shareware,
+  Nightmare,
+  EndGame,
+}
+
+
+// message box
+struct MessageBoxState {
+  bool active;
+  int x;
+  int y;
+  int width;
+  int height;
+  string text; // ...and here is the message string!
+  string origText; // w/o YES/NO menu
+  bool wantInput; // timed message = no input from user
+  MessageBoxType type;
+  name flatName;
+  // for quit box
+  name soundName;
+  bool playAndQuit;
+  // for yes/no
+  bool currYes;
+  int yesBarY, yesBarHeight;
+  int noBarY, noBarHeight;
+}
+
+MessageBoxState msgboxState;
+
+
+//==========================================================================
+//
+//  IsQuitPromptEnabled
+//
+//==========================================================================
+bool IsQuitPromptEnabled () {
+  return GetCvarB('menu_quit_prompt');
+}
+
+
+//==========================================================================
+//
+//  GetMessageBoxInputType
+//
+//==========================================================================
+MsgBoxInputType GetMessageBoxInputType () {
+  if (!msgboxState.active || !msgboxState.wantInput) return MsgBoxInputType.None;
+  if (msgboxState.type == MessageBoxType.None) return MsgBoxInputType.None; //wtf?!
+  if (msgboxState.type == MessageBoxType.Shareware) return MsgBoxInputType.None; //wtf?!
+  if (msgboxState.type >= MessageBoxType.ControlAll && msgboxState.type <= MessageBoxType.ControlNonStrife) return MsgBoxInputType.Keybind; //wtf?!
+  return MsgBoxInputType.YesNo;
+}
+
+
+//==========================================================================
+//
+//  QuitMessageBoxSound
+//
+//==========================================================================
+void QuitMessageBoxSound (name QuitSound) {
+  if (!QuitSound) return;
+  msgboxState.active = true;
+  msgboxState.playAndQuit = true;
+  msgboxState.soundName = QuitSound;
+  StopLocalSounds();
+  CmdBuf_AddText("Music stop\n");
+  LocalSound(QuitSound);
+}
+
+
+//==========================================================================
+//
+//  MessageBoxAppendYesNoMenuText
+//
+//==========================================================================
+protected final void MessageBoxAppendYesNoMenuText () {
+  string yesText = (msgboxState.currYes ? va("\c[%s]YES\c-", YesMenuColor) : "YES");
+  string noText = (msgboxState.currYes ? "NO" : va("\c[%s]NO\c-", NoMenuColor));
+
+  GRoot.SetFont('smallfont');
+  msgboxState.yesBarHeight = GRoot.TextHeight(yesText);
+  msgboxState.noBarHeight = GRoot.TextHeight(noText);
+
+  msgboxState.text ~= "\n\n";
+  msgboxState.text ~= yesText;
+  msgboxState.yesBarY = GRoot.TextHeight(msgboxState.text)-msgboxState.yesBarHeight;
+
+  msgboxState.text ~= "\n";
+  msgboxState.text ~= noText;
+  msgboxState.noBarY = GRoot.TextHeight(msgboxState.text)-msgboxState.noBarHeight;
+}
+
+
+//==========================================================================
+//
+//  MessageBoxSetYesNoPos
+//
+//==========================================================================
+void MessageBoxSetYesNoPos (bool yes) {
+  if (msgboxState.currYes != yes) {
+    msgboxState.currYes = yes;
+    msgboxState.text = msgboxState.origText;
+    MessageBoxAppendYesNoMenuText();
+  }
+}
+
+
+//==========================================================================
+//
+//  MessageBoxStartMessage
+//
+//==========================================================================
+void MessageBoxStartMessage (string text, MessageBoxType type, bool input) {
+  float ui_msgxbox_wrap_trigger = GetCvarF('ui_msgxbox_wrap_trigger');
+  float ui_msgxbox_wrap_width = GetCvarF('ui_msgxbox_wrap_width');
+
+  GRoot.SetFont('smallfont');
+
+  if (ui_msgxbox_wrap_trigger > 0 && ui_msgxbox_wrap_width > 0) {
+    // split too long text
+    msgboxState.width = GRoot.TextWidth(text);
+    //if (msgboxState.width > GetVirtualWidth()-192) text = GRoot.SplitTextWithNewlines(text, /*GetVirtualWidth()-132*/304);
+    if (float(msgboxState.width)/float(GetVirtualWidth()) > ui_msgxbox_wrap_trigger) {
+      int newwdt = int(float(GetVirtualWidth())*ui_msgxbox_wrap_width);
+      //print("oldwdt=%s; oldtext=<%q>", msgboxState.width, text);
+      text = GRoot.SplitTextWithNewlines(text, newwdt, trimRight:true);
+      //print("newwdt=%s; newtext=<%q>", newwdt, text);
+    }
+  }
+
+  msgboxState.active = true;
+  msgboxState.text = text;
+  msgboxState.origText = text;
+  msgboxState.type = type;
+  msgboxState.wantInput = input;
+  msgboxState.currYes = true;
+
+  if (msgboxState.wantInput && GetMessageBoxInputType() == MsgBoxInputType.YesNo) {
+    MessageBoxAppendYesNoMenuText();
+  }
+
+  msgboxState.width = min(/*304*/GetVirtualWidth()-16, (GRoot.TextWidth(msgboxState.text)+16)&~15);
+  msgboxState.height = min(/*184*/GetVirtualHeight()-16, (GRoot.TextHeight(msgboxState.text)+16)&~15);
+  msgboxState.x = (GetVirtualWidth()-msgboxState.width)/2;
+  msgboxState.y = (GetVirtualHeight()-msgboxState.height)/2;
+
+  if (type >= MessageBoxType.ControlAll && type <= MessageBoxType.ControlNonStrife) SetCvar('__ui_control_waiting', 1);
+
+  CmdBuf_AddText("HideConsole\n");
+}
+
+
+//==========================================================================
+//
+//  MessageBoxStartBindQuery
+//
+//  strifeMode:
+//    <0: non-strife
+//    >1: strife
+//    =0: don't care
+//
+//==========================================================================
+void MessageBoxStartBindQuery (MenuControlKey currctl, int strifeMode) {
+  CurrentCtl = currctl;
+  auto mt = (strifeMode < 0 ? MessageBoxType.ControlNonStrife : strifeMode > 0 ? MessageBoxType.ControlStrife : MessageBoxType.ControlAll);
+  MessageBoxStartMessage("Press new key\n\nESC to cancel", mt, input:false);
+}
+
+
+//==========================================================================
+//
+//  MessageBoxShowSharewareWarning
+//
+//==========================================================================
+void MessageBoxShowSharewareWarning (optional string text) {
+  if (!text) text = "ONLY AVAILABLE IN THE REGISTERED VERSION";
+  MessageBoxStartMessage(text, MessageBoxType.Shareware, input:false);
+}
+
+
+//==========================================================================
+//
+//  MessageBoxShowEndGameQuery
+//
+//==========================================================================
+void MessageBoxShowEndGameQuery (optional string text) {
+  if (!text) text = "Do you really want to end the game?";
+  MessageBoxStartMessage(text, MessageBoxType.EndGame, input:true);
+}
+
+
+//==========================================================================
+//
+//  MessageBoxShowSkillQuery
+//
+//==========================================================================
+void MessageBoxShowSkillQuery (string text) {
+  while (text.length && text[0] <= ' ') text = text[1..$];
+  while (text.length && text[$-1] <= ' ') text = text[0..$-1];
+  if (!text) text = "Are you sure? This skill level\nisn't even remotely fair.";
+  MessageBoxStartMessage(text, MessageBoxType.Nightmare, true);
+}
+
+
+//==========================================================================
+//
+//  MessageBoxDrawer
+//
+//==========================================================================
+override void MessageBoxDrawer () {
+  // horiz. & vertically centre string and print it
+  if (msgboxState.active) {
+    GRoot.SetFont('smallfont');
+
+    GRoot.FillRectWithFlatRepeat(msgboxState.x, msgboxState.y, msgboxState.width, msgboxState.height, msgboxState.flatName);
+    DrawBorder(msgboxState.x, msgboxState.y, msgboxState.width, msgboxState.height);
+    //GRoot.DrawRect(msgboxState.x, msgboxState.y, msgboxState.width, msgboxState.height, RGB(255, 0, 0));
+
+    // draw yes/no selection bar
+    if (msgboxState.wantInput && GetMessageBoxInputType() == MsgBoxInputType.YesNo) {
+      //int y0 = (GetVirtualHeight()-GRoot.TextHeight(msgboxState.text))/2;
+      int y0 = (GRoot.Height-GRoot.TextHeight(msgboxState.text))/2;
+      y0 += (msgboxState.currYes ? msgboxState.yesBarY : msgboxState.noBarY);
+      int hgt = (msgboxState.currYes ? msgboxState.yesBarHeight : msgboxState.noBarHeight);
+      GRoot.ShadeRect(msgboxState.x+2, y0, msgboxState.width-4, hgt, 0.6);
+    }
+
+    GRoot.SetTextAlign(hcentre, vcentre);
+    //GRoot.DrawText(GetVirtualWidth()/2, GetVirtualHeight()/2, msgboxState.text);
+    GRoot.DrawText(GRoot.Width/2, GRoot.Height/2, msgboxState.text);
+  }
+
+  if (msgboxState.playAndQuit && !IsLocalSoundPlaying(msgboxState.soundName)) {
+    CmdBuf_AddText("Quit\n");
+  }
+}
+
+
+//==========================================================================
+//
+//  MessageBoxResponder
+//
+//==========================================================================
+override bool MessageBoxResponder (event_t *event) {
+  if (msgboxState.playAndQuit) return true;
+
+  // take care of any messages that need input
+  if (msgboxState.active && event.type == ev_keydown) {
+    if (msgboxState.wantInput && GetMessageBoxInputType() == MsgBoxInputType.YesNo) {
+      // menu selection
+      switch (Widget.ConvertBoundKey(event.keycode)) {
+        case K_UPARROW:
+        case K_HOME:
+          MessageBoxSetYesNoPos(true);
+          return true;
+        case K_DOWNARROW:
+        case K_END:
+          MessageBoxSetYesNoPos(false);
+          return true;
+        case K_ENTER:
+        case K_SPACE:
+          // menu selection
+          event.keycode = (msgboxState.currYes ? K_y : K_n);
+          break;
+        // translate some keypresses to answers
+        case K_t:
+        case K_y:
+          MessageBoxSetYesNoPos(true);
+          event.keycode = K_y;
+          break;
+        case K_o:
+        case K_n:
+        case K_ESCAPE:
+          MessageBoxSetYesNoPos(false);
+          event.keycode = K_n;
+          break;
+        default:
+          // eat other keys
+          return true;
+      }
+    }
+
+    msgboxState.active = false;
+    switch (msgboxState.type) {
+      case MessageBoxType.None: break;
+      case MessageBoxType.Quit: QuitResponse(event->data1); break;
+      case MessageBoxType.ControlAll:
+      case MessageBoxType.ControlStrife:
+      case MessageBoxType.ControlNonStrife:
+        SetCvar('__ui_control_waiting', 0);
+        ControlResponse(event->data1, msgboxState.type);
+        break;
+      case MessageBoxType.Shareware: SharewareResponse(event->data1); break;
+      case MessageBoxType.Nightmare: VerifyNightmare(event->data1); break;
+      case MessageBoxType.EndGame: EndGameResponse(event->data1); break;
+    }
+
+    //S_StartSound(sfx1_swtchx);
+    return true;
+  }
+
+  return false;
+}
+
+
+//==========================================================================
+//
+//  MessageBoxActive
+//
+//==========================================================================
+override bool MessageBoxActive () {
+  return msgboxState.active;
+}
+
+
+//==========================================================================
+//
+//  ControlResponse
+//
+//==========================================================================
+void ControlResponse (int key, int msgtype) {
+  string kb_down;
+  string kb_up;
+  int key1;
+  int key2;
+  int strifeMode = 0;
+
+  switch (msgtype) {
+    case MessageBoxType.ControlAll: strifeMode = 0; break;
+    case MessageBoxType.ControlStrife: strifeMode = 1; break;
+    case MessageBoxType.ControlNonStrife: strifeMode = -1; break;
+    default: return;
+  }
+
+  if (key != K_ESCAPE) {
+    kb_down = CurrentCtl.CommandOn;
+    kb_up = CurrentCtl.CommandOff;
+    // old keyconf can register binding like 'addmenukey "Reload" +d_reload'
+    // there is prolly '-d_reload' too, so force it here
+    if (kb_down && !kb_up && kb_down[0] == "+" && kb_down.strIndexOf(";") < 0) kb_up = "-"~kb_down[1..$];
+    if (kb_up == " " || kb_up == ";") kb_up = "";
+    int isActive;
+    IN_GetBindingKeys(kb_down, &key1, &key2, strifeMode, CurrentCtl.ModSection, out isActive);
+    if (ControlColumn == 0) {
+      IN_SetBinding(key1, "", "", strifeMode, CurrentCtl.ModSection);
+      IN_SetBinding(key, kb_down, kb_up, strifeMode, CurrentCtl.ModSection);
+    }
+    if (ControlColumn == 1) {
+      IN_SetBinding(key2, "", "", strifeMode, CurrentCtl.ModSection);
+      IN_SetBinding(key, kb_down, kb_up, strifeMode, CurrentCtl.ModSection);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  VerifyNightmare
+//
+//  Realy nightmare skill?
+//
+//==========================================================================
+void VerifyNightmare (int ch) {
+  if (ch != K_y) return;
+  NewGame(SkillToConfirm);
+}
+
+
+//==========================================================================
+//
+//  EndGameResponse
+//
+//==========================================================================
+void EndGameResponse (int ch) {
+  if (ch != K_y) return;
+  CmdBuf_AddText("Disconnect\n");
+}
+
+
+//==========================================================================
+//
+//  GetQuitPromptText
+//
+//  override this in subclasses
+//
+//==========================================================================
+string GetQuitPromptText () {
+  return "";
+}
+
+
+//==========================================================================
+//
+//  GetQuitPromptSound
+//
+//  override this in subclasses
+//
+//==========================================================================
+name GetQuitPromptSound () {
+  return '';
+}
+
+
+//==========================================================================
+//
+//  ShowQuitPrompt
+//
+//==========================================================================
+void ShowQuitPrompt () {
+  if (!IsQuitPromptEnabled()) { CmdBuf_AddText("Quit\n"); return; }
+  if (QuitPromptSound) LocalSound('misc/chat');
+  string text = GetQuitPromptText();
+  if (!text) text = "ARE YOU SURE YOU WANT TO QUIT?";
+  MessageBoxStartMessage(text, MessageBoxType.Quit, input:true);
+}
+
+
+//==========================================================================
+//
+//  QuitResponse
+//
+//  override this in subclasses
+//
+//==========================================================================
+void QuitResponse (int key) {
+  if (key != K_y) return;
+  // continue to show message box?
+  name snd = GetQuitPromptSound();
+  if (snd) {
+    QuitMessageBoxSound(snd);
+  } else {
+    CmdBuf_AddText("Quit\n");
+  }
+}
+
+
+//==========================================================================
+//
+//  SharewareResponse
+//
+//  override this in subclasses
+//
+//==========================================================================
+void SharewareResponse (int key) {
+}
