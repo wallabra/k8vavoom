@@ -53,6 +53,7 @@ public:
   bool Responder (event_t *Event);
 
   void SetMouse (bool MouseOn);
+  inline bool IsMouseAllowed () const noexcept { return !!(RootFlags&RWF_MouseEnabled); }
 
   void RefreshScale ();
 

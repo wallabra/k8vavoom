@@ -91,6 +91,41 @@ void PostSpawn () {
 }
 
 
+//==========================================================================
+//
+//  ActivateUIMouse
+//
+//==========================================================================
+void ActivateUIMouse () {
+  SetCvar('__ui_active', 1);
+  if (GetCvarB('ui_mouse') && !GRoot.bMouseEnabled) GRoot.SetMouse(true);
+}
+
+
+//==========================================================================
+//
+//  DeactivateUIMouse
+//
+//==========================================================================
+void DeactivateUIMouse () {
+  SetCvar('__ui_active', 0);
+  if (GRoot.bMouseEnabled) GRoot.SetMouse(false);
+}
+
+
+//==========================================================================
+//
+//  CheckAndDeactivateUIMouse
+//
+//==========================================================================
+void CheckAndDeactivateUIMouse () {
+  if (menuStack.length) return;
+  if (CurrentMenuScreen) return;
+  if (MessageBoxActive()) return;
+  DeactivateUIMouse();
+}
+
+
 //**************************************************************************
 //
 // menu filter API
@@ -627,15 +662,10 @@ void PushMenuScreen (MenuScreen menu) {
 
   menuStack[$] = menu;
 
-  SetCvar('__ui_active', 1);
+  ActivateUIMouse();
   if (!CurrentMenuScreen) {
-    /*
-    if (cl.paused) S_ResumeSound();
-    C_ClearNotify();
-    */
     CmdBuf_AddText("HideConsole\n");
     LocalSound(menu.ActivateSound);
-    if (GetCvarB('ui_mouse')) GRoot.SetMouse(true);
   } else {
     CurrentMenuScreen.Hide();
   }
@@ -710,8 +740,7 @@ void PopMenu () {
   } else {
     if (menu) LocalSound(menu.ClearMenusSound);
     CurrentMenuScreen = none;
-    SetCvar('__ui_active', 0);
-    GRoot.SetMouse(false);
+    CheckAndDeactivateUIMouse();
   }
 
   delete menu;
@@ -730,8 +759,7 @@ void ForceMenuOff () {
   }
   menuStack.clear();
   CurrentMenuScreen = none;
-  SetCvar('__ui_active', 0);
-  GRoot.SetMouse(false);
+  CheckAndDeactivateUIMouse();
 }
 
 

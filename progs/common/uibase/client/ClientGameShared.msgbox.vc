@@ -189,6 +189,7 @@ void MessageBoxStartMessage (string text, MessageBoxType type, bool input) {
   if (type >= MessageBoxType.ControlAll && type <= MessageBoxType.ControlNonStrife) SetCvar('__ui_control_waiting', 1);
 
   CmdBuf_AddText("HideConsole\n");
+  ActivateUIMouse();
 }
 
 
@@ -337,7 +338,7 @@ override bool MessageBoxResponder (event_t *event) {
       case MessageBoxType.EndGame: EndGameResponse(event->data1); break;
     }
 
-    //S_StartSound(sfx1_swtchx);
+    CheckAndDeactivateUIMouse();
     return true;
   }
 
