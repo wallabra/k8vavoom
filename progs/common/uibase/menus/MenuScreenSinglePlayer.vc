@@ -25,6 +25,9 @@
 //**************************************************************************
 class MenuScreenSinglePlayer : MenuScreen;
 
+MenuTextButton savegameBtn;
+MenuTextButton endgameBtn;
+
 
 //==========================================================================
 //
@@ -51,12 +54,38 @@ override void CreateChoices () {
   Btn.Text = "Save Game";
   Btn.Activated = &ActivateSave;
   currentY += Btn.Height;
+  savegameBtn = Btn;
+  // disable "save game" button if we're not in the game
+  if (ClGame.Game.NetMode < GameInfo::NM_Standalone) Btn.Enabled = false;
 
   Btn = MenuTextButton(NewChild(MenuBigTextButton));
   Btn.SetPos(ChoicesStartX, currentY);
   Btn.Text = "End Game";
   Btn.Activated = &ActivateEndGame;
   currentY += Btn.Height;
+  endgameBtn = Btn;
+  // disable "end game" button if we're not in the game
+  if (ClGame.Game.NetMode < GameInfo::NM_Standalone) Btn.Enabled = false;
+}
+
+
+//==========================================================================
+//
+//  Tick
+//
+//==========================================================================
+override void Tick (float DeltaTime) {
+  bool enb = (ClGame.Game.NetMode >= GameInfo::NM_Standalone);
+  if (enb != endgameBtn.Enabled || enb != savegameBtn.Enabled) {
+    if (!enb && CursorPos >= 0 && CursorPos < Items.length) {
+      if (Items[CursorPos] == endgameBtn || Items[CursorPos] == savegameBtn) {
+        DoHome(); // move cursor up
+      }
+    }
+    savegameBtn.Enabled = enb;
+    endgameBtn.Enabled = enb;
+  }
+  ::Tick(DeltaTime);
 }
 
 
@@ -101,11 +130,13 @@ void ActivateSave (Object Sender) {
 //
 //==========================================================================
 void ActivateEndGame (Object Sender) {
-  CmdBuf_AddText("Disconnect\n");
+  //CmdBuf_AddText("Disconnect\n");
+  ClGame.MessageBoxStartMessage("Do you want to end current game?", ClientGameShared::MB_EndGame, true);
 }
 
 
 defaultproperties {
+  bTickEnabled = true; // to update endgame button status
   ChoicesStartX = 97;
   ChoicesStartY = 40;
   SelectorType = MenuSelector_Big;
