@@ -283,33 +283,23 @@ override void SetMenu (string Name) {
 
 //==========================================================================
 //
-//  ShowQuitPrompt
+//  GetQuitPromptText
 //
 //==========================================================================
-override void ShowQuitPrompt () {
-  if (!IsQuitPromptEnabled()) { CmdBuf_AddText("Quit\n"); return; }
-  LocalSound('misc/chat');
-  MessageBoxStartMessage(endmsg[P_Random()%NUM_END_MESSAGES], MB_Quit, true);
+override string GetQuitPromptText () {
+  return endmsg[P_Random()%endmsg.length];
 }
 
 
 //==========================================================================
 //
-//  QuitResponse
+//  GetQuitPromptSound
+//
+//  override this in subclasses
 //
 //==========================================================================
-override void QuitResponse (int ch) {
-  if (ch != K_y) return;
-  // continue to show message box
-  QuitMessageBoxSound(quitsounds[P_Random()%quitsounds.length]);
-  /*
-  messageToPrint = true;
-  WaitForQuit = true;
-  QuitSound = quitsounds[P_Random()&7];
-  StopLocalSounds();
-  CmdBuf_AddText("Music stop\n");
-  LocalSound(QuitSound);
-  */
+override name GetQuitPromptSound () {
+  return quitsounds[P_Random()%quitsounds.length];
 }
 
 

@@ -99,8 +99,8 @@ void ActivateSkill (Object Sender) {
     ClGame.SkillToConfirm = Btn.SkillIndex;
     ClGame.MessageBoxStartMessage(
       Btn.ConfirmationText ? Btn.ConfirmationText :
-      "are you sure? this skill level\nisn\'t even remotely fair.\n\npress y or n.",
-      ClientGameShared::MB_Nightmare, true);
+      "Are you sure? This skill level\nisn't even remotely fair.",
+      ClientGameShared::MessageBoxType.Nightmare, true);
   } else {
     ClGame.NewGame(Btn.SkillIndex);
   }

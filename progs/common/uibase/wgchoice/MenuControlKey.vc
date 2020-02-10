@@ -115,7 +115,7 @@ override bool OnKeyDown (int key) {
     case K_JOY1:
       if (!Disabled) {
         GetClGame().CurrentCtl = self;
-        int mt = (strifeMode < 0 ? ClientGameShared::MB_ControlNonStrife : strifeMode > 0 ? ClientGameShared::MB_ControlStrife : ClientGameShared::MB_ControlAll);
+        int mt = (strifeMode < 0 ? ClientGameShared::MessageBoxType.ControlNonStrife : strifeMode > 0 ? ClientGameShared::MessageBoxType.ControlStrife : ClientGameShared::MessageBoxType.ControlAll);
         GetClGame().MessageBoxStartMessage("Press new key\n\nESC to cancel", mt, false);
       }
       return true;
@@ -156,7 +156,7 @@ override void OnMouseClick (int X, int Y) {
   if (!Disabled) {
     SetFocus();
     GetClGame().CurrentCtl = self;
-    int mt = (strifeMode < 0 ? ClientGameShared::MB_ControlNonStrife : strifeMode > 0 ? ClientGameShared::MB_ControlStrife : ClientGameShared::MB_ControlAll);
+    int mt = (strifeMode < 0 ? ClientGameShared::MessageBoxType.ControlNonStrife : strifeMode > 0 ? ClientGameShared::MessageBoxType.ControlStrife : ClientGameShared::MessageBoxType.ControlAll);
     GetClGame().MessageBoxStartMessage("Press new key\n\nESC to cancel", mt, false);
   }
 }

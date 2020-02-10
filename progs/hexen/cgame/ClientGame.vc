@@ -275,28 +275,13 @@ override void SetMenu (string Name) {
 
 //==========================================================================
 //
-//  ShowQuitPrompt
+//  GetQuitPromptText
 //
 //==========================================================================
-override void ShowQuitPrompt () {
-  if (!IsQuitPromptEnabled()) { CmdBuf_AddText("Quit\n"); return; }
-  LocalSound('misc/chat');
-  MessageBoxStartMessage("ARE YOU SURE YOU WANT TO QUIT?", MB_Quit, true);
+override string GetQuitPromptText () {
+  return "ARE YOU SURE YOU WANT TO QUIT?";
 }
 
-
-//==========================================================================
-//
-//  QuitResponse
-//
-//==========================================================================
-
-override void QuitResponse(int ch)
-{
-  if (ch != K_y) return;
-
-  CmdBuf_AddText("Quit\n");
-}
 
 //==========================================================================
 //

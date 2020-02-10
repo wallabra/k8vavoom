@@ -72,6 +72,7 @@ array!MenuDefinition menudefs;
 
 string YesMenuColor = "White";
 string NoMenuColor = "White";
+name QuitPromptSound = 'misc/chat';
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -81,15 +82,15 @@ enum MsgBoxInputType {
   Keybind,
 }
 
-enum {
-  MB_None,
-  MB_Quit,
-  MB_ControlAll,
-  MB_ControlStrife,
-  MB_ControlNonStrife,
-  MB_Shareware,
-  MB_Nightmare,
-  MB_EndGame,
+enum MessageBoxType {
+  None,
+  Quit,
+  ControlAll,
+  ControlStrife,
+  ControlNonStrife,
+  Shareware,
+  Nightmare,
+  EndGame,
 }
 
 
@@ -103,7 +104,7 @@ struct MessageBoxState {
   string text; // ...and here is the message string!
   string origText; // w/o YES/NO menu
   bool wantInput; // timed message = no input from user
-  int type; // MB_XXX
+  MessageBoxType type;
   name flatName;
   // for quit box
   name soundName;
@@ -808,9 +809,9 @@ bool IsQuitPromptEnabled () {
 //==========================================================================
 MsgBoxInputType GetMessageBoxInputType () {
   if (!msgboxState.active || !msgboxState.wantInput) return MsgBoxInputType.None;
-  if (msgboxState.type == MB_None) return MsgBoxInputType.None; //wtf?!
-  if (msgboxState.type == MB_Shareware) return MsgBoxInputType.None; //wtf?!
-  if (msgboxState.type >= MB_ControlAll && msgboxState.type <= MB_ControlNonStrife) return MsgBoxInputType.Keybind; //wtf?!
+  if (msgboxState.type == MessageBoxType.None) return MsgBoxInputType.None; //wtf?!
+  if (msgboxState.type == MessageBoxType.Shareware) return MsgBoxInputType.None; //wtf?!
+  if (msgboxState.type >= MessageBoxType.ControlAll && msgboxState.type <= MessageBoxType.ControlNonStrife) return MsgBoxInputType.Keybind; //wtf?!
   return MsgBoxInputType.YesNo;
 }
 
@@ -873,7 +874,7 @@ void MessageBoxSetYesNoPos (bool yes) {
 //  MessageBoxStartMessage
 //
 //==========================================================================
-void MessageBoxStartMessage (string text, int type, bool input) {
+void MessageBoxStartMessage (string text, MessageBoxType type, bool input) {
   float ui_msgxbox_wrap_trigger = GetCvarF('ui_msgxbox_wrap_trigger');
   float ui_msgxbox_wrap_width = GetCvarF('ui_msgxbox_wrap_width');
 
@@ -907,7 +908,7 @@ void MessageBoxStartMessage (string text, int type, bool input) {
   msgboxState.x = (GetVirtualWidth()-msgboxState.width)/2;
   msgboxState.y = (GetVirtualHeight()-msgboxState.height)/2;
 
-  if (type >= MB_ControlAll && type <= MB_ControlNonStrife) SetCvar('__ui_control_waiting', 1);
+  if (type >= MessageBoxType.ControlAll && type <= MessageBoxType.ControlNonStrife) SetCvar('__ui_control_waiting', 1);
 
   CmdBuf_AddText("HideConsole\n");
 }
@@ -993,17 +994,17 @@ override bool MessageBoxResponder (event_t *event) {
 
     msgboxState.active = false;
     switch (msgboxState.type) {
-      case MB_None: break;
-      case MB_Quit: QuitResponse(event->data1); break;
-      case MB_ControlAll:
-      case MB_ControlStrife:
-      case MB_ControlNonStrife:
+      case MessageBoxType.None: break;
+      case MessageBoxType.Quit: QuitResponse(event->data1); break;
+      case MessageBoxType.ControlAll:
+      case MessageBoxType.ControlStrife:
+      case MessageBoxType.ControlNonStrife:
         SetCvar('__ui_control_waiting', 0);
         ControlResponse(event->data1, msgboxState.type);
         break;
-      case MB_Shareware: SharewareResponse(event->data1); break;
-      case MB_Nightmare: VerifyNightmare(event->data1); break;
-      case MB_EndGame: EndGameResponse(event->data1); break;
+      case MessageBoxType.Shareware: SharewareResponse(event->data1); break;
+      case MessageBoxType.Nightmare: VerifyNightmare(event->data1); break;
+      case MessageBoxType.EndGame: EndGameResponse(event->data1); break;
     }
 
     //S_StartSound(sfx1_swtchx);
@@ -1037,9 +1038,9 @@ void ControlResponse (int key, int msgtype) {
   int strifeMode = 0;
 
   switch (msgtype) {
-    case MB_ControlAll: strifeMode = 0; break;
-    case MB_ControlStrife: strifeMode = 1; break;
-    case MB_ControlNonStrife: strifeMode = -1; break;
+    case MessageBoxType.ControlAll: strifeMode = 0; break;
+    case MessageBoxType.ControlStrife: strifeMode = 1; break;
+    case MessageBoxType.ControlNonStrife: strifeMode = -1; break;
     default: return;
   }
 
@@ -1088,21 +1089,90 @@ void EndGameResponse (int ch) {
 }
 
 
-void ShowQuitPrompt () {
+//==========================================================================
+//
+//  GetQuitPromptText
+//
+//  override this in subclasses
+//
+//==========================================================================
+string GetQuitPromptText () {
+  return "";
 }
 
 
+//==========================================================================
+//
+//  GetQuitPromptSound
+//
+//  override this in subclasses
+//
+//==========================================================================
+name GetQuitPromptSound () {
+  return '';
+}
+
+
+//==========================================================================
+//
+//  ShowQuitPrompt
+//
+//==========================================================================
+void ShowQuitPrompt () {
+  if (!IsQuitPromptEnabled()) { CmdBuf_AddText("Quit\n"); return; }
+  if (QuitPromptSound) LocalSound('misc/chat');
+  string text = GetQuitPromptText();
+  if (!text) text = "ARE YOU SURE YOU WANT TO QUIT?";
+  MessageBoxStartMessage(text, MessageBoxType.Quit, true);
+}
+
+
+//==========================================================================
+//
+//  QuitResponse
+//
+//  override this in subclasses
+//
+//==========================================================================
+void QuitResponse (int key) {
+  if (key != K_y) return;
+  // continue to show message box?
+  name snd = GetQuitPromptSound();
+  if (snd) {
+    QuitMessageBoxSound(snd);
+  } else {
+    CmdBuf_AddText("Quit\n");
+  }
+}
+
+
+//==========================================================================
+//
+//  SharewareResponse
+//
+//  override this in subclasses
+//
+//==========================================================================
+void SharewareResponse (int key) {
+}
+
+
+//==========================================================================
+//
+//  DrawBorder
+//
+//  draw border around message box
+//
+//==========================================================================
 void DrawBorder (int x, int y, int w, int h, optional int ybotofs) {
 }
 
 
-void QuitResponse (int key) {
-}
-
-
-void SharewareResponse (int key) {
-}
-
+//**************************************************************************
+//
+// HUD messages API
+//
+//**************************************************************************
 
 //==========================================================================
 //

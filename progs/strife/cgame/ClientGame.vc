@@ -264,66 +264,18 @@ override void SetMenu (string Name) {
   if (!stricmp(Name, "Help")) { PushMenuScreen(SpawnMenu(MenuScreenHelp)); return; }
   if (!stricmp(Name, "Quit")) { ShowQuitPrompt(); return; }
   PushMenuScreen(SpawnMenu(MenuScreenMain));
-
-  /*
-  if (!stricmp(Name, "PSetup"))
-  {
-    PushMenuScreen(SpawnMenu(MenuScreenPlayerSetup));
-    return;
-  }
-  if (!stricmp(Name, "Options") || !stricmp(Name, "OptionsMenu"))
-  {
-    PushMenuScreen(SpawnMenu(MenuScreenOptions));
-    return;
-  }
-  if (!stricmp(Name, "Controls"))
-  {
-    PushMenuScreen(SpawnMenu(MenuScreenControls));
-    return;
-  }
-  if (!stricmp(Name, "Mouse"))
-  {
-    PushMenuScreen(SpawnMenu(MenuScreenMouseOptions));
-    return;
-  }
-  if (!stricmp(Name, "Resolution"))
-  {
-    PushMenuScreen(SpawnMenu(MenuScreenScreenResolution));
-    return;
-  }
-  if (!stricmp(Name, "Video"))
-  {
-    PushMenuScreen(SpawnMenu(MenuScreenVideoOptions));
-    return;
-  }
-  if (!stricmp(Name, "Sound"))
-  {
-    PushMenuScreen(SpawnMenu(MenuScreenSoundOptions));
-    return;
-  }
-  if (!stricmp(Name, "Help"))
-  {
-    PushMenuScreen(SpawnMenu(MenuScreenHelp));
-    return;
-  }
-  if (!stricmp(Name, "Quit"))
-  {
-    ShowQuitPrompt();
-    return;
-  }
-  PushMenuScreen(SpawnMenu(MenuScreenMain));
-  */
 }
 
 
 //==========================================================================
 //
-//  ShowQuitPrompt
+//  GetQuitPromptText
+//
+//  override this in subclasses
 //
 //==========================================================================
-override void ShowQuitPrompt () {
-  if (!IsQuitPromptEnabled()) { CmdBuf_AddText("Quit\n"); return; }
-  MessageBoxStartMessage("Do you really want to leave?", MB_Quit, true);
+override string GetQuitPromptText () {
+  return "Do you really want to leave?";
 }
 
 
