@@ -372,4 +372,6 @@ defaultproperties
   BigSelectorAnimFrames[1] = 'm_slctr2';
   DefaultFinaleMusic = 'hub';
   DefaultFinaleType = 'EndGameChess';
+  YesMenuColor = "Red";
+  NoMenuColor = "Red";
 }
