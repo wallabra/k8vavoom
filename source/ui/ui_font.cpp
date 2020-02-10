@@ -409,7 +409,9 @@ void VFont::ParseFontDefs () {
 //
 //==========================================================================
 VFont *VFont::FindFont (VName AName) {
-  for (VFont *F = Fonts; F; F = F->Next) if (F->Name == AName) return F;
+  for (VFont *F = Fonts; F; F = F->Next) {
+    if (F->Name == AName || VStr::strEquCI(*F->Name, *AName)) return F;
+  }
   return nullptr;
 }
 
