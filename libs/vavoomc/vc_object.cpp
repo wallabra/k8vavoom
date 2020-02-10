@@ -1366,7 +1366,12 @@ static int isPrefixedDigit (const char *s, const char *pfx, int minpfxlen, int m
 //
 //==========================================================================
 int VObject::VKeyFromName (VStr kn) {
+  const int oldlen = kn.length();
+  kn = kn.xstrip();
+  if (oldlen > 0 && kn.isEmpty()) kn = " "; // alot of spaces are equal to one space
+
   if (kn.isEmpty()) return 0;
+
   if (kn.length() == 1) {
     vuint8 ch = (vuint8)kn[0];
     if (ch >= '0' && ch <= '9') return K_N0+(ch-'0');
