@@ -590,8 +590,6 @@ void SCR_Update (bool fullUpdate) {
 
   // draw user interface
   GRoot->DrawWidgets();
-  // menu drawing
-  MN_Drawer();
   // console drawing
   C_Drawer();
   // various on-screen statistics

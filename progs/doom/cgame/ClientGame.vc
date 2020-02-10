@@ -276,18 +276,18 @@ override void SetMenu (string Name) {
   if (!stricmp(Name, "Main")) { PushMenuScreen(SpawnMenu(MenuScreenMain)); return; }
   if (!stricmp(Name, "PSetup")) { PushMenuScreen(SpawnMenu(MenuScreenPlayerSetup)); return; }
   if (!stricmp(Name, "Help")) { PushMenuScreen(SpawnMenu(MenuScreenHelp)); return; }
-  if (!stricmp(Name, "Quit")) { menu_quit(); return; }
+  if (!stricmp(Name, "Quit")) { ShowQuitPrompt(); return; }
   PushMenuScreen(SpawnMenu(MenuScreenMain));
 }
 
 
 //==========================================================================
 //
-//  menu_quit
+//  ShowQuitPrompt
 //
 //==========================================================================
-override void menu_quit () {
-  if (!GetCvarB('menu_quit_prompt')) { CmdBuf_AddText("Quit\n"); return; }
+override void ShowQuitPrompt () {
+  if (!IsQuitPromptEnabled()) { CmdBuf_AddText("Quit\n"); return; }
   LocalSound('misc/chat');
   MessageBoxStartMessage(va("%s\n\n(press y to quit)", endmsg[P_Random()%NUM_END_MESSAGES]), MB_Quit, true);
 }
@@ -301,12 +301,15 @@ override void menu_quit () {
 override void QuitResponse (int ch) {
   if (ch != K_y) return;
   // continue to show message box
+  QuitMessageBoxSound(quitsounds[P_Random()%quitsounds.length]);
+  /*
   messageToPrint = true;
   WaitForQuit = true;
   QuitSound = quitsounds[P_Random()&7];
   StopLocalSounds();
   CmdBuf_AddText("Music stop\n");
   LocalSound(QuitSound);
+  */
 }
 
 
@@ -383,7 +386,7 @@ override void DrawViewBorder (int x, int y, int w, int h) {
 
 defaultproperties {
   sb_height = 32;
-  MsgBoxFlat = 'flat20';
+  msgboxState.flatName = 'flat20';
   BigSelectorXOffset = -32;
   BigSelectorYOffset = -5;
   BigSelectorAnimSpeed = 4;

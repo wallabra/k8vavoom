@@ -26,7 +26,6 @@
 
 void MN_Init ();
 bool MN_Responder (event_t *ev);
-void MN_Drawer ();
 void MN_ActivateMenu ();
 void MN_DeactivateMenu ();
 bool MN_Active ();

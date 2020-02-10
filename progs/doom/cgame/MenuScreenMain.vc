@@ -72,7 +72,7 @@ override void CreateChoices () {
   auto btn = MenuBigTextButton(NewChild(MenuBigTextButton));
   btn.SetPos(ChoicesStartX, currentY);
   btn.Text = "Quit game";
-  btn.Activated = delegate void (Object Sender) { ClGame.menu_quit(); };
+  btn.Activated = delegate void (Object Sender) { ClGame.ShowQuitPrompt(); };
 }
 
 

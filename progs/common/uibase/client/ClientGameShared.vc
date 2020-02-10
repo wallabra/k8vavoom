@@ -25,17 +25,6 @@
 //**************************************************************************
 class ClientGameShared : LineSpecialClientGame abstract;
 
-enum {
-  MB_None,
-  MB_Quit,
-  MB_ControlAll,
-  MB_ControlStrife,
-  MB_ControlNonStrife,
-  MB_Shareware,
-  MB_Nightmare,
-  MB_EndGame,
-}
-
 // for gzdoom
 struct OptionValueDef {
   string caption;
@@ -70,20 +59,6 @@ string SkillClassName;
 int SkillToConfirm;
 
 
-// message box
-bool messageToPrint;
-int msgBoxX;
-int msgBoxY;
-int msgBoxW;
-int msgBoxH;
-string messageString; // ...and here is the message string!
-bool messageNeedsInput; // timed message = no input from user
-int messageType;
-name MsgBoxFlat;
-
-name QuitSound;
-bool WaitForQuit;
-
 int BigSelectorXOffset;
 int BigSelectorYOffset;
 int BigSelectorAnimSpeed;
@@ -95,6 +70,50 @@ name DefaultFinaleType;
 
 array!MenuDefinition menudefs;
 
+
+// ////////////////////////////////////////////////////////////////////////// //
+enum MsgBoxInputType {
+  None,
+  YesNo,
+  Keybind,
+}
+
+enum {
+  MB_None,
+  MB_Quit,
+  MB_ControlAll,
+  MB_ControlStrife,
+  MB_ControlNonStrife,
+  MB_Shareware,
+  MB_Nightmare,
+  MB_EndGame,
+}
+
+
+// message box
+struct MessageBoxState {
+  bool active;
+  int x;
+  int y;
+  int width;
+  int height;
+  string text; // ...and here is the message string!
+  bool wantInput; // timed message = no input from user
+  int type; // MB_XXX
+  name flatName;
+  // for quit box
+  name soundName;
+  bool playAndQuit;
+}
+
+MessageBoxState msgboxState;
+
+
+//**************************************************************************
+//
+// menu filter API
+//
+//**************************************************************************
 
 //==========================================================================
 //
@@ -525,7 +544,7 @@ bool SetCommonMenu (string Name) {
   }
 
   //if (!stricmp(Name, "Help")) { PushMenuScreen(SpawnMenu(MenuScreenHelp)); return true; }
-  //if (!stricmp(Name, "Quit")) { menu_quit(); return true; }
+  //if (!stricmp(Name, "Quit")) { ShowQuitPrompt(); return true; }
   //PushMenuScreen(SpawnMenu(MenuScreenMain));
   return false;
 }
@@ -758,6 +777,52 @@ void ForceMenuOff () {
 }
 
 
+//**************************************************************************
+//
+// message box API
+//
+//**************************************************************************
+
+//==========================================================================
+//
+//  IsQuitPromptEnabled
+//
+//==========================================================================
+bool IsQuitPromptEnabled () {
+  return GetCvarB('menu_quit_prompt');
+}
+
+
+//==========================================================================
+//
+//  GetMessageBoxInputType
+//
+//==========================================================================
+MsgBoxInputType GetMessageBoxInputType () {
+  if (!msgboxState.active || !msgboxState.wantInput) return MsgBoxInputType.None;
+  if (msgboxState.type == MB_None) return MsgBoxInputType.None; //wtf?!
+  if (msgboxState.type == MB_Shareware) return MsgBoxInputType.None; //wtf?!
+  if (msgboxState.type >= MB_ControlAll && msgboxState.type <= MB_ControlNonStrife) return MsgBoxInputType.Keybind; //wtf?!
+  return MsgBoxInputType.YesNo;
+}
+
+
+//==========================================================================
+//
+//  QuitMessageBoxSound
+//
+//==========================================================================
+void QuitMessageBoxSound (name QuitSound) {
+  if (!QuitSound) return;
+  msgboxState.active = true;
+  msgboxState.playAndQuit = true;
+  msgboxState.soundName = QuitSound;
+  StopLocalSounds();
+  CmdBuf_AddText("Music stop\n");
+  LocalSound(QuitSound);
+}
+
+
 //==========================================================================
 //
 //  MessageBoxStartMessage
@@ -770,25 +835,25 @@ void MessageBoxStartMessage (string text, int type, bool input) {
   if (ui_msgxbox_wrap_trigger > 0 && ui_msgxbox_wrap_width > 0) {
     // split too long text
     GRoot.SetFont('smallfont');
-    msgBoxW = GRoot.TextWidth(text);
-    //if (msgBoxW > GetVirtualWidth()-192) text = GRoot.SplitTextWithNewlines(text, /*GetVirtualWidth()-132*/304);
-    if (float(msgBoxW)/float(GetVirtualWidth()) > ui_msgxbox_wrap_trigger) {
+    msgboxState.width = GRoot.TextWidth(text);
+    //if (msgboxState.width > GetVirtualWidth()-192) text = GRoot.SplitTextWithNewlines(text, /*GetVirtualWidth()-132*/304);
+    if (float(msgboxState.width)/float(GetVirtualWidth()) > ui_msgxbox_wrap_trigger) {
       int newwdt = int(float(GetVirtualWidth())*ui_msgxbox_wrap_width);
-      //print("oldwdt=%s; oldtext=<%q>", msgBoxW, text);
+      //print("oldwdt=%s; oldtext=<%q>", msgboxState.width, text);
       text = GRoot.SplitTextWithNewlines(text, newwdt, trimRight:true);
       //print("newwdt=%s; newtext=<%q>", newwdt, text);
     }
   }
 
-  messageToPrint = true;
-  messageString = text;
-  messageType = type;
-  messageNeedsInput = input;
+  msgboxState.active = true;
+  msgboxState.text = text;
+  msgboxState.type = type;
+  msgboxState.wantInput = input;
 
-  msgBoxW = min(/*304*/GetVirtualWidth()-16, (GRoot.TextWidth(messageString)+16)&~15);
-  msgBoxH = min(/*184*/GetVirtualHeight()-16, (GRoot.TextHeight(messageString)+16)&~15);
-  msgBoxX = (GetVirtualWidth()-msgBoxW)/2;
-  msgBoxY = (GetVirtualHeight()-msgBoxH)/2;
+  msgboxState.width = min(/*304*/GetVirtualWidth()-16, (GRoot.TextWidth(msgboxState.text)+16)&~15);
+  msgboxState.height = min(/*184*/GetVirtualHeight()-16, (GRoot.TextHeight(msgboxState.text)+16)&~15);
+  msgboxState.x = (GetVirtualWidth()-msgboxState.width)/2;
+  msgboxState.y = (GetVirtualHeight()-msgboxState.height)/2;
 
   if (type >= MB_ControlAll && type <= MB_ControlNonStrife) SetCvar('__ui_control_waiting', 1);
 
@@ -803,16 +868,16 @@ void MessageBoxStartMessage (string text, int type, bool input) {
 //==========================================================================
 override void MessageBoxDrawer () {
   // horiz. & vertically centre string and print it
-  if (messageToPrint) {
-    GRoot.FillRectWithFlatRepeat(msgBoxX, msgBoxY, msgBoxW, msgBoxH, MsgBoxFlat);
-    DrawBorder(msgBoxX, msgBoxY, msgBoxW, msgBoxH);
-    //GRoot.DrawRect(msgBoxX, msgBoxY, msgBoxW, msgBoxH, RGB(255, 0, 0));
+  if (msgboxState.active) {
+    GRoot.FillRectWithFlatRepeat(msgboxState.x, msgboxState.y, msgboxState.width, msgboxState.height, msgboxState.flatName);
+    DrawBorder(msgboxState.x, msgboxState.y, msgboxState.width, msgboxState.height);
+    //GRoot.DrawRect(msgboxState.x, msgboxState.y, msgboxState.width, msgboxState.height, RGB(255, 0, 0));
     GRoot.SetFont('smallfont');
     GRoot.SetTextAlign(hcentre, vcentre);
-    GRoot.DrawText(GetVirtualWidth()/2, GetVirtualHeight()/2, messageString);
+    GRoot.DrawText(GetVirtualWidth()/2, GetVirtualHeight()/2, msgboxState.text);
   }
 
-  if (WaitForQuit && !IsLocalSoundPlaying(QuitSound)) {
+  if (msgboxState.playAndQuit && !IsLocalSoundPlaying(msgboxState.soundName)) {
     CmdBuf_AddText("Quit\n");
   }
 }
@@ -824,29 +889,42 @@ override void MessageBoxDrawer () {
 //
 //==========================================================================
 override bool MessageBoxResponder (event_t *event) {
-  if (WaitForQuit) return true;
+  if (msgboxState.playAndQuit) return true;
 
   // take care of any messages that need input
-  if (messageToPrint && event.type == ev_keydown) {
-    if (messageNeedsInput &&
-        event.keycode != K_SPACE &&
-        event.keycode != K_n &&
-        event.keycode != K_y &&
-        event.keycode != K_ESCAPE &&
-        event.keycode != K_MOUSE1 && event.keycode != K_MOUSE2)
-    {
-      return true;
+  if (msgboxState.active && event.type == ev_keydown) {
+    if (msgboxState.wantInput && GetMessageBoxInputType() == MsgBoxInputType.YesNo) {
+      if (event.keycode != K_SPACE &&
+          event.keycode != K_n &&
+          event.keycode != K_y &&
+          event.keycode != K_t &&
+          event.keycode != K_o &&
+          event.keycode != K_ESCAPE &&
+          event.keycode != K_MOUSE1 && event.keycode != K_MOUSE2)
+      {
+        // ignore other keys
+        return true;
+      }
+      // translate some keypresses to positive answers
+      switch (event.keycode) {
+        case K_t:
+        case K_SPACE:
+        case K_MOUSE1:
+          event.keycode = K_y;
+          break;
+        //case K_o: event.keycode = K_n; break;
+      }
     }
 
-    messageToPrint = false;
-    switch (messageType) {
+    msgboxState.active = false;
+    switch (msgboxState.type) {
       case MB_None: break;
       case MB_Quit: QuitResponse(event->data1); break;
       case MB_ControlAll:
       case MB_ControlStrife:
       case MB_ControlNonStrife:
         SetCvar('__ui_control_waiting', 0);
-        ControlResponse(event->data1, messageType);
+        ControlResponse(event->data1, msgboxState.type);
         break;
       case MB_Shareware: SharewareResponse(event->data1); break;
       case MB_Nightmare: VerifyNightmare(event->data1); break;
@@ -867,7 +945,7 @@ override bool MessageBoxResponder (event_t *event) {
 //
 //==========================================================================
 override bool MessageBoxActive () {
-  return messageToPrint;
+  return msgboxState.active;
 }
 
 
@@ -919,7 +997,7 @@ void ControlResponse (int key, int msgtype) {
 //
 //==========================================================================
 void VerifyNightmare (int ch) {
-  if (ch != K_y && ch != K_t) return;
+  if (ch != K_y) return;
   NewGame(SkillToConfirm);
 }
 
@@ -930,8 +1008,24 @@ void VerifyNightmare (int ch) {
 //
 //==========================================================================
 void EndGameResponse (int ch) {
-  if (ch != K_y && ch != K_t) return;
+  if (ch != K_y) return;
   CmdBuf_AddText("Disconnect\n");
+}
+
+
+void ShowQuitPrompt () {
+}
+
+
+void DrawBorder (int x, int y, int w, int h, optional int ybotofs) {
+}
+
+
+void QuitResponse (int key) {
+}
+
+
+void SharewareResponse (int key) {
 }
 
 
@@ -1017,22 +1111,6 @@ void NewGame (int SkillLevel) {
   CmdBuf_AddText("Map \"%q\"\n", MenuStartMap);
 
   ForceMenuOff();
-}
-
-
-void menu_quit () {
-}
-
-
-void DrawBorder (int x, int y, int w, int h, optional int ybotofs) {
-}
-
-
-void QuitResponse (int key) {
-}
-
-
-void SharewareResponse (int key) {
 }
 
 

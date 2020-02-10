@@ -268,23 +268,22 @@ override void SetMenu (string Name) {
   if (!stricmp(Name, "Main")) { PushMenuScreen(SpawnMenu(MenuScreenMain)); return; }
   if (!stricmp(Name, "PSetup")) { PushMenuScreen(SpawnMenu(MenuScreenPlayerSetup)); return; }
   if (!stricmp(Name, "Help")) { PushMenuScreen(SpawnMenu(MenuScreenHelp)); return; }
-  if (!stricmp(Name, "Quit")) { menu_quit(); return; }
+  if (!stricmp(Name, "Quit")) { ShowQuitPrompt(); return; }
   PushMenuScreen(SpawnMenu(MenuScreenMain));
 }
 
 
 //==========================================================================
 //
-//  menu_quit
+//  ShowQuitPrompt
 //
 //==========================================================================
-
-override void menu_quit()
-{
-  if (!GetCvarB('menu_quit_prompt')) { CmdBuf_AddText("Quit\n"); return; }
+override void ShowQuitPrompt () {
+  if (!IsQuitPromptEnabled()) { CmdBuf_AddText("Quit\n"); return; }
   LocalSound('misc/chat');
   MessageBoxStartMessage("ARE YOU SURE YOU WANT TO QUIT?", MB_Quit, true);
 }
+
 
 //==========================================================================
 //
@@ -365,7 +364,7 @@ override void DrawViewBorder(int x, int y, int w, int h)
 defaultproperties
 {
   sb_height = 39;
-  MsgBoxFlat = 'f_019';
+  msgboxState.flatName = 'f_019';
   BigSelectorXOffset = -28;
   BigSelectorYOffset = -1;
   BigSelectorAnimSpeed = 2;

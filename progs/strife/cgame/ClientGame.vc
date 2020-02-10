@@ -262,7 +262,7 @@ override void SetMenu (string Name) {
   if (!stricmp(Name, "Load")) { PushMenuScreen(SpawnMenu(MenuScreenLoadGame)); return; }
   if (!stricmp(Name, "PSetup")) { PushMenuScreen(SpawnMenu(MenuScreenPlayerSetup)); return; }
   if (!stricmp(Name, "Help")) { PushMenuScreen(SpawnMenu(MenuScreenHelp)); return; }
-  if (!stricmp(Name, "Quit")) { menu_quit(); return; }
+  if (!stricmp(Name, "Quit")) { ShowQuitPrompt(); return; }
   PushMenuScreen(SpawnMenu(MenuScreenMain));
 
   /*
@@ -308,7 +308,7 @@ override void SetMenu (string Name) {
   }
   if (!stricmp(Name, "Quit"))
   {
-    menu_quit();
+    ShowQuitPrompt();
     return;
   }
   PushMenuScreen(SpawnMenu(MenuScreenMain));
@@ -318,12 +318,12 @@ override void SetMenu (string Name) {
 
 //==========================================================================
 //
-//  menu_quit
+//  ShowQuitPrompt
 //
 //==========================================================================
-override void menu_quit () {
-  if (!GetCvarB('menu_quit_prompt')) { CmdBuf_AddText("Quit\n"); return; }
-  MessageBoxStartMessage("Do you really want to leave?\n\n(press y to quit)", MB_Quit, true);
+override void ShowQuitPrompt () {
+  if (!IsQuitPromptEnabled()) { CmdBuf_AddText("Quit\n"); return; }
+  MessageBoxStartMessage("Do you really want to leave?\n\n(press Y to quit)", MB_Quit, true);
 }
 
 
@@ -333,7 +333,7 @@ override void menu_quit () {
 //
 //==========================================================================
 override void QuitResponse (int ch) {
-  if (ch != K_y && ch != K_t) return;
+  if (ch != K_y) return;
   PushMenuScreen(SpawnMenu(MenuScreenQuit));
 }
 
@@ -440,7 +440,7 @@ override void SetFinaleType (int FinaleType) {
 
 defaultproperties {
   sb_height = 32;
-  MsgBoxFlat = 'f_pave01';
+  msgboxState.flatName = 'f_pave01';
   BigSelectorXOffset = -32;
   BigSelectorYOffset = -5;
   BigSelectorAnimSpeed = 6;

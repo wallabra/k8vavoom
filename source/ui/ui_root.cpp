@@ -53,6 +53,9 @@ void VRootWidget::Init () {
 void VRootWidget::DrawWidgets () {
   cleanupWidgets();
   DrawTree();
+  // draw message box
+  if (GClGame) GClGame->eventMessageBoxDrawer();
+  // draw mouse cursor
   if (RootFlags&RWF_MouseEnabled) DrawPic(MouseX-16, MouseY-16, MouseCursorPic);
 }
 
