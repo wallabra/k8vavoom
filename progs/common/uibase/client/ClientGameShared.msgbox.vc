@@ -247,6 +247,25 @@ void MessageBoxShowSkillQuery (string text) {
 
 //==========================================================================
 //
+//  MessageBoxGetMenuItemAt
+//
+//  returns -1, or menu item index
+//
+//==========================================================================
+int MessageBoxGetMenuItemAt (int x, int y) {
+  if (!msgboxState.active || !msgboxState.wantInput || GetMessageBoxInputType() != MsgBoxInputType.YesNo) return -1;
+  if (x < msgboxState.x || x >= msgboxState.x+msgboxState.width-4) return -1;
+  if (y < msgboxState.y || y >= msgboxState.y+msgboxState.height) return -1;
+  GRoot.SetFont('smallfont');
+  int y0 = (GRoot.Height-GRoot.TextHeight(msgboxState.text))/2;
+  if (y >= y0+msgboxState.yesBarY && y < y0+msgboxState.yesBarY+msgboxState.yesBarHeight) return 0;
+  if (y >= y0+msgboxState.noBarY && y < y0+msgboxState.noBarY+msgboxState.noBarHeight) return 1;
+  return -1;
+}
+
+
+//==========================================================================
+//
 //  MessageBoxDrawer
 //
 //==========================================================================
@@ -291,35 +310,44 @@ override bool MessageBoxResponder (event_t *event) {
   if (msgboxState.active && event.type == ev_keydown) {
     if (msgboxState.wantInput && GetMessageBoxInputType() == MsgBoxInputType.YesNo) {
       // menu selection
-      switch (Widget.ConvertBoundKey(event.keycode)) {
-        case K_UPARROW:
-        case K_HOME:
-          MessageBoxSetYesNoPos(true);
-          return true;
-        case K_DOWNARROW:
-        case K_END:
-          MessageBoxSetYesNoPos(false);
-          return true;
-        case K_ENTER:
-        case K_SPACE:
-          // menu selection
-          event.keycode = (msgboxState.currYes ? K_y : K_n);
-          break;
-        // translate some keypresses to answers
-        case K_t:
-        case K_y:
-          MessageBoxSetYesNoPos(true);
-          event.keycode = K_y;
-          break;
-        case K_o:
-        case K_n:
-        case K_ESCAPE:
-          MessageBoxSetYesNoPos(false);
-          event.keycode = K_n;
-          break;
-        default:
-          // eat other keys
-          return true;
+      if (event.keycode == K_ENTER || event.keycode == K_SPACE || event.keycode == K_MOUSE1) {
+        // menu selection
+        event.keycode = (msgboxState.currYes ? K_y : K_n);
+      } else if (event.keycode == K_ESCAPE || event.keycode == K_MOUSE2) {
+        MessageBoxSetYesNoPos(false);
+        event.keycode = K_n;
+      } else {
+        switch (Widget.ConvertBoundKey(event.keycode)) {
+          case K_UPARROW:
+          case K_HOME:
+            MessageBoxSetYesNoPos(true);
+            return true;
+          case K_DOWNARROW:
+          case K_END:
+            MessageBoxSetYesNoPos(false);
+            return true;
+          case K_ENTER:
+          case K_SPACE:
+          case K_MOUSE1:
+            // menu selection
+            event.keycode = (msgboxState.currYes ? K_y : K_n);
+            break;
+          // translate some keypresses to answers
+          case K_t:
+          case K_y:
+            MessageBoxSetYesNoPos(true);
+            event.keycode = K_y;
+            break;
+          case K_o:
+          case K_n:
+          case K_ESCAPE:
+            MessageBoxSetYesNoPos(false);
+            event.keycode = K_n;
+            break;
+          default:
+            // eat other keys
+            return true;
+        }
       }
     }
 
@@ -340,6 +368,15 @@ override bool MessageBoxResponder (event_t *event) {
 
     CheckAndDeactivateUIMouse();
     return true;
+  }
+
+  if (msgboxState.active && GRoot.bMouseEnabled && event.type == ev_uimouse) {
+    //printdebug("mouse! x=%s; y=%s", GRoot.MouseX, GRoot.MouseY);
+    if (msgboxState.wantInput && GetMessageBoxInputType() == MsgBoxInputType.YesNo) {
+      int idx = MessageBoxGetMenuItemAt(GRoot.MouseX, GRoot.MouseY);
+      if (idx >= 0) MessageBoxSetYesNoPos(idx == 0);
+      return true;
+    }
   }
 
   return false;
