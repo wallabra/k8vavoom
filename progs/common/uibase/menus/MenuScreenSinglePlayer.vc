@@ -130,8 +130,7 @@ void ActivateSave (Object Sender) {
 //
 //==========================================================================
 void ActivateEndGame (Object Sender) {
-  //CmdBuf_AddText("Disconnect\n");
-  ClGame.MessageBoxStartMessage("Do you want to end current game?", ClientGameShared::MessageBoxType.EndGame, true);
+  ClGame.MessageBoxShowEndGameQuery();
 }
 
 

@@ -83,10 +83,10 @@ override void CreateChoices () {
 void ActivateEpisode (Object Sender) {
   MenuChoiceEpisode Epi = MenuChoiceEpisode(Sender);
   if (!IsMapPresent(Epi.EDef->Name)) {
-    ClGame.MessageBoxStartMessage("ONLY AVAILABLE IN THE REGISTERED VERSION", ClientGameShared::MessageBoxType.Shareware, false);
+    ClGame.MessageBoxShowSharewareWarning();
     return;
   }
-  ClientGameShared(ClGame).SetEpisode(Epi.EDef);
+  ClGame.SetEpisode(Epi.EDef);
 }
 
 

@@ -916,6 +916,58 @@ void MessageBoxStartMessage (string text, MessageBoxType type, bool input) {
 
 //==========================================================================
 //
+//  MessageBoxStartBindQuery
+//
+//  strifeMode:
+//    <0: non-strife
+//    >1: strife
+//    =0: don't care
+//
+//==========================================================================
+void MessageBoxStartBindQuery (MenuControlKey currctl, int strifeMode) {
+  CurrentCtl = currctl;
+  auto mt = (strifeMode < 0 ? MessageBoxType.ControlNonStrife : strifeMode > 0 ? MessageBoxType.ControlStrife : MessageBoxType.ControlAll);
+  MessageBoxStartMessage("Press new key\n\nESC to cancel", mt, input:false);
+}
+
+
+//==========================================================================
+//
+//  MessageBoxShowSharewareWarning
+//
+//==========================================================================
+void MessageBoxShowSharewareWarning (optional string text) {
+  if (!text) text = "ONLY AVAILABLE IN THE REGISTERED VERSION";
+  MessageBoxStartMessage(text, MessageBoxType.Shareware, input:false);
+}
+
+
+//==========================================================================
+//
+//  MessageBoxShowEndGameQuery
+//
+//==========================================================================
+void MessageBoxShowEndGameQuery (optional string text) {
+  if (!text) text = "Do you really want to end the game?";
+  MessageBoxStartMessage(text, MessageBoxType.EndGame, input:true);
+}
+
+
+//==========================================================================
+//
+//  MessageBoxShowSkillQuery
+//
+//==========================================================================
+void MessageBoxShowSkillQuery (string text) {
+  while (text.length && text[0] <= ' ') text = text[1..$];
+  while (text.length && text[$-1] <= ' ') text = text[0..$-1];
+  if (!text) text = "Are you sure? This skill level\nisn't even remotely fair.";
+  MessageBoxStartMessage(text, MessageBoxType.Nightmare, true);
+}
+
+
+//==========================================================================
+//
 //  MessageBoxDrawer
 //
 //==========================================================================
@@ -1123,7 +1175,7 @@ void ShowQuitPrompt () {
   if (QuitPromptSound) LocalSound('misc/chat');
   string text = GetQuitPromptText();
   if (!text) text = "ARE YOU SURE YOU WANT TO QUIT?";
-  MessageBoxStartMessage(text, MessageBoxType.Quit, true);
+  MessageBoxStartMessage(text, MessageBoxType.Quit, input:true);
 }
 
 

@@ -97,10 +97,7 @@ void ActivateSkill (Object Sender) {
   MenuChoiceSkill Btn = MenuChoiceSkill(Sender);
   if (Btn.bMustConfirm) {
     ClGame.SkillToConfirm = Btn.SkillIndex;
-    ClGame.MessageBoxStartMessage(
-      Btn.ConfirmationText ? Btn.ConfirmationText :
-      "Are you sure? This skill level\nisn't even remotely fair.",
-      ClientGameShared::MessageBoxType.Nightmare, true);
+    ClGame.MessageBoxShowSkillQuery(Btn.ConfirmationText);
   } else {
     ClGame.NewGame(Btn.SkillIndex);
   }
