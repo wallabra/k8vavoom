@@ -833,10 +833,14 @@ static final int ConvertBoundKey (int key) {
 
   // convert numpad arrows
   switch (key) {
-    case K_PAD8: return K_UPARROW;
+    case K_PAD1: return K_END;
     case K_PAD2: return K_DOWNARROW;
+    case K_PAD3: return K_PAGEDOWN;
     case K_PAD4: return K_LEFTARROW;
     case K_PAD6: return K_RIGHTARROW;
+    case K_PAD7: return K_HOME;
+    case K_PAD8: return K_UPARROW;
+    case K_PAD9: return K_PAGEUP;
     case K_PADENTER: return K_ENTER;
   }
 

@@ -98,12 +98,15 @@ struct MessageBoxState {
   int width;
   int height;
   string text; // ...and here is the message string!
+  string origText; // w/o YES/NO menu
   bool wantInput; // timed message = no input from user
   int type; // MB_XXX
   name flatName;
   // for quit box
   name soundName;
   bool playAndQuit;
+  // for yes/no
+  bool currYes;
 }
 
 MessageBoxState msgboxState;
@@ -825,6 +828,34 @@ void QuitMessageBoxSound (name QuitSound) {
 
 //==========================================================================
 //
+//  MessageBoxAppendYesNoMenuText
+//
+//==========================================================================
+protected void MessageBoxAppendYesNoMenuText () {
+  if (msgboxState.currYes) {
+    msgboxState.text ~= "\n\n\c[White][YES]\c-\nNO";
+  } else {
+    msgboxState.text ~= "\n\nYES\n\c[White][NO]\c-";
+  }
+}
+
+
+//==========================================================================
+//
+//  MessageBoxSetYesNoPos
+//
+//==========================================================================
+void MessageBoxSetYesNoPos (bool yes) {
+  if (msgboxState.currYes != yes) {
+    msgboxState.currYes = yes;
+    msgboxState.text = msgboxState.origText;
+    MessageBoxAppendYesNoMenuText();
+  }
+}
+
+
+//==========================================================================
+//
 //  MessageBoxStartMessage
 //
 //==========================================================================
@@ -847,8 +878,14 @@ void MessageBoxStartMessage (string text, int type, bool input) {
 
   msgboxState.active = true;
   msgboxState.text = text;
+  msgboxState.origText = text;
   msgboxState.type = type;
   msgboxState.wantInput = input;
+  msgboxState.currYes = true;
+
+  if (msgboxState.wantInput && GetMessageBoxInputType() == MsgBoxInputType.YesNo) {
+    MessageBoxAppendYesNoMenuText();
+  }
 
   msgboxState.width = min(/*304*/GetVirtualWidth()-16, (GRoot.TextWidth(msgboxState.text)+16)&~15);
   msgboxState.height = min(/*184*/GetVirtualHeight()-16, (GRoot.TextHeight(msgboxState.text)+16)&~15);
@@ -875,6 +912,9 @@ override void MessageBoxDrawer () {
     GRoot.SetFont('smallfont');
     GRoot.SetTextAlign(hcentre, vcentre);
     GRoot.DrawText(GetVirtualWidth()/2, GetVirtualHeight()/2, msgboxState.text);
+
+    if (msgboxState.wantInput && GetMessageBoxInputType() == MsgBoxInputType.YesNo) {
+    }
   }
 
   if (msgboxState.playAndQuit && !IsLocalSoundPlaying(msgboxState.soundName)) {
@@ -894,25 +934,36 @@ override bool MessageBoxResponder (event_t *event) {
   // take care of any messages that need input
   if (msgboxState.active && event.type == ev_keydown) {
     if (msgboxState.wantInput && GetMessageBoxInputType() == MsgBoxInputType.YesNo) {
-      if (event.keycode != K_SPACE &&
-          event.keycode != K_n &&
-          event.keycode != K_y &&
-          event.keycode != K_t &&
-          event.keycode != K_o &&
-          event.keycode != K_ESCAPE &&
-          event.keycode != K_MOUSE1 && event.keycode != K_MOUSE2)
-      {
-        // ignore other keys
-        return true;
-      }
-      // translate some keypresses to positive answers
-      switch (event.keycode) {
-        case K_t:
+      // menu selection
+      switch (Widget.ConvertBoundKey(event.keycode)) {
+        case K_UPARROW:
+        case K_HOME:
+          MessageBoxSetYesNoPos(true);
+          return true;
+        case K_DOWNARROW:
+        case K_END:
+          MessageBoxSetYesNoPos(false);
+          return true;
+        case K_ENTER:
         case K_SPACE:
-        case K_MOUSE1:
+          // menu selection
+          event.keycode = (msgboxState.currYes ? K_y : K_n);
+          break;
+        // translate some keypresses to answers
+        case K_t:
+        case K_y:
+          MessageBoxSetYesNoPos(true);
           event.keycode = K_y;
           break;
-        //case K_o: event.keycode = K_n; break;
+        case K_o:
+        case K_n:
+        case K_ESCAPE:
+          MessageBoxSetYesNoPos(false);
+          event.keycode = K_n;
+          break;
+        default:
+          // eat other keys
+          return true;
       }
     }
 
