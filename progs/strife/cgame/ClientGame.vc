@@ -323,7 +323,7 @@ override void SetMenu (string Name) {
 //==========================================================================
 override void ShowQuitPrompt () {
   if (!IsQuitPromptEnabled()) { CmdBuf_AddText("Quit\n"); return; }
-  MessageBoxStartMessage("Do you really want to leave?\n\n(press Y to quit)", MB_Quit, true);
+  MessageBoxStartMessage("Do you really want to leave?", MB_Quit, true);
 }
 
 
