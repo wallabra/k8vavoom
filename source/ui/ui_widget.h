@@ -228,17 +228,21 @@ public:
   void DrawRect (int X, int Y, int Width, int Height, int color, float alpha);
   void DrawLine (int aX0, int aY0, int aX1, int aY1, int color, float alpha);
 
-  void SetFont (VFont*);
+  VFont *GetFont () noexcept;
+  void SetFont (VFont *AFont) noexcept;
   void SetFont (VName);
   void SetTextAlign (halign_e, valign_e);
   void SetTextShadow (bool);
-  void DrawText (int, int, VStr, int, int, float);
+  void DrawText (int x, int y, VStr String, int NormalColor, int BoldColor, float Alpha);
   int TextWidth (VStr);
   int TextHeight (VStr);
   int StringWidth (VStr);
   int FontHeight ();
   void DrawCursor ();
   void DrawCursorAt (int, int);
+
+  // returns text bounds with respect to the current text align
+  void TextBounds (int x, int y, VStr String, int *x0, int *y0, int *width, int *height);
 
   inline void SetCursorPos (int ax, int ay) { LastX = ax; LastY = ay; }
   inline void SetCursorX (int v) { LastX = v; }
@@ -326,9 +330,11 @@ public:
   DECLARE_FUNCTION(ShadeRect)
   DECLARE_FUNCTION(DrawLine)
 
+  DECLARE_FUNCTION(GetFont)
   DECLARE_FUNCTION(SetFont)
   DECLARE_FUNCTION(SetTextAlign)
   DECLARE_FUNCTION(SetTextShadow)
+  DECLARE_FUNCTION(TextBounds)
   DECLARE_FUNCTION(TextWidth)
   DECLARE_FUNCTION(StringWidth)
   DECLARE_FUNCTION(TextHeight)

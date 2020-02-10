@@ -918,10 +918,20 @@ void VWidget::DrawLine (int aX0, int aY0, int aX1, int aY1, int color, float alp
 
 //==========================================================================
 //
+//  VWidget::GetFont
+//
+//==========================================================================
+VFont *VWidget::GetFont () noexcept {
+  return Font;
+}
+
+
+//==========================================================================
+//
 //  VWidget::SetFont
 //
 //==========================================================================
-void VWidget::SetFont (VFont *AFont) {
+void VWidget::SetFont (VFont *AFont) noexcept {
   if (!AFont) Sys_Error("VWidget::SetFont: cannot set `nullptr` font");
   Font = AFont;
 }
@@ -1010,6 +1020,39 @@ void VWidget::DrawString (int x, int y, VStr String, int NormalColor, int BoldCo
 
   LastX = cx;
   LastY = cy;
+}
+
+
+//==========================================================================
+//
+//  VWidget::TextBounds
+//
+//  returns text bounds with respect to the current text align
+//
+//==========================================================================
+void VWidget::TextBounds (int x, int y, VStr String, int *x0, int *y0, int *width, int *height) {
+  if (x0 || y0) {
+    if (x0) {
+      int cx = x;
+      if (HAlign == hcentre) cx -= Font->StringWidth(String)/2;
+      if (HAlign == hright) cx -= Font->StringWidth(String);
+      *x0 = cx;
+    }
+
+    if (y0) {
+      int cy = y;
+      if (VAlign == vcentre) cy -= Font->TextHeight(String)/2;
+      if (VAlign == vbottom) cy -= Font->TextHeight(String);
+      *y0 = cy;
+    }
+  }
+
+  if (width || height) {
+    while (!String.isEmpty() && String[String.length()] == '\n') String.chopRight(1);
+
+    if (width) *width = Font->TextWidth(String);
+    if (height) *height = Font->TextHeight(String);
+  }
 }
 
 
@@ -1380,6 +1423,15 @@ IMPLEMENT_FUNCTION(VWidget, DrawLine) {
   if (Self) Self->DrawLine(X1, Y1, X2, Y2, color, alpha);
 }
 
+IMPLEMENT_FUNCTION(VWidget, GetFont) {
+  vobjGetParamSelf();
+  if (Self) {
+    VFont *font = Self->GetFont();
+    if (font) { RET_NAME(font->GetFontName()); return; }
+  }
+  RET_NAME(NAME_None);
+}
+
 IMPLEMENT_FUNCTION(VWidget, SetFont) {
   VName FontName;
   vobjGetParamSelf(FontName);
@@ -1396,6 +1448,22 @@ IMPLEMENT_FUNCTION(VWidget, SetTextShadow) {
   bool State;
   vobjGetParamSelf(State);
   if (Self) Self->SetTextShadow(State);
+}
+
+// native final void TextBounds (int x, int y, string text, out int x0, out int y0, out int width, out int height);
+IMPLEMENT_FUNCTION(VWidget, TextBounds) {
+  int x, y;
+  VStr text;
+  int *x0, *y0, *width, *height;
+  vobjGetParamSelf(x, y, text, x0, y0, width, height);
+  if (Self) {
+    Self->TextBounds(x, y, text, x0, y0, width, height);
+  } else {
+    if (x0) *x0 = x;
+    if (y0) *y0 = y;
+    if (width) *width = 0;
+    if (height) *height = 0;
+  }
 }
 
 IMPLEMENT_FUNCTION(VWidget, TextWidth) {

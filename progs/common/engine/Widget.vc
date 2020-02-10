@@ -204,12 +204,16 @@ native final void DrawRect (int x, int y, int width, int height, int color, opti
 // darkens a screen region
 native final void ShadeRect (int x, int y, int w, int h, float shade);
 
+// returns active font name
+native final name GetFont ();
 // selects active font
 native final void SetFont (name font);
 // changes text alignement
 native final void SetTextAlign (int halign, int valign);
 // enable/disable text shadow
 native final void SetTextShadow (bool on);
+// returns text bounds with respect to the current text align
+native final void TextBounds (int x, int y, string text, out int x0, out int y0, out int width, out int height);
 // calculates text width (correctly processes '\n')
 native final int TextWidth (string text);
 // calculates string width (no '\n' processing)
