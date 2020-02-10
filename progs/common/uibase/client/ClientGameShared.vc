@@ -107,6 +107,8 @@ struct MessageBoxState {
   bool playAndQuit;
   // for yes/no
   bool currYes;
+  int yesBarY, yesBarHeight;
+  int noBarY, noBarHeight;
 }
 
 MessageBoxState msgboxState;
@@ -831,12 +833,21 @@ void QuitMessageBoxSound (name QuitSound) {
 //  MessageBoxAppendYesNoMenuText
 //
 //==========================================================================
-protected void MessageBoxAppendYesNoMenuText () {
-  if (msgboxState.currYes) {
-    msgboxState.text ~= "\n\n\c[White][YES]\c-\nNO";
-  } else {
-    msgboxState.text ~= "\n\nYES\n\c[White][NO]\c-";
-  }
+protected final void MessageBoxAppendYesNoMenuText () {
+  string yesText = (msgboxState.currYes ? "\c[White][YES]\c-" : "YES");
+  string noText = (msgboxState.currYes ? "NO" : "\c[White][NO]\c-");
+
+  msgboxState.yesBarHeight = GRoot.TextHeight(yesText);
+  msgboxState.noBarHeight = GRoot.TextHeight(noText);
+
+  msgboxState.text ~= "\n";
+  msgboxState.yesBarY = GRoot.TextHeight(msgboxState.text);
+  msgboxState.text ~= "\n";
+  msgboxState.text ~= yesText;
+
+  msgboxState.noBarY = GRoot.TextHeight(msgboxState.text);
+  msgboxState.text ~= "\n";
+  msgboxState.text ~= noText;
 }
 
 
@@ -863,9 +874,10 @@ void MessageBoxStartMessage (string text, int type, bool input) {
   float ui_msgxbox_wrap_trigger = GetCvarF('ui_msgxbox_wrap_trigger');
   float ui_msgxbox_wrap_width = GetCvarF('ui_msgxbox_wrap_width');
 
+  GRoot.SetFont('smallfont');
+
   if (ui_msgxbox_wrap_trigger > 0 && ui_msgxbox_wrap_width > 0) {
     // split too long text
-    GRoot.SetFont('smallfont');
     msgboxState.width = GRoot.TextWidth(text);
     //if (msgboxState.width > GetVirtualWidth()-192) text = GRoot.SplitTextWithNewlines(text, /*GetVirtualWidth()-132*/304);
     if (float(msgboxState.width)/float(GetVirtualWidth()) > ui_msgxbox_wrap_trigger) {
@@ -909,12 +921,18 @@ override void MessageBoxDrawer () {
     GRoot.FillRectWithFlatRepeat(msgboxState.x, msgboxState.y, msgboxState.width, msgboxState.height, msgboxState.flatName);
     DrawBorder(msgboxState.x, msgboxState.y, msgboxState.width, msgboxState.height);
     //GRoot.DrawRect(msgboxState.x, msgboxState.y, msgboxState.width, msgboxState.height, RGB(255, 0, 0));
+
+    // draw yes/no selection bar
+    if (msgboxState.wantInput && GetMessageBoxInputType() == MsgBoxInputType.YesNo) {
+      int y0 = (GetVirtualHeight()-GRoot.TextHeight(msgboxState.text))/2;
+      y0 += (msgboxState.currYes ? msgboxState.yesBarY : msgboxState.noBarY);
+      int hgt = (msgboxState.currYes ? msgboxState.yesBarHeight : msgboxState.noBarHeight);
+      GRoot.ShadeRect(msgboxState.x+2, y0, msgboxState.width-4, hgt, 0.6);
+    }
+
     GRoot.SetFont('smallfont');
     GRoot.SetTextAlign(hcentre, vcentre);
     GRoot.DrawText(GetVirtualWidth()/2, GetVirtualHeight()/2, msgboxState.text);
-
-    if (msgboxState.wantInput && GetMessageBoxInputType() == MsgBoxInputType.YesNo) {
-    }
   }
 
   if (msgboxState.playAndQuit && !IsLocalSoundPlaying(msgboxState.soundName)) {
