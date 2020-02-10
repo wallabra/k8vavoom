@@ -96,7 +96,7 @@ protected final string FindOrAddKeySection (string secid, string secname) {
   // add a new section
   sections.length += 1;
   if (!secname) secname = va("--- %s ---", sections.length);
-  sections[$-1].secname = secid;
+  sections[$-1].secname = secname;
   sections[$-1].secid = secid;
   return secid;
 }
@@ -275,6 +275,7 @@ override void CreateChoices () {
       if (!mk.desc || !mk.alias_name) continue;
       if (addHeader) {
         addHeader = false;
+        //printdebug("id=<%s>; name=<%s>", sec.secid, sec.secname);
         AddHeader(sec.secname, firstHdr);
         firstHdr = false;
       }
