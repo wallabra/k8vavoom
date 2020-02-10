@@ -1328,12 +1328,45 @@ VStr VObject::NameFromVKey (int vkey) {
 
 //==========================================================================
 //
+//  isPrefixedDigit
+//
+//  returns digit or -1
+//  allow '_' after the prefix
+//
+//==========================================================================
+static int isPrefixedDigit (const char *s, const char *pfx, int minpfxlen, int maxpfxlen) {
+  if (!s || !s[0]) return -1;
+  // check prefix
+  if (pfx && pfx[0]) {
+    if (!VStr::startsWithCI(s, pfx)) return -1;
+    s += strlen(pfx);
+  }
+  // skip possible underscore or minus
+  if (s[0] == '_' || s[0] == '-') ++s;
+  // parse digit
+  int res = 0;
+  int len = 0;
+  while (*s) {
+    if (len > maxpfxlen) return -1; // too long
+    int dig = VStr::digitInBase(*s, 10);
+    if (dig < 0) return -1; // alas
+    res = res*10+dig;
+    ++s;
+    ++len;
+  }
+  if (len < minpfxlen) return -1; // too short
+  if (len > maxpfxlen) return -1; // just in case
+  return res;
+}
+
+
+//==========================================================================
+//
 //  VObject::VKeyFromName
 //
 //==========================================================================
 int VObject::VKeyFromName (VStr kn) {
   if (kn.isEmpty()) return 0;
-
   if (kn.length() == 1) {
     vuint8 ch = (vuint8)kn[0];
     if (ch >= '0' && ch <= '9') return K_N0+(ch-'0');
@@ -1348,97 +1381,87 @@ int VObject::VKeyFromName (VStr kn) {
     if (ch > 32 && ch < 127) return (int)ch;
   }
 
-  if (kn.ICmp("ESCAPE") == 0) return K_ESCAPE;
-  if (kn.ICmp("ENTER") == 0) return K_ENTER;
-  if (kn.ICmp("RETURN") == 0) return K_ENTER;
-  if (kn.ICmp("TAB") == 0) return K_TAB;
-  if (kn.ICmp("BACKSPACE") == 0) return K_BACKSPACE;
+  if (kn.strEquCI("ESCAPE")) return K_ESCAPE;
+  if (kn.strEquCI("ENTER")) return K_ENTER;
+  if (kn.strEquCI("RETURN")) return K_ENTER;
+  if (kn.strEquCI("TAB")) return K_TAB;
+  if (kn.strEquCI("BACKSPACE")) return K_BACKSPACE;
 
-  if (kn.ICmp("SPACE") == 0) return K_SPACE;
+  if (kn.strEquCI("SPACE")) return K_SPACE;
 
-  if (kn.ICmp("UPARROW") == 0 || kn.ICmp("UP") == 0) return K_UPARROW;
-  if (kn.ICmp("LEFTARROW") == 0 || kn.ICmp("LEFT") == 0) return K_LEFTARROW;
-  if (kn.ICmp("RIGHTARROW") == 0 || kn.ICmp("RIGHT") == 0) return K_RIGHTARROW;
-  if (kn.ICmp("DOWNARROW") == 0 || kn.ICmp("DOWN") == 0) return K_DOWNARROW;
-  if (kn.ICmp("INSERT") == 0 || kn.ICmp("INS") == 0) return K_INSERT;
-  if (kn.ICmp("DELETE") == 0 || kn.ICmp("DEL") == 0) return K_DELETE;
-  if (kn.ICmp("HOME") == 0) return K_HOME;
-  if (kn.ICmp("END") == 0) return K_END;
-  if (kn.ICmp("PAGEUP") == 0 || kn.ICmp("PGUP") == 0) return K_PAGEUP;
-  if (kn.ICmp("PAGEDOWN") == 0 || kn.ICmp("PGDOWN") == 0 || kn.ICmp("PGDN") == 0) return K_PAGEDOWN;
+  if (kn.strEquCI("UPARROW") || kn.strEquCI("UP")) return K_UPARROW;
+  if (kn.strEquCI("LEFTARROW") || kn.strEquCI("LEFT")) return K_LEFTARROW;
+  if (kn.strEquCI("RIGHTARROW") || kn.strEquCI("RIGHT")) return K_RIGHTARROW;
+  if (kn.strEquCI("DOWNARROW") || kn.strEquCI("DOWN")) return K_DOWNARROW;
+  if (kn.strEquCI("INSERT") || kn.strEquCI("INS")) return K_INSERT;
+  if (kn.strEquCI("DELETE") || kn.strEquCI("DEL")) return K_DELETE;
+  if (kn.strEquCI("HOME")) return K_HOME;
+  if (kn.strEquCI("END")) return K_END;
+  if (kn.strEquCI("PAGEUP") || kn.strEquCI("PGUP")) return K_PAGEUP;
+  if (kn.strEquCI("PAGEDOWN") || kn.strEquCI("PGDOWN") || kn.strEquCI("PGDN")) return K_PAGEDOWN;
 
-  if (kn.ICmp("PAD0") == 0 || kn.ICmp("PAD_0") == 0) return K_PAD0;
-  if (kn.ICmp("PAD1") == 0 || kn.ICmp("PAD_1") == 0) return K_PAD1;
-  if (kn.ICmp("PAD2") == 0 || kn.ICmp("PAD_2") == 0) return K_PAD2;
-  if (kn.ICmp("PAD3") == 0 || kn.ICmp("PAD_3") == 0) return K_PAD3;
-  if (kn.ICmp("PAD4") == 0 || kn.ICmp("PAD_4") == 0) return K_PAD4;
-  if (kn.ICmp("PAD5") == 0 || kn.ICmp("PAD_5") == 0) return K_PAD5;
-  if (kn.ICmp("PAD6") == 0 || kn.ICmp("PAD_6") == 0) return K_PAD6;
-  if (kn.ICmp("PAD7") == 0 || kn.ICmp("PAD_7") == 0) return K_PAD7;
-  if (kn.ICmp("PAD8") == 0 || kn.ICmp("PAD_8") == 0) return K_PAD8;
-  if (kn.ICmp("PAD9") == 0 || kn.ICmp("PAD_9") == 0) return K_PAD9;
+  int num = isPrefixedDigit(*kn, "PAD", 1, 1);
+  if (num >= 0) {
+    vassert(num < 10); // just in case
+    return K_PAD0+num;
+  }
+  num = isPrefixedDigit(*kn, "kp", 1, 1);
+  if (num >= 0) {
+    vassert(num < 10); // just in case
+    return K_PAD0+num;
+  }
 
-  if (kn.ICmp("NUMLOCK") == 0 || kn.ICmp("NUM") == 0) return K_NUMLOCK;
-  if (kn.ICmp("PADDIVIDE") == 0 || kn.ICmp("PAD_DIVIDE") == 0 || kn.ICmp("PAD/") == 0) return K_PADDIVIDE;
-  if (kn.ICmp("PADMULTIPLE") == 0 || kn.ICmp("PAD_MULTIPLE") == 0 || kn.ICmp("PAD*") == 0) return K_PADMULTIPLE;
-  if (kn.ICmp("PADMINUS") == 0 || kn.ICmp("PAD_MINUS") == 0 || kn.ICmp("PAD-") == 0) return K_PADMINUS;
-  if (kn.ICmp("PADPLUS") == 0 || kn.ICmp("PAD_PLUS") == 0 || kn.ICmp("PAD+") == 0) return K_PADPLUS;
-  if (kn.ICmp("PADENTER") == 0 || kn.ICmp("PAD_ENTER") == 0) return K_PADENTER;
-  if (kn.ICmp("PADDOT") == 0 || kn.ICmp("PAD_DOT") == 0 || kn.ICmp("PAD.") == 0) return K_PADDOT;
+  if (kn.strEquCI("NUMLOCK") || kn.strEquCI("NUM")) return K_NUMLOCK;
+  if (kn.strEquCI("PADDIVIDE") || kn.strEquCI("PAD_DIVIDE") || kn.strEquCI("PAD/")) return K_PADDIVIDE;
+  if (kn.strEquCI("PADMULTIPLE") || kn.strEquCI("PAD_MULTIPLE") || kn.strEquCI("PAD*")) return K_PADMULTIPLE;
+  if (kn.strEquCI("PADMINUS") || kn.strEquCI("PAD_MINUS") || kn.strEquCI("PAD-")) return K_PADMINUS;
+  if (kn.strEquCI("PADPLUS") || kn.strEquCI("PAD_PLUS") || kn.strEquCI("PAD+")) return K_PADPLUS;
+  if (kn.strEquCI("PADENTER") || kn.strEquCI("PAD_ENTER")) return K_PADENTER;
+  if (kn.strEquCI("PADDOT") || kn.strEquCI("PAD_DOT") || kn.strEquCI("PAD.")) return K_PADDOT;
 
-  if (kn.ICmp("CAPSLOCK") == 0 || kn.ICmp("CAPS") == 0) return K_CAPSLOCK;
-  if (kn.ICmp("BACKQUOTE") == 0) return K_BACKQUOTE;
+  if (kn.strEquCI("kp-enter") || kn.strEquCI("kp_enter") || kn.strEquCI("kpenter")) return K_PADENTER;
+  if (kn.strEquCI("kp.") || kn.strEquCI("kp-.")) return K_PADDOT;
+  if (kn.strEquCI("kp+") || kn.strEquCI("kp-+")) return K_PADPLUS;
+  if (kn.strEquCI("kp-") || kn.strEquCI("kp--")) return K_PADMINUS;
+  if (kn.strEquCI("kp*") || kn.strEquCI("kp-*")) return K_PADMULTIPLE;
+  if (kn.strEquCI("kp/") || kn.strEquCI("kp-/")) return K_PADDIVIDE;
 
-  if (kn.ICmp("F1") == 0) return K_F1;
-  if (kn.ICmp("F2") == 0) return K_F2;
-  if (kn.ICmp("F3") == 0) return K_F3;
-  if (kn.ICmp("F4") == 0) return K_F4;
-  if (kn.ICmp("F5") == 0) return K_F5;
-  if (kn.ICmp("F6") == 0) return K_F6;
-  if (kn.ICmp("F7") == 0) return K_F7;
-  if (kn.ICmp("F8") == 0) return K_F8;
-  if (kn.ICmp("F9") == 0) return K_F9;
-  if (kn.ICmp("F10") == 0) return K_F10;
-  if (kn.ICmp("F11") == 0) return K_F11;
-  if (kn.ICmp("F12") == 0) return K_F12;
+  if (kn.strEquCI("CAPSLOCK") || kn.strEquCI("CAPS")) return K_CAPSLOCK;
+  if (kn.strEquCI("BACKQUOTE")) return K_BACKQUOTE;
 
-  if (kn.ICmp("LSHIFT") == 0) return K_LSHIFT;
-  if (kn.ICmp("RSHIFT") == 0) return K_RSHIFT;
-  if (kn.ICmp("LCTRL") == 0) return K_LCTRL;
-  if (kn.ICmp("RCTRL") == 0) return K_RCTRL;
-  if (kn.ICmp("LALT") == 0) return K_LALT;
-  if (kn.ICmp("RALT") == 0) return K_RALT;
+  num = isPrefixedDigit(*kn, "f", 1, 2);
+  if (num >= 1 && num <= 12) {
+    return K_F1+num-1;
+  }
 
-  if (kn.ICmp("LWIN") == 0) return K_LWIN;
-  if (kn.ICmp("RWIN") == 0) return K_RWIN;
-  if (kn.ICmp("MENU") == 0) return K_MENU;
+  if (kn.strEquCI("LSHIFT")) return K_LSHIFT;
+  if (kn.strEquCI("RSHIFT")) return K_RSHIFT;
+  if (kn.strEquCI("LCTRL")) return K_LCTRL;
+  if (kn.strEquCI("RCTRL")) return K_RCTRL;
+  if (kn.strEquCI("LALT")) return K_LALT;
+  if (kn.strEquCI("RALT")) return K_RALT;
 
-  if (kn.ICmp("PRINTSCRN") == 0 || kn.ICmp("PSCRN") == 0 || kn.ICmp("PRINTSCREEN") == 0 ) return K_PRINTSCRN;
-  if (kn.ICmp("SCROLLLOCK") == 0 || kn.ICmp("SCROLL") == 0) return K_SCROLLLOCK;
-  if (kn.ICmp("PAUSE") == 0) return K_PAUSE;
+  if (kn.strEquCI("LWIN")) return K_LWIN;
+  if (kn.strEquCI("RWIN")) return K_RWIN;
+  if (kn.strEquCI("MENU")) return K_MENU;
 
-  if (kn.ICmp("MOUSE1") == 0) return K_MOUSE1;
-  if (kn.ICmp("MOUSE2") == 0) return K_MOUSE2;
-  if (kn.ICmp("MOUSE3") == 0) return K_MOUSE3;
-  if (kn.ICmp("MWHEELUP") == 0) return K_MWHEELUP;
-  if (kn.ICmp("MWHEELDOWN") == 0) return K_MWHEELDOWN;
+  if (kn.strEquCI("PRINTSCRN") || kn.strEquCI("PSCRN") || kn.strEquCI("PRINTSCREEN") ) return K_PRINTSCRN;
+  if (kn.strEquCI("SCROLLLOCK") || kn.strEquCI("SCROLL")) return K_SCROLLLOCK;
+  if (kn.strEquCI("PAUSE")) return K_PAUSE;
 
-  if (kn.ICmp("JOY1") == 0) return K_JOY1;
-  if (kn.ICmp("JOY2") == 0) return K_JOY2;
-  if (kn.ICmp("JOY3") == 0) return K_JOY3;
-  if (kn.ICmp("JOY4") == 0) return K_JOY4;
-  if (kn.ICmp("JOY5") == 0) return K_JOY5;
-  if (kn.ICmp("JOY6") == 0) return K_JOY6;
-  if (kn.ICmp("JOY7") == 0) return K_JOY7;
-  if (kn.ICmp("JOY8") == 0) return K_JOY8;
-  if (kn.ICmp("JOY9") == 0) return K_JOY9;
-  if (kn.ICmp("JOY10") == 0) return K_JOY10;
-  if (kn.ICmp("JOY11") == 0) return K_JOY11;
-  if (kn.ICmp("JOY12") == 0) return K_JOY12;
-  if (kn.ICmp("JOY13") == 0) return K_JOY13;
-  if (kn.ICmp("JOY14") == 0) return K_JOY14;
-  if (kn.ICmp("JOY15") == 0) return K_JOY15;
-  if (kn.ICmp("JOY16") == 0) return K_JOY16;
+  num = isPrefixedDigit(*kn, "mouse", 1, 1);
+  if (num >= 1) {
+    vassert(num < 10); // just in case
+    return K_MOUSE1+num-1;
+  }
+  if (kn.strEquCI("MWHEELUP")) return K_MWHEELUP;
+  if (kn.strEquCI("MWHEELDOWN")) return K_MWHEELDOWN;
+
+  num = isPrefixedDigit(*kn, "joy", 1, 2);
+  if (num >= 1 && num <= 16) {
+    vassert(num < 10); // just in case
+    return K_JOY1+num-1;
+  }
 
   return 0;
 }
