@@ -26,6 +26,10 @@
 #include "gamedefs.h"
 #include "sv_local.h"
 
+// try to dance around line trace imprecision
+// mostly used for lightmap tracing
+#define VV_BMAP_TRACE_EXPERIMENT
+
 static VCvarB dbg_bsp_trace_strict_flats("dbg_bsp_trace_strict_flats", false, "use strict checks for flats?", /*CVAR_Archive|*/CVAR_PreInit);
 static VCvarB dbg_sight_trace_bsp("dbg_sight_trace_bsp", false, "use simple BSP raycast for sight (debug)?", /*CVAR_Archive|*/CVAR_PreInit);
 
@@ -401,6 +405,9 @@ static bool SightTraverseIntercepts (SightTraceInfo &trace, sector_t *EndSector)
 //
 //  SightCheckLine
 //
+//  return `true` if line is not crossed or put into intercept list
+//  return `false` to stop checking due to blocking
+//
 //==========================================================================
 static bool SightCheckLine (SightTraceInfo &trace, line_t *ld) {
   if (ld->validcount == validcount) return true;
@@ -410,12 +417,31 @@ static bool SightCheckLine (SightTraceInfo &trace, line_t *ld) {
   float dot1 = DotProduct(*ld->v1, trace.Plane.normal)-trace.Plane.dist;
   float dot2 = DotProduct(*ld->v2, trace.Plane.normal)-trace.Plane.dist;
 
+  // for some reason, `VV_BMAP_TRACE_EXPERIMENT` gives slightly less lightmap misses
+  // let's hope it won't break sight checks...
+
+  #ifdef VV_BMAP_TRACE_EXPERIMENT
+  const float mul1 = dot1*dot2;
+  //if (mul1 >= 0) return true; // line isn't crossed
+  if (mul1 >= 0.01f) return true; // line isn't crossed
+  #else
   if (dot1*dot2 >= 0) return true; // line isn't crossed
+  #endif
 
   dot1 = DotProduct(trace.Start, ld->normal)-ld->dist;
   dot2 = DotProduct(trace.End, ld->normal)-ld->dist;
 
+  #ifdef VV_BMAP_TRACE_EXPERIMENT
+  const float mul2 = dot1*dot2;
+  //if (mul2 >= 0) return true; // line isn't crossed
+  if (mul2 >= 0.01f) return true; // line isn't crossed
+  #else
   if (dot1*dot2 >= 0) return true; // line isn't crossed
+  #endif
+
+  #ifdef VV_BMAP_TRACE_EXPERIMENT
+  if (mul1 >= 0 && mul2 >= 0 && mul1 <= 0.001f && mul2 <= 0.001f) return true;
+  #endif
 
   // try to early out the check
   if (!ld->backsector || !(ld->flags&ML_TWOSIDED) || (ld->flags&trace.LineBlockMask)) {
@@ -425,6 +451,7 @@ static bool SightCheckLine (SightTraceInfo &trace, line_t *ld) {
   // store the line for later intersection testing
   // distance
   const float den = DotProduct(ld->normal, trace.Delta);
+  if (fabsf(den) < 0.00001f) return true; // wtf?!
   const float num = ld->dist-DotProduct(trace.Start, ld->normal);
   const float frac = num/den;
   intercept_t *icept;
@@ -527,19 +554,6 @@ static bool SightPathTraverse (SightTraceInfo &trace, VLevel *level, sector_t *E
         trace.EarlyOut = true;
         return false; // early out
       }
-      /*
-      for (int dy = -44; dy <= 44; ++dy) {
-        for (int dx = -44; dx <= 44; ++dx) {
-          if (!(dx|dy)) continue;
-          int mx = mapx+dx, my = mapy+dy;
-          if (mx < 0 || my < 0 || mx >= level->BlockMapWidth || my >= level->BlockMapHeight) continue;
-          if (!SightBlockLinesIterator(trace, level, mx, my)) {
-            trace.EarlyOut = true;
-            return false; // early out
-          }
-        }
-      }
-      */
       //if (--guard == 0) Sys_Error("DDA walker fuckup!");
     }
     // couldn't early out, so go through the sorted list
@@ -687,18 +701,18 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
 
 //==========================================================================
 //
-//  VLevel::CastEx
+//  VLevel::CastLightRay
 //
 //  doesn't check pvs or reject
 //
 //==========================================================================
-bool VLevel::CastEx (sector_t *Sector, const TVec &org, const TVec &dest, unsigned blockflags, sector_t *DestSector) {
-  if (lengthSquared(org-dest) <= 1) return true;
-
+bool VLevel::CastLightRay (sector_t *Sector, const TVec &org, const TVec &dest, sector_t *DestSector) {
   // if starting or ending point is out of blockmap bounds, don't bother tracing
   // we can get away with this, because nothing can see anything beyound the map extents
   if (isNotInsideBM(org, this)) return false;
   if (isNotInsideBM(dest, this)) return false;
+
+  if (lengthSquared(org-dest) <= 1) return true;
 
   SightTraceInfo trace;
 
@@ -726,11 +740,13 @@ bool VLevel::CastEx (sector_t *Sector, const TVec &org, const TVec &dest, unsign
 
   //if (length2DSquared(org-dest) <= 1) return true;
 
-  trace.PlaneNoBlockFlags = blockflags;
+  //trace.PlaneNoBlockFlags = blockflags;
+  trace.PlaneNoBlockFlags = SPF_NOBLOCKSIGHT;
   trace.CheckBaseRegion = true;
-  trace.LineBlockMask = ML_BLOCKEVERYTHING;
-  if (trace.PlaneNoBlockFlags&SPF_NOBLOCKSIGHT) trace.LineBlockMask |= ML_BLOCKSIGHT;
-  if (trace.PlaneNoBlockFlags&SPF_NOBLOCKSHOOT) trace.LineBlockMask |= ML_BLOCKHITSCAN;
+  //trace.LineBlockMask = ML_BLOCKEVERYTHING; // this method is used to trace light, so "block everything" is not valid here
+  trace.LineBlockMask = ML_BLOCKSIGHT;
+  //if (trace.PlaneNoBlockFlags&SPF_NOBLOCKSIGHT) trace.LineBlockMask |= ML_BLOCKSIGHT;
+  //if (trace.PlaneNoBlockFlags&SPF_NOBLOCKSHOOT) trace.LineBlockMask |= ML_BLOCKHITSCAN;
 
   trace.Start = org;
   trace.End = dest;

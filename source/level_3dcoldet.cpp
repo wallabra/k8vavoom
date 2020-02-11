@@ -161,6 +161,9 @@ bool VLevel::CheckPlanePass (const TSecPlaneRef &plane, const TVec &linestart, c
   const float d2 = plane.DotPointDist(lineend);
   if (d2 >= 0.0f) return true; // didn't hit plane
 
+  //if (d2 > 0.0f) return true; // didn't hit plane (was >=)
+  //if (fabsf(d2-d1) < 0.0001f) return true; // too close to zero
+
   //frac = d1/(d1-d2); // [0..1], from start
 
   currhit = lineend;

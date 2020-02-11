@@ -1549,7 +1549,7 @@ bool VRenderLevelShared::RadiusCastRay (sector_t *sector, const TVec &org, const
   return false;
 #else
   // blockmap tracing
-  return Level->CastEx(sector, org, dest, SPF_NOBLOCKSIGHT);
+  return Level->CastLightRay(sector, org, dest);
 #endif
 }
 

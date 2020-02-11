@@ -29,6 +29,7 @@
 //#define VV_DEBUG_LMAP_ALLOCATOR
 //#define VV_EXPERIMENTAL_LMAP_FILTER
 //#define VV_USELESS_SUBTRACTIVE_LIGHT_CODE
+//#define VV_DEBUG_BMAP_TRACER
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -171,7 +172,7 @@ float VRenderLevelLightmap::CastStaticRay (sector_t *ssector, const TVec &p1, co
   if (t <= 2.0f) return 1.0f; // at light point
 
   if (!r_lmap_bsp_trace_static) {
-    if (!Level->CastEx(ssector, p1, p2, SPF_NOBLOCKSIGHT)) return 0.0f; // ray was blocked
+    if (!Level->CastLightRay(ssector, p1, p2)) return 0.0f; // ray was blocked
   } else {
     linetrace_t Trace;
     if (!Level->TraceLine(Trace, p1, p2, SPF_NOBLOCKSIGHT)) return 0.0f; // ray was blocked
@@ -891,6 +892,7 @@ void VRenderLevelLightmap::AddDynamicLights (surface_t *surf) {
     }
 
     TVec impact = dorg-surf->GetNormal()*dist;
+    //const TVec surfOffs = surf->GetNormal()*4.0f; // don't land exactly on a surface
 
     //TODO: we can use clipper to check if destination subsector is occluded
     bool needProperTrace = (doCheckTrace && xnfo > 0 && (dl.flags&dlight_t::NoShadow) == 0);
@@ -952,8 +954,23 @@ void VRenderLevelLightmap::AddDynamicLights (surface_t *surf) {
             //if (!lmi.spotLight) spt = lmi.calcTexPoint(starts+s*step, startt+t*step);
             if (length2DSquared((*spt)-dorg) > 2*2) {
               const TVec &p2 = *spt;
+              //const TVec p2 = (*spt)+surfOffs;
               if (!useBSPTrace) {
-                if (!Level->CastEx(Level->Subsectors[dlinfo[lnum].leafnum].sector, dorg, p2, SPF_NOBLOCKSIGHT, surfsector)) continue;
+                if (!Level->CastLightRay(Level->Subsectors[dlinfo[lnum].leafnum].sector, dorg, p2, surfsector)) {
+                  #ifdef VV_DEBUG_BMAP_TRACER
+                  if (!Level->TraceLine(Trace, dorg, p2, SPF_NOBLOCKSIGHT)) continue;
+                  GCon->Logf(NAME_Debug, "TRACEvsTRACE: org=(%g,%g,%g); dest=(%g,%g,%g); bmap=BLOCK; bsp=NON-BLOCK", dorg.x, dorg.y, dorg.z, p2.x, p2.y, p2.z);
+                  #endif
+                  continue;
+                }
+                #ifdef VV_DEBUG_BMAP_TRACER
+                else {
+                  if (!Level->TraceLine(Trace, dorg, p2, SPF_NOBLOCKSIGHT)) {
+                    GCon->Logf(NAME_Debug, "TRACEvsTRACE: org=(%g,%g,%g); dest=(%g,%g,%g); bmap=NON-BLOCK; bsp=BLOCK", dorg.x, dorg.y, dorg.z, p2.x, p2.y, p2.z);
+                    continue;
+                  }
+                }
+                #endif
               } else {
                 if (!Level->TraceLine(Trace, dorg, p2, SPF_NOBLOCKSIGHT)) continue; // ray was blocked
               }
