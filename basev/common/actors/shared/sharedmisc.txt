@@ -155,7 +155,7 @@ actor K8DebugLightBulb {
   +k8vavoomInternalNoTickGrav
   states {
     Spawn:
-      UNKN A -1
+      UNKN A -1 Bright
       Stop
   }
 }
