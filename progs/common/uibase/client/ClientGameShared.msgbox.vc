@@ -119,7 +119,10 @@ protected final void MessageBoxAppendYesNoMenuText () {
   string yesText = (msgboxState.currYes ? va("\c[%s]YES\c-", YesMenuColor) : "YES");
   string noText = (msgboxState.currYes ? "NO" : va("\c[%s]NO\c-", NoMenuColor));
 
+  auto oldfont = GRoot.GetFont();
+  scope(exit) GRoot.SetFont(oldfont);
   GRoot.SetFont('smallfont');
+
   msgboxState.yesBarHeight = GRoot.TextHeight(yesText);
   msgboxState.noBarHeight = GRoot.TextHeight(noText);
 
@@ -156,6 +159,8 @@ void MessageBoxStartMessage (string text, MessageBoxType type, bool input) {
   float ui_msgxbox_wrap_trigger = GetCvarF('ui_msgxbox_wrap_trigger');
   float ui_msgxbox_wrap_width = GetCvarF('ui_msgxbox_wrap_width');
 
+  auto oldfont = GRoot.GetFont();
+  scope(exit) GRoot.SetFont(oldfont);
   GRoot.SetFont('smallfont');
 
   if (ui_msgxbox_wrap_trigger > 0 && ui_msgxbox_wrap_width > 0) {
@@ -256,7 +261,11 @@ int MessageBoxGetMenuItemAt (int x, int y) {
   if (!msgboxState.active || !msgboxState.wantInput || GetMessageBoxInputType() != MsgBoxInputType.YesNo) return -1;
   if (x < msgboxState.x || x >= msgboxState.x+msgboxState.width-4) return -1;
   if (y < msgboxState.y || y >= msgboxState.y+msgboxState.height) return -1;
+
+  auto oldfont = GRoot.GetFont();
+  scope(exit) GRoot.SetFont(oldfont);
   GRoot.SetFont('smallfont');
+
   int y0 = (GRoot.Height-GRoot.TextHeight(msgboxState.text))/2;
   if (y >= y0+msgboxState.yesBarY && y < y0+msgboxState.yesBarY+msgboxState.yesBarHeight) return 0;
   if (y >= y0+msgboxState.noBarY && y < y0+msgboxState.noBarY+msgboxState.noBarHeight) return 1;
