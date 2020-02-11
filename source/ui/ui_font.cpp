@@ -106,12 +106,35 @@ public:
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-VFont *SmallFont;
-VFont *ConFont;
-VFont *VFont::Fonts;
+VFont *SmallFont = nullptr;
+VFont *ConFont = nullptr;
+VFont *VFont::Fonts = nullptr;
+TMap<VStrCI, VFont *> VFont::FontMap;
 
 static TArray<VTextColorDef> TextColors;
 static TArray<VColTransMap> TextColorLookup;
+
+
+//==========================================================================
+//
+//  VFont::RegisterFont
+//
+//  set font name, and register it as known font
+//
+//==========================================================================
+void VFont::RegisterFont (VFont *font, VName aname) {
+  if (!font) return;
+  font->Name = aname;
+  if (aname == NAME_None) { font->Next = nullptr; return; }
+
+  // register in list
+  font->Name = aname;
+  font->Next = Fonts;
+  Fonts = font;
+
+  // add to font map
+  FontMap.put(VStr(aname), font);
+}
 
 
 //==========================================================================
@@ -161,6 +184,7 @@ void VFont::StaticShutdown () {
     F = Next;
   }
   Fonts = nullptr;
+  FontMap.clear();
   TextColors.Clear();
   TextColorLookup.Clear();
 }
@@ -409,9 +433,17 @@ void VFont::ParseFontDefs () {
 //
 //==========================================================================
 VFont *VFont::FindFont (VName AName) {
+  #if 0
   for (VFont *F = Fonts; F; F = F->Next) {
     if (F->Name == AName || VStr::strEquCI(*F->Name, *AName)) return F;
   }
+  #else
+  if (AName != NAME_None) {
+    VStr fn(AName); // this doesn't allocate
+    auto fpp = FontMap.find(fn);
+    if (fpp) return *fpp;
+  }
+  #endif
   return nullptr;
 }
 
@@ -549,10 +581,7 @@ VFont::VFont (VName AName, VStr FormatStr, int First, int Count, int StartIndex)
     return;
   }
 
-  // register this font
-  Name = AName;
-  Next = Fonts;
-  Fonts = this;
+  RegisterFont(this, AName);
 
   // set up width of a space character as half width of N character
   // or 4 if character N has no graphic for it
@@ -950,9 +979,7 @@ VStr VFont::SplitTextWithNewlines (VStr Text, int MaxWidth, bool trimRight) cons
 //
 //==========================================================================
 VSpecialFont::VSpecialFont (VName AName, const TArray<int> &CharIndexes, const TArray<VName> &CharLumps, const bool *NoTranslate) {
-  Name = AName;
-  Next = Fonts;
-  Fonts = this;
+  RegisterFont(this, AName);
 
   for (int i = 0; i < 128; ++i) AsciiChars[i] = -1;
   FirstChar = -1;
@@ -1041,9 +1068,7 @@ VSpecialFont::VSpecialFont (VName AName, const TArray<int> &CharIndexes, const T
 //
 //==========================================================================
 VFon1Font::VFon1Font (VName AName, int LumpNum) {
-  Name = AName;
-  Next = Fonts;
-  Fonts = this;
+  RegisterFont(this, AName);
 
   VStream *lumpstream = W_CreateLumpReaderNum(LumpNum);
   VCheckedStream Strm(lumpstream);
@@ -1128,9 +1153,7 @@ VFon1Font::VFon1Font (VName AName, int LumpNum) {
 //
 //==========================================================================
 VFon2Font::VFon2Font (VName AName, int LumpNum) {
-  Name = AName;
-  Next = Fonts;
-  Fonts = this;
+  RegisterFont(this, AName);
 
   VStream *lumpstream = W_CreateLumpReaderNum(LumpNum);
   VCheckedStream Strm(lumpstream);
@@ -1229,9 +1252,7 @@ VFon2Font::VFon2Font (VName AName, int LumpNum) {
 //
 //==========================================================================
 VSingleTextureFont::VSingleTextureFont (VName AName, int TexNum) {
-  Name = AName;
-  Next = Fonts;
-  Fonts = this;
+  RegisterFont(this, AName);
 
   VTexture *Tex = GTextureManager[TexNum];
   for (int i = 0; i < 128; ++i) AsciiChars[i] = -1;

@@ -61,6 +61,10 @@ protected:
   rgba_t *Translation;
 
   static VFont *Fonts;
+  static TMap<VStrCI, VFont *> FontMap;
+
+  // set font name, and register it as known font
+  static void RegisterFont (VFont *font, VName aname);
 
   void BuildTranslations (const bool *ColorsUsed, rgba_t *Pal, bool ConsoleTrans, bool Rescale);
   int FindChar (int) const;
