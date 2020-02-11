@@ -1,0 +1,1332 @@
+//**************************************************************************
+//**
+//**    ##   ##    ##    ##   ##   ####     ####   ###     ###
+//**    ##   ##  ##  ##  ##   ##  ##  ##   ##  ##  ####   ####
+//**     ## ##  ##    ##  ## ##  ##    ## ##    ## ## ## ## ##
+//**     ## ##  ########  ## ##  ##    ## ##    ## ##  ###  ##
+//**      ###   ##    ##   ###    ##  ##   ##  ##  ##       ##
+//**       #    ##    ##    #      ####     ####   ##       ##
+//**
+//**  Copyright (C) 1999-2006 Jānis Legzdiņš
+//**  Copyright (C) 2018-2020 Ketmar Dark
+//**
+//**  This program is free software: you can redistribute it and/or modify
+//**  it under the terms of the GNU General Public License as published by
+//**  the Free Software Foundation, version 3 of the License ONLY.
+//**
+//**  This program is distributed in the hope that it will be useful,
+//**  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//**  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//**  GNU General Public License for more details.
+//**
+//**  You should have received a copy of the GNU General Public License
+//**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+//**
+//**************************************************************************
+
+//==========================================================================
+//
+//  cht_apply_to_classes
+//
+//==========================================================================
+private final void cht_apply_to_classes (string cmdname, string wantstr, void delegate (class!EntityEx cls) dg) {
+  class!EntityEx moClass = class!EntityEx(FindClassNoCaseStr(wantstr));
+  if (moClass) {
+    dg(moClass);
+    return;
+  }
+
+  // wildcard?
+  if (wantstr.strIndexOf("*") < 0 && wantstr.strIndexOf("?") < 0 &&
+      wantstr.strIndexOf("[") < 0 && wantstr.strIndexOf("]") < 0)
+  {
+    // can't find thing type
+    cprint("%s: unknown class '%s'", cmdname, wantstr);
+    return;
+  }
+
+  foreach AllClasses(EntityEx, out moClass) {
+    if (!globmatch(string(GetClassName(moClass)), wantstr, caseSensitive:false)) continue;
+    dg(moClass);
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_Jumper
+//
+//==========================================================================
+void Cheat_Jumper () {
+  Cheats ^= CF_HIGHJUMP;
+  if (Cheats&CF_HIGHJUMP) cprint("High Jump Cheat is On"); else cprint("High Jump Cheat is Off");
+}
+
+
+//==========================================================================
+//
+//  Cheat_ShooterKing
+//
+//==========================================================================
+void Cheat_ShooterKing () {
+  Cheats ^= CF_DOUBLEFIRINGSPEED;
+  if (Cheats&CF_DOUBLEFIRINGSPEED) cprint("Double Firing Speed Cheat is On"); else cprint("Double Firing Speed Cheat is Off");
+}
+
+
+//==========================================================================
+//
+//  Cheat_Regeneration
+//
+//==========================================================================
+void Cheat_Regeneration () {
+  Cheats ^= CF_REGENERATION;
+  if (Cheats&CF_REGENERATION) cprint("Regeneration Cheat is On"); else cprint("Regeneration Cheat is Off");
+}
+
+
+//==========================================================================
+//
+//  Cheat_PrintWeaponSlots
+//
+//==========================================================================
+void Cheat_PrintWeaponSlots () {
+  auto pawn = PlayerPawn(MO);
+  if (!pawn) return;
+  foreach (auto sidx; 0..pawn.GetNumberOfSlots()) {
+    int pwnum = 0;
+    foreach (auto widx; 0..pawn.GetSlotSize(sidx)) {
+      class!Weapon WpnCls = pawn.GetWeaponInSlot(sidx, widx);
+      if (!WpnCls) continue;
+      // check if it is spawnable
+      auto st = FindClassState(WpnCls, 'Ready');
+      if (!st) continue; // an abstract base class
+      if (!AreStateSpritesPresent(st)) continue; // no sprites
+      // ok, seems to be valid
+      if (!pwnum) print(" --- SLOT #%d ---", sidx);
+      print("   %2d: %C", pwnum, WpnCls);
+      ++pwnum;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_DumpInventory
+//
+//==========================================================================
+void Cheat_DumpInventory () {
+  bool dumpLoc = (Cmd_GetArgC() > 1);
+  print("=== inventory of player (%C : %C) ===", self, self.MO);
+  for (Inventory Item = EntityEx(MO).Inventory; Item; Item = Item.Inventory) {
+    if (dumpLoc) {
+      print("  %C: amount=%s  (%s)", Item, Item.Amount, GetClassLocationStr(Item.Class));
+    } else {
+      print("  %C: amount=%s", Item, Item.Amount);
+    }
+  }
+  if (ReadyWeapon || PendingWeapon) {
+    print("===========");
+    if (dumpLoc) {
+      if (ReadyWeapon) print("ReadyWeapon: %C  (%s)", ReadyWeapon, GetClassLocationStr(ReadyWeapon.Class));
+      if (PendingWeapon) print("PendingWeapon: %C  (%s)", PendingWeapon, GetClassLocationStr(PendingWeapon.Class));
+    } else {
+      if (ReadyWeapon) print("ReadyWeapon: %C", ReadyWeapon);
+      if (PendingWeapon) print("PendingWeapon: %C", PendingWeapon);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_WhereIsSrc_AC
+//
+//==========================================================================
+void Cheat_WhereIsSrc_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  if (args.length == 1) {
+    if (!newArg) return;
+  } else if (args.length == 2) {
+    if (newArg) return;
+  } else {
+    return;
+  }
+
+  // actors
+  class!EntityEx cls;
+  foreach AllClasses(EntityEx, out cls) {
+    if (IsAbstractClass(cls) || IsNativeClass(cls)) continue;
+    if ((cls isa 'Actor') || (cls isa 'Inventory')) {
+      aclist[$] = string(GetClassName(cls));
+    }
+  }
+
+  if (args.length == 1) {
+    if (aclist.length > 100) {
+      cprint("the list contains %s items; please, be more specific", aclist.length);
+      aclist.clear();
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_WhereIsSrc
+//
+//==========================================================================
+void Cheat_WhereIsSrc () {
+  if (Cmd_GetArgC() != 2) {
+    cprint("%s: class name expected", Cmd_GetArgV(0));
+    return;
+  }
+
+  cht_apply_to_classes(Cmd_GetArgV(0), Cmd_GetArgV(1), delegate void (class!EntityEx moClass) {
+    print("%C: %s", moClass, GetClassLocationStr(moClass));
+  });
+}
+
+
+//==========================================================================
+//
+//  Cheat_PrintReplacementFor_AC
+//
+//==========================================================================
+void Cheat_PrintReplacementFor_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  Cheat_WhereIsSrc_AC(ref args, newArg, out aclist);
+}
+
+
+//==========================================================================
+//
+//  Cheat_PrintReplacementFor
+//
+//==========================================================================
+void Cheat_PrintReplacementFor () {
+  if (Cmd_GetArgC() != 2) {
+    cprint("%s: class name expected", Cmd_GetArgV(0));
+    return;
+  }
+
+  cht_apply_to_classes(Cmd_GetArgV(0), Cmd_GetArgV(1), delegate void (class!EntityEx moClass) {
+    print("'%C' replaced with '%C'", moClass, GetClassReplacement(moClass));
+  });
+}
+
+
+//==========================================================================
+//
+//  Cheat_PrintReplaceeFor_AC
+//
+//==========================================================================
+void Cheat_PrintReplaceeFor_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  Cheat_WhereIsSrc_AC(ref args, newArg, out aclist);
+}
+
+
+//==========================================================================
+//
+//  Cheat_PrintReplaceeFor
+//
+//==========================================================================
+void Cheat_PrintReplaceeFor () {
+  if (Cmd_GetArgC() != 2) {
+    cprint("%s: class name expected", Cmd_GetArgV(0));
+    return;
+  }
+
+  cht_apply_to_classes(Cmd_GetArgV(0), Cmd_GetArgV(1), delegate void (class!EntityEx moClass) {
+    print("'%C' replaces '%C'", moClass, GetClassReplacee(moClass));
+  });
+}
+
+
+//==========================================================================
+//
+//  Cheat_PrintParentsFor_AC
+//
+//==========================================================================
+void Cheat_PrintParentsFor_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  Cheat_WhereIsSrc_AC(ref args, newArg, out aclist);
+}
+
+
+//==========================================================================
+//
+//  Cheat_PrintParentsFor
+//
+//==========================================================================
+void Cheat_PrintParentsFor () {
+  if (Cmd_GetArgC() != 2) {
+    cprint("%s: class name expected", Cmd_GetArgV(0));
+    return;
+  }
+
+  cht_apply_to_classes(Cmd_GetArgV(0), Cmd_GetArgV(1), delegate void (class!EntityEx moClass) {
+    if (!moClass || !GetClassParent(moClass)) return;
+    class cls = moClass;
+    print("=== %C ===", cls);
+    cls = GetClassParent(cls);
+    while (cls) {
+      print("  %C", cls);
+      cls = GetClassParent(cls);
+    }
+  });
+}
+
+
+//==========================================================================
+//
+//  Cheat_PrintSpritesFor_AC
+//
+//==========================================================================
+void Cheat_PrintSpritesFor_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  Cheat_WhereIsSrc_AC(ref args, newArg, out aclist);
+}
+
+
+//==========================================================================
+//
+//  Cheat_PrintSpritesFor
+//
+//==========================================================================
+void Cheat_PrintSpritesFor () {
+  if (Cmd_GetArgC() != 2) {
+    cprint("%s: class name expected", Cmd_GetArgV(0));
+    return;
+  }
+
+  cht_apply_to_classes(Cmd_GetArgV(0), Cmd_GetArgV(1), delegate void (class!EntityEx moClass) {
+    dictionary!(string, bool) sprmap;
+    array!string sprlist;
+    /*
+    // pickup sprite for inventory
+    auto inv = class!Inventory(moClass);
+    if (inv) {
+      string nn = string(inv.default.IconName).toLowerCase();
+      if (nn && nn != "tnt1") {
+        sprmap.put(nn, true);
+        sprlist[$] = nn;
+      }
+    }
+    */
+    // from states
+    for (state st = GetClassFirstState(moClass); st; st = GetNextStateInProg(st)) {
+      name sprname = GetStateSpriteName(st);
+      if (!sprname) continue;
+      if (sprname == 'tnt1') continue;
+      string nn = string(sprname);
+      int frm = GetStateSpriteFrame(st)&0x7f;
+      frm += 65;
+      nn ~= strFromChar(frm);
+      nn = nn.toUpperCase();
+      if (!AreStateSpritesPresent(st)) nn ~= " (MISSING!)";
+      if (sprmap.find(nn)) continue;
+      sprmap.put(nn, true);
+      sprlist[$] = nn;
+    }
+
+    // pickup sprite for inventory
+    string pkspr;
+    auto inv = class!Inventory(moClass);
+    if (inv) {
+      pkspr = string(inv.default.IconName).toLowerCase();
+      if (pkspr == "tnt1") pkspr = "";
+    }
+
+    // print others
+    if (!sprlist.length && !pkspr) {
+      print("no sprites found for class '%C'", moClass);
+    } else {
+      print("=== sprites for class '%C' ===", moClass);
+      if (pkspr) {
+        print("  INVENTORY SPRITE: %s", pkspr);
+        print("  ---");
+      }
+      sprlist.sort(delegate int (string a, string b) { return strcmp(a, b); });
+      //foreach (string s; sprlist) print(" %s", s);
+      int pos = 0, first = -1;
+      while (pos < sprlist.length) {
+        string s = sprlist[pos];
+        if (first < 0) {
+          first = pos;
+          ++pos;
+        } else if (s.strIndexOf(" ") >= 0 || s[0..$-1] != sprlist[first][0..$-1]) {
+          if (first != pos-1) print("  %s -- %s", sprlist[first], sprlist[pos-1]); else print("  %s", sprlist[first]);
+          first = -1;
+        } else {
+          ++pos;
+        }
+      }
+      if (first >= 0) {
+        if (first != pos-1) print("  %s -- %s", sprlist[first], sprlist[pos-1]); else print("  %s", sprlist[first]);
+      }
+    }
+  });
+}
+
+
+//==========================================================================
+//
+//  Cheat_PrintAllWeapons
+//
+//==========================================================================
+void Cheat_PrintAllWeapons () {
+  if (Cmd_GetArgC() != 1) {
+    cprint("%s: wut?!", Cmd_GetArgV(0));
+    return;
+  }
+
+  array!name wlist;
+  class!Weapon WpnCls;
+  foreach AllClasses(Weapon, WpnCls) {
+    if (WpnCls.default.bCheatNotWeapon) continue;
+    class!Weapon repl = class!Weapon(GetClassReplacement(WpnCls));
+    if (repl && repl != WpnCls) continue;
+    auto st = FindClassState(WpnCls, 'Ready');
+    if (!st) continue; // an abstract base class
+    if (!AreStateSpritesPresent(st)) continue; // no sprites
+    // if weapon cannot be spawned, you cannot get it
+    st = FindClassState(WpnCls, 'Spawn');
+    if (!st) continue; // an abstract base class
+    if (!AreStateSpritesPresent(st)) continue; // no sprites
+    wlist[$] = GetClassName(WpnCls);
+  }
+
+  if (wlist.length == 0) {
+    printwarn("no weapons found -- WTF?!");
+  } else {
+    wlist.sort(delegate int (name a, name b) { return nameicmp(a, b); });
+    print("=== %s weapons found ===", wlist.length);
+    foreach (name n; wlist) print("  %s", n);
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_Resurrect
+//
+//==========================================================================
+/*
+void Cheat_Resurrect () {
+  cprint("Not Implemented");
+}
+*/
+
+
+//==========================================================================
+//
+//  Cheat_God
+//
+//==========================================================================
+void Cheat_God () {
+  Cheats ^= CF_GODMODE;
+  if (Cheats&CF_GODMODE) {
+    if (LineSpecialGameInfo(Level.Game).GOD_HEALTH) {
+      if (MO) MO.Health = LineSpecialGameInfo(Level.Game).GOD_HEALTH;
+      Health = LineSpecialGameInfo(Level.Game).GOD_HEALTH;
+      cprint("Degreelessness Mode On");
+    } else {
+      cprint("GOD MODE ON");
+    }
+  } else {
+    if (LineSpecialGameInfo(Level.Game).GOD_HEALTH) {
+      cprint("Degreelessness Mode Off");
+    } else {
+      cprint("GOD MODE OFF");
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_Buddha
+//
+//==========================================================================
+void Cheat_Buddha () {
+  Cheats ^= CF_BUDDHA;
+  if (Cheats&CF_BUDDHA) cprint("Buddha Mode On"); else cprint("Buddha Mode Off");
+}
+
+
+//==========================================================================
+//
+//  Cheat_Summon_AC
+//
+//==========================================================================
+void Cheat_Summon_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  if (args.length == 1) {
+    if (!newArg) return;
+  } else if (args.length == 2) {
+    if (newArg) { aclist[$] = "noreplace"; return; }
+  } else {
+    if (args.length == 3 && !newArg) aclist[$] = "noreplace";
+    return;
+  }
+
+  bool noreplace = false;
+  if (args.length == 2 && args[1] && args[1][0] == "!") noreplace = true;
+
+  class!Actor cls;
+  foreach AllClasses(Actor, out cls) {
+    class!Actor ac = cls;
+    if (!noreplace) {
+      // skip unspawnable actors
+      ac = class!Actor(GetClassReplacement(cls));
+      if (!ac || ac != cls) continue;
+    }
+    if (!class!RandomSpawner(cls)) {
+      // check state
+      auto spwspate = FindClassState(ac, 'Spawn');
+      if (!spwspate) continue;
+      if (!AreStateSpritesPresent(spwspate)) continue;
+    }
+    aclist[$] = va("%s%s", (noreplace ? "!" : ""), GetClassName(ac));
+  }
+
+  if (args.length == 1 || (args.length == 2 && args[1] == "!")) {
+    if (aclist.length > 100) {
+      cprint("the list contains %s items; please, be more specific", aclist.length);
+      aclist.clear();
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_Summon
+//
+//==========================================================================
+void Cheat_Summon () {
+  //print("SUMMON: argc=%d", Cmd_GetArgC());
+  if (!MO.bIsPlayer || !Level) return;
+  auto plr = PlayerEx(MO.Player);
+  if (!plr) return;
+
+  if (Cmd_GetArgC() < 2 || Cmd_GetArgC() > 3) {
+    cprint("Summon: class name expected (use '!class' to disable replacement)");
+    return;
+  }
+
+  string clsName = Cmd_GetArgV(1);
+  if (!clsName || clsName == "!") {
+    cprint("Summon: class name expected");
+    return;
+  }
+
+  bool noreplace = false;
+  if (clsName[0] == "!") {
+    noreplace = true;
+    clsName = clsName[1..$];
+  }
+
+  // find which type to spawn
+  auto moClass = class!EntityEx(FindClassNoCaseStr(clsName));
+  if (!moClass) {
+    // Can't find thing type
+    printwarn("Summon: unknown class '%s'", clsName);
+    return;
+  }
+
+  //writeln("summon 0: ", GetClassName(moClass));
+  if (!noreplace && (Cmd_GetArgC() == 2 || stricmp(Cmd_GetArgV(2), "noreplace") != 0)) {
+    auto moRepl = class!EntityEx(GetClassReplacement(moClass));
+    if (moRepl) moClass = moRepl;
+  }
+  //writeln("summon 1: ", GetClassName(moClass));
+
+  bool doRandomSpawner = false;
+  if (class!RandomSpawner(moClass)) {
+    doRandomSpawner = true;
+    //printdebug("RANDOMSPAWNER: `%C`", moClass);
+  } else {
+    auto spwspate = FindClassState(moClass, 'Spawn');
+
+    // if actor has no spawn state, we cannot summon it
+    if (!spwspate) {
+      print("Summon: class '%s' has no spawn state", Cmd_GetArgV(1));
+      return;
+    }
+
+    // if actor has no spawn sprites, we cannot summon it
+    if (!AreStateSpritesPresent(spwspate)) {
+      print("Summon: class '%s' has no frames", Cmd_GetArgV(1));
+      return;
+    }
+
+    //if (Level.Game.nomonsters && moClass.default.bMonster) return;
+  }
+
+  // spawn it
+  TAVec ang = MO.Angles; //vector(plr.pitch, plr.yaw, plr.roll);
+  TVec dir;
+  AngleVector(ang, out dir);
+  TVec dst = MO.Origin+84*dir;
+  //dst.z = fclamp(dst.z, MO.FloorZ, MO.CeilingZ);
+
+  // this calls `OnMapSpawn(nullptr)` for spawned item
+  auto it = Level.Spawn(moClass, dst, AllowReplace:false); // optional TAVec AAngles, optional mthing_t *mthing, optional bool AllowReplace
+  if (!it) {
+    printwarn("cannot spawn `%C`", moClass);
+    return;
+  }
+
+  if (it.Sector) it.Origin.z = fclamp(it.Origin.z, it.FloorZ, it.CeilingZ);
+}
+
+
+//==========================================================================
+//
+//  Cheat_RemoveEntity_AC
+//
+//==========================================================================
+void Cheat_RemoveEntity_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  if (!MO) return;
+
+  if (args.length == 1) {
+    if (!newArg) return;
+  } else if (args.length == 2) {
+    if (newArg) return;
+  } else {
+    return;
+  }
+
+  dictionary!(name, bool) classmap;
+
+  // scan level entities
+  EntityEx ent;
+  foreach MO.AllThinkers(EntityEx, out ent) {
+    name cname = GetClassName(ent.Class);
+    if (classmap.find(cname)) continue;
+    if (ent.Owner) continue;
+    if (ent.bIsPlayer) continue;
+    classmap.put(cname, true);
+    aclist[$] = string(cname);
+  }
+
+  if (args.length == 1) {
+    if (aclist.length > 100) {
+      cprint("the list contains %s items; please, be more specific", aclist.length);
+      aclist.clear();
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_RemoveEntity
+//
+//==========================================================================
+void Cheat_RemoveEntity () {
+  if (!MO.bIsPlayer || !Level) return;
+  auto plr = PlayerEx(MO.Player);
+  if (!plr) return;
+
+  if (Cmd_GetArgC() != 2) {
+    cprint("RemoveEntity: class name expected");
+    return;
+  }
+
+  string wantstr = Cmd_GetArgV(1);
+  name wantname = name(wantstr);
+  bool isglob = false;
+
+  // find which type to remove
+  auto moClass = class!EntityEx(FindClassNoCase(wantname));
+  if (!moClass) {
+    if (wantstr.strIndexOf("*") < 0 && wantstr.strIndexOf("?") < 0 &&
+        wantstr.strIndexOf("[") < 0 && wantstr.strIndexOf("]") < 0)
+    {
+      // can't find thing type
+      print("RemoveEntity: unknown class '%s'", Cmd_GetArgV(1));
+      return;
+    }
+    isglob = true;
+  }
+
+  array!EntityEx elist;
+
+  EntityEx ent;
+  foreach MO.AllThinkers(EntityEx, out ent) {
+    if (ent.Owner) continue;
+    if (ent.bIsPlayer) continue;
+    if (isglob) {
+      if (!globmatch(string(GetClassName(ent.Class)), wantstr, caseSensitive:false)) continue;
+    } else {
+      name cname = GetClassName(ent.Class);
+      if (nameicmp(cname, wantname) != 0) continue;
+    }
+    elist[$] = ent;
+  }
+
+  if (elist.length == 0) {
+    print("RemoveEntity: no entities of class '%s' found", wantname);
+  } else {
+    foreach (EntityEx e; elist) delete e;
+    print("RemoveEntity: %s %s of class '%s' removed", elist.length, (elist.length != 1 ? "entities" : "entity"), wantname);
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_CountEntities_AC
+//
+//==========================================================================
+void Cheat_CountEntities_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  if (!MO) return;
+
+  if (args.length == 1) {
+    if (!newArg) return;
+  } else if (args.length == 2) {
+    if (newArg) return;
+  } else {
+    return;
+  }
+
+  dictionary!(name, bool) classmap;
+
+  // scan level entities
+  EntityEx ent;
+  foreach MO.AllThinkers(EntityEx, out ent) {
+    name cname = GetClassName(ent.Class);
+    if (classmap.find(cname)) continue;
+    if (ent.Owner) continue;
+    if (ent.bIsPlayer) continue;
+    classmap.put(cname, true);
+    aclist[$] = string(cname);
+  }
+
+  if (args.length == 1) {
+    if (aclist.length > 100) {
+      cprint("the list contains %s items; please, be more specific", aclist.length);
+      aclist.clear();
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_CountEntities
+//
+//==========================================================================
+void Cheat_CountEntities () {
+  if (!MO.bIsPlayer || !Level) return;
+  auto plr = PlayerEx(MO.Player);
+  if (!plr) return;
+
+  if (Cmd_GetArgC() != 2) {
+    cprint("CountEntities: class name expected");
+    return;
+  }
+
+  name wantname = name(Cmd_GetArgV(1));
+
+  // find which type to count
+  auto moClass = class!EntityEx(FindClassNoCase(wantname));
+  if (!moClass) {
+    // Can't find thing type
+    print("CountEntities: unknown class '%s'", Cmd_GetArgV(1));
+    return;
+  }
+
+  int count = 0;
+
+  EntityEx ent;
+  foreach MO.AllThinkers(EntityEx, out ent) {
+    name cname = GetClassName(ent.Class);
+    if (nameicmp(cname, wantname) != 0) continue;
+    if (ent.Owner) continue;
+    if (ent.bIsPlayer) continue;
+    ++count;
+  }
+
+  if (count == 0) {
+    print("CountEntities: no entities of class '%s' found", wantname);
+  } else {
+    print("CountEntities: %s %s of class '%s' found", count, (count != 1 ? "entities" : "entity"), wantname);
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_CountAllEntities
+//
+//==========================================================================
+struct CountAllEntsInfo {
+  name Name;
+  int Count;
+}
+
+void Cheat_CountAllEntities () {
+  if (!MO.bIsPlayer || !Level) return;
+  auto plr = PlayerEx(MO.Player);
+  if (!plr) return;
+
+  name wantname = name(Cmd_GetArgV(1));
+
+  dictionary!(name, int) ctr;
+
+  EntityEx ent;
+  foreach MO.AllThinkers(EntityEx, out ent) {
+    name cname = GetClassName(ent.Class);
+    if (ent.Owner) continue;
+    if (ent.bIsPlayer) continue;
+    auto cp = ctr.find(cname);
+    if (cp) {
+      *cp += 1;
+    } else {
+      ctr.put(cname, 1);
+    }
+  }
+
+  // sort by count
+  array!CountAllEntsInfo order;
+  for (auto idx = ctr.firstIndex(); ctr.isValidIndex(idx); idx = ctr.nextIndex(idx)) {
+    auto nfo = order.alloc();
+    nfo.Name = ctr.keyAtIndex(idx);
+    nfo.Count = *ctr.valueAtIndex(idx);
+  }
+
+  order.sort(delegate int (const ref CountAllEntsInfo a, const ref CountAllEntsInfo b) { return b.Count-a.Count; });
+  print("============== %s entity classes found ==============", order.length);
+  foreach (const ref auto nfo; order) print("  %6d -- %s", nfo.Count, nfo.Name);
+}
+
+
+//==========================================================================
+//
+//  Cheat_ForceWeapon_AC
+//
+//==========================================================================
+void Cheat_ForceWeapon_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  if (!MO.bIsPlayer || !Level) return;
+
+  if (args.length == 1) {
+    if (!newArg) return;
+  } else if (args.length == 2) {
+    if (newArg) { aclist[$] = "instant"; return; }
+  } else {
+    if (args.length == 3 && !newArg) aclist[$] = "instant";
+    return;
+  }
+
+  for (Inventory inv = EntityEx(MO).Inventory; inv; inv = inv.Inventory) {
+    if (Weapon(inv)) {
+      bool found = false;
+      string wname = string(GetClassName(inv.Class));
+      foreach (string s; aclist) if (s == wname) { found = true; break; }
+      if (!found) aclist[$] = wname;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_ForceWeapon
+//
+//==========================================================================
+void Cheat_ForceWeapon () {
+  //print("SUMMON: argc=%d", Cmd_GetArgC());
+  if (!MO.bIsPlayer || !Level) return;
+  auto plr = PlayerEx(MO.Player);
+  if (!plr) return;
+
+  if (Cmd_GetArgC() < 2 || Cmd_GetArgC() > 3) {
+    cprint("ForceWeapon: inventory name expected");
+    return;
+  }
+
+  string clsName = Cmd_GetArgV(1);
+  if (!clsName) {
+    cprint("ForceWeapon: inventory name expected");
+    return;
+  }
+
+  // find which type to spawn
+  auto wpnClass = class!EntityEx(FindClassNoCaseStr(clsName));
+  if (!wpnClass) {
+    // Can't find thing type
+    print("ForceWeapon: unknown class '%s'", clsName);
+    return;
+  }
+  if (wpnClass !isa 'Weapon') {
+    // Can't find thing type
+    print("ForceWeapon: class '%s' is not a weapon", clsName);
+    return;
+  }
+
+  Weapon wpn;
+  for (Inventory inv = EntityEx(MO).Inventory; inv; inv = inv.Inventory) {
+    if (inv.Class == wpnClass) {
+      wpn = Weapon(inv);
+      break;
+    }
+  }
+
+  bool instant = (stricmp(Cmd_GetArgV(2), "instant") == 0);
+  plr.SetWeapon(wpn);
+  plr.BringUpWeapon(instant:instant);
+}
+
+
+//==========================================================================
+//
+//  Cheat_NoClip
+//
+//==========================================================================
+void Cheat_NoClip () {
+  Cheats ^= CF_NOCLIP;
+  if (Cheats&CF_NOCLIP) {
+    MO.bColideWithThings = false;
+    MO.bColideWithWorld = false;
+    cprint("No Clipping Mode ON");
+  } else {
+    MO.bColideWithThings = true;
+    MO.bColideWithWorld = true;
+    cprint("No Clipping Mode OFF");
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_KillAll_AC
+//
+//==========================================================================
+void Cheat_KillAll_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  //printdebug("KAC: args.length=%s; newArg=%B; <%s>", args.length, newArg, args[$-1]);
+
+  //if (args.length == 1 && newArg) { aclist[$] = "-noblood"; return; }
+  if (args.length == 2 && !newArg && StrStartsWith("-noblood", args[$-1], caseSensitive:false)) { aclist[$] = "-noblood"; return; }
+
+  class!Actor cls;
+  foreach AllClasses(Actor, out cls) {
+    class!Actor ac = cls;
+    if (!ac.default.bMonster) continue;
+    if (!newArg && args.length > 1 && args[$-1]) {
+      if (!StrStartsWith(string(GetClassName(ac)), args[$-1], caseSensitive:false)) {
+        //printdebug("SKIP: <%s> (%s)", GetClassName(ac), args[$-1]);
+        continue;
+      }
+    }
+    Actor act;
+    bool found = false;
+    foreach Level.AllThinkers(ac, act) {
+      if (act.bMonster && act.Health > 0) {
+        found = true;
+        break;
+      }
+    }
+    if (found) {
+      //printdebug(" <%s>", GetClassName(ac));
+      aclist[$] = va("%s", GetClassName(ac));
+    }
+  }
+
+  if (aclist.length > 100) {
+    cprint("the list contains %s items; please, be more specific", aclist.length);
+    aclist.clear();
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_KillAll
+//
+//==========================================================================
+void Cheat_KillAll () {
+  if (!Level) return;
+  if (Cmd_GetArgC() < 2) {
+    cprint("%d MONSTERS KILLED", LineSpecialLevelInfo(Level).P_Massacre());
+  } else {
+    int count = 0;
+    bool spawnBlood = true;
+    int idx = 1;
+    if (stricmp(Cmd_GetArgV(1), "-noblood") == 0) { spawnBlood = false; ++idx; }
+    if (idx == Cmd_GetArgC()) {
+      count += LineSpecialLevelInfo(Level).P_MassacreEx("", spawnBlood);
+    } else {
+      for (; idx < Cmd_GetArgC(); ++idx) {
+        //printdebug("<%s>", Cmd_GetArgV(idx));
+        count += LineSpecialLevelInfo(Level).P_MassacreEx(Cmd_GetArgV(idx), spawnBlood);
+      }
+    }
+    cprint("%d MONSTERS KILLED", count);
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_NoWeapons
+//
+//==========================================================================
+void Cheat_NoWeapons () {
+  if (MorphTime) return;
+
+  // find weakest weapon
+  Inventory Item;
+  Weapon Weakest = none;
+  for (Item = EntityEx(MO).Inventory; Item; Item = Item.Inventory) {
+    if (Weapon(Item) && (!Weakest || Weakest.SelectionOrder < Weapon(Item).SelectionOrder)) {
+      Weakest = Weapon(Item);
+    }
+  }
+
+  // removed all others
+  for (Item = EntityEx(MO).Inventory; Item; ) {
+    Inventory Next = Item.Inventory;
+    if ((Weapon(Item) && Item != Weakest) || FourthWeaponHolder(Item)) {
+      Item.Destroy();
+    }
+    Item = Next;
+  }
+  SetWeapon(Weakest);
+  PendingWeapon = none; //Weakest;
+  if (Weakest) Weakest.bBobDisabled = true;
+
+  cprint("CHEATER-YOU DON'T DESERVE WEAPONS");
+}
+
+
+//==========================================================================
+//
+//  Cheat_Fly
+//
+//==========================================================================
+void Cheat_Fly () {
+  if (!bFly) {
+    bFly = true;
+    MO.bFly = true;
+    MO.bNoGravity = true;
+    if (MO.Origin.z <= MO.FloorZ) {
+      // thrust the player in the air a bit
+      FlyHeight = 10.0;
+    }
+    if (MO.Velocity.z <= -35.0*35.0) {
+      // stop falling scream
+      MO.StopSound(CHAN_VOICE);
+    }
+    cprint("You feel lighter");
+  } else {
+    if (MO.Origin.z != MO.FloorZ) {
+      //FIXME: player->centreing = true;
+    }
+    bFly = false;
+    MO.bFly = false;
+    MO.bNoGravity = false;
+    cprint("Gravity weights you down");
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_NoTarget
+//
+//==========================================================================
+void Cheat_NoTarget () {
+  bNoTarget = !bNoTarget;
+  if (bNoTarget) {
+    cprint("No Target Mode ON");
+  } else {
+    cprint("No Target Mode OFF");
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_Anubis
+//
+//==========================================================================
+void Cheat_Anubis () {
+  Cheats ^= CF_FRIGHTENING;
+  if (Cheats&CF_FRIGHTENING) {
+    cprint("\"Quake with fear!\"");
+  } else {
+    cprint("No more ogre armor");
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_Freeze
+//
+//==========================================================================
+void Cheat_Freeze () {
+  Cheats ^= CF_TIMEFREEZE;
+  if (Cheats&CF_TIMEFREEZE) {
+    cprint("Freeze mode on");
+    Level.bFrozen = true;
+  } else {
+    cprint("Freeze mode off");
+    Level.bFrozen = false;
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_WarpTo
+//
+//==========================================================================
+void Cheat_WarpTo () {
+  if (!MO.bIsPlayer || !Level || !EntityEx(MO)) return;
+
+  if (Cmd_GetArgC() < 3 || Cmd_GetArgC() > 4) {
+    cprint("WarpTo: x y [z]");
+    return;
+  }
+
+  bool err;
+
+  float x = atof(Cmd_GetArgV(1), out err);
+  if (err) { cprint("WarpTo: invalid x coord (%s)", Cmd_GetArgV(1)); return; }
+
+  float y = atof(Cmd_GetArgV(2), out err);
+  if (err) { cprint("WarpTo: invalid y coord (%s)", Cmd_GetArgV(2)); return; }
+
+  float z = EntityEx::ONFLOORZ;
+  if (Cmd_GetArgC() > 3) {
+    z = atof(Cmd_GetArgV(3), out err);
+    if (err) { cprint("WarpTo: invalid z coord (%s)", Cmd_GetArgV(3)); return; }
+  }
+
+  if (EntityEx(MO).Teleport(vector(x, y, z), MO.Angles.yaw, DstFog:false, SrcFog:false, KeepDir:true, ForceTelestomp:true)) {
+    if (Cmd_GetArgC() > 3) {
+      cprint("Teleported to (%s,%s,%s)", x, y, z);
+    } else {
+      cprint("Teleported to (%s,%s)", x, y);
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_MapHash
+//
+//==========================================================================
+void Cheat_MapHash () {
+  if (Cmd_GetArgC() > 1 && stricmp(Cmd_GetArgV(1), "sha224") == 0) {
+    print("MAP SHA224: %s", Level.XLevel.MapHash);
+  } else {
+    print("MAP MD5: %s", Level.XLevel.MapHashMD5);
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_MapHash_AC
+//
+//==========================================================================
+void Cheat_MapHash_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  if (args.length == 1) {
+    if (!newArg) return;
+  } else if (args.length == 2) {
+    if (newArg) return;
+  } else {
+    return;
+  }
+
+  aclist[$] = "sha224";
+}
+
+
+//==========================================================================
+//
+//  Cheat_VScriptCommand_AC
+//
+//==========================================================================
+void Cheat_VScriptCommand_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  //print("args.length=%s, new=%B", args.length, newArg);
+  //foreach (string s; args) print("  <%s>", s);
+
+  // autocomplete command
+  if (args.length == 1 || (args.length == 2 && !newArg)) {
+    //if (!newArg) return;
+    aclist[$] = "give";
+    aclist[$] = "take";
+    aclist[$] = "drop";
+    aclist[$] = "fire";
+    aclist[$] = "apts";
+    return;
+  }
+
+  // autocomplete class
+  if ((args.length == 2 && newArg) || (args.length == 3 && !newArg)) {
+    string cmd = args[1];
+    string pfx = (args.length == 3 ? args[2] : "");
+    // give: any inventory item
+    if (stricmp(cmd, "give") == 0) {
+      class!Inventory cls;
+      foreach AllClasses(Inventory, out cls) {
+        // abstract and native classes cannot be spawned
+        if (IsAbstractClass(cls) || IsNativeClass(cls)) continue;
+        // check prefix
+        string cns = string(GetClassName(cls));
+        if (pfx && !cns.strStartsWith(pfx, caseSensitive:false)) continue;
+        aclist[$] = string(GetClassName(cls));
+      }
+      return;
+    }
+    // take, drop: any held inventory item
+    if (stricmp(cmd, "take") == 0 || stricmp(cmd, "drop") == 0) {
+      for (auto inv = EntityEx(MO).Inventory; inv; inv = inv.Inventory) {
+        class!Inventory cls = class!Inventory(inv.Class);
+        if (!cls) continue;
+        // abstract and native classes cannot be spawned
+        //if (IsAbstractClass(cls) || IsNativeClass(cls)) continue;
+        // check prefix
+        string cns = string(GetClassName(cls));
+        if (pfx && !cns.strStartsWith(pfx, caseSensitive:false)) continue;
+        aclist[$] = string(GetClassName(cls));
+      }
+      return;
+    }
+    // fire: projectiles
+    if (stricmp(cmd, "fire") == 0) {
+      class!Actor cls;
+      foreach AllClasses(Actor, out cls) {
+        // abstract and native classes cannot be spawned
+        if (!cls.default.bMissile) continue;
+        if (IsAbstractClass(cls) || IsNativeClass(cls)) continue;
+        // check prefix
+        string cns = string(GetClassName(cls));
+        if (pfx && !cns.strStartsWith(pfx, caseSensitive:false)) continue;
+        auto spwspate = FindClassState(cls, 'Spawn');
+        if (!spwspate) continue;
+        if (!AreStateSpritesPresent(spwspate)) continue;
+        aclist[$] = string(GetClassName(cls));
+      }
+      return;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  Cheat_VScriptCommand
+//
+//==========================================================================
+void Cheat_VScriptCommand () {
+  int argc = Cmd_GetArgC();
+  if (argc == 1) return;
+  string vscmd = Cmd_GetArgV(1).toLowerCase();
+
+  if (vscmd == "?") {
+    print("give what [amount] -- give inventory item");
+    print("take what [amount] -- take inventory item");
+    print("drop what          -- drop inventory item");
+    print("fire mtp [ofs]     -- fire missile");
+    print("apts type          -- get armor points for type");
+    return;
+  }
+
+  if (argc < 3) return;
+
+  if (vscmd == "fire") {
+    class!Actor mt = class!Actor(GetClassReplacement(FindClassNoCaseStr(Cmd_GetArgV(2))));
+    if (!mt) { print("actor '%s' not found", Cmd_GetArgV(2)); return; }
+    float ofs = 4;
+    if (argc > 3) ofs = atof(Cmd_GetArgV(3));
+    //Actor(MO).A_CustomMissile(mt, MO.Height/2, 0, AimMode:2);
+    float hgt = MO.Height/2;
+    TVec Offs = ofs*vector(cos(MO.Angles.yaw), sin(MO.Angles.yaw), 0.0);
+    MO.Origin += Offs;
+    EntityEx A = Actor(MO).SpawnMissileAngles(mt, MO.Angles.yaw, MO.Angles.pitch, hgt);
+    MO.Origin -= Offs;
+    return;
+  }
+
+  // find inventory class
+  class!Inventory icls = class!Inventory(FindClassNoCaseStr(Cmd_GetArgV(2)));
+  if (!icls) { print("what is '%s'?", Cmd_GetArgV(2)); return; }
+
+  int amount = 0;
+  if (argc > 3) amount = atoi(Cmd_GetArgV(3));
+
+  Inventory invit = EntityEx(MO).FindInventory(icls);
+
+  if (vscmd == "give") {
+    if (!invit) {
+      // no item in inventory, give one
+      class!Inventory irepl = class!Inventory(GetClassReplacement(icls));
+      if (irepl) icls = irepl;
+      invit = Inventory(EntityEx(MO).Spawn(icls, default, default, default, AllowReplace:false));
+      // this shouldn't count for the item statistics
+      if (invit.bCountItem) {
+        invit.bCountItem = false;
+        --Level.TotalItems;
+      }
+      auto git = invit.TryPickup(EntityEx(MO));
+      if (!git) {
+        delete invit;
+        print("refused to get '%C'", icls);
+        return;
+      }
+      if (amount <= 0) return;
+      invit = EntityEx(MO).FindInventory(icls);
+      if (!invit) return;
+    }
+    auto oldam = invit.Amount;
+    invit.Amount = min(oldam+amount, invit.MaxAmount);
+    if (invit.Amount != oldam) {
+      print("you got %d of '%C'", invit.Amount-oldam, invit);
+    } else {
+      print("you already have maximum of '%C'", invit);
+    }
+    return;
+  }
+
+  if (vscmd == "take") {
+    if (!invit) { print("you don't have '%C'", icls); return; }
+    if (amount <= 0) amount = 1;
+    auto newam = invit.Amount-amount;
+    if (newam <= 0) {
+      EntityEx(MO).RemoveInventory(invit);
+      delete invit;
+      print("you lost '%C'", invit);
+    } else {
+      invit.Amount = newam;
+      print("you lost %d of '%C'", amount, invit);
+    }
+    return;
+  }
+
+  if (vscmd == "drop") {
+    if (!invit) { print("you don't have '%C'", icls); return; }
+    TVec dir = vector(cos(MO.Angles.yaw), sin(MO.Angles.yaw))*64;
+    dir.z = MO.Height/2;
+    auto it = Inventory(EntityEx(MO).DropItem(icls, max(0, amount), 1.0, dropofs:dir, AllowReplace:false));
+    if (it) {
+      print("dropped '%C'", icls);
+      it.Velocity = vector(0, 0, 0);
+      it.Amount = invit.Amount;
+      it.MaxAmount = invit.MaxAmount;
+      EntityEx(MO).RemoveInventory(invit);
+      //FIXME: delete invit here?
+    }
+    return;
+  }
+
+  if (vscmd == "apts") {
+    int pts = MO.GetArmorPointsForType(name(Cmd_GetArgV(2)));
+    print("points for armor type '%s': %s", Cmd_GetArgV(2), pts);
+    return;
+  }
+}
