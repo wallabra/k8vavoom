@@ -361,10 +361,15 @@ void VPathTraverse::RemoveInterceptsAfter (const float frac) {
 bool VPathTraverse::AddLineIntercepts (VThinker *Self, int mapx, int mapy, bool EarlyOut) {
   line_t *ld;
   for (VBlockLinesIterator It(Self->XLevel, mapx, mapy, &ld); It.GetNext(); ) {
-    float dot1 = DotProduct(*ld->v1, trace_plane.normal)-trace_plane.dist;
-    float dot2 = DotProduct(*ld->v2, trace_plane.normal)-trace_plane.dist;
+    const float dot1 = DotProduct(*ld->v1, trace_plane.normal)-trace_plane.dist;
+    const float dot2 = DotProduct(*ld->v2, trace_plane.normal)-trace_plane.dist;
 
-    if (dot1*dot2 >= 0) continue; // line isn't crossed
+    // do not use multiplication to check: zero speedup, lost accuracy
+    //if (dot1*dot2 >= 0) continue; // line isn't crossed
+    if (dot1 < 0.0f && dot2 < 0.0f) continue; // didn't reached back side
+    // if the trace is parallel to the line plane, ignore it
+    if (dot1 >= 0.0f && dot2 >= 0.0f) continue; // didn't reached front side
+
     // hit the line
 
     // find the fractional intercept point along the trace line
