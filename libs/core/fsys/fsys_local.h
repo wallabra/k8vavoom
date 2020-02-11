@@ -272,9 +272,11 @@ extern bool fsys_no_dup_reports;
 enum {
   AD_NONE,
   AD_SKULLDASHEE,
+  AD_HARMONY,
 };
 
 extern int fsys_detected_mod;
+extern VStr fsys_detected_mod_wad;
 
 extern mythread_mutex fsys_glock;
 

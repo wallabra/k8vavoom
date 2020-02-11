@@ -37,6 +37,7 @@ bool fsys_skipDehacked = false;
 
 // autodetected wad/pk3
 int fsys_detected_mod = AD_NONE;
+VStr fsys_detected_mod_wad;
 
 int fsys_ignoreSquare = 1; // do not check for "Adventures of Square"
 

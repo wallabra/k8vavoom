@@ -544,6 +544,20 @@ void VFileDirectory::buildNameMaps (bool rebuilding, VPakFileBase *pak) {
   }
   */
 
+  // detect Harmony v1.1
+  if (pak) {
+    VName titn = VName("dehacked", VName::Find);
+    if (titn != NAME_None) {
+      auto npp = lumpmap.find(titn);
+      if (npp) {
+        if (files[*npp].filesize == 26287 && pak->CalculateMD5(*npp) == "3446842b93dfa37075a238ccd5b0f29c") {
+          fsys_detected_mod = AD_HARMONY;
+          fsys_detected_mod_wad = getArchiveName();
+        }
+      }
+    }
+  }
+
   if (!rebuilding && fsys_dev_dump_paks) {
     GLog.Logf("======== PAK: %s ========", *getArchiveName());
     for (int f = 0; f < files.length(); ++f) {
