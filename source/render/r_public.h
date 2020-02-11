@@ -291,3 +291,7 @@ static inline vuint8 VVA_OKUNUSED R_LookupRGB (vint32 r, vint32 g, vint32 b) {
 #else
 #  error "choose RGB table size"
 #endif
+
+
+// used in FSYS to disable sprofs for known standalones
+extern bool rforce_disable_sprofs;

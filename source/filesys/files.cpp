@@ -58,6 +58,30 @@ static TArray<VStr> autoloadDirList;
 
 GameOptions game_options;
 
+extern VCvarB respawnparm;
+extern VCvarI fastparm;
+extern VCvarB NoMonsters;
+extern VCvarI Skill;
+
+int cli_NoMonsters = -1; // not specified
+int cli_CompileAndExit = 0;
+static int cli_FastMonsters = -1; // not specified
+static int cli_Respawn = -1; // not specified
+static int cli_NoMenuDef = -1; // not specified
+/*static*/ int cli_GoreMod = -1; // not specified
+static int cli_BDWMod = -1; // not specified
+static int cli_SkeeHUD = -1; // not specified
+
+static const char *cli_BaseDir = nullptr;
+static const char *cli_IWadName = nullptr;
+static const char *cli_IWadDir = nullptr;
+static const char *cli_SaveDir = nullptr;
+static const char *cli_ConfigDir = nullptr;
+
+static int reportIWads = 0;
+static int reportPWads = 1;
+static int cli_NakedBase = -1;
+
 
 struct MainWadFiles {
   VStr main;
@@ -1762,6 +1786,23 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
   // look for the main wad file
   VStr mainWadPath;
 
+  if (fsys_detected_mod == AD_HARMONY) {
+    GCon->Log(NAME_Init, "detected HARMONY standalone game...");
+    cli_NakedBase = 1;
+    fsys_onlyOneBaseFile = true;
+    if (mainiwad.isEmpty() && !fsys_detected_mod_wad.isEmpty()) {
+      mainiwad = fsys_detected_mod_wad;
+      GCon->Logf(NAME_Init, "forced HARMONY IWAD '%s'", *mainiwad);
+      for (int f = 0; f < pwadList.length(); ++f) {
+        if (pwadList[f].fname.strEquCI(mainiwad)) {
+          GCon->Log(NAME_Init, "  ...removed HARMONY pwad");
+          pwadList.removeAt(f);
+          --f;
+        }
+      }
+    }
+  }
+
   // try user-specified iwad
   int iwadidx = -1;
   VStr gameDsc;
@@ -1886,29 +1927,6 @@ static void RenameSprites () {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-extern VCvarB respawnparm;
-extern VCvarI fastparm;
-extern VCvarB NoMonsters;
-extern VCvarI Skill;
-
-int cli_NoMonsters = -1; // not specified
-int cli_CompileAndExit = 0;
-static int cli_FastMonsters = -1; // not specified
-static int cli_Respawn = -1; // not specified
-static int cli_NoMenuDef = -1; // not specified
-/*static*/ int cli_GoreMod = -1; // not specified
-static int cli_BDWMod = -1; // not specified
-static int cli_SkeeHUD = -1; // not specified
-
-static const char *cli_BaseDir = nullptr;
-static const char *cli_IWadName = nullptr;
-static const char *cli_IWadDir = nullptr;
-static const char *cli_SaveDir = nullptr;
-static const char *cli_ConfigDir = nullptr;
-
-static int reportIWads = 0;
-static int reportPWads = 1;
-static int cli_NakedBase = -1;
 
 
 //==========================================================================
@@ -2426,6 +2444,7 @@ void FL_Init () {
   // i need progs to be loaded from files
   //fl_devmode = true;
 #endif
+  //if (fsys_detected_mod == AD_HARMONY) customMode.clear();
 
   // process "warp", do it here, so "+var" will be processed after "map nnn"
   // postpone, and use `P_TranslateMapEx()` in host initialization
@@ -2481,9 +2500,13 @@ void FL_Init () {
     SearchPaths[i]->iwad = true;
   }
 
+  // disable sprite offsets for Harmony
+  if (fsys_detected_mod == AD_HARMONY) rforce_disable_sprofs = true;
+
   // load custom mode pwads
   if (customMode.disableBloodReplacement) fsys_DisableBloodReplacement = true;
-  if (customMode.disableBDW) fsys_DisableBDW = true;
+  if (customMode.disableBDW || fsys_detected_mod == AD_HARMONY) fsys_DisableBDW = true;
+
   CustomModeLoadPwads(CM_PRE_PWADS);
 
   int mapnum = -1;
