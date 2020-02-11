@@ -54,7 +54,7 @@ static VCvarB r_lmap_overbright_static("r_lmap_overbright_static", true, "Use Qu
 static VCvarF r_lmap_specular("r_lmap_specular", "0.1", "Specular light in regular renderer.", CVAR_Archive);
 static VCvarI r_lmap_atlas_limit("r_lmap_atlas_limit", "14", "Nuke lightmap cache if it reached this number of atlases.", CVAR_Archive);
 
-VCvarB r_lmap_bsp_trace_static("r_lmap_bsp_trace_static", true, "Trace static lightmaps with BSP tree instead of blockmap?", CVAR_Archive);
+VCvarB r_lmap_bsp_trace_static("r_lmap_bsp_trace_static", false, "Trace static lightmaps with BSP tree instead of blockmap?", CVAR_Archive);
 VCvarB r_lmap_bsp_trace_dynamic("r_lmap_bsp_trace_dynamic", false, "Trace dynamic lightmaps with BSP tree instead of blockmap?", CVAR_Archive);
 
 extern VCvarB dbg_adv_light_notrace_mark;
