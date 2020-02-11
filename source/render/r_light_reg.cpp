@@ -53,7 +53,8 @@ static VCvarB r_lmap_overbright_static("r_lmap_overbright_static", true, "Use Qu
 static VCvarF r_lmap_specular("r_lmap_specular", "0.1", "Specular light in regular renderer.", CVAR_Archive);
 static VCvarI r_lmap_atlas_limit("r_lmap_atlas_limit", "14", "Nuke lightmap cache if it reached this number of atlases.", CVAR_Archive);
 
-VCvarB r_lmap_bsp_trace("r_lmap_bsp_trace", true, "Trace lightmaps with BSP tree instead of blockmap?", CVAR_Archive);
+VCvarB r_lmap_bsp_trace_static("r_lmap_bsp_trace_static", true, "Trace static lightmaps with BSP tree instead of blockmap?", CVAR_Archive);
+VCvarB r_lmap_bsp_trace_dynamic("r_lmap_bsp_trace_dynamic", false, "Trace dynamic lightmaps with BSP tree instead of blockmap?", CVAR_Archive);
 
 extern VCvarB dbg_adv_light_notrace_mark;
 
@@ -158,18 +159,18 @@ static inline vuint32 fixSurfLightLevel (const surface_t *surf) {
 
 //==========================================================================
 //
-//  VRenderLevelLightmap::CastRay
+//  VRenderLevelLightmap::CastStaticRay
 //
 //  Returns the distance between the points, or 0 if blocked
 //
 //==========================================================================
-float VRenderLevelLightmap::CastRay (sector_t *ssector, const TVec &p1, const TVec &p2, float squaredist) {
+float VRenderLevelLightmap::CastStaticRay (sector_t *ssector, const TVec &p1, const TVec &p2, float squaredist) {
   const TVec delta = p2-p1;
   const float t = DotProduct(delta, delta);
   if (t >= squaredist) return 0.0f; // too far away
   if (t <= 2.0f) return 1.0f; // at light point
 
-  if (!r_lmap_bsp_trace) {
+  if (!r_lmap_bsp_trace_static) {
     if (!Level->CastEx(ssector, p1, p2, SPF_NOBLOCKSIGHT)) return 0.0f; // ray was blocked
   } else {
     linetrace_t Trace;
@@ -179,6 +180,33 @@ float VRenderLevelLightmap::CastRay (sector_t *ssector, const TVec &p1, const TV
   return sqrtf(t);
   //return 1.0f/fastInvSqrtf(t); //k8: not much faster
 }
+
+
+//==========================================================================
+//
+//  VRenderLevelLightmap::CastDynamicRay
+//
+//  Returns the distance between the points, or 0 if blocked
+//
+//==========================================================================
+/*
+float VRenderLevelLightmap::CastDynamicRay (sector_t *ssector, const TVec &p1, const TVec &p2, float squaredist) {
+  const TVec delta = p2-p1;
+  const float t = DotProduct(delta, delta);
+  if (t >= squaredist) return 0.0f; // too far away
+  if (t <= 2.0f) return 1.0f; // at light point
+
+  if (!r_lmap_bsp_trace_dynamic) {
+    if (!Level->CastEx(ssector, p1, p2, SPF_NOBLOCKSIGHT)) return 0.0f; // ray was blocked
+  } else {
+    linetrace_t Trace;
+    if (!Level->TraceLine(Trace, p1, p2, SPF_NOBLOCKSIGHT)) return 0.0f; // ray was blocked
+  }
+
+  return sqrtf(t);
+  //return 1.0f/fastInvSqrtf(t); //k8: not much faster
+}
+*/
 
 
 //==========================================================================
@@ -501,7 +529,7 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
       }
     }
 
-    const float raydist = CastRay(ssector, lorg+lnormal, (*spt)+lnormal, squaredist);
+    const float raydist = CastStaticRay(ssector, lorg+lnormal, (*spt)+lnormal, squaredist);
     if (raydist <= 0.0f) {
       // light ray is blocked
       /*
@@ -582,7 +610,7 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
             for (int dx = -1; dx < 2; ++dx) {
               for (int dz = -1; dz < 2; ++dz) {
                 if ((dx|dy|dz) == 0) continue;
-                raydist = CastRay(ssector, lorg+lnormal, pt+TVec(4*dx, 4*dy, 4*dz), squaredist);
+                raydist = CastStaticRay(ssector, lorg+lnormal, pt+TVec(4*dx, 4*dy, 4*dz), squaredist);
                 if (raydist > 0.0f) goto donetrace;
               }
             }
@@ -854,6 +882,8 @@ void VRenderLevelLightmap::AddDynamicLights (surface_t *surf) {
 
   const bool hasPVS = Level->HasPVS();
   const bool doCheckTrace = (r_dynamic_clip && r_dynamic_clip_more && r_allow_shadows);
+  const bool useBSPTrace = r_lmap_bsp_trace_dynamic.asBool();
+  linetrace_t Trace;
 
   for (unsigned lnum = 0; lnum < MAX_DLIGHTS; ++lnum) {
     if (!(surf->dlightbits&(1U<<lnum))) continue; // not lit by this light
@@ -948,7 +978,32 @@ void VRenderLevelLightmap::AddDynamicLights (surface_t *surf) {
           if (needProperTrace) {
             //if (!lmi.spotLight) spt = lmi.calcTexPoint(starts+s*step, startt+t*step);
             if (length2DSquared((*spt)-dorg) > 2*2) {
-              if (!Level->CastEx(Level->Subsectors[dlinfo[lnum].leafnum].sector, dorg, (*spt), SPF_NOBLOCKSIGHT, surfsector)) continue;
+              const TVec &p2 = *spt;
+              if (!useBSPTrace) {
+                if (!Level->CastEx(Level->Subsectors[dlinfo[lnum].leafnum].sector, dorg, p2, SPF_NOBLOCKSIGHT, surfsector)) continue;
+              } else {
+                if (!Level->TraceLine(Trace, dorg, p2, SPF_NOBLOCKSIGHT)) continue; // ray was blocked
+                /*
+                const TVec delta = p2-dorg;
+                float tdist = DotProduct(delta, delta);
+                //if (tdist >= dist*dist) continue; // too far away
+                if (tdist > 2.0f) {
+                  linetrace_t Trace;
+                  //if (!Level->TraceLine(Trace, dorg, p2, SPF_NOBLOCKSIGHT)) continue; // ray was blocked
+                  if (!Level->CastEx(Level->Subsectors[dlinfo[lnum].leafnum].sector, dorg, p2, SPF_NOBLOCKSIGHT, surfsector)) continue;
+                  tdist = sqrtf(tdist);
+                } else {
+                  tdist = 1.0f;
+                }
+                */
+                // recalc add with new distance
+                /*
+                add = (rad-tdist)*attn;
+                if (add <= 0.0f) continue;
+                // without this, lights with huge radius will overbright everything
+                if (add > 255.0f) add = 255.0f;
+                */
+              }
             }
           }
           int i = t*smax+s;

@@ -133,7 +133,7 @@ menudef AdvVideoOptions {
 
   option enum {
     title = "Lightmap Tracing Mode";
-    cvar = r_lmap_bsp_trace;
+    cvar = r_lmap_bsp_trace_static;
     list {
       "Blockmap",
       "BSP",
