@@ -1030,7 +1030,7 @@ void VWidget::DrawString (int x, int y, VStr String, int NormalColor, int BoldCo
 //  returns text bounds with respect to the current text align
 //
 //==========================================================================
-void VWidget::TextBounds (int x, int y, VStr String, int *x0, int *y0, int *width, int *height) {
+void VWidget::TextBounds (int x, int y, VStr String, int *x0, int *y0, int *width, int *height, bool trimTrailNL) {
   if (x0 || y0) {
     if (x0) {
       int cx = x;
@@ -1048,7 +1048,11 @@ void VWidget::TextBounds (int x, int y, VStr String, int *x0, int *y0, int *widt
   }
 
   if (width || height) {
-    while (!String.isEmpty() && String[String.length()] == '\n') String.chopRight(1);
+    if (trimTrailNL) {
+      int count = 0;
+      for (int pos = String.length()-1; pos >= 0 && String[pos] == '\n'; --pos) ++count;
+      String.chopRight(count);
+    }
 
     if (width) *width = Font->TextWidth(String);
     if (height) *height = Font->TextHeight(String);
@@ -1450,14 +1454,15 @@ IMPLEMENT_FUNCTION(VWidget, SetTextShadow) {
   if (Self) Self->SetTextShadow(State);
 }
 
-// native final void TextBounds (int x, int y, string text, out int x0, out int y0, out int width, out int height);
+// native final void TextBounds (int x, int y, string text, out int x0, out int y0, out int width, out int height, optional bool trimTrailNL);
 IMPLEMENT_FUNCTION(VWidget, TextBounds) {
   int x, y;
   VStr text;
   int *x0, *y0, *width, *height;
-  vobjGetParamSelf(x, y, text, x0, y0, width, height);
+  VOptParamBool trimTrailNL(true);
+  vobjGetParamSelf(x, y, text, x0, y0, width, height, trimTrailNL);
   if (Self) {
-    Self->TextBounds(x, y, text, x0, y0, width, height);
+    Self->TextBounds(x, y, text, x0, y0, width, height, trimTrailNL);
   } else {
     if (x0) *x0 = x;
     if (y0) *y0 = y;
