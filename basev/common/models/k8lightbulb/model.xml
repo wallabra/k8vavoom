@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<vavoom_model_definition>
+  <model name="k8debuglightbulb">
+    <md2 file="models/k8lightbulb/lbulb.md2" scale_x="1.0" scale_y="1.0" scale_z="1.0">
+      <skin file="lbulb.tga" />
+      <frame index="0" />
+    </md2>
+  </model>
+  <class name="K8DebugLightBulb">
+    <!-- Spawn -->
+    <state index="0"  model="k8debuglightbulb"  frame_index="0" />
+  </class>
+</vavoom_model_definition>

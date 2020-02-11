@@ -141,3 +141,21 @@ actor RocketSmokeTrail
     Stop
   }
 }
+
+
+//------------------------------------------------------------------------------
+actor K8DebugLightBulb {
+  Radius 1
+  Height 1
+  +NoGravity
+  +NoBlockmap
+  +NoInteraction
+  +DontSplash
+  //+MoveWithSector
+  +k8vavoomInternalNoTickGrav
+  states {
+    Spawn:
+      UNKN A -1
+      Stop
+  }
+}

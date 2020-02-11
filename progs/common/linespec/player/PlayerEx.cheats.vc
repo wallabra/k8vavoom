@@ -1330,3 +1330,62 @@ void Cheat_VScriptCommand () {
     return;
   }
 }
+
+
+//==========================================================================
+//
+//  Cheat_Debug_Summon_Light_Bulbs
+//
+//==========================================================================
+void Cheat_Debug_Summon_Light_Bulbs () {
+  /*
+  bool doDynamic = false;
+  bool doStatic = true;
+  if (Cmd_GetArgC() > 1) {
+    doStatic = false;
+    foreach (int f; 1..Cmd_GetArgC()) {
+           if (stricmp(Cmd_GetArgV(f), "dynamic") == 0) doDynamic = true;
+      else if (stricmp(Cmd_GetArgV(f), "static") == 0) doStatic = true;
+    }
+  }
+  */
+
+  class!Actor bulbClass = class!Actor(FindClassNoCaseStr("K8DebugLightBulb"));
+  if (!bulbClass) {
+    printwarn("actor 'K8DebugLightBulb' not found!");
+    return;
+  }
+
+  // remove old bulbs
+  Object bbobj;
+  foreach AllObjects(bulbClass, out bbobj) {
+    bbobj.Destroy();
+  }
+
+  // spawn new bulbs
+  foreach (const auto ref light; Level.XLevel.StaticLights) {
+    // this calls `OnMapSpawn(nullptr)` for spawned item
+    auto it = Level.Spawn(bulbClass, light.Origin, AllowReplace:false); // optional TAVec AAngles, optional mthing_t *mthing, optional bool AllowReplace
+  }
+  /*
+  TVec Origin;
+  float Radius;
+  int Color;
+  Entity Owner;
+  TVec ConeDir;
+  float ConeAngle;
+  */
+}
+
+
+//==========================================================================
+//
+//  Cheat_Debug_Summon_Light_Bulbs_AC
+//
+//==========================================================================
+/*
+void Cheat_Debug_Summon_Light_Bulbs_AC (const ref array!string args, bool newArg, out array!string aclist) {
+  aclist[$] = "dynamic";
+  aclist[$] = "static";
+}
+*/

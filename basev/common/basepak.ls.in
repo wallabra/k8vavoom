@@ -17,6 +17,9 @@ textures/-noflat-.png @CMAKE_CURRENT_SOURCE_DIR@/textures/-noflat-.png
 // common sprites
 $recursedir sprites/  @CMAKE_CURRENT_SOURCE_DIR@/sprites/
 
+// debug movels
+$recursedir models/  @CMAKE_CURRENT_SOURCE_DIR@/models/
+
 // sounds
 $recursedir sounds/  @CMAKE_CURRENT_SOURCE_DIR@/sounds/
 

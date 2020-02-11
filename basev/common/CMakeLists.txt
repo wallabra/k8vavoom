@@ -40,6 +40,9 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
 
     sounds/*
 
+    models/*
+    models/k8lightbulb/*
+
     sprites/iceca0.png
     sprites/icecb0.png
     sprites/icecc0.png

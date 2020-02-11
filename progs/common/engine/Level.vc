@@ -145,9 +145,7 @@ native readonly private void *BaseSides;
 native readonly private void *BaseSectors;
 native readonly private void *BasePolyObjs;
 
-//native readonly private int[] StaticLights;
-native readonly private rep_light_t *StaticLights;
-native readonly private int NumStaticLights;
+native readonly rep_light_t[] StaticLights;
 
 // not really array of ints, and properly cleared by C++ code
 native readonly private array!int ActiveSequences;
