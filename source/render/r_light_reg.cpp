@@ -184,33 +184,6 @@ float VRenderLevelLightmap::CastStaticRay (sector_t *ssector, const TVec &p1, co
 
 //==========================================================================
 //
-//  VRenderLevelLightmap::CastDynamicRay
-//
-//  Returns the distance between the points, or 0 if blocked
-//
-//==========================================================================
-/*
-float VRenderLevelLightmap::CastDynamicRay (sector_t *ssector, const TVec &p1, const TVec &p2, float squaredist) {
-  const TVec delta = p2-p1;
-  const float t = DotProduct(delta, delta);
-  if (t >= squaredist) return 0.0f; // too far away
-  if (t <= 2.0f) return 1.0f; // at light point
-
-  if (!r_lmap_bsp_trace_dynamic) {
-    if (!Level->CastEx(ssector, p1, p2, SPF_NOBLOCKSIGHT)) return 0.0f; // ray was blocked
-  } else {
-    linetrace_t Trace;
-    if (!Level->TraceLine(Trace, p1, p2, SPF_NOBLOCKSIGHT)) return 0.0f; // ray was blocked
-  }
-
-  return sqrtf(t);
-  //return 1.0f/fastInvSqrtf(t); //k8: not much faster
-}
-*/
-
-
-//==========================================================================
-//
 //  VRenderLevelLightmap::CalcMinMaxs
 //
 //==========================================================================
@@ -983,26 +956,6 @@ void VRenderLevelLightmap::AddDynamicLights (surface_t *surf) {
                 if (!Level->CastEx(Level->Subsectors[dlinfo[lnum].leafnum].sector, dorg, p2, SPF_NOBLOCKSIGHT, surfsector)) continue;
               } else {
                 if (!Level->TraceLine(Trace, dorg, p2, SPF_NOBLOCKSIGHT)) continue; // ray was blocked
-                /*
-                const TVec delta = p2-dorg;
-                float tdist = DotProduct(delta, delta);
-                //if (tdist >= dist*dist) continue; // too far away
-                if (tdist > 2.0f) {
-                  linetrace_t Trace;
-                  //if (!Level->TraceLine(Trace, dorg, p2, SPF_NOBLOCKSIGHT)) continue; // ray was blocked
-                  if (!Level->CastEx(Level->Subsectors[dlinfo[lnum].leafnum].sector, dorg, p2, SPF_NOBLOCKSIGHT, surfsector)) continue;
-                  tdist = sqrtf(tdist);
-                } else {
-                  tdist = 1.0f;
-                }
-                */
-                // recalc add with new distance
-                /*
-                add = (rad-tdist)*attn;
-                if (add <= 0.0f) continue;
-                // without this, lights with huge radius will overbright everything
-                if (add > 255.0f) add = 255.0f;
-                */
               }
             }
           }
