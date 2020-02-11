@@ -1332,6 +1332,7 @@ void Cheat_VScriptCommand () {
 }
 
 
+#ifdef THE_THING_THAT_SHOULD_NOT_COMPILE
 //==========================================================================
 //
 //  Cheat_Debug_Summon_Light_Bulbs
@@ -1389,3 +1390,4 @@ void Cheat_Debug_Summon_Light_Bulbs_AC (const ref array!string args, bool newArg
   aclist[$] = "static";
 }
 */
+#endif
