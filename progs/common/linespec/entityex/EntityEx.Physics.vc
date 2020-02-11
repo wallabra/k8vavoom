@@ -561,13 +561,15 @@ final float XYMovement (float DeltaTime, float ScrollX, float ScrollY) {
             //if (bIsPlayer) printdebug("%C: 03: scvel=%s; oldvel=%s; newVelocity=%s", self, scvel, oldvel, Velocity);
             */
             tmp_transporter_velocity = vector(ScrollX/DeltaTime, ScrollY/DeltaTime);
-            HitLine(&tmtrace, DeltaTime/float(Steps), true);
+            HitLine(&tmtrace, DeltaTime/float(Steps), forceSlide:true);
+            tmp_transporter_velocity = vector(0, 0, 0);
           } else {
             tmp_transporter_velocity = vector(0, 0, 0);
-            HitLine(&tmtrace, DeltaTime/float(Steps), true);
+            HitLine(&tmtrace, DeltaTime/float(Steps), forceSlide:true);
           }
         } else {
-          HitLine(&tmtrace, DeltaTime/float(Steps), false);
+          //tmp_transporter_velocity = vector(0, 0, 0); // just in case
+          HitLine(&tmtrace, DeltaTime/float(Steps), forceSlide:false);
         }
       }
       return oldfloorz;
