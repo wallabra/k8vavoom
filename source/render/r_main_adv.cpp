@@ -103,6 +103,37 @@ VRenderLevelShadowVolume::~VRenderLevelShadowVolume () {
 }
 
 
+#define DBG_RENDER_LIGHTS(pass_)  do { \
+  if (r_dbg_lightbulbs_static || r_dbg_lightbulbs_dynamic) { \
+    if (visibleStaticLightCount > 0 && r_dbg_lightbulbs_static) { \
+      visstatlightCount = visibleStaticLightCount; \
+      TAVec langles(0, 0, 0); \
+      const float zofs = r_dbg_lightbulbs_zofs_static.asFloat(); \
+      for (const StLightInfo *sli = visstatlights.ptr(); visstatlightCount--; ++sli) { \
+        TVec lorg = sli->stlight->origin; \
+        lorg.z += sli->zofs+zofs; \
+        R_DrawLightBulb(lorg, langles, sli->stlight->color, pass_, true/*shadowvol*/); \
+      } \
+    } \
+    \
+    if (visibleDynamicLightCount > 0 && r_dbg_lightbulbs_dynamic) { \
+      visdynlightCount = visibleDynamicLightCount; \
+      TAVec langles(0, 0, 0); \
+      const float zofs = r_dbg_lightbulbs_zofs_dynamic.asFloat(); \
+      for (const DynLightInfo *dli = visdynlights.ptr(); visdynlightCount--; ++dli) { \
+        TVec lorg = dli->l->origin; \
+        lorg.z += zofs; \
+        R_DrawLightBulb(lorg, langles, dli->l->color, pass_, true/*shadowvol*/); \
+      } \
+    } \
+  } \
+} while (0)
+
+
+static TArray<StLightInfo> visstatlights;
+static TArray<DynLightInfo> visdynlights;
+
+
 //==========================================================================
 //
 //  VRenderLevelShadowVolume::RenderScene
@@ -167,6 +198,12 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
 
   RenderMobjsAmbient();
 
+  unsigned visibleStaticLightCount = 0;
+  unsigned visibleDynamicLightCount = 0;
+
+  unsigned visdynlightCount = 0;
+  unsigned visstatlightCount = 0;
+
   //GCon->Log("***************** RenderScene *****************");
   //FIXME: mirrors can use stencils, and advlight too...
   if (!MirrorLevel) {
@@ -202,9 +239,7 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
       if (!staticLightsFiltered) RefilterStaticLights();
 
       // sort lights by distance to player, so faraway lights won't disable nearby ones
-      static TArray<StLightInfo> visstatlights;
       if (visstatlights.length() < Lights.length()) visstatlights.setLength(Lights.length());
-      unsigned visstatlightCount = 0;
 
       light_t *stlight = Lights.ptr();
       for (int i = Lights.length(); i--; ++stlight) {
@@ -247,6 +282,7 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
 
       // sort lights, so nearby ones will be rendered first
       if (visstatlightCount > 0) {
+        visibleStaticLightCount = visstatlightCount;
         if (r_advlight_sort_static) {
           timsort_r(visstatlights.ptr(), visstatlightCount, sizeof(StLightInfo), &stLightCompare, nullptr);
         }
@@ -265,9 +301,7 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
     DynamicLights = true;
 
     if (!FixedLight && r_dynamic_lights && r_max_lights != 0) {
-      static TArray<DynLightInfo> visdynlights;
       if (visdynlights.length() < MAX_DLIGHTS) visdynlights.setLength(MAX_DLIGHTS);
-      unsigned visdynlightCount = 0;
 
       dlight_t *l = DLights;
       for (int i = MAX_DLIGHTS; i--; ++l) {
@@ -310,6 +344,7 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
 
       // sort lights, so nearby ones will be rendered first
       if (visdynlightCount > 0) {
+        visibleDynamicLightCount = visdynlightCount;
         if (r_advlight_sort_dynamic) {
           timsort_r(visdynlights.ptr(), visdynlightCount, sizeof(DynLightInfo), &dynLightCompare, nullptr);
         }
@@ -334,14 +369,18 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
     }
   }
 
+  DBG_RENDER_LIGHTS(RPASS_Ambient);
+
   Drawer->DrawWorldTexturesPass();
   RenderMobjsTextures();
+  DBG_RENDER_LIGHTS(RPASS_Textures);
 
   Drawer->DrawWorldFogPass();
   RenderMobjsFog();
   Drawer->EndFogPass();
 
   RenderMobjs(RPASS_NonShadow);
+  DBG_RENDER_LIGHTS(RPASS_NonShadow);
 
   DrawParticles();
 

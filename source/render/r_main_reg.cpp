@@ -324,6 +324,32 @@ void VRenderLevelLightmap::RenderScene (const refdef_t *RD, const VViewClipper *
   //BuildVisibleObjectsList();
   RenderMobjs(RPASS_Normal);
 
+  // draw light bulbs
+  if (r_dbg_lightbulbs_static) {
+    TAVec langles(0, 0, 0);
+    const float zofs = r_dbg_lightbulbs_zofs_static.asFloat();
+    light_t *stlight = Lights.ptr();
+    for (int i = Lights.length(); i--; ++stlight) {
+      //if (!Lights[i].radius) continue;
+      if (!stlight->active || stlight->radius < 8) continue;
+      TVec lorg = stlight->origin;
+      lorg.z += zofs;
+      R_DrawLightBulb(lorg, langles, stlight->color, RPASS_Normal, false/*shadowvol*/);
+    }
+  }
+
+  if (r_dbg_lightbulbs_dynamic) {
+    TAVec langles(0, 0, 0);
+    const float zofs = r_dbg_lightbulbs_zofs_dynamic.asFloat();
+    dlight_t *l = DLights;
+    for (int i = MAX_DLIGHTS; i--; ++l) {
+      if (l->radius < l->minlight+8 || l->die < Level->Time) continue;
+      TVec lorg = l->origin;
+      lorg.z += zofs;
+      R_DrawLightBulb(lorg, langles, l->color, RPASS_Normal, false/*shadowvol*/);
+    }
+  }
+
   DrawParticles();
 
   DrawTranslucentPolys();

@@ -1849,3 +1849,40 @@ bool R_DrawStateModelFrame (VState *State, VState *NextState, float Inter,
   Drawer->EndView();
   return true;
 }
+
+
+//static VClass *bulbClass = nullptr;
+
+
+//==========================================================================
+//
+// R_DrawLightBulb
+//
+//==========================================================================
+void R_DrawLightBulb (const TVec &Org, const TAVec &Angles, vuint32 rgbLight, ERenderPass Pass, bool isShadowVol, float ScaleX, float ScaleY) {
+  /*
+  if (!bulbClass) {
+    bulbClass = VClass:FindClass("K8DebugLightBulb");
+    if (!bulbClass) return;
+  }
+  */
+
+  VClassModelScript *Cls = FindClassModelByName("K8DebugLightBulb");
+  if (!Cls) return;
+
+  VAliasModelFrameInfo Frame;
+  Frame.sprite = NAME_None;
+  Frame.frame = 0;
+  Frame.index = 0;
+  Frame.spriteIndex = 0;
+
+  int FIdx = FindFrame(*Cls, Frame, 0.0f);
+  if (FIdx == -1) return;
+
+  rgbLight |= 0xff000000u;
+  DrawModel(nullptr, nullptr, Org, Angles, ScaleX, ScaleY, *Cls, FIdx, FIdx, nullptr/*translation*/,
+    0/*colormap*/, 0/*version*/, rgbLight, 0/*fade*/,
+    1.0f/*alpha*/, false/*additive*/, false/*isviewmodel*/,
+    0.0f/*interpfrac*/, false/*interpolate*/, TVec()/*currlightpos*/, 0/*currlightradius*/,
+    Pass, isShadowVol);
+}

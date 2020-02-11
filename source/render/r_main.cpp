@@ -146,6 +146,11 @@ static VCvarI r_level_renderer("r_level_renderer", "1", "Level renderer type (0:
 
 int r_precache_textures_override = -1;
 
+VCvarB r_dbg_lightbulbs_static("r_dbg_lightbulbs_static", false, "Draw lighbulbs for static lights?", 0);
+VCvarB r_dbg_lightbulbs_dynamic("r_dbg_lightbulbs_dynamic", false, "Draw lighbulbs for dynamic lights?", 0);
+VCvarF r_dbg_lightbulbs_zofs_static("r_dbg_lightbulbs_zofs_static", "0", "Z offset for static lightbulbs.", 0);
+VCvarF r_dbg_lightbulbs_zofs_dynamic("r_dbg_lightbulbs_zofs_dynamic", "0", "Z offset for dynamic lightbulbs.", 0);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 // pool allocator for portal data

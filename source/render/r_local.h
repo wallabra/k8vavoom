@@ -1109,6 +1109,11 @@ extern VCvarB r_vis_check_flood;
 extern VCvarF r_fade_mult_regular;
 extern VCvarF r_fade_mult_advanced;
 
+extern VCvarB r_dbg_lightbulbs_static;
+extern VCvarB r_dbg_lightbulbs_dynamic;
+extern VCvarF r_dbg_lightbulbs_zofs_static;
+extern VCvarF r_dbg_lightbulbs_zofs_dynamic;
+
 extern VTextureTranslation **TranslationTables;
 extern int NumTranslationTables;
 extern VTextureTranslation IceTranslation;
@@ -1121,5 +1126,7 @@ extern vuint32 blocklightsb[VRenderLevelLightmap::LMapTraceInfo::GridSize*VRende
 
 extern double dbgCheckVisTime;
 
+
+void R_DrawLightBulb (const TVec &Org, const TAVec &Angles, vuint32 rgbLight, ERenderPass Pass, bool isShadowVol, float ScaleX=1.0f, float ScaleY=1.0);
 
 #endif
