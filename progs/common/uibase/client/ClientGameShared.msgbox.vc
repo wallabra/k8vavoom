@@ -28,6 +28,15 @@
 //
 //**************************************************************************
 
+string YesMenuColor = "White";
+string YesMenuText = "YES";
+
+string NoMenuColor = "White";
+string NoMenuText = "NO";
+
+name QuitPromptSound = 'misc/chat';
+
+
 enum MsgBoxInputType {
   None,
   YesNo,
@@ -54,7 +63,6 @@ struct MessageBoxState {
   int width;
   int height;
   string text; // ...and here is the message string!
-  string origText; // w/o YES/NO menu
   bool wantInput; // timed message = no input from user
   MessageBoxType type;
   name flatName;
@@ -63,8 +71,6 @@ struct MessageBoxState {
   bool playAndQuit;
   // for yes/no
   bool currYes;
-  int yesBarY, yesBarHeight;
-  int noBarY, noBarHeight;
 }
 
 MessageBoxState msgboxState;
@@ -96,6 +102,16 @@ MsgBoxInputType GetMessageBoxInputType () {
 
 //==========================================================================
 //
+//  IsMessageBoxWithMenu
+//
+//==========================================================================
+bool IsMessageBoxWithMenu () {
+  return (msgboxState.active && msgboxState.wantInput && GetMessageBoxInputType() == MsgBoxInputType.YesNo);
+}
+
+
+//==========================================================================
+//
 //  QuitMessageBoxSound
 //
 //==========================================================================
@@ -112,41 +128,11 @@ void QuitMessageBoxSound (name QuitSound) {
 
 //==========================================================================
 //
-//  MessageBoxAppendYesNoMenuText
-//
-//==========================================================================
-protected final void MessageBoxAppendYesNoMenuText () {
-  string yesText = (msgboxState.currYes ? va("\c[%s]YES\c-", YesMenuColor) : "YES");
-  string noText = (msgboxState.currYes ? "NO" : va("\c[%s]NO\c-", NoMenuColor));
-
-  auto oldfont = GRoot.GetFont();
-  scope(exit) GRoot.SetFont(oldfont);
-  GRoot.SetFont('smallfont');
-
-  msgboxState.yesBarHeight = GRoot.TextHeight(yesText);
-  msgboxState.noBarHeight = GRoot.TextHeight(noText);
-
-  msgboxState.text ~= "\n\n";
-  msgboxState.text ~= yesText;
-  msgboxState.yesBarY = GRoot.TextHeight(msgboxState.text)-msgboxState.yesBarHeight;
-
-  msgboxState.text ~= "\n";
-  msgboxState.text ~= noText;
-  msgboxState.noBarY = GRoot.TextHeight(msgboxState.text)-msgboxState.noBarHeight;
-}
-
-
-//==========================================================================
-//
 //  MessageBoxSetYesNoPos
 //
 //==========================================================================
 void MessageBoxSetYesNoPos (bool yes) {
-  if (msgboxState.currYes != yes) {
-    msgboxState.currYes = yes;
-    msgboxState.text = msgboxState.origText;
-    MessageBoxAppendYesNoMenuText();
-  }
+  msgboxState.currYes = yes;
 }
 
 
@@ -163,6 +149,10 @@ void MessageBoxStartMessage (string text, MessageBoxType type, bool input) {
   scope(exit) GRoot.SetFont(oldfont);
   GRoot.SetFont('smallfont');
 
+  while (text && text[0] == "\n") text = text[1..$];
+  while (text && text[$-1] <= 32) text = text[0..$-1];
+  if (!text) text = " ";
+
   if (ui_msgxbox_wrap_trigger > 0 && ui_msgxbox_wrap_width > 0) {
     // split too long text
     msgboxState.width = GRoot.TextWidth(text);
@@ -177,21 +167,27 @@ void MessageBoxStartMessage (string text, MessageBoxType type, bool input) {
 
   msgboxState.active = true;
   msgboxState.text = text;
-  msgboxState.origText = text;
   msgboxState.type = type;
   msgboxState.wantInput = input;
   msgboxState.currYes = true;
 
-  if (msgboxState.wantInput && GetMessageBoxInputType() == MsgBoxInputType.YesNo) {
-    MessageBoxAppendYesNoMenuText();
-  }
+  //if (IsMessageBoxWithMenu()) text ~= "\n\n\n";
 
-  msgboxState.width = min(/*304*/GetVirtualWidth()-16, (GRoot.TextWidth(msgboxState.text)+16)&~15);
-  msgboxState.height = min(/*184*/GetVirtualHeight()-16, (GRoot.TextHeight(msgboxState.text)+16)&~15);
-  msgboxState.x = (GetVirtualWidth()-msgboxState.width)/2;
-  msgboxState.y = (GetVirtualHeight()-msgboxState.height)/2;
+  int wdt = max(max(GRoot.TextWidth(text), GRoot.TextWidth(YesMenuText)), GRoot.TextWidth(NoMenuText))+16;
+  wdt = (wdt+15)/16;
+  wdt *= 16;
 
-  if (type >= MessageBoxType.ControlAll && type <= MessageBoxType.ControlNonStrife) SetCvar('__ui_control_waiting', 1);
+  int hgt = GRoot.TextHeight(text)+16;
+  if (IsMessageBoxWithMenu()) hgt += GetMessageBoxMenuItemHeight()*3;
+  hgt = (hgt+15)/16;
+  hgt *= 16;
+
+  msgboxState.width = min(/*304*/GetVirtualWidth()-16, wdt);
+  msgboxState.height = min(/*184*/GetVirtualHeight()-16, hgt);
+  msgboxState.x = (GetVirtualWidth()-wdt)/2;
+  msgboxState.y = (GetVirtualHeight()-hgt)/2;
+
+  if (GetMessageBoxInputType() == MsgBoxInputType.Keybind) SetCvar('__ui_control_waiting', 1);
 
   CmdBuf_AddText("HideConsole\n");
   ActivateUIMouse();
@@ -252,24 +248,49 @@ void MessageBoxShowSkillQuery (string text) {
 
 //==========================================================================
 //
+//  GetMessageBoxMenuItemHeight
+//
+//  font must be set
+//
+//==========================================================================
+int GetMessageBoxMenuItemHeight () {
+  return GRoot.FontHeight();
+}
+
+
+//==========================================================================
+//
+//  GetMessageBoxMenuTop
+//
+//  font must be set
+//
+//==========================================================================
+int GetMessageBoxMenuTop () {
+  return msgboxState.y+msgboxState.height-GetMessageBoxMenuItemHeight()*2-8;
+}
+
+
+//==========================================================================
+//
 //  MessageBoxGetMenuItemAt
 //
 //  returns -1, or menu item index
 //
 //==========================================================================
 int MessageBoxGetMenuItemAt (int x, int y) {
-  if (!msgboxState.active || !msgboxState.wantInput || GetMessageBoxInputType() != MsgBoxInputType.YesNo) return -1;
-  if (x < msgboxState.x || x >= msgboxState.x+msgboxState.width-4) return -1;
+  if (!IsMessageBoxWithMenu()) return -1;
+
+  if (x < msgboxState.x+2 || x >= msgboxState.x+msgboxState.width-4) return -1;
   if (y < msgboxState.y || y >= msgboxState.y+msgboxState.height) return -1;
 
   auto oldfont = GRoot.GetFont();
   scope(exit) GRoot.SetFont(oldfont);
   GRoot.SetFont('smallfont');
 
-  int y0 = (GRoot.Height-GRoot.TextHeight(msgboxState.text))/2;
-  if (y >= y0+msgboxState.yesBarY && y < y0+msgboxState.yesBarY+msgboxState.yesBarHeight) return 0;
-  if (y >= y0+msgboxState.noBarY && y < y0+msgboxState.noBarY+msgboxState.noBarHeight) return 1;
-  return -1;
+  int fh = GetMessageBoxMenuItemHeight();
+  int y0 = y-GetMessageBoxMenuTop();
+  if (y0 < 0 || y0 >= fh*2) return -1;
+  return y0/fh;
 }
 
 
@@ -287,18 +308,32 @@ override void MessageBoxDrawer () {
     DrawBorder(msgboxState.x, msgboxState.y, msgboxState.width, msgboxState.height);
     //GRoot.DrawRect(msgboxState.x, msgboxState.y, msgboxState.width, msgboxState.height, RGB(255, 0, 0));
 
+    bool hasMenu = IsMessageBoxWithMenu();
+    int y0, fh;
+
     // draw yes/no selection bar
-    if (msgboxState.wantInput && GetMessageBoxInputType() == MsgBoxInputType.YesNo) {
+    if (hasMenu) {
       //int y0 = (GetVirtualHeight()-GRoot.TextHeight(msgboxState.text))/2;
-      int y0 = (GRoot.Height-GRoot.TextHeight(msgboxState.text))/2;
-      y0 += (msgboxState.currYes ? msgboxState.yesBarY : msgboxState.noBarY);
-      int hgt = (msgboxState.currYes ? msgboxState.yesBarHeight : msgboxState.noBarHeight);
-      GRoot.ShadeRect(msgboxState.x+2, y0, msgboxState.width-4, hgt, 0.6);
+      fh = GetMessageBoxMenuItemHeight();
+      y0 = GetMessageBoxMenuTop();
+      GRoot.ShadeRect(msgboxState.x+2, y0+(msgboxState.currYes ? 0 : 1)*fh, msgboxState.width-4, fh, 0.6);
     }
 
-    GRoot.SetTextAlign(hcentre, vcentre);
+    // draw text
+    //GRoot.SetTextAlign(hcentre, vcentre);
+    GRoot.SetTextAlign(hcentre, vtop);
     //GRoot.DrawText(GetVirtualWidth()/2, GetVirtualHeight()/2, msgboxState.text);
-    GRoot.DrawText(GRoot.Width/2, GRoot.Height/2, msgboxState.text);
+    //GRoot.DrawText(GRoot.Width/2, GRoot.Height/2, msgboxState.text);
+    GRoot.DrawText(GRoot.Width/2, msgboxState.y+8, msgboxState.text);
+
+    // draw menu
+    if (hasMenu) {
+      string yesText = (msgboxState.currYes ? va("\c[%s]%s\c-", YesMenuColor, YesMenuText) : YesMenuText);
+      string noText = (msgboxState.currYes ? NoMenuText : va("\c[%s]%s\c-", NoMenuColor, NoMenuText));
+      GRoot.SetTextAlign(hcentre, vtop);
+      GRoot.DrawText(GRoot.Width/2, y0, yesText);
+      GRoot.DrawText(GRoot.Width/2, y0+fh, noText);
+    }
   }
 
   if (msgboxState.playAndQuit && !IsLocalSoundPlaying(msgboxState.soundName)) {

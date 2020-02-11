@@ -70,10 +70,6 @@ name DefaultFinaleType;
 
 array!MenuDefinition menudefs;
 
-string YesMenuColor = "White";
-string NoMenuColor = "White";
-name QuitPromptSound = 'misc/chat';
-
 
 #include "ClientGameShared.msgbox.vc"
 
