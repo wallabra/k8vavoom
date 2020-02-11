@@ -26,10 +26,6 @@
 #include "gamedefs.h"
 #include "sv_local.h"
 
-// try to dance around line trace imprecision
-// mostly used for lightmap tracing
-#define VV_BMAP_TRACE_EXPERIMENT
-
 static VCvarB dbg_bsp_trace_strict_flats("dbg_bsp_trace_strict_flats", false, "use strict checks for flats?", /*CVAR_Archive|*/CVAR_PreInit);
 static VCvarB dbg_sight_trace_bsp("dbg_sight_trace_bsp", false, "use simple BSP raycast for sight (debug)?", /*CVAR_Archive|*/CVAR_PreInit);
 
@@ -58,7 +54,7 @@ static bool CheckPlanes (linetrace_t &trace, sector_t *sec) {
 //  VLevel::CheckLine
 //
 //  returns `true` if the line isn't crossed
-//  returns `fales` if the line blocked the ray
+//  returns `false` if the line blocked the ray
 //
 //==========================================================================
 bool VLevel::CheckLine (linetrace_t &trace, seg_t *seg) const {
@@ -69,6 +65,7 @@ bool VLevel::CheckLine (linetrace_t &trace, seg_t *seg) const {
   if (line->validcount == validcount) return true;
   line->validcount = validcount;
 
+  #if 1
   int s1 = trace.LinePlane.PointOnSide2(*line->v1);
   int s2 = trace.LinePlane.PointOnSide2(*line->v2);
 
@@ -80,6 +77,32 @@ bool VLevel::CheckLine (linetrace_t &trace, seg_t *seg) const {
 
   // line isn't crossed?
   if (s1 == s2 || (s1 == 2 && s2 == 0)) return true;
+
+  #else
+  // k8: dunno, this doesn't make any difference
+
+  // signed distances from the line points to the trace line plane
+  float dot1 = DotProduct(*line->v1, trace.LinePlane.normal)-trace.LinePlane.dist;
+  float dot2 = DotProduct(*line->v2, trace.LinePlane.normal)-trace.LinePlane.dist;
+
+  // do not use multiplication to check: zero speedup, lost accuracy
+  //if (dot1*dot2 >= 0) return true; // line isn't crossed
+  if (dot1 < 0.0f && dot2 < 0.0f) return true; // didn't reached back side
+  // if the line is parallel to the trace plane, ignore it
+  if (dot1 >= 0.0f && dot2 >= 0.0f) return true; // didn't reached front side
+
+  // signed distances from the trace points to the line plane
+  dot1 = DotProduct(trace.Start, line->normal)-line->dist;
+  dot2 = DotProduct(trace.End, line->normal)-line->dist;
+
+  // do not use multiplication to check: zero speedup, lost accuracy
+  //if (dot1*dot2 >= 0) return true; // line isn't crossed
+  if (dot1 < 0.0f && dot2 < 0.0f) return true; // didn't reached back side
+  // if the trace is parallel to the line plane, ignore it
+  if (dot1 >= 0.0f && dot2 >= 0.0f) return true; // didn't reached front side
+
+  const int s1 = (dot1 < 0.0f); // the only thing we need here
+  #endif
 
   // crosses a two sided line
   //sector_t *front = (s1 == 0 || s1 == 2 ? line->frontsector : line->backsector);
@@ -302,7 +325,8 @@ struct SightTraceInfo {
   unsigned LineBlockMask;
 
   vuint32 PlaneNoBlockFlags;
-  TVec HitPlaneNormal;
+  // unreliable in case of early out
+  //!TVec HitPlaneNormal;
 };
 
 
@@ -313,7 +337,7 @@ struct SightTraceInfo {
 //==========================================================================
 static bool SightCheckPlanes (SightTraceInfo &trace, sector_t *sec) {
   //k8: for some reason, real sight checks ignores base sector region
-  return VLevel::CheckPassPlanes(sec, trace.CheckBaseRegion, trace.LineStart, trace.LineEnd, (unsigned)trace.PlaneNoBlockFlags, &trace.LineEnd, &trace.HitPlaneNormal, nullptr, nullptr);
+  return VLevel::CheckPassPlanes(sec, trace.CheckBaseRegion, trace.LineStart, trace.LineEnd, (unsigned)trace.PlaneNoBlockFlags, &trace.LineEnd, /*&trace.HitPlaneNormal*/nullptr, nullptr, nullptr);
 }
 
 
@@ -324,7 +348,7 @@ static bool SightCheckPlanes (SightTraceInfo &trace, sector_t *sec) {
 //==========================================================================
 static bool SightTraverse (SightTraceInfo &trace, const intercept_t *in) {
   line_t *line = in->line;
-  int s1 = line->PointOnSide2(trace.Start);
+  const int s1 = line->PointOnSide2(trace.Start);
   sector_t *front = (s1 == 0 || s1 == 2 ? line->frontsector : line->backsector);
   //sector_t *front = (li->PointOnSideFri(trace.Start) ? li->frontsector : li->backsector);
   TVec hitpoint = trace.Start+in->frac*trace.Delta;
@@ -342,7 +366,8 @@ static bool SightTraverse (SightTraceInfo &trace, const intercept_t *in) {
   }
 
   // hit line
-  trace.HitPlaneNormal = (s1 == 0 || s1 == 2 ? line->normal : -line->normal);
+  //trace.HitPlaneNormal = (s1 == 0 || s1 == 2 ? line->normal : -line->normal);
+  //!trace.HitPlaneNormal = (s1 == 1 ? -line->normal : line->normal);
 
   if (!(line->flags&ML_TWOSIDED)) trace.EarlyOut = true;
   return false; // stop
@@ -414,34 +439,25 @@ static bool SightCheckLine (SightTraceInfo &trace, line_t *ld) {
 
   ld->validcount = validcount;
 
+  // signed distances from the line points to the trace line plane
   float dot1 = DotProduct(*ld->v1, trace.Plane.normal)-trace.Plane.dist;
   float dot2 = DotProduct(*ld->v2, trace.Plane.normal)-trace.Plane.dist;
 
-  // for some reason, `VV_BMAP_TRACE_EXPERIMENT` gives slightly less lightmap misses
-  // let's hope it won't break sight checks...
+  // do not use multiplication to check: zero speedup, lost accuracy
+  //if (dot1*dot2 >= 0) return true; // line isn't crossed
+  if (dot1 < 0.0f && dot2 < 0.0f) return true; // didn't reached back side
+  // if the line is parallel to the trace plane, ignore it
+  if (dot1 >= 0.0f && dot2 >= 0.0f) return true; // didn't reached front side
 
-  #ifdef VV_BMAP_TRACE_EXPERIMENT
-  const float mul1 = dot1*dot2;
-  //if (mul1 >= 0) return true; // line isn't crossed
-  if (mul1 >= 0.01f) return true; // line isn't crossed
-  #else
-  if (dot1*dot2 >= 0) return true; // line isn't crossed
-  #endif
-
+  // signed distances from the trace points to the line plane
   dot1 = DotProduct(trace.Start, ld->normal)-ld->dist;
   dot2 = DotProduct(trace.End, ld->normal)-ld->dist;
 
-  #ifdef VV_BMAP_TRACE_EXPERIMENT
-  const float mul2 = dot1*dot2;
-  //if (mul2 >= 0) return true; // line isn't crossed
-  if (mul2 >= 0.01f) return true; // line isn't crossed
-  #else
-  if (dot1*dot2 >= 0) return true; // line isn't crossed
-  #endif
-
-  #ifdef VV_BMAP_TRACE_EXPERIMENT
-  if (mul1 >= 0 && mul2 >= 0 && mul1 <= 0.001f && mul2 <= 0.001f) return true;
-  #endif
+  // do not use multiplication to check: zero speedup, lost accuracy
+  //if (dot1*dot2 >= 0) return true; // line isn't crossed
+  if (dot1 < 0.0f && dot2 < 0.0f) return true; // didn't reached back side
+  // if the trace is parallel to the line plane, ignore it
+  if (dot1 >= 0.0f && dot2 >= 0.0f) return true; // didn't reached front side
 
   // try to early out the check
   if (!ld->backsector || !(ld->flags&ML_TWOSIDED) || (ld->flags&trace.LineBlockMask)) {
@@ -449,17 +465,17 @@ static bool SightCheckLine (SightTraceInfo &trace, line_t *ld) {
   }
 
   // store the line for later intersection testing
-  // distance
+  // signed distance
   const float den = DotProduct(ld->normal, trace.Delta);
   if (fabsf(den) < 0.00001f) return true; // wtf?!
   const float num = ld->dist-DotProduct(trace.Start, ld->normal);
   const float frac = num/den;
-  intercept_t *icept;
 
   // find place to put our new record
   // this is usually faster than sorting records, as we are traversing blockmap
   // more-or-less in order
   EnsureFreeIntercept();
+  intercept_t *icept;
   if (interUsed > 0) {
     unsigned ipos = interUsed;
     while (ipos > 0 && frac < intercepts[ipos-1].frac) --ipos;
