@@ -206,7 +206,7 @@ void ClearCentreMessage () {
 void AddCentreMessage (string Msg) {
   SetFont('smallfont');
   CentreMessageHeight = SplitText(Msg, CentreMessageLines, 600);
-  CentreTime = GetCvarF('hud_centre_message_time');
+  CentreTime = GetCvarF('hud_center_message_time');
 }
 
 

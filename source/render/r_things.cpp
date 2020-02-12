@@ -69,7 +69,7 @@ VCvarB r_shadows_corpses("r_shadows_corpses", true, "Render shadows for corpses?
 VCvarB r_shadows_missiles("r_shadows_missiles", true, "Render shadows for projectiles?", CVAR_Archive);
 VCvarB r_shadows_pickups("r_shadows_pickups", true, "Render shadows for pickups?", CVAR_Archive);
 VCvarB r_shadows_decorations("r_shadows_decorations", true, "Render shadows for decorations (any solid things)?", CVAR_Archive);
-VCvarB r_shadows_other("r_shadows_other", true, "Render shadows for things with unidentified types?", CVAR_Archive);
+VCvarB r_shadows_other("r_shadows_other", false, "Render shadows for things with unidentified types?", CVAR_Archive);
 VCvarB r_shadows_players("r_shadows_players", true, "Render shadows for players?", CVAR_Archive);
 
 static VCvarB r_draw_adjacent_sector_things("r_draw_adjacent_sector_things", true, "Draw things in sectors adjacent to visible sectors (can fix disappearing things, but somewhat slow)?", CVAR_Archive);

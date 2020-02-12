@@ -34,8 +34,8 @@ IMPLEMENT_CLASS(V, BasePlayer)
 bool VBasePlayer::isCheckpointSpawn = false;
 
 
-static VCvarF hud_notify_time("hud_notify_time", "5", "Notification timeout, in seconds.", CVAR_Archive);
-static VCvarF centre_msg_time("hud_centre_message_time", "7", "Centered message timeout.", CVAR_Archive);
+static VCvarF hud_notify_time("hud_notify_time", "3", "Notification timeout, in seconds.", CVAR_Archive);
+static VCvarF center_msg_time("hud_center_message_time", "3", "Centered message timeout.", CVAR_Archive);
 static VCvarB hud_msg_echo("hud_msg_echo", true, "Echo messages?", CVAR_Archive);
 static VCvarI hud_font_color("hud_font_color", "11", "Font color.", CVAR_Archive);
 static VCvarI hud_font_color_centered("hud_font_color_centered", "11", "Secondary font color.", CVAR_Archive);

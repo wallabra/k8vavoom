@@ -6,7 +6,7 @@ user int K8BDWOpt_DropEmptyMagazine = 1 : k8_helptext = "Drop empty magazines fr
 user int K8BDWOpt_RifleTracers = 1 : k8_helptext = "Allow bullet tracers for assault rifle?";
 user int K8BDWOpt_RifleCheatReload = 0 : k8_helptext = "Should assault rifle keep unused magazine ammo on reloading?";
 user int K8BDWOpt_RifleWarnLowAmmo = 1 : k8_helptext = "Make annoying sounds when assault rifle is low on ammo?";
-user int K8BDWOpt_ShotgunTracers = 0 : k8_helptext = "Allow bullet tracers for shotgun?";
+user int K8BDWOpt_ShotgunTracers = 1 : k8_helptext = "Allow bullet tracers for shotgun?";
 user int K8BDWOpt_EmptyShellTime = 3 : k8_helptext = "Empty shells disappear time, in minutes.";
 user int K8BDWOpt_EmptyCasingTime = 3 : k8_helptext = "Empty cases disappear time, in minutes.";
 user int K8BDWOpt_EmptyClipTime = 3 : k8_helptext = "Empty clips disappear time, in minutes.";

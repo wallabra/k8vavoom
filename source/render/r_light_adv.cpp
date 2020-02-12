@@ -101,7 +101,7 @@ static VCvarF r_shadowvol_pslope("r_shadowvol_pslope", "-0.2", "DEBUG");
 //VCvarI r_max_model_lights("r_max_model_lights", "32", "Maximum lights that can affect one model when we aren't using model shadows.", CVAR_Archive);
 VCvarI r_max_model_shadows("r_max_model_shadows", "16", "Maximum number of shadows one model can cast.", CVAR_Archive);
 
-VCvarI r_max_lights("r_max_lights", "64", "Total maximum lights for shadow volume renderer.", CVAR_Archive);
+VCvarI r_max_lights("r_max_lights", "256", "Total maximum lights for shadow volume renderer.", CVAR_Archive);
 VCvarI r_dynlight_minimum("r_dynlight_minimum", "6", "Render at least this number of dynamic lights, regardless of total limit.", CVAR_Archive);
 
 static VCvarI r_max_light_segs_all("r_max_light_segs_all", "-1", "Maximum light segments for all lights.", CVAR_Archive);
