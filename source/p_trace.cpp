@@ -684,9 +684,11 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
     (ignoreBlockAll ? 0 : ML_BLOCKEVERYTHING)|
     (trace.PlaneNoBlockFlags&SPF_NOBLOCKSHOOT ? ML_BLOCKHITSCAN : 0u);
 
+  const TVec lookOrigin = org+TVec(0, 0, myheight*0.75f); // look from the eyes (roughly)
+  //{ linetrace_t Trace; return TraceLine(Trace, lookOrigin, dest+TVec(0, 0, height*0.5f), SPF_NOBLOCKSIGHT); }
+
   if (!allowBetterSight || radius < 4.0f || height < 4.0f || myheight < 4.0f /*|| dbg_sight_trace_bsp*/) {
-    trace.Start = org;
-    trace.Start.z += myheight*0.75f; // look from the eyes (roughly)
+    trace.Start = lookOrigin;
     trace.End = dest;
     trace.End.z += height*0.5f;
     if (SightPathTraverse(trace, this)) return true;
@@ -695,34 +697,24 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
     if (trace.Delta.length2DSquared() >= 820.0f*820.0f) return false; // arbitrary number
     return SightPathTraverse2(trace);
   } else {
-    const float ithmult[2] = { 0.35f, 0.75f }; // destination height multiplier (0.5f is checked first)
     const float sidemult[3] = { 0.0f, -0.75f, 0.75f }; // side shift multiplier (by radius)
-    //const float fwdmult[2] = { 0.75f, 0.0f }; // forward shift multiplier (by radius)
-    //for (unsigned myf = 0; myf < 2; ++myf)
-    {
-      //TVec orgStartFwd = org+orgdirFwd*(radius*fwdmult[myf]);
-      //orgStartFwd.z += myheight*0.75f; // look from the eyes (roughly)
-      // check side looks
-      for (unsigned myx = 0; myx < 3; ++myx) {
-        // now look from eyes of t1 to some parts of t2
-        //const TVec orgStart = orgStartFwd+orgdirRight*(radius*sidemult[myx]);
-        const TVec orgStart = org+orgdirRight*(radius*sidemult[myx]);
-        trace.Start = orgStart;
+    const float ithmult[2] = { 0.35f, 0.75f }; // destination height multiplier (0.5f is checked first)
+    // check side looks
+    for (unsigned myx = 0; myx < 3; ++myx) {
+      // now look from eyes of t1 to some parts of t2
+      trace.Start = lookOrigin+orgdirRight*(radius*sidemult[myx]);
+      trace.End = dest;
+
+      // check middle
+      trace.End.z += height*0.5f;
+      if (SightPathTraverse(trace, this)) return true;
+      if (trace.EarlyOut || interUsed == 0) continue;
+
+      // check up and down
+      for (unsigned itsz = 0; itsz < 2; ++itsz) {
         trace.End = dest;
-
-        // check middle
-        trace.End.z += height*0.5f;
-        if (SightPathTraverse(trace, this)) return true;
-        if (trace.EarlyOut || interUsed == 0) continue;
-
-        // check up and down
-        for (unsigned itsz = 0; itsz < 2; ++itsz) {
-          trace.Start = orgStart;
-          trace.End = dest;
-          trace.End.z += height*ithmult[itsz];
-          //GCon->Logf("myx=%u; itsz=%u; org=(%g,%g,%g); dest=(%g,%g,%g); s=(%g,%g,%g); e=(%g,%g,%g)", myx, itsz, org.x, org.y, org.z, dest.x, dest.y, dest.z, trace.Start.x, trace.Start.y, trace.Start.z, trace.End.x, trace.End.y, trace.End.z);
-          if (SightPathTraverse2(trace)) return true;
-        }
+        trace.End.z += height*ithmult[itsz];
+        if (SightPathTraverse2(trace)) return true;
       }
     }
   }
