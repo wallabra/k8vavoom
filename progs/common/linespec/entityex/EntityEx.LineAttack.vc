@@ -728,7 +728,7 @@ final bool ShootCheckPlanes (sector_t *sec, optional line_t *line,
 {
   TVec hitpoint, hitnormal;
   bool hitsky;
-  if (!CheckPassPlanes(sec, checkSectorBounds:true, linestart, lineend, SPF_NOBLOCKSHOOT, out hitpoint, out hitnormal, out hitsky)) {
+  if (!CheckPassPlanes(sec, linestart, lineend, SPF_NOBLOCKSHOOT|SPF_IGNORE_BASE_REGION, out hitpoint, out hitnormal, out hitsky)) {
     if (outHitPoint) *outHitPoint = hitpoint;
     // if we are shooting floor or ceiling we are adjusting position
     // to spawn puff on floor or ceiling, not on wall

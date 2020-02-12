@@ -97,8 +97,9 @@ enum {
   SPF_MAX_FLAG     = 16u,
   SPF_FLAG_MASK    = 15u,
 
-  // used only as tracer flag
-  SPF_IGNORE_FAKE_FLOORS = 64u,
+  // used only as tracer flags
+  SPF_IGNORE_FAKE_FLOORS = 1u<<6, //64u,
+  SPF_IGNORE_BASE_REGION = 1u<<7,
 };
 
 

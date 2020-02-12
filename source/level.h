@@ -636,8 +636,10 @@ public:
   static void dumpSectorRegions (const sector_t *dst);
 
   static bool CheckPlanePass (const TSecPlaneRef &plane, const TVec &linestart, const TVec &lineend, TVec &currhit, bool &isSky);
-  // if `checkSectorBounds` is false, skip checking sector bounds (and the first sector region)
-  static bool CheckPassPlanes (sector_t *sector, bool checkSectorBounds, TVec linestart, TVec lineend, unsigned flagmask,
+
+  // set `SPF_IGNORE_FAKE_FLOORS` is flagmask to ignore fake floors
+  // set `SPF_IGNORE_BASE_REGION` is flagmask to ignore base region
+  static bool CheckPassPlanes (sector_t *sector, TVec linestart, TVec lineend, unsigned flagmask,
                                TVec *outHitPoint, TVec *outHitNormal, bool *outIsSky, TPlane *outHitPlane);
 
 public:

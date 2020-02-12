@@ -27,7 +27,26 @@
 #include "sv_local.h"
 
 static VCvarB dbg_bsp_trace_strict_flats("dbg_bsp_trace_strict_flats", false, "use strict checks for flats?", /*CVAR_Archive|*/CVAR_PreInit);
-static VCvarB dbg_sight_trace_bsp("dbg_sight_trace_bsp", false, "use simple BSP raycast for sight (debug)?", /*CVAR_Archive|*/CVAR_PreInit);
+//static VCvarB dbg_sight_trace_bsp("dbg_sight_trace_bsp", false, "use simple BSP raycast for sight (debug)?", /*CVAR_Archive|*/CVAR_PreInit);
+
+
+//**************************************************************************
+//
+// BSP raycasting
+//
+//**************************************************************************
+
+//==========================================================================
+//
+//  PlaneFlagsToLineFlags
+//
+//==========================================================================
+static inline VVA_CHECKRESULT VVA_OKUNUSED unsigned PlaneFlagsToLineFlags (unsigned planeblockflags) {
+  return
+    ((planeblockflags&SPF_NOBLOCKING) ? ML_BLOCKEVERYTHING : 0u)|
+    ((planeblockflags&SPF_NOBLOCKSIGHT) ? ML_BLOCKSIGHT : 0u)|
+    ((planeblockflags&SPF_NOBLOCKSHOOT) ? ML_BLOCKHITSCAN : 0u);
+}
 
 
 //==========================================================================
@@ -38,7 +57,7 @@ static VCvarB dbg_sight_trace_bsp("dbg_sight_trace_bsp", false, "use simple BSP 
 static bool CheckPlanes (linetrace_t &trace, sector_t *sec) {
   TVec outHit(0.0f, 0.0f, 0.0f), outNorm(0.0f, 0.0f, 0.0f);
 
-  if (!VLevel::CheckPassPlanes(sec, true/*sector bounds*/, trace.LineStart, trace.LineEnd, (unsigned)trace.PlaneNoBlockFlags, &outHit, &outNorm, nullptr, &trace.HitPlane)) {
+  if (!VLevel::CheckPassPlanes(sec, trace.LineStart, trace.LineEnd, (unsigned)trace.PlaneNoBlockFlags, &outHit, &outNorm, nullptr, &trace.HitPlane)) {
     // hit floor or ceiling
     trace.LineEnd = outHit;
     trace.HitPlaneNormal = outNorm;
@@ -66,42 +85,41 @@ bool VLevel::CheckLine (linetrace_t &trace, seg_t *seg) const {
   line->validcount = validcount;
 
   #if 1
-  int s1 = trace.LinePlane.PointOnSide2(*line->v1);
-  int s2 = trace.LinePlane.PointOnSide2(*line->v2);
+    int s1 = trace.LinePlane.PointOnSide2(*line->v1);
+    int s2 = trace.LinePlane.PointOnSide2(*line->v2);
 
-  // line isn't crossed?
-  if (s1 == s2) return true;
+    // line isn't crossed?
+    if (s1 == s2) return true;
 
-  s1 = line->PointOnSide2(trace.Start);
-  s2 = line->PointOnSide2(trace.End);
+    s1 = line->PointOnSide2(trace.Start);
+    s2 = line->PointOnSide2(trace.End);
 
-  // line isn't crossed?
-  if (s1 == s2 || (s1 == 2 && s2 == 0)) return true;
-
+    // line isn't crossed?
+    if (s1 == s2 || (s1 == 2 && s2 == 0)) return true;
   #else
-  // k8: dunno, this doesn't make any difference
+    // k8: dunno, this doesn't make any difference
 
-  // signed distances from the line points to the trace line plane
-  float dot1 = DotProduct(*line->v1, trace.LinePlane.normal)-trace.LinePlane.dist;
-  float dot2 = DotProduct(*line->v2, trace.LinePlane.normal)-trace.LinePlane.dist;
+    // signed distances from the line points to the trace line plane
+    float dot1 = DotProduct(*line->v1, trace.LinePlane.normal)-trace.LinePlane.dist;
+    float dot2 = DotProduct(*line->v2, trace.LinePlane.normal)-trace.LinePlane.dist;
 
-  // do not use multiplication to check: zero speedup, lost accuracy
-  //if (dot1*dot2 >= 0) return true; // line isn't crossed
-  if (dot1 < 0.0f && dot2 < 0.0f) return true; // didn't reached back side
-  // if the line is parallel to the trace plane, ignore it
-  if (dot1 >= 0.0f && dot2 >= 0.0f) return true; // didn't reached front side
+    // do not use multiplication to check: zero speedup, lost accuracy
+    //if (dot1*dot2 >= 0) return true; // line isn't crossed
+    if (dot1 < 0.0f && dot2 < 0.0f) return true; // didn't reached back side
+    // if the line is parallel to the trace plane, ignore it
+    if (dot1 >= 0.0f && dot2 >= 0.0f) return true; // didn't reached front side
 
-  // signed distances from the trace points to the line plane
-  dot1 = DotProduct(trace.Start, line->normal)-line->dist;
-  dot2 = DotProduct(trace.End, line->normal)-line->dist;
+    // signed distances from the trace points to the line plane
+    dot1 = DotProduct(trace.Start, line->normal)-line->dist;
+    dot2 = DotProduct(trace.End, line->normal)-line->dist;
 
-  // do not use multiplication to check: zero speedup, lost accuracy
-  //if (dot1*dot2 >= 0) return true; // line isn't crossed
-  if (dot1 < 0.0f && dot2 < 0.0f) return true; // didn't reached back side
-  // if the trace is parallel to the line plane, ignore it
-  if (dot1 >= 0.0f && dot2 >= 0.0f) return true; // didn't reached front side
+    // do not use multiplication to check: zero speedup, lost accuracy
+    //if (dot1*dot2 >= 0) return true; // line isn't crossed
+    if (dot1 < 0.0f && dot2 < 0.0f) return true; // didn't reached back side
+    // if the trace is parallel to the line plane, ignore it
+    if (dot1 >= 0.0f && dot2 >= 0.0f) return true; // didn't reached front side
 
-  const int s1 = (dot1 < 0.0f); // the only thing we need here
+    const int s1 = (dot1 < 0.0f); // the only thing we need here
   #endif
 
   // crosses a two sided line
@@ -123,18 +141,22 @@ bool VLevel::CheckLine (linetrace_t &trace, seg_t *seg) const {
   }
   trace.LineStart = trace.LineEnd;
 
-  if (line->flags&ML_TWOSIDED) {
-    // crosses a two sided line
-    opening_t *open = SV_LineOpenings(line, hitpoint, trace.PlaneNoBlockFlags&SPF_FLAG_MASK);
-    if (dbg_bsp_trace_strict_flats) {
-      while (open) {
-        if (open->bottom < hitpoint.z && open->top > hitpoint.z) return true;
-        open = open->next;
-      }
-    } else {
-      while (open) {
-        if (open->bottom <= hitpoint.z && open->top >= hitpoint.z) return true;
-        open = open->next;
+  if (!(line->flags&ML_TWOSIDED) || (line->flags&PlaneFlagsToLineFlags((unsigned)trace.PlaneNoBlockFlags))) {
+    trace.Flags |= linetrace_t::SightEarlyOut;
+  } else {
+    if (line->flags&ML_TWOSIDED) {
+      // crossed a two sided line
+      opening_t *open = SV_LineOpenings(line, hitpoint, trace.PlaneNoBlockFlags&SPF_FLAG_MASK);
+      if (dbg_bsp_trace_strict_flats) {
+        while (open) {
+          if (open->bottom < hitpoint.z && open->top > hitpoint.z) return true;
+          open = open->next;
+        }
+      } else {
+        while (open) {
+          if (open->bottom <= hitpoint.z && open->top >= hitpoint.z) return true;
+          open = open->next;
+        }
       }
     }
   }
@@ -145,7 +167,6 @@ bool VLevel::CheckLine (linetrace_t &trace, seg_t *seg) const {
   trace.HitPlane = *line;
   trace.HitLine = line;
 
-  if (!(line->flags&ML_TWOSIDED)) trace.Flags |= linetrace_t::SightEarlyOut;
   return false;
 }
 
@@ -195,11 +216,11 @@ bool VLevel::CrossSubsector (linetrace_t &trace, int num) const {
 //  Returns true if trace crosses the given node successfully.
 //
 //==========================================================================
-bool VLevel::CrossBSPNode (linetrace_t &trace, int BspNum) const {
-  if (BspNum == -1) return CrossSubsector(trace, 0); // just in case
+bool VLevel::CrossBSPNode (linetrace_t &trace, int bspnum) const {
+  if (bspnum == -1) return CrossSubsector(trace, 0); // just in case
 
-  if ((BspNum&NF_SUBSECTOR) == 0) {
-    const node_t *bsp = &Nodes[BspNum];
+  if ((bspnum&NF_SUBSECTOR) == 0) {
+    const node_t *bsp = &Nodes[bspnum];
     // decide which side the start point is on
     int side = bsp->PointOnSide2(trace.Start);
     bool both = (side == 2);
@@ -214,7 +235,7 @@ bool VLevel::CrossBSPNode (linetrace_t &trace, int BspNum) const {
     // cross the ending side
     return CrossBSPNode(trace, bsp->children[side^1]);
   } else {
-    return CrossSubsector(trace, BspNum&(~NF_SUBSECTOR));
+    return CrossSubsector(trace, bspnum&(~NF_SUBSECTOR));
   }
 }
 
@@ -297,7 +318,11 @@ IMPLEMENT_FUNCTION(VLevel, BSPTraceLineEx) {
 }
 
 
-// ////////////////////////////////////////////////////////////////////////// //
+//**************************************************************************
+//
+// blockmap tracing
+//
+//**************************************************************************
 static intercept_t *intercepts = nullptr;
 static unsigned interAllocated = 0;
 static unsigned interUsed = 0;
@@ -321,12 +346,13 @@ struct SightTraceInfo {
   TVec LineStart;
   TVec LineEnd;
 
-  bool CheckBaseRegion;
   unsigned LineBlockMask;
-
   vuint32 PlaneNoBlockFlags;
   // unreliable in case of early out
   //!TVec HitPlaneNormal;
+  // set in init phase
+  sector_t *StartSector;
+  sector_t *EndSector;
 };
 
 
@@ -337,7 +363,7 @@ struct SightTraceInfo {
 //==========================================================================
 static bool SightCheckPlanes (SightTraceInfo &trace, sector_t *sec) {
   //k8: for some reason, real sight checks ignores base sector region
-  return VLevel::CheckPassPlanes(sec, trace.CheckBaseRegion, trace.LineStart, trace.LineEnd, (unsigned)trace.PlaneNoBlockFlags, &trace.LineEnd, /*&trace.HitPlaneNormal*/nullptr, nullptr, nullptr);
+  return VLevel::CheckPassPlanes(sec, trace.LineStart, trace.LineEnd, (unsigned)trace.PlaneNoBlockFlags, &trace.LineEnd, /*&trace.HitPlaneNormal*/nullptr, nullptr, nullptr);
 }
 
 
@@ -374,20 +400,6 @@ static bool SightTraverse (SightTraceInfo &trace, const intercept_t *in) {
 }
 
 
-/*
-extern "C" {
-  static int compareIcept (const void *aa, const void *bb, void *) {
-    if (aa == bb) return 0;
-    const intercept_t *a = (const intercept_t *)aa;
-    const intercept_t *b = (const intercept_t *)bb;
-    if (a->frac < b->frac) return -1;
-    if (a->frac > b->frac) return 1;
-    return 0;
-  }
-}
-*/
-
-
 //==========================================================================
 //
 //  SightTraverseIntercepts
@@ -395,34 +407,19 @@ extern "C" {
 //  Returns true if the traverser function returns true for all lines
 //
 //==========================================================================
-static bool SightTraverseIntercepts (SightTraceInfo &trace, sector_t *EndSector) {
+static bool SightTraverseIntercepts (SightTraceInfo &trace) {
   int count = (int)interUsed;
 
   if (count > 0) {
-    intercept_t *scan;
-    /*
-    if (resort) {
-      // calculate intercept distance
-      scan = intercepts;
-      for (int i = count; i--; ++scan) {
-        const float den = DotProduct(scan->line->normal, trace.Delta);
-        const float num = scan->line->dist-DotProduct(trace.Start, scan->line->normal);
-        scan->frac = num/den;
-      }
-      // sort intercepts
-      timsort_r(intercepts, (size_t)count, sizeof(intercepts[0]), &compareIcept, nullptr);
-    }
-    */
-
     // go through in order
-    scan = intercepts;
+    intercept_t *scan = intercepts;
     for (int i = count; i--; ++scan) {
-      if (!SightTraverse(trace, scan)) return false; // don't bother going farther
+      if (!SightTraverse(trace, scan)) return false; // don't bother going further
     }
   }
 
   trace.LineEnd = trace.End;
-  return SightCheckPlanes(trace, EndSector);
+  return SightCheckPlanes(trace, trace.EndSector);
 }
 
 
@@ -540,27 +537,29 @@ static bool SightBlockLinesIterator (SightTraceInfo &trace, const VLevel *level,
 //  each. Returns true if the traverser function returns true for all lines
 //
 //==========================================================================
-static bool SightPathTraverse (SightTraceInfo &trace, VLevel *level, sector_t *EndSector) {
+static bool SightPathTraverse (SightTraceInfo &trace, VLevel *level) {
   VBlockMapWalker walker;
 
   interUsed = 0;
-  //trace.Intercepts.Clear();
+  trace.LineStart = trace.Start;
+  trace.Delta = trace.End-trace.Start;
+  trace.EarlyOut = false;
 
-  {
-    float x1 = trace.Start.x;
-    float y1 = trace.Start.y;
-    float x2 = trace.End.x;
-    float y2 = trace.End.y;
-    //k8: check if `Length()` and `SetPointDirXY()` are happy
-    if (x1 == x2 && y1 == y2) { x2 += 0.02f; y2 += 0.02f; }
-
-    trace.Delta = trace.End-trace.Start;
-    trace.Plane.SetPointDirXY(trace.Start, trace.Delta);
-    trace.EarlyOut = false;
-    trace.LineStart = trace.Start;
+  if (fabs(trace.Delta.x) <= 0.0001f && fabs(trace.Delta.y) <= 0.0001f) {
+    // vertical trace; check starting sector planes and get out
+    trace.Delta.x = trace.Delta.y = 0; // to simplify further checks
+    trace.LineEnd = trace.End;
+    // point cannot hit anything!
+    if (fabsf(trace.Delta.z) <= 0.0001f) {
+      trace.EarlyOut = true;
+      trace.Delta.z = 0;
+      return false;
+    }
+    return SightCheckPlanes(trace, trace.StartSector);
   }
 
   if (walker.start(level, trace.Start.x, trace.Start.y, trace.End.x, trace.End.y)) {
+    trace.Plane.SetPointDirXY(trace.Start, trace.Delta);
     //++validcount;
     level->IncrementValidCount();
     int mapx, mapy;
@@ -573,7 +572,7 @@ static bool SightPathTraverse (SightTraceInfo &trace, VLevel *level, sector_t *E
       //if (--guard == 0) Sys_Error("DDA walker fuckup!");
     }
     // couldn't early out, so go through the sorted list
-    return SightTraverseIntercepts(trace, EndSector);
+    return SightTraverseIntercepts(trace);
   }
 
   // out of map, see nothing
@@ -588,10 +587,10 @@ static bool SightPathTraverse (SightTraceInfo &trace, VLevel *level, sector_t *E
 //  Rechecks trace.Intercepts with different ending z value.
 //
 //==========================================================================
-static bool SightPathTraverse2 (SightTraceInfo &trace, sector_t *EndSector) {
+static bool SightPathTraverse2 (SightTraceInfo &trace) {
   trace.Delta = trace.End-trace.Start;
   trace.LineStart = trace.Start;
-  return SightTraverseIntercepts(trace, EndSector);
+  return SightTraverseIntercepts(trace);
 }
 
 
@@ -632,8 +631,6 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
   if (isNotInsideBM(org, this)) return false;
   if (isNotInsideBM(dest, this)) return false;
 
-  SightTraceInfo trace;
-
   if (!Sector) Sector = PointInSubsector(org)->sector;
 
   if (radius < 0.0f) radius = 0.0f;
@@ -663,20 +660,32 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
   }
 
   //if (length2DSquared(org-dest) <= 1) return true;
+  SightTraceInfo trace;
 
-  trace.PlaneNoBlockFlags = SPF_NOBLOCKSIGHT|(ignoreFakeFloors ? SPF_IGNORE_FAKE_FLOORS : 0u);
-  trace.LineBlockMask = (ignoreBlockAll ? 0 : ML_BLOCKEVERYTHING)|ML_BLOCKSIGHT;
-  trace.CheckBaseRegion = !skipBaseRegion;
+  trace.StartSector = Sector;
+  trace.EndSector = OtherSector;
+  trace.PlaneNoBlockFlags =
+    SPF_NOBLOCKSIGHT|
+    (ignoreFakeFloors ? SPF_IGNORE_FAKE_FLOORS : 0u)|
+    (skipBaseRegion ? SPF_IGNORE_BASE_REGION : 0u);
+  trace.LineBlockMask =
+    ML_BLOCKSIGHT|
+    (ignoreBlockAll ? 0 : ML_BLOCKEVERYTHING)|
+    (trace.PlaneNoBlockFlags&SPF_NOBLOCKSHOOT ? ML_BLOCKHITSCAN : 0u);
 
-  if (!allowBetterSight || radius < 4.0f || height < 4.0f || myheight < 4.0f || dbg_sight_trace_bsp) {
+  if (!allowBetterSight || radius < 4.0f || height < 4.0f || myheight < 4.0f /*|| dbg_sight_trace_bsp*/) {
     trace.Start = org;
     trace.Start.z += myheight*0.75f;
     trace.End = dest;
     trace.End.z += height*0.5f;
     //GCon->Log(NAME_Debug, "==================");
-    if (!dbg_sight_trace_bsp) return SightPathTraverse(trace, this, OtherSector);
-    linetrace_t ltr;
-    return TraceLine(ltr,  trace.Start, trace.End, trace.PlaneNoBlockFlags);
+    /*
+    if (dbg_sight_trace_bsp) {
+      linetrace_t ltr;
+      return TraceLine(ltr, trace.Start, trace.End, trace.PlaneNoBlockFlags);
+    }
+    */
+    return SightPathTraverse(trace, this);
   } else {
     /*static*/ const float ithmult[2] = { 0.15f, 0.85f };
     /*static*/ const float sidemult[3] = { 0.0f, -0.75f, 0.75f };
@@ -696,7 +705,7 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
         //GCon->Logf("myx=%u; itsz=*; org=(%g,%g,%g); dest=(%g,%g,%g); s=(%g,%g,%g); e=(%g,%g,%g)", myx, org.x, org.y, org.z, dest.x, dest.y, dest.z, trace.Start.x, trace.Start.y, trace.Start.z, trace.End.x, trace.End.y, trace.End.z);
 
         // check middle
-        if (SightPathTraverse(trace, this, OtherSector)) return true;
+        if (SightPathTraverse(trace, this)) return true;
         if (trace.EarlyOut) continue;
 
         // check up and down
@@ -705,7 +714,7 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
           trace.End = dest;
           trace.End.z += height*ithmult[itsz];
           //GCon->Logf("myx=%u; itsz=%u; org=(%g,%g,%g); dest=(%g,%g,%g); s=(%g,%g,%g); e=(%g,%g,%g)", myx, itsz, org.x, org.y, org.z, dest.x, dest.y, dest.z, trace.Start.x, trace.Start.y, trace.Start.z, trace.End.x, trace.End.y, trace.End.z);
-          if (SightPathTraverse2(trace, OtherSector)) return true;
+          if (SightPathTraverse2(trace)) return true;
         }
       }
     }
@@ -729,8 +738,6 @@ bool VLevel::CastLightRay (sector_t *Sector, const TVec &org, const TVec &dest, 
   if (isNotInsideBM(dest, this)) return false;
 
   if (lengthSquared(org-dest) <= 1) return true;
-
-  SightTraceInfo trace;
 
   // killough 4/19/98: make fake floors and ceilings block view
   if (Sector->heightsec) {
@@ -756,15 +763,14 @@ bool VLevel::CastLightRay (sector_t *Sector, const TVec &org, const TVec &dest, 
 
   //if (length2DSquared(org-dest) <= 1) return true;
 
-  //trace.PlaneNoBlockFlags = blockflags;
+  SightTraceInfo trace;
+  trace.StartSector = Sector;
+  trace.EndSector = OtherSector;
+  //FIXME: ignore fake floors here?
   trace.PlaneNoBlockFlags = SPF_NOBLOCKSIGHT;
-  trace.CheckBaseRegion = true;
-  //trace.LineBlockMask = ML_BLOCKEVERYTHING; // this method is used to trace light, so "block everything" is not valid here
   trace.LineBlockMask = ML_BLOCKSIGHT;
-  //if (trace.PlaneNoBlockFlags&SPF_NOBLOCKSIGHT) trace.LineBlockMask |= ML_BLOCKSIGHT;
-  //if (trace.PlaneNoBlockFlags&SPF_NOBLOCKSHOOT) trace.LineBlockMask |= ML_BLOCKHITSCAN;
 
   trace.Start = org;
   trace.End = dest;
-  return SightPathTraverse(trace, this, OtherSector);
+  return SightPathTraverse(trace, this);
 }

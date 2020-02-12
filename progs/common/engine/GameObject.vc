@@ -199,6 +199,11 @@ enum {
   SPF_ADDITIVE     = 8,
 
   SPF_MAX_FLAG     = 16,
+  SPF_FLAG_MASK    = 15,
+
+  // used only as tracer flags
+  SPF_IGNORE_FAKE_FLOORS = 64,
+  SPF_IGNORE_BASE_REGION = 128,
 };
 
 
@@ -1438,11 +1443,13 @@ native static final bool CheckPlanePass (const ref TSecPlaneRef plane, const TVe
 //
 //  checks all sector regions, returns `false` if any region plane was hit
 //  sets `outXXX` arguments on hit
-//  if `checkSectorBounds` is false, skip checking sector bounds
-//  (and the first sector region)
+//
+//  set `SPF_IGNORE_FAKE_FLOORS` is flagmask to ignore fake floors
+//  set `SPF_IGNORE_BASE_REGION` is flagmask to ignore base region
+//  (i.e. ignore base sector bounds)
 //
 //==========================================================================
-native static final bool CheckPassPlanes (const sector_t *sec, bool checkSectorBounds,
+native static final bool CheckPassPlanes (const sector_t *sec,
                                           TVec linestart, TVec lineend, int flagmask,
                                           optional out TVec outHitPoint, optional out TVec outHitNormal,
                                           optional out bool outIsSky);

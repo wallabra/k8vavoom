@@ -210,7 +210,7 @@ bool VLevel::CheckPlanePass (const TSecPlaneRef &plane, const TVec &linestart, c
 //  returns `true` if no hit was detected
 //
 //==========================================================================
-bool VLevel::CheckPassPlanes (sector_t *sector, bool checkSectorBounds, TVec linestart, TVec lineend, unsigned flagmask,
+bool VLevel::CheckPassPlanes (sector_t *sector, TVec linestart, TVec lineend, unsigned flagmask,
                               TVec *outHitPoint, TVec *outHitNormal, bool *outIsSky, TPlane *outHitPlane)
 {
   if (!sector) return true;
@@ -228,7 +228,8 @@ bool VLevel::CheckPassPlanes (sector_t *sector, bool checkSectorBounds, TVec lin
   bool isSky = false;
   TPlane bestHitPlane;
 
-  const bool checkFakeFloors = !!(flagmask&SPF_IGNORE_FAKE_FLOORS);
+  const bool checkFakeFloors = !(flagmask&SPF_IGNORE_FAKE_FLOORS);
+  const bool checkSectorBounds = !(flagmask&SPF_IGNORE_BASE_REGION);
   flagmask &= SPF_FLAG_MASK;
 
   if (checkSectorBounds) {
