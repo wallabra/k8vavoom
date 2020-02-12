@@ -590,6 +590,18 @@ static bool SightPathTraverse (SightTraceInfo &trace, VLevel *level) {
 static bool SightPathTraverse2 (SightTraceInfo &trace) {
   trace.Delta = trace.End-trace.Start;
   trace.LineStart = trace.Start;
+  if (fabs(trace.Delta.x) <= 0.0001f && fabs(trace.Delta.y) <= 0.0001f) {
+    // vertical trace; check starting sector planes and get out
+    trace.Delta.x = trace.Delta.y = 0; // to simplify further checks
+    trace.LineEnd = trace.End;
+    // point cannot hit anything!
+    if (fabsf(trace.Delta.z) <= 0.0001f) {
+      trace.EarlyOut = true;
+      trace.Delta.z = 0;
+      return false;
+    }
+    return SightCheckPlanes(trace, trace.StartSector);
+  }
   return SightTraverseIntercepts(trace);
 }
 
@@ -677,7 +689,8 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
     trace.Start = org;
     trace.Start.z += myheight*0.75f;
     trace.End = dest;
-    trace.End.z += height*0.5f;
+    //trace.End.z += height*0.5f;
+    trace.End.z += height*0.75f;
     //GCon->Log(NAME_Debug, "==================");
     /*
     if (dbg_sight_trace_bsp) {
@@ -701,7 +714,8 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
         TVec orgStart = orgStartFwd+orgdirRight*(radius*sidemult[myx]);
         trace.Start = orgStart;
         trace.End = dest;
-        trace.End.z += height*0.5f;
+        //trace.End.z += height*0.5f;
+        trace.End.z += height*0.75f;
         //GCon->Logf("myx=%u; itsz=*; org=(%g,%g,%g); dest=(%g,%g,%g); s=(%g,%g,%g); e=(%g,%g,%g)", myx, org.x, org.y, org.z, dest.x, dest.y, dest.z, trace.Start.x, trace.Start.y, trace.Start.z, trace.End.x, trace.End.y, trace.End.z);
 
         // check middle
@@ -764,6 +778,7 @@ bool VLevel::CastLightRay (sector_t *Sector, const TVec &org, const TVec &dest, 
   //if (length2DSquared(org-dest) <= 1) return true;
 
   SightTraceInfo trace;
+
   trace.StartSector = Sector;
   trace.EndSector = OtherSector;
   //FIXME: ignore fake floors here?

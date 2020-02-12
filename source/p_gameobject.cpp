@@ -747,8 +747,8 @@ IMPLEMENT_FUNCTION(VGameObject, CheckPlanePass) {
 
 //static final bool CheckPassPlanes (const sector_t *sector,
 //                                   TVec linestart, TVec lineend, int flagmask,
-//                                   optional out TVec outHitPoint, optional out TVec outHitNormal,
-//                                   optional out bool outIsSky);
+//                                   out TVec outHitPoint, out TVec outHitNormal,
+//                                   out bool outIsSky);
 IMPLEMENT_FUNCTION(VGameObject, CheckPassPlanes) {
   sector_t *sector;
   TVec linestart, lineend;
@@ -756,6 +756,6 @@ IMPLEMENT_FUNCTION(VGameObject, CheckPassPlanes) {
   VOptParamPtr<TVec> outHitPoint;
   VOptParamPtr<TVec> outHitNormal;
   VOptParamPtr<bool> outIsSky;
-  vobjGetParamSelf(sector, linestart, lineend, flagmask, outHitPoint, outHitNormal, outIsSky);
+  vobjGetParam(sector, linestart, lineend, flagmask, outHitPoint, outHitNormal, outIsSky);
   RET_BOOL(VLevel::CheckPassPlanes(sector, linestart, lineend, flagmask, outHitPoint, outHitNormal, outIsSky, nullptr));
 }
