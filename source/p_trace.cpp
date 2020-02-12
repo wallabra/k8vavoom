@@ -27,7 +27,6 @@
 #include "sv_local.h"
 
 static VCvarB dbg_bsp_trace_strict_flats("dbg_bsp_trace_strict_flats", false, "use strict checks for flats?", /*CVAR_Archive|*/CVAR_PreInit);
-//static VCvarB dbg_sight_trace_bsp("dbg_sight_trace_bsp", false, "use simple BSP raycast for sight (debug)?", /*CVAR_Archive|*/CVAR_PreInit);
 
 
 //**************************************************************************
@@ -687,40 +686,34 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
 
   if (!allowBetterSight || radius < 4.0f || height < 4.0f || myheight < 4.0f /*|| dbg_sight_trace_bsp*/) {
     trace.Start = org;
-    trace.Start.z += myheight*0.75f;
+    trace.Start.z += myheight*0.75f; // look from the eyes (roughly)
     trace.End = dest;
-    //trace.End.z += height*0.5f;
-    trace.End.z += height*0.75f;
-    //GCon->Log(NAME_Debug, "==================");
-    /*
-    if (dbg_sight_trace_bsp) {
-      linetrace_t ltr;
-      return TraceLine(ltr, trace.Start, trace.End, trace.PlaneNoBlockFlags);
-    }
-    */
-    return SightPathTraverse(trace, this);
+    trace.End.z += height*0.5f;
+    if (SightPathTraverse(trace, this)) return true;
+    if (trace.EarlyOut || interUsed == 0) return false;
+    // another fast check if not too far
+    if (trace.Delta.length2DSquared() >= 820.0f*820.0f) return false; // arbitrary number
+    return SightPathTraverse2(trace);
   } else {
-    /*static*/ const float ithmult[2] = { 0.15f, 0.85f };
-    /*static*/ const float sidemult[3] = { 0.0f, -0.75f, 0.75f };
-    /*static*/ const float fwdmult[2] = { 0.75f, 0.0f };
-    //GCon->Logf("=== forward:(%g,%g,%g) ===", orgdirFwd.x, orgdirFwd.y, orgdirFwd.z);
-    //GCon->Logf("=== right:(%g,%g,%g) ===", orgdirRight.x, orgdirRight.y, orgdirRight.z);
-    for (unsigned myf = 0; myf < 2; ++myf) {
-      TVec orgStartFwd = org+orgdirFwd*(radius*fwdmult[myf]);
-      orgStartFwd.z += myheight*0.75f;
+    const float ithmult[2] = { 0.35f, 0.75f }; // destination height multiplier (0.5f is checked first)
+    const float sidemult[3] = { 0.0f, -0.75f, 0.75f }; // side shift multiplier (by radius)
+    //const float fwdmult[2] = { 0.75f, 0.0f }; // forward shift multiplier (by radius)
+    //for (unsigned myf = 0; myf < 2; ++myf)
+    {
+      //TVec orgStartFwd = org+orgdirFwd*(radius*fwdmult[myf]);
+      //orgStartFwd.z += myheight*0.75f; // look from the eyes (roughly)
+      // check side looks
       for (unsigned myx = 0; myx < 3; ++myx) {
-        // an unobstructed LOS is possible
-        // now look from eyes of t1 to any part of t2
-        TVec orgStart = orgStartFwd+orgdirRight*(radius*sidemult[myx]);
+        // now look from eyes of t1 to some parts of t2
+        //const TVec orgStart = orgStartFwd+orgdirRight*(radius*sidemult[myx]);
+        const TVec orgStart = org+orgdirRight*(radius*sidemult[myx]);
         trace.Start = orgStart;
         trace.End = dest;
-        //trace.End.z += height*0.5f;
-        trace.End.z += height*0.75f;
-        //GCon->Logf("myx=%u; itsz=*; org=(%g,%g,%g); dest=(%g,%g,%g); s=(%g,%g,%g); e=(%g,%g,%g)", myx, org.x, org.y, org.z, dest.x, dest.y, dest.z, trace.Start.x, trace.Start.y, trace.Start.z, trace.End.x, trace.End.y, trace.End.z);
 
         // check middle
+        trace.End.z += height*0.5f;
         if (SightPathTraverse(trace, this)) return true;
-        if (trace.EarlyOut) continue;
+        if (trace.EarlyOut || interUsed == 0) continue;
 
         // check up and down
         for (unsigned itsz = 0; itsz < 2; ++itsz) {
