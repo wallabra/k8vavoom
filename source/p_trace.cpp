@@ -83,7 +83,7 @@ bool VLevel::CheckLine (linetrace_t &trace, seg_t *seg) const {
   if (line->validcount == validcount) return true;
   line->validcount = validcount;
 
-  #if 1
+  #if 0
     int s1 = trace.LinePlane.PointOnSide2(*line->v1);
     int s2 = trace.LinePlane.PointOnSide2(*line->v2);
 
@@ -95,12 +95,14 @@ bool VLevel::CheckLine (linetrace_t &trace, seg_t *seg) const {
 
     // line isn't crossed?
     if (s1 == s2 || (s1 == 2 && s2 == 0)) return true;
+
+    const bool backside = (s1 == 1);
   #else
     // k8: dunno, this doesn't make any difference
 
     // signed distances from the line points to the trace line plane
-    float dot1 = DotProduct(*line->v1, trace.LinePlane.normal)-trace.LinePlane.dist;
-    float dot2 = DotProduct(*line->v2, trace.LinePlane.normal)-trace.LinePlane.dist;
+    float dot1 = trace.LinePlane.PointDistance(*line->v1);
+    float dot2 = trace.LinePlane.PointDistance(*line->v2);
 
     // do not use multiplication to check: zero speedup, lost accuracy
     //if (dot1*dot2 >= 0) return true; // line isn't crossed
@@ -109,8 +111,8 @@ bool VLevel::CheckLine (linetrace_t &trace, seg_t *seg) const {
     if (dot1 >= 0.0f && dot2 >= 0.0f) return true; // didn't reached front side
 
     // signed distances from the trace points to the line plane
-    dot1 = DotProduct(trace.Start, line->normal)-line->dist;
-    dot2 = DotProduct(trace.End, line->normal)-line->dist;
+    dot1 = line->PointDistance(trace.Start);
+    dot2 = line->PointDistance(trace.End);
 
     // do not use multiplication to check: zero speedup, lost accuracy
     //if (dot1*dot2 >= 0) return true; // line isn't crossed
@@ -118,12 +120,12 @@ bool VLevel::CheckLine (linetrace_t &trace, seg_t *seg) const {
     // if the trace is parallel to the line plane, ignore it
     if (dot1 >= 0.0f && dot2 >= 0.0f) return true; // didn't reached front side
 
-    const int s1 = (dot1 < 0.0f); // the only thing we need here
+    const bool backside = (dot1 < 0.0f);
   #endif
 
   // crosses a two sided line
   //sector_t *front = (s1 == 0 || s1 == 2 ? line->frontsector : line->backsector);
-  sector_t *front = (s1 == 1 ? line->backsector : line->frontsector);
+  sector_t *front = (backside ? line->backsector : line->frontsector);
 
   // intercept vector
   // no need to check if den == 0, because then planes are parallel
@@ -162,7 +164,7 @@ bool VLevel::CheckLine (linetrace_t &trace, seg_t *seg) const {
 
   // hit line
   //trace.HitPlaneNormal = (s1 == 0 || s1 == 2 ? line->normal : -line->normal);
-  trace.HitPlaneNormal = (s1 == 1 ? -line->normal : line->normal);
+  trace.HitPlaneNormal = (backside ? -line->normal : line->normal);
   trace.HitPlane = *line;
   trace.HitLine = line;
 
@@ -438,8 +440,8 @@ static bool SightCheckLine (SightTraceInfo &trace, line_t *ld) {
   ld->validcount = validcount;
 
   // signed distances from the line points to the trace line plane
-  float dot1 = DotProduct(*ld->v1, trace.Plane.normal)-trace.Plane.dist;
-  float dot2 = DotProduct(*ld->v2, trace.Plane.normal)-trace.Plane.dist;
+  float dot1 = trace.Plane.PointDistance(*ld->v1);
+  float dot2 = trace.Plane.PointDistance(*ld->v2);
 
   // do not use multiplication to check: zero speedup, lost accuracy
   //if (dot1*dot2 >= 0) return true; // line isn't crossed
@@ -448,8 +450,8 @@ static bool SightCheckLine (SightTraceInfo &trace, line_t *ld) {
   if (dot1 >= 0.0f && dot2 >= 0.0f) return true; // didn't reached front side
 
   // signed distances from the trace points to the line plane
-  dot1 = DotProduct(trace.Start, ld->normal)-ld->dist;
-  dot2 = DotProduct(trace.End, ld->normal)-ld->dist;
+  dot1 = ld->PointDistance(trace.Start);
+  dot2 = ld->PointDistance(trace.End);
 
   // do not use multiplication to check: zero speedup, lost accuracy
   //if (dot1*dot2 >= 0) return true; // line isn't crossed
