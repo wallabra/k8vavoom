@@ -40,8 +40,7 @@ final string text {
 //
 //==========================================================================
 void setText (string text) {
-  while (text && text[0] <= ' ') text = text[1..$];
-  while (text && text[$-1] <= ' ') text = text[0..$-1];
+  text = text.xstrip;
   mText = SplitTextWithNewlines(text, GetVirtualWidth()-16);
 
   SetFont('smallfont');

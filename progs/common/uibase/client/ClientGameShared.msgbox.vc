@@ -149,6 +149,7 @@ void MessageBoxStartMessage (string text, MessageBoxType type, bool input) {
   scope(exit) GRoot.SetFont(oldfont);
   GRoot.SetFont('smallfont');
 
+  // cannot use `.xstrip` here
   while (text && text[0] == "\n") text = text[1..$];
   while (text && text[$-1] <= 32) text = text[0..$-1];
   if (!text) text = " ";
@@ -239,8 +240,7 @@ void MessageBoxShowEndGameQuery (optional string text) {
 //
 //==========================================================================
 void MessageBoxShowSkillQuery (string text) {
-  while (text.length && text[0] <= ' ') text = text[1..$];
-  while (text.length && text[$-1] <= ' ') text = text[0..$-1];
+  text = text.xstrip;
   if (!text) text = "Are you sure? This skill level\nisn't even remotely fair.";
   MessageBoxStartMessage(text, MessageBoxType.Nightmare, true);
 }

@@ -835,14 +835,8 @@ override void SB_DrawFullscreenStats () {
     float currTime = cl.MO.Level.XLevel.Time;
     // check if weapon name was changed
     if (cl.ReadyWeapon) {
-      string wname = TranslateString(cl.ReadyWeapon.StrifeName);
-      while (wname.length && wname[0] <= ' ') wname = wname[1..$];
-      while (wname.length && wname[$-1] <= ' ') wname = wname[0..$-1];
-      if (!wname) {
-        wname = string(GetClassName(cl.ReadyWeapon.Class));
-        while (wname.length && wname[0] <= ' ') wname = wname[1..$];
-        while (wname.length && wname[$-1] <= ' ') wname = wname[0..$-1];
-      }
+      string wname = TranslateString(cl.ReadyWeapon.StrifeName).xstrip;
+      if (!wname) wname = string(GetClassName(cl.ReadyWeapon.Class)).xstrip;
       if (lastWeaponName != wname) {
         lastWeaponName = wname;
         lastWeaponNameChangeTime = currTime;
