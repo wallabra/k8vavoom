@@ -338,6 +338,7 @@ VEmitContext::VEmitContext (VMemberBase *Member)
   , SelfStruct(nullptr)
   , Package(nullptr)
   , IndArray(nullptr)
+  , OuterClass(nullptr)
   , FuncRetType(TYPE_Unknown)
   , localsofs(0)
   , InDefaultProperties(false)
@@ -346,7 +347,7 @@ VEmitContext::VEmitContext (VMemberBase *Member)
   // find the class
   VMemberBase *CM = Member;
   while (CM && CM->MemberType != MEMBER_Class) CM = CM->Outer;
-  SelfClass = (VClass *)CM;
+  OuterClass = SelfClass = (VClass *)CM;
 
   VMemberBase *PM = Member;
   while (PM != nullptr && PM->MemberType != MEMBER_Package) PM = PM->Outer;
@@ -354,15 +355,18 @@ VEmitContext::VEmitContext (VMemberBase *Member)
 
   // check for struct method
   if (Member != nullptr && Member->MemberType == MEMBER_Method) {
-    VMemberBase *SM = Member;
-    while (SM && SM->MemberType != MEMBER_Struct) {
-      if (SM == SelfClass) { SM = nullptr; break; }
-      SM = SM->Outer;
-    }
-    if (SM) {
-      GLog.Logf(NAME_Debug, "compiling struct method `%s`", *Member->GetFullName());
-      SelfClass = nullptr;
-      SelfStruct = (VStruct *)SM;
+    VMethod *mt = (VMethod *)Member;
+    if (mt->Flags&FUNC_StructMethod) {
+      VMemberBase *SM = Member;
+      while (SM && SM->MemberType != MEMBER_Struct) {
+        if (SM == SelfClass) { SM = nullptr; break; }
+        SM = SM->Outer;
+      }
+      if (SM) {
+        GLog.Logf(NAME_Debug, "compiling struct method `%s`", *Member->GetFullName());
+        SelfClass = nullptr;
+        SelfStruct = (VStruct *)SM;
+      }
     }
   }
 

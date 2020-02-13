@@ -257,6 +257,31 @@ void VClass::CompilerShutdown () {
 
 //==========================================================================
 //
+//  VClass::FindInPropMap
+//
+//  returns empty string if not found
+//
+//==========================================================================
+VStr VClass::FindInPropMap (EType type, VStr prname) noexcept {
+  if (prname.isEmpty()) return VStr::EmptyString;
+  if (type == TYPE_String) {
+    for (VClass *cls = this; cls; cls = cls->ParentClass) {
+      auto np = cls->StringProps.find(prname);
+      //GLog.Logf(NAME_Debug, "::FIPM:STR:%s: prname=<%s>; found=<%s>", cls->GetName(), *prname, (np ? **np : ""));
+      if (np) return *np;
+    }
+  } else if (type == TYPE_Name) {
+    for (VClass *cls = this; cls; cls = cls->ParentClass) {
+      auto np = cls->NameProps.find(prname);
+      if (np) return *np;
+    }
+  }
+  return VStr::EmptyString;
+}
+
+
+//==========================================================================
+//
 //  VClass::ResolveAlias
 //
 //  returns `aname` for unknown alias, or `NAME_None` for alias loop
@@ -485,6 +510,31 @@ void VClass::StaticReinitStatesLookup () {
 
 //==========================================================================
 //
+//  SerialiseVStrVStrMap
+//
+//==========================================================================
+static void SerialiseVStrVStrMap (VStream &Strm, TMap<VStr, VStr> &map) {
+  vint32 count = (vint32)map.count();
+  Strm << STRM_INDEX(count);
+  if (Strm.IsLoading()) {
+    map.clear();
+    while (count-- > 0) {
+      VStr k, v;
+      Strm << k << v;
+      map.put(k, v);
+    }
+  } else {
+    for (auto it = map.first(); it; ++it) {
+      VStr k = it.getKey();
+      VStr v = it.getValue();
+      Strm << k << v;
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  VClass::Serialise
 //
 //==========================================================================
@@ -501,6 +551,7 @@ void VClass::Serialise (VStream &Strm) {
     << RepInfos
     << StateLabels
     << ClassGameObjName;
+
   // aliases
   vint32 acount = (vint32)AliasList.count();
   Strm << STRM_INDEX(acount);
@@ -522,6 +573,7 @@ void VClass::Serialise (VStream &Strm) {
       Strm << ai.aliasName << ai.origName;
     }
   }
+
   // enums
   acount = (vint32)KnownEnums.count();
   Strm << STRM_INDEX(acount);
@@ -538,6 +590,7 @@ void VClass::Serialise (VStream &Strm) {
       Strm << ename;
     }
   }
+
   // dfstate thingy
   Strm << STRM_INDEX(dfStateTexDirSet) << dfStateTexDir;
   acount = (vint32)dfStateTexList.count();
@@ -559,6 +612,11 @@ void VClass::Serialise (VStream &Strm) {
       Strm << ti.texImage << ti.frameWidth << ti.frameHeight << ti.frameOfsX << ti.frameOfsY;
     }
   }
+
+  // property renames for various types
+  SerialiseVStrVStrMap(Strm, StringProps);
+  SerialiseVStrVStrMap(Strm, NameProps);
+
   // done
 }
 

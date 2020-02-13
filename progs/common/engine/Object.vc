@@ -820,50 +820,55 @@ native static final float chachaNextFloatFull (ref ChaChaCtx ctx);
 // string functions
 
 // compare strings
-native static final int strcmp (string s1, string s2);
-// compare strings ingnoring case
-native static final int stricmp (string s1, string s2);
-// compare names ingnoring case
-native static final int nameicmp (name s1, name s2);
-// compare string and name ignoring case
-native static final int namestricmp (name s1, string s2);
-// convert string to lowercase
-native static final string strlwr (string s);
-// convert string to uppercase
-native static final string strupr (string s);
+native static final int strcmp (string s1, string s2) [property(string) cmp];
+// compare strings ingnoring case (not utf8-aware)
+native static final int stricmp (string s1, string s2) [property(string) icmp];
+// compare names ingnoring case (not utf8-aware)
+native static final int nameicmp (name s1, name s2) [property(name) icmp];
+// compare string and name ignoring case (not utf8-aware)
+native static final int namestricmp (name s1, string s2) [property(name) stricmp];
+// convert string to lowercase (not utf8-aware)
+native static final string strlwr (string s) [property(string) toLowerCase];
+// convert string to uppercase (not utf8-aware)
+native static final string strupr (string s) [property(string) toUpperCase];
 // string length (utf8-aware)
-native static final int strlenutf8 (string s);
+native static final int strlenutf8 (string s) [property(string) lengthUtf8];
 // gets a substring (utf8-aware)
-native static final string substrutf8 (string Str, int Start, int Len);
+native static final string substrutf8 (string Str, int Start, int Len) [property(string) substrUtf8];
 // creates one-char non-utf8 string from the given char code&0xff; 0 is allowed
 native static final string strFromChar (int ch);
 // creates one-char utf8 string from the given char code (or empty string if char code is invalid); 0 is allowed
 native static final string strFromCharUtf8 (int ch);
 // gets a substring (not utf8-aware)
-native static final string strmid (string Str, int Start, optional int Len);
+native static final string strmid (string Str, int Start, optional int Len) [property(string) mid];
 // gets left part of a string (not utf8-aware)
-native static final string strleft (string Str, int len);
+native static final string strleft (string Str, int len) [property(string) left];
 // gets right part of a string (not utf8-aware)
-native static final string strright (string Str, int len);
+native static final string strright (string Str, int len) [property(string) right];
 // gets right part of a string (not utf8-aware); default ch is space
 native static final string strrepeat (int len, optional int ch);
+alias strRepeat = strrepeat;
 // creates string from a number
 native static final string strFromInt (int v);
 // creates string from a number
 native static final string strFromFloat (float v);
 // do glob matching (knows '*' and '?')
+// (not utf8-aware)
 native static final bool globmatch (const string str, const string pat, optional bool caseSensitive/*=true*/);
 // returns 0-based index or -1
 // negative startpos means offset from string end; startpos doesn't affect result
-native static final int strIndexOf (const string str, const string pat, optional int startpos, optional bool caseSensitive/*=true*/);
+// (not utf8-aware)
+native static final int strIndexOf (const string str, const string pat, optional int startpos, optional bool caseSensitive/*=true*/) [property(string) indexOf];
 // returns 0-based index or -1
 // negative startpos means offset from string end; startpos doesn't affect result
-native static final int strLastIndexOf (const string str, const string pat, optional int startpos, optional bool caseSensitive/*=true*/);
+// (not utf8-aware)
+native static final int strLastIndexOf (const string str, const string pat, optional int startpos, optional bool caseSensitive/*=true*/) [property(string) lastIndexOf];
 
 // does varargs print into a temporary buffer
 native static final string va (string format, ...) [printf,1];
 
 // returns existing name, or ''
+// (not utf8-aware)
 native static final name findExistingName (string s, optional bool locase);
 
 // converts string to integer
@@ -872,14 +877,18 @@ native static final int atoi (string str, optional out bool err);
 native static final float atof (string str, optional out bool err);
 
 // checks if string starts with given string
-native static final bool StrStartsWith (string Str, string Check, optional bool caseSensitive/*=true*/);
+// (not utf8-aware)
+native static final bool StrStartsWith (string Str, string Check, optional bool caseSensitive/*=true*/) [property(string) startsWith];
 alias strStartsWith = StrStartsWith;
 // checks if string ends with given string
-native static final bool StrEndsWith (string Str, string Check, optional bool caseSensitive/*=true*/);
+// (not utf8-aware)
+native static final bool StrEndsWith (string Str, string Check, optional bool caseSensitive/*=true*/) [property(string) endsWith];
 alias strEndsWith = StrEndsWith;
 // replaces substrings with another string
-native static final string StrReplace (string Str, string Search, string Replacement);
+// (not utf8-aware)
+native static final string StrReplace (string Str, string Search, string Replacement) [property(string) replace];
 alias strReplace = StrReplace;
+
 
 //==========================================================================
 //

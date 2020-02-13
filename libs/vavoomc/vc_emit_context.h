@@ -200,6 +200,8 @@ public:
   VStruct *SelfStruct;
   VPackage *Package;
   VArrayElement *IndArray;
+  // this is set for structs
+  VClass *OuterClass;
 
   VFieldType FuncRetType;
 

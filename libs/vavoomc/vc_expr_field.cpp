@@ -666,7 +666,8 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
       delete this;
       return e->Resolve(ec);
     }
-    /*static*/ const char *knownTrans[] = {
+    /*
+    const char *knownTrans[] = {
       "toLowerCase", "strlwr",
       "toUpperCase", "strupr",
       nullptr,
@@ -681,6 +682,39 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
         // let UFCS do the work
         FieldName = VName(tr[1]);
         break;
+      }
+    }
+    */
+    if (ec.OuterClass) {
+      VStr newname = ec.OuterClass->FindInPropMap(TYPE_String, VStr(FieldName));
+      if (!newname.isEmpty()) {
+        // i found her!
+        //GLog.Logf(NAME_Debug, "<%s> : <%s>", *FieldName, *newname);
+        if (assType == AssType::AssTarget) {
+          ParseError(Loc, "Cannot assign to read-only property `%s`", *FieldName);
+          delete this;
+          return nullptr;
+        }
+        // let UFCS do the work
+        FieldName = VName(*newname);
+      }
+    }
+  }
+
+  // name properties
+  if (op->Type.Type == TYPE_Name) {
+    if (ec.OuterClass) {
+      VStr newname = ec.OuterClass->FindInPropMap(TYPE_Name, VStr(FieldName));
+      if (!newname.isEmpty()) {
+        // i found her!
+        //GLog.Logf(NAME_Debug, "<%s> : <%s>", *FieldName, *newname);
+        if (assType == AssType::AssTarget) {
+          ParseError(Loc, "Cannot assign to read-only property `%s`", *FieldName);
+          delete this;
+          return nullptr;
+        }
+        // let UFCS do the work
+        FieldName = VName(*newname);
       }
     }
   }

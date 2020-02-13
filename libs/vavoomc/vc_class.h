@@ -347,6 +347,15 @@ private:
   static void RebuildSpriteMap ();
 
 public:
+  // property renames for various types
+  // put here, because all methods belongs to classes
+  TMap<VStr, VStr> StringProps;
+  TMap<VStr, VStr> NameProps;
+
+  // returns empty string if not found
+  VStr FindInPropMap (EType type, VStr prname) noexcept;
+
+public:
   static void InitSpriteList ();
 
   static inline int GetSpriteCount () noexcept { return GSpriteNames.length(); }

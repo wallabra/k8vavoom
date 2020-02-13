@@ -1849,6 +1849,27 @@ void VParser::ParseMethodDef (VExpression *RetType, VName MName, const TLocation
           }
           Lex.NextToken();
         }
+      } else if (Lex.Name == "property") {
+        // property rename
+        if ((Func->Flags&~(FUNC_ProtectionFlags|FUNC_Native)) != (FUNC_Static|FUNC_Final)) {
+          ParseError(Func->Loc, "Builtin property be `static final`");
+        }
+        if (!InClass) ParseError(Func->Loc, "Builtin property should be defined in a class");
+        Lex.NextToken();
+        // get base type
+        TMap<VStr, VStr> *propMap = nullptr;
+        Lex.Expect(TK_LParen, ERR_MISSING_LPAREN);
+             if (Lex.Check(TK_String)) { if (InClass) propMap = &InClass->StringProps; }
+        else if (Lex.Check(TK_Name)) { if (InClass) propMap = &InClass->NameProps; }
+        else { ParseError(Lex.Location, "base type expected"); Lex.NextToken(); }
+        Lex.Expect(TK_RParen, ERR_MISSING_RPAREN);
+
+        if (Lex.Token != TK_Identifier) {
+          ParseError(Lex.Location, "property name expected");
+        } else {
+          if (propMap && MName != NAME_None) propMap->put(VStr(Lex.Name), VStr(MName));
+          Lex.NextToken();
+        }
       } else {
         ParseError(Lex.Location, "Unknown attribute `%s`", *Lex.Name);
       }
