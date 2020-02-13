@@ -1502,14 +1502,15 @@ final EntityEx DropItem (class!EntityEx type, int amount, float chance, optional
         if (Item.Amount < 1) Item.Amount = 1;
       }
     } else if (Weapon(Item)) {
+      Weapon wpn = Weapon(Item);
       // the same from dropped weapons
-      if (Weapon(Item).AmmoGive1 != 0) {
-        Weapon(Item).AmmoGive1 = Weapon(Item).AmmoGive1/2;
-        if (Weapon(Item).AmmoGive1 < 1) Weapon(Item).AmmoGive1 = 1;
+      if (wpn.AmmoGive1 != 0) {
+        wpn.AmmoGive1 = wpn.AmmoGive1/2;
+        if (wpn.AmmoGive1 < 1) wpn.AmmoGive1 = 1;
       }
-      if (Weapon(Item).AmmoGive2 != 0) {
-        Weapon(Item).AmmoGive2 = Weapon(Item).AmmoGive2/2;
-        if (Weapon(Item).AmmoGive2 < 1) Weapon(Item).AmmoGive2 = 1;
+      if (wpn.AmmoGive2 != 0) {
+        wpn.AmmoGive2 = wpn.AmmoGive2/2;
+        if (wpn.AmmoGive2 < 1) wpn.AmmoGive2 = 1;
       }
     }
     if (Item.SpecialDropAction(self)) return none;
