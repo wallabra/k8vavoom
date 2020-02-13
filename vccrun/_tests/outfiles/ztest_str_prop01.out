@@ -1,0 +1,15 @@
+abc
+ABC
+true : true
+true : true
+true : true
+true : true
+false : false
+true : true
+false : false
+true : true
+true : true
+<aBc> : xstrip
+<aBc  > : left
+< aBc> : right
+<aBc> : all

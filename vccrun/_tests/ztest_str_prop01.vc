@@ -1,0 +1,38 @@
+class Main : Object;
+
+
+void test (ref string s) {
+  print("%s", s.toLowerCase());
+  print("%s", s.toUpperCase);
+
+  name n1 = 'aBc';
+  print("%B : true", s.nameEqu(n1));
+  print("%B : true", s.nameEquCI(n1));
+  print("%B : true", n1.strEqu(s));
+  print("%B : true", n1.strEquCI(s));
+
+  name n2 = 'abc';
+  print("%B : false", s.nameEqu(n2));
+  print("%B : true", s.nameEquCI(n2));
+  print("%B : false", n2.strEqu(s));
+  print("%B : true", n2.strEquCI(s));
+
+  print("%B : true", n1.nameEquCI(n2));
+}
+
+
+void test1 (ref string s) {
+  print("<%s> : xstrip", s.xstrip);
+  print("<%s> : left", s.trimLeft);
+  print("<%s> : right", s.trimRight);
+  print("<%s> : all", s.trimAll);
+}
+
+
+void main () {
+  string s = "aBc";
+  test(s);
+
+  s = " aBc  ";
+  test1(s);
+}
