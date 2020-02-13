@@ -1356,6 +1356,32 @@ static void ParseBrightmap (int SrcLump, VScriptParser *sc) {
 
 //==========================================================================
 //
+//  ApplyGlowToTexture
+//
+//==========================================================================
+static void ApplyGlowToTexture (VName txname, bool isWall, bool allowOtherType, bool fullbright) {
+#ifdef CLIENT
+  if (txname != NAME_None && !VTextureManager::IsDummyTextureName(txname)) {
+    VTexture *basetex = GTextureManager.GetExistingTextureByName(VStr(txname), (isWall ? TEXTYPE_Wall : TEXTYPE_Flat));
+    if (!basetex && allowOtherType) basetex = GTextureManager.GetExistingTextureByName(VStr(txname), (!isWall ? TEXTYPE_Wall : TEXTYPE_Flat));
+    if (basetex) {
+      //GCon->Logf("GLOW: <%s>", *txname);
+      rgb_t gclr = basetex->GetAverageColor(153);
+      if (gclr.r || gclr.g || gclr.b) {
+        basetex->glowing = (fullbright ? 0xff000000u : 0xfe000000u)|(gclr.r<<16)|(gclr.g<<8)|gclr.b;
+      } else {
+        basetex->glowing = 0;
+      }
+      // we don't need its pixels anymore (also, undo any RGBA conversion)
+      basetex->ReleasePixels();
+    }
+  }
+#endif
+}
+
+
+//==========================================================================
+//
 //  ParseGlow
 //
 //==========================================================================
@@ -1373,8 +1399,20 @@ static void ParseGlow (VScriptParser *sc) {
     // not implemented gozzo feature (in gozzo too)
     if (sc->Check("Texture")) {
       // Texture "flat name", color[, glow height] [, fullbright]
-      sc->GetString();
-      while (sc->Check(",")) sc->ExpectString();
+      sc->ExpectName8Warn();
+      VName txname = sc->Name8;
+      if (sc->Check(",")) {
+        // ignore, we cannot support parameters yet
+        sc->ExpectString();
+        while (sc->Check(",")) sc->ExpectString();
+        (void)sc->Check("fullbright");
+      } else {
+        // no parameters, apply normal glow
+        bool fullbright = allFullBright;
+             if (sc->Check("fullbright")) fullbright = true;
+        else if (sc->Check("nofullbright")) fullbright = false;
+        ApplyGlowToTexture(txname, true, true, fullbright);
+      }
       continue;
     }
     // texture list
@@ -1382,35 +1420,24 @@ static void ParseGlow (VScriptParser *sc) {
          if (sc->Check("flats")) ttype = TEXTYPE_Flat;
     else if (sc->Check("walls")) ttype = TEXTYPE_Wall;
     if (ttype > 0) {
-#ifdef CLIENT
       bool fullbright = allFullBright;
            if (sc->Check("fullbright")) fullbright = true;
-      else if (sc->Check("nofullbright")) fullbright = false;
-#else
-           if (sc->Check("fullbright")) {}
-      else if (sc->Check("nofullbright")) {} // just for completeness
-#endif
+      else if (sc->Check("nofullbright")) fullbright = false; // just for completeness
       sc->Expect("{");
+      VName txname;
       while (!sc->Check("}")) {
         if (sc->Check(",")) continue;
-        sc->ExpectName8Warn();
-#ifdef CLIENT
-        VName img = sc->Name8;
-        if (img != NAME_None && !VTextureManager::IsDummyTextureName(img)) {
-          VTexture *basetex = GTextureManager.GetExistingTextureByName(VStr(img), ttype);
-          if (basetex) {
-            //GCon->Logf("GLOW: <%s>", *img);
-            rgb_t gclr = basetex->GetAverageColor(153);
-            if (gclr.r || gclr.g || gclr.b) {
-              basetex->glowing = (fullbright ? 0xff000000u : 0xfe000000u)|(gclr.r<<16)|(gclr.g<<8)|gclr.b;
-            } else {
-              basetex->glowing = 0;
-            }
-            // we don't need its pixels anymore (also, undo any RGBA conversion)
-            basetex->ReleasePixels();
-          }
+        if (sc->Check("texture")) {
+          sc->ExpectName8Warn();
+          txname = sc->Name8;
+          while (sc->Check(",")) sc->ExpectString();
+               if (sc->Check("fullbright")) fullbright = true;
+          else if (sc->Check("nofullbright")) fullbright = false;
+        } else {
+          sc->ExpectName8Warn();
+          txname = sc->Name8;
         }
-#endif
+        ApplyGlowToTexture(sc->Name8, (ttype == TEXTYPE_Wall), false, fullbright);
       }
       continue;
     }
