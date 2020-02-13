@@ -1427,17 +1427,18 @@ static void ParseGlow (VScriptParser *sc) {
       VName txname;
       while (!sc->Check("}")) {
         if (sc->Check(",")) continue;
+        bool xfbr = fullbright;
         if (sc->Check("texture")) {
           sc->ExpectName8Warn();
           txname = sc->Name8;
           while (sc->Check(",")) sc->ExpectString();
-               if (sc->Check("fullbright")) fullbright = true;
-          else if (sc->Check("nofullbright")) fullbright = false;
+               if (sc->Check("fullbright")) xfbr = true;
+          else if (sc->Check("nofullbright")) xfbr = false;
         } else {
           sc->ExpectName8Warn();
           txname = sc->Name8;
         }
-        ApplyGlowToTexture(sc->Name8, (ttype == TEXTYPE_Wall), false, fullbright);
+        ApplyGlowToTexture(sc->Name8, (ttype == TEXTYPE_Wall), false, xfbr);
       }
       continue;
     }
