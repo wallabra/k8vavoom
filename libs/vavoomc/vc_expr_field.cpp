@@ -666,25 +666,6 @@ VExpression *VDotField::InternalResolve (VEmitContext &ec, VDotField::AssType as
       delete this;
       return e->Resolve(ec);
     }
-    /*
-    const char *knownTrans[] = {
-      "toLowerCase", "strlwr",
-      "toUpperCase", "strupr",
-      nullptr,
-    };
-    for (const char **tr = knownTrans; *tr; tr += 2) {
-      if (FieldName == *tr) {
-        if (assType == AssType::AssTarget) {
-          ParseError(Loc, "Cannot assign to read-only property `%s`", *FieldName);
-          delete this;
-          return nullptr;
-        }
-        // let UFCS do the work
-        FieldName = VName(tr[1]);
-        break;
-      }
-    }
-    */
     if (ec.OuterClass) {
       VStr newname = ec.OuterClass->FindInPropMap(TYPE_String, VStr(FieldName));
       if (!newname.isEmpty()) {

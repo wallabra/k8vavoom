@@ -1104,24 +1104,6 @@ VExpression *VDotInvocation::DoResolve (VEmitContext &ec) {
     // translate method name for some built-in types
     if (SelfExpr->Type.IsNormalOrPointerType(TYPE_String)) {
       // string
-      /*
-      const char *knownStrTrans[] = {
-        "mid", "strmid",
-        "left", "strleft",
-        "right", "strright",
-        "toLowerCase", "strlwr",
-        "toUpperCase", "strupr",
-        //"repeat", "strrepeat",
-        nullptr,
-      };
-      for (const char **tr = knownStrTrans; *tr; tr += 2) {
-        if (MethodName == *tr) {
-          // i found her!
-          MethodName = VName(tr[1]);
-          break;
-        }
-      }
-      */
       if (ec.OuterClass) {
         VStr newname = ec.OuterClass->FindInPropMap(TYPE_String, VStr(MethodName));
         if (!newname.isEmpty()) {
