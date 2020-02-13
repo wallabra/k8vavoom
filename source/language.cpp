@@ -187,14 +187,27 @@ void VLanguage::ParseLanguageScript (vint32 Lump, const char *InCode, bool Exact
       sc->ExpectString();
 
       if (sc->String == "$") {
-        GCon->Logf(NAME_Warning, "%s: conditionals in language script is not supported yet", *sc->GetLoc().toStringNoCol());
+        //GCon->Logf(NAME_Warning, "%s: conditionals in language script is not supported yet", *sc->GetLoc().toStringNoCol());
         sc->Expect("ifgame");
         sc->Expect("(");
-        while (!sc->Check(")")) sc->ExpectString();
-        sc->ExpectString();
-        sc->Expect("=");
-        while (!sc->Check(";")) sc->ExpectString();
-        continue;
+        VStr gmname;
+        if (!sc->Check(")")) {
+          sc->ExpectString();
+          gmname = sc->String.xstrip();
+          if (!sc->Check(")")) {
+            GCon->Logf(NAME_Error, "%s: invalid conditional in language script", *sc->GetLoc().toStringNoCol());
+            while (!sc->Check(")")) sc->ExpectString();
+          }
+        } else {
+          GCon->Logf(NAME_Warning, "%s: empty conditionals in language script", *sc->GetLoc().toStringNoCol());
+        }
+        if (!gmname.isEmpty() && !game_name.asStr().startsWithCI(gmname)) {
+          //if (!gmname.isEmpty()) GCon->Logf(NAME_Init, "%s: skipped conditional for game '%s'", *sc->GetLoc().toStringNoCol(), *gmname);
+          sc->ExpectString();
+          sc->Expect("=");
+          while (!sc->Check(";")) sc->ExpectString();
+          continue;
+        }
       }
 
       VName Key(*sc->String, VName::AddLower);
