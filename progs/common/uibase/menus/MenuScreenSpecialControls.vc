@@ -120,7 +120,7 @@ void ParseKeyConfLump (int lump) {
     if (kc.Check("addkeysection")) {
       // addkeysection "Title" keysection<-(for config file)
       kc.ExpectString();
-      string secname = xstrip(kc.String);
+      string secname = kc.String.xstrip;
       //if (!secname) secname = va("--- %s ---", scnum++);
       // section id
       kc.ExpectString();
@@ -136,9 +136,9 @@ void ParseKeyConfLump (int lump) {
       /*
       auto aa = aliases_list.alloc();
       kc.ExpectString();
-      aa.alias_name = xstrip(kc.String);
+      aa.alias_name = kc.String.xstrip;
       kc.ExpectString();
-      aa.command = xstrip(kc.String);
+      aa.command = kc.String.xstrip;
       aa.secid = secid;
       if (!secid) aliases_list.remove(aliases_list.length-1);
       */
@@ -150,9 +150,9 @@ void ParseKeyConfLump (int lump) {
       /*
       auto bb = dbinds_list.alloc();
       kc.ExpectString();
-      bb.bind_key = xstrip(kc.String);
+      bb.bind_key = kc.String.xstrip;
       kc.ExpectString();
-      bb.alias_name = xstrip(kc.String);
+      bb.alias_name = kc.String.xstrip;
       bb.secid = secid;
       if (!secid) dbinds_list.remove(dbinds_list.length-1);
       */
@@ -164,9 +164,9 @@ void ParseKeyConfLump (int lump) {
       /*
       auto bb = binds_list.alloc();
       kc.ExpectString();
-      bb.bind_key = xstrip(kc.String);
+      bb.bind_key = kc.String.xstrip;
       kc.ExpectString();
-      bb.alias_name = xstrip(kc.String);
+      bb.alias_name = kc.String.xstrip;
       bb.secid = secid;
       if (!secid) binds_list.remove(binds_list.length-1);
       */
@@ -175,9 +175,9 @@ void ParseKeyConfLump (int lump) {
     if (kc.Check("addmenukey")) {
       auto mk = menukeys_list.alloc();
       kc.ExpectString();
-      mk.desc = xstrip(kc.String);
+      mk.desc = kc.String.xstrip;
       kc.ExpectString();
-      mk.alias_name = xstrip(kc.String);
+      mk.alias_name = kc.String.xstrip;
       mk.secid = secid;
       if (!secid) menukeys_list.remove(menukeys_list.length-1);
       continue;
