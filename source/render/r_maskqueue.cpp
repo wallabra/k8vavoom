@@ -506,18 +506,21 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
       if (allowedDelta > 0) {
         const int sph = Tex->GetRealHeight();
         if (sph > 0 && TexHeight > 0) {
-          const int spyofs = TexTOffset-(TexHeight-sph);
-          int botofs = (int)((sph-spyofs)*scaleY);
-          //GCon->Logf(NAME_Debug, "%s: height=%d; realheight=%d; ofs=%d; spyofs=%d; botofs=%d", thing->GetClass()->GetName(), TexHeight, sph, TexTOffset, spyofs, botofs);
-          if (botofs > 0 && botofs <= allowedDelta) {
-            // sink corpses a little
-            if (thing->IsAnyCorpse() && r_fix_sprite_offsets_smart_corpses) {
-              const float clipFactor = 1.8f;
-              const float ratio = clampval((float)botofs*clipFactor/(float)sph, 0.5f, 1.0f);
-              botofs = (int)((float)botofs*ratio);
-              if (botofs < 0 || botofs > allowedDelta) botofs = 0;
+          const int spbot = sph-TexTOffset; // pixels under "hotspot"
+          if (spbot > 0) {
+            int botofs = (int)(spbot*scaleY);
+            //GCon->Logf(NAME_Debug, "%s: height=%d; realheight=%d; ofs=%d; spbot=%d; botofs=%d; tofs=%d", thing->GetClass()->GetName(), TexHeight, sph, TexTOffset, spbot, botofs, TexTOffset);
+            if (botofs > 0 && botofs <= allowedDelta) {
+              //GCon->Logf(NAME_Debug, "%s: height=%d; realheight=%d; ofs=%d; spbot=%d; botofs=%d; tofs=%d", thing->GetClass()->GetName(), TexHeight, sph, TexTOffset, spbot, botofs, TexTOffset);
+              // sink corpses a little
+              if (thing->IsAnyCorpse() && r_fix_sprite_offsets_smart_corpses) {
+                const float clipFactor = 1.8f;
+                const float ratio = clampval((float)botofs*clipFactor/(float)sph, 0.5f, 1.0f);
+                botofs = (int)((float)botofs*ratio);
+                if (botofs < 0 || botofs > allowedDelta) botofs = 0;
+              }
+              TexTOffset += botofs/scaleY;
             }
-            TexTOffset += botofs/scaleY;
           }
         }
       }
