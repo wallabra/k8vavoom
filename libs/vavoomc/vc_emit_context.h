@@ -126,6 +126,7 @@ private:
   TArray<int> Labels;
   TArray<VLabelFixup> Fixups;
   TArray<VLocalVarDef> LocalDefs;
+
   int compIndex;
   int firstLoopCompIndex;
 
@@ -194,7 +195,9 @@ private:
 
 public:
   VMethod *CurrentFunc;
+  // both class and struct can be null (package context), or one of them can be set (but not both)
   VClass *SelfClass;
+  VStruct *SelfStruct;
   VPackage *Package;
   VArrayElement *IndArray;
 

@@ -30,23 +30,26 @@
 //
 //==========================================================================
 enum {
-  FUNC_Native      = 0x0001, // native method
-  FUNC_Static      = 0x0002, // static method
-  FUNC_VarArgs     = 0x0004, // variable argument count
-  FUNC_Final       = 0x0008, // final version of a method
-  FUNC_Spawner     = 0x0010, // automatic cast of return value
-  FUNC_Net         = 0x0020, // method is network-replicated
-  FUNC_NetReliable = 0x0040, // sent reliably over the network
-  FUNC_Iterator    = 0x0080, // can be used in foreach statements
+  FUNC_Native       = 0x0001, // native method
+  FUNC_Static       = 0x0002, // static method
+  FUNC_VarArgs      = 0x0004, // variable argument count
+  FUNC_Final        = 0x0008, // final version of a method
+  FUNC_Spawner      = 0x0010, // automatic cast of return value
+  FUNC_Net          = 0x0020, // method is network-replicated
+  FUNC_NetReliable  = 0x0040, // sent reliably over the network
+  FUNC_Iterator     = 0x0080, // can be used in foreach statements
 
-  FUNC_Decorate    = 0x0100, // can be called from decorate code
+  FUNC_Decorate     = 0x0100, // can be called from decorate code
   // do not allow calls to virtual methods inside this one
   // this is used in synthesized state methods, because they can be called with arbitrary `self`
-  FUNC_NoVCalls    = 0x0200,
+  FUNC_NoVCalls     = 0x0200,
 
-  FUNC_Override    = 0x1000, // used to check overrides
-  FUNC_Private     = 0x2000,
-  FUNC_Protected   = 0x4000,
+  // this is struct method; it should be final
+  FUNC_StructMethod = 0x0400,
+
+  FUNC_Override     = 0x1000, // used to check overrides
+  FUNC_Private      = 0x2000,
+  FUNC_Protected    = 0x4000,
 
   // non-virtual method -- i.e. it has `FUNC_Final` set, and it is not in VMT
   //k8: i don't remember why i introduced this

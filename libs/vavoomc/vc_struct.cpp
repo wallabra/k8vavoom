@@ -33,17 +33,17 @@
 //==========================================================================
 VStruct::VStruct (VName AName, VMemberBase *AOuter, TLocation ALoc)
   : VMemberBase(MEMBER_Struct, AName, AOuter, ALoc)
-  , ParentStruct(0)
+  , ParentStruct(nullptr)
   , IsVector(false)
   , StackSize(0)
-  , Fields(0)
+  , Fields(nullptr)
   , ParentStructName(NAME_None)
   , Defined(true)
   , PostLoaded(false)
   , Size(0)
   , Alignment(0)
-  , ReferenceFields(0)
-  , DestructorFields(0)
+  , ReferenceFields(nullptr)
+  , DestructorFields(nullptr)
   , AliasList()
   , AliasFrameNum(0)
   , cacheNeedDTor(-1)
@@ -123,7 +123,8 @@ void VStruct::Serialise (VStream &Strm) {
   Strm << ParentStruct
     << IsVector
     << STRM_INDEX(StackSize)
-    << Fields;
+    << Fields
+    << Methods;
 
   if (Strm.IsLoading()) {
     cacheNeedDTor = -1;

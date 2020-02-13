@@ -334,6 +334,9 @@ VEmitContext::VEmitContext (VMemberBase *Member)
   , lastFin(nullptr)
   , lastBC(nullptr)
   , CurrentFunc(nullptr)
+  , SelfClass(nullptr)
+  , SelfStruct(nullptr)
+  , Package(nullptr)
   , IndArray(nullptr)
   , FuncRetType(TYPE_Unknown)
   , localsofs(0)
@@ -349,6 +352,20 @@ VEmitContext::VEmitContext (VMemberBase *Member)
   while (PM != nullptr && PM->MemberType != MEMBER_Package) PM = PM->Outer;
   Package = (VPackage *)PM;
 
+  // check for struct method
+  if (Member != nullptr && Member->MemberType == MEMBER_Method) {
+    VMemberBase *SM = Member;
+    while (SM && SM->MemberType != MEMBER_Struct) {
+      if (SM == SelfClass) { SM = nullptr; break; }
+      SM = SM->Outer;
+    }
+    if (SM) {
+      GLog.Logf(NAME_Debug, "compiling struct method `%s`", *Member->GetFullName());
+      SelfClass = nullptr;
+      SelfStruct = (VStruct *)SM;
+    }
+  }
+
   if (Member != nullptr && Member->MemberType == MEMBER_Method) {
     CurrentFunc = (VMethod *)Member;
     //CurrentFunc->SelfTypeClass = nullptr;
@@ -358,24 +375,34 @@ VEmitContext::VEmitContext (VMemberBase *Member)
     //    hello, OOM on any moderately sized mod. yay.
     //CurrentFunc->Instructions.Resize(1024);
     FuncRetType = CurrentFunc->ReturnType;
+    if (SelfStruct) {
+      vassert(CurrentFunc->Flags&FUNC_StructMethod);
+    } else {
+      vassert(!(CurrentFunc->Flags&FUNC_StructMethod));
+    }
     // process `self(ClassName)`
     if (CurrentFunc->SelfTypeName != NAME_None) {
-      VClass *newSelfClass = VMemberBase::StaticFindClass(CurrentFunc->SelfTypeName);
-      if (!newSelfClass) {
-        ParseError(CurrentFunc->Loc, "No such class `%s` for forced self in method `%s`", *CurrentFunc->SelfTypeName, *CurrentFunc->GetFullName());
+      if (SelfStruct) {
+        ParseError(CurrentFunc->Loc, "You cannot force self for struct method `%s`", *CurrentFunc->GetFullName());
+        CurrentFunc->SelfTypeName = NAME_None;
       } else {
-        if (newSelfClass) {
-          VClass *cc = SelfClass;
-          while (cc && cc != newSelfClass) cc = cc->ParentClass;
-               if (!cc) ParseError(CurrentFunc->Loc, "Forced self `%s` for class `%s`, which is not super (method `%s`)", *CurrentFunc->SelfTypeName, SelfClass->GetName(), *CurrentFunc->GetFullName());
-          //else if (cc == SelfClass) ParseWarning(CurrentFunc->Loc, "Forced self `%s` for the same class (old=%s; new=%s) (method `%s`)", *CurrentFunc->SelfTypeName, *SelfClass->GetFullName(), *cc->GetFullName(), *CurrentFunc->GetFullName());
-          //else GLog.Logf(NAME_Debug, "%s: forced class `%s` for class `%s` (method `%s`)", *CurrentFunc->Loc.toStringNoCol(), *CurrentFunc->SelfTypeName, SelfClass->GetName(), *CurrentFunc->GetFullName());
-          if (!cc->Defined) ParseError(CurrentFunc->Loc, "Forced self class `%s` is not defined for method `%s`", *CurrentFunc->SelfTypeName, *CurrentFunc->GetFullName());
-          SelfClass = cc;
-          if (CurrentFunc->SelfTypeClass && CurrentFunc->SelfTypeClass != cc) Sys_Error("internal compiler error (SelfTypeName)");
-          CurrentFunc->SelfTypeClass = cc;
+        VClass *newSelfClass = VMemberBase::StaticFindClass(CurrentFunc->SelfTypeName);
+        if (!newSelfClass) {
+          ParseError(CurrentFunc->Loc, "No such class `%s` for forced self in method `%s`", *CurrentFunc->SelfTypeName, *CurrentFunc->GetFullName());
         } else {
-          ParseError(CurrentFunc->Loc, "Forced self `%s` for nothing (wtf?!) (method `%s`)", *CurrentFunc->SelfTypeName, *CurrentFunc->GetFullName());
+          if (newSelfClass) {
+            VClass *cc = SelfClass;
+            while (cc && cc != newSelfClass) cc = cc->ParentClass;
+                 if (!cc) ParseError(CurrentFunc->Loc, "Forced self `%s` for class `%s`, which is not super (method `%s`)", *CurrentFunc->SelfTypeName, SelfClass->GetName(), *CurrentFunc->GetFullName());
+            //else if (cc == SelfClass) ParseWarning(CurrentFunc->Loc, "Forced self `%s` for the same class (old=%s; new=%s) (method `%s`)", *CurrentFunc->SelfTypeName, *SelfClass->GetFullName(), *cc->GetFullName(), *CurrentFunc->GetFullName());
+            //else GLog.Logf(NAME_Debug, "%s: forced class `%s` for class `%s` (method `%s`)", *CurrentFunc->Loc.toStringNoCol(), *CurrentFunc->SelfTypeName, SelfClass->GetName(), *CurrentFunc->GetFullName());
+            if (!cc->Defined) ParseError(CurrentFunc->Loc, "Forced self class `%s` is not defined for method `%s`", *CurrentFunc->SelfTypeName, *CurrentFunc->GetFullName());
+            SelfClass = cc;
+            if (CurrentFunc->SelfTypeClass && CurrentFunc->SelfTypeClass != cc) Sys_Error("internal compiler error (SelfTypeName)");
+            CurrentFunc->SelfTypeClass = cc;
+          } else {
+            ParseError(CurrentFunc->Loc, "Forced self `%s` for nothing (wtf?!) (method `%s`)", *CurrentFunc->SelfTypeName, *CurrentFunc->GetFullName());
+          }
         }
       }
     }

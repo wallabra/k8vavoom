@@ -24,6 +24,17 @@
 //**
 //**************************************************************************
 
+/*
+  you can define struct methods via name mangling, like this:
+    void MyStruct::method (args...) [const] { ... }
+  the first hidden argument is always `[const] ref MyStruct self`.
+
+  you can call this as normal method:
+    mystruct.method(...)
+
+  note that struct method is automatically final.
+ */
+
 class VStruct : public VMemberBase {
 public:
   // persistent fields
@@ -33,6 +44,8 @@ public:
   vint32 StackSize;
   // structure fields
   VField *Fields;
+  // structure methods (namespacing)
+  TArray<VMethod *> Methods;
 
   // compiler fields
   VName ParentStructName;

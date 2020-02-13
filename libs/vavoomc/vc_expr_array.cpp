@@ -197,6 +197,14 @@ VExpression *VArrayElement::InternalResolve (VEmitContext &ec, bool assTarget) {
       delete this;
       return nullptr;
     }
+    if (!ec.SelfClass) {
+      ParseError(Loc, "No `opIndex` support for structs yet");
+      delete indcopy;
+      delete ind2copy;
+      ParseError(Loc, "Cannot find `opIndex`");
+      delete this;
+      return nullptr;
+    }
     if (assTarget) VCFatalError("VC: internal compiler error (VArrayElement::InternalResolve)");
     VName mtname = VName("opIndex");
     // try typed method first: opIndex<index>
