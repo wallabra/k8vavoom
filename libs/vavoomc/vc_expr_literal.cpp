@@ -499,7 +499,7 @@ void VSelf::DoSyntaxCopyTo (VExpression *e) {
 //
 //==========================================================================
 VExpression *VSelf::DoResolve (VEmitContext &ec) {
-  if (!ec.SelfClass) {
+  if (!ec.SelfClass && !ec.SelfStruct) {
     ParseError(Loc, "`self` is used outside of member function");
     delete this;
     return nullptr;
@@ -509,7 +509,11 @@ VExpression *VSelf::DoResolve (VEmitContext &ec) {
     delete this;
     return nullptr;
   }
-  Type = VFieldType(ec.SelfClass);
+  if (ec.SelfStruct) {
+    Type = VFieldType(ec.SelfStruct).MakePointerType(); // it is always a pointer
+  } else {
+    Type = VFieldType(ec.SelfClass);
+  }
   return this;
 }
 

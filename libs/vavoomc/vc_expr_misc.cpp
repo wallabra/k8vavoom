@@ -265,6 +265,7 @@ VExpression *VSingleName::InternalResolve (VEmitContext &ec, VSingleName::AssTyp
     return e->Resolve(ec);
   }
 
+  // class field/property/etc
   if (ec.SelfClass) {
     VConstant *Const = ec.SelfClass->FindConstant(Name);
     if (Const) {
