@@ -268,7 +268,7 @@ void ParseScript (name ScriptName) {
       sc.ExpectNumber();
       Anims[i].Y = sc.Number;
       sc.ExpectNumber();
-      Anims[i].Period = float(sc.Number) / 35.0;
+      Anims[i].Period = float(sc.Number)/35.0;
       if (sc.Check("Once")) Anims[i].bOnce = true;
       sc.Expect("{");
       while (!sc.Check("}")) {
@@ -280,7 +280,7 @@ void ParseScript (name ScriptName) {
       // init variables
       Anims[i].Ctr = -1;
       // specify the next time to draw it
-      Anims[i].NextTime = btime + 0.01 + Random() * Anims[i].Period;
+      Anims[i].NextTime = btime+0.01+Random()*Anims[i].Period;
     } else if (sc.Check("Pic")) {
       sc.ExpectNumber();
       Anims[i].X = sc.Number;
@@ -293,7 +293,7 @@ void ParseScript (name ScriptName) {
       // init variables
       Anims[i].Ctr = -1;
       // specify the next time to draw it
-      Anims[i].NextTime = btime + 0.01;
+      Anims[i].NextTime = btime+0.01;
     } else {
       sc.ScriptError("Bad syntax");
     }
