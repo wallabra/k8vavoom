@@ -204,6 +204,10 @@ enum {
   // used only as tracer flags
   SPF_IGNORE_FAKE_FLOORS = 64,
   SPF_IGNORE_BASE_REGION = 128,
+
+  // for BSP tracer (can be used for additional blocking flags)
+  SPF_PLAYER = 256,
+  SPF_MONSTER = 512,
 };
 
 

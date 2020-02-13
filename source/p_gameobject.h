@@ -99,7 +99,11 @@ enum {
 
   // used only as tracer flags
   SPF_IGNORE_FAKE_FLOORS = 1u<<6, //64u,
-  SPF_IGNORE_BASE_REGION = 1u<<7,
+  SPF_IGNORE_BASE_REGION = 1u<<7, //128u
+
+  // for BSP tracer (can be used for additional blocking flags)
+  SPF_PLAYER = 1u<<8, //256u
+  SPF_MONSTER = 1u<<9, //512u
 };
 
 
@@ -1099,6 +1103,8 @@ public:
   TVec LineStart;
   TVec LineEnd;
   vuint32 PlaneNoBlockFlags;
+  // the following will be calculated from `PlaneNoBlockFlags`
+  vuint32 LineBlockFlags;
   // subsector we ended in (can be arbitrary if trace doesn't end in map boundaries)
   // valid only for `TraceLine()` call (i.e. BSP trace)
   subsector_t *EndSubsector;

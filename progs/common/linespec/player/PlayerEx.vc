@@ -904,12 +904,12 @@ void CheckWaterJump (optional bool asStep) {
   vforward.z = 0.0;
   vforward = Normalise(vforward);
   end = start+vforward*24.0;
-  if (!Level.XLevel.BSPTraceLine(start, end, HitPoint, HitNormal)) {
+  if (!Level.XLevel.BSPTraceLine(start, end, HitPoint, HitNormal, noBlockFlags:SPF_NOBLOCKING|SPF_PLAYER)) {
     // solid at waist
     start.z = MO.Origin.z+MO.Height;
     end = start+vforward*24.0;
     //MoveDir = HitNormal*(-50.0);
-    if (Level.XLevel.BSPTraceLine(start, end, HitPoint, HitNormal)) {
+    if (Level.XLevel.BSPTraceLine(start, end, HitPoint, HitNormal, noBlockFlags:SPF_NOBLOCKING|SPF_PLAYER)) {
       // open at eye level
       EntityEx(MO).bWaterJump = true;
       MO.Velocity.z = 350.0;

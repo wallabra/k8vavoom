@@ -40,12 +40,16 @@ static VCvarB dbg_bsp_trace_strict_flats("dbg_bsp_trace_strict_flats", false, "u
 //  PlaneFlagsToLineFlags
 //
 //==========================================================================
+/*
 static inline VVA_CHECKRESULT VVA_OKUNUSED unsigned PlaneFlagsToLineFlags (unsigned planeblockflags) {
   return
-    ((planeblockflags&SPF_NOBLOCKING) ? ML_BLOCKEVERYTHING : 0u)|
+    ((planeblockflags&SPF_NOBLOCKING) ? ((ML_BLOCKING|ML_BLOCKEVERYTHING)|(planeblockflags&SPF_PLAYER ? ML_BLOCKPLAYERS : 0u)|(planeblockflags&SPF_MONSTER ? ML_BLOCKMONSTERS : 0u)) : 0u)|
     ((planeblockflags&SPF_NOBLOCKSIGHT) ? ML_BLOCKSIGHT : 0u)|
     ((planeblockflags&SPF_NOBLOCKSHOOT) ? ML_BLOCKHITSCAN : 0u);
+  //ML_BLOCK_FLOATERS      = 0x00040000u,
+  //ML_BLOCKPROJECTILE     = 0x01000000u,
 }
+*/
 
 
 //==========================================================================
@@ -142,7 +146,7 @@ bool VLevel::CheckLine (linetrace_t &trace, seg_t *seg) const {
   }
   trace.LineStart = trace.LineEnd;
 
-  if (!(line->flags&ML_TWOSIDED) || (line->flags&PlaneFlagsToLineFlags(trace.PlaneNoBlockFlags))) {
+  if (!(line->flags&ML_TWOSIDED) || (line->flags&trace.LineBlockFlags)) {
     trace.Flags |= linetrace_t::SightEarlyOut;
   } else {
     if (line->flags&ML_TWOSIDED) {
@@ -251,27 +255,39 @@ bool VLevel::CrossBSPNode (linetrace_t &trace, int bspnum) const {
 //  returns `fales` if the line was blocked, and sets hit normal/point
 //
 //==========================================================================
-bool VLevel::TraceLine (linetrace_t &trace, const TVec &Start, const TVec &End, int PlaneNoBlockFlags) {
+bool VLevel::TraceLine (linetrace_t &trace, const TVec &Start, const TVec &End, unsigned PlaneNoBlockFlags, unsigned moreLineBlockFlags) {
   trace.Start = Start;
   trace.End = End;
   trace.Delta = End-Start;
   trace.LineStart = Start;
-  trace.PlaneNoBlockFlags = (unsigned)PlaneNoBlockFlags;
+  trace.PlaneNoBlockFlags = PlaneNoBlockFlags;
   trace.HitLine = nullptr;
   trace.Flags = 0;
+
+  if (PlaneNoBlockFlags&SPF_NOBLOCKING) {
+    moreLineBlockFlags |= ML_BLOCKING|ML_BLOCKEVERYTHING;
+    if (PlaneNoBlockFlags&SPF_PLAYER) moreLineBlockFlags |= ML_BLOCKPLAYERS;
+    if (PlaneNoBlockFlags&SPF_MONSTER) moreLineBlockFlags |= ML_BLOCKMONSTERS;
+    //ML_BLOCK_FLOATERS      = 0x00040000u,
+    //ML_BLOCKPROJECTILE     = 0x01000000u,
+  }
+  if (PlaneNoBlockFlags&SPF_NOBLOCKSIGHT) moreLineBlockFlags |= ML_BLOCKSIGHT;
+  if (PlaneNoBlockFlags&SPF_NOBLOCKSHOOT) moreLineBlockFlags |= ML_BLOCKHITSCAN;
+
+  trace.LineBlockFlags = moreLineBlockFlags;
 
   //k8: HACK!
   if (trace.Delta.x == 0.0f && trace.Delta.y == 0.0f) {
     // this is vertical trace; end subsector is known
     trace.EndSubsector = PointInSubsector(End);
     //trace.Plane.SetPointNormal3D(Start, TVec(0.0f, 0.0f, (trace.Delta.z >= 0.0f ? 1.0f : -1.0f))); // arbitrary orientation
-    if (trace.Delta.z == 0.0f) {
+    // point cannot hit anything!
+    if (fabsf(trace.Delta.z) <= 0.0001f) {
       // always succeed
       trace.LineEnd = End;
       return true;
-    } else {
-      return CheckPlanes(trace, trace.EndSubsector->sector);
     }
+    return CheckPlanes(trace, trace.EndSubsector->sector);
   } else {
     IncrementValidCount();
     trace.LinePlane.SetPointDirXY(Start, trace.Delta);

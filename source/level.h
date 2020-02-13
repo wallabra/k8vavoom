@@ -591,7 +591,7 @@ public:
   bool ChangeSector (sector_t *sector, int crunch);
 
   // returns `false` on hit
-  bool TraceLine (linetrace_t &Trace, const TVec &Start, const TVec &End, int PlaneNoBlockFlags);
+  bool TraceLine (linetrace_t &Trace, const TVec &Start, const TVec &End, unsigned PlaneNoBlockFlags, unsigned moreLineBlockFlags=0);
 
   // doesn't check pvs or reject
   // `Sector` can be `nullptr`

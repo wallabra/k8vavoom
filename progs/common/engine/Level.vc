@@ -219,6 +219,8 @@ struct linetrace_t {
   TVec LineStart;
   TVec LineEnd;
   int PlaneNoBlockFlags; // SPF_XXX
+  // the following will be calculated from `PlaneNoBlockFlags`
+  int LineBlockFlags;
   // subsector we ended in (can be arbitrary if trace doesn't end in map boundaries)
   // valid only for `BSPTraceLine()` call (i.e. BSP trace)
   subsector_t *EndSubsector;
