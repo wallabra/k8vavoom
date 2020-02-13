@@ -1,0 +1,32 @@
+"skyboxes" lump defines a skybox:
+
+  rock_dawn {
+    // Right
+    {
+      map textures/skies/rkdawnrt.tga
+    }
+    // Front
+    {
+      map textures/skies/rkdawnft.tga
+    }
+    // Left
+    {
+      map textures/skies/rkdawnlf.tga
+    }
+    // Back
+    {
+      map textures/skies/rkdawnbk.tga
+    }
+    // Up
+    {
+      map textures/skies/rkdawnup.tga
+    }
+    // Down
+    {
+      map textures/skies/rkdawndn.tga
+    }
+  }
+
+
+"rock_dawn" is skybox name.
+other sections defines skybox side textures (called "maps" here).
