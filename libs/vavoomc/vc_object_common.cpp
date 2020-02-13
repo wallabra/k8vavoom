@@ -431,23 +431,9 @@ IMPLEMENT_FUNCTION(VObject, PlaneForLine) {
 
 //**************************************************************************
 //
-//  String functions
+//  Name functions
 //
 //**************************************************************************
-// native static final int strcmp (string s1, string s2);
-IMPLEMENT_FUNCTION(VObject, strcmp) {
-  VStr s1, s2;
-  vobjGetParam(s1, s2);
-  RET_INT(s1.Cmp(s2));
-}
-
-// native static final int stricmp (string s1, string s2);
-IMPLEMENT_FUNCTION(VObject, stricmp) {
-  VStr s1, s2;
-  vobjGetParam(s1, s2);
-  RET_INT(s1.ICmp(s2));
-}
-
 // native static final int nameicmp (name s1, name s2);
 IMPLEMENT_FUNCTION(VObject, nameicmp) {
   VName s1, s2;
@@ -461,6 +447,79 @@ IMPLEMENT_FUNCTION(VObject, namestricmp) {
   VStr s2;
   vobjGetParam(s1, s2);
   RET_INT(s2.ICmp(*s1));
+}
+
+// native static final bool nameEquCI (name s1, name s2);
+IMPLEMENT_FUNCTION(VObject, nameEquCI) {
+  VName n1, n2;
+  vobjGetParam(n1, n2);
+  RET_BOOL(VStr::strEquCI(*n1, *n2));
+}
+
+// native static final bool nameStrEqu (name s1, string s2) [property(name) strEqu];
+IMPLEMENT_FUNCTION(VObject, nameStrEqu) {
+  VName n1;
+  VStr s2;
+  vobjGetParam(n1, s2);
+  RET_BOOL(s2.strEqu(*n1));
+}
+
+// native static final bool nameStrEquCI (name s1, string s2) [property(name) strEquCI];
+IMPLEMENT_FUNCTION(VObject, nameStrEquCI) {
+  VName n1;
+  VStr s2;
+  vobjGetParam(n1, s2);
+  RET_BOOL(s2.strEquCI(*n1));
+}
+
+
+//**************************************************************************
+//
+//  String functions
+//
+//**************************************************************************
+// native static final bool strEqu (string s1, string s2);
+IMPLEMENT_FUNCTION(VObject, strEqu) {
+  VStr s1, s2;
+  vobjGetParam(s1, s2);
+  RET_BOOL(s1.strEqu(s2));
+}
+
+// native static final bool strEquCI (string s1, string s2);
+IMPLEMENT_FUNCTION(VObject, strEquCI) {
+  VStr s1, s2;
+  vobjGetParam(s1, s2);
+  RET_BOOL(s1.strEquCI(s2));
+}
+
+// native static final bool strNameEqu (string s1, name s2) [property(string) nameEqu];
+IMPLEMENT_FUNCTION(VObject, strNameEqu) {
+  VStr s1;
+  VName n2;
+  vobjGetParam(s1, n2);
+  RET_BOOL(s1.strEqu(*n2));
+}
+
+// native static final bool strNameEquCI (string s1, name s2) [property(string) nameEquCI];
+IMPLEMENT_FUNCTION(VObject, strNameEquCI) {
+  VStr s1;
+  VName n2;
+  vobjGetParam(s1, n2);
+  RET_BOOL(s1.strEquCI(*n2));
+}
+
+// native static final int strcmp (string s1, string s2);
+IMPLEMENT_FUNCTION(VObject, strcmp) {
+  VStr s1, s2;
+  vobjGetParam(s1, s2);
+  RET_INT(s1.Cmp(s2));
+}
+
+// native static final int stricmp (string s1, string s2);
+IMPLEMENT_FUNCTION(VObject, stricmp) {
+  VStr s1, s2;
+  vobjGetParam(s1, s2);
+  RET_INT(s1.ICmp(s2));
 }
 
 // native static final string strlwr (string s);
@@ -631,6 +690,20 @@ IMPLEMENT_FUNCTION(VObject, StrEndsWith) {
   }
 }
 
+//native static final bool StrStartsWithCI (string Str, string Check);
+IMPLEMENT_FUNCTION(VObject, StrStartsWithCI) {
+  VStr Str, Check;
+  vobjGetParam(Str, Check);
+  RET_BOOL(Str.startsWithNoCase(Check));
+}
+
+//native static final bool StrEndsWithCI (string Str, string Check);
+IMPLEMENT_FUNCTION(VObject, StrEndsWithCI) {
+  VStr Str, Check;
+  vobjGetParam(Str, Check);
+  RET_BOOL(Str.endsWithNoCase(Check));
+}
+
 // native static final string StrReplace (string Str, string Search, string Replacement);
 IMPLEMENT_FUNCTION(VObject, StrReplace) {
   VStr Str, Search, Replacement;
@@ -667,6 +740,34 @@ IMPLEMENT_FUNCTION(VObject, findExistingName) {
   VName res;
   if (!str.isEmpty()) res = VName(*str, (locase ? VName::FindLower : VName::Find));
   RET_NAME(res);
+}
+
+// native static final string strXStrip (string s) [property(string) xstrip];
+IMPLEMENT_FUNCTION(VObject, strXStrip) {
+  VStr str;
+  vobjGetParam(str);
+  RET_STR(str.xstrip());
+}
+
+// native static final string strTrimAll (string s) [property(string) stripLeft];
+IMPLEMENT_FUNCTION(VObject, strTrimAll) {
+  VStr str;
+  vobjGetParam(str);
+  RET_STR(str.xstrip());
+}
+
+// native static final string strTrimLeft (string s) [property(string) stripLeft];
+IMPLEMENT_FUNCTION(VObject, strTrimLeft) {
+  VStr str;
+  vobjGetParam(str);
+  RET_STR(str.trimLeft());
+}
+
+// native static final string strTrimRight (string s) [property(string) stripRight];
+IMPLEMENT_FUNCTION(VObject, strTrimRight) {
+  VStr str;
+  vobjGetParam(str);
+  RET_STR(str.trimRight());
 }
 
 

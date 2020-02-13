@@ -73,12 +73,21 @@
   DECLARE_FUNCTION(PlaneForPointNormal)
   DECLARE_FUNCTION(PlaneForLine)
 
+  // name functions
+  DECLARE_FUNCTION(nameicmp)
+  DECLARE_FUNCTION(namestricmp)
+  DECLARE_FUNCTION(nameEquCI)
+  DECLARE_FUNCTION(nameStrEqu)
+  DECLARE_FUNCTION(nameStrEquCI)
+
   // string functions
+  DECLARE_FUNCTION(strEqu)
+  DECLARE_FUNCTION(strEquCI)
+  DECLARE_FUNCTION(strNameEqu)
+  DECLARE_FUNCTION(strNameEquCI)
   DECLARE_FUNCTION(strlenutf8)
   DECLARE_FUNCTION(strcmp)
   DECLARE_FUNCTION(stricmp)
-  DECLARE_FUNCTION(nameicmp)
-  DECLARE_FUNCTION(namestricmp)
   //DECLARE_FUNCTION(strcat)
   DECLARE_FUNCTION(strlwr)
   DECLARE_FUNCTION(strupr)
@@ -96,11 +105,17 @@
   DECLARE_FUNCTION(atof)
   DECLARE_FUNCTION(StrStartsWith)
   DECLARE_FUNCTION(StrEndsWith)
+  DECLARE_FUNCTION(StrStartsWithCI)
+  DECLARE_FUNCTION(StrEndsWithCI)
   DECLARE_FUNCTION(StrReplace)
   DECLARE_FUNCTION(globmatch)
   DECLARE_FUNCTION(strIndexOf)
   DECLARE_FUNCTION(strLastIndexOf)
   DECLARE_FUNCTION(findExistingName)
+  DECLARE_FUNCTION(strXStrip)
+  DECLARE_FUNCTION(strTrimAll)
+  DECLARE_FUNCTION(strTrimLeft)
+  DECLARE_FUNCTION(strTrimRight)
 
   // random numbers
   DECLARE_FUNCTION(Random)

@@ -817,16 +817,34 @@ native static final float chachaNextFloatFull (ref ChaChaCtx ctx);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-// string functions
-
-// compare strings
-native static final int strcmp (string s1, string s2) [property(string) cmp];
-// compare strings ingnoring case (not utf8-aware)
-native static final int stricmp (string s1, string s2) [property(string) icmp];
+// name functions
 // compare names ingnoring case (not utf8-aware)
 native static final int nameicmp (name s1, name s2) [property(name) icmp];
 // compare string and name ignoring case (not utf8-aware)
 native static final int namestricmp (name s1, string s2) [property(name) stricmp];
+// compare names ignoring case (not utf8-aware)
+native static final bool nameEquCI (name s1, name s2);
+// compare name and string (not utf8-aware)
+native static final bool nameStrEqu (name s1, string s2) [property(name) strEqu];
+// compare name and string ignoring case (not utf8-aware)
+native static final bool nameStrEquCI (name s1, string s2) [property(name) strEquCI];
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// string functions
+
+// compare strings
+native static final bool strEqu (string s1, string s2);
+// compare strings ingnoring case (not utf8-aware)
+native static final bool strEquCI (string s1, string s2);
+// compare string and name
+native static final bool strNameEqu (string s1, name s2) [property(string) nameEqu];
+// compare string and name ingnoring case (not utf8-aware)
+native static final bool strNameEquCI (string s1, name s2) [property(string) nameEquCI];
+// compare strings
+native static final int strcmp (string s1, string s2) [property(string) cmp];
+// compare strings ingnoring case (not utf8-aware)
+native static final int stricmp (string s1, string s2) [property(string) icmp];
 // convert string to lowercase (not utf8-aware)
 native static final string strlwr (string s) [property(string) toLowerCase];
 // convert string to uppercase (not utf8-aware)
@@ -889,17 +907,23 @@ alias strEndsWith = StrEndsWith;
 native static final string StrReplace (string Str, string Search, string Replacement) [property(string) replace];
 alias strReplace = StrReplace;
 
+// checks if string starts with given string
+// (not utf8-aware)
+native static final bool StrStartsWithCI (string Str, string Check) [property(string) startsWithCI];
+alias strStartsWithCI = StrStartsWithCI;
+// checks if string ends with given string
+// (not utf8-aware)
+native static final bool StrEndsWithCI (string Str, string Check) [property(string) endsWithCI];
+alias strEndsWithCI = StrEndsWithCI;
 
-//==========================================================================
-//
-//  xstrip
-//
-//==========================================================================
-static final string xstrip (string s) {
-  while (s.length && s[0] <= " ") s = s[1..$];
-  while (s.length && s[$-1] <= " ") s = s[0..$-1];
-  return s;
-}
+// removes all [0..32] chars from both string ends
+native static final string strXStrip (string s) [property(string) xstrip];
+// removes all [0..32] chars from both string ends
+native static final string strTrimAll (string s) [property(string) trimAll];
+// removes all leading [0..32] chars
+native static final string strTrimLeft (string s) [property(string) trimLeft];
+// removes all trailing [0..32] chars
+native static final string strTrimRight (string s) [property(string) trimRight];
 
 
 // ////////////////////////////////////////////////////////////////////////// //
