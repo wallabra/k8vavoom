@@ -528,12 +528,15 @@ public:
   // map loader
   void LoadMap (VName MapName);
 
-  subsector_t *PointInSubsector (const TVec &point) const;
+  // vanilla buggy algo
+  subsector_t *PointInSubsector_Buggy (const TVec &point) const noexcept;
+  // bugfixed algo
+  subsector_t *PointInSubsector (const TVec &point) const noexcept;
 
-  inline bool HasPVS () const { return !!VisData; }
+  inline bool HasPVS () const noexcept { return !!VisData; }
 
   //const vuint8 *LeafPVS (const subsector_t *ss) const;
-  inline const vuint8 *LeafPVS (const subsector_t *ss) const {
+  inline const vuint8 *LeafPVS (const subsector_t *ss) const noexcept {
     if (VisData) {
       const int sub = (int)(ptrdiff_t)(ss-Subsectors);
       return VisData+(((NumSubsectors+7)>>3)*sub);
@@ -917,6 +920,8 @@ private:
 
   DECLARE_FUNCTION(PointInSector)
   DECLARE_FUNCTION(PointInSubsector)
+  DECLARE_FUNCTION(PointInSectorRender)
+  DECLARE_FUNCTION(PointInSubsectorRender)
   DECLARE_FUNCTION(BSPTraceLine)
   DECLARE_FUNCTION(BSPTraceLineEx)
   DECLARE_FUNCTION(ChangeSector)

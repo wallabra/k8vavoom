@@ -362,7 +362,7 @@ void VEntity::LinkToWorld (int properFloorCheck) {
   if (SubSector) UnlinkFromWorld();
 
   // link into subsector
-  subsector_t *ss = XLevel->PointInSubsector(Origin);
+  subsector_t *ss = XLevel->PointInSubsector_Buggy(Origin);
   SubSector = ss;
   Sector = ss->sector;
 
@@ -551,7 +551,7 @@ bool VEntity::CheckPosition (TVec Pos) {
   cptrace.BBox[BOX2D_RIGHT] = Pos.x+Radius;
   cptrace.BBox[BOX2D_LEFT] = Pos.x-Radius;
 
-  subsector_t *newsubsec = XLevel->PointInSubsector(Pos);
+  subsector_t *newsubsec = XLevel->PointInSubsector_Buggy(Pos);
 
   // The base floor / ceiling is from the subsector that contains the point.
   // Any contacted lines the step closer together will adjust them.
@@ -751,7 +751,7 @@ bool VEntity::CheckRelPosition (tmtrace_t &tmtrace, TVec Pos, bool noPickups, bo
   tmtrace.BBox[BOX2D_RIGHT] = Pos.x+Radius;
   tmtrace.BBox[BOX2D_LEFT] = Pos.x-Radius;
 
-  subsector_t *newsubsec = XLevel->PointInSubsector(Pos);
+  subsector_t *newsubsec = XLevel->PointInSubsector_Buggy(Pos);
   tmtrace.CeilingLine = nullptr;
 
   tmtSetupGap(&tmtrace, newsubsec->sector, Height, false);
@@ -1947,7 +1947,7 @@ bool VEntity::CheckSides (TVec lsPos) {
 //
 //==========================================================================
 bool VEntity::FixMapthingPos () {
-  sector_t *sec = XLevel->PointInSubsector(Origin)->sector; // here buggy original should be used!
+  sector_t *sec = XLevel->PointInSubsector_Buggy(Origin)->sector; // here buggy original should be used!
 
   bool res = false;
 

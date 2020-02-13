@@ -56,7 +56,7 @@ static inline VVA_CHECKRESULT VVA_OKUNUSED unsigned PlaneFlagsToLineFlags (unsig
 static bool CheckPlanes (linetrace_t &trace, sector_t *sec) {
   TVec outHit(0.0f, 0.0f, 0.0f), outNorm(0.0f, 0.0f, 0.0f);
 
-  if (!VLevel::CheckPassPlanes(sec, trace.LineStart, trace.LineEnd, (unsigned)trace.PlaneNoBlockFlags, &outHit, &outNorm, nullptr, &trace.HitPlane)) {
+  if (!VLevel::CheckPassPlanes(sec, trace.LineStart, trace.LineEnd, trace.PlaneNoBlockFlags, &outHit, &outNorm, nullptr, &trace.HitPlane)) {
     // hit floor or ceiling
     trace.LineEnd = outHit;
     trace.HitPlaneNormal = outNorm;
@@ -140,7 +140,7 @@ bool VLevel::CheckLine (linetrace_t &trace, seg_t *seg) const {
   }
   trace.LineStart = trace.LineEnd;
 
-  if (!(line->flags&ML_TWOSIDED) || (line->flags&PlaneFlagsToLineFlags((unsigned)trace.PlaneNoBlockFlags))) {
+  if (!(line->flags&ML_TWOSIDED) || (line->flags&PlaneFlagsToLineFlags(trace.PlaneNoBlockFlags))) {
     trace.Flags |= linetrace_t::SightEarlyOut;
   } else {
     if (line->flags&ML_TWOSIDED) {
@@ -221,18 +221,20 @@ bool VLevel::CrossBSPNode (linetrace_t &trace, int bspnum) const {
   if ((bspnum&NF_SUBSECTOR) == 0) {
     const node_t *bsp = &Nodes[bspnum];
     // decide which side the start point is on
-    int side = bsp->PointOnSide2(trace.Start);
-    bool both = (side == 2);
-    //if (both) side = 0; // an "on" should cross both sides
-    side &= 1;
+    // if bit 1 is set (i.e. `(side&2) != 0`), the point lies on the plane
+    const int side = bsp->PointOnSide2(trace.Start);
     // cross the starting side
-    if (!CrossBSPNode(trace, bsp->children[side])) {
-      return (both ? CrossBSPNode(trace, bsp->children[side^1]) : false);
+    if (!CrossBSPNode(trace, bsp->children[side&1])) {
+      // if on the plane, check other side
+      if (side&2) return CrossBSPNode(trace, bsp->children[(side&1)^1]);
+      // definitely blocked
+      return false;
     }
     // the partition plane is crossed here
-    if (!both && side == bsp->PointOnSide2(trace.End)) return true; // the line doesn't touch the other side
+    // if not on the plane, and endpoint is on the same side, there's nothing more to do
+    if (!(side&2) && side == bsp->PointOnSide2(trace.End)) return true; // the line doesn't touch the other side
     // cross the ending side
-    return CrossBSPNode(trace, bsp->children[side^1]);
+    return CrossBSPNode(trace, bsp->children[(side&1)^1]);
   } else {
     return CrossSubsector(trace, bspnum&(~NF_SUBSECTOR));
   }
@@ -252,7 +254,7 @@ bool VLevel::TraceLine (linetrace_t &trace, const TVec &Start, const TVec &End, 
   trace.End = End;
   trace.Delta = End-Start;
   trace.LineStart = Start;
-  trace.PlaneNoBlockFlags = PlaneNoBlockFlags;
+  trace.PlaneNoBlockFlags = (unsigned)PlaneNoBlockFlags;
   trace.HitLine = nullptr;
   trace.Flags = 0;
 
@@ -362,7 +364,7 @@ struct SightTraceInfo {
 //==========================================================================
 static bool SightCheckPlanes (SightTraceInfo &trace, sector_t *sec) {
   //k8: for some reason, real sight checks ignores base sector region
-  return VLevel::CheckPassPlanes(sec, trace.LineStart, trace.LineEnd, (unsigned)trace.PlaneNoBlockFlags, &trace.LineEnd, /*&trace.HitPlaneNormal*/nullptr, nullptr, nullptr);
+  return VLevel::CheckPassPlanes(sec, trace.LineStart, trace.LineEnd, trace.PlaneNoBlockFlags, &trace.LineEnd, /*&trace.HitPlaneNormal*/nullptr, nullptr, nullptr);
 }
 
 
@@ -642,7 +644,8 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
   if (isNotInsideBM(org, this)) return false;
   if (isNotInsideBM(dest, this)) return false;
 
-  if (!Sector) Sector = PointInSubsector(org)->sector;
+  // use buggy vanilla algo here, because this is what used for world linking
+  if (!Sector) Sector = PointInSubsector_Buggy(org)->sector;
 
   if (radius < 0.0f) radius = 0.0f;
   if (height < 0.0f) height = 0.0f;
@@ -659,7 +662,8 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
   }
 
   sector_t *OtherSector = DestSector;
-  if (!OtherSector) OtherSector = PointInSubsector(dest)->sector;
+  // use buggy vanilla algo here, because this is what used for world linking
+  if (!OtherSector) OtherSector = PointInSubsector_Buggy(dest)->sector;
 
   if (!ignoreFakeFloors && OtherSector->heightsec) {
     const sector_t *hs = OtherSector->heightsec;
@@ -738,6 +742,10 @@ bool VLevel::CastLightRay (sector_t *Sector, const TVec &org, const TVec &dest, 
 
   if (lengthSquared(org-dest) <= 1) return true;
 
+  // do not use buggy vanilla algo here!
+
+  if (!Sector) Sector = PointInSubsector(org)->sector;
+
   // killough 4/19/98: make fake floors and ceilings block view
   if (Sector->heightsec) {
     const sector_t *hs = Sector->heightsec;
@@ -759,8 +767,6 @@ bool VLevel::CastLightRay (sector_t *Sector, const TVec &org, const TVec &dest, 
       return false;
     }
   }
-
-  //if (length2DSquared(org-dest) <= 1) return true;
 
   SightTraceInfo trace;
 

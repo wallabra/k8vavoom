@@ -1682,7 +1682,8 @@ static void AM_DrawSubsectorSegs (const subsector_t *sub, vuint32 color, bool dr
 //
 //==========================================================================
 static void AM_DrawRenderedSubs () {
-  subsector_t *mysub = GClLevel->PointInSubsector(cl->ViewOrg);
+  // use buggy vanilla algo here, because this is what used for world linking
+  subsector_t *mysub = GClLevel->PointInSubsector_Buggy(cl->ViewOrg);
   vassert(mysub);
 
   const subsector_t *sub = &GClLevel->Subsectors[0];

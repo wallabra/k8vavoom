@@ -182,10 +182,12 @@ static int R_PointOnSideSlow(double xx, double yy, node_t *node)
 
 //==========================================================================
 //
-//  VLevel::PointInSubsector
+//  VLevel::PointInSubsector_Buggy
+//
+//  vanilla buggy algo
 //
 //==========================================================================
-subsector_t *VLevel::PointInSubsector (const TVec &point) const {
+subsector_t *VLevel::PointInSubsector_Buggy (const TVec &point) const noexcept {
   // single subsector is a special case
   if (!NumNodes) return Subsectors;
   int nodenum = NumNodes-1;
@@ -255,6 +257,25 @@ subsector_t *VLevel::PointInSubsector (const TVec &point) const {
     } else {
       nodenum = node->children[/*node->PointOnSide(point)*/(unsigned)(dist <= 0.0f)];
     }
+  } while ((nodenum&NF_SUBSECTOR) == 0);
+  return &Subsectors[nodenum&~NF_SUBSECTOR];
+}
+
+
+//==========================================================================
+//
+//  VLevel::PointInSubsector
+//
+//  bugfixed algo
+//
+//==========================================================================
+subsector_t *VLevel::PointInSubsector (const TVec &point) const noexcept {
+  // single subsector is a special case
+  if (!NumNodes) return Subsectors;
+  int nodenum = NumNodes-1;
+  do {
+    const node_t *node = Nodes+nodenum;
+    nodenum = node->children[node->PointOnSide(point)];
   } while ((nodenum&NF_SUBSECTOR) == 0);
   return &Subsectors[nodenum&~NF_SUBSECTOR];
 }
@@ -793,10 +814,22 @@ IMPLEMENT_FUNCTION(VLevel, GetLineIndex) {
 IMPLEMENT_FUNCTION(VLevel, PointInSector) {
   P_GET_VEC(Point);
   P_GET_SELF;
-  RET_PTR(Self->PointInSubsector(Point)->sector);
+  RET_PTR(Self->PointInSubsector_Buggy(Point)->sector);
 }
 
 IMPLEMENT_FUNCTION(VLevel, PointInSubsector) {
+  P_GET_VEC(Point);
+  P_GET_SELF;
+  RET_PTR(Self->PointInSubsector_Buggy(Point));
+}
+
+IMPLEMENT_FUNCTION(VLevel, PointInSectorRender) {
+  P_GET_VEC(Point);
+  P_GET_SELF;
+  RET_PTR(Self->PointInSubsector(Point)->sector);
+}
+
+IMPLEMENT_FUNCTION(VLevel, PointInSubsectorRender) {
   P_GET_VEC(Point);
   P_GET_SELF;
   RET_PTR(Self->PointInSubsector(Point));

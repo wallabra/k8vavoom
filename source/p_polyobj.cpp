@@ -446,7 +446,7 @@ void VLevel::TranslatePolyobjToStartSpot (float originX, float originY, int tag)
   }
   avg.x /= po->numsegs;
   avg.y /= po->numsegs;
-  subsector_t *sub = PointInSubsector(avg);
+  subsector_t *sub = PointInSubsector(avg); // bugfixed algo
   po->RelinkToSubsector(sub);
   UpdatePolySegs(po);
 }
@@ -524,7 +524,7 @@ void VLevel::LinkPolyobj (polyobj_t *po) {
   }
   avg.x /= po->numsegs;
   avg.y /= po->numsegs;
-  subsector_t *sub = PointInSubsector(avg);
+  subsector_t *sub = PointInSubsector(avg); // bugfixed algo
   po->RelinkToSubsector(sub);
 
   po->bbox2d[BOX2D_RIGHT] = MapBlock(rightX-BlockMapOrgX);

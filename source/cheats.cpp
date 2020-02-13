@@ -207,7 +207,7 @@ COMMAND(MyPos) {
   }
   if (CheatAllowed(Player)) {
     const VLevel *lvl = Player->Level->XLevel;
-    const subsector_t *ss = lvl->PointInSubsector(Player->MO->Origin);
+    const subsector_t *ss = lvl->PointInSubsector_Buggy(Player->MO->Origin);
     GCon->Logf("sub: %d; sector: %d", (int)(ptrdiff_t)(ss-lvl->Subsectors), (int)(ptrdiff_t)(ss->sector-lvl->Sectors));
     Player->Printf("MAP %s (%f,%f,%f) v:(%f,%f)",
       *GLevel->MapName, Player->MO->Origin.x,
