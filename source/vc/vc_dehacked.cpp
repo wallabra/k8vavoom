@@ -811,6 +811,16 @@ static void ReadSpriteName (int) {
 
 //==========================================================================
 //
+//  FixScale
+//
+//==========================================================================
+static inline vint32 FixScale (vint32 a, vint32 b, vint32 c) {
+  return (vint32)(((vint64)a*b)/c);
+}
+
+
+//==========================================================================
+//
 //  ReadAmmo
 //
 //==========================================================================
@@ -822,35 +832,79 @@ static void ReadAmmo (int num) {
     return;
   }
 
+  VClass *Weapon = VClass::FindClass("Weapon");
   VClass *Ammo = AmmoClasses[num];
+  const int oldVal = GetClassFieldInt(Ammo, "Amount"); // we'll need it later
+
+  int maxVal = -1;
+  int perVal = -1;
+
   while (ParseParam()) {
-    if (!VStr::ICmp(String, "Max ammo")) {
-      SetClassFieldInt(Ammo, "MaxAmount", value);
-      SetClassFieldInt(Ammo, "BackpackMaxAmount", value*2);
-    } else if (!VStr::ICmp(String, "Per ammo")) {
-      SetClassFieldInt(Ammo, "Amount", value);
-      SetClassFieldInt(Ammo, "BackpackAmount", value);
-    } else {
-      Warning("Invalid ammo param '%s'", String);
-    }
+         if (!VStr::ICmp(String, "Max ammo")) maxVal = value;
+    else if (!VStr::ICmp(String, "Per ammo")) perVal = value;
+    else Warning("Invalid ammo param '%s'", String);
+  }
+
+  if (maxVal < 0 && perVal < 0) return; // nothing to do
+
+  // sanitise values
+  if (maxVal >= 0 && perVal >= 0) {
+    if (maxVal < perVal) maxVal = perVal;
+  }
+
+  // set values
+  if (maxVal >= 0) {
+    SetClassFieldInt(Ammo, "MaxAmount", maxVal);
+    SetClassFieldInt(Ammo, "BackpackMaxAmount", maxVal*2);
+  }
+
+  if (perVal >= 0) {
+    SetClassFieldInt(Ammo, "Amount", perVal);
+    SetClassFieldInt(Ammo, "BackpackAmount", perVal);
   }
 
   // fix up amounts in derived classes
   for (VClass *C = VMemberBase::GClasses; C; C = C->LinkNext) {
-    if (!C->IsChildOf(Ammo)) continue;
     if (C == Ammo) continue;
-    SetClassFieldInt(C, "Amount", GetClassFieldInt(Ammo, "Amount")*5);
-    SetClassFieldInt(C, "MaxAmount", GetClassFieldInt(Ammo, "MaxAmount"));
-    SetClassFieldInt(C, "BackpackAmount", GetClassFieldInt(Ammo, "BackpackAmount")*5);
-    SetClassFieldInt(C, "BackpackMaxAmount", GetClassFieldInt(Ammo, "BackpackMaxAmount"));
+    if (C->IsChildOf(Ammo)) {
+      // derived ammo
+      if (maxVal >= 0) {
+        // fix maximum value
+        SetClassFieldInt(C, "MaxAmount", maxVal);
+        SetClassFieldInt(C, "BackpackMaxAmount", maxVal*2);
+      }
+      if (perVal >= 0) {
+        // fix default amout
+        const int amnt = FixScale(GetClassFieldInt(C, "Amount"), perVal, oldVal);
+        if (maxVal < amnt) {
+          // sanitise max amount
+          SetClassFieldInt(C, "MaxAmount", amnt);
+          SetClassFieldInt(C, "BackpackMaxAmount", amnt*2);
+        }
+        SetClassFieldInt(C, "Amount", amnt);
+        SetClassFieldInt(C, "BackpackAmount", amnt);
+      }
+    } else if (Weapon && C->IsChildOf(Weapon)) {
+      // fix weapon "ammo give"
+      if (GetClassFieldClass(C, "AmmoType1") == Ammo) {
+        SetClassFieldInt(C, "AmmoGive1", FixScale(GetClassFieldInt(C, "AmmoGive1"), perVal, oldVal));
+        //GCon->Logf(NAME_Debug, "*** fixing ammo1 for weapon '%s' (ammo '%s')", C->GetName(), Ammo->GetName());
+      }
+      if (GetClassFieldClass(C, "AmmoType2") == Ammo) {
+        SetClassFieldInt(C, "AmmoGive2", FixScale(GetClassFieldInt(C, "AmmoGive2"), perVal, oldVal));
+        //GCon->Logf(NAME_Debug, "*** fixing ammo2 for weapon '%s' (ammo '%s')", C->GetName(), Ammo->GetName());
+      }
+    }
   }
 
+  /*
   // fix up amounts in weapon classes
   for (int i = 0; i < WeaponClasses.length(); ++i) {
     VClass *C = WeaponClasses[i];
     if (GetClassFieldClass(C, "AmmoType1") == Ammo) SetClassFieldInt(C, "AmmoGive1", GetClassFieldInt(Ammo, "Amount")*2);
     if (GetClassFieldClass(C, "AmmoType2") == Ammo) SetClassFieldInt(C, "AmmoGive2", GetClassFieldInt(Ammo, "Amount")*2);
   }
+  */
 }
 
 
