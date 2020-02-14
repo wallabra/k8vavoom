@@ -372,13 +372,13 @@ VStr VObject::PF_FormatString () {
             case TYPE_Float: pbuf.putFloat(params[pi].f); break;
             case TYPE_Name:
               {
-                VName n = *(VName*)&params[pi].i;
+                VName n = *(VName *)&params[pi].i;
                 if (n == NAME_None) pbuf.putStr(VStr("<none>"), width, toRight, zeroFill); else pbuf.putStr(VStr(*n), width, toRight, zeroFill, (fspec == 'q'));
               }
               break;
             case TYPE_String:
               pbuf.putStr(*(VStr *)&params[pi].p, width, toRight, zeroFill, (fspec == 'q'));
-              ((VStr*)&params[pi].p)->Clean();
+              ((VStr *)&params[pi].p)->Clean();
               break;
             case TYPE_Pointer: pbuf.putPtr(params[pi].p); break;
             case TYPE_Reference:

@@ -215,7 +215,7 @@ VClass::~VClass () {
     ClassVTable = nullptr;
   }
   if (Defaults) {
-    DestructObject((VObject*)Defaults);
+    DestructObject((VObject *)Defaults);
     delete[] Defaults;
     Defaults = nullptr;
   }
@@ -632,7 +632,7 @@ void VClass::Shutdown () {
     ClassVTable = nullptr;
   }
   if (Defaults) {
-    DestructObject((VObject*)Defaults);
+    DestructObject((VObject *)Defaults);
     delete[] Defaults;
     Defaults = nullptr;
   }

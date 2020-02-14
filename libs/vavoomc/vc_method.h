@@ -240,7 +240,7 @@ public:
 
   TLocation FindPCLocation (const vuint8 *pc);
 
-  friend inline VStream &operator << (VStream &Strm, VMethod *&Obj) { return Strm << *(VMemberBase**)&Obj; }
+  friend inline VStream &operator << (VStream &Strm, VMethod *&Obj) { return Strm << *(VMemberBase **)&Obj; }
 
   // this is public for VCC
   void OptimizeInstructions ();

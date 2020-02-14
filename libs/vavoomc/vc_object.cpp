@@ -1161,8 +1161,8 @@ public:
     while (Index < VMemberBase::GMembers.Num()) {
       VMemberBase *Check = VMemberBase::GMembers[Index];
       ++Index;
-      if (Check->MemberType == MEMBER_Class && ((VClass*)Check)->IsChildOf(BaseClass)) {
-        *Out = (VClass*)Check;
+      if (Check->MemberType == MEMBER_Class && ((VClass *)Check)->IsChildOf(BaseClass)) {
+        *Out = (VClass *)Check;
         return true;
       }
     }

@@ -46,14 +46,14 @@ public: \
 #define DECLARE_CLASS(TClass, TSuperClass, TStaticFlags) \
   DECLARE_BASE_CLASS(TClass, TSuperClass, TStaticFlags|CLASS_Native) \
   virtual ~TClass() { ConditionalDestroy(); } \
-  friend inline VStream &operator<<(VStream &Strm, TClass *&Obj) { return Strm << *(VObject**)&Obj; } \
+  friend inline VStream &operator<<(VStream &Strm, TClass *&Obj) { return Strm << *(VObject **)&Obj; } \
   static void InternalConstructor() { new TClass(); }
 
 // declare an abstract class
 #define DECLARE_ABSTRACT_CLASS(TClass, TSuperClass, TStaticFlags) \
   DECLARE_BASE_CLASS(TClass, TSuperClass, TStaticFlags|CLASS_Abstract) \
   virtual ~TClass() { ConditionalDestroy(); } \
-  friend inline VStream &operator<<(VStream &Strm, TClass *&Obj) { return Strm << *(VObject**)&Obj; }
+  friend inline VStream &operator<<(VStream &Strm, TClass *&Obj) { return Strm << *(VObject **)&Obj; }
 
 // register a class at startup time
 #define IMPLEMENT_CLASS(Pre, TClass) \
@@ -817,8 +817,8 @@ inline vuint32 GetTypeHash (const VObject *Obj) { return (Obj ? hashU32(Obj->Get
 #define P_GET_STR(v)     VStr v = VObject::PR_PopStr()
 #define P_GET_VEC(v)     TVec v = VObject::PR_Popv()
 #define P_GET_AVEC(v)    TAVec v = VObject::PR_Popav()
-#define P_GET_REF(c, v)  c *v = (c*)VObject::PR_PopPtr()
-#define P_GET_PTR(t, v)  t *v = (t*)VObject::PR_PopPtr()
+#define P_GET_REF(c, v)  c *v = (c *)VObject::PR_PopPtr()
+#define P_GET_PTR(t, v)  t *v = (t *)VObject::PR_PopPtr()
 #define P_GET_SELF       ThisClass *Self = (ThisClass *)VObject::PR_PopPtr()
 
 #define P_GET_INT_OPT(v, d)     bool specified_##v = !!VObject::PR_Pop(); vint32 v = VObject::PR_Pop(); if (!specified_##v) v = d

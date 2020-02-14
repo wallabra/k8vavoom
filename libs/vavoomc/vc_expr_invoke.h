@@ -158,7 +158,7 @@ class VCastOrInvocation : public VInvocationBase {
 public:
   VName Name;
 
-  VCastOrInvocation (VName, const TLocation&, int, VExpression**);
+  VCastOrInvocation (VName, const TLocation&, int, VExpression **);
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
   virtual VExpression *ResolveIterator (VEmitContext &) override;

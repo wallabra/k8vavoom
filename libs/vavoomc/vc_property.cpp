@@ -125,7 +125,7 @@ bool VProperty::Define () {
   }
 
   VProperty *BaseProp = nullptr;
-  if (((VClass *)Outer)->ParentClass) BaseProp = ((VClass*)Outer)->ParentClass->FindProperty(Name);
+  if (((VClass *)Outer)->ParentClass) BaseProp = ((VClass *)Outer)->ParentClass->FindProperty(Name);
   if (BaseProp) {
     if (VMemberBase::optDeprecatedLaxOverride || VMemberBase::koraxCompatibility) Flags |= PROP_Override; // force `override`
     if ((Flags&PROP_Override) == 0) ParseError(Loc, "Overriding virtual property `%s` without `override` keyword", *GetFullName());

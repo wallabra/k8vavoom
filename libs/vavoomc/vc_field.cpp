@@ -149,10 +149,10 @@ void VField::CopyFieldValue (const vuint8 *Src, vuint8 *Dst, const VFieldType &T
     case TYPE_Int: *(vint32 *)Dst = *(const vint32 *)Src; break;
     case TYPE_Byte: *(vuint8 *)Dst = *(const vuint8 *)Src; break;
     case TYPE_Bool:
-      if ((*(const vuint32*)Src)&Type.BitMask) {
-        *(vuint32*)Dst |= Type.BitMask;
+      if ((*(const vuint32 *)Src)&Type.BitMask) {
+        *(vuint32 *)Dst |= Type.BitMask;
       } else {
-        *(vuint32*)Dst &= ~Type.BitMask;
+        *(vuint32 *)Dst &= ~Type.BitMask;
       }
       break;
     case TYPE_Float: *(float *)Dst = *(const float *)Src; break;
@@ -435,8 +435,8 @@ void VField::SerialiseFieldValue (VStream &Strm, vuint8 *Data, const VFieldType 
         VName CName = NAME_None;
         VName SName = NAME_None;
         if (*(VState **)Data) {
-          CName = (*(VState**)Data)->Outer->GetVName();
-          SName = (*(VState**)Data)->Name;
+          CName = (*(VState **)Data)->Outer->GetVName();
+          SName = (*(VState **)Data)->Name;
         }
         Strm << CName << SName;
       }

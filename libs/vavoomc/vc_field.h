@@ -86,36 +86,35 @@ public:
   static bool NeedToCleanField (const VFieldType &);
   static bool IdenticalValue (const vuint8 *, const vuint8 *, const VFieldType &);
 
-  friend inline VStream & operator << (VStream &Strm, VField *&Obj) { return Strm << *(VMemberBase**)&Obj; }
+  friend inline VStream & operator << (VStream &Strm, VField *&Obj) { return Strm << *(VMemberBase **)&Obj; }
 
-  inline vuint8 *GetFieldPtr (VObject *Obj) const { return (vuint8*)Obj+Ofs; }
-  inline float GetFloat (const VObject *Obj) const { return *(float*)((vuint8*)Obj+Ofs); }
-  inline TVec GetVec (const VObject *Obj) const { return *(TVec*)((vuint8*)Obj+Ofs); }
-  inline bool GetBool (VObject *Obj) const { return !!(*(vuint32*)((vuint8*)Obj+Ofs)&Type.BitMask); }
-  inline vint32 GetInt (VObject *Obj) const { return *(vint32*)((vuint8*)Obj+Ofs); }
-  inline vuint8 GetByte (VObject *Obj) const { return *(vuint8*)((vuint8*)Obj+Ofs); }
-  inline VName GetNameValue (VObject *Obj) const { return *(VName*)((vuint8*)Obj+Ofs); }
-  inline VStr GetStr (VObject *Obj) const { return *(VStr*)((vuint8*)Obj+Ofs); }
-  inline VClass *GetClassValue (VObject *Obj) const { return *(VClass**)((vuint8*)Obj+Ofs); }
-  inline VObject *GetObjectValue (VObject *Obj) const { return *(VObject**)((vuint8*)Obj+Ofs); }
+  inline vuint8 *GetFieldPtr (VObject *Obj) const noexcept { return (vuint8 *)Obj+Ofs; }
 
-  inline void SetByte (VObject *Obj, vuint8 Value) const { *((vuint8*)Obj+Ofs) = Value; }
-  inline void SetInt (VObject *Obj, int Value) const { *(vint32*)((vuint8*)Obj+Ofs) = Value; }
-  inline void SetInt (VObject *Obj, int Value, int Idx) const { ((vint32*)((vuint8*)Obj+Ofs))[Idx] = Value; }
-  inline void SetFloat (VObject *Obj, float Value) const { *(float*)((vuint8*)Obj+Ofs) = Value; }
-  inline void SetFloat (VObject *Obj, float Value, int Idx) const { ((float*)((vuint8*)Obj+Ofs))[Idx] = Value; }
-  inline void SetNameValue (VObject *Obj, VName Value) const { *(VName*)((vuint8*)Obj+Ofs) = Value; }
-  inline void SetStr (VObject *Obj, VStr Value) const { *(VStr*)((vuint8*)Obj+Ofs) = Value; }
+  inline float GetFloat (const VObject *Obj) const noexcept { return *(const float *)((const vuint8 *)Obj+Ofs); }
+  inline TVec GetVec (const VObject *Obj) const noexcept { return *(const TVec *)((const vuint8 *)Obj+Ofs); }
+  inline bool GetBool (const VObject *Obj) const noexcept { return !!(*(const vuint32 *)((const vuint8 *)Obj+Ofs)&Type.BitMask); }
+  inline vint32 GetInt (const VObject *Obj) const noexcept { return *(const vint32 *)((const vuint8 *)Obj+Ofs); }
+  inline vuint8 GetByte (const VObject *Obj) const noexcept { return *(const vuint8 *)((const vuint8 *)Obj+Ofs); }
+  inline VName GetNameValue (const VObject *Obj) const noexcept { return *(const VName *)((const vuint8 *)Obj+Ofs); }
+  inline VStr GetStr (const VObject *Obj) const noexcept { return *(const VStr *)((const vuint8 *)Obj+Ofs); }
+  inline VClass *GetClassValue (const VObject *Obj) const noexcept { return *(VClass *const *)((const vuint8 *)Obj+Ofs); }
+  inline VObject *GetObjectValue (const VObject *Obj) const noexcept { return *(VObject *const *)((const vuint8 *)Obj+Ofs); }
 
-  inline void SetBool (VObject *Obj, int Value) const {
+  inline void SetByte (VObject *Obj, vuint8 Value) const noexcept { *((vuint8 *)Obj+Ofs) = Value; }
+  inline void SetInt (VObject *Obj, int Value) const noexcept { *(vint32 *)((vuint8 *)Obj+Ofs) = Value; }
+  inline void SetInt (VObject *Obj, int Value, int Idx) const noexcept { ((vint32 *)((vuint8 *)Obj+Ofs))[Idx] = Value; }
+  inline void SetFloat (VObject *Obj, float Value) const noexcept { *(float *)((vuint8 *)Obj+Ofs) = Value; }
+  inline void SetFloat (VObject *Obj, float Value, int Idx) const noexcept { ((float *)((vuint8 *)Obj+Ofs))[Idx] = Value; }
+  inline void SetNameValue (VObject *Obj, VName Value) const noexcept { *(VName *)((vuint8 *)Obj+Ofs) = Value; }
+  inline void SetStr (VObject *Obj, VStr Value) const noexcept { *(VStr *)((vuint8 *)Obj+Ofs) = Value; }
+  inline void SetBool (VObject *Obj, int Value) const noexcept {
     if (Value) {
-      *(vuint32*)((vuint8*)Obj+Ofs) |= Type.BitMask;
+      *(vuint32 *)((vuint8 *)Obj+Ofs) |= Type.BitMask;
     } else {
-      *(vuint32*)((vuint8*)Obj+Ofs) &= ~Type.BitMask;
+      *(vuint32 *)((vuint8 *)Obj+Ofs) &= ~Type.BitMask;
     }
   }
-
-  inline void SetVec (VObject *Obj, const TVec &Value) const { *(TVec*)((vuint8*)Obj+Ofs) = Value; }
-  inline void SetClassValue (VObject *Obj, VClass *Value) const { *(VClass**)((vuint8*)Obj+Ofs) = Value; }
-  inline void SetObjectValue (VObject *Obj, VObject *Value) const { *(VObject**)((vuint8*)Obj+Ofs) = Value; }
+  inline void SetVec (VObject *Obj, const TVec &Value) const noexcept { *(TVec *)((vuint8 *)Obj+Ofs) = Value; }
+  inline void SetClassValue (VObject *Obj, VClass *Value) const noexcept { *(VClass **)((vuint8 *)Obj+Ofs) = Value; }
+  inline void SetObjectValue (VObject *Obj, VObject *Value) const noexcept { *(VObject **)((vuint8 *)Obj+Ofs) = Value; }
 };

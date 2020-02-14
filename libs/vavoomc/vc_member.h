@@ -29,7 +29,7 @@ class VExpression;
 class VStatement;
 class VLexer;
 
-#define ANY_PACKAGE  ((VPackage*)-1)
+#define ANY_PACKAGE  ((VPackage *)-1)
 #define ANY_MEMBER   (255)
 
 
