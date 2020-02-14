@@ -174,6 +174,11 @@ void GiveSigilPiece (EntityEx Receiver) {
       Player.SetViewObject(Wpn);
       Player.SetViewState(PS_WEAPON, Wpn.FindState('Ready5'));
       break;
+    default:
+      printwarn("A_SelectSigilReady: INVALID NUMBER OF SIGIL PIECES (%s)!", Sigil(Wpn).NumPieces);
+      Player.SetViewObject(Wpn);
+      Player.SetViewState(PS_WEAPON, Wpn.FindState('Ready1'));
+      break;
   }
 }
 
@@ -214,6 +219,11 @@ void GiveSigilPiece (EntityEx Receiver) {
       Player.SetViewObject(Wpn);
       Player.SetViewState(PS_WEAPON, Wpn.FindState('Deselect5'));
       break;
+    default:
+      printwarn("A_SelectSigilDown: INVALID NUMBER OF SIGIL PIECES (%s)!", Sigil(Wpn).NumPieces);
+      Player.SetViewObject(Wpn);
+      Player.SetViewState(PS_WEAPON, Wpn.FindState('Deselect1'));
+      break;
   }
 }
 
@@ -250,6 +260,11 @@ void GiveSigilPiece (EntityEx Receiver) {
       Player.SetViewObject(Wpn);
       Player.SetViewState(PS_WEAPON, Wpn.FindState('Select5'));
       break;
+    default:
+      printwarn("A_SelectSigilUp: INVALID NUMBER OF SIGIL PIECES (%s)!", Sigil(Wpn).NumPieces);
+      Player.SetViewObject(Wpn);
+      Player.SetViewState(PS_WEAPON, Wpn.FindState('Select1'));
+      break;
   }
 }
 
@@ -285,6 +300,11 @@ void GiveSigilPiece (EntityEx Receiver) {
     case 5:
       Player.SetViewObject(Wpn);
       Player.SetViewState(PS_WEAPON, Wpn.FindState('Fire5'));
+      break;
+    default:
+      printwarn("A_SelectSigilAttack: INVALID NUMBER OF SIGIL PIECES (%s)!", Sigil(Wpn).NumPieces);
+      Player.SetViewObject(Wpn);
+      Player.SetViewState(PS_WEAPON, Wpn.FindState('Fire1'));
       break;
   }
 }

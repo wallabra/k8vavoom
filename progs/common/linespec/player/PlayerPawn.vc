@@ -273,6 +273,22 @@ protected final bool HasWeaponInAnySlot (class!Weapon wpn) {
 
 //==========================================================================
 //
+//  FindSigilSlotNumber
+//
+//==========================================================================
+protected final int FindSigilSlotNumber () {
+  foreach (auto sidx; 0..GetNumberOfSlots()) {
+    foreach (auto widx; 0..GetSlotSize(sidx)) {
+      class!Weapon swc = GetWeaponInSlot(sidx, widx);
+      if (GetClassName(swc) == 'Sigil') return sidx;
+    }
+  }
+  return -1;
+}
+
+
+//==========================================================================
+//
 //  DumpWeaponSlots
 //
 //==========================================================================
@@ -411,8 +427,10 @@ void InitializeWeaponSlots () {
   {
     class!Weapon wcls;
     foreach AllClasses(Weapon, wcls) {
+      //if (debugDump) printdebug(":::000: %C", wcls);
       class!Weapon repl = class!Weapon(GetClassReplacement(wcls));
       if (repl && repl != wcls) continue; // this weapon is replaced with another one, don't bother
+      //if (debugDump) printdebug(":::001: %C; defsnum=%s", wcls, wcls.default.SlotNumber);
       // check for keyconf seal
       if (wclassInKeyconf.find(GetClassName(wcls))) {
         if (debugDump) printdebug("*** %C: this weapon is sealed by keyconf", wcls);
@@ -454,37 +472,52 @@ void InitializeWeaponSlots () {
           }
         }
       }
+      //if (debugDump) printdebug(":::002: %C; snum=%s", wcls, snum);
       // check found slot number
       if (snum < 0 || snum >= actualWeaponSlots.length) {
-        // skip Strife Sigils
-        if (!HasWeaponInAnySlot(wcls) && (wcls !isa 'Sigil')) {
-          // skip known  weapons
-          name cname = GetClassName(wcls);
-          bool doreport = GetCvarB('dbg_report_orphan_weapons');
-          /*
-          if (doreport) {
-            switch (cname) {
-              case 'Chainsaw':
-              case 'Shotgun':
-              case 'SuperShotgun':
-              case 'Chaingun':
-              case 'RocketLauncher':
-              case 'PlasmaRifle':
-              case 'BFG9000':
-              case 'FWeapAxe':
-              case 'FWeapHammer':
-              case 'StrifeGrenadeLauncher':
-              case 'StrifeGrenadeLauncher2':
-                doreport = false;
-                break;
+        if (!HasWeaponInAnySlot(wcls)) {
+          // special handling for Strife Sigils
+          if (wcls isa 'Sigil') {
+            if (GetClassName(wcls) != 'Sigil') {
+              // find base Sigil slot number
+              int sgnum = FindSigilSlotNumber();
+              if (sgnum >= 0 && sgnum < actualWeaponSlots.length) {
+                if (debugDump) printdebug(":::%C: added to sigil slot %d", wcls, sgnum);
+                needSlotSorting[sgnum] = true;
+                actualWeaponSlots[sgnum].weapons[$] = wcls;
+              }
+            } else {
+              if (debugDump) printdebug(":::%C: skipped base Sigil", wcls);
             }
+          } else {
+            // skip known  weapons
+            name cname = GetClassName(wcls);
+            bool doreport = GetCvarB('dbg_report_orphan_weapons');
+            /*
+            if (doreport) {
+              switch (cname) {
+                case 'Chainsaw':
+                case 'Shotgun':
+                case 'SuperShotgun':
+                case 'Chaingun':
+                case 'RocketLauncher':
+                case 'PlasmaRifle':
+                case 'BFG9000':
+                case 'FWeapAxe':
+                case 'FWeapHammer':
+                case 'StrifeGrenadeLauncher':
+                case 'StrifeGrenadeLauncher2':
+                  doreport = false;
+                  break;
+              }
+            }
+            */
+            if (doreport) {
+              printwarn("weapon `%C` has no defined slot (put into slot 11): %s", wcls, GetClassLocationStr(wcls));
+            }
+            needSlotSorting[10] = true;
+            actualWeaponSlots[10].weapons[$] = wcls;
           }
-          */
-          if (doreport) {
-            printwarn("weapon `%C` has no defined slot (put into slot 11): %s", wcls, GetClassLocationStr(wcls));
-          }
-          needSlotSorting[10] = true;
-          actualWeaponSlots[10].weapons[$] = wcls;
         }
         continue;
       }
