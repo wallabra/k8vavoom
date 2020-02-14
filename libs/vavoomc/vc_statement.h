@@ -239,8 +239,8 @@ public:
   VForeach (VExpression *AExpr, VStatement *AStatement, const TLocation &ALoc);
   virtual ~VForeach () override;
   virtual VStatement *SyntaxCopy () override;
-  virtual bool Resolve (VEmitContext&) override;
-  virtual void DoEmit (VEmitContext&) override;
+  virtual bool Resolve (VEmitContext &) override;
+  virtual void DoEmit (VEmitContext &) override;
   virtual void EmitFinalizer (VEmitContext &ec) override;
   virtual bool IsEndsWithReturn () const override;
   virtual bool IsProperCaseEnd (bool skipBreak) const override;
@@ -443,8 +443,8 @@ public:
   VSwitchCase (VSwitch *ASwitch, VExpression *AExpr, const TLocation &ALoc);
   virtual ~VSwitchCase () override;
   virtual VStatement *SyntaxCopy () override;
-  virtual bool Resolve (VEmitContext&) override;
-  virtual void DoEmit (VEmitContext&) override;
+  virtual bool Resolve (VEmitContext &) override;
+  virtual void DoEmit (VEmitContext &) override;
   virtual bool IsSwitchCase () const override;
 
 protected:

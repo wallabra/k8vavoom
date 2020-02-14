@@ -49,7 +49,7 @@ public:
   VExpression *op2;
 
 public:
-  VAssignment (EAssignOper, VExpression*, VExpression*, const TLocation&);
+  VAssignment (EAssignOper, VExpression *, VExpression *, const TLocation &);
   virtual ~VAssignment () override;
   virtual VExpression *SyntaxCopy () override;
   virtual VExpression *DoResolve (VEmitContext &) override;
