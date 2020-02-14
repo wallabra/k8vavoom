@@ -1470,6 +1470,7 @@ static bool CanBeSpriteName (VScriptParser *sc, bool asGoto=false) {
   }
   auto sp = sc->SavePos();
   if (sc->Check(":") || sc->Check("::")) { sc->RestorePos(sp); return false; }
+  if (sc->Check("{") || sc->Check("}")) { sc->RestorePos(sp); return false; }
   if (!sc->GetString()) { sc->RestorePos(sp); return false; }
   // check for valid frame names
   for (int f = 0; f < sc->String.length(); ++f) {
