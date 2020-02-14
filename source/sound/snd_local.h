@@ -225,7 +225,7 @@ public:
   void UpdateChannel3D (int Handle, const TVec &Org, const TVec &Vel);
   bool IsChannelPlaying (int Handle);
   void StopChannel (int Handle);
-  void UpdateListener (const TVec &org, const TVec &vel, const TVec &fwd, const TVec&, const TVec &up
+  void UpdateListener (const TVec &org, const TVec &vel, const TVec &fwd, const TVec &, const TVec &up
 #if defined(VAVOOM_REVERB)
                       , VReverbInfo *Env
 #endif

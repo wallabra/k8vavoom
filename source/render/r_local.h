@@ -550,13 +550,13 @@ protected:
   virtual void InitSurfs (bool recalcStaticLightmaps, surface_t *ASurfs, texinfo_t *texinfo, const TPlane *plane, subsector_t *sub) = 0;
   virtual surface_t *SubdivideFace (surface_t *InF, const TVec &axis, const TVec *nextaxis) = 0;
   virtual surface_t *SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis, seg_t *seg) = 0;
-  virtual void QueueWorldSurface (surface_t*) = 0;
+  virtual void QueueWorldSurface (surface_t *) = 0;
   virtual void FreeSurfCache (surfcache_t *&block);
-  virtual bool CacheSurface (surface_t*);
+  virtual bool CacheSurface (surface_t *);
   // this is called after surface queues built, so lightmap renderer can calculate new lightmaps
   virtual void ProcessCachedSurfaces ();
 
-  void PrepareWorldRender (const refdef_t*, const VViewClipper*);
+  void PrepareWorldRender (const refdef_t *, const VViewClipper *);
   // this should be called after `RenderWorld()`
   void BuildVisibleObjectsList ();
 
@@ -564,10 +564,10 @@ protected:
   void ExecuteSetViewSize ();
   void TransformFrustum ();
   void SetupFrame ();
-  void SetupCameraFrame (VEntity*, VTexture*, int, refdef_t*);
+  void SetupCameraFrame (VEntity *, VTexture *, int, refdef_t *);
   void MarkLeaves ();
   bool UpdateCameraTexture (VEntity *Camera, int TexNum, int FOV); // returns `true` if camera texture was updated
-  vuint32 GetFade (sec_region_t*);
+  vuint32 GetFade (sec_region_t *);
   int CollectSpriteTextures (TArray<bool> &texturepresent); // this is actually private, but meh... returns number of new textures
   void UncacheLevel ();
   VTextureTranslation *GetTranslation (int);
@@ -623,7 +623,7 @@ protected:
   void RenderSubRegion (subsector_t *sub, subregion_t *region);
   void RenderSubsector (int num, bool onlyClip);
   void RenderBSPNode (int bspnum, const float *bbox, unsigned AClipflags, bool onlyClip=false);
-  void RenderBspWorld (const refdef_t*, const VViewClipper*);
+  void RenderBspWorld (const refdef_t *, const VViewClipper *);
   void RenderPortals ();
 
   void CreateWorldSurfFromWV (subsector_t *sub, seg_t *seg, segpart_t *sp, TVec wv[4], vuint32 typeFlags, bool doOffset=false);
@@ -652,25 +652,25 @@ protected:
   int CountSegParts (const seg_t *);
   void CreateSegParts (subsector_t *r_surf_sub, drawseg_t *dseg, seg_t *seg, TSecPlaneRef r_floor, TSecPlaneRef r_ceiling, sec_region_t *curreg, bool isMainRegion);
   void CreateWorldSurfaces ();
-  bool CopyPlaneIfValid (sec_plane_t*, const sec_plane_t*, const sec_plane_t*);
-  void UpdateFakeFlats (sector_t*);
-  void UpdateDeepWater (sector_t*);
+  bool CopyPlaneIfValid (sec_plane_t *, const sec_plane_t *, const sec_plane_t *);
+  void UpdateFakeFlats (sector_t *);
+  void UpdateDeepWater (sector_t *);
   void UpdateFloodBug (sector_t *sec);
   // free all surfaces except the first one, clear first, set number of vertices to vcount
   surface_t *ReallocSurface (surface_t *surfs, int vcount);
-  void FreeSurfaces (surface_t*);
-  void FreeSegParts (segpart_t*);
+  void FreeSurfaces (surface_t *);
+  void FreeSegParts (segpart_t *);
 
   // models
-  bool DrawAliasModel (VEntity *mobj, const TVec&, const TAVec&, float, float, VModel*,
+  bool DrawAliasModel (VEntity *mobj, const TVec &, const TAVec &, float, float, VModel *,
     const VAliasModelFrameInfo &Frame, const VAliasModelFrameInfo &NextFrame,
-    VTextureTranslation*, int, vuint32, vuint32, float, bool,
+    VTextureTranslation *, int, vuint32, vuint32, float, bool,
     bool, float, bool, ERenderPass);
-  bool DrawAliasModel (VEntity *mobj, VName clsName, const TVec&, const TAVec&, float, float,
+  bool DrawAliasModel (VEntity *mobj, VName clsName, const TVec &, const TAVec &, float, float,
     const VAliasModelFrameInfo &Frame, const VAliasModelFrameInfo &NextFrame,
-    VTextureTranslation*, int, vuint32, vuint32, float, bool,
+    VTextureTranslation *, int, vuint32, vuint32, float, bool,
     bool, float, bool, ERenderPass);
-  bool DrawEntityModel (VEntity*, vuint32, vuint32, float, bool, float, ERenderPass);
+  bool DrawEntityModel (VEntity *, vuint32, vuint32, float, bool, float, ERenderPass);
   bool CheckAliasModelFrame (VEntity *Ent, float Inter);
   bool HasEntityAliasModel (VEntity *Ent) const;
   static bool IsAliasModelAllowedFor (VEntity *Ent);
@@ -685,12 +685,12 @@ protected:
                              int hangup=0);
   void QueueSprite (VEntity *thing, vuint32 light, vuint32 Fade, float Alpha, bool Additive, vuint32 seclight, bool onlyShadow=false);
   void QueueTranslucentAliasModel (VEntity *mobj, vuint32 light, vuint32 Fade, float Alpha, bool Additive, float TimeFrac);
-  bool RenderAliasModel (VEntity*, vuint32, vuint32, float, bool, ERenderPass);
-  void RenderThing (VEntity*, ERenderPass);
+  bool RenderAliasModel (VEntity *, vuint32, vuint32, float, bool, ERenderPass);
+  void RenderThing (VEntity *, ERenderPass);
   void RenderMobjs (ERenderPass);
   void DrawTranslucentPolys ();
-  void RenderPSprite (VViewState*, const VAliasModelFrameInfo &, float, vuint32, vuint32, float, bool);
-  bool RenderViewModel (VViewState*, vuint32, vuint32, float, bool);
+  void RenderPSprite (VViewState *, const VAliasModelFrameInfo &, float, vuint32, vuint32, float, bool);
+  bool RenderViewModel (VViewState *, vuint32, vuint32, float, bool);
   void DrawPlayerSprites ();
   void DrawCrosshair ();
 
@@ -930,12 +930,12 @@ protected:
   // lightmap cache manager
   void FlushCaches ();
   virtual void FreeSurfCache (surfcache_t *&block) override;
-  virtual bool CacheSurface (surface_t*) override;
+  virtual bool CacheSurface (surface_t *) override;
   virtual void ProcessCachedSurfaces () override;
 
   // world BSP rendering
-  virtual void QueueWorldSurface (surface_t*) override;
-  void RenderWorld (const refdef_t*, const VViewClipper*);
+  virtual void QueueWorldSurface (surface_t *) override;
+  void RenderWorld (const refdef_t *, const VViewClipper *);
 
   void RelightMap (bool recalcNow, bool onlyMarked);
 
@@ -945,7 +945,7 @@ public:
   void LightFace (surface_t *surf, subsector_t *leaf);
 
 public:
-  VRenderLevelLightmap (VLevel*);
+  VRenderLevelLightmap (VLevel *);
 
   virtual void PreRender () override;
 
@@ -979,7 +979,7 @@ protected:
   virtual void RefilterStaticLights () override;
 
   // general
-  virtual void RenderScene (const refdef_t*, const VViewClipper*) override;
+  virtual void RenderScene (const refdef_t *, const VViewClipper *) override;
 
   // surf methods
   virtual void InitSurfs (bool recalcStaticLightmaps, surface_t *ASurfs, texinfo_t *texinfo, const TPlane *plane, subsector_t *sub) override;
@@ -993,8 +993,8 @@ protected:
   vuint32 LightPointAmbient (const TVec &p, float radius, const subsector_t *psub=nullptr);
 
   // world BSP rendering
-  virtual void QueueWorldSurface (surface_t*) override;
-  void RenderWorld (const refdef_t*, const VViewClipper*);
+  virtual void QueueWorldSurface (surface_t *) override;
+  void RenderWorld (const refdef_t *, const VViewClipper *);
 
   void AddPolyObjToLightClipper (VViewClipper &clip, subsector_t *sub, bool asShadow);
 

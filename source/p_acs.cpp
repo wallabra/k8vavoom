@@ -818,7 +818,7 @@ void VAcsObject::LoadOldObject () {
   Strings = new char*[NumStrings];
   LowerCaseNames = new VName[NumStrings];
   for (i = 0; i < NumStrings; ++i) {
-    Strings[i] = (char*)Data+LittleLong(buffer[i]);
+    Strings[i] = (char *)Data+LittleLong(buffer[i]);
     LowerCaseNames[i] = NAME_None;
   }
 
@@ -905,8 +905,8 @@ void VAcsObject::LoadEnhancedObject () {
 
       for (i = 0, info = Scripts; i < NumScripts; ++i, ++info) {
         info->Number = LittleUShort(*(vuint16 *)buffer);
-        info->Type = ((vuint8*)buffer)[2];
-        info->ArgCount = ((vuint8*)buffer)[3];
+        info->Type = ((vuint8 *)buffer)[2];
+        info->ArgCount = ((vuint8 *)buffer)[3];
         ++buffer;
         info->Address = OffsetToPtr(LittleLong(*buffer++));
         info->Flags = 0;
@@ -1011,7 +1011,7 @@ void VAcsObject::LoadEnhancedObject () {
     for (i = 0; i < numvars; ++i) {
       MapVarStore[firstvar+i] = LittleLong(buffer[3+i]);
     }
-    buffer = (vint32 *)NextChunk((vuint8*)buffer);
+    buffer = (vint32 *)NextChunk((vuint8 *)buffer);
   }
 
   // create arrays
@@ -1050,7 +1050,7 @@ void VAcsObject::LoadEnhancedObject () {
       for (i = 0; i < initsize; ++i) elems[i] = LittleLong(buffer[3+i]);
 #endif
     }
-    buffer = (vint32 *)NextChunk((vuint8*)buffer);
+    buffer = (vint32 *)NextChunk((vuint8 *)buffer);
   }
 
   // start setting up array pointers
@@ -1103,7 +1103,7 @@ void VAcsObject::LoadEnhancedObject () {
     // [BL] Newer version of ASTR for structure aware compilers although we only have one array per chunk
     vuint32 *chunk = (vuint32 *)FindChunk("ATAG");
     while (chunk != nullptr) {
-      const uint8_t* chunkData = (const uint8_t*)(chunk+2);
+      const uint8_t* chunkData = (const uint8_t *)(chunk+2);
       // first byte is version, it should be 0
       if (*chunkData++ == 0) {
         int arraynum = MapVarStore[LittleLong(*(vint32 *)(chunkData))];
@@ -1165,7 +1165,7 @@ void VAcsObject::LoadEnhancedObject () {
         VAcsFunction *func = &Functions[j];
         if (func->Address != 0 || func->ImportNum != 0) continue;
 
-        int libfunc = lib->FindFunctionName((char*)(buffer+2)+LittleLong(buffer[3+j]));
+        int libfunc = lib->FindFunctionName((char *)(buffer+2)+LittleLong(buffer[3+j]));
         if (libfunc < 0) continue;
 
         VAcsFunction *realfunc = &lib->Functions[libfunc];
@@ -1193,7 +1193,7 @@ void VAcsObject::LoadEnhancedObject () {
       // resolve map variables
       buffer = (vint32 *)FindChunk("MIMP");
       if (buffer) {
-        parse = (char*)&buffer[2];
+        parse = (char *)&buffer[2];
         for (j = 0; j < LittleLong(buffer[1]); ++j) {
           int varNum = LittleLong(*(vint32 *)&parse[j]);
           j += 4;
@@ -1208,7 +1208,7 @@ void VAcsObject::LoadEnhancedObject () {
       // resolve arrays
       if (NumTotalArrays > NumArrays) {
         buffer = (vint32 *)FindChunk("AIMP");
-        parse = (char*)&buffer[3];
+        parse = (char *)&buffer[3];
         for (j = 0; j < LittleLong(buffer[2]); ++j) {
           int varNum = LittleLong(*(vint32 *)parse);
           parse += 4;
@@ -1307,7 +1307,7 @@ void VAcsObject::UnencryptStrings () {
   while (chunk) {
     for (int strnum = 0; strnum < LittleLong(chunk[3]); ++strnum) {
       int ofs = LittleLong(chunk[5+strnum]);
-      vuint8 *data = (vuint8*)chunk+ofs+8;
+      vuint8 *data = (vuint8 *)chunk+ofs+8;
       vuint8 last;
       int p = (vuint8)(ofs*157135);
       int i = 0;
@@ -1316,8 +1316,8 @@ void VAcsObject::UnencryptStrings () {
         ++i;
       } while (last != 0);
     }
-    prevchunk = (vuint8*)chunk;
-    chunk = (vuint32*)NextChunk((vuint8*)chunk);
+    prevchunk = (vuint8 *)chunk;
+    chunk = (vuint32 *)NextChunk((vuint8 *)chunk);
     prevchunk[3] = 'L';
   }
   if (prevchunk) prevchunk[3] = 'L';
@@ -1365,7 +1365,7 @@ int VAcsObject::FindStringInChunk (vuint8 *Chunk, const char *Name) const {
   if (Chunk) {
     int count = LittleLong(((vint32 *)Chunk)[2]);
     for (int i = 0; i < count; ++i) {
-      if (VStr::strEquCI(Name, (char*)(Chunk+8)+LittleLong(((vint32 *)Chunk)[3+i]))) {
+      if (VStr::strEquCI(Name, (char *)(Chunk+8)+LittleLong(((vint32 *)Chunk)[3+i]))) {
         return i;
       }
     }

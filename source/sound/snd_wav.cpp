@@ -51,7 +51,7 @@ struct FWavFormatDesc
 class VWaveSampleLoader : public VSampleLoader
 {
 public:
-  virtual void Load(sfxinfo_t&, VStream&) override;
+  virtual void Load(sfxinfo_t &, VStream &) override;
 };
 
 class VWavAudioCodec : public VAudioCodec
@@ -291,7 +291,7 @@ int VWavAudioCodec::Decode(short *Data, int NumSamples)
         }
       } else {
         for (int j = 0; j < ReadSamples; j++, pSrc += BlockAlign, pDst += 2) {
-          *pDst = LittleShort(*(short*)pSrc);
+          *pDst = LittleShort(*(int16_t *)pSrc);
         }
       }
     }

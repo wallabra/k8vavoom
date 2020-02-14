@@ -145,10 +145,10 @@ bool VOpenALDevice::Init () {
     GCon->Logf(NAME_Init, "AL_VERSION: %s", alGetString(AL_VERSION));
     GCon->Log(NAME_Init, "AL_EXTENSIONS:");
     TArray<VStr> Exts;
-    VStr((char*)alGetString(AL_EXTENSIONS)).Split(' ', Exts);
+    VStr((char *)alGetString(AL_EXTENSIONS)).Split(' ', Exts);
     for (int i = 0; i < Exts.Num(); i++) GCon->Log(NAME_Init, VStr("- ")+Exts[i]);
     GCon->Log(NAME_Init, "ALC_EXTENSIONS:");
-    VStr((char*)alcGetString(Device, ALC_EXTENSIONS)).Split(' ', Exts);
+    VStr((char *)alcGetString(Device, ALC_EXTENSIONS)).Split(' ', Exts);
     for (int i = 0; i < Exts.Num(); i++) GCon->Log(NAME_Init, VStr("- ")+Exts[i]);
   }
 
@@ -524,7 +524,7 @@ void VOpenALDevice::StopChannel (int Handle) {
 //
 //==========================================================================
 void VOpenALDevice::UpdateListener (const TVec &org, const TVec &vel,
-                                    const TVec &fwd, const TVec&, const TVec &up
+                                    const TVec &fwd, const TVec &, const TVec &up
 #if defined(VAVOOM_REVERB)
                                     , VReverbInfo *Env
 #endif

@@ -896,7 +896,7 @@ int VDatagramSocket::GetMessage (TArray<vuint8> &Data) {
 
   for (;;) {
     // read message
-    length = LanDriver->Read(LanSocket, (vuint8*)&packetBuffer, NET_DATAGRAMSIZE, &readaddr);
+    length = LanDriver->Read(LanSocket, (vuint8 *)&packetBuffer, NET_DATAGRAMSIZE, &readaddr);
 
     if (length == 0) break;
 

@@ -530,7 +530,7 @@ void VTexture::AdjustGamma (rgba_t *data, int size) {
 //  non-premultiplied
 //
 //==========================================================================
-#define CHKPIX(ofs) (l1[(ofs)*4+MSB] == 255 ? (( ((vuint32*)l1)[0] = ((vuint32*)l1)[ofs]&SOME_MASK), trans = true ) : false)
+#define CHKPIX(ofs) (l1[(ofs)*4+MSB] == 255 ? (( ((vuint32 *)l1)[0] = ((vuint32 *)l1)[ofs]&SOME_MASK), trans = true ) : false)
 
 void VTexture::SmoothEdges (vuint8 *buffer, int w, int h) {
   int x, y;

@@ -239,10 +239,10 @@ void VLoopbackDriver::Shutdown () {
 //==========================================================================
 VLoopbackSocket::~VLoopbackSocket () {
   if (OtherSock) OtherSock->OtherSock = nullptr;
-  if (this == ((VLoopbackDriver*)Driver)->loop_client) {
-    ((VLoopbackDriver*)Driver)->loop_client = nullptr;
+  if (this == ((VLoopbackDriver *)Driver)->loop_client) {
+    ((VLoopbackDriver *)Driver)->loop_client = nullptr;
   } else {
-    ((VLoopbackDriver*)Driver)->loop_server = nullptr;
+    ((VLoopbackDriver *)Driver)->loop_server = nullptr;
   }
 }
 

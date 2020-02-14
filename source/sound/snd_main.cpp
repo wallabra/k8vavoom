@@ -1271,7 +1271,7 @@ VSoundSeqNode::~VSoundSeqNode () {
     if (StopSound >= 1) ((VAudio *)GAudio)->PlaySound(StopSound, Origin, TVec(0, 0, 0), OriginId, 1, Volume, Attenuation, false);
 
     // remove from the list of active sound sequences
-    if (((VAudio*)GAudio)->SequenceListHead == this) ((VAudio *)GAudio)->SequenceListHead = Next;
+    if (((VAudio *)GAudio)->SequenceListHead == this) ((VAudio *)GAudio)->SequenceListHead = Next;
     if (Prev) Prev->Next = Next;
     if (Next) Next->Prev = Prev;
 
@@ -1446,7 +1446,7 @@ void VSoundSeqNode::Serialise (VStream &Strm) {
     Strm << STRM_INDEX(ParentSeqIdx) << STRM_INDEX(ChildSeqIdx);
     if (ParentSeqIdx != -1 || ChildSeqIdx != -1) {
       int i = 0;
-      for (VSoundSeqNode *n = ((VAudio*)GAudio)->SequenceListHead; n; n = n->Next, ++i) {
+      for (VSoundSeqNode *n = ((VAudio *)GAudio)->SequenceListHead; n; n = n->Next, ++i) {
         if (ParentSeqIdx == i) ParentSeq = n;
         if (ChildSeqIdx == i) ChildSeq = n;
       }
@@ -1463,7 +1463,7 @@ void VSoundSeqNode::Serialise (VStream &Strm) {
     vint32 ChildSeqIdx = -1;
     if (ParentSeq || ChildSeq) {
       int i = 0;
-      for (VSoundSeqNode *n = ((VAudio*)GAudio)->SequenceListHead; n; n = n->Next, ++i) {
+      for (VSoundSeqNode *n = ((VAudio *)GAudio)->SequenceListHead; n; n = n->Next, ++i) {
         if (ParentSeq == n) ParentSeqIdx = i;
         if (ChildSeq == n) ChildSeqIdx = i;
       }

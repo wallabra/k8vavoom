@@ -236,7 +236,7 @@ BOOL VMikModAudioCodec::Drv_Reset()
 
 BOOL VMikModAudioCodec::ArchiveReader_Seek(MREADER *rd, long offset, int whence)
 {
-  VStream *Strm = ((FMikModArchiveReader*)rd)->Strm;
+  VStream *Strm = ((FMikModArchiveReader *)rd)->Strm;
   int NewPos = 0;
   switch (whence)
   {
@@ -266,7 +266,7 @@ BOOL VMikModAudioCodec::ArchiveReader_Seek(MREADER *rd, long offset, int whence)
 
 long VMikModAudioCodec::ArchiveReader_Tell(MREADER *rd)
 {
-  VStream *Strm = ((FMikModArchiveReader*)rd)->Strm;
+  VStream *Strm = ((FMikModArchiveReader *)rd)->Strm;
   return Strm->Tell();
 }
 
@@ -278,10 +278,10 @@ long VMikModAudioCodec::ArchiveReader_Tell(MREADER *rd)
 
 BOOL VMikModAudioCodec::ArchiveReader_Read(MREADER *rd, void *dest, size_t length)
 {
-  VStream *Strm = ((FMikModArchiveReader*)rd)->Strm;
+  VStream *Strm = ((FMikModArchiveReader *)rd)->Strm;
   if (Strm->Tell() + (int)length > Strm->TotalSize())
   {
-    ((FMikModArchiveReader*)rd)->AtEof = true;
+    ((FMikModArchiveReader *)rd)->AtEof = true;
     return false;
   }
   Strm->Serialise(dest, length);
@@ -296,10 +296,10 @@ BOOL VMikModAudioCodec::ArchiveReader_Read(MREADER *rd, void *dest, size_t lengt
 
 int VMikModAudioCodec::ArchiveReader_Get(MREADER *rd)
 {
-  VStream *Strm = ((FMikModArchiveReader*)rd)->Strm;
+  VStream *Strm = ((FMikModArchiveReader *)rd)->Strm;
   if (Strm->AtEnd())
   {
-    ((FMikModArchiveReader*)rd)->AtEof = true;
+    ((FMikModArchiveReader *)rd)->AtEof = true;
     return EOF;
   }
   else
@@ -318,7 +318,7 @@ int VMikModAudioCodec::ArchiveReader_Get(MREADER *rd)
 
 BOOL VMikModAudioCodec::ArchiveReader_Eof(MREADER *rd)
 {
-  return ((FMikModArchiveReader*)rd)->AtEof;
+  return ((FMikModArchiveReader *)rd)->AtEof;
 }
 
 //==========================================================================

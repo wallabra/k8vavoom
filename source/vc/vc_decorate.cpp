@@ -861,7 +861,7 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
 //==========================================================================
 static float GetClassFieldFloat (VClass *Class, VName FieldName) {
   VField *F = Class->FindFieldChecked(FieldName);
-  return F->GetFloat((VObject*)Class->Defaults);
+  return F->GetFloat((VObject *)Class->Defaults);
 }
 
 
@@ -872,7 +872,7 @@ static float GetClassFieldFloat (VClass *Class, VName FieldName) {
 //==========================================================================
 static VVA_OKUNUSED TVec GetClassFieldVec (VClass *Class, VName FieldName) {
   VField *F = Class->FindFieldChecked(FieldName);
-  return F->GetVec((VObject*)Class->Defaults);
+  return F->GetVec((VObject *)Class->Defaults);
 }
 
 
@@ -883,7 +883,7 @@ static VVA_OKUNUSED TVec GetClassFieldVec (VClass *Class, VName FieldName) {
 //==========================================================================
 static TArray<VDropItemInfo> &GetClassDropItems (VClass *Class) {
   VField *F = Class->FindFieldChecked("DropItemList");
-  return *(TArray<VDropItemInfo>*)F->GetFieldPtr((VObject*)Class->Defaults);
+  return *(TArray<VDropItemInfo>*)F->GetFieldPtr((VObject *)Class->Defaults);
 }
 
 
@@ -905,7 +905,7 @@ static TArray<VDamageFactor> &GetClassDamageFactors (VClass *Class) {
 //==========================================================================
 static TArray<VPainChanceInfo> &GetClassPainChances (VClass *Class) {
   VField *F = Class->FindFieldChecked("PainChances");
-  return *(TArray<VPainChanceInfo>*)F->GetFieldPtr((VObject*)Class->Defaults);
+  return *(TArray<VPainChanceInfo>*)F->GetFieldPtr((VObject *)Class->Defaults);
 }
 
 
@@ -916,7 +916,7 @@ static TArray<VPainChanceInfo> &GetClassPainChances (VClass *Class) {
 //==========================================================================
 static void SetClassFieldInt (VClass *Class, VName FieldName, int Value, int Idx=0) {
   VField *F = Class->FindFieldChecked(FieldName);
-  F->SetInt((VObject*)Class->Defaults, Value, Idx);
+  F->SetInt((VObject *)Class->Defaults, Value, Idx);
 }
 
 
@@ -927,7 +927,7 @@ static void SetClassFieldInt (VClass *Class, VName FieldName, int Value, int Idx
 //==========================================================================
 static void SetClassFieldByte (VClass *Class, VName FieldName, vuint8 Value) {
   VField *F = Class->FindFieldChecked(FieldName);
-  F->SetByte((VObject*)Class->Defaults, Value);
+  F->SetByte((VObject *)Class->Defaults, Value);
 }
 
 
@@ -938,7 +938,7 @@ static void SetClassFieldByte (VClass *Class, VName FieldName, vuint8 Value) {
 //==========================================================================
 static void SetClassFieldFloat (VClass *Class, VName FieldName, float Value, int Idx=0) {
   VField *F = Class->FindFieldChecked(FieldName);
-  F->SetFloat((VObject*)Class->Defaults, Value, Idx);
+  F->SetFloat((VObject *)Class->Defaults, Value, Idx);
 }
 
 
@@ -949,7 +949,7 @@ static void SetClassFieldFloat (VClass *Class, VName FieldName, float Value, int
 //==========================================================================
 static void SetClassFieldBool (VClass *Class, VName FieldName, int Value) {
   VField *F = Class->FindFieldChecked(FieldName);
-  F->SetBool((VObject*)Class->Defaults, Value);
+  F->SetBool((VObject *)Class->Defaults, Value);
 }
 
 
@@ -960,7 +960,7 @@ static void SetClassFieldBool (VClass *Class, VName FieldName, int Value) {
 //==========================================================================
 static void SetClassFieldName (VClass *Class, VName FieldName, VName Value) {
   VField *F = Class->FindFieldChecked(FieldName);
-  F->SetNameValue((VObject*)Class->Defaults, Value);
+  F->SetNameValue((VObject *)Class->Defaults, Value);
 }
 
 
@@ -971,7 +971,7 @@ static void SetClassFieldName (VClass *Class, VName FieldName, VName Value) {
 //==========================================================================
 static void SetClassFieldStr (VClass *Class, VName FieldName, VStr Value) {
   VField *F = Class->FindFieldChecked(FieldName);
-  F->SetStr((VObject*)Class->Defaults, Value);
+  F->SetStr((VObject *)Class->Defaults, Value);
 }
 
 
@@ -982,7 +982,7 @@ static void SetClassFieldStr (VClass *Class, VName FieldName, VStr Value) {
 //==========================================================================
 static VVA_OKUNUSED void SetClassFieldVec (VClass *Class, VName FieldName, const TVec &Value) {
   VField *F = Class->FindFieldChecked(FieldName);
-  F->SetVec((VObject*)Class->Defaults, Value);
+  F->SetVec((VObject *)Class->Defaults, Value);
 }
 
 
@@ -2211,7 +2211,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
   int SpawnNum = -1;
   TArray<VState *> States;
   bool DropItemsDefined = false;
-  VObject *DefObj = (VObject*)Class->Defaults;
+  VObject *DefObj = (VObject *)Class->Defaults;
 
   if (sc->CheckNumber()) {
     if (sc->Number < -1 || sc->Number > 32767) sc->Error("DoomEdNum is out of range [-1, 32767]");
@@ -3817,7 +3817,7 @@ void ProcessDecorateScripts () {
 
   VField *DropItemListField = ActorClass->FindFieldChecked("DropItemList");
   for (int i = 0; i < DecPkg->ParsedClasses.Num(); ++i) {
-    TArray<VDropItemInfo> &List = *(TArray<VDropItemInfo>*)DropItemListField->GetFieldPtr((VObject*)DecPkg->ParsedClasses[i]->Defaults);
+    TArray<VDropItemInfo> &List = *(TArray<VDropItemInfo>*)DropItemListField->GetFieldPtr((VObject *)DecPkg->ParsedClasses[i]->Defaults);
     for (auto &&DI : List) {
       //VDropItemInfo &DI = List[j];
       if (DI.TypeName == NAME_None) { DI.Type = nullptr; continue; }

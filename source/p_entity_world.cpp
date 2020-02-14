@@ -2422,7 +2422,7 @@ IMPLEMENT_FUNCTION(VEntity, CanShoot) {
 
 IMPLEMENT_FUNCTION(VEntity, RoughBlockSearch) {
   P_GET_INT(Distance);
-  P_GET_PTR(VEntity*, EntPtr);
+  P_GET_PTR(VEntity *, EntPtr);
   P_GET_SELF;
   RET_PTR(new VRoughBlockSearchIterator(Self, Distance, EntPtr));
 }

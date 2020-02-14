@@ -478,7 +478,7 @@ void CL_ParseServerInfo (const ClientServerInfo *sinfo) {
   CL_LoadLevel(MapName);
   GClLevel->NetContext = ClientNetContext;
 
-  ((VLevelChannel*)cl->Net->Channels[CHANIDX_Level])->SetLevel(GClLevel);
+  ((VLevelChannel *)cl->Net->Channels[CHANIDX_Level])->SetLevel(GClLevel);
 
   R_Start(GClLevel);
   GAudio->Start();

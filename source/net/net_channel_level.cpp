@@ -579,7 +579,7 @@ void VLevelChannel::Update () {
     Msg.SetMark();
     Msg.WriteInt(CMD_CamTex/*, CMD_MAX*/);
     Msg.WriteInt(i/*, 0xff*/);
-    Connection->ObjMap->SerialiseObject(Msg, *(VObject**)&CamEnt);
+    Connection->ObjMap->SerialiseObject(Msg, *(VObject **)&CamEnt);
     Msg.WriteInt(Cam.TexNum/*, 0xffff*/);
     Msg.WriteInt(Cam.FOV/*, 360*/);
     if (Msg.NeedSplit()) Msg.SendSplitMessage();

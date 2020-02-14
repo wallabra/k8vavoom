@@ -146,12 +146,12 @@ void VOpenGLDrawer::DeleteTexture (VTexture *Tex) {
   if (!Tex) return;
   glBindTexture(GL_TEXTURE_2D, 0);
   if (Tex->DriverHandle) {
-    glDeleteTextures(1, (GLuint*)&Tex->DriverHandle);
+    glDeleteTextures(1, (GLuint *)&Tex->DriverHandle);
     Tex->DriverHandle = 0;
   }
   for (int j = 0; j < Tex->DriverTranslated.length(); ++j) {
     if (Tex->DriverTranslated[j].Handle) {
-      glDeleteTextures(1, (GLuint*)&Tex->DriverTranslated[j].Handle);
+      glDeleteTextures(1, (GLuint *)&Tex->DriverTranslated[j].Handle);
     }
   }
   Tex->DriverTranslated.Clear();

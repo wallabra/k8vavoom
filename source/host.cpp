@@ -474,7 +474,7 @@ static bool FilterTime () {
 static void Host_UpdateLanguage () {
   if (!Language.IsModified()) return;
 
-  VStr NewLang = VStr((const char*)Language).ToLower();
+  VStr NewLang = VStr((const char *)Language).ToLower();
   if (NewLang.Length() != 2 && NewLang.Length() != 3) {
     GCon->Log("Language identifier must be 2 or 3 characters long");
     Language = CurrentLanguage;

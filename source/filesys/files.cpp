@@ -1079,7 +1079,7 @@ static void wpkAppend (VStr fname, bool asystem) {
 
 // ////////////////////////////////////////////////////////////////////////// //
 VVA_OKUNUSED static int cmpfuncCI (const void *v1, const void *v2) {
-  return ((VStr*)v1)->ICmp((*(VStr*)v2));
+  return ((VStr *)v1)->ICmp((*(VStr *)v2));
 }
 
 VVA_OKUNUSED static int cmpfuncCINoExt (const void *v1, const void *v2) {

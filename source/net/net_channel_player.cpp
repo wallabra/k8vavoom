@@ -114,7 +114,7 @@ void VPlayerChannel::Update () {
 
   VMessageOut Msg(this);
   Msg.bReliable = true;
-  vuint8 *Data = (vuint8*)Plr;
+  vuint8 *Data = (vuint8 *)Plr;
   for (VField *F = Plr->GetClass()->NetFields; F; F = F->NextNetField) {
     if (!FieldCondValues[F->NetIndex]) continue;
     if (VField::IdenticalValue(Data+F->Ofs, OldData+F->Ofs, F->Type)) continue;

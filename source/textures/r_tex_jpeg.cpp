@@ -165,7 +165,7 @@ static void my_init_source (j_decompress_ptr cinfo) {
 //
 //==========================================================================
 static boolean my_fill_input_buffer (j_decompress_ptr cinfo) {
-  VJpegClientData *cdata = (VJpegClientData*)cinfo->client_data;
+  VJpegClientData *cdata = (VJpegClientData *)cinfo->client_data;
   if (cdata->Strm->AtEnd()) {
     // insert a fake EOI marker
     cdata->Buffer[0] = 0xff;
@@ -197,7 +197,7 @@ static void my_skip_input_data (j_decompress_ptr cinfo, long num_bytes) {
     cinfo->src->bytes_in_buffer -= num_bytes;
     cinfo->src->next_input_byte += num_bytes;
   } else {
-    VJpegClientData *cdata = (VJpegClientData*)cinfo->client_data;
+    VJpegClientData *cdata = (VJpegClientData *)cinfo->client_data;
     int Pos = cdata->Strm->Tell()+num_bytes-cinfo->src->bytes_in_buffer;
     if (Pos > cdata->Strm->TotalSize()) Pos = cdata->Strm->TotalSize();
     cdata->Strm->Seek(Pos);
@@ -476,7 +476,7 @@ vuint8 *VJpegTexture::GetPixels () {
 //
 //==========================================================================
 static void my_init_destination (j_compress_ptr cinfo) {
-  VJpegClientData *cdata = (VJpegClientData*)cinfo->client_data;
+  VJpegClientData *cdata = (VJpegClientData *)cinfo->client_data;
   cinfo->dest->next_output_byte = cdata->Buffer;
   cinfo->dest->free_in_buffer = 4096;
 }
@@ -488,7 +488,7 @@ static void my_init_destination (j_compress_ptr cinfo) {
 //
 //==========================================================================
 static boolean my_empty_output_buffer (j_compress_ptr cinfo) {
-  VJpegClientData *cdata = (VJpegClientData*)cinfo->client_data;
+  VJpegClientData *cdata = (VJpegClientData *)cinfo->client_data;
   cdata->Strm->Serialise(cdata->Buffer, 4096);
   cinfo->dest->next_output_byte = cdata->Buffer;
   cinfo->dest->free_in_buffer = 4096;
@@ -502,7 +502,7 @@ static boolean my_empty_output_buffer (j_compress_ptr cinfo) {
 //
 //==========================================================================
 static void my_term_destination (j_compress_ptr cinfo) {
-  VJpegClientData *cdata = (VJpegClientData*)cinfo->client_data;
+  VJpegClientData *cdata = (VJpegClientData *)cinfo->client_data;
   cdata->Strm->Serialise(cdata->Buffer, 4096-cinfo->dest->free_in_buffer);
 }
 

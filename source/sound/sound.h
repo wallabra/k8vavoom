@@ -177,10 +177,10 @@ private:
   FPlayerSound &GetOrAddPlayerSound (int PClass, int Gender, int RefId);
   int ResolveSound (int ClassID, int GenderID, int InSoundId);
 
-  void ParseSequenceScript(VScriptParser*);
-  void AssignSeqTranslations(VScriptParser*, int, seqtype_t);
+  void ParseSequenceScript(VScriptParser *);
+  void AssignSeqTranslations(VScriptParser *, int, seqtype_t);
 
-  void ParseReverbs(VScriptParser*);
+  void ParseReverbs(VScriptParser *);
 };
 
 //
@@ -196,7 +196,7 @@ public:
   virtual void Shutdown () = 0;
 
   // playback of sound effects
-  virtual void PlaySound (int, const TVec&, const TVec&, int, int, float, float, bool) = 0;
+  virtual void PlaySound (int, const TVec &, const TVec &, int, int, float, float, bool) = 0;
   virtual void StopSound (int, int) = 0;
   virtual void StopAllSound () = 0;
   virtual bool IsSoundPlaying (int, int) = 0;

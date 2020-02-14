@@ -194,7 +194,7 @@ void VThinkerChannel::Update () {
       }
     } else {
       // if it's an object reference that cannot be serialised, send it as nullptr reference
-      if (F->Type.Type == TYPE_Reference && !Connection->ObjMap->CanSerialiseObject(*(VObject**)FieldValue)) {
+      if (F->Type.Type == TYPE_Reference && !Connection->ObjMap->CanSerialiseObject(*(VObject **)FieldValue)) {
         if (!*(VObject **)(OldData+F->Ofs)) continue; // already sent as nullptr
         FieldValue = (vuint8 *)&NullObj;
       }

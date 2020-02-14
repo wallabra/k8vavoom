@@ -62,7 +62,7 @@ class VThinkButton : public VThinker {
   vint32 tbversion; // v1 stores more data
   VTextureID SwitchDefTexture;
 
-  virtual void SerialiseOther (VStream&) override;
+  virtual void SerialiseOther (VStream &) override;
   virtual void Tick (float) override;
   bool AdvanceFrame ();
 };

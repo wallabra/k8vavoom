@@ -233,14 +233,14 @@ public:
   }
 
   //  VObject interface
-  virtual bool ExecuteNetMethod(VMethod*) override;
+  virtual bool ExecuteNetMethod(VMethod *) override;
 
   void SpawnClient();
 
-  void Printf(const char*, ...) __attribute__((format(printf,2,3)));
-  void CentrePrintf(const char*, ...) __attribute__((format(printf,2,3)));
+  void Printf(const char *, ...) __attribute__((format(printf,2,3)));
+  void CentrePrintf(const char *, ...) __attribute__((format(printf,2,3)));
 
-  void SetViewState(int, VState*);
+  void SetViewState(int, VState *);
   void AdvanceViewStates(float);
 
   void SetUserInfo(VStr);
@@ -251,7 +251,7 @@ public:
   void StopPitchDrift();
   void AdjustAngles();
   void HandleInput();
-  bool Responder(event_t*);
+  bool Responder(event_t *);
   void ClearInput();
   int AcsGetInput(int);
 

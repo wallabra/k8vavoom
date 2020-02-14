@@ -1581,7 +1581,7 @@ void VLevel::LoadVertexes (int Lump, int GLLump, int &NumBaseVerts) {
     // read header of the GL vertexes lump and determinte GL vertex format
     char Magic[4];
     W_ReadFromLump(GLLump, Magic, 0, 4);
-    GlFormat = !VStr::NCmp((char*)Magic, GL_V2_MAGIC, 4) ? 2 : !VStr::NCmp((char*)Magic, GL_V5_MAGIC, 4) ? 5 : 1;
+    GlFormat = !VStr::NCmp((char *)Magic, GL_V2_MAGIC, 4) ? 2 : !VStr::NCmp((char *)Magic, GL_V5_MAGIC, 4) ? 5 : 1;
     if (GlFormat ==  5) LevelFlags |= LF_GLNodesV5;
   }
 
@@ -2675,7 +2675,7 @@ void VLevel::LoadBlockMap (int Lump) {
   // clear out mobj chains
   int Count = BlockMapWidth * BlockMapHeight;
   BlockLinks = new VEntity*[Count];
-  memset(BlockLinks, 0, sizeof(VEntity*) * Count);
+  memset(BlockLinks, 0, sizeof(VEntity *)*Count);
   */
 }
 

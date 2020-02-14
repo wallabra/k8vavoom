@@ -62,7 +62,7 @@ void VRenderLevelShadowVolume::InitSurfs (bool recalcStaticLightmaps, surface_t 
 //  VRenderLevelShadowVolume::SubdivideFace
 //
 //==========================================================================
-surface_t *VRenderLevelShadowVolume::SubdivideFace (surface_t *f, const TVec&, const TVec *) {
+surface_t *VRenderLevelShadowVolume::SubdivideFace (surface_t *f, const TVec &, const TVec *) {
   // advanced renderer can draw whole surface
   return f;
 }

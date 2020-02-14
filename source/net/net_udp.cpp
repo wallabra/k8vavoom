@@ -73,7 +73,7 @@ public:
   virtual int CloseSocket (int) override;
   virtual int Connect (int, sockaddr_t *) override;
   virtual int CheckNewConnections () override;
-  virtual int Read (int, vuint8 *, int, sockaddr_t*) override;
+  virtual int Read (int, vuint8 *, int, sockaddr_t *) override;
   virtual int Write (int, const vuint8 *, int, sockaddr_t *) override;
   virtual int Broadcast (int, const vuint8 *, int) override;
   virtual bool CanBroadcast () override;
@@ -544,7 +544,7 @@ int VUdpDriver::GetSocketAddr (int socket, sockaddr_t *addr) {
 //
 //==========================================================================
 VStr VUdpDriver::GetNameFromAddr (sockaddr_t *addr) {
-  hostent *hostentry = gethostbyaddr((char*)&((sockaddr_in*)addr)->sin_addr, sizeof(struct in_addr), AF_INET);
+  hostent *hostentry = gethostbyaddr((char *)&((sockaddr_in *)addr)->sin_addr, sizeof(struct in_addr), AF_INET);
   if (hostentry) return (char *)hostentry->h_name;
   return AddrToString(addr);
 }
@@ -615,7 +615,7 @@ int VUdpDriver::GetAddrFromName (const char *name, sockaddr_t *addr, int Default
 
   addr->sa_family = AF_INET;
   ((sockaddr_in *)addr)->sin_port = htons(DefaultPort);
-  ((sockaddr_in *)addr)->sin_addr.s_addr = *(int*)hostentry->h_addr_list[0];
+  ((sockaddr_in *)addr)->sin_addr.s_addr = *(int *)hostentry->h_addr_list[0];
 
   return 0;
 }

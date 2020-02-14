@@ -672,7 +672,7 @@ public:
   VL_ITERATOR(Nodes, allNodes, node_t)
   VL_ITERATOR(Things, allThings, mthing_t)
   VL_ITERATOR(Zones, allZones, vint32)
-  VL_ITERATOR(PolyObjs, allPolyObjs, polyobj_t*)
+  VL_ITERATOR(PolyObjs, allPolyObjs, polyobj_t *)
   VL_ITERATOR(PolyAnchorPoints, allPolyAnchorPoints, PolyAnchorPoint_t)
   VL_ITERATOR(GenericSpeeches, allGenericSpeeches, FRogueConSpeech)
   VL_ITERATOR(LevelSpeeches, allLevelSpeeches, FRogueConSpeech)
@@ -715,7 +715,7 @@ public:
   VL_ITERATOR_INDEX(Nodes, allNodesIdx, node_t)
   VL_ITERATOR_INDEX(Things, allThingsIdx, mthing_t)
   VL_ITERATOR_INDEX(Zones, allZonesIdx, vint32)
-  VL_ITERATOR_INDEX(PolyObjs, allPolyObjsIdx, polyobj_t*)
+  VL_ITERATOR_INDEX(PolyObjs, allPolyObjsIdx, polyobj_t *)
   VL_ITERATOR_INDEX(PolyAnchorPoints, allPolyAnchorPointsIdx, PolyAnchorPoint_t)
   VL_ITERATOR_INDEX(GenericSpeeches, allGenericSpeechesIdx, FRogueConSpeech)
   VL_ITERATOR_INDEX(LevelSpeeches, allLevelSpeechesIdx, FRogueConSpeech)
@@ -756,11 +756,11 @@ public:
 
 private:
   // map loaders
-  void LoadVertexes (int, int, int&);
+  void LoadVertexes (int, int, int &);
   void LoadSectors (int);
   void LoadSideDefs (int);
-  void LoadLineDefs1 (int, int, const mapInfo_t&);
-  void LoadLineDefs2 (int, int, const mapInfo_t&);
+  void LoadLineDefs1 (int, int, const mapInfo_t &);
+  void LoadLineDefs2 (int, int, const mapInfo_t &);
   void LoadGLSegs (int, int);
   void LoadSubsectors (int);
   void LoadNodes (int);

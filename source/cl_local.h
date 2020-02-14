@@ -195,7 +195,7 @@ void CL_ParseServerInfo (const ClientServerInfo *sinfo);
 void CL_ReadFromServerInfo ();
 void CL_StopRecording ();
 
-void R_DrawModelFrame (const TVec&, float, VModel*, int, int, const char*, int, int, int, float);
+void R_DrawModelFrame (const TVec &, float, VModel *, int, int, const char *, int, int, int, float);
 
 VModel *Mod_FindName (VStr);
 

@@ -124,7 +124,7 @@ private:
 
   VWidget *GetWidgetAt (float, float);
 
-  bool TransferAndClipRect (float&, float&, float&, float&, float&, float&, float&, float&) const;
+  bool TransferAndClipRect (float &, float &, float &, float &, float &, float &, float &, float &) const;
   void DrawString (int, int, VStr, int, int, float);
 
   void cleanupWidgets ();

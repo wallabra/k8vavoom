@@ -81,7 +81,7 @@ private:
   rgba_t *Palette;
 
 public:
-  VFontChar (VTexture*, rgba_t*);
+  VFontChar (VTexture *, rgba_t *);
   virtual ~VFontChar () override;
   virtual vuint8 *GetPixels () override;
   virtual rgba_t *GetPalette () override;

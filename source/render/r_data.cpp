@@ -130,7 +130,7 @@ static void SetClassFieldBool (VClass *Class, const char *FieldName, int Value) 
 static void SetClassFieldFloat (VClass *Class, const char *FieldName, float Value) {
   VField *F = Class->FindFieldChecked(FieldName);
   vassert(F->Type.Type == TYPE_Float);
-  float *Ptr = (float*)(Class->Defaults+F->Ofs);
+  float *Ptr = (float *)(Class->Defaults+F->Ofs);
   *Ptr = Value;
 }
 
@@ -143,7 +143,7 @@ static void SetClassFieldFloat (VClass *Class, const char *FieldName, float Valu
 static void SetClassFieldVec (VClass *Class, const char *FieldName, const TVec &Value) {
   VField *F = Class->FindFieldChecked(FieldName);
   vassert(F->Type.Type == TYPE_Vector);
-  TVec *Ptr = (TVec*)(Class->Defaults+F->Ofs);
+  TVec *Ptr = (TVec *)(Class->Defaults+F->Ofs);
   *Ptr = Value;
 }
 
@@ -583,7 +583,7 @@ void R_InstallSprite (const char *name, int index) {
 
   // scan all the lump names for each of the names, noting the highest frame letter
   // just compare 4 characters as ints
-  //int intname = *(int*)*VName(spritename, VName::AddLower8);
+  //int intname = *(int *)*VName(spritename, VName::AddLower8);
   const char *intname = *VName(spritename, VName::AddLower8);
   if (!intname[0] || !intname[1] || !intname[2] || !intname[3]) {
     GCon->Logf(NAME_Warning, "trying to install sprite with invalid name '%s'", intname);
@@ -688,7 +688,7 @@ void R_InstallSprite (const char *name, int index) {
 
   // allocate space for the frames present and copy sprtemp to it
   sprites[index].numframes = maxframe;
-  sprites[index].spriteframes = (spriteframe_t*)Z_Malloc(maxframe*sizeof(spriteframe_t));
+  sprites[index].spriteframes = (spriteframe_t *)Z_Malloc(maxframe*sizeof(spriteframe_t));
   memcpy(sprites[index].spriteframes, sprtemp, maxframe*sizeof(spriteframe_t));
 }
 

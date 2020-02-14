@@ -149,7 +149,7 @@ vuint8 *VWarpTexture::GetPixels () {
     }
   } else {
     if (!Pixels) Pixels = new vuint8[Width*Height*4];
-    vuint32 *Dst = (vuint32*)Pixels;
+    vuint32 *Dst = (vuint32 *)Pixels;
     for (int y = 0; y < Height; ++y) {
       for (int x = 0; x < Width; ++x, ++Dst) {
         *Dst = ((vuint32 *)SrcPixels)[(((int)YSin1[y]+x)%Width)+(((int)XSin1[x]+y)%Height)*Width];
@@ -254,11 +254,11 @@ vuint8 *VWarp2Texture::GetPixels () {
     }
   } else {
     if (!Pixels) Pixels = new vuint8[Width*Height*4];
-    vuint32 *dest = (vuint32*)Pixels;
+    vuint32 *dest = (vuint32 *)Pixels;
     for (int y = 0; y < Height; ++y) {
       for (int x = 0; x < Width; ++x) {
         int Idx = ((int)(XSin1[y]+XSin2[x])%Width)*4+((int)(YSin1[y]+YSin2[x])%Height)*Width*4;
-        *dest++ = *(vuint32*)(SrcPixels+Idx);
+        *dest++ = *(vuint32 *)(SrcPixels+Idx);
       }
     }
   }

@@ -225,7 +225,7 @@ bool VNetObjectsMap::SerialiseState (VStream &Strm, VState *&State) {
     }
   } else {
     if (State) {
-      vuint32 *ClassId = ClassMap.Find((VClass*)State->Outer);
+      vuint32 *ClassId = ClassMap.Find((VClass *)State->Outer);
       vuint32 StateId = State->NetId;
       vensure(ClassId);
       Strm.SerialiseInt(*ClassId/*, ClassLookup.Num()*/);

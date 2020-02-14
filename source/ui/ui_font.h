@@ -80,7 +80,7 @@ public:
 
   inline VName GetFontName () const noexcept { return Name; }
 
-  VTexture *GetChar (int, int*, int) const;
+  VTexture *GetChar (int, int *, int) const;
   int GetCharWidth (int) const;
   int StringWidth (VStr) const;
   int TextWidth (VStr) const;
