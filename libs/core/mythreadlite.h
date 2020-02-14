@@ -108,8 +108,7 @@ static __attribute__((unused)) inline void mythread_sigmask (int how, const sigs
 #endif
 }
 
-// Creates a new thread with all signals blocked. Returns zero on success
-// and non-zero on error.
+// Creates a new thread with all signals blocked. Returns zero on success and non-zero on error.
 static __attribute__((unused)) inline int mythread_create (mythread *thread, void *(*func) (void *arg), void *arg) VC_MYTHREAD_NOEXCEPT {
   sigset_t old;
   sigset_t all;
@@ -121,8 +120,14 @@ static __attribute__((unused)) inline int mythread_create (mythread *thread, voi
 }
 
 // Joins a thread. Returns zero on success and non-zero on error.
+// This also closes thread handle.
 static __attribute__((unused)) inline int mythread_join (mythread thread) VC_MYTHREAD_NOEXCEPT {
   return pthread_join(thread, nullptr);
+}
+
+// Detaches a thread, and closes thread handle. Returns zero on success and non-zero on error.
+static __attribute__((unused)) inline int mythread_detach (mythread thread) VC_MYTHREAD_NOEXCEPT {
+  return pthread_detach(thread);
 }
 
 // Initiatlizes a mutex. Returns zero on success and non-zero on error.
@@ -131,31 +136,19 @@ static __attribute__((unused)) inline int mythread_mutex_init (mythread_mutex *m
 }
 
 static __attribute__((unused)) inline void mythread_mutex_destroy (mythread_mutex *mutex) VC_MYTHREAD_NOEXCEPT {
-  /*int ret =*/ pthread_mutex_destroy(mutex);
-  /*
-  assert(ret == 0);
-  (void)ret;
-  */
+  if (pthread_mutex_destroy(mutex) != 0) abort();
 }
 
 static __attribute__((unused)) inline void mythread_mutex_lock (mythread_mutex *mutex) VC_MYTHREAD_NOEXCEPT {
-  /*int ret =*/ pthread_mutex_lock(mutex);
-  /*
-  assert(ret == 0);
-  (void)ret;
-  */
+  if (pthread_mutex_lock(mutex) != 0) abort();
 }
 
 static __attribute__((unused)) inline void mythread_mutex_unlock (mythread_mutex *mutex) VC_MYTHREAD_NOEXCEPT {
-  /*int ret =*/ pthread_mutex_unlock(mutex);
-  /*
-  assert(ret == 0);
-  (void)ret;
-  */
+  if (pthread_mutex_unlock(mutex) != 0) abort();
 }
 
 
-// Initializes a condition variable.
+// Initializes a condition variable. Returns zero on success and non-zero on error.
 //
 // Using CLOCK_MONOTONIC instead of the default CLOCK_REALTIME makes the
 // timeout in pthread_cond_timedwait() work correctly also if system time
@@ -189,38 +182,23 @@ static __attribute__((unused)) inline int mythread_cond_init (mythread_cond *myc
 }
 
 static __attribute__((unused)) inline void mythread_cond_destroy (mythread_cond *cond) VC_MYTHREAD_NOEXCEPT {
-  /*int ret =*/ pthread_cond_destroy(&cond->cond);
-  /*
-  assert(ret == 0);
-  (void)ret;
-  */
+  if (pthread_cond_destroy(&cond->cond) != 0) abort();
 }
 
 
 static __attribute__((unused)) inline void mythread_cond_signal (mythread_cond *cond) VC_MYTHREAD_NOEXCEPT {
-  /*int ret =*/ pthread_cond_signal(&cond->cond);
-  /*
-  assert(ret == 0);
-  (void)ret;
-  */
+  if (pthread_cond_signal(&cond->cond) != 0) abort();
 }
 
 static __attribute__((unused)) inline void mythread_cond_wait (mythread_cond *cond, mythread_mutex *mutex) VC_MYTHREAD_NOEXCEPT {
-  /*int ret =*/ pthread_cond_wait(&cond->cond, mutex);
-  /*
-  assert(ret == 0);
-  (void)ret;
-  */
+  if (pthread_cond_wait(&cond->cond, mutex) != 0) abort();
 }
 
 // Waits on a condition or until a timeout expires. If the timeout expires,
 // non-zero is returned, otherwise zero is returned.
 static __attribute__((unused)) inline int mythread_cond_timedwait (mythread_cond *cond, mythread_mutex *mutex, const mythread_condtime *condtime) VC_MYTHREAD_NOEXCEPT {
-  /*int ret =*/ return pthread_cond_timedwait(&cond->cond, mutex, condtime);
-  /*
-  assert(ret == 0 || ret == ETIMEDOUT);
-  return ret;
-  */
+  return pthread_cond_timedwait(&cond->cond, mutex, condtime);
+  //assert(ret == 0 || ret == ETIMEDOUT);
 }
 
 // Sets condtime to the absolute time that is timeout_ms milliseconds
@@ -230,11 +208,7 @@ static __attribute__((unused)) inline void mythread_condtime_set (mythread_condt
   condtime->tv_nsec = (timeout_ms%1000)*1000000;
 
   struct timespec now;
-  /*int ret =*/ clock_gettime(cond->clk_id, &now);
-  /*
-  assert(ret == 0);
-  (void)ret;
-  */
+  if (clock_gettime(cond->clk_id, &now) != 0) abort();
 
   condtime->tv_sec += now.tv_sec;
   condtime->tv_nsec += now.tv_nsec;
@@ -282,53 +256,47 @@ typedef struct timespec mythread_condtime;
 
 // Use pthread_sigmask() to set the signal mask in multi-threaded programs.
 // Do nothing on OpenVMS or Switch since they lack pthread_sigmask().
+#if 0
 static __attribute__((unused)) inline void mythread_sigmask (int how, const sigset_t * /*restrict*/ set, sigset_t * /*restrict*/ oset) VC_MYTHREAD_NOEXCEPT {
-
 }
+#endif
 
-// Creates a new thread with all signals blocked. Returns zero on success
-// and non-zero on error.
+// Creates a new thread with all signals blocked. Returns zero on success and non-zero on error.
 static __attribute__((unused)) inline int mythread_create (mythread *thread, int (*func) (void *arg), void *arg) VC_MYTHREAD_NOEXCEPT {
-  const int ret = thrd_create(thread, func, arg) != thrd_success;
-  return ret;
+  return (thrd_create(thread, func, arg) != thrd_success);
 }
 
 // Joins a thread. Returns zero on success and non-zero on error.
+// This also closes thread handle.
 static __attribute__((unused)) inline int mythread_join (mythread thread) VC_MYTHREAD_NOEXCEPT {
-  return thrd_join(thread, nullptr) != thrd_success;
+  return (thrd_join(thread, nullptr) != thrd_success);
 }
+
+// Detaches a thread, and closes thread handle. Returns zero on success and non-zero on error.
+static __attribute__((unused)) inline int mythread_detach (mythread thread) VC_MYTHREAD_NOEXCEPT {
+  return (thrd_detach(thread) != thrd_success);
+}
+
 
 // Initiatlizes a mutex. Returns zero on success and non-zero on error.
 static __attribute__((unused)) inline int mythread_mutex_init (mythread_mutex *mutex) VC_MYTHREAD_NOEXCEPT {
-  return mtx_init(mutex, mtx_plain) != thrd_success;
+  return (mtx_init(mutex, mtx_plain) != thrd_success);
 }
 
 static __attribute__((unused)) inline void mythread_mutex_destroy (mythread_mutex *mutex) VC_MYTHREAD_NOEXCEPT {
-  /*int ret =*/ mtx_destroy(mutex);
-  /*
-  assert(ret == 0);
-  (void)ret;
-  */
+  mtx_destroy(mutex);
 }
 
 static __attribute__((unused)) inline void mythread_mutex_lock (mythread_mutex *mutex) VC_MYTHREAD_NOEXCEPT {
-  /*int ret =*/ mtx_lock(mutex);
-  /*
-  assert(ret == 0);
-  (void)ret;
-  */
+  if (mtx_lock(mutex) != thrd_success) abort();
 }
 
 static __attribute__((unused)) inline void mythread_mutex_unlock (mythread_mutex *mutex) VC_MYTHREAD_NOEXCEPT {
-  /*int ret =*/ mtx_unlock(mutex);
-  /*
-  assert(ret == 0);
-  (void)ret;
-  */
+  if (mtx_unlock(mutex) != thrd_success) abort();
 }
 
 
-// Initializes a condition variable.
+// Initializes a condition variable. Returns zero on success and non-zero on error.
 //
 // Using CLOCK_MONOTONIC instead of the default CLOCK_REALTIME makes the
 // timeout in pthread_cond_timedwait() work correctly also if system time
@@ -342,42 +310,25 @@ static __attribute__((unused)) inline int mythread_cond_init (mythread_cond *myc
   // POSIX requires that all implementations of clock_gettime() must
   // support at least CLOCK_REALTIME.
   mycond->clk_id = CLOCK_REALTIME;
-  return cnd_init(&mycond->cond) != thrd_success;
+  return (cnd_init(&mycond->cond) != thrd_success);
 }
 
 static __attribute__((unused)) inline void mythread_cond_destroy (mythread_cond *cond) VC_MYTHREAD_NOEXCEPT {
-  /*int ret =*/ cnd_destroy(&cond->cond);
-  /*
-  assert(ret == 0);
-  (void)ret;
-  */
+  cnd_destroy(&cond->cond);
 }
 
-
 static __attribute__((unused)) inline void mythread_cond_signal (mythread_cond *cond) VC_MYTHREAD_NOEXCEPT {
-  /*int ret =*/ cnd_signal(&cond->cond);
-  /*
-  assert(ret == 0);
-  (void)ret;
-  */
+  if (cnd_signal(&cond->cond) != thrd_success) abort();
 }
 
 static __attribute__((unused)) inline void mythread_cond_wait (mythread_cond *cond, mythread_mutex *mutex) VC_MYTHREAD_NOEXCEPT {
-  /*int ret =*/ cnd_wait(&cond->cond, mutex);
-  /*
-  assert(ret == 0);
-  (void)ret;
-  */
+  if (cnd_wait(&cond->cond, mutex) != thrd_success) abort();
 }
 
 // Waits on a condition or until a timeout expires. If the timeout expires,
 // non-zero is returned, otherwise zero is returned.
 static __attribute__((unused)) inline int mythread_cond_timedwait (mythread_cond *cond, mythread_mutex *mutex, const mythread_condtime *condtime) VC_MYTHREAD_NOEXCEPT {
-  /*int ret =*/ return cnd_timedwait(&cond->cond, mutex, condtime) != thrd_success;
-  /*
-  assert(ret == 0 || ret == ETIMEDOUT);
-  return ret;
-  */
+  return (cnd_timedwait(&cond->cond, mutex, condtime) != thrd_success);
 }
 
 // Sets condtime to the absolute time that is timeout_ms milliseconds
@@ -387,11 +338,7 @@ static __attribute__((unused)) inline void mythread_condtime_set (mythread_condt
   condtime->tv_nsec = (timeout_ms%1000)*1000000;
 
   struct timespec now;
-  /*int ret =*/ clock_gettime(cond->clk_id, &now);
-  /*
-  assert(ret == 0);
-  (void)ret;
-  */
+  if (clock_gettime(cond->clk_id, &now) != 0) abort();
 
   condtime->tv_sec += now.tv_sec;
   condtime->tv_nsec += now.tv_nsec;
@@ -471,20 +418,32 @@ struct mythread_condtime {
 // make no sense because the other POSIX signal functions are missing anyway.
 
 
+// Creates a new thread with all signals blocked. Returns zero on success and non-zero on error.
 static __attribute__((unused)) inline int mythread_create (mythread *thread, unsigned int (__stdcall *func) (void *arg), void *arg) VC_MYTHREAD_NOEXCEPT {
   uintptr_t ret = _beginthreadex(nullptr, 0, func, arg, 0, nullptr);
-  if (ret == 0) return -1;
+  if (ret == 0) { *thread = (HANDLE)0; return -1; }
   *thread = (HANDLE)ret;
   return 0;
 }
 
+// Joins a thread. Returns zero on success and non-zero on error.
+// This also closes thread handle.
 static __attribute__((unused)) inline int mythread_join (mythread thread) VC_MYTHREAD_NOEXCEPT {
+  if (!thread) return -1;
   int ret = 0;
   if (WaitForSingleObject(thread, INFINITE) != WAIT_OBJECT_0) ret = -1;
   if (!CloseHandle(thread)) ret = -1;
   return ret;
 }
 
+// Detaches a thread, and closes thread handle. Returns zero on success and non-zero on error.
+static __attribute__((unused)) inline int mythread_detach (mythread thread) VC_MYTHREAD_NOEXCEPT {
+  if (!thread) return -1;
+  return (CloseHandle(thread) ? 0 : -1);
+}
+
+
+// Initiatlizes a mutex. Returns zero on success and non-zero on error.
 static __attribute__((unused)) inline int mythread_mutex_init (mythread_mutex *mutex) VC_MYTHREAD_NOEXCEPT {
   InitializeCriticalSection(mutex);
   return 0;
@@ -502,9 +461,11 @@ static __attribute__((unused)) inline void mythread_mutex_unlock (mythread_mutex
   LeaveCriticalSection(mutex);
 }
 
+
+// Initializes a condition variable. Returns zero on success and non-zero on error.
 static __attribute__((unused)) inline int mythread_cond_init (mythread_cond *cond) VC_MYTHREAD_NOEXCEPT {
   *cond = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-  return *cond == nullptr ? -1 : 0;
+  return (*cond == nullptr ? -1 : 0);
   //InitializeConditionVariable(cond);
   //return 0;
 }
@@ -528,6 +489,8 @@ static __attribute__((unused)) inline void mythread_cond_wait (mythread_cond *co
   //(void)ret;
 }
 
+// Waits on a condition or until a timeout expires. If the timeout expires,
+// non-zero is returned, otherwise zero is returned.
 static __attribute__((unused)) inline int mythread_cond_timedwait (mythread_cond *cond, mythread_mutex *mutex, const mythread_condtime *condtime) VC_MYTHREAD_NOEXCEPT {
   LeaveCriticalSection(mutex);
   DWORD elapsed = GetTickCount()-condtime->start;
@@ -541,6 +504,8 @@ static __attribute__((unused)) inline int mythread_cond_timedwait (mythread_cond
   //return !ret;
 }
 
+// Sets condtime to the absolute time that is timeout_ms milliseconds
+// in the future. The type of the clock to use is taken from cond.
 static __attribute__((unused)) inline void mythread_condtime_set (mythread_condtime *condtime, const mythread_cond *cond, uint32_t timeout) VC_MYTHREAD_NOEXCEPT {
   (void)cond;
   condtime->start = GetTickCount();
