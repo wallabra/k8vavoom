@@ -78,7 +78,7 @@ name ScoreIcon;
 // for morphed player classes
 class!Weapon MorphWeapon;
 
-// attack offset, relative to the centre of the player
+// attack offset, relative to the center of the player
 float AttackZOffset;
 
 // damage flash color

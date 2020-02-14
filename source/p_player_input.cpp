@@ -219,12 +219,12 @@ BUTTON(Left)
 BUTTON(Right)
 BUTTON(LookUp)
 BUTTON(LookDown)
-BUTTON(LookCentre)
+BUTTON(LookCenter)
 BUTTON(MoveLeft)
 BUTTON(MoveRight)
 BUTTON(FlyUp)
 BUTTON(FlyDown)
-BUTTON(FlyCentre)
+BUTTON(FlyCenter)
 BUTTON(Attack)
 BUTTON(Use)
 BUTTON(Jump)
@@ -436,7 +436,7 @@ COMMAND(Use) {
 //
 //==========================================================================
 void VBasePlayer::StartPitchDrift () {
-  PlayerFlags |= PF_Centreing;
+  PlayerFlags |= PF_Centering;
 }
 
 
@@ -446,7 +446,7 @@ void VBasePlayer::StartPitchDrift () {
 //
 //==========================================================================
 void VBasePlayer::StopPitchDrift () {
-  PlayerFlags &= ~PF_Centreing;
+  PlayerFlags &= ~PF_Centering;
 }
 
 
@@ -491,13 +491,13 @@ void VBasePlayer::AdjustAngles () {
   if (up || down || KeyMouseLook.IsDown()) StopPitchDrift();
   if (mouse_look_vertical && (mouse_look || KeyMouseLook.IsDown()) && !KeyStrafe.IsDown()) ViewAngles.pitch -= mousey*m_pitch;
 
-  // centre look
-  if (KeyLookCentre.IsDown() || KeyFlyCentre.IsDown()) StartPitchDrift();
-  if (PlayerFlags&PF_Centreing) {
+  // center look
+  if (KeyLookCenter.IsDown() || KeyFlyCenter.IsDown()) StartPitchDrift();
+  if (PlayerFlags&PF_Centering) {
     float adelta = cl_pitchdriftspeed*host_frametime;
     if (fabsf(ViewAngles.pitch) < adelta) {
       ViewAngles.pitch = 0;
-      PlayerFlags &= ~PF_Centreing;
+      PlayerFlags &= ~PF_Centering;
     } else {
            if (ViewAngles.pitch > 0.0f) ViewAngles.pitch -= adelta;
       else if (ViewAngles.pitch < 0.0f) ViewAngles.pitch += adelta;
@@ -590,7 +590,7 @@ void VBasePlayer::HandleInput () {
   }
 
   flyheight = midval(flyheight, -127.0f, 127.0f);
-  if (KeyFlyCentre.KeyState()) flyheight = TOCENTRE;
+  if (KeyFlyCenter.KeyState()) flyheight = TOCENTRE;
 
   // buttons
   Buttons = 0;

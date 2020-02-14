@@ -94,7 +94,7 @@ override bool Interpolate () {
   if (Target == none) return ::Interpolate();
 
   if (::Interpolate()) {
-    TVec delta = Target.GetCentre()-Origin;
+    TVec delta = Target.GetCenter()-Origin;
     VectorAngles(delta, out ang);
     Angles.yaw = ang.yaw;
     if (Args[2]&4) {

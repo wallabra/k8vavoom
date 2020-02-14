@@ -1351,7 +1351,7 @@ void PlayerInSpecialSector (float deltaTime) {
     ++SecretCount;
     ++Level.CurrentSecret;
     MO.Sector->special &= ~SECSPEC_SECRET_MASK;
-    centreprint("You found a secret area");
+    centerprint("You found a secret area");
     MO.PlaySound('misc/secret', /*CHAN_VOICE*/CHAN_AUTO);
   }
 

@@ -993,7 +993,7 @@ void VWidget::DrawString (int x, int y, VStr String, int NormalColor, int BoldCo
   int Kerning = Font->GetKerning();
   int Color = NormalColor;
 
-  if (HAlign == hcentre) cx -= Font->StringWidth(String)/2;
+  if (HAlign == hcenter) cx -= Font->StringWidth(String)/2;
   if (HAlign == hright) cx -= Font->StringWidth(String);
 
   bool oldflt = gl_pic_filtering;
@@ -1034,14 +1034,14 @@ void VWidget::TextBounds (int x, int y, VStr String, int *x0, int *y0, int *widt
   if (x0 || y0) {
     if (x0) {
       int cx = x;
-      if (HAlign == hcentre) cx -= Font->StringWidth(String)/2;
+      if (HAlign == hcenter) cx -= Font->StringWidth(String)/2;
       if (HAlign == hright) cx -= Font->StringWidth(String);
       *x0 = cx;
     }
 
     if (y0) {
       int cy = y;
-      if (VAlign == vcentre) cy -= Font->TextHeight(String)/2;
+      if (VAlign == vcenter) cy -= Font->TextHeight(String)/2;
       if (VAlign == vbottom) cy -= Font->TextHeight(String);
       *y0 = cy;
     }
@@ -1070,7 +1070,7 @@ void VWidget::DrawText (int x, int y, VStr String, int NormalColor, int BoldColo
   int cx = x;
   int cy = y;
 
-  if (VAlign == vcentre) cy -= Font->TextHeight(String)/2;
+  if (VAlign == vcenter) cy -= Font->TextHeight(String)/2;
   if (VAlign == vbottom) cy -= Font->TextHeight(String);
 
   // need this for correct cursor position with empty strings

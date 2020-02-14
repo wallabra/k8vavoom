@@ -198,10 +198,10 @@ __attribute__((format(printf,2,3))) void VBasePlayer::Printf (const char *s, ...
 
 //==========================================================================
 //
-//  VBasePlayer::CentrePrintf
+//  VBasePlayer::CenterPrintf
 //
 //==========================================================================
-__attribute__((format(printf,2,3))) void VBasePlayer::CentrePrintf (const char *s, ...) {
+__attribute__((format(printf,2,3))) void VBasePlayer::CenterPrintf (const char *s, ...) {
   va_list v;
   static char buf[4096];
 
@@ -209,7 +209,7 @@ __attribute__((format(printf,2,3))) void VBasePlayer::CentrePrintf (const char *
   vsnprintf(buf, sizeof(buf), s, v);
   va_end(v);
 
-  eventClientCentrePrint(buf);
+  eventClientCenterPrint(buf);
 }
 
 
@@ -513,10 +513,10 @@ void VBasePlayer::DoClientPrint (VStr AStr) {
 
 //==========================================================================
 //
-//  VBasePlayer::DoClientCentrePrint
+//  VBasePlayer::DoClientCenterPrint
 //
 //==========================================================================
-void VBasePlayer::DoClientCentrePrint (VStr Str) {
+void VBasePlayer::DoClientCenterPrint (VStr Str) {
   VStr Msg(Str);
 
   if (Msg.IsEmpty()) return;
@@ -527,7 +527,7 @@ void VBasePlayer::DoClientCentrePrint (VStr Str) {
     //GCon->Log("<-------------------------------->");
   }
 
-  ClGame->eventAddCentreMessage(Msg);
+  ClGame->eventAddCenterMessage(Msg);
 }
 
 
@@ -881,10 +881,10 @@ IMPLEMENT_FUNCTION(VBasePlayer, cprint) {
   Self->eventClientPrint(*msg);
 }
 
-IMPLEMENT_FUNCTION(VBasePlayer, centreprint) {
+IMPLEMENT_FUNCTION(VBasePlayer, centerprint) {
   VStr msg = PF_FormatString();
   P_GET_SELF;
-  Self->eventClientCentrePrint(*msg);
+  Self->eventClientCenterPrint(*msg);
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, GetPlayerNum) {
@@ -1013,10 +1013,10 @@ IMPLEMENT_FUNCTION(VBasePlayer, ClientPrint) {
   Self->DoClientPrint(Str);
 }
 
-IMPLEMENT_FUNCTION(VBasePlayer, ClientCentrePrint) {
+IMPLEMENT_FUNCTION(VBasePlayer, ClientCenterPrint) {
   VStr Str;
   vobjGetParamSelf(Str);
-  Self->DoClientCentrePrint(Str);
+  Self->DoClientCenterPrint(Str);
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, ClientSetAngles) {

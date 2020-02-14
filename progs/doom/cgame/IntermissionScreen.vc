@@ -444,13 +444,13 @@ void IM_DrawLF () {
     DrawPic(ConvertX(640/2)-info.width/2, y, LeaveTitlePic);
     y += info.height+TextHeight("DUMMY")/4;
   } else {
-    SetTextAlign(hcentre, vtop);
+    SetTextAlign(hcenter, vtop);
     DrawText(ConvertX(640/2), y, ClGame.im.LeaveName);
     y += (5*TextHeight("DUMMY"))/4;
   }
 
   // draw "Finished!"
-  SetTextAlign(hcentre, vtop);
+  SetTextAlign(hcenter, vtop);
   DrawText(ConvertX(640/2), y, "finished");
 }
 
@@ -467,7 +467,7 @@ void IM_DrawEL () {
   int y = WI_TITLEY;
 
   // draw "Entering"
-  SetTextAlign(hcentre, vtop);
+  SetTextAlign(hcenter, vtop);
   DrawText(ConvertX(640/2), y, "entering");
 
   // draw level
@@ -879,7 +879,7 @@ void IM_DrawDeathmatchStats () {
 
   IM_DrawLF();
 
-  SetTextAlign(hcentre, vtop);
+  SetTextAlign(hcenter, vtop);
   // draw stat titles (top line)
   DrawText(ConvertX(DM_TOTALSX), DM_MATRIXY-WI_SPACINGY, "FRAGS");
   DrawText(ConvertX(DM_DEATHSX), DM_MATRIXY-WI_SPACINGY, "DEATHS");

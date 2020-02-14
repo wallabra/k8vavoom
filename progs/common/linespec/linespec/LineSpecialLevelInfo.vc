@@ -5092,8 +5092,8 @@ final bool DoGroupForOne(EntityEx victim, EntityEx source, EntityEx dest,
 //
 //  EV_TeleportGroup
 //
-//  [RH] Teleport a group of actors centred around source_tid so
-// that they become centred around dest_tid instead.
+//  [RH] Teleport a group of actors centered around source_tid so
+// that they become centered around dest_tid instead.
 //
 //==========================================================================
 
@@ -6675,15 +6675,15 @@ override void SpawnMapThing (mthing_t *mthing) {
   LockDef *Lock = GetLockDef(lock);
   if (!Lock) {
     if (lock == 103) {
-      user.Player.centreprint("%s", Lock103Message);
+      user.Player.centerprint("%s", Lock103Message);
     } else {
-      user.Player.centreprint("That doesn't seem to work");
+      user.Player.centerprint("That doesn't seem to work");
     }
     user.PlaySound('misc/keytry', CHAN_VOICE);
     return false;
   }
   if (CheckLockDef(Lock, EntityEx(user))) return true;
-  user.Player.centreprint("%s", (door ? Lock->Message : Lock->RemoteMessage));
+  user.Player.centerprint("%s", (door ? Lock->Message : Lock->RemoteMessage));
   user.PlaySound(Lock->LockedSound, CHAN_VOICE);
   return false;
 }

@@ -73,7 +73,7 @@ const float MAULERRANGE        = 33.0*64.0;
   float x = Origin.x+(Random()-0.5)*6.0*50.0;
   float y = Origin.y+(Random()-0.5)*6.0*50.0;
 
-  // spawn bolt in the centre
+  // spawn bolt in the center
   EntityEx lightning1 = Spawn(Threshold > 25 ? class!Actor(SpectralLightningV2) : class!Actor(SpectralLightningV1), vector(x, y, ONCEILINGZ));
   if (lightning1) {
     if (Sector->bHasExtrafloors && Origin.z <= CeilingZ) lightning1.Origin.z = CeilingZ-lightning1.Height;

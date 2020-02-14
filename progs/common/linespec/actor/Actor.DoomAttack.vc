@@ -274,7 +274,7 @@ final void DoSPosAttack () {
   bSkullFly = true;
   PlaySound(AttackSound, CHAN_VOICE);
   A_FaceTarget();
-  Velocity = Normalise(Target.GetCentre()-Origin)*SKULLSPEED;
+  Velocity = Normalise(Target.GetCenter()-Origin)*SKULLSPEED;
 }
 
 
@@ -290,7 +290,7 @@ final void DoSPosAttack () {
   bSkullFly = true;
   PlaySound(AttackSound, CHAN_VOICE);
   A_FaceTarget();
-  Velocity = Normalise(Target.GetCentre()-Origin)*SkullSpeed;
+  Velocity = Normalise(Target.GetCenter()-Origin)*SkullSpeed;
 }
 
 

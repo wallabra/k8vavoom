@@ -1020,7 +1020,7 @@ void Cheat_Fly () {
     cprint("You feel lighter");
   } else {
     if (MO.Origin.z != MO.FloorZ) {
-      //FIXME: player->centreing = true;
+      //FIXME: player->centering = true;
     }
     bFly = false;
     MO.bFly = false;

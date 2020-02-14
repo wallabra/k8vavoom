@@ -882,7 +882,7 @@ final void NewChaseDirTo (TVec destination, optional EntityEx Target) {
       return;
     }
   } else {
-    float dist = Length2D(destination-GetCentre());
+    float dist = Length2D(destination-GetCenter());
 
     if (Target && Target.Health > 0) {
       // Enemy target is alive

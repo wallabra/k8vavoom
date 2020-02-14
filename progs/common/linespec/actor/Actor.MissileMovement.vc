@@ -99,7 +99,7 @@ const float TRACE2ANGLE = 7.0*45.0/16.0;
   // adjust direction
   if (!Tracer || Tracer.Health <= 0 || !CanSeek(Tracer)) return;
 
-  wishdir = Normalise(Tracer.GetCentre()-Origin);
+  wishdir = Normalise(Tracer.GetCenter()-Origin);
   currdir = Normalise(Velocity);
   delta = wishdir-currdir;
   adjustlen = Length(delta);

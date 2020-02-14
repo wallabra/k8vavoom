@@ -377,7 +377,7 @@ bool CastResponder (event_t *ev) {
 //==========================================================================
 void CastPostDraw () {
   SetFont('smallfont');
-  SetTextAlign(hcentre, vtop);
+  SetTextAlign(hcenter, vtop);
   //DrawText(320, 440, TranslateString(caststrings[castnum]));
   DrawText(GetVirtualWidth()/2, int(GetVirtualHeight()*0.917), TranslateString(caststrings[castnum]));
 }

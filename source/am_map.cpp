@@ -344,7 +344,7 @@ static const mline_t player_arrow1[] = {
 
 
 static const mline_t player_arrow2[] = {
-  { { -R+R/4.0f, 0.0f }, { 0.0f, 0.0f} }, // centre line.
+  { { -R+R/4.0f, 0.0f }, { 0.0f, 0.0f} }, // center line.
   { { -R+R/4.0f, R/8.0f }, { R, 0.0f} }, // blade
   { { -R+R/4.0f, -R/8.0f }, { R, 0.0f } },
   { { -R+R/4.0f, -R/4.0f }, { -R+R/4.0f, R/4.0f } }, // crosspiece

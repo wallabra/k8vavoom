@@ -49,8 +49,8 @@ int HudWidth;
 int HudHeight;
 bool isTextFont;
 
-// true if text lines should be centred
-bool bCentreX;
+// true if text lines should be centerd
+bool bCenterX;
 bool isHealthBar;
 
 float HoldTime;
@@ -85,7 +85,7 @@ void Reset () {
   HudWidth = default.HudWidth;
   HudHeight = default.HudHeight;
   isTextFont = default.isTextFont;
-  bCentreX = default.bCentreX;
+  bCenterX = default.bCenterX;
   isHealthBar = default.isHealthBar;
   HoldTime = default.HoldTime;
   Time = default.Time;
@@ -158,7 +158,7 @@ void Init (string Message, name AFont, int Type, int AId, int Color,
     isHealthBar = true;
     hbarCurr = fmax(0, Time1);
     hbarMax = fmax(1, Time2);
-    bCentreX = true;
+    bCenterX = true;
     MsgAlpha = fclamp(GetCvarF('k8HealthBarAlpha'), 0, 1);
     HoldTime = 0.25;
   } else {
@@ -205,10 +205,10 @@ void Init (string Message, name AFont, int Type, int AId, int Color,
     writeln("  size: ", Width, "x", Height);
     */
     if (fabs(MsgX) > 2.0) {
-      bCentreX = true;
+      bCenterX = true;
       MsgX = 0.5;
     } else {
-      if (fabs(MsgX) > 1.0) bCentreX = true;
+      if (fabs(MsgX) > 1.0) bCenterX = true;
       MsgX = (MsgX > 1.0 ? MsgX-1.0 : MsgX < -1.0 ? MsgX+1.0 : MsgX);
     }
     if (fabs(MsgY-0.5) <= 0.1) {
@@ -249,7 +249,7 @@ void Init (string Message, name AFont, int Type, int AId, int Color,
 
     int IntPart = int(MsgX);
     int FracPart = int(fabs(MsgX-float(IntPart))*10.0+0.5);
-    if (FracPart&4) bCentreX = true;
+    if (FracPart&4) bCenterX = true;
     if (MsgX > 0.0) {
       MsgX = float(IntPart)+float(FracPart&3)/10.0;
     } else {
@@ -356,7 +356,7 @@ override void OnDraw () {
     int FracPart = int(fabs(MsgX-float(IntPart))*10.0+0.5);
     //print("  x=%d; frac=%d", x, FracPart);
     // fractional part specifies alignment:
-    //   0 - centre
+    //   0 - center
     //   1 - left
     //   2 - right
     switch (FracPart&3) {
@@ -368,7 +368,7 @@ override void OnDraw () {
     FracPart = int(fabs(MsgY-float(IntPart))*10.0+0.5);
     //print("  y=%d; frac=%d", y, FracPart);
     // fractional part specifies alignment:
-    //   0 - centre
+    //   0 - center
     //   1 - top
     //   2 - bottom
     switch (FracPart&3) {
@@ -397,7 +397,7 @@ override void OnDraw () {
   }
 
   foreach (auto i; 0..MsgLines.length) {
-    if (bCentreX) {
+    if (bCenterX) {
       DrawTextLine(i, x+(MsgWidth-MsgLines[i].Width)/2, y, MsgLines[i].Text);
     } else {
       DrawTextLine(i, x, y, MsgLines[i].Text);

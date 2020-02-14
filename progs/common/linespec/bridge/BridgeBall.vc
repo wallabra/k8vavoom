@@ -32,7 +32,7 @@
 //      _Special1    true == removing from world
 //
 //  Child
-//      Instigator  pointer to centre mobj
+//      Instigator  pointer to center mobj
 //
 //**************************************************************************
 class BridgeBall : Actor;

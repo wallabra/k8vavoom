@@ -71,7 +71,7 @@ override bool ShouldRespawn () {
 //==========================================================================
 override bool Use (bool Pickup) {
   if (PlayerEx(Owner.Player).UsePuzzleItem(PuzzleItemNumber)) return true;
-  Owner.Player.centreprint("%s", FailMessage);
+  Owner.Player.centerprint("%s", FailMessage);
   return false;
 }
 

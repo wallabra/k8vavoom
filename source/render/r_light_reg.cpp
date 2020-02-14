@@ -322,7 +322,7 @@ void VRenderLevelLightmap::CalcPoints (LMapTraceInfo &lmi, const surface_t *surf
   lmi.didExtra = doExtra;
 
   // fill in surforg
-  // the points are biased towards the centre of the surface
+  // the points are biased towards the center of the surface
   // to help avoid edge cases just inside walls
   const float mids = surf->texturemins[0]+surf->extents[0]/2.0f;
   const float midt = surf->texturemins[1]+surf->extents[1]/2.0f;
@@ -360,7 +360,7 @@ void VRenderLevelLightmap::CalcPoints (LMapTraceInfo &lmi, const surface_t *surf
           CP_FIX_UT(t);
         }
 
-        // move surf 8 pixels towards the centre
+        // move surf 8 pixels towards the center
         const TVec fms = facemid-(*spt);
         *spt += 8*Normalise(fms);
       }

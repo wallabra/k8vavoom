@@ -64,7 +64,7 @@
 //**************************************************************************
 class SecurityCamera : Actor __mobjinfo__(9025);
 
-float Centre;
+float Center;
 float Acc;
 float Delta;
 float Range;
@@ -77,7 +77,7 @@ float Range;
 //==========================================================================
 override void BeginPlay () {
   ::BeginPlay();
-  Centre = Angles.yaw;
+  Center = Angles.yaw;
   if (Args[2]) Delta = 360.0/(float(Args[2])/8.0); else Delta = 0.0;
   if (Args[1]) Delta /= 2.0;
   Acc = 0.0;
@@ -106,7 +106,7 @@ override void Tick (float DeltaTime) {
 //==========================================================================
 void TickCamera (float DeltaTime) {
   Acc += Delta*DeltaTime;
-       if (Range) Angles.yaw = Centre+Range*sin(Acc);
+       if (Range) Angles.yaw = Center+Range*sin(Acc);
   else if (Delta) Angles.yaw = Acc;
 }
 

@@ -239,22 +239,22 @@ __attribute__((format(printf,2,3))) void VThinker::BroadcastPrintf (const char *
 
 //==========================================================================
 //
-//  VThinker::BroadcastCentrePrint
+//  VThinker::BroadcastCenterPrint
 //
 //==========================================================================
-void VThinker::BroadcastCentrePrint (const char *s) {
+void VThinker::BroadcastCenterPrint (const char *s) {
   for (int i = 0; i < svs.max_clients; ++i) {
-    if (Level->Game->Players[i]) Level->Game->Players[i]->eventClientCentrePrint(s);
+    if (Level->Game->Players[i]) Level->Game->Players[i]->eventClientCenterPrint(s);
   }
 }
 
 
 //==========================================================================
 //
-//  VThinker::BroadcastCentrePrintf
+//  VThinker::BroadcastCenterPrintf
 //
 //==========================================================================
-__attribute__((format(printf,2,3))) void VThinker::BroadcastCentrePrintf (const char *s, ...) {
+__attribute__((format(printf,2,3))) void VThinker::BroadcastCenterPrintf (const char *s, ...) {
   va_list v;
   static char buf[4096];
 
@@ -262,7 +262,7 @@ __attribute__((format(printf,2,3))) void VThinker::BroadcastCentrePrintf (const 
   vsnprintf(buf, sizeof(buf), s, v);
   va_end(v);
 
-  BroadcastCentrePrint(buf);
+  BroadcastCenterPrint(buf);
 }
 
 

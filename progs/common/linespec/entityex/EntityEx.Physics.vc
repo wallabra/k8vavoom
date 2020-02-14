@@ -1262,7 +1262,7 @@ final void PlayerLandedOnThing () {
       PlaySound('*land', CHAN_BODY);
     }
   }
-  //FIXME Player.centreing = true;
+  //FIXME Player.centering = true;
 }
 
 

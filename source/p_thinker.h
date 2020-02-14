@@ -87,8 +87,8 @@ public:
 
   void BroadcastPrint (const char *);
   void BroadcastPrintf (const char *, ...) __attribute__((format(printf,2,3)));
-  void BroadcastCentrePrint (const char *);
-  void BroadcastCentrePrintf (const char *, ...) __attribute__((format(printf,2,3)));
+  void BroadcastCenterPrint (const char *);
+  void BroadcastCenterPrintf (const char *, ...) __attribute__((format(printf,2,3)));
 
   DECLARE_FUNCTION(SpawnThinker)
   DECLARE_FUNCTION(SpawnNoTypeCheck)

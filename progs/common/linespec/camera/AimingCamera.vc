@@ -106,7 +106,7 @@ override void TickCamera (float DeltaTime) {
     }
     if (MaxPitchChange) {
       // aim camera's pitch
-      TVec dv = Target.GetCentre()-Origin;
+      TVec dv = Target.GetCenter()-Origin;
       TAVec d;
       VectorAngles(dv, out d);
            if (fabs(d.pitch-Angles.pitch) < MaxPitchChange*DeltaTime) Angles.pitch = d.pitch;

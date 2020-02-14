@@ -228,8 +228,8 @@ final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
 
     float dist =
       !bOldRadiusDamage ?
-      fmax(0.0, Length(Other.GetCentre()-GetCentre())-Other.Radius): // 3d
-      fmax(0.0, Length2D(Other.GetCentre()-GetCentre())-Other.Radius); // 2d
+      fmax(0.0, Length(Other.GetCenter()-GetCenter())-Other.Radius): // 3d
+      fmax(0.0, Length2D(Other.GetCenter()-GetCenter())-Other.Radius); // 2d
     //print("000: %C: dist=%s; BombDistance=%s", self, dist, BombDistance);
 
     if (dist >= BombDistance && int(dist) > int(BombDistance)) continue; // out of range
@@ -2320,7 +2320,7 @@ final int GetSpeech () {
 //==========================================================================
 final EntityEx TossUpObject (class!EntityEx type) {
   float randomspeed = Random()*8.0-6.0;
-  EntityEx A = SpawnEntityChecked(class!EntityEx, type, GetCentre());
+  EntityEx A = SpawnEntityChecked(class!EntityEx, type, GetCenter());
   if (A) {
     float an = AngleMod360(Angles.yaw+Random()*360.0);
     A.Angles.yaw = an;

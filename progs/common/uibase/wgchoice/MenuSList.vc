@@ -53,7 +53,7 @@ void DrawTextBox (string text) {
   if (w > 304) w = 304;
   if (h > 184) h = 184;
 
-  SetTextAlign(hcentre, vcentre);
+  SetTextAlign(hcenter, vcenter);
 
   int x = (GetVirtualWidth()-w)/2;
   int y = (GetVirtualHeight()-h)/2;
@@ -65,7 +65,7 @@ void DrawTextBox (string text) {
 #else
   auto rootw = GetClGame().GRoot;
 
-  rootw.SetTextAlign(hcentre, vcentre);
+  rootw.SetTextAlign(hcenter, vcenter);
   rootw.SetFont('smallfont');
 
   int w = (rootw.TextWidth(text)+16)&~15;

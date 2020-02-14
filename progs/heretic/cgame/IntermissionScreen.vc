@@ -364,7 +364,7 @@ void IM_DrawSingleStats () {
   DrawText(210, 205, "KILLS");
   DrawText(210, 230, "ITEMS");
   DrawText(210, 255, "SECRETS");
-  SetTextAlign(hcentre, vtop);
+  SetTextAlign(hcenter, vtop);
   DrawText(320, 143, ClGame.im.LeaveName);
   SetTextShadow(false);
 
@@ -426,7 +426,7 @@ void IM_DrawSingleStats () {
     SetTextShadow(false);
   } else {
     SetFont('smallfont');
-    SetTextAlign(hcentre, vtop);
+    SetTextAlign(hcenter, vtop);
     DrawText(320, 300, "NOW ENTERING:");
     SetTextShadow(true);
     SetFont('bigfont');
@@ -452,7 +452,7 @@ void IM_DrawCoopStats () {
   DrawText(315, 175, "BONUS");
   DrawText(392, 175, "SECRET");
 
-  SetTextAlign(hcentre, vtop);
+  SetTextAlign(hcenter, vtop);
   DrawText(320, 143, ClGame.im.LeaveName);
   SetTextShadow(false);
   SetFont('smallfont');
@@ -557,7 +557,7 @@ void IM_DrawDMStats () {
 //
 //========================================================================
 void IM_DrawOldLevel () {
-  SetTextAlign(hcentre, vtop);
+  SetTextAlign(hcenter, vtop);
 
   SetTextShadow(true);
   SetFont('bigfont');
@@ -575,7 +575,7 @@ void IM_DrawOldLevel () {
 //
 //========================================================================
 void IM_DrawYAH () {
-  SetTextAlign(hcentre, vtop);
+  SetTextAlign(hcenter, vtop);
 
   SetFont('smallfont');
   DrawText(320, 10, "NOW ENTERING:");

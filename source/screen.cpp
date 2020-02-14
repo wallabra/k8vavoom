@@ -293,7 +293,7 @@ static void DrawFPS () {
       T_SetAlign(hleft, vtop);
       xpos = 4;
     } else if (draw_gc_stats_posx == 0) {
-      T_SetAlign(hcentre, vtop);
+      T_SetAlign(hcenter, vtop);
       xpos = VirtualWidth/2;
     } else {
       T_SetAlign(hright, vtop);
@@ -322,7 +322,7 @@ static void DrawFPS () {
       T_SetAlign(hleft, vtop);
       xpos = 4;
     } else if (draw_fps_posx == 0) {
-      T_SetAlign(hcentre, vtop);
+      T_SetAlign(hcenter, vtop);
       xpos = VirtualWidth/2;
     } else {
       T_SetAlign(hright, vtop);

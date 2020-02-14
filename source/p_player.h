@@ -107,7 +107,7 @@ class VBasePlayer : public VGameObject {
     PF_AttackDown        = 0x0010u, // True if button down last tic.
     PF_UseDown           = 0x0020u,
     PF_DidSecret         = 0x0040u, // True if secret level has been done.
-    PF_Centreing         = 0x0080u,
+    PF_Centering         = 0x0080u,
     PF_IsClient          = 0x0100u, // Player on client side
     PF_AutomapRevealed   = 0x0200u,
     PF_AutomapShowThings = 0x0400u,
@@ -131,7 +131,7 @@ class VBasePlayer : public VGameObject {
   float ClientSideMove; // *2048 for move
   float ForwardMove; // *2048 for move
   float SideMove; // *2048 for move
-  float FlyMove; // fly up/down/centreing
+  float FlyMove; // fly up/down/centering
   /*vuint8*/vuint32 Buttons; // fire, use
   /*vuint8*/vuint32 Impulse; // weapon changes, inventory, etc
   // for ACS
@@ -238,7 +238,7 @@ public:
   void SpawnClient();
 
   void Printf(const char *, ...) __attribute__((format(printf,2,3)));
-  void CentrePrintf(const char *, ...) __attribute__((format(printf,2,3)));
+  void CenterPrintf(const char *, ...) __attribute__((format(printf,2,3)));
 
   void SetViewState(int, VState *);
   void AdvanceViewStates(float);
@@ -262,7 +262,7 @@ public:
   void DoClientAddSequenceChoice(int, VName);
   void DoClientStopSequence(int);
   void DoClientPrint(VStr);
-  void DoClientCentrePrint(VStr);
+  void DoClientCenterPrint(VStr);
   void DoClientSetAngles(TAVec);
   void DoClientIntermission(VName);
   void DoClientPause(bool);
@@ -293,7 +293,7 @@ public:
   DECLARE_FUNCTION(get_IsCheckpointSpawn)
 
   DECLARE_FUNCTION(cprint)
-  DECLARE_FUNCTION(centreprint)
+  DECLARE_FUNCTION(centerprint)
   DECLARE_FUNCTION(GetPlayerNum)
   DECLARE_FUNCTION(ClearPlayer)
   DECLARE_FUNCTION(SetViewObject)
@@ -308,7 +308,7 @@ public:
   DECLARE_FUNCTION(ClientAddSequenceChoice)
   DECLARE_FUNCTION(ClientStopSequence)
   DECLARE_FUNCTION(ClientPrint)
-  DECLARE_FUNCTION(ClientCentrePrint)
+  DECLARE_FUNCTION(ClientCenterPrint)
   DECLARE_FUNCTION(ClientSetAngles)
   DECLARE_FUNCTION(ClientIntermission)
   DECLARE_FUNCTION(ClientPause)
@@ -403,8 +403,8 @@ public:
     vobjPutParamSelf(Str);
     VMT_RET_VOID(method);
   }
-  void eventClientCentrePrint (VStr Str) {
-    static VMethodProxy method("ClientCentrePrint");
+  void eventClientCenterPrint (VStr Str) {
+    static VMethodProxy method("ClientCenterPrint");
     vobjPutParamSelf(Str);
     VMT_RET_VOID(method);
   }

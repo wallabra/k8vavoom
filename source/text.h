@@ -27,17 +27,15 @@
 // horisontal alignement
 enum halign_e {
   hleft,   //Left
-  hcentre, //Centred
+  hcenter, //Centerd
   hright,  //Right
-  hcenter = hcentre,
 };
 
 // vertical alignement
 enum valign_e {
   vtop,    //Top
-  vcentre, //Centre
+  vcenter, //Center
   vbottom, //Bottom
-  vcenter = vcentre,
 };
 
 // text colors, these must match the constants used in ACS

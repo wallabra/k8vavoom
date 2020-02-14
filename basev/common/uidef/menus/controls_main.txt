@@ -116,7 +116,7 @@ menudef ControlsMain {
   option bind {
     title = "Center view";
     button = tan;
-    command = "LookCentre";
+    command = "LookCenter";
   }
 
   option bind {
@@ -158,7 +158,7 @@ menudef ControlsMain {
   option bind {
     title = "Center flight";
     button = tan;
-    command = "FlyCentre";
+    command = "FlyCenter";
   }
 
 

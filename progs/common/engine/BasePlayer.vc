@@ -59,7 +59,7 @@ bool bFixAngle;
 bool bAttackDown; // `true` if button down last tic
 bool bUseDown;
 bool bDidSecret; // `true` if secret level has been done
-readonly private bool bCentreing;
+readonly private bool bCentering;
 readonly bool bIsClient; // player on client side
 bool bAutomapRevealed;
 bool bAutomapShowThings;
@@ -81,7 +81,7 @@ float ClientForwardMove; // *2048 for move
 float ClientSideMove; // *2048 for move
 float ForwardMove; // *2048 for move
 float SideMove; // *2048 for move
-float FlyMove; // fly up/down/centreing
+float FlyMove; // fly up/down/centering
 /*ubyte*/transient int Buttons; // fire, use
 /*ubyte*/transient int Impulse; // weapon changes, inventory, etc
 // for ACS, see C++ code
@@ -165,7 +165,7 @@ replication {
 
   reliable if (!bIsClient)
     ClientStartSequence, ClientAddSequenceChoice, ClientStopSequence,
-    ClientPrint, ClientCentrePrint, ClientSetAngles, ClientIntermission,
+    ClientPrint, ClientCenterPrint, ClientSetAngles, ClientIntermission,
     ClientPause, ClientSkipIntermission, ClientFinale, ClientChangeMusic,
     ClientSetServerInfo, ClientHudMessage;
 
@@ -183,9 +183,8 @@ native static final bool IsCheckpointSpawn { get; }
 
 // print to client
 native final void cprint (string format, ...) [printf,1];
-// client's centre message
-native final void centreprint (string format, ...) [printf,1];
-alias centerprint = centreprint;
+// client's center message
+native final void centerprint (string format, ...) [printf,1];
 native final int GetPlayerNum ();
 native final void ClearPlayer ();
 
@@ -204,8 +203,7 @@ native void ClientStartSequence (TVec Origin, int OriginId, name Name, int ModeN
 native void ClientAddSequenceChoice (int OriginId, name Choice);
 native void ClientStopSequence (int OriginId);
 native void ClientPrint (string Str);
-native void ClientCentrePrint (string Str);
-alias ClientCenterPrint = ClientCentrePrint;
+native void ClientCenterPrint (string Str);
 native void ClientSetAngles (TAVec Angles);
 native void ClientIntermission (name NextMap);
 native void ClientPause (bool Paused);

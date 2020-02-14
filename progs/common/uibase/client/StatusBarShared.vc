@@ -36,9 +36,9 @@ float[NUM_NOTIFY_LINES] notify_times;
 int num_notify;
 int first_notify;
 
-array!SplitLine CentreMessageLines;
-int CentreMessageHeight;
-float CentreTime;
+array!SplitLine CenterMessageLines;
+int CenterMessageHeight;
+float CenterTime;
 
 Widget HudMsgWin;
 
@@ -74,7 +74,7 @@ override void OnCreate () {
 //==========================================================================
 void StartMap () {
   ClearNotify();
-  ClearCentreMessage();
+  ClearCenterMessage();
   ClearHudMessages();
 }
 
@@ -86,7 +86,7 @@ void StartMap () {
 //==========================================================================
 override void OnDraw () {
   DrawNotify();
-  DrawCentreMessage();
+  DrawCenterMessage();
 }
 
 
@@ -105,7 +105,7 @@ override void Tick (float DeltaTime) {
     HudMsgWin.SetSize(root.Width, root.Height);
   }
   UpdateNotify(DeltaTime);
-  UpdateCentreMessage(DeltaTime);
+  UpdateCenterMessage(DeltaTime);
 }
 
 
@@ -185,47 +185,47 @@ void UpdateNotify (float DeltaTime) {
 
 
 //**************************************************************************
-//  Centre message
+//  Center message
 //**************************************************************************
 
 //==========================================================================
 //
-//  ClearCentreMessage
+//  ClearCenterMessage
 //
 //==========================================================================
-void ClearCentreMessage () {
-  CentreTime = 0.0;
+void ClearCenterMessage () {
+  CenterTime = 0.0;
 }
 
 
 //==========================================================================
 //
-//  AddCentreMessage
+//  AddCenterMessage
 //
 //==========================================================================
-void AddCentreMessage (string Msg) {
+void AddCenterMessage (string Msg) {
   SetFont('smallfont');
-  CentreMessageHeight = SplitText(Msg, CentreMessageLines, 600);
-  CentreTime = GetCvarF('hud_center_message_time');
+  CenterMessageHeight = SplitText(Msg, CenterMessageLines, 600);
+  CenterTime = GetCvarF('hud_center_message_time');
 }
 
 
 //==========================================================================
 //
-//  DrawCentreMessage
+//  DrawCenterMessage
 //
 //==========================================================================
-void DrawCentreMessage () {
-  if (CentreTime && CentreMessageLines.length) {
+void DrawCenterMessage () {
+  if (CenterTime && CenterMessageLines.length) {
     auto ovw = GetVirtualWidth();
     auto ovh = GetVirtualHeight();
-    int LineH = CentreMessageHeight/CentreMessageLines.length;
+    int LineH = CenterMessageHeight/CenterMessageLines.length;
     SetFont('smallfont');
     SetTextAlign(hleft, vtop);
     int tx = ovw/2;
-    int ty = (ovh-CentreMessageLines.length*LineH)/2-32;
-    foreach (auto i; 0..CentreMessageLines.length) {
-      DrawText(tx-CentreMessageLines[i].Width/2, ty+i*LineH, CentreMessageLines[i].Text, GetCvar('hud_font_color_centered'), CR_YELLOW);
+    int ty = (ovh-CenterMessageLines.length*LineH)/2-32;
+    foreach (auto i; 0..CenterMessageLines.length) {
+      DrawText(tx-CenterMessageLines[i].Width/2, ty+i*LineH, CenterMessageLines[i].Text, GetCvar('hud_font_color_centered'), CR_YELLOW);
     }
   }
 }
@@ -233,12 +233,12 @@ void DrawCentreMessage () {
 
 //==========================================================================
 //
-//  UpdateCentreMessage
+//  UpdateCenterMessage
 //
 //==========================================================================
-void UpdateCentreMessage (float DeltaTime) {
-  CentreTime -= DeltaTime;
-  if (CentreTime < 0.0) CentreTime = 0.0;
+void UpdateCenterMessage (float DeltaTime) {
+  CenterTime -= DeltaTime;
+  if (CenterTime < 0.0) CenterTime = 0.0;
 }
 
 
@@ -448,7 +448,7 @@ void SB_DrawDeathmatchStats () {
 
   PlayerReplicationInfo RepInfo;
 
-  SetTextAlign(hcentre, vtop);
+  SetTextAlign(hcenter, vtop);
   // draw stat titles (top line)
   DrawText(DM_TOTALSX, DM_MATRIXY-WI_SPACINGY, "FRAGS");
   DrawText(DM_DEATHSX, DM_MATRIXY-WI_SPACINGY, "DEATHS");

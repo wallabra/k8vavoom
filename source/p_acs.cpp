@@ -596,12 +596,12 @@ private:
 
   int FindSectorFromTag (sector_t *&sector, int tag, int start=-1);
 
-  void BroadcastCentrePrint (const char *s) {
+  void BroadcastCenterPrint (const char *s) {
     if (destroyed) return; // just in case
     if (!s || !s[0]) return; // oops
     for (int i = 0; i < svs.max_clients; ++i) {
       //k8: check if player is spawned?
-      if (Level->Game->Players[i]) Level->Game->Players[i]->eventClientCentrePrint(s);
+      if (Level->Game->Players[i]) Level->Game->Players[i]->eventClientCenterPrint(s);
     }
   }
 
@@ -4639,9 +4639,9 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
     ACSVM_CASE(PCD_EndPrint)
       PrintStr = PrintStr.EvalEscapeSequences();
       if (Activator && Activator->IsPlayer()) {
-        Activator->Player->CentrePrintf("%s", *PrintStr);
+        Activator->Player->CenterPrintf("%s", *PrintStr);
       } else {
-        BroadcastCentrePrint(*PrintStr);
+        BroadcastCenterPrint(*PrintStr);
       }
       SB_POP;
       ACSVM_BREAK;
@@ -4785,7 +4785,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_EndPrintBold)
       PrintStr = PrintStr.EvalEscapeSequences();
-      BroadcastCentrePrint(*(VStr(TEXT_COLOR_ESCAPE)+"+"+PrintStr));
+      BroadcastCenterPrint(*(VStr(TEXT_COLOR_ESCAPE)+"+"+PrintStr));
       SB_POP;
       ACSVM_BREAK;
 

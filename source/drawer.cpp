@@ -263,7 +263,7 @@ void R_LdrMsgShow (const char *msg, int clr) {
   if (Drawer && Drawer->IsInited()) {
     T_SetFont(SmallFont);
     Drawer->StartUpdate();
-    T_SetAlign(hcentre, vcentre);
+    T_SetAlign(hcenter, vcenter);
     // slightly off vcenter
     T_DrawText(VirtualWidth/2, VirtualHeight/2+64+10*currMsgNumber, msg, clr/*CR_TAN*/);
     Drawer->Update();

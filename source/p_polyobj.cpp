@@ -427,7 +427,7 @@ void VLevel::TranslatePolyobjToStartSpot (float originX, float originY, int tag)
 
   seg_t **tempSeg = po->segs;
   TVec *tempPt = po->originalPts;
-  TVec avg(0, 0, 0); // used to find a polyobj's centre, and hence subsector
+  TVec avg(0, 0, 0); // used to find a polyobj's center, and hence subsector
 
   for (int i = 0; i < po->numsegs; ++i, ++tempSeg, ++tempPt) {
     seg_t **veryTempSeg = po->segs;
@@ -513,7 +513,7 @@ void VLevel::LinkPolyobj (polyobj_t *po) {
      actually, not the original. on relinking, we have to scan all touching sectors,
      and get min floor and max ceiling.
   */
-  TVec avg(0, 0, 0); // used to find a polyobj's centre, and hence subsector
+  TVec avg(0, 0, 0); // used to find a polyobj's center, and hence subsector
   for (int i = 0; i < po->numsegs; ++i, ++tempSeg) {
     if ((*tempSeg)->v1->x > rightX) rightX = (*tempSeg)->v1->x;
     if ((*tempSeg)->v1->x < leftX) leftX = (*tempSeg)->v1->x;

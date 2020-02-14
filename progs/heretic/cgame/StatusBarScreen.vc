@@ -34,7 +34,7 @@ Player cl;
 int HealthMarker;
 int ChainWiggle;
 
-bool hitCentreFrame;
+bool hitCenterFrame;
 
 // Graphics
 int pic_barback;
@@ -483,15 +483,15 @@ void SB_DrawIcons () {
   if (Pw && (Pw.EffectTime > Player::BLINKTHRESHOLD || !(int(2.0*Pw.EffectTime)&1))) {
     int frame = (int(cl.MO.Level.XLevel.Time*35.0) /* ClGame.GLevel.TicTime */ / 3)&15;
     if (cl.MO.bFly) {
-      if (hitCentreFrame && frame != 15 && frame != 0) {
+      if (hitCenterFrame && frame != 15 && frame != 0) {
         frame = 15;
       } else {
-        hitCentreFrame = false;
+        hitCenterFrame = false;
       }
     } else {
-      if (hitCentreFrame || frame == 15 || frame == 0) {
+      if (hitCenterFrame || frame == 15 || frame == 0) {
         frame = 15;
-        hitCentreFrame = true;
+        hitCenterFrame = true;
       }
     }
     DrawPic(20, 17, pic_flight[frame]);

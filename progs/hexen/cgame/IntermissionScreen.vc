@@ -318,7 +318,7 @@ void IM_DrawHubText()
 void IM_DrawNumber(int val, int x, int y, int wrapThresh)
 {
   SetFont('smallfont');
-  SetTextAlign(hcentre, vtop);
+  SetTextAlign(hcenter, vtop);
   if (!(val < -9 && wrapThresh < 1000))
   {
     DrawText(x, y, va("%d",
@@ -339,7 +339,7 @@ void IM_DrawNumber(int val, int x, int y, int wrapThresh)
 void IM_DrawNumberBold(int val, int x, int y, int wrapThresh)
 {
   SetFont('smallfont');
-  SetTextAlign(hcentre, vtop);
+  SetTextAlign(hcenter, vtop);
   if (!(val < -9 && wrapThresh < 1000))
   {
     DrawText(x, y, va("%d", val >= wrapThresh ? val % wrapThresh : val), CR_YELLOW);

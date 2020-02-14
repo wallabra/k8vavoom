@@ -722,7 +722,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
           thrust *= 4.0;
         }
       }
-      dir = GetCentre()-inflictor.GetCentre();
+      dir = GetCenter()-inflictor.GetCenter();
       if (Length(dir) < 0.001) {
         // zero length. In this case Doom would use angle 0
         dir = vector(1.0, 0.0, 0.0);

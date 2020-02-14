@@ -862,17 +862,17 @@ final void common_A_FaceSomething (EntityEx Tgt, optional float max_turn, option
     float target_z;
 
     // if the target z is above the target's head, reposition to the middle of its body
-    if (source_z >= Origin.z+Height) source_z = GetCentreZ();
+    if (source_z >= Origin.z+Height) source_z = GetCenterZ();
 
     if (flags&(FAF_BOTTOM|FAF_MIDDLE|FAF_TOP)) {
       // note there is no +32 on purpose. this is for customization sake.
       // if one doesn't want this behavior, just don't use FAF_BOTTOM.
       if (flags&FAF_BOTTOM) target_z = Tgt.Origin.z;
-      if (flags&FAF_MIDDLE) target_z = Tgt.GetCentreZ();
+      if (flags&FAF_MIDDLE) target_z = Tgt.GetCenterZ();
       if (flags&FAF_TOP) target_z = Tgt.Origin.z+Tgt.Height;
     } else {
       target_z = Tgt.Origin.z+32;
-      if (target_z >= Tgt.Origin.z+Tgt.Height) target_z = Tgt.GetCentreZ();
+      if (target_z >= Tgt.Origin.z+Tgt.Height) target_z = Tgt.GetCenterZ();
     }
 
     target_z += z_ofs;

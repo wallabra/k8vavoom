@@ -74,18 +74,16 @@ const int MF_ICECORPSE = 0x80000000;
 // horisontal text alignement
 enum {
   hleft,
-  hcentre,
+  hcenter,
   hright,
 };
-alias hcenter = hcentre;
 
 // vertical text alignement
 enum {
   vtop,
-  vcentre,
+  vcenter,
   vbottom,
 };
-alias vcenter = vcentre;
 
 enum {
   HUDMSG_PLAIN,

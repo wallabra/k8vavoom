@@ -259,10 +259,10 @@ void AddNotifyMessage (string Str) {
 
 //==========================================================================
 //
-//  AddCentreMessage
+//  AddCenterMessage
 //
 //==========================================================================
-void AddCentreMessage (string Msg) {
+void AddCenterMessage (string Msg) {
 }
 
 

@@ -169,7 +169,7 @@ public:
 
   void eventDrawViewBorder (int x, int y, int w, int h) { static VMethodProxy method("DrawViewBorder"); vobjPutParamSelf(x, y, w, h); VMT_RET_VOID(method); }
   void eventAddNotifyMessage (VStr Str) { static VMethodProxy method("AddNotifyMessage"); vobjPutParamSelf(Str); VMT_RET_VOID(method); }
-  void eventAddCentreMessage (VStr Msg) { static VMethodProxy method("AddCentreMessage"); vobjPutParamSelf(Msg); VMT_RET_VOID(method); }
+  void eventAddCenterMessage (VStr Msg) { static VMethodProxy method("AddCenterMessage"); vobjPutParamSelf(Msg); VMT_RET_VOID(method); }
 
   void eventAddHudMessage (VStr Message, VName Font, int Type, int Id,
                            int Color, VStr ColorName, float x, float y,

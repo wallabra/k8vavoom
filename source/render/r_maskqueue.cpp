@@ -340,7 +340,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
 
     case SPR_VP_PARALLEL_ORIENTED:
       // Generate the sprite's axes, parallel to the viewplane, but
-      // rotated in that plane around the centre according to the sprite
+      // rotated in that plane around the center according to the sprite
       // entity's roll angle. So sprforward stays the same, but sprright
       // and sprup rotate
       sr = msin(thing->Angles.roll);
@@ -354,7 +354,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
     case SPR_VP_PARALLEL_UPRIGHT_ORIENTED:
       // Generate the sprite's axes, with sprup straight up in worldspace,
       // and sprright parallel to the viewplane and then rotated in that
-      // plane around the centre according to the sprite entity's roll
+      // plane around the center according to the sprite entity's roll
       // angle. So sprforward stays the same, but sprright and sprup rotate
       // This will not work if the view direction is very close to straight
       // up or down, because the cross product will be between two nearly

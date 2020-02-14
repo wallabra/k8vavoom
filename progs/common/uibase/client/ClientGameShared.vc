@@ -788,11 +788,11 @@ override void AddNotifyMessage (string Str) {
 
 //==========================================================================
 //
-//  AddCentreMessage
+//  AddCenterMessage
 //
 //==========================================================================
-override void AddCentreMessage (string Msg) {
-  GSBar.AddCentreMessage(Msg);
+override void AddCenterMessage (string Msg) {
+  GSBar.AddCenterMessage(Msg);
 }
 
 
