@@ -433,7 +433,7 @@ public:
   //VMethod *FindMethodNoCase (VName Name, bool bRecursive=true);
   VMethod *FindMethodChecked (VName);
   VMethod *FindAccessibleMethod (VName Name, VClass *self=nullptr, const TLocation *loc=nullptr);
-  int GetMethodIndex (VName);
+  int GetMethodIndex (VName) const;
 
   VState *FindState (VName);
   VState *FindStateChecked (VName);
@@ -556,6 +556,30 @@ public:
     }
     return nullptr;
   }
+
+public:
+  // default fields getters and setters
+  inline float GetFieldFloat (VName fldname) { return FindFieldChecked(fldname)->GetFloat((const VObject *)Defaults); }
+  inline TVec GetFieldVec (VName fldname) { return FindFieldChecked(fldname)->GetVec((const VObject *)Defaults); }
+  inline bool GetFieldBool (VName fldname) { return FindFieldChecked(fldname)->GetBool((const VObject *)Defaults); }
+  inline vint32 GetFieldInt (VName fldname) { return FindFieldChecked(fldname)->GetInt((const VObject *)Defaults); }
+  inline vuint8 GetFieldByte (VName fldname) { return FindFieldChecked(fldname)->GetByte((const VObject *)Defaults); }
+  inline VName GetFieldNameValue (VName fldname) { return FindFieldChecked(fldname)->GetNameValue((const VObject *)Defaults); }
+  inline VStr GetFieldStr (VName fldname) { return FindFieldChecked(fldname)->GetStr((const VObject *)Defaults); }
+  inline VClass *GetFieldClassValue (VName fldname) { return FindFieldChecked(fldname)->GetClassValue((const VObject *)Defaults); }
+  inline VObject *GetFieldObjectValue (VName fldname) { return FindFieldChecked(fldname)->GetObjectValue((const VObject *)Defaults); }
+
+  inline void SetFieldByte (VName fldname, vuint8 Value) { FindFieldChecked(fldname)->SetByte((VObject *)Defaults, Value); }
+  inline void SetFieldInt (VName fldname, int Value) { FindFieldChecked(fldname)->SetInt((VObject *)Defaults, Value); }
+  inline void SetFieldInt (VName fldname, int Value, int Idx) { FindFieldChecked(fldname)->SetInt((VObject *)Defaults, Value, Idx); }
+  inline void SetFieldFloat (VName fldname, float Value) { FindFieldChecked(fldname)->SetFloat((VObject *)Defaults, Value); }
+  inline void SetFieldFloat (VName fldname, float Value, int Idx) { FindFieldChecked(fldname)->SetFloat((VObject *)Defaults, Value, Idx); }
+  inline void SetFieldNameValue (VName fldname, VName Value) { FindFieldChecked(fldname)->SetNameValue((VObject *)Defaults, Value); }
+  inline void SetFieldStr (VName fldname, VStr Value) { FindFieldChecked(fldname)->SetStr((VObject *)Defaults, Value); }
+  inline void SetFieldBool (VName fldname, int Value) { FindFieldChecked(fldname)->SetBool((VObject *)Defaults, Value); }
+  inline void SetFieldVec (VName fldname, const TVec &Value) { FindFieldChecked(fldname)->SetVec((VObject *)Defaults, Value); }
+  inline void SetFieldClassValue (VName fldname, VClass *Value) { FindFieldChecked(fldname)->SetClassValue((VObject *)Defaults, Value); }
+  inline void SetFieldObjectValue (VName fldname, VObject *Value) { FindFieldChecked(fldname)->SetObjectValue((VObject *)Defaults, Value); }
 
 private:
   void CalcFieldOffsets ();

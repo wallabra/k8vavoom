@@ -795,7 +795,7 @@ VField *VClass::FindField (VName Name, const TLocation &l, VClass *SelfClass) {
 //==========================================================================
 VField *VClass::FindFieldChecked (VName AName) {
   VField *F = FindField(AName);
-  if (!F) Sys_Error("Field %s not found", *AName);
+  if (!F) Sys_Error("Field `%s` not found in class `%s`", *AName, GetName());
   return F;
 }
 
@@ -959,7 +959,7 @@ VMethod *VClass::FindAccessibleMethod (VName Name, VClass *self, const TLocation
 //==========================================================================
 VMethod *VClass::FindMethodChecked (VName AName) {
   VMethod *func = FindMethod(AName);
-  if (!func) Sys_Error("Function %s not found", *AName);
+  if (!func) Sys_Error("Function `%s` not found in class `%s`", *AName, GetName());
   return func;
 }
 
@@ -969,7 +969,7 @@ VMethod *VClass::FindMethodChecked (VName AName) {
 //  VClass::GetMethodIndex
 //
 //==========================================================================
-int VClass::GetMethodIndex (VName AName) {
+int VClass::GetMethodIndex (VName AName) const {
   if (AName == NAME_None) return -1;
   //for (int i = 0; i < ClassNumMethods; ++i) if (ClassVTable[i]->Name == AName) return i;
   //return -1;
@@ -1007,7 +1007,7 @@ VState *VClass::FindStateChecked (VName AName) {
   if (!s) {
     //HACK!
     if (VStr::ICmp(*AName, "none") == 0 || VStr::ICmp(*AName, "null") == 0 || VStr::ICmp(*AName, "nil") == 0) return nullptr;
-    Sys_Error("State `%s` not found", *AName);
+    Sys_Error("State `%s` not found in class `%s`", *AName, GetName());
   }
   return s;
 }

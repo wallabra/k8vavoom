@@ -552,6 +552,30 @@ public:
   #include "vc_object_common.h"
 
 public:
+  // default fields and setters
+  inline float GetFieldFloat (VName fldname) { return Class->FindFieldChecked(fldname)->GetFloat(this); }
+  inline TVec GetFieldVec (VName fldname) { return Class->FindFieldChecked(fldname)->GetVec(this); }
+  inline bool GetFieldBool (VName fldname) { return Class->FindFieldChecked(fldname)->GetBool(this); }
+  inline vint32 GetFieldInt (VName fldname) { return Class->FindFieldChecked(fldname)->GetInt(this); }
+  inline vuint8 GetFieldByte (VName fldname) { return Class->FindFieldChecked(fldname)->GetByte(this); }
+  inline VName GetFieldNameValue (VName fldname) { return Class->FindFieldChecked(fldname)->GetNameValue(this); }
+  inline VStr GetFieldStr (VName fldname) { return Class->FindFieldChecked(fldname)->GetStr(this); }
+  inline VClass *GetFieldClassValue (VName fldname) { return Class->FindFieldChecked(fldname)->GetClassValue(this); }
+  inline VObject *GetFieldObjectValue (VName fldname) { return Class->FindFieldChecked(fldname)->GetObjectValue(this); }
+
+  inline void SetFieldByte (VName fldname, vuint8 Value) { Class->FindFieldChecked(fldname)->SetByte(this, Value); }
+  inline void SetFieldInt (VName fldname, int Value) { Class->FindFieldChecked(fldname)->SetInt(this, Value); }
+  inline void SetFieldInt (VName fldname, int Value, int Idx) { Class->FindFieldChecked(fldname)->SetInt(this, Value, Idx); }
+  inline void SetFieldFloat (VName fldname, float Value) { Class->FindFieldChecked(fldname)->SetFloat(this, Value); }
+  inline void SetFieldFloat (VName fldname, float Value, int Idx) { Class->FindFieldChecked(fldname)->SetFloat(this, Value, Idx); }
+  inline void SetFieldNameValue (VName fldname, VName Value) { Class->FindFieldChecked(fldname)->SetNameValue(this, Value); }
+  inline void SetFieldStr (VName fldname, VStr Value) { Class->FindFieldChecked(fldname)->SetStr(this, Value); }
+  inline void SetFieldBool (VName fldname, int Value) { Class->FindFieldChecked(fldname)->SetBool(this, Value); }
+  inline void SetFieldVec (VName fldname, const TVec &Value) { Class->FindFieldChecked(fldname)->SetVec(this, Value); }
+  inline void SetFieldClassValue (VName fldname, VClass *Value) { Class->FindFieldChecked(fldname)->SetClassValue(this, Value); }
+  inline void SetFieldObjectValue (VName fldname, VObject *Value) { Class->FindFieldChecked(fldname)->SetObjectValue(this, Value); }
+
+public:
   // event queue API; as it is used both in k8vavoom and in vccrun, and with common `event_t` struct,
   // there is no reason to not have it here
 
