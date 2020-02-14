@@ -98,58 +98,6 @@ static VCvarB spr_report_missing_patches("spr_report_missing_patches", false, "R
 
 //==========================================================================
 //
-//  SetClassFieldInt
-//
-//==========================================================================
-static void SetClassFieldInt (VClass *Class, const char *FieldName, int Value, int Idx=0) {
-  VField *F = Class->FindFieldChecked(FieldName);
-  vassert(F->Type.Type == TYPE_Int);
-  vint32 *Ptr = (vint32 *)(Class->Defaults+F->Ofs);
-  Ptr[Idx] = Value;
-}
-
-
-//==========================================================================
-//
-//  SetClassFieldBool
-//
-//==========================================================================
-static void SetClassFieldBool (VClass *Class, const char *FieldName, int Value) {
-  VField *F = Class->FindFieldChecked(FieldName);
-  vassert(F->Type.Type == TYPE_Bool);
-  vuint32 *Ptr = (vuint32 *)(Class->Defaults+F->Ofs);
-  if (Value) *Ptr |= F->Type.BitMask; else *Ptr &= ~F->Type.BitMask;
-}
-
-
-//==========================================================================
-//
-//  SetClassFieldFloat
-//
-//==========================================================================
-static void SetClassFieldFloat (VClass *Class, const char *FieldName, float Value) {
-  VField *F = Class->FindFieldChecked(FieldName);
-  vassert(F->Type.Type == TYPE_Float);
-  float *Ptr = (float *)(Class->Defaults+F->Ofs);
-  *Ptr = Value;
-}
-
-
-//==========================================================================
-//
-//  SetClassFieldVec
-//
-//==========================================================================
-static void SetClassFieldVec (VClass *Class, const char *FieldName, const TVec &Value) {
-  VField *F = Class->FindFieldChecked(FieldName);
-  vassert(F->Type.Type == TYPE_Vector);
-  TVec *Ptr = (TVec *)(Class->Defaults+F->Ofs);
-  *Ptr = Value;
-}
-
-
-//==========================================================================
-//
 //  InitPalette
 //
 //==========================================================================
@@ -1624,10 +1572,10 @@ void R_ParseEffectDefs () {
     if (CD.StaticLight.IsNotEmpty()) {
       VLightEffectDef *SLight = R_FindLightEffect(CD.StaticLight);
       if (SLight) {
-        SetClassFieldBool(Cls, "bStaticLight", true);
-        SetClassFieldInt(Cls, "LightColor", SLight->Color);
-        SetClassFieldFloat(Cls, "LightRadius", SLight->Radius);
-        SetClassFieldVec(Cls, "LightOffset", SLight->Offset);
+        Cls->SetFieldBool("bStaticLight", true);
+        Cls->SetFieldInt("LightColor", SLight->Color);
+        Cls->SetFieldFloat("LightRadius", SLight->Radius);
+        Cls->SetFieldVec("LightOffset", SLight->Offset);
       } else {
         GCon->Logf(NAME_Warning, "Light \"%s\" not found.", *CD.StaticLight);
       }

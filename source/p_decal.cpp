@@ -926,13 +926,6 @@ void VDecalAnim::Serialise (VStream &Strm, VDecalAnim *&aptr) {
 
 
 // ////////////////////////////////////////////////////////////////////////// //
-static void SetClassFieldName (VClass *Class, VName FieldName, VName Value) {
-  VField *F = Class->FindFieldChecked(FieldName);
-  F->SetNameValue((VObject *)Class->Defaults, Value);
-}
-
-
-// ////////////////////////////////////////////////////////////////////////// //
 void ParseDecalDef (VScriptParser *sc) {
   const unsigned int MaxStack = 64;
   VScriptParser *scstack[MaxStack];
@@ -973,11 +966,11 @@ void ParseDecalDef (VScriptParser *sc) {
         VClass *klass = VClass::FindClassNoCase(*clsname);
         if (klass) {
           if (developer && cli_DebugDecals > 0) GCon->Logf(NAME_Dev, "%s: class '%s': set decal '%s'", *sc->GetLoc().toStringNoCol(), klass->GetName(), *decname);
-          SetClassFieldName(klass, VName("DecalName"), VName(*decname));
+          klass->SetFieldNameValue(VName("DecalName"), VName(*decname));
           VClass *k2 = klass->GetReplacee();
           if (k2 && k2 != klass) {
             if (developer) GCon->Logf(NAME_Dev, "  repclass '%s': set decal '%s'", k2->GetName(), *decname);
-            SetClassFieldName(k2, VName("DecalName"), VName(*decname));
+            k2->SetFieldNameValue(VName("DecalName"), VName(*decname));
           }
         } else {
           GCon->Logf(NAME_Warning, "%s: ignored 'generator' definition for class '%s'", *sc->GetLoc().toStringNoCol(), *clsname);
