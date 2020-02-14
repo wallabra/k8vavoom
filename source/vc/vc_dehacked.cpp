@@ -319,106 +319,6 @@ static bool ParseParam () {
 
 //==========================================================================
 //
-//  GetClassFieldInt
-//
-//==========================================================================
-static int GetClassFieldInt (VClass *Class, const char *FieldName) {
-  VField *F = Class->FindFieldChecked(FieldName);
-  int *Ptr = (int *)(Class->Defaults+F->Ofs);
-  return *Ptr;
-}
-
-
-//==========================================================================
-//
-//  GetClassFieldClass
-//
-//==========================================================================
-static VClass *GetClassFieldClass (VClass *Class, const char *FieldName) {
-  VField *F = Class->FindFieldChecked(FieldName);
-  VClass **Ptr = (VClass **)(Class->Defaults+F->Ofs);
-  return *Ptr;
-}
-
-
-//==========================================================================
-//
-//  SetClassFieldInt
-//
-//==========================================================================
-static void SetClassFieldInt (VClass *Class, const char *FieldName, int Value, int Idx=0) {
-  VField *F = Class->FindFieldChecked(FieldName);
-  vint32 *Ptr = (vint32 *)(Class->Defaults+F->Ofs);
-  Ptr[Idx] = Value;
-}
-
-
-//==========================================================================
-//
-//  SetClassFieldByte
-//
-//==========================================================================
-static void SetClassFieldByte (VClass *Class, const char *FieldName, vuint8 Value) {
-  VField *F = Class->FindFieldChecked(FieldName);
-  vuint8 *Ptr = Class->Defaults+F->Ofs;
-  *Ptr = Value;
-}
-
-
-//==========================================================================
-//
-//  SetClassFieldFloat
-//
-//==========================================================================
-static void SetClassFieldFloat (VClass *Class, const char *FieldName, float Value) {
-  VField *F = Class->FindFieldChecked(FieldName);
-  float *Ptr = (float *)(Class->Defaults+F->Ofs);
-  *Ptr = Value;
-}
-
-
-//==========================================================================
-//
-//  SetClassFieldName
-//
-//==========================================================================
-static void SetClassFieldName (VClass *Class, const char *FieldName, VName Value) {
-  VField *F = Class->FindFieldChecked(FieldName);
-  VName *Ptr = (VName *)(Class->Defaults+F->Ofs);
-  *Ptr = Value;
-}
-
-
-//==========================================================================
-//
-//  SetClassFieldClass
-//
-//==========================================================================
-static void SetClassFieldClass (VClass *Class, const char *FieldName, VClass *Value) {
-  VField *F = Class->FindFieldChecked(FieldName);
-  VClass **Ptr = (VClass **)(Class->Defaults+F->Ofs);
-  *Ptr = Value;
-}
-
-
-//==========================================================================
-//
-//  SetClassFieldBool
-//
-//==========================================================================
-static void SetClassFieldBool (VClass *Class, const char *FieldName, int Value) {
-  VField *F = Class->FindFieldChecked(FieldName);
-  vuint32 *Ptr = (vuint32 *)(Class->Defaults+F->Ofs);
-  if (Value) {
-    *Ptr |= F->Type.BitMask;
-  } else {
-    *Ptr &= ~F->Type.BitMask;
-  }
-}
-
-
-//==========================================================================
-//
 //  ParseFlag
 //
 //==========================================================================
@@ -481,9 +381,9 @@ static void DoThingState (VClass *Ent, const char *StateLabel) {
 //==========================================================================
 static void DoThingSound (VClass *Ent, const char *FieldName) {
   //  If it's not a number, treat it like a sound defined in SNDINFO
-       if (ValueString[0] < '0' || ValueString[0] > '9') SetClassFieldName(Ent, FieldName, ValueString);
+       if (ValueString[0] < '0' || ValueString[0] > '9') Ent->SetFieldNameValue(FieldName, ValueString);
   else if (value < 0 || value >= Sounds.length()) Warning("Bad sound index %d for '%s'", value, (Ent ? Ent->GetName() : "<undefined>"));
-  else SetClassFieldName(Ent, FieldName, Sounds[value]);
+  else Ent->SetFieldNameValue(FieldName, Sounds[value]);
 }
 
 
@@ -521,52 +421,52 @@ static void ReadThing (int num) {
       }
     } else if (!VStr::ICmp(String, "Hit points")) {
       hasSomeDefine = true;
-      SetClassFieldInt(Ent, "Health", value);
-      SetClassFieldInt(Ent, "GibsHealth", -value);
+      Ent->SetFieldInt("Health", value);
+      Ent->SetFieldInt("GibsHealth", -value);
     } else if (!VStr::ICmp(String, "Reaction time")) {
       hasSomeDefine = true;
-      SetClassFieldInt(Ent, "ReactionCount", value);
+      Ent->SetFieldInt("ReactionCount", value);
     } else if (!VStr::ICmp(String, "Missile damage")) {
       hasSomeDefine = true;
-      SetClassFieldInt(Ent, "MissileDamage", value);
+      Ent->SetFieldInt("MissileDamage", value);
     } else if (!VStr::ICmp(String, "Width")) {
       hasSomeDefine = true;
-      SetClassFieldFloat(Ent, "Radius", value/65536.0f);
+      Ent->SetFieldFloat("Radius", value/65536.0f);
       // also, reset render radius
-      SetClassFieldFloat(Ent, "RenderRadius", 0);
+      Ent->SetFieldFloat("RenderRadius", 0);
     } else if (!VStr::ICmp(String, "Height")) {
       gotHeight = true; // height changed
       hasSomeDefine = true;
-      SetClassFieldFloat(Ent, "Height", value/65536.0f);
+      Ent->SetFieldFloat("Height", value/65536.0f);
     } else if (!VStr::ICmp(String, "Mass")) {
       hasSomeDefine = true;
-      SetClassFieldFloat(Ent, "Mass", (value == 0x7fffffff ? 99999.0f : value));
+      Ent->SetFieldFloat("Mass", (value == 0x7fffffff ? 99999.0f : value));
     } else if (!VStr::ICmp(String, "Speed")) {
       hasSomeDefine = true;
       if (value < 100) {
-        SetClassFieldFloat(Ent, "Speed", 35.0f*value);
+        Ent->SetFieldFloat("Speed", 35.0f*value);
       } else {
-        SetClassFieldFloat(Ent, "Speed", 35.0f*value/65536.0f);
+        Ent->SetFieldFloat("Speed", 35.0f*value/65536.0f);
       }
     } else if (!VStr::ICmp(String, "Pain chance")) {
       hasSomeDefine = true;
-      SetClassFieldFloat(Ent, "PainChance", value/256.0f);
+      Ent->SetFieldFloat("PainChance", value/256.0f);
     } else if (!VStr::ICmp(String, "Translucency")) {
       //hasSomeDefine = true;
-      SetClassFieldFloat(Ent, "Alpha", value/65536.0f);
-      SetClassFieldByte(Ent, "RenderStyle", STYLE_Translucent);
+      Ent->SetFieldFloat("Alpha", value/65536.0f);
+      Ent->SetFieldByte("RenderStyle", STYLE_Translucent);
     } else if (!VStr::ICmp(String, "Alpha")) {
       //hasSomeDefine = true;
-      SetClassFieldFloat(Ent, "Alpha", VStr::atof(ValueString, 1));
+      Ent->SetFieldFloat("Alpha", VStr::atof(ValueString, 1));
     } else if (!VStr::ICmp(String, "Render Style")) {
       //hasSomeDefine = true;
-      SetClassFieldByte(Ent, "RenderStyle", ParseRenderStyle());
+      Ent->SetFieldByte("RenderStyle", ParseRenderStyle());
     } else if (!VStr::ICmp(String, "Scale")) {
       hasSomeDefine = true;
       float Scale = VStr::atof(ValueString, 1);
       Scale = midval(0.0001f, Scale, 256.0f);
-      SetClassFieldFloat(Ent, "ScaleX", Scale);
-      SetClassFieldFloat(Ent, "ScaleY", Scale);
+      Ent->SetFieldFloat("ScaleX", Scale);
+      Ent->SetFieldFloat("ScaleY", Scale);
     } else if (!VStr::ICmp(String, "Bits")) {
       hasSomeDefine = true;
       TArray<VStr> Flags;
@@ -577,91 +477,91 @@ static void ReadThing (int num) {
       for (int i = 0; i < Flags.length(); ++i) ParseFlag(Flags[i].ToUpper(), Values, Changed);
       if (Changed[0]) {
         gotSpawnCeiling = ((Values[0]&0x00000100) != 0);
-        SetClassFieldBool(Ent, "bSpecial", Values[0]&0x00000001);
-        SetClassFieldBool(Ent, "bSolid", Values[0]&0x00000002);
-        SetClassFieldBool(Ent, "bShootable", Values[0]&0x00000004);
-        SetClassFieldBool(Ent, "bNoSector", Values[0]&0x00000008);
-        SetClassFieldBool(Ent, "bNoBlockmap", Values[0]&0x00000010);
-        SetClassFieldBool(Ent, "bAmbush", Values[0]&0x00000020);
-        SetClassFieldBool(Ent, "bJustHit", Values[0]&0x00000040);
-        SetClassFieldBool(Ent, "bJustAttacked", Values[0]&0x00000080);
-        SetClassFieldBool(Ent, "bSpawnCeiling", Values[0]&0x00000100);
-        SetClassFieldBool(Ent, "bNoGravity", Values[0]&0x00000200);
-        SetClassFieldBool(Ent, "bDropOff", Values[0]&0x00000400);
-        SetClassFieldBool(Ent, "bPickUp", Values[0]&0x00000800);
-        SetClassFieldBool(Ent, "bColideWithThings", !(Values[0]&0x00001000));
-        SetClassFieldBool(Ent, "bColideWithWorld", !(Values[0]&0x00001000));
-        SetClassFieldBool(Ent, "bFloat", Values[0]&0x00004000);
-        SetClassFieldBool(Ent, "bTeleport", Values[0]&0x00008000);
-        SetClassFieldBool(Ent, "bMissile", Values[0]&0x00010000);
-        SetClassFieldBool(Ent, "bDropped", Values[0]&0x00020000);
-        SetClassFieldBool(Ent, "bShadow", Values[0]&0x00040000);
-        SetClassFieldBool(Ent, "bNoBlood", Values[0]&0x00080000);
-        SetClassFieldBool(Ent, "bCorpse", Values[0]&0x00100000);
-        SetClassFieldBool(Ent, "bInFloat", Values[0]&0x00200000);
-        SetClassFieldBool(Ent, "bCountKill", Values[0]&0x00400000);
-        SetClassFieldBool(Ent, "bCountItem", Values[0]&0x00800000);
-        SetClassFieldBool(Ent, "bSkullFly", Values[0]&0x01000000);
-        SetClassFieldBool(Ent, "bNoDeathmatch", Values[0]&0x02000000);
-        SetClassFieldBool(Ent, "bStealth", Values[0]&0x40000000);
+        Ent->SetFieldBool("bSpecial", Values[0]&0x00000001);
+        Ent->SetFieldBool("bSolid", Values[0]&0x00000002);
+        Ent->SetFieldBool("bShootable", Values[0]&0x00000004);
+        Ent->SetFieldBool("bNoSector", Values[0]&0x00000008);
+        Ent->SetFieldBool("bNoBlockmap", Values[0]&0x00000010);
+        Ent->SetFieldBool("bAmbush", Values[0]&0x00000020);
+        Ent->SetFieldBool("bJustHit", Values[0]&0x00000040);
+        Ent->SetFieldBool("bJustAttacked", Values[0]&0x00000080);
+        Ent->SetFieldBool("bSpawnCeiling", Values[0]&0x00000100);
+        Ent->SetFieldBool("bNoGravity", Values[0]&0x00000200);
+        Ent->SetFieldBool("bDropOff", Values[0]&0x00000400);
+        Ent->SetFieldBool("bPickUp", Values[0]&0x00000800);
+        Ent->SetFieldBool("bColideWithThings", !(Values[0]&0x00001000));
+        Ent->SetFieldBool("bColideWithWorld", !(Values[0]&0x00001000));
+        Ent->SetFieldBool("bFloat", Values[0]&0x00004000);
+        Ent->SetFieldBool("bTeleport", Values[0]&0x00008000);
+        Ent->SetFieldBool("bMissile", Values[0]&0x00010000);
+        Ent->SetFieldBool("bDropped", Values[0]&0x00020000);
+        Ent->SetFieldBool("bShadow", Values[0]&0x00040000);
+        Ent->SetFieldBool("bNoBlood", Values[0]&0x00080000);
+        Ent->SetFieldBool("bCorpse", Values[0]&0x00100000);
+        Ent->SetFieldBool("bInFloat", Values[0]&0x00200000);
+        Ent->SetFieldBool("bCountKill", Values[0]&0x00400000);
+        Ent->SetFieldBool("bCountItem", Values[0]&0x00800000);
+        Ent->SetFieldBool("bSkullFly", Values[0]&0x01000000);
+        Ent->SetFieldBool("bNoDeathmatch", Values[0]&0x02000000);
+        Ent->SetFieldBool("bStealth", Values[0]&0x40000000);
 
         // set additional flags for missiles
-        SetClassFieldBool(Ent, "bActivatePCross", Values[0]&0x00010000);
-        SetClassFieldBool(Ent, "bNoTeleport", Values[0]&0x00010000);
+        Ent->SetFieldBool("bActivatePCross", Values[0]&0x00010000);
+        Ent->SetFieldBool("bNoTeleport", Values[0]&0x00010000);
 
         // set additional flags for monsters
-        SetClassFieldBool(Ent, "bMonster", Values[0]&0x00400000);
-        SetClassFieldBool(Ent, "bActivateMCross", Values[0]&0x00400000);
+        Ent->SetFieldBool("bMonster", Values[0]&0x00400000);
+        Ent->SetFieldBool("bActivateMCross", Values[0]&0x00400000);
         // set push wall for both monsters and the player
-        SetClassFieldBool(Ent, "bActivatePushWall", (Values[0]&0x00400000) || num == 1);
+        Ent->SetFieldBool("bActivatePushWall", (Values[0]&0x00400000) || num == 1);
         // also set pass mobj flag
-        SetClassFieldBool(Ent, "bPassMobj", num == 1 || (Values[0]&0x00400000) || (Values[0]&0x00010000));
+        Ent->SetFieldBool("bPassMobj", num == 1 || (Values[0]&0x00400000) || (Values[0]&0x00010000));
 
         // translation
-        SetClassFieldInt(Ent, "Translation", Values[0]&0x0c000000 ? (TRANSL_Standard<<TRANSL_TYPE_SHIFT)+((Values[0]&0x0c000000)>>26)-1 : 0);
+        Ent->SetFieldInt("Translation", Values[0]&0x0c000000 ? (TRANSL_Standard<<TRANSL_TYPE_SHIFT)+((Values[0]&0x0c000000)>>26)-1 : 0);
 
         // alpha and render style
-        SetClassFieldFloat(Ent, "Alpha", (Values[0]&0x00040000) ? /*0.1f*/0.35f :
+        Ent->SetFieldFloat("Alpha", (Values[0]&0x00040000) ? /*0.1f*/0.35f :
           (Values[0]&0x80000000) ? /*0.5f*/0.55f :
           (Values[0]&0x10000000) ? /*0.25f*/0.35f :
           (Values[0]&0x20000000) ? 0.75f : 1.0f);
-        SetClassFieldByte(Ent, "RenderStyle", (Values[0]&0x00040000) ?
+        Ent->SetFieldByte("RenderStyle", (Values[0]&0x00040000) ?
           STYLE_OptFuzzy : (Values[0]&0xb0000000) ? STYLE_Translucent : STYLE_Normal);
       }
       if (Changed[1]) {
-        SetClassFieldBool(Ent, "bWindThrust", Values[1]&0x00000002);
-        SetClassFieldBool(Ent, "bBlasted", Values[1]&0x00000008);
-        SetClassFieldBool(Ent, "bFly", Values[1]&0x00000010);
-        SetClassFieldBool(Ent, "bFloorClip", Values[1]&0x00000020);
-        SetClassFieldBool(Ent, "bSpawnFloat", Values[1]&0x00000040);
-        SetClassFieldBool(Ent, "bNoTeleport", Values[1]&0x00000080);
-        SetClassFieldBool(Ent, "bRip", Values[1]&0x00000100);
-        SetClassFieldBool(Ent, "bPushable", Values[1]&0x00000200);
-        SetClassFieldBool(Ent, "bSlide", Values[1]&0x00000400);
-        SetClassFieldBool(Ent, "bOnMobj", Values[1]&0x00000800);
-        SetClassFieldBool(Ent, "bPassMobj", Values[1]&0x00001000);
-        SetClassFieldBool(Ent, "bCannotPush", Values[1]&0x00002000);
-        SetClassFieldBool(Ent, "bThruGhost", Values[1]&0x00004000);
-        SetClassFieldBool(Ent, "bBoss", Values[1]&0x00008000);
-        SetClassFieldBool(Ent, "bNoDamageThrust", Values[1]&0x00020000);
-        SetClassFieldBool(Ent, "bTelestomp", Values[1]&0x00040000);
-        SetClassFieldBool(Ent, "bInvisible", Values[1]&0x00080000);
-        SetClassFieldBool(Ent, "bFloatBob", Values[1]&0x00100000);
-        SetClassFieldBool(Ent, "bActivateImpact", Values[1]&0x00200000);
-        SetClassFieldBool(Ent, "bActivatePushWall", Values[1]&0x00400000);
-        SetClassFieldBool(Ent, "bActivateMCross", Values[1]&0x00800000);
-        SetClassFieldBool(Ent, "bActivatePCross", Values[1]&0x01000000);
-        SetClassFieldBool(Ent, "bCantLeaveFloorpic", Values[1]&0x02000000);
-        SetClassFieldBool(Ent, "bNonShootable", Values[1]&0x04000000);
-        SetClassFieldBool(Ent, "bInvulnerable", Values[1]&0x08000000);
-        SetClassFieldBool(Ent, "bDormant", Values[1]&0x10000000);
-        SetClassFieldBool(Ent, "bSeekerMissile", Values[1]&0x40000000);
-        SetClassFieldBool(Ent, "bReflective", Values[1]&0x80000000);
+        Ent->SetFieldBool("bWindThrust", Values[1]&0x00000002);
+        Ent->SetFieldBool("bBlasted", Values[1]&0x00000008);
+        Ent->SetFieldBool("bFly", Values[1]&0x00000010);
+        Ent->SetFieldBool("bFloorClip", Values[1]&0x00000020);
+        Ent->SetFieldBool("bSpawnFloat", Values[1]&0x00000040);
+        Ent->SetFieldBool("bNoTeleport", Values[1]&0x00000080);
+        Ent->SetFieldBool("bRip", Values[1]&0x00000100);
+        Ent->SetFieldBool("bPushable", Values[1]&0x00000200);
+        Ent->SetFieldBool("bSlide", Values[1]&0x00000400);
+        Ent->SetFieldBool("bOnMobj", Values[1]&0x00000800);
+        Ent->SetFieldBool("bPassMobj", Values[1]&0x00001000);
+        Ent->SetFieldBool("bCannotPush", Values[1]&0x00002000);
+        Ent->SetFieldBool("bThruGhost", Values[1]&0x00004000);
+        Ent->SetFieldBool("bBoss", Values[1]&0x00008000);
+        Ent->SetFieldBool("bNoDamageThrust", Values[1]&0x00020000);
+        Ent->SetFieldBool("bTelestomp", Values[1]&0x00040000);
+        Ent->SetFieldBool("bInvisible", Values[1]&0x00080000);
+        Ent->SetFieldBool("bFloatBob", Values[1]&0x00100000);
+        Ent->SetFieldBool("bActivateImpact", Values[1]&0x00200000);
+        Ent->SetFieldBool("bActivatePushWall", Values[1]&0x00400000);
+        Ent->SetFieldBool("bActivateMCross", Values[1]&0x00800000);
+        Ent->SetFieldBool("bActivatePCross", Values[1]&0x01000000);
+        Ent->SetFieldBool("bCantLeaveFloorpic", Values[1]&0x02000000);
+        Ent->SetFieldBool("bNonShootable", Values[1]&0x04000000);
+        Ent->SetFieldBool("bInvulnerable", Values[1]&0x08000000);
+        Ent->SetFieldBool("bDormant", Values[1]&0x10000000);
+        Ent->SetFieldBool("bSeekerMissile", Values[1]&0x40000000);
+        Ent->SetFieldBool("bReflective", Values[1]&0x80000000);
         //  Things that used to be flags before.
-        if (Values[1]&0x00000001) SetClassFieldFloat(Ent, "Gravity", 0.125f);
-             if (Values[1]&0x00010000) SetClassFieldName(Ent, "DamageType", "Fire");
-        else if (Values[1]&0x20000000) SetClassFieldName(Ent, "DamageType", "Ice");
-        if (Values[1]&0x00000004) SetClassFieldByte(Ent, "BounceType", 1);
+        if (Values[1]&0x00000001) Ent->SetFieldFloat("Gravity", 0.125f);
+             if (Values[1]&0x00010000) Ent->SetFieldNameValue("DamageType", "Fire");
+        else if (Values[1]&0x20000000) Ent->SetFieldNameValue("DamageType", "Ice");
+        if (Values[1]&0x00000004) Ent->SetFieldByte("BounceType", 1);
       }
     }
     // States
@@ -834,7 +734,7 @@ static void ReadAmmo (int num) {
 
   VClass *Weapon = VClass::FindClass("Weapon");
   VClass *Ammo = AmmoClasses[num];
-  const int oldVal = GetClassFieldInt(Ammo, "Amount"); // we'll need it later
+  const int oldVal = Ammo->GetFieldInt("Amount"); // we'll need it later
 
   int maxVal = -1;
   int perVal = -1;
@@ -854,13 +754,13 @@ static void ReadAmmo (int num) {
 
   // set values
   if (maxVal >= 0) {
-    SetClassFieldInt(Ammo, "MaxAmount", maxVal);
-    SetClassFieldInt(Ammo, "BackpackMaxAmount", maxVal*2);
+    Ammo->SetFieldInt("MaxAmount", maxVal);
+    Ammo->SetFieldInt("BackpackMaxAmount", maxVal*2);
   }
 
   if (perVal >= 0) {
-    SetClassFieldInt(Ammo, "Amount", perVal);
-    SetClassFieldInt(Ammo, "BackpackAmount", perVal);
+    Ammo->SetFieldInt("Amount", perVal);
+    Ammo->SetFieldInt("BackpackAmount", perVal);
   }
 
   // fix up amounts in derived classes
@@ -870,28 +770,28 @@ static void ReadAmmo (int num) {
       // derived ammo
       if (maxVal >= 0) {
         // fix maximum value
-        SetClassFieldInt(C, "MaxAmount", maxVal);
-        SetClassFieldInt(C, "BackpackMaxAmount", maxVal*2);
+        C->SetFieldInt("MaxAmount", maxVal);
+        C->SetFieldInt("BackpackMaxAmount", maxVal*2);
       }
       if (perVal >= 0) {
         // fix default amout
-        const int amnt = FixScale(GetClassFieldInt(C, "Amount"), perVal, oldVal);
+        const int amnt = FixScale(C->GetFieldInt("Amount"), perVal, oldVal);
         if (maxVal < amnt) {
           // sanitise max amount
-          SetClassFieldInt(C, "MaxAmount", amnt);
-          SetClassFieldInt(C, "BackpackMaxAmount", amnt*2);
+          C->SetFieldInt("MaxAmount", amnt);
+          C->SetFieldInt("BackpackMaxAmount", amnt*2);
         }
-        SetClassFieldInt(C, "Amount", amnt);
-        SetClassFieldInt(C, "BackpackAmount", amnt);
+        C->SetFieldInt("Amount", amnt);
+        C->SetFieldInt("BackpackAmount", amnt);
       }
     } else if (Weapon && C->IsChildOf(Weapon)) {
       // fix weapon "ammo give"
-      if (GetClassFieldClass(C, "AmmoType1") == Ammo) {
-        SetClassFieldInt(C, "AmmoGive1", FixScale(GetClassFieldInt(C, "AmmoGive1"), perVal, oldVal));
+      if (C->GetFieldClassValue("AmmoType1") == Ammo) {
+        C->SetFieldInt("AmmoGive1", FixScale(C->GetFieldInt("AmmoGive1"), perVal, oldVal));
         //GCon->Logf(NAME_Debug, "*** fixing ammo1 for weapon '%s' (ammo '%s')", C->GetName(), Ammo->GetName());
       }
-      if (GetClassFieldClass(C, "AmmoType2") == Ammo) {
-        SetClassFieldInt(C, "AmmoGive2", FixScale(GetClassFieldInt(C, "AmmoGive2"), perVal, oldVal));
+      if (C->GetFieldClassValue("AmmoType2") == Ammo) {
+        C->SetFieldInt("AmmoGive2", FixScale(C->GetFieldInt("AmmoGive2"), perVal, oldVal));
         //GCon->Logf(NAME_Debug, "*** fixing ammo2 for weapon '%s' (ammo '%s')", C->GetName(), Ammo->GetName());
       }
     }
@@ -939,14 +839,14 @@ static void ReadWeapon (int num) {
   while (ParseParam()) {
     if (!VStr::ICmp(String, "Ammo type")) {
       if (value < AmmoClasses.length()) {
-        SetClassFieldClass(Weapon, "AmmoType1", AmmoClasses[value]);
-        SetClassFieldInt(Weapon, "AmmoGive1", GetClassFieldInt(AmmoClasses[value], "Amount")*2);
-        if (GetClassFieldInt(Weapon, "AmmoUse1") == 0) SetClassFieldInt(Weapon, "AmmoUse1", 1);
+        Weapon->SetFieldClassValue("AmmoType1", AmmoClasses[value]);
+        Weapon->SetFieldInt("AmmoGive1", AmmoClasses[value]->GetFieldInt("Amount")*2);
+        if (Weapon->GetFieldInt("AmmoUse1") == 0) Weapon->SetFieldInt("AmmoUse1", 1);
       } else {
-        SetClassFieldClass(Weapon, "AmmoType1", nullptr);
+        Weapon->SetFieldClassValue("AmmoType1", nullptr);
       }
     } else if (!VStr::ICmp(String, "Ammo use") || !VStr::ICmp(String, "Ammo per shot")) {
-      SetClassFieldInt(Weapon, "AmmoUse1", value);
+      Weapon->SetFieldInt("AmmoUse1", value);
     } else if (!VStr::ICmp(String, "Min Ammo")) {
       // unused
     } else if (!VStr::ICmp(String, "Deselect frame")) {
@@ -1059,7 +959,7 @@ static void DoPowerupColor (const char *ClassName) {
   g = midval(0, g, 255);
   b = midval(0, b, 255);
   a = midval(0.0f, a, 1.0f);
-  SetClassFieldInt(Power, "BlendColor", (r<<16)|(g<<8)|b|int(a*255)<<24);
+  Power->SetFieldInt("BlendColor", (r<<16)|(g<<8)|b|int(a*255)<<24);
 }
 
 
@@ -1071,36 +971,36 @@ static void DoPowerupColor (const char *ClassName) {
 static void ReadMisc (int) {
   while (ParseParam()) {
     if (!VStr::ICmp(String, "Initial Health")) {
-      SetClassFieldInt(GameInfoClass, "INITIAL_HEALTH", value);
+      GameInfoClass->SetFieldInt("INITIAL_HEALTH", value);
     } else if (!VStr::ICmp(String, "Initial Bullets")) {
       TArray<VDropItemInfo>& List = *(TArray<VDropItemInfo>*)(DoomPlayerClass->Defaults+DoomPlayerClass->FindFieldChecked("DropItemList")->Ofs);
       for (int i = 0; i < List.length(); ++i) if (List[i].Type && List[i].Type->Name == "Clip") List[i].Amount = value;
     } else if (!VStr::ICmp(String, "Max Health")) {
-      SetClassFieldInt(HealthBonusClass, "MaxAmount", 2*value);
+      HealthBonusClass->SetFieldInt("MaxAmount", 2*value);
     } else if (!VStr::ICmp(String, "Max Armor")) {
-      SetClassFieldInt(ArmorBonusClass, "MaxSaveAmount", value);
+      ArmorBonusClass->SetFieldInt("MaxSaveAmount", value);
     } else if (!VStr::ICmp(String, "Green Armor Class")) {
-      SetClassFieldInt(GreenArmorClass, "SaveAmount", 100*value);
-      SetClassFieldFloat(GreenArmorClass, "SavePercent", value == 1 ? 1.0f/3.0f : 1.0f/2.0f);
+      GreenArmorClass->SetFieldInt("SaveAmount", 100*value);
+      GreenArmorClass->SetFieldFloat("SavePercent", value == 1 ? 1.0f/3.0f : 1.0f/2.0f);
     } else if (!VStr::ICmp(String, "Blue Armor Class")) {
-      SetClassFieldInt(BlueArmorClass, "SaveAmount", 100*value);
-      SetClassFieldFloat(BlueArmorClass, "SavePercent", value == 1 ? 1.0f/3.0f : 1.0f/2.0f);
+      BlueArmorClass->SetFieldInt("SaveAmount", 100*value);
+      BlueArmorClass->SetFieldFloat("SavePercent", value == 1 ? 1.0f/3.0f : 1.0f/2.0f);
     } else if (!VStr::ICmp(String, "Max Soulsphere")) {
-      SetClassFieldInt(SoulsphereClass, "MaxAmount", value);
+      SoulsphereClass->SetFieldInt("MaxAmount", value);
     } else if (!VStr::ICmp(String, "Soulsphere Health")) {
-      SetClassFieldInt(SoulsphereClass, "Amount", value);
+      SoulsphereClass->SetFieldInt("Amount", value);
     } else if (!VStr::ICmp(String, "Megasphere Health")) {
-      SetClassFieldInt(MegaHealthClass, "Amount", value);
-      SetClassFieldInt(MegaHealthClass, "MaxAmount", value);
+      MegaHealthClass->SetFieldInt("Amount", value);
+      MegaHealthClass->SetFieldInt("MaxAmount", value);
     } else if (!VStr::ICmp(String, "God Mode Health")) {
-      SetClassFieldInt(GameInfoClass, "GOD_HEALTH", value);
+      GameInfoClass->SetFieldInt("GOD_HEALTH", value);
     }
     else if (!VStr::ICmp(String, "IDFA Armor")) {} // cheat removed
     else if (!VStr::ICmp(String, "IDFA Armor Class")) {} // cheat removed
     else if (!VStr::ICmp(String, "IDKFA Armor")) {} // cheat removed
     else if (!VStr::ICmp(String, "IDKFA Armor Class")) {} // cheat removed
     else if (!VStr::ICmp(String, "BFG Cells/Shot")) {
-      SetClassFieldInt(BfgClass, "AmmoUse1", value);
+      BfgClass->SetFieldInt("AmmoUse1", value);
     } else if (!VStr::ICmp(String, "Monsters Infight")) {
       Infighting = value;
     } else if (!VStr::ICmp(String, "Monsters Ignore Each Other")) {
@@ -1124,9 +1024,9 @@ static void ReadMisc (int) {
     } else if (!VStr::ICmp(String, "Powerup Color Minotaur")) {
       DoPowerupColor("PowerMinotaur");
     } else if (!VStr::ICmp(String, "Rocket Explosion Style")) {
-      SetClassFieldInt(GameInfoClass, "DehExplosionStyle", ParseRenderStyle());
+      GameInfoClass->SetFieldInt("DehExplosionStyle", ParseRenderStyle());
     } else if (!VStr::ICmp(String, "Rocket Explosion Alpha")) {
-      SetClassFieldFloat(GameInfoClass, "DehExplosionAlpha", VStr::atof(ValueString, 1));
+      GameInfoClass->SetFieldFloat("DehExplosionAlpha", VStr::atof(ValueString, 1));
     } else {
       Warning("Invalid misc '%s'", String);
     }
@@ -1835,10 +1735,10 @@ void ProcessDehackedFiles () {
     // set all classes to use old style pickup handling
     if (EntClassTouched[i]) {
       //GCon->Logf(NAME_Debug, "dehacked touched `%s`", EntClasses[i]->GetName());
-      SetClassFieldBool(EntClasses[i], "bDehackedSpecial", true);
+      EntClasses[i]->SetFieldBool("bDehackedSpecial", true);
     }
   }
-  SetClassFieldBool(GameInfoClass, "bDehacked", true);
+  GameInfoClass->SetFieldBool("bDehacked", true);
 
   // do string replacement
   GSoundManager->ReplaceSoundLumpNames(SfxNames);

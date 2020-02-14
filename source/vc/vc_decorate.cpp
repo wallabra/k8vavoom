@@ -856,28 +856,6 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
 
 //==========================================================================
 //
-//  GetClassFieldFloat
-//
-//==========================================================================
-static float GetClassFieldFloat (VClass *Class, VName FieldName) {
-  VField *F = Class->FindFieldChecked(FieldName);
-  return F->GetFloat((VObject *)Class->Defaults);
-}
-
-
-//==========================================================================
-//
-//  GetClassFieldVec
-//
-//==========================================================================
-static VVA_OKUNUSED TVec GetClassFieldVec (VClass *Class, VName FieldName) {
-  VField *F = Class->FindFieldChecked(FieldName);
-  return F->GetVec((VObject *)Class->Defaults);
-}
-
-
-//==========================================================================
-//
 //  GetClassDropItems
 //
 //==========================================================================
@@ -906,138 +884,6 @@ static TArray<VDamageFactor> &GetClassDamageFactors (VClass *Class) {
 static TArray<VPainChanceInfo> &GetClassPainChances (VClass *Class) {
   VField *F = Class->FindFieldChecked("PainChances");
   return *(TArray<VPainChanceInfo>*)F->GetFieldPtr((VObject *)Class->Defaults);
-}
-
-
-//==========================================================================
-//
-//  SetClassFieldInt
-//
-//==========================================================================
-static void SetClassFieldInt (VClass *Class, VName FieldName, int Value, int Idx=0) {
-  VField *F = Class->FindFieldChecked(FieldName);
-  F->SetInt((VObject *)Class->Defaults, Value, Idx);
-}
-
-
-//==========================================================================
-//
-//  SetClassFieldByte
-//
-//==========================================================================
-static void SetClassFieldByte (VClass *Class, VName FieldName, vuint8 Value) {
-  VField *F = Class->FindFieldChecked(FieldName);
-  F->SetByte((VObject *)Class->Defaults, Value);
-}
-
-
-//==========================================================================
-//
-//  SetClassFieldFloat
-//
-//==========================================================================
-static void SetClassFieldFloat (VClass *Class, VName FieldName, float Value, int Idx=0) {
-  VField *F = Class->FindFieldChecked(FieldName);
-  F->SetFloat((VObject *)Class->Defaults, Value, Idx);
-}
-
-
-//==========================================================================
-//
-//  SetClassFieldBool
-//
-//==========================================================================
-static void SetClassFieldBool (VClass *Class, VName FieldName, int Value) {
-  VField *F = Class->FindFieldChecked(FieldName);
-  F->SetBool((VObject *)Class->Defaults, Value);
-}
-
-
-//==========================================================================
-//
-//  SetClassFieldName
-//
-//==========================================================================
-static void SetClassFieldName (VClass *Class, VName FieldName, VName Value) {
-  VField *F = Class->FindFieldChecked(FieldName);
-  F->SetNameValue((VObject *)Class->Defaults, Value);
-}
-
-
-//==========================================================================
-//
-//  SetClassFieldStr
-//
-//==========================================================================
-static void SetClassFieldStr (VClass *Class, VName FieldName, VStr Value) {
-  VField *F = Class->FindFieldChecked(FieldName);
-  F->SetStr((VObject *)Class->Defaults, Value);
-}
-
-
-//==========================================================================
-//
-//  SetClassFieldVec
-//
-//==========================================================================
-static VVA_OKUNUSED void SetClassFieldVec (VClass *Class, VName FieldName, const TVec &Value) {
-  VField *F = Class->FindFieldChecked(FieldName);
-  F->SetVec((VObject *)Class->Defaults, Value);
-}
-
-
-//==========================================================================
-//
-//  SetFieldByte
-//
-//==========================================================================
-static VVA_OKUNUSED void SetFieldByte (VObject *Obj, VName FieldName, vuint8 Value) {
-  VField *F = Obj->GetClass()->FindFieldChecked(FieldName);
-  F->SetByte(Obj, Value);
-}
-
-
-//==========================================================================
-//
-//  SetFieldFloat
-//
-//==========================================================================
-static VVA_OKUNUSED void SetFieldFloat (VObject *Obj, VName FieldName, float Value, int Idx=0) {
-  VField *F = Obj->GetClass()->FindFieldChecked(FieldName);
-  F->SetFloat(Obj, Value, Idx);
-}
-
-
-//==========================================================================
-//
-//  SetFieldBool
-//
-//==========================================================================
-static VVA_OKUNUSED void SetFieldBool (VObject *Obj, VName FieldName, int Value) {
-  VField *F = Obj->GetClass()->FindFieldChecked(FieldName);
-  F->SetBool(Obj, Value);
-}
-
-
-//==========================================================================
-//
-//  SetFieldName
-//
-//==========================================================================
-static VVA_OKUNUSED void SetFieldName (VObject *Obj, VName FieldName, VName Value) {
-  VField *F = Obj->GetClass()->FindFieldChecked(FieldName);
-  F->SetNameValue(Obj, Value);
-}
-
-
-//==========================================================================
-//
-//  SetFieldClass
-//
-//==========================================================================
-static VVA_OKUNUSED void SetFieldClass (VObject *Obj, VName FieldName, VClass *Value) {
-  VField *F = Obj->GetClass()->FindFieldChecked(FieldName);
-  F->SetClassValue(Obj, Value);
 }
 
 
@@ -2603,59 +2449,59 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             }
             break;
           case PROP_Monster:
-            SetClassFieldBool(Class, "bShootable", true);
-            SetClassFieldBool(Class, "bCountKill", true);
-            SetClassFieldBool(Class, "bSolid", true);
-            SetClassFieldBool(Class, "bActivatePushWall", true);
-            SetClassFieldBool(Class, "bActivateMCross", true);
-            SetClassFieldBool(Class, "bPassMobj", true);
-            SetClassFieldBool(Class, "bMonster", true);
-            SetClassFieldBool(Class, "bCanUseWalls", true);
+            Class->SetFieldBool("bShootable", true);
+            Class->SetFieldBool("bCountKill", true);
+            Class->SetFieldBool("bSolid", true);
+            Class->SetFieldBool("bActivatePushWall", true);
+            Class->SetFieldBool("bActivateMCross", true);
+            Class->SetFieldBool("bPassMobj", true);
+            Class->SetFieldBool("bMonster", true);
+            Class->SetFieldBool("bCanUseWalls", true);
             break;
           case PROP_Projectile:
-            SetClassFieldBool(Class, "bNoBlockmap", true);
-            SetClassFieldBool(Class, "bNoGravity", true);
-            SetClassFieldBool(Class, "bDropOff", true);
-            SetClassFieldBool(Class, "bMissile", true);
-            SetClassFieldBool(Class, "bActivateImpact", true);
-            SetClassFieldBool(Class, "bActivatePCross", true);
-            SetClassFieldBool(Class, "bNoTeleport", true);
-            if (GGameInfo->Flags&VGameInfo::GIF_DefaultBloodSplatter) SetClassFieldBool(Class, "bBloodSplatter", true);
+            Class->SetFieldBool("bNoBlockmap", true);
+            Class->SetFieldBool("bNoGravity", true);
+            Class->SetFieldBool("bDropOff", true);
+            Class->SetFieldBool("bMissile", true);
+            Class->SetFieldBool("bActivateImpact", true);
+            Class->SetFieldBool("bActivatePCross", true);
+            Class->SetFieldBool("bNoTeleport", true);
+            if (GGameInfo->Flags&VGameInfo::GIF_DefaultBloodSplatter) Class->SetFieldBool("bBloodSplatter", true);
             break;
           case PROP_BounceType:
             if (sc->Check("None")) {
-              SetClassFieldByte(Class, "BounceType", BOUNCE_None);
+              Class->SetFieldByte("BounceType", BOUNCE_None);
             } else if (sc->Check("Doom")) {
-              SetClassFieldByte(Class, "BounceType", BOUNCE_Doom);
-              SetClassFieldBool(Class, "bBounceWalls", true);
-              SetClassFieldBool(Class, "bBounceFloors", true);
-              SetClassFieldBool(Class, "bBounceCeilings", true);
-              SetClassFieldBool(Class, "bBounceOnActors", true);
-              SetClassFieldBool(Class, "bBounceAutoOff", true);
+              Class->SetFieldByte("BounceType", BOUNCE_Doom);
+              Class->SetFieldBool("bBounceWalls", true);
+              Class->SetFieldBool("bBounceFloors", true);
+              Class->SetFieldBool("bBounceCeilings", true);
+              Class->SetFieldBool("bBounceOnActors", true);
+              Class->SetFieldBool("bBounceAutoOff", true);
             } else if (sc->Check("Heretic")) {
-              SetClassFieldByte(Class, "BounceType", BOUNCE_Heretic);
-              SetClassFieldBool(Class, "bBounceFloors", true);
-              SetClassFieldBool(Class, "bBounceCeilings", true);
+              Class->SetFieldByte("BounceType", BOUNCE_Heretic);
+              Class->SetFieldBool("bBounceFloors", true);
+              Class->SetFieldBool("bBounceCeilings", true);
             } else if (sc->Check("Hexen")) {
-              SetClassFieldByte(Class, "BounceType", BOUNCE_Hexen);
-              SetClassFieldBool(Class, "bBounceWalls", true);
-              SetClassFieldBool(Class, "bBounceFloors", true);
-              SetClassFieldBool(Class, "bBounceCeilings", true);
-              SetClassFieldBool(Class, "bBounceOnActors", true);
+              Class->SetFieldByte("BounceType", BOUNCE_Hexen);
+              Class->SetFieldBool("bBounceWalls", true);
+              Class->SetFieldBool("bBounceFloors", true);
+              Class->SetFieldBool("bBounceCeilings", true);
+              Class->SetFieldBool("bBounceOnActors", true);
             } else if (sc->Check("DoomCompat")) {
-              SetClassFieldByte(Class, "BounceType", BOUNCE_Doom);
+              Class->SetFieldByte("BounceType", BOUNCE_Doom);
             } else if (sc->Check("HereticCompat")) {
-              SetClassFieldByte(Class, "BounceType", BOUNCE_Heretic);
+              Class->SetFieldByte("BounceType", BOUNCE_Heretic);
             } else if (sc->Check("HexenCompat")) {
-              SetClassFieldByte(Class, "BounceType", BOUNCE_Hexen);
+              Class->SetFieldByte("BounceType", BOUNCE_Hexen);
             } else if (sc->Check("Grenade")) {
               // bounces on walls and flats like ZDoom bounce
-              SetClassFieldByte(Class, "BounceType", BOUNCE_Doom);
-              SetClassFieldBool(Class, "bBounceOnActors", false);
+              Class->SetFieldByte("BounceType", BOUNCE_Doom);
+              Class->SetFieldBool("bBounceOnActors", false);
             } else if (sc->Check("Classic")) {
               // bounces on flats only, but does not die when bouncing
-              SetClassFieldByte(Class, "BounceType", BOUNCE_Heretic);
-              SetClassFieldBool(Class, "bMBFBounce", true);
+              Class->SetFieldByte("BounceType", BOUNCE_Heretic);
+              Class->SetFieldBool("bMBFBounce", true);
             }
             break;
           case PROP_ClearFlags:
@@ -2668,10 +2514,10 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
                 }
               }
             }
-            SetClassFieldByte(Class, "BounceType", BOUNCE_None);
-            SetClassFieldBool(Class, "bColideWithThings", true);
-            SetClassFieldBool(Class, "bColideWithWorld", true);
-            SetClassFieldBool(Class, "bPickUp", false);
+            Class->SetFieldByte("BounceType", BOUNCE_None);
+            Class->SetFieldBool("bColideWithThings", true);
+            Class->SetFieldBool("bColideWithWorld", true);
+            Class->SetFieldBool("bPickUp", false);
             break;
           case PROP_DropItem:
             {
@@ -2988,7 +2834,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
     //if (nfo) nfo->Class = Class;
   }
 
-  SetClassFieldInt(Class, "GameFilter", (GameFilter ? GameFilter : -1));
+  Class->SetFieldInt("GameFilter", (GameFilter ? GameFilter : -1));
 
   DoClassReplacement(ReplaceeClass, Class);
   /*
@@ -3066,11 +2912,11 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
     ActorClass->CreateDerivedClass(ClassName, DecPkg, uvars, sc->GetLoc());
   DecPkg->ParsedClasses.Append(Class);
 
-  if (Type == OLDDEC_Breakable) SetClassFieldBool(Class, "bShootable", true);
+  if (Type == OLDDEC_Breakable) Class->SetFieldBool("bShootable", true);
 
   if (Type == OLDDEC_Projectile) {
-    SetClassFieldBool(Class, "bMissile", true);
-    SetClassFieldBool(Class, "bDropOff", true);
+    Class->SetFieldBool("bMissile", true);
+    Class->SetFieldBool("bDropOff", true);
   }
 
   // parse game filters
@@ -3164,22 +3010,22 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
     // misc properties
     else if (sc->Check("Radius")) {
       sc->ExpectFloat();
-      SetClassFieldFloat(Class, "Radius", sc->Float);
+      Class->SetFieldFloat("Radius", sc->Float);
       // also, reset render radius
-      SetClassFieldFloat(Class, "RenderRadius", 0);
+      Class->SetFieldFloat("RenderRadius", 0);
     } else if (sc->Check("Height")) {
       sc->ExpectFloat();
-      SetClassFieldFloat(Class, "Height", sc->Float);
+      Class->SetFieldFloat("Height", sc->Float);
     } else if (sc->Check("Mass")) {
       sc->ExpectFloat();
-      SetClassFieldFloat(Class, "Mass", sc->Float);
+      Class->SetFieldFloat("Mass", sc->Float);
     } else if (sc->Check("Scale")) {
       sc->ExpectFloat();
-      SetClassFieldFloat(Class, "ScaleX", sc->Float);
-      SetClassFieldFloat(Class, "ScaleY", sc->Float);
+      Class->SetFieldFloat("ScaleX", sc->Float);
+      Class->SetFieldFloat("ScaleY", sc->Float);
     } else if (sc->Check("Alpha")) {
       sc->ExpectFloat();
-      SetClassFieldFloat(Class, "Alpha", midval(0.0f, (float)sc->Float, 1.0f));
+      Class->SetFieldFloat("Alpha", midval(0.0f, (float)sc->Float, 1.0f));
     } else if (sc->Check("RenderStyle")) {
       int RenderStyle = 0;
            if (sc->Check("STYLE_None")) RenderStyle = STYLE_None;
@@ -3190,20 +3036,20 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
       else if (sc->Check("STYLE_Translucent")) RenderStyle = STYLE_Translucent;
       else if (sc->Check("STYLE_Add")) RenderStyle = STYLE_Add;
       else sc->Error("Bad render style");
-      SetClassFieldByte(Class, "RenderStyle", RenderStyle);
+      Class->SetFieldByte("RenderStyle", RenderStyle);
     } else if (sc->Check("Translation1")) {
       sc->ExpectNumber();
       if (sc->Number < 0 || sc->Number > 2) sc->Error("Translation1 is out of range [0, 2]");
-      SetClassFieldInt(Class, "Translation", (TRANSL_Standard<<TRANSL_TYPE_SHIFT)+sc->Number);
+      Class->SetFieldInt("Translation", (TRANSL_Standard<<TRANSL_TYPE_SHIFT)+sc->Number);
     } else if (sc->Check("Translation2")) {
       sc->ExpectNumber();
       if (sc->Number < 0 || sc->Number > MAX_LEVEL_TRANSLATIONS) sc->Error(va("Translation2 is out of range [0, %d]", MAX_LEVEL_TRANSLATIONS));
-      SetClassFieldInt(Class, "Translation", (TRANSL_Level<<TRANSL_TYPE_SHIFT)+sc->Number);
+      Class->SetFieldInt("Translation", (TRANSL_Level<<TRANSL_TYPE_SHIFT)+sc->Number);
     }
     // breakable decoration properties
     else if (Type == OLDDEC_Breakable && sc->Check("Health")) {
       sc->ExpectNumber();
-      SetClassFieldInt(Class, "Health", sc->Number);
+      Class->SetFieldInt("Health", sc->Number);
     } else if (Type == OLDDEC_Breakable && sc->Check("DeathHeight")) {
       sc->ExpectFloat();
       DeathHeight = sc->Float;
@@ -3216,91 +3062,91 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
       SolidOnBurn = true;
     } else if ((Type == OLDDEC_Breakable || Type == OLDDEC_Projectile) && sc->Check("DeathSound")) {
       sc->ExpectString();
-      SetClassFieldName(Class, "DeathSound", *sc->String);
+      Class->SetFieldNameValue("DeathSound", *sc->String);
     } else if (Type == OLDDEC_Breakable && sc->Check("BurnDeathSound")) {
       sc->ExpectString();
-      SetClassFieldName(Class, "ActiveSound", *sc->String);
+      Class->SetFieldNameValue("ActiveSound", *sc->String);
     }
     // projectile properties
     else if (Type == OLDDEC_Projectile && sc->Check("Speed")) {
       sc->ExpectFloat();
-      SetClassFieldFloat(Class, "Speed", sc->Float*35.0f);
+      Class->SetFieldFloat("Speed", sc->Float*35.0f);
     } else if (Type == OLDDEC_Projectile && sc->Check("Damage")) {
       sc->ExpectNumber();
-      SetClassFieldFloat(Class, "MissileDamage", sc->Number);
+      Class->SetFieldFloat("MissileDamage", sc->Number);
     } else if (Type == OLDDEC_Projectile && sc->Check("DamageType")) {
       if (sc->Check("Normal")) {
-        SetClassFieldName(Class, "DamageType", NAME_None);
+        Class->SetFieldNameValue("DamageType", NAME_None);
       } else {
         sc->ExpectString();
-        SetClassFieldName(Class, "DamageType", *sc->String);
+        Class->SetFieldNameValue("DamageType", *sc->String);
       }
     } else if (Type == OLDDEC_Projectile && sc->Check("SpawnSound")) {
       sc->ExpectString();
-      SetClassFieldName(Class, "SightSound", *sc->String);
+      Class->SetFieldNameValue("SightSound", *sc->String);
     } else if (Type == OLDDEC_Projectile && sc->Check("ExplosionRadius")) {
       sc->ExpectNumber();
-      SetClassFieldFloat(Class, "ExplosionRadius", sc->Number);
+      Class->SetFieldFloat("ExplosionRadius", sc->Number);
       Explosive = true;
     } else if (Type == OLDDEC_Projectile && sc->Check("ExplosionDamage")) {
       sc->ExpectNumber();
-      SetClassFieldFloat(Class, "ExplosionDamage", sc->Number);
+      Class->SetFieldFloat("ExplosionDamage", sc->Number);
       Explosive = true;
     } else if (Type == OLDDEC_Projectile && sc->Check("DoNotHurtShooter")) {
-      SetClassFieldBool(Class, "bExplosionDontHurtSelf", true);
+      Class->SetFieldBool("bExplosionDontHurtSelf", true);
     } else if (Type == OLDDEC_Projectile && sc->Check("DoomBounce")) {
-      SetClassFieldByte(Class, "BounceType", BOUNCE_Doom);
+      Class->SetFieldByte("BounceType", BOUNCE_Doom);
     } else if (Type == OLDDEC_Projectile && sc->Check("HereticBounce")) {
-      SetClassFieldByte(Class, "BounceType", BOUNCE_Heretic);
+      Class->SetFieldByte("BounceType", BOUNCE_Heretic);
     } else if (Type == OLDDEC_Projectile && sc->Check("HexenBounce")) {
-      SetClassFieldByte(Class, "BounceType", BOUNCE_Hexen);
+      Class->SetFieldByte("BounceType", BOUNCE_Hexen);
     }
     // pickup properties
     else if (Type == OLDDEC_Pickup && sc->Check("PickupMessage")) {
       sc->ExpectString();
-      SetClassFieldStr(Class, "PickupMessage", sc->String);
+      Class->SetFieldStr("PickupMessage", sc->String);
     } else if (Type == OLDDEC_Pickup && sc->Check("PickupSound")) {
       sc->ExpectString();
-      SetClassFieldName(Class, "PickupSound", *sc->String);
+      Class->SetFieldNameValue("PickupSound", *sc->String);
     } else if (Type == OLDDEC_Pickup && sc->Check("Respawns")) {
-      SetClassFieldBool(Class, "bRespawns", true);
+      Class->SetFieldBool("bRespawns", true);
     }
     // compatibility flags
     else if (sc->Check("LowGravity")) {
-      SetClassFieldFloat(Class, "Gravity", 0.125f);
+      Class->SetFieldFloat("Gravity", 0.125f);
     } else if (sc->Check("FireDamage")) {
-      SetClassFieldName(Class, "DamageType", "Fire");
+      Class->SetFieldNameValue("DamageType", "Fire");
     }
     // flags
-    else if (sc->Check("Solid")) SetClassFieldBool(Class, "bSolid", true);
-    else if (sc->Check("NoSector")) SetClassFieldBool(Class, "bNoSector", true);
-    else if (sc->Check("NoBlockmap")) SetClassFieldBool(Class, "bNoBlockmap", true);
-    else if (sc->Check("SpawnCeiling")) SetClassFieldBool(Class, "bSpawnCeiling", true);
-    else if (sc->Check("NoGravity")) SetClassFieldBool(Class, "bNoGravity", true);
-    else if (sc->Check("Shadow")) SetClassFieldBool(Class, "bShadow", true);
-    else if (sc->Check("NoBlood")) SetClassFieldBool(Class, "bNoBlood", true);
-    else if (sc->Check("CountItem")) SetClassFieldBool(Class, "bCountItem", true);
-    else if (sc->Check("WindThrust")) SetClassFieldBool(Class, "bWindThrust", true);
-    else if (sc->Check("FloorClip")) SetClassFieldBool(Class, "bFloorClip", true);
-    else if (sc->Check("SpawnFloat")) SetClassFieldBool(Class, "bSpawnFloat", true);
-    else if (sc->Check("NoTeleport")) SetClassFieldBool(Class, "bNoTeleport", true);
-    else if (sc->Check("Ripper")) SetClassFieldBool(Class, "bRip", true);
-    else if (sc->Check("Pushable")) SetClassFieldBool(Class, "bPushable", true);
-    else if (sc->Check("SlidesOnWalls")) SetClassFieldBool(Class, "bSlide", true);
-    else if (sc->Check("CanPass")) SetClassFieldBool(Class, "bPassMobj", true);
-    else if (sc->Check("CannotPush")) SetClassFieldBool(Class, "bCannotPush", true);
-    else if (sc->Check("ThruGhost")) SetClassFieldBool(Class, "bThruGhost", true);
-    else if (sc->Check("NoDamageThrust")) SetClassFieldBool(Class, "bNoDamageThrust", true);
-    else if (sc->Check("Telestomp")) SetClassFieldBool(Class, "bTelestomp", true);
-    else if (sc->Check("FloatBob")) SetClassFieldBool(Class, "bFloatBob", true);
-    else if (sc->Check("ActivateImpact")) SetClassFieldBool(Class, "bActivateImpact", true);
-    else if (sc->Check("CanPushWalls")) SetClassFieldBool(Class, "bActivatePushWall", true);
-    else if (sc->Check("ActivateMCross")) SetClassFieldBool(Class, "bActivateMCross", true);
-    else if (sc->Check("ActivatePCross")) SetClassFieldBool(Class, "bActivatePCross", true);
-    else if (sc->Check("Reflective")) SetClassFieldBool(Class, "bReflective", true);
-    else if (sc->Check("FloorHugger")) SetClassFieldBool(Class, "bIgnoreFloorStep", true);
-    else if (sc->Check("CeilingHugger")) SetClassFieldBool(Class, "bIgnoreCeilingStep", true);
-    else if (sc->Check("DontSplash")) SetClassFieldBool(Class, "bNoSplash", true);
+    else if (sc->Check("Solid")) Class->SetFieldBool("bSolid", true);
+    else if (sc->Check("NoSector")) Class->SetFieldBool("bNoSector", true);
+    else if (sc->Check("NoBlockmap")) Class->SetFieldBool("bNoBlockmap", true);
+    else if (sc->Check("SpawnCeiling")) Class->SetFieldBool("bSpawnCeiling", true);
+    else if (sc->Check("NoGravity")) Class->SetFieldBool("bNoGravity", true);
+    else if (sc->Check("Shadow")) Class->SetFieldBool("bShadow", true);
+    else if (sc->Check("NoBlood")) Class->SetFieldBool("bNoBlood", true);
+    else if (sc->Check("CountItem")) Class->SetFieldBool("bCountItem", true);
+    else if (sc->Check("WindThrust")) Class->SetFieldBool("bWindThrust", true);
+    else if (sc->Check("FloorClip")) Class->SetFieldBool("bFloorClip", true);
+    else if (sc->Check("SpawnFloat")) Class->SetFieldBool("bSpawnFloat", true);
+    else if (sc->Check("NoTeleport")) Class->SetFieldBool("bNoTeleport", true);
+    else if (sc->Check("Ripper")) Class->SetFieldBool("bRip", true);
+    else if (sc->Check("Pushable")) Class->SetFieldBool("bPushable", true);
+    else if (sc->Check("SlidesOnWalls")) Class->SetFieldBool("bSlide", true);
+    else if (sc->Check("CanPass")) Class->SetFieldBool("bPassMobj", true);
+    else if (sc->Check("CannotPush")) Class->SetFieldBool("bCannotPush", true);
+    else if (sc->Check("ThruGhost")) Class->SetFieldBool("bThruGhost", true);
+    else if (sc->Check("NoDamageThrust")) Class->SetFieldBool("bNoDamageThrust", true);
+    else if (sc->Check("Telestomp")) Class->SetFieldBool("bTelestomp", true);
+    else if (sc->Check("FloatBob")) Class->SetFieldBool("bFloatBob", true);
+    else if (sc->Check("ActivateImpact")) Class->SetFieldBool("bActivateImpact", true);
+    else if (sc->Check("CanPushWalls")) Class->SetFieldBool("bActivatePushWall", true);
+    else if (sc->Check("ActivateMCross")) Class->SetFieldBool("bActivateMCross", true);
+    else if (sc->Check("ActivatePCross")) Class->SetFieldBool("bActivatePCross", true);
+    else if (sc->Check("Reflective")) Class->SetFieldBool("bReflective", true);
+    else if (sc->Check("FloorHugger")) Class->SetFieldBool("bIgnoreFloorStep", true);
+    else if (sc->Check("CeilingHugger")) Class->SetFieldBool("bIgnoreCeilingStep", true);
+    else if (sc->Check("DontSplash")) Class->SetFieldBool("bNoSplash", true);
     else {
       if (decorate_fail_on_unknown) {
         Sys_Error("Unknown property '%s'", *sc->String);
@@ -3369,8 +3215,8 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
           SetupOldStyleFunction(sc, Class, States[DeathStart], FuncA_ScreamAndUnblock);
         }
       }
-      if (!DeathHeight) DeathHeight = GetClassFieldFloat(Class, "Height");
-      SetClassFieldFloat(Class, "DeathHeight", DeathHeight);
+      if (!DeathHeight) DeathHeight = Class->GetFieldFloat("Height");
+      Class->SetFieldFloat("DeathHeight", DeathHeight);
     }
     Class->SetStateLabel("Death", States[DeathStart]);
   }
@@ -3392,8 +3238,8 @@ static void ParseOldDecoration (VScriptParser *sc, int Type) {
       }
     }
 
-    if (!BurnHeight) BurnHeight = GetClassFieldFloat(Class, "Height");
-    SetClassFieldFloat(Class, "BurnHeight", BurnHeight);
+    if (!BurnHeight) BurnHeight = Class->GetFieldFloat("Height");
+    Class->SetFieldFloat("BurnHeight", BurnHeight);
 
     TArray<VName> Names;
     Names.Append("Death");
