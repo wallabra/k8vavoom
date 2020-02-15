@@ -909,6 +909,16 @@ static TVec sanitiseScale (const TVec &scale) {
   if (!isFiniteF(res.x) || !res.x) res.x = 1.0f;
   if (!isFiniteF(res.y) || !res.y) res.y = 1.0f;
   if (!isFiniteF(res.z) || !res.z) res.z = 1.0f;
+  // fix negative scales (i don't know what gozzo does with them, but we'll convert them to 1/scale)
+  // usually, scale "-1" is for HUD weapons. wtf?!
+  /*
+  if (res.x < 0 && res.x != -1.0f) GCon->Logf("!!! scalex=%g", res.x);
+  if (res.y < 0 && res.y != -1.0f) GCon->Logf("!!! scaley=%g", res.y);
+  if (res.z < 0 && res.z != -1.0f) GCon->Logf("!!! scalez=%g", res.z);
+  */
+  if (res.x < 0) res.x = 1.0f/(-res.x);
+  if (res.y < 0) res.y = 1.0f/(-res.y);
+  if (res.z < 0) res.z = 1.0f/(-res.z);
   return res;
 }
 
