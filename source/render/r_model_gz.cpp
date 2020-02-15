@@ -362,9 +362,7 @@ void GZModelDef::parse (VScriptParser *sc) {
       offset.z /= scale.z;
       zoffset /= scale.z;
       // qstuffultra hack
-      //if (wasZOffset && zoffset > 8) zoffset += scale.z;
-      if (wasZOffset && zoffset > 8) zoffset += 5.4f;
-      //if (wasZOffset && zoffset > 8) zoffset += zoffset/2.8f;
+      if (wasZOffset && zoffset > 8) { offset.z = zoffset+scale.z; zoffset = 0; }
       continue;
     }
     // "frameindex"
