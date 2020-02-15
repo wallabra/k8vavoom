@@ -257,6 +257,7 @@ void GZModelDef::parse (VScriptParser *sc) {
   className = sc->String;
   sc->Expect("{");
   bool rotating = false;
+  bool wasZOffset = false; // temp hack for QStuffUltra
   while (!sc->Check("}")) {
     // skip flags
     if (sc->Check("PITCHFROMMOMENTUM") ||
@@ -355,6 +356,15 @@ void GZModelDef::parse (VScriptParser *sc) {
       sc->ExpectFloatWithSign();
       if (sc->Float == 0) sc->Error(va("invalid z scale in model '%s'", *className));
       scale.z = sc->Float;
+      // seems that scale scales previous offsets
+      offset.x /= scale.x;
+      offset.y /= scale.y;
+      offset.z /= scale.z;
+      zoffset /= scale.z;
+      // qstuffultra hack
+      //if (wasZOffset && zoffset > 8) zoffset += scale.z;
+      if (wasZOffset && zoffset > 8) zoffset += 5.4f;
+      //if (wasZOffset && zoffset > 8) zoffset += zoffset/2.8f;
       continue;
     }
     // "frameindex"
@@ -475,6 +485,7 @@ void GZModelDef::parse (VScriptParser *sc) {
     if (sc->Check("ZOffset")) {
       sc->ExpectFloatWithSign();
       zoffset = sc->Float;
+      wasZOffset = true;
       continue;
     }
     // "InheritActorPitch"
