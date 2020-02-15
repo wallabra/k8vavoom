@@ -533,6 +533,11 @@ final void DrawPicFitCenter (int maxw, int maxh, int x, int y, int handle, optio
   picinfo_t pinf;
   R_GetPicInfo(handle, &pinf);
   if (pinf.width > 0 && pinf.height > 0) {
+    #ifdef NONONONONONO
+    //x += pinf.xoffset;
+    //y += pinf.yoffset;
+    //if (pinf.xoffset == 0) x -= pinf.width/2;
+    if (pinf.yoffset == 0) y -= pinf.height;
     alpha = fmin(alpha, 1.0);
     // standard doom image is 31x17
     if (pinf.width <= maxw && pinf.height <= maxh) {
@@ -544,6 +549,29 @@ final void DrawPicFitCenter (int maxw, int maxh, int x, int y, int handle, optio
       float scaleN = fmin(scaleX, scaleY);
       DrawPicScaled(x+int((float(maxw)-pinf.width*scaleN)*0.5), y, handle, scaleN, scaleN, alpha);
     }
+    #else
+    int x0, y0, width, height;
+    R_GetPicRealDimensions(handle, out x0, out y0, out width, out height);
+    //printdebug("x0=%s; y0=%s; x1=%s; y1=%s; width=%s; height=%s; ofsx=%d; ofsy=%d", x0, y0, width, height, pinf.width, pinf.height, pinf.xoffset, pinf.yoffset);
+    width -= x0;
+    height -= y0;
+    if (width > 0 && height > 0) {
+      alpha = fmin(alpha, 1.0);
+      // standard doom image is 31x17
+      if (width <= maxw && height <= maxh) {
+        DrawPicScaledIgnoreOffset(x+(maxw-width)/2-x0, y-height-y0, handle, 1.0, 1.0, alpha);
+        //DrawRect(x, y-height-y0, maxw, height, 0xff_00_00);
+      } else {
+        // calculate scaling
+        float scaleX = (width > maxw ? float(maxw)/width : 1.0);
+        float scaleY = (height > maxh ? float(maxh)/height : 1.0);
+        float scaleN = fmin(scaleX, scaleY);
+        DrawPicScaledIgnoreOffset(x+int((float(maxw)-width*scaleN)*0.5)-int(x0*scaleN), y-int(height*scaleN)-int(y0*scaleN), handle, scaleN, scaleN, alpha);
+        //DrawRect(x, y-int(height*scaleN)-int(y0*scaleN), maxw, int(height*scaleN), 0xff_7f_00);
+        //DrawRect(x, y-maxh, maxw, maxh, 0xff_7f_00);
+      }
+    }
+    #endif
   }
 }
 
@@ -782,8 +810,8 @@ override void SB_DrawFullscreenStats () {
           return a.widx-b.widx;
         });
         SetFont('smallfont');
-        SetTextAlign(hleft, vtop);
-        //SetTextAlign(hcenter, vtop);
+        //SetTextAlign(hleft, vtop);
+        SetTextAlign(hcenter, vtop);
         int xpos = ovw/2-(alist.length*30)/2;
         int ypos = ovh-10-20;
         picinfo_t pi;
@@ -795,7 +823,7 @@ override void SB_DrawFullscreenStats () {
           if (ico) {
             //R_GetPicInfo(ico, &pi);
             //DrawPic(xpos+(30-pi.width)/2, ypos, ico, alpha);
-            DrawPicFitCenter(28, 18, xpos+1, ypos, ico, alpha);
+            DrawPicFitCenter(28, 18, xpos+1, ypos+2, ico, alpha);
           }
           int maxam = ai.ammo.k8GetAmmoKingMax();
           int am = ai.ammo.Amount;
@@ -806,7 +834,10 @@ override void SB_DrawFullscreenStats () {
           else if (am > maxam/3) aclr = CR_YELLOW;
           else aclr = CR_RED;
           //aclr = (am < maxam ? (am < maxam/4 ? CR_UNTRANSLATED : CR_GREEN) : CR_YELLOW);
-          DrawText(xpos, ypos+4, va("%3d", am), aclr, CR_UNTRANSLATED, alpha);
+          //!string astr = va("%3d", am);
+          //!int ax0 = xpos+(30-TextWidth(astr))/2;
+          //!DrawText(ax0, ypos+4, va("%3d", am), aclr, CR_UNTRANSLATED, alpha);
+          DrawText(xpos+30/2, ypos+4, va("%d", am), aclr, CR_UNTRANSLATED, alpha);
           //DrawText(xpos+(30/2), ypos+4, va("%d", ai.ammo.Amount), CR_UNTRANSLATED, CR_UNTRANSLATED, fsalpha);
           xpos += 30;
         }

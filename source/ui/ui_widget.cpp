@@ -693,6 +693,31 @@ void VWidget::DrawPicScaled (int X, int Y, VTexture *Tex, float scaleX, float sc
 
 //==========================================================================
 //
+//  VWidget::DrawPicScaledIgnoreOffset
+//
+//==========================================================================
+void VWidget::DrawPicScaledIgnoreOffset (int X, int Y, int Handle, float scaleX, float scaleY, float Alpha, int Trans) {
+  if (Alpha <= 0.0f) return;
+  VTexture *Tex = GTextureManager(Handle);
+  if (!Tex) return;
+
+  float X1 = X;
+  float Y1 = Y;
+  float X2 = (int)(X+Tex->GetScaledWidth()*scaleX);
+  float Y2 = (int)(Y+Tex->GetScaledHeight()*scaleY);
+  float S1 = 0;
+  float T1 = 0;
+  float S2 = Tex->GetWidth();
+  float T2 = Tex->GetHeight();
+  if (TransferAndClipRect(X1, Y1, X2, Y2, S1, T1, S2, T2)) {
+    //fprintf(stderr, "X=%d; Y=%d; X1=%f; Y1=%f; X2=%f; Y2=%f; w1=%f; tw=%d; S1=%f; T1=%f; S2=%f; T2=%f\n", X, Y, X1, Y1, X2, Y2, X2-X1, Tex->GetWidth(), S1, T1, S2, T2);
+    Drawer->DrawPic(X1, Y1, X2, Y2, S1, T1, S2, T2, Tex, R_GetCachedTranslation(Trans, nullptr), Alpha);
+  }
+}
+
+
+//==========================================================================
+//
 //  VWidget::DrawPic
 //
 //==========================================================================
@@ -1357,6 +1382,17 @@ IMPLEMENT_FUNCTION(VWidget, IsFocus) {
 IMPLEMENT_FUNCTION(VWidget, SetFocus) {
   vobjGetParamSelf();
   if (Self) Self->SetFocus();
+}
+
+
+IMPLEMENT_FUNCTION(VWidget, DrawPicScaledIgnoreOffset) {
+  int X, Y, Handle;
+  VOptParamFloat scaleX(1.0f);
+  VOptParamFloat scaleY(1.0f);
+  VOptParamFloat Alpha(1.0f);
+  VOptParamInt Translation(0);
+  vobjGetParamSelf(X, Y, Handle, scaleX, scaleY, Alpha, Translation);
+  if (Self) Self->DrawPicScaledIgnoreOffset(X, Y, Handle, scaleX, scaleY, Alpha, Translation);
 }
 
 IMPLEMENT_FUNCTION(VWidget, DrawPic) {

@@ -215,6 +215,8 @@ public:
   bool IsFocus (bool Recurse = true) const;
   void SetFocus ();
 
+  void DrawPicScaledIgnoreOffset (int X, int Y, int Handle, float scaleX=1.0f, float scaleY=1.0f, float Alpha=1.0f, int Trans=0);
+
   void DrawPic (int, int, int, float = 1.0f, int = 0);
   void DrawPicScaled (int X, int Y, int Handle, float scaleX, float scaleY, float Alpha=1.0f, int Trans=0);
   void DrawPicScaled (int X, int Y, VTexture *Tex, float scaleX, float scaleY, float Alpha=1.0f, int Trans=0);
@@ -320,6 +322,7 @@ public:
   DECLARE_FUNCTION(IsFocus)
   DECLARE_FUNCTION(SetFocus)
 
+  DECLARE_FUNCTION(DrawPicScaledIgnoreOffset)
   DECLARE_FUNCTION(DrawPic)
   DECLARE_FUNCTION(DrawPicScaled)
   DECLARE_FUNCTION(DrawShadowedPic)

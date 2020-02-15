@@ -192,6 +192,8 @@ native final Widget GetCurrentFocus ();
 native final bool IsFocus (optional bool Recurse);
 native final void SetFocus ();
 
+native final void DrawPicScaledIgnoreOffset (int X, int Y, int Handle, optional float scaleX/*=1.0f*/, optional float scaleY/*=1.0f*/, optional float Alpha/*=1.0f*/, optional int Trans/*=0*/);
+
 native final void DrawPic (int X, int Y, int Handle, optional float Alpha, optional int Translation);
 native final void DrawPicScaled (int X, int Y, int Handle, float scaleX, float scaleY, optional float Alpha, optional int Translation);
 native final void DrawShadowedPic (int X, int Y, int Handle);

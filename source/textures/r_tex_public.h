@@ -205,12 +205,17 @@ public:
   int SOffsetFix; // set only if `bForcedSpriteOffset` is true
   int TOffsetFix; // set only if `bForcedSpriteOffset` is true
   vuint8 WarpType;
-  float SScale; // scaling
-  float TScale;
+  float SScale; // horizontal scaling; divide by this to get "view size"
+  float TScale; // vertical scaling; divide by this to get "view size"
   int TextureTranslation; // animation
   int HashNext;
   int SourceLump;
-  int RealHeight; // without bottom transparent part; MIN_VINT32 means "not calculated yet"
+  // real picture dimensions (w/o transparent part), in pixels; MIN_VINT32 means "not calculated yet"
+  int RealX0;
+  int RealY0;
+  // this is from (0,0)
+  int RealHeight;
+  int RealWidth;
 
   VTexture *Brightmap;
 
@@ -289,7 +294,7 @@ protected:
   // will delete old `Pixels` if necessary
   void ConvertPixelsToShaded ();
 
-  void CalcRealHeight ();
+  void CalcRealDimensions ();
 
 public:
   static void FilterFringe (rgba_t *pic, int wdt, int hgt);
@@ -304,7 +309,10 @@ public:
   inline int GetFormat () const { return (shadeColor == -1 ?  mFormat : TEXFMT_RGBA); }
   PropertyRO<int, VTexture> Format {this, &VTexture::GetFormat};
 
-  inline int GetRealHeight () { if (RealHeight == MIN_VINT32) CalcRealHeight(); return RealHeight; }
+  inline int GetRealX0 () { if (RealX0 == MIN_VINT32) CalcRealDimensions(); return RealX0; }
+  inline int GetRealY0 () { if (RealY0 == MIN_VINT32) CalcRealDimensions(); return RealY0; }
+  inline int GetRealHeight () { if (RealHeight == MIN_VINT32) CalcRealDimensions(); return RealHeight; }
+  inline int GetRealWidth () { if (RealWidth == MIN_VINT32) CalcRealDimensions(); return RealWidth; }
 
 public:
   VTexture ();

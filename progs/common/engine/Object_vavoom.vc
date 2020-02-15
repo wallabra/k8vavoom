@@ -488,6 +488,8 @@ native static final int R_RegisterPicPal (name Name, name palname);
 native static final int R_RegisterPicPath (name path);
 // retrieves pic info
 native static final void R_GetPicInfo (int handle, picinfo_t *info);
+// WARNING! this is slow for the first time, and loads image into memory
+native static final void R_GetPicRealDimensions (int handle, out int x0, out int y0, out int width, out int height, optional bool unscaled);
 // draws a pic
 native static final void R_DrawPic (int x, int y, int handle, optional float alpha);
 native static final void R_DrawPicFloat (float x, float y, int handle, optional float alpha);

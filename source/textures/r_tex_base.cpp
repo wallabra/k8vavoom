@@ -116,7 +116,10 @@ VTexture::VTexture ()
   , TextureTranslation(0)
   , HashNext(-1)
   , SourceLump(-1)
+  , RealX0(MIN_VINT32)
+  , RealY0(MIN_VINT32)
   , RealHeight(MIN_VINT32)
+  , RealWidth(MIN_VINT32)
   , Brightmap(nullptr)
   , noDecals(false)
   , staticNoDecals(false)
@@ -776,11 +779,35 @@ rgba_t VTexture::getPixel (int x, int y) {
 
 //==========================================================================
 //
-//  VTexture::CalcRealHeight
+//  VTexture::CalcRealDimensions
 //
 //==========================================================================
-void VTexture::CalcRealHeight () {
+void VTexture::CalcRealDimensions () {
+  RealX0 = RealY0 = 0;
   RealHeight = Height;
+  RealWidth = Width;
+  // x0
+  while (RealX0 < Width) {
+    bool found = false;
+    for (int y = 0; y < Height; ++y) if (getPixel(RealX0, y).a != 0) { found = true; break; }
+    if (found) break;
+    ++RealX0;
+  }
+  // y0
+  while (RealY0 < Height) {
+    bool found = false;
+    for (int x = 0; x < Width; ++x) if (getPixel(x, RealY0).a != 0) { found = true; break; }
+    if (found) break;
+    ++RealY0;
+  }
+  // width
+  while (RealWidth > 0) {
+    bool found = false;
+    for (int y = 0; y < Height; ++y) if (getPixel(RealWidth-1, y).a != 0) { found = true; break; }
+    if (found) break;
+    --RealWidth;
+  }
+  // height
   while (RealHeight > 0) {
     bool found = false;
     for (int x = 0; x < Width; ++x) if (getPixel(x, RealHeight-1).a != 0) { found = true; break; }

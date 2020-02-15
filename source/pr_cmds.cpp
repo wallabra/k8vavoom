@@ -452,6 +452,43 @@ IMPLEMENT_FREE_FUNCTION(VObject, R_GetPicInfo) {
 }
 
 
+//native static final void R_GetPicRealDimensions (int handle, out int x0, out int y0, out int width, out int height, optional bool unscaled);
+IMPLEMENT_FREE_FUNCTION(VObject, R_GetPicRealDimensions) {
+  int handle;
+  int *x0, *y0, *width, *height;
+  VOptParamBool unscaled(false);
+  vobjGetParam(handle, x0, y0, width, height, unscaled);
+  VTexture *tx = GTextureManager.getIgnoreAnim(handle);
+  if (tx) {
+    if (x0) {
+      int v = tx->GetRealX0();
+      if (!unscaled) v = v/tx->SScale;
+      *x0 = v;
+    }
+    if (y0) {
+      int v = tx->GetRealY0();
+      if (!unscaled) v = v/tx->TScale;
+      *y0 = v;
+    }
+    if (width) {
+      int v = tx->GetRealWidth();
+      if (!unscaled) v = v/tx->SScale;
+      *width = v;
+    }
+    if (height) {
+      int v = tx->GetRealHeight();
+      if (!unscaled) v = v/tx->TScale;
+      *height = v;
+    }
+  } else {
+    if (x0) *x0 = 0;
+    if (y0) *y0 = 0;
+    if (width) *width = 0;
+    if (height) *height = 0;
+  }
+}
+
+
 //==========================================================================
 //
 //  R_DrawPic
