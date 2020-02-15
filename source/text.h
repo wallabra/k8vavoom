@@ -27,7 +27,7 @@
 // horisontal alignement
 enum halign_e {
   hleft,   //Left
-  hcenter, //Centerd
+  hcenter, //Centered
   hright,  //Right
 };
 

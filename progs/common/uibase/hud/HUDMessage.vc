@@ -49,7 +49,7 @@ int HudWidth;
 int HudHeight;
 bool isTextFont;
 
-// true if text lines should be centerd
+// true if text lines should be centered
 bool bCenterX;
 bool isHealthBar;
 
