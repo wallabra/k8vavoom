@@ -29,9 +29,15 @@ class VExpression;
 class VStatement;
 class VLexer;
 
-#define ANY_PACKAGE  ((VPackage *)-1)
+//k8: this should work for both 32-bit and 64-bit systems
+#define ANY_PACKAGE  ((VPackage *)((uintptr_t)(~(0ULL))))
 #define ANY_MEMBER   (255)
 
+/*k8: and this check doesn't work; sigh.
+static_assert(
+  (sizeof(VPackage *) == 4 && (uintptr_t)ANY_PACKAGE == 0xffffffffU) ||
+  (sizeof(VPackage *) == 8 && (uintptr_t)ANY_PACKAGE == 0xffffffffffffffffULL), "oopsie!");
+*/
 
 enum {
   MEMBER_Package,
