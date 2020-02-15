@@ -518,6 +518,24 @@ static final bool CalcLinesIntersection (TVec lav1, TVec lav2, TVec lbv1, TVec l
   return true;
 }
 
+static final float AngleClamp180Signed (float angle) {
+  /*
+  while (angle < -180.0) angle += 180.0;
+  while (angle > 180.0) angle -= 180.0;
+  return angle;
+  */
+  return fclamp(angle, -180.0, 180.0);
+}
+
+static final float AngleClamp360Signed (float angle) {
+  /*
+  while (angle < -360.0) angle += 360.0;
+  while (angle > 360.0) angle -= 360.0;
+  return angle;
+  */
+  return fclamp(angle, -360.0, 360.0);
+}
+
 // ////////////////////////////////////////////////////////////////////////// //
 // plane functions
 

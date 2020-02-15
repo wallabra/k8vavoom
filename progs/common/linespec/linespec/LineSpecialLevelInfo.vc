@@ -1967,13 +1967,13 @@ final bool EV_StopPoly (line_t *line, int Arg1, int Arg2, int Arg3,
 {
   int polyNum = Arg1;
   polyobj_t *poly = XLevel.GetPolyobj(polyNum);
-  if (!poly) Error("EV_RotatePoly: Invalid polyobj num"); //: %d\n", polyNum);
+  if (!poly) { printerror("EV_RotatePoly: invalid polyobj num %s", polyNum); return false; }
   delete poly->SpecialData;
   PolyobjStopSequence(poly);
 
-  for (int mirror = XLevel.GetPolyobjMirror(polyNum); mirror; mirror = XLevel.GetPolyobjMirror(polyNum)) {
+  for (int mirror = XLevel.GetPolyobjMirror(polyNum); mirror; mirror = XLevel.GetPolyobjMirror(/*polyNum*/mirror)) {
     poly = XLevel.GetPolyobj(mirror);
-    if (!poly) Error("EV_RotatePoly:  Invalid polyobj num"); //: %d\n", polyNum);
+    if (!poly) { printerror("EV_RotatePoly: invalid polyobj mirror num %s for pobj %s", mirror, polyNum); continue; }
     delete poly->SpecialData;
     PolyobjStopSequence(poly);
   }
@@ -1986,89 +1986,56 @@ final bool EV_StopPoly (line_t *line, int Arg1, int Arg2, int Arg3,
 //  EV_RotatePoly
 //
 //==========================================================================
-final bool EV_RotatePoly(line_t *line, int Arg1, int Arg2, int Arg3,
-  int Arg4, int Arg5, int direction, bool overRide)
+final bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle,
+                          int Arg4, int Arg5, int direction, bool overRide)
 {
-  int mirror;
-  int polyNum;
-  PolyobjRotator pe;
-  polyobj_t *poly;
+  polyobj_t *poly = XLevel.GetPolyobj(polyNum);
+  if (!poly) { printerror("EV_RotatePoly: invalid polyobj num %d", polyNum); return false; }
 
-  polyNum = Arg1;
-  poly = XLevel.GetPolyobj(polyNum);
-  if (poly)
-  {
-    if (poly->SpecialData && !overRide)
-    { // poly is already moving
-      return false;
-    }
+  //printdebug("ROTATE POBJ #%d (speed=%s; byteAngle=%s; dir=%s)", polyNum, speed, byteAngle, direction);
+  if (poly->SpecialData && !overRide) {
+    // poly is already moving
+    //printdebug("   already moving.");
+    return false;
   }
-  else
-  {
-    Error("EV_RotatePoly:  Invalid polyobj num"); //: %d\n", polyNum);
-  }
-  pe = SpawnThinker(PolyobjRotator);
+
+  PolyobjRotator pe = SpawnThinker(PolyobjRotator);
   pe.polyobj = polyNum;
-  if (Arg3)
-  {
-    if (Arg3 == 255)
-    {
-      pe.dist = -1.0;
-    }
-    else
-    {
-      pe.dist = float(Arg3)*(90.0/64.0); // Angle
-    }
-  }
-  else
-  {
-    pe.dist = 360.0;
-  }
-  pe.speed = AngleMod180(32.0*float(Arg2)*float(direction)*90.0/64.0/8.0);
+  pe.dist = (byteAngle ? (byteAngle == 255 ? -1.0 : float(byteAngle)*(90.0/64.0)/*Angle*/) : 360.0);
+  pe.speed = /*AngleClamp360Signed*/(32.0*float(speed)*float(direction)*90.0/64.0/8.0); // was AngleMod180
 
   //THRUST
   pe.thrust_force = pe.speed/32.0*float(0x800)/90.0;
 
+  //printdebug("  dist=%s; speed=%s; thrust_force=%s", pe.dist, pe.speed, pe.thrust_force);
+
   poly->SpecialData = pe;
   PolyobjStartSequence(poly, GetSeqTrans(poly->seqType, SEQ_Door), 0);
 
-  for (mirror = XLevel.GetPolyobjMirror(polyNum); mirror;
-    mirror = XLevel.GetPolyobjMirror(polyNum))
-  {
+  for (int mirror = XLevel.GetPolyobjMirror(polyNum); mirror; mirror = XLevel.GetPolyobjMirror(/*polyNum*/mirror)) {
     poly = XLevel.GetPolyobj(mirror);
-    if (!poly)
-    {
-      Error("EV_RotatePoly:  Invalid polyobj num"); //: %d\n", polyNum);
+    if (!poly) {
+      printerror("EV_RotatePoly: invalid mirror polyobj num %s for pobj %s", mirror, polyNum);
+      continue;
     }
-    if (poly && poly->SpecialData && !overRide)
-    { // mirroring poly is already in motion
+    //printdebug(" rotate mirror polyobj %s for pobj %s", mirror, polyNum);
+    if (poly && poly->SpecialData && !overRide) {
+      // mirroring poly is already in motion
+      //printdebug("  already in motion.");
       break;
     }
     pe = SpawnThinker(PolyobjRotator);
     poly->SpecialData = pe;
     pe.polyobj = mirror;
-    if (Arg3)
-    {
-      if (Arg3 == 255)
-      {
-        pe.dist = -1.0;
-      }
-      else
-      {
-        pe.dist = float(Arg3)*(90.0/64.0); // Angle
-      }
-    }
-    else
-    {
-      pe.dist = 360.0;
-    }
+    pe.dist = (byteAngle ? (byteAngle == 255 ? -1.0 : float(byteAngle)*(90.0/64.0)/*Angle*/) : 360.0);
     direction = -direction;
-    pe.speed = AngleMod180(32.0*float(Arg2)*float(direction)*90.0/64.0/8.0);
+    pe.speed = /*AngleClamp360Signed*/(32.0*float(speed)*float(direction)*90.0/64.0/8.0); // was AngleMod180
 
     //THRUST
     pe.thrust_force = pe.speed/32.0*float(0x800)/90.0;
+    //printdebug("  dist=%s; speed=%s; thrust_force=%s", pe.dist, pe.speed, pe.thrust_force);
 
-    polyNum = mirror;
+    //polyNum = mirror;
     PolyobjStartSequence(poly, GetSeqTrans(poly->seqType, SEQ_Door), 0);
   }
   return true;
@@ -2134,17 +2101,8 @@ final bool EV_MovePoly (line_t *line, int Arg1, int Arg2, int Arg3, int Arg4,
 
   polyNum = Arg1;
   poly = XLevel.GetPolyobj(polyNum);
-  if (poly)
-  {
-    if (poly->SpecialData && !overRide)
-    { // poly is already moving
-      return false;
-    }
-  }
-  else
-  {
-    Error("EV_MovePoly:  Invalid polyobj num"); //: %d\n", polyNum);
-  }
+  if (!poly) { printerror("EV_MovePoly: invalid polyobj num %s", polyNum); return false; }
+  if (poly->SpecialData && !overRide) return false; // poly is already moving
   pe = SpawnThinker(PolyobjMover);
   pe.polyobj = polyNum;
   if (timesEight)
@@ -2168,9 +2126,7 @@ final bool EV_MovePoly (line_t *line, int Arg1, int Arg2, int Arg3, int Arg4,
   pe.angle = an;
   PolyobjStartSequence(poly, GetSeqTrans(poly->seqType, SEQ_Door), 0);
 
-  for (mirror = XLevel.GetPolyobjMirror(polyNum); mirror;
-    mirror = XLevel.GetPolyobjMirror(polyNum))
-  {
+  for (mirror = XLevel.GetPolyobjMirror(polyNum); mirror; mirror = XLevel.GetPolyobjMirror(/*polyNum*/mirror)) {
     poly = XLevel.GetPolyobj(mirror);
     if (poly && poly->SpecialData && !overRide)
     { // mirroring poly is already in motion
@@ -2195,7 +2151,7 @@ final bool EV_MovePoly (line_t *line, int Arg1, int Arg2, int Arg3, int Arg4,
 
     an = AngleMod360(an+180.0); // reverse the angle
     pe.angle = an;
-    polyNum = mirror;
+    //polyNum = mirror;
     PolyobjStartSequence(poly, GetSeqTrans(poly->seqType, SEQ_Door), 0);
   }
   return true;
@@ -2218,17 +2174,8 @@ final bool EV_OpenPolyDoor(line_t *line, int Arg1, int Arg2, int Arg3,
 
   polyNum = Arg1;
   poly = XLevel.GetPolyobj(polyNum);
-  if (poly)
-  {
-    if (poly->SpecialData)
-    { // poly is already moving
-      return false;
-    }
-  }
-  else
-  {
-    Error("EV_OpenPolyDoor:  Invalid polyobj num"); //: %d\n", polyNum);
-  }
+  if (!poly) { printerror("EV_OpenPolyDoor: invalid polyobj num %s", polyNum); return false; }
+  if (poly->SpecialData) return false; // poly is already moving
   pd = SpawnThinker(PolyobjDoor);
   pd.type = type;
   pd.polyobj = polyNum;
@@ -2250,7 +2197,7 @@ final bool EV_OpenPolyDoor(line_t *line, int Arg1, int Arg2, int Arg3,
   else if (type == PolyobjDoor::PODOOR_SWING)
   {
     pd.waitTime = float(Arg4)/35.0;
-    pd.speed = AngleMod180(4.0*float(Arg2)*(90.0/64.0));
+    pd.speed = /*AngleClamp360Signed*/(4.0*float(Arg2)*(90.0/64.0)); // was AngleMod180
     pd.totalDist = float(Arg3)*(90.0/64.0);
     pd.dist = pd.totalDist;
 
@@ -2262,9 +2209,7 @@ final bool EV_OpenPolyDoor(line_t *line, int Arg1, int Arg2, int Arg3,
 
   poly->SpecialData = pd;
 
-  for (mirror = XLevel.GetPolyobjMirror(polyNum); mirror;
-    mirror = XLevel.GetPolyobjMirror(polyNum))
-  {
+  for (mirror = XLevel.GetPolyobjMirror(polyNum); mirror; mirror = XLevel.GetPolyobjMirror(/*polyNum*/mirror)) {
     poly = XLevel.GetPolyobj(mirror);
     if (poly && poly->SpecialData)
     { // mirroring poly is already in motion
@@ -2292,7 +2237,7 @@ final bool EV_OpenPolyDoor(line_t *line, int Arg1, int Arg2, int Arg3,
     else if (type == PolyobjDoor::PODOOR_SWING)
     {
       pd.waitTime = float(Arg4)/35.0;
-      pd.speed = AngleMod180(4.0*float(-Arg2)*(90.0/64.0));
+      pd.speed = /*AngleClamp360Signed*/(4.0*float(-Arg2)*(90.0/64.0)); // was AngleMod180
       pd.totalDist = float(Arg3)*(90.0/64.0);
       pd.dist = pd.totalDist;
 
@@ -2301,7 +2246,7 @@ final bool EV_OpenPolyDoor(line_t *line, int Arg1, int Arg2, int Arg3,
 
       PolyobjStartSequence(poly, GetSeqTrans(poly->seqType, SEQ_Door), 0);
     }
-    polyNum = mirror;
+    //polyNum = mirror;
   }
   return true;
 }
