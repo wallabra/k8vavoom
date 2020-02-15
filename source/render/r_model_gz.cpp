@@ -40,6 +40,9 @@ public:
     // set in `checkModelSanity()`
     TAVec angleOffset;
     float rotationSpeed; // !0: rotating
+    bool usePitch;
+    bool usePitchInverted;
+    bool useRoll;
     int vvindex; // vavoom frame index in the given model (-1: invalid frame)
     // used only in sanity check method
     int linkSprBase; // <0: end of list
@@ -62,11 +65,12 @@ public:
     // as we can merge models, different frames can have different scale
     TVec scale;
     TVec offset;
+    float zoffset;
     // temporary working data
     bool used;
 
     VStr toString () const {
-      return VStr(va("mdl(%d); frm(%d); vvfrm(%d); scale=(%g,%g,%g); ofs=(%g,%g,%g)", mdlindex, mdlframe, vvframe, scale.x, scale.y, scale.z, offset.x, offset.y, offset.z));
+      return VStr(va("mdl(%d); frm(%d); vvfrm(%d); scale=(%g,%g,%g); ofs=(%g,%g,%g); zofs=%g", mdlindex, mdlframe, vvframe, scale.x, scale.y, scale.z, offset.x, offset.y, offset.z, zoffset));
     }
   };
 
@@ -95,7 +99,11 @@ public:
   TArray<MSDef> models;
   TVec scale;
   TVec offset;
+  float zoffset;
   float rotationSpeed; // !0: rotating
+  bool usePitch;
+  bool usePitchInverted;
+  bool useRoll;
   TAVec angleOffset;
   TArray<Frame> frames;
 
@@ -136,7 +144,11 @@ GZModelDef::GZModelDef ()
   , models()
   , scale(0, 0, 0)
   , offset(0, 0, 0)
+  , zoffset(0)
   , rotationSpeed(0)
+  , usePitch(false)
+  , usePitchInverted(false)
+  , useRoll(false)
   , angleOffset(0, 0, 0)
   , frames()
 {
@@ -163,7 +175,9 @@ void GZModelDef::clear () {
   models.clear();
   scale = TVec(0, 0, 0);
   offset = TVec(0, 0, 0);
+  zoffset = 0;
   rotationSpeed = 0;
+  usePitch = usePitchInverted = useRoll = false;
   angleOffset = TAVec(0, 0, 0);
   frames.clear();
 }
@@ -243,7 +257,6 @@ void GZModelDef::parse (VScriptParser *sc) {
   className = sc->String;
   sc->Expect("{");
   bool rotating = false;
-  bool fixZOffset = false;
   while (!sc->Check("}")) {
     // skip flags
     if (sc->Check("PITCHFROMMOMENTUM") ||
@@ -456,14 +469,34 @@ void GZModelDef::parse (VScriptParser *sc) {
       offset.y = sc->Float;
       sc->ExpectFloatWithSign();
       offset.z = sc->Float;
-      fixZOffset = false;
       continue;
     }
     // "ZOffset"
     if (sc->Check("ZOffset")) {
       sc->ExpectFloatWithSign();
-      offset.z = sc->Float;
-      fixZOffset = true;
+      zoffset = sc->Float;
+      continue;
+    }
+    // "InheritActorPitch"
+    if (sc->Check("InheritActorPitch")) {
+      usePitch = false;
+      usePitchInverted = true;
+      continue;
+    }
+    // "InheritActorRoll"
+    if (sc->Check("InheritActorRoll")) {
+      useRoll = true;
+      continue;
+    }
+    // "UseActorPitch"
+    if (sc->Check("UseActorPitch")) {
+      usePitch = true;
+      usePitchInverted = false;
+      continue;
+    }
+    // "UseActorRoll"
+    if (sc->Check("UseActorRoll")) {
+      useRoll = true;
       continue;
     }
     // unknown shit, try to ignore it
@@ -478,7 +511,6 @@ void GZModelDef::parse (VScriptParser *sc) {
   }
   if (rotating && rotationSpeed == 0) rotationSpeed = 8; // arbitrary value
   if (!rotating) rotationSpeed = 0; // reset rotation flag
-  if (fixZOffset && scale.z) { offset.z /= scale.z; offset.z += 4; } // `+4` is temprorary hack for QStuff Ultra
 
   checkModelSanity();
 }
@@ -509,6 +541,7 @@ int GZModelDef::findModelFrame (int mdlindex, int mdlframe, bool allowAppend) {
   fi.vvframe = models[mdlindex].frameMap.length()-1;
   fi.scale = scale;
   fi.offset = offset;
+  fi.zoffset = zoffset;
   fi.used = true; // why not?
   return fi.vvframe;
 }
@@ -587,6 +620,9 @@ void GZModelDef::checkModelSanity () {
     hasValidFrames = true;
     frm.angleOffset = angleOffset; // copy it here
     frm.rotationSpeed = rotationSpeed;
+    frm.usePitch = usePitch;
+    frm.usePitchInverted = usePitchInverted;
+    frm.useRoll = useRoll;
 
     // add to frame map; order doesn't matter
     {
@@ -729,7 +765,8 @@ void GZModelDef::merge (GZModelDef &other) {
         if (mfrm.mdlindex == mdlindex &&
             mfrm.mdlframe == omfrm.mdlframe &&
             mfrm.scale == omfrm.scale &&
-            mfrm.offset == omfrm.offset)
+            mfrm.offset == omfrm.offset &&
+            mfrm.zoffset == omfrm.zoffset)
         {
           // yay, i found her!
           // reuse this frame
@@ -754,6 +791,7 @@ void GZModelDef::merge (GZModelDef &other) {
       nfi.vvframe = rmdl.frameMap.length()-1;
       nfi.scale = omfrm.scale;
       nfi.offset = omfrm.offset;
+      nfi.zoffset = omfrm.zoffset;
     }
 
     // find sprite frame to replace
@@ -788,6 +826,9 @@ void GZModelDef::merge (GZModelDef &other) {
     newfrm.frindex = ofrm.frindex;
     newfrm.angleOffset = ofrm.angleOffset;
     newfrm.rotationSpeed = ofrm.rotationSpeed;
+    newfrm.usePitch = ofrm.usePitch;
+    newfrm.usePitchInverted = ofrm.usePitchInverted;
+    newfrm.useRoll = ofrm.useRoll;
     newfrm.vvindex = frmapindex;
   }
 
@@ -889,6 +930,7 @@ VStr GZModelDef::createXml () {
     if (offset.x != 0) res += va(" offset_x=\"%g\"", offset.x);
     if (offset.y != 0) res += va(" offset_y=\"%g\"", offset.y);
     if (offset.z != 0) res += va(" offset_z=\"%g\"", offset.z);
+    if (zoffset != 0) res += va(" shift_z=\"%g\"", zoffset);
     res += ">\n";
     if (!mdl.skinFile.isEmpty()) {
       res += va("      <skin file=\"%s\" />\n", *mdl.skinFile.xmlEscape());
@@ -903,6 +945,7 @@ VStr GZModelDef::createXml () {
       if (fi.offset.x != offset.x) res += va(" offset_x=\"%g\"", fi.offset.x);
       if (fi.offset.y != offset.y) res += va(" offset_y=\"%g\"", fi.offset.y);
       if (fi.offset.z != offset.z) res += va(" offset_z=\"%g\"", fi.offset.z);
+      if (fi.zoffset != zoffset) res += va(" shift_z=\"%g\"", fi.zoffset);
       res += " />\n";
     }
     res += va("    </%s>\n", mdtag);
@@ -913,7 +956,7 @@ VStr GZModelDef::createXml () {
   res += va("  <class name=\"%s\" noselfshadow=\"true\">\n", *className.xmlEscape());
   for (auto &&frm : frames) {
     if (frm.vvindex < 0) continue;
-    res += va("    <state sprite=\"%s\" sprite_frame=\"%s\" model=\"%s_%d\" frame_index=\"%d\"",
+    res += va("    <state sprite=\"%s\" sprite_frame=\"%s\" model=\"%s_%d\" frame_index=\"%d\" gzdoom=\"true\"",
       *frm.sprbase.toUpperCase().xmlEscape(),
       *VStr((char)(frm.sprframe+'A')).xmlEscape(),
       *className.toLowerCase().xmlEscape(), frm.mdindex,
@@ -922,6 +965,9 @@ VStr GZModelDef::createXml () {
     if (frm.angleOffset.yaw) res += va(" rotate_yaw=\"%g\"", frm.angleOffset.yaw);
     if (frm.angleOffset.pitch) res += va(" rotate_pitch=\"%g\"", frm.angleOffset.pitch);
     if (frm.angleOffset.roll) res += va(" rotate_roll=\"%g\"", frm.angleOffset.roll);
+    if (frm.usePitch) res += va(" usepitch=\"true\"");
+    if (frm.usePitchInverted) res += va(" usepitch=\"inverted\"");
+    if (frm.useRoll) res += va(" useroll=\"true\"");
     res += " />\n";
   }
   res += "  </class>\n";

@@ -138,7 +138,7 @@ struct VScriptModel {
 // ////////////////////////////////////////////////////////////////////////// //
 struct ModelAngle {
 public:
-  enum Mode { Relative, Absolute, RelativeRandom, AbsoluteRandom };
+  enum Mode { Relative, Absolute, RelativeRandom, AbsoluteRandom, Zero, Inverted };
 public:
   float angle;
   Mode mode;
@@ -149,6 +149,8 @@ public:
   inline void SetAbsolute (float aangle) { angle = AngleMod(aangle); mode = Absolute; }
   inline void SetAbsoluteRandom () { angle = AngleMod(360.0f*Random()); mode = AbsoluteRandom; }
   inline void SetRelativeRandom () { angle = AngleMod(360.0f*Random()); mode = RelativeRandom; }
+  inline void SetZero () { mode = Zero; }
+  inline void SetInverted () { mode = Inverted; }
 
   inline float GetAngle (float baseangle, vuint8 rndVal) const {
     switch (mode) {
@@ -156,6 +158,8 @@ public:
       case Absolute: return angle;
       case RelativeRandom: return AngleMod(baseangle+angle+(float)rndVal*360.0f/255.0f);
       case AbsoluteRandom: return AngleMod(angle+(float)rndVal*360.0f/255.0f);
+      case Zero: return 0.0f;
+      case Inverted: return AngleMod(baseangle+angle+180.0f);
     }
     return angle;
   }
@@ -178,6 +182,8 @@ struct VScriptedModelFrame {
   ModelAngle anglePitch;
   float rotateSpeed; // yaw rotation speed
   float bobSpeed; // bobbing speed
+  int gzNoActorPitch; // <0: inverted; 0: use; 1: don't use (sorry)
+  bool gzNoActorRoll; // true: don't use actor roll;
   //
   VName sprite;
   int frame; // sprite frame
@@ -669,6 +675,17 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) 
 
       if (ParseBool(N, "rotation", false)) F.rotateSpeed = 100.0f;
       if (ParseBool(N, "bobbing", false)) F.bobSpeed = 180.0f;
+
+      // some special things
+      if (ParseBool(N, "gzdoom", false)) {
+        F.gzNoActorPitch = 1; // don't use actor pitch
+        F.gzNoActorRoll = true; // don't use actor roll
+        if (N->HasAttribute("usepitch")) {
+               if (N->GetAttribute("usepitch").strEqu("inverted")) F.gzNoActorPitch = -1; // inverted
+          else if (!ParseBool(N, "usepitch", false)) F.gzNoActorPitch = 0; // use
+        }
+        if (!ParseBool(N, "useroll", false)) F.gzNoActorRoll = false; // use
+      }
 
       int lastIndex = -666;
       if (N->HasAttribute("index")) {
@@ -1325,6 +1342,10 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
 
     // angle
     TAVec Md2Angle = Angles;
+
+    if (FDef.gzNoActorRoll) Md2Angle.roll = 0;
+    if (FDef.gzNoActorPitch) Md2Angle.pitch = (FDef.gzNoActorPitch < 0 ? AngleMod(FDef.gzNoActorPitch+180.0f) : 0);
+
     if (FDef.AngleStart || FDef.AngleEnd != 1.0f) {
       Md2Angle.yaw = AngleMod(Md2Angle.yaw+FDef.AngleStart+(FDef.AngleEnd-FDef.AngleStart)*Inter);
     }
