@@ -144,7 +144,7 @@ public:
 GZModelDef::GZModelDef ()
   : className()
   , models()
-  , scale(0, 0, 0)
+  , scale(1, 1, 1)
   , offset(0, 0, 0)
   , zoffset(0)
   , rotationSpeed(0)
@@ -176,7 +176,7 @@ GZModelDef::~GZModelDef () {
 void GZModelDef::clear () {
   className.clear();
   models.clear();
-  scale = TVec(0, 0, 0);
+  scale = TVec(1, 1, 1);
   offset = TVec(0, 0, 0);
   zoffset = 0;
   rotationSpeed = 0;
@@ -901,10 +901,25 @@ void GZModelDef::merge (GZModelDef &other) {
 
 //==========================================================================
 //
+//  sanitiseScale
+//
+//==========================================================================
+static TVec sanitiseScale (const TVec &scale) {
+  TVec res = scale;
+  if (!isFiniteF(res.x) || !res.x) res.x = 1.0f;
+  if (!isFiniteF(res.y) || !res.y) res.y = 1.0f;
+  if (!isFiniteF(res.z) || !res.z) res.z = 1.0f;
+  return res;
+}
+
+
+//==========================================================================
+//
 //  appendScale
 //
 //==========================================================================
-static void appendScale (VStr &res, const TVec &scale, const TVec *baseScale) {
+static void appendScale (VStr &res, TVec scale, const TVec *baseScale) {
+  scale = sanitiseScale(scale);
   if (baseScale) {
     if (*baseScale == scale) return; // base scale is set
     if (baseScale->x != scale.x && baseScale->y != scale.y && baseScale->z != scale.z) {

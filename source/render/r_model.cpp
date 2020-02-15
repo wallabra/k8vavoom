@@ -1459,6 +1459,8 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
     vuint32 Md2Light = Light;
     if (SubMdl.FullBright) Md2Light = 0xffffffff;
 
+    //if (Transform.Scale.isZero()) return; // just in case
+
     //if (Pass != RPASS_NonShadow) return;
     //if (Pass != RPASS_Ambient) return;
 
