@@ -3994,7 +3994,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       {
         int special = READ_BYTE_OR_INT32;
         INC_BYTE_OR_INT32;
-        //if (special == 226) GCon->Logf("***ACS:%d: LSPEC1: special=%d; args=(%d)", info->Number, special, sp[-1]);
+        //GCon->Logf(NAME_Debug, "***ACS:%d: LSPEC1: special=%d; args=(%d)", info->Number, special, sp[-1]);
         Level->eventExecuteActionSpecial(special, sp[-1], 0, 0, 0, 0, line, side, Activator);
         --sp;
       }
@@ -4004,7 +4004,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       {
         int special = READ_BYTE_OR_INT32;
         INC_BYTE_OR_INT32;
-        //if (special == 226) GCon->Logf("***ACS:%d: LSPEC2: special=%d; args=(%d,%d)", info->Number, special, sp[-2], sp[-1]);
+        //GCon->Logf(NAME_Debug, "***ACS:%d: LSPEC2: special=%d; args=(%d,%d)", info->Number, special, sp[-2], sp[-1]);
         Level->eventExecuteActionSpecial(special, sp[-2], sp[-1], 0, 0, 0, line, side, Activator);
         sp -= 2;
       }
@@ -4014,7 +4014,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       {
         int special = READ_BYTE_OR_INT32;
         INC_BYTE_OR_INT32;
-        //if (special == 226) GCon->Logf("***ACS:%d: LSPEC3: special=%d; args=(%d,%d,%d)", info->Number, special, sp[-3], sp[-2], sp[-1]);
+        //GCon->Logf(NAME_Debug, "***ACS:%d: LSPEC3: special=%d; args=(%d,%d,%d)", info->Number, special, sp[-3], sp[-2], sp[-1]);
         Level->eventExecuteActionSpecial(special, sp[-3], sp[-2], sp[-1], 0, 0, line, side, Activator);
         sp -= 3;
       }
@@ -4024,7 +4024,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       {
         int special = READ_BYTE_OR_INT32;
         INC_BYTE_OR_INT32;
-        //if (special == 226) GCon->Logf("***ACS:%d: LSPEC4: special=%d; args=(%d,%d,%d,%d)", info->Number, special, sp[-4], sp[-3], sp[-2], sp[-1]);
+        //GCon->Logf(NAME_Debug, "***ACS:%d: LSPEC4: special=%d; args=(%d,%d,%d,%d)", info->Number, special, sp[-4], sp[-3], sp[-2], sp[-1]);
         Level->eventExecuteActionSpecial(special, sp[-4], sp[-3], sp[-2], sp[-1], 0, line, side, Activator);
         sp -= 4;
       }
@@ -4034,7 +4034,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       {
         int special = READ_BYTE_OR_INT32;
         INC_BYTE_OR_INT32;
-        //if (special == 226) GCon->Logf("***ACS:%d: LSPEC5: special=%d; args=(%d,%d,%d,%d,%d)", info->Number, special, sp[-5], sp[-4], sp[-3], sp[-2], sp[-1]);
+        //GCon->Logf(NAME_Debug, "***ACS:%d: LSPEC5: special=%d; args=(%d,%d,%d,%d,%d)", info->Number, special, sp[-5], sp[-4], sp[-3], sp[-2], sp[-1]);
         Level->eventExecuteActionSpecial(special, sp[-5], sp[-4], sp[-3], sp[-2], sp[-1], line, side, Activator);
         sp -= 5;
       }
