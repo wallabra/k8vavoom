@@ -201,8 +201,26 @@ bool VRenderLevelShared::RenderViewModel (VViewState *VSt, vuint32 light,
                                           vuint32 Fade, float Alpha, bool Additive)
 {
   if (!r_models_view) return false;
+  if (!R_HaveClassModelByName(VSt->State->Outer->Name)) return false;
 
-  //TODO: fix for aspect ratio and non-default FOV
+  VMatrix4 oldProjMat;
+  TClipBase old_clip_base = clip_base;
+
+  // remporarily set FOV to 90
+  const bool restoreFOV = (fov.asFloat() != 90.0f);
+
+  if (restoreFOV) {
+    refdef_t newrd = refdef;
+    const float fov90 = CalcEffectiveFOV(90.0f, newrd);
+    SetupRefdefWithFOV(&newrd, fov90);
+
+    VMatrix4 newProjMat;
+    Drawer->CalcProjectionMatrix(newProjMat, this, &newrd);
+
+    Drawer->GetProjectionMatrix(oldProjMat);
+    Drawer->SetProjectionMatrix(newProjMat);
+  }
+
   TVec origin = Drawer->vieworg+(VSt->SX-1.0f)*Drawer->viewright/8.0f-(VSt->SY-32.0f)*Drawer->viewup/6.0f;
 
   float TimeFrac = 0;
@@ -211,10 +229,18 @@ bool VRenderLevelShared::RenderViewModel (VViewState *VSt, vuint32 light,
     TimeFrac = midval(0.0f, TimeFrac, 1.0f);
   }
 
-  return DrawAliasModel(nullptr, VSt->State->Outer->Name, origin, cl->ViewAngles, 1.0f, 1.0f,
+  const bool res = DrawAliasModel(nullptr, VSt->State->Outer->Name, origin, cl->ViewAngles, 1.0f, 1.0f,
     VSt->State->getMFI(), (VSt->State->NextState ? VSt->State->NextState->getMFI() : VSt->State->getMFI()),
     nullptr, 0, light, Fade, Alpha, Additive, true, TimeFrac, r_interpolate_frames,
     RPASS_Normal);
+
+  if (restoreFOV) {
+    // restore original FOV (just in case)
+    Drawer->SetProjectionMatrix(oldProjMat);
+    clip_base = old_clip_base;
+  }
+
+  return res;
 }
 
 

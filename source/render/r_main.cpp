@@ -1607,6 +1607,49 @@ COMMAND(SizeUp) {
 
 //==========================================================================
 //
+//  VRenderLevelShared::CalcEffectiveFOV
+//
+//==========================================================================
+float VRenderLevelShared::CalcEffectiveFOV (float fov, const refdef_t &refdef) {
+  if (!isFiniteF(fov)) fov = 90.0f;
+  fov = clampval(fov, 1.0f, 170.0f);
+
+  float effectiveFOV = fov;
+  if (r_vertical_fov) {
+    // convert to vertical aspect ratio
+    const float centerx = refdef.width*0.5f;
+
+    // for widescreen displays, increase the FOV so that the middle part of the
+    // screen that would be visible on a 4:3 display has the requested FOV
+    // taken from GZDoom
+    const float baseAspect = CalcBaseAspectRatio(r_aspect_ratio); // PixelAspect
+    const float centerxwide = centerx*(IsAspectTallerThanWide(baseAspect) ? 1.0f : GetAspectMultiplier(baseAspect)/48.0f);
+    if (centerxwide != centerx) {
+      // centerxwide is what centerx would be if the display was not widescreen
+      effectiveFOV = RAD2DEGF(2.0f*atanf(centerx*tanf(DEG2RADF(effectiveFOV)*0.5f)/centerxwide));
+      // just in case
+      if (effectiveFOV >= 180.0f) effectiveFOV = 179.5f;
+    }
+  }
+
+  return effectiveFOV;
+}
+
+
+//==========================================================================
+//
+//  VRenderLevelShared::ExecuteSetViewSize
+//
+//==========================================================================
+void VRenderLevelShared::SetupRefdefWithFOV (refdef_t *refdef, float fov) {
+  clip_base.setupViewport(refdef->width, refdef->height, fov, PixelAspect);
+  refdef->fovx = clip_base.fovx;
+  refdef->fovy = clip_base.fovy;
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::ExecuteSetViewSize
 //
 //==========================================================================

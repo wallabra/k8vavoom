@@ -561,6 +561,9 @@ protected:
   void BuildVisibleObjectsList ();
 
   // general
+  static float CalcEffectiveFOV (float fov, const refdef_t &refdef);
+  void SetupRefdefWithFOV (refdef_t *refdef, float fov);
+
   void ExecuteSetViewSize ();
   void TransformFrustum ();
   void SetupFrame ();
@@ -1128,5 +1131,9 @@ extern double dbgCheckVisTime;
 
 
 void R_DrawLightBulb (const TVec &Org, const TAVec &Angles, vuint32 rgbLight, ERenderPass Pass, bool isShadowVol, float ScaleX=1.0f, float ScaleY=1.0);
+
+// used to check for view models
+bool R_HaveClassModelByName (VName clsName);
+
 
 #endif

@@ -304,6 +304,16 @@ static VClassModelScript *FindClassModelByName (VName clsName) {
 
 //==========================================================================
 //
+//  R_HaveClassModelByName
+//
+//==========================================================================
+bool R_HaveClassModelByName (VName clsName) {
+  return !!FindClassModelByName(clsName);
+}
+
+
+//==========================================================================
+//
 //  R_EntModelNoSelfShadow
 //
 //==========================================================================
@@ -1344,37 +1354,40 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
     // angle
     TAVec Md2Angle = Angles;
 
-    if (FDef.gzNoActorRoll) Md2Angle.roll = 0;
-    // 0: use as is
-    if (FDef.gzNoActorPitch) {
-      if (FDef.gzNoActorPitch == 2) {
-        // from momentum
-        Md2Angle.pitch = (mobj ? VectorAnglePitch(mobj->Velocity) : 0.0f);
-      } else {
-        Md2Angle.pitch = (FDef.gzNoActorPitch < 0 ? AngleMod(FDef.gzNoActorPitch+180.0f) : 0);
-      }
-    }
-
-    if (FDef.AngleStart || FDef.AngleEnd != 1.0f) {
-      Md2Angle.yaw = AngleMod(Md2Angle.yaw+FDef.AngleStart+(FDef.AngleEnd-FDef.AngleStart)*Inter);
-    }
-
-    vuint8 rndVal = (mobj ? (hashU32(mobj->GetUniqueId())>>4)&0xffu : 0);
-
-    Md2Angle.yaw = FDef.angleYaw.GetAngle(Md2Angle.yaw, rndVal);
-    Md2Angle.pitch = FDef.anglePitch.GetAngle(Md2Angle.pitch, rndVal);
-    Md2Angle.roll = FDef.angleRoll.GetAngle(Md2Angle.roll, rndVal);
-
-    if (Level && mobj) {
-      if (r_model_autorotating && FDef.rotateSpeed) {
-        Md2Angle.yaw = AngleMod(Md2Angle.yaw+Level->Time*FDef.rotateSpeed+rndVal*38.6f);
+    if (!IsViewModel) {
+      // world model, fix angles
+      if (FDef.gzNoActorRoll) Md2Angle.roll = 0;
+      // 0: use as is
+      if (FDef.gzNoActorPitch) {
+        if (FDef.gzNoActorPitch == 2) {
+          // from momentum
+          Md2Angle.pitch = (mobj ? VectorAnglePitch(mobj->Velocity) : 0.0f);
+        } else {
+          Md2Angle.pitch = (FDef.gzNoActorPitch < 0 ? AngleMod(FDef.gzNoActorPitch+180.0f) : 0);
+        }
       }
 
-      if (r_model_autobobbing && FDef.bobSpeed) {
-        //GCon->Logf("UID: %3u (%s)", (hashU32(mobj->GetUniqueId())&0xff), *mobj->GetClass()->GetFullName());
-        const float bobHeight = 4.0f;
-        float zdelta = msin(AngleMod(Level->Time*FDef.bobSpeed+rndVal*44.5f))*bobHeight;
-        Md2Org.z += zdelta+bobHeight;
+      if (FDef.AngleStart || FDef.AngleEnd != 1.0f) {
+        Md2Angle.yaw = AngleMod(Md2Angle.yaw+FDef.AngleStart+(FDef.AngleEnd-FDef.AngleStart)*Inter);
+      }
+
+      vuint8 rndVal = (mobj ? (hashU32(mobj->GetUniqueId())>>4)&0xffu : 0);
+
+      Md2Angle.yaw = FDef.angleYaw.GetAngle(Md2Angle.yaw, rndVal);
+      Md2Angle.pitch = FDef.anglePitch.GetAngle(Md2Angle.pitch, rndVal);
+      Md2Angle.roll = FDef.angleRoll.GetAngle(Md2Angle.roll, rndVal);
+
+      if (Level && mobj) {
+        if (r_model_autorotating && FDef.rotateSpeed) {
+          Md2Angle.yaw = AngleMod(Md2Angle.yaw+Level->Time*FDef.rotateSpeed+rndVal*38.6f);
+        }
+
+        if (r_model_autobobbing && FDef.bobSpeed) {
+          //GCon->Logf("UID: %3u (%s)", (hashU32(mobj->GetUniqueId())&0xff), *mobj->GetClass()->GetFullName());
+          const float bobHeight = 4.0f;
+          float zdelta = msin(AngleMod(Level->Time*FDef.bobSpeed+rndVal*44.5f))*bobHeight;
+          Md2Org.z += zdelta+bobHeight;
+        }
       }
     }
 
