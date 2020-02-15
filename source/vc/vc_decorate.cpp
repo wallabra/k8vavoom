@@ -1829,7 +1829,7 @@ static void ScanActorDefForUserVars (VScriptParser *sc, TArray<VDecorateUserVarD
   sc->SetCMode(true);
   sc->SetEscape(false);
 
-  sc->CheckNumber();
+  sc->CheckNumberWithSign();
   while (sc->Check(";")) {}
   sc->Expect("{");
 
@@ -2059,7 +2059,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
   bool DropItemsDefined = false;
   VObject *DefObj = (VObject *)Class->Defaults;
 
-  if (sc->CheckNumber()) {
+  if (sc->CheckNumberWithSign()) {
     if (sc->Number < -1 || sc->Number > 32767) sc->Error("DoomEdNum is out of range [-1, 32767]");
     DoomEdNum = sc->Number;
   }
