@@ -42,6 +42,7 @@ public:
     float rotationSpeed; // !0: rotating
     bool usePitch;
     bool usePitchInverted;
+    bool usePitchMomentum;
     bool useRoll;
     int vvindex; // vavoom frame index in the given model (-1: invalid frame)
     // used only in sanity check method
@@ -103,6 +104,7 @@ public:
   float rotationSpeed; // !0: rotating
   bool usePitch;
   bool usePitchInverted;
+  bool usePitchMomentum;
   bool useRoll;
   TAVec angleOffset;
   TArray<Frame> frames;
@@ -148,6 +150,7 @@ GZModelDef::GZModelDef ()
   , rotationSpeed(0)
   , usePitch(false)
   , usePitchInverted(false)
+  , usePitchMomentum(false)
   , useRoll(false)
   , angleOffset(0, 0, 0)
   , frames()
@@ -177,7 +180,7 @@ void GZModelDef::clear () {
   offset = TVec(0, 0, 0);
   zoffset = 0;
   rotationSpeed = 0;
-  usePitch = usePitchInverted = useRoll = false;
+  usePitch = usePitchInverted = usePitchMomentum = useRoll = false;
   angleOffset = TAVec(0, 0, 0);
   frames.clear();
 }
@@ -260,14 +263,9 @@ void GZModelDef::parse (VScriptParser *sc) {
   bool wasZOffset = false; // temp hack for QStuffUltra
   while (!sc->Check("}")) {
     // skip flags
-    if (sc->Check("PITCHFROMMOMENTUM") ||
-        sc->Check("IGNORETRANSLATION") ||
-        sc->Check("INHERITACTORPITCH") ||
-        sc->Check("INHERITACTORROLL") ||
+    if (sc->Check("IGNORETRANSLATION") ||
         sc->Check("INTERPOLATEDOUBLEDFRAMES") ||
         sc->Check("NOINTERPOLATION") ||
-        sc->Check("USEACTORPITCH") ||
-        sc->Check("USEACTORROLL") ||
         sc->Check("DONTCULLBACKFACES") ||
         sc->Check("USEROTATIONCENTER"))
     {
@@ -490,6 +488,7 @@ void GZModelDef::parse (VScriptParser *sc) {
     if (sc->Check("InheritActorPitch")) {
       usePitch = false;
       usePitchInverted = true;
+      usePitchMomentum = false;
       continue;
     }
     // "InheritActorRoll"
@@ -501,11 +500,19 @@ void GZModelDef::parse (VScriptParser *sc) {
     if (sc->Check("UseActorPitch")) {
       usePitch = true;
       usePitchInverted = false;
+      usePitchMomentum = false;
       continue;
     }
     // "UseActorRoll"
     if (sc->Check("UseActorRoll")) {
       useRoll = true;
+      continue;
+    }
+    // "PitchFromMomentum"
+    if (sc->Check("PitchFromMomentum")) {
+      usePitch = false;
+      usePitchInverted = false;
+      usePitchMomentum = true;
       continue;
     }
     // unknown shit, try to ignore it
@@ -631,6 +638,7 @@ void GZModelDef::checkModelSanity () {
     frm.rotationSpeed = rotationSpeed;
     frm.usePitch = usePitch;
     frm.usePitchInverted = usePitchInverted;
+    frm.usePitchMomentum = usePitchMomentum;
     frm.useRoll = useRoll;
 
     // add to frame map; order doesn't matter
@@ -837,6 +845,7 @@ void GZModelDef::merge (GZModelDef &other) {
     newfrm.rotationSpeed = ofrm.rotationSpeed;
     newfrm.usePitch = ofrm.usePitch;
     newfrm.usePitchInverted = ofrm.usePitchInverted;
+    newfrm.usePitchMomentum = ofrm.usePitchMomentum;
     newfrm.useRoll = ofrm.useRoll;
     newfrm.vvindex = frmapindex;
   }
@@ -976,6 +985,7 @@ VStr GZModelDef::createXml () {
     if (frm.angleOffset.roll) res += va(" rotate_roll=\"%g\"", frm.angleOffset.roll);
     if (frm.usePitch) res += va(" usepitch=\"true\"");
     if (frm.usePitchInverted) res += va(" usepitch=\"inverted\"");
+    if (frm.usePitchMomentum) res += va(" usepitch=\"momentum\"");
     if (frm.useRoll) res += va(" useroll=\"true\"");
     res += " />\n";
   }

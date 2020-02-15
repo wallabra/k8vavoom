@@ -182,7 +182,7 @@ struct VScriptedModelFrame {
   ModelAngle anglePitch;
   float rotateSpeed; // yaw rotation speed
   float bobSpeed; // bobbing speed
-  int gzNoActorPitch; // <0: inverted; 0: use; 1: don't use (sorry)
+  int gzNoActorPitch; // <0: inverted; 0: use; 1: don't use (sorry); 2: from momentum (sorry)
   bool gzNoActorRoll; // true: don't use actor roll;
   //
   VName sprite;
@@ -682,9 +682,10 @@ static void ParseModelXml (VModel *Mdl, VXmlDocument *Doc, bool isGZDoom=false) 
         F.gzNoActorRoll = true; // don't use actor roll
         if (N->HasAttribute("usepitch")) {
                if (N->GetAttribute("usepitch").strEqu("inverted")) F.gzNoActorPitch = -1; // inverted
-          else if (!ParseBool(N, "usepitch", false)) F.gzNoActorPitch = 0; // use
+          else if (N->GetAttribute("usepitch").strEqu("momentum")) F.gzNoActorPitch = 2; // from momentum
+          else if (ParseBool(N, "usepitch", false)) F.gzNoActorPitch = 0; // use
         }
-        if (!ParseBool(N, "useroll", false)) F.gzNoActorRoll = false; // use
+        if (ParseBool(N, "useroll", false)) F.gzNoActorRoll = false; // use
       }
 
       int lastIndex = -666;
@@ -1344,7 +1345,15 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
     TAVec Md2Angle = Angles;
 
     if (FDef.gzNoActorRoll) Md2Angle.roll = 0;
-    if (FDef.gzNoActorPitch) Md2Angle.pitch = (FDef.gzNoActorPitch < 0 ? AngleMod(FDef.gzNoActorPitch+180.0f) : 0);
+    // 0: use as is
+    if (FDef.gzNoActorPitch) {
+      if (FDef.gzNoActorPitch == 2) {
+        // from momentum
+        Md2Angle.pitch = (mobj ? VectorAnglePitch(mobj->Velocity) : 0.0f);
+      } else {
+        Md2Angle.pitch = (FDef.gzNoActorPitch < 0 ? AngleMod(FDef.gzNoActorPitch+180.0f) : 0);
+      }
+    }
 
     if (FDef.AngleStart || FDef.AngleEnd != 1.0f) {
       Md2Angle.yaw = AngleMod(Md2Angle.yaw+FDef.AngleStart+(FDef.AngleEnd-FDef.AngleStart)*Inter);
