@@ -397,7 +397,7 @@ int VWadFile::CheckNumForName (VName LumpName, EWadNamespace NS, bool wantFirst)
   if (LumpName == NAME_None) return -1;
   // special ZIP-file namespaces in WAD file are in global namespace
   //EWadNamespace NS = InNS;
-  if (NS > WADNS_ZipSpecial && NS != WADNS_Any) NS = WADNS_Global;
+  if (NS > WADNS_ZipSpecial && NS < WADNS_Any) NS = WADNS_Global;
   return VPakFileBase::CheckNumForName(LumpName, NS, wantFirst);
 }
 
@@ -408,6 +408,6 @@ int VWadFile::CheckNumForName (VName LumpName, EWadNamespace NS, bool wantFirst)
 //
 //==========================================================================
 int VWadFile::IterateNS (int Start, EWadNamespace NS, bool allowEmptyName8) {
-  if (NS > WADNS_ZipSpecial && NS != WADNS_Any) NS = WADNS_Global;
+  if (NS > WADNS_ZipSpecial && NS < WADNS_Any) NS = WADNS_Global;
   return VPakFileBase::IterateNS(Start, NS, allowEmptyName8);
 }
