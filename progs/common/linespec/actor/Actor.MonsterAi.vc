@@ -195,9 +195,13 @@
 {
   EntityEx targ = none;
 
+  //if (self isa 'Crawler') printdebug("%C:A_LookEx:000: specified_flags=%B; flags=0x%04x; minseedist=%s; maxseedist=%s; maxheardist=%s; fov=%s; wakestate=%s", self, specified_flags, flags, minseedist, maxseedist, maxheardist, fov, wakestate);
+
   // fix optional args
   if (!fov && bLookAllAround) fov = 360; // use default value if zero
   if (!specified_wakestate) wakestate = FindState('See');
+
+  //if (self isa 'Crawler') printdebug("%C:A_LookEx:001: specified_flags=%B; flags=0x%04x; minseedist=%s; maxseedist=%s; maxheardist=%s; fov=%s; wakestate=%s", self, specified_flags, flags, minseedist, maxseedist, maxheardist, fov, wakestate);
 
   bool dojump = !(flags&LOF_NOJUMP);
   bool doSightCheck = !(flags&LOF_NOSIGHTCHECK);
