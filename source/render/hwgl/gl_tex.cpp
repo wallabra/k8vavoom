@@ -388,11 +388,14 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
       /*if (SrcTex->Name != NAME_None)*/ {
         GCon->Logf(NAME_Warning, "something is VERY wrong with textures in this mod (trying to upload null texture '%s')", *SrcTex->Name);
       }
-      vassert(SrcTex->GetWidth() > 0);
-      vassert(SrcTex->GetHeight() > 0);
-      rgba_t *dummy = (rgba_t *)Z_Calloc(SrcTex->GetWidth()*SrcTex->GetHeight()*sizeof(rgba_t));
-      //VTexture::checkerFillRGBA((vuint8 *)dummy, SrcTex->GetWidth(), SrcTex->GetHeight());
-      UploadTexture(SrcTex->GetWidth(), SrcTex->GetHeight(), dummy, false); // no fringe filtering
+      //k8: meh
+      //vassert(SrcTex->GetWidth() > 0);
+      //vassert(SrcTex->GetHeight() > 0);
+      //rgba_t *dummy = (rgba_t *)Z_Calloc(SrcTex->GetWidth()*SrcTex->GetHeight()*sizeof(rgba_t));
+      rgba_t *dummy = (rgba_t *)Z_Calloc(2*2*sizeof(rgba_t));
+      VTexture::checkerFillRGBA((vuint8 *)dummy, 2, 2);
+      //UploadTexture(SrcTex->GetWidth(), SrcTex->GetHeight(), dummy, false); // no fringe filtering
+      UploadTexture(2, 2, dummy, false); // no fringe filtering
       Z_Free(dummy);
     } else {
       // upload data
