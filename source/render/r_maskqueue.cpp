@@ -288,7 +288,9 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
   float cr;
   int hangup = 0;
   //FIXME: is this right?
-  bool ignoreSpriteFix = (spr_type != SPR_VP_PARALLEL_UPRIGHT);
+  // this also disables shadow
+  const bool ignoreSpriteFix = (spr_type != SPR_VP_PARALLEL_UPRIGHT);
+  if (ignoreSpriteFix) renderShadow = false;
 
   //spr_type = SPR_ORIENTED;
   switch (spr_type) {
