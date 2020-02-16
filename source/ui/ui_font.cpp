@@ -124,6 +124,7 @@ static TArray<VColTransMap> TextColorLookup;
 //==========================================================================
 void VFont::RegisterFont (VFont *font, VName aname) {
   if (!font) return;
+
   font->Name = aname;
   if (aname == NAME_None) { font->Next = nullptr; return; }
 
@@ -133,6 +134,11 @@ void VFont::RegisterFont (VFont *font, VName aname) {
   Fonts = font;
 
   // add to font map
+  if (FontMap.has(VStr(aname))) {
+    GCon->Logf(NAME_Init, "replacing font '%s'...", *aname);
+  } else {
+    GCon->Logf(NAME_Init, "registering font '%s'...", *aname);
+  }
   FontMap.put(VStr(aname), font);
 }
 
@@ -444,6 +450,7 @@ void VFont::ParseFontDefs () {
 
       if (FontName != NAME_None) {
         if (FontType == 1) {
+          GCon->Logf(NAME_Init, "creating font '%s'...", *FontName);
           auto fnt = new VFont(FontName, Template, First, Count, Start, SpaceWidth);
           if (fnt->GetFontName() == NAME_None) {
             GCon->Logf(NAME_Error, "FONT: cannot create font '%s'!", *FontName);
@@ -451,6 +458,7 @@ void VFont::ParseFontDefs () {
           }
         } else if (FontType == 2) {
           if (CharIndexes.Num()) {
+            GCon->Logf(NAME_Init, "creating special font '%s'...", *FontName);
             new VSpecialFont(FontName, CharIndexes, CharLumps, NoTranslate, SpaceWidth);
           }
         } else {
