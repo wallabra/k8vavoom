@@ -52,7 +52,7 @@ int FlameCount; // for flame thrower duration
 states
 {
 Ready:
-  PHNX A 1 DoReadyWeapon
+  PHNX A 1 A_WeaponReady
   Loop
 Deselect:
   PHNX A 1 A_Lower

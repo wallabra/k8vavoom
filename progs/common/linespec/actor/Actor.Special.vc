@@ -95,7 +95,19 @@
 //  DOOM II special, map 32. Uses special tag 666.
 //
 //==========================================================================
-[decorate] final void A_KeenDie (optional int tag) {
+[decorate] final void A_KeenDie () {
+  decorate_A_KeenDie();
+}
+
+
+//==========================================================================
+//
+//  decorate_A_KeenDie
+//
+//  DOOM II special, map 32. Uses special tag 666.
+//
+//==========================================================================
+[decorate] final void decorate_A_KeenDie (optional int tag) {
   EntityEx Other;
 
   A_Fall();

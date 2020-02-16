@@ -566,7 +566,19 @@ final void DoSPosAttack () {
 //  Spawn the hellfire.
 //
 //==========================================================================
-[decorate] final void A_VileTarget (optional name firetype) {
+[decorate] final void A_VileTarget () {
+  decorate_A_VileTarget();
+}
+
+
+//==========================================================================
+//
+//  decorate_A_VileTarget
+//
+//  Spawn the hellfire.
+//
+//==========================================================================
+[decorate] final void decorate_A_VileTarget (optional name firetype) {
   if (!Target) return;
 
   A_FaceTarget();
@@ -600,7 +612,19 @@ final void DoSPosAttack () {
 //  Arch-vile attack.
 //
 //==========================================================================
-[decorate] final void A_VileAttack (optional string sound, optional int initialdamage,
+[decorate] final void A_VileAttack () {
+  decorate_A_VileAttack();
+}
+
+
+//==========================================================================
+//
+//  decorate_A_VileAttack
+//
+//  Arch-vile attack.
+//
+//==========================================================================
+[decorate] final void decorate_A_VileAttack (optional string sound, optional int initialdamage,
                          optional int blastdamage, optional int blastradius,
                          optional float thrustfactor, optional name damagetype,
                          optional int flags)

@@ -90,7 +90,7 @@ override int GetBlend()
 states
 {
 Ready:
-  MSTF AAAAAABBBBBBCCCCCCDDDDDDEEEEEEFFFFF 1 DoReadyWeapon
+  MSTF AAAAAABBBBBBCCCCCCDDDDDDEEEEEEFFFFF 1 A_WeaponReady
   Loop
 Deselect:
   MSTF A 1 A_Lower

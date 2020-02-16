@@ -60,7 +60,7 @@ override bool DoRespawn()
 states
 {
 Ready:
-  MACE A 1 DoReadyWeapon
+  MACE A 1 A_WeaponReady
   Loop
 Deselect:
   MACE A 1 A_Lower

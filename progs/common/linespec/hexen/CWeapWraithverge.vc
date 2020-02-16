@@ -78,7 +78,7 @@ override int GetBlend () {
 states
 {
 Ready:
-  CHLY A 1 DoReadyWeapon
+  CHLY A 1 A_WeaponReady
   Loop
 Deselect:
   CHLY A 1 A_Lower

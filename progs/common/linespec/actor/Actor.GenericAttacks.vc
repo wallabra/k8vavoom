@@ -519,7 +519,19 @@ final void DoExplode (int damage, float distance, bool damageSelf, optional int 
 //  Handles a bunch of exploding things.
 //
 //==========================================================================
-[decorate] final void A_Explode (optional int damage, optional float radius, optional int flags) {
+[decorate] final void A_Explode () {
+  do_simple_A_Explode();
+}
+
+
+//==========================================================================
+//
+//  do_simple_A_Explode
+//
+//  Handles a bunch of exploding things.
+//
+//==========================================================================
+final void do_simple_A_Explode (optional int damage, optional float radius, optional int flags) {
   ubyte damageSelf;
 
   if (!specified_damage) damage = 128;

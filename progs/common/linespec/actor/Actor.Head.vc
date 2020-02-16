@@ -770,7 +770,20 @@ final void WeaponReadyResetAttackState () {
 //  Follows after getting weapon up, or after previous attack/fire sequence.
 //
 //==========================================================================
-[decorate] final void A_WeaponReady (optional int Flags) {
+[decorate] final void A_WeaponReady () {
+  decorate_A_WeaponReady();
+}
+
+
+//==========================================================================
+//
+//  decorate_A_WeaponReady
+//
+//  The player can fire the weapon or change to another weapon at this time.
+//  Follows after getting weapon up, or after previous attack/fire sequence.
+//
+//==========================================================================
+[decorate] final void decorate_A_WeaponReady (optional int Flags) {
   if (!bIsPlayer) return;
 
   bool wasZoomDown = Player.bZoomDown;
@@ -913,16 +926,4 @@ final void WeaponReadyResetAttackState () {
     Player.ViewStates[PS_WEAPON].SY = Weapon::WEAPONTOP+PlayerEx(Player).Bob*sin(angle);
   }
   */
-}
-
-
-//==========================================================================
-//
-//  DoReadyWeapon
-//
-//  This function replaces calls to A_WeaponReady in other codepointers.
-//
-//==========================================================================
-final void DoReadyWeapon () {
-  A_WeaponReady(0);
 }

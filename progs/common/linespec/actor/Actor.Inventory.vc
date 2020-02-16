@@ -257,10 +257,20 @@ final void DoTakeInventory (class!Inventory ItemType, int Amount, EntityEx Recei
 //
 //  A_Punch
 //
+//===========================================================================
+[decorate] final void A_Punch () {
+  decorate_A_Punch();
+}
+
+
+//===========================================================================
+//
+//  decorate_A_Punch
+//
 //  arguments are ignored (leftover from previous k8vavoom hack)
 //
 //===========================================================================
-[decorate] final void A_Punch (optional bool alertIfHit, optional bool noAlertIfKilled) {
+[decorate] final void decorate_A_Punch (optional bool alertIfHit, optional bool noAlertIfKilled) {
   if (bIsPlayer) {
     Weapon Wpn = PlayerEx(Player).ReadyWeapon;
     if (Wpn) {
