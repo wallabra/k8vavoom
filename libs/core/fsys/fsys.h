@@ -150,6 +150,7 @@ int W_GetFirstAuxLump (); // returns -1 if no aux archives were opened, or lump 
 int W_CheckNumForName (VName Name, EWadNamespace NS=WADNS_Global);
 int W_GetNumForName (VName Name, EWadNamespace NS=WADNS_Global);
 int W_CheckNumForNameInFile (VName Name, int File, EWadNamespace NS=WADNS_Global);
+int W_CheckNumForNameInFileOrLower (VName Name, int File, EWadNamespace NS=WADNS_Global);
 int W_CheckFirstNumForNameInFile (VName Name, int File, EWadNamespace NS=WADNS_Global);
 int W_CheckLastNumForNameInFile (VName Name, int File, EWadNamespace NS=WADNS_Global);
 int W_FindACSObjectInFile (VStr Name, int File);
