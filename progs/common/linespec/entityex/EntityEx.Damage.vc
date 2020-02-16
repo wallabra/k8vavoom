@@ -692,7 +692,7 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
 
   //printdebug("DAMAGE: self=`%C`; damage=%d; health=%s; forced=%B; dmgtype=<%s>", self, damage, Health, forced, DmgType);
   // push the target unless using a weapon that should not inflict thrust
-  if (inflictor && inflictor != self && bColideWithThings && !inflictor.bNoDamageThrust) {
+  if (inflictor && inflictor != self && bColideWithThings && !inflictor.bNoDamageThrust && !bDontThrust) {
     float kickback;
     if (bIsPlayer && !GetCvar('damage_thrust')) {
       kickback = 0.0;

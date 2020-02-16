@@ -257,11 +257,11 @@ final void RadiusAttack (EntityEx Source, int BombDamage, float BombDistance,
         if (DoDamage) {
           Other.Damage(self, Source, damage, BombDmgType);
         } else {
-          Other.bBlasted = true;
+          if (!bDontThrust) Other.bBlasted = true;
         }
       }
 
-      if (!Other.bIceCorpse && (!DoDamage || !bNoDamageThrust)) {
+      if (!bDontThrust && !Other.bIceCorpse && (!DoDamage || !bNoDamageThrust)) {
         float Thrust = dmgfloat*0.5;
         if (specified_fullthrustdistance && fullthrustdistance != 0 && dist <= fullthrustdistance) {
           Thrust = BombDamage*RDFactor*0.5;

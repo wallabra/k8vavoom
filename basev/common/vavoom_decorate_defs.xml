@@ -223,6 +223,7 @@
     <flag name="Ripper" property="bRip" />
     <flag name="NoBossRip" property="bNoBossRip" />
     <flag name="NoDamageThrust" property="bNoDamageThrust" />
+    <flag name="DontThrust" property="bDontThrust" />
     <flag name="DontReflect" property="bDontReflect" />
     <flag name="FloorHugger" property="bIgnoreFloorStep" />
     <flag name="CeilingHugger" property="bIgnoreCeilingStep" />
