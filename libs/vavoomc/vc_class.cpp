@@ -900,6 +900,21 @@ VMethod *VClass::FindMethod (VName Name, bool bRecursive) {
 
 //==========================================================================
 //
+//  VClass::FindMethodNoCase
+//
+//==========================================================================
+VMethod *VClass::FindMethodNoCase (VStr Name, bool bRecursive) {
+  if (Name.isEmpty()) return nullptr;
+  //Name = ResolveAlias(Name);
+  VMethod *M = (VMethod *)StaticFindMemberNoCase(Name, this, MEMBER_Method);
+  if (M) return M;
+  if (!bRecursive || !ParentClass) return nullptr;
+  return ParentClass->FindMethodNoCase(Name, true);
+}
+
+
+//==========================================================================
+//
 //  VClass::FindMethodNonPostLoaded
 //
 //  this will follow `ParentClassName` instead of `ParentClass`

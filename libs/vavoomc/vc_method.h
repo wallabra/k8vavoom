@@ -246,29 +246,31 @@ public:
   void OptimizeInstructions ();
 
   // <0: not found
-  int FindArgByName (VName aname) const;
+  int FindArgByName (VName aname) const noexcept;
 
-  inline bool IsDefined () const { return (defineResult >= 0); }
+  inline bool IsDefined () const noexcept { return (defineResult >= 0); }
 
-  inline bool IsStatic () const { return !!(Flags&FUNC_Static); }
+  inline bool IsStatic () const noexcept { return !!(Flags&FUNC_Static); }
   // valid only after codegen phase
   //inline bool IsVirtual () const { return !(Flags&FUNC_NonVirtual); } // you can use `VTableIndex >= 0` too
   // valid only after `PostLoad()` call
-  inline bool IsVirtual () const { return (VTableIndex >= 0); }
-  inline bool IsNonVirtual () const { return (VTableIndex < 0); }
+  inline bool IsVirtual () const noexcept { return (VTableIndex >= 0); }
+  inline bool IsNonVirtual () const noexcept { return (VTableIndex < 0); }
 
-  inline bool IsPostLoaded () const { return (VTableIndex >= -1); }
+  inline bool IsPostLoaded () const noexcept { return (VTableIndex >= -1); }
 
   // is this method suitable for various "normal" calls?
-  inline bool IsNormal () const { return ((Flags&(FUNC_VarArgs|FUNC_Spawner|FUNC_Iterator)) == 0); }
-
-  inline bool IsNetwork () const { return ((Flags&(FUNC_Net|FUNC_NetReliable)) != 0); }
+  inline bool IsNormal () const noexcept { return ((Flags&(FUNC_VarArgs|FUNC_Spawner|FUNC_Iterator)) == 0); }
+  inline bool IsNetwork () const noexcept { return ((Flags&(FUNC_Net|FUNC_NetReliable)) != 0); }
+  inline bool IsDecorate () const noexcept { return ((Flags&FUNC_Decorate) != 0); }
 
   // called from decorate parser, mostly
   // if we're calling a "good" method, there is no need to create a wrapper
   // not sure what to do with network methods, though
   // ok, state methods can be virtual and static now
-  inline bool IsGoodStateMethod () const { return (NumParams == 0 && (Flags&~(FUNC_Native|FUNC_Spawner|FUNC_Net|FUNC_NetReliable|FUNC_Static/*|FUNC_NonVirtual*/)) == /*FUNC_Final*/0); }
+  inline bool IsGoodStateMethod () const noexcept { return (NumParams == 0 && (Flags&~(FUNC_Native|FUNC_Spawner|FUNC_Net|FUNC_NetReliable|FUNC_Static/*|FUNC_NonVirtual*/)) == /*FUNC_Final*/0); }
+
+  bool CanBeCalledWithoutArguments () const noexcept;
 
   // this must be called on a postloaded method only
   inline VClass *GetSelfClass () {

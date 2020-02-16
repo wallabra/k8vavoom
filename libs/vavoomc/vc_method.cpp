@@ -447,7 +447,7 @@ void VMethod::Emit () {
 //  -2: several case-insensitive matches
 //
 //==========================================================================
-int VMethod::FindArgByName (VName aname) const {
+int VMethod::FindArgByName (VName aname) const noexcept {
   if (aname == NAME_None) return -1;
   for (int f = 0; f < NumParams; ++f) {
     if (Params[f].Name == aname) return f;
@@ -461,6 +461,19 @@ int VMethod::FindArgByName (VName aname) const {
     }
   }
   return res;
+}
+
+
+//==========================================================================
+//
+//  VMethod::CanBeCalledWithoutArguments
+//
+//==========================================================================
+bool VMethod::CanBeCalledWithoutArguments () const noexcept {
+  for (int f = 0; f < NumParams; ++f) {
+    if (!(ParamFlags[f]&FPARM_Optional)) return false;
+  }
+  return true;
 }
 
 

@@ -430,7 +430,7 @@ public:
   VMethod *FindMethod (VName Name, bool bRecursive=true);
   // this will follow `ParentClassName` instead of `ParentClass`
   VMethod *FindMethodNonPostLoaded (VName Name, bool bRecursive=true);
-  //VMethod *FindMethodNoCase (VName Name, bool bRecursive=true);
+  VMethod *FindMethodNoCase (VStr Name, bool bRecursive=true); // ignores aliases
   VMethod *FindMethodChecked (VName);
   VMethod *FindAccessibleMethod (VName Name, VClass *self=nullptr, const TLocation *loc=nullptr);
   int GetMethodIndex (VName) const;
