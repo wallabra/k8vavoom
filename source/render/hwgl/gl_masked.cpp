@@ -194,9 +194,10 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
 //
 //  hangup:
 //    0: normal
-//   -1: no z-buffer write, slightly offset (used for flat-aligned sprites)
-//   -2: no z-buffer write
 //  666: fake sprite shadow
+//  bit 0 set: no z-buffer write
+//  bit 1 set: do offsetting (used for flat-aligned sprites)
+//  bit 2 set: don't cull faces
 //
 //==========================================================================
 void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
@@ -211,6 +212,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
 
   TVec texpt(0, 0, 0);
   const bool fakeShadow = (hangup == 666);
+  if (fakeShadow) hangup = 1; // no z-buffer write
 
   bool doBrightmap = (!fakeShadow && r_brightmaps && r_brightmaps_sprite && Tex->Brightmap);
   bool styleDark = (Alpha >= 1000.0f);
@@ -258,31 +260,21 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
       }
     }
     if (hangup) {
-      zbufferWriteDisabled = true;
-      glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
-      glDepthMask(GL_FALSE); // no z-buffer writes
-      if (hangup == -1) {
-        const float updir = (!CanUseRevZ() ? -1.0f : 1.0f);// *hangup;
+      // no z-buffer?
+      if (hangup&1) {
+        zbufferWriteDisabled = true;
+        glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
+        glDepthMask(GL_FALSE); // no z-buffer writes
+      }
+      // offset?
+      if (hangup&2) {
+        const float updir = (!CanUseRevZ() ? -1.0f : 1.0f);
         GLPolygonOffset(updir, updir);
       }
-      /*
-      switch (hangup) {
-        case -1: // no z-buffer write, slightly offset (used for flat-aligned sprites)
-          {
-            const float updir = (!CanUseRevZ() ? -1.0f : 1.0f);// *hangup;
-            GLPolygonOffset(updir, updir);
-          }
-          break;
-        case -2: // no z-buffer write
-          break;
-        case -3: // no z-buffer write, negative offset
-          GLPolygonOffset(-1.0f, -1.0f);
-          break;
-        case -4: // no z-buffer write, positive offset
-          GLPolygonOffset(1.0f, 1.0f);
-          break;
+      // no cull?
+      if (hangup&4) {
+        glDisable(GL_CULL_FACE);
       }
-      */
     }
     //GLEnableBlend();
     // translucent things should not modify z-buffer
@@ -383,10 +375,17 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
 
   #undef SPRVTX
 
+  // no z-buffer?
+  if (zbufferWriteDisabled) glDepthMask(oldDepthMask); // restore z-buffer writes
+  // offset?
+  if (hangup&2) GLDisableOffset();
+  // no cull?
+  if (hangup&4) glEnable(GL_CULL_FACE);
+
   if (restoreBlend) {
-    if (hangup) GLDisableOffset();
+    //if (hangup) GLDisableOffset();
     //GLDisableBlend();
-    if (zbufferWriteDisabled) glDepthMask(oldDepthMask); // restore z-buffer writes
+    //if (zbufferWriteDisabled) glDepthMask(oldDepthMask); // restore z-buffer writes
     if (Additive) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
   }
   if (styleDark) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);

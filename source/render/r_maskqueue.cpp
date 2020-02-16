@@ -108,8 +108,10 @@ extern "C" {
 //
 //  hangup:
 //    0: normal
-//   -1: no z-buffer write, slightly offset (used for flat-aligned sprites)
 //  666: fake sprite shadow
+//  bit 0 set: no z-buffer write
+//  bit 1 set: do offsetting (used for flat-aligned sprites)
+//  bit 2 set: don't cull faces
 //
 //==========================================================================
 void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, TVec *sv,
@@ -340,8 +342,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
     case SPR_ORIENTED_OFS:
       // generate the sprite's axes, according to the sprite's world orientation
       AngleVectors(thing->/*Angles*/GetSpriteDrawAngles(), sprforward, sprright, sprup);
-      //if (spr_type != SPR_ORIENTED) hangup = (sprup.z > 0 ? 1 : sprup.z < 0 ? -1 : 0);
-      if (spr_type != SPR_ORIENTED) hangup = -1;
+      if (spr_type != SPR_ORIENTED) hangup = 3; // no z writes, offset
       break;
 
     case SPR_VP_PARALLEL_ORIENTED:
@@ -385,24 +386,27 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
     case SPR_FLAT: // offset slightly by pitch -- for floor/ceiling splats; ignore roll angle
       {
         TAVec angs = thing->GetSpriteDrawAngles();
-        angs.roll = 0;
-        angs.pitch = AngleMod(angs.pitch+90.0f);
+        // this is what makes the sprite looks like in GZDoom
+        angs.pitch = AngleMod(angs.pitch-90.0f);
+        // roll is meaningfull too
+        angs.roll = AngleMod(angs.roll+180.0f);
         // generate the sprite's axes, according to the sprite's world orientation
         AngleVectors(angs, sprforward, sprright, sprup);
-        //sprorigin -= sprforward*1.7f;
-        hangup = -1;
+        hangup = 7; // no z writes, offset, no cull
       }
       break;
 
     case SPR_WALL: // offset slightly by yaw -- for wall splats; ignore pitch and roll angle
       {
         TAVec angs = thing->GetSpriteDrawAngles();
-        angs.roll = 0;
+        // dunno if roll should be kept here
         angs.pitch = 0;
+        angs.roll = 0;
+        // this is what makes the sprite looks like in GZDoom
+        angs.yaw = AngleMod(angs.yaw+180.0f);
         // generate the sprite's axes, according to the sprite's world orientation
         AngleVectors(angs, sprforward, sprright, sprup);
-        //sprorigin -= sprforward*1.7f;
-        hangup = -1;
+        hangup = 7; // no z writes, offset, no cull
       }
       break;
 
