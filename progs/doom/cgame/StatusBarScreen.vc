@@ -847,6 +847,7 @@ override void SB_DrawFullscreenStats () {
   }
 
   if (GetCvarB('r_hud_draw_fs_powerup_timers')) {
+    SetTextAlign(hleft, vtop);
     int py = ovh-56;
     int px = 16;
     for (Inventory inv = EntityEx(cl.MO).Inventory; inv; inv = inv.Inventory) {
@@ -893,12 +894,16 @@ override void SB_DrawFullscreenStats () {
         //currAlpha = fsalpha*currAlpha;
       }
       if (currAlpha > 0) {
-        int xpos = (Width-TextWidth(lastWeaponName))/2;
+        //int xpos = (Width-TextWidth(lastWeaponName))/2;
         int ypos = ovh-10;
-        DrawText(xpos, ypos, lastWeaponName, GetCvarI('r_hud_weapon_name_color'), CR_UNTRANSLATED, currAlpha);
+        //DrawText(xpos, ypos, lastWeaponName, GetCvarI('r_hud_weapon_name_color'), CR_UNTRANSLATED, currAlpha);
+        SetTextAlign(hcenter, vtop);
+        DrawText(Width/2, ypos, lastWeaponName, GetCvarI('r_hud_weapon_name_color'), CR_UNTRANSLATED, currAlpha);
       }
     }
   }
+
+  SetTextAlign(hleft, vtop);
 
   // draw inventory bar or ready item when needed (it's drawn with transparency)
   if (cl.InventoryTime && cl.InvFirst) {
