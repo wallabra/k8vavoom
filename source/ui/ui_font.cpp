@@ -53,7 +53,7 @@ struct VColTransMap {
 // like regular font, but initialised using explicit list of patches
 class VSpecialFont : public VFont {
 public:
-  VSpecialFont (VName, const TArray<int> &, const TArray<VName> &, const bool *);
+  VSpecialFont (VName AName, const TArray<int> &CharIndexes, const TArray<VName> &CharLumps, const bool *NoTranslate, int ASpaceWidth);
 };
 
 // font in FON1 format
@@ -149,19 +149,19 @@ void VFont::StaticInit () {
 
   // small font
   if (W_CheckNumForName(NAME_fonta_s) >= 0) {
-    SmallFont = new VFont(NAME_smallfont, "fonta%02d", 33, 95, 1);
+    SmallFont = new VFont(NAME_smallfont, "fonta%02d", 33, 95, 1, -666);
   } else {
-    SmallFont = new VFont(NAME_smallfont, "stcfn%03d", 33, 95, 33);
+    SmallFont = new VFont(NAME_smallfont, "stcfn%03d", 33, 95, 33, -666);
   }
   // strife's second small font
   if (W_CheckNumForName(NAME_stbfn033) >= 0) {
-    new VFont(NAME_smallfont2, "stbfn%03d", 33, 95, 33);
+    new VFont(NAME_smallfont2, "stbfn%03d", 33, 95, 33, -666);
   }
   // big font
   if (W_CheckNumForName(NAME_bigfont) >= 0) {
     GetFont(NAME_bigfont, NAME_bigfont);
   } else {
-    new VFont(NAME_bigfont, "fontb%02d", 33, 95, 1);
+    new VFont(NAME_bigfont, "fontb%02d", 33, 95, 1, -666);
   }
   // console font
   ConFont = GetFont(NAME_consolefont, NAME_confont);
@@ -360,6 +360,7 @@ void VFont::ParseFontDefs () {
       int First = 33;
       int Count = 223;
       int Start = 33;
+      int SpaceWidth = -666;
       TArray<int> CharIndexes;
       TArray<VName> CharLumps;
       bool NoTranslate[256];
@@ -387,12 +388,18 @@ void VFont::ParseFontDefs () {
           sc.ExpectNumber();
           Start = sc.Number;
           FontType = 1;
-        } else if (sc.Check("notranslate")) {
+        } else if (sc.Check("notranslate") || sc.Check("notranslation")) {
           CHECK_TYPE(1);
           while (sc.CheckNumber() && !sc.Crossed) {
             if (sc.Number >= 0 && sc.Number < 256) NoTranslate[sc.Number] = true;
           }
           FontType = 2;
+        } else if (sc.Check("cursor")) {
+          sc.Message("fontdef 'CURSOR' property is not supported");
+          sc.ExpectString();
+        } else if (sc.Check("spacewidth")) {
+          sc.ExpectNumber();
+          SpaceWidth = sc.Number;
         } else {
           CHECK_TYPE(1);
           sc.ExpectLoneChar();
@@ -412,10 +419,10 @@ void VFont::ParseFontDefs () {
 
       if (FontName != NAME_None) {
         if (FontType == 1) {
-          new VFont(FontName, Template, First, Count, Start);
+          new VFont(FontName, Template, First, Count, Start, SpaceWidth);
         } else if (FontType == 2) {
           if (CharIndexes.Num()) {
-            new VSpecialFont(FontName, CharIndexes, CharLumps, NoTranslate);
+            new VSpecialFont(FontName, CharIndexes, CharLumps, NoTranslate, SpaceWidth);
           }
         } else {
           sc.Error("Font has no attributes");
@@ -495,7 +502,7 @@ VFont::VFont () {
 //  VFont::VFont
 //
 //==========================================================================
-VFont::VFont (VName AName, VStr FormatStr, int First, int Count, int StartIndex) {
+VFont::VFont (VName AName, VStr FormatStr, int First, int Count, int StartIndex, int ASpaceWidth) {
   for (int i = 0; i < 128; ++i) AsciiChars[i] = -1;
   FirstChar = -1;
   LastChar = -1;
@@ -585,12 +592,16 @@ VFont::VFont (VName AName, VStr FormatStr, int First, int Count, int StartIndex)
 
   // set up width of a space character as half width of N character
   // or 4 if character N has no graphic for it
-  int NIdx = FindChar('N');
-  if (NIdx >= 0) {
-    SpaceWidth = (Chars[NIdx].BaseTex->GetScaledWidth()+1)/2;
-    if (SpaceWidth < 1) SpaceWidth = 1; //k8: just in case
+  if (ASpaceWidth < 0) {
+    int NIdx = FindChar('N');
+    if (NIdx >= 0) {
+      SpaceWidth = (Chars[NIdx].BaseTex->GetScaledWidth()+1)/2;
+      if (SpaceWidth < 1) SpaceWidth = 1; //k8: just in case
+    } else {
+      SpaceWidth = 4;
+    }
   } else {
-    SpaceWidth = 4;
+    SpaceWidth = ASpaceWidth;
   }
 
   BuildTranslations(ColorsUsed, r_palette, false, true);
@@ -978,7 +989,7 @@ VStr VFont::SplitTextWithNewlines (VStr Text, int MaxWidth, bool trimRight) cons
 //  VSpecialFont::VSpecialFont
 //
 //==========================================================================
-VSpecialFont::VSpecialFont (VName AName, const TArray<int> &CharIndexes, const TArray<VName> &CharLumps, const bool *NoTranslate) {
+VSpecialFont::VSpecialFont (VName AName, const TArray<int> &CharIndexes, const TArray<VName> &CharLumps, const bool *NoTranslate, int ASpaceWidth) {
   RegisterFont(this, AName);
 
   for (int i = 0; i < 128; ++i) AsciiChars[i] = -1;
@@ -1031,12 +1042,16 @@ VSpecialFont::VSpecialFont (VName AName, const TArray<int> &CharIndexes, const T
 
   // set up width of a space character as half width of N character
   // or 4 if character N has no graphic for it
-  int NIdx = FindChar('N');
-  if (NIdx >= 0) {
-    SpaceWidth = (Chars[NIdx].BaseTex->GetScaledWidth()+1)/2;
-    if (SpaceWidth < 1) SpaceWidth = 1; //k8: just in case
+  if (ASpaceWidth < 0) {
+    int NIdx = FindChar('N');
+    if (NIdx >= 0) {
+      SpaceWidth = (Chars[NIdx].BaseTex->GetScaledWidth()+1)/2;
+      if (SpaceWidth < 1) SpaceWidth = 1; //k8: just in case
+    } else {
+      SpaceWidth = 4;
+    }
   } else {
-    SpaceWidth = 4;
+    SpaceWidth = ASpaceWidth;
   }
 
   BuildTranslations(ColorsUsed, r_palette, false, true);

@@ -75,7 +75,7 @@ protected:
 
 public:
   VFont ();
-  VFont (VName, VStr, int, int, int);
+  VFont (VName AName, VStr FormatStr, int First, int Count, int StartIndex, int ASpaceWidth);
   ~VFont ();
 
   inline VName GetFontName () const noexcept { return Name; }
