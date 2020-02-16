@@ -898,7 +898,7 @@ final void common_A_FaceSomething (EntityEx Tgt, optional float max_turn, option
     }
   }
 
-  if (!max_turn && !ang_offset && Tgt.bShadow) {
+  if (!max_turn && !ang_offset && Tgt.bShadow && !bSeeInvisible) {
     Angles.yaw = AngleMod360(Angles.yaw+(Random()-Random())*45.0);
   }
 }

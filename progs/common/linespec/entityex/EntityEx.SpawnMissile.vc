@@ -216,7 +216,7 @@ final EntityEx SpawnMissile (EntityEx dest, class!EntityEx type, optional float 
 
   if (dest) {
     dir = dest.Origin-Origin;
-    if (dest.bShadow) {
+    if (dest.bShadow && !bSeeInvisible) {
       // invisible target
       VectorRotateAroundZ(ref dir, (Random()-Random())*45.0/2.0);
     }
@@ -263,7 +263,7 @@ final EntityEx SpawnMissileXYZ (TVec org, EntityEx dest, class!EntityEx type) {
   A.PlayMissileSpawnSound(self);
   A.Target = self;  // Originator
   dir = dest.Origin-Origin;
-  if (dest.bShadow) {
+  if (dest.bShadow && !bSeeInvisible) {
     // invisible target
     VectorRotateAroundZ(ref dir, (Random()-Random())*45.0);
   }
@@ -311,7 +311,7 @@ final EntityEx SpawnMissileZAimed (float z, EntityEx dest, class!EntityEx type) 
   sincos(Angles.yaw, out dir.y, out dir.x);
   dir.z = (dist != 0.0 ? (dest.Origin.z-Origin.z)/dist : A.Speed);
   // fuzzy player
-  if (dest.bShadow) VectorRotateAroundZ(ref dir, (Random()-Random())*45.0/2.0);
+  if (dest.bShadow && !bSeeInvisible) VectorRotateAroundZ(ref dir, (Random()-Random())*45.0/2.0);
   dir = Normalise(dir);
   A.Velocity = dir*A.Speed;
   // floor and ceiling huggers should never have a vertical component to their velocity

@@ -289,7 +289,7 @@ final void FireSuperBullet () {
       Target.Origin.y-Target.Velocity.y*veleffect/35.0-Origin.y,
       Target.Origin.x-Target.Velocity.y*veleffect/35.0-Origin.x);
 
-    if (Target.bShadow) Ang.yaw = AngleMod360(Angles.yaw+(Random()-Random())*45.0);
+    if (Target.bShadow && !bSeeInvisible) Ang.yaw = AngleMod360(Angles.yaw+(Random()-Random())*45.0);
     Angles.yaw = Ang.yaw;
   }
 
@@ -467,7 +467,7 @@ final void DoAttack (bool DoMelee, bool DoMissile, int MeleeDamage,
     Target.Origin.y-Target.Velocity.y*3.0/35.0-Origin.y,
     Target.Origin.x-Target.Velocity.y*3.0/35.0-Origin.x);
 
-  if (Target.bShadow) Ang.yaw = AngleMod360(Angles.yaw+(Random()-Random())*45.0);
+  if (Target.bShadow && !bSeeInvisible) Ang.yaw = AngleMod360(Angles.yaw+(Random()-Random())*45.0);
   Angles.yaw = Ang.yaw;
 
   AngleVector(Ang, out Dir);

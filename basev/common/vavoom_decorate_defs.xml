@@ -166,6 +166,7 @@
     <!--flag_unsupported name="NoTimeFreeze" warning="true" /-->
     <flag name="NoFear" property="bNoFear" />
     <flag name="CantSeek" property="bCantSeek" />
+    <flag name="SeeInvisible" property="bSeeInvisible" />
     <flag name="Telestomp" property="bTelestomp" />
     <flag_inverted name="NoTelestomp" property="bTelestomp" />
     <flag name="StayMorphed" property="bStayMorphed" />
