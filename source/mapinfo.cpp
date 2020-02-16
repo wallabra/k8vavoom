@@ -94,6 +94,7 @@ struct MapInfoCommand {
 
 static MapInfoCommand *mclist = nullptr;
 static TMap<VStr, MapInfoCommand *> mcmap; // key is lowercase name
+static bool hasCustomDamageFactors = false;
 
 
 #define MAPINFOCMD(name_)  \
@@ -591,6 +592,8 @@ void InitMapInfo () {
 
   // we don't need it anymore
   mcmap.clear();
+
+  if (hasCustomDamageFactors) SV_ReplaceCustomDamageFactors();
 }
 
 
@@ -2039,6 +2042,67 @@ static void ParseGameInfo (VScriptParser *sc) {
 
 //==========================================================================
 //
+//  ParseDamageType
+//
+//==========================================================================
+static void ParseDamageType (VScriptParser *sc) {
+  sc->ExpectString(); // name
+  if (sc->String.strEquCI("Normal")) sc->String = "None";
+  VStr dfname = sc->String;
+  sc->Expect("{");
+
+  float factor = 1.0f;
+  bool noarmor = false;
+  bool replace = false;
+  while (!sc->Check("}")) {
+    if (sc->Check("NoArmor")) {
+      noarmor = true;
+      continue;
+    }
+    if (sc->Check("ReplaceFactor")) {
+      replace = true;
+      continue;
+    }
+    if (sc->Check("Factor")) {
+      sc->Expect("=");
+      sc->ExpectFloat();
+      factor = sc->Float;
+      continue;
+    }
+    //FIXME: implement this!
+    if (sc->Check("Obituary")) {
+      sc->Expect("=");
+      sc->ExpectString();
+      continue;
+    }
+    sc->Error(va("unknown DamageType field '%s'", *sc->String));
+  }
+
+  // add or replace damage type
+  VDamageFactor *fc = nullptr;
+  for (auto &&df : CustomDamageFactors) {
+    if (dfname.strEquCI(*df.DamageType)) {
+      fc = &df;
+      break;
+    }
+  }
+
+  if (!fc) {
+    fc = &CustomDamageFactors.alloc();
+    memset((void *)fc, 0, sizeof(VDamageFactor));
+    fc->DamageType = VName(*dfname);
+  }
+
+  fc->Factor = factor;
+  if (replace) fc->Flags |= VDamageFactor::DF_REPLACE;
+  if (noarmor) fc->Flags |= VDamageFactor::DF_NOARMOR;
+
+  hasCustomDamageFactors = true;
+}
+
+
+//==========================================================================
+//
 //  ParseMapInfo
 //
 //==========================================================================
@@ -2097,6 +2161,8 @@ static void ParseMapInfo (VScriptParser *sc, int milumpnum) {
       else if (sc->Check("gameinfo")) {
         ParseGameInfo(sc);
       } else if (sc->Check("damagetype")) {
+        ParseDamageType(sc);
+        /*
         sc->Message("Unimplemented MAPINFO command `DamageType`");
         if (!sc->Check("{")) {
           sc->ExpectString();
@@ -2104,6 +2170,7 @@ static void ParseMapInfo (VScriptParser *sc, int milumpnum) {
         } else {
           sc->SkipBracketed(true); // bracket eaten
         }
+        */
       } else if (sc->Check("GameSkyFlatName")) {
         if (sc->Check("=")) {} // just in case
         sc->ExpectString();

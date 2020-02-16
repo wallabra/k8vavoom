@@ -40,6 +40,8 @@ void SV_Shutdown ();
 void ServerFrame (int realtics);
 void SV_ShutdownGame ();
 
+void SV_ReplaceCustomDamageFactors ();
+
 // set all player fields to defaults (calls `ResetToDefaults()` method)
 void SV_ResetPlayers ();
 

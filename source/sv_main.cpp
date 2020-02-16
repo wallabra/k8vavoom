@@ -226,6 +226,29 @@ void G_LoadVCMods (VName modlistfile, const char *modtypestr) {
 
 //==========================================================================
 //
+//  SV_ReplaceCustomDamageFactors
+//
+//==========================================================================
+void SV_ReplaceCustomDamageFactors () {
+  if (!GGameInfo) return;
+  // put custom damage factors into gameinfo object
+  if (CustomDamageFactors.length()) {
+    GCon->Logf(NAME_Init, "setting up %d custom damage factor%s", CustomDamageFactors.length(), (CustomDamageFactors.length() != 1 ? "s" : ""));
+    VField *F = GGameInfo->GetClass()->FindFieldChecked("CustomDamageFactors");
+    TArray<VDamageFactor> &dflist = *(TArray<VDamageFactor> *)F->GetFieldPtr(GGameInfo);
+    dflist.resize(CustomDamageFactors.length()); // do not overallocate
+    for (auto &&it : CustomDamageFactors) {
+      VDamageFactor &newdf = dflist.alloc();
+      newdf = it;
+    }
+    // this can be called from mapinfo parser, so don't clear it here
+    //CustomDamageFactors.clear(); // we don't need them anymore
+  }
+}
+
+
+//==========================================================================
+//
 //  SV_Init
 //
 //==========================================================================
@@ -267,17 +290,7 @@ void SV_Init () {
   GGameInfo->validcount = &validcount;
   GGameInfo->skyflatnum = skyflatnum; // this should be fixed after mapinfo parsing
 
-  // put custom damage factors into gameinfo object
-  if (CustomDamageFactors.length()) {
-    VField *F = GGameInfo->GetClass()->FindFieldChecked("CustomDamageFactors");
-    TArray<VDamageFactor> &dflist = *(TArray<VDamageFactor> *)F->GetFieldPtr(GGameInfo);
-    dflist.resize(CustomDamageFactors.length()); // do not overallocate
-    for (auto &&it : CustomDamageFactors) {
-      VDamageFactor &newdf = dflist.alloc();
-      newdf = it;
-    }
-    CustomDamageFactors.clear(); // we don't need them anymore
-  }
+  SV_ReplaceCustomDamageFactors();
 
   P_InitSwitchList();
   P_InitTerrainTypes();
