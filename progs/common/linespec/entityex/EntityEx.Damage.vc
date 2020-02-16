@@ -694,6 +694,8 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
   // push the target unless using a weapon that should not inflict thrust
   if (inflictor && inflictor != self && bColideWithThings && !inflictor.bNoDamageThrust && !bDontThrust) {
     float kickback;
+
+    /* old code
     if (bIsPlayer && !GetCvar('damage_thrust')) {
       kickback = 0.0;
     } else if (!source || !source.bIsPlayer) {
@@ -702,6 +704,18 @@ final void Damage (EntityEx inflictor, EntityEx source, int damage,
       auto wpn = PlayerEx(source.Player).ReadyWeapon;
       kickback = (wpn ? wpn.Kickback : LineSpecialGameInfo(Level.Game).DefaultKickBack);
     }
+    */
+    if (bIsPlayer && !GetCvar('damage_thrust')) {
+      kickback = 0.0;
+    } else {
+           if (inflictor && inflictor.ProjectileKickback) kickback = inflictor.ProjectileKickback;
+      else if (!source || !source.bIsPlayer) kickback = LineSpecialGameInfo(Level.Game).DefaultKickBack;
+      else {
+        auto wpn = PlayerEx(source.Player).ReadyWeapon;
+        kickback = (wpn ? wpn.Kickback : LineSpecialGameInfo(Level.Game).DefaultKickBack);
+      }
+    }
+
     if (kickback) {
       TVec dir;
       float thrust = kickback/8.0*float(damage)/fmax(1, Mass);
