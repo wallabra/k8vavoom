@@ -261,6 +261,7 @@ void Cheat_Gimme_AC (const ref array!string args, bool newArg, out array!string 
   aclist[$] = "Ammo";
   aclist[$] = "Arsenal";
   aclist[$] = "Artifacts";
+  aclist[$] = "CurrAmmo";
   aclist[$] = "ElvenGifts";
   aclist[$] = "Health";
   aclist[$] = "Keys";
@@ -305,6 +306,11 @@ void Cheat_Gimme () {
   if (Cmd_CheckParm("ammo") || Cmd_CheckParm("arsenal")) {
     CheatHelper_AllAmmo(Cmd_CheckParm("full"));
     cprint("ALL AMMO");
+  }
+
+  if (Cmd_CheckParm("CurrAmmo")) {
+    CheatHelper_AllAmmo(false, current:true);
+    cprint("CURRENT AMMO");
   }
 
   if (Cmd_CheckParm("health")) {
