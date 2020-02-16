@@ -5111,12 +5111,13 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_SetFont)
       Font = GetNameLowerCase(sp[-1]);
-      //GCon->Logf("SETFONTI: '%s'", *Font);
+      //GCon->Logf(NAME_Debug, "SETFONTI: '%s'", *Font);
       --sp;
       ACSVM_BREAK;
 
     ACSVM_CASE(PCD_SetFontDirect)
       Font = GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID());
+      //GCon->Logf(NAME_Debug, "SETFONTD: '%s'", *Font);
       ip += 4;
       ACSVM_BREAK;
 

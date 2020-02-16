@@ -146,27 +146,52 @@ void VFont::StaticInit () {
   ParseTextColors();
 
   // initialise standard fonts
+  GCon->Log(NAME_Init, "creading default fonts...");
 
   // small font
   if (W_CheckNumForName(NAME_fonta_s) >= 0) {
+    GCon->Logf(NAME_Init, "  SmallFont: from 'fonta' lumps");
     SmallFont = new VFont(NAME_smallfont, "fonta%02d", 33, 95, 1, -666);
   } else {
+    GCon->Logf(NAME_Init, "  SmallFont: from 'stcfn' lumps");
     SmallFont = new VFont(NAME_smallfont, "stcfn%03d", 33, 95, 33, -666);
   }
+
+  if (SmallFont->GetFontName() == NAME_None) {
+    GCon->Logf(NAME_Warning, "  SmallFont: cannot create it, using ConsoleFont instead...");
+    SmallFont = GetFont(NAME_smallfont, NAME_confont);
+    if (!SmallFont) Sys_Error("cannot create console font");
+  }
+
   // strife's second small font
   if (W_CheckNumForName(NAME_stbfn033) >= 0) {
+    GCon->Logf(NAME_Init, "  Strife secondary small font");
     new VFont(NAME_smallfont2, "stbfn%03d", 33, 95, 33, -666);
   }
+
   // big font
   if (W_CheckNumForName(NAME_bigfont) >= 0) {
-    GetFont(NAME_bigfont, NAME_bigfont);
+    GCon->Logf(NAME_Init, "  BigFont: from FON lump");
+    if (!GetFont(NAME_bigfont, NAME_bigfont)) {
+      GCon->Logf(NAME_Warning, "  BigFont: cannot create it, using ConsoleFont instead...");
+      SmallFont = GetFont(NAME_bigfont, NAME_confont);
+      if (!SmallFont) Sys_Error("cannot create console font");
+    }
   } else {
-    new VFont(NAME_bigfont, "fontb%02d", 33, 95, 1, -666);
+    GCon->Logf(NAME_Init, "  BigFont: from 'fontb' lumps");
+    auto fnt = new VFont(NAME_bigfont, "fontb%02d", 33, 95, 1, -666);
+    if (fnt->GetFontName() == NAME_None) {
+      GCon->Logf(NAME_Warning, "  BigFont: cannot create it, using ConsoleFont instead...");
+      if (!GetFont(NAME_bigfont, NAME_confont)) Sys_Error("cannot create console font");
+    }
   }
-  // console font
-  ConFont = GetFont(NAME_consolefont, NAME_confont);
 
-  // load custom fonts
+  // console font
+  GCon->Logf(NAME_Init, "  ConsoleFont: from FON lump");
+  ConFont = GetFont(NAME_consolefont, NAME_confont);
+  if (!ConFont) Sys_Error("cannot create console font");
+
+  // load custom fonts (they can override standard fonts)
   ParseFontDefs();
 }
 
@@ -419,7 +444,11 @@ void VFont::ParseFontDefs () {
 
       if (FontName != NAME_None) {
         if (FontType == 1) {
-          new VFont(FontName, Template, First, Count, Start, SpaceWidth);
+          auto fnt = new VFont(FontName, Template, First, Count, Start, SpaceWidth);
+          if (fnt->GetFontName() == NAME_None) {
+            GCon->Logf(NAME_Error, "FONT: cannot create font '%s'!", *FontName);
+            delete fnt;
+          }
         } else if (FontType == 2) {
           if (CharIndexes.Num()) {
             new VSpecialFont(FontName, CharIndexes, CharLumps, NoTranslate, SpaceWidth);
@@ -493,7 +522,7 @@ VFont *VFont::GetFont (VName AName, VName LumpName) {
 //  VFont::VFont
 //
 //==========================================================================
-VFont::VFont () {
+VFont::VFont () : Name(NAME_None) {
 }
 
 
@@ -584,7 +613,7 @@ VFont::VFont (VName AName, VStr FormatStr, int First, int Count, int StartIndex,
   // if we have no char textures, don't register this font
   // this way we will have standard fonts visible of override failed
   if (!wasAnyChar) {
-    delete this;
+    AName = NAME_None;
     return;
   }
 
