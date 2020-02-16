@@ -569,10 +569,18 @@ weapons
 // ammo class names
 ammo
 {
-  Clip
-  Shell
-  Cell
-  RocketAmmo
+  Clip,
+  Shell,
+  Cell,
+  RocketAmmo,
+  GoldWandAmmo,
+  NULL,
+  BlasterAmmo,
+  SkullRodAmmo,
+  PhoenixRodAmmo,
+  MaceAmmo,
+  Mana1,
+  Mana2
 }
 
 // original thing heights

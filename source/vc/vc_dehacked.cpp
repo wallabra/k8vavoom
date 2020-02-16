@@ -187,7 +187,7 @@ static VStr dehFileName;
 
 //==========================================================================
 //
-//  GetLine
+//  Warning
 //
 //==========================================================================
 static __attribute__((format(printf, 1, 2))) void Warning (const char *fmt, ...) {
@@ -200,6 +200,24 @@ static __attribute__((format(printf, 1, 2))) void Warning (const char *fmt, ...)
     GLog.Logf(NAME_Warning, "%s:%d: %s", *dehFileName, dehCurrLine, res);
   } else {
     GLog.Logf(NAME_Warning, "DEHACKED: %s", res);
+  }
+}
+
+
+//==========================================================================
+//
+//  Message
+//
+//==========================================================================
+static __attribute__((format(printf, 1, 2))) void Message (const char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  char *res = vavarg(fmt, ap);
+  va_end(ap);
+  if (!dehFileName.isEmpty()) {
+    GLog.Logf(NAME_Init, "%s:%d: %s", *dehFileName, dehCurrLine, res);
+  } else {
+    GLog.Logf(NAME_Init, "DEHACKED: %s", res);
   }
 }
 
@@ -734,6 +752,13 @@ static void ReadAmmo (int num) {
 
   VClass *Weapon = VClass::FindClass("Weapon");
   VClass *Ammo = AmmoClasses[num];
+
+  if (!Ammo) {
+    Warning("trying to change null ammo num %d", num);
+    while (ParseParam()) {}
+    return;
+  }
+
   const int oldVal = Ammo->GetFieldInt("Amount"); // we'll need it later
 
   int maxVal = -1;
@@ -837,12 +862,15 @@ static void ReadWeapon (int num) {
 
   VClass *Weapon = WeaponClasses[num];
   while (ParseParam()) {
-    if (!VStr::ICmp(String, "Ammo type")) {
-      if (value < AmmoClasses.length()) {
-        Weapon->SetFieldClassValue("AmmoType1", AmmoClasses[value]);
-        Weapon->SetFieldInt("AmmoGive1", AmmoClasses[value]->GetFieldInt("Amount")*2);
+    if (VStr::strEquCI(String, "Ammo type")) {
+      VClass *ammo = (value >= 0 && value < AmmoClasses.length() ? AmmoClasses[value] : nullptr);
+      if (ammo) {
+        Message("replacing ammo for weapon '%s' with '%s'", Weapon->GetName(), ammo->GetName());
+        Weapon->SetFieldClassValue("AmmoType1", ammo);
+        Weapon->SetFieldInt("AmmoGive1", ammo->GetFieldInt("Amount")*2);
         if (Weapon->GetFieldInt("AmmoUse1") == 0) Weapon->SetFieldInt("AmmoUse1", 1);
       } else {
+        Message("replacing ammo for weapon '%s' with nothing", Weapon->GetName());
         Weapon->SetFieldClassValue("AmmoType1", nullptr);
       }
     } else if (!VStr::ICmp(String, "Ammo use") || !VStr::ICmp(String, "Ammo per shot")) {
@@ -1503,6 +1531,7 @@ static void LoadDehackedDefinitions () {
   sc->Expect("weapons");
   sc->Expect("{");
   while (!sc->Check("}")) {
+    if (sc->Check(",")) continue;
     sc->ExpectString();
     VClass *C = VClass::FindClass(*sc->String);
     if (!C) sc->Error(va("No such class %s", *sc->String));
@@ -1513,10 +1542,15 @@ static void LoadDehackedDefinitions () {
   sc->Expect("ammo");
   sc->Expect("{");
   while (!sc->Check("}")) {
+    if (sc->Check(",")) continue;
     sc->ExpectString();
-    VClass *C = VClass::FindClass(*sc->String);
-    if (!C) sc->Error(va("No such class %s", *sc->String));
-    AmmoClasses.Append(C);
+    if (sc->String.strEquCI("null")) {
+      AmmoClasses.Append(nullptr);
+    } else {
+      VClass *C = VClass::FindClass(*sc->String);
+      if (!C) sc->Message(va("No such ammo class '%s' (dehinfo)", *sc->String));
+      AmmoClasses.Append(C);
+    }
   }
 
   // set original thing heights
