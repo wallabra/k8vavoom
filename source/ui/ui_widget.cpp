@@ -844,6 +844,13 @@ void VWidget::FillRectWithFlatRepeat (int X, int Y, int Width, int Height, VName
     if (screenBackTexNum < 1) return;
     tex = GTextureManager.getIgnoreAnim(screenBackTexNum);
   } else {
+    int nn = GTextureManager.CheckNumForName(Name, TEXTYPE_Flat, true);
+    if (nn < 0) {
+      // no flat: fill rect with gray color
+      FillRect(X, Y, Width, Height, 0x222222, 1.0f);
+      return;
+    }
+    //tex = GTextureManager.getIgnoreAnim(GTextureManager.NumForName(Name, TEXTYPE_Flat, true));
     tex = GTextureManager.getIgnoreAnim(GTextureManager.NumForName(Name, TEXTYPE_Flat, true));
   }
   if (!tex || tex->Type == TEXTYPE_Null) return;

@@ -87,6 +87,9 @@ static int hitexNewCount = 0;
 static int hitexReplaceCount = 0;
 static double hitexLastMessageTime = -1;
 
+static TMapNC<VName, bool> numForNameWarned;
+static TMapNC<VName, bool> numForNameWarnedMapTextures;
+
 
 // sorry for this hack!
 extern void SV_UpdateSkyFlat ();
@@ -319,7 +322,7 @@ void VTextureManager::rehashTextures () {
 
 //==========================================================================
 //
-//  VTextureManager::ResetMapTextures
+//  VTextureManager::WipeWallPatches
 //
 //==========================================================================
 void VTextureManager::WipeWallPatches () {
@@ -347,6 +350,8 @@ void VTextureManager::WipeWallPatches () {
 //
 //==========================================================================
 void VTextureManager::ResetMapTextures () {
+  numForNameWarnedMapTextures.reset();
+
   if (MapTextures.length() == 0) {
 #ifdef CLIENT
     if (r_reupload_textures && Drawer) {
@@ -733,19 +738,20 @@ int VTextureManager::FindFlatByName (VName Name, bool bOverload) {
 //
 //==========================================================================
 int VTextureManager::NumForName (VName Name, int Type, bool bOverload, bool bAllowLoadAsMapTexture) {
-  static TMapNC<VName, bool> numForNameWarned;
   if (Name == NAME_None) return 0;
   if (IsDummyTextureName(Name)) return 0;
   int i = CheckNumForName(Name, Type, bOverload);
   if (i == -1) {
-    if (!numForNameWarned.has(Name)) {
-      if (bAllowLoadAsMapTexture) {
+    if (bAllowLoadAsMapTexture) {
+      if (!numForNameWarnedMapTextures.has(Name)) {
         auto lock = LockMapLocalTextures();
         i = GTextureManager.AddFileTextureChecked(Name, Type);
         if (i == -1) i = GTextureManager.AddFileTextureChecked(Name.GetLower(), Type);
         if (i != -1) return i;
-        numForNameWarned.put(Name, true);
+        numForNameWarnedMapTextures.put(Name, true);
       }
+    }
+    if (!numForNameWarned.put(Name, true)) {
       GCon->Logf(NAME_Warning, "VTextureManager::NumForName: '%s' not found (type:%d; over:%d)", *Name, (int)Type, (int)bOverload);
     }
     i = DefaultTexture;
