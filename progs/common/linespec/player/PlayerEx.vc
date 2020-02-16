@@ -5132,31 +5132,92 @@ void CheatHelper_AllWeapons (bool full) {
 //
 //  CheatHelper_AllAmmo
 //
+//  if `full` is `false`, give ammo only for weapons in hands
+//
 //==========================================================================
-void CheatHelper_AllAmmo () {
+void CheatHelper_AllAmmo (bool full) {
   bool gotit = false;
-  class!Ammo Cls;
-  foreach AllClasses(Ammo, out Cls) {
-    // only direct descendants
-    if (GetClassParent(Cls) != Ammo) continue;
-    if (!EntityEx.CheckSpawnGameFilter(Cls, Level.Game)) continue;
-    Ammo AmmoItem = EntityEx.SpawnAmmoType(Level, class!Ammo(Cls));
-    if (!AmmoItem) continue;
-    Inventory invAmmo = EntityEx(MO).FindInventory(Cls);
-    if (invAmmo && Ammo(invAmmo)) {
-      delete AmmoItem;
-      AmmoItem = Ammo(invAmmo);
-      assert(AmmoItem);
-    } else {
-      assert(Ammo(AmmoItem));
-      if (!AmmoItem.TryPickup(EntityEx(MO))) {
-        AmmoItem.Destroy();
-        AmmoItem = none;
+  if (full) {
+    class!Ammo Cls;
+    foreach AllClasses(Ammo, out Cls) {
+      // only direct descendants
+      if (GetClassParent(Cls) != Ammo) continue;
+      if (!EntityEx.CheckSpawnGameFilter(Cls, Level.Game)) continue;
+      Ammo AmmoItem = EntityEx.SpawnAmmoType(Level, class!Ammo(Cls));
+      if (!AmmoItem) continue;
+      Inventory invAmmo = EntityEx(MO).FindInventory(Cls);
+      if (invAmmo && Ammo(invAmmo)) {
+        delete AmmoItem;
+        AmmoItem = Ammo(invAmmo);
+        assert(AmmoItem);
       } else {
-        gotit = true;
+        assert(Ammo(AmmoItem));
+        if (!AmmoItem.TryPickup(EntityEx(MO))) {
+          AmmoItem.Destroy();
+          AmmoItem = none;
+        } else {
+          gotit = true;
+        }
+      }
+      if (Ammo(AmmoItem)) { AmmoItem.Amount = Ammo(AmmoItem)./*MaxAmount*/k8GetAmmoKingMax(); gotit = true; }
+    }
+  } else {
+    // only for weapons in hands
+    auto pawn = PlayerPawn(MO);
+    if (!pawn) return;
+
+    array!(class!Ammo) ammoList;
+
+    // check all weapon slots
+    /*
+    foreach (auto slot; 0..pawn.GetNumberOfSlots()) {
+      int slotsize = pawn.GetSlotSize(slot);
+      if (!slotsize) continue;
+      foreach (auto i; 0..slotsize; reverse) {
+        class!Weapon slotwpn = pawn.GetWeaponInSlot(slot, i);
+        if (!slotwpn) continue;
       }
     }
-    if (Ammo(AmmoItem)) { AmmoItem.Amount = Ammo(AmmoItem)./*MaxAmount*/k8GetAmmoKingMax(); gotit = true; }
+    */
+
+    // collect possible ammo
+    for (Inventory inv = pawn.Inventory; inv; inv = inv.Inventory) {
+      auto wpn = Weapon(inv);
+      if (!wpn) continue;
+      foreach (int atidx; 0..2) {
+        class!Ammo acls = (atidx ? wpn.AmmoType2 : wpn.AmmoType1);
+        if (!acls) continue;
+        int xidx = 0;
+        for (; xidx < ammoList.length; ++xidx) if (ammoList[xidx] == acls) break;
+        if (xidx >= ammoList.length) ammoList[$] = acls;
+      }
+    }
+
+    // now give collected ammo
+    foreach (class!Ammo acls; ammoList) {
+      //if (!EntityEx.CheckSpawnGameFilter(acls, Level.Game)) continue; // just in case?
+      Ammo AmmoItem = EntityEx.SpawnAmmoType(Level, acls);
+      if (!AmmoItem) {
+        printwarn("failed to spawn ammo '%C'", acls);
+        continue;
+      }
+      printdebug("spawned ammo '%C' for ammo class '%C'", AmmoItem, acls);
+      Inventory invAmmo = EntityEx(MO).FindInventory(acls);
+      if (invAmmo && Ammo(invAmmo)) {
+        delete AmmoItem;
+        AmmoItem = Ammo(invAmmo);
+        assert(AmmoItem);
+      } else {
+        assert(Ammo(AmmoItem));
+        if (!AmmoItem.TryPickup(EntityEx(MO))) {
+          AmmoItem.Destroy();
+          AmmoItem = none;
+        } else {
+          gotit = true;
+        }
+      }
+      if (Ammo(AmmoItem)) { AmmoItem.Amount = Ammo(AmmoItem)./*MaxAmount*/k8GetAmmoKingMax(); gotit = true; }
+    }
   }
   if (gotit) cprint("You got ammo!");
 }

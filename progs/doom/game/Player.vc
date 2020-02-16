@@ -371,7 +371,7 @@ void Cheat_Gimme () {
 
   // Ammo
   if (Cmd_CheckParm("Ammo") || Cmd_CheckParm("All") || Cmd_CheckParm("Arsenal")) {
-    CheatHelper_AllAmmo();
+    CheatHelper_AllAmmo(Cmd_CheckParm("full"));
   }
 
   // Keys

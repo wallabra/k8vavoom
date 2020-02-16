@@ -158,7 +158,7 @@ void Cheat_Gimme () {
 
   // ammo
   if (Cmd_CheckParm("Ammo") || Cmd_CheckParm("arsenal")) {
-    CheatHelper_AllAmmo();
+    CheatHelper_AllAmmo(Cmd_CheckParm("full"));
     cprint("FULL AMMO");
   }
 
