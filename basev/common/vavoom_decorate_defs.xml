@@ -216,6 +216,8 @@
     <flag name="NoPain" property="bNoPain" />
     <flag_byte name="ForceYBillboard" property="SpriteType" true_value="0" false_value="0" />
     <flag_byte name="ForceXYBillboard" property="SpriteType" true_value="4" false_value="0" />
+    <flag_byte name="FlatSprite" property="SpriteType" true_value="7" false_value="0" />
+    <flag_byte name="WallSprite" property="SpriteType" true_value="8" false_value="0" />
     <!-- Projectile -->
     <flag name="Missile" property="bMissile" />
     <flag name="Ripper" property="bRip" />

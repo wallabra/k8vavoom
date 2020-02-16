@@ -40,6 +40,8 @@ enum {
   SPR_VP_PARALLEL_ORIENTED, // 4 (xy billboard)
   SPR_VP_PARALLEL_UPRIGHT_ORIENTED, // 5
   SPR_ORIENTED_OFS, // 6 (offset slightly by pitch -- for floor/ceiling splats)
+  SPR_FLAT, // 7 (offset slightly by pitch -- for floor/ceiling splats; ignore roll angle)
+  SPR_WALL, // 8 (offset slightly by yaw -- for wall splats; ignore pitch and roll angle)
 };
 
 
@@ -285,6 +287,9 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
   float sr;
   float cr;
   int hangup = 0;
+  //FIXME: is this right?
+  bool ignoreSpriteFix = (spr_type != SPR_VP_PARALLEL_UPRIGHT);
+
   //spr_type = SPR_ORIENTED;
   switch (spr_type) {
     case SPR_VP_PARALLEL_UPRIGHT:
@@ -333,9 +338,8 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
     case SPR_ORIENTED_OFS:
       // generate the sprite's axes, according to the sprite's world orientation
       AngleVectors(thing->/*Angles*/GetSpriteDrawAngles(), sprforward, sprright, sprup);
-      if (spr_type != SPR_ORIENTED) {
-        hangup = (sprup.z > 0 ? 1 : sprup.z < 0 ? -1 : 0);
-      }
+      //if (spr_type != SPR_ORIENTED) hangup = (sprup.z > 0 ? 1 : sprup.z < 0 ? -1 : 0);
+      if (spr_type != SPR_ORIENTED) hangup = -1;
       break;
 
     case SPR_VP_PARALLEL_ORIENTED:
@@ -374,6 +378,30 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
       //  Rotate
       sprright = TVec(tvec.x*cr, tvec.y*cr, tvec.z*cr+sr);
       sprup = TVec(tvec.x*(-sr), tvec.y*(-sr), tvec.z*(-sr)+cr);
+      break;
+
+    case SPR_FLAT: // offset slightly by pitch -- for floor/ceiling splats; ignore roll angle
+      {
+        TAVec angs = thing->GetSpriteDrawAngles();
+        angs.roll = 0;
+        angs.pitch = AngleMod(angs.pitch+90.0f);
+        // generate the sprite's axes, according to the sprite's world orientation
+        AngleVectors(angs, sprforward, sprright, sprup);
+        //sprorigin -= sprforward*1.7f;
+        hangup = -1;
+      }
+      break;
+
+    case SPR_WALL: // offset slightly by yaw -- for wall splats; ignore pitch and roll angle
+      {
+        TAVec angs = thing->GetSpriteDrawAngles();
+        angs.roll = 0;
+        angs.pitch = 0;
+        // generate the sprite's axes, according to the sprite's world orientation
+        AngleVectors(angs, sprforward, sprright, sprup);
+        //sprorigin -= sprforward*1.7f;
+        hangup = -1;
+      }
       break;
 
     default:
@@ -457,7 +485,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
   //if (r_brightmaps && r_brightmaps_sprite && Tex->Brightmap && Tex->Brightmap->nofullbright) light = seclight; // disable fullbright
   if (r_brightmaps && r_brightmaps_sprite && Tex->nofullbright) light = seclight; // disable fullbright
 
-  int fixAlgo = r_fix_sprite_offsets.asInt();
+  int fixAlgo = (ignoreSpriteFix ? 0 : r_fix_sprite_offsets.asInt());
   if (fixAlgo < 0 || thing->IsFloatBob()) fixAlgo = 0; // just in case
 
   int TexWidth = Tex->GetWidth();

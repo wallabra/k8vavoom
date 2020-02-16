@@ -195,6 +195,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
 //  hangup:
 //    0: normal
 //   -1: no z-buffer write, slightly offset (used for flat-aligned sprites)
+//   -2: no z-buffer write
 //  666: fake sprite shadow
 //
 //==========================================================================
@@ -260,8 +261,28 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
       zbufferWriteDisabled = true;
       glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
       glDepthMask(GL_FALSE); // no z-buffer writes
-      const float updir = (!CanUseRevZ() ? -1.0f : 1.0f);//*hangup;
-      GLPolygonOffset(updir, updir);
+      if (hangup == -1) {
+        const float updir = (!CanUseRevZ() ? -1.0f : 1.0f);// *hangup;
+        GLPolygonOffset(updir, updir);
+      }
+      /*
+      switch (hangup) {
+        case -1: // no z-buffer write, slightly offset (used for flat-aligned sprites)
+          {
+            const float updir = (!CanUseRevZ() ? -1.0f : 1.0f);// *hangup;
+            GLPolygonOffset(updir, updir);
+          }
+          break;
+        case -2: // no z-buffer write
+          break;
+        case -3: // no z-buffer write, negative offset
+          GLPolygonOffset(-1.0f, -1.0f);
+          break;
+        case -4: // no z-buffer write, positive offset
+          GLPolygonOffset(1.0f, 1.0f);
+          break;
+      }
+      */
     }
     //GLEnableBlend();
     // translucent things should not modify z-buffer

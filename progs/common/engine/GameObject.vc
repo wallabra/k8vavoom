@@ -51,6 +51,8 @@ enum {
   SPR_VP_PARALLEL_UPRIGHT_ORIENTED,
   //
   SPR_ORIENTED_OFS, // 6 (offset slightly by pitch -- for floor/ceiling splats)
+  SPR_FLAT, // 7 (offset slightly by pitch -- for floor/ceiling splats; ignore roll angle)
+  SPR_WALL, // 8 (offset slightly by yaw -- for wall splats; ignore pitch and roll angle)
 };
 
 // frame flags:
