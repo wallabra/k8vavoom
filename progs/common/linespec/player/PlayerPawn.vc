@@ -169,20 +169,38 @@ protected final void SetWeaponInSlot (int slot, int index, class!Weapon wpn) {
 //  FindWeaponSlot
 //
 //==========================================================================
-final bool FindWeaponSlot (class!Weapon WpnClass, out int Slot, out int Index) {
+final bool FindWeaponSlot (class!Weapon WpnClass, out int Slot, out int Index/*, optional bool debug*/) {
   if (WpnClass) {
+    //if (debug) printdebug("FindWeaponSlot: %C", WpnClass);
     //class!Weapon wpnrep = class!Weapon(GetClassReplacement(WpnClass));
     //if (!wpnrep) wpnrep = WpnClass;
+    int pwrSlot = -1, pwrIndex = -1;
     foreach (auto sidx; 0..GetNumberOfSlots()) {
       foreach (auto widx; 0..GetSlotSize(sidx)) {
         class!Weapon swc = GetWeaponInSlot(sidx, widx);
+        //if (debug) printdebug("  slot #%d: index #%d: %C", sidx, widx, swc);
         if (!swc) continue;
-        if (swc != WpnClass) continue;
+        if (swc != WpnClass) {
+          if (pwrSlot < 0 && swc.default.SisterWeaponType && swc.default.SisterWeaponType == WpnClass) {
+            //printdebug("FOUND POWERED '%C' for '%C'", swc.default.SisterWeaponType, swc);
+            pwrSlot = sidx;
+            pwrIndex = widx;
+          }
+          continue;
+        }
         Slot = sidx;
         Index = widx;
         return true;
       }
     }
+    // return slot for sister weapon
+    if (pwrSlot >= 0) {
+      Slot = pwrSlot;
+      Index = pwrIndex;
+      return true;
+    }
+  } else {
+    //if (debug) printdebug("FindWeaponSlot: !!!");
   }
   Slot = -1;
   Index = -1;

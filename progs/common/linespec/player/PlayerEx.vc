@@ -1920,12 +1920,12 @@ Weapon CycleWeaponWithDir (Weapon Current, bool forward) {
 
   // find current weapon slot and index
   int currSlot, currIndex;
-  if (!Current || !pawn.FindWeaponSlot(class!Weapon(Current.Class), out currSlot, out currIndex)) {
+  if (!Current || !pawn.FindWeaponSlot(class!Weapon(Current.Class), out currSlot, out currIndex/*, debug:true*/)) {
     currSlot = 0;
     currIndex = (forward ? pawn.GetSlotSize(currSlot) : -1);
   }
 
-  //printdebug("st(fwd=%B): s=%s; i=%s", forward, currSlot, currIndex);
+  //printdebug("st(fwd=%B): s=%s; i=%s; current=%C", forward, currSlot, currIndex, Current);
   //if (Current) printdebug("  CW=%C; Wpn.SelectionOrder=%s", Current, Current.SelectionOrder);
   // now cycle
   int smax = pawn.GetNumberOfSlots();
@@ -5112,7 +5112,15 @@ void CheatHelper_AllWeapons (bool full) {
     // check if already have it
     if (EntityEx(MO).FindInventory(WpnCls, disableReplacement:true)) continue;
     // check for slot 11
-    if (!full && IsWeaponFromSlot11(WpnCls)) continue;
+    if (!full) {
+      if (IsWeaponFromSlot11(WpnCls)) continue;
+      /*
+      auto pawn = PlayerPawn(MO);
+      if (!pawn) continue;
+      int slot, widx;
+      if (!pawn.FindWeaponSlot(WpnCls, out slot, out widx)) continue;
+      */
+    }
     //Weapon Wpn = Weapon(Level.Spawn(WpnCls, default, default, default, AllowReplace:false));
     Weapon Wpn = EntityEx.SpawnWeaponType(Level, WpnCls, disableReplace:true);
     Wpn.AmmoGive1 = 0;
