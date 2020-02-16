@@ -856,7 +856,7 @@ static int findAndLoadTexture (VName Name, int Type, EWadNamespace NS) {
   TArray<int> shortlist; // short names
   VName fullLoName = Name.GetLower(); // this creates lo-cased name, if necessary
   for (int LNum = W_IterateNS(-1, NS); LNum >= 0; LNum = W_IterateNS(LNum, NS)) {
-    //GCon->Logf(NAME_Debug, "FOR '%s': #%d is '%s'", *Name, LNum, *W_LumpName(LNum));
+    //GCon->Logf(NAME_Debug, "FOR '%s': #%d is '%s' ns=%d; (%s)", *Name, LNum, *W_LumpName(LNum), (int)NS, *W_FullLumpName(LNum));
     VName lmpname = W_LumpName(LNum);
     if (lmpname == NAME_None) continue; // just in case
     if (lmpname.IsLower()) {
@@ -957,6 +957,53 @@ static int findAndLoadTextureShaded (VName Name, VName shName, int Type, EWadNam
 
 //==========================================================================
 //
+//  MoveNSUp
+//
+//==========================================================================
+static void MoveNSUp (EWadNamespace nslist[], EWadNamespace NS) {
+  unsigned idx = 0;
+  while (nslist[idx] != WADNS_ZipSpecial && nslist[idx] != NS) ++idx;
+  if (idx == 0 || nslist[idx] == WADNS_ZipSpecial) return; // nothing to do
+  memmove(&nslist[1], &nslist[0], idx*sizeof(nslist[0]));
+  nslist[0] = NS;
+}
+
+
+//==========================================================================
+//
+//  FixTextureNSList
+//
+//==========================================================================
+static void FixTextureNSList (EWadNamespace nslist[], int Type) {
+  switch (Type) {
+    case TEXTYPE_Flat: MoveNSUp(nslist, WADNS_Flats); break;
+    case TEXTYPE_Overload: MoveNSUp(nslist, WADNS_Graphics); break;
+    case TEXTYPE_Sprite: MoveNSUp(nslist, WADNS_Sprites); break;
+    case TEXTYPE_Pic: MoveNSUp(nslist, WADNS_Graphics); break;
+    case TEXTYPE_SkyMap: MoveNSUp(nslist, WADNS_Graphics); break;
+    case TEXTYPE_Skin: MoveNSUp(nslist, WADNS_Graphics); break;
+    case TEXTYPE_Autopage: MoveNSUp(nslist, WADNS_Graphics); break;
+    case TEXTYPE_FontChar: MoveNSUp(nslist, WADNS_Graphics); break;
+    default: break;
+  }
+}
+
+
+#define CREATE_TEXTURE_NS_LIST(typevar_)  \
+  EWadNamespace nslist[] = { \
+    WADNS_Patches, \
+    WADNS_Graphics, \
+    WADNS_Sprites, \
+    WADNS_Flats, \
+    WADNS_Global, \
+    /* end marker */ \
+    WADNS_ZipSpecial, \
+  }; \
+  FixTextureNSList(nslist, typevar_);
+
+
+//==========================================================================
+//
 //  VTextureManager::AddPatch
 //
 //==========================================================================
@@ -971,21 +1018,12 @@ int VTextureManager::AddPatch (VName Name, int Type, bool Silent) {
   // do not try to load already seen missing texture
   if (isSeenMissingTexture(Name)) return -1; // alas
 
-  // load it
-  /*static*/ const EWadNamespace nslist[] = {
-    WADNS_Patches,
-    WADNS_Graphics,
-    WADNS_Sprites,
-    WADNS_Flats,
-    WADNS_Global,
-    // end marker
-    WADNS_ZipSpecial,
-  };
+  CREATE_TEXTURE_NS_LIST(Type)
 
   for (unsigned nsidx = 0; nslist[nsidx] != WADNS_ZipSpecial; ++nsidx) {
     int tidx = findAndLoadTexture(Name, Type, nslist[nsidx]);
     if (tidx >= 0) {
-      //GCon->Logf(NAME_Warning, "AddPatch: '%s' of '%s' found! (%d)", *Name, VTexture::TexTypeToStr(Type), tidx);
+      //GCon->Logf(NAME_Debug, "AddPatch: '%s' of '%s' found! (%d) (%s)", *Name, VTexture::TexTypeToStr(Type), tidx, *W_FullLumpName(getIgnoreAnim(tidx)->SourceLump));
       return tidx;
     }
   }
@@ -1205,16 +1243,7 @@ int VTextureManager::AddPatchShaded (VName Name, int Type, int shade, bool Silen
   // do not try to load already seen missing texture
   if (isSeenMissingTexture(Name)) return -1; // alas
 
-  // load it
-  /*static*/ const EWadNamespace nslist[] = {
-    WADNS_Patches,
-    WADNS_Graphics,
-    WADNS_Sprites,
-    WADNS_Flats,
-    WADNS_Global,
-    // end marker
-    WADNS_ZipSpecial,
-  };
+  CREATE_TEXTURE_NS_LIST(Type)
 
   for (unsigned nsidx = 0; nslist[nsidx] != WADNS_ZipSpecial; ++nsidx) {
     int tidx = findAndLoadTextureShaded(Name, shName, Type, nslist[nsidx], shade);
@@ -1241,16 +1270,8 @@ int VTextureManager::CheckNumForNameAndForce (VName Name, int Type, bool bOverlo
   if (tidx >= 0) return tidx;
   // do not try to load already seen missing texture
   if (isSeenMissingTexture(Name)) return -1; // alas
-  // load it
-  /*static*/ const EWadNamespace nslist[] = {
-    WADNS_Patches,
-    WADNS_Graphics,
-    WADNS_Sprites,
-    WADNS_Flats,
-    WADNS_Global,
-    // end marker
-    WADNS_ZipSpecial,
-  };
+
+  CREATE_TEXTURE_NS_LIST(Type)
 
   for (unsigned nsidx = 0; nslist[nsidx] != WADNS_ZipSpecial; ++nsidx) {
     tidx = findAndLoadTexture(Name, Type, nslist[nsidx]);
