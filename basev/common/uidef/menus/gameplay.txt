@@ -11,12 +11,6 @@ menudef GameplayOptions {
   }
 
   option bool {
-    title = "Damage Thrust";
-    cvar = damage_thrust;
-    help = "Knockback monsters from shotgun shots.";
-  }
-
-  option bool {
     title = "Monsters can drop off";
     cvar = monster_dropoff;
   }
@@ -45,6 +39,12 @@ menudef GameplayOptions {
 
 
   header "Other Options";
+
+  option bool {
+    title = "Player Hit Kickback";
+    cvar = plr_allow_damage_thrust;
+    help = "Can the player be knocked back when damaged?";
+  }
 
   option enum {
     title = "Infinitely tall monsters";
