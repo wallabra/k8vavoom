@@ -2522,6 +2522,9 @@ void FL_Init () {
   if (customMode.disableBloodReplacement) fsys_DisableBloodReplacement = true;
   if (customMode.disableBDW || fsys_detected_mod == AD_HARMONY) fsys_DisableBDW = true;
 
+  fsys_report_added_paks = !!reportPWads;
+  //GCon->Logf(NAME_Debug, "!!!: %d", (fsys_report_added_paks ? 1 : 0));
+
   CustomModeLoadPwads(CM_PRE_PWADS);
 
   int mapnum = -1;
@@ -2529,7 +2532,6 @@ void FL_Init () {
   bool mapinfoFound = false;
 
   // mount pwads
-  fsys_report_added_paks = reportPWads;
   FL_StartUserWads(); // start marking
   for (int pwidx = 0; pwidx < pwadList.length(); ++pwidx) {
     PWadFile &pwf = pwadList[pwidx];
@@ -2537,6 +2539,8 @@ void FL_Init () {
     fsys_skipSprites = pwf.skipSprites;
     fsys_skipDehacked = pwf.skipDehacked;
     int nextfid = W_NextMountFileId();
+
+    //GCon->Logf(NAME_Debug, "::: %d : <%s>", nextfid, *pwf.fname);
 
     if (pwf.asDirectory) {
       if (pwf.storeInSave) wpkAppend(pwf.fname, false); // non-system pak
@@ -2590,7 +2594,7 @@ void FL_Init () {
   // load custom mode pwads
   CustomModeLoadPwads(CM_POST_PWADS);
 
-  fsys_report_added_paks = reportIWads;
+  fsys_report_added_paks = !!reportIWads;
 
   if (!fsys_DisableBDW && cli_BDWMod > 0) AddGameDir("basev/mods/bdw");
 
@@ -2599,7 +2603,7 @@ void FL_Init () {
     AddGameDir("basev/mods/skeehud");
   }
 
-  fsys_report_added_paks = reportPWads;
+  fsys_report_added_paks = !!reportPWads;
 
   RenameSprites();
 
