@@ -605,7 +605,9 @@ void IM_InitText () {
     ClGame.intermissionPhase == ClientGame::IM_Phase.Enter ? &ClGame.im.EnterText :
     nullptr;
 
-  if (!itext.Text) {
+  if (ClGame.cl.Level.bNoIntermission) itext = nullptr;
+
+  if (!itext || !itext.Text) {
     if (ClGame.cl.Level.bNoIntermission) {
       CmdBuf_AddText("TeleportNewMap\n");
       interstate = IMS_Done;

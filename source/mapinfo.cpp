@@ -1413,6 +1413,9 @@ static void ParseMap (VScriptParser *sc, bool &HexenMode, mapInfo_t &Default, in
     info->InterMusic = Default.InterMusic;
   }
 
+  // copy "no intermission" flag from default map
+  if (Default.Flags&VLevelInfo::LIF_NoIntermission) info->Flags |= VLevelInfo::LIF_NoIntermission;
+
   if (HexenMode) {
     info->Flags |= VLevelInfo::LIF_NoIntermission|
       VLevelInfo::LIF_FallingDamage|

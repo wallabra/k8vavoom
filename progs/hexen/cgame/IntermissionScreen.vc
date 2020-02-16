@@ -246,9 +246,15 @@ void IM_InitHubText()
     ClGame.intermissionPhase == ClientGame::IM_Phase.Enter ? &ClGame.im.EnterText :
     nullptr;
 
+  if (ClGame.cl.Level.bNoIntermission) {
+    interstate = IMS_Done;
+    cnt = 0.1;
+    return;
+  }
+
   interstate = IMS_Text;
   HubCount = 0.0;
-  if (itext.Text)
+  if (itext && itext.Text)
   {
     if (itext.bTextIsLump)
     {
@@ -279,6 +285,9 @@ void IM_InitHubText()
     {
       CmdBuf_AddText("music loop hub\n");
     }
+  } else {
+    interstate = IMS_Done;
+    cnt = 0.1;
   }
 }
 
