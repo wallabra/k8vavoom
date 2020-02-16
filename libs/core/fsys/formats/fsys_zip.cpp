@@ -148,7 +148,11 @@ void VZipFile::OpenArchive (VStream *fstream, vuint32 cdofs) {
 
   BytesBeforeZipFile = central_pos-(offset_central_dir+size_central_dir);
 
-  bool isPK3 = PakFileName.ExtractFileExtension().strEquCI(".pk3");
+  bool isPK3 =
+    PakFileName.ExtractFileExtension().strEquCI(".pk3") ||
+    PakFileName.ExtractFileExtension().strEquCI(".ipk3") ||
+    PakFileName.ExtractFileExtension().strEquCI(".pak") ||
+    PakFileName.ExtractFileExtension().strEquCI(".ipak");
   bool canHasPrefix = true;
   if (isPK3) canHasPrefix = false; // do not remove prefixes in pk3
   //GLog.Logf("*** ARK: <%s>:<%s> pfx=%d", *PakFileName, *PakFileName.ExtractFileExtension(), (int)canHasPrefix);

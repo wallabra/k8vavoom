@@ -64,10 +64,16 @@ const VPK3ResDirInfo PK3ResourceDirs[] = {
 
 static const char *PK3IgnoreExts[] = {
   ".wad",
+  ".iwad",
+  ".dfwad",
+  ".dfzip",
   ".zip",
   ".7z",
   ".pk3",
   ".pk7",
+  ".pak",
+  ".ipk3",
+  ".ipak",
   ".exe",
   ".com",
   ".bat",

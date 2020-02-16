@@ -1228,7 +1228,13 @@ bool W_IsWadPK3File (int fidx) {
     VSearchPath *w = SearchPaths[fidx];
     pfx = w->GetPrefix();
   } // unlock here
-  return (pfx.endsWithCI(".wad") || pfx.endsWithCI(".pk3"));
+  return
+    pfx.endsWithCI(".wad") ||
+    pfx.endsWithCI(".pk3") ||
+    pfx.endsWithCI(".pak") ||
+    pfx.endsWithCI(".ipk3") ||
+    pfx.endsWithCI(".iwad") ||
+    pfx.endsWithCI(".ipak");
 }
 
 
