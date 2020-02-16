@@ -1266,6 +1266,16 @@ VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
     }
   }
 
+  // paren-less decorate method?
+  if (ec.SelfClass) {
+    VMethod *M = ec.SelfClass->FindDecorateStateAction(*Name);
+    if (M) {
+      VExpression *e = new VDecorateInvocation(M, *Name, Loc, 0, nullptr);
+      delete this;
+      return e->Resolve(ec);
+    }
+  }
+
   ParseError(Loc, "Illegal expression identifier `%s`", *Name);
   delete this;
   return nullptr;
