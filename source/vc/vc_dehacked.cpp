@@ -1321,7 +1321,7 @@ static void ReadStrings (int) {
 //  LoadDehackedFile
 //
 //==========================================================================
-static void LoadDehackedFile (VStream *Strm) {
+static void LoadDehackedFile (VStream *Strm, int sourceLump) {
   dehCurrLine = 0;
   Patch = new char[Strm->TotalSize()+1];
   Strm->Serialise(Patch, Strm->TotalSize());
@@ -1384,18 +1384,25 @@ static void LoadDehackedFile (VStream *Strm) {
     else if (!VStr::ICmp(Section, "[CodePtr]")) ReadCodePtr(i);
     else if (!VStr::ICmp(Section, "Include")) {
       VStr LumpName = numStr;
-      int Lump = W_CheckNumForFileName(LumpName);
+      //int Lump = W_CheckNumForFileName(LumpName);
+      int Lump = (sourceLump >= 0 ? W_CheckNumForFileNameInSameFileOrLower(W_LumpFile(sourceLump), LumpName) : W_CheckNumForFileName(LumpName));
       // check WAD lump only if it's no longer than 8 characters and has no path separator
-      if (Lump < 0 && LumpName.Length() <= 8 && LumpName.IndexOf('/') < 0) {
-        Lump = W_CheckNumForName(VName(*LumpName, VName::AddLower8));
+      if (Lump < 0 && LumpName.IndexOf('/') < 0) {
+        VStr newName = LumpName.stripExtension();
+        if (newName.Length() <= 8 && VName(*newName, VName::FindLower8) != NAME_None) {
+          VName nn = VName(*newName, VName::FindLower8);
+          Lump = (sourceLump >= 0 ? W_CheckNumForNameInFileOrLower(nn, W_LumpFile(sourceLump)) : W_CheckNumForName(nn));
+        }
       }
       if (Lump < 0) {
         Warning("Lump '%s' not found", *LumpName);
       } else {
+        Message("including '%s' from '%s'...", *LumpName, *W_FullLumpName(Lump));
         char *SavedPatch = Patch;
         char *SavedPatchPtr = PatchPtr;
         char *SavedString = String;
-        LoadDehackedFile(W_CreateLumpReaderNum(Lump));
+        LoadDehackedFile(W_CreateLumpReaderNum(Lump), Lump);
+        Message("finished include '%s'.", *LumpName);
         Patch = SavedPatch;
         PatchPtr = SavedPatchPtr;
         String = SavedString;
@@ -1753,7 +1760,7 @@ void ProcessDehackedFiles () {
   for (auto &&dlump : dehlumps) {
     dehFileName = W_FullLumpName(dlump);
     GLog.Logf(NAME_Init, "Processing dehacked patch lump '%s'", *dehFileName);
-    LoadDehackedFile(W_CreateLumpReaderNum(dlump));
+    LoadDehackedFile(W_CreateLumpReaderNum(dlump), dlump);
   }
 
   for (auto &&dhs : cli_DehList) {
@@ -1761,7 +1768,7 @@ void ProcessDehackedFiles () {
     VStream *AStrm = FL_OpenSysFileRead(dhs);
     if (!AStrm) { GLog.Logf(NAME_Init, "No dehacked file '%s'", *dhs); continue; }
     dehFileName = dhs;
-    LoadDehackedFile(AStrm);
+    LoadDehackedFile(AStrm, -1);
   }
 
   dehFileName.clear();
