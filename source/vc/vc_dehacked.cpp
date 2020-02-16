@@ -872,6 +872,7 @@ static void ReadWeapon (int num) {
       } else {
         Message("replacing ammo for weapon '%s' with nothing", Weapon->GetName());
         Weapon->SetFieldClassValue("AmmoType1", nullptr);
+        Weapon->SetFieldBool("bAmmoOptional", true);
       }
     } else if (!VStr::ICmp(String, "Ammo use") || !VStr::ICmp(String, "Ammo per shot")) {
       Weapon->SetFieldInt("AmmoUse1", value);
