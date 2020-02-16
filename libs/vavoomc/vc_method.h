@@ -268,7 +268,12 @@ public:
   // if we're calling a "good" method, there is no need to create a wrapper
   // not sure what to do with network methods, though
   // ok, state methods can be virtual and static now
-  inline bool IsGoodStateMethod () const noexcept { return (NumParams == 0 && (Flags&~(FUNC_Native|FUNC_Spawner|FUNC_Net|FUNC_NetReliable|FUNC_Static/*|FUNC_NonVirtual*/)) == /*FUNC_Final*/0); }
+  //inline bool IsGoodStateMethod () const noexcept { return (NumParams == 0 && (Flags&~(FUNC_Native|FUNC_Spawner|FUNC_Net|FUNC_NetReliable|FUNC_Static/*|FUNC_NonVirtual*/)) == /*FUNC_Final*/0); }
+  inline bool IsGoodStateMethod () const noexcept {
+    return
+      NumParams == 0 &&
+      (Flags&(/*FUNC_Static|*/FUNC_VarArgs|FUNC_Spawner|FUNC_Iterator|FUNC_StructMethod|FUNC_Private|FUNC_Protected)) == 0;
+  }
 
   bool CanBeCalledWithoutArguments () const noexcept;
 
