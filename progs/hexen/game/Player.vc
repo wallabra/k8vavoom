@@ -290,7 +290,7 @@ void Cheat_Gimme () {
     HexenArmor HArmor = HexenArmor(EntityEx(MO).FindInventory(HexenArmor, disableReplacement:true));
     foreach (int i; 0..4) HArmor.Slots[i] = HArmor.SlotsIncrement[i];
 
-    CheatHelper_AllWeapons();
+    CheatHelper_AllWeapons(Cmd_CheckParm("full"));
 
     FourthWeaponHolder Hold = FourthWeaponHolder(EntityEx(MO).FindInventory(FourthWeaponHolder));
     if (!Hold) {

@@ -289,7 +289,7 @@ void Cheat_Gimme () {
 
   // weapons
   if (Cmd_CheckParm("Weapons") || Cmd_CheckParm("All") || Cmd_CheckParm("Arsenal")) {
-    CheatHelper_AllWeapons();
+    CheatHelper_AllWeapons(Cmd_CheckParm("full"));
   }
 
   // choppers

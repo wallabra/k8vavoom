@@ -5067,10 +5067,39 @@ override int GetCurrentArmorActualSaveAmount () {
 
 //==========================================================================
 //
+//  GetCurrentArmorActualSaveAmount
+//
+//==========================================================================
+bool IsWeaponFromSlot11 (class!Weapon wpn) {
+  if (!wpn) return true; // why not?
+
+  auto pawn = PlayerPawn(MO);
+  if (!pawn) return true;
+
+  //printdebug("checking weapon '%C' for slot 11...", wpn);
+
+  // slots are numbered from zero
+  int slotsize = pawn.GetSlotSize(10);
+  if (!slotsize) return false; // this slot is empty, nothing to do
+  //printdebug("slot 11 has %s weapons...", slotsize);
+
+  foreach (auto i; 0..slotsize) {
+    class!Weapon slotwpn = pawn.GetWeaponInSlot(10, i);
+    //printdebug("  weapon #%d: '%C'", i, slotwpn);
+    if (!slotwpn) continue;
+    if (slotwpn == wpn) return true;
+  }
+
+  return false;
+}
+
+
+//==========================================================================
+//
 //  CheatHelper_AllWeapons
 //
 //==========================================================================
-void CheatHelper_AllWeapons () {
+void CheatHelper_AllWeapons (bool full) {
   bool gotit = false;
   class!Weapon WpnCls;
   foreach AllClasses(Weapon, out WpnCls) {
@@ -5082,6 +5111,8 @@ void CheatHelper_AllWeapons () {
     if (!Weapon.IsUsableWeaponClass(WpnCls)) continue;
     // check if already have it
     if (EntityEx(MO).FindInventory(WpnCls, disableReplacement:true)) continue;
+    // check for slot 11
+    if (!full && IsWeaponFromSlot11(WpnCls)) continue;
     //Weapon Wpn = Weapon(Level.Spawn(WpnCls, default, default, default, AllowReplace:false));
     Weapon Wpn = EntityEx.SpawnWeaponType(Level, WpnCls, disableReplace:true);
     Wpn.AmmoGive1 = 0;
