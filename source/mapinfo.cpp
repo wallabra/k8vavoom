@@ -2017,7 +2017,7 @@ static void ParseGameInfo (VScriptParser *sc) {
       bool bval = ExpectBool("ForceKillScripts", sc);
       //mapInfoGameInfoInitial.bForceKillScripts = bval;
       if (bval) GGameInfo->Flags |= VGameInfo::GIF_ForceKillScripts; else GGameInfo->Flags &= ~VGameInfo::GIF_ForceKillScripts;
-    } else if (sc->Check("GameSkyFlatName")) {
+    } else if (sc->Check("SkyFlatName")) {
       sc->Expect("=");
       sc->ExpectString();
       if (sc->String.length() == 0 || sc->String.length() > 8) {
