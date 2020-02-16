@@ -294,6 +294,13 @@ code_pointers
   FireRailgunLeft   Inventory   A_FireRailgunLeft
   FireRailgunRight  Inventory   A_FireRailgunRight
   RailWait          Inventory   A_RailWait
+
+  Gravity           Actor       A_Gravity
+  NoGravity         Actor       A_NoGravity
+  LowGravity        Actor       A_LowGravity
+
+  SetReflectiveInvulnerable    Actor  A_SetReflectiveInvulnerable
+  UnSetReflectiveInvulnerable  Actor  A_UnSetReflectiveInvulnerable
 }
 
 // names of the sounds to be used when changing sounds
