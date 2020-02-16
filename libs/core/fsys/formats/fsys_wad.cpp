@@ -89,7 +89,7 @@ VWadFile *VWadFile::Create (VStr FileName, bool FixVoices, VStream *InStream) {
     wad->archStream = FL_OpenSysFileRead(FileName);
     if (!wad->archStream) { delete wad; Sys_Error("Couldn't open \"%s\"", *FileName); }
   }
-  if (fsys_report_added_paks && !FileName.isEmpty()) GLog.Logf(NAME_Init, "Adding \"%s\"...", *FileName);
+  if (fsys_report_added_paks && !FileName.isEmpty()) GLog.Logf(NAME_Init, "Adding wad \"%s\"...", *FileName);
 
   // WAD file or homebrew levels?
   memset(&header, 0, sizeof(header));
@@ -162,7 +162,7 @@ VWadFile *VWadFile::CreateSingleLumpStream (VStream *strm, VStr FileName) {
 
   VWadFile *wad = new VWadFile();
   wad->archStream = strm;
-  if (fsys_report_added_paks) GLog.Logf(NAME_Init, "Adding \"%s\"...", *FileName);
+  if (fsys_report_added_paks) GLog.Logf(NAME_Init, "Adding lump \"%s\"...", *FileName);
 
   wad->PakFileName = FileName;
   VPakFileInfo fi;

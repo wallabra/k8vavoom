@@ -231,7 +231,7 @@ static void AddArchiveFile_NoLock (VStr filename, VSearchPath *arc, bool allowpk
     if (!allowpk3 && !wad->normalwad) { delete wad; continue; }
 
     //W_AddFileFromZip(ZipName+":"+Wads[i], MemStrm);
-    if (fsys_report_added_paks) GLog.Logf(NAME_Init, "Adding archive '%s'...", *wad->GetPrefix());
+    if (fsys_report_added_paks) GLog.Logf(NAME_Init, "Adding nested archive '%s'...", *wad->GetPrefix());
     wadfiles.Append(wadname);
     SearchPaths.Append(wad);
 
@@ -263,6 +263,8 @@ void W_AddDiskFile (VStr FileName, bool FixVoices) {
 
   VStream *strm = FL_OpenSysFileRead(FileName);
   if (!strm) Sys_Error("Cannot read required file \"%s\"!", *FileName);
+
+  if (fsys_report_added_paks) GLog.Logf(NAME_Init, "Adding archive '%s'...", *FileName);
 
   MyThreadLocker glocker(&fsys_glock);
   VSearchPath *Wad = FArchiveReaderInfo::OpenArchive(strm, FileName);
@@ -304,6 +306,8 @@ bool W_AddDiskFileOptional (VStr FileName, bool FixVoices) {
 
   VStream *strm = FL_OpenSysFileRead(FileName);
   if (!strm) return false;
+
+  if (fsys_report_added_paks) GLog.Logf(NAME_Init, "Adding archive '%s'...", *FileName);
 
   MyThreadLocker glocker(&fsys_glock);
   VSearchPath *Wad = FArchiveReaderInfo::OpenArchive(strm, FileName);
