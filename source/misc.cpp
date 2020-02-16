@@ -365,6 +365,7 @@ vuint32 M_ParseColor (const char *Name, bool retZeroIfInvalid) {
     }
   } else {
     bool warnColor = false;
+    int colDec[3] = {-1, -1, -1};
     // treat like space separated hex values
     const vuint8 *s = (const vuint8 *)Name;
     for (int i = 0; i < 3; ++i) {
@@ -376,7 +377,7 @@ vuint32 M_ParseColor (const char *Name, bool retZeroIfInvalid) {
       }
       // parse hex
       int digCount = 0;
-      int n = 0;
+      int n = 0, decn = 0;
       while (*s) {
         if (s[0] <= ' ') break;
         int d = VStr::digitInBase(s[0], 16);
@@ -386,14 +387,36 @@ vuint32 M_ParseColor (const char *Name, bool retZeroIfInvalid) {
         }
         n = n*16+d;
         if (n > 0xffffff) n = 0xffff;
+        // collect decimals
+        if (decn >= 0) {
+          d = VStr::digitInBase(s[0], 10);
+          if (d < 0) {
+            decn = -1;
+          } else {
+            decn = decn*10+d;
+            if (decn > 255) decn = -1;
+          }
+        }
         ++s;
         ++digCount;
       }
       if (n > 255) { warnColor = true; n = 255; }
       if (digCount == 1) n = (n<<4)|n;
       Col[i] = n;
+      colDec[i] = decn;
     }
-    if (warnColor) GCon->Logf(NAME_Warning, "Invalid color <%s> (2)", Name);
+    if (warnColor) {
+      if (colDec[0] >= 0 && colDec[1] >= 0 && colDec[2] >= 0 &&
+          colDec[0] <= 255 && colDec[1] <= 255 && colDec[2] <= 255)
+      {
+        GCon->Logf(NAME_Warning, "Decimal color <%s> (0x00_%02x_%02x_%02x)", Name, colDec[0], colDec[1], colDec[2]);
+        Col[0] = colDec[0];
+        Col[1] = colDec[1];
+        Col[2] = colDec[2];
+      } else {
+        GCon->Logf(NAME_Warning, "Invalid color <%s> (2)", Name);
+      }
+    }
     //GCon->Logf("*** COLOR <%s> is 0x%08x", *Name, 0xff000000U|(((vuint32)Col[0])<<16)|(((vuint32)Col[1])<<8)|((vuint32)Col[2]));
   }
   return 0xff000000U|(((vuint32)Col[0])<<16)|(((vuint32)Col[1])<<8)|((vuint32)Col[2]);
