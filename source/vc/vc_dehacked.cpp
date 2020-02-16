@@ -938,16 +938,36 @@ static void ReadCodePtr (int) {
       VState *State = States[Index];
       if ((ValueString[0] == 'A' || ValueString[0] == 'a') && ValueString[1] == '_') ValueString += 2;
 
-      bool Found = false;
-      for (int i = 0; i < CodePtrs.length(); ++i) {
-        if (!CodePtrs[i].Name.ICmp(ValueString)) {
+      bool found = false;
+      for (auto &&it : CodePtrs) {
+        if (it.Name.strEquCI(ValueString)) {
           //GCon->Logf(NAME_Debug, "replacing frame #%d code pointer; old is '%s', new is '%s'", Index, (State->Function ? *State->Function->GetFullName() : "none"), (CodePtrs[i].Method ? *CodePtrs[i].Method->GetFullName() : "none"));
-          State->Function = CodePtrs[i].Method;
-          Found = true;
+          State->Function = it.Method;
+          found = true;
           break;
         }
       }
-      if (!Found) Warning("Invalid code pointer '%s'", ValueString);
+
+      if (!found) {
+        // try autorouting
+        VClass *Class = VClass::FindClass("Actor");
+        if (Class) {
+          VStr mtn(va("A_%s", ValueString));
+          VMethod *Method = Class->FindMethodNoCase(mtn);
+          if (Method && (!Method->IsDecorate() || !Method->CanBeCalledWithoutArguments())) Method = nullptr;
+          if (!Method) {
+            mtn = va("decorate_A_%s", ValueString);
+            Method = Class->FindMethodNoCase(mtn);
+          }
+          if (Method && Method->IsDecorate() && Method->CanBeCalledWithoutArguments()) {
+            //Message("*** %s -> %s", ValueString, *Method->GetFullName());
+            State->Function = Method;
+            found = true;
+          }
+        }
+      }
+
+      if (!found) Warning("Invalid code pointer '%s'", ValueString);
     } else {
       Warning("Invalid code pointer param '%s'", String);
     }
@@ -1509,6 +1529,8 @@ static void LoadDehackedDefinitions () {
     if (Class == nullptr) sc->Error(va("No such class `%s`", *ClassName));
     VMethod *Method = Class->FindMethod(*MethodName);
     if (Method == nullptr) sc->Error(va("No such method `%s` in class `%s`", *MethodName, *ClassName));
+    if (!Method->IsDecorate()) sc->Error(va("Method `%s` in class `%s` is not a decorate method", *MethodName, *ClassName));
+    if (!Method->CanBeCalledWithoutArguments()) sc->Error(va("Method `%s` in class `%s` cannot be called without arguments", *MethodName, *ClassName));
     VCodePtrInfo &P = CodePtrs.Alloc();
     P.Name = Name;
     P.Method = Method;
