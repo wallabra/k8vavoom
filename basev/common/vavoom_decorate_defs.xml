@@ -160,6 +160,7 @@
     <flag name="Spectral" property="bSpectral" relinktoworld="true" />
     <flag name="Frightened" property="bFrightened" />
     <flag name="NoTarget" property="bNeverTarget" />
+    <flag name="NeverTarget" property="bReallyNeverTarget" />
     <flag name="NoInfighting" property="bNoInfighting" />
     <!--flag_unsupported name="NoTimeFreeze" warning="true" /-->
     <flag name="NoFear" property="bNoFear" />

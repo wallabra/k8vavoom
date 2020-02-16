@@ -161,6 +161,7 @@ final bool LookForMonsters () {
     EntityEx mo = EntityEx(ee);
     if (!mo) continue;
     if (!mo.bMonster || mo == self || mo.Health <= 0) continue; // not a valid monster
+    if (mo.bReallyNeverTarget) continue;
     if (DistTo(mo) > MONS_LOOK_RANGE) continue; // out of range
     if (P_Random() < 16) continue; // skip
     if (count++ > MONS_LOOK_LIMIT) return false; // stop searching
@@ -206,6 +207,7 @@ final bool LookForMonsters2 (float fov, float minseedist, float maxseedist) {
       if (mo == self) continue; // self
       if (!mo.bMonster) continue; // not a monster
       if (bFriendly == mo.bFriendly) continue; // fiendly
+      if (mo.bReallyNeverTarget) continue;
 
       // distance check
       float distSq = DistToSquared(mo);

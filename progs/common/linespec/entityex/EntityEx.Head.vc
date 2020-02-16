@@ -234,6 +234,7 @@ bool bLightning; // electrocutes victims
 bool bHowlVictims; // make victims play howl sound when damaged
 bool bNoGrudge;
 bool bNeverTarget; // never switch target to this actor
+bool bReallyNeverTarget; // never ever target this actor
 bool bNoTargetSwitch; // never switches target until current one is dead
 bool bNoGravKill; // doesn't set NoGravity to false when killed
 bool bFaster;

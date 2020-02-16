@@ -3440,6 +3440,7 @@ void RespawnResetFlags () {
   bDontBlast = default.bDontBlast;
   bCanBlast = default.bCanBlast;
   bNeverTarget = default.bNeverTarget;
+  bReallyNeverTarget = default.bReallyNeverTarget;
   bDontGib = default.bDontGib;
   bNoBlockMonst = default.bNoBlockMonst;
   bFullVolDeath = default.bFullVolDeath;
@@ -3489,6 +3490,8 @@ void RespawnResetFlags () {
   bAlwaysFast = default.bAlwaysFast;
   bNeverFast = default.bNeverFast;
   bCanUseWalls = default.bCanUseWalls;
+
+  bDontThrust = default.bDontThrust;
 
   DecalName = default.DecalName;
 }
@@ -3684,7 +3687,7 @@ void CopyFriendliness (EntityEx Src, bool ChangeTarget) {
   bNoHatePlayers = Src.bNoHatePlayers;
   FriendPlayer = Src.FriendPlayer;
   Level.TotalKills += CountsAsKill();
-  if (ChangeTarget && Src.Target && !Src.Target.bNeverTarget) {
+  if (ChangeTarget && Src.Target && !Src.Target.bNeverTarget && !Src.Target.bReallyNeverTarget) {
     Target = Src.Target;
     LastHeard = Src.Target;
     //!LastPlayerSeenPos = Src.LastPlayerSeenPos;

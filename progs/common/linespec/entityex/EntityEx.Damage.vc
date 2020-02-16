@@ -915,7 +915,8 @@ int TakeSpecialDamage (EntityEx inflictor, EntityEx source, int damage, name Dmg
 //
 //==========================================================================
 bool OkayToSwitchTarget (EntityEx source) {
-  if (source == self) return false; // don't hate self
+  if (source == self) return false; // don't hate self (can happen when shooting barrels)
+  if (source.bReallyNeverTarget) return false;
   if (!source.bShootable) return false; // don't hate actors that cannot be hurt
   if (bNoTargetSwitch && Target) return false;
   if ((Master && source.IsA(GetClassName(Master.Class))) || // don't attack your master (or others of its type)
