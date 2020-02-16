@@ -927,6 +927,7 @@ static void ReadPointer (int num) {
 //
 //==========================================================================
 static void ReadCodePtr (int) {
+  // cannot use `DC_SetupStateMethod()` here, because creating new wrappers requires postloading
   while (ParseParam()) {
     if (!VStr::NICmp(String, "Frame", 5) && (vuint8)String[5] <= ' ') {
       int Index = VStr::atoi(String+6);
@@ -943,6 +944,7 @@ static void ReadCodePtr (int) {
         if (it.Name.strEquCI(ValueString)) {
           //GCon->Logf(NAME_Debug, "replacing frame #%d code pointer; old is '%s', new is '%s'", Index, (State->Function ? *State->Function->GetFullName() : "none"), (CodePtrs[i].Method ? *CodePtrs[i].Method->GetFullName() : "none"));
           State->Function = it.Method;
+          //DC_SetupStateMethod(State, it.Method);
           found = true;
           break;
         }
@@ -954,14 +956,15 @@ static void ReadCodePtr (int) {
         if (Class) {
           VStr mtn(va("A_%s", ValueString));
           VMethod *Method = Class->FindMethodNoCase(mtn);
-          if (Method && (!Method->IsDecorate() || !Method->CanBeCalledWithoutArguments())) Method = nullptr;
+          if (Method && (!Method->IsDecorate() || !Method->/*CanBeCalledWithoutArguments*/IsGoodStateMethod())) Method = nullptr;
           if (!Method) {
             mtn = va("decorate_A_%s", ValueString);
             Method = Class->FindMethodNoCase(mtn);
           }
-          if (Method && Method->IsDecorate() && Method->CanBeCalledWithoutArguments()) {
+          if (Method && Method->IsDecorate() && Method->/*CanBeCalledWithoutArguments*/IsGoodStateMethod()) {
             //Message("*** %s -> %s", ValueString, *Method->GetFullName());
             State->Function = Method;
+            //DC_SetupStateMethod(State, Method);
             found = true;
           }
         }
@@ -1530,7 +1533,11 @@ static void LoadDehackedDefinitions () {
     VMethod *Method = Class->FindMethod(*MethodName);
     if (Method == nullptr) sc->Error(va("No such method `%s` in class `%s`", *MethodName, *ClassName));
     if (!Method->IsDecorate()) sc->Error(va("Method `%s` in class `%s` is not a decorate method", *MethodName, *ClassName));
-    if (!Method->CanBeCalledWithoutArguments()) sc->Error(va("Method `%s` in class `%s` cannot be called without arguments", *MethodName, *ClassName));
+    if (!Method->/*CanBeCalledWithoutArguments*/IsGoodStateMethod()) {
+      //vassert(Method->NumParams == 0);
+      //GCon->Logf(NAME_Debug, "0x%08x", (unsigned)Method->Flags);
+      sc->Error(va("Method `%s` in class `%s` cannot be called without arguments", *Method->GetFullName(), *ClassName));
+    }
     VCodePtrInfo &P = CodePtrs.Alloc();
     P.Name = Name;
     P.Method = Method;

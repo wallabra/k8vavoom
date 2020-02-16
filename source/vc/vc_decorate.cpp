@@ -27,6 +27,7 @@
 #include "../gamedefs.h"
 #include "../sv_local.h"
 
+// WARNING! dehacked parser requires this!
 #define VC_DECORATE_ACTION_BELONGS_TO_STATE
 
 static VCvarB dbg_show_decorate_unsupported("dbg_show_decorate_unsupported", false, "Show unsupported decorate props/flags?", CVAR_PreInit|CVAR_Archive);
