@@ -249,6 +249,30 @@ VStr GZModelDef::buildPath (VScriptParser *sc, VStr path) {
 
 //==========================================================================
 //
+//  sanitiseScale
+//
+//==========================================================================
+static TVec sanitiseScale (const TVec &scale) {
+  TVec res = scale;
+  if (!isFiniteF(res.x) || !res.x) res.x = 1.0f;
+  if (!isFiniteF(res.y) || !res.y) res.y = 1.0f;
+  if (!isFiniteF(res.z) || !res.z) res.z = 1.0f;
+  // fix negative scales (i don't know what gozzo does with them, but we'll convert them to 1/scale)
+  // usually, scale "-1" is for HUD weapons. wtf?!
+  /*
+  if (res.x < 0 && res.x != -1.0f) GCon->Logf("!!! scalex=%g", res.x);
+  if (res.y < 0 && res.y != -1.0f) GCon->Logf("!!! scaley=%g", res.y);
+  if (res.z < 0 && res.z != -1.0f) GCon->Logf("!!! scalez=%g", res.z);
+  */
+  if (res.x < 0) res.x = 1.0f/(-res.x);
+  if (res.y < 0) res.y = 1.0f/(-res.y);
+  if (res.z < 0) res.z = 1.0f/(-res.z);
+  return res;
+}
+
+
+//==========================================================================
+//
 //  GZModelDef::parse
 //
 //==========================================================================
@@ -344,16 +368,18 @@ void GZModelDef::parse (VScriptParser *sc) {
     if (sc->Check("scale")) {
       // x
       sc->ExpectFloatWithSign();
-      if (sc->Float == 0) sc->Error(va("invalid x scale in model '%s'", *className));
+      if (sc->Float == 0) sc->Message(va("invalid x scale in model '%s'", *className));
       scale.x = sc->Float;
       // y
       sc->ExpectFloatWithSign();
-      if (sc->Float == 0) sc->Error(va("invalid y scale in model '%s'", *className));
+      if (sc->Float == 0) sc->Message(va("invalid y scale in model '%s'", *className));
       scale.y = sc->Float;
       // z
       sc->ExpectFloatWithSign();
-      if (sc->Float == 0) sc->Error(va("invalid z scale in model '%s'", *className));
+      if (sc->Float == 0) sc->Message(va("invalid z scale in model '%s'", *className));
       scale.z = sc->Float;
+      // normalize
+      scale = sanitiseScale(scale);
       // seems that scale scales previous offsets
       offset.x /= scale.x;
       offset.y /= scale.y;
@@ -896,30 +922,6 @@ void GZModelDef::merge (GZModelDef &other) {
       for (auto &&xit : mdl.frameMap.itemsIdx()) xit.value().vvframe = xit.index();
     }
   }
-}
-
-
-//==========================================================================
-//
-//  sanitiseScale
-//
-//==========================================================================
-static TVec sanitiseScale (const TVec &scale) {
-  TVec res = scale;
-  if (!isFiniteF(res.x) || !res.x) res.x = 1.0f;
-  if (!isFiniteF(res.y) || !res.y) res.y = 1.0f;
-  if (!isFiniteF(res.z) || !res.z) res.z = 1.0f;
-  // fix negative scales (i don't know what gozzo does with them, but we'll convert them to 1/scale)
-  // usually, scale "-1" is for HUD weapons. wtf?!
-  /*
-  if (res.x < 0 && res.x != -1.0f) GCon->Logf("!!! scalex=%g", res.x);
-  if (res.y < 0 && res.y != -1.0f) GCon->Logf("!!! scaley=%g", res.y);
-  if (res.z < 0 && res.z != -1.0f) GCon->Logf("!!! scalez=%g", res.z);
-  */
-  if (res.x < 0) res.x = 1.0f/(-res.x);
-  if (res.y < 0) res.y = 1.0f/(-res.y);
-  if (res.z < 0) res.z = 1.0f/(-res.z);
-  return res;
 }
 
 
