@@ -177,7 +177,7 @@ game "hexendd" {
 
 
 // Teaser Strife
-game "strife" {
+game "strifedemo" {
   description = "Strife Teaser";
   game = "basev/strife";
   iwad = "strife0.wad";
@@ -229,7 +229,7 @@ game "nerve" {
 
 
 // Doom:Complete
-game "doom2" {
+game "complete" {
   description = "Doom: Complete";
   game = "basev/complete";
   base = "basev/doom";
