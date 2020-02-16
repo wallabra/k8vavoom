@@ -189,7 +189,7 @@
 //  [KS] Borrowed the A_Look code to make a parameterized version.
 //
 //==========================================================================
-[decorate] final void A_LookEx (int flags, optional float minseedist, optional float maxseedist,
+[decorate] final void A_LookEx (optional int flags, optional float minseedist, optional float maxseedist,
                      optional float maxheardist, optional float fov,
                      optional /*name*/state wakestate)
 {
