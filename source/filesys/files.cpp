@@ -1839,13 +1839,20 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
   warpTpl = game.warp;
 
   // append iwad
-  IWadIndex = SearchPaths.length();
   //GCon->Logf("MAIN WAD(1): '%s'", *MainWadPath);
 
   GCon->Logf(NAME_Init, "loading game %s", *gameDsc);
-  GCon->Logf(NAME_Init, "using iwad \"%s\"...", *mainWadPath);
-  wpkAppend(mainWadPath, false); // mark iwad as "non-system" file, so path won't be stored in savegame
-  AddAnyFile(mainWadPath, false, game.FixVoices);
+  // if iwad is pk3, add it last
+  bool iwadAdded = false;
+  if (mainWadPath.endsWithCI("wad")) {
+    GCon->Logf(NAME_Init, "adding iwad \"%s\"...", *mainWadPath);
+    iwadAdded = true;
+    IWadIndex = SearchPaths.length();
+    wpkAppend(mainWadPath, false); // mark iwad as "non-system" file, so path won't be stored in savegame
+    AddAnyFile(mainWadPath, false, game.FixVoices);
+  } else {
+    GCon->Logf(NAME_Init, "using iwad \"%s\"...", *mainWadPath);
+  }
 
   // add optional files
   if (iwadidx >= 0) {
@@ -1867,6 +1874,14 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
   for (auto &&bdir : game.BaseDirs) if (!bdir.isEmpty()) AddGameDir(bdir);
 
   SetupGameDir(game.GameDir);
+
+  // add iwad here
+  if (!iwadAdded) {
+    GCon->Logf(NAME_Init, "adding iwad \"%s\"...", *mainWadPath);
+    IWadIndex = SearchPaths.length();
+    wpkAppend(mainWadPath, false); // mark iwad as "non-system" file, so path won't be stored in savegame
+    AddAnyFile(mainWadPath, false, game.FixVoices);
+  }
 }
 
 

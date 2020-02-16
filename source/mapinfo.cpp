@@ -1756,12 +1756,14 @@ static void ParseSkillDef (VScriptParser *sc) {
   for (int i = 0; i < SkillDefs.Num(); ++i) {
     if (sc->String.ICmp(SkillDefs[i].Name) == 0) {
       sdef = &SkillDefs[i];
+      //GCon->Logf(NAME_Debug, "SKILLDEF:%s: replaced skill #%d '%s' (%s)", *sc->GetLoc().toStringNoCol(), i, *sc->String, *SkillDefs[i].Name);
       break;
     }
   }
   if (!sdef) {
     sdef = &SkillDefs.Alloc();
     sdef->Name = sc->String;
+    //GCon->Logf(NAME_Debug, "SKILLDEF:%s: new skill #%d '%s'", *sc->GetLoc().toStringNoCol(), SkillDefs.length(), *sc->String);
   }
 
   // set defaults
