@@ -903,7 +903,9 @@ struct VOptParam##tname_ { \
   bool specified; \
   type_ value; \
   inline VOptParam##tname_ (type_ adefault=defval_) noexcept : specified(false), value(adefault) {} \
-  inline operator type_ () noexcept { return value; } \
+  /*inline operator type_ () noexcept { return value; }*/ \
+  inline operator type_ & () noexcept { return value; } \
+  inline VOptParam##tname_ &operator = (const type_ &v) noexcept { value = v; return *this; } \
 }; \
 static VVA_OKUNUSED inline void vobj_get_param (VOptParam##tname_ &n) noexcept { \
   n.specified = !!VObject::PR_Pop(); \
@@ -958,6 +960,7 @@ template<typename... Args> static VVA_OKUNUSED inline void vobjGetParam (Args&..
 }
 
 #define vobjGetParamSelf(...)  ThisClass *Self; vobjGetParam(Self, ##__VA_ARGS__)
+#define vobjDeclareSelf        ThisClass *Self
 
 
 // ////////////////////////////////////////////////////////////////////////// //
