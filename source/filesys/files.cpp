@@ -120,6 +120,8 @@ static ArgVarValue emptyAV;
 static TArray<VStr> cliModesList;
 static int cli_oldSprites = 0;
 
+#include "fsmoddetect.cpp"
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern "C" {
@@ -2254,6 +2256,8 @@ void FL_InitOptions () {
 void FL_Init () {
   const char *p;
   VStr mainIWad = VStr();
+
+  FL_RegisterModDetectors();
 
   fsys_warp_n0 = -1;
   fsys_warp_n1 = -1;
