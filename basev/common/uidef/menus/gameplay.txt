@@ -178,11 +178,19 @@ menudef GameplayOptions {
   }
 
   option bool {
-    title = "Shots go through crosshair";
+    title = "Hitscan shots through crosshair";
     cvar = gm_fix_attack_offset;
     help =
       "Raise shooting point a little, so hitscan shots will go through your crosshair."
       "\cGWARNING: this changes hitscan attack height!";
+  }
+
+  option bool {
+    title = "Projectile shots through crosshair";
+    cvar = gm_fix_projectile_attack_offset;
+    help =
+      "Raise shooting point a little, so projectile shots will go through your crosshair."
+      "\cGWARNING: this changes projectile attack height!";
   }
 
   option bool {

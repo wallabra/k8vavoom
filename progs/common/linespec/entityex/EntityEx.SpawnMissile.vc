@@ -466,7 +466,7 @@ final EntityEx SpawnSubMissile (class!EntityEx type, EntityEx AInstigator) {
   sincos(Angles.yaw, out sina, out cosa);
   other.Velocity.x = other.Speed*cosa;
   other.Velocity.y = other.Speed*sina;
-  AimLineAttack(dir, Angles, 1024.0, isRocket:true);
+  AimLineAttack(dir, Angles, 1024.0, rocketType:type);
   other.Velocity.z = other.Speed*dir.z;
   other.CheckMissileSpawn();
   return other;
@@ -522,9 +522,9 @@ final EntityEx SpawnPlayerMissileEx (class!EntityEx type, bool RetExploded,
 
   // try to find a target
   if (specified_angle) {
-    AimTarget = Aim(dir, 16.0*64.0, angle, noAutoaim:noAutoAim!optional, isRocket:true);
+    AimTarget = Aim(dir, 16.0*64.0, angle, noAutoaim:noAutoAim!optional, rocketType:type);
   } else {
-    AimTarget = Aim(dir, 16.0*64.0, noAutoaim:noAutoAim!optional, isRocket:true);
+    AimTarget = Aim(dir, 16.0*64.0, noAutoaim:noAutoAim!optional, rocketType:type);
   }
 
   TVec org = (specified_SpawnOrg ? SpawnOrg : Origin);
@@ -537,7 +537,7 @@ final EntityEx SpawnPlayerMissileEx (class!EntityEx type, bool RetExploded,
     dir.z = 0.0;
     dir = Normalise(dir);
   } else {
-    org.z += CalculateMissileAttackZOfs();
+    org.z += CalculateMissileAttackZOfs(type);
     /* done in `CalculateMissileAttackZOfs()`
     // missiles are spawned 4 units lower than hitscan attacks
     // add an extra unit to simulate Doom's original behaviour

@@ -108,10 +108,15 @@ float CalculateLineAttackZOfs () {
 //  calculate z offset for missile attack (will be added to origin)
 //
 //==========================================================================
-float CalculateMissileAttackZOfs () {
+float CalculateMissileAttackZOfs (class!EntityEx type) {
   // missiles are spawned 4 units lower than hitscan attacks
   // add an extra unit to simulate Doom's original behaviour
-  return Height*0.5-FloorClip+(bIsPlayer ? PlayerEx(Player).GetAttackZOfs : 8.0)-3.0;
+  if (bIsPlayer && GetCvarB('gm_fix_projectile_attack_offset')) {
+    // 4 is for autoaim
+    return Height*0.5-FloorClip+(type ? type.default.Height*0.5f : PlayerEx(Player).GetAttackZOfs-3.0);
+  } else {
+    return Height*0.5-FloorClip+(bIsPlayer ? PlayerEx(Player).GetAttackZOfs : 8.0)-3.0;
+  }
 }
 
 
@@ -494,7 +499,7 @@ final bool TraceLineEx (TVec org, TVec dir, float distance, bool allowEntities, 
 //
 //==========================================================================
 final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance,
-                              optional bool noVertAutoAim, optional bool isRocket)
+                              optional bool noVertAutoAim, optional class!EntityEx rocketType)
 {
   float x2, y2;
   float topangle, botangle;
@@ -515,7 +520,7 @@ final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance,
   AngleVector(angles, out aim_dir);
   x2 = Origin.x+distance*aim_dir.x;
   y2 = Origin.y+distance*aim_dir.y;
-  aim_z = Origin.z+(isRocket ? CalculateMissileAttackZOfs() : CalculateLineAttackZOfs());
+  aim_z = Origin.z+(rocketType ? CalculateMissileAttackZOfs(rocketType) : CalculateLineAttackZOfs());
   aim_range2d = Length2D(vector(distance*aim_dir.x, distance*aim_dir.y));
 
   // can't shoot outside view angles
@@ -621,7 +626,7 @@ final EntityEx AimLineAttack (out TVec OutDir, TAVec angles, float distance,
 //===========================================================================
 final EntityEx Aim (out TVec OutDir, float distance, optional float yaw,
                     optional bool noAutoaim, optional bool noVertAutoAim,
-                    optional bool isRocket)
+                    optional class!EntityEx rocketType)
 {
   TAVec ang;
   TVec dir;
@@ -649,14 +654,14 @@ final EntityEx Aim (out TVec OutDir, float distance, optional float yaw,
 
   // try to aim at a target
   // this is done even when autoaim is off so that we get a LineTarget that is needed for seeker missiles
-  LineTarget = AimLineAttack(out dir, ang, distance, isRocket:isRocket!optional);
+  LineTarget = AimLineAttack(out dir, ang, distance, rocketType:rocketType!optional);
   if (!LineTarget) {
     auto origYaw = ang.yaw;
     ang.yaw = AngleMod360(ang.yaw+45.0/8.0);
-    LineTarget = AimLineAttack(out dir, ang, distance, noVertAutoAim!optional, isRocket:isRocket!optional);
+    LineTarget = AimLineAttack(out dir, ang, distance, noVertAutoAim!optional, rocketType:rocketType!optional);
     if (!LineTarget) {
       ang.yaw = AngleMod360(ang.yaw-45.0/4.0);
-      LineTarget = AimLineAttack(out dir, ang, distance, noVertAutoAim!optional, isRocket:isRocket!optional);
+      LineTarget = AimLineAttack(out dir, ang, distance, noVertAutoAim!optional, rocketType:rocketType!optional);
       if (!LineTarget) {
         //ang.yaw = AngleMod360(ang.yaw+45.0/8.0);
         ang.yaw = origYaw;
@@ -677,7 +682,7 @@ final EntityEx Aim (out TVec OutDir, float distance, optional float yaw,
 //
 //==========================================================================
 final EntityEx AimEx (out TVec OutDir, float Range, float AngleInc, int NumSteps,
-                      optional float FinalRange, optional bool isRocket) {
+                      optional float FinalRange, optional class!EntityEx rocketType) {
   TAVec angles;
   //TVec vforward;
   EntityEx LineTarget;
@@ -686,20 +691,20 @@ final EntityEx AimEx (out TVec OutDir, float Range, float AngleInc, int NumSteps
     // try to the left
     angles = Angles;
     angles.yaw = AngleMod360(angles.yaw+float(i)*AngleInc);
-    LineTarget = AimLineAttack(out OutDir, angles, Range, isRocket:isRocket!optional);
+    LineTarget = AimLineAttack(out OutDir, angles, Range, rocketType:rocketType!optional);
     if (LineTarget) return LineTarget;
 
     // try to the right
     angles = Angles;
     angles.yaw = AngleMod360(angles.yaw-float(i)*AngleInc);
-    LineTarget = AimLineAttack(out OutDir, angles, Range, isRocket:isRocket!optional);
+    LineTarget = AimLineAttack(out OutDir, angles, Range, rocketType:rocketType!optional);
     if (LineTarget) return LineTarget;
   }
 
   if (FinalRange) {
     // didn't find any creatures, so try to strike any walls
     angles = Angles;
-    LineTarget = AimLineAttack(out OutDir, angles, FinalRange, isRocket:isRocket!optional);
+    LineTarget = AimLineAttack(out OutDir, angles, FinalRange, rocketType:rocketType!optional);
   } else {
     //AngleVector(Angles, out vforward);
     //OutDir = vforward;
