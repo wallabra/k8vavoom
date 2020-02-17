@@ -93,7 +93,8 @@ struct VPakFileInfo {
   VStr fileName; // name of the file (i.e. full name, lowercased)
   VName lumpName;
   /*EWadNamespace*/int lumpNamespace;
-  int nextLump; // next lump with the same name
+  int nextLump; // next lump with the same name (forward order)
+  int prevFile; // next file with the same name (backward order)
   // zip info
   vuint16 flag; // general purpose bit flag
   vuint16 compression; // compression method
@@ -111,6 +112,7 @@ struct VPakFileInfo {
     , lumpName(NAME_None)
     , lumpNamespace(-1)
     , nextLump(-1)
+    , prevFile(-1)
     , flag(0)
     , compression(0)
     , crc32(0)
@@ -268,18 +270,45 @@ extern TArray<VSearchPath *> SearchPaths;
 extern bool fsys_report_added_paks;
 extern bool fsys_no_dup_reports;
 
-// autodetected wad/pk3
-enum {
-  AD_NONE,
-  AD_SKULLDASHEE,
-  AD_HARMONY,
-};
-
-extern int fsys_detected_mod;
-extern VStr fsys_detected_mod_wad;
-
 extern mythread_mutex fsys_glock;
 
 extern int fsys_dev_dump_paks;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// mod detection mechanics
+
+// autodetected wad/pk3
+enum {
+  AD_NONE,
+};
+
+class FSysModDetectorHelper {
+  friend class VFileDirectory;
+private:
+  VFileDirectory *dir;
+  VPakFileBase *pak;
+
+public:
+  inline FSysModDetectorHelper (VFileDirectory *adir, VPakFileBase *apak) noexcept : dir(adir), pak(apak) {}
+
+  // hasLump("dehacked", 1066, "6bf56571d1f34d7cd7378b95556d67f8")
+  bool hasLump (const char *lumpname, int size=-1, const char *md5=nullptr);
+  // this checks for file; no globs allowed!
+  bool hasFile (const char *filename, int size=-1, const char *md5=nullptr);
+  // can be used to check zscript lump
+  bool checkLump (int lumpidx, int size=-1, const char *md5=nullptr);
+};
+
+// returns AD_NONE or mod id
+// mod detectors are called after registering an archive
+// `seenZScriptLump` < 0: no zscript lump was seen
+// return negative number to enable zscript, but don't register any mod
+typedef int (*fsysModDetectorCB) (FSysModDetectorHelper &hlp, int seenZScriptLump);
+
+void fsysRegisterModDetector (fsysModDetectorCB cb);
+
+extern int fsys_detected_mod;
+extern VStr fsys_detected_mod_wad;
 
 #endif

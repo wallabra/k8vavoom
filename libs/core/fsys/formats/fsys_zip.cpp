@@ -256,19 +256,6 @@ void VZipFile::OpenArchive (VStream *fstream, vuint32 cdofs) {
 
   pakdir.buildLumpNames();
   pakdir.buildNameMaps(false, this);
-
-  // detect SkullDash EE
-  if (isPK3) {
-    int tmidx = pakdir.findFile("maps/titlemap.wad");
-    //GLog.Logf("***%s: tmidx=%d", *PakFileName, tmidx);
-    if (tmidx >= 0 && pakdir.files[tmidx].filesize == 286046) {
-      //GLog.Logf("*** TITLEMAP: %s", *CalculateMD5(tmidx));
-      // check md5
-      if (CalculateMD5(tmidx) == "def4f5e00c60727aeb3a25d1982cfcf1") {
-        fsys_detected_mod = AD_SKULLDASHEE;
-      }
-    }
-  }
 }
 
 

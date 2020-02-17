@@ -25,8 +25,6 @@
 //**************************************************************************
 #include "fsys_local.h"
 
-//#define VV_ABSOLUTELY_NO_ZSCRIPT
-
 
 extern bool fsys_skipSounds;
 extern bool fsys_skipSprites;
@@ -107,6 +105,104 @@ bool VFS_ShouldIgnoreExt (VStr fname) {
   return false;
 }
 
+
+
+//==========================================================================
+//
+//  FSysModDetectorHelper::hasLump
+//
+//  hasLump("dehacked", 1066, "6bf56571d1f34d7cd7378b95556d67f8")
+//
+//==========================================================================
+bool FSysModDetectorHelper::hasLump (const char *lumpname, int size, const char *md5) {
+  if (!lumpname || !lumpname[0]) return false;
+  if (md5 && md5[0] && strlen(md5) != 32) return false; // invalid md5
+  if (strlen(lumpname) > 8) return false;
+  VName lname = VName(lumpname, VName::FindLower);
+  if (lname == NAME_None) return false;
+  auto npp = dir->lumpmap.find(lname);
+  if (!npp) return false;
+  for (int fidx = *npp; fidx >= 0 && fidx < dir->files.length(); fidx = dir->files[fidx].nextLump) {
+    if (size >= 0 && dir->files[fidx].filesize != size) continue;
+    if (md5 && md5[0] && !pak->CalculateMD5(fidx).strEquCI(md5)) continue;
+    return true;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
+//  FSysModDetectorHelper::hasFile
+//
+//  this checks for file; no globs allowed!
+//
+//==========================================================================
+bool FSysModDetectorHelper::hasFile (const char *filename, int size, const char *md5) {
+  if (!filename || !filename[0]) return false;
+  if (md5 && md5[0] && strlen(md5) != 32) return false; // invalid md5
+  VStr fname = VStr(filename).fixSlashes().toLowerCase();
+  while (!fname.isEmpty() && fname[0] == '/') fname.chopLeft(1);
+  if (fname.isEmpty()) return false;
+  auto npp = dir->filemap.find(fname);
+  if (!npp) return false;
+  for (int fidx = *npp; fidx >= 0 && fidx < dir->files.length(); fidx = dir->files[fidx].prevFile) {
+    if (size >= 0 && dir->files[fidx].filesize != size) continue;
+    if (md5 && md5[0] && !pak->CalculateMD5(fidx).strEquCI(md5)) continue;
+    return true;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
+//  FSysModDetectorHelper::checkLump
+//
+//  can be used to check zscript lump
+//
+//==========================================================================
+bool FSysModDetectorHelper::checkLump (int lumpidx, int size, const char *md5) {
+  if (size < 0 && (!md5 || !md5[0])) return (lumpidx >= 0 && lumpidx < dir->files.length()); // any lump will do
+  // we want to check size/md5
+  if (lumpidx < 0 || lumpidx >= dir->files.length()) return false; // no such lump, failed
+  if (md5 && md5[0] && strlen(md5) != 32) return false; // invalid md5
+  if (size >= 0 && dir->files[lumpidx].filesize != size) return false;
+  if (md5 && md5[0] && !pak->CalculateMD5(lumpidx).strEquCI(md5)) return false;
+  return true;
+}
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+static TArray<fsysModDetectorCB> modDetectorList;
+
+
+//==========================================================================
+//
+//  fsysRegisterModDetector
+//
+//==========================================================================
+void fsysRegisterModDetector (fsysModDetectorCB cb) {
+  if (!cb) return;
+  for (auto &&it : modDetectorList) if (it == cb) return;
+  modDetectorList.append(cb);
+}
+
+
+//==========================================================================
+//
+//  callModDetectors
+//
+//==========================================================================
+static int callModDetectors (VFileDirectory *adir, VPakFileBase *apak, int seenZScriptLump) {
+  if (modDetectorList.length() == 0) return AD_NONE;
+  FSysModDetectorHelper hlp(adir, apak);
+  for (auto &&it : modDetectorList) {
+    int res = it(hlp, seenZScriptLump);
+    if (res != AD_NONE) return res;
+  }
+  return AD_NONE;
+}
 
 
 //==========================================================================
@@ -205,6 +301,7 @@ int VFileDirectory::appendAndRegister (const VPakFileInfo &fi) {
   VPakFileInfo &nfo = files[f];
   VName lmp = nfo.lumpName;
   nfo.nextLump = -1; // just in case
+  nfo.prevFile = -1; // just in case
   if (lmp != NAME_None) {
     auto lp = lumpmap.find(lmp);
     if (lp) {
@@ -220,6 +317,8 @@ int VFileDirectory::appendAndRegister (const VPakFileInfo &fi) {
   }
   if (nfo.fileName.length()) {
     // put files into hashmap
+    auto pfp = filemap.find(nfo.fileName);
+    if (pfp) nfo.prevFile = *pfp;
     filemap.put(nfo.fileName, f);
   }
   return f;
@@ -418,22 +517,20 @@ void VFileDirectory::buildNameMaps (bool rebuilding, VPakFileBase *pak) {
 
   int seenZScriptLump = -1; // so we can calculate checksum later
   bool warnZScript = true;
-  #ifndef VV_ABSOLUTELY_NO_ZSCRIPT
   vuint32 squareChecked = 0u;
   if (fsys_ignoreSquare) squareChecked = ~0u;
   bool zscriptAllowed = false;
-  #else
-  enum { zscriptAllowed = false };
-  #endif
+
+  bool squareFound = false;
 
   for (int f = 0; f < files.length(); ++f) {
     VPakFileInfo &fi = files[f];
     // link lumps
     VName lmp = fi.lumpName;
     fi.nextLump = -1; // just in case
+    fi.prevFile = -1; // just in case
     if (/*lmp != NAME_None &&*/ seenZScriptLump < 0 && fi.lumpNamespace == WADNS_Global && VStr::strEquCI(*lmp, "zscript")) {
       seenZScriptLump = f;
-      #ifndef VV_ABSOLUTELY_NO_ZSCRIPT
       // check for "adventures of square"
       if (!fsys_IgnoreZScript && !squareChecked) {
         for (auto &&fit : files) {
@@ -447,12 +544,12 @@ void VFileDirectory::buildNameMaps (bool rebuilding, VPakFileBase *pak) {
           zscriptAllowed = true;
           fsys_DisableBDW = true;
           warnZScript = false;
+          squareFound = true;
           GLog.Log(NAME_Init, "Detected PWAD: 'Adventures of Square'");
         } else {
           squareChecked = ~0u;
         }
       }
-      #endif
       // ignore it for now
       fi.lumpName = NAME_None;
       continue;
@@ -503,65 +600,29 @@ void VFileDirectory::buildNameMaps (bool rebuilding, VPakFileBase *pak) {
         }
       }
       // put files into hashmap
+      auto pfp = filemap.find(fi.fileName);
+      if (pfp) fi.prevFile = *pfp;
       filemap.put(fi.fileName, f);
     }
     //if (fsys_dev_dump_paks) GLog.Logf(NAME_Debug, "%s: %s", *PakFileName, *Files[f].fileName);
   }
 
   // seen zscript, and not a square?
+  int modid = (pak && !squareFound && !fsys_detected_mod ? callModDetectors(this, pak, seenZScriptLump) : 0);
+  if (modid) zscriptAllowed = true; // detector will bomb out if it doesn't want that mod
+
+  // bomb out on zscript
   if (!zscriptAllowed && seenZScriptLump >= 0) {
-    #ifndef VV_ABSOLUTELY_NO_ZSCRIPT
-    // detect boringternity
-    if (pak) {
-      //GLog.Logf(NAME_Debug, "*** seenZScriptLump=%d (%s); size=%d (%p); rebuilding=%d", seenZScriptLump, *files[seenZScriptLump].fileName, files[seenZScriptLump].filesize, pak, (int)rebuilding);
-      if (files[seenZScriptLump].filesize == 13153 && pak->CalculateMD5(seenZScriptLump) == "9e53e2d46de1d0f6cfc004c74e1660cf") {
-        // this is possibly boringternity, do some more checks?
-        GLog.Log(NAME_Init, "Detected PWAD: boringternity");
-        zscriptAllowed = true;
-        //fsys_IgnoreZScript = true;
-        warnZScript = false;
-      }
-    }
-    #endif
-    // bomb out
-    if (!zscriptAllowed) {
-      if (fsys_IgnoreZScript) {
-        if (warnZScript) { warnZScript = false; GLog.Logf(NAME_Error, "Archive \"%s\" contains zscript!", *getArchiveName()); }
-      } else {
-        Sys_Error("Archive \"%s\" contains zscript!", *getArchiveName());
-      }
+    if (fsys_IgnoreZScript) {
+      if (warnZScript) { warnZScript = false; GLog.Logf(NAME_Error, "Archive \"%s\" contains zscript!", *getArchiveName()); }
+    } else {
+      Sys_Error("Archive \"%s\" contains zscript!", *getArchiveName());
     }
   }
 
-  // ok, let 'em play czechbox again
-  /*
-  if (pak) {
-    VName titn = VName("dehacked", VName::Find);
-    if (titn != NAME_None) {
-      auto npp = lumpmap.find(titn);
-      if (npp) {
-        if ((files[*npp].filesize == 1066 && pak->CalculateMD5(*npp) == "6bf56571d1f34d7cd7378b95556d67f8") ||
-            (files[*npp].filesize == 1072 && pak->CalculateMD5(*npp) == "b93dbb8163e0a512e7b76d60d885b41c"))
-        {
-          Sys_Error("CzechBox is not supported. sorry. not interested.");
-        }
-      }
-    }
-  }
-  */
-
-  // detect Harmony v1.1
-  if (pak) {
-    VName titn = VName("dehacked", VName::Find);
-    if (titn != NAME_None) {
-      auto npp = lumpmap.find(titn);
-      if (npp) {
-        if (files[*npp].filesize == 26287 && pak->CalculateMD5(*npp) == "3446842b93dfa37075a238ccd5b0f29c") {
-          fsys_detected_mod = AD_HARMONY;
-          fsys_detected_mod_wad = getArchiveName();
-        }
-      }
-    }
+  if (modid > 0) {
+    fsys_detected_mod = modid;
+    fsys_detected_mod_wad = getArchiveName();
   }
 
   if (!rebuilding && fsys_dev_dump_paks) {
