@@ -784,22 +784,22 @@ void VLevel::AddDecalById (TVec org, int id, int side, line_t *li, int level, in
 
 //native final void AddDecal (TVec org, name dectype, int side, line_t *li, optional int translation);
 IMPLEMENT_FUNCTION(VLevel, AddDecal) {
-  P_GET_INT_OPT(translation, 0);
-  P_GET_PTR(line_t, li);
-  P_GET_INT(side);
-  P_GET_NAME(dectype);
-  P_GET_VEC(org);
-  P_GET_SELF;
+  TVec org;
+  VName dectype;
+  int side;
+  line_t *li;
+  VOptParamInt translation(0);
+  vobjGetParamSelf(org, dectype, side, li, translation);
   Self->AddDecal(org, dectype, side, li, 0, translation);
 }
 
 //native final void AddDecalById (TVec org, int id, int side, line_t *li, optional int translation);
 IMPLEMENT_FUNCTION(VLevel, AddDecalById) {
-  P_GET_INT_OPT(translation, 0);
-  P_GET_PTR(line_t, li);
-  P_GET_INT(side);
-  P_GET_INT(id);
-  P_GET_VEC(org);
-  P_GET_SELF;
+  TVec org;
+  int id;
+  int side;
+  line_t *li;
+  VOptParamInt translation(0);
+  vobjGetParamSelf(org, id, side, li, translation);
   Self->AddDecalById(org, id, side, li, 0, translation);
 }
