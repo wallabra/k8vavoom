@@ -877,13 +877,13 @@ IMPLEMENT_FUNCTION(VBasePlayer, get_IsCheckpointSpawn) {
 
 IMPLEMENT_FUNCTION(VBasePlayer, cprint) {
   VStr msg = PF_FormatString();
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->eventClientPrint(*msg);
 }
 
 IMPLEMENT_FUNCTION(VBasePlayer, centerprint) {
   VStr msg = PF_FormatString();
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->eventClientCenterPrint(*msg);
 }
 

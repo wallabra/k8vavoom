@@ -344,20 +344,26 @@ VThinker *VThinker::SpawnCommon (bool allowNoneClass, bool checkKillEntityEx, bo
     if (!eexCls) Sys_Error("cannot find class `EntityEx`");
   }
 
-  P_GET_BOOL_OPT(AllowReplace, true);
-  P_GET_PTR_OPT(mthing_t, mthing, nullptr);
-  P_GET_AVEC_OPT(AAngles, TAVec(0, 0, 0));
-  P_GET_VEC_OPT(AOrigin, TVec(0, 0, 0));
-  P_GET_PTR(VClass, Class);
-  VClass *desiredClass = (hasDesiredClass ? (VClass *)PR_PopPtr() : nullptr);
-  P_GET_SELF;
+  VClass *desiredClass = nullptr;
+  VClass *Class;
+  VOptParamVec AOrigin(TVec(0, 0, 0));
+  VOptParamAVec AAngles(TAVec(0, 0, 0));
+  VOptParamPtr<mthing_t> mthing;
+  VOptParamBool AllowReplace(true);
+  vobjDeclareSelf;
+
+  if (hasDesiredClass) {
+    vobjGetParam(Self, desiredClass, Class, AOrigin, AAngles, mthing, AllowReplace);
+  } else {
+    vobjGetParam(Self, Class, AOrigin, AAngles, mthing, AllowReplace);
+  }
 
   if (!Self) { VObject::VMDumpCallStack(); Sys_Error("empty self in `Thinker::SpawnXXX()`"); }
   VEntity *SelfEnt = Cast<VEntity>(Self);
   // if spawner is entity, default to it's origin and angles
   if (SelfEnt) {
-    if (!specified_AOrigin) AOrigin = SelfEnt->Origin;
-    if (!specified_AAngles) AAngles = SelfEnt->Angles;
+    if (!AOrigin.specified) AOrigin = SelfEnt->Origin;
+    if (!AAngles.specified) AAngles = SelfEnt->Angles;
   }
   if (!Class) {
     if (!allowNoneClass) { VObject::VMDumpCallStack(); Sys_Error("Trying to spawn `None` class"); }
@@ -408,25 +414,24 @@ IMPLEMENT_FUNCTION(VThinker, SpawnEntityChecked) {
 }
 
 IMPLEMENT_FUNCTION(VThinker, Destroy) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->DestroyThinker();
 }
 
 IMPLEMENT_FUNCTION(VThinker, bprint) {
   VStr Msg = PF_FormatString();
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->BroadcastPrint(*Msg);
 }
 
 // native final dlight_t *AllocDlight(Thinker Owner, TVec origin, /*optional*/ float radius, optional int lightid);
 IMPLEMENT_FUNCTION(VThinker, AllocDlight) {
-  P_GET_INT_OPT(lightid, -1);
-  //P_GET_FLOAT_OPT(radius, 0);
-  P_GET_FLOAT(radius);
+  VThinker *Owner;
+  TVec lorg;
+  float radius;
+  VOptParamInt lightid(-1);
+  vobjGetParamSelf(Owner, lorg, radius, lightid);
   if (radius < 0) radius = 0;
-  P_GET_VEC(lorg);
-  P_GET_REF(VThinker, Owner);
-  P_GET_SELF;
   RET_PTR(Self->XLevel->Renderer->AllocDlight(Owner, lorg, radius, lightid));
 }
 
@@ -447,8 +452,8 @@ IMPLEMENT_FUNCTION(VThinker, ShiftDlightHeight) {
 }
 
 IMPLEMENT_FUNCTION(VThinker, NewParticle) {
-  P_GET_VEC(porg);
-  P_GET_SELF;
+  TVec porg;
+  vobjGetParamSelf(porg);
   if (GGameInfo->IsPaused()) {
     RET_PTR(nullptr);
   } else {
@@ -457,39 +462,39 @@ IMPLEMENT_FUNCTION(VThinker, NewParticle) {
 }
 
 IMPLEMENT_FUNCTION(VThinker, GetAmbientSound) {
-  P_GET_INT(Idx);
+  int Idx;
+  vobjGetParam(Idx);
   RET_PTR(GSoundManager->GetAmbientSound(Idx));
 }
 
 IMPLEMENT_FUNCTION(VThinker, AllThinkers) {
-  P_GET_PTR(VThinker *, Thinker);
-  P_GET_PTR(VClass, Class);
-  P_GET_SELF;
+  VClass *Class;
+  VThinker **Thinker;
+  vobjGetParamSelf(Class, Thinker);
   RET_PTR(new VScriptThinkerIterator(Self, Class, Thinker));
 }
 
 IMPLEMENT_FUNCTION(VThinker, AllActivePlayers) {
-  P_GET_PTR(VBasePlayer *, Out);
-  P_GET_SELF;
+  VBasePlayer **Out;
+  vobjGetParamSelf(Out);
   RET_PTR(new VActivePlayersIterator(Self, Out));
 }
 
+// native final iterator PathTraverse (out intercept_t *In, float x1, float y1, float x2, float y2, int flags);
 IMPLEMENT_FUNCTION(VThinker, PathTraverse) {
-  P_GET_INT(flags);
-  P_GET_FLOAT(y2);
-  P_GET_FLOAT(x2);
-  P_GET_FLOAT(y1);
-  P_GET_FLOAT(x1);
-  P_GET_PTR(intercept_t *, In);
-  P_GET_SELF;
+  intercept_t **In;
+  float x1, y1, x2, y2;
+  int flags;
+  vobjGetParamSelf(In, x1, y1, x2, y2, flags);
   RET_PTR(new VPathTraverse(Self, In, x1, y1, x2, y2, flags));
 }
 
+// native final iterator RadiusThings (out Entity Ent, TVec Org, float Radius);
 IMPLEMENT_FUNCTION(VThinker, RadiusThings) {
-  P_GET_FLOAT(Radius);
-  P_GET_VEC(Org);
-  P_GET_PTR(VEntity *, EntPtr);
-  P_GET_SELF;
+  VEntity **EntPtr;
+  TVec Org;
+  float Radius;
+  vobjGetParamSelf(EntPtr, Org, Radius);
   RET_PTR(new VRadiusThingsIterator(Self, EntPtr, Org, Radius));
 }
 

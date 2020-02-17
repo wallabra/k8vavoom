@@ -1691,14 +1691,14 @@ IMPLEMENT_FUNCTION(VScriptsParser, CurrLine) {
 
 IMPLEMENT_FUNCTION(VScriptsParser, ScriptError) {
   VStr Msg = PF_FormatString();
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->CheckInterface();
   Self->Int->Error(*Msg);
 }
 
 IMPLEMENT_FUNCTION(VScriptsParser, ScriptMessage) {
   VStr Msg = PF_FormatString();
-  P_GET_SELF;
+  vobjGetParamSelf();
   Self->CheckInterface();
   Self->Int->Message(*Msg);
 }

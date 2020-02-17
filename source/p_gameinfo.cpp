@@ -80,7 +80,7 @@ bool VGameInfo::IsInWipe () {
 
 
 IMPLEMENT_FUNCTION(VGameInfo, get_isInWipe) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   RET_BOOL(Self ? Self->IsInWipe() : false);
 }
 
@@ -102,7 +102,7 @@ bool VGameInfo::IsPaused () {
 
 
 IMPLEMENT_FUNCTION(VGameInfo, get_isPaused) {
-  P_GET_SELF;
+  vobjGetParamSelf();
   RET_BOOL(Self ? Self->IsPaused() : false);
 }
 
