@@ -126,11 +126,12 @@ public:
   bool CheckMatch (bool asRef, const TLocation &loc, const VFieldType &, bool raiseError=true) const;
   VStr GetName () const;
 
-  bool IsAnyArray () const;
-  bool IsAnyIndexableArray () const;
-  inline bool IsPointer () const { return (Type == TYPE_Pointer); } // useless, but nice
-  inline bool IsVoidPointer () const { return (Type == TYPE_Pointer && PtrLevel == 1 && InnerType == TYPE_Void); }
-
+  inline bool IsAnyArray () const noexcept { return (Type == TYPE_Array || Type == TYPE_DynamicArray || Type == TYPE_SliceArray || Type == TYPE_Dictionary); }
+  inline bool IsAnyIndexableArray () const noexcept { return (Type == TYPE_Array || Type == TYPE_DynamicArray || Type == TYPE_SliceArray); }
+  inline bool IsStruct () const noexcept { return (Type == TYPE_Struct); }
+  inline bool IsAnyArrayOrStruct () const noexcept { return (IsAnyArray() || IsStruct()); }
+  inline bool IsPointer () const noexcept { return (Type == TYPE_Pointer); } // useless, but nice
+  inline bool IsVoidPointer () const noexcept { return (Type == TYPE_Pointer && PtrLevel == 1 && InnerType == TYPE_Void); }
   inline bool IsPointerType (EType tp) const { return (Type == TYPE_Pointer && PtrLevel == 1 && InnerType == tp); }
   inline bool IsNormalOrPointerType (EType tp) const { return (Type == tp || (Type == TYPE_Pointer && PtrLevel == 1 && InnerType == tp)); }
 

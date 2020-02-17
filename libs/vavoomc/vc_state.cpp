@@ -158,11 +158,11 @@ void VState::Emit () {
     funcIsCopy = true; // set it here, so decorate code won't try to `PostLoad()` this state's function
     Function = ((VClass *)Outer)->FindMethod(FunctionName);
     if (!Function) {
-      ParseError(Loc, "No such method `%s`", *FunctionName);
+      ParseError(Loc, "No such method `%s` in class `%s`", *FunctionName, ((VClass *)Outer)->GetName());
     } else {
       if (Function->Flags&FUNC_VarArgs) { ParseError(Loc, "State method must not have varargs"); return; }
       if (Function->ReturnType.Type != TYPE_Void) ParseError(Loc, "State method must not return a value");
-      if (Function->NumParams) ParseError(Loc, "State method must not take any arguments");
+      if (!Function->IsGoodStateMethod()) ParseError(Loc, "State method must be callable without arguments");
       // ok, state methods can be virtual and static now
       if (Type != Vavoom && (Function->Flags&FUNC_Static) != 0) ParseError(Loc, "State method must not be static");
       /*

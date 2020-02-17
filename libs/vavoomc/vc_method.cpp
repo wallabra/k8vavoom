@@ -470,8 +470,14 @@ int VMethod::FindArgByName (VName aname) const noexcept {
 //
 //==========================================================================
 bool VMethod::CanBeCalledWithoutArguments () const noexcept {
+  if (NumParams > MAX_PARAMS) return false; // just in case
   for (int f = 0; f < NumParams; ++f) {
+    // optional?
     if (!(ParamFlags[f]&FPARM_Optional)) return false;
+    // it should not be ref/out array/dict/struct (VM requires pointer to dummy object in this case)
+    if ((ParamFlags[f]&(FPARM_Out|FPARM_Ref)) != 0) {
+      if (ParamTypes[f].IsAnyArrayOrStruct()) return false;
+    }
   }
   return true;
 }

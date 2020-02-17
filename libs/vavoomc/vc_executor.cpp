@@ -3227,6 +3227,72 @@ VFuncRes VObject::ExecuteFunction (VMethod *func) {
 }
 
 
+// this struct is used to hold temp strings
+// we're doing it this way to avoid calling ctors/dtors each time
+// should be kept in sync with corelib (or even moved there)
+struct VStrPool {
+private:
+  unsigned used;
+  void *pool[VMethod::MAX_PARAMS];
+
+public:
+  inline VStrPool () noexcept : used(0) {}
+  inline ~VStrPool () { clear(); }
+  inline VStrPool (const VStrPool &) = delete;
+  inline VStrPool &operator = (const VStrPool &) = delete;
+
+  inline void clear () {
+    for (unsigned f = 0; f < used; ++f) ((VStr *)(&pool[f]))->clear();
+    used = 0;
+  }
+
+  inline VStr *alloc () noexcept {
+    if (used == VMethod::MAX_PARAMS) Sys_Error("out of strings in `VStrPool`");
+    // this is valid initialisation for VStr
+    VStr *res = (VStr *)(&pool[used++]);
+    memset((void *)res, 0, sizeof(VStr));
+    return res;
+  }
+};
+
+static_assert(sizeof(VStr) == sizeof(void *), "invalid VStr size");
+
+
+// for simple types w/o ctor/dtor
+template<typename T> struct VSimpleTypePool {
+private:
+  unsigned used;
+  T pool[VMethod::MAX_PARAMS*3]; // for vectors
+
+public:
+  inline VSimpleTypePool () noexcept : used(0) {}
+  inline ~VSimpleTypePool () noexcept { used = 0; }
+  inline VSimpleTypePool (const VSimpleTypePool &) = delete;
+  inline VSimpleTypePool &operator = (const VSimpleTypePool &) = delete;
+
+  inline void clear () noexcept { used = 0; }
+
+  inline T *alloc () noexcept {
+    if (used == VMethod::MAX_PARAMS*3) Sys_Error("out of room in `VSimpleTypePool`");
+    // this is valid initialisation
+    T *res = &pool[used++];
+    memset((void *)res, 0, sizeof(T));
+    return res;
+  }
+
+  // for vectors/delegates
+  inline T *nalloc (unsigned count) noexcept {
+    vassert(count > 0 && count < VMethod::MAX_PARAMS);
+    if (used+count > VMethod::MAX_PARAMS*3) Sys_Error("out of room in `VSimpleTypePool`");
+    // this is valid initialisation
+    T *res = &pool[used];
+    memset((void *)res, 0, sizeof(T)*count);
+    used += count;
+    return res;
+  }
+};
+
+
 //==========================================================================
 //
 //  VObject::ExecuteFunctionNoArgs
@@ -3279,66 +3345,46 @@ VFuncRes VObject::ExecuteFunctionNoArgs (VObject *Self, VMethod *func, bool allo
     }
   }
 
-  // placeholders for "ref" args
-  int rints[VMethod::MAX_PARAMS];
-  float rfloats[VMethod::MAX_PARAMS*3]; // for vectors too
-  VStr rstrs[VMethod::MAX_PARAMS];
-  //VScriptArray *rdarrays[VMethod::MAX_PARAMS];
-  VName rnames[VMethod::MAX_PARAMS];
-  void *rptrs[VMethod::MAX_PARAMS*2]; // various pointers (including delegates)
-  int rintUsed = 0;
-  int rfloatUsed = 0;
-  int rstrUsed = 0;
-  //int rdarrayUsed = 0;
-  int rnameUsed = 0;
-  int rptrUsed = 0;
-
-  memset(rints, 0, sizeof(rints));
-  memset(rfloats, 0, sizeof(rfloats));
-  memset((void *)(&rstrs[0]), 0, sizeof(rstrs));
-  //memset((void *)(&rdarrays[0]), 0, sizeof(rdarrays));
-  memset((void *)(&rnames[0]), 0, sizeof(rnames));
-  memset(rptrs, 0, sizeof(rptrs));
-
   if (func->NumParams > VMethod::MAX_PARAMS) Sys_Error("ExecuteFunctionNoArgs: function `%s` has too many parameters (%d)", *func->GetFullName(), func->NumParams); // sanity check
+
+  // placeholders for "ref" args
+  VSimpleTypePool<int32_t> rints;
+  VSimpleTypePool<float> rfloats; // for vectors too
+  VSimpleTypePool<VName> rnames; // for vectors too
+  VSimpleTypePool<void *> rptrs; // various pointers (including delegates)
+  VStrPool rstrs;
+
   // push default values
   for (int f = 0; f < func->NumParams; ++f) {
     // out/ref arg
     if ((func->ParamFlags[f]&(FPARM_Out|FPARM_Ref)) != 0) {
-      if (func->ParamTypes[f].IsAnyArray()) Sys_Error("ExecuteFunctionNoArgs: function `%s`, argument #%d is ref/out array, this is not supported yet", *func->GetFullName(), f+1);
+      if (func->ParamTypes[f].IsAnyArrayOrStruct()) Sys_Error("ExecuteFunctionNoArgs: function `%s`, argument #%d is ref/out array/struct, this is not supported yet", *func->GetFullName(), f+1);
       switch (func->ParamTypes[f].Type) {
         case TYPE_Int:
         case TYPE_Byte:
         case TYPE_Bool:
-          P_PASS_PTR(&rints[rintUsed]);
-          ++rintUsed;
+          P_PASS_PTR(rints.alloc());
           break;
         case TYPE_Float:
-          P_PASS_PTR(&rfloats[rfloatUsed]);
-          ++rfloatUsed;
+          P_PASS_PTR(rfloats.alloc());
           break;
         case TYPE_Name:
-          P_PASS_PTR(&rnames[rnameUsed]);
-          ++rnameUsed;
+          P_PASS_PTR(rnames.alloc());
           break;
         case TYPE_String:
-          P_PASS_PTR(&rstrs[rstrUsed]);
-          ++rstrUsed;
+          P_PASS_PTR(rstrs.alloc());
           break;
         case TYPE_Pointer:
         case TYPE_Reference:
         case TYPE_Class:
         case TYPE_State:
-          P_PASS_PTR(&rptrs[rptrUsed]);
-          ++rptrUsed;
+          P_PASS_PTR(rptrs.alloc());
           break;
         case TYPE_Vector:
-          P_PASS_PTR(&rfloats[rfloatUsed]);
-          rfloatUsed += 3;
+          P_PASS_PTR(rfloats.nalloc(3));
           break;
         case TYPE_Delegate:
-          P_PASS_PTR(&rptrs[rptrUsed]);
-          rptrUsed += 2;
+          P_PASS_PTR(rptrs.nalloc(2));
           break;
         default:
           Sys_Error("%s", va("ExecuteFunctionNoArgs: function `%s`, argument #%d is of bad type `%s`", *func->GetFullName(), f+1, *func->ParamTypes[f].GetName()));
@@ -3384,9 +3430,7 @@ VFuncRes VObject::ExecuteFunctionNoArgs (VObject *Self, VMethod *func, bool allo
     }
   }
 
-  VFuncRes res = ExecuteFunction(func);
-  for (int f = rstrUsed-1; f >= 0; --f) rstrs[f].clear();
-  return res;
+  return ExecuteFunction(func);
 }
 
 

@@ -269,13 +269,16 @@ public:
   // not sure what to do with network methods, though
   // ok, state methods can be virtual and static now
   //inline bool IsGoodStateMethod () const noexcept { return (NumParams == 0 && (Flags&~(FUNC_Native|FUNC_Spawner|FUNC_Net|FUNC_NetReliable|FUNC_Static/*|FUNC_NonVirtual*/)) == /*FUNC_Final*/0); }
+
+  // can it be used in `ExecuteFunctionNoArgs()`?
+  bool CanBeCalledWithoutArguments () const noexcept;
+
+  // we're using `ExecuteFunctionNoArgs()` to call state methods, so make it less strict
   inline bool IsGoodStateMethod () const noexcept {
     return
-      NumParams == 0 &&
-      (Flags&(/*FUNC_Static|*/FUNC_VarArgs|FUNC_Spawner|FUNC_Iterator|FUNC_StructMethod|FUNC_Private|FUNC_Protected)) == 0;
+      (Flags&(FUNC_VarArgs|FUNC_Spawner|FUNC_Iterator|FUNC_StructMethod|FUNC_Private|FUNC_Protected)) == 0 &&
+      CanBeCalledWithoutArguments();
   }
-
-  bool CanBeCalledWithoutArguments () const noexcept;
 
   // this must be called on a postloaded method only
   inline VClass *GetSelfClass () {

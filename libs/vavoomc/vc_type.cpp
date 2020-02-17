@@ -724,28 +724,6 @@ VStr VFieldType::GetName () const {
 
 //==========================================================================
 //
-//  VFieldType::IsAnyArray
-//
-//==========================================================================
-bool VFieldType::IsAnyArray () const {
-  return (Type == TYPE_Array || Type == TYPE_DynamicArray ||
-          Type == TYPE_SliceArray || Type == TYPE_Dictionary);
-}
-
-
-//==========================================================================
-//
-//  VFieldType::IsAnyIndexableArray
-//
-//==========================================================================
-bool VFieldType::IsAnyIndexableArray () const {
-  return (Type == TYPE_Array || Type == TYPE_DynamicArray ||
-          Type == TYPE_SliceArray);
-}
-
-
-//==========================================================================
-//
 //  VFieldType::CanBeReplaced
 //
 //==========================================================================
