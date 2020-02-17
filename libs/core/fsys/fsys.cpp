@@ -39,8 +39,6 @@ bool fsys_skipDehacked = false;
 int fsys_detected_mod = AD_NONE;
 VStr fsys_detected_mod_wad;
 
-int fsys_ignoreSquare = 1; // do not check for "Adventures of Square"
-
 // local
 int fsys_dev_dump_paks = 0;
 
@@ -69,7 +67,6 @@ __attribute__((used)) FSys_Internal_Init_Class fsys_internal_init_class_variable
 //
 //==========================================================================
 void FSYS_InitOptions (VParsedArgs &pargs) {
-  pargs.RegisterFlagSet("-ignore-square", "do not check for \"Adventures of Square\"", &fsys_ignoreSquare);
   pargs.RegisterFlagSet("-ignore-zscript", "!", &fsys_IgnoreZScript);
   pargs.RegisterFlagSet("-fsys-dump-paks", "!dump loaded pak files", &fsys_dev_dump_paks);
 }

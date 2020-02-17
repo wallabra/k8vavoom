@@ -517,11 +517,7 @@ void VFileDirectory::buildNameMaps (bool rebuilding, VPakFileBase *pak) {
 
   int seenZScriptLump = -1; // so we can calculate checksum later
   bool warnZScript = true;
-  vuint32 squareChecked = 0u;
-  if (fsys_ignoreSquare) squareChecked = ~0u;
   bool zscriptAllowed = false;
-
-  bool squareFound = false;
 
   for (int f = 0; f < files.length(); ++f) {
     VPakFileInfo &fi = files[f];
@@ -529,32 +525,18 @@ void VFileDirectory::buildNameMaps (bool rebuilding, VPakFileBase *pak) {
     VName lmp = fi.lumpName;
     fi.nextLump = -1; // just in case
     fi.prevFile = -1; // just in case
-    if (/*lmp != NAME_None &&*/ seenZScriptLump < 0 && fi.lumpNamespace == WADNS_Global && VStr::strEquCI(*lmp, "zscript")) {
+
+    // check for zscript
+    if (seenZScriptLump < 0 && fi.lumpNamespace == WADNS_Global && VStr::strEquCI(*lmp, "zscript")) {
       seenZScriptLump = f;
-      // check for "adventures of square"
-      if (!fsys_IgnoreZScript && !squareChecked) {
-        for (auto &&fit : files) {
-               if (fit.fileName.strEquCI("SQU-SWE1.txt")) squareChecked |= 0b0001u;
-          else if (fit.fileName.strEquCI("GAMEINFO.sq")) squareChecked |= 0b0010u;
-          else if (fit.fileName.strEquCI("acs/sqcommon.o")) squareChecked |= 0b0100u;
-          else if (fit.fileName.strEquCI("acs/sq_jump.o")) squareChecked |= 0b1000u;
-        }
-        if (squareChecked == 0b1111u) {
-          //fsys_IgnoreZScript = true;
-          zscriptAllowed = true;
-          fsys_DisableBDW = true;
-          warnZScript = false;
-          squareFound = true;
-          GLog.Log(NAME_Init, "Detected PWAD: 'Adventures of Square'");
-        } else {
-          squareChecked = ~0u;
-        }
+      // ignore it for now (yeah, inverted condition)
+      if (!fsys_IgnoreZScript) {
+        fi.lumpName = NAME_None;
+        continue;
       }
-      // ignore it for now
-      fi.lumpName = NAME_None;
-      continue;
     }
 
+    // register lump
     if (lmp != NAME_None) {
       auto lsidp = lastSeenLump.find(lmp);
       if (!lsidp) {
@@ -577,6 +559,7 @@ void VFileDirectory::buildNameMaps (bool rebuilding, VPakFileBase *pak) {
       }
     }
 
+    // register file
     if (fi.fileName.length()) {
       if (doReports) {
         if ((aszip || lmp == "decorate") && filemap.has(fi.fileName)) {
@@ -607,9 +590,9 @@ void VFileDirectory::buildNameMaps (bool rebuilding, VPakFileBase *pak) {
     //if (fsys_dev_dump_paks) GLog.Logf(NAME_Debug, "%s: %s", *PakFileName, *Files[f].fileName);
   }
 
-  // seen zscript, and not a square?
-  int modid = (pak && !squareFound && !fsys_detected_mod ? callModDetectors(this, pak, seenZScriptLump) : 0);
+  int modid = (pak && !fsys_detected_mod ? callModDetectors(this, pak, seenZScriptLump) : 0);
   if (modid) zscriptAllowed = true; // detector will bomb out if it doesn't want that mod
+  if (fsys_detected_mod) zscriptAllowed = true;
 
   // bomb out on zscript
   if (!zscriptAllowed && seenZScriptLump >= 0) {

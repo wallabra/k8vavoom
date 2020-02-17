@@ -66,9 +66,6 @@ extern bool fsys_skipSounds;
 extern bool fsys_skipSprites;
 extern bool fsys_skipDehacked;
 
-// more cli args
-extern int fsys_ignoreSquare; // do not check for "Adventures of Square" (default is true)
-
 // this is internal now, use the api to set it
 //extern TArray<VStr> fsys_game_filters;
 
