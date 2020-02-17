@@ -685,7 +685,9 @@ actor MaceSpawner 2002
   Game Heretic
   +NoSector
   +NoBlockmap
-  +NoInteraction
+  //+NoInteractionOnIdle
+  // state action will still be called, and we don't need it to tick after that
+  +k8NoTickerGravOnIdle
   +Invisible
 
   //action native A_SpawnMace();

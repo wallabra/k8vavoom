@@ -358,7 +358,12 @@
     <flag name="NoKillScripts" property="bNoKillScripts" />
     <flag name="DontCorpse" property="bDontCorpse" />
     <!-- internal k8vavoom flags -->
+    <!-- this one doesn't call VC code for ticker, but keeps the object on the floor if it is not "+NoGravity" -->
     <flag name="k8vavoomInternalNoTickGrav" property="bNoTickGrav" />
+    <!-- this one switches object to "k8vavoomInternalNoTickGrav" when it enters idle state (the one with negative duration); also, sets "+NoBlockmap" -->
+    <flag_byte name="k8NoTickerGravOnIdle" property="NoTickGravOnIdleType" true_value="1" false_value="0" />
+    <!-- this one switches object to "NoInteraction" when it enters idle state (the one with negative duration); also, sets "+NoBlockmap" -->
+    <flag_byte name="k8NoInteractionGravOnIdle" property="NoTickGravOnIdleType" true_value="2" false_value="0" />
     <!-- used for sprite offset fixing -->
     <flag name="PseudoCorpse" property="bPseudoCorpse" relinktoworld="true" />
     <!-- limiters -->

@@ -702,7 +702,7 @@ actor ColonGibs 79
   Game Doom
   SpawnID 147
   +NoBlockmap
-  +NoInteraction
+  +k8NoTickerGravOnIdle
   +MoveWithSector
   states
   {
@@ -718,7 +718,7 @@ actor SmallBloodPool 80
   Game Doom
   SpawnID 148
   +NoBlockmap
-  +NoInteraction
+  +k8NoTickerGravOnIdle
   +MoveWithSector
   states
   {
@@ -734,7 +734,7 @@ actor BrainStem 81
   Game Doom
   SpawnID 150
   +NoBlockmap
-  +NoInteraction
+  +k8NoTickerGravOnIdle
   +MoveWithSector
   states
   {

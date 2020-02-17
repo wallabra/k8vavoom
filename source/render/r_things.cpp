@@ -115,7 +115,8 @@ bool VRenderLevelShared::IsThingVisible (VEntity *ent) const noexcept {
 //
 //==========================================================================
 bool VRenderLevelShared::RenderAliasModel (VEntity *mobj, vuint32 light,
-  vuint32 Fade, float Alpha, bool Additive, ERenderPass Pass)
+                                           vuint32 Fade, float Alpha, bool Additive,
+                                           ERenderPass Pass)
 {
   if (!r_models) return false;
   if (!IsAliasModelAllowedFor(mobj)) return false;

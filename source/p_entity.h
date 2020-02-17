@@ -286,6 +286,13 @@ class VEntity : public VThinker {
   };
   vuint32 FlagsEx;
 
+  // 0: none
+  // 1: switches object to "k8vavoomInternalNoTickGrav" when it enters idle state (the one with negative duration)
+  // 2: switches object to "NoInteraction" when it enters idle state (the one with negative duration)
+  // both "no interaction" state changes removes object from blockmap
+  // checked in `AdvanceState()`
+  vuint8 NoTickGravOnIdleType;
+
   // for movement checking
   float Radius;
   float Height;
@@ -577,6 +584,7 @@ public:
 
   bool SetState (VState *);
   void SetInitialState (VState *);
+  void PerformOnIdle (); // call when state duration becomes negative
   bool AdvanceState (float);
   VState *FindState (VName StateName, VName SubLabel=NAME_None, bool Exact=false);
   VState *FindStateEx (VStr StateName, bool Exact);

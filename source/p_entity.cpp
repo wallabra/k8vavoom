@@ -331,6 +331,36 @@ void VEntity::SetInitialState (VState *InState) {
     DispSpriteName = NAME_None;
     StateTime = -1.0f;
   }
+  if (NoTickGravOnIdleType && (!State || StateTime < 0.0f)) PerformOnIdle();
+}
+
+
+//==========================================================================
+//
+//  VEntity::PerformOnIdle
+//
+//==========================================================================
+void VEntity::PerformOnIdle () {
+  //GCon->Logf(NAME_Debug, "*** %s: idle; ntit=%d", GetClass()->GetName(), NoTickGravOnIdleType);
+  if (NoTickGravOnIdleType) {
+    // remove from blockmap
+    if (!(EntityFlags&EF_NoBlockmap)) {
+      UnlinkFromWorld();
+      EntityFlags |= EF_NoBlockmap;
+      LinkToWorld(true); // ...and link back again
+    }
+    switch (NoTickGravOnIdleType) {
+      case 1: // switches object to "k8vavoomInternalNoTickGrav" when it enters idle state (the one with negative duration)
+        FlagsEx |= EFEX_NoTickGrav;
+        //GCon->Logf(NAME_Debug, "*** %s becomes notick", GetClass()->GetName());
+        break;
+      case 2: // switches object to "NoInteraction" when it enters idle state (the one with negative duration)
+        FlagsEx |= EFEX_NoInteraction;
+        //GCon->Logf(NAME_Debug, "*** %s becomes nointeraction", GetClass()->GetName());
+        break;
+      //default: NoTickGravOnIdleType = 0; break; // just in case
+    }
+  }
 }
 
 
@@ -342,10 +372,11 @@ void VEntity::SetInitialState (VState *InState) {
 bool VEntity::AdvanceState (float deltaTime) {
   if (dbg_disable_state_advance) return true;
   if (deltaTime < 0.0f) return true; // allow zero delta time to process zero-duration states
+  if (!State) return true;
 
   //if (VStr::strEquCI(GetClass()->GetName(), "DeadDoomImp")) GCon->Logf(NAME_Debug, "%s: ADVANCE(000): state=%s", GetClass()->GetName(), (State ? *State->Loc.toStringNoCol() : "<none>"));
 
-  if (State && StateTime >= 0.0f) {
+  if (StateTime >= 0.0f) {
     //const bool dbg = isDebugDumpEnt(this);
     //if (dbg) GCon->Logf(NAME_Debug, "%u:%s:%s: StateTime=%g (%g) (nst=%g); delta=%g (%g)", GetUniqueId(), GetClass()->GetName(), *State->Loc.toStringShort(), StateTime, StateTime*35.0f, StateTime-deltaTime, deltaTime, deltaTime*35.0f);
     // we can came here with zero-duration states; if we'll subtract delta time in such case, we'll overshoot for the whole frame
@@ -370,7 +401,11 @@ bool VEntity::AdvanceState (float deltaTime) {
         if (StateTime > 0.0f) StateTime += 0.0002f; // delay it slightly, so spawner may do its business
       }
     }
+    if (NoTickGravOnIdleType && (!State || StateTime < 0.0f)) PerformOnIdle();
     //if (dbg && State) GCon->Logf(NAME_Debug, "%u:%s:%s:     END; StateTime=%g (%g); delta=%g (%g)", GetUniqueId(), GetClass()->GetName(), *State->Loc.toStringShort(), StateTime, StateTime*35.0f, deltaTime, deltaTime*35.0f);
+  } else if (NoTickGravOnIdleType) {
+    vassert(StateTime < 0.0f);
+    PerformOnIdle();
   }
   /*
   if (State) {

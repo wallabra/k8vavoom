@@ -310,6 +310,13 @@ bool bPseudoCorpse; // set in DECORATE for corpse decorations, so sprite offset 
 bool bFloatBob; // use float bobbing z movement (moved from `EntityEx`)
 bool bNoTickGravLifeTime; // if `bNoTickGrav` set, perform lifetime logic
 
+// 0: none
+// 1: switches object to "k8vavoomInternalNoTickGrav" when it enters idle state (the one with negative duration)
+// 2: this one switches object to "NoInteraction" when it enters idle state (the one with negative duration)
+// both "no interaction" state changes removes object from blockmap
+// checked in `AdvanceState()`
+ubyte NoTickGravOnIdleType;
+
 // for movement checking
 float Radius;
 // WARNING: for PlayerPawn, you should use `SetHeight()` method

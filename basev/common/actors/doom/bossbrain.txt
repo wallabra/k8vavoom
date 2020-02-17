@@ -39,7 +39,7 @@ actor BossEye 89
   Height 32
   +NoSector
   +NoBlockmap
-  +NoInteraction
+  //+NoInteraction
   +Invisible
   states
   {

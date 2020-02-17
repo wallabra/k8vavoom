@@ -420,7 +420,7 @@ actor GlassJunk
   Alpha 0.4
   +NoBlockmap
   +NoClip
-  +NoInteraction
+  //+NoInteraction
   +MoveWithSector
   states
   {

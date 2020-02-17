@@ -123,15 +123,6 @@ void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, TVec *sv,
   vassert(count >= 0);
   if (count == 0 || Alpha < 0.01f) return;
 
-  // make room
-  /*
-  if (traspUsed == traspSize) {
-    if (traspSize >= 0xfffffff) Sys_Error("Too many translucent entities");
-    traspSize += 0x10000;
-    trans_sprites = (trans_sprite_t *)Z_Realloc(trans_sprites, traspSize*sizeof(trans_sprites[0]));
-  }
-  */
-
   float dist;
   if (useSprOrigin) {
     TVec mid = sprOrigin;
@@ -157,7 +148,6 @@ void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, TVec *sv,
   //const float dist = fabsf(DotProduct(mid-Drawer->vieworg, Drawer->viewforward));
   //float dist = Length(mid-Drawer->vieworg);
 
-  //trans_sprite_t &spr = trans_sprites[traspUsed++];
   trans_sprite_t &spr = GetCurrentDLS().DrawSpriteList.alloc();
   if (isSprite) memcpy(spr.Verts, sv, sizeof(TVec)*4);
   spr.dist = dist;
@@ -177,6 +167,7 @@ void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, TVec *sv,
   spr.hangup = hangup;
   spr.Fade = Fade;
   spr.prio = priority;
+  //spr.origin = sprOrigin;
 }
 
 
@@ -187,15 +178,6 @@ void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, TVec *sv,
 //==========================================================================
 void VRenderLevelShared::QueueTranslucentAliasModel (VEntity *mobj, vuint32 light, vuint32 Fade, float Alpha, bool Additive, float TimeFrac) {
   if (!mobj) return; // just in case
-
-  // make room
-  /*
-  if (traspUsed == traspSize) {
-    if (traspSize >= 0xfffffff) Sys_Error("Too many translucent entities");
-    traspSize += 0x10000;
-    trans_sprites = (trans_sprite_t *)Z_Realloc(trans_sprites, traspSize*sizeof(trans_sprites[0]));
-  }
-  */
 
   //const float dist = fabsf(DotProduct(mobj->Origin-Drawer->vieworg, Drawer->viewforward));
   const float dist = LengthSquared(mobj->Origin-Drawer->vieworg);
@@ -214,6 +196,7 @@ void VRenderLevelShared::QueueTranslucentAliasModel (VEntity *mobj, vuint32 ligh
   spr.objid = mobj->GetUniqueId();
   spr.prio = 0; // normal priority
   spr.hangup = 0;
+  //spr.origin = mobj->Origin;
 }
 
 
@@ -468,7 +451,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
     }
     */
     ang = AngleMod(ang-thing->GetSpriteDrawAngles().yaw+180.0f+angadd);
-    vuint32 rot = (vuint32)(ang*16.0f/360.0f)&15;
+    const unsigned rot = (unsigned)(ang*16.0f/360.0f)&15;
     lump = sprframe->lump[rot];
     flip = sprframe->flip[rot];
   } else {
@@ -543,7 +526,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
           const int spbot = sph-TexTOffset; // pixels under "hotspot"
           if (spbot > 0) {
             int botofs = (int)(spbot*scaleY);
-            //GCon->Logf(NAME_Debug, "%s: height=%d; realheight=%d; ofs=%d; spbot=%d; botofs=%d; tofs=%d", thing->GetClass()->GetName(), TexHeight, sph, TexTOffset, spbot, botofs, TexTOffset);
+            //GCon->Logf(NAME_Debug, "%s: height=%d; realheight=%d; ofs=%d; spbot=%d; botofs=%d; tofs=%d; adelta=%d", thing->GetClass()->GetName(), TexHeight, sph, TexTOffset, spbot, botofs, TexTOffset, allowedDelta);
             if (botofs > 0 && botofs <= allowedDelta) {
               //GCon->Logf(NAME_Debug, "%s: height=%d; realheight=%d; ofs=%d; spbot=%d; botofs=%d; tofs=%d", thing->GetClass()->GetName(), TexHeight, sph, TexTOffset, spbot, botofs, TexTOffset);
               // sink corpses a little
