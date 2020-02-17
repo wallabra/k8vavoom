@@ -62,7 +62,7 @@
 //  Lowers current weapon, and changes weapon at bottom.
 //
 //==========================================================================
-[decorate] final void A_Lower () {
+[decorate] final void A_Lower () self(Actor) {
   do_A_Lower();
 }
 
@@ -116,7 +116,7 @@
 //  decorate_A_ReFire
 //
 //===========================================================================
-[decorate] final void decorate_A_ReFire (optional state refirestate) {
+[decorate] final void decorate_A_ReFire (optional state refirestate) self(Actor) {
   do_A_ReFire(refirestate!optional);
 }
 
@@ -136,7 +136,7 @@
 //  A_GunFlash
 //
 //===========================================================================
-[decorate] final void A_GunFlash () {
+[decorate] final void A_GunFlash () self(Actor) {
   do_A_GunFlash();
 }
 
@@ -219,30 +219,10 @@
 
 //===========================================================================
 //
-//  A_SawEx8
-//
-//===========================================================================
-[decorate] final void A_SawEx8 (optional bool alertIfHit, optional bool noAlertIfKilled) {
-  decorate_A_Saw();
-}
-
-
-//===========================================================================
-//
 //  A_Saw
 //
 //===========================================================================
-[decorate] final void A_Saw () {
-  decorate_A_Saw();
-}
-
-
-//===========================================================================
-//
-//  decorate_A_Saw
-//
-//===========================================================================
-[decorate] final void decorate_A_Saw (optional name FullSound, optional name HitSound,
+[decorate] final void A_Saw (optional name FullSound, optional name HitSound,
   optional int SawDamage, optional class!Actor PuffType,
   optional int flags, optional float range, optional float spread_xy, optional float spread_z,
   optional float lifesteal, optional float lifestealmax, optional string armorbonustype/*,
