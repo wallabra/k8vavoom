@@ -1013,19 +1013,7 @@ VExpression *VDecorateUserVar::DoResolve (VEmitContext &ec) {
     delete this;
     return nullptr;
   }
-  // first try to find the corresponding non-array method
-  /*
-  if (!index) {
-    VMethod *mt = ec.SelfClass->FindMethod(fldn);
-    if (mt) {
-      // use found method
-      VExpression *e = new VInvocation(nullptr, mt, nullptr, false, false, Loc, 0, nullptr);
-      delete this;
-      return e->Resolve(ec);
-    }
-  }
-  */
-  // no method, use checked field access
+  // use checked field access
   VField *fld = ec.SelfClass->FindField(fldn);
   if (!fld) {
     ParseError(Loc, "field `%s` => `%s` is not found in class `%s`", *fldname, *fldn, *ec.SelfClass->GetFullName());
@@ -1204,6 +1192,7 @@ VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
   //GLog.Logf(NAME_Debug, "%s: field '%s'", *Loc.toString(), *Name);
   if (ec.SelfClass) {
     VName ExtName = va("decorate_%s", *Name.toLowerCase());
+
     // prefixed constant
     VConstant *Const = ec.SelfClass->FindConstant(ExtName);
     if (Const) {
@@ -1225,19 +1214,6 @@ VExpression *VDecorateSingleName::DoResolve (VEmitContext &ec) {
       return e->Resolve(ec);
     }
   }
-
-  /* this is done above
-  if (ec.SelfClass) {
-    // non-prefixed checked field access
-    VName fldn = ec.SelfClass->FindDecorateStateFieldTrans(CheckName);
-    if (fldn != NAME_None) {
-      // checked field access
-      VExpression *e = new VDecorateUserVar(VName(*Name), Loc);
-      delete this;
-      return e->Resolve(ec);
-    }
-  }
-  */
 
   // non-prefixed constant
   // look only for constants defined in DECORATE scripts (and in the current class)

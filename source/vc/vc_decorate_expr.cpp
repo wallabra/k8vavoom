@@ -783,7 +783,6 @@ static VStatement *ParseFunCallAsStmt (VScriptParser *sc, VClass *Class, VState 
       //return nullptr;
       callExpr = new VDecorateInvocation(VName(*FuncName/*, VName::AddLower*/), stloc, NumArgs, Args);
     } else {
-      //VInvocation *Expr = new VInvocation(nullptr, Func, nullptr, false, false, stloc, NumArgs, Args);
       VDecorateInvocation *Expr = new VDecorateInvocation(Func, VName(*FuncName), stloc, NumArgs, Args);
       Expr->CallerState = State;
       callExpr = Expr;
@@ -1042,6 +1041,45 @@ static VStatement *ParseActionStatement (VScriptParser *sc, VClass *Class, VStat
 
 //==========================================================================
 //
+//  CreateStateActionCallWrapperStmt
+//
+//==========================================================================
+static VMethod *CreateStateActionCallWrapperStmt (VStatement *Stmt, VClass *Class, VState *State, const TLocation &Loc) {
+  vassert(Stmt);
+  vassert(State);
+  #if defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
+  VMethod *M = new VMethod(NAME_None, State, Loc);
+  #else
+  VMethod *M = new VMethod(NAME_None, Class, Loc);
+  #endif
+  M->Flags = FUNC_Final|FUNC_NoVCalls;
+  M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, Loc);
+  M->ReturnType = VFieldType(TYPE_Void);
+  M->Statement = Stmt;
+  M->NumParams = 0;
+  #if !defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
+  Class->AddMethod(M);
+  M->Define();
+  #endif
+  return M;
+}
+
+
+//==========================================================================
+//
+//  CreateStateActionCallWrapper
+//
+//==========================================================================
+static VMethod *CreateStateActionCallWrapper (VExpression *expr, VClass *Class, VState *State, const TLocation &Loc) {
+  vassert(expr);
+  vassert(State);
+  VExpressionStatement *Stmt = new VExpressionStatement(expr);
+  return CreateStateActionCallWrapperStmt(Stmt, Class, State, Loc);
+}
+
+
+//==========================================================================
+//
 //  ParseActionBlock
 //
 //  "{" checked
@@ -1058,21 +1096,9 @@ static void ParseActionBlock (VScriptParser *sc, VClass *Class, VState *State) {
   }
   inCodeBlock = oldicb;
 
+  State->FunctionName = NAME_None;
   if (stmt->Statements.length()) {
-    #if defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
-    VMethod *M = new VMethod(NAME_None, State, sc->GetLoc());
-    #else
-    VMethod *M = new VMethod(NAME_None, Class, sc->GetLoc());
-    #endif
-    M->Flags = FUNC_Final|FUNC_NoVCalls;
-    M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, sc->GetLoc());
-    M->ReturnType = VFieldType(TYPE_Void);
-    M->Statement = stmt;
-    M->NumParams = 0;
-    #if !defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
-    Class->AddMethod(M);
-    M->Define();
-    #endif
+    VMethod *M = CreateStateActionCallWrapperStmt(stmt, Class, State, sc->GetLoc());
     State->Function = M;
   } else {
     delete stmt;
@@ -1100,90 +1126,47 @@ static void ParseActionCall (VScriptParser *sc, VClass *Class, VState *State) {
 
   VStatement *suvst = CheckParseSetUserVarStmt(sc, Class, FuncName);
   if (suvst) {
-    #if defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
-    VMethod *M = new VMethod(NAME_None, State, sc->GetLoc());
-    #else
-    VMethod *M = new VMethod(NAME_None, Class, sc->GetLoc());
-    #endif
-    M->Flags = FUNC_Final|FUNC_NoVCalls;
-    M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, sc->GetLoc());
-    M->ReturnType = VFieldType(TYPE_Void);
-    M->Statement = suvst;
-    M->NumParams = 0;
-    #if !defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
-    Class->AddMethod(M);
-    M->Define();
-    #endif
-    Func = M;
+    Func = CreateStateActionCallWrapperStmt(suvst, Class, State, sc->GetLoc());
+  } else if (VStr::strEquCI(*FuncName, "A_Jump")) {
+    // `A_Jump` action always need a wrapper
+    VExpression *jexpr = ParseAJump(sc, Class, State);
+    Func = CreateStateActionCallWrapper(jexpr, Class, State, sc->GetLoc());
   } else {
-    if (VStr::strEquCI(*FuncName, "A_Jump")) {
-      VExpression *jexpr = ParseAJump(sc, Class, State);
-      VExpressionStatement *Stmt = new VExpressionStatement(jexpr);
-      #if defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
-      VMethod *M = new VMethod(NAME_None, State, sc->GetLoc());
-      #else
-      VMethod *M = new VMethod(NAME_None, Class, sc->GetLoc());
-      #endif
-      M->Flags = FUNC_Final|FUNC_NoVCalls;
-      M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, sc->GetLoc());
-      M->ReturnType = VFieldType(TYPE_Void);
-      M->Statement = Stmt;
-      M->NumParams = 0;
-      #if !defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
-      Class->AddMethod(M);
-      M->Define();
-      #endif
-      Func = M;
-    } else {
-      bool inIgnoreList = false;
-      Func = ParseFunCallWithName(sc, FuncName, Class, NumArgs, Args, false, &inIgnoreList); // no paren
-      if (inIgnoreList) {
-        vassert(!Func);
-        State->FunctionName = NAME_None;
-      } else {
-        if (!Func) {
-          if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "%s: Unknown state action `%s` in `%s` (replaced with NOP)", *actionLoc.toStringNoCol(), *FuncName, Class->GetName());
-          // if function is not found, it means something is wrong
-          // in that case we need to free argument expressions
-          for (int i = 0; i < NumArgs; ++i) {
-            if (Args[i]) {
-              delete Args[i];
-              Args[i] = nullptr;
-            }
-          }
-        } else if (NumArgs || Func->Name == NAME_None || !Func->IsGoodStateMethod()) {
-          // need to create invocation
-          //VInvocation *Expr = new VInvocation(nullptr, Func, nullptr, false, false, sc->GetLoc(), NumArgs, Args);
-          VDecorateInvocation *Expr = new VDecorateInvocation(Func, *FuncName, sc->GetLoc(), NumArgs, Args);
-          Expr->CallerState = State;
-          VExpressionStatement *Stmt = new VExpressionStatement(ParseCreateDropResult(Expr));
-          #if defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
-          VMethod *M = new VMethod(NAME_None, State, sc->GetLoc());
-          #else
-          VMethod *M = new VMethod(NAME_None, Class, sc->GetLoc());
-          #endif
-          M->Flags = FUNC_Final|FUNC_NoVCalls;
-          M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, sc->GetLoc());
-          M->ReturnType = VFieldType(TYPE_Void);
-          M->Statement = Stmt;
-          M->NumParams = 0;
-          #if !defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
-          Class->AddMethod(M);
-          M->Define();
-          #endif
-          Func = M;
-        } else {
-          //GCon->Logf(NAME_Debug, "*** %s: func=`%s` (%s) (params=%d; args=%d; final=%d; static=%d)", Class->GetName(), Func->GetName(), *FuncName, Func->NumParams, NumArgs, (Func->Flags&FUNC_Final ? 1 : 0), (Func->Flags&FUNC_Static ? 1 : 0));
-          State->FunctionName = Func->Name;
-          vassert(State->FunctionName != NAME_None);
-          Func = nullptr;
+    bool inIgnoreList = false;
+    Func = ParseFunCallWithName(sc, FuncName, Class, NumArgs, Args, false, &inIgnoreList); // no paren
+    if (inIgnoreList) {
+      // ignored state action
+      vassert(!Func);
+      State->FunctionName = NAME_None;
+    } else if (!Func) {
+      // unknown state action
+      if (!vcWarningsSilenced) GLog.Logf(NAME_Warning, "%s: Unknown state action `%s` in `%s` (replaced with NOP)", *actionLoc.toStringNoCol(), *FuncName, Class->GetName());
+      // if function is not found, it means something is wrong
+      // in that case we need to free argument expressions
+      for (int i = 0; i < NumArgs; ++i) {
+        if (Args[i]) {
+          delete Args[i];
+          Args[i] = nullptr;
         }
       }
+      State->FunctionName = NAME_None;
+    } else if (NumArgs || Func->Name == NAME_None || !Func->IsGoodStateMethod()) {
+      // call with arguments, or need a wrapper
+      VDecorateInvocation *Expr = new VDecorateInvocation(Func, *FuncName, sc->GetLoc(), NumArgs, Args);
+      Expr->CallerState = State;
+      Func = CreateStateActionCallWrapper(ParseCreateDropResult(Expr), Class, State, sc->GetLoc());
+    } else {
+      // no need to create any wrappers
+      //GCon->Logf(NAME_Debug, "*** %s: func=`%s` (%s) (params=%d; args=%d; final=%d; static=%d)", Class->GetName(), Func->GetName(), *FuncName, Func->NumParams, NumArgs, (Func->Flags&FUNC_Final ? 1 : 0), (Func->Flags&FUNC_Static ? 1 : 0));
+      State->FunctionName = Func->Name;
+      vassert(State->FunctionName != NAME_None);
+      Func = nullptr;
     }
   }
 
   State->Function = Func;
   if (Func) State->FunctionName = NAME_None;
+
   if (sc->Check(";")) {}
 }
 
@@ -1204,28 +1187,11 @@ static void SetupOldStyleFunction (VScriptParser *sc, VClass *Class, VState *Sta
     return;
   }
 
-  //FIXME: remove pasta (see function above)
   if (Func->Name == NAME_None || !Func->IsGoodStateMethod()) {
     // need to create invocation
-    //VInvocation *Expr = new VInvocation(nullptr, Func, nullptr, false, false, sc->GetLoc(), /*NumArgs*/0, /*Args*/nullptr);
     VDecorateInvocation *Expr = new VDecorateInvocation(Func, Func->Name, sc->GetLoc(), 0, nullptr);
     Expr->CallerState = State;
-    VExpressionStatement *Stmt = new VExpressionStatement(ParseCreateDropResult(Expr));
-    #if defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
-    VMethod *M = new VMethod(NAME_None, State, sc->GetLoc());
-    #else
-    VMethod *M = new VMethod(NAME_None, Class, sc->GetLoc());
-    #endif
-    M->Flags = FUNC_Final|FUNC_NoVCalls;
-    M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, sc->GetLoc());
-    M->ReturnType = VFieldType(TYPE_Void);
-    M->Statement = Stmt;
-    M->NumParams = 0;
-    #if !defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
-    Class->AddMethod(M);
-    M->Define();
-    #endif
-    Func = M;
+    Func = CreateStateActionCallWrapper(ParseCreateDropResult(Expr), Class, State, sc->GetLoc());
   } else {
     //GCon->Logf(NAME_Debug, "*** %s: func=`%s` (%s) (params=%d; args=%d; final=%d; static=%d)", Class->GetName(), Func->GetName(), *FuncName, Func->NumParams, NumArgs, (Func->Flags&FUNC_Final ? 1 : 0), (Func->Flags&FUNC_Static ? 1 : 0));
     State->FunctionName = Func->Name;
@@ -1236,46 +1202,3 @@ static void SetupOldStyleFunction (VScriptParser *sc, VClass *Class, VState *Sta
   State->Function = Func;
   if (Func) State->FunctionName = NAME_None;
 }
-
-
-//==========================================================================
-//
-//  DC_SetupStateMethod
-//
-//==========================================================================
-#if 0
-void DC_SetupStateMethod (VState *State, VMethod *Func) {
-  if (!Func) {
-    State->Function = nullptr;
-    State->FunctionName = NAME_None;
-    return;
-  }
-  #if !defined(VC_DECORATE_ACTION_BELONGS_TO_STATE)
-  static_assert(false, "dehacked support requires `VC_DECORATE_ACTION_BELONGS_TO_STATE`");
-  #else
-  //FIXME: remove pasta (see function in decorate expression parser)
-  if (Func->Name == NAME_None || !Func->IsGoodStateMethod()) {
-    // need to create invocation
-    //VInvocation *Expr = new VInvocation(nullptr, Func, nullptr, false, false, State->Loc, /*NumArgs*/0, /*Args*/nullptr);
-    VDecorateInvocation *Expr = new VDecorateInvocation(Func, Func->Name, State->Loc, 0, nullptr);
-    Expr->CallerState = State;
-    VExpressionStatement *Stmt = new VExpressionStatement(ParseCreateDropResult(Expr));
-    VMethod *M = new VMethod(NAME_None, State, State->Loc);
-    M->Flags = FUNC_Final|FUNC_NoVCalls;
-    M->ReturnTypeExpr = new VTypeExprSimple(TYPE_Void, State->Loc);
-    M->ReturnType = VFieldType(TYPE_Void);
-    M->Statement = Stmt;
-    M->NumParams = 0;
-    Func = M;
-  } else {
-    //GCon->Logf(NAME_Debug, "*** %s: func=`%s` (%s) (params=%d; args=%d; final=%d; static=%d)", Class->GetName(), Func->GetName(), *FuncName, Func->NumParams, NumArgs, (Func->Flags&FUNC_Final ? 1 : 0), (Func->Flags&FUNC_Static ? 1 : 0));
-    State->FunctionName = Func->Name;
-    vassert(State->FunctionName != NAME_None);
-    Func = nullptr;
-  }
-
-  State->Function = Func;
-  if (Func) State->FunctionName = NAME_None;
-  #endif
-}
-#endif
