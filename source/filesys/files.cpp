@@ -2022,7 +2022,6 @@ static int cliFnameCollector (VArgs &args, int idx, bool first) {
 //
 //==========================================================================
 void FL_InitOptions () {
-  fsys_ignoreSquare = 0; // check for "Adventures of Square"
   fsys_IgnoreZScript = 0;
 
   GArgs.AddFileOption("!1-game"); // '!' means "has args, and breaking" (number is argc)

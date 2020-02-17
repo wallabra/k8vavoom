@@ -28,6 +28,7 @@ enum {
   //AD_NONE,
   AD_SKULLDASHEE = 1,
   AD_HARMONY,
+  AD_SQUARE,
 };
 
 
@@ -96,6 +97,33 @@ static int detectHarmony (FSysModDetectorHelper &hlp, int seenZScriptLump) {
 
 //==========================================================================
 //
+//  detectSquare
+//
+//  detect Adventures Of Square
+//
+//==========================================================================
+static int detectSquare (FSysModDetectorHelper &hlp, int seenZScriptLump) {
+  if (seenZScriptLump >= 0 &&
+      hlp.hasFile("SQU-SWE1.txt") &&
+      hlp.hasFile("GAMEINFO.sq") &&
+      hlp.hasFile("acs/sqcommon.o") &&
+      hlp.hasFile("acs/sq_jump.o"))
+  {
+    GLog.Log(NAME_Init, "Detected TC: Adventures of Square");
+    cli_NakedBase = 1; // ignore autoloads
+    fsys_onlyOneBaseFile = true;
+    fsys_DisableBDW = true; // don't load BDW
+    cli_GoreMod = 0;
+    //rforce_disable_sprofs = true; // disable sprite offsets
+    //fsys_DisableBloodReplacement = true;
+    return AD_SQUARE;
+  }
+  return AD_NONE;
+}
+
+
+//==========================================================================
+//
 //  FL_RegisterModDetectors
 //
 //==========================================================================
@@ -104,5 +132,6 @@ static void FL_RegisterModDetectors () {
   fsysRegisterModDetector(&detectBoringTernity);
   fsysRegisterModDetector(&detectCzechbox);
   fsysRegisterModDetector(&detectHarmony);
+  fsysRegisterModDetector(&detectSquare);
 }
 
