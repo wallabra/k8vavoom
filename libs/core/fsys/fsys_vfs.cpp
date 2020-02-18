@@ -228,7 +228,7 @@ static void AddArchiveFile_NoLock (VStr filename, VSearchPath *arc, bool allowpk
     if (!wad) { delete MemStrm; continue; } // unknown format
 
     // if this is not a doom wad, and nested pk3s are not allowed, don't add it
-    if (!allowpk3 && !wad->normalwad) { delete wad; continue; }
+    if (!allowpk3 && !wad->IsWad()) { delete wad; continue; }
 
     //W_AddFileFromZip(ZipName+":"+Wads[i], MemStrm);
     if (fsys_report_added_paks) GLog.Logf(NAME_Init, "Adding nested archive '%s'...", *wad->GetPrefix());
@@ -236,7 +236,7 @@ static void AddArchiveFile_NoLock (VStr filename, VSearchPath *arc, bool allowpk
     SearchPaths.Append(wad);
 
     // if this is not a doom wad, and nested pk3s are allowed, recursively scan it
-    if (allowpk3 && !wad->normalwad) {
+    if (allowpk3 && !wad->IsWad()) {
       if (fsys_report_added_paks) GLog.Logf(NAME_Init, "Adding nested archives from '%s'...", *wad->GetPrefix());
       AddArchiveFile_NoLock(wad->GetPrefix(), wad, false); // no nested pk3s allowed
     }
@@ -275,7 +275,7 @@ void W_AddDiskFile (VStr FileName, bool FixVoices) {
     if (strm->IsError()) Sys_Error("Cannot read required file \"%s\"!", *FileName);
     Wad = VWadFile::CreateSingleLumpStream(strm, FileName);
   } else {
-    doomWad = Wad->normalwad;
+    doomWad = Wad->IsWad();
   }
 
   wadfiles.Append(FileName);
@@ -319,7 +319,7 @@ bool W_AddDiskFileOptional (VStr FileName, bool FixVoices) {
     GLog.Logf(NAME_Debug, "OPTDISKFILE: cannot detect format for '%s'...", *FileName);
     Wad = VWadFile::CreateSingleLumpStream(strm, FileName);
   } else {
-    doomWad = Wad->normalwad;
+    doomWad = Wad->IsWad();
   }
 
   wadfiles.Append(FileName);
@@ -1241,20 +1241,10 @@ void WadMapIterator::advanceToNextMapLump () {
 //
 //==========================================================================
 bool W_IsWadPK3File (int fidx) {
-  VStr pfx;
-  {
-    MyThreadLocker glocker(&fsys_glock);
-    if (fidx < 0 || fidx >= getSPCount()) return false;
-    VSearchPath *w = SearchPaths[fidx];
-    pfx = w->GetPrefix();
-  } // unlock here
-  return
-    pfx.endsWithCI(".wad") ||
-    pfx.endsWithCI(".pk3") ||
-    pfx.endsWithCI(".pak") ||
-    pfx.endsWithCI(".ipk3") ||
-    pfx.endsWithCI(".iwad") ||
-    pfx.endsWithCI(".ipak");
+  MyThreadLocker glocker(&fsys_glock);
+  if (fidx < 0 || fidx >= getSPCount()) return false;
+  VSearchPath *w = SearchPaths[fidx];
+  return w->IsAnyPak();
 }
 
 
@@ -1280,7 +1270,7 @@ bool W_IsIWADFile (int fidx) {
 bool W_IsWADFile (int fidx) {
   MyThreadLocker glocker(&fsys_glock);
   if (fidx < 0 || fidx >= getSPCount()) return false;
-  return SearchPaths[fidx]->normalwad;
+  return SearchPaths[fidx]->IsWad();
 }
 
 

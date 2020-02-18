@@ -53,14 +53,28 @@ struct VPK3ResDirInfo {
 //==========================================================================
 class VSearchPath {
 public:
+  enum Type {
+    WAD,
+    PAK, // .pk3, .ipk3, .pak, etc. -- "extended game archive"
+    OTHER, // zip file, for example
+  };
+
+public:
+  Type type;
   bool iwad;
   bool basepak;
-  bool normalwad;
   bool userwad;
 
 public:
   VSearchPath ();
   virtual ~VSearchPath ();
+
+  // is this a Doom wad file (i.e. "IWAD"/"PWAD" one)?
+  inline bool IsWad () const noexcept { return (type == WAD); }
+  // is this any pak type?
+  inline bool IsAnyPak () const noexcept { return (type >= WAD && type < OTHER); }
+  // is this not a known archive (probably zip container)?
+  inline bool IsNonPak () const noexcept { return (type == OTHER); }
 
   // all following methods are supposed to be called with global mutex protection
   // (i.e. they should not be called from multiple threads simultaneously)

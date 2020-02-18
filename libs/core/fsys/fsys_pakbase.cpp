@@ -211,9 +211,9 @@ static int callModDetectors (VFileDirectory *adir, VPakFileBase *apak, int seenZ
 //
 //==========================================================================
 VSearchPath::VSearchPath ()
-  : iwad(false)
+  : type(PAK) // safe choice
+  , iwad(false)
   , basepak(false)
-  , normalwad(false)
   , userwad(false)
 {
   if (fsys_mark_as_user) userwad = true;

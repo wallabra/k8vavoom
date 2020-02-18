@@ -64,7 +64,7 @@ struct lumpinfo_t {
 //==========================================================================
 VWadFile::VWadFile () : VPakFileBase("", false) // not a zip
 {
-  normalwad = true;
+  type = WAD;
 }
 
 
