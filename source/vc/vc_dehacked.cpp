@@ -29,6 +29,11 @@
 //**************************************************************************
 #include "gamedefs.h"
 
+static VCvarB dbg_dehacked_codepointers("dbg_dehacked_codepointers", false, "Show DEHACKED replaced code pointers?", CVAR_PreInit);
+static VCvarB dbg_dehacked_thing_replaces("dbg_dehacked_thing_replaces", false, "Show DEHACKED thing replaces?", CVAR_PreInit);
+static VCvarB dbg_dehacked_frame_replaces("dbg_dehacked_frame_replaces", false, "Show DEHACKED frame sprite replaces?", CVAR_PreInit);
+static VCvarB dbg_dehacked_dump_all("dbg_dehacked_dump_all", false, "Show all DEHACKED debug dumps?", CVAR_PreInit);
+
 
 static TArray<VStr> cli_DehList;
 static int cli_NoAnyDehacked = 0;
@@ -218,6 +223,24 @@ static __attribute__((format(printf, 1, 2))) void Message (const char *fmt, ...)
     GLog.Logf(NAME_Init, "%s:%d: %s", *dehFileName, dehCurrLine, res);
   } else {
     GLog.Logf(NAME_Init, "DEHACKED: %s", res);
+  }
+}
+
+
+//==========================================================================
+//
+//  DHDebugLog
+//
+//==========================================================================
+static __attribute__((format(printf, 1, 2))) void DHDebugLog (const char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  char *res = vavarg(fmt, ap);
+  va_end(ap);
+  if (!dehFileName.isEmpty()) {
+    GLog.Logf(NAME_Debug, "%s:%d: %s", *dehFileName, dehCurrLine, res);
+  } else {
+    GLog.Logf(NAME_Debug, "DEHACKED: %s", res);
   }
 }
 
@@ -432,7 +455,7 @@ static void ReadThing (int num) {
         // info output
         nfo = VClass::FindMObjIdByClass(Ent, GGameInfo->GameFilterFlag);
         if (nfo && nfo->DoomEdNum == value) {
-          GCon->Logf(NAME_Init, "DEHACKED: replaced `%s` DoomEdNum #%d with #%d", Ent->GetName(), oldid, value);
+          if (dbg_dehacked_dump_all || dbg_dehacked_thing_replaces) DHDebugLog("replaced `%s` DoomEdNum #%d with #%d", Ent->GetName(), oldid, value);
         }
       } else {
         VClass::RemoveMObjIdByClass(Ent, GGameInfo->GameFilterFlag);
@@ -682,6 +705,7 @@ static void ReadState (int num) {
       if (value < 0 || value >= Sprites.length()) {
         Warning("Bad sprite index %d for frame #%d", value, num);
       } else {
+        if (dbg_dehacked_dump_all || dbg_dehacked_frame_replaces) DHDebugLog("frame #%d; old sprite is '%s'(%d), new sprite is '%s' (%s)", num, *States[num]->SpriteName, States[num]->SpriteIndex, *Sprites[value], *States[num]->Loc.toStringNoCol());
         //GCon->Logf(NAME_Debug, "DEHACKED: frame #%d; prev sprite is '%s' (%d)", num, *States[num]->SpriteName, States[num]->SpriteIndex);
         States[num]->SpriteName = Sprites[value];
         States[num]->SpriteIndex = (Sprites[value] != NAME_None ? VClass::FindSprite(Sprites[value]) : 1);
@@ -912,6 +936,7 @@ static void ReadPointer (int num) {
       if (value < 0 || value >= States.length()) {
         Warning("Invalid source state %d", value);
       } else {
+        if (dbg_dehacked_dump_all || dbg_dehacked_codepointers) DHDebugLog("replacing codep frame #%d code pointer; old is (%d) '%s', new is '%s' (%s)", num, value, (CodePtrStates[num]->Function ? *CodePtrStates[num]->Function->GetFullName() : "none"), (StateActions[value] ? *StateActions[value]->GetFullName() : "none"), *CodePtrStates[num]->Loc.toStringNoCol());
         CodePtrStates[num]->Function = StateActions[value];
       }
     } else {
@@ -942,7 +967,7 @@ static void ReadCodePtr (int) {
       bool found = false;
       for (auto &&it : CodePtrs) {
         if (it.Name.strEquCI(ValueString)) {
-          //GCon->Logf(NAME_Debug, "replacing frame #%d code pointer; old is '%s', new is '%s'", Index, (State->Function ? *State->Function->GetFullName() : "none"), (CodePtrs[i].Method ? *CodePtrs[i].Method->GetFullName() : "none"));
+          if (dbg_dehacked_dump_all || dbg_dehacked_codepointers) DHDebugLog("replacing frame #%d code pointer; old is '%s', new is '%s' (%s)", Index, (State->Function ? *State->Function->GetFullName() : "none"), (it.Method ? *it.Method->GetFullName() : "none"), *State->Loc.toStringNoCol());
           State->Function = it.Method;
           //DC_SetupStateMethod(State, it.Method);
           found = true;
@@ -963,6 +988,7 @@ static void ReadCodePtr (int) {
           }
           if (Method && Method->IsDecorate() && Method->IsGoodStateMethod()) {
             //Message("*** %s -> %s", ValueString, *Method->GetFullName());
+            if (dbg_dehacked_dump_all || dbg_dehacked_codepointers) DHDebugLog("replacing frame #%d code pointer; old is '%s', new is '%s' (%s)", Index, (State->Function ? *State->Function->GetFullName() : "none"), (Method ? *Method->GetFullName() : "none"), *State->Loc.toStringNoCol());
             State->Function = Method;
             //DC_SetupStateMethod(State, Method);
             found = true;
