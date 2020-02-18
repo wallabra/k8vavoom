@@ -316,7 +316,7 @@ bool W_AddDiskFileOptional (VStr FileName, bool FixVoices) {
 
   if (!Wad) {
     if (strm->IsError()) { delete strm; return false; }
-    GLog.Logf(NAME_Debug, "OPTDISKFILE: cannot detect format for '%s'...", *FileName);
+    //GLog.Logf(NAME_Debug, "OPTDISKFILE: cannot detect format for '%s'...", *FileName);
     Wad = VWadFile::CreateSingleLumpStream(strm, FileName);
   } else {
     doomWad = Wad->IsWad();

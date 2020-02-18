@@ -160,15 +160,23 @@ VWadFile *VWadFile::Create (VStr FileName, bool FixVoices, VStream *InStream) {
 VWadFile *VWadFile::CreateSingleLumpStream (VStream *strm, VStr FileName) {
   vassert(strm);
 
+  VName lname = VName(*FileName.ExtractFileBase(false), VName::AddLower8); // do not fail on long names
+  if (lname == NAME_None) lname = VName(*FileName.ExtractFileBaseName(), VName::AddLower8); // in case it starts with a dot
+  if (lname == NAME_None) { delete strm; Sys_Error("cannot add single lump '%s' (invalid resulting lump name)", *FileName); }
+
+  if (fsys_report_added_paks) GLog.Logf(NAME_Init, "...adding file \"%s\" as a standalone lump '%s'.", *FileName, *lname);
+
+  FileName = FileName.fixSlashes();
+  while (!FileName.isEmpty() && FileName[0] == '/') FileName.chopLeft(1);
+
   VWadFile *wad = new VWadFile();
   wad->archStream = strm;
-  if (fsys_report_added_paks) GLog.Logf(NAME_Init, "Adding lump \"%s\"...", *FileName);
 
   wad->PakFileName = FileName;
   VPakFileInfo fi;
 
   // fill in lumpinfo
-  fi.lumpName = VName(*FileName.ExtractFileBase(), VName::AddLower8);
+  fi.lumpName = lname;
   fi.pakdataofs = 0;
   fi.filesize = wad->archStream->TotalSize();
   fi.lumpNamespace = WADNS_Global;
