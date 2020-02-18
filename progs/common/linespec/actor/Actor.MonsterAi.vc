@@ -195,13 +195,11 @@
 {
   EntityEx targ = none;
 
-  //if (self isa 'Crawler') printdebug("%C:A_LookEx:000: specified_flags=%B; flags=0x%04x; minseedist=%s; maxseedist=%s; maxheardist=%s; fov=%s; wakestate=%s", self, specified_flags, flags, minseedist, maxseedist, maxheardist, fov, wakestate);
+  //if (self isa 'PSXZombieMan') printdebug("%C:%s:A_LookEx:000: specified_flags=%B; flags=0x%04x; minseedist=%s; maxseedist=%s; maxheardist=%s; fov=%s; wakestate=%s (%B)", self, UniqueId, specified_flags, flags, minseedist, maxseedist, maxheardist, fov, wakestate, specified_wakestate);
 
   // fix optional args
   if (!fov && bLookAllAround) fov = 360; // use default value if zero
-  if (!specified_wakestate) wakestate = FindState('See');
-
-  //if (self isa 'Crawler') printdebug("%C:A_LookEx:001: specified_flags=%B; flags=0x%04x; minseedist=%s; maxseedist=%s; maxheardist=%s; fov=%s; wakestate=%s", self, specified_flags, flags, minseedist, maxseedist, maxheardist, fov, wakestate);
+  if (!specified_wakestate) wakestate = SeeState;
 
   bool dojump = !(flags&LOF_NOJUMP);
   bool doSightCheck = !(flags&LOF_NOSIGHTCHECK);
@@ -221,18 +219,23 @@
 
   Threshold = 0; // any shot will wake up
   EntityEx hearTarget = none;
-  if (TIDToHate) {
-    targ = Target;
-  } else {
-    if (!(flags&LOF_NOSOUNDCHECK)) {
-      targ = (Level.CompatSoundTarget || bNoSector ? EntityEx(Sector->SoundTarget) : LastHeard);
-      // if it's dead, don't chase it
-      if (targ && targ.Health <= 0) targ = none;
 
-      // [KS] if the target is too far away, don't respond to the sound
-      if (targ && maxheardist && DistTo(targ) > maxheardist) targ = none;
-      hearTarget = targ;
-    }
+  if (TIDToHate) {
+    // have something predefined to hate
+    targ = Target;
+    // do not target self
+    if (targ == self) targ = none;
+  } else if (!(flags&LOF_NOSOUNDCHECK)) {
+    // perform sound check
+    targ = (Level.CompatSoundTarget || bNoSector ? EntityEx(Sector->SoundTarget) : LastHeard);
+    // do not target self
+    if (targ == self) targ = none;
+    // if it's dead, don't chase it
+    if (targ && targ.Health <= 0) targ = none;
+
+    // [KS] if the target is too far away, don't respond to the sound
+    if (targ && maxheardist && DistTo2(targ) > maxheardist) targ = none;
+    hearTarget = targ;
 
     if (targ && targ.bIsPlayer && PlayerEx(targ.Player).bNoTarget) return;
   }
@@ -240,22 +243,29 @@
   // Andy Baker's stealth monsters
   if (bStealth) VisDir = -1;
 
+  bool doFindTarget = true; // this is used to block target searching if friendly monster is wandering
+
   if (targ && targ.bShootable) {
     // got (possibly new) target
-    if (bFriendly && targ.bFriendly) {
+    if (IsFriend(targ)) {
       // target is a friend
       // if we'll find a valid target here, the wandering logic should *not* be activated!
       // if would cause the seestate to be set twice
-      if (!doSightCheck || !LookForPlayers(fov, minseedist, (maxseedist ? fmin(maxseedist, 1280) : 1280))) {
-        // let the actor wander around aimlessly looking for a fight
-        state wkst = (dojump ? wakestate : none);
-        if (wkst) {
-          if (!bInChase) SetState(wkst);
-        } else {
-          A_Wander();
-        }
+      bool doWander = true;
+      if (!doSightCheck && LookForPlayers(fov, minseedist, (maxseedist ? fmin(maxseedist, 1280) : 1280))) {
+        if (Target && IsFriend(Target)) Target = none;
+        doWander = (Target == none);
       }
-      return; //k8: it seems to be ok to return here
+      if (doWander) {
+        // let the actor wander around aimlessly looking for a fight
+        if (dojump && !bInChase) {
+          if (wakestate) SetState(wakestate); else A_Wander();
+        }
+        // we're done here
+        return;
+      }
+      // do not look for a target if we already got one
+      doFindTarget = (Target == none);
     } else {
       // target is a foe
       Target = targ;
@@ -263,46 +273,39 @@
     }
   }
 
-  if (bAmbush) {
-    // blind ambushed monster won't see its target in any case
-    targ = Target;
-    if (!doSightCheck || !targ) return;
-    float tdist = (minseedist || maxseedist ? DistTo(targ) : 0); // in case we're not interested in distance checks, don't bother calculating it
-    bool targetInRange = ((!minseedist || tdist >= minseedist) && (!maxseedist || tdist <= maxseedist));
-    bool seeTarget = (targetInRange ? CanSee(targ) : false);
-    if (!seeTarget) {
-      // target is out of range, or invisible
-      if (!LookForPlayers(fov, minseedist, maxseedist)) return;
+  if (doFindTarget) {
+    // try to find/validate a target
+    // ambushed monster should check if its "ambush target" is still visible
+    // normal monster should check if its "non-hearing target" is still visible
+    // this is essentially the same logic, so i joined the checks
+    // this logic allows the monster to drop its "visible" target if it moved out of sight, and look for someone else
+    targ = Target; // if `targ` is `none`, look for a player
+    if (targ &&
+        (bAmbush || // ambushed?
+         !hearTarget || targ != hearTarget)) // target is not came from a sound check?
+    {
+      // check if we have an unobstructed LOS to our desired target
+      float tdist = (minseedist || maxseedist ? DistTo2(targ) : 0); // in case we're not interested in distance checks, don't bother calculating it
+      bool targetInRange = (tdist >= minseedist && (!maxseedist || tdist <= maxseedist));
+      //k8: gozzo uses `SF_SEEPASTBLOCKEVERYTHING` here
+      if (!targetInRange || !CanSee(targ)) targ = none; // look for a player if the target is lost
     }
-  } else {
-    if (!Target) {
-      // we have no target
-      if (!doSightCheck) return; // blind moster won't find a new target
-      if (!LookForPlayers(fov, minseedist, maxseedist)) return;
-    } else {
-      // is this target came from hearing?
-      if (!hearTarget || Target != hearTarget) {
-        // can we see a target?
-        if (!doSightCheck) return; // blind moster won't find a new target
-        targ = Target;
-        float tdist = (minseedist || maxseedist ? DistTo(targ) : 0); // in case we're not interested in distance checks, don't bother calculating it
-        bool targetInRange = ((!minseedist || tdist >= minseedist) && (!maxseedist || tdist <= maxseedist));
-        bool seeTarget = (targetInRange ? CanSee(targ) : false);
-        if (!seeTarget) {
-          // target is out of range, or invisible
-          if (!LookForPlayers(fov, minseedist, maxseedist)) return;
-        }
-      }
+    // if we have no target, look for a player
+    if (!targ) {
+      if (!doSightCheck || !LookForPlayers(fov, minseedist, maxseedist)) return; // the monster is blind, or there are no enemies around
     }
   }
 
   if (!Target) return;
 
-  // go into chase state
-  // don't start chasing after a goal if it isn't time yet
+  // don't start chasing after a goal if it isn't the time yet
   if (Target == Goal) {
-    if (ReactionTime > XLevel.Time) Target = none;
+    if (ReactionTime > XLevel.Time) {
+      Target = none;
+      return;
+    }
   } else if (SightSound && !(flags&LOF_NOSEESOUND)) {
+    // play see sound
     if (flags&LOF_FULLVOLSEESOUND) {
       // full volume
       PlaySound(SightSound, /*CHAN_VOICE*/CHAN_SIGHT, 1.0, ATTN_NONE);
@@ -311,14 +314,8 @@
     }
   }
 
-  if (dojump && Target) {
-    state wkst = /*FindState*/(wakestate);
-    if (wkst) {
-      SetState(/*FindState(wakestate)*/wkst);
-    } else {
-      if (SeeState) SetState(SeeState);
-    }
-  }
+  // go into chase state
+  if (dojump && wakestate) SetState(wakestate);
 }
 
 
@@ -566,7 +563,7 @@ void DoChase (bool FastChase, state AMeleeState, state AMissileState,
         FastChaseStrafeCount = 0;
         Velocity.x = 0.0;
         Velocity.y = 0.0;
-        dist = DistTo(Target);
+        dist = DistTo2(Target); // was `DistTo()`
         if (dist < 640.0) {
           if (P_Random() < 100) {
             ang = atan2(Target.Origin.y-Origin.y, Target.Origin.x-Origin.x);
