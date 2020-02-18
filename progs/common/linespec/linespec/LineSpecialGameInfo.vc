@@ -148,6 +148,9 @@ override void Init () {
   CreateCvarBool('zdoom_blood_hack', false, "Use ZDoom blood spawn hack (different starting frame depending on damage)?", CVAR_ARCHIVE);
   CreateCvarFloat('blood_ripper_delay', 0.5, "Ripper projectile blood spawn timeout, in seconds.", CVAR_ARCHIVE);
 
+  CreateCvarBool('show_secret_message', true, "Show 'you found a secret area' message?", CVAR_ARCHIVE);
+  CreateCvarBool('play_secret_sound', true, "Play 'you found a secret area' sound (misc/secret)?", CVAR_ARCHIVE);
+
   CreateCvarFloat('movebob', 0.1, "Player camera bobbing.", CVAR_ARCHIVE); // doom default is "0.25"
   CreateCvarFloat('weaponbob', 0.24, "Player weapon bobbing (relative to camera).", CVAR_ARCHIVE);
 

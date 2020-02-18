@@ -10,6 +10,18 @@ menudef MiscOptions {
   }
 
   option bool {
+    title = "'Secret Found' Message";
+    cvar = show_secret_message;
+    help = "Show 'you found a secret area' message?";
+  }
+
+  option bool {
+    title = "'Secret Found' Sound";
+    cvar = play_secret_sound;
+    help = "Play 'you found a secret area' sound (misc/secret)?";
+  }
+
+  option bool {
     title = "Checkpoints for map enter autosaves";
     cvar = sv_autoenter_checkpoints;
     help =
