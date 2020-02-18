@@ -43,6 +43,8 @@ Library libcore.a :
   src/mimalloc/static.c
   # lzma
   src/lzmadec/LzmaDec.c
+  # miniz
+  src/miniz/miniz.c
   # fsys (aka VFS)
   src/fsys/fsys.cpp
   src/fsys/fsys_pakbase.cpp
