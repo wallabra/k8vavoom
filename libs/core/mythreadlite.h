@@ -652,7 +652,7 @@ static __attribute__((unused)) inline void mythread_rwlock_lock_read (mythread_r
 }
 
 // Returns zero if the lock was aquired.
-static __attribute__((unused)) inline void mythread_rwlock_trylock_read (mythread_rwlock *rwlock) VC_MYTHREAD_NOEXCEPT {
+static __attribute__((unused)) inline int mythread_rwlock_trylock_read (mythread_rwlock *rwlock) VC_MYTHREAD_NOEXCEPT {
   return (TryAcquireSRWLockShared(rwlock) ? 0 : 1);
 }
 
@@ -665,7 +665,7 @@ static __attribute__((unused)) inline void mythread_rwlock_lock_write (mythread_
 }
 
 // Returns zero if the lock was aquired.
-static __attribute__((unused)) inline void mythread_rwlock_trylock_write (mythread_rwlock *rwlock) VC_MYTHREAD_NOEXCEPT {
+static __attribute__((unused)) inline int mythread_rwlock_trylock_write (mythread_rwlock *rwlock) VC_MYTHREAD_NOEXCEPT {
   return (TryAcquireSRWLockExclusive(rwlock) ? 0 : 1);
 }
 

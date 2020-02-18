@@ -34,6 +34,15 @@
 # undef VAVOOM_USE_MIMALLOC
 #endif
 
+// force shitdoze headers version
+#ifdef _WIN32
+# if !defined(_WIN32_WINNT)
+#  define _WIN32_WINNT  0x0600
+# elif _WIN32_WINNT < 0x0600
+#  undef _WIN32_WINNT
+#  define _WIN32_WINNT  0x0600
+# endif
+#endif
 // define this to activate zone allocator counters
 //#define VAVOOM_CORE_COUNT_ALLOCS
 
