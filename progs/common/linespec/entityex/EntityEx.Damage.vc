@@ -977,6 +977,8 @@ bool OkayToSwitchTarget (EntityEx source) {
 void Died (EntityEx source, EntityEx inflictor) {
   Inventory Item;
 
+  //printdebug("%C: DIED!", self);
+
   // calculate gibs health
   int GHealth = GibsHealth;
   if (!GHealth) {
@@ -1006,7 +1008,7 @@ void Died (EntityEx source, EntityEx inflictor) {
   }
 
   // notify actor's items
-  for (Item = Inventory; Item;) {
+  for (Item = Inventory; Item; ) {
     Inventory Next = Item.Inventory;
     Item.OwnerDied();
     Item = Next;
@@ -1129,6 +1131,8 @@ void Died (EntityEx source, EntityEx inflictor) {
     // normal death?
     if (!DeathState) DeathState = FindState('Death');
   }
+
+  //printdebug("%C:   DeathState=%s", self, DeathState);
 
   if (DeathState) {
     SetState(DeathState);
