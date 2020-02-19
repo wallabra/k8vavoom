@@ -601,12 +601,12 @@ static void ParseFTAnim (int wadfile, VScriptParser *sc, int fttype) {
 
   // name
   bool ignore = false;
-  sc->ExpectName8Warn();
-  VName startTxName = sc->Name8;
-  ad.Index = GTextureManager.CheckNumForNameAndForce(startTxName, (fttype == FT_Flat ? TEXTYPE_Flat : TEXTYPE_Wall), true, optional);
+  sc->ExpectString();
+  VName startTxName = NAME_None;
+  ad.Index = GTextureManager.FindOrLoadFullyNamedTexture(sc->String, &startTxName, (fttype == FT_Flat ? TEXTYPE_Flat : TEXTYPE_Wall), /*overload*/true, /*silent*/optional);
   if (ad.Index == -1) {
     ignore = true;
-    if (!optional) GCon->Logf(NAME_Warning, "ANIMDEFS: Can't find texture \"%s\"", *sc->Name8);
+    if (!optional) GCon->Logf(NAME_Warning, "ANIMDEFS: Can't find texture \"%s\"", *sc->String.quote());
   } else {
     animPicSeen.put(startTxName, true);
   }
@@ -662,19 +662,21 @@ static void ParseFTAnim (int wadfile, VScriptParser *sc, int fttype) {
     memset(&fd, 0, sizeof(fd));
 
     if (vanilla) {
-      sc->ExpectName8Warn();
+      sc->ExpectString();
       if (!ignore) {
         vassert(ad.range == 1);
         // simple pic
         vassert(CurType == 1);
-        fd.Index = GTextureManager.CheckNumForNameAndForce(sc->Name8, (fttype == FT_Flat ? TEXTYPE_Flat : TEXTYPE_Wall), true, optional);
-        if (fd.Index == -1 && !optional) sc->Message(va("Unknown texture \"%s\"", *sc->String));
-        animPicSeen.put(sc->Name8, true);
+        VName rtxname = NAME_None;
+        fd.Index = GTextureManager.FindOrLoadFullyNamedTexture(sc->String, &rtxname, (fttype == FT_Flat ? TEXTYPE_Flat : TEXTYPE_Wall), true, optional);
+        if (fd.Index == -1 && !optional) sc->Message(va("Unknown texture \"%s\"", *sc->String.quote()));
+        if (rtxname != NAME_None) animPicSeen.put(rtxname, true);
         fd.BaseTime = vanillaTics;
         fd.RandomRange = 0;
       }
     } else {
       if (sc->CheckNumber()) {
+        // numbered range
         //if (developer) GCon->Logf(NAME_Dev, "%s: pic: num=%d", *sc->GetLoc().toStringNoCol(), sc->Number);
         if (!ignore && currStBase < 0) {
           if (!FindFirstTextureInSequence(wadfile, startTxName, fttype, currStBase)) {
@@ -709,20 +711,22 @@ static void ParseFTAnim (int wadfile, VScriptParser *sc, int fttype) {
           }
         }
       } else {
-        sc->ExpectName8Warn();
+        // named texture
+        sc->ExpectString();
         //if (developer) GCon->Logf(NAME_Dev, "%s: pic: name=%s", *sc->GetLoc().toStringNoCol(), *sc->Name8);
         if (!ignore) {
           if (!ad.range) {
             // simple pic
             vassert(CurType == 1);
-            fd.Index = GTextureManager.CheckNumForNameAndForce(sc->Name8, (fttype == FT_Flat ? TEXTYPE_Flat : TEXTYPE_Wall), true, optional);
-            if (fd.Index == -1 && !optional) sc->Message(va("Unknown texture \"%s\"", *sc->String));
-            animPicSeen.put(sc->Name8, true);
+            VName rtxname = NAME_None;
+            fd.Index = GTextureManager.FindOrLoadFullyNamedTexture(sc->String, &rtxname, (fttype == FT_Flat ? TEXTYPE_Flat : TEXTYPE_Wall), true, optional);
+            if (fd.Index == -1 && !optional) sc->Message(va("Unknown texture \"%s\"", *sc->String.quote()));
+            if (rtxname != NAME_None) animPicSeen.put(rtxname, true);
           } else {
             // range
             vassert(CurType == 2);
             int txtype = (fttype == FT_Flat ? TEXTYPE_Flat : TEXTYPE_Wall);
-            BuildTextureRange(wadfile, GTextureManager.GetTextureName(ad.Index), sc->Name8, txtype, ids);
+            BuildTextureRange(wadfile, GTextureManager.GetTextureName(ad.Index), VName(*sc->String, VName::AddLower), txtype, ids);
             for (int f = 0; f < ids.length(); ++f) animPicSeen.put(GTextureManager.GetTextureName(ids[f]), true);
           }
         }
@@ -818,8 +822,8 @@ static TSwitch *ParseSwitchState (VScriptParser *sc, bool IgnoreBad) {
       sc->ExpectString();
       Sound = GSoundManager->GetSoundID(*sc->String);
     } else if (sc->Check("pic")) {
-      sc->ExpectName8Warn();
-      int Tex = GTextureManager.CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, /*false*/IgnoreBad || silentTexError);
+      sc->ExpectString();
+      int Tex = GTextureManager.FindOrLoadFullyNamedTexture(sc->String, nullptr, TEXTYPE_Wall, true, /*false*/IgnoreBad || silentTexError);
       if (Tex < 0 && !IgnoreBad) Bad = true;
       TSwitchFrame &F = Frames.Alloc();
       F.Texture = Tex;
@@ -880,14 +884,14 @@ static void ParseSwitchDef (VScriptParser *sc) {
   else if (sc->Check("any")) {}
 
   // switch texture
-  sc->ExpectName8Warn();
-  int t1 = GTextureManager.CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, silentTexError);
+  sc->ExpectName();
+  int t1 = GTextureManager.FindOrLoadFullyNamedTexture(sc->String, nullptr, TEXTYPE_Wall, true, silentTexError);
   bool Quest = false;
   TSwitch *Def1 = nullptr;
   TSwitch *Def2 = nullptr;
 
   // currently only basic switch definition is supported
-  while (1) {
+  for (;;) {
     if (sc->Check("quest")) {
       Quest = true;
     } else if (sc->Check("on")) {
@@ -939,11 +943,11 @@ static void ParseSwitchDef (VScriptParser *sc) {
 static void ParseAnimatedDoor (VScriptParser *sc) {
   // get base texture name
   bool ignore = false;
-  sc->ExpectName8Warn();
-  vint32 BaseTex = GTextureManager.CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, false);
+  sc->ExpectString();
+  vint32 BaseTex = GTextureManager.FindOrLoadFullyNamedTexture(sc->String, nullptr, TEXTYPE_Wall, true, false);
   if (BaseTex == -1) {
     ignore = true;
-    GCon->Logf(NAME_Warning, "ANIMDEFS: Can't find animdoor texture \"%s\"", *sc->String);
+    GCon->Logf(NAME_Warning, "ANIMDEFS: Can't find animdoor texture \"%s\"", *sc->String.quote());
   }
 
   VName OpenSound(NAME_None);
@@ -961,9 +965,9 @@ static void ParseAnimatedDoor (VScriptParser *sc) {
       if (sc->CheckNumber()) {
         v = BaseTex+sc->Number-1;
       } else {
-        sc->ExpectName8Warn();
-        v = GTextureManager.CheckNumForNameAndForce(sc->Name8, TEXTYPE_Wall, true, false);
-        if (v == -1 && !ignore) sc->Message(va("Unknown texture %s", *sc->String));
+        sc->ExpectString();
+        v = GTextureManager.FindOrLoadFullyNamedTexture(sc->String, nullptr, TEXTYPE_Wall, true, false);
+        if (v == -1 && !ignore) sc->Message(va("Unknown texture \"%s\"", *sc->String.quote()));
       }
       Frames.Append(v);
     } else {
@@ -994,8 +998,8 @@ static void ParseWarp (VScriptParser *sc, int Type) {
   else if (sc->Check("flat")) TexType = TEXTYPE_Flat;
   else sc->Error("Texture type expected");
 
-  sc->ExpectName8Warn();
-  int TexNum = GTextureManager.CheckNumForNameAndForce(sc->Name8, TexType, true, false);
+  sc->ExpectString();
+  int TexNum = GTextureManager.FindOrLoadFullyNamedTexture(sc->String, nullptr, TexType, true, false);
   if (TexNum < 0) return;
 
   float speed = 1;

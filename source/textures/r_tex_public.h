@@ -539,6 +539,12 @@ public:
   // try to force-load texture
   int CheckNumForNameAndForce (VName Name, int Type, bool bOverload, bool silent);
 
+  // this can find/load both textures without path (lump-named), and textures with full path
+  // it also can return normalized texture name in `normname` (it can be `nullptr` too)
+  // returns -1 if not found/cannot load
+  int FindOrLoadFullyNamedTexture (VStr txname, VName *normname, int Type, bool bOverload, bool silent, bool allowLoad=true);
+  inline int FindFullyNamedTexture (VStr txname, VName *normname, int Type, bool bOverload, bool silent) { return FindOrLoadFullyNamedTexture(txname, normname, Type, bOverload, silent, false); }
+
   inline bool IsMapLocalTexture (int TexNum) const noexcept { return (TexNum >= FirstMapTextureIndex); }
 
   inline bool IsEmptyTexture (int TexNum) const noexcept {

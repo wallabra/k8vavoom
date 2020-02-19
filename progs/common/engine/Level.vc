@@ -353,7 +353,7 @@ void AfterUnarchiveThinkers () {}
 bool OnRandomSpawner (RandomSpawner spw) { return true; }
 
 
-native int LdrTexNumForName (string texname, int Type, optional bool CMap, optional bool fromUDMF);
+native int LdrTexNumForName (string texname, int Type, optional bool CMap);
 
 #include "LevelMapFixer.vc"
 

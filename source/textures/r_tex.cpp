@@ -1105,10 +1105,10 @@ int VTextureManager::AddRawWithPal (VName Name, VName PalName) {
 
 //==========================================================================
 //
-//  tryHardToFindTheImage
+//  tryHardToFindTheImageLump
 //
 //==========================================================================
-static int tryHardToFindTheImage (VStr filename) {
+static int tryHardToFindTheImageLump (VStr filename) {
   if (filename.isEmpty()) return -1;
   int i = W_CheckNumForFileName(filename);
   if (i >= 0) return i;
@@ -1162,7 +1162,7 @@ int VTextureManager::AddFileTextureChecked (VName Name, int Type, VName forceNam
       if (trynum) break;
     }
 
-    i = tryHardToFindTheImage(*fname);
+    i = tryHardToFindTheImageLump(*fname);
     if (i >= 0) {
       VTexture *Tex = VTexture::CreateTexture(Type, i);
       if (Tex) {
@@ -1212,7 +1212,7 @@ int VTextureManager::AddFileTextureShaded (VName Name, int Type, int shade) {
   int i = CheckNumForName(shName, Type);
   if (i >= 0) return i;
 
-  i = tryHardToFindTheImage(*Name);
+  i = tryHardToFindTheImageLump(*Name);
   if (i >= 0) {
     VTexture *Tex = VTexture::CreateTexture(Type, i);
     if (Tex) {
@@ -1302,6 +1302,86 @@ int VTextureManager::CheckNumForNameAndForce (VName Name, int Type, bool bOverlo
   // alas
   //if (!silent) GCon->Logf(NAME_Warning, "Textures: missing texture \"%s\"", *Name);
   warnMissingTexture(Name, silent);
+  return -1;
+}
+
+
+//==========================================================================
+//
+//  VTextureManager::FindOrLoadFullyNamedTexture
+//
+//  this can find/load both textures without path (lump-named), and textures with full path
+//  it also can return normalized texture name in `normname` (it can be `nullptr` too)
+//  returns -1 if not found/cannot load
+//
+//==========================================================================
+int VTextureManager::FindOrLoadFullyNamedTexture (VStr txname, VName *normname, int Type, bool bOverload, bool silent, bool allowLoad) {
+  if (normname) *normname = NAME_None;
+  if (txname.isEmpty()) return -1;
+
+  txname = txname.fixSlashes().toLowerCase();
+
+  // check for full path
+  if (txname.indexOf('/') < 0) {
+    // no path, try lump search
+    VStr noext = txname.stripExtension();
+    VName loname = VName(*noext, VName::AddLower);
+    int res =
+      allowLoad ?
+        CheckNumForNameAndForce(loname, Type, bOverload, silent) :
+        CheckNumForName(loname, Type, bOverload);
+    if (res >= 0) {
+      if (normname) *normname = loname;
+    }
+    return res;
+  }
+
+  // full path search
+  //FIXME: switch to hashmap here
+
+  // persistent textures
+  for (auto &&it : Textures.itemsIdx()) {
+    VTexture *tx = it.value();
+    if (!tx || tx->SourceLump < 0) continue;
+    if (Type == TEXTYPE_Any || tx->Type == Type || (bOverload && tx->Type == TEXTYPE_Overload)) {
+      VStr fullname = W_RealLumpName(tx->SourceLump);
+      if (!fullname.strEquCI(txname)) continue;
+      if (normname) *normname = VName(*txname, VName::AddLower);
+      return it.index();
+    }
+  }
+
+  // map textures
+  for (auto &&it : MapTextures.itemsIdx()) {
+    VTexture *tx = it.value();
+    if (!tx || tx->SourceLump < 0) continue;
+    if (Type == TEXTYPE_Any || tx->Type == Type || (bOverload && tx->Type == TEXTYPE_Overload)) {
+      VStr fullname = W_RealLumpName(tx->SourceLump);
+      if (!fullname.strEquCI(txname)) continue;
+      if (normname) *normname = VName(*txname, VName::AddLower);
+      return it.index()+FirstMapTextureIndex;
+    }
+  }
+
+  // not found, try to load it
+  if (allowLoad) {
+    int lump = tryHardToFindTheImageLump(txname);
+    //int lump = W_CheckNumForFileName(txname);
+    if (lump >= 0) {
+      VTexture *tx = VTexture::CreateTexture(Type, lump);
+      if (tx) {
+        GCon->Logf(NAME_Debug, "loaded texture with long name \"%s\"", *txname.quote());
+        tx->Name = VName(*txname);
+        int res = GTextureManager.AddTexture(tx);
+        if (normname) *normname = VName(*txname);
+        return res;
+      }
+    }
+  }
+
+  // alas
+  warnMissingTexture(VName(*txname), silent);
+
   return -1;
 }
 

@@ -90,8 +90,6 @@ static VCvarB loader_force_nodes_rebuild("loader_force_nodes_rebuild", true, "Fo
 
 static VCvarB loader_force_fix_2s("loader_force_fix_2s", false, "Force-fix invalid two-sided flags? (non-persistent)", CVAR_PreInit/*|CVAR_Archive*/);
 
-//static VCvarB r_udmf_allow_extra_textures("r_udmf_allow_extra_textures", false, "Allow force-loading UDMF textures? (WARNING: savegames WILL crash!)", CVAR_Archive);
-
 
 extern VCvarI nodes_builder_type;
 #ifdef CLIENT
@@ -2985,14 +2983,15 @@ void VLevel::LoadACScripts (int Lump, int XMapLump) {
 //  texForceLoad
 //
 //==========================================================================
-static int texForceLoad (const char *name, int Type, bool CMap, bool allowForceLoad) {
-  if (!name || !name[0]) return 0; //(CMap ? 0 : GTextureManager.DefaultTexture); // just in case
+static int texForceLoad (const char *name, int Type, bool CMap) {
+  if (!name || !name[0]) return 0; // just in case
   if (name[0] == '-' && !name[1]) return 0; // just in case
   if (VStr::strEquCI(name, "aashitty") || VStr::strEquCI(name, "aastinky")) return 0;
   int i = -1;
 
   //GCon->Logf("texForceLoad(*): <%s>", name);
 
+  #if 0
   VName loname = NAME_None;
   // try filename if slash is found
   const char *slash = strchr(name, '/');
@@ -3048,6 +3047,9 @@ static int texForceLoad (const char *name, int Type, bool CMap, bool allowForceL
       //if (i != -1) GCon->Logf("texForceLoad(3): <%s> (%d)", name, i);
     }
   }
+  #else
+  i = GTextureManager.FindOrLoadFullyNamedTexture(VStr(name), nullptr, Type, /*overload*/true, /*silent*/true);
+  #endif
 
   if (i == -1) {
     VStr nn = VStr(name);
@@ -3065,16 +3067,15 @@ static int texForceLoad (const char *name, int Type, bool CMap, bool allowForceL
 //
 //  LdrTexNumForName
 //
-//  native int LdrTexNumForName (string name, int Type, optional bool CMap, optional bool fromUDMF);
+//  native int LdrTexNumForName (string name, int Type, optional bool CMap);
 //
 //==========================================================================
 IMPLEMENT_FUNCTION(VLevel, LdrTexNumForName) {
-  P_GET_BOOL_OPT(fromUDMF, false);
-  P_GET_BOOL_OPT(CMap, false);
-  P_GET_INT(Type);
-  P_GET_STR(name);
-  P_GET_SELF;
-  RET_INT(Self->TexNumForName(*name, Type, CMap, fromUDMF));
+  VStr name;
+  int Type;
+  VOptParamBool CMap(false);
+  vobjGetParamSelf(name, Type, CMap);
+  RET_INT(Self->TexNumForName(*name, Type, CMap));
 }
 
 
@@ -3085,60 +3086,9 @@ IMPLEMENT_FUNCTION(VLevel, LdrTexNumForName) {
 //  Retrieval, get a texture or flat number for a name.
 //
 //==========================================================================
-int VLevel::TexNumForName (const char *name, int Type, bool CMap, bool fromUDMF) const {
+int VLevel::TexNumForName (const char *name, int Type, bool CMap) const {
   if (!name || !name[0] || VStr::Cmp(name, "-") == 0) return 0;
-  return texForceLoad(name, Type, CMap, /*(fromUDMF ? r_udmf_allow_extra_textures : false)*/true);
-/*
-  int i = -1;
-  // try filename if slash is found
-  const char *slash = strchr(name, '/');
-  if (slash && slash[1] && fromUDMF && r_udmf_allow_extra_textures) {
-    VName loname = VName(name, VName::AddLower);
-    i = GTextureManager.AddFileTextureChecked(loname, Type);
-    if (i != -1) return i;
-  } else if (strchr(name, '.')) {
-    VName loname = VName(name, VName::AddLower);
-    i = GTextureManager.AddFileTextureChecked(loname, Type);
-    if (i != -1) return i;
-  }
-  VName Name(name, VName::AddLower8);
-  i = GTextureManager.CheckNumForName(Name, Type, true, true);
-  //if (i == -1) i = GTextureManager.CheckNumForName(VName(name, VName::AddLower), Type, true, true);
-  //if (i == -1 && VStr::length(name) > 8) i = GTextureManager.AddFileTexture(VName(name, VName::AddLower), Type);
-  if (i == -1) {
-    static TStrSet texNumForNameWarned;
-    if (CMap) return 0;
-    VName loname = VName(name, VName::AddLower);
-    if (!texNumForNameWarned.put(*loname)) GCon->Logf(NAME_Warning, "VLevel::TexNumForName: '%s' not found", *loname);
-    if (fromUDMF && r_udmf_allow_extra_textures) {
-      if (!slash) {
-        i = GTextureManager.AddFileTextureChecked(loname, Type);
-        if (i != -1) {
-          GCon->Logf(NAME_Warning, "VLevel::TexNumForName: force-loaded '%s'", *loname);
-          return i;
-        }
-      }
-    }
-    return GTextureManager.DefaultTexture;
-  } else {
-    //static TStrSet texReported;
-    //if (!texReported.put(name)) GCon->Logf("TEXTURE: '%s' (%s) is %d", name, *Name, i);
-  }
-  return i;
-*/
-}
-
-
-//==========================================================================
-//
-//  VLevel::TexNumForName2
-//
-//==========================================================================
-int VLevel::TexNumForName2 (const char *name, int Type, bool fromUDMF) const {
-  if (!name || !name[0]) return 0; //GTextureManager.DefaultTexture; // just in case
-  //int res = GTextureManager.CheckNumForName(VName(name, VName::AddLower), Type, /*bOverload*/true, /*bCheckAny*/true);
-  //if (!fromUDMF) return res;
-  return texForceLoad(name, Type, /*CMap*/false, /*r_udmf_allow_extra_textures*/true);
+  return texForceLoad(name, Type, CMap);
 }
 
 
