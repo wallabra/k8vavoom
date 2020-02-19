@@ -3792,6 +3792,8 @@ static TMap<VStr, bool> decoFlagsWarned;
 //
 //==========================================================================
 bool VEntity::SetDecorateFlag (VStr Flag, bool Value) {
+  //GCon->Logf(NAME_Debug, "%s:%u: VEntity::SetDecorateFlag: flag='%s'; value=%d", GetClass()->GetName(), GetUniqueId(), *Flag, (int)Value);
+
   VStr ClassFilter;
   int DotPos = Flag.indexOf('.');
   if (DotPos >= 0) {

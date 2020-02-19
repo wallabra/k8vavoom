@@ -114,8 +114,17 @@ void VEntity::DestroyThinker () {
     }
 
     // unlink from sector and block lists
+    // but we may be insile a state action (or VC code), so keep `Sector` and `SubSector` alive
+    subsector_t *oldSubSector = SubSector;
+    sector_t *oldSector = Sector;
     UnlinkFromWorld();
     if (XLevel) XLevel->DelSectorList();
+    // those could be still used, restore
+    // note that it is still safe to call `UnlinkFromWorld()` on such "half-linked" object
+    // but to play safe, set some guard flags
+    EntityFlags |= EF_NoSector|EF_NoBlockmap;
+    SubSector = oldSubSector;
+    Sector = oldSector;
 
     Super::DestroyThinker();
   }

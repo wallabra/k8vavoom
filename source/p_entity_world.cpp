@@ -344,6 +344,7 @@ void VEntity::UnlinkFromWorld () {
     }
     BlockMapCell = 0;
   }
+
   SubSector = nullptr;
   Sector = nullptr;
 }
@@ -363,6 +364,7 @@ void VEntity::LinkToWorld (int properFloorCheck) {
 
   // link into subsector
   subsector_t *ss = XLevel->PointInSubsector_Buggy(Origin);
+  //vassert(ss); // meh, it will segfault on `nullptr` anyway
   SubSector = ss;
   Sector = ss->sector;
 
@@ -1197,6 +1199,8 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
   TVec oldorg(0, 0, 0);
   line_t *ld;
   sector_t *OldSec = Sector;
+
+  if (IsGoingToDie() || !Sector) return false; // just in case, dead object is immovable
 
   bool skipEffects = (checkOnly || noPickups);
 
