@@ -998,6 +998,80 @@ static TeleportMapExFlag TMEFlags[] = {
 
 //==========================================================================
 //
+//  COMMAND ACS_TeleportNewMap
+//
+//  mapname posidx flags [skill]
+//
+//==========================================================================
+COMMAND(ACS_TeleportNewMap) {
+  if (Args.length() != 5) {
+    GCon->Logf("ACS_TeleportNewMap mapname posidx flags skill");
+    return;
+  }
+
+  if (Source == SRC_Command) {
+    ForwardToServer();
+    return;
+  }
+
+  if (GGameInfo->NetMode == NM_None || GGameInfo->NetMode == NM_Client) return;
+
+  int posidx = 0;
+  if (!Args[2].convertInt(&posidx)) {
+    GCon->Logf(NAME_Warning, "ACS_TeleportNewMap: invalid position index '%s'", *Args[2]);
+    posidx = 0;
+  }
+
+  int flags = 0;
+  if (!Args[3].convertInt(&flags)) {
+    GCon->Logf(NAME_Warning, "ACS_TeleportNewMap: invalid flags value '%s'", *Args[3]);
+    flags = 0;
+  }
+  flags |= CHANGELEVEL_REMOVEKEYS;
+
+  int skill = -1;
+  if (!Args[4].convertInt(&flags)) {
+    GCon->Logf(NAME_Warning, "ACS_TeleportNewMap: invalid skill value '%s'", *Args[4]);
+    skill = -1;
+  }
+
+  GCon->Logf(NAME_Debug, "ACS level teleport: map=<%s>; flags=0x%04x, skill=%d", *Args[1], (unsigned)flags, skill);
+
+  VName mname = VName(*Args[1], VName::FindLower8);
+  if (mname == NAME_None) {
+    if (!Args[1].startsWithCI("EndGame")) {
+      GCon->Logf(NAME_Warning, "ACS_TeleportNewMap: unknown map name '%s'", *Args[1]);
+      return;
+    }
+    mname = VName(*Args[1]);
+  }
+  GLevelInfo->NextMap = mname;
+
+  if (!deathmatch) {
+    if (VStr(GLevelInfo->NextMap).startsWithCI("EndGame")) {
+      for (int i = 0; i < svs.max_clients; ++i) {
+        if (GGameInfo->Players[i]) GGameInfo->Players[i]->eventClientFinale(*GLevelInfo->NextMap);
+      }
+      sv.intermission = 2;
+      return;
+    }
+  }
+
+#ifdef CLIENT
+  Draw_TeleportIcon();
+#endif
+
+  RebornPosition = posidx;
+  GGameInfo->RebornPosition = RebornPosition;
+  mapteleport_issued = true; // this will actually change the map
+  mapteleport_flags = flags;
+  mapteleport_skill = skill;
+  //if (GGameInfo->NetMode == NM_Standalone) SV_UpdateRebornSlot(); // copy the base slot to the reborn slot
+}
+
+
+//==========================================================================
+//
 //  COMMAND TeleportNewMapEx
 //
 //  mapname posidx flags [skill]
@@ -1054,8 +1128,11 @@ COMMAND_WITH_AC(TeleportNewMapEx) {
   } else {
     VName mname = VName(*Args[1], VName::FindLower8);
     if (mname == NAME_None) {
-      GCon->Logf(NAME_Warning, "TeleportNewMapEx: unknown map name '%s'", *Args[1]);
-      return;
+      if (!Args[1].startsWithCI("EndGame")) {
+        GCon->Logf(NAME_Warning, "TeleportNewMapEx: unknown map name '%s'", *Args[1]);
+        return;
+      }
+      mname = VName(*Args[1]);
     }
     GLevelInfo->NextMap = mname;
   }

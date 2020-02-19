@@ -2100,13 +2100,8 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
   // we won't show intermission anyway, so remove this flag
   flags &= ~CHANGELEVEL_NOINTERMISSION;
 
-  if (flags) {
-    GCon->Logf("SV_MapTeleport: unimplemented flag set: 0x%04x", flags);
-    if (flags&CHANGELEVEL_KEEPFACING) GCon->Logf("SV_MapTeleport:   KEEPFACING");
-    if (flags&CHANGELEVEL_RESETINVENTORY) GCon->Logf("SV_MapTeleport:   RESETINVENTORY");
-    if (flags&CHANGELEVEL_NOMONSTERS) GCon->Logf("SV_MapTeleport:   NOMONSTERS");
-    if (flags&CHANGELEVEL_NOINTERMISSION) GCon->Logf("SV_MapTeleport:   NOINTERMISSION");
-    if (flags&CHANGELEVEL_PRERAISEWEAPON) GCon->Logf("SV_MapTeleport:   PRERAISEWEAPON");
+  if (flags&~(CHANGELEVEL_KEEPFACING|CHANGELEVEL_RESETINVENTORY|CHANGELEVEL_RESETHEALTH|CHANGELEVEL_PRERAISEWEAPON|CHANGELEVEL_REMOVEKEYS)) {
+    GCon->Logf("SV_MapTeleport: unimplemented flag set: 0x%04x", (unsigned)flags);
   }
 
   TAVec plrAngles[MAXPLAYERS];

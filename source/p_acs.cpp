@@ -6587,7 +6587,7 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       //sp[-3] - Position
       //sp[-2] - Flags
       //sp[-1] - Skill
-      GCmdBuf << va("TeleportNewMapEx \"%s\" %d %d %d\n", *GetStr(sp[-4]).quote(), sp[-3], sp[-2], sp[-1]);
+      GCmdBuf << va("ACS_TeleportNewMap \"%s\" %d %d %d\n", *GetStr(sp[-4]).quote(), sp[-3], sp[-2], sp[-1]);
       sp -= 4;
       ACSVM_BREAK;
 
