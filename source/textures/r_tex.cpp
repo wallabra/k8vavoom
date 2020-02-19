@@ -108,6 +108,8 @@ VCvarB r_showinfo("r_showinfo", false, "Show some info about loaded textures?", 
 
 static VCvarB r_reupload_textures("r_reupload_textures", false, "Reupload textures to GPU when new map is loaded?", CVAR_Archive);
 
+static VCvarB r_debug_fullpath_textures("r_debug_fullpath_textures", false, "Show some debug messages for fullpath textures?", CVAR_PreInit);
+
 
 // ////////////////////////////////////////////////////////////////////////// //
 static TMapNC<VName, bool> patchesWarned;
@@ -1327,7 +1329,7 @@ int VTextureManager::CheckNumForNameAndForce (VName Name, int Type, bool bOverlo
 //  returns -1 if not found/cannot load
 //
 //==========================================================================
-int VTextureManager::FindOrLoadFullyNamedTexture (VStr txname, VName *normname, int Type, bool bOverload, bool silent, bool allowLoad) {
+int VTextureManager::FindOrLoadFullyNamedTexture (VStr txname, VName *normname, int Type, bool bOverload, bool silent, bool allowLoad, bool forceMapTexture) {
   if (normname) *normname = NAME_None;
   if (txname.isEmpty()) return -1;
 
@@ -1380,7 +1382,7 @@ int VTextureManager::FindOrLoadFullyNamedTexture (VStr txname, VName *normname, 
     auto tpp = txFullNameHash.find(txname);
     if (!tpp) tpp = txFullNameHashMap.find(txname);
     if (tpp) {
-      GCon->Logf(NAME_Debug, "found texture '%s' by hash (%s)", *txname, *W_RealLumpName(getTxByIndex(*tpp)->SourceLump));
+      if (r_debug_fullpath_textures) GCon->Logf(NAME_Debug, "found texture '%s' by hash (%s)", *txname, *W_RealLumpName(getTxByIndex(*tpp)->SourceLump));
       if (normname) *normname = VName(*txname);
       return *tpp;
     }
@@ -1397,7 +1399,7 @@ int VTextureManager::FindOrLoadFullyNamedTexture (VStr txname, VName *normname, 
       auto tpp = txFullNameHash.find(realtxname);
       if (!tpp) tpp = txFullNameHashMap.find(realtxname);
       if (tpp) {
-        GCon->Logf(NAME_Debug, "found texture '%s' by hash (%s)", *txname, *W_RealLumpName(getTxByIndex(*tpp)->SourceLump));
+        if (r_debug_fullpath_textures) GCon->Logf(NAME_Debug, "found texture '%s' by hash (%s)", *txname, *W_RealLumpName(getTxByIndex(*tpp)->SourceLump));
         if (normname) *normname = VName(*txname);
         return *tpp;
       }
@@ -1405,9 +1407,12 @@ int VTextureManager::FindOrLoadFullyNamedTexture (VStr txname, VName *normname, 
       if (allowLoad) {
         VTexture *tx = VTexture::CreateTexture(Type, lump);
         if (tx) {
-          GCon->Logf(NAME_Debug, "loaded texture with long name \"%s\"", *txname.quote());
+          if (r_debug_fullpath_textures) GCon->Logf(NAME_Debug, "loaded texture with long name \"%s\"", *txname.quote());
           tx->Name = VName(*txname);
+          const bool oldInMap = inMapTextures;
+          if (forceMapTexture) inMapTextures = true;
           int res = AddTexture(tx);
+          inMapTextures = oldInMap;
           if (normname) *normname = VName(*txname);
           return res;
         }
