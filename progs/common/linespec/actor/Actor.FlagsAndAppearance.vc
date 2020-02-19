@@ -506,3 +506,20 @@
     }
   }
 }
+
+
+//============================================================================
+//
+//  A_SetSpecial
+//
+//============================================================================
+[decorate] final void A_SetSpecial (int aspecial, optional int aarg0, optional int aarg1,
+                                    optional int aarg2, optional int aarg3, optional int aarg4)
+{
+  Special = aspecial;
+  Args[0] = aarg0;
+  Args[1] = aarg1;
+  Args[2] = aarg2;
+  Args[3] = aarg3;
+  Args[4] = aarg4;
+}
