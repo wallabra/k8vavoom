@@ -24,7 +24,7 @@
 //**
 //**************************************************************************
 // included from "r_model.cpp"
-static VCvarB r_models_verbose_loading("r_models_verbose_loading", false, "Log loaded 3D models?", CVAR_Archive);
+static VCvarB r_models_verbose_loading("r_models_verbose_loading", false, "Log loaded 3D models?", CVAR_PreInit);
 
 
 //==========================================================================
@@ -446,6 +446,8 @@ void VMeshModel::Load_MD3 (vuint8 *Data, int DataSize) {
     pmesh = (MD3Surface *)((vuint8 *)pmesh+pmesh->endOfs);
   }
 
+  if (r_models_verbose_loading) GCon->Logf(NAME_Debug, "*** MD3 model '%s': loading mesh #%d...", *this->Name, this->MeshIndex);
+
   // convert and copy shader data
   MD3Shader *pshader = (MD3Shader *)((vuint8 *)pmesh+pmesh->shaderOfs);
   for (unsigned i = 0; i < pmesh->shaderNum; ++i) {
@@ -488,6 +490,7 @@ void VMeshModel::Load_MD3 (vuint8 *Data, int DataSize) {
   // copy texture coordinates
   this->STVerts.setLength((int)pmesh->vertNum);
   for (unsigned i = 0; i < pmesh->vertNum; ++i) {
+    if (r_models_verbose_loading) GCon->Logf(NAME_Debug, "MD3 model '%s' (mesh #%d): st#%u: s=%g; t=%g", *this->Name, this->MeshIndex, i, pstverts[i].s, pstverts[i].t);
     this->STVerts[i].S = pstverts[i].s;
     this->STVerts[i].T = pstverts[i].t;
   }

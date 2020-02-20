@@ -313,6 +313,8 @@ void VOpenGLDrawer::SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap)
 void VOpenGLDrawer::SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int CMap) {
   SetSpriteLump(Tex, Trans, CMap, false);
   SetupTextureFiltering(model_filter);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 }
 
 
