@@ -743,6 +743,9 @@ struct sector_t {
   VEntity *ActionList;
 
   vint32 Damage;
+  VName DamageType; // can be empty for "standard/unknown"
+  vint32 DamageInterval; // in ticks; zero means `32` (Doom default)
+  vint32 DamageLeaky; // <0: none; 0: default (5); 256 is 100% (i.e. it is actually a byte)
 
   float Friction;
   float MoveFactor;

@@ -322,6 +322,9 @@ void VLevel::SerialiseOther (VStream &Strm) {
       vio.io(VName("AffectorData"), sec->AffectorData);
       vio.io(VName("ActionList"), sec->ActionList);
       vio.io(VName("Damage"), sec->Damage);
+      vio.io(VName("DamageType"), sec->DamageType);
+      vio.io(VName("DamageInterval"), sec->DamageInterval);
+      vio.io(VName("DamageLeaky"), sec->DamageLeaky);
       vio.io(VName("Friction"), sec->Friction);
       vio.io(VName("MoveFactor"), sec->MoveFactor);
       vio.io(VName("Gravity"), sec->Gravity);

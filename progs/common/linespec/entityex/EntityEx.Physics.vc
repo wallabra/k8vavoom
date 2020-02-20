@@ -1400,8 +1400,19 @@ final bool HitFloorType (optional bool justLanded) {
   // small splash for small masses
   if (Mass < 10.0 || bSmallSplash) smallsplash = true;
 
+  // this should be done for Voodoo Dolls only, because for the main player entity it is done in `PlayerEx`
+  // also, don't do it more than once per tick
   if (TInfo->DamageAmount && bIsPlayer && (XLevel.TicTime&TInfo->DamageTimeMask)) {
-    Damage(none, none, TInfo->DamageAmount, TInfo->DamageType/*, spawnBlood:true*/);
+    bool doIt = true;
+    PlayerEx pex = PlayerEx(Player);
+    if (pex) {
+           if (pex.MO == self) doIt = false; // check for Voodoo Doll
+      else if (pex.LastSectorDamageTic >= XLevel.TicTime) doIt = false; // check for proper tick
+      // apply protection suit (leaky)
+      // nope, Voodoo Dools cannot have any protection
+      //if (doIt && TInfo->bAllowProtection && P_Random() >= 5 && pex.FindProtectionSuit()) doIt = false;
+    }
+    if (doIt) Damage(none, none, TInfo->DamageAmount, TInfo->DamageType/*, spawnBlood:true*/);
   }
 
   VSplashInfo *SInfo = GetSplashInfo(TInfo->Splash);

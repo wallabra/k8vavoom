@@ -1040,6 +1040,9 @@ struct sector_t {
   Entity ActionList;
 
   int Damage;
+  name DamageType; // can be empty for "standard/unknown"
+  int DamageInterval; // in ticks; <0 means 0; zero means `32` (Doom default)
+  int DamageLeaky; // <0: none; 0: default (5); 256 is 100% (i.e. it is actually a byte)
 
   float Friction;
   float MoveFactor;

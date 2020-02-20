@@ -180,9 +180,10 @@
 //==========================================================================
 [decorate] final void A_CheckTerrain () {
   if (Origin.z == EFloor.spGetPointZ(Origin)) {
-    if ((Sector->special&SECSPEC_BASE_MASK) == SECSPEC_DamageInstantDeath) {
-      Damage(none, none, 999, 'InstantDeath', spawnBlood:true);
-    } else if ((Sector->special&SECSPEC_BASE_MASK) == SECSPEC_ScrollCurrent) {
+    int spc = Sector->special&SECSPEC_BASE_MASK;
+    if (spc == SECSPEC_DamageInstantDeath) {
+      Damage(none, none, (Health > 0 ? Health+1 : 999), 'InstantDeath', spawnBlood:true);
+    } else if (spc == SECSPEC_ScrollCurrent) {
       int anglespeed = Sector->sectorTag-100;
       float speed = float(anglespeed%10)/16.0*35.0;
       float finean = float(anglespeed/10)*45.0;

@@ -66,7 +66,8 @@ EntityEx Attacker;
 float JumpTime;
 TVec LocalQuakeHappening; // for each axis
 
-// for damaging flats
+// for damaging flats: don't apply damage more than once per tick
+// this is last tick when sector damage was applied
 int LastSectorDamageTic;
 
 float HazardTime;
@@ -168,12 +169,12 @@ transient subsector_t *lastViewOrgZSub;
 transient int LastRegenTicTime = 0;
 
 
-// used in `SetupSectorDamage()` and friends
+// used in `SetupSectorFlatDamage()` and friends
 struct SectorDamageInfo {
-  Inventory IronFeet;
   name flatDamageType;
   int flatDamage;
   int flatDamageTimeout;
+  int flatDamageLeaky; // byte, probability
   bool flatDamageExit;
   bool flatDamageHitFloor;
 }
@@ -1061,172 +1062,6 @@ void WaterJump () {
 
 //==========================================================================
 //
-//  InitSectorDamageInfo
-//
-//==========================================================================
-void InitSectorDamageInfo (ref SectorDamageInfo pdi) {
-  pdi.flatDamageType = '';
-  pdi.flatDamage = 0;
-  pdi.flatDamageTimeout = 0;
-  pdi.flatDamageExit = false;
-  pdi.flatDamageHitFloor = false;
-
-  // search for iron feet power: any subclass will do
-  pdi.IronFeet = EntityEx(MO).Inventory;
-  while (pdi.IronFeet) {
-    if (PowerIronFeet(pdi.IronFeet)) break;
-    pdi.IronFeet = pdi.IronFeet.Inventory;
-  }
-}
-
-
-//==========================================================================
-//
-//  SetupSectorDamage
-//
-//==========================================================================
-void SetupSectorDamage (float deltaTime, EntityEx ent, sector_t *sec, ref SectorDamageInfo pdi) {
-  if (sec->special >= SECSPEC_LightFlicker && sec->special <= 255) {
-    switch (sec->special) {
-      case SECSPEC_DamageHellslime:
-        if (!pdi.IronFeet) {
-          pdi.flatDamageType = 'Slime';
-          pdi.flatDamage = 10;
-          pdi.flatDamageTimeout = 32;
-        }
-        break;
-      case SECSPEC_DamageSludge:
-        if (!pdi.IronFeet) {
-          pdi.flatDamageType = 'Slime';
-          pdi.flatDamage = 4;
-          pdi.flatDamageTimeout = 32;
-        }
-        break;
-      case SECSPEC_DamageNukage:
-        if (!pdi.IronFeet) {
-          pdi.flatDamageType = 'Slime'; //FIXME
-          pdi.flatDamage = 5;
-          pdi.flatDamageTimeout = 32;
-        }
-        break;
-      case SECSPEC_LightStrobeFastDamage:
-      case SECSPEC_DamageSuperHellslime:
-        //k8: it was `(P_Random() < 5 && P_Random() < 5)`
-        if (!pdi.IronFeet || P_Random() < 5) {
-          pdi.flatDamageType = 'Slime'; //FIXME
-          pdi.flatDamage = 20;
-          pdi.flatDamageTimeout = 32;
-        }
-        break;
-      case SECSPEC_DamageSuperHellslimeExit:
-        // EXIT SUPER DAMAGE! (for E1M8 finale)
-        pdi.flatDamageType = ''; //FIXME
-        pdi.flatDamage = 20;
-        pdi.flatDamageTimeout = 32;
-        pdi.flatDamageExit = true;
-        break;
-      case SECSPEC_DamageLavaWimpy:
-        pdi.flatDamageType = 'Fire';
-        pdi.flatDamage = 5;
-        pdi.flatDamageTimeout = 16;
-        pdi.flatDamageHitFloor = true;
-        break;
-      case SECSPEC_DamageLavaHefty:
-        pdi.flatDamageType = 'Fire';
-        pdi.flatDamage = 8;
-        pdi.flatDamageTimeout = 16;
-        pdi.flatDamageHitFloor = true;
-        break;
-      case SECSPEC_ScrollEastLavaDamage:
-        ThrustPlayer(0.0, 1024.0, deltaTime);
-        pdi.flatDamageType = 'Fire';
-        pdi.flatDamage = 5;
-        pdi.flatDamageTimeout = 16;
-        pdi.flatDamageHitFloor = true;
-        break;
-      case SECSPEC_DamageHazard:
-        if (!pdi.IronFeet) HazardTime += 2.0*deltaTime;
-        break;
-      case SECSPEC_DamageInstantDeath:
-        ent.Damage(none, none, 999, 'InstantDeath', spawnBlood:true);
-        break;
-      case SECSPEC_DamageSuperHazard:
-        if (!pdi.IronFeet) HazardTime += 4.0*deltaTime;
-        break;
-    }
-  } else {
-    // extended sector damage type
-    switch (sec->special&SECSPEC_DAMAGE_MASK) {
-      case 0x0100:
-        if (!pdi.IronFeet) {
-          pdi.flatDamageType = 'Fire';
-          pdi.flatDamage = 5;
-          pdi.flatDamageTimeout = 32;
-        }
-        break;
-      case 0x0200:
-        if (!pdi.IronFeet) {
-          pdi.flatDamageType = 'Slime';
-          pdi.flatDamage = 10;
-          pdi.flatDamageTimeout = 32;
-        }
-        break;
-      case 0x0300:
-        if (!pdi.IronFeet || (P_Random() < 5 && P_Random() < 5)) {
-          pdi.flatDamageType = 'Slime';
-          pdi.flatDamage = 20;
-          pdi.flatDamageTimeout = 32;
-        }
-        break;
-    }
-  }
-}
-
-
-//==========================================================================
-//
-//  ApplySectorDamageInfo
-//
-//==========================================================================
-void ApplySectorDamageInfo (float deltaTime, EntityEx ent, sector_t *sec, ref SectorDamageInfo pdi, ref bool updateDamageTic) {
-  // apply flat damage
-  if (pdi.flatDamage && LastSectorDamageTic < Level.XLevel.TicTime) {
-    if (!(Level.XLevel.TicTime%pdi.flatDamageTimeout)) {
-      auto oldCheats = Cheats;
-      scope(exit) Cheats = oldCheats;
-      updateDamageTic = true;
-      if (pdi.flatDamageExit) Cheats &= ~CF_GODMODE;
-      if (pdi.flatDamageType) {
-        ent.Damage(none, none, pdi.flatDamage, pdi.flatDamageType);
-      } else {
-        ent.Damage(none, none, pdi.flatDamage);
-      }
-      if (pdi.flatDamageHitFloor) ent.HitFloorType();
-      if (pdi.flatDamageExit && Health <= 10) Level.ExitLevel(0);
-    }
-  }
-
-  // apply any customizable damage
-  if (sec->Damage && LastSectorDamageTic < Level.XLevel.TicTime) {
-    pdi.flatDamage = sec->Damage;
-    pdi.flatDamageTimeout = 0;
-    if (sec->Damage < 20) {
-      if (!pdi.IronFeet) pdi.flatDamageTimeout = 32;
-    } else if (sec->Damage < 50) {
-      if (!pdi.IronFeet || (P_Random() < 5 && P_Random() < 5)) pdi.flatDamageTimeout = 32;
-    } else {
-      pdi.flatDamageTimeout = 1;
-    }
-    if (pdi.flatDamageTimeout && !(Level.XLevel.TicTime%pdi.flatDamageTimeout)) {
-      updateDamageTic = true;
-      ent.Damage(none, none, pdi.flatDamage);
-    }
-  }
-}
-
-
-//==========================================================================
-//
 //  ProcessSectorScroll
 //
 //==========================================================================
@@ -1335,17 +1170,223 @@ void PlayerProcessScrollSectors (float deltaTime) {
 
 //==========================================================================
 //
-//  PlayerInSpecialSector
+//  FindProtectionSuit
 //
-//  Called every tic frame that the player origin is in a special sector.
+//==========================================================================
+Inventory FindProtectionSuit () {
+  // search for iron feet power: any subclass will do
+  Inventory IronFeet = EntityEx(MO).Inventory;
+  while (IronFeet) {
+    if (PowerIronFeet(IronFeet)) break;
+    IronFeet = IronFeet.Inventory;
+  }
+  return IronFeet;
+}
+
+
+//==========================================================================
+//
+//  InitSectorDamageInfo
+//
+//==========================================================================
+void InitSectorDamageInfo (ref SectorDamageInfo pdi) {
+  pdi.flatDamageType = '';
+  pdi.flatDamage = 0;
+  pdi.flatDamageTimeout = 0;
+  pdi.flatDamageLeaky = 0;
+  pdi.flatDamageExit = false;
+  pdi.flatDamageHitFloor = false;
+}
+
+
+//==========================================================================
+//
+//  SetupSectorUDMFDamage
+//
+//==========================================================================
+void SetupSectorUDMFDamage (float deltaTime, EntityEx ent, sector_t *sec, ref SectorDamageInfo pdi) {
+  if (sec.Damage) {
+    pdi.flatDamageType = sec.DamageType;
+    pdi.flatDamageTimeout = max(1, (sec.DamageInterval ? sec.DamageInterval : 32)); // 0 is "default 32"
+    pdi.flatDamageLeaky = max(0, (sec.DamageLeaky ? sec.DamageLeaky : 5)); // 0 is "default 5"
+    if (pdi.flatDamageType.nameEquCI('Exit')) {
+      // EXIT SUPER DAMAGE! (for E1M8 finale)
+      pdi.flatDamageType = ''; //FIXME
+      pdi.flatDamageExit = true;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  SetupSectorFlatDamage
+//
+//==========================================================================
+void SetupSectorFlatDamage (float deltaTime, EntityEx ent, sector_t *sec, ref SectorDamageInfo pdi) {
+  if (sec->special >= SECSPEC_LightFlicker && sec->special <= 255) {
+    switch (sec->special) {
+      case SECSPEC_DamageHellslime:
+        pdi.flatDamageType = 'Slime';
+        pdi.flatDamage = 10;
+        pdi.flatDamageTimeout = 32;
+        pdi.flatDamageLeaky = 5; // default leakage value
+        break;
+      case SECSPEC_DamageSludge:
+        pdi.flatDamageType = 'Slime';
+        pdi.flatDamage = 4;
+        pdi.flatDamageTimeout = 32;
+        pdi.flatDamageLeaky = 5; // default leakage value
+        break;
+      case SECSPEC_DamageNukage:
+        pdi.flatDamageType = 'Slime'; //FIXME
+        pdi.flatDamage = 5;
+        pdi.flatDamageTimeout = 32;
+        pdi.flatDamageLeaky = 5; // default leakage value
+        break;
+      case SECSPEC_LightStrobeFastDamage:
+      case SECSPEC_DamageSuperHellslime:
+        pdi.flatDamageType = 'Slime'; //FIXME
+        pdi.flatDamage = 20;
+        pdi.flatDamageTimeout = 32;
+        pdi.flatDamageLeaky = 5; // default leakage value
+        break;
+      case SECSPEC_DamageSuperHellslimeExit:
+        // EXIT SUPER DAMAGE! (for E1M8 finale)
+        pdi.flatDamageType = ''; //FIXME
+        pdi.flatDamage = 20;
+        pdi.flatDamageTimeout = 32;
+        pdi.flatDamageExit = true;
+        pdi.flatDamageLeaky = 5; // default leakage value
+        break;
+      case SECSPEC_DamageLavaWimpy:
+        pdi.flatDamageType = 'Fire';
+        pdi.flatDamage = 5;
+        pdi.flatDamageTimeout = 16;
+        pdi.flatDamageHitFloor = true;
+        pdi.flatDamageLeaky = 5; // default leakage value
+        break;
+      case SECSPEC_DamageLavaHefty:
+        pdi.flatDamageType = 'Fire';
+        pdi.flatDamage = 8;
+        pdi.flatDamageTimeout = 16;
+        pdi.flatDamageHitFloor = true;
+        pdi.flatDamageLeaky = 5; // default leakage value
+        break;
+      case SECSPEC_ScrollEastLavaDamage:
+        ThrustPlayer(0.0, 1024.0, deltaTime);
+        pdi.flatDamageType = 'Fire';
+        pdi.flatDamage = 5;
+        pdi.flatDamageTimeout = 16;
+        pdi.flatDamageHitFloor = true;
+        pdi.flatDamageLeaky = 5; // default leakage value
+        break;
+      case SECSPEC_DamageHazard:
+        // hack: leaky suit
+        if (P_Random() < 5 || !FindProtectionSuit()) HazardTime += 2.0*deltaTime;
+        break;
+      case SECSPEC_DamageInstantDeath:
+        ent.Damage(none, none, 999, 'InstantDeath', spawnBlood:true);
+        break;
+      case SECSPEC_DamageSuperHazard:
+        // hack: leaky suit
+        if (P_Random() < 5 || !FindProtectionSuit()) HazardTime += 4.0*deltaTime;
+        break;
+    }
+  } else {
+    // extended sector damage type
+    switch (sec->special&SECSPEC_DAMAGE_MASK) {
+      case 0x0100:
+        pdi.flatDamageType = 'Fire';
+        pdi.flatDamage = 5;
+        pdi.flatDamageTimeout = 32;
+        pdi.flatDamageLeaky = 5; // default leakage value
+        break;
+      case 0x0200:
+        pdi.flatDamageType = 'Slime';
+        pdi.flatDamage = 10;
+        pdi.flatDamageTimeout = 32;
+        pdi.flatDamageLeaky = 5; // default leakage value
+        break;
+      case 0x0300:
+        pdi.flatDamageType = 'Slime';
+        pdi.flatDamage = 20;
+        pdi.flatDamageTimeout = 32;
+        pdi.flatDamageLeaky = 5; // default leakage value
+        break;
+    }
+  }
+}
+
+
+//==========================================================================
+//
+//  ApplySectorDamageInfo
+//
+//  performs no excessive checks
+//  i.e. `LastSectorDamageTic` or height should be checked by a caller
+//
+//==========================================================================
+void ApplySectorDamageInfo (float deltaTime, EntityEx ent, sector_t *sec, ref SectorDamageInfo pdi) {
+  // any damage at all?
+  if (!pdi.flatDamage) return;
+  // is damage timeout ok?
+  if (pdi.flatDamageTimeout < 1) pdi.flatDamageTimeout = 1; // prevent divides by zero
+  if (Level.XLevel.TicTime%pdi.flatDamageTimeout) return;
+  // is suit active?
+  // if leak chance is bigger than 255, then the suit has no effect
+  bool suitActive = false;
+  if (pdi.flatDamage && pdi.flatDamageLeaky < 256 && FindProtectionSuit()) {
+    // leaky suit
+    suitActive = (P_Random() >= pdi.flatDamageLeaky);
+  }
+  // suit prevents damage, but not special effects
+  if (!suitActive) {
+    auto oldCheats = Cheats;
+    scope(exit) Cheats = oldCheats;
+    if (pdi.flatDamageExit) Cheats &= ~CF_GODMODE;
+    if (pdi.flatDamageType) {
+      ent.Damage(none, none, pdi.flatDamage, pdi.flatDamageType);
+    } else {
+      ent.Damage(none, none, pdi.flatDamage);
+    }
+  }
+  if (pdi.flatDamageHitFloor) ent.HitFloorType();
+  if (pdi.flatDamageExit && Health <= 10) Level.ExitLevel(0);
+}
+
+
+//==========================================================================
+//
+//  ApplySectorDamage
+//
+//  caller should check if it is ok to call this (i.e. last damage tick)
+//
+//==========================================================================
+void ApplySectorDamage (float deltaTime, EntityEx ent, sector_t *sec) {
+  SectorDamageInfo pdi;
+
+  // flat damage
+  InitSectorDamageInfo(ref pdi);
+  SetupSectorFlatDamage(deltaTime, ent, sec, ref pdi);
+  if (pdi.flatDamage) ApplySectorDamageInfo(deltaTime, ent, sec, ref pdi);
+
+  // UDMF sector damage
+  if (sec->Damage) {
+    InitSectorDamageInfo(ref pdi);
+    SetupSectorUDMFDamage(deltaTime, ent, sec, ref pdi);
+    if (pdi.flatDamage) ApplySectorDamageInfo(deltaTime, ent, sec, ref pdi);
+  }
+}
+
+
+//==========================================================================
+//
+//  PlayerInSpecialSector
 //
 //==========================================================================
 void PlayerInSpecialSector (float deltaTime) {
-  if (MO.Origin.z != GetPointZClamped(ref MO.Sector->floor, MO.Origin) && !MO.WaterLevel) {
-    // player is not touching the floor
-    return;
-  }
-
+  // it doesn't matter if we're touching the floor or not for secret sectors
   if (MO.Sector->special&SECSPEC_SECRET_MASK) {
     // secret area
     ++SecretCount;
@@ -1355,14 +1396,15 @@ void PlayerInSpecialSector (float deltaTime) {
     if (GetCvarB('play_secret_sound')) MO.PlaySound('misc/secret', /*CHAN_VOICE*/CHAN_AUTO);
   }
 
-  //FIXME: implement leaky suits
-  SectorDamageInfo pdi;
-  InitSectorDamageInfo(ref pdi);
+  if (MO.Origin.z != GetPointZClamped(ref MO.Sector->floor, MO.Origin) && !MO.WaterLevel) {
+    // player is not touching the floor
+    return;
+  }
 
-  bool updateDamageTic = false;
-  SetupSectorDamage(deltaTime, EntityEx(MO), MO.Sector, ref pdi);
-  ApplySectorDamageInfo(deltaTime, EntityEx(MO), MO.Sector, ref pdi, ref updateDamageTic);
-  if (updateDamageTic) LastSectorDamageTic = Level.XLevel.TicTime;
+  // do not apply damage continuously on the same tick
+  if (LastSectorDamageTic < Level.XLevel.TicTime) {
+    ApplySectorDamage(deltaTime, EntityEx(MO), MO.Sector);
+  }
 }
 
 
@@ -1370,25 +1412,25 @@ void PlayerInSpecialSector (float deltaTime) {
 //
 //  PlayerOnSpecialFlat
 //
+//  Called every tic frame.
+//
 //============================================================================
 void PlayerOnSpecialFlat (VTerrainInfo *floorType) {
   if (!floorType) return;
   if (MO.Origin.z != MO.FloorZ) return; // player is not touching the floor
 
+  if (!floorType->DamageAmount) return;
+  if (!(Level.XLevel.TicTime&floorType->DamageTimeMask)) return; // is this condition right?
+
   if (floorType->bAllowProtection) {
-    // search for iron feet power; any subclass will do
-    Inventory IronFeet = EntityEx(MO).Inventory;
-    while (IronFeet) {
-      if (PowerIronFeet(IronFeet)) return;
-      IronFeet = IronFeet.Inventory;
-    }
+    // apply protection suit (leaky)
+    if (P_Random() >= 5 && FindProtectionSuit()) return;
   }
 
-  if (floorType->DamageAmount && Level.XLevel.TicTime-LastSectorDamageTic >= floorType->DamageTimeMask+1) {
-    LastSectorDamageTic = Level.XLevel.TicTime;
-    EntityEx(MO).Damage(none, none, 10, 'Fire'/*, spawnBlood:true*/);
-    MO.PlaySound('world/lavasizzle', CHAN_BODY);
-  }
+  EntityEx(MO).Damage(none, none, floorType->DamageAmount, floorType->DamageType/*, spawnBlood:true*/);
+  //FIXME: use `DamageAmount` here?
+  //EntityEx(MO).Damage(none, none, 10, 'Fire'/*, spawnBlood:true*/);
+  //MO.PlaySound('world/lavasizzle', CHAN_BODY);
 }
 
 
@@ -1396,16 +1438,11 @@ void PlayerOnSpecialFlat (VTerrainInfo *floorType) {
 //
 //  PlayerInContents
 //
+//  Called every tic frame.
+//
 //==========================================================================
 void PlayerInContents (float deltaTime) {
   if (!MO.WaterLevel) return;
-
-  // search for iron feet power; any subclass will do
-  Inventory IronFeet = EntityEx(MO).Inventory;
-  while (IronFeet) {
-    if (PowerIronFeet(IronFeet)) break;
-    IronFeet = IronFeet.Inventory;
-  }
 
   name flatDamageType = '';
   int flatDamage = 0;
@@ -1413,56 +1450,47 @@ void PlayerInContents (float deltaTime) {
 
   switch (MO.WaterType) {
     case CONTENTS_LAVA:
-      if (!IronFeet) {
-        flatDamageType = 'Fire';
-        flatDamage = 10;
-        flatDamageTimeout = 32;
-      }
+      flatDamageType = 'Fire';
+      flatDamage = 10;
+      flatDamageTimeout = 32;
       break;
     case CONTENTS_NUKAGE:
-      if (!IronFeet) {
-        flatDamageType = 'Slime'; //FIXME
-        flatDamage = 5;
-        flatDamageTimeout = 32;
-      }
+      flatDamageType = 'Slime'; //FIXME
+      flatDamage = 5;
+      flatDamageTimeout = 32;
       break;
     case CONTENTS_SLIME:
-      if (!IronFeet) {
-        flatDamageType = 'Slime';
-        flatDamage = 10;
-        flatDamageTimeout = 32;
-      }
+      flatDamageType = 'Slime';
+      flatDamage = 10;
+      flatDamageTimeout = 32;
       break;
     case CONTENTS_HELLSLIME:
-      if (!IronFeet || P_Random() < 5) {
-        flatDamageType = 'Slime';
-        flatDamage = 20;
-        flatDamageTimeout = 32;
-      }
+      flatDamageType = 'Slime';
+      flatDamage = 20;
+      flatDamageTimeout = 32;
       break;
     case CONTENTS_SLUDGE:
-      if (!IronFeet) {
-        flatDamageType = 'Slime'; //FIXME
-        flatDamage = 4;
-        flatDamageTimeout = 32;
-      }
+      flatDamageType = 'Slime'; //FIXME
+      flatDamage = 4;
+      flatDamageTimeout = 32;
       break;
     case CONTENTS_HAZARD:
-      if (!IronFeet) HazardTime += 2.0*deltaTime;
-      break;
+      // apply protection suit (leaky)
+      if (P_Random() < 5 || !FindProtectionSuit()) HazardTime += 2.0*deltaTime;
+      return;
   }
 
+  // apply flat damage?
+  if (!flatDamage) return;
+  // check timeout
+  if (Level.XLevel.TicTime%flatDamageTimeout) return;
+  // apply protection suit (leaky)
+  if (P_Random() >= 5 && FindProtectionSuit()) return;
 
-  // apply flat damage
-  if (flatDamage && LastSectorDamageTic < Level.XLevel.TicTime) {
-    if (!(Level.XLevel.TicTime%flatDamageTimeout)) {
-      if (flatDamageType) {
-        EntityEx(MO).Damage(none, none, flatDamage, flatDamageType);
-      } else {
-        EntityEx(MO).Damage(none, none, flatDamage);
-      }
-      LastSectorDamageTic = Level.XLevel.TicTime;
-    }
+  if (flatDamageType) {
+    EntityEx(MO).Damage(none, none, flatDamage, flatDamageType);
+  } else {
+    EntityEx(MO).Damage(none, none, flatDamage);
   }
 }
 
@@ -4261,8 +4289,12 @@ override void PlayerTick (float deltaTime) {
     if (MO.Sector->special || MO.Sector->Damage) PlayerInSpecialSector(deltaTime);
   }
 
-  PlayerOnSpecialFlat(Actor(MO).GetFloorType());
-  PlayerInContents(deltaTime);
+  // do not apply effects continuously on the same tick
+  if (LastSectorDamageTic != Level.XLevel.TicTime) {
+    PlayerOnSpecialFlat(Actor(MO).GetFloorType());
+    PlayerInContents(deltaTime);
+    LastSectorDamageTic = Level.XLevel.TicTime;
+  }
 
   if (MO.Velocity.z <= -35.0*35.0 && MO.Velocity.z >= -40.0*35.0 &&
       !MorphTime && MO.WaterLevel == 0 &&

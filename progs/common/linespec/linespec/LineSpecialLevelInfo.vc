@@ -973,7 +973,7 @@ override int ExecuteActionSpecial (int Special, int Arg1, int Arg2, int Arg3,
     case LNSPEC_SectorSetFade:
       buttonSuccess = EV_SectorSetFade(Arg1, Arg2, Arg3, Arg4, Arg5);
       break;
-    case LNSPEC_SectorSetDamage:
+    case LNSPEC_SectorSetDamage: // tag, amount, mod, interval,leaky
       buttonSuccess = EV_SectorSetDamage(Arg1, Arg2, Arg3, Arg4, Arg5);
       break;
     case LNSPEC_TeleportLine:
@@ -3134,27 +3134,59 @@ final bool EV_SectorSetFade(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5)
   return true;
 }
 
+
+//=========================================================================
+//
+//  ConvertSpecialDamageType
+//
+//=========================================================================
+name ConvertSpecialDamageType (int mod) {
+  switch (mod) {
+    //0 = MOD_UNKNOWN
+    case 9: return 'BFGSplash'; // MOD_BFG_SPLASH
+    case 12: return 'Drowning'; // MOD_WATER
+    case 13: return 'Slime'; // MOD_SLIME
+    case 14: return 'Fire'; // MOD_LAVA
+    case 15: return 'Crush'; // MOD_CRUSH
+    case 16: return 'Telefrag'; // MOD_TELEFRAG
+    case 17: return 'Falling'; // MOD_FALLING
+    case 18: return 'Suicide'; // MOD_SUICIDE
+    //case 19: return ''; // MOD_BARREL //???
+    case 20: return 'Exit'; // MOD_EXIT
+    //case 21: return ''; // MOD_SPLASH //???
+    case 22: return 'Melee'; // MOD_HIT
+    case 23: return 'Railgun'; // MOD_RAILGUN
+    case 24: return 'Ice'; // MOD_ICE (ala Hexen)
+    case 25: return 'Disintegrate'; // MOD_DISINTEGRATE (ala Strife's Mauler)
+    case 26: return 'Poison'; // MOD_POISON
+    case 27: return 'Electric'; // MOD_ELECTRIC
+    case 1000: return 'Massacre'; // Massacre (no constant)
+  }
+  return '';
+}
+
+
 //=========================================================================
 //
 //  EV_SectorSetDamage
 //
 //=========================================================================
-
-final bool EV_SectorSetDamage(int Arg1, int Arg2, int Arg3, int Arg4,
-  int Arg5)
-{
+final bool EV_SectorSetDamage (int tag, int amount, int mod, int interval, int leaky) {
   sector_t *Sec;
-  if (!Arg1) return false;
-  bool Rtn = false;
-  for (int hidx = XLevel.FindSectorFromTag(out Sec, Arg1); hidx >= 0;
-       hidx = XLevel.FindSectorFromTag(out Sec, Arg1, hidx))
+  if (!tag) return false; //k8: is this right?
+  bool res = false;
+  for (int hidx = XLevel.FindSectorFromTag(out Sec, tag); hidx >= 0;
+       hidx = XLevel.FindSectorFromTag(out Sec, tag, hidx))
   {
-    Sec.Damage = Arg2;
-    //FIXME Arg3 is MOD
-    Rtn = true;
+    Sec.Damage = amount;
+    Sec.DamageType = ConvertSpecialDamageType(mod);
+    Sec.DamageInterval = (interval ? interval : -1); // fix for "0 is default"
+    Sec.DamageLeaky = (leaky ? leaky : -1); // fix for "0 is default"
+    res = true;
   }
-  return Rtn;
+  return res;
 }
+
 
 //==========================================================================
 //

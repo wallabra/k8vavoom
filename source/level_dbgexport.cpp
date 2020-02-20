@@ -280,7 +280,12 @@ void VLevel::DebugSaveLevel (VStream &strm) {
     if ((sector->params.LightColor&0xffffff) != 0xffffff) writef(strm, "  lightcolor = 0x%06x;\n", sector->params.LightColor);
     if (sector->params.Fade) writef(strm, "  fadecolor = 0x%08x;\n", sector->params.Fade);
     // other
-    if (sector->Damage) writef(strm, "  damageamount = %d;\n", sector->Damage);
+    if (sector->Damage) {
+      writef(strm, "  damageamount = %d;\n", sector->Damage);
+      if (sector->DamageType != NAME_None) writef(strm, "  damagetype = \"%s\";\n", *VStr(sector->DamageType).quote());
+      if (sector->DamageInterval != 32) writef(strm, "  damageinterval = %d;\n", sector->DamageInterval);
+      if (sector->DamageLeaky != 0) writef(strm, "  leakiness = %d;\n", sector->DamageLeaky);
+    }
     // write other crap
     writef(strm, "}\n");
   }

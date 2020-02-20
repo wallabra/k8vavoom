@@ -1045,6 +1045,9 @@ void StaticInit (Level InLevel, line_t *line) {
       Dmg = int(Length((*line->v2)-(*line->v1)));
       for (int hidx = InLevel.FindSectorFromTag(out sec, line->arg1); hidx >= 0; hidx = InLevel.FindSectorFromTag(out sec, line->arg1, hidx)) {
         sec.Damage = Dmg;
+        sec.DamageType = ''; // default
+        sec.DamageInterval = 0;
+        sec.DamageLeaky = 0;
       }
       break;
     //case 3: // defines a sector link with line IDs instead of tags, as in Eternity
