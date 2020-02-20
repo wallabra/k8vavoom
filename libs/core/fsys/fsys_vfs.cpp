@@ -1250,6 +1250,21 @@ bool W_IsWadPK3File (int fidx) {
 
 //==========================================================================
 //
+//  W_IsPakFile
+//
+//  not a container, not a wad (usually pk3)
+//
+//==========================================================================
+bool W_IsPakFile (int fidx) {
+  MyThreadLocker glocker(&fsys_glock);
+  if (fidx < 0 || fidx >= getSPCount()) return false;
+  VSearchPath *w = SearchPaths[fidx];
+  return (w->IsAnyPak() && !w->IsWad());
+}
+
+
+//==========================================================================
+//
 //  W_IsIWADFile
 //
 //==========================================================================

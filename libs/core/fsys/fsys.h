@@ -172,6 +172,7 @@ int W_LumpFile (int lump);
 int W_FindFirstLumpOccurence (VName lmpname, EWadNamespace NS);
 
 bool W_IsWadPK3File (int file);
+bool W_IsPakFile (int file); // not a container, not a wad (usually pk3)
 
 bool W_IsIWADFile (int file);
 bool W_IsWADFile (int file); // not pk3, not disk
