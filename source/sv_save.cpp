@@ -2114,7 +2114,6 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
     GGameInfo->Players[i]->eventPreTravel();
   }
 
-
   // collect list of thinkers that will go to the new level
   for (VThinker *Th = GLevel->ThinkerHead; Th; Th = Th->Next) {
     VEntity *vent = Cast<VEntity>(Th);
@@ -2159,6 +2158,8 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
   } else {
     // new map
     SV_SpawnServer(*mapname, true/*spawn thinkers*/);
+    // if we spawned a new server, there is no need to reset inventory, health or keys
+    flags &= ~(CHANGELEVEL_RESETINVENTORY|CHANGELEVEL_RESETHEALTH|CHANGELEVEL_REMOVEKEYS);
   }
 
   if (flags&CHANGELEVEL_NOMONSTERS) GGameInfo->nomonsters = oldNoMonsters;
