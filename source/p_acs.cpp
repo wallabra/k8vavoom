@@ -2792,12 +2792,12 @@ int VAcs::CallFunction (int argCount, int funcIndex, vint32 *args) {
         ScArgs[1] = (argCount > 3 ? args[3] : 0);
         ScArgs[2] = (argCount > 4 ? args[4] : 0);
         ScArgs[3] = (argCount > 5 ? args[5] : 0);
-        //GCon->Logf("ACSF_ACS_NamedExecuteAlways: script=<%s>; map=%d; args=(%d,%d,%d,%d)", *name, (argCount > 1 ? args[1] : 0), ScArgs[0], ScArgs[1], ScArgs[2], ScArgs[3]);
+        //GCon->Logf(NAME_Debug, "ACSF_ACS_NamedExecuteAlways: script=<%s>; map=%d; args=(%d,%d,%d,%d)", *name, (argCount > 1 ? args[1] : 0), ScArgs[0], ScArgs[1], ScArgs[2], ScArgs[3]);
         if (!ActiveObject->Level->Start(-name.GetIndex(), (argCount > 1 ? args[1] : 0), ScArgs[0], ScArgs[1], ScArgs[2], ScArgs[3], Activator, line, side, true/*always*/, false/*wantresult*/, false/*net*/)) {
-          //GCon->Logf("   FAILED!");
+          //GCon->Logf(NAME_Debug, "   FAILED!");
           return 0;
         }
-        //GCon->Logf("   OK!");
+        //GCon->Logf(NAME_Debug, "   OK!");
         return 1;
       }
       return 0;
@@ -4920,8 +4920,10 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_GiveInventory)
       if (Activator) {
+        //GCon->Logf(NAME_Debug, "PCD_GiveInventory: activator=<%s>; class=<%s>; count=%d", Activator->GetClass()->GetName(), *GetNameLowerCase(sp[-2]), sp[-1]);
         Activator->eventGiveInventory(GetNameLowerCase(sp[-2]), sp[-1], false); // disable replacement
       } else {
+        //GCon->Logf(NAME_Debug, "PCD_GiveInventory: activator=<NONE>; class=<%s>; count=%d", *GetNameLowerCase(sp[-2]), sp[-1]);
         for (auto &&it : Level->Game->playersSpawned()) {
           it.player()->MO->eventGiveInventory(GetNameLowerCase(sp[-2]), sp[-1], false); // disable replacement
         }
@@ -4931,8 +4933,10 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
 
     ACSVM_CASE(PCD_GiveInventoryDirect)
       if (Activator) {
+        //GCon->Logf(NAME_Debug, "PCD_GiveInventory: activator=<%s>; class=<%s>; count=%d", Activator->GetClass()->GetName(), *GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()), READ_INT32(ip+4));
         Activator->eventGiveInventory(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()), READ_INT32(ip+4), false); // disable replacement
       } else {
+        //GCon->Logf(NAME_Debug, "PCD_GiveInventory: activator=<NONE>; class=<%s>; count=%d", *GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()), READ_INT32(ip+4));
         for (auto &&it : Level->Game->playersSpawned()) {
           it.player()->MO->eventGiveInventory(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()), READ_INT32(ip+4), false); // disable replacement
         }
@@ -4966,7 +4970,9 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       if (!Activator) {
         sp[-1] = 0;
       } else {
-        sp[-1] = Activator->eventCheckInventory(GetNameLowerCase(sp[-1]), false); // disable replacement
+        VName clsName = GetNameLowerCase(sp[-1]);
+        sp[-1] = Activator->eventCheckInventory(clsName, false); // disable replacement
+        //GCon->Logf(NAME_Debug, "PCD_CheckInventory: <%s> = %d", *clsName, sp[-1]);
       }
       ACSVM_BREAK;
 
@@ -4974,7 +4980,9 @@ int VAcs::RunScript (float DeltaTime, bool immediate) {
       if (!Activator) {
         *sp = 0;
       } else {
-        *sp = Activator->eventCheckInventory(GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID()), false); // disable replacement
+        VName clsName = GetNameLowerCase(READ_INT32(ip)|ActiveObject->GetLibraryID());
+        *sp = Activator->eventCheckInventory(clsName, false); // disable replacement
+        //GCon->Logf(NAME_Debug, "PCD_CheckInventoryDirect: <%s> = %d", *clsName, *sp);
       }
       ++sp;
       ip += 4;
