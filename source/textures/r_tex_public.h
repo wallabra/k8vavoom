@@ -502,6 +502,9 @@ public:
   VVA_CHECKRESULT bool IsSkyTextureName (VName n) noexcept;
   void SetSkyFlatName (VStr flatname) noexcept;
 
+protected:
+  int AddFullNameTexture (VTexture *Tex, bool asMapTexture);
+
 public:
   VTextureManager ();
 

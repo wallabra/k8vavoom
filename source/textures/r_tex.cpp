@@ -91,7 +91,6 @@ static TMapNC<VName, bool> numForNameWarned;
 static TMapNC<VName, bool> numForNameWarnedMapTextures;
 
 static TMap<VStrCI, int> txFullNameHash; // value: texture index
-static TMap<VStrCI, int> txFullNameHashMap; // value: texture index
 
 // sorry for this hack!
 extern void SV_UpdateSkyFlat ();
@@ -316,7 +315,6 @@ void VTextureManager::DumpHashStats (EName logName) {
 void VTextureManager::rehashTextures () {
   for (int i = 0; i < HASH_SIZE; ++i) TextureHash[i] = -1;
   txFullNameHash.reset();
-  txFullNameHashMap.reset();
   if (Textures.length()) {
     vassert(Textures[0]->Name == NAME_None);
     vassert(Textures[0]->Type == TEXTYPE_Null);
@@ -357,7 +355,6 @@ void VTextureManager::WipeWallPatches () {
 //==========================================================================
 void VTextureManager::ResetMapTextures () {
   numForNameWarnedMapTextures.reset();
-  txFullNameHashMap.reset();
 
   if (MapTextures.length() == 0) {
 #ifdef CLIENT
@@ -449,6 +446,27 @@ int VTextureManager::AddTexture (VTexture *Tex) {
 
 //==========================================================================
 //
+//  VTextureManager::AddFullNameTexture
+//
+//==========================================================================
+int VTextureManager::AddFullNameTexture (VTexture *Tex, bool asMapTexture) {
+  if (!Tex) return -1;
+  if (!inMapTextures && !asMapTexture) {
+    Textures.Append(Tex);
+    Tex->TextureTranslation = Textures.length()-1;
+    AddToHash(Textures.length()-1);
+    return Textures.length()-1;
+  } else {
+    MapTextures.Append(Tex);
+    Tex->TextureTranslation = FirstMapTextureIndex+MapTextures.length()-1;
+    AddToHash(FirstMapTextureIndex+MapTextures.length()-1);
+    return FirstMapTextureIndex+MapTextures.length()-1;
+  }
+}
+
+
+//==========================================================================
+//
 //  VTextureManager::ReplaceTexture
 //
 //==========================================================================
@@ -472,6 +490,11 @@ void VTextureManager::ReplaceTexture (int Index, VTexture *NewTex) {
     if (skyflatnum > -2 && IsSkyTextureName(NewTex->Name)) R_UpdateSkyFlatNum();
   }
   //FIXME: delete OldTex?
+
+  // if it comes from a wad, don't add it to fullname hash
+  if (NewTex->SourceLump >= 0 && W_IsPakFile(W_LumpFile(NewTex->SourceLump))) {
+    txFullNameHash.put(W_RealLumpName(NewTex->SourceLump), Index);
+  }
 }
 
 
@@ -482,22 +505,28 @@ void VTextureManager::ReplaceTexture (int Index, VTexture *NewTex) {
 //==========================================================================
 void VTextureManager::AddToHash (int Index) {
   VTexture *tx = getTxByIndex(Index);
-  vassert(tx);
+  if (!tx) return; // why not?
   tx->HashNext = -1;
-  if (tx->Name == NAME_None || (*tx->Name)[0] == 0x7f) return;
-  VName tname = tx->Name.GetLower();
-  tx->Name = tname; // force lower-cased name for texture
-  int HashIndex = GetTypeHash(tname)&(HASH_SIZE-1);
-  if (Index < FirstMapTextureIndex) {
-    Textures[Index]->HashNext = TextureHash[HashIndex];
-    if (tx->SourceLump >= 0) txFullNameHash.put(W_RealLumpName(tx->SourceLump), Index);
-  } else {
-    MapTextures[Index-FirstMapTextureIndex]->HashNext = TextureHash[HashIndex];
-    if (tx->SourceLump >= 0) txFullNameHashMap.put(W_RealLumpName(tx->SourceLump), Index);
-  }
-  TextureHash[HashIndex] = Index;
 
-  if (skyflatnum > -2 && IsSkyTextureName(tx->Name)) R_UpdateSkyFlatNum();
+  const bool addShortName = (tx->Name != NAME_None && (*tx->Name)[0] != 0x7f);
+  if (addShortName) {
+    VName tname = tx->Name.GetLower();
+    tx->Name = tname; // force lower-cased name for texture
+    int HashIndex = GetTypeHash(tname)&(HASH_SIZE-1);
+    if (Index < FirstMapTextureIndex) {
+      Textures[Index]->HashNext = TextureHash[HashIndex];
+    } else {
+      MapTextures[Index-FirstMapTextureIndex]->HashNext = TextureHash[HashIndex];
+    }
+    TextureHash[HashIndex] = Index;
+  }
+
+  // if it comes from a wad, don't add it to fullname hash
+  if (tx->SourceLump >= 0 && (!addShortName || W_IsPakFile(W_LumpFile(tx->SourceLump)))) {
+    txFullNameHash.put(W_RealLumpName(tx->SourceLump), Index);
+  }
+
+  if (addShortName && skyflatnum > -2 && IsSkyTextureName(tx->Name)) R_UpdateSkyFlatNum();
 }
 
 
@@ -1232,7 +1261,7 @@ int VTextureManager::AddFileTextureShaded (VName Name, int Type, int shade) {
     if (Tex) {
       Tex->Name = shName;
       Tex->Shade(shade);
-      int res = AddTexture(Tex);
+      const int res = AddTexture(Tex);
       //GCon->Logf("TEXMAN: loaded shaded texture '%s' (named '%s'; id=%d)", *Name, *shName, res);
       return res;
     }
@@ -1351,55 +1380,24 @@ int VTextureManager::FindOrLoadFullyNamedTexture (VStr txname, VName *normname, 
   }
 
   // full path search
-  //FIXME: switch to hashmap here
-
-  #if 0
-  // persistent textures
-  for (auto &&it : Textures.itemsIdx()) {
-    VTexture *tx = it.value();
-    if (!tx || tx->SourceLump < 0) continue;
-    if (Type == TEXTYPE_Any || tx->Type == Type || (bOverload && tx->Type == TEXTYPE_Overload)) {
-      VStr fullname = W_RealLumpName(tx->SourceLump);
-      if (!fullname.strEquCI(txname)) continue;
-      if (normname) *normname = VName(*txname, VName::AddLower);
-      return it.index();
-    }
-  }
-
-  // map textures
-  for (auto &&it : MapTextures.itemsIdx()) {
-    VTexture *tx = it.value();
-    if (!tx || tx->SourceLump < 0) continue;
-    if (Type == TEXTYPE_Any || tx->Type == Type || (bOverload && tx->Type == TEXTYPE_Overload)) {
-      VStr fullname = W_RealLumpName(tx->SourceLump);
-      if (!fullname.strEquCI(txname)) continue;
-      if (normname) *normname = VName(*txname, VName::AddLower);
-      return it.index()+FirstMapTextureIndex;
-    }
-  }
-  #else
   {
     auto tpp = txFullNameHash.find(txname);
-    if (!tpp) tpp = txFullNameHashMap.find(txname);
     if (tpp) {
-      if (r_debug_fullpath_textures) GCon->Logf(NAME_Debug, "found texture '%s' by hash (%s)", *txname, *W_RealLumpName(getTxByIndex(*tpp)->SourceLump));
+      if (r_debug_fullpath_textures) GCon->Logf(NAME_Debug, "found texture '%s' by hash (%s : %s)", *txname, *W_RealLumpName(getTxByIndex(*tpp)->SourceLump), *getTxByIndex(*tpp)->Name);
       if (normname) *normname = VName(*txname);
       return *tpp;
     }
   }
-  #endif
 
   // not found, try to load it
   {
     int lump = tryHardToFindTheImageLump(txname);
-    //int lump = W_CheckNumForFileName(txname);
     if (lump >= 0) {
-      // try existing texture first (because we may got it with different extension)
+      // try existing texture first (because we may got it with a different extension)
       VStr realtxname = W_RealLumpName(lump);
       auto tpp = txFullNameHash.find(realtxname);
-      if (!tpp) tpp = txFullNameHashMap.find(realtxname);
       if (tpp) {
-        if (r_debug_fullpath_textures) GCon->Logf(NAME_Debug, "found texture '%s' by hash (%s)", *txname, *W_RealLumpName(getTxByIndex(*tpp)->SourceLump));
+        if (r_debug_fullpath_textures) GCon->Logf(NAME_Debug, "found texture '%s' by hash (%s : %s)", *txname, *W_RealLumpName(getTxByIndex(*tpp)->SourceLump), *getTxByIndex(*tpp)->Name);
         if (normname) *normname = VName(*txname);
         return *tpp;
       }
@@ -1408,11 +1406,8 @@ int VTextureManager::FindOrLoadFullyNamedTexture (VStr txname, VName *normname, 
         VTexture *tx = VTexture::CreateTexture(Type, lump);
         if (tx) {
           if (r_debug_fullpath_textures) GCon->Logf(NAME_Debug, "loaded texture with long name \"%s\"", *txname.quote());
-          tx->Name = VName(*txname);
-          const bool oldInMap = inMapTextures;
-          if (forceMapTexture) inMapTextures = true;
-          int res = AddTexture(tx);
-          inMapTextures = oldInMap;
+          tx->Name = NAME_None; // don't register in "short names" hash
+          const int res = AddFullNameTexture(tx, forceMapTexture);
           if (normname) *normname = VName(*txname);
           return res;
         }
