@@ -521,6 +521,10 @@ void VUdmfParser::ParseSector (VLevel *Level) {
   S.seqType = -1; // default seqType
   S.Gravity = 1.0f;  // default sector gravity of 1.0
   S.Zone = -1;
+  S.Damage = 0;
+  S.DamageType = NAME_None; // default
+  S.DamageInterval = 0; // default interval
+  S.DamageLeaky = 0;
 
   bool fpvalid[4] = {false, false, false, false};
   float fval[4] = {0,0,0,0};
@@ -603,6 +607,28 @@ void VUdmfParser::ParseSector (VLevel *Level) {
       if (Key.strEquCI("hidden")) { (void)CheckBool(); continue; }
       //k8: i don't know what the fuck is this
       if (Key.strEquCI("norespawn")) { (void)CheckBool(); continue; }
+
+      // sector damage properties
+      if (Key.strEquCI("damageamount")) { S.Damage = CheckInt(); continue; }
+      if (Key.strEquCI("damagetype")) {
+        VStr dmg = CheckString();
+        VStr dmgs = dmg.xstrip();
+        if (dmgs.isEmpty() || dmgs.strEquCI("none") || dmgs.strEquCI("normal")) dmg.clear();
+        S.DamageType = VName(*dmg);
+        continue;
+      }
+      if (Key.strEquCI("damageinterval")) {
+        S.DamageInterval = CheckInt();
+        // "0" means "default" in the engine; fix it
+        if (S.DamageInterval == 0) S.DamageInterval = -1;
+        continue;
+      }
+      if (Key.strEquCI("leakiness")) {
+        S.DamageLeaky = CheckInt();
+        // "0" means "default" in the engine; fix it
+        if (S.DamageLeaky == 0) S.DamageLeaky = -1;
+        continue;
+      }
     }
 
     keyWarning(WT_SECTOR);

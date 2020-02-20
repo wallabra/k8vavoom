@@ -1206,6 +1206,7 @@ void InitSectorDamageInfo (ref SectorDamageInfo pdi) {
 //==========================================================================
 void SetupSectorUDMFDamage (float deltaTime, EntityEx ent, sector_t *sec, ref SectorDamageInfo pdi) {
   if (sec.Damage) {
+    pdi.flatDamage = sec.Damage;
     pdi.flatDamageType = sec.DamageType;
     pdi.flatDamageTimeout = max(1, (sec.DamageInterval ? sec.DamageInterval : 32)); // 0 is "default 32"
     pdi.flatDamageLeaky = max(0, (sec.DamageLeaky ? sec.DamageLeaky : 5)); // 0 is "default 5"
@@ -1214,6 +1215,8 @@ void SetupSectorUDMFDamage (float deltaTime, EntityEx ent, sector_t *sec, ref Se
       pdi.flatDamageType = ''; //FIXME
       pdi.flatDamageExit = true;
     }
+    //printdebug("sector #%d: damage=%s; interval=%s; leak=%s; type=%s", sec-&Level.XLevel.Sectors[0], sec.Damage, sec.DamageInterval, sec.DamageLeaky, sec.DamageType);
+    //printdebug("  pdi: flatDamage=%s; flatDamageType=%s; flatDamageTimeout=%s; flatDamageLeaky=%s; flatDamageExit=%B", pdi.flatDamage, pdi.flatDamageType, pdi.flatDamageTimeout, pdi.flatDamageLeaky, pdi.flatDamageExit);
   }
 }
 
@@ -1373,6 +1376,7 @@ void ApplySectorDamage (float deltaTime, EntityEx ent, sector_t *sec) {
 
   // UDMF sector damage
   if (sec->Damage) {
+    //printdebug("sector #%d: damage=%s; interval=%s; leak=%s; type=%s", sec-&Level.XLevel.Sectors[0], sec.Damage, sec.DamageInterval, sec.DamageLeaky, sec.DamageType);
     InitSectorDamageInfo(ref pdi);
     SetupSectorUDMFDamage(deltaTime, ent, sec, ref pdi);
     if (pdi.flatDamage) ApplySectorDamageInfo(deltaTime, ent, sec, ref pdi);
