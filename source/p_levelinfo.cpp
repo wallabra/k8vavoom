@@ -29,9 +29,9 @@
 
 VCvarB compat_shorttex("compat_shorttex", false, "Compatibility: shorttex", 0);
 VCvarB compat_stairs("compat_stairs", false, "Compatibility: stairs", 0);
-VCvarB compat_limitpain("compat_limitpain", false, "Compatibility: limitpain", 0);
+VCvarI compat_limitpain("compat_limitpain", "0", "Compatibility: limit number of skulls from Pain Elementals? (0:map default; 1:always; 2: never)", CVAR_Archive);
 VCvarI compat_nopassover("compat_nopassover", "0", "Compatibility: infinitely tall monsters? (0:map default; 1:always; 2: never)", CVAR_Archive);
-VCvarB compat_notossdrops("compat_notossdrops", false, "Compatibility: notossdrops", 0);
+VCvarI compat_notossdrops("compat_notossdrops", "0", "Compatibility: toss dropped items? (0:map default; 1:always; 2: never)", CVAR_Archive);
 VCvarB compat_useblocking("compat_useblocking", false, "Compatibility: useblocking", 0);
 VCvarB compat_nodoorlight("compat_nodoorlight", false, "Compatibility: nodoorlight", 0);
 VCvarB compat_ravenscroll("compat_ravenscroll", false, "Compatibility: ravenscroll", 0);
@@ -469,9 +469,9 @@ IMPLEMENT_FUNCTION(VLevelInfo, IsTIDUsed) {
 // compat getters
 IMPLEMENT_FUNCTION(VLevelInfo, get_CompatShortTex)     { vobjGetParamSelf(); RET_BOOL(Self ? (!!(Self->LevelInfoFlags2&LIF2_CompatShortTex)     || compat_shorttex.asBool()) : false); }
 IMPLEMENT_FUNCTION(VLevelInfo, get_CompatStairs)       { vobjGetParamSelf(); RET_BOOL(Self ? (!!(Self->LevelInfoFlags2&LIF2_CompatStairs)       || compat_stairs.asBool()) : false); }
-IMPLEMENT_FUNCTION(VLevelInfo, get_CompatLimitPain)    { vobjGetParamSelf(); RET_BOOL(Self ? (!!(Self->LevelInfoFlags2&LIF2_CompatLimitPain)    || compat_limitpain.asBool()) : false); }
+IMPLEMENT_FUNCTION(VLevelInfo, get_CompatLimitPain)    { vobjGetParamSelf(); RET_BOOL(Self ? Self->GetLimitPain() : false); }
 IMPLEMENT_FUNCTION(VLevelInfo, get_CompatNoPassOver)   { vobjGetParamSelf(); RET_BOOL(Self ? Self->GetNoPassOver() : false); }
-IMPLEMENT_FUNCTION(VLevelInfo, get_CompatNoTossDrops)  { vobjGetParamSelf(); RET_BOOL(Self ? (!!(Self->LevelInfoFlags2&LIF2_CompatNoTossDrops)  || compat_notossdrops.asBool()) : false); }
+IMPLEMENT_FUNCTION(VLevelInfo, get_CompatNoTossDrops)  { vobjGetParamSelf(); RET_BOOL(Self ? Self->GetNoTossDropts() : false); }
 IMPLEMENT_FUNCTION(VLevelInfo, get_CompatUseBlocking)  { vobjGetParamSelf(); RET_BOOL(Self ? (!!(Self->LevelInfoFlags2&LIF2_CompatUseBlocking)  || compat_useblocking.asBool()) : false); }
 IMPLEMENT_FUNCTION(VLevelInfo, get_CompatNoDoorLight)  { vobjGetParamSelf(); RET_BOOL(Self ? (!!(Self->LevelInfoFlags2&LIF2_CompatNoDoorLight)  || compat_nodoorlight.asBool()) : false); }
 IMPLEMENT_FUNCTION(VLevelInfo, get_CompatRavenScroll)  { vobjGetParamSelf(); RET_BOOL(Self ? (!!(Self->LevelInfoFlags2&LIF2_CompatRavenScroll)  || compat_ravenscroll.asBool()) : false); }

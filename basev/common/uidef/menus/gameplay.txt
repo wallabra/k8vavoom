@@ -59,6 +59,19 @@ menudef GameplayOptions {
       "'Map Default' takes this from MAPINFO if set, otherwise defaults to 'NO'.";
   }
 
+  option enum {
+    title = "Toss dropped items";
+    cvar = compat_notossdrops;
+    list {
+      "Map Default, or 'yes'",
+      "Never",
+      "Always",
+    }
+    help =
+      "Should dropped items be tossed into the air a little?"
+      "'Map Default' takes this from MAPINFO if set, otherwise defaults to 'YES'.";
+  }
+
   option bool {
     title = "Pushable barrels";
     cvar = sv_pushable_barrels;

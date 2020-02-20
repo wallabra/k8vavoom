@@ -24,6 +24,8 @@
 //**
 //**************************************************************************
 extern VCvarI compat_nopassover;
+extern VCvarI compat_notossdrops;
+extern VCvarI compat_limitpain;
 
 class VLevelInfo : public VThinker {
   DECLARE_CLASS(VLevelInfo, VThinker, 0)
@@ -302,14 +304,18 @@ public:
 
   void eventAfterSetMapInfo () { static VMethodProxy method("AfterSetMapInfo"); vobjPutParamSelf(GLevel); VMT_RET_VOID(method); }
 
-  VVA_CHECKRESULT inline bool GetNoPassOver () const noexcept {
-    switch (compat_nopassover.asInt()) {
-      case 1: // always on
-        return true;
-      case 2: // always off
-        return false;
-      default: // map default
-        return !!(LevelInfoFlags2&LIF2_CompatNoPassOver);
+  #define CREATE_COMPAT_GETTER(name_,cvar_,flagvar_,flagname_) \
+    VVA_CHECKRESULT inline bool name_ () const noexcept { \
+      switch (cvar_.asInt()) { \
+        case 1: return true; /* always on */ \
+        case 2: return false; /* always off */ \
+        default: return !!(flagvar_&flagname_); /* map default */ \
+      } \
     }
-  }
+
+  CREATE_COMPAT_GETTER(GetNoPassOver,compat_nopassover,LevelInfoFlags2,LIF2_CompatNoPassOver)
+  CREATE_COMPAT_GETTER(GetNoTossDropts,compat_notossdrops,LevelInfoFlags2,LIF2_CompatNoTossDrops)
+  CREATE_COMPAT_GETTER(GetLimitPain,compat_limitpain,LevelInfoFlags2,LIF2_CompatLimitPain)
+
+  #undef CREATE_COMPAT_GETTER
 };

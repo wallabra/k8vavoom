@@ -855,10 +855,11 @@ final void NewChaseDirTo (TVec destination, optional EntityEx Target) {
   // Take advantage over an enemy without missiles, by keeping distance
   strafecount = 0;
 
+  //FIXME:k8: this thing seems to do the reverse of what it should (mosters actually jumps the high dropoffs)
   // Try to move away from a dropoff
   if (FloorZ-DropOffZ > MaxDropoffHeight &&
       Origin.z <= FloorZ && !bDropOff && !bOnMobj && !bFloat &&
-      ((!Level.CompatDropOff && GetCvar('monster_dropoff')) || bAvoidsDropOffs))
+      (bAvoidsDropOffs || (!Level.CompatDropOff && GetCvar('monster_dropoff'))))
   {
     float AvoidDeltaX;
     float AvoidDeltaY;
