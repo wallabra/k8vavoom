@@ -32,7 +32,11 @@ class WeaponGiver : Weapon abstract;
 //
 //==========================================================================
 override bool TryPickup (EntityEx Toucher) {
-  if (DropItemList.Num && ClassIsChildOf(DropItemList[0].Type, Weapon)) {
+  //FIXME: shoult it know about randomspawner?
+  //FIXME: Like a weapon, a WeaponGiver can be specified a certain amount of ammo.
+  //       By default (for the -1 value), it will give the same amount as the weapon it gives;
+  //       but a value of 0 or more is given it overrides the weapon's normal ammo quantity.
+  if (DropItemList && ClassIsChildOf(DropItemList[0].Type, Weapon)) {
     Weapon Wpn = Weapon(Spawn(class!EntityEx(DropItemList[0].Type), default, default, default/*, false*/));
     if (Wpn) {
       Wpn.bAlwaysPickup = false;
