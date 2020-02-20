@@ -1186,6 +1186,24 @@ Inventory FindProtectionSuit () {
 
 //==========================================================================
 //
+//  IsProtectionSuitActive
+//
+//  `leakChance` is byte; 0 means "always active", >255 means "never active"
+//
+//==========================================================================
+bool IsProtectionSuitActive (int leakChance) {
+  if (leakChance > 255) return false; // never active
+  if (leakChance > 0 && P_Random() < leakChance) {
+    //if (FindProtectionSuit()) printdebug("SUIT LEAKS! chance=%s", leakChance);
+    return false; // suit leaks
+  }
+  // check if we actually have a suit
+  return !!FindProtectionSuit();
+}
+
+
+//==========================================================================
+//
 //  InitSectorDamageInfo
 //
 //==========================================================================
@@ -1286,14 +1304,14 @@ void SetupSectorFlatDamage (float deltaTime, EntityEx ent, sector_t *sec, ref Se
         break;
       case SECSPEC_DamageHazard:
         // hack: leaky suit
-        if (P_Random() < 5 || !FindProtectionSuit()) HazardTime += 2.0*deltaTime;
+        if (!IsProtectionSuitActive(5)) HazardTime += 2.0*deltaTime;
         break;
       case SECSPEC_DamageInstantDeath:
         ent.Damage(none, none, 999, 'InstantDeath', spawnBlood:true);
         break;
       case SECSPEC_DamageSuperHazard:
         // hack: leaky suit
-        if (P_Random() < 5 || !FindProtectionSuit()) HazardTime += 4.0*deltaTime;
+        if (!IsProtectionSuitActive(5)) HazardTime += 4.0*deltaTime;
         break;
     }
   } else {
@@ -1336,15 +1354,8 @@ void ApplySectorDamageInfo (float deltaTime, EntityEx ent, sector_t *sec, ref Se
   // is damage timeout ok?
   if (pdi.flatDamageTimeout < 1) pdi.flatDamageTimeout = 1; // prevent divides by zero
   if (Level.XLevel.TicTime%pdi.flatDamageTimeout) return;
-  // is suit active?
-  // if leak chance is bigger than 255, then the suit has no effect
-  bool suitActive = false;
-  if (pdi.flatDamage && pdi.flatDamageLeaky < 256 && FindProtectionSuit()) {
-    // leaky suit
-    suitActive = (P_Random() >= pdi.flatDamageLeaky);
-  }
   // suit prevents damage, but not special effects
-  if (!suitActive) {
+  if (!IsProtectionSuitActive(pdi.flatDamageLeaky)) {
     auto oldCheats = Cheats;
     scope(exit) Cheats = oldCheats;
     if (pdi.flatDamageExit) Cheats &= ~CF_GODMODE;
@@ -1426,10 +1437,8 @@ void PlayerOnSpecialFlat (VTerrainInfo *floorType) {
   if (!floorType->DamageAmount) return;
   if (!(Level.XLevel.TicTime&floorType->DamageTimeMask)) return; // is this condition right?
 
-  if (floorType->bAllowProtection) {
-    // apply protection suit (leaky)
-    if (P_Random() >= 5 && FindProtectionSuit()) return;
-  }
+  // apply protection suit (leaky)
+  if (floorType->bAllowProtection && IsProtectionSuitActive(5)) return;
 
   EntityEx(MO).Damage(none, none, floorType->DamageAmount, floorType->DamageType/*, spawnBlood:true*/);
   //FIXME: use `DamageAmount` here?
@@ -1480,7 +1489,7 @@ void PlayerInContents (float deltaTime) {
       break;
     case CONTENTS_HAZARD:
       // apply protection suit (leaky)
-      if (P_Random() < 5 || !FindProtectionSuit()) HazardTime += 2.0*deltaTime;
+      if (!IsProtectionSuitActive(5)) HazardTime += 2.0*deltaTime;
       return;
   }
 
@@ -1489,7 +1498,7 @@ void PlayerInContents (float deltaTime) {
   // check timeout
   if (Level.XLevel.TicTime%flatDamageTimeout) return;
   // apply protection suit (leaky)
-  if (P_Random() >= 5 && FindProtectionSuit()) return;
+  if (IsProtectionSuitActive(5)) return;
 
   if (flatDamageType) {
     EntityEx(MO).Damage(none, none, flatDamage, flatDamageType);
