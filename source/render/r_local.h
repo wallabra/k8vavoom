@@ -56,9 +56,12 @@ enum DLType {
   DLTYPE_Flicker,
   DLTYPE_FlickerRandom,
   DLTYPE_Sector,
-  DLTYPE_Subtractive, // partially supported
-  DLTYPE_SectorSubtractive, // not supported
-  // flag (so point light can actually be spotlight; sigh)
+  //DLTYPE_Subtractive, // partially supported
+  //DLTYPE_SectorSubtractive, // not supported
+  DLTYPE_TypeMask = 0x1fu,
+  // flags (so point light can actually be spotlight; sigh)
+  DLTYPE_Subtractive = 0x20u,
+  DLTYPE_Additive = 0x40u,
   DLTYPE_Spot = 0x80u,
 };
 

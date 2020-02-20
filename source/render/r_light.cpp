@@ -596,7 +596,7 @@ void VRenderLevelShared::CalculateDynLightSub (float &l, float &lr, float &lg, f
         if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
       }
       const dlight_t &dl = DLights[i];
-      if (dl.type == DLTYPE_Subtractive && !r_allow_subtractive_lights) continue;
+      if ((dl.type&DLTYPE_Subtractive) && !r_allow_subtractive_lights) continue;
       //if (!dl.radius || dl.die < Level->Time) continue; // this is not needed here
       const float distSq = (p-dl.origin).lengthSquared();
       if (distSq >= dl.radius*dl.radius) continue; // too far away
@@ -618,7 +618,7 @@ void VRenderLevelShared::CalculateDynLightSub (float &l, float &lr, float &lg, f
             if (add <= 1.0f) continue;
           }
         }
-        if (dl.type == DLTYPE_Subtractive) add = -add;
+        if (dl.type&DLTYPE_Subtractive) add = -add;
         l += add;
         lr += add*((dl.color>>16)&255)/255.0f;
         lg += add*((dl.color>>8)&255)/255.0f;

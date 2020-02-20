@@ -24,6 +24,10 @@
 //**
 //**************************************************************************
 class SpotLightBase : DynamicLight;
+defaultproperties {
+  // spotlights are always attenuated, because they're quite new
+  Attenuated = true;
+}
 
 class SpotLight : SpotLightBase __mobjinfo__(9840);
 defaultproperties {

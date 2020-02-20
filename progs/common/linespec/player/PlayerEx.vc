@@ -23,6 +23,8 @@
 //**  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //**
 //**************************************************************************
+//#define SPOTLIGHT_DISCO_TEST
+
 class PlayerEx : BasePlayer abstract;
 
 // player internal flags, for cheats and debug
@@ -4477,7 +4479,7 @@ final void DebugPutRotatingSpotlight (TVec florg, float speed, float flradius, i
   fl.type = DynamicLight::DLTYPE_Spot;
   //fl.minlight = 64;
   fl.bNoShadow = false;
-  fl.bPlayerLight = true;
+  fl.bPlayerLight = true; // so it won't be rejected
 }
 
 

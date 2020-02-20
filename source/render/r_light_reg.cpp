@@ -864,7 +864,7 @@ void VRenderLevelLightmap::AddDynamicLights (surface_t *surf) {
 
     const dlight_t &dl = DLights[lnum];
     //if (dl.type == DLTYPE_Subtractive) GCon->Logf("***SUBTRACTIVE LIGHT!");
-    if (dl.type == DLTYPE_Subtractive && !r_allow_subtractive_lights) continue;
+    if ((dl.type&DLTYPE_Subtractive) && !r_allow_subtractive_lights) continue;
 
     const int xnfo = dlinfo[lnum].needTrace;
     if (!xnfo) continue;
@@ -977,7 +977,7 @@ void VRenderLevelLightmap::AddDynamicLights (surface_t *surf) {
             }
           }
           int i = t*smax+s;
-          if (dl.type != DLTYPE_Subtractive) {
+          if (!(dl.type&DLTYPE_Subtractive)) {
             //blocklights[i] += (rad-ptdist)*256.0f;
             blocklightsr[i] += rmul*add;
             blocklightsg[i] += gmul*add;

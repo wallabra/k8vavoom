@@ -32,15 +32,19 @@ enum {
   DLTYPE_Flicker,
   DLTYPE_FlickerRandom,
   DLTYPE_Sector,
-  DLTYPE_Subtractive, // not supported yet
-  DLTYPE_SectorSubtractive, // not supported yet
-  // flag (so point light can actually be spotlight; sigh)
+  //DLTYPE_Subtractive, // not supported yet
+  //DLTYPE_SectorSubtractive, // not supported yet
+  DLTYPE_TypeMask = 0x1f,
+  // flags (so point light can actually be spotlight; sigh)
+  DLTYPE_Subtractive = 0x20,
+  DLTYPE_Additive = 0x40,
   DLTYPE_Spot = 0x80,
 };
 
 ubyte LightType;
 float LightTime;
 float Intensity;
+bool Attenuated;
 
 
 //==========================================================================
@@ -52,10 +56,8 @@ override void OnMapSpawn (mthing_t *mthing) {
   //print("*** dynamic light for class '%C' (lt=%s; TID=%s; dormant=%B, mthing is %shere)", Class, LightType, TID, bDormant, (mthing ? "" : "not "));
   ::OnMapSpawn(mthing);
 
-  int ltype = LightType&~DLTYPE_Spot;
-
   //TODO: replace with statics
-  if (ltype == DLTYPE_Subtractive || ltype == DLTYPE_SectorSubtractive) {
+  if (LightType&DLTYPE_Subtractive) {
     //bDormant = true;
     printwarn("REMOVED SUBTRACTIVE LIGHT: r=%d; g=%d; b=%d; intensuty=%d", Args[0], Args[1], Args[2], Args[3]);
     /*
@@ -67,6 +69,8 @@ override void OnMapSpawn (mthing_t *mthing) {
     Destroy();
     return;
   }
+
+  int ltype = LightType&DLTYPE_TypeMask;
 
   // adjust Z position (why not?)
   // people loves to put lights into the floor/ceiling, and our tracer is not happy with those
@@ -89,10 +93,10 @@ override void OnMapSpawn (mthing_t *mthing) {
         Level.AddStaticLightRGB(none, Origin, IntensityToRadius(float(mthing->arg4)), mthing->arg1|0xff_00_00_00, dir, AngleMod360(max(mthing->arg2, mthing->arg3)));
       } else if (mthing->arg1 == 255 && mthing->arg2 == 255 && mthing->arg3 == 255) {
         // static white light
-        Level.AddStaticLight(none, Origin, /*StaticIntensityToRadius*/IntensityToRadius(float(mthing->arg4)));
+        Level.AddStaticLight(none, Origin, IntensityToRadius(float(mthing->arg4)));
       } else {
         // static colored light
-        Level.AddStaticLightRGB(none, Origin, /*StaticIntensityToRadius*/IntensityToRadius(float(mthing->arg4)), RGB(mthing->arg1, mthing->arg2, mthing->arg3));
+        Level.AddStaticLightRGB(none, Origin, IntensityToRadius(float(mthing->arg4)), RGB(mthing->arg1, mthing->arg2, mthing->arg3));
       }
     }
     Destroy();
@@ -107,10 +111,10 @@ override void OnMapSpawn (mthing_t *mthing) {
     Level.AddStaticLightRGB(none, Origin, IntensityToRadius(Intensity), RGB(mthing->arg1, mthing->arg2, mthing->arg3));
     /*
     if (Args[0] == 255 && Args[1] == 255 && Args[2]) {
-      Level.AddStaticLight(none, Origin, StaticIntensityToRadius(float(mthing->arg4)));
+      Level.AddStaticLight(none, Origin, IntensityToRadius(float(mthing->arg4)));
     } else {
       Level.AddStaticLightRGB(none, Origin,
-        StaticIntensityToRadius(float(mthing->arg4)),
+        IntensityToRadius(float(mthing->arg4)),
         RGB(mthing->arg1, mthing->arg2, mthing->arg3));
     }
     */
@@ -166,7 +170,7 @@ override void ClientTick (float DeltaTime) {
 
   if (bDormant) return;
 
-  int realLightType = LightType&~DLTYPE_Spot;
+  int realLightType = LightType&DLTYPE_TypeMask;
 
   switch (realLightType) {
     case DLTYPE_Point:
@@ -202,20 +206,6 @@ override void ClientTick (float DeltaTime) {
         if (Intensity > 255.0) Intensity = 255.0;
       }
       break;
-    case DLTYPE_SectorSubtractive:
-      {
-        float Scale = float(Args[3])*0.125;
-        if (!Scale) Scale = 1.0;
-        Intensity = float(Sector->params.lightlevel)*Scale;
-        if (Intensity < 0.0) Intensity = 0.0;
-        if (Intensity > 255.0) Intensity = 255.0;
-        realLightType = DLTYPE_Subtractive;
-      }
-      break;
-    case DLTYPE_Subtractive:
-      Intensity = float(Args[3]);
-      //if (RGB(Args[0], Args[1], Args[2]) == 0) return;
-      break;
   }
 
   dlight_t *dl = AllocDlight(self, Origin, IntensityToRadius(Intensity));
@@ -232,6 +222,8 @@ override void ClientTick (float DeltaTime) {
       dl->color = Args[0]|0xff_00_00_00;
     } else {
       dl->color = RGB(Args[0], Args[1], Args[2]);
+      // copy subractive/additive flags
+      dl.type |= LightType&(DLTYPE_Subtractive|DLTYPE_Additive);
     }
   }
 }
@@ -242,6 +234,7 @@ override void ClientTick (float DeltaTime) {
 //  StaticIntensityToRadius
 //
 //==========================================================================
+/*
 final float StaticIntensityToRadius (float Val) {
   if (Val <= 20.0) return Val*3.5;
   if (Val <= 30.0) return Val*3.0;
@@ -249,6 +242,7 @@ final float StaticIntensityToRadius (float Val) {
   if (Val <= 60.0) return Val*2.4;
   return Val*2.0;
 }
+*/
 
 
 //==========================================================================
@@ -257,6 +251,7 @@ final float StaticIntensityToRadius (float Val) {
 //
 //==========================================================================
 final float IntensityToRadius (float Val) {
+  if (Attenuated) return Val*1.04; //k8: 1.04f is just because i feel
   if (Val <= 20.0) return Val*4.5;
   if (Val <= 30.0) return Val*3.6;
   if (Val <= 40.0) return Val*3.3;

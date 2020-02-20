@@ -1919,9 +1919,9 @@ final void DoStateEffects (float DeltaTime) {
       //if (self isa 'ExplosiveBarrel') printdebug("%C:  dlight=%s; org=%s; lorg=%s; lrad=%s; type=%s", self, i, Origin, dl->origin, dl->radius, L->Type);
       //print("%C: rad: %s", self, dl->radius);
       //dl->origin = Origin + Forward * L->Offset.x - Right * L->Offset.y + Up * L->Offset.z;
-      switch (L->Type) {
+      switch (L->Type&DynamicLight::DLTYPE_TypeMask) {
         case DynamicLight::DLTYPE_Point:
-        case DynamicLight::DLTYPE_Subtractive:
+        //case DynamicLight::DLTYPE_Subtractive:
           //printdebug("%C: point light", self);
           dl->decay = /*XLevel.Time+*/300.0;
           dl->radius = (prev_rad <= L->Radius ? prev_rad : (prev_rad-L->Radius)*XLevel.Time);
@@ -1977,14 +1977,15 @@ final void DoStateEffects (float DeltaTime) {
           }
           break;
         case DynamicLight::DLTYPE_Sector:
-        case DynamicLight::DLTYPE_SectorSubtractive:
+        //case DynamicLight::DLTYPE_SectorSubtractive:
           {
             float Scale = L->Scale*0.125;
             if (!Scale) Scale = 1.0;
             dl->radius = float(Sector->params.lightlevel)*Scale;
             if (dl->radius < 0.0) dl->radius = 0.0;
             if (dl->radius > 255.0) dl->radius = 255.0;
-            dl->type = (L->Type == DynamicLight::DLTYPE_Sector ? DynamicLight::DLTYPE_Point : DynamicLight::DLTYPE_Subtractive);
+            //dl->type = (L->Type == DynamicLight::DLTYPE_Sector ? DynamicLight::DLTYPE_Point : DynamicLight::DLTYPE_Subtractive);
+            dl->type = DynamicLight::DLTYPE_Point;
           }
           break;
       }
