@@ -322,6 +322,11 @@ actor TechPillar 48
 actor Candlestick 34
 {
   Game Doom
+  /*gozzo does this; dunno
+  Radius 20
+  Height 14
+  ProjectilePassHeight -16
+  */
   states
   {
   Spawn:
