@@ -192,12 +192,10 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
 //
 //  VOpenGLDrawer::DrawSpritePolygon
 //
-//  hangup:
-//    0: normal
-//  666: fake sprite shadow
-//  bit 0 set: no z-buffer write
-//  bit 1 set: do offsetting (used for flat-aligned sprites)
-//  bit 2 set: don't cull faces
+//  hangup bits:
+//    bit 0 set: no z-buffer write
+//    bit 1 set: do offsetting (used for flat-aligned sprites)
+//    bit 2 set: don't cull faces
 //
 //==========================================================================
 void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
@@ -323,19 +321,19 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
 
   // setup blending
   switch (ri.translucency) {
-    case 1: // normal translucency
+    case RenderStyleInfo::Translucent: // normal translucency
       //restoreBlend = true; // default blending
       glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
       break;
-    case 2: // additive translucency
+    case RenderStyleInfo::Additive: // additive translucency
       restoreBlend = true;
       glBlendFunc(GL_ONE, GL_ONE); // our source rgb is already premultiplied
       break;
-    case 3: // translucent-dark (k8vavoom special)
+    case RenderStyleInfo::DarkTrans: // translucent-dark (k8vavoom special)
       restoreBlend = true;
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
       break;
-    case -1: // subtractive translucency
+    case RenderStyleInfo::Subtractive: // subtractive translucency
       // not implemented yet, sorry
       //restoreBlend = true; // default blending
       glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);

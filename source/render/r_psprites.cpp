@@ -182,8 +182,8 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   saxis *= scaleX;
   taxis *= scaleY;
 
-  Drawer->DrawSpritePolygon(dv, GTextureManager[lump], ri, /*Alpha, Additive,*/
-    nullptr, ColorMap, /*light, Fade,*/ -Drawer->viewforward,
+  Drawer->DrawSpritePolygon(dv, GTextureManager[lump], ri,
+    nullptr, ColorMap, -Drawer->viewforward,
     DotProduct(dv[0], -Drawer->viewforward), saxis, taxis, texorg);
 }
 

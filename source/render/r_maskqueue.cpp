@@ -197,14 +197,16 @@ void VRenderLevelShared::QueueTranslucentAliasModel (VEntity *mobj, const Render
 //  VRenderLevelShared::QueueSprite
 //
 //  this uses `seclight` from ri
+//  this can modify `ri`!
 //
 //==========================================================================
-void VRenderLevelShared::QueueSprite (VEntity *thing, const RenderStyleInfo &ri, bool onlyShadow) {
+void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool onlyShadow) {
   const int sprtype = thing->SpriteType;
   TVec sprorigin = thing->GetDrawOrigin();
 
   bool renderShadow =
     sprtype == SPR_VP_PARALLEL_UPRIGHT &&
+    !ri.isShadow() &&
     r_fake_sprite_shadows.asBool() &&
     r_sort_sprites.asBool() &&
     (r_fake_shadow_scale.asFloat() > 0.0f);
@@ -276,16 +278,13 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, const RenderStyleInfo &ri,
 
   sprframe = &sprdef->spriteframes[FrameIndex];
 
-  //if (r_brightmaps && r_brightmaps_sprite && Tex->Brightmap && Tex->Brightmap->nofullbright) light = seclight; // disable fullbright
-  RenderStyleInfo newri = ri;
-
   TVec sprforward(0, 0, 0);
   TVec sprright(0, 0, 0);
   TVec sprup(0, 0, 0);
 
   // HACK: if sprite is additive, move is slightly closer to view
   // this is mostly for things like light flares
-  if (newri.isAdditive()) sprorigin -= Drawer->viewforward*0.2f;
+  if (ri.isAdditive()) sprorigin -= Drawer->viewforward*0.2f;
 
   float dot;
   TVec tvec(0, 0, 0);
@@ -344,7 +343,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, const RenderStyleInfo &ri,
     case SPR_ORIENTED_OFS:
       // generate the sprite's axes, according to the sprite's world orientation
       AngleVectors(thing->/*Angles*/GetSpriteDrawAngles(), sprforward, sprright, sprup);
-      if (sprtype != SPR_ORIENTED) newri.hangup |= 0x103u; // no z writes, offset, special flag
+      if (sprtype != SPR_ORIENTED) ri.hangup |= 0x103u; // no z writes, offset, special flag
       break;
 
     case SPR_VP_PARALLEL_ORIENTED:
@@ -393,7 +392,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, const RenderStyleInfo &ri,
         angs.roll = AngleMod(angs.roll+180.0f);
         // generate the sprite's axes, according to the sprite's world orientation
         AngleVectors(angs, sprforward, sprright, sprup);
-        newri.hangup |= 0x107u; // no z writes, offset, no cull, special flag
+        ri.hangup |= 0x107u; // no z writes, offset, no cull, special flag
       }
       break;
 
@@ -407,7 +406,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, const RenderStyleInfo &ri,
         angs.yaw = AngleMod(angs.yaw+180.0f);
         // generate the sprite's axes, according to the sprite's world orientation
         AngleVectors(angs, sprforward, sprright, sprup);
-        newri.hangup |= 0x107u; // no z writes, offset, no cull, special flag
+        ri.hangup |= 0x107u; // no z writes, offset, no cull, special flag
       }
       break;
 
@@ -464,7 +463,9 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, const RenderStyleInfo &ri,
   VTexture *Tex = GTextureManager[lump];
   if (!Tex || Tex->Type == TEXTYPE_Null) return; // just in case
 
-  if (r_brightmaps && r_brightmaps_sprite && Tex->nofullbright) newri.light = newri.seclight; // disable fullbright
+  //if (r_brightmaps && r_brightmaps_sprite && Tex->Brightmap && Tex->Brightmap->nofullbright) light = seclight; // disable fullbright
+  // ignore brightmap flags for stencil style
+  if (!ri.stencilColor && r_brightmaps && r_brightmaps_sprite && Tex->nofullbright) ri.light = ri.seclight; // disable fullbright
 
   int fixAlgo = (ignoreSpriteFix ? 0 : r_fix_sprite_offsets.asInt());
   if (fixAlgo < 0 || thing->IsFloatBob()) fixAlgo = 0; // just in case
@@ -559,9 +560,9 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, const RenderStyleInfo &ri,
 
   //if (Fade != FADE_LIGHT) GCon->Logf("<%s>: Fade=0x%08x", *thing->GetClass()->GetFullName(), Fade);
 
-  //if (!newri.isTranslucent() && Tex->isTranslucent()) Alpha = 0.9999f;
+  //if (!ri.isTranslucent() && Tex->isTranslucent()) Alpha = 0.9999f;
 
-  if (newri.isTranslucent() || r_sort_sprites || Tex->isTranslucent()) {
+  if (ri.isTranslucent() || r_sort_sprites || Tex->isTranslucent()) {
     // add sprite
     int priority = 0;
     if (thing) {
@@ -572,7 +573,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, const RenderStyleInfo &ri,
       else if (thing->EntityFlags&VEntity::EF_NoBlockmap) priority = -200;
     }
     if (!onlyShadow) {
-      QueueTranslucentPoly(nullptr, sv, 4, lump, newri, /*Alpha+(thing->RenderStyle == STYLE_Dark ? 1666.0f : 0.0f), Additive,*/
+      QueueTranslucentPoly(nullptr, sv, 4, lump, ri, /*Alpha+(thing->RenderStyle == STYLE_Dark ? 1666.0f : 0.0f), Additive,*/
         thing->Translation, true/*isSprite*/, /*light, Fade,*/ -sprforward,
         DotProduct(sprorigin, -sprforward), (flip ? -sprright : sprright)/scaleX,
         -sprup/scaleY, (flip ? sv[2] : sv[1]), priority
@@ -580,7 +581,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, const RenderStyleInfo &ri,
     }
     // add shadow
     if (renderShadow) {
-      float Alpha = newri.alpha*r_fake_shadow_translucency.asFloat();
+      float Alpha = ri.alpha*r_fake_shadow_translucency.asFloat();
       if (Alpha >= 0.012f) {
         // check origin (+12 for "floatbob")
         /*if (sprorigin.z+12 >= thing->FloorZ)*/ {
@@ -603,13 +604,12 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, const RenderStyleInfo &ri,
           sv[2] = sprorigin+end+topdelta;
           sv[3] = sprorigin+end+botdelta;
 
-          //RenderStyleInfo newri = ri;
-          newri.alpha = Alpha;
-          newri.hangup = 0x01; // no z writes
-          newri.stencilColor = 0xff000000u; // shadows are black-stenciled
-          newri.translucency = 1; // normal translucenty
-          newri.hangup |= 0x200u; // special flag for sorter
-          QueueTranslucentPoly(nullptr, sv, 4, lump, newri,
+          ri.alpha = Alpha;
+          ri.hangup = 0x01; // no z writes
+          ri.stencilColor = 0xff000000u; // shadows are black-stenciled
+          ri.translucency = RenderStyleInfo::Translucent;
+          ri.hangup |= 0x200u; // special flag for sorter
+          QueueTranslucentPoly(nullptr, sv, 4, lump, ri,
             /*thing->Translation*/0, true/*isSprite*/, -sprforward,
             DotProduct(sprorigin, -sprforward), (flip ? -sprright : sprright)/scaleX,
             -sprup/scaleY, (flip ? sv[2] : sv[1]), priority,
@@ -618,11 +618,11 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, const RenderStyleInfo &ri,
       }
     }
   } else {
-    Drawer->DrawSpritePolygon(sv, /*GTextureManager[lump]*/Tex, newri, /*Alpha+(thing->RenderStyle == STYLE_Dark ? 1666.0f : 0.0f),
-      Additive,*/ GetTranslation(thing->Translation), ColorMap, /*light,
-      Fade,*/ -sprforward, DotProduct(sprorigin, -sprforward),
+    Drawer->DrawSpritePolygon(sv, Tex, ri,
+      GetTranslation(thing->Translation), ColorMap,
+      -sprforward, DotProduct(sprorigin, -sprforward),
       (flip ? -sprright : sprright)/scaleX,
-      -sprup/scaleY, (flip ? sv[2] : sv[1])/*, hangup*/);
+      -sprup/scaleY, (flip ? sv[2] : sv[1]));
   }
 }
 
@@ -806,9 +806,9 @@ void VRenderLevelShared::DrawTranslucentPolys () {
           pofs = 0;
         }
         Drawer->DrawSpritePolygon(spr.Verts, GTextureManager[spr.lump],
-                                  spr.rstyle/*spr.Alpha, spr.Additive*/, GetTranslation(spr.translation),
-                                  ColorMap, /*spr.light, spr.Fade,*/ spr.normal, spr.pdist,
-                                  spr.saxis, spr.taxis, spr.texorg/*, spr.hangup*/);
+                                  spr.rstyle, GetTranslation(spr.translation),
+                                  ColorMap, spr.normal, spr.pdist,
+                                  spr.saxis, spr.taxis, spr.texorg);
       } else {
         // masked polygon
         // non-translucent and non-additive polys should not end up here

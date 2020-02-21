@@ -91,12 +91,20 @@ struct trans_sprite_t;
 
 // used to pass render style parameters
 struct RenderStyleInfo {
+  enum {
+    Subtractive = -1,
+    Normal = 0,
+    Translucent = 1,
+    Additive = 2,
+    DarkTrans = 3, // k8vavoom special
+  };
+
   vuint32 seclight; // not used by hw renderer, but used by high-level renderer
   // hw renderer options
   vuint32 light; // high byte is intensity for colored light; color is multiplied by this
   vuint32 fade;
   vuint32 stencilColor; // if high byte is 0, this is not a stenciled sprite
-  vint32 translucency; // 0: normal; 1: normal translucency; -1: subtractive translucency; 2: additive translucency; 3: translucent-dark (k8vavoom special)
+  vint32 translucency; // see enum above
   float alpha; // should be valid, and non-zero
   //  hangup bits:
   //    0 set: no z-buffer write
@@ -108,6 +116,8 @@ struct RenderStyleInfo {
 
   inline bool isAdditive () const noexcept { return (translucency == 2); }
   inline bool isTranslucent () const noexcept { return (translucency || alpha < 1.0f); }
+  // this is how "shadow" render style is rendered
+  inline bool isShadow () const noexcept { return (translucency == Translucent && stencilColor == 0xff000000u); }
 };
 
 

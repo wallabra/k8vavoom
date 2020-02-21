@@ -553,7 +553,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
               //surfs->drawflags |= surface_t::DF_MASKED;
               RenderStyleInfo ri;
               ri.alpha = alpha;
-              ri.translucency = 1;
+              ri.translucency = RenderStyleInfo::Translucent;
               ri.fade = Fade;
               QueueTranslucentPoly(surfs, surfs->verts, surfs->count, 0,
                 ri,
@@ -624,7 +624,7 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
           } else {
             RenderStyleInfo ri;
             ri.alpha = texinfo->Alpha;
-            ri.translucency = (texinfo->Additive ? 2 : 1);
+            ri.translucency = (texinfo->Additive ? RenderStyleInfo::Additive : RenderStyleInfo::Translucent);
             ri.fade = Fade;
             QueueTranslucentPoly(surfs, surfs->verts, surfs->count, 0,
               ri,

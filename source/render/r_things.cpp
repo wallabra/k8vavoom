@@ -92,81 +92,76 @@ bool VRenderLevelDrawer::CalculateRenderStyleInfo (RenderStyleInfo &ri, int Rend
       return false;
     case STYLE_Normal: // just copy the image to the screen
       ri.stencilColor = 0u;
-      ri.translucency = 0;
+      ri.translucency = RenderStyleInfo::Normal;
       ri.alpha = 1.0f;
       return true;
     case STYLE_Fuzzy: // draw silhouette using "fuzz" effect
       ri.stencilColor = 0u;
-      ri.translucency = 1;
+      ri.translucency = RenderStyleInfo::Translucent;
       ri.alpha = FUZZY_ALPHA;
-      return true;
+      break;
     case STYLE_SoulTrans: // draw translucent with amount in r_transsouls
       ri.stencilColor = 0u;
-      ri.translucency = 1;
+      ri.translucency = RenderStyleInfo::Translucent;
       ri.alpha = r_transsouls.asFloat();
       break;
     case STYLE_OptFuzzy: // draw as fuzzy or translucent, based on user preference
       ri.stencilColor = 0u;
-      ri.translucency = 1;
-      if (r_drawfuzz) {
-        ri.alpha = FUZZY_ALPHA;
-      } else {
-        ri.alpha = a;
-      }
+      ri.translucency = RenderStyleInfo::Translucent;
+      ri.alpha = (r_drawfuzz ? FUZZY_ALPHA : a);
       break;
     case STYLE_Stencil: // solid color
     case STYLE_TranslucentStencil: // seems to be the same as stencil anyway
       ri.stencilColor = (vuint32)StencilColor|0xff000000u;
-      ri.translucency = 1;
-      ri.alpha = a;
-      break;
+      ri.translucency = RenderStyleInfo::Translucent;
+      ri.alpha = min2(1.0f, a);
+      return true;
     case STYLE_Translucent: // draw translucent
       ri.stencilColor = 0u;
-      ri.translucency = 1;
+      ri.translucency = RenderStyleInfo::Translucent;
       ri.alpha = a;
       break;
     case STYLE_Add: // draw additive
       ri.stencilColor = 0u;
-      ri.translucency = 2;
+      ri.translucency = RenderStyleInfo::Additive;
       ri.alpha = min2(1.0f, a);
       return true;
     case STYLE_Shaded: // treats 8-bit indexed images as an alpha map. Index 0 = fully transparent, index 255 = fully opaque. This is how decals are drawn. Use StencilColor property to colorize the resulting sprite.
       // not implemented
       ri.stencilColor = 0u;
-      ri.translucency = 1;
+      ri.translucency = RenderStyleInfo::Translucent;
       ri.alpha = a;
       break;
     case STYLE_Shadow:
       ri.stencilColor = 0xff000000u;
-      //ri.stencilColor = 0xffff0000u;
-      ri.translucency = 1;
+      ri.translucency = RenderStyleInfo::Translucent;
       ri.alpha = 0.4f; // was 0.3f
       return true;
     case STYLE_Subtract:
       ri.stencilColor = 0u;
-      ri.translucency = -1;
+      ri.translucency = RenderStyleInfo::Subtractive;
       ri.alpha = min2(1.0f, a);
       return true;
     case STYLE_AddStencil:
       ri.stencilColor = (vuint32)StencilColor|0xff000000u;
-      ri.translucency = 2;
+      ri.translucency = RenderStyleInfo::Additive;
       ri.alpha = min2(1.0f, a);
       return true;
     case STYLE_AddShaded: // treats 8-bit indexed images as an alpha map. Index 0 = fully transparent, index 255 = fully opaque. This is how decals are drawn. Use StencilColor property to colorize the resulting sprite.
       // not implemented
       ri.stencilColor = 0u;
-      ri.translucency = 2;
+      ri.translucency = RenderStyleInfo::Additive;
       ri.alpha = min2(1.0f, a);
       return true;
     case STYLE_Dark:
       ri.stencilColor = 0u;
-      ri.translucency = 3;
+      ri.translucency = RenderStyleInfo::DarkTrans;
       ri.alpha = min2(1.0f, a);
       return true;
     default: // translucent (will be converted to normal if necessary)
       GCon->Logf(NAME_Error, "unknown render style %d", RenderStyle);
       ri.stencilColor = 0u;
-      ri.translucency = 1;
+      ri.translucency = RenderStyleInfo::Translucent;
       ri.alpha = a;
       break;
   }
@@ -177,8 +172,6 @@ bool VRenderLevelDrawer::CalculateRenderStyleInfo (RenderStyleInfo &ri, int Rend
   }
   return true;
 }
-
-
 
 
 //==========================================================================

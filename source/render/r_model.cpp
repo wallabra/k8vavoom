@@ -1926,7 +1926,7 @@ bool R_DrawStateModelFrame (VState *State, VState *NextState, float Inter,
   ri.light = 0xffffffffu;
   ri.fade = 0;
   ri.alpha = 1.0f;
-  ri.translucency = 0;
+  ri.translucency = RenderStyleInfo::Normal;
   DrawModel(nullptr, nullptr, Origin, Angles, 1.0f, 1.0f, *Cls, FIdx, NFIdx, nullptr, 0, 0,
     ri, //0xffffffff, 0, 1.0f, false,
     false, InterpFrac, Interpolate, TVec(), 0, RPASS_Normal, true); // force draw
@@ -1970,7 +1970,7 @@ void R_DrawLightBulb (const TVec &Org, const TAVec &Angles, vuint32 rgbLight, ER
   ri.light = rgbLight;
   ri.fade = 0;
   ri.alpha = 1.0f;
-  ri.translucency = 0;
+  ri.translucency = RenderStyleInfo::Normal;
 
   DrawModel(nullptr, nullptr, Org, Angles, ScaleX, ScaleY, *Cls, FIdx, FIdx, nullptr/*translation*/,
     0/*colormap*/, 0/*version*/, ri, false/*isviewmodel*/,

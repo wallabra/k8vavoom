@@ -697,7 +697,7 @@ protected:
                              bool isSprite, const TVec &normal, float pdist,
                              const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority=0,
                              bool useSprOrigin=false, const TVec &sprOrigin=TVec(), vuint32 objid=0);
-  void QueueSprite (VEntity *thing, const RenderStyleInfo &ri, bool onlyShadow=false);
+  void QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool onlyShadow=false); // this can modify `ri`!
   void QueueTranslucentAliasModel (VEntity *mobj, const RenderStyleInfo &ri, float TimeFrac);
   bool RenderAliasModel (VEntity *mobj, const RenderStyleInfo &ri, ERenderPass Pass);
   void RenderThing (VEntity *, ERenderPass);
