@@ -29,7 +29,8 @@
     <!-- Collision and physics -->
     <prop_float name="Radius" property="Radius" />
     <prop_float name="Height" property="Height" />
-    <prop_float name="VanillaHeight" property="VanillaHeight" />
+    <!-- Defines the height of the actor for the purposes of allowing projectiles to pass through. If this is 0, the actor's height is used. If the value is positive, projectiles over this height will pass through the actor. If the value is negative, the absolute value will be used if the associated compatibility option is turned on. -->
+    <prop_float name="ProjectilePassHeight" property="VanillaHeight" />
     <prop_float name="DeathHeight" property="DeathHeight" />
     <prop_float name="BurnHeight" property="BurnHeight" />
     <prop_float name="CameraHeight" property="CameraHeight" />
@@ -43,7 +44,6 @@
     <prop_int name="BounceCount" property="BounceCount" />
     <prop_name name="BounceSound" property="BounceSound" />
     <prop_float name="ProjectileKickback" property="ProjectileKickback" />
-    <prop_int_unsupported name="ProjectilePassHeight" warning="true" />
     <prop_int_unsupported name="WeaveIndexXY" warning="true" />
     <prop_int_unsupported name="WeaveIndexZ" warning="true" />
     <!-- Sound -->
