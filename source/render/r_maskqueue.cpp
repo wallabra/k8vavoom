@@ -115,13 +115,13 @@ extern "C" {
 //
 //==========================================================================
 void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, TVec *sv,
-  int count, int lump, float Alpha, bool Additive, int translation,
-  bool isSprite, vuint32 light, vuint32 Fade, const TVec &normal, float pdist,
+  int count, int lump, const RenderStyleInfo &ri/*float Alpha, bool Additive*/, int translation,
+  bool isSprite, /*vuint32 light, vuint32 Fade,*/ const TVec &normal, float pdist,
   const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority,
-  bool useSprOrigin, const TVec &sprOrigin, vuint32 objid, int hangup)
+  bool useSprOrigin, const TVec &sprOrigin, vuint32 objid/*, int hangup*/)
 {
   vassert(count >= 0);
-  if (count == 0 || Alpha < 0.01f) return;
+  if (count == 0 || ri.alpha < 0.004f) return;
 
   float dist;
   if (useSprOrigin) {
@@ -158,16 +158,17 @@ void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, TVec *sv,
   spr.taxis = taxis;
   spr.texorg = texorg;
   spr.surf = surf;
-  spr.Alpha = Alpha;
-  spr.Additive = Additive;
+  //spr.Alpha = Alpha;
+  //spr.Additive = Additive;
   spr.translation = translation;
   spr.type = (isSprite ? 1 : 0);
-  spr.light = light;
+  //spr.light = light;
   spr.objid = objid;
-  spr.hangup = hangup;
-  spr.Fade = Fade;
+  //spr.hangup = hangup;
+  //spr.Fade = Fade;
   spr.prio = priority;
   //spr.origin = sprOrigin;
+  spr.rstyle = ri;
 }
 
 
@@ -176,7 +177,7 @@ void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, TVec *sv,
 //  VRenderLevelShared::QueueTranslucentAliasModel
 //
 //==========================================================================
-void VRenderLevelShared::QueueTranslucentAliasModel (VEntity *mobj, vuint32 light, vuint32 Fade, float Alpha, bool Additive, float TimeFrac) {
+void VRenderLevelShared::QueueTranslucentAliasModel (VEntity *mobj, const RenderStyleInfo &ri/*vuint32 light, vuint32 Fade, float Alpha, bool Additive*/, float TimeFrac) {
   if (!mobj) return; // just in case
 
   //const float dist = fabsf(DotProduct(mobj->Origin-Drawer->vieworg, Drawer->viewforward));
@@ -185,17 +186,18 @@ void VRenderLevelShared::QueueTranslucentAliasModel (VEntity *mobj, vuint32 ligh
   //trans_sprite_t &spr = trans_sprites[traspUsed++];
   trans_sprite_t &spr = GetCurrentDLS().DrawSpriteList.alloc();
   spr.Ent = mobj;
-  spr.light = light;
-  spr.Fade = Fade;
-  spr.Alpha = Alpha;
-  spr.Additive = Additive;
+  //spr.light = light;
+  //spr.Fade = Fade;
+  //spr.Alpha = Alpha;
+  //spr.Additive = Additive;
+  spr.rstyle = ri;
   spr.dist = dist;
   spr.type = 2;
   spr.TimeFrac = TimeFrac;
   spr.lump = -1; // has no sense
   spr.objid = mobj->GetUniqueId();
   spr.prio = 0; // normal priority
-  spr.hangup = 0;
+  //spr.hangup = 0;
   //spr.origin = mobj->Origin;
 }
 
@@ -204,15 +206,19 @@ void VRenderLevelShared::QueueTranslucentAliasModel (VEntity *mobj, vuint32 ligh
 //
 //  VRenderLevelShared::QueueSprite
 //
+//  this uses `seclight` from ri
+//
 //==========================================================================
+/*
 void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fade, float Alpha, bool Additive,
                                       vuint32 seclight, bool onlyShadow)
-{
-  const int spr_type = thing->SpriteType;
+*/
+void VRenderLevelShared::QueueSprite (VEntity *thing, const RenderStyleInfo &ri, bool onlyShadow) {
+  const int sprtype = thing->SpriteType;
   TVec sprorigin = thing->GetDrawOrigin();
 
   bool renderShadow =
-    spr_type == SPR_VP_PARALLEL_UPRIGHT &&
+    sprtype == SPR_VP_PARALLEL_UPRIGHT &&
     r_fake_sprite_shadows.asBool() &&
     r_sort_sprites.asBool() &&
     (r_fake_shadow_scale.asFloat() > 0.0f);
@@ -222,7 +228,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
       // don't draw camera actor shadow (just in case, it should not come here anyway)
       renderShadow = false;
     }
-    if (renderShadow && Additive) {
+    if (renderShadow && ri.isAdditive()) {
       if (thing->IsMissile()) {
         renderShadow = (r_fake_shadows_missiles.asBool() && r_fake_shadows_additive_missiles.asBool());
       } else if (thing->IsMonster()) {
@@ -259,26 +265,54 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
 
   if (onlyShadow && !renderShadow) return;
 
+  spritedef_t *sprdef;
+  spriteframe_t *sprframe;
+
+  int SpriteIndex = thing->GetEffectiveSpriteIndex();
+  int FrameIndex = thing->GetEffectiveSpriteFrame();
+  if (thing->FixedSpriteName != NAME_None) SpriteIndex = VClass::FindSprite(thing->FixedSpriteName);
+
+  // decide which patch to use for sprite relative to player
+  if ((unsigned)SpriteIndex >= (unsigned)sprites.length()) {
+    #ifdef PARANOID
+    GCon->Logf(NAME_Dev, "Invalid sprite number %d", SpriteIndex);
+    #endif
+    return;
+  }
+
+  sprdef = &sprites.ptr()[SpriteIndex];
+  if (FrameIndex >= sprdef->numframes) {
+    #ifdef PARANOID
+    GCon->Logf(NAME_Dev, "Invalid sprite frame %d : %d", SpriteIndex, FrameIndex);
+    #endif
+    return;
+  }
+
+  sprframe = &sprdef->spriteframes[FrameIndex];
+
+  //if (r_brightmaps && r_brightmaps_sprite && Tex->Brightmap && Tex->Brightmap->nofullbright) light = seclight; // disable fullbright
+  RenderStyleInfo newri = ri;
+
+
   TVec sprforward(0, 0, 0);
   TVec sprright(0, 0, 0);
   TVec sprup(0, 0, 0);
 
   // HACK: if sprite is additive, move is slightly closer to view
   // this is mostly for things like light flares
-  if (Additive) sprorigin -= Drawer->viewforward*0.2f;
+  if (newri.isAdditive()) sprorigin -= Drawer->viewforward*0.2f;
 
   float dot;
   TVec tvec(0, 0, 0);
   float sr;
   float cr;
-  int hangup = 0;
+  //int hangup = 0;
   //FIXME: is this right?
   // this also disables shadow
-  const bool ignoreSpriteFix = (spr_type != SPR_VP_PARALLEL_UPRIGHT);
+  const bool ignoreSpriteFix = (sprtype != SPR_VP_PARALLEL_UPRIGHT);
   if (ignoreSpriteFix) renderShadow = false;
 
-  //spr_type = SPR_ORIENTED;
-  switch (spr_type) {
+  switch (sprtype) {
     case SPR_VP_PARALLEL_UPRIGHT:
       // Generate the sprite's axes, with sprup straight up in worldspace,
       // and sprright parallel to the viewplane. This will not work if the
@@ -325,7 +359,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
     case SPR_ORIENTED_OFS:
       // generate the sprite's axes, according to the sprite's world orientation
       AngleVectors(thing->/*Angles*/GetSpriteDrawAngles(), sprforward, sprright, sprup);
-      if (spr_type != SPR_ORIENTED) hangup = 3; // no z writes, offset
+      if (sprtype != SPR_ORIENTED) newri.hangup |= 0x103u; // no z writes, offset, special flag
       break;
 
     case SPR_VP_PARALLEL_ORIENTED:
@@ -350,18 +384,17 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
       // up or down, because the cross product will be between two nearly
       // parallel vectors and starts to approach an undefined state, so we
       // don't draw if the two vectors are less than 1 degree apart
-      dot = Drawer->viewforward.z;  //  same as DotProduct(viewforward, sprup), because sprup is 0, 0, 1
-      if ((dot > 0.999848f) || (dot < -0.999848f))  // cos(1 degree) = 0.999848f
-        return;
+      dot = Drawer->viewforward.z; // same as DotProduct(viewforward, sprup), because sprup is 0, 0, 1
+      if (dot > 0.999848f || dot < -0.999848f) return; // cos(1 degree) = 0.999848f
 
       sr = msin(thing->Angles.roll);
       cr = mcos(thing->Angles.roll);
 
-      //  CrossProduct(TVec(0, 0, 1), Drawer->viewforward)
+      // CrossProduct(TVec(0, 0, 1), Drawer->viewforward)
       tvec = Normalise(TVec(Drawer->viewforward.y, -Drawer->viewforward.x, 0));
-      //  CrossProduct(tvec, TVec(0, 0, 1))
+      // CrossProduct(tvec, TVec(0, 0, 1))
       sprforward = TVec(-tvec.y, tvec.x, 0);
-      //  Rotate
+      // Rotate
       sprright = TVec(tvec.x*cr, tvec.y*cr, tvec.z*cr+sr);
       sprup = TVec(tvec.x*(-sr), tvec.y*(-sr), tvec.z*(-sr)+cr);
       break;
@@ -375,7 +408,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
         angs.roll = AngleMod(angs.roll+180.0f);
         // generate the sprite's axes, according to the sprite's world orientation
         AngleVectors(angs, sprforward, sprright, sprup);
-        hangup = 7; // no z writes, offset, no cull
+        newri.hangup |= 0x107u; // no z writes, offset, no cull, special flag
       }
       break;
 
@@ -389,38 +422,13 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
         angs.yaw = AngleMod(angs.yaw+180.0f);
         // generate the sprite's axes, according to the sprite's world orientation
         AngleVectors(angs, sprforward, sprright, sprup);
-        hangup = 7; // no z writes, offset, no cull
+        newri.hangup |= 0x107u; // no z writes, offset, no cull, special flag
       }
       break;
 
     default:
-      Sys_Error("QueueSprite: Bad sprite type %d", spr_type);
+      Sys_Error("QueueSprite: Bad sprite type %d", sprtype);
   }
-
-  spritedef_t *sprdef;
-  spriteframe_t *sprframe;
-
-  int SpriteIndex = thing->GetEffectiveSpriteIndex();
-  int FrameIndex = thing->GetEffectiveSpriteFrame();
-  if (thing->FixedSpriteName != NAME_None) SpriteIndex = VClass::FindSprite(thing->FixedSpriteName);
-
-  // decide which patch to use for sprite relative to player
-  if ((unsigned)SpriteIndex >= (unsigned)sprites.length()) {
-    #ifdef PARANOID
-    GCon->Logf(NAME_Dev, "Invalid sprite number %d", SpriteIndex);
-    #endif
-    return;
-  }
-
-  sprdef = &sprites.ptr()[SpriteIndex];
-  if (FrameIndex >= sprdef->numframes) {
-    #ifdef PARANOID
-    GCon->Logf(NAME_Dev, "Invalid sprite frame %d : %d", SpriteIndex, FrameIndex);
-    #endif
-    return;
-  }
-
-  sprframe = &sprdef->spriteframes[FrameIndex];
 
   int lump;
   bool flip;
@@ -471,8 +479,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
   VTexture *Tex = GTextureManager[lump];
   if (!Tex || Tex->Type == TEXTYPE_Null) return; // just in case
 
-  //if (r_brightmaps && r_brightmaps_sprite && Tex->Brightmap && Tex->Brightmap->nofullbright) light = seclight; // disable fullbright
-  if (r_brightmaps && r_brightmaps_sprite && Tex->nofullbright) light = seclight; // disable fullbright
+  if (r_brightmaps && r_brightmaps_sprite && Tex->nofullbright) newri.light = newri.seclight; // disable fullbright
 
   int fixAlgo = (ignoreSpriteFix ? 0 : r_fix_sprite_offsets.asInt());
   if (fixAlgo < 0 || thing->IsFloatBob()) fixAlgo = 0; // just in case
@@ -567,9 +574,9 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
 
   //if (Fade != FADE_LIGHT) GCon->Logf("<%s>: Fade=0x%08x", *thing->GetClass()->GetFullName(), Fade);
 
-  if (Alpha >= 1.0f && !Additive && Tex->isTranslucent()) Alpha = 0.9999f;
+  //if (!newri.isTranslucent() && Tex->isTranslucent()) Alpha = 0.9999f;
 
-  if (Alpha < 1.0f || Additive || r_sort_sprites) {
+  if (newri.isTranslucent() || r_sort_sprites || Tex->isTranslucent()) {
     // add sprite
     int priority = 0;
     if (thing) {
@@ -580,15 +587,15 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
       else if (thing->EntityFlags&VEntity::EF_NoBlockmap) priority = -200;
     }
     if (!onlyShadow) {
-      QueueTranslucentPoly(nullptr, sv, 4, lump, Alpha+(thing->RenderStyle == STYLE_Dark ? 1666.0f : 0.0f), Additive,
-        thing->Translation, true/*isSprite*/, light, Fade, -sprforward,
+      QueueTranslucentPoly(nullptr, sv, 4, lump, newri, /*Alpha+(thing->RenderStyle == STYLE_Dark ? 1666.0f : 0.0f), Additive,*/
+        thing->Translation, true/*isSprite*/, /*light, Fade,*/ -sprforward,
         DotProduct(sprorigin, -sprforward), (flip ? -sprright : sprright)/scaleX,
         -sprup/scaleY, (flip ? sv[2] : sv[1]), priority
-        , true, /*sprorigin*/thing->Origin, thing->GetUniqueId(), hangup);
+        , true, /*sprorigin*/thing->Origin, thing->GetUniqueId()/*, hangup*/);
     }
     // add shadow
     if (renderShadow) {
-      Alpha *= r_fake_shadow_translucency.asFloat();
+      float Alpha = newri.alpha*r_fake_shadow_translucency.asFloat();
       if (Alpha >= 0.012f) {
         // check origin (+12 for "floatbob")
         /*if (sprorigin.z+12 >= thing->FloorZ)*/ {
@@ -611,20 +618,27 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fad
           sv[2] = sprorigin+end+topdelta;
           sv[3] = sprorigin+end+botdelta;
 
-          QueueTranslucentPoly(nullptr, sv, 4, lump, Alpha, /*Additive*/false,
-            /*thing->Translation*/0, true/*isSprite*/, light, Fade, -sprforward,
+          //RenderStyleInfo newri = ri;
+          newri.alpha = Alpha;
+          newri.hangup = 0x01; // no z writes
+          newri.stencilColor = 0xff000000u; // shadows are black-stenciled
+          newri.translucency = 1; // normal translucenty
+          newri.hangup |= 0x200u; // special flag for sorter
+          QueueTranslucentPoly(nullptr, sv, 4, lump, newri,
+            //Alpha, /*Additive*/false,
+            /*thing->Translation*/0, true/*isSprite*/, /*light, Fade,*/ -sprforward,
             DotProduct(sprorigin, -sprforward), (flip ? -sprright : sprright)/scaleX,
-            -sprup/scaleY, (flip ? sv[2] : sv[1]), priority
-            , true, /*sprorigin*/thing->Origin, thing->GetUniqueId(), 666/*fakeshadow type*/);
+            -sprup/scaleY, (flip ? sv[2] : sv[1]), priority,
+            true, /*sprorigin*/thing->Origin, thing->GetUniqueId()/*, 666 fakeshadow type*/);
         }
       }
     }
   } else {
-    Drawer->DrawSpritePolygon(sv, /*GTextureManager[lump]*/Tex, Alpha+(thing->RenderStyle == STYLE_Dark ? 1666.0f : 0.0f),
-      Additive, GetTranslation(thing->Translation), ColorMap, light,
-      Fade, -sprforward, DotProduct(sprorigin, -sprforward),
+    Drawer->DrawSpritePolygon(sv, /*GTextureManager[lump]*/Tex, newri, /*Alpha+(thing->RenderStyle == STYLE_Dark ? 1666.0f : 0.0f),
+      Additive,*/ GetTranslation(thing->Translation), ColorMap, /*light,
+      Fade,*/ -sprforward, DotProduct(sprorigin, -sprforward),
       (flip ? -sprright : sprright)/scaleX,
-      -sprup/scaleY, (flip ? sv[2] : sv[1]), hangup);
+      -sprup/scaleY, (flip ? sv[2] : sv[1])/*, hangup*/);
   }
 }
 
@@ -640,9 +654,30 @@ extern "C" {
     const VRenderLevelShared::trans_sprite_t *ta = (const VRenderLevelShared::trans_sprite_t *)a;
     const VRenderLevelShared::trans_sprite_t *tb = (const VRenderLevelShared::trans_sprite_t *)b;
 
-    const int tahang = ta->hangup;
-    const int tbhang = tb->hangup;
+    const unsigned tahang = ta->rstyle.hangup;
+    const unsigned tbhang = tb->rstyle.hangup;
 
+    // fake sprite shadows comes first
+    if ((tahang|tbhang)&0x200u) {
+      // if both hangups has that bit set, the result of xoring will be 0
+      if ((tahang^tbhang)&0x200u) {
+        // onle one is fake shadow
+        return (tahang&0x200u ? -1/*a is shadow, b is not, (a < b) */ : 1/*a is not shadow, b is shadow, (a > b)*/);
+      }
+      // do normal checks
+    }
+
+    // "special hangup" sprites comes before other sprites
+    if ((tahang|tbhang)&0x100u) {
+      // if both hangups has that bit set, the result of xoring will be 0
+      if ((tahang^tbhang)&0x100u) {
+        // onle one is fake shadow
+        return (tahang&0x100u ? -1/*a is special, b is not, (a < b) */ : 1/*a is not special, b is special, (a > b)*/);
+      }
+      // do normal checks
+    }
+
+    /*
     // "hangup" sprites comes before other sprites
     if (tahang == -1 || tbhang == -1) {
       if (tahang == -1 && tbhang == -1) {
@@ -668,13 +703,14 @@ extern "C" {
         return 1;
       }
     }
+    */
 
     // non-translucent objects should come first
     bool didDistanceCheck = false;
 
     // translucent/additive
-    const bool aTrans = (ta->Additive || ta->Alpha < 1.0f);
-    const bool bTrans = (tb->Additive || tb->Alpha < 1.0f);
+    const bool aTrans = ta->rstyle.isTranslucent();
+    const bool bTrans = tb->rstyle.isTranslucent();
 
     if (aTrans && bTrans) {
       // both translucent, sort by distance to view origin (nearest last)
@@ -763,7 +799,7 @@ void VRenderLevelShared::DrawTranslucentPolys () {
       if (spr.type == 2) {
         // alias model
         if (pofsEnabled) { Drawer->GLDisableOffset(); pofsEnabled = false; }
-        DrawEntityModel(spr.Ent, spr.light, spr.Fade, spr.Alpha, spr.Additive, spr.TimeFrac, RPASS_Normal);
+        DrawEntityModel(spr.Ent, spr.rstyle/*spr.light, spr.Fade, spr.Alpha, spr.Additive*/, spr.TimeFrac, RPASS_Normal);
       } else if (spr.type) {
         // sprite
         if (r_sort_sprites && r_sprite_use_pofs && (firstSprite || lastpdist == spr.pdist)) {
@@ -786,15 +822,15 @@ void VRenderLevelShared::DrawTranslucentPolys () {
           pofs = 0;
         }
         Drawer->DrawSpritePolygon(spr.Verts, GTextureManager[spr.lump],
-                                  spr.Alpha, spr.Additive, GetTranslation(spr.translation),
-                                  ColorMap, spr.light, spr.Fade, spr.normal, spr.pdist,
-                                  spr.saxis, spr.taxis, spr.texorg, spr.hangup);
+                                  spr.rstyle/*spr.Alpha, spr.Additive*/, GetTranslation(spr.translation),
+                                  ColorMap, /*spr.light, spr.Fade,*/ spr.normal, spr.pdist,
+                                  spr.saxis, spr.taxis, spr.texorg/*, spr.hangup*/);
       } else {
         // masked polygon
         // non-translucent and non-additive polys should not end up here
         vassert(spr.surf);
         if (pofsEnabled) { Drawer->GLDisableOffset(); pofsEnabled = false; }
-        Drawer->DrawMaskedPolygon(spr.surf, spr.Alpha, spr.Additive);
+        Drawer->DrawMaskedPolygon(spr.surf, spr.rstyle.alpha, spr.rstyle.isAdditive());
       }
     }
 #undef MAX_POFS

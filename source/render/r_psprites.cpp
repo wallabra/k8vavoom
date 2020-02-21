@@ -68,16 +68,18 @@ static bool showPSpriteWarnings () { return (cli_WAll > 0 || cli_WarnSprites > 0
 //  VRenderLevelShared::RenderPSprite
 //
 //==========================================================================
+/*
 void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameInfo &mfi,
   float PSP_DIST, vuint32 light, vuint32 Fade, float Alpha, bool Additive)
-{
+*/
+void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameInfo &mfi, float PSP_DIST, const RenderStyleInfo &ri) {
   spritedef_t *sprdef;
   spriteframe_t *sprframe;
   int lump;
   bool flip;
 
-  if (Alpha <= 0.0002f) return; // no reason to render it, it is invisible
-  if (Alpha > 1.0f) Alpha = 1.0f;
+  if (ri.alpha < 0.004f) return; // no reason to render it, it is invisible
+  //if (ri.alpha > 1.0f) ri.alpha = 1.0f;
 
   // decide which patch to use
   if ((unsigned)mfi.spriteIndex/*VSt->State->SpriteIndex*/ >= (unsigned)sprites.length()) {
@@ -184,9 +186,9 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
   saxis *= scaleX;
   taxis *= scaleY;
 
-  Drawer->DrawSpritePolygon(dv, GTextureManager[lump], Alpha, Additive,
-    nullptr, ColorMap, light, Fade, -Drawer->viewforward,
-    DotProduct(dv[0], -Drawer->viewforward), saxis, taxis, texorg, false);
+  Drawer->DrawSpritePolygon(dv, GTextureManager[lump], ri, /*Alpha, Additive,*/
+    nullptr, ColorMap, /*light, Fade,*/ -Drawer->viewforward,
+    DotProduct(dv[0], -Drawer->viewforward), saxis, taxis, texorg);
 }
 
 
@@ -197,9 +199,7 @@ void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameI
 //  FIXME: this doesn't work with "----" and "####" view states
 //
 //==========================================================================
-bool VRenderLevelShared::RenderViewModel (VViewState *VSt, vuint32 light,
-                                          vuint32 Fade, float Alpha, bool Additive)
-{
+bool VRenderLevelShared::RenderViewModel (VViewState *VSt, const RenderStyleInfo &ri) {
   if (!r_models_view) return false;
   if (!R_HaveClassModelByName(VSt->State->Outer->Name)) return false;
 
@@ -231,7 +231,7 @@ bool VRenderLevelShared::RenderViewModel (VViewState *VSt, vuint32 light,
 
   const bool res = DrawAliasModel(nullptr, VSt->State->Outer->Name, origin, cl->ViewAngles, 1.0f, 1.0f,
     VSt->State->getMFI(), (VSt->State->NextState ? VSt->State->NextState->getMFI() : VSt->State->getMFI()),
-    nullptr, 0, light, Fade, Alpha, Additive, true, TimeFrac, r_interpolate_frames,
+    nullptr, 0, ri.light, ri.fade, ri.alpha, ri.isAdditive(), true, TimeFrac, r_interpolate_frames,
     RPASS_Normal);
 
   if (restoreFOV) {
@@ -255,8 +255,11 @@ void VRenderLevelShared::DrawPlayerSprites () {
 
   int RendStyle = STYLE_Normal;
   float Alpha = 1.0f;
-
   cl->MO->eventGetViewEntRenderParams(Alpha, RendStyle);
+
+  RenderStyleInfo ri;
+  if (!CalculateRenderStyleInfo(ri, RendStyle, Alpha)) return;
+  /*
   RendStyle = CoerceRenderStyle(RendStyle);
   bool Additive = IsAdditiveStyle(RendStyle);
 
@@ -276,6 +279,7 @@ void VRenderLevelShared::DrawPlayerSprites () {
   //Alpha = midval(0.0f, Alpha, 1.0f);
   if (Alpha <= 0.002f) return; // no reason to render it, it is invisible
   if (Alpha > 1.0f) Alpha = 1.0f;
+  */
 
   int ltxr = 0, ltxg = 0, ltxb = 0;
   {
@@ -326,11 +330,15 @@ void VRenderLevelShared::DrawPlayerSprites () {
     }
 
     //FIXME: fake "solid color" with colored light for now
+    /*
     if (RendStyle == STYLE_Stencil || RendStyle == STYLE_AddStencil) {
       light = (light&0xff000000u)|(cl->MO->StencilColor&0xffffffu);
     }
 
     vuint32 Fade = GetFade(SV_PointRegionLight(r_viewleaf->sector, cl->ViewOrg));
+    */
+    ri.light = ri.seclight = light;
+    ri.fade = GetFade(SV_PointRegionLight(r_viewleaf->sector, cl->ViewOrg));
 
     const float currSX = cl->ViewStates[i].SX;
     const float currSY = cl->ViewStates[i].SY;
@@ -369,8 +377,8 @@ void VRenderLevelShared::DrawPlayerSprites () {
     cl->ViewStates[i].SX += cl->ViewStates[i].BobOfsX;
     cl->ViewStates[i].SY += cl->ViewStates[i].OfsY+cl->ViewStates[i].BobOfsY;
 
-    if (!RenderViewModel(&cl->ViewStates[i], light, Fade, Alpha, Additive)) {
-      RenderPSprite(&cl->ViewStates[i], cl->getMFI(i), 3-i, light, Fade, Alpha, Additive);
+    if (!RenderViewModel(&cl->ViewStates[i], ri)) {
+      RenderPSprite(&cl->ViewStates[i], cl->getMFI(i), 3-i, ri);
     }
 
     cl->ViewStates[i].SX = currSX;

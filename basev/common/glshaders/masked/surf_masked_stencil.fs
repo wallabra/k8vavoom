@@ -3,6 +3,7 @@ $include "common/common.inc"
 
 uniform sampler2D Texture;
 uniform vec4 Light;
+uniform vec3 StencilColor;
 uniform float AlphaRef;
 
 $include "common/fog_vars.fs"
@@ -20,9 +21,10 @@ void main () {
 
   // black-stencil it
   vec4 FinalColor;
-  FinalColor.a = clamp(TexColor.a*lt.a, 0.0, 1.0);
-  FinalColor.rgb = vec3(0.0, 0.0, 0.0);
+  FinalColor.a = TexColor.a*lt.a;
+  //FinalColor.rgb *= lt.rgb;
+  FinalColor.rgb = StencilColor.rgb;
   $include "common/fog_calc.fs"
 
-  gl_FragColor = clamp(FinalColor, 0.0, 1.0);
+  gl_FragColor = FinalColor;
 }

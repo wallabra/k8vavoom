@@ -551,9 +551,15 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
             if (surfs->plvisible) {
               //GCon->Logf(NAME_Debug, "  SURF! norm=(%g,%g,%g); alpha=%g", surfs->plane.normal.x, surfs->plane.normal.y, surfs->plane.normal.z, SkyBox->GetSkyBoxPlaneAlpha());
               //surfs->drawflags |= surface_t::DF_MASKED;
-              QueueTranslucentPoly(surfs, surfs->verts, surfs->count,
-                0, alpha, false,
-                0, false, 0, Fade,
+              RenderStyleInfo ri;
+              ri.alpha = alpha;
+              ri.translucency = 1;
+              ri.fade = Fade;
+              QueueTranslucentPoly(surfs, surfs->verts, surfs->count, 0,
+                ri,
+                //alpha, false, // alpha, additive
+                0, false,
+                //0, Fade, // light, fade
                 TVec(), 0, TVec(), TVec(), TVec());
             }
           }
@@ -616,8 +622,15 @@ void VRenderLevelShared::DrawSurfaces (subsector_t *sub, sec_region_t *secregion
             //GCon->Logf(NAME_Debug, "***: add=%d(%d); PortalLevel=%d", (int)texinfo->Additive, (int)surfs->texinfo->Additive, PortalLevel);
             if (texinfo->Additive) GetCurrentDLS().DrawSurfListAdditive.append(surfs); else GetCurrentDLS().DrawSurfListAlpha.append(surfs);
           } else {
-            QueueTranslucentPoly(surfs, surfs->verts, surfs->count,
-              0, texinfo->Alpha, texinfo->Additive, 0, false, 0, Fade,
+            RenderStyleInfo ri;
+            ri.alpha = texinfo->Alpha;
+            ri.translucency = (texinfo->Additive ? 2 : 1);
+            ri.fade = Fade;
+            QueueTranslucentPoly(surfs, surfs->verts, surfs->count, 0,
+              ri,
+              //texinfo->Alpha, texinfo->Additive,
+              0, false,
+              //0, Fade, // light, fade
               TVec(), 0, TVec(), TVec(), TVec());
           }
         }

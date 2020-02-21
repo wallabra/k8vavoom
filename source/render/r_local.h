@@ -676,7 +676,8 @@ protected:
     const VAliasModelFrameInfo &Frame, const VAliasModelFrameInfo &NextFrame,
     VTextureTranslation *, int, vuint32, vuint32, float, bool,
     bool, float, bool, ERenderPass);
-  bool DrawEntityModel (VEntity *, vuint32, vuint32, float, bool, float, ERenderPass);
+  //bool DrawEntityModel (VEntity *, vuint32, vuint32, float, bool, float, ERenderPass);
+  bool DrawEntityModel (VEntity *Ent, const RenderStyleInfo &ri, float Inter, ERenderPass Pass);
   bool CheckAliasModelFrame (VEntity *Ent, float Inter);
   bool HasEntityAliasModel (VEntity *Ent) const;
   static bool IsAliasModelAllowedFor (VEntity *Ent);
@@ -684,19 +685,25 @@ protected:
 
   // things
   void QueueTranslucentPoly (surface_t *surf, TVec *sv, int count, int lump,
-                             float Alpha, bool Additive, int translation,
-                             bool isSprite, vuint32 light, vuint32 Fade, const TVec &normal, float pdist,
+                             const RenderStyleInfo &ri,
+                             /*float Alpha, bool Additive,*/ int translation,
+                             bool isSprite, /*vuint32 light, vuint32 Fade,*/ const TVec &normal, float pdist,
                              const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority=0,
-                             bool useSprOrigin=false, const TVec &sprOrigin=TVec(), vuint32 objid=0,
-                             int hangup=0);
-  void QueueSprite (VEntity *thing, vuint32 light, vuint32 Fade, float Alpha, bool Additive, vuint32 seclight, bool onlyShadow=false);
-  void QueueTranslucentAliasModel (VEntity *mobj, vuint32 light, vuint32 Fade, float Alpha, bool Additive, float TimeFrac);
-  bool RenderAliasModel (VEntity *, vuint32, vuint32, float, bool, ERenderPass);
+                             bool useSprOrigin=false, const TVec &sprOrigin=TVec(), vuint32 objid=0/*,
+                             int hangup=0*/);
+  //void QueueSprite (VEntity *thing, vuint32 light, vuint32 Fade, float Alpha, bool Additive, vuint32 seclight, bool onlyShadow=false);
+  void QueueSprite (VEntity *thing, const RenderStyleInfo &ri, bool onlyShadow=false);
+  //void QueueTranslucentAliasModel (VEntity *mobj, vuint32 light, vuint32 Fade, float Alpha, bool Additive, float TimeFrac);
+  void QueueTranslucentAliasModel (VEntity *mobj, const RenderStyleInfo &ri, float TimeFrac);
+  //bool RenderAliasModel (VEntity *, vuint32, vuint32, float, bool, ERenderPass);
+  bool RenderAliasModel (VEntity *mobj, const RenderStyleInfo &ri, ERenderPass Pass);
   void RenderThing (VEntity *, ERenderPass);
   void RenderMobjs (ERenderPass);
   void DrawTranslucentPolys ();
-  void RenderPSprite (VViewState *, const VAliasModelFrameInfo &, float, vuint32, vuint32, float, bool);
-  bool RenderViewModel (VViewState *, vuint32, vuint32, float, bool);
+  //void RenderPSprite (VViewState *, const VAliasModelFrameInfo &, float, vuint32, vuint32, float, bool);
+  void RenderPSprite (VViewState *VSt, const VAliasModelFrameInfo &mfi, float PSP_DIST, const RenderStyleInfo &ri);
+  //bool RenderViewModel (VViewState *, vuint32, vuint32, float, bool);
+  bool RenderViewModel (VViewState *VSt, const RenderStyleInfo &ri);
   void DrawPlayerSprites ();
   void DrawCrosshair ();
 

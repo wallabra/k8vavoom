@@ -1729,8 +1729,11 @@ static VModel *FindFixedModelFor (VEntity *Ent, bool verbose) {
 //  VRenderLevelShared::DrawEntityModel
 //
 //==========================================================================
+/*
 bool VRenderLevelShared::DrawEntityModel (VEntity *Ent, vuint32 Light, vuint32 Fade,
   float Alpha, bool Additive, float Inter, ERenderPass Pass)
+*/
+bool VRenderLevelShared::DrawEntityModel (VEntity *Ent, const RenderStyleInfo &ri, float Inter, ERenderPass Pass)
 {
   //VState *DispState = (Ent->EntityFlags&VEntity::EF_UseDispState ? Ent->DispState : Ent->State);
   //VState *DispState = Ent->State; //FIXME: skipframes
@@ -1747,14 +1750,14 @@ bool VRenderLevelShared::DrawEntityModel (VEntity *Ent, vuint32 Light, vuint32 F
       Ent->/*Angles*/GetModelDrawAngles(), Ent->ScaleX, Ent->ScaleY, Mdl,
       Ent->getMFI(), Ent->getNextMFI(),
       GetTranslation(Ent->Translation),
-      Ent->ModelVersion, Light, Fade, Alpha, Additive, false, Inter,
+      Ent->ModelVersion, ri.light, ri.fade, ri.alpha, ri.isAdditive(), false, Inter,
       Interpolate, Pass);
   } else {
     return DrawAliasModel(Ent, GetClassNameForModel(Ent), sprorigin,
       Ent->/*Angles*/GetModelDrawAngles(), Ent->ScaleX, Ent->ScaleY,
       Ent->getMFI(), Ent->getNextMFI(),
-      GetTranslation(Ent->Translation), Ent->ModelVersion, Light, Fade,
-      Alpha, Additive, false, Inter, Interpolate, Pass);
+      GetTranslation(Ent->Translation), Ent->ModelVersion, ri.light, ri.fade,
+      ri.alpha, ri.isAdditive(), false, Inter, Interpolate, Pass);
   }
 }
 

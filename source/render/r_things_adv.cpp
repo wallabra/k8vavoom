@@ -63,11 +63,115 @@ static VCvarB r_model_advshadow_all("r_model_advshadow_all", false, "Light all a
 
 //==========================================================================
 //
+//  VRenderLevelDrawer::CalculateRenderStyleInfo
+//
+//  returns `false` if there's no need to render the object
+//  sets `stencilColor`, `additive`, and `alpha` (only if the result is `true`)
+//
+//==========================================================================
+bool VRenderLevelDrawer::CalculateRenderStyleInfo (RenderStyleInfo &ri, int RenderStyle, float Alpha, vuint32 StencilColor) noexcept {
+  const float a = Alpha;
+  if (a < 0.004f) return false; // ~1.02
+
+  switch (RenderStyle) {
+    case STYLE_None: // do not draw
+      return false;
+    case STYLE_Normal: // just copy the image to the screen
+      ri.stencilColor = 0u;
+      ri.translucency = 0;
+      ri.alpha = 1.0f;
+      return true;
+    case STYLE_Fuzzy: // draw silhouette using "fuzz" effect
+      ri.stencilColor = 0u;
+      ri.translucency = 1;
+      ri.alpha = FUZZY_ALPHA;
+      return true;
+    case STYLE_SoulTrans: // draw translucent with amount in r_transsouls
+      ri.stencilColor = 0u;
+      ri.translucency = 1;
+      ri.alpha = r_transsouls.asFloat();
+      break;
+    case STYLE_OptFuzzy: // draw as fuzzy or translucent, based on user preference
+      ri.stencilColor = 0u;
+      ri.translucency = 1;
+      if (r_drawfuzz) {
+        ri.alpha = FUZZY_ALPHA;
+      } else {
+        ri.alpha = a;
+      }
+      break;
+    case STYLE_Stencil: // solid color
+    case STYLE_TranslucentStencil: // seems to be the same as stencil anyway
+      ri.stencilColor = (vuint32)StencilColor|0xff000000u;
+      ri.translucency = 1;
+      ri.alpha = a;
+      break;
+    case STYLE_Translucent: // draw translucent
+      ri.stencilColor = 0u;
+      ri.translucency = 1;
+      ri.alpha = a;
+      break;
+    case STYLE_Add: // draw additive
+      ri.stencilColor = 0u;
+      ri.translucency = 2;
+      ri.alpha = min2(1.0f, a);
+      return true;
+    case STYLE_Shaded: // treats 8-bit indexed images as an alpha map. Index 0 = fully transparent, index 255 = fully opaque. This is how decals are drawn. Use StencilColor property to colorize the resulting sprite.
+      // not implemented
+      ri.stencilColor = 0u;
+      ri.translucency = 1;
+      ri.alpha = a;
+      break;
+    case STYLE_Shadow:
+      ri.stencilColor = 0xff000000u;
+      ri.translucency = 1;
+      ri.alpha = 0.3f;
+      return true;
+    case STYLE_Subtract:
+      ri.stencilColor = 0u;
+      ri.translucency = -1;
+      ri.alpha = min2(1.0f, a);
+      return true;
+    case STYLE_AddStencil:
+      ri.stencilColor = (vuint32)StencilColor|0xff000000u;
+      ri.translucency = 2;
+      ri.alpha = min2(1.0f, a);
+      return true;
+    case STYLE_AddShaded: // treats 8-bit indexed images as an alpha map. Index 0 = fully transparent, index 255 = fully opaque. This is how decals are drawn. Use StencilColor property to colorize the resulting sprite.
+      // not implemented
+      ri.stencilColor = 0u;
+      ri.translucency = 2;
+      ri.alpha = min2(1.0f, a);
+      return true;
+    case STYLE_Dark:
+      ri.stencilColor = 0u;
+      ri.translucency = 3;
+      ri.alpha = min2(1.0f, a);
+      return true;
+    default: // translucent (will be converted to normal if necessary)
+      GCon->Logf(NAME_Error, "unknown render style %d", RenderStyle);
+      ri.stencilColor = 0u;
+      ri.translucency = 1;
+      ri.alpha = a;
+      break;
+  }
+  if (ri.alpha < 0.004f) return false;
+  if (ri.alpha >= 1.0f) {
+    ri.translucency = 0;
+    ri.alpha = 1.0f;
+  }
+  return true;
+}
+
+
+//==========================================================================
+//
 //  CalculateThingAlpha
 //
 //  returns `false` if object is not need to be rendered
 //
 //==========================================================================
+/*
 static inline bool CalculateThingAlpha (const VEntity *ent, int &RendStyle, float &Alpha) {
   int rs = VRenderLevelDrawer::CoerceRenderStyle(ent->RenderStyle);
   float alpha;
@@ -115,6 +219,7 @@ static inline bool CalculateThingAlpha (const VEntity *ent, int &RendStyle, floa
   Alpha = alpha;
   return true;
 }
+*/
 
 
 //==========================================================================
@@ -124,9 +229,11 @@ static inline bool CalculateThingAlpha (const VEntity *ent, int &RendStyle, floa
 //  returns `false` if object is not need to be rendered
 //
 //==========================================================================
-static inline bool SetupRenderStyleAndTime (const VEntity *ent, int &RendStyle, float &Alpha, bool &Additive, float &TimeFrac) {
-  if (!CalculateThingAlpha(ent, RendStyle, Alpha)) return false;
-  Additive = VRenderLevelDrawer::IsAdditiveStyle(RendStyle);
+//static inline bool SetupRenderStyleAndTime (const VEntity *ent, int &RendStyle, float &Alpha, bool &Additive, float &TimeFrac) {
+static inline bool SetupRenderStyleAndTime (const VEntity *ent, RenderStyleInfo &ri, float &TimeFrac) {
+  //if (!CalculateThingAlpha(ent, RendStyle, Alpha)) return false;
+  //Additive = VRenderLevelDrawer::IsAdditiveStyle(RendStyle);
+  if (!VRenderLevelDrawer::CalculateRenderStyleInfo(ri, ent->RenderStyle, ent->Alpha, ent->StencilColor)) return false;
 
   if (ent->State->Time > 0) {
     TimeFrac = 1.0f-(ent->StateTime/ent->State->Time);
@@ -155,12 +262,11 @@ void VRenderLevelShared::BuildVisibleObjectsList () {
 
   if (!r_draw_mobjs) return;
 
-  int RendStyle;
-  float Alpha;
-
   const bool lightAll = r_model_advshadow_all;
   const bool doDump = r_dbg_thing_dump_vislist.asBool();
   bool alphaDone = false;
+
+  RenderStyleInfo ri;
 
   if (doDump) GCon->Logf("=== VISIBLE THINGS ===");
   for (TThinkerIterator<VEntity> it(Level); it; ++it) {
@@ -174,9 +280,10 @@ void VRenderLevelShared::BuildVisibleObjectsList () {
       // collect all things with models (we'll need them in advrender)
       if (hasAliasModel) {
         alphaDone = true;
-        if (!CalculateThingAlpha(ent, RendStyle, Alpha)) continue; // invisible
+        //if (!CalculateThingAlpha(ent, RendStyle, Alpha)) continue; // invisible
+        if (!CalculateRenderStyleInfo(ri, ent->RenderStyle, ent->Alpha, ent->StencilColor)) continue; // invisible
         // ignore translucent things, they cannot cast a shadow
-        if (RendStyle == STYLE_Normal && Alpha >= 1.0f) {
+        if (!ri.isTranslucent()) {
           allShadowModelObjects.append(ent);
           ent->NumRenderedShadows = 0; // for advanced renderer
         }
@@ -189,7 +296,8 @@ void VRenderLevelShared::BuildVisibleObjectsList () {
     if (!IsThingVisible(ent)) continue;
 
     if (!alphaDone) {
-      if (!CalculateThingAlpha(ent, RendStyle, Alpha)) continue; // invisible
+      //if (!CalculateThingAlpha(ent, RendStyle, Alpha)) continue; // invisible
+      if (!CalculateRenderStyleInfo(ri, ent->RenderStyle, ent->Alpha, ent->StencilColor)) continue; // invisible
     }
 
     if (doDump) GCon->Logf("  <%s> (%f,%f,%f) 0x%08x", *ent->GetClass()->GetFullName(), ent->Origin.x, ent->Origin.y, ent->Origin.z, ent->EntityFlags);
@@ -244,8 +352,7 @@ void VRenderLevelShadowVolume::BuildMobjsInCurrLight (bool doShadows) {
       const int xh = MapBlock(CurrLightPos.x+CurrLightRadius-Level->BlockMapOrgX+MAXRADIUS);
       const int yl = MapBlock(CurrLightPos.y-CurrLightRadius-Level->BlockMapOrgY-MAXRADIUS);
       const int yh = MapBlock(CurrLightPos.y+CurrLightRadius-Level->BlockMapOrgY+MAXRADIUS);
-      int RendStyle;
-      float Alpha;
+      RenderStyleInfo ri;
       for (int bx = xl; bx <= xh; ++bx) {
         for (int by = yl; by <= yh; ++by) {
           for (VBlockThingsIterator It(Level, bx, by); It; ++It) {
@@ -257,9 +364,10 @@ void VRenderLevelShadowVolume::BuildMobjsInCurrLight (bool doShadows) {
             if (!IsSubsectorLitBspVis(SubIdx)) continue;
             if (!IsTouchedByCurrLight(ent)) continue;
             if (!HasEntityAliasModel(ent)) continue;
-            if (!CalculateThingAlpha(ent, RendStyle, Alpha)) continue; // invisible
+            //if (!CalculateThingAlpha(ent, RendStyle, Alpha)) continue; // invisible
+            if (!CalculateRenderStyleInfo(ri, ent->RenderStyle, ent->Alpha, ent->StencilColor)) continue; // invisible
             // ignore translucent things, they cannot cast a shadow
-            if (RendStyle == STYLE_Normal && Alpha >= 1.0f) {
+            if (!ri.isTranslucent()) {
               mobjsInCurrLight.append(ent);
             }
           }
@@ -278,17 +386,21 @@ void VRenderLevelShadowVolume::BuildMobjsInCurrLight (bool doShadows) {
 void VRenderLevelShadowVolume::RenderMobjsShadow (VEntity *owner, vuint32 dlflags) {
   if (!r_draw_mobjs || !r_models || !r_model_shadows) return;
   if (!r_dbg_advthing_draw_shadow) return;
-  int RendStyle;
-  float Alpha, TimeFrac;
-  bool Additive;
+  float TimeFrac;
+  RenderStyleInfo ri;
   for (auto &&ent : mobjsInCurrLight) {
     if (ent == owner && (dlflags&dlight_t::NoSelfShadow)) continue;
     if (ent->NumRenderedShadows > r_max_model_shadows) continue; // limit maximum shadows for this Entity
     if (!IsShadowAllowedFor(ent)) continue;
     //RenderThingShadow(ent);
-    if (SetupRenderStyleAndTime(ent, RendStyle, Alpha, Additive, TimeFrac)) {
+    if (SetupRenderStyleAndTime(ent, ri, TimeFrac)) {
       //GCon->Logf("THING SHADOW! (%s)", *ent->GetClass()->GetFullName());
-      DrawEntityModel(ent, 0xffffffff, 0, Alpha, Additive, TimeFrac, RPASS_ShadowVolumes);
+      if (!ri.isTranslucent()) {
+        ri.light = 0xffffffffu;
+        ri.fade = 0;
+        DrawEntityModel(ent, ri, TimeFrac, RPASS_ShadowVolumes);
+      }
+      //DrawEntityModel(ent, 0xffffffff, 0, ri, TimeFrac, RPASS_ShadowVolumes);
     }
     ++ent->NumRenderedShadows;
   }
@@ -303,16 +415,18 @@ void VRenderLevelShadowVolume::RenderMobjsShadow (VEntity *owner, vuint32 dlflag
 void VRenderLevelShadowVolume::RenderMobjsLight () {
   if (!r_draw_mobjs || !r_models || !r_model_light) return;
   if (!r_dbg_advthing_draw_light) return;
-  int RendStyle;
-  float Alpha, TimeFrac;
-  bool Additive;
+  float TimeFrac;
+  RenderStyleInfo ri;
   if (useInCurrLightAsLight) {
     // list is already built
     for (auto &&ent : mobjsInCurrLight) {
       if (ent == ViewEnt && (!r_chasecam || ent != cl->MO)) continue; // don't draw camera actor
       //RenderThingLight(ent);
-      if (SetupRenderStyleAndTime(ent, RendStyle, Alpha, Additive, TimeFrac)) {
-        DrawEntityModel(ent, 0xffffffff, 0, Alpha, Additive, TimeFrac, RPASS_Light);
+      if (SetupRenderStyleAndTime(ent, ri, TimeFrac)) {
+        ri.light = 0xffffffffu;
+        ri.fade = 0;
+        DrawEntityModel(ent, ri, TimeFrac, RPASS_Light);
+        //DrawEntityModel(ent, 0xffffffff, 0, ri, TimeFrac, RPASS_Light);
       }
     }
   } else {
@@ -323,8 +437,11 @@ void VRenderLevelShadowVolume::RenderMobjsLight () {
       if (!IsSubsectorLitBspVis(SubIdx)) continue;
       if (!IsTouchedByCurrLight(ent)) continue;
       //RenderThingLight(ent);
-      if (SetupRenderStyleAndTime(ent, RendStyle, Alpha, Additive, TimeFrac)) {
-        DrawEntityModel(ent, 0xffffffff, 0, Alpha, Additive, TimeFrac, RPASS_Light);
+      if (SetupRenderStyleAndTime(ent, ri, TimeFrac)) {
+        ri.light = 0xffffffffu;
+        ri.fade = 0;
+        DrawEntityModel(ent, ri, TimeFrac, RPASS_Light);
+        //DrawEntityModel(ent, 0xffffffff, 0, Alpha, Additive, TimeFrac, RPASS_Light);
       }
     }
   }
@@ -341,22 +458,21 @@ void VRenderLevelShadowVolume::RenderMobjsAmbient () {
   if (!r_dbg_advthing_draw_ambient) return;
   const bool oldLight = (!r_model_light || !r_model_shadows);
   const bool doDump = r_dbg_advthing_dump_ambient.asBool();
-  int RendStyle;
-  float Alpha, TimeFrac;
-  bool Additive;
+  float TimeFrac;
+  RenderStyleInfo ri;
   if (doDump) GCon->Log("=== ambient ===");
   for (auto &&ent : visibleAliasModels) {
     if (ent == ViewEnt && (!r_chasecam || ent != cl->MO)) continue; // don't draw camera actor
     if (doDump) GCon->Logf("  <%s> (%f,%f,%f)", *ent->GetClass()->GetFullName(), ent->Origin.x, ent->Origin.y, ent->Origin.z);
     //RenderThingAmbient(ent);
 
-    if (SetupRenderStyleAndTime(ent, RendStyle, Alpha, Additive, TimeFrac)) {
+    if (SetupRenderStyleAndTime(ent, ri, TimeFrac)) {
       //GCon->Logf("  <%s>", *ent->GetClass()->GetFullName());
-      if (Alpha < 1.0f) continue;
+      if (ri.isTranslucent()) continue;
 
       // setup lighting
       vuint32 light;
-      if (RendStyle == STYLE_Fuzzy) {
+      if (ent->RenderStyle == STYLE_Fuzzy) {
         light = 0;
       } else if ((ent->State->Frame&VState::FF_FULLBRIGHT) ||
                  (ent->EntityFlags&(VEntity::EF_FullBright|VEntity::EF_Bright)))
@@ -370,8 +486,11 @@ void VRenderLevelShadowVolume::RenderMobjsAmbient () {
           light = LightPointAmbient(ent->Origin, ent->GetRenderRadius(), ent->SubSector);
         }
       }
+      ri.light = ri.seclight = light;
+      ri.fade = 0;
 
-      DrawEntityModel(ent, light, 0, Alpha, Additive, TimeFrac, RPASS_Ambient);
+      //DrawEntityModel(ent, light, 0, Alpha, Additive, TimeFrac, RPASS_Ambient);
+      DrawEntityModel(ent, ri, TimeFrac, RPASS_Ambient);
     }
   }
 }
@@ -386,17 +505,19 @@ void VRenderLevelShadowVolume::RenderMobjsTextures () {
   if (!r_draw_mobjs || !r_models) return;
   if (!r_dbg_advthing_draw_texture) return;
   const bool doDump = r_dbg_advthing_dump_textures.asBool();
-  int RendStyle;
-  float Alpha, TimeFrac;
-  bool Additive;
+  float TimeFrac;
+  RenderStyleInfo ri;
   if (doDump) GCon->Log("=== textures ===");
   for (auto &&ent : visibleAliasModels) {
     if (ent == ViewEnt && (!r_chasecam || ent != cl->MO)) continue; // don't draw camera actor
     if (doDump) GCon->Logf("  <%s> (%f,%f,%f)", *ent->GetClass()->GetFullName(), ent->Origin.x, ent->Origin.y, ent->Origin.z);
     //RenderThingTextures(ent);
-    if (SetupRenderStyleAndTime(ent, RendStyle, Alpha, Additive, TimeFrac)) {
-      if (Alpha < 1.0f) continue;
-      DrawEntityModel(ent, 0xffffffff, 0, Alpha, Additive, TimeFrac, RPASS_Textures);
+    if (SetupRenderStyleAndTime(ent, ri, TimeFrac)) {
+      if (ri.alpha < 1.0f) continue;
+      ri.light = 0xffffffffu;
+      ri.fade = 0;
+      DrawEntityModel(ent, ri, TimeFrac, RPASS_Textures);
+      //DrawEntityModel(ent, 0xffffffff, 0, Alpha, Additive, TimeFrac, RPASS_Textures);
     }
   }
 }
@@ -410,16 +531,18 @@ void VRenderLevelShadowVolume::RenderMobjsTextures () {
 void VRenderLevelShadowVolume::RenderMobjsFog () {
   if (!r_draw_mobjs || !r_models) return;
   if (!r_dbg_advthing_draw_fog) return;
-  int RendStyle;
-  float Alpha, TimeFrac;
-  bool Additive;
+  float TimeFrac;
+  RenderStyleInfo ri;
   for (auto &&ent : visibleAliasModels) {
     if (ent == ViewEnt && (!r_chasecam || ent != cl->MO)) continue; // don't draw camera actor
     //RenderThingFog(ent);
-    if (SetupRenderStyleAndTime(ent, RendStyle, Alpha, Additive, TimeFrac)) {
+    if (SetupRenderStyleAndTime(ent, ri, TimeFrac)) {
       vuint32 Fade = GetFade(SV_PointRegionLight(ent->Sector, ent->Origin));
-      if (Fade || Alpha < 1.0f) {
-        DrawEntityModel(ent, 0xffffffff, Fade, Alpha, Additive, TimeFrac, RPASS_Fog);
+      if (Fade || ri.alpha < 1.0f) {
+        ri.light = 0xffffffffu;
+        ri.fade = Fade;
+        DrawEntityModel(ent, ri, TimeFrac, RPASS_Fog);
+        //DrawEntityModel(ent, 0xffffffff, Fade, Alpha, Additive, TimeFrac, RPASS_Fog);
       }
     }
   }

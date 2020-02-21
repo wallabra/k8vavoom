@@ -114,10 +114,12 @@ bool VRenderLevelShared::IsThingVisible (VEntity *ent) const noexcept {
 //  VRenderLevelShared::RenderAliasModel
 //
 //==========================================================================
+/*
 bool VRenderLevelShared::RenderAliasModel (VEntity *mobj, vuint32 light,
                                            vuint32 Fade, float Alpha, bool Additive,
                                            ERenderPass Pass)
-{
+*/
+bool VRenderLevelShared::RenderAliasModel (VEntity *mobj, const RenderStyleInfo &ri, ERenderPass Pass) {
   if (!r_models) return false;
   if (!IsAliasModelAllowedFor(mobj)) return false;
 
@@ -128,12 +130,12 @@ bool VRenderLevelShared::RenderAliasModel (VEntity *mobj, vuint32 light,
   }
 
   // draw it
-  if (Alpha < 1.0f || Additive) {
+  if (ri.isTranslucent()) {
     if (!CheckAliasModelFrame(mobj, TimeFrac)) return false;
-    QueueTranslucentAliasModel(mobj, light, Fade, Alpha, Additive, TimeFrac);
+    QueueTranslucentAliasModel(mobj, ri, TimeFrac);
     return true;
   } else {
-    return DrawEntityModel(mobj, light, Fade, 1.0f, false, TimeFrac, Pass);
+    return DrawEntityModel(mobj, ri, TimeFrac, Pass);
   }
 }
 
@@ -152,8 +154,12 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
     if (!mobj->IsRenderable()) return;
   }
 
+  RenderStyleInfo ri;
+  if (!CalculateRenderStyleInfo(ri, mobj->RenderStyle, mobj->Alpha, mobj->StencilColor)) return;
+  /*
   int RendStyle = CoerceRenderStyle(mobj->RenderStyle);
   if (RendStyle == STYLE_None) return;
+  */
 
   if (Pass == RPASS_Normal) {
     // this is called only in regular renderer, and only once
@@ -162,6 +168,7 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
     if (!IsThingVisible(mobj)) return;
   }
 
+  /*
   float Alpha = mobj->Alpha;
   bool Additive = IsAdditiveStyle(RendStyle);
 
@@ -180,35 +187,38 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
   }
   if (Alpha <= 0.01f) return; // no reason to render it, it is invisible
   if (Alpha > 1.0f) Alpha = 1.0f;
+  */
 
   // setup lighting
-  vuint32 light, seclight;
+  //vuint32 light, seclight;
 
-  if (RendStyle == STYLE_Fuzzy) {
-    light = seclight = 0;
+  if (mobj->RenderStyle == STYLE_Fuzzy) {
+    ri.light = ri.seclight = 0;
   } else if ((mobj->State->Frame&VState::FF_FULLBRIGHT) ||
              (mobj->EntityFlags&(VEntity::EF_FullBright|VEntity::EF_Bright))) {
-    light = 0xffffffff;
-    seclight = (r_brightmaps && r_brightmaps_sprite ? LightPoint(mobj->Origin, mobj->GetRenderRadius(), mobj->Height, nullptr, mobj->SubSector) : light);
+    ri.light = 0xffffffffu;
+    ri.seclight = (r_brightmaps && r_brightmaps_sprite ? LightPoint(mobj->Origin, mobj->GetRenderRadius(), mobj->Height, nullptr, mobj->SubSector) : ri.light);
   } else {
-    light = seclight = LightPoint(mobj->Origin, mobj->GetRenderRadius(), mobj->Height, nullptr, mobj->SubSector);
+    ri.light = ri.seclight = LightPoint(mobj->Origin, mobj->GetRenderRadius(), mobj->Height, nullptr, mobj->SubSector);
     //GCon->Logf("%s: radius=%f; height=%f", *mobj->GetClass()->GetFullName(), mobj->Radius, mobj->Height);
   }
 
   //FIXME: fake "solid color" with colored light for now
+  /*
   if (RendStyle == STYLE_Stencil || RendStyle == STYLE_AddStencil) {
     light = (light&0xff000000)|(mobj->StencilColor&0xffffff);
     seclight = (seclight&0xff000000)|(mobj->StencilColor&0xffffff);
   }
+  */
 
-  vuint32 Fade = GetFade(SV_PointRegionLight(mobj->Sector, mobj->Origin));
+  ri.fade = GetFade(SV_PointRegionLight(mobj->Sector, mobj->Origin));
 
   // try to draw a model
   // if it's a script and it doesn't specify model for this frame, draw sprite instead
-  if (!RenderAliasModel(mobj, light, Fade, Alpha, Additive, Pass)) {
-    QueueSprite(mobj, light, Fade, Alpha, Additive, seclight);
+  if (!RenderAliasModel(mobj, ri, Pass)) {
+    QueueSprite(mobj, ri);
   } else if (r_fake_shadows_alias_models) {
-    QueueSprite(mobj, light, Fade, Alpha, Additive, seclight, true); // only shadow
+    QueueSprite(mobj, ri, true); // only shadow
   }
 }
 

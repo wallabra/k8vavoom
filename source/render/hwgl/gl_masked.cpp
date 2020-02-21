@@ -201,125 +201,157 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
 //
 //==========================================================================
 void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
-                                       float Alpha, bool Additive,
+                                       const RenderStyleInfo &ri,
+                                       //float Alpha, bool Additive,
                                        VTextureTranslation *Translation, int CMap,
-                                       vuint32 light, vuint32 Fade,
+                                       //vuint32 light, vuint32 Fade,
                                        const TVec &sprnormal, float sprpdist,
-                                       const TVec &saxis, const TVec &taxis, const TVec &texorg,
-                                       int hangup)
+                                       const TVec &saxis, const TVec &taxis, const TVec &texorg)
 {
   if (!Tex || Tex->Type == TEXTYPE_Null) return; // just in case
 
-  TVec texpt(0, 0, 0);
-  const bool fakeShadow = (hangup == 666);
-  if (fakeShadow) hangup = 1; // no z-buffer write
+  enum ShaderType {
+    ShaderMasked,
+    ShaderMaskedBM,
+    ShaderStencil,
+    ShaderFakeShadow,
+  };
 
-  bool doBrightmap = (!fakeShadow && r_brightmaps && r_brightmaps_sprite && Tex->Brightmap);
-  bool styleDark = (Alpha >= 1000.0f);
-  if (styleDark) Alpha -= 1666.0f;
-
-  if (doBrightmap) {
-    //GCon->Logf("BRMAP for '%s' (%s)", *Tex->Name, *Tex->Brightmap->Name);
-    SurfMaskedBrightmap.Activate();
-    SurfMaskedBrightmap.SetBrightMapAdditive(r_brightmaps_additive ? 1.0f : 0.0f);
-    SurfMaskedBrightmap.SetTexture(0);
-    SurfMaskedBrightmap.SetTextureBM(1);
-    SelectTexture(1);
-    SetBrightmapTexture(Tex->Brightmap);
-    SelectTexture(0);
-  } else if (!fakeShadow) {
-    SurfMasked.Activate();
-    SurfMasked.SetTexture(0);
-    //SurfMasked.SetFogType();
+  ShaderType shadtype = ShaderMasked;
+  if (ri.stencilColor&0xff000000u) {
+    shadtype = (ri.stencilColor&0x00ffffffu ? ShaderStencil : ShaderFakeShadow);
   } else {
-    SurfMaskedFakeShadow.Activate();
-    SurfMaskedFakeShadow.SetTexture(0);
+    if (r_brightmaps && r_brightmaps_sprite && Tex->Brightmap) shadtype = ShaderMaskedBM;
+    //bool styleDark = (Alpha >= 1000.0f);
+    //if (styleDark) Alpha -= 1666.0f;
+  }
+
+  //const bool fakeShadow = (hangup == 666);
+  //if (fakeShadow) hangup = 1; // no z-buffer write
+
+  //bool doBrightmap = (!fakeShadow && r_brightmaps && r_brightmaps_sprite && Tex->Brightmap);
+  //bool styleDark = (Alpha >= 1000.0f);
+  //if (styleDark) Alpha -= 1666.0f;
+
+  const bool trans = (ri.translucency || ri.hangup || ri.alpha < 1.0f || Tex->isTranslucent());
+
+  switch (shadtype) {
+    case ShaderMasked:
+      SurfMasked.Activate();
+      SurfMasked.SetTexture(0);
+      SurfMasked.SetLight(
+        ((ri.light>>16)&255)/255.0f,
+        ((ri.light>>8)&255)/255.0f,
+        (ri.light&255)/255.0f, ri.alpha);
+      SurfMasked.SetFogFade(ri.fade, ri.alpha);
+      SurfMasked.SetAlphaRef(trans ? getAlphaThreshold() : 0.666f);
+      SurfMasked.UploadChangedUniforms();
+      break;
+    case ShaderMaskedBM:
+      SurfMaskedBrightmap.Activate();
+      SurfMaskedBrightmap.SetBrightMapAdditive(r_brightmaps_additive ? 1.0f : 0.0f);
+      SurfMaskedBrightmap.SetTexture(0);
+      SurfMaskedBrightmap.SetTextureBM(1);
+      SelectTexture(1);
+      SetBrightmapTexture(Tex->Brightmap);
+      SelectTexture(0);
+      SurfMaskedBrightmap.SetLight(
+        ((ri.light>>16)&255)/255.0f,
+        ((ri.light>>8)&255)/255.0f,
+        (ri.light&255)/255.0f, ri.alpha);
+      SurfMaskedBrightmap.SetFogFade(ri.fade, ri.alpha);
+      SurfMaskedBrightmap.SetAlphaRef(trans ? getAlphaThreshold() : 0.666f);
+      SurfMaskedBrightmap.UploadChangedUniforms();
+      break;
+    case ShaderStencil:
+      SurfMaskedStencil.Activate();
+      SurfMaskedStencil.SetTexture(0);
+      SurfMaskedStencil.SetStencilColor(
+        ((ri.stencilColor>>16)&255)/255.0f,
+        ((ri.stencilColor>>8)&255)/255.0f,
+        (ri.stencilColor&255)/255.0f);
+      SurfMaskedStencil.SetLight(
+        ((ri.light>>16)&255)/255.0f,
+        ((ri.light>>8)&255)/255.0f,
+        (ri.light&255)/255.0f, ri.alpha);
+      SurfMaskedStencil.SetFogFade(ri.fade, ri.alpha);
+      SurfMaskedStencil.SetAlphaRef(trans ? getAlphaThreshold() : 0.666f);
+      SurfMaskedStencil.UploadChangedUniforms();
+      break;
+    case ShaderFakeShadow:
+      SurfMaskedFakeShadow.Activate();
+      SurfMaskedFakeShadow.SetTexture(0);
+      SurfMaskedFakeShadow.SetLight(
+        ((ri.light>>16)&255)/255.0f,
+        ((ri.light>>8)&255)/255.0f,
+        (ri.light&255)/255.0f, ri.alpha);
+      SurfMaskedFakeShadow.SetAlphaRef(trans ? getAlphaThreshold() : 0.666f);
+      SurfMaskedFakeShadow.SetFogFade(ri.fade, ri.alpha);
+      SurfMaskedFakeShadow.UploadChangedUniforms();
+      break;
+    default: Sys_Error("ketmar forgot some shader type in `VOpenGLDrawer::DrawSpritePolygon()`");
   }
 
   SetSpriteLump(Tex, Translation, CMap, true);
-  //SetupTextureFiltering(noDepthChange ? 3 : sprite_filter);
-  //SetupTextureFiltering(noDepthChange ? model_filter : sprite_filter);
   SetupTextureFiltering(sprite_filter);
 
-  bool zbufferWriteDisabled = false;
+  bool restoreDepthMask = false; // `true` means "depth write disabled"
   bool restoreBlend = false;
-
   GLint oldDepthMask = 0;
 
-  if (Additive || hangup || Alpha < 1.0f || Tex->isTranslucent()) {
-    restoreBlend = true;
-    if (doBrightmap) {
-      //SurfMaskedBrightmap.SetAlphaRef(hangup || Additive ? getAlphaThreshold() : 0.666f);
-      SurfMaskedBrightmap.SetAlphaRef(hangup || Additive || Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
-    } else {
-      //SurfMasked.SetAlphaRef(hangup || Additive ? getAlphaThreshold() : 0.666f);
-      if (!fakeShadow) {
-        SurfMasked.SetAlphaRef(hangup || Additive || Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
-      } else {
-        SurfMaskedFakeShadow.SetAlphaRef(hangup || Additive || Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
-      }
-    }
-    if (hangup) {
-      // no z-buffer?
-      if (hangup&1) {
-        zbufferWriteDisabled = true;
-        glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
-        glDepthMask(GL_FALSE); // no z-buffer writes
-      }
-      // offset?
-      if (hangup&2) {
-        const float updir = (!CanUseRevZ() ? -1.0f : 1.0f);
-        GLPolygonOffset(updir, updir);
-      }
-      // no cull?
-      if (hangup&4) {
-        glDisable(GL_CULL_FACE);
-      }
-    }
-    //GLEnableBlend();
-    // translucent things should not modify z-buffer
-    if (!zbufferWriteDisabled && (Additive || Alpha < 1.0f)) {
+  // setup hangups
+  if (ri.hangup) {
+    // no z-buffer?
+    if (ri.hangup&1) {
+      restoreDepthMask = true;
       glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
       glDepthMask(GL_FALSE); // no z-buffer writes
-      zbufferWriteDisabled = true;
     }
-    if (Additive) {
-      glBlendFunc(GL_ONE, GL_ONE); // our source rgb is already premultiplied
-      //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    } else {
+    // offset?
+    if (ri.hangup&2) {
+      const float updir = (!CanUseRevZ() ? -1.0f : 1.0f);
+      GLPolygonOffset(updir, updir);
+    }
+    // no cull?
+    if (ri.hangup&4) glDisable(GL_CULL_FACE);
+  }
+
+  // translucent things should not modify z-buffer
+  if (!restoreDepthMask && trans) {
+    glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
+    glDepthMask(GL_FALSE); // no z-buffer writes
+    restoreDepthMask = true;
+  }
+
+  // setup blending
+  switch (ri.translucency) {
+    case 1: // normal translucency
+      //restoreBlend = true; // default blending
       glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-      //p_glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-    }
-  } else {
-    if (doBrightmap) {
-      SurfMaskedBrightmap.SetAlphaRef(Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
-    } else {
-      if (!fakeShadow) {
-        SurfMasked.SetAlphaRef(Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
-      } else {
-        SurfMaskedFakeShadow.SetAlphaRef(Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
+      break;
+    case 2: // additive translucency
+      restoreBlend = true;
+      glBlendFunc(GL_ONE, GL_ONE); // our source rgb is already premultiplied
+      break;
+    case 3: // translucent-dark (k8vavoom special)
+      restoreBlend = true;
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
+      break;
+    case -1: // subtractive translucency
+      // not implemented yet, sorry
+      //restoreBlend = true; // default blending
+      glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+      break;
+    default: // normal
+      if (trans) {
+        //restoreBlend = true; // default blending
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
       }
-    }
-    Alpha = 1.0f;
-    //GLDisableBlend();
-    //GLEnableBlend();
+      break;
   }
 
-  //GLEnableBlend();
-  if (styleDark) glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
 
-  //GCon->Logf("SPRITE: light=0x%08x; fade=0x%08x", light, Fade);
-  //Fade ^= 0x00ffffff;
-  //light = 0xffff0000;
-  //Fade = 0x3f323232;
-  /*
-  if (Fade != FADE_LIGHT && RendLev->IsShadowVolumeRenderer()) {
-    Fade ^= 0x00ffffff;
-  }
-  */
-
-  //GCon->Logf("Tex=%s; Fade=0x%08x; light=0x%08x; alpha=%f", *Tex->Name, Fade, light, Alpha);
-  //Fade = 0xff505050;
+  TVec texpt(0, 0, 0);
 
   #define SPRVTX(shdr_,cv_)  do { \
     texpt = (cv_)-texorg; \
@@ -330,67 +362,44 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
     glVertex(cv_); \
   } while (0)
 
-  if (doBrightmap) {
-    SurfMaskedBrightmap.SetLight(
-      ((light>>16)&255)/255.0f,
-      ((light>>8)&255)/255.0f,
-      (light&255)/255.0f, Alpha);
-    SurfMaskedBrightmap.SetFogFade(Fade, Alpha);
-    SurfMaskedBrightmap.UploadChangedUniforms();
-    glBegin(GL_QUADS);
-      SPRVTX(SurfMaskedBrightmap, cv[0]);
-      SPRVTX(SurfMaskedBrightmap, cv[1]);
-      SPRVTX(SurfMaskedBrightmap, cv[2]);
-      SPRVTX(SurfMaskedBrightmap, cv[3]);
-    glEnd();
-  } else {
-    if (!fakeShadow) {
-      SurfMasked.SetLight(
-        ((light>>16)&255)/255.0f,
-        ((light>>8)&255)/255.0f,
-        (light&255)/255.0f, Alpha);
-      SurfMasked.SetFogFade(Fade, Alpha);
-      SurfMasked.UploadChangedUniforms();
-      glBegin(GL_QUADS);
+  glBegin(GL_QUADS);
+    switch (shadtype) {
+      case ShaderMasked:
         SPRVTX(SurfMasked, cv[0]);
         SPRVTX(SurfMasked, cv[1]);
         SPRVTX(SurfMasked, cv[2]);
         SPRVTX(SurfMasked, cv[3]);
-      glEnd();
-    } else {
-      SurfMaskedFakeShadow.SetLight(
-        ((light>>16)&255)/255.0f,
-        ((light>>8)&255)/255.0f,
-        (light&255)/255.0f, Alpha);
-      SurfMaskedFakeShadow.SetFogFade(Fade, Alpha);
-      SurfMaskedFakeShadow.UploadChangedUniforms();
-      glBegin(GL_QUADS);
+        break;
+      case ShaderMaskedBM:
+        SPRVTX(SurfMaskedBrightmap, cv[0]);
+        SPRVTX(SurfMaskedBrightmap, cv[1]);
+        SPRVTX(SurfMaskedBrightmap, cv[2]);
+        SPRVTX(SurfMaskedBrightmap, cv[3]);
+        break;
+      case ShaderStencil:
+        SPRVTX(SurfMaskedStencil, cv[0]);
+        SPRVTX(SurfMaskedStencil, cv[1]);
+        SPRVTX(SurfMaskedStencil, cv[2]);
+        SPRVTX(SurfMaskedStencil, cv[3]);
+        break;
+      case ShaderFakeShadow:
         SPRVTX(SurfMaskedFakeShadow, cv[0]);
         SPRVTX(SurfMaskedFakeShadow, cv[1]);
         SPRVTX(SurfMaskedFakeShadow, cv[2]);
         SPRVTX(SurfMaskedFakeShadow, cv[3]);
-      glEnd();
+        break;
+      default: Sys_Error("ketmar forgot some shader type in `VOpenGLDrawer::DrawSpritePolygon()`");
     }
-  }
+  glEnd();
 
   #undef SPRVTX
 
-  // no z-buffer?
-  if (zbufferWriteDisabled) glDepthMask(oldDepthMask); // restore z-buffer writes
-  // offset?
-  if (hangup&2) GLDisableOffset();
-  // no cull?
-  if (hangup&4) glEnable(GL_CULL_FACE);
+  if (restoreDepthMask) glDepthMask(oldDepthMask);
+  if (ri.hangup&2) GLDisableOffset();
+  if (ri.hangup&4) glEnable(GL_CULL_FACE);
+  if (restoreBlend) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-  if (restoreBlend) {
-    //if (hangup) GLDisableOffset();
-    //GLDisableBlend();
-    //if (zbufferWriteDisabled) glDepthMask(oldDepthMask); // restore z-buffer writes
-    if (Additive) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-  }
-  if (styleDark) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-
-  if (doBrightmap) {
+  if (shadtype == ShaderMaskedBM) {
     SelectTexture(1);
     glBindTexture(GL_TEXTURE_2D, 0);
     SelectTexture(0);

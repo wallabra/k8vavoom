@@ -89,6 +89,28 @@ public:
 // ////////////////////////////////////////////////////////////////////////// //
 struct trans_sprite_t;
 
+// used to pass render style parameters
+struct RenderStyleInfo {
+  vuint32 seclight; // not used by hw renderer, but used by high-level renderer
+  // hw renderer options
+  vuint32 light; // high byte is intensity for colored light; color is multiplied by this
+  vuint32 fade;
+  vuint32 stencilColor; // if high byte is 0, this is not a stenciled sprite
+  vint32 translucency; // 0: normal; 1: normal translucency; -1: subtractive translucency; 2: additive translucency; 3: translucent-dark (k8vavoom special)
+  float alpha; // should be valid, and non-zero
+  //  hangup bits:
+  //    0 set: no z-buffer write
+  //    1 set: do offsetting (used for flat-aligned sprites)
+  //    2 set: don't cull faces
+  unsigned hangup;
+
+  inline RenderStyleInfo () noexcept : seclight(0u), light(0u), fade(0u), stencilColor(0u), translucency(0), alpha(1.0f), hangup(0u) {}
+
+  inline bool isAdditive () const noexcept { return (translucency == 2); }
+  inline bool isTranslucent () const noexcept { return (translucency || alpha < 1.0f); }
+};
+
+
 class VRenderLevelDrawer : public VRenderLevelPublic {
 protected:
   bool mIsShadowVolumeRenderer;
@@ -110,15 +132,16 @@ public:
     TVec saxis; // masked polys and sprites
     TVec taxis; // masked polys and sprites
     TVec texorg; // masked polys and sprites
-    float Alpha;
-    bool Additive;
+    //float Alpha;
+    //bool Additive;
     int translation; // masked polys and sprites
     int type; // 0: masked polygon (wall); 1: sprite; 2: alias model
     float dist; // for soriting
     vuint32 objid; // for entities
-    int hangup; // 0: normal; -1: no z-buffer write, slightly offset (used for flat-aligned sprites); 666: fake sprite shadow
-    vuint32 light;
-    vuint32 Fade;
+    //int hangup; // 0: normal; -1: no z-buffer write, slightly offset (used for flat-aligned sprites); 666: fake sprite shadow
+    //vuint32 light;
+    //vuint32 Fade;
+    RenderStyleInfo rstyle;
 
     // no need to setup this
     inline trans_sprite_t () noexcept {}
@@ -222,6 +245,9 @@ public:
   virtual void PrecacheLevel () = 0;
 
 public:
+  static bool CalculateRenderStyleInfo (RenderStyleInfo &ri, int RenderStyle, float Alpha, vuint32 StencilColor=0) noexcept;
+
+  #if 0
   static inline bool IsAdditiveStyle (int style) {
     switch (style) {
       case STYLE_AddStencil:
@@ -256,6 +282,7 @@ public:
     }
     return STYLE_Normal;
   }
+  #endif
 
   // limit light distance with both `r_lights_radius` and `gl_maxdist`
   static inline float GetLightMaxDist () noexcept {
@@ -431,10 +458,14 @@ public:
   virtual void BeginTranslucentPolygonDecals () = 0;
   virtual void DrawTranslucentPolygonDecals (surface_t *surf, float Alpha, bool Additive) = 0;
 
-  virtual void DrawSpritePolygon (const TVec *cv, VTexture *Tex, float Alpha,
-                                  bool Additive, VTextureTranslation *Translation, int CMap,
-                                  vuint32 light, vuint32 Fade, const TVec &normal, float pdist, const TVec &saxis,
-                                  const TVec &taxis, const TVec &texorg, int hangup) = 0;
+  virtual void DrawSpritePolygon (const TVec *cv, VTexture *Tex,
+                                  const RenderStyleInfo &ri,
+                                  //float Alpha, bool Additive,
+                                  VTextureTranslation *Translation, int CMap,
+                                  //vuint32 light, vuint32 Fade,
+                                  const TVec &sprnormal, float sprpdist,
+                                  const TVec &saxis, const TVec &taxis, const TVec &texorg) = 0;
+
   virtual void DrawAliasModel (const TVec &origin, const TAVec &angles, const AliasModelTrans &Transform,
                                VMeshModel *Mdl, int frame, int nextframe, VTexture *Skin, VTextureTranslation *Trans,
                                int CMap, vuint32 light, vuint32 Fade, float Alpha, bool Additive, bool is_view_model,
