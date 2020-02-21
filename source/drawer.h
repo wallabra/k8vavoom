@@ -132,15 +132,10 @@ public:
     TVec saxis; // masked polys and sprites
     TVec taxis; // masked polys and sprites
     TVec texorg; // masked polys and sprites
-    //float Alpha;
-    //bool Additive;
     int translation; // masked polys and sprites
     int type; // 0: masked polygon (wall); 1: sprite; 2: alias model
     float dist; // for soriting
     vuint32 objid; // for entities
-    //int hangup; // 0: normal; -1: no z-buffer write, slightly offset (used for flat-aligned sprites); 666: fake sprite shadow
-    //vuint32 light;
-    //vuint32 Fade;
     RenderStyleInfo rstyle;
 
     // no need to setup this
@@ -460,15 +455,13 @@ public:
 
   virtual void DrawSpritePolygon (const TVec *cv, VTexture *Tex,
                                   const RenderStyleInfo &ri,
-                                  //float Alpha, bool Additive,
                                   VTextureTranslation *Translation, int CMap,
-                                  //vuint32 light, vuint32 Fade,
                                   const TVec &sprnormal, float sprpdist,
                                   const TVec &saxis, const TVec &taxis, const TVec &texorg) = 0;
 
   virtual void DrawAliasModel (const TVec &origin, const TAVec &angles, const AliasModelTrans &Transform,
                                VMeshModel *Mdl, int frame, int nextframe, VTexture *Skin, VTextureTranslation *Trans,
-                               int CMap, const RenderStyleInfo &ri/*vuint32 light, vuint32 Fade, float Alpha, bool Additive*/, bool is_view_model,
+                               int CMap, const RenderStyleInfo &ri, bool is_view_model,
                                float Inter, bool Interpolate, bool ForceDepthUse, bool AllowTransparency,
                                bool onlyDepth) = 0;
 

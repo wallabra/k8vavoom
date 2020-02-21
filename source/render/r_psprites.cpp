@@ -68,10 +68,6 @@ static bool showPSpriteWarnings () { return (cli_WAll > 0 || cli_WarnSprites > 0
 //  VRenderLevelShared::RenderPSprite
 //
 //==========================================================================
-/*
-void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameInfo &mfi,
-  float PSP_DIST, vuint32 light, vuint32 Fade, float Alpha, bool Additive)
-*/
 void VRenderLevelShared::RenderPSprite (VViewState *VSt, const VAliasModelFrameInfo &mfi, float PSP_DIST, const RenderStyleInfo &ri) {
   spritedef_t *sprdef;
   spriteframe_t *sprframe;
@@ -231,7 +227,7 @@ bool VRenderLevelShared::RenderViewModel (VViewState *VSt, const RenderStyleInfo
 
   const bool res = DrawAliasModel(nullptr, VSt->State->Outer->Name, origin, cl->ViewAngles, 1.0f, 1.0f,
     VSt->State->getMFI(), (VSt->State->NextState ? VSt->State->NextState->getMFI() : VSt->State->getMFI()),
-    nullptr, 0, ri, /*ri.light, ri.fade, ri.alpha, ri.isAdditive(),*/ true, TimeFrac, r_interpolate_frames,
+    nullptr, 0, ri, true, TimeFrac, r_interpolate_frames,
     RPASS_Normal);
 
   if (restoreFOV) {
@@ -259,27 +255,6 @@ void VRenderLevelShared::DrawPlayerSprites () {
 
   RenderStyleInfo ri;
   if (!CalculateRenderStyleInfo(ri, RendStyle, Alpha)) return;
-  /*
-  RendStyle = CoerceRenderStyle(RendStyle);
-  bool Additive = IsAdditiveStyle(RendStyle);
-
-  if (RendStyle == STYLE_SoulTrans) {
-    RendStyle = STYLE_Translucent;
-    Alpha = r_transsouls;
-  } else if (RendStyle == STYLE_OptFuzzy) {
-    RendStyle = (r_drawfuzz ? STYLE_Fuzzy : STYLE_Translucent);
-  }
-
-  switch (RendStyle) {
-    case STYLE_None: return;
-    case STYLE_Normal: Alpha = 1.0f; break;
-    case STYLE_Fuzzy: Alpha = FUZZY_ALPHA; break;
-    case STYLE_Stencil: break;
-  }
-  //Alpha = midval(0.0f, Alpha, 1.0f);
-  if (Alpha <= 0.002f) return; // no reason to render it, it is invisible
-  if (Alpha > 1.0f) Alpha = 1.0f;
-  */
 
   int ltxr = 0, ltxg = 0, ltxb = 0;
   {
@@ -329,14 +304,6 @@ void VRenderLevelShared::DrawPlayerSprites () {
       //light = (0xff000000u)|(((vuint32)clampToByte(ltxr))<<16)|(((vuint32)clampToByte(ltxg))<<8)|((vuint32)clampToByte(ltxb));
     }
 
-    //FIXME: fake "solid color" with colored light for now
-    /*
-    if (RendStyle == STYLE_Stencil || RendStyle == STYLE_AddStencil) {
-      light = (light&0xff000000u)|(cl->MO->StencilColor&0xffffffu);
-    }
-
-    vuint32 Fade = GetFade(SV_PointRegionLight(r_viewleaf->sector, cl->ViewOrg));
-    */
     ri.light = ri.seclight = light;
     ri.fade = GetFade(SV_PointRegionLight(r_viewleaf->sector, cl->ViewOrg));
 

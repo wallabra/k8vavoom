@@ -77,6 +77,112 @@ static VCvarB r_draw_adjacent_sector_things("r_draw_adjacent_sector_things", tru
 
 //==========================================================================
 //
+//  VRenderLevelDrawer::CalculateRenderStyleInfo
+//
+//  returns `false` if there's no need to render the object
+//  sets `stencilColor`, `additive`, and `alpha` (only if the result is `true`)
+//
+//==========================================================================
+bool VRenderLevelDrawer::CalculateRenderStyleInfo (RenderStyleInfo &ri, int RenderStyle, float Alpha, vuint32 StencilColor) noexcept {
+  const float a = Alpha;
+  if (a < 0.004f) return false; // ~1.02
+
+  switch (RenderStyle) {
+    case STYLE_None: // do not draw
+      return false;
+    case STYLE_Normal: // just copy the image to the screen
+      ri.stencilColor = 0u;
+      ri.translucency = 0;
+      ri.alpha = 1.0f;
+      return true;
+    case STYLE_Fuzzy: // draw silhouette using "fuzz" effect
+      ri.stencilColor = 0u;
+      ri.translucency = 1;
+      ri.alpha = FUZZY_ALPHA;
+      return true;
+    case STYLE_SoulTrans: // draw translucent with amount in r_transsouls
+      ri.stencilColor = 0u;
+      ri.translucency = 1;
+      ri.alpha = r_transsouls.asFloat();
+      break;
+    case STYLE_OptFuzzy: // draw as fuzzy or translucent, based on user preference
+      ri.stencilColor = 0u;
+      ri.translucency = 1;
+      if (r_drawfuzz) {
+        ri.alpha = FUZZY_ALPHA;
+      } else {
+        ri.alpha = a;
+      }
+      break;
+    case STYLE_Stencil: // solid color
+    case STYLE_TranslucentStencil: // seems to be the same as stencil anyway
+      ri.stencilColor = (vuint32)StencilColor|0xff000000u;
+      ri.translucency = 1;
+      ri.alpha = a;
+      break;
+    case STYLE_Translucent: // draw translucent
+      ri.stencilColor = 0u;
+      ri.translucency = 1;
+      ri.alpha = a;
+      break;
+    case STYLE_Add: // draw additive
+      ri.stencilColor = 0u;
+      ri.translucency = 2;
+      ri.alpha = min2(1.0f, a);
+      return true;
+    case STYLE_Shaded: // treats 8-bit indexed images as an alpha map. Index 0 = fully transparent, index 255 = fully opaque. This is how decals are drawn. Use StencilColor property to colorize the resulting sprite.
+      // not implemented
+      ri.stencilColor = 0u;
+      ri.translucency = 1;
+      ri.alpha = a;
+      break;
+    case STYLE_Shadow:
+      ri.stencilColor = 0xff000000u;
+      //ri.stencilColor = 0xffff0000u;
+      ri.translucency = 1;
+      ri.alpha = 0.4f; // was 0.3f
+      return true;
+    case STYLE_Subtract:
+      ri.stencilColor = 0u;
+      ri.translucency = -1;
+      ri.alpha = min2(1.0f, a);
+      return true;
+    case STYLE_AddStencil:
+      ri.stencilColor = (vuint32)StencilColor|0xff000000u;
+      ri.translucency = 2;
+      ri.alpha = min2(1.0f, a);
+      return true;
+    case STYLE_AddShaded: // treats 8-bit indexed images as an alpha map. Index 0 = fully transparent, index 255 = fully opaque. This is how decals are drawn. Use StencilColor property to colorize the resulting sprite.
+      // not implemented
+      ri.stencilColor = 0u;
+      ri.translucency = 2;
+      ri.alpha = min2(1.0f, a);
+      return true;
+    case STYLE_Dark:
+      ri.stencilColor = 0u;
+      ri.translucency = 3;
+      ri.alpha = min2(1.0f, a);
+      return true;
+    default: // translucent (will be converted to normal if necessary)
+      GCon->Logf(NAME_Error, "unknown render style %d", RenderStyle);
+      ri.stencilColor = 0u;
+      ri.translucency = 1;
+      ri.alpha = a;
+      break;
+  }
+  if (ri.alpha < 0.004f) return false;
+  if (ri.alpha >= 1.0f) {
+    ri.translucency = 0;
+    ri.alpha = 1.0f;
+  }
+  return true;
+}
+
+
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::IsThingVisible
 //
 //  entity must not be `nullptr`, and must have `SubSector` set
@@ -114,11 +220,6 @@ bool VRenderLevelShared::IsThingVisible (VEntity *ent) const noexcept {
 //  VRenderLevelShared::RenderAliasModel
 //
 //==========================================================================
-/*
-bool VRenderLevelShared::RenderAliasModel (VEntity *mobj, vuint32 light,
-                                           vuint32 Fade, float Alpha, bool Additive,
-                                           ERenderPass Pass)
-*/
 bool VRenderLevelShared::RenderAliasModel (VEntity *mobj, const RenderStyleInfo &ri, ERenderPass Pass) {
   if (!r_models) return false;
   if (!IsAliasModelAllowedFor(mobj)) return false;
@@ -156,10 +257,6 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
 
   RenderStyleInfo ri;
   if (!CalculateRenderStyleInfo(ri, mobj->RenderStyle, mobj->Alpha, mobj->StencilColor)) return;
-  /*
-  int RendStyle = CoerceRenderStyle(mobj->RenderStyle);
-  if (RendStyle == STYLE_None) return;
-  */
 
   if (Pass == RPASS_Normal) {
     // this is called only in regular renderer, and only once
@@ -167,30 +264,6 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
     // skip things in subsectors that are not visible
     if (!IsThingVisible(mobj)) return;
   }
-
-  /*
-  float Alpha = mobj->Alpha;
-  bool Additive = IsAdditiveStyle(RendStyle);
-
-  if (RendStyle == STYLE_SoulTrans) {
-    RendStyle = STYLE_Translucent;
-    Alpha = r_transsouls;
-  } else if (RendStyle == STYLE_OptFuzzy) {
-    RendStyle = (r_drawfuzz ? STYLE_Fuzzy : STYLE_Translucent);
-  }
-
-  switch (RendStyle) {
-    case STYLE_None: return;
-    case STYLE_Normal: Alpha = 1.0f; break;
-    case STYLE_Fuzzy: Alpha = FUZZY_ALPHA; break;
-    case STYLE_Stencil: break;
-  }
-  if (Alpha <= 0.01f) return; // no reason to render it, it is invisible
-  if (Alpha > 1.0f) Alpha = 1.0f;
-  */
-
-  // setup lighting
-  //vuint32 light, seclight;
 
   if (mobj->RenderStyle == STYLE_Fuzzy) {
     ri.light = ri.seclight = 0;
@@ -202,14 +275,6 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
     ri.light = ri.seclight = LightPoint(mobj->Origin, mobj->GetRenderRadius(), mobj->Height, nullptr, mobj->SubSector);
     //GCon->Logf("%s: radius=%f; height=%f", *mobj->GetClass()->GetFullName(), mobj->Radius, mobj->Height);
   }
-
-  //FIXME: fake "solid color" with colored light for now
-  /*
-  if (RendStyle == STYLE_Stencil || RendStyle == STYLE_AddStencil) {
-    light = (light&0xff000000)|(mobj->StencilColor&0xffffff);
-    seclight = (seclight&0xff000000)|(mobj->StencilColor&0xffffff);
-  }
-  */
 
   ri.fade = GetFade(SV_PointRegionLight(mobj->Sector, mobj->Origin));
 

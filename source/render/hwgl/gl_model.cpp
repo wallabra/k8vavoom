@@ -214,7 +214,7 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
                                     const AliasModelTrans &Transform,
                                     VMeshModel *Mdl, int frame, int nextframe,
                                     VTexture *Skin, VTextureTranslation *Trans, int CMap,
-                                    const RenderStyleInfo &ri/*vuint32 light, vuint32 Fade, float Alpha, bool Additive*/,
+                                    const RenderStyleInfo &ri,
                                     bool is_view_model, float Inter, bool Interpolate,
                                     bool ForceDepthUse, bool AllowTransparency, bool onlyDepth)
 {

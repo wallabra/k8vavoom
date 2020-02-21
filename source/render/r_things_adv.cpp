@@ -63,177 +63,12 @@ static VCvarB r_model_advshadow_all("r_model_advshadow_all", false, "Light all a
 
 //==========================================================================
 //
-//  VRenderLevelDrawer::CalculateRenderStyleInfo
-//
-//  returns `false` if there's no need to render the object
-//  sets `stencilColor`, `additive`, and `alpha` (only if the result is `true`)
-//
-//==========================================================================
-bool VRenderLevelDrawer::CalculateRenderStyleInfo (RenderStyleInfo &ri, int RenderStyle, float Alpha, vuint32 StencilColor) noexcept {
-  const float a = Alpha;
-  if (a < 0.004f) return false; // ~1.02
-
-  switch (RenderStyle) {
-    case STYLE_None: // do not draw
-      return false;
-    case STYLE_Normal: // just copy the image to the screen
-      ri.stencilColor = 0u;
-      ri.translucency = 0;
-      ri.alpha = 1.0f;
-      return true;
-    case STYLE_Fuzzy: // draw silhouette using "fuzz" effect
-      ri.stencilColor = 0u;
-      ri.translucency = 1;
-      ri.alpha = FUZZY_ALPHA;
-      return true;
-    case STYLE_SoulTrans: // draw translucent with amount in r_transsouls
-      ri.stencilColor = 0u;
-      ri.translucency = 1;
-      ri.alpha = r_transsouls.asFloat();
-      break;
-    case STYLE_OptFuzzy: // draw as fuzzy or translucent, based on user preference
-      ri.stencilColor = 0u;
-      ri.translucency = 1;
-      if (r_drawfuzz) {
-        ri.alpha = FUZZY_ALPHA;
-      } else {
-        ri.alpha = a;
-      }
-      break;
-    case STYLE_Stencil: // solid color
-    case STYLE_TranslucentStencil: // seems to be the same as stencil anyway
-      ri.stencilColor = (vuint32)StencilColor|0xff000000u;
-      ri.translucency = 1;
-      ri.alpha = a;
-      break;
-    case STYLE_Translucent: // draw translucent
-      ri.stencilColor = 0u;
-      ri.translucency = 1;
-      ri.alpha = a;
-      break;
-    case STYLE_Add: // draw additive
-      ri.stencilColor = 0u;
-      ri.translucency = 2;
-      ri.alpha = min2(1.0f, a);
-      return true;
-    case STYLE_Shaded: // treats 8-bit indexed images as an alpha map. Index 0 = fully transparent, index 255 = fully opaque. This is how decals are drawn. Use StencilColor property to colorize the resulting sprite.
-      // not implemented
-      ri.stencilColor = 0u;
-      ri.translucency = 1;
-      ri.alpha = a;
-      break;
-    case STYLE_Shadow:
-      ri.stencilColor = 0xff000000u;
-      //ri.stencilColor = 0xffff0000u;
-      ri.translucency = 1;
-      ri.alpha = 0.4f; // was 0.3f
-      return true;
-    case STYLE_Subtract:
-      ri.stencilColor = 0u;
-      ri.translucency = -1;
-      ri.alpha = min2(1.0f, a);
-      return true;
-    case STYLE_AddStencil:
-      ri.stencilColor = (vuint32)StencilColor|0xff000000u;
-      ri.translucency = 2;
-      ri.alpha = min2(1.0f, a);
-      return true;
-    case STYLE_AddShaded: // treats 8-bit indexed images as an alpha map. Index 0 = fully transparent, index 255 = fully opaque. This is how decals are drawn. Use StencilColor property to colorize the resulting sprite.
-      // not implemented
-      ri.stencilColor = 0u;
-      ri.translucency = 2;
-      ri.alpha = min2(1.0f, a);
-      return true;
-    case STYLE_Dark:
-      ri.stencilColor = 0u;
-      ri.translucency = 3;
-      ri.alpha = min2(1.0f, a);
-      return true;
-    default: // translucent (will be converted to normal if necessary)
-      GCon->Logf(NAME_Error, "unknown render style %d", RenderStyle);
-      ri.stencilColor = 0u;
-      ri.translucency = 1;
-      ri.alpha = a;
-      break;
-  }
-  if (ri.alpha < 0.004f) return false;
-  if (ri.alpha >= 1.0f) {
-    ri.translucency = 0;
-    ri.alpha = 1.0f;
-  }
-  return true;
-}
-
-
-//==========================================================================
-//
-//  CalculateThingAlpha
-//
-//  returns `false` if object is not need to be rendered
-//
-//==========================================================================
-/*
-static inline bool CalculateThingAlpha (const VEntity *ent, int &RendStyle, float &Alpha) {
-  int rs = VRenderLevelDrawer::CoerceRenderStyle(ent->RenderStyle);
-  float alpha;
-  switch (rs) {
-    case STYLE_None:
-      return false;
-    case STYLE_Normal:
-      alpha = 1.0f;
-      break;
-    case STYLE_Translucent:
-    case STYLE_Dark:
-    case STYLE_Stencil: //???
-      alpha = ent->Alpha;
-      break;
-    case STYLE_Fuzzy:
-      alpha = FUZZY_ALPHA;
-      break;
-    case STYLE_OptFuzzy:
-      if (r_drawfuzz) {
-        rs = STYLE_Fuzzy;
-        alpha = FUZZY_ALPHA;
-      } else {
-        rs = STYLE_Translucent;
-        alpha = ent->Alpha;
-      }
-      break;
-    case STYLE_Add:
-    case STYLE_AddStencil:
-      alpha = ent->Alpha;
-      if (alpha >= 1.0f) alpha = 1.0f-0.002f;
-      break;
-    case STYLE_SoulTrans:
-      rs = STYLE_Translucent;
-      alpha = r_transsouls.asFloat();
-      if (alpha >= 1.0f) rs = STYLE_Normal;
-      break;
-    default:
-      GCon->Logf(NAME_Error, "Entity `%s` has unknown render style %d; ignored", ent->GetClass()->GetName(), rs);
-      rs = STYLE_None;
-      return false;
-  }
-  if (alpha < 0.01f) return false; // no reason to render it, it is invisible
-  if (alpha >= 1.0f) alpha = 1.0f;
-  RendStyle = rs;
-  Alpha = alpha;
-  return true;
-}
-*/
-
-
-//==========================================================================
-//
 //  SetupRenderStyle
 //
 //  returns `false` if object is not need to be rendered
 //
 //==========================================================================
-//static inline bool SetupRenderStyleAndTime (const VEntity *ent, int &RendStyle, float &Alpha, bool &Additive, float &TimeFrac) {
 static inline bool SetupRenderStyleAndTime (const VEntity *ent, RenderStyleInfo &ri, float &TimeFrac) {
-  //if (!CalculateThingAlpha(ent, RendStyle, Alpha)) return false;
-  //Additive = VRenderLevelDrawer::IsAdditiveStyle(RendStyle);
   if (!VRenderLevelDrawer::CalculateRenderStyleInfo(ri, ent->RenderStyle, ent->Alpha, ent->StencilColor)) return false;
 
   if (ent->State->Time > 0) {
@@ -281,7 +116,6 @@ void VRenderLevelShared::BuildVisibleObjectsList () {
       // collect all things with models (we'll need them in advrender)
       if (hasAliasModel) {
         alphaDone = true;
-        //if (!CalculateThingAlpha(ent, RendStyle, Alpha)) continue; // invisible
         if (!CalculateRenderStyleInfo(ri, ent->RenderStyle, ent->Alpha, ent->StencilColor)) continue; // invisible
         // ignore translucent things, they cannot cast a shadow
         if (!ri.isTranslucent()) {
@@ -297,7 +131,6 @@ void VRenderLevelShared::BuildVisibleObjectsList () {
     if (!IsThingVisible(ent)) continue;
 
     if (!alphaDone) {
-      //if (!CalculateThingAlpha(ent, RendStyle, Alpha)) continue; // invisible
       if (!CalculateRenderStyleInfo(ri, ent->RenderStyle, ent->Alpha, ent->StencilColor)) continue; // invisible
     }
 

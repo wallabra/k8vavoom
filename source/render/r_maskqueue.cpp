@@ -115,8 +115,8 @@ extern "C" {
 //
 //==========================================================================
 void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, TVec *sv,
-  int count, int lump, const RenderStyleInfo &ri/*float Alpha, bool Additive*/, int translation,
-  bool isSprite, /*vuint32 light, vuint32 Fade,*/ const TVec &normal, float pdist,
+  int count, int lump, const RenderStyleInfo &ri, int translation,
+  bool isSprite, const TVec &normal, float pdist,
   const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority,
   bool useSprOrigin, const TVec &sprOrigin, vuint32 objid/*, int hangup*/)
 {
@@ -158,14 +158,9 @@ void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, TVec *sv,
   spr.taxis = taxis;
   spr.texorg = texorg;
   spr.surf = surf;
-  //spr.Alpha = Alpha;
-  //spr.Additive = Additive;
   spr.translation = translation;
   spr.type = (isSprite ? 1 : 0);
-  //spr.light = light;
   spr.objid = objid;
-  //spr.hangup = hangup;
-  //spr.Fade = Fade;
   spr.prio = priority;
   //spr.origin = sprOrigin;
   spr.rstyle = ri;
@@ -186,10 +181,6 @@ void VRenderLevelShared::QueueTranslucentAliasModel (VEntity *mobj, const Render
   //trans_sprite_t &spr = trans_sprites[traspUsed++];
   trans_sprite_t &spr = GetCurrentDLS().DrawSpriteList.alloc();
   spr.Ent = mobj;
-  //spr.light = light;
-  //spr.Fade = Fade;
-  //spr.Alpha = Alpha;
-  //spr.Additive = Additive;
   spr.rstyle = ri;
   spr.dist = dist;
   spr.type = 2;
@@ -197,7 +188,6 @@ void VRenderLevelShared::QueueTranslucentAliasModel (VEntity *mobj, const Render
   spr.lump = -1; // has no sense
   spr.objid = mobj->GetUniqueId();
   spr.prio = 0; // normal priority
-  //spr.hangup = 0;
   //spr.origin = mobj->Origin;
 }
 
@@ -209,10 +199,6 @@ void VRenderLevelShared::QueueTranslucentAliasModel (VEntity *mobj, const Render
 //  this uses `seclight` from ri
 //
 //==========================================================================
-/*
-void VRenderLevelShared::QueueSprite (VEntity *thing, vuint32 light, vuint32 Fade, float Alpha, bool Additive,
-                                      vuint32 seclight, bool onlyShadow)
-*/
 void VRenderLevelShared::QueueSprite (VEntity *thing, const RenderStyleInfo &ri, bool onlyShadow) {
   const int sprtype = thing->SpriteType;
   TVec sprorigin = thing->GetDrawOrigin();
@@ -292,7 +278,6 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, const RenderStyleInfo &ri,
 
   //if (r_brightmaps && r_brightmaps_sprite && Tex->Brightmap && Tex->Brightmap->nofullbright) light = seclight; // disable fullbright
   RenderStyleInfo newri = ri;
-
 
   TVec sprforward(0, 0, 0);
   TVec sprright(0, 0, 0);
@@ -625,8 +610,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, const RenderStyleInfo &ri,
           newri.translucency = 1; // normal translucenty
           newri.hangup |= 0x200u; // special flag for sorter
           QueueTranslucentPoly(nullptr, sv, 4, lump, newri,
-            //Alpha, /*Additive*/false,
-            /*thing->Translation*/0, true/*isSprite*/, /*light, Fade,*/ -sprforward,
+            /*thing->Translation*/0, true/*isSprite*/, -sprforward,
             DotProduct(sprorigin, -sprforward), (flip ? -sprright : sprright)/scaleX,
             -sprup/scaleY, (flip ? sv[2] : sv[1]), priority,
             true, /*sprorigin*/thing->Origin, thing->GetUniqueId()/*, 666 fakeshadow type*/);

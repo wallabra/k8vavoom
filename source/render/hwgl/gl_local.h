@@ -310,20 +310,13 @@ public:
 
   virtual void DrawSpritePolygon (const TVec *cv, VTexture *Tex,
                                   const RenderStyleInfo &ri,
-                                  //float Alpha, bool Additive,
                                   VTextureTranslation *Translation, int CMap,
-                                  //vuint32 light, vuint32 Fade,
                                   const TVec &sprnormal, float sprpdist,
                                   const TVec &saxis, const TVec &taxis, const TVec &texorg) override;
 
-  /*
-  virtual void DrawAliasModel(const TVec &, const TAVec &, const AliasModelTrans &Transform,
-    VMeshModel *, int, int, VTexture *, VTextureTranslation *, int, vuint32,
-    vuint32, float, bool, bool, float, bool, bool, bool, bool) override;
-  */
   virtual void DrawAliasModel (const TVec &origin, const TAVec &angles, const AliasModelTrans &Transform,
                                VMeshModel *Mdl, int frame, int nextframe, VTexture *Skin, VTextureTranslation *Trans,
-                               int CMap, const RenderStyleInfo &ri/*vuint32 light, vuint32 Fade, float Alpha, bool Additive*/, bool is_view_model,
+                               int CMap, const RenderStyleInfo &ri, bool is_view_model,
                                float Inter, bool Interpolate, bool ForceDepthUse, bool AllowTransparency,
                                bool onlyDepth) override;
 

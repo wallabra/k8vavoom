@@ -1254,7 +1254,6 @@ void R_LoadAllModelsSkins () {
 static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVec &Angles,
   float ScaleX, float ScaleY, VClassModelScript &Cls, int FIdx, int NFIdx,
   VTextureTranslation *Trans, int ColorMap, int Version,
-  //vuint32 Light, vuint32 Fade, float Alpha, bool Additive,
   const RenderStyleInfo &ri,
   bool IsViewModel, float Inter,
   bool Interpolate, const TVec &LightPos, float LightRadius, ERenderPass Pass, bool isShadowVol)
@@ -1518,7 +1517,7 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
           Drawer->DrawAliasModel(Md2Org, Md2Angle, Transform,
             SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
             Trans, ColorMap,
-            newri, //Md2Light, Fade, Md2Alpha, Additive,
+            newri,
             IsViewModel, smooth_inter, Interpolate, SubMdl.UseDepth,
             SubMdl.AllowTransparency,
             !IsViewModel && isShadowVol); // for advanced renderer, we need to fill z-buffer, but not color buffer
@@ -1622,7 +1621,6 @@ bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, const TVec &Org, const T
   float ScaleX, float ScaleY, VModel *Mdl,
   const VAliasModelFrameInfo &Frame, const VAliasModelFrameInfo &NextFrame,
   VTextureTranslation *Trans, int Version,
-  //vuint32 Light, vuint32 Fade, float Alpha, bool Additive,
   const RenderStyleInfo &ri,
   bool IsViewModel, float Inter, bool Interpolate,
   ERenderPass Pass)
@@ -1655,7 +1653,6 @@ bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, VName clsName, const TVe
   float ScaleX, float ScaleY,
   const VAliasModelFrameInfo &Frame, const VAliasModelFrameInfo &NextFrame, //old:VState *State, VState *NextState,
   VTextureTranslation *Trans, int Version,
-  //vuint32 Light, vuint32 Fade, float Alpha, bool Additive,
   const RenderStyleInfo &ri,
   bool IsViewModel, float Inter, bool Interpolate,
   ERenderPass Pass)
@@ -1702,7 +1699,7 @@ bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, VName clsName, const TVe
     }
 
     DrawModel(Level, mobj, Org, Angles, ScaleX, ScaleY, *Cls, FIdx, NFIdx, Trans,
-      ColorMap, Version, ri, /*ri.light, ri.fade, ri.alpha, ri.isAdditive(),*/ IsViewModel,
+      ColorMap, Version, ri, IsViewModel,
       InterpFrac, Interpolate, CurrLightPos, CurrLightRadius, Pass, IsShadowVolumeRenderer());
 
     // try next one
@@ -1769,12 +1766,7 @@ static VModel *FindFixedModelFor (VEntity *Ent, bool verbose) {
 //  VRenderLevelShared::DrawEntityModel
 //
 //==========================================================================
-/*
-bool VRenderLevelShared::DrawEntityModel (VEntity *Ent, vuint32 Light, vuint32 Fade,
-  float Alpha, bool Additive, float Inter, ERenderPass Pass)
-*/
-bool VRenderLevelShared::DrawEntityModel (VEntity *Ent, const RenderStyleInfo &ri, float Inter, ERenderPass Pass)
-{
+bool VRenderLevelShared::DrawEntityModel (VEntity *Ent, const RenderStyleInfo &ri, float Inter, ERenderPass Pass) {
   //VState *DispState = (Ent->EntityFlags&VEntity::EF_UseDispState ? Ent->DispState : Ent->State);
   //VState *DispState = Ent->State; //FIXME: skipframes
 
@@ -1790,14 +1782,14 @@ bool VRenderLevelShared::DrawEntityModel (VEntity *Ent, const RenderStyleInfo &r
       Ent->/*Angles*/GetModelDrawAngles(), Ent->ScaleX, Ent->ScaleY, Mdl,
       Ent->getMFI(), Ent->getNextMFI(),
       GetTranslation(Ent->Translation),
-      Ent->ModelVersion, ri, /*ri.light, ri.fade, ri.alpha, ri.isAdditive(),*/ false, Inter,
+      Ent->ModelVersion, ri, false, Inter,
       Interpolate, Pass);
   } else {
     return DrawAliasModel(Ent, GetClassNameForModel(Ent), sprorigin,
       Ent->/*Angles*/GetModelDrawAngles(), Ent->ScaleX, Ent->ScaleY,
       Ent->getMFI(), Ent->getNextMFI(),
       GetTranslation(Ent->Translation), Ent->ModelVersion,
-      ri, /*ri.light, ri.fade, ri.alpha, ri.isAdditive(),*/ false, Inter, Interpolate, Pass);
+      ri, false, Inter, Interpolate, Pass);
   }
 }
 
