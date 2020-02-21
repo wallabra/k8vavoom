@@ -316,15 +316,26 @@ public:
                                   const TVec &sprnormal, float sprpdist,
                                   const TVec &saxis, const TVec &taxis, const TVec &texorg) override;
 
+  /*
   virtual void DrawAliasModel(const TVec &, const TAVec &, const AliasModelTrans &Transform,
     VMeshModel *, int, int, VTexture *, VTextureTranslation *, int, vuint32,
     vuint32, float, bool, bool, float, bool, bool, bool, bool) override;
+  */
+  virtual void DrawAliasModel (const TVec &origin, const TAVec &angles, const AliasModelTrans &Transform,
+                               VMeshModel *Mdl, int frame, int nextframe, VTexture *Skin, VTextureTranslation *Trans,
+                               int CMap, const RenderStyleInfo &ri/*vuint32 light, vuint32 Fade, float Alpha, bool Additive*/, bool is_view_model,
+                               float Inter, bool Interpolate, bool ForceDepthUse, bool AllowTransparency,
+                               bool onlyDepth) override;
+
   virtual void DrawAliasModelAmbient(const TVec &, const TAVec &, const AliasModelTrans &Transform,
     VMeshModel *, int, int, VTexture *, vuint32, float, float, bool,
     bool, bool) override;
-  virtual void DrawAliasModelTextures(const TVec &, const TAVec &, const AliasModelTrans &Transform,
-    VMeshModel *, int, int, VTexture *, VTextureTranslation *, int, float, float, bool,
-    bool, bool) override;
+  void DrawAliasModelTextures (const TVec &origin, const TAVec &angles,
+                               const AliasModelTrans &Transform,
+                               VMeshModel *Mdl, int frame, int nextframe,
+                               VTexture *Skin, VTextureTranslation *Trans, int CMap,
+                               vuint32 stencilColor, float Alpha, float Inter,
+                               bool Interpolate, bool ForceDepth, bool AllowTransparency) override;
   virtual void BeginModelsLightPass(const TVec &, float, float, vuint32, const TVec &aconeDir, const float aconeAngle) override;
   virtual void DrawAliasModelLight(const TVec &, const TAVec &, const AliasModelTrans &Transform,
     VMeshModel *, int, int, VTexture *, float, float, bool, bool) override;

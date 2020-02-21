@@ -250,6 +250,7 @@ ShaderList basedir="basev/common/glshaders" pakdir="glshaders" {
   Shader [advanced] ShadowsLightSpotDbg both="shadowvol/surf/shadows_surf_light" { defines { "VV_DEBUG_LIGHT", "VV_SPOTLIGHT" } }
 
   Shader SurfModel both="lightmap/surf_model";
+  Shader SurfModelStencil both="lightmap/surf_model" { define "VV_STENCIL"; }
 
   Shader [advanced] ShadowsModelAmbient both="shadowvol/model/shadows_model_ambient";
   Shader [advanced] ShadowsModelTextures both="shadowvol/model/shadows_model_textures";
@@ -257,6 +258,8 @@ ShaderList basedir="basev/common/glshaders" pakdir="glshaders" {
   Shader [advanced] ShadowsModelLightSpot both="shadowvol/model/shadows_model_light" { define "VV_SPOTLIGHT"; }
   Shader [advanced] ShadowsModelShadow both="shadowvol/model/shadows_model_shadow";
   Shader [advanced] ShadowsModelFog both="shadowvol/model/shadows_model_fog";
+
+  Shader [advanced] ShadowsModelTexturesStencil both="shadowvol/model/shadows_model_textures" { define "VV_STENCIL"; }
 
   // wipe
   Shader DrawWipeType0 both="wipe/draw_wipe_type0";

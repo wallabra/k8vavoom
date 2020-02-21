@@ -207,12 +207,14 @@ void VOpenGLDrawer::UnloadModels () {
 //
 //  VOpenGLDrawer::DrawAliasModel
 //
+//  renders alias model for lightmapped renderer
+//
 //==========================================================================
 void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
                                     const AliasModelTrans &Transform,
                                     VMeshModel *Mdl, int frame, int nextframe,
                                     VTexture *Skin, VTextureTranslation *Trans, int CMap,
-                                    vuint32 light, vuint32 Fade, float Alpha, bool Additive,
+                                    const RenderStyleInfo &ri/*vuint32 light, vuint32 Fade, float Alpha, bool Additive*/,
                                     bool is_view_model, float Inter, bool Interpolate,
                                     bool ForceDepthUse, bool AllowTransparency, bool onlyDepth)
 {
@@ -238,7 +240,6 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
   glAlphaFunc(GL_GREATER, 0.0f);
   GLEnableBlend();
 
-
   //GCon->Logf("%s: org=(%f,%f,%f); scale=(%f,%f,%f); ofs=(%f,%f,%f)", *Mdl->Name, origin.x, origin.y, origin.z, Scale.x, Scale.y, Scale.z, Offset.x, Offset.y, Offset.z);
 
   /*
@@ -259,19 +260,34 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
   AliasSetUpTransform(origin, angles, Transform, RotationMatrix);
   //AliasSetUpTransform(origin, angles, Offset, TVec(1, 1, 1), RotationMatrix);
 
-  SurfModel.Activate();
-  SurfModel.SetTexture(0);
-  //SurfModel.SetFogType();
-  SurfModel.SetModelToWorldMat(RotationMatrix);
-  SurfModel.SetFogFade(Fade, Alpha);
-  SurfModel.SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f);
-  SurfModel.SetAllowTransparency(AllowTransparency);
-  SurfModel.SetInter(Inter);
-  //SurfModel.SetLightVal(((light>>16)&255)/255.0f, ((light>>8)&255)/255.0f, (light&255)/255.0f, Alpha); // this is attribute
-  SurfModel.UploadChangedUniforms();
+  //if (ri.stencilColor) return;
 
+  if (!ri.stencilColor) {
+    SurfModel.Activate();
+    SurfModel.SetTexture(0);
+    //SurfModel.SetFogType();
+    SurfModel.SetModelToWorldMat(RotationMatrix);
+    SurfModel.SetFogFade(ri.fade, ri.alpha);
+    SurfModel.SetInAlpha(ri.alpha < 1.0f ? ri.alpha : 1.0f);
+    SurfModel.SetAllowTransparency(AllowTransparency);
+    SurfModel.SetInter(Inter);
+    //SurfModel.SetLightVal(((light>>16)&255)/255.0f, ((light>>8)&255)/255.0f, (light&255)/255.0f, Alpha); // this is attribute
+    SurfModel.UploadChangedUniforms();
+  } else {
+    SurfModelStencil.Activate();
+    SurfModelStencil.SetTexture(0);
+    //SurfModelStencil.SetFogType();
+    SurfModelStencil.SetModelToWorldMat(RotationMatrix);
+    SurfModelStencil.SetFogFade(ri.fade, ri.alpha);
+    SurfModelStencil.SetInAlpha(ri.alpha < 1.0f ? ri.alpha : 1.0f);
+    SurfModelStencil.SetAllowTransparency(AllowTransparency);
+    SurfModelStencil.SetInter(Inter);
+    //SurfModelStencil.SetLightVal(((light>>16)&255)/255.0f, ((light>>8)&255)/255.0f, (light&255)/255.0f, Alpha); // this is attribute
+    SurfModelStencil.SetStencilColor(((ri.stencilColor>>16)&255)/255.0f, ((ri.stencilColor>>8)&255)/255.0f, (ri.stencilColor&255)/255.0f);
+    SurfModelStencil.UploadChangedUniforms();
+  }
 
-  if (Additive) {
+  if (ri.isAdditive()) {
     glBlendFunc(GL_ONE, GL_ONE); // our source rgb is already premultiplied
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
   } else {
@@ -287,20 +303,32 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
     p_glVertexAttribPointerARB(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
     p_glEnableVertexAttribArrayARB(0);
 
-    p_glVertexAttribPointerARB(SurfModel.loc_Vert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset);
-    p_glEnableVertexAttribArrayARB(SurfModel.loc_Vert2);
+    if (!ri.stencilColor) {
+      p_glVertexAttribPointerARB(SurfModel.loc_Vert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset);
+      p_glEnableVertexAttribArrayARB(SurfModel.loc_Vert2);
 
-    p_glVertexAttribPointerARB(SurfModel.loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
-    p_glEnableVertexAttribArrayARB(SurfModel.loc_TexCoord);
+      p_glVertexAttribPointerARB(SurfModel.loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
+      p_glEnableVertexAttribArrayARB(SurfModel.loc_TexCoord);
 
-    //SurfModel.SetViewOrigin(vieworg);
-    SurfModel.SetLightValAttr(((light>>16)&255)/255.0f, ((light>>8)&255)/255.0f, (light&255)/255.0f, Alpha);
-    //SurfModel.UploadChangedAttrs();
+      //SurfModel.SetViewOrigin(vieworg);
+      SurfModel.SetLightValAttr(((ri.light>>16)&255)/255.0f, ((ri.light>>8)&255)/255.0f, (ri.light&255)/255.0f, ri.alpha);
+      //SurfModel.UploadChangedAttrs();
+    } else {
+      p_glVertexAttribPointerARB(SurfModelStencil.loc_Vert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset);
+      p_glEnableVertexAttribArrayARB(SurfModelStencil.loc_Vert2);
+
+      p_glVertexAttribPointerARB(SurfModelStencil.loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
+      p_glEnableVertexAttribArrayARB(SurfModelStencil.loc_TexCoord);
+
+      //SurfModelStencil.SetViewOrigin(vieworg);
+      SurfModelStencil.SetLightValAttr(((ri.light>>16)&255)/255.0f, ((ri.light>>8)&255)/255.0f, (ri.light&255)/255.0f, ri.alpha);
+      //SurfModelStencil.UploadChangedAttrs();
+    }
 
     p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, Mdl->IndexBuffer);
 
     //bool turnOnDepthMask = false;
-    if ((Alpha < 1.0f && !ForceDepthUse) || AllowTransparency) { //k8: dunno. really.
+    if ((ri.alpha < 1.0f && !ForceDepthUse) || AllowTransparency) { //k8: dunno. really.
       glDepthMask(GL_FALSE);
       //turnOnDepthMask = true;
     }
@@ -318,8 +346,13 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
     p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 
     p_glDisableVertexAttribArrayARB(0);
-    p_glDisableVertexAttribArrayARB(SurfModel.loc_Vert2);
-    p_glDisableVertexAttribArrayARB(SurfModel.loc_TexCoord);
+    if (!ri.stencilColor) {
+      p_glDisableVertexAttribArrayARB(SurfModel.loc_Vert2);
+      p_glDisableVertexAttribArrayARB(SurfModel.loc_TexCoord);
+    } else {
+      p_glDisableVertexAttribArrayARB(SurfModelStencil.loc_Vert2);
+      p_glDisableVertexAttribArrayARB(SurfModelStencil.loc_TexCoord);
+    }
     p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
   }
 
@@ -327,7 +360,7 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
   glShadeModel(GL_FLAT);
   glAlphaFunc(GL_GREATER, getAlphaThreshold());
   glDisable(GL_ALPHA_TEST);
-  if (Additive) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+  if (ri.isAdditive()) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
   //glPopMatrix();
   if (is_view_model) glDepthRange(0.0f, 1.0f);
@@ -460,7 +493,7 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
                                             const AliasModelTrans &Transform,
                                             VMeshModel *Mdl, int frame, int nextframe,
                                             VTexture *Skin, VTextureTranslation *Trans, int CMap,
-                                            float Alpha, float Inter,
+                                            vuint32 stencilColor, float Alpha, float Inter,
                                             bool Interpolate, bool ForceDepth, bool AllowTransparency)
 {
   VMeshFrame *FrameDesc = &Mdl->Frames[frame];
@@ -490,48 +523,76 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
   NormalMat[2][2] = normalmatrix[2][2];
   */
 
-  ShadowsModelTextures.Activate();
-  ShadowsModelTextures.SetTexture(0);
-  ShadowsModelTextures.SetInter(Inter);
-  ShadowsModelTextures.SetModelToWorldMat(RotationMatrix);
+  if (!stencilColor) {
+    ShadowsModelTextures.Activate();
+    ShadowsModelTextures.SetTexture(0);
+    ShadowsModelTextures.SetInter(Inter);
+    ShadowsModelTextures.SetModelToWorldMat(RotationMatrix);
 
-  ShadowsModelTextures.SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f);
-  ShadowsModelTextures.SetAllowTransparency(AllowTransparency);
+    ShadowsModelTextures.SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f);
+    ShadowsModelTextures.SetAllowTransparency(AllowTransparency);
+  } else {
+    ShadowsModelTexturesStencil.Activate();
+    ShadowsModelTexturesStencil.SetTexture(0);
+    ShadowsModelTexturesStencil.SetInter(Inter);
+    ShadowsModelTexturesStencil.SetModelToWorldMat(RotationMatrix);
+
+    ShadowsModelTexturesStencil.SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f);
+    ShadowsModelTexturesStencil.SetAllowTransparency(AllowTransparency);
+  }
 
   SelectTexture(1);
   glBindTexture(GL_TEXTURE_2D, ambLightFBO.getColorTid());
   SelectTexture(0);
-  ShadowsModelTextures.SetAmbLightTexture(1);
-  auto mfbo = GetMainFBO();
-  ShadowsModelTextures.SetScreenSize((float)mfbo->getWidth(), (float)mfbo->getHeight());
-  //ShadowsModelTextures.UploadChangedUniforms();
+  if (!stencilColor) {
+    ShadowsModelTextures.SetAmbLightTexture(1);
+    auto mfbo = GetMainFBO();
+    ShadowsModelTextures.SetScreenSize((float)mfbo->getWidth(), (float)mfbo->getHeight());
+    //ShadowsModelTextures.UploadChangedUniforms();
 
-  //!ShadowsModelTextures.SetNormalToWorldMat(NormalMat[0]);
-  ShadowsModelTextures.UploadChangedUniforms();
+    //!ShadowsModelTextures.SetNormalToWorldMat(NormalMat[0]);
+    ShadowsModelTextures.UploadChangedUniforms();
+  } else {
+    ShadowsModelTexturesStencil.SetAmbLightTexture(1);
+    auto mfbo = GetMainFBO();
+    ShadowsModelTexturesStencil.SetScreenSize((float)mfbo->getWidth(), (float)mfbo->getHeight());
+    //ShadowsModelTexturesStencil.UploadChangedUniforms();
+
+    //!ShadowsModelTexturesStencil.SetNormalToWorldMat(NormalMat[0]);
+    ShadowsModelTexturesStencil.UploadChangedUniforms();
+  }
 
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, Mdl->VertsBuffer);
 
   p_glVertexAttribPointerARB(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
   p_glEnableVertexAttribArrayARB(0);
 
-  //!p_glVertexAttribPointerARB(ShadowsModelTextures.loc_VertNormal, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->NormalsOffset);
-  //!p_glEnableVertexAttribArrayARB(ShadowsModelTextures.loc_VertNormal);
+  if (!stencilColor) {
+    //!p_glVertexAttribPointerARB(ShadowsModelTextures.loc_VertNormal, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->NormalsOffset);
+    //!p_glEnableVertexAttribArrayARB(ShadowsModelTextures.loc_VertNormal);
 
-  p_glVertexAttribPointerARB(ShadowsModelTextures.loc_Vert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset);
-  p_glEnableVertexAttribArrayARB(ShadowsModelTextures.loc_Vert2);
+    p_glVertexAttribPointerARB(ShadowsModelTextures.loc_Vert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset);
+    p_glEnableVertexAttribArrayARB(ShadowsModelTextures.loc_Vert2);
 
-  //!p_glVertexAttribPointerARB(ShadowsModelTextures.loc_Vert2Normal, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->NormalsOffset);
-  //!p_glEnableVertexAttribArrayARB(ShadowsModelTextures.loc_Vert2Normal);
+    //!p_glVertexAttribPointerARB(ShadowsModelTextures.loc_Vert2Normal, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->NormalsOffset);
+    //!p_glEnableVertexAttribArrayARB(ShadowsModelTextures.loc_Vert2Normal);
 
-  p_glVertexAttribPointerARB(ShadowsModelTextures.loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
-  p_glEnableVertexAttribArrayARB(ShadowsModelTextures.loc_TexCoord);
+    p_glVertexAttribPointerARB(ShadowsModelTextures.loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
+    p_glEnableVertexAttribArrayARB(ShadowsModelTextures.loc_TexCoord);
 
-  /*
-  //ShadowsModelTextures.SetViewOrigin(vieworg);
-  ShadowsModelTextures.SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f);
-  ShadowsModelTextures.SetAllowTransparency(AllowTransparency);
-  ShadowsModelTextures.UploadChangedUniforms();
-  */
+    /*
+    //ShadowsModelTextures.SetViewOrigin(vieworg);
+    ShadowsModelTextures.SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f);
+    ShadowsModelTextures.SetAllowTransparency(AllowTransparency);
+    ShadowsModelTextures.UploadChangedUniforms();
+    */
+  } else {
+    p_glVertexAttribPointerARB(ShadowsModelTexturesStencil.loc_Vert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset);
+    p_glEnableVertexAttribArrayARB(ShadowsModelTexturesStencil.loc_Vert2);
+
+    p_glVertexAttribPointerARB(ShadowsModelTexturesStencil.loc_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
+    p_glEnableVertexAttribArrayARB(ShadowsModelTexturesStencil.loc_TexCoord);
+  }
 
   /* original
   glEnable(GL_ALPHA_TEST);
@@ -570,10 +631,15 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
   p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 
   p_glDisableVertexAttribArrayARB(0);
-  //!p_glDisableVertexAttribArrayARB(ShadowsModelTextures.loc_VertNormal);
-  p_glDisableVertexAttribArrayARB(ShadowsModelTextures.loc_Vert2);
-  //!p_glDisableVertexAttribArrayARB(ShadowsModelTextures.loc_Vert2Normal);
-  p_glDisableVertexAttribArrayARB(ShadowsModelTextures.loc_TexCoord);
+  if (!stencilColor) {
+    //!p_glDisableVertexAttribArrayARB(ShadowsModelTextures.loc_VertNormal);
+    p_glDisableVertexAttribArrayARB(ShadowsModelTextures.loc_Vert2);
+    //!p_glDisableVertexAttribArrayARB(ShadowsModelTextures.loc_Vert2Normal);
+    p_glDisableVertexAttribArrayARB(ShadowsModelTextures.loc_TexCoord);
+  } else {
+    p_glDisableVertexAttribArrayARB(ShadowsModelTexturesStencil.loc_Vert2);
+    p_glDisableVertexAttribArrayARB(ShadowsModelTexturesStencil.loc_TexCoord);
+  }
   p_glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
 
   SelectTexture(1);

@@ -5,6 +5,9 @@ uniform sampler2D Texture;
 $include "common/fog_vars.fs"
 uniform float InAlpha;
 uniform bool AllowTransparency;
+#ifdef VV_STENCIL
+uniform vec3 StencilColor;
+#endif
 
 varying vec4 Light;
 varying vec2 TextureCoordinate;
@@ -28,7 +31,11 @@ void main () {
   // convert to premultiplied
   FinalColor.a *= InAlpha;
   if (FinalColor.a < ALPHA_MIN) discard;
+#ifdef VV_STENCIL
+  FinalColor.rgb = StencilColor.rgb;
+#else
   FinalColor.rgb = clamp(FinalColor.rgb*FinalColor.a, 0.0, 1.0);
+#endif
 
   $include "common/fog_calc.fs"
 

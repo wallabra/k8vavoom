@@ -1253,10 +1253,36 @@ void R_LoadAllModelsSkins () {
 //==========================================================================
 static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVec &Angles,
   float ScaleX, float ScaleY, VClassModelScript &Cls, int FIdx, int NFIdx,
-  VTextureTranslation *Trans, int ColorMap, int Version, vuint32 Light,
-  vuint32 Fade, float Alpha, bool Additive, bool IsViewModel, float Inter,
+  VTextureTranslation *Trans, int ColorMap, int Version,
+  //vuint32 Light, vuint32 Fade, float Alpha, bool Additive,
+  const RenderStyleInfo &ri,
+  bool IsViewModel, float Inter,
   bool Interpolate, const TVec &LightPos, float LightRadius, ERenderPass Pass, bool isShadowVol)
 {
+  // some early rejects
+  switch (Pass) {
+    case RPASS_Normal:
+      break;
+    case RPASS_Ambient:
+      if (ri.isTranslucent() && ri.stencilColor) return;
+      break;
+    case RPASS_ShadowVolumes:
+      if (ri.isTranslucent()) return;
+      break;
+    case RPASS_Textures:
+      break;
+    case RPASS_Light:
+      if (ri.isTranslucent() && ri.stencilColor) return;
+      break;
+    case RPASS_Fog:
+      //FIXME
+      if (ri.stencilColor) return;
+      break;
+    case RPASS_NonShadow:
+      if (ri.isAdditive()) return;
+      break;
+  }
+
   VScriptedModelFrame &FDef = Cls.Frames[FIdx];
   VScriptedModelFrame &NFDef = Cls.Frames[NFIdx];
   VScriptModel &ScMdl = Cls.Model->Models[FDef.ModelIndex];
@@ -1395,7 +1421,7 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
     if (SubMdl.PositionModel) PositionModel(Md2Org, Md2Angle, SubMdl.PositionModel, F.PositionIndex);
 
     // alpha
-    float Md2Alpha = Alpha;
+    float Md2Alpha = ri.alpha;
     if (FDef.AlphaStart != 1.0f || FDef.AlphaEnd != 1.0f) Md2Alpha *= FDef.AlphaStart+(FDef.AlphaEnd-FDef.AlphaStart)*Inter;
     if (F.AlphaStart != 1.0f || F.AlphaEnd != 1.0f) Md2Alpha *= F.AlphaStart+(F.AlphaEnd-F.AlphaStart)*Inter;
 
@@ -1416,16 +1442,20 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
 
     switch (Pass) {
       case RPASS_Normal:
+        break;
       case RPASS_Ambient:
+        if (ri.isTranslucent() && ri.stencilColor) continue;
         break;
       case RPASS_ShadowVolumes:
         if (Md2Alpha < 1.0f || SubMdl.NoShadow) continue;
+        if (ri.isTranslucent() && ri.stencilColor) continue;
         break;
       case RPASS_Textures:
         if (Md2Alpha <= getAlphaThreshold()) continue;
         break;
       case RPASS_Light:
         if (Md2Alpha <= getAlphaThreshold() || SubMdl.NoShadow) continue;
+        if (ri.isTranslucent() && ri.stencilColor) continue;
         break;
       case RPASS_Fog:
         /*
@@ -1438,7 +1468,8 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
         break;
       case RPASS_NonShadow:
         //if (Md2Alpha >= 1.0f && !Additive && !SubMdl.NoShadow) continue;
-        if (Md2Alpha < 1.0f || Additive /*|| SubMdl.NoShadow*/) continue;
+        if (Md2Alpha < 1.0f || ri.isAdditive() /*|| SubMdl.NoShadow*/) continue;
+        if (ri.isTranslucent() && ri.stencilColor) continue;
         break;
     }
 
@@ -1469,7 +1500,7 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
     }
 
     // light
-    vuint32 Md2Light = Light;
+    vuint32 Md2Light = ri.light;
     if (SubMdl.FullBright) Md2Light = 0xffffffff;
 
     //if (Transform.Scale.isZero()) return; // just in case
@@ -1481,20 +1512,25 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
       case RPASS_Normal:
       case RPASS_NonShadow:
         if (true /*IsViewModel || !isShadowVol*/) {
+          RenderStyleInfo newri = ri;
+          newri.light = Md2Light;
+          newri.alpha = Md2Alpha;
           Drawer->DrawAliasModel(Md2Org, Md2Angle, Transform,
             SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
-            Trans, ColorMap, Md2Light, Fade, Md2Alpha, Additive,
+            Trans, ColorMap,
+            newri, //Md2Light, Fade, Md2Alpha, Additive,
             IsViewModel, smooth_inter, Interpolate, SubMdl.UseDepth,
             SubMdl.AllowTransparency,
             !IsViewModel && isShadowVol); // for advanced renderer, we need to fill z-buffer, but not color buffer
         }
         break;
       case RPASS_Ambient:
-        if (!SubMdl.AllowTransparency)
+        if (!SubMdl.AllowTransparency) {
           Drawer->DrawAliasModelAmbient(Md2Org, Md2Angle, Transform,
             SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
             Md2Light, Md2Alpha, smooth_inter, Interpolate, SubMdl.UseDepth,
             SubMdl.AllowTransparency);
+        }
         break;
       case RPASS_ShadowVolumes:
         Drawer->DrawAliasModelShadow(Md2Org, Md2Angle, Transform,
@@ -1509,13 +1545,13 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
       case RPASS_Textures:
         Drawer->DrawAliasModelTextures(Md2Org, Md2Angle, Transform,
           SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
-          Trans, ColorMap, Md2Alpha, smooth_inter, Interpolate, SubMdl.UseDepth,
+          Trans, ColorMap, ri.stencilColor, Md2Alpha, smooth_inter, Interpolate, SubMdl.UseDepth,
           SubMdl.AllowTransparency);
         break;
       case RPASS_Fog:
         Drawer->DrawAliasModelFog(Md2Org, Md2Angle, Transform,
           SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
-          Fade, Md2Alpha, smooth_inter, Interpolate, SubMdl.AllowTransparency);
+          ri.fade, Md2Alpha, smooth_inter, Interpolate, SubMdl.AllowTransparency);
         break;
     }
   }
@@ -1585,8 +1621,10 @@ bool VRenderLevelShared::HasEntityAliasModel (VEntity *Ent) const {
 bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, const TVec &Org, const TAVec &Angles,
   float ScaleX, float ScaleY, VModel *Mdl,
   const VAliasModelFrameInfo &Frame, const VAliasModelFrameInfo &NextFrame,
-  VTextureTranslation *Trans, int Version, vuint32 Light, vuint32 Fade,
-  float Alpha, bool Additive, bool IsViewModel, float Inter, bool Interpolate,
+  VTextureTranslation *Trans, int Version,
+  //vuint32 Light, vuint32 Fade, float Alpha, bool Additive,
+  const RenderStyleInfo &ri,
+  bool IsViewModel, float Inter, bool Interpolate,
   ERenderPass Pass)
 {
   //if (!IsViewModel && !IsAliasModelAllowedFor(mobj)) return false;
@@ -1599,7 +1637,7 @@ bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, const TVec &Org, const T
     Interpolate = false;
   }
   DrawModel(Level, mobj, Org, Angles, ScaleX, ScaleY, *Mdl->DefaultClass, FIdx,
-    NFIdx, Trans, ColorMap, Version, Light, Fade, Alpha, Additive,
+    NFIdx, Trans, ColorMap, Version, ri, /*Light, Fade, Alpha, Additive,*/
     IsViewModel, InterpFrac, Interpolate, CurrLightPos, CurrLightRadius,
     Pass, IsShadowVolumeRenderer());
   return true;
@@ -1616,8 +1654,10 @@ bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, const TVec &Org, const T
 bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, VName clsName, const TVec &Org, const TAVec &Angles,
   float ScaleX, float ScaleY,
   const VAliasModelFrameInfo &Frame, const VAliasModelFrameInfo &NextFrame, //old:VState *State, VState *NextState,
-  VTextureTranslation *Trans, int Version, vuint32 Light, vuint32 Fade,
-  float Alpha, bool Additive, bool IsViewModel, float Inter, bool Interpolate,
+  VTextureTranslation *Trans, int Version,
+  //vuint32 Light, vuint32 Fade, float Alpha, bool Additive,
+  const RenderStyleInfo &ri,
+  bool IsViewModel, float Inter, bool Interpolate,
   ERenderPass Pass)
 {
   if (clsName == NAME_None) return false;
@@ -1662,7 +1702,7 @@ bool VRenderLevelShared::DrawAliasModel (VEntity *mobj, VName clsName, const TVe
     }
 
     DrawModel(Level, mobj, Org, Angles, ScaleX, ScaleY, *Cls, FIdx, NFIdx, Trans,
-      ColorMap, Version, Light, Fade, Alpha, Additive, IsViewModel,
+      ColorMap, Version, ri, /*ri.light, ri.fade, ri.alpha, ri.isAdditive(),*/ IsViewModel,
       InterpFrac, Interpolate, CurrLightPos, CurrLightRadius, Pass, IsShadowVolumeRenderer());
 
     // try next one
@@ -1750,14 +1790,14 @@ bool VRenderLevelShared::DrawEntityModel (VEntity *Ent, const RenderStyleInfo &r
       Ent->/*Angles*/GetModelDrawAngles(), Ent->ScaleX, Ent->ScaleY, Mdl,
       Ent->getMFI(), Ent->getNextMFI(),
       GetTranslation(Ent->Translation),
-      Ent->ModelVersion, ri.light, ri.fade, ri.alpha, ri.isAdditive(), false, Inter,
+      Ent->ModelVersion, ri, /*ri.light, ri.fade, ri.alpha, ri.isAdditive(),*/ false, Inter,
       Interpolate, Pass);
   } else {
     return DrawAliasModel(Ent, GetClassNameForModel(Ent), sprorigin,
       Ent->/*Angles*/GetModelDrawAngles(), Ent->ScaleX, Ent->ScaleY,
       Ent->getMFI(), Ent->getNextMFI(),
-      GetTranslation(Ent->Translation), Ent->ModelVersion, ri.light, ri.fade,
-      ri.alpha, ri.isAdditive(), false, Inter, Interpolate, Pass);
+      GetTranslation(Ent->Translation), Ent->ModelVersion,
+      ri, /*ri.light, ri.fade, ri.alpha, ri.isAdditive(),*/ false, Inter, Interpolate, Pass);
   }
 }
 
@@ -1890,9 +1930,14 @@ bool R_DrawStateModelFrame (VState *State, VState *NextState, float Inter,
   Angles.pitch = 0;
   Angles.roll = 0;
 
+  RenderStyleInfo ri;
+  ri.light = 0xffffffffu;
+  ri.fade = 0;
+  ri.alpha = 1.0f;
+  ri.translucency = 0;
   DrawModel(nullptr, nullptr, Origin, Angles, 1.0f, 1.0f, *Cls, FIdx, NFIdx, nullptr, 0, 0,
-    0xffffffff, 0, 1.0f, false, false, InterpFrac, Interpolate,
-    TVec(), 0, RPASS_Normal, true); // force draw
+    ri, //0xffffffff, 0, 1.0f, false,
+    false, InterpFrac, Interpolate, TVec(), 0, RPASS_Normal, true); // force draw
 
   Drawer->EndView();
   return true;
@@ -1928,9 +1973,15 @@ void R_DrawLightBulb (const TVec &Org, const TAVec &Angles, vuint32 rgbLight, ER
   if (FIdx == -1) return;
 
   rgbLight |= 0xff000000u;
+
+  RenderStyleInfo ri;
+  ri.light = rgbLight;
+  ri.fade = 0;
+  ri.alpha = 1.0f;
+  ri.translucency = 0;
+
   DrawModel(nullptr, nullptr, Org, Angles, ScaleX, ScaleY, *Cls, FIdx, FIdx, nullptr/*translation*/,
-    0/*colormap*/, 0/*version*/, rgbLight, 0/*fade*/,
-    1.0f/*alpha*/, false/*additive*/, false/*isviewmodel*/,
+    0/*colormap*/, 0/*version*/, ri, false/*isviewmodel*/,
     0.0f/*interpfrac*/, false/*interpolate*/, TVec()/*currlightpos*/, 0/*currlightradius*/,
     Pass, isShadowVol);
 }

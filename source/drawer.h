@@ -468,7 +468,7 @@ public:
 
   virtual void DrawAliasModel (const TVec &origin, const TAVec &angles, const AliasModelTrans &Transform,
                                VMeshModel *Mdl, int frame, int nextframe, VTexture *Skin, VTextureTranslation *Trans,
-                               int CMap, vuint32 light, vuint32 Fade, float Alpha, bool Additive, bool is_view_model,
+                               int CMap, const RenderStyleInfo &ri/*vuint32 light, vuint32 Fade, float Alpha, bool Additive*/, bool is_view_model,
                                float Inter, bool Interpolate, bool ForceDepthUse, bool AllowTransparency,
                                bool onlyDepth) = 0;
 
@@ -536,7 +536,7 @@ public:
                                        const AliasModelTrans &Transform,
                                        VMeshModel *Mdl, int frame, int nextframe,
                                        VTexture *Skin, VTextureTranslation *Trans,
-                                       int CMap, float Alpha, float Inter,
+                                       int CMap, vuint32 stencilColor, float Alpha, float Inter,
                                        bool Interpolate, bool ForceDepth, bool AllowTransparency) = 0;
   virtual void BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, const TVec &aconeDir, const float aconeAngle) = 0;
   virtual void DrawAliasModelLight (const TVec &origin, const TAVec &angles,

@@ -124,8 +124,9 @@ bool VRenderLevelDrawer::CalculateRenderStyleInfo (RenderStyleInfo &ri, int Rend
       break;
     case STYLE_Shadow:
       ri.stencilColor = 0xff000000u;
+      //ri.stencilColor = 0xffff0000u;
       ri.translucency = 1;
-      ri.alpha = 0.3f;
+      ri.alpha = 0.4f; // was 0.3f
       return true;
     case STYLE_Subtract:
       ri.stencilColor = 0u;

@@ -231,7 +231,7 @@ bool VRenderLevelShared::RenderViewModel (VViewState *VSt, const RenderStyleInfo
 
   const bool res = DrawAliasModel(nullptr, VSt->State->Outer->Name, origin, cl->ViewAngles, 1.0f, 1.0f,
     VSt->State->getMFI(), (VSt->State->NextState ? VSt->State->NextState->getMFI() : VSt->State->getMFI()),
-    nullptr, 0, ri.light, ri.fade, ri.alpha, ri.isAdditive(), true, TimeFrac, r_interpolate_frames,
+    nullptr, 0, ri, /*ri.light, ri.fade, ri.alpha, ri.isAdditive(),*/ true, TimeFrac, r_interpolate_frames,
     RPASS_Normal);
 
   if (restoreFOV) {

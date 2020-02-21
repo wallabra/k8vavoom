@@ -668,16 +668,39 @@ protected:
   void FreeSegParts (segpart_t *);
 
   // models
+  /*
   bool DrawAliasModel (VEntity *mobj, const TVec &, const TAVec &, float, float, VModel *,
     const VAliasModelFrameInfo &Frame, const VAliasModelFrameInfo &NextFrame,
     VTextureTranslation *, int, vuint32, vuint32, float, bool,
     bool, float, bool, ERenderPass);
+  */
+  bool DrawAliasModel (VEntity *mobj, const TVec &Org, const TAVec &Angles,
+    float ScaleX, float ScaleY, VModel *Mdl,
+    const VAliasModelFrameInfo &Frame, const VAliasModelFrameInfo &NextFrame,
+    VTextureTranslation *Trans, int Version,
+    //vuint32 Light, vuint32 Fade, float Alpha, bool Additive,
+    const RenderStyleInfo &ri,
+    bool IsViewModel, float Inter, bool Interpolate,
+    ERenderPass Pass);
+
+  /*
   bool DrawAliasModel (VEntity *mobj, VName clsName, const TVec &, const TAVec &, float, float,
     const VAliasModelFrameInfo &Frame, const VAliasModelFrameInfo &NextFrame,
     VTextureTranslation *, int, vuint32, vuint32, float, bool,
     bool, float, bool, ERenderPass);
+  */
+  bool DrawAliasModel (VEntity *mobj, VName clsName, const TVec &Org, const TAVec &Angles,
+    float ScaleX, float ScaleY,
+    const VAliasModelFrameInfo &Frame, const VAliasModelFrameInfo &NextFrame, //old:VState *State, VState *NextState,
+    VTextureTranslation *Trans, int Version,
+    //vuint32 Light, vuint32 Fade, float Alpha, bool Additive,
+    const RenderStyleInfo &ri,
+    bool IsViewModel, float Inter, bool Interpolate,
+    ERenderPass Pass);
+
   //bool DrawEntityModel (VEntity *, vuint32, vuint32, float, bool, float, ERenderPass);
   bool DrawEntityModel (VEntity *Ent, const RenderStyleInfo &ri, float Inter, ERenderPass Pass);
+
   bool CheckAliasModelFrame (VEntity *Ent, float Inter);
   bool HasEntityAliasModel (VEntity *Ent) const;
   static bool IsAliasModelAllowedFor (VEntity *Ent);
