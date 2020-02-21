@@ -87,6 +87,8 @@ struct tmtrace_t;
 extern VCvarB r_interpolate_thing_angles_models;
 extern VCvarB r_interpolate_thing_angles_sprites;
 #endif
+extern VCvarB sv_decoration_block_projectiles;
+
 
 enum {
   STYLE_None, // do not draw
@@ -639,6 +641,12 @@ public:
     return res;
   }
 
+  inline float GetBlockingHeightFor (const VEntity *other) const noexcept {
+    if (!(EntityFlags&EF_Missile)) return other->Height;
+    const float vhgt = other->VanillaHeight;
+    return (vhgt > 0 || (vhgt < 0 && !sv_decoration_block_projectiles) ? fabsf(vhgt) : other->Height);
+  }
+
 private:
   // world iterator callbacks
   bool CheckThing (tmtrace_t &, VEntity *);
@@ -738,4 +746,6 @@ public:
   DECLARE_FUNCTION(QS_GetFloat);
 
   DECLARE_FUNCTION(UpdateVelocity);
+
+  DECLARE_FUNCTION(GetBlockingHeightFor);
 };

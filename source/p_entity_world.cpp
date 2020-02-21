@@ -646,7 +646,7 @@ bool VEntity::CheckThing (tmtrace_t &cptrace, VEntity *Other) {
     // prevent some objects from overlapping
     if (EntityFlags&Other->EntityFlags&EF_DontOverlap) return false;
     // check if a mobj passed over/under another object
-    if (cptrace.Pos.z >= Other->Origin.z+Other->Height) return true;
+    if (cptrace.Pos.z >= Other->Origin.z+GetBlockingHeightFor(Other)) return true;
     if (cptrace.Pos.z+Height <= Other->Origin.z) return true; // under thing
   }
 
@@ -923,12 +923,13 @@ bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other, bool noPickups)
       if (fabsf(Other->Origin.x-tmtrace.End.x) < Other->Radius ||
           fabsf(Other->Origin.y-tmtrace.End.y) < Other->Radius)
       {
-        if (Other->Origin.z+Other->Height >= tmtrace.FloorZ &&
-            Other->Origin.z+Other->Height <= tmtrace.End.z+MaxStepHeight)
+        const float ohgt = GetBlockingHeightFor(Other);
+        if (Other->Origin.z+ohgt >= tmtrace.FloorZ &&
+            Other->Origin.z+ohgt <= tmtrace.End.z+MaxStepHeight)
         {
           //tmtrace.BlockingMobj = Other;
           tmtrace.StepThing = Other;
-          tmtrace.FloorZ = Other->Origin.z+Other->Height;
+          tmtrace.FloorZ = Other->Origin.z+ohgt;
         }
       }
     }
@@ -945,7 +946,7 @@ bool VEntity::CheckRelThing (tmtrace_t &tmtrace, VEntity *Other, bool noPickups)
       return false;
     }
     // check if a mobj passed over/under another object
-    if (tmtrace.End.z >= Other->Origin.z+Other->Height) return true; // overhead
+    if (tmtrace.End.z >= Other->Origin.z+GetBlockingHeightFor(Other)) return true; // overhead
     if (tmtrace.End.z+Height <= Other->Origin.z) return true;  // underneath
   }
 
@@ -1211,12 +1212,18 @@ bool VEntity::TryMove (tmtrace_t &tmtrace, TVec newPos, bool AllowDropOff, bool 
     // cannot fit into destination point
     VEntity *O = tmtrace.BlockingMobj;
     //GCon->Logf("HIT! %s", O->GetClass()->GetName());
+    if (!O) {
+      // can't step up or doesn't fit
+      PushLine(tmtrace, skipEffects);
+      return false;
+    }
 
-    if (!O || !(EntityFlags&EF_IsPlayer) ||
+    const float ohgt = GetBlockingHeightFor(O);
+    if (!(EntityFlags&EF_IsPlayer) ||
         (O->EntityFlags&EF_IsPlayer) ||
-        O->Origin.z+O->Height-Origin.z > MaxStepHeight ||
-        O->CeilingZ-(O->Origin.z+O->Height) < Height ||
-        tmtrace.CeilingZ-(O->Origin.z+O->Height) < Height)
+        O->Origin.z+ohgt-Origin.z > MaxStepHeight ||
+        O->CeilingZ-(O->Origin.z+ohgt) < Height ||
+        tmtrace.CeilingZ-(O->Origin.z+ohgt) < Height)
     {
       // can't step up or doesn't fit
       PushLine(tmtrace, skipEffects);
@@ -1816,7 +1823,8 @@ VEntity *VEntity::TestMobjZ (const TVec &TryOrg) {
         if (*Other == this) continue; // don't clip against self
         //k8: can't hit corpse
         if ((Other->EntityFlags&(EF_ColideWithThings|EF_Solid|EF_Corpse)) != (EF_ColideWithThings|EF_Solid)) continue; // can't hit things, or not solid
-        if (TryOrg.z > Other->Origin.z+Other->Height) continue; // over thing
+        const float ohgt = GetBlockingHeightFor(*Other);
+        if (TryOrg.z > Other->Origin.z+ohgt) continue; // over thing
         if (TryOrg.z+Height < Other->Origin.z) continue; // under thing
         const float blockdist = Other->Radius+Radius;
         if (fabsf(Other->Origin.x-TryOrg.x) >= blockdist ||
@@ -2437,4 +2445,12 @@ IMPLEMENT_FUNCTION(VEntity, UpdateVelocity) {
   float DeltaTime;
   vobjGetParamSelf(DeltaTime);
   Self->UpdateVelocity(DeltaTime);
+}
+
+
+// native final float GetBlockingHeightFor (Entity other);
+IMPLEMENT_FUNCTION(VEntity, GetBlockingHeightFor) {
+  VEntity *other;
+  vobjGetParamSelf(other);
+  RET_FLOAT(other ? Self->GetBlockingHeightFor(other) : 0.0f);
 }

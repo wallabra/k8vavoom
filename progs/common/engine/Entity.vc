@@ -325,6 +325,9 @@ float Height;
 // height in the vanilla engine; used in `sv_decoration_block_projectiles 0` mode
 // can be zero or negative
 // there is no need to save it, as it should not be modified in-game
+// negative means "use absolute value in compatibility mode"
+// positive means "use always"
+// used only for projectiles (missiles)
 transient float VanillaHeight;
 
 // additional info record for player avatars only
@@ -444,6 +447,9 @@ native final void CheckWater ();
 
 // moved from native to VC code
 //native final void UpdateVelocity ();
+
+// use this to get blocking height of enother entity, so missiles can use vanilla height for obstacles
+native final float GetBlockingHeightFor (Entity other);
 
 native final Entity CheckOnmobj ();
 
