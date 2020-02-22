@@ -31,6 +31,8 @@ extern VCvarB gl_pic_filtering;
 static VCvarB gl_recreate_changed_textures("gl_recreate_changed_textures", false, "Destroy and create new OpenGL textures for changed DooM animated ones?", CVAR_Archive);
 static VCvarB gl_camera_texture_use_readpixels("gl_camera_texture_use_readpixels", true, "Use ReadPixels to update camera textures?", CVAR_Archive);
 
+//static VCvarB r_gozzo_fucked_black("__r_gozzo_fucked_black", false, "Emulate fucked-up gozzo idea about black colors in non-translucent textures?", CVAR_PreInit);
+
 
 //==========================================================================
 //
@@ -397,7 +399,7 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
       rgba_t *dummy = (rgba_t *)Z_Calloc(2*2*sizeof(rgba_t));
       VTexture::checkerFillRGBA((vuint8 *)dummy, 2, 2);
       //UploadTexture(SrcTex->GetWidth(), SrcTex->GetHeight(), dummy, false); // no fringe filtering
-      UploadTexture(2, 2, dummy, false); // no fringe filtering
+      UploadTexture(2, 2, dummy, false, -1); // no fringe filtering
       Z_Free(dummy);
     } else {
       // upload data
@@ -408,26 +410,26 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
         const rgba_t *CMPal = ColorMaps[CMap].GetPalette();
         for (int i = 0; i < 256; ++i) tmppal[i] = CMPal[TrTab[i]];
         if (needUpdate) (void)SrcTex->GetPixels(); // this updates warp and other textures
-        UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), tmppal);
+        UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), tmppal, SrcTex->SourceLump);
       } else if (Translation) {
         // only translation
         //GCon->Logf("uploading translated texture '%s' (%dx%d)", *SrcTex->Name, SrcTex->GetWidth(), SrcTex->GetHeight());
         //for (int f = 0; f < 256; ++f) GCon->Logf("  %3d: r:g:b=%02x:%02x:%02x", f, Translation->GetPalette()[f].r, Translation->GetPalette()[f].g, Translation->GetPalette()[f].b);
         if (needUpdate) (void)SrcTex->GetPixels(); // this updates warp and other textures
-        UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), Translation->GetPalette());
+        UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), Translation->GetPalette(), SrcTex->SourceLump);
       } else if (CMap) {
         // only colormap
         //GCon->Logf(NAME_Dev, "uploading colormapped texture '%s' (%dx%d)", *SrcTex->Name, SrcTex->GetWidth(), SrcTex->GetHeight());
         if (needUpdate) (void)SrcTex->GetPixels(); // this updates warp and other textures
-        UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), ColorMaps[CMap].GetPalette());
+        UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), ColorMaps[CMap].GetPalette(), SrcTex->SourceLump);
       } else {
         // normal uploading
         vuint8 *block = SrcTex->GetPixels();
         //if (SrcTex->SourceLump >= 0) GCon->Logf(NAME_Debug, "uploading normal texture '%s' (%dx%d)", *SrcTex->Name, SrcTex->GetWidth(), SrcTex->GetHeight());
         if (SrcTex->Format == TEXFMT_8 || SrcTex->Format == TEXFMT_8Pal) {
-          UploadTexture8(SrcTex->GetWidth(), SrcTex->GetHeight(), block, SrcTex->GetPalette());
+          UploadTexture8(SrcTex->GetWidth(), SrcTex->GetHeight(), block, SrcTex->GetPalette(), SrcTex->SourceLump);
         } else {
-          UploadTexture(SrcTex->GetWidth(), SrcTex->GetHeight(), (rgba_t *)block, (SrcTex->isTransparent() || SrcTex->isTranslucent()));
+          UploadTexture(SrcTex->GetWidth(), SrcTex->GetHeight(), (rgba_t *)block, (SrcTex->isTransparent() || SrcTex->isTranslucent()), SrcTex->SourceLump);
         }
       }
     }
@@ -457,7 +459,7 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
 //  VOpenGLDrawer::UploadTexture8
 //
 //==========================================================================
-void VOpenGLDrawer::UploadTexture8 (int Width, int Height, const vuint8 *Data, const rgba_t *Pal) {
+void VOpenGLDrawer::UploadTexture8 (int Width, int Height, const vuint8 *Data, const rgba_t *Pal, int SourceLump) {
   // this is single-threaded, so why not?
   int w = (Width > 0 ? Width : 2);
   int h = (Height > 0 ? Height : 2);
@@ -478,7 +480,7 @@ void VOpenGLDrawer::UploadTexture8 (int Width, int Height, const vuint8 *Data, c
   } else {
     memset((void *)NewData, 0, w*h*4);
   }
-  UploadTexture(w, h, databuf, false);
+  UploadTexture(w, h, databuf, false, -1);
   //Z_Free(NewData);
 }
 
@@ -488,7 +490,7 @@ void VOpenGLDrawer::UploadTexture8 (int Width, int Height, const vuint8 *Data, c
 //  VOpenGLDrawer::UploadTexture8A
 //
 //==========================================================================
-void VOpenGLDrawer::UploadTexture8A (int Width, int Height, const pala_t *Data, const rgba_t *Pal) {
+void VOpenGLDrawer::UploadTexture8A (int Width, int Height, const pala_t *Data, const rgba_t *Pal, int SourceLump) {
   // this is single-threaded, so why not?
   int w = (Width > 0 ? Width : 2);
   int h = (Height > 0 ? Height : 2);
@@ -511,7 +513,7 @@ void VOpenGLDrawer::UploadTexture8A (int Width, int Height, const pala_t *Data, 
   } else {
     memset((void *)NewData, 0, w*h*4);
   }
-  UploadTexture(w, h, databuf, false);
+  UploadTexture(w, h, databuf, false, -1);
   //Z_Free(NewData);
 }
 
@@ -521,7 +523,7 @@ void VOpenGLDrawer::UploadTexture8A (int Width, int Height, const pala_t *Data, 
 //  VOpenGLDrawer::UploadTexture
 //
 //==========================================================================
-void VOpenGLDrawer::UploadTexture (int width, int height, const rgba_t *data, bool doFringeRemove) {
+void VOpenGLDrawer::UploadTexture (int width, int height, const rgba_t *data, bool doFringeRemove, int SourceLump) {
   if (width < 1 || height < 1) Sys_Error("WARNING: fucked texture (w=%d; h=%d)", width, height);
   if (!data) Sys_Error("WARNING: fucked texture (w=%d; h=%d, no data)", width, height);
 
@@ -544,6 +546,26 @@ void VOpenGLDrawer::UploadTexture (int width, int height, const rgba_t *data, bo
     tmpImgBuf0 = (vuint8 *)Z_Realloc(tmpImgBuf0, tmpImgBufSize);
     tmpImgBuf1 = (vuint8 *)Z_Realloc(tmpImgBuf1, tmpImgBufSize);
   }
+
+  /*
+  vuint8 *gozzoFucked = nullptr;
+  if (SourceLump >= 0 && r_gozzo_fucked_black && !W_IsIWADLump(SourceLump) && W_IsPakFile(W_LumpFile(SourceLump))) {
+    bool wasConversion = false;
+    gozzoFucked = (vuint8 *)Z_Malloc(w*h*4);
+    memcpy(gozzoFucked, data, w*h*4);
+    rgba_t *col = (rgba_t *)gozzoFucked;
+    for (int y = 0; y < w; ++y) {
+      for (int x = 0; x < h; ++x, ++col) {
+        if ((col->r|col->g|col->b) == 0 && col->a == 255) {
+          wasConversion = true;
+          col->a = 0;
+        }
+      }
+    }
+    if (wasConversion) GCon->Logf(NAME_Warning, "hacked gozzo-black texture '%s'", *W_FullLumpName(SourceLump));
+    data = (rgba_t *)gozzoFucked;
+  }
+  */
 
   vuint8 *image = tmpImgBuf0;
   vuint8 *pmimage = tmpImgBuf1;
@@ -569,4 +591,6 @@ void VOpenGLDrawer::UploadTexture (int width, int height, const rgba_t *data, bo
 
   glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
   glTexImage2D(GL_TEXTURE_2D, 0, 4, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
+
+  //if (gozzoFucked) Z_Free(gozzoFucked);
 }

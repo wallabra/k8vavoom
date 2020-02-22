@@ -837,6 +837,8 @@ void VTexture::ConvertPixelsToRGBA () {
     }
     delete[] Pixels;
     Pixels = (vuint8 *)newpic;
+    if (Pixels8BitValid) { delete Pixels8Bit; Pixels8Bit = nullptr; Pixels8BitValid = false; }
+    if (Pixels8BitAValid) { delete Pixels8BitA; Pixels8BitA = nullptr; Pixels8BitAValid = false; }
   }
   mFormat = TEXFMT_RGBA;
 }
