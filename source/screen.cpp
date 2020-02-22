@@ -417,8 +417,8 @@ static void ChangeResolution (int InWidth, int InHeight) {
   //fScaleXI = (float)VirtualWidth/(float)ScreenWidth;
   //fScaleYI = (float)VirtualHeight/(float)ScreenHeight;
 
+  // don't forget to call `GRoot->RefreshScale()`!
   //GCon->Logf("***SCALE0: %g, %g; scr:%dx%d; vscr:%dx%d", fScaleX, fScaleY, ScreenWidth, ScreenHeight, VirtualWidth, VirtualHeight);
-  if (GRoot) GRoot->RefreshScale();
 }
 
 
@@ -456,6 +456,11 @@ static void CheckResolutionChange () {
     R_LdrMsgReset();
     if (Drawer->RendLev) Drawer->RendLev->PrecacheLevel();
     if (GRoot) GRoot->RefreshScale();
+    // post "resolution changed" event
+    event_t ev;
+    memset((void *)&ev, 0, sizeof(event_t));
+    ev.type = ev_resolution;
+    VObject::PostEvent(ev);
     // recalculate view size and other data
     //R_SetViewSize(screenblocks);
     if (Drawer->RendLev) R_ForceViewSizeUpdate();

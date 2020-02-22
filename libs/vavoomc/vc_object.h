@@ -164,6 +164,8 @@ enum {
   ev_closequery,
   // socket library
   ev_socket,
+  // sent when resolution changed; no data
+  ev_resolution,
   // for neoUI library
   ev_neoui = 69,
   ev_user = 666,

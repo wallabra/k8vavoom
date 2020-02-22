@@ -386,13 +386,36 @@ void Tick (float DeltaTime) {}
 
 //==========================================================================
 //
+//  SentEventToChildren
+//
+//  call this in `OnEvent()`
+//  return `true` to prevent other handlers from being called.
+//
+//==========================================================================
+bool SentEventToChildren (ref event_t evt) {
+  // sent to all children
+  Widget cw = FirstChildWidget;
+  while (cw) {
+    Widget w = cw;
+    cw = cw.NextWidget;
+    if (w.OnEvent(evt)) return true;
+  }
+  return false;
+}
+
+
+//==========================================================================
+//
 //  OnEvent
 //
 //  this is called before any other specific handler.
 //  return `true` to prevent other handlers from being called.
 //
 //==========================================================================
-bool OnEvent (ref event_t evt) { return false; }
+bool OnEvent (ref event_t evt) {
+  if (evt.type == ev_resolution) printdebug("%C: *** RESOLUTION ***", self);
+  return SentEventToChildren(evt);
+}
 
 
 //==========================================================================

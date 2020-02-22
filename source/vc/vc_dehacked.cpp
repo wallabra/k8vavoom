@@ -1622,6 +1622,7 @@ static void LoadDehackedDefinitions () {
     //((VEntity *)EntClasses[HIdx]->Defaults)->Height = sc->Number;
     VanillaThingHeights.append(sc->Number);
     //if (((VEntity *)EntClasses[HIdx]->Defaults)->Height != sc->Number) GCon->Logf(NAME_Debug, "  VanillaHeight = %d; // %s", sc->Number, EntClasses[HIdx]->GetName());
+    //GCon->Logf(NAME_Debug, "DECORATE: %d: %s: VanillaHeight=%d; Height=%g", VanillaThingHeights.length()-1, EntClasses[HIdx]->GetName(), sc->Number, ((const VEntity *)EntClasses[HIdx]->Defaults)->Height);
     #if 0
     {
       VEntity *e = (VEntity *)EntClasses[HIdx]->Defaults;
