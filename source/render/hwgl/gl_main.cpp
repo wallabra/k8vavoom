@@ -365,6 +365,8 @@ VOpenGLDrawer::VOpenGLDrawer ()
   lastOverbrightEnable = !gl_regular_disable_overbright;
   //cameraFBO[0].mOwner = nullptr;
   //cameraFBO[1].mOwner = nullptr;
+
+  depthMaskSP = 0;
 }
 
 
@@ -422,6 +424,29 @@ void VOpenGLDrawer::CompileShaders () {
 void VOpenGLDrawer::DestroyShaders () {
   for (VGLShader *shad = shaderHead; shad; shad = shad->next) shad->Unload();
   shaderHead = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::PushDepthMask
+//
+//==========================================================================
+void VOpenGLDrawer::PushDepthMask () {
+  if (depthMaskSP >= MaxDepthMaskStack) Sys_Error("OpenGL: depth mask stack overflow");
+  glGetIntegerv(GL_DEPTH_WRITEMASK, &depthMaskStack[depthMaskSP]);
+  ++depthMaskSP;
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::PopDepthMask
+//
+//==========================================================================
+void VOpenGLDrawer::PopDepthMask () {
+  if (depthMaskSP == 0) Sys_Error("OpenGL: depth mask stack underflow");
+  glDepthMask(depthMaskStack[--depthMaskSP]);
 }
 
 
@@ -535,6 +560,7 @@ void VOpenGLDrawer::DeinitResolution () {
   wipeFBO.destroy();
   BloomDeinit();
   DeleteLightmapAtlases();
+  depthMaskSP = 0;
 }
 
 

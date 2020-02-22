@@ -249,6 +249,8 @@ void VRenderLevelShared::DrawPlayerSprites () {
   if (!r_draw_psprites || r_chasecam) return;
   if (!cl || !cl->MO) return;
 
+  static
+
   int RendStyle = STYLE_Normal;
   float Alpha = 1.0f;
   cl->MO->eventGetViewEntRenderParams(Alpha, RendStyle);
@@ -258,8 +260,7 @@ void VRenderLevelShared::DrawPlayerSprites () {
 
   int ltxr = 0, ltxg = 0, ltxb = 0;
   {
-    static VClass *eclass = nullptr;
-    if (!eclass) eclass = VClass::FindClass("Entity");
+    VClass *eclass = VEntity::StaticClass();
     // check if we have any light at player's origin (rough), and owned by player
     const dlight_t *dl = DLights;
     for (int dlcount = MAX_DLIGHTS; dlcount--; ++dl) {
@@ -275,14 +276,37 @@ void VRenderLevelShared::DrawPlayerSprites () {
     }
   }
 
+  RenderStyleInfo mdri = ri;
+
   // add all active psprites
   for (int i = 0; i < NUMPSPRITES; ++i) {
-    if (!cl->ViewStates[i].State) continue;
+    VState *vst = cl->ViewStates[i].State;
+    if (!vst) continue;
+
+    // fix rendering style for models
+    /*
+    if (r_models_view) {
+      mdri = ri;
+      if (vst->Outer->isClassMember() && R_HaveClassModelByName(vst->Outer->Name)) {
+        vassert(vst->Outer->isClassMember());
+        VClass *cls = (VClass *)vst->Outer;
+        if (cls->IsChildOf(VEntity::StaticClass())) {
+          RenderStyleInfo rsi;
+          const VEntity *ed = (const VEntity *)(cls->Defaults);
+          if (CalculateRenderStyleInfo(rsi, ed->RenderStyle, ed->Alpha, ed->StencilColor)) {
+            GCon->Logf(NAME_Debug, "PSPRITE #%d: class='%s'; rs=%d(%d) : %g(%g) (%d : %g)", i, cls->GetName(), rsi.translucency, ri.translucency, rsi.alpha, ri.alpha, ed->RenderStyle, ed->Alpha);
+            mdri.alpha = min2(mdri.alpha, rsi.alpha);
+            if (rsi.isAdditive()) mdri.translucency = rsi.translucency;
+          }
+        }
+      }
+    }
+    */
 
     vuint32 light;
     if (RendStyle == STYLE_Fuzzy) {
       light = 0;
-    } else if (cl->ViewStates[i].State->Frame&VState::FF_FULLBRIGHT) {
+    } else if (vst->Frame&VState::FF_FULLBRIGHT) {
       light = 0xffffffff;
     } else {
       /*
@@ -306,6 +330,9 @@ void VRenderLevelShared::DrawPlayerSprites () {
 
     ri.light = ri.seclight = light;
     ri.fade = GetFade(SV_PointRegionLight(r_viewleaf->sector, cl->ViewOrg));
+
+    mdri.light = mdri.seclight = light;
+    mdri.fade = ri.fade;
 
     const float currSX = cl->ViewStates[i].SX;
     const float currSY = cl->ViewStates[i].SY;
@@ -344,7 +371,7 @@ void VRenderLevelShared::DrawPlayerSprites () {
     cl->ViewStates[i].SX += cl->ViewStates[i].BobOfsX;
     cl->ViewStates[i].SY += cl->ViewStates[i].OfsY+cl->ViewStates[i].BobOfsY;
 
-    if (!RenderViewModel(&cl->ViewStates[i], ri)) {
+    if (!RenderViewModel(&cl->ViewStates[i], mdri)) {
       RenderPSprite(&cl->ViewStates[i], cl->getMFI(i), 3-i, ri);
     }
 

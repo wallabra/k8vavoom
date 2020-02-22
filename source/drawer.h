@@ -118,6 +118,8 @@ struct RenderStyleInfo {
   inline bool isTranslucent () const noexcept { return (translucency || alpha < 1.0f); }
   // this is how "shadow" render style is rendered
   inline bool isShadow () const noexcept { return (translucency == Translucent && stencilColor == 0xff000000u); }
+
+  const char *toCString () const noexcept { return va("light=0x%08x; fade=0x%08x; stc=0x%08x; trans=%d; alpha=%g; hang=0x%04x", light, fade, stencilColor, translucency, alpha, hangup); }
 };
 
 
@@ -369,6 +371,10 @@ public:
 public:
   static void RegisterICB (void (*cb) (int phase));
 
+protected:
+  virtual void PushDepthMask () = 0;
+  virtual void PopDepthMask () = 0;
+
 public:
   VRenderLevelDrawer *RendLev;
 
@@ -529,35 +535,48 @@ public:
   virtual void DrawWorldFogPass () = 0;
   virtual void EndFogPass () = 0;
 
+  virtual void BeginModelsAmbientPass () = 0;
+  virtual void EndModelsAmbientPass () = 0;
   virtual void DrawAliasModelAmbient (const TVec &origin, const TAVec &angles,
                                       const AliasModelTrans &Transform,
                                       VMeshModel *Mdl, int frame, int nextframe,
                                       VTexture *Skin, vuint32 light, float Alpha,
                                       float Inter, bool Interpolate,
                                       bool ForceDepth, bool AllowTransparency) = 0;
-  virtual void DrawAliasModelTextures (const TVec &origin, const TAVec &angles,
-                                       const AliasModelTrans &Transform,
-                                       VMeshModel *Mdl, int frame, int nextframe,
-                                       VTexture *Skin, VTextureTranslation *Trans,
-                                       int CMap, vuint32 stencilColor, float Alpha, float Inter,
-                                       bool Interpolate, bool ForceDepth, bool AllowTransparency) = 0;
+
   virtual void BeginModelsLightPass (const TVec &LightPos, float Radius, float LightMin, vuint32 Color, const TVec &aconeDir, const float aconeAngle) = 0;
+  virtual void EndModelsLightPass () = 0;
   virtual void DrawAliasModelLight (const TVec &origin, const TAVec &angles,
                                     const AliasModelTrans &Transform,
                                     VMeshModel *Mdl, int frame, int nextframe,
                                     VTexture *Skin, float Alpha, float Inter,
                                     bool Interpolate, bool AllowTransparency) = 0;
+
   virtual void BeginModelsShadowsPass (TVec &LightPos, float LightRadius) = 0;
+  virtual void EndModelsShadowsPass () = 0;
   virtual void DrawAliasModelShadow (const TVec &origin, const TAVec &angles,
                                      const AliasModelTrans &Transform,
                                      VMeshModel *Mdl, int frame, int nextframe,
                                      float Inter, bool Interpolate,
                                      const TVec &LightPos, float LightRadius) = 0;
+
+  virtual void BeginModelsTexturesPass () = 0;
+  virtual void EndModelsTexturesPass () = 0;
+  virtual void DrawAliasModelTextures (const TVec &origin, const TAVec &angles,
+                                       const AliasModelTrans &Transform,
+                                       VMeshModel *Mdl, int frame, int nextframe,
+                                       VTexture *Skin, VTextureTranslation *Trans,
+                                       int CMap, const RenderStyleInfo &ri, float Inter,
+                                       bool Interpolate, bool ForceDepth, bool AllowTransparency) = 0;
+
+  virtual void BeginModelsFogPass () = 0;
+  virtual void EndModelsFogPass () = 0;
   virtual void DrawAliasModelFog (const TVec &origin, const TAVec &angles,
                                   const AliasModelTrans &Transform,
                                   VMeshModel *Mdl, int frame, int nextframe,
                                   VTexture *Skin, vuint32 Fade, float Alpha, float Inter,
                                   bool Interpolate, bool AllowTransparency) = 0;
+
   virtual void GetRealWindowSize (int *rw, int *rh) = 0;
 
   virtual void GetProjectionMatrix (VMatrix4 &mat) = 0;

@@ -229,11 +229,10 @@ void VRenderLevelShadowVolume::RenderMobjsShadow (VEntity *owner, vuint32 dlflag
     //RenderThingShadow(ent);
     if (SetupRenderStyleAndTime(ent, ri, TimeFrac)) {
       //GCon->Logf("THING SHADOW! (%s)", *ent->GetClass()->GetFullName());
-      if (!ri.isTranslucent()) {
-        ri.light = 0xffffffffu;
-        ri.fade = 0;
-        DrawEntityModel(ent, ri, TimeFrac, RPASS_ShadowVolumes);
-      }
+      if (ri.isTranslucent()) continue;
+      ri.light = 0xffffffffu;
+      ri.fade = 0;
+      DrawEntityModel(ent, ri, TimeFrac, RPASS_ShadowVolumes);
       //DrawEntityModel(ent, 0xffffffff, 0, ri, TimeFrac, RPASS_ShadowVolumes);
     }
     ++ent->NumRenderedShadows;
@@ -272,6 +271,7 @@ void VRenderLevelShadowVolume::RenderMobjsLight () {
       if (!IsTouchedByCurrLight(ent)) continue;
       //RenderThingLight(ent);
       if (SetupRenderStyleAndTime(ent, ri, TimeFrac)) {
+        //if (ri.isTranslucent()) continue;
         ri.light = 0xffffffffu;
         ri.fade = 0;
         DrawEntityModel(ent, ri, TimeFrac, RPASS_Light);
@@ -290,11 +290,13 @@ void VRenderLevelShadowVolume::RenderMobjsLight () {
 void VRenderLevelShadowVolume::RenderMobjsAmbient () {
   if (!r_draw_mobjs || !r_models) return;
   if (!r_dbg_advthing_draw_ambient) return;
-  const bool oldLight = (!r_model_light || !r_model_shadows);
+  //const bool oldLight = (!r_model_light || !r_model_shadows);
+  const bool oldLight = r_model_light;
   const bool doDump = r_dbg_advthing_dump_ambient.asBool();
   float TimeFrac;
   RenderStyleInfo ri;
   if (doDump) GCon->Log("=== ambient ===");
+  Drawer->BeginModelsAmbientPass();
   for (auto &&ent : visibleAliasModels) {
     if (ent == ViewEnt && (!r_chasecam || ent != cl->MO)) continue; // don't draw camera actor
     if (doDump) GCon->Logf("  <%s> (%f,%f,%f)", *ent->GetClass()->GetFullName(), ent->Origin.x, ent->Origin.y, ent->Origin.z);
@@ -304,29 +306,14 @@ void VRenderLevelShadowVolume::RenderMobjsAmbient () {
       //GCon->Logf("  <%s>", *ent->GetClass()->GetFullName());
       if (ri.isTranslucent()) continue;
 
-      // setup lighting
-      vuint32 light;
-      if (ent->RenderStyle == STYLE_Fuzzy) {
-        light = 0;
-      } else if ((ent->State->Frame&VState::FF_FULLBRIGHT) ||
-                 (ent->EntityFlags&(VEntity::EF_FullBright|VEntity::EF_Bright)))
-      {
-        light = 0xffffffff;
-      } else {
-        if (oldLight) {
-          // use old way of lighting
-          light = LightPoint(ent->Origin, ent->GetRenderRadius(), ent->Height, nullptr, ent->SubSector);
-        } else {
-          light = LightPointAmbient(ent->Origin, ent->GetRenderRadius(), ent->SubSector);
-        }
-      }
-      ri.light = ri.seclight = light;
+      SetupRIThingLighting(ent, ri, !oldLight/*asAmbient*/, false/*allowBM*/);
       ri.fade = 0;
 
       //DrawEntityModel(ent, light, 0, Alpha, Additive, TimeFrac, RPASS_Ambient);
       DrawEntityModel(ent, ri, TimeFrac, RPASS_Ambient);
     }
   }
+  Drawer->EndModelsAmbientPass();
 }
 
 
@@ -342,18 +329,21 @@ void VRenderLevelShadowVolume::RenderMobjsTextures () {
   float TimeFrac;
   RenderStyleInfo ri;
   if (doDump) GCon->Log("=== textures ===");
+  Drawer->BeginModelsTexturesPass();
   for (auto &&ent : visibleAliasModels) {
     if (ent == ViewEnt && (!r_chasecam || ent != cl->MO)) continue; // don't draw camera actor
     if (doDump) GCon->Logf("  <%s> (%f,%f,%f)", *ent->GetClass()->GetFullName(), ent->Origin.x, ent->Origin.y, ent->Origin.z);
     //RenderThingTextures(ent);
     if (SetupRenderStyleAndTime(ent, ri, TimeFrac)) {
-      if (ri.alpha < 1.0f) continue;
+      //if (ri.alpha < 1.0f) continue; // wtf?!
+      if (ri.isTranslucent()) continue;
       ri.light = 0xffffffffu;
       ri.fade = 0;
       DrawEntityModel(ent, ri, TimeFrac, RPASS_Textures);
       //DrawEntityModel(ent, 0xffffffff, 0, Alpha, Additive, TimeFrac, RPASS_Textures);
     }
   }
+  Drawer->EndModelsTexturesPass();
 }
 
 
@@ -367,12 +357,14 @@ void VRenderLevelShadowVolume::RenderMobjsFog () {
   if (!r_dbg_advthing_draw_fog) return;
   float TimeFrac;
   RenderStyleInfo ri;
+  Drawer->BeginModelsFogPass();
   for (auto &&ent : visibleAliasModels) {
     if (ent == ViewEnt && (!r_chasecam || ent != cl->MO)) continue; // don't draw camera actor
     //RenderThingFog(ent);
     if (SetupRenderStyleAndTime(ent, ri, TimeFrac)) {
+      if (ri.isAdditive()) continue;
       vuint32 Fade = GetFade(SV_PointRegionLight(ent->Sector, ent->Origin));
-      if (Fade || ri.alpha < 1.0f) {
+      if (Fade) {
         ri.light = 0xffffffffu;
         ri.fade = Fade;
         DrawEntityModel(ent, ri, TimeFrac, RPASS_Fog);
@@ -380,4 +372,5 @@ void VRenderLevelShadowVolume::RenderMobjsFog () {
       }
     }
   }
+  Drawer->EndModelsFogPass();
 }

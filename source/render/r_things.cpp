@@ -236,6 +236,30 @@ bool VRenderLevelShared::RenderAliasModel (VEntity *mobj, const RenderStyleInfo 
 
 //==========================================================================
 //
+//  VRenderLevelShared::SetupRIThingLighting
+//
+//==========================================================================
+void VRenderLevelShared::SetupRIThingLighting (VEntity *ent, RenderStyleInfo &ri, bool asAmbient, bool allowBM) {
+  if (ent->RenderStyle == STYLE_Fuzzy) {
+    ri.light = ri.seclight = 0;
+  } else if ((ent->State->Frame&VState::FF_FULLBRIGHT) ||
+             (ent->EntityFlags&(VEntity::EF_FullBright|VEntity::EF_Bright)))
+  {
+    ri.light = ri.seclight = 0xffffffff;
+    if (allowBM && r_brightmaps && r_brightmaps_sprite) ri.seclight = LightPoint(ent->Origin, ent->GetRenderRadius(), ent->Height, nullptr, ent->SubSector);
+  } else {
+    if (!asAmbient) {
+      // use old way of lighting
+      ri.light = ri.seclight = LightPoint(ent->Origin, ent->GetRenderRadius(), ent->Height, nullptr, ent->SubSector);
+    } else {
+      ri.light = ri.seclight = LightPointAmbient(ent->Origin, ent->GetRenderRadius(), ent->SubSector);
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  VRenderLevelShared::RenderThing
 //
 //==========================================================================
@@ -250,6 +274,7 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
 
   RenderStyleInfo ri;
   if (!CalculateRenderStyleInfo(ri, mobj->RenderStyle, mobj->Alpha, mobj->StencilColor)) return;
+  //if (VStr::strEquCI(mobj->GetClass()->GetName(), "FlashSG")) GCon->Logf(NAME_Debug, "%s: %s", mobj->GetClass()->GetName(), ri.toCString());
 
   if (Pass == RPASS_Normal) {
     // this is called only in regular renderer, and only once
@@ -258,17 +283,7 @@ void VRenderLevelShared::RenderThing (VEntity *mobj, ERenderPass Pass) {
     if (!IsThingVisible(mobj)) return;
   }
 
-  if (mobj->RenderStyle == STYLE_Fuzzy) {
-    ri.light = ri.seclight = 0;
-  } else if ((mobj->State->Frame&VState::FF_FULLBRIGHT) ||
-             (mobj->EntityFlags&(VEntity::EF_FullBright|VEntity::EF_Bright))) {
-    ri.light = 0xffffffffu;
-    ri.seclight = (r_brightmaps && r_brightmaps_sprite ? LightPoint(mobj->Origin, mobj->GetRenderRadius(), mobj->Height, nullptr, mobj->SubSector) : ri.light);
-  } else {
-    ri.light = ri.seclight = LightPoint(mobj->Origin, mobj->GetRenderRadius(), mobj->Height, nullptr, mobj->SubSector);
-    //GCon->Logf("%s: radius=%f; height=%f", *mobj->GetClass()->GetFullName(), mobj->Radius, mobj->Height);
-  }
-
+  SetupRIThingLighting(mobj, ri, false/*asAmbient*/, true/*allowBM*/);
   ri.fade = GetFade(SV_PointRegionLight(mobj->Sector, mobj->Origin));
 
   // try to draw a model

@@ -31,6 +31,7 @@ void main () {
     if (TexColor.a < ALPHA_MIN) discard;
   }
 
+#ifdef VV_EXPERIMENTAL_FAST_LIGHT
   float DistVPosL = dot(VPosL, VPosL);
   float DistVPos = dot(VPos, VPos);
 
@@ -93,7 +94,12 @@ void main () {
     if (DistToLight < -LightRadius) discard;
   }
   */
+#else
+  float DistToLight = max(1.0, dot(VertToLight, VertToLight));
+  if (DistToLight >= LightRadius*LightRadius) discard;
 
+  DistToLight = sqrt(DistToLight);
+#endif
 
   float attenuation = (LightRadius-DistToLight-LightMin)*(0.5+(0.5*dot(normalize(VertToLight), Normal)));
 #ifdef VV_SPOTLIGHT
@@ -108,18 +114,11 @@ void main () {
   float ClampTrans = clamp((TexColor.a-0.1)/0.9, 0.0, 1.0);
   if (ClampTrans < ALPHA_MIN) discard;
 
-  /*
-  if (!AllowTransparency) {
-    if (InAlpha == 1.0 && ClampTrans < ALPHA_MASKED) discard;
-  } else {
-    if (ClampTrans < ALPHA_MIN) discard;
-  }
-  */
-
   vec4 FinalColor;
   FinalColor.rgb = LightColor;
-  FinalColor.a = (ClampAdd*TexColor.a)*(ClampTrans*(ClampTrans*(3.0-(2.0*ClampTrans))));
-  if (FinalColor.a < ALPHA_MIN) discard;
+  //FinalColor.a = (ClampAdd*TexColor.a)*(ClampTrans*(ClampTrans*(3.0-(2.0*ClampTrans))));
+  FinalColor.a = ClampAdd*(ClampTrans*(ClampTrans*(3.0-(2.0*ClampTrans))));
+  //if (FinalColor.a < ALPHA_MIN) discard;
 
   gl_FragColor = FinalColor;
 }

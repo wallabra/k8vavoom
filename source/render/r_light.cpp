@@ -979,4 +979,24 @@ vuint32 VRenderLevelShared::LightPoint (const TVec &p, float radius, float heigh
 }
 
 
+//==========================================================================
+//
+//  VRenderLevelShared::LightPointAmbient
+//
+//==========================================================================
+vuint32 VRenderLevelShared::LightPointAmbient (const TVec &p, float radius, const subsector_t *psub) {
+  if (FixedLight) return FixedLight|(FixedLight<<8)|(FixedLight<<16)|(FixedLight<<24);
+
+  const subsector_t *sub = (psub ? psub : Level->PointInSubsector(p));
+  float l = 0.0f, lr = 0.0f, lg = 0.0f, lb = 0.0f;
+  CalculateSubAmbient(l, lr, lg, lb, sub, p, radius, nullptr);
+
+  return
+    (((vuint32)clampToByte((int)l))<<24)|
+    (((vuint32)clampToByte((int)lr))<<16)|
+    (((vuint32)clampToByte((int)lg))<<8)|
+    ((vuint32)clampToByte((int)lb));
+}
+
+
 #undef RL_CLEAR_DLIGHT

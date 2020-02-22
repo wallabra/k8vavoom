@@ -229,26 +229,6 @@ void VRenderLevelShadowVolume::RefilterStaticLights () {
 
 //==========================================================================
 //
-//  VRenderLevelShadowVolume::LightPointAmbient
-//
-//==========================================================================
-vuint32 VRenderLevelShadowVolume::LightPointAmbient (const TVec &p, float radius, const subsector_t *psub) {
-  if (FixedLight) return FixedLight|(FixedLight<<8)|(FixedLight<<16)|(FixedLight<<24);
-
-  const subsector_t *sub = (psub ? psub : Level->PointInSubsector(p));
-  float l = 0.0f, lr = 0.0f, lg = 0.0f, lb = 0.0f;
-  CalculateSubAmbient(l, lr, lg, lb, sub, p, radius, nullptr);
-
-  return
-    (((vuint32)clampToByte((int)l))<<24)|
-    (((vuint32)clampToByte((int)lr))<<16)|
-    (((vuint32)clampToByte((int)lg))<<8)|
-    ((vuint32)clampToByte((int)lb));
-}
-
-
-//==========================================================================
-//
 //  VRenderLevelShadowVolume::BuildLightMap
 //
 //==========================================================================
@@ -1027,6 +1007,7 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
     if (r_shadowvol_use_pofs) {
       Drawer->GLDisableOffset();
     }
+    Drawer->EndModelsShadowsPass();
   }
   Drawer->EndLightShadowVolumes();
 
@@ -1044,8 +1025,10 @@ void VRenderLevelShadowVolume::RenderLightShadows (VEntity *ent, vuint32 dlflags
   dummyBBox[0] = dummyBBox[1] = dummyBBox[2] = -99999;
   dummyBBox[3] = dummyBBox[4] = dummyBBox[5] = +99999;
   RenderLightBSPNode(Level->NumNodes-1, dummyBBox, LimitLights);
+
   Drawer->BeginModelsLightPass(CurrLightPos, CurrLightRadius, LightMin, Color, coneDir, coneAngle);
   RenderMobjsLight();
+  Drawer->EndModelsLightPass();
 
   //if (hasScissor) Drawer->DebugRenderScreenRect(scoord[0], scoord[1], scoord[2], scoord[3], 0x7f007f00);
 

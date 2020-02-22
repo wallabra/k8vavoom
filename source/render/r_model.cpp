@@ -1263,22 +1263,26 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
     case RPASS_Normal:
       break;
     case RPASS_Ambient:
+      if (ri.isAdditive()) return;
       if (ri.isTranslucent() && ri.stencilColor) return;
       break;
     case RPASS_ShadowVolumes:
       if (ri.isTranslucent()) return;
       break;
     case RPASS_Textures:
+      if (ri.isAdditive()) return;
       break;
     case RPASS_Light:
-      if (ri.isTranslucent() && ri.stencilColor) return;
+      if (ri.isAdditive()) return;
+      //if (ri.isTranslucent() && ri.stencilColor) return;
       break;
     case RPASS_Fog:
       //FIXME
-      if (ri.stencilColor) return;
+      if (ri.isAdditive()) return;
+      //if (ri.stencilColor) return;
       break;
     case RPASS_NonShadow:
-      if (ri.isAdditive()) return;
+      if (!ri.isAdditive()) return;
       break;
   }
 
@@ -1443,18 +1447,22 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
       case RPASS_Normal:
         break;
       case RPASS_Ambient:
-        if (ri.isTranslucent() && ri.stencilColor) continue;
+        //if (ri.isTranslucent() && ri.stencilColor) continue; // already checked
+        //if (ri.isAdditive()) continue; // already checked
         break;
       case RPASS_ShadowVolumes:
         if (Md2Alpha < 1.0f || SubMdl.NoShadow) continue;
-        if (ri.isTranslucent() && ri.stencilColor) continue;
+        //if (ri.isTranslucent() && ri.stencilColor) continue; // already checked
+        //if (ri.isAdditive()) continue; // already checked
         break;
       case RPASS_Textures:
-        if (Md2Alpha <= getAlphaThreshold()) continue;
+        //if (Md2Alpha <= getAlphaThreshold() && !ri.isAdditive()) continue; // already checked
+        //if (ri.isAdditive()) continue; // already checked
         break;
       case RPASS_Light:
-        if (Md2Alpha <= getAlphaThreshold() || SubMdl.NoShadow) continue;
-        if (ri.isTranslucent() && ri.stencilColor) continue;
+        if (Md2Alpha <= getAlphaThreshold() /*|| SubMdl.NoShadow*/) continue;
+        //if (ri.isTranslucent() && ri.stencilColor) continue; // no need to
+        //if (ri.isAdditive()) continue; // already checked
         break;
       case RPASS_Fog:
         /*
@@ -1467,8 +1475,11 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
         break;
       case RPASS_NonShadow:
         //if (Md2Alpha >= 1.0f && !Additive && !SubMdl.NoShadow) continue;
-        if (Md2Alpha < 1.0f || ri.isAdditive() /*|| SubMdl.NoShadow*/) continue;
-        if (ri.isTranslucent() && ri.stencilColor) continue;
+        //!if (Md2Alpha < 1.0f || ri.isAdditive() /*|| SubMdl.NoShadow*/) continue;
+        //if (Md2Alpha >= 1.0f && !ri.isAdditive() /*|| SubMdl.NoShadow*/) continue;
+        //if (ri.isTranslucent() && ri.stencilColor) continue;
+        //
+        //if (!ri.isAdditive()) continue; // already checked
         break;
     }
 
@@ -1544,7 +1555,7 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
       case RPASS_Textures:
         Drawer->DrawAliasModelTextures(Md2Org, Md2Angle, Transform,
           SubMdl.Model, Md2Frame, Md2NextFrame, GTextureManager(SkinID),
-          Trans, ColorMap, ri.stencilColor, Md2Alpha, smooth_inter, Interpolate, SubMdl.UseDepth,
+          Trans, ColorMap, ri, smooth_inter, Interpolate, SubMdl.UseDepth,
           SubMdl.AllowTransparency);
         break;
       case RPASS_Fog:

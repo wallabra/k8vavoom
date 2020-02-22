@@ -7,24 +7,25 @@ uniform float InAlpha;
 uniform bool AllowTransparency;
 
 varying vec2 TextureCoordinate;
-varying float Dist;
+/*varying float Dist;*/
 
 
 void main () {
   vec4 TexColor = texture2D(Texture, TextureCoordinate);
   if (TexColor.a < ALPHA_MIN) discard;
 
-  float ClampTransp = clamp(((Light.a*TexColor.a)-0.1)/0.9, 0.0, 1.0);
-
   if (!AllowTransparency) {
     //if (InAlpha == 1.0 && ClampTransp < ALPHA_MASKED) discard;
     if (TexColor.a < ALPHA_MASKED) discard;
   } else {
-    if (ClampTransp < ALPHA_MIN) discard;
+    if (TexColor.a < ALPHA_MIN) discard;
   }
 
+  float ClampTransp = clamp(((Light.a*TexColor.a)-0.1)/0.9, 0.0, 1.0);
+
   vec4 FinalColor;
-  FinalColor.rgb = Light.rgb*(1.0-0.25*max(0, -sign(Dist)));
+  //old:FinalColor.rgb = Light.rgb*(1.0-0.25*max(0, -sign(Dist)));
+  FinalColor.rgb = Light.rgb;
 
   /*
   // `DistToView` is always positive (or zero)
@@ -37,7 +38,7 @@ void main () {
   */
 
   FinalColor.a = InAlpha*(ClampTransp*(ClampTransp*(3.0-(2.0*ClampTransp))));
-  if (FinalColor.a < ALPHA_MIN) discard;
+  //if (FinalColor.a < ALPHA_MIN) discard;
 
   gl_FragColor = FinalColor;
 }

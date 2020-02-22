@@ -220,12 +220,12 @@ enum ERenderPass {
   // for regular renderer
   RPASS_Normal,
   // for advanced renderer
-  RPASS_Ambient,
-  RPASS_ShadowVolumes,
-  RPASS_Light,
-  RPASS_Textures,
-  RPASS_Fog,
-  RPASS_NonShadow,
+  RPASS_Ambient, // render to ambient light texture
+  RPASS_ShadowVolumes, // render shadow volumes
+  RPASS_Light, // render lit model (sadly, uniformly lit yet)
+  RPASS_Textures, // render model textures on top of ambient lighting
+  RPASS_Fog, // render model darkening/fog
+  RPASS_NonShadow, // render "simple" models that doesn't require complex lighting (additive, for example)
 };
 
 
@@ -476,6 +476,9 @@ public:
   virtual bool IsSubsectorRendered (const subsector_t *sub) const noexcept override;
 
   virtual vuint32 LightPoint (const TVec &p, float radius, float height, const TPlane *surfplane=nullptr, const subsector_t *psub=nullptr) override;
+  // `radius` is used for... nothing yet
+  // `surfplace` is used to light masked surfaces
+  vuint32 LightPointAmbient (const TVec &p, float radius, const subsector_t *psub=nullptr);
 
   virtual void UpdateSubsectorFlatSurfaces (subsector_t *sub, bool dofloors, bool doceils, bool forced=false) override;
 
@@ -707,6 +710,9 @@ protected:
   bool RenderViewModel (VViewState *VSt, const RenderStyleInfo &ri);
   void DrawPlayerSprites ();
   void DrawCrosshair ();
+
+  // used in things rendering to calculate lighting in `ri`
+  void SetupRIThingLighting (VEntity *ent, RenderStyleInfo &ri, bool asAmbient, bool allowBM);
 
   // used in light checking
   bool RadiusCastRay (sector_t *sector, const TVec &org, const TVec &dest, float radius, bool advanced);
@@ -1002,9 +1008,6 @@ protected:
 
   // light methods
   //virtual void PushDlights () override;
-  // `radius` is used for... nothing yet
-  // `surfplace` is used to light masked surfaces
-  vuint32 LightPointAmbient (const TVec &p, float radius, const subsector_t *psub=nullptr);
 
   // world BSP rendering
   virtual void QueueWorldSurface (surface_t *) override;
@@ -1035,6 +1038,7 @@ protected:
 
   // things
   void BuildMobjsInCurrLight (bool doShadows);
+
   void RenderMobjsAmbient ();
   void RenderMobjsTextures ();
   void RenderMobjsLight ();

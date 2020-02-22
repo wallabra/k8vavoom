@@ -2,10 +2,10 @@
 $include "common/common.inc"
 
 uniform sampler2D Texture;
-uniform sampler2D AmbLightTexture;
+//uniform sampler2D AmbLightTexture;
 uniform float InAlpha;
 uniform bool AllowTransparency;
-uniform vec2 ScreenSize;
+//uniform vec2 ScreenSize;
 #ifdef VV_STENCIL
 uniform vec3 StencilColor;
 #endif
@@ -26,10 +26,11 @@ void main () {
   if (alpha < ALPHA_MIN) discard;
 
   vec4 FinalColor;
-#ifdef VV_STENCIL
-  FinalColor.rgb = StencilColor.rgb;
   FinalColor.a = alpha;
+#ifdef VV_STENCIL
+  FinalColor.rgb = StencilColor.rgb; // *alpha
   //FIXME: for now, skip ambient light for translucent texels
+  /*
   if (alpha >= 0.9) {
     // sample color from ambient light texture
     vec2 tc2 = gl_FragCoord.xy/ScreenSize.xy;
@@ -39,9 +40,10 @@ void main () {
     // k8: oops, no way to do it yet (why?)
     FinalColor.rgb = clamp(FinalColor.rgb*ambColor.rgb, 0.0, 1.0);
   }
+  */
 #else
+  /*
   FinalColor.rgb = TexColor.rgb*alpha;
-  FinalColor.a = alpha;
 
   // sample color from ambient light texture
   vec2 tc2 = gl_FragCoord.xy/ScreenSize.xy;
@@ -50,6 +52,12 @@ void main () {
   // Light.a == 1: fullbright
   // k8: oops, no way to do it yet (why?)
   FinalColor.rgb = clamp(FinalColor.rgb*ambColor.rgb, 0.0, 1.0);
+  */
+
+  FinalColor.rgb = TexColor.rgb;
+
+  float ClampTransp = clamp((TexColor.a-0.1)/0.9, 0.0, 1.0);
+  FinalColor.a = TexColor.a*(ClampTransp*(ClampTransp*(3.0-(2.0*ClampTransp))))*InAlpha;
 #endif
 
   gl_FragColor = FinalColor;
