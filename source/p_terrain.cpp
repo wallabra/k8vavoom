@@ -91,6 +91,8 @@ static TArray<VTerrainType> TerrainTypes;
 static TMapNC<VName, int> SplashMap; // key: lowercased name; value: index in `SplashInfos`
 static TMapNC<VName, int> TerrainMap; // key: lowercased name; value: index in `TerrainInfos`
 static TMapNC<int, int> TerrainTypeMap; // key: pic number; value: index in `TerrainTypes`
+static VName DefaultTerrainName;
+static int DefaultTerrainIndex;
 
 
 //==========================================================================
@@ -99,11 +101,16 @@ static TMapNC<int, int> TerrainTypeMap; // key: pic number; value: index in `Ter
 //
 //==========================================================================
 static VSplashInfo *GetSplashInfo (const char *Name) {
-  if (!Name || !Name[0]) Name = "solid"; // default one
-  VName loname = VName(Name, VName::FindLower);
-  if (loname == NAME_None) return nullptr;
-  auto spp = SplashMap.find(loname);
-  return (spp ? &SplashInfos[*spp] : nullptr);
+  if (!Name || !Name[0]) {
+    // default one
+    auto spp = SplashMap.find(DefaultTerrainName);
+    return (spp ? &SplashInfos[*spp] : nullptr);
+  } else {
+    VName loname = VName(Name, VName::FindLower);
+    if (loname == NAME_None) return nullptr;
+    auto spp = SplashMap.find(loname);
+    return (spp ? &SplashInfos[*spp] : nullptr);
+  }
   /*
   for (int i = 0; i < SplashInfos.Num(); ++i) {
     if (VStr::strEquCI(*SplashInfos[i].Name, *Name)) return &SplashInfos[i];
@@ -119,17 +126,27 @@ static VSplashInfo *GetSplashInfo (const char *Name) {
 //
 //==========================================================================
 static VTerrainInfo *GetTerrainInfo (const char *Name) {
-  if (!Name || !Name[0]) Name = "solid"; // default one
+  if (!Name || !Name[0]) return &TerrainInfos[DefaultTerrainIndex]; // default one
   VName loname = VName(Name, VName::FindLower);
   if (loname == NAME_None) return nullptr;
   auto spp = TerrainMap.find(loname);
   return (spp ? &TerrainInfos[*spp] : nullptr);
-  /*
-  for (int i = 0; i < TerrainInfos.Num(); ++i) {
-    if (VStr::strEquCI(*TerrainInfos[i].Name, *Name)) return &TerrainInfos[i];
-  }
-  return nullptr;
-  */
+}
+
+
+//==========================================================================
+//
+//  CheckTerrainKW
+//
+//  returns:
+//    0: nope
+//    1: terrain definition
+//    2: default terrain definition
+//
+//==========================================================================
+static int CheckTerrainKW (VScriptParser *sc) {
+  if (sc->Check("terrain")) return 1;
+  return (sc->Check("defaultterrain") ? 2 : 0);
 }
 
 
@@ -141,6 +158,7 @@ static VTerrainInfo *GetTerrainInfo (const char *Name) {
 static void ParseTerrainScript (VScriptParser *sc) {
   GCon->Logf(NAME_Init, "parsing terrain script '%s'...", *sc->GetScriptName());
   bool insideIf = false;
+  int tkw;
   while (!sc->AtEnd()) {
     auto loc = sc->GetLoc();
     if (sc->Check("splash")) {
@@ -203,10 +221,18 @@ static void ParseTerrainScript (VScriptParser *sc) {
           sc->Error(va("Unknown command (%s)", *sc->String));
         }
       }
-    } else if (sc->Check("terrain")) {
+    } else if ((tkw = CheckTerrainKW(sc)) != 0) {
       sc->ExpectString();
       if (sc->String.isEmpty()) sc->String = "none";
-      VTerrainInfo *TInfo = GetTerrainInfo(*sc->String);
+      VTerrainInfo *TInfo;
+      if (tkw == 2) {
+        // default terrain definition, remember new default terrain
+        DefaultTerrainName = VName(*sc->String, VName::AddLower);
+        // if just a name, do nothing else
+        if (sc->PeekChar() != '{') continue;
+      }
+      // new terrain
+      TInfo = GetTerrainInfo(*sc->String);
       if (!TInfo) {
         //!GCon->Logf(NAME_Init, "%s: new terrain '%s'", *sc->GetLoc().toStringNoCol(), *sc->String);
         VName nn = VName(*sc->String, VName::AddLower);
@@ -371,9 +397,28 @@ void P_InitTerrainTypes () {
   DefT.DamageType = NAME_None;
   DefT.Friction = 0.0f;
 
+  DefaultTerrainName = DefT.Name;
+  DefaultTerrainIndex = 0;
+
   for (int Lump = W_IterateNS(-1, WADNS_Global); Lump >= 0; Lump = W_IterateNS(Lump, WADNS_Global)) {
     if (W_LumpName(Lump) == NAME_terrain) {
       ParseTerrainScript(new VScriptParser(W_FullLumpName(Lump), W_CreateLumpReaderNum(Lump)));
+    }
+  }
+  GCon->Logf(NAME_Init, "got %d terrain definition%s", TerrainInfos.length(), (TerrainInfos.length() != 1 ? "s" : ""));
+
+  // fix default terrain name (why not?)
+  {
+    vassert(DefaultTerrainName != NAME_None);
+    auto spp = TerrainMap.find(DefaultTerrainName);
+    if (!spp) {
+      GCon->Logf(NAME_Warning, "unknown default terrain '%s', defaulted to '%s'", *DefaultTerrainName, *TerrainInfos[0].Name);
+      DefaultTerrainName = TerrainInfos[0].Name;
+      DefaultTerrainIndex = 0;
+    } else {
+      GCon->Logf(NAME_Init, "default terrain is '%s' (%d)", *DefaultTerrainName, *spp);
+      DefaultTerrainIndex = *spp;
+      vassert(DefaultTerrainIndex >= 0 && DefaultTerrainIndex < TerrainInfos.length());
     }
   }
 
@@ -382,7 +427,7 @@ void P_InitTerrainTypes () {
     ttinf.Info = GetTerrainInfo(*ttinf.TypeName);
     if (!ttinf.Info) {
       GCon->Logf(NAME_Warning, "unknown terrain type '%s' for texture '%s'", *ttinf.TypeName, (ttinf.Pic >= 0 ? *GTextureManager[ttinf.Pic]->Name : "<notexture>"));
-      ttinf.Info = &TerrainInfos[0]; // default one
+      ttinf.Info = &TerrainInfos[DefaultTerrainIndex]; // default one
     } else {
       //GCon->Logf(NAME_Warning, "set terrain type '%s' (%s) for texture '%s'", *ttinf.TypeName, *ttinf.Info->Name, (ttinf.Pic >= 0 ? *GTextureManager[ttinf.Pic]->Name : "<notexture>"));
     }
@@ -396,13 +441,8 @@ void P_InitTerrainTypes () {
 //
 //==========================================================================
 VTerrainInfo *SV_TerrainType (int pic) {
-  /*
-  for (int i = 0; i < TerrainTypes.Num(); ++i) {
-    if (TerrainTypes[i].Pic == pic) return TerrainTypes[i].Info;
-  }
-  */
   auto pp = TerrainTypeMap.find(pic);
-  return (pp ? TerrainTypes[*pp].Info : &TerrainInfos[0]);
+  return (pp ? TerrainTypes[*pp].Info : &TerrainInfos[DefaultTerrainIndex]);
 }
 
 
