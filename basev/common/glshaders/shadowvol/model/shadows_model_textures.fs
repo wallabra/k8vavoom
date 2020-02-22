@@ -29,7 +29,16 @@ void main () {
 #ifdef VV_STENCIL
   FinalColor.rgb = StencilColor.rgb;
   FinalColor.a = alpha;
-  //FIXME: sample color from ambient light texture too here?
+  //FIXME: for now, skip ambient light for translucent texels
+  if (alpha >= 0.9) {
+    // sample color from ambient light texture
+    vec2 tc2 = gl_FragCoord.xy/ScreenSize.xy;
+    vec3 ambColor = texture2D(AmbLightTexture, tc2).rgb;
+
+    // Light.a == 1: fullbright
+    // k8: oops, no way to do it yet (why?)
+    FinalColor.rgb = clamp(FinalColor.rgb*ambColor.rgb, 0.0, 1.0);
+  }
 #else
   FinalColor.rgb = TexColor.rgb*alpha;
   FinalColor.a = alpha;
