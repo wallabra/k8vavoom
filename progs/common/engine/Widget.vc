@@ -413,7 +413,7 @@ bool SentEventToChildren (ref event_t evt) {
 //
 //==========================================================================
 bool OnEvent (ref event_t evt) {
-  if (evt.type == ev_resolution) printdebug("%C: *** RESOLUTION ***", self);
+  //if (evt.type == ev_resolution) printdebug("%C: *** RESOLUTION ***", self);
   return SentEventToChildren(evt);
 }
 

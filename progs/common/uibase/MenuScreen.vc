@@ -798,6 +798,24 @@ override void OnDraw () {
 }
 
 
+//==========================================================================
+//
+//  OnEvent
+//
+//  this is called before any other specific handler.
+//  return `true` to prevent other handlers from being called.
+//
+//==========================================================================
+override bool OnEvent (ref event_t evt) {
+  if (evt.type == ev_resolution) {
+    //printdebug("%C: *** RESOLUTION ***", self);
+    // center menu
+    SetPos((GetVirtualWidth()-Width)/2, (GetVirtualHeight()-Height)/2);
+  }
+  return ::OnEvent(evt);
+}
+
+
 defaultproperties {
   X = 160;
   Y = 140;
