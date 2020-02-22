@@ -347,6 +347,7 @@ bool TryPickup (EntityEx Toucher) {
   EntityEx NewToucher = Toucher;
   bPickupGood = false;
   if (Toucher.Inventory && Toucher.Inventory.HandlePickup(self)) {
+    //printdebug("%C: HANDLED; toucher=%C; maxamout=%s; amount=%s; good=%B; transfer=%B", self, Toucher, MaxAmount, Amount, bPickupGood, bTransferInventory);
     if (!bPickupGood) return false;
     if (bTransferInventory) TransferInventoryTo(Toucher);
     GoAwayAndDie();
@@ -365,6 +366,7 @@ bool TryPickup (EntityEx Toucher) {
       return false;
     }
   } else {
+    //printdebug("%C: copying; toucher=%C; maxamout=%s; amount=%s", self, Toucher, MaxAmount, Amount);
     Inventory Copy = CreateCopy(Toucher);
     if (!Copy) return false;
     if (!Inventory(Copy)) {

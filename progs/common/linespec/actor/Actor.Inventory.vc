@@ -68,7 +68,7 @@ final bool DoGiveInventory (class!Inventory ItemType, int Amount, EntityEx Recei
       }
       /*
       else {
-        if (self !isa 'LDWordsAreMorePowerfulThanAThousandFrames') printdebug("%C:   given %C to %C", self, Item, Receiver);
+        printdebug("%C:   given %C to %C", self, Item, Receiver);
       }
       */
     }
