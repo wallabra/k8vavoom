@@ -229,7 +229,8 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
   //bool styleDark = (Alpha >= 1000.0f);
   //if (styleDark) Alpha -= 1666.0f;
 
-  const bool trans = (ri.translucency || ri.hangup || ri.alpha < 1.0f || Tex->isTranslucent());
+  // ignore translucent textures here: some idiots are trying to make "smoothed" sprites in this manner
+  const bool trans = (ri.translucency /*|| ri.hangup*/ || ri.alpha < 1.0f /*|| Tex->isTranslucent()*/);
 
   switch (shadtype) {
     case ShaderMasked:
@@ -291,18 +292,13 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
   SetSpriteLump(Tex, Translation, CMap, true);
   SetupTextureFiltering(sprite_filter);
 
-  bool restoreDepthMask = false; // `true` means "depth write disabled"
+  bool resetDepthMask = false; // `true` means "depth write disabled"
   bool restoreBlend = false;
-  GLint oldDepthMask = 0;
 
   // setup hangups
   if (ri.hangup) {
     // no z-buffer?
-    if (ri.hangup&1) {
-      restoreDepthMask = true;
-      glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
-      glDepthMask(GL_FALSE); // no z-buffer writes
-    }
+    if (ri.hangup&1) resetDepthMask = true;
     // offset?
     if (ri.hangup&2) {
       const float updir = (!CanUseRevZ() ? -1.0f : 1.0f);
@@ -313,10 +309,8 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
   }
 
   // translucent things should not modify z-buffer
-  if (!restoreDepthMask && trans) {
-    glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
-    glDepthMask(GL_FALSE); // no z-buffer writes
-    restoreDepthMask = true;
+  if (!resetDepthMask && trans) {
+    resetDepthMask = true;
   }
 
   // setup blending
@@ -346,6 +340,10 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
       break;
   }
 
+  if (resetDepthMask) {
+    PushDepthMask();
+    glDepthMask(GL_FALSE); // no z-buffer writes
+  }
 
   TVec texpt(0, 0, 0);
 
@@ -390,7 +388,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
 
   #undef SPRVTX
 
-  if (restoreDepthMask) glDepthMask(oldDepthMask);
+  if (resetDepthMask) PopDepthMask();
   if (ri.hangup&2) GLDisableOffset();
   if (ri.hangup&4) glEnable(GL_CULL_FACE);
   if (restoreBlend) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);

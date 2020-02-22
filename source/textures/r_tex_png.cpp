@@ -173,6 +173,7 @@ vuint8 *VPngTexture::GetPixels () {
       *dest++ = clr.a;
       if (clr.a != 255) {
         transparent = true;
+        //if (clr.a != 0 && VStr::startsWith(*Name, "csta")) GCon->Logf(NAME_Debug, "%s: x=%d; y=%d; clr=(%u,%u,%u,%u)", *Name, x, y, clr.r, clr.g, clr.b, clr.a);
         translucent = translucent || (clr.a != 0);
       }
     }
