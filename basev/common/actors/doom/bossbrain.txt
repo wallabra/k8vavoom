@@ -91,6 +91,7 @@ actor SpawnShot
 actor SpawnFire
 {
   Height 78
+  ProjectilePassHeight -16 // this is for dehacked
   RenderStyle Add
   +NoBlockmap
   +NoGravity

@@ -82,7 +82,6 @@ static char *ValueString;
 static int value;
 
 
-static TArray<int> VanillaThingHeights;
 static TArray<VName> Sprites;
 static TArray<VClass *> EntClasses;
 static TArray<bool> EntClassTouched; // by some dehacked definition
@@ -648,13 +647,17 @@ static void ReadThing (int num) {
       Warning("Invalid mobj param '%s'", String);
     }
   }
+
   // reset heights for things hanging from the ceiling that don't specify a new height
   if (!gotHeight && gotSpawnCeiling) {
-    if (((VEntity *)Ent->Defaults)->Height != VanillaThingHeights[num-1]) {
-      Warning("forced vanilla thing height for '%s' (our: %d, vanilla: %d) (this is harmless)", *Ent->GetFullName(), (int)(((VEntity *)Ent->Defaults)->Height), VanillaThingHeights[num-1]);
+    const float hgt = ((const VEntity *)Ent->Defaults)->Height;
+    const float dvh = ((const VEntity *)Ent->Defaults)->VanillaHeight;
+    if (dvh < 0 && hgt != -dvh) {
+      Warning("forced vanilla thing height for '%s' (our:%g, vanilla:%g) (this is harmless)", *Ent->GetFullName(), hgt, -dvh);
+      ((VEntity *)Ent->Defaults)->Height = -dvh;
     }
-    ((VEntity *)Ent->Defaults)->Height = VanillaThingHeights[num-1];
   }
+
   if (hasSomeDefine) EntClassTouched[num-1] = true;
 }
 
@@ -1477,6 +1480,7 @@ static void LoadDehackedDefinitions () {
   VStream *Strm = FL_OpenFileReadBaseOnly("dehinfo.txt");
   if (!Strm) Sys_Error("dehinfo.txt is required to parse dehacked patches");
 
+  GCon->Logf(NAME_Init, "loading dehacked definitions from '%s'...", *Strm->GetName());
   VScriptParser *sc = new VScriptParser("dehinfo.txt", Strm);
 
   // read sprite names
@@ -1612,29 +1616,7 @@ static void LoadDehackedDefinitions () {
     }
   }
 
-  // set original thing heights
-  sc->Expect("heights");
-  sc->Expect("{");
-  int HIdx = 0;
-  while (!sc->Check("}")) {
-    if (HIdx >= EntClasses.length()) sc->Error("Too many heights");
-    sc->ExpectNumber();
-    //((VEntity *)EntClasses[HIdx]->Defaults)->Height = sc->Number;
-    VanillaThingHeights.append(sc->Number);
-    //if (((VEntity *)EntClasses[HIdx]->Defaults)->Height != sc->Number) GCon->Logf(NAME_Debug, "  VanillaHeight = %d; // %s", sc->Number, EntClasses[HIdx]->GetName());
-    //GCon->Logf(NAME_Debug, "DECORATE: %d: %s: VanillaHeight=%d; Height=%g", VanillaThingHeights.length()-1, EntClasses[HIdx]->GetName(), sc->Number, ((const VEntity *)EntClasses[HIdx]->Defaults)->Height);
-    #if 0
-    {
-      VEntity *e = (VEntity *)EntClasses[HIdx]->Defaults;
-      if (!e->VanillaHeight) {
-        if (e->Height != sc->Number) {
-          GCon->Logf(NAME_Debug, "  VanillaHeight = %d; // %s  -- Height is %g", sc->Number, EntClasses[HIdx]->GetName(), e->Height);
-        }
-      }
-    }
-    #endif
-    ++HIdx;
-  }
+  // original thing heights are encoded in decorate now (with `ProjectilePassHeight`)
 
   GameInfoClass = VClass::FindClass("MainGameInfo");
   DoomPlayerClass = VClass::FindClass("DoomPlayer");

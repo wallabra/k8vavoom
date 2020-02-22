@@ -308,7 +308,7 @@ code_pointers
 // names of the sounds to be used when changing sounds
 sounds
 {
-  // first in implicitly empty
+  // first is implicitly empty
   weapons/pistol
   weapons/shotgf
   weapons/shotgr
@@ -593,6 +593,8 @@ ammo
 }
 
 // original thing heights
+// k8: this is now encoded in `ProjectilePassHeight`, no need to pass it here
+/*
 heights
 {
   56 56 56 56 16 56 8 16 64 8
@@ -610,3 +612,4 @@ heights
   16 16 16 16 16 16 16 16 88 88
   64 64 64 64 16 16 16
 }
+*/
