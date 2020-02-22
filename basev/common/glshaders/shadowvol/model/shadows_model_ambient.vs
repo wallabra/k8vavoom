@@ -3,7 +3,7 @@ $include "common/common.inc"
 
 uniform mat4 ModelToWorldMat;
 //uniform mat3 NormalToWorldMat;
-uniform vec3 ViewOrigin;
+//uniform vec3 ViewOrigin;
 uniform float Inter;
 
 attribute vec4 Vert2;

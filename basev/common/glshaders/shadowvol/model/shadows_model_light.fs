@@ -12,13 +12,16 @@ $include "common/spotlight_vars.fs"
 #endif
 
 varying vec3 Normal;
-varying vec3 VertToLight;
+#ifdef VV_EXPERIMENTAL_FAST_LIGHT
 varying vec3 VertToView;
 varying vec3 VPos;
 varying vec3 VPosL;
-varying vec2 TextureCoordinate;
+#endif
+varying vec3 VertToLight;
 varying float Dist;
 varying float VDist;
+
+varying vec2 TextureCoordinate;
 
 
 void main () {
@@ -95,6 +98,8 @@ void main () {
   }
   */
 #else
+  if (VDist <= 0.0 || Dist <= 0.0) discard;
+
   float DistToLight = max(1.0, dot(VertToLight, VertToLight));
   if (DistToLight >= LightRadius*LightRadius) discard;
 

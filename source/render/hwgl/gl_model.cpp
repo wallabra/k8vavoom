@@ -436,7 +436,7 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
   ShadowsModelAmbient.SetModelToWorldMat(RotationMatrix);
   //ShadowsModelAmbient.SetNormalToWorldMat(NormalMat[0]);
 
-  ShadowsModelAmbient.SetViewOrigin(vieworg);
+  //ShadowsModelAmbient.SetViewOrigin(vieworg);
   ShadowsModelAmbient.SetInAlpha(Alpha < 1.0f ? Alpha : 1.0f);
   ShadowsModelAmbient.SetAllowTransparency(AllowTransparency);
 
