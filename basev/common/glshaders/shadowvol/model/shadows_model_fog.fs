@@ -9,12 +9,9 @@ uniform bool AllowTransparency;
 $include "common/fog_vars.fs"
 
 varying vec2 TextureCoordinate;
-//varying float Dist;
 
 
 void main () {
-  //if (Dist <= 0.0) discard; // wtf?!
-
   vec4 TexColor = texture2D(Texture, TextureCoordinate);
   if (!AllowTransparency) {
     if (TexColor.a < ALPHA_MASKED) discard;

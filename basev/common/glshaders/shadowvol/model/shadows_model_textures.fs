@@ -22,43 +22,18 @@ void main () {
     if (TexColor.a < ALPHA_MIN) discard;
   }
 
-  float alpha = clamp(TexColor.a*InAlpha, 0.0, 1.0);
-  if (alpha < ALPHA_MIN) discard;
+  if (TexColor.a*InAlpha < ALPHA_MIN) discard;
 
   vec4 FinalColor;
-  FinalColor.a = alpha;
+
 #ifdef VV_STENCIL
-  FinalColor.rgb = StencilColor.rgb; // *alpha
-  //FIXME: for now, skip ambient light for translucent texels
-  /*
-  if (alpha >= 0.9) {
-    // sample color from ambient light texture
-    vec2 tc2 = gl_FragCoord.xy/ScreenSize.xy;
-    vec3 ambColor = texture2D(AmbLightTexture, tc2).rgb;
-
-    // Light.a == 1: fullbright
-    // k8: oops, no way to do it yet (why?)
-    FinalColor.rgb = clamp(FinalColor.rgb*ambColor.rgb, 0.0, 1.0);
-  }
-  */
+  FinalColor.rgb = StencilColor.rgb;
 #else
-  /*
-  FinalColor.rgb = TexColor.rgb*alpha;
-
-  // sample color from ambient light texture
-  vec2 tc2 = gl_FragCoord.xy/ScreenSize.xy;
-  vec3 ambColor = texture2D(AmbLightTexture, tc2).rgb;
-
-  // Light.a == 1: fullbright
-  // k8: oops, no way to do it yet (why?)
-  FinalColor.rgb = clamp(FinalColor.rgb*ambColor.rgb, 0.0, 1.0);
-  */
-
   FinalColor.rgb = TexColor.rgb;
+#endif
 
   float ClampTransp = clamp((TexColor.a-0.1)/0.9, 0.0, 1.0);
   FinalColor.a = TexColor.a*(ClampTransp*(ClampTransp*(3.0-(2.0*ClampTransp))))*InAlpha;
-#endif
 
   gl_FragColor = FinalColor;
 }

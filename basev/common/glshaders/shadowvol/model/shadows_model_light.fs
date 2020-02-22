@@ -12,19 +12,19 @@ $include "common/spotlight_vars.fs"
 #endif
 
 varying vec3 Normal;
-#ifdef VV_EXPERIMENTAL_FAST_LIGHT
-varying vec3 VertToView;
-varying vec3 VPos;
-varying vec3 VPosL;
-#endif
 varying vec3 VertToLight;
+/*
 varying float Dist;
 varying float VDist;
+*/
 
 varying vec2 TextureCoordinate;
 
 
 void main () {
+  //k8: don't do this until i fix normals, otherwise lighting looks weird
+  //if (VDist <= 0.0 || Dist <= 0.0) discard;
+
   vec4 TexColor = texture2D(Texture, TextureCoordinate);
   //if (TexColor.a < ALPHA_MIN) discard;
   TexColor.a *= InAlpha;
@@ -34,77 +34,10 @@ void main () {
     if (TexColor.a < ALPHA_MIN) discard;
   }
 
-#ifdef VV_EXPERIMENTAL_FAST_LIGHT
-  float DistVPosL = dot(VPosL, VPosL);
-  float DistVPos = dot(VPos, VPos);
-
-  //-2, -1, 0
-  float distSign1 = min(-1.0, sign(Dist)-1.0);
-  // =0: DistVPosL < -LightRadius
-  // <0: DistVPosL > LightRadius, or -DistVPosL < -LightRadius
-  //
-  // =0: DistVPosL < -LightRadius, or -DistVPosL > LightRadius
-  // <0: DistVPosL > LightRadius
-  //
-  //  0: -1
-  // -1:  1
-  float dsmul = -1.0-distSign1*2.0;
-
-  //3 < -5  -3 > 5
-  //-5 < -3  5 > 3
-
-  if (sign(Dist)*sign(DistVPos) < 0.0 || dsmul*DistVPosL > LightRadius*LightRadius) discard;
-  /*
-  if (Dist > 0.0) {
-    if (DistVPos < 0.0) discard;
-    if (DistVPosL < -LightRadius) discard;
-  } else {
-    if (DistVPos > 0.0) discard;
-    if (DistVPosL > LightRadius) discard;
-  }
-  */
-
-
-  float DistToView = dot(VertToView, VertToView);
-  if (sign(Dist)*sign(VDist) < 0.0 || sign(Dist)*sign(DistToView) < 0.0) discard;
-  /*
-  if (Dist > 0.0) {
-    if (VDist < 0.0) discard;
-    if (DistToView < 0.0) discard;
-  } else {
-    if (VDist > 0.0) discard;
-    if (DistToView > 0.0) discard;
-  }
-  */
-
-  float DistToLight = dot(VertToLight, VertToLight);
-
-  //  1:  1
-  //  0:  1
-  // -1: -1
-
-  //  1:  1
-  //  0: -1
-
-  float distSign2 = min(1.0, sign(Dist)+1.0);
-  float dsmul2 = -1.0-distSign2*2.0;
-  if (dsmul2*DistToLight > LightRadius) discard;
-
-  /*
-  if (Dist > 0.0) {
-    if (DistToLight > LightRadius) discard;
-  } else {
-    if (DistToLight < -LightRadius) discard;
-  }
-  */
-#else
-  if (VDist <= 0.0 || Dist <= 0.0) discard;
-
   float DistToLight = max(1.0, dot(VertToLight, VertToLight));
   if (DistToLight >= LightRadius*LightRadius) discard;
 
   DistToLight = sqrt(DistToLight);
-#endif
 
   float attenuation = (LightRadius-DistToLight-LightMin)*(0.5+(0.5*dot(normalize(VertToLight), Normal)));
 #ifdef VV_SPOTLIGHT
@@ -121,9 +54,7 @@ void main () {
 
   vec4 FinalColor;
   FinalColor.rgb = LightColor;
-  //FinalColor.a = (ClampAdd*TexColor.a)*(ClampTrans*(ClampTrans*(3.0-(2.0*ClampTrans))));
   FinalColor.a = ClampAdd*(ClampTrans*(ClampTrans*(3.0-(2.0*ClampTrans))));
-  //if (FinalColor.a < ALPHA_MIN) discard;
 
   gl_FragColor = FinalColor;
 }
