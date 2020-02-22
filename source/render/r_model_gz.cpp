@@ -264,9 +264,16 @@ static TVec sanitiseScale (const TVec &scale) {
   if (res.y < 0 && res.y != -1.0f) GCon->Logf("!!! scaley=%g", res.y);
   if (res.z < 0 && res.z != -1.0f) GCon->Logf("!!! scalez=%g", res.z);
   */
+  // idiotic gozzo somehow tolerate (or even require?) negative scales for HUD weapons. fuck it!
+  #if 0
   if (res.x < 0) res.x = 1.0f/(-res.x);
   if (res.y < 0) res.y = 1.0f/(-res.y);
   if (res.z < 0) res.z = 1.0f/(-res.z);
+  #else
+  res.x = fabs(res.x);
+  res.y = fabs(res.y);
+  res.z = fabs(res.z);
+  #endif
   return res;
 }
 
