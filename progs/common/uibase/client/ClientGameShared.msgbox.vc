@@ -240,7 +240,7 @@ void MessageBoxShowEndGameQuery (optional string text) {
 //
 //==========================================================================
 void MessageBoxShowSkillQuery (string text) {
-  text = text.xstrip;
+  text = TranslateString(text.xstrip);
   if (!text) text = "Are you sure? This skill level\nisn't even remotely fair.";
   MessageBoxStartMessage(text, MessageBoxType.Nightmare, true);
 }
