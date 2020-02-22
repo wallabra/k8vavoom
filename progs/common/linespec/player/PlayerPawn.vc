@@ -724,8 +724,17 @@ void AdjustSpeed (ref float forward, ref float side) {
     side = fclamp(side, -WALKING_SPEED, WALKING_SPEED);
   }
 
-  forward *= (forward >= -1000.0 && forward < 1000.0 ? ForwardMove1 : ForwardMove2);
-  side *= (side >= -1000.0 && side < 1000.0 ? SideMove1 : SideMove2);
+  //forward *= (forward >= -1000.0 && forward < 1000.0 ? ForwardMove1 : ForwardMove2);
+  if (forward) {
+    //printdebug("%C:000: forward=%s (%s : %s)", self, forward, ForwardMove1, ForwardMove2);
+    forward *= (fabs(forward) <= 1000.0 ? ForwardMove1 : ForwardMove2);
+    //printdebug("%C:001: forward=%s (%s : %s)", self, forward, ForwardMove1, ForwardMove2);
+  }
+  if (side) {
+    //printdebug("%C:000: side=%s (%s : %s)", self, side, SideMove1, SideMove2);
+    side *= (fabs(side) <= 1000 ? SideMove1 : SideMove2);
+    //printdebug("%C:001: side=%s (%s : %s)", self, side, SideMove1, SideMove2);
+  }
 
   if (Inventory && !PlayerEx(Player).MorphTime) {
     // adjust for a player with a speed artifact
