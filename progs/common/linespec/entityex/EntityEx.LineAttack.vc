@@ -111,11 +111,18 @@ float CalculateLineAttackZOfs () {
 float CalculateMissileAttackZOfs (class!EntityEx type) {
   // missiles are spawned 4 units lower than hitscan attacks
   // add an extra unit to simulate Doom's original behaviour
-  if (bIsPlayer && GetCvarB('gm_fix_projectile_attack_offset')) {
-    // 4 is for autoaim
-    return Height*0.5-FloorClip+(type ? type.default.Height*0.5f : PlayerEx(Player).GetAttackZOfs-3.0);
+  if (bIsPlayer) {
+    auto pex = PlayerEx(Player);
+    if (!pex) return Height*0.5-FloorClip+8.0-3.0; // just in case
+    if (GetCvarB('gm_fix_projectile_attack_offset_broken')) {
+      // 4 is for autoaim
+      //return Height*0.5-FloorClip+(type ? type.default.Height*0.5f : pex.GetAttackZOfs-3.0);
+      return Height*0.5-FloorClip+(type ? type.default.Height*0.5f : pex.GetAttackZOfs-3.0);
+    } else {
+      return Height*0.5-FloorClip+pex.GetAttackZOfs-3.0;
+    }
   } else {
-    return Height*0.5-FloorClip+(bIsPlayer ? PlayerEx(Player).GetAttackZOfs : 8.0)-3.0;
+    return Height*0.5-FloorClip+8.0-3.0;
   }
 }
 
