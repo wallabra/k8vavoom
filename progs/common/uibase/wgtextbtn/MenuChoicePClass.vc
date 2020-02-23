@@ -28,5 +28,21 @@ class MenuChoicePClass : MenuBigTextButton;
 int Index;
 
 
+//==========================================================================
+//
+//  SetSmallFont
+//
+//==========================================================================
+void SetSmallFont (bool useSmallFont) {
+  if (useSmallFont) {
+    TextFont = 'smallfont';
+    Height = 10;
+  } else {
+    TextFont = default.TextFont;
+    Height = default.Height;
+  }
+}
+
+
 defaultproperties {
 }

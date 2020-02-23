@@ -25,30 +25,28 @@
 //**************************************************************************
 class MenuScreenClass : MenuScreen;
 
-MenuStaticBitmap  FighterBox;
-MenuStaticAnim    FighterWalk;
-MenuStaticBitmap  ClericBox;
-MenuStaticAnim    ClericWalk;
-MenuStaticBitmap  MageBox;
-MenuStaticAnim    MageWalk;
+MenuStaticBitmap FighterBox;
+MenuStaticAnim FighterWalk;
+MenuStaticBitmap ClericBox;
+MenuStaticAnim ClericWalk;
+MenuStaticBitmap MageBox;
+MenuStaticAnim MageWalk;
+
 
 //==========================================================================
 //
 //  CreateChoices
 //
 //==========================================================================
-
-override void CreateChoices()
-{
-  if (WadLumpPresent('m_fbox'))
-  {
+override void CreateChoices () {
+  if (WadLumpPresent('m_fbox')) {
     FighterBox = NewChild(MenuStaticBitmap);
     FighterBox.SetOrigin(174, 28);
     FighterBox.SetPic('m_fbox');
     FighterBox.Hide();
 
     FighterWalk = NewChild(MenuStaticAnim);
-    FighterWalk.SetOrigin(174 + 24, 28 + 12);
+    FighterWalk.SetOrigin(174+24, 28+12);
     FighterWalk.Speed = 8;
     FighterWalk.AddFrame('m_fwalk1');
     FighterWalk.AddFrame('m_fwalk2');
@@ -62,7 +60,7 @@ override void CreateChoices()
     ClericBox.Hide();
 
     ClericWalk = NewChild(MenuStaticAnim);
-    ClericWalk.SetOrigin(174 + 24, 28 + 12);
+    ClericWalk.SetOrigin(174+24, 28+12);
     ClericWalk.Speed = 8;
     ClericWalk.AddFrame('m_cwalk1');
     ClericWalk.AddFrame('m_cwalk2');
@@ -76,7 +74,7 @@ override void CreateChoices()
     MageBox.Hide();
 
     MageWalk = NewChild(MenuStaticAnim);
-    MageWalk.SetOrigin(174 + 24, 28 + 12);
+    MageWalk.SetOrigin(174+24, 28+12);
     MageWalk.Speed = 8;
     MageWalk.AddFrame('m_mwalk1');
     MageWalk.AddFrame('m_mwalk2');
@@ -85,36 +83,34 @@ override void CreateChoices()
     MageWalk.Hide();
   }
 
+  bool useSmallFont = (ClGame.Game.PlayerClasses.length > 6);
+  if (useSmallFont) {
+    ChoicesStartY = 26;
+  }
+
   int currentY = ChoicesStartY;
-  int i;
-  for (i = 0; i < ClGame.Game.PlayerClasses.Num; i++)
-  {
+  foreach (int i; 0..ClGame.Game.PlayerClasses.length) {
     MenuChoicePClass Btn = NewChild(MenuChoicePClass);
+    Btn.SetSmallFont(useSmallFont);
     Btn.SetPos(ChoicesStartX, currentY);
-    Btn.Text = class!PlayerPawn(ClGame.Game.PlayerClasses[
-      i]).default.DisplayName;
+    Btn.Text = class!PlayerPawn(ClGame.Game.PlayerClasses[i]).default.DisplayName;
     Btn.FocusLost = &PClassItemFocusLost;
     Btn.FocusReceived = &PClassItemFocusReceived;
     Btn.Activated = &PClassItemActivate;
     Btn.Index = i;
     currentY += Btn.Height;
-    if (i == 0)
-    {
-      PClassItemFocusReceived(Btn);
-    }
+    if (i == 0) PClassItemFocusReceived(Btn);
   }
 }
+
 
 //==========================================================================
 //
 //  PClassItemFocusLost
 //
 //==========================================================================
-
-void PClassItemFocusLost(Object Sender)
-{
-  if (FighterBox)
-  {
+void PClassItemFocusLost (Object Sender) {
+  if (FighterBox) {
     FighterBox.Hide();
     FighterWalk.Hide();
     ClericBox.Hide();
@@ -124,50 +120,41 @@ void PClassItemFocusLost(Object Sender)
   }
 }
 
+
 //==========================================================================
 //
 //  PClassPClassItemFocusReceived
 //
 //==========================================================================
-
-void PClassItemFocusReceived(Object Sender)
-{
-  if (FighterBox)
-  {
+void PClassItemFocusReceived (Object Sender) {
+  if (FighterBox) {
     MenuChoicePClass Btn = MenuChoicePClass(Sender);
-    name CName = class!PlayerPawn(ClGame.Game.PlayerClasses[
-      Btn.Index]).default.SpawnClass;
-    if (CName == 'fighter')
-    {
+    name CName = class!PlayerPawn(ClGame.Game.PlayerClasses[Btn.Index]).default.SpawnClass;
+    if (CName == 'fighter') {
       FighterBox.Show();
       FighterWalk.Show();
-    }
-    else if (CName == 'cleric')
-    {
+    } else if (CName == 'cleric') {
       ClericBox.Show();
       ClericWalk.Show();
-    }
-    else if (CName == 'mage')
-    {
+    } else if (CName == 'mage') {
       MageBox.Show();
       MageWalk.Show();
     }
   }
 }
 
+
 //==========================================================================
 //
 //  PClassItemActivate
 //
 //==========================================================================
-
-void PClassItemActivate(Object Sender)
-{
+void PClassItemActivate (Object Sender) {
   ClientGameShared(ClGame).SetPClass(MenuChoicePClass(Sender).Index);
 }
 
-defaultproperties
-{
+
+defaultproperties {
   ChoicesStartX = 66;
   ChoicesStartY = 66;
   SelectorType = MenuSelector_Big;
