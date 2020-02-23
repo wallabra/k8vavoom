@@ -43,12 +43,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     models/*
     models/k8lightbulb/*
 
-    sprites/iceca0.png
-    sprites/icecb0.png
-    sprites/icecc0.png
-    sprites/icecd0.png
-    sprites/tnt1a0.lmp
-    sprites/unkna0.png
+    sprites/*.png
     sprites/dogs/*
 
     textures/-noflat-.png
