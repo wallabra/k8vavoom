@@ -33,35 +33,24 @@
 
 //==========================================================================
 //
-//  operator <<
-//
-//==========================================================================
-VStream &operator << (VStream &strm, const VNTValue &val) {
-  val.WriteTo(strm);
-  return strm;
-}
-
-
-//==========================================================================
-//
 //  VNTValue::VNTValue
 //
 //==========================================================================
 VNTValue::VNTValue (VName aname, const vuint8 *buf, int bufsz, bool doCopyData) {
   vassert(bufsz >= 0);
-  memset((void *)this, 0, sizeof(VNTValue));
+  zeroSelf();
   type = T_Blob;
   name = aname;
-  blobSize = bufsz;
-  if (doCopyData || (bufsz > 0 && !buf)) {
-    vuint32 *mem = (vuint32 *)Z_Malloc(bufsz+sizeof(vuint32));
-    blob = (vuint8 *)(mem+1);
-    *mem = 1;
-    if (bufsz) {
+  if (bufsz == 0) { doCopyData = false; buf = nullptr; }
+  if (doCopyData) {
+    newBlob(bufsz);
+    if (bufsz > 0) {
       if (buf) memcpy(blob, buf, bufsz); else memset(blob, 0, bufsz);
     }
   } else {
+    blobRC = nullptr;
     blob = (vuint8 *)buf;
+    blobSize = bufsz;
   }
 }
 
@@ -124,6 +113,51 @@ bool VNTValue::SkipValue (VStream &strm, vuint8 atype) {
 
 //==========================================================================
 //
+//  VNTValue::serialiseValueInternal
+//
+//  should be cleared, type should be set
+//
+//==========================================================================
+void VNTValue::serialiseValueInternal (VStream &strm) {
+  if (strm.IsError()) { clear(); return; }
+  switch (type) {
+    case T_Int: strm << STRM_INDEX(ud.ival); break;
+    case T_Float: strm << ud.fval; break;
+    case T_Vec: strm << vval.x << vval.y << vval.z; break;
+    case T_Name: strm << nval; break;
+    case T_Str: strm << sval; break;
+    case T_Class: strm << ud.cval; break;
+    case T_Obj: strm << ud.oval; break;
+    case T_XObj: strm << ud.xoval; break;
+    case T_Blob:
+      if (!strm.IsLoading()) {
+        // writing
+        vint32 len = blobSize;
+        if (len < 0 || len > 1024*1024*64) Sys_Error("invalid blob size (%d)", len);
+        strm << STRM_INDEX(len);
+        if (len) strm.Serialise(blob, len);
+        vassert(len == blobSize);
+        //VStr s = va("  writtenblob(%d):", blobSize); for (int f = 0; f < len; ++f) s += va(" %02x", blob[f]); GLog.Logf(NAME_Debug, "%s", *s);
+      } else {
+        // reading
+        vassert(strm.IsLoading());
+        vint32 len = -1;
+        strm << STRM_INDEX(len);
+        if (len < 0 || len > 1024*1024*64) Sys_Error("invalid blob size (%d)", len);
+        decRef(); // just in case
+        newBlob(len);
+        vassert(blobSize == len);
+        if (len > 0) strm.Serialise(blob, len);
+        //VStr s = va("  readblob(%d):", blobSize); for (int f = 0; f < len; ++f) s += va(" %02x", blob[f]); GLog.Logf(NAME_Debug, "%s", *s);
+      }
+      break;
+  }
+  if (strm.IsError()) { clear(); return; }
+}
+
+
+//==========================================================================
+//
 //  VNTValue::ReadValue
 //
 //  call this after `ReadTypeName()`
@@ -136,35 +170,7 @@ VNTValue VNTValue::ReadValue (VStream &strm, vuint8 atype, VName aname) {
   VNTValue res;
   res.type = atype;
   res.name = aname;
-  switch (atype) {
-    case T_Int: strm << STRM_INDEX(res.ud.ival); break;
-    case T_Float: strm << res.ud.fval; break;
-    case T_Vec: strm << res.vval.x << res.vval.y << res.vval.z; break;
-    case T_Name: strm << res.nval; break;
-    case T_Str: strm << res.sval; break;
-    case T_Class: strm << res.ud.cval; break;
-    case T_Obj: strm << res.ud.oval; break;
-    case T_XObj: strm << res.ud.xoval; break;
-    case T_Blob:
-      {
-        // reading
-        vint32 len = -1;
-        strm << STRM_INDEX(len);
-        if (len < 0 || len > 1024*1024*64) Sys_Error("invalid blob size (%d)", len);
-        if (len > 0) {
-          vuint32 *mem = (vuint32 *)Z_Malloc(len+sizeof(vuint32));
-          res.blob = (vuint8 *)(mem+1);
-          res.blobSize = len;
-          *mem = 1;
-          if (len) strm.Serialise(res.blob, len);
-        } else {
-          res.blob = nullptr;
-          res.blobSize = 0;
-        }
-      }
-      break;
-  }
-  if (strm.IsError()) return VNTValue();
+  res.serialiseValueInternal(strm);
   return res;
 }
 
@@ -176,80 +182,26 @@ VNTValue VNTValue::ReadValue (VStream &strm, vuint8 atype, VName aname) {
 //==========================================================================
 void VNTValue::Serialise (VStream &strm) {
   if (strm.IsLoading()) clear();
-
   strm << type;
   if (strm.IsLoading()) {
     if (!isValid()) Sys_Error("invalid NTValue type (%d)", type);
   }
   strm << name;
-
-  switch (type) {
-    case T_Int: strm << STRM_INDEX(ud.ival); break;
-    case T_Float: strm << ud.fval; break;
-    case T_Vec: strm << vval.x << vval.y << vval.z; break;
-    case T_Name: strm << nval; break;
-    case T_Str: strm << sval; break;
-    case T_Class: strm << ud.cval; break;
-    case T_Obj: strm << ud.oval; break;
-    case T_XObj: strm << ud.xoval; break;
-    case T_Blob:
-      if (strm.IsLoading()) {
-        // reading
-        vint32 len = -1;
-        strm << STRM_INDEX(len);
-        if (len < 0 || len > 1024*1024*64) Sys_Error("invalid blob size (%d)", len);
-        if (len > 0) {
-          vuint32 *mem = (vuint32 *)Z_Malloc(len+sizeof(vuint32));
-          blob = (vuint8 *)(mem+1);
-          blobSize = len;
-          *mem = 1;
-          if (len) strm.Serialise(blob, len);
-        } else {
-          blob = nullptr;
-          blobSize = 0;
-        }
-      } else {
-        // writing
-        vint32 len = blobSize;
-        if (len < 0 || len > 1024*1024*64) Sys_Error("invalid blob size (%d)", len);
-        strm << STRM_INDEX(len);
-        if (len) strm.Serialise(blob, len);
-      }
-      break;
-  }
+  serialiseValueInternal(strm);
 }
 
 
 //==========================================================================
 //
-//  VNTValue::WriteTo
+//  VNTValue::Serialise
 //
 //==========================================================================
-void VNTValue::WriteTo (VStream &strm) const {
+void VNTValue::Serialise (VStream &strm) const {
   vassert(!strm.IsLoading());
-  vuint8 atype = type;
-  strm << atype;
-  VName aname = name;
-  strm << aname;
-  switch (type) {
-    case T_Int: { vint32 v = ud.ival; strm << STRM_INDEX(v); } break;
-    case T_Float: { float f = ud.fval; strm << f; } break;
-    case T_Vec: { TVec v = vval; strm << v.x << v.y << v.z; } break;
-    case T_Name: { aname = nval; strm << aname; } break;
-    case T_Str: { VStr s = sval; strm << s; } break;
-    case T_Class: { VMemberBase *v = ud.cval; strm << v; } break;
-    case T_Obj: { VObject *v = ud.oval; strm << v; } break;
-    case T_XObj: { VSerialisable *v = ud.xoval; strm << v; } break;
-    case T_Blob:
-      {
-        // writing
-        vint32 len = blobSize;
-        if (len < 0 || len > 1024*1024*64) Sys_Error("invalid blob size (%d)", len);
-        strm << STRM_INDEX(len);
-        if (len) strm.Serialise(blob, len);
-      }
-      break;
-  }
+  strm << type;
+  strm << name;
+  // sorry for this hack
+  ((VNTValue *)this)->serialiseValueInternal(strm);
 }
 
 
@@ -267,25 +219,7 @@ void VNTValue::SkipSerialised (VStream &strm, vuint8 *otype, VName *oname) {
   strm << aname;
   if (otype) *otype = atype;
   if (oname) *oname = aname;
-  switch (atype) {
-    case T_Int: { vint32 v; strm << STRM_INDEX(v); } break;
-    case T_Float: { float v; strm << v; } break;
-    case T_Vec: { float x, y, z; strm << x << y << z; } break;
-    case T_Name: { VName v; strm << v; } break;
-    case T_Str: { VStr v; strm << v; } break;
-    case T_Class: { VMemberBase *v; strm << v; } break;
-    case T_Obj: { VObject *v; strm << v; } break;
-    case T_XObj: { VSerialisable *v; strm << v; } break;
-    case T_Blob:
-      {
-        vint32 len = -1;
-        strm << STRM_INDEX(len);
-        if (len < 0 || len > 1024*1024*64) Sys_Error("invalid blob size (%d)", len);
-        if (strm.IsError()) return;
-        if (len) strm.Seek(strm.Tell()+len);
-      }
-      break;
-  }
+  SkipValue(strm, atype);
 }
 
 
@@ -412,6 +346,7 @@ VNTValue VNTValueReader::coerceTo (VNTValue v, vuint8 vtype) {
 //==========================================================================
 VNTValue VNTValueReader::readValue (VName vname, vuint8 vtype) {
   if (!srcStream || srcStream->IsError()) { setError(); return VNTValue(); }
+  vassert(srcStream->IsLoading());
   // continue scan: usually, fields are read in the same order as they are written
   VName rdname;
   vuint8 rdtype;
@@ -596,11 +531,12 @@ VNTValueWriter::~VNTValueWriter () {
 //
 //==========================================================================
 void VNTValueWriter::WriteTo (VStream &strm) {
+  vassert(!strm.IsLoading());
   vint32 count = vlist.length();
   strm << STRM_INDEX(count);
   vassert(vlist.length() == count);
   for (vint32 f = 0; f < count; ++f) {
-    vlist[f].WriteTo(strm);
+    vlist[f].Serialise(strm);
     if (strm.IsError()) return;
   }
 }
@@ -862,7 +798,7 @@ void VNTValueIO::io (VName vname, VSerialisable *&v) {
 //==========================================================================
 VNTValue VNTValueIO::readBlob (VName vname) {
   if (!rd || bError || rd->IsError()) return VNTValue();
-  return rd->readValue(vname);
+  return rd->readValue(vname, VNTValue::T_Blob);
 }
 
 
@@ -873,6 +809,6 @@ VNTValue VNTValueIO::readBlob (VName vname) {
 //==========================================================================
 void VNTValueIO::writeBlob (VName vname, const void *buf, int len) {
   if (!wr || bError) return;
-  VNTValue v = VNTValue(vname, (const vuint8 *)buf, len, false); // don't copy
+  VNTValue v = VNTValue(vname, (const vuint8 *)buf, len, true); // need to copy it, because it isn't written immediately
   if (wr->putValue(v)) bError = true;
 }

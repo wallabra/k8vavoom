@@ -30,6 +30,7 @@ class VClass;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
+// WARNING! this *SHOULD* *NOT* have any virtual methods!
 struct VNTValue {
 public:
   enum {
@@ -60,58 +61,77 @@ protected:
   TVec vval;
   VName nval;
   VStr sval;
-  vuint8 *blob; // (blob-sizeof(vint32) is refcounter
+  // blob data
+  vuint32 *blobRC; // blob data refcounter; `nullptr` if data isn't copied
+  vuint8 *blob;
   vint32 blobSize;
 
 private:
-  inline void incRef () const {
-    if (blob) {
-      vuint32 *rc = (vuint32 *)(blob-sizeof(vuint32));
-      if (*rc != 0xffffffffU) ++(*rc);
-    }
+  inline void zeroSelf () noexcept { memset((void *)this, 0, sizeof(VNTValue)); }
+
+  inline void incRef () const noexcept {
+    if (blobRC) ++(*blobRC);
   }
 
   inline void decRef () {
-    if (blob) {
-      vuint32 *rc = (vuint32 *)(blob-sizeof(vuint32));
-      if (*rc != 0xffffffffU) {
-        if (--(*rc) == 0) {
-          Z_Free(blob);
-        }
+    if (blobRC) {
+      if (--(*blobRC) == 0) {
+        Z_Free(blob);
+        Z_Free(blobRC);
       }
     }
+    blobRC = nullptr;
     blob = nullptr;
     blobSize = 0;
   }
 
-public:
-  VNTValue () { memset((void *)this, 0, sizeof(VNTValue)); }
-  ~VNTValue () { clear(); }
+  inline void newBlob (int len) {
+    vassert(blobRC == nullptr);
+    vassert(blob == nullptr);
+    vassert(blobSize == 0);
+    vassert(len >= 0);
+    if (len > 0) {
+      blobRC = (vuint32 *)Z_Malloc(sizeof(vuint32));
+      *blobRC = 1;
+      blob = (vuint8 *)Z_Malloc(len);
+    } else {
+      blobRC = nullptr;
+      blob = nullptr;
+    }
+    blobSize = len;
+  }
 
-  VNTValue (const VNTValue &s) {
-    memset((void *)this, 0, sizeof(VNTValue));
+  // should be cleared, type should be set
+  void serialiseValueInternal (VStream &strm);
+
+public:
+  inline VNTValue () noexcept { memset((void *)this, 0, sizeof(VNTValue)); }
+  inline ~VNTValue () { clear(); }
+
+  inline VNTValue (const VNTValue &s) noexcept {
+    zeroSelf();
     type = s.type;
     name = s.name;
     switch (s.type) {
       case T_Vec: vval = s.vval; break;
       case T_Name: nval = s.nval; break;
       case T_Str: sval = s.sval; break;
-      case T_Blob: blob = (vuint8 *)s.blob; blobSize = s.blobSize; incRef(); break;
+      case T_Blob: blobRC = s.blobRC; blob = s.blob; blobSize = s.blobSize; incRef(); break;
       default: memcpy((void *)&ud, &s.ud, sizeof(ud)); break;
     }
   }
 
-  VNTValue (VName aname, vint32 val) : vval(0, 0, 0), nval(NAME_None), sval() { memset((void *)this, 0, sizeof(VNTValue)); type = T_Int; name = aname; ud.ival = val; }
-  VNTValue (VName aname, vuint32 val) : vval(0, 0, 0), nval(NAME_None), sval() { memset((void *)this, 0, sizeof(VNTValue)); type = T_Int; name = aname; ud.ival = (vint32)val; }
-  VNTValue (VName aname, float val) : vval(0, 0, 0), nval(NAME_None), sval() { memset((void *)this, 0, sizeof(VNTValue)); type = T_Float; name = aname; ud.fval = val; }
-  VNTValue (VName aname, const TVec &val) : vval(0, 0, 0), nval(NAME_None), sval() { memset((void *)this, 0, sizeof(VNTValue)); type = T_Vec; name = aname; vval = val; }
-  VNTValue (VName aname, VName val) : vval(0, 0, 0), nval(NAME_None), sval() { memset((void *)this, 0, sizeof(VNTValue)); type = T_Name; name = aname; nval = val; }
-  VNTValue (VName aname, VStr val) : vval(0, 0, 0), nval(NAME_None), sval() { memset((void *)this, 0, sizeof(VNTValue)); type = T_Str; name = aname; sval = val; }
-  VNTValue (VName aname, VClass *val) : vval(0, 0, 0), nval(NAME_None), sval() { memset((void *)this, 0, sizeof(VNTValue)); type = T_Class; name = aname; ud.cval = (VMemberBase *)val; }
-  VNTValue (VName aname, VObject *val) : vval(0, 0, 0), nval(NAME_None), sval() { memset((void *)this, 0, sizeof(VNTValue)); type = T_Obj; name = aname; ud.oval = val; }
-  VNTValue (VName aname, VSerialisable *val) : vval(0, 0, 0), nval(NAME_None), sval() { memset((void *)this, 0, sizeof(VNTValue)); type = T_XObj; name = aname; ud.xoval = val; }
+  VNTValue (VName aname, vint32 val) : vval(0, 0, 0), nval(NAME_None), sval() { zeroSelf(); type = T_Int; name = aname; ud.ival = val; }
+  VNTValue (VName aname, vuint32 val) : vval(0, 0, 0), nval(NAME_None), sval() { zeroSelf(); type = T_Int; name = aname; ud.ival = (vint32)val; }
+  VNTValue (VName aname, float val) : vval(0, 0, 0), nval(NAME_None), sval() { zeroSelf(); type = T_Float; name = aname; ud.fval = val; }
+  VNTValue (VName aname, const TVec &val) : vval(0, 0, 0), nval(NAME_None), sval() { zeroSelf(); type = T_Vec; name = aname; vval = val; }
+  VNTValue (VName aname, VName val) : vval(0, 0, 0), nval(NAME_None), sval() { zeroSelf(); type = T_Name; name = aname; nval = val; }
+  VNTValue (VName aname, VStr val) : vval(0, 0, 0), nval(NAME_None), sval() { zeroSelf(); type = T_Str; name = aname; sval = val; }
+  VNTValue (VName aname, VClass *val) : vval(0, 0, 0), nval(NAME_None), sval() { zeroSelf(); type = T_Class; name = aname; ud.cval = (VMemberBase *)val; }
+  VNTValue (VName aname, VObject *val) : vval(0, 0, 0), nval(NAME_None), sval() { zeroSelf(); type = T_Obj; name = aname; ud.oval = val; }
+  VNTValue (VName aname, VSerialisable *val) : vval(0, 0, 0), nval(NAME_None), sval() { zeroSelf(); type = T_XObj; name = aname; ud.xoval = val; }
 
-  VNTValue (VName aname, const vuint8 *buf, int bufsz, bool doCopyData=false);
+  VNTValue (VName aname, const vuint8 *buf, int bufsz, bool doCopyData=true);
 
   VNTValue &operator = (const VNTValue &s) {
     if ((void *)this == (void *)&s) return *this;
@@ -125,7 +145,7 @@ public:
       case T_Vec: vval = s.vval; break;
       case T_Name: nval = s.nval; break;
       case T_Str: sval = s.sval; break;
-      case T_Blob: blob = s.blob; blobSize = s.blobSize; incRef(); break;
+      case T_Blob: blobRC = s.blobRC; blob = s.blob; blobSize = s.blobSize; incRef(); break;
       default: memcpy((void *)&ud, &s.ud, sizeof(ud)); break;
     }
     return *this;
@@ -139,11 +159,11 @@ public:
       case T_Str: sval = VStr::EmptyString; break;
       case T_Blob: decRef(); break;
     }
-    memset((void *)this, 0, sizeof(VNTValue));
+    zeroSelf();
   }
 
   void Serialise (VStream &strm);
-  void WriteTo (VStream &strm) const;
+  void Serialise (VStream &strm) const;
 
   // this can optinally return value type and name
   static void SkipSerialised (VStream &strm, vuint8 *otype=nullptr, VName *oname=nullptr);
@@ -159,40 +179,42 @@ public:
   // returns invalid value on any error
   static VNTValue ReadValue (VStream &strm, vuint8 atype, VName aname);
 
-  static inline bool isValidType (vuint8 atype) { return (atype > T_Invalid && atype <= T_Blob); }
+  static inline bool isValidType (vuint8 atype) noexcept { return (atype > T_Invalid && atype <= T_Blob); }
 
-  inline operator bool () const { return isValid(); }
+  inline operator bool () const noexcept { return isValid(); }
 
   // checkers
-  inline bool isValid () const { return (type > T_Invalid && type <= T_Blob); }
-  inline bool isInt () const { return (type == T_Int); }
-  inline bool isFloat () const { return (type == T_Float); }
-  inline bool isVec () const { return (type == T_Vec); }
-  inline bool isName () const { return (type == T_Name); }
-  inline bool isStr () const { return (type == T_Str); }
-  inline bool isClass () const { return (type == T_Class); }
-  inline bool isObj () const { return (type == T_Obj); }
-  inline bool isXObj () const { return (type == T_XObj); }
-  inline bool isBlob () const { return (type == T_Blob); }
+  inline bool isValid () const noexcept { return (type > T_Invalid && type <= T_Blob); }
+  inline bool isInt () const noexcept { return (type == T_Int); }
+  inline bool isFloat () const noexcept { return (type == T_Float); }
+  inline bool isVec () const noexcept { return (type == T_Vec); }
+  inline bool isName () const noexcept { return (type == T_Name); }
+  inline bool isStr () const noexcept { return (type == T_Str); }
+  inline bool isClass () const noexcept { return (type == T_Class); }
+  inline bool isObj () const noexcept { return (type == T_Obj); }
+  inline bool isXObj () const noexcept { return (type == T_XObj); }
+  inline bool isBlob () const noexcept { return (type == T_Blob); }
 
   // getters and setters
-  inline VName getName () const { return name; }
-  inline vuint8 getType () const { return type; }
+  inline VName getName () const noexcept { return name; }
+  inline vuint8 getType () const noexcept { return type; }
 
-  inline vint32 getInt () const { return (type == T_Int ? ud.ival : 0); }
-  inline float getFloat () const { return (type == T_Float ? ud.fval : 0); }
-  inline TVec getVec () const { return (type == T_Vec ? vval : TVec(0, 0, 0)); }
-  inline VName getVName () const { return (type == T_Name ? nval : VName(NAME_None)); }
-  inline VStr getStr () const { return (type == T_Str ? sval : VStr::EmptyString); }
-  inline VClass *getClass () const { return (type == T_Class ? (VClass *)ud.cval : nullptr); }
-  inline VObject *getObj () const { return (type == T_Obj ? (VObject *)ud.oval : nullptr); }
-  inline VSerialisable *getXObj () const { return (type == T_XObj ? (VSerialisable *)ud.xoval : nullptr); }
+  inline vint32 getInt () const noexcept { return (type == T_Int ? ud.ival : 0); }
+  inline float getFloat () const noexcept { return (type == T_Float ? ud.fval : 0); }
+  inline TVec getVec () const noexcept { return (type == T_Vec ? vval : TVec(0, 0, 0)); }
+  inline VName getVName () const noexcept { return (type == T_Name ? nval : VName(NAME_None)); }
+  inline VStr getStr () const noexcept { return (type == T_Str ? sval : VStr::EmptyString); }
+  inline VClass *getClass () const noexcept { return (type == T_Class ? (VClass *)ud.cval : nullptr); }
+  inline VObject *getObj () const noexcept { return (type == T_Obj ? (VObject *)ud.oval : nullptr); }
+  inline VSerialisable *getXObj () const noexcept { return (type == T_XObj ? (VSerialisable *)ud.xoval : nullptr); }
 
-  inline vint32 getBlobSize () const { return (type == T_Blob ? blobSize : 0); }
-  inline const vuint8 *getBlobPtr () const { return (type == T_Blob ? blob : nullptr); }
+  inline vint32 getBlobSize () const noexcept { return (type == T_Blob ? blobSize : 0); }
+  inline vuint8 *getBlobPtr () noexcept { return (type == T_Blob ? blob : nullptr); }
+  inline const vuint8 *getBlobPtr () const noexcept { return (type == T_Blob ? blob : nullptr); }
 };
 
-VStream &operator << (VStream &strm, const VNTValue &val);
+VVA_OKUNUSED inline VStream &operator << (VStream &strm, VNTValue &val) { val.Serialise(strm); return strm; }
+VVA_OKUNUSED inline VStream &operator << (VStream &strm, const VNTValue &val) { val.Serialise(strm); return strm; }
 
 
 // ////////////////////////////////////////////////////////////////////////// //
