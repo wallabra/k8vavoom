@@ -128,12 +128,8 @@ void VOpenGLDrawer::FlushTexture (VTexture *Tex) {
     glDeleteTextures(1, (GLuint *)&Tex->DriverHandle);
     Tex->DriverHandle = 0;
   }
-  for (int j = 0; j < Tex->DriverTranslated.length(); ++j) {
-    if (Tex->DriverTranslated[j].Handle) {
-      glDeleteTextures(1, (GLuint *)&Tex->DriverTranslated[j].Handle);
-    }
-  }
-  Tex->DriverTranslated.resetNoDtor();
+  for (auto &&it : Tex->DriverTranslated) if (it.Handle) glDeleteTextures(1, (GLuint *)&it.Handle);
+  Tex->ResetTranslations();
   Tex->lastUpdateFrame = 0;
   if (Tex->Brightmap) FlushTexture(Tex->Brightmap);
 }
@@ -151,12 +147,8 @@ void VOpenGLDrawer::DeleteTexture (VTexture *Tex) {
     glDeleteTextures(1, (GLuint *)&Tex->DriverHandle);
     Tex->DriverHandle = 0;
   }
-  for (int j = 0; j < Tex->DriverTranslated.length(); ++j) {
-    if (Tex->DriverTranslated[j].Handle) {
-      glDeleteTextures(1, (GLuint *)&Tex->DriverTranslated[j].Handle);
-    }
-  }
-  Tex->DriverTranslated.Clear();
+  for (auto &&it : Tex->DriverTranslated) if (it.Handle) glDeleteTextures(1, (GLuint *)&it.Handle);
+  Tex->ClearTranslations();
   Tex->lastUpdateFrame = 0;
   if (Tex->Brightmap) DeleteTexture(Tex->Brightmap);
 }
@@ -196,10 +188,10 @@ void VOpenGLDrawer::SetBrightmapTexture (VTexture *Tex) {
 //  VOpenGLDrawer::SetTexture
 //
 //==========================================================================
-void VOpenGLDrawer::SetTexture (VTexture *Tex, int CMap) {
+void VOpenGLDrawer::SetTexture (VTexture *Tex, int CMap, vuint32 ShadeColor) {
   if (!Tex) Sys_Error("cannot set null texture");
   // camera textures are special
-  SetSpriteLump(Tex, nullptr, CMap, false);
+  SetSpriteLump(Tex, nullptr, CMap, false, ShadeColor);
   SetupTextureFiltering(texture_filter);
 }
 
@@ -209,9 +201,9 @@ void VOpenGLDrawer::SetTexture (VTexture *Tex, int CMap) {
 //  VOpenGLDrawer::SetDecalTexture
 //
 //==========================================================================
-void VOpenGLDrawer::SetDecalTexture (VTexture *Tex, VTextureTranslation *Translation, int CMap) {
+void VOpenGLDrawer::SetDecalTexture (VTexture *Tex, VTextureTranslation *Translation, int CMap, vuint32 ShadeColor) {
   if (!Tex) Sys_Error("cannot set null texture");
-  SetSpriteLump(Tex, Translation, CMap, false);
+  SetSpriteLump(Tex, Translation, CMap, false, ShadeColor);
   SetupTextureFiltering(texture_filter);
 }
 
@@ -221,9 +213,13 @@ void VOpenGLDrawer::SetDecalTexture (VTexture *Tex, VTextureTranslation *Transla
 //  VOpenGLDrawer::SetSpriteLump
 //
 //==========================================================================
-void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translation, int CMap, bool asPicture) {
+void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translation, int CMap, bool asPicture, vuint32 ShadeColor) {
   vassert(Tex);
   if (mInitialized) {
+    if (ShadeColor) {
+      Translation = nullptr; // just in case
+      ShadeColor |= 0xff000000u; // normalise it
+    }
     bool needUp = false;
     if (Tex->lastUpdateFrame != updateFrame && Tex->CheckModified()) {
       //GCon->Logf(NAME_Debug, "texture '%s' needs update! (%u : %u)", *Tex->Name, Tex->lastUpdateFrame, updateFrame);
@@ -231,65 +227,48 @@ void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translati
       needUp = true;
     }
     Tex->lastUpdateFrame = updateFrame;
-    if (Translation || CMap) {
-      VTexture::VTransData *TData = Tex->FindDriverTrans(Translation, CMap);
+    if (Translation || CMap || ShadeColor) {
+      // color translation, or color map
+      VTexture::VTransData *TData = (ShadeColor ? Tex->FindDriverShaded(ShadeColor, CMap): Tex->FindDriverTrans(Translation, CMap));
       if (TData) {
         //if (needUp) GCon->Logf(NAME_Error, "TEXTURE '%s' NEED UPDATE, BUT NOT UPDATED!", *Tex->Name);
         if (needUp || !TData->Handle || Tex->bIsCameraTexture) {
-          GenerateTexture(Tex, &TData->Handle, Translation, CMap, asPicture, needUp);
+          GenerateTexture(Tex, &TData->Handle, Translation, CMap, asPicture, needUp, ShadeColor);
         } else {
           glBindTexture(GL_TEXTURE_2D, TData->Handle);
         }
       } else {
+        // new translation
         //if (Translation) GCon->Logf("*** NEW TRANSLATION for texture '%s'", *Tex->Name);
         TData = &Tex->DriverTranslated.Alloc();
         TData->Handle = 0;
         TData->Trans = Translation;
         TData->ColorMap = CMap;
+        TData->ShadeColor = ShadeColor;
         //if (needUp) GCon->Logf(NAME_Debug, "TEXTURE '%s' NEED UPDATE!", *Tex->Name);
-        GenerateTexture(Tex, &TData->Handle, Translation, CMap, asPicture, needUp);
+        GenerateTexture(Tex, &TData->Handle, Translation, CMap, asPicture, needUp, ShadeColor);
       }
     } else if (!Tex->DriverHandle || needUp || Tex->bIsCameraTexture) {
-      GenerateTexture(Tex, &Tex->DriverHandle, nullptr, 0, asPicture, needUp);
+      // generate and bind new texture
+      GenerateTexture(Tex, &Tex->DriverHandle, nullptr, 0, asPicture, needUp, ShadeColor);
     } else {
+      // existing normal texture
       glBindTexture(GL_TEXTURE_2D, Tex->DriverHandle);
     }
-    #if 0
-    if (Tex->bIsCameraTexture) {
-      /*
-      int ttn = GTextureManager.FindWallByName("comp2");
-      if (ttn > 0) {
-        GLuint oth = Tex->DriverHandle;
-        GLint oldbindtex = 0;
-        glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldbindtex);
-        Tex = GTextureManager[ttn];
-        if (!Tex->DriverHandle) GenerateTexture(Tex, &Tex->DriverHandle, nullptr, 0, asPicture, needUp);
-        GCon->Logf(NAME_Debug, "ttn=%d; th=%u (oth=%u; obind=%u)", ttn, Tex->DriverHandle, oth, oldbindtex);
-        //glBindTexture(GL_TEXTURE_2D, Tex->DriverHandle);
-      }
-      */
-      GCon->Logf(NAME_Debug, "CAMERATEX '%s': %dx%d; ofs=(%d,%d); scale=(%g,%g)", *Tex->Name, Tex->Width, Tex->Height, Tex->SOffset, Tex->TOffset, Tex->SScale, Tex->TScale);
-      VCameraTexture *CamTex = (VCameraTexture *)Tex;
-      GLuint tid = GetCameraFBOTextureId(CamTex->camfboidx);
-      Tex->DriverHandle = tid;
-      glBindTexture(GL_TEXTURE_2D, Tex->DriverHandle);
-      //Tex->SOffset = Tex->TOffset = 0;
-      //Tex->SScale = Tex->TScale = 4.0f;
-    }
-    #endif
   }
-  tex_w = Tex->GetWidth();
-  tex_h = Tex->GetHeight();
+
+  tex_w = max2(1, Tex->GetWidth());
+  tex_h = max2(1, Tex->GetHeight());
   tex_iw = 1.0f/tex_w;
   tex_ih = 1.0f/tex_h;
 
-  tex_w_sc = Tex->GetScaledWidth();
-  tex_h_sc = Tex->GetScaledHeight();
+  tex_w_sc = max2(1, Tex->GetScaledWidth());
+  tex_h_sc = max2(1, Tex->GetScaledHeight());
   tex_iw_sc = 1.0f/tex_w_sc;
   tex_ih_sc = 1.0f/tex_h_sc;
 
-  tex_scale_x = Tex->SScale;
-  tex_scale_y = Tex->TScale;
+  tex_scale_x = (Tex->SScale ? Tex->SScale : 1.0f);
+  tex_scale_y = (Tex->TScale ? Tex->TScale : 1.0f);
 }
 
 
@@ -298,8 +277,8 @@ void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translati
 //  VOpenGLDrawer::SetPic
 //
 //==========================================================================
-void VOpenGLDrawer::SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap) {
-  SetSpriteLump(Tex, Trans, CMap, true);
+void VOpenGLDrawer::SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap, vuint32 ShadeColor) {
+  SetSpriteLump(Tex, Trans, CMap, true, ShadeColor);
   int flt = (gl_pic_filtering ? GL_LINEAR : GL_NEAREST);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, flt);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, flt);
@@ -312,8 +291,8 @@ void VOpenGLDrawer::SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap)
 //  VOpenGLDrawer::SetPicModel
 //
 //==========================================================================
-void VOpenGLDrawer::SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int CMap) {
-  SetSpriteLump(Tex, Trans, CMap, false);
+void VOpenGLDrawer::SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int CMap, vuint32 ShadeColor) {
+  SetSpriteLump(Tex, Trans, CMap, false, ShadeColor);
   SetupTextureFiltering(model_filter);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -324,8 +303,10 @@ void VOpenGLDrawer::SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int 
 //
 //  VOpenGLDrawer::GenerateTexture
 //
+//  TODO: remove some old translations if they weren't used for a long time
+//
 //==========================================================================
-void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTranslation *Translation, int CMap, bool asPicture, bool needUpdate) {
+void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTranslation *Translation, int CMap, bool asPicture, bool needUpdate, vuint32 ShadeColor) {
   // special handling for camera textures
   bool isCamTexture = Tex->bIsCameraTexture;
 
@@ -384,53 +365,50 @@ void VOpenGLDrawer::GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTra
     VTexture *SrcTex = Tex;
     if (!Tex->bIsCameraTexture) {
       VTexture *hitex = Tex->GetHighResolutionTexture();
-      if (hitex) SrcTex = hitex;
+      if (hitex && hitex->Type != TEXTYPE_Null) SrcTex = hitex;
     }
 
     if (SrcTex->Type == TEXTYPE_Null) {
       // fuckin' idiots
-      /*if (SrcTex->Name != NAME_None)*/ {
-        GCon->Logf(NAME_Warning, "something is VERY wrong with textures in this mod (trying to upload null texture '%s')", *SrcTex->Name);
-      }
-      //k8: meh
-      //vassert(SrcTex->GetWidth() > 0);
-      //vassert(SrcTex->GetHeight() > 0);
-      //rgba_t *dummy = (rgba_t *)Z_Calloc(SrcTex->GetWidth()*SrcTex->GetHeight()*sizeof(rgba_t));
-      rgba_t *dummy = (rgba_t *)Z_Calloc(2*2*sizeof(rgba_t));
+      GCon->Logf(NAME_Warning, "something is VERY wrong with textures in this mod (trying to upload null texture '%s')", *SrcTex->Name);
+      if (SrcTex->SourceLump >= 0) GCon->Logf(NAME_Warning, "...source lump: %s", *W_FullLumpName(SrcTex->SourceLump));
+      rgba_t dummy[4];
+      memset((void *)dummy, 0, sizeof(dummy));
       VTexture::checkerFillRGBA((vuint8 *)dummy, 2, 2);
-      //UploadTexture(SrcTex->GetWidth(), SrcTex->GetHeight(), dummy, false); // no fringe filtering
       UploadTexture(2, 2, dummy, false, -1); // no fringe filtering
-      Z_Free(dummy);
+    } else if (Translation && CMap) {
+      // both colormap and translation
+      rgba_t tmppal[256];
+      const vuint8 *TrTab = Translation->GetTable();
+      const rgba_t *CMPal = ColorMaps[CMap].GetPalette();
+      for (int i = 0; i < 256; ++i) tmppal[i] = CMPal[TrTab[i]];
+      if (needUpdate) (void)SrcTex->GetPixels(); // this updates warp and other textures
+      UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), tmppal, SrcTex->SourceLump);
+    } else if (Translation) {
+      // only translation
+      //GCon->Logf("uploading translated texture '%s' (%dx%d)", *SrcTex->Name, SrcTex->GetWidth(), SrcTex->GetHeight());
+      //for (int f = 0; f < 256; ++f) GCon->Logf("  %3d: r:g:b=%02x:%02x:%02x", f, Translation->GetPalette()[f].r, Translation->GetPalette()[f].g, Translation->GetPalette()[f].b);
+      if (needUpdate) (void)SrcTex->GetPixels(); // this updates warp and other textures
+      UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), Translation->GetPalette(), SrcTex->SourceLump);
+    } else if (CMap) {
+      // only colormap
+      //GCon->Logf(NAME_Dev, "uploading colormapped texture '%s' (%dx%d)", *SrcTex->Name, SrcTex->GetWidth(), SrcTex->GetHeight());
+      if (needUpdate) (void)SrcTex->GetPixels(); // this updates warp and other textures
+      UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), ColorMaps[CMap].GetPalette(), SrcTex->SourceLump);
+    } else if (ShadeColor) {
+      // shade (and possible colormap)
+      //GLog.Logf(NAME_Debug, "*** SHADE: tex='%s'; color=0x%08x", *SrcTex->Name, ShadeColor);
+      rgba_t *shadedPixels = SrcTex->CreateShadedPixels(ShadeColor, (CMap ? ColorMaps[CMap].GetPalette() : nullptr));
+      UploadTexture(SrcTex->GetWidth(), SrcTex->GetHeight(), shadedPixels, false/*remove fringe*/, -1);
+      SrcTex->FreeShadedPixels(shadedPixels);
     } else {
-      // upload data
-      if (Translation && CMap) {
-        // both colormap and translation
-        rgba_t tmppal[256];
-        const vuint8 *TrTab = Translation->GetTable();
-        const rgba_t *CMPal = ColorMaps[CMap].GetPalette();
-        for (int i = 0; i < 256; ++i) tmppal[i] = CMPal[TrTab[i]];
-        if (needUpdate) (void)SrcTex->GetPixels(); // this updates warp and other textures
-        UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), tmppal, SrcTex->SourceLump);
-      } else if (Translation) {
-        // only translation
-        //GCon->Logf("uploading translated texture '%s' (%dx%d)", *SrcTex->Name, SrcTex->GetWidth(), SrcTex->GetHeight());
-        //for (int f = 0; f < 256; ++f) GCon->Logf("  %3d: r:g:b=%02x:%02x:%02x", f, Translation->GetPalette()[f].r, Translation->GetPalette()[f].g, Translation->GetPalette()[f].b);
-        if (needUpdate) (void)SrcTex->GetPixels(); // this updates warp and other textures
-        UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), Translation->GetPalette(), SrcTex->SourceLump);
-      } else if (CMap) {
-        // only colormap
-        //GCon->Logf(NAME_Dev, "uploading colormapped texture '%s' (%dx%d)", *SrcTex->Name, SrcTex->GetWidth(), SrcTex->GetHeight());
-        if (needUpdate) (void)SrcTex->GetPixels(); // this updates warp and other textures
-        UploadTexture8A(SrcTex->GetWidth(), SrcTex->GetHeight(), SrcTex->GetPixels8A(), ColorMaps[CMap].GetPalette(), SrcTex->SourceLump);
+      // normal uploading
+      vuint8 *block = SrcTex->GetPixels();
+      //if (SrcTex->SourceLump >= 0) GCon->Logf(NAME_Debug, "uploading normal texture '%s' (%dx%d)", *SrcTex->Name, SrcTex->GetWidth(), SrcTex->GetHeight());
+      if (SrcTex->Format == TEXFMT_8 || SrcTex->Format == TEXFMT_8Pal) {
+        UploadTexture8(SrcTex->GetWidth(), SrcTex->GetHeight(), block, SrcTex->GetPalette(), SrcTex->SourceLump);
       } else {
-        // normal uploading
-        vuint8 *block = SrcTex->GetPixels();
-        //if (SrcTex->SourceLump >= 0) GCon->Logf(NAME_Debug, "uploading normal texture '%s' (%dx%d)", *SrcTex->Name, SrcTex->GetWidth(), SrcTex->GetHeight());
-        if (SrcTex->Format == TEXFMT_8 || SrcTex->Format == TEXFMT_8Pal) {
-          UploadTexture8(SrcTex->GetWidth(), SrcTex->GetHeight(), block, SrcTex->GetPalette(), SrcTex->SourceLump);
-        } else {
-          UploadTexture(SrcTex->GetWidth(), SrcTex->GetHeight(), (rgba_t *)block, (SrcTex->isTransparent() || SrcTex->isTranslucent()), SrcTex->SourceLump);
-        }
+        UploadTexture(SrcTex->GetWidth(), SrcTex->GetHeight(), (rgba_t *)block, (SrcTex->isTransparent() || SrcTex->isTranslucent()), SrcTex->SourceLump);
       }
     }
 

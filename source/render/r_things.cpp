@@ -127,11 +127,10 @@ bool VRenderLevelDrawer::CalculateRenderStyleInfo (RenderStyleInfo &ri, int Rend
       ri.alpha = min2(1.0f, a);
       return true;
     case STYLE_Shaded: // treats 8-bit indexed images as an alpha map. Index 0 = fully transparent, index 255 = fully opaque. This is how decals are drawn. Use StencilColor property to colorize the resulting sprite.
-      // not implemented
-      ri.stencilColor = 0u;
-      ri.translucency = RenderStyleInfo::Translucent;
+      ri.stencilColor = (vuint32)StencilColor|0xff000000u;
+      ri.translucency = RenderStyleInfo::Shaded;
       ri.alpha = a;
-      break;
+      return true;
     case STYLE_Shadow:
       ri.stencilColor = 0xff000000u;
       ri.translucency = RenderStyleInfo::Translucent;
@@ -148,9 +147,8 @@ bool VRenderLevelDrawer::CalculateRenderStyleInfo (RenderStyleInfo &ri, int Rend
       ri.alpha = min2(1.0f, a);
       return true;
     case STYLE_AddShaded: // treats 8-bit indexed images as an alpha map. Index 0 = fully transparent, index 255 = fully opaque. This is how decals are drawn. Use StencilColor property to colorize the resulting sprite.
-      // not implemented
-      ri.stencilColor = 0u;
-      ri.translucency = RenderStyleInfo::Additive;
+      ri.stencilColor = (vuint32)StencilColor|0xff000000u;
+      ri.translucency = RenderStyleInfo::AddShaded;
       ri.alpha = min2(1.0f, a);
       return true;
     case STYLE_Dark:
@@ -167,7 +165,7 @@ bool VRenderLevelDrawer::CalculateRenderStyleInfo (RenderStyleInfo &ri, int Rend
   }
   if (ri.alpha < 0.004f) return false;
   if (ri.alpha >= 1.0f) {
-    ri.translucency = 0;
+    //ri.translucency = 0;
     ri.alpha = 1.0f;
   }
   return true;

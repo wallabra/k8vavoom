@@ -150,6 +150,7 @@ public:
   };
   TArray<VTransCmd> Commands;
 
+public:
   VTextureTranslation ();
 
   void Clear ();
@@ -164,8 +165,8 @@ public:
   void BuildBloodTrans (int Col);
   void AddTransString (VStr Str);
 
-  inline const vuint8 *GetTable () const { return Table; }
-  inline const rgba_t *GetPalette () const { return Palette; }
+  inline const vuint8 *GetTable () const noexcept { return Table; }
+  inline const rgba_t *GetPalette () const noexcept { return Palette; }
 };
 
 
@@ -237,10 +238,15 @@ public:
     vuint32 Handle;
     VTextureTranslation *Trans;
     int ColorMap;
+    // if non-zero, this is shade color
+    vuint32 ShadeColor;
   };
 
   vuint32 DriverHandle;
   TArray<VTransData> DriverTranslated;
+
+  void ResetTranslations ();
+  void ClearTranslations ();
 
   inline bool IsGlowFullbright () const noexcept { return ((glowing&0xff000000u) == 0xff000000u); }
 
@@ -366,7 +372,17 @@ public:
   pala_t *GetPixels8A ();
   virtual rgba_t *GetPalette ();
   virtual VTexture *GetHighResolutionTexture ();
-  VTransData *FindDriverTrans (VTextureTranslation *, int);
+
+  // this returns temporary data, which should be freed with `FreeShadedPixels()`
+  // WARNING: next call to `CreateShadedPixels()` may invalidate the pointer!
+  //          that means that you MUST call `FreeShadedPixels()` before trying to
+  //          get another shaded pixels
+  // `palette` can be `nullptr` if no translation needed
+  rgba_t *CreateShadedPixels (vuint32 shadeColor, const rgba_t *palette);
+  void FreeShadedPixels (rgba_t *shadedPixels);
+
+  VTransData *FindDriverTrans (VTextureTranslation *TransTab, int CMap);
+  VTransData *FindDriverShaded (vuint32 ShadeColor, int CMap);
 
   static void AdjustGamma (rgba_t *, int); // for non-premultiplied
   static void SmoothEdges (vuint8 *, int, int); // for non-premultiplied

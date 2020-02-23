@@ -415,47 +415,51 @@ void VTexture::FixupPalette (rgba_t *Palette) {
 
 //==========================================================================
 //
+//  VTexture::ResetTranslations
+//
+//==========================================================================
+void VTexture::ResetTranslations () {
+  DriverTranslated.resetNoDtor();
+}
+
+
+//==========================================================================
+//
+//  VTexture::ClearTranslations
+//
+//==========================================================================
+void VTexture::ClearTranslations () {
+  DriverTranslated.resetNoDtor();
+  DriverTranslated.clear();
+}
+
+
+//==========================================================================
+//
 //  VTexture::FindDriverTrans
 //
 //==========================================================================
 VTexture::VTransData *VTexture::FindDriverTrans (VTextureTranslation *TransTab, int CMap) {
-  for (int i = 0; i < DriverTranslated.Num(); ++i) {
-    if (DriverTranslated[i].Trans == TransTab && DriverTranslated[i].ColorMap == CMap) {
-      return &DriverTranslated[i];
-    }
+  for (auto &&it : DriverTranslated) {
+    if (it.Trans == TransTab && it.ColorMap == CMap) return &it;
   }
   return nullptr;
 }
 
 
-  // prepare temp buffer (for fringe removing)
-  /*
-  //  WARNING! not thred-safe! (using static buffer)
-  //
-  static vuint8 *tempbuf = nullptr;
-  static vint32 tbsize = 0;
-  if (tbsize < (w+2)*(h+2)*4) {
-    tbsize = (((w+2)*(h+2)*4)|0xffff)+1;
-    tempbuf = (vuint8 *)Z_Realloc(tempbuf, tbsize);
+//==========================================================================
+//
+//  VTexture::FindDriverShaded
+//
+//==========================================================================
+VTexture::VTransData *VTexture::FindDriverShaded (vuint32 ShadeColor, int CMap) {
+  ShadeColor |= 0xff000000u;
+  for (auto &&it : DriverTranslated) {
+    if (it.ShadeColor == ShadeColor && it.ColorMap == CMap) return &it;
   }
+  return nullptr;
+}
 
-  const int tw = w+2;
-  const int th = h+2;
-
-  // copy image to temp buffer, with transparent border
-  memset(tempbuf, 0, tw*4); // top row
-  for (int y = 1; y <= h; ++y) {
-    *(vuint32)(tempbuf+(y*tw)*4) = 0; // left border
-    memcpy(tempbuf+(y*tw)*4+4, data+((y-1)*w)*4, w*4);
-    *(vuint32)(tempbuf+(y*tw)*4+(w+1)*4) = 0; // right border
-  }
-  memset(tempbuf+((h+1)*tw)*4, 0, tw*4); // bottom row
-  */
-
-  // remove fringes, by setting transparent pixel colors to average of
-  // surrounding non-transparent ones
-
-// 0: transparent
 
 //==========================================================================
 //
@@ -874,7 +878,7 @@ void VTexture::shadePixelsRGBA (int shadeColor) {
   const vuint8 shadeG = (shadeColor>>8)&0xff;
   const vuint8 shadeB = (shadeColor)&0xff;
   rgba_t *pic = (rgba_t *)Pixels;
-  for (int f = Width*Height; f > 0; --f, ++pic) {
+  for (int f = Width*Height; f--; ++pic) {
     // use red as intensity
     vuint8 intensity = pic->r;
     /*k8: nope
@@ -912,6 +916,82 @@ void VTexture::stencilPixelsRGBA (int shadeColor) {
     pic->g = clampToByte(intensity*shadeG);
     pic->b = clampToByte(intensity*shadeB);
   }
+}
+
+
+//==========================================================================
+//
+//  VTexture::CreateShadedPixels
+//
+//==========================================================================
+rgba_t *VTexture::CreateShadedPixels (vuint32 shadeColor, const rgba_t *palette) {
+  rgba_t *res = (rgba_t *)Z_Malloc(Width*Height*sizeof(rgba_t));
+  rgba_t *dest = res;
+
+  const vuint8 shadeR = (shadeColor>>16)&0xff;
+  const vuint8 shadeG = (shadeColor>>8)&0xff;
+  const vuint8 shadeB = (shadeColor)&0xff;
+
+  (void)GetPixels(); // this updates warp and other textures
+  // create shaded data
+  if (Format == TEXFMT_8 || Format == TEXFMT_8Pal) {
+    //GLog.Logf(NAME_Debug, "*** FMT8(%s): 0x%08x", *W_FullLumpName(SourceLump), shadeColor);
+    const vuint8 *src = (const vuint8 *)Pixels;
+    for (int f = Width*Height; f--; ++dest, ++src) {
+      dest->r = shadeR;
+      dest->g = shadeG;
+      dest->b = shadeB;
+      dest->a = *src;
+    }
+  } else {
+    vassert(Format == TEXFMT_RGBA);
+    //GLog.Logf(NAME_Debug, "*** FMT32(%s): 0x%08x", *W_FullLumpName(SourceLump), shadeColor);
+    const rgba_t *src = (const rgba_t *)Pixels;
+    for (int f = Width*Height; f--; ++dest, ++src) {
+      #if 1
+      const vuint8 ci = colorIntensity(src->r, src->g, src->b);
+      dest->r = shadeR;
+      dest->g = shadeG;
+      dest->b = shadeB;
+      dest->a = ci;
+      #elif 0
+      const vuint8 ci = src->r;
+      const float intensity = (int)ci/255.0f;
+      dest->r = clampToByte(intensity*shadeR);
+      dest->g = clampToByte(intensity*shadeG);
+      dest->b = clampToByte(intensity*shadeB);
+      dest->a = ci;
+      #else
+      dest->r = clampToByte((shadeR/255.0f)*(src->r/255.0f)*255.0f);
+      dest->g = clampToByte((shadeR/255.0f)*(src->g/255.0f)*255.0f);
+      dest->b = clampToByte((shadeR/255.0f)*(src->b/255.0f)*255.0f);
+      dest->a = colorIntensity(src->r, src->g, src->b);
+      #endif
+    }
+  }
+
+  // remap to another palette?
+  if (palette) {
+    dest = res;
+    for (int f = Width*Height; f--; ++dest) {
+      const vuint8 pidx = R_LookupRGB(dest->r, dest->g, dest->b);
+      dest->r = palette[pidx].r;
+      dest->g = palette[pidx].g;
+      dest->b = palette[pidx].b;
+    }
+  }
+
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VTexture::FreeShadedPixels
+//
+//==========================================================================
+void VTexture::FreeShadedPixels (rgba_t *shadedPixels) {
+  if (shadedPixels) Z_Free(shadedPixels);
 }
 
 

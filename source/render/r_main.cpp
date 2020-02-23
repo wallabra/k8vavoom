@@ -2426,19 +2426,6 @@ void R_DrawSpritePatch (float x, float y, int sprite, int frame, int rot,
 }
 
 
-/*
-  inline void UpdateDispFrameFrom (const VState *st) {
-    if (st) {
-      if ((st->Frame&VState::FF_KEEPSPRITE) == 0 && st->SpriteIndex != 1) {
-        DispSpriteFrame = (DispSpriteFrame&~0x00ffffff)|(st->SpriteIndex&0x00ffffff);
-        DispSpriteName = st->SpriteName;
-      }
-      if ((st->Frame&VState::FF_DONTCHANGE) == 0) DispSpriteFrame = (DispSpriteFrame&0x00ffffff)|((st->Frame&VState::FF_FRAMEMASK)<<24);
-    }
-  }
-*/
-
-
 struct SpriteScanInfo {
   TArray<bool> *texturepresent;
   TMapNC<VClass *, bool> classSeen;
@@ -2976,14 +2963,6 @@ VTextureTranslation *R_GetCachedTranslation (int TransNum, VLevel *Level) {
 
   if (!Tr) return nullptr;
 
-  /*
-  for (int i = 0; i < CachedTranslations.Num(); ++i) {
-    VTextureTranslation *Check = CachedTranslations[i];
-    if (Check->Crc != Tr->Crc) continue;
-    if (memcmp(Check->Palette, Tr->Palette, sizeof(Tr->Palette))) continue;
-    return Check;
-  }
-  */
   auto cpi = CachedTranslationsMap.find(Tr->Crc);
   if (cpi) {
     int cidx = *cpi;

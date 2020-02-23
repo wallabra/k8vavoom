@@ -1264,25 +1264,25 @@ static void DrawModel (VLevel *Level, VEntity *mobj, const TVec &Org, const TAVe
       break;
     case RPASS_Ambient:
       if (ri.isAdditive()) return;
-      if (ri.isTranslucent() && ri.stencilColor) return;
+      if (ri.isTranslucent() && ri.stencilColor) return; // shaded too
       break;
     case RPASS_ShadowVolumes:
       if (ri.isTranslucent()) return;
       break;
     case RPASS_Textures:
-      if (ri.isAdditive()) return;
+      if (ri.isAdditive() || ri.isShaded()) return;
       break;
     case RPASS_Light:
-      if (ri.isAdditive()) return;
-      //if (ri.isTranslucent() && ri.stencilColor) return;
+      if (ri.isAdditive() || ri.isShaded()) return;
+      //if (ri.isTranslucent() && ri.stencilColor) return; // shaded too
       break;
     case RPASS_Fog:
       //FIXME
-      if (ri.isAdditive()) return;
+      if (ri.isAdditive() || ri.isShaded()) return;
       //if (ri.stencilColor) return;
       break;
     case RPASS_NonShadow:
-      if (!ri.isAdditive()) return;
+      if (!ri.isAdditive() && !ri.isShaded()) return;
       break;
   }
 

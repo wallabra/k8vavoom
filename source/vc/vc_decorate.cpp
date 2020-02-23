@@ -2399,7 +2399,7 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             break;
           case PROP_RenderStyle:
             {
-              int RenderStyle = 0;
+              int RenderStyle = STYLE_Normal;
                    if (sc->Check("None")) RenderStyle = STYLE_None;
               else if (sc->Check("Normal")) RenderStyle = STYLE_Normal;
               else if (sc->Check("Fuzzy")) RenderStyle = STYLE_Fuzzy;
@@ -2407,14 +2407,18 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
               else if (sc->Check("OptFuzzy")) RenderStyle = STYLE_OptFuzzy;
               else if (sc->Check("Translucent")) RenderStyle = STYLE_Translucent;
               else if (sc->Check("Add")) RenderStyle = STYLE_Add;
-              else if (sc->Check("Dark")) RenderStyle = STYLE_Dark;
               else if (sc->Check("Stencil")) RenderStyle = STYLE_Stencil;
               else if (sc->Check("AddStencil")) RenderStyle = STYLE_AddStencil;
-              else if (sc->Check("Subtract")) { RenderStyle = STYLE_Subtract; /*if (dbg_show_decorate_unsupported)*/ if (!vcWarningsSilenced) GLog.Log(va("%s: Render style 'Subtract' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
-              else if (sc->Check("Shaded")) { RenderStyle = STYLE_Shaded; /*if (dbg_show_decorate_unsupported)*/ if (!vcWarningsSilenced) GLog.Log(va("%s: Render style 'Shaded' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
-              else if (sc->Check("AddShaded")) { RenderStyle = STYLE_AddShaded; /*if (dbg_show_decorate_unsupported)*/ if (!vcWarningsSilenced) GLog.Log(va("%s: Render style 'AddShaded' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
-              else if (sc->Check("Shadow")) { RenderStyle = STYLE_Shadow; /*if (dbg_show_decorate_unsupported)*/ if (!vcWarningsSilenced) GLog.Log(va("%s: Render style 'Shadow' in '%s' is not yet supported", *prloc.toStringNoCol(), Class->GetName())); } //FIXME
-              else sc->Error("Bad render style");
+              else if (sc->Check("Subtract")) RenderStyle = STYLE_Subtract;
+              else if (sc->Check("Shaded")) RenderStyle = STYLE_Shaded;
+              else if (sc->Check("AddShaded")) RenderStyle = STYLE_AddShaded;
+              else if (sc->Check("Shadow")) RenderStyle = STYLE_Shadow;
+              // special k8vavoom style
+              else if (sc->Check("Dark")) RenderStyle = STYLE_Dark;
+              else {
+                GCon->Logf(NAME_Error, va("%s: invalid render style '%s' in '%s'", *prloc.toStringNoCol(), *sc->String, Class->GetName()));
+                //sc->Error("Bad render style");
+              }
               P.Field->SetByte(DefObj, RenderStyle);
             }
             break;

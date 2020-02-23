@@ -700,13 +700,17 @@ protected:
   void DeleteTextures ();
   void FlushTexture (VTexture *);
   void DeleteTexture (VTexture *);
-  void SetTexture (VTexture *Tex, int CMap);
-  void SetDecalTexture (VTexture *Tex, VTextureTranslation *Translation, int CMap);
-  void SetBrightmapTexture (VTexture *);
-  void SetSpriteLump (VTexture *Tex, VTextureTranslation *Translation, int CMap, bool asPicture);
-  void SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap);
-  void SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int CMap);
-  void GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTranslation *Translation, int CMap, bool asPicture, bool needUpdate);
+
+  // if `ShadeColor` is not zero, ignore translation, and use "shaded" mode
+  // high byte of `ShadeColor` means nothing
+  void SetTexture (VTexture *Tex, int CMap, vuint32 ShadeColor=0);
+  void SetDecalTexture (VTexture *Tex, VTextureTranslation *Translation, int CMap, vuint32 ShadeColor=0);
+  void SetBrightmapTexture (VTexture *Tex);
+  void SetSpriteLump (VTexture *Tex, VTextureTranslation *Translation, int CMap, bool asPicture, vuint32 ShadeColor=0);
+  void SetPic (VTexture *Tex, VTextureTranslation *Trans, int CMap, vuint32 ShadeColor=0);
+  void SetPicModel (VTexture *Tex, VTextureTranslation *Trans, int CMap, vuint32 ShadeColor=0);
+
+  void GenerateTexture (VTexture *Tex, GLuint *pHandle, VTextureTranslation *Translation, int CMap, bool asPicture, bool needUpdate, vuint32 ShadeColor);
   void UploadTexture8 (int Width, int Height, const vuint8 *Data, const rgba_t *Pal, int SourceLump);
   void UploadTexture8A (int Width, int Height, const pala_t *Data, const rgba_t *Pal, int SourceLump);
   void UploadTexture (int width, int height, const rgba_t *data, bool doFringeRemove, int SourceLump);
@@ -721,6 +725,9 @@ protected:
   void UnloadModels ();
 
   void SetupTextureFiltering (int level); // level is taken from the appropriate cvar
+
+  void SetupBlending (const RenderStyleInfo &ri);
+  void RestoreBlending (const RenderStyleInfo &ri);
 
 private: // bloom
   int bloomWidth = 0, bloomHeight = 0, bloomMipmapCount = 0;

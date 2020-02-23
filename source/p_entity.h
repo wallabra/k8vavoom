@@ -99,12 +99,12 @@ enum {
   STYLE_Stencil, // solid color
   STYLE_Translucent, // draw translucent
   STYLE_Add, // draw additive
-  STYLE_Shaded, // not implemented
-  STYLE_TranslucentStencil, // not implemented
-  STYLE_Shadow, // not implemented
+  STYLE_Shaded, // implemented
+  STYLE_TranslucentStencil, // implemented
+  STYLE_Shadow, // implemented
   STYLE_Subtract, // not implemented
   STYLE_AddStencil, // solid color, additive
-  STYLE_AddShaded, // not implemented
+  STYLE_AddShaded, // implemented
   // special style for sprites only
   STYLE_Dark = 64,
 };

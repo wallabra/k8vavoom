@@ -227,17 +227,18 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
 
   UploadModel(Mdl);
 
-  SetPicModel(Skin, Trans, CMap);
+  SetPicModel(Skin, Trans, CMap, (ri.isShaded() ? ri.stencilColor : 0u));
+  if (ri.isShaded()) AllowTransparency = true;
 
-  glEnable(GL_ALPHA_TEST);
+  //glEnable(GL_ALPHA_TEST);
   glShadeModel(GL_SMOOTH);
-  glAlphaFunc(GL_GREATER, 0.0f);
+  //glAlphaFunc(GL_GREATER, 0.0f);
   GLEnableBlend();
 
   VMatrix4 RotationMatrix;
   AliasSetUpTransform(origin, angles, Transform, RotationMatrix);
 
-  if (!ri.stencilColor) {
+  if (!ri.isStenciled()) {
     SurfModel.Activate();
     SurfModel.SetTexture(0);
     SurfModel.SetModelToWorldMat(RotationMatrix);
@@ -260,11 +261,8 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
 
   PushDepthMask();
 
-  if (ri.isAdditive()) {
-    glBlendFunc(GL_ONE, GL_ONE); // our source rgb is already premultiplied
-  } else {
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-  }
+  //if (ri.isShaded()) GCon->Logf(NAME_Debug, "!!!!! %s (0x%08x)", *Mdl->Name, ri.stencilColor);
+  SetupBlending(ri);
 
   {
     VMeshFrame *FrameDesc = &Mdl->Frames[frame];
@@ -275,7 +273,7 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
     p_glVertexAttribPointerARB(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
     p_glEnableVertexAttribArrayARB(0);
 
-    if (!ri.stencilColor) {
+    if (!ri.isStenciled()) {
       p_glVertexAttribPointerARB(SurfModel.loc_Vert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset);
       p_glEnableVertexAttribArrayARB(SurfModel.loc_Vert2);
 
@@ -304,7 +302,7 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
     p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 
     p_glDisableVertexAttribArrayARB(0);
-    if (!ri.stencilColor) {
+    if (!ri.isStenciled()) {
       p_glDisableVertexAttribArrayARB(SurfModel.loc_Vert2);
       p_glDisableVertexAttribArrayARB(SurfModel.loc_TexCoord);
     } else {
@@ -315,9 +313,10 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
   }
 
   glShadeModel(GL_FLAT);
-  glAlphaFunc(GL_GREATER, getAlphaThreshold());
-  glDisable(GL_ALPHA_TEST);
-  if (ri.isAdditive()) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+  //glAlphaFunc(GL_GREATER, getAlphaThreshold());
+  //glDisable(GL_ALPHA_TEST);
+  //if (ri.isAdditive()) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+  RestoreBlending(ri);
 
   if (is_view_model) glDepthRange(0.0f, 1.0f);
 
@@ -735,7 +734,7 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
   VMatrix4 RotationMatrix;
   AliasSetUpTransform(origin, angles, Transform, RotationMatrix);
 
-  if (!ri.stencilColor) {
+  if (!ri.isStenciled()) {
     ShadowsModelTextures.Activate();
     ShadowsModelTextures.SetTexture(0);
     ShadowsModelTextures.SetInter(Inter);
@@ -762,7 +761,7 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
   p_glVertexAttribPointerARB(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)FrameDesc->VertsOffset);
   p_glEnableVertexAttribArrayARB(0);
 
-  if (!ri.stencilColor) {
+  if (!ri.isStenciled()) {
     p_glVertexAttribPointerARB(ShadowsModelTextures.loc_Vert2, 3, GL_FLOAT, GL_FALSE, 0, (void *)(size_t)NextFrameDesc->VertsOffset);
     p_glEnableVertexAttribArrayARB(ShadowsModelTextures.loc_Vert2);
 
@@ -782,7 +781,7 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
   p_glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
 
   p_glDisableVertexAttribArrayARB(0);
-  if (!ri.stencilColor) {
+  if (!ri.isStenciled()) {
     p_glDisableVertexAttribArrayARB(ShadowsModelTextures.loc_Vert2);
     p_glDisableVertexAttribArrayARB(ShadowsModelTextures.loc_TexCoord);
   } else {

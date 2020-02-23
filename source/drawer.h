@@ -97,6 +97,8 @@ struct RenderStyleInfo {
     Translucent = 1,
     Additive = 2,
     DarkTrans = 3, // k8vavoom special
+    Shaded = 4, // translucent, shaded; `stencilColor` is shade color
+    AddShaded = 5, // additive, shaded; `stencilColor` is shade color
   };
 
   vuint32 seclight; // not used by hw renderer, but used by high-level renderer
@@ -114,10 +116,12 @@ struct RenderStyleInfo {
 
   inline RenderStyleInfo () noexcept : seclight(0u), light(0u), fade(0u), stencilColor(0u), translucency(0), alpha(1.0f), hangup(0u) {}
 
-  inline bool isAdditive () const noexcept { return (translucency == 2); }
+  inline bool isAdditive () const noexcept { return (translucency == Additive || translucency == AddShaded); }
   inline bool isTranslucent () const noexcept { return (translucency || alpha < 1.0f); }
+  inline bool isShaded () const noexcept { return (translucency == Shaded || translucency == AddShaded); }
   // this is how "shadow" render style is rendered
   inline bool isShadow () const noexcept { return (translucency == Translucent && stencilColor == 0xff000000u); }
+  inline bool isStenciled () const noexcept { return (stencilColor && translucency != Shaded && translucency != AddShaded); }
 
   const char *toCString () const noexcept { return va("light=0x%08x; fade=0x%08x; stc=0x%08x; trans=%d; alpha=%g; hang=0x%04x", light, fade, stencilColor, translucency, alpha, hangup); }
 };

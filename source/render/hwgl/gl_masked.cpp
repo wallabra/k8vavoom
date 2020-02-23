@@ -214,7 +214,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
   };
 
   ShaderType shadtype = ShaderMasked;
-  if (ri.stencilColor&0xff000000u) {
+  if (ri.isStenciled()) {
     shadtype = (ri.stencilColor&0x00ffffffu ? ShaderStencil : ShaderFakeShadow);
   } else {
     if (r_brightmaps && r_brightmaps_sprite && Tex->Brightmap) shadtype = ShaderMaskedBM;
@@ -289,11 +289,10 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
     default: Sys_Error("ketmar forgot some shader type in `VOpenGLDrawer::DrawSpritePolygon()`");
   }
 
-  SetSpriteLump(Tex, Translation, CMap, true);
+  SetSpriteLump(Tex, Translation, CMap, true, (ri.isShaded() ? ri.stencilColor : 0u));
   SetupTextureFiltering(sprite_filter);
 
   bool resetDepthMask = false; // `true` means "depth write disabled"
-  bool restoreBlend = false;
 
   // setup hangups
   if (ri.hangup) {
@@ -313,32 +312,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
     resetDepthMask = true;
   }
 
-  // setup blending
-  switch (ri.translucency) {
-    case RenderStyleInfo::Translucent: // normal translucency
-      //restoreBlend = true; // default blending
-      glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-      break;
-    case RenderStyleInfo::Additive: // additive translucency
-      restoreBlend = true;
-      glBlendFunc(GL_ONE, GL_ONE); // our source rgb is already premultiplied
-      break;
-    case RenderStyleInfo::DarkTrans: // translucent-dark (k8vavoom special)
-      restoreBlend = true;
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
-      break;
-    case RenderStyleInfo::Subtractive: // subtractive translucency
-      // not implemented yet, sorry
-      //restoreBlend = true; // default blending
-      glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-      break;
-    default: // normal
-      if (trans) {
-        //restoreBlend = true; // default blending
-        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-      }
-      break;
-  }
+  SetupBlending(ri);
 
   if (resetDepthMask) {
     PushDepthMask();
@@ -391,7 +365,7 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
   if (resetDepthMask) PopDepthMask();
   if (ri.hangup&2) GLDisableOffset();
   if (ri.hangup&4) glEnable(GL_CULL_FACE);
-  if (restoreBlend) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+  RestoreBlending(ri);
 
   if (shadtype == ShaderMaskedBM) {
     SelectTexture(1);

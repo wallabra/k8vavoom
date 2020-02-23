@@ -206,7 +206,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
 
   bool renderShadow =
     sprtype == SPR_VP_PARALLEL_UPRIGHT &&
-    !ri.isShadow() &&
+    !ri.isShadow() && !ri.isShaded() && // yep
     r_fake_sprite_shadows.asBool() &&
     r_sort_sprites.asBool() &&
     (r_fake_shadow_scale.asFloat() > 0.0f);
@@ -465,7 +465,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
 
   //if (r_brightmaps && r_brightmaps_sprite && Tex->Brightmap && Tex->Brightmap->nofullbright) light = seclight; // disable fullbright
   // ignore brightmap flags for stencil style
-  if (!ri.stencilColor && r_brightmaps && r_brightmaps_sprite && Tex->nofullbright) ri.light = ri.seclight; // disable fullbright
+  if (!ri.isStenciled() && r_brightmaps && r_brightmaps_sprite && Tex->nofullbright) ri.light = ri.seclight; // disable fullbright
 
   int fixAlgo = (ignoreSpriteFix ? 0 : r_fix_sprite_offsets.asInt());
   if (fixAlgo < 0 || thing->IsFloatBob()) fixAlgo = 0; // just in case

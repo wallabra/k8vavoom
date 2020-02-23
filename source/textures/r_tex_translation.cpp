@@ -63,15 +63,6 @@ void VTextureTranslation::Clear () {
 //
 //==========================================================================
 void VTextureTranslation::CalcCrc () {
-  /*
-  auto Work = TCRC16();
-  for (int i = 1; i < 256; ++i) {
-    Work += Palette[i].r;
-    Work += Palette[i].g;
-    Work += Palette[i].b;
-  }
-  Crc = Work;
-  */
   auto Work = TCRC32();
   for (int i = 1; i < 256; ++i) {
     Work += Palette[i].r;
@@ -89,9 +80,11 @@ void VTextureTranslation::CalcCrc () {
 //==========================================================================
 void VTextureTranslation::Serialise (VStream &Strm) {
   //k8: is this right at all?
-  //    this is used to translations added by ACS
-  vuint8 xver = 0; // current version is 0
+  //    this is used for translations added by ACS
+  vuint8 xver = 0;
   Strm << xver;
+  if (xver != 0) Host_Error("invalid `VTextureTranslation` version: %u", xver);
+  // color translation
   Strm.Serialise(Table, 256);
   Strm.Serialise(Palette, sizeof(Palette));
   vuint16 itWasCrc16 = 0;

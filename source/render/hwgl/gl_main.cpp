@@ -519,6 +519,69 @@ void VOpenGLDrawer::SetupTextureFiltering (int level) {
 
 //==========================================================================
 //
+//  VOpenGLDrawer::SetupBlending
+//
+//==========================================================================
+void VOpenGLDrawer::SetupBlending (const RenderStyleInfo &ri) {
+  switch (ri.translucency) {
+    case RenderStyleInfo::Translucent: // normal translucency
+    case RenderStyleInfo::Shaded: // normal translucency
+      //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+      break;
+    case RenderStyleInfo::Additive: // additive translucency
+    case RenderStyleInfo::AddShaded: // additive translucency
+      glBlendFunc(GL_ONE, GL_ONE); // our source rgb is already premultiplied
+      break;
+    case RenderStyleInfo::DarkTrans: // translucent-dark (k8vavoom special)
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      break;
+    case RenderStyleInfo::Subtractive: // subtractive translucency
+      //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+      glBlendFunc(GL_ONE, GL_ONE); // dunno, looks like it
+      if (p_glBlendEquationSeparate) {
+        //glBlendEquationSeparate(GL_FUNC_SUBTRACT, GL_FUNC_ADD);
+        p_glBlendEquationSeparate(GL_FUNC_REVERSE_SUBTRACT, GL_FUNC_ADD);
+      } else {
+        // at least something
+        glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
+      }
+      break;
+    default: // normal
+      /*
+      if (trans) {
+        //restoreBlend = true; // default blending
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+      }
+      */
+      break;
+  }
+}
+
+
+//==========================================================================
+//
+//  VOpenGLDrawer::RestoreBlending
+//
+//==========================================================================
+void VOpenGLDrawer::RestoreBlending (const RenderStyleInfo &ri) {
+  switch (ri.translucency) {
+    case RenderStyleInfo::Additive: // additive translucency
+    case RenderStyleInfo::AddShaded: // additive translucency
+    case RenderStyleInfo::DarkTrans: // translucent-dark (k8vavoom special)
+      glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+      break;
+    case RenderStyleInfo::Subtractive: // subtractive translucency
+      glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+      glBlendEquation(GL_FUNC_ADD);
+      break;
+    default:
+      break;
+  }
+}
+
+
+//==========================================================================
+//
 //  VOpenGLDrawer::ReactivateCurrentFBO
 //
 //==========================================================================
