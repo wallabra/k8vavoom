@@ -6,6 +6,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/basepak.pk3
     basepak.ls.in
     *.txt
     confont.pcx
+    dbigfont.pcx
     default.cfg
     language.en
     startup.vs

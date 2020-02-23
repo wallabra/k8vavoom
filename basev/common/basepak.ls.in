@@ -76,5 +76,9 @@ $recursedirext|.inc| glshaders/  @CMAKE_CURRENT_SOURCE_DIR@/glshaders/
 $load @CMAKE_CURRENT_SOURCE_DIR@/confont.pcx
 confont.lmp  fon1
 
+// default big font
+$load @CMAKE_CURRENT_SOURCE_DIR@/dbigfont.pcx
+dbigfont.lmp  fon2
+
 // credits for various things
 $recursedirext|.txt| credits/  @CMAKE_CURRENT_SOURCE_DIR@/credits/

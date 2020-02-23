@@ -156,44 +156,59 @@ void VFont::StaticInit () {
 
   // small font
   if (W_CheckNumForName(NAME_fonta_s) >= 0) {
-    GCon->Logf(NAME_Init, "  SmallFont: from 'fonta' lumps");
+    GCon->Log(NAME_Init, "  SmallFont: from 'fonta' lumps");
     SmallFont = new VFont(NAME_smallfont, "fonta%02d", 33, 95, 1, -666);
   } else {
-    GCon->Logf(NAME_Init, "  SmallFont: from 'stcfn' lumps");
+    GCon->Log(NAME_Init, "  SmallFont: from 'stcfn' lumps");
     SmallFont = new VFont(NAME_smallfont, "stcfn%03d", 33, 95, 33, -666);
   }
 
   if (SmallFont->GetFontName() == NAME_None) {
-    GCon->Logf(NAME_Warning, "  SmallFont: cannot create it, using ConsoleFont instead...");
+    GCon->Log(NAME_Init, "  SmallFont: cannot create it, using ConsoleFont instead...");
     SmallFont = GetFont(NAME_smallfont, NAME_confont);
     if (!SmallFont) Sys_Error("cannot create console font");
   }
 
   // strife's second small font
   if (W_CheckNumForName(NAME_stbfn033) >= 0) {
-    GCon->Logf(NAME_Init, "  Strife secondary small font");
+    GCon->Log(NAME_Init, "  Strife secondary small font");
     new VFont(NAME_smallfont2, "stbfn%03d", 33, 95, 33, -666);
   }
 
   // big font
+  bool haveBigFont = false;
   if (W_CheckNumForName(NAME_bigfont) >= 0) {
-    GCon->Logf(NAME_Init, "  BigFont: from FON lump");
+    GCon->Log(NAME_Init, "  BigFont: from FON lump");
     if (!GetFont(NAME_bigfont, NAME_bigfont)) {
-      GCon->Logf(NAME_Warning, "  BigFont: cannot create it, using ConsoleFont instead...");
-      SmallFont = GetFont(NAME_bigfont, NAME_confont);
-      if (!SmallFont) Sys_Error("cannot create console font");
+      GCon->Log(NAME_Init, "  BigFont: cannot create");
+    } else {
+      haveBigFont = true;
     }
-  } else {
-    GCon->Logf(NAME_Init, "  BigFont: from 'fontb' lumps");
+  }
+  if (!haveBigFont) {
+    GCon->Log(NAME_Init, "  BigFont: from 'fontb' lumps");
     auto fnt = new VFont(NAME_bigfont, "fontb%02d", 33, 95, 1, -666);
     if (fnt->GetFontName() == NAME_None) {
-      GCon->Logf(NAME_Warning, "  BigFont: cannot create it, using ConsoleFont instead...");
-      if (!GetFont(NAME_bigfont, NAME_confont)) Sys_Error("cannot create console font");
+      GCon->Log(NAME_Init, "  BigFont: cannot create");
+    } else {
+      haveBigFont = true;
     }
+  }
+  if (!haveBigFont && W_CheckNumForName("dbigfont") >= 0) {
+    GCon->Log(NAME_Init, "  BigFont: from default FON lump");
+    if (!GetFont(NAME_bigfont, "dbigfont")) {
+      GCon->Log(NAME_Init, "  BigFont: cannot create");
+    } else {
+      haveBigFont = true;
+    }
+  }
+  if (!haveBigFont) {
+    GCon->Log(NAME_Init, "  BigFont: from console font");
+    if (!GetFont(NAME_bigfont, NAME_confont)) Sys_Error("cannot create console font");
   }
 
   // console font
-  GCon->Logf(NAME_Init, "  ConsoleFont: from FON lump");
+  GCon->Log(NAME_Init, "  ConsoleFont: from FON lump");
   ConFont = GetFont(NAME_consolefont, NAME_confont);
   if (!ConFont) Sys_Error("cannot create console font");
 
