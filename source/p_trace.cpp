@@ -712,11 +712,13 @@ bool VLevel::CastCanSee (sector_t *Sector, const TVec &org, float myheight, cons
   if (!allowBetterSight || radius < 4.0f || height < 4.0f || myheight < 4.0f /*|| dbg_sight_trace_bsp*/) {
     trace.Start = lookOrigin;
     trace.End = dest;
-    trace.End.z += height*0.5f;
+    trace.End.z += height*0.75f; // roughly at the head
     if (SightPathTraverse(trace, this)) return true;
     if (trace.EarlyOut || interUsed == 0) return false;
     // another fast check if not too far
     if (trace.Delta.length2DSquared() >= 820.0f*820.0f) return false; // arbitrary number
+    trace.End = dest;
+    trace.End.z += height*0.5f;
     return SightPathTraverse2(trace);
   } else {
     const float sidemult[3] = { 0.0f, -0.75f, 0.75f }; // side shift multiplier (by radius)
