@@ -44,6 +44,10 @@ public:
 
   void Serialise (VStream &strm) const;
   void Serialise (VStream &strm);
+
+private:
+  void save (VStream &strm) const;
+  void load (VStream &strm);
 };
 
 static_assert(sizeof(VTextureID) == sizeof(vint32), "invalid VTextureID size");

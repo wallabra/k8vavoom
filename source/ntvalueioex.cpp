@@ -197,7 +197,20 @@ void VNTValueIOEx::io (VName vname, VTextureID &v) {
       if (IsLoading()) v.id = 0;
       return;
     }
-    if (tname == NAME_None) {
+    if (ttype == -666 && tname == NAME_None) {
+      // new version
+      auto blob = readBlob(VName(va("%s.blobv0", *transformName(vname))));
+      if (!blob.isValid() || !blob.isBlob()) {
+        GCon->Log(NAME_Warning, "LOAD: save file is probably broken (no texture blob)");
+        v.id = 0;
+        return;
+      }
+      //GCon->Logf(NAME_Debug, "LDBLOB: size=%d", blob.getBlobSize());
+      //VStr s = "   "; for (int f = 0; f < blob.getBlobSize(); ++f) s += va(" %02x", blob.getBlobPtr()[f]); GCon->Logf(NAME_Debug, "%s", *s);
+      VMemoryStreamRO rst;
+      rst.Setup("::texture", blob.getBlobPtr(), blob.getBlobSize());
+      v.Serialise(rst);
+    } else if (tname == NAME_None) {
       //GCon->Log(NAME_Warning, "LOAD: save file is probably broken (empty texture name)");
       v.id = 0;
     } else {
@@ -225,9 +238,21 @@ void VNTValueIOEx::io (VName vname, VTextureID &v) {
     //GCon->Logf("txrd: <%s> : %d", *vname, v.id);
   } else {
     //GCon->Logf("txwr: <%s> : %d", *vname, v.id);
-    // writing
+    // writing (new version)
     VName tname = NAME_None;
-    int ttype = TEXTYPE_Wall;
+    int ttype = -666;
+    io(transformName(vname), tname);
+    io(VName(va("%s.ttype", *transformName(vname))), ttype);
+
+    VMemoryStream mst;
+    mst.BeginWrite();
+    v.Serialise(mst);
+    TArray<vuint8> &arr = mst.GetArray();
+    //GCon->Logf(NAME_Debug, "WRBLOB: size=%d", arr.length());
+    writeBlob(VName(va("%s.blobv0", *transformName(vname))), arr.ptr(), arr.length());
+    //VStr s = "   "; for (int f = 0; f < arr.length(); ++f) s += va(" %02x", arr[f]); GCon->Logf(NAME_Debug, "%s", *s);
+
+    /* (old version)
     if (v.id > 0) {
       if (!GTextureManager.getIgnoreAnim(v.id)) {
         GCon->Logf(NAME_Warning, "SAVE: trying to save inexisting texture with id #%d", v.id);
@@ -240,6 +265,7 @@ void VNTValueIOEx::io (VName vname, VTextureID &v) {
     }
     io(transformName(vname), tname);
     io(VName(va("%s.ttype", *transformName(vname))), ttype);
+    */
   }
 }
 
