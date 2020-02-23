@@ -57,10 +57,38 @@ public:
     if (fixType == D4V) wasD4VFixes = true;
     return true;
   }
+
+  bool matchClass (const VStr &NameStr, const VStr &ParentStr) const noexcept {
+    if (fixType == D4VRequired && !wasD4VFixes) return false;
+    if (!replaceName.isEmpty()) return false;
+    if (!className.isEmpty()) { if (!NameStr.globMatchCI(className)) return false; }
+    if (!parentName.isEmpty()) { if (!ParentStr.globMatchCI(parentName)) return false; }
+    if (fixType == D4V) wasD4VFixes = true;
+    return true;
+  }
 };
 
 
 static TArray<DCKnownClassIgnore> knownClassIgnores;
+
+
+//==========================================================================
+//
+//  CheckParentErrorHacks
+//
+//  returns `true` if this error should be ignored
+//
+//==========================================================================
+static bool CheckParentErrorHacks (VScriptParser *sc, const VStr &NameStr, const VStr &ParentStr) {
+  for (auto &&ign : knownClassIgnores) {
+    if (ign.matchClass(NameStr, ParentStr)) {
+      sc->Message(va("Parent class `%s` not found for actor `%s` (ignored)", *ParentStr, *NameStr));
+      return true;
+    }
+  }
+  //GCon->Logf(NAME_Debug, "class_ignore \"WTF\" {\n  class = \"%s\";\n  parent = \"%s\";\n  replace = \"%s\";\n  type = Unknown;\n}", *NameStr, *ParentStr, *ReplaceStr);
+  return false;
+}
 
 
 //==========================================================================

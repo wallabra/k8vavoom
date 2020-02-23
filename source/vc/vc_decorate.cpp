@@ -1957,6 +1957,8 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
       if (optionalActor) {
         sc->Message(va("Skipping optional actor `%s`", *NameStr));
         ParentClass = nullptr; // just in case
+      } else if (CheckParentErrorHacks(sc, NameStr, ParentStr)) {
+        ParentClass = nullptr; // ignore it
       } else if (cli_DecorateLaxParents) {
         sc->Message(va("Parent class `%s` not found for actor `%s`, ignoring actor", *ParentStr, *NameStr));
         ParentClass = nullptr; // just in case
