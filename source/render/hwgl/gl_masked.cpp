@@ -35,15 +35,31 @@
 //==========================================================================
 void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additive) {
   if (!surf->plvisible) return; // viewer is in back side or on plane
-  if (surf->count < 3) return;
+  if (surf->count < 3 || Alpha < 0.004f) return;
 
   texinfo_t *tex = surf->texinfo;
   if (!tex->Tex || tex->Tex->Type == TEXTYPE_Null) return;
+  if (Alpha > 1.0f) Alpha = 1.0f; // just in case
 
   GlowParams gp;
   CalcGlow(gp, surf);
 
-  bool doBrightmap = (r_brightmaps && tex->Tex->Brightmap);
+  SetTexture(tex->Tex, tex->ColorMap);
+
+  const bool doBrightmap = (r_brightmaps && tex->Tex->Brightmap);
+  const bool isAlphaTrans = (Alpha < 1.0f || tex->Tex->isTranslucent());
+  //k8: non-translucent walls should not end here, so there is no need to recalc/check lightmaps
+  const float lightLevel = getSurfLightLevel(surf);
+  const bool zbufferWriteDisabled = (Additive || Alpha < 1.0f); // translucent things should not modify z-buffer
+
+  bool doDecals = (tex->Tex && !tex->noDecals && surf->seg && surf->seg->decalhead && r_decals_enabled);
+  if (doDecals) {
+    if (Additive || isAlphaTrans) {
+      if (!r_decals_wall_alpha) doDecals = false;
+    } else {
+      if (!r_decals_wall_masked) doDecals = false;
+    }
+  }
 
   if (doBrightmap) {
     SurfMaskedBrightmapGlow.Activate();
@@ -58,6 +74,12 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     } else {
       VV_GLDRAWER_DEACTIVATE_GLOW(SurfMaskedBrightmapGlow);
     }
+    SurfMaskedBrightmapGlow.SetAlphaRef(Additive || isAlphaTrans ? getAlphaThreshold() : 0.666f);
+    SurfMaskedBrightmapGlow.SetLight(
+      ((surf->Light>>16)&255)*lightLevel/255.0f,
+      ((surf->Light>>8)&255)*lightLevel/255.0f,
+      (surf->Light&255)*lightLevel/255.0f, Alpha);
+    SurfMaskedBrightmapGlow.SetFogFade(surf->Fade, Alpha);
   } else {
     SurfMaskedGlow.Activate();
     SurfMaskedGlow.SetTexture(0);
@@ -67,70 +89,7 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     } else {
       VV_GLDRAWER_DEACTIVATE_GLOW(SurfMaskedGlow);
     }
-  }
-
-  SetTexture(tex->Tex, tex->ColorMap);
-
-  bool zbufferWriteDisabled = false;
-  bool decalsAllowed = false;
-  bool restoreBlend = false;
-
-  GLint oldDepthMask = 0;
-
-  if (Additive || Alpha < 1.0f || tex->Tex->isTranslucent()) {
-    restoreBlend = true;
-    if (doBrightmap) {
-      //SurfMaskedBrightmapGlow.SetAlphaRef(Additive ? getAlphaThreshold() : 0.666f);
-      SurfMaskedBrightmapGlow.SetAlphaRef(Additive || tex->Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
-    } else {
-      //SurfMaskedGlow.SetAlphaRef(Additive ? getAlphaThreshold() : 0.666f);
-      SurfMaskedGlow.SetAlphaRef(Additive || tex->Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
-    }
-    //GLEnableBlend();
-    //GLDisableBlend();
-    if (Additive) {
-      glBlendFunc(GL_ONE, GL_ONE); // our source rgb is already premultiplied
-      //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    } else {
-      glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-    }
-    // translucent things should not modify z-buffer
-    if (Additive || Alpha < 1.0f) {
-      zbufferWriteDisabled = true;
-      glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
-      glDepthMask(GL_FALSE); // no z-buffer writes
-    }
-    if (r_decals_enabled && r_decals_wall_alpha && surf->seg && surf->seg->decalhead) {
-      decalsAllowed = true;
-    }
-  } else {
-    //GLDisableBlend();
-    //GLEnableBlend(); // our texture will be premultiplied
-    //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-    if (doBrightmap) {
-      //SurfMaskedBrightmapGlow.SetAlphaRef(0.666f);
-      SurfMaskedBrightmapGlow.SetAlphaRef(tex->Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
-    } else {
-      //SurfMaskedGlow.SetAlphaRef(0.666f);
-      SurfMaskedGlow.SetAlphaRef(tex->Tex->isTranslucent() ? getAlphaThreshold() : 0.666f);
-    }
-    Alpha = 1.0f;
-    if (r_decals_enabled && r_decals_wall_masked && surf->seg && surf->seg->decalhead) {
-      decalsAllowed = true;
-    }
-  }
-
-  //k8: non-translucent walls should not end here, so there is no need to recalc/check lightmaps
-  const float lightLevel = getSurfLightLevel(surf);
-  //GCon->Logf("Tex: %s; lightLevel=%g", *tex->Tex->Name, getSurfLightLevel(surf));
-  //const float lightLevel = 1.0f;
-  if (doBrightmap) {
-    SurfMaskedBrightmapGlow.SetLight(
-      ((surf->Light>>16)&255)*lightLevel/255.0f,
-      ((surf->Light>>8)&255)*lightLevel/255.0f,
-      (surf->Light&255)*lightLevel/255.0f, Alpha);
-    SurfMaskedBrightmapGlow.SetFogFade(surf->Fade, Alpha);
-  } else {
+    SurfMaskedGlow.SetAlphaRef(Additive || isAlphaTrans ? getAlphaThreshold() : 0.666f);
     SurfMaskedGlow.SetLight(
       ((surf->Light>>16)&255)*lightLevel/255.0f,
       ((surf->Light>>8)&255)*lightLevel/255.0f,
@@ -138,7 +97,12 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
     SurfMaskedGlow.SetFogFade(surf->Fade, Alpha);
   }
 
-  bool doDecals = (decalsAllowed && tex->Tex && !tex->noDecals && surf->seg && surf->seg->decalhead);
+  if (Additive) glBlendFunc(GL_ONE, GL_ONE); // our source rgb is already premultiplied
+
+  if (zbufferWriteDisabled) {
+    PushDepthMask();
+    glDepthMask(GL_FALSE); // no z-buffer writes
+  }
 
   // fill stencil buffer for decals
   if (doDecals) RenderPrepareShaderDecals(surf);
@@ -167,17 +131,11 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
   // draw decals
   if (doDecals) {
     if (RenderFinishShaderDecals(DT_SIMPLE, surf, nullptr, tex->ColorMap)) {
-      //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // this was for non-premultiplied
-      //glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // decal renderer is using this too
-      //p_glUseProgramObjectARB(SurfSimpleProgram);
-      //return true;
+      Additive = true; // restore blending
     }
   }
 
-  if (restoreBlend) {
-    //GLDisableBlend();
-    if (zbufferWriteDisabled) glDepthMask(oldDepthMask); // restore z-buffer writes
-  }
+  if (zbufferWriteDisabled) PopDepthMask();
   if (Additive) glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
   if (doBrightmap) {
@@ -191,11 +149,6 @@ void VOpenGLDrawer::DrawMaskedPolygon (surface_t *surf, float Alpha, bool Additi
 //==========================================================================
 //
 //  VOpenGLDrawer::DrawSpritePolygon
-//
-//  hangup bits:
-//    bit 0 set: no z-buffer write
-//    bit 1 set: do offsetting (used for flat-aligned sprites)
-//    bit 2 set: don't cull faces
 //
 //==========================================================================
 void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
@@ -213,24 +166,18 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
     ShaderFakeShadow,
   };
 
+  // ignore translucent textures here: some idiots are trying to make "smoothed" sprites in this manner
+  bool resetDepthMask = (ri.alpha < 1.0f || ri.isAdditive()); // `true` means "depth write disabled"
   ShaderType shadtype = ShaderMasked;
   if (ri.isStenciled()) {
     shadtype = (ri.stencilColor&0x00ffffffu ? ShaderStencil : ShaderFakeShadow);
+    if (ri.translucency != RenderStyleInfo::Normal && ri.translucency != RenderStyleInfo::Translucent) resetDepthMask = true;
   } else {
     if (r_brightmaps && r_brightmaps_sprite && Tex->Brightmap) shadtype = ShaderMaskedBM;
-    //bool styleDark = (Alpha >= 1000.0f);
-    //if (styleDark) Alpha -= 1666.0f;
+    if (ri.isTranslucent()) resetDepthMask = true;
   }
 
-  //const bool fakeShadow = (hangup == 666);
-  //if (fakeShadow) hangup = 1; // no z-buffer write
-
-  //bool doBrightmap = (!fakeShadow && r_brightmaps && r_brightmaps_sprite && Tex->Brightmap);
-  //bool styleDark = (Alpha >= 1000.0f);
-  //if (styleDark) Alpha -= 1666.0f;
-
-  // ignore translucent textures here: some idiots are trying to make "smoothed" sprites in this manner
-  const bool trans = (ri.translucency /*|| ri.hangup*/ || ri.alpha < 1.0f /*|| Tex->isTranslucent()*/);
+  const bool trans = (ri.translucency || ri.alpha < 1.0f || Tex->isTranslucent());
 
   switch (shadtype) {
     case ShaderMasked:
@@ -292,25 +239,26 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
   SetSpriteLump(Tex, Translation, CMap, true, (ri.isShaded() ? ri.stencilColor : 0u));
   SetupTextureFiltering(sprite_filter);
 
-  bool resetDepthMask = false; // `true` means "depth write disabled"
-
   // setup hangups
-  if (ri.hangup) {
+  if (ri.flags) {
     // no z-buffer?
-    if (ri.hangup&1) resetDepthMask = true;
+    if (ri.flags&RenderStyleInfo::FlagNoDepthWrite) resetDepthMask = true;
     // offset?
-    if (ri.hangup&2) {
+    if (ri.flags&RenderStyleInfo::FlagOffset) {
       const float updir = (!CanUseRevZ() ? -1.0f : 1.0f);
       GLPolygonOffset(updir, updir);
     }
     // no cull?
-    if (ri.hangup&4) glDisable(GL_CULL_FACE);
+    if (ri.flags&RenderStyleInfo::FlagNoCull) glDisable(GL_CULL_FACE);
   }
 
   // translucent things should not modify z-buffer
+  // no
+  /*
   if (!resetDepthMask && trans) {
     resetDepthMask = true;
   }
+  */
 
   SetupBlending(ri);
 
@@ -363,8 +311,8 @@ void VOpenGLDrawer::DrawSpritePolygon (const TVec *cv, VTexture *Tex,
   #undef SPRVTX
 
   if (resetDepthMask) PopDepthMask();
-  if (ri.hangup&2) GLDisableOffset();
-  if (ri.hangup&4) glEnable(GL_CULL_FACE);
+  if (ri.flags&RenderStyleInfo::FlagOffset) GLDisableOffset();
+  if (ri.flags&RenderStyleInfo::FlagNoCull) glEnable(GL_CULL_FACE);
   RestoreBlending(ri);
 
   if (shadtype == ShaderMaskedBM) {

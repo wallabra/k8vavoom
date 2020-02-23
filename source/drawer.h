@@ -101,6 +101,19 @@ struct RenderStyleInfo {
     AddShaded = 5, // additive, shaded; `stencilColor` is shade color
   };
 
+  enum {
+    FlagNoDepthWrite = 1u<<0, // no z-buffer write
+    FlagOffset       = 1u<<1, // do offsetting (used for flat-aligned sprites)
+    FlagNoCull       = 1u<<2, // don't cull faces
+
+    FlagOptionsMask  = 0xffu,
+
+    FlagFlat     = 1u<<8, // flat sprite
+    FlagWall     = 1u<<9, // wall sprite
+    FlagOriented = 1u<<10, // oriented sprite
+    FlagShadow   = 1u<<11, // shadow sprite
+  };
+
   vuint32 seclight; // not used by hw renderer, but used by high-level renderer
   // hw renderer options
   vuint32 light; // high byte is intensity for colored light; color is multiplied by this
@@ -108,13 +121,9 @@ struct RenderStyleInfo {
   vuint32 stencilColor; // if high byte is 0, this is not a stenciled sprite
   vint32 translucency; // see enum above
   float alpha; // should be valid, and non-zero
-  //  hangup bits:
-  //    0 set: no z-buffer write
-  //    1 set: do offsetting (used for flat-aligned sprites)
-  //    2 set: don't cull faces
-  unsigned hangup;
+  unsigned flags;
 
-  inline RenderStyleInfo () noexcept : seclight(0u), light(0u), fade(0u), stencilColor(0u), translucency(0), alpha(1.0f), hangup(0u) {}
+  inline RenderStyleInfo () noexcept : seclight(0u), light(0u), fade(0u), stencilColor(0u), translucency(0), alpha(1.0f), flags(0u) {}
 
   inline bool isAdditive () const noexcept { return (translucency == Additive || translucency == AddShaded); }
   inline bool isTranslucent () const noexcept { return (translucency || alpha < 1.0f); }
@@ -123,7 +132,7 @@ struct RenderStyleInfo {
   inline bool isShadow () const noexcept { return (translucency == Translucent && stencilColor == 0xff000000u); }
   inline bool isStenciled () const noexcept { return (stencilColor && translucency != Shaded && translucency != AddShaded); }
 
-  const char *toCString () const noexcept { return va("light=0x%08x; fade=0x%08x; stc=0x%08x; trans=%d; alpha=%g; hang=0x%04x", light, fade, stencilColor, translucency, alpha, hangup); }
+  const char *toCString () const noexcept { return va("light=0x%08x; fade=0x%08x; stc=0x%08x; trans=%d; alpha=%g; flags=0x%04x", light, fade, stencilColor, translucency, alpha, flags); }
 };
 
 

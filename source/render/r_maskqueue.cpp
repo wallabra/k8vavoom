@@ -106,19 +106,12 @@ extern "C" {
 //
 //  VRenderLevelShared::QueueTranslucentPoly
 //
-//  hangup:
-//    0: normal
-//  666: fake sprite shadow
-//  bit 0 set: no z-buffer write
-//  bit 1 set: do offsetting (used for flat-aligned sprites)
-//  bit 2 set: don't cull faces
-//
 //==========================================================================
 void VRenderLevelShared::QueueTranslucentPoly (surface_t *surf, TVec *sv,
   int count, int lump, const RenderStyleInfo &ri, int translation,
   bool isSprite, const TVec &normal, float pdist,
   const TVec &saxis, const TVec &taxis, const TVec &texorg, int priority,
-  bool useSprOrigin, const TVec &sprOrigin, vuint32 objid/*, int hangup*/)
+  bool useSprOrigin, const TVec &sprOrigin, vuint32 objid)
 {
   vassert(count >= 0);
   if (count == 0 || ri.alpha < 0.004f) return;
@@ -290,7 +283,6 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
   TVec tvec(0, 0, 0);
   float sr;
   float cr;
-  //int hangup = 0;
   //FIXME: is this right?
   // this also disables shadow
   const bool ignoreSpriteFix = (sprtype != SPR_VP_PARALLEL_UPRIGHT);
@@ -343,7 +335,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
     case SPR_ORIENTED_OFS:
       // generate the sprite's axes, according to the sprite's world orientation
       AngleVectors(thing->/*Angles*/GetSpriteDrawAngles(), sprforward, sprright, sprup);
-      if (sprtype != SPR_ORIENTED) ri.hangup |= 0x103u; // no z writes, offset, special flag
+      if (sprtype != SPR_ORIENTED) ri.flags |= RenderStyleInfo::FlagOriented|RenderStyleInfo::FlagNoDepthWrite|RenderStyleInfo::FlagOffset;
       break;
 
     case SPR_VP_PARALLEL_ORIENTED:
@@ -392,7 +384,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
         angs.roll = AngleMod(angs.roll+180.0f);
         // generate the sprite's axes, according to the sprite's world orientation
         AngleVectors(angs, sprforward, sprright, sprup);
-        ri.hangup |= 0x107u; // no z writes, offset, no cull, special flag
+        ri.flags |= RenderStyleInfo::FlagFlat|RenderStyleInfo::FlagOffset|RenderStyleInfo::FlagNoCull;
       }
       break;
 
@@ -406,7 +398,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
         angs.yaw = AngleMod(angs.yaw+180.0f);
         // generate the sprite's axes, according to the sprite's world orientation
         AngleVectors(angs, sprforward, sprright, sprup);
-        ri.hangup |= 0x107u; // no z writes, offset, no cull, special flag
+        ri.flags |= RenderStyleInfo::FlagWall|RenderStyleInfo::FlagOffset|RenderStyleInfo::FlagNoCull;
       }
       break;
 
@@ -577,7 +569,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
         thing->Translation, true/*isSprite*/, /*light, Fade,*/ -sprforward,
         DotProduct(sprorigin, -sprforward), (flip ? -sprright : sprright)/scaleX,
         -sprup/scaleY, (flip ? sv[2] : sv[1]), priority
-        , true, /*sprorigin*/thing->Origin, thing->GetUniqueId()/*, hangup*/);
+        , true, /*sprorigin*/thing->Origin, thing->GetUniqueId());
     }
     // add shadow
     if (renderShadow) {
@@ -605,10 +597,9 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
           sv[3] = sprorigin+end+botdelta;
 
           ri.alpha = Alpha;
-          ri.hangup = 0x01; // no z writes
+          ri.flags = RenderStyleInfo::FlagShadow|RenderStyleInfo::FlagNoDepthWrite;
           ri.stencilColor = 0xff000000u; // shadows are black-stenciled
           ri.translucency = RenderStyleInfo::Translucent;
-          ri.hangup |= 0x200u; // special flag for sorter
           QueueTranslucentPoly(nullptr, sv, 4, lump, ri,
             /*thing->Translation*/0, true/*isSprite*/, -sprforward,
             DotProduct(sprorigin, -sprforward), (flip ? -sprright : sprright)/scaleX,
@@ -638,79 +629,49 @@ extern "C" {
     const VRenderLevelShared::trans_sprite_t *ta = (const VRenderLevelShared::trans_sprite_t *)a;
     const VRenderLevelShared::trans_sprite_t *tb = (const VRenderLevelShared::trans_sprite_t *)b;
 
-    const unsigned tahang = ta->rstyle.hangup;
-    const unsigned tbhang = tb->rstyle.hangup;
-
-    // fake sprite shadows comes first
-    if ((tahang|tbhang)&0x200u) {
-      // if both hangups has that bit set, the result of xoring will be 0
-      if ((tahang^tbhang)&0x200u) {
-        // onle one is fake shadow
-        return (tahang&0x200u ? -1/*a is shadow, b is not, (a < b) */ : 1/*a is not shadow, b is shadow, (a > b)*/);
+    // shadows come first
+    // oriented comes next
+    const unsigned taspec = ta->rstyle.flags&(RenderStyleInfo::FlagShadow|RenderStyleInfo::FlagOriented);
+    const unsigned tbspec = tb->rstyle.flags&(RenderStyleInfo::FlagShadow|RenderStyleInfo::FlagOriented);
+    // if both has the same bits set, the result of xoring will be 0
+    if (taspec^tbspec) {
+      // one is shadow?
+      if ((taspec^tbspec)&RenderStyleInfo::FlagShadow) {
+        return (taspec&RenderStyleInfo::FlagShadow ? -1/*a first (a is lesser)*/ : 1/*b first (a is greater)*/);
       }
-      // do normal checks
-    }
-
-    // "special hangup" sprites comes before other sprites
-    if ((tahang|tbhang)&0x100u) {
-      // if both hangups has that bit set, the result of xoring will be 0
-      if ((tahang^tbhang)&0x100u) {
-        // onle one is fake shadow
-        return (tahang&0x100u ? -1/*a is special, b is not, (a < b) */ : 1/*a is not special, b is special, (a > b)*/);
-      }
-      // do normal checks
-    }
-
-    /*
-    // "hangup" sprites comes before other sprites
-    if (tahang == -1 || tbhang == -1) {
-      if (tahang == -1 && tbhang == -1) {
-        // do normal checks here
-      } else if (tahang == -1) {
-        // a is hangup, b is not, (a < b)
-        return -1;
-      } else {
-        // a is not hangup, b is hangup, (a > b)
-        return 1;
+      // one is oriented?
+      if ((taspec^tbspec)&RenderStyleInfo::FlagOriented) {
+        return (taspec&RenderStyleInfo::FlagOriented ? -1/*a first (a is lesser)*/ : 1/*b first (a is greater)*/);
       }
     }
 
-    // fake sprite shadows comes first
-    if (tahang == 666 || tbhang == 666) {
-      if (tahang == 666 && tbhang == 666) {
-        // do normal checks here
-      } else if (tahang == 666) {
-        // a is shadow, b is not, (a < b)
-        return -1;
-      } else {
-        // a is not shadow, b is shadow, (a > b)
-        return 1;
-      }
+    #if 0
+    // sort by special type
+    const unsigned tahang = ta->rstyle.flags&~RenderStyleInfo::FlagOptionsMask;
+    const unsigned tbhang = tb->rstyle.flags&~RenderStyleInfo::FlagOptionsMask;
+
+    if (tahang|tbhang) {
+      if (tahang != tbhang) return (tahang > tbhang ? -1/*a first (a is lesser) */ : 1/*b first (a is greater)*/);
     }
-    */
+    #endif
 
     // non-translucent objects should come first
-    bool didDistanceCheck = false;
 
     // translucent/additive
-    const bool aTrans = ta->rstyle.isTranslucent();
-    const bool bTrans = tb->rstyle.isTranslucent();
+    const unsigned aTrans = (unsigned)(ta->rstyle.alpha < 1.0f || (ta->rstyle.isTranslucent() && !ta->rstyle.isStenciled()));
+    const unsigned bTrans = (unsigned)(tb->rstyle.alpha < 1.0f || (tb->rstyle.isTranslucent() && !tb->rstyle.isStenciled()));
 
-    if (aTrans && bTrans) {
-      // both translucent, sort by distance to view origin (nearest last)
-      const float d0 = ta->dist;
-      const float d1 = tb->dist;
-      if (d0 < d1) return 1; // a is nearer, so it is last (a > b)
-      if (d0 > d1) return -1; // b is nearer, so it is last (a < b)
-      // same distance, do other checks
-      didDistanceCheck = true;
-    } else if (aTrans) {
-      // a is translucent, b is not translucent; b first (a > b)
-      return 1;
-    } else if (bTrans) {
-      // a is not translucent, b is translucent; a first (a < b)
-      return -1;
+    // if both has that bit set, the result of xoring will be 0
+    if (aTrans^bTrans) {
+      // only one is translucent
+      return (aTrans ? 1/*a is translucent, b is not; b first (a is greater)*/ : -1/*a is not translucent, b is translucent; a first (a is lesser)*/);
     }
+
+    // sort by distance to view origin (nearest last)
+    const float d0 = ta->dist;
+    const float d1 = tb->dist;
+    if (d0 < d1) return 1; // a is nearer, so it is last (a is greater)
+    if (d0 > d1) return -1; // b is nearer, so it is last (a is lesser)
 
     // sort by object type
     // first masked polys, then sprites, then alias models
@@ -719,17 +680,6 @@ extern "C" {
     // type 2: alias models
     const int typediff = (int)ta->type-(int)tb->type;
     if (typediff) return typediff;
-
-    // distance again
-    if (!didDistanceCheck) {
-      // do nearest first here, so z-buffer will do some culling for us
-      //const float d0 = (ta->type == 1 ? ta->pdist : ta->dist);
-      //const float d1 = (tb->type == 1 ? tb->pdist : tb->dist);
-      const float d0 = ta->dist;
-      const float d1 = tb->dist;
-      if (d0 < d1) return -1; // a is nearest, so it is first (a < b)
-      if (d0 > d1) return 1; // b is nearest, so it is first (a > b)
-    }
 
     // priority check
     // higher priority comes first
