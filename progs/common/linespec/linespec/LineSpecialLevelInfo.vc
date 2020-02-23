@@ -4046,10 +4046,12 @@ final bool EV_ThingSpawn(int Arg1, int Arg2, int Arg3, int Arg4, int Arg5,
       {
         newAct.bDropped = true; // Don't respawn
       }
+      /* no need to do this, bobbing is done in renderer
       if (newAct.bFloatBob)
       {
         newAct.Special1f = newAct.Origin.z-newAct.FloorZ;
       }
+      */
       success = true;
     }
     if (!tid)

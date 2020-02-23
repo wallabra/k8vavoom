@@ -46,6 +46,8 @@
     <prop_float name="ProjectileKickback" property="ProjectileKickback" />
     <prop_int_unsupported name="WeaveIndexXY" warning="true" />
     <prop_int_unsupported name="WeaveIndexZ" warning="true" />
+    <prop_int_bob_phase name="FloatBobPhase" property="FloatBobPhase" />
+    <prop_float name="FloatBobStrength" property="FloatBobStrength" />
     <!-- Sound -->
     <prop_name name="SeeSound" property="SightSound" />
     <prop_name name="AttackSound" property="AttackSound" />

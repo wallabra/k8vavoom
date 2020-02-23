@@ -236,7 +236,8 @@ bool Physics (float DeltaTime) {
     // `UpdateVelocity()` does nothing if "no gravity" set
     //FIXME: make a separate flag for this?
     //if (!bNoGravity && (!bFloatBob || !bSpecial)) UpdateVelocity(DeltaTime);
-    if (!bFloatBob || !bSpecial) UpdateVelocity(DeltaTime);
+    //k8: why? floatbob should be affected by gravity, and dropped pickups too
+    /*if (!bFloatBob || !bSpecial)*/ UpdateVelocity(DeltaTime);
     // apply friction here
     if (Velocity.xy) ApplyFriction(DeltaTime);
   }
@@ -249,6 +250,8 @@ bool Physics (float DeltaTime) {
   //if (Velocity.x || Velocity.y) ApplyFriction(DeltaTime);
 
   if (bFloatBob) {
+    FloatBobPhase += DeltaTime;
+    /* moved to renderer
     float oldFloatZ = Origin.z;
     if (bSpecial) {
       // floating item bobbing motion (special1 is height)
@@ -276,6 +279,7 @@ bool Physics (float DeltaTime) {
     // interpolation
     float diffz = oldFloatZ-Origin.z;
     if (diffz < 10) tmp_phys_z_change += diffz;
+    */
   }
 
   // k8: thingy bridges should be checked even if we have zero vertical velocity.
@@ -286,7 +290,8 @@ bool Physics (float DeltaTime) {
   EntityEx onmo = EntityEx(CheckOnmobj());
   if (onmo || Velocity.z ||
       (Origin.z != FloorZ &&
-       (!bFloatBob || (!bSpecial && Origin.z-Level.Game.FloatBobOffsets[int(FloatBobPhase*35.0)&63] != FloorZ))))
+       /*(!bFloatBob || (!bSpecial && Origin.z-Level.Game.FloatBobOffsets[int(FloatBobPhase*35.0)&63] != FloorZ))*/
+       (!bFloatBob || !bSpecial)))
   {
     if (bPassMobj && !bMissile && !Level.CompatNoPassOver) {
       // handle Z momentum and gravity
@@ -622,6 +627,8 @@ final void ZMovement (float DeltaTime, float OldFloorZ) {
     }
   }
 
+  //if (bFloatBob && bSpecial) printdebug("%C:%s: velocity.z=%s; nograv=%B; z=%s; floorz=%s", self, UniqueId, Velocity.z, bNoGravity, Origin.z, FloorZ);
+
   // check for smooth step up
   if (bIsPlayer && oldz < FloorZ) {
     PlayerEx pex = PlayerEx(Player);
@@ -639,7 +646,8 @@ final void ZMovement (float DeltaTime, float OldFloorZ) {
   }
 
   // adjust height
-  if (!bFloatBob) Origin.z += Velocity.z*DeltaTime;
+  // k8: nope, floatbob is affected by gravity too
+  /*if (!bFloatBob)*/ Origin.z += Velocity.z*DeltaTime;
   float origz = Origin.z;
 
   if (bFloat && !bDormant && Target) {

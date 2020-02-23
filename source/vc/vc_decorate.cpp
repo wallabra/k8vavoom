@@ -94,6 +94,7 @@ enum {
   PROP_IntConst,
   PROP_IntUnsupported,
   PROP_IntIdUnsupported,
+  PROP_IntBobPhase,
   PROP_BitIndex,
   PROP_Float,
   PROP_FloatUnsupported,
@@ -650,6 +651,9 @@ static void ParseDecorateDef (VXmlDocument &Doc) {
         VPropDef &P = Lst.NewProp(PROP_IntConst, PN);
         P.SetField(Lst.Class, *PN->GetAttribute("property"));
         P.IConst = VStr::atoi(*PN->GetAttribute("value")); //FIXME
+      } else if (PN->Name == "prop_int_bob_phase") {
+        VPropDef &P = Lst.NewProp(PROP_IntBobPhase, PN);
+        P.SetField(Lst.Class, *PN->GetAttribute("property"));
       } else if (PN->Name == "prop_int_unsupported") {
         /*VPropDef &P =*/(void)Lst.NewProp(PROP_IntUnsupported, PN, true);
       } else if (PN->Name == "prop_float_unsupported") {
@@ -2141,6 +2145,14 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             break;
           case PROP_IntConst:
             P.Field->SetInt(DefObj, P.IConst);
+            break;
+          case PROP_IntBobPhase:
+            sc->ExpectNumberWithSign();
+            if (sc->Number < 0) {
+              P.Field->SetFloat(DefObj, -1.0f);
+            } else {
+              P.Field->SetFloat(DefObj, (sc->Number&63)/35.0f);
+            }
             break;
           case PROP_IntUnsupported:
             //FIXME

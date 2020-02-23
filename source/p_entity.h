@@ -327,6 +327,9 @@ class VEntity : public VThinker {
   float WaterSinkFactor;
   float WaterSinkSpeed;
 
+  float FloatBobPhase; // in seconds; <0 means "choose at random"; should be converted to ticks; amp is [0..63]
+  float FloatBobStrength;
+
   // for player sounds
   VName SoundClass;
   VName SoundGender;

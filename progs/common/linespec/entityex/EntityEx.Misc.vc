@@ -1296,8 +1296,8 @@ override void OnMapSpawn (mthing_t *mthing) {
     }
     if (bFloatBob) {
       // seed random starting index for bobbing motion
-      FloatBobPhase = Random()*256.0/35.0;
-      Special1f = mthing->height;
+      if (FloatBobPhase < 0) FloatBobPhase = Random()*256.0/35.0;
+      //Special1f = mthing->height; // no need to do this, bobbing is done in renderer
     }
     if (!bSynchronised && StateTime > 0.0) StateTime = 0.1+Random()*StateTime;
 
@@ -1327,11 +1327,22 @@ override void OnMapSpawn (mthing_t *mthing) {
       RenderStyle = STYLE_None;
     }
   } else {
+    bool wasFloatBob = bFloatBob;
+    if (wasFloatBob) printdebug("%C:%s: FBOB! z=%s; nogravity=%B; special=%B", self, UniqueId, Origin.z, bNoGravity, bSpecial);
+    bFloatBob = false; // so it won't be raised
          if (bSpawnCeiling) Origin.z = ONCEILINGZ;
     else if (bSpawnFloat) Origin.z = FLOATRANDZ;
-    //else if (bFloatBob) Origin.z = mthing->height;
+    /*
+    else if (bFloatBob) {
+      tmtrace_t tmtrace;
+      GetFloorAndCeiling(out tmtrace);
+      printdebug("%C: FBOB! z=%s; floorz=%s; hgt=%s", self, Origin.z, tmtrace.FloorZ, Origin.z-tmtrace.FloorZ);
+      Origin.z -= tmtrace.FloorZ;
+    }
+    */
     //else z = ONFLOORZ;
     SetOrigin2(Origin);
+    bFloatBob = wasFloatBob;
   }
 
   if (bStaticLight && mthing && !TID) {

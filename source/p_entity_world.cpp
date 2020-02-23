@@ -1125,6 +1125,28 @@ void VEntity::BlockedByLine (line_t *ld) {
 TVec VEntity::GetDrawOrigin () {
   TVec sprorigin = Origin+GetDrawDelta();
   sprorigin.z -= FloorClip;
+  // do floating bob here, so the dlight will not move
+#ifdef CLIENT
+  // perform bobbing
+  if (FlagsEx&EFEX_FloatBob) {
+    //float FloatBobPhase; // in seconds; <0 means "choose at random"; should be converted to ticks; amp is [0..63]
+    //float FloatBobStrength;
+    if (FloatBobPhase < 0) FloatBobPhase = Random()*256.0f/35.0f; // just in case
+    const float amp = FloatBobStrength*8.0f;
+    const float phase = fmodf(FloatBobPhase*35.0, 64.0f);
+    const float angle = phase*360.0f/64.0f;
+    #if 0
+    float zofs = msin(angle)*amp;
+    if (Sector) {
+           if (Origin.z+zofs < FloorZ && Origin.z >= FloorZ) zofs = Origin.z-FloorZ;
+      else if (Origin.z+zofs+Height > CeilingZ && Origin.z+Height <= CeilingZ) zofs = CeilingZ-Height-Origin.z;
+    }
+    res.z += zofs;
+    #else
+    sprorigin.z += msin(angle)*amp;
+    #endif
+  }
+#endif
   return sprorigin;
 }
 
@@ -1143,6 +1165,7 @@ TVec VEntity::GetDrawDelta () {
       TVec delta = Origin-LastMoveOrigin;
       if (!delta.isZero()) {
         delta *= ctt/LastMoveDuration;
+        //return (LastMoveOrigin+delta)-Origin;
         return (LastMoveOrigin+delta)-Origin;
       } else {
         // reset if angles are equal

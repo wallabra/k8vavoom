@@ -285,6 +285,7 @@ void CmdAddSlotDefault (ref array!string Args, bool asKeyconf) {
 
 
 defaultproperties {
+  /*
   FloatBobOffsets[0] = 0.0; FloatBobOffsets[1] = 0.7841339111; FloatBobOffsets[2] = 1.560714722; FloatBobOffsets[3] = 2.322265625;
   FloatBobOffsets[4] = 3.061462402; FloatBobOffsets[5] = 3.77116394; FloatBobOffsets[6] = 4.444549561; FloatBobOffsets[7] = 5.075134277;
   FloatBobOffsets[8] = 5.656845093; FloatBobOffsets[9] = 6.184082031; FloatBobOffsets[10] = 6.651748657; FloatBobOffsets[11] = 7.055358887;
@@ -301,6 +302,9 @@ defaultproperties {
   FloatBobOffsets[52] = -7.391052246; FloatBobOffsets[53] = -7.055374146; FloatBobOffsets[54] = -6.651763916; FloatBobOffsets[55] = -6.18409729;
   FloatBobOffsets[56] = -5.656860352; FloatBobOffsets[57] = -5.075149536; FloatBobOffsets[58] = -4.444564819; FloatBobOffsets[59] = -3.771179199;
   FloatBobOffsets[60] = -3.061477661; FloatBobOffsets[61] = -2.322280884; FloatBobOffsets[62] = -1.56072998; FloatBobOffsets[63] = -0.7841339111;
+  */
+  // this is sin table, multiplied by 8
+  foreach (int phase; 0..64) FloatBobOffsets[phase] = sin(phase*(360.0/64.0))*8;
 
   PhaseTable[0] = 128; PhaseTable[1] = 112; PhaseTable[2] = 96; PhaseTable[3] = 80; PhaseTable[4] = 64; PhaseTable[5] = 48; PhaseTable[6] = 32; PhaseTable[7] = 32;
   PhaseTable[8] = 16; PhaseTable[9] = 16; PhaseTable[10] = 16; //0, 0, 0, 0, 0,

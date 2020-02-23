@@ -473,7 +473,7 @@ int CurrentSpeech; // current speech index
 // actor's inventory
 Inventory Inventory;
 
-float FloatBobPhase;
+//float FloatBobPhase; // moved to Entity
 
 // for A_ExplodeParms
 int ExplosionDamage;

@@ -357,6 +357,8 @@ ubyte WaterType;
 float WaterSinkFactor = 3.0;
 float WaterSinkSpeed = 0.5;
 
+float FloatBobPhase; // moved from EntityEx; in seconds
+float FloatBobStrength; // default is 1
 
 // for player sounds
 name SoundClass;
@@ -1192,4 +1194,6 @@ defaultproperties {
   Gravity = 1.0;
   SoundClass = 'player';
   SoundGender = 'male';
+  FloatBobPhase = -1.0f;
+  FloatBobStrength = 1.0;
 }
