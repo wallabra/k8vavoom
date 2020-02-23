@@ -384,6 +384,7 @@ int SemParser::expectInt () {
     if (token == "NUMTOTALBOTS") return 666;
 
     if (token == "ISAAC_RAND_SIZE") return 256;
+    if (token == "MaxDepthMaskStack") return 16;
 
     restorePos(pos);
     Sys_Error("%s:%d: integer expected", *srcfile, getCurrLine());
