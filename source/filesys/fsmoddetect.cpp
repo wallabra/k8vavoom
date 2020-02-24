@@ -314,7 +314,7 @@ static void ParseDetectors (VStr name) {
         if (doExtend) {
           dt = detectorList[idx]; // reuse
         } else {
-          // remove
+          // remove existing
           delete detectorList[idx];
           detectorList.removeAt(idx);
         }
@@ -322,12 +322,14 @@ static void ParseDetectors (VStr name) {
         if (doExtend) sc->Error(va("cannot extend unknown detector '%s'", *dname));
       }
       sc->Expect("{");
-      if (!dt) dt = new VDetectorInfo();
+      if (!dt) {
+        // append new
+        dt = new VDetectorInfo();
+        detectorList.append(dt);
+      }
       dt->name = dname;
       dt->parseContent(sc);
       if (dt->gameTitle.isEmpty() && dt->reqiredContent.length() == 0) sc->Error(va("empty detector '%s'", *dname));
-      // append
-      detectorList.append(dt);
       continue;
     }
     if (!sc->GetString()) break;
