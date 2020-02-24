@@ -312,6 +312,19 @@ public:
   bool hasFile (const char *filename, int size=-1, const char *md5=nullptr);
   // can be used to check zscript lump
   bool checkLump (int lumpidx, int size=-1, const char *md5=nullptr);
+
+  // return lump *index*, or -1
+  int findLump (const char *lumpname, int size=-1, const char *md5=nullptr);
+  int findFile (const char *filename, int size=-1, const char *md5=nullptr);
+
+  // returns -1 for invalid lumps
+  int getLumpSize (int lumpidx);
+  // returns empty string for invalid lumps
+  VStr getLumpMD5 (int lumpidx);
+
+  // returns `nullptr` on error
+  // WARNING: ALWAYS DELETE THE STREAM!
+  VStream *createLumpReader (int lumpidx);
 };
 
 // returns AD_NONE or mod id

@@ -106,6 +106,53 @@ bool VFS_ShouldIgnoreExt (VStr fname) {
 }
 
 
+//==========================================================================
+//
+//  FSysModDetectorHelper::findLump
+//
+//  return lump *index*, or -1
+//
+//==========================================================================
+int FSysModDetectorHelper::findLump (const char *lumpname, int size, const char *md5) {
+  if (!lumpname || !lumpname[0]) return -1;
+  if (md5 && md5[0] && strlen(md5) != 32) return -1; // invalid md5
+  if (strlen(lumpname) > 8) return -1;
+  VName lname = VName(lumpname, VName::FindLower);
+  if (lname == NAME_None) return -1;
+  auto npp = dir->lumpmap.find(lname);
+  if (!npp) return -1;
+  for (int fidx = *npp; fidx >= 0 && fidx < dir->files.length(); fidx = dir->files[fidx].nextLump) {
+    if (size >= 0 && dir->files[fidx].filesize != size) continue;
+    if (md5 && md5[0] && !pak->CalculateMD5(fidx).strEquCI(md5)) continue;
+    return fidx;
+  }
+  return -1;
+}
+
+
+//==========================================================================
+//
+//  FSysModDetectorHelper::findFile
+//
+//  return lump *index*, or -1
+//
+//==========================================================================
+int FSysModDetectorHelper::findFile (const char *filename, int size, const char *md5) {
+  if (!filename || !filename[0]) return -1;
+  if (md5 && md5[0] && strlen(md5) != 32) return -1; // invalid md5
+  VStr fname = VStr(filename).fixSlashes().toLowerCase();
+  while (!fname.isEmpty() && fname[0] == '/') fname.chopLeft(1);
+  if (fname.isEmpty()) return -1;
+  auto npp = dir->filemap.find(fname);
+  if (!npp) return -1;
+  for (int fidx = *npp; fidx >= 0 && fidx < dir->files.length(); fidx = dir->files[fidx].prevFile) {
+    if (size >= 0 && dir->files[fidx].filesize != size) continue;
+    if (md5 && md5[0] && !pak->CalculateMD5(fidx).strEquCI(md5)) continue;
+    return fidx;
+  }
+  return -1;
+}
+
 
 //==========================================================================
 //
@@ -115,19 +162,7 @@ bool VFS_ShouldIgnoreExt (VStr fname) {
 //
 //==========================================================================
 bool FSysModDetectorHelper::hasLump (const char *lumpname, int size, const char *md5) {
-  if (!lumpname || !lumpname[0]) return false;
-  if (md5 && md5[0] && strlen(md5) != 32) return false; // invalid md5
-  if (strlen(lumpname) > 8) return false;
-  VName lname = VName(lumpname, VName::FindLower);
-  if (lname == NAME_None) return false;
-  auto npp = dir->lumpmap.find(lname);
-  if (!npp) return false;
-  for (int fidx = *npp; fidx >= 0 && fidx < dir->files.length(); fidx = dir->files[fidx].nextLump) {
-    if (size >= 0 && dir->files[fidx].filesize != size) continue;
-    if (md5 && md5[0] && !pak->CalculateMD5(fidx).strEquCI(md5)) continue;
-    return true;
-  }
-  return false;
+  return (findLump(lumpname, size, md5) >= 0);
 }
 
 
@@ -139,19 +174,7 @@ bool FSysModDetectorHelper::hasLump (const char *lumpname, int size, const char 
 //
 //==========================================================================
 bool FSysModDetectorHelper::hasFile (const char *filename, int size, const char *md5) {
-  if (!filename || !filename[0]) return false;
-  if (md5 && md5[0] && strlen(md5) != 32) return false; // invalid md5
-  VStr fname = VStr(filename).fixSlashes().toLowerCase();
-  while (!fname.isEmpty() && fname[0] == '/') fname.chopLeft(1);
-  if (fname.isEmpty()) return false;
-  auto npp = dir->filemap.find(fname);
-  if (!npp) return false;
-  for (int fidx = *npp; fidx >= 0 && fidx < dir->files.length(); fidx = dir->files[fidx].prevFile) {
-    if (size >= 0 && dir->files[fidx].filesize != size) continue;
-    if (md5 && md5[0] && !pak->CalculateMD5(fidx).strEquCI(md5)) continue;
-    return true;
-  }
-  return false;
+  return (findFile(filename, size, md5) >= 0);
 }
 
 
@@ -170,6 +193,42 @@ bool FSysModDetectorHelper::checkLump (int lumpidx, int size, const char *md5) {
   if (size >= 0 && dir->files[lumpidx].filesize != size) return false;
   if (md5 && md5[0] && !pak->CalculateMD5(lumpidx).strEquCI(md5)) return false;
   return true;
+}
+
+
+//==========================================================================
+//
+//  FSysModDetectorHelper::getLumpSize
+//
+//==========================================================================
+int FSysModDetectorHelper::getLumpSize (int lumpidx) {
+  if (lumpidx < 0 || lumpidx >= dir->files.length()) return -1;
+  return dir->files[lumpidx].filesize;
+}
+
+
+//==========================================================================
+//
+//  FSysModDetectorHelper::getLumpMD5
+//
+//==========================================================================
+VStr FSysModDetectorHelper::getLumpMD5 (int lumpidx) {
+  if (lumpidx < 0 || lumpidx >= dir->files.length()) return VStr::EmptyString;
+  return pak->CalculateMD5(lumpidx);
+}
+
+
+//==========================================================================
+//
+//  FSysModDetectorHelper::createLumpReader
+//
+//  returns `nullptr` on error
+//  WARNING: ALWAYS DELETE THE STREAM!
+//
+//==========================================================================
+VStream *FSysModDetectorHelper::createLumpReader (int lumpidx) {
+  if (lumpidx < 0 || lumpidx >= dir->files.length()) return nullptr;
+  return pak->CreateLumpReaderNum(lumpidx);
 }
 
 
