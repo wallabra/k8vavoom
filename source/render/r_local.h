@@ -939,7 +939,10 @@ protected:
   virtual surface_t *SubdivideSeg (surface_t *InSurf, const TVec &axis, const TVec *nextaxis, seg_t *seg) override;
 
   // light methods
-  float CastStaticRay (sector_t *ssector, const TVec &p1, const TVec &p2, float squaredist);
+  // cast light ray
+  // returns `false` if cannot reach
+  //   `dist` will be set to distance (zero means "too far away"); can be `nullptr`
+  bool CastStaticRay (float *dist, sector_t *srcsector, const TVec &p1, const TVec &p2, float squaredist);
   static void CalcMinMaxs (LMapTraceInfo &lmi, const surface_t *surf);
   static bool CalcFaceVectors (LMapTraceInfo &lmi, const surface_t *surf);
   void CalcPoints (LMapTraceInfo &lmi, const surface_t *surf, bool lowres); // for dynlights, set `lowres` to `true`

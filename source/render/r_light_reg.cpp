@@ -26,9 +26,16 @@
 #include "gamedefs.h"
 #include "r_local.h"
 
-//#define VV_DEBUG_LMAP_ALLOCATOR
 //#define VV_EXPERIMENTAL_LMAP_FILTER
 //#define VV_DEBUG_BMAP_TRACER
+
+// for some reason Janis tried to nudge lightmap texture point a little
+// with this, we'll get spurious "invalid lightmap points", and it causes
+// black (unlit) surface parts. i removed this calculation, and those
+// lighting bugs are gone. of course, the lighting at geometry edges is
+// still somewhat wrong, but it is way better than totally missed light.
+// also, this creates cheap ambient-occlusion-like effect. ;-)
+//#define VV_FIX_LMAP_TEXTURE_INSIDE_WALLS
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -159,21 +166,36 @@ static inline vuint32 fixSurfLightLevel (const surface_t *surf) {
 //  Returns the distance between the points, or 0 if blocked
 //
 //==========================================================================
-float VRenderLevelLightmap::CastStaticRay (sector_t *ssector, const TVec &p1, const TVec &p2, float squaredist) {
+bool VRenderLevelLightmap::CastStaticRay (float *dist, sector_t *srcsector, const TVec &p1, const TVec &p2, float squaredist) {
   const TVec delta = p2-p1;
   const float t = DotProduct(delta, delta);
-  if (t >= squaredist) return 0.0f; // too far away
-  if (t <= 2.0f) return 1.0f; // at light point
-
-  if (!r_lmap_bsp_trace_static) {
-    if (!Level->CastLightRay(ssector, p1, p2)) return 0.0f; // ray was blocked
-  } else {
-    linetrace_t Trace;
-    if (!Level->TraceLine(Trace, p1, p2, SPF_NOBLOCKSIGHT)) return 0.0f; // ray was blocked
+  if (t >= squaredist) {
+    // too far away
+    if (dist) *dist = 0.0f;
+    return false;
+  }
+  if (t <= 2.0f*2.0f) {
+    // at light point
+    if (dist) *dist = 1.0f;
+    return true;
   }
 
-  return sqrtf(t);
-  //return 1.0f/fastInvSqrtf(t); //k8: not much faster
+  if (!r_lmap_bsp_trace_static) {
+    if (!Level->CastLightRay(srcsector, p1, p2)) {
+      // ray was blocked
+      if (dist) *dist = 0.0f;
+      return false;
+    }
+  } else {
+    linetrace_t Trace;
+    if (!Level->TraceLine(Trace, p1, p2, SPF_NOBLOCKSIGHT)) {
+      if (dist) *dist = 0.0f;
+      return false;
+    }
+  }
+
+  if (dist) *dist = sqrtf(t); // 1.0f/fastInvSqrtf(t); k8: not much faster
+  return true;
 }
 
 
@@ -236,25 +258,27 @@ bool VRenderLevelLightmap::CalcFaceVectors (LMapTraceInfo &lmi, const surface_t 
 
   for (int i = 0; i < 2; ++i) {
     const float len = 1.0f/lmi.worldtotex[i].length();
-    //float len = lmi.worldtotex[i].length();
     if (!isFiniteF(len)) return false; // just in case
     const float dist = DotProduct(lmi.worldtotex[i], surf->GetNormal())*distscale;
     lmi.textoworld[i] = lmi.worldtotex[i]-texnormal*dist;
     lmi.textoworld[i] = lmi.textoworld[i]*len*len;
-    //lmi.textoworld[i] = lmi.textoworld[i]*(1.0f/len)*(1.0f/len);
   }
 
   // calculate texorg on the texture plane
+  /*
   for (int i = 0; i < 3; ++i) {
     //lmi.texorg[i] = -tex->soffs*lmi.textoworld[0][i]-tex->toffs*lmi.textoworld[1][i];
     lmi.texorg[i] = 0;
   }
 
   // project back to the face plane
-  {
-    const float dist = (DotProduct(lmi.texorg, surf->GetNormal())-surf->GetDist()-1.0f)*distscale;
-    lmi.texorg = lmi.texorg-texnormal*dist;
-  }
+  const float dist = (DotProduct(lmi.texorg, surf->GetNormal())-surf->GetDist()-1.0f)*distscale;
+  lmi.texorg = lmi.texorg-texnormal*dist;
+  */
+
+  // project back to the face plane
+  const float dist = (-surf->GetDist()-1.0f)*distscale;
+  lmi.texorg = lmi.texorg-texnormal*dist;
 
   return true;
 }
@@ -262,10 +286,10 @@ bool VRenderLevelLightmap::CalcFaceVectors (LMapTraceInfo &lmi, const surface_t 
 
 #define CP_FIX_UT(uort_)  do { \
   if (u##uort_ > mid##uort_) { \
-    u##uort_ -= 8; \
+    u##uort_ -= 4; \
     if (u##uort_ < mid##uort_) u##uort_ = mid##uort_; \
   } else { \
-    u##uort_ += 8; \
+    u##uort_ += 4; \
     if (u##uort_ > mid##uort_) u##uort_ = mid##uort_; \
   } \
 } while (0) \
@@ -318,9 +342,12 @@ void VRenderLevelLightmap::CalcPoints (LMapTraceInfo &lmi, const surface_t *surf
   // fill in surforg
   // the points are biased towards the center of the surface
   // to help avoid edge cases just inside walls
+  // k8: this doesn't work due to faulty raycasing; better turn it off to avoid artifacts
+  #ifdef VV_FIX_LMAP_TEXTURE_INSIDE_WALLS
   const float mids = surf->texturemins[0]+surf->extents[0]/2.0f;
   const float midt = surf->texturemins[1]+surf->extents[1]/2.0f;
   const TVec facemid = lmi.texorg+lmi.textoworld[0]*mids+lmi.textoworld[1]*midt;
+  #endif
 
   lmi.numsurfpt = w*h;
   bool doPointCheck = false;
@@ -331,6 +358,12 @@ void VRenderLevelLightmap::CalcPoints (LMapTraceInfo &lmi, const surface_t *surf
     doPointCheck = true;
   }
 
+  #ifdef VV_FIX_LMAP_TEXTURE_INSIDE_WALLS
+  bool dotrace = !lowres;
+  sector_t *facesec = surf->subsector->sector;
+  if (!facesec) dotrace = false;
+  #endif
+
   TVec *spt = lmi.surfpt;
   for (int t = 0; t < h; ++t) {
     for (int s = 0; s < w; ++s, ++spt) {
@@ -338,27 +371,40 @@ void VRenderLevelLightmap::CalcPoints (LMapTraceInfo &lmi, const surface_t *surf
       float us = starts+s*step;
       float ut = startt+t*step;
 
-      // if a line can be traced from surf to facemid, the point is good
-      for (int i = 0; i < 6; ++i) {
-        // calculate texture point
-        //*spt = lmi.texorg+lmi.textoworld[0]*us+lmi.textoworld[1]*ut;
+      #ifdef VV_FIX_LMAP_TEXTURE_INSIDE_WALLS
+      if (!dotrace) {
         *spt = lmi.calcTexPoint(us, ut);
-        if (lowres) break;
-        //const TVec fms = facemid-(*spt);
-        //if (length2DSquared(fms) < 0.1f) break; // same point, got it
-        if (Level->TraceLine(Trace, facemid, *spt, SPF_NOBLOCKSIGHT)) break; // got it
+      } else {
+        // if a line can be traced from surf to facemid, the point is good
+        bool found = false;
+        for (int i = 0; i < 6; ++i) {
+          // calculate texture point
+          *spt = lmi.calcTexPoint(us, ut);
+          //if (lowres) break;
+          //const TVec fmss = facemid-(*spt);
+          //if (length2DSquared(fmss) < 0.1f) break; // same point, got it
+          //!if (Level->TraceLine(Trace, facemid, *spt, SPF_NOBLOCKSIGHT)) break; // got it
+          if (CastStaticRay(nullptr, facesec, facemid, *spt, 999999.0f)) {
+            found = true;
+            break;
+          }
 
-        if (i&1) {
-          CP_FIX_UT(s);
-        } else {
-          CP_FIX_UT(t);
+          // move surf 4 pixels towards the center (was 8)
+          if (i&1) {
+            CP_FIX_UT(s);
+          } else {
+            CP_FIX_UT(t);
+          }
+
+          const TVec fms = facemid-(*spt);
+          *spt += 4*Normalise(fms);
         }
-
-        // move surf 8 pixels towards the center
-        const TVec fms = facemid-(*spt);
-        *spt += 8*Normalise(fms);
+        // just in case
+        if (!found) *spt = lmi.calcTexPoint(us, ut);
       }
-      //if (i == 2) ++c_bad;
+      #else
+      *spt = lmi.calcTexPoint(us, ut);
+      #endif
     }
   }
 }
@@ -467,6 +513,7 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
   }
 
   // check it for real
+  sector_t *srcsector = Level->PointInSubsector(lorg)->sector;
   const TVec *spt = lmi.surfpt;
   const float squaredist = light->radius*light->radius;
   const float rmul = ((light->color>>16)&255)/255.0f;
@@ -480,7 +527,6 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
   if (doMidFilter) memset(lmtracer.lightmapHit, 0, /*w*h*/lmi.numsurfpt);
 
   bool wasAnyHit = false;
-  sector_t *ssector = Level->PointInSubsector(lorg)->sector;
   const TVec lnormal = surf->GetNormal();
   //const TVec lorg = light->origin;
 
@@ -496,8 +542,8 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
       }
     }
 
-    const float raydist = CastStaticRay(ssector, lorg+lnormal, (*spt)+lnormal, squaredist);
-    if (raydist <= 0.0f) {
+    float raydist;
+    if (!CastStaticRay(&raydist, srcsector, lorg+lnormal, (*spt)+lnormal, squaredist)) {
       // light ray is blocked
       continue;
     }
@@ -566,8 +612,7 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
             for (int dx = -1; dx < 2; ++dx) {
               for (int dz = -1; dz < 2; ++dz) {
                 if ((dx|dy|dz) == 0) continue;
-                raydist = CastStaticRay(ssector, lorg+lnormal, pt+TVec(4*dx, 4*dy, 4*dz), squaredist);
-                if (raydist > 0.0f) goto donetrace;
+                if (CastStaticRay(&raydist , srcsector, lorg+lnormal, pt+TVec(4*dx, 4*dy, 4*dz), squaredist)) goto donetrace;
               }
             }
           }
