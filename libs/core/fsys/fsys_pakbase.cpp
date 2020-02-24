@@ -30,6 +30,7 @@ extern bool fsys_skipSounds;
 extern bool fsys_skipSprites;
 extern bool fsys_skipDehacked;
 bool fsys_no_dup_reports = false;
+bool fsys_hide_sprofs = false;
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -480,6 +481,12 @@ void VFileDirectory::buildLumpNames () {
           fi.lumpNamespace = -1;
           lumpName = VStr();
         }
+      }
+
+      // hide "sprofs" lumps?
+      if (fsys_hide_sprofs && fi.lumpNamespace == WADNS_Global && lumpName.strEquCI("sprofs")) {
+        fi.lumpNamespace = -1;
+        lumpName = VStr();
       }
 
       if ((fsys_skipSounds && fi.lumpNamespace == WADNS_Sounds) ||

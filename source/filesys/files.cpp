@@ -539,6 +539,20 @@ static CustomModeInfo customMode;
 static TArray<CustomModeInfo> userModes; // from "~/.k8vavoom/modes.rc"
 static TArray<GroupPwadInfo> postPWads; // from autoload
 static bool modDetectorDisabledIWads = false;
+static bool modNoBaseSprOfs = false;
+static TArray<VStr> modAddMods;
+
+
+//==========================================================================
+//
+//  mdetect_AddMod
+//
+//==========================================================================
+VVA_OKUNUSED static void mdetect_AddMod (VStr s) {
+  if (s.isEmpty()) return;
+  for (auto &&mm : modAddMods) if (mm.strEquCI(s)) return;
+  modAddMods.append(s);
+}
 
 
 //==========================================================================
@@ -775,65 +789,6 @@ static int pwflag_SkipDehacked = 0;
 static int pwflag_SkipSaveList = 0;
 
 
-/*
-static void tempMount (const PWadFile &pwf) {
-  if (pwf.fname.isEmpty()) return;
-
-  W_StartAuxiliary(); // just in case
-
-  if (pwf.asDirectory) {
-    VDirPakFile *dpak = new VDirPakFile(pwf.fname);
-    //if (!dpak->hasFiles()) { delete dpak; return; }
-
-    fsysSearchPaths.append(dpak);
-
-    // add all WAD files in the root
-    TArray<VStr> wads;
-    dpak->ListWadFiles(wads);
-    for (int i = 0; i < wads.length(); ++i) {
-      VStream *wadst = dpak->OpenFileRead(wads[i]);
-      if (!wadst) continue;
-      W_AddAuxiliaryStream(wadst, WAuxFileType::VFS_Archive);
-    }
-
-    // add all pk3 files in the root
-    TArray<VStr> pk3s;
-    dpak->ListPk3Files(pk3s);
-    for (int i = 0; i < pk3s.length(); ++i) {
-      VStream *pk3st = dpak->OpenFileRead(pk3s[i]);
-      W_AddAuxiliaryStream(pk3st, WAuxFileType::VFS_Archive);
-    }
-  } else {
-    VStream *strm = FL_OpenSysFileRead(pwf.fname);
-    if (!strm) {
-      //GCon->Logf(NAME_Init, "TEMPMOUNT: OOPS0: %s", *pwf.fname);
-      return;
-    }
-    if (strm->TotalSize() < 16) {
-      delete strm;
-      //GCon->Logf(NAME_Init, "TEMPMOUNT: OOPS1: %s", *pwf.fname);
-      return;
-    }
-    char sign[4];
-    strm->Serialise(sign, 4);
-    strm->Seek(0);
-    if (memcmp(sign, "PWAD", 4) == 0 || memcmp(sign, "IWAD", 4) == 0) {
-      //GCon->Logf(NAME_Init, "TEMPMOUNT: WAD: %s", *pwf.fname);
-      W_AddAuxiliaryStream(strm, WAuxFileType::VFS_Wad);
-    } else {
-      VStr ext = pwf.fname.ExtractFileExtension();
-      if (ext.strEquCI(".pk3") || ext.strEquCI(".zip") || ext.strEquCI(".pak")) {
-        W_AddAuxiliaryStream(strm, WAuxFileType::VFS_Zip); // guess, allow nested
-      } else {
-        // guess, don't allow nested
-        W_AddAuxiliaryStream(strm, WAuxFileType::VFS_Archive);
-      }
-    }
-  }
-}
-*/
-
-
 //**************************************************************************
 //
 // pwad scanner (used to pre-scan pwads to extract various things)
@@ -1030,19 +985,6 @@ static void performPWadScan () {
   pwadScanInfo.clear();
   pwadScanInfo.processed = true;
 
-  /* no need to mount pwads, it is already done
-  //fsys_EnableAuxSearch = true;
-  bool oldReport = fsys_no_dup_reports;
-  fsys_no_dup_reports = true;
-  W_CloseAuxiliary();
-  //for (int f = 0; f < W_NextMountFileId(); ++f) GCon->Logf(NAME_Debug, "#%d: %s", f, *W_FullPakNameByFile(f));
-  for (int pwidx = 0; pwidx < pwadList.length(); ++pwidx) {
-    //GCon->Logf(NAME_Debug, "  ... <%s>", *pwadList[pwidx].fname);
-    tempMount(pwadList[pwidx]);
-  }
-  //for (int f = 0; f < W_NextMountFileId(); ++f) GCon->Logf(NAME_Debug, "#%d: %s", f, *W_FullPakNameByFile(f));
-  */
-
   auto milump = (cli_NoZMapinfo >= 0 ? W_CheckNumForName("zmapinfo") : -1);
   if (milump < 0 /*!!! || !W_IsAuxLump(milump)*/) milump = W_CheckNumForName("mapinfo");
   pwadScanInfo.hasMapinfo = (milump >= 0 /*!!! && W_IsAuxLump(milump)*/);
@@ -1091,14 +1033,6 @@ static void performPWadScan () {
   GCon->Log(NAME_Init, "pwad map detection complete.");
 
   fsys_hasMapPwads = (fsys_PWadMaps.length() > 0);
-
-  // not mounted
-  /*
-  W_CloseAuxiliary();
-  //for (int f = 0; f < W_NextMountFileId(); ++f) GCon->Logf(NAME_Debug, "#%d: %s", f, *W_FullPakNameByFile(f));
-  fsys_no_dup_reports = oldReport;
-  //fsys_EnableAuxSearch = false;
-  */
 }
 
 
@@ -1358,6 +1292,8 @@ static void AddGameDir (VStr basedir, VStr dir) {
 
   if (!Sys_DirExists(bdx)) return;
 
+  fsys_hide_sprofs = modNoBaseSprOfs;
+
   TArray<VStr> WadFiles;
   TArray<VStr> ZipFiles;
 
@@ -1397,6 +1333,8 @@ static void AddGameDir (VStr basedir, VStr dir) {
       }
     }
   }
+
+  fsys_hide_sprofs = false;
 
   // custom mode
   SetupCustomMode(bdx);
@@ -1852,25 +1790,6 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
 
   // look for the main wad file
   VStr mainWadPath;
-
-  /*
-  if (fsys_detected_mod == AD_HARMONY) {
-    GCon->Log(NAME_Init, "detected HARMONY standalone game...");
-    cli_NakedBase = 1;
-    fsys_onlyOneBaseFile = true;
-    if (mainiwad.isEmpty() && !fsys_detected_mod_wad.isEmpty()) {
-      mainiwad = fsys_detected_mod_wad;
-      GCon->Logf(NAME_Init, "forced HARMONY IWAD '%s'", *mainiwad);
-      for (int f = 0; f < pwadList.length(); ++f) {
-        if (pwadList[f].fname.strEquCI(mainiwad)) {
-          GCon->Log(NAME_Init, "  ...removed HARMONY pwad");
-          pwadList.removeAt(f);
-          --f;
-        }
-      }
-    }
-  }
-  */
 
   int iwadidx = -1;
   VStr gameDsc;
@@ -2526,6 +2445,17 @@ void FL_Init () {
   // and current dir
   //IWadDirs.Append(".");
 
+  ParseDetectors("basev/detectors.txt");
+  // parse detectors from home directory
+  #ifndef _WIN32
+  {
+    const char *hdir = getenv("HOME");
+    if (hdir && hdir[0]) {
+      ParseDetectors(VStr(va("%s/.k8vavoom/detectors.rc", hdir)));;
+    }
+  }
+  #endif
+
   int mapnum = -1;
   VStr mapname;
   bool mapinfoFound = false;
@@ -2586,7 +2516,6 @@ void FL_Init () {
   // i need progs to be loaded from files
   //fl_devmode = true;
 #endif
-  //if (fsys_detected_mod == AD_HARMONY) customMode.clear();
 
   // process "warp", do it here, so "+var" will be processed after "map nnn"
   // postpone, and use `P_TranslateMapEx()` in host initialization
@@ -2642,12 +2571,9 @@ void FL_Init () {
     fsysSearchPaths[i]->iwad = true;
   }
 
-  // disable sprite offsets for Harmony
-  if (fsys_detected_mod == AD_HARMONY) rforce_disable_sprofs = true;
-
   // load custom mode pwads
   if (customMode.disableBloodReplacement) fsys_DisableBloodReplacement = true;
-  if (customMode.disableBDW || fsys_detected_mod == AD_HARMONY) fsys_DisableBDW = true;
+  if (customMode.disableBDW) fsys_DisableBDW = true;
 
   fsys_report_added_paks = !!reportPWads;
   //GCon->Logf(NAME_Debug, "!!!: %d", (fsys_report_added_paks ? 1 : 0));
@@ -2725,10 +2651,13 @@ void FL_Init () {
 
   if (!fsys_DisableBDW && cli_BDWMod > 0) AddGameDir("basev/mods/bdw");
 
-  if (cli_SkeeHUD > 0 || fsys_detected_mod == AD_SKULLDASHEE) {
-    if (fsys_detected_mod == AD_SKULLDASHEE) GCon->Logf(NAME_Init, "SkullDash EE detected, loading HUD");
-    AddGameDir("basev/mods/skeehud");
+  if (cli_SkeeHUD > 0) mdetect_AddMod("skeehud");
+
+  for (auto &&xmod : modAddMods) {
+    GCon->Logf(NAME_Init, "adding special built-in mod '%s'...", *xmod);
+    AddGameDir(va("basev/mods/%s", *xmod));
   }
+  modAddMods.clear(); // don't need it anymore
 
   fsys_report_added_paks = !!reportPWads;
 
@@ -2747,6 +2676,8 @@ void FL_Init () {
   if (fsys_warp_cmd.length() == 0) {
     if (GArgs.CheckParm("+map") != 0) Host_CLIMapStartFound();
   }
+
+  FreeDetectors(); // we don't need them
 }
 
 

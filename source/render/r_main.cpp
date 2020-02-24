@@ -64,11 +64,9 @@ static const char *videoDrvName = nullptr;
 
 void R_FreeSkyboxData ();
 
+
 vuint8 light_remap[256];
-
 int screenblocks = 0; // viewport size
-bool rforce_disable_sprofs = false;
-
 
 static VCvarF r_aspect_pixel("r_aspect_pixel", "1", "Pixel aspect ratio.", CVAR_Rom);
 static VCvarI r_aspect_horiz("r_aspect_horiz", "4", "Horizontal aspect multiplier.", CVAR_Rom);

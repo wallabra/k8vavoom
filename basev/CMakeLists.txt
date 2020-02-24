@@ -16,4 +16,5 @@ add_subdirectory(chex)
 
 add_subdirectory(mods)
 
-install(FILES games.txt DESTINATION ${DATADIR}/basev)
+install(FILES games.txt     DESTINATION ${DATADIR}/basev)
+install(FILES detectors.txt DESTINATION ${DATADIR}/basev)

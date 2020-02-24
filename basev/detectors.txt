@@ -1,0 +1,144 @@
+// this is used to detect various pwads, and adjust the game options
+/* usage:
+  // names should be unique! later name will override!
+  detector "some name" {
+    info {
+      // message on detection
+      showmessage = <true|false>; // show message on detection? (default: true)
+      type = "mod"; // just a string; default: "mod"
+      // message will look like: "Detected ${type}: <section name>"
+    }
+
+    // preconditions; all fields are optional
+    preconditions {
+      zscript = <true|false|dontcare>; // check for zscript lumps (default: dontcare)
+      gametitle = "glob"; // check "gametitle" from GAMEINFO lump (globs allowed)
+      // all defined files and lumps are REQUIRED
+      // size and md5 fields are optional
+      file { name = "name"; size = int; md5 = "md5sum"; }
+      lump { name = "name"; size = int; md5 = "md5sum"; }
+    }
+
+    // options applied on succesfull detection
+    options {
+      //allowzscript = <true|false>; // should zscript be allowed (ignored), or not? (default: false): NOT IMPLEMENTED YET
+      nomore = <true|false>; // stop detection on hit? (default: true)
+      gamename = "name"; // force game name (default: don't force)
+      nakedbase = <true|false>; // disable autoloads? (default: false)
+      bdw = <true|false|dontcare>; // bdw mod: force-enable, force-disable, don't change (default: dontcare)
+      gore = <true|false|dontcare>; // gore mod: force-enable, force-disable, don't change (default: dontcare)
+      modblood = <true|false|nogore>; // enable mod blood replacement? (default: true); "nogore" means "enable only if there's no gore mod"
+      iwad = <true|false>; // for some TCs game iwads should be disabled (default: true)
+      sprofslump = <true|false>; // disable basepak sprofs lumps (required for some TCs); forced to "true" by "iwad = false;" (and should be reset explicitly)
+    }
+  }
+*/
+
+detector "SkullDash EE" {
+  info {
+    type = "mod";
+  }
+
+  preconditions {
+    file { name = "maps/titlemap.wad"; size = 286046; md5 = "def4f5e00c60727aeb3a25d1982cfcf1"; }
+  }
+
+  options {
+    addmod = "skeehud"; // do not use this if you don't know what you're doing! (i.e. don't use this at all)
+    nomore = false; // allow other mods, why not
+  }
+}
+
+
+detector "Boringternity" {
+  info {
+    type = "pwad";
+  }
+
+  preconditions {
+    zscript = true;
+    lump { name = "zscript"; size = 13153; md5 = "9e53e2d46de1d0f6cfc004c74e1660cf"; }
+  }
+
+  options {
+    //allowzscript = true;
+    nomore = false; // allow more detections
+  }
+}
+
+
+detector "Harmony v1.1" {
+  info {
+    type = "TC";
+  }
+
+  preconditions {
+    zscript = false;
+    lump { name = "dehacked"; size = 26287; md5 = "3446842b93dfa37075a238ccd5b0f29c"; }
+  }
+
+  options {
+    gamename = "doom2";
+    nakedbase = true;
+    bdw = false;
+    iwad = false;
+  }
+}
+
+
+detector "Adventures of Square" {
+  info {
+    type = "TC";
+  }
+
+  preconditions {
+    zscript = true;
+    gametitle = "The Adventures of Square*";
+    file { name = "SQU-SWE1.txt"; }
+    file { name = "GAMEINFO.sq"; }
+    file { name = "acs/sqcommon.o"; }
+    file { name = "acs/sq_jump.o"; }
+  }
+
+  options {
+    gamename = "doom2";
+    nakedbase = true;
+    bdw = false;
+    gore = false;
+    sprofslump = false;
+  }
+}
+
+
+detector "Hunter's Moon" {
+  info {
+    type = "mod";
+  }
+
+  preconditions {
+    zscript = false;
+    gametitle = "*Hunter's Moon*";
+  }
+
+  options {
+    nakedbase = true;
+    bdw = false;
+  }
+}
+
+
+detector "Green Shit" {
+  info {
+    type = "pwad";
+  }
+
+  preconditions {
+    zscript = false;
+    file { name = "MAPINFO.txt"; size = 2306; md5 = "47b7e6bcc4024d428909a0f3f7b05126"; }
+  }
+
+  options {
+    gamename = "plutonia";
+    nomore = false; // allow other mods
+  }
+}

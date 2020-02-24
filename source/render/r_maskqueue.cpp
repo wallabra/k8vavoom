@@ -466,7 +466,7 @@ void VRenderLevelShared::QueueSprite (VEntity *thing, RenderStyleInfo &ri, bool 
   int TexHeight = Tex->GetHeight();
   int TexSOffset, TexTOffset;
 
-  if (fixAlgo > 1 && Tex->bForcedSpriteOffset && !rforce_disable_sprofs && r_use_sprofs_lump) {
+  if (fixAlgo > 1 && Tex->bForcedSpriteOffset && r_use_sprofs_lump) {
     TexSOffset = Tex->SOffsetFix;
     TexTOffset = Tex->TOffsetFix;
   } else {

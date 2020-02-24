@@ -368,4 +368,8 @@ public:
 };
 
 
+// used in FSYS to disable sprofs from basepaks for known standalones
+extern bool fsys_hide_sprofs;
+
+
 #endif
