@@ -29,6 +29,7 @@ enum {
   AD_SKULLDASHEE = 1,
   AD_HARMONY,
   AD_SQUARE,
+  AD_HMOON,
 };
 
 
@@ -124,6 +125,53 @@ static int detectSquare (FSysModDetectorHelper &hlp, int seenZScriptLump) {
 
 //==========================================================================
 //
+//  checkGameInfo
+//
+//==========================================================================
+static bool checkGameInfo (FSysModDetectorHelper &hlp, const char *gameName) {
+  if (!gameName || !gameName[0]) return false;
+  int fidx = hlp.findFile("GAMEINFO");
+  if (fidx < 0) return false;
+  if (hlp.getLumpSize(fidx) > 16384) return false; // sanity check
+  VStream *gi = hlp.createLumpReader(fidx);
+  if (!gi) return false;
+  VScriptParser *sc = new VScriptParser("gameinfo", gi);
+  sc->SetCMode(true);
+  while (sc->GetString()) {
+    if (!sc->String.strEquCI("STARTUPTITLE")) continue;
+    if (!sc->Check("=")) continue;
+    if (!sc->GetString()) break;
+    if (sc->String.strEquCI(gameName)) {
+      delete sc;
+      return true;
+    }
+  }
+  delete sc;
+  return false;
+}
+
+
+//==========================================================================
+//
+//  detectHuntersMoon
+//
+//  detect Hunter's Moon
+//
+//==========================================================================
+static int detectHuntersMoon (FSysModDetectorHelper &hlp, int seenZScriptLump) {
+  if (seenZScriptLump >= 0) return AD_NONE;
+  if (!checkGameInfo(hlp, "Hunter's Moon")) return AD_NONE;
+  GLog.Log(NAME_Init, "Detected mod: Hunter's Moon");
+  cli_NakedBase = 1; // ignore autoloads
+  fsys_onlyOneBaseFile = true;
+  fsys_DisableBDW = true; // don't load BDW
+  cli_GoreMod = 0; // disable gore mod
+  return AD_HMOON;
+}
+
+
+//==========================================================================
+//
 //  FL_RegisterModDetectors
 //
 //==========================================================================
@@ -133,5 +181,6 @@ static void FL_RegisterModDetectors () {
   fsysRegisterModDetector(&detectCzechbox);
   fsysRegisterModDetector(&detectHarmony);
   fsysRegisterModDetector(&detectSquare);
+  fsysRegisterModDetector(&detectHuntersMoon);
 }
 
