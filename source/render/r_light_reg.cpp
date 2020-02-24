@@ -37,7 +37,6 @@ extern VCvarB r_allow_ambient;
 extern VCvarB r_dynamic_clip;
 extern VCvarB r_dynamic_clip_pvs;
 extern VCvarB r_dynamic_clip_more;
-extern VCvarB r_allow_subtractive_lights;
 extern VCvarB r_glow_flat;
 
 vuint32 gf_dynlights_processed = 0;
@@ -847,7 +846,7 @@ void VRenderLevelLightmap::AddDynamicLights (surface_t *surf) {
 
     const dlight_t &dl = DLights[lnum];
     //if (dl.type == DLTYPE_Subtractive) GCon->Logf("***SUBTRACTIVE LIGHT!");
-    if ((dl.type&DLTYPE_Subtractive) && !r_allow_subtractive_lights) continue;
+    if (dl.type&DLTYPE_Subtractive) continue;
 
     const int xnfo = dlinfo[lnum].needTrace;
     if (!xnfo) continue;

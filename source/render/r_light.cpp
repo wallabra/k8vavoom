@@ -42,8 +42,6 @@ VCvarB r_light_opt_shadow("r_light_opt_shadow", false, "Check if light can poten
 VCvarF r_light_filter_dynamic_coeff("r_light_filter_dynamic_coeff", "0.2", "How close dynamic lights should be to be filtered out?\n(0.2-0.4 is usually ok).", CVAR_Archive);
 VCvarB r_allow_dynamic_light_filter("r_allow_dynamic_light_filter", true, "Allow filtering of dynamic lights?", CVAR_Archive);
 
-VCvarB r_allow_subtractive_lights("r_allow_subtractive_lights", false, "Are subtractive lights allowed?", /*CVAR_Archive*/0);
-
 static VCvarB r_dynamic_light_better_vis_check("r_dynamic_light_better_vis_check", true, "Do better (but slower) dynlight visibility checking on spawn?", CVAR_Archive);
 
 extern VCvarB r_glow_flat;
@@ -596,7 +594,7 @@ void VRenderLevelShared::CalculateDynLightSub (float &l, float &lr, float &lg, f
         if (!(dyn_facevis[leafnum>>3]&(1<<(leafnum&7)))) continue;
       }
       const dlight_t &dl = DLights[i];
-      if ((dl.type&DLTYPE_Subtractive) && !r_allow_subtractive_lights) continue;
+      if (dl.type&DLTYPE_Subtractive) continue;
       //if (!dl.radius || dl.die < Level->Time) continue; // this is not needed here
       const float distSq = (p-dl.origin).lengthSquared();
       if (distSq >= dl.radius*dl.radius) continue; // too far away

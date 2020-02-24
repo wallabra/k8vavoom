@@ -38,7 +38,6 @@
 
 
 extern VCvarB r_darken;
-extern VCvarB r_allow_subtractive_lights;
 extern VCvarB r_draw_mobjs;
 extern VCvarB r_model_shadows;
 extern VCvarB r_draw_pobj;
