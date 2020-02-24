@@ -120,8 +120,6 @@ static ArgVarValue emptyAV;
 static TArray<VStr> cliModesList;
 static int cli_oldSprites = 0;
 
-#include "fsmoddetect.cpp"
-
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern "C" {
@@ -540,6 +538,64 @@ struct CustomModeInfo {
 static CustomModeInfo customMode;
 static TArray<CustomModeInfo> userModes; // from "~/.k8vavoom/modes.rc"
 static TArray<GroupPwadInfo> postPWads; // from autoload
+static bool modDetectorDisabledIWads = false;
+
+
+//==========================================================================
+//
+//  mdetect_ClearAndBlockCustomModes
+//
+//==========================================================================
+VVA_OKUNUSED static void mdetect_ClearAndBlockCustomModes () {
+  customMode.clear();
+  userModes.clear();
+  postPWads.clear();
+  cli_NakedBase = 1; // ignore autoloads
+  fsys_onlyOneBaseFile = true;
+}
+
+
+//==========================================================================
+//
+//  mdetect_DisableBDW
+//
+//==========================================================================
+VVA_OKUNUSED static void mdetect_DisableBDW () {
+  fsys_DisableBDW = true;
+}
+
+
+//==========================================================================
+//
+//  mdetect_DisableGore
+//
+//==========================================================================
+VVA_OKUNUSED static void mdetect_DisableGore () {
+  cli_GoreMod = 0;
+}
+
+
+//==========================================================================
+//
+//  mdetect_DisableIWads
+//
+//==========================================================================
+VVA_OKUNUSED static void mdetect_DisableIWads () {
+  modDetectorDisabledIWads = true;
+}
+
+
+//==========================================================================
+//
+//  mdetect_SetGameName
+//
+//==========================================================================
+VVA_OKUNUSED static void mdetect_SetGameName (VStr gname) {
+  cliGameMode = gname;
+}
+
+
+#include "fsmoddetect.cpp"
 
 
 //==========================================================================
@@ -719,6 +775,7 @@ static int pwflag_SkipDehacked = 0;
 static int pwflag_SkipSaveList = 0;
 
 
+/*
 static void tempMount (const PWadFile &pwf) {
   if (pwf.fname.isEmpty()) return;
 
@@ -728,7 +785,7 @@ static void tempMount (const PWadFile &pwf) {
     VDirPakFile *dpak = new VDirPakFile(pwf.fname);
     //if (!dpak->hasFiles()) { delete dpak; return; }
 
-    SearchPaths.append(dpak);
+    fsysSearchPaths.append(dpak);
 
     // add all WAD files in the root
     TArray<VStr> wads;
@@ -774,6 +831,7 @@ static void tempMount (const PWadFile &pwf) {
     }
   }
 }
+*/
 
 
 //**************************************************************************
@@ -968,11 +1026,12 @@ static void findMapChecker (int lump) {
 //==========================================================================
 static void performPWadScan () {
   if (pwadScanInfo.processed) return;
-  fsys_EnableAuxSearch = true;
 
   pwadScanInfo.clear();
   pwadScanInfo.processed = true;
 
+  /* no need to mount pwads, it is already done
+  //fsys_EnableAuxSearch = true;
   bool oldReport = fsys_no_dup_reports;
   fsys_no_dup_reports = true;
   W_CloseAuxiliary();
@@ -982,15 +1041,16 @@ static void performPWadScan () {
     tempMount(pwadList[pwidx]);
   }
   //for (int f = 0; f < W_NextMountFileId(); ++f) GCon->Logf(NAME_Debug, "#%d: %s", f, *W_FullPakNameByFile(f));
+  */
 
   auto milump = (cli_NoZMapinfo >= 0 ? W_CheckNumForName("zmapinfo") : -1);
-  if (milump < 0 || !W_IsAuxLump(milump)) milump = W_CheckNumForName("mapinfo");
-  pwadScanInfo.hasMapinfo = (milump >= 0 && W_IsAuxLump(milump));
+  if (milump < 0 /*!!! || !W_IsAuxLump(milump)*/) milump = W_CheckNumForName("mapinfo");
+  pwadScanInfo.hasMapinfo = (milump >= 0 /*!!! && W_IsAuxLump(milump)*/);
 
   //GCon->Log("**********************************");
   // try "GAMEINFO" first
   auto gilump = W_CheckNumForName("gameinfo");
-  if (W_IsAuxLump(gilump)) {
+  if (gilump >= 0/*!!! W_IsAuxLump(gilump)*/) {
     VScriptParser *gsc = new VScriptParser(W_FullLumpName(gilump), W_CreateLumpReaderNum(gilump));
     gsc->SetCMode(true);
     while (gsc->GetString()) {
@@ -1009,11 +1069,11 @@ static void performPWadScan () {
 
   // guess the name of the first map
   GCon->Log(NAME_Init, "detecting pwad maps...");
-  for (auto &&it : WadMapIterator::FromFirstAuxFile()) findMapChecker(it.lump);
+  for (auto &&it : WadMapIterator::FromWadFile(0)/*!!! FromFirstAuxFile()*/) findMapChecker(it.lump);
   // if no ordinary maps, try to find "maps/xxx.wad" files
   if (!pwadScanInfo.isMapIndexValid()) {
     //for (auto &&it : WadFileIterator::FromFirstAuxFile()) {
-    for (auto &&it : WadNSIterator::FromWadFile(W_GetFirstAuxFile(), WADNS_AllFiles)) {
+    for (auto &&it : WadNSIterator::FromWadFile(0/*!!! W_GetFirstAuxFile()*/, WADNS_AllFiles)) {
       VStr fname = it.getRealName();
       // check for "maps/xxx.wad"
       //GCon->Logf(NAME_Debug, ":: <%s>", *fname);
@@ -1030,10 +1090,15 @@ static void performPWadScan () {
   timsort_r(fsys_PWadMaps.ptr(), fsys_PWadMaps.length(), sizeof(PWadMapLump), &cmpPWadMapLump, nullptr);
   GCon->Log(NAME_Init, "pwad map detection complete.");
 
+  fsys_hasMapPwads = (fsys_PWadMaps.length() > 0);
+
+  // not mounted
+  /*
   W_CloseAuxiliary();
   //for (int f = 0; f < W_NextMountFileId(); ++f) GCon->Logf(NAME_Debug, "#%d: %s", f, *W_FullPakNameByFile(f));
   fsys_no_dup_reports = oldReport;
-  fsys_EnableAuxSearch = false;
+  //fsys_EnableAuxSearch = false;
+  */
 }
 
 
@@ -1323,12 +1388,12 @@ static void AddGameDir (VStr basedir, VStr dir) {
   for (int i = 0; i < ZipFiles.length(); ++i) {
     //if (i == 0) wpkAppend(dir+"/"+ZipFiles[i], true); // system pak
     bool isBPK = ZipFiles[i].extractFileName().strEquCI("basepak.pk3");
-    int spl = SearchPaths.length();
+    int spl = fsysSearchPaths.length();
     W_AddDiskFile(bdx.appendPath(ZipFiles[i]));
     if (isBPK) {
       // mark "basepak" flags
-      for (int cc = spl; cc < SearchPaths.length(); ++cc) {
-        SearchPaths[cc]->basepak = true;
+      for (int cc = spl; cc < fsysSearchPaths.length(); ++cc) {
+        fsysSearchPaths[cc]->basepak = true;
       }
     }
   }
@@ -1378,7 +1443,7 @@ static void AddGameDir (VStr basedir, VStr dir) {
   // k8: nope
   /*
   VFilesDir *info = new VFilesDir(bdx);
-  SearchPaths.Append(info);
+  fsysSearchPaths.Append(info);
   */
 }
 
@@ -1702,7 +1767,7 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
 
       // try to select DooM or DooM II automatically
       if (!selectedGame) {
-        performPWadScan();
+        //!performPWadScan();
         if (!pwadScanInfo.iwad.isEmpty()) {
           for (auto &&game : games) {
             for (auto &&mwi : game.mainWads) {
@@ -1719,7 +1784,7 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
 
         // try to guess from map name
         if (!selectedGame) {
-          performPWadScan();
+          //!performPWadScan();
           //GCon->Logf(NAME_Debug, "*** hasMapinfo: %d; mapname=<%s>; episode=%d; map=%d; index=%d", (int)pwadScanInfo.hasMapinfo, *pwadScanInfo.mapname, pwadScanInfo.episode, pwadScanInfo.mapnum, pwadScanInfo.getMapIndex());
           if (pwadScanInfo.getMapIndex() > 0) {
             //GCon->Logf("MNAME: <%s>", *mname);
@@ -1788,6 +1853,7 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
   // look for the main wad file
   VStr mainWadPath;
 
+  /*
   if (fsys_detected_mod == AD_HARMONY) {
     GCon->Log(NAME_Init, "detected HARMONY standalone game...");
     cli_NakedBase = 1;
@@ -1804,27 +1870,32 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
       }
     }
   }
+  */
 
-  // try user-specified iwad
   int iwadidx = -1;
   VStr gameDsc;
-  if (mainiwad.length() > 0) {
-    GCon->Logf(NAME_Init, "trying custom IWAD '%s'...", *mainiwad);
-    mainWadPath = FindMainWad(mainiwad);
-    if (mainWadPath.isEmpty()) Sys_Error("custom IWAD '%s' not found!", *mainiwad);
-    GCon->Logf(NAME_Init, "found custom IWAD '%s'...", *mainWadPath);
-    gameDsc = game.description;
-  } else {
-    // try default iwads
-    for (iwadidx = 0; iwadidx < game.mainWads.length(); ++iwadidx) {
-      mainWadPath = FindMainWad(game.mainWads[iwadidx].main);
-      if (!mainWadPath.isEmpty()) {
-        gameDsc = game.mainWads[iwadidx].description;
-        break;
+  if (!modDetectorDisabledIWads) {
+    // try user-specified iwad
+    if (mainiwad.length() > 0) {
+      GCon->Logf(NAME_Init, "trying custom IWAD '%s'...", *mainiwad);
+      mainWadPath = FindMainWad(mainiwad);
+      if (mainWadPath.isEmpty()) Sys_Error("custom IWAD '%s' not found!", *mainiwad);
+      GCon->Logf(NAME_Init, "found custom IWAD '%s'...", *mainWadPath);
+      gameDsc = game.description;
+    } else {
+      // try default iwads
+      for (iwadidx = 0; iwadidx < game.mainWads.length(); ++iwadidx) {
+        mainWadPath = FindMainWad(game.mainWads[iwadidx].main);
+        if (!mainWadPath.isEmpty()) {
+          gameDsc = game.mainWads[iwadidx].description;
+          break;
+        }
       }
+      if (mainWadPath.isEmpty()) Sys_Error("Main wad file \"%s\" not found.", *game.mainWads[0].main);
+      vassert(iwadidx >= 0 && iwadidx < game.mainWads.length());
     }
-    if (mainWadPath.isEmpty()) Sys_Error("Main wad file \"%s\" not found.", *game.mainWads[0].main);
-    vassert(iwadidx >= 0 && iwadidx < game.mainWads.length());
+  } else {
+    gameDsc = "custom TC";
   }
 
   // process filters and warp template
@@ -1844,16 +1915,18 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
   //GCon->Logf("MAIN WAD(1): '%s'", *MainWadPath);
 
   GCon->Logf(NAME_Init, "loading game %s", *gameDsc);
-  // if iwad is pk3, add it last
   bool iwadAdded = false;
-  if (mainWadPath.endsWithCI("wad")) {
-    GCon->Logf(NAME_Init, "adding iwad \"%s\"...", *mainWadPath);
-    iwadAdded = true;
-    IWadIndex = SearchPaths.length();
-    wpkAppend(mainWadPath, false); // mark iwad as "non-system" file, so path won't be stored in savegame
-    AddAnyFile(mainWadPath, false, game.FixVoices);
-  } else {
-    GCon->Logf(NAME_Init, "using iwad \"%s\"...", *mainWadPath);
+  if (!modDetectorDisabledIWads) {
+    // if iwad is pk3, add it last
+    if (mainWadPath.endsWithCI("wad")) {
+      GCon->Logf(NAME_Init, "adding iwad \"%s\"...", *mainWadPath);
+      iwadAdded = true;
+      IWadIndex = fsysSearchPaths.length();
+      wpkAppend(mainWadPath, false); // mark iwad as "non-system" file, so path won't be stored in savegame
+      AddAnyFile(mainWadPath, false, game.FixVoices);
+    } else {
+      GCon->Logf(NAME_Init, "using iwad \"%s\"...", *mainWadPath);
+    }
   }
 
   // add optional files
@@ -1878,11 +1951,13 @@ static void ProcessBaseGameDefs (VStr name, VStr mainiwad) {
   SetupGameDir(game.GameDir);
 
   // add iwad here
-  if (!iwadAdded) {
-    GCon->Logf(NAME_Init, "adding iwad \"%s\"...", *mainWadPath);
-    IWadIndex = SearchPaths.length();
-    wpkAppend(mainWadPath, false); // mark iwad as "non-system" file, so path won't be stored in savegame
-    AddAnyFile(mainWadPath, false, game.FixVoices);
+  if (!modDetectorDisabledIWads) {
+    if (!iwadAdded) {
+      GCon->Logf(NAME_Init, "adding iwad \"%s\"...", *mainWadPath);
+      IWadIndex = fsysSearchPaths.length();
+      wpkAppend(mainWadPath, false); // mark iwad as "non-system" file, so path won't be stored in savegame
+      AddAnyFile(mainWadPath, false, game.FixVoices);
+    }
   }
 }
 
@@ -1936,9 +2011,9 @@ static void RenameSprites () {
   delete sc;
 
   bool RenameAll = !!cli_oldSprites;
-  for (int i = 0; i < SearchPaths.length(); ++i) {
-    if (RenameAll || i == IWadIndex) SearchPaths[i]->RenameSprites(Renames, LumpRenames);
-    SearchPaths[i]->RenameSprites(AlwaysRenames, AlwaysLumpRenames);
+  for (int i = 0; i < fsysSearchPaths.length(); ++i) {
+    if (RenameAll || i == IWadIndex) fsysSearchPaths[i]->RenameSprites(Renames, LumpRenames);
+    fsysSearchPaths[i]->RenameSprites(AlwaysRenames, AlwaysLumpRenames);
   }
 }
 
@@ -2451,6 +2526,55 @@ void FL_Init () {
   // and current dir
   //IWadDirs.Append(".");
 
+  int mapnum = -1;
+  VStr mapname;
+  bool mapinfoFound = false;
+
+  // mount pwads
+  FL_StartUserWads(); // start marking
+  for (int pwidx = 0; pwidx < pwadList.length(); ++pwidx) {
+    PWadFile &pwf = pwadList[pwidx];
+    fsys_skipSounds = pwf.skipSounds;
+    fsys_skipSprites = pwf.skipSprites;
+    fsys_skipDehacked = pwf.skipDehacked;
+    //!int nextfid = W_NextMountFileId();
+
+    //GCon->Logf(NAME_Debug, "::: %d : <%s>", nextfid, *pwf.fname);
+
+    if (pwf.asDirectory) {
+      if (pwf.storeInSave) wpkAppend(pwf.fname, false); // non-system pak
+      GCon->Logf(NAME_Init, "Mounting directory '%s' as emulated PK3 file.", *pwf.fname);
+      //AddPakDir(pwf.fname);
+      W_MountDiskDir(pwf.fname);
+    } else {
+      if (pwf.storeInSave) wpkAppend(pwf.fname, false); // non-system pak
+      AddAnyFile(pwf.fname, true);
+    }
+    fsys_hasPwads = true;
+  }
+  FL_EndUserWads(); // stop marking
+  fsys_skipSounds = false;
+  fsys_skipSprites = false;
+  fsys_skipDehacked = false;
+
+  // scan for user maps
+  performPWadScan();
+  if (pwadScanInfo.hasMapinfo) {
+    mapinfoFound = true;
+    fsys_hasMapPwads = true;
+  } else if (!pwadScanInfo.mapname.isEmpty()) {
+    mapnum = pwadScanInfo.getMapIndex();
+    mapname = pwadScanInfo.mapname;
+    fsys_hasMapPwads = true;
+  }
+
+  // save pwads to be added later
+  FSysSavedState pwadsSaved;
+  pwadsSaved.save();
+  TArray<VStr> wpklistSaved = wpklist;
+  wpklist.clear();
+
+
   ParseUserModes();
 
   AddGameDir("basev/common");
@@ -2514,8 +2638,8 @@ void FL_Init () {
   //if (isChex) AddGameDir("basev/mods/chex");
 
   // mark "iwad" flags
-  for (int i = 0; i < SearchPaths.length(); ++i) {
-    SearchPaths[i]->iwad = true;
+  for (int i = 0; i < fsysSearchPaths.length(); ++i) {
+    fsysSearchPaths[i]->iwad = true;
   }
 
   // disable sprite offsets for Harmony
@@ -2530,11 +2654,10 @@ void FL_Init () {
 
   CustomModeLoadPwads(CM_PRE_PWADS);
 
-  int mapnum = -1;
-  VStr mapname;
-  bool mapinfoFound = false;
-
-  // mount pwads
+  // mount pwads (actually, add already mounted ones)
+  pwadsSaved.restore();
+  for (auto &&it : wpklistSaved) wpklist.append(it);
+  /*
   FL_StartUserWads(); // start marking
   for (int pwidx = 0; pwidx < pwadList.length(); ++pwidx) {
     PWadFile &pwf = pwadList[pwidx];
@@ -2593,6 +2716,7 @@ void FL_Init () {
   fsys_skipSounds = false;
   fsys_skipSprites = false;
   fsys_skipDehacked = false;
+  */
 
   // load custom mode pwads
   CustomModeLoadPwads(CM_POST_PWADS);

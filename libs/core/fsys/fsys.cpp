@@ -43,11 +43,45 @@ VStr fsys_detected_mod_wad;
 int fsys_dev_dump_paks = 0;
 
 
-TArray<VSearchPath *> SearchPaths;
-TArray<VStr> wadfiles;
+TArray<VSearchPath *> fsysSearchPaths;
+TArray<VStr> fsysWadFileNames;
 TArray<VStr> fsys_game_filters;
 
 mythread_mutex fsys_glock;
+
+
+//==========================================================================
+//
+//  FSysSavedState::save
+//
+//  this clears current archives
+//
+//==========================================================================
+void FSysSavedState::save () {
+  if (saved) Sys_Error("FSysSavedState: double save");
+  saved = true;
+  svSearchPaths = fsysSearchPaths;
+  fsysSearchPaths.reset();
+  svwadfiles = fsysWadFileNames;
+  fsysWadFileNames.reset();
+}
+
+
+//==========================================================================
+//
+//  FSysSavedState::restore
+//
+//  this resets saved state
+//
+//==========================================================================
+void FSysSavedState::restore () {
+  if (!saved) Sys_Error("FSysSavedState: cannot restore empty save");
+  saved = false;
+  for (auto &&it : svSearchPaths) fsysSearchPaths.append(it);
+  for (auto &&it : svwadfiles) fsysWadFileNames.append(it);
+  svSearchPaths.clear();
+  svwadfiles.clear();
+}
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -79,12 +113,12 @@ void FSYS_InitOptions (VParsedArgs &pargs) {
 //==========================================================================
 void FSYS_Shutdown () {
   MyThreadLocker glocker(&fsys_glock);
-  for (int i = 0; i < SearchPaths.length(); ++i) {
-    delete SearchPaths[i];
-    SearchPaths[i] = nullptr;
+  for (int i = 0; i < fsysSearchPaths.length(); ++i) {
+    delete fsysSearchPaths[i];
+    fsysSearchPaths[i] = nullptr;
   }
-  SearchPaths.Clear();
-  wadfiles.Clear();
+  fsysSearchPaths.Clear();
+  fsysWadFileNames.Clear();
 }
 
 
@@ -173,8 +207,8 @@ bool FL_CheckFilterName (VStr &fname) {
 bool FL_FileExists (VStr fname) {
   if (fname.isEmpty()) return false;
   MyThreadLocker glocker(&fsys_glock);
-  for (int i = SearchPaths.length()-1; i >= 0; --i) {
-    if (SearchPaths[i]->FileExists(fname)) return true;
+  for (int i = fsysSearchPaths.length()-1; i >= 0; --i) {
+    if (fsysSearchPaths[i]->FileExists(fname)) return true;
   }
   return false;
 }
@@ -187,9 +221,9 @@ bool FL_FileExists (VStr fname) {
 //==========================================================================
 VStream *FL_OpenFileReadBaseOnly_NoLock (VStr Name) {
   if (Name.isEmpty()) return nullptr;
-  for (int i = SearchPaths.length()-1; i >= 0; --i) {
-    if (!SearchPaths[i]->basepak) continue;
-    VStream *Strm = SearchPaths[i]->OpenFileRead(Name);
+  for (int i = fsysSearchPaths.length()-1; i >= 0; --i) {
+    if (!fsysSearchPaths[i]->basepak) continue;
+    VStream *Strm = fsysSearchPaths[i]->OpenFileRead(Name);
     if (Strm) return Strm;
   }
   return nullptr;
@@ -206,8 +240,8 @@ VStream *FL_OpenFileRead_NoLock (VStr Name) {
   if (Name.length() >= 2 && Name[0] == '/' && Name[1] == '/') {
     return FL_OpenFileReadBaseOnly_NoLock(Name.mid(2, Name.length()));
   } else {
-    for (int i = SearchPaths.length()-1; i >= 0; --i) {
-      VStream *Strm = SearchPaths[i]->OpenFileRead(Name);
+    for (int i = fsysSearchPaths.length()-1; i >= 0; --i) {
+      VStream *Strm = fsysSearchPaths[i]->OpenFileRead(Name);
       if (Strm) return Strm;
     }
   }

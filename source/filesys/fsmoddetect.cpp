@@ -90,6 +90,10 @@ static int detectCzechbox (FSysModDetectorHelper &hlp, int seenZScriptLump) {
 static int detectHarmony (FSysModDetectorHelper &hlp, int seenZScriptLump) {
   if (hlp.hasLump("dehacked", 26287, "3446842b93dfa37075a238ccd5b0f29c")) {
     GLog.Log(NAME_Init, "Detected standalone TC: Harmony v1.1");
+    mdetect_SetGameName("doom2");
+    mdetect_ClearAndBlockCustomModes();
+    mdetect_DisableBDW();
+    mdetect_DisableIWads();
     return AD_HARMONY;
   }
   return AD_NONE;
@@ -111,10 +115,9 @@ static int detectSquare (FSysModDetectorHelper &hlp, int seenZScriptLump) {
       hlp.hasFile("acs/sq_jump.o"))
   {
     GLog.Log(NAME_Init, "Detected TC: Adventures of Square");
-    cli_NakedBase = 1; // ignore autoloads
-    fsys_onlyOneBaseFile = true;
-    fsys_DisableBDW = true; // don't load BDW
-    cli_GoreMod = 0;
+    mdetect_ClearAndBlockCustomModes();
+    mdetect_DisableBDW();
+    mdetect_DisableGore();
     //rforce_disable_sprofs = true; // disable sprite offsets
     //fsys_DisableBloodReplacement = true;
     return AD_SQUARE;
@@ -162,11 +165,11 @@ static int detectHuntersMoon (FSysModDetectorHelper &hlp, int seenZScriptLump) {
   if (seenZScriptLump >= 0) return AD_NONE;
   if (!checkGameInfo(hlp, "Hunter's Moon")) return AD_NONE;
   GLog.Log(NAME_Init, "Detected mod: Hunter's Moon");
-  cli_NakedBase = 1; // ignore autoloads
-  fsys_onlyOneBaseFile = true;
-  fsys_DisableBDW = true; // don't load BDW
-  //cli_GoreMod = 0; // disable gore mod
-  return AD_HMOON;
+  mdetect_ClearAndBlockCustomModes();
+  mdetect_DisableBDW();
+  //mdetect_DisableGore();
+  //return AD_HMOON;
+  return AD_NONE; // no reason to block other detection
 }
 
 

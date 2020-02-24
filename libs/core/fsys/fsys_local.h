@@ -279,7 +279,7 @@ VStream *FL_OpenFileReadBaseOnly_NoLock (VStr Name);
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern const VPK3ResDirInfo PK3ResourceDirs[];
-extern TArray<VSearchPath *> SearchPaths;
+extern TArray<VSearchPath *> fsysSearchPaths;
 
 extern bool fsys_report_added_paks;
 extern bool fsys_no_dup_reports;
@@ -337,5 +337,35 @@ void fsysRegisterModDetector (fsysModDetectorCB cb);
 
 extern int fsys_detected_mod;
 extern VStr fsys_detected_mod_wad;
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// GROSS HACK: you can "save" current open archives, and "append" them later
+// without reopening. this is used to open user-specified archives at startup,
+// and then move 'em down after base archives.
+// ////////////////////////////////////////////////////////////////////////// //
+
+// no autorestore; also, you can only save once
+class FSysSavedState {
+private:
+  TArray<VSearchPath *> svSearchPaths;
+  TArray<VStr> svwadfiles;
+  bool saved;
+
+public:
+  inline FSysSavedState () noexcept : svSearchPaths(), svwadfiles(), saved(false) {}
+  inline ~FSysSavedState () noexcept {} // no autorestore
+
+  // no copies
+  FSysSavedState (const FSysSavedState &) = delete;
+  FSysSavedState &operator = (const FSysSavedState &) = delete;
+
+  inline bool isActive () const noexcept { return saved; }
+
+  void save ();
+  // this resets saved state
+  void restore ();
+};
+
 
 #endif

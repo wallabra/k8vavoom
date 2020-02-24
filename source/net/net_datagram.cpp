@@ -150,7 +150,7 @@ public:
 
 // ////////////////////////////////////////////////////////////////////////// //
 extern int num_connected;
-extern TArray<VStr> wadfiles;
+extern TArray<VStr> fsysWadFileNames; // this is from corelib
 
 static VCvarB UseMaster("use_master", false, "Use master server?", CVAR_PreInit|CVAR_Archive);
 static VCvarS MasterSrv("master_srv", "ketmar.no-ip.org", "Master server domain name.", CVAR_PreInit|CVAR_Archive);
@@ -527,8 +527,8 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     MsgOut << TmpByte;
     TmpByte = NET_PROTOCOL_VERSION;
     MsgOut << TmpByte;
-    for (int i = 0; i < wadfiles.Num(); ++i) {
-      TmpStr = wadfiles[i];
+    for (int i = 0; i < fsysWadFileNames.Num(); ++i) {
+      TmpStr = fsysWadFileNames[i]; //TODO: remove path?
       MsgOut << TmpStr;
     }
     TmpStr = "";
