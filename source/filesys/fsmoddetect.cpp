@@ -203,4 +203,3 @@ static void FL_RegisterModDetectors () {
   fsysRegisterModDetector(&detectHuntersMoon);
   fsysRegisterModDetector(&detectVariousShit);
 }
-
