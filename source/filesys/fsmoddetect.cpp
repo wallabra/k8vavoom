@@ -165,7 +165,7 @@ static int detectHuntersMoon (FSysModDetectorHelper &hlp, int seenZScriptLump) {
   cli_NakedBase = 1; // ignore autoloads
   fsys_onlyOneBaseFile = true;
   fsys_DisableBDW = true; // don't load BDW
-  cli_GoreMod = 0; // disable gore mod
+  //cli_GoreMod = 0; // disable gore mod
   return AD_HMOON;
 }
 
