@@ -2841,7 +2841,7 @@ override void SpawnClient () {
   } else {
     mthing_t *best = PerformRebornSpawn();
     // if returned non-nullptr, it means that no good spawn position was found
-    // spawn player anyway, we don't want to totally ruing a game for them
+    // spawn player anyway, we don't want to totally ruin the game for them
     if (best) SpawnPlayer(best, false);
   }
 
@@ -5313,6 +5313,11 @@ void CheatHelper_AllKeys () {
   }
   cprint("You got keys!");
 }
+
+
+// can be overriden in user mods
+void AdjustForwardMove (ref float speed, ref float moveWalk, ref float moveRun) {}
+void AdjustSideMove (ref float speed, ref float moveWalk, ref float moveRun) {}
 
 
 defaultproperties {

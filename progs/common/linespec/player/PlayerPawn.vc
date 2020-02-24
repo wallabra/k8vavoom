@@ -724,15 +724,21 @@ void AdjustSpeed (ref float forward, ref float side) {
     side = fclamp(side, -WALKING_SPEED, WALKING_SPEED);
   }
 
+  PlayerEx pex = (bIsPlayer ? PlayerEx(Player) : none);
+
   //forward *= (forward >= -1000.0 && forward < 1000.0 ? ForwardMove1 : ForwardMove2);
   if (forward) {
     //printdebug("%C:000: forward=%s (%s : %s)", self, forward, ForwardMove1, ForwardMove2);
-    forward *= (fabs(forward) <= 1000.0 ? ForwardMove1 : ForwardMove2);
+    float fm1 = ForwardMove1, fm2 = ForwardMove2;
+    if (pex) pex.AdjustForwardMove(ref forward, ref fm1, ref fm2);
+    forward *= (fabs(forward) <= 1000.0 ? fm1 : fm2);
     //printdebug("%C:001: forward=%s (%s : %s)", self, forward, ForwardMove1, ForwardMove2);
   }
   if (side) {
     //printdebug("%C:000: side=%s (%s : %s)", self, side, SideMove1, SideMove2);
-    side *= (fabs(side) <= 1000 ? SideMove1 : SideMove2);
+    float sm1 = SideMove1, sm2 = SideMove2;
+    if (pex) pex.AdjustSideMove(ref side, ref sm1, ref sm2);
+    side *= (fabs(side) <= 1000 ? sm1 : sm2);
     //printdebug("%C:001: side=%s (%s : %s)", self, side, SideMove1, SideMove2);
   }
 
