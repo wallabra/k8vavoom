@@ -98,6 +98,7 @@ detector "Adventures of Square" {
     file { name = "GAMEINFO.sq"; }
     file { name = "acs/sqcommon.o"; }
     file { name = "acs/sq_jump.o"; }
+    file { name = "DECORATE.base"; }
   }
 
   options {
