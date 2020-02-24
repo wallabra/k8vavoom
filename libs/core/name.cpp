@@ -103,8 +103,8 @@ int VName::AppendNameEntry (VNameEntry *e) noexcept {
 //
 //==========================================================================
 static VName::VNameEntry *AllocateNameEntry (const char *Name, VName::VNameEntry *HashNext) noexcept {
-  const int slen = int(VStr::Length(Name));
-  size_t size = sizeof(VName::VNameEntry)-(PREDEFINED_NAME_SIZE+1)+slen+1;
+  const int slen = VStr::Length(Name);
+  size_t size = sizeof(VName::VNameEntry)-PREDEFINED_NAME_SIZE+slen; //+1 is done in declaration
   VName::VNameEntry *e = (VName::VNameEntry *)Z_Calloc(size);
   e->/*vstr.*/rc = -0x00ffffff; // "immutable" VStr flag
   e->/*vstr.*/length = slen;
