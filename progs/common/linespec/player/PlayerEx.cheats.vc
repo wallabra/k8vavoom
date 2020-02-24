@@ -54,6 +54,30 @@ private final void cht_apply_to_classes (string cmdname, string wantstr, void de
 
 //==========================================================================
 //
+//  CheatHelper_GimmePowers
+//
+//==========================================================================
+protected void CheatHelper_GimmePowers () {
+  if (Cmd_CheckParm("InfAmmo")) {
+    if (!EntityEx(MO).FindInfiniteAmmoPowerup()) {
+      auto it = PowerInfiniteAmmo(EntityEx(MO).GiveInventoryType(PowerInfiniteAmmo));
+      if (it) it.EffectTime = float.inf; // infinite
+      cprint("You got Infinite Ammo!");
+    }
+  }
+
+  if (Cmd_CheckParm("NoInfAmmo")) {
+    auto it = EntityEx(MO).FindInfiniteAmmoPowerup();
+    if (it) {
+      EntityEx(MO).RemoveInventory(it);
+      cprint("You lost Infinite Ammo!");
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  Cheat_Jumper
 //
 //==========================================================================

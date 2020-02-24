@@ -1328,7 +1328,7 @@ override void OnMapSpawn (mthing_t *mthing) {
     }
   } else {
     bool wasFloatBob = bFloatBob;
-    if (wasFloatBob) printdebug("%C:%s: FBOB! z=%s; nogravity=%B; special=%B", self, UniqueId, Origin.z, bNoGravity, bSpecial);
+    //if (wasFloatBob) printdebug("%C:%s: FBOB! z=%s; nogravity=%B; special=%B", self, UniqueId, Origin.z, bNoGravity, bSpecial);
     bFloatBob = false; // so it won't be raised
          if (bSpawnCeiling) Origin.z = ONCEILINGZ;
     else if (bSpawnFloat) Origin.z = FLOATRANDZ;

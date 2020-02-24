@@ -224,8 +224,10 @@ void Cheat_Gimme_AC (const ref array!string args, bool newArg, out array!string 
   aclist[$] = "Health2";
   aclist[$] = "Invisibility";
   aclist[$] = "Invulnerability";
+  aclist[$] = "InfAmmo";
   aclist[$] = "Keys";
   aclist[$] = "LightAmp";
+  aclist[$] = "NoInfAmmo";
   aclist[$] = "NoKeys";
   aclist[$] = "NoKeys";
   aclist[$] = "Powers";
@@ -390,6 +392,8 @@ void Cheat_Gimme () {
   if (gimmeFlags&GIMME_INVISIBILITY) { EntityEx(MO).GiveInventoryType(PowerInvisibility); cprint("You got Invisibility!"); }
   if (gimmeFlags&GIMME_IRONFEET) { EntityEx(MO).GiveInventoryType(PowerIronFeet); cprint("You got EnviroSuit!"); }
   if (gimmeFlags&GIMME_INFRARED) { EntityEx(MO).GiveInventoryType(PowerLightAmp); cprint("You got Light Amplifier!"); }
+
+  CheatHelper_GimmePowers();
 
   // items
   if (gimmeFlags&GIMME_ALLMAP) { EntityEx(MO).GiveInventoryType(Allmap); cprint("You got Computer Map!"); }

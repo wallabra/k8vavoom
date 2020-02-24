@@ -117,6 +117,7 @@ void Cheat_Gimme_AC (const ref array!string args, bool newArg, out array!string 
   aclist[$] = "CurrAmmo";
   aclist[$] = "Gold";
   aclist[$] = "Health";
+  aclist[$] = "InfAmmo";
   aclist[$] = "Keys";
   aclist[$] = "NoKeys";
   aclist[$] = "QuestItems";
@@ -221,6 +222,8 @@ void Cheat_Gimme () {
     if (GoldItem) GoldItem.Amount = min(100_000, GoldItem.MaxAmount);
     cprint("GOT GOLD");
   }
+
+  CheatHelper_GimmePowers();
 }
 
 

@@ -171,6 +171,7 @@ void Cheat_Gimme_AC (const ref array!string args, bool newArg, out array!string 
   aclist[$] = "CurrAmmo";
   aclist[$] = "ElvenGifts";
   aclist[$] = "Health";
+  aclist[$] = "InfAmmo";
   aclist[$] = "Keys";
   aclist[$] = "NoKeys";
   aclist[$] = "Power";
@@ -253,6 +254,8 @@ void Cheat_Gimme () {
     }
     cprint("ALL ARTIFACTS");
   }
+
+  CheatHelper_GimmePowers();
 }
 
 
