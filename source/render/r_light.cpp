@@ -912,41 +912,53 @@ void VRenderLevelShared::CalculateSubAmbient (float &l, float &lr, float &lg, fl
     } while (0);
   }
 
+  //TODO: glow height
+  #define MIX_FLAT_GLOW  \
+    if (hgt >= 0.0f && hgt < 120.0f) { \
+      /* if (lr == l && lg == l && lb == l) lr = lg = lb = 255; l = 255; */ \
+      /*return gtex->glowing|0xff000000u;*/ \
+      /*skipAmbient = true;*/ \
+      /*glowL = 255.0f;*/ \
+      float glowL = (120.0f-hgt)*255.0f/120.0f; \
+      float glowR = (gtex->glowing>>16)&0xff; \
+      float glowG = (gtex->glowing>>8)&0xff; \
+      float glowB = gtex->glowing&0xff; \
+      /* mix with glow */ \
+      /*glowL *= 0.8f;*/ \
+      if (glowL > 1.0f) { \
+        /*l *= 0.8f;*/ \
+        const float llfrac = (l/255.0f)*0.8f; \
+        const float glfrac = (glowL/255.0f)*0.8f; \
+        lr = clampval(lr*llfrac+glowR*glfrac, 0.0f, 255.0f); \
+        lg = clampval(lg*llfrac+glowG*glfrac, 0.0f, 255.0f); \
+        lb = clampval(lb*llfrac+glowB*glfrac, 0.0f, 255.0f); \
+        l = clampval(l+glowL, 0.0f, 255.0f); \
+      } \
+    }
+
+
   // glowing flats
   if (glowAllowed && r_glow_flat && sub->sector) {
     const sector_t *sec = sub->sector;
+    // fuckin' pasta!
     if (sec->floor.pic) {
       VTexture *gtex = GTextureManager(sec->floor.pic);
       if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
         const float hgt = p.z-sub->sector->floor.GetPointZClamped(p);
-        if (hgt >= 0.0f && hgt < 120.0f) {
-          /*
-          if (lr == l && lg == l && lb == l) lr = lg = lb = 255;
-          l = 255;
-          */
-          //return gtex->glowing|0xff000000u;
-          //skipAmbient = true;
-          //glowL = 255.0f;
-          float glowL = (120.0f-hgt)*255.0f/120.0f;
-          float glowR = (gtex->glowing>>16)&0xff;
-          float glowG = (gtex->glowing>>8)&0xff;
-          float glowB = gtex->glowing&0xff;
-
-          // mix with glow
-          //glowL *= 0.8f;
-          if (glowL > 1.0f) {
-            //l *= 0.8f;
-            const float llfrac = (l/255.0f)*0.8f;
-            const float glfrac = (glowL/255.0f)*0.8f;
-            lr = clampval(lr*llfrac+glowR*glfrac, 0.0f, 255.0f);
-            lg = clampval(lg*llfrac+glowG*glfrac, 0.0f, 255.0f);
-            lb = clampval(lb*llfrac+glowB*glfrac, 0.0f, 255.0f);
-            l = clampval(l+glowL, 0.0f, 255.0f);
-          }
-        }
+        MIX_FLAT_GLOW
+      }
+    }
+    if (sec->ceiling.pic) {
+      VTexture *gtex = GTextureManager(sec->ceiling.pic);
+      if (gtex && gtex->Type != TEXTYPE_Null && gtex->glowing) {
+        const float hgt = sub->sector->ceiling.GetPointZClamped(p)-p.z;
+        MIX_FLAT_GLOW
       }
     }
   }
+
+
+  #undef MIX_FLAT_GLOW
 }
 
 
