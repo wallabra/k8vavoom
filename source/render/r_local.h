@@ -1138,10 +1138,6 @@ extern VTextureTranslation IceTranslation;
 extern TArray<VTextureTranslation *> DecorateTranslations;
 extern TArray<VTextureTranslation *> BloodTranslations;
 
-extern vuint32 blocklightsr[VRenderLevelLightmap::LMapTraceInfo::GridSize*VRenderLevelLightmap::LMapTraceInfo::GridSize];
-extern vuint32 blocklightsg[VRenderLevelLightmap::LMapTraceInfo::GridSize*VRenderLevelLightmap::LMapTraceInfo::GridSize];
-extern vuint32 blocklightsb[VRenderLevelLightmap::LMapTraceInfo::GridSize*VRenderLevelLightmap::LMapTraceInfo::GridSize];
-
 extern double dbgCheckVisTime;
 
 

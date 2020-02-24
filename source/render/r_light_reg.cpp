@@ -66,25 +66,28 @@ enum { MaxSurfPoints = VRenderLevelLightmap::LMapTraceInfo::MaxSurfPoints };
 
 static_assert((Filter4X ? (MaxSurfPoints >= GridSize*GridSize*16) : (MaxSurfPoints >= GridSize*GridSize*4)), "invalid grid size");
 
-vuint32 blocklightsr[GridSize*GridSize];
-vuint32 blocklightsg[GridSize*GridSize];
-vuint32 blocklightsb[GridSize*GridSize];
-static vuint32 blockaddlightsr[GridSize*GridSize];
-static vuint32 blockaddlightsg[GridSize*GridSize];
-static vuint32 blockaddlightsb[GridSize*GridSize];
+//struct LightmapTracer {
+  static vuint32 blocklightsr[GridSize*GridSize];
+  static vuint32 blocklightsg[GridSize*GridSize];
+  static vuint32 blocklightsb[GridSize*GridSize];
+  static vuint32 blockaddlightsr[GridSize*GridSize];
+  static vuint32 blockaddlightsg[GridSize*GridSize];
+  static vuint32 blockaddlightsb[GridSize*GridSize];
 
-#ifdef VV_EXPERIMENTAL_LMAP_FILTER
-static vuint32 blocklightsrNew[GridSize*GridSize];
-static vuint32 blocklightsgNew[GridSize*GridSize];
-static vuint32 blocklightsbNew[GridSize*GridSize];
-#endif
+  #ifdef VV_EXPERIMENTAL_LMAP_FILTER
+  static vuint32 blocklightsrNew[GridSize*GridSize];
+  static vuint32 blocklightsgNew[GridSize*GridSize];
+  static vuint32 blocklightsbNew[GridSize*GridSize];
+  #endif
 
-#ifdef VV_USELESS_SUBTRACTIVE_LIGHT_CODE
-// subtractive
-static vuint32 blocklightsrS[GridSize*GridSize];
-static vuint32 blocklightsgS[GridSize*GridSize];
-static vuint32 blocklightsbS[GridSize*GridSize];
-#endif
+  #ifdef VV_USELESS_SUBTRACTIVE_LIGHT_CODE
+  // subtractive
+  static vuint32 blocklightsrS[GridSize*GridSize];
+  static vuint32 blocklightsgS[GridSize*GridSize];
+  static vuint32 blocklightsbS[GridSize*GridSize];
+  #endif
+//};
+
 
 int light_mem = 0;
 
