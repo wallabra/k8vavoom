@@ -28,7 +28,6 @@
 
 //#define VV_DEBUG_LMAP_ALLOCATOR
 //#define VV_EXPERIMENTAL_LMAP_FILTER
-//#define VV_USELESS_SUBTRACTIVE_LIGHT_CODE
 //#define VV_DEBUG_BMAP_TRACER
 
 
@@ -66,42 +65,35 @@ enum { MaxSurfPoints = VRenderLevelLightmap::LMapTraceInfo::MaxSurfPoints };
 
 static_assert((Filter4X ? (MaxSurfPoints >= GridSize*GridSize*16) : (MaxSurfPoints >= GridSize*GridSize*4)), "invalid grid size");
 
-//struct LightmapTracer {
-  static vuint32 blocklightsr[GridSize*GridSize];
-  static vuint32 blocklightsg[GridSize*GridSize];
-  static vuint32 blocklightsb[GridSize*GridSize];
-  static vuint32 blockaddlightsr[GridSize*GridSize];
-  static vuint32 blockaddlightsg[GridSize*GridSize];
-  static vuint32 blockaddlightsb[GridSize*GridSize];
+struct LightmapTracer {
+  vuint32 blocklightsr[GridSize*GridSize];
+  vuint32 blocklightsg[GridSize*GridSize];
+  vuint32 blocklightsb[GridSize*GridSize];
+  vuint32 blockaddlightsr[GridSize*GridSize];
+  vuint32 blockaddlightsg[GridSize*GridSize];
+  vuint32 blockaddlightsb[GridSize*GridSize];
 
   #ifdef VV_EXPERIMENTAL_LMAP_FILTER
-  static vuint32 blocklightsrNew[GridSize*GridSize];
-  static vuint32 blocklightsgNew[GridSize*GridSize];
-  static vuint32 blocklightsbNew[GridSize*GridSize];
+  vuint32 blocklightsrNew[GridSize*GridSize];
+  vuint32 blocklightsgNew[GridSize*GridSize];
+  vuint32 blocklightsbNew[GridSize*GridSize];
   #endif
 
-  #ifdef VV_USELESS_SUBTRACTIVE_LIGHT_CODE
-  // subtractive
-  static vuint32 blocklightsrS[GridSize*GridSize];
-  static vuint32 blocklightsgS[GridSize*GridSize];
-  static vuint32 blocklightsbS[GridSize*GridSize];
-  #endif
-//};
+  // this is for static lightmaps
+  // *4 for extra filtering
+  vuint8 lightmapHit[MaxSurfPoints];
+  float lightmapMono[MaxSurfPoints];
+  float lightmapr[MaxSurfPoints];
+  float lightmapg[MaxSurfPoints];
+  float lightmapb[MaxSurfPoints];
+  // set in lightmap merge code
+  bool hasOverbright; // has overbright component?
+  bool isColored; // is lightmap colored?
+};
 
 
 int light_mem = 0;
-
-
-// ////////////////////////////////////////////////////////////////////////// //
-// *4 for extra filtering
-static vuint8 lightmapHit[MaxSurfPoints];
-static float lightmap[MaxSurfPoints];
-static float lightmapr[MaxSurfPoints];
-static float lightmapg[MaxSurfPoints];
-static float lightmapb[MaxSurfPoints];
-// set in lightmap merge code
-static bool hasOverbright; // has overbright component?
-static bool isColored; // is lightmap colored?
+static LightmapTracer lmtracer;
 
 
 //==========================================================================
@@ -460,19 +452,19 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
     if (!CalcFaceVectors(lmi, surf)) {
       GCon->Logf(NAME_Warning, "cannot calculate lightmap vectors");
       lmi.numsurfpt = 0;
-      memset(lightmap, 0, sizeof(lightmap));
-      memset(lightmapr, 0, sizeof(lightmapr));
-      memset(lightmapg, 0, sizeof(lightmapg));
-      memset(lightmapb, 0, sizeof(lightmapb));
+      memset(lmtracer.lightmapMono, 0, sizeof(lmtracer.lightmapMono));
+      memset(lmtracer.lightmapr, 0, sizeof(lmtracer.lightmapr));
+      memset(lmtracer.lightmapg, 0, sizeof(lmtracer.lightmapg));
+      memset(lmtracer.lightmapb, 0, sizeof(lmtracer.lightmapb));
       return;
     }
 
     CalcPoints(lmi, surf, false);
     lmi.pointsCalced = true;
-    memset(lightmap, 0, lmi.numsurfpt*sizeof(lightmap[0]));
-    memset(lightmapr, 0, lmi.numsurfpt*sizeof(lightmapr[0]));
-    memset(lightmapg, 0, lmi.numsurfpt*sizeof(lightmapg[0]));
-    memset(lightmapb, 0, lmi.numsurfpt*sizeof(lightmapb[0]));
+    memset(lmtracer.lightmapMono, 0, lmi.numsurfpt*sizeof(lmtracer.lightmapMono[0]));
+    memset(lmtracer.lightmapr, 0, lmi.numsurfpt*sizeof(lmtracer.lightmapr[0]));
+    memset(lmtracer.lightmapg, 0, lmi.numsurfpt*sizeof(lmtracer.lightmapg[0]));
+    memset(lmtracer.lightmapb, 0, lmi.numsurfpt*sizeof(lmtracer.lightmapb[0]));
   }
 
   // check it for real
@@ -486,7 +478,7 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
   int h = (surf->extents[1]>>4)+1;
 
   bool doMidFilter = (!lmi.didExtra && r_lmap_filtering > 0);
-  if (doMidFilter) memset(lightmapHit, 0, /*w*h*/lmi.numsurfpt);
+  if (doMidFilter) memset(lmtracer.lightmapHit, 0, /*w*h*/lmi.numsurfpt);
 
   bool wasAnyHit = false;
   sector_t *ssector = Level->PointInSubsector(lorg)->sector;
@@ -497,7 +489,6 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
   for (int c = 0; c < lmi.numsurfpt; ++c, ++spt) {
     // check spotlight cone
     if (lmi.spotLight) {
-      //spt = lmi.calcTexPoint(starts+s*step, startt+t*step);
       if (length2DSquared((*spt)-lorg) > 2*2) {
         attn = spt->CalcSpotlightAttMult(lorg, lmi.coneDir, lmi.coneAngle);
         if (attn == 0.0f) continue;
@@ -509,27 +500,16 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
     const float raydist = CastStaticRay(ssector, lorg+lnormal, (*spt)+lnormal, squaredist);
     if (raydist <= 0.0f) {
       // light ray is blocked
-      /*
-      lightmap[c] += 255.0f;
-      lightmapg[c] += 255.0f;
-      isColored = true;
-      lmi.light_hit = true;
-      */
       continue;
     }
-    /*
-    if (CastRay(Level->PointInSubsector(*spt)->sector, *spt, lorg, squaredist) <= 0.0f) {
-      continue;
-    }
-    */
 
     TVec incoming = lorg-(*spt);
     if (!incoming.isZero()) {
       incoming.normaliseInPlace();
       if (!incoming.isValid()) {
-        lightmap[c] += 255.0f;
-        lightmapr[c] += 255.0f;
-        isColored = true;
+        lmtracer.lightmapMono[c] += 255.0f;
+        lmtracer.lightmapr[c] += 255.0f;
+        lmtracer.isColored = true;
         lmi.light_hit = true;
         continue;
       }
@@ -543,23 +523,23 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
     // without this, lights with huge radius will overbright everything
     if (add > 255.0f) add = 255.0f;
 
-    if (doMidFilter) { wasAnyHit = true; lightmapHit[c] = 1; }
+    if (doMidFilter) { wasAnyHit = true; lmtracer.lightmapHit[c] = 1; }
 
-    lightmap[c] += add;
-    lightmapr[c] += add*rmul;
-    lightmapg[c] += add*gmul;
-    lightmapb[c] += add*bmul;
+    lmtracer.lightmapMono[c] += add;
+    lmtracer.lightmapr[c] += add*rmul;
+    lmtracer.lightmapg[c] += add*gmul;
+    lmtracer.lightmapb[c] += add*bmul;
     // ignore really tiny lights
-    if (lightmap[c] > 1) {
+    if (lmtracer.lightmapMono[c] > 1) {
       lmi.light_hit = true;
-      if (light->color != 0xffffffff) isColored = true;
+      if (light->color != 0xffffffff) lmtracer.isColored = true;
     }
   }
 
   if (doMidFilter && wasAnyHit) {
     //GCon->Logf("w=%d; h=%d; num=%d; cnt=%d", w, h, w*h, lmi.numsurfpt);
    again:
-    const vuint8 *lht = lightmapHit;
+    const vuint8 *lht = lmtracer.lightmapHit;
     for (int y = 0; y < h; ++y) {
       for (int x = 0; x < w; ++x, ++lht) {
         const int laddr = y*w+x;
@@ -571,7 +551,7 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
         for (int dy = -1; dy < 2; ++dy) {
           const int sy = y+dy;
           if (sy < 0 || sy >= h) continue;
-          const vuint8 *row = lightmapHit+(sy*w);
+          const vuint8 *row = lmtracer.lightmapHit+(sy*w);
           for (int dx = -1; dx < 2; ++dx) {
             if ((dx|dy) == 0) continue;
             const int sx = x+dx;
@@ -610,16 +590,16 @@ void VRenderLevelLightmap::SingleLightFace (LMapTraceInfo &lmi, light_t *light, 
           // without this, lights with huge radius will overbright everything
           if (add > 255.0f) add = 255.0f;
 
-          lightmap[laddr] += add;
-          lightmapr[laddr] += add*rmul;
-          lightmapg[laddr] += add*gmul;
-          lightmapb[laddr] += add*bmul;
+          lmtracer.lightmapMono[laddr] += add;
+          lmtracer.lightmapr[laddr] += add*rmul;
+          lmtracer.lightmapg[laddr] += add*gmul;
+          lmtracer.lightmapb[laddr] += add*bmul;
           // ignore really tiny lights
-          if (lightmap[laddr] > 1) {
+          if (lmtracer.lightmapMono[laddr] > 1) {
             lmi.light_hit = true;
-            if (light->color != 0xffffffff) isColored = true;
+            if (light->color != 0xffffffff) lmtracer.isColored = true;
           }
-          lightmapHit[laddr] = 1;
+          lmtracer.lightmapHit[laddr] = 1;
           if (r_lmap_filtering == 2) goto again;
         }
       }
@@ -663,7 +643,7 @@ void VRenderLevelLightmap::LightFace (surface_t *surf, subsector_t *leaf) {
 
   const vuint8 *facevis = (leaf && Level->HasPVS() ? Level->LeafPVS(leaf) : nullptr);
   lmi.light_hit = false;
-  isColored = false;
+  lmtracer.isColored = false;
 
   // cast all static lights
   CalcMinMaxs(lmi, surf);
@@ -696,7 +676,7 @@ void VRenderLevelLightmap::LightFace (surface_t *surf, subsector_t *leaf) {
 
   // if the surface already has a static lightmap, we will reuse it,
   // otherwise we must allocate a new one
-  if (isColored) {
+  if (lmtracer.isColored) {
     // need colored lightmap
     int sz = w*h*(int)sizeof(surf->lightmap_rgb[0]);
     if (surf->lmrgbsize != sz) {
@@ -708,9 +688,9 @@ void VRenderLevelLightmap::LightFace (surface_t *surf, subsector_t *leaf) {
 
     if (!lmi.didExtra) {
       if (w*h <= MaxSurfPoints) {
-        FilterLightmap(lightmapr, w, h);
-        FilterLightmap(lightmapg, w, h);
-        FilterLightmap(lightmapb, w, h);
+        FilterLightmap(lmtracer.lightmapr, w, h);
+        FilterLightmap(lmtracer.lightmapg, w, h);
+        FilterLightmap(lmtracer.lightmapb, w, h);
       } else {
         GCon->Logf(NAME_Warning, "skipped filter for lightmap of size %dx%d", w, h);
       }
@@ -726,25 +706,25 @@ void VRenderLevelLightmap::LightFace (surface_t *surf, subsector_t *leaf) {
         float total;
         if (lmi.didExtra) {
           // filtered sample
-          FILTER_LMAP_EXTRA(lightmapr);
+          FILTER_LMAP_EXTRA(lmtracer.lightmapr);
         } else {
-          total = lightmapr[i];
+          total = lmtracer.lightmapr[i];
         }
         surf->lightmap_rgb[i].r = clampToByte((int)total);
 
         if (lmi.didExtra) {
           // filtered sample
-          FILTER_LMAP_EXTRA(lightmapg);
+          FILTER_LMAP_EXTRA(lmtracer.lightmapg);
         } else {
-          total = lightmapg[i];
+          total = lmtracer.lightmapg[i];
         }
         surf->lightmap_rgb[i].g = clampToByte((int)total);
 
         if (lmi.didExtra) {
           // filtered sample
-          FILTER_LMAP_EXTRA(lightmapb);
+          FILTER_LMAP_EXTRA(lmtracer.lightmapb);
         } else {
-          total = lightmapb[i];
+          total = lmtracer.lightmapb[i];
         }
         surf->lightmap_rgb[i].b = clampToByte((int)total);
       }
@@ -771,7 +751,7 @@ void VRenderLevelLightmap::LightFace (surface_t *surf, subsector_t *leaf) {
 
     if (!lmi.didExtra) {
       if (w*h <= MaxSurfPoints) {
-        FilterLightmap(lightmap, w, h);
+        FilterLightmap(lmtracer.lightmapMono, w, h);
       } else {
         GCon->Logf(NAME_Warning, "skipped filter for lightmap of size %dx%d", w, h);
       }
@@ -787,9 +767,9 @@ void VRenderLevelLightmap::LightFace (surface_t *surf, subsector_t *leaf) {
         float total;
         if (lmi.didExtra) {
           // filtered sample
-          FILTER_LMAP_EXTRA(lightmap);
+          FILTER_LMAP_EXTRA(lmtracer.lightmapMono);
         } else {
-          total = lightmap[i];
+          total = lmtracer.lightmapMono[i];
         }
         surf->lightmap[i] = clampToByte((int)total);
       }
@@ -980,20 +960,10 @@ void VRenderLevelLightmap::AddDynamicLights (surface_t *surf) {
             }
           }
           int i = t*smax+s;
-          if (!(dl.type&DLTYPE_Subtractive)) {
-            //blocklights[i] += (rad-ptdist)*256.0f;
-            blocklightsr[i] += rmul*add;
-            blocklightsg[i] += gmul*add;
-            blocklightsb[i] += bmul*add;
-          } else {
-            #ifdef VV_USELESS_SUBTRACTIVE_LIGHT_CODE
-            //blocklightsS[i] += (rad-ptdist)*256.0f;
-            blocklightsrS[i] += rmul*add;
-            blocklightsgS[i] += gmul*add;
-            blocklightsbS[i] += bmul*add;
-            #endif
-          }
-          if (dlcolor != 0xffffffff) isColored = true;
+          lmtracer.blocklightsr[i] += rmul*add;
+          lmtracer.blocklightsg[i] += gmul*add;
+          lmtracer.blocklightsb[i] += bmul*add;
+          if (dlcolor != 0xffffffff) lmtracer.isColored = true;
         }
       }
     }
@@ -1101,10 +1071,10 @@ void VRenderLevelLightmap::InvalidateBSPNodeLMaps (const TVec &org, float radius
     // decide which side the light is on
     const float dist = DotProduct(org, bsp->normal)-bsp->dist;
     if (dist > radius) {
-      // light is completely on front side
+      // light is completely on the front side
       return InvalidateBSPNodeLMaps(org, radius, bsp->children[0], bsp->bbox[0]);
     } else if (dist < -radius) {
-      // light is completely on back side
+      // light is completely on the back side
       return InvalidateBSPNodeLMaps(org, radius, bsp->children[1], bsp->bbox[1]);
     } else {
       //int side = bsp->PointOnSide(CurrLightPos);
@@ -1123,6 +1093,13 @@ void VRenderLevelLightmap::InvalidateBSPNodeLMaps (const TVec &org, float radius
   }
 }
 
+/*
+TODO:
+keep list of static lights that can affect each wall and flat, and trigger
+static lightmap recalc when the corresponding surface invalidates.
+this will allow us to recalculate static lightmaps when the door opened, for
+example.
+*/
 
 //==========================================================================
 //
@@ -1157,19 +1134,7 @@ void VRenderLevelLightmap::InvalidateStaticLightmaps (const TVec &org, float rad
 //  xblight
 //
 //==========================================================================
-#ifdef VV_USELESS_SUBTRACTIVE_LIGHT_CODE
-static inline int xblight (int add, int sub) {
-  enum {
-    minlight = 256,
-    maxlight = 0xff00,
-  };
-  int t = 255*256-add+sub;
-  //if (sub > 0) t = maxlight;
-  if (t < minlight) t = minlight; else if (t > maxlight) t = maxlight;
-  return t;
-}
-#else
-static inline int xblight (int add) {
+static inline int xblight (int add) noexcept {
   enum {
     minlight = 256,
     maxlight = 0xff00,
@@ -1177,7 +1142,6 @@ static inline int xblight (int add) {
   const int t = 255*256-add;
   return (t < minlight ? minlight : t > maxlight ? maxlight : t);
 }
-#endif
 
 
 //==========================================================================
@@ -1200,8 +1164,8 @@ void VRenderLevelLightmap::BuildLightMap (surface_t *surf) {
     if (surf->subsector) LightFace(surf, surf->subsector);
   }
 
-  isColored = false;
-  hasOverbright = false;
+  lmtracer.isColored = false;
+  lmtracer.hasOverbright = false;
   int smax = (surf->extents[0]>>4)+1;
   int tmax = (surf->extents[1]>>4)+1;
   vassert(smax > 0);
@@ -1218,46 +1182,42 @@ void VRenderLevelLightmap::BuildLightMap (surface_t *surf) {
   int tR = ((surf->Light>>16)&255)*t/255;
   int tG = ((surf->Light>>8)&255)*t/255;
   int tB = (surf->Light&255)*t/255;
-  if (tR != tG || tR != tB) isColored = true;
+  if (tR != tG || tR != tB) lmtracer.isColored = true;
 
   for (int i = 0; i < size; ++i) {
-    //blocklights[i] = t;
-    blocklightsr[i] = tR;
-    blocklightsg[i] = tG;
-    blocklightsb[i] = tB;
-    blockaddlightsr[i] = blockaddlightsg[i] = blockaddlightsb[i] = 0;
-    #ifdef VV_USELESS_SUBTRACTIVE_LIGHT_CODE
-    /*blocklightsS[i] =*/ blocklightsrS[i] = blocklightsgS[i] = blocklightsbS[i] = 0;
-    #endif
+    lmtracer.blocklightsr[i] = tR;
+    lmtracer.blocklightsg[i] = tG;
+    lmtracer.blocklightsb[i] = tB;
+    lmtracer.blockaddlightsr[i] = lmtracer.blockaddlightsg[i] = lmtracer.blockaddlightsb[i] = 0;
   }
 
   // sum lightmaps
   const bool overbright = r_lmap_overbright_static.asBool();
   if (lightmap_rgb) {
     if (!lightmap) Sys_Error("RGB lightmap without uncolored lightmap");
-    isColored = true;
+    lmtracer.isColored = true;
     for (int i = 0; i < size; ++i) {
       //blocklights[i] += lightmap[i]<<8;
-      blocklightsr[i] += lightmap_rgb[i].r<<8;
-      blocklightsg[i] += lightmap_rgb[i].g<<8;
-      blocklightsb[i] += lightmap_rgb[i].b<<8;
+      lmtracer.blocklightsr[i] += lightmap_rgb[i].r<<8;
+      lmtracer.blocklightsg[i] += lightmap_rgb[i].g<<8;
+      lmtracer.blocklightsb[i] += lightmap_rgb[i].b<<8;
       if (!overbright) {
-        if (blocklightsr[i] > 0xffff) blocklightsr[i] = 0xffff;
-        if (blocklightsg[i] > 0xffff) blocklightsg[i] = 0xffff;
-        if (blocklightsb[i] > 0xffff) blocklightsb[i] = 0xffff;
+        if (lmtracer.blocklightsr[i] > 0xffff) lmtracer.blocklightsr[i] = 0xffff;
+        if (lmtracer.blocklightsg[i] > 0xffff) lmtracer.blocklightsg[i] = 0xffff;
+        if (lmtracer.blocklightsb[i] > 0xffff) lmtracer.blocklightsb[i] = 0xffff;
       }
     }
   } else if (lightmap) {
     for (int i = 0; i < size; ++i) {
       t = lightmap[i]<<8;
       //blocklights[i] += t;
-      blocklightsr[i] += t;
-      blocklightsg[i] += t;
-      blocklightsb[i] += t;
+      lmtracer.blocklightsr[i] += t;
+      lmtracer.blocklightsg[i] += t;
+      lmtracer.blocklightsb[i] += t;
       if (!overbright) {
-        if (blocklightsr[i] > 0xffff) blocklightsr[i] = 0xffff;
-        if (blocklightsg[i] > 0xffff) blocklightsg[i] = 0xffff;
-        if (blocklightsb[i] > 0xffff) blocklightsb[i] = 0xffff;
+        if (lmtracer.blocklightsr[i] > 0xffff) lmtracer.blocklightsr[i] = 0xffff;
+        if (lmtracer.blocklightsg[i] > 0xffff) lmtracer.blocklightsg[i] = 0xffff;
+        if (lmtracer.blocklightsb[i] > 0xffff) lmtracer.blocklightsb[i] = 0xffff;
       }
     }
   }
@@ -1269,67 +1229,39 @@ void VRenderLevelLightmap::BuildLightMap (surface_t *surf) {
   // this must be done before lightmap procesing because it will clamp all lights
   const float spcoeff = clampval(r_lmap_specular.asFloat(), 0.0f, 16.0f);
   for (unsigned i = 0; i < (unsigned)size; ++i) {
-    #ifdef VV_USELESS_SUBTRACTIVE_LIGHT_CODE
-    t = blocklightsr[i]-blocklightsrS[i];
-    #else
-    t = blocklightsr[i];
-    #endif
-    //if (t < 0) { t = 0; blocklightsr[i] = 0; } // subtractive light fix
+    t = lmtracer.blocklightsr[i];
     t -= 0x10000;
     if (t > 0) {
       t = int(spcoeff*t);
       if (t > 0xffff) t = 0xffff;
-      blockaddlightsr[i] = t;
-      hasOverbright = true;
+      lmtracer.blockaddlightsr[i] = t;
+      lmtracer.hasOverbright = true;
     }
 
-    #ifdef VV_USELESS_SUBTRACTIVE_LIGHT_CODE
-    t = blocklightsg[i]-blocklightsgS[i];
-    #else
-    t = blocklightsg[i];
-    #endif
-    //if (t < 0) { t = 0; blocklightsg[i] = 0; } // subtractive light fix
+    t = lmtracer.blocklightsg[i];
     t -= 0x10000;
     if (t > 0) {
       t = int(spcoeff*t);
       if (t > 0xffff) t = 0xffff;
-      blockaddlightsg[i] = t;
-      hasOverbright = true;
+      lmtracer.blockaddlightsg[i] = t;
+      lmtracer.hasOverbright = true;
     }
 
-    #ifdef VV_USELESS_SUBTRACTIVE_LIGHT_CODE
-    t = blocklightsb[i]-blocklightsbS[i];
-    #else
-    t = blocklightsb[i];
-    #endif
-    //if (t < 0) { t = 0; blocklightsb[i] = 0; } // subtractive light fix
+    t = lmtracer.blocklightsb[i];
     t -= 0x10000;
     if (t > 0) {
       t = int(spcoeff*t);
       if (t > 0xffff) t = 0xffff;
-      blockaddlightsb[i] = t;
-      hasOverbright = true;
+      lmtracer.blockaddlightsb[i] = t;
+      lmtracer.hasOverbright = true;
     }
   }
 
   // bound, invert, and shift
   for (unsigned i = 0; i < (unsigned)size; ++i) {
-    //if (blocklightsrS[i]|blocklightsgS[i]|blocklightsbS[i]) fprintf(stderr, "*** SBL: (%d,%d,%d)\n", blocklightsrS[i], blocklightsgS[i], blocklightsbS[i]);
-    #ifdef VV_USELESS_SUBTRACTIVE_LIGHT_CODE
-    blocklightsr[i] = xblight((int)blocklightsr[i], (int)blocklightsrS[i]);
-    blocklightsg[i] = xblight((int)blocklightsg[i], (int)blocklightsgS[i]);
-    blocklightsb[i] = xblight((int)blocklightsb[i], (int)blocklightsbS[i]);
-    #else
-    blocklightsr[i] = xblight((int)blocklightsr[i]);
-    blocklightsg[i] = xblight((int)blocklightsg[i]);
-    blocklightsb[i] = xblight((int)blocklightsb[i]);
-    #endif
-
-    /*
-    blocklightsr[i] = 0xff00;
-    blocklightsg[i] = 0x0100;
-    blocklightsb[i] = 0xff00;
-    */
+    lmtracer.blocklightsr[i] = xblight((int)lmtracer.blocklightsr[i]);
+    lmtracer.blocklightsg[i] = xblight((int)lmtracer.blocklightsg[i]);
+    lmtracer.blocklightsb[i] = xblight((int)lmtracer.blocklightsb[i]);
   }
 
   #ifdef VV_EXPERIMENTAL_LMAP_FILTER
@@ -1351,25 +1283,23 @@ void VRenderLevelLightmap::BuildLightMap (surface_t *surf) {
   if (smax > 2 && tmax > 2) {
     for (int j = 1; j < tmax-1; ++j) {
       unsigned pos = j*smax+1;
-      blocklightsrNew[pos-1] = blocklightsr[pos-1];
-      blocklightsgNew[pos-1] = blocklightsg[pos-1];
-      blocklightsbNew[pos-1] = blocklightsb[pos-1];
+      lmtracer.blocklightsrNew[pos-1] = lmtracer.blocklightsr[pos-1];
+      lmtracer.blocklightsgNew[pos-1] = lmtracer.blocklightsg[pos-1];
+      lmtracer.blocklightsbNew[pos-1] = lmtracer.blocklightsb[pos-1];
       for (int i = 1; i < smax-1; ++i, ++pos) {
-        DO_ONE_LMFILTER(blocklightsr);
-        DO_ONE_LMFILTER(blocklightsg);
-        DO_ONE_LMFILTER(blocklightsb);
+        DO_ONE_LMFILTER(lmtracer.blocklightsr);
+        DO_ONE_LMFILTER(lmtracer.blocklightsg);
+        DO_ONE_LMFILTER(lmtracer.blocklightsb);
       }
-      blocklightsrNew[pos] = blocklightsr[pos];
-      blocklightsgNew[pos] = blocklightsg[pos];
-      blocklightsbNew[pos] = blocklightsb[pos];
+      lmtracer.blocklightsrNew[pos] = lmtracer.blocklightsr[pos];
+      lmtracer.blocklightsgNew[pos] = lmtracer.blocklightsg[pos];
+      lmtracer.blocklightsbNew[pos] = lmtracer.blocklightsb[pos];
     }
-    memcpy(blocklightsr+smax, blocklightsrNew+smax, smax*(tmax-2)*sizeof(blocklightsr[0]));
-    memcpy(blocklightsg+smax, blocklightsgNew+smax, smax*(tmax-2)*sizeof(blocklightsg[0]));
-    memcpy(blocklightsb+smax, blocklightsbNew+smax, smax*(tmax-2)*sizeof(blocklightsb[0]));
+    memcpy(lmtracer.blocklightsr+smax, lmtracer.blocklightsrNew+smax, smax*(tmax-2)*sizeof(lmtracer.blocklightsr[0]));
+    memcpy(lmtracer.blocklightsg+smax, lmtracer.blocklightsgNew+smax, smax*(tmax-2)*sizeof(lmtracer.blocklightsg[0]));
+    memcpy(lmtracer.blocklightsb+smax, lmtracer.blocklightsbNew+smax, smax*(tmax-2)*sizeof(lmtracer.blocklightsb[0]));
   }
   #endif
-
-  //return is_colored;
 }
 
 
@@ -1480,9 +1410,9 @@ bool VRenderLevelLightmap::BuildSurfaceLightmap (surface_t *surface) {
   for (int y = 0; y < tmax; ++y, lbp += BLOCK_WIDTH) {
     rgba_t *dlbp = lbp;
     for (int x = 0; x < smax; ++x, ++dlbp, ++blpos) {
-      dlbp->r = 255-clampToByte(blocklightsr[blpos]>>8);
-      dlbp->g = 255-clampToByte(blocklightsg[blpos]>>8);
-      dlbp->b = 255-clampToByte(blocklightsb[blpos]>>8);
+      dlbp->r = 255-clampToByte(lmtracer.blocklightsr[blpos]>>8);
+      dlbp->g = 255-clampToByte(lmtracer.blocklightsg[blpos]>>8);
+      dlbp->b = 255-clampToByte(lmtracer.blocklightsb[blpos]>>8);
       dlbp->a = 255;
     }
   }
@@ -1495,9 +1425,9 @@ bool VRenderLevelLightmap::BuildSurfaceLightmap (surface_t *surface) {
   for (int y = 0; y < tmax; ++y, lbp += BLOCK_WIDTH) {
     rgba_t *dlbp = lbp;
     for (int x = 0; x < smax; ++x, ++dlbp, ++blpos) {
-      dlbp->r = clampToByte(blockaddlightsr[blpos]>>8);
-      dlbp->g = clampToByte(blockaddlightsg[blpos]>>8);
-      dlbp->b = clampToByte(blockaddlightsb[blpos]>>8);
+      dlbp->r = clampToByte(lmtracer.blockaddlightsr[blpos]>>8);
+      dlbp->g = clampToByte(lmtracer.blockaddlightsg[blpos]>>8);
+      dlbp->b = clampToByte(lmtracer.blockaddlightsb[blpos]>>8);
       dlbp->a = 255;
     }
   }
