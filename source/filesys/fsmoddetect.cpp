@@ -175,6 +175,22 @@ static int detectHuntersMoon (FSysModDetectorHelper &hlp, int seenZScriptLump) {
 
 //==========================================================================
 //
+//  detectVariousShit
+//
+//==========================================================================
+static int detectVariousShit (FSysModDetectorHelper &hlp, int seenZScriptLump) {
+  if (seenZScriptLump >= 0) return AD_NONE;
+  if (hlp.hasFile("MAPINFO.txt", 2306, "47b7e6bcc4024d428909a0f3f7b05126")) {
+    GLog.Log(NAME_Init, "Detected PWAD: grinshit; switching to plutonia");
+    mdetect_SetGameName("plutonia");
+    return AD_NONE;
+  }
+  return AD_NONE; // no reason to block other detection
+}
+
+
+//==========================================================================
+//
 //  FL_RegisterModDetectors
 //
 //==========================================================================
@@ -185,5 +201,6 @@ static void FL_RegisterModDetectors () {
   fsysRegisterModDetector(&detectHarmony);
   fsysRegisterModDetector(&detectSquare);
   fsysRegisterModDetector(&detectHuntersMoon);
+  fsysRegisterModDetector(&detectVariousShit);
 }
 
