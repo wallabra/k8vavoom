@@ -201,7 +201,10 @@ Actor BDW_Rifle : Weapon Replaces Chaingun {
           else if (user_spread >= 3) A_SetPitch(-1.0+pitch);
           else A_SetPitch(-1.3+pitch);
         }
-      "----" A 0 BRIGHT A_TakeInventory("BDW_RifleAmmo", 1)
+      "----" A 0 BRIGHT
+        {
+          if (!CountInv("PowerInfiniteAmmo")) A_TakeInventory("BDW_RifleAmmo", 1);
+        }
       "####" A 1 BRIGHT // not B, i don't like that frame
         {
                if (user_spread >= 5) A_SetPitch(+0.4+pitch);
