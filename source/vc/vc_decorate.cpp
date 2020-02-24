@@ -40,6 +40,8 @@ static int disableBloodReplaces = 0;
 static int bloodOverrideAllowed = 0;
 static int enableKnownBlood = 0;
 
+bool decoIgnorePlayerSpeed = false;
+
 
 /*
 static inline VVA_OKUNUSED vuint32 GetTypeHashCI (const VStr &s) { return fnvHashStrCI(*s); }
@@ -2221,13 +2223,18 @@ static void ParseActor (VScriptParser *sc, TArray<VClassFixup> &ClassFixups, TAr
             break;
           case PROP_FloatOpt2:
             sc->ExpectFloat();
-            P.Field->SetFloat(DefObj, sc->Float);
-            P.Field2->SetFloat(DefObj, sc->Float);
-            if (sc->Check(",")) {
-              sc->ExpectFloat();
+            if (decoIgnorePlayerSpeed && (P.Field->Name == "ForwardMove1" || P.Field->Name == "SideMove1")) {
+              GCon->Log(NAME_Init, "...ignored playerpawn movement speed property");
+              if (sc->Check(",")) sc->ExpectFloat(); else (void)sc->CheckFloat();
+            } else {
+              P.Field->SetFloat(DefObj, sc->Float);
               P.Field2->SetFloat(DefObj, sc->Float);
-            } else if (sc->CheckFloat()) {
-              P.Field2->SetFloat(DefObj, sc->Float);
+              if (sc->Check(",")) {
+                sc->ExpectFloat();
+                P.Field2->SetFloat(DefObj, sc->Float);
+              } else if (sc->CheckFloat()) {
+                P.Field2->SetFloat(DefObj, sc->Float);
+              }
             }
             break;
           case PROP_Name:

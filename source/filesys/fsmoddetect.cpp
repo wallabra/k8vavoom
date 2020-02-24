@@ -62,6 +62,7 @@ public:
   int modblood; // -1: "nogore"
   bool iwad;
   bool sprofslump;
+  bool ignorePlayerSpeed;
 
 public:
   inline VDetectorInfo () noexcept
@@ -82,10 +83,30 @@ public:
     , modblood(1)
     , iwad(true)
     , sprofslump(true)
+    , ignorePlayerSpeed(false)
   {}
 
   // "{" just eaten
   void parseContent (VScriptParser *sc);
+
+  void clearPre () {
+    zscriptLumpCheck = -1;
+    gameTitle.clear();
+    reqiredContent.clear();
+  }
+
+  void clearOpts () {
+    addmod.clear();
+    nomore = true;
+    gamename.clear();
+    nakedbase = false;
+    bdw = -1;
+    gore = -1;
+    modblood = 1;
+    iwad = true;
+    sprofslump = true;
+    ignorePlayerSpeed = false;
+  }
 
 private:
   void parseInfo (VScriptParser *sc);
@@ -196,6 +217,7 @@ void VDetectorInfo::parseInfo (VScriptParser *sc) {
 //
 //==========================================================================
 void VDetectorInfo::parsePre (VScriptParser *sc) {
+  if (sc->Check("clear")) clearPre();
   sc->Expect("{");
   while (!sc->Check("}")) {
          if (sc->Check("zscript")) zscriptLumpCheck = parseBool(sc, "dontcare");
@@ -213,6 +235,7 @@ void VDetectorInfo::parsePre (VScriptParser *sc) {
 //
 //==========================================================================
 void VDetectorInfo::parseOpts (VScriptParser *sc) {
+  if (sc->Check("clear")) clearOpts();
   sc->Expect("{");
   while (!sc->Check("}")) {
          if (sc->Check("addmod")) addmod = parseString(sc);
@@ -224,6 +247,7 @@ void VDetectorInfo::parseOpts (VScriptParser *sc) {
     else if (sc->Check("modblood")) modblood = parseBool(sc, "nogore");
     else if (sc->Check("iwad")) { iwad = parseBool(sc); if (!iwad) sprofslump = false; }
     else if (sc->Check("sprofslump")) sprofslump = parseBool(sc);
+    else if (sc->Check("ignorePlayerSpeed")) ignorePlayerSpeed = parseBool(sc);
     else sc->Error(va("unknown options command '%s'", *sc->String));
   }
 }
@@ -279,24 +303,31 @@ static void ParseDetectors (VStr name) {
   sc->SetCMode(true);
   for (;;) {
     if (sc->Check("detector")) {
+      const bool doExtend = sc->Check("extend");
       sc->ExpectString();
       VStr dname = sc->String;
       if (dname.isEmpty()) sc->Error("empty detector name");
-      sc->Expect("{");
-      VDetectorInfo *dt = new VDetectorInfo();
-      dt->name = dname;
-      dt->parseContent(sc);
-      if (dt->gameTitle.isEmpty() && dt->reqiredContent.length() == 0) sc->Error(va("empty detector '%s'", *dname));
+      VDetectorInfo *dt = nullptr;
       int idx = 0;
       for (; idx < detectorList.length(); ++idx) if (detectorList[idx]->name.strEquCI(dname)) break;
       if (idx < detectorList.length()) {
-        // replace
-        delete detectorList[idx];
-        detectorList[idx] = dt;
+        if (doExtend) {
+          dt = detectorList[idx]; // reuse
+        } else {
+          // remove
+          delete detectorList[idx];
+          detectorList.removeAt(idx);
+        }
       } else {
-        // append
-        detectorList.append(dt);
+        if (doExtend) sc->Error(va("cannot extend unknown detector '%s'", *dname));
       }
+      sc->Expect("{");
+      if (!dt) dt = new VDetectorInfo();
+      dt->name = dname;
+      dt->parseContent(sc);
+      if (dt->gameTitle.isEmpty() && dt->reqiredContent.length() == 0) sc->Error(va("empty detector '%s'", *dname));
+      // append
+      detectorList.append(dt);
       continue;
     }
     if (!sc->GetString()) break;
@@ -380,6 +411,7 @@ static int detectFromList (FSysModDetectorHelper &hlp, int seenZScriptLump) {
     if (dc->modblood <= 0) { if (dc->modblood < 0) dc->modblood = (cli_GoreMod == 0); fsys_DisableBloodReplacement = (dc->modblood == 0); }
     if (!dc->iwad) mdetect_DisableIWads();
     if (!dc->sprofslump) modNoBaseSprOfs = true;
+    if (dc->ignorePlayerSpeed) decoIgnorePlayerSpeed = true;
     if (dc->nomore) return 1; // detected, stop
   }
 

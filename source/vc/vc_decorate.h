@@ -54,3 +54,5 @@ extern TArray<VClass *> NumberLimitedClasses;
 
 // GameInfo is not spawned yet, so keep them here
 extern TArray<VDamageFactor> CustomDamageFactors;
+
+extern bool decoIgnorePlayerSpeed;
