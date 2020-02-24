@@ -103,31 +103,6 @@ VRenderLevelShadowVolume::~VRenderLevelShadowVolume () {
 }
 
 
-#define DBG_RENDER_LIGHTS(pass_)  do { \
-  if (r_dbg_lightbulbs_static || r_dbg_lightbulbs_dynamic) { \
-    if (visibleStaticLightCount > 0 && r_dbg_lightbulbs_static) { \
-      visstatlightCount = visibleStaticLightCount; \
-      TAVec langles(0, 0, 0); \
-      const float zofs = r_dbg_lightbulbs_zofs_static.asFloat(); \
-      for (const StLightInfo *sli = visstatlights.ptr(); visstatlightCount--; ++sli) { \
-        TVec lorg = sli->stlight->origin; \
-        lorg.z += sli->zofs+zofs; \
-        R_DrawLightBulb(lorg, langles, sli->stlight->color, pass_, true/*shadowvol*/); \
-      } \
-    } \
-    \
-    if (visibleDynamicLightCount > 0 && r_dbg_lightbulbs_dynamic) { \
-      visdynlightCount = visibleDynamicLightCount; \
-      TAVec langles(0, 0, 0); \
-      const float zofs = r_dbg_lightbulbs_zofs_dynamic.asFloat(); \
-      for (const DynLightInfo *dli = visdynlights.ptr(); visdynlightCount--; ++dli) { \
-        TVec lorg = dli->l->origin; \
-        lorg.z += zofs; \
-        R_DrawLightBulb(lorg, langles, dli->l->color, pass_, true/*shadowvol*/); \
-      } \
-    } \
-  } \
-} while (0)
 
 
 static TArray<StLightInfo> visstatlights;
@@ -369,18 +344,41 @@ void VRenderLevelShadowVolume::RenderScene (const refdef_t *RD, const VViewClipp
     }
   }
 
-  DBG_RENDER_LIGHTS(RPASS_Ambient);
-
   Drawer->DrawWorldTexturesPass();
   RenderMobjsTextures();
-  DBG_RENDER_LIGHTS(RPASS_Textures);
 
   Drawer->DrawWorldFogPass();
   RenderMobjsFog();
   Drawer->EndFogPass();
 
   RenderMobjs(RPASS_NonShadow);
-  DBG_RENDER_LIGHTS(RPASS_NonShadow);
+
+  // render light bulbs
+  // use "normal" model rendering code here (yeah)
+  if (r_dbg_lightbulbs_static || r_dbg_lightbulbs_dynamic) {
+    // static
+    if (visibleStaticLightCount > 0 && r_dbg_lightbulbs_static) {
+      visstatlightCount = visibleStaticLightCount;
+      TAVec langles(0, 0, 0);
+      const float zofs = r_dbg_lightbulbs_zofs_static.asFloat();
+      for (const StLightInfo *sli = visstatlights.ptr(); visstatlightCount--; ++sli) {
+        TVec lorg = sli->stlight->origin;
+        lorg.z += sli->zofs+zofs;
+        R_DrawLightBulb(lorg, langles, sli->stlight->color, RPASS_Normal, true/*shadowvol*/);
+      }
+    }
+    // dynamic
+    if (visibleDynamicLightCount > 0 && r_dbg_lightbulbs_dynamic) {
+      visdynlightCount = visibleDynamicLightCount;
+      TAVec langles(0, 0, 0);
+      const float zofs = r_dbg_lightbulbs_zofs_dynamic.asFloat();
+      for (const DynLightInfo *dli = visdynlights.ptr(); visdynlightCount--; ++dli) {
+        TVec lorg = dli->l->origin;
+        lorg.z += zofs;
+        R_DrawLightBulb(lorg, langles, dli->l->color, RPASS_Normal, true/*shadowvol*/);
+      }
+    }
+  }
 
   DrawParticles();
 
