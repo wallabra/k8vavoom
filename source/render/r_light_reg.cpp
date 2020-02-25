@@ -35,7 +35,8 @@
 // lighting bugs are gone. of course, the lighting at geometry edges is
 // still somewhat wrong, but it is way better than totally missed light.
 // also, this creates cheap ambient-occlusion-like effect. ;-)
-//#define VV_FIX_LMAP_TEXTURE_INSIDE_WALLS
+static VCvarB r_lmap_stfix_enabled("r_lmap_stfix_enabled", false, "Enable lightmap \"inside wall\" fixing?", CVAR_Archive);
+static VCvarF r_lmap_stfix_step("r_lmap_stfix_step", "2", "Lightmap \"inside wall\" texel step", CVAR_Archive);
 
 
 // ////////////////////////////////////////////////////////////////////////// //
@@ -286,10 +287,10 @@ bool VRenderLevelLightmap::CalcFaceVectors (LMapTraceInfo &lmi, const surface_t 
 
 #define CP_FIX_UT(uort_)  do { \
   if (u##uort_ > mid##uort_) { \
-    u##uort_ -= 4; \
+    u##uort_ -= r_lmap_stfix_step.asFloat(); \
     if (u##uort_ < mid##uort_) u##uort_ = mid##uort_; \
   } else { \
-    u##uort_ += 4; \
+    u##uort_ += r_lmap_stfix_step.asFloat(); \
     if (u##uort_ > mid##uort_) u##uort_ = mid##uort_; \
   } \
 } while (0) \
@@ -339,15 +340,10 @@ void VRenderLevelLightmap::CalcPoints (LMapTraceInfo &lmi, const surface_t *surf
   }
   lmi.didExtra = doExtra;
 
-  // fill in surforg
-  // the points are biased towards the center of the surface
-  // to help avoid edge cases just inside walls
-  // k8: this doesn't work due to faulty raycasing; better turn it off to avoid artifacts
-  #ifdef VV_FIX_LMAP_TEXTURE_INSIDE_WALLS
-  const float mids = surf->texturemins[0]+surf->extents[0]/2.0f;
-  const float midt = surf->texturemins[1]+surf->extents[1]/2.0f;
-  const TVec facemid = lmi.texorg+lmi.textoworld[0]*mids+lmi.textoworld[1]*midt;
-  #endif
+  bool dotrace = !lowres;
+  sector_t *facesec = surf->subsector->sector;
+  if (!facesec) dotrace = false;
+  if (dotrace && !r_lmap_stfix_enabled) dotrace = false;
 
   lmi.numsurfpt = w*h;
   bool doPointCheck = false;
@@ -358,23 +354,22 @@ void VRenderLevelLightmap::CalcPoints (LMapTraceInfo &lmi, const surface_t *surf
     doPointCheck = true;
   }
 
-  #ifdef VV_FIX_LMAP_TEXTURE_INSIDE_WALLS
-  bool dotrace = !lowres;
-  sector_t *facesec = surf->subsector->sector;
-  if (!facesec) dotrace = false;
-  #endif
-
   TVec *spt = lmi.surfpt;
-  for (int t = 0; t < h; ++t) {
-    for (int s = 0; s < w; ++s, ++spt) {
-      if (doPointCheck && (int)(ptrdiff_t)(spt-lmi.surfpt) >= MaxSurfPoints) return;
-      float us = starts+s*step;
-      float ut = startt+t*step;
 
-      #ifdef VV_FIX_LMAP_TEXTURE_INSIDE_WALLS
-      if (!dotrace) {
-        *spt = lmi.calcTexPoint(us, ut);
-      } else {
+  if (dotrace) {
+    // fill in surforg
+    // the points are biased towards the center of the surface
+    // to help avoid edge cases just inside walls
+    const float mids = surf->texturemins[0]+surf->extents[0]/2.0f;
+    const float midt = surf->texturemins[1]+surf->extents[1]/2.0f;
+    const TVec facemid = lmi.texorg+lmi.textoworld[0]*mids+lmi.textoworld[1]*midt;
+
+    for (int t = 0; t < h; ++t) {
+      for (int s = 0; s < w; ++s, ++spt) {
+        if (doPointCheck && (int)(ptrdiff_t)(spt-lmi.surfpt) >= MaxSurfPoints) return;
+        float us = starts+s*step;
+        float ut = startt+t*step;
+
         // if a line can be traced from surf to facemid, the point is good
         bool found = false;
         for (int i = 0; i < 6; ++i) {
@@ -397,14 +392,24 @@ void VRenderLevelLightmap::CalcPoints (LMapTraceInfo &lmi, const surface_t *surf
           }
 
           const TVec fms = facemid-(*spt);
-          *spt += 4*Normalise(fms);
+          *spt += r_lmap_stfix_step.asFloat()*Normalise(fms);
         }
         // just in case
-        if (!found) *spt = lmi.calcTexPoint(us, ut);
+        if (!found) {
+          us = starts+s*step;
+          ut = startt+t*step;
+          *spt = lmi.calcTexPoint(us, ut);
+        }
       }
-      #else
-      *spt = lmi.calcTexPoint(us, ut);
-      #endif
+    }
+  } else {
+    for (int t = 0; t < h; ++t) {
+      for (int s = 0; s < w; ++s, ++spt) {
+        if (doPointCheck && (int)(ptrdiff_t)(spt-lmi.surfpt) >= MaxSurfPoints) return;
+        const float us = starts+s*step;
+        const float ut = startt+t*step;
+        *spt = lmi.calcTexPoint(us, ut);
+      }
     }
   }
 }
