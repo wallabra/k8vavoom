@@ -35,7 +35,7 @@
 // lighting bugs are gone. of course, the lighting at geometry edges is
 // still somewhat wrong, but it is way better than totally missed light.
 // also, this creates cheap ambient-occlusion-like effect. ;-)
-static VCvarB r_lmap_stfix_enabled("r_lmap_stfix_enabled", false, "Enable lightmap \"inside wall\" fixing?", CVAR_Archive);
+static VCvarB r_lmap_stfix_enabled("r_lmap_stfix_enabled", true, "Enable lightmap \"inside wall\" fixing?", CVAR_Archive);
 static VCvarF r_lmap_stfix_step("r_lmap_stfix_step", "2", "Lightmap \"inside wall\" texel step", CVAR_Archive);
 
 
