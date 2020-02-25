@@ -371,7 +371,7 @@ void VRenderLevelLightmap::CalcPoints (LMapTraceInfo &lmi, const surface_t *surf
         float ut = startt+t*step;
 
         // if a line can be traced from surf to facemid, the point is good
-        bool found = false;
+        //bool found = false;
         for (int i = 0; i < 6; ++i) {
           // calculate texture point
           *spt = lmi.calcTexPoint(us, ut);
@@ -380,7 +380,7 @@ void VRenderLevelLightmap::CalcPoints (LMapTraceInfo &lmi, const surface_t *surf
           //if (length2DSquared(fmss) < 0.1f) break; // same point, got it
           //!if (Level->TraceLine(Trace, facemid, *spt, SPF_NOBLOCKSIGHT)) break; // got it
           if (CastStaticRay(nullptr, facesec, facemid, *spt, 999999.0f)) {
-            found = true;
+            //found = true;
             break;
           }
 
@@ -395,11 +395,13 @@ void VRenderLevelLightmap::CalcPoints (LMapTraceInfo &lmi, const surface_t *surf
           *spt += r_lmap_stfix_step.asFloat()*Normalise(fms);
         }
         // just in case
+        /*
         if (!found) {
           us = starts+s*step;
           ut = startt+t*step;
           *spt = lmi.calcTexPoint(us, ut);
         }
+        */
       }
     }
   } else {
