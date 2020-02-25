@@ -240,6 +240,10 @@ public:
     int ColorMap;
     // if non-zero, this is shade color
     vuint32 ShadeColor;
+    vint32 lastUseTime; // this is "game time", from `GLevel->TicTime`
+
+    // call to wipe it -- not "properly clear", but wipe completely
+    inline void wipe () noexcept { memset((void *)this, 0, sizeof(VTransData)); }
   };
 
   vuint32 DriverHandle;
@@ -247,6 +251,15 @@ public:
 
   void ResetTranslations ();
   void ClearTranslations ();
+
+  void ClearTranslationAt (int idx);
+  // returns new index; also, marks it as "recently used"
+  int MoveTranslationToTop (int idx);
+
+  // -1 if not available
+  static inline vint32 GetTranslationCTime () noexcept {
+    return (GLevel ? GLevel->TicTime : GClLevel ? GClLevel->TicTime : -1);
+  }
 
   inline bool IsGlowFullbright () const noexcept { return ((glowing&0xff000000u) == 0xff000000u); }
 
@@ -381,8 +394,8 @@ public:
   rgba_t *CreateShadedPixels (vuint32 shadeColor, const rgba_t *palette);
   void FreeShadedPixels (rgba_t *shadedPixels);
 
-  VTransData *FindDriverTrans (VTextureTranslation *TransTab, int CMap);
-  VTransData *FindDriverShaded (vuint32 ShadeColor, int CMap);
+  VTransData *FindDriverTrans (VTextureTranslation *TransTab, int CMap, bool markUsed);
+  VTransData *FindDriverShaded (vuint32 ShadeColor, int CMap, bool markUsed);
 
   static void AdjustGamma (rgba_t *, int); // for non-premultiplied
   static void SmoothEdges (vuint8 *, int, int); // for non-premultiplied

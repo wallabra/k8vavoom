@@ -228,24 +228,41 @@ void VOpenGLDrawer::SetSpriteLump (VTexture *Tex, VTextureTranslation *Translati
     }
     Tex->lastUpdateFrame = updateFrame;
     if (Translation || CMap || ShadeColor) {
-      // color translation, or color map
-      VTexture::VTransData *TData = (ShadeColor ? Tex->FindDriverShaded(ShadeColor, CMap): Tex->FindDriverTrans(Translation, CMap));
+      // color translation, color map, or stenciled
+      // find translation, and mark it as recently used
+      VTexture::VTransData *TData = (ShadeColor ? Tex->FindDriverShaded(ShadeColor, CMap, true) : Tex->FindDriverTrans(Translation, CMap, true));
       if (TData) {
-        //if (needUp) GCon->Logf(NAME_Error, "TEXTURE '%s' NEED UPDATE, BUT NOT UPDATED!", *Tex->Name);
         if (needUp || !TData->Handle || Tex->bIsCameraTexture) {
           GenerateTexture(Tex, &TData->Handle, Translation, CMap, asPicture, needUp, ShadeColor);
         } else {
           glBindTexture(GL_TEXTURE_2D, TData->Handle);
         }
       } else {
-        // new translation
-        //if (Translation) GCon->Logf("*** NEW TRANSLATION for texture '%s'", *Tex->Name);
-        TData = &Tex->DriverTranslated.Alloc();
-        TData->Handle = 0;
-        TData->Trans = Translation;
-        TData->ColorMap = CMap;
-        TData->ShadeColor = ShadeColor;
-        //if (needUp) GCon->Logf(NAME_Debug, "TEXTURE '%s' NEED UPDATE!", *Tex->Name);
+        // drop some old translations
+        const vint32 ctime = Tex->GetTranslationCTime();
+        if (ctime >= 0) {
+          for (int f = 0; f < Tex->DriverTranslated.length(); ++f) {
+            TData = &Tex->DriverTranslated[f];
+            const vint32 ttime = TData->lastUseTime;
+            // keep it for six seconds, and then drop it
+            if (ttime >= ctime || ctime-ttime < 35*6) continue;
+            // drop it
+            if (TData->Handle) glDeleteTextures(1, (GLuint *)&TData->Handle);
+            Tex->ClearTranslationAt(f);
+            Tex->DriverTranslated.removeAt(f);
+            --f;
+          }
+        }
+        // new translation (insert it at the top of the list, why not)
+        VTexture::VTransData newtrans;
+        newtrans.wipe();
+        newtrans.Handle = 0;
+        newtrans.Trans = Translation;
+        newtrans.ColorMap = CMap;
+        newtrans.ShadeColor = ShadeColor;
+        if (ctime >= 0) newtrans.lastUseTime = ctime;
+        Tex->DriverTranslated.insert(0, newtrans);
+        TData = &Tex->DriverTranslated[0];
         GenerateTexture(Tex, &TData->Handle, Translation, CMap, asPicture, needUp, ShadeColor);
       }
     } else if (!Tex->DriverHandle || needUp || Tex->bIsCameraTexture) {

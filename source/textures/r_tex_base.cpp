@@ -436,12 +436,46 @@ void VTexture::ClearTranslations () {
 
 //==========================================================================
 //
+//  VTexture::ClearTranslationAt
+//
+//==========================================================================
+void VTexture::ClearTranslationAt (int idx) {
+  // currently, there's nothing to do
+}
+
+
+//==========================================================================
+//
+//  VTexture::MoveTranslationToTop
+//
+//  returns new index; also, marks it as "recently used"
+//
+//==========================================================================
+int VTexture::MoveTranslationToTop (int idx) {
+  if (idx < 0 || idx >= DriverTranslated.length()) return idx;
+  vint32 ctime = GetTranslationCTime();
+  if (ctime < 0) return idx; // nothing to do here
+  VTransData *td = DriverTranslated.ptr()+idx; // sorry
+  // don't bother swapping translations, it doesn't really matter
+  td->lastUseTime = ctime;
+  return idx;
+}
+
+
+//==========================================================================
+//
 //  VTexture::FindDriverTrans
 //
 //==========================================================================
-VTexture::VTransData *VTexture::FindDriverTrans (VTextureTranslation *TransTab, int CMap) {
+VTexture::VTransData *VTexture::FindDriverTrans (VTextureTranslation *TransTab, int CMap, bool markUsed) {
   for (auto &&it : DriverTranslated) {
-    if (it.Trans == TransTab && it.ColorMap == CMap) return &it;
+    if (it.Trans == TransTab && it.ColorMap == CMap) {
+      if (markUsed) {
+        const vint32 ctime = GetTranslationCTime();
+        if (ctime >= 0) it.lastUseTime = ctime;
+      }
+      return &it;
+    }
   }
   return nullptr;
 }
@@ -452,10 +486,16 @@ VTexture::VTransData *VTexture::FindDriverTrans (VTextureTranslation *TransTab, 
 //  VTexture::FindDriverShaded
 //
 //==========================================================================
-VTexture::VTransData *VTexture::FindDriverShaded (vuint32 ShadeColor, int CMap) {
+VTexture::VTransData *VTexture::FindDriverShaded (vuint32 ShadeColor, int CMap, bool markUsed) {
   ShadeColor |= 0xff000000u;
   for (auto &&it : DriverTranslated) {
-    if (it.ShadeColor == ShadeColor && it.ColorMap == CMap) return &it;
+    if (it.ShadeColor == ShadeColor && it.ColorMap == CMap) {
+      if (markUsed) {
+        const vint32 ctime = GetTranslationCTime();
+        if (ctime >= 0) it.lastUseTime = ctime;
+      }
+      return &it;
+    }
   }
   return nullptr;
 }
