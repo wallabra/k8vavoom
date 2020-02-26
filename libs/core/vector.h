@@ -736,11 +736,11 @@ public:
     float *dots;
     int tbsize;
 
+  public:
+    VV_DISABLE_COPY(ClipWorkData)
+
     inline ClipWorkData () noexcept : sides(&inlsides[0]), dots(&inldots[0]), tbsize(INLINE_SIZE) {}
     inline ~ClipWorkData () noexcept { clear(); }
-    // no copies
-    ClipWorkData (const ClipWorkData &) = delete;
-    ClipWorkData & operator = (const ClipWorkData &) = delete;
 
     inline void clear () noexcept {
       if (sides && sides != &inlsides[0]) Z_Free(sides);

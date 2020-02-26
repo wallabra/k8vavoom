@@ -90,13 +90,15 @@ static int last_line = 0;
 
 
 struct HistoryLine {
+public:
   char *str;
   int bufsize; // including trailing zero; NOT line length!
 
+public:
+  VV_DISABLE_COPY(HistoryLine)
+
   HistoryLine () noexcept : str(nullptr), bufsize(0) {}
   ~HistoryLine () noexcept { Z_Free(str); str = nullptr; bufsize = 0; }
-
-  HistoryLine &operator = (const HistoryLine &src) = delete;
 
   inline void swap (HistoryLine &src) noexcept {
     if (&src == this) return;

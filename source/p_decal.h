@@ -38,8 +38,6 @@ struct DecalFloatVal {
 
   DecalFloatVal () : value(0.0f), rnd(false), rndMin(0.0f), rndMax(0.0f) {}
   DecalFloatVal (float aval) : value(aval), rnd(false), rndMin(aval), rndMax(aval) {}
-  //DecalFloatVal (const DecalFloatVal &) = delete;
-  //DecalFloatVal &operator = (const DecalFloatVal &) = delete;
   DecalFloatVal clone ();
 
   void genValue ();

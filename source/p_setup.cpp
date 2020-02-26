@@ -159,11 +159,9 @@ public:
   bool doCloseAux;
 
 public:
+  VV_DISABLE_COPY(AuxiliaryCloser)
   AuxiliaryCloser () : doCloseAux(false) {}
   ~AuxiliaryCloser () { if (doCloseAux) W_CloseAuxiliary(); doCloseAux = false; }
-
-  AuxiliaryCloser (const AuxiliaryCloser &) = delete;
-  AuxiliaryCloser &operator = (const AuxiliaryCloser &) = delete;
 };
 
 

@@ -63,6 +63,8 @@ public:
 // object i/o is using mappers internally, so let's make it explicit
 class VStreamIOMapper {
 public:
+  VV_DISABLE_COPY(VStreamIOMapper)
+
   inline VStreamIOMapper () {}
   virtual ~VStreamIOMapper ();
 
@@ -90,6 +92,8 @@ public:
   vuint16 version; // stream version; usually purely informational
 
 public:
+  VV_DISABLE_COPY(VStream)
+
   inline VStream () : bLoading(true), bError(false), Mapper(nullptr), version(0) {}
   virtual ~VStream ();
 

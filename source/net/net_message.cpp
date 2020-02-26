@@ -29,24 +29,6 @@
 
 //==========================================================================
 //
-//  VMessageIn::VMessageIn
-//
-//==========================================================================
-VMessageIn::VMessageIn (vuint8 *Src, vint32 Length)
-  : VBitStreamReader(Src, Length)
-  , Next(nullptr)
-  , ChanType(0)
-  , ChanIndex(0)
-  , bReliable(false)
-  , bOpen(false)
-  , bClose(false)
-  , Sequence(0)
-{
-}
-
-
-//==========================================================================
-//
 //  VMessageOut::VMessageOut
 //
 //==========================================================================
@@ -64,23 +46,29 @@ VMessageOut::VMessageOut (VChannel *AChannel, bool aAllowExpand)
   , Time(0)
   , PacketId(0)
   , markPos(0)
-{
-}
+{}
 
 
 //==========================================================================
 //
-//  VMessageOut::Reset
+//  VMessageOut::Setup
 //
 //==========================================================================
-/*
-void VMessageOut::Reset () {
+void VMessageOut::Setup (VChannel *AChannel, bool aAllowExpand) {
+  Reinit(OUT_MESSAGE_SIZE, aAllowExpand);
+  mChannel = AChannel;
+  Next = nullptr;
+  ChanType = AChannel->Type;
+  ChanIndex = AChannel->Index;
+  bReliable = aAllowExpand;
+  bOpen = false;
+  bClose = false;
+  bReceivedAck = false;
   Sequence = 0;
   Time = 0;
   PacketId = 0;
-  Clear();
+  markPos = 0;
 }
-*/
 
 
 //==========================================================================

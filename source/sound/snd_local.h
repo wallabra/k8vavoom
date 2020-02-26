@@ -638,11 +638,9 @@ protected:
   bool runTrack (int tidx, EventCBType cb, void *udata);
 
 public:
+  VV_DISABLE_COPY(MIDIData)
   MIDIData ();
-  MIDIData (const MIDIData &) = delete;
   ~MIDIData ();
-
-  MIDIData & operator = (const MIDIData &) = delete;
 
   inline bool isValid () const { return (type != 0xff && delta != 0 && tempo != 0); }
   inline bool isEmpty () const { return (!isValid() || tracks.length() == 0); }

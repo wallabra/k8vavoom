@@ -244,12 +244,11 @@ private:
   VNTValue coerceTo (VNTValue v, vuint8 vtype);
 
 public:
+  VV_DISABLE_COPY(VNTValueReader)
+
   // doesn't own passed stream; starts reading from current stream position
   VNTValueReader (VStream *ASrcStream);
   ~VNTValueReader ();
-
-  VNTValueReader (const VNTValueReader &) = delete;
-  VNTValueReader &operator = (const VNTValueReader &) = delete;
 
   inline bool IsError () const { return bError; }
 
@@ -278,11 +277,10 @@ private:
   void WriteTo (VStream &strm);
 
 public:
+  VV_DISABLE_COPY(VNTValueWriter)
+
   VNTValueWriter (VStream *astrm);
   ~VNTValueWriter ();
-
-  VNTValueWriter (const VNTValueWriter &) = delete;
-  VNTValueWriter &operator = (const VNTValueWriter &) = delete;
 
   // returns `true` if value was replaced
   bool putValue (const VNTValue &v);

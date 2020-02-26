@@ -719,7 +719,7 @@ VBitStreamWriter::VBitStreamWriter (vint32 AMax, bool allowExpand)
   bLoading = false;
   int sz = (AMax+7)/8+(allowExpand ? 256 : 0);
   Data.SetNum(sz);
-  memset(Data.Ptr(), 0, sz);
+  if (sz > 0) memset(Data.Ptr(), 0, sz);
 }
 
 
@@ -730,6 +730,36 @@ VBitStreamWriter::VBitStreamWriter (vint32 AMax, bool allowExpand)
 //==========================================================================
 VBitStreamWriter::~VBitStreamWriter () {
   Close();
+}
+
+
+//==========================================================================
+//
+//  VBitStreamWriter::Reinit
+//
+//==========================================================================
+void VBitStreamWriter::Reinit (vint32 AMax, bool allowExpand) {
+  Max = AMax;
+  Pos = 0;
+  bAllowExpand = allowExpand;
+  bLoading = false;
+  int sz = (AMax+7)/8+(allowExpand ? 256 : 0);
+  Data.SetNum(sz);
+  if (sz > 0) memset(Data.Ptr(), 0, sz);
+}
+
+
+//==========================================================================
+//
+//  VBitStreamWriter::cloneFrom
+//
+//==========================================================================
+void VBitStreamWriter::cloneFrom (const VBitStreamWriter *wr) {
+  if (!wr || wr == this) return;
+  Data = wr->Data;
+  Max = wr->Max;
+  Pos = wr->Pos;
+  bAllowExpand = wr->bAllowExpand;
 }
 
 
@@ -923,6 +953,19 @@ VBitStreamReader::VBitStreamReader (vuint8 *Src, vint32 Length)
 //==========================================================================
 VBitStreamReader::~VBitStreamReader () {
   Close();
+}
+
+
+//==========================================================================
+//
+//  VBitStreamReader::cloneFrom
+//
+//==========================================================================
+void VBitStreamReader::cloneFrom (const VBitStreamReader *rd) {
+  if (!rd || rd == this) return;
+  Data = rd->Data;
+  Num = rd->Num;
+  Pos = rd->Pos;
 }
 
 

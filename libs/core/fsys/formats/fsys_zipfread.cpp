@@ -117,8 +117,11 @@ private:
   inline int totalOut () const { return (usezlib ? stream.total_out : lzmaGetTotalOut()); }
 
 public:
+  VV_DISABLE_COPY(VZipFileReader)
+
   VZipFileReader (VStr afname, VStream *, vuint32, const VPakFileInfo &, mythread_mutex *ardlock);
   virtual ~VZipFileReader () override;
+
   virtual VStr GetName () const override;
   virtual void Serialise (void *, int) override;
   virtual void Seek (int) override;

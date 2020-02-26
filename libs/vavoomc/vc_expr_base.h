@@ -35,6 +35,7 @@ public:
     VExpression *e;
 
   public:
+    VV_DISABLE_COPY(AutoCopy)
     AutoCopy () : e(nullptr) {}
     AutoCopy (VExpression *ae) : e(ae ? ae->SyntaxCopy() : nullptr) {}
     ~AutoCopy () { delete e; e = nullptr; }
@@ -68,10 +69,6 @@ public:
         Sys_Error("VC: internal compiler error (AutoCopy::assignNoCopy)");
       }
     }
-
-  private:
-    AutoCopy (const AutoCopy &ac) = delete;
-    AutoCopy &operator = (const AutoCopy &ac) = delete;
   };
 
 public:

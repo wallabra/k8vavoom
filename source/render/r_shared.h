@@ -251,10 +251,9 @@ protected:
     unsigned entries; // full
 
   public:
-    VBlockPool () noexcept : tail(nullptr), tailused(0), entries(0) {}
-    VBlockPool (const VBlockPool &) = delete;
-    VBlockPool &operator = (const VBlockPool &) = delete;
-    ~VBlockPool () noexcept { clear(); }
+    VV_DISABLE_COPY(VBlockPool)
+    inline VBlockPool () noexcept : tail(nullptr), tailused(0), entries(0) {}
+    inline ~VBlockPool () noexcept { clear(); }
 
     inline unsigned itemCount () noexcept { return entries*NUM_CACHE_BLOCKS_IN_POOL_ENTRY+tailused; }
 
@@ -410,11 +409,9 @@ public:
   }
 
 public:
-  V2DCache () noexcept : atlases(), freeblocks(nullptr), blockpool(), lastOldFreeFrame(0), cacheframecount(0) {}
-  ~V2DCache () noexcept { /*clear();*/ }
-
-  V2DCache (const V2DCache &) = delete;
-  V2DCache &operator = (const V2DCache &) = delete;
+  VV_DISABLE_COPY(V2DCache)
+  inline V2DCache () noexcept : atlases(), freeblocks(nullptr), blockpool(), lastOldFreeFrame(0), cacheframecount(0) {}
+  inline ~V2DCache () noexcept { /*clear();*/ }
 
   inline int getAtlasCount () const noexcept { return atlases.length(); }
 

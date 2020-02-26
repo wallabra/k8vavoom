@@ -57,9 +57,8 @@ public:
   TArray<TVec> list;
 
 public:
+  VV_DISABLE_COPY(VertexPool)
   VertexPool () {}
-  VertexPool (const VertexPool &) = delete;
-  VertexPool &operator = (const VertexPool &) = delete;
 
   void clear () {
     map.clear();

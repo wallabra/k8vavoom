@@ -103,6 +103,11 @@ enum ENoInit { E_NoInit };
 // number of elements in an array
 #define ARRAY_COUNT(array)  (sizeof(array)/sizeof((array)[0]))
 
+// disable copying for a class/struct
+#define VV_DISABLE_COPY(cname_) \
+  cname_ (const cname_ &) = delete; \
+  cname_ &operator = (const cname_ &) = delete;
+
 
 //==========================================================================
 //

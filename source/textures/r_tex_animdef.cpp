@@ -91,9 +91,8 @@ public:
   TMapNC<VName, int> map; // first lump for the given name, so we don't have to loop over and over again
 
 public:
+  VV_DISABLE_COPY(ListOfLumps)
   ListOfLumps () : list(), map() {}
-  ListOfLumps (const ListOfLumps &) = delete;
-  ListOfLumps &operator = (const ListOfLumps &) = delete;
 
   inline void clear () { map.clear(); list.clear(); }
 

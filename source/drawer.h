@@ -217,12 +217,11 @@ public:
     VRenderLevelDrawer *owner;
     int level;
   public:
+    VV_DISABLE_COPY(DrawListStackMark)
     inline DrawListStackMark (VRenderLevelDrawer *aowner) noexcept : owner(aowner), level(aowner->DrawListStack.length()) {
       vassert(owner);
       vassert(level > 0);
     }
-    DrawListStackMark (const DrawListStackMark &) = delete;
-    DrawListStackMark &operator = (const DrawListStackMark &) = delete;
     inline ~DrawListStackMark () {
       vassert(owner);
       vassert(level > 0);

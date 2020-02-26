@@ -80,6 +80,8 @@ private:
   void cacheAllData ();
 
 public:
+  VV_DISABLE_COPY(VZipStreamReader)
+
   // doesn't own passed stream
   VZipStreamReader (VStream *ASrcStream, vuint32 ACompressedSize=UNKNOWN_SIZE, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
   VZipStreamReader (VStr fname, VStream *ASrcStream, vuint32 ACompressedSize=UNKNOWN_SIZE, vuint32 AUncompressedSize=UNKNOWN_SIZE, Type atype=Type::ZLIB);
@@ -134,6 +136,8 @@ private:
   void setError ();
 
 public:
+  VV_DISABLE_COPY(VZipStreamWriter)
+
   // doesn't own passed stream
   VZipStreamWriter (VStream *, int clevel=6, Type atype=Type::ZLIB);
   virtual ~VZipStreamWriter () override;

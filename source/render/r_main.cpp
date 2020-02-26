@@ -2425,15 +2425,16 @@ void R_DrawSpritePatch (float x, float y, int sprite, int frame, int rot,
 
 
 struct SpriteScanInfo {
+public:
   TArray<bool> *texturepresent;
   TMapNC<VClass *, bool> classSeen;
   TMapNC<VState *, bool> stateSeen;
   TMapNC<vuint32, bool> spidxSeen;
   int sprtexcount;
 
-  SpriteScanInfo (TArray<bool> &txps) : texturepresent(&txps), stateSeen(), spidxSeen(), sprtexcount(0) {}
-  SpriteScanInfo (const SpriteScanInfo &) = delete;
-  SpriteScanInfo &operator = (const SpriteScanInfo &) = delete;
+public:
+  VV_DISABLE_COPY(SpriteScanInfo)
+  inline SpriteScanInfo (TArray<bool> &txps) noexcept : texturepresent(&txps), stateSeen(), spidxSeen(), sprtexcount(0) {}
 
   inline void clearStates () { stateSeen.reset(); }
 };

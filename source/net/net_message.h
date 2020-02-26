@@ -45,8 +45,6 @@ struct ClientServerInfo {
 // ////////////////////////////////////////////////////////////////////////// //
 class VMessageIn : public VBitStreamReader {
 public:
-  VMessageIn (vuint8 *Src = nullptr, vint32 Length=0);
-
   VMessageIn *Next;
   vuint8 ChanType;
   vint32 ChanIndex;
@@ -54,6 +52,31 @@ public:
   bool bOpen; // open channel message
   bool bClose; // close channel message
   vuint32 Sequence; // reliable message sequence ID
+
+public:
+  inline VMessageIn (vuint8 *Src=nullptr, vint32 Length=0)
+    : VBitStreamReader(Src, Length)
+    , Next(nullptr)
+    , ChanType(0)
+    , ChanIndex(0)
+    , bReliable(false)
+    , bOpen(false)
+    , bClose(false)
+    , Sequence(0)
+  {}
+  inline VMessageIn (const VMessageIn &src) noexcept
+    : VBitStreamReader(nullptr, 0)
+    , Next(nullptr)
+    , ChanType(src.ChanType)
+    , ChanIndex(src.ChanIndex)
+    , bReliable(src.bReliable)
+    , bOpen(src.bOpen)
+    , bClose(src.bClose)
+    , Sequence(src.Sequence)
+  {
+    // clone bitstream reader
+    cloneFrom(&src);
+  }
 };
 
 
@@ -74,7 +97,29 @@ public:
   int markPos;
 
 public:
+  // cannot be inlined, sorry
   VMessageOut (VChannel *AChannel, bool aAllowExpand=false);
+
+  inline VMessageOut (const VMessageOut &src)
+    : VBitStreamWriter(0, false) // it will be overwritten anyway
+    , mChannel(src.mChannel)
+    , Next(nullptr)
+    , ChanType(src.ChanType)
+    , ChanIndex(src.ChanIndex)
+    , bReliable(src.bReliable)
+    , bOpen(src.bOpen)
+    , bClose(src.bClose)
+    , bReceivedAck(src.bReceivedAck)
+    , Sequence(src.Sequence)
+    , Time(src.Time)
+    , PacketId(src.PacketId)
+    , markPos(src.markPos)
+  {
+    // clone bitstream writer
+    cloneFrom(&src);
+  }
+
+  void Setup (VChannel *AChannel, bool aAllowExpand=false);
 
   inline void SetMark () { markPos = GetNumBits(); }
   bool NeedSplit () const;

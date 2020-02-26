@@ -39,21 +39,24 @@ static VCvarB dbg_emulate_broken_gozzo_gotos("dbg_emulate_broken_gozzo_gotos", f
 
 // ////////////////////////////////////////////////////////////////////////// //
 struct SavedVObjectPtr {
+public:
   VObject **ptr;
   VObject *saved;
-  SavedVObjectPtr (VObject **aptr) : ptr(aptr), saved(*aptr) {}
-  ~SavedVObjectPtr() { *ptr = saved; }
+public:
+  VV_DISABLE_COPY(SavedVObjectPtr)
+  inline SavedVObjectPtr (VObject **aptr) noexcept : ptr(aptr), saved(*aptr) {}
+  inline ~SavedVObjectPtr () noexcept { *ptr = saved; }
 };
 
 
 struct PCSaver {
+public:
   VStateCall **ptr;
   VStateCall *PrevCall;
-
-  inline PCSaver (VStateCall **aptr) : ptr(aptr), PrevCall(nullptr) { if (ptr) PrevCall = *ptr; }
-  PCSaver (const PCSaver &) = delete;
-  inline ~PCSaver () { if (ptr) *ptr = PrevCall; ptr = nullptr; }
-  PCSaver &operator = (const PCSaver &) = delete;
+public:
+  VV_DISABLE_COPY(PCSaver)
+  inline PCSaver (VStateCall **aptr) noexcept : ptr(aptr), PrevCall(nullptr) { if (ptr) PrevCall = *ptr; }
+  inline ~PCSaver () noexcept { if (ptr) *ptr = PrevCall; ptr = nullptr; }
 };
 
 
@@ -62,11 +65,10 @@ struct SetStateGuard {
 public:
   VEntity *ent;
 public:
+  VV_DISABLE_COPY(SetStateGuard)
   // constructor increases invocation count
-  SetStateGuard (VEntity *aent) : ent(aent) { ent->incSetStateInvocation(); }
-  ~SetStateGuard () { ent->decSetStateInvocation(); ent = nullptr; }
-  SetStateGuard (const SetStateGuard &src) = delete;
-  inline SetStateGuard &operator = (const SetStateGuard &src) = delete;
+  inline SetStateGuard (VEntity *aent) noexcept : ent(aent) { ent->incSetStateInvocation(); }
+  inline ~SetStateGuard () noexcept { ent->decSetStateInvocation(); ent = nullptr; }
 };
 
 

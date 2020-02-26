@@ -346,3 +346,138 @@ public:
   VARR_DEFINE_ITEMS_ITERATOR(const)
   #undef VARR_DEFINE_ITEMS_ITERATOR
 };
+
+
+// ////////////////////////////////////////////////////////////////////////// //
+// didn't found a better place for this
+// this does allocations in 8KB chunks
+// `T` should be a POD, as it won't be properly copied/destructed
+// blocks are never moved on allocation
+template<class T> class VQueueLifo {
+private:
+  enum {
+    BlockSize = 8192, // 8KB blocks
+    ItemsPerBlock = (BlockSize-2*sizeof(void **))/sizeof(T),
+    PrevIndex = BlockSize/sizeof(void **)-2,
+    NextIndex = BlockSize/sizeof(void **)-1,
+  };
+
+private:
+  T *first; // first alloted block
+  T *currblock; // currently using block
+  int blocksAlloted; // number of allocated blocks, for stats
+  int used; // total number of elements pushed
+
+private:
+  inline static T *getPrevBlock (T *blk) noexcept { return (blk ? (T *)(((void **)blk)[PrevIndex]) : nullptr); }
+  inline static T *getNextBlock (T *blk) noexcept { return (blk ? (T *)(((void **)blk)[NextIndex]) : nullptr); }
+
+  inline static void setPrevBlock (T *blk, T* ptr) noexcept { if (blk) ((void **)blk)[PrevIndex] = ptr; }
+  inline static void setNextBlock (T *blk, T* ptr) noexcept { if (blk) ((void **)blk)[NextIndex] = ptr; }
+
+  inline int freeInCurrBlock () const noexcept { return (used%ItemsPerBlock ?: ItemsPerBlock); }
+
+public:
+  VV_DISABLE_COPY(VQueueLifo)
+  inline VQueueLifo () noexcept : first(nullptr), currblock(nullptr), blocksAlloted(0), used(0) {}
+  inline ~VQueueLifo () noexcept { clear(); }
+
+  T operator [] (int idx) noexcept {
+    vassert(idx >= 0 && idx < used);
+    int bnum = idx/ItemsPerBlock;
+    T *blk = first;
+    while (bnum--) blk = getNextBlock(blk);
+    return blk[idx%ItemsPerBlock];
+  }
+
+  inline int length () const noexcept { return used; }
+  inline int capacity () const noexcept { return blocksAlloted*ItemsPerBlock; }
+
+  // free all pool memory
+  inline void clear () noexcept {
+    while (first) {
+      T *nb = getNextBlock(first);
+      Z_Free(first);
+      first = nb;
+    }
+    first = currblock = nullptr;
+    blocksAlloted = 0;
+    used = 0;
+  }
+
+  // reset pool, but don't deallocate memory
+  inline void reset () noexcept {
+    currblock = first;
+    used = 0;
+  }
+
+  // allocate new element to fill
+  // won't clear it
+  inline T *alloc () noexcept {
+    if (currblock) {
+      if (used) {
+        int cbpos = freeInCurrBlock();
+        if (cbpos < ItemsPerBlock) {
+          // can use it
+          ++used;
+          return (currblock+cbpos);
+        }
+        // has next allocated block?
+        T *nb = getNextBlock(currblock);
+        if (nb) {
+          currblock = nb;
+          ++used;
+          vassert(freeInCurrBlock() == 1);
+          return nb;
+        }
+      } else {
+        // no used items, yay
+        vassert(currblock == first);
+        ++used;
+        return currblock;
+      }
+    } else {
+      vassert(used == 0);
+    }
+    // need a new block
+    vassert(getNextBlock(currblock) == nullptr);
+    ++blocksAlloted;
+    T *nblk = (T *)Z_Malloc(BlockSize);
+    setPrevBlock(nblk, currblock);
+    setNextBlock(nblk, nullptr);
+    setNextBlock(currblock, nblk);
+    if (!first) {
+      vassert(used == 0);
+      first = nblk;
+    }
+    currblock = nblk;
+    ++used;
+    vassert(freeInCurrBlock() == 1);
+    return nblk;
+  }
+
+  inline void push (const T &value) noexcept { T *cp = alloc(); *cp = value; }
+  inline void append (const T &value) noexcept { T *cp = alloc(); *cp = value; }
+
+  // forget last element
+  inline void pop () noexcept {
+    vassert(used);
+    if (freeInCurrBlock() == 1) {
+      // go to previous block (but don't go beyond first one)
+      T *pblk = getPrevBlock(currblock);
+      if (pblk) currblock = pblk;
+    }
+    --used;
+  }
+
+  // forget last element
+  inline T popValue () noexcept {
+    vassert(used);
+    T *res = getLast();
+    pop();
+    return *res;
+  }
+
+  // get pointer to last element (or `nullptr`)
+  inline T *getLast () noexcept { return (used ? currblock+freeInCurrBlock()-1 : nullptr); }
+};

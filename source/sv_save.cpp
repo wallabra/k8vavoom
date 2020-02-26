@@ -264,6 +264,9 @@ public:
   TArray<VObject *> Exports;
   TArray<VLevelScriptThinker *> AcsExports;
 
+public:
+  VV_DISABLE_COPY(VSaveLoaderStream)
+
   VSaveLoaderStream (VStream *InStream) : Stream(InStream) { bLoading = true; }
   virtual ~VSaveLoaderStream () override { Close(); delete Stream; Stream = nullptr; }
 
@@ -337,6 +340,9 @@ public:
   TMapNC<vuint32, vint32> ObjectsMap; // key: object uid; value: internal index
   TArray</*VLevelScriptThinker*/VSerialisable *> AcsExports;
   bool skipPlayers;
+
+public:
+  VV_DISABLE_COPY(VSaveWriterStream)
 
   VSaveWriterStream (VStream *InStream) : Stream(InStream) {
     bLoading = false;

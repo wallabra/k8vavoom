@@ -865,8 +865,11 @@ private:
 
 public:
   struct LMapTraceInfo {
+  public:
     enum { GridSize = 18 };
     enum { MaxSurfPoints = GridSize*GridSize*4/*16*/ }; // *4 for extra filtering
+
+  public:
     TVec smins, smaxs;
     TVec worldtotex[2];
     TVec textoworld[2];
@@ -881,9 +884,9 @@ public:
     float coneAngle;
     TVec coneDir;
 
-    LMapTraceInfo () { memset((void *)this, 0, sizeof(LMapTraceInfo)); }
-    LMapTraceInfo (const LMapTraceInfo &) = delete;
-    LMapTraceInfo & operator = (const LMapTraceInfo &) = delete;
+  public:
+    VV_DISABLE_COPY(LMapTraceInfo)
+    inline LMapTraceInfo () noexcept { memset((void *)this, 0, sizeof(LMapTraceInfo)); }
 
     inline TVec calcTexPoint (const float us, const float ut) const { return texorg+textoworld[0]*us+textoworld[1]*ut; }
 

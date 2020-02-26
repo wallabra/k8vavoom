@@ -506,9 +506,8 @@ public:
   bool active;
 
 public:
+  VV_DISABLE_COPY(MethodProfiler)
   inline MethodProfiler (VMethod *afunc) noexcept : func(afunc), timer(), active(false) {}
-  MethodProfiler (const MethodProfiler &) = delete;
-  MethodProfiler &operator = (const MethodProfiler &) = delete;
   inline ~MethodProfiler () {
     if (active) {
       timer.stop();
@@ -3236,10 +3235,9 @@ private:
   void *pool[VMethod::MAX_PARAMS];
 
 public:
+  VV_DISABLE_COPY(VStrPool)
   inline VStrPool () noexcept : used(0) {}
   inline ~VStrPool () { clear(); }
-  inline VStrPool (const VStrPool &) = delete;
-  inline VStrPool &operator = (const VStrPool &) = delete;
 
   inline void clear () {
     for (unsigned f = 0; f < used; ++f) ((VStr *)(&pool[f]))->clear();
@@ -3265,10 +3263,9 @@ private:
   T pool[VMethod::MAX_PARAMS*3]; // for vectors
 
 public:
+  VV_DISABLE_COPY(VSimpleTypePool)
   inline VSimpleTypePool () noexcept : used(0) {}
   inline ~VSimpleTypePool () noexcept { used = 0; }
-  inline VSimpleTypePool (const VSimpleTypePool &) = delete;
-  inline VSimpleTypePool &operator = (const VSimpleTypePool &) = delete;
 
   inline void clear () noexcept { used = 0; }
 

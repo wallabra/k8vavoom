@@ -353,12 +353,10 @@ private:
   bool saved;
 
 public:
+  VV_DISABLE_COPY(FSysSavedState)
+
   inline FSysSavedState () noexcept : svSearchPaths(), svwadfiles(), saved(false) {}
   inline ~FSysSavedState () noexcept {} // no autorestore
-
-  // no copies
-  FSysSavedState (const FSysSavedState &) = delete;
-  FSysSavedState &operator = (const FSysSavedState &) = delete;
 
   inline bool isActive () const noexcept { return saved; }
 

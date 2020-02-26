@@ -258,6 +258,7 @@ public:
   int stkPoolIdx; // -1: not in a pool
 
 public:
+  VV_DISABLE_COPY(ACSStack)
   ACSStack () : stk(nullptr), stkPoolIdx(acsStackNextFree) {
     if (stkPoolIdx >= 0) {
       // reuse stack
@@ -292,8 +293,6 @@ public:
     stk = nullptr;
     stkPoolIdx = -1;
   }
-  ACSStack (const ACSStack &) = delete;
-  ACSStack &operator = (const ACSStack &) = delete;
 };
 
 

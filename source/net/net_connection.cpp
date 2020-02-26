@@ -377,7 +377,7 @@ void VNetConnection::Flush () {
 
   // add trailing bit so we can find out how many bits the message has
   Out.WriteBit(true);
-  // pad it with zero bits untill byte boundary
+  // pad it with zero bits until byte boundary
   while (Out.GetNumBits()&7) Out.WriteBit(false);
 
   // send the message
@@ -393,7 +393,9 @@ void VNetConnection::Flush () {
   ++UnreliableSendSequence;
 
   // clear outgoing packet buffer
-  Out = VBitStreamWriter(MAX_MSGLEN*8);
+  //Out = VBitStreamWriter(MAX_MSGLEN*8);
+  //k8: shout we fully reinit `Out` here?
+  Out.Reinit(MAX_MSGLEN*8);
 }
 
 

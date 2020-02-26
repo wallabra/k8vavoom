@@ -174,7 +174,8 @@ void VObjectMapChannel::Update () {
       SendMessage(&Msg);
       if (!OpenAcked) return;
       if (CountOutMessages() >= 10) return; // queue is full
-      Msg = VMessageOut(this);
+      //Msg = VMessageOut(this);
+      Msg.Setup(this);
       Msg.bReliable = true;
       Msg.bOpen = false;
       WriteCounters(Msg);
@@ -190,7 +191,8 @@ void VObjectMapChannel::Update () {
     if (Msg.GetNumBytes()+1+VBitStreamWriter::CalcIntBits(VName::GetNumNames()) > OUT_MESSAGE_SIZE/8) {
       SendMessage(&Msg);
       if (CountOutMessages() >= 10) return; // queue is full
-      Msg = VMessageOut(this);
+      //Msg = VMessageOut(this);
+      Msg.Setup(this);
       Msg.bReliable = true;
       Msg.bOpen = false;
       WriteCounters(Msg);

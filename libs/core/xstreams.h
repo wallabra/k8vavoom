@@ -34,6 +34,8 @@ protected:
   VStr StreamName;
 
 public:
+  VV_DISABLE_COPY(VMemoryStreamRO)
+
   VMemoryStreamRO (); // so we can declare it, and initialize later
   VMemoryStreamRO (VStr strmName, const void *adata, int adataSize, bool takeOwnership=false);
   VMemoryStreamRO (VStr strmName, VStream *strm); // from current position to stream end
@@ -64,6 +66,8 @@ protected:
   VStr StreamName;
 
 public:
+  VV_DISABLE_COPY(VMemoryStream)
+
   // initialise empty writing stream
   VMemoryStream ();
   VMemoryStream (VStr strmName);
@@ -95,6 +99,8 @@ protected:
   VStr StreamName;
 
 public:
+  VV_DISABLE_COPY(VArrayStream)
+
   VArrayStream (VStr strmName, TArray<vuint8> &);
   virtual ~VArrayStream () override;
 
@@ -127,6 +133,8 @@ private:
   VStr StreamName;
 
 public:
+  VV_DISABLE_COPY(VPagedMemoryStream)
+
   // initialise empty writing stream
   VPagedMemoryStream (VStr strmName);
   virtual ~VPagedMemoryStream () override;
@@ -178,8 +186,14 @@ protected:
   }
 
 public:
-  VBitStreamWriter (vint32, bool allowExpand=false);
+  VV_DISABLE_COPY(VBitStreamWriter)
+
+  VBitStreamWriter (vint32 AMax, bool allowExpand=false);
   virtual ~VBitStreamWriter () override;
+
+  void cloneFrom (const VBitStreamWriter *wr);
+
+  void Reinit (vint32 AMax, bool allowExpand=false);
 
   virtual void Serialise (void *Data, int Length) override;
   virtual void SerialiseBits (void *Data, int Length) override;
@@ -233,8 +247,12 @@ protected:
   vint32 Pos;
 
 public:
+  VV_DISABLE_COPY(VBitStreamReader)
+
   VBitStreamReader (vuint8* = nullptr, vint32 = 0);
   virtual ~VBitStreamReader () override;
+
+  void cloneFrom (const VBitStreamReader *rd);
 
   void SetData (VBitStreamReader&, int) noexcept;
   virtual void Serialise (void *Data, int Length) override;
@@ -276,6 +294,8 @@ private:
   void setError ();
 
 public:
+  VV_DISABLE_COPY(VStdFileStreamBase)
+
   VStdFileStreamBase (FILE *afl, VStr aname, bool asWriter);
   virtual ~VStdFileStreamBase () override;
 
@@ -291,12 +311,16 @@ public:
 // owns afl
 class VStdFileStreamRead : public VStdFileStreamBase {
 public:
+  VV_DISABLE_COPY(VStdFileStreamRead)
+
   inline VStdFileStreamRead (FILE *afl, VStr aname=VStr()) : VStdFileStreamBase(afl, aname, false) {}
 };
 
 // owns afl
 class VStdFileStreamWrite : public VStdFileStreamBase {
 public:
+  VV_DISABLE_COPY(VStdFileStreamWrite)
+
   inline VStdFileStreamWrite (FILE *afl, VStr aname=VStr()) : VStdFileStreamBase(afl, aname, true) {}
 };
 
@@ -321,6 +345,8 @@ private:
   inline bool checkValidity () noexcept { return checkValidityCond(true); }
 
 public:
+  VV_DISABLE_COPY(VPartialStreamRO)
+
   // doesn't own passed stream
   VPartialStreamRO (VStream *ASrcStream, int astpos, int apartlen=-1, bool aOwnSrc=false);
   VPartialStreamRO (VStr aname, VStream *ASrcStream, int astpos, int apartlen, mythread_mutex *alockptr);

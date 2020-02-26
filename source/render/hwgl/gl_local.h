@@ -178,11 +178,9 @@ public:
     void createInternal (VOpenGLDrawer *aowner, int awidth, int aheight, bool createDepthStencil, bool mirroredRepeat);
 
   public:
+    VV_DISABLE_COPY(FBO)
     FBO ();
     ~FBO ();
-
-    FBO (const FBO &) = delete;
-    FBO &operator = (const FBO &) = delete;
 
     inline bool isValid () const noexcept { return (mOwner != nullptr); }
     inline int getWidth () const noexcept { return mWidth; }
@@ -615,10 +613,9 @@ private:
     int index; // internal index of this FBO
 
   public:
+    VV_DISABLE_COPY(CameraFBOInfo)
     CameraFBOInfo ();
     ~CameraFBOInfo ();
-    CameraFBOInfo (const CameraFBOInfo &) = delete;
-    CameraFBOInfo& operator = (const CameraFBOInfo &) = delete;
   };
 
 protected:

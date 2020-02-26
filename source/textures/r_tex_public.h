@@ -179,12 +179,13 @@ protected:
   inline bool InReleasingPixels () const noexcept { return (Type == -1); }
 
   struct ReleasePixelsLock {
+  public:
     VTexture *tex;
     int oldType;
+  public:
+    VV_DISABLE_COPY(ReleasePixelsLock)
     inline ReleasePixelsLock (VTexture *atex) noexcept : tex(atex), oldType(atex->Type) { atex->Type = -1; }
     inline ~ReleasePixelsLock () noexcept { if (tex) tex->Type = oldType; tex = nullptr; }
-    ReleasePixelsLock (const ReleasePixelsLock &) = delete;
-    ReleasePixelsLock & operator = (const ReleasePixelsLock &) = delete;
   };
 
 protected:

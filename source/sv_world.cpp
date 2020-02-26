@@ -1296,6 +1296,7 @@ int SV_PointContents (sector_t *sector, const TVec &p, bool dbgDump) {
   if (sector->Has3DFloors()) {
     const float secfz = sector->floor.GetPointZClamped(p);
     const float seccz = sector->ceiling.GetPointZClamped(p);
+    // out of sector's empty space?
     if (p.z < secfz || p.z > seccz) {
       if (dbgDump) GCon->Log(NAME_Debug, "SVP: case 2");
       return best->params->contents;

@@ -75,11 +75,10 @@ private:
   inline void checkValidity () { checkValidityCond(true); }
 
 public:
+  VV_DISABLE_COPY(VCheckedStream)
+
   VCheckedStream (VStream *ASrcStream); // this should not be used with `new`
   virtual ~VCheckedStream () override;
-
-  VCheckedStream (const VCheckedStream &) = delete;
-  VCheckedStream &operator = (const VCheckedStream &) = delete;
 
   void SetStream (VStream *ASrcStream);
 

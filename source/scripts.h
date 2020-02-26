@@ -108,14 +108,13 @@ public:
   inline void RestorePos (const VScriptSavedPos &pos) { pos.restoreTo(*this); }
 
 public:
+  VV_DISABLE_COPY(VScriptParser)
+
   // deletes `Strm`
   VScriptParser (VStr name, VStream *Strm);
   VScriptParser (VStr name, const char *atext);
 
   ~VScriptParser ();
-
-  VScriptParser (const VScriptParser &) = delete;
-  VScriptParser &operator = (const VScriptParser &) = delete;
 
   VScriptParser *clone () const;
 
