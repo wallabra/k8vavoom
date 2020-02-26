@@ -1251,7 +1251,7 @@ int NET_SendToAll (int blocktime) {
       VBasePlayer *Player = GGameInfo->Players[i];
       if (!state1[i]) {
         state1[i] = true;
-        Player->Net->Channels[0]->Close();
+        Player->Net->GetGeneralChannel()->Close();
         ++count;
         continue;
       }
@@ -1453,10 +1453,9 @@ COMMAND(PreSpawn) {
   VThinkerChannel *Chan = Player->Net->ThinkerChannels.FindPtr(GLevelInfo);
   if (!Chan) {
     Chan = (VThinkerChannel *)Player->Net->CreateChannel(CHANNEL_Thinker, -1);
-    if (Chan) {
-      Chan->SetThinker(GLevelInfo);
-      Chan->Update();
-    }
+    if (!Chan) Sys_Error("cannot allocate `LevelInfo` channel, this should NOT happen!");
+    Chan->SetThinker(GLevelInfo);
+    Chan->Update();
   }
 }
 
@@ -1535,7 +1534,7 @@ void SV_ShutdownGame () {
     if (!cls.demoplayback) {
       GCon->Log(NAME_Dev, "Sending clc_disconnect");
       if (cl->Net) {
-        if (cl->Net->Channels[0]) cl->Net->Channels[0]->Close();
+        if (cl->Net->GetGeneralChannel()) cl->Net->GetGeneralChannel()->Close();
         cl->Net->Flush();
       }
     }
@@ -1724,7 +1723,7 @@ void SV_CheckForNewClients () {
     VBasePlayer *Player = GPlayersBase[i];
     Player->Net = new VNetConnection(sock, ServerNetContext, Player);
     Player->Net->ObjMap->SetupClassLookup();
-    ((VPlayerChannel *)Player->Net->Channels[CHANIDX_Player])->SetPlayer(Player);
+    Player->Net->GetPlayerChannel()->SetPlayer(Player);
     Player->Net->CreateChannel(CHANNEL_ObjectMap, -1);
     SV_ConnectClient(Player);
     ++svs.num_connected;

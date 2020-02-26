@@ -53,12 +53,117 @@ VThinkerChannel::~VThinkerChannel () {
   // mark channel as closing to prevent sending a message
   Closing = true;
   // if this is a client version of entity, destroy it
-  if (Thinker && !OpenedLocally) {
-    Thinker->DestroyThinker();
-    Thinker->XLevel->RemoveThinker(Thinker);
-    Thinker->ConditionalDestroy();
+  RemoveThinkerFromGame();
+  #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
+  #ifdef CLIENT
+  GCon->Logf(NAME_Debug, "VThinkerChannel::~VThinkerChannel:%p (#%d) -- done", this, Index);
+  #endif
+  #endif
+}
+
+
+//==========================================================================
+//
+//  VThinkerChannel::RemoveThinkerFromGame
+//
+//==========================================================================
+void VThinkerChannel::RemoveThinkerFromGame () {
+  // if this is a client version of entity, destroy it
+  if (!Thinker) return;
+  if (!OpenedLocally) {
+    #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
+    #ifdef CLIENT
+    GCon->Logf(NAME_Debug, "VThinkerChannel::~RemoveThinkerFromGame:%p (#%d) -- before `DestroyThinker()`", this, Index);
+    #endif
+    #endif
+    // avoid loops
+    VThinker *th = Thinker;
+    Thinker = nullptr;
+    th->DestroyThinker();
+    //k8: oooh; hacks upon hacks, and more hacks... one of those methods can call `SetThinker(nullptr)` for us
+    if (th && th->XLevel) {
+      #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
+      #ifdef CLIENT
+      GCon->Logf(NAME_Debug, "VThinkerChannel::~RemoveThinkerFromGame:%p (#%d) -- before `RemoveThinker()`", this, Index);
+      #endif
+      #endif
+      th->XLevel->RemoveThinker(th);
+    }
+    if (th) {
+      #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
+      #ifdef CLIENT
+      GCon->Logf(NAME_Debug, "VThinkerChannel::~RemoveThinkerFromGame:%p (#%d) -- before `ConditionalDestroy()`", this, Index);
+      #endif
+      #endif
+      th->ConditionalDestroy();
+    }
+    // restore it
+    Thinker = th;
   }
+  #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
+  #ifdef CLIENT
+  GCon->Logf(NAME_Debug, "VThinkerChannel::~RemoveThinkerFromGame:%p (#%d) -- before `SetThinker()`", this, Index);
+  #endif
+  #endif
   SetThinker(nullptr);
+  #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
+  #ifdef CLIENT
+  GCon->Logf(NAME_Debug, "VThinkerChannel::~RemoveThinkerFromGame:%p (#%d) -- done", this, Index);
+  #endif
+  #endif
+}
+
+
+//==========================================================================
+//
+//  VThinkerChannel::Suicide
+//
+//==========================================================================
+void VThinkerChannel::Suicide () {
+  Closing = true;
+  #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
+  #ifdef CLIENT
+  GCon->Logf(NAME_Debug, "VThinkerChannel::Suicide:%p (#%d) -- resetting thinker", this, Index);
+  #endif
+  #endif
+  // if this is a client version of entity, destroy it
+  RemoveThinkerFromGame();
+  #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
+  #ifdef CLIENT
+  GCon->Logf(NAME_Debug, "VThinkerChannel::Suicide:%p (#%d) -- calling super::Suicide()", this, Index);
+  #endif
+  #endif
+  VChannel::Suicide();
+}
+
+
+//==========================================================================
+//
+//  VThinkerChannel::Close
+//
+//==========================================================================
+void VThinkerChannel::Close () {
+  if (!Closing) {
+    // don't suicide here, we still need to wait for ack
+    #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
+    #ifdef CLIENT
+    GCon->Logf(NAME_Debug, "VThinkerChannel::Close:%p (#%d) -- calling super::Close()", this, Index);
+    #endif
+    #endif
+    VChannel::Close();
+    #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
+    #ifdef CLIENT
+    GCon->Logf(NAME_Debug, "VThinkerChannel::Close:%p (#%d) -- removing thinker", this, Index);
+    #endif
+    #endif
+    // if this is a client version of entity, destroy it
+    RemoveThinkerFromGame();
+    #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
+    #ifdef CLIENT
+    GCon->Logf(NAME_Debug, "VThinkerChannel::Close:%p (#%d) -- done", this, Index);
+    #endif
+    #endif
+  }
 }
 
 
@@ -69,6 +174,11 @@ VThinkerChannel::~VThinkerChannel () {
 //==========================================================================
 void VThinkerChannel::SetThinker (VThinker *AThinker) {
   if (Thinker) {
+    #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
+    #ifdef CLIENT
+    GCon->Logf(NAME_Debug, "VThinkerChannel::SetThinker:%p (#%d): removing thinker '%s':%u", this, Index, Thinker->GetClass()->GetName(), Thinker->GetUniqueId());
+    #endif
+    #endif
     Connection->ThinkerChannels.Remove(Thinker);
     if (OldData) {
       for (VField *F = ThinkerClass->NetFields; F; F = F->NextNetField) {
@@ -86,6 +196,11 @@ void VThinkerChannel::SetThinker (VThinker *AThinker) {
   Thinker = AThinker;
 
   if (Thinker) {
+    #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
+    #ifdef CLIENT
+    GCon->Logf(NAME_Debug, "VThinkerChannel::SetThinker:%p (#%d): setting thinker '%s':%u", this, Index, AThinker->GetClass()->GetName(), AThinker->GetUniqueId());
+    #endif
+    #endif
     ThinkerClass = Thinker->GetClass();
     if (OpenedLocally) {
       VThinker *Def = (VThinker *)ThinkerClass->Defaults;
@@ -228,7 +343,7 @@ void VThinkerChannel::ParsePacket (VMessageIn &Msg) {
     Connection->ObjMap->SerialiseClass(Msg, C);
 
     VThinker *Th = Connection->Context->GetLevel()->SpawnThinker(C, TVec(0, 0, 0), TAVec(0, 0, 0), nullptr, false);
-#ifdef CLIENT
+    #ifdef CLIENT
     //GCon->Logf("NET:%p: spawned thinker with class `%s`", Th, Th->GetClass()->GetName());
     if (Th && Th->IsA(VLevelInfo::StaticClass())) {
       VLevelInfo *LInfo = (VLevelInfo *)Th;
@@ -238,7 +353,7 @@ void VThinkerChannel::ParsePacket (VMessageIn &Msg) {
       cl->Net->SendCommand("Client_Spawn\n");
       cls.signon = 1;
     }
-#endif
+    #endif
     SetThinker(Th);
   }
 
@@ -282,15 +397,4 @@ void VThinkerChannel::ParsePacket (VMessageIn &Msg) {
     Ent->LinkToWorld(true);
     //TVec newOrg = Eng->Origin;
   }
-}
-
-
-//==========================================================================
-//
-//  VThinkerChannel::Close
-//
-//==========================================================================
-void VThinkerChannel::Close () {
-  VChannel::Close();
-  SetThinker(nullptr);
 }

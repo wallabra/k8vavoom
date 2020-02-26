@@ -93,7 +93,7 @@ bool VBasePlayer::ExecuteNetMethod (VMethod *Func) {
 
     if (ShouldSend) {
       // replication condition is true, the method must be replicated
-      GDemoRecordingContext->ClientConnections[0]->Channels[CHANIDX_Player]->SendRpc(Func, this);
+      GDemoRecordingContext->ClientConnections[0]->GetPlayerChannel()->SendRpc(Func, this);
     }
   }
 
@@ -115,7 +115,7 @@ bool VBasePlayer::ExecuteNetMethod (VMethod *Func) {
 
   if (Net) {
     // replication condition is true, the method must be replicated
-    Net->Channels[CHANIDX_Player]->SendRpc(Func, this);
+    Net->GetPlayerChannel()->SendRpc(Func, this);
   }
 
   // clean up parameters

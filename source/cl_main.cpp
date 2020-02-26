@@ -402,7 +402,10 @@ void CL_SendMove () {
 
   if (cls.signon) {
     if (!GGameInfo->IsPaused()) cl->HandleInput();
-    if (cl->Net) ((VPlayerChannel *)cl->Net->Channels[CHANIDX_Player])->Update();
+    if (cl->Net) {
+      VPlayerChannel *pc = cl->Net->GetPlayerChannel();
+      if (pc) pc->Update();
+    }
   }
 
   if (cl->Net) cl->Net->Tick();
@@ -491,7 +494,7 @@ void CL_ParseServerInfo (const ClientServerInfo *sinfo) {
   CL_LoadLevel(MapName);
   GClLevel->NetContext = ClientNetContext;
 
-  ((VLevelChannel *)cl->Net->Channels[CHANIDX_Level])->SetLevel(GClLevel);
+  cl->Net->GetLevelChannel()->SetLevel(GClLevel);
 
   R_Start(GClLevel);
   GAudio->Start();
@@ -532,7 +535,7 @@ void CL_SetupNetClient (VSocketPublic *Sock) {
     cl->Net = new VNetConnection(Sock, ClientNetContext, cl);
   }
   ClientNetContext->ServerConnection = cl->Net;
-  ((VPlayerChannel *)cl->Net->Channels[CHANIDX_Player])->SetPlayer(cl);
+  cl->Net->GetPlayerChannel()->SetPlayer(cl);
 }
 
 
@@ -602,7 +605,7 @@ void CL_PlayDemo (VStr DemoName, bool IsTimeDemo) {
 
   cl->Net = new VDemoPlaybackNetConnection(ClientNetContext, cl, Strm, IsTimeDemo);
   ClientNetContext->ServerConnection = cl->Net;
-  ((VPlayerChannel *)cl->Net->Channels[CHANIDX_Player])->SetPlayer(cl);
+  cl->Net->GetPlayerChannel()->SetPlayer(cl);
 
   GGameInfo->NetMode = NM_Client;
   GClGame->eventDemoPlaybackStarted();
@@ -736,10 +739,10 @@ COMMAND_WITH_AC(RecordDemo) {
     GDemoRecordingContext->ClientConnections.Append(Conn);
     Conn->ObjMap->SetupClassLookup();
     VObjectMapChannel *Chan = (VObjectMapChannel *)Conn->CreateChannel(CHANNEL_ObjectMap, -1);
-    (void)Chan; //k8:???
+    (void)Chan; //k8:shut up, gcc!
     while (!Conn->ObjMapSent) Conn->Tick();
     Conn->SendServerInfo();
-    ((VPlayerChannel *)Conn->Channels[CHANIDX_Player])->SetPlayer(cl);
+    Conn->GetPlayerChannel()->SetPlayer(cl);
   }
 }
 

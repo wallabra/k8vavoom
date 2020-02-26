@@ -42,11 +42,8 @@ VChannel::VChannel (VNetConnection *AConnection, EChannelType AType, vint32 AInd
   , InMsg(nullptr)
   , OutMsg(nullptr)
 {
-  vensure(Index >= 0);
-  vensure(Index < MAX_CHANNELS);
-  vensure(!Connection->Channels[Index]);
-  Connection->Channels[Index] = this;
-  Connection->OpenChannels.Append(this);
+  vassert(Index >= 0 && Index < MAX_CHANNELS);
+  Connection->RegisterChannel(this);
 }
 
 
@@ -56,23 +53,109 @@ VChannel::VChannel (VNetConnection *AConnection, EChannelType AType, vint32 AInd
 //
 //==========================================================================
 VChannel::~VChannel () {
+  #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
+  #ifdef CLIENT
+  GCon->Logf(NAME_Debug, "VChannel::~VChannel:%p (#%d) -- enter", this, Index);
+  #endif
+  #endif
+  Closing = true; // just in case
+  ClearAllQueues();
+  if (Index >= 0 && Index < MAX_CHANNELS && Connection) {
+    #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
+    #ifdef CLIENT
+    GCon->Logf(NAME_Debug, "VChannel::~VChannel:%p (#%d) -- before `UnregisterChannel()`", this, Index);
+    #endif
+    #endif
+    Connection->UnregisterChannel(this);
+    Index = -1; // just in case
+    #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
+    #ifdef CLIENT
+    GCon->Logf(NAME_Debug, "VChannel::~VChannel:%p (#%d) -- after `UnregisterChannel()`", this, Index);
+    #endif
+    #endif
+  }
+  #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
+  #ifdef CLIENT
+  GCon->Logf(NAME_Debug, "VChannel::~VChannel:%p (#%d) -- done", this, Index);
+  #endif
+  #endif
+}
+
+
+//==========================================================================
+//
+//  VChannel::Suicide
+//
+//==========================================================================
+void VChannel::ClearAllQueues () {
   for (VMessageIn *Msg = InMsg; Msg; ) {
     VMessageIn *Next = Msg->Next;
     delete Msg;
     Msg = Next;
   }
+  InMsg = nullptr;
   for (VMessageOut *Msg = OutMsg; Msg; ) {
     VMessageOut *Next = Msg->Next;
     delete Msg;
     Msg = Next;
   }
-  //k8: yay, i love magic numbers!
-  if (Index != -666) {
-    if (Index >= 0 && Index < MAX_CHANNELS && Connection->Channels[Index] == this) {
-      Connection->Channels[Index] = nullptr;
-    }
-    Connection->OpenChannels.Remove(this);
+  OutMsg = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VChannel::ClearOutQueue
+//
+//==========================================================================
+void VChannel::ClearOutQueue () {
+  for (VMessageOut *Msg = OutMsg; Msg; ) {
+    VMessageOut *Next = Msg->Next;
+    delete Msg;
+    Msg = Next;
   }
+  OutMsg = nullptr;
+}
+
+
+//==========================================================================
+//
+//  VChannel::Suicide
+//
+//==========================================================================
+void VChannel::Suicide () {
+  Closing = true;
+  ClearOutQueue(); // it is safe to destroy it
+  if (Connection) Connection->MarkChannelsDirty();
+}
+
+
+//==========================================================================
+//
+//  VChannel::Close
+//
+//==========================================================================
+void VChannel::Close () {
+  if (Closing) return; // already in closing state
+
+  #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
+  #ifdef CLIENT
+  GCon->Logf(NAME_Debug, "VChannel::Close:%p (#%d) -- sending message", this, Index);
+  #endif
+  #endif
+  // send close message
+  VMessageOut Msg(this);
+  Msg.bReliable = true;
+  Msg.bClose = true;
+  SendMessage(&Msg);
+  #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
+  #ifdef CLIENT
+  GCon->Logf(NAME_Debug, "VChannel::Close:%p (#%d) -- message sent", this, Index);
+  #endif
+  #endif
+
+  // enter closing state
+  Closing = true;
 }
 
 
@@ -130,7 +213,7 @@ void VChannel::ReceivedRawMessage (VMessageIn &Msg) {
 
   if (!Closing) ParsePacket(Msg);
   if (Msg.bClose) {
-    delete this;
+    Suicide();
     return;
   }
 
@@ -139,14 +222,13 @@ void VChannel::ReceivedRawMessage (VMessageIn &Msg) {
     InMsg = OldMsg->Next;
     ++Connection->InSequence[Index];
     if (!Closing) ParsePacket(*OldMsg);
-    bool Closed = false;
-    if (OldMsg->bClose) {
-      delete this;
-      Closed = true;
-    }
+    const bool isCloseMsg = OldMsg->bClose;
     delete OldMsg;
     OldMsg = nullptr;
-    if (Closed) return;
+    if (isCloseMsg) {
+      Suicide();
+      return;
+    }
   }
 }
 
@@ -158,6 +240,7 @@ void VChannel::ReceivedRawMessage (VMessageIn &Msg) {
 //==========================================================================
 void VChannel::SendMessage (VMessageOut *AMsg) {
   VMessageOut *Msg = AMsg;
+
   if (Msg->IsError()) {
     GCon->Logf(NAME_DevNet, "Overflowed message (len=%d bits, %d bytes)", Msg->GetNum(), (Msg->GetNum()+7)/8);
     const char *chanName = "thinker";
@@ -202,7 +285,7 @@ bool VChannel::ReceivedAck () {
   // only the first ones are deleted so that close message doesn't
   // get handled while there's still messages that are not ACK-ed
   bool CloseAcked = false;
-  while (OutMsg && OutMsg->bReceivedAck) {
+  while (!CloseAcked && OutMsg && OutMsg->bReceivedAck) {
     VMessageOut *Msg = OutMsg;
     OutMsg = Msg->Next;
     if (Msg->bClose) CloseAcked = true;
@@ -212,26 +295,13 @@ bool VChannel::ReceivedAck () {
 
   // if we received ACK for close message then delete this channel
   //if (CloseAcked) delete this;
+  if (CloseAcked) {
+    #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
+    GCon->Logf(NAME_Debug, "%p: got close ack for channel #%d", this, Index);
+    #endif
+    Suicide();
+  }
   return CloseAcked;
-}
-
-
-//==========================================================================
-//
-//  VChannel::Close
-//
-//==========================================================================
-void VChannel::Close () {
-  if (Closing) return; // already in closing state
-
-  // send close message
-  VMessageOut Msg(this);
-  Msg.bReliable = true;
-  Msg.bClose = true;
-  SendMessage(&Msg);
-
-  // enter closing state
-  Closing = true;
 }
 
 
@@ -242,8 +312,11 @@ void VChannel::Close () {
 //==========================================================================
 void VChannel::Tick () {
   // resend timed out messages
+  // bomb the network with messages, because why not
+  //TODO: messages like player movement should be marked as "urgent" and we
+  //      should spam with them without delays
   for (VMessageOut *Msg = OutMsg; Msg; Msg = Msg->Next) {
-    if (!Msg->bReceivedAck && Connection->Driver->NetTime-Msg->Time > 1.0) {
+    if (!Msg->bReceivedAck && Connection->Driver->NetTime-Msg->Time > 1.0/35.0) {
       Connection->SendRawMessage(*Msg);
       ++Connection->Driver->packetsReSent;
     }

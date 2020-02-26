@@ -26,6 +26,9 @@
 #ifndef VAVOOM_NETWORK_HEADER
 #define VAVOOM_NETWORK_HEADER
 
+//#define VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
+
+
 class VNetContext;
 
 // network message class
@@ -72,7 +75,8 @@ enum EChannelIndex {
   CHANIDX_General,
   CHANIDX_Player,
   CHANIDX_Level,
-  CHANIDX_ThinkersStart
+  CHANIDX_KnownBmpMask = 0x111u,
+  CHANIDX_ThinkersStart,
 };
 
 
@@ -164,15 +168,32 @@ public:
   vuint8 Closing;
   VMessageIn *InMsg;
   VMessageOut *OutMsg; // sent reliable messages; we want ACK for them
+  // if `Closing` flag is set, we should remove the channel when `ReceivedAck()` returns `true`
+  // until then, the channel should be alive, because it may contain some reliable messages to resend
+  // also, it is safe to remove the channel if `OutMsg` is `nullptr` (we have no messages to ack)
 
+public:
   VChannel (VNetConnection *, EChannelType, vint32, vuint8);
   virtual ~VChannel ();
+
+  void ClearAllQueues ();
+  void ClearOutQueue ();
+
+  // is it safe to remove this channel?
+  inline bool IsDead () const noexcept { return (Closing && OutMsg == nullptr); }
+
+  inline bool IsThinker () const noexcept { return (Type == CHANNEL_Thinker); }
+
+  // call this instead of `delete this`
+  // connection ticker will take care of closed channels
+  // WARNING! this will not call `Close()`, but will set `Closing` flag directly
+  virtual void Suicide ();
 
   // VChannel interface
   void ReceivedRawMessage (VMessageIn &);
   virtual void ParsePacket (VMessageIn &) = 0;
   void SendMessage (VMessageOut *);
-  virtual bool ReceivedAck (); // returns `true` if channel is closed (the caller should delete it)
+  virtual bool ReceivedAck (); // returns `true` if closing ack received (the caller should delete it)
   virtual void Close ();
   virtual void Tick ();
   void SendRpc (VMethod *, VObject *);
@@ -190,6 +211,7 @@ public:
 
   // VChannel interface
   virtual void ParsePacket (VMessageIn &) override;
+  virtual void Suicide () override;
 };
 
 
@@ -217,6 +239,7 @@ public:
   int severInfoCurrPacket;
   ClientServerInfo csi;
 
+public:
   VLevelChannel (VNetConnection *, vint32, vuint8 = true);
   virtual ~VLevelChannel () override;
   void SetLevel (VLevel *);
@@ -224,6 +247,7 @@ public:
   void SendNewLevel ();
   void SendStaticLights ();
   void ResetLevel ();
+  virtual void Suicide () override;
   virtual void ParsePacket (VMessageIn &) override;
 };
 
@@ -239,13 +263,17 @@ public:
   bool UpdatedThisFrame;
   vuint8 *FieldCondValues;
 
-  VThinkerChannel (VNetConnection *, vint32, vuint8 = true);
+public:
+  VThinkerChannel (VNetConnection *AConnection, vint32 AIndex, vuint8 AOpenedLocally=true);
   virtual ~VThinkerChannel () override;
   void SetThinker (VThinker *);
   void EvalCondValues (VObject *, VClass *, vuint8 *);
   void Update ();
+  virtual void Suicide () override;
   virtual void ParsePacket (VMessageIn &) override;
   virtual void Close () override;
+
+  void RemoveThinkerFromGame ();
 };
 
 
@@ -258,11 +286,13 @@ public:
   bool NewObj;
   vuint8 *FieldCondValues;
 
+public:
   VPlayerChannel (VNetConnection *, vint32, vuint8 = true);
   virtual ~VPlayerChannel () override;
   void SetPlayer (VBasePlayer *);
   void EvalCondValues (VObject *, VClass *, vuint8 *);
   void Update ();
+  virtual void Suicide () override;
   virtual void ParsePacket (VMessageIn &) override;
 };
 
@@ -287,6 +317,7 @@ public:
   virtual ~VObjectMapChannel () override;
   virtual void Tick () override;
   void Update ();
+  virtual void Suicide () override;
   virtual void ParsePacket (VMessageIn &) override;
 };
 
@@ -305,6 +336,32 @@ class VNetConnection {
 protected:
   VSocketPublic *NetCon;
 
+protected:
+  // open channels (in random order)
+  //TArray<VChannel *> OpenChannels;
+  // non-thinker channels
+  VChannel *KnownChannels[CHANIDX_ThinkersStart];
+  vuint32 ChanFreeBitmap[(MAX_CHANNELS+31)/32];
+  // thinker channels
+  TMapNC<vint32, VChannel *> ChanIdxMap; // index -> channel
+  // if this flag is set, we *may* have some dead channels, and should call `RemoveDeadThinkerChannels()`
+  bool HasDeadChannels;
+
+public:
+  void RegisterChannel (VChannel *chan);
+  void UnregisterChannel (VChannel *chan, bool touchMap=true);
+
+  // can return -1 if there are no free thinker channels
+  vint32 AllocThinkerChannelId ();
+
+  inline void MarkChannelsDirty () noexcept { HasDeadChannels = true; }
+
+  inline VChannel *GetGeneralChannel () noexcept { return KnownChannels[CHANIDX_General]; }
+  inline VPlayerChannel *GetPlayerChannel () noexcept { return (VPlayerChannel *)(KnownChannels[CHANIDX_Player]); }
+  inline VLevelChannel *GetLevelChannel () noexcept { return (VLevelChannel *)(KnownChannels[CHANIDX_Level]); }
+
+  inline VChannel *GetChannelByIndex (int idx) noexcept { auto pp = ChanIdxMap.find(idx); return (pp ? *pp : nullptr); }
+
 public:
   VNetworkPublic *Driver;
   VNetContext *Context;
@@ -314,11 +371,11 @@ public:
   bool NeedsUpdate;
   bool AutoAck;
   VBitStreamWriter Out;
-  VChannel *Channels[MAX_CHANNELS];
-  TArray<VChannel *> OpenChannels;
+  //VChannel *Channels[MAX_CHANNELS];
+  //TArray<VChannel *> OpenChannels;
   vuint32 InSequence[MAX_CHANNELS];
   vuint32 OutSequence[MAX_CHANNELS];
-  TMap<VThinker *, VThinkerChannel *> ThinkerChannels;
+  TMapNC<VThinker *, VThinkerChannel *> ThinkerChannels;
   vuint32 AckSequence;
   vuint32 UnreliableSendSequence;
   vuint32 UnreliableReceiveSequence;
@@ -331,6 +388,14 @@ private:
   int UpdatePvsSize;
   const vuint8 *LeafPvs;
   VViewClipper Clipper;
+  // this is used in `VNetConnection::UpdateLevel()` to collect
+  // thinkers that wants to be updated, but we have no free channel.
+  // after visible entities are updated, we will rescan channels, and
+  // append close-up entities if some channels are freed.
+  // this is temporary buffer, only valid in that method.
+  TArray<VThinker *> PendingThinkers;
+  TArray<VEntity *> PendingGoreEnts;
+  TArray<vint32> AliveGoreChans;
 
 public:
   VNetConnection (VSocketPublic *, VNetContext *, VBasePlayer *);
@@ -343,7 +408,10 @@ public:
   VChannel *CreateChannel (vuint8, vint32, vuint8 = true);
   virtual void SendRawMessage (VMessageOut &);
   virtual void SendAck (vuint32);
-  void NotifyAckAllChans (); // this does the necessary cleanup too
+
+  // if `resetUpdated` is true, reset "updated" flag for thinker channels
+  void RemoveDeadThinkerChannels (bool resetUpdated=false);
+
   void PrepareOut (int);
   void Flush ();
   void FlushOutput (); // call this to send all queued packets at the end of the frame

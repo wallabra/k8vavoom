@@ -58,14 +58,27 @@ VNetContext::~VNetContext () {
 //
 //==========================================================================
 void VNetContext::ThinkerDestroyed (VThinker *Th) {
-  //GCon->Logf("NET:%p: destroyed thinker with class `%s`", Th, Th->GetClass()->GetName());
   if (ServerConnection) {
-    VThinkerChannel *Chan = ServerConnection->ThinkerChannels.FindPtr(Th);
-    if (Chan) Chan->Close();
+    // client; have connection with a server
+    VThinkerChannel *chan = ServerConnection->ThinkerChannels.FindPtr(Th);
+    if (chan) {
+      #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
+      GCon->Logf(NAME_Debug, "NET:CLIENT:%p: destroying thinker with class `%s`; chan %p: #%d", Th, Th->GetClass()->GetName(), chan, chan->Index);
+      #endif
+      chan->Close();
+      #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
+      GCon->Logf(NAME_Debug, "NET:CLIENT:%p: CLOSED thinker with class `%s`; chan %p: #%d", Th, Th->GetClass()->GetName(), chan, chan->Index);
+      #endif
+    }
   } else {
-    for (int i = 0; i < ClientConnections.Num(); ++i) {
-      VThinkerChannel *Chan = ClientConnections[i]->ThinkerChannels.FindPtr(Th);
-      if (Chan) Chan->Close();
+    for (auto &&it : ClientConnections) {
+      VThinkerChannel *chan = it->ThinkerChannels.FindPtr(Th);
+      if (chan) {
+        #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
+        GCon->Logf(NAME_Debug, "NET:SERVER:%p: destroyed thinker with class `%s`; chan %p: #%d", Th, Th->GetClass()->GetName(), chan, chan->Index);
+        #endif
+        chan->Close();
+      }
     }
   }
 }
@@ -84,13 +97,13 @@ void VNetContext::Tick () {
     if (!Conn) continue; // just in case
     if (Conn->State != NETCON_Closed) {
       // don't update level if the player isn't totally in the game yet
-      if (Conn->Channels[CHANIDX_General] && (Conn->Owner->PlayerFlags&VBasePlayer::PF_Spawned)) {
+      if (Conn->GetGeneralChannel() && (Conn->Owner->PlayerFlags&VBasePlayer::PF_Spawned)) {
         if (Conn->NeedsUpdate) {
           // reset update flag; it will be set again if we'll get any packet from the client
           Conn->NeedsUpdate = false;
           Conn->UpdateLevel();
         }
-        ((VPlayerChannel *)Conn->Channels[CHANIDX_Player])->Update();
+        Conn->GetPlayerChannel()->Update();
       }
       if (Conn->ObjMapSent && !Conn->LevelInfoSent) Conn->SendServerInfo();
       Conn->GetMessages(); // why not?

@@ -47,7 +47,7 @@ IMPLEMENT_CLASS(V, Thinker)
 //==========================================================================
 void VThinker::Destroy () {
   // close any thinker channels
-  if (XLevel) XLevel->NetContext->ThinkerDestroyed(this);
+  if (XLevel && XLevel->NetContext) XLevel->NetContext->ThinkerDestroyed(this);
   Super::Destroy();
 }
 
@@ -101,7 +101,10 @@ void VThinker::AddedToLevel () {
 //
 //==========================================================================
 void VThinker::RemovedFromLevel () {
-  if (XLevel && XLevel->Renderer) XLevel->Renderer->RemoveOwnedLight(this);
+  if (XLevel) {
+    if (XLevel->Renderer) XLevel->Renderer->RemoveOwnedLight(this);
+    if (XLevel->NetContext) XLevel->NetContext->ThinkerDestroyed(this);
+  }
 }
 
 

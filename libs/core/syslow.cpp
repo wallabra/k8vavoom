@@ -258,12 +258,14 @@ VStr Sys_FindFileCI (VStr path, bool lastIsDir) {
 #include <sys/types.h>
 #include <time.h>
 #include <utime.h>
+/*
 #ifdef _POSIX_PRIORITY_SCHEDULING
 # include <sched.h>
 # define HAVE_YIELD
 #else
 # warning "*** NO sched_yield() found! ***"
 #endif
+*/
 
 struct DirInfo {
   DIR *dh;

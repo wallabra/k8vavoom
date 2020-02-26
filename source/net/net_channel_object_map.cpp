@@ -54,6 +54,26 @@ VObjectMapChannel::~VObjectMapChannel () {
 
 //==========================================================================
 //
+//  VObjectMapChannel::Suicide
+//
+//==========================================================================
+void VObjectMapChannel::Suicide () {
+  #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
+  GCon->Logf(NAME_Debug, "VObjectMapChannel::Suicide:%p (#%d)", this, Index);
+  #endif
+  VChannel::Suicide();
+  Closing = true; // just in case
+  ClearAllQueues();
+  if (Index >= 0 && Index < MAX_CHANNELS && Connection) {
+    Connection->UnregisterChannel(this);
+    Index = -1; // just in case
+  }
+  Connection->ObjMapSent = true;
+}
+
+
+//==========================================================================
+//
 //  VObjectMapChannel::Tick
 //
 //==========================================================================
