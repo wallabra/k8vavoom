@@ -40,6 +40,10 @@ void SV_Shutdown ();
 void ServerFrame (int realtics);
 void SV_ShutdownGame ();
 
+// call this to perform various network bookkeeping
+void SV_ServerInterframeBK ();
+void SV_AllClientsNeedsWorldUpdate ();
+
 void SV_ReplaceCustomDamageFactors ();
 
 // set all player fields to defaults (calls `ResetToDefaults()` method)

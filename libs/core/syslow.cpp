@@ -258,6 +258,12 @@ VStr Sys_FindFileCI (VStr path, bool lastIsDir) {
 #include <sys/types.h>
 #include <time.h>
 #include <utime.h>
+#ifdef _POSIX_PRIORITY_SCHEDULING
+# include <sched.h>
+# define HAVE_YIELD
+#else
+# warning "*** NO sched_yield() found! ***"
+#endif
 
 struct DirInfo {
   DIR *dh;
@@ -549,8 +555,15 @@ vuint64 Sys_GetTimeCPUNano () {
 //==========================================================================
 void Sys_Yield () {
   //usleep(1);
-  /*static*/ const struct timespec sleepTime = {0, 28500000};
+  /*#ifdef HAVE_YIELD*/
+  #if 0
+  sched_yield();
+  #else
+  //const struct timespec sleepTime = {0, 28500000};
+  //const struct timespec sleepTime = {0, 1000000}; // one millisecond
+  const struct timespec sleepTime = {0, 100000}; // 0.1 millisecond
   nanosleep(&sleepTime, nullptr);
+  #endif
 }
 
 

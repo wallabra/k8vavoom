@@ -451,34 +451,36 @@ void SV_Clear () {
 //  SV_SendClientMessages
 //
 //==========================================================================
-void SV_SendClientMessages () {
-  // update player replication infos
-  for (int i = 0; i < svs.max_clients; ++i) {
-    VBasePlayer *Player = GGameInfo->Players[i];
-    if (!Player) continue;
-    if (Player->GetFlags()&_OF_Destroyed) continue;
+static void SV_SendClientMessages (bool full=true) {
+  if (full) {
+    // update player replication infos
+    for (int i = 0; i < svs.max_clients; ++i) {
+      VBasePlayer *Player = GGameInfo->Players[i];
+      if (!Player) continue;
+      if (Player->GetFlags()&_OF_Destroyed) continue;
 
-    VPlayerReplicationInfo *RepInfo = Player->PlayerReplicationInfo;
-    if (!RepInfo) continue;
+      VPlayerReplicationInfo *RepInfo = Player->PlayerReplicationInfo;
+      if (!RepInfo) continue;
 
-    RepInfo->PlayerName = Player->PlayerName;
-    RepInfo->UserInfo = Player->UserInfo;
-    RepInfo->TranslStart = Player->TranslStart;
-    RepInfo->TranslEnd = Player->TranslEnd;
-    RepInfo->Color = Player->Color;
-    RepInfo->Frags = Player->Frags;
-    RepInfo->Deaths = Player->Deaths;
-    RepInfo->KillCount = Player->KillCount;
-    RepInfo->ItemCount = Player->ItemCount;
-    RepInfo->SecretCount = Player->SecretCount;
+      RepInfo->PlayerName = Player->PlayerName;
+      RepInfo->UserInfo = Player->UserInfo;
+      RepInfo->TranslStart = Player->TranslStart;
+      RepInfo->TranslEnd = Player->TranslEnd;
+      RepInfo->Color = Player->Color;
+      RepInfo->Frags = Player->Frags;
+      RepInfo->Deaths = Player->Deaths;
+      RepInfo->KillCount = Player->KillCount;
+      RepInfo->ItemCount = Player->ItemCount;
+      RepInfo->SecretCount = Player->SecretCount;
 
-    // update view angle if needed
-    if (Player->PlayerFlags&VBasePlayer::PF_Spawned) Player->WriteViewData();
+      // update view angle if needed
+      if (Player->PlayerFlags&VBasePlayer::PF_Spawned) Player->WriteViewData();
+    }
   }
 
   ServerNetContext->Tick();
 
-  if (GDemoRecordingContext) {
+  if (full && GDemoRecordingContext) {
     for (int i = 0; i < GDemoRecordingContext->ClientConnections.length(); ++i) {
       //GDemoRecordingContext->ClientConnections[i]->Driver->SetNetTime();
       GDemoRecordingContext->ClientConnections[i]->NeedsUpdate = true;
@@ -618,7 +620,10 @@ static void SV_RunClients (bool skipFrame=false) {
     else if (Player->PlayerState == PST_CHEAT_REBORN) G_DoReborn(i, true);
 
     if (Player->Net) {
-      Player->Net->NeedsUpdate = false;
+      // resetting update flag is totally wrong: we may miss some important updates in combined mode!
+      // (because they aren't sent yet)
+      // let context ticker reset it instead
+      //Player->Net->NeedsUpdate = false;
       Player->Net->GetMessages();
     }
 
@@ -1675,7 +1680,7 @@ void SV_ConnectClient (VBasePlayer *player) {
   if (player->Net) {
     GCon->Logf(NAME_Dev, "Client %s connected", *player->Net->GetAddress());
     ServerNetContext->ClientConnections.Append(player->Net);
-    player->Net->NeedsUpdate = false;
+    player->Net->NeedsUpdate = false; // we're just connected, no need to send world updates yet
   }
 
   GGameInfo->Players[SV_GetPlayerNum(player)] = player;
@@ -1723,6 +1728,36 @@ void SV_CheckForNewClients () {
     Player->Net->CreateChannel(CHANNEL_ObjectMap, -1);
     SV_ConnectClient(Player);
     ++svs.num_connected;
+  }
+}
+
+
+//==========================================================================
+//
+//  SV_ServerInterframeBK
+//
+//==========================================================================
+void SV_ServerInterframeBK () {
+  // if we're running a server (either dedicated, or combined, and we are in game), process server bookkeeping
+  if (GGameInfo->NetMode == NM_DedicatedServer || GGameInfo->NetMode == NM_ListenServer) {
+    //SV_CheckForNewClients();
+    SV_SendClientMessages(false); // not full
+  }
+}
+
+
+//==========================================================================
+//
+//  SV_AllClientsNeedsWorldUpdate
+//
+//  force world update on the next tick
+//
+//==========================================================================
+void SV_AllClientsNeedsWorldUpdate () {
+  for (int i = 0; i < MAXPLAYERS; ++i) {
+    VBasePlayer *Player = GGameInfo->Players[i];
+    if (!Player || !Player->Net) continue;
+    Player->Net->NeedsUpdate = true;
   }
 }
 
@@ -1976,7 +2011,7 @@ void ServerFrame (int realtics) {
 
   if (mapteleport_issued) SV_MapTeleport(GLevelInfo->NextMap, mapteleport_flags, mapteleport_skill);
 
-  SV_SendClientMessages();
+  SV_SendClientMessages(); // full
 }
 
 

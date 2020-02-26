@@ -108,7 +108,7 @@ static void CL_ResetLastSong () {
 //  CL_Ticker
 //
 //==========================================================================
-void CL_Ticker () {
+static void CL_Ticker () {
   // do main actions
   if (!GClGame->InIntermission()) {
     SB_Ticker();
@@ -149,10 +149,10 @@ void CL_DecayLights () {
 //  CL_UpdateMobjs
 //
 //==========================================================================
-void CL_UpdateMobjs () {
+static void CL_UpdateMobjs (float deltaTime) {
   if (!GClLevel) return; //k8: this is wrong!
   for (TThinkerIterator<VThinker> Th(GClLevel); Th; ++Th) {
-    Th->eventClientTick(host_frametime);
+    Th->eventClientTick(deltaTime);
   }
 }
 
@@ -164,7 +164,7 @@ void CL_UpdateMobjs () {
 //  Read all incoming data from the server
 //
 //==========================================================================
-void CL_ReadFromServer () {
+void CL_ReadFromServer (float deltaTime) {
   if (!cl) return;
 
   if (cl->Net) {
@@ -174,17 +174,17 @@ void CL_ReadFromServer () {
   }
 
   if (cls.signon) {
-    if (GGameInfo->NetMode == NM_Client) {
-      GClLevel->Time += host_frametime;
+    if (GGameInfo->NetMode == NM_Client && deltaTime) {
+      GClLevel->Time += deltaTime;
       GClLevel->TicTime = (int)(GClLevel->Time*35.0f);
     }
 
-    CL_UpdateMobjs();
-    cl->eventClientTick(host_frametime);
-    CL_Ticker();
+    CL_UpdateMobjs(deltaTime);
+    cl->eventClientTick(deltaTime);
+    if (deltaTime) CL_Ticker();
   }
 
-  if (GClLevel && GClLevel->LevelInfo) {
+  if (deltaTime && GClLevel && GClLevel->LevelInfo) {
     if (CurrentSongLump != GClLevel->LevelInfo->SongLump) {
       CurrentSongLump = GClLevel->LevelInfo->SongLump;
       GAudio->MusicChanged();
@@ -406,6 +406,19 @@ void CL_SendMove () {
   }
 
   if (cl->Net) cl->Net->Tick();
+}
+
+
+//==========================================================================
+//
+//  CL_NetInterframe
+//
+//==========================================================================
+void CL_NetInterframe () {
+  if (!cl || !cl->Net) return;
+  if (cls.demoplayback || GGameInfo->NetMode == NM_TitleMap) return;
+  // no need to update channels here
+  cl->Net->Tick();
 }
 
 

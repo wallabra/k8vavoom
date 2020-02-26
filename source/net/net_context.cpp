@@ -75,16 +75,21 @@ void VNetContext::ThinkerDestroyed (VThinker *Th) {
 //
 //  VNetContext::Tick
 //
+//  this is directly called from server code
+//
 //==========================================================================
 void VNetContext::Tick () {
-  // this is directly called from server code
   for (int i = 0; i < ClientConnections.Num(); ++i) {
     VNetConnection *Conn = ClientConnections[i];
     if (!Conn) continue; // just in case
     if (Conn->State != NETCON_Closed) {
       // don't update level if the player isn't totally in the game yet
       if (Conn->Channels[CHANIDX_General] && (Conn->Owner->PlayerFlags&VBasePlayer::PF_Spawned)) {
-        if (Conn->NeedsUpdate) Conn->UpdateLevel();
+        if (Conn->NeedsUpdate) {
+          // reset update flag; it will be set again if we'll get any packet from the client
+          Conn->NeedsUpdate = false;
+          Conn->UpdateLevel();
+        }
         ((VPlayerChannel *)Conn->Channels[CHANIDX_Player])->Update();
       }
       if (Conn->ObjMapSent && !Conn->LevelInfoSent) Conn->SendServerInfo();

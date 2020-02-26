@@ -1822,9 +1822,11 @@ override bool SectorChanged (int CrushChange) {
 //
 //  ClientTick
 //
+//  delta time can be zero for "interframe" ticks
+//
 //==========================================================================
 override void ClientTick (float DeltaTime) {
-  if (bInvisible || bNoSector) return;
+  if (bInvisible || bNoSector || !DeltaTime) return;
 
   // if we're in closed door or something, skip effects
   if (CeilingZ <= FloorZ) return;

@@ -109,7 +109,7 @@ override void BeginPlay () {
 //==========================================================================
 override void ClientTick (float deltaTime) {
   ::ClientTick(deltaTime);
-  if (!bFountain) return;
+  if (!bFountain || !deltaTime) return;
 
   GenDelay -= deltaTime;
   if (GenDelay > 0.0) return;

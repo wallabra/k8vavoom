@@ -164,11 +164,13 @@ override bool Deactivate (EntityEx Activator) {
 //
 //  ClientTick
 //
+//  delta time can be zero for "interframe" ticks
+//
 //==========================================================================
 override void ClientTick (float DeltaTime) {
   ::ClientTick(DeltaTime);
 
-  if (bDormant) return;
+  if (bDormant || !DeltaTime) return;
 
   int realLightType = LightType&DLTYPE_TypeMask;
 

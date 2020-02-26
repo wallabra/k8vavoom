@@ -511,24 +511,43 @@ void Host_Frame () {
   static double time3 = 0;
   int pass1, pass2, pass3;
 
+  static double lastNetFrameTime = 0;
+  if (!lastNetFrameTime) lastNetFrameTime = Sys_Time();
+
   try {
     // decide the simulation time
     if (!FilterTime()) {
-      // don't run too fast, or packets will flood out
-#ifndef CLIENT
-      Sys_Yield();
-#endif
+      // don't run frames too fast
+      // but still process network activity, we may want to re-send packets and such
+      const double ctt = Sys_Time();
+      if (ctt-lastNetFrameTime >= 1.0/60.0) {
+        // perform network activity
+        lastNetFrameTime = ctt;
+        #ifdef CLIENT
+        // process client
+        CL_NetInterframe(); // this does all necessary checks
+        #endif
+        #ifdef SERVER
+        // if we're running a server (either dedicated, or combined, and we are in game), process server bookkeeping
+        SV_ServerInterframeBK(); // this does all necessary checks
+        #endif
+      } else {
+        // don't do it too often, tho
+        Sys_Yield();
+      }
       return;
     }
+
+    lastNetFrameTime = Sys_Time();
 
     if (GSoundManager) GSoundManager->Process();
 
     Host_UpdateLanguage();
 
-#ifdef CLIENT
+    #ifdef CLIENT
     // get new key, mice and joystick events
     GInput->ProcessEvents();
-#endif
+    #endif
 
     // check for commands typed to the host
     Host_GetConsoleCommands();
@@ -545,33 +564,32 @@ void Host_Frame () {
     if (host_frametime >= max_fps_cap_double) {
       incFrame = true;
 
-#ifdef CLIENT
-      // make intentions
+      #ifdef CLIENT
       CL_SendMove(); // this also ticks network
-#endif
+      #endif
 
-#ifdef SERVER
+      #ifdef SERVER
       if (GGameInfo->NetMode != NM_None && GGameInfo->NetMode != NM_Client) {
         // server operations
         ServerFrame(host_frametics);
       }
-#endif
+      #endif
 
       host_time += host_frametime;
 
-#ifdef CLIENT
+      #ifdef CLIENT
       // fetch results from server
-      CL_ReadFromServer();
+      CL_ReadFromServer(host_frametime);
 
       // update user interface
       GRoot->TickWidgets(host_frametime);
-#endif
+      #endif
     }
 
     // collect all garbage
     VObject::CollectGarbage();
 
-#ifdef CLIENT
+    #ifdef CLIENT
     // update video
     if (show_time) time1 = Sys_Time();
     SCR_Update();
@@ -581,7 +599,7 @@ void Host_Frame () {
 
     // update audio
     GAudio->UpdateSounds();
-#endif
+    #endif
 
     if (show_time) {
       pass1 = (int)((time1-time3)*1000);
@@ -605,7 +623,7 @@ void Host_Frame () {
     //k8: no need to, we'll do this in p_setup
     //W_CloseAuxiliary();
 
-#ifdef CLIENT
+    #ifdef CLIENT
     if (GGameInfo->NetMode == NM_DedicatedServer) {
       SV_ShutdownGame();
       Sys_Error("Host_Error: %s\n", e.message); // dedicated servers exit
@@ -614,10 +632,10 @@ void Host_Frame () {
     SV_ShutdownGame();
     GClGame->eventOnHostError();
     C_StartFull();
-#else
+    #else
     SV_ShutdownGame();
     Sys_Error("Host_Error: %s\n", e.message); // dedicated servers exit
-#endif
+    #endif
   } catch (EndGame &e) {
     GCon->Logf(NAME_Dev, "Host_EndGame: %s", e.message);
 
@@ -627,7 +645,7 @@ void Host_Frame () {
     //k8: no need to, we'll do this in p_setup
     //W_CloseAuxiliary();
 
-#ifdef CLIENT
+    #ifdef CLIENT
     if (GGameInfo->NetMode == NM_DedicatedServer) {
       SV_ShutdownGame();
       Sys_Error("Host_EndGame: %s\n", e.message); // dedicated servers exit
@@ -635,10 +653,10 @@ void Host_Frame () {
 
     SV_ShutdownGame();
     GClGame->eventOnHostEndGame();
-#else
+    #else
     SV_ShutdownGame();
     Sys_Error("Host_EndGame: %s\n", e.message); // dedicated servers exit
-#endif
+    #endif
   }
 }
 

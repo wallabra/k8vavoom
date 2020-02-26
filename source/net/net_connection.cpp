@@ -134,11 +134,12 @@ void VNetConnection::GetMessages () {
       return;
     }
     if (ret) {
+      NeedsUpdate = true; // we got *any* activity, update the world!
       // received some packet
       if (!IsLocalConnection()) {
         NetCon->LastMessageTime = Driver->NetTime;
              if (ret == 1) ++Driver->MessagesReceived;
-        else if (ret == 2) ++Driver->UnreliableMessagesReceived;
+        else if (ret == 2) ++Driver->UnreliableMessagesReceived; // this seems to never happen
       }
       if (Data.Num() > 0) {
         vuint8 LastByte = Data[Data.Num()-1];
@@ -208,7 +209,7 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
   if (Packet.ReadInt(/*256*/) != NETPACKET_DATA) return;
   ++Driver->packetsReceived;
 
-  NeedsUpdate = true;
+  //NeedsUpdate = true; // this is done elsewhere
 
   vuint32 Sequence;
   Packet << Sequence;

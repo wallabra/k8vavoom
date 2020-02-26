@@ -152,6 +152,8 @@ void Tick (float deltaTime) {
 //
 //  ClientTick
 //
+//  delta time can be zero for "interframe" ticks
+//
 //==========================================================================
 void ClientTick (float DeltaTime) {
 }

@@ -42,8 +42,9 @@ struct client_static_t {
 void CL_Init ();
 void CL_Shutdown ();
 void CL_SendMove ();
+void CL_NetInterframe ();
 bool CL_Responder (event_t *ev);
-void CL_ReadFromServer ();
+void CL_ReadFromServer (float deltaTime);
 void CL_SetUpLocalPlayer ();
 void CL_SetUpStandaloneClient ();
 
