@@ -297,7 +297,7 @@ char *Sys_ConsoleInput ()
 #ifdef USE_SIGNAL_HANDLER
 
 static void signal_handler (int s) {
-  vmAbortBySignal += 1;
+  VObject::vmAbortBySignal += 1;
   // ignore future instances of this signal
   signal(s, SIG_IGN);
   stack_trace();

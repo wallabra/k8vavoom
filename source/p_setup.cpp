@@ -825,7 +825,9 @@ void VLevel::LoadMap (VName AMapName) {
 
   mapTextureWarns.clear();
   // clear automap marks; save loader will restore them from a save
+  #ifdef CLIENT
   AM_ClearMarks();
+  #endif
 
   if (csTouched) Z_Free(csTouched);
   csTouchCount = 0;
@@ -836,12 +838,12 @@ load_again:
   ResetLoadingTimings();
   GTextureManager.ResetMapTextures();
 
-#ifdef CLIENT
+  #ifdef CLIENT
   r_max_portal_depth_override = -1;
   ldr_extrasamples_override = -1;
   r_precalc_static_lights_override = -1;
   r_precache_textures_override = -1;
-#endif
+  #endif
 
   double TotalTime = -Sys_Time();
   double InitTime = -Sys_Time();

@@ -76,8 +76,14 @@ VDrawer::VDrawer () noexcept
   , HaveDepthClamp(false)
   , RendLev(nullptr)
 {
+  #ifdef CLIENT
   ScrWdt = max2(1, ScreenWidth);
   ScrHgt = max2(1, ScreenHeight);
+  #else
+  // it doesn't matter
+  ScrWdt = 320;
+  ScrHgt = 200;
+  #endif
   LightFadeMult = 1.0f;
 }
 

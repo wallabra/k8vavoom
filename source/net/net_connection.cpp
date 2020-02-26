@@ -123,13 +123,18 @@ void VNetConnection::GetMessages () {
   Driver->SetNetTime();
   do {
     TArray<vuint8> Data;
+    //  returns  0 if no data is waiting
+    //  returns  1 if a packet was received
+    //  returns -1 if connection is invalid
     ret = GetRawPacket(Data);
     if (ret == -1) {
+      // error
       GCon->Log(NAME_DevNet, "Bad read");
       State = NETCON_Closed;
       return;
     }
     if (ret) {
+      // received some packet
       if (!IsLocalConnection()) {
         NetCon->LastMessageTime = Driver->NetTime;
              if (ret == 1) ++Driver->MessagesReceived;
@@ -142,12 +147,13 @@ void VNetConnection::GetMessages () {
           vuint32 Length = Data.Num()*8-1;
           for (vuint8 Mask = 0x80; !(LastByte&Mask); Mask >>= 1) --Length;
           VBitStreamReader Packet(Data.Ptr(), Length);
+          //GCon->Logf(NAME_DevNet, "%g: Got network packet; length=%d", Sys_Time(), Length);
           ReceivedPacket(Packet);
         } else {
-          GCon->Logf(NAME_DevNet, "Packet is missing trailing bit");
+          GCon->Log(NAME_DevNet, "Packet is missing trailing bit");
         }
       } else {
-        GCon->Logf(NAME_DevNet, "Packet is too small");
+        GCon->Log(NAME_DevNet, "Packet is too small");
         ++Driver->shortPacketCount;
       }
     }
@@ -385,6 +391,24 @@ void VNetConnection::PrepareOut (int Length) {
 
 //==========================================================================
 //
+//  VNetConnection::FlushOutput
+//
+//==========================================================================
+void VNetConnection::FlushOutput () {
+  Driver->SetNetTime();
+  if (!Out.GetNumBits()) {
+    // check if we have to send keepalive
+    double tout = VNetworkPublic::MessageTimeOut;
+    if (tout < 50) tout = 50;
+    tout /= 1000.0f;
+    if (Driver->NetTime-LastSendTime < tout/2.0f) return;
+  }
+  Flush(); // send keepalive or accumulated data
+}
+
+
+//==========================================================================
+//
 //  VNetConnection::Flush
 //
 //==========================================================================
@@ -443,6 +467,8 @@ bool VNetConnection::IsLocalConnection () {
 //
 //==========================================================================
 void VNetConnection::Tick () {
+  if (State == NETCON_Closed) return;
+
   // for bots and demo playback there's no other end that will send us
   // the ACK so just mark all outgoing messages as ACK-ed
   if (AutoAck) {
@@ -480,14 +506,15 @@ void VNetConnection::Tick () {
   }
 
   if (!connTimedOut) {
-    // run tick for all of the open channels
-    for (int i = OpenChannels.Num()-1; i >= 0; --i) if (OpenChannels[i]) OpenChannels[i]->Tick();
+    // run tick for all open channels
+    //for (int i = OpenChannels.Num()-1; i >= 0; --i) if (OpenChannels[i]) OpenChannels[i]->Tick();
+    for (auto &&chan : OpenChannels) if (chan) chan->Tick();
     // if general channel has been closed, then this connection is closed
     if (!Channels[CHANIDX_General]) State = NETCON_Closed;
   }
 
   // flush any remaining data or send keepalive
-  Flush();
+  FlushOutput();
 
   //GCon->Logf(NAME_DevNet, "***: (time delta=%g); sent: %d (%d); recv: %d (%d)", (/*Sys_Time()-*/Driver->NetTime-NetCon->LastMessageTime)*1000.0f, Driver->MessagesSent, Driver->packetsSent, Driver->MessagesReceived, Driver->packetsReceived);
 }

@@ -677,7 +677,7 @@ static void SV_RunClients (bool skipFrame=false) {
 //  SV_Ticker
 //
 //==========================================================================
-void SV_Ticker () {
+static void SV_Ticker () {
   //double saved_frametime;
 
   if (GGameInfo->NetMode >= NM_DedicatedServer &&

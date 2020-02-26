@@ -768,7 +768,12 @@ void VCommand::ExecuteString (VStr Acmd, ECmdSource src, VBasePlayer *APlayer) {
     bool oldCheating = VCvar::GetCheating();
     bool cheatingChanged = false;
     VBasePlayer *plr = findPlayer();
-    if (!plr || !cl || !cl->Net) {
+    #ifdef CLIENT
+    if (!plr || !cl || !cl->Net)
+    #else
+    if (!plr)
+    #endif
+    {
       cheatingChanged = true;
       VCvar::SetCheating(/*VCvar::GetBool("sv_cheats")*/true);
       //GCon->Log(NAME_Debug, "forced: cheating and unlatching");

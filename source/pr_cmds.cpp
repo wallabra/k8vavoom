@@ -379,8 +379,11 @@ IMPLEMENT_FREE_FUNCTION(VObject, LoadTextLump) {
 
 
 #ifdef CLIENT
-
-#include "neoui/vc_object_neoui.cpp"
+# define CVC_CALC_EXPR(expr_)  expr_
+# include "neoui/vc_object_neoui.cpp"
+#else
+# define CVC_CALC_EXPR(expr_)  0
+#endif
 
 //**************************************************************************
 //
@@ -394,16 +397,18 @@ IMPLEMENT_FREE_FUNCTION(VObject, LoadTextLump) {
 //
 //==========================================================================
 IMPLEMENT_FREE_FUNCTION(VObject, SetVirtualScreen) {
+  #ifdef CLIENT
   P_GET_INT(Height);
   P_GET_INT(Width);
   SCR_SetVirtualScreen(Width, Height);
+  #endif
 }
 
-IMPLEMENT_FREE_FUNCTION(VObject, GetVirtualWidth) { RET_INT(VirtualWidth); }
-IMPLEMENT_FREE_FUNCTION(VObject, GetVirtualHeight) { RET_INT(VirtualHeight); }
+IMPLEMENT_FREE_FUNCTION(VObject, GetVirtualWidth) { RET_INT(CVC_CALC_EXPR(VirtualWidth)); }
+IMPLEMENT_FREE_FUNCTION(VObject, GetVirtualHeight) { RET_INT(CVC_CALC_EXPR(VirtualHeight)); }
 
-IMPLEMENT_FREE_FUNCTION(VObject, GetRealScreenWidth) { RET_INT(ScreenWidth); }
-IMPLEMENT_FREE_FUNCTION(VObject, GetRealScreenHeight) { RET_INT(ScreenHeight); }
+IMPLEMENT_FREE_FUNCTION(VObject, GetRealScreenWidth) { RET_INT(CVC_CALC_EXPR(ScreenWidth)); }
+IMPLEMENT_FREE_FUNCTION(VObject, GetRealScreenHeight) { RET_INT(CVC_CALC_EXPR(ScreenHeight)); }
 
 
 //==========================================================================
@@ -499,7 +504,9 @@ IMPLEMENT_FREE_FUNCTION(VObject, R_DrawPic) {
   P_GET_INT(handle);
   P_GET_INT(y);
   P_GET_INT(x);
+  #ifdef CLIENT
   R_DrawPic(x, y, handle, alpha);
+  #endif
 }
 
 
@@ -513,7 +520,9 @@ IMPLEMENT_FREE_FUNCTION(VObject, R_DrawPicFloat) {
   P_GET_INT(handle);
   P_GET_FLOAT(y);
   P_GET_FLOAT(x);
+  #ifdef CLIENT
   R_DrawPicFloat(x, y, handle, alpha);
+  #endif
 }
 
 
@@ -529,7 +538,9 @@ IMPLEMENT_FREE_FUNCTION(VObject, R_DrawPicPart) {
   P_GET_FLOAT(pwdt);
   P_GET_INT(y);
   P_GET_INT(x);
+  #ifdef CLIENT
   R_DrawPicPart(x, y, pwdt, phgt, handle, alpha);
+  #endif
 }
 
 
@@ -545,7 +556,9 @@ IMPLEMENT_FREE_FUNCTION(VObject, R_DrawPicFloatPart) {
   P_GET_FLOAT(pwdt);
   P_GET_FLOAT(y);
   P_GET_FLOAT(x);
+  #ifdef CLIENT
   R_DrawPicFloatPart(x, y, pwdt, phgt, handle, alpha);
+  #endif
 }
 
 
@@ -563,7 +576,9 @@ IMPLEMENT_FREE_FUNCTION(VObject, R_DrawPicPartEx) {
   P_GET_FLOAT(tx0);
   P_GET_INT(y);
   P_GET_INT(x);
+  #ifdef CLIENT
   R_DrawPicPartEx(x, y, tx0, ty0, tx1, ty1, handle, alpha);
+  #endif
 }
 
 
@@ -581,7 +596,9 @@ IMPLEMENT_FREE_FUNCTION(VObject, R_DrawPicFloatPartEx) {
   P_GET_FLOAT(tx0);
   P_GET_FLOAT(y);
   P_GET_FLOAT(x);
+  #ifdef CLIENT
   R_DrawPicFloatPartEx(x, y, tx0, ty0, tx1, ty1, handle, alpha);
+  #endif
 }
 
 
@@ -622,7 +639,9 @@ IMPLEMENT_FREE_FUNCTION(VObject, R_DrawSpritePatch) {
   P_GET_INT(sprite);
   P_GET_FLOAT(y);
   P_GET_FLOAT(x);
+  #ifdef CLIENT
   R_DrawSpritePatch(x, y, sprite, frame, rot, TranslStart, TranslEnd, Color, Scale);
+  #endif
 }
 
 
@@ -633,11 +652,15 @@ IMPLEMENT_FREE_FUNCTION(VObject, R_DrawSpritePatch) {
 //==========================================================================
 IMPLEMENT_FREE_FUNCTION(VObject, InstallModel) {
   P_GET_STR(name);
+  #ifdef CLIENT
   if (FL_FileExists(name)) {
     RET_PTR(Mod_FindName(name));
   } else {
-    RET_PTR(0);
+    RET_PTR(nullptr);
   }
+  #else
+  RET_PTR(nullptr);
+  #endif
 }
 
 
@@ -656,7 +679,9 @@ IMPLEMENT_FREE_FUNCTION(VObject, R_DrawModelFrame) {
   P_GET_PTR(VModel, model);
   P_GET_FLOAT(angle);
   P_GET_VEC(origin);
+  #ifdef CLIENT
   R_DrawModelFrame(origin, angle, model, frame, nextframe, *skin, TranslStart, TranslEnd, Color, 0);
+  #endif
 }
 
 
@@ -672,7 +697,9 @@ IMPLEMENT_FREE_FUNCTION(VObject, R_FillRect) {
   P_GET_FLOAT(width);
   P_GET_FLOAT(y);
   P_GET_FLOAT(x);
+  #ifdef CLIENT
   if (Drawer) Drawer->FillRect(x*fScaleX, y*fScaleY, (x+width)*fScaleX, (y+height)*fScaleY, color, alpha);
+  #endif
 }
 
 
@@ -685,7 +712,9 @@ IMPLEMENT_FREE_FUNCTION(VObject, R_ShadeRect) {
   float x, y, width, height;
   float darken;
   vobjGetParam(x, y, width, height, darken);
+  #ifdef CLIENT
   if (Drawer) Drawer->ShadeRect(x*fScaleX, y*fScaleY, (x+width)*fScaleX, (y+height)*fScaleY, darken);
+  #endif
 }
 
 
@@ -699,7 +728,9 @@ IMPLEMENT_FREE_FUNCTION(VObject, R_DrawRect) {
   vuint32 color;
   VOptParamFloat alpha(1.0f);
   vobjGetParam(x, y, width, height, color, alpha);
+  #ifdef CLIENT
   if (Drawer) Drawer->DrawRect(x*fScaleX, y*fScaleY, (x+width)*fScaleX, (y+height)*fScaleY, color, alpha);
+  #endif
 }
 
 
@@ -713,7 +744,9 @@ IMPLEMENT_FREE_FUNCTION(VObject, R_DrawLine) {
   vuint32 color;
   VOptParamFloat alpha(1.0f);
   vobjGetParam(x1, y1, x2, y2, color, alpha);
+  #ifdef CLIENT
   if (Drawer) Drawer->DrawLine(x1*fScaleX, y1*fScaleY, x2*fScaleX, y2*fScaleY, color, alpha);
+  #endif
 }
 
 
@@ -723,33 +756,41 @@ IMPLEMENT_FREE_FUNCTION(VObject, R_DrawLine) {
 //
 //==========================================================================
 IMPLEMENT_FREE_FUNCTION(VObject, R_GetAspectRatio) {
+  #ifdef CLIENT
   RET_FLOAT(R_GetAspectRatio());
+  #else
+  RET_FLOAT(1.0f);
+  #endif
 }
 
 // native static final int R_GetAspectRatioCount ();
 IMPLEMENT_FREE_FUNCTION(VObject, R_GetAspectRatioCount) {
-  RET_INT(R_GetAspectRatioCount());
+  RET_INT(CVC_CALC_EXPR(R_GetAspectRatioCount()));
 }
 
 // native static final int R_GetAspectRatioHoriz (int idx);
 IMPLEMENT_FREE_FUNCTION(VObject, R_GetAspectRatioHoriz) {
   int idx;
   vobjGetParam(idx);
-  RET_INT(R_GetAspectRatioHoriz(idx));
+  RET_INT(CVC_CALC_EXPR(R_GetAspectRatioHoriz(idx)));
 }
 
 // native static final int R_GetAspectRatioVert (int idx);
 IMPLEMENT_FREE_FUNCTION(VObject, R_GetAspectRatioVert) {
   int idx;
   vobjGetParam(idx);
-  RET_INT(R_GetAspectRatioVert(idx));
+  RET_INT(CVC_CALC_EXPR(R_GetAspectRatioVert(idx)));
 }
 
 // native static final string R_GetAspectRatioDsc (int idx);
 IMPLEMENT_FREE_FUNCTION(VObject, R_GetAspectRatioDsc) {
   int idx;
   vobjGetParam(idx);
+  #ifdef CLIENT
   RET_STR(VStr(R_GetAspectRatioDsc(idx)));
+  #else
+  RET_STR(VStr("dummy"));
+  #endif
 }
 
 
@@ -759,12 +800,16 @@ IMPLEMENT_FREE_FUNCTION(VObject, R_GetAspectRatioDsc) {
 //
 //==========================================================================
 IMPLEMENT_FREE_FUNCTION(VObject, R_SupportsShadowVolumeRendering) {
+  #ifdef CLIENT
   if (Drawer) {
     RET_BOOL(Drawer->SupportsShadowVolumeRendering());
   } else {
     // be conservative
     RET_BOOL(false);
   }
+  #else
+  RET_BOOL(false);
+  #endif
 }
 
 
@@ -781,7 +826,9 @@ IMPLEMENT_FREE_FUNCTION(VObject, R_SupportsShadowVolumeRendering) {
 //==========================================================================
 IMPLEMENT_FREE_FUNCTION(VObject, LocalSound) {
   P_GET_NAME(name);
+  #ifdef CLIENT
   GAudio->PlaySound(GSoundManager->GetSoundID(name), TVec(0, 0, 0), TVec(0, 0, 0), 0, 0, 1, 0, false);
+  #endif
 }
 
 
@@ -792,7 +839,9 @@ IMPLEMENT_FREE_FUNCTION(VObject, LocalSound) {
 //==========================================================================
 IMPLEMENT_FREE_FUNCTION(VObject, IsLocalSoundPlaying) {
   P_GET_NAME(name);
+  #ifdef CLIENT
   RET_BOOL(GAudio->IsSoundPlaying(0, GSoundManager->GetSoundID(name)));
+  #endif
 }
 
 
@@ -802,7 +851,9 @@ IMPLEMENT_FREE_FUNCTION(VObject, IsLocalSoundPlaying) {
 //
 //==========================================================================
 IMPLEMENT_FREE_FUNCTION(VObject, StopLocalSounds) {
+  #ifdef CLIENT
   GAudio->StopSound(0, 0);
+  #endif
 }
 
 
@@ -813,17 +864,25 @@ IMPLEMENT_FREE_FUNCTION(VObject, StopLocalSounds) {
 //==========================================================================
 IMPLEMENT_FREE_FUNCTION(VObject, TranslateKey) {
   P_GET_INT(ch);
+  #ifdef CLIENT
   if (!GInput) { RET_STR(VStr::EmptyString); return; }
   ch = GInput->TranslateKey(ch);
   //FIXME: i18n
   if (ch < 1 || ch > 127) { RET_STR(VStr::EmptyString); return; }
   RET_STR(VStr((char)ch));
+  #else
+  RET_STR(VStr::EmptyString);
+  #endif
 }
 
 
 IMPLEMENT_FREE_FUNCTION(VObject, KeyNameForNum) {
   P_GET_INT(keynum);
+  #ifdef CLIENT
   RET_STR(GInput->KeyNameForNum(keynum));
+  #else
+  RET_STR(VStr::EmptyString);
+  #endif
 }
 
 
@@ -834,7 +893,13 @@ IMPLEMENT_FREE_FUNCTION(VObject, IN_GetBindingKeys) {
   P_GET_PTR(int, key2);
   P_GET_PTR(int, key1);
   P_GET_STR(name);
+  #ifdef CLIENT
   GInput->GetBindingKeys(name, *key1, *key2, modsection, strifemode, isActive);
+  #else
+  if (key1) *key1 = 0;
+  if (key2) *key2 = 0;
+  if (isActive) *isActive = false;
+  #endif
 }
 
 
@@ -844,7 +909,12 @@ IMPLEMENT_FREE_FUNCTION(VObject, IN_GetDefaultModBindingKeys) {
   P_GET_PTR(int, key2);
   P_GET_PTR(int, key1);
   P_GET_STR(name);
+  #ifdef CLIENT
   GInput->GetDefaultModBindingKeys(name, *key1, *key2, modsection);
+  #else
+  if (key1) *key1 = 0;
+  if (key2) *key2 = 0;
+  #endif
 }
 
 
@@ -854,7 +924,9 @@ IMPLEMENT_FREE_FUNCTION(VObject, IN_SetBinding) {
   P_GET_STR(onup);
   P_GET_STR(ondown);
   P_GET_INT(keynum);
+  #ifdef CLIENT
   GInput->SetBinding(keynum, ondown, onup, modsection, strifemode);
+  #endif
 }
 
 
@@ -868,7 +940,6 @@ IMPLEMENT_FREE_FUNCTION(VObject, StartSearch) {
   GNet->StartSearch(Master);
 }
 
-#endif // CLIENT
 
 //native static bool IsLineTagEqual (const line_t *line, int tag);
 IMPLEMENT_FREE_FUNCTION(VObject, IsLineTagEqual) {

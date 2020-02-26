@@ -876,11 +876,11 @@ VDatagramSocket::~VDatagramSocket () {
 //
 //  VDatagramSocket::GetMessage
 //
-// If there is a packet, return it.
+//  If there is a packet, return it.
 //
-// returns 0 if no data is waiting
-// returns 1 if a packet was received
-// returns -1 if connection is invalid
+//  returns 0 if no data is waiting
+//  returns 1 if a packet was received
+//  returns -1 if connection is invalid
 //
 //==========================================================================
 int VDatagramSocket::GetMessage (TArray<vuint8> &Data) {

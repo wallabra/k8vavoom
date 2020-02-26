@@ -450,6 +450,7 @@ public:
 };
 
 
+#ifdef CLIENT
 static bool skipCallbackInited = false;
 
 
@@ -479,6 +480,7 @@ static void SV_SetupSkipCallback () {
   skipCallbackInited = true;
   VObject::CanSkipReadingClassCBList.append(&checkSkipClassCB);
 }
+#endif
 
 
 //==========================================================================
@@ -1994,7 +1996,11 @@ static void SV_SaveGame (int slot, VStr Description, bool checkpoint, bool isAut
     // checkpoints using normal map cache
     if (!checkpoint && !saveFileBase.isEmpty()) {
       VStr ccfname = saveFileBase+".lmap";
+      #ifdef CLIENT
       bool doPrecalc = (r_precalc_static_lights_override >= 0 ? !!r_precalc_static_lights_override : r_precalc_static_lights);
+      #else
+      enum { doPrecalc = false };
+      #endif
       if (!GLevel->Renderer || !GLevel->Renderer->isNeedLightmapCache() || !loader_cache_data || !doPrecalc) {
         // no rendered usually means that this is some kind of server (the thing that should not be, but...)
         Sys_FileDelete(ccfname);
@@ -2025,6 +2031,7 @@ static void SV_SaveGame (int slot, VStr Description, bool checkpoint, bool isAut
 }
 
 
+#ifdef CLIENT
 //==========================================================================
 //
 //  SV_LoadGame
@@ -2046,9 +2053,9 @@ static void SV_LoadGame (int slot) {
     GLevel->cacheFileBase = saveFileBase;
     GLevel->cacheFlags &= ~VLevel::CacheFlag_Ignore;
     //GCon->Logf(NAME_Debug, "**********************: <%s>", *GLevel->cacheFileBase);
-#ifdef CLIENT
+    #ifdef CLIENT
     if (GGameInfo->NetMode != NM_DedicatedServer) CL_SetUpLocalPlayer();
-#endif
+    #endif
     // launch waiting scripts
     if (!deathmatch) GLevel->Acs->CheckAcsStore();
 
@@ -2068,6 +2075,7 @@ static void SV_LoadGame (int slot) {
 
   SV_SendLoadedEvent();
 }
+#endif
 
 
 //==========================================================================

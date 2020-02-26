@@ -650,7 +650,7 @@ endif(WITH_FLAC)
 #
 #  **** Check for FluidSynth ****
 #
-if(WITH_FLUID)
+if(WITH_FLUID AND ENABLE_CLIENT)
   if(WITH_SYS_FLUID)
     FIND_PACKAGE(PkgConfig REQUIRED)
     PKG_CHECK_MODULES(FLUID fluidsynth)
@@ -684,14 +684,14 @@ if(WITH_FLUID)
   endif(WITH_SYS_FLUID)
 else(WITH_FLUID)
   set(FLUID_FOUND OFF)
-endif(WITH_FLUID)
+endif(WITH_FLUID AND ENABLE_CLIENT)
 
-if(FLUID_FOUND AND NOT WITH_SYS_FLUID)
+if(FLUID_FOUND AND NOT WITH_SYS_FLUID AND ENABLE_CLIENT)
   add_definitions(-DBUILTIN_FLUID)
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/fluidsynth_lite/include)
   include_directories(${CMAKE_CURRENT_BINARY_DIR}/libs/fluidsynth_lite/include)
   set(MAIN_LIBS libfluidsynth_lite ${MAIN_LIBS})
-endif(FLUID_FOUND AND NOT WITH_SYS_FLUID)
+endif(FLUID_FOUND AND NOT WITH_SYS_FLUID AND ENABLE_CLIENT)
 
 
 #

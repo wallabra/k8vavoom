@@ -137,7 +137,9 @@ void VLevel::SerialiseOther (VStream &Strm) {
   side_t *si;
 
   // do not save stale map marks
+  #ifdef CLIENT
   AM_ClearMarksIfMapChanged(this);
+  #endif
 
   if (Strm.IsLoading()) {
     for (unsigned f = 0; f < (unsigned)NumSubsectors; ++f) {
@@ -436,7 +438,9 @@ void VLevel::SerialiseOther (VStream &Strm) {
     //GCon->Logf(NAME_Debug, "marks: %d", number);
     if (Strm.IsLoading()) {
       // load automap marks
+      #ifdef CLIENT
       AM_ClearMarks();
+      #endif
       for (int markidx = 0; markidx < number; ++markidx) {
         VNTValueIOEx vio(&Strm);
         float x = 0, y = 0;

@@ -346,6 +346,7 @@ public:
   void NotifyAckAllChans (); // this does the necessary cleanup too
   void PrepareOut (int);
   void Flush ();
+  void FlushOutput (); // call this to send all queued packets at the end of the frame
   bool IsLocalConnection ();
   inline VStr GetAddress () const { return (NetCon ? NetCon->Address : VStr()); }
   void Tick ();

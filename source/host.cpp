@@ -206,6 +206,16 @@ void Host_Init () {
 
   if (cli_SetDeveloperDefine > 0) VMemberBase::StaticAddDefine("K8_DEVELOPER");
 
+  #ifdef SERVER
+  VMemberBase::StaticAddDefine("SERVER");
+  #endif
+  #ifdef CLIENT
+  VMemberBase::StaticAddDefine("CLIENT");
+  #else
+  // allow unimplemented builtins for dedicated server (temp. band-aid)
+  VObject::engineAllowNotImplementedBuiltins = true;
+  #endif
+
   FL_ProcessPreInits();
 
 
@@ -537,7 +547,7 @@ void Host_Frame () {
 
 #ifdef CLIENT
       // make intentions
-      CL_SendMove();
+      CL_SendMove(); // this also ticks network
 #endif
 
 #ifdef SERVER

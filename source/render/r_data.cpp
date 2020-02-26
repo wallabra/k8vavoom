@@ -1334,14 +1334,9 @@ static void ApplyGlowToTexture (VName txname, bool isWall, bool allowOtherType, 
 //
 //==========================================================================
 static void ParseGlow (VScriptParser *sc) {
-#ifdef CLIENT
   bool allFullBright = true;
        if (sc->Check("fullbright")) allFullBright = true;
   else if (sc->Check("nofullbright")) {} // just for completeness
-#else
-       if (sc->Check("fullbright")) {}
-  else if (sc->Check("nofullbright")) {} // just for completeness
-#endif
   sc->Expect("{");
   while (!sc->Check("}")) {
     // not implemented gozzo feature (in gozzo too)
