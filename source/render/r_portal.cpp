@@ -217,10 +217,10 @@ void VPortal::Draw (bool UseStencil) {
 
 //==========================================================================
 //
-//  VPortal::SetUpRanges
+//  VPortal::SetupRanges
 //
 //==========================================================================
-void VPortal::SetUpRanges (const refdef_t &refdef, VViewClipper &Range, bool Revert, bool SetFrustum) {
+void VPortal::SetupRanges (const refdef_t &refdef, VViewClipper &Range, bool Revert, bool SetFrustum) {
   Range.ClearClipNodes(Drawer->vieworg, RLev->Level);
   if (SetFrustum) {
     Range.ClipInitFrustumRange(Drawer->viewangles, Drawer->viewforward, Drawer->viewright, Drawer->viewup, refdef.fovx, refdef.fovy);
@@ -387,7 +387,7 @@ bool VSectorStackPortal::MatchSkyBox (VEntity *AEnt) const {
 void VSectorStackPortal::DrawContents () {
   VViewClipper Range;
   refdef_t rd = RLev->refdef;
-  VPortal::SetUpRanges(rd, Range, false, true); //k8: after moving viewport?
+  VPortal::SetupRanges(rd, Range, false, true); //k8: after moving viewport?
 
   RLev->ViewEnt = Viewport;
   VEntity *Mate = Viewport->GetSkyBoxMate();
@@ -397,7 +397,7 @@ void VSectorStackPortal::DrawContents () {
   Drawer->vieworg.x = Drawer->vieworg.x+Viewport->Origin.x-Mate->Origin.x;
   Drawer->vieworg.y = Drawer->vieworg.y+Viewport->Origin.y-Mate->Origin.y;
 
-  //VPortal::SetUpRanges(Range, false, true); //k8: after moving viewport?
+  //VPortal::SetupRanges(Range, false, true); //k8: after moving viewport?
 
   // reuse FixedModel flag to prevent recursion
   Viewport->EntityFlags |= VEntity::EF_FixedModel;
@@ -465,7 +465,7 @@ void VMirrorPortal::DrawContents () {
 
   refdef_t rd = RLev->refdef;
   VViewClipper Range;
-  SetUpRanges(rd, Range, true, false);
+  SetupRanges(rd, Range, true, false);
 
   // use "far plane" (it is unused by default)
   const TClipPlane SavedClip = Drawer->view_frustum.planes[5]; // save far/mirror plane

@@ -45,8 +45,8 @@ void CL_SendMove ();
 void CL_NetInterframe ();
 bool CL_Responder (event_t *ev);
 void CL_ReadFromServer (float deltaTime);
-void CL_SetUpLocalPlayer ();
-void CL_SetUpStandaloneClient ();
+void CL_SetupLocalPlayer ();
+void CL_SetupStandaloneClient ();
 
 extern client_static_t cls;
 extern VBasePlayer *cl;

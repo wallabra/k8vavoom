@@ -654,7 +654,7 @@ public:
   virtual void DrawContents () = 0;
 
 protected:
-  void SetUpRanges (const refdef_t &refdef, VViewClipper &Range, bool Revert, bool SetFrustum);
+  void SetupRanges (const refdef_t &refdef, VViewClipper &Range, bool Revert, bool SetFrustum);
 };
 
 

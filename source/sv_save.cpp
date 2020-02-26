@@ -1815,7 +1815,7 @@ static bool SV_LoadMap (VName MapName, bool allowCheckpoints, bool hubTeleport) 
     sv_loading = false; // just in case
     try {
       VBasePlayer::isCheckpointSpawn = true;
-      CL_SetUpLocalPlayer();
+      CL_SetupLocalPlayer();
     } catch (...) {
       VBasePlayer::isCheckpointSpawn = false;
       throw;
@@ -2054,7 +2054,7 @@ static void SV_LoadGame (int slot) {
     GLevel->cacheFlags &= ~VLevel::CacheFlag_Ignore;
     //GCon->Logf(NAME_Debug, "**********************: <%s>", *GLevel->cacheFileBase);
     #ifdef CLIENT
-    if (GGameInfo->NetMode != NM_DedicatedServer) CL_SetUpLocalPlayer();
+    if (GGameInfo->NetMode != NM_DedicatedServer) CL_SetupLocalPlayer();
     #endif
     // launch waiting scripts
     if (!deathmatch) GLevel->Acs->CheckAcsStore();
@@ -2193,7 +2193,7 @@ void SV_MapTeleport (VName mapname, int flags, int newskill) {
       GGameInfo->NetMode == NM_Standalone ||
       GGameInfo->NetMode == NM_ListenServer)
   {
-    CL_SetUpStandaloneClient();
+    CL_SetupStandaloneClient();
     doSaveGame = sv_new_map_autosave;
   }
   //if (!enterAutosavesEnabled) doSaveGame = false;

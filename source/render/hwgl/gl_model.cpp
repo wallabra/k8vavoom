@@ -61,10 +61,10 @@ static VVA_OKUNUSED void dumpShaderLocs (VOpenGLDrawer *drawer, GLuint prog) {
 
 //==========================================================================
 //
-//  AliasSetUpTransform
+//  AliasSetupTransform
 //
 //==========================================================================
-static void AliasSetUpTransform (const TVec &modelorg, const TAVec &angles,
+static void AliasSetupTransform (const TVec &modelorg, const TAVec &angles,
                                  const AliasModelTrans &Transform,
                                  VMatrix4 &RotationMatrix)
 {
@@ -114,10 +114,10 @@ static void AliasSetUpTransform (const TVec &modelorg, const TAVec &angles,
 
 //==========================================================================
 //
-//  AliasSetUpNormalTransform
+//  AliasSetupNormalTransform
 //
 //==========================================================================
-static void AliasSetUpNormalTransform (const TAVec &angles, const TVec &Scale, VMatrix4 &RotationMatrix) {
+static void AliasSetupNormalTransform (const TAVec &angles, const TVec &Scale, VMatrix4 &RotationMatrix) {
   TVec alias_forward(0, 0, 0), alias_right(0, 0, 0), alias_up(0, 0, 0);
   AngleVectors(angles, alias_forward, alias_right, alias_up);
 
@@ -236,7 +236,7 @@ void VOpenGLDrawer::DrawAliasModel (const TVec &origin, const TAVec &angles,
   GLEnableBlend();
 
   VMatrix4 RotationMatrix;
-  AliasSetUpTransform(origin, angles, Transform, RotationMatrix);
+  AliasSetupTransform(origin, angles, Transform, RotationMatrix);
 
   if (!ri.isStenciled()) {
     SurfModel.Activate();
@@ -373,7 +373,7 @@ void VOpenGLDrawer::DrawAliasModelAmbient (const TVec &origin, const TAVec &angl
   UploadModel(Mdl);
 
   VMatrix4 RotationMatrix;
-  AliasSetUpTransform(origin, angles, Transform, RotationMatrix);
+  AliasSetupTransform(origin, angles, Transform, RotationMatrix);
 
   ShadowsModelAmbient.Activate();
   ShadowsModelAmbient.SetTexture(0);
@@ -506,9 +506,9 @@ void VOpenGLDrawer::DrawAliasModelLight (const TVec &origin, const TAVec &angles
   VMeshFrame *NextFrameDesc = &Mdl->Frames[nextframe];
 
   VMatrix4 RotationMatrix;
-  AliasSetUpTransform(origin, angles, Transform, RotationMatrix);
+  AliasSetupTransform(origin, angles, Transform, RotationMatrix);
   VMatrix4 normalmatrix;
-  AliasSetUpNormalTransform(angles, Transform.Scale, normalmatrix);
+  AliasSetupNormalTransform(angles, Transform.Scale, normalmatrix);
 
   float NormalMat[3][3];
   NormalMat[0][0] = normalmatrix[0][0];
@@ -579,7 +579,7 @@ void VOpenGLDrawer::DrawAliasModelShadow (const TVec &origin, const TAVec &angle
   UploadModel(Mdl);
 
   VMatrix4 RotationMatrix;
-  AliasSetUpTransform(origin, angles, Transform, RotationMatrix);
+  AliasSetupTransform(origin, angles, Transform, RotationMatrix);
 
   //VMatrix4 InvRotationMatrix = RotationMatrix.Inverse();
   VMatrix4 InvRotationMatrix = RotationMatrix;
@@ -732,7 +732,7 @@ void VOpenGLDrawer::DrawAliasModelTextures (const TVec &origin, const TAVec &ang
   UploadModel(Mdl);
 
   VMatrix4 RotationMatrix;
-  AliasSetUpTransform(origin, angles, Transform, RotationMatrix);
+  AliasSetupTransform(origin, angles, Transform, RotationMatrix);
 
   if (!ri.isStenciled()) {
     ShadowsModelTextures.Activate();
@@ -846,7 +846,7 @@ void VOpenGLDrawer::DrawAliasModelFog (const TVec &origin, const TAVec &angles,
   glGetIntegerv(GL_DEPTH_WRITEMASK, &oldDepthMask);
 
   VMatrix4 RotationMatrix;
-  AliasSetUpTransform(origin, angles, Transform, RotationMatrix);
+  AliasSetupTransform(origin, angles, Transform, RotationMatrix);
 
   ShadowsModelFog.Activate();
   ShadowsModelFog.SetTexture(0);

@@ -3071,10 +3071,10 @@ bool CheckSpot (mthing_t *mthing, optional bool onlyCheck) {
 
 //==========================================================================
 //
-//  SetUpPlayerClass
+//  SetupPlayerClass
 //
 //==========================================================================
-void SetUpPlayerClass () {
+void SetupPlayerClass () {
   if (LineSpecialGameInfo(Level.Game).bRandomClass &&
       Level.Game.deathmatch && Level.Game.PlayerClasses.Num > 1)
   {
@@ -3308,7 +3308,7 @@ void SpawnPlayer (mthing_t *mthing, bool Voodoo) {
 
   if (!cheatReborn && GetCvarB('sv_force_pistol_start')) ResetInventory = true;
 
-  SetUpPlayerClass();
+  SetupPlayerClass();
 
   float x = spawnOrigin.x;
   float y = spawnOrigin.y;

@@ -1616,7 +1616,7 @@ COMMAND(Restart) {
   {
     // reload the level from scratch
     SV_SpawnServer(*GLevel->MapName, true/*spawn thinkers*/);
-    if (GGameInfo->NetMode != NM_DedicatedServer) CL_SetUpLocalPlayer();
+    if (GGameInfo->NetMode != NM_DedicatedServer) CL_SetupLocalPlayer();
   }
 }
 #endif
@@ -1723,7 +1723,7 @@ void SV_CheckForNewClients () {
 
     VBasePlayer *Player = GPlayersBase[i];
     Player->Net = new VNetConnection(sock, ServerNetContext, Player);
-    Player->Net->ObjMap->SetUpClassLookup();
+    Player->Net->ObjMap->SetupClassLookup();
     ((VPlayerChannel *)Player->Net->Channels[CHANIDX_Player])->SetPlayer(Player);
     Player->Net->CreateChannel(CHANNEL_ObjectMap, -1);
     SV_ConnectClient(Player);
@@ -1851,7 +1851,7 @@ COMMAND_WITH_AC(Map) {
   }
 
 #ifdef CLIENT
-  if (GGameInfo->NetMode != NM_DedicatedServer) CL_SetUpLocalPlayer();
+  if (GGameInfo->NetMode != NM_DedicatedServer) CL_SetupLocalPlayer();
 #endif
 }
 
@@ -1936,7 +1936,7 @@ bool Host_StartTitleMap () {
   SV_ResetPlayers();
   SV_SpawnServer("titlemap", true/*spawn thinkers*/, true/*titlemap*/);
 #ifdef CLIENT
-  CL_SetUpLocalPlayer();
+  CL_SetupLocalPlayer();
 #endif
   loadingTitlemap = false;
   return true;

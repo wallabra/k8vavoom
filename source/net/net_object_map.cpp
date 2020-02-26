@@ -47,7 +47,7 @@ VNetObjectsMap::VNetObjectsMap (VNetConnection *AConnection) : Connection(AConne
 
 //==========================================================================
 //
-//  VNetObjectsMap::SetUpClassLookup
+//  VNetObjectsMap::~VNetObjectsMap
 //
 //==========================================================================
 VNetObjectsMap::~VNetObjectsMap () {
@@ -56,10 +56,10 @@ VNetObjectsMap::~VNetObjectsMap () {
 
 //==========================================================================
 //
-//  VNetObjectsMap::SetUpClassLookup
+//  VNetObjectsMap::SetupClassLookup
 //
 //==========================================================================
-void VNetObjectsMap::SetUpClassLookup () {
+void VNetObjectsMap::SetupClassLookup () {
   NameMap.SetNum(VName::GetNumNames());
   NameLookup.SetNum(VName::GetNumNames());
   for (int i = 0; i < VName::GetNumNames(); ++i) {

@@ -351,7 +351,7 @@ public:
   inline VStr GetAddress () const { return (NetCon ? NetCon->Address : VStr()); }
   void Tick ();
   void SendCommand (VStr Str);
-  void SetUpFatPVS ();
+  void SetupFatPVS ();
   int CheckFatPVS (subsector_t *);
   bool SecCheckFatPVS (sector_t *);
   bool IsRelevant (VThinker *Th);
@@ -363,7 +363,7 @@ public:
   virtual void Intermission (bool active);
 
 private:
-  void SetUpPvsNode (int, float *);
+  void SetupPvsNode (int, float *);
 };
 
 
@@ -421,7 +421,7 @@ public:
   VNetObjectsMap (VNetConnection *);
   virtual ~VNetObjectsMap ();
 
-  void SetUpClassLookup ();
+  void SetupClassLookup ();
   bool CanSerialiseObject (VObject *);
 
   virtual bool SerialiseName (VStream &, VName &) override;

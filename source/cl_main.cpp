@@ -34,7 +34,7 @@
 #define VAVOOM_DEMO_VERSION  (1)
 
 
-void CL_SetUpNetClient (VSocketPublic *);
+void CL_SetupNetClient (VSocketPublic *);
 void SV_ConnectClient (VBasePlayer *);
 void CL_Clear ();
 void CL_ReadFromServerInfo ();
@@ -298,7 +298,7 @@ void CL_EstablishConnection (const char *host) {
     return;
   }
 
-  CL_SetUpNetClient(Sock);
+  CL_SetupNetClient(Sock);
   GCon->Logf(NAME_Dev, "CL_EstablishConnection: connected to %s", host);
   GGameInfo->NetMode = NM_Client;
 
@@ -314,10 +314,10 @@ void CL_EstablishConnection (const char *host) {
 
 //==========================================================================
 //
-//  CL_SetUpLocalPlayer
+//  CL_SetupLocalPlayer
 //
 //==========================================================================
-void CL_SetUpLocalPlayer () {
+void CL_SetupLocalPlayer () {
   if (GGameInfo->NetMode == NM_DedicatedServer) return;
 
   VBasePlayer *Player = GPlayersBase[0];
@@ -335,16 +335,16 @@ void CL_SetUpLocalPlayer () {
 
   MN_DeactivateMenu();
 
-  CL_SetUpStandaloneClient();
+  CL_SetupStandaloneClient();
 }
 
 
 //==========================================================================
 //
-//  CL_SetUpStandaloneClient
+//  CL_SetupStandaloneClient
 //
 //==========================================================================
-void CL_SetUpStandaloneClient () {
+void CL_SetupStandaloneClient () {
   CL_Clear();
 
   GClGame->serverinfo = svs.serverinfo;
@@ -516,10 +516,10 @@ VLevel *VClientNetContext::GetLevel () {
 
 //==========================================================================
 //
-//  CL_SetUpNetClient
+//  CL_SetupNetClient
 //
 //==========================================================================
-void CL_SetUpNetClient (VSocketPublic *Sock) {
+void CL_SetupNetClient (VSocketPublic *Sock) {
   // create player structure
   cl = (VBasePlayer *)VObject::StaticSpawnWithReplace(VClass::FindClass("Player"));
   cl->PlayerFlags |= VBasePlayer::PF_IsClient;
@@ -734,7 +734,7 @@ COMMAND_WITH_AC(RecordDemo) {
     VNetConnection *Conn = new VNetConnection(Sock, GDemoRecordingContext, cl);
     Conn->AutoAck = true;
     GDemoRecordingContext->ClientConnections.Append(Conn);
-    Conn->ObjMap->SetUpClassLookup();
+    Conn->ObjMap->SetupClassLookup();
     VObjectMapChannel *Chan = (VObjectMapChannel *)Conn->CreateChannel(CHANNEL_ObjectMap, -1);
     (void)Chan; //k8:???
     while (!Conn->ObjMapSent) Conn->Tick();

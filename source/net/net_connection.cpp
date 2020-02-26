@@ -536,10 +536,10 @@ void VNetConnection::SendCommand (VStr Str) {
 
 //==========================================================================
 //
-//  VNetConnection::SetUpFatPVS
+//  VNetConnection::SetupFatPVS
 //
 //==========================================================================
-void VNetConnection::SetUpFatPVS () {
+void VNetConnection::SetupFatPVS () {
   float dummy_bbox[6] = { -99999, -99999, -99999, 99999, 99999, 99999 };
   VLevel *Level = Context->GetLevel();
   if (!Level) return;
@@ -563,16 +563,16 @@ void VNetConnection::SetUpFatPVS () {
   Clipper.ClearClipNodes(Owner->ViewOrg, Level);
   //Clipper.check2STextures = false;
   Clipper.RepSectors = (Channels[CHANIDX_Level] ? ((VLevelChannel *)Channels[CHANIDX_Level])->Sectors : nullptr);
-  SetUpPvsNode(Level->NumNodes-1, dummy_bbox);
+  SetupPvsNode(Level->NumNodes-1, dummy_bbox);
 }
 
 
 //==========================================================================
 //
-//  VNetConnection::SetUpPvsNode
+//  VNetConnection::SetupPvsNode
 //
 //==========================================================================
-void VNetConnection::SetUpPvsNode (int BspNum, float *BBox) {
+void VNetConnection::SetupPvsNode (int BspNum, float *BBox) {
   VLevel *Level = Context->GetLevel();
   vassert(Level);
 #ifdef VV_CLIPPER_FULL_CHECK
@@ -596,10 +596,10 @@ void VNetConnection::SetUpPvsNode (int BspNum, float *BBox) {
     // decide which side the view point is on
     int Side = Bsp->PointOnSide(Owner->ViewOrg);
     // recursively divide front space
-    SetUpPvsNode(Bsp->children[Side], Bsp->bbox[Side]);
+    SetupPvsNode(Bsp->children[Side], Bsp->bbox[Side]);
     // possibly divide back space
     //if (!Clipper.ClipIsBBoxVisible(Bsp->bbox[Side^1])) return;
-    return SetUpPvsNode(Bsp->children[Side^1], Bsp->bbox[Side^1]);
+    return SetupPvsNode(Bsp->children[Side^1], Bsp->bbox[Side^1]);
   } else {
     int SubNum = BspNum&~NF_SUBSECTOR;
     subsector_t *Sub = &Level->Subsectors[SubNum];
@@ -664,7 +664,7 @@ bool VNetConnection::IsRelevant (VThinker *Th) {
 //==========================================================================
 void VNetConnection::UpdateLevel () {
   if (((VLevelChannel *)Channels[CHANIDX_Level])->Level) {
-    SetUpFatPVS();
+    SetupFatPVS();
 
     ((VLevelChannel *)Channels[CHANIDX_Level])->Update();
 
