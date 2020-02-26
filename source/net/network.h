@@ -163,7 +163,7 @@ public:
   vuint8 OpenAcked;
   vuint8 Closing;
   VMessageIn *InMsg;
-  VMessageOut *OutMsg;
+  VMessageOut *OutMsg; // sent reliable messages; we want ACK for them
 
   VChannel (VNetConnection *, EChannelType, vint32, vuint8);
   virtual ~VChannel ();
@@ -172,7 +172,7 @@ public:
   void ReceivedRawMessage (VMessageIn &);
   virtual void ParsePacket (VMessageIn &) = 0;
   void SendMessage (VMessageOut *);
-  virtual void ReceivedAck ();
+  virtual bool ReceivedAck (); // returns `true` if channel is closed (the caller should delete it)
   virtual void Close ();
   virtual void Tick ();
   void SendRpc (VMethod *, VObject *);
@@ -343,6 +343,7 @@ public:
   VChannel *CreateChannel (vuint8, vint32, vuint8 = true);
   virtual void SendRawMessage (VMessageOut &);
   virtual void SendAck (vuint32);
+  void NotifyAckAllChans (); // this does the necessary cleanup too
   void PrepareOut (int);
   void Flush ();
   bool IsLocalConnection ();

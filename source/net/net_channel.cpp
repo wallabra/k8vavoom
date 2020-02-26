@@ -59,17 +59,20 @@ VChannel::~VChannel () {
   for (VMessageIn *Msg = InMsg; Msg; ) {
     VMessageIn *Next = Msg->Next;
     delete Msg;
-    Msg = (Next ? Next : nullptr);
+    Msg = Next;
   }
   for (VMessageOut *Msg = OutMsg; Msg; ) {
     VMessageOut *Next = Msg->Next;
     delete Msg;
-    Msg = (Next ? Next : nullptr);
+    Msg = Next;
   }
-  if (Index != -1 && Connection->Channels[Index] == this) {
-    Connection->Channels[Index] = nullptr;
+  //k8: yay, i love magic numbers!
+  if (Index != -666) {
+    if (Index >= 0 && Index < MAX_CHANNELS && Connection->Channels[Index] == this) {
+      Connection->Channels[Index] = nullptr;
+    }
+    Connection->OpenChannels.Remove(this);
   }
-  Connection->OpenChannels.Remove(this);
 }
 
 
@@ -168,6 +171,8 @@ void VChannel::SendMessage (VMessageOut *AMsg) {
     //abort();
     return;
   }
+
+  // put reliable message into resend queue
   if (Msg->bReliable) {
     Msg->Sequence = Connection->OutSequence[Index];
 
@@ -189,8 +194,10 @@ void VChannel::SendMessage (VMessageOut *AMsg) {
 //
 //  VChannel::ReceivedAck
 //
+//  returns `true` if channel is closed (the caller should delete it)
+//
 //==========================================================================
-void VChannel::ReceivedAck () {
+bool VChannel::ReceivedAck () {
   // clean up messages that have been ACK-ed
   // only the first ones are deleted so that close message doesn't
   // get handled while there's still messages that are not ACK-ed
@@ -204,7 +211,8 @@ void VChannel::ReceivedAck () {
   }
 
   // if we received ACK for close message then delete this channel
-  if (CloseAcked) delete this;
+  //if (CloseAcked) delete this;
+  return CloseAcked;
 }
 
 

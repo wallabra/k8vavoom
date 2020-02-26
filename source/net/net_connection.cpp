@@ -168,6 +168,33 @@ int VNetConnection::GetRawPacket (TArray<vuint8> &Data) {
 
 //==========================================================================
 //
+//  VNetConnection::NotifyAckAllChans
+//
+//  this does the necessary cleanup too
+//
+//==========================================================================
+void VNetConnection::NotifyAckAllChans () {
+  for (int i = 0; i < OpenChannels.length(); ++i) {
+    VChannel *chan = OpenChannels[i];
+    // just in case
+    if (!chan) {
+      OpenChannels.removeAt(i);
+      --i;
+      continue;
+    }
+    if (chan->ReceivedAck()) {
+      // this channel is closed, and should be removed
+      chan->Index = -666; // channel should not delete itself, we'll take care of it
+      delete chan;
+      OpenChannels.removeAt(i);
+      --i;
+    }
+  }
+}
+
+
+//==========================================================================
+//
 //  VNetConnection::ReceivedPacket
 //
 //==========================================================================
@@ -222,7 +249,7 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
       }
 
       // notify channels that ACK has been received
-      for (int i = OpenChannels.Num()-1; i >= 0; --i) OpenChannels[i]->ReceivedAck();
+      NotifyAckAllChans();
     } else {
       NeedsAck = true;
       VMessageIn Msg;
@@ -381,7 +408,7 @@ void VNetConnection::Flush () {
   while (Out.GetNumBits()&7) Out.WriteBit(false);
 
   // send the message
-  if (net_test_loss == 0 || Random()*100.0 <= net_test_loss) {
+  if (net_test_loss == 0 || Random()*100.0f <= net_test_loss) {
     if (NetCon->SendMessage(Out.GetData(), Out.GetNumBytes()) == -1) State = NETCON_Closed;
   }
   LastSendTime = Driver->NetTime;
@@ -419,12 +446,13 @@ void VNetConnection::Tick () {
   // for bots and demo playback there's no other end that will send us
   // the ACK so just mark all outgoing messages as ACK-ed
   if (AutoAck) {
-    for (int i = OpenChannels.Num()-1; i >= 0; --i) {
-      if (!OpenChannels[i]) continue; // k8: just in case
-      for (VMessageOut *Msg = OpenChannels[i]->OutMsg; Msg; Msg = Msg->Next) Msg->bReceivedAck = true;
-      OpenChannels[i]->OpenAcked = true;
-      OpenChannels[i]->ReceivedAck();
+    for (auto &&chan : OpenChannels) {
+      if (!chan) continue; // k8: just in case
+      for (VMessageOut *Msg = chan->OutMsg; Msg; Msg = Msg->Next) Msg->bReceivedAck = true;
+      chan->OpenAcked = true;
+      //OpenChannels[i]->ReceivedAck();
     }
+    NotifyAckAllChans();
   }
 
   // see if this connection has timed out
