@@ -77,7 +77,7 @@ public:
   virtual int Write (int, const vuint8 *, int, sockaddr_t *) override;
   virtual int Broadcast (int, const vuint8 *, int) override;
   virtual bool CanBroadcast () override;
-  virtual char *AddrToString (sockaddr_t *) override;
+  virtual VStr AddrToString (sockaddr_t *) override;
   virtual int StringToAddr (const char *, sockaddr_t *) override;
   virtual int GetSocketAddr (int, sockaddr_t *) override;
   virtual VStr GetNameFromAddr (sockaddr_t *) override;
@@ -222,7 +222,7 @@ int VUdpDriver::Init () {
   if (Net->MyIpAddress[0] == 0) {
     sockaddr_t addr;
     GetSocketAddr(net_controlsocket, &addr);
-    VStr::Cpy(Net->MyIpAddress, AddrToString(&addr));
+    VStr::Cpy(Net->MyIpAddress, *AddrToString(&addr));
     char *colon = strrchr(Net->MyIpAddress, ':');
     if (colon) *colon = 0;
     GCon->Logf(NAME_Init, "My IP address: %s", Net->MyIpAddress);
@@ -369,7 +369,7 @@ int VUdpDriver::OpenSocket (int port) {
 
   closesocket(newsocket);
 
-  Sys_Error("Unable to bind to %s", AddrToString((sockaddr_t *)&address));
+  Sys_Error("Unable to bind to %s", *AddrToString((sockaddr_t *)&address));
   return -1;
 }
 
@@ -491,13 +491,13 @@ int VUdpDriver::Broadcast (int socket, const vuint8 *buf, int len) {
 //  VUdpDriver::AddrToString
 //
 //==========================================================================
-char *VUdpDriver::AddrToString (sockaddr_t *addr) {
-  static char buffer[32];
+VStr VUdpDriver::AddrToString (sockaddr_t *addr) {
+  char buffer[32];
   int haddr = ntohl(((sockaddr_in *)addr)->sin_addr.s_addr);
   snprintf(buffer, sizeof(buffer), "%d.%d.%d.%d:%d", (haddr>>24)&0xff,
     (haddr>>16)&0xff, (haddr>>8)&0xff, haddr&0xff,
     ntohs(((sockaddr_in *)addr)->sin_port));
-  return buffer;
+  return VStr(buffer);
 }
 
 

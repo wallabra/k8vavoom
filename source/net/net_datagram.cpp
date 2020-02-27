@@ -71,6 +71,9 @@ static int cli_NoLAN = 0;
   VParsedArgs::RegisterAlias("-no-lan", "-nolan");
 
 
+static VCvarB net_dbg_dump_rejected_connections("net_dbg_dump_rejected_connections", false, "Dump rejected connections?");
+
+
 // ////////////////////////////////////////////////////////////////////////// //
 class VDatagramSocket : public VSocket {
 public:
@@ -248,14 +251,12 @@ void VDatagramDriver::SearchForHosts (VNetLanDriver *Drv, bool xmit, bool ForMas
     msg << msgtype;
     if (msgtype != CCREP_SERVER_INFO) continue;
 
-    char *addr;
     VStr str;
-
-    addr = Drv->AddrToString(&readaddr);
+    VStr addr = Drv->AddrToString(&readaddr);
 
     // search the cache for this server
     for (n = 0; n < Net->HostCacheCount; ++n) {
-      if (Net->HostCache[n].CName == addr) break;
+      if (addr.strEqu(Net->HostCache[n].CName)) break;
     }
 
     // is it already there?
@@ -536,16 +537,28 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   if (acceptsock == -1) return nullptr;
 
   len = Drv->Read(acceptsock, packetBuffer.data, MAX_MSGLEN, &clientaddr);
-  if (len < (int)sizeof(vint32)) return nullptr;
+  if (len < (int)sizeof(vint32)) {
+    if (len >= 0 && net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: too short packet (%d) from %s", len, *Drv->AddrToString(&clientaddr));
+    return nullptr;
+  }
+
   VBitStreamReader msg(packetBuffer.data, len<<3);
 
   msg << control;
-  if (control != NETPACKET_CTL) return nullptr;
+  if (control != NETPACKET_CTL) {
+    if (net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: invalid packet type (%u) from %s", control, *Drv->AddrToString(&clientaddr));
+    return nullptr;
+  }
 
   msg << command;
   if (command == CCREQ_SERVER_INFO) {
     msg << gamename;
-    if (gamename != "K8VAVOOM") return nullptr;
+    if (gamename != "K8VAVOOM") {
+      if (net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: invalid game type from %s", *Drv->AddrToString(&clientaddr));
+      return nullptr;
+    }
+
+    GCon->Logf(NAME_DevNet, "CONN: sending server info to %s", *Drv->AddrToString(&clientaddr));
 
     VBitStreamWriter MsgOut(MAX_MSGLEN<<3);
     TmpByte = NETPACKET_CTL;
@@ -573,7 +586,10 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     return nullptr;
   }
 
-  if (command != CCREQ_CONNECT) return nullptr;
+  if (command != CCREQ_CONNECT) {
+    if (net_dbg_dump_rejected_connections) GCon->Logf(NAME_DevNet, "CONN: unknown packet command (%u) from %s", command, *Drv->AddrToString(&clientaddr));
+    return nullptr;
+  }
 
   msg << gamename;
   if (gamename != "K8VAVOOM") {
@@ -598,6 +614,7 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
     if (ret >= 0) {
       // is this a duplicate connection reqeust?
       if (ret == 0 && Net->NetTime-s->ConnectTime < 2.0) {
+        GCon->Logf(NAME_DevNet, "CONN: duplicate connection request from %s (this is ok)", *Drv->AddrToString(&clientaddr));
         // yes, so send a duplicate reply
         VBitStreamWriter MsgOut(32<<3);
         Drv->GetSocketAddr(s->LanSocket, &newaddr);
@@ -628,7 +645,9 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   if (newsock == -1) return nullptr;
 
   // connect to the client
+  GCon->Logf(NAME_DevNet, "CONN: connecting to client %s", *Drv->AddrToString(&clientaddr));
   if (Drv->Connect(newsock, &clientaddr) == -1) {
+    GCon->Logf(NAME_DevNet, "CONN: cannot connect to client %s", *Drv->AddrToString(&clientaddr));
     Drv->CloseSocket(newsock);
     return nullptr;
   }
@@ -642,6 +661,8 @@ VSocket *VDatagramDriver::CheckNewConnections (VNetLanDriver *Drv) {
   sock->Address = Drv->AddrToString(&clientaddr);
 
   Drv->GetSocketAddr(newsock, &newaddr);
+
+  GCon->Logf(NAME_DevNet, "allocated socket %s for client %s", *Drv->AddrToString(&newaddr), *sock->Address);
 
   // send him back the info about the server connection he has been allocated
   VBitStreamWriter MsgOut(32<<3);
