@@ -26,6 +26,8 @@
 #include "gamedefs.h"
 #include "network.h"
 
+static VCvarI net_dbg_dump_thinker_channels("net_dbg_dump_thinker_channels", "0", "Dump thinker channels creation/closing (bit 0)?");
+
 
 //==========================================================================
 //
@@ -76,6 +78,7 @@ void VThinkerChannel::RemoveThinkerFromGame () {
     GCon->Logf(NAME_Debug, "VThinkerChannel::~RemoveThinkerFromGame:%p (#%d) -- before `DestroyThinker()`", this, Index);
     #endif
     #endif
+    if (net_dbg_dump_thinker_channels.asInt()&1) GCon->Logf(NAME_Debug, "VThinkerChannel #%d: removing thinker '%s':%u from game...", Index, Thinker->GetClass()->GetName(), Thinker->GetUniqueId());
     // avoid loops
     VThinker *th = Thinker;
     Thinker = nullptr;
@@ -173,6 +176,10 @@ void VThinkerChannel::Close () {
 //
 //==========================================================================
 void VThinkerChannel::SetThinker (VThinker *AThinker) {
+  if (Thinker && !AThinker && net_dbg_dump_thinker_channels.asInt()&1) GCon->Logf(NAME_Debug, "VThinkerChannel #%d: clearing thinker '%s':%u", Index, Thinker->GetClass()->GetName(), Thinker->GetUniqueId());
+  if (!Thinker && AThinker && net_dbg_dump_thinker_channels.asInt()&1) GCon->Logf(NAME_Debug, "VThinkerChannel #%d: setting thinker '%s':%u", Index, AThinker->GetClass()->GetName(), AThinker->GetUniqueId());
+  if (Thinker && AThinker && net_dbg_dump_thinker_channels.asInt()&1) GCon->Logf(NAME_Debug, "VThinkerChannel #%d: replacing thinker '%s':%u with '%s':%u", Index, Thinker->GetClass()->GetName(), Thinker->GetUniqueId(), AThinker->GetClass()->GetName(), AThinker->GetUniqueId());
+
   if (Thinker) {
     #ifdef VAVOOM_EXCESSIVE_NETWORK_DEBUG_LOGS
     #ifdef CLIENT

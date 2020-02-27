@@ -30,6 +30,7 @@
 
 
 static VCvarF net_test_loss("net_test_loss", "0", "Test packet loss code?", CVAR_PreInit);
+static VCvarB net_dbg_conn_show_outdated("net_dbg_conn_show_outdated", false, "Show outdated channel messages?");
 
 
 //==========================================================================
@@ -317,9 +318,19 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
           #endif
           #endif
         } else {
-          if (!Msg.bClose) {
+          if (Msg.ChanIndex < 0 || Msg.ChanIndex >= MAX_CHANNELS) {
+            GCon->Logf(NAME_DevNet, "Ignored message for invalid channel %d", Msg.ChanIndex);
+          } else if (!Msg.bClose && Msg.bReliable) {
             //k8: we still may receive some resent messages for closed channels; why?
-            GCon->Logf(NAME_DevNet, "Channel %d is not open", Msg.ChanIndex);
+            // ignore outdated messages
+            if (Msg.bReliable && Msg.Sequence < InSequence[Msg.ChanIndex]) {
+              //++Driver->receivedDuplicateCount;
+              if (net_dbg_conn_show_outdated) {
+                GCon->Logf(NAME_DevNet, "Ignored outdated message for channel %d (msg seq is %u, conn seq is %u)", Msg.ChanIndex, Msg.Sequence, InSequence[Msg.ChanIndex]);
+              }
+            } else {
+              GCon->Logf(NAME_DevNet, "Channel %d is not open (msg seq is %u, conn seq is %u)", Msg.ChanIndex, Msg.Sequence, InSequence[Msg.ChanIndex]);
+            }
           }
           continue;
         }
