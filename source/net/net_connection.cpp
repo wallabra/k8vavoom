@@ -64,6 +64,22 @@ VNetConnection::VNetConnection (VSocketPublic *ANetCon, VNetContext *AContext, V
   vassert(ChanIdxMap.length() == 0);
   HasDeadChannels = false;
 
+  // fill free thinker ids
+  memset(ChanFreeIds, 0, sizeof(ChanFreeIds));
+  ChanFreeIdsUsed = MAX_CHANNELS-CHANIDX_ThinkersStart;
+  for (int f = 0; f < (int)ChanFreeIdsUsed; ++f) ChanFreeIds[f] = f+CHANIDX_ThinkersStart;
+  /* no need to shuffle it, our allocator will take care of that
+  // shuffle
+  for (unsigned f = 0; f < ChanFreeIdsUsed; ++f) {
+    unsigned sidx = GenRandomU31()%ChanFreeIdsUsed;
+    if (sidx != f) {
+      const int tmp = ChanFreeIds[f];
+      ChanFreeIds[f] = ChanFreeIds[sidx];
+      ChanFreeIds[sidx] = tmp;
+    }
+  }
+  */
+
   memset(InSequence, 0, sizeof(InSequence));
   memset(OutSequence, 0, sizeof(OutSequence));
 
@@ -345,14 +361,65 @@ void VNetConnection::ReceivedPacket (VBitStreamReader &Packet) {
 
 //==========================================================================
 //
-//  VNetConnection::RegisterChannel
+//  VNetConnection::GetRandomThinkerChannelId
+//
+//==========================================================================
+int VNetConnection::GetRandomThinkerChannelId () {
+  vassert(ChanFreeIdsUsed > 0);
+  // select random element; swap it with the last one; shrink array
+  if (ChanFreeIdsUsed > 1) {
+    const unsigned idx = GenRandomU31()%ChanFreeIdsUsed;
+    // swap idx and the last one
+    if (idx != ChanFreeIdsUsed-1) {
+      const int tmp = ChanFreeIds[idx];
+      ChanFreeIds[idx] = ChanFreeIds[ChanFreeIdsUsed-1];
+      ChanFreeIds[ChanFreeIdsUsed-1] = tmp;
+    }
+  }
+  // return the last one
+  int res = ChanFreeIds[--ChanFreeIdsUsed];
+  //GCon->Logf(NAME_Debug, "*** ALLOCATED THID %d (%u thids left)", res, ChanFreeIdsUsed);
+  vassert(ChanFreeIdsUsed >= 0);
+  vassert(res >= CHANIDX_ThinkersStart && res < MAX_CHANNELS);
+  return res;
+}
+
+
+//==========================================================================
+//
+//  VNetConnection::ReleaseThinkerChannelId
+//
+//==========================================================================
+void VNetConnection::ReleaseThinkerChannelId (int idx) {
+  //GCon->Logf(NAME_Debug, "*** FREEING THID %d (%u thids in pool)", idx, ChanFreeIdsUsed);
+  vassert(idx >= CHANIDX_ThinkersStart && idx < MAX_CHANNELS);
+  vassert(ChanFreeIdsUsed < (unsigned)(MAX_CHANNELS-CHANIDX_ThinkersStart));
+  // select random element; remember its value, and replace it with idx; append replaced value to the array
+  if (ChanFreeIdsUsed > 1) {
+    const unsigned arridx = GenRandomU31()%ChanFreeIdsUsed;
+    const int tmp = ChanFreeIds[arridx];
+    ChanFreeIds[arridx] = idx;
+    idx = tmp;
+  }
+  ChanFreeIds[ChanFreeIdsUsed++] = idx;
+}
+
+
+//==========================================================================
+//
+//  VNetConnection::AllocThinkerChannelId
 //
 //  can return -1 if there are no free thinker channels
 //
 //==========================================================================
-vint32 VNetConnection::AllocThinkerChannelId () {
+int VNetConnection::AllocThinkerChannelId () {
   // early exit
   if (ChanIdxMap.length() >= MAX_CHANNELS) return -1;
+  if (ChanFreeIdsUsed == 0) return -1; // just in case
+  const int idx = GetRandomThinkerChannelId();
+  if (idx < 0) return -1; // just in case
+  return idx;
+  /* old code, sequential
   // ok, we may have some free channels, look for a free one in the bitmap
   const uint32_t oldbmp0 = ChanFreeBitmap[0];
   ChanFreeBitmap[0] |= CHANIDX_KnownBmpMask; // temporarily
@@ -363,7 +430,7 @@ vint32 VNetConnection::AllocThinkerChannelId () {
       for (unsigned ofs = 0; ofs < 32; ++ofs) {
         if (!(slot&(1u<<ofs))) {
           ChanFreeBitmap[0] = oldbmp0;
-          return (vint32)(idx*32u+ofs);
+          return (int)(idx*32u+ofs);
         }
       }
       abort(); // the thing that should not be
@@ -371,6 +438,7 @@ vint32 VNetConnection::AllocThinkerChannelId () {
   }
   ChanFreeBitmap[0] = oldbmp0;
   return -1; // no free slots
+  */
 }
 
 
@@ -431,6 +499,8 @@ void VNetConnection::UnregisterChannel (VChannel *chan, bool touchMap) {
   if (idx < CHANIDX_ThinkersStart) {
     if (!KnownChannels[idx]) Sys_Error("trying to unregister non-registered known channel %d", idx);
     KnownChannels[idx] = nullptr;
+  } else {
+    ReleaseThinkerChannelId(idx);
   }
   if (touchMap) ChanIdxMap.remove(idx);
   // for thinker channel, remove it from thinker map (and from the game)
@@ -452,21 +522,39 @@ VChannel *VNetConnection::CreateChannel (vuint8 Type, vint32 AIndex, vuint8 Open
   // if channel index is -1, find a free channel slot
   vint32 Index = AIndex;
   if (Index == -1) {
-    Index = AllocThinkerChannelId();
-    if (Index < 0) return nullptr;
-    /*
-    Index = CHANIDX_ThinkersStart;
-    while (Index < MAX_CHANNELS && Channels[Index]) ++Index;
-    if (Index == MAX_CHANNELS) return nullptr;
-    */
+    if (Type == CHANNEL_ObjectMap) {
+      vassert(KnownChannels[CHANIDX_ObjectMap] == nullptr);
+      Index = CHANIDX_ObjectMap;
+    } else {
+      vassert(Type == CHANNEL_Thinker);
+      Index = AllocThinkerChannelId();
+      if (Index < 0) return nullptr;
+      vassert(Index >= CHANIDX_ThinkersStart && Index < MAX_CHANNELS);
+    }
+  } else if (Type == CHANIDX_ThinkersStart) {
+    // this can happen in client (server requested channel id)
+    //FIXME: make this faster!
+    //GCon->Logf(NAME_Debug, "trying to allocate fixed thinker channel #%d", Index);
+    unsigned xidx = 0;
+    while (xidx < ChanFreeIdsUsed && ChanFreeIds[xidx] != Index) ++xidx;
+    if (xidx >= ChanFreeIdsUsed) Sys_Error("trying to allocate already allocated fixed thinker channel #%d", Index);
+    // swap with last element
+    if (xidx != ChanFreeIdsUsed-1) {
+      const int tmp = ChanFreeIds[xidx];
+      ChanFreeIds[xidx] = ChanFreeIds[ChanFreeIdsUsed-1];
+      ChanFreeIds[ChanFreeIdsUsed-1] = tmp;
+    }
+    vassert(ChanFreeIds[ChanFreeIdsUsed-1] == Index);
+    --ChanFreeIdsUsed;
   }
+  vassert(Index >= 0 && Index < MAX_CHANNELS);
 
   switch (Type) {
-    case CHANNEL_Control: return new VControlChannel(this, Index, OpenedLocally);
-    case CHANNEL_Level: return new VLevelChannel(this, Index, OpenedLocally);
-    case CHANNEL_Player: return new VPlayerChannel(this, Index, OpenedLocally);
-    case CHANNEL_Thinker: return new VThinkerChannel(this, Index, OpenedLocally);
-    case CHANNEL_ObjectMap: return new VObjectMapChannel(this, Index, OpenedLocally);
+    case CHANNEL_Control: vassert(Index == CHANIDX_General); return new VControlChannel(this, Index, OpenedLocally);
+    case CHANNEL_Level: vassert(Index == CHANIDX_Level); return new VLevelChannel(this, Index, OpenedLocally);
+    case CHANNEL_Player: vassert(Index == CHANIDX_Player); return new VPlayerChannel(this, Index, OpenedLocally);
+    case CHANNEL_Thinker: vassert(Index >= CHANIDX_ThinkersStart); return new VThinkerChannel(this, Index, OpenedLocally);
+    case CHANNEL_ObjectMap: vassert(Index == CHANIDX_ObjectMap); return new VObjectMapChannel(this, Index, OpenedLocally);
     default: GCon->Logf(NAME_DevNet, "Unknown channel type %d for channel %d", Type, Index); return nullptr;
   }
 }

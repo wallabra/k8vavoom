@@ -75,8 +75,10 @@ enum EChannelIndex {
   CHANIDX_General,
   CHANIDX_Player,
   CHANIDX_Level,
-  CHANIDX_KnownBmpMask = 0x111u,
+  CHANIDX_ObjectMap,
   CHANIDX_ThinkersStart,
+  //
+  CHANIDX_KnownBmpMask = 0x1111u,
 };
 
 
@@ -346,17 +348,24 @@ protected:
   // non-thinker channels
   VChannel *KnownChannels[CHANIDX_ThinkersStart];
   vuint32 ChanFreeBitmap[(MAX_CHANNELS+31)/32];
+  // use random channel ids for thinkers
+  int ChanFreeIds[MAX_CHANNELS];
+  unsigned ChanFreeIdsUsed;
   // thinker channels
   TMapNC<vint32, VChannel *> ChanIdxMap; // index -> channel
   // if this flag is set, we *may* have some dead channels, and should call `RemoveDeadThinkerChannels()`
   bool HasDeadChannels;
+
+protected:
+  void ReleaseThinkerChannelId (int idx);
+  int GetRandomThinkerChannelId ();
 
 public:
   void RegisterChannel (VChannel *chan);
   void UnregisterChannel (VChannel *chan, bool touchMap=true);
 
   // can return -1 if there are no free thinker channels
-  vint32 AllocThinkerChannelId ();
+  int AllocThinkerChannelId ();
 
   inline void MarkChannelsDirty () noexcept { HasDeadChannels = true; }
 
