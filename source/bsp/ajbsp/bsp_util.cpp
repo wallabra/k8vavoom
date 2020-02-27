@@ -86,6 +86,19 @@ void MinorIssue(const char *fmt, ...)
 }
 
 
+void InfoMessage(const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	vsnprintf(message_buf, sizeof(message_buf), fmt, args);
+	va_end(args);
+
+	ajbsp_PrintVerbose("INFO: %s", message_buf);
+}
+
+
+
 //------------------------------------------------------------------------
 // UTILITY : general purpose functions
 //------------------------------------------------------------------------

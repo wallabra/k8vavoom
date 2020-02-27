@@ -1017,6 +1017,7 @@ static void FindLimitWorker(superblock_t *block, bbox_t *bbox)
 		if (hx > bbox->maxx) bbox->maxx = hx;
 		if (hy > bbox->maxy) bbox->maxy = hy;
 	}
+	ajbsp_Progress(cur_info->donesegs, cur_info->totalsegs);
 
 	// recursive handle sub-blocks
 
@@ -1517,6 +1518,7 @@ superblock_t *CreateSegs(void)
 
 	// step through linedefs and get side numbers
 
+	//InfoMessage("creating initial segs...");
 	cur_info->donesegs = cur_info->totalsegs = 0;
 	for (i=0 ; i < num_linedefs ; i++)
 	{
@@ -1574,6 +1576,7 @@ superblock_t *CreateSegs(void)
 				line->two_sided = 0;
 			}
 		}
+		if (i%256 == 0) ajbsp_Progress(i, num_linedefs);
 	}
 
 	return block;
@@ -1977,6 +1980,8 @@ build_result_e BuildNodes(superblock_t *seg_list,
 	DebugShowSegs(seg_list);
 # endif
 
+	ajbsp_Progress(cur_info->donesegs, cur_info->totalsegs);
+
 	/* pick best node to use.  None indicates convexicity */
 	best = PickNode(seg_list, depth, bbox);
 
@@ -2088,7 +2093,7 @@ build_result_e BuildNodes(superblock_t *seg_list,
 	ajbsp_DebugPrintf("Build: DONE\n");
 # endif
 
-	//ajbsp_Progress(cur_info->donesegs, cur_info->totalsegs);
+	ajbsp_Progress(cur_info->donesegs, cur_info->totalsegs);
 	return ret;
 }
 

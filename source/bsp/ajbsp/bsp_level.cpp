@@ -495,6 +495,7 @@ static void FindBlockmapLimits(bbox_t *bbox)
 	bbox->minx = bbox->miny = SHRT_MAX;
 	bbox->maxx = bbox->maxy = SHRT_MIN;
 
+	//InfoMessage("FindBlockmapLimits...");
 	for (i=0 ; i < num_linedefs ; i++)
 	{
 		linedef_t *L = LookupLinedef(i);
@@ -520,6 +521,7 @@ static void FindBlockmapLimits(bbox_t *bbox)
 			mid_x += (lx + hx) / 32;
 			mid_y += (ly + hy) / 32;
 		}
+		if (i%1024 == 0) ajbsp_Progress(i, num_linedefs);
 	}
 
 	if (num_linedefs > 0)

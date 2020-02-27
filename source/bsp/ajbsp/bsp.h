@@ -136,6 +136,7 @@ typedef double angle_g;  // degrees, 0 is E, 90 is N
 void Failure(const char *fmt, ...) __attribute__((format(printf,1,2)));
 void Warning(const char *fmt, ...) __attribute__((format(printf,1,2)));
 void MinorIssue(const char *fmt, ...) __attribute__((format(printf,1,2)));
+void InfoMessage(const char *fmt, ...) __attribute__((format(printf,1,2)));
 
 // allocate and clear some memory.  guaranteed not to fail.
 void *UtilCalloc(int size);
