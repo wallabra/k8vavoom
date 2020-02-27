@@ -358,13 +358,15 @@ void VThinkerChannel::ParsePacket (VMessageIn &Msg) {
   }
 
   VEntity *Ent = Cast<VEntity>(Thinker);
-  //TVec oldOrg(0.0f, 0.0f, 0.0f);
+  TVec oldOrg(0.0f, 0.0f, 0.0f);
+  TAVec oldAngles(0.0f, 0.0f, 0.0f);
   if (Ent) {
     Ent->UnlinkFromWorld();
     //TODO: use this to interpolate movements
     //      actually, we need to quantize movements by frame tics (1/35), and
     //      setup interpolation variables
-    //oldOrg = Eng->Origin;
+    oldOrg = Ent->Origin;
+    oldAngles = Ent->Angles;
   }
 
   while (!Msg.AtEnd()) {
@@ -395,6 +397,22 @@ void VThinkerChannel::ParsePacket (VMessageIn &Msg) {
 
   if (Ent) {
     Ent->LinkToWorld(true);
-    //TVec newOrg = Eng->Origin;
+    //TODO: do not interpolate players?
+    TVec newOrg = Ent->Origin;
+    if (newOrg != oldOrg) {
+      //GCon->Logf(NAME_Debug, "ENTITY '%s':%u moved! statetime=%g; state=%s", Ent->GetClass()->GetName(), Ent->GetUniqueId(), Ent->StateTime, (Ent->State ? *Ent->State->Loc.toStringNoCol() : "<none>"));
+      if (Ent->StateTime < 0) {
+        Ent->MoveFlags &= ~VEntity::MVF_JustMoved;
+      } else if (Ent->StateTime > 0 && (newOrg-oldOrg).length2DSquared() < 64*64) {
+        Ent->LastMoveOrigin = oldOrg;
+        //Ent->LastMoveAngles = oldAngles;
+        Ent->LastMoveAngles = Ent->Angles;
+        Ent->LastMoveTime = Ent->XLevel->Time;
+        Ent->LastMoveDuration = Ent->StateTime;
+        Ent->MoveFlags |= VEntity::MVF_JustMoved;
+      } else {
+        Ent->MoveFlags &= ~VEntity::MVF_JustMoved;
+      }
+    }
   }
 }

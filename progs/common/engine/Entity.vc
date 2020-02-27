@@ -395,6 +395,11 @@ replication {
     DispSpriteFrame, DispSpriteName,
     DecalName;
 
+  /*
+  reliable if (Role == ROLE_Authority && (bIsPlayer || bMonster || bMissile))
+    LastMoveOrigin, LastMoveAngles, LastMoveTime, LastMoveDuration, bIntrJustMoved;
+  */
+
   reliable if (Role == ROLE_Authority && bFixedModel)
     FixedModelName;
 
