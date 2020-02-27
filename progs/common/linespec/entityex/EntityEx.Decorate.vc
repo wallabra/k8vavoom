@@ -292,6 +292,8 @@ const [decorate] int AAPTR_OWNER = 0x10_0000;
 [decorate] final float decorate_vely { get { return Velocity.y/35.0; } }
 [decorate] final float decorate_velz { get { return Velocity.z/35.0; } }
 [decorate] final float decorate_missileMore { get { return (bTriggerHappy ? 1.0 : 0.0); } }
+[decorate] final int decorate_ExplosionDamage { get { return ExplosionDamage; } }
+[decorate] final int decorate_ExplosionRadius { get { return ExplosionRadius; } }
 
 [decorate] final int decorate_GetUID () { return __ObjectUniqueId; }
 [decorate] final Object decorate_GetSelf () { return self; }
